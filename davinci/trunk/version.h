@@ -1,9 +1,15 @@
-char *version = "@(#) daVinci Version #1.13";
-
+char *version = "@(#) daVinci Version #1.17";
 
 #include "build.h"
 
 /*
+
+Version 1.17: Thu Dec  4 20:35:59 MST 2003
+	+ Converted to use automake, libtool, and modern autoconf.
+	+ Added GUI module and VICAR widget library.
+	+ Added HTML documentation for GUI module.
+	+ Cleaned up miscellaneous compilation warnings.
+
 Version 1.14: Fri Aug 29 16:09:36 MST 2003
 	+ Have added a new image processing function: ff_fncc
 		it is called as fncc(template,source).  It currently

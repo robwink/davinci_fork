@@ -61,6 +61,10 @@ p.output {
            margin-left: 16px;
 }
 
+p.example {
+                margin-left: 16px;
+}
+
 p.smallfont { 
               font-size: 10px;
 }
@@ -104,7 +108,7 @@ p.smallfont {
                     margin-left: 16px;
 }
 
-.widgetlist colgroup { border-right: 1px solid #000; }
+.widgetlist col { border-right: 1px solid #000; }
 
 .widgetlist tr:first-child { border-bottom: 1px solid #000; }
 
@@ -128,4 +132,31 @@ code.dv {
 
 code.output {
               color: #00a0a0;
+}
+
+img.example {
+              border: none;
+              margin-left: 16px;
+}
+
+pre.code {
+           color: #ff00ff;
+           font-family: monospace;
+           margin-left: 16px;
+}
+
+pre.output {
+             color: #00a0a0;
+             font-family: monospace;
+             margin-left: 16px;
+}
+
+p.note { 
+         color: #ff0000;
+         font-size: 10px;
+         font-style: italic;
+         margin-left: 16px;
+         margin-right: 16px;
+         padding-top: 2px;
+         padding-left: 4px;
 }
