@@ -1,7 +1,10 @@
-char *version = "@(#) daVinci Version #0.67";
+char *version = "@(#) daVinci Version #0.67.1";
 #include "build.h"
 
 /*
+Version 0.67.1: Thu Mar 29 14:35:21 MST 2001
+	* buf in ff_rgb.  V_DSIZE() was getting improperly set
+
 Version 0.67: Thu Mar 22 13:51:39 MST 2001
     * This is a tag version before I start mucking with scope
 	* Fixed a bug with dereference of null structs.
