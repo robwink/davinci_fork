@@ -33,26 +33,32 @@
    byte first (like Motorola and SPARC, unlike Intel and VAX).  */
 #define WORDS_BIGENDIAN 1
 
+/* Define if the X Window System is missing or not being used.  */
+/* #undef X_DISPLAY_MISSING */
+
 /*Define if you have module library*/
 #define BUILD_MODULE_SUPPORT 1
 
 /*Define if you have projection library libproj*/
-/* #undef HAVE_LIBPROJ */
+#define HAVE_LIBPROJ 1
 
 /*Define if you have Xm library*/
 #define HAVE_LIBXM 1
 
 /*Define if you have the PlPlot library */
-/* #undef HAVE_PLPLOT */
+#define HAVE_PLPLOT 1
 
 /*Define if you have plplotFX library*/
-/* #undef INCLUDE_API */
+#define INCLUDE_API 1
 
 /*Define if you have use hpux shl library*/
-#define USE_HPUX_SHL 1
+/* #undef USE_HPUX_SHL */
 
 /*Define if you have xrt3d library*/
 /* #undef XRT_ENABLED */
+
+/*Define if you have readline library */
+#define HAVE_LIBREADLINE 1
 
 /* Define if you have the basename function.  */
 #define HAVE_BASENAME 1
@@ -127,22 +133,22 @@
 #define HAVE_LIMITS_H 1
 
 /* Define if you have the <magick.h> header file.  */
-/* #undef HAVE_MAGICK_H */
+#define HAVE_MAGICK_H 1
 
 /* Define if you have the <magick/api.h> header file.  */
-/* #undef HAVE_MAGICK_API_H */
+#define HAVE_MAGICK_API_H 1
 
 /* Define if you have the <malloc.h> header file.  */
 #define HAVE_MALLOC_H 1
 
 /* Define if you have the <my_list.h> header file.  */
-/* #undef HAVE_MY_LIST_H */
+#define HAVE_MY_LIST_H 1
 
 /* Define if you have the <ndir.h> header file.  */
 /* #undef HAVE_NDIR_H */
 
 /* Define if you have the <projects.h> header file.  */
-/* #undef HAVE_PROJECTS_H */
+#define HAVE_PROJECTS_H 1
 
 /* Define if you have the <sys/dir.h> header file.  */
 /* #undef HAVE_SYS_DIR_H */
@@ -163,7 +169,7 @@
 #define HAVE_VALUES_H 1
 
 /* Define if you have the Magick library (-lMagick).  */
-/* #undef HAVE_LIBMAGICK */
+#define HAVE_LIBMAGICK 1
 
 /* Define if you have the X11 library (-lX11).  */
 #define HAVE_LIBX11 1
@@ -184,22 +190,19 @@
 /* #undef HAVE_LIBCURSES */
 
 /* Define if you have the hdf5 library (-lhdf5).  */
-/* #undef HAVE_LIBHDF5 */
+#define HAVE_LIBHDF5 1
 
 /* Define if you have the jpeg library (-ljpeg).  */
-/* #undef HAVE_LIBJPEG */
+#define HAVE_LIBJPEG 1
 
 /* Define if you have the m library (-lm).  */
 #define HAVE_LIBM 1
 
 /* Define if you have the msss_vis library (-lmsss_vis).  */
-/* #undef HAVE_LIBMSSS_VIS */
+#define HAVE_LIBMSSS_VIS 1
 
 /* Define if you have the png library (-lpng).  */
 /* #undef HAVE_LIBPNG */
-
-/* Define if you have the readline library (-lreadline).  */
-#define HAVE_LIBREADLINE 1
 
 /* Define if you have the termcap library (-ltermcap).  */
 #define HAVE_LIBTERMCAP 1
@@ -208,7 +211,7 @@
 #define HAVE_LIBTIFF 1
 
 /* Define if you have the usds library (-lusds).  */
-/* #undef HAVE_LIBUSDS */
+#define HAVE_LIBUSDS 1
 
 /* Define if you have the z library (-lz).  */
 #define HAVE_LIBZ 1

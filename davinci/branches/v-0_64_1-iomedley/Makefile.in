@@ -17,7 +17,7 @@ INSTALL_DATA = @INSTALL_DATA@
 XINCLUDES=@XINCLUDES@ $(XRTINCLUDE)
 XLIBS=@XLIBS@ $(XRTLIBS)
 
-CPPFLAGS=@CPPFLAGS@ -Ilib -Iiomedley
+CPPFLAGS=-I$(srcdir) @CPPFLAGS@ -Ilib -Iiomedley
 CFLAGS=$(XINCLUDES) @CFLAGS@ 
 LDFLAGS=@LDFLAGS@
 
@@ -114,7 +114,7 @@ install:
 # File specific dependancies
 #
 help.o:	help.c
-	$(CC) $(CFLAGS) $(DEFS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $*.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(DEFS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $*.c
 
 clean:
 	-rm -f *.o davinci dv core gplot TAGS config.cache config.h config.log 
