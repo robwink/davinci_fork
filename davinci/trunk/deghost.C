@@ -5,10 +5,10 @@
 #include <malloc.h>
 #include <stdlib.h>
 #include <string.h>
-#include <qmv/hvector.h>
 #include "config.h"
 
 #if defined(HAVE_LIBQMV) && defined(HAVE_QMV_HVECTOR_H)
+#include <qmv/hvector.h>
 
 #define MYSQL_CMD "mysql -h mapserver1 -u dblogin2 -pthmsdb -D themis2"
 
