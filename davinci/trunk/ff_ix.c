@@ -27,10 +27,11 @@ ff_histogram(vfuncptr func, Var * arg)
 {
 	Var *obj = NULL, *compress = NULL, *normalize = NULL, *cumulative=NULL;
 	int type = 0;
-	int x,y,z, n, i, j, dsize, low, high, v;
+	int x,y,z, n, i, j, dsize, low, high;
 	float *data;
 	char *ptr = NULL;
 	int count = 0;
+	float v;
 
 	float start = MAXFLOAT, size= MAXFLOAT;
 	int steps = MAXINT;
@@ -116,6 +117,13 @@ ff_histogram(vfuncptr func, Var * arg)
 
 	data = (float *)calloc((steps+1) * 2, sizeof(float));
 
+	if (debug > 1) {
+		printf("debug: histogram:\n");
+		printf("debug:    start: %f\n", start);
+		printf("debug:    steps: %f\n", steps);
+		printf("debug:    size: %f\n", size);
+	}
+
 	/*
 	** X axis
 	*/
@@ -124,7 +132,7 @@ ff_histogram(vfuncptr func, Var * arg)
 	}
 
 	for (i = 0 ; i < dsize ; i++) {
-		v = extract_int(obj, i);
+		v = extract_float(obj, i);
 		j = (v - start) / size;
 		if (j < 0) {
 			j = 0;
