@@ -34,7 +34,7 @@ btemp(double f, double radiance)
 	if (radiance <= 0)
 		return (0.0);
 
-	x = log1p(C1 * f * f * f / radiance);
+	x = log(1.0 + (C1 * f * f * f / radiance));
 	if (x <= 0)
 		return (0.0);
 

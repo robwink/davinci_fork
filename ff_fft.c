@@ -7,6 +7,12 @@
 void cdft(int n, double wr, double wi, double *a);
 void rdft(int n, double wr, double wi, double *a);
 
+void mayer_fht(double *fz, int n);
+void mayer_ifft(int n, double *real, double *imag);
+void mayer_realfft(int n, double *real);
+void mayer_fft(int n, double *real, double *imag);
+void mayer_realifft(int n, double *real);
+
 Var *
 ff_fft(vfuncptr func, Var * arg)
 {

@@ -1,5 +1,7 @@
 SHELL = /bin/sh
 
+CFLAGS=-g
+
 srcdir = @srcdir@
 VPATH = @srcdir@
 
@@ -61,8 +63,9 @@ lexer.c:	lexer.l
 	mv lex.yy.c lexer.c
 
 parser.c:	parser.y
-	btyacc -S push.skel -d parser.y
-	mv y_tab.c parser.c
+	bison -d parser.y
+	mv parser.tab.c parser.c
+	mv parser.tab.h y_tab.h
 
 install:
 	cp davinci $(BINDIR)

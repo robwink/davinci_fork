@@ -257,6 +257,9 @@ evaluate(Var * n)
             break;
 
         case ID_ELSE:
+			/**
+			 ** A true and a false option.  Run the true one.
+			 **/
             evaluate(left);
             break;
 
@@ -265,6 +268,10 @@ evaluate(Var * n)
             if (!is_zero(pop(scope))) {
                 evaluate(right);
             } else if (right && V_TYPE(right) == ID_ELSE) {
+				/**
+				 ** In the event of a test that fails, and our child node
+				 ** is an else, run the false node.
+				 **/
                 evaluate(V_NODE(right)->right);
             }
             break;

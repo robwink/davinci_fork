@@ -90,7 +90,7 @@ ff_gnoise(vfuncptr func, Var * arg)
 
 	for (j = 0; j < y; j++) {
 		for (i = 0; i < x; i++) {
-			d = (float) z *drand48();
+			d = (int) ((float)z *drand48());
 			((unsigned char *) V_DATA(s))[(d * y + j) * x + i] = 255;
 		}
 	}

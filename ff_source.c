@@ -7,7 +7,7 @@
 
 FILE *ftos;
 static FILE **fstack=NULL;
-static int nfstack=0;
+int nfstack=0;
 static int fsize=16;
 int sourced=0;
 

@@ -3,6 +3,19 @@
 
 #include <pwd.h>
 
+void
+init_iheader(struct _iheader *h)
+{
+	int i;
+	for (i = 0 ; i < 3 ; i++) {
+		h->s_lo[i] = -1;
+		h->s_hi[i] = -1;
+		h->s_skip[i] = -1;
+		h->prefix[i] = -1;
+		h->suffix[i] = -1;
+	}
+}
+
 
 /**
  ** locate_file() - check path for filename.
@@ -510,7 +523,7 @@ uncompress(FILE * fp, char *fname)
     if ((pfp = popen(buf, "r")) == NULL) {
         sprintf(buf, "compress -d < %s > %s", fname, tptr);
         if ((pfp = popen(buf, "r")) == NULL) {
-            xfree(tptr);
+            free(tptr);
             return (NULL);
         }
     }
@@ -521,7 +534,7 @@ uncompress(FILE * fp, char *fname)
     fp = fopen(tptr, "r");
 
     unlink(tptr);
-    xfree(tptr);
+    free(tptr);
 
     return (fp);
 }
@@ -600,14 +613,3 @@ get_env_var(char *name)
     return (value);
 }
 
-init_iheader(struct _iheader *h)
-{
-	int i;
-	for (i = 0 ; i < 3 ; i++) {
-		h->s_lo[i] = -1;
-		h->s_hi[i] = -1;
-		h->s_skip[i] = -1;
-		h->prefix[i] = -1;
-		h->suffix[i] = -1;
-	}
-}

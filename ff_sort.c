@@ -1,38 +1,38 @@
 #include "parser.h"
 
 int 
-cmp_byte(u_char * a, u_char * b)
+cmp_byte(const void * a, const void * b)
 {
-	if (*a > *b) return(1);
-	if (*a < *b) return(-1);
+	if (*(u_char *)a > *(u_char *)b) return(1);
+	if (*(u_char *)a < *(u_char *)b) return(-1);
 	return(0);
 }
 int 
-cmp_short(short *a, short *b)
+cmp_short(const void *a, const void *b)
 {
-	if (*a > *b) return(1);
-	if (*a < *b) return(-1);
+	if (*(short *)a > *(short *)b) return(1);
+	if (*(short *)a < *(short *)b) return(-1);
 	return(0);
 }
 int 
-cmp_int(int *a, int *b)
+cmp_int(const void *a, const void *b)
 {
-	if (*a > *b) return(1);
-	if (*a < *b) return(-1);
+	if (*(int *)a > *(int *)b) return(1);
+	if (*(int *)a < *(int *)b) return(-1);
 	return(0);
 }
 int 
-cmp_float(float *a, float *b)
+cmp_float(const void *a, const void *b)
 {
-	if (*a > *b) return(1);
-	if (*a < *b) return(-1);
+	if (*(float *)a > *(float *)b) return(1);
+	if (*(float *)a < *(float *)b) return(-1);
 	return(0);
 }
 int 
-cmp_double(double *a, double *b)
+cmp_double(const void *a, const void *b)
 {
-	if (*a > *b) return(1);
-	if (*a < *b) return(-1);
+	if (*(double *)a > *(double *)b) return(1);
+	if (*(double *)a < *(double *)b) return(-1);
 	return(0);
 }
 
@@ -44,10 +44,10 @@ ff_sort(vfuncptr func, Var * arg)
 	Var **av;
 	int format, dsize;
 	void *data;
-	int (*cmp)();
+	int (*cmp)(const void *, const void *);
 
 	Alist alist[2];
-	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &value, 0);
+	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &value);
 	alist[1].name = NULL;
 
 	make_args(&ac, &av, func, arg);

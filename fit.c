@@ -211,7 +211,7 @@ dfit(Var *x, Var *y, Var *ip, char *fname,
 	send_to_plot("set noparametric\n");
 	sprintf(buf, "plot \"%s\" using 1:2 with points, %s with lines\n",
 		tmp, p+1);
-        xfree(tmp);
+        free(tmp);
 				 
         send_to_plot(buf);
     }

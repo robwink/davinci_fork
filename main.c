@@ -1,10 +1,12 @@
 #include <setjmp.h>
 #include "parser.h"
 
-#include <readline/readline.h>
+#include "y_tab.h"
+
 #include <Xm/PushB.h>
 
 int interactive = 1;
+
 int debug = 0;
 char pp_input_buf[8192];
 FILE *lfile = NULL;
@@ -15,6 +17,15 @@ int VERBOSE = 2;
 
 int allocs = 0;
 Var *VZERO;
+
+int windows = 1;
+
+/**
+ ** This is stuff from the old input.c
+ **/
+int pp_count = 0;
+int pp_line = 0;
+int indent = 0;
 
 /**
  ** Command line args:
@@ -30,7 +41,16 @@ void fake_data();
 void env_vars();
 void log_time();
 void lhandler(char *line);
+void quit(void);
+void parse_buffer(char *buf);
 
+
+void init_history(char *fname);
+void process_streams(void);
+void event_loop(void);
+
+void rl_callback_read_char();
+void rl_callback_handler_install(char *, void (char *));
 
 void
 sighandler(int data)
@@ -60,11 +80,11 @@ main(int ac, char **av)
     int i, j, k, flag = 0;
     char *logfile = NULL;
     int iflag = 0;
-
+	
     s = new_scope();
 
     signal(SIGPIPE, SIG_IGN);
-    signal(SIGINT, sighandler);
+    // signal(SIGINT, sighandler);
 
     scope_push(s);
     /**
@@ -87,6 +107,9 @@ main(int ac, char **av)
                 switch (av[i][j]) {
                 case '-':   /* last option */
                     flag = 1;
+                    break;
+                case 'w':   /* no windows */
+                    windows = 0;
                     break;
                 case 'f':{  /* redirected input file */
                     k++;
@@ -127,7 +150,7 @@ main(int ac, char **av)
                 case 'i':{
                     /** 
                     **/
-                    interactive = 0;
+                    iflag = 1;
                     break;
                 }
                 case 'q':{
@@ -144,7 +167,7 @@ main(int ac, char **av)
     }
 
     if (iflag)
-        interactive = 1 - interactive;
+        interactive = 1;
 
     env_vars();
     fake_data();
@@ -164,6 +187,7 @@ main(int ac, char **av)
             push_input_stream(fp);
         }
     }
+
     /**
     ** set up temporary directory
     **/
@@ -175,42 +199,59 @@ main(int ac, char **av)
     ** Before we get to events, process any pushed files
     */
     process_streams();
-    
     event_loop();
 }
 
 /* ARGSUSED */
-int get_file_input(XtPointer client_data, int *fid, XtInputId *id)
+void get_file_input(XtPointer client_data, int *fid, XtInputId *id)
 {
     rl_callback_read_char();
 }
 
-event_loop()
+extern XtAppContext        app;
+extern Widget 		top;
+
+void
+event_loop(void)
 {
-    XtAppContext        app;
+	if (interactive) {
+		if (windows)  {
+			char *argv[1];
+			char *av0 = "null";
+			int argc = 1;
+			XEvent event;
+			argv[0] = av0;
 
-    XtToolkitInitialize();
-    app = XtCreateApplicationContext();
+			top = XtVaAppInitialize(&app, "Simple", NULL, 0,
+									&argc,
+									argv, NULL, NULL);
+		} else {
+			/**
+			 ** This is a hack to let us use the Xt event model, without
+			 ** needing an X server.  It is a bad idea.
+			 **/
+			XtToolkitInitialize();
+			app = XtCreateApplicationContext();
+		}
 
-    if (interactive) {
-        XtAppAddInput(app,
-                      fileno(stdin),
-                      XtInputReadMask,
-                      get_file_input,
-                      NULL);
-        rl_callback_handler_install("dv> ", lhandler);
-    }
+		XtAppAddInput(app,
+					  fileno(stdin),
+					  (void *) XtInputReadMask,
+					  get_file_input,
+					  NULL);
+		rl_callback_handler_install("dv> ", lhandler);
 
-    XtAppMainLoop(app);
+		XtAppMainLoop(app);
+	}
 }
 
 void lhandler(char *line)
 {
     int i,j;
     char *buf;
+    char prompt[256];
     extern int pp_line;
     extern int pp_count;
-    extern char *yytext;
 
     /**
     ** Readline has a whole line of input, process it.
@@ -219,18 +260,27 @@ void lhandler(char *line)
         quit();
     }
 		
-    if (*line) { 
-        add_history(line);
-    }
 
-    buf = malloc(strlen(line)+2);
+    buf = (char *)malloc(strlen(line)+2);
     strcpy(buf, line);
     strcat(buf, "\n");
+
+    if (*line) { 
+        add_history((char *)line);
+		log_line(buf);
+    }
 
     pp_line++;
     pp_count = 0;
 
     parse_buffer(buf);
+
+	if (indent) {
+		sprintf(prompt, "%2d> ", indent);
+	} else {
+		sprintf(prompt, "dv> ", indent);
+	}
+	rl_callback_handler_install(prompt, lhandler);
 
     /*
     ** Process anything pushed onto the stream stack by the last command.
@@ -238,20 +288,69 @@ void lhandler(char *line)
     process_streams();
 }
 
-process_streams()
+void
+process_streams(void)
 {
     extern FILE *ftos;
+    extern int nfstack;
     /*
     ** Process anything that has been pushed onto the input stream stack.
     **/
-    while (ftos != NULL) {
+    while (nfstack != 0) {
         parse_stream(ftos);
-        fclose(ftos);
+        // fclose(ftos);
 		pop_input_file();
     }
 }
 
-quit()
+void
+parse_stream(FILE *fp)
+{
+	char buf[1024];
+	extern int pp_line;
+
+	pp_line = 0;
+    while(fgets(buf, 1024, fp) != NULL) {
+		pp_line++;
+        parse_buffer(buf);
+    }
+}
+
+Var *curnode;
+void *parent_buffer;
+
+void
+parse_buffer(char *buf)
+{
+    int i,j;
+	extern char *yytext;
+	extern FILE *save_fp;
+	int flag = 0;
+
+    parent_buffer = yy_scan_string(buf);
+
+    while(i = yylex()) {
+		/*
+		** if this is a function definition, do no further parsing yet.
+		*/
+		if (save_fp) continue;
+
+        j = yyparse(i, (Var *)yytext);
+		if (j == -1) quit();
+
+		if (j == 1 && curnode != NULL) {
+			evaluate(curnode);
+			pp_print(pop(scope_tos()));
+			free_tree(curnode);
+			indent = 0;
+			cleanup(scope_tos());
+		}
+    }
+    yy_delete_buffer(parent_buffer);
+}
+
+void
+quit(void)
 {
     char cmd[256];
     char *path = getenv("TMPDIR");
@@ -272,8 +371,7 @@ quit()
 void
 log_line(char *str)
 {
-    extern int sourced;
-    if (lfile && sourced == 1) {
+    if (lfile) {
         fprintf(lfile, "%s", str);
         fflush(lfile);
     }
@@ -465,6 +563,7 @@ log_time()
     }
 }
 
+void
 init_history(char *fname)
 {
     char buf[256];
@@ -480,41 +579,8 @@ init_history(char *fname)
         if (buf[0] == '#')
             continue;
         buf[strlen(buf) - 1] = '\0';
-        add_history(buf);
+        add_history((char *)buf);
     }
 #endif
 }
 
-
-parse_stream(FILE *fp)
-{
-	char buf[1024];
-	extern int pp_line;
-
-	pp_line = 0;
-    while(fgets(buf, 1024, fp) != NULL) {
-		pp_line++;
-        parse_buffer(buf);
-    }
-}
-
-Var *curnode;
-
-parse_buffer(char *buf)
-{
-    int i,j;
-    void *handle;
-	extern char *yytext;
-
-    handle = yy_scan_string(buf);
-    while(i = yylex()) {
-        j = yyparse(i, yytext);
-		if (j == -1) quit();
-		if (j == 1 && curnode != NULL) {
-			evaluate(curnode);
-			pp_print(pop(scope_tos()));
-			free_tree(curnode);
-		}
-    }
-    yy_delete_buffer(handle);
-}

@@ -10,6 +10,30 @@ char *yytext;
 extern int pp_count;
 #define YY_USER_ACTION pp_count+=yyleng;
 
+#define MYECHO	if (save_fp) (void) fwrite( yytext, yyleng, 1, save_fp );
+
+extern int indent;
+FILE *save_fp = NULL;
+char save_file[256];
+
+void start_save()
+{
+    char *tmp;
+
+    tmp = tempnam(NULL, NULL);
+    strcpy(save_file, tmp);
+    xfree(tmp);
+
+    save_fp = fopen(save_file, "w");
+}
+
+void end_save()
+{
+	fclose(save_fp);
+	save_fp = NULL;
+	save_ufunc(save_file);
+}
+
 %}
 
 ws      [ \t]+
@@ -24,42 +48,55 @@ comment #.*
 
 %%
 
-"define"	{ return(FUNC_DEF); }
-"for"		{ return(FOR); }
-"while"     { return(WHILE); }
-"where"     { return(WHERE); }
-"break"     { return(BREAK); }
-"continue"  { return(CONTINUE); }
-"if"        { return(IF); }
-"else"      { return(ELSE); }
-"return"    { return(RETURN); }
-"quit"      { return(QUIT); }
-"help"		{ return(HELP); }
+"define"	{ start_save(); MYECHO; return(FUNC_DEF); }
+"for"		{ MYECHO; return(FOR); }
+"while"     { MYECHO; return(WHILE); }
+"where"     { MYECHO; return(WHERE); }
+"break"     { MYECHO; return(BREAK); }
+"continue"  { MYECHO; return(CONTINUE); }
+"if"        { MYECHO; return(IF); }
+"else"      { MYECHO; return(ELSE); }
+"return"    { MYECHO; return(RETURN); }
+"quit"      { MYECHO; return(QUIT); }
+"help"		{ MYECHO; return(HELP); }
 
-"=="        { return(EQ_OP); }
-"!="        { return(NE_OP); }
-"<="        { return(LE_OP); }
-">="        { return(GE_OP); }
-">"         { return(GT_OP); }
-"<"         { return(LT_OP); }
+"=="        { MYECHO; return(EQ_OP); }
+"!="        { MYECHO; return(NE_OP); }
+"<="        { MYECHO; return(LE_OP); }
+">="        { MYECHO; return(GE_OP); }
+">"         { MYECHO; return(GT_OP); }
+"<"         { MYECHO; return(LT_OP); }
 
-"-="		{ return(DEC_OP); }
-"+="		{ return(INC_OP); }
+"-="		{ MYECHO; return(DEC_OP); }
+"+="		{ MYECHO; return(INC_OP); }
 
-"||"        { return(OR_OP); }
-"&&"        { return(AND_OP); }
-"//"        { return(CAT_OP); }
+"||"        { MYECHO; return(OR_OP); }
+"&&"        { MYECHO; return(AND_OP); }
+"//"        { MYECHO; return(CAT_OP); }
+
+"{"         { MYECHO; indent++; return('{'); }
+"}"         { MYECHO; indent--; 
+				if (save_fp && indent == 0) {
+					end_save();
+					/*
+					 * Lie to the parser.
+					 */
+					return('\n');
+				}
+				return('}'); 
+			}
 
 
-{ival}              { return(IVAL); }
-{rval}              { return(RVAL); }
-{var}               { return(ID); }
-\"(\\.|[^\\"\n])*\" { return(STRING); }
-\'(\\.|[^\\'\n])*\' { return(STRING); }
-{comment}   ;
+{ival}              { yytext = strdup(yytext); MYECHO; return(IVAL); }
+{rval}              { yytext = strdup(yytext); MYECHO; return(RVAL); }
+{var}               { yytext = strdup(yytext); MYECHO; return(ID); }
+\"(\\.|[^\\"\n])*\" { yytext = strdup(yytext); MYECHO; return(STRING); }
+\'(\\.|[^\\'\n])*\' { yytext = strdup(yytext); MYECHO; return(STRING); }
 
-{ws}        { }
-"\n"        { return('\n'); }
-.           { return(yytext[0]); };
+{comment}   { MYECHO; }
+
+{ws}        { MYECHO; }
+"\n"        { MYECHO; return('\n'); }
+.           { MYECHO; return(yytext[0]); };
 
 %%

@@ -1,9 +1,19 @@
-char *version = "@(#) daVinci Version #0.46";
+char *version = "@(#) daVinci Version #0.51";
 
 
 /*
+Version 0.51:
+    * added -w option to bypass connecting to X-server
+	* Modified [where] to allow arrays on rhs
+	* Modified [where] to allow disparate id[where] and expr objects
 
-Wed Mar 24 19:02:39 MST 1999
+Version 0.50: Mon Jun 28 13:29:59 MST 1999, 
+	* Modified to use push parser in bison.  This will cause compile
+	  problems, but nothing that can't be handled.
+	  This eliminated input.c
+	* Added xrt stuff
+
+Version 0.47: Wed Mar 24 19:02:39 MST 1999
 	+ added minvert() LU decomposition matrix inversion
 	* updated io_vicar to write new format, but is sun specific.
 	* speedup to array.c

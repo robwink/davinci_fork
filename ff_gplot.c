@@ -87,7 +87,7 @@ ff_gplot(vfuncptr func, Var *arg)
     fprintf(gplot_pfp, "] \"%s\" with linespoints\n", fname);
     fflush(gplot_pfp);
 
-    xfree(fname);
+    free(fname);
 
     return(NULL);
 }
@@ -154,7 +154,7 @@ ff_plot(vfuncptr func, Var *arg)
                 sprintf(buf + strlen(buf), "'%s'", fname);
 				if (V_NAME(v)) 
 					sprintf(buf + strlen(buf), "title '%s'", V_NAME(v));
-				xfree(fname);
+				free(fname);
             }
         }
     }
@@ -216,7 +216,7 @@ ff_splot(vfuncptr func, Var *arg)
                 sprintf(buf + strlen(buf), "\"%s\"", fname);
 				if (V_NAME(v)) 
 					sprintf(buf + strlen(buf), "title '%s'", V_NAME(v));
-		xfree(fname);
+				free(fname);
             }
         }
     }

@@ -718,8 +718,10 @@ ff_isis_summary(vfuncptr func, Var * arg)
 
     char *options[] =
     {
-        "core", "line", "sample", "band",
-        "line_suffix", "sample_suffix", "band_suffix"
+        "core", 
+		"line", "line_suffix", 
+		"sample", "sample_suffix", 
+		"band", "band_suffix"
     };
 
     int ac;
@@ -791,8 +793,8 @@ ff_isis_summary(vfuncptr func, Var * arg)
                     n = OdlGetAllKwdValuesArray(key, &list);
                     if (n == s[i]) {
                         for (j = 0; j < s[i]; j++) {
-                            fprintf(stderr, "SAMPLE_SUFFIX Plane %3d: '%s'\n",
-                                j, list[j]);
+                            fprintf(stderr, "%s_SUFFIX Plane %3d: '%s'\n",
+                                str, j, list[j]);
                         }
                     } else {
                         parse_error("suffix name mismatch\n");

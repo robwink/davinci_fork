@@ -103,7 +103,7 @@ ff_sprintf(vfuncptr func, Var *arg)
 char *
 str_append(char *s1, char *s2)
 {
-    s1 = realloc(s1, strlen(s1)+strlen(s2)+1);
+    s1 = (char *)realloc(s1, strlen(s1)+strlen(s2)+1);
     strcat(s1, s2);
     return(s1);
 }
@@ -140,7 +140,7 @@ do_sprintf(vfuncptr func, Var *arg)
         return(NULL);
     }
 
-    out = calloc(1,1);
+    out = (char *)calloc(1,1);
     escape(fmt = format = V_STRING(v));		/* backslash interpretation */
     gv = arg->next;
 
@@ -269,9 +269,7 @@ do_sprintf(vfuncptr func, Var *arg)
 }
 
 static char *
-mklong(str, ch)
-    char *str;
-    int ch;
+mklong(char *str, int ch)
 {
     static char copy[64];
     int len;
@@ -285,11 +283,10 @@ mklong(str, ch)
 }
 
 static void
-escape(fmt)
-    register char *fmt;
+escape(register char *fmt)
 {
-    register char *store;
-    register int value, c;
+     char *store;
+     int value, c;
 
     for (store = fmt; (c = *fmt); ++fmt, ++store) {
         if (c != '\\') {
@@ -391,8 +388,7 @@ getstr(char **ip)
 }
 
 static int
-getint(ip)
-    int *ip;
+getint(int *ip)
 {
     Var *v = gv, *e;
  
@@ -466,10 +462,7 @@ unsigned long strtoul ();
 /* char *malloc (); */
 
 static int
-int_vasprintf (result, format, args)
-    char **result;
-    char *format;
-    va_list args;
+int_vasprintf (char **result, char *format, va_list args)
 {
     char *p = format;
     /* Add one to make sure that it is never zero, which might cause malloc
@@ -534,7 +527,7 @@ int_vasprintf (result, format, args)
 	}
     }
 
-    *result = malloc (total_width);
+    *result = (char *)malloc (total_width);
     if (*result != NULL)
         return vsprintf (*result, format, ap);
     else
@@ -542,10 +535,7 @@ int_vasprintf (result, format, args)
 }
 
 int
-vasprintf (result, format, args)
-    char **result;
-    const char *format;
-    va_list args;
+vasprintf (char **result, const char *format, va_list args)
 {
     return int_vasprintf (result, format, args);
 }

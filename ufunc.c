@@ -11,6 +11,8 @@ int nufunc = 0;
 int ufsize = 16;
 extern int pp_line;
 
+char *strndup(const char *, int);
+
 UFUNC *
 locate_ufunc(char *name) 
 {
@@ -62,12 +64,11 @@ free_ufunc(UFUNC *f)
 }
 
 void
-save_function()
+save_ufunc(char *filename)
 {
     UFUNC *f;
-    extern char save_file[];
 
-    f = load_function(save_file);
+    f = load_function(filename);
     if (f == NULL) return;
     /**
      ** If a ufunc with this name exists, destroy it
@@ -82,7 +83,7 @@ save_function()
 }
 
 UFUNC *
-load_function(char *fname)
+load_function(char *filename)
 {
     /**
      ** locate and verify important portions of function definition
@@ -94,25 +95,26 @@ load_function(char *fname)
     int nlen = 0;
     char name[256];
     UFUNC *f = NULL;
-    FILE *fp;
     Scope *scope;
+    void *handle;
+	extern char *yytext;
+	extern Var *curnode;
+	FILE *fp;
+	extern void *parent_buffer;
 
     /**
      ** Get text from file
      **/
-    if (stat(fname, &sbuf) != 0) {
+    if (stat(filename, &sbuf) != 0) {
         fprintf(stderr, "Internal error: load_function, no file\n");
         return(NULL);
     }
     buf = (char *)calloc(1, sbuf.st_size+1);
-    if ((fd = open(fname, O_RDONLY)) < 0) {
-        fprintf(stderr, "Internal error: load_function, no data in file\n");
-        return(NULL);
-    }
-    read(fd, buf, sbuf.st_size);
+	fp = fopen(filename, "r");
+    fread(buf, sbuf.st_size, 1, fp);
+	fclose(fp);
+
     buf[sbuf.st_size] = '\0';
-    close(fd);
-    unlink(fname);
 
     str = buf;
 
@@ -164,7 +166,7 @@ load_function(char *fname)
              ** Duplicate the string for cutting on.
              **/
             if (p != str) {
-                f->argbuf = strndup(p, str-p);
+                f->argbuf = strndup((const char *)p, str-p);
                 split_string(f->argbuf, &f->nargs, &f->args, ",");
             }
             /**
@@ -231,23 +233,18 @@ load_function(char *fname)
     /**
      ** Shove the function into the stream for evaluation.
      **/
-    fname = tempnam(NULL, NULL);
-    fp = fopen(fname, "w");
-    fputs(f->body, fp);
-    fclose(fp);
-    fp = fopen(fname, "r");
-
-	unlink(fname);
-	xfree(fname);
-
-    push_input_stream(fp);
-    scope = new_scope();
-    scope->ufunc = f;
-    scope_push(scope);
-
-    pp_line = 0;
-
-    f->ready = 1;
+	
+    handle = yy_scan_string(str);
+	while(i = yylex()) {
+		j = yyparse(i, (Var *)yytext);
+		if (j == 1) {
+			f->tree = curnode;
+			break;
+		}
+	}
+    yy_delete_buffer(handle);
+	yy_switch_to_buffer(parent_buffer);
+	f->ready = 1;
 
     return(f);
 }
@@ -443,7 +440,7 @@ ufunc_edit(vfuncptr func , Var *arg)
     }
     if (temp) {
 		unlink(fname);
-		xfree(fname);
+		free(fname);
 	} else if (filename && fname != filename) free(fname);
 
     return(NULL);

@@ -61,7 +61,7 @@
 
 typedef struct Object_Structure
 {
-    char *class;
+    char *classname;
     char *pre_comment;  /* Comments before the OBJECT = line     */
     char *line_comment; /* Comments on the OBJECT = line         */
     char *post_comment; /* Comments before the END_OBJECT = line */
@@ -179,6 +179,7 @@ int ListToArray();
 
 #else
 
+OBJDESC *OdlParseLabelFptr (FILE *, char *, MASK, unsigned short);
 OBJDESC *OdlParseLabelFile (char *, char *, MASK, unsigned short);
 OBJDESC *OdlParseLabelString (char *, char *, MASK, unsigned short);
 OBJDESC *OdlExpandLabelFile (OBJDESC *, char *, char *, MASK, unsigned short);

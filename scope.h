@@ -32,6 +32,7 @@ struct tag_Stack {
 
 
 typedef struct tag_Scope Scope;
+
 struct tag_Scope {
 	Dictionary *dd;		/* named variable data dictionary */
 	Dictionary *args;	/* number arguments data dictionary */

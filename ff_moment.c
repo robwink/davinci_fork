@@ -49,7 +49,7 @@ ff_moment(vfuncptr func, Var *arg)
     curt=0;
     for (i = 0 ; i < dsize ; i++) {
         s = extract_double(v,i)-ave;
-        adev=adev+abs(s);
+        adev=adev+fabs(s);
         p=s*s;
         var=var+p;
         p=p*s;

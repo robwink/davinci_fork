@@ -51,9 +51,8 @@ char fht_version[] = "Brcwl-Hrtly-Ron-dbld";
 
 #define SQRT2_2   0.70710678118654752440084436210484
 #define SQRT2   2*0.70710678118654752440084436210484
-mayer_fht(fz, n)
-     int n;
-     REAL *fz;
+
+mayer_fht(REAL *fz, int n)
 {
 	REAL a, b;
 	REAL c1, s1, s2, c2, s3, c3, s4, c4;
@@ -195,9 +194,7 @@ mayer_fht(fz, n)
 }
 
 
-mayer_ifft(n, real, imag)
-     int n;
-     double *real, *imag;
+mayer_ifft(int n, double *real, double *imag)
 {
 	double a, b, c, d;
 	double q, r, s, t;
@@ -220,9 +217,7 @@ mayer_ifft(n, real, imag)
 	}
 }
 
-mayer_realfft(n, real)
-     int n;
-     double *real;
+mayer_realfft(int n, double *real)
 {
 	double a, b, c, d;
 	int i, j, k;
@@ -235,9 +230,7 @@ mayer_realfft(n, real)
 	}
 }
 
-mayer_fft(n, real, imag)
-     int n;
-     double *real, *imag;
+mayer_fft(int n, double *real, double *imag)
 {
 	double a, b, c, d;
 	double q, r, s, t;
@@ -260,9 +253,7 @@ mayer_fft(n, real, imag)
 	mayer_fht(imag, n);
 }
 
-mayer_realifft(n, real)
-     int n;
-     double *real;
+mayer_realifft(int n, double *real)
 {
 	double a, b, c, d;
 	int i, j, k;

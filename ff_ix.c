@@ -71,7 +71,7 @@ ff_histogram(vfuncptr func, Var * arg)
 			return(NULL);
 	}
 
-	data = calloc((high-low+1) * 2, sizeof(int));
+	data = (int *)calloc((high-low+1) * 2, sizeof(int));
 	for (i = 0 ; i < high-low+1 ; i++) {
 		data[i*2] = i+low;
 	}
@@ -92,7 +92,7 @@ ff_histogram(vfuncptr func, Var * arg)
 		}
 	}
 	if (normalize) {
-		float *fdata = calloc(2*j, sizeof(float));
+		float *fdata = (float *)calloc(2*j, sizeof(float));
 		for (i = 0 ; i < j ; i++) {
 			fdata[i*2] = data[i*2];
 			fdata[i*2+1] = (float)data[i*2+1]/(float)dsize;
@@ -316,7 +316,7 @@ ff_entropy(vfuncptr func, Var * arg)
 	void *a, *b, *data;
 	int format, nbytes;
 	float p, ent = 0;
-	int (*cmp)();
+	int (*cmp)(const void *, const void *);
 
 	int ac;
 	Var **av;
