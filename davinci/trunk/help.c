@@ -47,7 +47,11 @@
  */
 
 #ifndef HELPFILE
+#ifndef __MSDOS__
 #define HELPFILE "/usr/local/lib/davinci.gih"
+#else
+#define HELPFILE "docs\\dv.gih"
+#endif
 #endif
 
 #include "parser.h"
