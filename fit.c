@@ -25,7 +25,7 @@
  **  data values.
  **/
 
-Var * lin_fit(Var *x, Var *y,int Row,int plot);
+Var * lin_fit(Var *x, Var *y,int Row,int plot, double ignore);
 void    first_guess(double *, char *, int);
 int     fit(int,int);
 ifptr   getfcnptr(char *, int *, int *, int *, char *);
@@ -46,7 +46,8 @@ Var * ff_fit(vfuncptr func, Var *args)
         { "steps", NULL },
         { "x", NULL },
         { "plot", NULL },
-		  { "verbose",NULL},
+		{ "verbose",NULL},
+		{ "ignore",NULL},
         { NULL, NULL }
     };
 
@@ -60,7 +61,9 @@ Var * ff_fit(vfuncptr func, Var *args)
     char *ftype = NULL;
     int iter = 1;
     int plot = 0 ;
-	 int verbose =0;
+	int verbose =0;
+	Var *ignore_val = NULL;
+	double ignore=MINFLOAT;
 
 
     char *fits[] = { "gauss", "gaussc", "gaussl", "ngauss", "lorenz",
@@ -124,8 +127,12 @@ Var * ff_fit(vfuncptr func, Var *args)
         return(NULL);
     }
 
+    if ((v = get_kw("ignore", kw)) != NULL) {
+        ignore = extract_double(v, 0);
+    }
+
     if (!(strcmp(ftype,"linear"))) {
-        s=lin_fit(x,y,V_DSIZE(x),plot);
+        s=lin_fit(x,y,V_DSIZE(x),plot, ignore);
     }
 
 
@@ -148,7 +155,7 @@ Var * ff_fit(vfuncptr func, Var *args)
 }
 
 Var *
-lin_fit(Var *x, Var *y,int Row, int plot)
+lin_fit(Var *x, Var *y,int Row, int plot, double ignore)
 {
 	double **data;
 	char *tmp;
@@ -159,6 +166,7 @@ lin_fit(Var *x, Var *y,int Row, int plot)
 	int i;
 
 	double **A,**Cov,*B,*r;
+	double x1, y1;
 
 	A=dmatrix(2,2);
 	data=dmatrix(Row,2);
@@ -176,8 +184,13 @@ lin_fit(Var *x, Var *y,int Row, int plot)
 
 
 	for (i=0;i<Row;i++){
-		data[i][0]=extract_double(x,i); /*a*/
-		data[i][1]=extract_double(y,i); /*b*/
+		x1 = extract_double(x,i); /*a*/
+		y1 = extract_double(y,i); /*b*/
+
+		if (x1 == ignore || y1 == ignore) continue;
+
+		data[i][0]=x1;
+		data[i][1]=y1;
 
 		A[0][1]+=data[i][0];
 		A[1][0]+=data[i][0];
