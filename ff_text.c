@@ -1023,7 +1023,7 @@ Var *ff_stringsubst(vfuncptr func, Var *arg)
 	Var *result;
 
 	regex_t preg;
-	int cflags=0;
+	int cflags=REG_EXTENDED;
 
 
 
