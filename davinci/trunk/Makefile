@@ -16,15 +16,15 @@ INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 
 XINCLUDES=-I/usr/openwin/include $(XRTINCLUDE)
-XLIBS=-L/usr/openwin/lib $(XRTLIBS)
+XLIBS=-L/usr/openwin/lib $(XRTLIBS) -L /user/east/asbms/davinci/plplot-990122/tmp
 
 XRTINCLUDE=  
 XRTLIBS = 
 
 
 CC     = gcc
-DEFS   = -DHAVE_CONFIG_H -Ilib
-LIBS   = $(READLINE_LIB) $(XLIBS) -lMagick -ltiff -lproj -lz -lreadline -ltermcap -ljpeg -lXext -lXt -lX11 -lm  -lhdf5
+DEFS   = -DHAVE_CONFIG_H -Ilib -DINCLUDE_API
+LIBS   = $(READLINE_LIB) $(XLIBS) -L $(LIBDIR) -lMagick -ltiff -lproj -lz -lreadline -ltermcap -ljpeg  -lplplotFX -lXext -lXm -lXt -lX11 -lm  -lhdf5
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
@@ -51,7 +51,8 @@ OBJ=p.o pp.o symbol.o error.o \
 	ff_header.o ff_text.o io_ers.o io_goes.o ff_bbr.o ff_vignette.o \
 	ff_pause.o printf.o ff_ifill.o ff_xfrm.o newfunc.o ff_ix.o ff_avg.o \
 	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
-	x.o xrt_print_3d.o motif_tools.o ff_convolve.o ff_struct.o
+	x.o xrt_print_3d.o motif_tools.o ff_convolve.c ff_struct.o apifunc.o \
+	ff_plplot.o
 
 all:	 davinci gplot
 
@@ -118,6 +119,9 @@ gplot:	gplot.o lib/libXfred.a system.o
 
 lib/libXfred.a:
 	@cd lib ; $(MAKE)
+
+libplplotFX.a:
+	@cd plplot-990122/tmp ; $(MAKE)
 
 depend:
 	gcc -MM $(OBJ:.o=.c)
@@ -193,4 +197,4 @@ fft.o: fft.h
 matrix.o: parser.h config.h system.h ufunc.h scope.h func.h
 dct.o: parser.h config.h system.h ufunc.h scope.h func.h
 fft_mayer.o: trigtbl.h
-ff_projection: parser.h config.h system.h ufunc.h scope.h func.h
+ff_projection.o: parser.h config.h system.h ufunc.h scope.h func.h
