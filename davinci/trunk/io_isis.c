@@ -1022,6 +1022,13 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
 
 
     if (Suffix==NULL){
+        fprintf(stderr, "%s: ISIS %s qube\n", isisfile, Org2Str(s.org));
+
+        fprintf(stderr, "Core   size (Samples,Lines,Bands) = (%6d,%6d,%6d)\n",
+            GetSamples(s.size, s.org),
+            GetLines(s.size, s.org),
+            GetBands(s.size, s.org));
+
        fprintf(stderr, "Suffix size (Samples,Lines,Bands) = (%6d,%6d,%6d)\n",
             suffix[orders[s.org][0]], suffix[orders[s.org][1]], suffix[orders[s.org][2]]);
 
@@ -1148,160 +1155,4 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
 
 		
     return(newVal(s.org,s.s_hi[0],s.s_hi[1],s.s_hi[2],s_suffix_item_bytes,data));
-}
-
-
-/**
- ** read and write ISIS suffix planes
- **/
-
-Var *
-ff_isis_summary(vfuncptr func, Var * arg)
-{
-    OBJDESC *object, *qube;
-    KEYWORD *key;
-    int scope = ODL_THIS_OBJECT;
-
-    struct _iheader h;
-    char *filename, *fname, **list, fname2[256];
-    FILE *fp;
-    int suffix[3] = {0, 0, 0};
-    int s[3], n, i, j;
-    char *which_qube = NULL;
-    void *data;
-
-    char *options[] =
-    {
-        "core", 
-		"line", "line_suffix", 
-		"sample", "sample_suffix", 
-		"band", "band_suffix"
-    };
-
-    int ac;
-    Var **av, *v;
-    Alist alist[3];
-    alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
-    alist[1] = make_alist("qube", ID_ENUM, options, &which_qube);
-    alist[2].name = NULL;
-
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist))
-        return (NULL);
-
-    if (filename == NULL) {
-        parse_error("No filename specified.");
-        return (NULL);
-    }
-    if ((fname = locate_file(filename)) == NULL ||
-        (fp = fopen(fname, "r")) == NULL) {
-        fprintf(stderr, "Unable to open file: %s\n", filename);
-        return (NULL);
-    }
-    strcpy(fname2, fname);
-    free(fname);
-    fname = fname2;
-
-    if (GetISISHeader(fp, fname, &h, &object) == 0) {
-        free(fname);
-        return (NULL);
-    }
-
-    if ((qube = OdlFindObjDesc(object, "QUBE", NULL, 0, 0, 0)) == NULL) {
-        fprintf(stderr, "%s: Not a qube object.\n", filename);
-        return (NULL);
-    }
-    if (which_qube == NULL) {
-        /**
-         ** Just output information about file
-         **/
-        fprintf(stderr, "%s: ISIS %s qube\n", filename, Org2Str(h.org));
-
-        fprintf(stderr, "Core   size (Samples,Lines,Bands) = (%6d,%6d,%6d)\n",
-            GetSamples(h.size, h.org),
-            GetLines(h.size, h.org),
-            GetBands(h.size, h.org));
-
-        if ((key = OdlFindKwd(qube, "SUFFIX_ITEMS", NULL, 0, scope))) {
-            sscanf(key->value, "(%d,%d,%d)", &suffix[0], &suffix[1], &suffix[2]);
-        }
-        s[0] = suffix[orders[h.org][0]];
-        s[1] = suffix[orders[h.org][1]];
-        s[2] = suffix[orders[h.org][2]];
-
-        fprintf(stderr, "Suffix size (Samples,Lines,Bands) = (%6d,%6d,%6d)\n",
-            s[0], s[1], s[2]);
-
-        for (i = 0; i < 3; i++) {
-            char str[256];
-            char str2[256];
-            switch (i) {
-                case 0: strcpy(str, "SAMPLE_SUFFIX"); break;
-                case 1: strcpy(str, "LINE_SUFFIX"); break;
-                case 2: strcpy(str, "BAND_SUFFIX"); break;
-            }
-            if (s[i]) {
-                sprintf(str2, "%s_NAME", str);
-                fprintf(stderr, "\n");
-                if ((key = OdlFindKwd(qube, str2, NULL, 0, scope))) {
-                    n = OdlGetAllKwdValuesArray(key, &list);
-                    if (n == s[i]) {
-                        for (j = 0; j < s[i]; j++) {
-                            fprintf(stderr, "%s_SUFFIX Plane %3d: '%s'\n",
-                                str, j, list[j]);
-                        }
-                    } else {
-                        parse_error("suffix name mismatch\n");
-                    }
-                } else {
-                    parse_error("Unable to find suffix names\n");
-
-                }
-            }
-        }
-        return (NULL);
-    } else {
-#if 0
-        if (!strncasecmp(which_qube, "qube", 4)) {
-            return(LoadISIS(fp, fname, 0));
-        } else if (!strncasecmp(which_qube, "sample", 6)) {
-            i = 0;
-        } else if (!strncasecmp(which_qube, "line", 4)) {
-            i = 1;
-        } else if (!strncasecmp(which_qube, "band", 4)) {
-            i = 2;
-        }
-        /**
-         ** Shift the core into prefix, and the suffix into core.
-         **/
-        j = orders[h.org][i];
-        h.prefix[j] = h.size[j];
-        h.size[j] = h.suffix[j];
-        h.suffix[j] = 0;
-
-        /**
-         ** Find SUFFIX_BYTES
-         **/
-        if ((key = OdlFindKwd(qube, "SUFFIX_BYTES", NULL, 0, scope))) {
-            suffix_bytes = key->value;
-        }
-
-        /**
-         ** Need to locate %s_SUFFIX_ITEM_TYPE
-         **/ 
-
-         START HERE.
-
-        
-
-        if ((data = read_qube_data(fileno(fp), &h)) == NULL) {
-            return(NULL);
-        }
-        v = iheader2var(&h);
-        V_DATA(v) = data;
-#endif
-    }
-
-/*TESTING ROUTINE...SHOULD BE REMOVED!!!!*****/
-
 }
