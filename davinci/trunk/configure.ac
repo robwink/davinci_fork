@@ -21,6 +21,7 @@ dnl AC_PROG_YACC
 dnl AM_PROG_LEX
 AC_PROG_INSTALL
 dnl AC_PROG_RANLIB
+AC_PROG_MAKE_SET
 
 dnl FIX: need AC_LIBTOOL_DLOPEN?
 AC_LIBTOOL_DLOPEN
@@ -38,6 +39,7 @@ AC_ARG_ENABLE(modules,
 AM_CONDITIONAL(MODULE_SUPPORT, test "x$enable_modules" != "xno")
 if test "x$enable_modules" != "xno"; then
 	AC_DEFINE(BUILD_MODULE_SUPPORT, 1, [loadable module support])
+	MY_SUBDIRS="$MY_SUBDIRS modules"
 fi
 
 dnl iomedley (default = yes).
@@ -133,6 +135,7 @@ if test "x$libreadline_found" = "xno"; then
 		CFLAGS="$CFLAGS -Ireadline"
 		AC_DEFINE(HAVE_LIBREADLINE, 1)
 		AC_CONFIG_SUBDIRS(readline)
+		MY_SUBDIRS="$MY_SUBDIRS readline"
 		local_readline=yes
 		libreadline_found=yes
 	else
@@ -153,6 +156,7 @@ if test "x$enable_vicar" != "xno"; then
 		dnl Not sure this is working either; doesn't look like $top_builddir gets set..
 		CFLAGS="$CFLAGS -I$top_builddir/vicar"
 		AC_DEFINE(HAVE_LIBVICAR, 1, [VICAR widget library is present])
+		MY_SUBDIRS="$MY_SUBDIRS vicar"
 		local_vicar=yes
 	else
 		AC_MSG_RESULT(no)
@@ -171,6 +175,7 @@ if test "x$enable_iomedley" != "xno"; then
 		CFLAGS="$CFLAGS -Iiomedley"
 		AC_DEFINE(HAVE_LIBIOMEDLEY, 1, [iomedley library is present])
 		AC_CONFIG_SUBDIRS(iomedley)
+		MY_SUBDIRS="$MY_SUBDIRS iomedley"
 		local_iomedley=yes
 	else
 		AC_MSG_RESULT(no)
@@ -181,10 +186,7 @@ AM_CONDITIONAL(LOCAL_IOMEDLEY, test x$local_iomedley = xyes)
 
 dnl FIX: this stuff can go away if libtool is used.
 
-AC_SUBST(MODULE_CC_OPT)
-AC_SUBST(MODULE_LINKER)
-AC_SUBST(MODULE_LINK_OPT)
-AC_SUBST(MODULE_ADDN_LIBS)
+AC_SUBST(MY_SUBDIRS)
 
 dnl For libtool support.
 AC_CONFIG_SUBDIRS(libltdl)
