@@ -18,6 +18,8 @@
 #define NUMBER_OF_GUESSES 4
 #define	INVALID_DATA	0
 
+int Compressed;
+
 
 enum _CMD {BAND,FRAME,SINGLE,ALL};
 int FrameBandStart[]={16,32,58,84,110,136,162,188,213,239};
@@ -31,9 +33,11 @@ int Read_Ahead_For_Best_Collumn_Guess(int *Width,unsigned char *buf,int len);
 #ifndef LITTLE_E
 unsigned short Start_Sync = { 0xF0CA };
 unsigned short Stop_Sync = { 0xAB8C };
+unsigned int StopStart_Sync = {0xAB8CF0CA};
 #else
 unsigned short Start_Sync = { 0xCAF0 };
 unsigned short Stop_Sync = { 0x8CAB };
+unsigned int StopStart_Sync = {0x8CABCAF0};
 #endif
 
 
@@ -87,12 +91,51 @@ Read_Ahead_For_Best_Collumn_Guess(int *Width,unsigned char *buf,int len)
 
 
 
+#if 0
+int Skip_To_Stop_Sync(int *i, unsigned char *buf,int len)
+{
+    int count=0;
+    int Tmp=*i;
+	 int result;	
+
+    while ((*i)<len-1){
+        if (memcmp((buf+(*i)), &Stop_Sync, 2) == 0) {
+				if (!(Compressed)){
+					if (*i-Tmp+2==328)
+						return(count);
+					else {
+						int Tmp2=*i;
+						result=Skip_To_Start_Sync(&Tmp2,buf,len);
+						if (result < 0) {
+							return(-1);
+						}
+						if (Tmp2-Tmp==328){/*Found a false stop sync*/
+							*i=Tmp2-2;/*Set it to real stop sync*/
+							return(*i-Tmp);
+						}
+						else if (Tmp2-Tmp > 328) {/*We have a junk packet somewhere*/
+							return(count);/*return original count, fingure it out from tere*/
+						}
+
+
+            return (count);
+        }
+        else {
+            (*i)++;
+            count++;
+        }
+    }
+    parse_error("Premature EOF.\n");
+    return(-1);
+}
+#endif
+
 
 int Skip_To_Stop_Sync(int *i, unsigned char *buf,int len)
 {
     int count=0;
     int Tmp=*i;
-    unsigned short V;
+	 int result;	
 
     while ((*i)<len-1){
         if (memcmp((buf+(*i)), &Stop_Sync, 2) == 0) {
@@ -106,6 +149,37 @@ int Skip_To_Stop_Sync(int *i, unsigned char *buf,int len)
     parse_error("Premature EOF.\n");
     return(-1);
 }
+
+
+int Skip_To_StopStart_Sync(int *i, unsigned char *buf,int len)
+{
+    int count=0;
+    int Tmp=*i;
+	 int result;	
+
+    while ((*i)<len-3){
+        	if (memcmp((buf+(*i)), &StopStart_Sync, 4) == 0) {
+				/*Set i (and count) to be past the stop sync, but
+					at the begining of the start sync
+				*/
+				(*i)+=2;
+				count+=2;
+
+				return(count);
+			}
+			else {
+				count++;
+				(*i)++;
+			}
+	 }
+/*If we're here we've run past the end of file:
+	End packet with only have a Stop, so
+	just look for that
+*/
+	*i=Tmp;
+	return(Skip_To_Stop_Sync(i,buf,len));
+}
+
 
 
 int Skip_To_Start_Sync(int *i, unsigned char *buf,int len)
@@ -418,8 +492,8 @@ ff_Frame_Grabber_Read(vfuncptr func, Var * arg)
 
 static int Themis_Sort(const void *vA, const void *vB)
 {
-	char *A = vA;
-	char *B = vB;
+	char *A = (char *)vA;
+	char *B = (char *)vB;
     unsigned char A_c_Band;
     unsigned short A_c_Frame;
     unsigned char B_c_Band;
@@ -491,6 +565,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
     int		old_len=0;
     int 		i, j, a, b;
     int 		fd;
+	 int		swap_flag=1;
     struct 		stat sbuf;
     unsigned 	char *buf;
     unsigned 	char  c_Band;
@@ -505,23 +580,24 @@ ff_PACI_Read(vfuncptr func, Var * arg)
     int		BandCount[16]={0};
     int		Bad_Flag=0;
     int		Max_Band=-1;
-    int		Max_Band_Count=0;
-    int		new_count;
+    int		Max_Frame_Count=0;
+	 int		band_frame_count;
+	 int		Total_Frame_Count;
     int		offset;
-    unsigned short frame_count=0xFFFF;
 
     int		debug=0;
 
     Var **av, *v;
     int ac;
-    Alist alist[6];
+    Alist alist[7];
 
     alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
     alist[1] = make_alist("frame", INT, NULL, &Frame);
     alist[2] = make_alist("band", INT, NULL, &Band);
     alist[3] = make_alist("report", INT, NULL, &report);
     alist[4] = make_alist("nosig", INT, NULL, &Data_Only);
-    alist[5].name = NULL;
+    alist[5] = make_alist("swap", INT, NULL, &swap_flag);
+    alist[6].name = NULL;
 
 
     make_args(&ac, &av, func, arg);
@@ -561,14 +637,20 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 
     fstat(fd, &sbuf);
     old_len=len = sbuf.st_size;
+
+
+    buf = mmap((caddr_t)0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+	if(swap_flag)
+      swab(buf, buf, len);
+
+	 len+=328;		 /*Add room for an additional packet; this will prevent
+							 an unitialized read from a file that is still being
+							 written to*/
+
     if ((data=malloc(len))==NULL){
         parse_error("Couldn't allocate temporary buffer...aborting\n");
         return(NULL);
     }
-
-
-    buf = mmap((caddr_t)0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-    swab(buf, buf, len);
 
 
     if (!report) {
@@ -580,32 +662,39 @@ ff_PACI_Read(vfuncptr func, Var * arg)
         Col=Output+2;			
 #endif
 
-        while ((i < len) && !(Done)) {
+		
+/*Find Start of data transmission*/
+
+       if (Skip_To_Start_Sync(&i,buf,old_len) == -1) {/*Most likely not a themis file*/
+               parse_error("Doesn't look like this is a themis file...Aborting\n");
+					return(NULL);
+       }
+
+        while ((i < (old_len-_DATA)) && !(Done)) {
             c_Band=0;
             c_Frame=0;
-            if (Skip_To_Start_Sync(&i,buf,len) == -1) {
-                break;
-            }
-
             c_Band=*(buf+i+_BANDS)&0xf;
             if (c_Band < 14 && c_Band > Max_Band) Max_Band=c_Band;
             if (c_Band==0xE)  /*Last Frame*/
                 Done=1;
 
             c_Frame=(((*(buf+i+_FRAMES) & 0xFF)<< 8) | (*(buf+i+_FRAMES+1) & 0xFF));
-            if ((Output=Skip_To_Stop_Sync(&i,buf,len)) == -1) {
+            if ((Output=Skip_To_StopStart_Sync(&i,buf,old_len)) == -1) {
                 break;
             } 
 
-            if (Keep(c_Band,c_Frame,Cmd,Frame,Band) && ((Output+2) <= 328 )){
+            if (Keep(c_Band,c_Frame,Cmd,Frame,Band) && ((Output) <= 328 )){
+
 #ifdef HAVE_LIBUSDS
+
                 if (Data_Only && Cmd!=ALL){
-                    if (Output-_DATA < 320){
-                        offset=Output-_DATA;
+                    if (Output-_SIGINFO < 320){
+                        offset=Output-_SIGINFO;
                         if (decompress!=NULL)
                             free(decompress);
                         decompress=Themis_Entry((buf+i-Output+_DATA),&offset);
                         if (offset==320){
+									 Compressed=1;
                             memcpy((data+Index),decompress,offset);
                             Index+=(offset);
                             Lines++;
@@ -613,40 +702,43 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                         }
                     }
                     else {
-                        memcpy((data+Index),(buf+i-Output+_DATA),Output);
-                        Index+=(Output-_DATA);
+								Compressed=0;
+                        memcpy((data+Index),(buf+i-Output+_DATA),Output-_SIGINFO);
+                        Index+=(Output-_SIGINFO);
                         Lines++;
                 			BandCount[c_Band]++;
                     }
-                } else { 
-                    if (Output-_DATA < 320){
+                } 
+					 else { 
+                    if (Output-_SIGINFO < 320){
 
                         if (len < (Lines*Col+320)) { 	/*We're running out of room!*/
-                            int guess=(len/(Output+2));/*Guess # of total lines*/
+                            int guess=(len/(Output));/*Guess # of total lines*/
                             len = guess * Col; 			/*How big it needs to be*/
                             parse_error("Increasing Buffer sizes\n");
                             data=realloc(data,len);
-/*									newbuf=realloc(newbuf,len);*/
                         }
 
-                        offset=Output-_DATA;
+                        offset=Output-_SIGINFO;
                         if (decompress!=NULL)
                             free(decompress);
                         decompress=Themis_Entry((buf+i-Output+_DATA),&offset);
                         if (offset==320){
+									 Compressed=1;
                             memcpy((data+Index),(buf+i-Output),_DATA);
                             Index+=_DATA;
                             memcpy((data+Index),decompress,offset);
                             Index+=(offset);
-                            memcpy((data+Index),(buf+i),2);
+                            memcpy((data+Index),(buf+i-2),2);/*Stop sync*/
                             Index+=2;
                             Lines++;
                 				 BandCount[c_Band]++;
                         }
                     }
                     else {
-                        memcpy(((char *)data+Index),(buf+i-Output),Output+2);
-                        Index+=Output+2;
+								Compressed=0;
+                        memcpy(((char *)data+Index),(buf+i-Output),Output);
+                        Index+=Output;
                         Lines++;
                 			BandCount[c_Band]++;
                     }
@@ -655,13 +747,13 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                 if (Data_Only && Cmd!=ALL){
                     memcpy(((unsigned char *)data)+Index,
 							((unsigned char *)buf)+i-Output+_DATA,
-							Output);
-                    Index+=(Output-_DATA);
+							Output-_SIGINFO);
+                    Index+=(Output-_SIGINFO);
                     Lines++;
 	                 BandCount[c_Band]++;
                 } else { 
-                    memcpy(((char *)data+Index),(buf+i-Output),Output+2);
-                    Index+=Output+2;
+                    memcpy(((char *)data+Index),(buf+i-Output),Output);
+                    Index+=Output;
                     Lines++;
 	                 BandCount[c_Band]++;
                 }
@@ -687,6 +779,10 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 						if (BandCount[i]){
 							Bc[idx]=BandCount[i];
 							idx++;
+							printf("Mapping Band:%d to Davinci slot:%d\n",i,idx);
+						}
+						else {
+							printf("Band %d has no data, throwing it out\n",i);
 						}
 					}
 					Max_Band=idx-1;
@@ -695,32 +791,254 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 					}
 				}
 	
-            Max_Band_Count=BandCount[0];
+            Max_Frame_Count=BandCount[0];
             for (i=0;i<Max_Band;i++){
                 if (BandCount[i]!=BandCount[i+1]) {
                     Bad_Flag=1;
                 }
-                if (Max_Band_Count < BandCount[i+1]) Max_Band_Count=BandCount[i+1];
+                if (Max_Frame_Count < BandCount[i+1]) Max_Frame_Count=BandCount[i+1];
 			   	
             }
             for (i=0;i<=Max_Band;i++){ /*Now, gotta count the missing frames!*/
-                extra_frames+=(Max_Band_Count-BandCount[i]);
+                extra_frames+=(Max_Frame_Count-BandCount[i]);
             }
             len+=Col*extra_frames;
 
             if ((newbuf=malloc(len))==NULL){
-      		parse_error("Couldn't allocate transfer buffer...aborting\n");
-      		return(NULL);
+      			parse_error("Couldn't allocate transfer buffer...aborting\n");
+      			return(NULL);
             }	
 
+/*            if (Bad_Flag){ We have uneven Band counts! Gotta do things differently! */
+				{
+               unsigned char c_band;
+               unsigned char current_band=255;
+               unsigned short c_frame;
+					int i;
+					band_frame_count=Max_Frame_Count+1;
+					Total_Frame_Count=0;
 
-            if (Bad_Flag){ /*We have uneven Band counts! Gotta do things differently! */
-                unsigned char c_band;
-                unsigned char last_band=255;
+
+					for (i=0;i<Lines;i++){
+                    	c_band=*((char *)data+(i*Col)+_BANDS)&0xf;
+                    	c_frame=(((*((char *)data+(i*Col)+_FRAMES) & 0xFF)<< 8) | 
+                             (*((char *)data+(i*Col)+_FRAMES+1) & 0xFF));
+							
+							if (current_band!=c_band) {
+								if (band_frame_count < Max_Frame_Count) {/*Missing end frames*/
+                        	printf("Extending buffer:%d\n",(Col*(Max_Frame_Count-band_frame_count)));
+                        	len+=(Col*(Max_Frame_Count-band_frame_count));
+                        	if((newbuf=realloc(newbuf,len))==NULL){
+                        	    printf("Couldn't extend buffer...you're hosed\n");
+                        	    return(NULL);
+                        	}
+                    
+
+                        	Add_Fake_Frame((((unsigned char *)newbuf)+Total_Frame_Count*Col),
+											(int)c_band, (FrameBandStart[current_band]+band_frame_count), 
+											(Max_Frame_Count-band_frame_count), Col);
+
+									parse_error("Adding End frames: %d-%d in Band: %d\n",
+										(FrameBandStart[current_band]+band_frame_count),
+										(FrameBandStart[current_band]+Max_Frame_Count-1), c_band);
+
+                            Total_Frame_Count+=(Max_Frame_Count-band_frame_count);
+                        }
+								band_frame_count=0;
+								current_band=c_band;
+							}
+					
+							if (c_frame > (FrameBandStart[current_band]+band_frame_count)){ /*Missing frames*/
+                       printf("Extending buffer: %d\n",(c_frame-(FrameBandStart[current_band]+
+																			band_frame_count))*Col);
+                       len+=(c_frame-(FrameBandStart[current_band]+band_frame_count))*Col;
+
+                       if((newbuf=realloc(newbuf,len))==NULL){
+                       	    printf("Couldn't extend buffer...you're hosed\n");
+                       	    return(NULL);
+                       }
+                    		
+
+								Add_Fake_Frame((((unsigned char *)newbuf)+Total_Frame_Count*Col),
+									(int)c_band, (FrameBandStart[current_band]+band_frame_count),
+									(c_frame-(FrameBandStart[current_band]+band_frame_count)), Col);
+					
+								parse_error("Adding frames: %d-%d in Band: %d\n",
+									(FrameBandStart[current_band]+band_frame_count),
+									(c_frame-1),c_band);
+
+								Total_Frame_Count+=c_frame-(FrameBandStart[current_band]+band_frame_count);
+								band_frame_count+=c_frame-(FrameBandStart[current_band]+band_frame_count);
+							}
+
+							else if (c_frame < (FrameBandStart[current_band]+band_frame_count)) {
+								parse_error("Corrupted Frame Sequence...Aborting\n");
+								return(NULL);
+							}
+
+				
+                    memcpy((((unsigned char *)newbuf)+(Total_Frame_Count*Col)),
+							(((unsigned char *)data)+i*Col),
+							Col);
+                    band_frame_count++;
+						  Total_Frame_Count++;
+						
+			
+                }
+
+					if (band_frame_count < Max_Frame_Count) {/*Missing end frames*/
+
+                 	Add_Fake_Frame((((unsigned char *)newbuf)+Total_Frame_Count*Col),
+							(int)c_band, (FrameBandStart[current_band]+band_frame_count), 
+							(Max_Frame_Count-band_frame_count), Col);
+
+						parse_error("Adding End frames: %d-%d in Band: %d\n",
+							(FrameBandStart[current_band]+band_frame_count),
+							(FrameBandStart[current_band]+Max_Frame_Count-1), c_band);
+
+                  Total_Frame_Count+=(Max_Frame_Count-band_frame_count);
+						band_frame_count+=(Max_Frame_Count-band_frame_count); 
+                }
+					 
+
+
+           } 
+#if 0
+
+				else {
+
+                int j,i;
                 unsigned short c_frame;
+					 unsigned char c_band;
+					 Total_Frame_Count=0;
+
+                for (j=0 ; j <= Max_Band ; j++) {
+					 	  band_frame_count=0;
+                    c_band=*((char *)data+(i*Col)+_BANDS)&0xf;
+						  
+                    for (i=0 ; i < BandCount[0] ; i++) {
+                        c_frame=(((*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES) & 0xFF)<< 8) | 
+                                 (*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES+1) & 0xFF));
+
+                        if (c_frame > (FrameBandStart[c_band]+band_frame_count)) {
+                            /*Add a frame, gotta add memory too!*/
+                            len+=(Col);
+                            newbuf=realloc(newbuf,len);
+
+                            Add_Fake_Frame((((unsigned char *)newbuf)+ Total_Frame_Count*Col),
+										 j, (FrameBandStart[c_band]+band_frame_count),
+                               c_frame-(FrameBandStart[c_band]+band_frame_count), Col);
+									 parse_error("Adding frames: %d-%d in Band: %d\n",
+										(FrameBandStart[c_band]+band_frame_count),
+										(c_frame-1), c_band);
+                            new_count+=c_frame-(FrameBandStart[c_band]+new_count);	
+
+
+
+                        } else if (c_frame < (FrameBandStart[c_band]+new_count)) {
+                            parse_error("Corrupted Frame Sequence...aborting\n");
+                            return(NULL);
+                        }
+						
+                        memcpy((((unsigned char *)newbuf)+j*BandCount[0]*Col+(new_count++)*Col),
+                               (((unsigned char *)data)+j*BandCount[0]*Col+i*Col),
+							   Col);
+                    }
+                }
+            }	
+#endif
+
+
+        } 
+
+		  else {
+            munmap(buf,old_len);
+            close(fd);
+            if (Data_Only){
+                return(newVal(BSQ,(Col-_SIGINFO),Lines,1,BYTE,data));
+            }
+            else {
+                return(newVal(BSQ,Col,Lines,1,BYTE,data));
+            }
+        }
+
+        munmap(buf,old_len);
+        close(fd);
+        free(data);
+        if (Data_Only){
+            void *do_buff;
+            int count = band_frame_count;
+            count*=(Max_Band+1);
+            if ((do_buff=malloc(len))==NULL){
+                parse_error("Not enough memory for temporary buffer support\n");
+                free(newbuf);
+                return(NULL);
+            }	
+            for (i=0;i<Total_Frame_Count;i++){
+                memcpy((((unsigned char *)do_buff)+(i*(Col-_SIGINFO))),
+						(((unsigned char *)newbuf)+(i*Col)+_DATA),
+						(Col-_SIGINFO));
+            }
+            free(newbuf);
+            return(newVal(BSQ,(Col-_SIGINFO),
+                          band_frame_count,
+                          Max_Band+1,BYTE,do_buff)); 
+        }
+        return(newVal(BSQ,Col,band_frame_count,Max_Band+1,BYTE,newbuf));
+		
+    } else {
+        int *band = (int *)calloc(32, sizeof(int));
+        unsigned int minframe = MAXINT;
+        int maxframe = -1;
+        i = 0;
+
+        while ((i < len) && !(Done)) {
+            c_Band=0;
+            c_Frame=0;
+            if (Skip_To_Start_Sync(&i,buf,len) < 0) {
+                break;
+            }
+            c_Band=*(buf+i+_BANDS);
+            if (c_Band==0xE) /*Last Frame*/
+                Done=1;
+            c_Frame=(((*(buf+i+_FRAMES) & 0xFF)<< 8) | (*(buf+i+_FRAMES+1) & 0xFF));
+            if ((Output=Skip_To_Stop_Sync(&i,buf,len)) < 0) {
+                break;
+            }
+            if (c_Frame > maxframe) maxframe = c_Frame;
+            if (c_Frame < minframe) minframe = c_Frame;
+            band[c_Band]++;
+        }
+        
+        printf("File: %s\n", filename);
+        printf("First frame: %d\n", minframe);
+        printf("Last Frame:  %d\n", maxframe);
+        printf("Bands:       ");
+        for (i = 0 ; i< 32 ; i++) {
+            if (band[i]) printf("%d ", i);
+        }
+        printf("\n");
+    }
+
+    free(newbuf);
+    free(data);
+	
+    munmap(buf,old_len);
+    close(fd);
+    return(NULL);
+
+}
+
+
+
+
+
+
+/*Older code, moved down here while I tested "newer" code*/
+
+#if 0
                 int i;
                 int new_count=0;
-/*                parse_error("Missing Frames...zero-padded frames will be added:\n");*/
                 for (i=0;i<Lines;i++) {
                     c_band=*((char *)data+(i*Col)+_BANDS)&0xf;
                     c_frame=(((*((char *)data+(i*Col)+_FRAMES) & 0xFF)<< 8) | 
@@ -774,120 +1092,8 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                     frame_count++;
 			
                 }
-            } else {
+            } 
 
-                int j,i;
-                unsigned short c_frame;
-					 unsigned char c_band;
+#endif
 
-                for (j=0 ; j <= Max_Band ; j++) {
-                    new_count=0;
-                    c_band=*((char *)data+(i*Col)+_BANDS)&0xf;
-							if (c_band != j){
-								parse_error("Moving Band: %d to slot: %d\n",c_band,j);
-							}
-						  
-                    for (i=0 ; i < BandCount[0] ; i++) {
-                        c_frame=(((*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES) & 0xFF)<< 8) | 
-                                 (*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES+1) & 0xFF));
-                        if (c_frame > (FrameBandStart[c_band]+new_count)) {
-                            /*Add a frame, gotta add memory too!*/
-                            len+=(Col);
-                            realloc(newbuf,len);
-                            Add_Fake_Frame((((unsigned char *)newbuf)+
-														 j*BandCount[0]*Col+new_count*Col),
-                                           j, (FrameBandStart[c_band]+new_count),
-                                           c_frame-(FrameBandStart[c_band]+new_count), Col);
-									parse_error("Adding frames: %d-%d in Band: %d\n",
-										(FrameBandStart[c_band]+new_count),
-										(c_frame-1), c_band);
-                            new_count+=c_frame-(FrameBandStart[c_band]+new_count);	
-                        } else if (c_frame < (FrameBandStart[c_band]+new_count)) {
-                            parse_error("Corrupted Frame Sequence...aborting\n");
-                            return(NULL);
-                        }
-						
-                        memcpy((((unsigned char *)newbuf)+j*BandCount[0]*Col+(new_count++)*Col),
-                               (((unsigned char *)data)+j*BandCount[0]*Col+i*Col),
-							   Col);
-                    }
-                }
-            }	
-        } else {
-            munmap(buf,old_len);
-            close(fd);
-            free(newbuf);
-            if (Data_Only){
-                return(newVal(BSQ,(Col-_SIGINFO),Lines,1,BYTE,data));
-            }
-            else {
-                return(newVal(BSQ,Col,Lines,1,BYTE,data));
-            }
-        }
 
-        munmap(buf,old_len);
-        close(fd);
-        free(data);
-        if (Data_Only){
-            void *do_buff;
-            int count = (Bad_Flag ? frame_count:new_count);
-            count*=(Max_Band+1);
-            if ((do_buff=malloc(len))==NULL){
-                parse_error("Not enough memory for temporary buffer support\n");
-                free(newbuf);
-                return(NULL);
-            }	
-            for (i=0;i<count;i++){
-                memcpy((((unsigned char *)do_buff)+(i*(Col-_SIGINFO))),
-						(((unsigned char *)newbuf)+(i*Col)+_DATA),
-						(Col-_SIGINFO));
-            }
-            free(newbuf);
-            return(newVal(BSQ,(Col-_SIGINFO),
-                          (Bad_Flag ? frame_count:new_count),
-                          Max_Band+1,BYTE,do_buff)); 
-        }
-        return(newVal(BSQ,Col,(Bad_Flag ? frame_count:new_count),Max_Band+1,BYTE,newbuf));
-		
-    } else {
-        int *band = (int *)calloc(32, sizeof(int));
-        unsigned int minframe = MAXINT;
-        int maxframe = -1;
-        i = 0;
-
-        while ((i < len) && !(Done)) {
-            c_Band=0;
-            c_Frame=0;
-            if (Skip_To_Start_Sync(&i,buf,len) < 0) {
-                break;
-            }
-            c_Band=*(buf+i+_BANDS);
-            if (c_Band==0xE) /*Last Frame*/
-                Done=1;
-            c_Frame=(((*(buf+i+_FRAMES) & 0xFF)<< 8) | (*(buf+i+_FRAMES+1) & 0xFF));
-            if ((Output=Skip_To_Stop_Sync(&i,buf,len)) < 0) {
-                break;
-            }
-            if (c_Frame > maxframe) maxframe = c_Frame;
-            if (c_Frame < minframe) minframe = c_Frame;
-            band[c_Band]++;
-        }
-        
-        printf("File: %s\n", filename);
-        printf("First frame: %d\n", minframe);
-        printf("Last Frame:  %d\n", maxframe);
-        printf("Bands:       ");
-        for (i = 0 ; i< 32 ; i++) {
-            if (band[i]) printf("%d ", i);
-        }
-        printf("\n");
-    }
-
-    free(newbuf);
-    free(data);
-	
-    munmap(buf,old_len);
-    close(fd);
-    return(NULL);
-
-}
