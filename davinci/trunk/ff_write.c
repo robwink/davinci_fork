@@ -130,6 +130,16 @@ ff_write(vfuncptr func, Var *arg)
         fprintf(stderr, "File exists.\n");
         return(NULL);
     }
+
+	if (access(filename, F_OK) != 0) {
+		FILE *fp;
+		/* try to create file, just to make sure we can */
+		if ((fp = fopen(filename, "w")) == NULL) {
+			fprintf(stderr, "Unable to open file for write: %s\n", filename);
+			return(NULL);
+		}
+		fclose(fp);
+	}
     /*
     ** Get title string
     */

@@ -140,7 +140,7 @@ int LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var);
 int WriteRaw(Var *, FILE *, char *);
 int WriteGRD(Var *, FILE *, char *);
 int WriteSpecpr(Var *, char *, char *);
-int WriteHDF5(hid_t, char *, Var *);
+void WriteHDF5(hid_t, char *, Var *);
 int WriteISIS(Var *, FILE *, char *, char *);
 void WritePPM(Var *, FILE *, char *);
 void WritePGM(Var *, FILE *, char *);
