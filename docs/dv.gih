@@ -1039,6 +1039,49 @@
 
     dv> a = min(object=data, axis=xy)
 
+?functions load_vis()
+?load_vis()
+ load_vis() - Load a VISIBLE Paci file
+
+	load_vis(filename=STRING, [gse=1], [nocube=1])
+
+	The load_vis function will read the four types of visible paci data that
+	currently exitis: (gse, raw, predictive, DCT).  If the data is from the
+	gse at Raytheon in Santa Barbara, then gse=1 MUST be issed (the defualt is
+	gse=0).  If the data contain multiple bands, then routine will return a data
+	cube with each band on a different Z-plane.  If the user wants a single
+	band file then use: nocube=1 (defualt: nocube=0).  This will prevent the 
+	reader from stacking the bands.
+
+?functions load_paci()
+?load_paci()
+ load_paci() - Load an IR Paci file 
+
+ load_paci(filename=STRING, [[frame=INT] | [band=int]], [report=1], [nosig=1],
+				[swap=1],[quiet={0,1,2}])
+
+	The load_paci function reads an IR paci file into memory and organizes in various
+	ways depending on user input.  The user can specifiy a band OR frame number and only
+	those data that match are loaded.  If the user sets report=1 then only a summary report
+	is given back (and no data are loaded).  Each frame of data has 6 control values tacked
+	on to the front of the frame and 2 value tacked on the back.  The first 2 values are the
+	starting sync word, the next value is the ID, then band number then two numbers for the
+	frame number.  The last two values are the ending sync value.  If the user does NOT
+	want these values to be returned with the data, then use: nosig=1 (defualt is nosig=0).  
+
+	There are two major forms for IR paci data, byte-swapped and NOT byte-swapped.
+	If the data is from the Ratheon GSE (in Santa Barbara) then it is byte-swapped.
+	Other-wise it is not.  If the data is NOT byte-swapped, swap=0 must be issued since
+	swap=1 is the default value.
+
+	Finally, various information about the condition of the data, missing information,
+	skipped and/or repeated information is displayed.  To modify this a quiet value can
+	be issued (defualt: quiet=0) with the following results:
+
+		quiet=0:		Full reporting
+		quiet=1:		Only print end summary
+		quiet=2:		Print nothing except fatal errors
+
 ?functions max()
 ?max()
  max() - Compute maximum value along specified axis
