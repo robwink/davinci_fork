@@ -340,7 +340,7 @@ ff_xplot(vfuncptr func, Var *arg)
 
 			}
 
-			else if (!(strcmp(av[i]->name,"seperate"))) {
+			else if (!(strcmp(av[i]->name,"separate"))) {
 				Sep=1;
 			}
 
