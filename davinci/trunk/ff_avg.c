@@ -1,8 +1,19 @@
 #include "parser.h"
 
+#include <sys/types.h>
+#include <time.h>
+
+
+
 #define XAXIS	1
 #define YAXIS	2
 #define ZAXIS	4
+
+
+int Benchmark(void)
+{
+	return ((int)(time(NULL)));
+}
 
 Var *
 ff_avg(vfuncptr func, Var * arg)
@@ -225,6 +236,9 @@ ff_convolve(vfuncptr func, Var * arg)
 	int kernel_z_center, kernel_z;
 	int x,y,z;
 
+
+	int start,stop;
+
 	int ac;
 	Var **av;
 	Alist alist[4];
@@ -267,10 +281,10 @@ ff_convolve(vfuncptr func, Var * arg)
 		return(NULL);
 	}
 
+//	start=Benchmark();
+
 	for (i = 0 ; i < dsize ; i++) {
 		xpos(i, obj,&x, &y, &z);		/* compute current x,y,z */
-		fprintf(stderr, "Convolve: %d %d %d\r", x, y,z);
-
 		for (a = 0 ; a < kernel_x ; a++) {
 			x_pos = x + a - kernel_x_center;
 			if (x_pos < 0 || x_pos >= obj_x) continue;
@@ -291,6 +305,11 @@ ff_convolve(vfuncptr func, Var * arg)
 		}
 		if (norm) data[i] /= (float)wt[i];
 	}
+
+
+
+	fprintf(stderr,"Delta Time:%d\n",(stop-start));
+	
 	return(newVal(V_ORG(obj), 
 		V_SIZE(obj)[0],
 		V_SIZE(obj)[1],
@@ -299,7 +318,318 @@ ff_convolve(vfuncptr func, Var * arg)
 		data));
 }
 
+Var *
+ff_convolve3(vfuncptr func, Var * arg)
+{
+	Var *obj=NULL, *kernel=NULL, *v;
+	int norm=1;
+	float *data, *cache, val;
+	float *Mask,*Weight;
+	int *P;
+	int wt;
+	float temp;
 
+	int dsize, i, j, k;
+	int q, r, s;
+	int Init_Cache=1;
+
+	int Mode[3],Ce[3],Center[3];
+	int Pos[3];
+	int MajC,MidC,MinC;
+	int mOrd[3];/*Size of cube in order of: 0-X 1-Y 2-Z */
+	int kOrd[3];/*Size of Mask in order of: 0-X 1-Y 2-Z */
+	int T,M[3];/*Temp Variables*/
+
+	int Mem_Index;
+	int Center_Index;
+
+	int I;
+
+	int start,stop;
+
+
+	int ac;
+	Var **av;
+	Alist alist[4];
+	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
+	alist[1] = make_alist("kernel",  	ID_VAL,		NULL,	&kernel);
+	alist[2] = make_alist("normalize", 	INT, NULL, &norm);
+	alist[3].name = NULL;
+
+
+	make_args(&ac, &av, func, arg);
+	if (parse_args(ac, av, alist)) return(NULL);
+
+	if (obj == NULL) {
+		parse_error("%s: No object specified\n", func->name);
+		return(NULL);
+	}
+	if (kernel == NULL) {
+		parse_error("%s: No kernel specified\n", func->name);
+		return(NULL);
+	}
+
+
+	mOrd[0] = GetSamples(V_SIZE(obj), V_ORG(obj));
+	mOrd[1] = GetLines(V_SIZE(obj), V_ORG(obj));
+	mOrd[2] = GetBands(V_SIZE(obj), V_ORG(obj));
+
+	Center[0]=(kOrd[0] = GetSamples(V_SIZE(kernel), V_ORG(kernel)))/2;
+	Center[1]=(kOrd[1] = GetLines(V_SIZE(kernel), V_ORG(kernel)))/2;
+	Center[2]=(kOrd[2] = GetBands(V_SIZE(kernel), V_ORG(kernel)))/2;
+
+
+	dsize = V_DSIZE(obj);
+	if ((data = calloc(dsize, sizeof(float))) == NULL) {
+		parse_error("Unable to allocate memory");
+		return(NULL);
+	}
+
+	if ((cache = calloc(V_DSIZE(kernel), sizeof(float))) == NULL) {
+		parse_error("Unable to allocate memory for cache");
+		return(NULL);
+	}
+
+	if ((Mask = calloc(V_DSIZE(kernel), sizeof(float))) == NULL) {
+		parse_error("Unable to allocate memory for Mask");
+		return(NULL);
+	}
+
+	if ((Weight = calloc(V_DSIZE(kernel), sizeof(int))) == NULL) {
+		parse_error("Unable to allocate memory for Weights");
+		return(NULL);
+	}
+
+
+
+	start=Benchmark();
+
+
+	/*****
+	***	Find Axis lengths from shortest to longest and set up Mode:
+	***	Mode[0]=Shortest
+	***	Mode[1]=Middle
+	***	Mode[2]=Longest.  
+	***	We move the cache through the data block along the longest axis
+	******/
+
+	for (i=0;i<3;i++){
+	  Mode[i]=i;
+	  M[i]=mOrd[i];
+	}
+
+	for (i=0;i<3;i++){
+	  for(j=0;j<2;j++){
+		if (M[j]>M[j+1]){
+			T=M[j];
+			M[j]=M[j+1];
+			M[j+1]=T;
+			T=Mode[j];
+			Mode[j]=Mode[j+1];
+			Mode[j+1]=T;
+		}
+	  }
+	}
+
+	
+
+	if ((P = (int *)calloc(kOrd[Mode[2]], sizeof(int))) == NULL) {
+		parse_error("Unable to allocate memory for cache");
+		return(NULL);
+	}
+
+
+
+	/***********************************************************************************
+	**Copy data from Kernal into Mask so that Mask has the same orientation as the Cache.
+	**This is a one time access penalty to Kernel.  It also makes the math between the
+	**The Cache and the Kernel easier (IMHO).
+	*************************************************************************************/
+	for(i=0;i<kOrd[Mode[0]];i++){
+	  for(j=0;j<kOrd[Mode[1]];j++){
+	    for(k=0;k<kOrd[Mode[2]];k++){
+		Pos[Mode[0]]=i;
+		Pos[Mode[1]]=j;
+		Pos[Mode[2]]=k;
+		I=cpos(Pos[0],Pos[1],Pos[2],kernel);
+		Mask[k*kOrd[Mode[1]]*kOrd[Mode[0]]+
+		     j*kOrd[Mode[0]]+i]=
+		     extract_float(kernel,I);
+	    }
+          }
+	}
+	
+	
+	
+	/*************************************************************
+	**Main body of loop
+	**/
+	for(i=0;i<mOrd[Mode[0]];i++){
+	  for(j=0;j<mOrd[Mode[1]];j++){
+	    for(k=0;k<mOrd[Mode[2]];k++){
+		
+		Ce[Mode[0]]=i;
+		Ce[Mode[1]]=j;
+		Ce[Mode[2]]=k;
+
+
+		if (Init_Cache){ /*Need to fully load cache block*/
+		  MajC=MidC=MinC=0;
+		  val=0;
+		  wt=0;
+		  for (s=k-Center[Mode[2]];s<=k+Center[Mode[2]];s++){
+		    for (r=j-Center[Mode[1]];r<=j+Center[Mode[1]];r++){
+		      for (q=i-Center[Mode[0]];q<=i+Center[Mode[0]];q++){
+			/*Load Cache Block*/
+			if (q<0 || r <0 || s<0){ //Do a wrap check here in the furture
+				cache[MajC*kOrd[Mode[1]]*kOrd[Mode[0]]+
+				      MidC*kOrd[Mode[0]]+
+				      MinC]=0;
+				Weight[MajC*kOrd[Mode[1]]*kOrd[Mode[0]]+
+				       MidC*kOrd[Mode[0]]+
+				       MinC]=0;
+			}
+			else if (q>= mOrd[Mode[0]] || 
+				 r>= mOrd[Mode[1]] || 
+				 s>= mOrd[Mode[2]]){
+				cache[MajC*kOrd[Mode[1]]*kOrd[Mode[0]]+
+				      MidC*kOrd[Mode[0]]+
+				      MinC]=0;
+				Weight[MajC*kOrd[Mode[1]]*kOrd[Mode[0]]+
+				       MidC*kOrd[Mode[0]]+
+				       MinC]=0;
+			}
+			else {
+				Pos[Mode[0]]=q;
+				Pos[Mode[1]]=r;
+				Pos[Mode[2]]=s;
+				Mem_Index=cpos(Pos[0],Pos[1],Pos[2],obj);
+				cache[MajC*kOrd[Mode[1]]*kOrd[Mode[0]]+
+				      MidC*kOrd[Mode[0]]+MinC]=
+					extract_float(obj,Mem_Index);
+				Weight[MajC*kOrd[Mode[1]]*kOrd[Mode[0]]+
+				       MidC*kOrd[Mode[0]]+MinC]=1;
+				wt++;
+				val+=cache[MajC*kOrd[Mode[1]]*kOrd[Mode[0]]+
+					   MidC*kOrd[Mode[0]]+MinC]*
+				     Mask[MajC*kOrd[Mode[1]]*kOrd[Mode[0]]+
+					   MidC*kOrd[Mode[0]]+MinC];
+			}
+			MinC++;
+			
+		      }
+		      MinC=0;
+		      MidC++;
+		    }
+	  	    P[MajC]=MajC*kOrd[Mode[1]]*kOrd[Mode[0]];
+		    MidC=0;
+		    MajC++;
+		  }
+		  Init_Cache=0;
+//		  View_Cache(cache,P,kOrd[Mode[2]],kOrd[Mode[1]],kOrd[Mode[0]]);
+		}		
+			
+
+		else { /*Load a new section and shift the pointers; also update the weight block*/
+		  MidC=MinC=0;
+		  val=0;
+		  wt=0;
+		  s=k+Center[Mode[2]];
+		  for (r=j-Center[Mode[1]];r<=j+Center[Mode[1]];r++){
+		    for (q=i-Center[Mode[0]];q<=i+Center[Mode[0]];q++){
+			/*Load Portion of Cache Block*/
+			if (q<0 || r <0 || s<0){ //Do a wrap check here in the furture
+				cache[P[0]+MidC*kOrd[Mode[0]]+MinC]=0;
+				Weight[P[0]+MidC*kOrd[Mode[0]]+MinC]=0;
+			}
+			else if (q>= mOrd[Mode[0]] || 
+				 r>= mOrd[Mode[1]] || 
+				 s>= mOrd[Mode[2]]){
+				cache[P[0]+MidC*kOrd[Mode[0]]+MinC]=0;
+				Weight[P[0]+MidC*kOrd[Mode[0]]+MinC]=0;
+			}
+			else {
+				Pos[Mode[0]]=q;
+				Pos[Mode[1]]=r;
+				Pos[Mode[2]]=s;
+				Mem_Index=cpos(Pos[0],Pos[1],Pos[2],obj);
+				cache[P[0]+MidC*kOrd[Mode[0]]+MinC]=
+					extract_float(obj,Mem_Index);
+				Weight[P[0]+MidC*kOrd[Mode[0]]+MinC]=1;
+				val+=cache[P[0]+MidC*kOrd[Mode[0]]+MinC]*
+				     Mask[(kOrd[Mode[2]]-1)*kOrd[Mode[1]]*kOrd[Mode[0]]+
+					MidC*kOrd[Mode[0]]+MinC];
+				wt++;
+			}
+			MinC++;
+		      }
+		      MinC=0;
+		      MidC++;
+		    }
+		    /*Now adjust cache pointers and finish multiplying the Mask*/
+		    T=P[0];
+		    for(s=0;s<kOrd[Mode[2]]-1;s++){
+			P[s]=P[s+1];
+			for(r=0;r<kOrd[Mode[1]];r++){
+			  for(q=0;q<kOrd[Mode[0]];q++){
+			    wt+=Weight[P[s]+r*kOrd[Mode[0]]+q];
+			    val+=cache[P[s]+r*kOrd[Mode[0]]+q]*
+				 Mask[s*kOrd[Mode[1]]*kOrd[Mode[0]]+r*kOrd[Mode[0]]+q];
+			  }
+			}	
+		    }
+		    P[kOrd[Mode[2]]-1]=T;
+
+//		  View_Cache(cache,P,kOrd[Mode[2]],kOrd[Mode[1]],kOrd[Mode[0]]);
+		}
+/*
+		val=0;
+		wt=0;
+		for (q=0;q<kOrd[Mode[0]];q++){
+		  for (r=0;r<kOrd[Mode[1]];r++){
+		    for (s=0;s<kOrd[Mode[2]];s++){
+			val+=cache[P[s]+r*kOrd[Mode[0]]+q]*
+			 	Mask[s*kOrd[Mode[1]]*kOrd[Mode[0]]+
+				     r*kOrd[Mode[0]]+q];
+			wt+=Weight[P[s]+r*kOrd[Mode[0]]+q];
+		    }
+		  }
+		}
+*/
+
+		I=cpos(Ce[0],Ce[1],Ce[2],obj);
+		data[I]=val;
+		if (norm) data[I]/=(float)wt;
+
+	}
+        Init_Cache=1;
+      }
+    }
+	stop=Benchmark();
+	fprintf(stderr,"Delta Time:%d\n",(stop-start));
+    return(newVal(V_ORG(obj), 
+	V_SIZE(obj)[0],
+	V_SIZE(obj)[1],
+	V_SIZE(obj)[2],
+	FLOAT, 
+	(float *)data));
+}
+
+void View_Cache(float *cache,int *P,int Major,int Middle,int Minor)
+{
+	int i,j,k;
+
+	for (i=0;i<Major;i++){
+	  printf("Major:%d\n",i);
+	  for (j=0;j<Middle;j++){
+	    printf("\t");
+	    for (k=0;k<Minor;k++){
+		printf("%d ",(int)cache[P[i]+j*Minor+k]);
+	    }
+            printf("\n");
+	  }
+	}
+}	
 Var *
 ff_convolve2(vfuncptr func, Var * arg)
 {
