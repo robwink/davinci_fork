@@ -1,5 +1,7 @@
 #include "parser.h"
 
+#if defined(HAVE_LIBQMV) && defined(HAVE_QMV_HVECTOR_H)
+
 char *
 createThemisGhostImage(int ghostDown,
 					   int ghostRight,
@@ -93,6 +95,8 @@ ff_deghost(vfuncptr func, Var * arg)
 	}
 	return(out);
 }
+
+#endif
 
 Var *
 make_band(Var *in, int band)
