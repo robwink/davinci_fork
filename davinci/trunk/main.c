@@ -291,6 +291,7 @@ extern "C" {
 #else
     extern SetTopLevel(Widget *);
 #endif
+#endif
 
 
 void
