@@ -102,16 +102,13 @@ install_sh = @install_sh@
 @HAVE_LIBMAGICK_TRUE@dvmagick_la_SOURCES = dvmagick.c
 @HAVE_LIBMAGICK_TRUE@dvmagick_la_LDFLAGS = -module
 
-pkglib_LTLIBRARIES = kjn.la mod1.la mod2.la pnm_mod.la gui.la $(MY_MAGICK_LIBRARY)
+pkglib_LTLIBRARIES = mod1.la mod2.la pnm_mod.la gui.la $(MY_MAGICK_LIBRARY)
 
 mod1_la_SOURCES = mod1.c
 mod1_la_LDFLAGS = -module
 
 mod2_la_SOURCES = mod2.c
 mod2_la_LDFLAGS = -module
-
-kjn_la_SOURCES = mod_kjn.c
-kjn_la_LDFLAGS = -module
 
 pnm_mod_la_SOURCES = pnm_mod.c
 pnm_mod_la_LDFLAGS = -module
@@ -156,9 +153,6 @@ am_gui_la_OBJECTS = gui.lo widget_arrowbutton.lo widget_cascadebutton.lo \
 	widget_toplevelshell.lo widget_transientshell.lo \
 	widget_vicar.lo
 gui_la_OBJECTS = $(am_gui_la_OBJECTS)
-kjn_la_LIBADD =
-am_kjn_la_OBJECTS = mod_kjn.lo
-kjn_la_OBJECTS = $(am_kjn_la_OBJECTS)
 mod1_la_LIBADD =
 am_mod1_la_OBJECTS = mod1.lo
 mod1_la_OBJECTS = $(am_mod1_la_OBJECTS)
@@ -178,7 +172,7 @@ depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/dvmagick.Plo ./$(DEPDIR)/gui.Plo \
 @AMDEP_TRUE@	./$(DEPDIR)/mod1.Plo ./$(DEPDIR)/mod2.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/mod_kjn.Plo ./$(DEPDIR)/pnm_mod.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/pnm_mod.Plo \
 @AMDEP_TRUE@	./$(DEPDIR)/widget_arrowbutton.Plo \
 @AMDEP_TRUE@	./$(DEPDIR)/widget_cascadebutton.Plo \
 @AMDEP_TRUE@	./$(DEPDIR)/widget_command.Plo \
@@ -215,10 +209,9 @@ LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 CFLAGS = @CFLAGS@
 DIST_SOURCES = $(dvmagick_la_SOURCES) $(gui_la_SOURCES) \
-	$(kjn_la_SOURCES) $(mod1_la_SOURCES) $(mod2_la_SOURCES) \
-	$(pnm_mod_la_SOURCES)
+	$(mod1_la_SOURCES) $(mod2_la_SOURCES) $(pnm_mod_la_SOURCES)
 DIST_COMMON = Makefile.am Makefile.in
-SOURCES = $(dvmagick_la_SOURCES) $(gui_la_SOURCES) $(kjn_la_SOURCES) $(mod1_la_SOURCES) $(mod2_la_SOURCES) $(pnm_mod_la_SOURCES)
+SOURCES = $(dvmagick_la_SOURCES) $(gui_la_SOURCES) $(mod1_la_SOURCES) $(mod2_la_SOURCES) $(pnm_mod_la_SOURCES)
 
 all: all-am
 
@@ -261,8 +254,6 @@ dvmagick.la: $(dvmagick_la_OBJECTS) $(dvmagick_la_DEPENDENCIES)
 	$(LINK) -rpath $(pkglibdir) $(dvmagick_la_LDFLAGS) $(dvmagick_la_OBJECTS) $(dvmagick_la_LIBADD) $(LIBS)
 gui.la: $(gui_la_OBJECTS) $(gui_la_DEPENDENCIES) 
 	$(LINK) -rpath $(pkglibdir) $(gui_la_LDFLAGS) $(gui_la_OBJECTS) $(gui_la_LIBADD) $(LIBS)
-kjn.la: $(kjn_la_OBJECTS) $(kjn_la_DEPENDENCIES) 
-	$(LINK) -rpath $(pkglibdir) $(kjn_la_LDFLAGS) $(kjn_la_OBJECTS) $(kjn_la_LIBADD) $(LIBS)
 mod1.la: $(mod1_la_OBJECTS) $(mod1_la_DEPENDENCIES) 
 	$(LINK) -rpath $(pkglibdir) $(mod1_la_LDFLAGS) $(mod1_la_OBJECTS) $(mod1_la_LIBADD) $(LIBS)
 mod2.la: $(mod2_la_OBJECTS) $(mod2_la_DEPENDENCIES) 
@@ -280,7 +271,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gui.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod1.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod2.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_kjn.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pnm_mod.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_arrowbutton.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_cascadebutton.Plo@am__quote@
