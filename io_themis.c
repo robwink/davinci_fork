@@ -603,7 +603,7 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
         fclose(infile);
     	if (header.format=SHORT){ /*Data is actually 12-bit and needs the upper 4 bits cleaned off*/
             dsize=header.size[0]*header.size[1]*header.size[2];
-            for (i=0;i<dsize*2;i+=2){
+            for (i=0;i<dsize;i++){
                 ((short *)(data))[i] &= 4095;
             }
     	}
