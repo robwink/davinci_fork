@@ -1,8 +1,15 @@
-char *version = "@(#) daVinci Version #1.33";
+char *version = "@(#) daVinci Version #1.35";
 
 #include "build.h"
 
 /*
+Version 1.35: Fri Aug  6 16:04:28 MST 2004
+	* The penultimate check-in for the new autoconf stuff
+
+Version 1.34: 
+	* Who knows?  Saadat didn't make a log entry.  Something to do with
+	  new libisis modules.
+
 Version 1.33: Tue Aug  3 13:21:04 MST 2004
 	* Checked in a bunch of pending minor changes.  Maybe autoconf isn't
 	  quite right though.
