@@ -29,7 +29,7 @@
 /* #undef HAVE_LIBPROJ */
 
 /*Define if you have Xm library*/
-/* #undef HAVE_LIBXM */
+#define HAVE_LIBXM 1
 
 /*Define if you have the PlPlot library */
 /* #undef HAVE_PLPLOT */
@@ -83,7 +83,7 @@
 #define HAVE_STRDUP 1
 
 /* Define if you have the strndup function.  */
-#define HAVE_STRNDUP 1
+/* #undef HAVE_STRNDUP */
 
 /* Define if you have the strspn function.  */
 #define HAVE_STRSPN 1
@@ -161,25 +161,25 @@
 #define HAVE_LIBXEXT 1
 
 /* Define if you have the Xm library (-lXm).  */
-/* #undef HAVE_LIBXM */
+#define HAVE_LIBXM 1
 
 /* Define if you have the Xt library (-lXt).  */
 #define HAVE_LIBXT 1
 
 /* Define if you have the bz2 library (-lbz2).  */
-#define HAVE_LIBBZ2 1
+/* #undef HAVE_LIBBZ2 */
 
 /* Define if you have the curses library (-lcurses).  */
-/* #undef HAVE_LIBCURSES */
+#define HAVE_LIBCURSES 1
 
 /* Define if you have the hdf5 library (-lhdf5).  */
-/* #undef HAVE_LIBHDF5 */
+#define HAVE_LIBHDF5 1
 
 /* Define if you have the iomedley library (-liomedley).  */
 #define HAVE_LIBIOMEDLEY 1
 
 /* Define if you have the jpeg library (-ljpeg).  */
-#define HAVE_LIBJPEG 1
+/* #undef HAVE_LIBJPEG */
 
 /* Define if you have the m library (-lm).  */
 #define HAVE_LIBM 1
@@ -194,7 +194,7 @@
 #define HAVE_LIBREADLINE 1
 
 /* Define if you have the termcap library (-ltermcap).  */
-#define HAVE_LIBTERMCAP 1
+/* #undef HAVE_LIBTERMCAP */
 
 /* Define if you have the tiff library (-ltiff).  */
 #define HAVE_LIBTIFF 1

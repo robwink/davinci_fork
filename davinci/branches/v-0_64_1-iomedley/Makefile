@@ -10,16 +10,16 @@ BINDIR = $(exec_prefix)/bin
 LIBDIR = $(prefix)/lib
 mandir = $(prefix)/man/man1
 
-INSTALL = /usr/bin/install -c
+INSTALL = ./install-sh -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 
-XINCLUDES=-I/usr/X11R6/include/X11 $(XRTINCLUDE)
-XLIBS=-L/usr/X11R6/lib $(XRTLIBS)
+XINCLUDES= $(XRTINCLUDE)
+XLIBS= $(XRTLIBS)
 
 CPPFLAGS= -I/usr/include/X11
 CFLAGS=$(XINCLUDES) -Ilib -g -O2 -I. -INONE/include -I../iomedley  -I../iomedley
-LDFLAGS= -L/usr/X11R6/lib -L${exec_prefix}/lib -Lreadline -LNONE/lib -L../iomedley  -L. -L../iomedley
+LDFLAGS= -L${exec_prefix}/lib -Lreadline -LNONE/lib -L../iomedley  -L. -L../iomedley
 
 XRTINCLUDE=  
 XRTLIBS = 
@@ -27,7 +27,7 @@ XRTLIBS =
 
 CC     = gcc
 DEFS   = -DHAVE_CONFIG_H 
-LIBS   = -liomedley -lMagick -ltiff -lpng -lbz2 -lreadline -ltermcap -ljpeg -lz -lXext -lXt -lX11 -lm  -ldl  -lmodsupp -liomedley $(XLIBS)
+LIBS   = -liomedley -lMagick -ltiff -lpng -lreadline -lcurses -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -lc  -lmodsupp -liomedley $(XLIBS)
 AR     = ar
 RANLIB = ranlib
 
