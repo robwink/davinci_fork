@@ -46,6 +46,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the `cfitsio' library (-lcfitsio). */
+#undef HAVE_LIBCFITSIO
+
 /* Define to 1 if you have the <libgen.h> header file. */
 #undef HAVE_LIBGEN_H
 
@@ -88,8 +91,17 @@
 /* VICAR widget library is present */
 #undef HAVE_LIBVICAR
 
+/* Define to 1 if you have the `X11' library (-lX11). */
+#undef HAVE_LIBX11
+
+/* Define to 1 if you have the `Xm' library (-lXm). */
+#undef HAVE_LIBXM
+
 /* Define to 1 if you have the `Xmu' library (-lXmu). */
 #undef HAVE_LIBXMU
+
+/* Define to 1 if you have the `Xt' library (-lXt). */
+#undef HAVE_LIBXT
 
 /* Define to 1 if you have the `z' library (-lz). */
 #undef HAVE_LIBZ

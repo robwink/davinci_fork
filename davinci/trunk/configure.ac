@@ -217,7 +217,7 @@ if test "x$enable_modules" != "xno"; then
 	CFLAGS="$CFLAGS $LTDLINCL"
 	AC_DEFINE(BUILD_MODULE_SUPPORT, 1, [loadable module support])
 	build_module_support=yes
-	MY_SUBDIRS="$MY_SUBDIRS modules modules/kjn libltdl"
+	MY_SUBDIRS="$MY_SUBDIRS modules libltdl"
 
 	dnl We're including this, so it'll always be there.
 	dnl This define is to satisfy some ifdefs in io_loadmod.c.
