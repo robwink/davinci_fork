@@ -19,59 +19,16 @@
 Var *
 HasValue(vfuncptr func, Var *arg)
 {
-    Scope *scope = scope_tos();
-    Symtable *s;
-    char *name;
-    Var *v = newVar();
-    int i;
+	Var *v = newVal(BSQ, 1, 1, 1, INT, calloc(1, sizeof(int)));
 
-    make_sym(v, INT, "0");
-    V_TYPE(v) = ID_VAL;
-
-    if (arg == NULL || V_NAME(arg) == NULL) {
+    if (arg == NULL || V_NAME(arg) == NULL || get_sym(V_NAME(arg)) != NULL) {
         V_INT(v) = 1;
-        return(v);
-    }
-
-    name = V_NAME(arg);
-    /**
-    ** search the dd first.
-    **/
-    if (scope->dd && scope->dd->count && scope->dd->name) {
-        for (i = 1 ; i < scope->dd->count ; i++) {
-            if (scope->dd->name[i] && !strcmp(scope->dd->name[i], name)) {
-                if (scope->dd->value[i] != NULL) {
-                    V_INT(v) = 1;
-                    return(v);
-                } else {
-                    V_INT(v) = 0;
-                    return(v);
-                }
-            }
-        }
-    }
-    for (s = scope->symtab ; s != NULL ; s = s->next) {
-        if (V_NAME(s->value) && !strcmp(V_NAME(s->value), name)) {
-            return(p_mkval(ID_IVAL, "1"));
-        }
-    }
-    V_INT(v) = 0;
-    return(v);
+    } else {
+        V_INT(v) = 0;
+	}
+	return(v);
 }
 
-
-Var *search_dd(Scope *scope, char *name)
-{
-    int i;
-    if (scope->dd && scope->dd->count && scope->dd->name) {
-        for (i = 1 ; i < scope->dd->count ; i++) {
-            if (scope->dd->name[i] && !strcmp(scope->dd->name[i], name)) {
-                return(scope->dd->value[i]);
-            }
-        }
-    }
-    return(NULL);
-}
 
 /**
  ** remove a symbol from the symtab.
@@ -139,16 +96,17 @@ Var *get_sym(char *name)
     Scope *scope = scope_tos();
     Var *v;
 
-    if ((v = search_dd(scope, name)) != NULL) return(v);
+    if ((v = dd_find(scope, name)) != NULL) return(v);
     if ((v = search_symtab(scope, name)) != NULL) return(v);
     return(NULL);
 }
+
 Var *get_global_sym(char *name)
 {
     Scope *scope = global_scope();
     Var *v;
 
-    if ((v = search_dd(scope, name)) != NULL) return(v);
+    if ((v = dd_find(scope, name)) != NULL) return(v);
     if ((v = search_symtab(scope, name)) != NULL) return(v);
     return(NULL);
 }
@@ -196,16 +154,19 @@ sym_put(Scope *scope, Var *s)
     **/
     if ((v = get_sym(V_NAME(s))) != NULL) {
 
+		mem_claim(s);
         /* swap around the values */
         tmp = *v;
         *v = *s;
         *s = tmp;
 
         /* put the names back */
-        tmp.name = v->name;
-        v->name = s->name;
-        s->name = tmp.name;
+        // tmp.name = v->name;
+        // v->name = s->name;
+        // s->name = tmp.name;
+
         free_var(s);
+		s = v;
     } else {
         symtab = (Symtable *)calloc(1, sizeof(Symtable));
         symtab->value = s;
