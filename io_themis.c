@@ -683,14 +683,14 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 					int Bc[16];
 					int idx=0;
 					int i;
-					for (i=0;i<Max_Band;i++){
+					for (i=0;i<=Max_Band;i++){
 						if (BandCount[i]){
 							Bc[idx]=BandCount[i];
 							idx++;
 						}
 					}
-					Max_Band=idx;
-					for(i=0;i<Max_Band;i++){
+					Max_Band=idx-1;
+					for(i=0;i<=Max_Band;i++){
 						BandCount[i]=Bc[i];
 					}
 				}
@@ -703,7 +703,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                 if (Max_Band_Count < BandCount[i+1]) Max_Band_Count=BandCount[i+1];
 			   	
             }
-            for (i=0;i<Max_Band;i++){ /*Now, gotta count the missing frames!*/
+            for (i=0;i<=Max_Band;i++){ /*Now, gotta count the missing frames!*/
                 extra_frames+=(Max_Band_Count-BandCount[i]);
             }
             len+=Col*extra_frames;
@@ -720,30 +720,37 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                 unsigned short c_frame;
                 int i;
                 int new_count=0;
-                parse_error("Missing Frames...zero-padded frames will be added\n");
+/*                parse_error("Missing Frames...zero-padded frames will be added:\n");*/
                 for (i=0;i<Lines;i++) {
                     c_band=*((char *)data+(i*Col)+_BANDS)&0xf;
                     c_frame=(((*((char *)data+(i*Col)+_FRAMES) & 0xFF)<< 8) | 
                              (*((char *)data+(i*Col)+_FRAMES+1) & 0xFF));
                     if (last_band != c_band) {
 								parse_error("Keeping Band: %d\n",c_band);
+
                         if (frame_count < Max_Band_Count) {/*Missing ending data*/
+
                             Add_Fake_Frame((((unsigned char *)newbuf)+new_count*Col),
-									(int)c_band,
-                                    frame_count,
-									(Max_Band_Count-frame_count),
-									Col);
+									(int)c_band, frame_count, (Max_Band_Count-frame_count), Col);
+
+									parse_error("Adding frames: %d-%d in Band: %d\n",
+										frame_count,Max_Band_Count, c_band);
+
                             new_count+=(Max_Band_Count-frame_count)+1;
                         }
                         frame_count=0;
                         last_band=c_band;
                     }
                     if (c_frame > FrameBandStart[c_band]+frame_count){
+
                         Add_Fake_Frame((((unsigned char *)newbuf)+new_count*Col),
-                                       (int) c_band,
-									   FrameBandStart[c_band]+frame_count,
-                                       c_frame-(FrameBandStart[c_band]+frame_count),
-									   Col);
+                            (int) c_band, FrameBandStart[c_band]+frame_count,
+                            c_frame-(FrameBandStart[c_band]+frame_count), Col);
+
+								parse_error("Adding frames: %d-%d in Band: %d\n",
+									(FrameBandStart[c_band]+frame_count),
+									(c_frame-1), c_band);
+
                         new_count+=c_frame-(FrameBandStart[c_band]+frame_count);
                         frame_count+=c_frame-(FrameBandStart[c_band]+frame_count);
                     }
@@ -771,23 +778,31 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 
                 int j,i;
                 unsigned short c_frame;
+					 unsigned char c_band;
 
                 for (j=0 ; j <= Max_Band ; j++) {
                     new_count=0;
+                    c_band=*((char *)data+(i*Col)+_BANDS)&0xf;
+							if (c_band != j){
+								parse_error("Moving Band: %d to slot: %d\n",c_band,j);
+							}
+						  
                     for (i=0 ; i < BandCount[0] ; i++) {
                         c_frame=(((*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES) & 0xFF)<< 8) | 
                                  (*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES+1) & 0xFF));
-                        if (c_frame > (FrameBandStart[j]+new_count)) {
+                        if (c_frame > (FrameBandStart[c_band]+new_count)) {
                             /*Add a frame, gotta add memory too!*/
                             len+=(Col);
                             realloc(newbuf,len);
-                            Add_Fake_Frame((((unsigned char *)newbuf)+j*BandCount[0]*Col+new_count*Col),
-                                           j,
-										   (FrameBandStart[j]+new_count),
-                                           c_frame-(FrameBandStart[j]+new_count),
-										   Col);
-                            new_count+=c_frame-(FrameBandStart[j]+new_count);	
-                        } else if (c_frame < (FrameBandStart[j]+new_count)) {
+                            Add_Fake_Frame((((unsigned char *)newbuf)+
+														 j*BandCount[0]*Col+new_count*Col),
+                                           j, (FrameBandStart[c_band]+new_count),
+                                           c_frame-(FrameBandStart[c_band]+new_count), Col);
+									parse_error("Adding frames: %d-%d in Band: %d\n",
+										(FrameBandStart[c_band]+new_count),
+										(c_frame-1), c_band);
+                            new_count+=c_frame-(FrameBandStart[c_band]+new_count);	
+                        } else if (c_frame < (FrameBandStart[c_band]+new_count)) {
                             parse_error("Corrupted Frame Sequence...aborting\n");
                             return(NULL);
                         }
