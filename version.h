@@ -1,8 +1,14 @@
-char *version = "@(#) daVinci Version #1.38";
+char *version = "@(#) daVinci Version #1.39";
 
 #include "build.h"
 
 /*
+Verxion 1.39: Fri Sep 24 18:01:46 MST 2004
+	+ Fixed stomping over out of bounds memory in the last
+	  line of history data while removing indent marks from
+	  it.
+	+ Initialized a return variable in HDF reader.
+
 Version 1.38: Thu Aug 12 10:17:38 MST 2004
 	+ Added davinci function get_struct_key(), which returns
 	  the name associated with a particular structure element.
