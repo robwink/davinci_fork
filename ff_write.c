@@ -33,7 +33,7 @@ ff_write(vfuncptr func, Var *arg)
     Var **av;
 
     Alist alist[6];
-    alist[0] = make_alist("object",   ID_VAL,    NULL, &ob);
+    alist[0] = make_alist("object",   ID_UNK,    NULL, &ob);
     alist[1] = make_alist("filename", ID_STRING, NULL, &filename);
     alist[2] = make_alist("type",     ID_ENUM,   NULL, &type);
     alist[3] = make_alist("title",    ID_STRING, NULL, &title);
