@@ -452,7 +452,7 @@ Add_Fake_Frame(void *newbuf,int band, int frame, int num_frames,int width)
 	unsigned char pseudo_ID=99;
 	unsigned short new_frame;
 	char *blank=malloc(width-8);
-	memset(blank,INVALID_DATA,width);
+	memset(blank,INVALID_DATA,(width-8));
 
 	for (i=0;i<num_frames;i++){
 		new_frame=frame+i;	
@@ -463,6 +463,8 @@ Add_Fake_Frame(void *newbuf,int band, int frame, int num_frames,int width)
 		memcpy((newbuf+i*width+_DATA),blank,(width-8));
 		memcpy((newbuf+i*width+(width-2)),&Stop_Sync,2);
 	}
+
+	free(blank);
 }
 
 
@@ -558,10 +560,6 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 		return(NULL);
 	}
 
-	if ((newbuf=malloc(len))==NULL){
-      parse_error("Couldn't allocate transfer buffer...aborting\n");
-      return(NULL);
-	}
 
 	buf = mmap((caddr_t)0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
 	swab(buf, buf, len);
@@ -572,6 +570,9 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 
 #ifdef HAVE_LIBUSDS
 	Col=320+_SIGINFO;
+#endif
+#ifndef HAVE_LIBUSDS
+					Col=Output+2;			
 #endif
 
 		while ((i < len) && !(Done)) {
@@ -590,15 +591,14 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 					Done = 1;
 				} 
 
-#ifndef HAVE_LIBUSDS
-					Col=Output+2;			
-#endif
 
 
 				else {
 					if (Keep(c_Band,c_Frame,Cmd,Frame,Band) && ((Output+2) <= 328 )){
 						BandCount[c_Band]++;
 						if (Data_Only && Cmd!=ALL){
+
+#ifdef HAVE_LIBUSDS
 							if (Output-_DATA < 320){
 								offset=Output-_DATA;
 								if (decompress!=NULL)
@@ -615,8 +615,17 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 								Index+=(Output-_DATA);
 								Lines++;
 							}
+#else
+								memcpy((data+Index),(buf+i-Output+_DATA),Output);
+								Index+=(Output-_DATA);
+								Lines++;
+
+#endif
+
+
 						}
 						else { 
+#ifdef HAVE_LIBUSDS
 							if (Output-_DATA < 320){
 
 								if (len < (Lines*Col+320)) { 	/*We're running out of room!*/
@@ -624,7 +633,7 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 									len = guess * Col; 			/*How big it needs to be*/
 									parse_error("Increasing Buffer sizes\n");
 									data=realloc(data,len);
-									newbuf=realloc(newbuf,len);
+/*									newbuf=realloc(newbuf,len);*/
 								}
 
 								offset=Output-_DATA;
@@ -646,6 +655,12 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 								Index+=Output+2;
 								Lines++;
 							}
+#else
+
+								memcpy(((char *)data+Index),(buf+i-Output),Output+2);
+								Index+=Output+2;
+								Lines++;
+#endif
 						}
 					}
 				}
@@ -658,16 +673,27 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 			fclose(wp);
 		}
 
-
 		if(Cmd==ALL){
+			int extra_frames=0;
 			qsort((char *)data,Lines,Col,Themis_Sort);
 			Max_Band_Count=BandCount[0];
 			for (i=0;i<Max_Band;i++){
 				if (BandCount[i]!=BandCount[i+1]) {
 					Bad_Flag=1;
-					if (Max_Band_Count < BandCount[i+1]) Max_Band_Count=BandCount[i+1];
 				}
+				if (Max_Band_Count < BandCount[i+1]) Max_Band_Count=BandCount[i+1];
+			   	
 		  	}
+			for (i=0;i<Max_Band;i++){ /*Now, gotta count the missing frames!*/
+				extra_frames+=(Max_Band_Count-BandCount[i]);
+			}
+			len+=Col*extra_frames;
+
+			if ((newbuf=malloc(len))==NULL){
+      		parse_error("Couldn't allocate transfer buffer...aborting\n");
+      		return(NULL);
+			}	
+
 
 			if (Bad_Flag){ /*We have uneven Band counts! Gotta do things differently! */
 				unsigned char c_band;
@@ -690,7 +716,8 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 						last_band=c_band;
 					}
 					if (c_frame > FrameBandStart[c_band]+frame_count){
-						Add_Fake_Frame((newbuf+new_count*Col),c_band,FrameBandStart[c_band]+frame_count,
+						Add_Fake_Frame((newbuf+new_count*Col),
+								c_band,FrameBandStart[c_band]+frame_count,
 								c_frame-(FrameBandStart[c_band]+frame_count),Col);
 						new_count+=c_frame-(FrameBandStart[c_band]+frame_count);
 						frame_count+=c_frame-(FrameBandStart[c_band]+frame_count);
@@ -698,6 +725,15 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 					else if (c_frame < FrameBandStart[c_band]+frame_count){
 						parse_error("Corrupted Frame Sequence...aborting\n");
 						return(NULL);
+					}
+
+					if ((new_count*Col+Col) >= len){
+						printf("Extending buffer; newcount=%d; i=%d\n",new_count,i);
+						len+=Col*(new_count-Lines);
+						if((newbuf=realloc(newbuf,len))==NULL){
+							printf("Couldn't extend buffer...you're hosed\n");
+							return(NULL);
+						}
 					}
 				
 					memcpy((newbuf+((new_count++)*Col)),(data+i*Col),Col);
@@ -717,6 +753,9 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 						c_frame=(((*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES) & 0xFF)<< 8) | 
 									(*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES+1) & 0xFF));
 						if (c_frame > (FrameBandStart[j]+i)) {
+							/*Add a frame, gotta add memory too!*/
+							len+=(Col);
+							realloc(newbuf,len);
 							Add_Fake_Frame((newbuf+j*BandCount[0]*Col+new_count*Col),
 												j,(FrameBandStart[j]+i),
 												c_frame-(FrameBandStart[j]+i),Col);
