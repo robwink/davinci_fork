@@ -1,7 +1,10 @@
-char *version = "@(#) daVinci Version #0.7";
+char *version = "@(#) daVinci Version #0.7.1";
 #include "build.h"
 
 /*
+Version 0.7.1: Tue Apr  3 13:46:19 MST 2001
+	* Version just after merging the iomedley branch in.
+
 Version 0.7: Mon Apr  2 17:57:21 MST 2001
 	* Version just before merging the iomedley branch in.
 	* iomedley branch to be merged v-0_64_1-iomedley

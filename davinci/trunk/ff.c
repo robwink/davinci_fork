@@ -1517,7 +1517,7 @@ ff_fsize(vfuncptr func, Var * arg)
 }
 
 
-#include "readline/history.h"
+#include <readline/history.h>
 
 Var *
 ff_history(vfuncptr func, Var * arg)
@@ -1545,13 +1545,14 @@ ff_history(vfuncptr func, Var * arg)
 void
 print_history(int i)
 {
+#ifdef HAVE_LIBREADLINE
     HIST_ENTRY *h;
     HISTORY_STATE *state;
     int j;
 
-#ifdef HAVE_LIBREADLINE
     state = history_get_history_state();
     if (i == -1) i = state->length;
+	if (i > state->length) i = state->length;
     for (j = state->length-i ; j < state->length ; j++) {
         h = state->entries[j];
         printf("%6d   %s\n", j+1, h->line);
@@ -1563,6 +1564,9 @@ print_history(int i)
 Var *
 ff_hedit(vfuncptr func, Var * arg)
 {
+
+#ifdef HAVE_LIBREADLINE
+
     FILE *fp;
     Var *value = NULL;
     int ac, i, j, count = 0;
@@ -1572,7 +1576,6 @@ ff_hedit(vfuncptr func, Var * arg)
 
     char *path=getenv("TMPDIR");
 
-#ifdef HAVE_LIBREADLINE
 
     Alist alist[2];
     alist[0] = make_alist("number",    ID_VAL,    NULL,     &value);
@@ -1604,7 +1607,11 @@ ff_hedit(vfuncptr func, Var * arg)
     fclose(fp);
 
     if ((editor = getenv("EDITOR")) == NULL) 
+#ifdef _WIN32
+		editor = "notepad";
+#else /* UNIX */
         editor = "/bin/vi";
+#endif /* _WIN32 */
 
     sprintf(buf, "%s %s", editor, tmp);
     system(buf);
@@ -1919,6 +1926,8 @@ ff_killchild(vfuncptr func, Var *arg)
 	pid=getpgrp();
 	pid=-pid;
 	kill(pid,SIGUSR1);
+#else
+	parse_error("Function not supported under DOS/Windows.");
 #endif /* _WIN32 */
 	return(NULL);
 }

@@ -526,7 +526,7 @@ int rf_QUBE(char *fn, Var *ob,char * val)
 	FILE *fp;
 	Var *data=NULL;
 	fp=fopen(fn,"r");
-	data=LoadISIS(fp,fn,NULL);
+	data=dv_LoadISIS(fp,fn,NULL);
 	if (data!=NULL){
 		add_struct(ob,"DATA",data);
 		fclose(fp);
@@ -806,7 +806,7 @@ int rf_IMAGE(char *fn, Var *ob,char * val)
 	FILE *fp;
 	Var *data=NULL;
 	fp=fopen(fn,"r");
-	data=LoadISIS(fp,fn,NULL);
+	data=dv_LoadISIS(fp,fn,NULL);
 	if (data!=NULL){
 		add_struct(ob,"IMAGE",data);
 		fclose(fp);
