@@ -1,0 +1,17 @@
+#! /u/randy/Project/davinci/davinci
+load_module("gui")
+a = gui.create("rowcolumn", "contain1")
+b = create(20,1,1)
+for (i=0; i<20; i = i+1) {
+   b[i] = gui.create("pushbutton", sprintf("Button %i", i+1), a);
+}
+slider = gui.create("scrollbar", "scroll", a);
+quit_button = gui.create("pushbutton", "Quit", a);
+gui.realize()
+
+d = gui.wait();
+
+while (d.widget != quit_button) {
+   printf("widget id: %i  event: %s\n", d.widget, d.event);
+   d = gui.wait();
+}
