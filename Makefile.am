@@ -27,7 +27,7 @@ SUBDIRS = @MY_SUBDIRS@ libltdl
 
 bin_PROGRAMS = davinci
 
-BUILT_SOURCES = config.h
+BUILT_SOURCES = config.h build.h
 
 noinst_LIBRARIES = $(MY_MODULES_LIB)
 
@@ -68,6 +68,10 @@ davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	products.h ufunc.h api_extern_defs.h dvio.h header.h \
 	proto.h version.h apidef.h dvio_specpr.h help.h rfunc.h \
 	xrt_print_3d.h avl.h endian_norm.h io_loadmod.h scope.h \
-	build.h ff.h isis_obj.h system.h ff_modules.h module_io.h \
+	ff.h isis_obj.h system.h ff_modules.h module_io.h \
 	toolbox.h configwin.h fft.h motif_tools.h tools.h \
 	lexer.c parser.c parser.h y_tab.h
+
+build.h: Makefile
+	echo 'char *build = "'`date`'";' > $@
+	echo 'char *builder = "'`whoami`'@'`hostname`'";' >> $@
