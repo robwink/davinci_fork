@@ -231,6 +231,32 @@ struct _vfuncptr vfunclist[] = {
     { "pzoom",   ff_pzoom,   NULL, NULL},
 #endif
 
+    { "struct",         ff_struct,             NULL , NULL},
+    { "eval",           ff_eval,               NULL , NULL},
+    { "add_struct",     ff_add_struct,         NULL , NULL},
+    { "get_struct",     ff_get_struct,         NULL , NULL},
+    { "eigen",          ff_eigen,              NULL , NULL},
+    { "covar",          ff_corr_covar_and_scp, NULL , NULL},
+    { "corr",           ff_corr_covar_and_scp, NULL , NULL},
+    { "scp",            ff_corr_covar_and_scp, NULL , NULL},
+    { "pcs",            ff_pcs,                NULL , NULL},
+
+    { "syscall",        ff_syscall,            NULL, NULL},
+    { "shell",        ff_syscall,            NULL, NULL},
+    { "basename",       ff_filename,           (void *)1, NULL},
+    { "dirname",        ff_filename,           (void *)2, NULL},
+    { "strsub",         ff_stringsubst,        NULL, NULL},
+    { "dump",           ff_dump,               NULL, NULL},
+    { "global",         ff_global,             NULL, NULL},
+    { "delete",         ff_delete,             NULL, NULL},
+    { "load_vanilla",   ff_loadvan,            NULL, NULL},
+    { "load_PDS",       ReadPDS,               NULL, NULL},
+    { "load_pds",       ReadPDS,               NULL, NULL},
+    { "rtrim",          ff_rtrim,              NULL, NULL},
+
+    { "equals",         ff_equals,             NULL, NULL},
+    { "xplot",          ff_xplot,              NULL, NULL},
+    { "killall",        ff_killchild,          NULL, NULL},
 #ifdef HAVE_LIBPROJ   
     { "projection", ff_projection,   NULL , NULL},
 #endif
