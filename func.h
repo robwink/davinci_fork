@@ -419,6 +419,7 @@ Var * per_pixel(vfuncptr func, Var *arg);
 Var * ff_exists(vfuncptr func, Var * arg);
 Var * ff_putenv(vfuncptr func, Var * arg);
 Var * ff_length(vfuncptr func, Var * arg);
+Var * ff_shade(vfuncptr func, Var * arg);
 
 Var *	ff_GSE_VIS_downshift(vfuncptr func, Var * arg);
 Var *	ff_GSE_VIS_upshift(vfuncptr func, Var * arg);
