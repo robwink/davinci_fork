@@ -27,7 +27,7 @@ interp_bilinear(float x1, float y1, Var *obj, float ignore)
 	int h = GetY(obj);
 	float ix1, iy1, ix2, iy2, px, py;
 	float xv, xv2;
-	float a1, b1, a2, b2;
+	float a1, a2, a3, a4;
 
 	if (x1 < 0 || x1 >= w || y1 < 0 || y1 >= h) return(ignore);
 
@@ -43,13 +43,49 @@ interp_bilinear(float x1, float y1, Var *obj, float ignore)
 
 	px = x1-ix1;
 	py = y1-iy1;
+	
+	a1 = extract_float(obj, cpos(ix1,   iy1, 0, obj));
+	a2 = extract_float(obj, cpos(ix2,   iy1, 0, obj));
+	a3 = extract_float(obj, cpos(ix1,   iy2, 0, obj));
+	a4 = extract_float(obj, cpos(ix2,   iy2, 0, obj));
+
+	if (a1 == ignore) {
+		if (px < 0.5) return(ignore);
+		else a1 = a2;
+	}
+	if (a2 == ignore) {
+		if (px >= 0.5) return(ignore);
+		else a2 = a1;
+	}
+	if (a3 == ignore) {
+		if (px < 0.5) return(ignore);
+		else a3 = a4;
+	}
+	if (a4 == ignore) {
+		if (px >= 0.5) return(ignore);
+		else a4 = a3;
+	}
+	if (a1 == ignore) {
+		if (py < 0.5) return(ignore);
+		else {
+			a1 = a3;
+			a2 = a4;
+		}
+	}
+	if (a3 == ignore) {
+		if (py >= 0.5) return(ignore);
+		else {
+			a3 = a1;
+			a4 = a2;
+		}
+	}
 
 	xv = (1.0-py) * 
-			((1.0-px) * extract_float(obj, cpos(ix1,   iy1, 0, obj)) + 
-		 	 (    px) * extract_float(obj, cpos(ix2,   iy1, 0, obj)))
+			(((1.0-px) * a1) + 
+		 	 ((    px) * a2))
 	    +(    py) *
-			((1.0-px) * extract_float(obj, cpos(ix1,   iy2, 0, obj)) + 
-		 	 (    px) * extract_float(obj, cpos(ix2,   iy2, 0, obj)));
+			(((1.0-px) * a3) + 
+		 	 ((    px) * a4));
 	return(xv);
 }
 
