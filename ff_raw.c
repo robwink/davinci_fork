@@ -8,7 +8,7 @@ ff_raw(vfuncptr func, Var * arg)
 	unsigned char *buf;
 	char *filename=NULL;
 	FILE *fp;
-	int x = -1,y = -1,z =-1,header;
+	int x = -1,y = -1,z =-1,header=0;
 	char *org = NULL;
 	char *format =NULL;
 	struct iom_iheader h;
