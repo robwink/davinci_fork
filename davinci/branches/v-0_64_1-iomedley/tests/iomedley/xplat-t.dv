@@ -47,7 +47,7 @@ if (rc[,1]=="notfound"){
 		exit(2)
 	}
 }
-d = load2(src_img) * 128
+d = load(src_img) * 128
 
 
 printf("Reading/comparing test formats ...\n")
@@ -58,7 +58,7 @@ for(i=1; i<=n; i+=1){
 	e = org(format(d[,,1:nplanes[i]],fmts[i]),orgs[i])
 
 	f = 0
-	f = load2(tmppfx//types[i])
+	f = load(tmppfx//types[i])
 
 	df = dim(f)
 	de = dim(e)

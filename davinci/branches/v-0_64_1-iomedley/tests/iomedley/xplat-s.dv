@@ -47,7 +47,7 @@ if (rc[,1]=="notfound"){
 		exit(2)
 	}
 }
-d = load2(src_img) * 128
+d = load(src_img) * 128
 
 printf("Writing test formats ...\n")
 

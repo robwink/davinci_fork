@@ -9,9 +9,9 @@
 define WriteAndVerify(3,3) {
 
 	system("rm "//$2//" 2>/dev/null");
-	write2($1,$2,type=$3,force=1);
+	write($1,$2,type=$3,force=1);
 
-	e=0; e=load2($2);
+	e=0; e=load($2);
 
 	di=dim($1);
 	de=dim(e);
