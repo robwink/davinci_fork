@@ -1,4 +1,4 @@
-#ifdef HAVE_CFITSIO
+#ifdef HAVE_LIBCFITSIO
 
 #include <cfitsio/fitsio.h>
 #include "parser.h"
