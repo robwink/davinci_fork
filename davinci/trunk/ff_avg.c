@@ -420,12 +420,12 @@ ff_convolve(vfuncptr func, Var * arg)
 
 	int ac;
 	Var **av;
-	Alist alist[4];
+	Alist alist[5];
 	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
 	alist[1] = make_alist("kernel",  	ID_VAL,		NULL,	&kernel);
 	alist[2] = make_alist("normalize", 	INT, NULL, &norm);
-	alist[2] = make_alist("ignore", 	FLOAT, NULL, &ignore);
-	alist[3].name = NULL;
+	alist[3] = make_alist("ignore", 	FLOAT, NULL, &ignore);
+	alist[4].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
