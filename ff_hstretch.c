@@ -66,23 +66,19 @@ ff_hstretch(vfuncptr func, Var * arg)
 }
 
 /* generate a CDF */
-static int *gauss(dnmin, dnmax, gsigma, amean)
+static float *gauss(dnmin, dnmax, gsigma, amean)
 {
-	float sigma;
-	float a;
-	float b;
-	float ss;
-	float sum;
-	int nent;
-	float anorm;
+	float sigma, a, b, ss, sum;
+	float *out;
+	int nent, i;
 
 	sigma = (dnmax - dnmin + 1) / (2 * gsigma);
 	a = 1.0 / (sqrt(2.0 * 3.14159) * sigma);
 	b = -1.0 / (2.0 * sigma*sigma);
 	nent = dnmax - dnmin + 1;
-	sum = 0.0
+	sum = 0.0;
 
-	out = calloc(sizeof(int), nent);
+	out = calloc(sizeof(float), nent);
 
 	for (i = dnmin; i <= nent; i+=1) {
 		ss = (dnmin + i - 1)-amean;
