@@ -36,3 +36,17 @@ A port of the netpbm/pbmplus suite.
 
     Function uses BILINEAR FILTERING for Smoothing.
 
+?pnm_mod destripe
+    Usage: destripe(object, detectors)
+
+    Destripe removes periodic scan lines introduced by sensor
+    mis-calibration.  This type of striping is often seen in
+    Landsat MSS data (every 6th line) and Landsat TM data
+    (every 16th line).  This function will calculate the mean
+    of lines either side of the Nth line and add the standard
+    deviation of that mean.
+
+    The number of detectors is the periodicity of the striping
+    (i.e. 6 for MSS and 16 for TM). The algorithm assumes
+    VERTICAL striping - i.e., the data should be in the aquired
+    format (horizontal strips).
