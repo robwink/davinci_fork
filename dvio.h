@@ -52,7 +52,9 @@ Var *dv_LoadAVIRIS(FILE *fp, char *filename, struct iom_iheader *s);
 Var *dv_LoadGOES(FILE *fp, char *filename, struct iom_iheader *s);
 Var *dv_LoadIMath(FILE *fp, char *filename, struct iom_iheader *s);
 Var *dv_LoadISIS(FILE *fp, char *filename, struct iom_iheader *s);
+#ifdef HAVE_LIBMAGICK
 Var *dv_LoadGFX_Image(FILE *fp, char *filename, struct iom_iheader *s);
+#endif /* HAVE_LIBMAGICK */
 Var *dv_LoadPNM(FILE *fp, char *filename, struct iom_iheader *s);
 Var *dv_LoadVicar(FILE *fp, char *filename, struct iom_iheader *s);
 Var *dv_LoadGRD(FILE *fp, char *filename, struct iom_iheader *s);
