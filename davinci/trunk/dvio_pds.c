@@ -1159,6 +1159,26 @@ int rf_QUBE(char *fn, Var *ob,char * val, int dptr)
 	fclose(fp);
 	return(1);
 }
+
+int
+rf_BitField(int *j,char **Bufs,char *tmpbuf, FIELD **f, int ptr, int row, int *size)
+{
+	int i=*j;
+/*
+** We've already loaded the entire contents of the all the bit collumns into a single value,
+** now we're going to iterate through each bit-collumn and place it (but first we step one forward
+** so that we are now on the first bit collumn
+*/
+	i++;
+	while (f[i]->bitfield != NULL) {
+		memcpy(Bufs[i]+row*size[i],(tmpbuf+ptr),size[i]); /*Copy the whole thing in we'll fix it later*/
+		i++;
+	}
+	*j=(i-1);
+}
+		
+
+
 int rf_TABLE(char *fn, Var *ob,char * val, int dptr)
 {
 	LABEL *label;
@@ -1172,6 +1192,7 @@ int rf_TABLE(char *fn, Var *ob,char * val, int dptr)
 	int step;
 	int *size;
 	int err;
+	int num_items=0;
 
 	label=LoadLabel(fn);
 	if (label == NULL){
@@ -1181,15 +1202,17 @@ int rf_TABLE(char *fn, Var *ob,char * val, int dptr)
 
 	f = (FIELD **) label->fields->ptr;
 
+	num_items=label->fields->number; /*This is a count of BOTH columns AND bit-columns*/
+
 /*Add new structure to parent ob*/
 	Data=new_struct(0);
 
 	/*Initialize a set of buffers to read in the data*/
 	
-	Bufs=(char **)calloc(label->nfields,sizeof(char *));
+	Bufs=(char **)calloc(num_items,sizeof(char *));
 	tmpbuf=(char *)calloc(label->reclen,sizeof(char));
-	size=(int *)calloc(label->nfields,sizeof(int));
-	for (j=0;j<label->nfields;j++){
+	size=(int *)calloc(num_items,sizeof(int));
+	for (j=0;j<num_items;j++){
 
 		if (f[j]->dimension)
 			size[j]=f[j]->size*f[j]->dimension;
@@ -1214,11 +1237,16 @@ int rf_TABLE(char *fn, Var *ob,char * val, int dptr)
 
 		step=0;
 
-		for(j=0;j<label->nfields;j++){
-
+		for(j=0;j<num_items;j++){
 			/*Place in the approiate buffer*/
+
 			memcpy((Bufs[j]+i*size[j]),(tmpbuf+step),size[j]);
 			step+=size[j];
+
+			if (f[j]->eformat == MSB_BIT_FIELD) 
+				rf_BitField(&j,Bufs,tmpbuf,f,(step-size[j]),i,size);
+
+		
 		}
 	}
 	close(fp);
@@ -1230,7 +1258,7 @@ int rf_TABLE(char *fn, Var *ob,char * val, int dptr)
 
 	free(tmpbuf);
 	free(size);
-	for (j=0;j<label->nfields;j++){	
+	for (j=0;j<num_items;j++){	
 		free(Bufs[j]);
 	}
 	free(Bufs);
@@ -1339,9 +1367,11 @@ Set_Col_Var(Var **Data,FIELD **f,LABEL *label,int *size, char **Bufs)
 	double fnum;
 	int step;
 	int dim;
-	
+	int num_items;
 
-	for (j=0;j<label->nfields;j++){
+	num_items=label->fields->number;
+
+	for (j=0;j<num_items;j++){
 		dim=(f[j]->dimension ? f[j]->dimension : 1);
 		step=0;
 		if (f[j]->scale)
