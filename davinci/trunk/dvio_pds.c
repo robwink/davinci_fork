@@ -1,7 +1,7 @@
 #include "header.h"
 #include "parser.h"
 #include "io_lablib3.h"
-
+#include "endian_norm.h"
 #include <ctype.h>
 
 #define MAXOBJ 10	
