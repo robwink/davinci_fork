@@ -15,7 +15,7 @@
 /*      This define and include if for the projection library,
         limiting the build to just on projection type           */
 
-#define PJ_LIST_H "my_list.h"
+/* #define PJ_LIST_H "my_list.h" */
 
 
 #ifdef __cplusplus
@@ -52,8 +52,8 @@ Var *ff_projection(vfuncptr func, Var * arg)
 
 	char *options[]={"MARS","EARTH","SPHERE",NULL};
 
-	UV	pj_data;
-	PJ	*ref;
+	projUV	pj_data;
+	projPJ	*ref;
 
         int ac;
         Var **av;
