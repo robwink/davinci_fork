@@ -8,6 +8,7 @@ Version 0.56a Thu Mar 23 14:45:30 MST 2000
    + scp() - Sum of squares and cross products matrix
    + eigen() - Eigen Values & Vectors of Real Symmetric Matrices
    + Test cases and data for testing the above functions
+	+ HDF read/write for textarray objects
 
 Version 0.56: Wed Mar 22 23:46:06 MST 2000
 	+ undid ufunc modifications
@@ -23,7 +24,6 @@ Version 0.55:
 	+ global()
 	+ dump()
 	+ structures: { }, [], add_struct(), get_struct()
-	+ HDF read/write
 	* Added new object: text_array; multiple lines of text and support functions:
 	- array subsetting
 	- line by line grep search
