@@ -17,9 +17,9 @@ INSTALL_DATA = ${INSTALL} -m 644
 XINCLUDES=-I/usr/openwin/include $(XRTINCLUDE)
 XLIBS=-L/usr/openwin/lib $(XRTLIBS)
 
-CPPFLAGS=-I$(srcdir)  -I/usr/local/include -I/usr/openwin/include -I/usr/openwin/include/X11 -I/usr/include/X11 -Ilib -Iiomedley
-CFLAGS=$(XINCLUDES) -g -O2 -O  
-LDFLAGS= -L/usr/openwin/lib -L${exec_prefix}/lib -L/usr/local/lib -L/usr/openwin/lib -R/usr/openwin/lib 
+CPPFLAGS=-I$(srcdir)  -I/usr/include/X11 -Ilib -Iiomedley
+CFLAGS=$(XINCLUDES) -g -O2  
+LDFLAGS= -L/usr/openwin/lib -L${exec_prefix}/lib 
 
 XRTINCLUDE=  
 XRTLIBS = 
@@ -27,7 +27,7 @@ XRTLIBS =
 
 CC     = gcc
 DEFS   = -DHAVE_CONFIG_H 
-LIBS   =  -L. -Liomedley -lmodsupp -liomedley $(XLIBS) -lplplotFX -lMagick -ltiff -lproj -ltermcap -ljpeg -lmsss_vis -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -lreadline -L/opt/local/src/ImageMagick-4.2.9/magick -lMagick -ltiff -ljpeg -lpng -ldpstk -ldps -lXext -lXt -lX11 -lsocket -lnsl -lz -lm -ldl
+LIBS   =  -L. -Liomedley -lmodsupp -liomedley $(XLIBS) -lplplotFX -ltiff -lproj -ltermcap -ljpeg -lmsss_vis -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -lreadline -ldl
 AR     = ar
 RANLIB = ranlib
 
