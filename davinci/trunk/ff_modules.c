@@ -976,6 +976,13 @@ locate_dv_module(
 	/*
 	** Always make a copy of the original string. We are going
 	** to do some destructive stuff on it.
+	** Q: since when does making a copy of a pointer to a string make
+	**    a copy of the string itself?  If we're doing strtok games on
+	**    dv_mod_path or its aliases down the call chain, we are playing
+	**    a dangerous game indeed since getenv() returns a pointer to the
+	**    actual environment!  I don't have time to fully audit this code
+	**    but it looks EXTREMELY dangerous to me, offhand. -rsk 9 May 2002
+
 	*/
 
 	if (dv_mod_path == NULL){

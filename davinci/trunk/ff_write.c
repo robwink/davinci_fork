@@ -109,6 +109,10 @@ ff_write(vfuncptr func, Var *arg)
     }
 #endif
 
+#ifdef BUILD_MODULE_SUPPORT
+    else if (iomod_handler_for_type(type)) write_to_io_module(ob, filename, type, force);
+#endif
+
 #ifdef HAVE_LIBMAGICK
     // else if (dvio_ValidGfx(type, GFX_type))    dv_WriteGFX_Image(ob, filename, force, GFX_type);
     else if (1) paramdvWriteImage(ob, filename, type, force);

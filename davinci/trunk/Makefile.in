@@ -48,7 +48,7 @@ CONFIG=Makefile.in configure.in configure config.guess config.sub config.h.in in
 DIST=README README_FF *.[chyl] ${CONFIG}
 DISTDIR=tests docs 
 
-MODULE_SUPP_OBJS=ff_modules.o module_io.o
+MODULE_SUPP_OBJS=ff_modules.o module_io.o io_loadmod.o
 
 MOD_SUPP_LIB=libmodsupp.a
 MOD_SUPP_LIB_OBJS=error.o ff_struct.o darray.o avl.o shared_globals.o

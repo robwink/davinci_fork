@@ -105,7 +105,9 @@ ff_load(vfuncptr func, Var * arg)
 #ifdef HAVE_LIBHDF5
         if (input == NULL)    input = LoadHDF5(fname);
 #endif
-
+#ifdef BUILD_MODULE_SUPPORT
+	if (input == NULL)    input = read_from_io_module(fp);
+#endif
 		/* Libmagic should always be the last chance */
 #ifdef HAVE_LIBMAGICK
         if (input == NULL)

@@ -246,6 +246,9 @@ struct _vfuncptr vfunclist[] = {
     { "load_module",    ff_load_dv_module,     NULL, NULL},
     { "unload_module",  ff_unload_dv_module,   NULL, NULL},
     { "list_modules",   ff_list_dv_modules,    NULL, NULL},
+    { "insmod", ff_insmod, NULL, NULL},
+    { "rmmod", ff_rmmod, NULL, NULL},
+    { "lsmod", ff_lsmod, NULL, NULL},
 #endif /* BUILD_MODULE_SUPPORT */
 
 /* add additional functions here.  Don't forget the trailing comma. */

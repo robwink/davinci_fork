@@ -673,7 +673,12 @@ MODULE_TYPE int paramdvWriteImage(Var * image, char * fname, char *itype, int fo
   /* Parametric write function, to divorce argument parsing from the
      actual file writing tasks
   */
-  
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is currently supported.");
+    goto error_exit;
+  }
+    
   /* check file existence. */
   if (stat(fname, &sbuf) == -1) {
     switch (errno) {
@@ -774,11 +779,6 @@ MODULE_TYPE Var * dvWriteImage(vfuncptr f, Var *args)
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
-    parse_error("Only byte data is currently supported.");
-    goto error_exit;
-  }
-  
   rtncode = paramdvWriteImage(image, fname, itype, force);
  error_exit:
   return newInt(rtncode);

@@ -206,6 +206,9 @@
 /* Define if you have the termcap library (-ltermcap).  */
 #undef HAVE_LIBTERMCAP
 
+/* Define if you have the ltdl library (-lltdl).  */
+#undef HAVE_LIBLTDL
+
 /* Define if you have the tiff library (-ltiff).  */
 #undef HAVE_LIBTIFF
 
