@@ -53,3 +53,6 @@ dvmagick.dvm:   dvmagick.o Makefile
 
 dvmagick.o: dvmagick.c ../parser.h
 	$(CC) -c $(IMCFLAGS) $(IMCPPFLAGS) $(DEFS) $< -o $@
+
+dvmagick.c: ../dvmagick.c
+	cp ../dvmagick.c .
