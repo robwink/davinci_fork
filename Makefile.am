@@ -74,4 +74,4 @@ davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
 
 build.h: Makefile
 	echo 'char *build = "'`date`'";' > $@
-	echo 'char *builder = "'`whoami`'@'`hostname`'";' >> $@
+	echo 'char *builder = "'`id | sed -e 's/[^(]*(\([^)]*\)).*/\1/'`'@'`hostname`'";' >> $@
