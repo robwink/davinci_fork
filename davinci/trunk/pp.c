@@ -53,8 +53,8 @@ V_DUP(Var *v)
 	case ID_VSTRUCT:
 		{
 			int i;
-			V_STRUCT(r).names = calloc(V_STRUCT(v).count, sizeof(char *));
-			V_STRUCT(r).data = calloc(V_STRUCT(v).count, sizeof(Var *));
+			V_STRUCT(r).names = (char **)calloc(V_STRUCT(v).count, sizeof(char *));
+			V_STRUCT(r).data = (Var **) calloc(V_STRUCT(v).count, sizeof(Var *));
 			for (i = 0 ; i < V_STRUCT(r).count ; i++) {
 				V_STRUCT(r).data[i] = V_DUP(V_STRUCT(v).data[i]);
 				V_STRUCT(r).names[i] = strdup(V_STRUCT(v).names[i]);
@@ -136,6 +136,7 @@ pp_print(Var *v)
     return(v);
 }
 
+void
 pp_print_struct(Var *v, int indent)
 {
     extern int SCALE;
@@ -143,8 +144,8 @@ pp_print_struct(Var *v, int indent)
     Var *s;
     char bytes[32];
 	
-    if (v == NULL) return(v);
-    if (VERBOSE == 0) return(v);
+    if (v == NULL) return;
+    if (VERBOSE == 0) return;
 
 	if (V_NAME(v)) printf("%s", V_NAME(v));
 	if (indent == 0) {
@@ -178,8 +179,7 @@ pp_print_struct(Var *v, int indent)
 			} else {
 				sprintf(bytes, "%d", NBYTES(V_FORMAT(s))*V_DSIZE(s));
 				commaize(bytes);
-				printf("%s:\t%dx%dx%d array of %s, %s format [%s bytes]\n",
-					   V_NAME(s) ? V_NAME(s) : "", 	
+				printf("\t%dx%dx%d array of %s, %s format [%s bytes]\n",
 					   GetSamples(V_SIZE(s),V_ORG(s)),
 					   GetLines(V_SIZE(s),V_ORG(s)),
 					   GetBands(V_SIZE(s),V_ORG(s)),

@@ -185,6 +185,7 @@ void squash_spaces(char *s);
  * print a help message 
  * also print available subtopics, if subtopics is TRUE
  */
+int
 help(
      char *keyword,     /* on this topic */
      char *path,        /* from this file */

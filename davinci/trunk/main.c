@@ -299,27 +299,26 @@ process_streams(void)
 {
     extern FILE *ftos;
     extern int nfstack;
+	char buf[1024];
+	extern int pp_line;
     /*
     ** Process anything that has been pushed onto the input stream stack.
     **/
-    while (nfstack != 0) {
-        parse_stream(ftos);
-        /* fclose(ftos); */
+
+	while (nfstack) {
+		while (fgets(buf, 1024, ftos) != NULL) {
+			pp_line++;
+			parse_buffer(buf);
+		}
 		pop_input_file();
     }
+
+	pp_line = 0;
 }
 
 void
 parse_stream(FILE *fp)
 {
-	char buf[1024];
-	extern int pp_line;
-
-	pp_line = 0;
-    while(fgets(buf, 1024, fp) != NULL) {
-		pp_line++;
-        parse_buffer(buf);
-    }
 }
 
 Var *curnode;
@@ -369,7 +368,7 @@ quit(void)
     /**
     ** clean up temporary directory
     **/
-    sprintf(cmd, "rm -rf %s &", path + 7);
+    sprintf(cmd, "rm -rf %s &", path);
     system(cmd);
     exit(1);
 }

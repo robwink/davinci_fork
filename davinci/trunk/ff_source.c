@@ -31,7 +31,7 @@ push_input_stream(FILE *fptr)
 void
 push_input_file(char *name)
 {
-    FILE *fptr;
+    FILE *fptr = NULL;
     char *fname;
 
     if (name == NULL) {

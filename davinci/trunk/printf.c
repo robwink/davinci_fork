@@ -69,7 +69,7 @@ static int	 getint __P((int *));
 static int	 getstr __P((char **));
 static char	*mklong __P((char *, int));
 static void	 usage __P((void));
-static int asprintf(char **, char const *, ...);
+static int asprintf(char **, char *, ...);
 
 static Var *gv;
 char *do_sprintf(vfuncptr func, Var *arg);
@@ -535,13 +535,13 @@ int_vasprintf (char **result, char *format, va_list args)
 }
 
 int
-vasprintf (char **result, const char *format, va_list args)
+vasprintf (char **result, char *format, va_list args)
 {
     return int_vasprintf (result, format, args);
 }
 
 int
-asprintf(char **str, char const *fmt, ...)
+asprintf(char **str, char *fmt, ...)
 {
     int ret;
     va_list ap;

@@ -52,6 +52,7 @@ char fht_version[] = "Brcwl-Hrtly-Ron-dbld";
 #define SQRT2_2   0.70710678118654752440084436210484
 #define SQRT2   2*0.70710678118654752440084436210484
 
+int
 mayer_fht(REAL *fz, int n)
 {
 	REAL a, b;
@@ -115,7 +116,7 @@ mayer_fht(REAL *fz, int n)
 		}
 	}
 	if (n < 16)
-		return;
+		return 0;
 
 	do {
 		REAL s1, c1;
@@ -191,9 +192,10 @@ mayer_fht(REAL *fz, int n)
 		}
 		TRIG_RESET(k, c1, s1);
 	} while (k4 < n);
+        return 0;
 }
 
-
+int
 mayer_ifft(int n, double *real, double *imag)
 {
 	double a, b, c, d;
@@ -215,8 +217,10 @@ mayer_ifft(int n, double *real, double *imag)
 		real[i] = (q - t) * 0.5;
 		real[j] = (q + t) * 0.5;
 	}
+        return 0;
 }
 
+int
 mayer_realfft(int n, double *real)
 {
 	double a, b, c, d;
@@ -228,8 +232,10 @@ mayer_realfft(int n, double *real)
 		real[j] = (a - b) * 0.5;
 		real[i] = (a + b) * 0.5;
 	}
+        return 0;
 }
 
+int
 mayer_fft(int n, double *real, double *imag)
 {
 	double a, b, c, d;
@@ -251,8 +257,10 @@ mayer_fft(int n, double *real, double *imag)
 	}
 	mayer_fht(real, n);
 	mayer_fht(imag, n);
+        return 0;
 }
 
+int
 mayer_realifft(int n, double *real)
 {
 	double a, b, c, d;
@@ -264,4 +272,5 @@ mayer_realifft(int n, double *real)
 		real[i] = (a + b);
 	}
 	mayer_fht(real, n);
+        return 0;
 }

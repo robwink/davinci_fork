@@ -438,7 +438,7 @@ char *strdup(const char *s1)
 /* #ifndef HAVE_STRDUP */
 /* #endif */
 
-char *strndup(const char *s1, int len)
+char *strndup(char *s1, int len)
 {
         char *s2;
         if (s1 == NULL) s1 = "";

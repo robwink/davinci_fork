@@ -1,19 +1,26 @@
 //#include "config.h"
+
 #ifdef __cplusplus
-extern "C" char *readline(char *);
-extern "C" void *add_history(char *);
-extern "C" void rl_callback_handler_install(char *, void (*)(char *));
-extern "C" struct _hist_state* history_get_history_state(void);
-extern "C" void rl_callback_read_char ();
-extern "C" int yywrap ( void );
+extern "C" {
 #endif
+char *readline(char *);
+/* void *add_history(char *); */
+void rl_callback_handler_install(char *, void (*)(char *));
+struct _hist_state* history_get_history_state(void);
+void rl_callback_read_char ();
+int yywrap ( void );
 
 #include "hdf5.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 struct yy_buffer_state;
 void yy_delete_buffer ( struct yy_buffer_state *b );
 struct yy_buffer_state *yy_scan_string( const char *yy_str );
 void yy_switch_to_buffer ( struct yy_buffer_state *new_buffer);
+
 
 
 void yyerror(char *s);
@@ -51,6 +58,7 @@ Var *pp_get_att (Var *, Var *, Var *);  /* get value of attribute */
 Var *pp_parens (Var *);                 /* do parens processing (set hist) */
 Var *pp_set_att (Var *, Var *, Var *, Var *);   /* set value of attribute */
 Var *pp_set_where(Var *, Var *, Var *);
+Var * pp_set_struct(Var *a, Var *b, Var *exp);
 Var *pp_shellArgs(Var *);               /* find shell command line args */
 Var *pp_argv(Var *, Var *);
 Var *pp_mk_rstep(Var *r1, Var *r2);		/* add a step value to ranges */
@@ -59,10 +67,12 @@ Var *pp_usage(Var *);
 void pp_set_cvar (Var *, Var *);	/* set control variable */
 Var *pp_get_cvar (char *);		/* get control variable */
 Var * pp_shell(char *cmd);
+void pp_print_struct(Var *v, int indent);
 
 Var *V_DUP (Var *);
 Var *set_array (Var *, Var *, Var *);
 Var *extract_array (Var *, Range *);
+Var ** find_struct(Var *a, Var *b);
 
 /* symbol.c */
 Var *get_sym (char *name);	/* retrieve named Sym from table */
@@ -83,6 +93,7 @@ int __BIP2BSQ (Var * s1, Var * s2, int i);
 int __BIP2BIL (Var * s1, Var * s2, int i);
 int __BIP2BIP (Var * s1, Var * s2, int i);
 int cpos(int x, int y, int z, Var *v);
+void xpos(int i, Var *v, int *x, int *y, int *z);
 
 /* pp_math.h */
 int extract_int (Var * v, int i);
@@ -136,6 +147,8 @@ Var *LoadGFX_Image(char *filename);
 Var *ff_XImage_Display(vfuncptr func, Var * arg);
 #endif
 int LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var);
+Var * LoadVanilla(char *filename);
+Var * LoadHDF5(char *filename);
 
 int WriteRaw(Var *, FILE *, char *);
 int WriteGRD(Var *, FILE *, char *);
@@ -148,8 +161,10 @@ int WriteVicar(Var *, FILE *, char *);
 int WriteAscii(Var *, FILE *, char *);
 int WriteERS(Var *, FILE *, char *);
 int WriteIMath(Var *s, FILE *fp, char *filename);
+void WriteHDF5(hid_t parent, char *name, Var *v);
+
 #ifdef HAVE_LIBMAGICK
-void iriieGFX_Image(Var *ob,char *filename,char *GFX_type);
+void WriteGFX_Image(Var *ob,char *filename,char *GFX_type);
 #endif
 int is_AVIRIS(FILE *);
 int is_GRD(FILE *);
@@ -316,8 +331,11 @@ int cmp_double(const void *, const void *);
 void log_line(char *str);
 int make_args(int *ac, Var ***av, vfuncptr func, Var *args);
 int parse_args(int ac, Var **av, Alist *alist);
-int print_history(int i);
+void print_history(int i);
 
 void xfree(void *);
 void save_ufunc(char *filename);
 void vax_ieee_r(float *from, float *to);
+
+char *strndup(char *, int);
+
