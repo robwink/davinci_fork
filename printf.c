@@ -298,11 +298,13 @@ do_sprintf(vfuncptr func, Var *arg)
     /* NOTREACHED */
 }
 
+
 static char *
 mklong(char *str, int ch)
 {
-    static char copy[64];
+    static char copy[1024];
     int len;
+
 
     len = strlen(str) + 2;
     memmove(copy, str, len - 3);
@@ -377,6 +379,8 @@ getchr(char *p)
 {
     Var *v = gv, *e;
 
+    gv = gv->next;
+
     if (v == NULL) return(1);
     if ((e = eval(v)) == NULL) {
         sprintf(error_buf, "Variable not found: %s", V_NAME(v));
@@ -384,8 +388,6 @@ getchr(char *p)
         return(1);
     }
     v = e;
-
-    gv = gv->next;
 
     if (V_TYPE(v) == ID_VAL) {
         *p = extract_int(v, 0);
@@ -399,6 +401,8 @@ static int
 getstr(char **ip)
 {
     Var *v = gv, *e;
+
+    gv = gv->next;
  
     if (v == NULL) return(1);
     if ((e = eval(v)) == NULL) {
@@ -407,7 +411,6 @@ getstr(char **ip)
         return(1);
     }
     v = e;
-    gv = gv->next;
     
     if (V_TYPE(v) != ID_STRING) {
         parse_error("sprintf: Expected a string");
@@ -422,6 +425,8 @@ getint(int *ip)
 {
     Var *v = gv, *e;
  
+    gv = gv->next;
+
     if (v == NULL) return(1);
     if ((e = eval(v)) == NULL) {
         sprintf(error_buf, "Variable not found: %s", V_NAME(v));
@@ -429,7 +434,6 @@ getint(int *ip)
         return(1);
     }
     v = e;
-    gv = gv->next;
 
     if (V_TYPE(v) != ID_VAL) {
         sprintf(error_buf, "sprintf: Expected a value");
@@ -444,6 +448,8 @@ static int
 getdouble(double *ip)
 {
     Var *v = gv, *e;
+
+    gv = gv->next;
  
     if (v == NULL) return(0);
     if ((e = eval(v)) == NULL) {
@@ -452,7 +458,6 @@ getdouble(double *ip)
         return(1);
     }
     v = e;
-    gv = gv->next;
 
     if (V_TYPE(v) != ID_VAL) {
         sprintf(error_buf, "sprintf: Expected a value");

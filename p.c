@@ -614,6 +614,8 @@ find_struct(Var *a, Var *b)
 }
 
 
+#if 0
+
 Var *
 byte_compile(Var * n)
 {
@@ -621,27 +623,60 @@ byte_compile(Var * n)
     Var *p1 = NULL, *p2 = NULL, *p3 = NULL;
     Scope *scope = scope_tos();
     int type;
+	int i;
 
     if (n == NULL) return (NULL);
     type = V_TYPE(n);
 
     /**
-     ** These are not nodes, but merely vals.  push 'em. and return; 
+     ** These are not nodes
      **/
     switch (type) {
         case ID_IVAL:
         case ID_RVAL:
-        case ID_ID:
-        case ID_UNK:
         case ID_STRING:
+			/*
+			** An immediate value.  Store in the constants table and
+			** set up this node to point to it's location
+			*/
+			b = newBnode();
+			i = store_constant(n);
+			b->type = CONSTANT;
+			b->value = i;
+            return(b);
+
+        case ID_UNK:
+			/*
+			** there are two possibilities:
+			**    This is a variable
+			**    This is an enumeration value
+			** Either way, allocate a unique spot for it in the symbol table
+			*/ 
+			b = newBnode();
+			i = store_id(n);
+			b->type = ID;
+			b->value = i;
+			return(b);
+
+        case ID_ID:
         case ID_VAL:
-            return (NULL);
-    }
+			/*
+			** These should never occur
+			*/
+			fprintf(stderr, "This case should not occur.\n");
+			return(NULL);
+	}
 
     left = V_NODE(n)->left;
     right = V_NODE(n)->right;
 
     if (type == ID_ARGV) {
+		/*
+		** One of:
+		**      $1, $2   - command line argument
+		**      $NAME    - environment variable
+		**      $ARGV[i] - command line argument
+		*/
 		if (left) {
 			evaluate(left);
 			p1 = pop(scope);
@@ -653,6 +688,8 @@ byte_compile(Var * n)
 		}
         push(scope, pp_argv(p1, p2));
         return (NULL);
+
+		emit(type, 
     }
 
 
@@ -673,7 +710,7 @@ byte_compile(Var * n)
         case ID_POW:
             p1 = byte_compile(left);
             p2 = byte_compile(right);
-            push(scope, pp_math(p1, type, p2));
+			emit(type, new_temp());
             break;
 
 		case ID_INC:
@@ -978,3 +1015,5 @@ byte_compile(Var * n)
     }
     return (NULL);
 }
+
+#endif

@@ -497,7 +497,8 @@ ff_global(vfuncptr func, Var * arg)
 	if (e != NULL) {
         dd_put(scope_tos(), V_NAME(e), e);
 	} else {
-		parse_error("%s: variable %s not found", func->name, V_NAME(arg));
+        char *zero = (char *)calloc(1,1);
+        dd_put(scope_tos(), V_NAME(arg), newVal(BSQ, 1,1,1, BYTE, zero));
 	}
 	return(NULL);
 }
