@@ -200,9 +200,10 @@ struct _vfuncptr vfunclist[] = {
     { "pcs",        ff_pcs,         NULL , NULL},
 
     { "histogram",  ff_histogram,       NULL , NULL},
+    { "hstats",     ff_hstats,          NULL , NULL},
     { "rgb2hsv",    ff_rgb2hsv,         NULL , NULL},
     { "hsv2rgb",    ff_hsv2rgb,         NULL , NULL},
-    { "rgb",        ff_rgb,      NULL , NULL},
+    { "rgb",        ff_rgb,             NULL , NULL},
 
     { "entropy",        ff_entropy,     NULL , NULL},
 
