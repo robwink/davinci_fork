@@ -14,7 +14,7 @@ AC_PATH_X
 
 
 dnl Checks for libraries.
-old_LDFLAGS=$LDFLAGS
+old_LDFLAGS="$LDFLAGS"
 if test "$x_libraries" != ""
 then
 	LDFLAGS="$LDFLAGS -L$x_libraries"
@@ -24,7 +24,6 @@ AC_CHECK_LIB(m, sqrt)
 AC_CHECK_LIB(X11, XOpenDisplay)
 AC_CHECK_LIB(Xt, XtToolkitInitialize)
 AC_CHECK_LIB(Xext,XShmPutImage)
-LDFLAGS=$old_LDFLAGS
 
 AC_CHECK_LIB(jpeg,jpeg_simple_progression)
 AC_CHECK_LIB(termcap, tgetent)
@@ -98,8 +97,19 @@ AC_CHECK_FUNCS(mkdir putenv select strdup strspn strstr strtod strtol strtoul)
 AC_CHECK_FUNCS(index rindex getdtablesize getwd usleep strtoul basename)
 AC_CHECK_FUNCS(dirname bcopy bcmp bzero)
 
-XINCLUDES=-I$x_includes
-XLIBS=-L$x_libraries
+if test "$x_includes" != ""
+then
+	XINCLUDES=-I$x_includes
+else
+	XINCLUDES=''
+fi
+
+if test "$x_libraries" != ""
+then
+	XLIBS=-L$x_libraries
+else
+	XLIBS=''
+fi
 
 AC_SUBST(READLINE_OBJ)
 AC_SUBST(READLINE_LIB)

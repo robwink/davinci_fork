@@ -1,5 +1,5 @@
 #include "parser.h"
-
+#ifdef HAVE_LIBPROJ
 /**
  ** projection()
 **/
@@ -15,7 +15,7 @@
 /*      This define and include if for the projection library,
         limiting the build to just on projection type           */
 
-#define PJ_LIST_H "/user/east/asbms/mapping/Stereo/my_list.h"
+#define PJ_LIST_H "my_list.h"
 #include "projects.h"
 
 Var *ff_projection(vfuncptr func, Var * arg)
@@ -202,3 +202,5 @@ xmin=pj_data.v;
 
 	return(newVal(BIP,z,newX,newY,format,data));
 }
+
+#endif
