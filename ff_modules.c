@@ -93,8 +93,7 @@ ff_load_dv_module(
 	alist[0] = make_alist("mod", ID_STRING, NULL, &module_name);
 	alist[1].name = NULL;
 
-	make_args(&ac, &av, func, args);
-	if (parse_args(ac, av, alist)){
+	if (parse_args(func, args, alist) == 0) {
 		parse_error("%s(): argument parsing failed.", func->name);
 		return NULL;
 	}
@@ -151,8 +150,7 @@ ff_unload_dv_module(
 	alist[0] = make_alist("mod", ID_STRING, NULL, &module_name);
 	alist[1].name = NULL;
 
-	make_args(&ac, &av, func, args);
-	if (parse_args(ac, av, alist)){
+	if (parse_args(func, args, alist) == 0) {
 		parse_error("%s(): argument parsing failed.", func->name);
 		return NULL;
 	}

@@ -21,13 +21,13 @@ int continuation = 0;
 int in_comment = 0;
 int in_string = 0;
 
-extern int debug; /* moved to shared_globals.c */
+int debug = 0;
 char pp_input_buf[8192];
 FILE *lfile = NULL;
 FILE *pfp = NULL;
 
 int SCALE = 6;
-extern int VERBOSE; /* moved to shared_globals.c */
+int VERBOSE = 2;
 int DEPTH = 2;
 
 int allocs = 0;
@@ -77,9 +77,7 @@ jmp_buf env;
 
 void user_sighandler(int data)
 {
-#ifndef _WIN32
    signal(SIGUSR1, user_sighandler);
-#endif /* _WIN32 */
 }
 
 void
@@ -98,13 +96,11 @@ sighandler(int data)
         signal(SIGSEGV,SIG_DFL);
         break;
 
-#ifndef _WIN32
     case (SIGBUS):
     	sprintf(cmd, "rm -rf %s &", path);
     	system(cmd);
         signal(SIGBUS,SIG_DFL);
         break;
-#endif /* _WIN32 */
 
     case (SIGINT):
 
@@ -137,7 +133,7 @@ main(int ac, char **av)
 	
     s = new_scope();
 
-#ifndef _WIN32
+#ifndef __MSDOS__
     signal(SIGPIPE, SIG_IGN);
     signal(SIGINT, sighandler); 
     signal(SIGSEGV, sighandler);
@@ -242,7 +238,7 @@ main(int ac, char **av)
     fake_data();
 
     if (interactive) {
-#ifdef _WIN32  
+#ifdef __MSDOS__  
         extern Init_DLL(void);  
     
         if(Init_DLL()){  
@@ -271,7 +267,7 @@ main(int ac, char **av)
     /**
     ** set up temporary directory
     **/
-#ifdef _WIN32
+#ifdef __MSDOS__
     {  
         char tmpbuf[128];  
         _strtime( tmpbuf );  
@@ -282,10 +278,12 @@ main(int ac, char **av)
 #else
     if ((p = getenv("TMPDIR")) == NULL) {
         sprintf(path, "TMPDIR=%sdv_%d", P_tmpdir, getpid());
+	} else {
+        sprintf(path, "TMPDIR=%sdv_%d", getenv("TMPDIR"), getpid());
+	}
 
-        mkdir(path + 7, 0777);
-        putenv(path);
-    }
+	mkdir(path + 7, 0777);
+	putenv(path);
 #endif
 
     /*
@@ -304,7 +302,7 @@ void get_file_input(XtPointer client_data, int *fid, XtInputId *id)
 #endif
 
 
-#if defined(INCLUDE_API) && defined(HAVE_LIBXM)
+#ifdef INCLUDE_API
 #ifdef __cplusplus
 extern "C" {
     extern SetTopLevel(Widget *);
@@ -389,7 +387,7 @@ void lhandler(char *line)
 
         parse_buffer(buf);
 
-#ifndef _WIN32
+#ifndef __MSDOS__
         setjmp(env);
 #endif
 
@@ -455,8 +453,8 @@ parse_buffer(char *buf)
     Var *node;
 	extern char *pp_str;
 
-    parent_buffer = (void *)get_current_buffer();
-    buffer = (void *)yy_scan_string(buf);
+    parent_buffer = get_current_buffer();
+    buffer = yy_scan_string(buf);
 	pp_str = buf;
 
     while(i = yylex()) {
@@ -497,8 +495,8 @@ eval_buffer(char *buf)
     void *buffer;
     Var *node;
 
-    parent_buffer = (void *)get_current_buffer();
-    buffer = (void *)yy_scan_string(buf);
+    parent_buffer = get_current_buffer();
+    buffer = yy_scan_string(buf);
 
     while(i = yylex()) {
         /*
@@ -510,7 +508,7 @@ eval_buffer(char *buf)
         if (j == 1 && curnode != NULL) {
             node = curnode;
             evaluate(node);
-            /* v = pop(scope_tos()); */
+            /* // v = pop(scope_tos()); */
             free_tree(node);
         }
     }
@@ -536,7 +534,7 @@ quit(void)
     /**
     ** clean up temporary directory
     **/
-#ifndef _WIN32 /*Windows will cleanup it's own temp directory */
+#ifndef __MSDOS__ /*Windows will cleanup it's own temp directory */
     sprintf(cmd, "rm -rf %s &", path);
     system(cmd);
 #endif
@@ -593,14 +591,14 @@ fake_data()
         }
     }
 
-#ifndef _WIN32
+#ifndef __MSDOS__
     srand48(getpid());
 #else    
     srand( (unsigned int) time( NULL ) ); 
 #endif
     
     for (i = 0; i < 12; i++) {
-#ifndef _WIN32
+#ifndef __MSDOS__
         ((float *) V_DATA(v))[i + 12] = drand48();
 #else
         ((float *) V_DATA(v))[i + 12] = (float )rand();
@@ -780,3 +778,18 @@ dv_complete_func(char *text, int start, int end)
 }
 
 
+#ifndef HAVE_LIBREADLINE
+
+void add_history () { }
+char *readline(char *prompt) 
+{
+	char buf[256];
+	fputs(prompt, stdout); 
+	fflush(stdout);
+	if (fgets(buf, 256, stdin) != NULL) {
+		return(strdup(buf));
+	} else {
+		return(NULL);
+	}
+}
+#endif
