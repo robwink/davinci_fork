@@ -89,4 +89,9 @@ int dvio_ValidGfx(char *type,char *GFX_type);
 */
 char *dv_locate_file(char *fname);
 
+/*
+** Set the verbosity of iomedley.
+*/
+void dv_set_iom_verbosity();
+
 #endif /* _DVIO_H_ */

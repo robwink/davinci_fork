@@ -1,5 +1,6 @@
 /********************************** pp.c *********************************/
 #include "parser.h"
+#include "dvio.h"
 
 /**
  ** pp_emit_prompt()    - spit out prompt if interactive 
@@ -331,7 +332,7 @@ pp_set_var(Var *id, Var *range, Var *exp)
     /**
      ** Check for reserved variables and verify their type.
      **/
-    if (!strcmp(V_NAME(exp), "verbose")) VERBOSE = V_INT(exp);
+    if (!strcmp(V_NAME(exp), "verbose")){ VERBOSE = V_INT(exp); dv_set_iom_verbosity(); }
     if (!strcmp(V_NAME(exp), "scale")) SCALE = V_INT(exp);
     if (!strcmp(V_NAME(exp), "debug")) debug = V_INT(exp);
     if (!strcmp(V_NAME(exp), "depth")) DEPTH = V_INT(exp);

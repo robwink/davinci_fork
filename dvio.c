@@ -259,3 +259,12 @@ dv_locate_file(char *fname)
     }
     return (NULL);
 }
+
+
+void
+dv_set_iom_verbosity()
+{
+	if (VERBOSE == 1){ iom_VERBOSITY = 5; }
+	else if (VERBOSE >= 2){ iom_VERBOSITY = 10; }
+	else { iom_VERBOSITY = VERBOSE; }
+}

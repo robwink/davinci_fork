@@ -1,7 +1,10 @@
-char *version = "@(#) daVinci Version #0.7.1";
+char *version = "@(#) daVinci Version #0.7.2";
 #include "build.h"
 
 /*
+Version 0.7.2: Thu Apr 12 13:45:00 MST 2001
+	* Added verbosity control to iomedley.
+
 Version 0.7.1: Tue Apr  3 13:46:19 MST 2001
 	* Version just after merging the iomedley branch in.
 	* Made modules code conditional as well.
