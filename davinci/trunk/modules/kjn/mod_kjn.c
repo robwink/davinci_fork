@@ -1,5 +1,11 @@
 #include "parser.h"
 #include "ff_modules.h"
+#include "dvio.h"
+
+typedef struct {
+  float *emiss;
+  float *maxbtemp;
+} emissobj;
 
 static float *smoothy(float *obj, float *kernel, int ox, int oy, int oz, int kx, int ky, int kz, int norm, float ignore);
 static Var *do_smoothy(Var *obj, Var *kernel, int norm, float ignore, int kernreduce);
@@ -8,6 +14,9 @@ static int *do_corners(Var *pic_a, float nullval);
 static int *sstretch(float *data, float ignore, int x, int y, int z);
 static int *rdr_coreg(int *pic, int x, int y, int z, int b10);
 static float *deplaid(float *data, int x, int y, int z, float nullval, int b10);
+static float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval);
+static float *tb2rad(float *btemp, Var *temp_rad, int *bandlist, int bx, float nullval, int x, int y);
+static emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1, int b2);
 
 static Var *kjn_y_shear(vfuncptr, Var *);
 static Var *kjn_kfill(vfuncptr, Var *);
@@ -18,12 +27,13 @@ static Var *kjn_sawtooth(vfuncptr, Var *);
 static Var *kjn_deplaid(vfuncptr, Var *);
 static Var *kjn_rectify(vfuncptr, Var *);
 static Var *kjn_coreg(vfuncptr, Var *);
-static Var *kjn_coreg2(vfuncptr, Var *);
-static Var *kjn_rdr_deplaid(vfuncptr func, Var *);
 static Var *kjn_supersample(vfuncptr func, Var *);
 static Var *kjn_ss_coreg(vfuncptr func, Var *);
 static Var *kjn_ss_pic(vfuncptr func, Var *);
 static Var *kjn_coreg_fill(vfuncptr func, Var *);
+static Var *kjn_rad2tb(vfuncptr func, Var *);
+static Var *kjn_themissivity(vfuncptr func, Var *);
+static Var *kjn_whitey(vfuncptr func, Var *);
 
 static dvModuleFuncDesc exported_list[] = {
   { "y_shear", (void *) kjn_y_shear },
@@ -35,16 +45,17 @@ static dvModuleFuncDesc exported_list[] = {
   { "deplaid", (void *) kjn_deplaid },
   { "rectify", (void *) kjn_rectify },
   { "coreg", (void *) kjn_coreg },
-  { "coreg2", (void *) kjn_coreg2 },
-  { "rdr_deplaid", (void *) kjn_rdr_deplaid },
   { "supersample", (void *) kjn_supersample },
   { "ss_coreg", (void *) kjn_ss_coreg },
   { "ss_pic", (void *) kjn_ss_pic },
-  { "coreg_fill", (void *) kjn_coreg_fill }
+  { "coreg_fill", (void *) kjn_coreg_fill },
+  { "rad2tb", (void *) kjn_rad2tb },
+  { "themissivity", (void *) kjn_themissivity},
+  { "whitey", (void *) kjn_whitey}
 };
 
 static dvModuleInitStuff is = {
-  exported_list, 14,
+  exported_list, 16,
   NULL, 0
 };
 
@@ -694,6 +705,11 @@ float *smoothy(float *obj, float *kernel, int ox, int oy, int oz, int kx, int ky
 }
 
 
+
+
+
+
+
 Var *
 kjn_ramp(vfuncptr func, Var * arg)
 {
@@ -715,20 +731,13 @@ kjn_ramp(vfuncptr func, Var * arg)
     int ct = 1;			/* counter */
     int num = 2;		/* fill-in number */
     int olm1 = 2, olm2 = 2;	/* maximum values for the ol1 & ol2 arrays */
-    int up, down, left, right;	/* some neighborhood indices */
-    int expanded = 0;		/* a flag indicating that there's expected
-                                   to be a full pixel of null around the
-				   outside of an image 
-				*/
-    int verbose=0;
+	int up, down, left, right;	/* some neighborhood indices */
 
-    Alist alist[6];
+    Alist alist[4];
     alist[0] = make_alist("pic1", ID_VAL, NULL, &pic_1);
     alist[1] = make_alist("pic2", ID_VAL, NULL, &pic_2);
     alist[2] = make_alist("ignore", INT, NULL, &nullv);
-    alist[3] = make_alist("expanded", INT, NULL, &expanded);
-    alist[4] = make_alist("verbose", INT, NULL, &verbose);
-    alist[5].name = NULL;
+    alist[3].name = NULL;
 
     if (parse_args(func, arg, alist) == 0)
 	return (NULL);
@@ -774,12 +783,12 @@ kjn_ramp(vfuncptr func, Var * arg)
     ol1 = (int *) calloc(sizeof(int), w * (z));
     ol2 = (int *) calloc(sizeof(int), w * (z));
 
+    /* extract the two pictures into their storage arrays */
     r1 = y+1;
     r2 = 0;
     c1 = x+1;
     c2 = 0;
 
-    /* extract the two pictures into their storage arrays */
     for (j = 1; j <= y ; j++) {
 	for (i = 1; i <= x ; i++) {
 	    t1 = j * w + i;
@@ -802,27 +811,27 @@ kjn_ramp(vfuncptr func, Var * arg)
     */
     for (k = 0; k <= y+1 ; k++) {
 	t1 = k * w + 0;
-	pict1[t1] = expanded ? nullv+1 : nullv;
-	pict2[t1] = expanded ? nullv+1 : nullv;
+	pict1[t1] = nullv;
+	pict2[t1] = nullv;
 	ol1[t1] = -1;
 	ol2[t1] = -1;
 	
 	t1 = k * w + (x+1);
-	pict1[t1] = expanded ? nullv+1 : nullv;
-	pict2[t1] = expanded ? nullv+1 : nullv;
+	pict1[t1] = nullv;
+	pict2[t1] = nullv;
 	ol1[t1] = -1;
 	ol2[t1] = -1;
     }
     for (k = 0; k <= x+1 ; k++) {
 	t1 = 0 * w + k;
-	pict1[t1] = expanded ? nullv+1 : nullv;
-	pict2[t1] = expanded ? nullv+1 : nullv;
+	pict1[t1] = nullv;
+	pict2[t1] = nullv;
 	ol1[t1] = -1;
 	ol2[t1] = -1;
 
 	t1 = (y+1) * w + k;
-	pict1[t1] = expanded ? nullv+1 : nullv;
-	pict2[t1] = expanded ? nullv+1 : nullv;
+	pict1[t1] = nullv;
+	pict2[t1] = nullv;
 	ol1[t1] = -1;
 	ol2[t1] = -1;
     }
@@ -896,19 +905,11 @@ kjn_ramp(vfuncptr func, Var * arg)
 	}
     }
 
-    if (verbose) {
-	    out = new_struct(0);
-	    add_struct(out, "ol1", newVal(BSQ, w,z,1,INT,ol1));
-	    add_struct(out, "ol2", newVal(BSQ, w,z,1,INT,ol2));
-	    add_struct(out, "out", newVal(BSQ, x, y, 1, FLOAT, pict1));
-	    return(out);
-    } else {
-	free(ol1);
-	free(ol2);
+    free(ol1);
+    free(ol2);
 
-	out = newVal(BSQ, x, y, 1, FLOAT, pict1);
-	return out;
-    }
+    out = newVal(BSQ, x, y, 1, FLOAT, pict1);
+    return out;
 }
 
 
@@ -1116,11 +1117,11 @@ kjn_sawtooth(vfuncptr func, Var * arg)
   float *tooth;               /* the output of sawtooth routine */
   int x = 0, y = 0, z = 0;
 
-  Alist alist[5];
+  Alist alist[4];
   alist[0] = make_alist("x",       INT,         NULL,	&x);
   alist[1] = make_alist("y",       INT,         NULL,	&y);
   alist[2] = make_alist("z",       INT,         NULL,   &z);
-  alist[4].name = NULL;
+  alist[3].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -1825,13 +1826,13 @@ kjn_coreg(vfuncptr func, Var * arg)
   int      *pos;                                       /* final position returned */
   int       wt = 0;
 
-  Alist alist[7];
+  Alist alist[6];
   alist[0] = make_alist("pic1",     ID_VAL,	NULL,	&pic1_in);
   alist[1] = make_alist("pic2",     ID_VAL,     NULL,   &pic2_in);
   alist[2] = make_alist("search",   INT,        NULL,   &search);
   alist[3] = make_alist("null",     INT,        NULL,   &nullval);
   alist[4] = make_alist("space",    INT,        NULL,   &space);
-  alist[6].name = NULL;
+  alist[5].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);
   
@@ -1915,425 +1916,6 @@ kjn_coreg(vfuncptr func, Var * arg)
   return out;
 }
 
-Var *
-kjn_coreg2(vfuncptr func, Var * arg)
-{
-  typedef unsigned char byte;
-
-  Var      *pic1_in = NULL;                            /* first picture to be coregistered */
-  Var      *pic2_in = NULL;                            /* second picture to be coregistered */
-  Var      *out = NULL;
-  int     ignore = 0;
-  float    *solution = NULL;                           /* map of solution space */
-  int       verbose = 0;                               /* flag to dump solution space at end */
-  int       search = 10;                               /* search radius */
-  int       s_dia = 21;                                /* search diameter */
-  int       x, y;                                      /* size of images */
-  int       a = 0, b = 0;                              /* position of lowval*/
-  int       i, j, m, n;                                /* loop indices */
-  float     lowval = 2e11;                             /* lowest value found by search */
-  float     curval = 0;                                /* current value */
-  int       p1, p2, v1, v2;
-  int      *pos;                                       /* final position returned */
-  int      *wt;
-  int random = 1000;
-  int ok = 0;
-  int count = 0;
-  int total = 0;
-  int sum = 0;
-  int force=0;
-
-  Alist alist[8];
-  alist[0] = make_alist("pic1",     ID_VAL,	NULL,	&pic1_in);
-  alist[1] = make_alist("pic2",     ID_VAL,     NULL,   &pic2_in);
-  alist[2] = make_alist("search",   INT,        NULL,   &search);
-  alist[3] = make_alist("ignore",   INT,        NULL,   &ignore);
-  alist[4] = make_alist("verbose",    INT,        NULL,   &verbose);
-  alist[5] = make_alist("random",   INT,        NULL,   &random);
-  alist[6] = make_alist("force",    INT,        NULL,   &force);
-  alist[7].name = NULL;
-  
-  if (parse_args(func, arg, alist) == 0) return(NULL);
-  
-  /* if two pics did not get passed to the function */
-  if (pic1_in == NULL || pic2_in == NULL) {
-  	parse_error("images are no same size.\n");
-    return NULL;
-  }
-  
-  x = GetX(pic1_in);
-  y = GetY(pic1_in);
-  if (x != GetX(pic2_in) || y != GetY(pic2_in)) {
-  	parse_error("images are not same size.\n");
-	return(NULL);
-  }
-  
-  
-  if(search < 0) {
-    parse_error("please don't be dumb, use only positive search radii");
-    parse_error("radius being reset to 10");
-    search = 10;
-  }
- 
-	s_dia = search*2 + 1;
-
-	solution = (float *)calloc(sizeof(float),(search*2+1)*(search*2+1));
-	wt = (int *)calloc(sizeof(int),(search*2+1)*(search*2+1));
-
-	if (random) {
-		/* 
-		** Random search
-		*/
-		while (count < random) {
-			/* stop when we've tried too many times */
-			if (++total > V_DSIZE(pic1_in)) break;
-			i = lrand48() % x;
-			j = lrand48() % y;
-			p1 = cpos(i, j, 0, pic1_in);
-			v1 = extract_int(pic1_in, p1);
-			if (v1 == ignore) continue;
-
-			ok = 0;
-			for(m=-search; m<(search+1); m++) {
-				if((j+m)<0 || (j+m)>=y) continue;
-				for(n=-search; n<(search+1); n++) {
-					if((i+n)<0 || (i+n)>=x) continue;
-
-					p2 = cpos(i+n,j+m,0,pic2_in);
-					v2 = extract_int(pic2_in, p2); 
-
-					if (v2 == ignore) continue;
-					ok = 1;
-
-					curval = ((float)v1-(float)v2)*((float)v1-(float)v2);
-					solution[(m+search)*(s_dia) + (n+search)] += curval;
-					wt[(m+search)*(s_dia) + (n+search)] += 1;
-				}
-			}
-			count += ok;
-		}
-	} else {
-		/*
-		** Exhaustive search, skipping pixels that are blank in both
-		*/
-		for (count = 0 ; count < V_DSIZE(pic1_in) ; count++) {
-			v1 = extract_int(pic1_in, count);
-			if (v1 == ignore) continue;
-
-			v2 = extract_int(pic2_in, count);
-			if (v2 == ignore) continue;
-
-			j = count/x;
-			i = count%x;
-
-			for(m=-search; m<(search+1); m++) {
-				if((j+m)<0 || (j+m)>=y) continue;
-				for(n=-search; n<(search+1); n++) {
-					if((i+n)<0 || (i+n)>=x) continue;
-
-					p2 = cpos(i+n,j+m,0,pic2_in);
-					v2 = extract_int(pic2_in, p2); 
-
-					if (v2 == ignore) continue;
-
-					curval = ((float)v1-(float)v2)*((float)v1-(float)v2);
-					solution[(m+search)*(s_dia) + (n+search)] += curval;
-					wt[(m+search)*(s_dia) + (n+search)] += 1;
-				}
-			}
-		}
-	}
-
-	a = -search;
-	b = -search;
-	lowval = solution[0]/wt[0];
-
-	for(m=-search; m<(search+1); m++) {
-		for(n=-search; n<(search+1); n++) {
-			p1 = (m+search)*s_dia + n+search;
-			if (wt[p1] > 0) {
-				solution[p1] = (float)solution[p1]/(float)wt[p1];
-				if(solution[p1] < lowval) {
-					lowval = solution[p1];     /* set lowval */
-					a = n;                     /* x position of lowval */
-					b = m;                     /* y position of lowval */
-				}
-			}
-		}
-	}
-
-	if (verbose > 0) {
-		pos = (int *) malloc(sizeof(int) * 2);
-		pos[0] = a;
-		pos[1] = b;
-
-		out = new_struct(2);
-		add_struct(out, "space", newVal(BSQ, s_dia, s_dia, 1, FLOAT, solution));
-		add_struct(out, "wt", newVal(BSQ, s_dia, s_dia, 1, INT, wt));
-		add_struct(out, "position", newVal(BSQ, 2, 1, 1, INT, pos));
-		add_struct(out, "count", newInt(count));
-		printf("count=%d/%d\n", count, total);
-		return(out);
-	}
-
-	free(solution);
-	free(wt);
-	pos = (int *)malloc(sizeof(int)*2);
-	pos[0] = a;
-	pos[1] = b;
-	out = newVal(BSQ, 2, 1, 1, INT, pos);
-	return out;
-}
-
-
-
-
-
-
-Var *
-kjn_rdr_deplaid(vfuncptr func, Var * arg)
-{
-
-  Var      *data = NULL;                            /* the original radiance data */
-  Var      *out = NULL;                             /* the output array */
-  float    *data_new = NULL;                        /* deplaided radiance data */
-  float    *seg = NULL;                             /* segment of data to be sstretched */
-  int      *pic = NULL;                             /* sstretched picture */
-  float    *newarray = NULL;                        /* larger array to fit coregistered data */
-  float    *newarray2 = NULL;                       /* deplaided newarray */
-  float    *row_noise, *col_noise;                  /* removed noise from each chunk */
-  float    *row_noise_chunk, *col_noise_chunk;
-  float    *final_row_noise, *final_col_noise;      /* final row and col noise removed */
-  int      *rn_weight, *cn_weight;                  /* weight arrays for row and col noise */
-  float     nullv = -32768.0;
-  float     m;
-  int       verbose = 0;
-  int       ni;
-  int       x, y, z;
-  int       i, j, k, l;
-  int      *creg;
-  int       x_shift, y_shift;
-  int       chunks;
-  int       ret = 1;
-  float    *chunk_weight;
-
-  Alist alist[4];
-  alist[0] = make_alist("data", 		ID_VAL,		NULL,	&data);
-  alist[1] = make_alist("verbose",              INT,            NULL,   &verbose);
-  alist[2] = make_alist("return",               INT,            NULL,   &ret);
-  alist[3].name = NULL;
-  
-  if (parse_args(func, arg, alist) == 0) return(NULL);
-
-  /* if no data got passed to the function */
-  if (data == NULL) {
-    parse_error("\nrdr_deplaid() - 5/25/04\n");
-    parse_error("algorithm to replace destripe and deplaid.");
-    parse_error("deplaids RDRs right after IRF is applied\n");
-    parse_error("Syntax:  kjn.rdr_deplaid(data,verbose,ret)");
-    parse_error("Example: kjn.rdr_deplaid(data=a, verbose=1, ret=1");
-    parse_error("data:  an RDR that has not been destriped.");
-    parse_error("verbose:  if you want to see how it's progessing use verbose=1. Default is 0.");
-    parse_error("return:  0: deplaided data, 1: data & noise, 2: just noise.  Default is 1.\n");
-    return NULL;
-  }
-
-  /* x, y and z dimensions of the data */
-  x = GetX(data);
-  y = GetY(data);
-  z = GetZ(data);
-
-  chunks = y/250;
-
-  /* allocate memory */
-  seg = (float *)malloc(sizeof(float)*x*500*z);
-  row_noise = (float *)calloc(sizeof(float), 500*chunks*z);
-  row_noise_chunk = (float *)calloc(sizeof(float), 540);
-  rn_weight = (int *)malloc(sizeof(int)*540);
-  col_noise = (float *)calloc(sizeof(float), x*chunks*z);
-  col_noise_chunk = (float *)calloc(sizeof(float), x+40);
-  cn_weight = (int *)malloc(sizeof(int)*(x+40));
-  final_row_noise = (float *)calloc(sizeof(float), y*z);
-  final_col_noise = (float *)calloc(sizeof(float), x*z);
-  newarray = (float *)malloc(sizeof(float)*(x+40)*540*z);
-
-  /* taking chunk of the rdr */
-  for(l=0; l<chunks; l++) {
-    if(verbose == 1) {
-      parse_error("fabricating chunk %d of %d",l+1,chunks);
-    }
-    for(k=0;k<z;k++){
-      for(j=l*250;j<l*250+500;j++) {
-	for(i=0;i<x;i++) {
-	  if(j<y) seg[k*500*x + (j-(l*250))*x + i] = extract_float(data,cpos(i,j,k,data));
-	  if(j>=y) seg[k*500*x + (j-(l*250))*x + i] = 0;
-	}
-      }
-    }
-
-    /* call sstretch */
-    pic = sstretch(seg,nullv,x,500,z);
-
-    /* clean the newarray */
-    for(k=0;k<z;k++) {
-      for(j=0;j<540;j++) {
-	for(i=0;i<x+40;i++) {
-	  newarray[k*(540)*(x+40) + j*(x+40) + i] = 0.0;
-	}
-      }
-    }
-
-    /* calculate the coregistration for the bands */
-    creg = rdr_coreg(pic,x,500,z,z);
-
-    /* fill the newarray in with coregistered data */
-    for(k=0;k<z;k++) {
-      x_shift = creg[k*2];
-      y_shift = creg[k*2 + 1];
-      for(j=0;j<500;j++) {
-	for(i=0;i<x;i++) {
-	  newarray[k*(x+40)*(540) + (j+20-y_shift)*(x+40) + i+20-x_shift] = seg[k*x*500 + j*x + i];
-	}
-      }
-    }
-
-    /* deplaid the coregistered data */
-    newarray2 = deplaid(newarray, x+40, 540, z, 0, z);
-
-    /* extract the removed noise and store it in row and col noise */
-    for(k=0;k<z;k++) {
-      x_shift = creg[k*2];
-      y_shift = creg[k*2 + 1];
-
-      for(i=0;i<540;i++) {
-	row_noise_chunk[i] = 0;
-	rn_weight[i] = 0;
-      }
-      for(i=0;i<x+40;i++) {
-	col_noise_chunk[i] = 0;
-	cn_weight[i] = 0;
-      }
-
-      /* record noise in row and col_noise_chunk */
-      for(j=0;j<540;j++) {
-	for(i=0;i<x+40;i++) {
-	  ni = k*(540)*(x+40) + j*(x+40) + i;
-	  if(newarray[ni] != 0) {
-	    row_noise_chunk[j] += newarray[ni] - newarray2[ni];
-	    rn_weight[j] += 1;
-	    
-	    col_noise_chunk[i] += newarray[ni] - newarray2[ni];
-	    cn_weight[i] += 1;
-	  }
-
-	  if(i==x+40-1 && rn_weight[j] != 0) row_noise_chunk[j] /= (float)rn_weight[j];
-	  if(j==539 && cn_weight[i] != 0) col_noise_chunk[i] /= (float)cn_weight[i];
-	}
-      }
-
-      /* now use creg to put chunk noise into row and col_noise */
-      for(j=0;j<500;j++) {
-	row_noise[k*chunks*500 + j*chunks + l] = row_noise_chunk[j+20-y_shift];
-      }
-      for(i=0;i<x;i++) {
-	col_noise[k*chunks*x + l*x + i] = col_noise_chunk[i+20-x_shift];
-      }
-    }
-  }
-
-  free(col_noise_chunk);
-  free(row_noise_chunk);
-  free(rn_weight);
-
-  for(i=0;i<x;i++) {
-    cn_weight[i] = 0;
-  }
-
-  if(verbose == 1) parse_error("filling in final noise arrays");
-  /* fill in final_col_noise */
-  for(k=0;k<z;k++) {
-    for(i=0;i<x;i++) {
-      cn_weight[i] = 0;
-    }
-    for(l=0;l<chunks;l++) {
-      for(i=0;i<x;i++) {
-	final_col_noise[k*x + i] += col_noise[k*chunks*x + l*x + i];
-	cn_weight[i] += 1;
-	if(l==chunks-1) final_col_noise[k*x + i] /= (float)cn_weight[i];
-      }
-    }
-  }
-
-  free(cn_weight);
-  free(col_noise);
-
-  /* create array to hold chunk weight */
-  chunk_weight = (float *)malloc(sizeof(float)*500);
-  for(i=0;i<500;i++) {
-    chunk_weight[i] = (250.0 - abs(250.0-(float)i))/250.0;
-  }
-
-  /* multiply row_noise by chunk_weight */
-  for(k=0;k<z;k++) {
-    for(j=0;j<500;j++) {
-      for(i=1;i<chunks-1;i++) {
-	row_noise[k*500*chunks + j*chunks + i] *= chunk_weight[j];
-      }
-      if(j>=250) row_noise[k*500*chunks + j*chunks] *= chunk_weight[j];
-      if(j<250) row_noise[k*500*chunks + j*chunks + chunks - 1] *= chunk_weight[j];
-    }
-  }
-  free(chunk_weight);
-
-  /* fill in final_row_noise */
-  for(k=0;k<z;k++) {
-    l = 0;
-    for(i=0;i<chunks;i++) {
-      l = 250*i;
-      for(j=0;j<500;j++) {
-	final_row_noise[k*y + l + j] += row_noise[k*500*chunks + j*chunks + i];
-      }
-    }
-  }
-
-  free(row_noise);
-  free(pic);
-  free(seg);
-  free(newarray);
-  free(newarray2);
-
-  /* deplaided data */
-  data_new = (float *)malloc(sizeof(float)*x*y*z);
-  
-  for(k=0;k<z;k++) {
-    for(j=0;j<y;j++) {
-      for(i=0;i<x;i++) {
-	m = extract_float(data,cpos(i,j,k,data));
-	data_new[k*x*y + j*x + i] = m - final_row_noise[k*y + j] - final_col_noise[k*x + i];
-      }
-    }
-  }
-  
-  /* return array */
-  if(ret == 0) {
-    out = newVal(BSQ, x, y, z, FLOAT, data_new);
-    return out;
-  }
-
-
-  if(ret == 2) {
-    out = new_struct(2);
-    add_struct(out, "row_noise", newVal(BSQ, 1, y, z, FLOAT, final_row_noise));
-    add_struct(out, "col_noise", newVal(BSQ, x, 1, z, FLOAT, final_col_noise));
-    return out;
-  }
-  
-  out = new_struct(3);
-  add_struct(out, "row_noise", newVal(BSQ, 1, y, z, FLOAT, final_row_noise));
-  add_struct(out, "col_noise", newVal(BSQ, x, 1, z, FLOAT, final_col_noise));
-  add_struct(out, "data", newVal(BSQ, x, y, z, FLOAT, data_new));
-  return out;
-}
 
 
 
@@ -3217,4 +2799,629 @@ kjn_coreg_fill(vfuncptr func, Var * arg)
   out = newVal(BSQ, x+p, y+p, z, FLOAT, cssdata);
   return(out);
 }
+
+
+
+
+
+
+
+
+Var *
+kjn_rad2tb(vfuncptr func, Var * arg)
+{
+
+  /* wrapper used to call rad2tb */
+
+  Var         *rad = NULL;                     /* the original radiance */
+  Var         *bandlist = NULL;                /* list of bands to be converted to brightness temperature */
+  Var         *temp_rad = NULL;                /* temperature/radiance lookup file */
+  Var         *out = NULL;                     /* end product */
+  char        *fname = NULL;                   /* the pointer to the filename */
+  FILE        *fp = NULL;                      /* pointer to file */
+  struct       iom_iheader h;                  /* temp_rad_v4 header structure */
+  float        nullval = -32768;               /* default null value of radiance data */
+  float       *b_temps = NULL;                 /* brightness temperatures computed by rad2tb */
+  int         *blist = NULL;                   /* the integer list of bands extracted from bandlist or created */
+  int          x, y, z;                        /* dimensions of the data */
+  int          bx = 0;                         /* x-dimension of the bandlist */
+  int          i;                              /* loop index */
+  
+  Alist alist[5];
+  alist[0] = make_alist("rad", 		 ID_VAL,         NULL,   &rad);
+  alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
+  alist[2] = make_alist("null",          FLOAT,          NULL,   &nullval);
+  alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
+  alist[4].name = NULL;
+
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+
+  if (rad == NULL) {
+    parse_error("rad2tb() - 7/07/04");
+    parse_error("THEMIS radiance to THEMIS Brightness Temperature Converter\n");
+    parse_error("Uses /themis/calib/temp_rad_v4 as conversion table.");
+    parse_error("Assumes 10 bands of radiance for right now.\n");
+    parse_error("Syntax:  b = kjn.rad2tb(rad,bandlist,null,temp_rad_path)");
+    parse_error("example: b = kjn.rad2tb(a)");
+    parse_error("example: b = kjn.rad2tb(a,1//2//3//4//5//6//7//8//9,0)");
+    parse_error("example: b = kjn.rad2tb(rad=a,bandlist=4//9//10,null=-32768,temp_rad_path=\"/themis/calib/temp_rad_v3\")");
+    parse_error("rad - any float valued 3-D radiance array.");
+    parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
+    parse_error("null - non-data pixel value. Default is -32768 AND 0.");
+    parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is /themis/calib/temp_rad_v4.\n");
+    return NULL;
+  }
+
+  if (bandlist != NULL) {
+    bx = GetX(bandlist);
+    blist = (int *)malloc(sizeof(int)*bx);
+    for(i=0;i<bx;i++) {
+      blist[i] = extract_int(bandlist,cpos(i,0,0,bandlist));
+    }
+  }
+
+  if (bandlist == NULL) {
+    blist = (int *)malloc(sizeof(int)*10);
+    for(i=0;i<10;i++) {
+      blist[i] = i+1;
+    }
+    bx = 10;
+  }
+
+  x = GetX(rad);
+  y = GetY(rad);
+  z = GetZ(rad);
+
+  /* initialize temp_rad header */
+  iom_init_iheader(&h);
+
+  /* load temp_rad_v4 table into memory */
+  if (fname == NULL) fname = strdup("/themis/calib/temp_rad_v4");
+  fp = fopen(fname, "rb");
+
+  if (fp == NULL) {
+    parse_error("Can't open look up table /themis/calib/temp_rad_v4!\n");
+    return(NULL);
+  }
+
+  temp_rad = dv_LoadVicar(fp, fname, &h);
+  fclose(fp);
+  free(fname);
+
+  /* convert to brightness temperature and return */
+  b_temps = rad2tb(rad, temp_rad, blist, bx, nullval);
+
+  free(blist);
+  out = newVal(BSQ, x, y, z, FLOAT, b_temps);
+  return(out);
+ 
+}
+
+
+float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval)
+{
+
+  float    *btemps;                       /* the output interpolated brightness temperature data */
+  float    *m = NULL, *b = NULL;          /* slope and intercept arrays */
+  float    *temps = NULL;                 /* linear temperature lookup array extracted from temp_rad */
+  float    *rads = NULL;                  /* linear radiance lookup array extracted from temp_rad */
+  int       x, y;                         /* dimensions of input/output arrays */
+  int       pt1, pt2, mid;                /* array indices used in finding bounding points */
+  int       w;                            /* y-size of lookup table */
+  int       i, j, k;                      /* loop indices */
+  int       band;                         /* which band is currently being converted */
+  float     cur_val = 0.0;                /* temporary extracted radiance value*/
+
+  /*
+    radiance is a THEMIS radiance cube of up to 10 bands
+    temp_rad is the radiance/temperature conversion table
+    bandlist is an integer list of which THEMIS bands are in the radiance cube
+    bx is the number of elements in bandlist, also the number of bands in the radiance cube
+    nullval is the null data value
+  */
+
+  x = GetX(radiance);
+  y = GetY(radiance);
+  w = GetY(temp_rad);
+
+  /* assigning memory for the interpolated data, temps and rads */
+  btemps = (float *)calloc(sizeof(FLOAT), x*y*bx);
+  temps = (float *)malloc(sizeof(FLOAT)*w);
+  rads = (float *)malloc(sizeof(FLOAT)*w);
+  
+  /* slopes and intercepts arrays */
+  m = (float *)calloc(sizeof(FLOAT), w-1);
+  b = (float *)calloc(sizeof(FLOAT), w-1);
+
+  /* extract the linear temperature array */
+  for (i=0;i<w;i++) {
+    temps[i] = extract_float(temp_rad,cpos(0,i,0,temp_rad));
+  }
+
+  /* loop through the bands */
+  for(k=0;k<bx;k++) {
+
+    band = bandlist[k];
+
+    /* extract linear radiances array */
+    for(i=0;i<w;i++) {
+      rads[i] = extract_float(temp_rad,cpos(band,i,0,temp_rad));
+    }
+
+    /* calculate the slopes and intercepts */
+    for(i=1;i<w;i++){
+      m[i-1] = (temps[i]-temps[i-1])/(rads[i]-rads[i-1]);
+      b[i-1] = temps[i-1] - m[i-1]*rads[i-1];
+    }
+
+    /* work on a point at a time */
+    for(j=0;j<y;j++) {
+      for(i=0;i<x;i++) {
+	cur_val = extract_float(radiance,cpos(i,j,k,radiance));
+
+	if(cur_val == -32768 || cur_val == 0 || cur_val == nullval) btemps[k*y*x + j*x + i] = 0;
+
+	if(cur_val != -32768 && cur_val != 0 && cur_val != nullval) {
+
+	  /* locate the two bounding points in the rads array containing the radiance value */
+	  pt1 = 0;
+	  pt2 = w;
+	  mid = 0;
+	
+	  while((pt2-pt1) > 1) {
+	    mid = (pt1+pt2)/2;
+	    if(cur_val > rads[mid]) pt1 = mid;
+	    if(cur_val < rads[mid]) pt2 = mid;
+	    if(cur_val == rads[mid]) pt1 = pt2 = mid;
+	  }
+
+	  if(temps[pt2] == temps[pt1]) btemps[k*y*x + j*x + i] = temps[pt1];
+	  else btemps[k*y*x + j*x + i] = m[pt1]*cur_val + b[pt1];
+	}
+      }
+    }
+  }
+
+  free(temps);
+  free(rads);
+  free(m);
+  free(b);
+  return(btemps);
+}
+
+
+
+float *tb2rad(float *btemp, Var *temp_rad, int *bandlist, int bx, float nullval, int x, int y)
+{
+
+  float    *irads;                        /* output interpolated radiance values */
+  float    *m = NULL, *b = NULL;          /* slope and intercept arrays */
+  float    *temps = NULL;                 /* linear temperature lookup array extracted from temp_rad */
+  float    *rads = NULL;                  /* linear radiance lookup array extracted from temp_rad */
+  int       pt1, pt2, mid;                /* array indices used in finding bounding points */
+  int       w;                            /* y-size of lookup table */
+  int       i, j, k;                      /* loop indices */
+  int       band;                         /* which band is currently being converted */
+  float     cur_val = 0.0;                /* temporary extracted radiance value*/
+
+  /*
+    btemp is a single THEMIS brightness temperature map
+    temp_rad is the radiance/temperature conversion table
+    bandlist is an integer list of which THEMIS bands are in the radiance cube
+    bx is the number of elements in bandlist, also the number of bands in the radiance cube
+    nullval is the null data value
+  */
+
+  w = GetY(temp_rad);
+
+  /* assigning memory for the interpolated data, temps and rads */
+  irads = (float *)calloc(sizeof(FLOAT), x*y*bx);
+  temps = (float *)malloc(sizeof(FLOAT)*w);
+  rads = (float *)malloc(sizeof(FLOAT)*w);
+  
+  /* slopes and intercepts arrays */
+  m = (float *)calloc(sizeof(FLOAT), w-1);
+  b = (float *)calloc(sizeof(FLOAT), w-1);
+
+  /* extract the linear temperature array */
+  for (i=0;i<w;i++) {
+    temps[i] = extract_float(temp_rad,cpos(0,i,0,temp_rad));
+  }
+
+  /* loop through the bands */
+  for(k=0;k<bx;k++) {
+
+    band = bandlist[k];
+
+    /* extract linear radiances array */
+    for(i=0;i<w;i++) {
+      rads[i] = extract_float(temp_rad,cpos(band,i,0,temp_rad));
+    }
+
+    /* calculate the slopes and intercepts */
+    for(i=1;i<w;i++){
+      m[i-1] = (rads[i]-rads[i-1])/(temps[i]-temps[i-1]);
+      b[i-1] = rads[i-1] - m[i-1]*temps[i-1];
+    }
+
+    /* work on a point at a time */
+    for(j=0;j<y;j++) {
+      for(i=0;i<x;i++) {
+	cur_val = btemp[j*x + i];
+	if(cur_val == 0) irads[k*y*x + j*x + i] = nullval;
+
+	if(cur_val > 0) {
+
+	  /* locate the two bounding points in the temps array containing the temperature value */
+	  pt1 = 0;
+	  pt2 = w;
+	  mid = 0;
+	
+	  while((pt2-pt1) > 1) {
+	    mid = (pt1+pt2)/2;
+	    if(cur_val > temps[mid]) pt1 = mid;
+	    if(cur_val < temps[mid]) pt2 = mid;
+	    if(cur_val == temps[mid]) pt1 = pt2 = mid;
+	  }
+
+	  if(rads[pt2] == rads[pt1]) irads[k*y*x + j*x + i] = rads[pt1];
+	  else irads[k*y*x + j*x + i] = m[pt1]*cur_val + b[pt1];
+	}
+      }
+    }
+  }
+
+  free(temps);
+  free(rads);
+  free(m);
+  free(b);
+  return(irads);
+}
+
+
+
+
+
+
+
+
+Var *
+kjn_themissivity(vfuncptr func, Var * arg)
+{
+
+  Var         *rad = NULL;                     /* the original radiance */
+  Var         *bandlist = NULL;                /* list of bands to be converted to brightness temperature */
+  Var         *out = NULL;                     /* end product */
+  float        nullval = -32768;               /* default null value of radiance data */
+  char        *fname = NULL;                   /* the pointer to the filename */
+  int          b1 = 3, b2 = 9;                 /* the boundary bands used to determine highest brightness temperature */
+  int         *blist = NULL;                   /* the integer list of bands extracted from bandlist or created */
+  int          i;                              /* loop index */
+  int          bx, x, y, z;                    /* size of the original array */
+  emissobj    *e_struct;                       /* emissivity structure output from themissivity */
+  
+  Alist alist[7];
+  alist[0] = make_alist("rad", 		 ID_VAL,         NULL,   &rad);
+  alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
+  alist[2] = make_alist("null",          FLOAT,          NULL,   &nullval);
+  alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
+  alist[4] = make_alist("b1",            INT,            NULL,   &b1);
+  alist[5] = make_alist("b2",            INT,            NULL,   &b2);
+  alist[6].name = NULL;
+
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+
+  if (rad == NULL) {
+    parse_error("themissivity() - 7/07/04");
+    parse_error("THEMIS radiance to THEMIS emissivity converter\n");
+    parse_error("Syntax:  b = kjn.themissivity(rad,bandlist,null,temp_rad_path,b1,b2)");
+    parse_error("example: b = kjn.themissivity(a)");
+    parse_error("example: b = kjn.themissivity(a,1//2//3//4//5//6//7//8//9,0,b1=4,b2=8)");
+    parse_error("example: b = kjn.themissivity(rad=a,bandlist=4//9//10,null=-2,temp_rad_path=\"/themis/calib/temp_rad_v3\")");
+    parse_error("rad - any 3-D radiance array.");
+    parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
+    parse_error("null - non-data pixel value. Default is -32768 AND 0.");
+    parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is /themis/calib/temp_rad_v4.");
+    parse_error("b1 - first band to search for maximum brightness temperature. Default is 3. ");
+    parse_error("b2 - end band to search for maximum brightness temperature. Default is 9.\n");
+    return NULL;
+  }
+
+  if (bandlist != NULL) {
+    return(bandlist);
+    bx = GetX(bandlist);
+    blist = (int *)malloc(sizeof(int)*bx);
+    for(i=0;i<bx;i++) {
+      blist[i] = extract_int(bandlist,cpos(i,0,0,bandlist));
+    }
+  }
+
+  if (bandlist == NULL) {
+    blist = (int *)malloc(sizeof(int)*10);
+    for(i=0;i<10;i++) {
+      blist[i] = i+1;
+    }
+    bx = 10;
+  }
+
+  x = GetX(rad);
+  y = GetY(rad);
+  z = GetZ(rad);
+
+  if(z != bx){
+    parse_error("bandlist not same dimension as input radiance!");
+    return(out);
+  }
+
+  if (fname == NULL) fname = strdup("/themis/calib/temp_rad_v4");
+
+  e_struct = themissivity(rad, blist, nullval, fname, b1, b2);
+
+  if(e_struct) {
+    out = new_struct(2);
+    add_struct(out, "emiss", newVal(BSQ, x, y, z, FLOAT, e_struct->emiss));
+    add_struct(out, "maxbtemp", newVal(BSQ, x, y, 1, FLOAT, e_struct->maxbtemp));
+
+    free(e_struct);
+    return(out);
+  }
+
+  else {
+    return(NULL);
+  }
+}
+ 
+
+
+
+emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1, int b2)
+{
+
+  Var         *temp_rad = NULL;                /* temperature/radiance lookup file */
+  Var         *out = NULL;                     /* end product */
+  FILE        *fp = NULL;                      /* pointer to file */
+  struct       iom_iheader h;                  /* temp_rad_v4 header structure */
+  float       *emiss = NULL;                   /* the output emissivity */
+  float       *b_temps = NULL;                 /* brightness temperatures computed by rad2tb */
+  float       *max_b_temp = NULL;              /* maximum brightness temperatures for radiance cube (1-D) */
+  float       *irad = NULL;                    /* interpolated radiance from max_b_temp */
+  int          x, y, z;                        /* dimensions of the data */
+  int          bx = 0;                         /* x-dimension of the bandlist */
+  int          i, j, k;                        /* loop index */
+  float        temp_val;                       /* guess */
+  emissobj    *e_struct = NULL;
+
+  x = GetX(rad);
+  y = GetY(rad);
+  z = GetZ(rad);
+
+  /* stuff for b1 and b2 */
+  if(b2>z){
+    parse_error("Bad limits for max_b_temp. Setting b1 = 1 and b2 = %d",z);
+    b1 = 1;
+    b2 = z;
+  }
+
+  /* initialize temp_rad header */
+  iom_init_iheader(&h);
+
+  /* load temp_rad_v4 table into memory */
+  fp = fopen(fname, "rb");
+
+  if (fp == NULL) {
+    parse_error("Can't open look up table /themis/calib/temp_rad_v4!\n");
+    return(NULL);
+  }
+
+  temp_rad = dv_LoadVicar(fp, fname, &h);
+  fclose(fp);
+  free(fname);
+
+  /* convert to brightness temperature and return */
+  b_temps = rad2tb(rad, temp_rad, blist, z, nullval);
+
+  e_struct = (emissobj *)calloc(sizeof(emissobj),1);
+  e_struct->emiss = (float *)calloc(sizeof(float), x*y*z);
+  e_struct->maxbtemp = (float *)calloc(sizeof(float), x*y);
+
+  /* find max_b_temp */
+  for(k=b1-1;k<=b2;k++) {
+    for(j=0;j<y;j++) {
+      for(i=0;i<x;i++) {
+	if(b_temps[k*x*y + j*x + i] > e_struct->maxbtemp[j*x + i]) e_struct->maxbtemp[j*x + i] = b_temps[k*x*y + j*x + i];
+      }
+    }
+  }
+
+  free(b_temps);
+
+  /* compute the interpolated radiance from max_b_temp */
+  irad = tb2rad(e_struct->maxbtemp, temp_rad, blist, z, nullval, x, y);
+
+  /* divide the interpolated radiance by the original radiance and set to emissivity */
+  for(k=0;k<z;k++) {
+    for(j=0;j<y;j++) {
+      for(i=0;i<x;i++) {
+	temp_val = extract_float(rad,cpos(i,j,k,rad));
+	if (temp_val != 0 && irad[k*y*x + j*x + i] != 0 && temp_val != nullval && irad[k*y*x + j*x + i] != nullval) {
+	  e_struct->emiss[k*y*x + j*x + i] = temp_val / irad[k*y*x + j*x + i];
+	}
+      }
+    }
+  }
+
+  free(blist);
+  free(irad);
+
+  return(e_struct);
+}
+
+
+
+
+
+Var *
+kjn_whitey(vfuncptr func, Var * arg)
+{
+
+  Var         *rad = NULL;                     /* the original radiance */
+  Var         *bandlist = NULL;                /* list of bands to be converted to brightness temperature */
+  Var         *temp_rad = NULL;                /* temperature/radiance lookup file */
+  Var         *out = NULL;                     /* end product */
+  char        *fname = NULL;                   /* the pointer to the filename */
+  FILE        *fp = NULL;                      /* pointer to file */
+  struct       iom_iheader h;                  /* temp_rad_v4 header structure */
+  float        nullval = -32768;               /* default null value of radiance data */
+  float       *emiss = NULL;                   /* the output emissivity */
+  float       *s_emiss = NULL;                 /* smoothed emissivity */
+  float       *b_temps = NULL;                 /* brightness temperatures computed by rad2tb */
+  float       *max_b_temp = NULL;              /* maximum brightness temperatures for radiance cube (1-D) */
+  float       *irad = NULL;                    /* interpolated radiance from max_b_temp */
+  float       *kern = NULL;                    /* smoothing kernel */
+  int         *blist = NULL;                   /* the integer list of bands extracted from bandlist or created */
+  int          x, y, z;                        /* dimensions of the data */
+  int          bx = 0;                         /* x-dimension of the bandlist */
+  int          i, j, k;                        /* loop index */
+  float        temp_val;                       /* guess */
+  int          b1 = 3, b2 = 9;                 /* the boundary bands used to determine highest brightness temperature */
+  int          k_size = 5;                     /* size of the smoothing kernel */
+  
+  Alist alist[7];
+  alist[0] = make_alist("rad", 		 ID_VAL,         NULL,   &rad);
+  alist[1] = make_alist("k_size",        INT,            NULL,   &k_size);
+  alist[2] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
+  alist[3] = make_alist("null",          FLOAT,          NULL,   &nullval);
+  alist[4] = make_alist("b1",            INT,            NULL,   &b1);
+  alist[5] = make_alist("b2",            INT,            NULL,   &b2);
+  alist[6].name = NULL;
+
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+
+  if (rad == NULL) {
+    parse_error("whitey() - 7/10/04");
+    parse_error("White noise removal algorithm for THEMIS radiance cubes");
+    parse_error("Converts to emissivity, smoothes and multiplies by unsmoothed brightness temperature\n");
+    parse_error("Syntax:  b = kjn.whitey(rad,k_size,bandlist,null,b1,b2)");
+    parse_error("example: b = kjn.whitey(a)");
+    parse_error("example: b = kjn.whitey(a,7,1//2//3//4//5//6//7//8//9,0,b1=4,b2=8)");
+    parse_error("example: b = kjn.whitey(rad=a,k_size=7,bandlist=4//9//10,null=-2)");
+    parse_error("rad - any 3-D radiance array.");
+    parse_error("k_size - the size of the smoothing kernel. Default is 5.");
+    parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
+    parse_error("null - non-data pixel value. Default is -32768 AND 0.");
+    parse_error("b1 - first band to search for maximum brightness temperature. Default is 3. ");
+    parse_error("b2 - end band to search for maximum brightness temperature. Default is 9.\n");
+    return NULL;
+  }
+
+  if (bandlist != NULL) {
+    return(bandlist);
+    bx = GetX(bandlist);
+    blist = (int *)malloc(sizeof(int)*bx);
+    for(i=0;i<bx;i++) {
+      blist[i] = extract_int(bandlist,cpos(i,0,0,bandlist));
+    }
+  }
+
+  if (bandlist == NULL) {
+    blist = (int *)malloc(sizeof(int)*10);
+    for(i=0;i<10;i++) {
+      blist[i] = i+1;
+    }
+    bx = 10;
+  }
+
+  x = GetX(rad);
+  y = GetY(rad);
+  z = GetZ(rad);
+
+  /* stuff for b1 and b2 */
+  if(b2>z){
+    parse_error("Bad limits for max_b_temp. Setting b1 = 1 and b2 = %d",z);
+    b1 = 1;
+    b2 = z;
+  }
+
+  /* initialize temp_rad header */
+  iom_init_iheader(&h);
+
+  /* load temp_rad_v4 table into memory */
+  fname = strdup("/themis/calib/temp_rad_v4");
+  fp = fopen(fname, "rb");
+
+  if (fp == NULL) {
+    parse_error("Can't open look up table /themis/calib/temp_rad_v4!\n");
+    return(NULL);
+  }
+
+  temp_rad = dv_LoadVicar(fp, fname, &h);
+  fclose(fp);
+  free(fname);
+
+  /* convert to brightness temperature and return */
+  b_temps = rad2tb(rad, temp_rad, blist, bx, nullval);
+
+  /* allocate memory for max_b_temp */
+  max_b_temp = (float *)calloc(sizeof(FLOAT), x*y);
+
+  /* find max_b_temp */
+  for(k=b1-1;k<=b2;k++) {
+    for(j=0;j<y;j++) {
+      for(i=0;i<x;i++) {
+	if(b_temps[k*x*y + j*x + i] > max_b_temp[j*x + i]) max_b_temp[j*x + i] = b_temps[k*x*y + j*x + i];
+      }
+    }
+  }
+
+  free(b_temps);
+
+  /* compute the interpolated radiance from max_b_temp */
+  irad = tb2rad(max_b_temp, temp_rad, blist, bx, nullval, x, y);
+
+  /* allocate memory for emiss */
+  emiss = (float *)calloc(sizeof(FLOAT), x*y*z);
+
+  /* divide the interpolated radiance by the original radiance and set to emissivity */
+  for(k=0;k<z;k++) {
+    for(j=0;j<y;j++) {
+      for(i=0;i<x;i++) {
+	temp_val = extract_float(rad,cpos(i,j,k,rad));
+	if (temp_val != 0 && irad[k*y*x + j*x + i] != 0 && temp_val != nullval && irad[k*y*x + j*x + i] != nullval) {
+	  emiss[k*y*x + j*x + i] = temp_val / irad[k*y*x + j*x + i];
+	}
+      }
+    }
+  }
+
+  free(blist);
+  free(max_b_temp);
+
+  /* create kernel and smooth the emissivity */
+  kern = (float *)malloc(sizeof(FLOAT)*k_size*k_size);
+  for(j=0;j<k_size;j++) {
+    for(i=0;i<k_size;i++) {
+      kern[j*k_size + i] = 1.0;
+    }
+  }
+
+  s_emiss = smoothy(emiss, kern, x, y, z, k_size, k_size, 1, 1, 0);
+
+  /* multiply by irad to get smooth picture - reuse emiss array */
+  for(k=0;k<z;k++) {
+    for(j=0;j<y;j++) {
+      for(i=0;i<x;i++) {
+	emiss[k*y*x + j*x + i] = s_emiss[k*y*x + j*x + i] * irad[k*y*x + j*x + i];
+      }
+    }
+  }
+
+  free(s_emiss);
+  free(irad);
+
+  out = newVal(BSQ, x, y, z, FLOAT, emiss);
+  return out;
+}
+
+
+
 

@@ -9568,7 +9568,7 @@ echo $ECHO_N "checking if local libiomedley present... $ECHO_C" >&6
 	if test -x iomedley/configure; then
 		echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
-		CFLAGS="$CFLAGS -I./$ac_top_builddir/iomedley"
+		CFLAGS="$CFLAGS -I\$(top_srcdir)/iomedley"
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBIOMEDLEY 1
@@ -24229,7 +24229,7 @@ _ACEOF
 
 fi
 
-									CFLAGS="$CFLAGS -I./$ac_top_builddir/vicar"
+									CFLAGS="$CFLAGS -I\$(top_srcdir)/vicar"
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBVICAR 1
@@ -25809,9 +25809,17 @@ echo "$as_me: error: $ac_sub_configure failed for $ac_dir" >&2;}
 fi
 
 
-PRINT_N() {
-	echo $ECHO_N "$1:  $ECHO_C"
-	echo $ECHO_N "printf(\"$1:  $ECHO_C\");" >> build_summary
+PRINT_YES_NO() {
+  answer="Yes"
+  if test $# -lt 2; then
+    answer="No"
+  else
+      if test "$2" = "no"; then
+        answer="No"
+      fi
+  fi
+  echo "$1:  ${answer}"
+  echo "printf(\"$1:  ${answer}\n\");" >> build_summary
 }
 
 PRINT() {
@@ -25819,41 +25827,14 @@ PRINT() {
 	echo "printf(\"$1\n\");" >> build_summary
 }
 
-IF_YES_NO() {
-  if test $# -lt 1; then
-    PRINT "No"
-    return
-  else
-    while test $# -gt 0; do
-      if test "$1" = "no"; then
-        PRINT "No"
-        return
-      fi
-      shift
-    done
-  fi
-  PRINT "Yes"
-}
-
 rm -f build_summary
 
 PRINT ""
-PRINT   "Configuration Summary"
-PRINT   "--------------------------"
-
-PRINT_N "            Readline"
-IF_YES_NO "$have_readline"
-
-PRINT_N "              X11/Xt"
-IF_YES_NO "$have_xt"
-
-PRINT_N "               Motif"
-IF_YES_NO "$have_motif"
-
-PRINT_N "                HDF5"
-IF_YES_NO "$have_libhdf"
-
-PRINT_N "      Module Support"
-IF_YES_NO "$build_module_support"
-PRINT_N "    GUI/Vicar Module"
-IF_YES_NO "$local_vicar"
+PRINT        "Configuration Summary"
+PRINT        "----------------------"
+PRINT_YES_NO "        Readline" "$have_readline"
+PRINT_YES_NO "          X11/Xt" "$have_xt"
+PRINT_YES_NO "           Motif" "$have_motif"
+PRINT_YES_NO "            HDF5" "$have_libhdf"
+PRINT_YES_NO "  Module Support" "$build_module_support"
+PRINT_YES_NO "GUI/Vicar Module" "$local_vicar"
