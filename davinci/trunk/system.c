@@ -3,9 +3,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-#if   defined(HAVE_CONFIG_H)
-#include <config.h>
-#endif
+#include "config.h"
 
 #ifndef _WIN32
 #include <sys/time.h>

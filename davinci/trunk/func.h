@@ -44,7 +44,7 @@ int yylex(void);
 
 void squash_spaces(char *s);
 int instring(char *str, char c);
-void save_function();
+void save_function(void);
 void eat_em(void);
 int dd_put_argv(Scope *s, Var *v);
 void unput_nextc(char c);
@@ -54,7 +54,7 @@ char *do_help(char *input);
 void parse_stream(FILE *fp);
 
 /* pp.c */
-void emit_prompt ();                    /* spit out prompt if interactive */
+void emit_prompt (void);                /* spit out prompt if interactive */
 Var *pp_math (Var *, int , Var *);      /* perform math */
 Var *pp_relop (Var *, int, Var *);      /* perform math */
 Var *pp_set_var (Var *, Var *, Var *);  /* set variables */
@@ -124,7 +124,7 @@ int cpos(int x, int y, int z, Var *v);
 void xpos(int i, Var *v, int *x, int *y, int *z);
 
 /* pp_math.h */
-int extract_int (Var * v, int i);
+int extract_int (const Var * v, const int i);
 float extract_float (Var * v, int i);
 double extract_double (Var * v, int i);
 Var *pp_add_strings(Var *a, Var *b);
@@ -132,7 +132,7 @@ Var *pp_math_strings(Var *a, int op, Var *b);
 
 /* file.h */
 void push_input_file (char *name);
-void pop_input_file ();
+void pop_input_file (void);
 int is_file (char *name);
 
 /* error.c */
@@ -196,7 +196,7 @@ FILE *uncompress(FILE *, char *);
 
 
 
-Var *p_mknod();
+Var *p_mknod(int, Var *, Var *);
 Var *p_mkval(int, char *);
 Var *evaluate(Var *);
 Var * p_rnode(Var *, Var *);
@@ -340,8 +340,8 @@ Var *ff_eval(vfuncptr func, Var *arg);
 
 Var *ff_add_struct(vfuncptr func, Var *arg);
 Var *ff_get_struct(vfuncptr func, Var *arg);
-void get_struct_element(Var *v, int i, char **name, Var **data);
-int get_struct_count(Var *v);
+void get_struct_element(const Var *v, const int i, char **name, Var **data);
+int get_struct_count(const Var *v);
 
 
 #ifdef INCLUDE_API
@@ -403,6 +403,7 @@ Var * ff_delete(vfuncptr func, Var *arg);
 /* internal functions for structures */
 Var *new_struct(int ac);
 void add_struct(Var *s, char *name, Var *exp);
+void free_struct(Var *);
 
 /* internal functions for text arrays */
 Var *newString(char *str);

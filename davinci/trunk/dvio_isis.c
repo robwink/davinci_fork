@@ -317,7 +317,7 @@ int *
 fix_unsigned(struct iom_iheader *h, unsigned short *s)
 {
 	int len;
-	int *data = s;
+	int *data = (int *) s; /* JAS: explicit cast correct? 18 nov 2003 */
 	int i;
 
 	if (h->eformat == iom_MSB_INT_2 || h->eformat == iom_LSB_INT_2) {

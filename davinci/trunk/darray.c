@@ -206,7 +206,7 @@ Darray_replace(Darray *d, int i, void *in, void **out)
 /*
 ** Get the number of elements in the array
 */
-int Darray_count(Darray *d)
+int Darray_count(const Darray *d)
 {
     if (d) return(d->count);
     return(-1);
@@ -253,21 +253,22 @@ int Acmp(const void *a, const void *b, void *param)
 Nnode *
 Nnode_create(char *key, void *value)
 {
-    Nnode *a = (Nnode *)calloc(1, sizeof(Nnode));
-	if (key) a->key = (char *)strdup(key);
-    a->value = value;
-    a->index = -1;      /* unassigned */
-    return(a);
+
+  Nnode *a = (Nnode *)calloc(1, sizeof(Nnode));
+  if (key) a->key = (char *)strdup(key);
+  a->value = value;
+  a->index = -1;      /* unassigned */
+  return(a);
+
 }
 
 void
-Nnode_free(Nnode *a, void (*fptr)())
+Nnode_free(Nnode *a, void (*fptr)(void *))
 {
 	if (a->key) free(a->key);
 	if (fptr && a->value) fptr(a->value);
 	free(a);
 }
-
 
 Narray *
 Narray_create(int size)
@@ -458,28 +459,29 @@ Narray_replace(Narray *a, int i, void *New, void **old)
 /*
 ** Narray_get() - Get values of element at index.
 */
+
 int
-Narray_get(Narray *a, int i, char **key, void **data)
+Narray_get(const Narray *a, const int i, char **key, void **data)
 {
-    Nnode *n;
-    if (Darray_get(a->data, i, (void **)&n) == 1) {
-        if (key) *key = n->key;
-        if (data) *data = n->value;
-        return(1);
-    }
-    return(-1);
+  Nnode *n;
+  if (Darray_get(a->data, i, (void **)&n) == 1) {
+    if (key) *key = n->key;
+    if (data) *data = n->value;
+    return(1);
+  }
+  return(-1);
 }
 
 
 int 
-Narray_count(Narray *a)
+Narray_count(const Narray *a)
 {
     if (a) return(Darray_count(a->data));
     return(-1);
 }
 
 void
-Narray_free(Narray *a, void (*fptr)())
+Narray_free(Narray *a, void (*fptr)(void *))
 {
 	int i;
 	int count = Darray_count(a->data);

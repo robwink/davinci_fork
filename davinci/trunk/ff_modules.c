@@ -43,7 +43,7 @@ static const char ver_any_str[] = "(any)";
 #define printable_ver_str(ver) ((ver)? (ver): ver_any_str)
 
 /* daVinci module file extension */
-static const char DVM_EXT[] = "dvm";
+static const char DVM_EXT[] = "so";
 
 /* Environment variable for module lookup */
 static const char DV_MOD_PATH_ENV[] = "DV_MOD_PATH";
@@ -57,7 +57,7 @@ static char DV_MODULE_INIT_FUNC_NAME[] = "dv_module_init";
 static char DV_MODULE_FINI_FUNC_NAME[] = "dv_module_fini";
 
 typedef int (* dvModuleInitFunc)(const char *called_as,
-								 dvModuleInitStuff *init_stuff);
+				 dvModuleInitStuff *init_stuff);
 typedef int (* dvModuleFiniFunc)(const char *called_as);
 
 

@@ -3,10 +3,6 @@
 #include "parser.h"
 #include "dvio.h"
 
-#if    defined(HAVE_CONFIG_H)
-#include <config.h>
-#endif
-
 #ifdef __CYGWIN__
 #include <io.h>
 extern Swap_Big_and_Little(Var *);
@@ -90,6 +86,12 @@ ff_write(vfuncptr func, Var *arg)
       }
       iom_type_idx++;
     }
+
+    /* FIX: remove */
+    if (iom_type_found)
+      fprintf(stderr, "IOM type\n");
+    else
+      fprintf(stderr, "not IOM type\n");
 
     if (iom_type_found)                   dv_WriteIOM(ob, filename, type, force);
     else if (!strcasecmp(type, "raw"))    dv_WriteRaw(ob, filename, force);

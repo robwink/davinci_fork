@@ -56,4 +56,4 @@
 #define	H_NOTFOUND	1	/* didn't find the keyword */
 #define	H_ERROR		(-1)	/* didn't find the help file */
 
-extern void FreeHelp();		/* use this if you need memory */
+extern void FreeHelp(void);		/* use this if you need memory */

@@ -1,8 +1,6 @@
 /********************************** system.h **********************************/
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif /* HAVE_CONFIG_H */
+#include "config.h"
 
 /**
  ** This file contains all system specific dependencies, and defines

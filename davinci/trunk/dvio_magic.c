@@ -1,8 +1,7 @@
-#if defined(HAVE_CONFIG_H)
-#include <config.h>
-#endif
+#include "config.h"
 
 #ifdef HAVE_LIBMAGICK
+
 #include <magick/magick.h>
 #include <magick/api.h>
 #include "parser.h"

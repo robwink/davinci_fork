@@ -193,36 +193,39 @@ ff_insert_struct(vfuncptr func, Var * arg)
 int
 struct_pos(Var *a, Var *v)
 {
-	int pos = -1;
-	Var *e;
-	char *name;
 
-	if (V_TYPE(v) == ID_STRING) {
-		name = V_STRING(v);
-		pos = find_struct(a, V_STRING(v), NULL);
-		if (pos == -1) {
-			parse_error("Structure does not contain element: %s", name);
-		}
-	} else {
-		/* The user passed a number, it is one based */
-		e = eval(v);
-		if (e == NULL) {
-            parse_error("Unable to find variable: %s", V_NAME(v));
-            return(NULL);
-		}
-		v = e;
-		if (V_TYPE(v) == ID_VAL) {
-			pos = extract_int(v, 0);
-			if (pos > 0 && pos <= get_struct_count(a)) {
-				return(pos-1);
-			} else {
-				return(-1);
-			}
-		} else {
-			parse_error("Not a value");
-		}
-	}
-	return(pos);
+  int	pos = -1;
+  Var	*e;
+  char	*name;
+
+  if (V_TYPE(v) == ID_STRING) {
+    name = V_STRING(v);
+    pos = find_struct(a, V_STRING(v), NULL);
+    if (pos == -1) {
+      parse_error("Structure does not contain element: %s", name);
+    }
+  } else {
+    /* The user passed a number, it is one based */
+    e = eval(v);
+    if (e == NULL) {
+      parse_error("Unable to find variable: %s", V_NAME(v));
+      return(-1); /* JAS FIX: this was returning NULL */
+    }
+    v = e;
+    if (V_TYPE(v) == ID_VAL) {
+      pos = extract_int(v, 0);
+      if (pos > 0 && pos <= get_struct_count(a)) {
+	return(pos-1);
+      } else {
+	return(-1);
+      }
+    } else {
+      parse_error("Not a value");
+    }
+  }
+
+  return(pos);
+
 }
 
 insert_struct(Var *a, int pos, char *name, Var *data)
@@ -260,37 +263,43 @@ ff_get_struct(vfuncptr func, Var * arg)
 Var *
 varray_subset(Var *v, Range *r)
 {
-    Var *s;
-    int size;
-    int i, j;
-    char *name;
-    Var **data, *old;
 
-    size = 1 + (r->hi[0] - r->lo[0]) / r->step[0];
+  Var	*s;
+  int	size;
+  int	i, j;
+  char	*name;
+  /* JAS FIX: not sure if this ever worked before..
+     Var	**data, *old;
+  */
+  Var	*data;
 
-    if (size == 1) {
-        get_struct_element(v, r->lo[0], NULL, &s);
-    } else {
-		/* this code is broken */
-		/*
-        s = new_struct(size);
-        for (i = 0 ; i < size ; i++) {
-            j = r->lo[0] + i *r->step[0];
-            get_struct_element(v, j, NULL, &data);
-            Narray_replace(V_STRUCT(s), i, data, (void **)&old);
-            if (old) free_var(old);
-        }
-		*/
-		s = new_struct(size);
-        for (i = 0 ; i < size ; i++) {
-            j = r->lo[0] + i *r->step[0];
-            get_struct_element(v, j, &name, &data);
-			data = V_DUP(data);
-            Narray_add(V_STRUCT(s), name, data);
-			mem_claim(data);
-		}
+  size = 1 + (r->hi[0] - r->lo[0]) / r->step[0];
+
+  if (size == 1) {
+    get_struct_element(v, r->lo[0], NULL, &s);
+  } else {
+    /* this code is broken */
+    /*
+      s = new_struct(size);
+      for (i = 0 ; i < size ; i++) {
+      j = r->lo[0] + i *r->step[0];
+      get_struct_element(v, j, NULL, &data);
+      Narray_replace(V_STRUCT(s), i, data, (void **)&old);
+      if (old) free_var(old);
+      }
+    */
+    s = new_struct(size);
+    for (i = 0 ; i < size ; i++) {
+      j = r->lo[0] + i *r->step[0];
+      get_struct_element(v, j, &name, &data);
+      data = V_DUP(data);
+      Narray_add(V_STRUCT(s), name, data);
+      mem_claim(data);
     }
-    return(s);
+  }
+
+  return(s);
+
 }
 
 /*
@@ -402,11 +411,11 @@ find_struct(Var *a, char *b, Var **data)
     return(Narray_find(V_STRUCT(a), b, (void **)data));
 }
 
+void
 free_struct(Var *v)
 {
-    Narray_free(V_STRUCT(v), free_var);
+  Narray_free(V_STRUCT(v), free_var);
 }
-
 
 compare_struct(Var *a, Var *b)
 {
@@ -430,18 +439,19 @@ compare_struct(Var *a, Var *b)
 }
 
 void
-get_struct_element(Var *v, int i, char **name, Var **data)
+get_struct_element(const Var *v, const int i, char **name, Var **data)
 {
     Narray_get(V_STRUCT(v), i, name, (void **)data);
 }
+
 int
-get_struct_count(Var *v) 
+get_struct_count(const Var *v) 
 {
-    return(Narray_count(V_STRUCT(v)));
+  return(Narray_count(V_STRUCT(v)));
 }
 
 int
-get_struct_names(Var *v, char ***names, char *prefix) 
+get_struct_names(const Var *v, char ***names, const char *prefix) 
 {
 	Var *data;
 	char *name;
