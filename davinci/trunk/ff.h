@@ -236,7 +236,7 @@ struct _vfuncptr vfunclist[] = {
     { "pzoom",   ff_pzoom,   NULL, NULL},
 #endif
 
-#ifdef HAVE_LIBPROJ   
+#if 0
     { "projection", ff_projection,   NULL , NULL},
 #endif
 
@@ -282,7 +282,7 @@ struct _vfuncptr vfunclist[] = {
 	 { "slant",        ff_slant,                NULL },
 	 { "unslant",      ff_unslant,                NULL },
 
-	{ "hstretch",      ff_hstretch, 			NULL },
+/*	{ "hstretch",      ff_hstretch, 			NULL }, */
 
     { NULL,             NULL,                  NULL }
 };
