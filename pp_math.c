@@ -62,6 +62,16 @@ int rpos(int, Var *, Var *);
 	}\
 }
 
+#define DO_CMP_LOOP(T1,_E_) \
+{\
+	T1 v1, v2;\
+	for (i = 0 ; i < dsize ; i++) {\
+		v1 = _E_(a,rpos(i,val,a)); \
+		v2 = _E_(b,rpos(i,val,b));\
+		if (v1 != v2) return(0); \
+	}\
+}
+
 int
 is_relop(int op)
 {
@@ -233,6 +243,117 @@ pp_math(Var * a, int op, Var * b)
     return (val);
 }
 
+/**
+ ** pp_compare()   - perform comparison
+ **/
+
+int
+pp_compare(Var * a, Var * b)
+{
+    int in_format, out_format;
+    int size[3];
+    int dsize = 0;
+    int i;
+    int order;
+    Var *val, *t, v;
+    void *data;
+    int count;
+    int va, vb;
+    int ca = 1, cb = 1;
+    int dzero=0;
+
+	val = &v;
+
+    if (a == NULL) a = VZERO;	/* define this somewhere */
+    if (b == NULL) return(0);	/* called with error */
+
+    if ((t = eval(a)) == NULL) {
+        sprintf(error_buf, "Variable not found: %s", V_NAME(a));
+        parse_error(NULL);
+        return (0);
+    }
+    a = t;
+    if ((t = eval(b)) == NULL) {
+        sprintf(error_buf, "Variable not found: %s", V_NAME(b));
+        parse_error(NULL);
+        return (0);
+    }
+    b = t;
+    /**
+    ** Verify that we can actually do math with these two objects.
+    **
+    ** Okay if:	dimensions are the same or 1.	(size == size)
+    **
+    **/
+
+/*
+    if (V_TYPE(a) == ID_STRING || V_TYPE(b) == ID_STRING || 
+		  V_TYPE(a) == ID_TEXT || V_TYPE(b) == ID_TEXT) {
+        return (pp_math_strings(a, ID_EQ, b));
+    }
+*/
+    if (V_TYPE(a) != ID_VAL || V_TYPE(b) != ID_VAL) {	/* can this happen? */
+        parse_error("math operation illegal on non-values");
+        return (0);
+    }
+    count = 0;
+    for (i = 0; i < 3; i++) {
+        va = V_SIZE(a)[orders[V_ORDER(a)][i]];
+        vb = V_SIZE(b)[orders[V_ORDER(b)][i]];
+        if (va != 1 && vb != 1 && va != vb) {
+            parse_error("math operation illegal, sizes differ");
+            return (0);
+        }
+        if (va != vb) {
+            ca *= va;
+            cb *= vb;
+        }
+    }
+    if (ca != 1 && cb != 1) {
+        parse_error("math operation illegal, sizes differ on more than 1 axis");
+        return (0);
+    }
+
+    dsize = 1;
+    for (i = 0; i < 3; i++) {
+        size[i] = max(V_SIZE(a)[orders[V_ORDER(a)][i]],
+                      V_SIZE(b)[orders[V_ORDER(b)][i]]);
+        dsize *= size[i];
+    }
+    order = (V_DSIZE(a) > V_DSIZE(b) ? V_ORDER(a) : V_ORDER(b));
+
+    if (dsize == 0)
+        dsize = 1;	/* impossible? */
+
+    in_format = max(V_FORMAT(a), V_FORMAT(b));
+
+    V_TYPE(val) = ID_VAL;
+    V_FORMAT(val) = out_format;
+    V_DSIZE(val) = dsize;
+    V_ORDER(val) = order;
+    V_DATA(val) = data;
+
+/** size was extracted as x,y,z.  put it back appropriately **/
+
+    V_SIZE(val)[orders[order][0]] = size[0];
+    V_SIZE(val)[orders[order][1]] = size[1];
+    V_SIZE(val)[orders[order][2]] = size[2];
+
+	switch (in_format) {
+		case BYTE:
+		case SHORT:
+		case INT:
+			DO_CMP_LOOP(int, extract_int);
+			break;
+		case FLOAT:
+			DO_CMP_LOOP(float, extract_float);
+			break;
+		case DOUBLE:
+			DO_CMP_LOOP(double, extract_double);
+			break;
+	}
+	return(1);
+}
 
 
 typedef int (*ifptr) (Var *, Var *, int);
