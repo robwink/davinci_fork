@@ -1,0 +1,67 @@
+#!/opt/local/bin/davinci -fqwv0
+
+#
+# Test some functions to make sure they do what we think they should
+#
+define success()  {
+	if ($1 == 1)  {
+		printf("passed.\n");
+	} else {
+		printf("failed\n");
+	}
+}
+
+printf("Function tests\n");
+
+printf("trigonometric  (radians): ...")
+x = 1/256.0
+pi = 104348.0 / 33215
+success (atan(tan(x))== x && \
+	(sin(x)*sin(x) + cos(x)*cos(x)) == 1.0 && \
+	acos(-1) == pi && \
+	asin(1)*2 == pi && \
+	cos(pi/4) == sqrt(2)/2 && \
+	sin(pi/4) == sqrt(2)/2) 
+
+printf("trigonometric  (degrees): ...")
+x = 1/256.0
+pi = 180.0
+success (atand(tand(x))== x && \
+	(sind(x)*sind(x) + cosd(x)*cosd(x)) == 1.0 && \
+	acosd(-1) == pi && \
+	asind(1) == 90.0 && \
+	cosd(pi/4) == sqrt(2)/2 && \
+	sind(pi/4) == sqrt(2)/2) 
+
+printf("logarithmic and misc math ...");
+y = 1.0+x
+success (ln(x) / ln(2) == -8.0 && \
+	log10(x) / log10(2) == -8.0 && \
+	ln(pow(2.0, -8.0))/ln(2) == -8.0  && \
+	exp(ln(x)) == x && \
+    floor(y) == y-x && \
+	ceil(y) == y-x+1 && \
+	abs(x) == x && \
+	abs(-x) == x) 
+
+/* format conversion */
+
+printf("format conversion         ...");
+a = random(10,10,10)*255
+success (char(a) == floor(a) && \
+		 char(a+256) != floor(a)+256 && \
+		 char(a-256) != floor(a)-256 && \
+		 short(a*127) == floor(a*127) && \
+		 int(a*256) == floor(a*256) && \
+		 float(3.0) / 2 == 1.5 && \
+		 double(3.0) / 2 == 1.5) 
+
+
+printf("\n");
+printf("dim()                     ...");
+a = 1//2//3
+b = translate(a,x,y)
+c = translate(a,x,z)
+success (dim(a)[1] == 3 && (dim(a)[2] == dim(a)[3] == 1) && \
+		 dim(b)[2] == 3 && (dim(b)[1] == dim(b)[3] == 1) && \
+		 dim(c)[3] == 3 && (dim(c)[1] == dim(c)[2] == 1)) 
