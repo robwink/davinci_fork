@@ -1,4 +1,3 @@
-
 #include <ctype.h>
 #include <math.h>
 #include <stdio.h>
@@ -13,6 +12,7 @@
 #include <qmv/hvector.h>
 
 #define MYSQL_CMD "mysql -h mapserver1 -u dblogin2 -pthmsdb -D themis2"
+#define WGET_CMD "wget -q -O -"
 
 // For every pixel DOWN in image for the ghost, we ADD this much
 // fraction of a second in degrees west longitude to the longitude.
@@ -345,12 +345,188 @@ struct FramedImage
 
 #define LINES "=============================================================\n"
 
-/** The memory allocated for 'cells' must be freed by the caller,
- ** using the delete[] operator.
- **/
 static int
-readCells(const char *stamp, FramedImage& fi, int reverseLon)
+readCellsFromTrackServer(const char *stamp, FramedImage& fi)
  {
+	fi.cells = NULL;
+
+	///////////////////
+	// Determine the parameters of the image, from the DB
+	///////////////////
+
+	char cmd[1000];
+	sprintf(cmd,
+			MYSQL_CMD " -B -s -e \"select start, duration from obs where filename='%s'\"",
+			stamp);
+
+	FILE *fp = popen(cmd, "r");
+	if(!fp)
+	 {
+		sprintf(ERRMSG,
+				LINES,
+				"ERROR:"
+				"\tUnable to run external mysql command.\n"
+				"\n"
+				"\tTRIED: %s\n"
+				LINES,
+				cmd);
+		pclose(fp);
+		return  0;
+	 }
+
+	char line_buff[1000];
+	if(feof(fp)  ||  !fgets(line_buff, 1000, fp))
+	 {
+		sprintf(ERRMSG,
+				LINES,
+				"ERROR:"
+				"\tUnable to find stamp in database!\n"
+				"\n"
+				"\tTRIED: %s\n"
+				LINES,
+				cmd);
+		pclose(fp);
+		return  0;
+	 }
+	pclose(fp);
+
+	char *eol = strchr(line_buff, '\n');
+	if(eol)
+		*eol = 0;
+
+	double start;
+	double duration;
+	int read_items = sscanf(line_buff,
+							"%lf %lf",
+							&start,
+							&duration);
+	if(read_items != 2)
+	 {
+		sprintf(ERRMSG,
+				LINES
+				"ERROR:"
+				"\tUnable to parse geometry database data!\n"
+				"\n"
+				"\tTRIED: %s\n"
+				"\n"
+				"\tFAILED WITH THE RESULT LINE:\n"
+				"\t[%s]\n"
+				LINES,
+				cmd, line_buff);
+		return  0;
+	 }
+
+	///////////////////
+	// Grab points from the track server
+	///////////////////
+
+	double xmin = start;
+	double xdelta = 256/30.;
+	int xcount = (int) ceil(duration / xdelta) + 1;
+	double ymin = -4/15.;
+	double ydelta = 8/15.;
+	int ycount = 2;
+	sprintf(cmd,
+			WGET_CMD " 'http://mapserver1.la.asu.edu/jmars/time_track.phtml"
+			"?format=c"
+			"&xmin=%f&xdelta=%f&xcount=%d"
+			"&ymin=%f&ydelta=%f&ycount=%d'",
+			xmin, xdelta, xcount,
+			ymin, ydelta, ycount
+		);
+	fp = popen(cmd, "r");
+	if(!fp)
+	 {
+		sprintf(ERRMSG,
+				LINES,
+				"ERROR:"
+				"\tUnable to run external wget command.\n"
+				"\n"
+				"\tTRIED: %s\n"
+				LINES,
+				cmd);
+		pclose(fp);
+		return  0;
+	 }
+
+	HVector pts[3000]; // 256 frames worth of corner pts max, WAY rounded up
+	for(int i=0; i<xcount*2; i++)
+	 {
+		if(feof(fp)  ||  fgets(line_buff, 1000, fp) == NULL)
+		 {
+			sprintf(ERRMSG,
+					LINES
+					"ERROR:"
+					"\tTrack server returned only %d points! (wanted %d)\n"
+					"\n"
+					"\tTRIED: %s\n"
+					LINES,
+					i, xcount*2, cmd);
+			pclose(fp);
+			return  0;
+		 }
+
+		char *eol = strchr(line_buff, '\n');
+		if(eol)
+			*eol = 0;
+
+		read_items = sscanf(line_buff, "%lf %lf %lf",
+							&(pts[i][0]),
+							&(pts[i][1]),
+							&(pts[i][2]) );
+
+		if(read_items != 3)
+		 {
+			sprintf(ERRMSG,
+					LINES
+					"ERROR:"
+					"\tUnable to parse track server data!\n"
+					"\n"
+					"\tTRIED: %s\n"
+					"\n"
+					"\tFAILED WITH THE RESULT LINE:\n"
+					"\t[%s]\n"
+					LINES,
+					cmd, line_buff);
+			pclose(fp);
+			return  0;
+		 }
+	 }
+
+	if(fgets(line_buff, 1000, fp) != NULL)
+	 {
+		sprintf(ERRMSG,
+				LINES
+				"ERROR:"
+				"\tTrack server returned too much data!\n"
+				"\n"
+				"\tTRIED: %s\n"
+				"\n"
+				"\tFIRST LINE OF EXTRA DATA:\n"
+				"\t[%s]\n"
+				LINES,
+				cmd, line_buff);
+		pclose(fp);
+		return  0;
+	 }
+
+	pclose(fp);
+
+	fi.count = xcount - 1;
+	fi.cells = new Cell[fi.count];
+	for(int i=0; i<xcount-1; i++)
+		fi.cells[i].set(pts[i*2+2],
+						pts[i*2+3],
+						pts[i*2+1],
+						pts[i*2  ] );
+
+	return  1;
+ }
+
+static int
+readCellsFromGeometryDB(const char *stamp, FramedImage& fi)
+ {
+	static const int reverseLon = 1; // old option, deprecated
 	fi.cells = NULL;
 
 	char cmd[1000];
@@ -413,6 +589,7 @@ readCells(const char *stamp, FramedImage& fi, int reverseLon)
 					"\t[%s]\n"
 					LINES,
 					cmd, line_buff);
+			pclose(fp);
 			return  0;
 		 }
 
@@ -431,6 +608,7 @@ readCells(const char *stamp, FramedImage& fi, int reverseLon)
 					"[%s]\n"
 					LINES,
 					cmd, line_buff);
+			pclose(fp);
 			return  0;
 		 }
 
@@ -440,6 +618,7 @@ readCells(const char *stamp, FramedImage& fi, int reverseLon)
 		pts[last_frame_id * 4 + last_point_type - 1].x = read_lon;
 		pts[last_frame_id * 4 + last_point_type - 1].y = read_lat;
 	 }
+	pclose(fp);
 
 	if(last_frame_id == -1)
 	 {
@@ -481,6 +660,19 @@ readCells(const char *stamp, FramedImage& fi, int reverseLon)
 	return  1;
  }
 
+/**
+ ** The memory allocated for fi.cells must be freed by the caller,
+ ** using the delete[] operator.
+ **/
+static int
+readCells(const char *stamp, FramedImage& fi, int useTrackServer)
+ {
+	if(useTrackServer)
+		return  readCellsFromTrackServer(stamp, fi);
+	else
+		return  readCellsFromGeometryDB(stamp, fi);
+ }
+
 static int
 readImage(const char *fname, FramedImage& fi)
  {
@@ -498,6 +690,7 @@ readImage(const char *fname, FramedImage& fi)
 	if(count != 4  ||  strcmp(magic, "P5")  ||  !isspace(fgetc(fp)))
 	 {
 		fprintf(stderr, "\nUnable to read image file %s!\n", fname);
+		fclose(fp);
 		return  0;
 	 }
 	fi.cellH = 256;
@@ -506,6 +699,7 @@ readImage(const char *fname, FramedImage& fi)
 	if(maxval >= 256)
 	 {
 		fprintf(stderr, "\nCan't read 16-bit values!\n");
+		fclose(fp);
 		return  0;
 	 }
 
@@ -518,9 +712,11 @@ readImage(const char *fname, FramedImage& fi)
 			fprintf(stderr, "\nEarly EOF!\n");
 		else
 			fprintf(stderr, "\nI/O error while reading file!\n");
+		fclose(fp);
 		return  0;
 	 }
 
+	fclose(fp);
 	return  1;
  }
 
@@ -650,9 +846,6 @@ testUninterpolate(Cell& cell)
  **
  ** The passed-in ghostDataBuff must already be initialized to zero
  ** (or whatever value you desire for "blank" areas of the ghost).
- **
- ** If reverseLon is non-zero, then longitude values read from the
- ** database are reversed (east vs west) before being used.
  **/
 extern "C"
 char *
@@ -665,7 +858,7 @@ createThemisGhostImage(int ghostDown,
 					   int bytesPerPixel,
 					   void *imageDataBuff,
 					   void *ghostDataBuff,
-					   int reverseLon)
+					   int useTrackServer)
  {
 	FramedImage fi;
 	fi.imageW = imageW;
@@ -675,8 +868,21 @@ createThemisGhostImage(int ghostDown,
 	fi.ghostData = (char *) ghostDataBuff;
 	fi.bpp = bytesPerPixel;
 
-	if(!readCells(stamp_id, fi, reverseLon))
+	if(!readCells(stamp_id, fi, useTrackServer))
 		return  ERRMSG;
+
+/*MCW
+	for(int i=0; i<fi.count; i++)
+	 {
+		for(int c=0; c<4; c++)
+			printf("%f\t%f\t%f\n",
+				   fi.cells[i].chain[c][0],
+				   fi.cells[i].chain[c][1],
+				   fi.cells[i].chain[c][2] );
+		printf("\n");
+	 }
+	exit(0);
+*/
 
 	createGhost(fi, ghostDown, ghostRight, msg);
 
@@ -688,16 +894,16 @@ createThemisGhostImage(int ghostDown,
 #ifdef GHOST_MAIN
 main(int ac, char *av[])
  {
-	if(ac != 3  &&  ac != 4)
+	if(ac != 4)
 	 {
-		fprintf(stderr, "USAGE: stampid.pgm ghostDown [reverse]\n");
+		fprintf(stderr, "USAGE: stampid.pgm ghostDown {ts|db}\n");
 		return  -1;
 	 }
 
 	char *image_fname = av[1];
 	char *stamp_id = strdup(av[1]);  stamp_id[9] = 0;
 	int down = atoi(av[2]);
-	int reverse = av[3] != NULL;
+	int useTrackServer = !strcmp(av[3],"ts");
 
 	FramedImage fi;
 
@@ -710,13 +916,14 @@ main(int ac, char *av[])
 
 	char * err = createThemisGhostImage(down, 0, "Ghosting row", stamp_id,
 										fi.imageW, fi.imageH, fi.bpp,
-										fi.imageData, fi.ghostData, reverse);
+										fi.imageData, fi.ghostData,
+										useTrackServer);
 	if(err)
 	 {
 		fprintf(stderr, "%s", err);
 		exit(-1);
 	 }
-	fprintf(stderr, "Created ghost!\n");
+	fprintf(stderr, "Created ghost!                                \n");
 
 	writeGhost(fi, stdout);
 	fprintf(stderr, "Wrote ghost image file to stdout!\n");
