@@ -35,6 +35,7 @@ int allocs = 0;
 Var *VZERO;
 
 static int windows = 1;
+int usage(char *prog);
 
 /**
  ** This is stuff from the old input.c
@@ -206,8 +207,12 @@ main(int ac, char **av)
                         VERBOSE = av[i][j + 1] - '0';
                     } else {
                         k++;
-                        VERBOSE = atoi(av[i + k]);
-                        av[i + k] = NULL;
+						if (i+k >= ac) {
+							exit(usage(av[0]));
+						} else {
+							VERBOSE = atoi(av[i + k]);
+							av[i + k] = NULL;
+						}
                     }
                     break;
                 }
@@ -849,3 +854,11 @@ char *readline(char *prompt)
 	}
 }
 #endif
+
+int
+usage(char *prog) {
+	fprintf(stderr, 
+		"usage: %s [-Viwq] [-v#] [-l logfile] [-e cmd] [-f script] args\n",
+		prog);
+	return(1);
+}
