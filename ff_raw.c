@@ -43,7 +43,7 @@ ff_raw(vfuncptr func, Var * arg)
 		return(NULL);
 	}
 
-	if ((fp=fopen(filename,"r"))==NULL){
+	if ((fp=fopen(filename,"rb"))==NULL){
 		parse_error("Can't find file: %s",filename);
 		return(NULL);
 	}

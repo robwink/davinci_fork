@@ -116,13 +116,13 @@ make_band(Var *in, int band)
 
 	if (V_ORG(in) == BSQ) {
 		p1 = cpos(0,0,band,in);
-		memcpy(V_DATA(out), V_DATA(in)+p1*nbytes, nbytes*x*y);
+		memcpy(V_DATA(out), (char *)V_DATA(in)+p1*nbytes, nbytes*x*y);
 	} else {
 		for (i = 0 ; i< x ; i++) {
 			for (j = 0 ; j< y ; j++) {
 				p1 = cpos(x,y,band,in);
 				p2 = cpos(x,y,0,out);
-				memcpy(V_DATA(out)+p2*nbytes, V_DATA(in)+p1*nbytes, nbytes);
+				memcpy((char *)V_DATA(out)+p2*nbytes, (char *)V_DATA(in)+p1*nbytes, nbytes);
 			}
 		}
 	}

@@ -76,7 +76,7 @@ ff_header(vfuncptr func, Var *arg)
             return (NULL);
         }
     }
-    if (fname && (fp = fopen(fname, "r")) != NULL) {
+    if (fname && (fp = fopen(fname, "rb")) != NULL) {
 
         if (iom_is_compressed(fp))
             fp = iom_uncompress(fp, fname);
