@@ -3,7 +3,9 @@
 
 #include "y_tab.h"
 
-#include <Xm/PushB.h>
+#include <X11/Intrinsic.h>
+#include <X11/Shell.h>
+#include <X11/Xatom.h>
 
 int interactive = 1;
 
@@ -18,7 +20,13 @@ int VERBOSE = 2;
 int allocs = 0;
 Var *VZERO;
 
+#ifdef HAVE_LIBXM
 int windows = 1;
+#endif
+
+#ifndef HAVE_LIBXM
+int windows = 0;
+#endif
 
 /**
  ** This is stuff from the old input.c
@@ -208,8 +216,8 @@ void get_file_input(XtPointer client_data, int *fid, XtInputId *id)
     rl_callback_read_char();
 }
 
-extern XtAppContext        app;
-extern Widget 		top;
+Widget top=NULL;
+XtAppContext    app;
 
 void
 event_loop(void)
@@ -221,7 +229,6 @@ event_loop(void)
 			int argc = 1;
 			XEvent event;
 			argv[0] = av0;
-
 			top = XtVaAppInitialize(&app, "Simple", NULL, 0,
 									&argc,
 									argv, NULL, NULL);
