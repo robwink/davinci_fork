@@ -102,6 +102,8 @@ struct _vfuncptr vfunclist[] = {
     { "filetype",   ff_filetype,    NULL , NULL},
     { "ls",         ff_list,        NULL , NULL},
     { "list",       ff_list,        NULL , NULL},
+	 { "save_pds",	  WritePDS,       NULL , NULL},
+	 { "write_pds",	  WritePDS,       NULL , NULL},
     
 /* string functions */
 
