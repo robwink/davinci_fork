@@ -1,10 +1,14 @@
-char *version = "@(#) daVinci Version #0.55a";
+char *version = "@(#) daVinci Version #0.56";
 
 /*
+Version 0.56: Wed Mar 22 23:46:06 MST 2000
+	+ undid ufunc modifications
+	+ fixed !shell
+	+ finally started tagging revisions
+
 Version 0.55a:
 	* modified ufunc loader
 	+ added delete()
-
 
 Version 0.55:
 	* fixed eval again.  I think you can return values now
