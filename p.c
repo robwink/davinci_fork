@@ -24,8 +24,12 @@ p_mknod(int type, Var * left, Var * right)
 	mem_claim(v);
     n = V_NODE(v);
     v->type = type;
+
     n->left = left;
+	n->left->parent = n;
+
     n->right = right;
+	n->right->parent = n;
 
     return (v);
 }
