@@ -35,7 +35,6 @@ int yylex(void);
 
 void squash_spaces(char *s);
 int instring(char *str, char c);
-int check_ufunc(Var *v);
 void save_function();
 void eat_em(void);
 int dd_put_argv(Scope *s, Var *v);
@@ -340,11 +339,10 @@ Var *ff_pzoom(vfuncptr func, Var * arg);
 #endif
 
 Var *ff_struct(vfuncptr func, Var *arg);
-Var *ff_vcat(vfuncptr func, Var *arg);
 
 Var *ff_eigen(vfuncptr func, Var *arg);
 Var *ff_pcs(vfuncptr func, Var *arg);
-Var *ff_corr_covar_and_scp(vfuncptr func, Var *arg);
+Var *ff_covar(vfuncptr func, Var *arg);
 
 Var *ff_loadvan(vfuncptr func, Var *arg);
 Var *ff_loadspecpr(vfuncptr func, Var *arg);
@@ -421,5 +419,6 @@ Var * per_pixel(vfuncptr func, Var *arg);
 Var * ff_exists(vfuncptr func, Var * arg);
 Var * ff_putenv(vfuncptr func, Var * arg);
 Var * ff_length(vfuncptr func, Var * arg);
+
 Var *	ff_GSE_VIS_downshift(vfuncptr func, Var * arg);
 Var *	ff_GSE_VIS_upshift(vfuncptr func, Var * arg);

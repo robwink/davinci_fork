@@ -188,6 +188,23 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
             fptr = (float *)(alist[j].value);
             *fptr = extract_float(v, 0);
             alist[j].filled = 1;
+        } else if (alist[j].type == DOUBLE) {
+            double *fptr;
+            if ((e = eval(v)) == NULL) {
+                parse_error("%s: Variable not found: %s", fname, V_NAME(v));
+				free(av);
+                return(0);
+            }
+            v = e;
+            if (V_TYPE(v) != ID_VAL) {
+                parse_error("Illegal argument %s(...%s=...), expected DOUBLE", 
+                            fname, alist[j].name);
+				free(av);
+                return(0);
+            }
+            fptr = (double *)(alist[j].value);
+            *fptr = extract_double(v, 0);
+            alist[j].filled = 1;
         } else if (alist[j].type == ID_ENUM) {
             char **p, *q = NULL, *ptr;
             char **values = (char **)alist[j].limits;

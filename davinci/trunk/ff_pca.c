@@ -554,7 +554,7 @@ ff_pcs(vfuncptr	func, Var *args)
 /** davinci function scp(obj [, axis = z])                                **/
 /***************************************************************************/
 Var *
-ff_corr_covar_and_scp(
+ff_covar(
 	vfuncptr	func,
 	Var		*args
 )

@@ -726,7 +726,6 @@ pp_shellArgs(Var *v)
 
 /**
  ** pp_argv() - Get $arg value from current scope.
- **
  **/
 
 Var *
@@ -753,56 +752,30 @@ pp_argv(Var *left, Var *right)
 
     if (V_TYPE(v) == ID_VAL) {
         n = V_INT(v);
-        if (n == 0) {
-            /**
-            ** $0 is a special case.  For the global scope, return
-            ** argv[0].  For everyone else, find the function name
-            ** and return it.  In both these cases, $0 has already
-            ** been stuffed (by name) into the scope->dd
-            **/
-            return(get_sym("$0"));
-        }
-        if (n > dd_argc(scope)) {
-            sprintf(error_buf, "Argument does not exist: $%d\n", n);
-            parse_error(NULL);
-            return(NULL);
-        } else {
-            /**
-            ** This returns memory from the dd.  Don't free it.
-            **/
-            return(dd_get_argv(scope,n));
-        }
+		v = dd_get_argv(scope, n);
+		if (v == NULL)  {
+            parse_error("Argument does not exist: $%d\n", n);
+		}
+		return(v);
     } else if (!strcasecmp(V_NAME(v), "argc")) {
         /**
         ** special case, number of dd->args.
         **/
-        return(dd_argc_var(scope));
+        return(dd_get_argc(scope));
     } else {
         strcpy(name, V_NAME(v));
         if (!strcasecmp(name, "argv")) {
 			/* we should dump the entire ARGV array here */
 			return(dd_make_arglist(scope));
         }
+
+		/*
+		** just some random $ENV variable
+		*/
         if ((value = get_env_var(name)) == NULL) {
             return(NULL);
         }
-        /**
-        ** if symbol is not in symtab, put it there.
-        **/
-/*
-        if ((s = get_global_sym(name)) == NULL) {
-            s = newVar();
-            V_TYPE(s) = ID_STRING;
-            V_STRING(s) = strdup(value);
-            V_NAME(s) = strdup(name);
-            put_global_sym(s);
-        }
-*/	
-        s = newVar();
-        V_TYPE(s) = ID_STRING;
-        V_STRING(s) = strdup(value);
-        
-        return(s);
+        return(newString(value));
     }
 }
 

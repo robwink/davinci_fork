@@ -1,7 +1,9 @@
 char *version = "@(#) daVinci Version #0.7.2";
+
 #include "build.h"
 
 /*
+
 Version 0.7.2: Thu Apr 12 13:45:00 MST 2001
 	* Added verbosity control to iomedley.
 
@@ -13,6 +15,10 @@ Version 0.7: Mon Apr  2 17:57:21 MST 2001
 	* Version just before merging the iomedley branch in.
 	* iomedley branch to be merged v-0_64_1-iomedley
 	* last tag on v-0_64_1-iomedley is v-0_64_1-iom-final
+
+Version 0.68: 
+	* Extended cat to take a variable number of args
+	* fixed bug in ff_history/print_history
 
 Version 0.67.1: Thu Mar 29 14:35:21 MST 2001
 	* buf in ff_rgb.  V_DSIZE() was getting improperly set
