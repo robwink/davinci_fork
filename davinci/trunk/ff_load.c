@@ -96,10 +96,6 @@ ff_raw(vfuncptr func, Var * arg)
         	return (NULL);
         }
 
-	if ((fp=fopen(filename,"r"))==NULL){
-		parse_error("Can't find file: %s",filename);
-		return(NULL);
-	}
 
 	if (!(Row) || !(Col)) {
 		parse_error("Must specify row and column size!");
@@ -108,12 +104,20 @@ ff_raw(vfuncptr func, Var * arg)
 
 	buf=(unsigned char *)calloc((Row*Col),sizeof(char));
 
-	size=fread(buf,sizeof(char),(Row*Col),fp);
-	if (size < (Row*Col)){
-		parse_error("Incorrect Row/Col size, sorry...aborting");
+	if ((fp=fopen(filename,"r"))==NULL){
+		parse_error("Can't find file: %s",filename);
 		return(NULL);
 	}
 
+	size=fread(buf,sizeof(char),(Row*Col),fp);
+
+	if (size < (Row*Col)){
+		parse_error("Incorrect Row/Col size, sorry...aborting");
+		fclose(fp);
+		return(NULL);
+	}
+
+	fclose(fp);
 	return(newVal(BSQ,Col,Row,1,BYTE,buf));
 }
 
