@@ -413,6 +413,12 @@ dispatch_ufunc(UFUNC *f, Var *arg)
 	 ** a name, we need to get rid of it.
      **/
     if ((v = scope->rval) != NULL) {
+		/**
+		*** DANGER!
+		***
+		*** If v is an element from a structure, then this test will fail.
+		*** v can neither be memclaimed, nor is it in the local symtab.
+		**/
         if (mem_claim(v) != NULL || rm_symtab(v) != NULL) {
             insert = 1;
         }
