@@ -136,9 +136,11 @@ ff_write(vfuncptr func, Var *arg)
     else if (iomod_handler_for_type(type)) write_to_io_module(ob, filename, type, force);
 #endif
 
+#if 0
 #ifdef HAVE_LIBMAGICK
     // else if (dvio_ValidGfx(type, GFX_type))    dv_WriteGFX_Image(ob, filename, force, GFX_type);
     else if (1) paramdvWriteImage(ob, filename, type, force);
+#endif
 #endif
     else {
       sprintf(error_buf, "Unrecognized type: %s", type);

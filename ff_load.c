@@ -43,6 +43,9 @@ ff_load(vfuncptr func, Var * arg)
 	/* Set data extraction ranges for iom_read_qube_data(). */
 
 	Alist alist[12];
+
+	iom_init_iheader(&h);
+
 	alist[0] = make_alist( "filename",  ID_UNK,  NULL,     &fvar);
 	alist[1] = make_alist( "record",    INT,    	NULL,     &record);
 	alist[2] = make_alist( "xlow",      INT,    	NULL,     &h.s_lo[0]);
@@ -88,7 +91,6 @@ ff_load(vfuncptr func, Var * arg)
         }
     }
 
-	iom_init_iheader(&h);
 	if (record != -1) h.s_lo[2] = h.s_hi[2] = record;
 
     if (fname && (fp = fopen(fname, "rb")) != NULL) {
@@ -114,10 +116,12 @@ ff_load(vfuncptr func, Var * arg)
 	if (input == NULL)    input = read_from_io_module(fp);
 #endif
 		/* Libmagic should always be the last chance */
+#if 0
 #ifdef HAVE_LIBMAGICK
         if (input == NULL)
 	         input = dvReadImage(func, arg); // last gasp attempt.
 #endif /* HAVE_LIBMAGICK */
+#endif
 
         fclose(fp);
 		

@@ -1,9 +1,16 @@
-char *version = "@(#) daVinci Version #1.12";
+char *version = "@(#) daVinci Version #1.13";
 
 
 #include "build.h"
 
 /*
+Version 1.13: Tue Jul 15 15:43:38 MST 2003
+	+ misc checking, including bug in load() for mini-tes .QUB files
+	(No, I have no idea why this fixed it)
+
+Version 1.12: Tue Apr  1 15:15:04 MST 2003
+	+ Fixed a file handle leakage while reading ISIS suffix planes.
+
 Version 1.12: Tue Apr  1 15:15:04 MST 2003
 	+ Fixed a file handle leakage while reading ISIS suffix planes.
 
