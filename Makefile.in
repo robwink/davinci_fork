@@ -182,7 +182,7 @@ davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	dvio_aviris.c dvio_envi.c dvio_ers.c dvio_goes.c dvio_grd.c \
 	dvio_hdf.c dvio_imath.c dvio_iomedley.c dvio_isis.c dvio_magic.c \
 	dvio_pds.c dvio_pnm.c dvio_raw.c dvio_specpr.c \
-	dvio_themis.c dvio_vicar.c endian_norm.c \
+	dvio_themis.c dvio_vicar.c endian_norm.c  dvio_fits.c \
 	error.c ff.c ff_ascii.c ff_avg.c \
 	ff_bbr.c ff_cluster.c ff_convolve.c ff_deghost.c ff_display.c \
 	ff_fft.c ff_filetype.c ff_fncc.c ff_gnoise.c ff_gplot.c \
@@ -236,7 +236,7 @@ am_davinci_OBJECTS = apifunc.$(OBJEXT) array.$(OBJEXT) avl.$(OBJEXT) \
 	dvio_imath.$(OBJEXT) dvio_iomedley.$(OBJEXT) \
 	dvio_isis.$(OBJEXT) dvio_magic.$(OBJEXT) dvio_pds.$(OBJEXT) \
 	dvio_pnm.$(OBJEXT) dvio_raw.$(OBJEXT) dvio_specpr.$(OBJEXT) \
-	dvio_themis.$(OBJEXT) dvio_vicar.$(OBJEXT) \
+	dvio_themis.$(OBJEXT) dvio_vicar.$(OBJEXT) dvio_fits.$(OBJEXT) \
 	endian_norm.$(OBJEXT) error.$(OBJEXT) ff.$(OBJEXT) \
 	ff_ascii.$(OBJEXT) ff_avg.$(OBJEXT) ff_bbr.$(OBJEXT) \
 	ff_cluster.$(OBJEXT) ff_convolve.$(OBJEXT) ff_deghost.$(OBJEXT) \
@@ -290,6 +290,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/dvio_raw.Po ./$(DEPDIR)/dvio_specpr.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/dvio_themis.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/dvio_vicar.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/dvio_fits.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/endian_norm.Po ./$(DEPDIR)/error.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff.Po ./$(DEPDIR)/ff_ascii.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_avg.Po ./$(DEPDIR)/ff_bbr.Po \
@@ -472,6 +473,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_specpr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_themis.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_vicar.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_fits.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/endian_norm.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/error.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff.Po@am__quote@
