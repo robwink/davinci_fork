@@ -306,7 +306,6 @@ static Var *ff_pnmhelp(vfuncptr f, Var *args)
 			if (retval == H_FOUND) return(ff_pnmhelp(f,args));
 		}
 	}
-
         return(NULL);
 }
 
