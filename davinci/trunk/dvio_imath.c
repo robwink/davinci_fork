@@ -30,11 +30,11 @@ dv_LoadIMath(
         iom_MergeHeaderAndSlice(&h, s);
     }
 
+    data = (double *)iom_read_qube_data(fileno(fp), &h);
+
     ht = h.dim[0];
     wt = h.dim[1];
 	
-    data = (double *)iom_read_qube_data(fileno(fp), &h);
-
     if (h.transposed) {
         double *data2 = (double *)calloc(wt * ht, sizeof(double));
 

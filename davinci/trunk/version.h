@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.80";
+char *version = "@(#) daVinci Version #0.81";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,10 @@ char *version = "@(#) daVinci Version #0.80";
 #include "build.h"
 
 /*
+Version 0.81:
+	* dvio_imath was reading data size incorrectly from
+	  the header, resulting in memory overwrites.
+
 Version 0.80:
 	* Made the INTFMT and REALFMT keyword values (in a VICAR
 	  file) default to the platform-defaults instead of the 
