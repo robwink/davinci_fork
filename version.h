@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.86";
+char *version = "@(#) daVinci Version #0.87";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,9 @@ char *version = "@(#) daVinci Version #0.86";
 #include "build.h"
 
 /*
+Version 0.87: Mon Feb 25 16:26:57 MST 2002
+	* Made ff_avg use doubles instead of floats
+	* Randy forgot to update the version when he fixed hdf5 reads
 
 Version 0.86: Thu Feb 21 13:32:54 MST 2002
 	* Modified ff_interp so that it caches the slopes and the
@@ -19,6 +22,7 @@ Version 0.85: Wed Feb 20 18:42:58 MST 2002
 Version 0.84: Tue Feb 19 23:15:41 MST 2002
 	* Make load() take a text to load multiple files, returns struct
 	* Fixed io_isis to load by filename rather than file pointer
+	* Made display use pnm io routines
 
 Version 0.83: Wed Jan  9 15:41:00 MST 2002
 	* Fixed a bug in xplot regarding NULL (or no) varaibles being passed
