@@ -1,18 +1,7 @@
-?
- PNM Loadable Module - A port of netpbm/pbmplus.
+?pnm_mod
+A port of the netpbm/pbmplus suite.
 
-?modules
- Modules - Loadable modules are optional plug-ins for DaVinci.
-
- Assuming you have the module installed it can be loaded via
- load_module("<module name>").  Thereafter, its functions can be
- accessed via <module name>.<function name>(<function params>).
-
-?modules pnm_mod
-?pnm_mod - A port of the netpbm/pbmplus suite to DaVinci
-    pnm_mod is a port of pbmplus.  See subtopics below:
-
-?modules pnm_mod cut
+?pnm_mod cut
     Usage: cut(object, left, top, width, height) where:
 
     LEFT is the leftmost column (negative implies from right)
@@ -20,21 +9,21 @@
     WIDTH is the number of columns in the output.
     HEIGHT is the number of rows in the output.
 
-?modules pnm_mod crop
+?pnm_mod crop
     Usage: crop(object, left, right, top, bottom)
 
     Left/Right/Top and Bottom relate to image sides.  Specify 1
     to crop the side, 0 to leave it alone.  Crop automatically
     determines the border color by simple image analysis.
 
-?modules pnm_mod pad
+?pnm_mod pad
     Usage: pad(object, color, left, right, top, bottom)
 
     Color can be zero (black) or one (white)
     Left/Right/Top and Bottom values dictate the size (in pixels)
     of the border on each side of the image.
 
-?modules pnm_mod scale
+?pnm_mod scale
     Usage: scale(object, xsize, ysize, xscale, yscale)
 
     You may specify a SINGLE axis change.  For example, xsize OR
