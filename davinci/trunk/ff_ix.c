@@ -262,7 +262,7 @@ ff_hsv2rgb(vfuncptr func, Var * arg)
 	z = GetBands(V_SIZE(obj), V_ORG(obj));
 
 	if (z != 3) {
-		parse_error("%s: Input must have 3 bands.\n", av[0]);
+		parse_error("%s: Input must have 3 bands.\n", func->name);
 		return(NULL);
 	}
 

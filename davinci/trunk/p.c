@@ -494,7 +494,7 @@ evaluate(Var * n)
       push(scope, NULL);
     }
 #ifdef BUILD_MODULE_SUPPORT
-    else if ((p3 = search_in_list_of_loaded_modules(V_NAME(p1)) != NULL) {
+    else if ((p3 = search_in_list_of_loaded_modules(V_NAME(p1))) != NULL) {
       vfuncptr t;
 
       // Support for help
