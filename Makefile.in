@@ -31,7 +31,8 @@ LIBS   =  -L. -Liomedley -lmodsupp -liomedley $(XLIBS) @LIBS@
 AR     = ar
 RANLIB = @RANLIB@
 
-LIBIOMEDLEY = iomedley/libiomedley.a
+LIBIOMEDLEYDIR = iomedley
+LIBIOMEDLEY = $(LIBIOMEDLEYDIR)/libiomedley.a
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
@@ -78,7 +79,7 @@ davinci:	$(OBJ)  $(READLINE_OBJ) $(MOD_SUPP_LIB) $(LIBIOMEDLEY)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $@ $(READLINE_LIB) $(LIBS)
 
 $(LIBIOMEDLEY):
-	cd iomedley && $(MAKE)
+	cd $(LIBIOMEDLEYDIR) && $(MAKE)
 
 $(MOD_SUPP_LIB): $(MOD_SUPP_LIB_OBJS)
 	$(AR) qv $(MOD_SUPP_LIB) $(MOD_SUPP_LIB_OBJS)
@@ -90,7 +91,7 @@ build.h:	$(OBJ:ff_version.o=)
 	echo 'char *builder = "'`whoami`'@'`hostname`'";' >> build.h
 
 readline/libreadline.a:
-	@(cd readline ; make )
+	@(cd readline && $(MAKE) )
 
 lexer.o:	lexer.c parser.o
 
@@ -118,9 +119,10 @@ help.o:	help.c
 clean:
 	-rm -f *.o davinci dv core gplot TAGS config.cache config.h config.log 
 	-rm -f .dvlog */.dvlog .nfs* */.nfs* *~ */*~
-	-(cd readline ; make clean)
-	-(cd lib ; make clean)
-	-(cd modules ; make clean)
+	-(cd readline && $(MAKE) clean)
+	-(cd lib && $(MAKE) clean)
+	-(cd modules && $(MAKE) clean)
+	-(cd $(LIBIOMEDLEYDIR) && $(MAKE) clean)
 
 dist:	clean
 	echo davinci-`head -1 version.h | sed -e 's/.* Version #//;s/".*//'` > .ver
@@ -128,7 +130,7 @@ dist:	clean
 	rm -rf readline/config.cache
 	mkdir `cat .ver`
 	ln $(DIST) `cat .ver`
-	(cd `cat .ver` ; ln -s ../docs ../tests ../readline ../lib .)
+	(cd `cat .ver` && ln -s ../docs ../tests ../readline ../lib .)
 	tar chf `cat .ver`.tar `cat .ver`
 	compress `cat .ver`.tar
 	rm -rf `cat .ver` .ver
@@ -157,16 +159,16 @@ gplot:	gplot.o lib/libXfred.a system.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) gplot.o system.o -o $@ $(LDFLAGS) -Llib -lXfred $(LIBS) $(XLIBS) -lX11
 
 lib/libXfred.a:
-	@cd lib ; $(MAKE)
+	cd lib && $(MAKE)
 
 depend:
 	@gcc -MM $(OBJ:.o=.c)
 
 x.o:    x.c
-	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(XRTINCLUDE) $<
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(XRTINCLUDE) x.c
 
 xrt_print_3d.o: xrt_print_3d.c
-	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(XRTINCLUDE) $<
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(XRTINCLUDE) xrt_print_3d.c
 
 
 
