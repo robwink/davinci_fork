@@ -23,8 +23,8 @@ enum _CMD {BAND,FRAME,SINGLE,ALL};
 int FrameBandStart[]={16,32,58,84,110,136,162,188,213,239};
 
 typedef enum _CMD CMD;
-int Skip_To_Stop_Sync(int *i, char *buf,int len);
-int Skip_To_Start_Sync(int *i, char *buf,int len);
+int Skip_To_Stop_Sync(int *i, unsigned char *buf,int len);
+int Skip_To_Start_Sync(int *i, unsigned char *buf,int len);
 int Keep(unsigned char B, unsigned short F, CMD Cmd, int Frame, int Band);
 int Read_Ahead_For_Best_Collumn_Guess(int *Width,unsigned char *buf,int len);
 
@@ -88,7 +88,7 @@ Read_Ahead_For_Best_Collumn_Guess(int *Width,unsigned char *buf,int len)
 
 
 
-int Skip_To_Stop_Sync(int *i, char *buf,int len)
+int Skip_To_Stop_Sync(int *i, unsigned char *buf,int len)
 {
     int count=0;
     int Tmp=*i;
@@ -108,7 +108,7 @@ int Skip_To_Stop_Sync(int *i, char *buf,int len)
 }
 
 
-int Skip_To_Start_Sync(int *i, char *buf,int len)
+int Skip_To_Start_Sync(int *i, unsigned char *buf,int len)
 {
     int Tmp=*i;
     short V;
@@ -279,7 +279,7 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
     if (header.format=SHORT){ /*Data is actually 12-bit and needs the upper 4 bits cleaned off*/
         dsize=header.size[0]*header.size[1]*header.size[2];
         for (i=0;i<dsize*2;i+=2){
-            (*((short *)(data+i))) &=4095;
+            ((short *)(data))[i] &= 4095;
         }
     }
 
@@ -416,8 +416,10 @@ ff_Frame_Grabber_Read(vfuncptr func, Var * arg)
 
 }
 
-static int Themis_Sort(char *A, char *B)
+static int Themis_Sort(const void *vA, const void *vB)
 {
+	char *A = vA;
+	char *B = vB;
     unsigned char A_c_Band;
     unsigned short A_c_Frame;
     unsigned char B_c_Band;
@@ -456,12 +458,12 @@ Add_Fake_Frame(void *newbuf,int band, int frame, int num_frames,int width)
 
     for (i=0;i<num_frames;i++){
         new_frame=frame+i;	
-        memcpy((newbuf+i*width),&Start_Sync,2);
-        memcpy((newbuf+i*width+2),&pseudo_ID,1);
-        memcpy((newbuf+i*width+_BANDS),&band,1);
-        memcpy((newbuf+i*width+_FRAMES),&new_frame,2);
-        memcpy((newbuf+i*width+_DATA),blank,(width-8));
-        memcpy((newbuf+i*width+(width-2)),&Stop_Sync,2);
+        memcpy((((unsigned char *)newbuf)+i*width),&Start_Sync,2);
+        memcpy((((unsigned char *)newbuf)+i*width+2),&pseudo_ID,1);
+        memcpy((((unsigned char *)newbuf)+i*width+_BANDS),&band,1);
+        memcpy((((unsigned char *)newbuf)+i*width+_FRAMES),&new_frame,2);
+        memcpy((((unsigned char *)newbuf)+i*width+_DATA),blank,(width-8));
+        memcpy((((unsigned char *)newbuf)+i*width+(width-2)),&Stop_Sync,2);
     }
 
     free(blank);
@@ -651,7 +653,9 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                 }
 #else
                 if (Data_Only && Cmd!=ALL){
-                    memcpy((data+Index),(buf+i-Output+_DATA),Output);
+                    memcpy(((unsigned char *)data)+Index,
+							((unsigned char *)buf)+i-Output+_DATA,
+							Output);
                     Index+=(Output-_DATA);
                     Lines++;
 	                 BandCount[c_Band]++;
@@ -706,17 +710,22 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                              (*((char *)data+(i*Col)+_FRAMES+1) & 0xFF));
                     if (last_band != c_band) {
                         if (frame_count < Max_Band_Count) {/*Missing ending data*/
-                            Add_Fake_Frame((newbuf+new_count*Col),c_band,
-                                           frame_count,(Max_Band_Count-frame_count),Col);
+                            Add_Fake_Frame((((unsigned char *)newbuf)+new_count*Col),
+									(int)c_band,
+                                    frame_count,
+									(Max_Band_Count-frame_count),
+									Col);
                             new_count+=(Max_Band_Count-frame_count)+1;
                         }
                         frame_count=0;
                         last_band=c_band;
                     }
                     if (c_frame > FrameBandStart[c_band]+frame_count){
-                        Add_Fake_Frame((newbuf+new_count*Col),
-                                       c_band,FrameBandStart[c_band]+frame_count,
-                                       c_frame-(FrameBandStart[c_band]+frame_count),Col);
+                        Add_Fake_Frame((((unsigned char *)newbuf)+new_count*Col),
+                                       (int) c_band,
+									   FrameBandStart[c_band]+frame_count,
+                                       c_frame-(FrameBandStart[c_band]+frame_count),
+									   Col);
                         new_count+=c_frame-(FrameBandStart[c_band]+frame_count);
                         frame_count+=c_frame-(FrameBandStart[c_band]+frame_count);
                     }
@@ -734,7 +743,9 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                         }
                     }
 				
-                    memcpy((newbuf+((new_count++)*Col)),(data+i*Col),Col);
+                    memcpy((((unsigned char *)newbuf)+((new_count++)*Col)),
+							(((unsigned char *)data)+i*Col),
+							Col);
                     frame_count++;
 			
                 }
@@ -752,17 +763,20 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                             /*Add a frame, gotta add memory too!*/
                             len+=(Col);
                             realloc(newbuf,len);
-                            Add_Fake_Frame((newbuf+j*BandCount[0]*Col+new_count*Col),
-                                           j,(FrameBandStart[j]+new_count),
-                                           c_frame-(FrameBandStart[j]+new_count),Col);
+                            Add_Fake_Frame((((unsigned char *)newbuf)+j*BandCount[0]*Col+new_count*Col),
+                                           j,
+										   (FrameBandStart[j]+new_count),
+                                           c_frame-(FrameBandStart[j]+new_count),
+										   Col);
                             new_count+=c_frame-(FrameBandStart[j]+new_count);	
                         } else if (c_frame < (FrameBandStart[j]+new_count)) {
                             parse_error("Corrupted Frame Sequence...aborting\n");
                             return(NULL);
                         }
 						
-                        memcpy((newbuf+j*BandCount[0]*Col+(new_count++)*Col),
-                               (data+j*BandCount[0]*Col+i*Col),Col);
+                        memcpy((((unsigned char *)newbuf)+j*BandCount[0]*Col+(new_count++)*Col),
+                               (((unsigned char *)data)+j*BandCount[0]*Col+i*Col),
+							   Col);
                     }
                 }
             }	
@@ -791,7 +805,9 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                 return(NULL);
             }	
             for (i=0;i<count;i++){
-                memcpy((do_buff+(i*(Col-_SIGINFO))),(newbuf+(i*Col)+_DATA),(Col-_SIGINFO));
+                memcpy((((unsigned char *)do_buff)+(i*(Col-_SIGINFO))),
+						(((unsigned char *)newbuf)+(i*Col)+_DATA),
+						(Col-_SIGINFO));
             }
             free(newbuf);
             return(newVal(BSQ,(Col-_SIGINFO),

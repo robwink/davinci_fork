@@ -26,5 +26,8 @@
 #endif
 
 
+#ifndef HAVE_STRDUP
 char *strdup(const char *);
+#endif
+
 void *my_realloc(void *, int);

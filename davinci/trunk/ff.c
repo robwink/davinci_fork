@@ -798,12 +798,12 @@ replicate_text(Var *ob, int x, int y)
 	V_TYPE(s)=ID_TEXT;
 	V_TEXT(s).Row=V_TEXT(ob).Row*y;
 	Row=V_TEXT(ob).Row;
-	V_TEXT(s).text=(unsigned char **)calloc(V_TEXT(s).Row,sizeof(char *));
+	V_TEXT(s).text=(char **)calloc(V_TEXT(s).Row,sizeof(char *));
 
 
 	for (j=0;j<y;j++){
 			for(l=0;l<Row;l++){
-				V_TEXT(s).text[j*Row+l]=(unsigned char *)calloc(
+				V_TEXT(s).text[j*Row+l]=(char *)calloc(
 					strlen(V_TEXT(ob).text[l])*x,sizeof(char));
 				strcpy(V_TEXT(s).text[j*Row+l],V_TEXT(ob).text[l]);
 				for (i=1;i<x;i++){
@@ -1012,7 +1012,7 @@ cat_mixed_text(Var * ob1, Var * ob2, int axis)
 	int Row;
 	int i;
 	char *string;
-	unsigned char **text;
+	char **text;
 
 	V_TYPE(s)=ID_TEXT; /* Text+String=Text; String+Text=Text; either way...*/
 
@@ -1022,9 +1022,9 @@ cat_mixed_text(Var * ob1, Var * ob2, int axis)
 		text=V_TEXT(ob1).text;
 		if (axis==0) {/*Left, same # of Rows*/
 			V_TEXT(s).Row=Row;
-			V_TEXT(s).text=(unsigned char **)calloc(sizeof(char *),Row);
+			V_TEXT(s).text=(char **)calloc(sizeof(char *),Row);
 			for (i=0;i<Row;i++){
-				V_TEXT(s).text[i]=(unsigned char *)calloc(sizeof(char),
+				V_TEXT(s).text[i]=(char *)calloc(sizeof(char),
 					strlen(text[i])+strlen(string));
 				strcpy(V_TEXT(s).text[i],text[i]);
 				strcat(V_TEXT(s).text[i],string);
@@ -1033,7 +1033,7 @@ cat_mixed_text(Var * ob1, Var * ob2, int axis)
 		else { /*Top, w/string as extra row on bottom*/
 			Row++;
 			V_TEXT(s).Row=Row;
-			V_TEXT(s).text=(unsigned char **)calloc(sizeof(char *),Row);
+			V_TEXT(s).text=(char **)calloc(sizeof(char *),Row);
 			for (i=0;i<Row-1;i++){
 				V_TEXT(s).text[i]=strdup(text[i]);
 			}
@@ -1048,9 +1048,9 @@ cat_mixed_text(Var * ob1, Var * ob2, int axis)
 
 		if (axis==0){ /*Right, same # of Row*/
 			V_TEXT(s).Row=Row;
-			V_TEXT(s).text=(unsigned char **)calloc(sizeof(char *),Row);
+			V_TEXT(s).text=(char **)calloc(sizeof(char *),Row);
 			for (i=0;i<Row;i++){
-				V_TEXT(s).text[i]=(unsigned char *)calloc(sizeof(char),
+				V_TEXT(s).text[i]=(char *)calloc(sizeof(char),
 					 strlen(text[i])+strlen(string));
 				strcpy(V_TEXT(s).text[i],string);
 				strcat(V_TEXT(s).text[i],text[i]);
@@ -1060,7 +1060,7 @@ cat_mixed_text(Var * ob1, Var * ob2, int axis)
 		else {/*Bottom, w/string as extra row on top*/
 			Row++;
 			V_TEXT(s).Row=Row;
-			V_TEXT(s).text=(unsigned char **)calloc(sizeof(char *),Row);
+			V_TEXT(s).text=(char **)calloc(sizeof(char *),Row);
 			V_TEXT(s).text[0]=strdup(string);
 			for(i=1;i<Row;i++){
 				 V_TEXT(s).text[i]=strdup(text[i-1]);
@@ -1088,7 +1088,7 @@ cat_string_text(Var * ob1, Var * ob2, int axis)
 	if (axis==1 && V_TYPE(ob1)==ID_STRING){ /*String->Text*/
 		V_TYPE(s)=ID_TEXT;
 		V_TEXT(s).Row=2;
-		V_TEXT(s).text=(unsigned char **)calloc(sizeof(char *),2);
+		V_TEXT(s).text=(char **)calloc(sizeof(char *),2);
 		V_TEXT(s).text[0]=strdup(V_STRING(ob1));
 		V_TEXT(s).text[1]=strdup(V_STRING(ob2));
 		return(s);
@@ -1102,7 +1102,7 @@ cat_string_text(Var * ob1, Var * ob2, int axis)
 		Row1=V_TEXT(ob1).Row;
 		Row2=V_TEXT(ob2).Row;
 		V_TEXT(s).Row=Row1+Row2;
-		V_TEXT(s).text=(unsigned char **)calloc(sizeof(char *),V_TEXT(s).Row);
+		V_TEXT(s).text=(char **)calloc(sizeof(char *),V_TEXT(s).Row);
 		for (i=0;i<Row1;i++){
 			V_TEXT(s).text[counter++]=strdup(V_TEXT(ob1).text[i]);
 		}
@@ -1114,7 +1114,7 @@ cat_string_text(Var * ob1, Var * ob2, int axis)
 
 	else if (V_TYPE(ob1)==ID_STRING){
 		V_TYPE(s)=ID_STRING;
-		V_STRING(s)=(unsigned char *)calloc(sizeof(char),strlen(V_STRING(ob1))+
+		V_STRING(s)=(char *)calloc(sizeof(char),strlen(V_STRING(ob1))+
 							strlen(V_STRING(ob2))+1);
 		strcpy(V_STRING(s),V_STRING(ob1));
 		strcat(V_STRING(s),V_STRING(ob2));
@@ -1133,9 +1133,9 @@ cat_string_text(Var * ob1, Var * ob2, int axis)
 		V_TYPE(s)=ID_TEXT;
 		Row=V_TEXT(ob1).Row;
 		V_TEXT(s).Row=Row;
-		V_TEXT(s).text=(unsigned char **)calloc(sizeof(char *),Row);
+		V_TEXT(s).text=(char **)calloc(sizeof(char *),Row);
 		for (i=0;i<Row;i++){	
-			V_TEXT(s).text[i]=(unsigned char *)calloc(sizeof(char),strlen(V_TEXT(ob1).text[i])+
+			V_TEXT(s).text[i]=(char *)calloc(sizeof(char),strlen(V_TEXT(ob1).text[i])+
 						strlen(V_TEXT(ob2).text[i])+1);
 			strcpy(V_TEXT(s).text[i],V_TEXT(ob1).text[i]);
 			strcat(V_TEXT(s).text[i],V_TEXT(ob2).text[i]);
@@ -1721,7 +1721,7 @@ ff_syscall(vfuncptr func, Var * arg)
     FILE *fp;
 
 	 Var *o;
-	 unsigned char **text;
+	 char **text;
 	 int Row=0;
 	 int Max=100;
 	 char *ptr;
@@ -1740,7 +1740,7 @@ ff_syscall(vfuncptr func, Var * arg)
 	if ((fp=popen(expr,"r"))==NULL)
 		return(NULL);
 
-	text=(unsigned char **)calloc(Max,sizeof(char *));	
+	text=(char **)calloc(Max,sizeof(char *));	
 	while(getline(&ptr, fp) != EOF) {
 		if (Row >=Max){
 			Max+=100;

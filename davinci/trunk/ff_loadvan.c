@@ -884,7 +884,7 @@ vpass2(
    }
 
    /* evaluate data limit */
-   dend = data + len;
+   dend = ((char *)data) + len;
 
    /* Point to first token */
    tok = data;

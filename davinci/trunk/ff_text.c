@@ -38,7 +38,7 @@ ff_text(vfuncptr func, Var *arg)
     char *ptr;
     int rlen;
 
-    unsigned char *cdata;
+    char *cdata;
     int count=0;
 
     int i,j,k;
@@ -98,7 +98,7 @@ ff_text(vfuncptr func, Var *arg)
     rewind(fp);
 
     dsize = x*y;
-    cdata = (unsigned char *)calloc(dsize,sizeof(char));
+    cdata = (char *)calloc(dsize,sizeof(char));
 
     for (j = 0 ; j < y ; j++) {
         if ((rlen = getline(&ptr, fp)) == -1) break;
@@ -136,7 +136,7 @@ ff_textarray(vfuncptr func, Var *arg)
     FILE *fp;
     char *ptr;
     int rlen;
-    unsigned char *p, **t;
+    char *p, **t;
     int len, size;
 	
     Var *o;
@@ -229,7 +229,7 @@ ff_delim_textarray(Var *ob,int item,char *delim)
     Var *s;
 
     int Max=25;
-    unsigned char *buffer;
+    char *buffer;
 
     if (strlen(delim) > 1) {
         parse_error("Single character delimiters only");
@@ -239,8 +239,8 @@ ff_delim_textarray(Var *ob,int item,char *delim)
     s=newVar();
     V_TYPE(s)=ID_TEXT;
     V_TEXT(s).Row=Row=V_TEXT(ob).Row;
-    V_TEXT(s).text=(unsigned char **)calloc(Row,sizeof(char *));
-    buffer=(unsigned char *)calloc(Max,sizeof(char));
+    V_TEXT(s).text=(char **)calloc(Row,sizeof(char *));
+    buffer=(char *)calloc(Max,sizeof(char));
 
 
     for (i=0;i<Row;i++){
@@ -423,12 +423,12 @@ textarray_subset(Var *v, Var *range)
         return(NULL);
     }
 
-    V_TEXT(o).text=(unsigned char **)calloc(V_TEXT(o).Row,sizeof(char *));
+    V_TEXT(o).text=(char **)calloc(V_TEXT(o).Row,sizeof(char *));
     V_TYPE(o)=ID_TEXT;
 
     for (i=lo[1];i<=hi[1];i+=step[1]){
         if (lo[0] >= strlen(V_TEXT(v).text[i])) {
-            V_TEXT(o).text[counter]=(unsigned char *)calloc(1,1);
+            V_TEXT(o).text[counter]=(char *)calloc(1,1);
             V_TEXT(o).text[counter][0]='\0';
         }
         else /*if (hi[0]!=0)*/{
@@ -436,7 +436,7 @@ textarray_subset(Var *v, Var *range)
                 V_TEXT(o).text[counter]=strdup((V_TEXT(v).text[i]+lo[0]));
             }
             else {
-                V_TEXT(o).text[counter]=(unsigned char *)calloc((hi[0]-lo[0]+1)+1,sizeof(char));
+                V_TEXT(o).text[counter]=(char *)calloc((hi[0]-lo[0]+1)+1,sizeof(char));
                 memcpy(V_TEXT(o).text[counter],(V_TEXT(v).text[i]+lo[0]),(hi[0]-lo[0]+1));
                 V_TEXT(o).text[counter][(hi[0]-lo[0]+1)]='\0';
             }
@@ -493,7 +493,7 @@ text_dirname(Var *ob1)
     V_TYPE(Tmp)=ID_STRING;
     V_TYPE(S)=ID_TEXT;
     V_TEXT(S).Row=V_TEXT(ob1).Row;
-    V_TEXT(S).text=(unsigned char **)calloc(V_TEXT(ob1).Row,sizeof(char *));
+    V_TEXT(S).text=(char **)calloc(V_TEXT(ob1).Row,sizeof(char *));
     for (i=0;i<V_TEXT(ob1).Row;i++){
         V_STRING(Tmp)=V_TEXT(ob1).text[i];
         V_TEXT(S).text[i]=string_dirname(Tmp);
@@ -554,7 +554,7 @@ text_basename(Var *ob1,char *ext)
     V_TYPE(Tmp)=ID_STRING;
     V_TYPE(S)=ID_TEXT;
     V_TEXT(S).Row=V_TEXT(ob1).Row;
-    V_TEXT(S).text=(unsigned char **)calloc(V_TEXT(ob1).Row,sizeof(char *));
+    V_TEXT(S).text=(char **)calloc(V_TEXT(ob1).Row,sizeof(char *));
     for (i=0;i<V_TEXT(ob1).Row;i++){
         V_STRING(Tmp)=V_TEXT(ob1).text[i];
         V_TEXT(S).text[i]=string_basename(Tmp,ext);
@@ -678,7 +678,7 @@ ff_grep(vfuncptr func, Var * arg)
     S=newVar();
     V_TYPE(S)=ID_TEXT;
     V_TEXT(S).Row=count;
-    V_TEXT(S).text=(unsigned char **)calloc(count,sizeof(char *));
+    V_TEXT(S).text=(char **)calloc(count,sizeof(char *));
     for (i=0;i<V_TEXT(ob1).Row;i++){
         newcursor = regex(ptr, V_TEXT(ob1).text[i]);
         if (newcursor!=NULL){
@@ -891,7 +891,7 @@ set_text(Var *to,Range *r, Var *from)
 		tmp_hi=min(hi[0],(cur_line_leng-1));
 		length = (tmp_hi-lo[0]+1);
 		free(V_TEXT(to).text[i]);
-		V_TEXT(to).text[i]=(unsigned char *)calloc(string_length+
+		V_TEXT(to).text[i]=(char *)calloc(string_length+
 				cur_line_leng-length+1,sizeof(char));
 		memcpy(V_TEXT(to).text[i],V_TEXT(dest).text[i],lo[0]);
 		memcpy((V_TEXT(to).text[i]+lo[0]),string,string_length);
@@ -990,7 +990,7 @@ char *single_replace(char *line, regex_t *preg, char *replace)
 			if (replace[i]=='&') {
 				/*insert whole match pattern*/
 				delta=pmatch[0].rm_eo-pmatch[0].rm_so;
-				memcpy((newtext+index),pmatch[0].rm_sp,delta);
+				memcpy((newtext+index), line + pmatch[0].rm_so, delta);
 				index+=delta;
 			}
 			else if (replace[i]=='\\'){
@@ -1000,7 +1000,7 @@ char *single_replace(char *line, regex_t *preg, char *replace)
 						numeral=replace[i]-'0';
 						if (pmatch[numeral].rm_so >= 0){ /*requested valid substring*/
 							delta=pmatch[numeral].rm_eo-pmatch[numeral].rm_so;
-							memcpy((newtext+index),pmatch[numeral].rm_sp, delta);
+							memcpy((newtext+index),line + pmatch[numeral].rm_so, delta);
 							index+=delta;
 						}
 					}
@@ -1113,7 +1113,7 @@ Var *ff_stringsubst(vfuncptr func, Var *arg)
 		Row=V_TEXT(ob).Row;
 		V_TEXT(result).Row=Row;
 		V_TYPE(result)=ID_TEXT;
-		V_TEXT(result).text=(unsigned char **)calloc(Row,sizeof(char *));
+		V_TEXT(result).text=(char **)calloc(Row,sizeof(char *));
 		for (i=0;i<Row;i++){
 			if((V_TEXT(result).text[i]=single_replace(V_TEXT(ob).text[i],&preg,subst))==NULL){
 				V_TEXT(result).text[i]=(char *)calloc(1,1);
@@ -1125,10 +1125,10 @@ Var *ff_stringsubst(vfuncptr func, Var *arg)
     return(result);
 }
 
-unsigned char *
+char *
 rtrim_string(char *string, char *trim)
 {
-	unsigned char *new_string;
+	char *new_string;
 	int len;
 	int i;
 
@@ -1145,12 +1145,12 @@ rtrim_string(char *string, char *trim)
 		new_string=strdup(string);
 	}
 	else if (i < 0 ) { /*String was nothing but trim character*/
-		new_string=(unsigned char *)calloc(1,sizeof(char));
+		new_string=(char *)calloc(1,sizeof(char));
 		new_string[0]='\0';
 	}
 
 	else { /*We trimmed some*/
-		new_string=(unsigned char *)calloc((i+2),sizeof(char));
+		new_string=(char *)calloc((i+2),sizeof(char));
 		strncpy(new_string,string,(i+1));
 		new_string[i+1]='\0';
 	}
@@ -1207,7 +1207,7 @@ ff_rtrim(vfuncptr func, Var *arg)
 
 	V_TYPE(s)=ID_TEXT;
 	V_TEXT(s).Row=Row;
-	V_TEXT(s).text= (unsigned char **)calloc(Row,sizeof(char *));
+	V_TEXT(s).text= (char **)calloc(Row,sizeof(char *));
 
 	for (i=0;i<Row;i++){
 		V_TEXT(s).text[i]=rtrim_string(V_TEXT(ob).text[i],trim);

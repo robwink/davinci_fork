@@ -56,7 +56,8 @@ ff_avg(vfuncptr func, Var * arg)
 
 
 	v = newVal(V_ORG(obj), out[0], out[1], out[2], FLOAT, NULL);
-	fdata = (float *)V_DATA(v) = calloc(V_DSIZE(v), sizeof(float));
+	fdata = (float *)calloc(V_DSIZE(v), sizeof(float));
+	V_DATA(v) = fdata;
 
 	for (i = 0 ; i < dsize ; i++) {
 		fdata[rpos(i, obj, v)] += extract_float(obj, i);
@@ -146,7 +147,8 @@ ff_min(vfuncptr func, Var * arg)
 	v = newVal(V_ORG(obj), out[0], out[1], out[2], FLOAT, NULL);
 	dsize2 = V_DSIZE(v);
 
-	fdata = (float *)V_DATA(v) = calloc(dsize2, sizeof(float));
+	fdata = (float *)calloc(dsize2, sizeof(float));
+	V_DATA(v) = fdata;
 	data = V_DATA(obj);
 
 
