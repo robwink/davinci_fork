@@ -2,7 +2,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-//extern read_qube_data(int fp, struct _iheader *h);
+/*extern read_qube_data(int fp, struct _iheader *h); */
 
 int GetGSEHeader (FILE *fp, struct _iheader *h)
 {
@@ -16,7 +16,7 @@ int GetGSEHeader (FILE *fp, struct _iheader *h)
 	float	Exposure;
 	int	i=0;
 	int	nb=1;
-	char	Nibs[9][24];//Header has 9 short words in it
+	char	Nibs[9][24];/*Header has 9 short words in it */
 	int	plane;
 
 	rewind(fp);
@@ -40,7 +40,7 @@ int GetGSEHeader (FILE *fp, struct _iheader *h)
 	Row=Num[1];
 
 
-//Validate Header (this test might change)
+/*Validate Header (this test might change) */
 
 	if (strcmp(Nibs[0],"ms98") || strcmp(Nibs[1],"image")){
 		return(NULL);
@@ -57,7 +57,7 @@ int GetGSEHeader (FILE *fp, struct _iheader *h)
 	}
 
 
-//Okay, the file header is a GSE visible image; load the _iheader structure with info
+/*Okay, the file header is a GSE visible image; load the _iheader structure with info */
 	
 	h->org=BSQ;
 	h->size[0]=Col;

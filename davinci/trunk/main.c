@@ -95,7 +95,7 @@ main(int ac, char **av)
     s = new_scope();
 
     signal(SIGPIPE, SIG_IGN);
-    // signal(SIGINT, sighandler);
+    /* signal(SIGINT, sighandler); */
 
     scope_push(s);
     /**
@@ -306,7 +306,7 @@ process_streams(void)
     **/
     while (nfstack != 0) {
         parse_stream(ftos);
-        // fclose(ftos);
+        /* fclose(ftos); */
 		pop_input_file();
     }
 }

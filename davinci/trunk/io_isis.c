@@ -807,7 +807,7 @@ void * read_qube_suffix(int fd, struct _iheader *h,
     count = 0;
 
     for (z=h->s_lo[2];z<h->s_hi[2];z+=h->s_skip[2]){
-//	printf("Z:=%d\n",z);
+/*	printf("Z:=%d\n",z); */
 	lseek(fd,h->dptr+z*(h->size[0]*
 		h->size[1]*c_bytes+
 			h->size[0]*h->suffix[1]+
@@ -887,10 +887,10 @@ void *RePackData(void *data, int file_bytes, int data_type,int data_chunk)
         	return (NULL);
     	}
 
-	for (i=1;i<=data_size;i++){ 	//Cycle through the number of elements
+	for (i=1;i<=data_size;i++){ 	/*Cycle through the number of elements */
 
-		j=i*file_bytes-data_bytes; 	//Align j with LSB at element i in *data
-		l=i*data_bytes-data_bytes;	//Align l with LSB at element i in *p_data
+		j=i*file_bytes-data_bytes; 	/*Align j with LSB at element i in *data */
+		l=i*data_bytes-data_bytes;	/*Align l with LSB at element i in *p_data */
 		memcpy((char *)p_data+l,(char *)data+j,data_bytes);
 	}
 
@@ -1136,7 +1136,7 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
 	
     
     for (i = 0 ; i < 3 ; i++) {
-        s.s_lo[i] = 0;	//Just to make sure!!
+        s.s_lo[i] = 0;	/*Just to make sure!! */
 	s.s_hi[i]=s.size[i]+1;
     }
 

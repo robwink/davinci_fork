@@ -239,7 +239,7 @@ ff_load(vfuncptr func, Var * arg)
         if (input == NULL)    input = LoadGOES(fp, filename, &h);
         if (input == NULL)    input = LoadAVIRIS(fp, filename, &h);
 
-        fclose(fp);//ImageMagick opens its own files
+        fclose(fp);	/* ImageMagick opens its own files */
 #ifdef HAVE_LIBMAGICK
 	if (input == NULL)    input = LoadGFX_Image(filename);
 #endif
