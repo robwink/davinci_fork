@@ -842,7 +842,7 @@ ff_replicate(vfuncptr func, Var * arg)
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (v == NULL) {
-        parse_error("clone: No obejct specified\n");
+        parse_error("clone: No object specified\n");
         return(NULL);
     }
 
@@ -855,6 +855,11 @@ ff_replicate(vfuncptr func, Var * arg)
         return(replicate_text(v,x,y));
 
     org = V_ORG(v);
+
+	if (x <= 0 || y <= 0 || z <= 0) {
+		parse_error("Bad dimension value");
+		return(NULL);
+	}
 
     len[orders[org][0]] = x;
     len[orders[org][1]] = y;
@@ -1545,14 +1550,12 @@ print_history(int i)
     int j;
 
 #ifdef HAVE_LIBREADLINE
-#endif
     state = history_get_history_state();
     if (i == -1) i = state->length;
     for (j = state->length-i ; j < state->length ; j++) {
         h = state->entries[j];
         printf("%6d   %s\n", j+1, h->line);
     }
-#if 0
 #endif
 }
 
@@ -1570,7 +1573,6 @@ ff_hedit(vfuncptr func, Var * arg)
     char *path=getenv("TMPDIR");
 
 #ifdef HAVE_LIBREADLINE
-#endif
 
     Alist alist[2];
     alist[0] = make_alist("number",    ID_VAL,    NULL,     &value);
@@ -1612,11 +1614,13 @@ ff_hedit(vfuncptr func, Var * arg)
     push_input_stream(fp);
 
     free(tmp);
-#if 0
 #endif
     return(NULL);
 }
 
+/*
+** This function lets you LIE to the system.
+*/
 Var *
 ff_resize(vfuncptr func, Var * arg)
 {
@@ -1923,3 +1927,27 @@ double tand(double theta) { return(tan(theta*M_PI/180.0)); }
 double acosd(double theta) { return(acos(theta)*180.0/M_PI); }
 double asind(double theta) { return(asin(theta)*180.0/M_PI); }
 double atand(double theta) { return(atan(theta)*180.0/M_PI); }
+
+Var *
+ff_foo(vfuncptr func, Var * arg)
+{
+	Var *v = NULL;
+	char *ptr;
+    Alist alist[3];
+
+	/* this is an example of getting an enumeration 
+	   when you don't know what the options are 
+	*/
+
+    alist[0] = make_alist("bar",    ID_ENUM,     NULL,     &ptr);
+    alist[1].name = NULL;
+ 
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (ptr != NULL) {
+		printf("You passed %s\n", ptr);
+	} else {
+		printf("Sorry, no name.\n");
+	}
+	return(NULL);
+}
