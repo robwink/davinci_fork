@@ -167,7 +167,7 @@ if test "x$enable_modules" != "xno"; then
 	AC_SUBST(LIBLDTL)
 	AC_DEFINE(BUILD_MODULE_SUPPORT, 1, [loadable module support])
 	build_module_support=yes
-	MY_SUBDIRS="$MY_SUBDIRS modules modules/kjn libldtl"
+	MY_SUBDIRS="$MY_SUBDIRS modules modules/kjn libltdl"
 
 	dnl We're including this, so it'll always be there.
 	dnl This define is to satisfy some ifdefs in io_loadmod.c.
@@ -222,11 +222,9 @@ IF_YES_NO() {
   PRINT "Yes"
 }
 
-
-
 PRINT ""
-PRINT   "--------------------- ---"
 PRINT   " Configure Summary"
+PRINT   "-------------------  ---"
 
 PRINT_N "          Readline"
 IF_YES_NO "$have_readline"

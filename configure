@@ -24332,7 +24332,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 	build_module_support=yes
-	MY_SUBDIRS="$MY_SUBDIRS modules modules/kjn libldtl"
+	MY_SUBDIRS="$MY_SUBDIRS modules modules/kjn libltdl"
 
 
 cat >>confdefs.h <<\_ACEOF
@@ -26021,11 +26021,9 @@ IF_YES_NO() {
   PRINT "Yes"
 }
 
-
-
 PRINT ""
-PRINT   "--------------------- ---"
 PRINT   " Configure Summary"
+PRINT   "-------------------  ---"
 
 PRINT_N "          Readline"
 IF_YES_NO "$have_readline"
