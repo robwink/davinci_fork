@@ -786,7 +786,7 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 			if (!(strcasecmp(struct_name,"data"))) {/*Found it!*/
 
 #ifdef LITTLE_ENDIAN
-				oi->obj_data[oi->count]=var_endian(Var *tmpvar);
+				oi->obj_data[oi->count]=var_endian(tmpvar);
 				oi->obj_dirty[oi->count]=1;
 #else
 				oi->obj_data[oi->count]= (unsigned char *)V_DATA(tmpvar); 
