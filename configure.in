@@ -19,6 +19,8 @@ case "$target" in
 *-ibm-aix4.3*)  LDFLAGS="$LDFLAGS -Wl,-b,bigtoc";
 esac
 
+dnl Check for endian
+AC_C_BIGENDIAN
 
 dnl Check for X path.
 AC_PATH_X
