@@ -2,7 +2,7 @@
 //
 // Port of the PNM suite of utilities for DaVinci
 // 
-
+#include "help.h"
 #include "parser.h"
 #include "ff_modules.h"
 
@@ -11,6 +11,7 @@ static Var *ff_pnmcut(vfuncptr f, Var *args);
 static Var *ff_pnmscale(vfuncptr f, Var *args);
 static Var *ff_pnmcrop(vfuncptr f, Var *args);
 static Var *ff_pnmpad(vfuncptr f, Var *args);
+static Var *ff_pnmhelp(vfuncptr f, Var *args);
 
 // Main Algorithms - None static so is reusable
 Var *pnmcut(Var* obj, int iLeft, int iTop, int iWidth, int iHeight);
@@ -38,6 +39,7 @@ static void print_pad_usage(void);
 
 // Initialization
 static dvModuleFuncDesc exported_list[] = {
+    {"pnmhelp", (void *)ff_pnmhelp},
     {"cut", (void *)ff_pnmcut},
     {"scale", (void *)ff_pnmscale},
     {"crop", (void *)ff_pnmcrop},
@@ -45,7 +47,7 @@ static dvModuleFuncDesc exported_list[] = {
 };
 
 static dvModuleInitStuff is = {
-    exported_list, 4,
+    exported_list, 5,
     NULL, 0
 };
 
@@ -273,6 +275,39 @@ ff_pnmpad(vfuncptr f, Var *args)
     }
 
     return(pnmpad(obj,pColor,pLeft,pRight,pTop,pBottom));
+}
+
+static Var *ff_pnmhelp(vfuncptr f, Var *args)
+{
+	int   subtopics = 0;
+	int   retval    = 0;
+
+	char  keyword[BUFSIZ] = "modules pnm_mod\0"; // Leave space for return
+	char* filenme = "docs/pnm_mod.gih\0";
+	char* input_line = NULL;
+        int   more_help = 1;
+	Alist alist[1];
+
+	alist[0].name = NULL;
+	if (0==parse_args(f,args,alist))
+		printf("\n\nNo arguments should be passed to help.\n\n");
+
+	retval = help(keyword, filenme, &subtopics);
+
+	if (retval == H_FOUND) // Ok, bad me, using subtopics as retval
+	{
+		input_line = cleanup_input(readline("Subtopic: "));
+		
+	        if (strlen(input_line))
+		{	
+			subtopics = 0;
+			sprintf(keyword, "%s %s\0",keyword,input_line);
+			retval = help(keyword, filenme, &subtopics);
+			if (retval == H_FOUND) return(ff_pnmhelp(f,args));
+		}
+	}
+
+        return(NULL);
 }
 
 /////////////////////////////////////////////////////////////////
