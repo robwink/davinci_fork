@@ -292,8 +292,8 @@
         Imath
         GOES weather satellite
         AVIRIS
-		GIF, JPEG, TIFF, PNG, BMP
-		HDF5
+        GIF, JPEG, TIFF, PNG, BMP
+        HDF5
 
     If the specified path is not absolute (ie: it doesn't start with a '/'),
     and the specified file cannot be found in the current directory, the
@@ -340,12 +340,12 @@
         ascii   - Columnar ascii matrix
         imath   - Imath format
         ers     - ER Mapper Raster
-		gif     - Compuserve GIF format
-		tiff    - Tagged Image File Format
-		jpeg    - Joint Photographic Experts Group
-		png		- Portable Network Graphics
-		bmp		- Microsoft Bitmap
-		raw     - Binary output, no header
+        gif     - Compuserve GIF format
+        tiff    - Tagged Image File Format
+        jpeg    - Joint Photographic Experts Group
+        png     - Portable Network Graphics
+        bmp     - Microsoft Bitmap
+        raw     - Binary output, no header
     
     If the force keyword is included, then any existing file of the same
     name is overwritten.  Without this keyword, the write is aborted
@@ -353,8 +353,8 @@
 
     Notes: 
         The standard graphics formats (GIF, TIFF, JPEG, PNG, BMP, PPM),
-		all expect either 1 or 3 band, byte images.  A 3-band image is
-		interpreted to be a red band, a green band and a blue band.
+        all expect either 1 or 3 band, byte images.  A 3-band image is
+        interpreted to be a red band, a green band and a blue band.
 
         The PGM and GRD formats can not handle multiplane data.
 
@@ -364,7 +364,7 @@
 
  See Also:
     filetype(), read(), rgb(), load_pds(), load_raw(), ascii(),
-	write_isis()
+    write_isis()
 
 ?functions filetype()
 ?filetype()
@@ -379,14 +379,14 @@
         "GRD"    - USGS GRD
         "ISIS"   - PDS/ISIS
         "PNM"    - PBMPlus 
-		"AVIRIS" - AVIRIS
-		"IMATH"  - VM IMath format
-		"ENVI"   - ENVI format
+        "AVIRIS" - AVIRIS
+        "IMATH"  - VM IMath format
+        "ENVI"   - ENVI format
 
     The output from the filetype() function is suitable for input to the
     type value of the write() function.
 
-	This funCtion is almost always not up to date with the latest stuff.
+    This funCtion is almost always not up to date with the latest stuff.
 
 ?functions source()
 ?source()
@@ -408,8 +408,8 @@
  atoi(STRING | TEXT)
 
     The atoi function converts the specified string to an INT value.
-	If the input is a TEXT array, then each line of the TEXT array is 
-	converted and an array of 1xNx1 values is returned.
+    If the input is a TEXT array, then each line of the TEXT array is 
+    converted and an array of 1xNx1 values is returned.
 
  See Also:
     atof()
@@ -421,11 +421,11 @@
  atof(STRING | TEXT)
 
     The atof function converts the specified string to a FLOAT value.
-	If the input is a TEXT array, then each line of the TEXT array is 
-	converted and an array of 1xNx1 values is returned.
+    If the input is a TEXT array, then each line of the TEXT array is 
+    converted and an array of 1xNx1 values is returned.
 
  See Also:
-	atoi(), atod()
+    atoi(), atod()
 
 ?functions atod()
 ?atod()
@@ -434,11 +434,11 @@
  atod(STRING | TEXT)
 
     The atod function converts the specified string to a DOUBLE value.
-	If the input is a TEXT array, then each line of the TEXT array is 
-	converted and an array of 1xNx1 values is returned.
+    If the input is a TEXT array, then each line of the TEXT array is 
+    converted and an array of 1xNx1 values is returned.
 
  See also:
-	atof(), atoi()
+    atof(), atoi()
 
 ?functions basename
 ?basename
@@ -457,7 +457,7 @@
     removed.
 
  See also:
-	dirname()
+    dirname()
 
 ?functions cluster
 ?cluster
@@ -769,6 +769,12 @@
     and high values of TO must reside entirely within the low and high
     values of FROM.
 
+    Note:  A lot of people get confused by this description.  Lets try again:
+
+    OBJECT is a set of Y values.
+    FROM is a corresponding set of X values.
+    TO is one or more new X values to look up from the FROM/OBJECT pairs.
+
 ?functions fit()
 ?fit()
  fit() - Least squares curve fitting
@@ -962,6 +968,17 @@
 
     s = sprintf("The value of 3+4 is %d\n", 3+4)
 
+?functions fprintf()
+?fprintf()
+ fprintf() - print formatted output to a file
+
+ fprintf(filename, fmt, ... )
+
+ The fprintf() function works exactly like the sprintf function,
+ but appends its output to specified filename.
+
+ Notes: This is such a hack.
+
 ?functions system()
 ?system()
  system() - issue a shell command.
@@ -1083,24 +1100,24 @@
 ?load_vis()
  load_vis() - Load a VISIBLE Paci file
 
-	load_vis(filename=STRING, [gse=1], [nocube=1], [verbose=0], [rotate=1])
+    load_vis(filename=STRING, [gse=1], [nocube=1], [verbose=0], [rotate=1])
 
-	The load_vis function will read the four types of visible paci data that
-	currently exitis: (gse, raw, predictive, DCT).  
+    The load_vis function will read the four types of visible paci data that
+    currently exitis: (gse, raw, predictive, DCT).  
 
-	If the data contain multiple bands, then the routine will return a data
-	cube with each band on a different Z-plane.  If the user wants a single
-	band file then use: nocube=1 (defualt: nocube=0).  This will prevent the 
-	reader from stacking the bands.
+    If the data contain multiple bands, then the routine will return a data
+    cube with each band on a different Z-plane.  If the user wants a single
+    band file then use: nocube=1 (defualt: nocube=0).  This will prevent the 
+    reader from stacking the bands.
 
-	There is a verbose mode which may be used.  This will increase the amount
-	of information which davinci returns reguarding what is going on during
-	the read.
+    There is a verbose mode which may be used.  This will increase the amount
+    of information which davinci returns reguarding what is going on during
+    the read.
 
-	The final flag is the rotate flag.  Right now, it WILL rotate by default
-	and the user must give a rotate=0 to prevent rotation (currently, only
-	spacecraft data is rotated, gse is NOT).  Rotation involves horizontal and
-	vertical flipping of EACH framelet (not the entire image). 
+    The final flag is the rotate flag.  Right now, it WILL rotate by default
+    and the user must give a rotate=0 to prevent rotation (currently, only
+    spacecraft data is rotated, gse is NOT).  Rotation involves horizontal and
+    vertical flipping of EACH framelet (not the entire image). 
 
 
 ?functions load_paci()
@@ -1108,29 +1125,29 @@
  load_paci() - Load an IR Paci file 
 
  load_paci(filename=STRING, [[frame=INT] | [band=int]], [report=1], [nosig=1],
-				[swap=1],[quiet={0,1,2}])
+                [swap=1],[quiet={0,1,2}])
 
-	The load_paci function reads an IR paci file into memory and organizes in various
-	ways depending on user input.  The user can specifiy a band OR frame number and only
-	those data that match are loaded.  If the user sets report=1 then only a summary report
-	is given back (and no data are loaded).  Each frame of data has 6 control values tacked
-	on to the front of the frame and 2 value tacked on the back.  The first 2 values are the
-	starting sync word, the next value is the ID, then band number then two numbers for the
-	frame number.  The last two values are the ending sync value.  If the user does NOT
-	want these values to be returned with the data, then use: nosig=1 (defualt is nosig=0).  
+    The load_paci function reads an IR paci file into memory and organizes in various
+    ways depending on user input.  The user can specifiy a band OR frame number and only
+    those data that match are loaded.  If the user sets report=1 then only a summary report
+    is given back (and no data are loaded).  Each frame of data has 6 control values tacked
+    on to the front of the frame and 2 value tacked on the back.  The first 2 values are the
+    starting sync word, the next value is the ID, then band number then two numbers for the
+    frame number.  The last two values are the ending sync value.  If the user does NOT
+    want these values to be returned with the data, then use: nosig=1 (defualt is nosig=0).  
 
-	There are two major forms for IR paci data, byte-swapped and NOT byte-swapped.
-	If the data is from the Ratheon GSE (in Santa Barbara) then it is byte-swapped.
-	Other-wise it is not.  If the data is NOT byte-swapped, swap=0 must be issued since
-	swap=1 is the default value.
+    There are two major forms for IR paci data, byte-swapped and NOT byte-swapped.
+    If the data is from the Ratheon GSE (in Santa Barbara) then it is byte-swapped.
+    Other-wise it is not.  If the data is NOT byte-swapped, swap=0 must be issued since
+    swap=1 is the default value.
 
-	Finally, various information about the condition of the data, missing information,
-	skipped and/or repeated information is displayed.  To modify this a quiet value can
-	be issued (defualt: quiet=0) with the following results:
+    Finally, various information about the condition of the data, missing information,
+    skipped and/or repeated information is displayed.  To modify this a quiet value can
+    be issued (defualt: quiet=0) with the following results:
 
-		quiet=0:		Full reporting
-		quiet=1:		Only print end summary
-		quiet=2:		Print nothing except fatal errors
+        quiet=0:        Full reporting
+        quiet=1:        Only print end summary
+        quiet=2:        Print nothing except fatal errors
 
 ?functions max()
 ?max()
@@ -1329,7 +1346,7 @@
     The results from minvert() are always of type DOUBLE
 
  See Also:
-	identity(), mxm()
+    identity(), mxm()
 
 ?functions mxm()
 ?mxm()
@@ -1340,7 +1357,7 @@
     Multiples ob1 by ob2 using matrix multiplcation.
 
  See Also:
-	identity(), minvert()
+    identity(), minvert()
 
 ?functions identity()
 ?identity()
@@ -1351,7 +1368,7 @@
      Generate an identity matrix of the given size.
 
  See Also:
-	mxm(), minvert()
+    mxm(), minvert()
 
 ?functions basis()
 ?basis()
@@ -1555,7 +1572,7 @@
   When passed a TEXT array, it operates on each line of the TEXT array.
 
  See Also:
-	basename()
+    basename()
 
 ?functions issubstring()
 ?issubstring()
@@ -1948,11 +1965,11 @@ Davinci supports the following matrix functions:
  The following example extracts the plane named 'background' from the 
  file "my_file":
 
-	dv> a = isis( filename="my_file", plane="background")
+    dv> a = isis( filename="my_file", plane="background")
  
  This example extracts the band suffix plane #3: 
 
-	dv> a = isis( filename="my_file", plane=3, type=band)
+    dv> a = isis( filename="my_file", plane=3, type=band)
 
 
 ?functions load_vanilla()
@@ -2066,10 +2083,10 @@ Davinci supports the following matrix functions:
 
  Example:
 
-	dv> length(create(5,5,1))
-	25
-	dv> length("some string")
-	11
+    dv> length(create(5,5,1))
+    25
+    dv> length("some string")
+    11
 
 ?functions add_struct()
 ?add_struct()
@@ -2122,7 +2139,7 @@ Davinci supports the following matrix functions:
  load_raw() - Load a binary data file
 
  load_raw(filename=STRING, x=INT, y=INT, z=INT, org=ORG, 
-		   format=FORMAT, header=INT)
+           format=FORMAT, header=INT)
 
  The load_raw() function allows a user to load uncompressed binary data
  files of unreconized file format by specifying the relevent information 
@@ -2130,8 +2147,8 @@ Davinci supports the following matrix functions:
 
  ORG must be one of "bil", "bip", "bsq".
  FORMAT must be one of: "byte", 
-			"msb_short", "msb_int", "msb_float", "msb_double" , 
-			"lsb_short", "lsb_int", "lsb_float", "lsb_double".
+            "msb_short", "msb_int", "msb_float", "msb_double" , 
+            "lsb_short", "lsb_int", "lsb_float", "lsb_double".
 
  The header value specifies the size, in bytes, of any header to be skipped.
 
@@ -2141,4 +2158,74 @@ Davinci supports the following matrix functions:
   You can add structures: { one=1 } + { two=2 }
 
  See also:
- 	add_struct(), get_struct(), remove_struct(), insert_struct(), length()
+    add_struct(), get_struct(), remove_struct(), insert_struct(), length()
+
+?functions equals()
+?equals()
+ equals() - Determine if two things are the same
+
+ equals(obj1, obj2)
+
+ The equals() function checks every piece of obj1 and obj2 to see if the
+ two objects are identical.  This works for VALs, STRINGs, TEXTs and 
+ Structures.
+
+ Equals() returns 1 if the two objects are identical, and 0 if not.
+
+?functions contains()
+?contains()
+ contains() - Determing if an array contains a specific value
+
+ contains(obj=VAL, value=VAL)
+
+ The contains() function determine if an array contains a specific value.
+ The value is converted to the same type as the array, so comparison of
+ an integer array and a floating point number might produce unexpected 
+ results.
+
+ Contains() returns 1 if the specific value is found in the array, and 0
+ if it isn't.
+
+ Example:
+
+    These examples return 1:
+
+        contains(1//2//3, 3) 
+        contains(1//2//3, 3.00001)   # note, the float is converted to an int
+
+    These examples return 0:
+
+        contains(1//2//3, 4) 
+        contains(1.1//2.2//3.3, 3)
+
+?functions dump()
+?dump()
+ dump() - Output an entire object
+
+ dump(obj)
+
+ The dump() function outputs every element of a VAL or TEXT, ignoring
+ the usual 100 value, 10 line limits imposed by echo().
+
+?functions dump()
+?dump()
+ dump() - Output an entire object
+
+ dump(obj)
+
+ The dump() function outputs every element of a VAL or TEXT, ignoring
+ the usual 100 value, 10 line limits imposed by echo().
+
+?functions global()
+?globval()
+ global() - Include a global variable in the current scope
+
+ global(var)
+
+ The global() function makes a named variable from the global scope available
+ within the local scope (ie: inside a function).  Any changes made to the
+ variable in the local scope affect the global variable directly.
+
+ You cannot create a global variable in this manner.
+
+ Note: global is all around not really safe to use.
