@@ -10,16 +10,16 @@ BINDIR = $(exec_prefix)/bin
 LIBDIR = $(prefix)/lib
 mandir = $(prefix)/man/man1
 
-INSTALL = ./install-sh -c
+INSTALL = /opt/imake/bin/install -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 
-XINCLUDES=-I/usr/openwin/include $(XRTINCLUDE)
-XLIBS=-L/usr/openwin/lib $(XRTLIBS)
+XINCLUDES= $(XRTINCLUDE)
+XLIBS= $(XRTLIBS)
 
-CPPFLAGS= -I/usr/local/include -I/usr/openwin/include -I/usr/openwin/include/X11 -I/usr/include/X11 -Ilib -Iiomedley
-CFLAGS=$(XINCLUDES) -g -O2 -I. -O  
-LDFLAGS= -L/usr/openwin/lib -L${exec_prefix}/lib -Lreadline -L/usr/local/lib -L/usr/openwin/lib -R/usr/openwin/lib 
+CPPFLAGS= -I/usr/include/X11 -Ilib -Iiomedley
+CFLAGS=$(XINCLUDES) -I/opt/bzip2/include -L/opt/bzip2/lib -I/opt/libpng/include -L/opt/libpng/lib -I/opt/tiff-3.5/include -L/opt/tiff-3.5/lib -I/opt/xpm/include -L/opt/xpm/lib -I/opt/zlib/include -L/opt/zlib/lib -I/opt/netpbm/include -L/opt/netpbm/lib -I/opt/mpeg2/include -L/opt/mpeg2/lib -I/opt/jpeg-6/lib -L/opt/jpeg-6/include -I/opt/jbigkit/include -L/opt/jbigkit/lib -I/opt/bison/include -L/opt/bison/lib -I/opt/freetype/include -L/opt/freetype/lib -I/usr/local/include -L/usr/local/lib -I/opt/readline/include -L/opt/readline/lib -I.  
+LDFLAGS= -L${exec_prefix}/lib -Lreadline -Wl,-E
 
 XRTINCLUDE=  
 XRTLIBS = 
@@ -27,7 +27,7 @@ XRTLIBS =
 
 CC     = gcc
 DEFS   = -DHAVE_CONFIG_H 
-LIBS   =  -L. -Liomedley -lmodsupp -liomedley $(XLIBS) -lplplotFX -lMagick -ltiff -lproj -lreadline -ltermcap -ljpeg -lmsss_vis -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -L/opt/local/src/ImageMagick-4.2.9/magick -lMagick -ltiff -ljpeg -lpng -ldpstk -ldps -lXext -lXt -lX11 -lsocket -lnsl -lz -lm -ldl
+LIBS   =  -L. -Liomedley -lmodsupp -liomedley $(XLIBS) -ltiff -lreadline -ltermcap -lz -lXm -lXext -lXt -lX11 -lm  -ldld
 AR     = ar
 RANLIB = ranlib
 
@@ -58,7 +58,7 @@ OBJ=p.o pp.o symbol.o \
 	reserved.o array.o string.o pp_math.o rpos.o init.o help.o \
 	io_grd.o io_isis.o io_lablib3.o io_pnm.o io_specpr.o io_vicar.o \
 	io_aviris.o io_imath.o io_magic.o io_themis.o\
-	ff_moment.o io_ascii.o ff_interp.o ff_projection.o \
+	ff_moment.o io_ascii.o ff_interp.o  \
 	lexer.o parser.o main.o fit.o system.o misc.o ufunc.o scope.o \
 	ff_header.o ff_text.o io_ers.o io_goes.o ff_bbr.o ff_vignette.o \
 	ff_pause.o printf.o ff_ifill.o ff_xfrm.o newfunc.o ff_ix.o ff_avg.o \
@@ -328,32 +328,32 @@ avl.o: avl.c avl.h
 ff_modules.o: ff_modules.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
 dvio.o: dvio.c parser.h system.h darray.h avl.h ff_modules.h \
- module_io.h ufunc.h scope.h func.h ../iomedley/iomedley.h \
- ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+ module_io.h ufunc.h scope.h func.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h 
 dvio_aviris.o: dvio_aviris.c parser.h system.h darray.h avl.h \
  ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
- ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+ iomedley/iomedley.h iomedley/io_lablib3.h iomedley/toolbox.h 
 dvio_goes.o: dvio_goes.c parser.h system.h darray.h avl.h ff_modules.h \
- module_io.h ufunc.h scope.h func.h dvio.h ../iomedley/iomedley.h \
- ../iomedley/io_lablib3.h ../iomedley/toolbox.h
+ module_io.h ufunc.h scope.h func.h dvio.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h
 dvio_grd.o: dvio_grd.c parser.h system.h darray.h avl.h ff_modules.h \
- module_io.h ufunc.h scope.h func.h dvio.h ../iomedley/iomedley.h \
- ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+ module_io.h ufunc.h scope.h func.h dvio.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h 
 dvio_imath.o: dvio_imath.c parser.h system.h darray.h avl.h \
  ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
- ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+ iomedley/iomedley.h iomedley/io_lablib3.h iomedley/toolbox.h 
 dvio_isis.o: dvio_isis.c parser.h system.h darray.h avl.h ff_modules.h \
- module_io.h ufunc.h scope.h func.h dvio.h ../iomedley/iomedley.h \
- ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+ module_io.h ufunc.h scope.h func.h dvio.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h 
 dvio_magic.o: dvio_magic.c config.h parser.h system.h darray.h avl.h \
  ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
- ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h
+ iomedley/iomedley.h iomedley/io_lablib3.h iomedley/toolbox.h
 dvio_pnm.o: dvio_pnm.c parser.h system.h darray.h avl.h ff_modules.h \
- module_io.h ufunc.h scope.h func.h ../iomedley/iomedley.h \
- ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+ module_io.h ufunc.h scope.h func.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h 
 dvio_vicar.o: dvio_vicar.c parser.h system.h darray.h avl.h \
  ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
- ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+ iomedley/iomedley.h iomedley/io_lablib3.h iomedley/toolbox.h 
 dvio_envi.o: dvio_envi.c parser.h system.h darray.h avl.h ff_modules.h \
- module_io.h ufunc.h scope.h func.h dvio.h ../iomedley/iomedley.h \
- ../iomedley/io_lablib3.h ../iomedley/toolbox.h
+ module_io.h ufunc.h scope.h func.h dvio.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h
