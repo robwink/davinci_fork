@@ -48,7 +48,7 @@ static MODHANDLE portable_dlopen(char * fname) {
 #elif defined(_WIN32)
   return LoadLibrary(fname);
 #else  /* default case */
-  returndlopen(fname, RTLD_LAZY);
+  return dlopen(fname, RTLD_LAZY);
 #endif /* USE_HPUX_SHL */
 }
 
