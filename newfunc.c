@@ -120,6 +120,34 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
             p = (char **)(alist[j].value);
             *p = V_STRING(v);
             alist[j].filled = 1;
+        } else if (alist[j].type == ID_TEXT) {
+			/*
+			** This works just like string, but should also allow the
+			** user to pass just a string, which can get promoted.
+			*/
+            Var **vptr;
+            if ((e = eval(v)) == NULL) {
+                parse_error("%s: Variable not found: %s", fname, V_NAME(v));
+				free(av);
+                return(0);
+            }
+            v = e;
+            if (V_TYPE(v) != ID_TEXT && V_TYPE(v) != ID_STRING) {
+                parse_error(
+                    "Illegal argument to function %s(), expected STRING",
+                    fname);
+				free(av);
+                return(0);
+            }
+
+			if (V_TYPE(v) == ID_STRING) {
+				char **s = (char **)calloc(1, sizeof(char *));
+				s[0] = strdup(V_STRING(v));
+				v = newText(1, s);
+			}
+			vptr = (Var **)(alist[j].value);
+			*vptr = v;
+            alist[j].filled = 1;
         } else if (alist[j].type == ID_VAL) {
             Var **vptr;
             if ((e = eval(v)) == NULL) {
@@ -264,16 +292,6 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
                 return(0);
             }
             v = e;
-/*
-            if (V_TYPE(v) != ID_STRING) {
-                parse_error(
-                    "Illegal argument to function %s(), expected STRING", 
-                    fname);
-				free(av);
-                return(0);
-            }
-*/
-
             vptr = (Var **)(alist[j].value);
             *vptr = v;
             alist[j].filled = 1;
