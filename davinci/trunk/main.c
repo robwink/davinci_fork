@@ -98,6 +98,7 @@ main(int ac, char **av)
     int i, j, k, flag = 0;
     char *logfile = NULL;
     int iflag = 0;
+	char *p;
 	
     s = new_scope();
 
@@ -222,18 +223,22 @@ extern Init_DLL(void);
     /**
     ** set up temporary directory
     **/
-#ifndef __MSDOS__
-    sprintf(path, "TMPDIR=%s/dv_%d", P_tmpdir, getpid());
-#else
+#ifdef __MSDOS__
         {  
                 char tmpbuf[128];  
                 _strtime( tmpbuf );  
                 sprintf(path, "c:\\windows\\temp\\dv_%s",tmpbuf);  
+				mkdir(path + 7, 0777);
+				putenv(path);
         }  
-#endif
+#else
+	if ((p = getenv("TMPDIR")) == NULL) {
+		sprintf(path, "TMPDIR=%s/dv_%d", P_tmpdir, getpid());
 
-    mkdir(path + 7, 0777);
-    putenv(path);
+		mkdir(path + 7, 0777);
+		putenv(path);
+	}
+#endif
 
     /*
     ** Before we get to events, process any pushed files

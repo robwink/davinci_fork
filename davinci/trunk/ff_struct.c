@@ -436,3 +436,71 @@ LoadVanilla(char *filename)
 
     return(o);
 }
+
+Var *
+ff_add_struct(vfuncptr func, Var * arg)
+{
+	Var *a = NULL, b, *v;
+	char *name = NULL;
+
+	int ac;
+	Var **av;
+	Alist alist[3];
+	alist[0] = make_alist( "object",    ID_VSTRUCT,    NULL,     &a);
+	alist[1] = make_alist( "name",      ID_STRING,     NULL,     &name);
+	alist[2].name = NULL;
+
+	make_args(&ac, &av, func, arg);
+	if (parse_args(ac, av, alist)) return(NULL);
+
+	if (a == NULL) {
+		parse_error("Object is null");
+		return(NULL);
+	}
+	
+	if (name == NULL) {
+		parse_error("name is null");
+		return(NULL);
+	}
+
+	V_TYPE(&b) = ID_UNK;
+	V_NAME(&b) = name;
+
+	v = newVal(BSQ, 1, 1, 1, BYTE, calloc(1,1));
+
+	return(pp_set_struct(a, &b, v));
+}
+
+Var *
+ff_get_struct(vfuncptr func, Var * arg)
+{
+	Var *a = NULL, b, **v;
+	char *name = NULL;
+
+	int ac;
+	Var **av;
+	Alist alist[3];
+	alist[0] = make_alist( "object",    ID_VSTRUCT,    NULL,     &a);
+	alist[1] = make_alist( "name",      ID_STRING,     NULL,     &name);
+	alist[2].name = NULL;
+
+	make_args(&ac, &av, func, arg);
+	if (parse_args(ac, av, alist)) return(NULL);
+
+	if (a == NULL) {
+		parse_error("Object is null");
+		return(NULL);
+	}
+	
+	if (name == NULL) {
+		parse_error("name is null");
+		return(NULL);
+	}
+
+	V_TYPE(&b) = ID_UNK;
+	V_NAME(&b) = name;
+
+	v = find_struct(a, &b);
+
+	return(*v);
+}

@@ -315,6 +315,9 @@ Var *ff_convolve2(vfuncptr func, Var *arg);
 Var *ff_convolve3(vfuncptr func, Var *arg);
 Var *ff_eval(vfuncptr func, Var *arg);
 
+Var *ff_add_struct(vfuncptr func, Var *arg);
+Var *ff_get_struct(vfuncptr func, Var *arg);
+
 
 #ifndef __MSDOS__
 Var *ff_popen(vfuncptr func, Var * arg);
