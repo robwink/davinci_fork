@@ -1,9 +1,12 @@
-char *version = "@(#) daVinci Version #1.11";
+char *version = "@(#) daVinci Version #1.12";
 
 
 #include "build.h"
 
 /*
+Version 1.12: Tue Apr  1 15:15:04 MST 2003
+	+ Fixed a file handle leakage while reading ISIS suffix planes.
+
 Version 1.11: Mon Mar 24 15:51:18 MST 2003
 	+ Various fixes plus modifications to dump to handle other variables (texts)
 	+ added slant and unslant, plus rice code

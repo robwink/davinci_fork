@@ -939,6 +939,7 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
 
     if (iom_GetISISHeader(fp, fname, &s, msg_file, &object) == 0) {
         parse_error("%s: not an ISIS file", fname);
+        fclose(fp);
         free(fname);
         return (NULL);
     }
@@ -950,6 +951,7 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
 
     if (qube  == NULL) {
         parse_error("%s: Not a qube object.", isisfile);
+        fclose(fp);
         return (NULL);
     }
 
@@ -1027,12 +1029,14 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
                 }
             }
         }
+        fclose(fp);
         return(NULL);
         
     } else if (V_TYPE(Suffix)==ID_STRING) {
         name=V_STRING(Suffix);
         if(dv_LookupSuffix(qube, name, &plane, &type, &s, suffix)) {
             parse_error("Unable to find plane: %s", name);
+            fclose(fp);
             return(NULL);
         }
     } else {
@@ -1054,6 +1058,7 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
 
     if(type <0 || type > 2){
         fprintf(stderr, "Illegal axis type specified: %d\n",type);
+        fclose(fp);
         return(NULL);
     }
 
@@ -1063,6 +1068,7 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
                 suffix[iom_orders[s.org][type]],
                 ((type==0) ? ("Sample"): ((type==1) ? ("Line"):("Band"))),
                 (suffix[iom_orders[s.org][type]] > 1 ? ("s"):("")));
+        fclose(fp);
         return(NULL);
     }
     
@@ -1111,6 +1117,8 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
                              &format, /* data now s_suffix_item_bytes -> format */
                              iom_orders[s.org][type],&chunk);
 
+    fclose(fp);
+    
     s.s_hi[iom_orders[s.org][type]]=1;
 
 /*
