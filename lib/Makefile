@@ -14,8 +14,8 @@ INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 
 CC     = gcc
-DEFS   =  -DHAVE_CONFIG_H 
-LIBS   =  -lplplotFX -lMagick -L/opt/local/ImageMagick-5.4.2/magick -lMagick -llcms -ltiff -ljpeg -lpng -ldpstk -ldps -lXext -lXt -lSM -lICE -lX11 -lsocket -lnsl -lz -lpthread -lm -lproj -lltdl -ltermcap -lmsss_vis -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -lreadline -lcurses -ldl
+DEFS   = -I/usr/X11R6/include -DHAVE_CONFIG_H 
+LIBS   = -L/usr/X11R6/lib -lMagick -L/usr/lib -lMagick -lfreetype -lXext -lXt -lSM -lICE -lX11 -lz -lpthread -lm -lltdl -ltermcap -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -lreadline -lcurses -ldl
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
