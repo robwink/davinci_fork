@@ -1,7 +1,7 @@
-# Generated automatically from Makefile.in by configure.
 SHELL = /bin/sh
 
 srcdir = .
+
 
 prefix = /usr/local
 exec_prefix = $(prefix)
