@@ -103,7 +103,7 @@ dnl Check for library functions.
 AC_FUNC_MEMCMP
 AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(mkdir putenv select strdup strndup strspn strstr strtod strtol strtoul)
+AC_CHECK_FUNCS(mkdir putenv select strdup strndup strspn strstr strtod strtol strtoul drand48)
 AC_CHECK_FUNCS(index rindex getdtablesize getwd usleep strtoul basename)
 AC_CHECK_FUNCS(dirname bcopy bcmp bzero)
 
