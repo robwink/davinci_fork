@@ -1078,7 +1078,7 @@ write_isis_planes(vfuncptr func, Var * arg)
         for (k = 0 ; k < size[2] ; k++) {
             for (j = 0 ; j < size[1] ; j++) {
                 pos = (k*size[1]+j)*size[0] * nbytes;
-                fwrite(V_DATA(core) + pos, size[0], nbytes, fp);
+                fwrite((char *)V_DATA(core) + pos, size[0], nbytes, fp);
 
                 if (suffix[0]) {
                     for (n = 0 ; n < get_struct_count(suffix[0]) ; n++) {
@@ -1118,7 +1118,7 @@ write_one(Var *v, int x, int y, int z, FILE *fp)
     if (nbytes < 4) {
         fwrite(&zero, 4-nbytes, 1, fp);
     }
-    fwrite(V_DATA(v) + pos*nbytes, 1, nbytes, fp);
+    fwrite((char *)V_DATA(v) + pos*nbytes, 1, nbytes, fp);
 } 
 
 write_row_x(Var *v, int y, int z, FILE *fp)

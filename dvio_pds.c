@@ -626,6 +626,11 @@ int rf_TABLE(char *fn, Var *ob,char * val, int dptr)
 	int err;
 
 	label=LoadLabel(fn);
+	if (label == NULL){
+		fprintf(stderr, "Unable to load label from \"%s\".\n", ((fn == NULL)?"(null)":fn));
+		return 1;
+	}
+
 	f = (FIELD **) label->fields->ptr;
 
 /*Add new structure to parent ob*/

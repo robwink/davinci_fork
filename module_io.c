@@ -66,8 +66,12 @@ open_dv_module_file(
 	if (!mh->handle){
 	  /* I imagine this needs to be something different for Hockey Pux.
 	     I don't have one to play with at the moment. */
+#if defined(_WIN32) || defined(USE_HPUX_SHL)
+		parse_error("Unable to open module %s.\n", fname);
+#else
 		parse_error("Unable to open module %s. Reason: %s.",
 					fname, dlerror());
+#endif /* defined(_WIN32) || defined(USE_HPUX_SHL) */
 
 		free(mh);
 		return NULL;

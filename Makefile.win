@@ -30,6 +30,7 @@ OBJ=p.obj pp.obj symbol.obj \
 	ff_header.obj ff_text.obj ff_bbr.obj ff_vignette.obj \
 	ff_pause.obj printf.obj ff_ifill.obj ff_xfrm.obj newfunc.obj ff_ix.obj ff_avg.obj \
 	ff_sort.obj ff_fft.obj fft.obj matrix.obj fft_mayer.obj dct.obj fft2f.obj \
+	ff_shade.obj \
 	x.obj xrt_print_3d.obj motif_tools.obj ff_convolve.obj apifunc.obj \
 	ff_plplot.obj ff_pca.obj ff_loadvan.obj tools.obj header.obj \
 	dvio_pds.obj dvio_hdf.obj ff_pbm.obj ff_modules.obj module_io.obj \

@@ -103,7 +103,6 @@ ff_gplot(vfuncptr func, Var *arg)
 Var *
 ff_plot(vfuncptr func, Var *arg)
 {
-#ifdef HAVE_LIBX11
     Var *s,*v;
     FILE *fp;
     char *fname;
@@ -168,7 +167,6 @@ ff_plot(vfuncptr func, Var *arg)
         }
     }
     send_to_plot(buf);
-#endif
     return(NULL);
 }
 
@@ -236,12 +234,19 @@ ff_splot(vfuncptr func, Var *arg)
     return(NULL);
 }
 
+
+#ifdef WIN32
+	#define GPLOT_CMD "gnuplot"
+#elif  defined(HAVE_LIBX11)
+	#define GPLOT_CMD "gplot"
+#endif /* WIN32 */
+
 int
 send_to_plot(char *s)
 {
-#ifdef HAVE_LIBX11
+#ifdef GPLOT_CMD
     if (pfp == NULL) {
-        if ((pfp = popen("gplot", "w")) == NULL) {
+        if ((pfp = popen(GPLOT_CMD, "w")) == NULL) {
             fprintf(stderr, "Unable to open gplot.\n");
             return(0);
         }
@@ -253,7 +258,7 @@ send_to_plot(char *s)
         send_to_plot(s);
     }
     write(fileno(pfp), "\n", 1);
-#endif
+#endif /* GPLOT_CMD */
     return(1);
 }
 
