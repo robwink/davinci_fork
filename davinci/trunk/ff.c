@@ -23,41 +23,52 @@ V_func(char *name, Var * arg)
     vfuncptr f;
     UFUNC *uf, *locate_ufunc(char *);
 #ifdef INCLUDE_API
-	APIDEFS *api;
+    APIDEFS *api;
 #endif
 
+    /*
+    ** This needs to check ALL the args to determine if there's any
+    ** that need to be parallelized
+    */
+	/*
+    if (parallel_args(arg)) {
+        return(parallel_handler(name, arg));
+    }
+	*/
 
-    /**
+    /*
     ** Find and call the named function or its handler
-    **/
+    */
     for (f = vfunclist; f->name != NULL; f++) {
         if (!strcmp(f->name, name)) {
             return (f->fptr(f, arg));
         }
     }
 
-    /**
+    /*
     ** No internal function match.  Check ufunc list
-    **/
+    */
     if ((uf = locate_ufunc(name)) != NULL) {
         return (dispatch_ufunc(uf, arg));
     }
 
 #ifdef INCLUDE_API
-    /**
+    /*
     ** Check for func in API list
-    **/
+    */
     if((api = api_lookup(name)) != NULL){
         return(dispatch_api(api,arg));
     }
 #endif
 
-    /**
+    /*
     ** No function found?  Return NULL
-    **/
+    */
     parse_error( "Function not found: %s", name);
     return (NULL);
 }
+
+
 
 /**
  ** verify_single_arg() - check arg list for valid argument.
@@ -2029,6 +2040,7 @@ Var *
 ff_length(vfuncptr func, Var * arg)
 {
     Var *obj;
+	int len;
 
     Alist alist[2];
     alist[0] = make_alist("obj",    ID_UNK,     NULL,     &obj);
@@ -2036,17 +2048,213 @@ ff_length(vfuncptr func, Var * arg)
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
+	len = v_length(obj);
+	if (len >= 0) {
+		return(newInt(v_length(obj)));
+	} else {
+		parse_error("%s: unrecognized type", func->name);
+		return(NULL);
+	}
+
+}	
+
+int
+v_length(Var *obj)
+{
 	switch (V_TYPE(obj))  {
 		case ID_STRUCT:
-			return(newInt(get_struct_count(obj)));
+			return(get_struct_count(obj));
 		case ID_TEXT:
-			return(newInt(V_TEXT(obj).Row));
+			return(V_TEXT(obj).Row);
 		case ID_STRING:
-			return(newInt(strlen(V_STRING(obj))));
+			return(strlen(V_STRING(obj)));
 		case ID_VAL:
-			return(newInt(V_DSIZE(obj)));
+			return(V_DSIZE(obj));
 		default:
-			parse_error("%s: unrecognized type", func->name);
-			return(NULL);
+			return(-1);
 	}
+}
+
+/*
+** Return a mask of everywhere that a value occurs, where the
+** value can be a hex representation (ala ISIS)
+*/
+
+
+Var *
+ff_deleted(vfuncptr func, Var * arg)
+{
+    Var *obj = NULL;
+	Var *str_value = NULL, *v;
+	char vbuf[16] = { 0 };
+	int bytes;
+	int nbytes, dsize;
+	unsigned char *data, *out;
+	int i;
+
+
+    Alist alist[3];
+    alist[0] = make_alist("obj",    ID_VAL,     NULL,     &obj);
+    alist[1] = make_alist("value",  ID_UNK,     NULL,     &str_value);
+    alist[2].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (obj == NULL) {
+        parse_error( "%s: No value specified for keyword: object.", func->name);
+		return(NULL);
+	}
+	if (str_value == NULL) {
+        parse_error( "%s: No value specified for keyword: value.", func->name);
+		return(NULL);
+	}
+
+	if (V_TYPE(str_value) == ID_STRING) {
+		bytes = decode_hexstring(V_STRING(str_value), vbuf);
+	}
+
+	if (bytes == 0) {
+		parse_error("Unrecognized value: %s", V_STRING(str_value));
+		return(NULL);
+	}
+
+	dsize = V_DSIZE(obj);
+	data = V_DATA(obj);
+	nbytes = NBYTES(V_FORMAT(obj));
+	if (bytes != nbytes) {
+		parse_error("Word sizes differ");
+		return(NULL);
+	}
+	out = calloc(dsize, 1);
+
+	for (i = 0 ; i < dsize ; i++) {
+		if (memcmp(data+(i*nbytes), vbuf, bytes) == 0) {
+			out[i] = 1;
+		}
+	}
+
+	v = newVar();
+	V_TYPE(v) = ID_VAL;
+	V_ORG(v) = V_ORG(obj);
+	V_FORMAT(v) = BYTE;
+	V_SIZE(v)[0] = V_SIZE(obj)[0];
+	V_SIZE(v)[1] = V_SIZE(obj)[1];
+	V_SIZE(v)[2] = V_SIZE(obj)[2];
+	V_DSIZE(v) = V_DSIZE(obj);
+	V_DATA(v) = out;
+
+	return(v);
+}
+
+int
+decode_hexstring(char *str, char *buf)
+{
+	char *vbuf = buf;
+	int char_count = 0;
+	int base, shift;
+
+	char *p, *q;
+	/*
+	** Try to decode value into a hex block
+	*/
+	if (str[0] == '#') {
+		p = str;
+		q = strchr(str+1, '#');
+		if (p && q) {
+			base = atoi(p+1);
+			switch(base) {
+				case 16: shift=4; break;
+				default:
+					return(0);
+			}
+			p = q+1;
+			/*
+			** this is a hacky hardcode for #16#.
+			*/
+			while (*p) {
+				if (*p >= '0' && *p <= '9') {
+					*vbuf += *p - '0';
+				} else if (*p >= 'a' && *p <= 'f') {
+					*vbuf += *p - 'a' + 10;
+				} else if (*p >= 'A' && *p <= 'F') {
+					*vbuf += *p - 'A' + 10;
+				} else {
+					return(0);
+				}
+				char_count++;
+				p++;
+				if (char_count % 2 == 0) {
+					vbuf++;
+				} else {
+					*vbuf = *vbuf << 4;
+				}
+			}
+		}
+		return(char_count/2);
+	}
+	return(0);
+}
+
+Var *
+ff_set_deleted(vfuncptr func, Var * arg)
+{
+    Var *obj = NULL, *mask=NULL;
+	Var *str_value = NULL, *v;
+	char vbuf[16] = { 0 };
+	int bytes;
+	int nbytes, dsize;
+	unsigned char *data, *out;
+	int i;
+
+
+    Alist alist[4];
+    alist[0] = make_alist("obj",    ID_VAL,     NULL,     &obj);
+    alist[1] = make_alist("mask",   ID_VAL,     NULL,     &mask);
+    alist[2] = make_alist("value",  ID_UNK,     NULL,     &str_value);
+    alist[3].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (obj == NULL) {
+        parse_error( "%s: No value specified for keyword: object.", func->name);
+		return(NULL);
+	}
+	if (mask == NULL) {
+        parse_error( "%s: No value specified for keyword: mask.", func->name);
+		return(NULL);
+	}
+	if (str_value == NULL) {
+        parse_error( "%s: No value specified for keyword: value.", func->name);
+		return(NULL);
+	}
+
+	if (math_operable(obj,mask) == 0) {
+		parse_error("Sizes don't match");
+		return(NULL);
+	}
+
+	if (V_TYPE(str_value) == ID_STRING) {
+		bytes = decode_hexstring(V_STRING(str_value), vbuf);
+	}
+
+	if (bytes == 0) {
+		parse_error("Unrecognized value: %s", V_STRING(str_value));
+		return(NULL);
+	}
+
+	dsize = V_DSIZE(obj); 
+	nbytes = NBYTES(V_FORMAT(obj));
+	if (bytes != nbytes) {
+		parse_error("Word sizes differ");
+		return(NULL);
+	}
+	v = V_DUP(obj); 
+	data = V_DATA(v); 
+
+	for (i = 0 ; i < dsize ; i++) {
+		if (extract_int(mask, i)) {
+			memcpy(data+(nbytes*i), vbuf, bytes);
+		}
+	}
+	return(v);
 }
