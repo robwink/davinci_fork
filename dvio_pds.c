@@ -4,11 +4,23 @@
 
 #include <ctype.h>
 
+#define MAXOBJ 10	
+
+typedef struct _objectInfo
+{
+	int	count;
+
+	int 	*obj_ptr;  /*File Byte offset of ^OBJECT = */
+	int 	*obj_size; /*In RECORD_BYTES */
+	char	**obj_data; /*Duh */
+	
+} objectInfo;
+
 
 void Set_Col_Var(Var **,FIELD **,LABEL * ,int *size, char **);
 void ProcessGroupIntoLabel(FILE *fp,int record_bytes, Var *v, char *name);
-void ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v, char *name,unsigned char **obj_ptr, int *size);
-Var * ProcessIntoLabel(FILE *fp,int record_bytes, Var *v, int depth,int *label_ptr,unsigned char **obj_ptr,int *size);
+void ProintcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v, char *name,objectInfo *oi);
+Var *ProcessIntoLabel(FILE *fp,int record_bytes, Var *v, int depth,int *label_ptr,objectInfo *oi);
 
 
 static char keyword_prefix[]="PTR_TO_";
@@ -22,6 +34,7 @@ typedef struct _dataKeys
 	char *FileName; /*Name of the file the PDS object is from, 
 							could be different than the one originally given */
 	int  dptr;		/*offset into file where data begins*/
+
 }dataKey;
 
 /*To add dataKey words for more readable types do the following 3 steps:*/
@@ -280,7 +293,7 @@ do_key(OBJDESC *ob, KEYWORD* key)
 	unsigned short kwv;
 	Var *o=NULL;
 	int	*i;
-	float *f;
+	double *f;
 
 			kwv=OdlGetKwdValueType(key);
 	
@@ -292,9 +305,9 @@ do_key(OBJDESC *ob, KEYWORD* key)
 				o=newVal(BSQ,1,1,1,INT,i);
 				break;
 			case ODL_REAL:
-				f=(float *)calloc(1,sizeof(float));
-				*f=atof(key->value);
-				o=newVal(BSQ,1,1,1,FLOAT,f);
+				f=(double *)calloc(1,sizeof(double));
+				*f=strtod(key->value,NULL);
+				o=newVal(BSQ,1,1,1,DOUBLE,f);
 				break;
 			case ODL_SYMBOL:
 			case ODL_DATE:
@@ -625,7 +638,7 @@ ProcessGroupIntoLabel(FILE *fp,int record_bytes, Var *v, char *name)
 	tmpname=strdup(struct_name);
 	*struct_name='\0';
 
-	ProcessIntoLabel(fp,record_bytes,v, 0,NULL,NULL,NULL);
+	ProcessIntoLabel(fp,record_bytes,v, 0,NULL,NULL);
 
 	memcpy(struct_name,tmpname,strlen(tmpname));
 	free(tmpname);
@@ -636,13 +649,70 @@ ProcessGroupIntoLabel(FILE *fp,int record_bytes, Var *v, char *name)
 }
 
 void
-ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,unsigned char **obj_ptr, int *size)
+ProcessHistoryIntoString(Var *v,char **theString, int *ptr) 
+{
+
+	int i;
+	int count;
+	Var *element;
+	char *name;
+	char *tmpname;
+	char string[1024*32];
+	static int current_size;
+
+	if (!(*ptr)){ /*first time through, malloc up some memory */
+		current_size=(1024*64);
+		(*theString)=(char *)malloc(current_size);
+	}
+
+
+/*Grow theString if needed*/
+	if (*ptr >= (current_size/2)) {
+		current_size *= 2;
+		(*theString)=realloc(*theString,current_size);
+	}
+
+	count = get_struct_count(v);
+	for (i=0;i<count;i++){
+		get_struct_element(v,i,&name,&element);
+		if (V_TYPE(element) == ID_STRUCT){
+			tmpname=correct_name(name);
+			sprintf(string,"GROUP = %s\r\n",tmpname);
+			memcpy((*theString+(*ptr)),string,strlen(string));
+			*ptr+=strlen(string);
+
+			ProcessHistoryIntoString(element,theString,ptr);
+
+			sprintf(string,"END_GROUP = %s\r\n",tmpname);
+			memcpy((*theString+(*ptr)),string,strlen(string));
+			*ptr+=strlen(string);
+	
+			free(tmpname);
+
+		}
+		else if (!(strcasecmp(name,"Object")))
+			continue;
+
+		else {
+			tmpname=correct_name(name);
+			sprintf(string,"%s = %s\r\n",tmpname,V_STRING(element));
+			memcpy((*theString+(*ptr)),string,strlen(string));
+			*ptr+=strlen(string);
+			free(tmpname);
+		}
+	}
+}
+				
+
+void
+ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *oi)
 {
 
 	Var *tmpvar;
 	int i;
 	int count;
 	char *struct_name;
+	int rem;
 
 	char *tmpname;
 	char *tmpname2;
@@ -653,30 +723,106 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,unsigned cha
 		tmpname=strdup(struct_name);
 		*struct_name='\0';
 
-		ProcessIntoLabel(fp,record_bytes,v, 0,NULL,NULL,NULL);
+		ProcessIntoLabel(fp,record_bytes,v, 0,NULL,NULL);
 		memcpy(struct_name,tmpname,strlen(tmpname));
 		free(tmpname);
 		/*Need to make use of the data object here*/
+		oi->obj_size[oi->count]=0;
+		oi->obj_data[oi->count]=NULL;
+		oi->count++;
 	}
+
+	else if ((!(strcasecmp("history",name)))){
+		char end[]="END";
+		int ptr=0;
+		int size;
+
+		count = get_struct_count(v);
+		for (i=0;i<count;i++){ /*We could assume the DATA object is last, but that could lead to trouble */
+	 		get_struct_element(v,i, &struct_name, &tmpvar);
+			if (!(strcasecmp(struct_name,"data"))) {/*Found it!*/
+				ProcessHistoryIntoString(tmpvar,&oi->obj_data[oi->count],&ptr);
+				memcpy((oi->obj_data[oi->count]+ptr),end,strlen(end));
+				ptr+=strlen(end);
+				
+
+				size = (ptr/record_bytes)+1;
+				oi->obj_data[oi->count]=realloc(oi->obj_data[oi->count],size*record_bytes);
+				if (ptr % record_bytes) {
+					int rem = size*record_bytes - ptr;
+					memset(oi->obj_data[oi->count]+ptr,0x20,rem);
+					ptr+=rem;
+				}
+				oi->obj_size[oi->count]=(ptr/record_bytes);
+				oi->count++;
+				break;
+			}
+
+
+		}
+
+   	get_struct_element(v, 0, &struct_name, &tmpvar); /*Get the OBJECT Tag and temporarily NULLify it */
+		tmpname=strdup(struct_name);
+		*struct_name='\0';
+	
+		ProcessIntoLabel(fp,record_bytes,v, 0,NULL,NULL);
+
+		memcpy(struct_name,tmpname,strlen(tmpname));
+		free(tmpname);
+
+	}
+
 
 	else if ((!(strcasecmp("qube",name))) || (!(strcasecmp("image",name)))){ /*We're processing a qube*/
 		count = get_struct_count(v);
 		for (i=0;i<count;i++){ /*We could assume the DATA object is last, but that could lead to trouble */
 	 		get_struct_element(v,i, &struct_name, &tmpvar);
 			if (!(strcasecmp(struct_name,"data"))) {/*Found it!*/
-				*obj_ptr=(unsigned char *)V_DATA(tmpvar); /*Now we should have a pointer to the data*/
-				*size=V_SIZE(tmpvar)[0]*V_SIZE(tmpvar)[1]*V_SIZE(tmpvar)[2]*NBYTES(V_FORMAT(tmpvar));
+
+				oi->obj_data[oi->count]=
+					(unsigned char *)V_DATA(tmpvar); 
+					/*Now we should have a pointer to the data*/
+
+				oi->obj_size[oi->count]=
+					(V_SIZE(tmpvar)[0]*V_SIZE(tmpvar)[1]*
+					V_SIZE(tmpvar)[2]*
+					NBYTES(V_FORMAT(tmpvar)));				
+					/* Check for alignment and pad as needed */
+
+
+				if (oi->obj_size[oi->count] % record_bytes){ 
+					/* We're not aligned to record bytes..copy and pad*/
+
+					rem = (oi->obj_size[oi->count] / record_bytes);
+					rem++;
+					rem*=record_bytes;
+					oi->obj_data[oi->count]=(unsigned char *)malloc(rem);
+
+					memcpy((void *)oi->obj_data[oi->count],
+							 (void *)V_DATA(tmpvar),
+							 oi->obj_size[oi->count]*record_bytes);
+
+					memset(oi->obj_data[oi->count],0x20,
+							 (rem-(oi->obj_size[oi->count]*record_bytes)));  /*Set the difference to spaces */
+
+					oi->obj_size[oi->count]=rem/record_bytes;
+				}
+				else
+					oi->obj_size[oi->count]/=record_bytes;
+				
+				oi->count++;
 				break;
 			}
 		}
+
 		/*finish processing the object label */
-			/*We send in nulls because at this point....we SHOULD NOT find any labels or objects that we want! */	
+		/*We send in nulls because at this point....we SHOULD NOT find any labels or objects that we want! */	
 
    	get_struct_element(v, 0, &struct_name, &tmpvar); /*Get the OBJECT Tag and temporarily NULLify it */
 		tmpname=strdup(struct_name);
 		*struct_name='\0';
 	
-		ProcessIntoLabel(fp,record_bytes,v, 0,NULL,NULL,NULL);
+		ProcessIntoLabel(fp,record_bytes,v, 0,NULL,NULL);
 
 		memcpy(struct_name,tmpname,strlen(tmpname));
 		free(tmpname);
@@ -684,7 +830,7 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,unsigned cha
 	}
 
 	else {
-		ProcessIntoLabel(fp,record_bytes,v, 0,NULL,NULL,NULL);
+		ProcessIntoLabel(fp,record_bytes,v, 0,NULL,NULL);
 	}
 
 	fprintf(fp,"END_OBJECT = %s\r\n", name);
@@ -745,10 +891,10 @@ output_big_var(FILE *out,Var *data,char *inset,char *name)
 }
 
 Var *
-ProcessIntoLabel(FILE *fp,int record_bytes, Var *v, int depth, int *label_ptrs, unsigned char **obj_ptr, int *size)
+ProcessIntoLabel(FILE *fp,int record_bytes, Var *v, int depth, int *label_ptrs, objectInfo *oi)
 {
 	int i;
-	/* int label_ptrs[3]; 0=FILE_RECORDS; 1=LABEL_RECORDS 2=PDS_OBJECT (ie ^table, ^qube, etc)*/
+	/* int label_ptrs[3]; 0=FILE_RECORDS; 1=LABEL_RECORDS */
 	
 	int count;
 	Var *data=newVar();
@@ -786,7 +932,7 @@ ProcessIntoLabel(FILE *fp,int record_bytes, Var *v, int depth, int *label_ptrs, 
 			continue;
 		}
 		else if (*name == '\0') {
-			parse_error("Found an element with no name...skipping");
+/*			parse_error("Found an element with no name...skipping");*/
 			count--;
 			continue;
 		}
@@ -809,16 +955,9 @@ ProcessIntoLabel(FILE *fp,int record_bytes, Var *v, int depth, int *label_ptrs, 
          fprintf(fp,"%sLABEL_RECORDS = %s\r\n",inset,pad);
       }
 
-/*	
-		else if (!(strcasecmp(name,"PRODUCT_ID"))){
-			pds_filename=remangle_name(V_STRING(data));	
-         fprintf(fp,"%sPRODUCT_ID = %s\r\n",inset,pds_filename);
-      }
-*/
-
 
 		else if (!(strncasecmp(name,"PTR_TO_",7))){
-			label_ptrs[2]=ftell(fp)+strlen((name+7))+4; /* +4 for the space and ='s*/
+			oi->obj_ptr[oi->count]=ftell(fp)+strlen((name+7))+4; /* +4 for the space and ='s*/
 			tmpname=correct_name((name+7));
 			fprintf(fp,"%s^%s = %s\r\n",inset,tmpname,pad);
 			free(tmpname);
@@ -838,7 +977,7 @@ ProcessIntoLabel(FILE *fp,int record_bytes, Var *v, int depth, int *label_ptrs, 
 			get_struct_element(data,0,&newname,&tmp_var);
 			if (strcmp("Object",(newname))) {
 				parse_error("Parsing unknown structure");
-				ProcessIntoLabel(fp,record_bytes,data,depth,label_ptrs, obj_ptr, size);
+				ProcessIntoLabel(fp,record_bytes,data,depth,label_ptrs, oi);
 			}
 			else {
 			
@@ -846,17 +985,12 @@ ProcessIntoLabel(FILE *fp,int record_bytes, Var *v, int depth, int *label_ptrs, 
 					ProcessGroupIntoLabel(fp,record_bytes,data,name);
 
 				else
-					ProcessObjectIntoLabel(fp,record_bytes,data,V_STRING(tmp_var),obj_ptr,size);
+					ProcessObjectIntoLabel(fp,record_bytes,data,V_STRING(tmp_var),oi);
 			}
 		}	
 
-
 		else if (V_TYPE(data)==ID_TEXT) {
-//			char **text;
-//			int row;
 			int ti;
-//			text=V_TEXT(data).text;
-//			row=V_TEXT(data).Row;
 			tmpname=correct_name(name);
 			fprintf(fp,"%s%s = (",inset,tmpname);
 			free(tmpname);
@@ -936,22 +1070,23 @@ ProcessIntoLabel(FILE *fp,int record_bytes, Var *v, int depth, int *label_ptrs, 
 
 
 void
-Fix_Label(FILE *fp,int record_bytes,int *label_ptr, int obj_size)
+Fix_Label(FILE *fp,int record_bytes,int *label_ptr, objectInfo *oi)
 {
-	int total,rem;
+	int rem;
 	char *pad;	
 	int size;
 	int size_in_records;
+	int i;
+	int total;
 
 	rewind(fp);
 /*
 ** label_ptr[0] is the #-bytes into fp where the FILE_RECORDS=
 ** label_ptr[1] is the #-bytes into fp where the LABEL_RECORDS=
-** label_ptr[2] is the #-bytes into fp where the ^OBJECT=
-** label_ptr[3] is the #-bytes into fp where the label ends.
+** label_ptr[2] is the #-bytes into fp where the label ends.
 */
 
-	size=label_ptr[3];
+	size=label_ptr[2];
 	fseek(fp,size,SEEK_SET); /*back to end!*/
 	size_in_records=size/record_bytes;
 	rem = (size % record_bytes);
@@ -964,20 +1099,30 @@ Fix_Label(FILE *fp,int record_bytes,int *label_ptr, int obj_size)
 		fflush(fp);
 	}
 
-	total=size_in_records+obj_size/record_bytes;
 	
 
-/*Now to go back and fix the 3 label spots*/
+	total=size_in_records;	
 
-	rewind(fp);
-	fseek(fp,label_ptr[0]+1,SEEK_SET);
-	fprintf(fp,"%d",total);
+/*Now to go back and fix the  label spots*/
+
 	rewind(fp);
 	fseek(fp,label_ptr[1]+1,SEEK_SET);
 	fprintf(fp,"%d",size_in_records);
 	rewind(fp);
-	fseek(fp,label_ptr[2]+1,SEEK_SET);
-	fprintf(fp,"%d",size_in_records+1);
+
+	size_in_records++;
+
+	for(i=0;i<oi->count;i++){
+		rewind(fp);
+		fseek(fp,oi->obj_ptr[i]+1,SEEK_SET);
+		fprintf(fp,"%d",size_in_records);
+		size_in_records+=oi->obj_size[i];
+		total+=oi->obj_size[i];
+	}
+
+	rewind(fp);
+	fseek(fp,label_ptr[0]+1,SEEK_SET);
+	fprintf(fp,"%d",total);
 
 }
 
@@ -998,8 +1143,10 @@ WritePDS(vfuncptr func, Var *arg)
 	int record_bytes; /*		Gotta keep track of this baby!*/
 	Var *result;
 	int label_ptr[4];
-	unsigned char *obj_ptr;
-	int size;
+	objectInfo	oi;
+	oi.obj_ptr = (int *)malloc(sizeof(int)*MAXOBJ);
+	oi.obj_size = (int *)malloc(sizeof(int)*MAXOBJ);
+	oi.obj_data = (char **)malloc(sizeof(char *)*MAXOBJ);
 
 
 
@@ -1045,12 +1192,21 @@ WritePDS(vfuncptr func, Var *arg)
 
 	fp=fopen(fn,"w");
 
-	ProcessIntoLabel(fp,record_bytes,v,-1,label_ptr,&obj_ptr,&size);
+	ProcessIntoLabel(fp,record_bytes,v,-1,label_ptr,&oi);
 	fprintf(fp,"END\r\n");
-	label_ptr[3]=ftell(fp);
-	Fix_Label(fp,record_bytes,label_ptr,size);
+	label_ptr[2]=ftell(fp);
+	Fix_Label(fp,record_bytes,label_ptr,&oi);
 	fseek(fp,0,SEEK_END);
-	fwrite(obj_ptr,sizeof(char),size,fp);
+/*
+** At this point, the data object should have themselves
+**  been padded as needed so that we can we can just dump
+** 'em
+*/
+
+	for(i=0;i<oi.count;i++)
+		fwrite(oi.obj_data[i],sizeof(char),
+			(oi.obj_size[i]*record_bytes),fp);
+	
 	fclose(fp);
 	return(result);
 
@@ -1482,8 +1638,149 @@ int rf_HISTOGRAM_IMAGE(char *fn, Var *ob,char * val, int dptr)
 {
 	return(0);
 }
+
+void
+history_parse_buffer(FILE *in, Var *top)
+{
+	int count=0;
+	Var *tmpvar;
+	char *key;
+	char value[1024*64]; /*64k buffer better be enough!*/
+	char tmp[1024];
+	char tmp2[1024];
+	int multi=0;
+	char *ptr;
+	int result;
+	char buf[1024];
+
+	while (1) {
+		fgets(buf,1023,in); /*Suck in the next line*/
+	
+		if (!(multi)) {
+			result=sscanf(buf,"%s = %s",tmp,tmp2);
+			if (result < 2) {
+				if (!(strcasecmp("END",tmp)))
+					break;
+				else
+					continue;
+			}
+		}
+	
+
+		if (multi) { /*okay we're in multi-line mode, and we've read the first line */
+			if ((ptr=strchr(buf,'\"'))) /*That's it, it's ALL over*/
+				multi=0;
+
+			strcat(value,buf);
+
+			if (!(multi)) {
+				if (!(strcmp((value+strlen(value)-2),"\r\n")))
+					value[strlen(value)-2]='\0';
+
+				V_STRING(tmpvar)=strdup(value);
+				add_struct(top,fix_name(key),tmpvar);
+			}
+		}
+
+		else { /*okay, we're reading in a line...does it have a single set of double quotes? */
+			ptr=strchr(buf,'\"');
+			if (ptr != NULL) {/* there's the first one */
+
+				if (strchr((++ptr),'\"') !=NULL) /* there's the second one */
+					multi=0;
+
+				else /*Didn't find a second one...go into multi-line mode */
+					multi=1;
+
+				strcpy(value,(--ptr)); /*Either way we want to copy it */
+
+				if (!multi)
+					if (!(strcmp((value+strlen(value)-2),"\r\n")))
+						value[strlen(value)-2]='\0';
+
+			}
+
+			else  { 
+		
+				strcpy(value,tmp2);
+			}
+
+
+			key=tmp;
+	
+			if (!(strcasecmp("GROUP",key))) 
+			{
+				Var *newtop = new_struct(0);
+				Var *newvar = newVar();
+				V_TYPE(newvar)=ID_STRING;
+				V_STRING(newvar)=strdup("GROUP");
+				add_struct(newtop,"Object",newvar);
+				add_struct(top,fix_name(value),newtop);
+				history_parse_buffer(in,newtop);
+			}
+
+			else if (!(strcasecmp("END_GROUP",key)))
+				break;
+
+			else if (!(strcasecmp("END",key)))
+				break;
+
+			else 
+			{
+			
+				tmpvar=newVar();
+				V_TYPE(tmpvar)=ID_STRING;
+
+				if (!(multi)) {
+					V_STRING(tmpvar)=strdup(value);
+					add_struct(top,fix_name(key),tmpvar);
+				}
+			}
+		}
+	}
+}
+
+
 int rf_HISTORY(char *fn, Var *ob,char * val, int dptr)
 {
+	int i;
+	int count = get_struct_count(ob);
+	Var *tmp;
+	char *name;
+	int size=0;
+	FILE *in;
+	Var *data=new_struct(0);
+
+/*
+	for (i=0;i<count;i++){
+		get_struct_element(ob,i,&name,&tmp);
+		if (name != NULL) {
+			if(!(strcasecmp(name,"BYTES"))){
+				size=V_INT(tmp);
+				break;
+			}
+		}
+	}
+
+	if (!(size))
+		return(0);
+*/
+		
+	in=fopen(fn,"rb");	
+	fseek(in,dptr,SEEK_SET);
+	tmp = newVar();
+	V_TYPE(tmp)=ID_STRING;
+	V_STRING(tmp)=strdup("HISTORY");
+	add_struct(data,"Object",tmp);
+	
+
+	history_parse_buffer(in,data);
+
+	fclose(in);
+
+	if (get_struct_count(data))
+		add_struct(ob,fix_name("DATA"),data);
+
 	return(0);
 }
 
