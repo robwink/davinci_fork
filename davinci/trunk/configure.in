@@ -24,6 +24,7 @@ AC_CHECK_LIB(m, sqrt)
 AC_CHECK_LIB(X11, XOpenDisplay)
 AC_CHECK_LIB(Xt, XtToolkitInitialize)
 AC_CHECK_LIB(Xext,XShmPutImage)
+AC_CHECK_LIB(Xm,XmCreateForm)
 
 AC_CHECK_LIB(jpeg,jpeg_simple_progression)
 AC_CHECK_LIB(termcap, tgetent)
