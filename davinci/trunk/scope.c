@@ -111,6 +111,10 @@ dd_put_argv(Scope *s, Var *v)
         dd->value = (Var **)my_realloc(dd->value, sizeof(Var *) * dd->size);
         dd->name = (char **)my_realloc(dd->name, sizeof(char *) * dd->size);
     }
+	/*
+	** WARNING: This looks like it will break if you try to global a
+	**          value that was passed.
+	*/
     dd->value[dd->count] = v;
     dd->name[dd->count] = V_NAME(v);
     V_NAME(v) = NULL;

@@ -21,13 +21,15 @@ ff_avg(vfuncptr func, Var * arg)
 	};
 	int dsize2;
 	float f;
+	Var *both = NULL;
 
 	int ac;
 	Var **av;
-	Alist alist[3];
+	Alist alist[4];
 	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
 	alist[1] = make_alist("axis",  		ID_ENUM,	options,	&ptr);
-	alist[2].name = NULL;
+	alist[2] = make_alist("both",  		ID_UNK,	NULL,	&both);
+	alist[3].name = NULL;
 
 	make_args(&ac, &av, func, arg);
 	if (parse_args(ac, av, alist)) return(NULL);
@@ -59,38 +61,57 @@ ff_avg(vfuncptr func, Var * arg)
 	fdata = (float *)calloc(V_DSIZE(v), sizeof(float));
 	V_DATA(v) = fdata;
 
+	/*
+	** Sum the data
+	*/
 	for (i = 0 ; i < dsize ; i++) {
 		fdata[rpos(i, obj, v)] += extract_float(obj, i);
 	}
+
+	if (!strcmp(func->name, "sum")) {
+		return(v);
+	}
+
+	/*
+	** find the mean
+	*/
 	dsize2 = V_DSIZE(v);
 	f = (float)dsize2 / (float)dsize;
-
-
-	if (!strcmp(func->name, "avg") || !strcmp(func->name, "stddev")) {
-		/**
-		 ** divide for avg.
-		 **/
-		for (i = 0 ; i < dsize2 ; i++) {
-			fdata[i] *= f;
-		}
+	for (i = 0 ; i < dsize2 ; i++) {
+		fdata[i] *= f;
 	}
 
-	if (!strcmp(func->name, "stddev")) {
-		vx = (float *)calloc(dsize2, sizeof(float));
-		for (i = 0 ; i < dsize ; i++) {
-			j = rpos(i, obj, v);
-			f = extract_float(obj, i) - fdata[j];
-			vx[j] += f*f;	
-		}
-		f = 1 / (((float)dsize / (float)dsize2) - 1);
-		for (i = 0 ; i < dsize2 ; i++) {
-			vx[i]=sqrt(vx[i]*f);
-		}
+	if (!both && !strcmp(func->name, "avg")) {
+		return(v);
+	}
+
+	/*
+	** find stddev
+	*/
+
+	vx = (float *)calloc(dsize2, sizeof(float));
+	for (i = 0 ; i < dsize ; i++) {
+		j = rpos(i, obj, v);
+		f = extract_float(obj, i) - fdata[j];
+		vx[j] += f*f;	
+	}
+	f = 1 / (((float)dsize / (float)dsize2) - 1);
+	for (i = 0 ; i < dsize2 ; i++) {
+		vx[i]=sqrt(vx[i]*f);
+	}
+	/*
+	** If user hasn't asked for both avg and stddev, free avg
+	*/
+	if (!both) {
 		free(fdata);
 		V_DATA(v) = vx;
+		return(v);
 	}
 
-	return(v);
+	both = new_struct(0);
+	add_struct(both, "avg", newVal(V_ORG(obj), out[0], out[1], out[2], FLOAT, fdata));
+	add_struct(both, "stddev", v);
+	return(both);
 }
 
 

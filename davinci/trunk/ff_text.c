@@ -29,7 +29,7 @@ newText(int rows, char **text)
  ** read a text file into BYTE data
  **/
 Var *
-ff_text(vfuncptr func, Var *arg)
+ff_read_text(vfuncptr func, Var *arg)
 {
     char    *filename;
     Var     *v, *e, *s;
@@ -104,31 +104,19 @@ ff_text(vfuncptr func, Var *arg)
         if ((rlen = getline(&ptr, fp)) == -1) break;
         memcpy(cdata+(x*j), ptr, strlen(ptr));
     }
-
-
 	fclose(fp);
 
     if (VERBOSE > 1) {
         fprintf(stderr, "Read TEXT file: %dx%d (%d bytes)\n", x,y,count);
     }
 
-    s = newVar();
-    V_TYPE(s) = ID_VAL;
-    V_DATA(s) = cdata;
-    V_FORMAT(s) = BYTE;
-    V_ORG(s) = BSQ;
-    V_DSIZE(s) = dsize;
-    V_SIZE(s)[0] = x;
-    V_SIZE(s)[1] = y;
-    V_SIZE(s)[2] = 1;
-
-	 fclose(fp);
+	s = newVal(BSQ, x, y, 1, BYTE, cdata);
 
     return(s);
 }
 
 Var *
-ff_textarray(vfuncptr func, Var *arg)
+ff_read_lines(vfuncptr func, Var *arg)
 {
     char    *filename;
     Var     *v, *e, *s;
@@ -143,32 +131,15 @@ ff_textarray(vfuncptr func, Var *arg)
 
     int i,j,k;
     int count;
+    int ac;
+    Var **av;
 
-    struct keywords kw[] = {
-        { "filename", NULL },   /* filename to read */
-        { NULL, NULL }
-    };
+    Alist alist[2];
+    alist[0] = make_alist( "filename", ID_STRING,   NULL,     &filename);
+    alist[1].name = NULL;
 
-    if (evaluate_keywords(func, arg, kw)) {
-        return(NULL);
-    }
-
-    if ((v = get_kw("filename", kw)) == NULL) {
-        sprintf(error_buf, "No filename specified: %s()", func->name);
-        parse_error(NULL);
-        return(NULL);
-    }
-    if (V_TYPE(v) != ID_STRING) {
-        e = eval(v);
-        if (e == NULL || V_TYPE(e) != ID_STRING) {
-            sprintf(error_buf, "Illegal argument: %s(... filename=...)", 
-                    func->name);
-            parse_error(NULL);
-            return(NULL);
-        }
-        v = e;
-    }
-    filename = V_STRING(v);
+    make_args(&ac, &av, func, arg);
+    if (parse_args(ac, av, alist)) return(NULL);
 
     if ((fname = locate_file(filename)) == NULL) {
         sprintf(error_buf, "Cannot find file: %s\n", filename);

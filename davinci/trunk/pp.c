@@ -774,16 +774,38 @@ pp_argv(Var *left, Var *right)
     }
 }
 
+int 
+compare_strings(char *s1, int op, char *s2)
+{
+	int i, k;
+	i = strcmp(s1, s2);
+	switch (op) {
+		case ID_EQ:		k = (i == 0);	break;
+		case ID_NE:		k = (i != 0);	break;
+		case ID_LT:		k = (i < 0);	break;
+		case ID_GT:		k = (i > 0);	break;
+		case ID_LE:		k = (i <= 0);	break;
+		case ID_GE:		k = (i >= 0);	break;
+	}
+	return(k);
+}
+
 Var *
 pp_math_strings(Var *exp1, int op, Var *exp2)
 {
-    Var *s,*e;
+    Var *s,*e, *text;
 
     int i,k;
     double d1,d2;
     char *ptr;
+	int rows;
+	int *data;
 
     if (exp1 == NULL || exp2 == NULL) return(NULL);
+	if (op == ID_OR || op == ID_AND) {
+		parse_error("Cannot perform boolean logic on type STRING or TEXT");
+		return(NULL);
+	}
 
     if ((e = eval(exp1)) == NULL) {
         sprintf(error_buf, "Variable not found: %s", V_NAME(exp1));
@@ -791,6 +813,7 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
         return (NULL);
     }
     exp1 = e;
+
     if ((e = eval(exp2)) == NULL) {
         sprintf(error_buf, "Variable not found: %s", V_NAME(exp2));
         parse_error(NULL);
@@ -798,211 +821,55 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
     }
     exp2 = e;
 
+	if (op == ID_ADD) return(pp_add_strings(exp1, exp2));
+
     if (V_TYPE(exp1) == ID_STRING && V_TYPE(exp2) == ID_STRING) {
-        i = strcmp(V_STRING(exp1), V_STRING(exp2));
-        switch (op) {
-        case ID_EQ:		k = (i == 0);	break;
-        case ID_NE:		k = (i != 0);	break;
-        case ID_LT:		k = (i < 0);	break;
-        case ID_GT:		k = (i > 0);	break;
-        case ID_LE:		k = (i <= 0);	break;
-        case ID_GE:		k = (i >= 0);	break;
-        case ID_ADD:	return(pp_add_strings(exp1, exp2)); break;
-        case ID_OR:
-        case ID_AND:
-            parse_error("Cannot perform boolean logic on type STRING");
-            return(NULL);
-        }
+		/*
+		** 2 string objects
+		*/
+		k = compare_strings(V_STRING(exp1), op, V_STRING(exp2));
 		s = newVal(BSQ,1,1,1,INT,calloc(1, sizeof(int)));
 		V_INT(s) = k;
 		return(s);
-
-    } else if ((V_TYPE(exp1) == ID_TEXT || V_TYPE(exp1) == ID_STRING) &&
-				(V_TYPE(exp2) == ID_STRING || V_TYPE(exp2) == ID_TEXT)) {
-		int *Data;
-		int f1,f2;
-		int Row;
-		Var *Tmp1,*Tmp2;
-
-		if (V_TYPE(exp1)==ID_TEXT)
-			f1=1;
-		else
-			f1=0;
-
-		if (V_TYPE(exp2)==ID_TEXT)
-			f2=1;
-		else
-			f2=0;
-		
-		if (f1 && f2 && V_TEXT(exp1).Row != V_TEXT(exp2).Row){
-			parse_error("Text arrays must be the same size");
-			return(NULL);
-		}
-
-		else if (op==ID_OR || op==ID_AND){
-			parse_error("Can't perform boolean operators on TEXT");
-			return(NULL);
-		}
-
-		if (f1)
-			Row=V_TEXT(exp1).Row;
-		else
-			Row=V_TEXT(exp2).Row;
-
-		Tmp1=newVar();
-		Tmp2=newVar();
-
-		V_TYPE(Tmp1)=ID_STRING;
-		V_TYPE(Tmp2)=ID_STRING;
-
-		Data=(int *)calloc(Row,sizeof(int));
-		
-		for (i=0;i<Row;i++){
-			V_STRING(Tmp1)=(f1 ? (char *)V_TEXT(exp1).text[i] : V_STRING(exp1));
-			V_STRING(Tmp2)=(f2 ? (char *)V_TEXT(exp2).text[i] : V_STRING(exp2));
-			Data[i]=extract_int((pp_math(Tmp1,op,Tmp2)),0);
-		}
-		V_STRING(Tmp1)=NULL;
-		V_STRING(Tmp2)=NULL;
-		return(newVal(BSQ,1,Row,1,INT,Data));
-
-    } else if (op != ID_ADD) {
-
-        parse_error("Operation not supported on string and non-string");
-        return(NULL);
-
-    } else {
+	} else if (V_TYPE(exp1) == ID_TEXT && V_TYPE(exp2) == ID_TEXT) {
 		/*
-		** Just adding stuff
+		** 2 text objects
 		*/
-        return(pp_add_strings(exp1, exp2));
-    }
-}
-
-Var *
-pp_relop(Var *exp1, int op, Var *exp2)
-{
-    Var *s,*e;
-
-    int i,j,k;
-    int format;
-    double d1,d2;
-
-    if (exp1 == NULL || exp2 == NULL) return(NULL);
-
-    if ((e = eval(exp1)) == NULL) {
-        sprintf(error_buf, "Variable not found: %s", V_NAME(exp1));
-        parse_error(NULL);
-        return (NULL);
-    }
-    exp1 = e;
-    if ((e = eval(exp2)) == NULL) {
-        sprintf(error_buf, "Variable not found: %s", V_NAME(exp2));
-        parse_error(NULL);
-        return (NULL);
-    }
-    exp2 = e;
-
-    if (V_TYPE(exp1) == ID_STRING && V_TYPE(exp2) == ID_STRING) {
-        i = strcmp(V_STRING(exp1), V_STRING(exp2));
-        switch (op) {
-        case ID_EQ:		k = (i == 0);	break;
-        case ID_NE:		k = (i != 0);	break;
-        case ID_LT:		k = (i < 0);	break;
-        case ID_GT:		k = (i > 0);	break;
-        case ID_LE:		k = (i <= 0);	break;
-        case ID_GE:		k = (i >= 0);	break;
-        case ID_OR:
-        case ID_AND:
-            parse_error("Cannot perform boolean logic on type STRING");
-            return(NULL);
-        }
-    } 
-	 else if (V_TYPE(exp1) == ID_TEXT && V_TYPE(exp2) == ID_TEXT) {
-		Var *Tmp1, *Tmp2;
-		int *Data;
 		if (V_TEXT(exp1).Row != V_TEXT(exp2).Row){
 			parse_error("Text arrays must be the same size");
 			return(NULL);
 		}
-		else if (op==ID_OR || op==ID_AND){
-			parse_error("Can't perform boolean operators on TEXT");
-			return(NULL);
+		rows = V_TEXT(exp1).Row;
+		data=(int *)calloc(rows,sizeof(int));
+		for (i = 0 ; i < rows ; i++) {
+			data[i] = compare_strings(V_TEXT(exp1).text[i], 
+                                      op, 
+									  V_TEXT(exp2).text[i]);
 		}
+		return(newVal(BSQ,1,rows,1,INT,data));
+	} else {
+		/*
+		** one text, one string
+		*/
 
-		Tmp1=newVar();
-		Tmp2=newVar();
-		V_TYPE(Tmp1)=ID_STRING;
-		V_TYPE(Tmp2)=ID_STRING;
-		Data=(int *)calloc(V_TEXT(exp1).Row,sizeof(int));
-		
-		for (i=0;i<V_TEXT(exp1).Row;i++){
-			V_STRING(Tmp1)=V_TEXT(exp1).text[i];
-			V_STRING(Tmp2)=V_TEXT(exp2).text[i];
-			Data[i]=extract_int((pp_relop(Tmp1,op,Tmp2)),0);
+		if (V_TYPE(exp1) == ID_TEXT) {
+			text = exp1;
+			ptr = V_STRING(exp2);
+		} else {
+			text = exp2;
+			ptr = V_STRING(exp1);
 		}
-		V_STRING(Tmp1)=NULL;
-		V_STRING(Tmp2)=NULL;
-		return(newVal(BSQ,1,V_TEXT(exp1).Row,1,INT,Data));
-	 }	
+		rows = V_TEXT(text).Row;
+		data = calloc(rows, sizeof(int));
 
-
-	 else {
-        if (V_TYPE(exp1) != ID_VAL || V_TYPE(exp2) != ID_VAL) {
-            parse_error("Relational operators require values.");
-            return(NULL);
-        }
-        if (V_DSIZE(exp1) != 1 || V_DSIZE(exp2) != 1) {
-            parse_error("Relational operators only work with single values.");
-            return(NULL);
-        }
-
-        format = max(V_FORMAT(exp1),V_FORMAT(exp2));
-        switch(format) {
-        case BYTE:
-        case SHORT:
-        case INT:
-            i = extract_int(exp1,0);
-            j = extract_int(exp2,0);
-            switch (op) {
-            case ID_EQ:		k = (i == j);	break;
-            case ID_NE:		k = (i != j);	break;
-            case ID_LT:		k = (i < j);	break;
-            case ID_GT:		k = (i > j);	break;
-            case ID_LE:		k = (i <= j);	break;
-            case ID_GE:		k = (i >= j);	break;
-            case ID_OR:		k = (i || j);	break;
-            case ID_AND:	k = (i && j);	break;
-            }
-            break;
-        case FLOAT:
-        case DOUBLE:
-            d1 = extract_double(exp1,0);
-            d2 = extract_double(exp2,0);
-            switch (op) {
-            case ID_EQ:		k = (d1 == d2);	break;
-            case ID_NE:		k = (d1 != d2);	break;
-            case ID_LT:		k = (d1 < d2);	break;
-            case ID_GT:		k = (d1 > d2);	break;
-            case ID_LE:		k = (d1 <= d2);	break;
-            case ID_GE:		k = (d1 >= d2);	break;
-            case ID_OR:		k = (d1 || d2);	break;
-            case ID_AND:	k = (d1 && d2);	break;
-            }
-            break;
-        }
-    }
-
-    s = newVar();
-    V_TYPE(s) = ID_VAL;
-    V_SIZE(s)[0] = V_SIZE(s)[1] = V_SIZE(s)[2] = V_DSIZE(s) = 1;
-    V_FORMAT(s) = INT;
-    V_ORG(s) = BSQ;
-    V_DATA(s) = calloc(1, sizeof(int));
-    V_INT(s) = k;
-
-    return(s);
+		for (i = 0 ; i < rows ; i++) {
+			data[i] = compare_strings(V_TEXT(text).text[i], op, ptr);
+			if (V_TYPE(exp1) != ID_TEXT) data[i] = -data[i];
+		}
+		return(newVal(BSQ,1,rows,1,INT,data));
+	}
 }
+
 
 char *
 toBytes(int i)

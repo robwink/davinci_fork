@@ -26,10 +26,7 @@ p_mknod(int type, Var * left, Var * right)
     v->type = type;
 
     n->left = left;
-	n->left->parent = n;
-
     n->right = right;
-	n->right->parent = n;
 
     return (v);
 }
@@ -421,9 +418,7 @@ evaluate(Var * n)
             if (right) evaluate(right);
             p2 = pop(scope);
             p1 = pop(scope);
-			if (p1 != NULL && p2 != NULL)  {
-				push(scope, do_cat(p1, p2, 0));
-			}
+			push(scope, do_cat(p1, p2, 0));
 		    break;
 
 		case ID_DEREF:
