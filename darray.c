@@ -64,6 +64,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "darray.h"
+#include <stdlib.h>
+#include <string.h>
 
 /*
 ** Darray_create(size)
@@ -106,6 +108,24 @@ Darray_add(Darray *d, void *new)
     d->data[d->count++] = new;
 
     return(d->count-1);
+}
+
+/*
+** Remove an element from Darray
+*/
+void *
+Darray_remove(Darray *d, int i)
+{
+	void *el = NULL;
+
+	if (d == NULL || i >= d->count || i < 0) return NULL;
+
+	el = d->data[i];
+	memmove(&d->data[i], &d->data[i+1], sizeof(char *) * (d->count - i - 1));
+
+	d->count --;
+
+	return el;
 }
 
 /*
@@ -256,6 +276,50 @@ Narray_add(Narray *a, char *key, void *data)
     */
     n->index = Darray_add(a->data, n);
     return(n->index);
+}
+
+
+/*
+** Deletes the key from the Narray and returns the data
+** associated with it.
+*/
+void *
+Narray_delete(Narray *a, char *key)
+{
+	int i;
+	Nnode n;
+	Nnode *found, *node;
+
+	if (a == NULL) return NULL;
+
+	memset(&n, 0, sizeof(n));
+	n.key = key;
+
+	found = avl_find(a->tree, &n);
+
+	if (found){
+
+		/* remove element from the linearly ordered array */
+		Darray_remove(a->data, found->index);
+
+		/*
+		** Re-index the nodes which have indices higher than
+		** found->index.
+		**
+		** Don't know of a better way as yet!
+		*/
+
+		for(i = 0; i < a->data->count; i++){
+			node = (Nnode *)a->data->data[i];
+			if (node->index > found->index){
+				node->index --;
+			}
+		}
+
+		return avl_delete(a->tree, found);
+	}
+
+	return NULL;
 }
 
 /*

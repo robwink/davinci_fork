@@ -1,4 +1,5 @@
-#ifndef _DARRAY_H
+#ifndef _DARRAY_H_
+#define _DARRAY_H_
 
 #include "avl.h"
 
@@ -21,10 +22,11 @@ int Darray_count(Darray *d);
 void Darray_free(Darray *d, void (*fptr)()) ;
 Narray * Narray_create(int size);
 int Narray_add(Narray *a, char *key, void *data);
+void *Narray_delete(Narray *a, char *key);
 int Narray_find(Narray *a, char *key, void **data);
 int Narray_replace(Narray *a, int i, void *new, void **old);
 int Narray_get(Narray *a, int i, char **key, void **data);
 int Narray_count(Narray *a);
 void Narray_free(Narray *a, void (*fptr)());
 
-#endif
+#endif /* _DARRAY_H_ */
