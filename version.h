@@ -1,8 +1,12 @@
-char *version = "@(#) daVinci Version #1.21";
+char *version = "@(#) daVinci Version #1.22";
 
 #include "build.h"
 
 /*
+Version 1.22: Tue Jan 20 12:37:20 MST 2004
+	* there's versioning problems in /usr/local/bin.
+	  Incremeting version to make sure I know what's installed.
+
 
 Version 1.21: Thu Jan  8 14:27:41 MST 2004
 	+ Fixed GUI modules X resource setter to handle XmStringList sets with
