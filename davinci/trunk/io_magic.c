@@ -255,7 +255,11 @@ void WriteGFX_Image(Var *ob,char *filename,char *GFX_type)
 
 	if (!strcmp(GFX_type,"gifc"))
 		strcpy(GFX_type,"gif");
+	if (!strcmp(GFX_type,"gifg"))
+		strcpy(GFX_type,"gif");
 	if (!strcmp(GFX_type,"mpgc"))
+		strcpy(GFX_type,"mpg");
+	if (!strcmp(GFX_type,"mpgg"))
 		strcpy(GFX_type,"mpg");
 	
 
