@@ -1,0 +1,109 @@
+
+BASICS
+
+
+daVinci module processing code is contained in ff_modules.c and
+module_io.c.
+
+daVinci modules are essentially ".so"s (shared-objects) or
+shared-libraries or ".dll"s.  I'll use the term shared-object in the
+text below to refer to any one of these variations. Shared objects
+are compiled as "position-independent-code" (which is different
+from relocatable code).
+
+Modules are named with a ".dvm" extension for consistency sake.
+
+Each compiler and each system has a different way of make shared
+objects.  Various options that I've encountered thus far are given
+below:
+
+Solaris 7 - Sparc
+	position independent compile: -Kpic
+	linker option to generate shared object: -G
+	
+
+RedHat Linux - PC
+	position independent compile: -fPIC
+	linker option to generate shared object: -shared
+
+Windows NT - PC
+	does not require compile in position independent fashion
+	compiler option to generate shared object (DLL): -ML
+		(-MLd for debuggable DLL)
+
+HPUX 11 - hppa1.1
+	position independent compile: +z
+	linker option to generate shared object: -B symbolic -b
+	** linking by passing options through compiler does not work
+	   use system linker
+
+IRIX - SGI
+	position independent compile: -KPIC
+	linker option to generate shared object: -shared
+
+AIX 4.3 - RS/6000
+	position independent compile: -K
+
+
+** NOTE: The options listed above are for the default compiler and
+linker that comes with the system. If gcc is available and it works on
+the platform, then compile and link usiing -fPIC and -shared
+respectively.
+
+The "davinci" executable has to be linked with appropriate library to
+do dynamic link. Moreover, the executable should export all symbols
+in it so that modules can use functions available in davinci. Note
+however, that it does not seem possible to do in Windows.
+
+Microsoft Windows require that the functions exported by DLLs (our
+modules) be declared using a special DLL declaration (as given in
+"ff_modules.h" DV_MOD_EXPORT macro).  Moreover, the DLLs cannot use
+functions from within the executable. So, common functions and
+variables must be taken out and built into a separate library. This
+library is then linked to both davinci executable and the modules.
+
+
+
+
+
+
+WRITING MODULES
+
+
+daVinci modules must have the following in them:
+
+a)  An initialization function with the same prototype as the type
+	"dvModuleInitFunc" defined in ff_modules.h. Its name must be
+	whatever is specified in "DV_MODULE_INIT_FUNC_NAME" in 
+	ff_modules.h.
+
+	The initialization function must fill in the dvModuleInitStuff
+	structure passed to it. The structure is composed of a list of
+	functions exported by the module and a list of modules the current
+	module is dependent upon.
+
+c)	A finalization function with the same prototype as the type
+	"dvModuleFiniFunc" defined in ff_modules.h. Its name must be
+	whatever is specified in "DV_MODULE_FINI_FUNC_NAME" in
+	ff_modules.h
+
+d)	All the functions other than the initialization and finalization
+	functions must be declared "static" otherwise, they may interfere
+	with similarly named functions in other modules.
+
+e)	All the global variables must also be declared "static".
+
+f)	The list of functions and modules passed back must remain 
+	intact on return from the initialization function and all
+	through the lifetime of the loaded module. In other words,
+	the value filled into the "dvModuleInitStuff *" better
+	remain there till the point the module is unloaded.
+
+
+Two example modules are available in the "modules" sub-directory.
+"mod1" exports "jack" and "sam", while "mod2" exports "foo" and "bar".
+Module "mod2" is dependent upon module "mod1". So, loading "mod2"
+automatically loads "mod1" as well.
+
+A Makefile is also available in the "modules" sub-directory, which can
+be used as a template for making modules.
