@@ -683,6 +683,7 @@ unquote(char *name)
     char *p = name;
 
 	if (name == NULL) return(NULL);
+	if (*name == 0) return(name);
     if (*name == '"') {
         p++;
         name++;
@@ -711,7 +712,7 @@ unescape(char *str)
     char *p = str;
     char *q = str;
 
-	if (str) {
+	if (str && *str) {
 		while (*p) {
 			if (*p == '\\') {
 				if (*(p + 1) == 't')

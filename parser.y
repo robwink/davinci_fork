@@ -99,11 +99,15 @@ selection_statement
 
 separator
     : ';'                           {  
-                                        $$ = p_mkval(ID_STRING, pp_str); 
+										if (pp_str && strlen(pp_str) > 1) {
+											$$ = p_mkval(ID_STRING, pp_str); 
+										}
                                     }
     | '\n'                          { 
                                         pp_count = 0; 
-                                        $$ = p_mkval(ID_STRING, pp_str); 
+										if (pp_str && strlen(pp_str) > 1) {
+											$$ = p_mkval(ID_STRING, pp_str); 
+										}
                                     }
     ;
 

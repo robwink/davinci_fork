@@ -296,6 +296,7 @@ load_function(char *filename)
 	}
 	yy_switch_to_buffer((struct yy_buffer_state *)parent_buffer);
 	f->ready = 1;
+	pp_str = NULL;
 
 	/*
 	** Take one off  because save_ufunc put one on.
