@@ -38,18 +38,18 @@ void *list_add(LIST * list, void *ptr);
 LIST *
 make_list(int count, void **ptr)
 {
-    LIST *new = calloc(1, sizeof(LIST));
+    LIST *New = calloc(1, sizeof(LIST));
 
-    new->number = count;
-    new->ptr = ptr;
+    New->number = count;
+    New->ptr = ptr;
     /**
      ** fill in pointers to functions.
      **/
-    new->add = list_add;
-    new->data = list_data;
-    new->count = list_count;
+    New->add = list_add;
+    New->data = list_data;
+    New->count = list_count;
 
-    return (new);
+    return (New);
 }
 
 LIST *
@@ -180,9 +180,9 @@ list_merge(LIST *l1, LIST *l2)
 QUEUE *
 new_queue(void *data)
 {
-    QUEUE *new = calloc(1, sizeof(QUEUE));
-    new->data = data;
-    return (new);
+    QUEUE *New = calloc(1, sizeof(QUEUE));
+    New->data = data;
+    return (New);
 }
 
 QUEUE *
@@ -196,10 +196,10 @@ end_of_queue(QUEUE * queue)
 void
 add_queue_head(QUEUE ** l, void *data)
 {
-    QUEUE *new;
-    new = new_queue(data);
-    new->next = *l;
-    *l = new;
+    QUEUE *New;
+    New = new_queue(data);
+    New->next = *l;
+    *l = New;
 }
 
 void

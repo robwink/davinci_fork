@@ -97,7 +97,7 @@ Darray_create(int size)
 ** -1 on error
 */
 int 
-Darray_add(Darray *d, void *new)
+Darray_add(Darray *d, void *New)
 {
     if (d == NULL) return(-1);
     
@@ -105,7 +105,7 @@ Darray_add(Darray *d, void *new)
         d->size *= 2;
         d->data = (void **)realloc(d->data, d->size * sizeof(void *));
     }
-    d->data[d->count++] = new;
+    d->data[d->count++] = New;
 
     return(d->count-1);
 }
@@ -358,12 +358,12 @@ Narray_find(Narray *a, char *key, void **data)
 */
 
 int
-Narray_replace(Narray *a, int i, void *new, void **old)
+Narray_replace(Narray *a, int i, void *New, void **old)
 {
     Nnode *n;
 	if (Darray_get(a->data, i, (void **)&n) == 1) {
 		*old = n->value;
-		n->value = new;
+		n->value = New;
 		return(1);
 	}
 	return(-1);
