@@ -4,6 +4,12 @@ char *version = "@(#) daVinci Version #1.13";
 #include "build.h"
 
 /*
+Version 1.14: Fri Aug 29 16:09:36 MST 2003
+	+ Have added a new image processing function: ff_fncc
+		it is called as fncc(template,source).  It currently
+		returns two objects in a structure.  corner_point is
+		the only useful object at the moment
+
 Version 1.13: Tue Jul 15 15:43:38 MST 2003
 	+ misc checking, including bug in load() for mini-tes .QUB files
 	(No, I have no idea why this fixed it)
