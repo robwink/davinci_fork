@@ -180,6 +180,8 @@ struct _vfuncptr vfunclist[] = {
     { "irfft3",     ff_realfft3,     (void *)0 },
 
     { "self_convolve",     ff_self_convolve,     (void *)0 },
+    { "convolve",      ff_convolve,     (void *)0 },
+    { "convolve2",     ff_convolve2,     (void *)0 },
 
 #ifdef HAVE_XRT
     { "xrt3d",     	ff_xrt3d,    NULL },

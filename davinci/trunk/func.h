@@ -275,6 +275,8 @@ Var *ff_dct(vfuncptr func, Var *arg);
 Var *ff_entropy(vfuncptr func, Var *arg);
 Var *ff_projection(vfuncptr func, Var *arg);
 Var *ff_self_convolve(vfuncptr func, Var *arg);
+Var *ff_convolve(vfuncptr func, Var *arg);
+Var *ff_convolve2(vfuncptr func, Var *arg);
 
 Alist make_alist(char *name, int type, void *limits, void *value);
 
