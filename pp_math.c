@@ -16,8 +16,7 @@ int rpos(int, Var *, Var *);
  **/
 #define DO_MATH_LOOP(T1,T2,_E_,_S_) \
 {\
-	int k; \
-	T1 v1, v2, r;\
+	T1 v1, v2;\
 	T2 *idata = (T2 *)data;\
 	for (i = 0 ; i < dsize ; i++) {\
 		v1 = _E_(a,rpos(i,val,a));\
@@ -43,8 +42,7 @@ int rpos(int, Var *, Var *);
 
 #define DO_RELOP_LOOP(T1,T2,_E_,_S_) \
 {\
-	int k; \
-	T1 v1, v2, r;\
+	T1 v1, v2;\
 	T2 *idata = (T2 *)data;\
 	for (i = 0 ; i < dsize ; i++) {\
 		v1 = _E_(a,rpos(i,val,a));\
@@ -135,7 +133,14 @@ pp_math(Var * a, int op, Var * b)
 		  V_TYPE(a) == ID_TEXT || V_TYPE(b) == ID_TEXT) {
         return (pp_math_strings(a, op, b));
     }
-    if (V_TYPE(a) != ID_VAL || V_TYPE(b) != ID_VAL) {	/* can this happen? */
+    if (V_TYPE(a) == ID_STRUCT || V_TYPE(b) == ID_STRUCT) {
+		if (V_TYPE(a) != V_TYPE(b)) {
+			parse_error("Can only add structs to structs");
+			return(NULL);
+		}
+		return(concatenate_struct(a,b));
+	}
+    if (V_TYPE(a) != ID_VAL || V_TYPE(b) != ID_VAL) {
         parse_error("math operation illegal on non-values");
         return (NULL);
     }

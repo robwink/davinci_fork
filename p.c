@@ -539,11 +539,12 @@ evaluate(Var * n)
     }
 #endif /* BUILD_MODULE_SUPPORT */
     else {
-      if (find_struct(p1, p2, &p3) != -1) {
-	push(scope, p3);
+	  char *name = p2 ? V_NAME(p2) : NULL;
+      if (find_struct(p1, name, &p3) != -1) {
+	    push(scope, p3);
       } else {
-	parse_error("structure does not contain member: %s", V_NAME(p2));
-	push(scope, NULL);
+	    parse_error("structure does not contain member: %s", V_NAME(p2));
+	    push(scope, NULL);
       }
     }
 			

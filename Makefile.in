@@ -27,7 +27,7 @@ XRTLIBS = @XRTLIBS@
 
 CC     = @CC@
 DEFS   = @DEFS@ 
-LIBS   =  -L. -Liomedley -lmodsupp -liomedley $(XLIBS) @LIBS@
+LIBS   =  -L. -Liomedley -liomedley $(XLIBS) @LIBS@
 AR     = ar
 RANLIB = @RANLIB@
 
@@ -70,6 +70,7 @@ OBJ=p.o pp.o symbol.o \
 	dvio_isis.o dvio_magic.o dvio_pnm.o dvio_vicar.o dvio.o \
 	dvio_ers.o dvio_envi.o dvio_raw.o dvio_specpr.o dvio_themis.o \
 	dvio_ascii.o dvio_pds.o dvio_hdf.o \
+    error.o ff_struct.o darray.o avl.o \
 	util.o ff_shade.o @MAGICKOBJ@
 
 
