@@ -359,10 +359,9 @@ load_hdf5(hid_t parent)
     V_STRUCT(o).data = (Var **)calloc(count, sizeof(Var *));
     
     while ((ret = H5Giterate(parent, ".", &idx, group_iter, &e)) > 0)  {
-        V_STRUCT(o).names[idx] = V_NAME(e);
-        V_STRUCT(o).data[idx] = e;
+        V_STRUCT(o).names[idx-1] = V_NAME(e);
+        V_STRUCT(o).data[idx-1] = e;
         V_NAME(e) = NULL;
-        idx++;
     }
     return(o);
 }
