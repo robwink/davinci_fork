@@ -1,5 +1,35 @@
 #include "parser.h"
 
+#ifdef HAVE_LIBMAGICK
+int ValidGfx(char *type,char *GFX_type)
+{
+ 
+    int nt=43;//Number of types...modify this number if you change the number of types
+
+    char *Gfx_Types[]={"avs","bmp","cmyk","gif","gifc","gifg","hist","jbig","jpeg","jpg","map","matte","miff","mpeg",
+			"mpgg","mpgc","mtv","pcd","pcx","pict","pm","pbm","pgm","ppm","pnm","ras","rgb","rgba",
+			"rle","sgi","sun","tga","tif","tiff","tile","vid","viff","xc","xbm","xpm","xv",
+			"xwd","yuv"};
+    int i;
+
+	for (i = 0 ; i < strlen(type) ; i++) {
+        	if (isupper(type[i])) type[i] = tolower(type[i]);
+    	}
+
+	for (i=0;i<nt;i++){
+		if (!(strcmp(type,Gfx_Types[i]))){
+			strcpy(GFX_type,Gfx_Types[i]);
+			return (1);
+		}
+	}
+
+//	fprintf(stderr,"%s is not a supported image file type\n",type);
+
+	return (0);
+}
+#endif
+
+
 Var *
 ff_write(vfuncptr func, Var *arg)
 {
@@ -8,6 +38,10 @@ ff_write(vfuncptr func, Var *arg)
     char *title;
     char *type=NULL;
 	int force=0;
+    char GFX_type[5];
+
+
+
 
     struct keywords kw[] = {
         { "object", NULL },
@@ -104,17 +138,18 @@ ff_write(vfuncptr func, Var *arg)
 	}
 
     if (!strcasecmp(type, "vicar")) WriteVicar(ob, NULL, filename); 
-    else if (!strcasecmp(type, "grd"))   WriteGRD(ob, NULL, filename);
-    else if (!strcasecmp(type, "pgm"))   WritePGM(ob, NULL, filename);
-    else if (!strcasecmp(type, "ppm"))   WritePPM(ob, NULL, filename);
+    else if (!strcasecmp(type, "grd"))    WriteGRD(ob, NULL, filename);
+    else if (!strcasecmp(type, "pgm"))    WritePGM(ob, NULL, filename);
+    else if (!strcasecmp(type, "ppm"))    WritePPM(ob, NULL, filename);
     else if (!strcasecmp(type, "ascii"))  WriteAscii(ob, NULL, filename);
-    else if (!strcasecmp(type, "ers"))  WriteERS(ob, NULL, filename);
+    else if (!strcasecmp(type, "ers"))    WriteERS(ob, NULL, filename);
     else if (!strcasecmp(type, "imath"))  WriteIMath(ob, NULL, filename);
-    else if (!strcasecmp(type, "isis"))  {
-		WriteISIS(ob, NULL, filename, title);
-    } else if (!strcasecmp(type, "specpr")) {
-        WriteSpecpr(ob, filename, title);
-    } else {
+    else if (!strcasecmp(type, "isis"))   WriteISIS(ob, NULL, filename, title);
+    else if (!strcasecmp(type, "specpr")) WriteSpecpr(ob, filename, title);
+#ifdef HAVE_LIBMAGICK
+    else if (ValidGfx(type,GFX_type))     WriteGFX_Image(ob,filename,GFX_type);
+#endif
+    else {
         sprintf(error_buf, "Unrecognized type: %s", type);
         parse_error(NULL);
         return(NULL);
