@@ -5,6 +5,29 @@
 void matrix_LUinvert(int n, double *A, double *B);
 
 Var *
+ff_identity(vfuncptr func, Var * arg)
+{
+	int size = 0, i;
+	float *data;
+
+	Alist alist[2];
+	alist[0] = make_alist( "size",    INT,    NULL,     &size);
+	alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (size <= 0) {
+		parse_error("%s: No size specified\n", func->name);
+		return(NULL);
+	}
+
+	data = calloc(size * size, sizeof(float));
+	for (i = 0 ; i < size ; i++) {
+		data[i + i*size] = 1.0;
+	}
+	return(newVal(BSQ, size, size, 1, FLOAT, data));
+}
+Var *
 ff_minvert(vfuncptr func, Var * arg)
 {
 	Var *obj = NULL;

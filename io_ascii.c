@@ -11,7 +11,9 @@ WriteAscii(Var *s, FILE *fp, char *filename)
     int ival;
     double dval;
     int d[3];
-    int i;
+    int i, j, k;
+	int x, y, z;
+	int pos;
 
     if (fp == NULL) {
         if ((fp = fopen(filename, "w")) == NULL) {
@@ -32,32 +34,34 @@ WriteAscii(Var *s, FILE *fp, char *filename)
 
     dsize = V_DSIZE(s);
     format = V_FORMAT(s);
-    d[0] = V_SIZE(s)[0];
-    d[1] = V_SIZE(s)[1] * d[0];
 
-    for (i = 0 ; i < V_DSIZE(s) ; i++) {
-	switch (format) {
-	  case BYTE:
-	  case SHORT:
-	  case INT:
-	    ival = extract_int(s, i);
-	    fprintf(fp, "%d", ival);
-	    break;
-	  case FLOAT:
-	  case DOUBLE:
-	    dval = extract_double(s, i);
-	    fprintf(fp, "%.10g", dval);
-	    break;
+	x = GetX(s);
+	y = GetY(s);
+	z = GetZ(s);
+
+    for (k = 0 ; k < z ; k++) {
+		if (k) fputc('\n', fp);
+		for (j = 0 ; j < y ; j++) {
+			for (i = 0 ; i < x ; i++) {
+				if (i) fputc('\t', fp);
+				pos = cpos(i, j, k, s);
+				switch (format) {
+				  case BYTE:
+				  case SHORT:
+				  case INT:
+					ival = extract_int(s, pos);
+					fprintf(fp, "%d", ival);
+					break;
+				  case FLOAT:
+				  case DOUBLE:
+					dval = extract_double(s, pos);
+					fprintf(fp, "%.10g", dval);
+					break;
+				}
+			}
+			fputc('\n', fp);
+		}
 	}
-	if (((i+1) % d[0]) == 0) {
-	    fputc('\n', fp);
-	} else {
-	    fputc('\t', fp);
-	}
-	if (((i+1) % d[1]) == 0 && (i+1) != dsize) {
-	    fputc('\n', fp);
-	}
-    }
     fclose(fp);
     return(1);
 }

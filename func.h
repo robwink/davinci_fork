@@ -431,3 +431,9 @@ double asind(double);
 double atand(double);
 
 Var * ff_audit(vfuncptr func, Var *arg);
+Var * ff_identity(vfuncptr func, Var *arg);
+Var * per_pixel(vfuncptr func, Var *arg);
+
+Var * ff_exists(vfuncptr func, Var * arg);
+Var * ff_putenv(vfuncptr func, Var * arg);
+Var * ff_length(vfuncptr func, Var * arg);

@@ -1191,20 +1191,6 @@
  The normalize option divides each bin by the total number of elements.
  The cumulative option produces a cumulative histogram.
 
-?functions basis()
-?basis()
- basis() - generate square transform basis function
-
- basis(object=VAL, type=STRING, size=INT)
-
-    type: hadamard
-          haar
-
-?functions mxm()
-?mxm()
- mxm() - compute matrix multiplication
-
- mxm(ob1, ob2) 
 
 ?functions gnoise()
 ?gnoise()
@@ -1282,6 +1268,39 @@
 
     The results from minvert() are always of type DOUBLE
 
+ See Also:
+	identity(), mxm()
+
+?functions mxm()
+?mxm()
+ mxm() - matrix multiplication
+
+ mxm(ob1, ob2) 
+
+    Multiples ob1 by ob2 using matrix multiplcation.
+
+ See Also:
+	identity(), minvert()
+
+?functions identity()
+?identity()
+ identity() - generate identity matrix
+
+ identity(INT)
+
+     Generate an identity matrix of the given size.
+
+ See Also:
+	mxm(), minvert()
+
+?functions basis()
+?basis()
+ basis() - generate square transform basis function
+
+ basis(object=VAL, type=STRING, size=INT)
+
+    type: hadamard
+          haar
 ?functions dct()
 ?dct()
  dct() - Compute dct along specified axis
@@ -1954,3 +1973,37 @@ Davinci supports the following matrix functions:
     XPM   X Windows system pixmap file (color).
     XWD   X Windows system window dump file (color).
     YUV   CCIR 601 4:1:1 file.
+
+?functions fexists()
+?fexists()
+ fexists() - Determine if a file exists
+
+ fexists(filename=STRING | TEXT)
+
+ The fexists() function determines if a file exists or not.  
+
+ If passed a single value, it will return 1 if the file exists and
+ 0 if it does not exist.
+
+ When passed a TEXT array, it will return an array of values, 1 for
+ each row of the input.
+
+?functions length()
+?length()
+ length() - Determine the size of an object
+
+ length(object)
+
+ The length function returns the cardinallity of an object.
+
+ For regular arrays, it returns the total number of values in the array.
+ For strings, it returns the number of characters in the string.
+ For structures, it returns the number of elements in the structure
+ For text arrays, it returns the number of lines in the array.
+
+ Example:
+
+	dv> length(create(5,5,1))
+	25
+	dv> length("some string")
+	11

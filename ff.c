@@ -1760,6 +1760,9 @@ ff_syscall(vfuncptr func, Var * arg)
     }
 
     pclose(fp);
+	if (Row == 0) {
+		return(NULL);
+	}
 
     o=newVar();
     V_TYPE(o)=ID_TEXT;
@@ -1929,25 +1932,87 @@ double asind(double theta) { return(asin(theta)*180.0/M_PI); }
 double atand(double theta) { return(atan(theta)*180.0/M_PI); }
 
 Var *
-ff_foo(vfuncptr func, Var * arg)
+ff_exists(vfuncptr func, Var * arg)
 {
 	Var *v = NULL;
-	char *ptr;
-    Alist alist[3];
+	char *filename = NULL;
+	int n, i;
 
-	/* this is an example of getting an enumeration 
-	   when you don't know what the options are 
-	*/
-
-    alist[0] = make_alist("bar",    ID_ENUM,     NULL,     &ptr);
+    Alist alist[2];
+    alist[0] = make_alist("filename",    ID_UNK,     NULL,     &v);
     alist[1].name = NULL;
- 
+
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (ptr != NULL) {
-		printf("You passed %s\n", ptr);
+	if (v == NULL) {
+        parse_error( "%s: No filename specified.", func->name);
+		return(NULL);
+	} else if (V_TYPE(v) == ID_STRING) {
+		filename = V_STRING(v);
+		return(newInt(access(filename, F_OK) == 0));
+	} else if (V_TYPE(v) == ID_TEXT) {
+		int *data = calloc(n, sizeof(int));
+		n = V_TEXT(v).Row;
+		for (i = 0 ; i < n ; i++) {
+			data[i] = (access(V_TEXT(v).text[i], F_OK) == 0);
+		}
+		return(newVal(BSQ, 1, n, 1, INT, data));
 	} else {
-		printf("Sorry, no name.\n");
+        parse_error( "%s: Argument is not a filename.", func->name);
+		return(NULL);
 	}
+}
+
+Var *
+ff_putenv(vfuncptr func, Var * arg)
+{
+	Var *v = NULL;
+	char *name = NULL, *val=NULL;
+	char buf[4096];
+
+    Alist alist[3];
+    alist[0] = make_alist("name",    ID_STRING,     NULL,     &name);
+    alist[1] = make_alist("value",    ID_STRING,     NULL,     &val);
+    alist[2].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (name == NULL) {
+        parse_error( "%s: No name specified.", func->name);
+		return(NULL);
+	}
+	if (val == NULL) {
+        parse_error( "%s: No value specified.", func->name);
+		return(NULL);
+	}
+	sprintf(buf, "%s=%s", name, val);
+	putenv(buf);
 	return(NULL);
+}
+
+Var *
+ff_length(vfuncptr func, Var * arg)
+{
+    Var *obj;
+    int *iptr;
+
+    Alist alist[2];
+    alist[0] = make_alist("obj",    ID_UNK,     NULL,     &obj);
+    alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	switch (V_TYPE(obj))  {
+		case ID_STRUCT:
+			return(newInt(get_struct_count(obj)));
+		case ID_TEXT:
+			return(newInt(V_TEXT(obj).Row));
+		case ID_STRING:
+			return(newInt(strlen(V_STRING(obj))));
+		case ID_VAL:
+			return(newInt(V_DSIZE(obj)));
+		default:
+			parse_error("%s: unrecognized type", func->name);
+			return(NULL);
+	}
 }

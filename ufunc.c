@@ -343,7 +343,7 @@ dispatch_ufunc(UFUNC *f, Var *arg)
      ** Total number of args is stored in $0
      **/
     for ( p = arg ; p != NULL ; p=p->next) {
-        if (V_TYPE(p) == ID_KEYWORD) {
+        if (V_TYPE(p) == ID_KEYWORD) {1
 			for (i = 0 ; i < f->nargs ; i++) {
 				if (!strcmp(f->args[i], V_NAME(p))) {
 					break;

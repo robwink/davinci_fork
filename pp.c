@@ -39,11 +39,11 @@ V_DUP(Var *v)
     Var *r;
     int dsize;
 
-	if (V_TYPE(v) != ID_STRUCT) {
-		r = newVar();
-		memcpy(r, v, sizeof(Var));
-		V_NAME(r) = NULL;
-	}
+    if (V_TYPE(v) != ID_STRUCT) {
+        r = newVar();
+        memcpy(r, v, sizeof(Var));
+        V_NAME(r) = NULL;
+    }
 
     switch (V_TYPE(v)) {
     case ID_VAL:
@@ -51,7 +51,7 @@ V_DUP(Var *v)
         dsize = V_DSIZE(v)*NBYTES(V_FORMAT(v));
         V_SYM(r)->data = memcpy(malloc(dsize), V_SYM(v)->data, dsize);
         if (V_TITLE(v)) V_TITLE(r) = strdup(V_TITLE(v));
-		break;
+        break;
     case ID_STRING:
         V_STRING(r) = strdup(V_STRING(v));
         break;
@@ -60,19 +60,20 @@ V_DUP(Var *v)
         break;
     case ID_STRUCT:
         r = (Var *)duplicate_struct(v);
-		break;
+        break;
 
     case ID_TEXT:		/*Added: Thu Mar  2 16:49:11 MST 2000*/
-		{
-			int i;
-			V_TEXT(r).Row=V_TEXT(v).Row;
-			V_TEXT(r).text=(char **)calloc(sizeof(char *),V_TEXT(r).Row);
-			for (i=0;i<V_TEXT(r).Row;i++){
-				V_TEXT(r).text[i]=strdup(V_TEXT(v).text[i]);
-			}
-		}
-		break;
-
+    {
+        int i;
+        V_TEXT(r).Row=V_TEXT(v).Row;
+        V_TEXT(r).text=(char **)calloc(sizeof(char *),V_TEXT(r).Row);
+        for (i=0;i<V_TEXT(r).Row;i++){
+            V_TEXT(r).text[i]=strdup(V_TEXT(v).text[i]);
+        }
+    }
+    break;
+    default:
+        return(NULL);
     }
     return(r);
 }
@@ -95,8 +96,8 @@ pp_print(Var *v)
     if (VERBOSE == 0) return(v);
 
     /**
-    ** Evaluate SCALE here.
-    **/
+     ** Evaluate SCALE here.
+     **/
 
     s = eval(v);
     if (s != NULL) {
@@ -121,12 +122,12 @@ pp_print_struct(Var *v, int indent, int depth)
     if (v == NULL) return;
     if (VERBOSE == 0) return;
 
-	/*
-    //  if (V_NAME(v)) printf("%s", V_NAME(v));
-    //  if (indent == 0) {
-        //      printf(": struct\n");
-        //  }
-	*/
+    /*
+      //  if (V_NAME(v)) printf("%s", V_NAME(v));
+      //  if (indent == 0) {
+      //      printf(": struct\n");
+      //  }
+    */
 
     indent += 4;
 
@@ -227,9 +228,9 @@ pp_print_var(Var *v, char *name, int indent, int depth)
         dump_var(v, indent+4, 10);
         break;
 	
-	case ID_MODULE:
-		pp_print_module_var(v);
-		break;
+    case ID_MODULE:
+        pp_print_module_var(v);
+        break;
     }
 }
 
@@ -260,22 +261,22 @@ pp_set_var(Var *id, Var *range, Var *exp)
     Range *r, rout;
 
     /**
-    ** If exp is named, it is a simple variable substitution.
-    ** If its not named, we can use its memory directly.
-    **/
+     ** If exp is named, it is a simple variable substitution.
+     ** If its not named, we can use its memory directly.
+     **/
     if (exp == NULL) return(NULL);
     if (range != NULL) {
         /**
-        ** The user has requested an array replacement.
-        **/
+         ** The user has requested an array replacement.
+         **/
         v = id;
         if ((e = eval(v)) != NULL) v = e;
         if ((e = eval(exp)) != NULL) exp = e;
 
         /**
-        ** Verify that the src and destination pieces 
-        ** are legal values, and the same size
-        **/
+         ** Verify that the src and destination pieces 
+         ** are legal values, and the same size
+         **/
         
         r = V_RANGE(range);
 
@@ -293,20 +294,20 @@ pp_set_var(Var *id, Var *range, Var *exp)
             return(set_varray(v,&rout,exp));
         }
 
-		array_replace(v, exp, &rout);
+        array_replace(v, exp, &rout);
 
         /**
-        ** go ahead and pull out the range to return.
-        **/
+         ** go ahead and pull out the range to return.
+         **/
         return(pp_range(id, range));
     }
 
 
     /**
-    ** this does the actual equivalence.
-    ** If the rhs is a named value, duplicate it.
-    ** otherwise, use the memory directly.
-    **/
+     ** this does the actual equivalence.
+     ** If the rhs is a named value, duplicate it.
+     ** otherwise, use the memory directly.
+     **/
     if (V_NAME(exp) != NULL) {
         v = eval(exp);
         if (v != NULL) {
@@ -318,16 +319,16 @@ pp_set_var(Var *id, Var *range, Var *exp)
         }
     } else if (mem_claim(exp) == NULL) {
         /**
-        ** if we can't claim the memory, we can't use it.
-        **/
+         ** if we can't claim the memory, we can't use it.
+         **/
         exp = V_DUP(exp);
     }
 
     V_NAME(exp) = strdup(V_NAME(id));
 
     /**
-    ** Check for reserved variables and verify their type.
-    **/
+     ** Check for reserved variables and verify their type.
+     **/
     if (!strcmp(V_NAME(exp), "verbose")) VERBOSE = V_INT(exp);
     if (!strcmp(V_NAME(exp), "scale")) SCALE = V_INT(exp);
     if (!strcmp(V_NAME(exp), "debug")) debug = V_INT(exp);
@@ -340,64 +341,64 @@ pp_set_var(Var *id, Var *range, Var *exp)
 int
 array_replace(Var *dst, Var *src, Range *r)
 {
-	int i, j, k;
-	int size[3];
-	int x, y, z;
-	int d, s;
+    int i, j, k;
+    int size[3];
+    int x, y, z;
+    int d, s;
 
-	x = GetX(src);
-	y = GetY(src);
-	z = GetZ(src);
+    x = GetX(src);
+    y = GetY(src);
+    z = GetZ(src);
 
-	for (i =0 ; i < 3 ; i++) {
-		size[i] = 1 + (r->hi[i] - r->lo[i])/r->step[i];
-		j = orders[V_ORG(src)][i];
-		if (V_SIZE(src)[j] != 1 && size[i] != V_SIZE(src)[j]) {
-			parse_error("Array sizes don't match");
-			return(0);
-		}
-	}
+    for (i =0 ; i < 3 ; i++) {
+        size[i] = 1 + (r->hi[i] - r->lo[i])/r->step[i];
+        j = orders[V_ORG(src)][i];
+        if (V_SIZE(src)[j] != 1 && size[i] != V_SIZE(src)[j]) {
+            parse_error("Array sizes don't match");
+            return(0);
+        }
+    }
 
-	for (i = 0 ; i < size[0] ; i++) {
-		for (j = 0 ; j < size[1] ; j++) {
-			for (k = 0 ; k < size[2] ; k++) {
+    for (i = 0 ; i < size[0] ; i++) {
+        for (j = 0 ; j < size[1] ; j++) {
+            for (k = 0 ; k < size[2] ; k++) {
 
-				d = cpos(i*r->step[0] + r->lo[0],
-						 j*r->step[1] + r->lo[1],
-						 k*r->step[2] + r->lo[2], dst);
+                d = cpos(i*r->step[0] + r->lo[0],
+                         j*r->step[1] + r->lo[1],
+                         k*r->step[2] + r->lo[2], dst);
 
 				/*
 				** modification to correctly handle sizes of 1
 				** This is slow, but works 
 				*/
-				s = cpos(i % x,j % y,k % z,src);
+                s = cpos(i % x,j % y,k % z,src);
 
-				switch(V_FORMAT(dst)) {
-				case BYTE:
-					((u_char *)V_DATA(dst))[d] =
-						saturate_byte(extract_int(src, s));
-					break;
-				case SHORT:
-					((short *)V_DATA(dst))[d] =
-						saturate_short(extract_int(src, s));
-					break;
-				case INT:
-					((int *)V_DATA(dst))[d] =
-						saturate_int(extract_int(src, s));
-					break;
-				case FLOAT:
-					((float *)V_DATA(dst))[d] =
-						extract_float(src, s);
-					break;
-				case DOUBLE:
-					((double *)V_DATA(dst))[d] =
-						extract_double(src, s);
-					break;
-				}
-			}
-		}
-	}
-	return(1);
+                switch(V_FORMAT(dst)) {
+                case BYTE:
+                    ((u_char *)V_DATA(dst))[d] =
+                        saturate_byte(extract_int(src, s));
+                    break;
+                case SHORT:
+                    ((short *)V_DATA(dst))[d] =
+                        saturate_short(extract_int(src, s));
+                    break;
+                case INT:
+                    ((int *)V_DATA(dst))[d] =
+                        saturate_int(extract_int(src, s));
+                    break;
+                case FLOAT:
+                    ((float *)V_DATA(dst))[d] =
+                        extract_float(src, s);
+                    break;
+                case DOUBLE:
+                    ((double *)V_DATA(dst))[d] =
+                        extract_double(src, s);
+                    break;
+                }
+            }
+        }
+    }
+    return(1);
 }
 
 
@@ -423,7 +424,7 @@ pp_set_struct(Var *a, Var *b, Var *exp)
         v = eval(exp);
         if (v != NULL) {
             exp = V_DUP(v);
-			V_NAME(exp) = NULL;
+            V_NAME(exp) = NULL;
         }
         if (V_TYPE(exp) == ID_UNK) {
             parse_error("Variable not found: %s", V_NAME(exp));
@@ -433,8 +434,8 @@ pp_set_struct(Var *a, Var *b, Var *exp)
 
     if (V_NAME(exp) != NULL || mem_claim(exp) == NULL) {
         /**
-        ** if we can't claim the memory, we can't use it.
-        **/
+         ** if we can't claim the memory, we can't use it.
+         **/
         exp = V_DUP(exp);
         mem_claim(exp);
     }
@@ -557,8 +558,8 @@ pp_range(Var *v, Var *r)
     Range rout;
 
     /**
-    ** Do some basic error detection
-    **/
+     ** Do some basic error detection
+     **/
     if (v == NULL || r == NULL) return(NULL);
 
     t = eval(v);
@@ -620,9 +621,14 @@ pp_func(Var *function, Var *arglist)
 Var *
 pp_mk_arglist(Var *arglist, Var *arg) 
 {
+    /*
+    ** force some next pointers to be NULL here
+    */
     Var *p;
     if (arglist == NULL) {
+		if (arg == NULL) return(NULL);
         arglist = arg;
+        arg->next = NULL;
         return(arglist);
     }
     if (arg == NULL) {
@@ -645,6 +651,7 @@ pp_keyword_to_arg(Var *keyword, Var *ex)
 {
     V_TYPE(keyword) = ID_KEYWORD;
     V_KEYVAL(keyword) = ex;
+    keyword->next = ex->next = NULL;
     return(keyword);
 }
 
@@ -674,8 +681,8 @@ pp_shellArgs(Var *v)
 	
 
     /**
-    ** if symbol is not in symtab, put it there.
-    **/
+     ** if symbol is not in symtab, put it there.
+     **/
     if ((s = get_sym(name)) == NULL) {
         s = newVar();
         V_TYPE(s) = ID_STRING;
@@ -684,10 +691,10 @@ pp_shellArgs(Var *v)
         put_sym(s);
     }
     /**
-    ** This cannot return the Var we just put into the symtab, cause 
-    ** it will have ->next already set.  Make a new Var containing
-    ** just its name.
-    **/
+     ** This cannot return the Var we just put into the symtab, cause 
+     ** it will have ->next already set.  Make a new Var containing
+     ** just its name.
+     **/
     s = newVar();
     V_NAME(s) = strdup(name);
     V_TYPE(s) = ID_UNK;
@@ -751,8 +758,8 @@ pp_argv(Var *left, Var *right)
     } else {
         strcpy(name, V_NAME(v));
         if (!strcasecmp(name, "argv")) {
-            parse_error("$ARGV requires an array index.");
-            return(NULL);
+			/* we should dump the entire ARGV array here */
+			return(dd_make_arglist(scope));
         }
         if ((value = get_env_var(name)) == NULL) {
             return(NULL);
@@ -760,6 +767,7 @@ pp_argv(Var *left, Var *right)
         /**
         ** if symbol is not in symtab, put it there.
         **/
+/*
         if ((s = get_global_sym(name)) == NULL) {
             s = newVar();
             V_TYPE(s) = ID_STRING;
@@ -767,6 +775,11 @@ pp_argv(Var *left, Var *right)
             V_NAME(s) = strdup(name);
             put_global_sym(s);
         }
+*/	
+        s = newVar();
+        V_TYPE(s) = ID_STRING;
+        V_STRING(s) = strdup(value);
+        
         return(s);
     }
 }
@@ -822,7 +835,7 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
 
     if (V_TYPE(exp1) == ID_STRING && V_TYPE(exp2) == ID_STRING) {
         /*
-        ** 2 string objects
+        ** compare 2 string objects
         */
         k = compare_strings(V_STRING(exp1), op, V_STRING(exp2));
         s = newVal(BSQ,1,1,1,INT,calloc(1, sizeof(int)));
@@ -844,6 +857,10 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
                                       V_TEXT(exp2).text[i]);
         }
         return(newVal(BSQ,1,rows,1,INT,data));
+    } else if ((V_TYPE(exp1) != ID_STRING && V_TYPE(exp1) != ID_TEXT) ||
+               (V_TYPE(exp2) != ID_STRING && V_TYPE(exp2) != ID_TEXT)) {
+        parse_error("unable to compare strings and non-strings");
+        return(NULL);
     } else {
         /*
         ** one text, one string
@@ -937,16 +954,16 @@ pp_set_where(Var *id, Var *where, Var *exp)
     double dval;
 
     /**
-    ** If exp is named, it is a simple variable substitution.
-    ** If its not named, we can use its memory directly.
-    **/
+     ** If exp is named, it is a simple variable substitution.
+     ** If its not named, we can use its memory directly.
+     **/
     if (exp == NULL) return(NULL);
 
     /**
-    ** this does the actual equivalence.
-    ** If the rhs is a named value, duplicate it.
-    ** otherwise, use the memory directly.
-    **/
+     ** this does the actual equivalence.
+     ** If the rhs is a named value, duplicate it.
+     ** otherwise, use the memory directly.
+     **/
 
     if ((v = eval(exp)) == NULL) {
         parse_error("rhs is NULL.\n");
@@ -984,7 +1001,7 @@ pp_set_where(Var *id, Var *where, Var *exp)
   parse_error("rhs doesn't match org/shape of lhs of where\n");
   return(NULL);
   }
-  */
+*/
     if (V_TYPE(id)==ID_TEXT && 
         (V_TYPE(exp)==ID_STRING || V_TYPE(exp)==ID_TEXT) &&
         V_TYPE(where)==ID_VAL)

@@ -19,6 +19,8 @@
 
 typedef struct { float r, g, b; } RGB;
 typedef struct { float h, s, v; } HSV;
+typedef struct { float c, m, y; } CMY;
+typedef struct { float c, m, y, k; } KCMY;
 RGB HSVToRGB(HSV hsv);
 HSV RGBToHSV(RGB rgb);
 
@@ -251,7 +253,7 @@ ff_hsv2rgb(vfuncptr func, Var * arg)
 	Var *obj = NULL, *maxval = NULL;
 	float *data;
 	char *ptr = NULL;
-	double mval;
+	double mval = 1.0;
 	int x,y,z,i,j,k1,k2,k3;
 
 	HSV a;
@@ -260,19 +262,14 @@ ff_hsv2rgb(vfuncptr func, Var * arg)
 	int ac;
 	Var **av;
 	Alist alist[2];
-	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
-	alist[1] = make_alist( "maxval",  ID_VAL,    NULL,     &maxval);
+	alist[0] = make_alist( "object",  ID_VAL,    NULL,     &obj);
+	alist[1] = make_alist( "maxval",  DOUBLE,    NULL,     &mval);
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
 		parse_error("%s: No object specified\n", func->name);
 		return(NULL);
-	}
-	if (maxval == NULL) {
-		mval = 1.0;
-	} else {
-		mval = extract_double(maxval, 0);
 	}
 
 	x = GetSamples(V_SIZE(obj), V_ORG(obj));
@@ -380,6 +377,69 @@ HSVToRGB(HSV hsv)
 	return rgb;
 }
 
+#define MAX_INTENSITY 255
+
+RGB
+CMYToRGB(cmy)
+CMY cmy;
+
+{
+    RGB rgb;
+
+    rgb.r = MAX_INTENSITY - cmy.c;
+    rgb.g = MAX_INTENSITY - cmy.m;
+    rgb.b = MAX_INTENSITY - cmy.y;
+    return rgb;
+}
+
+/*
+ * Convert an RGB to CMY.
+ */
+
+CMY
+RGBToCMY(rgb)
+RGB rgb;
+
+{
+    CMY cmy;
+
+    cmy.c = MAX_INTENSITY - rgb.r;
+    cmy.m = MAX_INTENSITY - rgb.g;
+    cmy.y = MAX_INTENSITY - rgb.b;
+    return cmy;
+}
+
+KCMY 
+RGBtoKCMY(RGB rgb)
+{
+	KCMY kcmy;
+
+    kcmy.c = MAX_INTENSITY - rgb.r;
+    kcmy.m = MAX_INTENSITY - rgb.g;
+    kcmy.y = MAX_INTENSITY - rgb.b;
+
+	kcmy.k = min(min(kcmy.c, kcmy.m), kcmy.y);
+
+	if (kcmy.k > 0) {
+		kcmy.c = kcmy.c - kcmy.k;
+		kcmy.m = kcmy.m - kcmy.k;
+		kcmy.y = kcmy.y - kcmy.k;
+	}
+	return(kcmy);
+}
+
+RGB 
+KCMYtoRGB(KCMY kcmy)
+{
+	RGB rgb;
+
+	rgb.r = MAX_INTENSITY - (kcmy.c + kcmy.k);
+	rgb.g = MAX_INTENSITY - (kcmy.m + kcmy.k);
+	rgb.b = MAX_INTENSITY - (kcmy.y + kcmy.k);
+
+	return(rgb);
+}
+
 /**
  ** Compute entropy of an image
  **/
@@ -438,3 +498,4 @@ ff_entropy(vfuncptr func, Var * arg)
 	free(data);
 	return(newVal(BSQ, 1, 1, 1, FLOAT, memdup(&ent, sizeof(FLOAT))));
 }
+

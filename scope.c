@@ -161,6 +161,31 @@ dd_argc_var(Scope *s)
     return(s->args->value[0]);
 }
 
+/*
+**
+*/
+Var *
+dd_make_arglist(Scope *s)
+{
+    Dictionary *dd = s->args;
+	Var *v = new_struct(dd->count);
+	Var *p;
+	int i;
+	void *zero;
+
+    for (i = 1 ; i < dd->count ; i++) {
+		if (V_TYPE(dd->value[i]) == ID_UNK) {
+			zero = (char *)calloc(1,1);
+			p = newVal(BSQ, 1,1,1, BYTE, zero);
+			mem_claim(p);
+		} else {
+			p = V_DUP(dd->value[i]);		
+		}
+		add_struct(v, dd->name[i], p);
+    }
+	return(v);
+}
+
 Dictionary * 
 new_dd()
 {

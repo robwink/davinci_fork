@@ -18,7 +18,7 @@ XINCLUDES=-I/usr/openwin/include $(XRTINCLUDE) -I/usr/local/include
 XLIBS=-L/usr/openwin/lib $(XRTLIBS)
 
 CPPFLAGS= -I/usr/include/X11
-CFLAGS=$(XINCLUDES) -Ilib -g -O2 -I. 
+CFLAGS=$(XINCLUDES) -Ilib -g -I. 
 LDFLAGS= -L/usr/openwin/lib -L${exec_prefix}/lib -Lreadline  -L.
 
 XRTINCLUDE=  
@@ -27,7 +27,7 @@ XRTLIBS =
 
 CC     = gcc
 DEFS   = -DHAVE_CONFIG_H 
-LIBS   = $(XLIBS) -lplplotFX -lMagick -ltiff -lproj -lreadline -ltermcap -ljpeg -lmsss_vis -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -ldl  -lmodsupp
+LIBS   = $(XLIBS) -lplplotFX -lMagick -ltiff -lproj -lreadline -ltermcap  -ldpstk -ldps -lpng -ljpeg -lmsss_vis -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -ldl  -lmodsupp
 AR     = ar
 RANLIB = ranlib
 
