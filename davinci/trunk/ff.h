@@ -72,9 +72,10 @@ struct _vfuncptr vfunclist[] = {
     { "cat",        ff_cat,       NULL , NULL},
     { "translate",  ff_translate, NULL , NULL},
     { "struct",         ff_struct,             NULL , NULL},
-    { "add_struct",     ff_add_struct,         NULL , NULL},
+    { "add_struct",     ff_insert_struct,         NULL , NULL},
     { "get_struct",     ff_get_struct,         NULL , NULL},
     { "remove_struct",     ff_remove_struct,         NULL , NULL},
+    { "insert_struct",     ff_insert_struct,         NULL , NULL},
     
 /* i/o */
 
@@ -263,6 +264,9 @@ struct _vfuncptr vfunclist[] = {
 
     { "shade",          ff_shade,              NULL },
     { "fexists",        ff_exists,              NULL },
+
+    { "bindct",        ff_bindct,              NULL },
+    { "binidct",       ff_bindct,              NULL },
     { NULL,             NULL,                  NULL }
 };
 
