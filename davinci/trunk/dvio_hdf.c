@@ -5,13 +5,15 @@
 
 #ifdef HAVE_LIBHDF5
 
+#define HDF5_COMPRESSION_LEVEL 6
+
 #include <hdf5.h>
 Var *load_hdf5(hid_t parent);
 
 void
 WriteHDF5(hid_t parent, char *name, Var *v)
 {
-    hid_t dataset, datatype, dataspace, aid2, attr, child;
+    hid_t dataset, datatype, dataspace, aid2, attr, child, plist;
     hsize_t size[3];
     int org;
     int top = 0;
@@ -65,7 +67,7 @@ WriteHDF5(hid_t parent, char *name, Var *v)
         ** member is a value.  Create a dataset
         */
         for (i = 0 ; i < 3 ; i++) {
-            size[i] = V_SIZE(v)[i];
+	  size[i] = V_SIZE(v)[i];
         }
         org = V_ORG(v);
         dataspace = H5Screate_simple(3, size, NULL);
@@ -76,7 +78,15 @@ WriteHDF5(hid_t parent, char *name, Var *v)
         case FLOAT: datatype = H5Tcopy(H5T_IEEE_F32BE); break;
         case DOUBLE: datatype = H5Tcopy(H5T_IEEE_F64BE); break;
         }
-        dataset = H5Dcreate(parent, name, datatype, dataspace, H5P_DEFAULT);
+
+	/*
+	** Enable chunking and compression - JAS
+	*/
+	plist = H5Pcreate(H5P_DATASET_CREATE);
+	H5Pset_chunk(plist, 3, size);
+	H5Pset_deflate(plist, HDF5_COMPRESSION_LEVEL);
+
+        dataset = H5Dcreate(parent, name, datatype, dataspace, plist);
 #ifdef WORDS_BIGENDIAN
         H5Dwrite(dataset, datatype, 
                  H5S_ALL, H5S_ALL, H5P_DEFAULT, V_DATA(v));
@@ -101,6 +111,7 @@ WriteHDF5(hid_t parent, char *name, Var *v)
         H5Tclose(datatype);
         H5Sclose(dataspace);
         H5Dclose(dataset);
+	H5Pclose(plist);
         break;
 
 
@@ -108,6 +119,7 @@ WriteHDF5(hid_t parent, char *name, Var *v)
         /*
         ** Member is a string of characters
         */
+
         lines=1;
         length=1;/*Set length to 1, and size to length*/
         dataspace = H5Screate_simple(1,&length,NULL);
