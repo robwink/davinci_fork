@@ -1169,13 +1169,13 @@ ff_rtrim(vfuncptr func, Var *arg)
 		return(s);
 	}
 
-	if (V_TYPE(ob)!=ID_TEXT){
+	else if (V_TYPE(ob)!=ID_TEXT){
 		parse_error("Rtrim only workds on strings or text_arrays");
 		return(NULL);
 	}
-
+	
 	Row=V_TEXT(ob).Row;
-
+	s=newVar();
 	V_TYPE(s)=ID_TEXT;
 	V_TEXT(s).Row=Row;
 	V_TEXT(s).text= (char **)calloc(Row,sizeof(char *));

@@ -53,6 +53,8 @@ if test "$PL_LIB" != ""
 then
 	AC_DEFINE(INCLUDE_API)
 	AC_DEFINE(HAVE_PLPLOT)
+	LIBS="$PL_LIB $LIBS"
+	echo $LIBS
 fi
 
 

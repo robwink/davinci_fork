@@ -302,7 +302,7 @@ LoadISIS(FILE *fp, char *filename, struct _iheader *s)
 {
     struct _iheader h;
     int org;
-    Var *v;
+    Var *v=NULL;
     char hbuf[HBUFSIZE];
     void *data;
 	int i,j;
