@@ -14,7 +14,6 @@ static int input_ptr = 0;
 int indent = 0;
 int pp_count = 0;
 int pp_line = 0;
-int indent = 0;
 
 void log_line(char *);
 int yylex(void);
