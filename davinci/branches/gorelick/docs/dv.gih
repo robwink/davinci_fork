@@ -1,0 +1,1175 @@
+?
+ Intro
+
+?operators
+
+ Davinci provides the following mathematical and relational operators:
+
+   Mathematical        Relational                   Arrays
+   ---------------     ------------------------     --------------------
+    + add              <  less than                 []     range
+    - subtract         >  greater than              //     concatenation
+    * multipy          <= less than or equal        where  partial replacement
+    / divide           >= greater than or equal
+    % modulo           == equal 
+    = equvialence      != not equal
+                       || logical OR
+                       && logical AND
+
+
+ All the mathematical operators except can take any two VAL types, and 
+ will cast up to the larger type.
+
+ All the relational operators return a value of 0 or 1.  If used on arrays,
+ they return an array of 0's and 1's.
+
+ Range, concatentaion and the where operator each have their own 
+ pecularities.  Consult the individual help topics.
+
+?operators //
+?//
+?concatenation
+
+ The // operator concatenates (appends) two values together along their
+ X axis.  It is shorthand for cat(v1, v2, x), and therefore has all
+ the limitations of the cat() function.
+
+ Example:
+    This example creates a 3x1x1 array from the numbers 1, 2 and 3:
+
+        dv> 1 // 2 // 3
+        :       3x1x1 array of int, bsq format [12 bytes]
+        1       2       3
+
+
+?operators []
+?[]
+?range
+ The unary range operator, [], extracts a subset of data from a VAL.
+ The range operator can oply be applied to a named variable.
+ The range operator takes up to three ranges, one for each axis, in the
+ order X, Y, Z, of the form [low:hi:step].
+
+ Any of the range values may be blank, indicating the least restrictive 
+ value.  If the third or second and third values are blank, they may be
+ completely omitted.
+
+ Example:
+     This example extracts a portion of the X axis, all the values along
+     the Y axis, and the even values along the Z axis:
+
+        dv> data[3:8, , 2::2]
+
+?operators where
+?where
+?[where]
+ The unary operator 'where', provides partial array replacement, based on
+ a boolean expresion.  The 'where' operator can only be used during array
+ assignment, and then, only on a named array.
+
+ The syntax is as follows:
+
+    array [ where expr1 ] = expr2
+
+ Expr1 must evaluate to an array with the same organization and dimensions 
+ as array, and where expr1 is true, the corresponding element of array is 
+ replaced with the value of expr2.  Expr2 must be a single value.
+
+ Example:
+     This example replaces all values in data that are less than zero,
+     with the value 0.
+
+        dv> data[ where (data < 0) ] = 0
+
+?functions
+ Functions
+
+?functions org()
+?org()
+ org() - Show or change an objects data organization
+
+ org(object=VAL [,org={BIL,BIP,BSQ}])
+
+    The org() function reports or changes the data organization of an
+    object.  If used with only one argument, the data organization of
+    the object specified is reported as a string.  The return values
+    are one of:
+
+        "bil" - Band interleaved by line (XZY)
+        "bip" - Band interleaved by pixel (ZXY)
+        "bsq" - Band sequential (XYZ)
+
+    If the second, optional, argument is included, the object specified
+    by the first argument is duplicated and converted to the specified
+    organization.
+
+ See Also:
+    bil(), bip(), bsq()
+
+?functions format()
+?format() 
+ format()  - Show or change an objects data format
+
+ format(object=VAL [, format={BYTE,SHORT,INT,FLOAT,DOUBLE}])
+
+    The format() function reports or changes the data format of an
+    object.  If used with only one argument, the data format of the
+    object specified by the argument is reported as a string.  The
+    return values are one of:
+
+        "byte"   - 8 bit unsigned integer
+        "short"  - 16 bit signed integer
+        "int"    - 32 bit signed integer
+        "float"  - 32 bit real
+        "double" - 64 bit real
+
+    If the second, optional, argument is included, the object specified bt
+    the first argument is duplicated and converted to the specified format.
+
+ See Also:
+    byte(), short(), int(), float(), double()
+
+?functions dim()
+?dim()
+ dim() - Show an objects size
+
+ dim(object=VAL)
+
+    The dim() function reports the size of each axis of an object.
+    The values are returned in a 3x1x1 array, as the size of the 
+    X, Y and Z axis, respectivly.
+
+?functions bsq()
+?bsq()
+ bsq() - Convert an object to BSQ organization
+
+ bsq(object=VAL)
+
+    The bsq() function copies and converts an object to BSQ organization.
+    This function is equivalent to org(object=VAL, org=BSQ).
+
+ See Also:
+    bil(), bip(), org()
+
+?functions bip()
+?bip()
+ bip() - Convert an object to BIP organization
+
+ bip(object=VAL)
+
+    The bip() function copies and converts an object to BIP organization.
+    This function is equivalent to org(object=VAL, org=BIP).
+
+ See Also:
+    bil(), bsq(), org()
+
+?functions bil()
+?bil()
+ bil() - Convert an object to BIL organization
+
+ bil(object=VAL)
+
+    The bil() function copies and converts an object to BIL organization.
+    This function is equivalent to org(object=VAL, org=BIL).
+
+ See Also:
+    bsq(), bip(), org()
+
+?functions byte()
+?byte()
+ byte() - Convert an object to BYTE format
+
+ byte(object=VAL)
+
+    The byte() function copies and converts an object to BYTE format.
+    Any values above or below the maximum representable values of
+    0, 255 are set to the nearest representable value.
+    This function is equivalent to format(object=VAL, format=BYTE).
+
+ See Also:
+    short(), int(), float(), double(), format()
+
+?functions short()
+?short()
+ short() - Convert an object to SHORT format
+
+ short(object=VAL)
+
+    The short() function copies and converts an object to SHORT format.
+    Any values above or below the maximum representable values of
+    -32767,32768 are set to the closest representable value.
+    This function is equivalent to format(object=VAL, format=SHORT).
+
+ See Also:
+    byte(), int(), float(), double(), format()
+
+?functions int()
+?int()
+ int() - Convert an object to INT format
+
+ int(object=VAL)
+
+    The int() function copies and converts an object to INT format.
+    Any values above or below the maximum representable values of
+    -2^31,2^31 are set to the closest representable value.
+    This function is equivalent to format(object=VAL, format=INT).
+
+ See Also:
+    byte(), short(), float(), double(), format()
+
+?functions float()
+?float()
+ float() - Convert an object to FLOAT format
+
+ float(object=VAL)
+
+    The float() function copies and converts an object to FLOAT format.
+    The behavior of float() when dealing with values out of the 
+    representable range, 1.4e-45 to 3.4e38, is undefined.
+    This function is equivalent to format(object=VAL, format=FLOAT).
+
+ See Also:
+    byte(), short(), int(), double(), format()
+
+?functions double()
+?double()
+ double() - Convert an object to DOUBLE format
+
+ double(object=VAL)
+
+    The double() function copies and converts an object to DOUBLE format.
+    The behavior of double() when dealing with values out of the 
+    representable range, 1.7e308 to 4.9e-324 is undefined.
+    This function is equivalent to format(object=VAL, format=DOUBLE).
+
+ See Also:
+    byte(), short(), int(), float(), format()
+
+?functions cat()
+?cat()
+ cat() - Concatenate (append) two objects together
+
+ cat(ob1=VAL,ob2=VAL,axis={X,Y,Z})
+
+    The cat() function duplicates ob1 and appends a copy of ob2, along the 
+    specified axis.  The two objects must match in format and organization, 
+    and must have the same dimension along the two unspecified axis.
+
+ See Also:
+    format(), org(), dim(), //
+
+?functions clone()
+?clone()
+ clone() - Duplicate an object many times.
+
+ clone(object=VAL [,x=INT] [,y=INT] [,z=INT])
+
+    The clone() function dupicates the specified object X*Y*Z times, and
+    concatenates these objects together the specified number of time along
+    each axis.  Any of the X, Y or Z values that are not specified defualt
+    to a value of 1.
+
+ See Also:
+    cat()
+
+?functions read()
+?read()
+ read() - Load a data from file
+
+ read(filename="path" [,record=INT])
+
+    The read() function loads the specified data file.   The read() 
+    function can automatically recognize and load the following file 
+    formats:
+        SpecPR_FS2
+        VICAR Grayscale
+        PDS/ISIS Qube and Image
+        PBMPlus: PBM, PGM and PPM formats
+        USGS GRD
+        Imath
+        GOES weather satellite
+        AVIRIS
+
+    If the specified path is not absolute (ie: it doesn't start with a '/'),
+    and the specified file cannot be found in the current directory, the
+    DATAPATH variable is used as a list of directories to additionally search.
+    The specified path is appended to each directory listed in the DATAPATH
+    variable.
+
+    If the variable VERBOSE is set to a value greater than zero, details of
+    the file loading process are printed to stderr.  Higher values (up to 3)
+    produce more output.
+
+    The record value is required for SpecPR files.  If it is given with 
+    another file type, it is used as the high and low value for a Z axis 
+    subset, causing a single image to be extracted from cubes.
+
+    Reading a PPM image produces a 3-plane, BIP cube of byte values.
+    Each plane represents the red, green and blue values respectivly.
+
+    The functions load() and import() are aliases for the read() function.
+
+ See Also:
+    write(), filetype(), datapath, verbose
+
+?functions write()
+?write()
+ write() - Save data to file
+
+ write(object=VAL, filename="path", type=TYPE, force=1)
+
+    The write() function copies data to a file.  The value of type specifies 
+    the type of file written, and is one of: 
+
+        specpr  - SpecPR
+        vicar   - Vicar grayscale
+        grd     - USGS Grid
+        pgm     - Pbmplus grayscale
+        ppm     - Pbmplus true-color
+        isis    - PDS/ISIS
+        ascii   - Columnar ascii matrix
+        imath   - Imath format
+        ers     - ER Mapper Raster
+	
+	If the force keyword is included, then any existing file of the same
+	name is overwritten.  Without this keyword, the write is aborted
+	if the filename already exists.
+
+    Notes: 
+        The PPM type requires a 3-plane BIP cube of byte values, as produced
+        by the rgb() function.
+
+        The PGM and GRD formats can not handle multiplane data.
+
+        The ERS format produces two files, one named "path", containing the
+        raw raster data, and another named "path.ers", containing the ERS
+        header.  This is the standard for ERS files.
+
+ See Also:
+    filetype(), read(), rgb()
+
+?functions filetype()
+?filetype()
+ filetype() - Determine the type of a file
+
+ filetype(filename="path")
+
+    The filetype function returns the type of a data file.  The filetype
+    function returns the following strings for each type recognized:
+        "SPECPR" - Specpr_FS2
+        "VICAR"  - VICAR
+        "GRD"    - USGS GRD
+        "ISIS"   - PDS/ISIS
+        "PNM"    - PBMPlus 
+
+    The output from the filetype() function is suitable for input to the
+    type value of the write() function.
+
+?functions source()
+?source()
+ source() - Execute a script file
+
+ source(filename="path")
+
+    The source function executes the specified file exactly as if its
+    contents has been typed as input, with the exception that the commands
+    are not stored in the log file, although the source() command is.
+
+    Executing scripts that call source is allowed.  The only limit on the
+    number of files that can be open is imposed by the operating system.
+
+?functions atoi()
+?atoi()
+ atoi() - Convert a string to INT
+
+ atoi(STRING)
+
+    The atoi function converts the specified string to an INT value.
+
+ See Also:
+    atof()
+
+?functions atof()
+?atof()
+ atof() - Convert a string to FLOAT
+
+ atof(STRING)
+
+    The atof function converts the specified string to an FLOAT value.
+
+?functions basename
+?basename
+ basename - Return file portion of a path/file string.
+
+ basename(STRING)
+
+    The basename function searches the specified string for the last
+    occurance of the '/' character, and duplicates and returns
+    everything after it.  If the '/' character does not appear in
+    the string, the entire string is duplicated and returned.
+
+    The basename function is identical to the unix command of the same name.  
+
+?functions cluster
+?cluster
+ cluster - Windowing cluster detection
+
+ cluster(object=VAL [,radius=INT] [,threshold=INT])
+
+    The cluster() function generates a 'windowed cluster overlay', from a
+    source image.  Each pixel of the overlay represents the number of
+    neighboring pixels in the source image.  A pixel is considered to be a
+    neighbor if it is within radius pixels, and has a value above threshold.
+
+    The source image must be a BYTE, SHORT or INT image, with a depth of 1.
+
+ See Also:
+    ccount()
+
+?functions ccount()
+?ccount()
+ ccount() - Count pixels in a cluster overlay
+
+ ccount(object=VAL [,threshold=INT] [,ignore=INT])
+
+    The ccount() function is used to count the number of pixels in a 
+    cluster overlay that have a value above the specified threshold.  
+
+    Ccount() returns a 3x1x1 array of FLOAT values representing:
+        The ratio of the next two values,
+        The number of pixels in the overlay with a value above threshold,
+        The total number of pixels in the image with a value above ignore.
+
+ See Also:
+    cluster()
+
+?functions rgb()
+?rgb()
+ rgb() - Generate a 3-plane RGB image.
+
+ rgb(red=VAL,green=VAL,blue=VAL)
+
+    The rgb() function duplicates the three specified objects, and
+    concatenates them together into a 3-band BIP cube, suitable for
+    output as a PPM image.
+
+    Each image must be an BYTE image and have the same X and Y dimensions.
+
+ See Also:
+    write()
+
+?functions translate()
+?translate()
+ translate() - translate an object along specified axis
+
+ translate(object=VAL,from={x,y,z},to={x,y,z},flip=1)
+
+    The translate function translates the specified object along the
+    from the 'from' axis to the 'to' axis.  (ie: from X to Y).  If
+    the 'flip' keyword is included (with any value), the specified
+    axes are copied in descending instead of ascending order.
+
+    The following example translates the specified image from the
+    +X to the -Y axis, effectivly rotating the image counter-clockwise
+    in the X-Y plane.
+
+    Example:
+       dv> translate(object=image, from=x, to=y, flip=1)
+
+?functions ascii()
+?ascii()
+ ascii() - Load an ASCII columnar file
+
+ ascii(filename="PATH",x=INT,y=INT,z=INT,format=TYPE,column=INT,row=INT,delim=STRING)
+
+    The ascii() function loads data from an ASCII columnar (matrix) file.  
+    The data is assumed to be in BSQ organization.
+
+    Pixel values on a line must be separated by at least one space or 
+    tab.  Lines must be seperated by exactly 1 newline, and planes
+    must be seperated by one (1) blank line.
+
+    The only required keyword is 'filename'.  If any of the X, Y or Z
+    values are omitted, they are assumed to be 1, unless all are omitted,
+    in which case the file is pre-scanned to attempt to determine its
+    size.
+
+    'Format' determines the output type of the data.  TYPE is one of:
+    'byte', 'short', 'int', 'float', or 'double'.  If format is omitted,
+    the default output type is FLOAT.  Floating point values cannot be
+    read using a type of 'byte', 'short' or 'int'.
+
+    The value 'row' specifies the number of lines to skip before trying
+    to read any data.  The value 'column' specifies the number of values
+    to skip for every line read.
+
+    The 'delim' parameter defines the list of column delimiters to use.
+    If this option is omitted, the both TAB and SPACE are used as delimters.
+    The value for 'delim' should always be enclosed in quotes.
+
+?functions Math
+ Davinci supports the usual complement of floating-point math functions.
+ Each of these functions returns a FLOAT.
+
+?functions Math sin()
+?sin()
+ sin() - Trigonometric sine
+
+ sin(VAL)
+
+    Computes the trigonometric sine of the input value.
+
+?functions Math cos()
+?cos()
+ cos() - Trigonometric cosine
+
+ cos(VAL)
+
+    Computes the trigonometric cosine of the input value.
+
+?functions Math tan()
+?tan()
+ tan() - Trigonometric tangent
+
+ tan(VAL)
+
+    Computes the trigonometric tangent of the input value.
+
+?functions Math asin()
+?asin()
+ asin() - Trigonometric arc-sine
+
+ asin(VAL)
+
+    Computes the trigonometric arc-sine of the input value.
+
+?functions Math acos()
+?acos()
+ acos() - Trigonometric arc-cosine
+
+ acos(VAL)
+
+    Computes the trigonometric arc-cosine of the input value.
+
+?functions Math atan()
+?atan()
+ atan() - Trigonometric arc-tangent
+
+ atan(VAL)
+
+    Computes the trigonometric arc-tangent of the input value.
+
+?functions Math floor()
+?floor()
+ floor() - Round down
+
+ floor(VAL)
+
+    Rounds down to the nearest integer value.  Produces FLOAT value.
+
+?functions Math ceil()
+?ceil()
+ ceil() - Round up
+
+ ceil(VAL)
+
+    Rounds up to the nearest integer value.  Produces FLOAT value.
+
+?functions Math abs()
+?abs()
+ abs() - Absolute value
+
+ ceil(VAL)
+
+    Returns absolute value of input value.
+
+?functions Math exp()
+?exp()
+ exp() - Exponential function
+
+ exp(VAL)
+
+    Returns exponential function, e^x
+
+?functions Math log()
+?log()
+ log() - Base e logarithm
+
+ log(VAL)
+
+    Returns natural logarithm of input value.  Input value must be positive
+
+?functions Math log10()
+?log10()
+ log10() - Base 10 logarithm
+
+ log10(VAL)
+
+    Returns base 10 logarithm of input value.  Input value must be positive
+
+?functions Math pow()
+?pow()
+ pow() - Compute x raised to the power y
+
+ pow(x,y) 
+
+ Computes x raised to the power y.
+
+?functions help
+?help()
+ help - Online help function
+
+ help topic
+ ? topic
+
+    This is the online help system.
+
+?functions moment()
+?moment()
+ moment() - Compute standard statistics (min,max,mean,adev,sdev,var,skew,kurt)
+
+ moment(VAL)
+
+    Computes the following statistics for the input value, and returns
+    them (in the specified order) in a 8x1x1 FLOAT array:
+
+         minimum value,
+         maximum value,
+         mean,
+         average deviation,
+         standard deviation,
+         variance,
+         skewness,
+         kurtosis.
+
+
+?functions display()
+?display()
+ display() - Display a grayscale image
+
+ display(VAL)
+
+
+    The display function passes the specified argument to an external
+    viewer, as a grayscale image.
+
+?functions gplot()
+?gplot()
+ gplot() - Plot an object
+
+ gplot(VAL)
+
+
+    The gplot function passes the specified argument to an external
+    plotting program (gnuplot).  The data is passed as it is stored
+    in memory.
+
+?functions interp()
+?interp()
+ interp() - Point interpolation
+
+ interp(object=VAL,from=VAL,to=VAL)
+
+
+    The interp() function performs a point interpolation.  OBJECT is 
+    interpolated from the FROM object to the TO object, taking OBJECT
+    as the Y data values, and FROM as the corresponding X values.
+
+    OBJECT and FROM must contain the same number of elements.  The low
+    and high values of TO must reside entirely within the low and high
+    values of FROM.
+
+?functions fit()
+?fit()
+ fit() - Least squares curve fitting
+
+ fit(y=VAL, x=VAL, steps=INT, type=STRING, plot=BOOL, start=VAL)
+
+    The fit() function performs a non-linear least-squares fit to a data
+    set, using the user specified function type.  Currently, only
+    the following four functions are implemented:
+
+        gauss       f(x) = a2 * exp(-((a0-x)/a1)**2)
+        gaussc      f(x) = a2 * exp(-((a0-x)/a1)**2) + a3
+        gaussl      f(x) = a2 * exp(-((a0-x)/a1)**2) + a3 + a4*x
+        linear      f(x) = a0 + a1*x
+        quad        f(x) = a0 + a1*x + a2*x*x
+        cube        f(x) = a0 + a1*x + a2*x*x + a3*x*x*x
+
+    The fit() function uses an iterative method to find the best fit,
+    however by default, only one iteration is performed.  The user can
+    specify a larger number of iterations with the 'steps' parameter, or
+    the fit() function can be called repeatedly, using the return values
+    from the previous call as the start parameter for the next call.
+
+    If no start parameter is specified, or any of the start parameters are
+    zero, fit() makes a guess based on the function selected and the 
+    actual data values.  (The marquant-levy fitting method can not handle
+    zero coefficients.)
+
+    If the X data values are not specified, channels are used instead, 
+    starting at 0.
+
+    The fit() function returns an array of DOUBLEs containing the
+    function coefficients, the the chi-squared 'goodness-of-fit'
+    value, and the alamda necessary for the next iteration.  The
+    order of these values is defined by the function type selected.
+
+    The returned coefficients array is suitable for use as the start values
+    for another iteration of the fit() function.
+
+    If the plot keyword is given and is non-null, then the data, and the 
+    fitted function are plotted.
+
+?functions vignette()
+?vignette()
+ vignette() - Generate vignetting correction image
+
+ vignette(width=INT, height=INT, radius=FLOAT, offset=FLOAT, intensity=FLOAT)
+
+    The vignette() function generates a vignetting correction image.
+ 
+    The width and height parameters specify the size of the image.
+    Radius, offset and intensity specify the values of the variables
+    in the vignetting function:
+ 
+         cx = width/2;
+         cy = height/2;
+         r =  sqrt((i-cx)*(i-cx) + (j-cy)*(j-cy))
+         a[i,j] = intensity * cos((r/radius) * (pi/2))) + offset
+    
+    The returned image is of type FLOAT
+
+?functions bop
+?bop
+ bop - binary operator functions
+
+ Binary operator functions take exactly 2 inputs, operate on them in the 
+ same way math operators work, and return a double.
+
+ The functions covered by bop are:
+
+ bbr()   - Generate black-body curves 
+ btemp() - Compute brightness temperature
+
+?functions bbr()
+?bbr()
+ bbr() - Generate black-body curves
+
+ bbr(wavelength, temp)
+
+    The bbr() function is a binary operator function (see bop).
+
+    The bbr() function computes the black-body curve corresponding
+    to the specified temperature, for the given wavelength(s).
+
+    Wavelengths are assumed to be in units of wavenumber (1/cm).
+
+    The bbr() function returns a DOUBLE.
+
+ See also:
+	btemp(), bop()
+
+?functions btemp()
+?btemp()
+ btemp() - Compute brightness temperature
+
+ btemp(wavelength, radiance)
+
+    The bbr() function is a binary operator function (see bop).
+
+    The btemp() function computes the brightness temperature of
+    the given radiance(s) at the specified wevelength(s).
+
+    Wavelengths are assumed to be in units of wavenumber (1/cm).
+
+    The btemp() function returns a DOUBLE.
+
+ See also:
+	bbr(), bop()
+
+?functions ifill()
+?ifill()
+ ifill() - Interpolated image fill
+
+ ifill(object=VAL, radius=INT, fill=VAL)
+
+    The ifill() function 'fills in gaps' in an image.
+    
+    The input image is searched a strip at a time in a particular
+    scan direction, searching for values equal to the fill value.
+    If a run of 1 or more pixels of the fill value are found, and
+    the run does not extend more than <radius> pixels, the fill
+    values are replaced with values interpolated from the non-fill
+    values bordering the gap.
+
+    This process is repeated 4 times, corresponding to scan directions
+    running north/south, east/west, ne/sw, and nw/se.  The 4 images
+    are averaged together, ignoring any remaining fill values, and
+    the non-fill values from the original image are copied in place.
+
+    The <radius> value defaults to 3.
+    The <fill> value defaults to 0.
+
+?functions pause()
+?pause()
+ pause() - Get a line of input from the user
+ 
+ pause(string)
+
+ The pause() function prints its argument (without a newline), and
+ waits for a line of input from the user, which is returned by the
+ function as a string.
+
+ Example:
+
+    while (1) {
+        s = pause("Enter a number, or press return to exit:\n")
+        if (strlen(s) <= 1) break
+    }
+
+?functions printf()
+?printf()
+ printf() - print formatted output
+
+ printf(fmt [, argument...] )
+
+ The printf() function is a direct interface to the C library function
+ of the same name.  
+ 
+ Printf returns no value.
+
+?functions sprintf()
+?sprintf()
+ sprintf() - print formatted output to a string
+
+ sprintf(fmt, ... )
+
+ The sprintf() function is a direct interface to the the C library
+ function of the same name, except that the the output string is 
+ returned, not passed.
+
+ Example:
+
+    s = sprintf("The value of 3+4 is %d\n", 3+4)
+
+?functions system()
+?system()
+ system() - issue a shell command.
+
+ system(cmd)
+
+ The system() function executes the specified command string using the
+ C library system() call, and returns when the command exits.
+
+ The system() function returns no value.
+
+ Example:
+
+    system("ls -l");
+
+
+?functions fsize()
+?fsize()
+ fsize() - return file size
+
+ fsize(filename)
+
+ The fsize() function determines the size of the specified file, and
+ returns that number as an integer.  If the file does not exist, fsize()
+ returns a -1.
+
+ Example:
+
+    fsize("/etc/passwd")
+
+
+?functions avg()
+?avg()
+ avg() - Compute average along specified axis
+
+ avg(object=VAL, axis=[x][y][z])
+
+ The avg() function computes the statistical average along one or
+ more axis.  If no axis is specified, then the average is computed
+ along all three.  avg() always returns a FLOAT.
+
+ Example:
+
+    This example computes the average along the X and Y axis, producing
+    an array with the same Z dimension of the input data.
+
+    dv> a = avg(object=data, axis=xy)
+
+?functions stddev()
+?stddev()
+ stddev() - Compute standard deviation along specified axis
+
+ stddev(object=VAL, axis=[x][y][z])
+
+ The stddev() function computes the standard deviation along one or
+ more axis.  If no axis is specified, then the standard deviation 
+ is computed along all three.  stddev() returns a FLOAT.
+
+ Example:
+
+    This example computes the standard deviation the X and Y axis, producing
+    an array with the same Z dimension of the input data.
+
+    dv> sigma = stddev(object=data, axis=xy)
+
+
+?functions sum()
+?sum()
+ sum() - Compute sum along specified axis
+
+ sum(object=VAL, axis=[x][y][z])
+
+     The sum() function computes the sum of values along one or more axis.  
+     If no axis is specified, then all the summation is performed along
+     all three axis.  Sum always returns a FLOAT.
+
+ Example:
+
+    This example computes the sum along the X and Y axis, producing
+    an array with the same Z dimension of the input data.
+
+    dv> a = sum(object=data, axis=xy)
+
+?functions min()
+?min()
+ min() - Compute minimum value along specified axis
+
+ min(object=VAL, axis=[x][y][z])
+
+     The min() function finds the minimum value along one or more axis.  
+     If no axis is specified, then all three axis are used.
+     Min always returns a FLOAT.  This is not really the correct
+     behaviour, but it is the easiest.
+
+ Example:
+
+    This example finds the minimum along the X and Y axis, producing
+    an array with the same Z dimension of the input data.
+
+    dv> a = min(object=data, axis=xy)
+
+?functions max()
+?max()
+ max() - Compute maximum value along specified axis
+
+ max(object=VAL, axis=[x][y][z])
+
+     The max() function finds the maximum value along one or more axis.  
+     If no axis is specified, then all three axis are used.
+     Max always returns a FLOAT.  This is not really the correct
+     behaviour, but it is the easiest.
+
+ Example:
+
+    This example finds the maximum along the X and Y axis, producing
+    an array with the same Z dimension of the input data.
+
+    dv> a = max(object=data, axis=xy)
+
+?history
+     Davinci maintains a command line history.  As each line is typed, it
+     is logged to a file in the current working directory, ".dvlog".  When
+     davinci is started in an interactive session, this log file is preloaded
+     into the command history.
+
+     The history() command shows the contents of the history.
+
+     You can copy lines from the history into a temporary file, which can
+     then be edited, using the edit() function.
+
+?history history()
+?history()
+ history() - Display command line history
+
+ history(INT)
+
+     The history() function displays the last N commands from the command
+     line history.  If no argument is given, then the entire history is 
+     printed to the screen.
+
+ Example:
+
+ This example displays the last 10 commands:
+
+    dv> history(10)
+
+?functions sort()
+?sort()
+ sort() - Sort an array of numbers
+
+ sort(VAL)
+
+     The sort() function sorts an array of numbers in ascending order,
+     producing an array with the same format, organization and size of the
+     orginal array.
+
+?functions rgb2hsv()
+?rgb2hsv()
+ rgb2hsv() - Convert a 3-plane RGB image into HSV
+
+ rgb2hsv(object=VAL, maxval=VAL)
+
+     The rgb2hsv() function converts a 3-band RGB image into a 3-band
+	 HSV image.  If maxval is specified, it is taken to be the maximum
+	 intensity value.  If no value is specified for maxval, its value is
+	 determined from the input type.
+
+	 HSV values range from 0.0 to 1.0, so the return value has a type of
+	 FLOAT.
+
+
+?functions hsv2rgb()
+?hsv2rgb()
+ hsv2rgb() - Convert a 3-plane HSV image into RGB
+
+ hsv2rgb(object=VAL, maxval=VAL)
+
+     The hsv2rgb() function converts a 3-band HSV image into a 3-band
+	 RGB image.  If maxval is specified, it is taken to be the maximum
+	 intensity value, and the RGB values are scaled to lie between 0 
+	 and maxval.  If no value is specified for maxval, it defaults to 1.
+
+	The return value of hsv2rgb() has a type of FLOAT.
+
+?functions histogram()
+?histogram()
+
+ histogram() - Generate a histogram
+
+ histogram(object=VAL, compress=BOOL, normalize=BOOL);
+
+?functions basis()
+?basis()
+ basis() - generate square transform basis function
+
+ basis(object=VAL, type=STRING, size=INT)
+
+	type: hadamard
+	      haar
+
+?functions mxm()
+?mxm()
+ mxm() - compute matrix multiplication
+
+ mxm(ob1, ob2) 
+
+?functions gnoise()
+?gnoise()
+ gnoise() - Generate a cube of mutually exclusive planes of noise.
+
+ gnoise([x=INT],[y=INT],[z=INT],[seed=INT])
+
+    The gnoise() function generates Z mutually exclusive planes of
+    uniformly distributed noise.  For each X,Y location, exactly 1 pixel
+    along the Z axis is set to a value of 1, producing images of 
+    random noise with a frequency of 1/Z.  The value seed can be specified
+    to seed the random number generator, to produce reproducable random
+    numbers.  Any dimension not specified defaults to a value of 1.
+
+ See Also:
+    random(), rnoise()
+
+?functions rnoise()
+?rnoise()
+ rnoise() - Generate a cube of pseudo-random, normally distributed, noise.
+
+ rnoise([x=INT],[y=INT],[z=INT],[seed=INT])
+
+    The rnoise() function generates a cube of the specified dimensions,
+    of normally distributed random values.  The normal distribution has
+    a standard deviation of 1.0.  A seed value can be specified to seed
+    the random number generator, to produce reproducable random numbers.
+    Any dimension not specified defaults to a value of 1.
+
+ See Also:
+    random(), gnoise()
+
+?functions random()
+?random()
+ random() - Generate pseudo-random numbers
+
+ random([x=INT],[y=INT],[z=INT],[seed=INT],[type=STRING)
+
+    The random() function generates random numbers, with a distribution
+    specified by the type parameter.
+
+    The possible values for type, and the types of numbers generates are:
+
+    type        distribution    type    interval
+    -------     ------------    ----    ------------
+    uniform     uniform         float   [0.0, 1.0)          # default value
+    drand48     uniform         float   [0.0, 1.0)
+    mrand48     uniform         int     [-2^31, 2^31)
+    normal      gaussian        float   *
+    gauss       gaussian        float   *
+    rand        simple          int     [0, (2^15)-1]
+    random      simple          int     [0, (2**31)-1]
+
+    The gaussian distribution has a mean of 0.0, and a standard deviation
+    of 1.0.
+
+    The value seed can be specified to seed any of the random number 
+    generators, to produce reproducable random numbers.  Any dimension 
+    not specified defaults to a value of 1.
+
+    Some of these distributions may not be available on all systems.
+
+ See Also:
+    rnoise(), gnoise()
+
+?functions minvert()
+?minvert()
+ minvert() - Invert a square matrix
+ 
+ minvert(VAR)
+ 
+    The minvert() function inverts a square matrix using LU decomposition.
+    The matrix must be square in the X and Y dimensions and the size of the
+    Z dimension must be 1.
+
+    The results from minvert() are always of type DOUBLE
+
+?functions dct()
+?dct()
+ dct() - Compute dct along specified axis
+
+ dct(object=VAL, axis=[x][y][z], dir=[1|-1])
+
+     The dct() function computes the forward or inverse discrete cosine transform 
+	 of values along one or more axis.  If no axis is specified, then all the 
+	 computation is performed along all three axis.  If the direction is not
+	 specified, a forward dct is assumed.
+	 
+	 The dct() function always returns a DOUBLE.
+
+ Example:
+
+    This example computes the dct along the X and Y axis, producing
+    an array with the same Z dimension of the input data.
+
+    dv> a = dct(object=data, axis=xy)
+
+?functions entropy()
+?entrpy()
+ entrpy() - Compute entrpy of object
+
+ entropy(object=VAL)
+
+     The entropy() function computes the entropy in an object,
+	 as sum(p * log2(p)), where p is the probability of each symbol
+	 occuring.  This is determined by sorting the values in the object
+	 and then counting them.
+
+	 The entropy() function always returns a FLOAT.
+
+?functions Matrix
+Davinci supports the following matrix functions:
+
+	mxm()     - matrix multiply
+	minvert() - matrix inversion
