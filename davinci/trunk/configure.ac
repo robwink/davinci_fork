@@ -42,6 +42,11 @@ dnl VICAR widget (default = yes).
 AC_ARG_ENABLE([vicar],
 	AC_HELP_STRING([--disable-vicar], [remove VICAR widget support.]))
 
+dnl libisis for ISIS cube writer (default = yes)
+AC_ARG_ENABLE([libisis],
+    AC_HELP_STRING([--disable-libisis],
+                   [disable use of libisis and hence ISIS cube writer.]))
+
 dnl Add X paths.
 AC_PATH_XTRA
 CFLAGS="$CFLAGS $X_CFLAGS"
@@ -111,6 +116,36 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(mkdir putenv select strdup strndup strspn strstr strtod strtol strtoul drand48)
 AC_CHECK_FUNCS(index rindex getdtablesize getwd usleep strtoul basename)
 AC_CHECK_FUNCS(dirname bcopy bcmp bzero)
+
+dnl Get path to libisis+includes from system env if ISISR is defined
+if test "x$ISISR" != "x"; then
+	isis_runtime="$ISISR"
+fi
+
+dnl If the user specified a path to the enable-libisis, use that
+if test "x$enable_libisis" != "xno" -a "x$enable_libisis" != "xyes" -a "x$enable_libisis" != "x"; then
+	isis_runtime=$enable_libisis
+fi
+
+dnl If libisis is supposed to be used, then check for its existance
+if test "x$enable_libisis" != "xno"; then
+
+	dnl Add library path to libisis
+	CPPFLAGS="$CPPFLAGS -I$isis_runtime/inc"
+	LDFLAGS="$LDFLAGS -L$isis_runtime/lib"
+
+	dnl Check for existance of libisis
+	have_libisis=yes
+	AC_CHECK_LIB(isis, q_open,
+				 [LIBS="$LIBS -lisis -lisisbind -lisisgen -lg2c"],
+				 [have_libisis=no],
+				 [-lisisbind -lisisgen -lg2c])
+	AC_CHECK_HEADERS(q.h, [/bin/true], [have_libisis=no])
+
+	if test "x$have_libisis" = "xyes"; then
+		AC_DEFINE(HAVE_LIBISIS, 1, [ headers and libraries for libisis ])
+	fi
+fi
 
 dnl Check for plplot library.
 dnl FIX: why two distinct defines here?
@@ -237,3 +272,4 @@ PRINT_YES_NO "           Motif" "$have_motif"
 PRINT_YES_NO "            HDF5" "$have_libhdf"
 PRINT_YES_NO "  Module Support" "$build_module_support"
 PRINT_YES_NO "GUI/Vicar Module" "$local_vicar"
+PRINT_YES_NO "         libisis" "$have_libisis"

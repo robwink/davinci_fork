@@ -5,7 +5,7 @@
  **
  ** list - a dynamic array of pointers
  **
- ** LIST *make_list(count, ptr)        - make a new list using existing data
+ ** LIST *make_list_for_data(count, ptr)        - make a new list using existing data
  ** LIST *new_list()                   - make a new empty list
  ** void  list_add(list, ptr)          - add data to an existing list
  ** int   list_count(list)             - return number of items in list
@@ -36,7 +36,7 @@ void **list_data(LIST * list);
 void *list_add(LIST * list, void *ptr);
 
 LIST *
-make_list(int count, void **ptr)
+make_list_for_data(int count, void **ptr)
 {
     LIST *New = calloc(1, sizeof(LIST));
 
@@ -55,7 +55,7 @@ make_list(int count, void **ptr)
 LIST *
 new_list()
 {
-    return (make_list(0, NULL));
+    return (make_list_for_data(0, NULL));
 }
 
 void *

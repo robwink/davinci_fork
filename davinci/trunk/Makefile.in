@@ -173,7 +173,7 @@ noinst_LIBRARIES = $(MY_MODULES_LIB)
 
 libmodsupp_a_SOURCES = ff_modules.c module_io.c io_loadmod.c
 
-davinci_LDADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULES_LIB)
+davinci_LDADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULES_LIB) 
 davinci_LDFLAGS = -export-dynamic
 
 davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \

@@ -35,7 +35,7 @@ struct _list {
 void *list_add(LIST *list, void *ptr);
 int list_count(LIST *list);
 void **list_data(LIST *list);
-LIST *make_list(int count, void **ptr);
+LIST *make_list_for_data(int count, void **ptr);
 LIST *new_list();
 void list_merge(LIST *l1, LIST *l2);
 
