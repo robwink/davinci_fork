@@ -45,7 +45,13 @@ ff_cluster(vfuncptr func, Var * arg)
 	make_args(&ac, &av, func, arg);
 	if (parse_args(ac, av, alist)) return(NULL);
 
-	if (obj == NULL || GetBands(V_SIZE(obj), V_ORG(obj)) != 1) {
+	if (obj == NULL) {
+        parse_error("%s: No object specified.", func->name);
+        return (NULL);
+	}
+
+	i = GetBands(V_SIZE(obj), V_ORG(obj));
+	if (i != 1) {
         parse_error("%s: Object must be an image of depth 1", func->name);
         return (NULL);
     }
@@ -75,7 +81,7 @@ ff_cluster(vfuncptr func, Var * arg)
 Var *
 ff_ccount(vfuncptr func, Var * arg)
 {
-    Var *v, *e, *obj;
+    Var *v, *e, *obj = NULL;
     int threshold = 2, ignore = 1, i, dsize;
     int top = 0, bottom = 0, value = 0;
 
@@ -90,7 +96,13 @@ ff_ccount(vfuncptr func, Var * arg)
 	make_args(&ac, &av, func, arg);
 	if (parse_args(ac, av, alist)) return(NULL);
 
-    if (obj == NULL || GetBands(V_SIZE(v), V_ORG(v)) != 1) {
+	if (obj == NULL) {
+        parse_error("%s: No object specified.", func->name);
+        return (NULL);
+	}
+
+	i = GetBands(V_SIZE(obj), V_ORG(obj));
+	if (i != 1) {
         parse_error("%s: Object must be an image of depth 1", func->name);
         return (NULL);
     }
@@ -105,7 +117,7 @@ ff_ccount(vfuncptr func, Var * arg)
             top++;
     }
 
-	newVal(BSQ, 3, 1, 1, FLOAT, calloc(3, sizeof(float)));
+	v = newVal(BSQ, 3, 1, 1, FLOAT, calloc(3, sizeof(float)));
 
     if (bottom == 0) {
         ((float *) V_DATA(v))[0] = (float) 0.0;
