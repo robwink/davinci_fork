@@ -170,7 +170,7 @@ Darray_remove(Darray *d, int i)
 **        -1 on error
 */
 int
-Darray_get(Darray *d, int i, void **ret)
+Darray_get(const Darray *d, const int i, void **ret)
 {
     if (d == NULL) return(-1);
         

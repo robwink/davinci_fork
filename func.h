@@ -402,7 +402,7 @@ Var * ff_delete(vfuncptr func, Var *arg);
 
 /* internal functions for structures */
 Var *new_struct(int ac);
-void add_struct(Var *s, char *name, Var *exp);
+void add_struct(Var *s, const char *name, Var *exp);
 void free_struct(Var *);
 
 /* internal functions for text arrays */
