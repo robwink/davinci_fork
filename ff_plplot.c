@@ -23,21 +23,20 @@ ff_popen(vfuncptr func, Var * arg)
 	int r,g,b;
 	int c1,c2;
 
-        int ac;
-        Var **av;
-        Alist alist[9];
-        alist[0] = make_alist("row",		INT,	NULL,   &Row);
-        alist[1] = make_alist("col",		INT,	NULL,	&Col);
-        alist[2] = make_alist("xpos",		INT, 	NULL,	&Xpos);
-        alist[3] = make_alist("ypos",		INT, 	NULL,	&Ypos);
-        alist[4] = make_alist("xpixels",		INT, 	NULL,	&Xpixels);
-        alist[5] = make_alist("ypixels",		INT, 	NULL,	&Ypixels);
-        alist[6] = make_alist("title",		ID_STRING, 	NULL,	&Title);
-        alist[7] = make_alist("portrait",		INT, 	NULL,	&Portrait);
-        alist[8].name = NULL;
+	int ac;
+	Var **av;
+	Alist alist[9];
+	alist[0] = make_alist("row",		INT,	NULL,   &Row);
+	alist[1] = make_alist("col",		INT,	NULL,	&Col);
+	alist[2] = make_alist("xpos",		INT, 	NULL,	&Xpos);
+	alist[3] = make_alist("ypos",		INT, 	NULL,	&Ypos);
+	alist[4] = make_alist("xpixels",		INT, 	NULL,	&Xpixels);
+	alist[5] = make_alist("ypixels",		INT, 	NULL,	&Ypixels);
+	alist[6] = make_alist("title",		ID_STRING, 	NULL,	&Title);
+	alist[7] = make_alist("portrait",		INT, 	NULL,	&Portrait);
+	alist[8].name = NULL;
 
-        make_args(&ac, &av, func, arg);
-        if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (Title==NULL){
 		Title=strdup("Plot Window");
@@ -85,17 +84,15 @@ ff_pprint(vfuncptr func, Var * arg)
 
 	char *output[]={"ps","psc","pbm",NULL};
 
+	int ac;
+	Var **av;
+	Alist alist[4];
+	alist[0] = make_alist("id",		INT,	NULL,   &Stream);
+	alist[1] = make_alist("title",		ID_STRING, 	NULL,	&Title);
+	alist[2] = make_alist("type",		ID_ENUM, 	output,	&Output);
+	alist[3].name = NULL;
 
-        int ac;
-        Var **av;
-        Alist alist[4];
-        alist[0] = make_alist("id",		INT,	NULL,   &Stream);
-        alist[1] = make_alist("title",		ID_STRING, 	NULL,	&Title);
-        alist[2] = make_alist("type",		ID_ENUM, 	output,	&Output);
-        alist[3].name = NULL;
-
-        make_args(&ac, &av, func, arg);
-        if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (Title==NULL){
 		Title=strdup("MyPlot.ps");
@@ -185,8 +182,8 @@ ff_pplot(vfuncptr func, Var * arg)
         alist[9] = make_alist("ylow",		ID_VAL, 	NULL,	&pmin);
         alist[10].name = NULL;
 
-        make_args(&ac, &av, func, arg);
-        if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
         if (obj == NULL) {
                 parse_error("%s: No object specified\n", func->name);
                 return(NULL);
@@ -396,8 +393,7 @@ ff_ptext(vfuncptr func, Var * arg)
         alist[7] = make_alist("world",       INT,		NULL,   &world);
         alist[8].name = NULL;
 
-        make_args(&ac, &av, func, arg);
-        if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
         if (text==NULL) {
 		return(NULL);
@@ -620,8 +616,7 @@ ff_pline(vfuncptr func, Var * arg)
         alist[4] = make_alist("color",       INT,		NULL,   &Color);
         alist[5].name = NULL;
 
-        make_args(&ac, &av, func, arg);
-        if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
         if (X==NULL || Y==NULL){
 		return(NULL);
@@ -686,8 +681,7 @@ ff_pbox(vfuncptr func, Var * arg)
         alist[7] = make_alist("color",       INT,		NULL,   &Color);
         alist[8].name = NULL;
 
-        make_args(&ac, &av, func, arg);
-        if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	strcpy(xBoxString,"bcst");
 	strcpy(yBoxString,"bcstv");
@@ -760,8 +754,7 @@ ff_pzoom(vfuncptr func, Var * arg)
 	alist[7] = make_alist("reset",		INT, 	NULL,	&Reset);
 	alist[8].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (X!=NULL){
 		x_hi=extract_float(X,1);

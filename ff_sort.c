@@ -50,8 +50,7 @@ ff_sort(vfuncptr func, Var * arg)
 	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &value);
 	alist[1].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (value == NULL)  {
 		return(NULL);

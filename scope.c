@@ -122,8 +122,8 @@ dd_put_argv(Scope *s, Var *v)
     dd->count++;
 
     /**
-    ** subtract 1 for $0
-    **/
+     ** subtract 1 for $0
+     **/
     V_INT(dd->value[0]) = dd->count - 1;
 
     return(dd->count-1);
@@ -147,8 +147,8 @@ int
 dd_argc(Scope *s)
 {
     /**
-    ** subtract 1 for $0
-    **/
+     ** subtract 1 for $0
+     **/
     return(s->args->count - 1);
 }
 
@@ -171,8 +171,8 @@ new_dd()
     d->count = 1;
 
     /**
-    ** Make a var for $argc
-    **/
+     ** Make a var for $argc
+     **/
     d->value[0] = (Var *)calloc(1, sizeof(Var));
     make_sym(d->value[0], INT, "0");
     V_TYPE(d->value[0]) = ID_VAL;
@@ -203,7 +203,7 @@ free_scope(Scope *s)
        for (i = 0 ; i < s->dd->count ; i++) {
        free(s->dd->name);
        }
-       */
+    */
 
     if (s->dd->value) free(s->dd->value);
     if (s->dd) free(s->dd);
@@ -261,6 +261,13 @@ clean_table(Symtable *s)
     }
 }
 
+void
+clean_tmp(Scope *scope)
+{
+    if (scope->tmp) Darray_free(scope->tmp, free_var);
+    scope->tmp = NULL;
+}
+    
 /**
  ** Clean the stack and tmptab of the current scope
  **/
@@ -269,7 +276,8 @@ void
 cleanup(Scope *scope)
 {
     clean_stack(scope);
-    clean_table(scope->tmp);
+    clean_tmp(scope);
+    /* clean_table(scope->tmp); */
     scope->tmp = NULL;
 }
 
@@ -279,6 +287,7 @@ cleanup(Scope *scope)
  ** allocate memory in the scope tmp list
  **/
 
+#if 0
 Var *
 mem_malloc(void)
 {
@@ -339,7 +348,64 @@ mem_claim(Var *ptr)
     }
     return(NULL);
 }
+#endif
 
+Var *
+mem_malloc(void)
+{
+    Scope *scope = scope_tos();
+    Var *v = (Var *)calloc(1, sizeof(Var));
+
+	if (scope->tmp == NULL) scope->tmp = Darray_create(0);
+
+    Darray_add(scope->tmp, v);
+
+    return(v);
+}
+
+Var *
+mem_claim_struct(Var *v)
+{
+    int i;
+    int count;
+    Var *data;
+
+    if (V_TYPE(v) == ID_STRUCT) {
+        count = get_struct_count(v);
+        for (i = 0 ; i < count ; i++) {
+            get_struct_element(v, i, NULL, &data);
+            mem_claim(data);
+        }
+    }
+    return(v);
+}
+
+/**
+ ** claim memory in the scope tmp list, so it doesn't get free'd
+ ** return NULL if it isn't here.
+ **/
+Var *
+mem_claim(Var *ptr)
+{
+    Scope *scope = scope_tos();
+    Var *v;
+    int count;
+	int i;
+
+    if (scope->tmp == NULL) return(NULL);
+    if ((count = Darray_count(scope->tmp)) == 0) return(NULL);
+
+    for (i = count-1 ; i >= 0 ; i--) {
+        if (Darray_get(scope->tmp, i, (void **)&v) == 1 && v == ptr) {
+            /*
+            ** This is it.
+            */
+            Darray_replace(scope->tmp, i, NULL, (void **)&v);
+            return(mem_claim_struct(v));
+        }
+    }
+    return(NULL);
+}
 
 /**
  ** free the scope tmp list
@@ -348,15 +414,7 @@ mem_claim(Var *ptr)
 void
 mem_free(Scope *scope)
 {
-    Symtable *sym, *tmp;
-
-    sym = scope->tmp;
-    while(sym != NULL)  {
-        tmp = sym;
-        sym = sym->next;
-        free_var(tmp->value);
-        free(tmp);
-    }
+    if (scope->tmp) Darray_free(scope->tmp, free_var);
 }
 
 
@@ -380,7 +438,7 @@ clean_scope(Scope *scope)
            for (i = 1 ; i< scope->dd->count ; i++) {
            free(scope->dd->name[i]);
            }
-           */
+        */
         if (scope->dd->name) free(scope->dd->name);
         free(scope->dd);
     }
@@ -391,7 +449,8 @@ clean_scope(Scope *scope)
         free(scope->args);
     }
     clean_stack(scope);
-    clean_table(scope->tmp);
+    clean_tmp(scope);
+/*    clean_table(scope->tmp); */
     scope->tmp = NULL;
 
     clean_table(scope->symtab);

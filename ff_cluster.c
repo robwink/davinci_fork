@@ -42,8 +42,7 @@ ff_cluster(vfuncptr func, Var * arg)
 	alist[2] = make_alist( "threshold", INT,    NULL,     &threshold);
 	alist[3].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
         parse_error("%s: No object specified.", func->name);
@@ -93,8 +92,7 @@ ff_ccount(vfuncptr func, Var * arg)
 	alist[2] = make_alist( "ignore",    INT,    NULL,     &ignore);
 	alist[3].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
         parse_error("%s: No object specified.", func->name);

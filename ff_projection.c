@@ -69,8 +69,7 @@ Var *ff_projection(vfuncptr func, Var * arg)
         alist[6].name = NULL;
 
 
-        make_args(&ac, &av, func, arg);
-        if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
         if (obj == NULL) {
                 parse_error("%s: No object specified\n", func->name);

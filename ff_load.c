@@ -13,6 +13,7 @@ void
 init_iheader(struct _iheader *h)
 {
 	int i;
+	memset(h, '\0', sizeof(*h));
 	for (i = 0 ; i < 3 ; i++) {
 		h->s_lo[i] = -1;
 		h->s_hi[i] = -1;
@@ -82,8 +83,7 @@ ff_raw(vfuncptr func, Var * arg)
 	alist[2] = make_alist( "col", INT,NULL,&Col);
 	alist[3].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-        if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
         if (filename == NULL) {
         	parse_error("No filename specified to load()");
@@ -144,8 +144,7 @@ ff_load(vfuncptr func, Var * arg)
 
 	init_iheader(&h);
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (filename == NULL) {
         parse_error("No filename specified to load()");

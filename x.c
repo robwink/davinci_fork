@@ -220,11 +220,9 @@ ff_xrt3d(vfuncptr func, Var * arg)
     Alist alist[3];
     alist[0] = make_alist("obj",    ID_VAL,     NULL,     &obj);
     alist[1] = make_alist("new",    INT,     NULL,     &new_window);
-
     alist[2].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (obj == NULL)  {
         parse_error("No argument specified: %s(...obj=...)", av[0]);

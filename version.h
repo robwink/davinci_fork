@@ -1,7 +1,14 @@
-char *version = "@(#) daVinci Version #0.62b";
+char *version = "@(#) daVinci Version #0.63";
 #include "build.h"
 
 /*
+Version 0.63: Tue Jan  9 17:47:46 MST 2001
+	* Found memory loss bug in make_args/parse_args.
+	* Above bug found AFTER converting tmp table to Darray
+
+Version 0.62c: Wed Dec  6 16:50:32 MST 2000
+	* yet another bug in detached ISIS labels
+
 Version 0.62b: Mon Oct 23 17:21:59 MST 2000
 	* ff_histogram only extracted ints
 

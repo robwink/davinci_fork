@@ -327,6 +327,7 @@ ff_xplot(vfuncptr func, Var *arg)
 				if (Xaxis==NULL){
 					parse_error("Variable not found: %s", 
 						V_NAME(V_KEYVAL(av[i])));
+					free(av);
 					return(NULL);
 				}
 			}
@@ -347,6 +348,7 @@ ff_xplot(vfuncptr func, Var *arg)
 
 			else {
 				parse_error("Illegal keyword %s\n",av[i]->name);
+				free(av);
 				return(NULL);
 			}
 			av[i]=NULL;
@@ -367,6 +369,7 @@ ff_xplot(vfuncptr func, Var *arg)
 			if (V_TYPE(s) == ID_UNK){
 				if ((s=eval(av[idx]))==NULL){
 					parse_error("Unknown Variable\n");
+					free(av);
 					return(NULL);
 				}
 			}
@@ -377,6 +380,7 @@ ff_xplot(vfuncptr func, Var *arg)
 			Find_Axis(&axs,s);
 
 			if(axs=='\0')
+				free(av);
 				return(NULL); 	
 
 			Axis=strdup(&axs);
@@ -437,6 +441,7 @@ ff_xplot(vfuncptr func, Var *arg)
 			if (V_TYPE(s) == ID_UNK){
 				if ((s=eval(av[idx]))==NULL){
 					parse_error("Unknown Variable\n");
+					free(av);
 					return(NULL);
 				}
 			}
@@ -464,11 +469,13 @@ ff_xplot(vfuncptr func, Var *arg)
 
 					if (XOrd[Mode[0]]!=Ord[Mode[0]] ){
 						parse_error("Given X-Axis doesn't agree with given data set");
+							free(av);
          					return(NULL);
       			}
 
   	    			else if ((XOrd[1]!=1 && XOrd[2]!=1) && (XOrd[1]!=Ord[Mode[1]] && XOrd[2]!=Ord[Mode[2]])){
          			parse_error("Given X-Axis doesn't agree with given data set");
+					free(av);
          			return(NULL);
       			}
 				}
@@ -545,5 +552,6 @@ ff_xplot(vfuncptr func, Var *arg)
 	}
     send_to_plot(buf);
 #endif
+	free(av);
     return(NULL);
 }

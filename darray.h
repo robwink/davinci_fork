@@ -1,3 +1,5 @@
+#ifndef _DARRAY_H
+
 #include "avl.h"
 
 typedef struct _Darray {
@@ -24,3 +26,5 @@ int Narray_replace(Narray *a, int i, void *new, void **old);
 int Narray_get(Narray *a, int i, char **key, void **data);
 int Narray_count(Narray *a);
 void Narray_free(Narray *a, void (*fptr)());
+
+#endif

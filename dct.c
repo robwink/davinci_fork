@@ -54,8 +54,7 @@ ff_dct(vfuncptr func, Var * arg)
 	alist[2] = make_alist( "dir",    ID_VAL,    NULL,        &dobj);
 	alist[3].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
 		parse_error("%s: No object specified\n", func->name);

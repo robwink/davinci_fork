@@ -1150,8 +1150,7 @@ ff_loadvan(
     alist[1] = make_alist( "delim",  ID_STRING,    NULL,        &delim_arg);
     alist[2].name = NULL;
 
-    make_args(&ac, &av, func, args);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, args, alist) == 0) return(NULL);
 
     if (file_arg == NULL){
         parse_error("%s(): \"%s\" must be specified.\n",

@@ -37,7 +37,7 @@ struct tag_Scope {
 	Dictionary *dd;		/* named variable data dictionary */
 	Dictionary *args;	/* number arguments data dictionary */
 	Symtable *symtab;		/* local symbol table. */
-	Symtable *tmp;		/* tmp memory list */
+	Darray *tmp;		/* tmp memory list */
 	Stack *stack;		/* local stack */
 	UFUNC *ufunc;		/* function pointer */
 
