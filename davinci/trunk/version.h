@@ -1,6 +1,10 @@
-char *version = "@(#) daVinci Version #0.56c";
+char *version = "@(#) daVinci Version #0.56d";
 
 /*
+Version 0.56d: Mon Apr  3 18:51:48 MST 2000
+	* Bug: file pointer in read_lines() wasn't getting closed.
+	* Bug: signal handler for SIG_PIPE was disabled
+
 Version 0.56c: Sat Apr  1 19:28:44 MST 2000
 	* bug in array.c.  Caused a scrolling effect in array replacement.
 
