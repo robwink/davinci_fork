@@ -6231,7 +6231,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_X11_XOpenDisplay" >&5
 echo "${ECHO_T}$ac_cv_lib_X11_XOpenDisplay" >&6
 if test $ac_cv_lib_X11_XOpenDisplay = yes; then
-  LIBS=$LIBS -lX11
+  LIBS="$LIBS -lX11"
 else
   have_xt=no
 fi
@@ -6291,7 +6291,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_Xt_XtToolkitInitialize" >&5
 echo "${ECHO_T}$ac_cv_lib_Xt_XtToolkitInitialize" >&6
 if test $ac_cv_lib_Xt_XtToolkitInitialize = yes; then
-  LIBS=$LIBS -lXt
+  LIBS="$LIBS -lXt"
 else
   have_xt=no
 fi
