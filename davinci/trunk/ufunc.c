@@ -164,7 +164,7 @@ load_function(char *filename)
              ** Duplicate the string for cutting on.
              **/
             if (p != str) {
-                f->argbuf = strndup((const char *)p, str-p);
+                f->argbuf = strndup((char *)p, str-p);
                 split_string(f->argbuf, &f->nargs, &f->args, ",");
             }
             /**
