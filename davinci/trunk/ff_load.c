@@ -5,6 +5,31 @@
 
 
 Var *
+ff_load_many(vfuncptr func, Var * arg)
+{
+	int i;
+	char *filename;
+	Var *s, *t;
+	if (arg == NULL || V_TYPE(arg) != ID_TEXT) {
+        parse_error("No filenames specified to %s()", func->name);
+        return (NULL);
+	}
+
+	s = new_struct(V_TEXT(arg).Row);
+	for (i = 0 ; i < V_TEXT(arg).Row ; i++) {
+		filename = strdup(V_TEXT(arg).text[i]);
+		t = ff_load(func, newString(filename));
+		if (t) add_struct(s, filename, t);
+	}
+	if (get_struct_count(s)) {
+		return(s);
+	}  else {
+		return(NULL);
+	}
+}
+
+
+Var *
 ff_load(vfuncptr func, Var * arg)
 {
     int record = -1;
@@ -13,12 +38,10 @@ ff_load(vfuncptr func, Var * arg)
     char *filename = NULL;
     char *p, *fname;
 	struct iom_iheader h;
+	Var *fvar = NULL;
 
-
-	int ac;
-	Var **av;
 	Alist alist[12];
-	alist[0] = make_alist( "filename",  ID_STRING,  NULL,     &filename);
+	alist[0] = make_alist( "filename",  ID_UNK,  NULL,     &fvar);
 	alist[1] = make_alist( "record",    INT,    	NULL,     &record);
 	alist[2] = make_alist( "xlow",      INT,    	NULL,     &h.s_lo[0]);
 	alist[3] = make_alist( "xhigh",     INT,    	NULL,     &h.s_hi[0]);
@@ -31,12 +54,19 @@ ff_load(vfuncptr func, Var * arg)
 	alist[10] = make_alist( "zskip",     INT,    	NULL,     &h.s_skip[2]);
 	alist[11].name = NULL;
 
-	iom_init_iheader(&h);
-
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (filename == NULL) {
+	if (fvar == NULL) {
         parse_error("No filename specified to load()");
+        return (NULL);
+	}
+	if (V_TYPE(fvar) == ID_TEXT) {
+		return(ff_load_many(func, fvar));
+	} else if (V_TYPE(fvar) == ID_STRING) {
+		filename = V_STRING(fvar);
+	} else {
+        parse_error("Illegal argument to function %s(%s), expected STRING", 
+			func->name, "filename");
         return (NULL);
 	}
 
@@ -56,6 +86,7 @@ ff_load(vfuncptr func, Var * arg)
         }
     }
 
+	iom_init_iheader(&h);
 	if (record != -1) h.s_lo[2] = h.s_hi[2] = record;
 
     if (fname && (fp = fopen(fname, "rb")) != NULL) {

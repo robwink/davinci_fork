@@ -22,6 +22,10 @@ V_func(char *name, Var * arg)
 {
     vfuncptr f;
     UFUNC *uf, *locate_ufunc(char *);
+#ifdef INCLUDE_API
+	APIDEFS *api;
+#endif
+
 
     /**
     ** Find and call the named function or its handler
