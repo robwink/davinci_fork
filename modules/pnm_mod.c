@@ -11,12 +11,14 @@ static Var *ff_pnmcut(vfuncptr f, Var *args);
 static Var *ff_pnmscale(vfuncptr f, Var *args);
 static Var *ff_pnmcrop(vfuncptr f, Var *args);
 static Var *ff_pnmpad(vfuncptr f, Var *args);
+static Var *ff_destripe(vfuncptr f, Var *args);
 
 // Main Algorithms - None static so is reusable
 Var *pnmcut(Var* obj, int iLeft, int iTop, int iWidth, int iHeight);
 Var *pnmscale(Var* obj, int xsize, int ysize, float xscale, float yscale); 
 Var *pnmcrop(Var *obj, int left, int right, int top, int bottom);
 Var *pnmpad(Var *obj, int color, int left, int right, int top, int bottom);
+Var *destripe(Var *obj, int detectors);
 
 // Internal support functions - ARE ALL STATIC
 static int  cut_convert_and_check_ranges(int *iLeft, int *iTop, 
@@ -29,23 +31,27 @@ static int map_image(int x, int y, int z, int left, int top,
 		     Var* obj,Var* output, void* data);
 static int size_object(Var *output, int nx, int ny, int z);
 static double GetPixel(Var *obj, int width, int height, float orgX, float orgY, int z);
+static void fix_stripe(void* data, Var* obj, 
+		       int x, int k1, int k2, int k3, int detectors);
 
 // Usage functions
 static void print_cut_usage(void);
 static void print_scale_usage(void);
 static void print_crop_usage(void);
 static void print_pad_usage(void);
+static void print_destripe_usage(void);
 
 // Initialization
 static dvModuleFuncDesc exported_list[] = {
     {"cut", (void *)ff_pnmcut},
     {"scale", (void *)ff_pnmscale},
     {"crop", (void *)ff_pnmcrop},
-    {"pad", (void *)ff_pnmpad} /*,*/
+    {"pad", (void *)ff_pnmpad}, 
+    {"destripe", (void *)ff_destripe} /*,*/
 };
 
 static dvModuleInitStuff is = {
-    exported_list, 4,
+    exported_list, 5,
     NULL, 0
 };
 
@@ -275,6 +281,41 @@ ff_pnmpad(vfuncptr f, Var *args)
     return(pnmpad(obj,pColor,pLeft,pRight,pTop,pBottom));
 }
 
+// DESTRIPE - Remove sensor miscalibration lines
+//
+// INPUTS:  OBJECT     - The image (matrix) to be padded 
+//          DETECTORS  - See print_destripe_usage below
+//
+// RETURNS: The destriped image
+// 
+static Var *
+ff_destripe(vfuncptr f, Var *args)
+{
+    Var *obj = NULL;
+
+    int detectors = 0;
+
+    Alist alist[3];
+    alist[0] = make_alist("object", ID_VAL, NULL, &obj);
+    alist[1] = make_alist("detectors", INT, NULL, &detectors);
+    alist[2].name = NULL;
+
+    if (0 == parse_args(f, args, alist) || NULL == obj)
+    {
+        print_destripe_usage();
+	return(NULL);
+    }
+
+    // Check arguments
+    if (detectors <= 0 || obj == NULL)
+    {
+	    print_detectors_usage();
+	    return(NULL);
+    }
+
+    return(destripe(obj,detectors));
+}
+
 /////////////////////////////////////////////////////////////////
 //       SECTION TWO - MAIN ALGORITHMS CALLED INTERNALLY       //
 /////////////////////////////////////////////////////////////////
@@ -481,6 +522,67 @@ Var *pnmpad(Var *obj, int color, int left, int right, int top, int bottom)
     V_DATA(output) = data;
 
     return(output);
+}
+
+Var *destripe(Var *obj, int detectors)
+{
+    int i  = 0;
+    int j  = 0;
+    int k  = 0;
+    int k1 = 0;
+    int k2 = 0;
+    int k3 = 0;
+    int x = GetX(obj);
+    int y = GetY(obj);
+    int z = GetZ(obj);
+
+    void* data = NULL;
+    Var* output = newVar();
+
+    V_TYPE(output)    = V_TYPE(obj);   
+    V_DSIZE(output)   = (x * y * z);
+    V_ORG(output)     = V_ORG(obj);
+    V_FORMAT(output)  = V_FORMAT(obj);
+    V_DATA(output)    = calloc(NBYTES(V_FORMAT(obj)), (x * y * z) ); 
+    data              = calloc(NBYTES(V_FORMAT(obj)), (x * y * z) );
+
+    if (!size_object(output, x, y, z))
+    	    return(NULL);
+
+    // Loop through all X (horizontal)
+    // If we're on a detector line, go through all Y / Z.
+    // For each pixel, take the average of the lines either side.
+    for (i = 0; i < x; i++)
+    {
+	    for (j = 0; j < y; j++)
+	    {
+		    for (k = 0; k < z; k++)
+		    {
+		        k1 = cpos(i,j,k, obj);
+
+			// Get pixels either side of target
+			// If 'side' is not possible (e.g. image
+			// edge) get the other side just so average
+			// works out reasonable.
+			if (i > 0)
+				k2 = cpos((i-1),j,k,obj);
+			else
+				k2 = cpos((i+1),j,k,obj);
+
+			if (i < (x-1))
+				k3 = cpos((i+1),j,k,obj);
+			else
+				k3 = cpos((i-1),j,k,obj);
+		
+			fix_stripe(data,obj,i,k1,k2,k3,detectors);
+       		     }
+	    }
+    }
+
+    free(V_DATA(output));
+    V_DATA(output) = data;
+
+    return output;
 }
 
 /////////////////////////////////////////////////////////////////
@@ -749,6 +851,73 @@ static double GetPixel(Var *obj, int width, int height, float orgX, float orgY, 
     return color;
 }
 
+static void fix_stripe(void* data, Var* obj, 
+		       int x, int k1, int k2, int k3, int detectors)
+{
+	// One based
+	// If we're on an error (detector) line, do the whole averaging thing
+	// Otherwise, just take a straight copy
+	if ((x+1) % detectors == 0)
+	{
+		switch(V_FORMAT(obj)) {
+			case BYTE: 
+	       		     ((u_char*)data)[k1] = ( 
+				   extract_int(obj,k2) +
+				   extract_int(obj,k3) 
+				                  ) / 2;
+			    break;
+			case SHORT:
+	       		     ((short*)data)[k1] = ( 
+				   extract_int(obj,k2) +
+				   extract_int(obj,k3) 
+				                  ) / 2;
+			    break;
+			case INT:
+	       		     ((int*)data)[k1] = ( 
+				   extract_int(obj,k2) +
+				   extract_int(obj,k3) 
+				                  ) / 2;
+			    break;
+			case FLOAT:
+	       		     ((float*)data)[k1] = ( 
+				   extract_float(obj,k2) +
+				   extract_float(obj,k3) 
+				                  ) / 2;
+			    break;
+			case DOUBLE:
+	       		     ((double*)data)[k1] = ( 
+				   extract_double(obj,k2) +
+				   extract_double(obj,k3) 
+				                  ) / 2;
+				    break;
+	 		default:
+			    break;
+		}
+	}
+	else
+	{
+		switch(V_FORMAT(obj)) {
+			case BYTE: 
+	       		     ((u_char*)data)[k1] = extract_int(obj,k1); 
+			    break;
+			case SHORT:
+	       		     ((short*)data)[k1] = extract_int(obj,k1);
+			    break;
+			case INT:
+	       		     ((int*)data)[k1] = extract_int(obj,k1); 
+			    break;
+			case FLOAT:
+	       		     ((float*)data)[k1] = extract_float(obj,k1); 
+			    break;
+			case DOUBLE:
+	       		     ((double*)data)[k1] = extract_double(obj,k1);
+			    break;
+	 		default:
+			    break;
+		}
+	}
+}
+
 ///////////////////////////////////////////////
 //       SECTION FOUR - USAGE FUNCTIONS      // 
 ///////////////////////////////////////////////
@@ -787,5 +956,20 @@ void print_pad_usage(void)
     printf("Color can be zero (black) or one (white)\n");
     printf("Left/Right/Top and Bottom values dictate the size (in pixels)\n");
     printf("of the border on each side of the image.\n\n");
+}
+
+void print_destripe_usage(void)
+{
+    printf("Usage: destripe(object, detectors)\n\n");
+    printf("Destripe removes periodic scan lines introduced by sensor\n");
+    printf("mis-calibration.  This type of striping is often seen in\n");
+    printf("Landsat MSS data (every 6th line) and Landsat TM data\n");
+    printf("(every 16th line).  This function will calculate the mean\n");
+    printf("of lines either side of the Nth line and add the standard\n");
+    printf("deviation of that mean.\n\n");
+    printf("The number of detectors is the periodicity of the striping\n");
+    printf("(i.e. 6 for MSS and 16 for TM). The algorithm assumes\n");
+    printf("VERTICAL striping - i.e., the data should be in the aquired\n");
+    printf("format (horizontal strips).\n\n");
 }
 
