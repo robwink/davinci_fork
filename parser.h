@@ -81,7 +81,7 @@ struct _tagVstruct {
 
 struct _text {
 	int Row;
-	unsigned char **text;
+	char **text;
 };
 
 

@@ -76,7 +76,7 @@ V_DUP(Var *v)
 		{
 			int i;
 			V_TEXT(r).Row=V_TEXT(v).Row;
-			V_TEXT(r).text=(unsigned char **)calloc(sizeof(unsigned char *),V_TEXT(r).Row);
+			V_TEXT(r).text=(char **)calloc(sizeof(char *),V_TEXT(r).Row);
 			for (i=0;i<V_TEXT(r).Row;i++){
 				V_TEXT(r).text[i]=strdup(V_TEXT(v).text[i]);
 			}

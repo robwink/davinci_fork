@@ -257,13 +257,13 @@ do_key(OBJDESC *ob, KEYWORD* key)
 					}
 					V_TYPE(o)=ID_TEXT;
 					V_TEXT(o).Row=count;
-					V_TEXT(o).text=(unsigned char**)calloc(count,sizeof(char *));
+					V_TEXT(o).text=(char**)calloc(count,sizeof(char *));
 					count=0;
 					start=key->value;
 					stop=strchr(key->value,'\n');
 					while(stop!=NULL){
 						delta=stop-start;
-						V_TEXT(o).text[count]=(unsigned char*)calloc(delta+1,sizeof(char));
+						V_TEXT(o).text[count]=(char*)calloc(delta+1,sizeof(char));
 						memcpy(V_TEXT(o).text[count],start,(delta+1));
 						V_TEXT(o).text[count][delta]='\0';
 						count++;
@@ -272,7 +272,7 @@ do_key(OBJDESC *ob, KEYWORD* key)
 					}
 					delta=strlen(start);
 					if (delta){
-						V_TEXT(o).text[count]=(unsigned char*)calloc(delta+1,
+						V_TEXT(o).text[count]=(char*)calloc(delta+1,
 																					sizeof(char));
 						memcpy(V_TEXT(o).text[count], start, delta);
 						V_TEXT(o).text[count][delta]='\0';
@@ -291,7 +291,7 @@ do_key(OBJDESC *ob, KEYWORD* key)
 						o=newVar();
 						V_TYPE(o)=ID_TEXT;
 						V_TEXT(o).Row=num;
-						V_TEXT(o).text=(unsigned char **)calloc(num,sizeof(char *));
+						V_TEXT(o).text=(char **)calloc(num,sizeof(char *));
 						for (i=0;i<num;i++){
 							V_TEXT(o).text[i]=strdup(stuff[i]);
 						}
@@ -690,7 +690,7 @@ DoScale(FIELD **f,LABEL *label,char *ob)
 			Val=Scale(size,ptr,f[0]);
 			memcpy((Bufs+index),&Val,8);
 			index+=8;
-			ptr+=size;
+			ptr = (unsigned char *)ptr + size;
 		}
 	}
 	f[0]->eformat=IEEE_REAL;
@@ -722,7 +722,7 @@ Set_Col_Var(Var **Data,FIELD **f,LABEL *label,int *size, char **Bufs)
 		case CHARACTER:
 			text=(char **)calloc(label->nrows,sizeof(char *));
 			for (i=0;i<label->nrows;i++){
-				text[i]=(unsigned char *)calloc(size[j]+1,sizeof(char));
+				text[i]=(char *)calloc(size[j]+1,sizeof(char));
 				memcpy(text[i],(Bufs[j]+i*size[j]),size[j]);
 				text[i][size[j]]='\0';
 			}
@@ -765,7 +765,7 @@ Set_Col_Var(Var **Data,FIELD **f,LABEL *label,int *size, char **Bufs)
 				memcpy(num,Bufs[j]+f[j]->size*i,f[j]->size);
 				num[f[j]->size]='\0';
 				inum=atoi(num);
-				memcpy(data+step,&inum,sizeof(int));
+				memcpy((char *)data+step,&inum,sizeof(int));
 				step+=sizeof(int);
 			}
 
@@ -778,7 +778,7 @@ Set_Col_Var(Var **Data,FIELD **f,LABEL *label,int *size, char **Bufs)
 				memcpy(num,Bufs[j]+f[j]->size*i,f[j]->size);
 				num[f[j]->size]='\0';
 				fnum=atof(num);
-				memcpy(data+step,&fnum,sizeof(double));
+				memcpy((char *)data+step,&fnum,sizeof(double));
 				step+=sizeof(double);
 			}
 

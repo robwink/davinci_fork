@@ -19,10 +19,12 @@ int yywrap ( void );
 }
 #endif
 
-struct yy_buffer_state;
-void yy_delete_buffer ( struct yy_buffer_state *b );
-struct yy_buffer_state *yy_scan_string( const char *yy_str );
-void yy_switch_to_buffer ( struct yy_buffer_state *new_buffer);
+#if 0
+typedef struct yy_buffer_state *YY_BUFFER_STATE; 
+void yy_delete_buffer ( YY_BUFFER_STATE );
+YY_BUFFER_STATE yy_scan_string( char *yy_str );
+void yy_switch_to_buffer ( YY_BUFFER_STATE new_buffer);
+#endif
 
 
 
