@@ -59,117 +59,6 @@ locate_file(char *fname)
     return (NULL);
 }
 
-#if 0
-
-Var *
-ff_load2(vfuncptr func, Var * arg)
-{
-    int frec = 0;
-    FILE *fp = NULL;
-    Var *v, *e, *input = NULL;
-    char *filename;
-    char *p, *fname;
-
-    struct keywords kw[] =
-            {
-                {"filename", NULL},
-                {"record", NULL},
-                {NULL, NULL}
-            };
-
-    /**
-     ** Detect file type.
-     **
-     ** It is possible that someone has handed us a specpr record specifier, 
-     ** which includes both the filaname and a record number suffix.  
-     ** We need to try both with and without the record suffix 
-     ** (as it may be otherwise be a valid filename)
-     **/
-
-    if (evaluate_keywords(func, arg, kw)) {
-        return (NULL);
-    }
-    /**
-     ** get filename keyword.  Verify type
-     **/
-    if ((v = get_kw("filename", kw)) == NULL) {
-        /**
-         ** Whats load with no args do? 
-         **/
-        parse_error("No filename specified to load()");
-        return (NULL);
-    }
-    if (V_TYPE(v) != ID_STRING) {
-        e = eval(v);
-        if (e == NULL || V_TYPE(e) != ID_STRING) {
-            parse_error("Illegal argument to load(...filename=...)");
-            return (NULL);
-        }
-        v = e;
-    }
-    filename = V_STRING(v);
-
-    /** 
-     ** If a record was specified as a keyword, get it.
-     **/
-    if ((v = get_kw("record", kw)) != NULL) {
-        if (V_TYPE(v) != ID_VAL) {
-            e = eval(v);
-            if (e == NULL) {
-                parse_error("Illegal argument to load(...record=...)");
-            }
-            v = e;
-        }
-        if (V_TYPE(v) == ID_STRING) {
-            frec = atoi(V_STRING(v));
-        } else {
-            if (V_TYPE(v) != ID_VAL || V_FORMAT(v) != INT || V_DSIZE(v) != 1) {
-                parse_error("Illegal argument to load(...record=...)");
-                return (NULL);
-            }
-            frec = V_INT(v);
-        }
-    }
-    /** 
-     ** if open file fails, check for record suffix
-     **/
-    if ((fname = locate_file(filename)) == NULL) {
-        if ((p = strchr(filename, SPECPR_SUFFIX)) != NULL) {
-            *p = '\0';
-            frec = atoi(p + 1);
-            fname = locate_file(filename);
-        }
-        if (fname == NULL) {
-            sprintf(error_buf, "Cannot find file: %s", filename);
-            parse_error(NULL);
-            return (NULL);
-        }
-    }
-    if (fname && (fp = fopen(fname, "r")) != NULL) {
-
-        if (is_compressed(fp))
-            fp = uncompress(fp, fname);
-
-        if (input == NULL)    input = LoadSpecpr(fp, filename, frec);
-        if (input == NULL)    input = LoadVicar(fp, filename, frec);
-        if (input == NULL)    input = LoadISIS(fp, filename, frec);
-        if (input == NULL)    input = LoadGRD(fp, filename, frec);
-        if (input == NULL)    input = LoadPNM(fp, filename, frec);
-        if (input == NULL)    input = Load_imath(fp, filename, frec);
-        if (input == NULL)    input = LoadGOES(fp, filename, frec);
-        if (input == NULL)    input = LoadAVIRIS(fp, filename, frec);
-        if (input == NULL) {
-            sprintf(error_buf, "Unable to determine file type: %s", filename);
-            parse_error(NULL);
-        }
-        fclose(fp);
-    }
-    if (fname)
-        free(fname);
-    return (input);
-}
-
-#endif
 
 Var *
 ff_load(vfuncptr func, Var * arg)
@@ -240,9 +129,13 @@ ff_load(vfuncptr func, Var * arg)
         if (input == NULL)    input = LoadAVIRIS(fp, filename, &h);
 
         fclose(fp);	/* ImageMagick opens its own files */
+
+	if (input == NULL)    input = LoadHDF5(filename);
+
 #ifdef HAVE_LIBMAGICK
 	if (input == NULL)    input = LoadGFX_Image(filename);
 #endif
+
         if (input == NULL) {
             sprintf(error_buf, "Unable to determine file type: %s", filename);
             parse_error(NULL);

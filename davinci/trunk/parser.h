@@ -28,6 +28,7 @@ typedef Var * Vptr;
 typedef struct _symbol Sym;
 typedef struct _range Range;
 typedef struct _tagnode Node;
+typedef struct _tagVstruct Vstruct;
 
 struct _range {
 	int dim;			/* dimension of data */
@@ -54,6 +55,12 @@ struct _tagnode {
 	Var *parent;
 };
 
+struct _tagVstruct {
+	int count;
+	char **names;
+	Var **data;
+};
+
 struct _var {
 	int type;
     char *name;
@@ -63,6 +70,7 @@ struct _var {
 		Range range;
 		char *string;
 		Var *keyval;		/* used by $Keyword */
+		Vstruct vstruct;		/* used by $Keyword */
 	} value; 
 	Var *next;
 };
@@ -89,6 +97,8 @@ struct _var {
 #define V_HISTORY(v) V_SYM(v)->history
 #define V_TITLE(v)   V_SYM(v)->title
 
+#define V_STRUCT(v)  (v)->value.vstruct
+
 
 #define new(type)	(type *)mem_malloc()
 
@@ -104,6 +114,8 @@ struct _var {
 #define ID_STRING       ID_BASE+2       /* NULL terminated character string */
 #define	ID_KEYWORD		ID_BASE+3		/* keyword argument */
 #define ID_VAL			ID_BASE+5		/* everything with dim != 0 */
+#define ID_VSTRUCT      ID_BASE+6		/* Structure */
+
 #define ID_IVAL         ID_BASE+10		/* Integer value */
 #define ID_RVAL         ID_BASE+11		/* real value */
 #define ID_ID           ID_BASE+12		/* Identifier */
@@ -150,9 +162,9 @@ struct _var {
 #define ID_CAT          ID_BASE+50		/* concatenate */
 
 #define ID_ENUM         ID_BASE+51		/* enumerated argument, not parsed */
-#define ID_STRUCT       ID_BASE+52		/* Structure */
 #define ID_DECL         ID_BASE+53		/* Declaration */
 #define ID_WHERE        ID_BASE+54		/* Where */
+#define ID_STRUCT       ID_BASE+55		/* Structure dereference */
 
 
 /**

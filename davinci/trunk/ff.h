@@ -186,13 +186,15 @@ struct _vfuncptr vfunclist[] = {
     { "rfft3",     	ff_realfft3,     (void *)1 },
     { "irfft3",     ff_realfft3,     (void *)0 },
 
-    { "self_convolve",     ff_self_convolve,     (void *)0 },
-    { "convolve",      ff_convolve,     (void *)0 },
-    { "convolve2",     ff_convolve2,     (void *)0 },
+    { "self_convolve",     ff_self_convolve,    NULL },
+    { "convolve",      ff_convolve,     		NULL },
+    { "convolve2",     ff_convolve2,     		NULL },
 
 #ifdef HAVE_XM_XR3DT_H
     { "xrt3d",     	ff_xrt3d,    NULL },
 #endif
+
+    { "struct",     ff_struct,     NULL },
 
     { NULL,         NULL,        NULL }
 };

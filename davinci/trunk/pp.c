@@ -37,19 +37,31 @@ V_DUP(Var *v)
 
     switch (V_TYPE(v)) {
     case ID_VAL:
-    {
-        memcpy(V_SYM(r), V_SYM(v), sizeof(Sym));
-        dsize = V_DSIZE(v)*NBYTES(V_FORMAT(v));
-        V_SYM(r)->data = memcpy(malloc(dsize), V_SYM(v)->data, dsize);
-        if (V_TITLE(v)) V_TITLE(r) = strdup(V_TITLE(v));
-    }
-    break;
+		{
+			memcpy(V_SYM(r), V_SYM(v), sizeof(Sym));
+			dsize = V_DSIZE(v)*NBYTES(V_FORMAT(v));
+			V_SYM(r)->data = memcpy(malloc(dsize), V_SYM(v)->data, dsize);
+			if (V_TITLE(v)) V_TITLE(r) = strdup(V_TITLE(v));
+		}
+		break;
     case ID_STRING:
         V_STRING(r) = strdup(V_STRING(v));
         break;
     case ID_UNK:
         if (V_NAME(v)) V_NAME(r) = strdup(V_NAME(v));
         break;
+	case ID_VSTRUCT:
+		{
+			int i;
+			V_STRUCT(r).names = calloc(V_STRUCT(v).count, sizeof(char *));
+			V_STRUCT(r).data = calloc(V_STRUCT(v).count, sizeof(Var *));
+			for (i = 0 ; i < V_STRUCT(r).count ; i++) {
+				V_STRUCT(r).data[i] = V_DUP(V_STRUCT(v).data[i]);
+				V_STRUCT(r).names[i] = strdup(V_STRUCT(v).names[i]);
+			}
+			V_STRUCT(r).count = V_STRUCT(v).count;
+		}
+		break;
     }
     return(r);
 }
@@ -114,11 +126,77 @@ pp_print(Var *v)
             printf("\n");
         }
         break;
+	case ID_VSTRUCT:
+		pp_print_struct(v, 0);
+		break;
     default:
         printf("error: Unknown type.\n");
         break;
     }
     return(v);
+}
+
+pp_print_struct(Var *v, int indent)
+{
+    extern int SCALE;
+    int i;
+    Var *s;
+    char bytes[32];
+	
+    if (v == NULL) return(v);
+    if (VERBOSE == 0) return(v);
+
+	if (V_NAME(v)) printf("%s", V_NAME(v));
+	if (indent == 0) {
+		printf(": struct\n");
+	}
+
+	indent += 4;
+
+	for (i = 0 ; i < V_STRUCT(v).count ; i++) {
+		if (indent) printf("%*s", indent, " ");
+		printf("%s: ", V_STRUCT(v).names[i]);
+		s = V_STRUCT(v).data[i];
+
+		switch (V_TYPE(s)) {
+		case ID_STRING:
+			printf("\"%s\"\n", V_STRING(s));
+			break;
+		case ID_VAL:
+			/**
+			** This should iterate in XYZ order, always.
+			**/
+
+			if (V_DSIZE(s) == 1) {
+				switch (V_FORMAT(s)) {
+					case BYTE: printf("%d\n", ((u_char *)V_DATA(s))[0]); break;
+					case SHORT: printf("%d\n", ((short *)V_DATA(s))[0]); break;
+					case INT:  printf("%d\n", ((int *)V_DATA(s))[0]); break;
+					case FLOAT: printf("%#.*g\n", SCALE, ((float *)V_DATA(s))[0]); break;
+					case DOUBLE: printf("%#.*g\n", SCALE, ((double *)V_DATA(s))[0]); break;
+				}
+			} else {
+				sprintf(bytes, "%d", NBYTES(V_FORMAT(s))*V_DSIZE(s));
+				commaize(bytes);
+				printf("%s:\t%dx%dx%d array of %s, %s format [%s bytes]\n",
+					   V_NAME(s) ? V_NAME(s) : "", 	
+					   GetSamples(V_SIZE(s),V_ORG(s)),
+					   GetLines(V_SIZE(s),V_ORG(s)),
+					   GetBands(V_SIZE(s),V_ORG(s)),
+					   Format2Str(V_FORMAT(s)),
+					   Org2Str(V_ORG(s)),
+					   bytes);
+			}
+			break;
+		case ID_VSTRUCT:
+			printf("struct\n");
+			pp_print_struct(s, indent);
+			break;
+		default:
+			printf("error: Unknown type.\n");
+			break;
+		}
+	}
 }
 
 /**
@@ -222,6 +300,10 @@ pp_set_var(Var *id, Var *range, Var *exp)
         if (v != NULL) {
             exp = V_DUP(v);
         }
+		if (V_TYPE(exp) == ID_UNK) {
+			parse_error("Variable not found: %s", V_NAME(exp));
+			return(NULL);
+		}
     } else if (mem_claim(exp) == NULL) {
         /**
         ** if we can't claim the memory, we can't use it.
@@ -238,6 +320,39 @@ pp_set_var(Var *id, Var *range, Var *exp)
     return(id);
 }
 
+
+Var *
+pp_set_struct(Var *a, Var *b, Var *exp)
+{
+	Var **p = find_struct(a, b);
+	Var *v;
+
+	if (exp == NULL) return(NULL);
+
+	if (p != NULL) {
+		if (V_NAME(exp) != NULL) {
+			v = eval(exp);
+			if (v != NULL) {
+				exp = V_DUP(v);
+			}
+			if (V_TYPE(exp) == ID_UNK) {
+				parse_error("Variable not found: %s", V_NAME(exp));
+				return(NULL);
+			}
+		} else if (mem_claim(exp) == NULL) {
+			/**
+			** if we can't claim the memory, we can't use it.
+			**/
+			exp = V_DUP(exp);
+		}
+		mem_claim(exp);
+		V_NAME(exp) = NULL;
+		free_var(*p);
+		*p = exp;
+		return(exp);
+	}
+	return(NULL);
+}
 /**
  ** Ranges:
  **/

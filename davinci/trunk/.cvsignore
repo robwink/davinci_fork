@@ -1,5 +1,4 @@
 README
-api.h
 TODO
 ff_bop.c
 docs
@@ -22,7 +21,6 @@ config.h
 NOTES
 bison.simple
 convert
-apifunc.c
 apidef.c.test
 tmp
 memory.h
