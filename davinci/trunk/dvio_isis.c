@@ -2,6 +2,146 @@
 #include "dvio.h"
 
 char *iformat_to_eformat(Var *obj);
+static void * dv_RePackData(void *data, int file_bytes, iom_idf data_type, int data_chunk);
+
+
+Var *
+write_PDS_Qube(Var *core, Var *side, Var *bottom, Var *back, FILE *fp)
+{
+    Var *v;
+    Var *suffix[3] = { NULL, NULL, NULL} ;
+    int size[3];
+    int suf_size[3];
+    char *suf_names[3];
+    Var *plane;
+    char *name;
+    char buf[2560];
+    char lenstr[256];
+    int i, j, k;
+    int error = 0;
+    int nbytes;
+    int pos;
+    int n;
+    char *filename = NULL;
+	char *p;
+	int rec_len, lbl_length;
+	Var *zero;
+	int nsuffix[3] = { 0, 0, 0 };
+
+
+    if (core == NULL) {
+        parse_error("No core object specified");
+        return(NULL);
+    }
+
+
+	suffix[0]=side;
+	suffix[1]=bottom;
+	suffix[2]=back;
+
+    size[0] = GetX(core);
+    size[1] = GetY(core);
+    size[2] = GetZ(core);
+
+	zero = newInt(0);
+
+    /*
+    ** Verify the size of each suffix plane
+    */
+    for (i = 0 ; i < 3 ; i++) {
+        if (suffix[i] != NULL) {
+            for (j = 0 ; j < get_struct_count(suffix[i]) ; j++) {
+                get_struct_element(suffix[i], j, &name, &plane);
+                suf_size[0] = GetX(plane);
+                suf_size[1] = GetY(plane);
+                suf_size[2] = GetZ(plane);
+
+                switch (i) {
+                case 0:	/* side */
+                    if (size[1] != suf_size[1] || 
+                        size[2] != suf_size[2] ||
+                        suf_size[0] != 1) 
+                        error++;
+                    break;
+                case 1:	/* bottom */
+                    if (size[0] != suf_size[0] || 
+                        size[2] != suf_size[2] ||
+                        suf_size[1] != 1) 
+                        error++;
+                    break;
+
+                case 2: /* back */
+                    if (size[0] != suf_size[0] || 
+                        size[1] != suf_size[1] ||
+                        suf_size[2] != 1) 
+                        error++;
+                    break;
+                }
+                if (error) {
+                    parse_error("Suffix plane does not match core size: "
+                                "%d [%dx%dx%d] vs %dx%dx%d\n", 
+                                name, 
+                                suf_size[0], suf_size[1], suf_size[2],
+                                size[0], size[1], size[2]);
+                    return(NULL);
+                }
+            }
+        }
+    }
+
+   nbytes = GetNbytes(core);
+	nsuffix[0] = (suffix[0] ? get_struct_count(suffix[0]) : 0);
+	nsuffix[1] = (suffix[1] ? get_struct_count(suffix[1]) : 0);
+	nsuffix[2] = (suffix[2] ? get_struct_count(suffix[2]) : 0);
+
+    if (V_ORG(core) == BSQ) {
+        for (k = 0 ; k < size[2] ; k++) {
+            for (j = 0 ; j < size[1] ; j++) {
+                pos = (k*size[1]+j)*size[0] * nbytes;
+                fwrite((char *)V_DATA(core) + pos, size[0], nbytes, fp);
+
+				/* write sample suffix */
+				for (n = 0 ; n < nsuffix[0] ; n++) {
+					get_struct_element(suffix[0], n, NULL, &v);
+					write_one(v, 0, j, k, fp);
+				}
+            }
+			/* write line suffix */
+			for (n = 0 ; n < nsuffix[1] ; n++) {
+				get_struct_element(suffix[1], n, NULL, &v);
+				write_row_x(v, 0, k, fp, nsuffix[0]);
+			}
+        }
+		/* write band suffix */
+		for (n = 0 ; n < nsuffix[2] ; n++) {
+			get_struct_element(suffix[2], n, NULL, &v);
+			write_plane(v, V_ORG(core), 2, fp, nsuffix[0], nsuffix[1]);
+		}
+    } else if (V_ORG(core) == BIP) {
+        for (k = 0 ; k < size[1] ; k++) {		/* y axis */
+            for (j = 0 ; j < size[0] ; j++) {	/* z axis */
+                pos = (k*size[0]+j)*size[2] * nbytes;
+                fwrite((char *)V_DATA(core) + pos, size[2], nbytes, fp);
+
+				for (n = 0 ; n < nsuffix[2] ; n++) {
+					get_struct_element(suffix[2], n, NULL, &v);
+					write_one(v, j, k, 0, fp);
+				}
+            }
+			for (n = 0 ; n < nsuffix[0] ; n++) {
+				get_struct_element(suffix[0], n, NULL, &v);
+				write_row_x(v, 0, k, fp, nsuffix[2]);
+			}
+        }
+
+		for (n = 0 ; n < nsuffix[1] ; n++) {
+			get_struct_element(suffix[1], n, NULL, &v);
+			write_plane(v, V_ORG(core), 1, fp, nsuffix[2], nsuffix[0]);
+		}
+	}
+    fclose(fp);
+    return(v);
+}
 
 
 Var *dv_LoadISISFromPDS(FILE *fp, char *fn, int dptr)
@@ -500,7 +640,7 @@ dv_read_qube_suffix(int fd,
         lseek(fd,h->dptr+z*(h->size[0]*
                             h->size[1]*c_bytes+
                             h->size[0]*h->suffix[1]+
-                            h->size[1]*h->suffix[0])+
+                            h->size[1]*h->suffix[0]+h->corner)+
               offset1,0);
         
             
@@ -535,6 +675,11 @@ dv_read_qube_suffix(int fd,
     if (VERBOSE > 1)
         fprintf(stderr, ".");
 
+    *s_item_byte = iom_Eformat2Iformat(s_item_byte_e);
+
+    if (s_bytes!=iom_NBYTESI(*s_item_byte))
+        data=dv_RePackData(data,s_bytes,*s_item_byte,*size);
+
 
     /*
     ** byte_swap_data() returns the machine dependent type of
@@ -542,7 +687,6 @@ dv_read_qube_suffix(int fd,
     ** "s_item_byte_e".
     */
     format = iom_byte_swap_data(data, dsize/s_bytes, s_item_byte_e);
-    *s_item_byte = format;
 
     free(p_data);
     return(data);
@@ -917,8 +1061,10 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
 
     s.s_hi[iom_orders[s.org][type]]=1;
 
+/*
     if (suffix_bytes!=iom_NBYTESI(format))
         data=dv_RePackData(data,suffix_bytes,format,chunk);
+*/
     
     return(newVal(s.org,
                   s.s_hi[0],
@@ -932,6 +1078,7 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
 Var *
 write_isis_planes(vfuncptr func, Var * arg)
 {
+
     Var *core;
     Var *v;
     Var *suffix[3] = { NULL, NULL, NULL} ;
