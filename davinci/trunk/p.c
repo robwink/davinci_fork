@@ -114,6 +114,7 @@ evaluate(Var * n)
         case ID_UNK:
         case ID_STRING:
         case ID_VAL:
+		  case ID_TEXT:					/*Added: Thu Mar  2 16:00:18 MST 2000*/
             push(scope, V_DUP(n));
             return (NULL);
     }
@@ -550,6 +551,7 @@ free_tree(Var *n)
 	    case ID_ID:
 	    case ID_UNK:
 	    case ID_KEYWORD:
+		 case ID_TEXT:			/*Added: Thu Mar  2 16:01:19 MST 2000*/
 	       free_var(n);
 	       return;
         }

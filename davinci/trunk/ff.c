@@ -7,8 +7,8 @@
 
 #ifdef __MSDOS__
 #include <dos.h>
-
 #endif
+
 /**
  ** V_func - find and call named function
  **
@@ -384,12 +384,9 @@ ff_org(vfuncptr func, Var * arg)
     **/
     dsize = V_DSIZE(ob);
     format = V_FORMAT(ob);
-
     s = newVar();
     V_TYPE(s) = ID_VAL;
-
     memcpy(V_SYM(s), V_SYM(ob), sizeof(Sym));
-
     V_DATA(s) = calloc(dsize, NBYTES(format));
     V_ORG(s) = org;
 
@@ -404,7 +401,6 @@ ff_org(vfuncptr func, Var * arg)
         j = rpos(i, ob, s);
         memcpy(((char *) to) + (j * nbytes), ((char *) from) + (i * nbytes), nbytes);
     }
-
     return (s);
 }
 
@@ -791,6 +787,36 @@ ff_echo(vfuncptr func, Var * arg)
 /**
  ** Copy an object onto itself N times, in each direction specified.
  **/
+Var *
+replicate_text(Var *ob, int x, int y)
+{
+	Var *s;
+	int i,j,l;
+	int Row;
+
+	s=newVar();
+	V_TYPE(s)=ID_TEXT;
+	V_TEXT(s).Row=V_TEXT(ob).Row*y;
+	Row=V_TEXT(ob).Row;
+	V_TEXT(s).text=(unsigned char **)calloc(sizeof(char *),V_TEXT(s).Row);
+
+
+	for (j=0;j<y;j++){
+			for(l=0;l<Row;l++){
+				V_TEXT(s).text[j*Row+l]=(unsigned char *)calloc(sizeof(char),
+					strlen(V_TEXT(ob).text[l])*x);
+				strcpy(V_TEXT(s).text[j*Row+l],V_TEXT(ob).text[l]);
+				for (i=1;i<x;i++){
+					strcat(V_TEXT(s).text[j*Row+l],V_TEXT(ob).text[l]);
+				}
+			}
+	}
+
+	return(s);
+}
+
+
+
 
 Var *
 ff_replicate(vfuncptr func, Var * arg)
@@ -810,7 +836,7 @@ ff_replicate(vfuncptr func, Var * arg)
     int ac;
     Var **av;
     Alist alist[5];
-    alist[0] = make_alist( "object", ID_VAL,   NULL, &v);
+    alist[0] = make_alist( "object", ID_UNK,   NULL, &v);
     alist[1] = make_alist( "x",   INT, NULL,  &x);
     alist[2] = make_alist( "y",   INT, NULL,  &y);
     alist[3] = make_alist( "z",   INT, NULL,  &z);
@@ -822,6 +848,14 @@ ff_replicate(vfuncptr func, Var * arg)
 		parse_error("clone: No obejct specified\n");
 		return(NULL);
 	}
+
+	if (V_TYPE(v)!=ID_VAL && V_TYPE(v)!=ID_TEXT){
+		parse_error("Invalid replication object");
+		return(NULL);
+	}
+
+	if (V_TYPE(v)==ID_TEXT)
+		return(replicate_text(v,x,y));
 
     org = V_ORG(v);
 
@@ -941,8 +975,8 @@ ff_cat(vfuncptr func, Var * arg)
     int ac;
     Var **av;
     Alist alist[4];
-    alist[0] = make_alist( "ob1", ID_VAL,   NULL,     &ob1);
-    alist[1] = make_alist( "ob2", ID_VAL,   NULL,     &ob2);
+    alist[0] = make_alist( "ob1", ID_UNK,   NULL,     &ob1);
+    alist[1] = make_alist( "ob2", ID_UNK,   NULL,     &ob2);
     alist[2] = make_alist( "axis",   ID_ENUM,  options,     &axis_str);
     alist[3].name = NULL;
     make_args(&ac, &av, func, arg);
@@ -972,6 +1006,149 @@ ff_cat(vfuncptr func, Var * arg)
 }
 
 Var *
+cat_mixed_text(Var * ob1, Var * ob2, int axis)
+{
+	Var *s=newVar();
+	int Row;
+	int i;
+	char *string;
+	unsigned char **text;
+
+	V_TYPE(s)=ID_TEXT; /* Text+String=Text; String+Text=Text; either way...*/
+
+	if (V_TYPE(ob1)==ID_TEXT) { /*Left or Top is text*/
+		Row=V_TEXT(ob1).Row;
+		string=V_STRING(ob2);
+		text=V_TEXT(ob1).text;
+		if (axis==0) {/*Left, same # of Rows*/
+			V_TEXT(s).Row=Row;
+			V_TEXT(s).text=(unsigned char **)calloc(sizeof(char *),Row);
+			for (i=0;i<Row;i++){
+				V_TEXT(s).text[i]=(unsigned char *)calloc(sizeof(char),
+					strlen(text[i])+strlen(string));
+				strcpy(V_TEXT(s).text[i],text[i]);
+				strcat(V_TEXT(s).text[i],string);
+			}
+		}
+		else { /*Top, w/string as extra row on bottom*/
+			Row++;
+			V_TEXT(s).Row=Row;
+			V_TEXT(s).text=(unsigned char **)calloc(sizeof(char *),Row);
+			for (i=0;i<Row-1;i++){
+				V_TEXT(s).text[i]=strdup(text[i]);
+			}
+			V_TEXT(s).text[i]=strdup(string);
+		}
+	}
+
+	else {/*Right or Bottom is Text*/
+		Row=V_TEXT(ob2).Row;
+		string=V_STRING(ob1);
+		text=V_TEXT(ob2).text;
+
+		if (axis==0){ /*Right, same # of Row*/
+			V_TEXT(s).Row=Row;
+			V_TEXT(s).text=(unsigned char **)calloc(sizeof(char *),Row);
+			for (i=0;i<Row;i++){
+				V_TEXT(s).text[i]=(unsigned char *)calloc(sizeof(char),
+					 strlen(text[i])+strlen(string));
+				strcpy(V_TEXT(s).text[i],string);
+				strcat(V_TEXT(s).text[i],text[i]);
+			}
+		}
+
+		else {/*Bottom, w/string as extra row on top*/
+			Row++;
+			V_TEXT(s).Row=Row;
+			V_TEXT(s).text=(unsigned char **)calloc(sizeof(char *),Row);
+			V_TEXT(s).text[0]=strdup(string);
+			for(i=1;i<Row;i++){
+				 V_TEXT(s).text[i]=strdup(text[i-1]);
+			}
+		}
+	}
+
+	return(s);
+}
+
+Var *
+cat_string_text(Var * ob1, Var * ob2, int axis)
+{ 
+	Var *s=newVar();
+
+	if (axis==2) { /*Can't cat Text or Strings in Z*/
+		parse_error("Invalid axis specified");
+		return(NULL);
+	}
+
+	if (V_TYPE(ob1) != V_TYPE(ob2)){ /*mixing strings and text!*/
+		return(cat_mixed_text(ob1,ob2,axis));
+	}
+
+	if (axis==1 && V_TYPE(ob1)==ID_STRING){ /*String->Text*/
+		V_TYPE(s)=ID_TEXT;
+		V_TEXT(s).Row=2;
+		V_TEXT(s).text=(unsigned char **)calloc(sizeof(char *),2);
+		V_TEXT(s).text[0]=strdup(V_STRING(ob1));
+		V_TEXT(s).text[1]=strdup(V_STRING(ob2));
+		return(s);
+	}
+
+	else if (axis==1) {
+		int i;
+		int counter=0;
+		int Row1,Row2;
+		V_TYPE(s)=ID_TEXT;
+		Row1=V_TEXT(ob1).Row;
+		Row2=V_TEXT(ob2).Row;
+		V_TEXT(s).Row=Row1+Row2;
+		V_TEXT(s).text=(unsigned char **)calloc(sizeof(char *),V_TEXT(s).Row);
+		for (i=0;i<Row1;i++){
+			V_TEXT(s).text[counter++]=strdup(V_TEXT(ob1).text[i]);
+		}
+		for (i=0;i<Row2;i++){
+			V_TEXT(s).text[counter++]=strdup(V_TEXT(ob2).text[i]);
+		}
+		return(s);
+	}
+
+	else if (V_TYPE(ob1)==ID_STRING){
+		V_TYPE(s)=ID_STRING;
+		V_STRING(s)=(unsigned char *)calloc(sizeof(char),strlen(V_STRING(ob1))+
+							strlen(V_STRING(ob2))+1);
+		strcpy(V_STRING(s),V_STRING(ob1));
+		strcat(V_STRING(s),V_STRING(ob2));
+	
+		return(s);
+	}
+
+	else {
+		int i;
+		int Row;
+		if (V_TEXT(ob1).Row != V_TEXT(ob2).Row){
+			parse_error("Objects must have equal number of rows");
+			return(NULL);
+		}
+		
+		V_TYPE(s)=ID_TEXT;
+		Row=V_TEXT(ob1).Row;
+		V_TEXT(s).Row=Row;
+		V_TEXT(s).text=(unsigned char **)calloc(sizeof(char *),Row);
+		for (i=0;i<Row;i++){	
+			V_TEXT(s).text[i]=(unsigned char *)calloc(sizeof(char),strlen(V_TEXT(ob1).text[i])+
+						strlen(V_TEXT(ob2).text[i])+1);
+			strcpy(V_TEXT(s).text[i],V_TEXT(ob1).text[i]);
+			strcat(V_TEXT(s).text[i],V_TEXT(ob2).text[i]);
+		}
+
+		return(s);
+	}
+
+	return(NULL);
+}
+			
+
+Var *
 do_cat(Var * ob1, Var * ob2, int axis)
 {
     Var *e, *s;
@@ -980,23 +1157,37 @@ do_cat(Var * ob1, Var * ob2, int axis)
     void *data, *d1, *d2, *out;
     int dsize;
     int nbytes;
+	 int ob1_type,ob2_type;
 
-    if (ob1 != NULL) axis = orders[V_ORG(ob1)][axis];
 
     if ((e = eval(ob1)) != NULL) ob1 = e;
     if ((e = eval(ob2)) != NULL) ob2 = e;
     if (ob1 == NULL) return (ob2);
     if (ob2 == NULL) return (ob1);
 
+	 ob1_type=V_TYPE(ob1);
+	 ob2_type=V_TYPE(ob2);
 
-    if (V_TYPE(ob1) != ID_VAL) {
+
+    if (ob1_type != ID_VAL && ob1_type != ID_STRING && ob1_type != ID_TEXT) {
         parse_error( "cat(), improper object specified");
         return (NULL);
     }
-    if (V_TYPE(ob2) != ID_VAL) {
+
+    if (ob2_type != ID_VAL && ob2_type != ID_STRING && ob2_type != ID_TEXT) {
         parse_error( "cat(), improper object specified");
         return (NULL);
     }
+
+	 if ((ob1_type == ID_VAL && ob2_type!=ID_VAL) || 
+			(ob1_type!=ID_VAL && ob2_type==ID_VAL)){
+		  parse_error( "cat(), Can't mix numbers with non-numbers!");
+		  return(NULL);
+	 }
+
+	 if (ob1_type == ID_STRING || ob1_type==ID_TEXT)
+			return(cat_string_text(ob1,ob2,axis));
+
     if (V_FORMAT(ob1) != V_FORMAT(ob2)) {
         parse_error( "cat(), Data formats must match.");
         return (NULL);
@@ -1172,12 +1363,12 @@ ff_string(vfuncptr func, Var * arg)
 Var *
 ff_strlen(vfuncptr func, Var * arg)
 {
-        char *S1=NULL;
+        Var *S1=NULL;
         int ac;
         Var **av;  
         int *Result=(int *)calloc(1,sizeof(int));
         Alist alist[2];
-        alist[0] = make_alist("string",         ID_STRING,         NULL,   &S1);
+        alist[0] = make_alist("string",         ID_UNK,         NULL,   &S1);
         alist[1].name = NULL;
 
         make_args(&ac, &av, func, arg);
@@ -1187,9 +1378,18 @@ ff_strlen(vfuncptr func, Var * arg)
                 *Result=0;
         }
 
-	else {
-		*Result=strlen(S1);
-	}
+		  else if (V_TYPE(S1)==ID_TEXT){
+				*Result=V_TEXT(S1).Row;
+		  }
+
+		  else if (V_TYPE(S1)==-ID_STRING){
+				*Result=strlen(V_STRING(S1));
+		  }
+
+		  else {
+			parse_error("Invalid type");
+			return(NULL);
+		  }
 
 	return(newVal(BSQ,1,1,1, INT, Result));
 }
@@ -1380,6 +1580,8 @@ ff_hedit(vfuncptr func, Var * arg)
     Var **av;
     HISTORY_STATE *state;
     char *tmp, *editor, buf[256];
+
+	 char *path=getenv("TMPDIR");
 
 #ifdef HAVE_LIBREADLINE
 

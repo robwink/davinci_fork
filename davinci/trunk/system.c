@@ -433,6 +433,7 @@ bzero (to, count)
 
 #endif
 
+#ifndef HAVE_STRDUP 
 char *strdup(const char *s1)
 {
         char *s2;
@@ -443,9 +444,9 @@ char *strdup(const char *s1)
         return(s2);
 }
 
-/* #ifndef HAVE_STRDUP */
-/* #endif */
+#endif 
 
+#ifndef HAVE_STRNDUP 
 char *strndup(char *s1, int len)
 {
         char *s2;
@@ -456,8 +457,7 @@ char *strndup(char *s1, int len)
 		s2[len] = '\0';
         return(s2);
 }
-/* #ifndef HAVE_STRNDUP */
-/* #endif */
+#endif 
 
 void *
 my_realloc(void *ptr, int len)

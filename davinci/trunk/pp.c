@@ -9,6 +9,9 @@ void commaize(char *);
 void pp_print_varray(Var *v, int indent) ;
 void pp_print_var(Var *v, char *name, int indent) ;
 
+extern Var * textarray_subset(Var *, Var *);
+extern Var * set_text(Var *, Range *,Var *);
+
 /*
 void 
 pp_emit_prompt()
@@ -81,6 +84,19 @@ V_DUP(Var *v)
         V_DATA(r) = out;
     }
     break;
+
+
+	 case ID_TEXT:		/*Added: Thu Mar  2 16:49:11 MST 2000*/
+		{
+			int i;
+			V_TEXT(r).Row=V_TEXT(v).Row;
+			V_TEXT(r).text=(unsigned char **)calloc(sizeof(unsigned char *),V_TEXT(r).Row);
+			for (i=0;i<V_TEXT(r).Row;i++){
+				V_TEXT(r).text[i]=strdup(V_TEXT(v).text[i]);
+			}
+		}
+		break;
+
     }
     return(r);
 }
@@ -156,6 +172,20 @@ pp_print(Var *v)
     case ID_VARRAY:
         pp_print_varray(v, 0);
         break;
+
+	 case ID_TEXT:		/*Added: Thu Mar  2 16:52:39 MST 2000*/
+		{
+			int i,row=(5 < V_TEXT(v).Row ? 5 : V_TEXT(v).Row);
+			printf("%s: Text Buffer with %d %s of text\n",
+                   V_NAME(v) ? V_NAME(v) : "", 	
+						 V_TEXT(v).Row,
+						 ((V_TEXT(v).Row==1) ? "lines" : "lines"));
+			for (i=0;i<row;i++){
+				printf("Line:%d\t%s\n",(i+1),V_TEXT(v).text[i]);
+			}
+		}
+		break;
+
     default:
         printf("error: Unknown type.\n");
         break;
@@ -252,6 +282,21 @@ pp_print_var(Var *v, char *name, int indent)
     case ID_VARRAY:
         pp_print_varray(v, indent);
         break;
+
+	
+	 case ID_TEXT:		/*Added: Thu Mar  2 16:52:39 MST 2000*/
+		{
+			int i,row=(5 < V_TEXT(v).Row ? 5 : V_TEXT(v).Row);
+			printf("Text Buffer with %d %s of text\n",
+						 V_TEXT(v).Row,
+						 ((V_TEXT(v).Row==1) ? "lines" : "lines"));
+			for (i=0;i<row;i++){
+				printf("Line:%d\t%s\n",(i+1),V_TEXT(v).text[i]);
+			}
+		}
+		break;
+
+
     }
 }
 
@@ -286,6 +331,10 @@ pp_set_var(Var *id, Var *range, Var *exp)
         **/
         
         r = V_RANGE(range);
+
+		  if (V_TYPE(v)==ID_TEXT) /*Need to intercept TEXT var's before fixup*/
+				return(set_text(v,r,exp));
+
         if (fixup_ranges(v, r, &rout) == 0) {
             parse_error("Illegal range value.");
             return(NULL);
@@ -576,7 +625,9 @@ pp_range(Var *v, Var *r)
             return(NULL);
         }
         return(varray_subset(v, &rout));
-    }
+    } else if (V_TYPE(v) == ID_TEXT) {
+			return(textarray_subset(v,r));
+	 }
 	
     parse_error( "Illegal type: %s", V_NAME(v));
     return(NULL);
