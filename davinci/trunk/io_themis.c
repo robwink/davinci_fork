@@ -1,8 +1,97 @@
 #include "parser.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <values.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#ifndef __MSDOS__
+#include <sys/mman.h>
+#endif
 
-/*extern read_qube_data(int fp, struct _iheader *h); */
+
+#define	_BANDS	3
+#define	_FRAMES	4
+#define _DATA	6
+
+
+enum _CMD {BAND,FRAME,SINGLE,ALL};
+
+typedef enum _CMD CMD;
+int Skip_To_Stop_Sync(int *i, char *buf,int len);
+int Skip_To_Start_Sync(int *i, char *buf,int len);
+int Keep(unsigned char B, unsigned short F, CMD Cmd, int Frame, int Band);
+
+#ifndef LITTLE_E
+unsigned short Start_Sync = { 0xF0CA };
+unsigned short Stop_Sync = { 0xAB8C };
+#else
+unsigned short Start_Sync = { 0xCAF0 };
+unsigned short Stop_Sync = { 0x8CAB };
+#endif
+
+int Skip_To_Stop_Sync(int *i, char *buf,int len)
+{
+    int count=0;
+    int Tmp=*i;
+	short V;
+
+    while ((*i)<len-1){
+		V=*((short *)(buf+(*i)));
+        if (memcmp(&V, &Stop_Sync, 2) == 0) {
+            return (count);
+        }
+        else {
+            (*i)++;
+            count++;
+        }
+    }
+    parse_error("Premature EOF.\n");
+    return(-1);
+}
+
+
+int Skip_To_Start_Sync(int *i, char *buf,int len)
+{
+    int Tmp=*i;
+	short V;
+
+    while ((*i)<len-1){
+		V=*((short *)(buf+(*i)));
+        if (memcmp(&V, &Start_Sync, 2) == 0) {
+            return(1);
+        }
+        else
+            (*i)++;
+    }
+
+    return(-1);
+}
+
+
+int Keep(unsigned char B, unsigned short F, CMD Cmd, int Frame, int Band)
+{
+    switch (Cmd) {
+
+    case BAND:
+        if(Band==(((int)B) & 0x0F))
+            return (1);
+        break;
+
+    case FRAME:
+        if (Frame==(((int)F) & 0xFFFF) && 
+            (B!=0x0F && B!=0xE))
+            return (1);
+        break;
+
+    case ALL:
+        if (B!=0x0F && B!=0xE)
+            return(1);
+        break;
+    }
+
+    return(0);
+}
+
 
 int GetGSEHeader (FILE *fp, struct _iheader *h)
 {
@@ -262,3 +351,161 @@ ff_Frame_Grabber_Read(vfuncptr func, Var * arg)
     return(newVal(BSQ,X,Y,Z,num_bytes,((num_bytes==2) ? ((void *)sh_data_words) : ((void *)data_words))));
 
 }
+
+
+Var *
+ff_PAKI_Read(vfuncptr func, Var * arg)
+{
+#ifdef __MSDOS__
+	extern unsigned char *mmap(void *, size_t , int, int , int , size_t );
+	extern void munmap(unsigned char *,int);
+	typedef	void*	caddr_t;
+#endif
+	void		*data;
+	char 		*filename,*fname,fname2[256];
+	int 		Frame=-1;
+	int 		Band=-1;
+	int 		report=0;
+	int		len=0;
+	int 		i, j, a, b;
+	int 		fd;
+	struct 		stat sbuf;
+	unsigned 	char *buf;
+	unsigned 	char  c_Band;
+	unsigned 	short c_Frame;	
+	CMD		Cmd;
+	int		Output=0;
+	int		Done=0;
+	int		Col=0;
+	int		Lines=0;
+	int		Data_Only=0;
+	int		Index=0;
+
+    	Var **av, *v;
+    	int ac;
+    	Alist alist[6];
+
+    	alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
+    	alist[1] = make_alist("frame", INT, NULL, &Frame);
+    	alist[2] = make_alist("band", INT, NULL, &Band);
+    	alist[3] = make_alist("report", INT, NULL, &report);
+    	alist[4] = make_alist("nosig", INT, NULL, &Data_Only);
+    	alist[5].name = NULL;
+
+
+    	make_args(&ac, &av, func, arg);
+    	if (parse_args(ac, av, alist))
+       	 	return (NULL);
+
+    	if (filename == NULL) {
+        	parse_error("No filename specified.");
+        	return (NULL);
+    	}
+
+
+    	if (Frame < 0 && Band < 0)
+		Cmd=ALL;
+	else if (Frame < 0 && Band >=0)
+		Cmd=BAND;
+	else if (Frame >= 0 && Band <0)
+		Cmd=FRAME;
+	else {
+		parse_error("Ignoring Band, using Frame\n");
+		Cmd=FRAME;
+		Band=-1;
+	}
+#ifndef __MSDOS__
+	if ((fd = open(filename, O_RDONLY))==NULL){
+#else
+	if ((fd = open(filename, O_RDONLY | O_BINARY))==-1){
+#endif
+		fprintf(stderr,"Can't open file: %s...aborting\n",filename);
+		return(NULL);
+	}
+
+
+	fstat(fd, &sbuf);
+	len = sbuf.st_size;
+	data=malloc(len);
+	buf = mmap((caddr_t)0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+//#ifndef LITTLE_E
+	swab(buf, buf, len);
+//#endif
+
+
+	if (!report) {
+		i = 0;
+		while ((i < len) && !(Done)) {
+			c_Band=0;
+			c_Frame=0;
+			if (Skip_To_Start_Sync(&i,buf,len) == -1) {
+				Done = 1;
+			} 
+			else {
+				c_Band=*(buf+i+_BANDS);
+				if (c_Band==0xE)  /*Last Frame*/
+					Done=1;
+				c_Frame=(((*(buf+i+_FRAMES) & 0xFF)<< 8) | (*(buf+i+_FRAMES+1) & 0xFF));
+				if ((Output=Skip_To_Stop_Sync(&i,buf,len)) == -1) {
+					Done = 1;
+				} 
+				else {
+					if (Keep(c_Band,c_Frame,Cmd,Frame,Band)){
+						if (Data_Only){
+							memcpy(((char *)data+Index),(buf+i-Output+_DATA),Output);
+							Index+=(Output-_DATA);
+							Col=Output-_DATA;
+						}
+						else {
+							memcpy(((char *)data+Index),(buf+i-Output),Output+2);
+							Index+=Output+2;
+							Col=Output+2;
+						}
+						Lines++;
+					}
+				}
+			}
+		}
+	} 
+	else {
+		int *band = (int *)calloc(32, sizeof(int));
+		unsigned int minframe = MAXINT;
+		int maxframe = -1;
+		i = 0;
+		while ((i < len) && !(Done)) {
+			c_Band=0;
+			c_Frame=0;
+			if (Skip_To_Start_Sync(&i,buf,len) >= 0) {
+				c_Band=*(buf+i+_BANDS);
+				if (c_Band==0xE) /*Last Frame*/
+					Done=1;
+				c_Frame=(((*(buf+i+_FRAMES) & 0xFF)<< 8) | (*(buf+i+_FRAMES+1) & 0xFF));
+				if ((Output=Skip_To_Stop_Sync(&i,buf,len)) >= 0) {
+					if (c_Frame > maxframe) maxframe = c_Frame;
+					if (c_Frame < minframe) minframe = c_Frame;
+					band[c_Band]++;
+				} 
+				else {
+					Done++;
+				}
+			} 
+			else {
+				Done++;
+			}
+		}
+		printf("File: %s\n", filename);
+		printf("First frame: %d\n", minframe);
+		printf("Last Frame:  %d\n", maxframe);
+		printf("Bands:       ");
+		for (i = 0 ; i< 32 ; i++) {
+			if (band[i]) printf("%d ", i);
+		}
+		printf("\n");
+	}
+	
+	munmap(buf,len);
+	close(fd);
+	return(newVal(BSQ,Col,Lines,1,BYTE,data)); 
+
+}
+

@@ -5,6 +5,10 @@
 #include "rfunc.h"
 #endif
 
+#ifdef __MSDOS__
+#include <dos.h>
+
+#endif
 /**
  ** V_func - find and call named function
  **
@@ -1300,6 +1304,62 @@ ff_string(vfuncptr func, Var * arg)
 }
 
 Var *
+ff_strlen(vfuncptr func, Var * arg)
+{
+        char *S1=NULL;
+        int ac;
+        Var **av;  
+        int *Result=(int *)calloc(1,sizeof(int));
+        Alist alist[2];
+        alist[0] = make_alist("string",         ID_STRING,         NULL,   &S1);
+        alist[1].name = NULL;
+
+        make_args(&ac, &av, func, arg);
+        if (parse_args(ac, av, alist)) *Result=0;
+ 
+        else if (S1 == NULL){
+                *Result=0;
+        }
+
+	else {
+		*Result=strlen(S1);
+	}
+
+	return(newVal(BSQ,1,1,1, INT, Result));
+}
+
+
+Var *
+ff_issubstring(vfuncptr func, Var * arg)
+{
+	char *S1=NULL,*S2=NULL;
+        int ac;
+        Var **av;
+	int *Result=(int *)calloc(1,sizeof(int));
+        Alist alist[3];
+        alist[0] = make_alist("target",         ID_STRING,         NULL,   &S1);
+        alist[1] = make_alist("source",           ID_STRING,        NULL,        &S2);
+        alist[2].name = NULL;
+
+        make_args(&ac, &av, func, arg);
+        if (parse_args(ac, av, alist)) *Result=0;
+
+	else if (S1 == NULL || S2 == NULL){
+		*Result=0;
+	}
+
+	else if ((strstr(S1,S2))==NULL){
+		*Result=0;
+	}
+	else 
+		*Result=1;
+
+	return(newVal(BSQ,1,1,1, INT, Result));
+}
+
+
+
+Var *
 ff_pow(vfuncptr func, Var * arg)
 {
 	Var *ob1, *ob2;
@@ -1564,8 +1624,10 @@ ff_resize(vfuncptr func, Var * arg)
 Var *
 ff_fork(vfuncptr func, Var * arg)
 {
+#ifndef __MSDOS__
 	if (fork() == 0) {
 		sleep(10);
 	}
+#endif
 	return(NULL);
 }

@@ -3,9 +3,11 @@
 
 #include "y_tab.h"
 
+#ifdef HAVE_LIBX11
 #include <X11/Intrinsic.h>
 #include <X11/Shell.h>
 #include <X11/Xatom.h>
+#endif
 
 int interactive = 1;
 
@@ -20,8 +22,10 @@ int VERBOSE = 2;
 int allocs = 0;
 Var *VZERO;
 
+#ifdef HAVE_LIBXT
 Widget top=NULL;
 XtAppContext    app;
+#endif
 
 #ifdef HAVE_LIBXM
 static int windows = 1;
@@ -58,8 +62,10 @@ void init_history(char *fname);
 void process_streams(void);
 void event_loop(void);
 
+#ifndef __MSDOS__
 void rl_callback_read_char();
 void rl_callback_handler_install(char *, void (char *));
+#endif
 
 void
 sighandler(int data)
@@ -92,8 +98,10 @@ main(int ac, char **av)
 	
     s = new_scope();
 
+#ifndef __MSDOS__
     signal(SIGPIPE, SIG_IGN);
     /* signal(SIGINT, sighandler); */
+#endif
 
     scope_push(s);
     /**
@@ -182,6 +190,17 @@ main(int ac, char **av)
     fake_data();
 
     if (interactive) {
+#ifdef __MSDOS__  
+/*extern readline(char *);  */
+/*extern add_history(char *);  */
+extern Init_DLL(void);  
+    
+                if(Init_DLL()){  
+                        parse_error("Can't initialize the readline DLL\n");  
+                        exit(-1);  
+                }  
+#endif
+
         if (logfile == NULL)
             logfile = ".dvlog";
         lfile = fopen(logfile, "a");
@@ -200,7 +219,16 @@ main(int ac, char **av)
     /**
     ** set up temporary directory
     **/
+#ifndef __MSDOS__
     sprintf(path, "TMPDIR=%s/dv_%d", P_tmpdir, getpid());
+#else
+        {  
+                char tmpbuf[128];  
+                _strtime( tmpbuf );  
+                sprintf(path, "c:\\windows\\temp\\dv_%s",tmpbuf);  
+        }  
+#endif
+
     mkdir(path + 7, 0777);
     putenv(path);
 
@@ -211,17 +239,19 @@ main(int ac, char **av)
     event_loop();
 }
 
+#ifndef __MSDOS__
 /* ARGSUSED */
 void get_file_input(XtPointer client_data, int *fid, XtInputId *id)
 {
     rl_callback_read_char();
 }
-
+#endif
 
 void
 event_loop(void)
 {
     if (interactive) {
+#ifndef __MSDOS__
         if (windows && getenv("DISPLAY") != NULL)  {
             char *argv[1];
             char *av0 = "null";
@@ -231,6 +261,7 @@ event_loop(void)
             top = XtVaAppInitialize(&app, "Simple", NULL, 0,
                                     &argc,
                                     argv, NULL, NULL);
+		SetTopLevel(&top);
         } else {
             /**
             ** This is a hack to let us use the Xt event model, without
@@ -248,7 +279,13 @@ event_loop(void)
         rl_callback_handler_install("dv> ", lhandler);
 
         XtAppMainLoop(app);
+#endif
+
+#ifdef __MSDOS__
+	lhandler((char *)readline("dv> "));
+#endif
     }
+
 }
 
 void lhandler(char *line)
@@ -258,6 +295,10 @@ void lhandler(char *line)
     char prompt[256];
     extern int pp_line;
     extern int pp_count;
+
+#ifdef __MSDOS__
+while (1) {
+#endif
 
     /**
     ** Readline has a whole line of input, process it.
@@ -286,12 +327,18 @@ void lhandler(char *line)
     } else {
         sprintf(prompt, "dv> ", indent);
     }
-    rl_callback_handler_install(prompt, lhandler);
-
+#ifndef __MSDOS__
+        rl_callback_handler_install(prompt, lhandler);
+#endif
     /*
     ** Process anything pushed onto the stream stack by the last command.
     */
     process_streams();
+#ifdef __MSDOS__
+    line=(char *)readline(prompt);
+  }
+#endif
+
 }
 
 void
@@ -357,14 +404,18 @@ quit(void)
 
     if (interactive) {
         printf("\n");
+#ifndef __MSDOS__
         rl_callback_handler_remove();
+#endif
     }
 
     /**
     ** clean up temporary directory
     **/
+#ifndef __MSDOS__ /*Windows will cleanup it's own temp directory */
     sprintf(cmd, "rm -rf %s &", path);
     system(cmd);
+#endif
     exit(1);
 }
 
@@ -418,9 +469,18 @@ fake_data()
         }
     }
 
+#ifndef __MSDOS__
     srand48(getpid());
+#else    
+                 srand( (unsigned int) time( NULL ) ); 
+#endif
+    
     for (i = 0; i < 12; i++) {
+#ifndef __MSDOS__
         ((float *) V_DATA(v))[i + 12] = drand48();
+#else
+                  ((float *) V_DATA(v))[i + 12] = (float )rand();
+#endif
     }
 
     v = (Var *) calloc(1, sizeof(Var));
