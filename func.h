@@ -439,3 +439,5 @@ Var * ff_hstats(vfuncptr func, Var * arg);
 Var * ff_bindct(vfuncptr func, Var * arg);
 
 Var * ff_deghost(vfuncptr func, Var * arg);
+Var * ff_deleted(vfuncptr func, Var * arg);
+Var * ff_set_deleted(vfuncptr func, Var * arg);
