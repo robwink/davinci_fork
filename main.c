@@ -70,6 +70,11 @@ void rl_callback_handler_install(char *, void (char *));
 jmp_buf env;
 #endif
 
+void user_sighandler(int data)
+{
+   signal(SIGUSR1, user_sighandler);
+}
+
 void
 sighandler(int data)
 {
@@ -77,6 +82,7 @@ sighandler(int data)
     Scope *scope;
     char cmd[256];
     char *path = getenv("TMPDIR");
+
 
     switch (data) {
 
@@ -103,6 +109,10 @@ sighandler(int data)
     	longjmp(env, 1);
 
         break;
+
+
+
+
     }
 }
 
@@ -128,6 +138,7 @@ main(int ac, char **av)
     signal(SIGINT, sighandler); 
     signal(SIGSEGV, sighandler);
     signal(SIGBUS, sighandler);
+    signal(SIGUSR1, user_sighandler);
 
 #endif
 
@@ -368,8 +379,9 @@ void lhandler(char *line)
 
         parse_buffer(buf);
 
-
+#ifndef __MSDOS__
         setjmp(env);
+#endif
 
         /*
         ** Process anything pushed onto the stream stack by the last command.

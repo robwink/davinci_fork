@@ -403,3 +403,5 @@ Var *ff_equals(vfuncptr func, Var *arg);
 Var * newInt(int i);
 Var * newFloat(float f);
 Var *ff_xplot(vfuncptr func, Var *arg);
+Var *ff_killchild(vfuncptr func, Var *arg); 
+
