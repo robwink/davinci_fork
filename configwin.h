@@ -80,6 +80,14 @@
 /* The following macro is defined if we have libreadline */
 #define HAVE_LIBREADLINE 1
 
-/* #define HAVE_LIBHDF5 1 */
+/* The following macro is defined if we have libhdf5 */
+#define HAVE_LIBHDF5 1
+
+/* The following macro is defined if we have zlib */
+#define HAVE_LIBZLIB 1
+
+/*Define if you have the PlPlot library */
+/* #define HAVE_PLPLOT 1 */
+#undef HAVE_PLPLOT
 
 #endif /* _CONFIGWIN_H_ */

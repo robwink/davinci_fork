@@ -1,9 +1,13 @@
-char *version = "@(#) daVinci Version #1.03";
+char *version = "@(#) daVinci Version #1.04";
 
 
 #include "build.h"
 
 /*
+Version 1.04: Mon Sep 23 10:35:34  2002
+	+ Added a new version of HDF5 library and enabled it.
+	+ Moved HDF5 in its own subdir in the win32 directory 
+
 Version 1.03: Fri Sep 20 18:30:36  2002
 	+ Cleaned the code for windows compile
 
