@@ -788,7 +788,7 @@ Add_Fake_Frame(void *newbuf,int band, int frame, int num_frames,int width,int ef
     unsigned char pseudo_ID=255;
     unsigned short new_frame;
     char *blank=malloc(width-8);
-    //    memset(blank,INVALID_DATA,(width-8));
+    /* //    memset(blank,INVALID_DATA,(width-8)); */
     int flip=0;
     unsigned char spot=0;
     int step=5;

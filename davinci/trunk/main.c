@@ -277,9 +277,9 @@ main(int ac, char **av)
     }  
 #else
     if ((p = getenv("TMPDIR")) == NULL) {
-        sprintf(path, "TMPDIR=%sdv_%d", P_tmpdir, getpid());
+        sprintf(path, "TMPDIR=%s/dv_%d", P_tmpdir, getpid());
 	} else {
-        sprintf(path, "TMPDIR=%sdv_%d", getenv("TMPDIR"), getpid());
+        sprintf(path, "TMPDIR=%s/dv_%d", getenv("TMPDIR"), getpid());
 	}
 
 	mkdir(path + 7, 0777);

@@ -93,20 +93,23 @@ Var *ff_projection(vfuncptr func, Var * arg)
         parse_error("Unrecognized value: %s(...%s=...)", func->name, "type");
         return(NULL);
     }
-        	strcpy(parameters[0],"proj=stere"); //Needed to initialize the projection library for Stereo
+        	strcpy(parameters[0],"proj=stere"); 
+			/* //Needed to initialize the projection library for Stereo */
 		Lat=extract_float(pLat,0);
 		Lon=extract_float(pLon,0);
 		radius=extract_float(pRadius,0);
 		if (Lat==0.0)
-			Lat=0.001; //Odd bug: Lat must not = 0.0 else it will fail.  This is close.
+			Lat=0.001; 
+			/* //Odd bug: Lat must not = 0.0 else it will fail.  This is close. */
 		
 
-	switch (type){ //Setting up the parameter list for Projection initalization
+	switch (type){ 
+	/* //Setting up the parameter list for Projection initalization */
 	case 1:
        		sprintf(parameters[1],"lon_0=%f",Lon);
         	sprintf(parameters[2],"lat_0=%f",Lat);
-        	sprintf(parameters[3],"a=%f",3399200.0); //Major equitorial radius (meters)
-        	sprintf(parameters[4],"b=%f",3376100.0); //Polar radius (meters)
+        	sprintf(parameters[3],"a=%f",3399200.0); /* //Major equitorial radius (meters) */
+        	sprintf(parameters[4],"b=%f",3376100.0); /* //Polar radius (meters) */
 		break;
 	case 2:
        		sprintf(parameters[1],"lon_0=%f",Lon);
@@ -175,12 +178,12 @@ xmin=pj_data.v;
         y = GetLines(V_SIZE(obj), V_ORG(obj));
         z = GetBands(V_SIZE(obj), V_ORG(obj));
 
-//Its format and size (in bytes)
+/* //Its format and size (in bytes) */
 	format=V_FORMAT(obj);
 	size=NBYTES(format);
 	newX=newY=ppd*2*radius;
 
-//Set aside enough space in our output dataset variable
+/* //Set aside enough space in our output dataset variable */
 	data=calloc(z*newX*newY,size);
 
 /*Now we loop through stereo space and project backwards to Lat/Lon space, find the appropriate
