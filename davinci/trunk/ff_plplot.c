@@ -221,7 +221,7 @@ ff_pplot(vfuncptr func, Var * arg)
 			pl_plsplw(nTitle);
 			pl_plssub(1,1);
 			pl_plsdev("xtwin");
-			pl_plspage(0,0,512,512,0,0);
+			pl_plspage(0,0,512,512,1,1);
 			pl_plinit();
 			setup=1;
 		} /*else, will be using the current stream*/

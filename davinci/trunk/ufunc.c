@@ -11,6 +11,8 @@ int nufunc = 0;
 int ufsize = 16;
 extern int pp_line;
 
+void list_funcs();
+
 UFUNC *
 locate_ufunc(char *name) 
 {
@@ -101,7 +103,7 @@ load_function(char *filename)
 	extern char *yytext;
 	extern Var *curnode;
 	FILE *fp;
-	extern void *parent_buffer;
+	void *parent_buffer;
 	extern int local_line;
 
     /**
@@ -249,6 +251,8 @@ load_function(char *filename)
 	
 	pp_line = local_line;
 	p = str;
+
+	parent_buffer = (void *)get_current_buffer();
 
 	while (p && *p) {
 		q = strchr(p, '\n');

@@ -1,10 +1,11 @@
-char *version = "@(#) daVinci Version #0.54a";
+char *version = "@(#) daVinci Version #0.55";
 
 /*
 Version 0.55:
+	* fixed eval again.  I think you can return values now
 	+ global()
 	+ dump()
-	+ text arrays: syscall(), grep, etc
+	+ text arrays: shell(), grep, etc
 	+ structures: { }, [], add_struct(), get_struct()
 	+ HDF read/write
 
