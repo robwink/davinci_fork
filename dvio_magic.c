@@ -15,6 +15,7 @@ dv_LoadGFX_Image(FILE *fp, char *filename, struct iom_iheader *s)
     struct iom_iheader h;
     void *image_data = NULL;
     int   status;
+	char  hbuf[HBUFSIZE];
 
     if (!(status = iom_GetGFXHeader(fp, filename, &h))){ return NULL; }
 
@@ -35,6 +36,16 @@ dv_LoadGFX_Image(FILE *fp, char *filename, struct iom_iheader *s)
         v = NULL;
     }
 
+    sprintf(hbuf, "%s: via Magick %s image: %dx%dx%d, %d bits",
+            filename, iom_Org2Str(h.org),
+            iom_GetSamples(h.dim, h.org), 
+            iom_GetLines(h.dim, h.org), 
+            iom_GetBands(h.dim, h.org), 
+            iom_NBYTESI(h.format)*8);
+    if (VERBOSE > 1) {
+        parse_error(hbuf);
+    }
+    
     iom_cleanup_iheader(&h);
 
     return v;

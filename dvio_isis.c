@@ -95,6 +95,12 @@ dv_WriteISIS(Var *s, char *filename, int force, char *title)
     */
 
     var2iom_iheader(s, &h);
+
+	if (VERBOSE > 1){
+        fprintf(stderr, "Writing %s: %dx%dx%d ISIS file.\n",
+                filename, h.size[0], h.size[1], h.size[2]);
+	}
+
     status = iom_WriteISIS(filename, V_DATA(s), &h, force, title);
     iom_cleanup_iheader(&h);
 

@@ -12,6 +12,7 @@ dv_LoadGRD(FILE *fp, char *filename, struct iom_iheader *s)
     char buf[256];
     int size,size2;
     int status;
+	char hbuf[1024];
 
     if (!iom_isGRD(fp)){ return NULL; }
 
@@ -28,6 +29,16 @@ dv_LoadGRD(FILE *fp, char *filename, struct iom_iheader *s)
     data = iom_read_qube_data(fileno(fp), &h);
     v = iom_iheader2var(&h);
 
+    sprintf(hbuf, "%s: GRD %s image: %dx%dx%d, %d bits",
+            filename, iom_Org2Str(h.org),
+            iom_GetSamples(h.dim, h.org), 
+            iom_GetLines(h.dim, h.org), 
+            iom_GetBands(h.dim, h.org), 
+            iom_NBYTESI(h.format)*8);
+    if (VERBOSE > 1) {
+        parse_error(hbuf);
+    }
+    
     V_DATA(v) = data;
 
     iom_cleanup_iheader(&h);

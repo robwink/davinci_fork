@@ -16,6 +16,7 @@ dv_LoadPNM(
     int bits;
     struct iom_iheader h;
     int status;
+	char hbuf[HBUFSIZE];
 
     Var *v;
 
@@ -42,6 +43,16 @@ dv_LoadPNM(
         v = NULL;
     }
 
+    sprintf(hbuf, "%s: PNM %s image: %dx%dx%d, %d bits",
+            filename, iom_Org2Str(h.org),
+            iom_GetSamples(h.dim, h.org), 
+            iom_GetLines(h.dim, h.org), 
+            iom_GetBands(h.dim, h.org), 
+            iom_NBYTESI(h.format)*8);
+    if (VERBOSE > 1) {
+        parse_error(hbuf);
+    }
+    
     iom_cleanup_iheader(&h);
 
 
@@ -109,12 +120,14 @@ dv_WritePGM(Var *obj, char *filename, int force)
         return 0;
     }
 
+    var2iom_iheader(obj, &h);
+
     if (VERBOSE > 1)  {
         fprintf(stderr, "Writing %s: %dx%d PGM file.\n",
-                filename, h.size[0], h.size[1]);
+                filename, iom_GetSamples(h.size,h.org),
+				iom_GetLines(h.size,h.org));
     }   
 
-    var2iom_iheader(obj, &h);
     status = iom_WritePNM(filename, V_DATA(obj), &h, force);
     iom_cleanup_iheader(&h);
     
@@ -150,12 +163,16 @@ dv_WritePPM(Var *obj, char *filename, int force)
         return 0;
     }
 
+    var2iom_iheader(obj, &h);
+
     if (VERBOSE > 1)  {
         fprintf(stderr, "Writing %s: %dx%dx%d PPM file.\n",
-                filename, h.dim[0], h.dim[1], h.dim[2]);
+                filename, 
+				iom_GetSamples(h.size,h.org),
+				iom_GetLines(h.size,h.org),
+				iom_GetBands(h.size,h.org));
     }   
 
-    var2iom_iheader(obj, &h);
     status = iom_WritePNM(filename, V_DATA(obj), &h, force);
     iom_cleanup_iheader(&h);
     
