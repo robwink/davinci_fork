@@ -1,8 +1,11 @@
-char *version = "@(#) daVinci Version #1.23";
+char *version = "@(#) daVinci Version #1.24";
 
 #include "build.h"
 
 /*
+Version 1.24: Tue Feb 10 14:58:27 MST 2004
+	* Fixed ff_convolve (wasn't using ignore properly)[Ben]
+
 Version 1.23: Mon Jan 26 14:08:02 MST 2004
 	* Fixed some uninitialized VAR* variables in ff_deghost that were
 	  causing core dumps for Kim. [Michael]
