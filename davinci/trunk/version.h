@@ -1,8 +1,15 @@
-char *version = "@(#) daVinci Version #0.7.2";
+char *version = "@(#) daVinci Version #0.79";
+
+/*
+** saadat, stop setting the version number to X.Y.Z.
+*/
 
 #include "build.h"
 
 /*
+Version 0.79: Tue May 29 18:43:38 MST 2001
+	* Brought all changes up to date between 0.7 tree and 0.6 tree.
+	* Fixed version numbering.
 
 Version 0.7.2: Thu Apr 12 13:45:00 MST 2001
 	* Added verbosity control to iomedley.
