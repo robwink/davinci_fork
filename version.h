@@ -3,6 +3,7 @@ char *version = "@(#) daVinci Version #0.64";
 
 /*
 Version 0.64: Thu Jan 11 17:27:46 MST 2001
+	* Fixed bugs is isis()
 	* Added modules support
 	* Fixed a lot of stuff for multi-platform compiles
 
