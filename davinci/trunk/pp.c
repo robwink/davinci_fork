@@ -666,7 +666,7 @@ get_env_var(char *name)
         parse_error(NULL);
         return (NULL);
     }
-    return (value);
+    return (strdup(value));
 }
 
 
@@ -772,6 +772,15 @@ pp_argv(Var *left, Var *right)
     }
 }
 
+Var *pp_new_parallel(Var *axis, Var *arg)
+{
+	Var *n;
+
+	n = newVar();
+	return(n);
+}
+
+
 int 
 compare_strings(char *s1, int op, char *s2)
 {
@@ -870,6 +879,7 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
         return(newVal(BSQ,1,rows,1,INT,data));
     }
 }
+
 
 
 char *
