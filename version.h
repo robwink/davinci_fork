@@ -1,6 +1,21 @@
-char *version = "@(#) daVinci Version #0.61";
+char *version = "@(#) daVinci Version #0.62b";
+#include "build.h"
 
 /*
+Version 0.62b: Mon Oct 23 17:21:59 MST 2000
+	* ff_histogram only extracted ints
+
+Version 0.62a: Thu Oct 12 17:00:43 MST 2000
+	* broke ufunc
+
+Version 0.62: Thu Oct 12 17:00:43 MST 2000
+	* enhanced version info and -V flag
+	* fixed bug with struct/scope memory
+	* fixed stack errors in unescape and unquote
+	* made X11 input depend on Xt not Xm
+	* Added ID_LINE for a robust debug capability
+	* mk_node no longer uses scope memory.  This should make things faster
+
 Version 0.61: Thu Sep 14 17:55:05 MST 2000
 	* Changed structures to use Narray associative arrays
 
