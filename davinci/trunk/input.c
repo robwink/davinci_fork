@@ -14,9 +14,8 @@ static int input_ptr = 0;
 int indent = 0;
 int pp_count = 0;
 int pp_line = 0;
+int indent = 0;
 
-char *readline(char *);
-void add_history(char *);
 void log_line(char *);
 int yylex(void);
 
@@ -47,7 +46,7 @@ input_loop(char *buf, int *result, int max_size)
                         add_history(il);
                     strcpy(input_line, il);
                     strcat(input_line, "\n");
-                    xfree(il);
+                    free(il);
                     il = input_line;
 #endif
                 }
@@ -126,7 +125,7 @@ eat_em()
 
     tmp = tempnam(NULL, NULL);
     strcpy(save_file, tmp);
-    xfree(tmp);
+    free(tmp);
 
     save_fp = fopen(save_file, "w");
     fprintf(save_fp, "define");

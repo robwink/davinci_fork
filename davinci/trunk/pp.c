@@ -777,7 +777,7 @@ Var *
 pp_set_where(Var *id, Var *where, Var *exp) 
 {
     Var *v, *e;
-    int i,j,k;
+    int i,j,k, l;
     int size[3], s1,s2,s3,d1,d2,d3, od[3], os[3], d, s;
     Range *r, rout;
 	int ival, dsize, format;
@@ -799,12 +799,8 @@ pp_set_where(Var *id, Var *where, Var *exp)
 		parse_error("rhs is NULL.\n");
 		return(NULL);
 	}
-	exp = V_DUP(v);
+	exp = v;
 
-	if (V_DSIZE(exp) != 1) {
-		parse_error("rhs has too many values to use with 'where'.\n");
-		return(NULL);
-	}
 
 	if ((v = eval(id)) == NULL) {
 		parse_error("lhs does not exist\n");
@@ -818,6 +814,7 @@ pp_set_where(Var *id, Var *where, Var *exp)
 	}
 	where = v;
 
+/*
 	if (V_ORG(id) != V_ORG(where) ||
 	    V_SIZE(id)[0] != V_SIZE(where)[0] ||
 	    V_SIZE(id)[1] != V_SIZE(where)[1] ||
@@ -826,22 +823,88 @@ pp_set_where(Var *id, Var *where, Var *exp)
 		parse_error("'where' value doesn't match org/shape of lhs\n");
 		return(NULL);
 	}
+	if (V_ORG(id) != V_ORG(exp) ||
+	    V_SIZE(id)[0] != V_SIZE(exp)[0] ||
+	    V_SIZE(id)[1] != V_SIZE(exp)[1] ||
+	    V_SIZE(id)[2] != V_SIZE(exp)[2]) {
 
-	dsize = V_DSIZE(id);
-	format = V_FORMAT(id);
-	ival  = extract_int(exp, 0);
-	dval  = extract_double(exp, 0);
+		parse_error("rhs doesn't match org/shape of lhs of where\n");
+		return(NULL);
+	}
+*/
 
-	for (i = 0 ; i < dsize ; i++) {
-		if (extract_int(where, i)) {
-			switch (format) {
-				case BYTE:		((u_char *)V_DATA(id))[i] = ival; break;
-				case SHORT:		((short *)V_DATA(id))[i] = ival; break;
-				case INT:		((int *)V_DATA(id))[i] = ival; break;
-				case FLOAT:		((float *)V_DATA(id))[i] = dval; break;
-				case DOUBLE:	((double *)V_DATA(id))[i] = dval; break;
+	if (V_DSIZE(exp) != 1) {
+		for (i = 0 ; i < 3 ; i++) {
+			j = V_SIZE(id)[orders[V_ORG(id)][i]];
+			k = V_SIZE(where)[orders[V_ORG(where)][i]];
+			l = V_SIZE(exp)[orders[V_ORG(exp)][i]];
+			if (j == 1) {
+				if (k == 1 || l == 1) continue;
+				if (k != l) {
+					parse_error("Sizes don't match\n");
+				}
+			}
+			if (k == 1) {
+				if (j == 1 || l == 1) continue;
+				if (j != l) {
+					parse_error("Sizes don't match\n");
+				}
+			}
+			if (l == 1) {
+				if (j == 1 || k == 1) continue;
+				if (j != k) {
+					parse_error("Sizes don't match\n");
+				}
 			}
 		}
+	}
+
+
+	if (V_DSIZE(exp) == 1) {
+		dsize = V_DSIZE(id);
+		format = V_FORMAT(id);
+		ival  = extract_int(exp, 0);
+		dval  = extract_double(exp, 0);
+
+		for (i = 0 ; i < dsize ; i++) {
+			if (extract_int(where, i)) {
+				switch (format) {
+					case BYTE:		((u_char *)V_DATA(id))[i] = ival; break;
+					case SHORT:		((short *)V_DATA(id))[i] = ival; break;
+					case INT:		((int *)V_DATA(id))[i] = ival; break;
+					case FLOAT:		((float *)V_DATA(id))[i] = dval; break;
+					case DOUBLE:	((double *)V_DATA(id))[i] = dval; break;
+				}
+			}
+		}
+	} else {
+		dsize = V_DSIZE(id);
+		format = V_FORMAT(id);
+
+		for (i = 0 ; i < dsize ; i++) {
+			j = rpos(i, id, where);
+			if (extract_int(where, j)) {
+				k = rpos(i, id, exp);
+				switch (format) {
+					case BYTE:		
+						((u_char *)V_DATA(id))[i] = extract_int(exp, k); 
+						break;
+					case SHORT:		
+						((short *)V_DATA(id))[i] = extract_int(exp, k); 
+						break;
+					case INT:		
+						((int *)V_DATA(id))[i] = extract_int(exp, k); 
+						break;
+					case FLOAT:		
+						((float *)V_DATA(id))[i] = extract_double(exp, k); 
+						break;
+					case DOUBLE:	
+						((double *)V_DATA(id))[i] = extract_double(exp, k); 
+						break;
+				}
+			}
+		}
+
 	}
     return(id);
 }

@@ -8,6 +8,7 @@
 static unsigned radix (unsigned n);
 static void split (COMPLEX *in, unsigned r, unsigned m, COMPLEX *out);
 static void join (COMPLEX *in, unsigned m, unsigned n, COMPLEX *out);
+int W_init (unsigned n);
 
 /*
  * Forward Fast Fourier Transform on the n samples of complex array in.

@@ -8,6 +8,8 @@
 
 #include "io_specpr.h"
 
+char *strndup(const char *, int);
+
 char *
 decode_time(int s,char *buf)
 {
@@ -285,7 +287,10 @@ make_label(int npixels, int waves, char *title, char *ahist, char *mhist)
     label.irmas = label.revs = label.iband[0] = label.iband[1] = 1;
     label.irespt = label.itpntr = 0;
     label.siangl = label.seangl = label.sphase = 0;
-    label.itimch = label.xnrm = label.scatin = label.timint = 1;
+    label.itimch = 1;
+    label.xnrm = 1;
+    label.scatin = 1;
+    label.timint = 1;
     label.tempd = 273;
 
     label.irwav = waves ;/* wavelengths pointer */
@@ -584,7 +589,7 @@ LoadSpecprHeader(FILE *fp, char *filename, int rec, char *element, Var **val)
     } else if (tval != NULL) {
         v = new(Var);
         V_TYPE(v) = ID_STRING;
-        V_STRING(v) = strndup(tval, range);
+        V_STRING(v) = strndup((const char *)tval, range);
     }
 
     *val = v;

@@ -1,5 +1,6 @@
 #include "ff.h"
 #include "apidef.h"
+#include "rfunc.h"
 
 /**
  ** V_func - find and call named function
@@ -15,6 +16,7 @@ V_func(char *name, Var * arg)
 	vfuncptr f;
 	UFUNC *uf, *locate_ufunc(char *);
 	APIDEFS *api;
+	ArgsRegister *rf, *locate_rfunc(char *);
 
 	/**
 	 ** Find and call the named function or its handler
@@ -23,6 +25,10 @@ V_func(char *name, Var * arg)
 		if (!strcmp(f->name, name)) {
 			return (f->fptr(f, arg));
 		}
+	}
+
+	if ((rf = locate_rfunc(name)) != NULL) {
+		return(dispatch_rfunc(rf, arg));
 	}
 
 	/**
@@ -754,21 +760,21 @@ ff_create(vfuncptr func, Var * arg)
 		case BYTE: {
 			u_char *idata = (u_char *) V_DATA(s);
 			for (i = 0; i < dsize; i++) {
-				idata[i] = start + i * step;
+				idata[i] = (u_char) (start + i * step);
 			}
 			break;
 		}
 		case SHORT: {
 			short *idata = (short *) V_DATA(s);
 			for (i = 0; i < dsize; i++) {
-				idata[i] = start + i * step;
+				idata[i] = (short)(start + i * step);
 			}
 			break;
 		}
 		case INT: {
 			int *idata = (int *) V_DATA(s);
 			for (i = 0; i < dsize; i++) {
-				idata[i] = start + i * step;
+				idata[i] = (int)(start + i * step);
 			}
 			break;
 		}
@@ -1398,7 +1404,7 @@ ff_fsize(vfuncptr func, Var * arg)
 		fprintf(stderr, "%s: No filename specified\n", av[0]);
 		return(NULL);
 	} else {
-		data = calloc(1, sizeof(int));
+		data = (int *)calloc(1, sizeof(int));
 		*data = -1;
 		if ((stat(filename, &sbuf)) == 0) {
 			*data = sbuf.st_size;
@@ -1485,7 +1491,7 @@ ff_hedit(vfuncptr func, Var * arg)
 	tmp = tempnam(NULL, NULL);
 	if ((fp = fopen(tmp, "w")) == NULL ) {
 		parse_error("%s: unable to open temp file: %s", av[0], tmp);
-		xfree(tmp);
+		free(tmp);
 		return(NULL);
 	}
 
@@ -1504,7 +1510,7 @@ ff_hedit(vfuncptr func, Var * arg)
 	unlink(tmp);
 	push_input_stream(fp);
 
-	xfree(tmp);
+	free(tmp);
 #endif
 	return(NULL);
 }

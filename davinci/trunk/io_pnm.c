@@ -113,7 +113,7 @@ ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
             for (i = 0 ; i < k ; i++) {
                 sdata[count++] = get_int(fp);
             }
-            data = sdata;
+            data = (u_char *)sdata;
             *bits = 16;
         } else {
             parse_error("Unable to read this pgm file.  Odd maxval");
@@ -275,7 +275,7 @@ LoadPNM(FILE *fp, char *filename, struct _iheader *s)
     /**
     *** Get format
     **/
-    if (ReadPNM(fp, filename, &x, &y, &z, &bits, &data) != 1) {
+    if (ReadPNM(fp, filename, &x, &y, &z, &bits, (void **)&data) != 1) {
         return(NULL);
     }
 
@@ -297,8 +297,8 @@ LoadPNM(FILE *fp, char *filename, struct _iheader *s)
     if (bits == 8) {
         V_FORMAT(v) = BYTE;
     } else if (bits == 16) {
-		int *data = calloc(4, x*y*z);
-		unsigned short *sdata = V_DATA(v);
+		int *data = (int *)calloc(4, x*y*z);
+		u_short *sdata = (u_short *)V_DATA(v);
 
 		for (i = 0 ; i < V_DSIZE(v) ; i++) {
 			data[i] = sdata[i];

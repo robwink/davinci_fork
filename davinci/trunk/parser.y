@@ -8,11 +8,13 @@ Var *p_mkval(int , char *);
 
 extern Var *curnode;
 extern char *yytext;
-extern int indent;
 extern FILE *ftos;
 jmp_buf env;
 
-int eatNL =1;
+extern int indent;
+extern int pp_count;
+
+int log_it = 0;
 %}
 
 %token WHILE CONTINUE BREAK RETURN FOR WHERE
@@ -30,46 +32,15 @@ int eatNL =1;
 
 start
     : statement				{ curnode = $$ = $1;  YYACCEPT; }
-    | error separator       { curnode = NULL ; YYACCEPT; }
+    | error separator       
+			{ 
+				indent = 0; 
+			  	curnode = NULL; 
+			  	YYACCEPT;
+			}
 	|
     ;
 
-/**
- ** Functions should evaluate once, but the tree shouldn't be
- ** thrown away.  Store it in the current scope, before returning.
- **/
-
-statements
-    : statement                 { 
-                                    if (check_ufunc($1)) {
-										if (setjmp(env) == 0) {
-											evaluate($1);
-											pp_print(pop(scope_tos()));
-										} else {
-											while (ftos && ftos != stdin)
-												pop_input_file();
-										}
-                                        free_tree($1);
-										cleanup(scope_tos());
-                                    }
-                                }
-    | error separator           {
-                                    indent = 0;
-                                }
-    | statements statement      {
-                                    if (check_ufunc($2)) {
-										if (setjmp(env) == 0) {
-											evaluate($2);
-											pp_print(pop(scope_tos()));
-										} else {
-											while (ftos && ftos != stdin)
-												pop_input_file();
-										}
-                                        free_tree($2);
-										cleanup(scope_tos());
-                                    }
-                                }
-    ;
 
 statement
     : expression_statement                  { $$ = $1; }
@@ -79,8 +50,8 @@ statement
     | iteration_statement                   { $$ = $1; }
     | command_statement                     { $$ = $1; }
 	| SHELL                                 { $$ = pp_shell(yytext); }
-    | FUNC_DEF ID '(' args ')' compound_statement { $$ = NULL; }
     | QUIT                                  { YYABORT; }
+    | FUNC_DEF id '(' args ')' compound_statement { $$ = NULL; }
 	;
 
 command_statement
@@ -101,7 +72,7 @@ expression_statement
     ;
 
 compound_statement
-    :   '{' {indent++;} statement_list '}'  { indent--;$$ = $3; }
+    :   '{' statement_list '}'  { $$ = $2; }
     ;
 
 statement_list
@@ -110,16 +81,16 @@ statement_list
     ;
 
 selection_statement
-    : IF '(' expression ')' statement ELSE statement [YYVALID;]
+    : IF '(' expression ')' statement ELSE statement 
                             { $$ = p_mknod(ID_IF, $3, p_mknod(ID_ELSE, $5, $7)); }
-    | IF '(' expression ')' statement [YYVALID;]
+    | IF '(' expression ')' statement 
 							{ $$ = p_mknod(ID_IF, $3, $5); }
 	;
 
 
 separator
-    : ';'
-    | '\n'
+    : ';'							{ $$ = NULL; }
+    | '\n'							{ pp_count = 0; $$ = NULL; }
     ;
 
 
@@ -261,10 +232,32 @@ lhs
     | '$' id '[' expression ']'         { $$ = p_mknod(ID_ARGV, $2, $4); }
     ;
 
-id: ID                                  { $$ = p_mkval(ID_ID, $1); }
-ival : IVAL                             { $$ = p_mkval(ID_IVAL, $1); }
-rval: RVAL                              { $$ = p_mkval(ID_RVAL, $1); }
-string: STRING                          { $$ = p_mkval(ID_STRING, $1); }
+id: ID                             { $$ = p_mkval(ID_ID, (char *)$1); free($1); }
+ival : IVAL                        { $$ = p_mkval(ID_IVAL, (char *)$1); free($1);  }
+rval: RVAL                         { $$ = p_mkval(ID_RVAL, (char *)$1); free($1); }
+string: STRING                     { $$ = p_mkval(ID_STRING, (char *)$1); free($1); }
 ;
 
+/**
+ ** Functions should evaluate once, but the tree shouldn't be
+ ** thrown away.  Store it in the current scope, before returning.
+ **/
+
+statements
+    : statement                 { 
+                                    if (check_ufunc($1)) {
+										if (setjmp(env) == 0) {
+											evaluate($1);
+											pp_print(pop(scope_tos()));
+										} else {
+											while (ftos && ftos != stdin)
+												pop_input_file();
+										}
+                                        free_tree($1);
+										cleanup(scope_tos());
+                                    }
+                                }
+    ;
+
 %%
+

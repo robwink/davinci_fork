@@ -250,8 +250,7 @@ BUGS
 #ifndef HAVE_BASENAME
 
 char *
-basename (name)
-     const char *name;
+basename (const char *name)
 {
   const char *base = name;
 
@@ -269,8 +268,7 @@ basename (name)
 
 #ifndef HAVE_DIRNAME
 char *
-dirname (path)
-     char *path;
+dirname (char *path)
 {
   char *newpath;
   char *slash;
@@ -432,7 +430,7 @@ char *strdup(const char *s1)
         char *s2;
         if (s1 == NULL) s1 = "";
 
-        s2 = malloc(strlen(s1)+1);
+        s2 = (char *)malloc(strlen(s1)+1);
         memcpy(s2,s1,strlen(s1)+1);
         return(s2);
 }
@@ -445,7 +443,7 @@ char *strndup(const char *s1, int len)
         char *s2;
         if (s1 == NULL) s1 = "";
 
-        s2 = malloc(len+1);
+        s2 = (char *)malloc(len+1);
         memcpy(s2,s1,len);
 		s2[len] = '\0';
         return(s2);

@@ -12,6 +12,12 @@ float g_random();
 float noise();
 void g_srandom(int);
 
+#ifndef HAVE_RANDOM
+#define random rand
+#define srandom srand
+#endif
+
+
 Var *
 ff_random(vfuncptr func, Var * arg)
 {

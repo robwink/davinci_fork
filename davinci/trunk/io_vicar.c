@@ -312,7 +312,7 @@ WriteVicar(Var *s, FILE *fp, char *filename)
     sprintf(ptr+strlen(ptr), "N4=0  NBB=0  NLB=0  ");
     
 	{
-		uint  t = time(0);
+		time_t t = time(0);
 		sprintf(ptr+strlen(ptr),
             "HOST='SUN-SOLR'  INTFMT='HIGH'  REALFMT='IEEE'  BHOST='VAX-VMS'  BINTFMT='LOW'  BREALFMT='VAX'  BLTYPE=''  TASK='DAVINCI'  USER='%s'  DAT_TIM='%24.24s'", getpwuid(getuid())->pw_name, ctime(&t));
 

@@ -1,4 +1,24 @@
-char *readline(char *);
+#ifdef __cplusplus
+extern "C" char *readline(char *);
+extern "C" void *add_history(char *);
+extern "C" void rl_callback_handler_install(char *, void (*)(char *));
+extern "C" struct _hist_state* history_get_history_state(void);
+extern "C" void rl_callback_read_char ();
+extern "C" int yywrap ( void );
+#endif
+
+struct yy_buffer_state;
+void yy_delete_buffer ( struct yy_buffer_state *b );
+struct yy_buffer_state *yy_scan_string( const char *yy_str );
+void yy_switch_to_buffer ( struct yy_buffer_state *new_buffer);
+
+
+void yyerror(char *s);
+int yyparse(int, Var *);
+
+void log_line(char *);
+int yylex(void);
+
 void squash_spaces(char *s);
 int instring(char *str, char c);
 int check_ufunc(Var *v);
@@ -8,6 +28,8 @@ int dd_put_argv(Scope *s, Var *v);
 void unput_nextc(char c);
 int send_to_plot(char *);
 char *do_help(char *input);
+
+void parse_stream(FILE *fp);
 
 /* pp.c */
 void emit_prompt ();                    /* spit out prompt if interactive */
@@ -92,6 +114,7 @@ int KwToFloat(char *, struct keywords *, float *);
 /* vicar.h */
 char *get_value (char *, char *);
 int GetVicarHeader (FILE *, struct _iheader *);
+int GetAVIRISHeader (FILE *, struct _iheader *);
 Var *iheader2var (struct _iheader *);
 
 /* read.c */
@@ -103,6 +126,7 @@ Var *LoadISIS (FILE *, char *, struct _iheader *);
 Var *LoadGRD(FILE *,char *, struct _iheader *);
 Var *LoadPNM(FILE *, char *, struct _iheader *);
 Var *LoadGOES (FILE *, char *, struct _iheader *);
+Var *LoadAVIRIS (FILE *, char *, struct _iheader *);
 Var *Load_imath (FILE *, char *, struct _iheader *);
 int LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var);
 
@@ -116,6 +140,7 @@ int WriteAscii(Var *, FILE *, char *);
 int WriteERS(Var *, FILE *, char *);
 int WriteIMath(Var *s, FILE *fp, char *filename);
 
+int is_AVIRIS(FILE *);
 int is_GRD(FILE *);
 int is_Vicar(FILE *);
 int is_compressed(FILE *);
@@ -221,6 +246,7 @@ Var *ff_sprintf(vfuncptr func, Var *);
 Var *ff_system(vfuncptr func, Var *);
 Var *ff_ifill(vfuncptr func, Var *arg);
 Var *ff_jfill(vfuncptr func, Var *arg);
+Var *ff_pfill(vfuncptr func, Var *arg);
 Var *ff_bop(vfuncptr func, Var *arg);
 Var *ff_avg(vfuncptr func, Var *arg);
 Var *ff_basis(vfuncptr func, Var *arg);
@@ -247,14 +273,24 @@ Var *ff_minvert(vfuncptr func, Var *arg);
 Var *ff_dct(vfuncptr func, Var *arg);
 Var *ff_entropy(vfuncptr func, Var *arg);
 
-Alist make_alist();
+Alist make_alist(char *name, int type, void *limits, void *value);
+
 
 double bbr(double, double);
 double btemp(double, double);
 Var *newVal(int org, int x, int y, int z, int format, void *data);
 
-int cmp_byte(u_char * a, u_char * b);
-int cmp_short(short *a, short *b);
-int cmp_int(int *a, int *b);
-int cmp_float(float *a, float *b);
-int cmp_double(double *a, double *b);
+int cmp_byte(const void *, const void *);
+int cmp_short(const void *, const void *);
+int cmp_int(const void *, const void *);
+int cmp_float(const void *, const void *);
+int cmp_double(const void *, const void *);
+
+void log_line(char *str);
+int make_args(int *ac, Var ***av, vfuncptr func, Var *args);
+int parse_args(int ac, Var **av, Alist *alist);
+int print_history(int i);
+
+void xfree(void *);
+void save_ufunc(char *filename);
+void vax_ieee_r(float *from, float *to);

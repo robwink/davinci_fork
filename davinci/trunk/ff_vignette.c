@@ -5,7 +5,7 @@
  **/
 
 float *
-vignette(int width, int height, int r0, int offset, int i0)
+vignette(int width, int height, float r0, float offset, float i0)
 {
     int cx, cy;
     float r;

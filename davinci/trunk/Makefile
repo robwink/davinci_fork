@@ -13,15 +13,18 @@ INSTALL = ./install-sh -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 
-XINCLUDES=-I/usr/openwin/include
-XLIBS=-L/usr/openwin/lib
+XINCLUDES=-I/usr/include/X11R5 -I/usr/include/Motif1.2 $(XRTINCLUDE)
+XLIBS=-L/usr/lib/X11R5 $(XRTLIBS)
+
+XRTINCLUDE= -I$(XRTHOME)/include
+XRTLIBS = -L$(XRTHOME)/lib -L/usr/lib/Motif1.2 -lxrt3d -lpdsutil -lMrm -lXm -lXpm
 
 CC     = gcc
-DEFS   = -DHAVE_CONFIG_H -Ilib
-LIBS   = -lreadline -ltermcap -lXt -lX11 -lm 
+CFLAGS = -g -DHAVE_CONFIG_H -Ilib -DHAVE_XRT
+LIBS   = $(XLIBS) -lreadline -ltermcap -lXt -lX11 -lm 
 
 .c.o:
-	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
 
 ###
 ### If you are unable to compile readline, comment the following three lines
@@ -40,16 +43,20 @@ OBJ=p.o pp.o symbol.o error.o \
 	reserved.o array.o string.o pp_math.o rpos.o init.o help.o \
 	io_grd.o io_isis.o io_lablib3.o io_pnm.o io_specpr.o io_vicar.o \
 	io_aviris.o io_imath.o \
-	input.o ff_moment.o io_ascii.o ff_interp.o \
+	ff_moment.o io_ascii.o ff_interp.o \
 	lexer.o parser.o main.o fit.o system.o misc.o ufunc.o scope.o \
 	ff_header.o ff_text.o io_ers.o io_goes.o ff_bbr.o ff_vignette.o \
 	ff_pause.o printf.o ff_ifill.o ff_xfrm.o newfunc.o ff_ix.o ff_avg.o \
-	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o
+	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
+	x.o xrt_print_3d.o motif_tools.o rfunc.o
+#	input.o 
 
-all:	davinci gplot
+all:	davinci 
+# gplot
 
 davinci:	$(OBJ)  $(READLINE_OBJ) 
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $@ $(READLINE_LIB) $(LIBS)
+#	$(XRTHOME)/bin/xrt_auth davinci
 
 readline/libreadline.a:
 	@(cd readline ; make )
@@ -61,8 +68,11 @@ lexer.c:	lexer.l
 	mv lex.yy.c lexer.c
 
 parser.c:	parser.y
-	btyacc -S push.skel -d parser.y
-	mv y_tab.c parser.c
+	bison -d parser.y
+	mv parser.tab.c parser.c
+	mv parser.tab.h y_tab.h
+
+
 
 install:
 	cp davinci $(BINDIR)
@@ -100,7 +110,7 @@ binary:	davinci gplot
 	echo `./config.guess`
 
 gplot.o:	gplot.c
-	$(CC) -c $(CPPFLAGS) $(DEFS) $(XINCLUDES) -Ilib $(CFLAGS) $< 
+	$(CC) -c $(CPPFLAGS) $(XINCLUDES) -Ilib $(CFLAGS) $< 
 
 gplot:	gplot.o lib/libXfred.a system.o
 	$(CC) $(CFLAGS) gplot.o system.o -o $@ -Llib -lXfred $(LIBS) $(XLIBS) -lX11
@@ -110,6 +120,13 @@ lib/libXfred.a:
 
 depend:
 	gcc -MM $(OBJ:.o=.c)
+
+x.o:	x.c
+	$(CC) -c $(CFLAGS) $(XRTINCLUDE) $?
+
+xrt_print_3d.o:	xrt_print_3d.c
+	$(CC) -c $(CFLAGS) $(XRTINCLUDE) $?
+
 
 
 #########################################################################
