@@ -1,5 +1,10 @@
 #include "parser.h"
 
+
+#ifdef __MSDOS__
+extern Swap_Big_and_Little(Var *);
+#endif
+
 #ifdef HAVE_LIBMAGICK
 int ValidGfx(char *type,char *GFX_type)
 {
@@ -157,6 +162,11 @@ ff_write(vfuncptr func, Var *arg)
         title = V_STRING(v);
     }
 
+#ifdef LITTLE_E 
+    ob=(Var *)Swap_Big_and_Little(ob);
+#endif
+
+
     if      (!strcasecmp(type, "raw"))    WriteRaw(ob, NULL, filename);
     else if (!strcasecmp(type, "vicar"))  WriteVicar(ob, NULL, filename); 
     else if (!strcasecmp(type, "grd"))    WriteGRD(ob, NULL, filename);
@@ -169,7 +179,12 @@ ff_write(vfuncptr func, Var *arg)
     else if (!strcasecmp(type, "specpr")) WriteSpecpr(ob, filename, title);
     else if (!strcasecmp(type, "hdf"))    WriteHDF5(-1, filename, ob);
 #ifdef HAVE_LIBMAGICK
-    else if (ValidGfx(type,GFX_type))     WriteGFX_Image(ob,filename,GFX_type);
+#ifdef LITTLE_E
+    else if (ValidGfx(type,GFX_type))     {WriteGFX_Image(Swap_Big_And_Little(ob),filename,GFX_type); return(NULL);}
+#endif
+#ifndef LITTLE_E
+    else if (ValidGfx(type,GFX_type))     {WriteGFX_Image(ob,filename,GFX_type);}
+#endif
 #endif
     else {
         sprintf(error_buf, "Unrecognized type: %s", type);

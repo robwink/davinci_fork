@@ -4,8 +4,9 @@
  ** This file contains all system specific dependencies, and defines
  ** some values that aren't on all systems
  **/
-
+#ifndef __MSDOS__
 #include <netinet/in.h>
+#endif
 
 #ifndef MINSHORT
 #define MINSHORT    ((short)(1 << ((8*sizeof(short) - 1))))

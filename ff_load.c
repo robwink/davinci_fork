@@ -1,7 +1,13 @@
 #include "parser.h"
 #include "io_specpr.h"
 
+#ifndef __MSDOS__
 #include <pwd.h>
+#endif
+
+#ifdef LITTLE_E
+extern Swap_Big_and_Little(Var *);
+#endif
 
 void
 init_iheader(struct _iheader *h)
@@ -115,7 +121,7 @@ ff_load(vfuncptr func, Var * arg)
 
 	if (record != -1) h.s_lo[2] = h.s_hi[2] = record;
 
-    if (fname && (fp = fopen(fname, "r")) != NULL) {
+    if (fname && (fp = fopen(fname, "rb")) != NULL) {
         if (is_compressed(fp))
             fp = uncompress(fp, fname);
 
@@ -130,11 +136,17 @@ ff_load(vfuncptr func, Var * arg)
 
         fclose(fp);	/* ImageMagick opens its own files */
 
-		if (input == NULL)    input = LoadHDF5(filename);
+#ifdef LITTLE_E
+        if (input!=NULL)
+                return((Var *)Swap_Big_and_Little(input));
+#endif
 
 #ifdef HAVE_LIBMAGICK
 		if (input == NULL)    input = LoadGFX_Image(filename);
 #endif
+
+		if (input == NULL)    input = LoadHDF5(filename);
+
 
 		if (input == NULL)    input = LoadVanilla(filename);
 
@@ -470,7 +482,10 @@ expand_filename(char *s)
                 strcat(buf, e);
             }
             p = q;
-        } else if (*p == '~' && p == s) { /* home directory expansion */
+	
+        }
+    #ifndef __MSDOS__ 
+	    else if (*p == '~' && p == s) { /* home directory expansion */
             q = p + 1;
             while (*q && (isalnum(*q) || *q == '_')) {
                 q++;
@@ -488,7 +503,9 @@ expand_filename(char *s)
                 }
             }
             p = q;
-        } else {
+        } 
+	#endif
+	    else {
             strncat(buf, p, 1);
             p++;
         }

@@ -1,4 +1,6 @@
+#ifndef __MSDOS__
 #include "config.h"
+#endif
 #ifdef HAVE_LIBMAGICK
 #ifdef HAVE_LIBX11
 #include <magick.h>

@@ -1,7 +1,11 @@
 #include <stdio.h>
 #include <string.h>
+#ifndef __MSDOS__
 #include <sys/time.h>
 #include <sys/resource.h>
+#else 
+#include <sys/timeb.h>
+#endif
 #include <errno.h>
 #include <time.h>
 #include <sys/types.h>
@@ -13,7 +17,11 @@
 #include "config.h"
 
 #ifdef HAVE_SYS_TIME_H
+#ifndef __MSDOS__
 #include <sys/time.h>
+#else
+#include <sys/timeb.h>
+#endif
 #endif
 
 #ifdef HAVE_LIMITS_H
