@@ -245,7 +245,7 @@ set_varray(Var *v, Range *r, Var *e)
 Var *
 create_struct(Var *v)
 {
-    Var *p, *q, *r, *s;
+    Var *p, *q, *r, *s, *tmp;
     char *name;
     p = v;
 
@@ -264,7 +264,9 @@ create_struct(Var *v)
             free_var(s);
             return(NULL);
         }
-        add_struct(s, name, V_DUP(r));
+		tmp = V_DUP(r);
+		mem_claim(tmp);
+        add_struct(s, name, tmp);
         p = q;
     }
     return(s);
