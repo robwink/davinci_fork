@@ -78,7 +78,7 @@ ff_atof(vfuncptr func, Var * arg)
 		} else if (!strcmp(func->name, "atod")) {
 			s = newVal(BSQ, 1, 1, 1, DOUBLE, NULL);
 			V_DATA(s) = (double *) calloc(1, sizeof(double));
-			V_FLOAT(s) = (double) strtod(V_STRING(v), NULL);
+			V_DOUBLE(s) = (double) strtod(V_STRING(v), NULL);
 		}
 	} else {
 		int line;
@@ -89,12 +89,14 @@ ff_atof(vfuncptr func, Var * arg)
 			for (line = 0; line < nlines; line++) {
 				data[line] = strtod(V_TEXT(v).text[line], NULL);
 			}
+			V_DATA(s) = data;
 		} else if (!strcmp(func->name, "atod")) {
 			double *data = (double *) calloc(nlines, sizeof(double));
 			s = newVal(BSQ, 1, nlines, 1, DOUBLE, NULL);
 			for (line = 0; line < nlines; line++) {
 				data[line] = strtod(V_TEXT(v).text[line], NULL);
 			}
+			V_DATA(s) = data;
 		}
 	}
 

@@ -325,9 +325,9 @@ pp_set_var(Var *id, Var *range, Var *exp)
      ** Check for reserved variables and verify their type.
      **/
     if (!strcmp(V_NAME(exp), "verbose")){ VERBOSE = V_INT(exp); dv_set_iom_verbosity(); }
-    if (!strcmp(V_NAME(exp), "scale")) SCALE = V_INT(exp);
+    if (!strcmp(V_NAME(exp), "SCALE")) SCALE = V_INT(exp);
     if (!strcmp(V_NAME(exp), "debug")) debug = V_INT(exp);
-    if (!strcmp(V_NAME(exp), "depth")) DEPTH = V_INT(exp);
+    if (!strcmp(V_NAME(exp), "DEPTH")) DEPTH = V_INT(exp);
 
     return(put_sym(exp));
 }
