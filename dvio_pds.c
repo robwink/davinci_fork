@@ -34,8 +34,14 @@ typedef struct _objectInfo
 	int			*obj_dirty; /*Check this if the object needs to be freed when we're finished*/
 
 	Var 			*sample_suffix;
+	int			total_sample_count; /*This is needed for record alignment*/
 	Var 			*line_suffix;
+	int			total_line_count; /*This is needed for record alignment*/
 	Var 			*band_suffix;
+	int			total_band_count; /*This is needed for record alignment*/
+	int			Qub_Pad; /*We can't pad the qub data block, because it doesn't get merged with the suffix
+									 planes until later, so we need to save the pad amount, and do it AFTER the qube is
+									 written to disk*/
 	
 } objectInfo;
 
@@ -876,7 +882,41 @@ ProcessHistoryIntoString(Var *v,char **theString, int *ptr)
 
 	}
 }
-				
+
+int
+set_suffix(Var *suffix,Var **final) 
+{			
+	int v_count = get_struct_count(suffix);
+	Var *final_block;
+
+#ifdef LITTLE_ENDIAN
+
+/*
+** If we're little endian, we need to step through the suffix structure and var_endian
+** EACH structure element, relpacing the copy's V_DATA item with the return object
+** and don't forget to free up the old V_DATA object!
+*/
+	Var *tmp = V_DUP(suffix); /*copy the item (it's a structure!)*/
+	int i = 0;
+	Var *element;
+	char *innername;
+	char *v_data;
+	for(i=0;i<v_count;i++){ /*Need to skip first element, it's the Object=Name element*/
+		get_struct_element(tmp,i,&innername,&element);
+		v_data=V_DATA(element);
+		V_DATA(element)=var_endian(element);
+		free(v_data);
+	}
+	final_block=tmp;
+#else
+	final_block=suffix;
+#endif
+
+	*final=final_block;
+
+	return(v_count);
+}
+
 
 void
 ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *oi)
@@ -887,6 +927,14 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 	int count;
 	char *struct_name;
 	int rem;
+	int samples;
+	int lines;
+	int bands;
+	
+	char **name_list;
+	int  sample_idx=-1;
+	int  line_idx=-1;
+	int  band_idx=-1;
 
 	char *tmpname;
 	char *tmpname2;
@@ -949,20 +997,62 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 
 	}
 
-
 /*
-	else if ((!(strcasecmp("sample_suffix",name))) ||
-				(!(strcasecmp("line_suffix",name))) ||
-				(!(strcasecmp("band_suffix",name)))){
+** The QUBE (SPECTRAL_QUBE):
+** The Qube requires that we not only calculate it's size but that we figure out
+** if there are additional pieces of data, ie SUFFIX_PLANES.  We must traverse
+** the entire spectral_qube structure looking for 4 things:
+**			1) data 
+**			2) sample_suffix
+**			3) line_suffix
+**			4) band_suffix
+**
+**	The first one (data) is of course mandatory.  The suffix objects however,
+** are not and can appear altogether, in any partial combination, or not
+** at all.  Therefore, we MUST determine if any are present and adjust the qube's
+** size accordingly.
 */
+
 
 	else if ((!(strcasecmp("spectral_qube",name))) || 
 				(!(strcasecmp("qube",name))) || 
 				(!(strcasecmp("image",name)))){ /*We're processing a qube*/
 
+		count = get_struct_names(v,&name_list,NULL);
+
+		for (i=0;i<count && name_list[i]!=NULL;i++){
+			if (!(strcasecmp("sample_suffix",name_list[i])))
+				sample_idx=i;
+			else if (!(strcasecmp("line_suffix",name_list[i])))
+				line_idx=i;
+			else if (!(strcasecmp("band_suffix",name_list[i])))
+				band_idx=i;
+
+			free(name_list[i]);
+		}
+
+		free(name_list);
+
+		if (sample_idx >= 0) {
+	 		get_struct_element(v,sample_idx, &struct_name, &tmpvar);
+			oi->total_sample_count=set_suffix(tmpvar,&oi->sample_suffix);
+		}
+
+		if (line_idx >= 0) {
+	 		get_struct_element(v,line_idx, &struct_name, &tmpvar);
+			oi->total_line_count=set_suffix(tmpvar,&oi->line_suffix);
+		}
+
+		if (band_idx >= 0) {
+	 		get_struct_element(v,band_idx, &struct_name, &tmpvar);
+			oi->total_band_count=set_suffix(tmpvar,&oi->band_suffix);
+		}
+
+
 		count = get_struct_count(v);
 		for (i=0;i<count;i++){ /*We could assume the DATA object is last, but that could lead to trouble */
 	 		get_struct_element(v,i, &struct_name, &tmpvar);
+
 			if (!(strcasecmp(struct_name,"data"))) {/*Found it!*/
 
 #ifdef LITTLE_ENDIAN
@@ -982,9 +1072,26 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 				oi->obj_size[oi->count]=
 					(V_SIZE(tmpvar)[0]*V_SIZE(tmpvar)[1]*
 					V_SIZE(tmpvar)[2]*
-					NBYTES(V_FORMAT(tmpvar)));				
+					NBYTES(V_FORMAT(tmpvar)));
 
-#ifdef BUTTHOLE
+/*
+** We've calculated the size of the CORE but we need to check for SUFFIX
+** information which will have already been processed above.
+*/
+				
+				samples	= GetX(tmpvar);
+				lines		= GetY(tmpvar);
+				bands		= GetZ(tmpvar);
+
+				oi->obj_size[oi->count]+=
+					bands*lines*oi->total_sample_count*4+
+					bands*samples*oi->total_line_count*4+
+					samples*lines*oi->total_band_count*4+
+					bands*oi->total_sample_count*oi->total_line_count*4; /*Need to add 2nd corner info!*/
+
+
+
+
 				/* Check for alignment and pad as needed */
 
 				if (oi->obj_size[oi->count] % record_bytes){ 
@@ -993,20 +1100,12 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 					rem = (oi->obj_size[oi->count] / record_bytes);
 					rem++;
 					rem*=record_bytes;
-					oi->obj_data[oi->count]=(unsigned char *)malloc(rem);
-
-					memcpy((void *)oi->obj_data[oi->count],
-							 (void *)V_DATA(tmpvar),
-							 oi->obj_size[oi->count]*record_bytes);
-
-					memset(oi->obj_data[oi->count],0x20,
-							 (rem-(oi->obj_size[oi->count]*record_bytes)));  /*Set the difference to spaces */
+					oi->Qub_Pad = rem - oi->obj_size[oi->count]; /*#-Bytes we'll need to pad*/
 
 					oi->obj_size[oi->count]=rem/record_bytes;
 				}
 				else
 					oi->obj_size[oi->count]/=record_bytes;
-#endif
 			
 				if (!(strcasecmp("image",name)))
 					oi->obj_type[oi->count]=PDS_IMAGE;
@@ -1175,51 +1274,11 @@ ProcessIntoLabel(FILE *fp,int record_bytes, Var *v, int depth, int *label_ptrs, 
 			char *newname;
 			get_struct_element(data,0,&newname,&tmp_var);
 
-
 			if ( (!(strcasecmp("sample_suffix",name))) ||
 				(!(strcasecmp("line_suffix",name))) ||
 				(!(strcasecmp("band_suffix",name)))) {
-
-#ifdef LITTLE_ENDIAN
-
-/*
-** If we're little endian, we need to step through the suffix structure and var_endian
-** EACH structure element, relpacing the copy's V_DATA item with the return object
-** and don't forget to free up the old V_DATA object!
-*/
-				Var *tmp = V_DUP(data); /*copy the item (it's a structure!)*/
-				int v_count = get_struct_count(tmp);
-				int i = 0;
-				Var *element;
-				char *innername;
-				char *v_data;
-
-				for(i=0;i<v_count;i++){ /*Need to skip first element, it's the Object=Name element*/
-					get_struct_element(tmp,i,&innername,&element);
-					v_data=V_DATA(element);
-					V_DATA(element)=var_endian(element);
-					free(v_data);
-				}
-
-				if (!(strcasecmp("sample_suffix",name)))
-					oi->sample_suffix=tmp;
-				else if (!(strcasecmp("line_suffix",name)))
-					oi->line_suffix=tmp;
-				else
-					oi->band_suffix=tmp;
-					
-#else
-				if (!(strcasecmp("sample_suffix",name)))
-					oi->sample_suffix=v;
-				else if (!(strcasecmp("line_suffix",name)))
-					oi->line_suffix=v;
-				else
-					oi->band_suffix=v;
-#endif
-
-				count--;
-				continue;
-
+					count--;
+					continue;
 			}
 
 
@@ -1402,8 +1461,12 @@ WritePDS(vfuncptr func, Var *arg)
 	oi.count=0;
 	oi.ptr_count=0;
 	oi.sample_suffix=NULL;
+	oi.total_sample_count=0;
 	oi.line_suffix=NULL;
+	oi.total_line_count=0;
 	oi.band_suffix=NULL;
+	oi.total_band_count=0;
+	oi.Qub_Pad=0;
 
 
 
@@ -1476,7 +1539,11 @@ WritePDS(vfuncptr func, Var *arg)
 				fclose(fp);
 				return(NULL);
 			}
-			
+			if (oi.Qub_Pad) {
+				char *pad=(char *)malloc(oi.Qub_Pad*sizeof(char));
+				memset(pad,0x20,oi.Qub_Pad);
+				fwrite(pad,sizeof(char),oi.Qub_Pad,fp);
+			}
 
 		}
 
