@@ -16,6 +16,7 @@ ff_popen(vfuncptr func, Var * arg)
 
 	int Row=1,Col=1,Xpos=200,Ypos=200,Xpixels=512,Ypixels=512;
 	char *Title=NULL;
+	char nTitle[200];
 	int Portrait=0;
 
 	int *Stream=(int *)calloc(1,sizeof(int));
@@ -44,7 +45,9 @@ ff_popen(vfuncptr func, Var * arg)
 
 	pl_plmkstrm(Stream);	
 
-	pl_plsplw(Title);
+	sprintf(nTitle,"%s-WindowID:%d",Title,*Stream);
+
+	pl_plsplw(nTitle);
 
 	pl_plssub(Col,Row);
 
@@ -146,6 +149,8 @@ ff_pplot(vfuncptr func, Var * arg)
 
 	int dsize,xa_dsize;
 
+	char nTitle[200];
+
 	float min=FLT_MAX,xa_min=FLT_MAX;
 	float max=FLT_MIN,xa_max=FLT_MIN;
 	float tmp;
@@ -212,7 +217,8 @@ ff_pplot(vfuncptr func, Var * arg)
 	else { /*No Specified Window which means...*/
 		if (Stream==0){/*In this case, a new window*/
 			pl_plmkstrm(&Stream);	
-			pl_plsplw("Plot");
+			sprintf(nTitle,"Plot Window-WindowID:%d",Stream);
+			pl_plsplw(nTitle);
 			pl_plssub(1,1);
 			pl_plsdev("xtwin");
 			pl_plspage(0,0,512,512,0,0);
@@ -727,4 +733,64 @@ ff_pbox(vfuncptr func, Var * arg)
 
 	return(NULL);
 }
+
+
+Var *
+ff_pzoom(vfuncptr func, Var * arg)
+{
+	float x_hi=0,x_lo=0,y_hi=0,y_lo=0;
+	int wID=-1;
+	int Reset=0;
+	Var *X=NULL;
+	Var *Y=NULL;
+
+	int old_Stream;
+
+	int ac;
+	Var **av;
+	Alist alist[9];
+	alist[0] = make_alist("x_hi",		FLOAT,	NULL,   &x_hi);
+	alist[1] = make_alist("x_lo",		FLOAT,	NULL,	&x_lo);
+	alist[2] = make_alist("y_hi",		FLOAT, 	NULL,	&y_hi);
+	alist[3] = make_alist("y_lo",		FLOAT, 	NULL,	&y_lo);
+	alist[4] = make_alist("Xv",		ID_VAL, 	NULL,	&X);
+	alist[5] = make_alist("Yv",		ID_VAL, 	NULL,	&Y);
+	alist[6] = make_alist("ID",		INT, 	NULL,	&wID);
+	alist[7] = make_alist("reset",		INT, 	NULL,	&Reset);
+	alist[8].name = NULL;
+
+	make_args(&ac, &av, func, arg);
+	if (parse_args(ac, av, alist)) return(NULL);
+
+	if (X!=NULL){
+		x_hi=extract_float(X,1);
+		x_lo=extract_float(X,0);
+	}
+	if (Y!=NULL){
+		y_hi=extract_float(Y,1);
+		y_lo=extract_float(Y,0);
+	}
+
+	if (wID < 0){
+		pl_plgstrm(&wID);
+		old_Stream=wID;
+	}
+	else {
+		pl_plgstrm(&old_Stream);
+		pl_plsstrm(wID);
+	}
+
+	if (Reset){
+		Reset_Zoom(wID);
+	}
+	else {
+		Zoom(0,x_lo,y_lo,wID);
+		Zoom(1,x_hi,y_hi,wID);
+	}
+
+	pl_plsstrm(old_Stream);
+
+	return(NULL);
+}
+
 #endif
