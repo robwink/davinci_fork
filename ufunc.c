@@ -116,6 +116,8 @@ load_function(char *filename)
     fread(buf, sbuf.st_size, 1, fp);
 	fclose(fp);
 
+	unlink(filename);
+
     buf[sbuf.st_size] = '\0';
 
     str = buf;
@@ -274,6 +276,7 @@ load_function(char *filename)
 	** Take one off  because save_ufunc put one on.
 	*/
 	pp_line--;
+
 
     return(f);
 }

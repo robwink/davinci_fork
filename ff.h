@@ -213,6 +213,8 @@ struct _vfuncptr vfunclist[] = {
 
     { "struct",     ff_struct,     NULL },
     { "eval",     ff_eval,     NULL },
+    { "add_struct",     ff_add_struct,     NULL },
+    { "get_struct",     ff_get_struct,     NULL },
 
     { NULL,         NULL,        NULL }
 };
