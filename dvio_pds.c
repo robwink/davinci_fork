@@ -6,6 +6,10 @@
 
 #define MAXOBJ 10	
 
+#ifdef LITTLE_ENDIAN
+extern char * var_endian(Var * v);
+#endif
+
 typedef struct _objectInfo
 {
 	int	count;
@@ -13,6 +17,7 @@ typedef struct _objectInfo
 	int 	*obj_ptr;  /*File Byte offset of ^OBJECT = */
 	int 	*obj_size; /*In RECORD_BYTES */
 	char	**obj_data; /*Duh */
+	int	*obj_dirty; /*Check this if the object needs to be freed when we're finished*/
 	
 } objectInfo;
 
@@ -729,11 +734,12 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 		/*Need to make use of the data object here*/
 		oi->obj_size[oi->count]=0;
 		oi->obj_data[oi->count]=NULL;
+		oi->obj_dirty[oi->count]=0;
 		oi->count++;
 	}
 
 	else if ((!(strcasecmp("history",name)))){
-		char end[]="END";
+		char end[]="END\n";
 		int ptr=0;
 		int size;
 
@@ -744,7 +750,6 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 				ProcessHistoryIntoString(tmpvar,&oi->obj_data[oi->count],&ptr);
 				memcpy((oi->obj_data[oi->count]+ptr),end,strlen(end));
 				ptr+=strlen(end);
-				
 
 				size = (ptr/record_bytes)+1;
 				oi->obj_data[oi->count]=realloc(oi->obj_data[oi->count],size*record_bytes);
@@ -754,6 +759,7 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 					ptr+=rem;
 				}
 				oi->obj_size[oi->count]=(ptr/record_bytes);
+				oi->obj_dirty[oi->count]=1;
 				oi->count++;
 				break;
 			}
@@ -779,9 +785,14 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 	 		get_struct_element(v,i, &struct_name, &tmpvar);
 			if (!(strcasecmp(struct_name,"data"))) {/*Found it!*/
 
-				oi->obj_data[oi->count]=
-					(unsigned char *)V_DATA(tmpvar); 
+#ifdef LITTLE_ENDIAN
+				oi->obj_data[oi->count]=var_endian(Var *tmpvar);
+				oi->obj_dirty[oi->count]=1;
+#else
+				oi->obj_data[oi->count]= (unsigned char *)V_DATA(tmpvar); 
 					/*Now we should have a pointer to the data*/
+				oi->obj_dirty[oi->count]=0;
+#endif
 
 				oi->obj_size[oi->count]=
 					(V_SIZE(tmpvar)[0]*V_SIZE(tmpvar)[1]*
@@ -902,23 +913,20 @@ ProcessIntoLabel(FILE *fp,int record_bytes, Var *v, int depth, int *label_ptrs, 
 	char *name;
 	char pad[26]={0};
 	char *pds_filename;
-	char *inset;
+	char inset[1024]={'\0'};
 	char *tmpname;
 
 	depth++;
 
 	if (depth > 0) {
-		inset = malloc(sizeof(char) * depth + 1);
-		memset(inset,0x0,depth+1);
+		memset(inset,0x0,depth+1); /* if depth is > 1023 I'll eat my hat! */ 
 		memset(inset,'\t',depth);
 	}
-	else
-		inset=strdup(" ");
-
+	else 
+		inset[0]='\0';
 
 
 	memset(pad,0x20,25);
-
 
 	count=get_struct_count(v);
    i=0;
@@ -932,7 +940,6 @@ ProcessIntoLabel(FILE *fp,int record_bytes, Var *v, int depth, int *label_ptrs, 
 			continue;
 		}
 		else if (*name == '\0') {
-/*			parse_error("Found an element with no name...skipping");*/
 			count--;
 			continue;
 		}
@@ -1094,7 +1101,8 @@ Fix_Label(FILE *fp,int record_bytes,int *label_ptr, objectInfo *oi)
 		size_in_records++;
 		rem = (size_in_records* record_bytes) - size;
 		pad = (char *)malloc(rem);
-		memset(pad,0x20 /*space*/,rem);
+		memset(pad,0x20 /*space*/,rem-1);
+		memset(pad+rem-1,0x0a /* \n */,1);
 		fwrite(pad,sizeof(char),rem,fp); /*Okay! now our label is padded appropriately*/
 		fflush(fp);
 	}
@@ -1146,6 +1154,7 @@ WritePDS(vfuncptr func, Var *arg)
 	objectInfo	oi;
 	oi.obj_ptr = (int *)malloc(sizeof(int)*MAXOBJ);
 	oi.obj_size = (int *)malloc(sizeof(int)*MAXOBJ);
+	oi.obj_dirty = (int *)malloc(sizeof(int)*MAXOBJ);
 	oi.obj_data = (char **)malloc(sizeof(char *)*MAXOBJ);
 
 
@@ -1203,9 +1212,12 @@ WritePDS(vfuncptr func, Var *arg)
 ** 'em
 */
 
-	for(i=0;i<oi.count;i++)
+	for(i=0;i<oi.count;i++){
 		fwrite(oi.obj_data[i],sizeof(char),
 			(oi.obj_size[i]*record_bytes),fp);
+		if (oi.obj_dirty[i])
+			free(oi.obj_data[i]);
+	}
 	
 	fclose(fp);
 	return(result);
