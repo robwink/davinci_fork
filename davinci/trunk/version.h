@@ -1,7 +1,11 @@
-char *version = "@(#) daVinci Version #0.64";
+char *version = "@(#) daVinci Version #0.64.1";
 #include "build.h"
 
 /*
+Version 0.64.1: Fri Jan 19 11:54:50 MST 2001
+	* Fixed core dump on user-function return value
+	* Removed "readline/readline.h" from Makefile.in
+
 Version 0.64: Thu Jan 11 17:27:46 MST 2001
 	* Fixed bugs is isis()
 	* Added modules support

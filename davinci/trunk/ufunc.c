@@ -422,7 +422,6 @@ dispatch_ufunc(UFUNC *f, Var *arg)
     clean_scope(scope_pop());
         
     if (insert) {
-        Symtable *sym;
         Scope *scope = scope_tos();
 
 		if (V_NAME(v) != NULL) {
@@ -430,10 +429,10 @@ dispatch_ufunc(UFUNC *f, Var *arg)
 			V_NAME(v) = NULL;
 		}
 
-        sym = (Symtable *)calloc(1, sizeof(Symtable));
-        sym->value = v;
-        sym->next = scope->tmp;
-        scope->tmp = sym;
+		if (scope->tmp == NULL){
+			scope->tmp = Darray_create(1);
+		}
+		Darray_add(scope->tmp, v);
     }
     return(v);
 }

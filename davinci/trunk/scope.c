@@ -445,7 +445,7 @@ clean_scope(Scope *scope)
     if (scope->args) {
         free_var(scope->args->value[0]);
         free(scope->args->value);
-        free(scope->args->name);
+        if (scope->args->name) free(scope->args->name);
         free(scope->args);
     }
     clean_stack(scope);
