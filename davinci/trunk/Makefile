@@ -70,7 +70,7 @@ OBJ=p.o pp.o symbol.o \
 	dvio_isis.o dvio_magic.o dvio_pnm.o dvio_vicar.o dvio.o \
 	dvio_ers.o dvio_envi.o dvio_raw.o dvio_specpr.o dvio_themis.o \
 	dvio_ascii.o dvio_pds.o dvio_hdf.o \
-	util.o
+	util.o ff_shade.o
 
 
 all:	 davinci gplot
@@ -130,7 +130,7 @@ dist:	clean
 	rm -rf readline/config.cache
 	mkdir `cat .ver`
 	ln $(DIST) `cat .ver`
-	(cd `cat .ver` && ln -s ../docs ../tests ../readline ../lib .)
+	(cd `cat .ver` && ln -s ../docs ../tests ../readline ../lib ../iomedley .)
 	tar chf `cat .ver`.tar `cat .ver`
 	compress `cat .ver`.tar
 	rm -rf `cat .ver` .ver

@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.81";
+char *version = "@(#) daVinci Version #0.82";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,10 @@ char *version = "@(#) daVinci Version #0.81";
 #include "build.h"
 
 /*
+Version 0.82: Mon Nov 26 12:37:07 MST 2001
+	* Errors in alist for ff_ix.c:hsv2rgb
+	* users were using 'scale' and setting reserverd word SCALE
+
 Version 0.81:
 	* dvio_imath was reading data size incorrectly from
 	  the header, resulting in memory overwrites.
@@ -16,6 +20,10 @@ Version 0.80:
 	  file) default to the platform-defaults instead of the 
 	  standard-defaults (when they are not specified in the
 	  VICAR file).
+
+Version 0.79b: Thu Jul 19 21:25:13 MST 2001
+	* lost fexist from ff.h
+	+ added ff_shade
 
 Version 0.79a: Fri Jun  8 20:29:21 MST 2001
 	* Someone overwrote with an old version of ff.h.  Fixed.

@@ -46,7 +46,7 @@ ff_write(vfuncptr func, Var *arg)
     ** Make sure user specified an object
     **/
     if (ob == NULL){
-        parse_error("write what?  Specify data object");
+        parse_error("%s: No object specified.", func->name);
         return(NULL);
     }
 
