@@ -283,7 +283,7 @@ void get_file_input(XtPointer client_data, int *fid, XtInputId *id)
 #endif
 
 
-#ifdef HAVE_PLPLOT
+#ifdef INCLUDE_API
 #ifdef __cplusplus
 extern "C" {
     extern SetTopLevel(Widget *);
@@ -310,7 +310,7 @@ event_loop(void)
             top = XtVaAppInitialize(&app, "Simple", NULL, 0,
                                     &argc,
                                     argv, NULL, NULL);
-#ifdef HAVE_PLPLOT
+#ifdef INCLUDE_API
             SetTopLevel(&top);
 #endif
         } else {
