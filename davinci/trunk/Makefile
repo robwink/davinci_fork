@@ -5,7 +5,7 @@ CFLAGS=-g $(XINCLUDES)
 
 srcdir = .
 
-prefix= /opt/local
+prefix= /usr/local
 exec_prefix = $(prefix)
 BINDIR = $(exec_prefix)/bin
 LIBDIR = $(prefix)/lib
@@ -52,7 +52,7 @@ OBJ=p.o pp.o symbol.o error.o \
 	ff_pause.o printf.o ff_ifill.o ff_xfrm.o newfunc.o ff_ix.o ff_avg.o \
 	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
 	x.o xrt_print_3d.o motif_tools.o ff_convolve.o ff_struct.o apifunc.o \
-	ff_plplot.o 
+	ff_plplot.o ff_pca.o
 
 all:	 davinci gplot
 
@@ -205,3 +205,5 @@ dct.o: parser.h config.h system.h ufunc.h scope.h func.h
 fft_mayer.o: trigtbl.h
 ff_projection.o: parser.h config.h system.h ufunc.h scope.h func.h
 apifunc.o: parser.h config.h system.h ufunc.h scope.h func.h api.h apidef.h
+ff_pca.o: ff_pca.c parser.h config.h system.h ufunc.h scope.h func.h \
+ /usr/local/include/hdf5.h

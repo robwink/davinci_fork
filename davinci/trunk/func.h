@@ -336,6 +336,10 @@ Var *ff_pzoom(vfuncptr func, Var * arg);
 Var *ff_struct(vfuncptr func, Var *arg);
 Var *ff_vcat(vfuncptr func, Var *arg);
 
+Var *ff_eigen(vfuncptr func, Var *arg);
+Var *ff_pcs(vfuncptr func, Var *arg);
+Var *ff_corr_covar_and_scp(vfuncptr func, Var *arg);
+
 Alist make_alist(char *name, int type, void *limits, void *value);
 
 
