@@ -15,12 +15,16 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-XINCLUDES=@XINCLUDES@
-XLIBS=@XLIBS@
+XINCLUDES=@XINCLUDES@ $(XRTINCLUDE)
+XLIBS=@XLIBS@ $(XRTLIBS)
+
+XRTINCLUDE= @XRTINCLUDE@ 
+XRTLIBS = @XRTLIBS@
+
 
 CC     = @CC@
 DEFS   = @DEFS@ -Ilib
-LIBS   = @LIBS@
+LIBS   = $(XLIBS) @LIBS@
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
@@ -41,12 +45,13 @@ OBJ=p.o pp.o symbol.o error.o \
 	ff_load.o ff_rgb.o ff_random.o ff_source.o ff_version.o ff_write.o \
 	reserved.o array.o string.o pp_math.o rpos.o init.o help.o \
 	io_grd.o io_isis.o io_lablib3.o io_pnm.o io_specpr.o io_vicar.o \
-	io_aviris.o io_imath.o \
-	input.o ff_moment.o io_ascii.o ff_interp.o \
+	io_aviris.o io_imath.o io_magic.o\
+	ff_moment.o io_ascii.o ff_interp.o ff_projection.o\
 	lexer.o parser.o main.o fit.o system.o misc.o ufunc.o scope.o \
 	ff_header.o ff_text.o io_ers.o io_goes.o ff_bbr.o ff_vignette.o \
 	ff_pause.o printf.o ff_ifill.o ff_xfrm.o newfunc.o ff_ix.o ff_avg.o \
-	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o
+	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
+	x.o xrt_print_3d.o motif_tools.o ff_convolve.c
 
 all:	davinci gplot
 
@@ -114,6 +119,13 @@ lib/libXfred.a:
 depend:
 	gcc -MM $(OBJ:.o=.c)
 
+x.o:    x.c
+	$(CC) -c $(CFLAGS) $(XRTINCLUDE) $?
+
+xrt_print_3d.o: xrt_print_3d.c
+	$(CC) -c $(CFLAGS) $(XRTINCLUDE) $?
+
+
 
 #########################################################################
 p.o: parser.h config.h system.h ufunc.h scope.h func.h
@@ -178,3 +190,4 @@ fft.o: fft.h
 matrix.o: parser.h config.h system.h ufunc.h scope.h func.h
 dct.o: parser.h config.h system.h ufunc.h scope.h func.h
 fft_mayer.o: trigtbl.h
+ff_projection: parser.h config.h system.h ufunc.h scope.h func.h
