@@ -382,12 +382,6 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int v
 	count=fread(&first_mh,sizeof(msdp_Header),1,fp);
 	if (!count)
 		return(0);
-	if (first_mh.bands==0)
-		width=VIS_TEST_WIDTH;
-	else
-		width=VIS_WIDTH;
-
-	*vis_width=width;
 
 	*nob=Count_Out_Bands((int)first_mh.bands,rot);
 	
@@ -404,6 +398,13 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int v
 		swab((char *)&mh,(char *)&mh,sizeof(msdp_Header));
 
 		height+=(mh.line*16);
+		if (mh.bands==0)
+			width=VIS_TEST_WIDTH;
+		else
+			width=mh.edit[0]*16;
+
+		*vis_width=width;
+
 		frag=(mh.len_lo | (mh.len_hi << 16));
 
 		chunk = (unsigned char *) malloc(frag+sizeof(msdp_Header)+1);
