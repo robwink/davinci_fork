@@ -3,10 +3,17 @@
 
 #include "y_tab.h"
 
-#ifdef HAVE_LIBX11
+#if defined(HAVE_LIBXM)
+#define USE_X11_EVENTS 1
+#endif
+
+#ifdef USE_X11_EVENTS
 #include <X11/Intrinsic.h>
 #include <X11/Shell.h>
 #include <X11/Xatom.h>
+
+Widget top=NULL;
+XtAppContext    app;
 #endif
 
 int interactive = 1;
@@ -26,16 +33,7 @@ int DEPTH = 2;
 int allocs = 0;
 Var *VZERO;
 
-#ifdef HAVE_LIBXT
-Widget top=NULL;
-XtAppContext    app;
-#endif
-
-#ifdef HAVE_LIBXM
 static int windows = 1;
-#else
-static int windows = 0;
-#endif
 
 /**
  ** This is stuff from the old input.c
@@ -66,7 +64,7 @@ void init_history(char *fname);
 void process_streams(void);
 void event_loop(void);
 
-#ifndef __MSDOS__
+#ifdef USE_X11_EVENTS
 void rl_callback_read_char();
 void rl_callback_handler_install(char *, void (char *));
 jmp_buf env;
@@ -80,32 +78,32 @@ sighandler(int data)
     char cmd[256];
     char *path = getenv("TMPDIR");
 
-	switch (data) {
+    switch (data) {
 
-	case (SIGSEGV):
+    case (SIGSEGV):
     	sprintf(cmd, "rm -rf %s &", path);
     	system(cmd);
-		signal(SIGSEGV,SIG_DFL);
-		break;
+        signal(SIGSEGV,SIG_DFL);
+        break;
 
-	case (SIGBUS):
+    case (SIGBUS):
     	sprintf(cmd, "rm -rf %s &", path);
     	system(cmd);
-		signal(SIGBUS,SIG_DFL);
-		break;
+        signal(SIGBUS,SIG_DFL);
+        break;
 
-	case (SIGINT):
+    case (SIGINT):
 
-	    while ((scope = scope_tos()) != global_scope()) {
-   	     dd_unput_argv(scope);
-      	  clean_scope(scope_pop());
+        while ((scope = scope_tos()) != global_scope()) {
+            dd_unput_argv(scope);
+            clean_scope(scope_pop());
     	}
 
     	signal(SIGINT, sighandler);
     	longjmp(env, 1);
 
-		break;
-	}
+        break;
+    }
 }
 
 char *__progname = "davinci";
@@ -121,15 +119,15 @@ main(int ac, char **av)
     int i, j, k, flag = 0;
     char *logfile = NULL;
     int iflag = 0;
-	char *p;
+    char *p;
 	
     s = new_scope();
 
 #ifndef __MSDOS__
-     signal(SIGPIPE, SIG_IGN);
-     signal(SIGINT, sighandler); 
-	 signal(SIGSEGV, sighandler);
-	 signal(SIGBUS, sighandler);
+    signal(SIGPIPE, SIG_IGN);
+    signal(SIGINT, sighandler); 
+    signal(SIGSEGV, sighandler);
+    signal(SIGBUS, sighandler);
 
 #endif
 
@@ -208,13 +206,13 @@ main(int ac, char **av)
             }
             i += k;
         } else {
-			char buf[256];
+            char buf[256];
             flag = 1;
             dd_put_argv(s, p_mkval(ID_STRING, av[i]));
-			v = p_mkval(ID_STRING, av[i]);
-			sprintf(buf, "$%d", i);
-			V_NAME(v) = strdup(buf);
-			put_sym(v);
+            v = p_mkval(ID_STRING, av[i]);
+            sprintf(buf, "$%d", i);
+            V_NAME(v) = strdup(buf);
+            put_sym(v);
         }
     }
 
@@ -226,14 +224,12 @@ main(int ac, char **av)
 
     if (interactive) {
 #ifdef __MSDOS__  
-/*extern readline(char *);  */
-/*extern add_history(char *);  */
-extern Init_DLL(void);  
+        extern Init_DLL(void);  
     
-                if(Init_DLL()){  
-                        parse_error("Can't initialize the readline DLL\n");  
-                        exit(-1);  
-                }  
+        if(Init_DLL()){  
+            parse_error("Can't initialize the readline DLL\n");  
+            exit(-1);  
+        }  
 #endif
 
         if (logfile == NULL)
@@ -255,20 +251,20 @@ extern Init_DLL(void);
     ** set up temporary directory
     **/
 #ifdef __MSDOS__
-        {  
-                char tmpbuf[128];  
-                _strtime( tmpbuf );  
-                sprintf(path, "TMPDIR=c:\\windows\\temp\\dv_%s",tmpbuf);  
-				mkdir(path + 7, 0777);
-				putenv(path);
-        }  
+    {  
+        char tmpbuf[128];  
+        _strtime( tmpbuf );  
+        sprintf(path, "TMPDIR=c:\\windows\\temp\\dv_%s",tmpbuf);  
+        mkdir(path + 7, 0777);
+        putenv(path);
+    }  
 #else
-	if ((p = getenv("TMPDIR")) == NULL) {
-		sprintf(path, "TMPDIR=%sdv_%d", P_tmpdir, getpid());
+    if ((p = getenv("TMPDIR")) == NULL) {
+        sprintf(path, "TMPDIR=%sdv_%d", P_tmpdir, getpid());
 
-		mkdir(path + 7, 0777);
-		putenv(path);
-	}
+        mkdir(path + 7, 0777);
+        putenv(path);
+    }
 #endif
 
     /*
@@ -278,7 +274,7 @@ extern Init_DLL(void);
     event_loop();
 }
 
-#ifndef __MSDOS__
+#ifdef USE_X11_EVENTS
 /* ARGSUSED */
 void get_file_input(XtPointer client_data, int *fid, XtInputId *id)
 {
@@ -286,23 +282,22 @@ void get_file_input(XtPointer client_data, int *fid, XtInputId *id)
 }
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #ifdef HAVE_PLPLOT
-extern SetTopLevel(Widget *);
+#ifdef __cplusplus
+extern "C" {
+    extern SetTopLevel(Widget *);
+}
+#else
+    extern SetTopLevel(Widget *);
 #endif
 
-#ifdef __cplusplus
-}
-#endif
 
 void
 event_loop(void)
 {
     if (interactive) {
-#ifdef __MSDOS__
+#ifndef USE_X11_EVENTS
 	lhandler((char *)readline("dv> "));
 #else 
         if (windows && getenv("DISPLAY") != NULL)  {
@@ -346,58 +341,58 @@ void lhandler(char *line)
     extern int pp_line;
     extern int pp_count;
 
-#ifdef __MSDOS__
-while (1) {
+#ifndef USE_X11_EVENTS
+    while (1) {
 #endif
 
-    /**
-    ** Readline has a whole line of input, process it.
-    **/
-    if (line == NULL) {
-        quit();
-    }
+        /**
+        ** Readline has a whole line of input, process it.
+        **/
+        if (line == NULL) {
+            quit();
+        }
 		
 
-    buf = (char *)malloc(strlen(line)+2);
-    strcpy(buf, line);
-    strcat(buf, "\n");
+        buf = (char *)malloc(strlen(line)+2);
+        strcpy(buf, line);
+        strcat(buf, "\n");
 
-    if (*line) { 
-        add_history((char *)line);
-        log_line(buf);
-    }
+        if (*line) { 
+            add_history((char *)line);
+            log_line(buf);
+        }
 
-    pp_line++;
-    pp_count = 0;
+        pp_line++;
+        pp_count = 0;
 
-    parse_buffer(buf);
-
-
-	 setjmp(env);
+        parse_buffer(buf);
 
 
-    if (indent) {
-        sprintf(prompt, "%2d> ", indent);
-    } else if (continuation) {
-		continuation = 0;
-        sprintf(prompt, "  > ", indent);
-    } else if (in_comment) {
-        sprintf(prompt, "/*> ", indent);
-    } else if (in_string) {
-        sprintf(prompt, "\" > ", indent);
-    } else {
-        sprintf(prompt, "dv> ", indent);
-    }
-#ifndef __MSDOS__
+        setjmp(env);
+
+        /*
+        ** Process anything pushed onto the stream stack by the last command.
+        */
+        process_streams();
+
+        if (indent) {
+            sprintf(prompt, "%2d> ", indent);
+        } else if (continuation) {
+            continuation = 0;
+            sprintf(prompt, "  > ", indent);
+        } else if (in_comment) {
+            sprintf(prompt, "/*> ", indent);    /* nothing */
+        } else if (in_string) {
+            sprintf(prompt, "\" > ", indent);
+        } else {
+            sprintf(prompt, "dv> ", indent);
+        }
+        
+#ifdef USE_X11_EVENTS
 	rl_callback_handler_install(prompt, lhandler);
-#endif
-    /*
-    ** Process anything pushed onto the stream stack by the last command.
-    */
-    process_streams();
-#ifdef __MSDOS__
-    line=(char *)readline(prompt);
-  }
+#else
+        line=(char *)readline(prompt);
+    }
 #endif
 
 }
@@ -433,12 +428,12 @@ parse_buffer(char *buf)
     extern char *yytext;
     extern FILE *save_fp;
     int flag = 0;
-	Var *v = NULL;
-	void *parent_buffer;
-	void *buffer;
-	Var *node;
+    Var *v = NULL;
+    void *parent_buffer;
+    void *buffer;
+    Var *node;
 
-	parent_buffer = get_current_buffer();
+    parent_buffer = get_current_buffer();
     buffer = yy_scan_string(buf);
 
     while(i = yylex()) {
@@ -449,18 +444,18 @@ parse_buffer(char *buf)
         if (j == -1) quit();
 
         if (j == 1 && curnode != NULL) {
-			node = curnode;
+            node = curnode;
             evaluate(node);
             v = pop(scope_tos());
-			pp_print(v);
-			free_tree(node);
-			indent = 0;
-			cleanup(scope_tos());
+            pp_print(v);
+            free_tree(node);
+            indent = 0;
+            cleanup(scope_tos());
         }
     }
 
     yy_delete_buffer((struct yy_buffer_state *)buffer);
-	if (parent_buffer) yy_switch_to_buffer(parent_buffer);
+    if (parent_buffer) yy_switch_to_buffer(parent_buffer);
 }
 
 /*
@@ -474,12 +469,12 @@ eval_buffer(char *buf)
     extern char *yytext;
     extern FILE *save_fp;
     int flag = 0;
-	Var *v = NULL;
-	void *parent_buffer;
-	void *buffer;
-	Var *node;
+    Var *v = NULL;
+    void *parent_buffer;
+    void *buffer;
+    Var *node;
 
-	parent_buffer = get_current_buffer();
+    parent_buffer = get_current_buffer();
     buffer = yy_scan_string(buf);
 
     while(i = yylex()) {
@@ -490,16 +485,16 @@ eval_buffer(char *buf)
         if (j == -1) quit();
 
         if (j == 1 && curnode != NULL) {
-			node = curnode;
+            node = curnode;
             evaluate(node);
             // v = pop(scope_tos());
-			free_tree(node);
+            free_tree(node);
         }
     }
 
     yy_delete_buffer((struct yy_buffer_state *)buffer);
-	if (parent_buffer) yy_switch_to_buffer(parent_buffer);
-	return(v);
+    if (parent_buffer) yy_switch_to_buffer(parent_buffer);
+    return(v);
 }
 
 void
@@ -510,7 +505,7 @@ quit(void)
 
     if (interactive) {
         printf("\n");
-#ifndef __MSDOS__
+#ifdef USE_X11_EVENTS
         rl_callback_handler_remove();
 #endif
     }
@@ -578,14 +573,14 @@ fake_data()
 #ifndef __MSDOS__
     srand48(getpid());
 #else    
-                 srand( (unsigned int) time( NULL ) ); 
+    srand( (unsigned int) time( NULL ) ); 
 #endif
     
     for (i = 0; i < 12; i++) {
 #ifndef __MSDOS__
         ((float *) V_DATA(v))[i + 12] = drand48();
 #else
-                  ((float *) V_DATA(v))[i + 12] = (float )rand();
+        ((float *) V_DATA(v))[i + 12] = (float )rand();
 #endif
     }
 
