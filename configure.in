@@ -12,6 +12,14 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_RANLIB
 
+dnl Check for AIX
+AC_AIX
+
+case "$target" in
+*-ibm-aix4.3*)  LDFLAGS="$LDFLAGS -Wl,-bbigtoc";
+esac
+
+
 dnl Check for X path.
 AC_PATH_X
 
