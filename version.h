@@ -1,8 +1,14 @@
-char *version = "@(#) daVinci Version #1.37";
+char *version = "@(#) daVinci Version #1.38";
 
 #include "build.h"
 
 /*
+Version 1.38: Thu Aug 12 10:17:38 MST 2004
+	+ Added davinci function get_struct_key(), which returns
+	  the name associated with a particular structure element.
+	  If the element is unnamed, an empty string is returned.
+	  If the element is invalid, null is returned.
+
 Version 1.37: Thu Aug 12 09:39:52 MST 2004
 	* Fixed write_isis_planes() to correctly output all three
 	  suffix planes.

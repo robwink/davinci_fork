@@ -76,6 +76,7 @@ struct _vfuncptr vfunclist[] = {
     { "get_struct",     ff_get_struct,         NULL , NULL},
     { "remove_struct",     ff_remove_struct,         NULL , NULL},
     { "insert_struct",     ff_insert_struct,         NULL , NULL},
+    { "get_struct_key",    ff_get_struct_key,        NULL, NULL},
     
 /* i/o */
 

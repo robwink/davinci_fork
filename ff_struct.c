@@ -60,6 +60,38 @@ ff_struct(vfuncptr func, Var * arg)
     return(v);
 }
 
+Var *
+ff_get_struct_key(vfuncptr func, Var* arg)
+{
+    Var *s = NULL, *v = NULL;
+    int  index = 0;
+    char *key = NULL;
+
+    int ac;
+    Var **av;
+    Alist alist[3];
+    alist[0] = make_alist( "object",    ID_STRUCT,  NULL,     &s);
+    alist[1] = make_alist( "int",       INT,        NULL,     &index); /* 1-based */
+    alist[2].name = NULL;
+
+    if (parse_args(func, arg, alist) == 0) return(NULL);
+
+    if (s == NULL) {
+        parse_error("Object is null");
+        return(NULL);
+    }
+
+    if (index <= 0 || index > get_struct_count(s)){
+        parse_error("Index is out of bounds");
+        return(NULL);
+    }
+    
+    get_struct_element(s, index-1, &key, &v);
+    if (key == NULL){ key = ""; }
+    
+    return newString(strdup(key));
+}
+
 /*
 */
 void
