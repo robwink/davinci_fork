@@ -259,6 +259,8 @@ struct _vfuncptr vfunclist[] = {
 	 { "fexists",			ff_exists,			NULL, NULL},
 	 { "putenv",			ff_putenv,			NULL, NULL},
 	 { "length",			ff_length,			NULL, NULL},
+	 { "vis_downshift",	ff_GSE_VIS_downshift,NULL,NULL},
+	 { "vis_upshift",	ff_GSE_VIS_upshift,NULL,NULL},
 
     { NULL,             NULL,                  NULL }
 };

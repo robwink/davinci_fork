@@ -49,7 +49,7 @@ int get_data(double **data, struct data_order *order, char *filename,
 int mrqfit(double **data,struct data_order order,
 				int num_indep, int ndata, int itmax, double *a,
 				int ma, int mfit, double **covar,
-				double *chisq, int (*func)());
+				double *chisq, int (*func)(),int);
 
 void solve_for_da(double **, double **, double *, double *, int);
 int alpha_beta_chisq(double **data, struct data_order order,

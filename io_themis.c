@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "XformTable.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <values.h>
@@ -6,9 +7,8 @@
 #include <sys/stat.h>
 #ifndef __MSDOS__
 #include <sys/mman.h>
+#include "iomedley.h"
 #endif
-#include "dvio.h"
-#include "XformTable.h"
 
 #define	_IMAGEID				2
 #define	_BANDS				3
@@ -22,7 +22,6 @@
 #define VIS_WIDTH 			1024
 #define VIS_TEST_WIDTH 		1032
 #define FRAMELET_HEIGHT		192
-#define	INIT_CHUNK			4096
 
 char *vis_bands[]={"Band_860","Band_425","Band_650","Band_750","Band_550"};
 int Compressed;
@@ -72,15 +71,15 @@ int Read_Ahead_For_Best_Collumn_Guess(int *Width,unsigned char *buf,int len);
 void RedunBegone(char **buf, int *Lines, int Col,PACIstatus *Ps,
                  int quiet,int eflag, Var *err,int *BandCount);
 
-#ifdef WORDS_BIGENDIAN
+#ifndef LITTLE_E
 unsigned short Start_Sync = { 0xF0CA };
 unsigned short Stop_Sync = { 0xAB8C };
 unsigned int StopStart_Sync = {0xAB8CF0CA};
-#else /* little endian */
+#else
 unsigned short Start_Sync = { 0xCAF0 };
 unsigned short Stop_Sync = { 0x8CAB };
 unsigned int StopStart_Sync = {0x8CABCAF0};
-#endif /* WORDS_BIGENDIAN */
+#endif
 
 
 #ifdef HAVE_LIBUSDS
@@ -235,7 +234,7 @@ int Keep(unsigned char B, unsigned short F, CMD Cmd, int Frame, int Band)
 }
 
 
-int GetGSEHeader (FILE *fp, struct iom_iheader *h)
+int GetGSEHeader (FILE *fp /*, struct _iheader *h*/)
 {
     unsigned char	Buf[1000];
     unsigned int	Num[6];
@@ -283,21 +282,12 @@ unsigned char cookie[]={0x00,0x00,0x06,0x7b,0x00,0x00,0x04,0x00};
 		return(0);
 
 /*Okay, the file header is a GSE visible image; load the _iheader structure with info */
-	
-	iom_init_iheader(h);
-
-    h->org=iom_BSQ;
+/*	
+    h->org=BSQ;
     h->size[0]=Col;
     h->size[1]=Row;
     h->size[2]=(Size/(Row*Col*nb));
-	if (nb == 1){
-		h->eformat = iom_MSB_INT_1;
-		h->format = iom_BYTE;
-	}
-	else {
-		h->eformat = iom_MSB_INT_2;
-		h->format = iom_SHORT;
-	}
+    h->format=((nb==1) ? (BYTE):(SHORT));
     h->dptr=1024;
     h->gain=0.0;
     h->corner=0;
@@ -308,6 +298,7 @@ unsigned char cookie[]={0x00,0x00,0x06,0x7b,0x00,0x00,0x04,0x00};
         h->s_hi[i]=h->size[i];
         h->s_skip[i]=0;
     }
+*/
     return (1);
 }
 
@@ -581,11 +572,81 @@ Var *Make_Vis_Cube(int nob, int height, int width, unsigned char *buf)
 
 }
 
+Var *ff_GSE_VIS_upshift(vfuncptr func, Var * arg)
+{
+	Var *obj=NULL;
+	
+	short	*data;
+	unsigned char *orig;
+
+	int x,y,z;
+	int i,j,k;
+
+
+   Alist alist[2];
+   alist[0] = make_alist("obj", ID_VAL, NULL, &obj);
+   alist[1].name = NULL;
+
+
+
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (obj==NULL) {
+		parse_error("Must supply an object ('obj=')");
+		return(NULL);
+	}
+
+	if (V_TYPE(obj)!=BYTE) {
+		parse_error("This function upshifts BYTE values to SHORT values\n"
+						"based on the MSSS Square-Root Encoding Table. Please only\n"
+						"submit BYTE values");
+
+		return(NULL);
+	}
+
+	if (V_ORG(obj)!=BSQ) {
+		parse_error("Data MUST be in bsq format");
+		return(NULL);
+	}
+
+	x=GetSamples(V_SIZE(obj), V_ORG(obj));
+	y=GetLines(V_SIZE(obj), V_ORG(obj));
+	z=GetBands(V_SIZE(obj), V_ORG(obj));
+
+	data=(short *)calloc(sizeof(short),(x*y*z));
+
+	for (i=0;i<z;i++){
+		for(j=0;j<y;j++){
+			for(k=0;k<x;k++){
+				data[i*y*x+j*x+k]= (short )XformTable[orig[i*y*x+j*x+k]*4+3];
+			}
+		}
+	}
+
+	return(newVal(BSQ,x,y,z,SHORT,data));
+}
+	
+
+	
+
+Var *ff_GSE_VIS_downshift(vfuncptr func, Var * arg)
+{
+	Var *obj=NULL;
+   Alist alist[2];
+   alist[0] = make_alist("obj", ID_VAL, NULL, &obj);
+   alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) 
+		return(NULL);
+}
+
+
 Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
 {
     FILE	*infile;
     void	*data;
-    struct	iom_iheader header;
+//    struct	_iheader header;
     int i,j;
     int dsize;
     int gse=0;
@@ -598,6 +659,7 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
     unsigned char *buf;
 	 int nocube=0;
 	 int verb=0;
+	 int Row,Col;
 
     Alist alist[5];
     alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
@@ -614,7 +676,7 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
     }
 
 
-    if ((fname = dv_locate_file(filename)) == NULL ||
+    if ((fname = locate_file(filename)) == NULL ||
         (infile = fopen(fname, "r")) == NULL) {
         fprintf(stderr, "Unable to open file: %s\n", filename);
         return (NULL);
@@ -632,24 +694,18 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
 //            parse_error("Your choice is not a valid GSE visible spectrum (ddd) file");
 //            return (NULL);
 //       }
+    Col = 1032;
+    Row = 1024;
 
-    	data = iom_read_qube_data(fileno(infile), &header);
+    	data=read_qube_data(fileno(infile), &header);
 
         fclose(infile);
-    	if (header.format=iom_SHORT){ /*Data is actually 12-bit and needs the upper 4 bits cleaned off*/
-            dsize=header.size[0]*header.size[1]*header.size[2];
-            for (i=0;i<dsize;i++){
-                ((short *)(data))[i] &= 0x7ff;
-            }
+    	/*Data is actually 11-bit and needs the upper 4 bits cleaned off*/
+      for (i=0;i<(Row*Col);i++){
+      	((short *)(data))[i] &= 0x7ff;
     	}
 
-		v = newVal(ihorg2vorg(header.org),
-			header.size[0],header.size[1],header.size[2],
-			ihfmt2vfmt(header.format),
-			data);
-
-		iom_cleanup_iheader(&header);
-    	return(v);
+    	return(newVal(header.org,header.size[0],header.size[1],header.size[2],header.format,data));
     }
 
     else {
@@ -698,7 +754,7 @@ ff_Frame_Grabber_Read(vfuncptr func, Var * arg)
         return (NULL);
     }
 
-    if ((fname = dv_locate_file(filename)) == NULL ||
+    if ((fname = locate_file(filename)) == NULL ||
         (infile = fopen(fname, "r")) == NULL) {
         fprintf(stderr, "Unable to open file: %s\n", filename);
         return (NULL);
@@ -1072,54 +1128,8 @@ void Summary(PACIstatus *Ps)
     }
 }
 			
-/* returns < 0 if it can't find EITHER sync
-** returns = 0 if it CAN find sc sync
-** returns > 1 if it CAN find gse sync
-**
-**
-**	It's my thinking that if neither sync can be found
-** within INIT_CHUNK bytes, it just ain't a PACI file
-*/
-
-int
-Check_Swap(unsigned char *buf, int len)
-{
-	int chunk;
-
-	int i;
-
-	unsigned char sync_sc[]={0xAB,0x8C,0xF0,0xCA};
-	unsigned char sync_gse[]={0x8C,0xAB,0xCA,0xF0};
-
-	i=0;
-	chunk=((len > INIT_CHUNK) ? INIT_CHUNK : len);
-	while (i < (chunk-3)) {
-		if (buf[i]==sync_sc[0] &&
-			 buf[i+1]==sync_sc[1] &&
-			 buf[i+2]==sync_sc[2] &&
-			 buf[i+3]==sync_sc[3]   )
-
-			return(0);
-		
-		i++;
-	}
-
-	i=0;
-
-	while (i < (chunk-3)) {
-		if (buf[i]==sync_gse[0] &&
-			 buf[i+1]==sync_gse[1] &&
-			 buf[i+2]==sync_gse[2] &&
-			 buf[i+3]==sync_gse[3]   )
-
-			return(1);
-		
-		i++;
-	}
-
-	return(-1);
 			
-}			
+			
 
 Var *
 ff_PACI_Read(vfuncptr func, Var * arg)
@@ -1168,7 +1178,6 @@ ff_PACI_Read(vfuncptr func, Var * arg)
     int		debug=0;
     Var 		*err=NULL;
     int		eflag=0;
-	 int		cflag=0;
 
     Var **av, *v;
     int ac;
@@ -1238,24 +1247,6 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 
     fbuf = mmap((caddr_t)0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
 
-	 cflag=Check_Swap(fbuf,len);
-
-	 if ( cflag < 0) {
-		parse_error("I don't think this is a PACI file");
-		return(NULL);
-	 }
-
-	 else if (cflag) {
-				parse_error("Reading gse PACI data");
-            swab(fbuf, fbuf, len);
-    }
-	
-	 else
-				parse_error("Reading spacecraft PACI data");
-
-	 buf=fbuf;
-
-/*
     if(swap_flag){
         if (Spec_Swap){
             Packet_Swap(&buf,fbuf,&len);
@@ -1269,10 +1260,6 @@ ff_PACI_Read(vfuncptr func, Var * arg)
     }
     else 	
         buf=fbuf;
-
-*/
-
-
 
 
     len+=328;		 /*Add room for an additional packet; this will prevent
@@ -1631,137 +1618,3 @@ ff_PACI_Read(vfuncptr func, Var * arg)
     return(NULL);
 
 }
-
-Var *ff_GSE_VIS_upshift(vfuncptr func, Var * arg)
-{
-   Var *obj=NULL;
-  
-   short *data;
-   unsigned char *orig;
-
-   int x,y,z;
-   int i,j,k;
-
-
-   Alist alist[2];
-   alist[0] = make_alist("obj", ID_VAL, NULL, &obj);
-   alist[1].name = NULL;
-
-
-
-
-   if (parse_args(func, arg, alist) == 0) return(NULL);
-
-   if (obj==NULL) {
-      parse_error("Must supply an object ('obj=')");
-      return(NULL);
-   }
-   
-   if (V_FORMAT(obj)!=BYTE) {
-      parse_error("This function upshifts BYTE values to SHORT values\n"
-                  "based on the MSSS Square-Root Encoding Table. Please only\n"
-                  "submit BYTE values");
-
-      return(NULL);
-   }
-   if (V_ORG(obj)!=BSQ) {
-      parse_error("Data MUST be in bsq format");
-      return(NULL);
-   }
-  
-   x=GetSamples(V_SIZE(obj), V_ORG(obj));
-   y=GetLines(V_SIZE(obj), V_ORG(obj));
-   z=GetBands(V_SIZE(obj), V_ORG(obj));
-  
-   data=(short *)calloc(sizeof(short),(x*y*z));
-	orig=(unsigned char *)V_DATA(obj);
-  
-   for (i=0;i<z;i++){
-      for(j=0;j<y;j++){
-         for(k=0;k<x;k++){
-            data[i*y*x+j*x+k]= (short )XformTable[orig[i*y*x+j*x+k]*4+3];
-         }
-      }
-   }
-  
-   return(newVal(BSQ,x,y,z,SHORT,data));
-} 
-
-unsigned char
-find_Value(unsigned short v)
-{
-	int i;
-	float value=(float)v;
-	i=(int)sqrt(value)-5;
-
-	if (v > 2048)
-		return(255);
-
-	if (i < 0 ) i=0;
-
-
-	while (i < 256) {
-		if (value >= XformTable[i*4+1] &&
-			 value <= XformTable[i*4+2]   )
-			return (XformTable[i*4]);
-		i++;
-	}
-
-	return(0);
-}
-
-Var *ff_GSE_VIS_downshift(vfuncptr func, Var * arg)
-{
-
-   Var *obj=NULL;
-	int x,y,z;
-	int i,j,k;
-
-	unsigned char *data;
-	unsigned short *orig;
-
-
-
-   Alist alist[2];
-   alist[0] = make_alist("obj", ID_VAL, NULL, &obj);
-   alist[1].name = NULL;
-
-   if (parse_args(func, arg, alist) == 0)
-      return(NULL);
-
-   if (obj==NULL) {
-      parse_error("Must supply an object ('obj=')");
-      return(NULL);
-   }
-   
-   if (V_FORMAT(obj)!=SHORT) {
-      parse_error("This function downshifts SHORT values to BYTE values\n"
-                  "based on the MSSS Square-Root Encoding Table. Please only\n"
-                  "submit SHORT values");
-
-      return(NULL);
-   }
-   if (V_ORG(obj)!=BSQ) {
-      parse_error("Data MUST be in bsq format");
-      return(NULL);
-   }
-  
-   x=GetSamples(V_SIZE(obj), V_ORG(obj));
-   y=GetLines(V_SIZE(obj), V_ORG(obj));
-   z=GetBands(V_SIZE(obj), V_ORG(obj));
-
-	data=(unsigned char *)calloc(sizeof(char),(x*y*z));
-	orig=(unsigned short *)V_DATA(obj);
-
-   for (i=0;i<z;i++){
-      for(j=0;j<y;j++){
-         for(k=0;k<x;k++){
-            data[i*y*x+j*x+k]= find_Value(orig[i*y*x+j*x+k]);
-         }
-      }
-   }
-   return(newVal(BSQ,x,y,z,BYTE,data));
-} 
-
-
-

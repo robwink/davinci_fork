@@ -26,15 +26,15 @@
  **/
 
 Var * lin_fit(Var *x, Var *y,int Row,int plot);
-void    first_guess(double *, char *);
-int     fit(int);
+void    first_guess(double *, char *, int);
+int     fit(int,int);
 ifptr   getfcnptr(char *, int *, int *, int *, char *);
 int     mrqfit(double **, struct data_order, int, int, int, double *,
-               int, int, double **, double *, ifptr);
+               int, int, double **, double *, ifptr,int);
 int     alpha_beta_chisq(double **, struct data_order,int , int , double *,
                          int ,int , double **, double *, double *, ifptr);
 void    gd(Var *, Var *, char *);
-int     dfit(Var *, Var *, Var *, char *, int, double **, int *, int);
+int     dfit(Var *, Var *, Var *, char *, int, double **, int *, int,int );
 
 
 Var * ff_fit(vfuncptr func, Var *args)
@@ -46,6 +46,7 @@ Var * ff_fit(vfuncptr func, Var *args)
         { "steps", NULL },
         { "x", NULL },
         { "plot", NULL },
+		  { "verbose",NULL},
         { NULL, NULL }
     };
 
@@ -59,6 +60,8 @@ Var * ff_fit(vfuncptr func, Var *args)
     char *ftype = NULL;
     int iter = 1;
     int plot = 0 ;
+	 int verbose =0;
+
 
     char *fits[] = { "gauss", "gaussc", "gaussl", "ngauss", "lorenz",
                      "2lorenz", "linear", "quad", "cube", "poly", 
@@ -96,6 +99,7 @@ Var * ff_fit(vfuncptr func, Var *args)
 
     if (KwToInt("steps", kw, &iter) < 0) return(NULL);
     if (KwToInt("plot", kw, &plot) < 0) return(NULL);
+    if (KwToInt("verbose", kw, &verbose) < 0) return(NULL);
 
     /**
      ** Figure out what kind of data we have.
@@ -129,7 +133,7 @@ Var * ff_fit(vfuncptr func, Var *args)
 
 
 
-   else if (dfit(x, y, ip, ftype, iter, &op, &nparam, plot)) {
+   else if (dfit(x, y, ip, ftype, iter, &op, &nparam, plot,verbose)) {
         s = NULL;
     } else {
         s = newVar();
@@ -246,7 +250,7 @@ ifptr           func = NULL;
 
 int
 dfit(Var *x, Var *y, Var *ip, char *fname, 
-     int iter, double **op, int *nparam, int plot)
+     int iter, double **op, int *nparam, int plot,int verbose)
 {
 
     FILE *fp;
@@ -265,14 +269,14 @@ dfit(Var *x, Var *y, Var *ip, char *fname,
         if (ip && i < V_DSIZE(ip)) a[i] = extract_double(ip, i);
         else a[i] = 0.0;
     }
-    first_guess(a, fname);
+    first_guess(a, fname,verbose);
 
     if (ip && V_DSIZE(ip) == ma+2) alamda = extract_double(ip, ma+1);
     else
         /* start alamda small */
         alamda = 1e-3;
 
-    status = fit(iter);         /* fit using the given number of iterations */
+    status = fit(iter,verbose);         /* fit using the given number of iterations */
 
     /* put return values in place */
 
@@ -302,12 +306,12 @@ dfit(Var *x, Var *y, Var *ip, char *fname,
 
     free(data);
 
-    if (VERBOSE) printf("%s\n", comment);
+    if (verbose) printf("%s\n", comment);
     return(failed);
 }
 
 void
-first_guess(double *a, char *fname)
+first_guess(double *a, char *fname,int verbose)
 {
     int i;
     int maxi=0, mini=0, left, right;
@@ -366,7 +370,7 @@ first_guess(double *a, char *fname)
         if (a[1] == 0.0) a[1] = (x[maxi] > x[mini] ? 1.0 : -1.0);
     }
 
-	if (VERBOSE)
+	if (verbose)
 		fprintf(stderr, "guess: %f %f %f\n", a[0], a[1], a[2]);
 }
 
@@ -408,12 +412,12 @@ gd(Var *x, Var *y, char *fname)
 }
 
 int
-fit(int itmax) 
+fit(int itmax,int verbose) 
 {
     /* nonzero returns 1 if all sigma's are non-zero */
     if (nonzero(data[order.sig], ndata)) {
         failed = mrqfit(data, order, num_indep, ndata, itmax, a, ma,
-                        mfit, covar, &chisq, func);
+                        mfit, covar, &chisq, func,verbose);
     } else {
         failed = 1;
         printf("all sigmas must be non-zero, check weighting and order\n");
@@ -454,7 +458,8 @@ mrqfit(double **data,
        int mfit,
        double **covar,
        double *chisq,
-       ifptr func)
+       ifptr func,
+		 int verbose)
 {
     int             i, j, k;    /* indices for loops */
     double        **alpha;
@@ -486,7 +491,7 @@ mrqfit(double **data,
 
     /* loop specified number of iterations */
     while (i <= itmax) {
-		if (VERBOSE) fprintf(stderr, "iteration %d\n", i);
+		if (verbose) fprintf(stderr, "iteration %d\n", i);
         ochisq = *chisq;
         for (j = 0; j < mfit; j++) {
             for (k = 0; k < mfit; k++) {
@@ -521,14 +526,14 @@ mrqfit(double **data,
                 a[j] = atry[j];
         }
 
-        if (VERBOSE) {
+        if (verbose) {
             for (j = 0; j < ma; j++)
                 printf("a%d= %g\t", j, a[j]);
             printf("\nchisqr = %g", *chisq);
             printf("\nalamda = %g", alamda);
             printf("\n");
         } else
-			if (VERBOSE) 
+			if (verbose) 
 				printf("iteration: %d chisqr: %g\n", i, *chisq);
         i++;
 
