@@ -268,7 +268,11 @@ struct _vfuncptr vfunclist[] = {
     { "bindct",        ff_bindct,              NULL },
      { "binidct",       ff_bindct,              NULL },
 
+#if defined(HAVE_LIBQMV) && defined(HAVE_QMV_HVECTOR_H)
      { "geom_ghost",       ff_deghost,              NULL },
+#endif
+     { "deleted",       ff_deleted,              NULL },
+     { "set_deleted",       ff_set_deleted,              NULL },
     { NULL,             NULL,                  NULL }
 };
 
