@@ -300,6 +300,8 @@ struct _vfuncptr vfunclist[] = {
     { "write_isis_cub",     ff_write_isis_cub,          NULL },
 #endif /* HAVE_LIBISIS */
 
+	{ "load_bin5",      ff_load_bin5,          NULL },
+
     { NULL,             NULL,                  NULL }
 };
 

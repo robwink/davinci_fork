@@ -278,6 +278,7 @@ Var *do_cat(Var *, Var *, int);
 Var *ff_ascii(vfuncptr, Var *);
 Var *ff_read_text(vfuncptr, Var *);
 Var *ff_read_lines(vfuncptr, Var *);
+Var *ff_load_bin5(vfuncptr, Var *);
 Var *ff_string(vfuncptr, Var *);
 Var *ff_delim(vfuncptr, Var *);
 Var *ff_translate(vfuncptr, Var *);

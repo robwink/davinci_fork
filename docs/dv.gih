@@ -2257,3 +2257,55 @@ Davinci supports the following matrix functions:
  pixel is performed.
 
  The function returns the X and Y offset of image1 into image 2.
+
+?functions load_bin5()
+?io load_bin5()
+?load_bin5()
+ load_bin5() - Loads data from a BIN5 file
+
+ load_bin5(filename=PATH)
+
+ BIN5 files are generated as an output from krc, the thermal
+ intertia modeler. These files can have more than three
+ dimensions.
+ 
+ Let's assume that the number of dimensions in a given bin5
+ file is represented by N. If N<=3 the data is returned as a
+ 3D-cube. If N>3 then cubes are formed out of the last three
+ dimensions and concatenated in a hierarchy of structures as
+ unnamed elements. For example, for a file with dimensions
+ [W,X,Y,Z], the result will be a structure with W (unnamed)
+ elements each of size [XxYxZ]. Similarly, for a file with
+ dimensions [V,W,X,Y,Z], the result will be a structure with
+ V (unnamed) sub-structures. Each sub-structure of V will be
+ a structure with W (unnamed) elements each of size [XxYxZ].
+
+ If the data were loaded into a variable called named "a",
+ then a data element can be accessed in "a" as "a[w][x,y,z]"
+ for the 4D case above and as "a[v][w][x,y,z]" for the 5D
+ case above.
+
+ Notes:
+    A bin5 file has a text label (multiple of 512 bytes)
+	which looks like:
+
+    N d1 d2 .. dN Y E [L] <<... TIME>>TEXT ... ARCH C_END
+
+	where,
+	  N      is the number of dimensions,
+	  d1..dN are the sizes of each dimension with the
+	         most rapidly varying index first
+	  Y      is the data type of individual data elements
+	         1=byte, 2=short, 3=long, 4=float, 5=double,
+			 12=ushort, 13=ulong (ref: IDL data types)
+	  E      is the number of elements = d1*d2*..*dN
+	  L      is the size of label (multiple of 512)
+	  TIME   is the creation time of the file
+	  TEXT   is the description associated with the file
+	  ARC    is a 5-char value representing the machine on
+	         which the data was written to this file,
+			 supported values are "i386  " and "sun  "
+	  C_END  is the sentinal which marks the end of label
+
+
+
