@@ -8,7 +8,7 @@
 
 
 
-#define DV_MOD_LIBPATH "/usr/lib/davinci/modules"
+#define DV_MOD_LIBPATH "/usr/local/lib/davinci"
 #define DV_MOD_ENV "DV_MOD_PATH"
 
 #define yesno(n) (n ? "yes" : "no")
