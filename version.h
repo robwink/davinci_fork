@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.97";
+char *version = "@(#) daVinci Version #0.98a";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,13 @@ char *version = "@(#) daVinci Version #0.97";
 #include "build.h"
 
 /*
+Version 0.98a: Tue Jun 25 00:16:58 MST 2002
+	+ Added left and right shifting
+	* think I fixed the (arg=NULL) problem with function calls
+
+Version 0.98: Wed Jun 12 03:28:21 MST 2002
+	+ Modifications to write_isis routines to handle BIP cubes and planes
+
 Version 0.97: Wed Jun 12 03:28:21 MST 2002
 	+ Checking of several bug fixes and misc modifications
 

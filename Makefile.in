@@ -17,7 +17,7 @@ INSTALL_DATA = @INSTALL_DATA@
 XINCLUDES=@XINCLUDES@ $(XRTINCLUDE)
 XLIBS=@XLIBS@ $(XRTLIBS)
 
-CPPFLAGS=-I$(srcdir) @CPPFLAGS@ -Ilib -Iiomedley
+CPPFLAGS=-I$(srcdir) @CPPFLAGS@ -Ilib -I$(srcdir)/iomedley
 CFLAGS=$(XINCLUDES) @CFLAGS@ 
 LDFLAGS=@LDFLAGS@
 
@@ -27,7 +27,7 @@ XRTLIBS = @XRTLIBS@
 
 CC     = @CC@
 DEFS   = @DEFS@ 
-LIBS   =  -L. -Liomedley -liomedley $(XLIBS) @LIBS@
+LIBS   =  -L. -L$(srcdir)/iomedley -liomedley $(XLIBS) @LIBS@
 AR     = ar
 RANLIB = @RANLIB@
 
@@ -115,7 +115,7 @@ install:
 # File specific dependancies
 #
 help.o:	help.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(DEFS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $*.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(DEFS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $<
 
 clean:
 	-rm -f *.o davinci dv core gplot TAGS config.cache config.log $(MOD_SUPP_LIB)
@@ -166,10 +166,10 @@ depend:
 	@gcc -MM $(OBJ:.o=.c)
 
 x.o:    x.c
-	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(XRTINCLUDE) x.c
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(XRTINCLUDE) $<
 
 xrt_print_3d.o: xrt_print_3d.c
-	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(XRTINCLUDE) xrt_print_3d.c
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(XRTINCLUDE) $<
 
 
 

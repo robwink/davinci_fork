@@ -30,7 +30,7 @@ void out()
 %token ID
 %token DEC_OP INC_OP MULSET_OP DIVSET_OP
 %token LT_OP GT_OP GE_OP LE_OP EQ_OP NE_OP
-%token AND_OP OR_OP CAT_OP 
+%token AND_OP OR_OP CAT_OP LSHIFT_OP RSHIFT_OP
 %token QUIT HELP LIST
 %token FUNC_DEF
 %token SHELL
@@ -209,12 +209,18 @@ equality_expr
     ;
 
 relation_expr
-    : additive_expr                     { $$ = $1; }
+    : shift_expr                     { $$ = $1; }
     | relation_expr LT_OP additive_expr { $$ = p_mknod(ID_LT ,$1,$3); }
     | relation_expr GT_OP additive_expr { $$ = p_mknod(ID_GT ,$1,$3); }
     | relation_expr LE_OP additive_expr { $$ = p_mknod(ID_LE ,$1,$3); }
     | relation_expr GE_OP additive_expr { $$ = p_mknod(ID_GE ,$1,$3); }
     ;
+
+shift_expr
+    : additive_expr                     { $$ = $1; }
+    | additive_expr LSHIFT_OP mult_expr       { $$ = p_mknod(ID_LSHIFT,$1,$3); }
+    | additive_expr RSHIFT_OP mult_expr       { $$ = p_mknod(ID_RSHIFT,$1,$3); }
+	;
 
 additive_expr
     : mult_expr                         { $$ = $1; }

@@ -646,7 +646,8 @@ pp_keyword_to_arg(Var *keyword, Var *ex)
 {
     V_TYPE(keyword) = ID_KEYWORD;
     V_KEYVAL(keyword) = ex;
-    keyword->next = ex->next = NULL;
+    keyword->next = NULL;
+	if (ex) ex->next = NULL;
     return(keyword);
 }
 

@@ -56,6 +56,8 @@ fixup_ranges(Var *v, Range *in, Range *out)
 /**
  ** These convert from BSQ to something else
  ** Which is why orders[BIP] looks funny.
+ **
+ ** This is the "location" of axis N.
  **/ 
 
 int orders[3][3] = {

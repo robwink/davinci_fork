@@ -985,11 +985,14 @@
 ?avg()
  avg() - Compute average along specified axis
 
- avg(object=VAL, axis=[x][y][z], [both=BOOL])
+ avg(object=VAL, axis=[x][y][z], [both=BOOL], [ignore=VAL])
 
  The avg() function computes the statistical average along one or
  more axis.  If no axis is specified, then the average is computed
  along all three.  avg() always returns a FLOAT.
+
+ If a value is passed for ignore, it is ignored during the computation.
+
 
  If the both flag is set (both=1), then avg returns a structure
  containing the both the avg and stddev.
@@ -1008,14 +1011,16 @@
 ?stddev()
  stddev() - Compute standard deviation along specified axis
 
- stddev(object=VAL, axis=[x][y][z])
+ stddev(object=VAL, axis=[x][y][z], [both=BOOL], [ignore=VAL])
 
  The stddev() function computes the standard deviation along one or
  more axis.  If no axis is specified, then the standard deviation 
  is computed along all three.  stddev() returns a FLOAT.
 
- If the both flag is set (both=1), then avg returns a structure
- containing the both the avg and stddev.
+ If a value is passed for ignore, it is ignored during the computation.
+
+ If the both flag is set (both=1), then stddev returns a structure
+ containing the both the average and stddev.
 
  Example:
 
@@ -2084,3 +2089,27 @@ Davinci supports the following matrix functions:
 
  The remove_struct() function deletes an element from a structure.  The
  deleted element is returned.
+ 
+?functions load_raw()
+?load_raw()
+ load_raw() - Load a binary data file
+
+ load_raw(filename=STRING, x=INT, y=INT, z=INT, org=ORG, 
+		   format=FORMAT, header=INT)
+
+ The load_raw() function allows a user to load uncompressed binary data
+ files of unreconized file format by specifying the relevent information 
+ about the file.
+
+ ORG must be one of "bil", "bip", "bsq".
+ FORMAT must be one of: "byte", 
+			"msb_short", "msb_int", "msb_float", "msb_double" , 
+			"lsb_short", "lsb_int", "lsb_float", "lsb_double".
+
+ The header value specifies the size, in bytes, of any header to be skipped.
+
+?structures
+
+  You can add structures:
+
+	{ one=1 } + { two=2 }

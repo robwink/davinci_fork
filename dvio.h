@@ -2,7 +2,7 @@
 #define _DVIO_H_
 
 #include "parser.h"
-#include "iomedley.h"
+#include <iomedley.h>
 
 
 /*

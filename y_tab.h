@@ -26,11 +26,13 @@
 #define	AND_OP	279
 #define	OR_OP	280
 #define	CAT_OP	281
-#define	QUIT	282
-#define	HELP	283
-#define	LIST	284
-#define	FUNC_DEF	285
-#define	SHELL	286
+#define	LSHIFT_OP	282
+#define	RSHIFT_OP	283
+#define	QUIT	284
+#define	HELP	285
+#define	LIST	286
+#define	FUNC_DEF	287
+#define	SHELL	288
 
 
 extern YYSTYPE yylval;

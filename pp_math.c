@@ -40,6 +40,20 @@ int rpos(int, Var *, Var *);
 	}\
 }
 
+#define DO_SHIFT_LOOP(T1,T2,_E_,_S_) \
+{\
+	T1 v1, v2;\
+	T2 *idata = (T2 *)data;\
+	for (i = 0 ; i < dsize ; i++) {\
+		v1 = _E_(a,rpos(i,val,a));\
+		v2 = _E_(b,rpos(i,val,b));\
+		switch(op) {\
+			case ID_LSHIFT:    idata[i] = _S_(v1 << v2); break;\
+			case ID_RSHIFT:    idata[i] = _S_(v1 >> v2); break;\
+		}\
+	}\
+}
+
 #define DO_RELOP_LOOP(T1,T2,_E_,_S_) \
 {\
 	T1 v1, v2;\
@@ -218,6 +232,23 @@ pp_math(Var * a, int op, Var * b)
             DO_RELOP_LOOP(double, u_char, extract_double, (double));
             break;
         }
+    } else if (op == ID_LSHIFT || op == ID_RSHIFT) {
+		if (in_format <= INT) {
+			switch (V_FORMAT(a)) {
+			case BYTE:
+				DO_SHIFT_LOOP(int, u_char, extract_int, saturate_byte);
+				break;
+			case SHORT:
+				DO_SHIFT_LOOP(int, short, extract_int, saturate_short);
+				break;
+			case INT:
+				DO_SHIFT_LOOP(int, int, extract_int, (int));
+				break;
+			}
+		} else {
+			parse_error("Can only shift ints\n");
+			return(NULL);
+		}
     } else {
         /**
         ** For each output element (0-size), de-compute relative position using
@@ -250,6 +281,9 @@ pp_math(Var * a, int op, Var * b)
 
 /**
  ** pp_compare()   - perform comparison
+ **
+ ** Notes:  the val variable in this function is only
+ **         a temporary place holder, used to do a->b index offsets.
  **/
 
 int
@@ -332,10 +366,10 @@ pp_compare(Var * a, Var * b)
     in_format = max(V_FORMAT(a), V_FORMAT(b));
 
     V_TYPE(val) = ID_VAL;
-    V_FORMAT(val) = out_format;
+    V_FORMAT(val) = V_FORMAT(a);
     V_DSIZE(val) = dsize;
     V_ORDER(val) = order;
-    V_DATA(val) = data;
+    V_DATA(val) = NULL;
 
 /** size was extracted as x,y,z.  put it back appropriately **/
 

@@ -78,6 +78,9 @@ comment #.*
 "help"		{ return(HELP); }
 ^"!".*"\n"  { return(SHELL); }
 
+"<<"         { return(LSHIFT_OP); }
+">>"         { return(RSHIFT_OP); }
+
 "=="        { return(EQ_OP); }
 "!="        { return(NE_OP); }
 "<="        { return(LE_OP); }

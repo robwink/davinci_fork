@@ -181,6 +181,8 @@ evaluate(Var * n)
   case ID_SUB:
   case ID_MULT:
   case ID_DIV:
+  case ID_LSHIFT:
+  case ID_RSHIFT:
   case ID_MOD:
   case ID_POW:
     if (left) evaluate(left);
