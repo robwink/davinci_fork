@@ -276,7 +276,10 @@
 ?read()
  read() - Load a data from file
 
- read(filename="path" [,record=INT])
+ read(filename="path" [,record=INT],
+	  [,xlow=INT] [,xhigh=INT] [,xskip=INT]
+	  [,ylow=INT] [,yhigh=INT] [,yskip=INT]
+	  [,zlow=INT] [,zhigh=INT] [,zskip=INT])
 
     The read() function loads the specified data file.   The read() 
     function can automatically recognize and load the following file 
@@ -304,6 +307,10 @@
     another file type, it is used as the high and low value for a Z axis 
     subset, causing a single image to be extracted from cubes.
 
+	The values low, high and skip can be specified for each axis (ie: xlow,
+	zhigh, etc) to specify a precise subset to be read.  All the subsetting
+	arguments are optional.
+
     Reading a PPM image produces a 3-plane, BIP cube of byte values.
     Each plane represents the red, green and blue values respectivly.
 
@@ -330,10 +337,10 @@
         ascii   - Columnar ascii matrix
         imath   - Imath format
         ers     - ER Mapper Raster
-	
-	If the force keyword is included, then any existing file of the same
-	name is overwritten.  Without this keyword, the write is aborted
-	if the filename already exists.
+    
+    If the force keyword is included, then any existing file of the same
+    name is overwritten.  Without this keyword, the write is aborted
+    if the filename already exists.
 
     Notes: 
         The PPM type requires a 3-plane BIP cube of byte values, as produced
@@ -768,7 +775,7 @@
     The bbr() function returns a DOUBLE.
 
  See also:
-	btemp(), bop()
+    btemp(), bop()
 
 ?functions btemp()
 ?btemp()
@@ -786,7 +793,7 @@
     The btemp() function returns a DOUBLE.
 
  See also:
-	bbr(), bop()
+    bbr(), bop()
 
 ?functions ifill()
 ?ifill()
@@ -810,6 +817,25 @@
 
     The <radius> value defaults to 3.
     The <fill> value defaults to 0.
+
+?functions jfjll()
+?jfjll()
+ jfjll() - Phil's filling routine
+
+ ifill(object=VAL, radius=INT, fill=VAL, wrap=BOOL, neighbors=INT)
+
+    The jfjll() function 'fills in gaps' in an image.
+    
+    The input image is searched for holes (values equal to the fill value).
+    For each hole, the input image is scanned in 8 directions for non-fill
+    values.  If <neighbors> non-fill values are found within <radius> pixels,
+    a weighted average of these values is used to fill in the hole.
+
+    The weighting used is r*r.
+
+    The value <radius> defaults to 3.
+    The value <fill> defaults to 0.
+    The value <neighbors> defaults to 5.
 
 ?functions pause()
 ?pause()
@@ -1016,12 +1042,12 @@
  rgb2hsv(object=VAL, maxval=VAL)
 
      The rgb2hsv() function converts a 3-band RGB image into a 3-band
-	 HSV image.  If maxval is specified, it is taken to be the maximum
-	 intensity value.  If no value is specified for maxval, its value is
-	 determined from the input type.
+     HSV image.  If maxval is specified, it is taken to be the maximum
+     intensity value.  If no value is specified for maxval, its value is
+     determined from the input type.
 
-	 HSV values range from 0.0 to 1.0, so the return value has a type of
-	 FLOAT.
+     HSV values range from 0.0 to 1.0, so the return value has a type of
+     FLOAT.
 
 
 ?functions hsv2rgb()
@@ -1031,11 +1057,11 @@
  hsv2rgb(object=VAL, maxval=VAL)
 
      The hsv2rgb() function converts a 3-band HSV image into a 3-band
-	 RGB image.  If maxval is specified, it is taken to be the maximum
-	 intensity value, and the RGB values are scaled to lie between 0 
-	 and maxval.  If no value is specified for maxval, it defaults to 1.
+     RGB image.  If maxval is specified, it is taken to be the maximum
+     intensity value, and the RGB values are scaled to lie between 0 
+     and maxval.  If no value is specified for maxval, it defaults to 1.
 
-	The return value of hsv2rgb() has a type of FLOAT.
+    The return value of hsv2rgb() has a type of FLOAT.
 
 ?functions histogram()
 ?histogram()
@@ -1050,8 +1076,8 @@
 
  basis(object=VAL, type=STRING, size=INT)
 
-	type: hadamard
-	      haar
+    type: hadamard
+          haar
 
 ?functions mxm()
 ?mxm()
@@ -1118,7 +1144,7 @@
     generators, to produce reproducable random numbers.  Any dimension 
     not specified defaults to a value of 1.
 
-    Some of these distributions may not be available on all systems.
+    Some of these types may not be available on all systems.
 
  See Also:
     rnoise(), gnoise()
@@ -1142,11 +1168,11 @@
  dct(object=VAL, axis=[x][y][z], dir=[1|-1])
 
      The dct() function computes the forward or inverse discrete cosine transform 
-	 of values along one or more axis.  If no axis is specified, then all the 
-	 computation is performed along all three axis.  If the direction is not
-	 specified, a forward dct is assumed.
-	 
-	 The dct() function always returns a DOUBLE.
+     of values along one or more axis.  If no axis is specified, then all the 
+     computation is performed along all three axis.  If the direction is not
+     specified, a forward dct is assumed.
+     
+     The dct() function always returns a DOUBLE.
 
  Example:
 
@@ -1156,17 +1182,54 @@
     dv> a = dct(object=data, axis=xy)
 
 ?functions entropy()
-?entrpy()
- entrpy() - Compute entrpy of object
+?entropy()
+ entropy() - Compute entrpy of object
 
  entropy(object=VAL)
 
      The entropy() function computes the entropy in an object,
-	 as sum(p * log2(p)), where p is the probability of each symbol
-	 occuring.  This is determined by sorting the values in the object
-	 and then counting them.
+     as sum(p * log2(p)), where p is the probability of each symbol
+     occuring.  This is determined by sorting the values in the object
+     and then counting them.
 
-	 The entropy() function always returns a FLOAT.
+     The entropy() function always returns a FLOAT.
+
+?functions xrt3d
+xrt3d
+ xrt3d() - Display data using an XRT3D widget
+
+ xrt3d(object=VAL, new=BOOL)
+
+     The xrt3d() function displays data in an XRT3d window, creating the
+     window if necessary.  If the keyword "new" is provided, a new window
+     is always created, abandoning any previously created window.
+
+     The XRT3d tool provides the following actions:
+
+        Rotation:   
+            Drag with Button2 and move clockwise or counter-clockwise.
+                or
+            Hold down Button2 and press x, y, or z to select an axis.  Then
+            move the mouse perpendicular to that axis.
+        
+        Translation:
+            Press Shift and drag with Button2 to shift the graph
+
+        Scaling:
+            Press Ctrl and drag with Button2. Move mouse down to zoom in, 
+            and up to zoom out.
+        
+        Return to default:
+            Press r to reset ann scaling, translations and zooming.
+
+        Zoom:
+            Press Ctrl and drag with Button1 to select the zoom area
+
+        Pick:
+            Click with Button1 to find nearest data point.
+        
+        Map:
+            Click with Button3 to find the nearest point on the surface.
 
 ?functions projection()
 ?projection()
@@ -1174,37 +1237,87 @@
 
  projection(obj=VAL, [lat=FLOAT], [lon=FLOAT], [rad=FLOAT], [ppd=INT], type=STRING)
 
-     The projection() function will process each band of an object, projecting 
-	into a BIL organized dataset.  Format of the object does not matter. 
-	The lat and lon parameters specify the center point of the project, 
-	and the rad paramter is the radius extent of the projection.  The ppd 
-	paramter defines the size of the resultant image as stands for 
-	pixels per degree.  Therefore, if a radius of 20 is specified with 
-	ppd=5 the resulting band will be (2x20x5) in the X and Y directions.  
-	Type sets the parameters of distortion, that is if one is projecting
-	on the planet Mars as opposed to a sphere, there will be a slightly 
-	different result.  The projection types are as follows:
-		type: MARS
-		      EARTH
-		      SPHERE
+The projection() function will process each band of an object, projecting
+into a BIL organized dataset.  Format of the object does not matter.
+The lat and lon parameters specify the center point of the projection,
+and the rad paramter is the radius extent of the projection in degrees.
+The ppd paramter specified pixels per degree, and when combined with
+the radius value, defines the size of the output image.  Therefore,
+if a radius of 20 is specified with ppd=5 the resulting band will be
+(2x20x5) pixels on each side.  The type parameter sets the parameters of
+distortion, that is if one is projecting on the planet Mars as opposed
+to a sphere, there will be a slightly different result.  The projection
+types are as follows:
 
-	The four optional paramters: defualt to the following values:
-		
-		lat=90.0
-		lon=0.0
-		rad=30.0
-		ppd=1
+    type: MARS
+          EARTH
+          SPHERE
 
-	example:
+    The four optional paramters: default to the following values:
+        
+        lat=90.0
+        lon=0.0
+        rad=30.0
+        ppd=1
 
-	dv> b = projection(obj=a,lat=0.0,rad=90,ppd=10,type=MARS)
+    example:
 
-	will produce an equatorial projection (with lon defaulting to 0) with 
-	the poles at the top and botton of the image.  Each band in b will 
-	have the XY dimention of 1800 (2x90x10).
+    dv> projection(obj=a,lat=0.0,rad=90,ppd=10,type=MARS)
+
+    This will produce an equatorial projection (with lon defaulting to 0)
+    with the poles at the top and botton of the image.  Each band will
+    have the XY dimention of 1800 (2x90x10).
 
 ?functions Matrix
 Davinci supports the following matrix functions:
 
-	mxm()     - matrix multiply
-	minvert() - matrix inversion
+    mxm()     - matrix multiply
+    minvert() - matrix inversion
+    convolve() - sliding window kernel convolution
+
+?functions convolve()
+?convolve()
+ convolve() - Kernel convolution
+
+ convolve(object=VAL, kernel=VAL, norm=BOOL)
+
+    The convolve() function computes a sliding window kernel convolution.
+
+    For each pixel in object, the weighted sum of the neighboring pixels
+    is computed, with the weights being specified by the kernel.
+
+    The norm parameter specifies whether or not each pixel is to
+    be divided by the number of pixels used in the calculation.
+    The neighborhood of edge pixels is smaller than center pixels.
+    If norm=0, the edge pixels will be much smaller than the center
+    pixels.  The default is norm=1.
+
+    Example:
+
+    The following kernel computes the average of a 3x3 neighborhood for 
+    each pixel, smoothing the image.
+
+        dv> b = clone(1, 3, 3, 1)
+        1       1       1
+        1       1       1
+        1       1       1
+        dv> convolve(img, b)
+    
+?news
+ DaVinci News
+
+ 1999/10/22 - Added windowing convolution, useful for LPF, etc.
+
+ 1999/06/08 - Released version 0.50.
+              + Added xrt3d()
+              * rewrote text interface to use the Xt event model
+              * Wrote a push parser for bison, and started using it.
+                (This means the average user can't make parser.c from parser.y
+                anymore, but doesn't need to because parser.c is provided.)
+
+ 1999/03/24 - Version 0.48
+            + added minvert(), matrix inversion (LU decomposition)
+            * updated io_vicar to write new vicar format, but is sun specific
+            * speedup to array.c
+            + added limited support for 16-bit pgm files
+
