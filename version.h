@@ -1,8 +1,20 @@
-char *version = "@(#) daVinci Version #0.53";
-
+char *version = "@(#) daVinci Version #0.54";
 
 /*
-Version 0.53: Tue Feb  1 19:04:29 MST 2000
+
+Version 0.54
+    * Added support code and resourse files for a Win32/Console version of davinci
+  	-Support for reading Big-Endian files correctly
+	-Use of a win32 compliant readline lib (readline.dll)
+	-Use of a win32 compliant hdf5 lib (hdf5.lib)
+	-Supports most file format input/output (as big endian) at this time
+
+Version 0.53
+    * Added the Pl-Plot library with an Xt interface (api.h apifunc.c apidef.h)
+    * Added ff_plplot file which congolerates several 
+			plotting commands into a simple davinci command
+    * Added an interactive cursor command (for use with a plplot window)
+	which returns normalize coords
 	+ added line continuation  "\"
 	+ added C-style (multiline) comments 
 	* fixed line-number reporting in ufuncs.  It's a hack.
