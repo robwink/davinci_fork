@@ -19,7 +19,29 @@
 #include <sys/un.h>
 #include <sys/types.h>
 #include <sys/time.h>
+
+#ifdef HAVE_VALUES_H
 #include <values.h>
+#endif
+
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+
+#define MINSHORT        SHRT_MIN
+#define MININT          INT_MIN
+#define MINLONG         LONG_MIN
+
+#define MAXSHORT        SHRT_MAX
+#define MAXINT          INT_MAX
+#define MAXLONG         LONG_MAX
+
+#endif
+
+#include <float.h>
+#define MAXDOUBLE       DBL_MAX
+/* #define MAXFLOAT        FLT_MAX */
+#define MINDOUBLE       DBL_MIN
+#define MINFLOAT        FLT_MIN
 
 #else 
 
@@ -340,9 +362,7 @@ extern int DEPTH;
 extern int SCALE;
 extern int debug;
 
-#ifndef _WIN32 
-#define drand48()       ((double)lrand48()/(unsigned int)(1<<31))
-#else
+#ifdef _WIN32 
 #define readline w_readline
 #define add_history w_add_history
 #define history_get_history_state w_history_get_history_state

@@ -50,13 +50,13 @@
 	char *b = NULL; \
 	if (fieldwidth) \
 		if (precision) \
-			(void)asprintf(&b, f, fieldwidth, precision, func); \
+			(void)dv_asprintf(&b, f, fieldwidth, precision, func); \
 		else \
-			(void)asprintf(&b, f, fieldwidth, func); \
+			(void)dv_asprintf(&b, f, fieldwidth, func); \
 	else if (precision) \
-		(void)asprintf(&b, f, precision, func); \
+		(void)dv_asprintf(&b, f, precision, func); \
 	else \
-		(void)asprintf(&b, f, func); \
+		(void)dv_asprintf(&b, f, func); \
 	if (b) { \
                 out = str_append(out, b); \
 		free(b); \
@@ -71,7 +71,7 @@ static int	 getint __P((int *));
 static int	 getstr __P((char **));
 static char	*mklong __P((char *, int));
 static void	 usage __P((void));
-static int asprintf(char **, char *, ...);
+static int dv_asprintf(char **, char *, ...);
 
 static Var *gv;
 char *do_sprintf(vfuncptr func, Var *arg);
@@ -497,7 +497,7 @@ unsigned long strtoul ();
 /* char *malloc (); */
 
 static int
-int_vasprintf (char **result, char *format, va_list args)
+dv_int_vasprintf (char **result, char *format, va_list args)
 {
     char *p = format;
     /* Add one to make sure that it is never zero, which might cause malloc
@@ -570,13 +570,13 @@ int_vasprintf (char **result, char *format, va_list args)
 }
 
 int
-vasprintf (char **result, char *format, va_list args)
+dv_vasprintf (char **result, char *format, va_list args)
 {
-    return int_vasprintf (result, format, args);
+    return dv_int_vasprintf (result, format, args);
 }
 
 int
-asprintf(char **str, char *fmt, ...)
+dv_asprintf(char **str, char *fmt, ...)
 {
     int ret;
     va_list ap;

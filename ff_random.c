@@ -16,11 +16,11 @@ void g_srandom(int);
 #define random rand
 #define srandom srand
 #endif
-#ifdef _WIN32
-#include <math.h>
-const long r_l_max= 2147483648;
-const long r_l_min= -2147483648;
 
+#ifndef HAVE_DRAND48
+#include <math.h>
+const long r_l_max= 2 << 31;
+const long r_l_min= -(2 << 31);
 
 double drand48(void)
 {

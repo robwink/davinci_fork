@@ -15,6 +15,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
 XINCLUDES=@XINCLUDES@ $(XRTINCLUDE)
+X_INCLUDE_DIR=@X_INCLUDE_DIR@
 XLIBS=@XLIBS@ $(XRTLIBS)
 
 CPPFLAGS=-I$(srcdir) @CPPFLAGS@ -Ilib -I$(srcdir)/iomedley
@@ -155,7 +156,7 @@ binary:	davinci gplot
 	echo `./config.guess`
 
 gplot.o:	gplot.c
-	$(CC) -c $(CPPFLAGS) $(DEFS) $(XINCLUDES) -Ilib $(CFLAGS) $< 
+	$(CC) -c -DX_INCLUDE_DIR=$(X_INCLUDE_DIR) $(CPPFLAGS) $(DEFS) $(XINCLUDES) -Ilib $(CFLAGS) $< 
 
 gplot:	gplot.o lib/libXfred.a system.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) gplot.o system.o -o $@ $(LDFLAGS) -Llib -lXfred $(LIBS) $(XLIBS) -lX11

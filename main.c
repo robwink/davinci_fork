@@ -119,7 +119,7 @@ sighandler(int data)
     }
 }
 
-char *__progname = "davinci";
+/* char *__progname = "davinci"; */
 
 int 
 main(int ac, char **av)

@@ -1,9 +1,12 @@
-char *version = "@(#) daVinci Version #1.06";
+char *version = "@(#) daVinci Version #1.07";
 
 
 #include "build.h"
 
 /*
+Version 1.07: Tue Oct  8 16:54:47 MST 2002
+	+ Merged in OS/X changes
+
 Version 1.06: Mon Sep 30 21:16:01 MST 2002
 	+ promoted unsigned shorts to ints in load_pds()
 
