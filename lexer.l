@@ -16,6 +16,12 @@ extern int in_string;
 
 #define YY_USER_ACTION pp_count+=yyleng;
 
+YY_BUFFER_STATE
+get_current_buffer()
+{
+	return(YY_CURRENT_BUFFER);
+}
+
 extern int indent;
 FILE *save_fp = NULL;
 char save_file[256];
@@ -80,8 +86,8 @@ comment #.*
 
 "-="		{ return(DEC_OP); }
 "+="		{ return(INC_OP); }
-"-="		{ return(MULSET_OP); }
-"+="		{ return(DIVSET_OP); }
+"*="		{ return(MULSET_OP); }
+"/="		{ return(DIVSET_OP); }
 
 "||"        { return(OR_OP); }
 "&&"        { return(AND_OP); }

@@ -1688,6 +1688,7 @@ ff_eval(vfuncptr func, Var * arg)
     Var **av;
     char *expr;
     FILE *fp;
+	char *buf;
 	
     Alist alist[2];
     alist[0] = make_alist("expr",    ID_STRING,     NULL,     &expr);
@@ -1699,15 +1700,16 @@ ff_eval(vfuncptr func, Var * arg)
     if (expr == NULL)  {
         return(NULL);
     }
+	
+	/*
+	** gotta stick a newline terminator on the end
+	*/
+	buf = calloc(strlen(expr)+3, 1);
+	strcpy(buf, expr);
+	strcat(buf, "\n");
+	eval_buffer(buf);
 
-    if ((fp = tmpfile()) != NULL) {
-        fputs(expr, fp);
-        fputc('\n', fp);
-        rewind(fp);
-        push_input_stream(fp);
-    }
-
-    return(NULL);
+    return(pop(scope_tos()));
 }
 
 Var *

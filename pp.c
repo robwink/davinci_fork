@@ -87,6 +87,10 @@ V_DUP(Var *v)
 }
 
 
+/*
+** Default function to output tos()
+*/
+
 Var *
 pp_print(Var *v)
 {
@@ -106,75 +110,13 @@ pp_print(Var *v)
     s = eval(v);
     if (s != NULL) {
         v = s;
-		pp_print_var(v, V_NAME(v), 0);
+		pp_print_var(v, NULL, 0);
 	} else {
 		parse_error("Unable to find variable: %s", V_NAME(v));
 	}
 
 	return(NULL);
 }
-
-#if 0
-    switch (V_TYPE(v)) {
-    case ID_STRING:
-        printf("\"%s\"\n", V_STRING(v));
-        break;
-    case ID_VAL:
-        /**
-        ** This should iterate in XYZ order, always.
-        **/
-        sprintf(bytes, "%d", NBYTES(V_FORMAT(v))*V_DSIZE(v));
-        commaize(bytes);
-
-	   x = GetSamples(V_SIZE(v),V_ORG(v));
-	   y = GetLines(V_SIZE(v),V_ORG(v));
-	   z = GetBands(V_SIZE(v),V_ORG(v));
-
-        if (V_DSIZE(v) > 1) {
-            printf("%s:\t%dx%dx%d array of %s, %s format [%s bytes]\n",
-                   V_NAME(v) ? V_NAME(v) : "", 	
-                   x,
-                   y,
-                   z,
-                   Format2Str(V_FORMAT(v)),
-                   Org2Str(V_ORG(v)),
-                   bytes);
-        }
-        if (V_DSIZE(v) < 100) {
-			for (k = 0 ; k < z ; k++) {
-			for (j = 0 ; j < y ; j++) {
-			for (i = 0 ; i < x ; i++) {
-				c = cpos(i,j,k,v);
-                switch (V_FORMAT(v)) {
-                case BYTE: printf("%d\t", ((u_char *)V_DATA(v))[c]); break;
-                case SHORT: printf("%d\t", ((short *)V_DATA(v))[c]); break;
-                case INT:  printf("%d\t", ((int *)V_DATA(v))[c]); break;
-                case FLOAT: printf("%#.*g\t", SCALE, ((float *)V_DATA(v))[c]); break;
-                case DOUBLE: printf("%#.*g\t", SCALE, ((double *)V_DATA(v))[c]); break;
-                }
-            }
-            printf("\n");
-			}
-            if (z > 1) printf("\n");
-			}
-        }
-        break;
-    case ID_STRUCT:
-        pp_print_struct(v, 0);
-        break;
-
-	 case ID_TEXT:		/*Added: Thu Mar  2 16:52:39 MST 2000*/
-		print_text(v, 0);
-		break;
-
-    default:
-        printf("error: Unknown type.\n");
-        break;
-    }
-    return(v);
-}
-#endif
-
 
 void
 pp_print_struct(Var *v, int indent)
@@ -248,9 +190,12 @@ pp_print_var(Var *v, char *name, int indent)
     extern int SCALE;
     char bytes[32];
 	int x, y, z, row, i;
+	int npassed = (name != NULL);
 
-	if (name == NULL) name = "";
-	if (indent) printf("%*s%s: ", indent, "", name);
+	if (name == NULL) {
+		name = "";
+	}
+	if (indent || npassed) printf("%*s%s: ", indent, "", name);
 
     switch (V_TYPE(v)) {
     case ID_STRING:

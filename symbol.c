@@ -292,7 +292,7 @@ free_var(Var *v)
 			if (V_NAME(v)) free(V_NAME(v));
 			break;
 
-		case ID_TEXT:								/*Added: Thu Mar  2 16:03:49 MST 2000*/
+		case ID_TEXT:				/*Added: Thu Mar  2 16:03:49 MST 2000*/
 			for (i=0;i< V_TEXT(v).Row; i++){
 				free(V_TEXT(v).text[i]);
 			}

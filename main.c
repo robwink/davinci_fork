@@ -211,8 +211,13 @@ main(int ac, char **av)
             }
             i += k;
         } else {
+			char buf[256];
             flag = 1;
             dd_put_argv(s, p_mkval(ID_STRING, av[i]));
+			v = p_mkval(ID_STRING, av[i]);
+			sprintf(buf, "$%d", i);
+			V_NAME(v) = strdup(buf);
+			put_sym(v);
         }
     }
 
@@ -299,7 +304,9 @@ void
 event_loop(void)
 {
     if (interactive) {
-#ifndef __MSDOS__
+#ifdef __MSDOS__
+		lhandler((char *)readline("dv> "));
+#else 
         if (windows && getenv("DISPLAY") != NULL)  {
             char *argv[1];
             char *av0 = "null";
@@ -328,12 +335,7 @@ event_loop(void)
 
         XtAppMainLoop(app);
 #endif
-
-#ifdef __MSDOS__
-	lhandler((char *)readline("dv> "));
-#endif
     }
-
 }
 
 void lhandler(char *line)
@@ -369,6 +371,7 @@ while (1) {
     pp_count = 0;
 
     parse_buffer(buf);
+
 
 	 setjmp(env);
 
@@ -422,7 +425,6 @@ process_streams(void)
 }
 
 Var *curnode;
-void *parent_buffer;
 
 void
 parse_buffer(char *buf)
@@ -431,8 +433,13 @@ parse_buffer(char *buf)
     extern char *yytext;
     extern FILE *save_fp;
     int flag = 0;
+	Var *v = NULL;
+	void *parent_buffer;
+	void *buffer;
+	Var *node;
 
-    parent_buffer = yy_scan_string(buf);
+	parent_buffer = get_current_buffer();
+    buffer = yy_scan_string(buf);
 
     while(i = yylex()) {
         /*
@@ -442,14 +449,57 @@ parse_buffer(char *buf)
         if (j == -1) quit();
 
         if (j == 1 && curnode != NULL) {
-            evaluate(curnode);
-            pp_print(pop(scope_tos()));
-            free_tree(curnode);
-            indent = 0;
-            cleanup(scope_tos());
+			node = curnode;
+            evaluate(node);
+            v = pop(scope_tos());
+			pp_print(v);
+			free_tree(node);
+			indent = 0;
+			cleanup(scope_tos());
         }
     }
-    yy_delete_buffer((struct yy_buffer_state *)parent_buffer);
+
+    yy_delete_buffer((struct yy_buffer_state *)buffer);
+	if (parent_buffer) yy_switch_to_buffer(parent_buffer);
+}
+
+/*
+** This is similar to parse_buffer, but it doesn't print the stack
+** or clean up the scope
+*/
+Var *
+eval_buffer(char *buf)
+{
+    int i,j;
+    extern char *yytext;
+    extern FILE *save_fp;
+    int flag = 0;
+	Var *v = NULL;
+	void *parent_buffer;
+	void *buffer;
+	Var *node;
+
+	parent_buffer = get_current_buffer();
+    buffer = yy_scan_string(buf);
+
+    while(i = yylex()) {
+        /*
+        ** if this is a function definition, do no further parsing yet.
+        */
+        j = yyparse(i, (Var *)yytext);
+        if (j == -1) quit();
+
+        if (j == 1 && curnode != NULL) {
+			node = curnode;
+            evaluate(node);
+            // v = pop(scope_tos());
+			free_tree(node);
+        }
+    }
+
+    yy_delete_buffer((struct yy_buffer_state *)buffer);
+	if (parent_buffer) yy_switch_to_buffer(parent_buffer);
+	return(v);
 }
 
 void
