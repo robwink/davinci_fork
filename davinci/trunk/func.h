@@ -293,6 +293,10 @@ Var *ff_projection(vfuncptr func, Var *arg);
 Var *ff_self_convolve(vfuncptr func, Var *arg);
 Var *ff_convolve(vfuncptr func, Var *arg);
 Var *ff_convolve2(vfuncptr func, Var *arg);
+Var *ff_convolve3(vfuncptr func, Var *arg);
+
+
+Var *ff_popen(vfuncptr func, Var * arg);
 
 Var *ff_struct(vfuncptr func, Var *arg);
 
