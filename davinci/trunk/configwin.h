@@ -34,7 +34,8 @@
 ** ff_modules.c may still be compiled. See Makefile.win.
 */
 
-#define BUILD_MODULE_SUPPORT 
+/* #define BUILD_MODULE_SUPPORT  */
+#undef BUILD_MODULE_SUPPORT
 
 
 /*
@@ -78,5 +79,7 @@
 
 /* The following macro is defined if we have libreadline */
 #define HAVE_LIBREADLINE 1
+
+/* #define HAVE_LIBHDF5 1 */
 
 #endif /* _CONFIGWIN_H_ */

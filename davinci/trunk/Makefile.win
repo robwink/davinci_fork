@@ -2,17 +2,21 @@ CC=cl
 CPPFLAGS=-I. -Ilib -Iwin32 -Iiomedley
 CFLAGS=-Yd -nologo -ZI -GZ
 LDFLAGS=-libpath:win32 -libpath:iomedley
-
-#DEFS   = -DNEED_UDEFS -D_CONSOLE -DHAVE_STRTOUL -DBUILD_MODULE_SUPPORT -D_WIN32 -DMSDOS -D_MSDOS -D_MSDOS_ -DINCLUDE_API
-#DEFS   = -DNEED_UDEFS -D_CONSOLE -DHAVE_STRTOUL -DBUILD_MODULE_SUPPORT -D_WIN32 -DMSDOS -D_MSDOS -D_MSDOS_ -DHAVE_STRING_H
 DEFS    = -DHAVE_CONFIG_H
-#LIBS   = -ltiff -lz -lreadline -ljpeg -lusds -lm  -lplplotFX 
+MAKE=nmake
 
-MODSUPPLIB=modsupp.lib
-LIBS   = hdf5.lib $(MODSUPPLIB) iomedley.lib 
+# -- The io_loadmod.c does not compile as yet
+
+#MODULE_SUPP_OBJS=ff_modules.obj module_io.obj io_loadmod.obj
+#MOD_SUPP_LIB=modsupp.lib
+#MOD_SUPP_LIB_OBJS=error.obj ff_struct.obj darray.obj avl.obj shared_globals.obj
+
+LIBS   = hdf5.lib iomedley.lib 
 
 LIBIOMEDLEYDIR = iomedley
-LIBIOMEDLEY = $(LIBIOMEDLEYDIR)/libiomedley.a
+LIBIOMEDLEY = $(LIBIOMEDLEYDIR)/iomedley.lib
+
+READLINE_OBJ = win32/w_readline.obj
 
 
 .SUFFIXES: .obj .lib
@@ -20,8 +24,31 @@ LIBIOMEDLEY = $(LIBIOMEDLEYDIR)/libiomedley.a
 .c.obj:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $< -Fo$@
 
-#############################################################################
 OBJ=p.obj pp.obj symbol.obj \
+	ff.obj ff_cluster.obj ff_display.obj ff_gnoise.obj ff_gplot.obj \
+	ff_rgb.obj ff_random.obj ff_source.obj ff_version.obj \
+	reserved.obj array.obj string.obj pp_math.obj rpos.obj init.obj help.obj \
+	ff_moment.obj ff_interp.obj  \
+	lexer.obj parser.obj main.obj fit.obj system.obj misc.obj ufunc.obj scope.obj \
+	ff_header.obj ff_text.obj ff_bbr.obj ff_vignette.obj \
+	ff_pause.obj printf.obj ff_ifill.obj ff_xfrm.obj newfunc.obj ff_ix.obj ff_avg.obj \
+	ff_sort.obj ff_fft.obj fft.obj matrix.obj fft_mayer.obj dct.obj fft2f.obj \
+	x.obj xrt_print_3d.obj motif_tools.obj ff_convolve.obj apifunc.obj \
+	ff_plplot.obj ff_pca.obj ff_loadvan.obj tools.obj header.obj \
+	ff_pbm.obj ff_meta.obj \
+	ff_load.obj ff_write.obj ff_raw.obj ff_ascii.obj ff_filetype.obj \
+	dvio_aviris.obj dvio_goes.obj dvio_grd.obj dvio_imath.obj \
+	dvio_isis.obj dvio_magic.obj dvio_pnm.obj dvio_vicar.obj dvio.obj \
+	dvio_ers.obj dvio_envi.obj dvio_raw.obj dvio_specpr.obj dvio_themis.obj \
+	dvio_ascii.obj dvio_pds.obj dvio_hdf.obj endian_norm.obj \
+	error.obj ff_struct.obj darray.obj avl.obj \
+	util.obj ff_shade.obj \
+	binDCT.obj ff_deghost.obj deghost.obj \
+	win32/regex.obj win32/mem.obj
+
+
+#############################################################################
+OBJX=p.obj pp.obj symbol.obj \
 	ff.obj ff_ascii.obj ff_cluster.obj ff_display.obj ff_gnoise.obj ff_gplot.obj \
 	ff_load.obj ff_rgb.obj ff_random.obj ff_source.obj ff_version.obj ff_write.obj \
 	reserved.obj array.obj string.obj pp_math.obj rpos.obj init.obj help.obj \
@@ -41,21 +68,20 @@ OBJ=p.obj pp.obj symbol.obj \
 	dvio_vicar.obj dvio.obj dvio_specpr.obj dvio_themis.obj dvio_ascii.obj \
 	ff_meta.obj util.obj
 
-MODSUPPLIBOBJS=error.obj ff_struct.obj darray.obj avl.obj shared_globals.obj
 
 all:	 davinci 
 
-davinci:	$(LIBIOMEDLEY) $(OBJ) $(MODSUPPLIB)
-	$(CC) $(CFLAGS) $(OBJ) -Fe$@ -MLd -link $(LDFLAGS) $(LIBS)
+davinci:	$(LIBIOMEDLEY) $(READLINE_OBJ) $(OBJ)
+	$(CC) $(CFLAGS) $(OBJ) $(READLINE_OBJ) -Fe$@ -MLd -link $(LDFLAGS) $(LIBS)
 
 $(LIBIOMEDLEY):
 	cd $(LIBIOMEDLEYDIR)
 	$(MAKE) -f Makefile.win
 	cd ..
 
-$(MODSUPPLIB): $(MODSUPPLIBOBJS)
-	@echo "Building support library for modules..."
-	lib -nologo -out:$@ $(MODSUPPLIBOBJS)
+#$(MOD_SUPP_LIB): $(MOD_SUPP_LIB_OBJS)
+#	@echo "Building support library for modules..."
+#	lib -nologo -out:$@ $(MOD_SUPP_LIB_OBJS)
 
 ff_version.obj:	build.h
 build.h:	$(OBJ:ff_version.obj=)
@@ -84,7 +110,7 @@ help.obj:	help.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(DEFS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $*.c -Fo$@
 
 clean:
-	-del -f *.obj davinci dv core gplot TAGS config.cache config.log $(MODSUPPLIB)
+	-del -f *.obj davinci dv core gplot TAGS config.cache config.log $(MOD_SUPP_LIB)
 	-del -f .dvlog */.dvlog *~ */*~
 
 #gplot.obj:	gplot.c

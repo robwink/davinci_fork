@@ -7,6 +7,7 @@
 
 #ifdef _WIN32
 #include <io.h>
+#include "mem.h"
 #else
 #include <sys/mman.h>
 #include <libgen.h>

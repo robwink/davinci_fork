@@ -75,7 +75,7 @@ int rf_IMAGE(char *, Var *,char *, int);
 int rf_HISTOGRAM_IMAGE(char *, Var *,char *, int);
 int rf_HISTORY(char *, Var *,char *, int);
 
-static dataKey	*dK;
+static dataKey	*dK = NULL;
 typedef int (*PFI)(char *, Var *, char *, int);
 
 /*Step2: Add the name of the READ function/wrapper here*/
@@ -977,14 +977,14 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 	 		get_struct_element(v,i, &struct_name, &tmpvar);
 			if (!(strcasecmp(struct_name,"data"))) {/*Found it!*/
 				ProcessHistoryIntoString(tmpvar,(char **)&oi->obj_data[oi->count],&ptr);
-				memcpy((oi->obj_data[oi->count]+ptr),end,strlen(end));
+				memcpy(((char *)oi->obj_data[oi->count]+ptr),end,strlen(end));
 				ptr+=strlen(end);
 
 				size = (ptr/record_bytes)+1;
 				oi->obj_data[oi->count]=(void *)realloc(oi->obj_data[oi->count],size*record_bytes);
 				if (ptr % record_bytes) {
 					int rem = size*record_bytes - ptr;
-					memset(oi->obj_data[oi->count]+ptr,0x20,rem);
+					memset((char *)oi->obj_data[oi->count]+ptr,0x20,rem);
 					ptr+=rem;
 				}
 				oi->obj_size[oi->count]=(ptr/record_bytes);
@@ -1541,7 +1541,7 @@ WritePDS(vfuncptr func, Var *arg)
 		return(NULL);
 	}
 
-	fp=fopen(fn,"w");
+	fp=fopen(fn,"wb");
 
 
 	if (fp==NULL) {
@@ -1684,7 +1684,7 @@ int rf_QUBE(char *fn, Var *ob,char * val, int dptr)
 {
 	FILE *fp;
 	Var *data=NULL;
-	fp=fopen(fn,"r");
+	fp=fopen(fn,"rb");
 	data=(Var *)dv_LoadISISFromPDS(fp,fn,dptr);
 	if (data!=NULL){
 		add_struct(ob,fix_name("DATA"),data);
@@ -1760,7 +1760,11 @@ int rf_TABLE(char *fn, Var *ob,char * val, int dptr)
 
 	Offset=dptr;
 
+#ifdef _WIN32
+	fp=open(fn,O_RDONLY|O_BINARY,0);
+#else /* UNIX */
 	fp=open(fn,O_RDONLY,0);
+#endif /* _WIN32 */
 	lseek(fp,Offset,SEEK_SET);
 	for (i=0;i<label->nrows;i++){
 
@@ -2003,7 +2007,7 @@ int rf_IMAGE(char *fn, Var *ob,char * val, int dptr)
 
 	FILE *fp;
 	Var *data=NULL;
-	fp=fopen(fn,"r");
+	fp=fopen(fn,"rb");
 	data=(Var *)dv_LoadISIS(fp,fn,NULL);
 	if (data!=NULL){
 		add_struct(ob,fix_name("DATA"),data);

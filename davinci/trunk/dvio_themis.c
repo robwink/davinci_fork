@@ -1,12 +1,14 @@
-#include "parser.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <values.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#ifndef __MSDOS__
+#if defined(__MSDOS__)||defined(_WIN32)
+#include "mem.h"
+#else
 #include <sys/mman.h>
-#endif
+#endif /* _WIN32 */
+#include "parser.h"
 #include "dvio.h"
 #include "XformTable.h"
 

@@ -173,7 +173,11 @@ specpr_open(char *path)
     int fout;
     char *p;
 
+#ifdef _WIN32
+	if ((fout = open(path, O_RDWR|O_BINARY)) >= 0) {
+#else /* UNIX */
 	if ((fout = open(path, O_RDWR)) >= 0) {
+#endif /* _WIN32 */
         return(fout);
     } else {
         /* it doesn't exist.  Create it. */
@@ -181,7 +185,11 @@ specpr_open(char *path)
         ** this needs to prepend the SPECPR_MAGIC cookie to record 0
         **/
 
+#ifdef _WIN32
+        fout = open(path, O_RDWR | O_CREAT | O_BINARY, 0777);
+#else /* UNIX */
         fout = open(path, O_RDWR | O_CREAT, 0777);
+#endif /* _WIN32 */
         if (fout < 0) return(fout);
 
         p = (char *)malloc(LABELSIZE);
@@ -624,7 +632,7 @@ ff_loadspecpr(vfuncptr func, Var *arg)
     }
     
 
-    if ((fp = fopen(filename, "r")) == NULL) {
+    if ((fp = fopen(filename, "rb")) == NULL) {
         parse_error("Unable to open file: %s\n", filename);
         return(NULL);
     }

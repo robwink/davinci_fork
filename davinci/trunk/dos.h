@@ -37,6 +37,7 @@
 #endif /* _WIN32 */
 
 #define F_OK    0
+#define R_OK    4
 #define PROT_READ       0x1             /* pages can be read */
 #define PROT_WRITE      0x2             /* pages can be written */  
 #define PROT_EXEC       0x4             /* pages can be executed */

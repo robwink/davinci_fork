@@ -349,7 +349,11 @@ dv_LoadISIS(FILE *fp, char *filename, struct iom_iheader *s)
     datafile = h.ddfname; /* get the detached data file name */
     
     if (datafile != NULL) {
+#ifdef _WIN32
+        if ((fd = open(datafile, O_RDONLY|O_BINARY)) < 0) {
+#else /* UNIX */
         if ((fd = open(datafile, O_RDONLY)) < 0) {
+#endif /* _WIN32 */
             fprintf(stderr, "Unable to open data file: %s\n", datafile);
             return(NULL);
         }
@@ -876,7 +880,7 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
     }
 
     if ((fname = dv_locate_file(isisfile)) == NULL ||
-        (fp = fopen(fname, "r")) == NULL) {
+        (fp = fopen(fname, "rb")) == NULL) {
         fprintf(stderr, "Unable to open file: %s\n", isisfile);
         return (NULL);
     }
@@ -1134,7 +1138,7 @@ write_isis_planes(vfuncptr func, Var * arg)
         return(NULL);
     }
 
-    fp = fopen(filename, "w");
+    fp = fopen(filename, "wb");
 
     size[0] = GetX(core);
     size[1] = GetY(core);
