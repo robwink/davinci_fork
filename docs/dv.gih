@@ -667,6 +667,47 @@
     The display function passes the specified argument to an external
     viewer, as a grayscale image.
 
+?functions xplot()
+?xplot()
+ xplot - Plot one or more objects, and supply an optional X-Axis
+
+ xplot([axis={X,Y,Z}],[Xaxis=VAL],VAL1,[VAL2...])
+
+	The xplot function will take a data block (or several data blocks)
+	and plot them using axis as a kind of delimiter.  Example:
+		a=create(1,7,20)
+		xplot(a, axis=Y)
+
+	will create a set of 20 data plots (all the same color) of 7 data 
+	points each.  Alternatively:
+		xplot(a,axis=Z) 
+
+	will reate a set of 7 data plots (all the same color) of 20 data points
+	each.  To seperate data sets (in terms of color/symbol) then specify
+	them as different objects:
+		xplot(a1,a2,axis=Y)
+
+	will produce (on the same graph) two plots of 20 data sets of 7 data
+	points each (assumeing a1 and a2 have the same configuration as our
+	original a).
+
+	An X-Axis can also be specified to provide a horizontal scale of
+	a particular nature:
+	
+		MyAxis=create(1,7,1,format=float)
+		MyAxis=MyAxis/max(MyAxis) /*My Axis is now 0->1 in 7 steps */
+		xplot(axis=Y,a,a1,a2,Xaxis=Myaxis)
+
+	Now we will get three color plots of 20 data sets (each) of 7
+	data points each and the X-axis will go from 0 to 1 in seven steps.
+
+	Alternatively, we could have specified MyAxis as follows:
+
+		MyAxis=create(1,7,20,format=float)
+
+	Now there is an X-axis per data set (NOTE: this can be abused so use
+	with caution).
+
 ?functions gplot()
 ?gplot()
  gplot() - Plot an object
