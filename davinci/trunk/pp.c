@@ -47,13 +47,11 @@ V_DUP(Var *v)
 
     switch (V_TYPE(v)) {
     case ID_VAL:
-    {
         memcpy(V_SYM(r), V_SYM(v), sizeof(Sym));
         dsize = V_DSIZE(v)*NBYTES(V_FORMAT(v));
         V_SYM(r)->data = memcpy(malloc(dsize), V_SYM(v)->data, dsize);
         if (V_TITLE(v)) V_TITLE(r) = strdup(V_TITLE(v));
-    }
-    break;
+		break;
     case ID_STRING:
         V_STRING(r) = strdup(V_STRING(v));
         break;
@@ -61,21 +59,19 @@ V_DUP(Var *v)
         if (V_NAME(v)) V_NAME(r) = strdup(V_NAME(v));
         break;
     case ID_STRUCT:
-    {
-        r = duplicate_struct(v);
-    }
-    break;
+        r = (Var *)duplicate_struct(v);
+		break;
 
     case ID_TEXT:		/*Added: Thu Mar  2 16:49:11 MST 2000*/
-    {
-        int i;
-        V_TEXT(r).Row=V_TEXT(v).Row;
-        V_TEXT(r).text=(char **)calloc(sizeof(char *),V_TEXT(r).Row);
-        for (i=0;i<V_TEXT(r).Row;i++){
-            V_TEXT(r).text[i]=strdup(V_TEXT(v).text[i]);
-        }
-    }
-    break;
+		{
+			int i;
+			V_TEXT(r).Row=V_TEXT(v).Row;
+			V_TEXT(r).text=(char **)calloc(sizeof(char *),V_TEXT(r).Row);
+			for (i=0;i<V_TEXT(r).Row;i++){
+				V_TEXT(r).text[i]=strdup(V_TEXT(v).text[i]);
+			}
+		}
+		break;
 
     }
     return(r);
@@ -125,10 +121,12 @@ pp_print_struct(Var *v, int indent, int depth)
     if (v == NULL) return;
     if (VERBOSE == 0) return;
 
+	/*
     //  if (V_NAME(v)) printf("%s", V_NAME(v));
     //  if (indent == 0) {
         //      printf(": struct\n");
         //  }
+	*/
 
     indent += 4;
 
@@ -291,54 +289,8 @@ pp_set_var(Var *id, Var *range, Var *exp)
             return(set_varray(v,&rout,exp));
         }
 
-        for (i =0 ; i < 3 ; i++) {
-            size[i] = 1 + (rout.hi[i] - rout.lo[i])/rout.step[i];
-            j = orders[V_ORG(exp)][i];
-            if (V_SIZE(exp)[j] == 1) continue;
-            if (size[i] != V_SIZE(exp)[j]) {
-                parse_error("Array sizes don't match");
-                return(NULL);
-            }
-        }
-        r = &rout;
+		array_replace(v, exp, &rout);
 
-        for (i = 0 ; i < size[0] ; i++) {
-            for (j = 0 ; j < size[1] ; j++) {
-                for (k = 0 ; k < size[2] ; k++) {
-
-                    d = cpos(i*r->step[0] + r->lo[0],
-                             j*r->step[1] + r->lo[1],
-                             k*r->step[2] + r->lo[2], v);
-
-                    s = cpos(i,j,k,exp);
-
-                    // s = rpos(d, v, exp);
-
-                    switch(V_FORMAT(v)) {
-                    case BYTE:
-                        ((u_char *)V_DATA(v))[d] =
-                            saturate_byte(extract_int(exp, s));
-                        break;
-                    case SHORT:
-                        ((short *)V_DATA(v))[d] =
-                            saturate_short(extract_int(exp, s));
-                        break;
-                    case INT:
-                        ((int *)V_DATA(v))[d] =
-                            saturate_int(extract_int(exp, s));
-                        break;
-                    case FLOAT:
-                        ((float *)V_DATA(v))[d] =
-                            extract_float(exp, s);
-                        break;
-                    case DOUBLE:
-                        ((double *)V_DATA(v))[d] =
-                            extract_double(exp, s);
-                        break;
-                    }
-                }
-            }
-        }
         /**
         ** go ahead and pull out the range to return.
         **/
@@ -377,8 +329,71 @@ pp_set_var(Var *id, Var *range, Var *exp)
     if (!strcmp(V_NAME(exp), "debug")) debug = V_INT(exp);
     if (!strcmp(V_NAME(exp), "depth")) DEPTH = V_INT(exp);
 
-    put_sym(exp);
-    return(id);
+    return(put_sym(exp));
+}
+
+
+int
+array_replace(Var *dst, Var *src, Range *r)
+{
+	int i, j, k;
+	int size[3];
+	int x, y, z;
+	int d, s;
+
+	x = GetX(src);
+	y = GetY(src);
+	z = GetZ(src);
+
+	for (i =0 ; i < 3 ; i++) {
+		size[i] = 1 + (r->hi[i] - r->lo[i])/r->step[i];
+		j = orders[V_ORG(src)][i];
+		if (V_SIZE(src)[j] != 1 && size[i] != V_SIZE(src)[j]) {
+			parse_error("Array sizes don't match");
+			return(0);
+		}
+	}
+
+	for (i = 0 ; i < size[0] ; i++) {
+		for (j = 0 ; j < size[1] ; j++) {
+			for (k = 0 ; k < size[2] ; k++) {
+
+				d = cpos(i*r->step[0] + r->lo[0],
+						 j*r->step[1] + r->lo[1],
+						 k*r->step[2] + r->lo[2], dst);
+
+				/*
+				** modification to correctly handle sizes of 1
+				** This is slow, but works 
+				*/
+				s = cpos(i % x,j % y,k % z,src);
+
+				switch(V_FORMAT(dst)) {
+				case BYTE:
+					((u_char *)V_DATA(dst))[d] =
+						saturate_byte(extract_int(src, s));
+					break;
+				case SHORT:
+					((short *)V_DATA(dst))[d] =
+						saturate_short(extract_int(src, s));
+					break;
+				case INT:
+					((int *)V_DATA(dst))[d] =
+						saturate_int(extract_int(src, s));
+					break;
+				case FLOAT:
+					((float *)V_DATA(dst))[d] =
+						extract_float(src, s);
+					break;
+				case DOUBLE:
+					((double *)V_DATA(dst))[d] =
+						extract_double(src, s);
+					break;
+				}
+			}
+		}
+	}
+	return(1);
 }
 
 
