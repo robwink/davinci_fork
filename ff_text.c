@@ -105,6 +105,7 @@ ff_text(vfuncptr func, Var *arg)
         memcpy(cdata+(x*j), ptr, strlen(ptr));
     }
 
+
 	fclose(fp);
 
     if (VERBOSE > 1) {
@@ -120,6 +121,8 @@ ff_text(vfuncptr func, Var *arg)
     V_SIZE(s)[0] = x;
     V_SIZE(s)[1] = y;
     V_SIZE(s)[2] = 1;
+
+	 fclose(fp);
 
     return(s);
 }
@@ -190,6 +193,8 @@ ff_textarray(vfuncptr func, Var *arg)
         }
         t[count++] = strdup(ptr);
     }
+	 fclose(fp);
+
     t = realloc(t, count*sizeof(char *));
 
     o=newVar();
@@ -1120,3 +1125,93 @@ Var *ff_stringsubst(vfuncptr func, Var *arg)
     return(result);
 }
 
+unsigned char *
+rtrim_string(char *string, char *trim)
+{
+	unsigned char *new_string;
+	int len;
+	int i;
+
+	len=strlen(string);
+
+	i=len-1;
+	while (i >= 0) {
+		if (string[i]!=*trim)
+			break;
+		i--;
+	}
+
+	if (i==(len-1)) { /*String didn't end with trim character*/
+		new_string=strdup(string);
+	}
+	else if (i < 0 ) { /*String was nothing but trim character*/
+		new_string=(unsigned char *)calloc(1,sizeof(char));
+		new_string[0]='\0';
+	}
+
+	else { /*We trimmed some*/
+		new_string=(unsigned char *)calloc((i+2),sizeof(char));
+		strncpy(new_string,string,(i+1));
+		new_string[i+1]='\0';
+	}
+
+	return(new_string);
+}
+		
+
+
+Var *
+ff_rtrim(vfuncptr func, Var *arg)
+{
+	Var *ob=NULL;
+	char *trim=NULL;
+
+   int ac;
+   Var **av;
+
+	int i,Row;	
+
+	Alist alist[3];
+
+	Var *s;
+
+	alist[0] = make_alist( "obj", ID_UNK,   NULL,     &ob);
+	alist[1] = make_alist( "trim", ID_STRING,   NULL,     &trim);
+	alist[2].name = NULL;
+
+	make_args(&ac, &av, func, arg);
+
+	if (parse_args(ac, av, alist)) return(NULL);
+
+	/*Error checks*/
+
+	if (ob==NULL || trim==NULL){
+		parse_error("Not enough information provided");
+		return(NULL);
+	}
+
+	
+	if (V_TYPE(ob)==ID_STRING){
+		s=newVar();
+		V_TYPE(s)=ID_STRING;
+		V_STRING(s)=rtrim_string(V_STRING(ob),trim);
+		return(s);
+	}
+
+	if (V_TYPE(ob)!=ID_TEXT){
+		parse_error("Rtrim only workds on strings or text_arrays");
+		return(NULL);
+	}
+
+	Row=V_TEXT(ob).Row;
+
+	V_TYPE(s)=ID_TEXT;
+	V_TEXT(s).Row=Row;
+	V_TEXT(s).text= (unsigned char **)calloc(Row,sizeof(char *));
+
+	for (i=0;i<Row;i++){
+		V_TEXT(s).text[i]=rtrim_string(V_TEXT(ob).text[i],trim);
+	}
+
+	return(s);
+}
