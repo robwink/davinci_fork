@@ -20,8 +20,8 @@ XRTINCLUDE= -I$(XRTHOME)/include
 XRTLIBS = -L$(XRTHOME)/lib -L/usr/lib/Motif1.2 -lxrt3d -lpdsutil -lMrm -lXm -lXpm
 
 CC     = gcc
-CFLAGS = -g -DHAVE_CONFIG_H -Ilib -DHAVE_XRT
-LIBS   = $(XLIBS) -lreadline -ltermcap -lXt -lX11 -lm 
+CFLAGS = -g -DHAVE_CONFIG_H -Ilib -DHAVE_XRT -I/user/east/asbms/Project4/include
+LIBS   = $(XLIBS) -L/user/east/asbms/Project4/lib -lproj -lreadline -ltermcap -lXt -lX11 -lm 
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
@@ -48,7 +48,7 @@ OBJ=p.o pp.o symbol.o error.o \
 	ff_header.o ff_text.o io_ers.o io_goes.o ff_bbr.o ff_vignette.o \
 	ff_pause.o printf.o ff_ifill.o ff_xfrm.o newfunc.o ff_ix.o ff_avg.o \
 	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
-	x.o xrt_print_3d.o motif_tools.o rfunc.o
+	x.o xrt_print_3d.o motif_tools.o rfunc.o ff_projection.o
 #	input.o 
 
 all:	davinci 
