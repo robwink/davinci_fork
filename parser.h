@@ -246,6 +246,8 @@ enum {
 
 	ID_INC,            /* increment value */
 	ID_DEC,            /* decrement value */
+	ID_INCSET,            /* increment value */
+	ID_DECSET,            /* decrement value */
 	ID_MULSET,         /* *= value */
 	ID_DIVSET,         /* /= value */
 

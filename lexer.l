@@ -90,8 +90,10 @@ comment #.*
 ">"         { return(GT_OP); }
 "<"         { return(LT_OP); }
 
-"-="		{ return(DEC_OP); }
-"+="		{ return(INC_OP); }
+"-="		{ return(DECSET_OP); }
+"+="		{ return(INCSET_OP); }
+"++"		{ return(INC_OP); }
+"--"		{ return(DEC_OP); }
 "*="		{ return(MULSET_OP); }
 "/="		{ return(DIVSET_OP); }
 

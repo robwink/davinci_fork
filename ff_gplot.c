@@ -12,7 +12,6 @@ extern FILE *pfp;
 Var *
 ff_gplot(vfuncptr func, Var *arg)
 {
-#ifdef HAVE_LIBX11
     Var *object, *e;
     int i;
     FILE *fp;
@@ -75,7 +74,6 @@ ff_gplot(vfuncptr func, Var *arg)
     fflush(gplot_pfp);
 
     free(fname);
-#endif
     return(NULL);
 }
 
@@ -292,7 +290,6 @@ ff_xplot(vfuncptr func, Var *arg)
  **   --Ben
  */
 
-#ifdef HAVE_LIBX11
     Var *s, *v;
     FILE *fp;
     char *fname;
@@ -540,6 +537,5 @@ ff_xplot(vfuncptr func, Var *arg)
     }
     send_to_plot(buf);
     free(av);
-#endif
     return (NULL);
 }

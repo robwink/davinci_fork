@@ -664,6 +664,13 @@ ff_nop(vfuncptr func, Var * arg)
 Var *
 ff_echo(vfuncptr func, Var * arg)
 {
+	Var *obj;
+    Alist alist[2];
+    alist[0] = make_alist( "obj",    ID_UNK,   NULL,     &obj);
+    alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
     /**
     ** The cheap version.  Should expand this for proper use someday.
      **/
@@ -671,7 +678,7 @@ ff_echo(vfuncptr func, Var * arg)
     t = VERBOSE;
     VERBOSE = 1;
 
-    pp_print(arg);
+    pp_print(obj);
 
     VERBOSE = t;
     return (NULL);

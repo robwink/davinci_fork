@@ -117,7 +117,7 @@ Var *
 evaluate(Var * n)
 {
     Var *left, *right, *range, *where;
-    Var *p1 = NULL, *p2 = NULL, *p3 = NULL;
+    Var *p1 = NULL, *p2 = NULL, *p3 = NULL, *p4=NULL, *p5=NULL;
     Scope *scope = scope_tos();
     int type;
 
@@ -190,35 +190,6 @@ evaluate(Var * n)
 	push(scope, pp_math(p1, type, p2));
 	break;
 
-    case ID_INC:
-    case ID_DEC:
-	if (left)
-	    evaluate(left);
-	if (right)
-	    evaluate(right);
-	p2 = pop(scope);
-	p1 = pop(scope);
-
-	switch (type) {
-	case ID_INC:
-	    p3 = pp_math(p1, ID_ADD, p2);
-	    break;
-	case ID_DEC:
-	    p3 = pp_math(p1, ID_SUB, p2);
-	    break;
-	}
-
-	if (V_TYPE(left) == ID_DEREF) {
-	    evaluate(V_NODE(left)->left);
-	    evaluate(V_NODE(left)->right);
-
-	    p2 = pop(scope);
-	    p1 = pop(scope);
-	    push(scope, pp_set_struct(p1, p2, p3));
-	} else {
-	    push(scope, pp_set_var(p1, NULL, p3));
-	}
-	break;
 
     case ID_UMINUS:
 	if (left)
@@ -481,6 +452,105 @@ evaluate(Var * n)
 	    p2 = pop(scope);
 	    p1 = pop(scope);
 	    push(scope, pp_set_var(p1, NULL, p2));
+	}
+	break;
+/*
+    case ID_INC:
+    case ID_DEC:
+	if (left) evaluate(left);
+	if (right) evaluate(right);
+	p2 = pop(scope);
+	p1 = pop(scope);
+
+	switch (type) {
+	case ID_INC: p3 = pp_math(p1, ID_ADD, p2); break;
+	case ID_DEC: p3 = pp_math(p1, ID_SUB, p2); break;
+	}
+
+	if (V_TYPE(left) == ID_DEREF) {
+	    evaluate(V_NODE(left)->left);
+	    evaluate(V_NODE(left)->right);
+
+	    p2 = pop(scope);
+	    p1 = pop(scope);
+	    push(scope, pp_set_struct(p1, p2, p3));
+	} else {
+	    push(scope, pp_set_var(p1, NULL, p3));
+	}
+	break;
+*/
+    case ID_INC:		/* increment */
+    case ID_DEC:		/* decrement */
+    	/* These are supposed to work just like equivalence,
+	   but in this case, we want to extract the array,
+	   do some math with it, and put it back
+	*/
+	if (V_TYPE(left) == ID_ARRAY) {
+	    evaluate(V_NODE(left)->left);
+	    evaluate(V_NODE(left)->right);
+	    evaluate(right);
+	    evaluate(left);
+
+	    p3 = pop(scope);		/* get the actual subsetted data (left) */
+	    p2 = pop(scope);		/* expression */
+	    range = pop(scope);		/* range of destination */
+	    p1 = pop(scope);		/* destination */
+
+	    if (type == ID_INC) p5 = pp_math(p3, ID_ADD, p2);
+	    if (type == ID_DEC) p5 = pp_math(p3, ID_SUB, p2);
+	    push(scope, pp_set_var(p1, range, p5));
+	} else if (V_TYPE(left) == ID_WHERE) {
+	    /*
+             *              ID_SET
+             *            /        \
+             *    ID_WHERE          EXPR
+             *   /        \
+             *  ID       VAL
+            */
+	    evaluate(V_NODE(left)->left);
+	    evaluate(V_NODE(left)->right);
+	    evaluate(right);
+
+	    evaluate(V_NODE(left)->left);
+	    p3 = pop(scope);
+
+	    p2 = pop(scope);
+	    where = pop(scope);
+	    p1 = pop(scope);
+
+	    if (type == ID_INC) p5 = pp_math(p3, ID_ADD, p2);
+	    if (type == ID_DEC) p5 = pp_math(p3, ID_SUB, p2);
+	    push(scope, pp_set_where(p1, where, p5));
+	} else if (V_TYPE(left) == ID_DEREF) {
+	    /*
+             *               ID_SET
+             *             /        \
+             *        ID_DEREF     EXPR
+             *      /        \
+             *     ID         ID 
+            */
+	    evaluate(V_NODE(left)->left);
+	    evaluate(V_NODE(left)->right);
+	    evaluate(right);
+	    evaluate(left);
+
+	    p4 = pop(scope);	/* structure.member */
+	    p3 = pop(scope);	/* expr */
+	    p2 = pop(scope);	/* member */
+	    p1 = pop(scope);	/* structure */
+
+	    if (type == ID_INC) p5 = pp_math(p4, ID_ADD, p3);
+	    if (type == ID_DEC) p5 = pp_math(p4, ID_SUB, p3);
+	    push(scope, pp_set_struct(p1, p2, p5));
+	} else {
+	    evaluate(left);
+	    evaluate(right);
+	    p2 = pop(scope);
+	    p1 = pop(scope);
+
+	    if (type == ID_INC) p5 = pp_math(p1, ID_ADD, p2);
+	    if (type == ID_DEC) p5 = pp_math(p1, ID_SUB, p2);
+	    push(scope, pp_set_var(p1, NULL, p5));
 	}
 	break;
     case ID_CAT:

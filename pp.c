@@ -349,6 +349,101 @@ pp_set_var(Var *id, Var *range, Var *exp)
     return(exp);
 }
 
+/**
+ ** pp_inc_var() - perform incremnt/decrement
+ **/
+
+Var *
+pp_inc_var(Var *id, Var *range, Var *exp) 
+{
+    Var *v, *e;
+    Range *r, rout;
+
+    /**
+     **/
+    if (exp == NULL) return(NULL);
+    if (range != NULL) {
+        /**
+         ** The user has requested an array replacement.
+         **/
+        v = id;
+        if ((e = eval(v)) != NULL) v = e;
+        if ((e = eval(exp)) != NULL) exp = e;
+
+        /**
+         ** Verify that the src and destination pieces 
+         ** are legal values, and the same size
+         **/
+        
+        r = V_RANGE(range);
+
+        if (V_TYPE(v)==ID_TEXT) {/*Need to intercept TEXT var's */
+            parse_error("Can't inc/decrement TEXT");
+	    return(NULL);
+	}
+        if (V_TYPE(v)==ID_STRING) {/*Ditto for STRING var's!*/
+            parse_error("Can't inc/decrement STRING");
+	    return(NULL);
+	}
+
+        if (fixup_ranges(v, r, &rout) == 0) {
+            parse_error("Illegal range value.");
+            return(NULL);
+        }
+
+        if (V_TYPE(v) == ID_STRUCT) {
+            parse_error("Can't inc/decrement STRUCT");
+	    return(NULL);
+        }
+
+        array_replace(v, exp, &rout);
+
+        /**
+         ** go ahead and pull out the range to return.
+         **/
+        return(pp_range(id, range));
+    }
+
+
+    /**
+     ** this does the actual equivalence.
+     ** If the rhs is a named value, duplicate it.
+     ** otherwise, use the memory directly.
+     **/
+    if (V_NAME(exp) != NULL) {
+        v = eval(exp);
+        if (v != NULL) {
+            exp = V_DUP(v);
+        }
+        if (V_TYPE(exp) == ID_UNK) {
+            parse_error("Variable not found: %s", V_NAME(exp));
+            return(NULL);
+        }
+    } else if (mem_claim(exp) == NULL) {
+        /**
+         ** if we can't claim the memory, we can't use it.
+         **/
+        exp = V_DUP(exp);
+    }
+
+    /* looks like structs might not have names, so skip this for them */
+    if (V_NAME(id)) {
+        V_NAME(exp) = strdup(V_NAME(id));
+
+        /**
+         ** Check for reserved variables and verify their type.
+         **/
+        if (!strcmp(V_NAME(exp), "verbose")){ VERBOSE = V_INT(exp); dv_set_iom_verbosity(); }
+        if (!strcmp(V_NAME(exp), "SCALE")) SCALE = V_INT(exp);
+        if (!strcmp(V_NAME(exp), "debug")) debug = V_INT(exp);
+        if (!strcmp(V_NAME(exp), "DEPTH")) DEPTH = V_INT(exp);
+
+        exp = put_sym(exp);
+    }
+
+    return(exp);
+}
+
 
 int
 array_replace(Var *dst, Var *src, Range *r)
@@ -1002,24 +1097,6 @@ pp_set_where(Var *id, Var *where, Var *exp)
     }
     where = v;
 
-/*
-  if (V_ORG(id) != V_ORG(where) ||
-  V_SIZE(id)[0] != V_SIZE(where)[0] ||
-  V_SIZE(id)[1] != V_SIZE(where)[1] ||
-  V_SIZE(id)[2] != V_SIZE(where)[2]) {
-
-  parse_error("'where' value doesn't match org/shape of lhs\n");
-  return(NULL);
-  }
-  if (V_ORG(id) != V_ORG(exp) ||
-  V_SIZE(id)[0] != V_SIZE(exp)[0] ||
-  V_SIZE(id)[1] != V_SIZE(exp)[1] ||
-  V_SIZE(id)[2] != V_SIZE(exp)[2]) {
-
-  parse_error("rhs doesn't match org/shape of lhs of where\n");
-  return(NULL);
-  }
-*/
     if (V_TYPE(id)==ID_TEXT && 
         (V_TYPE(exp)==ID_STRING || V_TYPE(exp)==ID_TEXT) &&
         V_TYPE(where)==ID_VAL)

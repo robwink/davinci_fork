@@ -779,7 +779,7 @@
 ?fit()
  fit() - Least squares curve fitting
 
- fit(y=VAL, x=VAL, steps=INT, type=STRING, plot=BOOL, start=VAL)
+ fit(y=VAL, x=VAL, steps=INT, type=STRING, plot=BOOL, start=VAL, ignore=VAL)
 
     The fit() function performs a non-linear least-squares fit to a data
     set, using the user specified function type.  Currently, only
@@ -1020,8 +1020,10 @@
  more axis.  If no axis is specified, then the average is computed
  along all three.  avg() always returns a FLOAT.
 
- If a value is passed for ignore, it is ignored during the computation.
-
+ If an ignore value is specified, then any element that is equal to
+ the ignore value is not included in the computation.  If all the
+ values in the computation are equal to the ignore value, then the
+ output is set to the ignore value.
 
  If the both flag is set (both=1), then avg returns a structure
  containing the both the avg and stddev.
@@ -1046,7 +1048,10 @@
  more axis.  If no axis is specified, then the standard deviation 
  is computed along all three.  stddev() returns a FLOAT.
 
- If a value is passed for ignore, it is ignored during the computation.
+ If an ignore value is specified, then any element that is equal to
+ the ignore value is not included in the computation.  If all the
+ values in the computation are equal to the ignore value, then the
+ output is set to the ignore value.
 
  If the both flag is set (both=1), then stddev returns a structure
  containing the both the average and stddev.
@@ -1082,10 +1087,16 @@
 ?min()
  min() - Compute minimum value along specified axis
 
- min(object=VAL, axis=[x][y][z])
+ min(object=VAL, axis=[x][y][z], ignore=VAL)
 
      The min() function finds the minimum value along one or more axis.  
      If no axis is specified, then all three axis are used.
+
+	 If an ignore value is specified, then any element that is equal to
+	 the ignore value is not included in the computation.  If all the
+	 values in the computation are equal to the ignore value, then the
+	 output is set to the ignore value.
+
      Min always returns a FLOAT.  This is not really the correct
      behaviour, but it is the easiest.
 
@@ -1095,6 +1106,31 @@
     an array with the same Z dimension of the input data.
 
     dv> a = min(object=data, axis=xy)
+
+?functions max()
+?max()
+ max() - Compute maximum value along specified axis
+
+ max(object=VAL, axis=[x][y][z])
+
+     The max() function finds the maximum value along one or more axis.  
+     If no axis is specified, then all three axis are used.
+
+	 If an ignore value is specified, then any element that is equal to
+	 the ignore value is not included in the computation.  If all the
+	 values in the computation are equal to the ignore value, then the
+	 output is set to the ignore value.
+
+     Max always returns a FLOAT.  This is not really the correct
+     behaviour, but it is the easiest.
+
+ Example:
+
+    This example finds the maximum along the X and Y axis, producing
+    an array with the same Z dimension of the input data.
+
+    dv> a = max(object=data, axis=xy)
+
 
 ?functions load_vis()
 ?load_vis()
@@ -1148,24 +1184,6 @@
         quiet=0:        Full reporting
         quiet=1:        Only print end summary
         quiet=2:        Print nothing except fatal errors
-
-?functions max()
-?max()
- max() - Compute maximum value along specified axis
-
- max(object=VAL, axis=[x][y][z])
-
-     The max() function finds the maximum value along one or more axis.  
-     If no axis is specified, then all three axis are used.
-     Max always returns a FLOAT.  This is not really the correct
-     behaviour, but it is the easiest.
-
- Example:
-
-    This example finds the maximum along the X and Y axis, producing
-    an array with the same Z dimension of the input data.
-
-    dv> a = max(object=data, axis=xy)
 
 ?history
      Davinci maintains a command line history.  As each line is typed, it
