@@ -440,8 +440,8 @@
  See also:
     atof(), atoi()
 
-?functions basename
-?basename
+?functions basename()
+?basename()
  basename - Return file portion of a path/file string.
 
  basename(obj=STRING | TEXT, [ext = STRING])
@@ -459,8 +459,8 @@
  See also:
     dirname()
 
-?functions cluster
-?cluster
+?functions cluster()
+?cluster()
  cluster - Windowing cluster detection
 
  cluster(object=VAL [,radius=INT] [,threshold=INT])
@@ -664,7 +664,7 @@
 
  Computes x raised to the power y.
 
-?functions help
+?functions help()
 ?help()
  help - Online help function
 
@@ -1423,7 +1423,7 @@
         pzoom() -   Zoom in on a graph
 
 ?functions popen()
-?popen
+?popen()
  popen() - Define, initialize and open a window for plotting
 
  popen(xpos=INT, ypos=INT, xpixels=INT, ypixels=INT,title=STRING,portrait=int)
@@ -1440,7 +1440,7 @@
     (portrait=0, default) or as portrait (portrait=1)
 
 ?functions pplot()
-?pplot
+?pplot()
  pplot() - Plot a data cube along specified axis
 
  pplot(obj=VAL, axis={X,Y,Z}, 
@@ -1466,7 +1466,7 @@
                                 automatically calculated if no value is given.
            
 ?functions pprint()
-?pprint
+?pprint()
  pprint() - Print a current plot
 
  pprint(id=INT, title=STRING, type={ps,psc,pbm})
@@ -1481,7 +1481,7 @@
         pbm - 640x480 graphics file (size is fixed)
 
 ?functions ptext()
-?ptext
+?ptext()
  ptext() - Flexible labeling tool
 
  ptext(c=INT, e=FLOAT, x=FLOAT, y=FLOAT, angle=INT, 
@@ -1504,7 +1504,7 @@
             normalized (default)
 
 ?functions pbox()
-?pbox
+?pbox()
  pbox() - Set up plot box with tick marks
 
  pbox(e=FLOAT, lt=INT, x=INT, y=INT, X=INT, Y=INT, m=INT, color=INT)
@@ -1520,7 +1520,7 @@
         color : integer value between 0 and 15 (0 is background color)
 
 ?functions pline()
-?pline
+?pline()
  pline() - Draw a set of connected line segments
 
  pline(ls=INT,lt=INT, x=VAL, y=VAL, color=INT)
@@ -1538,7 +1538,7 @@
     color: integer between 0 and 15 (0 is the background color).
 
 ?functions pzoom()
-?pzoom
+?pzoom()
  pzoom() - Zoom in on a graph
 
  pzoom(x_lo=INT,x_hi=INT,y_lo=INT,y_hi=INT,Xv=VAL,Yv=VAL,reset=1)
@@ -1555,7 +1555,7 @@
     reset=1 puts graph back original settings
 
 ?functions read_lines()
-?read_lines
+?read_lines()
  read_lines() - Read text file into text array object
 
  read_lines(filename=STRING)
@@ -1563,7 +1563,7 @@
   The read_lines() reads a text file and returns it as a TEXT array.
 
 ?functions dirname()
-?dirname
+?dirname()
  dirname() - return the directory portion of a pathname
 
  dirname(object = STRING | TEXT)
@@ -1583,7 +1583,7 @@
   issubstring will return 1 if target contains source and 0 otherwise.
 
 ?functions delim()
-?delim
+?delim()
  delim() - return choosen collumn from delimted text
 
  delim(object = TEXT, delim = STRING, count = INT)
@@ -1593,7 +1593,7 @@
   same number of rows as object.
 
 ?functions grep()
-?grep
+?grep()
  grep() - search for the first occurrence of a pattern
 
  grep(object = TEXT, pattern = STRING)
@@ -1602,7 +1602,7 @@
   contains the specified pattern.  grep() supports regex patterns.
 
 ?functions strsub()
-?strsub
+?strsub()
  strsub() - substring substitution using regular expressions
  
  strsub(object= STRING | TEXT, match = STRING, subst = STRING)
@@ -1620,7 +1620,7 @@
   double back-slashes (\\) must be used within davinci
 
 ?functions strstr()
-?strstr
+?strstr()
  strstr() - locate and return index of first occurence of substring
 
  strstr(obj= STRING | TEXT, pattern= STRING)
@@ -1631,7 +1631,7 @@
   the given text object.  
 
 ?functions syscall()
-?syscall
+?syscall()
  syscall() - system's call
  
  syscall(STRING)
@@ -1639,8 +1639,8 @@
  syscall executes STRING in a command shell and returns any output
  in a TEXT object.
 
-?functions xrt3d
-?xrt3d
+?functions xrt3d()
+?xrt3d()
  xrt3d() - Display data using an XRT3D widget
 
  xrt3d(object=VAL, new=BOOL)
@@ -1976,7 +1976,7 @@ Davinci supports the following matrix functions:
 ?load_vanilla()
  load_vanilla() - Loads vanilla text output from a file
 
- load_vanilla(file=STRING [, delim=STRING)
+ load_vanilla(file=STRING [, delim=STRING])
 
   The load_vanilla() function loads a text output file generated
   by a run of vanilla. Fields with same names are combined into
@@ -2004,55 +2004,23 @@ Davinci supports the following matrix functions:
     'n' is the number of lines minus 1 (#lines - 1) in the input file.
     (#lines - 1: because the first line contains the header info)
 
-    dv> system("vanilla ./data -fields 'sclk_time temps[1-4]' > /tmp/foo")
+    dv> system("vanilla ./data -fields 'sclk_time ick temps[1-4]' > /tmp/foo")
 
                     (some time later)
     
     dv> a = load_vanilla("/tmp/foo")
+    struct, 3 elements
+        sclk_time: 1x2x1 array of int, bsq format [8 bytes]
+        ick: 1x2x1 array of int, bsq format [8 bytes]
+        temps: 4x2x1 array of int, bsq format [32 bytes]
 
-?extras libmagic
-?libmagic
+ Additional Notes:
 
- The libmagic library has options to support reading and writing the
- following file formats:
-
-    AVS   AVS X image file.
-    BMP   Microsoft Windows bitmap image file.
-    CMYK  Raw cyan, magenta, yellow, and black bytes.
-    GIF   CompuServe graphics interchange format; 8-bit color.
-    HISTOGRAM
-    JBIG  Joint Bi-level Image experts Group file interchange format.
-    JPEG  Joint Photographic Experts Group JFIF format; compressed 24-bit color
-.
-    MAP   colormap intensities and indices.
-    MATTE Raw matte bytes.
-    MIFF  Magick image file format.
-    MPEG  Motion Picture Experts Group file interchange format.
-    MTV   MTV Raytracing image format
-    PCD   Photo CD.
-    PCX   ZSoft IBM PC Paintbrush file.
-    PICT  Apple Macintosh QuickDraw/PICT file.
-    PLASMA plasma fractal image.
-    PNG   Portable Network Graphics.
-    PNM   Portable anymap.
-    PPM   Portable pixmap format (color).
-    PS    Adobe PostScript file.
-    PS2   Adobe Level II PostScript file.
-    RAD   Radiance image file.
-    RGB   Raw red, green, and blue bytes.
-    RGBA  Raw red, green, blue, and matte bytes.
-    RLE   Utah Run length encoded image file; read only.
-    SGI   Irix RGB image file.
-    SUN   SUN Rasterfile.
-    TGA   Truevision Targa image file.
-    TIFF  Tagged Image File Format.
-    TILE  tile image with a texture.
-    VID   Visual Image Directory.
-    VIFF  Khoros Visualization image file.
-    XC    constant image of X server color.
-    XPM   X Windows system pixmap file (color).
-    XWD   X Windows system window dump file (color).
-    YUV   CCIR 601 4:1:1 file.
+  The vanilla output is TSV (tab separated values).  There's a one
+  line TSV header containing the names of the columns.  Vanilla is
+  capable of outputting variable length arrays, but the load_vanilla()
+  function (and davinci in general) can't handle that output.  Instead,
+  make sure to specify a range on arrays, such as 'array[1-143]'.
 
 ?functions fexists()
 ?fexists()
@@ -2065,7 +2033,7 @@ Davinci supports the following matrix functions:
  If passed a single value, it will return 1 if the file exists and
  0 if it does not exist.
 
- When passed a TEXT array, it will return an array of values, 1 for
+ When passed a TEXT array, it will return an array of values, one for
  each row of the input.
 
 ?functions length()
@@ -2142,8 +2110,9 @@ Davinci supports the following matrix functions:
            format=FORMAT, header=INT)
 
  The load_raw() function allows a user to load uncompressed binary data
- files of unreconized file format by specifying the relevent information 
- about the file.
+ by specifying relevent information about the file.  
+
+ The x, y and z parameters specify the number of pixels in each axis.
 
  ORG must be one of "bil", "bip", "bsq".
  FORMAT must be one of: "byte", 
@@ -2154,8 +2123,14 @@ Davinci supports the following matrix functions:
 
 ?structures
 
-  You can create anonymous structure (with no name) using { name=value }.
-  You can add structures: { one=1 } + { two=2 }
+  You can create anonymous structure (with no name) using the { } operators.
+  Like this:
+  	dv> x = { name=value, a=1, b="three" }.
+
+  You can combine structures via addition: { one=1 } + { two=2 }
+
+  You can read and write structures to disk with the optional HDF support
+  library.
 
  See also:
     add_struct(), get_struct(), remove_struct(), insert_struct(), length()
@@ -2229,3 +2204,38 @@ Davinci supports the following matrix functions:
  You cannot create a global variable in this manner.
 
  Note: global is all around not really safe to use.
+
+?functions load_pds()
+?io load_pds()
+?load_pds()
+ load_pds() - Read a PDS file into a structure
+
+ load_pds(filename=PATH [, data=BOOLEAN])
+
+ PDS files contain of NAME=VALUE pairs, and some rudimentary hierarchal
+ structure via OBJECT and GROUP constructs.
+
+ The load_pds() function understands a few common PDS data structures:
+ 	QUBE, SPECTRAL_QUBE, TABLE, IMAGE, HISTOGRAM_IMAGE and HISTORY.
+
+ The DATA argument specifies whether or not to load the data from
+ any objects encountered in the file.  (0=don't load, default is 1)
+
+?functions coreg()
+?coreg()
+ coreg() - image coregistration
+
+ coreg(i1, i2 [,search=INT][,random=INT][,ignore=INT])
+
+    i1 and i2 must be 1-band images
+    search - radius of the search window.  (default: 10)
+    random - number of random samples to use (default: 1000)
+    ignore - ignore value (background pixel color)
+
+ The coreg() function performs a windowed search computing the square
+ of the difference between a random pixel and it's NxN neighbors.
+
+ If the "random" value is set to zero, an exhaustive search of every 
+ pixel is performed.
+
+ The function returns the X and Y offset of image1 into image 2.

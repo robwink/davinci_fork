@@ -52,7 +52,7 @@ davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ff_projection.c ff_random.c ff_raw.c ff_rgb.c ff_rice.c \
 	ff_shade.c ff_slant.c ff_sort.c ff_source.c ff_struct.c \
 	ff_text.c ff_version.c ff_vignette.c ff_write.c ff_xfrm.c \
-	fft.c fft2f.c fft_mayer.c fit.c ff_coreg.c \
+	fft.c fft2f.c fft_mayer.c fit.c ff_coreg.c ff_boxfilter.c \
 	header.c \
 	help.c init.c \
 	isis_obj.c main.c matrix.c \
