@@ -7,11 +7,11 @@
 /****Addition******  Modified 9/21/99****/
 typedef struct _sheader
 {
-	int	s_bytes;
-	int	*s_item_type;
-	int	s_quantity;
-	int	s_plane_number;
-	int	*s_item_byte;
+    int s_bytes;
+    int *s_item_type;
+    int s_quantity;
+    int s_plane_number;
+    int *s_item_byte;
 }sheader;
 
 
@@ -27,7 +27,9 @@ is_ISIS(FILE *fp)
     if (fgets(buf, 256, fp) == NULL) {
         return(0);
     }
-    if (strncmp(buf, "CCSD", 4) && strncmp(buf, "NJPL", 4) && strncmp(buf,"PDS",3)) {
+    if (strncmp(buf, "CCSD", 4) &&
+        strncmp(buf, "NJPL", 4) &&
+        strncmp(buf,"PDS",3)) {
         return(0);
     }
 
@@ -41,10 +43,10 @@ is_ISIS(FILE *fp)
 
 int
 GetISISHeader(FILE *fp, 
-			char *filename, 
-			struct _iheader *h, 
-			char **datafile, 	/* ISIS data can have a detached label */
-			OBJDESC **r_obj)
+              char *filename, 
+              struct _iheader *h, 
+              char **datafile,  /* ISIS data can have a detached label */
+              OBJDESC **r_obj)
 {
     OBJDESC * ob, *qube, *image;
     KEYWORD * key;
@@ -106,7 +108,7 @@ GetISISHeader(FILE *fp,
                 org = BIP;
             else {
                 parse_error("Unrecognized data organization: %s = %s",
-                        "AXIS_NAME", key->value);
+                            "AXIS_NAME", key->value);
             }
         }
 
@@ -135,7 +137,7 @@ GetISISHeader(FILE *fp,
                 break;
             default:
                 parse_error( "Unrecognized data format: %s = %s",
-                        "CORE_ITEM_BYTES", key->value);
+                             "CORE_ITEM_BYTES", key->value);
                 break;
             }
         }
@@ -210,7 +212,7 @@ GetISISHeader(FILE *fp,
         h->suffix[0] = suffix_size[0];
         h->suffix[1] = suffix_size[1];
         h->suffix[2] = suffix_size[2];
-		h->corner = suffix[0]*suffix[1]*suffix_bytes;
+        h->corner = suffix[0]*suffix[1]*suffix_bytes;
 
         if ((key = OdlFindKwd(ob, "^QUBE", NULL, 0, 0)) != NULL) {
             OdlGetFileName(key, &start, &start_type);
@@ -264,16 +266,16 @@ GetISISHeader(FILE *fp,
             ** Load important IMAGE values
             **/
             if ((key = OdlFindKwd(ob, "^IMAGE", NULL, 0, 0)) != NULL) {
-				char *fname;
+                char *fname;
                 fname = OdlGetFileName(key, &start, &start_type);
-				fname = OdlGetFileSpec(fname, filename);
+                fname = OdlGetFileSpec(fname, filename);
 
-				if (fname)  *datafile = strdup(fname);
-				else *datafile = NULL;
+                if (fname)  *datafile = strdup(fname);
+                else *datafile = NULL;
 
                 if (start_type == ODL_RECORD_LOCATION) {
                     start = (start-1)*rlen;
-					h->dptr = start;
+                    h->dptr = start;
                 } 
             }
             if (r_obj != NULL) {
@@ -305,8 +307,8 @@ LoadISIS(FILE *fp, char *filename, struct _iheader *s)
     Var *v=NULL;
     char hbuf[HBUFSIZE];
     void *data;
-	int i,j;
-	char *datafile = NULL;
+    int i,j;
+    char *datafile = NULL;
 
     if (is_ISIS(fp) == 0) return(NULL);
 
@@ -315,8 +317,8 @@ LoadISIS(FILE *fp, char *filename, struct _iheader *s)
     }
 
     /**
-     ** If user specified a record, subset out a specific band
-     **/
+    ** If user specified a record, subset out a specific band
+    **/
 
     if (s != NULL) {
         /** 
@@ -324,38 +326,38 @@ LoadISIS(FILE *fp, char *filename, struct _iheader *s)
         **/
         org = h.org;
 
-		for (i = 0 ; i < 3 ; i++) {
-			j = orders[org][i];
-			if (s->s_lo[j] > 0) h.s_lo[i] = s->s_lo[j];
-			if (s->s_hi[j] > 0) h.s_hi[i] = s->s_hi[j];
-			if (s->s_skip[j] > 0) h.s_skip[i] = s->s_skip[j];
-			if (s->prefix[j] > 0) h.prefix[i] = s->prefix[j];
-			if (s->suffix[j] > 0) h.suffix[i] = s->suffix[j];
-		}
+        for (i = 0 ; i < 3 ; i++) {
+            j = orders[org][i];
+            if (s->s_lo[j] > 0) h.s_lo[i] = s->s_lo[j];
+            if (s->s_hi[j] > 0) h.s_hi[i] = s->s_hi[j];
+            if (s->s_skip[j] > 0) h.s_skip[i] = s->s_skip[j];
+            if (s->prefix[j] > 0) h.prefix[i] = s->prefix[j];
+            if (s->suffix[j] > 0) h.suffix[i] = s->suffix[j];
+        }
     }
 
-	/*
-	** Handle reading a detached label
-	*/
-	if (datafile != NULL) {
-		int fd = open(datafile, O_RDONLY);
-		if (fd < 0) {
-			fprintf(stderr, "Unable to open data file: %s\n", datafile);
-			return(NULL);
-		}
-		data = read_qube_data(fd, &h);
-		close(fd);
-		if (data == NULL) {
-			return(NULL);
-		}
-	} else {
-		/**
-		 ** Put all this into a Var struct.
-		 **/
-		if ((data = read_qube_data(fileno(fp), &h)) == NULL) {
-			return(NULL);
-		}
-	}
+    /*
+    ** Handle reading a detached label
+    */
+    if (datafile != NULL) {
+        int fd = open(datafile, O_RDONLY);
+        if (fd < 0) {
+            fprintf(stderr, "Unable to open data file: %s\n", datafile);
+            return(NULL);
+        }
+        data = read_qube_data(fd, &h);
+        close(fd);
+        if (data == NULL) {
+            return(NULL);
+        }
+    } else {
+        /**
+        ** Put all this into a Var struct.
+        **/
+        if ((data = read_qube_data(fileno(fp), &h)) == NULL) {
+            return(NULL);
+        }
+    }
     v = iheader2var(&h);
     V_DATA(v) = data;
 
@@ -386,9 +388,9 @@ WriteISIS(Var *s, FILE *fp, char *filename, char *title )
     dsize = V_DSIZE(s);
     fsize = dsize/512+1;
     if (V_FORMAT(s) > INT) {
-    fprintf(stderr, "Unable to write ISIS files with %s format.\n",
-        Format2Str(V_FORMAT(s)));
-    return(0);
+        fprintf(stderr, "Unable to write ISIS files with %s format.\n",
+                Format2Str(V_FORMAT(s)));
+        return(0);
     }
 
     sprintf(buf, "CCSD3ZF0000100000001NJPL3IF0PDS200000001 = SFDU_LABEL\r\n");
@@ -408,10 +410,10 @@ WriteISIS(Var *s, FILE *fp, char *filename, char *title )
         sprintf(buf+strlen(buf), "    AXES_NAME = (BAND,SAMPLE,LINE)\r\n");
     }
     sprintf(buf+strlen(buf), "    CORE_ITEMS = (%d,%d,%d)\r\n", V_SIZE(s)[0],
-        V_SIZE(s)[1],
-        V_SIZE(s)[2]);
+            V_SIZE(s)[1],
+            V_SIZE(s)[2]);
     sprintf(buf+strlen(buf), "    CORE_ITEM_BYTES = %d\r\n", 
-        NBYTES(V_FORMAT(s)));
+            NBYTES(V_FORMAT(s)));
     sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = SUN_INTEGER\r\n");
     sprintf(buf+strlen(buf), "    CORE_BASE = 0.0\r\n");
     sprintf(buf+strlen(buf), "    CORE_MULTIPLIER = 1.0\r\n");
@@ -651,8 +653,14 @@ ieee_vax_r(int *from, float *to)
     *to = g;
 }
 
-void * read_qube_suffix(int fd, struct _iheader *h,
-	int s_bytes,int plane_number,int s_item_byte,int ordinate,int *size)
+void * 
+read_qube_suffix(int fd, 
+                 struct _iheader *h,
+                 int s_bytes,
+                 int plane_number,
+                 int s_item_byte,
+                 int ordinate,
+                 int *size)
 {
 /*** ordinate: 0=minor, 1=middle, 2=major ***/
 
@@ -702,27 +710,27 @@ void * read_qube_suffix(int fd, struct _iheader *h,
 
 
     if (ordinate==2) {
-	plane=h->size[0]*h->size[1]*s_bytes;
-	dsize=plane;
-	offset1=plane_number*s_bytes*h->size[0]*h->size[1];
-	offset2=0;
-	offset3=h->size[0]*s_bytes;
+    plane=h->size[0]*h->size[1]*s_bytes;
+    dsize=plane;
+    offset1=plane_number*s_bytes*h->size[0]*h->size[1];
+    offset2=0;
+    offset3=h->size[0]*s_bytes;
     }
 
     else if (ordinate==1) {
-	plane=h->size[0]*h->suffix[1];
- 	dsize=h->size[2]*h->size[0]*s_bytes;
-	offset1=h->size[1]*h->size[0]*c_bytes+h->size[1]*h->suffix[0];
-	offset2=h->size[0]*s_bytes*plane_number;
-	offset3=0;
+    plane=h->size[0]*h->suffix[1];
+    dsize=h->size[2]*h->size[0]*s_bytes;
+    offset1=h->size[1]*h->size[0]*c_bytes+h->size[1]*h->suffix[0];
+    offset2=h->size[0]*s_bytes*plane_number;
+    offset3=0;
     }
 
     else {
-	plane=h->size[0]*h->size[1]*c_bytes+h->size[1]*h->suffix[0];
-	dsize=h->size[2]*h->size[1]*s_bytes;
-	offset1=0;
-	offset2=h->size[0]*c_bytes+plane_number*s_bytes;
-	offset3=h->size[0]*c_bytes+h->suffix[0];
+    plane=h->size[0]*h->size[1]*c_bytes+h->size[1]*h->suffix[0];
+    dsize=h->size[2]*h->size[1]*s_bytes;
+    offset1=0;
+    offset2=h->size[0]*c_bytes+plane_number*s_bytes;
+    offset3=h->size[0]*c_bytes+h->suffix[0];
     }
 
 /**
@@ -735,8 +743,8 @@ void * read_qube_suffix(int fd, struct _iheader *h,
     }
     *size=dsize;
     /**
-     ** Allocate some temporary storage space
-     **/
+    ** Allocate some temporary storage space
+    **/
     
     
     if ((p_data = malloc(plane)) == NULL) {
@@ -750,48 +758,48 @@ void * read_qube_suffix(int fd, struct _iheader *h,
     count = 0;
 
     for (z=h->s_lo[2];z<h->s_hi[2];z+=h->s_skip[2]){
-/*	printf("Z:=%d\n",z); */
-	lseek(fd,h->dptr+z*(h->size[0]*
-		h->size[1]*c_bytes+
-			h->size[0]*h->suffix[1]+
-				h->size[1]*h->suffix[0])+
-					offset1,0);
+/*  printf("Z:=%d\n",z); */
+    lseek(fd,h->dptr+z*(h->size[0]*
+                            h->size[1]*c_bytes+
+                            h->size[0]*h->suffix[1]+
+                            h->size[1]*h->suffix[0])+
+              offset1,0);
 
-    		
-	if ((err = read(fd, p_data, plane)) != plane) {
+            
+    if ((err = read(fd, p_data, plane)) != plane) {
             parse_error("Early EOF");
             break;
         }
 
-	if (ordinate==2 && h->s_skip[0]==1 && h->s_skip[1]==1){
-		memcpy((char *)data,(char *)p_data,plane);
-	}
+    if (ordinate==2 && h->s_skip[0]==1 && h->s_skip[1]==1){
+            memcpy((char *)data,(char *)p_data,plane);
+    }
 
-	else {
-		for (y=h->s_lo[1];y<h->s_hi[1];y+=h->s_skip[1]){ 
-			if (ordinate==1 && h->s_skip[0]==1 && h->s_skip[2]==1){
-				memcpy((char *)data+count,(char *)p_data+offset2,h->size[0]*s_bytes);
-				count+=h->size[0]*s_bytes;
-			}
-			else { 
-				for(x = h->s_lo[0]; x < h->s_hi[0]; x += h->s_skip[0]){
-					memcpy((char *)data+count,(char *)p_data+
-						offset2+y*offset3+
-						(x-h->s_lo[0])*s_bytes,s_bytes);
-					count+=s_bytes;
-				}
-			}
-		}
-	} 
-   }
+    else {
+            for (y=h->s_lo[1];y<h->s_hi[1];y+=h->s_skip[1]){ 
+                if (ordinate==1 && h->s_skip[0]==1 && h->s_skip[2]==1){
+                    memcpy((char *)data+count,(char *)p_data+offset2,h->size[0]*s_bytes);
+                    count+=h->size[0]*s_bytes;
+                }
+                else { 
+                    for(x = h->s_lo[0]; x < h->s_hi[0]; x += h->s_skip[0]){
+                        memcpy((char *)data+count,(char *)p_data+
+                               offset2+y*offset3+
+                               (x-h->s_lo[0])*s_bytes,s_bytes);
+                        count+=s_bytes;
+                    }
+                }
+            }
+    } 
+    }
 
-   if (VERBOSE > 1)
-            fprintf(stderr, ".");
+    if (VERBOSE > 1)
+        fprintf(stderr, ".");
 
     /**
     ** convert VAX_FLOAT if necessary.
     **/
-	
+    
     if (s_item_byte == VAX_FLOAT) {
         int i;
         for (i = 0 ; i < (dsize/s_bytes) ; i++) {
@@ -804,84 +812,89 @@ void * read_qube_suffix(int fd, struct _iheader *h,
         swab((const char *)data, (char *)data, dsize);
     }
 
-   free(p_data);
-   return(data);
+    free(p_data);
+    return(data);
 }
 
 void *RePackData(void *data, int file_bytes, int data_type,int data_chunk)
 {
 /**********************************************************
-** data:	old data set we wish to repack
-** file_bytes	Number of bytes per element in *data
-** data_type	The acutal data type of the elements in *data
-** data_chunk	The total size of data
+** data:    old data set we wish to repack
+** file_bytes   Number of bytes per element in *data
+** data_type    The acutal data type of the elements in *data
+** data_chunk   The total size of data
 ** LOCAL:
-**	data_bytes: 	Number of bytes per element for this data_type
-**	data_size:  	Number of elements in *data 
-**	*p_data:	Our new re-packed data set
+**  data_bytes:     Number of bytes per element for this data_type
+**  data_size:      Number of elements in *data 
+**  *p_data:    Our new re-packed data set
 *************************************************************/
-	int data_bytes=NBYTES(data_type);
- 	int data_size=(data_chunk/file_bytes);
- 	void *p_data;
-        int i,j,l;
+    int data_bytes=NBYTES(data_type);
+    int data_size=(data_chunk/file_bytes);
+    void *p_data;
+    int i,j,l;
 
-	if ((p_data=malloc(data_size*data_bytes))==NULL){
-		fprintf(stderr, "Unable to allocate memory.\n");
-        	return (NULL);
-    	}
+    if ((p_data=malloc(data_size*data_bytes))==NULL){
+        fprintf(stderr, "Unable to allocate memory.\n");
+        return (NULL);
+    }
 
-	for (i=1;i<=data_size;i++){ 	/*Cycle through the number of elements */
+    for (i=1;i<=data_size;i++){     /*Cycle through the number of elements */
 
-		j=i*file_bytes-data_bytes; 	/*Align j with LSB at element i in *data */
-		l=i*data_bytes-data_bytes;	/*Align l with LSB at element i in *p_data */
-		memcpy((char *)p_data+l,(char *)data+j,data_bytes);
-	}
+        j=i*file_bytes-data_bytes;  /*Align j with LSB at element i in *data */
+        l=i*data_bytes-data_bytes;  /*Align l with LSB at element i in *p_data */
+        memcpy((char *)p_data+l,(char *)data+j,data_bytes);
+    }
 
-	free(data);
-	return(p_data);
+    free(data);
+    return(p_data);
 }
 
-int LookUpSuffix(OBJDESC *qube,char *name, int *plane, int *type, struct _iheader *h, int *suffix)
+int LookUpSuffix(OBJDESC *qube,
+				char *name, 
+				int *plane, 
+				int *type, 
+				struct _iheader *h, 
+				int *suffix)
 {
     KEYWORD *key;
     char **list;
     int scope = ODL_THIS_OBJECT;
     int i,j,n;
+	char str[256];
+	char str2[256];
+
     for (i = 0; i < 3; i++) {
-            char str[256];
-            char str2[256];
-            switch (i) {
-                case 0: strcpy(str, "SAMPLE_SUFFIX"); break;
-                case 1: strcpy(str, "LINE_SUFFIX"); break;
-                case 2: strcpy(str, "BAND_SUFFIX"); break;
-            }
-            if (suffix[orders[h->org][i]]) {
-                sprintf(str2, "%s_NAME", str);
-                fprintf(stderr, "\n");
-                if ((key = OdlFindKwd(qube, str2, NULL, 0, scope))) {
-                    n = OdlGetAllKwdValuesArray(key, &list);
-                    if (n == suffix[orders[h->org][i]]) {
-                        for (j = 0; j < suffix[orders[h->org][i]]; j++) {
-                                if(!strcmp(list[j],name)){
-					*plane=j;
-					*type=orders[h->org][i];
-					return(0);
-				}
+        switch (i) {
+        case 0: strcpy(str, "SAMPLE_SUFFIX"); break;
+        case 1: strcpy(str, "LINE_SUFFIX"); break;
+        case 2: strcpy(str, "BAND_SUFFIX"); break;
+        }
+        if (suffix[orders[h->org][i]]) {
+            sprintf(str2, "%s_NAME", str);
+            fprintf(stderr, "\n");
+            if ((key = OdlFindKwd(qube, str2, NULL, 0, scope))) {
+                n = OdlGetAllKwdValuesArray(key, &list);
+                if (n == suffix[orders[h->org][i]]) {
+                    for (j = 0; j < suffix[orders[h->org][i]]; j++) {
+                        if(!strcmp(list[j],name)){
+                            *plane=j;
+                            *type=orders[h->org][i];
+                            return(0);
                         }
-                    } 
-                    else {
-                        parse_error("suffix name mismatch\n");
-			return(1);
                     }
                 } 
                 else {
-                    parse_error("Unable to find suffix name\n");
-		    return(1);
-
+                    parse_error("suffix name mismatch\n");
+                    return(1);
                 }
+            } else {
+                parse_error("Unable to find suffix name\n");
+                return(1);
+
             }
-   }
-   return(1);
+        }
+    }
+    return(1);
 }
 
 Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
@@ -889,10 +902,10 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
 
 /**************************
   type is meant as:
-	0: Sample Suffix
-	1: Line Suffix
-	2: Band Suffix
-**************************/
+  0: Sample Suffix
+  1: Line Suffix
+  2: Band Suffix
+  **************************/
 
 
     OBJDESC *object, *qube;
@@ -909,7 +922,7 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
     char *isisfile;
     char *name;
     int type=2, plane=0;
-    Var	*Suffix=NULL;
+    Var *Suffix=NULL;
     int s_suffix_item_bytes;
     int chunk;
     
@@ -919,15 +932,15 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
     char *axis[]={"SAMPLE_","LINE_","BAND_"};
     char suffix_item_byte[80];
     char suffix_item_type[80];
-	char *datafile = NULL;
+    char *datafile = NULL;
 
     int ac;
     Var **av;
     Alist alist[4];
 
     alist[0] = make_alist("filename", ID_STRING, NULL, &isisfile);
-    alist[1] = make_alist("plane", ID_UNK,NULL, &Suffix);
-    alist[2] = make_alist("type", ID_ENUM,options, &name);
+    alist[1] = make_alist("plane", ID_UNK, NULL, &Suffix);
+    alist[2] = make_alist("type", ID_ENUM, options, &name);
     alist[3].name = NULL;
     
     make_args(&ac, &av, func, arg);
@@ -950,13 +963,13 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
     fname = fname2;
 
     if (GetISISHeader(fp, fname, &s, &datafile, &object) == 0) {
-       free(fname);
-       return (NULL);
+        free(fname);
+        return (NULL);
     }
 
     if ((qube = OdlFindObjDesc(object, "QUBE", NULL, 0, 0, 0)) == NULL) {
-      fprintf(stderr, "%s: Not a qube object.\n", isisfile);
-      return (NULL);
+        fprintf(stderr, "%s: Not a qube object.\n", isisfile);
+        return (NULL);
     }
 
     if ((key = OdlFindKwd(qube, "SUFFIX_ITEMS", NULL, 0, scope))) {
@@ -968,20 +981,20 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
         fprintf(stderr, "%s: ISIS %s qube\n", isisfile, Org2Str(s.org));
 
         fprintf(stderr, "Core   size (Samples,Lines,Bands) = (%6d,%6d,%6d)\n",
-            GetSamples(s.size, s.org),
-            GetLines(s.size, s.org),
-            GetBands(s.size, s.org));
+                GetSamples(s.size, s.org),
+                GetLines(s.size, s.org),
+                GetBands(s.size, s.org));
 
-       fprintf(stderr, "Suffix size (Samples,Lines,Bands) = (%6d,%6d,%6d)\n",
-            suffix[orders[s.org][0]], suffix[orders[s.org][1]], suffix[orders[s.org][2]]);
+        fprintf(stderr, "Suffix size (Samples,Lines,Bands) = (%6d,%6d,%6d)\n",
+                suffix[orders[s.org][0]], suffix[orders[s.org][1]], suffix[orders[s.org][2]]);
 
-       for (i = 0; i < 3; i++) {
+        for (i = 0; i < 3; i++) {
             char str[256];
             char str2[256];
             switch (i) {
-                case 0: strcpy(str, "SAMPLE_SUFFIX"); break;
-                case 1: strcpy(str, "LINE_SUFFIX"); break;
-                case 2: strcpy(str, "BAND_SUFFIX"); break;
+            case 0: strcpy(str, "SAMPLE_SUFFIX"); break;
+            case 1: strcpy(str, "LINE_SUFFIX"); break;
+            case 2: strcpy(str, "BAND_SUFFIX"); break;
             }
             if (suffix[orders[s.org][i]]) {
                 sprintf(str2, "%s_NAME", str);
@@ -991,7 +1004,7 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
                     if (n == suffix[orders[s.org][i]]) {
                         for (j = 0; j < suffix[orders[s.org][i]]; j++) {
                             fprintf(stderr, "%s_SUFFIX Plane %3d: '%s'\n",
-                                str, j, list[j]);
+                                    str, j, list[j]);
                         }
                     } else {
                         parse_error("suffix name mismatch\n");
@@ -1002,21 +1015,21 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
                 }
             }
         }
-    	
+        
         return(NULL);
     }
 
     else if (V_TYPE(Suffix)==ID_STRING) {
-	name=V_STRING(Suffix);
-	if(LookUpSuffix(qube,name,&plane,&type,&s,suffix))
-		return(NULL);
+    name=V_STRING(Suffix);
+    if(LookUpSuffix(qube, name, &plane, &type, &s, suffix))
+            return(NULL);
     }
 
     else {
-		plane=extract_int(Suffix,0);
-		if (!strcasecmp(name, "Band")) type=2;
-		if (!strcasecmp(name, "Line")) type=1;
-		if (!strcasecmp(name, "Sample")) type=0;
+        plane=extract_int(Suffix,0);
+        if (!strcasecmp(name, "Band")) type=2;
+        if (!strcasecmp(name, "Line")) type=1;
+        if (!strcasecmp(name, "Sample")) type=0;
     }
 
     strcpy(suffix_item_byte,axis[type]);
@@ -1027,76 +1040,85 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
     if (plane<0) plane=0;
 
     if(type <0 || type > 2){
-	fprintf(stderr, "Illegal axis type specified: %d\n",type);
-	return(NULL);
+    fprintf(stderr, "Illegal axis type specified: %d\n",type);
+    return(NULL);
     }
 
 
 
     if ((plane)>= suffix[orders[s.org][type]]){ 
         fprintf(stderr, "The cube only has %d %s-Suffix plane%s\n",
-		suffix[orders[s.org][type]],
-		((type==0) ? ("Sample"): ((type==1) ? ("Line"):("Band"))),
-		(suffix[orders[s.org][type]] > 1 ? ("s"):("")));
-	return(NULL);
+        suffix[orders[s.org][type]],
+        ((type==0) ? ("Sample"): ((type==1) ? ("Line"):("Band"))),
+        (suffix[orders[s.org][type]] > 1 ? ("s"):("")));
+    return(NULL);
     }
 
     suffix_bytes=s.suffix[orders[s.org][type]]/suffix[orders[s.org][type]];
 
     if ((key = OdlFindKwd(qube, suffix_item_byte, NULL, 0, scope))) {
-       n = OdlGetAllKwdValuesArray(key, &list);
+        n = OdlGetAllKwdValuesArray(key, &list);
 
-           switch (atoi(list[plane])) {
-            case 1:
-                s_suffix_item_bytes = BYTE;
-                break;
-            case 2:
-                s_suffix_item_bytes = SHORT;
-                break;
-            case 4:
-                s_suffix_item_bytes = INT;
-                break;
-            default:
-                parse_error( "Unrecognized data format: %s = %s",
-                        suffix_item_byte, key->value);
-                break;
-           }
-     }
+        switch (atoi(list[plane])) {
+        case 1:
+            s_suffix_item_bytes = BYTE;
+            break;
+        case 2:
+            s_suffix_item_bytes = SHORT;
+            break;
+        case 4:
+            s_suffix_item_bytes = INT;
+            break;
+        default:
+            parse_error( "Unrecognized data format: %s = %s",
+                         suffix_item_byte, key->value);
+            break;
+        }
+    }
 
     if ((key = OdlFindKwd(qube, suffix_item_type, NULL, 0, scope))) {
-       n = OdlGetAllKwdValuesArray(key, &list); 
+        n = OdlGetAllKwdValuesArray(key, &list); 
 
-       if (s_suffix_item_bytes == INT && !strcmp(list[plane], "REAL")) {
-           s_suffix_item_bytes = FLOAT;
-       }
-       if (s_suffix_item_bytes == INT && !strcmp(list[plane], "SUN_REAL")) {
-           s_suffix_item_bytes = FLOAT;
-       }   
-       if (s_suffix_item_bytes == INT && !strcmp(list[plane], "VAX_REAL")) {
-           s_suffix_item_bytes = VAX_FLOAT;
-       }   
+        if (s_suffix_item_bytes == INT && !strcmp(list[plane], "REAL")) {
+            s_suffix_item_bytes = FLOAT;
+        }
+        if (s_suffix_item_bytes == INT && !strcmp(list[plane], "SUN_REAL")) {
+            s_suffix_item_bytes = FLOAT;
+        }   
+        if (s_suffix_item_bytes == INT && !strcmp(list[plane], "VAX_REAL")) {
+            s_suffix_item_bytes = VAX_FLOAT;
+        }   
     }
-	
+    
     
     for (i = 0 ; i < 3 ; i++) {
-        s.s_lo[i] = 0;	/*Just to make sure!! */
-	s.s_hi[i]=s.size[i]+1;
+        s.s_lo[i] = 0;  /*Just to make sure!! */
+    s.s_hi[i]=s.size[i]+1;
     }
 
     s.s_lo[orders[s.org][type]]=s.size[orders[s.org][type]]+1;
-    s.s_hi[orders[s.org][type]]=s.s_lo[orders[s.org][type]]+1;	
+    s.s_hi[orders[s.org][type]]=s.s_lo[orders[s.org][type]]+1;  
 
-    data=read_qube_suffix(fileno(fp),&s,suffix_bytes,plane,s_suffix_item_bytes,orders[s.org][type],&chunk);
+    data=read_qube_suffix(fileno(fp),
+                          &s,
+                          suffix_bytes,plane,
+                          s_suffix_item_bytes,
+                          orders[s.org][type],&chunk);
 
     s.s_hi[orders[s.org][type]]=1;
 
     if (suffix_bytes!=NBYTES(s_suffix_item_bytes))
-	data=RePackData(data,suffix_bytes,s_suffix_item_bytes,chunk);
-		
+    data=RePackData(data,suffix_bytes,s_suffix_item_bytes,chunk);
+        
     if (s_suffix_item_bytes==VAX_FLOAT) s_suffix_item_bytes=FLOAT;
     if (s_suffix_item_bytes==VAX_INTEGER)  s_suffix_item_bytes=SHORT;
 
-		
-    return(newVal(s.org,s.s_hi[0],s.s_hi[1],s.s_hi[2],s_suffix_item_bytes,data));
+        
+    return(newVal(s.org,
+                  s.s_hi[0],
+                  s.s_hi[1],
+                  s.s_hi[2],
+                  s_suffix_item_bytes,
+                  data));
 }
 
