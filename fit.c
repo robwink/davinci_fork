@@ -37,20 +37,8 @@ void    gd(Var *, Var *, char *);
 int     dfit(Var *, Var *, Var *, char *, int, double **, int *, int,int );
 
 
-Var * ff_fit(vfuncptr func, Var *args)
+Var * ff_fit(vfuncptr func, Var *arg)
 {
-    struct keywords kw[] = {
-        { "y", NULL },
-        { "type", NULL },
-        { "start", NULL },
-        { "steps", NULL },
-        { "x", NULL },
-        { "plot", NULL },
-		{ "verbose",NULL},
-		{ "ignore",NULL},
-        { NULL, NULL }
-    };
-
     Var *v = NULL;
     Var *y = NULL;
     Var *x = NULL;
@@ -58,63 +46,42 @@ Var * ff_fit(vfuncptr func, Var *args)
     Var *s;
     double *op;
     int nparam;
-    char *ftype = NULL;
+    char *ftype = "linear";
     int iter = 1;
     int plot = 0 ;
 	int verbose =0;
 	Var *ignore_val = NULL;
 	double ignore=MINFLOAT;
 
-
     char *fits[] = { "gauss", "gaussc", "gaussl", "ngauss", "lorenz",
                      "2lorenz", "linear", "quad", "cube", "poly", 
 					 "nexp", "xyquad", "xygauss", "sincos", NULL };
 
-    if (evaluate_keywords(func, args, kw)) {
+	Alist alist[9];
+	alist[0] = make_alist( "y",       ID_VAL,    NULL,    &y);
+	alist[1] = make_alist( "type",    ID_ENUM,   fits,    &ftype);
+	alist[2] = make_alist( "start",   ID_VAL,    NULL,    &ip);
+	alist[3] = make_alist( "steps",   INT,       NULL,    &iter);
+	alist[4] = make_alist( "x",       ID_VAL,    NULL,    &x);
+	alist[5] = make_alist( "plot",    INT,       NULL,    &plot);
+	alist[6] = make_alist( "verbose", INT,       NULL,    &verbose);
+	alist[7] = make_alist( "ignore",  DOUBLE,    NULL,    &ignore);
+	alist[8].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+    if (y == NULL) {
+        parse_error("%s: No data specified (y=VAR)", func->name);
+        return(NULL);
+    }
+	/*
+	** we could provide a default X here if we wanted
+	*/ 
+    if (x == NULL) {
+        parse_error("%s: No x data specified (x=VAR)", func->name);
         return(NULL);
     }
 
-    if ((v = get_kw("y", kw)) == NULL) {
-        sprintf(error_buf, "%s: No data specified (y=VAR)", func->name);
-        parse_error(NULL);
-        return(NULL);
-    } else {
-        y = eval(v);
-    }
-
-    if ((v = get_kw("x", kw)) != NULL) {
-        x = eval(v);
-    }
-
-    if ((v = get_kw("type", kw)) == NULL) {
-        ftype = "linear";
-    } else if ((ftype = enumerated_arg(v, fits)) == NULL) {
-        parse_error("Unrecognized fit type.");
-        return(NULL);
-    }
-
-        
-    if ((v = get_kw("start", kw)) == NULL) {
-        ip = NULL;
-    } else {
-        ip = eval(v);
-    }
-
-    if (KwToInt("steps", kw, &iter) < 0) return(NULL);
-    if (KwToInt("plot", kw, &plot) < 0) return(NULL);
-    if (KwToInt("verbose", kw, &verbose) < 0) return(NULL);
-
-    /**
-     ** Figure out what kind of data we have.
-     **/
-    if (V_TYPE(y) != ID_VAL) {
-        parse_error("Expected an array for keyword: y=");
-        return(NULL);
-    }
-    if (x && V_TYPE(x) != ID_VAL) {
-        parse_error("Expected an array for keyword: x=");
-        return(NULL);
-    }
     if (x && (V_DSIZE(x) != V_DSIZE(y))) {
         sprintf(error_buf, "X axis for data [%d points] not same size as Y axis [%d points]", 
                 V_DSIZE(x), V_DSIZE(y));
@@ -127,17 +94,9 @@ Var * ff_fit(vfuncptr func, Var *args)
         return(NULL);
     }
 
-    if ((v = get_kw("ignore", kw)) != NULL) {
-        ignore = extract_double(v, 0);
-    }
-
     if (!(strcmp(ftype,"linear"))) {
         s=lin_fit(x,y,V_DSIZE(x),plot, ignore);
-    }
-
-
-
-   else if (dfit(x, y, ip, ftype, iter, &op, &nparam, plot,verbose)) {
+    } else if (dfit(x, y, ip, ftype, iter, &op, &nparam, plot,verbose)) {
         s = NULL;
     } else {
         s = newVar();
@@ -163,7 +122,7 @@ lin_fit(Var *x, Var *y,int Row, int plot, double ignore)
    char buf2[256];
 	FILE *fp;
 
-	int i;
+	int i, count;
 
 	double **A,**Cov,*B,*r;
 	double x1, y1;
@@ -180,14 +139,16 @@ lin_fit(Var *x, Var *y,int Row, int plot, double ignore)
 		r[1]=B[1]=Cov[1][1]=A[1][1]=0.0;
 
 
-	A[0][0]=(float)Row;
 
 
+	count = 0;
 	for (i=0;i<Row;i++){
 		x1 = extract_double(x,i); /*a*/
 		y1 = extract_double(y,i); /*b*/
 
 		if (x1 == ignore || y1 == ignore) continue;
+
+		count++;
 
 		data[i][0]=x1;
 		data[i][1]=y1;
@@ -199,6 +160,7 @@ lin_fit(Var *x, Var *y,int Row, int plot, double ignore)
 		B[0]+=data[i][1];
 		B[1]+=(data[i][0]*data[i][1]);
 	}
+	A[0][0]=(float)count;
 
 	solve_for_da(A,Cov,B,r,2);
 
@@ -215,6 +177,9 @@ lin_fit(Var *x, Var *y,int Row, int plot, double ignore)
 		}
 
 		for (i = 0 ; i < Row ; i++) {
+			x1 = extract_double(x,i); /*a*/
+			y1 = extract_double(y,i); /*b*/
+			if (x1 == ignore || y1 == ignore) continue;
 			fprintf(fp, "%g %g\n", data[i][0], data[i][1]);
 		}
 
