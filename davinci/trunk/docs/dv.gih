@@ -408,7 +408,7 @@
 ?basename
  basename - Return file portion of a path/file string.
 
- basename(STRING)
+ basename(obj=STRING | TEXT, [ext = STRING])
 
     The basename function searches the specified string for the last
     occurance of the '/' character, and duplicates and returns
@@ -416,6 +416,9 @@
     the string, the entire string is duplicated and returned.
 
     The basename function is identical to the unix command of the same name.  
+
+    if ext is used, then the ending substring which matches ext is
+    removed.
 
 ?functions cluster
 ?cluster
@@ -1206,7 +1209,7 @@
 		pzoom()	-	Zoom in on a graph
 
 ?functions popen()
-popen
+?popen
  popen() - Define, initialize and open a window for plotting
 
  popen(xpos=INT, ypos=INT, xpixels=INT, ypixels=INT,title=STRING,portrait=int)
@@ -1221,7 +1224,7 @@ popen
 		as portrait (portrait=1)
 
 ?functions pplot()
-pplot
+?pplot
  pplot() - Plot a data cube along specified axis
 
  pplot(obj=VAL, axis={X,Y or Z}, [append=INT, window=INT, Xaxis=VAL, color=int, xhigh=FLOAT
@@ -1244,7 +1247,7 @@ pplot
 		   if no value is given.
 	  	   
 ?functions pprint()
-pprint
+?pprint
  pprint() - Print a current plot
 
  pprint(id=INT, title=STRING, type={ps,psc,pbm})
@@ -1258,7 +1261,7 @@ pprint
 		pbm - 640x480 graphics file (size is fixed)
 
 ?functions ptext()
-ptext
+?ptext
  ptext() - Flexible labeling tool
 
  ptext(c=INT, e=FLOAT, x=FLOAT, y=FLOAT, angle=INT, text=STRING, kolor=INT, world=INT)
@@ -1276,7 +1279,7 @@ ptext
 	world:  flag, if set to 1, x & y need to be in world coord. else normalized (default)
 
 ?functions pbox()
-pbox
+?pbox
  pbox() - Set up plot box with tick marks
 
  pbox(e=FLOAT, lt=INT, x=INT, y=INT, X=INT, Y=INT, m=INT, color=INT)
@@ -1292,7 +1295,7 @@ pbox
     	color : integer value between 0 and 15 (0 is background color)
 
 ?functions pline()
-pline
+?pline
  pline() - Draw a set of connected line segments
 
  pline(ls=INT,lt=INT, x=VAL, y=VAL, color=INT)
@@ -1310,7 +1313,7 @@ pline
  	color: integer between 0 and 15 (0 is the background color).
 
 ?functions pzoom()
-pzoom
+?pzoom
  pzoom() - Zoom in on a graph
 
  pzoom(x_lo=INT,x_hi=INT,y_lo=INT,y_hi=INT,Xv=VAL,Yv=VAL,reset=1)
@@ -1326,10 +1329,96 @@ pzoom
 
 	reset=1 puts graph back original settings
 
+?functions read_lines()
+?read_lines
+ read_lines() - Read text file into text array object
+
+ read_lines(filename=STRING)
+
+  read_lines will read in a text file and for ever newline, a row inside
+  a text array will be created.  The function then returns the text array
+
+?functions dirname()
+?dirname
+ dirname() - return the directory portion of a pathname
+
+ dirname(object = STRING | TEXT)
+
+  dirname will take either a STRING object or a TEXT array
+  object and return the directory portion of either (assuming
+  the STRING or TEXT was a valid path).
+
+?functions issubstring()
+?issubstring
+ issubstring() - tests whether one string is a substring of another
+
+ issubstring(targert = STRING, source = STRING)
+
+  issubstring will return TRUE if target contains source and 
+  FALSE otherwise.
+
+?functions delim()
+?delim
+ delim() - return choosen collumn from delimted text
+
+ delim(object = TEXT, delim = STRING, count = INT)
+
+  delim returns collumn count as defined by delimiter delim from
+  object.  The collumn is returned as a TEXT object with the
+  same number of rows as object.
+
+?functions grep()
+?grep
+ grep() - search for the first occurrence of a pattern
+
+ grep(object = TEXT, pattern = STRING)
+
+  grep will search each row of a TEXT object for pattern
+  and returns another TEXT object.  The new TEXT object will
+  contain rows that are  either a blank line if pattern is not 
+  in that row in Object or Object's line is pattern is in that row
+  of Object.
+
+?functions strsub()
+?strsub
+ strsub() - substring substitution using regular expressions
+ 
+ strsub(object= STRING | TEXT, match = STRING, subst = STRING)
+
+  strsub traverses a string looking for match and replaces it
+  with subst.  For a TEXT object, this operation is done on
+  everyrow using the same match and subst.  
+  Note: match and subst can contain SED like notation
+
+  ex:
+  strsub("xxxxxzzzxxxxxzzzxxxxxzzzxxxx","z\(z\)z","QQ\1QQ")
+  will replace zzz with QQzQQ
+
+  double \\ must be used within davinci
+
+?functions strstr()
+?strstr
+ strstr() - locate and return index of first occurence of substring
+
+ strstr(obj= STRING | TEXT, pattern= STRING)
+
+  strstr returns the index value where pattern begins in obj or 0
+  if pattern is not in obj.  For a TEXT object a VAL is returned
+  whoes size is [1,Row,1] where Row is the number of rows in
+  the given text object.  
+
+?functions syscall()
+?syscall
+ syscall() - system's call
+ 
+ syscall(STRING)
+
+ syscall executes STRING in a command shell and returns any output
+ in a TEXT object.
 
 
 ?functions xrt3d
-xrt3d
+?xrt3d
  xrt3d() - Display data using an XRT3D widget
 
  xrt3d(object=VAL, new=BOOL)
