@@ -105,11 +105,11 @@ Var * ff_fit(vfuncptr func, Var *args)
      ** Figure out what kind of data we have.
      **/
     if (V_TYPE(y) != ID_VAL) {
-        parse_error("Expected an array for keyowrd: y=");
+        parse_error("Expected an array for keyword: y=");
         return(NULL);
     }
     if (x && V_TYPE(x) != ID_VAL) {
-        parse_error("Expected an array for keyowrd: x=");
+        parse_error("Expected an array for keyword: x=");
         return(NULL);
     }
     if (x && (V_DSIZE(x) != V_DSIZE(y))) {

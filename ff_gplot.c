@@ -44,7 +44,7 @@ ff_gplot(vfuncptr func, Var *arg)
     if ((e = eval(object)) != NULL) object = e;
 
     if (V_TYPE(object) != ID_VAL) {
-        fprintf(stderr, "Expected value for keyowrd: object\n");
+        fprintf(stderr, "Expected value for keyword: object\n");
         return(NULL);
     }
 
