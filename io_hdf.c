@@ -258,7 +258,7 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
 		 else {
 		 	V_TYPE(v)=ID_TEXT;
 		 	V_TEXT(v).Row=Lines;
-	 	 	V_TEXT(v).text=(unsigned char **)calloc(Lines,sizeof(char *));
+	 	 	V_TEXT(v).text=(char **)calloc(Lines,sizeof(char *));
 		 }
 
 			dataspace = H5Dget_space(dataset);
@@ -280,7 +280,10 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
 				while (nm < len) {
 					if (((char *)databuf)[nm]=='\n'){
 						V_TEXT(v).text[index]=malloc(nm-lm+1);
-						memcpy(V_TEXT(v).text[index],databuf+lm,(nm-lm+1));
+						memcpy(
+							V_TEXT(v).text[index],
+							(char *)databuf+lm,
+							(nm-lm+1));
 						V_TEXT(v).text[index][nm-lm]='\0';
 						index++;
 						nm++;/*Next line or end*/
