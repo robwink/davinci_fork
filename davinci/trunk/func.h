@@ -344,6 +344,7 @@ Var *ff_loadvan(vfuncptr func, Var *arg);
 
 Alist make_alist(char *name, int type, void *limits, void *value);
 
+Var * ReadPDS(vfuncptr func, Var * arg);
 
 double bbr(double, double);
 double btemp(double, double);
