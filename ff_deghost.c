@@ -24,7 +24,7 @@ ff_deghost(vfuncptr func, Var * arg)
 	void *out_data;
 	char *msg;
 	char prompt[256];
-	int reverse = 0;
+	int reverse = 1;
 
 	Alist alist[7];
 	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
