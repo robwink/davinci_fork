@@ -1,8 +1,12 @@
-char *version = "@(#) daVinci Version #1.42";
+char *version = "@(#) daVinci Version #1.42a";
 
 #include "build.h"
 
 /*
+
+Version 1.42a: Wed Mar 23 16:45:01 MST 2005
+        * Changed system() semantics slightly.
+
 Version 1.42: Mon Feb  7 19:49:59 MST 2005
 	* Commited ff_window, ff_gconvolve, ff_warp and ff_median.
 
