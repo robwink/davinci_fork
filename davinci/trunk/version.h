@@ -1,6 +1,10 @@
-char *version = "@(#) daVinci Version #0.59";
+char *version = "@(#) daVinci Version #0.59a";
 
 /*
+Version 0.59a: Wed Aug  2 16:17:03 MST 2000
+	* Fixed line nmumbers, again.  Pushes pp_lineno onto the stack for source()
+
+
 Version 0.59: Wed Jul 26 15:15:16 MST 2000
 	* Modifications to io_specpr
 	* Added ONE_AXIS and ANY_AXIS to newfunc
