@@ -112,8 +112,8 @@ ff_insert_struct(vfuncptr func, Var * arg)
     Var **av;
     Alist alist[6];
     alist[0] = make_alist( "object",    ID_STRUCT,    NULL,     &a);
-    alist[1] = make_alist( "name",      ID_STRING,     NULL,     &name);
-    alist[2] = make_alist( "value",     ID_UNK,     NULL,     &v);
+    alist[1] = make_alist( "value",     ID_UNK,     NULL,     &v);
+    alist[2] = make_alist( "name",      ID_STRING,     NULL,     &name);
     alist[3] = make_alist( "before",    ID_UNK,     NULL,     &before);
     alist[4] = make_alist( "after",     ID_UNK,     NULL,     &after);
     alist[5].name = NULL;
