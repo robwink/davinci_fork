@@ -265,8 +265,10 @@ struct _vfuncptr vfunclist[] = {
     { "shade",          ff_shade,              NULL },
     { "fexists",        ff_exists,              NULL },
 
-/*    { "bindct",        ff_bindct,              NULL }, */
-/*     { "binidct",       ff_bindct,              NULL }, */
+    { "bindct",        ff_bindct,              NULL },
+     { "binidct",       ff_bindct,              NULL },
+
+     { "geom_ghost",       ff_deghost,              NULL },
     { NULL,             NULL,                  NULL }
 };
 
