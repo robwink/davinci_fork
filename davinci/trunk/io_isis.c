@@ -28,7 +28,7 @@ is_ISIS(FILE *fp)
     if (fgets(buf, 256, fp) == NULL) {
         return(0);
     }
-    if (strncmp(buf, "CCSD", 4) && strncmp(buf, "NJPL", 4)) {
+    if (strncmp(buf, "CCSD", 4) && strncmp(buf, "NJPL", 4) && strncmp(buf,"PDS",3)) {
         return(0);
     }
 
