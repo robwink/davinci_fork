@@ -349,7 +349,7 @@ dispatch_ufunc(UFUNC *f, Var *arg)
 		ac = Narray_count(V_ARGS(arg));
 	}
 	for (j = 0 ; j < ac ; j++) {
-		Narray_get(V_ARGS(arg), j, NULL, &p);
+		Narray_get(V_ARGS(arg), j, NULL, (void **) &p);
 
         if (V_TYPE(p) == ID_KEYWORD) {
 			for (i = 0 ; i < f->nargs ; i++) {
@@ -478,7 +478,7 @@ ufunc_edit(vfuncptr func , Var *arg)
 	*/
 
 	if (arg == NULL) return(NULL);
-	Narray_get(V_ARGS(arg), 0, NULL, &function);
+	Narray_get(V_ARGS(arg), 0, NULL, (void **)&function);
 
     if (V_TYPE(function) == ID_STRING) {
         filename = V_STRING(function);
