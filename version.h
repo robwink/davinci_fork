@@ -8,79 +8,80 @@ Version 0.52a
     * Updated configure.in and Makefile.in
 
 Version 0.52:
-    * modified grammar to streamline to ansi standard
-	+    you can subset return values and other subsets w/o prior assignment.
+    * modified grammar to streamline to ansi standard.  Side effects:
+    +    you can subset return values and other subsets w/o prior assignment.
+	+    you can take a where of a where
 
 Version 0.51:
     * added -w option to bypass connecting to X-server
-	* Modified [where] to allow arrays on rhs
-	* Modified [where] to allow disparate id[where] and expr objects
+    * Modified [where] to allow arrays on rhs
+    * Modified [where] to allow disparate id[where] and expr objects
 
 Version 0.50: Mon Jun 28 13:29:59 MST 1999, 
-	* Modified to use push parser in bison.  This will cause compile
-	  problems, but nothing that can't be handled.
-	  This eliminated input.c
-	* Added xrt stuff
+    * Modified to use push parser in bison.  This will cause compile
+      problems, but nothing that can't be handled.
+      This eliminated input.c
+    * Added xrt stuff
 
 Version 0.47: Wed Mar 24 19:02:39 MST 1999
-	+ added minvert() LU decomposition matrix inversion
-	* updated io_vicar to write new format, but is sun specific.
-	* speedup to array.c
-	+ added limited support for 16-bit pgm files
+    + added minvert() LU decomposition matrix inversion
+    * updated io_vicar to write new format, but is sun specific.
+    * speedup to array.c
+    + added limited support for 16-bit pgm files
 
 Version 0.46: Wed Jan 20 17:41:32 MST 1999
-	* interim version for VIMS.
-	+ beginnings of XRT
-	+ fft(), ifft()
-	+ added subsets to ff_read() 
-	+ fixed io_isis to properly handle blackplane corners
+    * interim version for VIMS.
+    + beginnings of XRT
+    + fft(), ifft()
+    + added subsets to ff_read() 
+    + fixed io_isis to properly handle blackplane corners
 
 Version 0.45: Tue May  5 13:23:32 MST 1998
-	* Preliminary version of apifunc
+    * Preliminary version of apifunc
 
 Version 0.44c:
-	* rgb2hsv(), hsv2rgb()
-	* started using autoconf
-	* sort(), min(), max()
-	* Added [where expr]
+    * rgb2hsv(), hsv2rgb()
+    * started using autoconf
+    * sort(), min(), max()
+    * Added [where expr]
 
 Version 0.44b: 
-	* isis():	Get isis info, or load suffix planes
-	* edit(): 	a numeric argument invokes a history editor, starting
-				with the specified command.
-	* history()
-	* fsize()
+    * isis():   Get isis info, or load suffix planes
+    * edit():   a numeric argument invokes a history editor, starting
+                with the specified command.
+    * history()
+    * fsize()
 
 Version 0.44a: Wed Nov 26 17:46:01 MST 1997
-	* transfer version
+    * transfer version
 
 Version 0.44: Tue Nov 18 23:35:08 MST 1997
-	+ newfunc.c
-	+ Added shortest unique match for argument keywords in newfunc
-	+ ff_ix.c: histogram()			(should move basis and mxm into here)
-	+ changed ff_rnoise into ff_random, and promoted it to newfunc.
-	+ Added ctrl-c handler, but it doesn't handle exiting ufuncs well.
-	* changed bbr() and btemp() to try to avoid division by zero
-	+ avg(), sum()
+    + newfunc.c
+    + Added shortest unique match for argument keywords in newfunc
+    + ff_ix.c: histogram()          (should move basis and mxm into here)
+    + changed ff_rnoise into ff_random, and promoted it to newfunc.
+    + Added ctrl-c handler, but it doesn't handle exiting ufuncs well.
+    * changed bbr() and btemp() to try to avoid division by zero
+    + avg(), sum()
 
 Version 0.43c:
-	* transfer version
-	! ID_ARGV wasn't evaluating its ranges.
-	! Broke ID_ARGV, above.  Fixed it.  p.c#123
-	+ mxm(), basis()
+    * transfer version
+    ! ID_ARGV wasn't evaluating its ranges.
+    ! Broke ID_ARGV, above.  Fixed it.  p.c#123
+    + mxm(), basis()
 
 Version 0.43b:
-	+ added ff_bop(), moved bbr() and btemp() under it
-	- problems with !, took it out of lexer.l
-	* Lots of new help 
-	+ Added ifill()
+    + added ff_bop(), moved bbr() and btemp() under it
+    - problems with !, took it out of lexer.l
+    * Lots of new help 
+    + Added ifill()
 
 Version 0.43a:
-	+ system()
-	+ sprintf()
-	+ printf()
-	* upgraded to new readline library (2.1)
-	+ !cmd shell execution.
+    + system()
+    + sprintf()
+    + printf()
+    * upgraded to new readline library (2.1)
+    + !cmd shell execution.
     * help routines overhaul (stolen from Gnuplot)
     + Inline concatenation:  1//2//3
 

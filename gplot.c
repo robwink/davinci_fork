@@ -183,7 +183,7 @@ XB_CALLBACK(DoPSWrite)
 		XBell(PB->display, 50);
 		fprintf(stderr, "No filename specified\n");
 	}
-	sprintf(buf, "set terminal postscript %s color", type);
+	sprintf(buf, "set terminal postscript %s color solid", type);
 	if (strlen(font)) sprintf(buf+strlen(buf), " \"%s\"", font);
 	if (strlen(pt)) sprintf(buf+strlen(buf), " %s ", pt);
 

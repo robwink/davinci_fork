@@ -137,7 +137,8 @@ ff_write(vfuncptr func, Var *arg)
 		title = V_STRING(v);
 	}
 
-    if (!strcasecmp(type, "vicar")) WriteVicar(ob, NULL, filename); 
+    if      (!strcasecmp(type, "raw"))    WriteRaw(ob, NULL, filename);
+    else if (!strcasecmp(type, "vicar"))  WriteVicar(ob, NULL, filename); 
     else if (!strcasecmp(type, "grd"))    WriteGRD(ob, NULL, filename);
     else if (!strcasecmp(type, "pgm"))    WritePGM(ob, NULL, filename);
     else if (!strcasecmp(type, "ppm"))    WritePPM(ob, NULL, filename);
@@ -155,4 +156,19 @@ ff_write(vfuncptr func, Var *arg)
         return(NULL);
     }
     return(NULL);
+}
+
+int
+WriteRaw(Var *s, FILE *fp, char *filename)
+{
+    if (fp == NULL) {
+        if ((fp = fopen(filename, "w")) == NULL) {
+			return(0);
+		}
+    }
+
+    fwrite(V_DATA(s), NBYTES(V_FORMAT(s)), V_DSIZE(s), fp);
+    fclose(fp);
+
+    return(1);
 }
