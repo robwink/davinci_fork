@@ -17,9 +17,9 @@ extern Swap_Big_and_Little(Var *);
 /* FIX: put these in a header */
 
 #ifdef HAVE_LIBPNG
-static unsigned char const *iom_filetypes[] = { "gif", "jpg", "jpeg", "tif", "tiff", "png", 0 };
+static unsigned char const *iom_filetypes[] = { "gif", "jpg", "jpeg", "tif", "tiff", "png", "bmp", 0 };
 #else
-static unsigned char const *iom_filetypes[] = { "gif", "jpg", "jpeg", "tif", "tiff", 0 };
+static unsigned char const *iom_filetypes[] = { "gif", "jpg", "jpeg", "tif", "tiff", "bmp", 0 };
 #endif
 
 Var *
