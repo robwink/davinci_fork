@@ -37,10 +37,6 @@ dnl Enable/disable loadable modules (default = yes).
 AC_ARG_ENABLE(modules,
 	AC_HELP_STRING([--disable-modules], [remove loadable module support.]))
 AM_CONDITIONAL(MODULE_SUPPORT, test "x$enable_modules" != "xno")
-if test "x$enable_modules" != "xno"; then
-	AC_DEFINE(BUILD_MODULE_SUPPORT, 1, [loadable module support])
-	MY_SUBDIRS="$MY_SUBDIRS modules"
-fi
 
 dnl iomedley (default = yes).
 AC_ARG_ENABLE([iomedley],
@@ -145,6 +141,25 @@ if test "x$libreadline_found" = "xno"; then
 fi
 AM_CONDITIONAL(LOCAL_READLINE, test "x$local_readline" = "xyes")
 
+dnl Configure iomedley.
+
+if test "x$enable_iomedley" != "xno"; then
+
+	AC_MSG_CHECKING(if local libiomedley present)
+	if test -x iomedley/configure; then
+		AC_MSG_RESULT(yes)
+		CFLAGS="$CFLAGS -Iiomedley"
+		AC_DEFINE(HAVE_LIBIOMEDLEY, 1, [iomedley library is present])
+		AC_CONFIG_SUBDIRS(iomedley)
+		MY_SUBDIRS="$MY_SUBDIRS iomedley"
+		local_iomedley=yes
+	else
+		AC_MSG_RESULT(no)
+	fi
+
+fi
+AM_CONDITIONAL(LOCAL_IOMEDLEY, test x$local_iomedley = xyes)
+
 dnl Configure VICAR widget.
 
 if test "x$enable_vicar" != "xno"; then
@@ -165,24 +180,12 @@ if test "x$enable_vicar" != "xno"; then
 fi
 AM_CONDITIONAL(LOCAL_VICAR, test x$local_vicar = xyes)
 
-dnl Configure iomedley.
+dnl Add modules subdir.
 
-if test "x$enable_iomedley" != "xno"; then
-
-	AC_MSG_CHECKING(if local libiomedley present)
-	if test -x iomedley/configure; then
-		AC_MSG_RESULT(yes)
-		CFLAGS="$CFLAGS -Iiomedley"
-		AC_DEFINE(HAVE_LIBIOMEDLEY, 1, [iomedley library is present])
-		AC_CONFIG_SUBDIRS(iomedley)
-		MY_SUBDIRS="$MY_SUBDIRS iomedley"
-		local_iomedley=yes
-	else
-		AC_MSG_RESULT(no)
-	fi
-
+if test "x$enable_modules" != "xno"; then
+	AC_DEFINE(BUILD_MODULE_SUPPORT, 1, [loadable module support])
+	MY_SUBDIRS="$MY_SUBDIRS modules"
 fi
-AM_CONDITIONAL(LOCAL_IOMEDLEY, test x$local_iomedley = xyes)
 
 dnl FIX: this stuff can go away if libtool is used.
 
