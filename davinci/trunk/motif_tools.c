@@ -20,7 +20,7 @@
 * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
 *
 ******************************************************************************/
-
+#ifdef XRT_ENABLED
 #define MOTIF_TOOLS
 
 #include <assert.h>
@@ -2958,3 +2958,5 @@ MtRandomInt(int a, int b)
 
     return (a + (int) (ratio*(b-a)));
 }
+
+#endif

@@ -7,6 +7,8 @@
 #include <Xm/PushB.h>
 */
 
+#ifdef XRT_ENABLED 
+
 #include <Xm/MainW.h>
 #include <Xm/RowColumn.h>
 #include <Xm/Form.h>
@@ -21,10 +23,11 @@
 
 #include "motif_tools.h"
 
-Widget top=NULL;
+extern XtAppContext        app;
+extern Widget           top;
+
 static Widget		graph = NULL;
 static Widget		show_mesh, show_shade, show_contour, show_zone;
-XtAppContext	app;
 Xrt3dData   *grid = NULL;
 
 /***************************************************************************
@@ -418,3 +421,5 @@ CreatePopup2(void)
     
     XtRealizeWidget(base);
 }
+
+#endif

@@ -20,7 +20,7 @@
 * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
 *
 ******************************************************************************/
-
+#ifdef XRT_ENABLED 
 #define PRINT_3D
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1497,3 +1497,5 @@ MtShow3dPrintDialog(Widget graph_to_print, char *default_printer,
     graph = graph_to_print;
     XtManageChild(print_dialog);
 }
+
+#endif
