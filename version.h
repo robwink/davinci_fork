@@ -1,6 +1,14 @@
-char *version = "@(#) daVinci Version #0.56";
+char *version = "@(#) daVinci Version #0.56a";
 
 /*
+Version 0.56a Thu Mar 23 14:45:30 MST 2000
+   + pcs() - Principal Component Stretch
+   + covar() - Covariance Matrix
+   + corr() - Coefficients of Correlation Matrix
+   + scp() - Sum of squares and cross products matrix
+   + eigen() - Eigen Values & Vectors of Real Symmetric Matrices
+   + Test cases and data for testing the above functions
+
 Version 0.56: Wed Mar 22 23:46:06 MST 2000
 	+ undid ufunc modifications
 	+ fixed !shell
