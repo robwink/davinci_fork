@@ -819,6 +819,7 @@ set_text(Var *to,Range *r, Var *from)
     int cur_line_leng;
     int tmp_hi;
     int tmp_lo;
+	 int counter=0;
 
 
 	
@@ -867,8 +868,9 @@ set_text(Var *to,Range *r, Var *from)
 
 	for (i=lo[1];i<=hi[1];i+=step[1]){
 		if (V_TYPE(from)==ID_TEXT){
-			string=V_TEXT(from).text[i];
+			string=V_TEXT(from).text[counter];
 			string_length=strlen(string);
+			counter++;
 		}
 
 		cur_line_leng=strlen(V_TEXT(to).text[i]);
