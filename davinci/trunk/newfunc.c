@@ -27,7 +27,7 @@ Alist alist[] = {
  **/
 
  /**
-	How do we get av[0] installed?
+    How do we get av[0] installed?
   **/
 
 int 
@@ -98,7 +98,7 @@ parse_args(int ac, Var **av, Alist *alist)
                 parse_error("%s: Variable not found: %s", fname, V_NAME(v));
                 return(1);
             }
-			v = e;
+            v = e;
             if (V_TYPE(v) != ID_STRING) {
                 parse_error(
                     "Illegal argument to function %s(), expected STRING", 
@@ -212,7 +212,7 @@ parse_args(int ac, Var **av, Alist *alist)
                 parse_error("%s: Variable not found: %s", fname, V_NAME(v));
                 return(1);
             }
-   	    v = e;
+            v = e;
 /*
             if (V_TYPE(v) != ID_STRING) {
                 parse_error(
@@ -225,9 +225,49 @@ parse_args(int ac, Var **av, Alist *alist)
             vptr = (Var **)(alist[j].value);
             *vptr = v;
             alist[j].filled = 1;
-		} else {
-			fprintf(stderr, "parse_args: Bad programmer, no biscuit.\n");
-		}
+        } else if (alist[j].type == ONE_AXIS) {
+            int _t;
+            /*
+            ** Shorthand for enumerated axis.  One of "x", "y" or "z"
+            */
+
+            char **p, *q = NULL, *ptr;
+            char *values[] = { "x", "y", "z" };
+
+            if (V_TYPE(v) == ID_STRING) 
+                ptr = V_STRING(v);
+            else 
+                ptr = V_NAME(v);
+
+            for (_t = 0 ; _t < 2 ; _t++) {
+                if (ptr) {
+                    for (p = values; p && *p; p++) {
+                        if (ptr && !strcasecmp(ptr, *p)) {
+                            q = *p;
+                            break;
+                        }
+                    }
+                }
+                if ((e = eval(v)) == NULL || (V_TYPE(e) != ID_STRING)) {
+                    break;
+                }
+                ptr = V_STRING(e);
+            }
+
+            if (q == NULL) {
+                parse_error("Illegal argument to function %s(...%s...)", 
+                            fname, alist[j].name);
+                return(1);
+            }
+
+            p = (char **)(alist[j].value);
+            *p = q;
+            alist[j].filled = 1;
+        } else if (alist[j].type == ANY_AXIS) {
+
+        } else {
+            fprintf(stderr, "parse_args: Bad programmer, no biscuit.\n");
+        }
     }
     return(0);
 }
@@ -256,11 +296,11 @@ make_args(int *ac, Var ***av, vfuncptr func, Var *args)
 Alist
 make_alist(char *name, int type, void *limits, void *value)
 {
-	Alist a;
+    Alist a;
     a.name = name;
     a.type = type;
     a.limits = limits;
     a.value = value;
-	a.filled = 0;
-	return(a);
+    a.filled = 0;
+    return(a);
 }

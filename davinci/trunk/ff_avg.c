@@ -12,6 +12,143 @@
 ** If the user passes the 'both' option, you get a struct with both a & s
 */
 
+/*
+** this is a one pass algorithm to find sum, avg and stddev.
+*/
+Var *
+ff_avg2(vfuncptr func, Var * arg)
+{
+	Var *obj=NULL, *v;
+	char *ptr = NULL;
+	int axis = 0, dsize, i, j;
+	float n;
+	int in[3], out[3];
+	float *sum, *sum2, *vx;
+	char *options[] =  {
+		"x", "y", "z", "xy", "yx", "xz", "zx", "yz", "zy",
+		"xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL
+	};
+	int dsize2;
+	float f, x;
+	Var *both = NULL;
+	Var *avg = NULL, *stddev = NULL;
+	int f_avg =0, f_stddev = 0, f_sum = 0;
+
+	int ac;
+	Var **av;
+	Alist alist[4];
+	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
+	alist[1] = make_alist("axis",  		ID_ENUM,	options,	&ptr);
+	alist[2] = make_alist("both",  		ID_VAL,	    NULL,	&both);
+	alist[3].name = NULL;
+
+	make_args(&ac, &av, func, arg);
+	if (parse_args(ac, av, alist)) return(NULL);
+
+	if (ptr == NULL) {
+		axis = XAXIS | YAXIS | ZAXIS;		/* all of them */
+	} else {
+		if (strchr(ptr, 'x') || strchr(ptr, 'X')) axis |= XAXIS;
+		if (strchr(ptr, 'y') || strchr(ptr, 'Y')) axis |= YAXIS;
+		if (strchr(ptr, 'z') || strchr(ptr, 'Z')) axis |= ZAXIS;
+	}
+
+	if (obj == NULL) {
+		parse_error("%s: No object specified\n", func->name);
+		return(NULL);
+	}
+
+	dsize = V_DSIZE(obj);
+	for (i = 0 ; i < 3 ; i++) {
+		in[i] = out[i] = V_SIZE(obj)[i];
+	}
+
+	if (axis & XAXIS) out[orders[V_ORG(obj)][0]] = 1;
+	if (axis & YAXIS) out[orders[V_ORG(obj)][1]] = 1;
+	if (axis & ZAXIS) out[orders[V_ORG(obj)][2]] = 1;
+
+	/*
+	** Decide what operations to perform and setup output variables
+	** v is a generic variable with the right output sizes.
+	*/
+	if (!strcmp(func->name, "sum"))  {
+		f_sum = 1;
+		v = newVal(V_ORG(obj), out[0], out[1], out[2], FLOAT, NULL);
+	}
+
+	if (!strcmp(func->name, "avg") || both)  {
+		f_avg = 1;
+		v = avg = newVal(V_ORG(obj), out[0], out[1], out[2], FLOAT, NULL); 
+	} 
+
+	if (!strcmp(func->name, "stddev") || both)  {
+		f_stddev = 1;
+		v = stddev = newVal(V_ORG(obj), out[0], out[1], out[2], FLOAT, NULL); 
+	}
+
+	sum= (float *)calloc(V_DSIZE(v), sizeof(float));
+	if (f_stddev) sum2= (float *)calloc(V_DSIZE(v), sizeof(float));
+
+	/*
+	** The if avoids the x^2 computation on the case we don't need it.
+	*/
+	if (f_stddev) {
+		/*
+		** Sum the data
+		*/
+		for (i = 0 ; i < dsize ; i++) {
+			x = extract_float(obj, i);
+			j = rpos(i, obj, v);
+			sum[j] += x;
+			sum2[j] += x*x;
+		}
+	} else {
+		for (i = 0 ; i < dsize ; i++) {
+			x = extract_float(obj, i);
+			j = rpos(i, obj, v);
+			sum[j] += x;
+		}
+	}
+
+	dsize2 = V_DSIZE(v);
+	n = (float)dsize / (float)dsize2;
+
+	/*
+	** Perform required computations with sums
+	*/
+	if (f_stddev) {
+		for (i = 0 ; i < dsize2 ; i++) {
+			sum2[i] = sqrt((sum2[i] - (sum[i]*sum[i]/n))/(n-1));
+		}
+		V_DATA(stddev) = sum2;
+	}
+
+	if (f_avg) {
+		n = (float)dsize2 / (float)dsize;
+		for (i = 0 ; i < dsize2 ; i++) {
+			sum[i] = sum[i] * n;
+		}
+		V_DATA(avg) = sum;
+	}
+
+	if (f_sum) {
+		V_DATA(v) = sum;
+		return(v);
+	} else if (both) {
+		both = new_struct(0);
+		add_struct(both, "avg", avg);
+		add_struct(both, "stddev", stddev);
+		return(both);
+	} else if (f_stddev) {
+		return(stddev);
+	} else if (f_avg) {
+		return(avg);
+	} else {
+		parse_error("ff_avg: Shouldn't ever get here.\n");
+		return(NULL);
+	}
+}
+
 Var *
 ff_avg(vfuncptr func, Var * arg)
 {
