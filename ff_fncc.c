@@ -88,7 +88,6 @@ ff_fncc(vfuncptr func, Var * arg)
 		return(NULL);
 	}
 
-
 	if (V_FORMAT(obj) != DOUBLE) {
 		parse_error("%s: Object must contain DOUBLE values\n", func->name);
 		return(NULL);
@@ -98,7 +97,7 @@ ff_fncc(vfuncptr func, Var * arg)
 		parse_error("%s: Template must contain DOUBLE values\n", func->name);
 		return(NULL);
 	}
-
+ 
 	if (GetZ(obj) > 1 || GetZ(template) > 1) {
 		parse_error("%s: Currently only works on single Band objects\n", func->name);
 		return(NULL);
@@ -123,14 +122,14 @@ ff_fncc(vfuncptr func, Var * arg)
 
 	if (ig != ref) 
 		ignore = &ig;
-#ifdef RUNNING
+
 	if (rf == NULL) { /* by the query above, we know BOTH are NULL */
 		running_f = (double *)malloc(x * y * sizeof(double));
 		/*DEBUG - set to odd value to find non-address elements */
-		memset((void *)running_f,0x12345678,(x * y * sizeof(double))); 
+		memset((void *)running_f,0xff,(x * y * sizeof(double))); 
 
 		running_f2 = (double *)malloc(x * y * sizeof(double));
-		memset((void *)running_f2,0x12345678,(x * y * sizeof(double))); 
+		memset((void *)running_f2,0xff,(x * y * sizeof(double))); 
 
 		if (running_f == NULL || running_f2 == NULL) {
 			parse_error("Memory Error: Not enough memory to support this call!");
@@ -151,7 +150,6 @@ ff_fncc(vfuncptr func, Var * arg)
 		running_f = (double *)V_DATA(rf);
 		running_f2 = (double *)V_DATA(rf2);
 	}
-#endif
 
 	t_prime = (double *)malloc(t_col * t_row * sizeof(double));
 	build_t_constants(t,t_row,t_col,&t_avg,t_prime,&t_var,ignore);
@@ -159,19 +157,8 @@ ff_fncc(vfuncptr func, Var * arg)
 
 	parse_error("Building convolution");
 
-	if (fft) {
-		tmp_t=flip_t(t_row,t_col,t);
-		parse_error("Using FFT to do convolution");
-		r = FFT_2D_Convolve(t_row,t_col,f_row,f_col,tmp_t,f);
-		free(tmp_t);
-		return(newVal(BSQ,(int)pow(2.,ceil(log((double)x)/log(2.))),
-								(int)pow(2.,ceil(log((double)y)/log(2.))),
-								1,DOUBLE,r));
-//		return(newVal(BSQ,x,y,1,DOUBLE,r));
-	}
-
-	else
-		r = TwoD_Convolve(t_row,t_col,f_row,f_col,t,f,ignore); 
+//	r = TwoD_Convolve(t_row,t_col,f_row,f_col,t,f,ignore); 
+	r = (double *)calloc(x * y , sizeof(double));
 
 	parse_error("Building cross-correlation");
 	cc=fncc(r,y,x,t_row,t_col,f_row,f_col,f,t_var,t_avg,ignore,running_f,running_f2,rec);
@@ -482,13 +469,25 @@ fncc(double *r, int g_row,int g_col,int t_row,int t_col,int f_row,
 	int col_even_mod = 1;
 	double total = f_col * f_row;
 	int f_ic = 0; //igore count for the f-window under t
-	double tol = 1e-8;
+	double tol = 1e-18;
+
+	int 		SOTS_error_count = 0;
+	double 	SOTS_error_abs_max = 0.;
+	double 	SOTS_error_RMS = 0.;
+
+	int 		FSUM_error_count = 0;
+	double 	FSUM_error_abs_max = 0.;
+	double 	FSUM_error_RMS = 0.;
 
 	double fsum;
 	double favg;
 	double sots; //Sum of the Squares of f (under t)
 
 	double *g = (double *)malloc(g_col * g_row * sizeof(double));
+	
+	double *f_error = (double *)malloc(g_col * g_row * sizeof(double));
+	double *f2_error = (double *)malloc(g_col * g_row * sizeof(double));
+
 
 	int ten_p = ((double)g_row * 0.1);
 	if (ten_p < 1) ten_p = 1;
@@ -522,13 +521,26 @@ fncc(double *r, int g_row,int g_col,int t_row,int t_col,int f_row,
 
 			favg = (fsum*fsum)/(t_col*t_row-f_ic);
 
-/*
+//			if ( fabs(fsum-running_f[i*g_col+j]) > tol)  {
+				FSUM_error_count++;
+				FSUM_error_RMS+=(fsum-running_f[i*g_col+j])*(fsum-running_f[i*g_col+j]);
+				if (fabs(fsum-running_f[i*g_col+j]) > FSUM_error_abs_max ) FSUM_error_abs_max=fabs(fsum-running_f[i*g_col+j]);
 
-			if ( fabs(fsum-running_f[i*g_col+j]) > tol) 
-				parse_error("@ %d,%d (row,col): fsum = %g while running_f = %g",i,j,fsum,running_f[i*g_col+j]);
-			if (fabs(sots-running_f2[i*g_col+j]) > tol)
-				parse_error("@ %d,%d (row,col): sots = %g while running_f2 = %g",i,j,sots,running_f2[i*g_col+j]);
-*/
+//				fprintf(stderr,"%d,%d (row,col): FSUM = %16.12lf while running_f = %16.12lf (delta=%16.12lf)\n", i,j,fsum,running_f[i*g_col+j],fabs(fsum-running_f[i*g_col+j]));
+
+
+				f_error[i*g_col+j] = fabs(fsum-running_f[i*g_col+j]);
+//			}
+
+
+
+//			if (fabs(sots-running_f2[i*g_col+j]) > tol) {
+				SOTS_error_count++;
+				SOTS_error_RMS+=(sots-running_f2[i*g_col+j])*(sots-running_f2[i*g_col+j]);
+				if (fabs(sots-running_f2[i*g_col+j]) > SOTS_error_abs_max ) SOTS_error_abs_max=fabs(sots-running_f2[i*g_col+j]);
+//				fprintf(stderr,"%d,%d (row,col): SOTS = %16.12lf while running_f2 = %16.12lf (delta=%16.12lf)\n", i,j,sots,running_f2[i*g_col+j],fabs(sots-running_f2[i*g_col+j]));
+				f2_error[i*g_col+j] = fabs(sots-running_f2[i*g_col+j]);
+//			}
 
 
 
@@ -547,21 +559,49 @@ fncc(double *r, int g_row,int g_col,int t_row,int t_col,int f_row,
 
 				else {
 
-					if (rec) {
-						float denom;
-						g[i*g_col+j] = (r[i*g_col+j] - (fsum*t_avg))*(r[i*g_col+j] - (fsum*t_avg));
-						denom = (t_col*t_row-1-f_ic)*sqrt( p3 * t_var);
-						g[i*g_col+j] /= (denom*denom);
-					}
+					g[i*g_col+j] = (r[i*g_col+j] - (fsum*t_avg))/(t_col*t_row-1-f_ic);
+					g[i*g_col+j] /= sqrt( p3 * t_var);
 
-					else {
-						g[i*g_col+j] = (r[i*g_col+j] - (fsum*t_avg))/(t_col*t_row-1-f_ic);
-						g[i*g_col+j] /= sqrt( p3 * t_var);
-					}
 				}
 			}
 		}
 	}
+
+	if (FSUM_error_count) {
+		fprintf(stderr,"FSUM: %d errors encountered out of %d calculations (--> %f%%)\n",
+					FSUM_error_count,(g_col*g_row),((double)FSUM_error_count/(double)(g_col*g_row))*100.);
+		fprintf(stderr,"\t\tRMS: %14.12f\n",sqrt(FSUM_error_RMS/(double)FSUM_error_count));
+		fprintf(stderr,"\t\tABS MAX: %14.12f\n",FSUM_error_abs_max);
+	}
+
+	if (SOTS_error_count) {
+		fprintf(stderr,"SOTS: %d errors encountered out of %d calculations (--> %f%%)\n",
+					SOTS_error_count,(g_col*g_row),((double)SOTS_error_count/(double)(g_col*g_row))*100.);
+		fprintf(stderr,"\tRMS: %14.12f\n",sqrt(SOTS_error_RMS/(double)SOTS_error_count));
+		fprintf(stderr,"\tABS MAX: %14.12f\n",SOTS_error_abs_max);
+	}
+
+	{
+		FILE *out;
+
+		fprintf(stderr,"Writing out %d Col X %d Row Raw Double File: f_error\n",g_col,g_row);
+
+		out = fopen("f_error","wb");
+		fwrite(f_error,(g_col*g_row),sizeof(double),out);
+		fclose(out);
+		
+		fprintf(stderr,"Writing out %d Col X %d Row Raw Double File: f2_error\n",g_col,g_row);
+
+		out = fopen("f2_error","wb");
+		fwrite(f2_error,(g_col*g_row),sizeof(double),out);
+		fclose(out);
+		
+
+		free(f_error);
+		free(f2_error);
+	}
+		
+
 
 	return(g);
 }
@@ -634,10 +674,13 @@ build_running_sums(int trow,int tcol,int frow,int fcol,int grow,
 	int x, y;
 	int u, v;
 
+	int t_cen_col;
+	int t_cen_row;
+
 	s = (double *)malloc(gcol * grow * sizeof(double));
-	memset((void *)s,0x12345678,(gcol * grow * sizeof(double)));
+	memset((void *)s,0x0,(gcol * grow * sizeof(double)));
 	ss = (double *)malloc(gcol * grow * sizeof(double));
-	memset((void *)ss,0x12345678,(gcol * grow * sizeof(double)));
+	memset((void *)ss,0x0,(gcol * grow * sizeof(double)));
 
 	if (s == NULL || ss == NULL ) {
 			parse_error("Could not allocate enough memory to perform this task...aborting");
@@ -653,20 +696,40 @@ build_running_sums(int trow,int tcol,int frow,int fcol,int grow,
 */
 
 	parse_error("Building first round tables");
+	t_cen_row = (trow/2);
+ 	t_cen_col = (tcol/2);
+
+/*
+	for (v=0;v<grow;v++){
+		for(u=0;u<gcol;u++){
+*/
 
 	for (v=0;v<grow;v++){
 		for(u=0;u<gcol;u++){
+
 			/* SUM of f */
-			s[v*gcol+u] = (((u >= fcol)||(v >= frow)) ? 0.0 : f[v * fcol + u]);
+			s[v*gcol+u] = (((u >= fcol)||(v >= frow)) ? (double)0.0 : f[v * fcol + u]);
+			s[v*gcol+u]+= ((u == 0) ? (double)0.0 : s[v*gcol+(u-1)]);
+			s[v*gcol+u]+= ((v == 0) ? (double)0.0 : s[(v-1)*gcol+u]);
+			s[v*gcol+u]-= (((u == 0) || (v == 0)) ? (double)0.0 : s[(v-1)*gcol+(u-1)]);
+
+			/* SUM of f^2 */
+			ss[v*gcol+u] = (((u >= fcol)||(v >= frow)) ? (double)0.0 : (f[v * fcol + u] * f[v * fcol + u]));
+			ss[v*gcol+u]+= ((u == 0) ? (double)0.0 : ss[v*gcol+(u-1)]);
+			ss[v*gcol+u]+= ((v == 0) ? (double)0.0 : ss[(v-1)*gcol+u]);
+			ss[v*gcol+u]-= (((u == 0) || (v == 0)) ? (double)0.0 : ss[(v-1)*gcol+(u-1)]);
+
+
+
+/*
 			s[v*gcol+u]+= ((u == 0) ? 0.0 : s[v*gcol+(u-1)]);
 			s[v*gcol+u]+= ((v == 0) ? 0.0 : s[(v-1)*gcol+u]);
 			s[v*gcol+u]-= (((u == 0) || (v == 0)) ? 0.0 : s[(v-1)*gcol+(u-1)]);
 
-			/* SUM of f^2 */
-			ss[v*gcol+u] = (((u >= fcol)||(v >= frow)) ? 0.0 : (f[v * fcol + u] * f[v * fcol + u]));
 			ss[v*gcol+u]+= ((u == 0) ? 0.0 : ss[v*gcol+(u-1)]);
 			ss[v*gcol+u]+= ((v == 0) ? 0.0 : ss[(v-1)*gcol+u]);
 			ss[v*gcol+u]-= (((u == 0) || (v == 0)) ? 0.0 : ss[(v-1)*gcol+(u-1)]);
+*/
 		}
 	}
 			 
@@ -682,15 +745,15 @@ build_running_sums(int trow,int tcol,int frow,int fcol,int grow,
 
 			/* Final f SUM */
 			running_f[v*gcol+u] = s[v*gcol+u];
-			running_f[v*gcol+u]-= ((x < 1) ? 0.0 : s[v*gcol+(x-1)]);
-			running_f[v*gcol+u]-= ((y < 1) ? 0.0 : s[(y-1)*gcol+u]);
-			running_f[v*gcol+u]+= (((x < 1) || (y < 1)) ? 0.0 : s[(y-1)*gcol+(x-1)]);
+			running_f[v*gcol+u]-= ((x < 1) ? (double)0.0 : s[v*gcol+(x-1)]);
+			running_f[v*gcol+u]-= ((y < 1) ? (double)0.0 : s[(y-1)*gcol+u]);
+			running_f[v*gcol+u]+= (((x < 1) || (y < 1)) ? (double)0.0 : s[(y-1)*gcol+(x-1)]);
 
 			/* Final f^2 SUM */
 			running_f2[v*gcol+u] = ss[v*gcol+u];
-			running_f2[v*gcol+u]-= ((x < 1) ? 0.0 : ss[v*gcol+(x-1)]);
-			running_f2[v*gcol+u]-= ((y < 1) ? 0.0 : ss[(y-1)*gcol+u]);
-			running_f2[v*gcol+u]+= (((x < 1) || (y < 1)) ? 0.0 : ss[(y-1)*gcol+(x-1)]);
+			running_f2[v*gcol+u]-= ((x < 1) ? (double)0.0 : ss[v*gcol+(x-1)]);
+			running_f2[v*gcol+u]-= ((y < 1) ? (double)0.0 : ss[(y-1)*gcol+u]);
+			running_f2[v*gcol+u]+= (((x < 1) || (y < 1)) ? (double)0.0 : ss[(y-1)*gcol+(x-1)]);
 		}
 	}
 
