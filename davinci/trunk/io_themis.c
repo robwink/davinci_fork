@@ -543,7 +543,99 @@ Add_Fake_Frame(void *newbuf,int band, int frame, int num_frames,int width)
     free(blank);
 }
 
+void
+Packet_Swap(unsigned char **buf, unsigned char *fbuf, int *len)
+{
+	int i;
+	int l=*len;
+	int idx=0;
+	int counter;
+	int packets=0;
+	int bpackets=0;
+	unsigned char hold[512];/*Temp space...might need to be sized on the fly*/
 
+	unsigned char	SyncStart[]={0xCA,0xF0};
+	unsigned char SyncStop[]={0x8C,0xAB};
+
+
+	*buf=(unsigned char *)calloc(l+(1/10),sizeof(unsigned char*));
+
+	i=0;
+
+	while (i<(l-1)) {
+		counter=0;
+		if (fbuf[i]==0){
+			while((fbuf[i]==0) && (i < (l-1))){
+				i++;
+			}
+			if (i>=(l-1))
+					break;
+		}
+
+		if(((fbuf[i]!=SyncStart[0]) || (fbuf[i+1]!=SyncStart[1]))
+			&& ((fbuf[i]!=SyncStart[1]) || (fbuf[i+1]!=SyncStart[0]))){
+			parse_error("I'm lost...looking for start sync");
+			i++;
+			while ( i < l-1) {
+				if ((fbuf[i]!=SyncStart[0]) || (fbuf[i+1]!=SyncStart[1])){
+					i++;
+				}
+				else break;
+			}
+			if (i>=(l-1)){
+				parse_error("Never found the start sync...aborting\n");
+				free (*buf);
+				*buf=NULL;
+				return;
+			}
+		}
+
+		while (i < l-1) {
+			if (((fbuf[i]==SyncStop[0]) && (fbuf[i+1]==SyncStop[1]))
+				|| ((fbuf[i]==SyncStop[1]) && (fbuf[i+1]==SyncStop[0]))){/*End of Packet*/
+				if (counter % 2) { /*Odd length*/
+					hold[counter]=0;
+					counter++;
+					bpackets++;
+				}
+
+				packets++;
+				hold[counter]=SyncStop[0];
+				counter++;
+				hold[counter]=SyncStop[1];
+				counter++;
+				i+=2;
+				break;
+			}
+
+			else { /*Reading Packet*/
+				hold[counter]=fbuf[i];
+				counter++;
+				i++;
+			}
+
+			if (counter >= 511) { /*Uh oh!*/
+				parse_error("Ahhh, choking on some major junk! Tossing it!");
+				counter=6;
+			}
+		}
+
+		if (i>= (l-1)){
+			parse_error("Ran to end of file with out stopsync..sending back what I have");
+			parse_error("Packets= %d  Bad Packets= %d, bytes = %d",packets,bpackets,idx);
+			*len=idx;
+			return;
+		}
+
+		swab(hold,hold,counter);
+		memcpy(((*buf)+idx),hold,counter);
+		idx+=counter;
+	}
+
+	parse_error("Packets= %d  Bad Packets= %d, bytes = %d",packets,bpackets,idx);
+	*len=idx;
+
+}
 	
 
 Var *
@@ -567,9 +659,11 @@ ff_PACI_Read(vfuncptr func, Var * arg)
     int 		fd;
 	 int		swap_flag=1;
     struct 		stat sbuf;
-    unsigned 	char *buf;
+    unsigned 	char *buf=NULL;
+	 unsigned	char *fbuf;
     unsigned 	char  c_Band;
     unsigned 	short c_Frame;	
+	 int		Spec_Swap=0;
     CMD		Cmd;
     int		Output=0;
     int		Done=0;
@@ -597,7 +691,8 @@ ff_PACI_Read(vfuncptr func, Var * arg)
     alist[3] = make_alist("report", INT, NULL, &report);
     alist[4] = make_alist("nosig", INT, NULL, &Data_Only);
     alist[5] = make_alist("swap", INT, NULL, &swap_flag);
-    alist[6].name = NULL;
+    alist[6] = make_alist("spec", INT, NULL, &Spec_Swap);
+    alist[7].name = NULL;
 
 
     make_args(&ac, &av, func, arg);
@@ -639,9 +734,22 @@ ff_PACI_Read(vfuncptr func, Var * arg)
     old_len=len = sbuf.st_size;
 
 
-    buf = mmap((caddr_t)0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-	if(swap_flag)
-      swab(buf, buf, len);
+    fbuf = mmap((caddr_t)0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+
+	if(swap_flag){
+		if (Spec_Swap){
+			Packet_Swap(&buf,fbuf,&len);
+				if ((buf==NULL) || (len==0))
+					return(NULL);
+		}
+		else{
+			buf=fbuf;
+      	swab(buf, buf, len);
+		}
+	}
+	else 	
+		buf=fbuf;
+
 
 	 len+=328;		 /*Add room for an additional packet; this will prevent
 							 an unitialized read from a file that is still being
