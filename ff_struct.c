@@ -74,7 +74,13 @@ add_struct(Var *s, char *name, Var *exp)
         */
         if ((i = Narray_find(V_STRUCT(s), name, NULL)) != -1) {
             Narray_replace(V_STRUCT(s), i, exp, (void **)&old);
-            if (old) free_var(old);
+            if (old) {
+				/*
+				** Gotta claim the memory before we free it
+				*/
+				mem_claim(old);
+				free_var(old);
+			}
         }
     }
 }
@@ -172,10 +178,6 @@ varray_subset(Var *v, Range *r)
     size = 1 + (r->hi[0] - r->lo[0]) / r->step[0];
 
     if (size == 1) {
-        /*
-        ** single occurance, just return the Var
-        */
-        /* s = V_DUP(V_STRUCT(v).data[r->lo[0]]); */
         get_struct_element(v, r->lo[0], NULL, &s);
     } else {
         s = new_struct(size);

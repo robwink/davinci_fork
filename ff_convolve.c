@@ -18,16 +18,16 @@ vector convolve_BRUTE(const vector& vec1, const vector& vec2)
         }
 
         long int i, j;
-        // part 1
+        /* part 1 */
         for(i = 0; i <= (v1->size - 1); ++i)
                 for(j = 0; j <= i; ++j)
                         v.data[i] += v1->data[j] * v2->data[i - j];
-        // part 2
+        /* part 2 */
         if(v2->size > v1->size)
                 for(i = v1->size; i <= (v2->size - 1); ++i)
                         for(j = 0; j <= (v1->size - 1); ++j)
                                 v.data[i] += v1->data[j] * v2->data[i - j];
-        // part 3
+        /*  part 3 */
         for(i = 1; i <= (v1->size - 1); ++i)
                 for(j = i; j <= (v1->size - 1); ++j)
                         v.data[(v2->size - 1) + i] +=

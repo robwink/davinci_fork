@@ -551,7 +551,7 @@ ff_xplot(vfuncptr func, Var *arg)
 		}
 	}
     send_to_plot(buf);
-#endif
 	free(av);
+#endif
     return(NULL);
 }

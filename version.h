@@ -1,7 +1,11 @@
-char *version = "@(#) daVinci Version #0.63";
+char *version = "@(#) daVinci Version #0.64";
 #include "build.h"
 
 /*
+Version 0.64: Thu Jan 11 17:27:46 MST 2001
+	* Added modules support
+	* Fixed a lot of stuff for multi-platform compiles
+
 Version 0.63: Tue Jan  9 17:47:46 MST 2001
 	* Found memory loss bug in make_args/parse_args.
 	* Above bug found AFTER converting tmp table to Darray

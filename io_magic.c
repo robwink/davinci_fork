@@ -14,7 +14,7 @@
 
 extern Widget top;
 
-Image *Var2Miff(Var *ob)//Write
+Image *Var2Miff(Var *ob) /* Write */
 {
 	int i,j,k;
 	Image *image,*tmp_image,*start_image;
@@ -111,7 +111,7 @@ Image *Var2Miff(Var *ob)//Write
 		Frame_Size+=((Gray) ? (x*y) : (3*x*y));
 		Frames--;
 		image->scene=scene++;
-//		CondenseImage(image);
+/* 		CondenseImage(image); */
 		if (First_Time){
 			tmp_image=image;
 			First_Time=0;
@@ -128,7 +128,7 @@ Image *Var2Miff(Var *ob)//Write
       	return(image);
 }
 
-Var *Miff2Var(Image *image)//Read
+Var *Miff2Var(Image *image) /*  Read */
 {
 
 	Image *tmp_image;
@@ -263,7 +263,7 @@ void WriteGFX_Image(Var *ob,char *filename,char *GFX_type)
 		strcpy(GFX_type,"mpg");
 	
 
-	strcpy(newfn,GFX_type);		//<GFX_type:filename> will designate desired file type
+	strcpy(newfn,GFX_type);		/* <GFX_type:filename> will designate desired file type */
 	strcat(newfn,":");
 	strcat(newfn,filename);
 

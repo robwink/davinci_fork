@@ -4,6 +4,9 @@ static char rcsver[] = "$Id$";
  ** $Source$
  **
  ** $Log$
+ ** Revision 1.3  2001/01/12 00:29:22  gorelick
+ ** Version 0.64
+ **
  ** Revision 1.2  2000/11/28 21:39:10  gorelick
  ** Some minor compile bugs
  **
@@ -40,7 +43,8 @@ EFORMAT ConvertType(char *type);
 DATA
 ConvertASCIItoData(char *ascii, int i)
 {
-	return((DATA) 0);
+	DATA d;
+	return(d);
 }
 
 /**
