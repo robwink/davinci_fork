@@ -266,8 +266,10 @@ main(int ac, char **av)
         log_time();
         if (quick == 0)
             init_history(logfile);
-
+#ifdef HAVE_LIBREADLINE
+	/* JAS FIX */
 		rl_attempted_completion_function = dv_complete_func; 
+#endif
     }
     if (quick == 0) {
         sprintf(path, "%s/.dvrc", getenv("HOME"));
