@@ -405,7 +405,7 @@ CreatePopup2(void)
                               XtNtitle, "daVinci/XRT3D",
                               NULL);
     
-    MtCreateShell(base, NULL, NULL, (Widget (*)())CreateMain, menu_items,
+    MtCreateShell(base, NULL, NULL, (_WidgetRec *(*)())CreateMain, menu_items,
                   NULL, False);
 
     /*

@@ -262,7 +262,7 @@ extern int SCALE;
 extern int debug;
 
 #define drand48()	((double)lrand48()/(unsigned int)(1<<31))
-/* char *strndup(char *, int); */
+char *strndup(char *, int);
 
 #include "ufunc.h"
 #include "scope.h"
