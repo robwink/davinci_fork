@@ -58,6 +58,9 @@
 #define _MSDOS_
 #endif
 
+#ifndef __MSDOS__
+#define __MSDOS__
+#endif /* __MSDOS__ */
 
 
 /*
@@ -67,4 +70,10 @@
 
 #define HAVE_STRING_H
 
-#endif
+/* The following macro is defined for big-endian machines */
+#undef WORDS_BIGENDIAN
+
+/* The following macro is defined if we have libMagick */
+#undef HAVE_LIBMAGICK
+
+#endif /* _CONFIGWIN_H_ */
