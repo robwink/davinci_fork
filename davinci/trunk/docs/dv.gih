@@ -393,9 +393,11 @@
 ?atoi()
  atoi() - Convert a string to INT
 
- atoi(STRING)
+ atoi(STRING | TEXT)
 
     The atoi function converts the specified string to an INT value.
+	If the input is a TEXT array, then each line of the TEXT array is 
+	converted and an array of 1xNx1 values is returned.
 
  See Also:
     atof()
@@ -404,9 +406,27 @@
 ?atof()
  atof() - Convert a string to FLOAT
 
- atof(STRING)
+ atof(STRING | TEXT)
 
-    The atof function converts the specified string to an FLOAT value.
+    The atof function converts the specified string to a FLOAT value.
+	If the input is a TEXT array, then each line of the TEXT array is 
+	converted and an array of 1xNx1 values is returned.
+
+ See Also:
+	atoi(), atod()
+
+?functions atod()
+?atod()
+ atod() - Convert a string to DOUBLE
+
+ atod(STRING | TEXT)
+
+    The atod function converts the specified string to a DOUBLE value.
+	If the input is a TEXT array, then each line of the TEXT array is 
+	converted and an array of 1xNx1 values is returned.
+
+ See also:
+	atof(), atoi()
 
 ?functions basename
 ?basename
@@ -423,6 +443,9 @@
 
     if ext is used, then the ending substring which matches ext is
     removed.
+
+ See also:
+	dirname()
 
 ?functions cluster
 ?cluster
@@ -1504,6 +1527,9 @@
   The dirname() function returns the directory portion of a path.
   When passed a TEXT array, it operates on each line of the TEXT array.
 
+ See Also:
+	basename()
+
 ?functions issubstring()
 ?issubstring()
  issubstring() - tests whether one string is a substring of another
@@ -2017,3 +2043,34 @@ Davinci supports the following matrix functions:
 	25
 	dv> length("some string")
 	11
+
+?functions add_struct()
+?add_struct()
+ add_struct() - Add an element to a structure
+
+ add_struct(object=STRUCT, name=STRING, value=VAL)
+
+ The add_struct() function adds an element to a structure.  This 
+ function is shorthand for "object.name = value", but in this case, 
+ name can be a string variable.
+
+ The add_struct() function returns the value argument.
+
+?functions get_struct()
+?get_struct()
+ get_struct() - Get an element from a structure
+
+ get_struct(object=STRUCT, name=STRING)
+
+ The get_struct() returns an element from a structure.  This function is 
+ shorthand for "object.name", but in this case, name can be a string 
+ variable.
+
+?functions remove_struct()
+?remove_struct()
+ remove_struct() - Remove an element from a structure
+
+ remove_struct(object=STRUCT, name=STRING)
+
+ The remove_struct() function deletes an element from a structure.  The
+ deleted element is returned.
