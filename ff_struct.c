@@ -1,7 +1,9 @@
 #include "parser.h"
 #include "func.h"
 #include <sys/stat.h>
+#ifndef __MSDOS__
 #include <sys/mman.h>
+#endif
 
 #include "hdf5.h"
 
@@ -258,7 +260,13 @@ load_hdf5(hid_t parent)
 Var *
 LoadVanilla(char *filename)
 {
-    int fd;
+#ifdef __MSDOS__
+	extern unsigned char *mmap(void *, size_t , int, int , int , size_t );
+	extern void munmap(unsigned char *, int);
+	typedef	void*	caddr_t;
+#endif
+    
+	int fd;
     struct stat sbuf;
     int rows;
     int cols;
