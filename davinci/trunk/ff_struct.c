@@ -108,6 +108,10 @@ ff_add_struct(vfuncptr func, Var * arg)
         return(NULL);
     }
 	
+	/*
+	** If the user doesn't pass a name, then try to take the name from the
+	** incoming variable.
+	*/
     if (name == NULL && (v == NULL || (v != NULL && V_NAME(v) == NULL))) {
         parse_error("name is null");
         return(NULL);
@@ -159,10 +163,7 @@ ff_get_struct(vfuncptr func, Var * arg)
         return(NULL);
     }
 
-    V_TYPE(&b) = ID_UNK;
-    V_NAME(&b) = name;
-
-    find_struct(a, &b, &v);
+    find_struct(a, name, &v);
     return(v);
 }
 
@@ -273,7 +274,7 @@ create_struct(Var *v)
 }
 
 int
-find_struct(Var *a, Var *b, Var **data)
+find_struct(Var *a, char *b, Var **data)
 {
     Var *s;
     int i;
@@ -292,28 +293,10 @@ find_struct(Var *a, Var *b, Var **data)
         return(-1);
     }
 
-    if ((i = Narray_find(V_STRUCT(a), V_NAME(b), (void **)data)) != -1) {
+    if ((i = Narray_find(V_STRUCT(a), b, (void **)data)) != -1) {
         return(i);
     }
     return(-1);
-}
-
-Var *
-duplicate_struct(Var *v)
-{
-    int i;
-    int count = get_struct_count(v);
-    Var *r = new_struct(count);
-    char *name;
-    Var *data;
-
-    for (i = 0 ; i < count ; i++) {
-        get_struct_element(v, i, &name, &data);
-		data = V_DUP(data);
-		mem_claim(data);
-        add_struct(r, name, data);
-    }
-    return(r);
 }
 
 free_struct(Var *v)
@@ -375,4 +358,59 @@ get_struct_names(Var *v, char ***names, char *prefix)
 	p[count++] = NULL;
 	*names = p;
 	return(count);
+}
+
+Var *
+duplicate_struct(Var *v)
+{
+    int i;
+    int count = get_struct_count(v);
+    Var *r = new_struct(count);
+    char *name;
+    Var *data;
+
+    for (i = 0 ; i < count ; i++) {
+        get_struct_element(v, i, &name, &data);
+	data = V_DUP(data);
+	mem_claim(data);
+        add_struct(r, name, data);
+    }
+    return(r);
+}
+
+
+/*
+** This function makes totally new data, not just append.
+*/
+
+Var *
+concatenate_struct(Var *a, Var *b)
+{
+	int i;
+	char *name;
+	Var *c, *data;
+	Var *aa, *bb;
+
+	/* verify that both args are usable */
+	if (V_TYPE(a) == NULL || V_TYPE(b) == NULL) return(NULL);
+
+	/* verify that there's no name conflicts */
+	for (i = 0 ; i < get_struct_count(b) ; i++) {
+		get_struct_element(b, i, &name, NULL);
+		if (find_struct(a, name, NULL) >= 0) {
+			parse_error("Structures both contain element named: %s\n", name);
+			return(NULL);
+		}
+	}
+	/* ok to proceed */
+
+	aa = duplicate_struct(a);
+
+	for (i = 0 ; i < get_struct_count(b) ; i++) {
+		get_struct_element(b, i, &name, &data);
+		data = V_DUP(data);
+		mem_claim(data);
+		add_struct(aa, name, data);
+	}
+	return(aa);
 }

@@ -87,7 +87,7 @@ Var *ff_list_dv_modules(vfuncptr func, Var *arg);
 Var *V_DUP (Var *);
 Var *set_array (Var *, Var *, Var *);
 Var *extract_array (Var *, Range *);
-int find_struct(Var *a, Var *b, Var **c);
+int find_struct(Var *a, char *name, Var **c);
 
 /* symbol.c */
 Var *get_sym (char *name);	/* retrieve named Sym from table */
