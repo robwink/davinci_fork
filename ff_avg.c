@@ -444,7 +444,7 @@ ff_convolve(vfuncptr func, Var * arg)
 Var *do_convolve(Var *obj, Var *kernel, int norm, float ignore)
 {
 	Var *v;
-	float *data, val;
+	float *data, val, tmp;
 	int *wt;
 
 	int dsize, i, j, k;
@@ -493,14 +493,19 @@ Var *do_convolve(Var *obj, Var *kernel, int norm, float ignore)
 					j = cpos(x_pos, y_pos, z_pos, obj);
 					k = cpos(a, b, c, kernel);
 					val = extract_float(kernel,k);
-					if (val != ignore) {
+					tmp = extract_float(obj, j);
+					if (val != ignore && tmp != ignore) {
 						wt[i]++;
-						data[i] += val * extract_float(obj, j);
+						data[i] += val * tmp;
 					}
 				}
 			}
 		}
-		if (norm) data[i] /= (float)wt[i];
+		if (norm) 
+			if (wt[i])
+				data[i] /= (float)wt[i];
+			else
+				data[i] = ignore; /* If there are no weights, then we've only got ignore values */
 	}
 
 	return(newVal(V_ORG(obj), 
