@@ -980,7 +980,9 @@ locate_dv_module(
 	**    a dangerous game indeed since getenv() returns a pointer to the
 	**    actual environment!  I don't have time to fully audit this code
 	**    but it looks EXTREMELY dangerous to me, offhand. -rsk 9 May 2002
-
+    **
+	** Well, those stdups below here look an awful lot like they're
+	** making copies to me.  -nsg June 10, 2004.
 	*/
 
 	if (dv_mod_path == NULL){
@@ -1439,3 +1441,30 @@ load_dv_module_functions(
 	return ct;
 }
 
+
+
+void
+module_help(char *module,  char *keyword)
+{
+	char *path = NULL;
+	char *dv_mod_path = NULL;
+
+	/*
+	This is the same logic from dv_mod_path, but I didn't want
+	to try to chop off the module object file extensions
+	*/
+
+	/* If DV_MOD_PATH environment is not set use the default path */
+	if ((dv_mod_path = getenv(DV_MOD_PATH_ENV)) == NULL) {
+		dv_mod_path = DV_MOD_PATH_DEF;
+	}
+	path = malloc(strlen(dv_mod_path)+strlen(module)+6);
+	sprintf(path, "%s/%s.gih", dv_mod_path, module);
+
+	if (access(path, R_OK) != 0) {
+		parse_error("Unable to open help file: %s", path);
+		free(path);
+		return;
+	}
+	do_help(keyword, path);
+}

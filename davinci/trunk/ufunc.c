@@ -546,7 +546,7 @@ list_funcs()
 Var *
 ff_global(vfuncptr func, Var * arg)
 {
-	Var *e = NULL;
+	Var *e = NULL, *v = NULL;
 	Var *aval = NULL;
 	char *aname = NULL;
 	Alist alist[2];
@@ -558,13 +558,31 @@ ff_global(vfuncptr func, Var * arg)
 
 	if (aname == NULL) {return(NULL);}
 
-	e = get_global_sym(aname);
-
-	if (e != NULL) {
-		dd_put(scope_tos(), V_NAME(e), e);
-	} else {
-		char *zero = (char *)calloc(1,1);
-		dd_put(scope_tos(), aname, newVal(BSQ, 1,1,1, BYTE, zero));
+	if ((e = get_global_sym(aname)) == NULL)  {
+		/* 
+		 * Doesn't exist in the global scope.  
+		 * If it exists in the local scope, get it and give it's memory
+		 * to the global scope.  Otherwise, create a new value.
+		 */
+		if ((e = eval(aname)) == NULL) {
+			char *zero = (char *)calloc(1,1);
+			e = newVal(BSQ, 1,1,1, BYTE, zero);
+			mem_claim(e);
+			V_NAME(e) = strdup(aname);
+		} else {
+			if ((v = rm_symtab(e)) != NULL) {
+				e = v;
+			} else {
+				/* Ok, at this point, this named argument exists in the
+				 * local scope, but it has to be in the dd, not the symtab.
+				 * The means it's owned by a parent's scope.  Lets just quit.
+				 */
+				parse_error("error: symbol is not part of the local scope");
+				return(NULL);
+			}
+		}
+		put_global_sym(e);
 	}
+	dd_put(scope_tos(), V_NAME(e), e);
 	return(NULL);
 }

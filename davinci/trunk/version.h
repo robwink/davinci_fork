@@ -1,8 +1,14 @@
-char *version = "@(#) daVinci Version #1.28";
+char *version = "@(#) daVinci Version #1.29";
 
 #include "build.h"
 
 /*
+
+Version 1.29: Fri Jun 25 14:11:55 MST 2004
+	* fixed another bug in global()
+	* bug in ff_min with ignore values
+	* several hacks to make module.help() work
+
 Version 1.28: Tue Jun 22 10:07:08 MST 2004
 	* Renamed OBJDESC field "class" to "obj_class" to keep
 	  in sync with iomedley.

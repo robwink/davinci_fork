@@ -261,12 +261,11 @@ postfix_expr
     : primary_expr                  { $$ = $1; }
     | postfix_expr '[' ranges ']'   { $$ = p_mknod(ID_ARRAY,$1,$3); }
     | postfix_expr '.' id           { $$ = p_mknod(ID_DEREF,$1,$3); }
-    | postfix_expr '.' HELP         { $$ = p_mknod(ID_DEREF,$1,
-										p_mkval(ID_ID, "help")); }
     | postfix_expr '(' args ')'     { $$ = p_mknod(ID_FUNCT,$1,$3); }
     | '@' id '(' arg ')'           { $$ = p_mknod(ID_PARALLEL,$2,$4); }
     | '@' '(' arg ')'              { $$ = p_mknod(ID_PARALLEL,NULL,$3); }
     | postfix_expr '(' '?' ')'      { $$ = pp_exact_help($1); }
+    | postfix_expr '.' HELP         { $$ = pp_exact_help($1); }
     ;
 
 rhs_postfix_expr
