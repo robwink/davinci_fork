@@ -1,8 +1,12 @@
-char *version = "@(#) daVinci Version #1.22";
+char *version = "@(#) daVinci Version #1.23";
 
 #include "build.h"
 
 /*
+Version 1.23: Mon Jan 26 14:08:02 MST 2004
+	* Fixed some uninitialized VAR* variables in ff_deghost that were
+	  causing core dumps for Kim. [Michael]
+
 Version 1.22: Tue Jan 20 12:37:20 MST 2004
 	* there's versioning problems in /usr/local/bin.
 	  Incremeting version to make sure I know what's installed.
