@@ -10,7 +10,9 @@ void pp_print_varray(Var *v, int indent) ;
 void pp_print_var(Var *v, char *name, int indent) ;
 
 extern Var * textarray_subset(Var *, Var *);
+extern Var * string_subset(Var *, Var *);
 extern Var * set_text(Var *, Range *,Var *);
+extern Var * set_string(Var *, Range *,Var *);
 extern Var * where_text(Var *,Var *,Var *);
 
 /*
@@ -280,6 +282,8 @@ pp_set_var(Var *id, Var *range, Var *exp)
 
 		if (V_TYPE(v)==ID_TEXT) /*Need to intercept TEXT var's before fixup*/
 			return(set_text(v,r,exp));
+		if (V_TYPE(v)==ID_STRING) /*Ditto for STRING var's!*/
+			return(set_string(v,r,exp));
 
         if (fixup_ranges(v, r, &rout) == 0) {
             parse_error("Illegal range value.");
@@ -572,6 +576,8 @@ pp_range(Var *v, Var *r)
         return(varray_subset(v, &rout));
     } else if (V_TYPE(v) == ID_TEXT) {
 		return(textarray_subset(v,r));
+	} else if (V_TYPE(v) == ID_STRING) {
+		return(string_subset(v,r));
 	}
 	
     parse_error( "Illegal type: %s", V_NAME(v));
