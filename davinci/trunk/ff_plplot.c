@@ -497,11 +497,12 @@ ff_ptext(vfuncptr func, Var * arg)
 void
 ptext_border(float e,int c,int angle,float x,float y,char *text,int Location)
 {
-	extern plP_wcpcx(float);
-	extern plP_wcpcy(float);
-	extern plP_pcdcx(int);
-	extern plP_pcdcy(int);
-	extern plP_mmpcy(float);
+
+	extern int plP_wcpcx(float);
+	extern int plP_wcpcy(float);
+	extern float plP_pcdcx(int);
+	extern float plP_pcdcy(int);
+	extern int plP_mmpcy(float);
 
 
 	float xmin,xmax,ymin,ymax;

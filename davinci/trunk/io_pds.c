@@ -179,7 +179,7 @@ make_int(char *number)
 		if (number[i]=='#') { /*Other one*/
 			number[i]='\0'; 
 			base=strdup((number+offset));
-			return((int) strtoll(base,NULL,atoi(radix)));
+			return((int) strtol(base,NULL,atoi(radix)));
 		}
 		i++;
 	}
