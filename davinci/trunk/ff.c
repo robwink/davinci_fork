@@ -1263,6 +1263,7 @@ Var *
 ff_system(vfuncptr func, Var * arg)
 {
     char *str= NULL;
+    int sys_rtnval;
 	Alist alist[2];
 	alist[0] = make_alist( "command",    ID_STRING,    NULL,    &str);
 	alist[1].name = NULL;
@@ -1272,8 +1273,8 @@ ff_system(vfuncptr func, Var * arg)
 		parse_error("Not enough arguments to function: %s()", func->name);
 		return(NULL);
 	}
-	system(str);
-    return (NULL);
+	sys_rtnval = system(str);
+	return newInt(sys_rtnval);
 }
 
 Var *
