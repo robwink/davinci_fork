@@ -1,6 +1,15 @@
 #include "parser.h"
 
+extern int mayer_realfft(int n, double *out);
+extern int mayer_realifft(int n, double *out);
+extern int mayer_fft(int n, double *out, double *im);
+extern int mayer_ifft(int n, double *out, double *im);
+
+double *flip_t(int trow,int tcol,double *t);
+
 double * TwoD_Convolve(int trow,int tcol,int frow,int fcol, double *tdata, double *fdata, double *ignore);
+double * FFT_2D_Convolve(int trow,int tcol,int frow,int fcol, double *tdata, double *fdata);
+double * pad_template(int trow,int tcol,int frow,int fcol, double *tdata);
 
 void build_t_constants(double *t, int t_row, int t_col, double *t_avg, double *t_prime, double *t2_prime, double *ignore);
 
@@ -27,12 +36,14 @@ ff_fncc(vfuncptr func, Var * arg)
 	Var **av;
 	double *r;
 	double *cc;
+	int fft=0;
 
 	int x,y;
 	int f_row,f_col;
 	int t_row,t_col;
 	double *f=NULL;
 	double *t=NULL;
+	double *tmp_t=NULL;
 	double *t_prime;
 
 	double t_avg,t_var;
@@ -49,13 +60,14 @@ ff_fncc(vfuncptr func, Var * arg)
 	int *p;
 	int *p1;
 
-	Alist alist[6];
+	Alist alist[7];
 	alist[0] = make_alist("template",     ID_VAL,     NULL, &template);
 	alist[1] = make_alist("object",     ID_VAL,     NULL, &obj);
 	alist[2] = make_alist("rf",     ID_VAL,     NULL, &rf);
 	alist[3] = make_alist("r2",     ID_VAL,     NULL, &rf2);
-	alist[4] = make_alist("ignore",     DOUBLE,     NULL, &ig);
-	alist[5].name = NULL;
+	alist[4] = make_alist("fft",     INT,     NULL, &fft);
+	alist[5] = make_alist("ignore",     DOUBLE,     NULL, &ig);
+	alist[6].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -104,10 +116,14 @@ ff_fncc(vfuncptr func, Var * arg)
 
 	if (ig != ref) 
 		ignore = &ig;
-
+#ifdef RUNNING
 	if (rf == NULL) { /* by the query above, we know BOTH are NULL */
 		running_f = (double *)malloc(x * y * sizeof(double));
+		/*DEBUG - set to odd value to find non-address elements */
+		memset((void *)running_f,0x12345678,(x * y * sizeof(double))); 
+
 		running_f2 = (double *)malloc(x * y * sizeof(double));
+		memset((void *)running_f2,0x12345678,(x * y * sizeof(double))); 
 
 		if (running_f == NULL || running_f2 == NULL) {
 			parse_error("Memory Error: Not enough memory to support this call!");
@@ -128,39 +144,251 @@ ff_fncc(vfuncptr func, Var * arg)
 		running_f = (double *)V_DATA(rf);
 		running_f2 = (double *)V_DATA(rf2);
 	}
+#endif
 
 	t_prime = (double *)malloc(t_col * t_row * sizeof(double));
-	parse_error("Building t constants");
 	build_t_constants(t,t_row,t_col,&t_avg,t_prime,&t_var,ignore);
-	parse_error("Varience of t: %g\n",t_var);
-	parse_error("Avg of t: %g\n",t_avg);
+	free(t_prime);
 
 	parse_error("Building convolution");
-	r = TwoD_Convolve(t_row,t_col,f_row,f_col,t,f,ignore); 
+
+	if (fft) {
+		tmp_t=flip_t(t_row,t_col,t);
+		parse_error("Using FFT to do convolution");
+		r = FFT_2D_Convolve(t_row,t_col,f_row,f_col,tmp_t,f);
+		free(tmp_t);
+		return(newVal(BSQ,(int)pow(2.,ceil(log((double)x)/log(2.))),
+								(int)pow(2.,ceil(log((double)y)/log(2.))),
+								1,DOUBLE,r));
+//		return(newVal(BSQ,x,y,1,DOUBLE,r));
+	}
+
+	else
+		r = TwoD_Convolve(t_row,t_col,f_row,f_col,t,f,ignore); 
 
 	parse_error("Building cross-correlation");
 	cc=fncc(r,y,x,t_row,t_col,f_row,f_col,f,t_var,t_avg,ignore,running_f,running_f2);
-
-	free(t_prime);
-
-	free(r);
 
 	p = (int *) malloc(2 * sizeof(int));
 	p1 = (int *) malloc(2 * sizeof(int));
 	find_max_point(x,y,cc,p);
 	p[0]++;p[1]++;
-	p1[0]=p[0]-t_col+2;
-	p1[1]=p[1]-t_row+2;
+	p1[0]=p[0]-t_col+1;
+	p1[1]=p[1]-t_row+1;
 
-	result = new_struct(5);
-	add_struct(result,"cross_correlation",newVal(BSQ,x,y,1,DOUBLE,cc));
+	result = new_struct(2);
+//	add_struct(result,"convolution",newVal(BSQ,x,y,1,DOUBLE,r));
+//	add_struct(result,"cross_correlation",newVal(BSQ,x,y,1,DOUBLE,cc));
+	free(cc);
+	free(r);
+
+/* Max point is 0-indexed */
 	add_struct(result,"max_point",newVal(BSQ,2,1,1,INT,p));
+/* Corner point is 0-indexed */
 	add_struct(result,"corner_point",newVal(BSQ,2,1,1,INT,p1));
-	add_struct(result,"running_sum",newVal(BSQ,x,y,1,DOUBLE,running_f));
-	add_struct(result,"running_sum_squared",newVal(BSQ,x,y,1,DOUBLE,running_f2));
+
+//	add_struct(result,"running_sum",newVal(BSQ,x,y,1,DOUBLE,running_f));
+//	add_struct(result,"running_sum_squared",newVal(BSQ,x,y,1,DOUBLE,running_f2));
+
+//	free(running_f);
+//	free(running_f2);
 
 
 	return(result);
+}
+
+double * 
+FFT_2D_Convolve(int trow,int tcol,int frow,int fcol, double *t, double *f)
+{
+	double *pad_t;
+	double *pad_f;
+
+	double *f_vector_col;
+	double *f_vector_row;
+	double *t_vector_col;
+	double *t_vector_row;
+	double *t_fft;
+	double *f_fft; 
+	double *f_vector_col_im;
+	double *f_vector_row_im;
+	double *t_vector_col_im;
+	double *t_vector_row_im;
+	double *t_fft_im;
+	double *f_fft_im; 
+
+	double *r;
+
+	int i,j;
+	int col_pad;
+	int row_pad;
+	int row_byte_diff;
+	int col_byte_diff;
+	int row_byte;
+	int col_byte;
+
+	int gcol = fcol+tcol-1;
+	int grow = frow+trow-1;
+	
+	int col_chunk = gcol * sizeof(double);
+
+	double tol = 1e-9;
+
+	pad_f=pad_template(frow,fcol,grow,gcol,f);
+
+	pad_t=pad_template(trow,tcol,grow,gcol,t);
+
+	row_pad = (int)pow(2.,ceil(log((double)grow)/log(2.)));
+	col_pad = (int)pow(2.,ceil(log((double)gcol)/log(2.)));
+
+
+	row_byte_diff = (row_pad-grow)*sizeof(double);
+	col_byte_diff = (col_pad-gcol)*sizeof(double);
+	row_byte=row_pad*sizeof(double);
+	col_byte=col_pad*sizeof(double);
+
+
+	f_vector_col = (double *)malloc(row_pad*sizeof(double)); //Collumn (has grow # of entries)
+	f_vector_row = (double *)malloc(col_pad*sizeof(double)); //Row (has gcol # of entries)
+	t_vector_col = (double *)malloc(row_pad*sizeof(double));
+	t_vector_row = (double *)malloc(col_pad*sizeof(double));
+	f_fft = (double *)malloc(col_pad*row_pad*sizeof(double));
+	t_fft = (double *)malloc(col_pad*row_pad*sizeof(double));
+//	r =  (double *)malloc(grow*gcol*sizeof(double));
+	r =  (double *)malloc(col_pad*row_pad*sizeof(double));
+
+	f_vector_col_im = (double *)malloc(row_pad*sizeof(double)); //Collumn (has grow # of entries)
+	f_vector_row_im = (double *)malloc(col_pad*sizeof(double)); //Row (has gcol # of entries)
+	t_vector_col_im = (double *)malloc(row_pad*sizeof(double));
+	t_vector_row_im = (double *)malloc(col_pad*sizeof(double));
+	f_fft_im = (double *)malloc(col_pad*row_pad*sizeof(double));
+	t_fft_im = (double *)malloc(col_pad*row_pad*sizeof(double));
+
+/* First lets translate every col, row by row (this is easy) */
+
+	for(i=0;i<grow;i++){
+		memset(f_vector_row,0x0,col_byte);
+		memset(t_vector_row,0x0,col_byte);
+
+		memset(f_vector_row_im,0x0,col_byte);
+		memset(t_vector_row_im,0x0,col_byte);
+
+		memcpy(f_vector_row,pad_f+(i*gcol),col_chunk);
+		memcpy(t_vector_row,pad_t+(i*gcol),col_chunk);
+
+//		mayer_realfft(col_pad,f_vector_row);
+//		mayer_realfft(col_pad,t_vector_row);
+
+		mayer_fft(col_pad,f_vector_row,f_vector_row_im);
+		mayer_fft(col_pad,t_vector_row,t_vector_row_im);
+
+		memcpy(f_fft+i*col_pad,f_vector_row,col_byte);
+		memcpy(t_fft+i*col_pad,t_vector_row,col_byte);
+
+		memcpy(f_fft_im+i*col_pad,f_vector_row_im,col_byte);
+		memcpy(t_fft_im+i*col_pad,t_vector_row_im,col_byte);
+	}
+
+	printf("+");
+
+/* 
+** Now we process the rows, col by col.
+** At the same time, after a collumn has been processed
+** we do the multiplication and store the result back in f_fft
+** 
+*/
+
+	for(j=0;j<col_pad;j++){
+		memset(f_vector_col,0x0,row_byte);
+		memset(t_vector_col,0x0,row_byte);
+		memset(f_vector_col_im,0x0,row_byte);
+		memset(t_vector_col_im,0x0,row_byte);
+		for(i=0;i<grow;i++){
+			f_vector_col[i]=f_fft[i*col_pad+j];
+			t_vector_col[i]=t_fft[i*col_pad+j];
+			f_vector_col_im[i]=f_fft_im[i*col_pad+j];
+			t_vector_col_im[i]=t_fft_im[i*col_pad+j];
+		}
+//		mayer_realfft(row_pad,f_vector_col);
+//		mayer_realfft(row_pad,t_vector_col);
+		mayer_fft(row_pad,f_vector_col,f_vector_col_im);
+		mayer_fft(row_pad,t_vector_col,t_vector_col_im);
+		
+
+		for(i=0;i<row_pad;i++) {
+//			f_fft[i*col_pad+j] = f_vector_col[i];// * t_vector_col[i];// + f_vector_col_im[i] * t_vector_col_im[i]*-1.;
+
+			f_fft[i*col_pad+j] = f_vector_col[i] * t_vector_col[i] + f_vector_col_im[i] * t_vector_col_im[i]*-1.;
+			f_fft_im[i*col_pad+j] = f_vector_col[i] * t_vector_col_im[i] + f_vector_col_im[i]*t_vector_col[i] ;
+		}
+
+		
+	}
+	printf("+");
+	
+
+/*
+** Now we have the maxtrix f_fft which is f*t in freq. space.
+** Now we need to run an inverse fft on this matrix to get
+** our convolution back!
+*/
+
+/*
+** First we process colums, row by row
+*/
+
+	for (i=0;i<row_pad;i++){
+		memcpy(f_vector_row,f_fft+(i*col_pad),col_byte);
+		memcpy(f_vector_row_im,f_fft_im+(i*col_pad),col_byte);
+//		mayer_realifft(col_pad,f_vector_row);
+		mayer_ifft(col_pad,f_vector_row,f_vector_row_im);
+		memcpy(f_fft+(i*col_pad),f_vector_row,col_byte);
+		memcpy(f_fft_im+(i*col_pad),f_vector_row_im,col_byte);
+	}	
+	printf("+");
+
+/*
+** Now we process the rows, column by collumn
+*/
+
+	for(j=0;j<col_pad;j++){
+		for(i=0;i<row_pad;i++) {
+			f_vector_col[i] = f_fft[i*col_pad+j];
+			f_vector_col_im[i] = f_fft_im[i*col_pad+j];
+		}
+
+//		mayer_realifft(row_pad,f_vector_col);
+		mayer_ifft(row_pad,f_vector_col,f_vector_col_im);
+
+		for(i=0;i<row_pad;i++) {
+//			r[i*gcol+j]=f_vector_col[i];///(double)(col_pad*row_pad);	
+//			if (r[i*gcol+j] < tol && r[i*gcol+j] > -tol)
+//				r[i*gcol+j]=0.;
+			r[i*col_pad+j]=f_vector_col[i]/(double)(col_pad*row_pad);	
+			if (r[i*col_pad+j] < tol && r[i*col_pad+j] > -tol)
+				r[i*col_pad+j]=0.;
+		}
+	}
+	printf("+\n");
+
+	return(r);
+}
+
+double * 
+pad_template(int trow,int tcol,int frow,int fcol, double *t)
+{
+	double *pad_t;
+	int i,j;
+
+	pad_t = (double *)malloc(frow*fcol*sizeof(double));
+	memset((void *) pad_t,0x0,(frow*fcol*sizeof(double)));
+
+	for(i=0;i<trow;i++){
+		for(j=0;j<tcol;j++){
+			pad_t[i*fcol+j]=t[i*tcol+j];
+		}
+	}
+
+	return(pad_t);
 }
 
 void 
@@ -270,19 +498,19 @@ fncc(double *r, int g_row,int g_col,int t_row,int t_col,int f_row,
 		for(j=0;j<g_col;j++){
 			x = j - t_cen_col;
 
-/*			fsum = f_sum(f,f_row,f_col,x,y,t_cen_row,t_cen_col,row_even_mod,col_even_mod,&sots,&f_ic,ignore); */
+			fsum = f_sum(f,f_row,f_col,x,y,t_cen_row,t_cen_col,row_even_mod,col_even_mod,&sots,&f_ic,ignore); 
 
-			fsum = running_f[i*g_col+j];
-			sots = running_f2[i*g_col+j];
+//			fsum = running_f[i*g_col+j];
+//			sots = running_f2[i*g_col+j];
 
 			favg = (fsum*fsum)/(t_col*t_row-f_ic);
 
-
 /*
+
 			if ( fabs(fsum-running_f[i*g_col+j]) > tol) 
-				parse_error("@ %d,%d (row,col): fsum = %f while running_f = %f",i,j,fsum,running_f);
+				parse_error("@ %d,%d (row,col): fsum = %g while running_f = %g",i,j,fsum,running_f[i*g_col+j]);
 			if (fabs(sots-running_f2[i*g_col+j]) > tol)
-				parse_error("@ %d,%d (row,col): sots = %f while running_f2 = %f",i,j,sots,running_f2);
+				parse_error("@ %d,%d (row,col): sots = %g while running_f2 = %g",i,j,sots,running_f2[i*g_col+j]);
 */
 
 
@@ -293,8 +521,8 @@ fncc(double *r, int g_row,int g_col,int t_row,int t_col,int f_row,
 				p3 = (sots - favg)/(t_col*t_row-1-f_ic);
 
 				if ( p3 < 0. ) {
-					parse_error("Error at cell: %d,%d we have: %g",j,i,p3);
-					g[i*g_col+j] = 0.;
+//					parse_error("Error at cell: %d,%d we have: %g",j,i,p3);
+					g[i*g_col+j] = MINFLOAT;
 				}
 
 				else if ( p3 < tol && p3 > -tol) //as good as dead
@@ -381,7 +609,9 @@ build_running_sums(int trow,int tcol,int frow,int fcol,int grow,
 	int u, v;
 
 	s = (double *)malloc(gcol * grow * sizeof(double));
+	memset((void *)s,0x12345678,(gcol * grow * sizeof(double)));
 	ss = (double *)malloc(gcol * grow * sizeof(double));
+	memset((void *)ss,0x12345678,(gcol * grow * sizeof(double)));
 
 	if (s == NULL || ss == NULL ) {
 			parse_error("Could not allocate enough memory to perform this task...aborting");
@@ -621,5 +851,21 @@ TwoD_Convolve(int trow,int tcol,int frow,int fcol, double *t, double *f, double 
 	} /* for y */
 
 	return (g);
+}
+
+double *
+flip_t(int trow,int tcol,double *t)
+{
+	int i,j;
+
+	double *tt = (double *)malloc(trow*tcol*sizeof(double));
+
+	for(i=0;i<trow;i++){
+		for(j=0;j<tcol;j++){
+			tt[(trow-i-1)*tcol+(tcol-j-1)]=t[i*tcol+j];
+		}
+	}
+
+	return(tt);
 }
 
