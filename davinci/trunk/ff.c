@@ -2033,7 +2033,7 @@ ff_putenv(vfuncptr func, Var * arg)
 		return(NULL);
 	}
 	sprintf(buf, "%s=%s", name, val);
-	putenv(buf);
+	putenv(strdup(buf));
 	return(NULL);
 }
 
