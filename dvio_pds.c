@@ -2,6 +2,8 @@
 #include "parser.h"
 #include "io_lablib3.h"
 
+#include <ctype.h>
+
 
 void Set_Col_Var(Var **,FIELD **,LABEL * ,int *size, char **);
 
@@ -37,7 +39,30 @@ PFI VrF[]={rf_QUBE,rf_TABLE,rf_IMAGE,rf_HISTOGRAM_IMAGE,rf_HISTORY};
 static char *keyName[]={"QUBE","TABLE","IMAGE","HISTOGRAM_IMAGE","HISTORY",NULL};
 static int num_data_Keys;
 
+char *
+fix_name(char *input_name)
+{
+	char *name=strdup(input_name);
+	int len=strlen(name);
+	int i;
+	int val;
 
+	if (len < 1)
+		return("Foo!");
+
+	i=0;
+	while(i<len){
+		val=(int)(name[i]) & 0xff;
+		if (isupper(val)){
+			val=tolower(val) & 0xff;
+			name[i]=(char)val;
+		}
+		i++;
+	}
+
+	return(name);
+}
+				
 
 void
 Init_Obj_Table(void)
@@ -384,7 +409,7 @@ Traverse_Tree(OBJDESC * ob,Var *v)
 			}
 
 			/*Now add the name to the structure*/
-			add_struct(v,keyname,do_key(ob,key));
+			add_struct(v,fix_name(keyname),do_key(ob,key));
          key=OdlGetNextKwd(key);
       }
 
@@ -400,7 +425,7 @@ Traverse_Tree(OBJDESC * ob,Var *v)
 					}
 				}
 
-				add_struct(v,keyname,do_key(ob,key));
+				add_struct(v,fix_name(keyname),do_key(ob,key));
 				key=OdlGetNextKwd(key);
 		}
 
@@ -417,7 +442,7 @@ Traverse_Tree(OBJDESC * ob,Var *v)
 				name=next_ob->class;
 
 			next_var=new_struct(0);
-			add_struct(v,name,next_var);
+			add_struct(v,fix_name(name),next_var);
 
 			/*Check to see if this is an object we want*/
 			if ((idx=Match_Key_Obj(next_ob->class))) {/* It is */
@@ -446,7 +471,7 @@ Traverse_Tree(OBJDESC * ob,Var *v)
 				name=next_ob->class;
 
 			next_var=new_struct(0);
-			add_struct(v,name,next_var);
+			add_struct(v,fix_name(name),next_var);
 
 			/*Check to see if this is an object we want*/
 			if ((idx=Match_Key_Obj(next_ob->class))) {/* It is */
@@ -470,7 +495,7 @@ Traverse_Tree(OBJDESC * ob,Var *v)
 				}
 			}
 
-			add_struct(v,keyname,do_key(ob,key));
+			add_struct(v,fix_name(keyname),do_key(ob,key));
 			key=OdlGetNextKwd(key);
 		}
 	}
@@ -529,7 +554,7 @@ int rf_QUBE(char *fn, Var *ob,char * val)
 	fp=fopen(fn,"r");
 	data=dv_LoadISIS(fp,fn,NULL);
 	if (data!=NULL){
-		add_struct(ob,"DATA",data);
+		add_struct(ob,fix_name("DATA"),data);
 		fclose(fp);
 		return(0);
 	}
@@ -597,7 +622,7 @@ int rf_TABLE(char *fn, Var *ob,char * val)
 	/*Set each field Var's data and parameter information*/
 	Set_Col_Var(&Data,f,label,size,Bufs);
 
-	add_struct(ob,"DATA",Data);
+	add_struct(ob,fix_name("DATA"),Data);
 
 	free(tmpbuf);
 	free(size);
@@ -797,7 +822,7 @@ Set_Col_Var(Var **Data,FIELD **f,LABEL *label,int *size, char **Bufs)
 			break;
 
 		}
-		add_struct(*Data,f[j]->name,v);
+		add_struct(*Data,fix_name(f[j]->name),v);
 	}	
 }
 
@@ -809,7 +834,7 @@ int rf_IMAGE(char *fn, Var *ob,char * val)
 	fp=fopen(fn,"r");
 	data=dv_LoadISIS(fp,fn,NULL);
 	if (data!=NULL){
-		add_struct(ob,"IMAGE",data);
+		add_struct(ob,fix_name("IMAGE"),data);
 		fclose(fp);
 		return(0);
 	}

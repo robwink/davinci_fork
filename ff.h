@@ -236,9 +236,6 @@ struct _vfuncptr vfunclist[] = {
     { "add_struct",     ff_add_struct,         NULL , NULL},
     { "get_struct",     ff_get_struct,         NULL , NULL},
     { "eigen",          ff_eigen,              NULL , NULL},
-    { "covar",          ff_corr_covar_and_scp, NULL , NULL},
-    { "corr",           ff_corr_covar_and_scp, NULL , NULL},
-    { "scp",            ff_corr_covar_and_scp, NULL , NULL},
     { "pcs",            ff_pcs,                NULL , NULL},
 
     { "syscall",        ff_syscall,            NULL, NULL},
