@@ -118,8 +118,8 @@ lin_fit(Var *x, Var *y,int Row, int plot, double ignore)
 {
 	double **data;
 	char *tmp;
-    char buf[256];
-    char buf2[256];
+   char buf[256];
+   char buf2[256];
 	FILE *fp;
 
 	int i, count;
@@ -128,6 +128,7 @@ lin_fit(Var *x, Var *y,int Row, int plot, double ignore)
 	double x1, y1;
 
 	A=dmatrix(2,2);
+	/* data=dmatrix(Row,2); */
 	Cov=dmatrix(2,2);
 	B=dvector(2);
 	r=dvector(2);
@@ -143,16 +144,22 @@ lin_fit(Var *x, Var *y,int Row, int plot, double ignore)
 		y1 = extract_double(y,i); /*b*/
 
 		if (x1 == ignore || y1 == ignore) continue;
+
 		count++;
 
+/*
+		data[i][0]=x1;
+		data[i][1]=y1;
+*/
+
 		A[0][1]+=x1;
+		A[1][0]+=x1;
 		A[1][1]+=(x1*x1);
 
 		B[0]+=y1;
 		B[1]+=(x1*y1);
 	}
 	A[0][0]=(float)count;
-	A[1][0] = A[0][1];
 
 	solve_for_da(A,Cov,B,r,2);
 
@@ -182,11 +189,16 @@ lin_fit(Var *x, Var *y,int Row, int plot, double ignore)
 			send_to_plot(buf);
 		}
 
+/*		strcpy(buf2, comment); */
+/*		p = strchr(buf2, '='); */
 		send_to_plot("set noparametric\n");
 		sprintf(buf, "plot \"%s\" using 1:2 with points, %s with lines\n", tmp, "a0+a1*x");
 		free(tmp);
 		send_to_plot(buf);
 	}
+
+	/* free_dmatrix(data,Row,2); */
+
 	return(newVal(BSQ,2,1,1,DOUBLE,r));
 }	
 

@@ -1,8 +1,12 @@
-char *version = "@(#) daVinci Version #1.30";
+char *version = "@(#) daVinci Version #1.31";
 
 #include "build.h"
 
 /*
+Version 1.31: Wed Jun 30 03:35:03 MST 2004
+	* Minor changes to hdf reader to be compatible with new version
+          of the library
+
 Version 1.30: Tue Jun 29 23:03:41 MST 2004
 	* Fixed fit(type=linear) to avoid a complete duplication of the data
 
