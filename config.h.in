@@ -21,6 +21,12 @@
 /* Define if your <sys/time.h> declares struct tm.  */
 #undef TM_IN_SYS_TIME
 
+/*Define if you have Xm library*/
+#undef HAVE_LIBXM
+
+/*Define if you have xrt3d library*/
+#undef XRT_ENABLED
+
 /* Define if you have the basename function.  */
 #undef HAVE_BASENAME
 
@@ -78,6 +84,9 @@
 /* Define if you have the usleep function.  */
 #undef HAVE_USLEEP
 
+/* Define if you have the <Xm/Xrt3d.h> header file.  */
+#undef HAVE_XM_XRT3D_H
+
 /* Define if you have the <dirent.h> header file.  */
 #undef HAVE_DIRENT_H
 
@@ -87,11 +96,23 @@
 /* Define if you have the <limits.h> header file.  */
 #undef HAVE_LIMITS_H
 
+/* Define if you have the <magick.h> header file.  */
+#undef HAVE_MAGICK_H
+
+/* Define if you have the <magick/api.h> header file.  */
+#undef HAVE_MAGICK_API_H
+
 /* Define if you have the <malloc.h> header file.  */
 #undef HAVE_MALLOC_H
 
+/* Define if you have the <my_list.h> header file.  */
+#undef HAVE_MY_LIST_H
+
 /* Define if you have the <ndir.h> header file.  */
 #undef HAVE_NDIR_H
+
+/* Define if you have the <projects.h> header file.  */
+#undef HAVE_PROJECTS_H
 
 /* Define if you have the <sys/dir.h> header file.  */
 #undef HAVE_SYS_DIR_H
@@ -108,14 +129,38 @@
 /* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H
 
+/* Define if you have the <values.h> header file.  */
+#undef HAVE_VALUES_H
+
+/* Define if you have the Magick library (-lMagick).  */
+#undef HAVE_LIBMAGICK
+
 /* Define if you have the X11 library (-lX11).  */
 #undef HAVE_LIBX11
 
+/* Define if you have the Xext library (-lXext).  */
+#undef HAVE_LIBXEXT
+
+/* Define if you have the Xt library (-lXt).  */
+#undef HAVE_LIBXT
+
+/* Define if you have the jpeg library (-ljpeg).  */
+#undef HAVE_LIBJPEG
+
 /* Define if you have the m library (-lm).  */
 #undef HAVE_LIBM
+
+/* Define if you have the proj library (-lproj).  */
+#undef HAVE_LIBPROJ
 
 /* Define if you have the readline library (-lreadline).  */
 #undef HAVE_LIBREADLINE
 
 /* Define if you have the termcap library (-ltermcap).  */
 #undef HAVE_LIBTERMCAP
+
+/* Define if you have the tiff library (-ltiff).  */
+#undef HAVE_LIBTIFF
+
+/* Define if you have the z library (-lz).  */
+#undef HAVE_LIBZ

@@ -1,6 +1,6 @@
 SHELL = /bin/sh
 
-CFLAGS=-g
+CFLAGS=-g $(XINCLUDES)
 
 srcdir = @srcdir@
 VPATH = @srcdir@
@@ -24,7 +24,7 @@ XRTLIBS = @XRTLIBS@
 
 CC     = @CC@
 DEFS   = @DEFS@ -Ilib
-LIBS   = $(XLIBS) @LIBS@
+LIBS   = $(READLINE_LIB) $(XLIBS) @LIBS@
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
@@ -53,7 +53,7 @@ OBJ=p.o pp.o symbol.o error.o \
 	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
 	x.o xrt_print_3d.o motif_tools.o ff_convolve.c
 
-all:	davinci gplot
+all:	@MAKEREAD@ davinci gplot
 
 davinci:	$(OBJ)  $(READLINE_OBJ) 
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $@ $(READLINE_LIB) $(LIBS)
