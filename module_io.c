@@ -64,8 +64,10 @@ open_dv_module_file(
 	/* Caution! mh->handle is "int" for HPUX and "void *" for others */
 
 	if (!mh->handle){
+	  /* I imagine this needs to be something different for Hockey Pux.
+	     I don't have one to play with at the moment. 
 		parse_error("Unable to open module %s. Reason: %s.",
-					fname, strerror(errno));
+					fname, dlerror());
 
 		free(mh);
 		return NULL;
