@@ -71,6 +71,7 @@ command_statement
 help_statement
     : HELP                          { $$ = pp_help(NULL); }
     | HELP id                       { $$ = pp_help($2); }
+    | HELP string                   { $$ = pp_help($2); }
     | '?'                           { $$ = pp_help(NULL); }
     | '?' id                        { $$ = pp_help($2); }
     ;

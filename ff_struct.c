@@ -184,13 +184,24 @@ varray_subset(Var *v, Range *r)
     if (size == 1) {
         get_struct_element(v, r->lo[0], NULL, &s);
     } else {
+		/* this code is broken */
+		/*
         s = new_struct(size);
         for (i = 0 ; i < size ; i++) {
             j = r->lo[0] + i *r->step[0];
-            get_struct_element(v, i, NULL, &data);
-            Narray_replace(V_STRUCT(s), j, data, (void **)&old);
+            get_struct_element(v, j, NULL, &data);
+            Narray_replace(V_STRUCT(s), i, data, (void **)&old);
             if (old) free_var(old);
         }
+		*/
+		s = new_struct(size);
+        for (i = 0 ; i < size ; i++) {
+            j = r->lo[0] + i *r->step[0];
+            get_struct_element(v, j, &name, &data);
+			data = V_DUP(data);
+            Narray_add(V_STRUCT(s), name, data);
+			mem_claim(data);
+		}
     }
     return(s);
 }
@@ -374,8 +385,8 @@ duplicate_struct(Var *v)
 
     for (i = 0 ; i < count ; i++) {
         get_struct_element(v, i, &name, &data);
-	data = V_DUP(data);
-	mem_claim(data);
+		data = V_DUP(data);
+		mem_claim(data);
         add_struct(r, name, data);
     }
     return(r);
@@ -384,6 +395,8 @@ duplicate_struct(Var *v)
 
 /*
 ** This function makes totally new data, not just append.
+**
+** This looks like it will fail with unnamed elements
 */
 
 Var *

@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.94";
+char *version = "@(#) daVinci Version #0.97";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,14 @@ char *version = "@(#) daVinci Version #0.94";
 #include "build.h"
 
 /*
+Version 0.97: Wed Jun 12 03:28:21 MST 2002
+	+ Checking of several bug fixes and misc modifications
+
+Version 0.96: Wed Jun 12 03:28:21 MST 2002
+	+ Added moments(), covar(ignore) and avg(ignore)
+
+Version 0.95: Fri May 31 16:41:03 MST 2002
+	+ Made HDF use automatic compression
 
 Version 0.94: Tue May 28 13:45:12 MST 2002
 	+ added changes to support read/write IO modules, using libtool

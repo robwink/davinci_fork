@@ -1937,6 +1937,13 @@ newFloat(float f)
 	V_FLOAT(v) = f;
 	return(v);
 }
+Var *
+newDouble(double d)
+{
+	Var *v = newVal(BSQ, 1, 1,1, DOUBLE, calloc(1, sizeof(double)));	
+	V_DOUBLE(v) = d;
+	return(v);
+}
 
 Var *
 ff_killchild(vfuncptr func, Var *arg)

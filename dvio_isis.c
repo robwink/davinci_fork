@@ -33,7 +33,7 @@ Var *dv_LoadISISFromPDS(FILE *fp, char *fn, int dptr)
 
 	iom_init_iheader(h);
 
-	ob = (OBJDESC *)OdlParseLabelFile(fn, err_file,ODL_EXPAND_STRUCTURE, 0);
+	ob = (OBJDESC *)OdlParseLabelFile(fn, err_file,ODL_EXPAND_STRUCTURE, VERBOSE==0);
 
 	qube = NULL;
 	qube = OdlFindObjDesc(ob, "QUBE", NULL, 0, 0, 0);
@@ -282,7 +282,7 @@ dv_LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var)
 #endif /* _WIN32 */
 
     ob = (OBJDESC *)OdlParseLabelFptr(fp, err_file,
-                                      ODL_EXPAND_STRUCTURE | ODL_EXPAND_CATALOG, 0);
+                                      ODL_EXPAND_STRUCTURE | ODL_EXPAND_CATALOG, VERBOSE==0);
 
     if (!ob || (key = OdlFindKwd(ob, "RECORD_BYTES", NULL, 0, 0)) == NULL) {
         OdlFreeTree(ob);

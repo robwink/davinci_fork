@@ -1303,7 +1303,7 @@ ReadPDS(vfuncptr func, Var *arg)
 
 	Init_Obj_Table();
 
-	ob = (OBJDESC *)OdlParseLabelFile(filename, err_file,ODL_EXPAND_STRUCTURE, 0);
+	ob = (OBJDESC *)OdlParseLabelFile(filename, err_file,ODL_EXPAND_STRUCTURE, VERBOSE == 0);
 	if ((key = OdlFindKwd(ob, "RECORD_BYTES", NULL, 0, ODL_THIS_OBJECT))==NULL){
 		parse_error("Hey! This doesn't look like a PDS file");
 		return(NULL);

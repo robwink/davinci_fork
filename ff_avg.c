@@ -23,7 +23,8 @@ ff_avg2(vfuncptr func, Var * arg)
 	int axis = 0, dsize, i, j;
 	double n;
 	int in[3], out[3];
-	double *sum, *sum2, *vx;
+	double *sum, *sum2;
+	int *count;
 	char *options[] =  {
 		"x", "y", "z", "xy", "yx", "xz", "zx", "yz", "zy",
 		"xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL
@@ -33,12 +34,15 @@ ff_avg2(vfuncptr func, Var * arg)
 	Var *both = NULL;
 	Var *avg = NULL, *stddev = NULL;
 	int f_avg =0, f_stddev = 0, f_sum = 0;
+	Var *ignore = NULL;
+	double ignore_val;
 
-	Alist alist[4];
+	Alist alist[5];
 	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
 	alist[1] = make_alist("axis",  		ID_ENUM,	options,	&ptr);
 	alist[2] = make_alist("both",  		ID_VAL,	    NULL,	&both);
-	alist[3].name = NULL;
+	alist[3] = make_alist("ignore",  	ID_VAL,	    NULL,	&ignore);
+	alist[4].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -84,7 +88,10 @@ ff_avg2(vfuncptr func, Var * arg)
 	}
 
 	sum= (double *)calloc(V_DSIZE(v), sizeof(double));
+	count= (int *)calloc(V_DSIZE(v), sizeof(int));
 	if (f_stddev) sum2= (double *)calloc(V_DSIZE(v), sizeof(double));
+
+	if (ignore) ignore_val = extract_double(ignore, 0);
 
 	/*
 	** The if avoids the x^2 computation on the case we don't need it.
@@ -95,38 +102,50 @@ ff_avg2(vfuncptr func, Var * arg)
 		*/
 		for (i = 0 ; i < dsize ; i++) {
 			x = extract_float(obj, i);
+			if (ignore && x==ignore_val) continue;
 			j = rpos(i, obj, v);
 			sum[j] += x;
 			sum2[j] += x*x;
+			count[j]++;
 		}
 	} else {
 		for (i = 0 ; i < dsize ; i++) {
 			x = extract_float(obj, i);
+			if (ignore && x==ignore_val) continue;
 			j = rpos(i, obj, v);
 			sum[j] += x;
+			count[j]++;
 		}
 	}
 
 	dsize2 = V_DSIZE(v);
-	n = (double)dsize / (double)dsize2;
+	// n = (double)dsize / (double)dsize2;
 
 	/*
 	** Perform required computations with sums
 	*/
 	if (f_stddev) {
 		for (i = 0 ; i < dsize2 ; i++) {
-			sum2[i] = sqrt((sum2[i] - (sum[i]*sum[i]/n))/(n-1));
+			if (count[i] > 1)  {
+				sum2[i] = sqrt((sum2[i] - (sum[i]*sum[i]/count[i]))/(count[i]-1));
+			}
 		}
 		V_DATA(stddev) = sum2;
 	}
 
 	if (f_avg) {
-		n = (double)dsize2 / (double)dsize;
+		// n = (double)dsize2 / (double)dsize;
 		for (i = 0 ; i < dsize2 ; i++) {
-			sum[i] = sum[i] * n;
+			if (count[i] > 0) {
+				sum[i] = sum[i] / count[i];
+			} else {
+				sum[i] = 0;
+			}
 		}
 		V_DATA(avg) = sum;
 	}
+
+	free(count);
 
 	if (f_sum) {
 		V_DATA(v) = sum;

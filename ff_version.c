@@ -43,14 +43,8 @@ dump_version()
 #ifdef HAVE_LIBHDF5
 		printf("%s ", "libhdf5");
 #endif
-#ifdef HAVE_LIBJPEG
-		printf("%s ", "libjpeg");
-#endif
 #ifdef HAVE_LIBREADLINE
 		printf("%s ", "libreadline");
-#endif
-#ifdef HAVE_LIBTIFF
-		printf("%s ", "libtiff");
 #endif
 #ifdef HAVE_LIBUSDS
 		printf("%s ", "libusds");

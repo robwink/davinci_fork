@@ -275,6 +275,7 @@ Var *ff_plot(vfuncptr, Var *);
 Var *ff_splot(vfuncptr, Var *);
 Var *ff_display(vfuncptr, Var *);
 Var *ff_moment(vfuncptr, Var *);
+Var *ff_moments(vfuncptr, Var *);
 Var *ff_interp(vfuncptr, Var *);
 Var *ff_fit(vfuncptr, Var *);
 Var *ff_header(vfuncptr func, Var *);
@@ -401,6 +402,7 @@ Var *ff_rtrim(vfuncptr func, Var *arg);
 Var *ff_equals(vfuncptr func, Var *arg);
 Var * newInt(int i);
 Var * newFloat(float f);
+Var * newDouble(double f);
 Var *ff_xplot(vfuncptr func, Var *arg);
 Var *ff_killchild(vfuncptr func, Var *arg); 
 
