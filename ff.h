@@ -283,6 +283,8 @@ struct _vfuncptr vfunclist[] = {
 	 { "slant",        ff_slant,                NULL },
 	 { "unslant",      ff_unslant,                NULL },
 
+	 { "chdir",      ff_chdir,                NULL },
+
 /*	{ "hstretch",      ff_hstretch, 			NULL }, */
 
     { NULL,             NULL,                  NULL }

@@ -461,3 +461,4 @@ Var * ff_unslant(vfuncptr func, Var * arg);
 
 Var *do_convolve(Var *obj, Var *kernel, int norm);
 Var *ff_hstretch(vfuncptr func, Var * arg);
+Var *ff_chdir(vfuncptr func, Var * arg);
