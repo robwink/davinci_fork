@@ -684,13 +684,17 @@ ProcessGroupIntoLabel(FILE *fp,int record_bytes, Var *v, char *name)
 	fprintf(fp,"GROUP = %s\r\n", tmpname2);
 
    get_struct_element(v, 0, &struct_name, &tmpvar); /*Get the OBJECT Tag and temporarily NULLify it */
-	tmpname=strdup(struct_name);
-	*struct_name='\0';
+/*	tmpname=strdup(struct_name); */
+/*	*struct_name='\0'; */
+
+	struct_name[0]='\0';
 
 	ProcessIntoLabel(fp,record_bytes,v, 0,NULL,NULL);
 
-	memcpy(struct_name,tmpname,strlen(tmpname));
-	free(tmpname);
+/*	memcpy(struct_name,tmpname,strlen(tmpname)); */
+/*	free(tmpname); */
+
+	struct_name[0]='O'; /* Replace the O in Object */
 
 	fprintf(fp,"END_GROUP = %s\r\n", tmpname2);
 	free(tmpname2);
@@ -942,12 +946,19 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 
 	if (!(strcasecmp("table",name))){ /*We're processing a table!*/
    	get_struct_element(v, 0, &struct_name, &tmpvar); /*Get the OBJECT Tag and temporarily NULLify it */
-		tmpname=strdup(struct_name);
-		*struct_name='\0';
+
+/*		tmpname=strdup(struct_name); */
+/*		*struct_name='\0'; */
+
+		struct_name[0]='\0';
 
 		ProcessIntoLabel(fp,record_bytes,v, 0,NULL,oi);
-		memcpy(struct_name,tmpname,strlen(tmpname));
-		free(tmpname);
+
+/*		memcpy(struct_name,tmpname,strlen(tmpname)); */
+/*		free(tmpname); */
+
+		struct_name[0]='O';
+
 		/*Need to make use of the data object here*/
 		oi->obj_size[oi->count]=0;
 		oi->obj_data[oi->count]=(void *)NULL;
@@ -987,13 +998,19 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 		}
 
    	get_struct_element(v, 0, &struct_name, &tmpvar); /*Get the OBJECT Tag and temporarily NULLify it */
-		tmpname=strdup(struct_name);
-		*struct_name='\0';
+
+/*		tmpname=strdup(struct_name); */
+/*		*struct_name='\0'; */
+
+		struct_name[0]='\0';
 	
 		ProcessIntoLabel(fp,record_bytes,v, 1,NULL,oi);
 
-		memcpy(struct_name,tmpname,strlen(tmpname));
-		free(tmpname);
+/*		memcpy(struct_name,tmpname,strlen(tmpname)); */
+/*		free(tmpname); */
+
+
+		struct_name[0]='O';
 
 	}
 
@@ -1121,13 +1138,18 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 		/*We send in nulls because at this point....we SHOULD NOT find any labels or objects that we want! */	
 
    	get_struct_element(v, 0, &struct_name, &tmpvar); /*Get the OBJECT Tag and temporarily NULLify it */
-		tmpname=strdup(struct_name);
-		*struct_name='\0';
+
+/*		tmpname=strdup(struct_name); */
+/*		*struct_name='\0'; */
+
+		struct_name[0]='\0';
 	
 		ProcessIntoLabel(fp,record_bytes,v, 0,NULL,oi);
 
-		memcpy(struct_name,tmpname,strlen(tmpname));
-		free(tmpname);
+/*		memcpy(struct_name,tmpname,strlen(tmpname)); */
+/*		free(tmpname); */
+
+		struct_name[0]='O';
 
 	}
 
@@ -1448,7 +1470,7 @@ WritePDS(vfuncptr func, Var *arg)
 	int flag;
 	int count;
 	int i;
-	char *fn;
+	char *fn=NULL;
 	int record_bytes; /*		Gotta keep track of this baby!*/
 	Var *result;
 	int label_ptr[4];
@@ -1477,6 +1499,15 @@ WritePDS(vfuncptr func, Var *arg)
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
+	if (fn == NULL) {
+		parse_error("Hey, I need a filename so I know where to write the information...sheesh!");
+		return(NULL);
+	}
+
+	else if (strlen(fn) < 1) {
+		 parse_error("Hey, I need a non-zero length filename so I know where to write the information...sheesh!");
+      return(NULL);
+   }
 
 	if (v==NULL) {
 		parse_error("Can't write out an empty file...please supply an object");
@@ -1511,6 +1542,12 @@ WritePDS(vfuncptr func, Var *arg)
 	}
 
 	fp=fopen(fn,"w");
+
+
+	if (fp==NULL) {
+		parse_error("Can't open file: %s for writing...sorry, but you're hosed.",fn);
+		return(NULL);
+	}
 
 	ProcessIntoLabel(fp,record_bytes,v,-1,label_ptr,&oi);
 	fprintf(fp,"END\r\n");
