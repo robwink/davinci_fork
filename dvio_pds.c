@@ -17,19 +17,20 @@ typedef struct _dataKeys
 	char *KeyValue; /*PTR_TO_<OBJECT> keyword entry's value*/
 	char *FileName; /*Name of the file the PDS object is from, 
 							could be different than the one originally given */
+	int  dptr;		/*offset into file where data begins*/
 }dataKey;
 
 /*To add dataKey words for more readable types do the following 3 steps:*/
 
 /*Step 1: Add READ function/wrapper declaration here*/
-int rf_QUBE(char *, Var *,char *);
-int rf_TABLE(char *, Var *,char *);
-int rf_IMAGE(char *, Var *,char *);
-int rf_HISTOGRAM_IMAGE(char *, Var *,char *);
-int rf_HISTORY(char *, Var *,char *);
+int rf_QUBE(char *, Var *,char *, int);
+int rf_TABLE(char *, Var *,char *, int);
+int rf_IMAGE(char *, Var *,char *, int);
+int rf_HISTOGRAM_IMAGE(char *, Var *,char *, int);
+int rf_HISTORY(char *, Var *,char *, int);
 
 static dataKey	*dK;
-typedef int (*PFI)(char *, Var *, char *);
+typedef int (*PFI)(char *, Var *, char *, int);
 
 /*Step2: Add the name of the READ function/wrapper here*/
 PFI VrF[]={rf_QUBE,rf_TABLE,rf_IMAGE,rf_HISTOGRAM_IMAGE,rf_HISTORY};
@@ -40,9 +41,38 @@ static char *keyName[]={"QUBE","TABLE","IMAGE","HISTOGRAM_IMAGE","HISTORY",NULL}
 static int num_data_Keys;
 
 
-/*Need to figure this out*/
-int pds_record_bytes;
+/*
+** We want to note the Record_Bytes.  
+** If we have multiple objects in this file
+** this is value which everything is aligned to.
+** Therefore, if we have a qube and a table, while the table
+** maybe have rows of size N, the record bytes might be of
+** size M.  Therefore, any pointers in the file will
+** be in units of M (ie ^TABLE = Q ==> the table is at
+** address Q*M.  However, after reaching the table, we'll
+** be reading it in chunks of N.  So....
+*/
+void
+Add_Key_Offset(char *Val,int Index, int record_bytes)
+{
+   if (Index < 1) {
+      printf("Error: Table Underflow\n");
+      exit(0);
+   }     
+         
+   if (Index > num_data_Keys) {
+      printf("Error: Table Overflow\n");
+      exit(0);
+   }  
+      
+   /*Need to subtract 1 (we added one when we sent it the first time)*/
+            
+   Index--;
 
+//I don't understand, but when record_bytes was N and the object Point M dptr was always N*(M-1)...oh well
+	dK[Index].dptr=record_bytes*(atoi(Val)-1);
+}
+	
 char *
 fix_name(char *input_name)
 {
@@ -87,6 +117,7 @@ Init_Obj_Table(void)
 		dK[i].Name=keyName[i];
 		dK[i].Obj=NULL;
 		dK[i].KeyValue=NULL;
+		dK[i].dptr=0;
 	}
 }	
 
@@ -168,7 +199,7 @@ Read_Object(Var *v)
 	for (i=0;i<num_data_Keys;i++){
 		if (dK[i].Obj!=NULL && dK[i].Name!=NULL && dK[i].KeyValue!=NULL)
 /*			printf("%p %s %s %s\n",dK[i].Obj,dK[i].FileName,dK[i].Name,dK[i].KeyValue);*/
-			(VrF[i])(dK[i].FileName,dK[i].Obj,dK[i].KeyValue);
+			(VrF[i])(dK[i].FileName,dK[i].Obj,dK[i].KeyValue,dK[i].dptr);
 	}
 }
 
@@ -365,7 +396,7 @@ mod_name_if_necessary(char *name)
 }
 
 void
-Traverse_Tree(OBJDESC * ob,Var *v)
+Traverse_Tree(OBJDESC * ob,Var *v, int record_bytes)
 {
 	KEYWORD * key;
 	int offset=strlen(keyword_prefix);
@@ -409,6 +440,7 @@ Traverse_Tree(OBJDESC * ob,Var *v)
 			if (key->is_a_pointer){/* then check to see if it's an object we want*/
 				if ((idx=Match_Key_Obj(&key->name[1]))) {/* It is */
 					Add_Key_Word_Value(key->value,idx);
+					Add_Key_Offset(key->value,idx,record_bytes);
 				}
 			}
 
@@ -422,26 +454,15 @@ Traverse_Tree(OBJDESC * ob,Var *v)
 		else if (key->line_number < next_ob->line_number) {
 				keyname=mod_name_if_necessary(key->name);
 			
-/*
-** We want to note the Record_Bytes.  
-** If we have multiple objects in this file
-** this is value which everything is aligned to.
-** Therefore, if we have a qube and a table, while the table
-** maybe have rows of size N, the record bytes might be of
-** size M.  Therefore, any pointers in the file will
-** be in units of M (ie ^TABLE = Q ==> the table is at
-** address Q*M.  However, after reaching the table, we'll
-** be reading it in chunks of N.  So....
-*/
-	
-				if (!(strcmp(keyname,"RECORD_BYTES")))
-					pds_record_bytes=atoi(key->value);
+//				if (!(strcmp(keyname,"RECORD_BYTES")))
+//					pds_record_bytes=atoi(key->value);
 
 
 				/*Check to see if this is a pointer*/
 				if (key->is_a_pointer){/* then check to see if it's an object we want*/
 					if ((idx=Match_Key_Obj(&key->name[1]))) {/* It is */
 						Add_Key_Word_Value(key->value,idx);
+						Add_Key_Offset(key->value,idx,record_bytes);
 					}
 				}
 
@@ -469,7 +490,7 @@ Traverse_Tree(OBJDESC * ob,Var *v)
 				Add_Key_Obj(next_var,next_ob->file_name,idx);
 			}
 			
-			Traverse_Tree(next_ob,next_var);
+			Traverse_Tree(next_ob,next_var,record_bytes);
 
 			next_ob= OdlNextObjDesc(next_ob,0,&scope);
 
@@ -498,7 +519,7 @@ Traverse_Tree(OBJDESC * ob,Var *v)
 				Add_Key_Obj(next_var,next_ob->file_name,idx);
 			}
 
-			Traverse_Tree(next_ob,next_var);
+			Traverse_Tree(next_ob,next_var,record_bytes);
 			next_ob=OdlNextObjDesc(next_ob,0,&scope);
 			count--;
 		}
@@ -512,6 +533,7 @@ Traverse_Tree(OBJDESC * ob,Var *v)
 			if (key->is_a_pointer){/* then check to see if it's an object we want*/
 				if ((idx=Match_Key_Obj(&key->name[1]))) {/* It is */
 					Add_Key_Word_Value(key->value,idx);
+					Add_Key_Offset(key->value,idx,record_bytes);
 				}
 			}
 
@@ -534,9 +556,11 @@ ReadPDS(vfuncptr func, Var *arg)
    Var **av;
 
 	OBJDESC * ob;
+	KEYWORD *key;
 	char *err_file=NULL;
 	int	obn=1;
 	char *fn;
+	int record_bytes;
 
 	FILE *fp;
 
@@ -558,8 +582,13 @@ ReadPDS(vfuncptr func, Var *arg)
 	Init_Obj_Table();
 
 	ob = (OBJDESC *)OdlParseLabelFile(fn, err_file,ODL_EXPAND_STRUCTURE, 0);
+	if ((key = OdlFindKwd(ob, "RECORD_BYTES", NULL, 0, ODL_THIS_OBJECT))==NULL){
+		parse_error("Hey! This doesn't look like a PDS file");
+		return(NULL);
+	}
+	record_bytes=atoi(key->value);
 	
-	Traverse_Tree(ob,v);
+	Traverse_Tree(ob,v,record_bytes);
 
 	Read_Object(v);
 
@@ -567,12 +596,12 @@ ReadPDS(vfuncptr func, Var *arg)
 }
 
 
-int rf_QUBE(char *fn, Var *ob,char * val)
+int rf_QUBE(char *fn, Var *ob,char * val, int dptr)
 {
 	FILE *fp;
 	Var *data=NULL;
 	fp=fopen(fn,"r");
-	data=(Var *)dv_LoadISIS(fp,fn,NULL);
+	data=(Var *)dv_LoadISISFromPDS(fp,fn,dptr);
 	if (data!=NULL){
 		add_struct(ob,fix_name("DATA"),data);
 		fclose(fp);
@@ -582,7 +611,7 @@ int rf_QUBE(char *fn, Var *ob,char * val)
 	fclose(fp);
 	return(1);
 }
-int rf_TABLE(char *fn, Var *ob,char * val)
+int rf_TABLE(char *fn, Var *ob,char * val, int dptr)
 {
 	LABEL *label;
 	Var *Data;
@@ -617,12 +646,7 @@ int rf_TABLE(char *fn, Var *ob,char * val)
 		Bufs[j]=(char *)calloc((label->nrows*size[j]),sizeof(char));
 	}
 
-	if (label->reclen != pds_record_bytes)
-		Offset=(atoi(val)-1)*pds_record_bytes;
-
-	else
- 		Offset=(atoi(val)-1)*label->reclen;	
-
+	Offset=dptr;
 
 	fp=open(fn,O_RDONLY,0);
 	lseek(fp,Offset,SEEK_SET);
@@ -853,7 +877,7 @@ Set_Col_Var(Var **Data,FIELD **f,LABEL *label,int *size, char **Bufs)
 	}	
 }
 
-int rf_IMAGE(char *fn, Var *ob,char * val)
+int rf_IMAGE(char *fn, Var *ob,char * val, int dptr)
 {
 
 	FILE *fp;
@@ -869,11 +893,11 @@ int rf_IMAGE(char *fn, Var *ob,char * val)
 	fclose(fp);
 	return(1);
 }
-int rf_HISTOGRAM_IMAGE(char *fn, Var *ob,char * val)
+int rf_HISTOGRAM_IMAGE(char *fn, Var *ob,char * val, int dptr)
 {
 	return(0);
 }
-int rf_HISTORY(char *fn, Var *ob,char * val)
+int rf_HISTORY(char *fn, Var *ob,char * val, int dptr)
 {
 	return(0);
 }

@@ -9,6 +9,7 @@ char *version = "@(#) daVinci Version #0.83";
 /*
 Version 0.83: Wed Jan  9 15:41:00 MST 2002
 	* Fixed a bug in xplot regarding NULL (or no) varaibles being passed
+	* Changes PDS reader functionality to be able to have multiple objects in a file
 
 Version 0.82: Mon Nov 26 12:37:07 MST 2001
 	* Errors in alist for ff_ix.c:hsv2rgb
