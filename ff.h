@@ -13,9 +13,9 @@ struct _vfuncptr vfunclist[] = {
     /*
      * By using the third argument to hold a pointer to an actual library
      * function, we can reuse ff_dfunc() to implement ANY function that 
-	 * expects a single double argument, and returns a single double 
-	 * argument (like all the simple math functions).
-	 *
+     * expects a single double argument, and returns a single double 
+     * argument (like all the simple math functions).
+     *
      * Presumably, we could extend this idea to handle all integer and
      * string function (ff_ifunc and ff_sfunc), but they are of less use.
      */
@@ -70,9 +70,10 @@ struct _vfuncptr vfunclist[] = {
     { "load",       ff_load,     NULL },
     { "read",       ff_load,     NULL },        /* an alias */
     { "import",     ff_load,     NULL },        /* an alias */
-	{ "load_ir",   ff_Frame_Grabber_Read, NULL},
-	{ "load_vis", ff_GSE_VIS_Read,    NULL},
-	{ "load_paci",ff_PACI_Read,NULL},
+    { "load_ir",    ff_Frame_Grabber_Read, NULL},
+    { "load_frame", ff_Frame_Grabber_Read, NULL},
+    { "load_vis",   ff_GSE_VIS_Read,    NULL},
+    { "load_paci",  ff_PACI_Read,NULL},
 
     { "save",       ff_write,    NULL },
     { "write",      ff_write,    NULL },        /* an alias */
@@ -87,10 +88,10 @@ struct _vfuncptr vfunclist[] = {
     { "atof",       ff_atof,     NULL },
     { "string",     ff_string,   NULL },
     { "delim",      ff_delim,    NULL },
-    { "issubstring",ff_issubstring,	NULL},
-    { "strlen",	    ff_strlen,	NULL},
-    { "strstr",	    ff_strstr,	NULL},
-	 { "grep",		ff_grep,		NULL},
+    { "issubstring",ff_issubstring, NULL},
+    { "strlen",     ff_strlen,  NULL},
+    { "strstr",     ff_strstr,  NULL},
+     { "grep",      ff_grep,        NULL},
     
     { "rgb",        ff_rgb,      NULL },
     
@@ -113,12 +114,12 @@ struct _vfuncptr vfunclist[] = {
     
         /* Could implement avg, stddev, etc, by making ff_moment recognize 
            the third argument and only return the expected values */
-    { "moment",     ff_moment,	NULL },   
-    { "avg",     ff_avg,    	NULL },   
-    { "stddev",  ff_avg,    	NULL },   
-    { "sum",     ff_avg,    	NULL },   
-    { "min",     ff_min,    	NULL },   
-    { "max",     ff_min,    	NULL },   
+    { "moment",     ff_moment,  NULL },   
+    { "avg",     ff_avg,        NULL },   
+    { "stddev",  ff_avg,        NULL },   
+    { "sum",     ff_avg,        NULL },   
+    { "min",     ff_min,        NULL },   
+    { "max",     ff_min,        NULL },   
     { "sort",     ff_sort,      NULL },
     { "minchan",  ff_findmin,   NULL },   
     { "maxchan",  ff_findmin,   NULL },   
@@ -132,26 +133,26 @@ struct _vfuncptr vfunclist[] = {
     { "hasvalue",   HasValue,    NULL },
     { "HasValue",   HasValue,    NULL },
     { "edit",       ufunc_edit,  NULL },
-    { "header",     ff_header,   NULL },	/* read stuff from file headers */
-    { "ascii",      ff_ascii,    NULL },	
+    { "header",     ff_header,   NULL },    /* read stuff from file headers */
+    { "ascii",      ff_ascii,    NULL },    
     { "read_ascii", ff_ascii,    NULL },
-    { "read_text",  ff_text,     NULL },
-	 { "read_lines",ff_textarray,NULL},
+    { "read_text",  ff_read_text,     NULL },
+    { "read_lines", ff_read_lines,NULL},
 
 #ifdef INCLUDE_API
-    {"popen",	ff_popen,	NULL},
-    {"pprint",	ff_pprint,	NULL},
-    {"pplot",	ff_pplot,	NULL},
-    {"ptext",	ff_ptext,	NULL},
-    {"pline",	ff_pline,	NULL},
-    {"pbox",	ff_pbox,	NULL},
-    {"pzoom",	ff_pzoom,	NULL},
+    {"popen",   ff_popen,   NULL},
+    {"pprint",  ff_pprint,  NULL},
+    {"pplot",   ff_pplot,   NULL},
+    {"ptext",   ff_ptext,   NULL},
+    {"pline",   ff_pline,   NULL},
+    {"pbox",    ff_pbox,    NULL},
+    {"pzoom",   ff_pzoom,   NULL},
 #endif
     
 #if 0
     { "bbr",        ff_bbr,      NULL },    /* blackbody radiance   */
     { "bbrf",       ff_bbrf,     NULL },    /* blackbody radiance[] */
-    { "btemp",      ff_btemp,    NULL },	/* added by kaq */
+    { "btemp",      ff_btemp,    NULL },    /* added by kaq */
 #endif
 
     { "bbr",        ff_bop,      (void *)bbr   },
@@ -159,9 +160,9 @@ struct _vfuncptr vfunclist[] = {
     { "atan2",      ff_bop,      (void *)atan2 },
 
     { "vignette",   ff_vignette, NULL },
-    { "pause",      ff_pause,    NULL },	/* get input from user */
-    { "ifill",      ff_ifill,    NULL },	/* interpolated fill */
-    { "jfjll",      ff_jfill,    NULL },	/* jnterpolated fjll */
+    { "pause",      ff_pause,    NULL },    /* get input from user */
+    { "ifill",      ff_ifill,    NULL },    /* interpolated fill */
+    { "jfjll",      ff_jfill,    NULL },    /* jnterpolated fjll */
 
     { "printf",     ff_printf,    NULL },
     { "sprintf",    ff_sprintf,   NULL },
@@ -169,46 +170,46 @@ struct _vfuncptr vfunclist[] = {
     { "system",     ff_system,    NULL },
     { "fsize",      ff_fsize,    NULL },
     { "history",    ff_history,    NULL },
-    { "h",     		ff_history,    NULL },
+    { "h",          ff_history,    NULL },
 
 /* add additional functions here.  Don't forget the trailing comma. */
 
-    { "basis",     	ff_basis,  			NULL },
-    { "mxm",     	ff_mxm,    			NULL },
-    { "histogram",	ff_histogram,  		NULL },
-    { "rgb2hsv",    ff_rgb2hsv,    		NULL },
-    { "hsv2rgb",    ff_hsv2rgb,    		NULL },
+    { "basis",      ff_basis,           NULL },
+    { "mxm",        ff_mxm,             NULL },
+    { "histogram",  ff_histogram,       NULL },
+    { "rgb2hsv",    ff_rgb2hsv,         NULL },
+    { "hsv2rgb",    ff_hsv2rgb,         NULL },
 
-    { "isis",	ff_read_suffix_plane, NULL},
-    { "resize",     ff_resize,    		NULL },
-    { "fork",     	ff_fork,    		NULL },
+    { "isis",   ff_read_suffix_plane, NULL},
+    { "resize",     ff_resize,          NULL },
+    { "fork",       ff_fork,            NULL },
 
-    { "minvert",     	ff_minvert,     NULL },
-    { "dct",     	ff_dct,     NULL },
-    { "entropy",     	ff_entropy,     NULL },
+    { "minvert",        ff_minvert,     NULL },
+    { "dct",        ff_dct,     NULL },
+    { "entropy",        ff_entropy,     NULL },
 #ifdef HAVE_LIBPROJ   
-    { "projection",	ff_projection,   NULL },
+    { "projection", ff_projection,   NULL },
 #endif
 
 #ifdef HAVE_LIBMAGICK 
-    { "XIdisplay",	ff_XImage_Display, NULL},
+    { "XIdisplay",  ff_XImage_Display, NULL},
 #endif
 
-    { "fft",     	ff_fft,     (void *)1 },
-    { "ifft",     	ff_fft,     (void *)0 },
-    { "rfft",     	ff_realfft,     (void *)1 },
-    { "irfft",     	ff_realfft,     (void *)0 },
-    { "rfft2",     	ff_realfft2,     (void *)1 },
+    { "fft",        ff_fft,     (void *)1 },
+    { "ifft",       ff_fft,     (void *)0 },
+    { "rfft",       ff_realfft,     (void *)1 },
+    { "irfft",      ff_realfft,     (void *)0 },
+    { "rfft2",      ff_realfft2,     (void *)1 },
     { "irfft2",     ff_realfft2,     (void *)0 },
-    { "rfft3",     	ff_realfft3,     (void *)1 },
+    { "rfft3",      ff_realfft3,     (void *)1 },
     { "irfft3",     ff_realfft3,     (void *)0 },
 
     { "self_convolve",     ff_self_convolve,    NULL },
-    { "convolve",      ff_convolve,     		NULL },
-    { "convolve3",     ff_convolve3,     		NULL },
+    { "convolve",      ff_convolve,             NULL },
+    { "convolve3",     ff_convolve3,            NULL },
 
 #ifdef HAVE_XM_XR3DT_H
-    { "xrt3d",     	ff_xrt3d,    NULL },
+    { "xrt3d",      ff_xrt3d,    NULL },
 #endif
 
     { "struct",         ff_struct,             NULL },
@@ -227,9 +228,12 @@ struct _vfuncptr vfunclist[] = {
     { "dump",           ff_dump,               NULL},
     { "global",         ff_global,             NULL},
     { "delete",         ff_delete,             NULL},
-	 { "load_vanilla",   ff_loadvan,            NULL},
-	 { "load_PDS",			ReadPDS,					  NULL},
-	 { "rtrim",				ff_rtrim,				  NULL},
+    { "load_vanilla",   ff_loadvan,            NULL},
+    { "load_PDS",       ReadPDS,                      NULL},
+    { "rtrim",          ff_rtrim,                 NULL},
+
+    { "equals",         ff_equals,                 NULL},
+
     { NULL,             NULL,                  NULL }
 };
 

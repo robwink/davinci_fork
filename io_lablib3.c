@@ -5956,13 +5956,13 @@ find_file(char *fname)
 		 ** original path, trailing component lowercased
 		 **/
 		strcpy(buf, fname);
-		lowercase(basename(buf));
+		lowercase((char *)basename(buf));
 		if (!access(buf, R_OK)) return(strdup(buf));
 
 		/**
 		 ** original path, trailing component uppercased
 		 **/
-		uppercase(basename(buf));
+		uppercase((char *)basename(buf));
 		if (!access(buf, R_OK)) return(strdup(buf));
 
 		/**

@@ -1,6 +1,13 @@
-char *version = "@(#) daVinci Version #0.56f";
+char *version = "@(#) daVinci Version #0.57";
 
 /*
+Version 0.57: Thu Apr 20 15:00:49 MST 2000
+	* Modified structure subsetting to return the actual var, not a copy.
+	  This might have ramifications, but was necessary to make a.b.c work.
+	  It also facilitates inc and dec working.
+	+ Added both=1 flag to avg();
+	* mucked with ff_text to make additions work, and comparisons faster
+
 Version 0.56f: Tue Apr 11 19:37:10 MST 2000
 	* Fixed a bunch of compile problems without plplot and hdf.
 

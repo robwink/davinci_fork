@@ -366,14 +366,15 @@ varray_subset(Var *v, Range *r)
 		/*
 		** single occurance, just return the Var
 		*/
-		s = V_DUP(V_STRUCT(v).data[r->lo[0]]);
+		// s = V_DUP(V_STRUCT(v).data[r->lo[0]]);
+		s = V_STRUCT(v).data[r->lo[0]];
 	} else {
 		s = new_struct(0);
 		names = V_STRUCT(v).names;
 		data = V_STRUCT(v).data;
 
 		for (i = r->lo[0] ; i <= r->hi[0] ; i+= r->step[0])  {
-			add_struct(s, names[i], V_DUP(data[i]));
+			add_struct(s, names[i], data[i]);
 		}
 	}
 	return(s);
@@ -397,21 +398,30 @@ set_varray(Var *v, Range *r, Var *e)
 	Var **dst = V_STRUCT(v).data;
 	Var **src = NULL;			/* either NULL for N<-1 or not for N<-N */
 
-	if (V_TYPE(e) == ID_STRUCT) {
-		src = V_STRUCT(e).data;
-		if (size != V_STRUCT(e).count) {
-			parse_error("Structure sizes don't match.");
-			return(NULL);
+	/*
+	** The case of 1 <- N, just duplicate N and stuff it in here
+	*/
+	if (size == 1) {
+		i = r->lo[0];
+		dst[i] = V_DUP(e);
+		mem_claim(dst[i]);
+	} else {
+		if (V_TYPE(e) == ID_STRUCT) {
+			src = V_STRUCT(e).data;
+			if (size != V_STRUCT(e).count) {
+				parse_error("Structure sizes don't match.");
+				return(NULL);
+			}
+		}
+
+		for (i = r->lo[0] ; i <= r->hi[0] ; i += r->step[0]) {
+			free_var(dst[i]);
+			dst[i] = (src == NULL ? V_DUP(e) : V_DUP(src[count++]));
+			mem_claim(dst[i]);
 		}
 	}
 
-	for (i = r->lo[0] ; i <= r->hi[0] ; i += r->step[0]) {
-		free_var(dst[i]);
-		dst[i] = (src == NULL ? V_DUP(e) : V_DUP(src[count++]));
-		mem_claim(dst[i]);
-	}
-
-	return(V_DUP(e));
+	return(varray_subset(v, r));
 }
 
 Var *

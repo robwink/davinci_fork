@@ -173,9 +173,7 @@ specpr_open(char *path)
     int fout;
     char *p;
 
-    if ((fout = open(path, O_RDONLY)) >= 0) {
-        close(fout);
-        fout = open(path, O_WRONLY | O_CREAT | O_APPEND);
+	if ((fout = open(path, O_RDWR)) >= 0) {
         return(fout);
     } else {
         /* it doesn't exist.  Create it. */
@@ -183,13 +181,14 @@ specpr_open(char *path)
         ** this needs to prepend the SPECPR_MAGIC cookie to record 0
         **/
 
-        fout = open(path, O_WRONLY | O_CREAT | O_APPEND, 0777);
+        fout = open(path, O_RDWR | O_CREAT, 0777);
         if (fout < 0) return(fout);
 
         p = (char *)malloc(LABELSIZE);
         memset(p, '\0', LABELSIZE);
         memcpy(p, SPECPR_STAMP, strlen(SPECPR_STAMP));
         write(fout, p, LABELSIZE);
+		lseek(fout, 0, SEEK_SET);
         free(p);
         return(fout);
     }
@@ -421,23 +420,18 @@ WriteSpecpr(Var *v, char *filename, char *title)
     /**
     ** Open the file
     **/
+	fd = specpr_open(filename);
 
-    fp = fopen(filename, "r+");
-    if (fp == NULL) {
-        fd = specpr_open(filename);
-    } else {
-        /**
-        ** Verify its a specpr file
-        **/
-        fread(buf,sizeof(SPECPR_MAGIC),1,fp);
-        if (strncmp(buf, SPECPR_MAGIC, strlen(SPECPR_MAGIC))) {
-            sprintf(error_buf, "Not a SPECPR file: %s", V_NAME(v));
-            parse_error(NULL);
-            fclose(fp);
-            return(0);
-        }
-        fd = fileno(fp);
-    }
+	/**
+	** Verify its a specpr file
+	**/
+	read(fd, buf, sizeof(SPECPR_MAGIC));
+	if (strncmp(buf, SPECPR_MAGIC, strlen(SPECPR_MAGIC))) {
+		sprintf(error_buf, "Not a SPECPR file: %s", filename);
+		parse_error(NULL);
+		close(fd);
+		return(0);
+	}
 
     if (V_FORMAT(v) == FLOAT) {
         fdata = (float *)V_DATA(v);
@@ -462,7 +456,7 @@ WriteSpecpr(Var *v, char *filename, char *title)
     free(label);
 
     if (V_DATA(v) != fdata) free(fdata);
-    fclose(fp);
+    close(fd);
 
     return 1;
 }

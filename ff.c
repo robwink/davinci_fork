@@ -1637,13 +1637,17 @@ ff_resize(vfuncptr func, Var * arg)
     Var **av;
     Var *obj;
     int x = 1,y = 1,z = 1;
+    char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
+	char *org_str = NULL;
+	int org;
 
-    Alist alist[5];
+    Alist alist[6];
     alist[0] = make_alist("obj",    ID_VAL,     NULL,     &obj);
     alist[1] = make_alist("x",    	INT,    	NULL,     &x);
     alist[2] = make_alist("y",    	INT,    	NULL,     &y);
     alist[3] = make_alist("z",    	INT,    	NULL,     &z);
-    alist[4].name = NULL;
+    alist[4] = make_alist("org",    ID_ENUM,    orgs,     &org_str);
+    alist[5].name = NULL;
 
     make_args(&ac, &av, func, arg);
     if (parse_args(ac, av, alist)) return(NULL);
@@ -1662,6 +1666,17 @@ ff_resize(vfuncptr func, Var * arg)
                     x, y, z, V_DSIZE(obj));
         return(NULL);
     }
+
+
+	if (org_str != NULL) {
+		if (!strcasecmp(org_str, "bsq")) org = BSQ;
+		else if (!strcasecmp(org_str, "xyz")) org = BSQ;
+		else if (!strcasecmp(org_str, "bil")) org = BIL;
+		else if (!strcasecmp(org_str, "xzy")) org = BIL;
+		else if (!strcasecmp(org_str, "bip")) org = BIP;
+		else if (!strcasecmp(org_str, "zxy")) org = BIP;
+		V_ORG(obj) = org;
+	}
 
     V_SIZE(obj)[orders[V_ORG(obj)][0]] = x;
     V_SIZE(obj)[orders[V_ORG(obj)][1]] = y;
@@ -1789,23 +1804,110 @@ ff_dump(vfuncptr func, Var * arg)
 	return(NULL);
 }
 
-Var *
-ff_same(vfuncptr func, Var * arg)
-{
-}
 
+/*
+** compare a to b to see if they are equivalent
+*/
 Var *
 ff_equals(vfuncptr func, Var * arg)
 {
-	Var *v1, *v2;
-    Alist alist[2];
+	Var *v1 = NULL, *v2 = NULL, *v, *e;
     int ac, i, j; 
     Var **av;
+    Alist alist[3];
+	char *data;
 
-    alist[0] = make_alist("obj1",    ID_VAL,     NULL,     &v1);
-    alist[1] = make_alist("obj2",    ID_VAL,     NULL,     &v2);
+    alist[0] = make_alist("obj1",    ID_UNK,     NULL,     &v1);
+    alist[1] = make_alist("obj2",    ID_UNK,     NULL,     &v2);
     alist[2].name = NULL;
 
     make_args(&ac, &av, func, arg);
     if (parse_args(ac, av, alist)) return(NULL); 
+
+	if ((e = eval(v1)) != NULL) v1 = e;
+	if ((e = eval(v2)) != NULL) v2 = e;
+
+	data = calloc(1,1);
+	data[0] = compare_vars(v1,v2);
+	v = newVal(BSQ, 1, 1, 1, BYTE, data);
+	return(v);
+}
+
+int
+compare_vars(Var *a, Var *b)
+{
+	int i;
+	int x1, y1, z1;
+	int x2, y2, z2;
+	int rows, format;
+
+	if (a == NULL || b == NULL) return(0);
+	if (V_TYPE(a) != V_TYPE(b)) return(0);
+
+	switch (V_TYPE(a)) {
+	case ID_STRUCT:
+		if (V_STRUCT(a).count != V_STRUCT(b).count) return(0);
+		for (i = 0 ; i < V_STRUCT(a).count ; i++) {
+			if (compare_vars(V_STRUCT(a).data[i], V_STRUCT(b).data[i]) == 0) {
+				return(0);
+			}
+		}
+		return(1);
+		
+	case ID_TEXT:
+		if (V_TEXT(a).Row != V_TEXT(b).Row) return(0);
+		rows = V_TEXT(a).Row;
+		for (i = 0 ; i < rows ; i++) {
+			if (strcmp(V_TEXT(a).text[i], V_TEXT(b).text[i])) {
+				return(0);
+			}
+		}
+		return(1);
+
+	case ID_STRING:
+		if (strcmp(V_STRING(a), V_STRING(b))) {
+			return(0);
+		}
+		return(1);
+
+	case ID_VAL:
+		/*
+		** pp_math will give us an answer,
+		** but will also let us use smaller sets.
+		** Verify that these are the same size first
+		*/
+		x1 = GetSamples(V_SIZE(a), V_ORG(a));
+		y1 = GetLines(V_SIZE(a), V_ORG(a));
+		z1 = GetBands(V_SIZE(a), V_ORG(a));
+
+		x2 = GetSamples(V_SIZE(b), V_ORG(b));
+		y2 = GetLines(V_SIZE(b), V_ORG(b));
+		z2 = GetBands(V_SIZE(b), V_ORG(b));
+
+		if (x1 != x2 || y1 != y2 || z1 != z2) {
+			return(0);
+		}
+
+		format = max(V_FORMAT(a), V_FORMAT(b));
+
+		for (i = 0 ; i < V_DSIZE(a) ; i++) {
+			switch(format) {
+				case BYTE:
+				case SHORT:
+				case INT:
+					if (extract_int(a,i) != extract_int(b,rpos(i,a,b)))
+						return(0);
+					break;
+				case FLOAT:
+					if (extract_float(a,i) != extract_float(b,rpos(i,a, b)))
+						return(0);
+					break;
+				case DOUBLE:
+					if (extract_double(a,i) != extract_double(b,rpos(i,a, b)))
+						return(0);
+					break;
+			}
+		}
+		return(1);
+	}
 }

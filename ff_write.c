@@ -136,7 +136,7 @@ ff_write(vfuncptr func, Var *arg)
         return(NULL);
     }
 
-	if (access(filename, F_OK) != 0) {
+	if (access(filename, F_OK) != 0 && strcasecmp(type, "specpr")) {
 		FILE *fp;
 		/* try to create file, just to make sure we can */
 		if ((fp = fopen(filename, "w")) == NULL) {
