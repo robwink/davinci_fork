@@ -3249,7 +3249,8 @@ gui_getResourceValues(Widget widget, Var *dvStruct, Narray *visibleResources,
 
       if (getValue == NULL) {
 	if (ResourceTypeMap[j].typeNames == NULL) {
-	  parse_error("ERROR: unknown X resource type encountered");
+	  parse_error("ERROR: unknown X resource type encountered: (%s,%s)", 
+			resourceName,resourceType);
 #if DEBUG
 	  fprintf(stderr, "DEBUG: resourceName = \"%s\"\n", resourceName);
 	  fprintf(stderr, "DEBUG: resourceType = \"%s\"\n", resourceType);
@@ -3568,7 +3569,11 @@ gui_getXmString(Widget widget, String resourceName, String resourceType)
     o = NULL;
   }
 
-  XtFree((XtPointer) cstrValue);
+/*
+ * Freeing this often leaves us with a core dump.  Blah.
+ * NsG: Sun Jun 13 20:20:27 MST 2004
+ */
+  // XtFree((XtPointer) cstrValue);
 
   return o;
 
@@ -3678,6 +3683,11 @@ gui_getXmStringTableCount(const Widget widget,
 	  widget, resource, free, count);
 #endif
 
+/* Unnecessary hack, I think
+  if (count) {
+	stringTable = XtMalloc((count+1) * sizeof(XmString));
+  } 
+*/
   XtVaGetValues(widget, resource, &stringTable, NULL);
 
 #if DEBUG
@@ -3800,7 +3810,7 @@ gui_setXmStringTableFromDarray(const Widget widget,
       parse_error("Error: unable to allocate memory for string list.");
     }
     else {
-      gui_freeStackPush(freeStack, stringTable);
+      // gui_freeStackPush(freeStack, stringTable);
       for (stringIdx = 0; stringIdx < numStrings; stringIdx++) {
 	if (Darray_get(value, stringIdx, (void **) &stringValue) == -1) {
 	  parse_error("Internal error: unable to read Darray.");
@@ -3817,7 +3827,7 @@ gui_setXmStringTableFromDarray(const Widget widget,
 	    stringTable = oldValue;
 	    break;
 	  }
-	  gui_freeStackPush(freeStack, xmStringValue);
+	  // gui_freeStackPush(freeStack, xmStringValue);
 	  stringTable[stringIdx] = xmStringValue;
 	}
       }

@@ -137,6 +137,7 @@ gui_getListPseudoResources(const Widget widget, Var *dvStruct)
 
   int	itemCount, selectedItemCount;
   Var	*items, *selectedItems;
+  int   *selectedList, N_selectedList;
 
 #if DEBUG
   fprintf(stderr, "DEBUG: gui_getListPseudoResources(%ld, %ld)\n",
@@ -161,6 +162,13 @@ gui_getListPseudoResources(const Widget widget, Var *dvStruct)
 					      selectedItemCount);
   }
   add_struct(dvStruct, "selectedItemList", selectedItems);
+
+  if (XmListGetSelectedPos(widget, &selectedList, &N_selectedList) == TRUE) {
+	  add_struct(dvStruct, "selectedPosition", 
+		newVal(BSQ, 1, N_selectedList, 1, INT, selectedList));
+  } else {
+	  add_struct(dvStruct, "selectedPosition", newInt(-1));
+  }
 
   return;
 
@@ -206,6 +214,9 @@ gui_setListPseudoResources(Widget widget, Var *dvStruct,
       if (!strcmp(name, "itemList")) {
 	setItems(widget, "items", "itemCount", value);
 	Narray_add(publicResources, name, NULL);
+	/*
+	** BUG: I'm concerned that we might not own this memory
+	*/
 	free_var(Narray_delete(V_STRUCT(dvStruct), "itemList"));
 	cont = 1;
 	break;

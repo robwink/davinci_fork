@@ -34,7 +34,7 @@ static void setItems(const Widget, const String, const String, const Var *);
  *****************************************************************************/
 
 static const char *scrolledListPublicResources[] = {
-  "itemList", "selectedItemList", "visibleItemCount",
+  "itemList", "selectedItemList", "visibleItemCount", "selectedPosition",
 };
 
 /*****************************************************************************
@@ -214,6 +214,7 @@ gui_getScrolledListPseudoResources(const Widget widget, Var *dvStruct)
 
   int	itemCount, selectedItemCount;
   Var	*items, *selectedItems;
+  int   *selectedList, N_selectedList;
 
 #if DEBUG
   fprintf(stderr, "DEBUG: gui_getListPseudoResources(%ld, %ld)\n",
@@ -238,6 +239,14 @@ gui_getScrolledListPseudoResources(const Widget widget, Var *dvStruct)
 					      selectedItemCount);
   }
   add_struct(dvStruct, "selectedItems", selectedItems);
+
+  if (XmListGetSelectedPos(widget, &selectedList, &N_selectedList) == TRUE) {
+          add_struct(dvStruct, "selectedPosition",
+                newVal(BSQ, 1, N_selectedList, 1, INT, selectedList));
+  } else {
+	  add_struct(dvStruct, "selectedPosition", newInt(-1));
+  }
+
 
   return;
 
