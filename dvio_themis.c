@@ -580,6 +580,36 @@ Var *Make_Vis_Cube(int nob, int height, int width, unsigned char *buf)
 
 
 }
+void
+Rotate_Buffer(unsigned char *buf,int height,int width,int verb)
+{
+	int	nof=height/FRAMELET_HEIGHT;
+	int	i,j,k;
+	int	chunk=FRAMELET_HEIGHT*width;
+
+	unsigned char	*hold=(unsigned char*) calloc(sizeof(char),(width*FRAMELET_HEIGHT));
+
+	if (verb)
+		parse_error("Rotating all individual frames 180 degrees");
+
+	for (i=0;i<nof;i++){
+
+		/*Copy Framelet into hold on pixel at a time, rotating it as we go*/
+
+		for (j=0;j<FRAMELET_HEIGHT;j++){
+			for(k=0;k<width;k++){
+				hold[(FRAMELET_HEIGHT-1-j)*width+(width-1-k)]=
+					buf[i*chunk+j*width+k];
+			}
+		}
+
+		/*Now, memmove framelet back into place in the original buffer (rotated!)*/
+
+		memcpy((buf+i*chunk),hold,(FRAMELET_HEIGHT*width));
+	}
+
+	free(hold);
+}
 
 Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
 {
@@ -598,13 +628,15 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
     unsigned char *buf;
 	 int nocube=0;
 	 int verb=0;
+	 int rotate=1;
 
-    Alist alist[5];
+    Alist alist[6];
     alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
     alist[1] = make_alist("gse", INT, NULL, &gse);
     alist[2] = make_alist("nocube", INT, NULL, &nocube);
     alist[3] = make_alist("verbose", INT, NULL, &verb);
-    alist[4].name = NULL;
+	 alist[4] = make_alist("rotate",INT,NULL,&rotate);
+    alist[5].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -655,6 +687,8 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
     else {
         height=Process_SC_Vis(infile,&buf,&width,&nob,verb);
 		  if (height) {
+				if (rotate)
+					Rotate_Buffer(buf,height,width,verb);
 				if (nocube)
       			return(newVal(BSQ,width,height,1,BYTE,buf));
 				else
