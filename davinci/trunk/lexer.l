@@ -14,7 +14,7 @@ extern int continuation;
 extern int in_comment;
 extern int in_string;
 
-#define YY_USER_ACTION pp_count+=yyleng; MYECHO
+#define YY_USER_ACTION pp_count+=yyleng;
 
 YY_BUFFER_STATE
 get_current_buffer()
@@ -28,20 +28,26 @@ char save_file[256];
 
 int caller;			/* used by flex to handle comments in multiple states */
 
+void start_save()
+{
+    char *tmp;
+
+	local_line = pp_line;
+    tmp = tempnam(NULL, NULL);
+    strcpy(save_file, tmp);
+    free(tmp);
+
+    save_fp = fopen(save_file, "w");
+}
 
 void end_save()
 {
-	if (save_fp) {
-		fprintf(save_fp, "\n");
-		fclose(save_fp);
-		save_fp = NULL;
-	}
+	fprintf(save_fp, "\n");
+	fclose(save_fp);
+	save_fp = NULL;
+	save_ufunc(save_file);
 }
 
-save_lines()
-{
-	
-}
 
 %}
 
@@ -55,10 +61,11 @@ rval    {real}|{ereal}
 var     [a-zA-Z_][a-zA-Z0-9_]*
 comment #.*
 
+
 %x comment ufunc
 %%
 
-"define"	{ return(FUNC_DEF); }
+"define"	{ start_save(); MYECHO; BEGIN(ufunc); }
 "for"		{ return(FOR); }
 "while"     { return(WHILE); }
 "where"     { return(WHERE); }
@@ -107,51 +114,29 @@ comment #.*
 "\n"        { return('\n'); }
 .           { return(yytext[0]); };
 
-<ufunc>\"(\\.|[^\\"\n])*\" {  }
-<ufunc>\'(\\.|[^\\'\n])*\' {  }
+<ufunc>\"(\\.|[^\\"\n])*\" { MYECHO; }
+<ufunc>\'(\\.|[^\\'\n])*\' { MYECHO; }
 
-<ufunc>"/*"		   {  caller = ufunc; BEGIN(comment); in_comment = 1; }
+<ufunc>"/*"		   { MYECHO; caller = ufunc; BEGIN(comment); in_comment = 1; }
 
-<ufunc>"{"         {  indent++; } 
+<ufunc>"{"         { MYECHO; indent++; } 
 <ufunc>"}"         { 
+					 	MYECHO; 
 						indent--; 
 						if (indent == 0) { 
 							BEGIN(INITIAL); 
 							end_save();
-							return(END_DEF);
+							return('\n');
 						} 
-						printf(">> %s\n", yytext);
 				   }
-<ufunc>"\\\n"      {  continuation=1; }
-<ufunc>"\n"        { 
-						if (indent == 0) {
-							/*
-							** well, apparently, we aren't in a ufunc.  Punt.
-							*/
-							return('\n');;
-						}
-					}
-<ufunc>{comment}   {  }
-<ufunc>[^{}]*      {  };
+<ufunc>"\\\n"      { MYECHO; continuation=1; }
+<ufunc>"\n"        { MYECHO; };
+<ufunc>{comment}   { MYECHO; }
+<ufunc>[^{}]*      { MYECHO; };
 
 
-<comment>[^*\n]*        {  /* eat anything that's not a '*' */ }
-<comment>"*"+[^*/\n]*   {  /* eat up '*'s not followed by '/'s */ }
-<comment>\n             {  }
-<comment>"*"+"/"        {  BEGIN(caller); in_comment = 0;}
+<comment>[^*\n]*        { MYECHO; /* eat anything that's not a '*' */ }
+<comment>"*"+[^*/\n]*   { MYECHO; /* eat up '*'s not followed by '/'s */ }
+<comment>\n             { MYECHO; }
+<comment>"*"+"/"        { MYECHO; BEGIN(caller); in_comment = 0;}
 %%
-
-void start_save()
-{
-    char *tmp;
-
-	local_line = pp_line;
-    tmp = tempnam(NULL, NULL);
-    strcpy(save_file, tmp);
-    free(tmp);
-
-    save_fp = fopen(save_file, "w");
-	fprintf(save_fp, "%s", yytext);
-	fflush(save_fp);
-}
-

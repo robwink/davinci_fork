@@ -31,7 +31,6 @@
 #define	LIST	284
 #define	FUNC_DEF	285
 #define	SHELL	286
-#define	END_DEF	287
 
 
 extern YYSTYPE yylval;
