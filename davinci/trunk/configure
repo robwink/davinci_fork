@@ -983,7 +983,7 @@ else
   fi
 fi
 
-for ac_prog in mawk gawk nawk awk
+for ac_prog in gawk mawk nawk awk
 do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -2224,7 +2224,7 @@ LDFLAGS="$LDFLAGS -L$libdir"
 
 
 case "$target" in
-*-linux-gnu)  CFLAGS="$CFLAGS -I/usr/include/X11";;
+*-linux-gnu)  CFLAGS="$CFLAGS -rdynamic -I/usr/include/X11";;
 *-ibm-aix4.3*)  LDFLAGS="$LDFLAGS -Wl,-b,bigtoc";;
 esac
 
