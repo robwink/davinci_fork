@@ -227,6 +227,7 @@ struct _vfuncptr vfunclist[] = {
     { "dump",           ff_dump,               NULL},
     { "global",         ff_global,             NULL},
     { "delete",         ff_delete,             NULL},
+	 { "load_vanilla",   ff_loadvan,            NULL},
     { NULL,             NULL,                  NULL }
 };
 
