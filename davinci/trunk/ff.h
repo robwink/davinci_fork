@@ -86,6 +86,8 @@ struct _vfuncptr vfunclist[] = {
     { "basename",   ff_basename, NULL },
     { "string",     ff_string,   NULL },
     { "delim",      ff_delim,    NULL },
+    { "issubstring",ff_issubstring,	NULL},
+    { "strlen",	    ff_strlen,	NULL},
     
     { "rgb",        ff_rgb,      NULL },
     
@@ -132,10 +134,17 @@ struct _vfuncptr vfunclist[] = {
     { "read_ascii", ff_ascii,    NULL },
     { "read_text",  ff_text,     NULL },
 
-     {"popen", ff_popen,       NULL},
-     {"pprint",        ff_pprint,      NULL},
-     {"pplot", ff_pplot,       NULL},
+    {"popen",	ff_popen,	NULL},
+    {"pprint",	ff_pprint,	NULL},
+    {"pplot",	ff_pplot,	NULL},
+    {"ptext",	ff_ptext,	NULL},
+    {"pline",	ff_pline,	NULL},
+    {"pbox",	ff_pbox,	NULL},
+    
 
+
+
+    
 #if 0
     { "bbr",        ff_bbr,      NULL },    /* blackbody radiance   */
     { "bbrf",       ff_bbrf,     NULL },    /* blackbody radiance[] */

@@ -237,6 +237,8 @@ Var *ff_write (vfuncptr, Var *);
 Var *ff_filetype(vfuncptr , Var *);
 Var *ff_list(vfuncptr, Var *);
 Var *ff_atoi(vfuncptr func, Var *arg);
+Var *ff_issubstring(vfuncptr func, Var * arg);
+Var *ff_strlen(vfuncptr func, Var * arg);
 Var *ff_atof(vfuncptr func, Var *arg);
 Var *ff_sprintf(vfuncptr func, Var *arg);
 Var *ff_version(vfuncptr, Var *);
@@ -314,6 +316,9 @@ Var *ff_convolve3(vfuncptr func, Var *arg);
 Var *ff_popen(vfuncptr func, Var * arg);
 Var *ff_pprint(vfuncptr func, Var * arg);
 Var *ff_pplot(vfuncptr func, Var * arg);
+Var *ff_ptext(vfuncptr func, Var * arg);
+Var *ff_pline(vfuncptr func, Var * arg);
+Var *ff_pbox(vfuncptr func, Var * arg);
 
 Var *ff_struct(vfuncptr func, Var *arg);
 
