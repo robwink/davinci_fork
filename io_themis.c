@@ -596,7 +596,6 @@ ff_PACI_Read(vfuncptr func, Var * arg)
             } 
 
             if (Keep(c_Band,c_Frame,Cmd,Frame,Band) && ((Output+2) <= 328 )){
-                BandCount[c_Band]++;
 #ifdef HAVE_LIBUSDS
                 if (Data_Only && Cmd!=ALL){
                     if (Output-_DATA < 320){
@@ -608,12 +607,14 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                             memcpy((data+Index),decompress,offset);
                             Index+=(offset);
                             Lines++;
+                				 BandCount[c_Band]++;
                         }
                     }
                     else {
                         memcpy((data+Index),(buf+i-Output+_DATA),Output);
                         Index+=(Output-_DATA);
                         Lines++;
+                			BandCount[c_Band]++;
                     }
                 } else { 
                     if (Output-_DATA < 320){
@@ -638,12 +639,14 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                             memcpy((data+Index),(buf+i),2);
                             Index+=2;
                             Lines++;
+                				 BandCount[c_Band]++;
                         }
                     }
                     else {
                         memcpy(((char *)data+Index),(buf+i-Output),Output+2);
                         Index+=Output+2;
                         Lines++;
+                			BandCount[c_Band]++;
                     }
                 }
 #else
@@ -651,10 +654,12 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                     memcpy((data+Index),(buf+i-Output+_DATA),Output);
                     Index+=(Output-_DATA);
                     Lines++;
+	                 BandCount[c_Band]++;
                 } else { 
                     memcpy(((char *)data+Index),(buf+i-Output),Output+2);
                     Index+=Output+2;
                     Lines++;
+	                 BandCount[c_Band]++;
                 }
 #endif
             }
@@ -743,15 +748,15 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                     for (i=0 ; i < BandCount[0] ; i++) {
                         c_frame=(((*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES) & 0xFF)<< 8) | 
                                  (*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES+1) & 0xFF));
-                        if (c_frame > (FrameBandStart[j]+i)) {
+                        if (c_frame > (FrameBandStart[j]+new_count)) {
                             /*Add a frame, gotta add memory too!*/
                             len+=(Col);
                             realloc(newbuf,len);
                             Add_Fake_Frame((newbuf+j*BandCount[0]*Col+new_count*Col),
-                                           j,(FrameBandStart[j]+i),
-                                           c_frame-(FrameBandStart[j]+i),Col);
-                            new_count+=c_frame-(FrameBandStart[j]+i);	
-                        } else if (c_frame < (FrameBandStart[j]+i)) {
+                                           j,(FrameBandStart[j]+new_count),
+                                           c_frame-(FrameBandStart[j]+new_count),Col);
+                            new_count+=c_frame-(FrameBandStart[j]+new_count);	
+                        } else if (c_frame < (FrameBandStart[j]+new_count)) {
                             parse_error("Corrupted Frame Sequence...aborting\n");
                             return(NULL);
                         }
