@@ -1,14 +1,23 @@
-/* #include <config.h> */
+#include <config.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifndef HAVE_LIBREADLINE
+  /* JAS FIX: these conflict if readline is used.  not sure about add_history().. */
 char *readline(char *);
 void add_history();
+#endif
+
+#if 0
+  /* JAS FIX: these conflict if readline is used, and are not needed otherwise. */
 void rl_callback_handler_install(char *, void (*)(char *));
 struct _hist_state* history_get_history_state(void);
 void rl_callback_read_char ();
 void rl_callback_handler_remove();
+#endif
+
 int yywrap ( void );
 
 #ifdef HAVE_LIBHDF5
