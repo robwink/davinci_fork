@@ -1,7 +1,7 @@
 #include "parser.h"
-#ifdef _WIN32
+#ifdef __CYGWIN__
 #include <process.h>
-#endif /* _WIN32 */
+#endif /* _CYGWIN__ */
 #include <errno.h>
 
 #define DV_DEFAULT_VIEWER "xv"
@@ -65,7 +65,8 @@ ff_display(vfuncptr func, Var *arg)
         sprintf(buf, "%s %s &", viewer, fname);
     }
 
-#ifdef _WIN32
+#ifdef __CYGWIN__
+	fprintf(stderr, "spawning xv\n");
     if (_spawnlp(_P_NOWAIT, viewer, viewer, fname, NULL) == -1){
         parse_error("Error spawning the viewer %s. Reason: %s.",
                     viewer, strerror(errno));

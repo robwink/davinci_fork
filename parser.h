@@ -13,7 +13,6 @@
 #include <config.h>
 #endif
 
-#ifndef _WIN32
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -52,7 +51,7 @@
 #ifndef MAXDOUBLE
 #define MAXDOUBLE       DBL_MAX
 #endif
-/* #define MAXFLOAT        FLT_MAX */
+#define MAXFLOAT        FLT_MAX
 #ifndef MINDOUBLE
 #define MINDOUBLE       DBL_MIN
 #endif
@@ -60,11 +59,6 @@
 #define MINFLOAT        FLT_MIN
 #endif
 
-#else 
-
-#include "dos.h"
-
-#endif
 
 #include <sys/stat.h>
 #include <fcntl.h>

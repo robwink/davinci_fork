@@ -1764,11 +1764,11 @@ int rf_TABLE(char *fn, Var *ob,char * val, int dptr)
 
 	Offset=dptr;
 
-#ifdef _WIN32
+#ifdef __CYGWIN__
 	fp=open(fn,O_RDONLY|O_BINARY,0);
-#else /* UNIX */
+#else 
 	fp=open(fn,O_RDONLY,0);
-#endif /* _WIN32 */
+#endif /* __CYGWIN__ */
 	lseek(fp,Offset,SEEK_SET);
 	for (i=0;i<label->nrows;i++){
 

@@ -1,10 +1,6 @@
 #include "parser.h"
 
-#ifdef _WIN32
-	#define GPLOT_CMD "gnuplot"
-#elif  defined(HAVE_LIBX11)
-	#define GPLOT_CMD "gplot"
-#endif /* _WIN32 */
+#define GPLOT_CMD "gnuplot"
 
 FILE *gplot_pfp=NULL;
 #ifdef GPLOT_CMD

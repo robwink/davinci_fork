@@ -5,10 +5,6 @@
 #include "rfunc.h"
 #endif
 
-#ifdef _WIN32
-#include <dos.h>
-#endif
-
 /**
  ** V_func - find and call named function
  **
@@ -1667,15 +1663,17 @@ ff_hedit(vfuncptr func, Var * arg)
     }
     fclose(fp);
 
-    if ((editor = getenv("EDITOR")) == NULL) 
-#ifdef _WIN32
-		editor = "notepad";
-#else /* UNIX */
-        editor = "/bin/vi";
-#endif /* _WIN32 */
-
-    sprintf(buf, "%s %s", editor, tmp);
-    system(buf);
+#ifdef __CYGWIN__
+    if ((editor = getenv("EDITOR")) == NULL) editor = "notepad";
+	if (_spawnlp(_P_NOWAIT, editor, editor, tmp, NULL) == -1){
+		parse_error("Unable to open editor.");
+		return(NULL);
+	}
+#else 
+    if ((editor = getenv("EDITOR")) == NULL) editor = "/bin/vi";
+	sprintf(buf, "%s %s", editor, tmp);
+	system(buf);
+#endif /* __CYGWIN__ */
 
     fp = fopen(tmp, "r");
     unlink(tmp);
@@ -1744,7 +1742,7 @@ ff_resize(vfuncptr func, Var * arg)
 Var *
 ff_fork(vfuncptr func, Var * arg)
 {
-#ifndef _WIN32
+#ifndef __CYGWIN__
     if (fork() == 0) {
         sleep(10);
     }
@@ -1980,14 +1978,14 @@ newDouble(double d)
 Var *
 ff_killchild(vfuncptr func, Var *arg)
 {
-#ifndef _WIN32
+#ifndef __CYGWIN__
 	pid_t pid;
 	pid=getpgrp();
 	pid=-pid;
 	kill(pid,SIGUSR1);
 #else
 	parse_error("Function not supported under DOS/Windows.");
-#endif /* _WIN32 */
+#endif /* __CYGWIN__ */
 	return(NULL);
 }
 

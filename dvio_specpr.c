@@ -173,11 +173,11 @@ specpr_open(char *path)
     int fout;
     char *p;
 
-#ifdef _WIN32
+#ifdef __CYGWIN__
 	if ((fout = open(path, O_RDWR|O_BINARY)) >= 0) {
-#else /* UNIX */
+#else 
 	if ((fout = open(path, O_RDWR)) >= 0) {
-#endif /* _WIN32 */
+#endif /* __CYGWIN__ */
         return(fout);
     } else {
         /* it doesn't exist.  Create it. */
@@ -185,11 +185,11 @@ specpr_open(char *path)
         ** this needs to prepend the SPECPR_MAGIC cookie to record 0
         **/
 
-#ifdef _WIN32
+#ifdef __CYGWIN__
         fout = open(path, O_RDWR | O_CREAT | O_BINARY, 0777);
-#else /* UNIX */
+#else 
         fout = open(path, O_RDWR | O_CREAT, 0777);
-#endif /* _WIN32 */
+#endif /* __CYGWIN__ */
         if (fout < 0) return(fout);
 
         p = (char *)malloc(LABELSIZE);

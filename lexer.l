@@ -109,18 +109,21 @@ comment #.*
 {rval}              { yytext = strdup(yytext); return(RVAL); }
 {var}               { yytext = strdup(yytext); return(ID); }
 
-\"(\\.|[^\\"\n])*\" { yytext = strdup(yytext); return(STRING); }
-\'(\\.|[^\\'\n])*\' { yytext = strdup(yytext); return(STRING); }
+\"(\\.|[^\\"\r\n])*\" { yytext = strdup(yytext); return(STRING); }
+\'(\\.|[^\\'\r\n])*\' { yytext = strdup(yytext); return(STRING); }
 
 {comment}   { }
 {ws}        { }
+"\x1a"      { }
 
+"\\\r\n"    { continuation=1; pp_line++; }
 "\\\n"      { continuation=1; pp_line++; }
+"\r\n"      { return('\n'); }
 "\n"        { return('\n'); }
 .           { return(yytext[0]); };
 
-<ufunc>\"(\\.|[^\\"\n])*\" { MYECHO; }
-<ufunc>\'(\\.|[^\\'\n])*\' { MYECHO; }
+<ufunc>\"(\\.|[^\\"\r\n])*\" { MYECHO; }
+<ufunc>\'(\\.|[^\\'\r\n])*\' { MYECHO; }
 
 <ufunc>"/*"		   { MYECHO; caller = ufunc; BEGIN(comment); in_comment = 1; }
 
@@ -134,14 +137,17 @@ comment #.*
 							return('\n');
 						} 
 				   }
+<ufunc>"\\\r\n"    { MYECHO; continuation=1; }
 <ufunc>"\\\n"      { MYECHO; continuation=1; }
+<ufunc>"\r\n"      { MYECHO; };
 <ufunc>"\n"        { MYECHO; };
 <ufunc>{comment}   { MYECHO; }
 <ufunc>[^{}]*      { MYECHO; };
 
 
-<comment>[^*\n]*        { MYECHO; /* eat anything that's not a '*' */ }
-<comment>"*"+[^*/\n]*   { MYECHO; /* eat up '*'s not followed by '/'s */ }
+<comment>[^*\r\n]*      { MYECHO; /* eat anything that's not a '*' */ }
+<comment>"*"+[^*/\r\n]* { MYECHO; /* eat up '*'s not followed by '/'s */ }
 <comment>\n             { MYECHO; }
+<comment>\r\n           { MYECHO; }
 <comment>"*"+"/"        { MYECHO; BEGIN(caller); in_comment = 0;}
 %%

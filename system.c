@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 #if   defined(HAVE_CONFIG_H)
 #include <config.h>
@@ -478,6 +480,23 @@ my_realloc(void *ptr, int len)
 	} else {
 		return(realloc(ptr, len));
 	}
+}
+
+void rmrf(char *path)
+{
+	DIR *dir;
+	struct dirent *d;
+	char target[1024];
+
+	dir = opendir(path);
+	while((d = readdir(dir)) != NULL) {
+		if (strcmp(d->d_name, ".") && strcmp(d->d_name,"..")) {
+			sprintf(target, "%s/%s", path, d->d_name);
+			unlink(target);
+		}
+	}
+	closedir(dir);
+	rmdir(path);
 }
 
 /*

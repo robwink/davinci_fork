@@ -47,7 +47,7 @@
  */
 
 #ifndef HELPFILE
-#ifndef _WIN32
+#ifndef __CYGWIN__
 #define HELPFILE "/usr/local/lib/dv.gih"
 #else
 #define HELPFILE "docs\\dv.gih"
@@ -76,7 +76,7 @@ extern int errno;
    ** to read helpfile into memory, avoiding reread of help file. 12/89.
    **
    ** Modified by Russell Lang to avoid reading completely into memory
-   ** if _WIN32 defined.  This uses much less memory.  6/91
+   ** if __CYGWIN__ defined.  This uses much less memory.  6/91
    **
    ** The help file looks like this (the question marks are really in column 1):
    **

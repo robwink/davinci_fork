@@ -355,11 +355,11 @@ dv_LoadISIS(FILE *fp, char *filename, struct iom_iheader *s)
         msg_file = NULL;
     }
     else {
-#ifdef _WIN32
+#ifdef __CYGWIN__
         msg_file = "nul:";
 #else
         msg_file = "/dev/null";
-#endif /* _WIN32 */
+#endif /* __CYGWIN__ */
     }
     
     if (iom_GetISISHeader(fp, filename, &h, msg_file, NULL) == 0) {
@@ -385,11 +385,11 @@ dv_LoadISIS(FILE *fp, char *filename, struct iom_iheader *s)
     datafile = h.ddfname; /* get the detached data file name */
     
     if (datafile != NULL) {
-#ifdef _WIN32
+#ifdef __CYGWIN__
         if ((fd = open(datafile, O_RDONLY|O_BINARY)) < 0) {
-#else /* UNIX */
+#else 
         if ((fd = open(datafile, O_RDONLY)) < 0) {
-#endif /* _WIN32 */
+#endif /* __CYGWIN__ */
             fprintf(stderr, "Unable to open data file: %s\n", datafile);
             return(NULL);
         }
@@ -467,11 +467,11 @@ dv_LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var)
     rewind(fp);
 
     if (VERBOSE > 0) err_file = NULL;
-#ifdef _WIN32
+#ifdef __CYGWIN__
     else err_file = "nul:";
 #else
     else err_file = "/dev/null";
-#endif /* _WIN32 */
+#endif /* __CYGWIN__ */
 
     ob = (OBJDESC *)OdlParseLabelFptr(fp, err_file,
                                       ODL_EXPAND_STRUCTURE | ODL_EXPAND_CATALOG, VERBOSE==0);
@@ -930,11 +930,11 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
         msg_file = NULL;
     }
     else {
-#ifdef _WIN32
+#ifdef ___CYGWIN__
         msg_file = "nul:";
 #else
         msg_file = "/dev/null";
-#endif /* _WIN32 */
+#endif /* __CYGWIN__ */
     }
 
     if (iom_GetISISHeader(fp, fname, &s, msg_file, &object) == 0) {

@@ -43,9 +43,9 @@ push_input_file(char *name)
 
     if (name == NULL) {
         fptr = stdin;
-    } else if ((fptr = fopen(name, "r")) == NULL) {
+    } else if ((fptr = fopen(name, "rb")) == NULL) {
         if ((fname = dv_locate_file(name)) != NULL) {
-            fptr = fopen(fname, "r");
+            fptr = fopen(fname, "rb");
             free(fname);
         }
         if (fptr == NULL)  {

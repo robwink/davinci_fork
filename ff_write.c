@@ -7,7 +7,7 @@
 #include <config.h>
 #endif
 
-#ifdef _WIN32
+#ifdef __CYGWIN__
 #include <io.h>
 extern Swap_Big_and_Little(Var *);
 #else

@@ -113,7 +113,7 @@ load_function(char *filename)
         return(NULL);
     }
     buf = (char *)calloc(1, sbuf.st_size+1);
-	fp = fopen(filename, "r");
+	fp = fopen(filename, "rb");
     fread(buf, sbuf.st_size, 1, fp);
 	fclose(fp);
 
