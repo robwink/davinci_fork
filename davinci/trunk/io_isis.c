@@ -15,7 +15,6 @@ typedef struct _sheader
 }sheader;
 
 
-int GetISISHeader(FILE *, char *filename, struct _iheader *, OBJDESC **ob);
 void vax_ieee_r(float *from, float *to);
 
 int
@@ -39,8 +38,13 @@ is_ISIS(FILE *fp)
 }
 
 
+
 int
-GetISISHeader(FILE *fp, char *filename, struct _iheader *h, OBJDESC **r_obj)
+GetISISHeader(FILE *fp, 
+			char *filename, 
+			struct _iheader *h, 
+			char **datafile, 	/* ISIS data can have a detached label */
+			OBJDESC **r_obj)
 {
     OBJDESC * ob, *qube, *image;
     KEYWORD * key;
@@ -168,85 +172,6 @@ GetISISHeader(FILE *fp, char *filename, struct _iheader *h, OBJDESC **r_obj)
             suffix_bytes = atoi(key->value);
         }
 
-#if 0
-        /**
-        ** In theory, we should be able to simply multiply the suffix_items
-        ** times suffix_bytes, to get a suffix_size, but its not that cut and
-        ** dry.  Instead, for each suffix_item, we need to loop through 
-        ** its *_suffix_bytes, and add them all together, to get a total 
-        ** number of bytes to skip.
-        **/
-
-        if (suffix[0] != 0) {
-            switch (org) {
-            case BIL: 
-                strcpy(name, "SAMPLE_SUFFIX_ITEM_BYTES"); 
-                break;
-            case BIP:   
-                strcpy(name, "BAND_SUFFIX_ITEM_BYTES"); 
-                break;
-            case BSQ:   
-                strcpy(name, "SAMPLE_SUFFIX_ITEM_BYTES"); 
-                break;
-            }
-            if ((key = OdlFindKwd(qube, name, NULL, 0, scope))) {
-                suffix_size[0] = 0;
-                if ((ptr = strchr(key->value, '(')) != NULL) {
-                    for (i = 0 ; i < suffix[0] ; i++) {
-                        suffix_size[0] += strtod(ptr + 1, &ptr);
-                    }
-                } else {
-                    suffix_size[0] = strtod(key->value, NULL);
-                }
-            }
-        }
-        if (suffix[1] != 0) {
-            switch (org) {
-            case BIL: 
-                strcpy(name, "BAND_SUFFIX_ITEM_BYTES"); 
-                break;
-            case BIP:   
-                strcpy(name, "SAMPLE_SUFFIX_ITEM_BYTES"); 
-                break;
-            case BSQ:   
-                strcpy(name, "LINE_SUFFIX_ITEM_BYTES"); 
-                break;
-            }
-            if ((key = OdlFindKwd(qube, name, NULL, 0, scope))) {
-                suffix_size[1] = 0;
-                if ((ptr = strchr(key->value, '(')) != NULL) {
-                    for (i = 0 ; i < suffix[1] ; i++) {
-                        suffix_size[1] += strtod(ptr + 1, &ptr);
-                    }
-                } else {
-                    suffix_size[1] = strtod(key->value, NULL);
-                }
-            }
-        }
-        if (suffix[2] != 0) {
-            switch (org) {
-            case BIL: 
-                strcpy(name, "LINE_SUFFIX_ITEM_BYTES"); 
-                break;
-            case BIP:   
-                strcpy(name, "LINE_SUFFIX_ITEM_BYTES"); 
-                break;
-            case BSQ:   
-                strcpy(name, "BAND_SUFFIX_ITEM_BYTES"); 
-                break;
-            }
-            if ((key = OdlFindKwd(qube, name, NULL, 0, scope))) {
-                suffix_size[2] = 0;
-                if ((ptr = strchr(key->value, '(')) != NULL) {
-                    for (i = 0 ; i < suffix[0] ; i++) {
-                        suffix_size[2] += strtod(ptr + 1, &ptr);
-                    }
-                } else {
-                    suffix_size[2] = strtod(key->value, NULL);
-                }
-            }
-        }
-#endif
 
         for (i = 0 ; i < 3 ; i++) {
             if (suffix[i]) {
@@ -339,11 +264,17 @@ GetISISHeader(FILE *fp, char *filename, struct _iheader *h, OBJDESC **r_obj)
             ** Load important IMAGE values
             **/
             if ((key = OdlFindKwd(ob, "^IMAGE", NULL, 0, 0)) != NULL) {
-                OdlGetFileName(key, &start, &start_type);
+				char *fname;
+                fname = OdlGetFileName(key, &start, &start_type);
+				fname = OdlGetFileSpec(fname, filename);
+
+				if (fname)  *datafile = strdup(fname);
+				else *datafile = NULL;
+
                 if (start_type == ODL_RECORD_LOCATION) {
                     start = (start-1)*rlen;
-                }
-                h->dptr = start;
+					h->dptr = start;
+                } 
             }
             if (r_obj != NULL) {
                 *r_obj = ob;
@@ -375,10 +306,11 @@ LoadISIS(FILE *fp, char *filename, struct _iheader *s)
     char hbuf[HBUFSIZE];
     void *data;
 	int i,j;
+	char *datafile = NULL;
 
     if (is_ISIS(fp) == 0) return(NULL);
 
-    if (GetISISHeader(fp, filename, &h, NULL) == 0) {
+    if (GetISISHeader(fp, filename, &h, &datafile, NULL) == 0) {
         return(NULL);
     }
 
@@ -402,13 +334,28 @@ LoadISIS(FILE *fp, char *filename, struct _iheader *s)
 		}
     }
 
-
-    /**
-     ** Put all this into a Var struct.
-     **/
-    if ((data = read_qube_data(fileno(fp), &h)) == NULL) {
-        return(NULL);
-    }
+	/*
+	** Handle reading a detached label
+	*/
+	if (datafile != NULL) {
+		int fd = open(datafile, O_RDONLY);
+		if (fd < 0) {
+			fprintf(stderr, "Unable to open data file: %s\n", datafile);
+			return(NULL);
+		}
+		data = read_qube_data(fd, &h);
+		close(fd);
+		if (data == NULL) {
+			return(NULL);
+		}
+	} else {
+		/**
+		 ** Put all this into a Var struct.
+		 **/
+		if ((data = read_qube_data(fileno(fp), &h)) == NULL) {
+			return(NULL);
+		}
+	}
     v = iheader2var(&h);
     V_DATA(v) = data;
 
@@ -972,6 +919,7 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
     char *axis[]={"SAMPLE_","LINE_","BAND_"};
     char suffix_item_byte[80];
     char suffix_item_type[80];
+	char *datafile = NULL;
 
     int ac;
     Var **av;
@@ -1001,7 +949,7 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
     free(fname);
     fname = fname2;
 
-    if (GetISISHeader(fp, fname, &s, &object) == 0) {
+    if (GetISISHeader(fp, fname, &s, &datafile, &object) == 0) {
        free(fname);
        return (NULL);
     }
@@ -1151,3 +1099,4 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
 		
     return(newVal(s.org,s.s_hi[0],s.s_hi[1],s.s_hi[2],s_suffix_item_bytes,data));
 }
+
