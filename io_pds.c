@@ -533,9 +533,11 @@ int rf_QUBE(char *fn, Var *ob,char * val)
 	data=LoadISIS(fp,fn,NULL);
 	if (data!=NULL){
 		add_struct(ob,"DATA",data);
+		fclose(fp);
 		return(0);
 	}
 
+	fclose(fp);
 	return(1);
 }
 int rf_TABLE(char *fn, Var *ob,char * val)
@@ -811,9 +813,11 @@ int rf_IMAGE(char *fn, Var *ob,char * val)
 	data=LoadISIS(fp,fn,NULL);
 	if (data!=NULL){
 		add_struct(ob,"IMAGE",data);
+		fclose(fp);
 		return(0);
 	}
 
+	fclose(fp);
 	return(1);
 }
 int rf_HISTOGRAM_IMAGE(char *fn, Var *ob,char * val)
