@@ -51,8 +51,8 @@ dnl Check for Xt and X libraries
 dnl    We don't really care if any of these are found, we just want to know
 dnl    if they're NOT found
 have_xt=yes
-AC_CHECK_LIB(X11, XOpenDisplay,[LIBS=$LIBS -lX11],[have_xt=no])
-AC_CHECK_LIB(Xt, XtToolkitInitialize,[LIBS=$LIBS -lXt],[have_xt=no])
+AC_CHECK_LIB(X11, XOpenDisplay,[LIBS="$LIBS -lX11"],[have_xt=no])
+AC_CHECK_LIB(Xt, XtToolkitInitialize,[LIBS="$LIBS -lXt"],[have_xt=no])
 AC_CHECK_HEADERS(X11/Intrinsic.h,[ /bin/true ],[have_xt=no])
 if test "x$have_xt" = "xyes"; then
 	AC_DEFINE(HAVE_XT, 1, [ headers and libraries for X11 and Xt ])
