@@ -19,7 +19,9 @@ int Darray_add(Darray *d, void *new);
 int Darray_get(Darray *d, int i, void **ret);
 int Darray_replace(Darray *d, int i, void *in, void **out);
 int Darray_count(Darray *d);
+void Darray_release(Darray *d, void (*fptr)());
 void Darray_free(Darray *d, void (*fptr)()) ;
+
 Narray * Narray_create(int size);
 int Narray_add(Narray *a, char *key, void *data);
 void *Narray_delete(Narray *a, char *key);

@@ -24,10 +24,6 @@ V_func(char *name, Var * arg)
     UFUNC *uf, *locate_ufunc(char *);
     APIDEFS *api;
 
-#ifdef rfunc
-    ArgsRegister *rf, *locate_rfunc(char *);
-#endif
-
     /**
     ** Find and call the named function or its handler
     **/
@@ -36,12 +32,6 @@ V_func(char *name, Var * arg)
             return (f->fptr(f, arg));
         }
     }
-
-#ifdef rfunc
-    if ((rf = locate_rfunc(name)) != NULL) {
-        return(dispatch_rfunc(rf, arg));
-    }
-#endif
 
     /**
     ** No internal function match.  Check ufunc list
@@ -347,8 +337,6 @@ ff_org(vfuncptr func, Var * arg)
     char *org_str = NULL;
     char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
 
-    int ac;
-    Var **av;
     Alist alist[4];
     alist[0] = make_alist( "object", ID_VAL,   NULL,     &ob);
     alist[1] = make_alist( "org",    ID_ENUM,  orgs,     &org_str);
@@ -542,8 +530,6 @@ ff_format(vfuncptr func, Var * arg)
     char *format_str = NULL;
     char *formats[] = { "byte", "short", "int", "float", "double", NULL };
 
-    int ac;
-    Var **av;
     Alist alist[4];
     alist[0] = make_alist( "object", ID_VAL,   NULL,        &object);
     alist[1] = make_alist( "format", ID_ENUM,  formats,     &format_str);
@@ -622,8 +608,6 @@ ff_create(vfuncptr func, Var * arg)
     float *fdata;
     double *ddata;
 
-    int ac;
-    Var **av;
     Alist alist[8];
     alist[0] = make_alist( "x",      INT,      NULL,     &x);
     alist[1] = make_alist( "y",      INT,      NULL,     &y);
@@ -830,8 +814,6 @@ ff_replicate(vfuncptr func, Var * arg)
     int nbytes;
     int i, j, k, l;
 
-    int ac;
-    Var **av;
     Alist alist[5];
     alist[0] = make_alist( "object", ID_UNK,   NULL, &v);
     alist[1] = make_alist( "x",   INT, NULL,  &x);
@@ -965,6 +947,7 @@ KwToFloat(char *name, struct keywords *kw, float *val)
  ** and concatenate them together along specified axis.
  **/
 
+#if 0
 Var *
 ff_cat(vfuncptr func, Var * arg)
 {
@@ -974,8 +957,6 @@ ff_cat(vfuncptr func, Var * arg)
     int axis;
     char *options[] = { "x", "y", "z", NULL };
 
-    int ac;
-    Var **av;
     Alist alist[4];
     alist[0] = make_alist( "ob1", ID_UNK,   NULL,     &ob1);
     alist[1] = make_alist( "ob2", ID_UNK,   NULL,     &ob2);
@@ -1005,6 +986,69 @@ ff_cat(vfuncptr func, Var * arg)
     ** convert axis from XYZ to ORDER
     **/
     return (do_cat(ob1, ob2, axis));
+}
+#endif
+
+
+Var *
+ff_cat(vfuncptr func, Var * arg)
+{
+	int ac;
+	Var **av;
+	Var *axis_var = NULL, *p, *q, *v;
+	char *axis_str;
+	int i, j, axis;
+
+	make_args(&ac, &av, func, arg);
+
+	if (ac < 4) {
+		parse_error("Not enough arguments to cat()");
+		return(NULL);
+	}
+	/* find axis if specified */
+	for (i = 1 ; i < ac ; i++) {
+		if (V_TYPE(av[i]) == ID_KEYWORD && !strcasecmp(V_NAME(av[i]), "axis")) {
+			axis_var = V_KEYVAL(av[i]);
+			for (j = i ; j < ac-1 ; j++) {
+				av[j] = av[j+1];
+			}
+			ac--;
+			break;
+		}
+	}
+	if (axis_var == NULL) {
+		axis_var = av[ac-1];
+		ac--;
+	}
+
+	if (V_TYPE(axis_var) == ID_STRING) {
+		axis_str = V_STRING(axis_var);
+	} else if ((v = eval(axis_var)) != NULL && V_TYPE(v) == ID_STRING) {
+		axis_str = V_STRING(v);
+	} else if (V_NAME(axis_var) != NULL) {
+		axis_str = V_NAME(axis_var);
+	} else {
+		parse_error("cat(): No axis specified");
+		return(NULL);
+	}
+	if (!strcasecmp(axis_str, "x")) axis = 0;
+	else if (!strcasecmp(axis_str, "y")) axis = 1;
+	else if (!strcasecmp(axis_str, "z")) axis = 2;
+	else {
+		parse_error("cat(): Invalid axis specified");
+		return(NULL);
+	}
+
+	p = av[1];
+	for (i = 2 ; i < ac ; i++) {
+		q = do_cat(p,av[i],axis);
+		if (q == NULL) {
+			return(NULL);
+		}
+		p = q;
+	}
+	free(av);
+	return(p);
 }
 
 Var *
@@ -1366,8 +1410,6 @@ Var *
 ff_strlen(vfuncptr func, Var * arg)
 {
     Var *S1=NULL;
-    int ac;
-    Var **av;  
     int *Result=(int *)calloc(1,sizeof(int));
     Alist alist[2];
     alist[0] = make_alist("string",         ID_UNK,         NULL,   &S1);
@@ -1394,8 +1436,6 @@ Var *
 ff_issubstring(vfuncptr func, Var * arg)
 {
     char *S1=NULL,*S2=NULL;
-    int ac;
-    Var **av;
     int *Result=(int *)calloc(1,sizeof(int));
     Alist alist[3];
     alist[0] = make_alist("target", ID_STRING, NULL, &S1);
@@ -1422,8 +1462,6 @@ ff_pow(vfuncptr func, Var * arg)
 {
     Var *ob1 = NULL, *ob2 = NULL;
     Var *v, *e;
-    int ac;
-    Var **av;
     Alist alist[3];
     alist[0] = make_alist( "ob1", ID_VAL,   NULL,     &ob1);
     alist[1] = make_alist( "ob2", ID_VAL,   NULL,     &ob2);
@@ -1470,8 +1508,6 @@ Var *
 ff_exit(vfuncptr func, Var * arg)
 {
     Var *obj = NULL;
-    int ac;
-    Var **av;
     Alist alist[2];
 
     alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
@@ -1492,8 +1528,6 @@ Var *
 ff_fsize(vfuncptr func, Var * arg)
 {
     char *filename = NULL;
-    int ac;
-    Var **av;
     struct stat sbuf;
     int *data;
 
@@ -1504,7 +1538,7 @@ ff_fsize(vfuncptr func, Var * arg)
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (filename == NULL) {
-        fprintf(stderr, "%s: No filename specified\n", (char *)av[0]);
+        fprintf(stderr, "%s: No filename specified\n", func->name);
         return(NULL);
     } else {
         data = (int *)calloc(1, sizeof(int));
@@ -1523,8 +1557,7 @@ Var *
 ff_history(vfuncptr func, Var * arg)
 {
     Var *value = NULL;
-    int ac, i, count = 0;
-    Var **av;
+    int i, count = 0;
 
     Alist alist[2];
     alist[0] = make_alist( "count",    ID_VAL,    NULL,     &value);
@@ -1569,8 +1602,7 @@ ff_hedit(vfuncptr func, Var * arg)
 
     FILE *fp;
     Var *value = NULL;
-    int ac, i, j, count = 0;
-    Var **av;
+    int i, j, count = 0;
     HISTORY_STATE *state;
     char *tmp, *editor, buf[256];
 
@@ -1591,12 +1623,12 @@ ff_hedit(vfuncptr func, Var * arg)
 
     state = history_get_history_state();
     if (count >= state->length) {
-        parse_error("%s: not that many history entires", av[0]);
+        parse_error("%s: not that many history entires", func->name);
         return(NULL);
     }
     tmp = tempnam(NULL, NULL);
     if ((fp = fopen(tmp, "w")) == NULL ) {
-        parse_error("%s: unable to open temp file: %s", av[0], tmp);
+        parse_error("%s: unable to open temp file: %s", func->name, tmp);
         free(tmp);
         return(NULL);
     }
@@ -1631,8 +1663,7 @@ ff_hedit(vfuncptr func, Var * arg)
 Var *
 ff_resize(vfuncptr func, Var * arg)
 {
-    int ac, i, j;
-    Var **av;
+    int i, j;
     Var *obj;
     int x = 1,y = 1,z = 1;
     char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
@@ -1650,7 +1681,7 @@ ff_resize(vfuncptr func, Var * arg)
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (obj == NULL)  {
-        parse_error("No argument specified: %s(...obj=...)", av[0]);
+        parse_error("No argument specified: %s(...obj=...)", func->name);
         return(NULL);
     }
 
@@ -1696,8 +1727,7 @@ ff_fork(vfuncptr func, Var * arg)
 Var *
 ff_eval(vfuncptr func, Var * arg)
 {
-    int ac, i, j;
-    Var **av;
+    int i, j;
     char *expr;
     FILE *fp;
     char *buf;
@@ -1726,8 +1756,7 @@ ff_eval(vfuncptr func, Var * arg)
 Var *
 ff_syscall(vfuncptr func, Var * arg)
 {
-    int ac, i, j; 
-    Var **av;
+    int i, j; 
     char *expr;
     FILE *fp;
 
@@ -1783,8 +1812,7 @@ Var *
 ff_dump(vfuncptr func, Var * arg)
 {
     Var *v;
-    int ac, i, j; 
-    Var **av;
+    int i, j; 
     int depth;
 
     Alist alist[3];
@@ -1809,8 +1837,7 @@ Var *
 ff_equals(vfuncptr func, Var * arg)
 {
     Var *v1 = NULL, *v2 = NULL, *v, *e;
-    int ac, i, j; 
-    Var **av;
+    int i, j; 
     Alist alist[3];
     char *data;
 

@@ -178,7 +178,7 @@ int Darray_count(Darray *d)
     return(-1);
 }
 
-void Darray_free(Darray *d, void (*fptr)(void *)) 
+void Darray_release(Darray *d, void (*fptr)(void *)) 
 {
 	int i;
 
@@ -187,9 +187,16 @@ void Darray_free(Darray *d, void (*fptr)(void *))
 			if (d->data[i]) fptr(d->data[i]);
 		}
 	}
+	d->count =0;
+}
+
+void Darray_free(Darray *d, void (*fptr)(void *)) 
+{
+	Darray_release(d, fptr);
 	free(d->data);
 	free(d);
 }
+
 
 /*
 ****************************************************************************
