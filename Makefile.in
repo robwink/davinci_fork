@@ -73,7 +73,7 @@ OBJ=p.o pp.o symbol.o \
 	dvio_ers.o dvio_envi.o dvio_raw.o dvio_specpr.o dvio_themis.o \
 	dvio_ascii.o dvio_pds.o dvio_hdf.o endian_norm.o \
 	error.o ff_struct.o darray.o avl.o \
-	util.o ff_shade.o @MAGICKOBJ@ \
+	util.o ff_shade.o \
 	binDCT.o ff_deghost.o deghost.o
 
 
@@ -95,7 +95,7 @@ build.h:	$(OBJ:ff_version.o=)
 	echo 'char *builder = "'`whoami`'@'`hostname`'";' >> build.h
 
 readline/libreadline.a:
-	@(cd readline && $(MAKE) )
+	@(cd readline && $(MAKE) static)
 
 lexer.o:	lexer.c parser.o
 
