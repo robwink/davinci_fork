@@ -1,17 +1,17 @@
-char *version = "@(#) daVinci Version #1.10";
+char *version = "@(#) daVinci Version #1.11";
 
 
 #include "build.h"
 
 /*
+Version 1.11: Mon Mar 24 15:51:18 MST 2003
+	+ Various fixes plus modifications to dump to handle other variables (texts)
+	+ added slant and unslant, plus rice code
+
 Version 1.10:
 	+ Fix to io_lablib3 (PDS label reader) which overwrote memory 
 	  elsewhere while reading constructs like:
 	                INSTRUMENT_FOV = 20<MRAD>
-
-	  CAUTION: This is not the daVinci Version 1.10 which exists on
-	           Linux netboot boxes but is as yet not checked in by 
-			   whoever has created it.
 
 Version 1.09: Wed Jan 22 15:55:44 MST 2003
 	+ Fixes (again) to gplot to allow GPLOT_CMD environment variable.
