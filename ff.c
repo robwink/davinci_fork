@@ -1821,7 +1821,7 @@ ff_dump(vfuncptr func, Var * arg)
     int depth;
 
     Alist alist[3];
-    alist[0] = make_alist("object",    ID_VAL,     NULL,     &v);
+    alist[0] = make_alist("object",    ID_UNK,     NULL,     &v);
     alist[1] = make_alist("depth",    INT,     NULL,     &depth);
     alist[2].name = NULL;
  
@@ -2259,3 +2259,81 @@ ff_set_deleted(vfuncptr func, Var * arg)
 	}
 	return(v);
 }
+
+Var *
+ff_contains(vfuncptr func, Var * arg)
+{
+    Var *obj = NULL, *value=NULL;
+	int dsize;
+	int i, ret = 0;
+	int vi;
+	double vd;
+
+
+    Alist alist[4];
+    alist[0] = make_alist("obj",    ID_VAL,     NULL,     &obj);
+    alist[1] = make_alist("value",   ID_VAL,     NULL,    &value);
+    alist[2].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (obj == NULL) {
+        parse_error( "%s: No value specified for keyword: object.", func->name);
+		return(NULL);
+	}
+	if (value == NULL) {
+        parse_error( "%s: No value specified for keyword: value.", func->name);
+		return(NULL);
+	}
+	dsize = V_DSIZE(obj);
+
+	switch (V_FORMAT(obj)) {
+		case BYTE:
+			vi = extract_int(value, 0);
+			for (i = 0 ; i < dsize ; i++) {
+				if (((unsigned char *)V_DATA(obj))[i] == vi) {
+					ret = 1;
+					break;
+				}
+			}
+			break;
+		case SHORT:
+			vi = extract_int(value, 0);
+			for (i = 0 ; i < dsize ; i++) {
+				if (((short *)V_DATA(obj))[i] == vi) {
+					ret = 1;
+					break;
+				}
+			}
+			break;
+		case INT:
+			vi = extract_int(value, 0);
+			for (i = 0 ; i < dsize ; i++) {
+				if (((int *)V_DATA(obj))[i] == vi) {
+					ret = 1;
+					break;
+				}
+			}
+			break;
+		case FLOAT:
+			vd = extract_float(value, 0);
+			for (i = 0 ; i < dsize ; i++) {
+				if (((float *)V_DATA(obj))[i] == vd) {
+					ret = 1;
+					break;
+				}
+			}
+			break;
+		case DOUBLE:
+			vd = extract_double(value, 0);
+			for (i = 0 ; i < dsize ; i++) {
+				if (((double *)V_DATA(obj))[i] == vd) {
+					ret = 1;
+					break;
+				}
+			}
+			break;
+	}
+    return(newInt(ret));
+}
+
