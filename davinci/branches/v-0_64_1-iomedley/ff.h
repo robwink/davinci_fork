@@ -75,6 +75,7 @@ struct _vfuncptr vfunclist[] = {
 
     { "source",     ff_source,   NULL },
     { "load",       ff_load,     NULL },
+	{ "load2",      ff_load2,    NULL },
     { "read",       ff_load,     NULL },        /* an alias */
     { "import",     ff_load,     NULL },        /* an alias */
     { "load_ir",    ff_Frame_Grabber_Read, NULL},
