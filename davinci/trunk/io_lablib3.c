@@ -29,12 +29,15 @@
 /*                                                                        */
 /*========================================================================*/
 
+#include "header.h"
 #include "io_lablib3.h"
 
+
 long odl_message_count = {0};
-short odl_suppress_messages = {FALSE};
+short odl_suppress_messages = {TRUE};
 
 
+char * find_file(char *fname);
 
 
 
@@ -141,7 +144,12 @@ OBJDESC *OdlParseLabelFile (char *filespec, char *message_fname, MASK expand,
 
 
 
-OBJDESC *OdlParseLabelFptr (FILE *fp, char *message_fname, MASK expand, unsigned short suppress_messages)
+OBJDESC *OdlParseLabelFptr (fp, message_fname, expand, suppress_messages)
+FILE *fp;
+char *message_fname;
+MASK expand;
+unsigned short suppress_messages;
+
 {
     OBJDESC *root = {NULL};
     
@@ -377,7 +385,7 @@ OBJDESC *OdlExpandLabelFile (OBJDESC *object, char *orig_fspec, char *message_fn
    
                     /*  Parse the file  */
                     temp_root = (OBJDESC *) OdlParseFile(fspec,l_ptr,
-                                                        message_fname,NULL,0,1,1,1);
+                                             message_fname,NULL,suppress_messages,1,1,1);
                     
                     /*  Was there anything in the file to parse?  */
                     if (temp_root != NULL)
@@ -571,7 +579,7 @@ OBJDESC *OdlFindObjDesc( OBJDESC *start_object, char *object_class,
         if (object_class == NULL)
              found = TRUE;
         else
-             found = OdlWildCardCompare(object_class, obj->classname);
+             found = OdlWildCardCompare(object_class, obj->class);
 
         if ((found) && (keyword_name != NULL))
         {
@@ -978,7 +986,7 @@ OBJDESC *OdlCopyObjDesc (OBJDESC *object)
 
     if (object != NULL)
     {
-        new_object = OdlNewObjDesc(object->classname, 
+        new_object = OdlNewObjDesc(object->class, 
                                object->pre_comment, object->line_comment,
                                object->post_comment, object->end_comment,
                                object->file_name, object->is_a_group, 
@@ -1046,7 +1054,7 @@ OBJDESC *OdlNewObjDesc (char *object_class, char *pre_comment,
         SayGoodbye()
     else
     {
-        CopyString(new_object->classname, object_class)
+        CopyString(new_object->class, object_class)
         CopyString(new_object->pre_comment, pre_comment)
         CopyString(new_object->line_comment, line_comment)
         CopyString(new_object->post_comment, post_comment)
@@ -1188,7 +1196,7 @@ char *OdlGetObjDescClassName (OBJDESC *object)
     char *class_name = {NULL};
 
     if (object != NULL)
-        class_name = object->classname;
+        class_name = object->class;
 
     return(class_name);
 
@@ -2526,7 +2534,7 @@ OBJDESC *OdlFreeTree (OBJDESC *object)
         OdlFreeTree(object->first_child);
         OdlFreeTree(object->right_sibling);
         OdlFreeAllKwds(object);
-        LemmeGo(object->classname)      
+        LemmeGo(object->class)      
         LemmeGo(object->pre_comment)
         LemmeGo(object->line_comment)
         LemmeGo(object->post_comment)
@@ -2711,6 +2719,7 @@ FILE *OdlOpenMessageFile (char *message_fname, FILE *message_fptr)
 #endif
 {
     FILE *fptr = {stdout};
+    char *c = message_fname;
 
     if (message_fptr != NULL)
         fptr = message_fptr;
@@ -2977,22 +2986,21 @@ char *OdlGetFileSpec (char *fname, char *orig_fspec)   /* this is still TBD */
 {
     char *fspec = {NULL}, *p;
 
+
     if (fname != NULL)
     {
-		if (access(fname, F_OK) == 0) {
-			/* this is still TBD */
-			CopyString(fspec, fname)
-		} else {
-			if (orig_fspec) {
-				CopyString(fspec, orig_fspec);
-				if ((p = strrchr(fspec, '/')) != NULL) {
-					*(p+1) = '\0';
-					AppendString(fspec, fname);
-				}
-			}
+		CopyString(fspec, orig_fspec);
+		if ((p = strrchr(fspec, '/')) != NULL) {
+			*(p+1) = '\0';
+			AppendString(fspec, fname);
 		}
-    }
-
+		if (access(fspec, F_OK) != 0) {
+			/**
+			 ** Try some alternate versions
+			 **/
+			fspec = find_file(fspec);
+		}
+	}
     return(fspec);
 
 }  /*  End:  "OdlGetFileSpec"  */
@@ -3469,10 +3477,10 @@ void OdlPrintHierarchy (OBJDESC *object, char *message_fname,
             OdlPrintLine(message_fname, m_ptr, msgtext);
         }
 
-        if (obj->classname == NULL)
+        if (obj->class == NULL)
             OdlPrintLine(message_fname, m_ptr, "  --  <no class>\n");
         else {
-            sprintf(msgtext, "  --  %s\n", obj->classname);
+            sprintf(msgtext, "  --  %s\n", obj->class);
             OdlPrintLine(message_fname, m_ptr, msgtext);
         }
 
@@ -3553,12 +3561,12 @@ void OdlPrintLabel (OBJDESC *object, char *message_fname, FILE *message_fptr,
     
             if (object->parent != NULL)
             {
-                if (object->classname == NULL) {
+                if (object->class == NULL) {
                     sprintf(msgtext, "%sOBJECT", blanks);
                     OdlPrintLine(message_fname, m_ptr, msgtext);
                 }
                 else {
-                    sprintf(msgtext, "%sOBJECT = %s", blanks, object->classname);
+                    sprintf(msgtext, "%sOBJECT = %s", blanks, object->class);
                     OdlPrintLine(message_fname, m_ptr, msgtext);
                 }
     
@@ -3579,12 +3587,12 @@ void OdlPrintLabel (OBJDESC *object, char *message_fname, FILE *message_fptr,
     
             if (object->parent != NULL)
             {
-                if (object->classname == NULL) {
+                if (object->class == NULL) {
                     sprintf(msgtext, "%sEND_OBJECT", blanks);
                     OdlPrintLine(message_fname, m_ptr, msgtext);
                 }
                 else {
-                    sprintf(msgtext, "%sEND_OBJECT = %s", blanks, object->classname);
+                    sprintf(msgtext, "%sEND_OBJECT = %s", blanks, object->class);
                     OdlPrintLine(message_fname, m_ptr, msgtext);
                 }
     
@@ -4498,7 +4506,7 @@ static short OdlValidEndObjDesc (OBJDESC *curr_object, char *equals,
     {
         if (*right_part != '\0')
         {
-            if (strcmp(curr_object->classname, right_part) != 0)
+            if (strcmp(curr_object->class, right_part) != 0)
             {
                 status = OdlPrintMessage(message_fname, message_fptr, line_number,
                             "OBJECT and END_OBJECT class identifiers do not match");
@@ -5217,8 +5225,6 @@ char *OdlValueEnd( char *text)
     /*  find a character that is a brace, paren, or comma  */
     c = strpbrk(text, "{}(),");
 
-	if (c == NULL) return(text+strlen(text)-1);
-
     /*  backup over any trailing blanks  */
     for (--c; ((c > text) && ((*c == ' ') || (*c == '\0'))); --c) ;
 
@@ -5770,16 +5776,13 @@ char *OdlTempFname()
 {
     FILE *fptr = {NULL};
     char *fname = {NULL};
-    char temp_str  [TB_MAXPATH + TB_MAXFNAME], tmp;
+    char temp_str  [TB_MAXPATH + TB_MAXFNAME];
     char base_name [TB_MAXPATH + TB_MAXFNAME];
 
     strcpy(base_name, "tmp.tmp");
 
 #ifdef SUN_UNIX
-    tmp = tempnam(NULL,NULL);
-	strcpy( temp_str, tmp);
-	free(tmp);
-
+    tmpnam(temp_str);
     strcpy( base_name, temp_str);  /* Bug fix 11/2/94 SM                     */
                                    /* Was:    sprintf(base_name, "~/%s.tmp", */
                                    /*                 temp_str);             */
@@ -5800,7 +5803,7 @@ char *OdlTempFname()
         time_t t;
         t = (time_t) time(NULL);
         sprintf(base_name, "C:\\%ld", t);
-        base_name[8] = EOS;
+        base_name[8] = '\0';	/* EOS; */
         strcat(base_name, ".tmp");
     }
 #endif
@@ -5817,7 +5820,8 @@ char *OdlTempFname()
 }  /*  End:  "OdlTempFname"  */
 
 
-short CheckBalance(char *text)
+short CheckBalance(text)
+char *text;
 {
     long quote_nesting = 0;
     long brace_nesting = 0;
@@ -5863,7 +5867,7 @@ int ListToArray(TB_STRING_LIST *list, char ***array)
     for (t = list ; t != NULL ; t=t->next) {
         count++;
     }
-    *array = (char **)calloc(count, sizeof(char *));
+    *array = calloc(count, sizeof(char *));
 
 	t = list;
 	while(t != NULL) {
@@ -5874,3 +5878,138 @@ int ListToArray(TB_STRING_LIST *list, char ***array)
     }
 	return(i);
 }
+
+#if 0
+/*
+ * helper functions
+ *
+ */
+char *
+basename(const char *name)
+{
+	const char *base = name;
+
+	while (*name) {
+		if (*name++ == '/') {
+			base = name;
+		}
+	}
+	return (char *) base;
+}
+
+#endif
+
+char *
+dirname(char *path)
+{
+	char *newpath;
+	char *slash;
+	int length;		/* Length of result, not including NUL.  */
+
+	slash = strrchr(path, '/');
+	if (slash == 0) {
+		/* File is in the current directory.  */
+		path = ".";
+		length = 1;
+	} else {
+		/* Remove any trailing slashes from the result.  */
+		while (slash > path && *slash == '/')
+			--slash;
+
+		length = slash - path + 1;
+	}
+	newpath = (char *) malloc(length + 1);
+	if (newpath == 0)
+		return 0;
+	strncpy(newpath, path, length);
+	newpath[length] = 0;
+	return newpath;
+}
+
+char *uppercase(char *s)
+{
+	char *p;
+	for (p = s ; p && *p ; p++) {
+		if (islower(*p)) *p = *p - 'a' + 'A';
+	}
+   return(s);
+}
+char *lowercase(char *s)
+{
+	char *p;
+	for (p = s ; p && *p ; p++) {
+		if (isupper(*p)) *p = *p - 'A' + 'a';
+	}
+   return(s);
+}
+char *
+find_file(char *fname)
+{
+	if (!access(fname, R_OK)) return(fname);
+
+	/**
+	 ** try some permutations
+	 **/
+    {
+		char buf[256], buf2[256], buf3[256], *p;
+		/**
+		 ** original path, trailing component lowercased
+		 **/
+		strcpy(buf, fname);
+		lowercase(basename(buf));
+		if (!access(buf, R_OK)) return(strdup(buf));
+
+		/**
+		 ** original path, trailing component uppercased
+		 **/
+		uppercase(basename(buf));
+		if (!access(buf, R_OK)) return(strdup(buf));
+
+		/**
+		 ** whole path lowercased
+		 **/
+		strcpy(buf, fname);
+		lowercase(buf);
+		if (!access(buf, R_OK)) return(strdup(buf));
+
+		/**
+		 ** whole path uppercased
+		 **/
+		uppercase(buf);
+		if (!access(buf, R_OK)) return(strdup(buf));
+
+		/**
+		 ** One last ditch attempt:  twiddle case on each piece
+		 **/
+		strcpy(buf, fname);
+		buf2[0] = 0;
+      
+		for (p = strtok(buf, "/") ; p != NULL ; p = strtok(NULL, "/")) {
+				if (buf2[0] != 0) {
+					sprintf(buf3, "%s/%s", buf2, p);
+				} else {
+					sprintf(buf3, "%s", p);
+				}
+				if (!access(buf3, F_OK)) {
+						strcpy(buf2, buf3);
+						continue;
+				}
+
+				sprintf(buf3, "%s/%s", buf2, uppercase(p));
+				if (!access(buf3, F_OK)) {
+						strcpy(buf2, buf3);
+						continue;
+				}
+
+				sprintf(buf3, "%s/%s", buf2, lowercase(p));
+				if (!access(buf3, F_OK)) {
+						strcpy(buf2, buf3);
+						continue;
+				}
+            fname = strdup(buf3);
+				break;
+		}
+	}
+	return(fname);
+}
+
