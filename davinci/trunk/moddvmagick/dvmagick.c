@@ -5,17 +5,17 @@
   Copyright 2002, Mars Space Flight Facility,
   Department of Geological Sciences, Arizona State University
 
-  Written January 8-15, 2002 by Randy Kaelber
+  Written January 8-23, 2002 by Randy Kaelber
 
   Current Bug List:
-
-  1. ReadImage not supported yet.
-
-  2. WriteImage can only write BSQ and BIP objects.
-
-  3. BIP color animations are "weird".
-
-  4. Image manipulation API not yet implemented.
+ 
+  1. Any manipulation routine that uses convolve, plus a few mathematically
+  intensive ones that don't, produce a bunch of unwanted noise in the 
+  resulting image.  I think this is a bug due to my imperfect understanding of
+  ImageMagick, and ImageMagick's far short of perfect documentation.  I am
+  still researching ImageMagick's source code trying to figure out how the
+  mogrify command works, and I have a question pending on the ImageMagick
+  user list.
 
   Gotchas:
   
@@ -51,6 +51,54 @@
 
 static Var *dvWriteImage(vfuncptr f, Var *args);
 static Var *dvReadImage(vfuncptr f, Var *args);
+static Var *dvAddNoiseImage(vfuncptr f, Var *args);
+static Var *dvAppendImages(vfuncptr f, Var *args);
+static Var *dvAverageImages(vfuncptr f, Var *args);
+static Var *dvBlurImage(vfuncptr f, Var *args);
+static Var *dvCharcoalImage(vfuncptr f, Var *args);
+static Var *dvChopImage(vfuncptr f, Var *args);
+static Var *dvColorizeImage(vfuncptr f, Var *args);
+static Var *dvContrastImage(vfuncptr f, Var *args);
+static Var *dvCropImage(vfuncptr f, Var *args);
+static Var *dvDespeckleImage(vfuncptr f, Var *args);
+static Var *dvEdgeImage(vfuncptr f, Var *args);
+static Var *dvEmbossImage(vfuncptr f, Var *args);
+static Var *dvEnhanceImage(vfuncptr f, Var *args);
+static Var *dvEqualizeImage(vfuncptr f, Var *args);
+static Var *dvFlattenImages(vfuncptr f, Var *args);
+static Var *dvFlipImage(vfuncptr f, Var *args);
+static Var *dvFlopImage(vfuncptr f, Var *args);
+static Var *dvGammaImage(vfuncptr f, Var *args);
+static Var *dvGaussianBlurImage(vfuncptr f, Var *args);
+static Var *dvImplodeImage(vfuncptr f, Var *args);
+static Var *dvLevelImage(vfuncptr f, Var *args);
+static Var *dvMagnifyImage(vfuncptr f, Var *args);
+static Var *dvMedianFilterImage(vfuncptr f, Var *args);
+static Var *dvMinifyImage(vfuncptr f, Var *args);
+static Var *dvModulateImage(vfuncptr f, Var *args);
+static Var *dvMorphImages(vfuncptr f, Var *args);
+static Var *dvMosaicImages(vfuncptr f, Var *args);
+static Var *dvMotionBlurImage(vfuncptr f, Var *args);
+static Var *dvNegateImage(vfuncptr f, Var *args);
+static Var *dvNormalizeImage(vfuncptr f, Var *args);
+static Var *dvOilPaintImage(vfuncptr f, Var *args);
+static Var *dvReduceNoiseImage(vfuncptr f, Var *args);
+static Var *dvResizeImage(vfuncptr f, Var *args);
+static Var *dvRollImage(vfuncptr f, Var *args);
+static Var *dvRotateImage(vfuncptr f, Var *args);
+static Var *dvSampleImage(vfuncptr f, Var *args);
+static Var *dvScaleImage(vfuncptr f, Var *args);
+static Var *dvShadeImage(vfuncptr f, Var *args);
+static Var *dvSharpenImage(vfuncptr f, Var *args);
+static Var *dvShaveImage(vfuncptr f, Var *args);
+static Var *dvShearImage(vfuncptr f, Var *args);
+static Var *dvSpreadImage(vfuncptr f, Var *args);
+static Var *dvSteganoImage(vfuncptr f, Var *args);
+static Var *dvStereoImage(vfuncptr f, Var *args);
+static Var *dvSwirlImage(vfuncptr f, Var *args);
+static Var *dvUnsharpMaskImage(vfuncptr f, Var *args);
+static Var *dvWaveImage(vfuncptr f, Var *args);
+
 
 /* 
    davinci usage:
@@ -66,8 +114,56 @@ static Var *dvReadImage(vfuncptr f, Var *args);
 
 /* Begin DaVinci set up structures and constructors, destructors */
 static dvModuleFuncDesc export_funcs [] = {
-  {"WriteImage", (void *)dvWriteImage},
+  {"WriteImage", (void *)dvWriteImage}, 
   {"ReadImage", (void *)dvReadImage},
+  {"AddNoiseImage", (void *)dvAddNoiseImage},
+  {"AppendImages", (void *)dvAppendImages},
+  {"AverageImages", (void *)dvAverageImages},
+  {"BlurImage", (void *)dvBlurImage},
+  {"CharcoalImage", (void *)dvCharcoalImage},
+  {"ChopImage", (void *)dvChopImage},
+  {"ColorizeImage", (void *)dvColorizeImage},
+  {"ContrastImage", (void *)dvContrastImage},
+  {"CropImage", (void *)dvCropImage},
+  {"DespeckleImage", (void *)dvDespeckleImage},
+  {"EdgeImage", (void *)dvEdgeImage},
+  {"EmbossImage", (void *)dvEmbossImage},
+  {"EnhanceImage", (void *)dvEnhanceImage},
+  {"EqualizeImage", (void *)dvEqualizeImage},
+  {"FlattenImages", (void *)dvFlattenImages},
+  {"FlipImage", (void *)dvFlipImage},
+  {"FlopImage", (void *)dvFlopImage},
+  {"GammaImage", (void *)dvGammaImage},
+  {"GaussianBlurImage", (void *)dvGaussianBlurImage},
+  {"ImplodeImage", (void *)dvImplodeImage},
+  {"LevelImage", (void *)dvLevelImage},
+  {"MagnifyImage", (void *)dvMagnifyImage},
+  {"MedianFilterImage", (void *)dvMedianFilterImage},
+  {"MinifyImage", (void *)dvMinifyImage},
+  {"ModulateImage", (void *)dvModulateImage},
+  {"MorphImages", (void *)dvMorphImages},
+  {"MosaicImages", (void *)dvMosaicImages},
+  {"MotionBlurImage", (void *)dvMotionBlurImage},
+  {"NegateImage", (void *)dvNegateImage},
+  {"NormalizeImage", (void *)dvNormalizeImage},
+  {"OilPaintImage", (void *)dvOilPaintImage},
+  {"ReduceNoiseImage", (void *)dvReduceNoiseImage},
+  {"ResizeImage", (void *)dvResizeImage},
+  {"RollImage", (void *)dvRollImage},
+  {"RotateImage", (void *)dvRotateImage},
+  {"SampleImage", (void *)dvSampleImage},
+  {"ScaleImage", (void *)dvScaleImage},
+  {"ShadeImage", (void *)dvShadeImage},
+  {"SharpenImage", (void *)dvSharpenImage},
+  {"ShaveImage", (void *)dvShaveImage},
+  {"ShearImage", (void *)dvShearImage},
+  {"SpreadImage", (void *)dvSpreadImage},
+  {"SteganoImage", (void *)dvSteganoImage},
+  {"StereoImage", (void *)dvStereoImage},
+  {"SwirlImage", (void *)dvSwirlImage},
+  {"UnsharpMaskImage", (void *)dvUnsharpMaskImage},
+  {"WaveImage", (void *)dvWaveImage},
+
   {NULL, NULL}
 };
 
@@ -88,7 +184,7 @@ static dvDepAttr deps[] = {
 /* The structure that defines what is accessible from DaVinci */
 
 static dvModuleInitStuff dvinit = {
-  export_funcs, 2, NULL, 0
+  export_funcs, 49, NULL, 0
 };
 
 
@@ -105,7 +201,6 @@ DV_MOD_EXPORT int dv_module_init(const char *modname,
   char shortversion[10];
   *ini = dvinit;
   if (deps == NULL); /* no op to keep gcc from carping about deps */
-  InitializeMagick("davinci");
   (void) GetMagickVersion(&imversion);
   snprintf(shortversion, 10, "%i.%i.%i", imversion >> 8, 
 	   (imversion & 0xF0)  >> 4, (imversion & 0xF));
@@ -117,7 +212,6 @@ DV_MOD_EXPORT int dv_module_init(const char *modname,
 
 DV_MOD_EXPORT void dv_module_fini(const char *modname)
 {
-  DestroyMagick();
   parse_error("%s Unloaded.", modname);
 }
 
@@ -171,6 +265,31 @@ static Image * constitute_dvobject(Var * obj, char * planes, unsigned int z) {
   return rtn;
 }
 
+Image * read_im_image(char * fn) {
+  /* Read an ImageMagick image from disk.
+
+  Arguments:
+  fn:  Where to find the file on disk
+
+  Returns:
+  a pointer to an ImageMagick Image object on success, NULL on failure 
+  */
+
+  ExceptionInfo exc;
+  ImageInfo * img_info;
+  Image * rtn;
+
+  GetExceptionInfo(&exc);
+  img_info=CloneImageInfo((ImageInfo *) NULL);
+  strcpy(img_info->filename, fn);
+  rtn = ReadImage(img_info,&exc);
+  if (rtn == NULL) {
+    parse_error("Image read failed: %s", exc.reason);
+  }
+  return rtn;
+}
+
+
 static unsigned int write_im_image(Image * img, char * fn, char * type) {
   /* Write an ImageMagick image out to disk.
 
@@ -204,46 +323,6 @@ static unsigned int write_im_image(Image * img, char * fn, char * type) {
   return rtn;
 }
   
-static unsigned int composite_color_layers(Image * red, Image * green, 
-						  Image * blue) {
-  /* Function to add three identically sized images together, good for
-     RGB compositing.  You don't really have to pass the images in RGB 
-     order, but it will help you keep things clear.  Note that your
-     red composite layer is destroyed by this function, as it is what
-     returns the composited image.  If you will need it after calling,
-     I suggest Cloning it first.
-
-     Arguments:
-     red: The red layer image.  This is also the finished composite image
-     when we're done.
-
-     green: The green layer image.
-
-     blue: The blue layer image.
-
-     Returns: 1 on success, 0 on failure
-  */
-  unsigned int rtn;
-  rtn = 1 - CompositeImage(red, AddCompositeOp, green, 0, 0);
-  rtn += 2 * (1 - CompositeImage(red, AddCompositeOp, blue, 0, 0));
-  switch (rtn) {
-  case 3:
-    parse_error("All Image compositing failed.");
-    break;
-  case 2:
-    parse_error("Red/Blue compositing failed.");
-    break;
-  case 1:
-    parse_error("Red/Green compositing failed.");
-    break;
-  case 0:
-    return 1;
-  }
-  return(1 - (rtn/rtn));
-}
-
-
-
 static Image * assemble_image(Var * obj, unsigned int ctype, 
 			      unsigned int zplane) {
   /* Routine to build a single ImageMagick greyscale or color image from a 
@@ -266,9 +345,9 @@ static Image * assemble_image(Var * obj, unsigned int ctype,
   ExceptionInfo exc;
   Var *dvzplane[3] = {NULL, NULL, NULL}, *o;
   Range dvrange;
-  PixelPacket * line_pixels;
-  unsigned int y,z;
-  register unsigned int x;
+  register PixelPacket * line_pixels;
+  unsigned int y = 0,z = 0;
+  register unsigned int x = 0;
 
   img_info = CloneImageInfo((ImageInfo *) NULL);
   GetExceptionInfo(&exc);
@@ -328,24 +407,6 @@ static Image * assemble_image(Var * obj, unsigned int ctype,
 	goto jump_error_cond;
       }
     }
-    /*    for(z = 0; z<3; z++) {
-	  dvrange.lo[0] = 1; dvrange.hi[0] = GetX(obj);
-	  dvrange.lo[1] = 1; dvrange.hi[1] = GetY(obj);
-	  dvrange.lo[2] = z+zplane; dvrange.hi[2] = z+zplane ;
-	  dvrange.step[0] = 1; dvrange.step[1] = 1; dvrange.step[2] = 1;
-	  
-	  if ((dvzplane = extract_array(obj, &dvrange)) == NULL) {
-	  parse_error("extract_array() failed."); 
-	  goto jump_error_cond;
-	  }
-	  if ((subimg[z] = constitute_dvobject(dvzplane, itype[z], 0)) == NULL) {
-	  goto jump_error_cond;
-	  }
-	  }
-	  if (composite_color_layers(subimg[0], subimg[1], subimg[2]) == 0) {
-	  goto jump_error_cond;
-	  }
-	  img = subimg[0]; */
   }
   else {
     /* easy does it */
@@ -375,8 +436,8 @@ static Image * assemble_image(Var * obj, unsigned int ctype,
 }  
 
 static Var * im_to_dv(Image * img) {
-  /* im_to_dv: Takes and ImageMagick image or animation and returns
-     a DaVinci object that represents the image file.
+  /* im_to_dv: Takes an ImageMagick image or animation and returns
+     a DaVinci object that represents the image.
 
      Arguments:
      img: The ImageMagick Image Object we want to convert
@@ -385,9 +446,87 @@ static Var * im_to_dv(Image * img) {
      A pointer to a DaVinci cube on success.  NULL pointer on failure.
 
   */
-  parse_error("Unimplemented.");
-  return (NULL);
+  
+  unsigned long x = 0, y = 0, z = 0, i = 0, xi = 0, yi = 0, imgcount = 0;
+  ExceptionInfo exc;
+  PixelPacket p;
+  Image * cur_frame;
+  unsigned char *dvdata, mono;
 
+  GetExceptionInfo(&exc);
+  cur_frame = img;
+  while (cur_frame != NULL) {
+    z++;
+    imgcount++;
+    cur_frame = cur_frame->next;
+  }
+  mono = 0;
+  /* if the image is color, then we have 3 bands for every image.
+     If it's not color, we'll set our mono flag. 
+
+     Aside: the ImageMagick documents are wrong about the IsGrayImage()
+     method.  You must supply the exception structure as well.  Word
+     to the wise when dealing with IM:  forget the docs, read the source
+     code. 
+  */
+
+  if (!IsGrayImage(img, &exc)) z *= 3; else mono = 1;
+
+  x = img->columns;
+  y = img->rows;
+
+  /* allocate the storage space for the the davinci cube data */
+  if ((dvdata = calloc(x*y*z, sizeof(unsigned char))) == NULL) {
+    parse_error("calloc() call failed.");
+    return (NULL);
+  }
+  /* start with the first image.  If this is a still image, we'll
+     never move away from it */
+  cur_frame = img;
+  /* we'll keep track of the bands by the image number, and just
+     multiply by three when we deal with color */
+  for(i=0; i<imgcount; i++) {
+
+    /* get each pixel, left to right, top to bottom */
+    for(yi=0; yi < y; yi++) {
+      for(xi=0; xi < x; xi++) {
+	if (mono) {
+	  /* greyscale: just set one element.
+	     Again, watch the differences between the documented API
+	     and the one you actually find in the library. Doh!
+	  */
+	  p = GetOnePixel(cur_frame, xi, yi);
+
+	  /* This index arithmetic may look frightful, but it's really
+	     simple if you break it down. We'll always generate the
+	     structure in BSQ format, so:
+
+	     add xi bytes to represent that we are in column xi(ndex) of x
+	     add x*yi to represent that we are in line yi(ndex) of y
+	     add yi*xi*(bandno) to represent the current band.
+
+	     bandno is just the image index for monochrome, so it's simply
+	     i.  It's a little trickier for color. Band i through i+2 
+	     represent red, green, and blue bands respectively.  So, red
+	     becomes i*3, green i*3+1, and blue is i*3+2.
+
+	  */
+	  dvdata[xi+(x*yi)+(x*y*i)] = p.red;
+	}
+	else {
+	  /* color: set an element in each of three bands */
+	  p = GetOnePixel(cur_frame, xi, yi);
+	  dvdata[xi+(x*yi)+(x*y*(i*3))] = p.red;
+	  dvdata[xi+(x*yi)+(x*y*(i*3+1))] = p.green;
+	  dvdata[xi+(x*yi)+(x*y*(i*3+2))] = p.blue;
+	}
+      }
+    }
+    /* advance to the next image if there's one */
+    cur_frame = cur_frame->next;
+    if (cur_frame == NULL) break; /* extra safety */
+  }
+  return newVal(BSQ, x, y, z, BYTE, dvdata);  
 }
 
 static Image * dv_to_im(Var * obj, int type)
@@ -410,8 +549,8 @@ static Image * dv_to_im(Var * obj, int type)
   ExceptionInfo imexc;
   ImageInfo * img_info;
   Image *img = NULL, *curframe, *prvframe;
-  int x,y,z, curz, movietype;
-  unsigned int scene=0;
+  int x,y,z, curz = 0, movietype = 0;
+  unsigned int scene= 0;
 
 
   img_info = CloneImageInfo((ImageInfo *) NULL);
@@ -469,16 +608,40 @@ static Image * dv_to_im(Var * obj, int type)
 static Var * dvReadImage(vfuncptr f, Var *args)
 {
   Var * rtn = NULL;
-  parse_error("Unimplemented.");
+  Image * img = NULL;
+  Alist alist[3];
+  int use_org = BSQ, i = 0;
+  char * fname = NULL, * org = NULL;
+  
+  InitializeMagick("davinci");
+  alist[0] = make_alist("filename", ID_STRING, NULL, &fname);
+  alist[1] = make_alist("org", ID_ENUM, NULL, &org);
+  alist[2].name = NULL;
 
-  rtn = newVar();  /* try to return a value */
-  V_TYPE(rtn) = ID_VAL;
-  V_DSIZE(rtn) = V_SIZE(rtn)[0] = V_SIZE(rtn)[1] = V_SIZE(rtn)[2] = 1;
-  V_ORG(rtn) = BSQ;
-  V_FORMAT(rtn) = INT;
-  V_DATA(rtn) = calloc(1, sizeof(int));
-  V_INT(rtn) = 0;
+  if (parse_args(f, args, alist) == 0) return(NULL);
+  
+  if (fname == NULL) {
+    parse_error("Filename required.");
+    goto error_exit;
+  }
+  if (org != NULL) {
+  for (i=0; i<strlen(org); i++) org[i] = tolower(org[i]);
+  if (!strcmp("bsq", org))
+    use_org = BSQ;
+  else if (!strcmp("bil", org))
+    use_org = BIL;
+  else if (!strcmp("bip", org))
+    use_org = BIP;
+  else
+    parse_error("Unrecognized data format.  Will use BSQ.");
+  }
+  img = read_im_image(fname);
+  if (img != NULL) rtn = im_to_dv(img);
 
+  /* We'll use org eventually to translate this into the appropriate format */
+ error_exit:
+  if (img != NULL) DestroyImage(img);
+  DestroyMagick();
   return(rtn);
 }  
 
@@ -491,20 +654,35 @@ static Var * dvWriteImage(vfuncptr f, Var *args)
   Image * imimg;
   struct stat sbuf;
   char *itype = NULL, *fname = NULL;
-  int z = 0, org = BSQ, force = 0, rtncode = 0, fd, i, movietype = 0;
+  int z = 0, org = BSQ, force = 0, rtncode = 0, fd = -1, i = 0, movietype = 0;
   Alist alist[5];
   
+  InitializeMagick("davinci");
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
   alist[1] = make_alist("filename", ID_STRING, NULL, &fname);
   alist[2] = make_alist("type", ID_ENUM, NULL, &itype);
   alist[3] = make_alist("force", ID_VAL, NULL, &forceobj);
   alist[4].name = NULL;
 
-  if (parse_args(f, args, alist) == 0) return(NULL);
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument is required.");
+    goto error_exit;
+  }
+  if (fname == NULL) {
+    parse_error("Filename argument is required.");
+    goto error_exit;
+  }
+
   if (forceobj == NULL) force = 0; else force = V_INT(forceobj);
   if (force != 0 && force != 1) {
     parse_error("force value must be 0 or 1.");
-    return(NULL);
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is currently supported.");
+    goto error_exit;
   }
   
   /* check file existence. */
@@ -515,29 +693,26 @@ static Var * dvWriteImage(vfuncptr f, Var *args)
     default:
       /* Hmm... a permissions problem or a misspelled path component? */
       parse_error("Cannot open %s: %s", fname, strerror(errno));
-      return(NULL);
+      goto error_exit;
     }
   }
   else {
     /* Don't overwrite files if user told us not to */
     if (force == 0) {
       parse_error("File exists.  Specify force=1.");
-      return(NULL);
+      goto error_exit;
     }
     /* If we can't open the file in write mode, we have a problem. */
     if ((fd = open(fname, O_WRONLY) == -1)) {
       parse_error("Cannot open %s: %s", fname, strerror(errno));
-      return(NULL);
+      goto error_exit;
     }
     else {
       close(fd);
     }
   }
 
-  if (V_FORMAT(image) != BYTE) {
-    parse_error("Only byte data is currently supported.");
-    return(NULL);
-  }
+
 
   z = GetZ(image);
 
@@ -556,11 +731,11 @@ static Var * dvWriteImage(vfuncptr f, Var *args)
     if (strcmp(itype, "mpgc") && strcmp(itype, "mpgg") &&
 	strcmp(itype, "gifc") && strcmp(itype, "gifg")) {
       parse_error("You must specify a movie format for %i bands.");
-      return(NULL);
+      goto error_exit;
     }
     if (itype[3] == 'c' && z % 3 != 0) {
       parse_error("Color movies require a band count that is a multiple of 3.");
-      return(NULL);
+      goto error_exit;
     }
     if (itype[3] == 'c') movietype = 2;
     if (itype[3] == 'g') movietype = 1;
@@ -568,8 +743,2155 @@ static Var * dvWriteImage(vfuncptr f, Var *args)
 
   imimg = dv_to_im(image, movietype);
   if (imimg != NULL) rtncode = write_im_image(imimg, fname, itype);
-
+ error_exit:
+  DestroyMagick();
   return newInt(rtncode);  /* try to return a value */
 }
 
+static Var * dvAddNoiseImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick AddNoiseImage method.
 
+      b = AddNoiseImage(a, noisetype)
+
+      a: is an input image cube
+      noisetype: is one of uniform, gaussian, multiplicative, impulse,
+      laplacian, or poisson
+      
+      returns a new cube representing the transform performed on the object
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  int i;
+  char * noisetype;
+  char * noisetypes[] = {"uniform", "gaussian", "multiplicative", "impulse",
+			 "laplacian", "poisson", ""};
+  NoiseType ntype[] = {UniformNoise, GaussianNoise, MultiplicativeGaussianNoise,
+		 ImpulseNoise, LaplacianNoise, PoissonNoise};
+  NoiseType noise = UniformNoise;
+  Alist alist[3];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("type", ID_ENUM, noisetypes, &noisetype); 
+  alist[2].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (noisetype != NULL) {
+    for (i=0; strlen(noisetypes[i]) > 0; i++) {
+      if (!strcmp(noisetypes[i], noisetype)) {
+	noise = ntype[i];
+	break;
+      }
+    }
+    if (strlen(noisetypes[i]) == 0) {
+      parse_error("Unknown noise type %s.  Uniform assumed.\n", noisetype);
+    }
+  }
+  	   
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = AddNoiseImage(imimg, noise, &exc);
+
+  if (outimg != NULL) { 
+    dvoutput = im_to_dv(outimg);
+  }
+  else {
+    parse_error("AddNoiseImage Failed: %s", exc.reason);
+  }
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+
+static Var * dvAppendImages(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick AppendImages method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  Alist alist[3];
+  char * stackval[] = {"horiz", "vert", ""};
+  char * stack;
+  int stk;
+  
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("stack", ID_ENUM, stackval, &stack);
+  alist[2].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  stk = 0;
+  if (stack != NULL) {
+    if (stack[0] == 'h') stk = 0; else stk = 1;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = AppendImages(imimg, stk, &exc); 
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvAverageImages(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick AverageImages method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  Alist alist[2];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+
+  alist[1].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = AverageImages(imimg, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvBlurImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick BlurImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  double radius = 0.0, sigma = 0.0;
+  ExceptionInfo exc;
+  Alist alist[4];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
+  alist[2] = make_alist("sigma", DOUBLE, NULL, &sigma);
+  alist[3].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  parse_error("Applying blur: radius=%f sigma=%f", radius, sigma);
+  if (radius <= sigma) 
+    parse_error("Warning: sigma larger than radius.  Strange results ahead...");
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = BlurImage(imimg, radius, sigma, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvCharcoalImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick CharcoalImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  double radius = 0.0, sigma = 0.0;
+  ExceptionInfo exc;
+  Alist alist[4];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
+  alist[2] = make_alist("sigma", DOUBLE, NULL, &sigma);
+  alist[3].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = CharcoalImage(imimg, radius, sigma, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvChopImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick ChopImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  RectangleInfo rect;
+  ExceptionInfo exc;
+  Alist alist[6];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("x", INT, NULL, &rect.x);
+  alist[2] = make_alist("y", INT, NULL, &rect.y);
+  alist[3] = make_alist("width", INT, NULL, &rect.width);
+  alist[4] = make_alist("height", INT, NULL, &rect.height);
+  alist[5].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = ChopImage(imimg, &rect, &exc); 
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvColorizeImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick ColorizeImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  int opacity;
+  char opacity_arg[10];
+  PixelPacket brush;
+  ExceptionInfo exc;
+  Alist alist[6];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("opacity", INT, NULL, &opacity);
+  alist[2] = make_alist("red", INT, NULL, &(brush.red));
+  alist[3] = make_alist("green", INT, NULL, &(brush.green));
+  alist[4] = make_alist("blue", INT, NULL, &(brush.blue));
+  alist[5].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (opacity < 0 || opacity > 100) {
+    parse_error("Opacity must be between 0 and 100, inclusive (percent).");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  sprintf(opacity_arg, "%i", opacity);
+
+  outimg = ColorizeImage(imimg, opacity_arg, brush, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvContrastImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick ContrastImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL;
+  unsigned int sharpen = 0;
+  unsigned int rtn = 0;
+  Alist alist[3];
+
+  InitializeMagick("davinci");
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("sharpen", INT, NULL, &sharpen);
+  alist[2].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  rtn = ContrastImage(imimg, sharpen);
+
+  if (rtn == 1) dvoutput = im_to_dv(imimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvCropImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick CropImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  RectangleInfo rect;
+  ExceptionInfo exc;
+  Alist alist[6];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("x", INT, NULL, &rect.x);
+  alist[2] = make_alist("y", INT, NULL, &rect.y);
+  alist[3] = make_alist("width", INT, NULL, &rect.width);
+  alist[4] = make_alist("height", INT, NULL, &rect.height);
+  alist[5].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = CropImage(imimg, &rect, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+
+static Var * dvDespeckleImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick DespeckleImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  Alist alist[2];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+
+  alist[1].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = DespeckleImage(imimg, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvEdgeImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick EdgeImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  double radius = 0.0;
+  ExceptionInfo exc;
+  Alist alist[3];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
+  alist[2].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = EdgeImage(imimg, radius, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvEmbossImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick EmbossImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  double radius = 0.0, sigma = 0.0;
+  Alist alist[4];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
+  alist[2] = make_alist("sigma", DOUBLE, NULL, &sigma);
+  alist[3].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = EmbossImage(imimg, radius, sigma, &exc); 
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvEnhanceImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick EnhanceImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  Alist alist[2];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+
+  alist[1].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = EnhanceImage(imimg, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+static Var * dvEqualizeImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick EqualizeImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL;
+  unsigned int rtn = 0;
+  Alist alist[2];
+
+  InitializeMagick("davinci");
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  rtn = EqualizeImage(imimg);
+
+  if (rtn == 1) dvoutput = im_to_dv(imimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+
+static Var * dvFlattenImages(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick FlattenImages method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  Alist alist[2];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+
+  alist[1].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = FlattenImages(imimg, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvFlipImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick FlipImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  Alist alist[2];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+
+  alist[1].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = FlipImage(imimg, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvFlopImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick FlopImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  Alist alist[2];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+
+  alist[1].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = FlopImage(imimg, &exc); 
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+static Var * dvGammaImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick GammaImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL;
+  unsigned int rtn = 0;
+  float gamma[4]  = {1.0, 1.0, 1.0, 1.0};
+  char gamma_arg[256];
+  int x;
+  Var *gammaobj = NULL;
+  Alist alist[3];
+
+  InitializeMagick("davinci");
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("gamma", ID_VAL, NULL, &gammaobj);
+  alist[2].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+  
+  if (gammaobj != NULL) {
+  
+    if (GetY(gammaobj) != 1 || GetZ(gammaobj) != 1 || GetX(gammaobj) > 4) {
+      parse_error("Gamma object must be an nX1X1 cube, with n <= 4");
+      goto error_exit;
+    }
+    for(x=1; x<=GetX(gammaobj); x++) {
+      gamma[x-1] = extract_float(gammaobj, x);
+    }
+    if (GetX(gammaobj) == 1) {
+      for(x=1; x<4; x++) gamma[x] = gamma[0];
+    }
+  }
+
+  sprintf(gamma_arg, "%lf,%lf,%lf,%lf", gamma[0], gamma[1], gamma[2], gamma[3]);
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  rtn = GammaImage(imimg, gamma_arg);
+
+  if (rtn == 1) dvoutput = im_to_dv(imimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+
+
+static Var * dvGaussianBlurImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick GaussianBlurImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  double radius = 0.0, sigma = 0.0;
+  Alist alist[4];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
+  alist[2] = make_alist("sigma", DOUBLE, NULL, &sigma);
+  alist[3].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = GaussianBlurImage(imimg, radius, sigma, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvImplodeImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick ImplodeImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  double amount = 0.0;
+  Alist alist[3];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("amount", DOUBLE, NULL, &amount);
+  alist[2].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = ImplodeImage(imimg, amount, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+
+static Var * dvLevelImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick LevelImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL;
+  unsigned int rtn = 0;
+  double blackpoint = 0.0, midpoint = 1.0, whitepoint = MaxRGB;
+
+  char level_arg[256];
+  Alist alist[5];
+
+  InitializeMagick("davinci");
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("blackpoint", DOUBLE, NULL, &blackpoint);
+  alist[2] = make_alist("midpoint", DOUBLE, NULL, &midpoint);
+  alist[3] = make_alist("whitepoint", DOUBLE, NULL, &whitepoint);
+  alist[4].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+  
+  sprintf(level_arg, "%lf,%lf,%lf", blackpoint, midpoint, whitepoint);
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  rtn = LevelImage(imimg, level_arg);
+
+  if (rtn == 1) dvoutput = im_to_dv(imimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvMagnifyImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick MagnifyImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  Alist alist[2];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+
+  alist[1].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = MagnifyImage(imimg, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvMedianFilterImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick MedianFilterImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  double radius = 0.0;
+  Alist alist[3];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
+  alist[2].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = MedianFilterImage(imimg, radius, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvMinifyImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick MinifyImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  Alist alist[2];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+
+  alist[1].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = MinifyImage(imimg, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+
+static Var * dvModulateImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick LevelImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL;
+  unsigned int rtn = 0;
+  double brightness = 100.0, saturation = 100.0, hue = 100.0;
+
+  char modulate_arg[256];
+  Alist alist[5];
+
+  InitializeMagick("davinci");
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("brightness", DOUBLE, NULL, &brightness);
+  alist[2] = make_alist("saturation", DOUBLE, NULL, &saturation);
+  alist[3] = make_alist("hue", DOUBLE, NULL, &hue);
+  alist[4].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+  
+  sprintf(modulate_arg, "%lf,%lf,%lf", brightness, saturation, hue);
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  rtn = ModulateImage(imimg, modulate_arg);
+
+  if (rtn == 1) dvoutput = im_to_dv(imimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+
+static Var * dvMorphImages(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick MorphImages method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  unsigned int framecount;
+  Alist alist[3];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("iterations", INT, NULL, &framecount);
+  alist[2].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = MorphImages(imimg, framecount, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvMosaicImages(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick MosaicImages method.
+      This function is not terribly useful until we can actually figure
+      out how to use the page structure properly.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  Alist alist[2];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+
+  alist[1].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = MosaicImages(imimg, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvMotionBlurImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick MotionBlurImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  double radius = 0.0, sigma = 0.0, angle = 0.0;
+  Alist alist[5];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
+  alist[2] = make_alist("sigma", DOUBLE, NULL, &sigma);
+  alist[3] = make_alist("angle", DOUBLE, NULL, &angle);
+  alist[4].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = MotionBlurImage(imimg, radius, sigma, angle, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvNegateImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick NegateImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL;
+  unsigned int grayscale = 0;
+  unsigned int rtn = 0;
+  Alist alist[3];
+
+  InitializeMagick("davinci");
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("grayscale", INT, NULL, &grayscale);
+  alist[2].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  rtn = NegateImage(imimg, grayscale);
+
+  if (rtn == 1) dvoutput = im_to_dv(imimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvNormalizeImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick NormalizeImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL;
+  unsigned int rtn = 0;
+  Alist alist[2];
+
+  InitializeMagick("davinci");
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  rtn = NormalizeImage(imimg);
+
+  if (rtn == 1) dvoutput = im_to_dv(imimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+
+
+static Var * dvOilPaintImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick OilPaintImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  double radius = 0.0;
+  Alist alist[3];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
+  alist[2].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = OilPaintImage(imimg, radius, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvReduceNoiseImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick ReduceNoiseImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  double radius = 0.0;
+  Alist alist[3];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
+  alist[2].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = ReduceNoiseImage(imimg, radius, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvResizeImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick ResizeImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  unsigned int columns = 0, rows = 0;
+  char * filtertype = NULL;
+  char * filtertypes[] = {"bessel", "blackman", "box", "catrom", "cubic",
+			  "gaussian", "hanning", "hermite", "lanczos",
+			  "mitchell", "point", "quadratic", "sinc",
+			  "triangle", ""};
+  FilterTypes ftype[] = {BesselFilter, BlackmanFilter, BoxFilter, CatromFilter,
+			CubicFilter, GaussianFilter, HanningFilter,
+			HermiteFilter, LanczosFilter, MitchellFilter,
+			PointFilter, QuadraticFilter, SincFilter,
+			TriangleFilter};
+  double blur = 0.0;
+  FilterTypes filter = UndefinedFilter;
+  int i;
+  float ratio = 0.0;
+  Alist alist[6];
+  
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("columns", INT, NULL, &columns);
+  alist[2] = make_alist("rows", INT, NULL, &rows);
+  alist[3] = make_alist("type", ID_ENUM, filtertypes, &filtertype);
+  alist[4] = make_alist("blur", DOUBLE, NULL, &blur);
+  alist[5].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (filtertype != NULL) {
+    for (i=0; strlen(filtertypes[i]) > 0; i++) {
+      if (!strcmp(filtertypes[i], filtertype)) {
+	filter = ftype[i];
+	break;
+      }
+    }
+  }
+  else {
+    parse_error("Filter type is required.");
+    goto error_exit;
+  }
+
+  if (strlen(filtertypes[i]) == 0) {
+    parse_error("Unknown filter type %s.", filtertype);
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  if (columns == 0 && rows == 0) {
+    parse_error("Cannot specify zero for both rows and columns.");
+    goto error_exit;
+  }
+  /* little extra feature:  We will keep the aspect ratio if we just
+     supply one dimension. */
+  if (columns == 0) {
+    ratio = (float)rows / (float)GetY(image);
+    columns = GetX(image) * ratio;
+  }
+  else if (rows == 0) {
+    ratio = (float)columns / (float)GetX(image);
+    rows = GetY(image) * ratio;
+  }
+
+  outimg = ResizeImage(imimg, columns, rows, filter, blur, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvRollImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick RollImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  Alist alist[4];
+  long x = 0, y = 0;
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("x", INT, NULL, &x);
+  alist[2] = make_alist("y", INT, NULL, &y);
+  alist[3].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = RollImage(imimg, x,y, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvRotateImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick RotateImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  double angle = 0.0;
+  Alist alist[2];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("angle", DOUBLE, NULL, &angle);
+  alist[2].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = RotateImage(imimg, angle, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvSampleImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick SampleImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  unsigned int rows = 0, columns = 0;
+  float ratio = 0.0;
+  Alist alist[4];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("columns", INT, NULL, &columns);
+  alist[2] = make_alist("rows", INT, NULL, &rows);
+  alist[3].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+  /* little extra feature:  We will keep the aspect ratio if we just
+     supply one dimension. */
+  if (columns == 0) {
+    ratio = (float)rows / (float)GetY(image);
+    columns = GetX(image) * ratio;
+  }
+  else if (rows == 0) {
+    ratio = (float)columns / (float)GetX(image);
+    rows = GetY(image) * ratio;
+  }
+
+  outimg = SampleImage(imimg, columns, rows, &exc); 
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvScaleImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick ScaleImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  unsigned int rows = 0, columns = 0;
+  float ratio = 0.0;
+  Alist alist[4];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("columns", INT, NULL, &columns);
+  alist[2] = make_alist("rows", INT, NULL, &rows);
+  alist[3].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  /* little extra feature:  We will keep the aspect ratio if we just
+     supply one dimension. */
+  if (columns == 0) {
+    ratio = (float)rows / (float)GetY(image);
+    columns = GetX(image) * ratio;
+  }
+  else if (rows == 0) {
+    ratio = (float)columns / (float)GetX(image);
+    rows = GetY(image) * ratio;
+  }
+
+  outimg = ScaleImage(imimg, columns, rows, &exc); 
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvShadeImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick ShadeImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  unsigned int colorshade = 0;
+  double azimuth = 0.0, elevation = 0.0;
+
+  Alist alist[5];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("colorshade", INT, NULL, &colorshade);
+  alist[2] = make_alist("azimuth", DOUBLE, NULL, &azimuth);
+  alist[3] = make_alist("elevation", DOUBLE, NULL, &elevation);
+  alist[4].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = ShadeImage(imimg, colorshade, azimuth, elevation, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvSharpenImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick SharpenImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  double radius = 0.0, sigma = 0.0;
+  Alist alist[4];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
+  alist[2] = make_alist("sigma", DOUBLE, NULL, &sigma);
+  alist[3].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = SharpenImage(imimg, radius, sigma, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvShaveImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick ShaveImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  Alist alist[6];
+  RectangleInfo rect;
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("x", INT, NULL, &rect.x);
+  alist[2] = make_alist("y", INT, NULL, &rect.y);
+  alist[3] = make_alist("width", INT, NULL, &rect.width);
+  alist[4] = make_alist("height", INT, NULL, &rect.height);
+  alist[5].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = ShaveImage(imimg, &rect, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvShearImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick ShearImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  double xshear = 0.0, yshear = 0.0;
+  Alist alist[4];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("xshear", DOUBLE, NULL, &xshear);
+  alist[2] = make_alist("yshear", DOUBLE, NULL, &yshear);
+  alist[3].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = ShearImage(imimg, xshear, yshear, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvSpreadImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick SpreadImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  unsigned int amount;
+  Alist alist[3];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("amount", INT, NULL, &amount);
+  alist[2].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = SpreadImage(imimg, amount, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvSteganoImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick SteganoImage method.
+ */
+  Var *image = NULL, *steg = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *stegimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  Alist alist[3];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("stegimage", ID_VAL, NULL, &steg);
+  alist[2].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.");
+    goto error_exit;
+  }
+  if (steg == NULL) {
+    parse_error("Steganographic image required.");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+  if ((stegimg = dv_to_im(steg, 0)) == NULL) goto error_exit;
+
+  outimg = SteganoImage(imimg, stegimg, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+  
+ error_exit:
+  if (stegimg != NULL) DestroyImage(stegimg);
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvStereoImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick StereoImage method.
+ */
+  Var *image = NULL, *offsetimg =  NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *osimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  Alist alist[3];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("offset", ID_VAL, NULL, &offsetimg);
+  alist[2].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+  if (offsetimg == NULL) {
+    parse_error("Offset image required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+  if ((osimg = dv_to_im(offsetimg, 0)) == NULL) goto error_exit;
+
+  outimg = StereoImage(imimg, osimg, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (osimg != NULL) DestroyImage(osimg);
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvSwirlImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick SwirlImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  double angle = 0.0;
+  Alist alist[3];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("angle", DOUBLE, NULL, &angle);
+  alist[2].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = SwirlImage(imimg, angle, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvUnsharpMaskImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick UnsharpMaskImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  Alist alist[6];
+  double radius = 0.0, sigma = 0.0, amount = 0.0, threshold = 0.0;
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
+  alist[2] = make_alist("sigma", DOUBLE, NULL, &sigma);
+  alist[3] = make_alist("amount", DOUBLE, NULL, &amount);
+  alist[4] = make_alist("threshold", DOUBLE, NULL, &threshold);
+  alist[5].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = UnsharpMaskImage(imimg, radius, sigma, amount, threshold, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
+
+
+static Var * dvWaveImage(vfuncptr f, Var *args) {
+  /*
+      Implements the ImageMagick WaveImage method.
+ */
+  Var *image = NULL, *dvoutput = NULL;
+  Image *imimg = NULL, *outimg = NULL;
+  ExceptionInfo exc;
+  double amplitude = 0.0, length = 0.0;
+  Alist alist[4];
+
+  InitializeMagick("davinci");
+  GetExceptionInfo(&exc);
+
+  alist[0] = make_alist("object", ID_VAL, NULL, &image);
+  alist[1] = make_alist("amplitude", DOUBLE, NULL, &amplitude);
+  alist[2] = make_alist("length", DOUBLE, NULL, &length);
+  alist[3].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) goto error_exit;
+  if (image == NULL) {
+    parse_error("Object argument required.\n");
+    goto error_exit;
+  }
+
+  if (V_FORMAT(image) != BYTE) {
+    parse_error("Only byte data is supported.\n");
+    goto error_exit;
+  }
+
+  if ((imimg = dv_to_im(image, 0)) == NULL) goto error_exit;
+
+  outimg = WaveImage(imimg, amplitude, length, &exc);
+
+  if (outimg != NULL) dvoutput = im_to_dv(outimg);
+
+ error_exit:
+  if (imimg != NULL) DestroyImage(imimg);
+  if (outimg != NULL) DestroyImage(outimg);
+  DestroyMagick();
+  return(dvoutput);
+}
