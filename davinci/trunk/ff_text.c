@@ -492,7 +492,6 @@ text_dirname(Var *ob1)
         V_TEXT(S).text[i]=string_dirname(Tmp);
     }
     V_STRING(Tmp)=NULL;
-    // 	free_var(Tmp);	
     return(S);
 }
 
@@ -679,7 +678,7 @@ ff_grep(vfuncptr func, Var * arg)
             V_TEXT(S).text[index++]=strdup(V_TEXT(ob1).text[i]);
         }
     }
-
+	 free(ptr);
     return(S);
 }
 
@@ -697,12 +696,11 @@ ff_grep(vfuncptr func, Var * arg)
  ** partial matches, which is computed each time this routine is called.
  **/
 
-int
-kmp(char *s1, char *s2)
+int *
+kmp_compile(char *s2)
 {
-    int l1 = strlen(s1);                        /* length of text */
     int l2 = strlen(s2);                        /* length of substring */
-    int i,j, *align = (int *)calloc(l2, sizeof(int));
+    int i,j, *align = (int *)calloc(l2+1, sizeof(int));
 
     /* compute the align array */
 
@@ -715,6 +713,15 @@ kmp(char *s1, char *s2)
         align[i+1] = j;                         /* save new value */
     }
 
+	return (align);
+}
+
+int kmp(char *s1, char *s2,int *align)
+{
+    int l1 = strlen(s1);                        /* length of text */
+    int l2 = strlen(s2);                        /* length of substring */
+    int i,j;
+
     /* search the string, using the align array to detect partial matches */
 
     j = 0;                                      /* j: index into s2 (sub) */
@@ -723,7 +730,7 @@ kmp(char *s1, char *s2)
             if (s1[i] == s2[j]) {               /* got a match? */
                 j++;                                /* move s2 forward */
                 if (j == l2) {                      /* out of characters? */
-                    free(align);
+/*                  free(align);*/
                     return(i-j+1);                   /* return match */
                 }
             } else if (j != 0) {                /* no match; 0 is special */
@@ -733,14 +740,8 @@ kmp(char *s1, char *s2)
             break;
         }
     }
-    free(align);
+/*    free(align);*/
     return(-1);                          /* return NULL */
-}
-
-int 
-ff_string_strstr(char *s1, char *s2)
-{
-    return ((kmp(s1,s2)+1));
 }
 
 Var *
@@ -748,10 +749,13 @@ ff_text_strstr(Var *ob1,char *s1)
 {
     int i;
     int *data=calloc(V_TEXT(ob1).Row,sizeof(int));
+	 int *align=kmp_compile(s1);
 	
     for (i=0;i<V_TEXT(ob1).Row;i++){
-        data[i]=ff_string_strstr(V_TEXT(ob1).text[i],s1);
+        data[i]=kmp(V_TEXT(ob1).text[i],s1,align)+1;
     }
+
+	 free(align);
 
     return(newVal(BSQ,1,V_TEXT(ob1).Row,1,INT,data));
 }
@@ -786,7 +790,9 @@ ff_strstr(vfuncptr func, Var * arg)
 
     if (V_TYPE(ob1)==ID_STRING){
         int *v=calloc(1,sizeof(int));
-        *v=ff_string_strstr(V_STRING(ob1),s1);
+		  int *align=kmp_compile(s1);
+        *v=kmp(V_STRING(ob1),s1,align)+1;
+		  free(align);
         return(newVal(BSQ,1,1,1,INT,v));
     }
 
@@ -891,7 +897,6 @@ set_text(Var *to,Range *r, Var *from)
 	}
 
 
-	free_var(dest);
 	return(src);
 }
 
@@ -1022,7 +1027,7 @@ char *single_replace(char *line, regex_t *preg, char *replace)
     newtext[index]='\0';
 
     /*Shrink to fit*/
-    newtext=realloc(newtext,strlen(newtext));
+    newtext=realloc(newtext,strlen(newtext)+1);
 	
     return(newtext);
 }
@@ -1109,6 +1114,7 @@ Var *ff_stringsubst(vfuncptr func, Var *arg)
 			}
 		}
 	}
+	 regfree(&preg);
     return(result);
 }
 
