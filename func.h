@@ -367,7 +367,10 @@ Alist make_alist(char *name, int type, void *limits, void *value);
 
 Var * ReadPDS(vfuncptr func, Var * arg);
 Var * WritePDS(vfuncptr func, Var * arg);
-Var * WritePDS2(vfuncptr func, Var * arg);
+
+#ifdef HAVE_LIBISIS
+Var * ff_write_isis_cub(vfuncptr func, Var *args);
+#endif /* HAVE_LIBISIS */
 
 double bbr(double, double);
 double btemp(double, double);

@@ -3,6 +3,9 @@
 #include "io_lablib3.h"
 #include "endian_norm.h"
 #include <ctype.h>
+#include "dvio.h"
+#include <sys/types.h>
+#include <regex.h>
 
 #define MAXOBJ 10
 
@@ -482,6 +485,35 @@ void ProcessGroup(Var * v, KEYWORD ** key, OBJDESC * ob)
     }
 }
 
+static char *
+gen_next_unused_name_instance(
+    char *keyname,
+    Var  *s
+    )
+{
+    char *ser_key_name;
+    int   i;
+    int   max_ser_no = 1000;
+    Var  *v;
+
+    /* alloc a ridiculously large key name buffer */
+    ser_key_name = (char *)calloc(strlen(keyname)+64, sizeof(char));
+
+    for(i = 1; i < max_ser_no; i++){
+        /* generate a key with the next free serial number */
+        sprintf(ser_key_name, "%s_%d", keyname, i);
+        
+        if (find_struct(s, ser_key_name, &v) < 0){
+            /* if this serial number is unused, return this key */
+            return ser_key_name;
+        }
+    }
+
+    free(ser_key_name);
+    
+    return NULL; /* no such instance found */
+}
+
 void Traverse_Tree(OBJDESC * ob, Var * v, int record_bytes)
 {
     KEYWORD *key;
@@ -545,7 +577,15 @@ void Traverse_Tree(OBJDESC * ob, Var * v, int record_bytes)
 */
             if (!(strcmp("GROUP", key->name))) {        /* we have the begining of a group! */
                 next_var = new_struct(0);
-                add_struct(v, fix_name(key->value), next_var);
+                keyname = fix_name(key->value);
+                
+                if (find_struct(v, keyname, &tmp_var) >= 0){
+                    /* the group already exists within history, generate a
+                       serializaed group name from the given name */
+                    keyname = gen_next_unused_name_instance(keyname, v);
+                }
+                
+                add_struct(v, keyname, next_var);
                 tmp_var = newVar();
                 V_TYPE(tmp_var) = ID_STRING;
                 V_STRING(tmp_var) = strdup("GROUP");
@@ -645,7 +685,15 @@ void Traverse_Tree(OBJDESC * ob, Var * v, int record_bytes)
 */
             if (!(strcmp("GROUP", key->name))) {        /* we have the begining of a group! */
                 next_var = new_struct(0);
-                add_struct(v, fix_name(key->value), next_var);
+                keyname = fix_name(key->value);
+                
+                if (find_struct(v, keyname, &tmp_var) >= 0){
+                    /* the group already exists within history, generate a
+                       serializaed group name from the given name */
+                    keyname = gen_next_unused_name_instance(keyname, v);
+                }
+                
+                add_struct(v, keyname, next_var);
                 tmp_var = newVar();
                 V_TYPE(tmp_var) = ID_STRING;
                 V_STRING(tmp_var) = strdup("GROUP");
@@ -1626,8 +1674,52 @@ Var *ff_load_many_pds(vfuncptr func, Var * arg)
     }
 }
 
+#ifdef HAVE_LIBISIS
+Var *
+ff_write_isis_cub(vfuncptr func, Var *args)
+{
+    Var   *obj = NULL;
+    char  *fname = NULL;
+    int    force = 0;
+    Alist  alist[4];
+
+    alist[0] = make_alist("obj",      ID_STRUCT, NULL, &obj);
+    alist[1] = make_alist("filename", ID_STRING, NULL, &fname);
+    alist[2] = make_alist("force",    INT,       NULL, &force);
+    alist[3].name = NULL;
+
+    if (parse_args(func, args, alist) == 0) return NULL;
+
+    if (obj == NULL){
+        parse_error("%s(): Missing \"%s\".", func->name, alist[0].name);
+		parse_error("Usage: %s(obj=STRUCT, filename=STRING [, force=1])", func->name);
+		parse_error("Example: a=load_pds(\"foo.cub\"); %s(a, \"bar.cub\")", func->name);
+        return NULL;
+    }
+    
+    if (fname == NULL){
+        parse_error("%s(): Missing \"%s\".\n", func->name, alist[1].name);
+        return NULL;
+    }
+
+    return newInt(dv_WriteISISStruct(obj, fname, force));
+}
+#endif /* HAVE_LIBISIS */
 
 
+/**
+ ** Historically ReadPDS did not load suffix data. Thus loading
+ ** suffix data by default may break davinci scripts left and right.
+ ** Also, integrating this conditional load of suffix data does not
+ ** fit very well in the current call structure of rf_XXXX functions.
+ ** In order for a proper fit to happen, we may want an element by
+ ** the name of "function_data", which holds the special data needed
+ ** by one particular reader function.
+ **
+ ** For now, I am controlling loading of suffix data using the
+ ** following global variable.
+ **/
+static int LOAD_SUFFIX_DATA = 0;
 Var *ReadPDS(vfuncptr func, Var * arg)
 {
 
@@ -1642,19 +1734,23 @@ Var *ReadPDS(vfuncptr func, Var * arg)
     int record_bytes;
     char *filename = NULL, *fname = NULL;
     int data = 1;
+    int suffix_data = 0;
 
     FILE *fp;
 
     Var *v = new_struct(0);
 
-    Alist alist[3];
+    Alist alist[4];
     alist[0] = make_alist("filename", ID_UNK, NULL, &fn);
     alist[1] = make_alist("data", INT, NULL, &data);
-    alist[2].name = NULL;
+    alist[2] = make_alist("suffix_data", INT, NULL, &suffix_data);
+    alist[3].name = NULL;
 
     if (parse_args(func, arg, alist) == 0)
         return (NULL);
 
+    /* see the comment above LOAD_SUFFIX_DATA's declaration */
+    LOAD_SUFFIX_DATA = suffix_data;
 
     if (V_TYPE(fn) == ID_TEXT) {
         return (ff_load_many_pds(func, fn));
@@ -1707,17 +1803,34 @@ Var *ReadPDS(vfuncptr func, Var * arg)
 int rf_QUBE(char *fn, Var * ob, char *val, int dptr)
 {
     FILE *fp;
-    Var *data = NULL;
+    Var *data = NULL, *suffix_data = NULL;
+
+    
     fp = fopen(fn, "rb");
+    
     data = (Var *) dv_LoadISISFromPDS(fp, fn, dptr);
-    if (data != NULL) {
-        add_struct(ob, fix_name("DATA"), data);
-        fclose(fp);
-        return (0);
+    if (data == NULL) { fclose(fp); return 1; }
+    add_struct(ob, fix_name("DATA"), data);
+
+    if (LOAD_SUFFIX_DATA){
+        suffix_data = (Var *) dv_LoadISISSuffixesFromPDS(fp, fn);
+        if (suffix_data == NULL){ fclose(fp); return 1; }
+        
+        /* create a suffix part only when there are suffixes, i.e.
+           avoid blank suffix structure */
+        if (get_struct_count(suffix_data) > 0){
+            add_struct(ob, fix_name("SUFFIX_DATA"), suffix_data);
+        }
+        else {
+            mem_claim(suffix_data);
+            free_struct(suffix_data);
+            /* NOTE: if one does not do mem_claim and free_struct
+               the garbage collector will take care of it */
+        }
     }
 
     fclose(fp);
-    return (1);
+    return (0);
 }
 
 int
@@ -2113,6 +2226,55 @@ char *history_parse_buffer(FILE * in)
     return (TheString);
 }
 
+static char *
+history_remove_isis_indents(const char *history)
+{
+    char *src_hist = strdup(history);
+    char *line, **lines;
+    char *p;
+    LIST *lines_list;
+    regex_t indent_regex;
+    regmatch_t matches[1];
+    int i, n;
+    int rc;
+
+    rc = regcomp(&indent_regex, "^(([|]{1,5})|([|][0-9]{3}[|]))(----)?", REG_EXTENDED);
+    if (rc != 0){
+        parse_error("regcomp() failed for indents pattern.");
+        return NULL;
+    }
+    
+    lines_list = new_list();
+    for(p = src_hist; line = strtok(p, "\n"); p = NULL){
+        list_add(lines_list, line);
+    }
+
+    
+    n = list_count(lines_list);
+    lines = (char **)list_data(lines_list);
+    
+    for(i = 0; i < n; i++){
+        /* remove ISIS style vertical-bar indent-end marker */
+        rc = regexec(&indent_regex, lines[i], sizeof(matches)/sizeof(regmatch_t), matches, 0);
+        if (rc == 0){
+            /* a match was found: get rid of indent */
+            strcpy(lines[i], &lines[i][matches[0].rm_eo]);
+        }
+    }
+
+    regfree(&indent_regex);
+
+    strcpy(history, "");
+    for(i = 0; i < n; i++){
+        if (i > 0){ strcat(history, "\n"); }
+        strcat(history, lines[i]);
+    }
+
+    list_free(lines_list);
+    free(src_hist);
+    
+	return history;
+}
 
 int rf_HISTORY(char *fn, Var * ob, char *val, int dptr)
 {
@@ -2138,6 +2300,9 @@ int rf_HISTORY(char *fn, Var * ob, char *val, int dptr)
 /*Read in the history object as a giant string*/
     history = history_parse_buffer(in);
     fclose(in);
+
+    /* Assuming ISIS history object: remove any indent marks */
+    history_remove_isis_indents(history);
 
 /*Call the OdlParseLabelString fucntion and make it an ODL object*/
     top =

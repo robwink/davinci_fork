@@ -295,6 +295,10 @@ struct _vfuncptr vfunclist[] = {
     { "hstretch",   ff_hstretch, 		NULL }, 
     { "coreg",      ff_coreg, 			NULL }, 
 
+#ifdef HAVE_LIBISIS
+    { "write_isis_cub",     ff_write_isis_cub,          NULL },
+#endif /* HAVE_LIBISIS */
+
     { NULL,             NULL,                  NULL }
 };
 
