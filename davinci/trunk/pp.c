@@ -40,6 +40,8 @@ V_DUP(Var *v)
     Var *r;
     int dsize;
 
+	if (v == NULL) return(NULL);
+
     if (V_TYPE(v) != ID_STRUCT) {
         r = newVar();
         memcpy(r, v, sizeof(Var));
@@ -927,6 +929,24 @@ pp_help(Var *s)
     else if (V_STRING(s)) p = V_STRING(s);
 
     do_help(p);
+    return(NULL);
+}
+
+Var *
+pp_exact_help(Var *s)
+{
+    char *p = NULL;
+	char *q;
+
+    if (s == NULL) p = NULL;
+    else if (V_NAME(s)) p = V_NAME(s);
+    else if (V_STRING(s)) p = V_STRING(s);
+
+	q = malloc(strlen(p) + 2);
+	sprintf(q, "%s()",p);
+
+    do_help(q);
+	free(q);
     return(NULL);
 }
 
