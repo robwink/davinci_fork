@@ -394,7 +394,6 @@ int parse_args(vfuncptr func, Var *args, Alist *alist);
 int make_args(int *ac, Var ***av, vfuncptr func, Var *args);
 void print_history(int i);
 
-void xfree(void *);
 /* void save_ufunc(char *filename); */
 void vax_ieee_r(float *from, float *to);
 
