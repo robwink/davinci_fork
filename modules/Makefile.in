@@ -7,18 +7,21 @@ BINDIR = $(exec_prefix)/bin
 LIBDIR = $(prefix)/lib
 mandir = $(prefix)/man/man1
 
-
+IMLDFLAGS=-L.. @IMLDFLAGS@ @MODULE_LINK_OPT@
+IMLIBS=@IMLIBS@
+IMCPPFLAGS=@IMCPPFLAGS@
+IMCFLAGS=-DDAVINCI_MODULE -g -I.. @IMCFLAGS@
 CC     = @CC@
 DEFS   = @DEFS@ 
 LINK   = @MODULE_LINKER@
 
-CFLAGS=-g -I.. @MODULE_CC_OPT@
+CFLAGS=-DDAVINCI_MODULE -g -I.. @MODULE_CC_OPT@
 LDFLAGS=-L.. @MODULE_LINK_OPT@
 LDLIBS=@MODULE_ADDN_LIBS@ -lc
 
 .SUFFIXES:	.dvm
 
-MODULES=mod1.dvm mod2.dvm pnm_mod.dvm
+MODULES=mod1.dvm mod2.dvm pnm_mod.dvm dvmagick.dvm
 
 all:	$(MODULES)
 
@@ -38,7 +41,15 @@ clean:
 mod1.dvm:	mod1.o Makefile
 mod2.dvm:	mod2.o Makefile
 pnm_mod.dvm:	pnm_mod.o Makefile
+dvmagick.dvm:	dvmagick.o Makefile
 mod1.o:	mod1.c ../parser.h
 mod2.o:	mod2.c ../parser.h
 pnm_mod.o: pnm_mod.c ../parser.h
 
+# ImageMagick is SPE-SHUL!
+
+dvmagick.dvm:   dvmagick.o Makefile
+	$(LINK) $(IMLDFLAGS) $< $(IMLIBS) -o $@
+
+dvmagick.o: dvmagick.c ../parser.h
+	$(CC) -c $(IMCFLAGS) $(IMCPPFLAGS) $(DEFS) $< -o $@
