@@ -1,8 +1,12 @@
-char *version = "@(#) daVinci Version #1.27";
+char *version = "@(#) daVinci Version #1.28";
 
 #include "build.h"
 
 /*
+Version 1.28: Tue Jun 22 10:07:08 MST 2004
+	* Renamed OBJDESC field "class" to "obj_class" to keep
+	  in sync with iomedley.
+
 Version 1.27: Wed Jun 16 19:29:59 MST 2004
 	* Bug in global() related to new argument handling
 

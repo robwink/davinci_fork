@@ -303,8 +303,8 @@ do_obj(OBJDESC *ob,Var *v)
         KEYWORD *kwd;
         Var *o=new_struct(0);
 
-        if (ob->class != NULL)
-                name=strdup(ob->class);
+        if (ob->obj_class != NULL)
+                name=strdup(ob->obj_class);
 
         else if((kwd = OdlFindKwd(ob, "NAME", NULL,1, ODL_THIS_OBJECT))!=NULL)
                 name=strdup(kwd->name);
@@ -579,18 +579,18 @@ void Traverse_Tree(OBJDESC * ob, Var * v, int record_bytes)
                     name = tmp_key->value;
 
             if (name == NULL)   /*Still no name */
-                name = next_ob->class;
+                name = next_ob->obj_class;
 
             next_var = new_struct(0);
             add_struct(v, fix_name(name), next_var);
             /*NEW: Add variable Object with value "class" right under our structure */
             tmp_var = newVar();
             V_TYPE(tmp_var) = ID_STRING;
-            V_STRING(tmp_var) = strdup(next_ob->class);
+            V_STRING(tmp_var) = strdup(next_ob->obj_class);
             add_struct(next_var, "Object", tmp_var);
 
             /*Check to see if this is an object we want */
-            if ((idx = Match_Key_Obj(next_ob->class))) {        /* It is */
+            if ((idx = Match_Key_Obj(next_ob->obj_class))) {        /* It is */
                 Add_Key_Obj(next_var, next_ob->file_name, idx);
 
             }
@@ -615,18 +615,18 @@ void Traverse_Tree(OBJDESC * ob, Var * v, int record_bytes)
                     name = tmp_key->value;
 
             if (name == NULL)
-                name = next_ob->class;
+                name = next_ob->obj_class;
 
             next_var = new_struct(0);
             add_struct(v, fix_name(name), next_var);
             /*NEW: Add variable Object with value "class" right under our structure */
             tmp_var = newVar();
             V_TYPE(tmp_var) = ID_STRING;
-            V_STRING(tmp_var) = strdup(next_ob->class);
+            V_STRING(tmp_var) = strdup(next_ob->obj_class);
             add_struct(next_var, "Object", tmp_var);
 
             /*Check to see if this is an object we want */
-            if ((idx = Match_Key_Obj(next_ob->class))) {        /* It is */
+            if ((idx = Match_Key_Obj(next_ob->obj_class))) {        /* It is */
                 Add_Key_Obj(next_var, next_ob->file_name, idx);
 
             }
