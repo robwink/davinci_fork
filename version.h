@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.79a";
+char *version = "@(#) daVinci Version #0.80";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
