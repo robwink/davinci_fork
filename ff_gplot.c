@@ -1,9 +1,15 @@
 #include "parser.h"
 
+#ifdef _WIN32
+	#define GPLOT_CMD "gnuplot"
+#elif  defined(HAVE_LIBX11)
+	#define GPLOT_CMD "gplot"
+#endif /* _WIN32 */
+
 FILE *gplot_pfp=NULL;
-#ifdef HAVE_LIBX11
+#ifdef GPLOT_CMD
 extern FILE *pfp;
-#endif
+#endif /* GPLOT_CMD */
 float g_xlow;
 float g_xhigh;
 float g_ylow;
@@ -234,12 +240,6 @@ ff_splot(vfuncptr func, Var *arg)
     return(NULL);
 }
 
-
-#ifdef WIN32
-	#define GPLOT_CMD "gnuplot"
-#elif  defined(HAVE_LIBX11)
-	#define GPLOT_CMD "gplot"
-#endif /* WIN32 */
 
 int
 send_to_plot(char *s)
