@@ -98,6 +98,7 @@ ff_load(vfuncptr func, Var * arg)
 	}
 
 	if (input == NULL)    input = dv_LoadIOM(fp, fname, &h);
+	if (input == NULL)    input = dv_LoadPNM(fp, fname, &h);	
 	if (input == NULL)    input = LoadSpecpr(fp, fname, record);
 	if (input == NULL)    input = dv_LoadVicar(fp, fname, &h);
 	if (input == NULL)    input = dv_LoadISIS(fp, fname, &h);
