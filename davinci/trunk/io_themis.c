@@ -29,6 +29,14 @@ int Skip_To_Stop_Sync(int *i, unsigned char *buf,int len);
 int Skip_To_Start_Sync(int *i, unsigned char *buf,int len);
 int Keep(unsigned char B, unsigned short F, CMD Cmd, int Frame, int Band);
 int Read_Ahead_For_Best_Collumn_Guess(int *Width,unsigned char *buf,int len);
+void RedunBegone(char **buf, int *Lines, int Col,int *redun,int quiet);
+
+typedef struct {
+
+	int	AddedFrames[16];
+	int	RepeatedFrames[16];
+	int	Mapping[16];
+} PACIstatus;
 
 #ifndef LITTLE_E
 unsigned short Start_Sync = { 0xF0CA };
@@ -44,6 +52,8 @@ unsigned int StopStart_Sync = {0x8CABCAF0};
 #ifdef HAVE_LIBUSDS
 extern unsigned char *Themis_Entry(unsigned char*, int *);
 #endif
+
+
 
 int 
 Read_Ahead_For_Best_Collumn_Guess(int *Width,unsigned char *buf,int len)
@@ -278,7 +288,7 @@ int GetGSEHeader (FILE *fp, struct _iheader *h)
     **/
     Col = 1032;
     Row = 1024;
-    nb = 2;
+    nb = 1;
 
     plane=(Row*Col*nb);
     if (Size % plane) {
@@ -313,13 +323,15 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
     struct	_iheader header;
     int i,j;
     int dsize;
+	 int size=0;
     int ac;
     Var **av, *v;
-    Alist alist[2];
     char	*filename,*fname,fname2[256];
 
+    Alist alist[333];
     alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
-    alist[1].name = NULL;
+    alist[1] = make_alist("size", INT, NULL, &size);
+    alist[2].name = NULL;
 
 
     make_args(&ac, &av, func, arg);
@@ -525,10 +537,31 @@ void
 Add_Fake_Frame(void *newbuf,int band, int frame, int num_frames,int width)
 {
     int i;
-    unsigned char pseudo_ID=99;
+    unsigned char pseudo_ID=255;
     unsigned short new_frame;
     char *blank=malloc(width-8);
-    memset(blank,INVALID_DATA,(width-8));
+//    memset(blank,INVALID_DATA,(width-8));
+	int flip=0;
+	unsigned char spot=0;
+	int step=5;
+
+
+
+	for(i=0;i<(width-8);i++){
+		if (!((i+1) % step)){
+			if(flip){
+				flip=0;
+				spot=0;
+			}
+			else {
+				flip=1;
+				spot=255;
+			}
+		}
+
+		blank[i]=spot;
+	}
+
 
     for (i=0;i<num_frames;i++){
         new_frame=frame+i;	
@@ -636,7 +669,100 @@ Packet_Swap(unsigned char **buf, unsigned char *fbuf, int *len)
 	*len=idx;
 
 }
+
+/*
+** Compare 2 themis data lines.  If they both contain the SAME
+** data at every element, return 1, else 0
+*/
+int cmp_themis_lines(char *A, char *B, int Col)
+{
+	int i;
+	for (i=0;i<Col;i++){
+		if (A[i]!=B[i])
+			return(0);
+	}
+	return(1);
+}
+
+void
+RedunBegone(char **buf, int *Lines, int Col, int *redun,int quiet)
+{
+	int i;
+	char *data=*buf;
+
+	char A[320],B[320];	
+
+	unsigned short frameA,frameB;
+	unsigned char Band;
+		
 	
+	for (i=0;i<(*Lines-1);i++){
+
+     	frameA=(((data[i*Col+_FRAMES] & 0xFF)<< 8) | 
+				(data[i*Col+_FRAMES+1] & 0xFF));
+
+     	frameB=(((data[(i+1)*Col+_FRAMES] & 0xFF)<< 8) | 
+				(data[(i+1)*Col+_FRAMES+1] & 0xFF));
+
+		if (frameA==frameB) { /*Uh Oh! Duplicate frame #'s*/
+			/*Check and see if the frames are truely identical*/
+			memcpy(A,(data+i*Col+_DATA),(Col-_SIGINFO));
+			memcpy(B,(data+(i+1)*Col+_DATA),(Col-_SIGINFO));
+			Band=data[(i+1)*Col+_BANDS] & 0x0f;
+
+			if (cmp_themis_lines(A,B,(Col-_SIGINFO))) { /* oh Yea! Redudant data!*/
+				redun[Band]++;
+				if(!(quiet))
+					parse_error("Redundant frame found!! Frame: %d\t Band: %d...Fixing",frameA,Band);
+				memmove((*buf+i*Col),(*buf+(i+1)*Col),((*Lines)-i-1)*Col);
+				(*Lines)--;
+				i--; /*Subtract 1 from i so that it comes back the (i+1) frame which is now at i*/
+			}
+
+			else
+				if(!(quiet))
+					parse_error("Redundant Frame #'s found...but data is different...Go Figure.  Frame:%d\tBand:%d",frameA,Band);
+		}
+	}
+}
+			
+	
+void Summary(PACIstatus *Ps)
+{
+	int i;
+	char msg1[256]={'\0'};
+	char msg2[256]={'\0'};
+
+
+	for (i=0;i<10;i++){
+		if (Ps->Mapping[i]){
+			parse_error("Mapping Band:%d to Davinci slot:%d",i,Ps->Mapping[i]);
+		}
+		else	
+			parse_error("Band %d has no data, throwing it out",i);
+	}
+
+	for (i=0;i<10;i++){
+		if(Ps->Mapping[i]){
+			if (Ps->AddedFrames[i] || Ps->RepeatedFrames[i]){
+				if (Ps->AddedFrames[i]) 
+					sprintf(msg1,"Added Frames:%04d\t",Ps->AddedFrames[i]);
+				else
+					sprintf(msg1,"                \t");
+
+				if (Ps->RepeatedFrames[i])
+					sprintf(msg2,"Repeated Frames:%04d",Ps->RepeatedFrames[i]);
+				else
+					strcpy(msg2," ");
+			
+				parse_error("Band:%02d (slot %02d)\t%s%s",i,Ps->Mapping[i],msg1,msg2);
+			}
+		}
+	}
+}
+			
+			
+			
 
 Var *
 ff_PACI_Read(vfuncptr func, Var * arg)
@@ -678,12 +804,14 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 	 int		band_frame_count;
 	 int		Total_Frame_Count;
     int		offset;
+	 PACIstatus Ps;
+	 int	   quiet=0;
 
     int		debug=0;
 
     Var **av, *v;
     int ac;
-    Alist alist[7];
+    Alist alist[9];
 
     alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
     alist[1] = make_alist("frame", INT, NULL, &Frame);
@@ -692,7 +820,8 @@ ff_PACI_Read(vfuncptr func, Var * arg)
     alist[4] = make_alist("nosig", INT, NULL, &Data_Only);
     alist[5] = make_alist("swap", INT, NULL, &swap_flag);
     alist[6] = make_alist("spec", INT, NULL, &Spec_Swap);
-    alist[7].name = NULL;
+    alist[7] = make_alist("quiet", INT, NULL, &quiet);
+    alist[8].name = NULL;
 
 
     make_args(&ac, &av, func, arg);
@@ -717,14 +846,16 @@ ff_PACI_Read(vfuncptr func, Var * arg)
         Band=-1;
     }
 
+	 memset(&Ps,0x00,sizeof(PACIstatus));
+
 #ifndef __MSDOS__
     if ((fd = open(filename, O_RDONLY))==-1){
-        fprintf(stderr,"Can't open file: %s...aborting\n",filename);
+        parse_error("Can't open file: %s...aborting\n",filename);
         return(NULL);
     }
 #else
     if ((fd = open(filename, O_RDONLY | O_BINARY))==-1){
-        fprintf(stderr,"Can't open file: %s...aborting\n",filename);
+        parse_error("Can't open file: %s...aborting\n",filename);
         return(NULL);
     }
 #endif
@@ -820,10 +951,11 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 					 else { 
                     if (Output-_SIGINFO < 320){
 
-                        if (len <= (Lines*Col+320)) { 	/*We're running out of room!*/
+                        if (len < (Lines*Col+320)) { 	/*We're running out of room!*/
                             int guess=(len/(Output));/*Guess # of total lines*/
                             len = guess * Col; 			/*How big it needs to be*/
-                            parse_error("Increasing Buffer sizes\n");
+									 if (!(quiet))
+                            	parse_error("Increasing Buffer sizes\n");
                             data=realloc(data,len);
                         }
 
@@ -878,6 +1010,10 @@ ff_PACI_Read(vfuncptr func, Var * arg)
         if (Cmd==ALL) {
             int extra_frames=0;
             qsort((char *)data,Lines,Col,Themis_Sort);
+
+				/*Toss redudant data*/
+				RedunBegone((char **)&data,&Lines,Col,Ps.RepeatedFrames,quiet);
+
 				/*Pack Bands: this throws out empty bands*/
 				{
 					int Bc[16];
@@ -887,11 +1023,15 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 						if (BandCount[i]){
 							Bc[idx]=BandCount[i];
 							idx++;
-							printf("Mapping Band:%d to Davinci slot:%d\n",i,idx);
+							Ps.Mapping[i]=idx;
+/*							printf("Mapping Band:%d to Davinci slot:%d\n",i,idx);*/
 						}
+/*
 						else {
 							printf("Band %d has no data, throwing it out\n",i);
 						}
+*/
+
 					}
 					Max_Band=idx-1;
 					for(i=0;i<=Max_Band;i++){
@@ -934,7 +1074,8 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 							
 							if (current_band!=c_band) {
 								if (band_frame_count < Max_Frame_Count) {/*Missing end frames*/
-                        	printf("Extending buffer:%d\n",(Col*(Max_Frame_Count-band_frame_count)));
+									if(!(quiet))
+                        		parse_error("Extending buffer:%d\n",(Col*(Max_Frame_Count-band_frame_count)));
                         	len+=(Col*(Max_Frame_Count-band_frame_count));
                         	if((newbuf=realloc(newbuf,len))==NULL){
                         	    printf("Couldn't extend buffer...you're hosed\n");
@@ -945,10 +1086,13 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                         	Add_Fake_Frame((((unsigned char *)newbuf)+Total_Frame_Count*Col),
 											(int)c_band, (FrameBandStart[current_band]+band_frame_count), 
 											(Max_Frame_Count-band_frame_count), Col);
+									if(!(quiet)){
+										parse_error("Adding End frames: %d-%d in Band: %d\n",
+											(FrameBandStart[current_band]+band_frame_count),
+											(FrameBandStart[current_band]+Max_Frame_Count-1), c_band);
+									}
 
-									parse_error("Adding End frames: %d-%d in Band: %d\n",
-										(FrameBandStart[current_band]+band_frame_count),
-										(FrameBandStart[current_band]+Max_Frame_Count-1), c_band);
+									Ps.AddedFrames[c_band]+=(Max_Frame_Count-band_frame_count);
 
                             Total_Frame_Count+=(Max_Frame_Count-band_frame_count);
                         }
@@ -957,8 +1101,10 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 							}
 					
 							if (c_frame > (FrameBandStart[current_band]+band_frame_count)){ /*Missing frames*/
-                       printf("Extending buffer: %d\n",(c_frame-(FrameBandStart[current_band]+
-																			band_frame_count))*Col);
+								if(!(quiet)){
+                       		printf("Extending buffer: %d\n",(c_frame-(FrameBandStart[current_band]+
+												band_frame_count))*Col);
+								}
                        len+=(c_frame-(FrameBandStart[current_band]+band_frame_count))*Col;
 
                        if((newbuf=realloc(newbuf,len))==NULL){
@@ -970,18 +1116,21 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 								Add_Fake_Frame((((unsigned char *)newbuf)+Total_Frame_Count*Col),
 									(int)c_band, (FrameBandStart[current_band]+band_frame_count),
 									(c_frame-(FrameBandStart[current_band]+band_frame_count)), Col);
-					
-								parse_error("Adding frames: %d-%d in Band: %d\n",
-									(FrameBandStart[current_band]+band_frame_count),
-									(c_frame-1),c_band);
+								if(!(quiet)){	
+									parse_error("Adding frames: %d-%d in Band: %d\n",
+										(FrameBandStart[current_band]+band_frame_count),
+										(c_frame-1),c_band);
+								}
 
+								Ps.AddedFrames[c_band]+=c_frame-(FrameBandStart[current_band]+band_frame_count);
 								Total_Frame_Count+=c_frame-(FrameBandStart[current_band]+band_frame_count);
 								band_frame_count+=c_frame-(FrameBandStart[current_band]+band_frame_count);
 							}
 
-							else if (c_frame < (FrameBandStart[current_band]+band_frame_count)) {
+							else if (c_frame < (FrameBandStart[current_band]+band_frame_count)) { 
+									  
 								parse_error("Corrupted Frame Sequence...Aborting\n");
-								return(NULL);
+									return(NULL);
 							}
 
 				
@@ -999,11 +1148,13 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                  	Add_Fake_Frame((((unsigned char *)newbuf)+Total_Frame_Count*Col),
 							(int)c_band, (FrameBandStart[current_band]+band_frame_count), 
 							(Max_Frame_Count-band_frame_count), Col);
+						if(!(quiet)){
+							parse_error("Adding End frames: %d-%d in Band: %d\n",
+								(FrameBandStart[current_band]+band_frame_count),
+								(FrameBandStart[current_band]+Max_Frame_Count-1), c_band);
+						}
 
-						parse_error("Adding End frames: %d-%d in Band: %d\n",
-							(FrameBandStart[current_band]+band_frame_count),
-							(FrameBandStart[current_band]+Max_Frame_Count-1), c_band);
-
+						Ps.AddedFrames[c_band]+=(Max_Frame_Count-band_frame_count);
                   Total_Frame_Count+=(Max_Frame_Count-band_frame_count);
 						band_frame_count+=(Max_Frame_Count-band_frame_count); 
                 }
@@ -1069,6 +1220,9 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                 return(newVal(BSQ,Col,Lines,1,BYTE,data));
             }
         }
+
+		  if (quiet < 2)
+				Summary(&Ps);
 
         munmap(buf,old_len);
         close(fd);
