@@ -372,7 +372,7 @@ readCells(const char *stamp, FramedImage& fi, int reverseLon)
 		return  0;
 	 }
 
-	Point2D pts[300]; // 256 frames max, rounded up
+	Point2D pts[3000]; // 256 frames max, rounded up (TIMES POINTS PER FRAME!)
 
 	// Priming values that would've resulted from record number -1
 	int last_frame_id = -1;
