@@ -203,10 +203,6 @@ struct _vfuncptr vfunclist[] = {
     { "projection", ff_projection,   NULL , NULL},
 #endif
 
-#ifdef HAVE_LIBMAGICK 
-    { "XIdisplay",  ff_XImage_Display, NULL, NULL},
-#endif
-
     { "fft",        ff_fft,     (void *)1 , NULL},
     { "ifft",       ff_fft,     (void *)0 , NULL},
     { "rfft",       ff_realfft,     (void *)1 , NULL},

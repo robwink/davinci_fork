@@ -78,7 +78,7 @@ ff_rgb(vfuncptr func, Var *arg)
     V_SIZE(s)[0] = 3;
     V_SIZE(s)[1] = x;
     V_SIZE(s)[2] = y;
-    V_DSIZE(s) = x*y;
+    V_DSIZE(s) = x*y*3;
     V_FORMAT(s) = BYTE;
 
     return(s);

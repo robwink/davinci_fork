@@ -2,17 +2,10 @@
 #include "config.h"
 #endif
 #ifdef HAVE_LIBMAGICK
-#ifdef HAVE_LIBX11
 #include <magick.h>
 #include <magick/api.h>
-#include <magick/xwindows.h>
-#include <X11/Intrinsic.h>
-#include <X11/Shell.h>
-#include <X11/Xatom.h>
 
 #include "parser.h"
-
-extern Widget top;
 
 Image *Var2Miff(Var *ob) /* Write */
 {
@@ -30,10 +23,7 @@ Image *Var2Miff(Var *ob) /* Write */
 	int scene=0;
 	QuantizeInfo quantize_info;
 	ImageInfo	tmp_info,image_info;
-	Display *display;
 	unsigned long state;
-  	XResourceInfo resource;
-  	XrmDatabase resource_database;
 
 	char *data=(char *)V_DATA(ob);
 
@@ -276,59 +266,4 @@ void WriteGFX_Image(Var *ob,char *filename,char *GFX_type)
 	free(newfn);
 }
 
-Var *ff_XImage_Display(vfuncptr func, Var * arg)
-{
-	Var *Obj;
-        int ac,i;
-        Var **av, *v;
-        Alist alist[2];
-	Image *image,*tmp_image;
-	ImageInfo image_info;
-	QuantizeInfo quantize_info;
-	char disp[1024];
-	Display *display;
-	unsigned long state;
-  	XResourceInfo resource;
-  	XrmDatabase resource_database;
-
-        alist[0] = make_alist("object", ID_VAL, NULL, &Obj);
-        alist[1].name = NULL;
-	disp[0]='\0';
-
-	if (parse_args(func, arg, alist) == 0) return(NULL);
-
-	if((image=Var2Miff(Obj))==NULL){
-		return (NULL);
-	}
-
-
-  	GetImageInfo(&image_info);
-	GetQuantizeInfo(&quantize_info);
-
-	display=XOpenDisplay((char *) NULL);
-
-  	if (display == (Display *) NULL){
-    		parse_error("Unable to display image...can't open X server");
-		return (NULL);
-	}
-
-  	XSetErrorHandler(XError);
-  	resource_database=XGetResourceDatabase(display,"davinci");
-  	XGetResourceInfo(resource_database,"davinci",&resource);
-  	resource.image_info=(&image_info);
-  	resource.quantize_info=(&quantize_info);
-  	state=DefaultState;
-
-  	tmp_image=XDisplayImage(display,&resource,(char **) NULL,0,&image,&state);
-
-  	XCloseDisplay(display);
-
-	if (tmp_image!=NULL)
-		return(Miff2Var(tmp_image));
-	else
-		return(NULL);
-
-}
-
-#endif
 #endif
