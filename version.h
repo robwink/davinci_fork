@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.84";
+char *version = "@(#) daVinci Version #0.85";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,11 @@ char *version = "@(#) daVinci Version #0.84";
 #include "build.h"
 
 /*
+
+Version 0.85: Wed Feb 20 18:42:58 MST 2002
+	* Modified ff_interp to use binary-searching for searching 
+	  domain values (instead of linear search).
+
 Version 0.84: Tue Feb 19 23:15:41 MST 2002
 	* Make load() take a text to load multiple files, returns struct
 	* Fixed io_isis to load by filename rather than file pointer
