@@ -355,6 +355,7 @@ Var *ff_pzoom(vfuncptr func, Var * arg);
 #endif
 
 Var *ff_struct(vfuncptr func, Var *arg);
+Var *ff_get_struct_key(vfuncptr func, Var* arg);
 
 Var *ff_eigen(vfuncptr func, Var *arg);
 Var *ff_pcs(vfuncptr func, Var *arg);
