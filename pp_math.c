@@ -453,7 +453,7 @@ xpos(int i, Var *v, int *x, int *y, int *z)
 
 
 int 
-extract_int(Var * v, int i)
+extract_int(const Var * v, const int i)
 {
     switch (V_FORMAT(v)) {
     case BYTE:

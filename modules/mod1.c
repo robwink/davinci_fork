@@ -1,7 +1,6 @@
 #include "parser.h"
 #include "ff_modules.h"
 
-
 static Var *foo(vfuncptr f, Var *args);
 static Var *bar(vfuncptr f, Var *args);
 

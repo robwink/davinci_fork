@@ -3,7 +3,7 @@
 
 #include "y_tab.h"
 
-#if defined(HAVE_LIBXT)
+#ifdef HAVE_LIBXT
 #define USE_X11_EVENTS 1
 #endif
 
@@ -12,8 +12,8 @@
 #include <X11/Shell.h>
 #include <X11/Xatom.h>
 
-Widget top=NULL;
-XtAppContext    app;
+Widget		applicationShell = NULL;
+XtAppContext	applicationContext;
 #endif
 
 int interactive = 1;
@@ -242,7 +242,8 @@ main(int ac, char **av)
     }
 	dv_set_iom_verbosity();
 
-    if (iflag)
+	/* JAS FIX: always run interactive for GUI testing.. */
+	/* if (iflag) */
         interactive = 1;
 
     env_vars();
@@ -323,6 +324,61 @@ extern "C" {
 #endif
 #endif
 
+/* FIX: move to gui.c */
+
+static String defaultAppResources[] = {
+  "*TopLevelShell.allowShellResize: true",
+  "*vicar.xZoomIn: 1",
+  "*vicar.xZoomOut: 1",
+  "*vicar.yZoomIn: 1",
+  "*vicar.yZoomOut: 1",
+  "*vicar.viewWidth: 640",
+  "*vicar.viewHeight: 480",
+  "*vicar.tileWidth: 256",
+  "*vicar.tileHeight: 256",
+  "*vicar.allowShellResize: True",
+  "*vicar.shadowThickness: 1",
+  /* NOTE: the following is one long string.  Don't add commas. */
+  "*vicar.translations: #augment \\n "
+  "~Shift<Btn2Down>:			MousePanStart() \\n "
+  "~Shift<Btn2Motion>:			MousePan() \\n "
+  "~Shift~Ctrl~Meta<Key>osfLeft:	PanOne(left) \\n "
+  "~Shift~Ctrl~Meta<Key>osfRight:	PanOne(right) \\n "
+  "~Shift~Ctrl~Meta<Key>osfUp:		PanOne(up) \\n "
+  "~Shift~Ctrl~Meta<Key>osfDown:	PanOne(down) \\n "
+  "Ctrl~Shift~Meta<Key>osfLeft:		PanEdge(left) \\n "
+  "Ctrl~Shift~Meta<Key>osfRight:	PanEdge(right) \\n "
+  "Ctrl~Shift~Meta<Key>osfUp:		PanEdge(up) \\n "
+  "Ctrl~Shift~Meta<Key>osfDown:		PanEdge(down) \\n "
+  "Shift~Ctrl~Meta<Key>osfLeft:		PanHalfView(left) \\n "
+  "Shift~Ctrl~Meta<Key>osfRight:	PanHalfView(right) \\n "
+  "Shift~Ctrl~Meta<Key>osfUp:		PanHalfView(up) \\n "
+  "Shift~Ctrl~Meta<Key>osfDown:		PanHalfView(down) \\n "
+  "<Key>osfActivate:			Input(\"Return hit\") \\n "
+  "<Btn1Down>:				Input(\"Draw\",\"start\") \\n "
+  "Button2<Key>space:			Input(\"Draw\",\"mark\") \\n "
+  "<Btn1Motion>:			Input(\"Draw\",\"drag\") \\n "
+  "<Btn1Up>:				Input(\"Draw\",\"end\") \\n "
+  "<Key>osfEscape:			CursorMode(toggle) \\n "
+  "~Shift<Key>grave:			CursorMode(toggle) \\n "
+  "<Key>asciitilde:			CursorMode(toggle,true) \\n "
+  "Shift<Key>grave:			CursorMode(toggle,true) \\n "
+  "<Key>plus:				CursorMode(floating) \\n "
+  "<Key>minus:				CursorMode(planted) \\n "
+  "Shift<Motion>:			MoveCursorMouse() \\n "
+  "<Key>c:				MoveCursorMouse() \\n "
+  "Shift Ctrl<Key>osfLeft:		MoveCursor(left) \\n "
+  "Shift Ctrl<Key>osfRight:		MoveCursor(right) \\n "
+  "Shift Ctrl<Key>osfUp:		MoveCursor(up) \\n "
+  "Shift Ctrl<Key>osfDown:		MoveCursor(down) \\n "
+  "Meta<Key>osfLeft:			MoveCursorScreen(left) \\n "
+  "Meta<Key>osfRight:			MoveCursorScreen(right) \\n "
+  "Meta<Key>osfUp:			MoveCursorScreen(up) \\n "
+  "Meta<Key>osfDown:			MoveCursorScreen(down) \\n "
+  "<Visible>:				Input(\"VisibilityNotify\")",
+  /* NOTE: end of long string. */
+  NULL
+};
 
 void
 event_loop(void)
@@ -331,17 +387,23 @@ event_loop(void)
 #if !defined(USE_X11_EVENTS) || !defined(HAVE_LIBREADLINE)
       /* JAS FIX */
 	lhandler((char *)readline("dv> "));
-#else 
+#else
+	// JAS FIX: this should work even with a null DISPLAY, if -display is set..i think there are better
+	// ways to get the display as well..
         if (windows && getenv("DISPLAY") != NULL)  {
+	  // JAS FIX: what is this argv/argv manglation?
             char *argv[1];
             char *av0 = "null";
             int argc = 1;
             argv[0] = av0;
-            top = XtVaAppInitialize(&app, "Simple", NULL, 0,
-                                    &argc,
-                                    argv, NULL, NULL);
+            applicationShell = XtVaAppInitialize(&applicationContext,
+						 "Davinci", NULL, 0,
+						 &argc, argv,
+						 defaultAppResources, NULL);
+
 #ifdef INCLUDE_API
-            SetTopLevel(&top);
+	    /* FIX: what's this for? -JAS */
+            SetTopLevel(&applicationShell);
 #endif
         } else {
             /**
@@ -349,17 +411,17 @@ event_loop(void)
             ** needing an X server.  It is a bad idea.
             **/
             XtToolkitInitialize();
-            app = XtCreateApplicationContext();
+            applicationContext = XtCreateApplicationContext();
         }
 
-        XtAppAddInput(app,
+        XtAppAddInput(applicationContext,
                       fileno(stdin),
                       (void *) XtInputReadMask,
                       get_file_input,
                       NULL);
         rl_callback_handler_install("dv> ", lhandler);
 
-        XtAppMainLoop(app);
+        XtAppMainLoop(applicationContext);
 #endif
     }
 }
@@ -453,16 +515,17 @@ Var *curnode;
 void
 parse_buffer(char *buf)
 {
+
     int i,j;
     extern char *yytext;
     Var *v = NULL;
     void *parent_buffer;
     void *buffer;
     Var *node;
-	extern char *pp_str;
+    extern char *pp_str;
 
-    parent_buffer = get_current_buffer();
-    buffer = yy_scan_string(buf);
+    parent_buffer = (void *) get_current_buffer();
+    buffer = (void *) yy_scan_string(buf);
 	pp_str = buf;
 
     while((i = yylex()) != 0) {
@@ -501,8 +564,8 @@ eval_buffer(char *buf)
     void *buffer;
     Var *node;
 
-    parent_buffer = get_current_buffer();
-    buffer = yy_scan_string(buf);
+    parent_buffer = (void *) get_current_buffer();
+    buffer = (void *) yy_scan_string(buf);
 
     while((i = yylex()) != 0) {
         /*

@@ -1,0 +1,144 @@
+# test-overlays.dav
+
+# Davinci GUI test script.
+
+verbose = 1
+load_module("gui")
+
+#####
+#
+# Support functions
+#
+#####
+
+# showVicar() displays a VICAR widget with the specified filename.
+
+define showVicar() {
+
+  fileName = $1
+  data = load_pds(fileName)
+
+  if (dim(data.qube.data)[3] != 10) {
+    gui_ErrorDialog(fileName, "Only 10-band cubes are supported.")
+    return(0)
+  }
+
+  data = data.qube.data
+  data[where data < 0] = 0
+  dpyData = cat(stretch(data[,,3]), stretch(data[,,5]), stretch(data[,,7]),z)
+  dpyData = bsq(dpyData)
+
+  vtop = gui.create("topLevelShell", name=fileName)
+  vicar = gui.create("vicar", vtop, { image = dpyData })
+  gui.set(vicar, { inputMode = "MODE_SELECT" })
+  gui.realize(vtop)
+
+}
+
+#####
+#
+# Main
+#
+#####
+
+##### topLevelShell widget
+
+# Create a top-level shell window with the title "Davinci".
+# You must create a top-level shell to hold other widgets before they can be
+# displayed.
+
+top = gui.create("topLevelShell", name = "Davinci")
+
+##### form widget
+
+# Create a layout widget to arrange some other widgets.
+
+form = gui.create("form", top)
+
+##### label widget
+
+# Create a label containing user instructions, spanning the top of the
+# window.  The properties structure is build explicitly for clarity.
+
+infoProps = struct();
+# At the moment there's a bug with setting labelString at create time..
+#infoProps.labelString = "Click on a file to open a VICAR widget."
+
+# The following properties are inherited by all children of the form widget.
+# See the Motif reference manual for explanations of these properties.  Some
+# of these values are already the default, but are included for clarity.
+
+infoProps.leftAttachment = "ATTACH_FORM"
+infoProps.topAttachment = "ATTACH_FORM"
+infoProps.rightAttachment = "ATTACH_FORM"
+# infoProps.bottomAttachment will be set later.
+
+# Create the label with the form widget as its parent.
+
+infoLabel = gui.create("label", form, infoProps)
+gui.get(infoLabel, all = 1)
+
+# At the moment there's a bug with setting labelString at create time..
+gui.set(infoLabel, { labelString = "Click on a file to open a VICAR widget." })
+
+##### list widget
+
+# Create a list widget to hold a static list of filenames.
+
+fileNames = cat("I00996003RDR.project.normalize.cub", \
+		"I01283002RDR.project.normalize.cub", \
+		"I01645003RDR.project.normalize.cub", \
+		"I01957003RDR.project.normalize.cub", \
+		"I06376002RDR.project.normalize.cub", \
+		axis = y)
+listProps = struct()
+listProps.itemList = fileNames
+listProps.visibleItemCount = length(fileNames)
+listProps.leftAttachment = "ATTACH_FORM"
+listProps.rightAttachment = "ATTACH_FORM"
+listProps.bottomAttachment = "ATTACH_FORM"
+
+# Here is an example of referencing a widget by its Davinci widget ID.
+
+listProps.topAttachment = "ATTACH_WIDGET"
+listProps.topWidget = infoLabel
+
+list = gui.create("list", form, listProps)
+gui.get(list, all = 1)
+
+##### Widget referencing
+
+# Now that we have a widget ID for the list widget, we can set the
+# infoLabel widget's form connections.  These particular resource values
+# are coupled and MUST be set at the same time, or the setting will be
+# ignored.  See the Motif reference for details.
+
+gui.set(infoLabel, { bottomAttachment = "ATTACH_WIDGET", bottomWidget = list })
+
+##### Display
+
+# Now that the widget is complete, display it to the user.
+
+gui.realize(top)
+
+# Wait for the user to click on a list entry, which generates a
+# browseSelection event.
+
+ok = 1
+while (ok == 1) {
+
+  # gui.wait() blocks til an event occurs on one of the widgets under its
+  # control.  The returned struct contains the widget ID and the event name.
+
+  event = gui.wait()
+
+  # See if the event occurred on the list widget.
+  if (event.widget == list) {
+    # No need to check the event name, since it only generates one event
+    # while in single-select mode.  Check the widget properties to determine
+    # which item was selected.
+    selection = gui.get(list).selectedItems[,1]
+    showVicar(selection)
+  }
+
+}

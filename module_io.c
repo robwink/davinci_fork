@@ -1,13 +1,10 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#if defined(HAVE_CONFIG_H)
-#include <config.h>
-#endif /* HAVE_CONFIG_H */
-
+#include "config.h"
 #include "module_io.h"
 
-#if   defined(USE_HPUX_SHL)
+#if defined(USE_HPUX_SHL)
 #include <dl.h>
 #elif defined(_WIN32)
 #include <windows.h>

@@ -33,6 +33,10 @@
 
 #define __P(a) a
 
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+
 #include "parser.h"
 
 #include <sys/types.h>
@@ -488,10 +492,12 @@ License along with libiberty; see the file COPYING.LIB.  If
 not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
+#if 0
+/* JAS FIX: moving these to the top in an attempt to satify Purify. */
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdarg.h>
-
+#endif
 
 unsigned long strtoul ();
 /* char *malloc (); */
@@ -513,8 +519,8 @@ dv_int_vasprintf (char **result, char *format, va_list args)
                 ++p;
             if (*p == '*')
 	    {
-                ++p;
-                total_width += abs (va_arg (args, int));
+	      ++p;
+	      total_width += abs (va_arg(args, int));
 	    }
             else
                 total_width += strtoul (p, &p, 10);
