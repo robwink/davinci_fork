@@ -24386,7 +24386,6 @@ fi
 
 
 
-
                                         ac_config_files="$ac_config_files Makefile modules/Makefile modules/kjn/Makefile vicar/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -25942,7 +25941,7 @@ PRINT_YES_NO() {
   if test $# -lt 2; then
     answer="No"
   else
-      if test "$2" = "no"; then
+      if test "$2" != "yes"; then
         answer="No"
       fi
   fi

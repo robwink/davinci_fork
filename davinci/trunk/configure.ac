@@ -194,7 +194,6 @@ dnl FIX: this stuff can go away if libtool is used.
 
 AC_SUBST(MY_SUBDIRS)
 
-
 AC_OUTPUT([Makefile modules/Makefile modules/kjn/Makefile vicar/Makefile])
 
 PRINT_YES_NO() {
@@ -202,7 +201,7 @@ PRINT_YES_NO() {
   if test $# -lt 2; then
     answer="No"
   else
-      if test "$2" = "no"; then
+      if test "$2" != "yes"; then
         answer="No"
       fi
   fi
