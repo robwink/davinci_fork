@@ -16,6 +16,32 @@ void g_srandom(int);
 #define random rand
 #define srandom srand
 #endif
+#ifdef __MSDOS__
+#include <math.h>
+const long r_l_max= 2147483648;
+const long r_l_min= -2147483648;
+
+
+double drand48(void)
+{
+        return(((double) rand())/((double)(RAND_MAX)));
+}  
+
+
+long mrand48(void)
+{
+        return((long)(((double)rand()/(double)RAND_MAX)*((double)(r_l_max-r_l_min)+r_l_min)));
+}
+long lrand48(void)
+{
+        return((long)(((double)rand()/(double)RAND_MAX)*((double)r_l_max)));
+}
+
+void srand48(long seedval)
+{
+        srand(seedval);
+}
+#endif
 
 
 Var *

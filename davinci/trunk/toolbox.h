@@ -18,7 +18,11 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#ifndef __MSDOS__
 #include <unistd.h>
+#else
+#define F_OK 0
+#endif
 #include <string.h>
 #include <ctype.h>
 #include <time.h>

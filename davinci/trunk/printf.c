@@ -42,7 +42,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef __MSDOS__
 #include <unistd.h>
+#endif
 
 #define PF(out, f, func) { \
 	char *b = NULL; \

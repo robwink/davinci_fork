@@ -1,7 +1,9 @@
 /*********************************** vicar.c **********************************/
 #include "parser.h"
 #include "io_vicar.h"
+#ifndef __MSDOS__
 #include <pwd.h>
+#endif
 
 /**
  ** Vicar I/O routines
@@ -315,9 +317,12 @@ WriteVicar(Var *s, FILE *fp, char *filename)
     
 	{
 		time_t t = time(0);
+#ifndef __MSDOS__
 		sprintf(ptr+strlen(ptr),
             "HOST='SUN-SOLR'  INTFMT='HIGH'  REALFMT='IEEE'  BHOST='VAX-VMS'  BINTFMT='LOW'  BREALFMT='VAX'  BLTYPE=''  TASK='DAVINCI'  USER='%s'  DAT_TIM='%24.24s'", getpwuid(getuid())->pw_name, ctime(&t));
-
+#else
+      sprintf(ptr+strlen(ptr),"HOST='SUN-SOLR'  INTFMT='HIGH'  REALFMT='IEEE'  BHOST='VAX-VMS'  BINTFMT='LOW' BREALFMT='VAX'  BLTYPE=''  TASK='DAVINCI'  USER='%s'  DAT_TIM='%24.24s'", "MSDOS", ctime(&t));
+#endif
 	}
     /**
      ** compute final label size and stuff it in at the front.
@@ -336,7 +341,7 @@ WriteVicar(Var *s, FILE *fp, char *filename)
     }
 
     if (fp == NULL) {
-        if ((fp = fopen(filename, "w")) == NULL) {
+        if ((fp = fopen(filename, "wb")) == NULL) {
 			return(0);
 		}
     }

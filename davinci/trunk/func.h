@@ -233,6 +233,7 @@ Var *ff_source (vfuncptr, Var *);
 Var *ff_load (vfuncptr, Var *);
 Var *ff_Frame_Grabber_Read(vfuncptr func, Var * arg);
 Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg);
+Var *ff_PAKI_Read(vfuncptr func, Var * arg);
 Var *ff_write (vfuncptr, Var *);
 Var *ff_filetype(vfuncptr , Var *);
 Var *ff_list(vfuncptr, Var *);
@@ -312,13 +313,14 @@ Var *ff_convolve(vfuncptr func, Var *arg);
 Var *ff_convolve2(vfuncptr func, Var *arg);
 Var *ff_convolve3(vfuncptr func, Var *arg);
 
-
+#ifndef __MSDOS__
 Var *ff_popen(vfuncptr func, Var * arg);
 Var *ff_pprint(vfuncptr func, Var * arg);
 Var *ff_pplot(vfuncptr func, Var * arg);
 Var *ff_ptext(vfuncptr func, Var * arg);
 Var *ff_pline(vfuncptr func, Var * arg);
 Var *ff_pbox(vfuncptr func, Var * arg);
+#endif
 
 Var *ff_struct(vfuncptr func, Var *arg);
 
