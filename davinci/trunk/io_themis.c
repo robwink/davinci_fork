@@ -44,44 +44,44 @@ extern unsigned char *Themis_Entry(unsigned char*, int *);
 int 
 Read_Ahead_For_Best_Collumn_Guess(int *Width,unsigned char *buf,int len)
 {
-	int i,j;
-	int Done=0;
+    int i,j;
+    int Done=0;
 
-	int LineCount=0;
-	int Guesses[NUMBER_OF_GUESSES];
+    int LineCount=0;
+    int Guesses[NUMBER_OF_GUESSES];
 
-	i=0;
+    i=0;
 	
 
-	while (!Done) {
+    while (!Done) {
 
-		if(Skip_To_Start_Sync(&i,buf,len) < 0){
-			return(++Done);
-		}
+        if(Skip_To_Start_Sync(&i,buf,len) < 0){
+            return(++Done);
+        }
 			
-		if( (Guesses[LineCount]=Skip_To_Stop_Sync(&i,buf,len)) < 0){
-				return(++Done);
-		}
+        if( (Guesses[LineCount]=Skip_To_Stop_Sync(&i,buf,len)) < 0){
+            return(++Done);
+        }
 
-		if (Guesses[LineCount] <= (MAXDATA+_SIGINFO) &&
-			 	Guesses[LineCount] >= (MINDATA+_SIGINFO)){
-			 LineCount++;
-		}
+        if (Guesses[LineCount] <= (MAXDATA+_SIGINFO) &&
+            Guesses[LineCount] >= (MINDATA+_SIGINFO)){
+            LineCount++;
+        }
 
-		if (LineCount == NUMBER_OF_GUESSES) {
-			for (j=0;j<NUMBER_OF_GUESSES-1;j++){
-				if(Guesses[j]!=Guesses[j+1]){
-					j=NUMBER_OF_GUESSES;
-					LineCount=0;/*Start again*/
-				}
-			}
-			if (LineCount) {/*Got a good guess!*/
-				*Width=(Guesses[0]+2)/*Add two for the stop sync*/;
-				return(0);
-			}
-		}
-	}
-	return (1);
+        if (LineCount == NUMBER_OF_GUESSES) {
+            for (j=0;j<NUMBER_OF_GUESSES-1;j++){
+                if(Guesses[j]!=Guesses[j+1]){
+                    j=NUMBER_OF_GUESSES;
+                    LineCount=0;/*Start again*/
+                }
+            }
+            if (LineCount) {/*Got a good guess!*/
+                *Width=(Guesses[0]+2)/*Add two for the stop sync*/;
+                return(0);
+            }
+        }
+    }
+    return (1);
 }	
 			
 
@@ -92,7 +92,7 @@ int Skip_To_Stop_Sync(int *i, char *buf,int len)
 {
     int count=0;
     int Tmp=*i;
-	unsigned short V;
+    unsigned short V;
 
     while ((*i)<len-1){
         if (memcmp((buf+(*i)), &Stop_Sync, 2) == 0) {
@@ -111,7 +111,7 @@ int Skip_To_Stop_Sync(int *i, char *buf,int len)
 int Skip_To_Start_Sync(int *i, char *buf,int len)
 {
     int Tmp=*i;
-	short V;
+    short V;
 
     while ((*i)<len-1){
         if (memcmp((buf+(*i)), &Start_Sync, 2) == 0) {
@@ -152,138 +152,138 @@ int Keep(unsigned char B, unsigned short F, CMD Cmd, int Frame, int Band)
 
 int GetGSEHeader (FILE *fp, struct _iheader *h)
 {
-	unsigned char	Buf[1000];
-	unsigned int	Num[6];
-	struct stat 	filebuf;
+    unsigned char	Buf[1000];
+    unsigned int	Num[6];
+    struct stat 	filebuf;
 
-	int	Col,Row;
-	int	Size;
-	int 	Time;
-	float	Exposure;
-	int	i=0;
-	int	nb=1;
-	char	Nibs[9][24];/*Header has 9 short words in it */
-	int	plane;
+    int	Col,Row;
+    int	Size;
+    int 	Time;
+    float	Exposure;
+    int	i=0;
+    int	nb=1;
+    char	Nibs[9][24];/*Header has 9 short words in it */
+    int	plane;
 
-	rewind(fp);
-	fstat(fileno(fp),&filebuf);
-	Size=(filebuf.st_size)-1024;
+    rewind(fp);
+    fstat(fileno(fp),&filebuf);
+    Size=(filebuf.st_size)-1024;
 
-	if (Size <=0){
-		return(0);
-	}
+    if (Size <=0){
+        return(0);
+    }
 
 #if 0
-	if (fread((void *)Num,sizeof (unsigned int),6,fp)!=6){
-		return (0);
-	}
+    if (fread((void *)Num,sizeof (unsigned int),6,fp)!=6){
+        return (0);
+    }
 
-	fscanf(fp,"%s %s %s %s %s %s %s %s %s",
-		Nibs[0],Nibs[1],Nibs[2],Nibs[3],
-		Nibs[4],Nibs[5],Nibs[6],Nibs[7],Nibs[8]);
+    fscanf(fp,"%s %s %s %s %s %s %s %s %s",
+           Nibs[0],Nibs[1],Nibs[2],Nibs[3],
+           Nibs[4],Nibs[5],Nibs[6],Nibs[7],Nibs[8]);
 
-	Col=Num[2];
-	Row=Num[1];
+    Col=Num[2];
+    Row=Num[1];
 
 
 /*Validate Header (this test might change) */
 
-	if (strcmp(Nibs[0],"ms98") || strcmp(Nibs[1],"image")){
-		return(NULL);
-	}
+    if (strcmp(Nibs[0],"ms98") || strcmp(Nibs[1],"image")){
+        return(NULL);
+    }
 
 /*
-	if (strcmp(Nibs[8],"ci1656.bin"))
-		nb=1;
-	else
-		nb=2;
-*/
+  if (strcmp(Nibs[8],"ci1656.bin"))
+  nb=1;
+  else
+  nb=2;
+  */
 #endif
-	/**
-	*** I have hard-coded these values becase the header word sucks.
-	**/
-	Col = 1032;
-	Row = 1024;
-	nb = 2;
+    /**
+    *** I have hard-coded these values becase the header word sucks.
+    **/
+    Col = 1032;
+    Row = 1024;
+    nb = 2;
 
-	plane=(Row*Col*nb);
-	if (Size % plane) {
-		parse_error("File contains incomplete frame\n");
-	}
+    plane=(Row*Col*nb);
+    if (Size % plane) {
+        parse_error("File contains incomplete frame\n");
+    }
 
 
 /*Okay, the file header is a GSE visible image; load the _iheader structure with info */
 	
-	h->org=BSQ;
-	h->size[0]=Col;
-	h->size[1]=Row;
-	h->size[2]=(Size/(Row*Col*nb));
-	h->format=((nb==1) ? (BYTE):(SHORT));
-	h->dptr=1024;
-	h->gain=0.0;
-	h->corner=0;
-	for (i=0;i<3;i++){
-		h->suffix[i]=0;
-		h->prefix[i]=0;
-		h->s_lo[i]=0;
-		h->s_hi[i]=h->size[i];
-		h->s_skip[i]=0;
-	}
-	return (1);
+    h->org=BSQ;
+    h->size[0]=Col;
+    h->size[1]=Row;
+    h->size[2]=(Size/(Row*Col*nb));
+    h->format=((nb==1) ? (BYTE):(SHORT));
+    h->dptr=1024;
+    h->gain=0.0;
+    h->corner=0;
+    for (i=0;i<3;i++){
+        h->suffix[i]=0;
+        h->prefix[i]=0;
+        h->s_lo[i]=0;
+        h->s_hi[i]=h->size[i];
+        h->s_skip[i]=0;
+    }
+    return (1);
 }
 
 Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
 {
-	FILE	*infile;
-	void	*data;
-struct	_iheader header;
-        int i,j;
-			int dsize;
-    	int ac;
-    	Var **av, *v;
-    	Alist alist[2];
-	char	*filename,*fname,fname2[256];
+    FILE	*infile;
+    void	*data;
+    struct	_iheader header;
+    int i,j;
+    int dsize;
+    int ac;
+    Var **av, *v;
+    Alist alist[2];
+    char	*filename,*fname,fname2[256];
 
-    	alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
-    	alist[1].name = NULL;
-
-
-    	make_args(&ac, &av, func, arg);
-    	if (parse_args(ac, av, alist))
-       	 	return (NULL);
-
-    	if (filename == NULL) {
-        	parse_error("No filename specified.");
-        	return (NULL);
-    	}
+    alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
+    alist[1].name = NULL;
 
 
-    	if ((fname = locate_file(filename)) == NULL ||
-        	(infile = fopen(fname, "r")) == NULL) {
-        	fprintf(stderr, "Unable to open file: %s\n", filename);
-        	return (NULL);
-    	}
+    make_args(&ac, &av, func, arg);
+    if (parse_args(ac, av, alist))
+        return (NULL);
 
-    	strcpy(fname2, fname);
-	free(fname);
-    	fname = fname2;
+    if (filename == NULL) {
+        parse_error("No filename specified.");
+        return (NULL);
+    }
 
-	if (GetGSEHeader(infile,&header) == 0) {
-		parse_error("Your choice is not a valid GSE visible spectrum (ddd) file");
-		return (NULL);
-	}
 
-	data=read_qube_data(fileno(infile), &header);
+    if ((fname = locate_file(filename)) == NULL ||
+        (infile = fopen(fname, "r")) == NULL) {
+        fprintf(stderr, "Unable to open file: %s\n", filename);
+        return (NULL);
+    }
 
-	fclose(infile);
-	if (header.format=SHORT){ /*Data is actually 12-bit and needs the upper 4 bits cleaned off*/
-		dsize=header.size[0]*header.size[1]*header.size[2];
-		for (i=0;i<dsize*2;i+=2){
-			(*((short *)(data+i))) &=4095;
-		}
-	}
+    strcpy(fname2, fname);
+    free(fname);
+    fname = fname2;
 
-	return(newVal(header.org,header.size[0],header.size[1],header.size[2],header.format,data));
+    if (GetGSEHeader(infile,&header) == 0) {
+        parse_error("Your choice is not a valid GSE visible spectrum (ddd) file");
+        return (NULL);
+    }
+
+    data=read_qube_data(fileno(infile), &header);
+
+    fclose(infile);
+    if (header.format=SHORT){ /*Data is actually 12-bit and needs the upper 4 bits cleaned off*/
+        dsize=header.size[0]*header.size[1]*header.size[2];
+        for (i=0;i<dsize*2;i+=2){
+            (*((short *)(data+i))) &=4095;
+        }
+    }
+
+    return(newVal(header.org,header.size[0],header.size[1],header.size[2],header.format,data));
 }
 
 
@@ -316,17 +316,17 @@ ff_Frame_Grabber_Read(vfuncptr func, Var * arg)
 
     make_args(&ac, &av, func, arg);
     if (parse_args(ac, av, alist))
-	    return (NULL);
+        return (NULL);
 
     if (filename == NULL) {
-	    parse_error("No filename specified.");
-	    return (NULL);
+        parse_error("No filename specified.");
+        return (NULL);
     }
 
     if ((fname = locate_file(filename)) == NULL ||
-	    (infile = fopen(fname, "r")) == NULL) {
-	    fprintf(stderr, "Unable to open file: %s\n", filename);
-	    return (NULL);
+        (infile = fopen(fname, "r")) == NULL) {
+        fprintf(stderr, "Unable to open file: %s\n", filename);
+        return (NULL);
     }
 
     strcpy(fname2, fname);
@@ -346,68 +346,68 @@ ff_Frame_Grabber_Read(vfuncptr func, Var * arg)
     {
     case 00 :
     case 04 :
-	    /* full frame 8 bits */
-	    /* compute number of bytes of data */
-	    nbytes = nrows*npixels*nframes;
-	    nvals = npixels;
-	    data_words = (unsigned char *) calloc(sizeof(unsigned char), nbytes);
-	    fread (data_words, sizeof(unsigned char), nbytes, infile);
-	    X=npixels;
-	    Y=nrows;
-	    Z=nframes;
-	    num_bytes=1;
-	    break;
+        /* full frame 8 bits */
+        /* compute number of bytes of data */
+        nbytes = nrows*npixels*nframes;
+        nvals = npixels;
+        data_words = (unsigned char *) calloc(sizeof(unsigned char), nbytes);
+        fread (data_words, sizeof(unsigned char), nbytes, infile);
+        X=npixels;
+        Y=nrows;
+        Z=nframes;
+        num_bytes=1;
+        break;
     case 01 :
-	    /* line mode 8 bits */
-	    /* compute number of bytes of data */
-	    nbytes = 2*npixels*nframes;
-	    nvals = 2*npixels;
-	    data_words = (unsigned char *) calloc(sizeof(unsigned char), nbytes);
-	    fread (data_words, sizeof(unsigned char), nbytes, infile);
-	    X=npixels;
-	    Y=2;
-	    Z=nframes;
-	    num_bytes=1;
-	    break;
+        /* line mode 8 bits */
+        /* compute number of bytes of data */
+        nbytes = 2*npixels*nframes;
+        nvals = 2*npixels;
+        data_words = (unsigned char *) calloc(sizeof(unsigned char), nbytes);
+        fread (data_words, sizeof(unsigned char), nbytes, infile);
+        X=npixels;
+        Y=2;
+        Z=nframes;
+        num_bytes=1;
+        break;
     case 02 :
-	    /* Pixel mode 8 bits */
-	    /* compute number of bytes of data */
-	    nbytes = nrows*nframes;
-	    nvals = nrows;
-	    data_words = (unsigned char *) calloc(sizeof(unsigned char), nbytes);
-	    fread (data_words, sizeof(unsigned char), nbytes, infile);
-	    X=1;
-	    Y=nrows;
-	    Z=nframes;
-	    num_bytes=1;
-	    break;
+        /* Pixel mode 8 bits */
+        /* compute number of bytes of data */
+        nbytes = nrows*nframes;
+        nvals = nrows;
+        data_words = (unsigned char *) calloc(sizeof(unsigned char), nbytes);
+        fread (data_words, sizeof(unsigned char), nbytes, infile);
+        X=1;
+        Y=nrows;
+        Z=nframes;
+        num_bytes=1;
+        break;
     case 03 :
-	    /* 9 Pixel mode 8 bits */
-	    /* compute number of bytes of data */
-	    nbytes = 36*nframes;
-	    data_words = (unsigned char *) calloc(sizeof(unsigned char), nbytes);
-	    fread (data_words, sizeof(unsigned char), nbytes, infile);
-	    X=9;
-	    Y=3;
-	    Z=nframes;
-	    num_bytes=1;	
-	    break;
+        /* 9 Pixel mode 8 bits */
+        /* compute number of bytes of data */
+        nbytes = 36*nframes;
+        data_words = (unsigned char *) calloc(sizeof(unsigned char), nbytes);
+        fread (data_words, sizeof(unsigned char), nbytes, infile);
+        X=9;
+        Y=3;
+        Z=nframes;
+        num_bytes=1;	
+        break;
     case 10 :
     case 14 :
-	    /* full frame 12 bits */
-	    /* compute number of bytes of data */
-	    nbytes = nrows*npixels*nframes*2;
-	    nvals = 2*npixels;
-	    sh_data_words = (unsigned short *) calloc(sizeof(unsigned char), nbytes);
-	    fread (sh_data_words, sizeof(unsigned short), nbytes, infile);
-	    X=npixels;
-	    Y=nrows;
-	    Z=nframes;
-	    num_bytes=2;
-	    break;
+        /* full frame 12 bits */
+        /* compute number of bytes of data */
+        nbytes = nrows*npixels*nframes*2;
+        nvals = 2*npixels;
+        sh_data_words = (unsigned short *) calloc(sizeof(unsigned char), nbytes);
+        fread (sh_data_words, sizeof(unsigned short), nbytes, infile);
+        X=npixels;
+        Y=nrows;
+        Z=nframes;
+        num_bytes=2;
+        break;
     case 20 :
-	    parse_error("IEEE data file: (Consists of just header)");
-	    break;
+        parse_error("IEEE data file: (Consists of just header)");
+        break;
     } /* switch fileType */
 
     fclose(infile);
@@ -418,437 +418,439 @@ ff_Frame_Grabber_Read(vfuncptr func, Var * arg)
 
 static int Themis_Sort(char *A, char *B)
 {
-	unsigned char A_c_Band;
-   unsigned short A_c_Frame;
-	unsigned char B_c_Band;
-   unsigned short B_c_Frame;
+    unsigned char A_c_Band;
+    unsigned short A_c_Frame;
+    unsigned char B_c_Band;
+    unsigned short B_c_Frame;
 
-	A_c_Band=*(A+_BANDS)&0xf;
-	B_c_Band=*(B+_BANDS)&0xf;
+    A_c_Band=*(A+_BANDS)&0xf;
+    B_c_Band=*(B+_BANDS)&0xf;
 
-	if (A_c_Band > B_c_Band)
-		return(1);
-	else if (A_c_Band < B_c_Band)
-		return(-1);
-	else {
+    if (A_c_Band > B_c_Band)
+        return(1);
+    else if (A_c_Band < B_c_Band)
+        return(-1);
+    else {
    	A_c_Frame=(((*(A+_FRAMES) & 0xFF)<< 8) | (*(A+_FRAMES+1) & 0xFF));
    	B_c_Frame=(((*(B+_FRAMES) & 0xFF)<< 8) | (*(B+_FRAMES+1) & 0xFF));
 
-		if (A_c_Frame > B_c_Frame)
-			return(1);
-		else if (A_c_Frame < B_c_Frame) 
-			return(-1);
-		else
-			return(0);
-	}
+        if (A_c_Frame > B_c_Frame)
+            return(1);
+        else if (A_c_Frame < B_c_Frame) 
+            return(-1);
+        else
+            return(0);
+    }
 
-	return(0);
+    return(0);
 }
 
 void
 Add_Fake_Frame(void *newbuf,int band, int frame, int num_frames,int width)
 {
-	int i;
-	unsigned char pseudo_ID=99;
-	unsigned short new_frame;
-	char *blank=malloc(width-8);
-	memset(blank,INVALID_DATA,(width-8));
+    int i;
+    unsigned char pseudo_ID=99;
+    unsigned short new_frame;
+    char *blank=malloc(width-8);
+    memset(blank,INVALID_DATA,(width-8));
 
-	for (i=0;i<num_frames;i++){
-		new_frame=frame+i;	
-		memcpy((newbuf+i*width),&Start_Sync,2);
-		memcpy((newbuf+i*width+2),&pseudo_ID,1);
-		memcpy((newbuf+i*width+_BANDS),&band,1);
-		memcpy((newbuf+i*width+_FRAMES),&new_frame,2);
-		memcpy((newbuf+i*width+_DATA),blank,(width-8));
-		memcpy((newbuf+i*width+(width-2)),&Stop_Sync,2);
-	}
+    for (i=0;i<num_frames;i++){
+        new_frame=frame+i;	
+        memcpy((newbuf+i*width),&Start_Sync,2);
+        memcpy((newbuf+i*width+2),&pseudo_ID,1);
+        memcpy((newbuf+i*width+_BANDS),&band,1);
+        memcpy((newbuf+i*width+_FRAMES),&new_frame,2);
+        memcpy((newbuf+i*width+_DATA),blank,(width-8));
+        memcpy((newbuf+i*width+(width-2)),&Stop_Sync,2);
+    }
 
-	free(blank);
+    free(blank);
 }
 
 
 	
 
 Var *
-ff_PAKI_Read(vfuncptr func, Var * arg)
+ff_PACI_Read(vfuncptr func, Var * arg)
 {
 #ifdef __MSDOS__
-	extern unsigned char *mmap(void *, size_t , int, int , int , size_t );
-	extern void munmap(unsigned char *,int);
-	typedef	void*	caddr_t;
+    extern unsigned char *mmap(void *, size_t , int, int , int , size_t );
+    extern void munmap(unsigned char *,int);
+    typedef	void*	caddr_t;
 #endif
-	void		*data;
-	void		*newbuf;
-	char 		*filename,*fname,fname2[256];
-	unsigned char *decompress=NULL;
-	int 		Frame=-1;
-	int 		Band=-1;
-	int 		report=0;
-	int		len=0;
-	int		old_len=0;
-	int 		i, j, a, b;
-	int 		fd;
-	struct 		stat sbuf;
-	unsigned 	char *buf;
-	unsigned 	char  c_Band;
-	unsigned 	short c_Frame;	
-	CMD		Cmd;
-	int		Output=0;
-	int		Done=0;
-	int		Col=0;
-	int		Lines=0;
-	int		Data_Only=0;
-	int		Index=0;
-	int		BandCount[16]={0};
-	int		Bad_Flag=0;
-	int		Max_Band=-1;
-	int		Max_Band_Count=0;
-	int		new_count;
-	int		offset;
-	unsigned short frame_count=0xFFFF;
+    void		*data;
+    void		*newbuf;
+    char 		*filename,*fname,fname2[256];
+    unsigned char *decompress=NULL;
+    int 		Frame=-1;
+    int 		Band=-1;
+    int 		report=0;
+    int		len=0;
+    int		old_len=0;
+    int 		i, j, a, b;
+    int 		fd;
+    struct 		stat sbuf;
+    unsigned 	char *buf;
+    unsigned 	char  c_Band;
+    unsigned 	short c_Frame;	
+    CMD		Cmd;
+    int		Output=0;
+    int		Done=0;
+    int		Col=0;
+    int		Lines=0;
+    int		Data_Only=0;
+    int		Index=0;
+    int		BandCount[16]={0};
+    int		Bad_Flag=0;
+    int		Max_Band=-1;
+    int		Max_Band_Count=0;
+    int		new_count;
+    int		offset;
+    unsigned short frame_count=0xFFFF;
 
-	int		debug=0;
+    int		debug=0;
 
-    	Var **av, *v;
-    	int ac;
-    	Alist alist[6];
+    Var **av, *v;
+    int ac;
+    Alist alist[6];
 
-    	alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
-    	alist[1] = make_alist("frame", INT, NULL, &Frame);
-    	alist[2] = make_alist("band", INT, NULL, &Band);
-    	alist[3] = make_alist("report", INT, NULL, &report);
-    	alist[4] = make_alist("nosig", INT, NULL, &Data_Only);
-    	alist[5].name = NULL;
-
-
-    	make_args(&ac, &av, func, arg);
-    	if (parse_args(ac, av, alist))
-       	 	return (NULL);
-
-    	if (filename == NULL) {
-        	parse_error("No filename specified.");
-        	return (NULL);
-    	}
+    alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
+    alist[1] = make_alist("frame", INT, NULL, &Frame);
+    alist[2] = make_alist("band", INT, NULL, &Band);
+    alist[3] = make_alist("report", INT, NULL, &report);
+    alist[4] = make_alist("nosig", INT, NULL, &Data_Only);
+    alist[5].name = NULL;
 
 
-    	if (Frame < 0 && Band < 0)
-		Cmd=ALL;
-	else if (Frame < 0 && Band >=0)
-		Cmd=BAND;
-	else if (Frame >= 0 && Band <0)
-		Cmd=FRAME;
-	else {
-		parse_error("Ignoring Band, using Frame\n");
-		Cmd=FRAME;
-		Band=-1;
-	}
+    make_args(&ac, &av, func, arg);
+    if (parse_args(ac, av, alist))
+        return (NULL);
+
+    if (filename == NULL) {
+        parse_error("No filename specified.");
+        return (NULL);
+    }
+
+
+    if (Frame < 0 && Band < 0)
+        Cmd=ALL;
+    else if (Frame < 0 && Band >=0)
+        Cmd=BAND;
+    else if (Frame >= 0 && Band <0)
+        Cmd=FRAME;
+    else {
+        parse_error("Ignoring Band, using Frame\n");
+        Cmd=FRAME;
+        Band=-1;
+    }
 #ifndef __MSDOS__
-	if ((fd = open(filename, O_RDONLY))==-1){
+    if ((fd = open(filename, O_RDONLY))==-1){
+        fprintf(stderr,"Can't open file: %s...aborting\n",filename);
+        return(NULL);
+    }
 #else
-	if ((fd = open(filename, O_RDONLY | O_BINARY))==-1){
+    if ((fd = open(filename, O_RDONLY | O_BINARY))==-1){
+        fprintf(stderr,"Can't open file: %s...aborting\n",filename);
+        return(NULL);
+    }
 #endif
-		fprintf(stderr,"Can't open file: %s...aborting\n",filename);
-		return(NULL);
-	}
 
 
-	fstat(fd, &sbuf);
-	old_len=len = sbuf.st_size;
-	if ((data=malloc(len))==NULL){
-		parse_error("Couldn't allocate temporary buffer...aborting\n");
-		return(NULL);
-	}
+    fstat(fd, &sbuf);
+    old_len=len = sbuf.st_size;
+    if ((data=malloc(len))==NULL){
+        parse_error("Couldn't allocate temporary buffer...aborting\n");
+        return(NULL);
+    }
 
 
-	buf = mmap((caddr_t)0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-	swab(buf, buf, len);
+    buf = mmap((caddr_t)0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+    swab(buf, buf, len);
 
 
-	if (!report) {
-		i = 0;
+    if (!report) {
+        i = 0;
 
 #ifdef HAVE_LIBUSDS
 	Col=320+_SIGINFO;
 #endif
 #ifndef HAVE_LIBUSDS
-					Col=Output+2;			
+        Col=Output+2;			
 #endif
 
-		while ((i < len) && !(Done)) {
-			c_Band=0;
-			c_Frame=0;
-			if (Skip_To_Start_Sync(&i,buf,len) == -1) {
-				Done = 1;
-			} 
-			else {
-				c_Band=*(buf+i+_BANDS)&0xf;
-				if (c_Band < 14 && c_Band > Max_Band) Max_Band=c_Band;
-				if (c_Band==0xE)  /*Last Frame*/
-					Done=1;
-				c_Frame=(((*(buf+i+_FRAMES) & 0xFF)<< 8) | (*(buf+i+_FRAMES+1) & 0xFF));
-				if ((Output=Skip_To_Stop_Sync(&i,buf,len)) == -1) {
-					Done = 1;
-				} 
+        while ((i < len) && !(Done)) {
+            c_Band=0;
+            c_Frame=0;
+            if (Skip_To_Start_Sync(&i,buf,len) == -1) {
+                Done = 1;
+            } 
+            else {
+                c_Band=*(buf+i+_BANDS)&0xf;
+                if (c_Band < 14 && c_Band > Max_Band) Max_Band=c_Band;
+                if (c_Band==0xE)  /*Last Frame*/
+                    Done=1;
+                c_Frame=(((*(buf+i+_FRAMES) & 0xFF)<< 8) | (*(buf+i+_FRAMES+1) & 0xFF));
+                if ((Output=Skip_To_Stop_Sync(&i,buf,len)) == -1) {
+                    Done = 1;
+                } 
 
 
 
-				else {
-					if (Keep(c_Band,c_Frame,Cmd,Frame,Band) && ((Output+2) <= 328 )){
-						BandCount[c_Band]++;
-						if (Data_Only && Cmd!=ALL){
+                else {
+                    if (Keep(c_Band,c_Frame,Cmd,Frame,Band) && ((Output+2) <= 328 )){
+                        BandCount[c_Band]++;
+                        if (Data_Only && Cmd!=ALL){
 
 #ifdef HAVE_LIBUSDS
-							if (Output-_DATA < 320){
-								offset=Output-_DATA;
-								if (decompress!=NULL)
-									free(decompress);
-								decompress=Themis_Entry((buf+i-Output+_DATA),&offset);
-								if (offset==320){
-									memcpy((data+Index),decompress,offset);
-									Index+=(offset);
-									Lines++;
-								}
-							}
-							else {
-								memcpy((data+Index),(buf+i-Output+_DATA),Output);
-								Index+=(Output-_DATA);
-								Lines++;
-							}
+                            if (Output-_DATA < 320){
+                                offset=Output-_DATA;
+                                if (decompress!=NULL)
+                                    free(decompress);
+                                decompress=Themis_Entry((buf+i-Output+_DATA),&offset);
+                                if (offset==320){
+                                    memcpy((data+Index),decompress,offset);
+                                    Index+=(offset);
+                                    Lines++;
+                                }
+                            }
+                            else {
+                                memcpy((data+Index),(buf+i-Output+_DATA),Output);
+                                Index+=(Output-_DATA);
+                                Lines++;
+                            }
 #else
-								memcpy((data+Index),(buf+i-Output+_DATA),Output);
-								Index+=(Output-_DATA);
-								Lines++;
+                            memcpy((data+Index),(buf+i-Output+_DATA),Output);
+                            Index+=(Output-_DATA);
+                            Lines++;
 
 #endif
 
 
-						}
-						else { 
+                        }
+                        else { 
 #ifdef HAVE_LIBUSDS
-							if (Output-_DATA < 320){
+                            if (Output-_DATA < 320){
 
-								if (len < (Lines*Col+320)) { 	/*We're running out of room!*/
-									int guess=(len/(Output+2));/*Guess # of total lines*/
-									len = guess * Col; 			/*How big it needs to be*/
-									parse_error("Increasing Buffer sizes\n");
-									data=realloc(data,len);
+                                if (len < (Lines*Col+320)) { 	/*We're running out of room!*/
+                                    int guess=(len/(Output+2));/*Guess # of total lines*/
+                                    len = guess * Col; 			/*How big it needs to be*/
+                                    parse_error("Increasing Buffer sizes\n");
+                                    data=realloc(data,len);
 /*									newbuf=realloc(newbuf,len);*/
-								}
+                                }
 
-								offset=Output-_DATA;
-								if (decompress!=NULL)
-									free(decompress);
-								decompress=Themis_Entry((buf+i-Output+_DATA),&offset);
-								if (offset==320){
-									memcpy((data+Index),(buf+i-Output),_DATA);
-									Index+=_DATA;
-									memcpy((data+Index),decompress,offset);
-									Index+=(offset);
-									memcpy((data+Index),(buf+i),2);
-									Index+=2;
-									Lines++;
-								}
-							}
-							else {
-								memcpy(((char *)data+Index),(buf+i-Output),Output+2);
-								Index+=Output+2;
-								Lines++;
-							}
+                                offset=Output-_DATA;
+                                if (decompress!=NULL)
+                                    free(decompress);
+                                decompress=Themis_Entry((buf+i-Output+_DATA),&offset);
+                                if (offset==320){
+                                    memcpy((data+Index),(buf+i-Output),_DATA);
+                                    Index+=_DATA;
+                                    memcpy((data+Index),decompress,offset);
+                                    Index+=(offset);
+                                    memcpy((data+Index),(buf+i),2);
+                                    Index+=2;
+                                    Lines++;
+                                }
+                            }
+                            else {
+                                memcpy(((char *)data+Index),(buf+i-Output),Output+2);
+                                Index+=Output+2;
+                                Lines++;
+                            }
 #else
 
-								memcpy(((char *)data+Index),(buf+i-Output),Output+2);
-								Index+=Output+2;
-								Lines++;
+                            memcpy(((char *)data+Index),(buf+i-Output),Output+2);
+                            Index+=Output+2;
+                            Lines++;
 #endif
-						}
-					}
-				}
-			}
-		}
+                        }
+                    }
+                }
+            }
+        }
 
-		if (debug) {
-			FILE *wp=fopen("debug.dump","wb");
-			fwrite(data,sizeof(char),len,wp);
-			fclose(wp);
-		}
+        if (debug) {
+            FILE *wp=fopen("debug.dump","wb");
+            fwrite(data,sizeof(char),len,wp);
+            fclose(wp);
+        }
 
-		if(Cmd==ALL){
-			int extra_frames=0;
-			qsort((char *)data,Lines,Col,Themis_Sort);
-			Max_Band_Count=BandCount[0];
-			for (i=0;i<Max_Band;i++){
-				if (BandCount[i]!=BandCount[i+1]) {
-					Bad_Flag=1;
-				}
-				if (Max_Band_Count < BandCount[i+1]) Max_Band_Count=BandCount[i+1];
+        if(Cmd==ALL){
+            int extra_frames=0;
+            qsort((char *)data,Lines,Col,Themis_Sort);
+            Max_Band_Count=BandCount[0];
+            for (i=0;i<Max_Band;i++){
+                if (BandCount[i]!=BandCount[i+1]) {
+                    Bad_Flag=1;
+                }
+                if (Max_Band_Count < BandCount[i+1]) Max_Band_Count=BandCount[i+1];
 			   	
-		  	}
-			for (i=0;i<Max_Band;i++){ /*Now, gotta count the missing frames!*/
-				extra_frames+=(Max_Band_Count-BandCount[i]);
-			}
-			len+=Col*extra_frames;
+            }
+            for (i=0;i<Max_Band;i++){ /*Now, gotta count the missing frames!*/
+                extra_frames+=(Max_Band_Count-BandCount[i]);
+            }
+            len+=Col*extra_frames;
 
-			if ((newbuf=malloc(len))==NULL){
+            if ((newbuf=malloc(len))==NULL){
       		parse_error("Couldn't allocate transfer buffer...aborting\n");
       		return(NULL);
-			}	
+            }	
 
 
-			if (Bad_Flag){ /*We have uneven Band counts! Gotta do things differently! */
-				unsigned char c_band;
-				unsigned char last_band=255;
-				unsigned short c_frame;
-				int i;
-				int new_count=0;
-				parse_error("Missing Frames...zero-padded frames will be added\n");
-				for (i=0;i<Lines;i++){
-					c_band=*((char *)data+(i*Col)+_BANDS)&0xf;
-					c_frame=(((*((char *)data+(i*Col)+_FRAMES) & 0xFF)<< 8) | 
-								(*((char *)data+(i*Col)+_FRAMES+1) & 0xFF));
-					if (last_band != c_band) {
-						if (frame_count < Max_Band_Count) {/*Missing ending data*/
-							Add_Fake_Frame((newbuf+new_count*Col),c_band,
-								frame_count,(Max_Band_Count-frame_count),Col);
-							new_count+=(Max_Band_Count-frame_count)+1;
-						}
-						frame_count=0;
-						last_band=c_band;
-					}
-					if (c_frame > FrameBandStart[c_band]+frame_count){
-						Add_Fake_Frame((newbuf+new_count*Col),
-								c_band,FrameBandStart[c_band]+frame_count,
-								c_frame-(FrameBandStart[c_band]+frame_count),Col);
-						new_count+=c_frame-(FrameBandStart[c_band]+frame_count);
-						frame_count+=c_frame-(FrameBandStart[c_band]+frame_count);
-					}
-					else if (c_frame < FrameBandStart[c_band]+frame_count){
-						parse_error("Corrupted Frame Sequence...aborting\n");
-						return(NULL);
-					}
+            if (Bad_Flag){ /*We have uneven Band counts! Gotta do things differently! */
+                unsigned char c_band;
+                unsigned char last_band=255;
+                unsigned short c_frame;
+                int i;
+                int new_count=0;
+                parse_error("Missing Frames...zero-padded frames will be added\n");
+                for (i=0;i<Lines;i++){
+                    c_band=*((char *)data+(i*Col)+_BANDS)&0xf;
+                    c_frame=(((*((char *)data+(i*Col)+_FRAMES) & 0xFF)<< 8) | 
+                             (*((char *)data+(i*Col)+_FRAMES+1) & 0xFF));
+                    if (last_band != c_band) {
+                        if (frame_count < Max_Band_Count) {/*Missing ending data*/
+                            Add_Fake_Frame((newbuf+new_count*Col),c_band,
+                                           frame_count,(Max_Band_Count-frame_count),Col);
+                            new_count+=(Max_Band_Count-frame_count)+1;
+                        }
+                        frame_count=0;
+                        last_band=c_band;
+                    }
+                    if (c_frame > FrameBandStart[c_band]+frame_count){
+                        Add_Fake_Frame((newbuf+new_count*Col),
+                                       c_band,FrameBandStart[c_band]+frame_count,
+                                       c_frame-(FrameBandStart[c_band]+frame_count),Col);
+                        new_count+=c_frame-(FrameBandStart[c_band]+frame_count);
+                        frame_count+=c_frame-(FrameBandStart[c_band]+frame_count);
+                    }
+                    else if (c_frame < FrameBandStart[c_band]+frame_count){
+                        parse_error("Corrupted Frame Sequence...aborting\n");
+                        return(NULL);
+                    }
 
-					if ((new_count*Col+Col) >= len){
-						printf("Extending buffer; newcount=%d; i=%d\n",new_count,i);
-						len+=Col*(new_count-Lines);
-						if((newbuf=realloc(newbuf,len))==NULL){
-							printf("Couldn't extend buffer...you're hosed\n");
-							return(NULL);
-						}
-					}
+                    if ((new_count*Col+Col) >= len){
+                        printf("Extending buffer; newcount=%d; i=%d\n",new_count,i);
+                        len+=Col*(new_count-Lines);
+                        if((newbuf=realloc(newbuf,len))==NULL){
+                            printf("Couldn't extend buffer...you're hosed\n");
+                            return(NULL);
+                        }
+                    }
 				
-					memcpy((newbuf+((new_count++)*Col)),(data+i*Col),Col);
-					frame_count++;
+                    memcpy((newbuf+((new_count++)*Col)),(data+i*Col),Col);
+                    frame_count++;
 			
-				}
-			}	
+                }
+            }	
 
-			else {
+            else {
 
-				int j,i;
-				unsigned short c_frame;
+                int j,i;
+                unsigned short c_frame;
 
-				for (j=0;j<=Max_Band;j++){
-					new_count=0;
-					for (i=0;i<BandCount[0];i++){
-						c_frame=(((*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES) & 0xFF)<< 8) | 
-									(*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES+1) & 0xFF));
-						if (c_frame > (FrameBandStart[j]+i)) {
-							/*Add a frame, gotta add memory too!*/
-							len+=(Col);
-							realloc(newbuf,len);
-							Add_Fake_Frame((newbuf+j*BandCount[0]*Col+new_count*Col),
-												j,(FrameBandStart[j]+i),
-												c_frame-(FrameBandStart[j]+i),Col);
-							new_count+=c_frame-(FrameBandStart[j]+i);	
-						}
-						else if (c_frame < (FrameBandStart[j]+i)) {
-							parse_error("Corrupted Frame Sequence...aborting\n");
-							return(NULL);
-						}
+                for (j=0;j<=Max_Band;j++){
+                    new_count=0;
+                    for (i=0;i<BandCount[0];i++){
+                        c_frame=(((*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES) & 0xFF)<< 8) | 
+                                 (*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES+1) & 0xFF));
+                        if (c_frame > (FrameBandStart[j]+i)) {
+                            /*Add a frame, gotta add memory too!*/
+                            len+=(Col);
+                            realloc(newbuf,len);
+                            Add_Fake_Frame((newbuf+j*BandCount[0]*Col+new_count*Col),
+                                           j,(FrameBandStart[j]+i),
+                                           c_frame-(FrameBandStart[j]+i),Col);
+                            new_count+=c_frame-(FrameBandStart[j]+i);	
+                        }
+                        else if (c_frame < (FrameBandStart[j]+i)) {
+                            parse_error("Corrupted Frame Sequence...aborting\n");
+                            return(NULL);
+                        }
 						
-						memcpy((newbuf+j*BandCount[0]*Col+(new_count++)*Col),
-								 (data+j*BandCount[0]*Col+i*Col),Col);
-					}
-				}
-			}	
-		}
-		else {
-			munmap(buf,old_len);
-			close(fd);
-			free(newbuf);
-			if (Data_Only){
-				return(newVal(BSQ,(Col-_SIGINFO),Lines,1,BYTE,data));
-			}
-			else {
-				return(newVal(BSQ,Col,Lines,1,BYTE,data));
-			}
-		}
+                        memcpy((newbuf+j*BandCount[0]*Col+(new_count++)*Col),
+                               (data+j*BandCount[0]*Col+i*Col),Col);
+                    }
+                }
+            }	
+        }
+        else {
+            munmap(buf,old_len);
+            close(fd);
+            free(newbuf);
+            if (Data_Only){
+                return(newVal(BSQ,(Col-_SIGINFO),Lines,1,BYTE,data));
+            }
+            else {
+                return(newVal(BSQ,Col,Lines,1,BYTE,data));
+            }
+        }
 
-		munmap(buf,old_len);
-		close(fd);
-		free(data);
-		if (Data_Only){
-			void *do_buff;
-			int count = (Bad_Flag ? frame_count:new_count);
-			count*=(Max_Band+1);
-			if ((do_buff=malloc(len))==NULL){
-				parse_error("Not enough memory for temporary buffer support\n");
-				free(newbuf);
-				return(NULL);
-			}	
-			for (i=0;i<count;i++){
-				memcpy((do_buff+(i*(Col-_SIGINFO))),(newbuf+(i*Col)+_DATA),(Col-_SIGINFO));
-			}
-				free(newbuf);
-			   return(newVal(BSQ,(Col-_SIGINFO),
-						(Bad_Flag ? frame_count:new_count),
-						Max_Band+1,BYTE,do_buff)); 
-		}
-		return(newVal(BSQ,Col,(Bad_Flag ? frame_count:new_count),Max_Band+1,BYTE,newbuf));
+        munmap(buf,old_len);
+        close(fd);
+        free(data);
+        if (Data_Only){
+            void *do_buff;
+            int count = (Bad_Flag ? frame_count:new_count);
+            count*=(Max_Band+1);
+            if ((do_buff=malloc(len))==NULL){
+                parse_error("Not enough memory for temporary buffer support\n");
+                free(newbuf);
+                return(NULL);
+            }	
+            for (i=0;i<count;i++){
+                memcpy((do_buff+(i*(Col-_SIGINFO))),(newbuf+(i*Col)+_DATA),(Col-_SIGINFO));
+            }
+            free(newbuf);
+            return(newVal(BSQ,(Col-_SIGINFO),
+                          (Bad_Flag ? frame_count:new_count),
+                          Max_Band+1,BYTE,do_buff)); 
+        }
+        return(newVal(BSQ,Col,(Bad_Flag ? frame_count:new_count),Max_Band+1,BYTE,newbuf));
 		
-	} 
-	else {
-		int *band = (int *)calloc(32, sizeof(int));
-		unsigned int minframe = MAXINT;
-		int maxframe = -1;
-		i = 0;
-		while ((i < len) && !(Done)) {
-			c_Band=0;
-			c_Frame=0;
-			if (Skip_To_Start_Sync(&i,buf,len) >= 0) {
-				c_Band=*(buf+i+_BANDS);
-				if (c_Band==0xE) /*Last Frame*/
-					Done=1;
-				c_Frame=(((*(buf+i+_FRAMES) & 0xFF)<< 8) | (*(buf+i+_FRAMES+1) & 0xFF));
-				if ((Output=Skip_To_Stop_Sync(&i,buf,len)) >= 0) {
-					if (c_Frame > maxframe) maxframe = c_Frame;
-					if (c_Frame < minframe) minframe = c_Frame;
-					band[c_Band]++;
-				} 
-				else {
-					Done++;
-				}
-			} 
-			else {
-				Done++;
-			}
-		}
-		printf("File: %s\n", filename);
-		printf("First frame: %d\n", minframe);
-		printf("Last Frame:  %d\n", maxframe);
-		printf("Bands:       ");
-		for (i = 0 ; i< 32 ; i++) {
-			if (band[i]) printf("%d ", i);
-		}
-		printf("\n");
-	}
+    } 
+    else {
+        int *band = (int *)calloc(32, sizeof(int));
+        unsigned int minframe = MAXINT;
+        int maxframe = -1;
+        i = 0;
+        while ((i < len) && !(Done)) {
+            c_Band=0;
+            c_Frame=0;
+            if (Skip_To_Start_Sync(&i,buf,len) >= 0) {
+                c_Band=*(buf+i+_BANDS);
+                if (c_Band==0xE) /*Last Frame*/
+                    Done=1;
+                c_Frame=(((*(buf+i+_FRAMES) & 0xFF)<< 8) | (*(buf+i+_FRAMES+1) & 0xFF));
+                if ((Output=Skip_To_Stop_Sync(&i,buf,len)) >= 0) {
+                    if (c_Frame > maxframe) maxframe = c_Frame;
+                    if (c_Frame < minframe) minframe = c_Frame;
+                    band[c_Band]++;
+                } 
+                else {
+                    Done++;
+                }
+            } 
+            else {
+                Done++;
+            }
+        }
+        printf("File: %s\n", filename);
+        printf("First frame: %d\n", minframe);
+        printf("Last Frame:  %d\n", maxframe);
+        printf("Bands:       ");
+        for (i = 0 ; i< 32 ; i++) {
+            if (band[i]) printf("%d ", i);
+        }
+        printf("\n");
+    }
 
-	free(newbuf);
-	free(data);
+    free(newbuf);
+    free(data);
 	
-	munmap(buf,old_len);
-	close(fd);
-	return(NULL);
+    munmap(buf,old_len);
+    close(fd);
+    return(NULL);
 
 }
-

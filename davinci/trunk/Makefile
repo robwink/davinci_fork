@@ -5,7 +5,7 @@ CFLAGS=-g $(XINCLUDES)
 
 srcdir = .
 
-prefix= /usr/local
+prefix= /opt/local
 exec_prefix = $(prefix)
 BINDIR = $(exec_prefix)/bin
 LIBDIR = $(prefix)/lib
@@ -24,7 +24,7 @@ XRTLIBS =
 
 CC     = gcc
 DEFS   = -DHAVE_CONFIG_H -Ilib
-LIBS   = $(READLINE_LIB) -lplplotFX $(XLIBS) -lhdf5 -lMagick -ltiff -lproj -lz -lreadline -ltermcap -ljpeg -lXm -lXext -lXt -lX11 -lm 
+LIBS   = $(READLINE_LIB) -lplplotFX $(XLIBS) -lMagick -ltiff -lproj -lz -lreadline -ltermcap -ljpeg -lusds -lhdf5 -lXm -lXext -lXt -lX11 -lm 
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
@@ -168,6 +168,7 @@ io_isis.o: parser.h config.h system.h ufunc.h scope.h func.h io_lablib3.h toolbo
 io_lablib3.o: io_lablib3.h toolbox.h
 io_pnm.o: parser.h config.h system.h ufunc.h scope.h func.h
 io_specpr.o: parser.h config.h system.h ufunc.h scope.h func.h io_specpr.h
+io_themis.o:parser.h config.h system.h ufunc.h scope.h func.h 
 io_vicar.o: parser.h config.h system.h ufunc.h scope.h func.h io_vicar.h
 io_aviris.o: parser.h config.h system.h ufunc.h scope.h func.h io_vicar.h
 io_imath.o: parser.h config.h system.h ufunc.h scope.h func.h
@@ -202,4 +203,5 @@ fft.o: fft.h
 matrix.o: parser.h config.h system.h ufunc.h scope.h func.h
 dct.o: parser.h config.h system.h ufunc.h scope.h func.h
 fft_mayer.o: trigtbl.h
-ff_projection: parser.h config.h system.h ufunc.h scope.h func.h
+ff_projection.o: parser.h config.h system.h ufunc.h scope.h func.h
+apifunc.o: parser.h config.h system.h ufunc.h scope.h func.h api.h apidef.h

@@ -24,6 +24,9 @@
 /*Define if you have Xm library*/
 #undef HAVE_LIBXM
 
+/*Define if you have plplotFX library*/
+#undef INCLUDE_API
+
 /*Define if you have xrt3d library*/
 #undef XRT_ENABLED
 
@@ -141,8 +144,14 @@
 /* Define if you have the Xext library (-lXext).  */
 #undef HAVE_LIBXEXT
 
+/* Define if you have the Xm library (-lXm).  */
+#undef HAVE_LIBXM
+
 /* Define if you have the Xt library (-lXt).  */
 #undef HAVE_LIBXT
+
+/* Define if you have the hdf5 library (-lhdf5).  */
+#undef HAVE_LIBHDF5
 
 /* Define if you have the jpeg library (-ljpeg).  */
 #undef HAVE_LIBJPEG
@@ -161,6 +170,9 @@
 
 /* Define if you have the tiff library (-ltiff).  */
 #undef HAVE_LIBTIFF
+
+/* Define if you have the usds library (-lusds).  */
+#undef HAVE_LIBUSDS
 
 /* Define if you have the z library (-lz).  */
 #undef HAVE_LIBZ

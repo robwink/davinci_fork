@@ -1,7 +1,8 @@
+#include "parser.h"
 #ifdef INCLUDE_API
 
-#include "parser.h"
 #include "api.h"
+
 
 APIDEFS *
 api_lookup(char *aname){

@@ -1,6 +1,8 @@
-char *version = "@(#) daVinci Version #0.54";
+char *version = "@(#) daVinci Version #0.54a";
 
 /*
+Version 0.54a:
+	* Interim delivery for themis
 
 Version 0.54
     * Added support code and resourse files for a Win32/Console version of davinci

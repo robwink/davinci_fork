@@ -469,8 +469,8 @@ pp_set_struct(Var *a, Var *b, Var *exp)
 		}
 
 		count = V_STRUCT(a).count;
-		V_STRUCT(a).names = realloc(V_STRUCT(a).names, count+1);
-		V_STRUCT(a).data = realloc(V_STRUCT(a).data, count+1);
+		V_STRUCT(a).names = realloc(V_STRUCT(a).names, (count+1) * sizeof(char *));
+		V_STRUCT(a).data = realloc(V_STRUCT(a).data, (count+1) * sizeof(Var *));
 		V_STRUCT(a).names[count] = strdup(V_NAME(b));
 		p = &(V_STRUCT(a).data[count]);
 		V_STRUCT(a).count++;
