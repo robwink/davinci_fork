@@ -64,13 +64,13 @@ readline/libreadline.a:
 
 lexer.o:	lexer.C parser.o
 
-lexer.C:	lexer.l
+lexer.c:	lexer.l
 	flex lexer.l
-	mv lex.yy.c lexer.C
+	mv lex.yy.c lexer.~
 
-parser.C:	parser.y
+parser.c:	parser.y
 	/opt/local/alt/bin/bison -d parser.y
-	mv parser.tab.c parser.C
+	mv parser.tab.c parser.c
 	mv parser.tab.h y_tab.h
 
 install:

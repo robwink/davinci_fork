@@ -312,6 +312,8 @@ Var *ff_convolve3(vfuncptr func, Var *arg);
 
 
 Var *ff_popen(vfuncptr func, Var * arg);
+Var *ff_pprint(vfuncptr func, Var * arg);
+Var *ff_pplot(vfuncptr func, Var * arg);
 
 Var *ff_struct(vfuncptr func, Var *arg);
 
