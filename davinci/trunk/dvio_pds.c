@@ -55,11 +55,11 @@ static dataKey	*dK;
 typedef int (*PFI)(char *, Var *, char *, int);
 
 /*Step2: Add the name of the READ function/wrapper here*/
-PFI VrF[]={rf_QUBE,rf_TABLE,rf_IMAGE,rf_HISTOGRAM_IMAGE,rf_HISTORY};
+PFI VrF[]={rf_QUBE,rf_QUBE,rf_TABLE,rf_IMAGE,rf_HISTOGRAM_IMAGE,rf_HISTORY};
 
 
 /*Step 3: Add the dataKey word to this here (before the NULL!)*/
-static char *keyName[]={"QUBE","TABLE","IMAGE","HISTOGRAM_IMAGE","HISTORY",NULL};
+static char *keyName[]={"SPECTRAL_QUBE","QUBE","TABLE","IMAGE","HISTOGRAM_IMAGE","HISTORY",NULL};
 static int num_data_Keys;
 
 

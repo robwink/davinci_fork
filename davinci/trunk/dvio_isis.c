@@ -34,8 +34,15 @@ Var *dv_LoadISISFromPDS(FILE *fp, char *fn, int dptr)
 	iom_init_iheader(h);
 
 	ob = (OBJDESC *)OdlParseLabelFile(fn, err_file,ODL_EXPAND_STRUCTURE, 0);
-	if ((qube = OdlFindObjDesc(ob, "QUBE", NULL, 0, 0, 0)) == NULL) {
-		parse_error("Bad Call: this is PDS file doesn't contain a QUBE");
+
+	qube = NULL;
+	qube = OdlFindObjDesc(ob, "QUBE", NULL, 0, 0, 0);
+
+	if (qube == NULL)
+		qube = OdlFindObjDesc(ob, "SPECTRAL_QUBE", NULL, 0, 0, 0);
+
+	if (qube == NULL) {
+		parse_error("Bad Call: this PDS file doesn't contain a QUBE or SPECTRAL_QUBE");
 		return(NULL);
 	}
 
@@ -729,7 +736,12 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
         return (NULL);
     }
 
-    if ((qube = OdlFindObjDesc(object, "QUBE", NULL, 0, 0, 0)) == NULL) {
+	 qube = NULL;
+	 qube = OdlFindObjDesc(object, "QUBE", NULL, 0, 0, 0);
+	 if (qube == NULL)
+		qube = OdlFindObjDesc(object, "SPECTRAL_QUBE", NULL, 0, 0, 0);
+
+    if (qube  == NULL) {
         parse_error("%s: Not a qube object.", isisfile);
         return (NULL);
     }
