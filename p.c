@@ -524,6 +524,9 @@ evaluate(Var * n)
 	    if (strcmp((V_NAME(p2)), MODULE_HELP) == 0) {
 		sprintf(module_help, getenv("DV_MOD_PATH"));
 
+/*
+** This will never work.
+*/ 
 		if (NULL == module_help)	// use default
 		{
 		    sprintf(module_help, "/usr/lib/davinci/modules");

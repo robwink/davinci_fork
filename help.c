@@ -168,7 +168,7 @@ static int pagelines;       /* count for builtin pager */
 
 static void OutLine( char *line);
 static void EndOutput();
-char * do_help(char *input);
+char * do_help(char *input, char *path);
 char * cleanup_input(char *s);
 static int LoadHelp(char *path);
 static LINEBUF * storeline( char *text);
@@ -685,7 +685,7 @@ EndOutput()
  */
 
 char *
-do_help(char *input)
+do_help(char *input, char *path)
 {
 	static char *helpbuf = NULL;
 	static char *prompt = NULL;
@@ -697,10 +697,15 @@ do_help(char *input)
 	char *help_ptr;		/* name of help file */
 	char *input_line;
 
-	if ((help_ptr = getenv("DVHELP")) == (char *) NULL) {
-		/* if can't find environment variable then just use HELPFILE */
-		help_ptr = HELPFILE;
+	if (path == NULL) {
+		if ((help_ptr = getenv("DVHELP")) == (char *) NULL) {
+			/* if can't find environment variable then just use HELPFILE */
+			help_ptr = HELPFILE;
+		}
+	} else {
+		help_ptr = path;
 	}
+
 	if (helpbuf == NULL) {
 		helpbuf = (char *)malloc((unsigned long) PATHSIZE);
 		prompt = (char *)malloc((unsigned long) PATHSIZE);
@@ -746,7 +751,7 @@ do_help(char *input)
 					    more_help = (input_line && strlen(input_line));
 					    if (more_help)
 						    /* base for next level is all of current helpbuf */
-						    do_help(input_line);
+						    do_help(input_line, help_ptr);
 				    } else
 					    more_help = FALSE;
 			    } while (more_help);

@@ -360,6 +360,8 @@ fb_min(Var *obj, int axis, int direction, float ignore)
 	for (i = 0 ; i < dsize ; i++) {
 		j = rpos(i, obj, v);
 		x = extract_float(obj, i);
+		if (x == ignore) continue;
+
 		if (direction == 0) {
 			if (fdata[j] == ignore || x < fdata[j]) fdata[j] = x;
 		} else {

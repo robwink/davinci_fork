@@ -49,7 +49,7 @@ void eat_em(void);
 int dd_put_argv(Scope *s, Var *v);
 void unput_nextc(char c);
 int send_to_plot(char *);
-char *do_help(char *input);
+char *do_help(char *input, char *path);
 
 void parse_stream(FILE *fp);
 

@@ -873,16 +873,44 @@ commaize(char *s)
     }
 }
 
+/*
+** Ok, this is a big, temporary hack to handle module dereferences
+** to the module help function.  There shouldn't be ANY node 
+** manipulations outside of p.c, so I've clearly done this wrong.
+**
+** But it works for the case of module.function(?)
+*/
+
 Var *
 pp_help(Var *s)
 {
     char *p = NULL;
+	Var *p1, *p2;
+	char *module, *function;
 
     if (s == NULL) p = NULL;
+	else if (V_TYPE(s) == ID_DEREF) {
+		/* This is help on a module function */
+		p1 = V_NODE(s)->left;
+		p2 = V_NODE(s)->right;
+		if (V_NAME(p1) == NULL) {
+			parse_error("Error: bad help usage.");
+			return(NULL);
+		}
+		module = V_NAME(p1);
+		if (p2 == NULL || V_NAME(p2) == NULL) {
+			module_help(module, NULL);
+			return(NULL);
+		} else {
+			function = V_NAME(p2);
+			module_help(module, function);
+			return(NULL);
+		}
+	}
     else if (V_NAME(s)) p = V_NAME(s);
     else if (V_STRING(s)) p = V_STRING(s);
 
-    do_help(p);
+    do_help(p, NULL);
     return(NULL);
 }
 
@@ -891,15 +919,34 @@ pp_exact_help(Var *s)
 {
     char *p = NULL;
 	char *q;
+	Var *p1, *p2;
+	char *module, *function;
 
     if (s == NULL) p = NULL;
-    else if (V_NAME(s)) p = V_NAME(s);
+	else if (V_TYPE(s) == ID_DEREF) {
+		/* This is help on a module function */
+		p1 = V_NODE(s)->left;
+		p2 = V_NODE(s)->right;
+		if (V_NAME(p1) == NULL) {
+			parse_error("Error: bad help usage.");
+			return(NULL);
+		}
+		module = V_NAME(p1);
+		if (p2 == NULL || V_NAME(p2) == NULL) {
+			module_help(module, NULL);
+			return(NULL);
+		} else {
+			function = V_NAME(p2);
+			module_help(module, function);
+			return(NULL);
+		}
+	} else if (V_NAME(s)) p = V_NAME(s);
     else if (V_STRING(s)) p = V_STRING(s);
 
 	q = malloc(strlen(p) + 2);
 	sprintf(q, "%s()",p);
 
-    do_help(q);
+    do_help(q, NULL);
 	free(q);
     return(NULL);
 }
