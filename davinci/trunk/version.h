@@ -1,6 +1,11 @@
-char *version = "@(#) daVinci Version #0.55";
+char *version = "@(#) daVinci Version #0.55a";
 
 /*
+Version 0.55a:
+	* modified ufunc loader
+	+ added delete()
+
+
 Version 0.55:
 	* fixed eval again.  I think you can return values now
 	+ global()

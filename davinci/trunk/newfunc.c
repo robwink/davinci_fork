@@ -243,7 +243,7 @@ make_args(int *ac, Var ***av, vfuncptr func, Var *args)
 
     *av = (Var **)calloc(count+2, sizeof(Var *));
 
-    (*av)[i++] = (Var *)func->name;
+    if (func) (*av)[i++] = (Var *)func->name;
     for (v = args ; v != NULL ; v = next) {
         (*av)[i++] = v;
         next = v->next;
