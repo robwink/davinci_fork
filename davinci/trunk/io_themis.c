@@ -17,8 +17,34 @@
 #define	MINDATA	128
 #define NUMBER_OF_GUESSES 4
 #define	INVALID_DATA	0
+#define VIS_WIDTH 1024
 
 int Compressed;
+
+typedef unsigned short uint16;
+typedef unsigned char uint8;
+
+typedef struct {
+   uint16   id;
+   uint16   num;
+   uint16   off;
+   uint16   line; 
+   uint8    time[5];
+   uint8    stat;
+   uint8    cmd[17]; 
+   uint8    spare1[5];
+   uint16   exposure;
+   uint16   bands;
+   uint16   down;
+   uint8    edit[2];  
+   uint8    comp[8];
+   uint16   sens;
+   uint8    spare4[4];
+   uint16   len_lo;  
+   uint16   len_hi;  
+
+} msdp_Header;
+
 
 
 enum _CMD {BAND,FRAME,SINGLE,ALL};
@@ -288,7 +314,7 @@ int GetGSEHeader (FILE *fp, struct _iheader *h)
     **/
     Col = 1032;
     Row = 1024;
-    nb = 1;
+    nb = 2;
 
     plane=(Row*Col*nb);
     if (Size % plane) {
@@ -316,6 +342,93 @@ int GetGSEHeader (FILE *fp, struct _iheader *h)
     return (1);
 }
 
+
+int
+Process_SC_Vis(FILE *infile,unsigned char **data)
+{
+	int i;
+	msdp_Header	mh;
+	int count;
+	FILE *fp=infile;
+	int height=0;
+	int width=VIS_WIDTH;
+	int size=0;
+	int frag;
+	int down;
+	int idx=0;
+	unsigned char dummy;
+	unsigned char *in_chunk=NULL;
+	unsigned char *out_chunk=NULL;
+	int	chunk_len;
+	unsigned int xcomp, pcomp, spacing, levels;
+	int huffman_table;
+
+
+	while(1) {
+		count=fread(&mh,sizeof(msdp_Header),1,fp);
+		if (!(count))
+			break;
+
+		swab((char *)&mh,(char *)&mh,sizeof(msdp_Header));
+
+		height+=(mh.line*16);
+		frag=(mh.len_lo | (mh.len_hi << 16));
+		size+=frag;
+
+		fseek(fp,(frag+1),SEEK_CUR); /*Gotta skip the checksum byte at the end*/
+	}
+
+	if ((height*width) != size) {
+		parse_error("Height*Width doesn't equate to size: %d vs %d\n",(height*width),size);
+	}
+	size=((height*width) > size ? (height*width):(size));
+	*data=(unsigned char *)calloc(size,sizeof(char));
+
+	rewind(fp);
+
+	while (1) {
+		count=fread(&mh,sizeof(msdp_Header),1,fp);
+		if (!(count))
+			break;
+
+		swab((char *)&mh,(char *)&mh,sizeof(msdp_Header));
+		frag=(mh.len_lo | (mh.len_hi << 16));
+		swab((char *)&mh,(char *)&mh,sizeof(msdp_Header));
+
+		if(in_chunk!=NULL)
+			free(in_chunk);
+		in_chunk=(unsigned char *)calloc(frag,sizeof(char));
+		fread(in_chunk,frag,sizeof(char),fp);
+
+/*decode frag if necessary; offline for now
+
+		xcomp = (mh.comp[0] >> 2) & 3;
+		pcomp = (mh.comp[0] & 3);
+		spacing = mh.comp[4] | (mh.comp[5] << 8);
+		levels = (mh.comp[1] >> 5)+1;
+		huffman_table = mh.comp[1]&0xf;
+
+
+		if (xcomp || pcomp) {
+			out_chunk=decode_chunk(,,,);
+			memcpy((*data+idx),out_chunk,chunk_len);
+			idx+=chunk_len;
+		}
+
+		else {
+			memcpy((*data+idx),in_chunk,frag);
+			idx+=frag;
+		}
+*/
+		memcpy((*data+idx),in_chunk,frag);
+		idx+=frag;
+
+		fread(&dummy,1,1,fp);
+	}
+
+	return(height);
+}
+
 Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
 {
     FILE	*infile;
@@ -323,14 +436,17 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
     struct	_iheader header;
     int i,j;
     int dsize;
-	 int size=0;
+	 int gse=0;
     int ac;
+	 int height;
+	 int width=VIS_WIDTH;
     Var **av, *v;
     char	*filename,*fname,fname2[256];
+	 unsigned char *buf;
 
     Alist alist[333];
     alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
-    alist[1] = make_alist("size", INT, NULL, &size);
+    alist[1] = make_alist("gse", INT, NULL, &gse);
     alist[2].name = NULL;
 
 
@@ -354,22 +470,32 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
     free(fname);
     fname = fname2;
 
-    if (GetGSEHeader(infile,&header) == 0) {
+	if (gse){
+
+		if (GetGSEHeader(infile,&header) == 0) {
         parse_error("Your choice is not a valid GSE visible spectrum (ddd) file");
         return (NULL);
-    }
+    	}
 
-    data=read_qube_data(fileno(infile), &header);
+    	data=read_qube_data(fileno(infile), &header);
 
-    fclose(infile);
-    if (header.format=SHORT){ /*Data is actually 12-bit and needs the upper 4 bits cleaned off*/
-        dsize=header.size[0]*header.size[1]*header.size[2];
-        for (i=0;i<dsize*2;i+=2){
-            ((short *)(data))[i] &= 4095;
-        }
-    }
+ 	   fclose(infile);
+    	if (header.format=SHORT){ /*Data is actually 12-bit and needs the upper 4 bits cleaned off*/
+      	  dsize=header.size[0]*header.size[1]*header.size[2];
+      	  for (i=0;i<dsize*2;i+=2){
+      	      ((short *)(data))[i] &= 4095;
+      	  }
+    	}
 
-    return(newVal(header.org,header.size[0],header.size[1],header.size[2],header.format,data));
+    	return(newVal(header.org,header.size[0],header.size[1],header.size[2],header.format,data));
+	}
+
+	else {
+		height=Process_SC_Vis(infile,&buf);
+		return(newVal(BSQ,width,height,1,BYTE,buf));
+	}
+	
+
 }
 
 
@@ -951,7 +1077,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 					 else { 
                     if (Output-_SIGINFO < 320){
 
-                        if (len < (Lines*Col+320)) { 	/*We're running out of room!*/
+                        if (len <= (Lines*Col+320)) { 	/*We're running out of room!*/
                             int guess=(len/(Output));/*Guess # of total lines*/
                             len = guess * Col; 			/*How big it needs to be*/
 									 if (!(quiet))
