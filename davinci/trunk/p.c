@@ -9,7 +9,6 @@
  **/
 
 char *unescape(char *), *unquote(char *);
-Var ** find_struct(Var *a, Var *b);
 
 /**
  ** p_mknod() - Make a node of the specified type
@@ -433,11 +432,10 @@ evaluate(Var * n)
             p1 = pop(scope);
 
 			{
-				Var **p3 = find_struct(p1, p2);
-				if (p3 != NULL) {
-					push(scope, *p3);
+				if (find_struct(p1, p2, &p3) != -1) {
+					push(scope, p3);
 				} else {
-					parse_error("structure doesn no contain member: %s",
+					parse_error("structure does not contain member: %s",
 								V_NAME(p2));
 					push(scope, NULL);
 				}
@@ -574,33 +572,5 @@ free_tree(Var *n)
 	free(n);
 	n = right;
     }
-}
-
-Var **
-find_struct(Var *a, Var *b)
-{
-	Var *s;
-	int i;
-	if (a == NULL || b == NULL) return(NULL);
-
-	if ((s = eval(a)) != NULL) {
-		a = s;
-	}
-
-	if (V_TYPE(a) != ID_STRUCT) {
-		if (V_NAME(a)) {
-			parse_error("%s: Not a struct", V_NAME(a));
-		} else {
-			parse_error("element is not a struct");
-		}
-		return(NULL);
-	}
-
-	for (i = 0; i < V_STRUCT(a).count ; i++) {
-		if (!strcmp(V_STRUCT(a).names[i], V_NAME(b))) {
-			return(V_STRUCT(a).data +i);
-		}
-	}
-	return(NULL);
 }
 

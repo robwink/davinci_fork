@@ -39,9 +39,11 @@ V_DUP(Var *v)
     Var *r;
     int dsize;
 
-    r = newVar();
-    memcpy(r, v, sizeof(Var));
-    V_NAME(r) = NULL;
+	if (V_TYPE(v) != ID_STRUCT) {
+		r = newVar();
+		memcpy(r, v, sizeof(Var));
+		V_NAME(r) = NULL;
+	}
 
     switch (V_TYPE(v)) {
     case ID_VAL:
@@ -60,28 +62,20 @@ V_DUP(Var *v)
         break;
     case ID_STRUCT:
     {
-        int i;
-        V_STRUCT(r).names = (char **)calloc(V_STRUCT(v).count, sizeof(char *));
-        V_STRUCT(r).data = (Var **) calloc(V_STRUCT(v).count, sizeof(Var *));
-        for (i = 0 ; i < V_STRUCT(r).count ; i++) {
-            V_STRUCT(r).data[i] = V_DUP(V_STRUCT(v).data[i]);
-            V_STRUCT(r).names[i] = V_STRUCT(v).names[i] ? strdup(V_STRUCT(v).names[i]) : 0;
-
-        }
-        V_STRUCT(r).count = V_STRUCT(v).count;
+        r = duplicate_struct(v);
     }
     break;
 
-	 case ID_TEXT:		/*Added: Thu Mar  2 16:49:11 MST 2000*/
-		{
-			int i;
-			V_TEXT(r).Row=V_TEXT(v).Row;
-			V_TEXT(r).text=(char **)calloc(sizeof(char *),V_TEXT(r).Row);
-			for (i=0;i<V_TEXT(r).Row;i++){
-				V_TEXT(r).text[i]=strdup(V_TEXT(v).text[i]);
-			}
-		}
-		break;
+    case ID_TEXT:		/*Added: Thu Mar  2 16:49:11 MST 2000*/
+    {
+        int i;
+        V_TEXT(r).Row=V_TEXT(v).Row;
+        V_TEXT(r).text=(char **)calloc(sizeof(char *),V_TEXT(r).Row);
+        for (i=0;i<V_TEXT(r).Row;i++){
+            V_TEXT(r).text[i]=strdup(V_TEXT(v).text[i]);
+        }
+    }
+    break;
 
     }
     return(r);
@@ -97,7 +91,7 @@ pp_print(Var *v)
 {
     extern int SCALE;
     int i, j, k, c;
-	int x, y, z;
+    int x, y, z;
     Var *s;
     char bytes[32];
 
@@ -111,19 +105,19 @@ pp_print(Var *v)
     s = eval(v);
     if (s != NULL) {
         v = s;
-		pp_print_var(v, NULL, 0, DEPTH);
-	} else {
-		parse_error("Unable to find variable: %s", V_NAME(v));
-	}
+        pp_print_var(v, NULL, 0, DEPTH);
+    } else {
+        parse_error("Unable to find variable: %s", V_NAME(v));
+    }
 
-	return(NULL);
+    return(NULL);
 }
 
 void
 pp_print_struct(Var *v, int indent, int depth)
 {
     extern int SCALE;
-    int i;
+    int i, count;
     Var *s;
     char bytes[32];
     char *name;
@@ -131,58 +125,58 @@ pp_print_struct(Var *v, int indent, int depth)
     if (v == NULL) return;
     if (VERBOSE == 0) return;
 
-//  if (V_NAME(v)) printf("%s", V_NAME(v));
-//  if (indent == 0) {
-//      printf(": struct\n");
-//  }
+    //  if (V_NAME(v)) printf("%s", V_NAME(v));
+    //  if (indent == 0) {
+        //      printf(": struct\n");
+        //  }
 
     indent += 4;
 
-    for (i = 0 ; i < V_STRUCT(v).count ; i++) {
-        name = V_STRUCT(v).names[i];
-        s = V_STRUCT(v).data[i];
+    count = get_struct_count(v);
+    for (i = 0 ; i < count ; i++) {
+        get_struct_element(v, i, &name, &s);
         pp_print_var(s, name, indent, depth);
     }
 }
 
 dump_var(Var *v, int indent, int limit) 
 {
-	int i,j,k,c;
-	int x, y, z;
-	int row;
+    int i,j,k,c;
+    int x, y, z;
+    int row;
 
-	switch (V_TYPE(v)) {
-	case ID_VAL:
-		x = GetSamples(V_SIZE(v),V_ORG(v));
-		y = GetLines(V_SIZE(v),V_ORG(v));
-		z = GetBands(V_SIZE(v),V_ORG(v));
-		if (limit == 0 || (limit && V_DSIZE(v) <= limit)) {
-			for (k = 0 ; k < z ; k++) {
-			for (j = 0 ; j < y ; j++) {
-			for (i = 0 ; i < x ; i++) {
-				c = cpos(i,j,k,v);
-				switch (V_FORMAT(v)) {
-				case BYTE: printf("%d\t", ((u_char *)V_DATA(v))[c]); break;
-				case SHORT: printf("%d\t", ((short *)V_DATA(v))[c]); break;
-				case INT:  printf("%d\t", ((int *)V_DATA(v))[c]); break;
-				case FLOAT: printf("%#.*g\t", SCALE, ((float *)V_DATA(v))[c]); break;
-				case DOUBLE: printf("%#.*g\t", SCALE, ((double *)V_DATA(v))[c]); break;
-				}
-			}
-			printf("\n");
-			}
-			if (z > 1) printf("\n");
-			}
-		}
-		break;
-	case ID_TEXT:
-		row = V_TEXT(v).Row;
-		if (limit) row = min(limit, row);
-		for (i=0 ; i < row ; i++){
-			printf("%*s%d: %s\n", indent, "", (i+1), V_TEXT(v).text[i]);
-		}
-		break;
-	}
+    switch (V_TYPE(v)) {
+    case ID_VAL:
+        x = GetSamples(V_SIZE(v),V_ORG(v));
+        y = GetLines(V_SIZE(v),V_ORG(v));
+        z = GetBands(V_SIZE(v),V_ORG(v));
+        if (limit == 0 || (limit && V_DSIZE(v) <= limit)) {
+            for (k = 0 ; k < z ; k++) {
+                for (j = 0 ; j < y ; j++) {
+                    for (i = 0 ; i < x ; i++) {
+                        c = cpos(i,j,k,v);
+                        switch (V_FORMAT(v)) {
+                        case BYTE: printf("%d\t", ((u_char *)V_DATA(v))[c]); break;
+                        case SHORT: printf("%d\t", ((short *)V_DATA(v))[c]); break;
+                        case INT:  printf("%d\t", ((int *)V_DATA(v))[c]); break;
+                        case FLOAT: printf("%#.*g\t", SCALE, ((float *)V_DATA(v))[c]); break;
+                        case DOUBLE: printf("%#.*g\t", SCALE, ((double *)V_DATA(v))[c]); break;
+                        }
+                    }
+                    printf("\n");
+                }
+                if (z > 1) printf("\n");
+            }
+        }
+        break;
+    case ID_TEXT:
+        row = V_TEXT(v).Row;
+        if (limit) row = min(limit, row);
+        for (i=0 ; i < row ; i++){
+            printf("%*s%d: %s\n", indent, "", (i+1), V_TEXT(v).text[i]);
+        }
+        break;
+    }
 }
 
 void
@@ -190,13 +184,13 @@ pp_print_var(Var *v, char *name, int indent, int depth)
 {
     extern int SCALE;
     char bytes[32];
-	int x, y, z, row, i;
-	int npassed = (name != NULL);
+    int x, y, z, row, i;
+    int npassed = (name != NULL);
 
-	if (name == NULL) {
-		name = "";
-	}
-	if (indent || npassed) printf("%*s%s: ", indent, "", name);
+    if (name == NULL) {
+        name = "";
+    }
+    if (indent || npassed) printf("%*s%s: ", indent, "", name);
 
     switch (V_TYPE(v)) {
     case ID_STRING:
@@ -204,11 +198,11 @@ pp_print_var(Var *v, char *name, int indent, int depth)
         break;
     case ID_VAL:
         if (V_DSIZE(v) == 1) {
-			dump_var(v, indent, 1);
+            dump_var(v, indent, 1);
         } else {
-			x = GetSamples(V_SIZE(v),V_ORG(v));
-			y = GetLines(V_SIZE(v),V_ORG(v));
-			z = GetBands(V_SIZE(v),V_ORG(v));
+            x = GetSamples(V_SIZE(v),V_ORG(v));
+            y = GetLines(V_SIZE(v),V_ORG(v));
+            z = GetBands(V_SIZE(v),V_ORG(v));
             sprintf(bytes, "%d", NBYTES(V_FORMAT(v))*V_DSIZE(v));
             commaize(bytes);
             printf("%dx%dx%d array of %s, %s format [%s bytes]\n",
@@ -216,39 +210,39 @@ pp_print_var(Var *v, char *name, int indent, int depth)
                    Format2Str(V_FORMAT(v)),
                    Org2Str(V_ORG(v)),
                    bytes);
-			if (indent == 0) {
-				dump_var(v, 0, 100);
-			}
+            if (indent == 0) {
+                dump_var(v, 0, 100);
+            }
         }
         break;
     case ID_STRUCT:
-		if (depth > 0)  {
-			printf("struct, %d elements\n", V_STRUCT(v).count);
-			pp_print_struct(v, indent, depth-1);
-		} else {
-			printf("struct, %d elements...\n", V_STRUCT(v).count);
-		}
+        if (depth > 0)  {
+            printf("struct, %d elements\n", get_struct_count(v));
+            pp_print_struct(v, indent, depth-1);
+        } else {
+            printf("struct, %d elements...\n", get_struct_count(v));
+        }
         break;
 	
-	 case ID_TEXT:		/*Added: Thu Mar  2 16:52:39 MST 2000*/
-		printf("Text Buffer with %d lines of text\n", V_TEXT(v).Row);
-		dump_var(v, indent+4, 10);
-		break;
+    case ID_TEXT:		/*Added: Thu Mar  2 16:52:39 MST 2000*/
+        printf("Text Buffer with %d lines of text\n", V_TEXT(v).Row);
+        dump_var(v, indent+4, 10);
+        break;
     }
 }
 
 void
 print_text(Var *v, int indent)
 {
-	int i,row;
+    int i,row;
 
-	row = min(10, V_TEXT(v).Row);
+    row = min(10, V_TEXT(v).Row);
 
-	printf("%*sText Buffer with %d lines of text\n", indent, "", V_TEXT(v).Row);
+    printf("%*sText Buffer with %d lines of text\n", indent, "", V_TEXT(v).Row);
 
-	for (i=0;i<row;i++){
-		printf("%*s%d: \t%s\n", indent, "", (i+1), V_TEXT(v).text[i]);
-	}
+    for (i=0;i<row;i++){
+        printf("%*s%d: \t%s\n", indent, "", (i+1), V_TEXT(v).text[i]);
+    }
 }
 
 /**
@@ -283,19 +277,19 @@ pp_set_var(Var *id, Var *range, Var *exp)
         
         r = V_RANGE(range);
 
-		if (V_TYPE(v)==ID_TEXT) /*Need to intercept TEXT var's before fixup*/
-			return(set_text(v,r,exp));
-		if (V_TYPE(v)==ID_STRING) /*Ditto for STRING var's!*/
-			return(set_string(v,r,exp));
+        if (V_TYPE(v)==ID_TEXT) /*Need to intercept TEXT var's before fixup*/
+            return(set_text(v,r,exp));
+        if (V_TYPE(v)==ID_STRING) /*Ditto for STRING var's!*/
+            return(set_string(v,r,exp));
 
         if (fixup_ranges(v, r, &rout) == 0) {
             parse_error("Illegal range value.");
             return(NULL);
         }
 
-		if (V_TYPE(v) == ID_STRUCT) {
-			return(set_varray(v,&rout,exp));
-		}
+        if (V_TYPE(v) == ID_STRUCT) {
+            return(set_varray(v,&rout,exp));
+        }
 
         for (i =0 ; i < 3 ; i++) {
             size[i] = 1 + (rout.hi[i] - rout.lo[i])/rout.step[i];
@@ -316,7 +310,7 @@ pp_set_var(Var *id, Var *range, Var *exp)
                              j*r->step[1] + r->lo[1],
                              k*r->step[2] + r->lo[2], v);
 
-					s = cpos(i,j,k,exp);
+                    s = cpos(i,j,k,exp);
 
                     // s = rpos(d, v, exp);
 
@@ -361,16 +355,16 @@ pp_set_var(Var *id, Var *range, Var *exp)
         v = eval(exp);
         if (v != NULL) {
             exp = V_DUP(v);
-		}
+        }
         if (V_TYPE(exp) == ID_UNK) {
             parse_error("Variable not found: %s", V_NAME(exp));
             return(NULL);
         }
     } else if (mem_claim(exp) == NULL) {
-		/**
-		** if we can't claim the memory, we can't use it.
-		**/
-		exp = V_DUP(exp);
+        /**
+        ** if we can't claim the memory, we can't use it.
+        **/
+        exp = V_DUP(exp);
     }
 
     V_NAME(exp) = strdup(V_NAME(id));
@@ -393,57 +387,41 @@ pp_set_struct(Var *a, Var *b, Var *exp)
 {
     Var **p;
     Var *v, *s;
-	int count;
-	Var **data;
-	int added = 0;
+    int count;
+    Var **data;
+    int added = 0;
 
-	if (a == NULL || b == NULL) return(NULL);
+    if ((s = eval(a)) != NULL) a = s;
+    if (a == NULL || b == NULL) return(NULL);
     if (exp == NULL) return(NULL);
 
-	if (V_NAME(exp) != NULL) {
-		v = eval(exp);
-		if (v != NULL) {
-			exp = V_DUP(v);
-		}
-		if (V_TYPE(exp) == ID_UNK) {
-			parse_error("Variable not found: %s", V_NAME(exp));
-			return(NULL);
-		}
-	}
+    if (V_TYPE(a) != ID_STRUCT) {
+        parse_error("Argument is not a struct\n");
+        return(NULL);
+    }
 
-	p = find_struct(a,b);
+    if (V_NAME(exp) != NULL) {
+        v = eval(exp);
+        if (v != NULL) {
+            exp = V_DUP(v);
+			V_NAME(exp) = NULL;
+        }
+        if (V_TYPE(exp) == ID_UNK) {
+            parse_error("Variable not found: %s", V_NAME(exp));
+            return(NULL);
+        }
+    }
 
-	if (p == NULL) {
-		/*
-		** dynamic addition to structures  (EGADS!)
-		*/
-		if ((s = eval(a)) != NULL) a = s;
+    if (V_NAME(exp) != NULL || mem_claim(exp) == NULL) {
+        /**
+        ** if we can't claim the memory, we can't use it.
+        **/
+        exp = V_DUP(exp);
+        mem_claim(exp);
+    }
 
-		if (V_TYPE(a) != ID_STRUCT) {
-			return(NULL);
-		}
-
-		count = V_STRUCT(a).count;
-		V_STRUCT(a).names = realloc(V_STRUCT(a).names, (count+1) * sizeof(char *));
-		V_STRUCT(a).data = realloc(V_STRUCT(a).data, (count+1) * sizeof(Var *));
-		V_STRUCT(a).names[count] = V_NAME(b) ? strdup(V_NAME(b)) : 0;
-		p = &(V_STRUCT(a).data[count]);
-		V_STRUCT(a).count++;
-		added = 1;
-	}
-
-	if (V_NAME(exp) == NULL && mem_claim(exp) == NULL) {
-		/**
-		** if we can't claim the memory, we can't use it.
-		**/
-		exp = V_DUP(exp);
-	}
-
-	mem_claim(exp);
-	V_NAME(exp) = NULL;
-	if (!added) free_var(*p);
-	*p = exp;
-	return(exp);
+    add_struct(a, V_NAME(b), exp);
+    return(exp);
 }
 /**
  ** Ranges:
@@ -581,10 +559,10 @@ pp_range(Var *v, Var *r)
         }
         return(varray_subset(v, &rout));
     } else if (V_TYPE(v) == ID_TEXT) {
-		return(textarray_subset(v,r));
-	} else if (V_TYPE(v) == ID_STRING) {
-		return(string_subset(v,r));
-	}
+        return(textarray_subset(v,r));
+    } else if (V_TYPE(v) == ID_STRING) {
+        return(string_subset(v,r));
+    }
 	
     parse_error( "Illegal type: %s", V_NAME(v));
     return(NULL);
@@ -777,17 +755,17 @@ pp_argv(Var *left, Var *right)
 int 
 compare_strings(char *s1, int op, char *s2)
 {
-	int i, k;
-	i = strcmp(s1, s2);
-	switch (op) {
-		case ID_EQ:		k = (i == 0);	break;
-		case ID_NE:		k = (i != 0);	break;
-		case ID_LT:		k = (i < 0);	break;
-		case ID_GT:		k = (i > 0);	break;
-		case ID_LE:		k = (i <= 0);	break;
-		case ID_GE:		k = (i >= 0);	break;
-	}
-	return(k);
+    int i, k;
+    i = strcmp(s1, s2);
+    switch (op) {
+    case ID_EQ:		k = (i == 0);	break;
+    case ID_NE:		k = (i != 0);	break;
+    case ID_LT:		k = (i < 0);	break;
+    case ID_GT:		k = (i > 0);	break;
+    case ID_LE:		k = (i <= 0);	break;
+    case ID_GE:		k = (i >= 0);	break;
+    }
+    return(k);
 }
 
 Var *
@@ -798,14 +776,14 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
     int i,k;
     double d1,d2;
     char *ptr;
-	int rows;
-	int *data;
+    int rows;
+    int *data;
 
     if (exp1 == NULL || exp2 == NULL) return(NULL);
-	if (op == ID_OR || op == ID_AND) {
-		parse_error("Cannot perform boolean logic on type STRING or TEXT");
-		return(NULL);
-	}
+    if (op == ID_OR || op == ID_AND) {
+        parse_error("Cannot perform boolean logic on type STRING or TEXT");
+        return(NULL);
+    }
 
     if ((e = eval(exp1)) == NULL) {
         sprintf(error_buf, "Variable not found: %s", V_NAME(exp1));
@@ -821,53 +799,53 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
     }
     exp2 = e;
 
-	if (op == ID_ADD) return(pp_add_strings(exp1, exp2));
+    if (op == ID_ADD) return(pp_add_strings(exp1, exp2));
 
     if (V_TYPE(exp1) == ID_STRING && V_TYPE(exp2) == ID_STRING) {
-		/*
-		** 2 string objects
-		*/
-		k = compare_strings(V_STRING(exp1), op, V_STRING(exp2));
-		s = newVal(BSQ,1,1,1,INT,calloc(1, sizeof(int)));
-		V_INT(s) = k;
-		return(s);
-	} else if (V_TYPE(exp1) == ID_TEXT && V_TYPE(exp2) == ID_TEXT) {
-		/*
-		** 2 text objects
-		*/
-		if (V_TEXT(exp1).Row != V_TEXT(exp2).Row){
-			parse_error("Text arrays must be the same size");
-			return(NULL);
-		}
-		rows = V_TEXT(exp1).Row;
-		data=(int *)calloc(rows,sizeof(int));
-		for (i = 0 ; i < rows ; i++) {
-			data[i] = compare_strings(V_TEXT(exp1).text[i], 
+        /*
+        ** 2 string objects
+        */
+        k = compare_strings(V_STRING(exp1), op, V_STRING(exp2));
+        s = newVal(BSQ,1,1,1,INT,calloc(1, sizeof(int)));
+        V_INT(s) = k;
+        return(s);
+    } else if (V_TYPE(exp1) == ID_TEXT && V_TYPE(exp2) == ID_TEXT) {
+        /*
+        ** 2 text objects
+        */
+        if (V_TEXT(exp1).Row != V_TEXT(exp2).Row){
+            parse_error("Text arrays must be the same size");
+            return(NULL);
+        }
+        rows = V_TEXT(exp1).Row;
+        data=(int *)calloc(rows,sizeof(int));
+        for (i = 0 ; i < rows ; i++) {
+            data[i] = compare_strings(V_TEXT(exp1).text[i], 
                                       op, 
-									  V_TEXT(exp2).text[i]);
-		}
-		return(newVal(BSQ,1,rows,1,INT,data));
-	} else {
-		/*
-		** one text, one string
-		*/
+                                      V_TEXT(exp2).text[i]);
+        }
+        return(newVal(BSQ,1,rows,1,INT,data));
+    } else {
+        /*
+        ** one text, one string
+        */
 
-		if (V_TYPE(exp1) == ID_TEXT) {
-			text = exp1;
-			ptr = V_STRING(exp2);
-		} else {
-			text = exp2;
-			ptr = V_STRING(exp1);
-		}
-		rows = V_TEXT(text).Row;
-		data = calloc(rows, sizeof(int));
+        if (V_TYPE(exp1) == ID_TEXT) {
+            text = exp1;
+            ptr = V_STRING(exp2);
+        } else {
+            text = exp2;
+            ptr = V_STRING(exp1);
+        }
+        rows = V_TEXT(text).Row;
+        data = calloc(rows, sizeof(int));
 
-		for (i = 0 ; i < rows ; i++) {
-			data[i] = compare_strings(V_TEXT(text).text[i], op, ptr);
-			if (V_TYPE(exp1) != ID_TEXT) data[i] = -data[i];
-		}
-		return(newVal(BSQ,1,rows,1,INT,data));
-	}
+        for (i = 0 ; i < rows ; i++) {
+            data[i] = compare_strings(V_TEXT(text).text[i], op, ptr);
+            if (V_TYPE(exp1) != ID_TEXT) data[i] = -data[i];
+        }
+        return(newVal(BSQ,1,rows,1,INT,data));
+    }
 }
 
 
@@ -988,10 +966,10 @@ pp_set_where(Var *id, Var *where, Var *exp)
   return(NULL);
   }
   */
-	 if (V_TYPE(id)==ID_TEXT && 
-		  (V_TYPE(exp)==ID_STRING || V_TYPE(exp)==ID_TEXT) &&
-		  V_TYPE(where)==ID_VAL)
-			 return(where_text(id,where,exp));
+    if (V_TYPE(id)==ID_TEXT && 
+        (V_TYPE(exp)==ID_STRING || V_TYPE(exp)==ID_TEXT) &&
+        V_TYPE(where)==ID_VAL)
+        return(where_text(id,where,exp));
 
     if (V_DSIZE(exp) != 1) {
         for (i = 0 ; i < 3 ; i++) {

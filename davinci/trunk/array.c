@@ -43,7 +43,7 @@ fixup_ranges(Var *v, Range *in, Range *out)
 			return(0);
 		}
 		memset(out, 0, sizeof(*out));
-		if (fixup(0, in, out, V_STRUCT(v).count) == 0) return(0);
+		if (fixup(0, in, out, get_struct_count(v)) == 0) return(0);
 
 	} else {
 		for (i = 0 ; i < 3 ; i++) {

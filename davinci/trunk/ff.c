@@ -361,23 +361,23 @@ ff_org(vfuncptr func, Var * arg)
     if (func->fdata != NULL) {
         org = (int) (func->fdata) - 10;
     } else {
-		if (org_str == NULL) {
-			/**
-			** no order specified.  Print out the org of the passed object.
-			**/
-			s = newVar();
-			V_TYPE(s) = ID_STRING;
-			V_STRING(s) = strdup(Org2Str(V_ORG(ob)));
-			return (s);
-		} else { 
-			if (!strcasecmp(org_str, "bsq")) org = BSQ;
-			else if (!strcasecmp(org_str, "xyz")) org = BSQ;
-			else if (!strcasecmp(org_str, "bil")) org = BIL;
-			else if (!strcasecmp(org_str, "xzy")) org = BIL;
-			else if (!strcasecmp(org_str, "bip")) org = BIP;
-			else if (!strcasecmp(org_str, "zxy")) org = BIP;
-		}
-	}
+        if (org_str == NULL) {
+            /**
+            ** no order specified.  Print out the org of the passed object.
+            **/
+            s = newVar();
+            V_TYPE(s) = ID_STRING;
+            V_STRING(s) = strdup(Org2Str(V_ORG(ob)));
+            return (s);
+        } else { 
+            if (!strcasecmp(org_str, "bsq")) org = BSQ;
+            else if (!strcasecmp(org_str, "xyz")) org = BSQ;
+            else if (!strcasecmp(org_str, "bil")) org = BIL;
+            else if (!strcasecmp(org_str, "xzy")) org = BIL;
+            else if (!strcasecmp(org_str, "bip")) org = BIP;
+            else if (!strcasecmp(org_str, "zxy")) org = BIP;
+        }
+    }
 
     /**
     ** create output variable
@@ -540,7 +540,7 @@ ff_format(vfuncptr func, Var * arg)
 {
     Var *v, *s, *object = NULL;
     char *ptr;
-	char *format_str = NULL;
+    char *format_str = NULL;
     char *formats[] = { "byte", "short", "int", "float", "double", NULL };
 
     int ac;
@@ -571,15 +571,15 @@ ff_format(vfuncptr func, Var * arg)
         ** v specifies format.
         **/
 
-		if (!strcasecmp(format_str, "byte")) ptr = "byte";
-		else if (!strcasecmp(format_str, "short")) ptr = "short";
-		else if (!strcasecmp(format_str, "int")) ptr = "int";
-		else if (!strcasecmp(format_str, "float")) ptr = "float";
-		else if (!strcasecmp(format_str, "double")) ptr = "double";
+        if (!strcasecmp(format_str, "byte")) ptr = "byte";
+        else if (!strcasecmp(format_str, "short")) ptr = "short";
+        else if (!strcasecmp(format_str, "int")) ptr = "int";
+        else if (!strcasecmp(format_str, "float")) ptr = "float";
+        else if (!strcasecmp(format_str, "double")) ptr = "double";
 
-		object->next = NULL;
-		return (V_func(ptr, object));
-	}
+        object->next = NULL;
+        return (V_func(ptr, object));
+    }
 }
 
 
@@ -679,9 +679,9 @@ ff_create(vfuncptr func, Var * arg)
     for (k = 0 ; k < z ; k++) {
         for (j = 0 ; j < y ; j++) {
             for (i = 0 ; i < x ; i++) {
-				v = (count++) * step + start;
-				c = cpos(i,j,k,s);
-				switch (format) {
+                v = (count++) * step + start;
+                c = cpos(i,j,k,s);
+                switch (format) {
                 case BYTE: 
                     cdata[c] = saturate_byte(v);
                     break;
@@ -790,29 +790,29 @@ ff_echo(vfuncptr func, Var * arg)
 Var *
 replicate_text(Var *ob, int x, int y)
 {
-	Var *s;
-	int i,j,l;
-	int Row;
+    Var *s;
+    int i,j,l;
+    int Row;
 
-	s=newVar();
-	V_TYPE(s)=ID_TEXT;
-	V_TEXT(s).Row=V_TEXT(ob).Row*y;
-	Row=V_TEXT(ob).Row;
-	V_TEXT(s).text=(char **)calloc(V_TEXT(s).Row,sizeof(char *));
+    s=newVar();
+    V_TYPE(s)=ID_TEXT;
+    V_TEXT(s).Row=V_TEXT(ob).Row*y;
+    Row=V_TEXT(ob).Row;
+    V_TEXT(s).text=(char **)calloc(V_TEXT(s).Row,sizeof(char *));
 
 
-	for (j=0;j<y;j++){
-			for(l=0;l<Row;l++){
-				V_TEXT(s).text[j*Row+l]=(char *)calloc(
-					strlen(V_TEXT(ob).text[l])*x,sizeof(char));
-				strcpy(V_TEXT(s).text[j*Row+l],V_TEXT(ob).text[l]);
-				for (i=1;i<x;i++){
-					strcat(V_TEXT(s).text[j*Row+l],V_TEXT(ob).text[l]);
-				}
-			}
-	}
+    for (j=0;j<y;j++){
+        for(l=0;l<Row;l++){
+            V_TEXT(s).text[j*Row+l]=(char *)calloc(
+                strlen(V_TEXT(ob).text[l])*x,sizeof(char));
+            strcpy(V_TEXT(s).text[j*Row+l],V_TEXT(ob).text[l]);
+            for (i=1;i<x;i++){
+                strcat(V_TEXT(s).text[j*Row+l],V_TEXT(ob).text[l]);
+            }
+        }
+    }
 
-	return(s);
+    return(s);
 }
 
 
@@ -844,18 +844,18 @@ ff_replicate(vfuncptr func, Var * arg)
     make_args(&ac, &av, func, arg);
     if (parse_args(ac, av, alist)) return(NULL);
 
-	if (v == NULL) {
-		parse_error("clone: No obejct specified\n");
-		return(NULL);
-	}
+    if (v == NULL) {
+        parse_error("clone: No obejct specified\n");
+        return(NULL);
+    }
 
-	if (V_TYPE(v)!=ID_VAL && V_TYPE(v)!=ID_TEXT){
-		parse_error("Invalid replication object");
-		return(NULL);
-	}
+    if (V_TYPE(v)!=ID_VAL && V_TYPE(v)!=ID_TEXT){
+        parse_error("Invalid replication object");
+        return(NULL);
+    }
 
-	if (V_TYPE(v)==ID_TEXT)
-		return(replicate_text(v,x,y));
+    if (V_TYPE(v)==ID_TEXT)
+        return(replicate_text(v,x,y));
 
     org = V_ORG(v);
 
@@ -986,10 +986,10 @@ ff_cat(vfuncptr func, Var * arg)
         parse_error("%s(), No axis specified.", func->name);
         return (NULL);
     } else {
-		if (!strcasecmp(axis_str, "x")) axis = 0;
-		else if (!strcasecmp(axis_str, "y")) axis = 1;
-		else if (!strcasecmp(axis_str, "z")) axis = 2;
-	}
+        if (!strcasecmp(axis_str, "x")) axis = 0;
+        else if (!strcasecmp(axis_str, "y")) axis = 1;
+        else if (!strcasecmp(axis_str, "z")) axis = 2;
+    }
 
     if (ob1 == NULL) {
         parse_error("No objects specified");
@@ -1008,143 +1008,143 @@ ff_cat(vfuncptr func, Var * arg)
 Var *
 cat_mixed_text(Var * ob1, Var * ob2, int axis)
 {
-	Var *s=newVar();
-	int Row;
-	int i;
-	char *string;
-	char **text;
+    Var *s=newVar();
+    int Row;
+    int i;
+    char *string;
+    char **text;
 
-	V_TYPE(s)=ID_TEXT; /* Text+String=Text; String+Text=Text; either way...*/
+    V_TYPE(s)=ID_TEXT; /* Text+String=Text; String+Text=Text; either way...*/
 
-	if (V_TYPE(ob1)==ID_TEXT) { /*Left or Top is text*/
-		Row=V_TEXT(ob1).Row;
-		string=V_STRING(ob2);
-		text=V_TEXT(ob1).text;
-		if (axis==0) {/*Left, same # of Rows*/
-			V_TEXT(s).Row=Row;
-			V_TEXT(s).text=(char **)calloc(sizeof(char *),Row);
-			for (i=0;i<Row;i++){
-				V_TEXT(s).text[i]=(char *)calloc(sizeof(char),
-					strlen(text[i])+strlen(string));
-				strcpy(V_TEXT(s).text[i],text[i]);
-				strcat(V_TEXT(s).text[i],string);
-			}
-		}
-		else { /*Top, w/string as extra row on bottom*/
-			Row++;
-			V_TEXT(s).Row=Row;
-			V_TEXT(s).text=(char **)calloc(sizeof(char *),Row);
-			for (i=0;i<Row-1;i++){
-				V_TEXT(s).text[i]=strdup(text[i]);
-			}
-			V_TEXT(s).text[i]=strdup(string);
-		}
-	}
+    if (V_TYPE(ob1)==ID_TEXT) { /*Left or Top is text*/
+        Row=V_TEXT(ob1).Row;
+        string=V_STRING(ob2);
+        text=V_TEXT(ob1).text;
+        if (axis==0) {/*Left, same # of Rows*/
+            V_TEXT(s).Row=Row;
+            V_TEXT(s).text=(char **)calloc(sizeof(char *),Row);
+            for (i=0;i<Row;i++){
+                V_TEXT(s).text[i]=(char *)calloc(sizeof(char),
+                                                 strlen(text[i])+strlen(string));
+                strcpy(V_TEXT(s).text[i],text[i]);
+                strcat(V_TEXT(s).text[i],string);
+            }
+        }
+        else { /*Top, w/string as extra row on bottom*/
+            Row++;
+            V_TEXT(s).Row=Row;
+            V_TEXT(s).text=(char **)calloc(sizeof(char *),Row);
+            for (i=0;i<Row-1;i++){
+                V_TEXT(s).text[i]=strdup(text[i]);
+            }
+            V_TEXT(s).text[i]=strdup(string);
+        }
+    }
 
-	else {/*Right or Bottom is Text*/
-		Row=V_TEXT(ob2).Row;
-		string=V_STRING(ob1);
-		text=V_TEXT(ob2).text;
+    else {/*Right or Bottom is Text*/
+        Row=V_TEXT(ob2).Row;
+        string=V_STRING(ob1);
+        text=V_TEXT(ob2).text;
 
-		if (axis==0){ /*Right, same # of Row*/
-			V_TEXT(s).Row=Row;
-			V_TEXT(s).text=(char **)calloc(sizeof(char *),Row);
-			for (i=0;i<Row;i++){
-				V_TEXT(s).text[i]=(char *)calloc(sizeof(char),
-					 strlen(text[i])+strlen(string));
-				strcpy(V_TEXT(s).text[i],string);
-				strcat(V_TEXT(s).text[i],text[i]);
-			}
-		}
+        if (axis==0){ /*Right, same # of Row*/
+            V_TEXT(s).Row=Row;
+            V_TEXT(s).text=(char **)calloc(sizeof(char *),Row);
+            for (i=0;i<Row;i++){
+                V_TEXT(s).text[i]=(char *)calloc(sizeof(char),
+                                                 strlen(text[i])+strlen(string));
+                strcpy(V_TEXT(s).text[i],string);
+                strcat(V_TEXT(s).text[i],text[i]);
+            }
+        }
 
-		else {/*Bottom, w/string as extra row on top*/
-			Row++;
-			V_TEXT(s).Row=Row;
-			V_TEXT(s).text=(char **)calloc(sizeof(char *),Row);
-			V_TEXT(s).text[0]=strdup(string);
-			for(i=1;i<Row;i++){
-				 V_TEXT(s).text[i]=strdup(text[i-1]);
-			}
-		}
-	}
+        else {/*Bottom, w/string as extra row on top*/
+            Row++;
+            V_TEXT(s).Row=Row;
+            V_TEXT(s).text=(char **)calloc(sizeof(char *),Row);
+            V_TEXT(s).text[0]=strdup(string);
+            for(i=1;i<Row;i++){
+                V_TEXT(s).text[i]=strdup(text[i-1]);
+            }
+        }
+    }
 
-	return(s);
+    return(s);
 }
 
 Var *
 cat_string_text(Var * ob1, Var * ob2, int axis)
 { 
-	Var *s=newVar();
+    Var *s=newVar();
 
-	if (axis==2) { /*Can't cat Text or Strings in Z*/
-		parse_error("Invalid axis specified");
-		return(NULL);
-	}
+    if (axis==2) { /*Can't cat Text or Strings in Z*/
+        parse_error("Invalid axis specified");
+        return(NULL);
+    }
 
-	if (V_TYPE(ob1) != V_TYPE(ob2)){ /*mixing strings and text!*/
-		return(cat_mixed_text(ob1,ob2,axis));
-	}
+    if (V_TYPE(ob1) != V_TYPE(ob2)){ /*mixing strings and text!*/
+        return(cat_mixed_text(ob1,ob2,axis));
+    }
 
-	if (axis==1 && V_TYPE(ob1)==ID_STRING){ /*String->Text*/
-		V_TYPE(s)=ID_TEXT;
-		V_TEXT(s).Row=2;
-		V_TEXT(s).text=(char **)calloc(sizeof(char *),2);
-		V_TEXT(s).text[0]=strdup(V_STRING(ob1));
-		V_TEXT(s).text[1]=strdup(V_STRING(ob2));
-		return(s);
-	}
+    if (axis==1 && V_TYPE(ob1)==ID_STRING){ /*String->Text*/
+        V_TYPE(s)=ID_TEXT;
+        V_TEXT(s).Row=2;
+        V_TEXT(s).text=(char **)calloc(sizeof(char *),2);
+        V_TEXT(s).text[0]=strdup(V_STRING(ob1));
+        V_TEXT(s).text[1]=strdup(V_STRING(ob2));
+        return(s);
+    }
 
-	else if (axis==1) {
-		int i;
-		int counter=0;
-		int Row1,Row2;
-		V_TYPE(s)=ID_TEXT;
-		Row1=V_TEXT(ob1).Row;
-		Row2=V_TEXT(ob2).Row;
-		V_TEXT(s).Row=Row1+Row2;
-		V_TEXT(s).text=(char **)calloc(sizeof(char *),V_TEXT(s).Row);
-		for (i=0;i<Row1;i++){
-			V_TEXT(s).text[counter++]=strdup(V_TEXT(ob1).text[i]);
-		}
-		for (i=0;i<Row2;i++){
-			V_TEXT(s).text[counter++]=strdup(V_TEXT(ob2).text[i]);
-		}
-		return(s);
-	}
+    else if (axis==1) {
+        int i;
+        int counter=0;
+        int Row1,Row2;
+        V_TYPE(s)=ID_TEXT;
+        Row1=V_TEXT(ob1).Row;
+        Row2=V_TEXT(ob2).Row;
+        V_TEXT(s).Row=Row1+Row2;
+        V_TEXT(s).text=(char **)calloc(sizeof(char *),V_TEXT(s).Row);
+        for (i=0;i<Row1;i++){
+            V_TEXT(s).text[counter++]=strdup(V_TEXT(ob1).text[i]);
+        }
+        for (i=0;i<Row2;i++){
+            V_TEXT(s).text[counter++]=strdup(V_TEXT(ob2).text[i]);
+        }
+        return(s);
+    }
 
-	else if (V_TYPE(ob1)==ID_STRING){
-		V_TYPE(s)=ID_STRING;
-		V_STRING(s)=(char *)calloc(sizeof(char),strlen(V_STRING(ob1))+
-							strlen(V_STRING(ob2))+1);
-		strcpy(V_STRING(s),V_STRING(ob1));
-		strcat(V_STRING(s),V_STRING(ob2));
+    else if (V_TYPE(ob1)==ID_STRING){
+        V_TYPE(s)=ID_STRING;
+        V_STRING(s)=(char *)calloc(sizeof(char),strlen(V_STRING(ob1))+
+                                   strlen(V_STRING(ob2))+1);
+        strcpy(V_STRING(s),V_STRING(ob1));
+        strcat(V_STRING(s),V_STRING(ob2));
 	
-		return(s);
-	}
+        return(s);
+    }
 
-	else {
-		int i;
-		int Row;
-		if (V_TEXT(ob1).Row != V_TEXT(ob2).Row){
-			parse_error("Objects must have equal number of rows");
-			return(NULL);
-		}
+    else {
+        int i;
+        int Row;
+        if (V_TEXT(ob1).Row != V_TEXT(ob2).Row){
+            parse_error("Objects must have equal number of rows");
+            return(NULL);
+        }
 		
-		V_TYPE(s)=ID_TEXT;
-		Row=V_TEXT(ob1).Row;
-		V_TEXT(s).Row=Row;
-		V_TEXT(s).text=(char **)calloc(sizeof(char *),Row);
-		for (i=0;i<Row;i++){	
-			V_TEXT(s).text[i]=(char *)calloc(sizeof(char),strlen(V_TEXT(ob1).text[i])+
-						strlen(V_TEXT(ob2).text[i])+1);
-			strcpy(V_TEXT(s).text[i],V_TEXT(ob1).text[i]);
-			strcat(V_TEXT(s).text[i],V_TEXT(ob2).text[i]);
-		}
+        V_TYPE(s)=ID_TEXT;
+        Row=V_TEXT(ob1).Row;
+        V_TEXT(s).Row=Row;
+        V_TEXT(s).text=(char **)calloc(sizeof(char *),Row);
+        for (i=0;i<Row;i++){	
+            V_TEXT(s).text[i]=(char *)calloc(sizeof(char),strlen(V_TEXT(ob1).text[i])+
+                                             strlen(V_TEXT(ob2).text[i])+1);
+            strcpy(V_TEXT(s).text[i],V_TEXT(ob1).text[i]);
+            strcat(V_TEXT(s).text[i],V_TEXT(ob2).text[i]);
+        }
 
-		return(s);
-	}
+        return(s);
+    }
 
-	return(NULL);
+    return(NULL);
 }
 			
 
@@ -1157,7 +1157,7 @@ do_cat(Var * ob1, Var * ob2, int axis)
     void *data, *d1, *d2, *out;
     int dsize;
     int nbytes;
-	 int ob1_type,ob2_type;
+    int ob1_type,ob2_type;
 
 
     if ((e = eval(ob1)) != NULL) ob1 = e;
@@ -1165,8 +1165,8 @@ do_cat(Var * ob1, Var * ob2, int axis)
     if (ob1 == NULL) return (ob2);
     if (ob2 == NULL) return (ob1);
 
-	 ob1_type=V_TYPE(ob1);
-	 ob2_type=V_TYPE(ob2);
+    ob1_type=V_TYPE(ob1);
+    ob2_type=V_TYPE(ob2);
 
 
     if (ob1_type != ID_VAL && ob1_type != ID_STRING && ob1_type != ID_TEXT) {
@@ -1179,14 +1179,14 @@ do_cat(Var * ob1, Var * ob2, int axis)
         return (NULL);
     }
 
-	 if ((ob1_type == ID_VAL && ob2_type!=ID_VAL) || 
-			(ob1_type!=ID_VAL && ob2_type==ID_VAL)){
-		  parse_error( "cat(), Can't mix numbers with non-numbers!");
-		  return(NULL);
-	 }
+    if ((ob1_type == ID_VAL && ob2_type!=ID_VAL) || 
+        (ob1_type!=ID_VAL && ob2_type==ID_VAL)){
+        parse_error( "cat(), Can't mix numbers with non-numbers!");
+        return(NULL);
+    }
 
-	 if (ob1_type == ID_STRING || ob1_type==ID_TEXT)
-			return(cat_string_text(ob1,ob2,axis));
+    if (ob1_type == ID_STRING || ob1_type==ID_TEXT)
+        return(cat_string_text(ob1,ob2,axis));
 
     if (V_FORMAT(ob1) != V_FORMAT(ob2)) {
         parse_error( "cat(), Data formats must match.");
@@ -1363,64 +1363,64 @@ ff_string(vfuncptr func, Var * arg)
 Var *
 ff_strlen(vfuncptr func, Var * arg)
 {
-        Var *S1=NULL;
-        int ac;
-        Var **av;  
-        int *Result=(int *)calloc(1,sizeof(int));
-        Alist alist[2];
-        alist[0] = make_alist("string",         ID_UNK,         NULL,   &S1);
-        alist[1].name = NULL;
+    Var *S1=NULL;
+    int ac;
+    Var **av;  
+    int *Result=(int *)calloc(1,sizeof(int));
+    Alist alist[2];
+    alist[0] = make_alist("string",         ID_UNK,         NULL,   &S1);
+    alist[1].name = NULL;
 
-        make_args(&ac, &av, func, arg);
-        if (parse_args(ac, av, alist)) *Result=0;
+    make_args(&ac, &av, func, arg);
+    if (parse_args(ac, av, alist)) *Result=0;
  
-        else if (S1 == NULL){
-                *Result=0;
-        }
+    else if (S1 == NULL){
+        *Result=0;
+    }
 
-		  else if (V_TYPE(S1)==ID_TEXT){
-				*Result=V_TEXT(S1).Row;
-		  }
+    else if (V_TYPE(S1)==ID_TEXT){
+        *Result=V_TEXT(S1).Row;
+    }
 
-		  else if (V_TYPE(S1)==ID_STRING){
-				*Result=strlen(V_STRING(S1));
-		  }
+    else if (V_TYPE(S1)==ID_STRING){
+        *Result=strlen(V_STRING(S1));
+    }
 
-		  else {
-			parse_error("Invalid type");
-			return(NULL);
-		  }
+    else {
+        parse_error("Invalid type");
+        return(NULL);
+    }
 
-	return(newVal(BSQ,1,1,1, INT, Result));
+    return(newVal(BSQ,1,1,1, INT, Result));
 }
 
 
 Var *
 ff_issubstring(vfuncptr func, Var * arg)
 {
-	char *S1=NULL,*S2=NULL;
-        int ac;
-        Var **av;
-	int *Result=(int *)calloc(1,sizeof(int));
-        Alist alist[3];
-        alist[0] = make_alist("target",         ID_STRING,         NULL,   &S1);
-        alist[1] = make_alist("source",           ID_STRING,        NULL,        &S2);
-        alist[2].name = NULL;
+    char *S1=NULL,*S2=NULL;
+    int ac;
+    Var **av;
+    int *Result=(int *)calloc(1,sizeof(int));
+    Alist alist[3];
+    alist[0] = make_alist("target",         ID_STRING,         NULL,   &S1);
+    alist[1] = make_alist("source",           ID_STRING,        NULL,        &S2);
+    alist[2].name = NULL;
 
-        make_args(&ac, &av, func, arg);
-        if (parse_args(ac, av, alist)) *Result=0;
+    make_args(&ac, &av, func, arg);
+    if (parse_args(ac, av, alist)) *Result=0;
 
-	else if (S1 == NULL || S2 == NULL){
-		*Result=0;
-	}
+    else if (S1 == NULL || S2 == NULL){
+        *Result=0;
+    }
 
-	else if ((strstr(S1,S2))==NULL){
-		*Result=0;
-	}
-	else 
-		*Result=1;
+    else if ((strstr(S1,S2))==NULL){
+        *Result=0;
+    }
+    else 
+        *Result=1;
 
-	return(newVal(BSQ,1,1,1, INT, Result));
+    return(newVal(BSQ,1,1,1, INT, Result));
 }
 
 
@@ -1442,7 +1442,7 @@ ff_pow(vfuncptr func, Var * arg)
     if (ob1 == NULL) {
         parse_error("%s(), two objects required.", func->name);
         return (NULL);
-	}
+    }
     if (ob2 == NULL) {
         parse_error("%s(), second object not specified", func->name);
         return (NULL);
@@ -1581,7 +1581,7 @@ ff_hedit(vfuncptr func, Var * arg)
     HISTORY_STATE *state;
     char *tmp, *editor, buf[256];
 
-	 char *path=getenv("TMPDIR");
+    char *path=getenv("TMPDIR");
 
 #ifdef HAVE_LIBREADLINE
 
@@ -1638,8 +1638,8 @@ ff_resize(vfuncptr func, Var * arg)
     Var *obj;
     int x = 1,y = 1,z = 1;
     char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
-	char *org_str = NULL;
-	int org;
+    char *org_str = NULL;
+    int org;
 
     Alist alist[6];
     alist[0] = make_alist("obj",    ID_VAL,     NULL,     &obj);
@@ -1668,15 +1668,15 @@ ff_resize(vfuncptr func, Var * arg)
     }
 
 
-	if (org_str != NULL) {
-		if (!strcasecmp(org_str, "bsq")) org = BSQ;
-		else if (!strcasecmp(org_str, "xyz")) org = BSQ;
-		else if (!strcasecmp(org_str, "bil")) org = BIL;
-		else if (!strcasecmp(org_str, "xzy")) org = BIL;
-		else if (!strcasecmp(org_str, "bip")) org = BIP;
-		else if (!strcasecmp(org_str, "zxy")) org = BIP;
-		V_ORG(obj) = org;
-	}
+    if (org_str != NULL) {
+        if (!strcasecmp(org_str, "bsq")) org = BSQ;
+        else if (!strcasecmp(org_str, "xyz")) org = BSQ;
+        else if (!strcasecmp(org_str, "bil")) org = BIL;
+        else if (!strcasecmp(org_str, "xzy")) org = BIL;
+        else if (!strcasecmp(org_str, "bip")) org = BIP;
+        else if (!strcasecmp(org_str, "zxy")) org = BIP;
+        V_ORG(obj) = org;
+    }
 
     V_SIZE(obj)[orders[V_ORG(obj)][0]] = x;
     V_SIZE(obj)[orders[V_ORG(obj)][1]] = y;
@@ -1703,7 +1703,7 @@ ff_eval(vfuncptr func, Var * arg)
     Var **av;
     char *expr;
     FILE *fp;
-	char *buf;
+    char *buf;
 	
     Alist alist[2];
     alist[0] = make_alist("expr",    ID_STRING,     NULL,     &expr);
@@ -1716,13 +1716,13 @@ ff_eval(vfuncptr func, Var * arg)
         return(NULL);
     }
 	
-	/*
-	** gotta stick a newline terminator on the end
-	*/
-	buf = calloc(strlen(expr)+3, 1);
-	strcpy(buf, expr);
-	strcat(buf, "\n");
-	eval_buffer(buf);
+    /*
+    ** gotta stick a newline terminator on the end
+    */
+    buf = calloc(strlen(expr)+3, 1);
+    strcpy(buf, expr);
+    strcat(buf, "\n");
+    eval_buffer(buf);
 
     return(pop(scope_tos()));
 }
@@ -1735,11 +1735,11 @@ ff_syscall(vfuncptr func, Var * arg)
     char *expr;
     FILE *fp;
 
-	 Var *o;
-	 char **text;
-	 int Row=0;
-	 int Max=100;
-	 char *ptr;
+    Var *o;
+    char **text;
+    int Row=0;
+    int Max=100;
+    char *ptr;
 
     Alist alist[2];
     alist[0] = make_alist("command",    ID_STRING,     NULL,     &expr);
@@ -1752,42 +1752,42 @@ ff_syscall(vfuncptr func, Var * arg)
         return(NULL);
     }
 
-	if ((fp=popen(expr,"r"))==NULL)
-		return(NULL);
+    if ((fp=popen(expr,"r"))==NULL)
+        return(NULL);
 
-	text=(char **)calloc(Max,sizeof(char *));	
-	while(getline(&ptr, fp) != EOF) {
-		if (Row >=Max){
-			Max+=100;
-			if((text=realloc(text,(Max*sizeof(char *))))==NULL){
-				parse_error("Couldn't allocate large enough buffer to hold result");
-				return(NULL);
-			}
-		}
-		if (ptr[strlen(ptr)-1]=='\n')
-			ptr[strlen(ptr)-1]='\0'; /*Strip off \n from end of line*/
+    text=(char **)calloc(Max,sizeof(char *));	
+    while(getline(&ptr, fp) != EOF) {
+        if (Row >=Max){
+            Max+=100;
+            if((text=realloc(text,(Max*sizeof(char *))))==NULL){
+                parse_error("Couldn't allocate large enough buffer to hold result");
+                return(NULL);
+            }
+        }
+        if (ptr[strlen(ptr)-1]=='\n')
+            ptr[strlen(ptr)-1]='\0'; /*Strip off \n from end of line*/
 
-		text[Row]=strdup(ptr);
-		Row++;
-	}
+        text[Row]=strdup(ptr);
+        Row++;
+    }
 
-	pclose(fp);
+    pclose(fp);
 
-	o=newVar();
-	V_TYPE(o)=ID_TEXT;
-	V_TEXT(o).Row=Row;
-	V_TEXT(o).text=text;
+    o=newVar();
+    V_TYPE(o)=ID_TEXT;
+    V_TEXT(o).Row=Row;
+    V_TEXT(o).text=text;
 
-	return(o);
+    return(o);
 }
 		
 Var *
 ff_dump(vfuncptr func, Var * arg)
 {
-	Var *v;
+    Var *v;
     int ac, i, j; 
     Var **av;
-	int depth;
+    int depth;
 
     Alist alist[3];
     alist[0] = make_alist("object",    ID_VAL,     NULL,     &v);
@@ -1797,11 +1797,11 @@ ff_dump(vfuncptr func, Var * arg)
     make_args(&ac, &av, func, arg);
     if (parse_args(ac, av, alist)) return(NULL); 
  
-	if (v == NULL) return(NULL);
+    if (v == NULL) return(NULL);
 
-	dump_var(v, 0, 0);
+    dump_var(v, 0, 0);
 
-	return(NULL);
+    return(NULL);
 }
 
 
@@ -1811,11 +1811,11 @@ ff_dump(vfuncptr func, Var * arg)
 Var *
 ff_equals(vfuncptr func, Var * arg)
 {
-	Var *v1 = NULL, *v2 = NULL, *v, *e;
+    Var *v1 = NULL, *v2 = NULL, *v, *e;
     int ac, i, j; 
     Var **av;
     Alist alist[3];
-	char *data;
+    char *data;
 
     alist[0] = make_alist("obj1",    ID_UNK,     NULL,     &v1);
     alist[1] = make_alist("obj2",    ID_UNK,     NULL,     &v2);
@@ -1824,105 +1824,99 @@ ff_equals(vfuncptr func, Var * arg)
     make_args(&ac, &av, func, arg);
     if (parse_args(ac, av, alist)) return(NULL); 
 
-	if ((e = eval(v1)) != NULL) v1 = e;
-	if ((e = eval(v2)) != NULL) v2 = e;
+    if ((e = eval(v1)) != NULL) v1 = e;
+    if ((e = eval(v2)) != NULL) v2 = e;
 
-	data = calloc(1,1);
-	data[0] = compare_vars(v1,v2);
-	v = newVal(BSQ, 1, 1, 1, BYTE, data);
-	return(v);
+    data = calloc(1,1);
+    data[0] = compare_vars(v1,v2);
+    v = newVal(BSQ, 1, 1, 1, BYTE, data);
+    return(v);
 }
 
 int
 compare_vars(Var *a, Var *b)
 {
-	int i;
-	int x1, y1, z1;
-	int x2, y2, z2;
-	int rows, format;
+    int i;
+    int x1, y1, z1;
+    int x2, y2, z2;
+    int rows, format;
 
-	if (a == NULL || b == NULL) return(0);
-	if (V_TYPE(a) != V_TYPE(b)) return(0);
+    if (a == NULL || b == NULL) return(0);
+    if (V_TYPE(a) != V_TYPE(b)) return(0);
 
-	switch (V_TYPE(a)) {
-	case ID_STRUCT:
-		if (V_STRUCT(a).count != V_STRUCT(b).count) return(0);
-		for (i = 0 ; i < V_STRUCT(a).count ; i++) {
-			if (compare_vars(V_STRUCT(a).data[i], V_STRUCT(b).data[i]) == 0) {
-				return(0);
-			}
-		}
-		return(1);
+    switch (V_TYPE(a)) {
+    case ID_STRUCT:
+        return(compare_struct(a, b));
 		
-	case ID_TEXT:
-		if (V_TEXT(a).Row != V_TEXT(b).Row) return(0);
-		rows = V_TEXT(a).Row;
-		for (i = 0 ; i < rows ; i++) {
-			if (strcmp(V_TEXT(a).text[i], V_TEXT(b).text[i])) {
-				return(0);
-			}
-		}
-		return(1);
+    case ID_TEXT:
+        if (V_TEXT(a).Row != V_TEXT(b).Row) return(0);
+        rows = V_TEXT(a).Row;
+        for (i = 0 ; i < rows ; i++) {
+            if (strcmp(V_TEXT(a).text[i], V_TEXT(b).text[i])) {
+                return(0);
+            }
+        }
+        return(1);
 
-	case ID_STRING:
-		if (strcmp(V_STRING(a), V_STRING(b))) {
-			return(0);
-		}
-		return(1);
+    case ID_STRING:
+        if (strcmp(V_STRING(a), V_STRING(b))) {
+            return(0);
+        }
+        return(1);
 
-	case ID_VAL:
-		/*
-		** pp_math will give us an answer,
-		** but will also let us use smaller sets.
-		** Verify that these are the same size first
-		*/
-		x1 = GetSamples(V_SIZE(a), V_ORG(a));
-		y1 = GetLines(V_SIZE(a), V_ORG(a));
-		z1 = GetBands(V_SIZE(a), V_ORG(a));
+    case ID_VAL:
+        /*
+        ** pp_math will give us an answer,
+        ** but will also let us use smaller sets.
+        ** Verify that these are the same size first
+        */
+        x1 = GetSamples(V_SIZE(a), V_ORG(a));
+        y1 = GetLines(V_SIZE(a), V_ORG(a));
+        z1 = GetBands(V_SIZE(a), V_ORG(a));
 
-		x2 = GetSamples(V_SIZE(b), V_ORG(b));
-		y2 = GetLines(V_SIZE(b), V_ORG(b));
-		z2 = GetBands(V_SIZE(b), V_ORG(b));
+        x2 = GetSamples(V_SIZE(b), V_ORG(b));
+        y2 = GetLines(V_SIZE(b), V_ORG(b));
+        z2 = GetBands(V_SIZE(b), V_ORG(b));
 
-		if (x1 != x2 || y1 != y2 || z1 != z2) {
-			return(0);
-		}
+        if (x1 != x2 || y1 != y2 || z1 != z2) {
+            return(0);
+        }
 
-		format = max(V_FORMAT(a), V_FORMAT(b));
+        format = max(V_FORMAT(a), V_FORMAT(b));
 
-		for (i = 0 ; i < V_DSIZE(a) ; i++) {
-			switch(format) {
-				case BYTE:
-				case SHORT:
-				case INT:
-					if (extract_int(a,i) != extract_int(b,rpos(i,a,b)))
-						return(0);
-					break;
-				case FLOAT:
-					if (extract_float(a,i) != extract_float(b,rpos(i,a, b)))
-						return(0);
-					break;
-				case DOUBLE:
-					if (extract_double(a,i) != extract_double(b,rpos(i,a, b)))
-						return(0);
-					break;
-			}
-		}
-		return(1);
-	}
+        for (i = 0 ; i < V_DSIZE(a) ; i++) {
+            switch(format) {
+            case BYTE:
+            case SHORT:
+            case INT:
+                if (extract_int(a,i) != extract_int(b,rpos(i,a,b)))
+                    return(0);
+                break;
+            case FLOAT:
+                if (extract_float(a,i) != extract_float(b,rpos(i,a, b)))
+                    return(0);
+                break;
+            case DOUBLE:
+                if (extract_double(a,i) != extract_double(b,rpos(i,a, b)))
+                    return(0);
+                break;
+            }
+        }
+        return(1);
+    }
 }
 
 Var *
 newInt(int i)
 {
-	Var *v = newVal(BSQ, 1, 1,1, INT, calloc(1, sizeof(int)));	
-	V_INT(v) = i;
-	return(v);
+    Var *v = newVal(BSQ, 1, 1,1, INT, calloc(1, sizeof(int)));	
+    V_INT(v) = i;
+    return(v);
 }
 Var *
 newFloat(float f)
 {
-	Var *v = newVal(BSQ, 1, 1,1, FLOAT, calloc(1, sizeof(float)));	
-	V_FLOAT(v) = f;
-	return(v);
+    Var *v = newVal(BSQ, 1, 1,1, FLOAT, calloc(1, sizeof(float)));	
+    V_FLOAT(v) = f;
+    return(v);
 }
