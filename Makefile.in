@@ -41,7 +41,7 @@ READLINE_OBJ=@READLINE_OBJ@
 READLINE_LIB=@READLINE_LIB@
 
 #############################################################################
-CONFIG=Makefile.in configure.in configure config.h.in install-sh
+CONFIG=Makefile.in configure.in configure config.guess config.sub config.h.in install-sh
 DIST=README README_FF *.[chyl] ${CONFIG}
 DISTDIR=tests docs 
 
@@ -63,7 +63,7 @@ OBJ=p.o pp.o symbol.o \
 	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
 	x.o xrt_print_3d.o motif_tools.o ff_convolve.o apifunc.o \
 	ff_plplot.o ff_pca.o ff_loadvan.o tools.o header.o \
-	io_pds.o io_hdf.o ff_pbm.o @MODULE_SUPP_OBJS@
+	io_pds.o io_hdf.o ff_pbm.o ff_meta.o @MODULE_SUPP_OBJS@
 
 all:	@MAKEREAD@ davinci gplot
 
