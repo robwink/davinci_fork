@@ -775,6 +775,7 @@ char *
 cleanup_input(char *s)
 {
 	char *p;
+	if (!s || *s == 0) return(NULL);
 	while(s && *s && isspace(*s)) s++;
 	for (p = s+strlen(s)-1 ; p >= s && isspace(*p) ; *p-- = 0);
 	return(s);
