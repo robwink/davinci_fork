@@ -313,7 +313,7 @@ main(int ac, char **av)
     return(0);
 }
 
-#ifdef USE_X11_EVENTS
+#if defined(USE_X11_EVENTS) && defined(HAVE_LIBREADLINE)
 /* ARGSUSED */
 void get_file_input(XtPointer client_data, int *fid, XtInputId *id)
 {
@@ -337,7 +337,8 @@ void
 event_loop(void)
 {
     if (interactive) {
-#ifndef USE_X11_EVENTS
+#if !defined(USE_X11_EVENTS) || !defined(HAVE_LIBREADLINE)
+      /* JAS FIX */
 	lhandler((char *)readline("dv> "));
 #else 
         if (windows && getenv("DISPLAY") != NULL)  {
@@ -379,7 +380,8 @@ void lhandler(char *line)
     extern int pp_line;
     extern int pp_count;
 
-#ifndef USE_X11_EVENTS
+#if !defined(USE_X11_EVENTS) || !defined(HAVE_LIBREADLINE)
+    /* JAS FIX */
     while (1) {
 #endif
 
@@ -425,8 +427,8 @@ void lhandler(char *line)
             sprintf(prompt, "dv> ");
         }
 
-#ifdef USE_X11_EVENTS
-	/* JAS FIX: also check for defined(HAVE_LIBREADLINE) ? */
+#if defined(USE_X11_EVENTS) && defined(HAVE_LIBREADLINE)
+	/* JAS FIX */
 	rl_callback_handler_install(prompt, lhandler);
 #else
         line=(char *)readline(prompt);
@@ -539,7 +541,8 @@ quit(void)
 
     if (interactive) {
         printf("\n");
-#ifdef USE_X11_EVENTS
+#if defined(USE_X11_EVENTS) && defined(HAVE_LIBREADLINE)
+	/* JAS FIX */
         rl_callback_handler_remove();
 #endif
     }
@@ -547,7 +550,7 @@ quit(void)
     /**
     ** clean up temporary directory
     **/
-#ifndef __MSDOS__ /*Windows will cleanup it's own temp directory */
+#ifndef __MSDOS__ /*Windows will cleanup its own temp directory */
     sprintf(cmd, "rm -rf %s &", path);
     system(cmd);
 #endif
