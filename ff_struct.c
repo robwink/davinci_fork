@@ -392,7 +392,8 @@ create_struct(Var *v)
         r = eval(p);
         if (r == NULL) {
             parse_error("Unable to find variable: %s", V_NAME(p));
-            free_var(s);
+			/* DON'T FREE HERE!  The scope will get this */
+            /* free_var(s); */
             return(NULL);
         }
         tmp = V_DUP(r);
