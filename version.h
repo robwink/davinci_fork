@@ -1,8 +1,10 @@
-char *version = "@(#) daVinci Version #1.29";
+char *version = "@(#) daVinci Version #1.30";
 
 #include "build.h"
 
 /*
+Version 1.30: Tue Jun 29 23:03:41 MST 2004
+	* Fixed fit(type=linear) to avoid a complete duplication of the data
 
 Version 1.29: Fri Jun 25 14:11:55 MST 2004
 	* fixed another bug in global()
