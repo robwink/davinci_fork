@@ -71,16 +71,22 @@ Var *
 ff_mxm(vfuncptr func, Var * arg)
 {
     int i,j,k, x1, y1, z1, x2, y2, z2;
-    double *data;
     Var *ob1 = NULL, *ob2 = NULL;
     Var *v;
 
-    Alist alist[3];
-	alist[0] = make_alist("ob1",    ID_VAL,    NULL,       &ob1);
-	alist[1] = make_alist("ob2",    ID_VAL,    NULL,       &ob2);
-	alist[2].name = NULL;
+    Alist	alist[4];
+    char	*formats[] = { "float", "double", NULL };
+    char	*format = "double"; /* Default format */
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    double	*double_data;
+    float	*float_data;
+
+    alist[0] = make_alist("ob1", ID_VAL, NULL, &ob1);
+    alist[1] = make_alist("ob2", ID_VAL, NULL, &ob2);
+    alist[2] = make_alist("format", ID_ENUM, formats, &format);
+    alist[3].name = NULL;
+
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (ob1 == NULL || ob2 == NULL) {
         parse_error("%s(), two objects required.", func->name);
@@ -101,20 +107,43 @@ ff_mxm(vfuncptr func, Var * arg)
         return(NULL);
     }
 
-    data = (double *)calloc(y1*x2, sizeof(double));
-    v = newVal(BSQ, x2, y1, 1, DOUBLE, data);
+    if (!strcasecmp(format, "float")) {
 
-    for (j = 0 ; j < y1 ; j++) {
+      float_data = (float *) calloc(y1*x2, sizeof(float));
+      v = newVal(BSQ, x2, y1, 1, FLOAT, float_data);
+
+      for (j = 0 ; j < y1 ; j++) {
         for (i = 0 ; i < x2 ; i++) {
-            data[cpos(i,j,0,v)] = 0;
-            for (k = 0 ; k < x1 ; k++) {
-                data[cpos(i,j,0,v)] += 
-                    extract_double(ob1, cpos(k, j, 0, ob1)) * 
-                    extract_double(ob2, cpos(i, k, 0, ob2));
-            }
+	  float_data[cpos(i,j,0,v)] = 0;
+	  for (k = 0 ; k < x1 ; k++) {
+	    float_data[cpos(i,j,0,v)] += 
+	      extract_float(ob1, cpos(k, j, 0, ob1)) * 
+	      extract_float(ob2, cpos(i, k, 0, ob2));
+	  }
         }
+      }
+
     }
+    else { /* Double */
+
+      double_data = (double *) calloc(y1*x2, sizeof(double));
+      v = newVal(BSQ, x2, y1, 1, DOUBLE, double_data);
+
+      for (j = 0 ; j < y1 ; j++) {
+        for (i = 0 ; i < x2 ; i++) {
+	  double_data[cpos(i,j,0,v)] = 0;
+	  for (k = 0 ; k < x1 ; k++) {
+	    double_data[cpos(i,j,0,v)] += 
+	      extract_double(ob1, cpos(k, j, 0, ob1)) * 
+	      extract_double(ob2, cpos(i, k, 0, ob2));
+	  }
+        }
+      }
+
+    }
+
     return(v);
+
 }
 
 /**
