@@ -464,7 +464,7 @@ ac_includes_default="\
 ac_subdirs_all="$ac_subdirs_all readline"
 ac_subdirs_all="$ac_subdirs_all iomedley"
 ac_subdirs_all="$ac_subdirs_all libltdl"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM AWK SET_MAKE DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT CXX CXXFLAGS ac_ct_CXX CXXDEPMODE LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL MODULE_SUPPORT_TRUE MODULE_SUPPORT_FALSE X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS HAVE_LIBMAGICK_TRUE HAVE_LIBMAGICK_FALSE LIBOBJS subdirs LOCAL_READLINE_TRUE LOCAL_READLINE_FALSE LOCAL_VICAR_TRUE LOCAL_VICAR_FALSE LOCAL_IOMEDLEY_TRUE LOCAL_IOMEDLEY_FALSE MY_SUBDIRS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM AWK SET_MAKE DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT CXX CXXFLAGS ac_ct_CXX CXXDEPMODE LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL MODULE_SUPPORT_TRUE MODULE_SUPPORT_FALSE X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS HAVE_LIBMAGICK_TRUE HAVE_LIBMAGICK_FALSE LIBOBJS subdirs LOCAL_READLINE_TRUE LOCAL_READLINE_FALSE LOCAL_IOMEDLEY_TRUE LOCAL_IOMEDLEY_FALSE LOCAL_VICAR_TRUE LOCAL_VICAR_FALSE MY_SUBDIRS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -19709,14 +19709,6 @@ else
   MODULE_SUPPORT_FALSE=
 fi
 
-if test "x$enable_modules" != "xno"; then
-
-cat >>confdefs.h <<\_ACEOF
-#define BUILD_MODULE_SUPPORT 1
-_ACEOF
-
-	MY_SUBDIRS="$MY_SUBDIRS modules"
-fi
 
 # Check whether --enable-iomedley or --disable-iomedley was given.
 if test "${enable_iomedley+set}" = set; then
@@ -24041,39 +24033,6 @@ fi
 
 
 
-if test "x$enable_vicar" != "xno"; then
-
-	echo "$as_me:$LINENO: checking if local libvicar present" >&5
-echo $ECHO_N "checking if local libvicar present... $ECHO_C" >&6
-	if test -d vicar; then
-		echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-						CFLAGS="$CFLAGS -I$top_builddir/vicar"
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_LIBVICAR 1
-_ACEOF
-
-		MY_SUBDIRS="$MY_SUBDIRS vicar"
-		local_vicar=yes
-	else
-		echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-	fi
-
-fi
-
-
-if test x$local_vicar = xyes; then
-  LOCAL_VICAR_TRUE=
-  LOCAL_VICAR_FALSE='#'
-else
-  LOCAL_VICAR_TRUE='#'
-  LOCAL_VICAR_FALSE=
-fi
-
-
-
 if test "x$enable_iomedley" != "xno"; then
 
 	echo "$as_me:$LINENO: checking if local libiomedley present" >&5
@@ -24109,6 +24068,49 @@ else
   LOCAL_IOMEDLEY_FALSE=
 fi
 
+
+
+if test "x$enable_vicar" != "xno"; then
+
+	echo "$as_me:$LINENO: checking if local libvicar present" >&5
+echo $ECHO_N "checking if local libvicar present... $ECHO_C" >&6
+	if test -d vicar; then
+		echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+						CFLAGS="$CFLAGS -I$top_builddir/vicar"
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LIBVICAR 1
+_ACEOF
+
+		MY_SUBDIRS="$MY_SUBDIRS vicar"
+		local_vicar=yes
+	else
+		echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+	fi
+
+fi
+
+
+if test x$local_vicar = xyes; then
+  LOCAL_VICAR_TRUE=
+  LOCAL_VICAR_FALSE='#'
+else
+  LOCAL_VICAR_TRUE='#'
+  LOCAL_VICAR_FALSE=
+fi
+
+
+
+if test "x$enable_modules" != "xno"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define BUILD_MODULE_SUPPORT 1
+_ACEOF
+
+	MY_SUBDIRS="$MY_SUBDIRS modules"
+fi
 
 
 
@@ -24245,17 +24247,17 @@ echo "$as_me: error: conditional \"LOCAL_READLINE\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${LOCAL_VICAR_TRUE}" && test -z "${LOCAL_VICAR_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"LOCAL_VICAR\" was never defined.
-Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"LOCAL_VICAR\" was never defined.
-Usually this means the macro was only invoked conditionally." >&2;}
-   { (exit 1); exit 1; }; }
-fi
 if test -z "${LOCAL_IOMEDLEY_TRUE}" && test -z "${LOCAL_IOMEDLEY_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"LOCAL_IOMEDLEY\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"LOCAL_IOMEDLEY\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${LOCAL_VICAR_TRUE}" && test -z "${LOCAL_VICAR_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"LOCAL_VICAR\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"LOCAL_VICAR\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -24867,10 +24869,10 @@ s,@LIBOBJS@,$LIBOBJS,;t t
 s,@subdirs@,$subdirs,;t t
 s,@LOCAL_READLINE_TRUE@,$LOCAL_READLINE_TRUE,;t t
 s,@LOCAL_READLINE_FALSE@,$LOCAL_READLINE_FALSE,;t t
-s,@LOCAL_VICAR_TRUE@,$LOCAL_VICAR_TRUE,;t t
-s,@LOCAL_VICAR_FALSE@,$LOCAL_VICAR_FALSE,;t t
 s,@LOCAL_IOMEDLEY_TRUE@,$LOCAL_IOMEDLEY_TRUE,;t t
 s,@LOCAL_IOMEDLEY_FALSE@,$LOCAL_IOMEDLEY_FALSE,;t t
+s,@LOCAL_VICAR_TRUE@,$LOCAL_VICAR_TRUE,;t t
+s,@LOCAL_VICAR_FALSE@,$LOCAL_VICAR_FALSE,;t t
 s,@MY_SUBDIRS@,$MY_SUBDIRS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
