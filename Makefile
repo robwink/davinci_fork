@@ -1,7 +1,7 @@
 # Generated automatically from Makefile.in by configure.
 SHELL = /bin/sh
 
-CFLAGS=-g -O $(XINCLUDES)
+CFLAGS=-g $(XINCLUDES)
 
 srcdir = .
 

@@ -257,7 +257,7 @@ send_to_plot(char *s)
     return(1);
 }
 
-char 
+void 
 Find_Axis( char *R,Var *Obj)
 {
 	int axis=0;

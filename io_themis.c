@@ -1462,7 +1462,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
         printf("\n");
     }
 
-    free(newbuf);
+/*    free(newbuf); */
     free(data);
 	
     munmap(buf,old_len);
