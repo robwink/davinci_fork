@@ -233,7 +233,7 @@ ff_interp.o: ff_interp.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
 ff_projection.o: ff_projection.c parser.h config.h system.h darray.h \
  avl.h ff_modules.h ufunc.h scope.h func.h \
- /usr/local/include/projects.h /usr/local/include/my_list.h
+ /usr/local/include/projects.h
 lexer.o: lexer.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h y_tab.h
 parser.o: parser.c parser.h config.h system.h darray.h avl.h \
