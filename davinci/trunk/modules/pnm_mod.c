@@ -138,8 +138,10 @@ static Var *
 ff_pnmscale(vfuncptr f, Var *args)
 {
     Var *obj = NULL;
-    int xsize, ysize = MAXINT; // Max makes checking
-    float xscale, yscale = MAXFLOAT;   // optionals easier
+    int xsize = MAXINT;
+    int ysize = MAXINT;
+    float xscale = MAXFLOAT;
+    float yscale = MAXFLOAT;
 
     Alist alist[6];
     alist[0] = make_alist("object", ID_VAL, NULL, &obj);
@@ -428,7 +430,6 @@ Var *pnmpad(Var *obj, int color, int left, int right, int top, int bottom)
 {
     int x,y,z    = 0;
     int nx,ny    = 0;
-    int nbytes   = 0;
     Var* output  = NULL;
     void* data   = NULL;
 
@@ -439,7 +440,6 @@ Var *pnmpad(Var *obj, int color, int left, int right, int top, int bottom)
     ny = y + (top+bottom);
 
     output            = newVar();
-    nbytes            = NBYTES(V_FORMAT(obj));
     V_TYPE(output)    = V_TYPE(obj);   
     V_DSIZE(output)   = (nx * ny * z);
     V_ORG(output)     = V_ORG(obj);
@@ -511,16 +511,16 @@ static Var *scale_doit(Var* obj, int x, int y, int z, int newcols, int newrows)
 
     output         = newVar();
 
-    V_TYPE(output) = V_TYPE(obj);   
-    V_DATA(output) = calloc(GetNBytes(obj), (newcols * newrows * z) ); 
-
-    V_DSIZE(output)     = (newcols * newrows * z);
+    V_TYPE(output)   = V_TYPE(obj);   
+    V_DSIZE(output)  = (newcols * newrows * z);
+    V_ORG(output)    = V_ORG(obj);
+    V_FORMAT(output) = V_FORMAT(obj);
+    V_DATA(output)   = calloc(NBYTES(V_FORMAT(obj)), (newcols * newrows * z));
 
     if (!size_object(output, newcols, newrows, z))
 	    return(NULL);
 
-    V_ORDER(output)     = V_ORG(obj);
-    V_FORMAT(output)    = V_FORMAT(obj);
+    return(output);
 }
 
 static int fill_object_with_pad_color(int nx, int ny, int z, 
