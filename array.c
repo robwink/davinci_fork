@@ -120,6 +120,7 @@ extract_array(Var *v, Range *r)
     return(out);
 }
 
+/*
 Var *
 subset(Var *v, 
 		int xlo, int xhi, int xskip,
@@ -128,6 +129,7 @@ subset(Var *v,
 {
 	
 }
+*/
 
 
 Var *

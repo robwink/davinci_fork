@@ -283,6 +283,7 @@ cpos(int x, int y, int z, Var *v)
     ** should never get here.
     return(out[0] + V_SIZE(v)[0] * (out[1] + out[2] * V_SIZE(v)[1]));
     **/
+    return(0);
 }
 
 void

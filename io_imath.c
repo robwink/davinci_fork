@@ -13,7 +13,6 @@ int
 is_imath(FILE *fp)
 {
     char buf[256];
-    int size,size2;
 
     /**
     ** Get record size.
@@ -32,8 +31,7 @@ Var *
 Load_imath(FILE *fp, char *filename, struct _iheader *s)
 {
     char buf[256];
-    int size1,size2;
-    double *data, t;
+    double *data;
     struct _iheader h;
     int i,j, k;
     Var *v;

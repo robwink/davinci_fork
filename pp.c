@@ -208,7 +208,7 @@ pp_set_var(Var *id, Var *range, Var *exp)
 {
     Var *v, *e;
     int i,j,k;
-    int size[3], s1,s2,s3,d1,d2,d3, od[3], os[3], d, s;
+    int size[3],  d, s;
     Range *r, rout;
 
     /**
@@ -683,8 +683,7 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
 {
     Var *s,*e;
 
-    int i,j,k;
-    int format;
+    int i,k;
     double d1,d2;
     char *ptr;
 
@@ -744,7 +743,6 @@ pp_relop(Var *exp1, int op, Var *exp2)
     int i,j,k;
     int format;
     double d1,d2;
-    char *ptr;
 
     if (exp1 == NULL || exp2 == NULL) return(NULL);
 
@@ -895,12 +893,10 @@ pp_shell(char *cmd)
 Var *
 pp_set_where(Var *id, Var *where, Var *exp) 
 {
-    Var *v, *e;
+    Var *v;
     int i,j,k, l;
-    int size[3], s1,s2,s3,d1,d2,d3, od[3], os[3], d, s;
-    Range *r, rout;
-	int ival, dsize, format;
-	double dval;
+    int ival, dsize, format;
+    double dval;
 
     /**
     ** If exp is named, it is a simple variable substitution.

@@ -367,7 +367,6 @@ LoadVicarHeader(FILE *fp, char *filename, int rec, char *element, Var **var)
 	Var *v= NULL;
     char *p, *q, *str;
     int s = 0;
-    int i;
 
     rewind(fp);
 

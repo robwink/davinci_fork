@@ -228,11 +228,10 @@ ff_bop(vfuncptr func, Var * arg)
     int i;
     int order;
     Var *val, *t, *a, *b;
-    void *data;
     int count;
     int va, vb;
     int ca = 1, cb = 1;
-	double v1, v2, r;
+	double v1, v2;
 	double *ddata;
 	ddfunc fptr;
 
@@ -564,7 +563,7 @@ ff_dim(vfuncptr func, Var * arg)
 Var *
 ff_format(vfuncptr func, Var * arg)
 {
-	Var *e, *v, *s, *object;
+	Var *v, *s, *object;
 	char *ptr;
 
 	struct keywords kw[] =
@@ -1055,7 +1054,7 @@ KwToFloat(char *name, struct keywords *kw, float *val)
 Var *
 ff_cat(vfuncptr func, Var * arg)
 {
-	Var *v, *s, *e;
+	Var *v;
 	Var *ob1, *ob2;
 	char *ptr;
 	int axis;
@@ -1105,7 +1104,7 @@ ff_cat(vfuncptr func, Var * arg)
 Var *
 do_cat(Var * ob1, Var * ob2, int axis)
 {
-	Var *v, *e, *s;
+	Var *e, *s;
 	int i, j;
 	int s1[3], s2[3];
 	void *data, *d1, *d2, *out;
@@ -1289,7 +1288,6 @@ Var *
 ff_string(vfuncptr func, Var * arg)
 {
 	Var *v, *s;
-	char *p;
 
 	if ((v = verify_single_arg(func, arg)) == NULL)
 		return (NULL);
@@ -1409,7 +1407,7 @@ ff_fsize(vfuncptr func, Var * arg)
 	if (parse_args(ac, av, alist)) return(NULL);
 
 	if (filename == NULL) {
-		fprintf(stderr, "%s: No filename specified\n", av[0]);
+		fprintf(stderr, "%s: No filename specified\n", (char *)av[0]);
 		return(NULL);
 	} else {
 		data = (int *)calloc(1, sizeof(int));
@@ -1473,7 +1471,6 @@ ff_hedit(vfuncptr func, Var * arg)
 	Var *value = NULL;
 	int ac, i, j, count = 0;
 	Var **av;
-	HIST_ENTRY *h;
 	HISTORY_STATE *state;
 	char *tmp, *editor, buf[256];
 
@@ -1527,7 +1524,7 @@ ff_hedit(vfuncptr func, Var * arg)
 Var *
 ff_resize(vfuncptr func, Var * arg)
 {
-	int ac, i, j, count = 0;
+	int ac, i, j;
 	Var **av;
 	Var *obj;
 	int x = 1,y = 1,z = 1;

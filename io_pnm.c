@@ -198,7 +198,6 @@ ReadPNMHeader(FILE *fp, char *filename, int *xout, int *yout,
 {
     char id,format;
     int x,y,z,count;
-    int i,j,k,d;
     int bitshift;
     int maxval;
     u_char *data;
@@ -262,11 +261,8 @@ ReadPNMHeader(FILE *fp, char *filename, int *xout, int *yout,
 Var *
 LoadPNM(FILE *fp, char *filename, struct _iheader *s)
 {
-    char id,format;
-    int x,y,z,count;
-    int i,j,k,d;
-    int bitshift;
-    int maxval;
+    int x,y,z;
+    int i;
     u_char *data;
     int bits;
 

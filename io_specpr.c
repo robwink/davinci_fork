@@ -477,7 +477,7 @@ LoadSpecprHeader(FILE *fp, char *filename, int rec, char *element, Var **val)
     struct _label label;
     struct _tlabel *tlabel;
     float *data;
-    Var *s, *v = NULL;
+    Var *v = NULL;
     int *ival = NULL;
     float *fval = NULL;
     char *tval = NULL;

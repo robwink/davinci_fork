@@ -21,15 +21,11 @@ void g_srandom(int);
 Var *
 ff_random(vfuncptr func, Var * arg)
 {
-    Var *s;
     int x = 1, y = 1, z = 1, seed = MAXINT;
-    void *data;
     float *fdata;
     int dsize;
     int i;
     char *ptr = NULL;
-
-    int (*f) (void);
 
     char *options[] = { "normal", "gaussian", "rand", "random", 
                         "mrand48", "drand48", "uniform", "rnoise", NULL};
