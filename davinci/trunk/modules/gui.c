@@ -3635,7 +3635,12 @@ gui_setXmStringTableFromNarray(const Widget widget,
 
   if (widget != NULL) {
     XtVaGetValues(widget, resourceName, &oldValue, NULL);
-    gui_freeStackPush(freeStack, oldValue);
+#if 0
+    /* FIX: this almost definitely needs to be freed. */
+    if (oldValue != NULL) {
+      gui_freeStackPush(freeStack, oldValue);
+    }
+#endif
   }
   else {
     oldValue = NULL;
