@@ -83,7 +83,7 @@ void user_sighandler(int data)
 #endif /* _WIN32 */
 
 void
-sighandler(int data)
+dv_sighandler(int data)
 {
     Scope *scope;
     char cmd[256];
@@ -107,7 +107,7 @@ sighandler(int data)
 #endif /* _WIN32 */
 
     case (SIGINT):
-    	signal(SIGINT, sighandler);
+    	signal(SIGINT, dv_sighandler);
 
         while ((scope = scope_tos()) != global_scope()) {
             dd_unput_argv(scope);
@@ -137,10 +137,10 @@ main(int ac, char **av)
     s = new_scope();
 
 #ifndef __MSDOS__
-    signal(SIGINT, sighandler); 
-    signal(SIGSEGV, sighandler);
+    signal(SIGINT, dv_sighandler); 
+    signal(SIGSEGV, dv_sighandler);
     signal(SIGPIPE, SIG_IGN);
-    signal(SIGBUS, sighandler);
+    signal(SIGBUS, dv_sighandler);
     signal(SIGUSR1, user_sighandler);
 #endif
 
