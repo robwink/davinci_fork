@@ -236,6 +236,7 @@ struct _vfuncptr vfunclist[] = {
     { "rtrim",          ff_rtrim,                 NULL},
 
     { "equals",         ff_equals,                 NULL},
+	 { "xplot",				ff_xplot,						NULL},
 
     { NULL,             NULL,                  NULL }
 };
