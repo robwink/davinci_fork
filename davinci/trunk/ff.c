@@ -1,6 +1,9 @@
 #include "ff.h"
 #include "apidef.h"
+
+#ifdef rfunc
 #include "rfunc.h"
+#endif
 
 /**
  ** V_func - find and call named function
@@ -16,7 +19,10 @@ V_func(char *name, Var * arg)
 	vfuncptr f;
 	UFUNC *uf, *locate_ufunc(char *);
 	APIDEFS *api;
+
+#ifdef rfunc
 	ArgsRegister *rf, *locate_rfunc(char *);
+#endif
 
 	/**
 	 ** Find and call the named function or its handler
@@ -27,9 +33,11 @@ V_func(char *name, Var * arg)
 		}
 	}
 
+#ifdef rfunc
 	if ((rf = locate_rfunc(name)) != NULL) {
 		return(dispatch_rfunc(rf, arg));
 	}
+#endif
 
 	/**
 	 ** No internal function match.  Check ufunc list

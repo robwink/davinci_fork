@@ -9,11 +9,11 @@
 void jfill_x(Var *, int , int , int , float *, float , int);
 void jfill_y(Var *, int , int , int , float *, float , int);
 void jfill_merge(float *, float *, float , int);
-void jfill_lr(Var *, int , int , int , float *, float , int);
+void jfill_lr(Var *, int , int , int , float *, float , int, int);
 void jfill_tb(Var *, int , int , int , float *, float , int);
 void jfill_tr(Var *, int , int , int , float *, float , int);
 void jfill_tl(Var *, int , int , int , float *, float , int);
-void jfill(float *data, int n, float fill, int radius);
+void jfill(float *data, int n, float fill, int radius, int wrap);
 
 /**
  ** ff_pause() - Get a line of input from the user
@@ -161,7 +161,7 @@ ff_ifill(vfuncptr func, Var * arg)
 {
     char *fname;
     Var *v, *ev, *obj;
-    int radius = 3;
+    int radius = 3, wrap=0;
     float fill = 0.0;
     float *data1, *data2, *data3, d;
 	int state=0;
@@ -170,12 +170,13 @@ ff_ifill(vfuncptr func, Var * arg)
 
 	int ac;
 	Var **av;
-	Alist alist[5];
+	Alist alist[6];
 	alist[0] = make_alist( "object",    ID_VAL, NULL, &obj);
 	alist[1] = make_alist( "fill",      FLOAT,  NULL, &fill);
 	alist[2] = make_alist( "radius",    INT,    NULL, &radius);
-	alist[3] = make_alist( "pass",      ID_STRING,    NULL, &pass);
-	alist[4].name = NULL;
+	alist[3] = make_alist( "wrap",      INT,    NULL, &wrap);
+	alist[4] = make_alist( "pass",      ID_STRING,    NULL, &pass);
+	alist[5].name = NULL;
 
 	make_args(&ac, &av, func, arg);
 	if (parse_args(ac, av, alist)) return(NULL);
@@ -209,12 +210,12 @@ ff_ifill(vfuncptr func, Var * arg)
 
 	if (strchr(pass, '1') && strchr(pass, '2')) {
 		jfill_tb(obj, width, height, depth, data2, fill, radius);
-		jfill_lr(obj, width, height, depth, data3, fill, radius);
+		jfill_lr(obj, width, height, depth, data3, fill, radius, wrap);
 		jfill_merge(data2, data3, fill, dsize);
 	} else if (strchr(pass, '1')) {
 		jfill_tb(obj, width, height, depth, data2, fill, radius);
 	} else if (strchr(pass, '2')) {
-		jfill_lr(obj, width, height, depth, data2, fill, radius);
+		jfill_lr(obj, width, height, depth, data2, fill, radius, wrap);
 	}
 
 	if ((strchr(pass, '3') || strchr(pass, '4')) &&
@@ -336,7 +337,7 @@ jfill_y(Var *obj, int width, int height, int depth, float *data,
 }
 
 void
-jfill_lr(Var *obj, int x, int y, int z, float *data, float fill, int radius)
+jfill_lr(Var *obj, int x, int y, int z, float *data, float fill, int radius, int wrap)
 {
     int i, j, k, *p;
     float m, *d;
@@ -353,7 +354,7 @@ jfill_lr(Var *obj, int x, int y, int z, float *data, float fill, int radius)
 				p[i] = cpos(i, j, k, obj);
 				d[i] = extract_float(obj, p[i]);
             }
-			jfill(d, x, fill, radius);
+			jfill(d, x, fill, radius, wrap);
 			for (i = 0; i < x; i++) {
 				data[p[i]] = d[i];
             }
@@ -378,7 +379,7 @@ jfill_tb(Var *obj, int x, int y, int z, float *data, float fill, int radius)
 				p[j] = cpos(i, j, k, obj);
 				d[j] = extract_float(obj, p[j]);
             }
-			jfill(d, y, fill, radius);
+			jfill(d, y, fill, radius, 0);
 			for (j = 0; j < y; j++) {
 				data[p[j]] = d[j];
             }
@@ -408,7 +409,7 @@ jfill_tr(Var *obj, int x, int y, int z, float *data, float fill, int radius)
 				p[j] = cpos(i+j, j, k, obj);
 				d[j] = extract_float(obj, p[j]);
 			}
-			jfill(d, j, fill, radius);
+			jfill(d, j, fill, radius,0);
 			for (l = 0 ; l < j ; l++) {
 				data[p[l]] = d[l];
 			}
@@ -420,7 +421,7 @@ jfill_tr(Var *obj, int x, int y, int z, float *data, float fill, int radius)
 				p[i] = cpos(i, j+i, k, obj);
 				d[i] = extract_float(obj, p[i]);
 			}
-			jfill(d, i, fill, radius);
+			jfill(d, i, fill, radius, 0);
 			for (l = 0 ; l < i ; l++) {
 				data[p[l]] = d[l];
 			}
@@ -451,7 +452,7 @@ jfill_tl(Var *obj, int x, int y, int z, float *data, float fill, int radius)
 				p[j] = cpos(i-j, j, k, obj);
 				d[j] = extract_float(obj, p[j]);
 			}
-			jfill(d, j, fill, radius);
+			jfill(d, j, fill, radius,0);
 			for (l = 0 ; l < j ; l++) {
 				data[p[l]] = d[l];
 			}
@@ -464,7 +465,7 @@ jfill_tl(Var *obj, int x, int y, int z, float *data, float fill, int radius)
 				p[i] = cpos(x-i-1, j+i, k, obj);
 				d[i] = extract_float(obj, p[i]);
 			}
-			jfill(d, i, fill, radius);
+			jfill(d, i, fill, radius,0);
 			for (l = 0 ; l < i ; l++) {
 				data[p[l]] = d[l];
 			}
@@ -494,13 +495,16 @@ jfill_merge(float *d1, float *d2, float fill, int dsize)
 }
 
 void
-jfill(float *data, int n, float fill, int radius)
+jfill(float *data, int n, float fill, int radius, int wrap)
 {
 	int i, j, x1, x2, state = 0;
 	float y1, y2, m, d;
+	int N = n;
 
-	for (i = 0 ; i < n ; i++) {
-		d = data[i];
+	if (wrap) N+=radius;
+
+	for (i = 0 ; i < N ; i++) {
+		d = data[i % n];
 		if (state == 0 && d != fill) {
 				y1 = d;
 				x1 = i;
@@ -521,7 +525,7 @@ jfill(float *data, int n, float fill, int radius)
 			}
 			m = (y2 - y1)/(x2-x1);
 			for (j = x1+1 ; j < x2 ; j++) {
-				data[j] = y1+m*(j-x1);
+				data[j % n] = y1+m*(j-x1);
 			}
 			x1 = x2;
 			y1 = y2;

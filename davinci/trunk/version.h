@@ -3,6 +3,10 @@ char *version = "@(#) daVinci Version #0.51";
 
 /*
 Version 0.51:
+    * modified grammar to streamline to ansi standard
+	+    you can subset return values and other subsets w/o prior assignment.
+
+Version 0.51:
     * added -w option to bypass connecting to X-server
 	* Modified [where] to allow arrays on rhs
 	* Modified [where] to allow disparate id[where] and expr objects
