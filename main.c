@@ -424,7 +424,7 @@ void lhandler(char *line)
         }
 
 #ifdef USE_X11_EVENTS
-	/* JAS FIX: also check for defined(HAVE_LIBREADLINE) ?
+	/* JAS FIX: also check for defined(HAVE_LIBREADLINE) ? */
 	rl_callback_handler_install(prompt, lhandler);
 #else
         line=(char *)readline(prompt);
@@ -766,7 +766,7 @@ init_history(char *fname)
     char buf[256];
     FILE *fp;
 
-    /* JAS FIX: what's up with the two empty if/endif below?
+    /* JAS FIX: what's up with the two empty if/endif below? */
 #ifdef HAVE_LIBREADLINE
 #endif
 
