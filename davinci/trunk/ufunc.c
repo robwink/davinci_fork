@@ -333,9 +333,10 @@ make_ufunc(Var *id, Var *args, Var *body)
 		perror(save_file);
         return(NULL);
     }
-    f->text = (char *)calloc(1, sbuf.st_size+1);
+    f->text = (char *)calloc(1, sbuf.st_size+1+8+strlen(f->name));
+	sprintf(f->text, "define %s ", f->name);
 	fp = fopen(save_file, "r");
-    fread(f->text, sbuf.st_size, 1, fp);
+    fread(f->text + strlen(f->text), sbuf.st_size, 1, fp);
 	fclose(fp);
 
 	unlink(save_file);

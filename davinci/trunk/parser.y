@@ -34,10 +34,11 @@ int log_it = 0;
 
 start
     : statement             { curnode = $$ = $1;  YYACCEPT; }
-    | error separator       
+    | error separator		
             { 
                 indent = 0; 
                 curnode = NULL; 
+				end_save();
                 YYACCEPT;
             }
     |
@@ -53,9 +54,10 @@ statement
     | command_statement            { $$ = $1; }
     | SHELL                        { $$ = pp_shell(yytext); }
     | QUIT                         { YYABORT; }
-    | FUNC_DEF separator           { $$ = NULL; list_funcs(); }
-    | FUNC_DEF { start_save(); } id '(' arglist ')' compound_statement {end_save(); }
-									{ save_ufunc($3, $5, $7);  $$ = NULL; }
+    | FUNC_DEF separator           { $$ = NULL; list_funcs(NULL); }
+    | FUNC_DEF id separator        { $$ = NULL; list_funcs($2); }
+    | FUNC_DEF id {start_save(); } '(' arglist ')' compound_statement 
+  								{ end_save(); save_ufunc($3, $5, $7);  $$ = NULL; }  
     ;
 
 command_statement
