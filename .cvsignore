@@ -21,7 +21,6 @@ isis2vicar
 config.h
 NOTES
 bison.simple
-motif_tools.h
 convert
 apifunc.c
 apidef.c.test
@@ -43,13 +42,8 @@ parser2.y
 data
 cassini-1
 test.cub
-motif_tools.c
 stamp
 parser2.tab.h
-xrt_print_3d.c
-xrt_print_3d.h
 gplot
-rfunc.c
 .dvlog
 davinci
-rfunc.h
