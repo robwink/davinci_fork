@@ -117,7 +117,7 @@ help.o:	help.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(DEFS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $*.c
 
 clean:
-	-rm -f *.o davinci dv core gplot TAGS config.cache config.h config.log $(MOD_SUPP_LIB)
+	-rm -f *.o davinci dv core gplot TAGS config.cache config.log $(MOD_SUPP_LIB)
 	-rm -f .dvlog */.dvlog .nfs* */.nfs* *~ */*~
 	-(cd readline && $(MAKE) clean)
 	-(cd lib && $(MAKE) clean)
