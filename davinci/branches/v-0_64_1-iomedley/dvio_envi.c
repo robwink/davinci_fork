@@ -7,7 +7,7 @@ dv_LoadENVI(FILE *fp, char *filename, struct iom_iheader *s)
   struct iom_iheader h;
   void *data;
   Var *v = NULL;
-  char hbuf[1024];
+  char hbuf[HBUFSIZE];
 
   if (iom_isENVI(fp) == 0) return NULL;
 

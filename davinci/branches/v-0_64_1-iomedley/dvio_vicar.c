@@ -62,6 +62,12 @@ dv_WriteVicar(Var *ob, char *filename, int force)
     int status;
 
     var2iom_iheader(ob, &h);
+
+	if (VERBOSE > 1){
+        fprintf(stderr, "Writing %s: %dx%dx%d VICAR file.\n",
+                filename, h.size[0], h.size[1], h.size[2]);
+	}
+
     status = iom_WriteVicar(filename, V_DATA(ob), &h, force);
     iom_cleanup_iheader(&h);
 
