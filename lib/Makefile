@@ -9,13 +9,13 @@ bindir = $(exec_prefix)/bin
 datadir = $(prefix)/lib
 mandir = $(prefix)/man/man1
 
-INSTALL = /usr/bin/install -c
+INSTALL = /u/gorelick/bin/install -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 
 CC     = gcc
-DEFS   = -I/usr/X11R6/include -DHAVE_CONFIG_H 
-LIBS   = -L/usr/X11R6/lib -lproj -lqmv -lltdl -ltermcap -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -lreadline -lcurses -ldl
+DEFS   = -I/usr/openwin/include -DHAVE_CONFIG_H 
+LIBS   = -L/usr/openwin/lib -lplplotFX -lproj -lqmv -lltdl -ltermcap -lmsss_vis -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -lreadline -lcurses -ldl
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<

@@ -479,3 +479,26 @@ my_realloc(void *ptr, int len)
 		return(realloc(ptr, len));
 	}
 }
+
+/*
+** Create a temporary file, using the nameing convention dujour 
+** Returns NULL if it can't figure one out.
+*/
+
+char *
+make_temp_file_path()
+{
+        int fd;
+		char pathbuf[256];
+        char *tmpdir = getenv("TMPDIR");
+
+        if (tmpdir == NULL) tmpdir = "/tmp";
+
+        sprintf(pathbuf, "%s/XXXXXX", tmpdir);
+        fd = mkstemp(pathbuf);
+        if (fd == -1) {
+                return(NULL);
+        }
+        close(fd);
+        return(strdup(pathbuf));
+}

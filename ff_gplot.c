@@ -69,8 +69,12 @@ ff_gplot(vfuncptr func, Var *arg)
 
     if (gplot_pfp == NULL) gplot_pfp = popen("gnuplot","w");
 
-    fname = tempnam(NULL,NULL);
-    fp = fopen(fname, "w");
+    fname = make_temp_file_path();
+    if (fname == NULL || (fp = fopen(fname, "w")) == NULL ) {
+        parse_error("%s: unable to open temp file", func->name);
+        if (fname) free(fname);
+        return(NULL);
+    }
 
     for (i = 0 ; i < V_DSIZE(object) ; i++) {
         switch (V_FORMAT(object)) {
@@ -130,8 +134,12 @@ ff_plot(vfuncptr func, Var *arg)
                 
                 type = V_FORMAT(v);
                 
-                fname = tempnam(NULL,NULL);
-                fp = fopen(fname, "w");
+				fname = make_temp_file_path();
+				if (fname == NULL || (fp = fopen(fname, "w")) == NULL ) {
+					parse_error("%s: unable to open temp file", func->name);
+					if (fname) free(fname);
+					return(NULL);
+				}
                 
                 s0 = V_SIZE(v)[0];
                 s1 = V_SIZE(v)[1] * V_SIZE(v)[0];
@@ -201,8 +209,12 @@ ff_splot(vfuncptr func, Var *arg)
                 if ((v= eval(s)) == NULL) v = s;
                 type = V_FORMAT(v);
                 
-                fname = tempnam(NULL,NULL);
-                fp = fopen(fname, "w");
+				fname = make_temp_file_path();
+				if (fname == NULL || (fp = fopen(fname, "w")) == NULL ) {
+					parse_error("%s: unable to open temp file", func->name);
+					if (fname) free(fname);
+					return(NULL);
+				}
                 
                 s0 = V_SIZE(v)[0];
                 s1 = V_SIZE(v)[1] * V_SIZE(v)[0];
@@ -444,8 +456,13 @@ ff_xplot(vfuncptr func, Var *arg)
 				    break;
 			    case ID_VAL:
 				    if (!(Sep)) {
-					    fname = tempnam(NULL, NULL);
-					    fp = fopen(fname, "w");
+
+						fname = make_temp_file_path();
+						if (fname == NULL || (fp = fopen(fname, "w")) == NULL ) {
+							parse_error("%s: unable to open temp file", func->name);
+							if (fname) free(fname);
+							return(NULL);
+						}
 				    }
 				    if ((v = eval(s)) == NULL)
 					    v = s;
@@ -473,8 +490,12 @@ ff_xplot(vfuncptr func, Var *arg)
 					    for (j = 0; j < Ord[Mode[1]]; j++) {
 
 						    if (Sep) {
-							    fname = tempnam(NULL, NULL);
-							    fp = fopen(fname, "w");
+								fname = make_temp_file_path();
+								if (fname == NULL || (fp = fopen(fname, "w")) == NULL ) {
+									parse_error("%s: unable to open temp file", func->name);
+									if (fname) free(fname);
+									return(NULL);
+								}
 						    }
 						    for (k = 0; k < Ord[Mode[0]]; k++) {
 							    CE[Mode[2]] = i;

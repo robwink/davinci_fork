@@ -194,8 +194,12 @@ lin_fit(Var *x, Var *y,int Row, int plot)
 	free(B);
 
 	if (plot) {
-		tmp = tempnam(NULL,NULL);
-		fp = fopen(tmp, "w");
+		tmp = make_temp_file_path();
+		if (tmp == NULL || (fp = fopen(tmp, "w")) == NULL ) {
+			parse_error("unable to open temp file");
+			if (tmp) free(tmp);
+			return(NULL);
+		}
 
 		for (i = 0 ; i < Row ; i++) {
 			fprintf(fp, "%g %g\n", data[i][0], data[i][1]);
@@ -280,8 +284,12 @@ dfit(Var *x, Var *y, Var *ip, char *fname,
     a[ma+1] = alamda;
 
     if (plot) {
-        tmp = tempnam(NULL,NULL);
-        fp = fopen(tmp, "w");
+		tmp = make_temp_file_path();
+		if (tmp == NULL || (fp = fopen(tmp, "w")) == NULL ) {
+			parse_error("unable to open temp file");
+			if (tmp) free(tmp);
+			return(NULL);
+		}
         for (i = 0 ; i < ndata ; i++) {
             fprintf(fp, "%g %g\n", data[0][i], data[1][i]);
         }
