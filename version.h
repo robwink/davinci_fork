@@ -7,6 +7,12 @@ char *version = "@(#) daVinci Version #0.79a";
 #include "build.h"
 
 /*
+Version 0.80:
+	* Made the INTFMT and REALFMT keyword values (in a VICAR
+	  file) default to the platform-defaults instead of the 
+	  standard-defaults (when they are not specified in the
+	  VICAR file).
+
 Version 0.79a: Fri Jun  8 20:29:21 MST 2001
 	* Someone overwrote with an old version of ff.h.  Fixed.
 
