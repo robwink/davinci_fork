@@ -1,5 +1,5 @@
 #include "parser.h"
-
+#include "help.h"
 /**
  ** This file contains routines to interact with the yacc grammar.
  **
@@ -9,6 +9,7 @@
  **/
 
 #define PRINTABLE_STR(s) ((s)? (s): "(null)")
+#define MODULE_HELP (const char*)"help"
 
 char *unescape(char *), *unquote(char *);
 
@@ -116,6 +117,13 @@ evaluate(Var * n)
     Var *p1 = NULL, *p2 = NULL, *p3 = NULL;
     Scope *scope = scope_tos();
     int type;
+
+    // Variables added for module help
+    int  subtopics = 0;
+    int  retval    = 0;
+    char module_help[BUFSIZ] = "\0";
+    char keyword[BUFSIZ]     = "pnm_mod\0";
+    char* input_line = NULL;
 
     if (n == NULL) return (NULL);
     type = V_TYPE(n);
@@ -324,7 +332,7 @@ evaluate(Var * n)
 				if (p2 && V_TYPE(p2) == ID_FUNCTION){
 					push(scope, pp_call_dv_module_func(V_FUNC(p2), p1));
 				}
-				else {
+				else  {
 					parse_error("Function dereference allowed for module variables only.");
 				}
 #else /* no module support */
@@ -488,7 +496,26 @@ evaluate(Var * n)
 			else if (p3 = search_in_list_of_loaded_modules(V_NAME(p1))) {
 				vfuncptr t;
 
-				if(t = find_module_func(&V_MODULE(p3), V_NAME(p2))){
+				// Support for help
+				if (strcmp((V_NAME(p2)), MODULE_HELP)==0)
+				{
+					sprintf(module_help, "docs/%s.gih", V_NAME(p3));
+				        retval = help(keyword, module_help, &subtopics);
+
+				        if (retval == H_FOUND)
+        				{
+				                input_line = cleanup_input(readline("Subtopic: "));
+
+				                if (strlen(input_line))
+						{
+				                        subtopics = 0;
+				                        sprintf(keyword, "%s %s\0",keyword,input_line);
+				                        retval = help(keyword, module_help, &subtopics);
+				                        // if (retval == H_FOUND) return(evaluate(n));
+                				}
+        				}
+				}
+				else if(t = find_module_func(&V_MODULE(p3), V_NAME(p2))){
 					p1 = newVar();
 					p1->value.function = t;
 					p1->type = ID_FUNCTION;
