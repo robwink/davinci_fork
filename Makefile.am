@@ -7,26 +7,23 @@
 
 ## FIX: put config.h.in, configure.ac, Makefile.am somewhere so make dist works?
 
+## DIST_SUBDIRS = config docs lib libltdl moddvmagick modules tests vicar win32
+EXTRA_DIST = README.modules README_FF docs gplot.c lexer.l lib moddvmagick parser.y push.skel tests win32
+## EXTRA_DIST = README.modules README_FF docs push.skel? shared_globals.c? tests win32
+
 if MODULE_SUPPORT
   MY_MODULES_LIB = libmodsupp.a
-  MY_MODULES_SUBDIR = modules
 endif
 
 if LOCAL_READLINE
   MY_READLINE_LDADD = readline/libreadline.a
-  MY_READLINE_SUBDIR = readline
 endif
 
 if LOCAL_IOMEDLEY
   MY_IOMEDLEY_LDADD = iomedley/libiomedley.a
-  MY_IOMEDLEY_SUBDIR = iomedley
 endif
 
-if LOCAL_VICAR
-  MY_VICAR_SUBDIR = vicar
-endif
-
-SUBDIRS = $(MY_READLINE_SUBDIR) $(MY_IOMEDLEY_SUBDIR) $(MY_VICAR_SUBDIR) $(MY_MODULES_SUBDIR) libltdl
+SUBDIRS = @MY_SUBDIRS@ libltdl
 
 bin_PROGRAMS = davinci
 

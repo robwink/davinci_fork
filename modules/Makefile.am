@@ -30,5 +30,15 @@ gui_la_SOURCES = gui.c \
 	widget_text.c widget_textfield.c widget_togglebutton.c \
 	widget_toplevelshell.c widget_transientshell.c \
 	widget_vicar.c
+	gui.h widget_arrowbutton.h widget_cascadebutton.h widget_command.h \
+	widget_drawnbutton.h widget_errordialog.h widget_fileselectionbox.h \
+	widget_form.h widget_frame.h widget_label.h widget_list.h \
+	widget_menubar.h widget_panedwindow.h widget_pushbutton.h \
+	widget_radiobox.h widget_rowcolumn.h widget_scale.h \
+	widget_scrollbar.h widget_scrolledlist.h widget_scrolledwindow.h \
+	widget_selectionbox.h widget_separator.h widget_textfield.h \
+	widget_text.h widget_togglebutton.h widget_toplevelshell.h \
+	widget_transientshell.h widget_vicar.h widget_xbaematrix.h
+
 gui_la_LDFLAGS = -module
 gui_la_LIBADD = $(MY_VICAR_LIBADD)
