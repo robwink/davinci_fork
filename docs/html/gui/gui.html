@@ -28,6 +28,11 @@
 	<li><a href="#contact">Contacting the Author</a></li>
       </ul>
 
+      <h3>Appendices:</h3>
+
+      <ul class="contents">
+	<li><a href="#wlist">List Widget</a></li>
+      </ul>
     </div>
 
     <h2 id="intro">Introduction</h2>
@@ -118,7 +123,7 @@ load_module(&quot;gui&quot;)
 	  <dt>gui.realize(widgetid)</dt>
 	  <dd>
 	    <p>Make the specified widget visible.  This recursively applies to all of the widget's children as well.</p>
-	    <p>It is best to create an configure the widget and all its children before realizing the outermost widget, to avoid display problems.</p>
+	    <p>It is best to create and configure the widget and all its children before realizing the outermost widget, to avoid display problems.</p>
 	  </dd>
 
 	  <dt>gui.addcallback(widgetid, callback, eval)</dt>
@@ -477,7 +482,7 @@ gui.realize(top)
 
       <p>If you place a layout manager widget--such as a <i>RowColumn</i>--inside another layout manager--such as a <i>Form</i>, it may not be possible to control the <i>Form</i> resources that the <i>RowColumn</i> widget inherits.</p>
       
-      <p>You may notice similar problems if you place a complex widget--such as the <i>VICAR</i> widget--inside a container/layout manager.  Some widgets provide their own frame and layout, and do not conform to other layout manager constraints.  These widgets work best when give their own window frame.</p>
+      <p>You may notice similar problems if you place a complex widget--such as the <i>VICAR</i> widget--inside a container/layout manager.  Some widgets provide their own frame and layout, and do not conform to other layout manager constraints.  These widgets work best when given their own window frame.</p>
 
       <h3>Memory Leaks</h3>
 
@@ -490,6 +495,23 @@ gui.realize(top)
     <div class="box">
 
       <p>If you have any questions/comments/bug reports, please send email to <a href="mailto:Jim.Stewart@asu.edu">Jim.Stewart@asu.edu</a>.</p>
+
+    </div>
+
+    <h2>Appendices</h2>
+
+    <div class="box">
+
+      <h3 id="wlist">List Widget</h3>
+
+      <p>The <i>List</i> widget uses a pseudo-resource to control its list items.  The real resources <code>items</code> and <code>itemCount</code> are not directly settable by the user (although you may read them).  To manipulate the item list, you must set the <code>itemList</code> resource.  The resource is a list of strings (Davinci <code>STRING</code>, <code>TEXT</code> or nameless <code>STRUCT</code>).</p>
+
+      <p>Example:</p>
+
+      <pre class="code">
+items = cat("item1", "item2", "item3", axis=y)
+list = gui.create("list", parentWidget, { itemList = items })
+</pre>
 
     </div>
 

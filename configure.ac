@@ -184,7 +184,7 @@ dnl Add modules subdir.
 
 if test "x$enable_modules" != "xno"; then
 	AC_DEFINE(BUILD_MODULE_SUPPORT, 1, [loadable module support])
-	MY_SUBDIRS="$MY_SUBDIRS modules"
+	MY_SUBDIRS="$MY_SUBDIRS modules modules/kjn"
 fi
 
 dnl FIX: this stuff can go away if libtool is used.
@@ -194,4 +194,4 @@ AC_SUBST(MY_SUBDIRS)
 dnl For libtool support.
 AC_CONFIG_SUBDIRS(libltdl)
 
-AC_OUTPUT([Makefile modules/Makefile vicar/Makefile])
+AC_OUTPUT([Makefile modules/Makefile modules/kjn/Makefile vicar/Makefile])
