@@ -1916,6 +1916,8 @@ ff_killchild(vfuncptr func, Var *arg)
 	pid=getpgrp();
 	pid=-pid;
 	kill(pid,SIGUSR1);
+#else
+	parse_error("Function not supported under DOS/Windows.");
 #endif /* _WIN32 */
 	return(NULL);
 }

@@ -1,5 +1,6 @@
 #include "parser.h"
 
+#define DV_DEFAULT_VIEWER "xv"
 
 Var *
 ff_display(vfuncptr func, Var *arg)
@@ -11,6 +12,7 @@ ff_display(vfuncptr func, Var *arg)
     int bands;
     char buf[256];
     int max,r,g,b;
+	char *viewer = NULL;
 
     struct keywords kw[] = {
 	{ "object", NULL },
@@ -99,7 +101,10 @@ ff_display(vfuncptr func, Var *arg)
 	}
 	fclose(fp);
     }
-    sprintf(buf, "xv %s &", fname);
+
+	viewer=getenv("DV_VIEWER");
+	if (viewer == NULL){ viewer=DV_DEFAULT_VIEWER; }
+    sprintf(buf, "%s %s &", viewer, fname);
     free(fname);
     system(buf);
 
