@@ -487,14 +487,17 @@ void rmrf(char *path)
 	char target[1024];
 
 	dir = opendir(path);
-	while((d = readdir(dir)) != NULL) {
-		if (strcmp(d->d_name, ".") && strcmp(d->d_name,"..")) {
-			sprintf(target, "%s/%s", path, d->d_name);
-			unlink(target);
-		}
-	}
-	closedir(dir);
-	rmdir(path);
+   /* eandres: Only delete it if it exists. */
+   if (dir != NULL) {
+	   while((d = readdir(dir)) != NULL) {
+	   	if (strcmp(d->d_name, ".") && strcmp(d->d_name,"..")) {
+	   		sprintf(target, "%s/%s", path, d->d_name);
+	   		unlink(target);
+	   	}
+	   }
+	   closedir(dir);
+	   rmdir(path);
+   }
 }
 
 /*
