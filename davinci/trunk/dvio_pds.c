@@ -513,7 +513,6 @@ ReadPDS(vfuncptr func, Var *arg)
 	Init_Obj_Table();
 
 	ob = (OBJDESC *)OdlParseLabelFile(fn, err_file,ODL_EXPAND_STRUCTURE, 0);
-
 	
 	Traverse_Tree(ob,v);
 
@@ -521,6 +520,8 @@ ReadPDS(vfuncptr func, Var *arg)
 
 	return(v);
 }
+
+
 int rf_QUBE(char *fn, Var *ob,char * val)
 {
 	FILE *fp;
