@@ -8,6 +8,7 @@
  *
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,7 +29,6 @@ extern int iom_isPNM(FILE *);
 extern int iom_GetGIFHeader(FILE *, char *, struct iom_iheader *);
 extern int iom_GetJPEGHeader(FILE *, char *, struct iom_iheader *);
 extern int iom_GetTIFFHeader(FILE *, char *, struct iom_iheader *);
-extern int iom_GetPNGHeader(FILE *, char *, struct iom_iheader *);
 
 #if 0
 extern int iom_GetPNMHeader(FILE *, char *, struct iom_iheader *);
@@ -37,7 +37,6 @@ extern int iom_GetPNMHeader(FILE *, char *, struct iom_iheader *);
 extern int iom_WriteGIF();
 extern int iom_WriteJPEG();
 extern int iom_WriteTIFF();
-extern int iom_WritePNG();
 
 #if 0
 extern int iom_WritePNM();
@@ -65,7 +64,6 @@ typedef struct {
 static const char *gif_extensions[]  = { "gif", NULL };
 static const char *jpeg_extensions[] = { "jpg", "jpeg", NULL };
 static const char *tiff_extensions[] = { "tif", "tiff", NULL };
-static const char *png_extensions[]  = { "png", NULL };
 
 #if 0
 static const char *pnm_extensions[]  = { "pnm", NULL };
@@ -73,11 +71,19 @@ static const char *ppm_extensions[]  = { "ppm", NULL };
 static const char *pgm_extensions[]  = { "pgm", NULL };
 #endif
 
+#ifdef HAVE_LIBPNG
+extern int iom_GetPNGHeader(FILE *, char *, struct iom_iheader *);
+extern int iom_WritePNG();
+static const char *png_extensions[]  = { "png", NULL };
+#endif
+
 static iom_io_interface	interfaces[] = {
   { "GIF",  gif_extensions,  iom_isGIF,  iom_GetGIFHeader,  iom_WriteGIF,  1 },
   { "JPEG", jpeg_extensions, iom_isJPEG, iom_GetJPEGHeader, iom_WriteJPEG, 1 },
   { "TIFF", tiff_extensions, iom_isTIFF, iom_GetTIFFHeader, iom_WriteTIFF, 2 },
+#ifdef HAVE_LIBPNG
   { "PNG",  png_extensions,  iom_isPNG,  iom_GetPNGHeader,  iom_WritePNG,  2 },
+#endif
 #if 0
   { "PNM",  pnm_extensions,  iom_isPNM,  iom_GetPNMHeader,  iom_WritePNM,  1 }, /* FIX: check maxbytes */
   { "PPM",  pnm_extensions,  iom_isPNM,  iom_GetPNMHeader,  iom_WritePPM,  1 },
@@ -86,7 +92,7 @@ static iom_io_interface	interfaces[] = {
   { NULL,   NULL,            NULL,       NULL,              NULL,          0 },
 };
 
-/* */
+/*********/
 
 Var *
 dv_LoadIOM(FILE *fp, char *filename, struct iom_iheader *s)

@@ -1,3 +1,4 @@
+#include "config.h"
 #include <errno.h>
 #include "parser.h"
 #include "dvio.h"
@@ -15,7 +16,11 @@ extern Swap_Big_and_Little(Var *);
 
 /* FIX: put these in a header */
 
+#ifdef HAVE_LIBPNG
 static unsigned char const *iom_filetypes[] = { "gif", "jpg", "jpeg", "tif", "tiff", "png", 0 };
+#else
+static unsigned char const *iom_filetypes[] = { "gif", "jpg", "jpeg", "tif", "tiff", 0 };
+#endif
 
 Var *
 ff_write(vfuncptr func, Var *arg)
