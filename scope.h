@@ -56,7 +56,7 @@ struct tag_Scope {
 Var * dd_get_argv(Scope *s, int n);
 void dd_put(Scope *s, char *name, Var *v);
 void dd_unput_argv(Scope *s);
-int dd_find(Scope *, char *);
+Var *dd_find(Scope *, char *);
 
 Scope *new_scope();
 void scope_push(Scope *);

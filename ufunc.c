@@ -97,7 +97,7 @@ load_function(char *filename)
 	char line[2048];
 	char *q;
 
-    UFUNC *f = NULL;
+    UFUNC *f = NULL, *f2 = NULL;
     Scope *scope;
     void *handle;
 	extern char *yytext;
@@ -105,6 +105,7 @@ load_function(char *filename)
 	FILE *fp;
 	void *parent_buffer;
 	extern int local_line;
+	extern char *pp_str;
 
     /**
      ** Get text from file
@@ -156,6 +157,25 @@ load_function(char *filename)
     f->name = strdup(name);
     f->text = buf;
     f->ready = 0;
+
+	/*
+	** Added 09/29/00, 
+	**
+	** See if the function we are replacing is exactly the same.
+	** If so, do nothing.
+	*/
+
+	if ((f2 = locate_ufunc(f->name)) != NULL) {
+		if (!strcmp(f->text, f2->text)) {
+			/*
+			** Functions are identical, move on.
+			*/
+			free(f->name);
+			free(f->text);
+			free(f);
+			return(NULL);
+		}
+	}
 
     /**
      ** should now find '( args )'.
@@ -261,6 +281,7 @@ load_function(char *filename)
 		line[q-p+1] = '\0';
 		if (debug) printf("%s", line);
 		handle = yy_scan_string(line);
+		pp_str = line;
 		pp_line++;
 		while(i = yylex()) {
 			j = yyparse(i, (Var *)yytext);
@@ -322,7 +343,7 @@ dispatch_ufunc(UFUNC *f, Var *arg)
      **/
     for ( p = arg ; p != NULL ; p=p->next) {
         if (V_TYPE(p) == ID_KEYWORD) {
-            if (dd_find(scope, V_NAME(p)) == 0) {
+            if (dd_find(scope, V_NAME(p)) == NULL) {
                 sprintf(error_buf, "Unknown keyword to ufunc: %s(... %s= ...)",
                         f->name, V_NAME(p));
                 parse_error(NULL);
