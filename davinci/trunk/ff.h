@@ -251,6 +251,9 @@ struct _vfuncptr vfunclist[] = {
 	 { "write_isis",	write_isis_planes,      NULL,NULL},
 
 /* */
+
+    { "shade",          ff_shade,              NULL },
+    { "fexists",        ff_exists,              NULL },
     { NULL,             NULL,                  NULL }
 };
 
