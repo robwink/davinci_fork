@@ -1,8 +1,21 @@
-char *version = "@(#) daVinci Version #1.17";
+char *version = "@(#) daVinci Version #1.20";
 
 #include "build.h"
 
 /*
+Version 1.20: Wed Dec 24 02:22:58 MST 2003
+	* Fixed embedded (){} in quotes for load_pds
+	* Fixed "first element looks like an int but rest are floats" in
+	  load_pds, when loading a sequence or set
+	* Moved over ff_source from -hstr to use dv_locate_file and new args
+
+Version 1.19: Tue Dec 23 15:12:00 MST 2003
+	* Modified event_loop to do Xt setup before processing streams,
+	  so that you can, for instance, load_module("gui") in your .dvrc.
+	  This also means that you don't have to be interactive to use Xt.
+
+Version 1.18: 
+	* Who knows?  Jim won't put in log messages.
 
 Version 1.17: Thu Dec  4 20:35:59 MST 2003
 	+ Converted to use automake, libtool, and modern autoconf.

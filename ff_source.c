@@ -43,9 +43,9 @@ push_input_file(char *name)
 
     if (name == NULL) {
         fptr = stdin;
-    } else if ((fptr = fopen(name, "rb")) == NULL) {
+    } else if ((fptr = fopen(name, "r")) == NULL) {
         if ((fname = dv_locate_file(name)) != NULL) {
-            fptr = fopen(fname, "rb");
+            fptr = fopen(fname, "r");
             free(fname);
         }
         if (fptr == NULL)  {
@@ -105,27 +105,31 @@ Var *
 ff_source(vfuncptr func, Var *arg)
 {
     char *p;
+	char *filename = NULL;
+	char *fname = NULL;
 
-    if (arg == NULL) {
-        return(NULL);
-    } else if (arg->next != NULL) {
-        sprintf(error_buf, "Too many arguments to function: %s()", func->name);
-        parse_error(NULL);
-        return(NULL);
-    }
-    if (V_TYPE(arg) != ID_STRING) {
-        sprintf(error_buf, "Invalid argument to function: %s()", func->name);
-        parse_error(NULL);
-        return(NULL);
-    }
+	Alist alist[2];
+	alist[0] = make_alist( "filename",    ID_STRING,    NULL,    &filename);
+	alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (filename == NULL) {
+		parse_error("%s: No filename specified.", func->name);
+		return(NULL);
+	}
     /**
      ** remove extra quotes from string.
      **/
-    p = V_STRING(arg);
+    p = filename;
     if (*p == '"') p++;
     if (strchr(p, '"')) *(strchr(p,'"')) = '\0';
 
-    push_input_file(p);
+	if ((fname = dv_locate_file(filename)) == NULL) {
+		parse_error("Cannot find file: %s\n", filename);
+		return(NULL);
+	}
+    push_input_file(fname);
 
     return(NULL);
 }
