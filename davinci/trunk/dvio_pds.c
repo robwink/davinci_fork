@@ -1516,7 +1516,7 @@ Var *WritePDS(vfuncptr func, Var * arg)
         return (NULL);
     }
 
-    if ((fname = dv_locate_file(filename)) == NULL) {
+    if ((fname = dv_locate_file(filename)) == (char*)NULL) {
         parse_error("%s: Unable to expand filename %s\n", func->name,
                     filename);
         return (NULL);
@@ -1670,7 +1670,7 @@ Var *ReadPDS(vfuncptr func, Var * arg)
         parse_error("%s: No filename specified\n", func->name);
         return (NULL);
     }
-    if ((fname = dv_locate_file(filename)) == NULL) {
+    if ((fname = dv_locate_file(filename)) == (char*)NULL) {
         parse_error("%s: Unable to expand filename %s\n", func->name,
                     filename);
         return (NULL);
