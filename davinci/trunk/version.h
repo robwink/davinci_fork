@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.99d";
+char *version = "@(#) daVinci Version #1.01";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,9 @@ char *version = "@(#) daVinci Version #0.99d";
 #include "build.h"
 
 /*
+Version 1.01: Wed Sep 18 15:30:40 MST 2002
+	+ Bug in io_isis.c, detached labels weren't working correctly.
+
 Version 0.99d: Wed Jun 26 17:33:23 MST 2002
 	+ merged everything together
 
