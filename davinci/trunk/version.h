@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.87c";
+char *version = "@(#) daVinci Version #0.88";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,12 +7,15 @@ char *version = "@(#) daVinci Version #0.87c";
 #include "build.h"
 
 /*
-Version 0.87b: Wed Mar 13 18:17:30  2002
-	+ structure addition
+
+Version 0.88: Thu Mar 21 12:27:50 MST 2002
+	* Added a working rf_HISTORY function to dvio_pds
+	* Added a working HISOTRY writer to WritePDS
 
 Version 0.87b: Wed Mar 13 18:17:30  2002
 	* Added some #defines for windows compile
 	* Replaced gplot with gnuplot for ff_plot
+	+ structure addition
 
 Version 0.87a: Fri Mar  8 13:24:12 MST 2002
 	* Bug in [where] for single valued rhs.
