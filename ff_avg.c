@@ -411,20 +411,8 @@ ff_findmin(vfuncptr func, Var * arg)
 Var *
 ff_convolve(vfuncptr func, Var * arg)
 {
-	Var *obj=NULL, *kernel=NULL, *v;
+	Var *obj=NULL, *kernel=NULL;
 	int norm=1;
-	float *data, val;
-	int *wt;
-
-	int dsize, i, j, k;
-	int a, b, c;
-	int x_pos, y_pos, z_pos;
-	int obj_x, obj_y, obj_z;
-	int kernel_x_center, kernel_x;
-	int kernel_y_center, kernel_y;
-	int kernel_z_center, kernel_z;
-	int x,y,z;
-
 
 	int ac;
 	Var **av;
@@ -444,7 +432,24 @@ ff_convolve(vfuncptr func, Var * arg)
 		parse_error("%s: No kernel specified\n", func->name);
 		return(NULL);
 	}
+	return(do_convolve(obj, kernel, norm));
+}
 
+
+Var *do_convolve(Var *obj, Var *kernel, int norm)
+{
+	Var *v;
+	float *data, val;
+	int *wt;
+
+	int dsize, i, j, k;
+	int a, b, c;
+	int x_pos, y_pos, z_pos;
+	int obj_x, obj_y, obj_z;
+	int kernel_x_center, kernel_x;
+	int kernel_y_center, kernel_y;
+	int kernel_z_center, kernel_z;
+	int x,y,z;
 	obj_x = GetSamples(V_SIZE(obj), V_ORG(obj));
 	obj_y = GetLines(V_SIZE(obj), V_ORG(obj));
 	obj_z = GetBands(V_SIZE(obj), V_ORG(obj));
