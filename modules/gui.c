@@ -2963,12 +2963,12 @@ dv_XGet(vfuncptr f, Var * args) {
   dvAllResources = 0;
   dvResourceList = NULL;
   alist[0] = make_alist("widgetid", INT, NULL, &dvWidgetId);
-  alist[1] = make_alist("resources", ID_UNK, NULL, &dvResourceList);
+  alist[1] = make_alist("resourcelist", ID_UNK, NULL, &dvResourceList);
   alist[2] = make_alist("all", INT, NULL, &dvAllResources);
   alist[3].name = NULL;
 
   if (parse_args(f, args, alist) == 0) {
-    parse_error("Usage: a = gui.get(widgetid [,all=0|1] [,resources=LIST])");
+    parse_error("Usage: a = gui.get(widgetid [,all=0|1] [,resourcelist=LIST])");
     return NULL;
   }
 
