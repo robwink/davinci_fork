@@ -505,8 +505,8 @@ LoadSpecprHeader(FILE *fp, char *filename, int rec, char *element, Var **val)
     }
     else if (!strcasecmp(element, "iscta")) ival = &label.iscta;
     else if (!strcasecmp(element, "isctb")) ival = &label.isctb;
-    else if (!strcasecmp(element, "jdatea")) ival = &label.iscta;
-    else if (!strcasecmp(element, "jdateb")) ival = &label.iscta;
+    else if (!strcasecmp(element, "jdatea")) ival = &label.jdatea;
+    else if (!strcasecmp(element, "jdateb")) ival = &label.jdateb;
     else if (!strcasecmp(element, "istb")) ival = &label.istb;
     else if (!strcasecmp(element, "isra")) ival = &label.isra;
     else if (!strcasecmp(element, "isdec")) ival = &label.isdec;
@@ -581,4 +581,126 @@ LoadSpecprHeader(FILE *fp, char *filename, int rec, char *element, Var **val)
     return(1);
 }
 
+Var *
+ff_loadspecpr(vfuncptr func, Var *arg)
+{
+    char *filename = NULL;
+    int record = -1;
+	FILE *fp;
+    
+    int ac;
+    Var **av;
+    Alist alist[12];
+    alist[0] = make_alist( "filename",  ID_STRING,  NULL,     &filename);
+    alist[1] = make_alist( "record",    INT,        NULL,     &record);
+    alist[2].name = NULL;
+    
+    make_args(&ac, &av, func, arg);
+    if (parse_args(ac, av, alist)) return(NULL);
+
+    if (filename == NULL) {
+        parse_error("No filename specified to load()");
+        return (NULL);
+    }
+    if (record < 0) {
+        parse_error("No record specified.");
+        return (NULL);
+    }
+    
+
+    if ((fp = fopen(filename, "r")) == NULL) {
+        parse_error("Unable to open file: %s\n", filename);
+        return(NULL);
+    }
+    return(LoadSpecprHeaderStruct(fp, filename, record));
+}
+
+/**
+ ** LoadSpecprHeader() - extract a specific header element from a specpr file
+ **/
+Var *
+LoadSpecprHeaderStruct(FILE *fp, char *filename, int rec)
+{
+    struct _label label;
+    struct _tlabel *tlabel;
+    float *data;
+    Var *v = NULL;
+    int *ival = NULL;
+    float *fval = NULL;
+    char *tval = NULL;
+    int range = 1;
+	int *iptr;
+	char date[9];
+
+    /**
+    ** Verify file type.
+    **/
+    if (!is_specpr(fp)) return(0); 
+
+    if (rec == 0) {
+        parse_error("header(): Must specify record for SpecPR file.");
+        return(1);
+    }
+
+    if (read_specpr(fileno(fp), rec, &label, (char **)&data) <= 0) {
+        sprintf(error_buf, "header(): record is SpecPR continuation record %s#%d", filename, rec);
+        parse_error(NULL);
+        return(1);
+    }
+    tlabel = (struct _tlabel *)&label;
+
+    if (check_bit(label.icflag,1)) {
+        /* text */
+        v = new_struct(0);
+        add_struct(v, "itext", newString((char *)data));
+        return(v);
+    } else {
+		char **mhist;
+
+        v = new_struct(0);
+        add_struct(v, "icflag",     newInt(label.icflag));
+        add_struct(v, "ititl",      newString(strndup(label.ititl, 40)));
+        add_struct(v, "usernm",     newString(strndup(label.usernm, 8)));
+		decode_time(label.iscta, date);
+        add_struct(v, "iscta",      newString(strdup(date)));
+		decode_time(label.isctb, date);
+        add_struct(v, "isctb",      newString(strdup(date)));
+		decode_date(label.jdatea, date);
+        add_struct(v, "jdatea",     newString(strdup(date)));
+		decode_date(label.jdateb, date);
+        add_struct(v, "jdateb",     newString(strdup(date)));
+        add_struct(v, "istb",       newInt(label.istb));
+        add_struct(v, "isra",       newInt(label.isra));
+        add_struct(v, "isdec",      newInt(label.isdec));
+        add_struct(v, "itchan",     newInt(label.itchan));
+        add_struct(v, "irmas",      newInt(label.irmas));
+        add_struct(v, "revs",       newInt(label.revs));
+		iptr = calloc(2, sizeof(int));
+		iptr[0] = label.iband[0];
+		iptr[1] = label.iband[1];
+        add_struct(v, "iband",      newVal(BSQ, 2, 1, 1, INT, iptr));
+        add_struct(v, "irwav",      newInt(label.irwav));
+        add_struct(v, "irespt",     newInt(label.irespt));
+        add_struct(v, "irecno",     newInt(label.irecno));
+        add_struct(v, "itpntr",     newInt(label.itpntr));
+        add_struct(v, "ihist",      newString(strndup(label.ihist, 60)));
+		mhist = calloc(4, sizeof(char *));
+		mhist[0] = strndup(label.mhist, 74);
+		mhist[1] = strndup(label.mhist+74, 74);
+		mhist[2] = strndup(label.mhist+148, 74);
+		mhist[3] = strndup(label.mhist+222, 74);
+        add_struct(v, "mhist",      newText(4, mhist));
+        add_struct(v, "nruns",      newInt(label.nruns));
+        add_struct(v, "siangl",     newInt(label.siangl));
+        add_struct(v, "seangl",     newInt(label.seangl));
+        add_struct(v, "sphase",     newInt(label.sphase));
+        add_struct(v, "iwtrns",     newInt(label.iwtrns));
+        add_struct(v, "itimch",     newInt(label.itimch));
+        add_struct(v, "xnrm",       newFloat(label.xnrm));
+        add_struct(v, "scatin",     newFloat(label.scatin));
+        add_struct(v, "timint",     newFloat(label.timint));
+        add_struct(v, "tempd",      newFloat(label.tempd));
+    }
+    return(v);
+}
 #endif

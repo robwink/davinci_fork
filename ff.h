@@ -73,7 +73,8 @@ struct _vfuncptr vfunclist[] = {
     { "load_ir",    ff_Frame_Grabber_Read, NULL},
     { "load_frame", ff_Frame_Grabber_Read, NULL},
     { "load_vis",   ff_GSE_VIS_Read,    NULL},
-    { "load_paci",  ff_PACI_Read,NULL},
+    { "load_paci",  ff_PACI_Read,       NULL},
+    { "load_specpr",ff_loadspecpr,      NULL},
 
     { "save",       ff_write,    NULL },
     { "write",      ff_write,    NULL },        /* an alias */
@@ -89,9 +90,9 @@ struct _vfuncptr vfunclist[] = {
     { "string",     ff_string,   NULL },
     { "delim",      ff_delim,    NULL },
     { "issubstring",ff_issubstring, NULL},
-    { "strlen",     ff_strlen,  NULL},
-    { "strstr",     ff_strstr,  NULL},
-     { "grep",      ff_grep,        NULL},
+    { "strlen",     ff_strlen,   NULL},
+    { "strstr",     ff_strstr,   NULL},
+    { "grep",       ff_grep,     NULL},
     
     { "rgb",        ff_rgb,      NULL },
     
@@ -115,8 +116,10 @@ struct _vfuncptr vfunclist[] = {
         /* Could implement avg, stddev, etc, by making ff_moment recognize 
            the third argument and only return the expected values */
     { "moment",     ff_moment,  NULL },   
-    { "avg",     ff_avg,        NULL },   
-    { "stddev",  ff_avg,        NULL },   
+    { "avg",     ff_avg2,        NULL },   
+    { "stddev",  ff_avg2,        NULL },   
+    { "avg2",    ff_avg,        NULL },   
+    { "stddev2", ff_avg,        NULL },   
     { "sum",     ff_avg,        NULL },   
     { "min",     ff_min,        NULL },   
     { "max",     ff_min,        NULL },   

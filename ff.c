@@ -1911,3 +1911,18 @@ compare_vars(Var *a, Var *b)
 		return(1);
 	}
 }
+
+Var *
+newInt(int i)
+{
+	Var *v = newVal(BSQ, 1, 1,1, INT, calloc(1, sizeof(int)));	
+	V_INT(v) = i;
+	return(v);
+}
+Var *
+newFloat(float f)
+{
+	Var *v = newVal(BSQ, 1, 1,1, FLOAT, calloc(1, sizeof(float)));	
+	V_FLOAT(v) = f;
+	return(v);
+}

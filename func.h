@@ -139,6 +139,7 @@ Var *iheader2var (struct _iheader *);
 void *read_qube_data(int, struct _iheader *);
 
 Var *LoadSpecpr(FILE *,char *,int );
+Var *LoadSpecprHeaderStruct(FILE *,char *,int );
 Var *LoadVicar (FILE *, char *, struct _iheader *);
 Var *LoadISIS (FILE *, char *, struct _iheader *);
 Var *LoadGRD(FILE *,char *, struct _iheader *);
@@ -292,6 +293,7 @@ Var *ff_jfill(vfuncptr func, Var *arg);
 Var *ff_pfill(vfuncptr func, Var *arg);
 Var *ff_bop(vfuncptr func, Var *arg);
 Var *ff_avg(vfuncptr func, Var *arg);
+Var *ff_avg2(vfuncptr func, Var *arg);
 Var *ff_basis(vfuncptr func, Var *arg);
 Var *ff_mxm(vfuncptr func, Var *arg);
 Var *ff_histogram(vfuncptr func, Var *arg);
@@ -348,6 +350,7 @@ Var *ff_pcs(vfuncptr func, Var *arg);
 Var *ff_corr_covar_and_scp(vfuncptr func, Var *arg);
 
 Var *ff_loadvan(vfuncptr func, Var *arg);
+Var *ff_loadspecpr(vfuncptr func, Var *arg);
 
 Alist make_alist(char *name, int type, void *limits, void *value);
 
@@ -397,3 +400,5 @@ Var *newText(int rows, char **text);
 Var *ff_rtrim(vfuncptr func, Var *arg);
 
 Var *ff_equals(vfuncptr func, Var *arg);
+Var * newInt(int i);
+Var * newFloat(float f);

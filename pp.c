@@ -361,16 +361,16 @@ pp_set_var(Var *id, Var *range, Var *exp)
         v = eval(exp);
         if (v != NULL) {
             exp = V_DUP(v);
-        }
+		}
         if (V_TYPE(exp) == ID_UNK) {
             parse_error("Variable not found: %s", V_NAME(exp));
             return(NULL);
         }
     } else if (mem_claim(exp) == NULL) {
-        /**
-        ** if we can't claim the memory, we can't use it.
-        **/
-        exp = V_DUP(exp);
+		/**
+		** if we can't claim the memory, we can't use it.
+		**/
+		exp = V_DUP(exp);
     }
 
     V_NAME(exp) = strdup(V_NAME(id));

@@ -1,10 +1,20 @@
-char *version = "@(#) daVinci Version #0.57a";
+char *version = "@(#) daVinci Version #0.59";
 
 /*
-Version 0.57a Thu Jun  1 09:16:56 MST 2000
+Version 0.59: Wed Jul 26 15:15:16 MST 2000
+	* Modifications to io_specpr
+	* Added ONE_AXIS and ANY_AXIS to newfunc
+	* This is really more of 0.57a
+
+Version 0.58 Thu Jun  1 09:16:56 MST 2000
 	*Have made several modifications to io_themis to increase
 		it's robusticity for reading corrupted datasets.
 	*Have also added more informational output to io_themis
+
+Version 0.57a: Mon Apr 24 16:00:26 MST 2000
+	* updated historam()
+	* made a fb for ff_min()
+	* enhanced ff_avg() to use 1 pass algorithm.
 
 Version 0.57: Thu Apr 20 15:00:49 MST 2000
 	* Modified structure subsetting to return the actual var, not a copy.

@@ -937,6 +937,9 @@
 
     dv> a = avg(object=data, axis=xy)
 
+ Note: The avg function uses a one-pass accumulator that can experience
+	   round off error with lots of numbers.
+
 ?functions stddev()
 ?stddev()
  stddev() - Compute standard deviation along specified axis
@@ -957,6 +960,8 @@
 
     dv> sigma = stddev(object=data, axis=xy)
 
+ Note: The stddev function uses a one-pass accumulator that can experience
+	   round off error with lots of numbers.
 
 ?functions sum()
 ?sum()

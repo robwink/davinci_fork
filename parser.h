@@ -28,6 +28,7 @@
 #include <ctype.h>
 #include <signal.h>
 
+#include "avl.h"
 
 #include "system.h"
 
@@ -122,8 +123,9 @@ struct _var {
 #define V_HISTORY(v) V_SYM(v)->history
 #define V_TITLE(v)   V_SYM(v)->title
 
-#define V_STRUCT(v)  (v)->value.vstruct
 #define V_TEXT(v)		(v)->value.textarray
+
+#define V_STRUCT(v)  (v)->value.vstruct
 
 #define newVar	(Var *)mem_malloc
 
@@ -197,6 +199,9 @@ struct _var {
 
 #define ID_CONSTRUCT    ID_BASE+57		/* Structure constructor */
 #define ID_DECONSTRUCT  ID_BASE+58		/* Structure deconstructor */
+
+#define ONE_AXIS  ID_BASE+59		/* argument options */
+#define ANY_AXIS  ID_BASE+60		/* argument options */
 
 
 
