@@ -1,11 +1,14 @@
-char *version = "@(#) daVinci Version #1.02";
+char *version = "@(#) daVinci Version #1.03";
 
 
 #include "build.h"
 
 /*
-Version 1.02: Fri Sep 20 18:30:36  2002
+Version 1.03: Fri Sep 20 18:30:36  2002
 	+ Cleaned the code for windows compile
+
+Version 1.02: Fri Sep 20 18:30:36  2002
+	+ environment variables were getting freed (that's bad)
 
 Version 1.01: Wed Sep 18 15:30:40 MST 2002
 	+ Bug in io_isis.c, detached labels weren't working correctly.
