@@ -253,6 +253,7 @@ Var *ff_ccount(vfuncptr func, Var *arg);
 Var *ff_nop(vfuncptr func, Var *arg);
 Var *ff_echo(vfuncptr func, Var *arg);
 Var *ff_filename(vfuncptr func, Var *arg);
+Var *ff_stringsubst(vfuncptr func, Var *arg);
 Var *ff_rgb(vfuncptr func, Var *arg);
 Var *ff_replicate(vfuncptr func, Var *arg);
 Var *ff_cat(vfuncptr func, Var *arg);
