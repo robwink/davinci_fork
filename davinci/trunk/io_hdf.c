@@ -4,7 +4,7 @@
 
 #ifdef HAVE_LIBHDF5
 
-#include "hdf5.h"
+#include <hdf5.h>
 Var *load_hdf5(hid_t parent);
 
 void

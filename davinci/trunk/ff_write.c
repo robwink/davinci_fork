@@ -1,8 +1,14 @@
 #include "parser.h"
-#include "config.h"
 
-#ifdef __MSDOS__
+#if    defined(HAVE_CONFIG_H)
+#include "config.h"
+#endif
+
+#ifdef _WIN32
+#include <io.h>
 extern Swap_Big_and_Little(Var *);
+#else
+#include <unistd.h>
 #endif
 
 /*

@@ -1,7 +1,7 @@
 #include "parser.h"
 #include "func.h"
 #include <sys/stat.h>
-#ifndef __MSDOS__
+#ifndef _WIN32
 #include <sys/mman.h>
 #endif
 
@@ -80,180 +80,6 @@ add_struct(Var *s, char *name, Var *exp)
 }
 
 
-Var *
-LoadVanilla(char *filename)
-{
-#ifdef __MSDOS__
-    extern unsigned char *mmap(void *, size_t , int, int , int , size_t );
-    extern void munmap(unsigned char *, int);
-    typedef	void*	caddr_t;
-#endif
- 
-    int fd;
-    struct stat sbuf;
-    int rows;
-    int cols;
-    int len;
-    int i, j, k;
-    int state;
-    char *buf, *p, **data, c;
-    int *type;
-    char **names;
-    Var *o, *v;
-
-    rows = cols = 0;
-    
-    if (stat(filename, &sbuf) != 0) {
-        parse_error("Unable to open file: %s\n", filename);
-        return(NULL);
-    }
-    if ((len = sbuf.st_size) == 0) return(NULL);
-
-    if ((fd= open(filename, O_RDONLY)) < 0) {
-        parse_error("Unable to open file: %s", filename);
-        return(NULL);
-    }
-    buf =  mmap(NULL, len+1, (PROT_READ | PROT_WRITE), MAP_PRIVATE, fd, 0);
-    close(fd);
-
-    /*
-    ** Remove trailing spaces and newlines
-    */
-    for (i = len - 1; i > 0 ; i--) {
-        if (isspace(buf[i])) {
-            buf[i] = ' ';
-            continue;
-        }
-        break;
-    }
-    if (i == 0) return(NULL);			/* empty file? */
-
-    /*
-    ** How many rows?
-    */
-    rows = 1;
-    for (i = 0 ; i < len ; i++) {
-        if (buf[i] == '\n') rows++;
-    }
-
-    /*
-    ** If we wanted to be nice to the user, we could allow them
-    ** to create an empty structure with one line of header, no data.
-    */
-    if (rows == 1) {
-        parse_error("No data in file: %s\n", filename);
-        munmap(buf, len);
-        return(NULL);
-    }
-
-    /*
-    ** How many columns?
-    */
-    p = buf;
-    while (*p != '\n') {
-        while (*p == ' ' || *p == '\t') p++;
-        while (!isspace(*p)) p++;
-        cols++;
-        while (*p == ' ' || *p == '\t') p++;
-    }
-
-
-    type = (int *)calloc(cols, sizeof(int));
-    data = (char **)calloc(rows*cols, sizeof(char *));
-    names = (char **)calloc(cols, sizeof(char *));
-    names[0] = strndup(buf, p-buf+1);
-
-    i = 0;
-    for (p = strtok(names[0], " \t\n") ; p && *p ; p = strtok(NULL, " \t\n")) {
-        names[i++] = p;
-    }
-
-    /*
-    ** Find each column and verify the format of each column
-    */
-
-    i = j = 0;
-    state = 0;
-    while (i < len) {
-        c = buf[i];
-        if (state == 0) {		/* reading spaces */
-            if (!isspace(c)) {
-                if (j == rows*cols) {
-                    parse_error("Too many values in file");
-                    break;
-                }
-                data[j++] = buf+i;
-                state = 1;
-            }
-        } else {                        /* reading !spaces */
-            if (isspace(c)) {
-                buf[i] = '\0';
-                state = 0;
-            }
-        }
-
-        /*
-        ** Update column type
-        */
-        if (j-1 > cols) {
-            k = (j-1) % cols;
-            if (isdigit(c) || c == '+' || c == '-')  type[k] |= 1;
-            else if (strchr("Ee.", c))               type[k] |= 2;
-            else if (!isspace(c))                    type[k] |= 4;
-        }
-
-        /*
-        ** verify we got enough columns per row
-        */
-        if (c == '\n' && (j % cols) != 0) {
-            parse_error("Ragged row in file: %s row %d\n", filename, j / cols);
-            break;
-        }
-        i++;
-    }
-
-    /* error condition */
-    if (i != len || j != rows*cols) {
-        fprintf(stderr, "Error condition\n");
-        munmap(buf, len);
-        free(data);
-        return(NULL);
-    }
-
-
-    o = new_struct(cols);
-
-    /*
-    ** Ok, we have each column in text.  Create the Var and convert the data
-    */
-    for (i = 0 ; i < cols ; i++) {
-        if (type[i] & 4) {			/* string */
-            char **out = (char **)calloc(rows, sizeof(char *));
-            char *zero;
-            for (j = 0 ; j < rows ; j++)  {
-                out[i] = strdup(data[(j*cols)+i]);
-            }
-            /* v = newString(1, cols, 1, out); */
-            zero = (char *)calloc(1,1);
-            v = newVal(BSQ, 1,1,1, BYTE, zero);
-        } else if (type[i] & 2) {	/* float */
-            float *out = (float *)calloc(rows, sizeof(float));
-            for (j = 0 ; j < rows ; j++)  {
-                out[i] = atof(data[(j*cols)+i]);
-            }
-            v = newVal(BSQ, 1, rows, 1, FLOAT, out);
-        } else if (type[i] & 1) {	/* int */
-            int *out = (int *)calloc(rows, sizeof(float));
-            for (j = 0 ; j < rows ; j++) {
-                out[i] = atoi(data[(j*cols)+i]);
-            }
-            v = newVal(BSQ, 1, rows, 1, INT, out);
-        }
-        add_struct(o, names[i], v);
-    }
-
-    return(o);
-}
 
 Var *
 ff_add_struct(vfuncptr func, Var * arg)
@@ -349,7 +175,7 @@ varray_subset(Var *v, Range *r)
         /*
         ** single occurance, just return the Var
         */
-        // s = V_DUP(V_STRUCT(v).data[r->lo[0]]);
+        /* s = V_DUP(V_STRUCT(v).data[r->lo[0]]); */
         get_struct_element(v, r->lo[0], NULL, &s);
     } else {
         s = new_struct(size);
@@ -513,6 +339,7 @@ compare_struct(Var *a, Var *b)
     return(1);
 }
 
+void
 get_struct_element(Var *v, int i, char **name, Var **data)
 {
     Narray_get(V_STRUCT(v), i, name, (void **)data);

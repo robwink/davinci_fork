@@ -226,6 +226,10 @@ pp_print_var(Var *v, char *name, int indent, int depth)
         printf("Text Buffer with %d lines of text\n", V_TEXT(v).Row);
         dump_var(v, indent+4, 10);
         break;
+	
+	case ID_MODULE:
+		pp_print_module_var(v);
+		break;
     }
 }
 

@@ -640,7 +640,7 @@ ff_convolve3(vfuncptr func, Var * arg)
 		    for (r=j-Center[Mode[1]];r<=j+Center[Mode[1]];r++){
 		      for (q=i-Center[Mode[0]];q<=i+Center[Mode[0]];q++){
 			/*Load Cache Block*/
-			if (q<0 || r <0 || s<0){ //Do a wrap check here in the furture
+			if (q<0 || r <0 || s<0){ /* Do a wrap check here in the furture */
 				cache[MajC*kOrd[Mode[1]]*kOrd[Mode[0]]+
 				      MidC*kOrd[Mode[0]]+
 				      MinC]=0;
@@ -685,7 +685,7 @@ ff_convolve3(vfuncptr func, Var * arg)
 		    MajC++;
 		  }
 		  Init_Cache=0;
-//		  View_Cache(cache,P,kOrd[Mode[2]],kOrd[Mode[1]],kOrd[Mode[0]]);
+/*		  View_Cache(cache,P,kOrd[Mode[2]],kOrd[Mode[1]],kOrd[Mode[0]]); */
 		}		
 			
 
@@ -697,7 +697,7 @@ ff_convolve3(vfuncptr func, Var * arg)
 		  for (r=j-Center[Mode[1]];r<=j+Center[Mode[1]];r++){
 		    for (q=i-Center[Mode[0]];q<=i+Center[Mode[0]];q++){
 			/*Load Portion of Cache Block*/
-			if (q<0 || r <0 || s<0){ //Do a wrap check here in the furture
+			if (q<0 || r <0 || s<0){ /* Do a wrap check here in the furture */
 				cache[P[0]+MidC*kOrd[Mode[0]]+MinC]=0;
 				Weight[P[0]+MidC*kOrd[Mode[0]]+MinC]=0;
 			}
@@ -739,7 +739,7 @@ ff_convolve3(vfuncptr func, Var * arg)
 		    }
 		    P[kOrd[Mode[2]]-1]=T;
 
-//		  View_Cache(cache,P,kOrd[Mode[2]],kOrd[Mode[1]],kOrd[Mode[0]]);
+/*		  View_Cache(cache,P,kOrd[Mode[2]],kOrd[Mode[1]],kOrd[Mode[0]]); */
 		}
 /*
 		val=0;

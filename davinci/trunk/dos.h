@@ -2,7 +2,39 @@
         header files, cuz parser.h is included everywhere!!*/
 
 #include <sys/timeb.h>
-#include "values.h"
+#include <limits.h>
+
+#ifndef _WIN32
+#include <values.h>
+#else /* _WIN32 */
+
+#ifndef MINSHORT
+#define MINSHORT SHRT_MIN
+#endif
+
+#ifndef MAXSHORT
+#define MAXSHORT SHRT_MAX
+#endif
+
+#ifndef MININT
+#define MININT   INT_MIN
+#endif
+
+#ifndef MAXINT
+#define MAXINT   INT_MAX
+#endif
+
+#include <float.h>
+
+#ifndef MINFLOAT
+#define MINFLOAT FLT_MIN
+#endif
+
+#ifndef MAXFLOAT
+#define MAXFLOAT FLT_MAX
+#endif
+
+#endif /* _WIN32 */
 
 #define F_OK    0
 #define PROT_READ       0x1             /* pages can be read */

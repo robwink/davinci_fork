@@ -12,7 +12,7 @@ void rl_callback_handler_remove();
 int yywrap ( void );
 
 #ifdef HAVE_LIBHDF5
-#include "hdf5.h"
+#include <hdf5.h>
 #endif
 
 #ifdef __cplusplus
@@ -72,6 +72,18 @@ void pp_set_cvar (Var *, Var *);	/* set control variable */
 Var *pp_get_cvar (char *);		/* get control variable */
 Var * pp_shell(char *cmd);
 void pp_print_struct(Var *v, int indent, int depth);
+int pp_compare(Var *a, Var *b);
+
+#ifdef BUILD_MODULE_SUPPORT
+/* Modules related functions */
+void pp_print_module_var(Var *mv);
+Var *pp_call_dv_module_func(vfuncptr f, Var *args);
+Var *search_in_list_of_loaded_modules(char *name);
+vfuncptr find_module_func(dvModule *m, char *name);
+Var *ff_load_dv_module(vfuncptr func, Var *arg);
+Var *ff_unload_dv_module(vfuncptr func, Var *arg);
+Var *ff_list_dv_modules(vfuncptr func, Var *arg);
+#endif
 
 Var *V_DUP (Var *);
 Var *set_array (Var *, Var *, Var *);
@@ -329,6 +341,8 @@ Var *ff_eval(vfuncptr func, Var *arg);
 
 Var *ff_add_struct(vfuncptr func, Var *arg);
 Var *ff_get_struct(vfuncptr func, Var *arg);
+void get_struct_element(Var *v, int i, char **name, Var **data);
+int get_struct_count(Var *v);
 
 
 #ifdef INCLUDE_API

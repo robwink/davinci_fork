@@ -1,9 +1,11 @@
 /*********************************** vicar.c **********************************/
 #include "parser.h"
 #include "io_vicar.h"
-#ifndef __MSDOS__
+#ifndef _WIN32
 #include <pwd.h>
 #endif
+
+#include <time.h>
 
 /**
  ** Vicar I/O routines
@@ -317,7 +319,7 @@ WriteVicar(Var *s, FILE *fp, char *filename)
     
 	{
 		time_t t = time(0);
-#ifndef __MSDOS__
+#ifndef _WIN32
 		sprintf(ptr+strlen(ptr),
             "HOST='SUN-SOLR'  INTFMT='HIGH'  REALFMT='IEEE'  BHOST='VAX-VMS'  BINTFMT='LOW'  BREALFMT='VAX'  BLTYPE=''  TASK='DAVINCI'  USER='%s'  DAT_TIM='%24.24s'", getpwuid(getuid())->pw_name, ctime(&t));
 #else

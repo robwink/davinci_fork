@@ -208,8 +208,8 @@ lin_fit(Var *x, Var *y,int Row, int plot)
 			send_to_plot(buf);
 		}
 
-//		strcpy(buf2, comment);
-//		p = strchr(buf2, '=');
+/*		strcpy(buf2, comment); */
+/*		p = strchr(buf2, '='); */
 		send_to_plot("set noparametric\n");
 		sprintf(buf, "plot \"%s\" using 1:2 with points, %s with lines\n", tmp, "a0+a1*x");
 		free(tmp);

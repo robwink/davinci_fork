@@ -1,4 +1,4 @@
-#ifndef __MSDOS__
+#ifndef _WIN32
 #include "config.h"
 #endif
 #ifdef HAVE_LIBMAGICK

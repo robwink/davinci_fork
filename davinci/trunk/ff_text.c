@@ -1,8 +1,11 @@
 #include "parser.h"
-#include <libgen.h>
 #include <sys/types.h>
+#include <stdlib.h>
 #include <regex.h>
 
+#if !defined(_WIN32) && !defined(_AIX)
+#include <libgen.h>
+#endif /* _WIN32 */
 
 extern char *__loc1; /*Global char * for regex */
 
@@ -606,15 +609,16 @@ ff_filename(vfuncptr func, Var * arg)
 Var *
 ff_grep(vfuncptr func, Var * arg)
 {
-
     Var *ob1;
     int ac;
     Var **av;
     Var *S;
-    char *s1=NULL,*newcursor=NULL,*ptr=NULL;
+    char *s1=NULL,*ptr=NULL;
+	int newcursor = 0;
     int count=0;
     int index=0;
     int i;
+	regex_t compiled;
     Alist alist[3];
     alist[0] = make_alist( "obj", ID_UNK,   NULL,     &ob1);
     alist[1] = make_alist( "pattern", ID_STRING,   NULL,     &s1);
@@ -631,10 +635,10 @@ ff_grep(vfuncptr func, Var * arg)
         return(NULL);	
     }
     /* Compile expression space */
-    ptr = regcmp(s1, (char *)0);
+    regcomp(&compiled, s1, REG_EXTENDED);
     for (i=0;i<V_TEXT(ob1).Row;i++){
-        newcursor = regex(ptr, V_TEXT(ob1).text[i]);/*Does pattern search using compiled space*/
-        if (newcursor!=NULL)
+        newcursor = regexec(&compiled, V_TEXT(ob1).text[i], 0, NULL, 0);
+        if (newcursor == 0)
             count++;
     }
 
@@ -648,12 +652,12 @@ ff_grep(vfuncptr func, Var * arg)
     V_TEXT(S).Row=count;
     V_TEXT(S).text=(char **)calloc(count,sizeof(char *));
     for (i=0;i<V_TEXT(ob1).Row;i++){
-        newcursor = regex(ptr, V_TEXT(ob1).text[i]);
-        if (newcursor!=NULL){
+        newcursor = regexec(&compiled, V_TEXT(ob1).text[i], 0, NULL, 0);
+        if (newcursor == 0){
             V_TEXT(S).text[index++]=strdup(V_TEXT(ob1).text[i]);
         }
     }
-	 free(ptr);
+	regfree(&compiled);
     return(S);
 }
 
@@ -1138,7 +1142,7 @@ ff_rtrim(vfuncptr func, Var *arg)
 
 	Alist alist[3];
 
-	Var *s;
+	Var *s = NULL;
 
 	alist[0] = make_alist( "obj", ID_UNK,   NULL,     &ob);
 	alist[1] = make_alist( "trim", ID_STRING,   NULL,     &trim);
@@ -1161,8 +1165,8 @@ ff_rtrim(vfuncptr func, Var *arg)
 		return(s);
 	}
 
-	else if (V_TYPE(ob)!=ID_TEXT){
-		parse_error("Rtrim only workds on strings or text_arrays");
+	if (V_TYPE(ob)!=ID_TEXT){
+		parse_error("Rtrim only works on strings or text_arrays");
 		return(NULL);
 	}
 	

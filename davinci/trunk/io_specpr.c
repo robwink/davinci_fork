@@ -638,13 +638,13 @@ LoadSpecprHeaderStruct(FILE *fp, char *filename, int rec)
 
     if (rec == 0) {
         parse_error("header(): Must specify record for SpecPR file.");
-        return(1);
+        return(NULL);
     }
 
     if (read_specpr(fileno(fp), rec, &label, (char **)&data) <= 0) {
         sprintf(error_buf, "header(): record is SpecPR continuation record %s#%d", filename, rec);
-        parse_error(NULL);
-        return(1);
+        parse_error(error_buf);
+        return(NULL);
     }
     tlabel = (struct _tlabel *)&label;
 

@@ -1,9 +1,15 @@
 #include "parser.h"
 #include "io_specpr.h"
 
-#ifndef __MSDOS__
+#ifdef _WIN32
+#include <io.h>
+#else
 #include <pwd.h>
-#endif
+#include <unistd.h>
+#endif /* _WIN32 */
+
+#include <stdlib.h>
+#include <sys/types.h>
 
 #ifdef LITTLE_E
 extern Swap_Big_and_Little(Var *);
@@ -348,7 +354,7 @@ read_qube_data(int fd, struct _iheader *h)
         /**
         ** byte swap 'em.
         **/
-        swab((const char *)data, (char *)data, dsize * NBYTES(h->format));
+        swab((char *)data, (char *)data, dsize * NBYTES(h->format));
     }
     /**
      **/
@@ -531,7 +537,7 @@ expand_filename(char *s)
             p = q;
 	
         }
-#ifndef __MSDOS__ 
+#ifndef _WIN32 
 	    else if (*p == '~' && p == s) { /* home directory expansion */
             q = p + 1;
             while (*q && (isalnum(*q) || *q == '_')) {

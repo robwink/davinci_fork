@@ -4,11 +4,18 @@
 #include <math.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#ifdef _WIN32
+#include <io.h>
+#else
 #include <sys/mman.h>
+#include <libgen.h>
+#endif /* _WIN32 */
+
 #include <fcntl.h>
 #include <ctype.h>
-#include <libgen.h>
 #include "parser.h"
+#include "system.h"
 
 
 #define MAX(a,b) (((a) > (b))? (a): (b))
@@ -23,7 +30,6 @@
 #define EFILE   -6 /* unable to open file -OR- input file problem */
 
 
-typedef unsigned char uchar;
 
 typedef enum {
     TINT,
