@@ -3,7 +3,7 @@
 
 #include "y_tab.h"
 
-#if defined(HAVE_LIBXM)
+#if defined(HAVE_LIBXT)
 #define USE_X11_EVENTS 1
 #endif
 
@@ -64,11 +64,16 @@ void init_history(char *fname);
 void process_streams(void);
 void event_loop(void);
 
+#include <readline/readline.h>
+char ** dv_complete_func(char *text, int start, int end);
+CPPFunction * rl_attempted_completion_function;
+
 #ifdef USE_X11_EVENTS
 void rl_callback_read_char();
 void rl_callback_handler_install(char *, void (char *));
-jmp_buf env;
 #endif
+
+jmp_buf env;
 
 void user_sighandler(int data)
 {
@@ -78,7 +83,6 @@ void user_sighandler(int data)
 void
 sighandler(int data)
 {
-/*    extern jmp_buf env;*/
     Scope *scope;
     char cmd[256];
     char *path = getenv("TMPDIR");
@@ -109,10 +113,6 @@ sighandler(int data)
     	longjmp(env, 1);
 
         break;
-
-
-
-
     }
 }
 
@@ -213,6 +213,10 @@ main(int ac, char **av)
                     quick = 1;
                     break;
                 }
+                case 'V':{
+                    dump_version();
+                    exit(1);
+                }
                 }
             }
             i += k;
@@ -249,6 +253,8 @@ main(int ac, char **av)
         log_time();
         if (quick == 0)
             init_history(logfile);
+
+		rl_attempted_completion_function = dv_complete_func; 
     }
     if (quick == 0) {
         sprintf(path, "%s/.dvrc", getenv("HOME"));
@@ -443,9 +449,11 @@ parse_buffer(char *buf)
     void *parent_buffer;
     void *buffer;
     Var *node;
+	extern char *pp_str;
 
     parent_buffer = get_current_buffer();
     buffer = yy_scan_string(buf);
+	pp_str = buf;
 
     while(i = yylex()) {
         /*
@@ -674,6 +682,7 @@ unquote(char *name)
 {
     char *p = name;
 
+	if (name == NULL) return(NULL);
     if (*name == '"') {
         p++;
         name++;
@@ -702,22 +711,24 @@ unescape(char *str)
     char *p = str;
     char *q = str;
 
-    while (*p) {
-        if (*p == '\\') {
-            if (*(p + 1) == 't')
-                *q = '\t';
-            else if (*(p + 1) == 'n')
-                *q = '\n';
-            else
-                *q = *(p + 1);
-            p++;
-        } else {
-            *q = *p;
-        }
-        p++;
-        q++;
-    }
-    *q = *p;
+	if (str) {
+		while (*p) {
+			if (*p == '\\') {
+				if (*(p + 1) == 't')
+					*q = '\t';
+				else if (*(p + 1) == 'n')
+					*q = '\n';
+				else
+					*q = *(p + 1);
+				p++;
+			} else {
+				*q = *p;
+			}
+			p++;
+			q++;
+		}
+		*q = *p;
+	}
     return (str);
 }
 
@@ -755,4 +766,12 @@ init_history(char *fname)
     }
 #endif
 }
+
+
+char **
+dv_complete_func(char *text, int start, int end)
+{
+	return(NULL);
+}
+
 
