@@ -131,6 +131,13 @@ struct _vfuncptr vfunclist[] = {
     { "ascii",      ff_ascii,    NULL },	
     { "read_ascii", ff_ascii,    NULL },
     { "read_text",  ff_text,     NULL },
+
+
+
+    {"popen",	ff_popen,	NULL},
+
+
+
     
 #if 0
     { "bbr",        ff_bbr,      NULL },    /* blackbody radiance   */
@@ -189,6 +196,7 @@ struct _vfuncptr vfunclist[] = {
     { "self_convolve",     ff_self_convolve,    NULL },
     { "convolve",      ff_convolve,     		NULL },
     { "convolve2",     ff_convolve2,     		NULL },
+    { "convolve3",     ff_convolve3,     		NULL },
 
 #ifdef HAVE_XM_XR3DT_H
     { "xrt3d",     	ff_xrt3d,    NULL },
