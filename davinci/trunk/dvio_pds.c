@@ -1812,7 +1812,7 @@ Scale(int size, void *ptr, FIELD *f)
 	 unsigned short *sp;
 	float *fp;
 	double *dp;
-	char num[9];
+	char num[256];	/* this was WAY too small at [9] */
 
 /*Set up pointer casts for our data type*/
 
@@ -1822,77 +1822,65 @@ Scale(int size, void *ptr, FIELD *f)
 	fp=ptr;
 	dp=ptr;
 
+    switch (f->eformat) {
+    case MSB_INTEGER:
+    case MSB_UNSIGNED_INTEGER:
+    case LSB_INTEGER:
+    case LSB_UNSIGNED_INTEGER:
+        switch (f->size) {
+			case 4: return ((double) ip[0] * f->scale + f->offset);
+			case 2: return ((double) sp[0] * f->scale + f->offset);
+			case 1: return ((double) cp[0] * f->scale + f->offset);
+        }
 
+        break;
 
-	switch(f->eformat) {
+    case IEEE_REAL:
+    case PC_REAL:
+        switch (f->size) {
+			case 8: return (dp[0] * f->scale + f->offset);
+			case 4: return ((double) fp[0] * f->scale + f->offset);
+        }
 
-		case MSB_INTEGER:
-      case MSB_UNSIGNED_INTEGER:
-			switch(f->size) {
-			case 4:
-					return((double)ip[0]*f->scale+f->offset);
-			case 2:
-					return((double)sp[0]*f->scale+f->offset);
-			case 1:
-					return((double)cp[0]*f->scale+f->offset);
-			}
-			break;
-		
-		case IEEE_REAL:
-			switch(f->size) {
-			case 8:
-					return(dp[0]*f->scale+f->offset);
-			case 4:
-					return((double)fp[0]*f->scale+f->offset);
-			}
-       break;
-		case ASCII_INTEGER:
-			memcpy(num,cp,f->size);
-			num[f->size]='\0';
-			return((double)(atoi(num))*f->scale+f->offset);
-        
-         break;
-      case ASCII_REAL:
-			memcpy(num,cp,f->size);
-			num[f->size]='\0';
-			return((double)(atof(num))*f->scale+f->offset);
-		}
-	return (0);
+        break;
+    case ASCII_INTEGER:
+        memcpy(num, cp, f->size);
+        num[f->size] = '\0';
+        return ((double) (atoi(num)) * f->scale + f->offset);
+
+        break;
+    case ASCII_REAL:
+        memcpy(num, cp, f->size);
+        num[f->size] = '\0';
+        return ((double) (atof(num)) * f->scale + f->offset);
+    }
+
+    return (0);
 }
 
 	
 char *
-DoScale(FIELD **f,LABEL *label,char *ob)
+DoScale(int rows, FIELD *f, char *in)
 {
-	char *Bufs;
-	int rows;
-	int size;
-	int dim;
+	double *out;
 	void *ptr;
-	
+	int count = 0;
 	double Val;
-	int index=0;
 	int i,j;
+	int dim=(f->dimension ? f->dimension : 1);
+	int size = f->size;
 
-
-	rows=label->nrows;
-	size=f[0]->size;
-	dim=(f[0]->dimension ? f[0]->dimension : 1);
-
-	Bufs=(char *)calloc(rows*8*dim,sizeof(char));
-	ptr=ob;
+	out=(double *)calloc(rows*dim,sizeof(double));
+	ptr=in;
 	for(i=0;i<rows;i++){
 		for (j=0;j<dim;j++){	
-			Val=Scale(size,ptr,f[0]);
-			memcpy((Bufs+index),&Val,8);
-			index+=8;
+			out[count++] = Scale(size,ptr,f);
 			ptr = (unsigned char *)ptr + size;
 		}
 	}
-	f[0]->eformat=IEEE_REAL;
-	f[0]->size=8;
-	free(ob);
-	return(Bufs);
+
+	free(in);
+	return((char *)out);
 }
 
 void
@@ -1911,92 +1899,131 @@ Set_Col_Var(Var **Data,FIELD **f,LABEL *label,int *size, char **Bufs)
 
 	num_items=label->fields->number;
 
+/**
+*** Note: the calloc in all these routines is stupid, as it
+***       allocates (nbytes*nitems, 1)
+**/
+
 	for (j=0;j<num_items;j++){
 		dim=(f[j]->dimension ? f[j]->dimension : 1);
 		step=0;
-		if (f[j]->scale)
-			Bufs[j]=DoScale(&f[j],label,Bufs[j]);
+
+		/* Do appropriate endian conversion */
 		switch(f[j]->eformat) {
-		case CHARACTER:
-			text=(char **)calloc(label->nrows,sizeof(char *));
-			for (i=0;i<label->nrows;i++){
-				text[i]=(char *)calloc(size[j]+1,sizeof(char));
-				memcpy(text[i],(Bufs[j]+i*size[j]),size[j]);
-				text[i][size[j]]='\0';
-			}
-			v=newText(label->nrows,text);
-			break;
+			case LSB_INTEGER:
+			case LSB_UNSIGNED_INTEGER: 
+			case LSB_BIT_FIELD:
+				LSB(Bufs[j], label->nrows*dim, f[j]->size);
+				break;
+			case MSB_INTEGER:
+			case MSB_UNSIGNED_INTEGER: 
+			case MSB_BIT_FIELD:
+				MSB(Bufs[j], label->nrows*dim, f[j]->size);
+				break;
+			case IEEE_REAL:
+				MSB(Bufs[j], label->nrows*dim, f[j]->size);
+				break;
+			case PC_REAL:
+				LSB(Bufs[j], label->nrows*dim, f[j]->size);
+				break;
+		}
 
-		case MSB_INTEGER:
-		case MSB_UNSIGNED_INTEGER:
-			data=calloc(size[j]*label->nrows,sizeof(char));
-			memcpy(data,Bufs[j],size[j]*label->nrows);
-			switch (f[j]->size) {
-				case 4:
-					v=newVal(BSQ,dim,label->nrows,1,INT,data);
-					break;
-				case 2:
-					v=newVal(BSQ,dim,label->nrows,1,SHORT,data);
-					break;
-				case 1:
-					v=newVal(BSQ,dim,label->nrows,1,BYTE,data);
-			 }
-			break;
-
-		case IEEE_REAL:
-			/*Easier to make a newVal, so free current instance*/
-/*			data=calloc(size[j]*label->nrows,sizeof(char)); */
-			data=calloc(f[j]->size*label->nrows,sizeof(char));
-/*			memcpy(data,Bufs[j],size[j]*label->nrows); */
-			memcpy(data,Bufs[j],f[j]->size*label->nrows);
-			switch (f[j]->size) {
-				case 8:
-					v=newVal(BSQ,dim,label->nrows,1,DOUBLE,data);
-					break;
-				case 4:
-					v=newVal(BSQ,dim,label->nrows,1,FLOAT,data);
-					break;
-			}
-			break;
-
-		case ASCII_INTEGER:
-			data=calloc(sizeof(int)*label->nrows,sizeof(char));
-			for (i=0;i<(label->nrows*dim);i++){
-				memcpy(num,Bufs[j]+f[j]->size*i,f[j]->size);
-				num[f[j]->size]='\0';
-				inum=atoi(num);
-				memcpy((char *)data+step,&inum,sizeof(int));
-				step+=sizeof(int);
-			}
-
-			v=newVal(BSQ,dim,label->nrows,1,INT,data);
-			break;
-
-		case ASCII_REAL:
-			data=calloc(sizeof(double)*label->nrows,sizeof(char));
-			for (i=0;i<(label->nrows*dim);i++){
-				memcpy(num,Bufs[j]+f[j]->size*i,f[j]->size);
-				num[f[j]->size]='\0';
-				fnum=atof(num);
-				memcpy((char *)data+step,&fnum,sizeof(double));
-				step+=sizeof(double);
-			}
-
+		if (f[j]->scale) {
+			/* 
+			** special case: result is always a double 
+			** regardless of input size
+			*/
+			Bufs[j]=DoScale(label->nrows, f[j], Bufs[j]);
+			data=calloc(dim*8*label->nrows,sizeof(char));
+			memcpy(data,Bufs[j],dim*8*label->nrows);
 			v=newVal(BSQ,dim,label->nrows,1,DOUBLE,data);
-			break;
+		} else {
+			switch(f[j]->eformat) {
+			case CHARACTER:
+				text=(char **)calloc(label->nrows,sizeof(char *));
+				for (i=0;i<label->nrows;i++){
+					text[i]=(char *)calloc(size[j]+1,sizeof(char));
+					memcpy(text[i],(Bufs[j]+i*size[j]),size[j]);
+					text[i][size[j]]='\0';
+				}
+				v=newText(label->nrows,text);
+				break;
 
-		case BYTE_OFFSET:
-			data=calloc(size[j]*label->nrows,sizeof(char));
-			memcpy(data,Bufs[j],size[j]*label->nrows);
-			v=newVal(BSQ,dim,label->nrows,1,INT,data);
-			break;
+			case MSB_INTEGER:
+			case MSB_UNSIGNED_INTEGER:
+			case LSB_INTEGER:
+			case LSB_UNSIGNED_INTEGER:
+				data=calloc(size[j]*label->nrows,sizeof(char));
+				memcpy(data,Bufs[j],size[j]*label->nrows);
 
-		case MSB_BIT_FIELD:
-			data=calloc(size[j]*label->nrows,sizeof(char));
-			memcpy(data,Bufs[j],size[j]*label->nrows);
-			v=newVal(BSQ,dim,label->nrows,1,INT,data);
-			break;
+				switch (f[j]->size) {
+					case 4:
+						v=newVal(BSQ,dim,label->nrows,1,INT,data);
+						break;
+					case 2:
+						v=newVal(BSQ,dim,label->nrows,1,SHORT,data);
+						break;
+					case 1:
+						v=newVal(BSQ,dim,label->nrows,1,BYTE,data);
+				 }
+				break;
 
+
+			case IEEE_REAL:
+			case PC_REAL:
+				data=calloc(size[j]*label->nrows,sizeof(char));
+				memcpy(data,Bufs[j],size[j]*label->nrows);
+
+				switch (f[j]->size) {
+					case 8:
+						v=newVal(BSQ,dim,label->nrows,1,DOUBLE,data);
+						break;
+					case 4:
+						v=newVal(BSQ,dim,label->nrows,1,FLOAT,data);
+						break;
+				}
+				break;
+
+			case ASCII_INTEGER:
+				data=calloc(sizeof(int)*label->nrows,sizeof(char));
+				for (i=0;i<(label->nrows*dim);i++){
+					memcpy(num,Bufs[j]+f[j]->size*i,f[j]->size);
+					num[f[j]->size]='\0';
+					inum=atoi(num);
+					memcpy((char *)data+step,&inum,sizeof(int));
+					step+=sizeof(int);
+				}
+
+				v=newVal(BSQ,dim,label->nrows,1,INT,data);
+				break;
+
+			case ASCII_REAL:
+				data=calloc(sizeof(double)*label->nrows,sizeof(char));
+				for (i=0;i<(label->nrows*dim);i++){
+					memcpy(num,Bufs[j]+f[j]->size*i,f[j]->size);
+					num[f[j]->size]='\0';
+					fnum=atof(num);
+					memcpy((char *)data+step,&fnum,sizeof(double));
+					step+=sizeof(double);
+				}
+
+				v=newVal(BSQ,dim,label->nrows,1,DOUBLE,data);
+				break;
+
+			case BYTE_OFFSET:
+				data=calloc(size[j]*label->nrows,sizeof(char));
+				memcpy(data,Bufs[j],size[j]*label->nrows);
+				v=newVal(BSQ,dim,label->nrows,1,INT,data);
+				break;
+
+			case MSB_BIT_FIELD:
+			case LSB_BIT_FIELD:
+				data=calloc(size[j]*label->nrows,sizeof(char));
+				memcpy(data,Bufs[j],size[j]*label->nrows);
+				v=newVal(BSQ,dim,label->nrows,1,INT,data);
+				break;
+
+			}
 		}
 		add_struct(*Data,fix_name(f[j]->name),v);
 	}	

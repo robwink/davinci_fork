@@ -4,6 +4,9 @@ static char rcsver[] = "$Id$";
  ** $Source$
  **
  ** $Log$
+ ** Revision 1.5  2002/09/24 21:36:26  gorelick
+ ** Endian normalization changes for table reads
+ **
  ** Revision 1.4  2002/06/15 03:33:01  gorelick
  ** Miscelaneous checking
  **
@@ -346,21 +349,24 @@ MakeBitField(OBJDESC *col, FIELD *f)
 	return(NULL);
 }
 
-
 IFORMAT
 eformat_to_iformat(EFORMAT e)
 {
 	switch(e) {
+		case LSB_INTEGER:
 		case MSB_INTEGER:
 		case ASCII_INTEGER:
 			return(VINT);
 
-		case MSB_BIT_FIELD:
 		case MSB_UNSIGNED_INTEGER:
+		case LSB_UNSIGNED_INTEGER:
+		case MSB_BIT_FIELD:
+		case LSB_BIT_FIELD:
 		case BYTE_OFFSET:
 			return(UVINT);
 
 		case IEEE_REAL:
+		case PC_REAL:
 		case ASCII_REAL:
 			return ( REAL );
 
@@ -368,7 +374,7 @@ eformat_to_iformat(EFORMAT e)
 			return ( STRING );
 
 		default:
-			parse_error("Unrecognized etype: %d", e);
+			fprintf(stderr, "Unrecognized etype: %d\n", e);
 	}
 
 	return INVALID_IFORMAT;
@@ -377,12 +383,23 @@ eformat_to_iformat(EFORMAT e)
 EFORMAT
 ConvertType(char *type) 
 {
-    if (!strcasecmp(type, "MSB_INTEGER")) {
-		return(MSB_INTEGER);
-    } else if (!strcasecmp(type, "MSB_UNSIGNED_INTEGER")) {
-		return(MSB_UNSIGNED_INTEGER);
-    } else if (!strcasecmp(type, "IEEE_REAL")) {
-		return(IEEE_REAL);
+    if (!strcasecmp(type, "MSB_INTEGER") ||
+		!strcasecmp(type, "SUN_INTEGER") ||
+		!strcasecmp(type, "MAC_INTEGER") ||
+		!strcasecmp(type, "INTEGER")) {
+			return(MSB_INTEGER);
+    } else if (!strcasecmp(type, "MSB_UNSIGNED_INTEGER") ||
+               !strcasecmp(type, "SUN_UNSIGNED_INTEGER") || 
+               !strcasecmp(type, "MAC_UNSIGNED_INTEGER") || 
+               !strcasecmp(type, "UNSIGNED_INTEGER")) {
+			return(MSB_UNSIGNED_INTEGER);
+    } else if (!strcasecmp(type, "IEEE_REAL") ||
+               !strcasecmp(type, "SUN_REAL") ||
+               !strcasecmp(type, "MAC_REAL") ||
+               !strcasecmp(type, "REAL")) {
+			return(IEEE_REAL);
+    } else if (!strcasecmp(type, "PC_REAL")) {
+		return(PC_REAL);
     } else if (!strcasecmp(type, "CHARACTER")) {
 		return(CHARACTER);
     } else if (!strcasecmp(type, "ASCII_INTEGER")) {
@@ -393,10 +410,19 @@ ConvertType(char *type)
 		return(BYTE_OFFSET);
     } else if (!strcasecmp(type, "MSB_BIT_STRING")) {
 		return(MSB_BIT_FIELD);
+    } else if (!strcasecmp(type, "LSB_BIT_STRING")) {
+		return(LSB_BIT_FIELD);
+    } else if (!strcasecmp(type, "LSB_INTEGER") ||
+               !strcasecmp(type, "PC_INTEGER") || 
+               !strcasecmp(type, "VAX_INTEGER")) {
+			return(LSB_INTEGER);
+    } else if (!strcasecmp(type, "LSB_UNSIGNED_INTEGER") ||
+               !strcasecmp(type, "PC_UNSIGNED_INTEGER") || 
+               !strcasecmp(type, "VAX_UNSIGNED_INTEGER")) {
+			return(LSB_UNSIGNED_INTEGER);
 	}
 	return(INVALID_EFORMAT);
 }
-
  
 /**
  ** Given a field name, locate it in the list of labels.

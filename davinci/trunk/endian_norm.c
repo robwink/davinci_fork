@@ -1,16 +1,74 @@
 #include "endian_norm.h"
 
 
+/*
+** Convert to/from MSB in place.  Does nothing if you're already MSB
+*/
+void MSB(unsigned char * data, 
+			  unsigned int data_elem,
+		      unsigned int word_size) 
+{
+#ifdef WORDS_BIGENDIAN
+
+#else
+	swap_endian(data, data_elem, word_size);
+#endif
+}
+
+/*
+** Convert to/from LSB in place.  Does nothing if you're already LSB
+*/
+void LSB(unsigned char * data, 
+			  unsigned int data_elem,
+		      unsigned int word_size)
+{
+#ifdef WORDS_BIGENDIAN
+	swap_endian(data, data_elem, word_size);
+#else
+
+#endif
+}
+
+/*
+** Do an actual endian conversion, in place
+*/
+swap_endian(unsigned char *buf, unsigned int n, unsigned int size)
+{
+	int i;
+	int total_bytes = n*size;
+	unsigned char t;
+#define swap(a,b)	t = a; a = b ; b = t;
+
+	if (size == 1) return;
+
+	for (i = 0 ; i < total_bytes ; i+=size) {
+		switch(size) {
+			case 2:
+				swap(buf[i],buf[i+1]); 
+				break;
+			case 4:
+				swap(buf[i],  buf[i+3]); 
+				swap(buf[i+1],buf[i+2]); 
+				break;
+			case 8:
+				swap(buf[i],  buf[i+7]); 
+				swap(buf[i+1],buf[i+6]); 
+				swap(buf[i+2],buf[i+5]); 
+				swap(buf[i+3],buf[i+4]); 
+				break;
+		}
+    }
+}
 
 char * flip_endian(unsigned char * data, unsigned int data_elem,
-		   unsigned int word_size) {
+           unsigned int word_size) {
   /* Ensure the data is always read and written in big endian format.
      Try not to call this on big endian machines, since it's just a
-     wasterful copy operation in that case. 
+     wasterful copy operation in that case.
   */
   unsigned char * new_buf;
   unsigned int data_size, i = 0;
-  
+
   data_size = data_elem * word_size;
   new_buf = calloc(data_elem, word_size);
   if (new_buf == NULL) {
@@ -53,6 +111,8 @@ char * flip_endian(unsigned char * data, unsigned int data_elem,
 #endif /* WORDS_BIGENDIAN */
   return new_buf;
 }
+
+
 
 
 char * var_endian(Var * v) {
