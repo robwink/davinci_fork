@@ -183,6 +183,9 @@ Var *dv_LoadISISFromPDS(FILE *fp, char *fn, int dptr)
 	int			scope=ODL_THIS_OBJECT;
 	int			format;
 	int 			i;
+	int			_unsigned = 0;
+	int			item_bytes=0;
+
 
 	iom_init_iheader(h);
 
@@ -231,13 +234,17 @@ Var *dv_LoadISISFromPDS(FILE *fp, char *fn, int dptr)
 	** Format
 	**/
 
-	key2 = OdlFindKwd(qube, "CORE_ITEM_BYTES", NULL, 0, scope);
+	if ((key2 = OdlFindKwd(qube, "CORE_ITEM_BYTES", NULL, 0, scope)))
+		item_bytes = atoi(key2->value);
 
 	/**
 	** This tells us if we happen to be using float vs int
 	**/
 
-	key1 = OdlFindKwd(qube, "CORE_ITEM_TYPE", NULL, 0, scope);
+	if ((key1 = OdlFindKwd(qube, "CORE_ITEM_TYPE", NULL, 0, scope)))
+		if (strstr(key1->value,"UNSIGNED"))
+			_unsigned = 1;
+
 
 	format = iom_ConvertISISType(key1 ? key1->value : NULL,
 		NULL, key2 ? key2->value : NULL);
@@ -294,7 +301,9 @@ Var *dv_LoadISISFromPDS(FILE *fp, char *fn, int dptr)
 	/*
 	** We need do promote unsigned short to signed int here
 	*/
-	data = fix_unsigned(h, data);
+
+	if (item_bytes == 2 && _unsigned)
+		data = fix_unsigned(h, data);
 
 	v = iom_iheader2var(h);
 	V_DATA(v) = data;
