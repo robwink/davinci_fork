@@ -10,22 +10,37 @@
 extern char * var_endian(Var * v);
 #endif
 
+
+/*
+** If the object is a QUBE AND has suffix planes, we need to run special software to process,
+** therefore we need to save the suffix structures without interfering with the object
+** information
+*/
+
+enum _PDS_Object {PDS_QUBE,SUFFIX,PDS_IMAGE,PDS_HISTORY,PDS_TABLE,PDS_HISTOGRAM_IMAGE};
+typedef enum _PDS_Object PDS_Object;
+
 typedef struct _objectInfo
 {
 	int	count;
 	int	ptr_count;
 
-	int 	*obj_ptr;  /*File Byte offset of ^OBJECT = */
-	int 	*obj_size; /*In RECORD_BYTES */
-	char	**obj_data; /*Duh */
-	int	*obj_dirty; /*Check this if the object needs to be freed when we're finished*/
+	PDS_Object 	*obj_type; 	/*What kind of object is it*/
+	int 			*obj_ptr;  	/*File Byte offset of ^OBJECT = */
+	int 			*obj_size; 	/*In RECORD_BYTES */
+	void			**obj_data; /*Duh */
+	int			*obj_dirty; /*Check this if the object needs to be freed when we're finished*/
+
+	Var 			*sample_suffix;
+	Var 			*line_suffix;
+	Var 			*band_suffix;
 	
 } objectInfo;
 
 
 void Set_Col_Var(Var **,FIELD **,LABEL * ,int *size, char **);
 void ProcessGroupIntoLabel(FILE *fp,int record_bytes, Var *v, char *name);
-void ProintcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v, char *name,objectInfo *oi);
+void ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v, char *name,objectInfo *oi);
 Var *ProcessIntoLabel(FILE *fp,int record_bytes, Var *v, int depth,int *label_ptr,objectInfo *oi);
 
 
@@ -335,17 +350,37 @@ do_key(OBJDESC *ob, KEYWORD* key)
 				{
 					char **stuff;
 					int num;
-					int i;
+					int ii;
+					/*Assumption: All items are of the SAME type */
 					num=OdlGetAllKwdValuesArray(key,&stuff);
 					if (num){
-						o=newVar();
-						V_TYPE(o)=ID_TEXT;
-						V_TEXT(o).Row=num;
-						V_TEXT(o).text=(char **)calloc(num,sizeof(char *));
-						for (i=0;i<num;i++){
-							V_TEXT(o).text[i]=strdup(stuff[i]);
+						switch(OdlDataType(stuff[0])) {
+
+						case ODL_INTEGER:
+							i=(int *)malloc(num*sizeof(int));
+							for (ii=0;ii<num;ii++)
+								i[ii]=atoi(stuff[ii]);
+							o=newVal(BSQ,num,1,1,INT,i);
+							break;
+
+						case ODL_REAL:
+							f=(double *)malloc(num*sizeof(double));
+							for (ii=0;ii<num;ii++)	
+								f[ii]=strtod(stuff[ii],NULL);
+							o=newVal(BSQ,num,1,1,DOUBLE,f);
+							break;
+
+						default:
+							o=newVar();
+							V_TYPE(o)=ID_TEXT;
+							V_TEXT(o).Row=num;
+							V_TEXT(o).text=(char **)calloc(num,sizeof(char *));
+							for (ii=0;ii<num;ii++){
+								V_TEXT(o).text[ii]=strdup(stuff[ii]);
+							}
 						}
 					}
+
 					else {
 						o=newVar();
 						V_TYPE(o)=ID_STRING;
@@ -654,6 +689,119 @@ ProcessGroupIntoLabel(FILE *fp,int record_bytes, Var *v, char *name)
 	
 }
 
+char *
+ProcessVarIntoString(Var *element, char *name)
+{
+	int flag=0;
+	int idx;
+	int count;
+	char tmp_string[1024];
+	char *string=(char *)malloc(1024*32*sizeof(char));
+	char *tmpname;
+
+	if (GetSamples(V_SIZE(element),V_ORG(element)) > 1) flag+=1;
+	if (GetLines(V_SIZE(element),V_ORG(element)) > 1) flag+=2;
+	if (GetBands(V_SIZE(element),V_ORG(element)) > 1) flag+=4;
+
+	if (flag) {
+		if ( ((flag & 1) && (flag & 2)) ||
+			  ((flag & 1) && (flag & 4)) ||
+			  ((flag & 2) && (flag & 4))) {
+
+			parse_error("Can't write out a plane or a cube object into the history!");
+			sprintf(string,"%s = \"Error\"\r\n",correct_name(name));
+			return (string);
+		}
+	}
+
+	else {
+
+		if (V_FORMAT(element) == INT)
+		{
+			sprintf(tmp_string,"%d",V_INT(element));
+		}
+
+		else if (V_FORMAT(element) == FLOAT)
+		{
+			sprintf(tmp_string,"%f",V_FLOAT(element));
+		}
+
+		else if (V_FORMAT(element) == DOUBLE)
+		{
+			sprintf(tmp_string,"%lf",V_DOUBLE(element));
+		}
+
+		else {
+			parse_error("Found a scalar which isn't covered");
+			strcpy(tmp_string,"\"Error\"\r\n");
+		}
+
+		sprintf(string,"%s = ",correct_name(name));
+		strcat(string,tmp_string);
+		strcat(string,"\r\n");
+		return(string);
+	}
+
+
+
+/*Okay, we're dealing with a vector, NOT a scale so we have to build a list */
+	sprintf(string,"%s = (",correct_name(name));
+	for (idx=0;idx<3;idx++)
+		if (flag & (1 << idx))
+			break;
+
+	switch (idx) {
+
+	case 0:
+		count=GetSamples(V_SIZE(element),V_ORG(element));
+		break;
+
+	case 1:
+		count=GetLines(V_SIZE(element),V_ORG(element));
+		break;
+
+	case 2:
+		count=GetBands(V_SIZE(element),V_ORG(element));
+		break;
+	}
+
+
+	for (idx=0;idx<count;idx++){
+		switch(V_FORMAT(element)) {
+
+		case BYTE:
+
+				break;
+
+		case SHORT:
+
+				break;
+
+		case INT:
+				sprintf(tmp_string,"%d, ",extract_int(element,idx));
+				break;
+
+		case FLOAT:
+				sprintf(tmp_string,"%f, ",extract_float(element,idx));
+				break;
+
+		case DOUBLE:
+				sprintf(tmp_string,"%lf, ",extract_double(element,idx));
+				break;
+
+		}
+		strcat(string,tmp_string);
+			
+	}
+
+	/*Need to back up two chars and replace them with a ')' */
+	strcpy((string+strlen(string)-2),")");	
+	strcat(string,"\r\n");
+	return(string);
+
+}
+
+
 void
 ProcessHistoryIntoString(Var *v,char **theString, int *ptr) 
 {
@@ -664,6 +812,7 @@ ProcessHistoryIntoString(Var *v,char **theString, int *ptr)
 	char *name;
 	char *tmpname;
 	char string[1024*32];
+	char num[1024];
 	static int current_size;
 
 	if (!(*ptr)){ /*first time through, malloc up some memory */
@@ -696,16 +845,33 @@ ProcessHistoryIntoString(Var *v,char **theString, int *ptr)
 			free(tmpname);
 
 		}
+
 		else if (!(strcasecmp(name,"Object")))
 			continue;
 
-		else {
+		/*Check for non-string values and convert */
+		else if (V_TYPE(element) == ID_VAL) 
+		{
+			tmpname=ProcessVarIntoString(element,name);
+			memcpy((*theString+(*ptr)),tmpname,strlen(tmpname));
+			*ptr+=strlen(tmpname);
+			free(tmpname);
+		}
+
+		else if (V_TYPE(element) == ID_STRING) 
+		{
+
 			tmpname=correct_name(name);
 			sprintf(string,"%s = %s\r\n",tmpname,V_STRING(element));
 			memcpy((*theString+(*ptr)),string,strlen(string));
 			*ptr+=strlen(string);
 			free(tmpname);
 		}
+
+		else {
+			parse_error("History Object contains an unknown object...skipping it!");
+		}
+
 	}
 }
 				
@@ -729,13 +895,14 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 		tmpname=strdup(struct_name);
 		*struct_name='\0';
 
-		ProcessIntoLabel(fp,record_bytes,v, 0,NULL,NULL);
+		ProcessIntoLabel(fp,record_bytes,v, 0,NULL,oi);
 		memcpy(struct_name,tmpname,strlen(tmpname));
 		free(tmpname);
 		/*Need to make use of the data object here*/
 		oi->obj_size[oi->count]=0;
-		oi->obj_data[oi->count]=NULL;
+		oi->obj_data[oi->count]=(void *)NULL;
 		oi->obj_dirty[oi->count]=0;
+		oi->obj_type[oi->count]=PDS_TABLE;
 		oi->count++;
 	}
 
@@ -748,12 +915,12 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 		for (i=0;i<count;i++){ /*We could assume the DATA object is last, but that could lead to trouble */
 	 		get_struct_element(v,i, &struct_name, &tmpvar);
 			if (!(strcasecmp(struct_name,"data"))) {/*Found it!*/
-				ProcessHistoryIntoString(tmpvar,&oi->obj_data[oi->count],&ptr);
+				ProcessHistoryIntoString(tmpvar,(char **)&oi->obj_data[oi->count],&ptr);
 				memcpy((oi->obj_data[oi->count]+ptr),end,strlen(end));
 				ptr+=strlen(end);
 
 				size = (ptr/record_bytes)+1;
-				oi->obj_data[oi->count]=realloc(oi->obj_data[oi->count],size*record_bytes);
+				oi->obj_data[oi->count]=(void *)realloc(oi->obj_data[oi->count],size*record_bytes);
 				if (ptr % record_bytes) {
 					int rem = size*record_bytes - ptr;
 					memset(oi->obj_data[oi->count]+ptr,0x20,rem);
@@ -761,6 +928,7 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 				}
 				oi->obj_size[oi->count]=(ptr/record_bytes);
 				oi->obj_dirty[oi->count]=1;
+				oi->obj_type[oi->count]=PDS_HISTORY;
 				oi->count++;
 				break;
 			}
@@ -772,13 +940,19 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 		tmpname=strdup(struct_name);
 		*struct_name='\0';
 	
-		ProcessIntoLabel(fp,record_bytes,v, 0,NULL,NULL);
+		ProcessIntoLabel(fp,record_bytes,v, 1,NULL,oi);
 
 		memcpy(struct_name,tmpname,strlen(tmpname));
 		free(tmpname);
 
 	}
 
+
+/*
+	else if ((!(strcasecmp("sample_suffix",name))) ||
+				(!(strcasecmp("line_suffix",name))) ||
+				(!(strcasecmp("band_suffix",name)))){
+*/
 
 	else if ((!(strcasecmp("spectral_qube",name))) || 
 				(!(strcasecmp("qube",name))) || 
@@ -790,10 +964,15 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 			if (!(strcasecmp(struct_name,"data"))) {/*Found it!*/
 
 #ifdef LITTLE_ENDIAN
-				oi->obj_data[oi->count]=var_endian(tmpvar);
+				Var *data = V_DUP(tmpvar);
+				char *tmp = V_DATA(data);
+				V_DATA(data) = var_endian(data);
+				free(tmp);
+
+				oi->obj_data[oi->count]=data;
 				oi->obj_dirty[oi->count]=1;
 #else
-				oi->obj_data[oi->count]= (unsigned char *)V_DATA(tmpvar); 
+				oi->obj_data[oi->count]= tmpvar); 
 					/*Now we should have a pointer to the data*/
 				oi->obj_dirty[oi->count]=0;
 #endif
@@ -802,8 +981,9 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 					(V_SIZE(tmpvar)[0]*V_SIZE(tmpvar)[1]*
 					V_SIZE(tmpvar)[2]*
 					NBYTES(V_FORMAT(tmpvar)));				
-					/* Check for alignment and pad as needed */
 
+
+				/* Check for alignment and pad as needed */
 
 				if (oi->obj_size[oi->count] % record_bytes){ 
 					/* We're not aligned to record bytes..copy and pad*/
@@ -824,7 +1004,12 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 				}
 				else
 					oi->obj_size[oi->count]/=record_bytes;
-				
+			
+				if (!(strcasecmp("image",name)))
+					oi->obj_type[oi->count]=PDS_IMAGE;
+				else
+					oi->obj_type[oi->count]=PDS_QUBE;
+	
 				oi->count++;
 				break;
 			}
@@ -837,7 +1022,7 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 		tmpname=strdup(struct_name);
 		*struct_name='\0';
 	
-		ProcessIntoLabel(fp,record_bytes,v, 0,NULL,NULL);
+		ProcessIntoLabel(fp,record_bytes,v, 0,NULL,oi);
 
 		memcpy(struct_name,tmpname,strlen(tmpname));
 		free(tmpname);
@@ -845,7 +1030,7 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 	}
 
 	else {
-		ProcessIntoLabel(fp,record_bytes,v, 0,NULL,NULL);
+		ProcessIntoLabel(fp,record_bytes,v, 0,NULL,oi);
 	}
 
 	fprintf(fp,"END_OBJECT = %s\r\n", name);
@@ -986,10 +1171,60 @@ ProcessIntoLabel(FILE *fp,int record_bytes, Var *v, int depth, int *label_ptrs, 
 		else if (V_TYPE(data)==ID_STRUCT) {
 			char *newname;
 			get_struct_element(data,0,&newname,&tmp_var);
-			if (strcmp("Object",(newname))) {
+
+
+			if ( (!(strcasecmp("sample_suffix",name))) ||
+				(!(strcasecmp("line_suffix",name))) ||
+				(!(strcasecmp("band_suffix",name)))) {
+
+#ifdef LITTLE_ENDIAN
+
+/*
+** If we're little endian, we need to step through the suffix structure and var_endian
+** EACH structure element, relpacing the copy's V_DATA item with the return object
+** and don't forget to free up the old V_DATA object!
+*/
+				Var *tmp = V_DUP(data); /*copy the item (it's a structure!)*/
+				int v_count = get_struct_count(tmp);
+				int i = 0;
+				Var *element;
+				char *innername;
+				char *v_data;
+
+				for(i=0;i<v_count;i++){ /*Need to skip first element, it's the Object=Name element*/
+					get_struct_element(tmp,i,&innername,&element);
+					v_data=V_DATA(element);
+					V_DATA(element)=var_endian(element);
+					free(v_data);
+				}
+
+				if (!(strcasecmp("sample_suffix",name)))
+					oi->sample_suffix=tmp;
+				else if (!(strcasecmp("line_suffix",name)))
+					oi->line_suffix=tmp;
+				else
+					oi->band_suffix=tmp;
+					
+#else
+				if (!(strcasecmp("sample_suffix",name)))
+					oi->sample_suffix=v;
+				else if (!(strcasecmp("line_suffix",name)))
+					oi->line_suffix=v;
+				else
+					oi->band_suffix=v;
+#endif
+
+				count--;
+				continue;
+
+			}
+
+
+			else if (strcmp("Object",(newname))) {
 				parse_error("Parsing unknown structure");
 				ProcessIntoLabel(fp,record_bytes,data,depth,label_ptrs, oi);
 			}
+
 			else {
 			
 				if (!(strcmp("GROUP",(V_STRING(tmp_var))))) 
@@ -1159,9 +1394,13 @@ WritePDS(vfuncptr func, Var *arg)
 	oi.obj_ptr = (int *)malloc(sizeof(int)*MAXOBJ);
 	oi.obj_size = (int *)malloc(sizeof(int)*MAXOBJ);
 	oi.obj_dirty = (int *)malloc(sizeof(int)*MAXOBJ);
-	oi.obj_data = (char **)malloc(sizeof(char *)*MAXOBJ);
+	oi.obj_type = (PDS_Object *)malloc(sizeof(PDS_Object)*MAXOBJ);
+	oi.obj_data = (void **)malloc(sizeof(void *)*MAXOBJ);
 	oi.count=0;
 	oi.ptr_count=0;
+	oi.sample_suffix=NULL;
+	oi.line_suffix=NULL;
+	oi.band_suffix=NULL;
 
 
 
@@ -1219,11 +1458,28 @@ WritePDS(vfuncptr func, Var *arg)
 */
 
 	for(i=0;i<oi.count;i++){
-		fwrite(oi.obj_data[i],sizeof(char),
-			(oi.obj_size[i]*record_bytes),fp);
-		if (oi.obj_dirty[i])
-			free(oi.obj_data[i]);
+		if (oi.obj_type[i] != PDS_QUBE) {
+
+			fwrite(oi.obj_data[i],sizeof(char), (oi.obj_size[i]*record_bytes),fp);
+
+			if (oi.obj_dirty[i])
+				free(oi.obj_data[i]);
+		}
+
+		else {
+
+			if (write_PDS_Qube((Var *)oi.obj_data[i],oi.sample_suffix,oi.line_suffix,oi.band_suffix,fp)==NULL){
+				parse_error("Error Writting Qube!");
+				fclose(fp);
+				unlink(fp);
+				return(NULL);
+			}
+			
+
+		}
+
 	}
+
 	
 	fclose(fp);
 	return(result);
@@ -1657,105 +1913,39 @@ int rf_HISTOGRAM_IMAGE(char *fn, Var *ob,char * val, int dptr)
 	return(0);
 }
 
-void
-history_parse_buffer(FILE *in, Var *top)
+char *
+history_parse_buffer(FILE *in)
 {
-	int count=0;
-	Var *tmpvar;
-	char *key;
-	char value[1024*64]; /*64k buffer better be enough!*/
-	char tmp[1024];
-	char tmp2[1024];
-	int multi=0;
-	char *ptr;
-	int result;
 	char buf[1024];
+	int  max=2048;
+	int  ptr=0;
+	char *TheString;
+
+	TheString=(char *)malloc(max);
+
 
 	while (1) {
 		fgets(buf,1023,in); /*Suck in the next line*/
+
+		if ((ptr+strlen(buf)) >= max){
+			max*=2;
+			TheString=(char *)realloc((TheString),max);
+		}
+
+		strcpy((TheString+ptr),buf);
+		ptr+=strlen(buf);
 	
-		if (!(multi)) {
-			result=sscanf(buf,"%s = %s",tmp,tmp2);
-			if (result < 2) {
-				if (!(strcasecmp("END",tmp)))
-					break;
-				else
+		if (!(strncasecmp("END",buf,3)))
+			if  (!(strncasecmp("END_",buf,4)))
 					continue;
-			}
-		}
-	
+			else
+					break;
 
-		if (multi) { /*okay we're in multi-line mode, and we've read the first line */
-			if ((ptr=strchr(buf,'\"'))) /*That's it, it's ALL over*/
-				multi=0;
-
-			strcat(value,buf);
-
-			if (!(multi)) {
-				if (!(strcmp((value+strlen(value)-2),"\r\n")))
-					value[strlen(value)-2]='\0';
-
-				V_STRING(tmpvar)=strdup(value);
-				add_struct(top,fix_name(key),tmpvar);
-			}
-		}
-
-		else { /*okay, we're reading in a line...does it have a single set of double quotes? */
-			ptr=strchr(buf,'\"');
-			if (ptr != NULL) {/* there's the first one */
-
-				if (strchr((++ptr),'\"') !=NULL) /* there's the second one */
-					multi=0;
-
-				else /*Didn't find a second one...go into multi-line mode */
-					multi=1;
-
-				strcpy(value,(--ptr)); /*Either way we want to copy it */
-
-				if (!multi)
-					if (!(strcmp((value+strlen(value)-2),"\r\n")))
-						value[strlen(value)-2]='\0';
-
-			}
-
-			else  { 
-		
-				strcpy(value,tmp2);
-			}
-
-
-			key=tmp;
-	
-			if (!(strcasecmp("GROUP",key))) 
-			{
-				Var *newtop = new_struct(0);
-				Var *newvar = newVar();
-				V_TYPE(newvar)=ID_STRING;
-				V_STRING(newvar)=strdup("GROUP");
-				add_struct(newtop,"Object",newvar);
-				add_struct(top,fix_name(value),newtop);
-				history_parse_buffer(in,newtop);
-			}
-
-			else if (!(strcasecmp("END_GROUP",key)))
-				break;
-
-			else if (!(strcasecmp("END",key)))
-				break;
-
-			else 
-			{
-			
-				tmpvar=newVar();
-				V_TYPE(tmpvar)=ID_STRING;
-
-				if (!(multi)) {
-					V_STRING(tmpvar)=strdup(value);
-					add_struct(top,fix_name(key),tmpvar);
-				}
-			}
-		}
 	}
+
+	TheString=(char *)realloc(TheString,strlen(TheString));
+
+	return(TheString);	
 }
 
 
@@ -1768,21 +1958,9 @@ int rf_HISTORY(char *fn, Var *ob,char * val, int dptr)
 	int size=0;
 	FILE *in;
 	Var *data=new_struct(0);
+	char *history;
+	OBJDESC *top;
 
-/*
-	for (i=0;i<count;i++){
-		get_struct_element(ob,i,&name,&tmp);
-		if (name != NULL) {
-			if(!(strcasecmp(name,"BYTES"))){
-				size=V_INT(tmp);
-				break;
-			}
-		}
-	}
-
-	if (!(size))
-		return(0);
-*/
 		
 	in=fopen(fn,"rb");	
 	fseek(in,dptr,SEEK_SET);
@@ -1792,9 +1970,13 @@ int rf_HISTORY(char *fn, Var *ob,char * val, int dptr)
 	add_struct(data,"Object",tmp);
 	
 
-	history_parse_buffer(in,data);
-
+/*Read in the history object as a giant string*/
+	history=history_parse_buffer(in);
 	fclose(in);
+
+/*Call the OdlParseLabelString fucntion and make it an ODL object*/
+	top=OdlParseLabelString(history,NULL,ODL_EXPAND_STRUCTURE, VERBOSE == 0);
+	Traverse_Tree(top,data,0);
 
 	if (get_struct_count(data))
 		add_struct(ob,fix_name("DATA"),data);
