@@ -17,7 +17,7 @@
 #define	MINDATA	128
 #define NUMBER_OF_GUESSES 4
 #define	INVALID_DATA	0
-#define VIS_WIDTH 1024
+#define VIS_WIDTH 1032
 
 int Compressed;
 
@@ -46,6 +46,14 @@ typedef struct {
 } msdp_Header;
 
 
+typedef struct {
+
+	int	AddedFrames[16];
+	int	RepeatedFrames[16];
+	int	CorruptFrames[16];
+	int	Mapping[16];
+} PACIstatus;
+
 
 enum _CMD {BAND,FRAME,SINGLE,ALL};
 int FrameBandStart[]={16,32,58,84,110,136,162,188,213,239};
@@ -55,14 +63,8 @@ int Skip_To_Stop_Sync(int *i, unsigned char *buf,int len);
 int Skip_To_Start_Sync(int *i, unsigned char *buf,int len);
 int Keep(unsigned char B, unsigned short F, CMD Cmd, int Frame, int Band);
 int Read_Ahead_For_Best_Collumn_Guess(int *Width,unsigned char *buf,int len);
-void RedunBegone(char **buf, int *Lines, int Col,int *redun,int quiet);
-
-typedef struct {
-
-	int	AddedFrames[16];
-	int	RepeatedFrames[16];
-	int	Mapping[16];
-} PACIstatus;
+void RedunBegone(char **buf, int *Lines, int Col,PACIstatus *Ps,
+						int quiet,int eflag, Var *err,int *BandCount);
 
 #ifndef LITTLE_E
 unsigned short Start_Sync = { 0xF0CA };
@@ -660,7 +662,7 @@ static int Themis_Sort(const void *vA, const void *vB)
 }
 
 void
-Add_Fake_Frame(void *newbuf,int band, int frame, int num_frames,int width)
+Add_Fake_Frame(void *newbuf,int band, int frame, int num_frames,int width,int eflag, Var *err)
 {
     int i;
     unsigned char pseudo_ID=255;
@@ -672,6 +674,8 @@ Add_Fake_Frame(void *newbuf,int band, int frame, int num_frames,int width)
 	int step=5;
 
 
+	if (eflag)
+		V_INT(err) |= 2; /*Or it with 2*/
 
 	for(i=0;i<(width-8);i++){
 		if (!((i+1) % step)){
@@ -811,7 +815,7 @@ int cmp_themis_lines(char *A, char *B, int Col)
 }
 
 void
-RedunBegone(char **buf, int *Lines, int Col, int *redun,int quiet)
+RedunBegone(char **buf, int *Lines, int Col, PACIstatus *Ps,int quiet, int eflag, Var *err,int *BandCount)
 {
 	int i;
 	char *data=*buf;
@@ -837,17 +841,29 @@ RedunBegone(char **buf, int *Lines, int Col, int *redun,int quiet)
 			Band=data[(i+1)*Col+_BANDS] & 0x0f;
 
 			if (cmp_themis_lines(A,B,(Col-_SIGINFO))) { /* oh Yea! Redudant data!*/
-				redun[Band]++;
+				Ps->RepeatedFrames[Band]++;
 				if(!(quiet))
 					parse_error("Redundant frame found!! Frame: %d\t Band: %d...Fixing",frameA,Band);
 				memmove((*buf+i*Col),(*buf+(i+1)*Col),((*Lines)-i-1)*Col);
 				(*Lines)--;
+				BandCount[Band]--;
 				i--; /*Subtract 1 from i so that it comes back the (i+1) frame which is now at i*/
+				if (eflag)
+					V_INT(err) |= 1; /*Or it with 1*/
 			}
 
-			else
+			else {
+				Ps->CorruptFrames[Band]++;
 				if(!(quiet))
-					parse_error("Redundant Frame #'s found...but data is different...Go Figure.  Frame:%d\tBand:%d",frameA,Band);
+					parse_error("Corrupted frames found!! Frame: %d\t Band: %d...Deleting",frameA,Band);
+				memmove((*buf+i*Col),(*buf+(i+2)*Col),((*Lines)-i-2)*Col);
+				(*Lines)-=2; /*deleted 2 lines*/
+				BandCount[Band]-=2;
+				i--; /*Subtract 1 from i so that it comes back the (i+2) frame which is now at i*/
+				if (eflag)
+					V_INT(err) |= 4; /*Or it with 4*/
+			}
+					
 		}
 	}
 }
@@ -858,6 +874,7 @@ void Summary(PACIstatus *Ps)
 	int i;
 	char msg1[256]={'\0'};
 	char msg2[256]={'\0'};
+	char msg3[256]={'\0'};
 
 
 	for (i=0;i<10;i++){
@@ -870,18 +887,25 @@ void Summary(PACIstatus *Ps)
 
 	for (i=0;i<10;i++){
 		if(Ps->Mapping[i]){
-			if (Ps->AddedFrames[i] || Ps->RepeatedFrames[i]){
+			if (Ps->AddedFrames[i] || Ps->RepeatedFrames[i] || Ps->CorruptFrames[i]){
 				if (Ps->AddedFrames[i]) 
 					sprintf(msg1,"Added Frames:%04d\t",Ps->AddedFrames[i]);
 				else
 					sprintf(msg1,"                \t");
 
 				if (Ps->RepeatedFrames[i])
-					sprintf(msg2,"Repeated Frames:%04d",Ps->RepeatedFrames[i]);
+					sprintf(msg2,"Repeated Frames:%04d\t",Ps->RepeatedFrames[i]);
 				else
-					strcpy(msg2," ");
+					strcpy(msg2,"                 \t");
+
+				if (Ps->CorruptFrames[i])
+					sprintf(msg3,"Corrupted Frames:%04d",Ps->CorruptFrames[i]);
+				else
+					strcpy(msg3," ");
 			
-				parse_error("Band:%02d (slot %02d)\t%s%s",i,Ps->Mapping[i],msg1,msg2);
+			
+				parse_error("Band:%02d (slot %02d)\t%s%s%s",i,
+								Ps->Mapping[i],msg1,msg2,msg3);
 			}
 		}
 	}
@@ -932,12 +956,15 @@ ff_PACI_Read(vfuncptr func, Var * arg)
     int		offset;
 	 PACIstatus Ps;
 	 int	   quiet=0;
+	 int 		EndFrame;
 
     int		debug=0;
+	 Var 		*err=NULL;
+	 int		eflag=0;
 
     Var **av, *v;
     int ac;
-    Alist alist[9];
+    Alist alist[10];
 
     alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
     alist[1] = make_alist("frame", INT, NULL, &Frame);
@@ -947,7 +974,8 @@ ff_PACI_Read(vfuncptr func, Var * arg)
     alist[5] = make_alist("swap", INT, NULL, &swap_flag);
     alist[6] = make_alist("spec", INT, NULL, &Spec_Swap);
     alist[7] = make_alist("quiet", INT, NULL, &quiet);
-    alist[8].name = NULL;
+    alist[8] = make_alist("err", ID_VAL, NULL, &err);
+    alist[9].name = NULL;
 
 
     make_args(&ac, &av, func, arg);
@@ -958,6 +986,18 @@ ff_PACI_Read(vfuncptr func, Var * arg)
         parse_error("No filename specified.");
         return (NULL);
     }
+
+	 if (err){
+		eflag=1;
+		V_INT(err)=0;	
+		/*Error return:
+			err=0 No Errors
+			err=1 Redundant frames
+			err=2 Missing frames
+			err=3 Both
+		*/
+
+	 }
 
 
     if (Frame < 0 && Band < 0)
@@ -1138,7 +1178,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
             qsort((char *)data,Lines,Col,Themis_Sort);
 
 				/*Toss redudant data*/
-				RedunBegone((char **)&data,&Lines,Col,Ps.RepeatedFrames,quiet);
+				RedunBegone((char **)&data,&Lines,Col,&Ps,quiet,eflag,err,BandCount);
 
 				/*Pack Bands: this throws out empty bands*/
 				{
@@ -1167,10 +1207,11 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 	
             Max_Frame_Count=BandCount[0];
             for (i=0;i<Max_Band;i++){
-                if (BandCount[i]!=BandCount[i+1]) {
-                    Bad_Flag=1;
-                }
-                if (Max_Frame_Count < BandCount[i+1]) Max_Frame_Count=BandCount[i+1];
+					 EndFrame=0xFFFF & (((unsigned char *)data)[(BandCount[i]-1)*Col+_FRAMES] << 8 |
+								((unsigned char *)data)[(BandCount[i]-1)*Col+_FRAMES+1]);
+
+                if (Max_Frame_Count < EndFrame-FrameBandStart[i]) 
+						Max_Frame_Count=EndFrame-FrameBandStart[i];
 			   	
             }
             for (i=0;i<=Max_Band;i++){ /*Now, gotta count the missing frames!*/
@@ -1211,7 +1252,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 
                         	Add_Fake_Frame((((unsigned char *)newbuf)+Total_Frame_Count*Col),
 											(int)c_band, (FrameBandStart[current_band]+band_frame_count), 
-											(Max_Frame_Count-band_frame_count), Col);
+											(Max_Frame_Count-band_frame_count), Col,eflag,err);
 									if(!(quiet)){
 										parse_error("Adding End frames: %d-%d in Band: %d\n",
 											(FrameBandStart[current_band]+band_frame_count),
@@ -1241,7 +1282,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 
 								Add_Fake_Frame((((unsigned char *)newbuf)+Total_Frame_Count*Col),
 									(int)c_band, (FrameBandStart[current_band]+band_frame_count),
-									(c_frame-(FrameBandStart[current_band]+band_frame_count)), Col);
+									(c_frame-(FrameBandStart[current_band]+band_frame_count)), Col,eflag, err);
 								if(!(quiet)){	
 									parse_error("Adding frames: %d-%d in Band: %d\n",
 										(FrameBandStart[current_band]+band_frame_count),
@@ -1273,7 +1314,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 
                  	Add_Fake_Frame((((unsigned char *)newbuf)+Total_Frame_Count*Col),
 							(int)c_band, (FrameBandStart[current_band]+band_frame_count), 
-							(Max_Frame_Count-band_frame_count), Col);
+							(Max_Frame_Count-band_frame_count), Col,eflag, err);
 						if(!(quiet)){
 							parse_error("Adding End frames: %d-%d in Band: %d\n",
 								(FrameBandStart[current_band]+band_frame_count),
