@@ -155,7 +155,7 @@ ReadPNM(FILE *fp, char *filename, int *xout, int *yout,
         break;
     case '5':                 /* raw pgm format */
         maxval = get_int(fp);
-        if (maxval == 255) {
+        if (maxval <= 255) {
             data = (unsigned char *)calloc(1, x*y);
             fread(data, 1, x*y, fp);
             *bits = 8;
@@ -290,7 +290,7 @@ LoadPNM(FILE *fp, char *filename, struct _iheader *s)
         V_ORG(v) = BIP;
     }
     V_DSIZE(v) = x*y*z;
-    if (bits == 8) {
+    if (bits <= 8) {
         V_FORMAT(v) = BYTE;
     } else if (bits == 16) {
 		int *data = (int *)calloc(4, x*y*z);
