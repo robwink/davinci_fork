@@ -42,22 +42,21 @@ ff_coreg(vfuncptr func, Var * arg)
   
   /* if two pics did not get passed to the function */
   if (pic1_in == NULL || pic2_in == NULL) {
-  	parse_error("images are no same size.\n");
+  	parse_error("%s: no objects specified.\n", func->name);
     return NULL;
   }
   
   x = GetX(pic1_in);
   y = GetY(pic1_in);
   if (x != GetX(pic2_in) || y != GetY(pic2_in)) {
-  	parse_error("images are not same size.\n");
+  	parse_error("%s: images are not same size.\n", func->name);
 	return(NULL);
   }
   
   
   if(search < 0) {
-    parse_error("please don't be dumb, use only positive search radii");
-    parse_error("radius being reset to 10");
-    search = 10;
+    parse_error("Invalid value: %s(...search=%d)\n",func->name);
+	return(NULL);
   }
  
 	s_dia = search*2 + 1;

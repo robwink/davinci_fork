@@ -137,7 +137,7 @@ if test "x$enable_iomedley" != "xno"; then
 	AC_MSG_CHECKING(if local libiomedley present)
 	if test -x iomedley/configure; then
 		AC_MSG_RESULT(yes)
-		CFLAGS="$CFLAGS -Iiomedley"
+		CFLAGS="$CFLAGS -I./$top_srcdir/iomedley"
 		AC_DEFINE(HAVE_LIBIOMEDLEY, 1, [iomedley library is present])
 		AC_CONFIG_SUBDIRS(iomedley)
 		MY_SUBDIRS="$MY_SUBDIRS iomedley"
@@ -159,14 +159,15 @@ AM_CONDITIONAL(HAVE_MOTIF, [test "x$have_motif" = "xyes"])
 
 dnl Add module support.
 if test "x$enable_modules" != "xno"; then
-dnl FIX: need AC_LIBTOOL_DLOPEN?
-    AC_LIBTOOL_DLOPEN
+	AC_CONFIG_SUBDIRS(libltdl)
+	AC_LIBTOOL_DLOPEN
     AC_LIBLTDL_CONVENIENCE
     AC_PROG_LIBTOOL
 	AC_SUBST(INCLDTL)
+	AC_SUBST(LIBLDTL)
 	AC_DEFINE(BUILD_MODULE_SUPPORT, 1, [loadable module support])
 	build_module_support=yes
-	MY_SUBDIRS="$MY_SUBDIRS modules modules/kjn"
+	MY_SUBDIRS="$MY_SUBDIRS modules modules/kjn libldtl"
 
 	dnl We're including this, so it'll always be there.
 	dnl This define is to satisfy some ifdefs in io_loadmod.c.
@@ -178,7 +179,7 @@ dnl FIX: need AC_LIBTOOL_DLOPEN?
 			AC_CHECK_LIB(Xmu, XmuClientWindow)
 			dnl This should only be added to modules/Makefile.am's CFLAGS, but I'm sick of autoconf.
 			dnl Not sure this is working either; doesn't look like $top_builddir gets set..
-			CFLAGS="$CFLAGS -I$ac_top_srcdir/vicar"
+			CFLAGS="$CFLAGS -I./$top_srcdir/vicar"
 			AC_DEFINE(HAVE_LIBVICAR, 1, [VICAR widget library is present])
 			MY_SUBDIRS="$MY_SUBDIRS vicar"
 			local_vicar=yes
@@ -194,8 +195,6 @@ dnl FIX: this stuff can go away if libtool is used.
 
 AC_SUBST(MY_SUBDIRS)
 
-dnl For libtool support.
-AC_CONFIG_SUBDIRS(libltdl)
 
 AC_OUTPUT([Makefile modules/Makefile modules/kjn/Makefile vicar/Makefile])
 
@@ -227,23 +226,23 @@ IF_YES_NO() {
 
 PRINT ""
 PRINT   "--------------------- ---"
-PRINT "Configure Summary"
+PRINT   " Configure Summary"
 
-PRINT_N "       Readline"
+PRINT_N "          Readline"
 IF_YES_NO "$have_readline"
 
-PRINT_N "         X11/Xt"
+PRINT_N "            X11/Xt"
 IF_YES_NO "$have_xt"
 
-PRINT_N "          Motif"
+PRINT_N "             Motif"
 IF_YES_NO "$have_motif"
 
-PRINT_N "           HDF5"
+PRINT_N "              HDF5"
 IF_YES_NO "$have_hdf"
 
-PRINT_N " Module Support"
+PRINT_N "    Module Support"
 IF_YES_NO "$build_module_support"
-PRINT_N "  LibMagick"
+PRINT_N "ImageMagick Module"
 IF_YES_NO "$have_libmagick"
-PRINT_N "  GUI/Vicar"
+PRINT_N "  GUI/Vicar Module"
 IF_YES_NO "$local_vicar"
