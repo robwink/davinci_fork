@@ -96,7 +96,7 @@ ff_raw(vfuncptr func, Var * arg)
 	}
 
 	if (!(Row) || !(Col)) {
-		parse_error("Must specify row and collumn size!");
+		parse_error("Must specify row and column size!");
 		return(NULL);
 	}
 

@@ -1,5 +1,6 @@
+#ifndef _FF_H_
+#define _FF_H_
 #include "parser.h"
-
 
 /**
  ** The list of named functions, their handlers and an optional data value
@@ -177,6 +178,8 @@ struct _vfuncptr vfunclist[] = {
 
 /* add additional functions here.  Don't forget the trailing comma. */
 
+	{ "audit",      ff_audit,      NULL },
+
     { "basis",      ff_basis,           NULL },
     { "mxm",        ff_mxm,             NULL },
     { "histogram",  ff_histogram,       NULL },
@@ -243,3 +246,4 @@ struct _vfuncptr vfunclist[] = {
     { NULL,             NULL,                  NULL }
 };
 
+#endif

@@ -53,7 +53,7 @@ OBJ=p.o pp.o symbol.o error.o \
 	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
 	x.o xrt_print_3d.o motif_tools.o ff_convolve.o ff_struct.o apifunc.o \
 	ff_plplot.o ff_pca.o ff_loadvan.o tools.o header.o \
-	io_pds.o io_hdf.o darray.o avl.o ff_pbm.o
+	io_pds.o io_hdf.o darray.o avl.o ff_pbm.o ff_meta.o
 
 all:	 davinci gplot
 
