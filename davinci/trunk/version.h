@@ -1,8 +1,11 @@
-char *version = "@(#) daVinci Version #1.43";
+char *version = "@(#) daVinci Version #1.43a";
 
 #include "build.h"
 
 /*
+Version 1.43a: Thu Mar 24 16:47:07 MST 2005
+	* Missing prototype in isis_obj.c
+
 Version 1.43: Thu Mar 24 15:41:25 MST 2005
 	* Fixed lingering module dependency (module_help) for when
        modules aren't included.
