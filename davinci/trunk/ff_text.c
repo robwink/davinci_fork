@@ -61,30 +61,30 @@ ff_text(vfuncptr func, Var *arg)
         parse_error(NULL);
         return(NULL);
     }
-        /**
-         ** Determine the file size.  X is max of all line lengths.
-         **/
+    /**
+    ** Determine the file size.  X is max of all line lengths.
+    **/
 
-	x = y = 0;
-	count = 0;
-	while(getline(&ptr, fp) != EOF) {
-		if ((int)strlen(ptr) > x) 
-			x = (int)strlen(ptr);
-		y++;
-		count += (int)strlen(ptr);
-	}
-	rewind(fp);
+    x = y = 0;
+    count = 0;
+    while(getline(&ptr, fp) != EOF) {
+        if ((int)strlen(ptr) > x) 
+            x = (int)strlen(ptr);
+        y++;
+        count += (int)strlen(ptr);
+    }
+    rewind(fp);
 
     dsize = x*y;
     cdata = (unsigned char *)calloc(dsize,sizeof(char));
 
-	for (j = 0 ; j < y ; j++) {
-		if ((rlen = getline(&ptr, fp)) == -1) break;
-		memcpy(cdata+(x*j), ptr, strlen(ptr));
-	}
+    for (j = 0 ; j < y ; j++) {
+        if ((rlen = getline(&ptr, fp)) == -1) break;
+        memcpy(cdata+(x*j), ptr, strlen(ptr));
+    }
 
     if (VERBOSE > 1) {
-		fprintf(stderr, "Read TEXT file: %dx%d (%d bytes)\n", x,y,count);
+        fprintf(stderr, "Read TEXT file: %dx%d (%d bytes)\n", x,y,count);
     }
 
     s = newVar();
@@ -109,11 +109,13 @@ ff_textarray(vfuncptr func, Var *arg)
     FILE *fp;
     char *ptr;
     int rlen;
+    unsigned char *p, **t;
+    int len, size;
 	
-	 Var *o;
+    Var *o;
 
     int i,j,k;
-	 int count;
+    int count;
 
     struct keywords kw[] = {
         { "filename", NULL },   /* filename to read */
@@ -151,32 +153,27 @@ ff_textarray(vfuncptr func, Var *arg)
         parse_error(NULL);
         return(NULL);
     }
-        /**
-         ** Determine the file size.  X is max of all line lengths.
-         **/
 
+    count = 0;
+    size = 64;
+    t = calloc(size, sizeof(char *));
 
-	o=newVar();
-	
+    while((rlen = getline(&ptr, fp)) != EOF) {
+        if (ptr[rlen-1] == '\n') ptr[rlen-1] = '\0';
+        if (size == count) {
+            t = realloc(t, size*2*sizeof(char *));
+            size *= 2;
+        }
+        t[count++] = strdup(ptr);
+    }
+    t = realloc(t, count*sizeof(char *));
 
-	count = 0;
-	while(getline(&ptr, fp) != EOF) {
-		count ++;
-	}
-	rewind(fp);
-
+    o=newVar();
     V_TEXT(o).Row=count;
-    V_TEXT(o).text = (unsigned char **)calloc(V_TEXT(o).Row,sizeof(char));
-
-	for (j = 0 ; j < count;j++) {
-		if ((rlen = getline(&ptr, fp)) == -1) break;
-		V_TEXT(o).text[j]=strdup(ptr);
-		if (V_TEXT(o).text[j][strlen(V_TEXT(o).text[j])-1]=='\n')
-			V_TEXT(o).text[j][strlen(V_TEXT(o).text[j])-1]='\0';
-	}
+    V_TEXT(o).text = t;
 
     if (VERBOSE > 1) {
-		fprintf(stderr, "Read TEXT file: %d lines\n", count);
+        fprintf(stderr, "Read TEXT file: %d lines\n", count);
     }
 
     V_TYPE(o) = ID_TEXT;
@@ -191,67 +188,66 @@ ff_textarray(vfuncptr func, Var *arg)
 Var *
 ff_delim_textarray(Var *ob,int item,char *delim)
 {
-	int i;
-	int j;
-	int Row;
-	int End=0;
-	int length;
-	char *text;
-	int hit;
-	int index=0;
+    int i;
+    int j;
+    int Row;
+    int End=0;
+    int length;
+    char *text;
+    int hit;
+    int index=0;
 
-	Var *s;
+    Var *s;
 
-	int Max=25;
-	unsigned char *buffer;
+    int Max=25;
+    unsigned char *buffer;
 
-	if (strlen(delim) > 1) {
-		parse_error("Single character delimiters only");
-		return(NULL);
-	}
+    if (strlen(delim) > 1) {
+        parse_error("Single character delimiters only");
+        return(NULL);
+    }
 
-	s=newVar();
-	V_TYPE(s)=ID_TEXT;
-	V_TEXT(s).Row=Row=V_TEXT(ob).Row;
-	V_TEXT(s).text=(unsigned char **)calloc(Row,sizeof(char *));
-	buffer=(unsigned char *)calloc(Max,sizeof(char));
+    s=newVar();
+    V_TYPE(s)=ID_TEXT;
+    V_TEXT(s).Row=Row=V_TEXT(ob).Row;
+    V_TEXT(s).text=(unsigned char **)calloc(Row,sizeof(char *));
+    buffer=(unsigned char *)calloc(Max,sizeof(char));
 
 
-	for (i=0;i<Row;i++){
-		j=0; hit=0; index=0;
-		End=0;
-	 	text=V_TEXT(ob).text[i];
-		length=strlen(text);	
-		memset(buffer,0,Max);
-		while((j<length) && !(End)){
-			if (text[j]==*delim){ /*Need to handle multiples copies of adjactent
-											delimiters:  xxxxxxxcccxxxxxxxxcxxxxxxcc
-											where delim=c
-										*/
-				while (j<length && text[j]==*delim)
-					j++;
-				j--; /*We'll be advancing j up ahead,so we need to back off one*/
-				hit++;
-			}
-			else if ((hit+1)==item){
-					if (j>=Max){
-					 	Max+=Max;	
-						buffer=realloc(buffer,Max*sizeof(char));
-						memset((buffer+(Max/2)),0,(Max/2));
-					}
-					buffer[index++]=text[j];
-			}
+    for (i=0;i<Row;i++){
+        j=0; hit=0; index=0;
+        End=0;
+        text=V_TEXT(ob).text[i];
+        length=strlen(text);	
+        memset(buffer,0,Max);
+        while((j<length) && !(End)){
+            if (text[j]==*delim) {
+                /*Need to handle multiples copies of adjactent delimiters:
+                  xxxxxxxcccxxxxxxxxcxxxxxxcc where delim=c */
+                while (j<length && text[j] == *delim)
+                    j++;
+                j--; /*We'll be advancing j up ahead,so we need to back off one*/
+                hit++;
+            }
+            else if ((hit+1)==item){
+                if (j>=Max){
+                    Max+=Max;	
+                    buffer=realloc(buffer,Max*sizeof(char));
+                    memset((buffer+(Max/2)),0,(Max/2));
+                }
+                buffer[index++]=text[j];
+            }
 
-			else if (hit==item)
-				End=1;
+            else if (hit==item)
+                End=1;
 					
-			j++;
-		}
+            j++;
+        }
 
-		V_TEXT(s).text[i]=strdup(buffer);
-	}
+        V_TEXT(s).text[i]=strdup(buffer);
+    }
 	
-	return(s);
+    return(s);
 }	
 
 
@@ -262,16 +258,16 @@ ff_delim_textarray(Var *ob,int item,char *delim)
 Var *
 ff_delim(vfuncptr func, Var *arg)
 {
-	Var *ob, *cval, *s, *v, *e;
-	char *delim;
-	char *cdata;
-	char *ptr;
-	int item, count;
+    Var *ob, *cval, *s, *v, *e;
+    char *delim;
+    char *cdata;
+    char *ptr;
+    int item, count;
 
     struct keywords kw[] = {
         { "object", NULL },   	/* object to read */
-		{ "delim",    NULL },   /* string of delimters to use */
-		{ "count",    NULL },   /* string of delimters to use */
+        { "delim",    NULL },   /* string of delimters to use */
+        { "count",    NULL },   /* string of delimters to use */
         { NULL, NULL }
     };
 
@@ -289,193 +285,193 @@ ff_delim(vfuncptr func, Var *arg)
         parse_error("Illegal argument to read_text(...object=...)");
         return(NULL);
     }
-	if (V_TYPE(e) == ID_VAL) {
-		if (V_FORMAT(e) != BYTE) {
-			parse_error("Illegal argument to read_text(...object=...), must be BYTE");
-			return(NULL);
-		}
-	} else if (V_TYPE(e) != ID_STRING && V_TYPE(e) != ID_TEXT) {
+    if (V_TYPE(e) == ID_VAL) {
+        if (V_FORMAT(e) != BYTE) {
+            parse_error("Illegal argument to read_text(...object=...), must be BYTE");
+            return(NULL);
+        }
+    } else if (V_TYPE(e) != ID_STRING && V_TYPE(e) != ID_TEXT) {
         parse_error("Illegal argument to read_text(...object=...), must be BYTE");
         return(NULL);
-	}
+    }
     ob = e;
 	
-	if ((cval = RequireKeyword("count",  kw, ID_VAL, INT,  func)) == NULL) 
-		return(NULL);
-	item = V_INT(cval);
+    if ((cval = RequireKeyword("count",  kw, ID_VAL, INT,  func)) == NULL) 
+        return(NULL);
+    item = V_INT(cval);
 
-	if (item <= 0)  {
-		sprintf(error_buf, "%s(), count must be greater than 0", func->name);
-		parse_error(NULL);
-		return(NULL);
-	}
+    if (item <= 0)  {
+        sprintf(error_buf, "%s(), count must be greater than 0", func->name);
+        parse_error(NULL);
+        return(NULL);
+    }
 
     if ((v = get_kw("delim", kw)) != NULL) {
-		if ((e = eval(v)) != NULL) v = e;
-		if (V_TYPE(v) != ID_STRING) {
-			sprintf(error_buf, "%s(), delim must be a STRING", func->name);
-		}
+        if ((e = eval(v)) != NULL) v = e;
+        if (V_TYPE(v) != ID_STRING) {
+            sprintf(error_buf, "%s(), delim must be a STRING", func->name);
+        }
     }
-	delim = V_STRING(v);
+    delim = V_STRING(v);
 
-	if (V_TYPE(ob)==ID_TEXT)
-		return(ff_delim_textarray(ob,item,delim));
+    if (V_TYPE(ob)==ID_TEXT)
+        return(ff_delim_textarray(ob,item,delim));
 
-	if (V_TYPE(ob) == ID_VAL) {
-		cdata = strdup((char *)V_DATA(ob));
-	} else {
-		cdata = strdup((char *)V_STRING(ob));
-	}
+    if (V_TYPE(ob) == ID_VAL) {
+        cdata = strdup((char *)V_DATA(ob));
+    } else {
+        cdata = strdup((char *)V_STRING(ob));
+    }
 
-	ptr = cdata;
-	count = 0;
-	while((ptr = strtok(ptr, delim)) != NULL) {
-		count++;
-		if (count == item) {
-			s = newVar();
-			V_TYPE(s) = ID_STRING;
-			V_STRING(s) = strdup(ptr);
-			free(cdata);
-			return(s);
-		}
-		ptr = NULL;
-	}
+    ptr = cdata;
+    count = 0;
+    while((ptr = strtok(ptr, delim)) != NULL) {
+        count++;
+        if (count == item) {
+            s = newVar();
+            V_TYPE(s) = ID_STRING;
+            V_STRING(s) = strdup(ptr);
+            free(cdata);
+            return(s);
+        }
+        ptr = NULL;
+    }
 
-	if (VERBOSE) {
-		fprintf(stderr, "%s(), Unable to find delimiter %d\n", func->name, item);
-	}
-	return(NULL);
+    if (VERBOSE) {
+        fprintf(stderr, "%s(), Unable to find delimiter %d\n", func->name, item);
+    }
+    return(NULL);
 }
 
 
 Var *
 textarray_subset(Var *v, Var *range)
 {
-	Range *r=V_RANGE(range);
+    Range *r=V_RANGE(range);
 
-	int i,lo[2],hi[2],step[2];
+    int i,lo[2],hi[2],step[2];
 
-	Var *o;
+    Var *o;
 
-	int counter=0;
+    int counter=0;
 
-	for (i=0;i<2;i++){
-		lo[i]=r->lo[i];
-		hi[i]=r->hi[i];
-		step[i]=r->step[i];
-		if (lo[i]==0) lo[i]=1;
-		if (hi[i]==0)
-			if (i==1)
-				hi[i]=V_TEXT(v).Row;
-			else
-				hi[i]=INT_MAX; /*This is to fool it into using full length of string on given row*/
-		lo[i]--;
-		hi[i]--;
-		if (hi[i] < lo[i]){
-			 parse_error("Illegal Range value\n");
-         return(NULL);
-      }
+    for (i=0;i<2;i++){
+        lo[i]=r->lo[i];
+        hi[i]=r->hi[i];
+        step[i]=r->step[i];
+        if (lo[i]==0) lo[i]=1;
+        if (hi[i]==0)
+            if (i==1)
+                hi[i]=V_TEXT(v).Row;
+            else
+                hi[i]=INT_MAX; /*This is to fool it into using full length of string on given row*/
+        lo[i]--;
+        hi[i]--;
+        if (hi[i] < lo[i]){
+            parse_error("Illegal Range value\n");
+            return(NULL);
+        }
 
-		if (lo[i] < 0 || hi[i] < 0 || step[i] < 0){
-			parse_error("Illegal Range value\n");
-			return(NULL); 
-		}
+        if (lo[i] < 0 || hi[i] < 0 || step[i] < 0){
+            parse_error("Illegal Range value\n");
+            return(NULL); 
+        }
 
-		if (step[i] == 0) step[i]=1;
-	}
+        if (step[i] == 0) step[i]=1;
+    }
 
-	if (hi[1]>=V_TEXT(v).Row){
-		parse_error("Illegal range value\n");
-		return(NULL);
-	}
+    if (hi[1]>=V_TEXT(v).Row){
+        parse_error("Illegal range value\n");
+        return(NULL);
+    }
 
 
-	o=newVar();
+    o=newVar();
 
-	V_TEXT(o).Row=((hi[1]-lo[1])/step[1])+1;
-	if (V_TEXT(o).Row <=0){
-		printf("Hey! You can't do that!\n");
-		return(NULL);
-	}
+    V_TEXT(o).Row=((hi[1]-lo[1])/step[1])+1;
+    if (V_TEXT(o).Row <=0){
+        printf("Hey! You can't do that!\n");
+        return(NULL);
+    }
 
-	V_TEXT(o).text=(unsigned char **)calloc(V_TEXT(o).Row,sizeof(char *));
-	V_TYPE(o)=ID_TEXT;
+    V_TEXT(o).text=(unsigned char **)calloc(V_TEXT(o).Row,sizeof(char *));
+    V_TYPE(o)=ID_TEXT;
 
-	for (i=lo[1];i<=hi[1];i+=step[1]){
-		if (lo[0] >= strlen(V_TEXT(v).text[i])) {
-			V_TEXT(o).text[counter]=(unsigned char *)calloc(1,1);
-			V_TEXT(o).text[counter][0]='\0';
-		}
-		else /*if (hi[0]!=0)*/{
-			if ((hi[0]-lo[0]+1) > strlen(V_TEXT(v).text[i])){
-				V_TEXT(o).text[counter]=strdup((V_TEXT(v).text[i]+lo[0]));
-			}
-			else {
-				V_TEXT(o).text[counter]=(unsigned char *)calloc((hi[0]-lo[0]+1)+1,sizeof(char));
-				memcpy(V_TEXT(o).text[counter],(V_TEXT(v).text[i]+lo[0]),(hi[0]-lo[0]+1));
-				V_TEXT(o).text[counter][(hi[0]-lo[0]+1)]='\0';
-			}
-		}
+    for (i=lo[1];i<=hi[1];i+=step[1]){
+        if (lo[0] >= strlen(V_TEXT(v).text[i])) {
+            V_TEXT(o).text[counter]=(unsigned char *)calloc(1,1);
+            V_TEXT(o).text[counter][0]='\0';
+        }
+        else /*if (hi[0]!=0)*/{
+            if ((hi[0]-lo[0]+1) > strlen(V_TEXT(v).text[i])){
+                V_TEXT(o).text[counter]=strdup((V_TEXT(v).text[i]+lo[0]));
+            }
+            else {
+                V_TEXT(o).text[counter]=(unsigned char *)calloc((hi[0]-lo[0]+1)+1,sizeof(char));
+                memcpy(V_TEXT(o).text[counter],(V_TEXT(v).text[i]+lo[0]),(hi[0]-lo[0]+1));
+                V_TEXT(o).text[counter][(hi[0]-lo[0]+1)]='\0';
+            }
+        }
 /*
-		else {
-			V_TEXT(o).text[counter]=strdup((V_TEXT(v).text[i]+lo[0]));
-		}
-*/
+  else {
+  V_TEXT(o).text[counter]=strdup((V_TEXT(v).text[i]+lo[0]));
+  }
+  */
 
-		counter++;
-	}
+        counter++;
+    }
 	
 
-	if (counter==1){ /*What were really have is a string */
+    if (counter==1){ /*What were really have is a string */
 
-		V_TYPE(o)=ID_STRING;
-		V_STRING(o)=(V_TEXT(o).text[0]);
-	}
+        V_TYPE(o)=ID_STRING;
+        V_STRING(o)=(V_TEXT(o).text[0]);
+    }
 		
-	return(o);
+    return(o);
 }
 
 char *
 string_dirname(Var *ob1)
 {
-	char *s;
-	int i;
-	int Flag=1;
+    char *s;
+    int i;
+    int Flag=1;
 
-	if (V_STRING(ob1)==NULL)
-		return(NULL);
+    if (V_STRING(ob1)==NULL)
+        return(NULL);
 
-	i=strlen(V_STRING(ob1));
+    i=strlen(V_STRING(ob1));
 
-	while ((i--)>=0) {
-		if (V_STRING(ob1)[i]=='/'){
-			s=(char *)calloc(i+1,sizeof(char));
-			strncpy(s,V_STRING(ob1),i+1);
-			s[i]='\0';
-			return (s);
-		}
-	}
-	s=strdup(".");
-	return(s);
+    while ((i--)>=0) {
+        if (V_STRING(ob1)[i]=='/'){
+            s=(char *)calloc(i+1,sizeof(char));
+            strncpy(s,V_STRING(ob1),i+1);
+            s[i]='\0';
+            return (s);
+        }
+    }
+    s=strdup(".");
+    return(s);
 }
 
 Var *
 text_dirname(Var *ob1)
 {
-	int i;
-	Var *S=newVar();
-	Var *Tmp=newVar();
-	V_TYPE(Tmp)=ID_STRING;
-	V_TYPE(S)=ID_TEXT;
-	V_TEXT(S).Row=V_TEXT(ob1).Row;
-	V_TEXT(S).text=(unsigned char **)calloc(V_TEXT(ob1).Row,sizeof(char *));
-	for (i=0;i<V_TEXT(ob1).Row;i++){
-		V_STRING(Tmp)=V_TEXT(ob1).text[i];
-		V_TEXT(S).text[i]=string_dirname(Tmp);
-	}
-	V_STRING(Tmp)=NULL;
-// 	free_var(Tmp);	
-	return(S);
+    int i;
+    Var *S=newVar();
+    Var *Tmp=newVar();
+    V_TYPE(Tmp)=ID_STRING;
+    V_TYPE(S)=ID_TEXT;
+    V_TEXT(S).Row=V_TEXT(ob1).Row;
+    V_TEXT(S).text=(unsigned char **)calloc(V_TEXT(ob1).Row,sizeof(char *));
+    for (i=0;i<V_TEXT(ob1).Row;i++){
+        V_STRING(Tmp)=V_TEXT(ob1).text[i];
+        V_TEXT(S).text[i]=string_dirname(Tmp);
+    }
+    V_STRING(Tmp)=NULL;
+    // 	free_var(Tmp);	
+    return(S);
 }
 
 
@@ -484,51 +480,50 @@ text_dirname(Var *ob1)
 char *
 string_basename(Var *ob1)
 {
-	char *s;
-	int i;
-	int len;
+    char *s;
+    int i;
+    int len;
 
-	if (V_STRING(ob1)==NULL)
-		return(NULL);
+    if (V_STRING(ob1)==NULL)
+        return(NULL);
 
-	len=i=strlen(V_STRING(ob1));
-	
+    len=i=strlen(V_STRING(ob1));
 
-	while ((i--)>=0) {
-		if (V_STRING(ob1)[i]=='/'){
-			if ((i+1)==len){/*No name*/
-				s=(char *)calloc(1,1);
-				s[0]='\0';
-			}
-			else {
-				s=strdup((V_STRING(ob1)+i+1));
-			}
-			return(s);
-		}
-	}
+    while ((i--)>=0) {
+        if (V_STRING(ob1)[i]=='/'){
+            if ((i+1)==len){/*No name*/
+                s=(char *)calloc(1,1);
+                s[0]='\0';
+            }
+            else {
+                s=strdup((V_STRING(ob1)+i+1));
+            }
+            return(s);
+        }
+    }
 
-	s=strdup((V_STRING(ob1)));
+    s=strdup((V_STRING(ob1)));
 
-	return(s);
+    return(s);
 }
 
 Var *
 text_basename(Var *ob1)
 {
-	int i;
-	Var *S=newVar();
-	Var *Tmp=newVar();
-	V_TYPE(Tmp)=ID_STRING;
-	V_TYPE(S)=ID_TEXT;
-	V_TEXT(S).Row=V_TEXT(ob1).Row;
-	V_TEXT(S).text=(unsigned char **)calloc(V_TEXT(ob1).Row,sizeof(char *));
-	for (i=0;i<V_TEXT(ob1).Row;i++){
-		V_STRING(Tmp)=V_TEXT(ob1).text[i];
-		V_TEXT(S).text[i]=string_basename(Tmp);
-	}
-	V_STRING(Tmp)=NULL;
-// 	free_var(Tmp);	
-	return(S);
+    int i;
+    Var *S=newVar();
+    Var *Tmp=newVar();
+    V_TYPE(Tmp)=ID_STRING;
+    V_TYPE(S)=ID_TEXT;
+    V_TEXT(S).Row=V_TEXT(ob1).Row;
+    V_TEXT(S).text=(unsigned char **)calloc(V_TEXT(ob1).Row,sizeof(char *));
+    for (i=0;i<V_TEXT(ob1).Row;i++){
+        V_STRING(Tmp)=V_TEXT(ob1).text[i];
+        V_TEXT(S).text[i]=string_basename(Tmp);
+    }
+    V_STRING(Tmp)=NULL;
+    // 	free_var(Tmp);	
+    return(S);
 }
 
 
@@ -536,67 +531,65 @@ Var *
 ff_filename(vfuncptr func, Var * arg) 
 {
 
-	 Var *ob1;
+    Var *ob1;
     int ac;
     Var **av;
-	 Var *S;
-	 int filefunc;
+    Var *S;
+    int filefunc;
     Alist alist[2];
     alist[0] = make_alist( "obj", ID_UNK,   NULL,     &ob1);
     alist[1].name = NULL;
 
-	 filefunc=func->fdata;
-	 if (filefunc==NULL){
-		parse_error("Bad function");
-		return(NULL);
-	 }	
+    filefunc=func->fdata;
+
+    if (filefunc==NULL){
+        parse_error("Bad function");
+        return(NULL);
+    }	
 
     make_args(&ac, &av, func, arg);
     if (parse_args(ac, av, alist)) return(NULL);
 
-	 if (ob1==NULL){
-		return(NULL);
-	 }
+    if (ob1==NULL){
+        return(NULL);
+    }
 
 
-	 if (V_TYPE(ob1)==ID_STRING){
-	 	S=newVar();
-		V_TYPE(S)=ID_STRING;
-		if (filefunc==1){
-			V_STRING(S)=string_basename(ob1);
-		}
+    if (V_TYPE(ob1)==ID_STRING){
+        S=newVar();
+        V_TYPE(S)=ID_STRING;
+        if (filefunc==1){
+            V_STRING(S)=string_basename(ob1);
+        }
 
-	   else if (filefunc==2){
-			V_STRING(S)=string_dirname(ob1);
-		}
+        else if (filefunc==2){
+            V_STRING(S)=string_dirname(ob1);
+        }
 
-		else {
-			parse_error("Bad Functions");
-			return(NULL);
-		}
-		return(S);
-	 }
-	
- 	 else if (V_TYPE(ob1)==ID_TEXT){
-		if (filefunc==1){
-			S=text_basename(ob1);
-		}
-		else if (filefunc==2){
-			S=text_dirname(ob1);
-		}
+        else {
+            parse_error("Bad Functions");
+            return(NULL);
+        }
+        return(S);
+    } else if (V_TYPE(ob1)==ID_TEXT){
+        if (filefunc==1){
+            S=text_basename(ob1);
+        }
+        else if (filefunc==2){
+            S=text_dirname(ob1);
+        }
 
-		else {
-         parse_error("Bad Functions");
-         return(NULL);
-      }
-		return(S);
-	 }
+        else {
+            parse_error("Bad Functions");
+            return(NULL);
+        }
+        return(S);
+    }
 
-	 else {
-		parse_error("Only STRING and TEXT types are allowed");
-		return(NULL);
-	 }
-
+    else {
+        parse_error("Only STRING and TEXT types are allowed");
+        return(NULL);
+    }
 }
 
 
@@ -608,10 +601,10 @@ ff_grep(vfuncptr func, Var * arg)
     int ac;
     Var **av;
     Var *S;
-	 char *s1=NULL,*newcursor=NULL,*ptr=NULL;
+    char *s1=NULL,*newcursor=NULL,*ptr=NULL;
     int count=0;
-	 int index=0;
-	 int i;
+    int index=0;
+    int i;
     Alist alist[3];
     alist[0] = make_alist( "obj", ID_UNK,   NULL,     &ob1);
     alist[1] = make_alist( "pattern", ID_STRING,   NULL,     &s1);
@@ -621,37 +614,38 @@ ff_grep(vfuncptr func, Var * arg)
     if (parse_args(ac, av, alist)) return(NULL);
     
     if (ob1==NULL || s1==NULL){
-      return(NULL);
+        return(NULL);
     }
 
-	 if (V_TYPE(ob1)!=ID_TEXT){
-		parse_error("Can only grep Text Arrays\n");
-		return(NULL);	
-	 }
-	 ptr = regcmp(s1, (char *)0);/*Compiles expression space*/
-	 for (i=0;i<V_TEXT(ob1).Row;i++){
-		newcursor = regex(ptr, V_TEXT(ob1).text[i]);/*Does pattern search using compiled space*/
-		if (newcursor!=NULL)
-			count++;
-	 }
+    if (V_TYPE(ob1)!=ID_TEXT){
+        parse_error("Can only grep Text Arrays\n");
+        return(NULL);	
+    }
+    /* Compile expression space */
+    ptr = regcmp(s1, (char *)0);
+    for (i=0;i<V_TEXT(ob1).Row;i++){
+        newcursor = regex(ptr, V_TEXT(ob1).text[i]);/*Does pattern search using compiled space*/
+        if (newcursor!=NULL)
+            count++;
+    }
 
-	 if (count==0){
-		parse_error("No Match");
-		return(NULL);
-	 }
+    if (count==0){
+        parse_error("No Match");
+        return(NULL);
+    }
 
-	 S=newVar();
-	 V_TYPE(S)=ID_TEXT;
-	 V_TEXT(S).Row=count;
-	 V_TEXT(S).text=(unsigned char **)calloc(count,sizeof(char *));
-	 for (i=0;i<V_TEXT(ob1).Row;i++){
-		newcursor = regex(ptr, V_TEXT(ob1).text[i]);
-		if (newcursor!=NULL){
-			V_TEXT(S).text[index++]=strdup(V_TEXT(ob1).text[i]);
-	   }
-	 }
+    S=newVar();
+    V_TYPE(S)=ID_TEXT;
+    V_TEXT(S).Row=count;
+    V_TEXT(S).text=(unsigned char **)calloc(count,sizeof(char *));
+    for (i=0;i<V_TEXT(ob1).Row;i++){
+        newcursor = regex(ptr, V_TEXT(ob1).text[i]);
+        if (newcursor!=NULL){
+            V_TEXT(S).text[index++]=strdup(V_TEXT(ob1).text[i]);
+        }
+    }
 
-	 return(S);
+    return(S);
 }
 
 
@@ -711,20 +705,20 @@ kmp(char *s1, char *s2)
 int 
 ff_string_strstr(char *s1, char *s2)
 {
-	return ((kmp(s1,s2)+1));
+    return ((kmp(s1,s2)+1));
 }
 
 Var *
 ff_text_strstr(Var *ob1,char *s1)
 {
-	int i;
-	int *data=calloc(V_TEXT(ob1).Row,sizeof(int));
+    int i;
+    int *data=calloc(V_TEXT(ob1).Row,sizeof(int));
 	
-	for (i=0;i<V_TEXT(ob1).Row;i++){
-		data[i]=ff_string_strstr(V_TEXT(ob1).text[i],s1);
-	}
+    for (i=0;i<V_TEXT(ob1).Row;i++){
+        data[i]=ff_string_strstr(V_TEXT(ob1).text[i],s1);
+    }
 
-	return(newVal(BSQ,1,V_TEXT(ob1).Row,1,INT,data));
+    return(newVal(BSQ,1,V_TEXT(ob1).Row,1,INT,data));
 }
 
 Var *
@@ -748,23 +742,23 @@ ff_strstr(vfuncptr func, Var * arg)
     if (parse_args(ac, av, alist)) return(NULL);
 
     if (ob1==NULL || s1==NULL){
-      return(NULL);
+        return(NULL);
     }
 
-	 if (V_TYPE(ob1)==ID_TEXT){
-		return(ff_text_strstr(ob1,s1));
-	 }
+    if (V_TYPE(ob1)==ID_TEXT){
+        return(ff_text_strstr(ob1,s1));
+    }
 
-	 if (V_TYPE(ob1)==ID_STRING){
-		int *v=calloc(1,sizeof(int));
-		*v=ff_string_strstr(V_STRING(ob1),s1);
-		return(newVal(BSQ,1,1,1,INT,v));
-	 }
+    if (V_TYPE(ob1)==ID_STRING){
+        int *v=calloc(1,sizeof(int));
+        *v=ff_string_strstr(V_STRING(ob1),s1);
+        return(newVal(BSQ,1,1,1,INT,v));
+    }
 
-	 else {
-		parse_error("Invalid type...but thanks for playing!");
-		return(NULL);
-	}
+    else {
+        parse_error("Invalid type...but thanks for playing!");
+        return(NULL);
+    }
 }
 
 /**
@@ -778,120 +772,120 @@ ff_strstr(vfuncptr func, Var * arg)
 Var *
 set_text(Var *to,Range *r, Var *from)
 {
-	Var *src;
-	Var *dest;
+    Var *src;
+    Var *dest;
 
-	int i,Row;
-	int lo[2],hi[2],step[2];
-	char *string;
-	int length;
-	int height;
-	int string_length;
-	int cur_line_leng;
-	int tmp_hi;
-	int tmp_lo;
+    int i,Row;
+    int lo[2],hi[2],step[2];
+    char *string;
+    int length;
+    int height;
+    int string_length;
+    int cur_line_leng;
+    int tmp_hi;
+    int tmp_lo;
 
 
 	
-	for (i=0;i<2;i++){
-		lo[i]=r->lo[i];
-		hi[i]=r->hi[i];
-		step[i]=r->step[i];
-		if (lo[i]==0) lo[i]=1;
-		if (hi[i]==0)
-			if (i==1)
-				hi[i]=V_TEXT(to).Row;
-			else
-				hi[i]=INT_MAX; /*This is to fool it into using full length of string on given row*/
-		lo[i]--;
-		hi[i]--;
-		if (hi[i] < lo[i]){
-			 parse_error("Illegal Range value\n");
-         return(NULL);
-      }
+    for (i=0;i<2;i++){
+        lo[i]=r->lo[i];
+        hi[i]=r->hi[i];
+        step[i]=r->step[i];
+        if (lo[i]==0) lo[i]=1;
+        if (hi[i]==0)
+            if (i==1)
+                hi[i]=V_TEXT(to).Row;
+            else
+                hi[i]=INT_MAX; /*This is to fool it into using full length of string on given row*/
+        lo[i]--;
+        hi[i]--;
+        if (hi[i] < lo[i]){
+            parse_error("Illegal Range value\n");
+            return(NULL);
+        }
 
-		if (lo[i] < 0 || hi[i] < 0 || step[i] < 0){
-			parse_error("Illegal Range value\n");
-			return(NULL); 
-		}
+        if (lo[i] < 0 || hi[i] < 0 || step[i] < 0){
+            parse_error("Illegal Range value\n");
+            return(NULL); 
+        }
 
-		if (step[i] == 0) step[i]=1;
-	}
+        if (step[i] == 0) step[i]=1;
+    }
 	
-	height = (hi[1]-lo[1])/step[1]+1;
+    height = (hi[1]-lo[1])/step[1]+1;
 	
-	dest=V_DUP(to);
-	src=V_DUP(from);
+    dest=V_DUP(to);
+    src=V_DUP(from);
 
-	if (V_TYPE(from)==ID_STRING){
-		string=V_STRING(from);
-		string_length=strlen(string);
-	}
+    if (V_TYPE(from)==ID_STRING){
+        string=V_STRING(from);
+        string_length=strlen(string);
+    }
 
-	else {
-		if (((hi[1]-lo[1]/step[1]+1) != V_TEXT(from).Row) && (V_TEXT(from).Row > 1)) {
-			parse_error("Can't subset text arrays of different Row sizes");
-			return(NULL);
-		}
-	}
-
-
-	for (i=lo[1];i<=hi[1];i+=step[1]){
-		if (V_TYPE(from)==ID_TEXT){
-			string=V_TEXT(from).text[i];
-			string_length=strlen(string);
-		}
-
-		cur_line_leng=strlen(V_TEXT(to).text[i]);
-		if (lo[0] >= cur_line_leng) continue; /*Skip it*/
-		tmp_hi=min(hi[0],(cur_line_leng-1));
-		length = (tmp_hi-lo[0]+1);
-		free(V_TEXT(to).text[i]);
-		V_TEXT(to).text[i]=(unsigned char *)calloc(string_length+
-				cur_line_leng-length+1,sizeof(char));
-		memcpy(V_TEXT(to).text[i],V_TEXT(dest).text[i],lo[0]);
-		memcpy((V_TEXT(to).text[i]+lo[0]),string,string_length);
-		memcpy((V_TEXT(to).text[i]+lo[0]+string_length),
-				 (V_TEXT(dest).text[i]+tmp_hi+1),
-					(cur_line_leng-tmp_hi-1));
-		V_TEXT(to).text[i][lo[0]+
-			string_length+
-			(cur_line_leng-tmp_hi-1)]='\0';
-	}
+    else {
+        if (((hi[1]-lo[1]/step[1]+1) != V_TEXT(from).Row) && (V_TEXT(from).Row > 1)) {
+            parse_error("Can't subset text arrays of different Row sizes");
+            return(NULL);
+        }
+    }
 
 
-	free_var(dest);
-	return(src);
+    for (i=lo[1];i<=hi[1];i+=step[1]){
+        if (V_TYPE(from)==ID_TEXT){
+            string=V_TEXT(from).text[i];
+            string_length=strlen(string);
+        }
+
+        cur_line_leng=strlen(V_TEXT(to).text[i]);
+        if (lo[0] >= cur_line_leng) continue; /*Skip it*/
+        tmp_hi=min(hi[0],(cur_line_leng-1));
+        length = (tmp_hi-lo[0]+1);
+        free(V_TEXT(to).text[i]);
+        V_TEXT(to).text[i]=(unsigned char *)calloc(string_length+
+                                                   cur_line_leng-length+1,sizeof(char));
+        memcpy(V_TEXT(to).text[i],V_TEXT(dest).text[i],lo[0]);
+        memcpy((V_TEXT(to).text[i]+lo[0]),string,string_length);
+        memcpy((V_TEXT(to).text[i]+lo[0]+string_length),
+               (V_TEXT(dest).text[i]+tmp_hi+1),
+               (cur_line_leng-tmp_hi-1));
+        V_TEXT(to).text[i][lo[0]+
+                          string_length+
+                          (cur_line_leng-tmp_hi-1)]='\0';
+    }
+
+
+    free_var(dest);
+    return(src);
 }
 
 
 Var *
 where_text(Var *id, Var *where, Var *exp)
 {
-	int i;
-	Var *temp;
-	int len;
-	char *text;
+    int i;
+    Var *temp;
+    int len;
+    char *text;
 
-	if (V_TEXT(id).Row != V_SIZE(where)[1]){
-		parse_error("Target and source need to have the same number of rows");
-		return(NULL);
-	}
+    if (V_TEXT(id).Row != V_SIZE(where)[1]){
+        parse_error("Target and source need to have the same number of rows");
+        return(NULL);
+    }
 
-	if (V_TYPE(exp)==ID_STRING)
-		len=0;
+    if (V_TYPE(exp)==ID_STRING)
+        len=0;
 
-	temp=V_DUP(exp);
+    temp=V_DUP(exp);
 
-	for (i=0;i<V_TEXT(id).Row;i++){
-		if(extract_int(where,i)){
-			text=(len ? V_TEXT(exp).text[i] : V_STRING(exp));
-			free(V_TEXT(id).text[i]);
-			V_TEXT(id).text[i]=strdup(text);
-		}
-	}
+    for (i=0;i<V_TEXT(id).Row;i++){
+        if(extract_int(where,i)){
+            text=(len ? V_TEXT(exp).text[i] : V_STRING(exp));
+            free(V_TEXT(id).text[i]);
+            V_TEXT(id).text[i]=strdup(text);
+        }
+    }
 		
-	return(exp);	
+    return(exp);	
 	
 
 }

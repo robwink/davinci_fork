@@ -173,11 +173,22 @@ evaluate(Var * n)
             if (right) evaluate(right);
 			p2 = pop(scope);
 			p1 = pop(scope);
+
 			switch (type) {
 				case ID_INC: p3 = pp_math(p1, ID_ADD, p2); break;
 				case ID_DEC: p3 = pp_math(p1, ID_SUB, p2); break;
 			}
-			push(scope, pp_set_var(p1, NULL, p3));
+
+			if (V_TYPE(left) == ID_DEREF) {
+				evaluate(V_NODE(left)->left);
+				evaluate(V_NODE(left)->right);
+
+                p2 = pop(scope);
+                p1 = pop(scope);
+                push(scope, pp_set_struct(p1, p2, p3));
+			} else {
+				push(scope, pp_set_var(p1, NULL, p3));
+			}
 			break;
 
         case ID_UMINUS:
@@ -384,12 +395,12 @@ evaluate(Var * n)
                 p1 = pop(scope);
 				push(scope, pp_set_where(p1, where, p2));
 
-			} else if (V_TYPE(left) == ID_STRUCT) {
+			} else if (V_TYPE(left) == ID_DEREF) {
 
 /*
                                     ID_SET
                                   /        \
-                           ID_STRUCT          EXPR
+                           ID_DEREF          EXPR
                           /        \
                          ID         ID 
 */
@@ -419,7 +430,7 @@ evaluate(Var * n)
 			}
 		    break;
 
-		case ID_STRUCT:
+		case ID_DEREF:
 			/*
 			** Derefernce of a structure element.
 			** Push the assoicated Var
@@ -443,6 +454,15 @@ evaluate(Var * n)
 			
 			break;
 
+		case ID_CONSTRUCT:
+			/*
+			** Construct a structure from the passed arguments
+			*/
+			evaluate(left);
+			p1 = pop(scope);
+			push(scope, create_struct(p1));
+
+			break;
 
 		default:
 			fprintf(stderr, "Unknown type: %d\n", type);
@@ -596,7 +616,7 @@ find_struct(Var *a, Var *b)
 		a = s;
 	}
 
-	if (V_TYPE(a) != ID_VSTRUCT) {
+	if (V_TYPE(a) != ID_STRUCT) {
 		if (V_NAME(a)) {
 			parse_error("%s: Not a struct", V_NAME(a));
 		} else {

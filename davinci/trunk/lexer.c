@@ -282,25 +282,25 @@ static void yy_fatal_error YY_PROTO(( yyconst char msg[] ));
 	*yy_cp = '\0'; \
 	yy_c_buf_p = yy_cp;
 
-#define YY_NUM_RULES 49
-#define YY_END_OF_BUFFER 50
+#define YY_NUM_RULES 51
+#define YY_END_OF_BUFFER 52
 static yyconst short int yy_accept[140] =
     {   0,
-        0,    0,   45,   45,   44,   44,   50,   35,   32,   34,
-       35,   35,   31,   35,   35,   35,   35,   35,   35,   26,
-       17,   35,   16,   28,   35,   28,   28,   28,   28,   28,
-       28,   28,   28,   28,   28,   23,   35,   24,   45,   47,
-       46,   44,   42,   44,   43,   44,   44,   44,   39,   40,
-       32,   13,    0,   29,    0,   31,   21,    0,   30,    0,
-       19,   18,   27,   25,   22,   27,   26,    0,   14,   12,
-       15,   28,   33,   28,   28,   28,   28,   28,   28,    7,
-       28,   28,   28,   20,   45,   46,   46,   48,   44,   44,
-       36,   44,    0,   43,   43,   44,   37,   44,    0,   38,
+        0,    0,   47,   47,   46,   46,   52,   37,   34,   36,
+       37,   37,   33,   37,   37,   37,   37,   37,   37,   28,
+       17,   37,   16,   30,   37,   30,   30,   30,   30,   30,
+       30,   30,   30,   30,   30,   25,   37,   26,   47,   49,
+       48,   46,   44,   46,   45,   46,   46,   46,   41,   42,
+       34,   13,    0,   31,    0,   33,   23,    0,   32,    0,
+       19,   18,   29,   27,   24,   29,   28,    0,   14,   12,
+       15,   30,   35,   30,   30,   30,   30,   30,   30,    7,
+       30,   30,   30,   22,   47,   48,   48,   50,   46,   46,
+       38,   46,    0,   45,   45,   46,   39,   46,    0,   40,
 
-       41,   27,    0,   27,   28,   28,   28,   28,    2,   28,
-       28,   28,   28,   28,   36,    0,   37,    0,   28,   28,
-       28,    8,   11,   10,   28,   28,   28,    5,   28,   28,
-       28,    4,    3,   28,    1,    9,   28,    6,    0
+       43,   29,    0,   29,   30,   30,   30,   30,    2,   30,
+       30,   30,   30,   30,   38,    0,   39,    0,   30,   30,
+       30,    8,   11,   10,   30,   30,   30,    5,   30,   30,
+       30,    4,    3,   30,    1,    9,   30,    6,    0
     } ;
 
 static yyconst int yy_ec[256] =
@@ -854,107 +854,117 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 84 "lexer.l"
-{ return(OR_OP); }
+#line 83 "lexer.l"
+{ return(MULSET_OP); }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 85 "lexer.l"
-{ return(AND_OP); }
+#line 84 "lexer.l"
+{ return(DIVSET_OP); }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
 #line 86 "lexer.l"
-{ return(CAT_OP); }
+{ return(OR_OP); }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 89 "lexer.l"
-{ indent++; return('{'); }
+#line 87 "lexer.l"
+{ return(AND_OP); }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 90 "lexer.l"
-{ indent--; return('}'); }
+#line 88 "lexer.l"
+{ return(CAT_OP); }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 92 "lexer.l"
-{ caller = INITIAL; BEGIN(comment); in_comment = 1; }
+#line 91 "lexer.l"
+{ indent++; return('{'); }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 94 "lexer.l"
-{ yytext = strdup(yytext); return(IVAL); }
+#line 92 "lexer.l"
+{ indent--; return('}'); }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 95 "lexer.l"
-{ yytext = strdup(yytext); return(RVAL); }
+#line 94 "lexer.l"
+{ caller = INITIAL; BEGIN(comment); in_comment = 1; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
 #line 96 "lexer.l"
-{ yytext = strdup(yytext); return(ID); }
+{ yytext = strdup(yytext); return(IVAL); }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 98 "lexer.l"
-{ yytext = strdup(yytext); return(STRING); }
+#line 97 "lexer.l"
+{ yytext = strdup(yytext); return(RVAL); }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 99 "lexer.l"
-{ yytext = strdup(yytext); return(STRING); }
+#line 98 "lexer.l"
+{ yytext = strdup(yytext); return(ID); }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 101 "lexer.l"
-{ }
+#line 100 "lexer.l"
+{ yytext = strdup(yytext); return(STRING); }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 102 "lexer.l"
-{ }
+#line 101 "lexer.l"
+{ yytext = strdup(yytext); return(STRING); }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 104 "lexer.l"
-{ continuation=1; pp_line++; }
+#line 103 "lexer.l"
+{ }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 105 "lexer.l"
-{ return('\n'); }
+#line 104 "lexer.l"
+{ }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
 #line 106 "lexer.l"
-{ return(yytext[0]); };
+{ continuation=1; pp_line++; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 108 "lexer.l"
-{ MYECHO; }
+#line 107 "lexer.l"
+{ return('\n'); }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 109 "lexer.l"
-{ MYECHO; }
+#line 108 "lexer.l"
+{ return(yytext[0]); };
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 111 "lexer.l"
-{ MYECHO; caller = ufunc; BEGIN(comment); in_comment = 1; }
+#line 110 "lexer.l"
+{ MYECHO; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 113 "lexer.l"
-{ MYECHO; indent++; } 
+#line 111 "lexer.l"
+{ MYECHO; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 114 "lexer.l"
+#line 113 "lexer.l"
+{ MYECHO; caller = ufunc; BEGIN(comment); in_comment = 1; }
+	YY_BREAK
+case 41:
+YY_RULE_SETUP
+#line 115 "lexer.l"
+{ MYECHO; indent++; } 
+	YY_BREAK
+case 42:
+YY_RULE_SETUP
+#line 116 "lexer.l"
 { 
 					 	MYECHO; 
 						indent--; 
@@ -965,20 +975,10 @@ YY_RULE_SETUP
 						} 
 				   }
 	YY_BREAK
-case 41:
-YY_RULE_SETUP
-#line 123 "lexer.l"
-{ MYECHO; continuation=1; }
-	YY_BREAK
-case 42:
-YY_RULE_SETUP
-#line 124 "lexer.l"
-{ MYECHO; };
-	YY_BREAK
 case 43:
 YY_RULE_SETUP
 #line 125 "lexer.l"
-{ MYECHO; }
+{ MYECHO; continuation=1; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
@@ -987,30 +987,40 @@ YY_RULE_SETUP
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 129 "lexer.l"
-{ MYECHO; /* eat anything that's not a '*' */ }
+#line 127 "lexer.l"
+{ MYECHO; }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 130 "lexer.l"
-{ MYECHO; /* eat up '*'s not followed by '/'s */ }
+#line 128 "lexer.l"
+{ MYECHO; };
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
 #line 131 "lexer.l"
-{ MYECHO; }
+{ MYECHO; /* eat anything that's not a '*' */ }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
 #line 132 "lexer.l"
-{ MYECHO; BEGIN(caller); in_comment = 0;}
+{ MYECHO; /* eat up '*'s not followed by '/'s */ }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
 #line 133 "lexer.l"
+{ MYECHO; }
+	YY_BREAK
+case 50:
+YY_RULE_SETUP
+#line 134 "lexer.l"
+{ MYECHO; BEGIN(caller); in_comment = 0;}
+	YY_BREAK
+case 51:
+YY_RULE_SETUP
+#line 135 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1014 "lex.yy.c"
+#line 1024 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(comment):
 case YY_STATE_EOF(ufunc):
@@ -1898,5 +1908,5 @@ int main()
 	return 0;
 	}
 #endif
-#line 133 "lexer.l"
+#line 135 "lexer.l"
 

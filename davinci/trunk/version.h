@@ -1,6 +1,13 @@
 char *version = "@(#) daVinci Version #0.54a";
 
 /*
+Version 0.55:
+	+ global()
+	+ dump()
+	+ text arrays: syscall(), grep, etc
+	+ structures: { }, [], add_struct(), get_struct()
+	+ HDF read/write
+
 Version 0.54a:
 	* Interim delivery for themis
 

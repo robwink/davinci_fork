@@ -277,7 +277,6 @@ load_function(char *filename)
 	*/
 	pp_line--;
 
-
     return(f);
 }
 
@@ -485,4 +484,16 @@ list_funcs()
     for (i = 0 ; i < nufunc ; i++) {
 		printf("%s\n", ufunc_list[i]->name);
 	}
+}
+
+Var *
+ff_global(vfuncptr func, Var * arg)
+{
+	Var *e = get_global_sym(V_NAME(arg));
+	if (e != NULL) {
+        dd_put(scope_tos(), V_NAME(e), e);
+	} else {
+		parse_error("%s: variable %s not found", func->name, V_NAME(arg));
+	}
+	return(NULL);
 }

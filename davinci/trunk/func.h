@@ -362,5 +362,9 @@ char *strndup(char *, int);
 Var *varray_subset(Var *v, Range *r);
 
 Var *set_varray(Var *v, Range *r, Var *e);
-
+void print_text(Var *v, int indent);
+Var * create_struct(Var *v);
 Var *ff_syscall(vfuncptr func, Var * arg);
+
+Var * ff_dump(vfuncptr func, Var * arg);
+Var * ff_global(vfuncptr func, Var * arg);

@@ -18,7 +18,7 @@ ff_atoi(vfuncptr func, Var *arg)
         parse_error("Variable not found: %s", V_NAME(arg));
         return (NULL);
    }
-   if (V_TYPE(v) != ID_STRING || V_TYPE(v)!=ID_TEXT ){
+   if (V_TYPE(v) != ID_STRING && V_TYPE(v)!=ID_TEXT ){
 		parse_error("Invalid object type");
 		return(NULL);
 	}
@@ -28,6 +28,7 @@ ff_atoi(vfuncptr func, Var *arg)
 	if (V_TYPE(v) == ID_STRING){
 		i = (int)strtod(V_STRING(v), NULL);
 		V_SIZE(s)[0] = V_SIZE(s)[1] = V_SIZE(s)[2] = V_DSIZE(s) = 1;
+		V_DATA(s) = (int *)calloc(1, sizeof(int));
 		V_INT(s) = i;
 	}
 
@@ -65,7 +66,7 @@ ff_atof(vfuncptr func, Var *arg)
         parse_error("Variable not found: %s", V_NAME(arg));
         return (NULL);
    }
-   if (V_TYPE(v) != ID_STRING || V_TYPE(v)!=ID_TEXT ){
+   if (V_TYPE(v) != ID_STRING && V_TYPE(v)!=ID_TEXT ){
 		parse_error("Invalid object type");
 		return(NULL);
 	}
@@ -75,10 +76,9 @@ ff_atof(vfuncptr func, Var *arg)
 	if (V_TYPE(v) == ID_STRING){
 		f = (float)strtod(V_STRING(v), NULL);
 		V_SIZE(s)[0] = V_SIZE(s)[1] = V_SIZE(s)[2] = V_DSIZE(s) = 1;
+		V_DATA(s) = (float *)calloc(1, sizeof(float));
 		V_FLOAT(s) = f;
-	}
-
-	else {
+	} else {
 		int l;
 		float *data = (float *)calloc(V_TEXT(v).Row, sizeof(float));
 		for (l=0;l<V_TEXT(v).Row;l++){

@@ -11,6 +11,21 @@ Var *load_hdf5(hid_t parent);
 
 
 Var *
+new_struct(int ac)
+{
+	Var *o = newVar();
+
+	if (ac <= 0) ac = 1;
+
+    V_TYPE(o) = ID_STRUCT;
+    V_STRUCT(o).count = 0;
+    V_STRUCT(o).names = (char **)calloc(ac, sizeof(char *));
+    V_STRUCT(o).data = (Var **)calloc(ac, sizeof(Var *));
+
+	return(o);
+}
+
+Var *
 make_struct(int ac, Var **av)
 {
     Var *o;
@@ -19,23 +34,22 @@ make_struct(int ac, Var **av)
     int i;
     char *zero;
 
-    o = newVar();
-    V_TYPE(o) = ID_VSTRUCT;
-    V_STRUCT(o).count = ac;
-    names = V_STRUCT(o).names = (char **)calloc(ac, sizeof(char *));
-    data = V_STRUCT(o).data = (Var **)calloc(ac, sizeof(Var *));
+    o = new_struct(ac);
+	names = V_STRUCT(o).names;
+	data = V_STRUCT(o).data;
 
     for (i = 0 ; i < ac ; i++) {
         zero = (char *)calloc(1,1);
         /*
         ** check for duplicate names here
         */
-        names[i] = strdup(V_NAME(av[i]));
+        names[i] = (V_NAME(av[i]) ? strdup(V_NAME(av[i])) : 0);
         data[i] = newVal(BSQ, 1,1,1, BYTE, zero);
         mem_claim(data[i]);
     }
     return(o);
 }
+
 
 Var *
 ff_struct(vfuncptr func, Var * arg)
@@ -51,6 +65,31 @@ ff_struct(vfuncptr func, Var * arg)
 
     make_args(&ac, &av, func, arg);
     return(make_struct(ac-1, av+1));
+}
+
+/*
+** This does NOT check for duplicate names.
+** It also doesn't mem_claim
+*/
+void
+add_struct(Var *s, char *name, Var *exp)
+{
+    char **names;
+    Var **data;
+	int count = V_STRUCT(s).count;
+
+	names = V_STRUCT(s).names;
+	data = V_STRUCT(s).data;
+
+	names = realloc(names, (count+1)*sizeof(char *));
+	data = realloc(data, (count+1)*sizeof(Var *));
+	data[count] = V_DUP(exp);
+	names[count] = name ? strdup(name) : 0;
+	mem_claim(data[count]);
+
+	V_STRUCT(s).names = names;
+	V_STRUCT(s).data = data;
+	V_STRUCT(s).count = count+1;
 }
 
 void
@@ -81,7 +120,7 @@ WriteHDF5(hid_t parent, char *name, Var *v)
     }
 
     switch (V_TYPE(v)) {
-    case ID_VSTRUCT:
+    case ID_STRUCT:
 
         /*
         ** member is a structure.  We need to create a sub-group
@@ -228,7 +267,7 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
     case H5G_GROUP:
         child = H5Gopen(parent, name);
         v = load_hdf5(child);
-        V_NAME(v) = strdup(name);
+        V_NAME(v) = (name ? strdup(name) : 0);
         H5Gclose(child);
         break;
 
@@ -375,7 +414,7 @@ load_hdf5(hid_t parent)
     }
 
     o = newVar();
-    V_TYPE(o) = ID_VSTRUCT;
+    V_TYPE(o) = ID_STRUCT;
     V_STRUCT(o).count = count;
     V_STRUCT(o).names = (char **)calloc(count, sizeof(char *));
     V_STRUCT(o).data = (Var **)calloc(count, sizeof(Var *));
@@ -532,7 +571,7 @@ LoadVanilla(char *filename)
 
 
     o = newVar();
-    V_TYPE(o) = ID_VSTRUCT;
+    V_TYPE(o) = ID_STRUCT;
     V_STRUCT(o).count = cols;
     V_STRUCT(o).names = (char **)calloc(cols, sizeof(char *));
     V_STRUCT(o).data = (Var **)calloc(cols, sizeof(Var *));
@@ -563,7 +602,7 @@ LoadVanilla(char *filename)
             }
             v = newVal(BSQ, 1, rows, 1, INT, out);
         }
-        V_STRUCT(o).names[i] = strdup(names[i]);
+        V_STRUCT(o).names[i] = (names[i] ? strdup(names[i]) : 0);
         V_STRUCT(o).data[i] = v;
     }
 
@@ -579,7 +618,7 @@ ff_add_struct(vfuncptr func, Var * arg)
 	int ac;
 	Var **av;
 	Alist alist[4];
-	alist[0] = make_alist( "object",    ID_VSTRUCT,    NULL,     &a);
+	alist[0] = make_alist( "object",    ID_STRUCT,    NULL,     &a);
 	alist[1] = make_alist( "name",      ID_STRING,     NULL,     &name);
 	alist[2] = make_alist( "value",     ID_UNK,     NULL,     &v);
 	alist[3].name = NULL;
@@ -601,7 +640,7 @@ ff_add_struct(vfuncptr func, Var * arg)
 	if (name != NULL) {
 		V_NAME(&b) = name;
 	}  else if (v != NULL && V_NAME(v) != NULL) {
-		V_NAME(&b) = strdup(V_NAME(v));
+		V_NAME(&b) = (V_NAME(v) ? strdup(V_NAME(v)) : 0);
 	}
 
 	if (v == NULL) {
@@ -627,7 +666,7 @@ ff_get_struct(vfuncptr func, Var * arg)
 	int ac;
 	Var **av;
 	Alist alist[3];
-	alist[0] = make_alist( "object",    ID_VSTRUCT,    NULL,     &a);
+	alist[0] = make_alist( "object",    ID_STRUCT,    NULL,     &a);
 	alist[1] = make_alist( "name",      ID_STRING,     NULL,     &name);
 	alist[2].name = NULL;
 
@@ -650,4 +689,95 @@ ff_get_struct(vfuncptr func, Var * arg)
 	v = find_struct(a, &b);
 
 	return(*v);
+}
+
+Var *
+varray_subset(Var *v, Range *r)
+{
+	Var *s;
+	int size;
+	int i;
+	char **names;
+	Var **data;
+
+	size = 1 + (r->hi[0] - r->lo[0]) / r->step[0];
+
+	if (size == 1) {
+		/*
+		** single occurance, just return the Var
+		*/
+		s = V_DUP(V_STRUCT(v).data[r->lo[0]]);
+	} else {
+		s = new_struct(0);
+		names = V_STRUCT(v).names;
+		data = V_STRUCT(v).data;
+
+		for (i = r->lo[0] ; i <= r->hi[0] ; i+= r->step[0])  {
+			add_struct(s, names[i], data[i]);
+		}
+	}
+	return(s);
+}
+
+/*
+** Set 1 to 1
+** Set 1 to struct
+** Set many to 1		( replication )
+** Set many to many		( same size )
+*/
+
+Var *
+set_varray(Var *v, Range *r, Var *e)
+{
+	int i;
+	int count = 0;
+
+	int size = 1 + (r->hi[0] - r->lo[0]) / r->step[0];
+
+	Var **dst = V_STRUCT(v).data;
+	Var **src = NULL;			/* either NULL for N<-1 or not for N<-N */
+
+	if (V_TYPE(e) == ID_STRUCT) {
+		src = V_STRUCT(e).data;
+		if (size != V_STRUCT(e).count) {
+			parse_error("Structure sizes don't match.");
+			return(NULL);
+		}
+	}
+
+	for (i = r->lo[0] ; i <= r->hi[0] ; i += r->step[0]) {
+		free_var(dst[i]);
+		dst[i] = (src == NULL ? V_DUP(e) : V_DUP(src[count++]));
+		mem_claim(dst[i]);
+	}
+
+	return(V_DUP(e));
+}
+
+Var *
+create_struct(Var *v)
+{
+	Var *p, *q, *r, *s;
+	char *name;
+	p = v;
+
+	s = new_struct(0);
+
+	while(p != NULL) {
+		q = p->next;
+		name = NULL;
+		if (V_TYPE(p) == ID_KEYWORD) {
+			name = V_NAME(p);
+			p = V_KEYVAL(p);
+		}
+		r = eval(p);
+		if (r == NULL) {
+			parse_error("Unable to find variable: %s\n", V_NAME(p));
+			free_var(s);
+			return(NULL);
+		}
+		add_struct(s, name, r);
+		p = q;
+	}
+	return(s);
 }

@@ -80,6 +80,8 @@ comment #.*
 
 "-="		{ return(DEC_OP); }
 "+="		{ return(INC_OP); }
+"-="		{ return(MULSET_OP); }
+"+="		{ return(DIVSET_OP); }
 
 "||"        { return(OR_OP); }
 "&&"        { return(AND_OP); }

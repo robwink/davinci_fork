@@ -21,9 +21,9 @@ int log_it = 0;
 %token IF ELSE
 %token IVAL RVAL STRING
 %token ID
-%token DEC_OP INC_OP
+%token DEC_OP INC_OP MULSET_OP DIVSET_OP
 %token LT_OP GT_OP GE_OP LE_OP EQ_OP NE_OP
-%token AND_OP OR_OP CAT_OP
+%token AND_OP OR_OP CAT_OP 
 %token QUIT HELP LIST
 %token FUNC_DEF
 %token SHELL
@@ -153,6 +153,8 @@ assignment_expr
     : postfix_expr '=' expr       { $$ = p_mknod(ID_SET,$1,$3); }
     | postfix_expr INC_OP expr    { $$ = p_mknod(ID_INC,$1,$3); }
     | postfix_expr DEC_OP expr    { $$ = p_mknod(ID_DEC,$1,$3); }
+    | postfix_expr MULSET_OP expr { $$ = p_mknod(ID_MULSET,$1,$3); }
+    | postfix_expr DIVSET_OP expr { $$ = p_mknod(ID_DIVSET,$1,$3); }
     | postfix_expr '[' WHERE expr ']' '=' expr  
 										{ $$ = p_mknod(ID_SET,
                                                p_mknod(ID_WHERE, $1, $4), $7); }
@@ -220,11 +222,12 @@ string: STRING            { $$ = p_mkval(ID_STRING, (char *)$1); free($1); }
 primary_expr
     : id                            { $$ = $1; }
     | '(' expr ')'                  { $$ = $2; }
+	;
 
 postfix_expr
     : primary_expr                  { $$ = $1; }
     | postfix_expr '[' ranges ']'   { $$ = p_mknod(ID_ARRAY,$1,$3); }
-    | postfix_expr '.' id           { $$ = p_mknod(ID_STRUCT,$1,$3); }
+    | postfix_expr '.' id           { $$ = p_mknod(ID_DEREF,$1,$3); }
     | postfix_expr '(' ')'     		{ $$ = p_mknod(ID_FUNCT,$1,NULL); }
     | postfix_expr '(' args ')'     { $$ = p_mknod(ID_FUNCT,$1,$3); }
     | postfix_expr '(' '?' ')'      { $$ = pp_help($1); }
@@ -239,6 +242,7 @@ rhs_postfix_expr
     | '$' id '[' expr ']' 			{ $$ = p_mknod(ID_ARGV, $2, $4); }
     | '$' ival              		{ $$ = p_mknod(ID_ARGV, $2, NULL); }
     | '$' ival '[' expr ']' 		{ $$ = p_mknod(ID_ARGV, $2, $4); }
+	| '{' args '}'					{ $$ = p_mknod(ID_CONSTRUCT, $2, NULL); }
 	;
 
 %%
