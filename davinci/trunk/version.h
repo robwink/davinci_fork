@@ -5,9 +5,14 @@ Version 0.55:
 	* fixed eval again.  I think you can return values now
 	+ global()
 	+ dump()
-	+ text arrays: shell(), grep, etc
 	+ structures: { }, [], add_struct(), get_struct()
 	+ HDF read/write
+	* Added new object: text_array; multiple lines of text and support functions:
+	- array subsetting
+	- line by line grep search
+	- line by line substring substitution
+ 	- basename and dirname substring substition
+	- read/write functionality
 
 Version 0.54a:
 	* Interim delivery for themis
