@@ -1,8 +1,8 @@
-char *version = "@(#) daVinci Version #0.51";
+char *version = "@(#) daVinci Version #0.52";
 
 
 /*
-Version 0.51:
+Version 0.52:
     * modified grammar to streamline to ansi standard
 	+    you can subset return values and other subsets w/o prior assignment.
 
