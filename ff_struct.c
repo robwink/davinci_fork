@@ -61,6 +61,7 @@ WriteHDF5(hid_t parent, char *name, Var *v)
     int org;
     int top = 0;
     int i;
+	 hsize_t length;
     Var *e;
 
     if (V_NAME(v) != NULL) {
@@ -115,6 +116,7 @@ WriteHDF5(hid_t parent, char *name, Var *v)
         dataset = H5Dcreate(parent, name, datatype, dataspace, H5P_DEFAULT);
         H5Dwrite(dataset, datatype, 
                  H5S_ALL, H5S_ALL, H5P_DEFAULT, V_DATA(v));
+
         aid2 = H5Screate(H5S_SCALAR);
         attr = H5Acreate(dataset, "org", H5T_NATIVE_INT, aid2, H5P_DEFAULT);
 
@@ -126,6 +128,22 @@ WriteHDF5(hid_t parent, char *name, Var *v)
         H5Sclose(dataspace);
         H5Dclose(dataset);
         break;
+
+
+	 case ID_STRING:
+		/*
+		** Member is a string of characters
+		*/
+		length=strlen(V_STRING(v))+1;/*String+NULL*/
+		dataspace = H5Screate_simple(1,&length,NULL);
+		datatype = H5Tcopy(H5T_C_S1);
+		H5Tset_size(datatype,strlen(V_STRING(v))+1);
+		dataset = H5Dcreate(parent,name, datatype, dataspace, H5P_DEFAULT);
+		H5Dwrite(dataset, datatype,H5S_ALL, H5S_ALL, H5P_DEFAULT, V_STRING(v));
+		H5Tclose(datatype);
+		H5Sclose(dataspace);
+	 	H5Dclose(dataset);
+		break;
 
     }
     if (top) H5Fclose(parent);
@@ -140,7 +158,9 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
     H5G_stat_t buf;
     hid_t child, dataset, dataspace, datatype, attr;
     int org, type, size[3],  dsize, i;
+	 int var_type;
     hsize_t datasize[3], maxsize[3];
+	 H5T_class_t classtype;
     Var *v;
     void *databuf;
 
@@ -158,38 +178,65 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
         break;
 
     case H5G_DATASET:
-        if ((dataset = H5Dopen(parent, name)) < 0) {
-            return 0;
-        }
+     if ((dataset = H5Dopen(parent, name)) < 0) {
+          return 0;
+     }
 
-        datatype = H5Dget_type(dataset);
+     datatype = H5Dget_type(dataset);
+	  classtype=(H5Tget_class(datatype));
 
-        if (H5Tequal(datatype , H5T_NATIVE_UCHAR)) type = BYTE;
-        if (H5Tequal(datatype , H5T_NATIVE_SHORT)) type = SHORT;
-        if (H5Tequal(datatype , H5T_NATIVE_INT))   type = INT;
-        if (H5Tequal(datatype , H5T_NATIVE_FLOAT)) type = FLOAT;
-        if (H5Tequal(datatype , H5T_NATIVE_DOUBLE)) type = DOUBLE;
+	  if (classtype==H5T_INTEGER){
+        if (H5Tequal(datatype , H5T_NATIVE_UCHAR)) 
+			type = BYTE;
+        else if (H5Tequal(datatype , H5T_NATIVE_SHORT)) 
+			type = SHORT;
+        else if (H5Tequal(datatype , H5T_NATIVE_INT))   
+			type = INT;
+	  }
+	  else if (classtype==H5T_FLOAT){
+        if (H5Tequal(datatype , H5T_NATIVE_FLOAT)) 
+			type = FLOAT;
+        else if (H5Tequal(datatype , H5T_NATIVE_DOUBLE)) 
+			type = DOUBLE;
+     }
 
-        attr = H5Aopen_name(dataset, "org");
-        H5Aread(attr, H5T_NATIVE_INT, &org);
-        H5Aclose(attr);
-        
-        dataspace = H5Dget_space(dataset);
-        H5Sget_simple_extent_dims(dataspace, datasize, maxsize);
-        for (i = 0 ; i < 3 ; i++) {
-            size[i] = datasize[i];
-        }
-        dsize = H5Sget_simple_extent_npoints(dataspace);
-        databuf = calloc(dsize, NBYTES(type));
-        H5Dread(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, databuf);
+     else if (classtype=H5T_STRING){
+			type=ID_STRING;
+	  }
 
-        H5Tclose(datatype);
-        H5Sclose(dataspace);
-        H5Dclose(dataset);
+	  if (type!=ID_STRING){
+       attr = H5Aopen_name(dataset, "org");
+       H5Aread(attr, H5T_NATIVE_INT, &org);
+       H5Aclose(attr);
+	  }
 
-        v = newVal(org, size[0], size[1], size[2], type, databuf);
-        V_NAME(v) = strdup(name);
+       dataspace = H5Dget_space(dataset);
+       H5Sget_simple_extent_dims(dataspace, datasize, maxsize);
+       for (i = 0 ; i < 3 ; i++) {
+        	    size[i] = datasize[i];
+       }
+       dsize = H5Sget_simple_extent_npoints(dataspace);
+       databuf = calloc(dsize, NBYTES(type));
+       H5Dread(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, databuf);
+
+       H5Tclose(datatype);
+       H5Sclose(dataspace);
+       H5Dclose(dataset);
+
+		 if (type==ID_STRING){
+        	v = newVal(0, 0,0,0, BYTE, databuf);
+			V_STRING(v)=strdup(databuf);
+			V_TYPE(v)=ID_STRING;
+        	V_NAME(v) = strdup(name);
+		 }
+       else {
+        	v = newVal(org, size[0], size[1], size[2], type, databuf);
+        	V_NAME(v) = strdup(name);
+		 }
+
+
     }
+
     *((Var **)data) = v;
     return 1;
 }
