@@ -159,7 +159,7 @@ binary:	davinci gplot
 gplot.o:	gplot.c
 	$(CC) -c -DX_INCLUDE_DIR=$(X_INCLUDE_DIR) $(CPPFLAGS) $(DEFS) $(XINCLUDES) -Ilib $(CFLAGS) $< 
 
-gplot:	gplot.o lib/libXfred.a system.o
+gplot:	gplot.o lib/libXfred.a system.o $(LIBIOMEDLEY)
 	$(CC) $(CPPFLAGS) $(CFLAGS) gplot.o system.o -o $@ $(LDFLAGS) -Llib -lXfred $(LIBS) $(XLIBS) -lX11
 
 lib/libXfred.a:
