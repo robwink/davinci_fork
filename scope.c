@@ -235,13 +235,12 @@ clean_stack(Scope *scope)
 {
     Stack *stack = scope->stack;
     Var *v;
+
     while(stack->top) {
         v = stack->value[--stack->top];
         if (v == NULL) continue;
 
         if (mem_claim(v) != NULL) free_var(v);
-        else if (V_NAME(v) == NULL) 
-            fprintf(stderr, "Clean stack, what is this?\n");
     }
 }
 
