@@ -65,7 +65,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
-#include <values.h>
 
 #include <Xm/DialogS.h>
 
