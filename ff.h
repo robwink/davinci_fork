@@ -285,7 +285,7 @@ struct _vfuncptr vfunclist[] = {
 	 { "distance_map", ff_distance_map,         NULL },
 	 { "slant",        ff_slant,                NULL },
 	 { "unslant",      ff_unslant,                NULL },
-
+         { "unslant_shear", ff_unslant_shear, NULL },
 	 { "chdir",      ff_chdir,                NULL },
 
     { "fncc_fft2d",         ff_fncc_fft2d,              NULL },
