@@ -1,9 +1,11 @@
 #ifndef _WIN32
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif /* HAVE_CONFIG_H */
 #endif
 #ifdef HAVE_LIBMAGICK
 #ifdef HAVE_LIBX11
-#include <magick.h>
+#include <magick/magick.h>
 #include <magick/api.h>
 #include <magick/xwindows.h>
 #include <X11/Intrinsic.h>

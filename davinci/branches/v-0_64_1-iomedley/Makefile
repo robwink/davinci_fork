@@ -4,22 +4,22 @@ SHELL = /bin/sh
 
 srcdir = .
 
-prefix= /usr/local
+prefix= /home/saadat/transient
 exec_prefix = $(prefix)
 BINDIR = $(exec_prefix)/bin
 LIBDIR = $(prefix)/lib
 mandir = $(prefix)/man/man1
 
-INSTALL = ./install-sh -c
+INSTALL = /usr/bin/install -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 
-XINCLUDES=-I/usr/openwin/include $(XRTINCLUDE) -I/usr/local/include
-XLIBS=-L/usr/openwin/lib $(XRTLIBS)
+XINCLUDES=-I/usr/X11R6/include $(XRTINCLUDE)
+XLIBS=-L/usr/X11R6/lib $(XRTLIBS)
 
 CPPFLAGS= -I/usr/include/X11
-CFLAGS=$(XINCLUDES) -Ilib -g -O2 -I.  -I../iomedley
-LDFLAGS= -L/usr/openwin/lib -L${exec_prefix}/lib -Lreadline  -L. -L../iomedley
+CFLAGS=$(XINCLUDES) -Ilib -g -O2 -I. -I/home/saadat/transient/include -I../iomedley  -I../iomedley
+LDFLAGS= -L/usr/X11R6/lib -L${exec_prefix}/lib -Lreadline -L/home/saadat/transient/lib -L../iomedley  -L. -L../iomedley
 
 XRTINCLUDE=  
 XRTLIBS = 
@@ -27,12 +27,12 @@ XRTLIBS =
 
 CC     = gcc
 DEFS   = -DHAVE_CONFIG_H 
-LIBS   = $(XLIBS) -lplplotFX -lMagick -ltiff -lproj -lreadline -ltermcap -ljpeg -lmsss_vis -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -ldl  -lmodsupp -liomedley
+LIBS   = $(XLIBS) -liomedley -lMagick -ltiff -lpng -lbz2 -lreadline -ltermcap -ljpeg -lz -lXext -lXt -lX11 -lm  -ldl  -lmodsupp -liomedley
 AR     = ar
 RANLIB = ranlib
 
 .c.o:
-	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $< -o $@
+	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
 
 ###
 ### If you are unable to compile readline, comment the following three lines
@@ -56,7 +56,7 @@ OBJ=p.o pp.o symbol.o \
 	reserved.o array.o string.o pp_math.o rpos.o init.o help.o \
 	io_grd.o io_isis.o io_lablib3.o io_pnm.o io_specpr.o io_vicar.o \
 	io_aviris.o io_imath.o io_magic.o io_themis.o\
-	ff_moment.o io_ascii.o ff_interp.o ff_projection.o \
+	ff_moment.o io_ascii.o ff_interp.o  \
 	lexer.o parser.o main.o fit.o system.o misc.o ufunc.o scope.o \
 	ff_header.o ff_text.o io_ers.o io_goes.o ff_bbr.o ff_vignette.o \
 	ff_pause.o printf.o ff_ifill.o ff_xfrm.o newfunc.o ff_ix.o ff_avg.o \
@@ -64,14 +64,13 @@ OBJ=p.o pp.o symbol.o \
 	x.o xrt_print_3d.o motif_tools.o ff_convolve.o apifunc.o \
 	ff_plplot.o ff_pca.o ff_loadvan.o tools.o header.o \
 	io_pds.o io_hdf.o ff_pbm.o ff_meta.o $(MODULE_SUPP_OBJS) \
-	dvio.o dvio_aviris.o dvio_goes.o dvio_grd.o dvio_imath.o \
-	dvio_isis.o dvio_magic.o dvio_pnm.o dvio_vicar.o \
-	dvio_raw.o dvio_ers.o \
+	dvio_aviris.o dvio_goes.o dvio_grd.o dvio_imath.o \
+	dvio_isis.o dvio_magic.o dvio_pnm.o dvio_vicar.o dvio.o \
+	dvio_ers.o dvio_raw.o \
 	ff_load2.o ff_write2.o
 
 
 all:	 davinci gplot
-
 
 davinci:	$(OBJ)  $(READLINE_OBJ) $(MOD_SUPP_LIB)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $@ $(READLINE_LIB) $(LIBS)
@@ -109,7 +108,7 @@ install:
 # File specific dependancies
 #
 help.o:	help.c
-	$(CC) $(CFLAGS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $*.c
+	$(CC) $(CFLAGS) $(DEFS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $*.c
 
 clean:
 	-rm -f *.o davinci dv core gplot TAGS config.cache config.h config.log 
@@ -159,7 +158,7 @@ depend:
 	@gcc -MM $(OBJ:.o=.c)
 
 x.o:    x.c
-	$(CC) -c $(CFLAGS) $(XRTINCLUDE) $<
+	$(CC) -c $(CFLAGS) $(DEFS) $(XRTINCLUDE) $<
 
 xrt_print_3d.o: xrt_print_3d.c
 	$(CC) -c $(CFLAGS) $(XRTINCLUDE) $<
@@ -175,7 +174,7 @@ symbol.o: symbol.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
 error.o: error.c
 ff.o: ff.c ff.h parser.h config.h system.h darray.h avl.h ff_modules.h \
- ufunc.h scope.h func.h apidef.h 
+ ufunc.h scope.h func.h apidef.h
 ff_ascii.o: ff_ascii.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
 ff_cluster.o: ff_cluster.c parser.h config.h system.h darray.h avl.h \
@@ -323,3 +322,30 @@ darray.o: darray.c darray.h avl.h
 avl.o: avl.c avl.h
 ff_modules.o: ff_modules.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
+dvio.o: dvio.c parser.h system.h darray.h avl.h ff_modules.h \
+ module_io.h ufunc.h scope.h func.h ../iomedley/iomedley.h \
+ ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+dvio_aviris.o: dvio_aviris.c parser.h system.h darray.h avl.h \
+ ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
+ ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+dvio_goes.o: dvio_goes.c parser.h system.h darray.h avl.h ff_modules.h \
+ module_io.h ufunc.h scope.h func.h dvio.h ../iomedley/iomedley.h \
+ ../iomedley/io_lablib3.h ../iomedley/toolbox.h
+dvio_grd.o: dvio_grd.c parser.h system.h darray.h avl.h ff_modules.h \
+ module_io.h ufunc.h scope.h func.h dvio.h ../iomedley/iomedley.h \
+ ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+dvio_imath.o: dvio_imath.c parser.h system.h darray.h avl.h \
+ ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
+ ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+dvio_isis.o: dvio_isis.c parser.h system.h darray.h avl.h ff_modules.h \
+ module_io.h ufunc.h scope.h func.h dvio.h ../iomedley/iomedley.h \
+ ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+dvio_magic.o: dvio_magic.c config.h parser.h system.h darray.h avl.h \
+ ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
+ ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h
+dvio_pnm.o: dvio_pnm.c parser.h system.h darray.h avl.h ff_modules.h \
+ module_io.h ufunc.h scope.h func.h ../iomedley/iomedley.h \
+ ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+dvio_vicar.o: dvio_vicar.c parser.h system.h darray.h avl.h \
+ ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
+ ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h 

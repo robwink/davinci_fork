@@ -26,16 +26,16 @@
 #define BUILD_MODULE_SUPPORT 1
 
 /*Define if you have projection library libproj*/
-#define HAVE_LIBPROJ 1
+/* #undef HAVE_LIBPROJ */
 
 /*Define if you have Xm library*/
-#define HAVE_LIBXM 1
+/* #undef HAVE_LIBXM */
 
 /*Define if you have the PlPlot library */
-#define HAVE_PLPLOT 1
+/* #undef HAVE_PLPLOT */
 
 /*Define if you have plplotFX library*/
-#define INCLUDE_API 1
+/* #undef INCLUDE_API */
 
 /*Define if you have use hpux shl library*/
 /* #undef USE_HPUX_SHL */
@@ -83,7 +83,7 @@
 #define HAVE_STRDUP 1
 
 /* Define if you have the strndup function.  */
-/* #undef HAVE_STRNDUP */
+#define HAVE_STRNDUP 1
 
 /* Define if you have the strspn function.  */
 #define HAVE_STRSPN 1
@@ -116,22 +116,22 @@
 #define HAVE_LIMITS_H 1
 
 /* Define if you have the <magick.h> header file.  */
-#define HAVE_MAGICK_H 1
+/* #undef HAVE_MAGICK_H */
 
 /* Define if you have the <magick/api.h> header file.  */
-#define HAVE_MAGICK_API_H 1
+/* #undef HAVE_MAGICK_API_H */
 
 /* Define if you have the <malloc.h> header file.  */
 #define HAVE_MALLOC_H 1
 
 /* Define if you have the <my_list.h> header file.  */
-#define HAVE_MY_LIST_H 1
+/* #undef HAVE_MY_LIST_H */
 
 /* Define if you have the <ndir.h> header file.  */
 /* #undef HAVE_NDIR_H */
 
 /* Define if you have the <projects.h> header file.  */
-#define HAVE_PROJECTS_H 1
+/* #undef HAVE_PROJECTS_H */
 
 /* Define if you have the <sys/dir.h> header file.  */
 /* #undef HAVE_SYS_DIR_H */
@@ -161,16 +161,22 @@
 #define HAVE_LIBXEXT 1
 
 /* Define if you have the Xm library (-lXm).  */
-#define HAVE_LIBXM 1
+/* #undef HAVE_LIBXM */
 
 /* Define if you have the Xt library (-lXt).  */
 #define HAVE_LIBXT 1
+
+/* Define if you have the bz2 library (-lbz2).  */
+#define HAVE_LIBBZ2 1
 
 /* Define if you have the curses library (-lcurses).  */
 /* #undef HAVE_LIBCURSES */
 
 /* Define if you have the hdf5 library (-lhdf5).  */
-#define HAVE_LIBHDF5 1
+/* #undef HAVE_LIBHDF5 */
+
+/* Define if you have the iomedley library (-liomedley).  */
+#define HAVE_LIBIOMEDLEY 1
 
 /* Define if you have the jpeg library (-ljpeg).  */
 #define HAVE_LIBJPEG 1
@@ -179,7 +185,10 @@
 #define HAVE_LIBM 1
 
 /* Define if you have the msss_vis library (-lmsss_vis).  */
-#define HAVE_LIBMSSS_VIS 1
+/* #undef HAVE_LIBMSSS_VIS */
+
+/* Define if you have the png library (-lpng).  */
+#define HAVE_LIBPNG 1
 
 /* Define if you have the readline library (-lreadline).  */
 #define HAVE_LIBREADLINE 1
@@ -191,7 +200,7 @@
 #define HAVE_LIBTIFF 1
 
 /* Define if you have the usds library (-lusds).  */
-#define HAVE_LIBUSDS 1
+/* #undef HAVE_LIBUSDS */
 
 /* Define if you have the z library (-lz).  */
 #define HAVE_LIBZ 1

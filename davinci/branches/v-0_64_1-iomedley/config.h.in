@@ -165,11 +165,17 @@
 /* Define if you have the Xt library (-lXt).  */
 #undef HAVE_LIBXT
 
+/* Define if you have the bz2 library (-lbz2).  */
+#undef HAVE_LIBBZ2
+
 /* Define if you have the curses library (-lcurses).  */
 #undef HAVE_LIBCURSES
 
 /* Define if you have the hdf5 library (-lhdf5).  */
 #undef HAVE_LIBHDF5
+
+/* Define if you have the iomedley library (-liomedley).  */
+#undef HAVE_LIBIOMEDLEY
 
 /* Define if you have the jpeg library (-ljpeg).  */
 #undef HAVE_LIBJPEG
@@ -179,6 +185,9 @@
 
 /* Define if you have the msss_vis library (-lmsss_vis).  */
 #undef HAVE_LIBMSSS_VIS
+
+/* Define if you have the png library (-lpng).  */
+#undef HAVE_LIBPNG
 
 /* Define if you have the readline library (-lreadline).  */
 #undef HAVE_LIBREADLINE

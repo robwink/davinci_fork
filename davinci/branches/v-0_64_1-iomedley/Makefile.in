@@ -108,7 +108,7 @@ install:
 # File specific dependancies
 #
 help.o:	help.c
-	$(CC) $(CFLAGS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $*.c
+	$(CC) $(CFLAGS) $(DEFS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $*.c
 
 clean:
 	-rm -f *.o davinci dv core gplot TAGS config.cache config.h config.log 
@@ -158,7 +158,7 @@ depend:
 	@gcc -MM $(OBJ:.o=.c)
 
 x.o:    x.c
-	$(CC) -c $(CFLAGS) $(XRTINCLUDE) $<
+	$(CC) -c $(CFLAGS) $(DEFS) $(XRTINCLUDE) $<
 
 xrt_print_3d.o: xrt_print_3d.c
 	$(CC) -c $(CFLAGS) $(XRTINCLUDE) $<
@@ -324,36 +324,28 @@ ff_modules.o: ff_modules.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
 dvio.o: dvio.c parser.h system.h darray.h avl.h ff_modules.h \
  module_io.h ufunc.h scope.h func.h ../iomedley/iomedley.h \
- ../iomedley/io_lablib3.h ../iomedley/toolbox.h \
- /opt/local/include/magick.h
+ ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
 dvio_aviris.o: dvio_aviris.c parser.h system.h darray.h avl.h \
  ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
- ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h \
- /opt/local/include/magick.h
+ ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
 dvio_goes.o: dvio_goes.c parser.h system.h darray.h avl.h ff_modules.h \
  module_io.h ufunc.h scope.h func.h dvio.h ../iomedley/iomedley.h \
- ../iomedley/io_lablib3.h ../iomedley/toolbox.h \
- /opt/local/include/magick.h
+ ../iomedley/io_lablib3.h ../iomedley/toolbox.h
 dvio_grd.o: dvio_grd.c parser.h system.h darray.h avl.h ff_modules.h \
  module_io.h ufunc.h scope.h func.h dvio.h ../iomedley/iomedley.h \
- ../iomedley/io_lablib3.h ../iomedley/toolbox.h \
- /opt/local/include/magick.h
+ ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
 dvio_imath.o: dvio_imath.c parser.h system.h darray.h avl.h \
  ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
- ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h \
- /opt/local/include/magick.h
+ ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
 dvio_isis.o: dvio_isis.c parser.h system.h darray.h avl.h ff_modules.h \
  module_io.h ufunc.h scope.h func.h dvio.h ../iomedley/iomedley.h \
- ../iomedley/io_lablib3.h ../iomedley/toolbox.h \
- /opt/local/include/magick.h
+ ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
 dvio_magic.o: dvio_magic.c config.h parser.h system.h darray.h avl.h \
  ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
  ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h
 dvio_pnm.o: dvio_pnm.c parser.h system.h darray.h avl.h ff_modules.h \
  module_io.h ufunc.h scope.h func.h ../iomedley/iomedley.h \
- ../iomedley/io_lablib3.h ../iomedley/toolbox.h \
- /opt/local/include/magick.h
+ ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
 dvio_vicar.o: dvio_vicar.c parser.h system.h darray.h avl.h \
  ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
- ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h \
- /opt/local/include/magick.h
+ ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
