@@ -736,7 +736,7 @@ kjn_ramp(vfuncptr func, Var * arg)
     Alist alist[4];
     alist[0] = make_alist("pic1", ID_VAL, NULL, &pic_1);
     alist[1] = make_alist("pic2", ID_VAL, NULL, &pic_2);
-    alist[2] = make_alist("ignore", INT, NULL, &nullv);
+    alist[2] = make_alist("ignore", FLOAT, NULL, &nullv);
     alist[3].name = NULL;
 
     if (parse_args(func, arg, alist) == 0)
