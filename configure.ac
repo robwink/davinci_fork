@@ -63,8 +63,8 @@ AC_CHECK_LIB(ltdl, lt_dlopen)
 AC_CHECK_LIB(readline, rl_callback_handler_install, ,[have_readline=no])
 dnl AC_CHECK_LIB(readline, rl_callback_handler_install)
 
-dnl AC_CHECK_LIB(z, deflate)
-dnl AC_CHECK_LIB(png, png_check_version)
+AC_CHECK_LIB(z, deflate)
+AC_CHECK_LIB(png, png_check_version)
 
 dnl Check for ImageMagic.
 dnl AC_CHECK_LIB(Magick, GetImageInfo, [],[have_libmagick=no])
