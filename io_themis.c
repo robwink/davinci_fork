@@ -37,6 +37,10 @@ unsigned short Stop_Sync = { 0x8CAB };
 #endif
 
 
+#ifdef HAVE_LIBUSDS
+extern unsigned char *Themis_Entry(unsigned char*, int *);
+#endif
+
 int 
 Read_Ahead_For_Best_Collumn_Guess(int *Width,unsigned char *buf,int len)
 {
@@ -475,10 +479,12 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 	void		*data;
 	void		*newbuf;
 	char 		*filename,*fname,fname2[256];
+	unsigned char *decompress=NULL;
 	int 		Frame=-1;
 	int 		Band=-1;
 	int 		report=0;
 	int		len=0;
+	int		old_len=0;
 	int 		i, j, a, b;
 	int 		fd;
 	struct 		stat sbuf;
@@ -497,7 +503,10 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 	int		Max_Band=-1;
 	int		Max_Band_Count=0;
 	int		new_count;
+	int		offset;
 	unsigned short frame_count=0xFFFF;
+
+	int		debug=0;
 
     	Var **av, *v;
     	int ac;
@@ -543,7 +552,7 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 
 
 	fstat(fd, &sbuf);
-	len = sbuf.st_size;
+	old_len=len = sbuf.st_size;
 	if ((data=malloc(len))==NULL){
 		parse_error("Couldn't allocate temporary buffer...aborting\n");
 		return(NULL);
@@ -559,8 +568,12 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 
 
 	if (!report) {
-		Done=Read_Ahead_For_Best_Collumn_Guess(&Col,buf,len);
 		i = 0;
+
+#ifdef HAVE_LIBUSDS
+	Col=320+_SIGINFO;
+#endif
+
 		while ((i < len) && !(Done)) {
 			c_Band=0;
 			c_Frame=0;
@@ -576,22 +589,76 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 				if ((Output=Skip_To_Stop_Sync(&i,buf,len)) == -1) {
 					Done = 1;
 				} 
+
+#ifndef HAVE_LIBUSDS
+					Col=Output+2;			
+#endif
+
+
 				else {
-					if (Keep(c_Band,c_Frame,Cmd,Frame,Band) && ((Output+2) <= 328 && (Output+2) >=128)){
+					if (Keep(c_Band,c_Frame,Cmd,Frame,Band) && ((Output+2) <= 328 )){
 						BandCount[c_Band]++;
 						if (Data_Only && Cmd!=ALL){
-							memcpy(((char *)data+Index),(buf+i-Output+_DATA),Output);
-							Index+=(Output-_DATA);
+							if (Output-_DATA < 320){
+								offset=Output-_DATA;
+								if (decompress!=NULL)
+									free(decompress);
+								decompress=Themis_Entry((buf+i-Output+_DATA),&offset);
+								if (offset==320){
+									memcpy((data+Index),decompress,offset);
+									Index+=(offset);
+									Lines++;
+								}
+							}
+							else {
+								memcpy((data+Index),(buf+i-Output+_DATA),Output);
+								Index+=(Output-_DATA);
+								Lines++;
+							}
 						}
 						else { 
-							memcpy(((char *)data+Index),(buf+i-Output),Output+2);
-							Index+=Output+2;
+							if (Output-_DATA < 320){
+
+								if (len < (Lines*Col+320)) { 	/*We're running out of room!*/
+									int guess=(len/(Output+2));/*Guess # of total lines*/
+									len = guess * Col; 			/*How big it needs to be*/
+									parse_error("Increasing Buffer sizes\n");
+									data=realloc(data,len);
+									newbuf=realloc(newbuf,len);
+								}
+
+								offset=Output-_DATA;
+								if (decompress!=NULL)
+									free(decompress);
+								decompress=Themis_Entry((buf+i-Output+_DATA),&offset);
+								if (offset==320){
+									memcpy((data+Index),(buf+i-Output),_DATA);
+									Index+=_DATA;
+									memcpy((data+Index),decompress,offset);
+									Index+=(offset);
+									memcpy((data+Index),(buf+i),2);
+									Index+=2;
+									Lines++;
+								}
+							}
+							else {
+								memcpy(((char *)data+Index),(buf+i-Output),Output+2);
+								Index+=Output+2;
+								Lines++;
+							}
 						}
-						Lines++;
 					}
 				}
 			}
 		}
+
+		if (debug) {
+			FILE *wp=fopen("debug.dump","wb");
+			fwrite(data,sizeof(char),len,wp);
+			fclose(wp);
+		}
+
+
 		if(Cmd==ALL){
 			qsort((char *)data,Lines,Col,Themis_Sort);
 			Max_Band_Count=BandCount[0];
@@ -667,7 +734,7 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 			}	
 		}
 		else {
-			munmap(buf,len);
+			munmap(buf,old_len);
 			close(fd);
 			free(newbuf);
 			if (Data_Only){
@@ -678,20 +745,26 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 			}
 		}
 
-		munmap(buf,len);
+		munmap(buf,old_len);
 		close(fd);
+		free(data);
 		if (Data_Only){
+			void *do_buff;
 			int count = (Bad_Flag ? frame_count:new_count);
 			count*=(Max_Band+1);
+			if ((do_buff=malloc(len))==NULL){
+				parse_error("Not enough memory for temporary buffer support\n");
+				free(newbuf);
+				return(NULL);
+			}	
 			for (i=0;i<count;i++){
-				memcpy((newbuf+(i*(Col-_SIGINFO))),(data+(i*Col)+_DATA),(Col-_SIGINFO));
+				memcpy((do_buff+(i*(Col-_SIGINFO))),(newbuf+(i*Col)+_DATA),(Col-_SIGINFO));
 			}
-				free(data);
+				free(newbuf);
 			   return(newVal(BSQ,(Col-_SIGINFO),
 						(Bad_Flag ? frame_count:new_count),
-						Max_Band+1,BYTE,newbuf)); 
+						Max_Band+1,BYTE,do_buff)); 
 		}
-		free(data);
 		return(newVal(BSQ,Col,(Bad_Flag ? frame_count:new_count),Max_Band+1,BYTE,newbuf));
 		
 	} 
@@ -730,8 +803,11 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 		}
 		printf("\n");
 	}
+
+	free(newbuf);
+	free(data);
 	
-	munmap(buf,len);
+	munmap(buf,old_len);
 	close(fd);
 	return(NULL);
 
