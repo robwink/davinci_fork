@@ -139,6 +139,7 @@ static Var *dv_XSet(vfuncptr, Var *);
 static Var *dv_XEventWait(vfuncptr, Var *);
 static Var *dv_Realize(vfuncptr, Var *);
 static Var *dv_AddCallback(vfuncptr, Var *);
+static Var *dv_ListCallbacks(vfuncptr, Var *);
 static Var *dv_RemoveCallback(vfuncptr, Var *);
 #if 0
 static Var *dv_WidgetShow(vfuncptr, Var *);
@@ -1057,7 +1058,8 @@ static WidgetMapEntry WidgetMap[] = {
  *
  *****************************************************************************/
 
-#define DV_MODULE_FUNC_COUNT 8
+#define DV_MODULE_FUNC_COUNT 9 /* NOTE: update this if you add functions below! */
+
 static dvModuleFuncDesc export_funcs [] = {
   { "create", 		(void *) dv_CreateWidget }, /* FIX: need void *? */
   { "destroy",		(void *) dv_DestroyWidget },
@@ -1066,6 +1068,7 @@ static dvModuleFuncDesc export_funcs [] = {
   { "set",     		(void *) dv_XSet },
   { "realize", 		(void *) dv_Realize },
   { "addcallback", 	(void *) dv_AddCallback },
+  { "listcallbacks", 	(void *) dv_ListCallbacks },
   { "removecallback", 	(void *) dv_RemoveCallback },
 #if 0
   { "show",    		(void *) dv_WidgetShow },
@@ -1953,6 +1956,131 @@ dv_AddCallback(vfuncptr f, Var *args)
   else {
     return newInt(0);
   }
+
+}
+
+static Var *
+dv_ListCallbacks(vfuncptr f, Var *args)
+{
+
+  Alist			alist[2];
+  int			widgetId;
+  Widget		widget;
+  MyWidgetList		widgetListEntry;
+  int			widgetClassId;
+  CallbackList		callbacks;
+  Var			*dvCallbackList;
+  CallbackMapEntry	*callbackMapEntry;
+  Var			*dvEvalString;
+  Boolean		foundEval;
+  int			i;
+
+#if DEBUG
+  fprintf(stderr, "DEBUG: entering dv_AddCallback()\n");
+#endif
+
+  widgetId = DV_INVALID_WIDGET_ID;
+
+  alist[0] = make_alist("widgetid", INT, NULL, &widgetId);
+  alist[1].name = NULL;
+
+  if (parse_args(f, args, alist) == 0) {
+    parse_error("Usage: a = gui.listcallbacks(widgetid).");
+    return newInt(-1);
+  }
+
+  if (widgetId == DV_INVALID_WIDGET_ID) {
+    parse_error("widgetid is required.");
+    return newInt(-1);
+  }
+
+  widget = getWidgetFromId(widgetId);
+  if (widget == NULL) {
+    parse_error("Invalid widget id.");
+    return NULL;
+  }
+
+  widgetListEntry = gui_getWidgetListEntryFromWidget(widget);
+  widgetClassId = widgetListEntry->widgetClassId;
+
+  /* Struct to return to user. */
+  dvCallbackList = new_struct(0);
+
+  /* Check for the destroy callback first. */
+
+  foundEval = False;
+  callbackMapEntry = CallbackMapHead;
+
+  while (callbackMapEntry != NULL) {
+    if (callbackMapEntry->widgetId == widgetId &&
+	!strcmp(callbackMapEntry->dvCallbackName, DV_GUI_DESTROY_CALLBACK_NAME)) {
+      if (callbackMapEntry->evalString != NULL) {
+	dvEvalString = newString(dupString(callbackMapEntry->evalString));
+      }
+      else {
+	/* This shouldn't happen, but just in case.. */
+#if DEBUG
+	fprintf(stderr, "DEBUG: null eval string in callback map!\n");
+#endif
+	dvEvalString = newString(dupString("<null>"));
+      }
+      add_struct(dvCallbackList, DV_GUI_DESTROY_CALLBACK_NAME, dvEvalString);
+      foundEval = True;
+      break;
+    }
+    callbackMapEntry = callbackMapEntry->next;
+  }
+
+  if (foundEval == False) {
+    add_struct(dvCallbackList, DV_GUI_DESTROY_CALLBACK_NAME, newString(dupString("<default>")));
+  }
+
+  /* For each callback defined for widgets of this class, get the current eval string (if any) and add it
+   * to the return struct.  If no eval string has been set for a given callback, return "<default>".  If a
+   * callback map entry has a null eval string, "<null>" is returned, but that should never happen.
+   */
+
+  if (WidgetMap[widgetClassId].getCallbacks != NULL) {
+
+    callbacks = (*WidgetMap[widgetClassId].getCallbacks)();
+
+    i = 0;
+
+    while (callbacks[i].dvCallbackName != NULL) {
+
+      foundEval = False;
+      callbackMapEntry = CallbackMapHead;
+
+      while (callbackMapEntry != NULL) {
+	if (callbackMapEntry->widgetId == widgetId &&
+	    !strcmp(callbackMapEntry->dvCallbackName, callbacks[i].dvCallbackName)) {
+	  if (callbackMapEntry->evalString != NULL) {
+	    dvEvalString = newString(dupString(callbackMapEntry->evalString));
+	  }
+	  else {
+	    /* This shouldn't happen, but just in case.. */
+#if DEBUG
+	    fprintf(stderr, "DEBUG: null eval string in callback map!\n");
+#endif
+	    dvEvalString = newString(dupString("<null>"));
+	  }
+	  add_struct(dvCallbackList, callbackMapEntry->dvCallbackName, dvEvalString);
+	  foundEval = True;
+	  break;
+	}
+	callbackMapEntry = callbackMapEntry->next;
+      }
+
+      if (foundEval == False) {
+	add_struct(dvCallbackList, callbacks[i].dvCallbackName, newString(dupString("<default>")));
+      }
+
+      i++;
+
+    }
+  }
+
+  return dvCallbackList;
 
 }
 
@@ -2994,7 +3122,7 @@ dv_XGet(vfuncptr f, Var * args) {
     visibleResources = widgetListEntry->publicResources;
   }
   else {
-    visibleResources = gui_extractStringList(dvResourceList);
+    visibleResources = gui_extractNarray(dvResourceList);
     if (visibleResources == NULL) {
       /* FIX: should this fail silently? */
       parse_error("Warning: resource list is empty.");
@@ -3606,17 +3734,17 @@ gui_getXmStringTableCount(const Widget widget,
 }
 
 /* XtArgVal
- * gui_setXmStringTableFromNarray()
+ * gui_setXmStringTableFromDarray()
  *
  * FIX: describe.
  *
  */
 
 XtArgVal
-gui_setXmStringTableFromNarray(const Widget widget,
+gui_setXmStringTableFromDarray(const Widget widget,
 			       const String resourceName,
 			       const String resourceType,
-			       const Narray *value,
+			       const Darray *value,
 			       FreeStackList freeStack)
 {
 
@@ -3627,7 +3755,7 @@ gui_setXmStringTableFromNarray(const Widget widget,
   XmString	xmStringValue;
 
 #if DEBUG
-  fprintf(stderr, "DEBUG: gui_setXmStringTableFromNarray(widget = %ld, "
+  fprintf(stderr, "DEBUG: gui_setXmStringTableFromDarray(widget = %ld, "
 	  "resourceName = '%s', resourceType = '%s', value = %ld, "
 	  "freeStack = %ld)\n",
 	  widget, resourceName, resourceType, value, freeStack);
@@ -3646,7 +3774,7 @@ gui_setXmStringTableFromNarray(const Widget widget,
     oldValue = NULL;
   }
 
-  numStrings = Narray_count(value);
+  numStrings = Darray_count(value);
 #if DEBUG
   fprintf(stderr, "DEBUG: numStrings = %d\n", numStrings);
 #endif
@@ -3663,8 +3791,8 @@ gui_setXmStringTableFromNarray(const Widget widget,
     else {
       gui_freeStackPush(freeStack, stringTable);
       for (stringIdx = 0; stringIdx < numStrings; stringIdx++) {
-	if (Narray_get(value, stringIdx, &stringValue, NULL) == -1) {
-	  parse_error("Internal error: unable to read Narray.");
+	if (Darray_get(value, stringIdx, (void **) &stringValue) == -1) {
+	  parse_error("Internal error: unable to read Darray.");
 	  stringTable = oldValue;
 	  break;
 	}
@@ -3705,11 +3833,11 @@ gui_setXmStringTable(const Widget widget,
 		     FreeStackList freeStack)
 {
 
-  Narray	*stringList;
+  Darray	*stringList;
   XtArgVal	stringTable;
 
-  stringList = gui_extractStringList(value);
-  stringTable = gui_setXmStringTableFromNarray(widget, resourceName,
+  stringList = gui_extractDarray(value);
+  stringTable = gui_setXmStringTableFromDarray(widget, resourceName,
 					       resourceType, stringList,
 					       freeStack);
 
@@ -4406,6 +4534,8 @@ dupString(const char *source)
 
   char *dest;
 
+  /* FIX: what about when source is null? */
+
   dest = malloc((strlen(source) + 1) * sizeof(char *));
 
   if (dest != NULL) {
@@ -4416,8 +4546,90 @@ dupString(const char *source)
 
 }
 
+/* Darray *
+ * gui_extractDarray(Var *dvResourceList)
+ *
+ * Builds a list of strings in a Darray (NULL values) from a Davinci Var.
+ * Supported Var types are ID_STRING, ID_TEXT, and ID_STRUCT (values only).
+ *
+ * Returns pointer to a new Darray.  Caller is responsible for freeing memory.
+ * Returns NULL and prints failure message on any error.
+ *
+ */
+
+Darray *
+gui_extractDarray(const Var *value)
+{
+
+  Darray	*stringList;
+  TextArray	textArray;
+  int		nameIdx, structCount;
+  Var		*elementValue;
+
+#if DEBUG
+  fprintf(stderr, "DEBUG: gui_extractDarray(value = %ld)\n", value);
+#endif  
+
+  stringList = NULL;
+
+  if (value != NULL) { 
+
+    switch (V_TYPE(value)) {
+
+    case ID_STRING:
+      stringList = Darray_create(1);
+      if (Darray_add(stringList, V_STRING(value)) == -1) {
+	parse_error("Internal error: unable to add to Darray.");
+	Darray_free(stringList, NULL);
+	stringList = NULL;
+      }
+      break;
+
+    case ID_TEXT:
+      textArray = V_TEXT(value);
+      stringList = Darray_create(textArray.Row); /* 0 is ok. */
+      for (nameIdx = 0; nameIdx < textArray.Row; nameIdx++) {
+	if (Darray_add(stringList, textArray.text[nameIdx]) == -1) {
+	  parse_error("Internal error: unable to add to Darray.");
+	  Darray_free(stringList, NULL);
+	  stringList = NULL;
+	}
+      }
+      break;
+
+    case ID_STRUCT:
+      structCount = get_struct_count(value);
+      stringList = Darray_create(structCount); /* 0 is ok. */
+      for (nameIdx = 0; nameIdx < structCount; nameIdx++) {
+	get_struct_element(value, nameIdx, NULL, &elementValue);
+	if (V_TYPE(elementValue) != ID_STRING) {
+	  parse_error("Error: expecting STRING values in struct.");
+	  Darray_free(stringList, NULL);
+	  stringList = NULL;
+	  break;
+	}
+	if (Darray_add(stringList, V_STRING(elementValue)) == -1) {
+	  parse_error("Internal error: unable to add to Darray.");
+	  Darray_free(stringList, NULL);
+	  stringList = NULL;
+	  break;
+	}
+      }
+      break;
+
+    default:
+      parse_error("Error: string list must be STRING, TEXT, or STRUCT.");
+      return NULL;
+
+    }
+  }
+
+  return stringList;
+
+}
+
 /* Narray *
- * gui_extractStringList(Var *dvResourceList)
+ * gui_extractNarray(Var *dvResourceList)
  *
  * Builds a list of strings in an Narray (NULL values) from a Davinci Var.
  * Supported Var types are ID_STRING, ID_TEXT, and ID_STRUCT (values only).
@@ -4428,7 +4640,7 @@ dupString(const char *source)
  */
 
 Narray *
-gui_extractStringList(const Var *value)
+gui_extractNarray(const Var *value)
 {
 
   Narray	*stringList;
@@ -4437,7 +4649,7 @@ gui_extractStringList(const Var *value)
   Var		*elementValue;
 
 #if DEBUG
-  fprintf(stderr, "DEBUG: gui_extractStringList(value = %ld)\n", value);
+  fprintf(stderr, "DEBUG: gui_extractNarray(value = %ld)\n", value);
 #endif  
 
   stringList = NULL;
