@@ -290,8 +290,10 @@ struct _vfuncptr vfunclist[] = {
     { "fncc_cmplx_mul",     ff_fncc_cmplx_mul,          NULL },
     { "fncc_fft_conv_real", ff_fncc_fft_conv_real,      NULL },
     { "fncc_write_mat",     ff_fncc_write_mat,          NULL },
+    { "boxfilter",          ff_boxfilter,          NULL },
     
-     { "hstretch",      ff_hstretch, 			NULL }, 
+    { "hstretch",   ff_hstretch, 		NULL }, 
+    { "coreg",      ff_coreg, 			NULL }, 
 
     { NULL,             NULL,                  NULL }
 };
