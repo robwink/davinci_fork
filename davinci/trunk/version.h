@@ -1,9 +1,12 @@
-char *version = "@(#) daVinci Version #1.05";
+char *version = "@(#) daVinci Version #1.06";
 
 
 #include "build.h"
 
 /*
+Version 1.06: Mon Sep 30 21:16:01 MST 2002
+	+ promoted unsigned shorts to ints in load_pds()
+
 Version 1.05: Fri Sep 20 22:56:35 MST 2002
 	+ load_pds() table reader didn't handle endian_ness
 
