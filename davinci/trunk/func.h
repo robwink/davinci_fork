@@ -385,3 +385,6 @@ void add_struct(Var *s, char *name, Var *exp);
 /* internal functions for text arrays */
 Var *newString(char *str);
 Var *newText(int rows, char **text);
+
+/*Text/string functions*/
+Var *ff_rtrim(vfuncptr func, Var *arg);

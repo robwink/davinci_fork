@@ -228,7 +228,8 @@ struct _vfuncptr vfunclist[] = {
     { "global",         ff_global,             NULL},
     { "delete",         ff_delete,             NULL},
 	 { "load_vanilla",   ff_loadvan,            NULL},
-	 { "readPDS",			ReadPDS,					  NULL},
+	 { "load_PDS",			ReadPDS,					  NULL},
+	 { "rtrim",				ff_rtrim,				  NULL},
     { NULL,             NULL,                  NULL }
 };
 
