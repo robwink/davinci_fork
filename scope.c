@@ -69,7 +69,16 @@ dd_find(Scope *s, char *name)
 Var *
 dd_get_argv(Scope *s, int n)
 {
-    return(s->args->value[n]);
+	if (n < s->args->count) {
+		return(s->args->value[n]);
+	}
+	return(NULL);
+}
+
+Var *
+dd_get_argc(Scope *s)
+{
+    return(newInt(s->args->count-1));
 }
 
 void
@@ -260,6 +269,20 @@ pop(Scope *scope)
 }
 
 void
+clean_table(Symtable *s)
+{
+    Symtable *t;
+
+    while(s != NULL) {
+        t = s->next;
+        free_var(s->value);
+        free(s);
+        s = t;
+    }
+}
+
+
+void
 clean_stack(Scope *scope)
 {
     Stack *stack = scope->stack;
@@ -273,18 +296,6 @@ clean_stack(Scope *scope)
     }
 }
 
-void
-clean_table(Symtable *s)
-{
-    Symtable *t;
-
-    while(s != NULL) {
-        t = s->next;
-        free_var(s->value);
-        free(s);
-        s = t;
-    }
-}
 
 void
 clean_tmp(Scope *scope)
@@ -475,7 +486,6 @@ clean_scope(Scope *scope)
     }
     clean_stack(scope);
     clean_tmp(scope);
-/*    clean_table(scope->tmp); */
     scope->tmp = NULL;
 
     clean_table(scope->symtab);

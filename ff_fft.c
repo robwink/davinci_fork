@@ -202,12 +202,14 @@ ff_realfft3(vfuncptr func, Var * arg)
 	}
 
 	n = V_DSIZE(obj);
+	/*
 	for (x = n ; (x & 1) == 0 ; x >>= 1) 
 		;
 	if (x != 1) {
 		parse_error("dimension not a power of 2. Use version 0.\n");
 		return(NULL);
 	}
+	*/
 
 	in = (double *)calloc(n, sizeof(double));
 

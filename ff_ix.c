@@ -40,8 +40,6 @@ ff_histogram(vfuncptr func, Var * arg)
 	float start = MAXFLOAT, size= MAXFLOAT;
 	int steps = MAXINT;
 
-	int ac;
-	Var **av;
 	Alist alist[9];
 	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &obj);
 	alist[1] = make_alist( "compress",  ID_VAL,    NULL,    &compress);

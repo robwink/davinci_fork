@@ -161,9 +161,9 @@ sym_put(Scope *scope, Var *s)
         *s = tmp;
 
         /* put the names back */
-        /* tmp.name = v->name; */
-        /* v->name = s->name; */
-        /* s->name = tmp.name; */
+        tmp.name = v->name;
+        v->name = s->name;
+        s->name = tmp.name;
 
         free_var(s);
 		s = v;

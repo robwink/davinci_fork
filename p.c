@@ -593,25 +593,6 @@ p_llist(int type, Var * list, Var * stmt)
 }
 
 
-/**
- **
- **/
-int
-check_ufunc(Var *v)
-{
-    Scope *scope = scope_tos();
-
-    if (v == NULL) return 0;
-
-    if (scope != global_scope()) {
-        if (scope->ufunc && scope->ufunc->tree == NULL)  {
-            scope->ufunc->tree = v;
-            clean_scope(scope_pop());
-            return(0);
-        }
-    }
-    return(1);
-}
 
 /**
  ** Free all the memory allocated in a tree.  Do this like evaluate does.
