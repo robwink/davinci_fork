@@ -42,8 +42,7 @@ ff_avg2(vfuncptr func, Var * arg)
 	alist[2] = make_alist("both",  		ID_VAL,	    NULL,	&both);
 	alist[3].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (ptr == NULL) {
 		axis = XAXIS | YAXIS | ZAXIS;		/* all of them */
@@ -173,8 +172,7 @@ ff_avg(vfuncptr func, Var * arg)
 	alist[2] = make_alist("both",  		ID_UNK,	NULL,	&both);
 	alist[3].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (ptr == NULL) {
 		axis = XAXIS | YAXIS | ZAXIS;		/* all of them */
@@ -278,8 +276,7 @@ ff_min(vfuncptr func, Var * arg)
 	alist[1] = make_alist("axis",  		ID_ENUM,	options,	&ptr);
 	alist[2].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (ptr == NULL) {
 		axis = XAXIS | YAXIS | ZAXIS;		/* all of them */
@@ -366,8 +363,7 @@ ff_findmin(vfuncptr func, Var * arg)
 	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
 	alist[1].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
 		parse_error("%s: No object specified\n", func->name);
@@ -421,8 +417,7 @@ ff_convolve(vfuncptr func, Var * arg)
 	alist[2] = make_alist("normalize", 	INT, NULL, &norm);
 	alist[3].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
 		parse_error("%s: No object specified\n", func->name);
@@ -523,8 +518,7 @@ ff_convolve3(vfuncptr func, Var * arg)
 	alist[3].name = NULL;
 
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
 		parse_error("%s: No object specified\n", func->name);

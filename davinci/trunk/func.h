@@ -366,8 +366,8 @@ int cmp_float(const void *, const void *);
 int cmp_double(const void *, const void *);
 
 void log_line(char *str);
+int parse_args(vfuncptr func, Var *args, Alist *alist);
 int make_args(int *ac, Var ***av, vfuncptr func, Var *args);
-int parse_args(int ac, Var **av, Alist *alist);
 void print_history(int i);
 
 void xfree(void *);
@@ -409,5 +409,11 @@ Var * ff_cut(vfuncptr func, Var * arg);
 Var * ff_crop(vfuncptr func, Var * arg);
 Var * ff_raw(vfuncptr func, Var * arg);
 
-/* meta functions */
+double cosd(double);
+double sind(double);
+double tand(double);
+double acosd(double);
+double asind(double);
+double atand(double);
+
 Var * ff_audit(vfuncptr func, Var *arg);

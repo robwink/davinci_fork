@@ -50,17 +50,14 @@ make_struct(int ac, Var **av)
 Var *
 ff_struct(vfuncptr func, Var * arg)
 {
-    Var *obj = NULL, *compress = NULL, *normalize = NULL;
-    int type = 0;
-    int x,y,z, n, i, j, dsize, low, high, v;
-    int *data;
-    char *ptr = NULL;
-
+	Var *v;
     int ac;
     Var **av;
 
     make_args(&ac, &av, func, arg);
-    return(make_struct(ac-1, av+1));
+	v = make_struct(ac-1, av+1);
+	free(av);
+    return(v);
 }
 
 /*
@@ -272,8 +269,7 @@ ff_add_struct(vfuncptr func, Var * arg)
     alist[2] = make_alist( "value",     ID_UNK,     NULL,     &v);
     alist[3].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (a == NULL) {
         parse_error("Object is null");
@@ -319,8 +315,7 @@ ff_get_struct(vfuncptr func, Var * arg)
     alist[1] = make_alist( "name",      ID_STRING,     NULL,     &name);
     alist[2].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (a == NULL) {
         parse_error("Object is null");

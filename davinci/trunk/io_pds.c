@@ -500,11 +500,7 @@ ReadPDS(vfuncptr func, Var *arg)
    alist[0] = make_alist( "filename", ID_STRING,   NULL,     &fn);
    alist[1].name = NULL;
 
-   make_args(&ac, &av, func, arg);
-   
-   if (parse_args(ac, av, alist)) return(NULL);
-   
-
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if((fp=fopen(fn,"r"))==NULL){
 		parse_error("Can't find file");

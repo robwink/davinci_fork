@@ -295,9 +295,7 @@ Var *ff_XImage_Display(vfuncptr func, Var * arg)
         alist[1].name = NULL;
 	disp[0]='\0';
 
-        make_args(&ac, &av, func, arg);
-        if (parse_args(ac, av, alist))
-                return (NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if((image=Var2Miff(Obj))==NULL){
 		return (NULL);

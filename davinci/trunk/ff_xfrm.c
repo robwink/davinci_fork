@@ -21,8 +21,7 @@ ff_basis(vfuncptr func, Var * arg)
 	alist[2] = make_alist("size",      INT,       NULL,       &size);
 	alist[3].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (obj == NULL && size <= 0) {
         parse_error("%s: No object or size specified\n", func->name);
@@ -85,8 +84,7 @@ ff_mxm(vfuncptr func, Var * arg)
 	alist[1] = make_alist("ob2",    ID_VAL,    NULL,       &ob2);
 	alist[2].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (ob1 == NULL || ob2 == NULL) {
         parse_error("%s(), two objects required.", func->name);

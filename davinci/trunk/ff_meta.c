@@ -18,19 +18,8 @@ ff_audit(vfuncptr func, Var *arg)
 	realtime = times(&faketime);
 	ptr = sbrk(0);
 
-	s = newVar();
-    V_TYPE(s) = ID_VAL;
-
-    V_DATA(s) = calloc(4, sizeof(int));
-    V_FORMAT(s) = INT;
-    V_ORDER(s) = BSQ;
-    V_DSIZE(s) = 4;
-
-    V_SIZE(s)[0] = 4;
-    V_SIZE(s)[1] = 1;
-    V_SIZE(s)[2] = 1;
-
-	s_data = (int *) V_DATA(s);
+	s_data = calloc(4, sizeof(int));
+	s = newVal(BSQ, 4, 1, 1, INT, s_data);
 
 	s_data[0] = (int)ptr;
 	s_data[1] = faketime.tms_utime;

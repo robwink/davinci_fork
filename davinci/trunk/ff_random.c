@@ -65,9 +65,7 @@ ff_random(vfuncptr func, Var * arg)
 	alist[4] = make_alist("type", ID_ENUM, options, &ptr);
 	alist[5].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist))
-        return (NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (func->fdata != NULL) {
         if (ptr == NULL) ptr = (char *)func->fdata;

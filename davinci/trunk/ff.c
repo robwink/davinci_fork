@@ -355,8 +355,7 @@ ff_org(vfuncptr func, Var * arg)
     alist[2] = make_alist( "order",  ID_ENUM,  orgs,     &org_str);
     alist[3].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (func->fdata != NULL) {
         org = (int) (func->fdata) - 10;
@@ -551,8 +550,7 @@ ff_format(vfuncptr func, Var * arg)
     alist[2] = make_alist( "type",   ID_ENUM,  formats,     &format_str);
     alist[3].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (format_str == NULL) {
         /**
@@ -636,8 +634,7 @@ ff_create(vfuncptr func, Var * arg)
     alist[6] = make_alist( "step",   FLOAT,    NULL,     &step);
     alist[7].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     dsize = x*y*z;
 
@@ -841,8 +838,8 @@ ff_replicate(vfuncptr func, Var * arg)
     alist[2] = make_alist( "y",   INT, NULL,  &y);
     alist[3] = make_alist( "z",   INT, NULL,  &z);
     alist[4].name = NULL;
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (v == NULL) {
         parse_error("clone: No obejct specified\n");
@@ -979,8 +976,8 @@ ff_cat(vfuncptr func, Var * arg)
     alist[1] = make_alist( "ob2", ID_UNK,   NULL,     &ob2);
     alist[2] = make_alist( "axis",   ID_ENUM,  options,     &axis_str);
     alist[3].name = NULL;
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (axis_str == NULL) {
         parse_error("%s(), No axis specified.", func->name);
@@ -1371,22 +1368,15 @@ ff_strlen(vfuncptr func, Var * arg)
     alist[0] = make_alist("string",         ID_UNK,         NULL,   &S1);
     alist[1].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) *Result=0;
- 
-    else if (S1 == NULL){
+	if (parse_args(func, arg, alist) == 0) {
+		*Result=0;
+	} else if (S1 == NULL){
         *Result=0;
-    }
-
-    else if (V_TYPE(S1)==ID_TEXT){
+    } else if (V_TYPE(S1)==ID_TEXT){
         *Result=V_TEXT(S1).Row;
-    }
-
-    else if (V_TYPE(S1)==ID_STRING){
+    } else if (V_TYPE(S1)==ID_STRING){
         *Result=strlen(V_STRING(S1));
-    }
-
-    else {
+    } else {
         parse_error("Invalid type");
         return(NULL);
     }
@@ -1403,22 +1393,19 @@ ff_issubstring(vfuncptr func, Var * arg)
     Var **av;
     int *Result=(int *)calloc(1,sizeof(int));
     Alist alist[3];
-    alist[0] = make_alist("target",         ID_STRING,         NULL,   &S1);
-    alist[1] = make_alist("source",           ID_STRING,        NULL,        &S2);
+    alist[0] = make_alist("target", ID_STRING, NULL, &S1);
+    alist[1] = make_alist("source", ID_STRING, NULL, &S2);
     alist[2].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) *Result=0;
-
-    else if (S1 == NULL || S2 == NULL){
+	if (parse_args(func, arg, alist) == 0) {
+		*Result=0;
+	} else if (S1 == NULL || S2 == NULL){
         *Result=0;
-    }
-
-    else if ((strstr(S1,S2))==NULL){
+    } else if ((strstr(S1,S2))==NULL){
         *Result=0;
-    }
-    else 
+    } else {
         *Result=1;
+	}
 
     return(newVal(BSQ,1,1,1, INT, Result));
 }
@@ -1436,8 +1423,8 @@ ff_pow(vfuncptr func, Var * arg)
     alist[0] = make_alist( "ob1", ID_VAL,   NULL,     &ob1);
     alist[1] = make_alist( "ob2", ID_VAL,   NULL,     &ob2);
     alist[2].name = NULL;
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (ob1 == NULL) {
         parse_error("%s(), two objects required.", func->name);
@@ -1485,8 +1472,7 @@ ff_exit(vfuncptr func, Var * arg)
     alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
     alist[1].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (obj == NULL) {
         exit(0);
@@ -1510,8 +1496,7 @@ ff_fsize(vfuncptr func, Var * arg)
     alist[0] = make_alist("filename",    ID_STRING,    NULL,     &filename);
     alist[1].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (filename == NULL) {
         fprintf(stderr, "%s: No filename specified\n", (char *)av[0]);
@@ -1540,8 +1525,7 @@ ff_history(vfuncptr func, Var * arg)
     alist[0] = make_alist( "count",    ID_VAL,    NULL,     &value);
     alist[1].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (value == NULL)  {
         count=-1;
@@ -1589,8 +1573,7 @@ ff_hedit(vfuncptr func, Var * arg)
     alist[0] = make_alist("number",    ID_VAL,    NULL,     &value);
     alist[1].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (value == NULL)  {
         count=10;
@@ -1649,8 +1632,7 @@ ff_resize(vfuncptr func, Var * arg)
     alist[4] = make_alist("org",    ID_ENUM,    orgs,     &org_str);
     alist[5].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (obj == NULL)  {
         parse_error("No argument specified: %s(...obj=...)", av[0]);
@@ -1709,8 +1691,7 @@ ff_eval(vfuncptr func, Var * arg)
     alist[0] = make_alist("expr",    ID_STRING,     NULL,     &expr);
     alist[1].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (expr == NULL)  {
         return(NULL);
@@ -1745,8 +1726,7 @@ ff_syscall(vfuncptr func, Var * arg)
     alist[0] = make_alist("command",    ID_STRING,     NULL,     &expr);
     alist[1].name = NULL;
  
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL); 
+	if (parse_args(func, arg, alist) == 0) return(NULL);
  
     if (expr == NULL)  {
         return(NULL);
@@ -1794,8 +1774,7 @@ ff_dump(vfuncptr func, Var * arg)
     alist[1] = make_alist("depth",    INT,     NULL,     &depth);
     alist[2].name = NULL;
  
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL); 
+	if (parse_args(func, arg, alist) == 0) return(NULL);
  
     if (v == NULL) return(NULL);
 
@@ -1821,8 +1800,7 @@ ff_equals(vfuncptr func, Var * arg)
     alist[1] = make_alist("obj2",    ID_UNK,     NULL,     &v2);
     alist[2].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL); 
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if ((e = eval(v1)) != NULL) v1 = e;
     if ((e = eval(v2)) != NULL) v2 = e;
@@ -1932,3 +1910,10 @@ ff_killchild(vfuncptr func, Var *arg)
 	return(NULL);
 }
 
+
+double cosd(double theta) { return(cos(theta*M_PI/180.0)); }
+double sind(double theta) { return(sin(theta*M_PI/180.0)); }
+double tand(double theta) { return(tan(theta*M_PI/180.0)); }
+double acosd(double theta) { return(acos(theta)*180.0/M_PI); }
+double asind(double theta) { return(asin(theta)*180.0/M_PI); }
+double atand(double theta) { return(atan(theta)*180.0/M_PI); }

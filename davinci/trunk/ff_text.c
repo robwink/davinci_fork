@@ -138,8 +138,7 @@ ff_read_lines(vfuncptr func, Var *arg)
     alist[0] = make_alist( "filename", ID_STRING,   NULL,     &filename);
     alist[1].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if ((fname = locate_file(filename)) == NULL) {
         sprintf(error_buf, "Cannot find file: %s\n", filename);
@@ -556,8 +555,7 @@ ff_filename(vfuncptr func, Var * arg)
         return(NULL);
     }	
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (ob1==NULL){
         return(NULL);
@@ -622,8 +620,7 @@ ff_grep(vfuncptr func, Var * arg)
     alist[1] = make_alist( "pattern", ID_STRING,   NULL,     &s1);
     alist[2].name = NULL;
     
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
     
     if (ob1==NULL || s1==NULL){
         return(NULL);
@@ -755,8 +752,7 @@ ff_strstr(vfuncptr func, Var * arg)
     alist[1] = make_alist( "pattern", ID_STRING,   NULL,     &s1);
     alist[2].name = NULL;
 
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (ob1==NULL || s1==NULL){
         return(NULL);
@@ -1035,9 +1031,7 @@ Var *ff_stringsubst(vfuncptr func, Var *arg)
 	alist[2] = make_alist( "substitute", ID_STRING,   NULL,     &subst);
 	alist[3].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	/*User error checking...silly user! */
 
@@ -1150,9 +1144,7 @@ ff_rtrim(vfuncptr func, Var *arg)
 	alist[1] = make_alist( "trim", ID_STRING,   NULL,     &trim);
 	alist[2].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	/*Error checks*/
 

@@ -31,13 +31,20 @@ Alist alist[] = {
   **/
 
 int 
-parse_args(int ac, Var **av, Alist *alist)
+parse_args(vfuncptr name, Var *args, Alist *alist)
 {
     int i,j,k,count;
     Var *s, *v, *e;
-    char *fname = (char *)av[0];
+    char *fname;
     char *ptr;
     int len;
+
+	int ac;
+	Var **av;
+
+	make_args(&ac, &av, name, args);
+
+	fname = av[0];
 
     for (i = 1 ; i < ac ; i++) {
         v = av[i];
@@ -67,11 +74,13 @@ parse_args(int ac, Var **av, Alist *alist)
             if (count == 0) {
                 parse_error("Unknown keyword to function: %s(... %s= ...)",
                             fname, ptr);
-                return (1);
+				free(av);
+                return(0);
             }
             if (count > 1) {
                 parse_error(NULL);
-                return (1);
+				free(av);
+                return(0);
             }
             /**
             ** Get just the argument part
@@ -83,7 +92,8 @@ parse_args(int ac, Var **av, Alist *alist)
             }
             if (alist[j].name == NULL) {
                 parse_error("Too many arguments to function: %s()", fname);
-                return (1);
+				free(av);
+                return(0);
             }
         }
 
@@ -96,14 +106,16 @@ parse_args(int ac, Var **av, Alist *alist)
             char **p;
             if ((e = eval(v)) == NULL) {
                 parse_error("%s: Variable not found: %s", fname, V_NAME(v));
-                return(1);
+				free(av);
+                return(0);
             }
             v = e;
             if (V_TYPE(v) != ID_STRING) {
                 parse_error(
                     "Illegal argument to function %s(), expected STRING", 
                     fname);
-                return(1);
+				free(av);
+                return(0);
             }
             p = (char **)(alist[j].value);
             *p = V_STRING(v);
@@ -112,13 +124,15 @@ parse_args(int ac, Var **av, Alist *alist)
             Var **vptr;
             if ((e = eval(v)) == NULL) {
                 parse_error("%s: Variable not found: %s", fname, V_NAME(v));
-                return(1);
+				free(av);
+                return(0);
             }
             v = e;
             if (V_TYPE(v) != ID_VAL) {
                 parse_error("Illegal argument %s(...%s=...), expected VAL", 
                             fname, alist[j].name);
-                return(1);
+				free(av);
+                return(0);
             }
             vptr = (Var **)(alist[j].value);
             *vptr = v;
@@ -127,13 +141,15 @@ parse_args(int ac, Var **av, Alist *alist)
             Var **vptr;
             if ((e = eval(v)) == NULL) {
                 parse_error("%s: Variable not found: %s", fname, V_NAME(v));
-                return(1);
+				free(av);
+                return(0);
             }
             v = e;
             if (V_TYPE(v) != ID_STRUCT) {
                 parse_error("Illegal argument %s(...%s=...), expected STRUCT", 
                             fname, alist[j].name);
-                return(1);
+				free(av);
+                return(0);
             }
             vptr = (Var **)(alist[j].value);
             *vptr = v;
@@ -142,13 +158,15 @@ parse_args(int ac, Var **av, Alist *alist)
             int *iptr;
             if ((e = eval(v)) == NULL) {
                 parse_error("%s: Variable not found: %s", fname, V_NAME(v));
-                return(1);
+				free(av);
+                return(0);
             }
             v = e;
             if (V_TYPE(v) != ID_VAL || V_FORMAT(v) > INT) {
                 parse_error("Illegal argument %s(...%s=...), expected INT", 
                             fname, alist[j].name);
-                return(1);
+				free(av);
+                return(0);
             }
             iptr = (int *)(alist[j].value);
             *iptr = extract_int(v, 0);
@@ -157,13 +175,15 @@ parse_args(int ac, Var **av, Alist *alist)
             float *fptr;
             if ((e = eval(v)) == NULL) {
                 parse_error("%s: Variable not found: %s", fname, V_NAME(v));
-                return(1);
+				free(av);
+                return(0);
             }
             v = e;
             if (V_TYPE(v) != ID_VAL) {
                 parse_error("Illegal argument %s(...%s=...), expected FLOAT", 
                             fname, alist[j].name);
-                return(1);
+				free(av);
+                return(0);
             }
             fptr = (float *)(alist[j].value);
             *fptr = extract_float(v, 0);
@@ -200,7 +220,8 @@ parse_args(int ac, Var **av, Alist *alist)
             if (q == NULL) {
                 parse_error("Illegal argument to function %s(...%s...)", 
                             fname, alist[j].name);
-                return(1);
+				free(av);
+                return(0);
             }
 
             p = (char **)(alist[j].value);
@@ -210,7 +231,8 @@ parse_args(int ac, Var **av, Alist *alist)
             Var **vptr;
             if ((e = eval(v)) == NULL) {
                 parse_error("%s: Variable not found: %s", fname, V_NAME(v));
-                return(1);
+				free(av);
+                return(0);
             }
             v = e;
 /*
@@ -218,7 +240,8 @@ parse_args(int ac, Var **av, Alist *alist)
                 parse_error(
                     "Illegal argument to function %s(), expected STRING", 
                     fname);
-                return(1);
+				free(av);
+                return(0);
             }
 */
 
@@ -257,7 +280,8 @@ parse_args(int ac, Var **av, Alist *alist)
             if (q == NULL) {
                 parse_error("Illegal argument to function %s(...%s...)", 
                             fname, alist[j].name);
-                return(1);
+				free(av);
+                return(0);
             }
 
             p = (char **)(alist[j].value);
@@ -269,7 +293,9 @@ parse_args(int ac, Var **av, Alist *alist)
             fprintf(stderr, "parse_args: Bad programmer, no biscuit.\n");
         }
     }
-    return(0);
+    
+    free(av);
+    return(ac);
 }
 
 int

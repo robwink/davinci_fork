@@ -342,10 +342,7 @@ pcs(
 /** davinci function pcs(obj [, opt = v, axis = z, scale = 1])            **/
 /***************************************************************************/
 Var *
-ff_pcs(
-	vfuncptr	func,
-	Var		*args
-)
+ff_pcs(vfuncptr	func, Var *args)
 {
 	int		ac;
 	Var		**av;
@@ -382,8 +379,7 @@ ff_pcs(
 	alist[4] = make_alist( "niter",  INT,       NULL,        &niter);
 	alist[5].name = NULL;
 
-	make_args(&ac, &av, func, args);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, args, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
 		parse_error("%s(): Argument \"%s\" not specified\n",
@@ -586,8 +582,7 @@ ff_corr_covar_and_scp(
 	alist[1] = make_alist( "axis",   ID_ENUM,   axis_enums,  &axis_arg);
 	alist[2].name = NULL;
 
-	make_args(&ac, &av, func, args);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, args, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
 		parse_error("%s(): Argument \"%s\" not specified\n",
@@ -1185,8 +1180,7 @@ ff_eigen(
 	alist[1] = make_alist( "niter",  INT,       NULL,        &niter);
 	alist[2].name = NULL;
 
-	make_args(&ac, &av, func, args);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, args, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
 		parse_error("%s(): Argument \"%s\" not specified\n",

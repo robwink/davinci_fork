@@ -595,8 +595,7 @@ ff_loadspecpr(vfuncptr func, Var *arg)
     alist[1] = make_alist( "record",    INT,        NULL,     &record);
     alist[2].name = NULL;
     
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (filename == NULL) {
         parse_error("No filename specified to load()");

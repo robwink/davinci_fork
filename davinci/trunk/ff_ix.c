@@ -48,8 +48,7 @@ ff_histogram(vfuncptr func, Var * arg)
 	alist[6] = make_alist( "steps",      INT,       NULL,    &steps);
 	alist[7].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
 		parse_error("%s: No object specified\n", func->name);
@@ -191,8 +190,7 @@ ff_rgb2hsv(vfuncptr func, Var * arg)
 	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
 	alist[1] = make_alist( "maxval",  ID_VAL,    NULL,     &maxval);
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
 		parse_error("%s: No object specified\n", func->name);
@@ -263,8 +261,7 @@ ff_hsv2rgb(vfuncptr func, Var * arg)
 	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
 	alist[1] = make_alist( "maxval",  ID_VAL,    NULL,     &maxval);
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
 		parse_error("%s: No object specified\n", func->name);
@@ -401,8 +398,7 @@ ff_entropy(vfuncptr func, Var * arg)
 	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
 	alist[1].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
 		parse_error("%s: No object specified\n", func->name);

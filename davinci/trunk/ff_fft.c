@@ -28,8 +28,7 @@ ff_fft(vfuncptr func, Var * arg)
 	alist[1] = make_alist( "img",    ID_VAL,    NULL,     &img);
 	alist[3].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (real == NULL && img == NULL) {
 		parse_error("%s: No real or imaginary objects specified\n", func->name);
@@ -90,8 +89,7 @@ ff_realfft(vfuncptr func, Var * arg)
 	alist[0] = make_alist( "obj",    ID_VAL,    NULL,     &obj);
 	alist[2].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
 		parse_error("%s: No object specified\n", func->name);
@@ -130,8 +128,7 @@ ff_realfft2(vfuncptr func, Var * arg)
 	alist[0] = make_alist( "obj",    ID_VAL,    NULL,     &obj);
 	alist[2].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
 		parse_error("%s: No object specified\n", func->name);
@@ -197,8 +194,7 @@ ff_realfft3(vfuncptr func, Var * arg)
 	alist[0] = make_alist( "obj",    ID_VAL,    NULL,     &obj);
 	alist[2].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
 		parse_error("%s: No object specified\n", func->name);

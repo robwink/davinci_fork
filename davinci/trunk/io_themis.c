@@ -573,10 +573,7 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
     alist[2] = make_alist("nocube", INT, NULL, &nocube);
     alist[3].name = NULL;
 
-
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist))
-        return (NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (filename == NULL) {
         parse_error("No filename specified.");
@@ -645,18 +642,15 @@ ff_Frame_Grabber_Read(vfuncptr func, Var * arg)
 
     int ac;
     Var **av, *v;
-    Alist alist[2];
     char	*filename,*fname,fname2[256];
     int	X,Y,Z;
     int	num_bytes;
 
+    Alist alist[2];
     alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
     alist[1].name = NULL;
 
-
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist))
-        return (NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (filename == NULL) {
         parse_error("No filename specified.");
@@ -1103,10 +1097,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
     alist[8] = make_alist("err", ID_VAL, NULL, &err);
     alist[9].name = NULL;
 
-
-    make_args(&ac, &av, func, arg);
-    if (parse_args(ac, av, alist))
-        return (NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (filename == NULL) {
         parse_error("No filename specified.");

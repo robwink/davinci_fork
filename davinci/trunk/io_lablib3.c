@@ -2230,20 +2230,29 @@ TB_STRING_LIST *OdlGetAllKwdValues(KEYWORD *keyword)
     char *val_start = {NULL};
     char *val_stop = {NULL};
     char save_ch;
+	int type;
 
     if (keyword != NULL)
     {
         if (keyword->value != NULL)
         {
-            for (val_start=(char *)OdlValueStart(keyword->value);
-                     *val_start != '\0'; 
-                         val_start=(char *)OdlValueStart(val_stop+1))
-            {
-                val_stop = (char *) OdlValueEnd(val_start);
-                save_ch = *(val_stop + 1); *(val_stop + 1) = '\0';
-                AddStringToList(val_start, value_list)
-                *(val_stop + 1) = save_ch;
-            }
+			type = OdlGetKwdValueType(keyword);
+			if (type == ODL_SEQUENCE || type == ODL_SET) {
+				for (val_start=(char *)OdlValueStart(keyword->value);
+						 *val_start != '\0'; 
+							 val_start=(char *)OdlValueStart(val_stop+1))
+				{
+					val_stop = (char *) OdlValueEnd(val_start);
+					save_ch = *(val_stop + 1); *(val_stop + 1) = '\0';
+					AddStringToList(val_start, value_list)
+					*(val_stop + 1) = save_ch;
+				}
+			} else {
+				/*
+				** This is not a sequence or a set, so just return the one
+				*/
+				AddStringToList(keyword->value, value_list);
+			}
 
         }  /*  End:  "if (keyword->value != NULL) ..."  */
 
@@ -2989,11 +2998,18 @@ char *OdlGetFileSpec (char *fname, char *orig_fspec)   /* this is still TBD */
 
     if (fname != NULL)
     {
-		CopyString(fspec, orig_fspec);
-		if ((p = strrchr(fspec, '/')) != NULL) {
+		/*
+		** If there was a directory specified, use it.
+		*/
+		if (strchr(orig_fspec, '/') != NULL)  {
+			CopyString(fspec, orig_fspec);
+			p = strrchr(fspec, '/');
 			*(p+1) = '\0';
 			AppendString(fspec, fname);
+		} else {
+			CopyString(fspec, fname);
 		}
+
 		if (access(fspec, F_OK) != 0) {
 			/**
 			 ** Try some alternate versions

@@ -65,8 +65,7 @@ ff_jfill(vfuncptr func, Var * arg)
 	alist[4] = make_alist( "neighbors",      INT,    NULL, &neighbors);
 	alist[5].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
 		parse_error("%s: No object specified\n", func->name);
@@ -178,8 +177,7 @@ ff_ifill(vfuncptr func, Var * arg)
 	alist[4] = make_alist( "pass",      ID_STRING,    NULL, &pass);
 	alist[5].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (obj == NULL) {
 		parse_error("%s: No object specified\n", func->name);

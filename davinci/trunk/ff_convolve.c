@@ -51,8 +51,7 @@ ff_self_convolve(vfuncptr func, Var * arg)
 	alist[0] = make_alist( "obj1",    ID_VAL,    NULL,     &v1);
 	alist[2].name = NULL;
 
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (v1 == NULL) {
 		parse_error("%s: No obj1 specified\n", func->name);

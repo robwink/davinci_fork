@@ -18,7 +18,7 @@
  ** 	Replace item at index with new value.  Retrieves old value.
  ** 	Returns 1 on success.
  **
- ** int Darray_free( array, void (*function_pointer)()) 
+ ** void Darray_free( array, void (*function_pointer)()) 
  **
  **     Free the elements in a Darray using the specified function pointer
  **/
@@ -158,7 +158,7 @@ int Darray_count(Darray *d)
     return(-1);
 }
 
-void Darray_free(Darray *d, void (*fptr)()) 
+void Darray_free(Darray *d, void (*fptr)(void *)) 
 {
 	int i;
 
