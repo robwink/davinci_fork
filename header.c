@@ -4,6 +4,9 @@ static char rcsver[] = "$Id$";
  ** $Source$
  **
  ** $Log$
+ ** Revision 1.2  2000/11/28 21:39:10  gorelick
+ ** Some minor compile bugs
+ **
  ** Revision 1.1  2000/04/07 19:16:16  asbms
  ** io_pds support files from Vanilla
  **
@@ -37,6 +40,7 @@ EFORMAT ConvertType(char *type);
 DATA
 ConvertASCIItoData(char *ascii, int i)
 {
+	return((DATA) 0);
 }
 
 /**

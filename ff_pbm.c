@@ -175,7 +175,7 @@ scale(Var *img,
       int xscale,
       int yscale)
 {
-
+	return(NULL);
 }
 
 
@@ -192,6 +192,7 @@ pad(Var *img,
     )
 {
 	
+	return(NULL);
 }
 
 /* paste one image into another */
@@ -199,6 +200,7 @@ Var *
 paste(Var *src, Var *dst, int x, int y, int z)
 {
 	
+	return(NULL);
 }
 
 color()		/* colorize a grayscale image */
