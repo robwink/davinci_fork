@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.82";
+char *version = "@(#) daVinci Version #0.83";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,9 @@ char *version = "@(#) daVinci Version #0.82";
 #include "build.h"
 
 /*
+Version 0.83: Wed Jan  9 15:41:00 MST 2002
+	* Fixed a bug in xplot regarding NULL (or no) varaibles being passed
+
 Version 0.82: Mon Nov 26 12:37:07 MST 2001
 	* Errors in alist for ff_ix.c:hsv2rgb
 	* users were using 'scale' and setting reserverd word SCALE

@@ -278,273 +278,254 @@ Find_Axis( char *R,Var *Obj)
 Var *
 ff_xplot(vfuncptr func, Var *arg)
 {
-/*	Modified Plot; Created:
-**	Mon Jul 31 10:21:29 MST 2000
-**	--Ben
-*/
+/*      Modified Plot; Created:
+ **   Mon Jul 31 10:21:29 MST 2000
+ **   --Ben
+ */
 
 #ifdef HAVE_LIBX11
-    Var *s,*v;
-    FILE *fp;
-    char *fname;
+	Var *s, *v;
+	FILE *fp;
+	char *fname;
 
-    int type;
-    char buf[5120]={0};		/* added factor of 10 */
-    int s0,s1;
-    int count = 0;
-    
-
-    Var	*Xaxis=NULL;
-
-    int Mode[3];
-   
-    int Ord[3];
-    int XOrd[3];
-   
-    int CE[3];
-   
-    int dsize,xa_dsize;
-    int xFlag=0;
-    char *Axis=NULL;
-    int obj_index;
-    float *x,*y;
-    int i,j,k;
-    Var *Ax;
-    int idx;
-    int Sep=0;
-
-    char axs;
-
-    int ac;
-    Var **av;
-
-    make_args(&ac,&av,func,arg); /*chop up the args into an array
-									parse and remove them from the list */
-    for (i=0;i<ac;i++){
-        if (V_TYPE(av[i])==ID_KEYWORD){
-            if(!(strcmp(av[i]->name,"Xaxis")))	{
-                Xaxis=eval(V_KEYVAL(av[i]));
-                if (Xaxis==NULL){
-                    parse_error("Variable not found: %s", 
-                                V_NAME(V_KEYVAL(av[i])));
-                    free(av);
-                    return(NULL);
-                }
-            } else if (!(strcmp(av[i]->name,"axis"))) {
-                v=V_KEYVAL(av[i]);
-                if (V_TYPE(v) == ID_STRING)
-                    Axis = V_STRING(v);
-                else
-                    Axis = V_NAME(v); 
-
-            } else if (!(strcmp(av[i]->name,"separate"))) {
-                Sep=1;
-            } else {
-                parse_error("Illegal keyword %s\n",av[i]->name);
-                free(av);
-                return(NULL);
-            }
-            av[i]=NULL;
-        }
-    }
-
-    if (Xaxis!=NULL)
-        xFlag=1;
-
-    if (Axis==NULL){
-
-        for (idx=1;idx<ac;idx++) {
-            if (av[idx]==NULL)
-                continue;
-
-            s=av[idx];
-
-            if (V_TYPE(s) == ID_UNK){
-                if ((s=eval(av[idx]))==NULL){
-                    parse_error("Unknown Variable\n");
-                    free(av);
-                    return(NULL);
-                }
-            }
-
-            if (V_TYPE(s)!=ID_VAL)
-                continue;
-
-            Find_Axis(&axs,s);
-
-            if(axs=='\0')
-                free(av);
-            return(NULL); 	
-
-            Axis=strdup(&axs);
-            break;
-        }
-    }
-		
-    switch (*Axis) {
-
-    case 'X':
-    case 'x':
-        Mode[0]=0;
-        Mode[1]=1;
-        Mode[2]=2;
-        break;
-    case 'Y':
-    case 'y':
-        Mode[0]=1;
-        Mode[1]=0;
-        Mode[2]=2;
-        break;
-    case 'Z':
-    case 'z':
-        Mode[0]=2;
-        Mode[1]=0;
-        Mode[2]=1;
-        break;
-    default :
-        Mode[0]=1;
-        Mode[1]=0;
-        Mode[2]=2;
-        break;
-    }
+	int type;
+	char buf[5120] =
+	{0};			/* added factor of 10 */
+	int s0, s1;
+	int count = 0;
 
 
+	Var *Xaxis = NULL;
+
+	int Mode[3];
+
+	int Ord[3];
+	int XOrd[3];
+
+	int CE[3];
+
+	int dsize, xa_dsize;
+	int xFlag = 0;
+	char *Axis = NULL;
+	int obj_index;
+	float *x, *y;
+	int i, j, k;
+	Var *Ax;
+	int idx;
+	int Sep = 0;
+
+	char axs;
+
+	int ac;
+	Var **av;
+
+	make_args(&ac, &av, func, arg);		/*chop up the args into an array
+						   parse and remove them from the list */
+	for (i = 0; i < ac; i++) {
+		if (V_TYPE(av[i]) == ID_KEYWORD) {
+			if (!(strcmp(av[i]->name, "Xaxis"))) {
+				Xaxis = eval(V_KEYVAL(av[i]));
+				if (Xaxis == NULL) {
+					parse_error("Variable not found: %s",
+						V_NAME(V_KEYVAL(av[i])));
+					free(av);
+					return (NULL);
+				}
+			} else if (!(strcmp(av[i]->name, "axis"))) {
+				v = V_KEYVAL(av[i]);
+				if (V_TYPE(v) == ID_STRING)
+					Axis = V_STRING(v);
+				else
+					Axis = V_NAME(v);
+
+			} else if (!(strcmp(av[i]->name, "separate"))) {
+				Sep = 1;
+			} else {
+				parse_error("Illegal keyword %s\n", av[i]->name);
+				free(av);
+				return (NULL);
+			}
+			av[i] = NULL;
+		}
+	}
+
+	if (Xaxis != NULL)
+		xFlag = 1;
+
+	if (Axis == NULL) {
+		for (idx = 1; idx < ac; idx++) {
+			if (av[idx] == NULL)
+				continue;
+
+			s = av[idx];
+
+			if (V_TYPE(s) == ID_UNK) {
+				if ((s = eval(av[idx])) == NULL) {
+					parse_error("Unknown Variable\n");
+					free(av);
+					return (NULL);
+				}
+			}
+			if (V_TYPE(s) != ID_VAL)
+				continue;
+
+			Find_Axis(&axs, s);
+			Axis = strdup(&axs);
+			break;
+		}
+		if (Axis == NULL) {
+			parse_error("xplot: No variables.\n");
+			return(NULL);
+		}
+	}
+	switch (*Axis) {
+	    case 'X':
+	    case 'x':
+		    Mode[0] = 0;
+		    Mode[1] = 1;
+		    Mode[2] = 2;
+		    break;
+	    case 'Y':
+	    case 'y':
+		    Mode[0] = 1;
+		    Mode[1] = 0;
+		    Mode[2] = 2;
+		    break;
+	    case 'Z':
+	    case 'z':
+		    Mode[0] = 2;
+		    Mode[1] = 0;
+		    Mode[2] = 1;
+		    break;
+	    default:
+		    Mode[0] = 1;
+		    Mode[1] = 0;
+		    Mode[2] = 2;
+		    break;
+	}
 
 
-    if (Xaxis!=NULL){
-        XOrd[0] = GetSamples(V_SIZE(Xaxis), V_ORG(Xaxis));
-        XOrd[1] = GetLines(V_SIZE(Xaxis), V_ORG(Xaxis));
-        XOrd[2] = GetBands(V_SIZE(Xaxis), V_ORG(Xaxis));
-  
-    }
+	if (Xaxis != NULL) {
+		XOrd[0] = GetSamples(V_SIZE(Xaxis), V_ORG(Xaxis));
+		XOrd[1] = GetLines(V_SIZE(Xaxis), V_ORG(Xaxis));
+		XOrd[2] = GetBands(V_SIZE(Xaxis), V_ORG(Xaxis));
 
+	}
+	if (arg && arg->next == NULL && V_TYPE(arg) == ID_STRING) {
+		strcpy(buf, V_STRING(arg));
+	} else {
+		strcpy(buf, "plot ");
+		for (idx = 1; idx < ac; idx++) {
+			s = av[idx];
 
-    if (arg && arg->next == NULL && V_TYPE(arg) == ID_STRING) {
-        strcpy(buf, V_STRING(arg));
-    } 
-    else {
-        strcpy(buf, "plot ");
-        for (idx=1;idx<ac;idx++) {
+			if (s == NULL) continue;
 
-            if (av[idx]==NULL)
-                continue;
+			if (V_TYPE(s) == ID_UNK) {
+				if ((s = eval(av[idx])) == NULL) {
+					parse_error("Unknown Variable\n");
+					free(av);
+					return (NULL);
+				}
+			}
+			switch (V_TYPE(s)) {
 
-            s=av[idx];
+			    case ID_STRING:
+				    strcat(buf, V_STRING(s));
+				    count++;
+				    break;
+			    case ID_VAL:
+				    if (!(Sep)) {
+					    fname = tempnam(NULL, NULL);
+					    fp = fopen(fname, "w");
+				    }
+				    if ((v = eval(s)) == NULL)
+					    v = s;
 
-            if (V_TYPE(s) == ID_UNK){
-                if ((s=eval(av[idx]))==NULL){
-                    parse_error("Unknown Variable\n");
-                    free(av);
-                    return(NULL);
-                }
-            }
+				    Ord[0] = GetSamples(V_SIZE(v), V_ORG(v));
+				    Ord[1] = GetLines(V_SIZE(v), V_ORG(v));
+				    Ord[2] = GetBands(V_SIZE(v), V_ORG(v));
 
+				    if (xFlag) {
 
-            switch (V_TYPE(s)) {
+					    if (XOrd[Mode[0]] != Ord[Mode[0]]) {
+						    parse_error("Given X-Axis doesn't agree with given data set");
+						    free(av);
+						    return (NULL);
+					    } else if ((XOrd[1] != 1 && XOrd[2] != 1) && (XOrd[1] != Ord[Mode[1]] && XOrd[2] != Ord[Mode[2]])) {
+						    parse_error("Given X-Axis doesn't agree with given data set");
+						    free(av);
+						    return (NULL);
+					    }
+				    }
+				    x = calloc(Ord[Mode[0]], sizeof(float));
+				    y = calloc(Ord[Mode[0]], sizeof(float));
 
-            case ID_STRING:
-                strcat(buf, V_STRING(s));
-                count++;
-                break;
-            case ID_VAL: 
-                if (!(Sep)) {
-                    fname = tempnam(NULL,NULL);
-                    fp = fopen(fname, "w");
-                }
+				    for (i = 0; i < Ord[Mode[2]]; i++) {
+					    for (j = 0; j < Ord[Mode[1]]; j++) {
 
-                if ((v= eval(s)) == NULL) v = s;
+						    if (Sep) {
+							    fname = tempnam(NULL, NULL);
+							    fp = fopen(fname, "w");
+						    }
+						    for (k = 0; k < Ord[Mode[0]]; k++) {
+							    CE[Mode[2]] = i;
+							    CE[Mode[1]] = j;
+							    CE[Mode[0]] = k;
+							    obj_index = cpos(CE[0], CE[1], CE[2], v);
+							    switch (V_FORMAT(v)) {
+								case BYTE:
+								case SHORT:
+								case INT:
+									y[k] = (float) extract_int(v, obj_index);
+								case FLOAT:
+								case DOUBLE:
+									y[k] = extract_float(v, obj_index);
+							    }
 
-                Ord[0] = GetSamples(V_SIZE(v), V_ORG(v));
-                Ord[1] = GetLines(V_SIZE(v), V_ORG(v));
-                Ord[2] = GetBands(V_SIZE(v), V_ORG(v));
-				
-                if (xFlag){
+							    if (xFlag) {
+								    switch (V_FORMAT(v)) {
+									case BYTE:
+									case SHORT:
+									case INT:
+										x[k] = (float) extract_int(Xaxis, rpos(obj_index, v, Xaxis));
+									case FLOAT:
+									case DOUBLE:
+										x[k] = extract_float(Xaxis, rpos(obj_index, v, Xaxis));
+								    }
+							    } else {
+								    x[k] = (float) k;
+							    }
+							    fprintf(fp, "%g\t %g\n", x[k], y[k]);
+						    }
 
-                    if (XOrd[Mode[0]]!=Ord[Mode[0]] ){
-                        parse_error("Given X-Axis doesn't agree with given data set");
-                        free(av);
-                        return(NULL);
-                    }
-
-                    else if ((XOrd[1]!=1 && XOrd[2]!=1) && (XOrd[1]!=Ord[Mode[1]] && XOrd[2]!=Ord[Mode[2]])){
-                        parse_error("Given X-Axis doesn't agree with given data set");
-                        free(av);
-                        return(NULL);
-                    }
-                }
-                
-                x=calloc(Ord[Mode[0]],sizeof(float));
-                y=calloc(Ord[Mode[0]],sizeof(float));
-
-                for (i=0;i<Ord[Mode[2]];i++){
-                    for (j=0;j<Ord[Mode[1]];j++){
-					
-                        if (Sep) {
-                            fname = tempnam(NULL,NULL);
-                            fp = fopen(fname, "w");
-                        }
-
-
-                        for (k=0;k<Ord[Mode[0]];k++){
-                            CE[Mode[2]]=i;
-                            CE[Mode[1]]=j;
-                            CE[Mode[0]]=k;
-                            obj_index=cpos(CE[0],CE[1],CE[2],v);
-                            switch (V_FORMAT(v)) {
-                            case BYTE:
-                            case SHORT:
-                            case INT:
-                                y[k]=(float)extract_int(v,obj_index);
-                            case FLOAT:
-                            case DOUBLE:
-                                y[k]=extract_float(v,obj_index);
-                            }
-
-                            if (xFlag){
-                                switch (V_FORMAT(v)) {
-                                case BYTE:
-                                case SHORT:
-                                case INT:
-                                    x[k]=(float)extract_int(Xaxis,rpos(obj_index,v,Xaxis));
-                                case FLOAT:
-                                case DOUBLE:
-                                    x[k]=extract_float(Xaxis,rpos(obj_index,v,Xaxis));
-                                }
-                            }
-                            else {
-                                x[k]=(float)k;
-                            }
-                            fprintf(fp,"%g\t %g\n",x[k],y[k]);
-                        }
-
-                        if (Sep) {
-                            fclose(fp);
-                            if (count++) strcat(buf, ",");
-                            sprintf(buf + strlen(buf), "'%s'", fname);
-                            if (V_NAME(v)) 
-                                sprintf(buf + strlen(buf), "title '%s'", V_NAME(v));
-                            free(fname);
-                        }
-
-                        else
-                            fprintf(fp,"\n");
-                    }
-                }
-                free(x);
-                free(y);
-                if (!(Sep)){
-                    fclose(fp);
-                    if (count++) strcat(buf, ",");
-                    sprintf(buf + strlen(buf), "'%s'", fname);
-                    if (V_NAME(v)) 
-                        sprintf(buf + strlen(buf), "title '%s'", V_NAME(v));
-                    free(fname);
-                }
-            }
-        }
-    }
-    send_to_plot(buf);
-    free(av);
+						    if (Sep) {
+							    fclose(fp);
+							    if (count++)
+								    strcat(buf, ",");
+							    sprintf(buf + strlen(buf), "'%s'", fname);
+							    if (V_NAME(v))
+								    sprintf(buf + strlen(buf), "title '%s'", V_NAME(v));
+							    free(fname);
+						    } else
+							    fprintf(fp, "\n");
+					    }
+				    }
+				    free(x);
+				    free(y);
+				    if (!(Sep)) {
+					    fclose(fp);
+					    if (count++)
+						    strcat(buf, ",");
+					    sprintf(buf + strlen(buf), "'%s'", fname);
+					    if (V_NAME(v))
+						    sprintf(buf + strlen(buf), "title '%s'", V_NAME(v));
+					    free(fname);
+				    }
+			}
+		}
+	}
+	send_to_plot(buf);
+	free(av);
 #endif
-    return(NULL);
+	return (NULL);
 }
