@@ -17,6 +17,9 @@
 /*Define if you have Xm library*/
 #undef HAVE_LIBXM
 
+/*Define if you have plplotFX library*/
+#undef INCLUDE_API
+
 /*Define if you have xrt3d library*/
 #undef XRT_ENABLED
 
