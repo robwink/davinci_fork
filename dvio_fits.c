@@ -1,3 +1,5 @@
+#ifdef HAVE_CFITSIO
+
 #include <cfitsio/fitsio.h>
 #include "parser.h"
 
@@ -480,7 +482,4 @@ ReadFITS(vfuncptr func, Var * arg)
    return(data);
 }
 
-
-
-   
-
+#endif
