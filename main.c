@@ -80,8 +80,6 @@ sighandler(int data)
     char cmd[256];
     char *path = getenv("TMPDIR");
 
-
-
 	switch (data) {
 
 	case (SIGSEGV):
@@ -107,7 +105,6 @@ sighandler(int data)
     	longjmp(env, 1);
 
 		break;
-
 	}
 }
 
@@ -129,11 +126,10 @@ main(int ac, char **av)
     s = new_scope();
 
 #ifndef __MSDOS__
-    /*signal(SIGPIPE, SIG_IGN);*/
-    signal(SIGINT, sighandler); 
+     signal(SIGPIPE, SIG_IGN);
+     signal(SIGINT, sighandler); 
 	 signal(SIGSEGV, sighandler);
 	 signal(SIGBUS, sighandler);
-
 
 #endif
 

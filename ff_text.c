@@ -105,6 +105,8 @@ ff_text(vfuncptr func, Var *arg)
         memcpy(cdata+(x*j), ptr, strlen(ptr));
     }
 
+	fclose(fp);
+
     if (VERBOSE > 1) {
         fprintf(stderr, "Read TEXT file: %dx%d (%d bytes)\n", x,y,count);
     }
