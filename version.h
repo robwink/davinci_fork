@@ -2,6 +2,11 @@ char *version = "@(#) daVinci Version #0.52";
 
 
 /*
+Version 0.52a
+    * Added stereo projection function
+    * Added ImageMagick library for 40+ graphics file types (R/W) including Mpeg
+    * Updated configure.in and Makefile.in
+
 Version 0.52:
     * modified grammar to streamline to ansi standard
 	+    you can subset return values and other subsets w/o prior assignment.
@@ -262,4 +267,6 @@ Version 0.24: Fri Feb  3 18:51:10 MST 1995
 
 Version 0.23: Tue Jan 10 15:29:14 MST 1995
     * Added grd I/O
+    * Added projection() 
+    * Added Imagick Libriary routines making 30+ graphics formats read/writeable
 */
