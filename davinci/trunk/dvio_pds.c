@@ -1588,7 +1588,7 @@ WritePDS(vfuncptr func, Var *arg)
 
 	
 	fclose(fp);
-	return(result);
+	return(NULL);
 
 }
 
