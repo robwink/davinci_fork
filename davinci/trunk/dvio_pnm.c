@@ -177,7 +177,7 @@ dv_WritePPM(Var *obj, char *filename, int force)
     iom_cleanup_iheader(&h);
     
     if (status == 0){
-        parse_error("Writing of PPM file %s fialed.\n", filename);
+        parse_error("Writing of PPM file %s failed.\n", filename);
         return 0;
     }
     
