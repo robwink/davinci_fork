@@ -201,45 +201,55 @@ Traverse_Tree(OBJDESC * ob,Var *v)
 	key=OdlGetFirstKwd(ob);
 
 	while (key!=NULL && count) {
-		/*Keyword before object*/
-		if (key->line_number < next_ob->line_number && !(key->is_a_pointer)) {
+
+		/*If Key and Next_ob are from different files, keyword takes precedent*/
+		if ((strcmp(key->file_name,next_ob->file_name))){
 			add_struct(v,key->name,do_key(ob,key));
-			key=OdlGetNextKwd(key);
-		}
+         key=OdlGetNextKwd(key);
+      }
 
-		/*special case of obj/key entry, next_ob should be it*/
-		else if (key->is_a_pointer){
-			next_var=new_struct(0);
-			if (key->name[0]=='^') /*Eeww, Don't like carrots */
-				add_struct(v,(key->name+1),next_var);
-			else
-				add_struct(v,key->name,next_var);
-
-			Traverse_Tree(next_ob,next_var);
-			
-			next_ob= OdlNextObjDesc(next_ob,0,&scope);
-
-			count--;
-
-			/*Need to step past this keyword since it was really an object*/
-			key=OdlGetNextKwd(key);
-		}
-
-		/*object before keyword*/
 		else {
-			name=(OdlFindKwd(next_ob, "NAME", NULL,1, ODL_THIS_OBJECT))->value;
-			if (name==NULL){/*Oh man, no name!*/
-				name=next_ob->class;
+			/*Same filename, so check line numbers*/
+			/*Keyword before object*/
+			if (key->line_number < next_ob->line_number && !(key->is_a_pointer)) {
+				add_struct(v,key->name,do_key(ob,key));
+				key=OdlGetNextKwd(key);
 			}
 
-			next_var=new_struct(0);
-			add_struct(v,name,next_var);
+			/*special case of obj/key entry, next_ob should be it*/
+			else if (key->is_a_pointer){
+				next_var=new_struct(0);
+				if (key->name[0]=='^') /*Eeww, Don't like carrots */
+					add_struct(v,(key->name+1),next_var);
+				else
+					add_struct(v,key->name,next_var);
+
+				Traverse_Tree(next_ob,next_var);
+			
+				next_ob= OdlNextObjDesc(next_ob,0,&scope);
+
+				count--;
+
+				/*Need to step past this keyword since it was really an object*/
+				key=OdlGetNextKwd(key);
+			}
+
+			/*object before keyword*/
+			else {
+				name=(OdlFindKwd(next_ob, "NAME", NULL,1, ODL_THIS_OBJECT))->value;
+				if (name==NULL){/*Oh man, no name!*/
+					name=next_ob->class;
+				}
+
+				next_var=new_struct(0);
+				add_struct(v,name,next_var);
 				
-			Traverse_Tree(next_ob,next_var);
+				Traverse_Tree(next_ob,next_var);
+	
+				next_ob= OdlNextObjDesc(next_ob,0,&scope);
 
-			next_ob= OdlNextObjDesc(next_ob,0,&scope);
-
-			count--;
+				count--;
+			}
 		}
 	}
 
