@@ -69,15 +69,15 @@ int Read_Ahead_For_Best_Collumn_Guess(int *Width,unsigned char *buf,int len);
 void RedunBegone(char **buf, int *Lines, int Col,PACIstatus *Ps,
                  int quiet,int eflag, Var *err,int *BandCount);
 
-#ifndef LITTLE_E
+#ifdef WORDS_BIGENDIAN
 unsigned short Start_Sync = { 0xF0CA };
 unsigned short Stop_Sync = { 0xAB8C };
 unsigned int StopStart_Sync = {0xAB8CF0CA};
-#else
+#else /* little endian */
 unsigned short Start_Sync = { 0xCAF0 };
 unsigned short Stop_Sync = { 0x8CAB };
 unsigned int StopStart_Sync = {0x8CABCAF0};
-#endif
+#endif /* WORDS_BIGENDIAN */
 
 
 #ifdef HAVE_LIBUSDS
@@ -91,8 +91,7 @@ extern unsigned char * read_predictive(FILE *infile,
 
 extern unsigned char * read_DCT(FILE *infile, 
 											int *total_size, 
-											int guess_size,
-											int verb);
+											int guess_size);
 
 
 int 
@@ -247,11 +246,6 @@ int GetGSEHeader (FILE *fp, struct _iheader *h)
     char	Nibs[9][24];/*Header has 9 short words in it */
     int	plane;
 
-unsigned char cookie[]={0x00,0x00,0x06,0x7b,0x00,0x00,0x04,0x00};
-	 int  chunk=8;
-
-	 unsigned char buf[10];
-
     rewind(fp);
     fstat(fileno(fp),&filebuf);
     Size=(filebuf.st_size)-1024;
@@ -260,24 +254,18 @@ unsigned char cookie[]={0x00,0x00,0x06,0x7b,0x00,0x00,0x04,0x00};
         return(0);
     }
 
-	 fread(buf,sizeof(char),chunk,fp);
-
-
     /**
     *** I have hard-coded these values becase the header word sucks.
     **/
     Col = 1032;
     Row = 1024;
     nb = 2;
-/*
+
     plane=(Row*Col*nb);
     if (Size % plane) {
         parse_error("File contains incomplete frame\n");
     }
-*/
 
-	 if (strcmp(buf,cookie))  /*what are the odds?*/
-		return(0);
 
 /*Okay, the file header is a GSE visible image; load the _iheader structure with info */
 	
@@ -339,7 +327,7 @@ Count_Out_Bands(int b)
 
 
 int
-Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int verb)
+Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob)
 {
 	int i;
 	msdp_Header	mh;
@@ -360,11 +348,8 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int v
 	unsigned int xcomp, pcomp, spacing, levels;
 	int huffman_table;
 	int quiet=0;
-	unsigned char *chunk;
 
 /* Read the 1st header for set-up perposes */
-
-	rewind(infile);
 
 	count=fread(&first_mh,sizeof(msdp_Header),1,fp);
 	if (!count)
@@ -392,10 +377,6 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int v
 
 		height+=(mh.line*16);
 		frag=(mh.len_lo | (mh.len_hi << 16));
-
-		chunk = (unsigned char *) malloc(frag+sizeof(msdp_Header)+1);
-
-
 		size+=frag;
 
 		fseek(fp,(frag+1),SEEK_CUR); /*Gotta skip the checksum byte at the end*/
@@ -437,7 +418,7 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int v
 		 parse_error("Reading DCT Compressed Image");
 
 #ifdef HAVE_LIBMSSS_VIS
-		 *data=read_DCT(infile,&size,size,verb);
+		 *data=read_DCT(infile,&size,size);
 		 height=size/width; 
 		 size+=1024;/*Pad size, this routine doesn't add the 1024, so we gotta fake it for below*/
 #else
@@ -585,14 +566,12 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
     char	*filename,*fname,fname2[256];
     unsigned char *buf;
 	 int nocube=0;
-	 int verb=0;
 
-    Alist alist[5];
+    Alist alist[4];
     alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
     alist[1] = make_alist("gse", INT, NULL, &gse);
     alist[2] = make_alist("nocube", INT, NULL, &nocube);
-    alist[3] = make_alist("verbose", INT, NULL, &verb);
-    alist[4].name = NULL;
+    alist[3].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -612,21 +591,19 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
     free(fname);
     fname = fname2;
 
-	 gse=GetGSEHeader(infile,&header);
-
     if (gse){
 
-//       if (GetGSEHeader(infile,&header) == 0) {
-//            parse_error("Your choice is not a valid GSE visible spectrum (ddd) file");
-//            return (NULL);
-//       }
+        if (GetGSEHeader(infile,&header) == 0) {
+            parse_error("Your choice is not a valid GSE visible spectrum (ddd) file");
+            return (NULL);
+    	}
 
     	data=read_qube_data(fileno(infile), &header);
 
         fclose(infile);
     	if (header.format=SHORT){ /*Data is actually 12-bit and needs the upper 4 bits cleaned off*/
             dsize=header.size[0]*header.size[1]*header.size[2];
-            for (i=0;i<dsize;i++){
+            for (i=0;i<dsize*2;i+=2){
                 ((short *)(data))[i] &= 4095;
             }
     	}
@@ -635,7 +612,7 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
     }
 
     else {
-        height=Process_SC_Vis(infile,&buf,&width,&nob,verb);
+        height=Process_SC_Vis(infile,&buf,&width,&nob);
 		  if (height) {
 				if (nocube)
       			return(newVal(BSQ,width,height,1,BYTE,buf));

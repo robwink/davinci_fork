@@ -1,23 +1,22 @@
 #include "parser.h"
 
+#define DV_DEFAULT_VIEWER "xv"
 
 Var *
 ff_display(vfuncptr func, Var *arg)
 {
     Var *object, *e;
-	 Var *name=NULL;
     FILE *fp;
     char *fname;
-	 char *title=NULL;
     int i,j,count;
     int bands;
     char buf[256];
     int max,r,g,b;
+	char *viewer = NULL;
 
     struct keywords kw[] = {
 	{ "object", NULL },
 	{ "max", NULL },
-	{ "title",NULL},
 	{ NULL, NULL }
     };
 
@@ -53,18 +52,6 @@ ff_display(vfuncptr func, Var *arg)
 	parse_error(NULL);
 	return(NULL);
     }
-
-	if ((name = get_kw("title", kw)) != NULL) {	
-		if (V_STRING(name) !=NULL)
-			title=V_STRING(name);
-		else if ((e = eval(name)) != NULL)
-			title=V_STRING(e);
-		else
-			title=(char *)strdup("NoName");
-	}
-
-	
-
 
     if (bands == 3 && V_ORG(object) == BIP) {
 	fname = tempnam(NULL,NULL);
@@ -114,11 +101,10 @@ ff_display(vfuncptr func, Var *arg)
 	}
 	fclose(fp);
     }
-	 if (title)
-    	sprintf(buf, "xv -na \"%s\" %s &", title,fname);
-	 else
-    	sprintf(buf, "xv %s &", fname);
-		
+
+	viewer=getenv("DV_VIEWER");
+	if (viewer == NULL){ viewer=DV_DEFAULT_VIEWER; }
+    sprintf(buf, "%s %s &", viewer, fname);
     free(fname);
     system(buf);
 

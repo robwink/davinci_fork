@@ -1,4 +1,4 @@
-/* #include "config.h" */
+/* #include <config.h> */
 
 #ifdef __cplusplus
 extern "C" {
@@ -161,7 +161,9 @@ Var *LoadAVIRIS (FILE *, char *, struct _iheader *);
 Var *Load_imath (FILE *, char *, struct _iheader *);
 #ifdef HAVE_LIBMAGICK
 Var *LoadGFX_Image(char *filename);
+#if 0
 Var *ff_XImage_Display(vfuncptr func, Var * arg);
+#endif /* 0 */
 #endif
 int LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var);
 Var * LoadVanilla(char *filename);
@@ -251,6 +253,8 @@ Var *ff_org (vfuncptr, Var *);
 Var *ff_create (vfuncptr, Var *);
 Var *ff_source (vfuncptr, Var *);
 Var *ff_load (vfuncptr, Var *);
+Var *ff_load2(vfuncptr, Var *);
+Var *ff_write2(vfuncptr, Var *);
 Var *ff_Frame_Grabber_Read(vfuncptr func, Var * arg);
 Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg);
 Var *ff_PACI_Read(vfuncptr func, Var * arg);
@@ -431,9 +435,3 @@ double asind(double);
 double atand(double);
 
 Var * ff_audit(vfuncptr func, Var *arg);
-Var * ff_identity(vfuncptr func, Var *arg);
-Var * per_pixel(vfuncptr func, Var *arg);
-
-Var * ff_exists(vfuncptr func, Var * arg);
-Var * ff_putenv(vfuncptr func, Var * arg);
-Var * ff_length(vfuncptr func, Var * arg);

@@ -236,11 +236,11 @@ GetISISHeader(FILE *fp,
                 size[0] = atoi(key->value);
             }
 
-            key1 = OdlFindKwd(image, "SAMPLE_TYPE", NULL, 0, scope);
-            key2 = OdlFindKwd(image, "SAMPLE_BITS", NULL, 0, scope);
+            key1 = OdlFindKwd(image, "SAMPLE_BITS", NULL, 0, scope);
+            key2 = OdlFindKwd(image, "SAMPLE_TYPE", NULL, 0, scope);
 
             format = ConvertISISType( key1 ? key1->value : NULL, 
-									  key2 ? key2->value : NULL,
+                                      key2 ? key2->value : NULL,
 									  NULL);
 
             /**

@@ -54,8 +54,11 @@ fixup_ranges(Var *v, Range *in, Range *out)
     return(1);
 }
 /**
- ** These convert from BSQ to something else
- ** Which is why orders[BIP] looks funny.
+ ** do a point by point copy of v, via the specified range.
+ **
+ ** Incoming range values are 1-N, must be modified to 0-(N-1)
+ **
+ ** This routine is now data dependent. !!!
  **/ 
 
 int orders[3][3] = {

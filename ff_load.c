@@ -96,6 +96,10 @@ ff_raw(vfuncptr func, Var * arg)
         	return (NULL);
         }
 
+	if ((fp=fopen(filename,"r"))==NULL){
+		parse_error("Can't find file: %s",filename);
+		return(NULL);
+	}
 
 	if (!(Row) || !(Col)) {
 		parse_error("Must specify row and column size!");
@@ -104,20 +108,12 @@ ff_raw(vfuncptr func, Var * arg)
 
 	buf=(unsigned char *)calloc((Row*Col),sizeof(char));
 
-	if ((fp=fopen(filename,"r"))==NULL){
-		parse_error("Can't find file: %s",filename);
-		return(NULL);
-	}
-
 	size=fread(buf,sizeof(char),(Row*Col),fp);
-
 	if (size < (Row*Col)){
 		parse_error("Incorrect Row/Col size, sorry...aborting");
-		fclose(fp);
 		return(NULL);
 	}
 
-	fclose(fp);
 	return(newVal(BSQ,Col,Row,1,BYTE,buf));
 }
 
@@ -183,19 +179,19 @@ ff_load(vfuncptr func, Var * arg)
         if (is_compressed(fp))
             fp = uncompress(fp, fname);
 
-        if (input == NULL)    input = LoadSpecpr(fp, filename, record);
-        if (input == NULL)    input = LoadVicar(fp, filename, &h);
-        if (input == NULL)    input = LoadISIS(fp, filename, &h);
-        if (input == NULL)    input = LoadGRD(fp, filename, &h);
-        if (input == NULL)    input = LoadPNM(fp, filename, &h);
-        if (input == NULL)    input = Load_imath(fp, filename, &h);
-        if (input == NULL)    input = LoadGOES(fp, filename, &h);
-        if (input == NULL)    input = LoadAVIRIS(fp, filename, &h);
+        if (input == NULL)    input = LoadSpecpr(fp, fname, record);
+        if (input == NULL)    input = LoadVicar(fp, fname, &h);
+        if (input == NULL)    input = LoadISIS(fp, fname, &h);
+        if (input == NULL)    input = LoadGRD(fp, fname, &h);
+        if (input == NULL)    input = LoadPNM(fp, fname, &h);
+        if (input == NULL)    input = Load_imath(fp, fname, &h);
+        if (input == NULL)    input = LoadGOES(fp, fname, &h);
+        if (input == NULL)    input = LoadAVIRIS(fp, fname, &h);
 
         fclose(fp);	/* These others open their own files */
 		
 #ifdef HAVE_LIBHDF5
-	  	  if (input == NULL)    input = LoadHDF5(filename);
+	  	  if (input == NULL)    input = LoadHDF5(fname);
 #endif
 
 #ifdef LITTLE_E
@@ -204,7 +200,7 @@ ff_load(vfuncptr func, Var * arg)
 #endif
 
 #ifdef HAVE_LIBMAGICK
-		if (input == NULL)    input = LoadGFX_Image(filename);
+		if (input == NULL)    input = LoadGFX_Image(fname);
 #endif
 
         if (input == NULL) {

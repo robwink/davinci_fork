@@ -17,9 +17,9 @@ INSTALL_DATA = @INSTALL_DATA@
 XINCLUDES=@XINCLUDES@ $(XRTINCLUDE)
 XLIBS=@XLIBS@ $(XRTLIBS)
 
-CPPFLAGS=@CPPFLAGS@
-CFLAGS=$(XINCLUDES) -Ilib @CFLAGS@
-LDFLAGS=@LDFLAGS@ -L.
+CPPFLAGS=-I$(srcdir) @CPPFLAGS@ -Ilib -Iiomedley
+CFLAGS=$(XINCLUDES) @CFLAGS@ 
+LDFLAGS=@LDFLAGS@
 
 XRTINCLUDE= @XRTINCLUDE@ 
 XRTLIBS = @XRTLIBS@
@@ -27,9 +27,12 @@ XRTLIBS = @XRTLIBS@
 
 CC     = @CC@
 DEFS   = @DEFS@ 
-LIBS   = $(XLIBS) @LIBS@  -lmodsupp
+LIBS   =  -L. -Liomedley -lmodsupp -liomedley $(XLIBS) @LIBS@
 AR     = ar
 RANLIB = @RANLIB@
+
+LIBIOMEDLEYDIR = iomedley
+LIBIOMEDLEY = $(LIBIOMEDLEYDIR)/libiomedley.a
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
@@ -63,12 +66,20 @@ OBJ=p.o pp.o symbol.o \
 	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
 	x.o xrt_print_3d.o motif_tools.o ff_convolve.o apifunc.o \
 	ff_plplot.o ff_pca.o ff_loadvan.o tools.o header.o \
-	io_pds.o io_hdf.o ff_pbm.o ff_meta.o @MODULE_SUPP_OBJS@
+	io_pds.o io_hdf.o ff_pbm.o ff_meta.o @MODULE_SUPP_OBJS@ \
+	ff_load2.o ff_write2.o \
+	dvio_aviris.o dvio_goes.o dvio_grd.o dvio_imath.o \
+	dvio_isis.o dvio_magic.o dvio_pnm.o dvio_vicar.o dvio.o \
+	dvio_ers.o dvio_envi.o dvio_raw.o 
+
 
 all:	@MAKEREAD@ davinci gplot
 
-davinci:	$(OBJ)  $(READLINE_OBJ) $(MOD_SUPP_LIB)
+davinci:	$(OBJ)  $(READLINE_OBJ) $(MOD_SUPP_LIB) $(LIBIOMEDLEY)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $@ $(READLINE_LIB) $(LIBS)
+
+$(LIBIOMEDLEY):
+	cd $(LIBIOMEDLEYDIR) && $(MAKE)
 
 $(MOD_SUPP_LIB): $(MOD_SUPP_LIB_OBJS)
 	$(AR) qv $(MOD_SUPP_LIB) $(MOD_SUPP_LIB_OBJS)
@@ -80,7 +91,7 @@ build.h:	$(OBJ:ff_version.o=)
 	echo 'char *builder = "'`whoami`'@'`hostname`'";' >> build.h
 
 readline/libreadline.a:
-	@(cd readline ; make )
+	@(cd readline && $(MAKE) )
 
 lexer.o:	lexer.c parser.o
 
@@ -103,14 +114,15 @@ install:
 # File specific dependancies
 #
 help.o:	help.c
-	$(CC) $(CFLAGS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $*.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(DEFS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $*.c
 
 clean:
 	-rm -f *.o davinci dv core gplot TAGS config.cache config.h config.log 
 	-rm -f .dvlog */.dvlog .nfs* */.nfs* *~ */*~
-	-(cd readline ; make clean)
-	-(cd lib ; make clean)
-	-(cd modules ; make clean)
+	-(cd readline && $(MAKE) clean)
+	-(cd lib && $(MAKE) clean)
+	-(cd modules && $(MAKE) clean)
+	-(cd $(LIBIOMEDLEYDIR) && $(MAKE) clean)
 
 dist:	clean
 	echo davinci-`head -1 version.h | sed -e 's/.* Version #//;s/".*//'` > .ver
@@ -118,7 +130,7 @@ dist:	clean
 	rm -rf readline/config.cache
 	mkdir `cat .ver`
 	ln $(DIST) `cat .ver`
-	(cd `cat .ver` ; ln -s ../docs ../tests ../readline ../lib .)
+	(cd `cat .ver` && ln -s ../docs ../tests ../readline ../lib .)
 	tar chf `cat .ver`.tar `cat .ver`
 	compress `cat .ver`.tar
 	rm -rf `cat .ver` .ver
@@ -144,19 +156,19 @@ gplot.o:	gplot.c
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(XINCLUDES) -Ilib $(CFLAGS) $< 
 
 gplot:	gplot.o lib/libXfred.a system.o
-	$(CC) $(CFLAGS) gplot.o system.o -o $@ $(LDFLAGS) -Llib -lXfred $(LIBS) $(XLIBS) -lX11
+	$(CC) $(CPPFLAGS) $(CFLAGS) gplot.o system.o -o $@ $(LDFLAGS) -Llib -lXfred $(LIBS) $(XLIBS) -lX11
 
 lib/libXfred.a:
-	@cd lib ; $(MAKE)
+	cd lib && $(MAKE)
 
 depend:
 	@gcc -MM $(OBJ:.o=.c)
 
 x.o:    x.c
-	$(CC) -c $(CFLAGS) $(XRTINCLUDE) $<
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(XRTINCLUDE) x.c
 
 xrt_print_3d.o: xrt_print_3d.c
-	$(CC) -c $(CFLAGS) $(XRTINCLUDE) $<
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(XRTINCLUDE) xrt_print_3d.c
 
 
 
@@ -317,3 +329,33 @@ darray.o: darray.c darray.h avl.h
 avl.o: avl.c avl.h
 ff_modules.o: ff_modules.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
+dvio.o: dvio.c parser.h system.h darray.h avl.h ff_modules.h \
+ module_io.h ufunc.h scope.h func.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h 
+dvio_aviris.o: dvio_aviris.c parser.h system.h darray.h avl.h \
+ ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
+ iomedley/iomedley.h iomedley/io_lablib3.h iomedley/toolbox.h 
+dvio_goes.o: dvio_goes.c parser.h system.h darray.h avl.h ff_modules.h \
+ module_io.h ufunc.h scope.h func.h dvio.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h
+dvio_grd.o: dvio_grd.c parser.h system.h darray.h avl.h ff_modules.h \
+ module_io.h ufunc.h scope.h func.h dvio.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h 
+dvio_imath.o: dvio_imath.c parser.h system.h darray.h avl.h \
+ ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
+ iomedley/iomedley.h iomedley/io_lablib3.h iomedley/toolbox.h 
+dvio_isis.o: dvio_isis.c parser.h system.h darray.h avl.h ff_modules.h \
+ module_io.h ufunc.h scope.h func.h dvio.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h 
+dvio_magic.o: dvio_magic.c config.h parser.h system.h darray.h avl.h \
+ ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
+ iomedley/iomedley.h iomedley/io_lablib3.h iomedley/toolbox.h
+dvio_pnm.o: dvio_pnm.c parser.h system.h darray.h avl.h ff_modules.h \
+ module_io.h ufunc.h scope.h func.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h 
+dvio_vicar.o: dvio_vicar.c parser.h system.h darray.h avl.h \
+ ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
+ iomedley/iomedley.h iomedley/io_lablib3.h iomedley/toolbox.h 
+dvio_envi.o: dvio_envi.c parser.h system.h darray.h avl.h ff_modules.h \
+ module_io.h ufunc.h scope.h func.h dvio.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h

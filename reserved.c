@@ -13,6 +13,7 @@ struct _rlist {
     char *name;
     Var *(*func)(Var *,Var *,Var *);
 } rlist[] = {
+    { "order", RV_set_order },
     { "scale", RV_set_int },
     { "verbose", RV_set_int },
     { "debug", RV_set_int },
@@ -54,6 +55,51 @@ set_reserved_var(Var *id, Var *range, Var *exp)
  ** functions to specifically set reserved variables.
  **/
 
+Var * 
+RV_set_order(Var *id,Var *range,Var *exp) 
+{
+    char *p;
+    /**
+     ** Expect an enumerated string of XYZ, XZY, ZXY
+     **/
+    if (exp == NULL) {
+	/**
+	 ** Perhaps this should unset this value?
+	 **/
+	return(NULL);
+    }
+
+    if (V_TYPE(exp) != ID_STRING || V_STRING(exp) == NULL) {
+	sprintf(error_buf, "Improper value for reserved variable: %s", 
+		V_NAME(id));
+	parse_error(NULL);
+	return(NULL);
+    }
+
+    p = V_STRING(exp);
+    if (*p == '"') p++;
+    if (strchr(p, '"')) *(strchr(p, '"')) = '\0';
+
+    if (	!strcasecmp(p, "xyz") ||
+	!strcasecmp(p, "xzy") ||
+	!strcasecmp(p, "yxz") ||
+	!strcasecmp(p, "yzx") ||
+	!strcasecmp(p, "zxy") ||
+	!strcasecmp(p, "zyx")) {
+	/**
+	 ** valid.  Set it.
+	 **/
+	V_STRING(id) = strdup(p);
+	V_TYPE(id) = ID_STRING;
+	put_sym(id);
+    } else {
+	sprintf(error_buf, "Improper value for reserved variable: %s", 
+		V_NAME(id));
+	parse_error(NULL);
+	return(NULL);
+    }
+    return(id);
+}
 
 Var * 
 RV_set_int(Var *id,Var *range,Var *exp) 

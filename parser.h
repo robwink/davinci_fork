@@ -10,7 +10,7 @@
 #include <limits.h>
 
 #if   defined(HAVE_CONFIG_H)
-#include "config.h"
+#include <config.h>
 #endif
 
 #ifndef _WIN32
@@ -283,7 +283,6 @@ struct _vfuncptr {
     char *name;
     vfunc fptr;
     void *fdata;
-    void *fdata2;
 };
 
 struct _iheader {

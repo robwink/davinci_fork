@@ -75,10 +75,12 @@ void rl_callback_handler_install(char *, void (char *));
 
 jmp_buf env;
 
+#ifndef _WIN32
 void user_sighandler(int data)
 {
    signal(SIGUSR1, user_sighandler);
 }
+#endif /* _WIN32 */
 
 void
 sighandler(int data)
@@ -96,11 +98,13 @@ sighandler(int data)
         signal(SIGSEGV,SIG_DFL);
         break;
 
+#ifndef _WIN32
     case (SIGBUS):
     	sprintf(cmd, "rm -rf %s &", path);
     	system(cmd);
         signal(SIGBUS,SIG_DFL);
         break;
+#endif /* _WIN32 */
 
     case (SIGINT):
 

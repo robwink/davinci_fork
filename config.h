@@ -1,6 +1,13 @@
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
 
+/* Define if on AIX 3.
+   System headers sometimes define this.
+   We just want to avoid a redefinition error message.  */
+#ifndef _ALL_SOURCE
+/* #undef _ALL_SOURCE */
+#endif
+
 /* Define to empty if the keyword does not work.  */
 /* #undef const */
 
@@ -22,6 +29,13 @@
 /* Define if your <sys/time.h> declares struct tm.  */
 /* #undef TM_IN_SYS_TIME */
 
+/* Define if your processor stores words with the most significant
+   byte first (like Motorola and SPARC, unlike Intel and VAX).  */
+#define WORDS_BIGENDIAN 1
+
+/* Define if the X Window System is missing or not being used.  */
+/* #undef X_DISPLAY_MISSING */
+
 /*Define if you have module library*/
 #define BUILD_MODULE_SUPPORT 1
 
@@ -42,6 +56,9 @@
 
 /*Define if you have xrt3d library*/
 /* #undef XRT_ENABLED */
+
+/*Define if you have readline library */
+#define HAVE_LIBREADLINE 1
 
 /* Define if you have the basename function.  */
 #define HAVE_BASENAME 1
@@ -133,6 +150,9 @@
 /* Define if you have the <projects.h> header file.  */
 #define HAVE_PROJECTS_H 1
 
+/* Define if you have the <readline/history.h> header file.  */
+#define HAVE_READLINE_HISTORY_H 1
+
 /* Define if you have the <sys/dir.h> header file.  */
 /* #undef HAVE_SYS_DIR_H */
 
@@ -166,6 +186,9 @@
 /* Define if you have the Xt library (-lXt).  */
 #define HAVE_LIBXT 1
 
+/* Define if you have the bz2 library (-lbz2).  */
+/* #undef HAVE_LIBBZ2 */
+
 /* Define if you have the curses library (-lcurses).  */
 /* #undef HAVE_LIBCURSES */
 
@@ -181,8 +204,8 @@
 /* Define if you have the msss_vis library (-lmsss_vis).  */
 #define HAVE_LIBMSSS_VIS 1
 
-/* Define if you have the readline library (-lreadline).  */
-#define HAVE_LIBREADLINE 1
+/* Define if you have the png library (-lpng).  */
+/* #undef HAVE_LIBPNG */
 
 /* Define if you have the termcap library (-ltermcap).  */
 #define HAVE_LIBTERMCAP 1
