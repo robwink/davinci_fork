@@ -1321,3 +1321,32 @@ Davinci supports the following matrix functions:
             * speedup to array.c
             + added limited support for 16-bit pgm files
 
+?functions create()
+?create()
+ create() - Create an array of values
+
+ create(x=INT, y=INT, z=INT, [org=ORG, format=FORMAT, start=VAL, step=VAL])
+
+     The create() function creates an array of data of the specified
+	 size, format and organization.
+
+     The 'x', 'y' and 'z' parameters specify the size of each axis.
+	 If a value is not given, it is assumed to be 1.
+
+	 The 'org' and 'format' parameters specify the organization (one of
+	 bil, bip, bsq, xyz, xzy, zxy) and format (one of byte, short, int,
+	 float or double).  The default organization is bsq.  The default
+	 format is int.
+
+	 The array is filled with a ramp.  The first element is numbered from
+	 the 'start' parameter (default of 1) and each successive element is 
+	 incremented by the step size (default of 1).
+	 
+
+ Example:
+
+    This example creates a 3x3x1 image.  The elements are automatically 
+	numbered from 1 to 9.
+
+	dv> a = create(3,3,1)
+
