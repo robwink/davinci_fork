@@ -990,7 +990,7 @@ char *single_replace(char *line, regex_t *preg, char *replace)
 			if (replace[i]=='&') {
 				/*insert whole match pattern*/
 				delta=pmatch[0].rm_eo-pmatch[0].rm_so;
-				memcpy((newtext+index), line + pmatch[0].rm_so, delta);
+				memcpy((newtext+index), Marker + pmatch[0].rm_so, delta);
 				index+=delta;
 			}
 			else if (replace[i]=='\\'){
@@ -1000,7 +1000,7 @@ char *single_replace(char *line, regex_t *preg, char *replace)
 						numeral=replace[i]-'0';
 						if (pmatch[numeral].rm_so >= 0){ /*requested valid substring*/
 							delta=pmatch[numeral].rm_eo-pmatch[numeral].rm_so;
-							memcpy((newtext+index),line + pmatch[numeral].rm_so, delta);
+							memcpy((newtext+index),Marker + pmatch[numeral].rm_so, delta);
 							index+=delta;
 						}
 					}
