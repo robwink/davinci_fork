@@ -475,7 +475,6 @@ text_dirname(Var *ob1)
 
 
 
-/* This was badly written and wrong */
 /*
 ** basename() can both modify its argument and return static memory.  
 ** Be careful about return values.
