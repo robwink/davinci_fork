@@ -2,11 +2,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#if defined(__MSDOS__)||defined(_WIN32)
+#if defined(___CYGWIN__)
 #include "mem.h"
 #else
 #include <sys/mman.h>
-#endif /* _WIN32 */
+#endif /* __CYGWIN__ */
 #include "parser.h"
 #include "dvio.h"
 #include "XformTable.h"

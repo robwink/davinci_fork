@@ -58,6 +58,7 @@ void log_time();
 void lhandler(char *line);
 void quit(void);
 void parse_buffer(char *buf);
+void rmrf(char *path);
 
 
 void init_history(char *fname);
@@ -85,36 +86,32 @@ void rl_callback_handler_install(char *, void (*)(char *));
 
 jmp_buf env;
 
-#ifndef _WIN32
 void user_sighandler(int data)
 {
    signal(SIGUSR1, user_sighandler);
 }
-#endif /* _WIN32 */
 
 void
 dv_sighandler(int data)
 {
     Scope *scope;
     char cmd[256];
-    char *path = getenv("TMPDIR");
 
+    char *path = getenv("TMPDIR");
 
     switch (data) {
 
     case (SIGSEGV):
-    	sprintf(cmd, "rm -rf %s &", path);
-    	system(cmd);
+		rmrf(path);
         signal(SIGSEGV,SIG_DFL);
         break;
 
-#ifndef _WIN32
+#ifndef __CYGWIN__
     case (SIGBUS):
-    	sprintf(cmd, "rm -rf %s &", path);
-    	system(cmd);
+		rmrf(path);
         signal(SIGBUS,SIG_DFL);
         break;
-#endif /* _WIN32 */
+#endif /* __CYGWIN__ */
 
     case (SIGINT):
     	signal(SIGINT, dv_sighandler);
@@ -129,6 +126,8 @@ dv_sighandler(int data)
     }
 }
 
+
+
 /* char *__progname = "davinci"; */
 
 int 
@@ -138,6 +137,7 @@ main(int ac, char **av)
     Var *v;
     FILE *fp;
     char path[256];
+    char path2[256];
     int quick = 0;
     int i, j, k, flag = 0;
     char *logfile = NULL;
@@ -146,13 +146,11 @@ main(int ac, char **av)
 	
     s = new_scope();
 
-#ifndef __MSDOS__
     signal(SIGINT, dv_sighandler); 
     signal(SIGSEGV, dv_sighandler);
     signal(SIGPIPE, SIG_IGN);
     signal(SIGBUS, dv_sighandler);
     signal(SIGUSR1, user_sighandler);
-#endif
 
     scope_push(s);
     /**
@@ -251,14 +249,6 @@ main(int ac, char **av)
     fake_data();
 
     if (interactive) {
-#ifdef __MSDOS__  
-        extern Init_DLL(void);  
-    
-        if(Init_DLL()){  
-            parse_error("Can't initialize the readline DLL\n");  
-            exit(-1);  
-        }  
-#endif
 
         if (logfile == NULL)
             logfile = ".dvlog";
@@ -282,24 +272,25 @@ main(int ac, char **av)
     /**
     ** set up temporary directory
     **/
-#ifdef __MSDOS__
-    {  
-        char tmpbuf[128];  
-        _strtime( tmpbuf );  
-        sprintf(path, "TMPDIR=c:\\windows\\temp\\dv_%s",tmpbuf);  
+    if ((p = getenv("TMPDIR")) == NULL) {
+#if 0
+	/* I'm not convinced we wont need this for cygwin yet */
+    {
+        char tmpbuf[128];
+        _strtime( tmpbuf );
+        sprintf(path, "TMPDIR=c:\\windows\\temp\\dv_%s",tmpbuf);
         mkdir(path + 7, 0777);
         putenv(path);
-    }  
+    }
 #else
-    if ((p = getenv("TMPDIR")) == NULL) {
         sprintf(path, "TMPDIR=%s/dv_%d", P_tmpdir, getpid());
+#endif
 	} else {
         sprintf(path, "TMPDIR=%s/dv_%d", getenv("TMPDIR"), getpid());
 	}
 
 	mkdir(path + 7, 0777);
 	putenv(path);
-#endif
 
     /*
     ** Before we get to events, process any pushed files
@@ -550,10 +541,7 @@ quit(void)
     /**
     ** clean up temporary directory
     **/
-#ifndef __MSDOS__ /*Windows will cleanup its own temp directory */
-    sprintf(cmd, "rm -rf %s &", path);
-    system(cmd);
-#endif
+    rmrf(path);
     exit(0);
 }
 
@@ -607,18 +595,10 @@ fake_data()
         }
     }
 
-#ifndef __MSDOS__
-    srand48(getpid());
-#else    
     srand( (unsigned int) time( NULL ) ); 
-#endif
     
     for (i = 0; i < 12; i++) {
-#ifndef __MSDOS__
         ((float *) V_DATA(v))[i + 12] = drand48();
-#else
-        ((float *) V_DATA(v))[i + 12] = (float )rand();
-#endif
     }
 
     v = (Var *) calloc(1, sizeof(Var));
