@@ -548,21 +548,23 @@ ff_global(vfuncptr func, Var * arg)
 {
 	Var *e = NULL;
 	Var *aval = NULL;
+	char *aname = NULL;
 	Alist alist[2];
-	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &aval);
+
+	alist[0] = make_alist( "object",    ID_ENUM,    NULL,    &aname);
 	alist[1].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (aval == NULL) {return(NULL);}
+	if (aname == NULL) {return(NULL);}
 
-	e = get_global_sym(V_NAME(aval));
+	e = get_global_sym(aname);
 
 	if (e != NULL) {
 		dd_put(scope_tos(), V_NAME(e), e);
 	} else {
 		char *zero = (char *)calloc(1,1);
-		dd_put(scope_tos(), V_NAME(arg), newVal(BSQ, 1,1,1, BYTE, zero));
+		dd_put(scope_tos(), aname, newVal(BSQ, 1,1,1, BYTE, zero));
 	}
 	return(NULL);
 }
