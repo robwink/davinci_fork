@@ -37,7 +37,6 @@ AC_CHECK_LIB(z,deflate)
 AC_CHECK_LIB(hdf5,H5open)
 AC_CHECK_LIB(usds,Themis_Entry)
 AC_CHECK_LIB(msss_vis,read_DCT)
-
 AC_CHECK_LIB(jpeg,jpeg_simple_progression)
 AC_CHECK_LIB(termcap, tgetent)
 
@@ -81,8 +80,22 @@ if test "$PROJ_OBJS" != ""; then
 			],PROJ_OBJS="")
 fi
 
+AC_CHECK_LIB(bz2,bzopen)
+AC_CHECK_LIB(png,png_check_version)
 AC_CHECK_LIB(tiff,TIFFIsTiled)
+
+CFLAGS="$CFLAGS -I${prefix:-.}/include"
+LDFLAGS="$LDFLAGS -L${prefix:-.}/lib"
 AC_CHECK_LIB(Magick, GetMagickInfo)
+
+dnl Check for iomedley - which depends upon libMagick if libMagick exists
+CFLAGS="$CFLAGS -I../iomedley"
+LDFLAGS="$LDFLAGS -L../iomedley"
+AC_CHECK_LIB(iomedley, iom_read_qube_data)
+if eval "echo \"$LIB\" | grep -e 'iomedley'"; then
+	AC_MSG_ERROR(libiomedley not found in its default location ../iomedley.)
+fi
+
 
 PL_LIB=''
 AC_CHECK_LIB(plplotFX,c_plinit,PL_LIB='-lplplotFX',,)

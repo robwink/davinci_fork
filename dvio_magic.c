@@ -3,7 +3,7 @@
 #endif
 
 #if defined(HAVE_LIBMAGICK) && defined(HAVE_LIBX11)
-#include <magick.h>
+#include <magick/magick.h>
 #include <magick/api.h>
 #include <magick/xwindows.h>
 #include <X11/Intrinsic.h>

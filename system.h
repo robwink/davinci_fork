@@ -1,5 +1,9 @@
 /********************************** system.h **********************************/
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif /* HAVE_CONFIG_H */
+
 /**
  ** This file contains all system specific dependencies, and defines
  ** some values that aren't on all systems
@@ -34,7 +38,7 @@ typedef unsigned char uchar;
 
 
 #ifndef HAVE_STRDUP
-char *strdup(const char *);
+char *strdup(const char *); 
 #endif
 
 void *my_realloc(void *, int);
