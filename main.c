@@ -142,6 +142,7 @@ main(int ac, char **av)
     char *logfile = NULL;
     int iflag = 0;
     char *p;
+	int history = 1;
 	
     s = new_scope();
 
@@ -226,6 +227,11 @@ main(int ac, char **av)
                     quick = 1;
                     break;
                 }
+                case 'h':{
+					/* force loading of the history, even in quick mode */
+                    history = 1;
+                    break;
+                }
                 case 'V':{
                     dump_version();
                     exit(1);
@@ -254,7 +260,7 @@ main(int ac, char **av)
 
         lfile = fopen(logfile, "a");
         log_time();
-        if (quick == 0)
+        if (quick == 0 || history == 1)
             init_history(logfile);
 #ifdef HAVE_LIBREADLINE
 	/* JAS FIX */
