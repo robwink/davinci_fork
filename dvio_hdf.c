@@ -68,7 +68,7 @@ char * var_endian(Var * v) {
   unsigned int el = 0;
   
   el = V_SIZE(v)[0] * V_SIZE(v)[1] * V_SIZE(v)[2];
-  ws = NBYTES(V_TYPE(v));
+  ws = NBYTES(V_FORMAT(v));
   return flip_endian(V_DATA(v), el, ws);
 }
 
