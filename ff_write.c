@@ -110,13 +110,14 @@ ff_write(vfuncptr func, Var *arg)
 #endif
 
 #ifdef HAVE_LIBMAGICK
-	else if (dvio_ValidGfx(type, GFX_type))    dv_WriteGFX_Image(ob, filename, force, GFX_type);
+    // else if (dvio_ValidGfx(type, GFX_type))    dv_WriteGFX_Image(ob, filename, force, GFX_type);
+    else if (1) paramdvWriteImage(ob, filename, type, force);
 #endif
     else {
-        sprintf(error_buf, "Unrecognized type: %s", type);
-        parse_error(NULL);
-        return(NULL);
+      sprintf(error_buf, "Unrecognized type: %s", type);
+      parse_error(NULL);
+      return(NULL);
     }
-
+    
     return(NULL);
 }

@@ -3147,17 +3147,17 @@ fi
 		MAGICK_LDFLAGS=`$MAGICK_CONFIG --ldflags`
 	fi
 
-		if test "$MAGICK_VERSION" = "4.2.9"
+		if test "$MAGICK_VERSION" = "5.4.2"
 	then
 		save_CPPFLAGS="$CPPFLAGS"
 		save_CFLAGS="$CFLAGS"
 		save_LIBS="$LIBS"
 		save_LDFLAGS="$LDFLAGS"
 
-		CPPFLAGS="$CPPFLAGS $MAGICK_CPPFLAGS"
-		CFLAGS="$CFLAGS $MAGICK_CFLAGS"
-		LIBS="$LIBS $MAGICK_LIBS"
-		LDFLAGS="$LDFLAGS $MAGICK_LDFLAGS"
+		CPPFLAGS="$MAGICK_CPPFLAGS $CPPFLAGS"
+		CFLAGS="$MAGICK_CFLAGS $CFLAGS"
+		LIBS="$MAGICK_LIBS $LIBS"
+		LDFLAGS="$MAGICK_LDFLAGS $LDFLAGS"
 
 												
 				echo $ac_n "checking for GetMagickInfo in -lMagick""... $ac_c" 1>&6
@@ -3214,7 +3214,7 @@ else
 fi
 
 	else
-		echo "configure: warning: ImageMagick version 4.2.9 required for compiling with ImageMagick" 1>&2
+		echo "configure: warning: ImageMagick version 5.4.2 required for compiling with ImageMagick" 1>&2
 	fi
 fi
 
