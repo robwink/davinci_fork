@@ -164,6 +164,69 @@ ff_histogram(vfuncptr func, Var * arg)
 	return(newVal(BSQ, 2, j, 1, FLOAT, data));
 }
 
+
+Var *
+ff_hstats(vfuncptr func, Var * arg)
+{
+	Var *obj = NULL;
+	int x,y,z, i, j;
+	float *data;
+	Var *both, *avg, *stddev;
+	double sum, sum2;
+	double x1, y1;
+	int n;
+
+	float start = MAXFLOAT, size= MAXFLOAT;
+	int steps = MAXINT;
+
+	Alist alist[2];
+	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &obj);
+	alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (obj == NULL) {
+		parse_error("%s: No object specified\n", func->name);
+		return(NULL);
+	}
+
+	x = GetSamples(V_SIZE(obj), V_ORG(obj));
+	y = GetLines(V_SIZE(obj), V_ORG(obj));
+	z = GetBands(V_SIZE(obj), V_ORG(obj));
+
+	if (x != 2 || z != 1 || y < 2) {
+		parse_error("Object does not look like a histogram.");
+		return(NULL);
+	}
+
+	avg = newVal(BSQ, 1, 1, 1, DOUBLE, calloc(1, sizeof(double)));
+	stddev = newVal(BSQ, 1, 1, 1, DOUBLE, calloc(1, sizeof(double)));
+
+	/*
+	** Use one pass method
+	*/
+	sum = 0;
+	sum2 = 0;
+	n = 0;
+	for (i = 0 ; i < y ; i++) {
+		j = cpos(0, i, 0, obj);
+
+		x1 = extract_double(obj, j);
+		y1 = extract_double(obj, j+1);
+
+		sum += x1*y1;
+		sum2 += (x1*x1)*y1;
+		n += y1;
+	}
+	V_DOUBLE(stddev) = sqrt((sum2 - (sum*sum/n))/(n-1));
+	V_DOUBLE(avg) = sum/n;
+
+	both = new_struct(0);
+	add_struct(both, "avg", avg);
+	add_struct(both, "stddev", stddev);
+	return(both);
+}
+
 Var *
 ff_rgb2hsv(vfuncptr func, Var * arg)
 {

@@ -429,3 +429,4 @@ Var * write_isis_planes(vfuncptr func, Var * arg);
 Var * ff_load_many(vfuncptr func, Var * arg);
 
 Var *ff_remove_struct(vfuncptr func, Var * arg);
+Var * ff_hstats(vfuncptr func, Var * arg);
