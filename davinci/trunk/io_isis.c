@@ -707,7 +707,7 @@ ieee_vax_r(int *from, float *to)
 }
 
 void * read_qube_suffix(int fd, struct _iheader *h,
-	int s_bytes,int plane_number,int s_item_byte,int ordinate)
+	int s_bytes,int plane_number,int s_item_byte,int ordinate,int *size)
 {
 /*** ordinate: 0=minor, 1=middle, 2=major ***/
 
@@ -790,6 +790,7 @@ void * read_qube_suffix(int fd, struct _iheader *h,
         fprintf(stderr, "Unable to allocate memory.\n");
         return (NULL);
     }
+    *size=dsize;
     /**
      ** Allocate some temporary storage space
      **/
@@ -864,6 +865,39 @@ void * read_qube_suffix(int fd, struct _iheader *h,
    return(data);
 }
 
+void *RePackData(void *data, int file_bytes, int data_type,int data_chunk)
+{
+/**********************************************************
+** data:	old data set we wish to repack
+** file_bytes	Number of bytes per element in *data
+** data_type	The acutal data type of the elements in *data
+** data_chunk	The total size of data
+** LOCAL:
+**	data_bytes: 	Number of bytes per element for this data_type
+**	data_size:  	Number of elements in *data 
+**	*p_data:	Our new re-packed data set
+*************************************************************/
+	int data_bytes=NBYTES(data_type);
+ 	int data_size=(data_chunk/file_bytes);
+ 	void *p_data;
+        int i,j,k,l;
+
+	if ((p_data=malloc(data_size*data_bytes))==NULL){
+		fprintf(stderr, "Unable to allocate memory.\n");
+        	return (NULL);
+    	}
+
+	for (i=1;i<=data_size;i++){ 	//Cycle through the number of elements
+
+		j=i*file_bytes-data_bytes; 	//Align j with LSB at element i in *data
+		l=i*data_bytes-data_bytes;	//Align l with LSB at element i in *p_data
+		memcpy((char *)p_data+l,(char *)data+j,data_bytes);
+	}
+
+	free(data);
+	return(p_data);
+}
+
 int LookUpSuffix(OBJDESC *qube,char *name, int *plane, int *type, struct _iheader *h, int *suffix)
 {
     KEYWORD *key;
@@ -935,6 +969,7 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
     int type=2, plane=0;
     Var	*Suffix=NULL;
     int s_suffix_item_bytes;
+    int chunk;
     
     
     char *options[]={"Sample","Line","Band",NULL};
@@ -1056,6 +1091,8 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
 	return(NULL);
     }
 
+    suffix_bytes=s.suffix[orders[s.org][type]]/suffix[orders[s.org][type]];
+
     if ((key = OdlFindKwd(qube, suffix_item_byte, NULL, 0, scope))) {
        n = OdlGetAllKwdValuesArray(key, &list);
 
@@ -1090,7 +1127,6 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
        }   
     }
 	
-    suffix_bytes=s.suffix[orders[s.org][type]]/suffix[orders[s.org][type]];
     
     for (i = 0 ; i < 3 ; i++) {
         s.s_lo[i] = 0;	//Just to make sure!!
@@ -1100,12 +1136,16 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
     s.s_lo[orders[s.org][type]]=s.size[orders[s.org][type]]+1;
     s.s_hi[orders[s.org][type]]=s.s_lo[orders[s.org][type]]+1;	
 
-    data=read_qube_suffix(fileno(fp),&s,suffix_bytes,plane,s_suffix_item_bytes,orders[s.org][type]);
+    data=read_qube_suffix(fileno(fp),&s,suffix_bytes,plane,s_suffix_item_bytes,orders[s.org][type],&chunk);
 
     s.s_hi[orders[s.org][type]]=1;
+
+    if (suffix_bytes!=NBYTES(s_suffix_item_bytes))
+	data=RePackData(data,suffix_bytes,s_suffix_item_bytes,chunk);
 		
     if (s_suffix_item_bytes==VAX_FLOAT) s_suffix_item_bytes=FLOAT;
-    if (s_suffix_item_bytes==VAX_INTEGER)  s_suffix_item_bytes=INT;
+    if (s_suffix_item_bytes==VAX_INTEGER)  s_suffix_item_bytes=SHORT;
+
 		
     return(newVal(s.org,s.s_hi[0],s.s_hi[1],s.s_hi[2],s_suffix_item_bytes,data));
 }
