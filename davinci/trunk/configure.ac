@@ -54,7 +54,6 @@ LIBS="$LIBS $X_PRE_LIBS $X_LIBS $X_EXTRA_LIBS"
 dnl Check for X libraries.
 AC_CHECK_LIB(X11, XOpenDisplay)
 AC_CHECK_LIB(Xt, XtToolkitInitialize)
-AC_CHECK_LIB(Xm, XmCreateForm)
 AC_CHECK_LIB(Xmu, XmuClientWindow)
 
 dnl Check for miscellaneous libraries.
@@ -76,6 +75,7 @@ AC_DEFINE(HAVE_LIBLTDL, 1, [ltdl library present])
 dnl Check for ImageMagic.
 AC_CHECK_LIB(Magick, GetImageInfo, [libmagick_found=yes])
 AM_CONDITIONAL(HAVE_LIBMAGICK, test "x$libmagick_found" = "xyes")
+
 
 dnl This is a C++ library; set the language so the test succeeds.
 dnl FIX: not sure why we need both lib and header check..
@@ -160,32 +160,41 @@ if test "x$enable_iomedley" != "xno"; then
 fi
 AM_CONDITIONAL(LOCAL_IOMEDLEY, test x$local_iomedley = xyes)
 
+dnl Check for Motif 
+AC_CHECK_LIB(Xm, XmCreateForm, have_motif=yes, have_motif=no)
+AC_CHECK_HEADERS(X11/Intrinsic.h, ,have_motif=no)
+AC_CHECK_HEADERS(Xm/Xm.h, , have_motif=no)
+
+if test "x$have_motif" = "xyes"; then
+	AC_DEFINE(HAVE_MOTIF, 1, [if all motif parts are present])
+fi
+AM_CONDITIONAL(HAVE_MOTIF, test "x$have_motif" = "xyes")
+
+dnl Add modules subdir.
+if test "x$enable_modules" != "xno"; then
+	AC_DEFINE(BUILD_MODULE_SUPPORT, 1, [loadable module support])
+	MY_SUBDIRS="$MY_SUBDIRS modules modules/kjn"
+fi
+
 dnl Configure VICAR widget.
-
 if test "x$enable_vicar" != "xno"; then
-
-	AC_MSG_CHECKING(if local libvicar present)
-	if test -d vicar; then
+	AC_MSG_CHECKING(for libvicar)
+	if test -d vicar -a "x$have_motif" = "xyes"; then
 		AC_MSG_RESULT(yes)
 		dnl This should only be added to modules/Makefile.am's CFLAGS, but I'm sick of autoconf.
 		dnl Not sure this is working either; doesn't look like $top_builddir gets set..
-		CFLAGS="$CFLAGS -I$top_builddir/vicar"
+		CFLAGS="$CFLAGS -I$top_srcdir/vicar"
 		AC_DEFINE(HAVE_LIBVICAR, 1, [VICAR widget library is present])
 		MY_SUBDIRS="$MY_SUBDIRS vicar"
 		local_vicar=yes
 	else
 		AC_MSG_RESULT(no)
 	fi
-
 fi
-AM_CONDITIONAL(LOCAL_VICAR, test x$local_vicar = xyes)
 
-dnl Add modules subdir.
+AM_CONDITIONAL(LOCAL_VICAR, test "x$have_motif" = "xyes" -a "x$local_vicar" = "xyes")
 
-if test "x$enable_modules" != "xno"; then
-	AC_DEFINE(BUILD_MODULE_SUPPORT, 1, [loadable module support])
-	MY_SUBDIRS="$MY_SUBDIRS modules modules/kjn"
-fi
+
 
 dnl FIX: this stuff can go away if libtool is used.
 

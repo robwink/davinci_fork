@@ -9,36 +9,38 @@ static int *sstretch(float *data, float ignore, int x, int y, int z);
 static int *rdr_coreg(int *pic, int x, int y, int z, int b10);
 static float *deplaid(float *data, int x, int y, int z, float nullval, int b10);
 
-static Var *ff_y_shear(vfuncptr, Var *);
-static Var *ff_kfill(vfuncptr, Var *);
-static Var *ff_smoothy(vfuncptr, Var *);
-static Var *ff_ramp(vfuncptr, Var *);
-static Var *ff_corners(vfuncptr, Var *);
-static Var *ff_sawtooth(vfuncptr, Var *);
-static Var *ff_deplaid(vfuncptr, Var *);
-static Var *ff_rectify(vfuncptr, Var *);
-static Var *ff_coreg(vfuncptr, Var *);
-static Var *ff_rdr_deplaid(vfuncptr func, Var *);
-static Var *ff_supersample(vfuncptr func, Var *);
-static Var *ff_ss_coreg(vfuncptr func, Var *);
-static Var *ff_ss_pic(vfuncptr func, Var *);
-static Var *ff_coreg_fill(vfuncptr func, Var *);
+static Var *kjn_y_shear(vfuncptr, Var *);
+static Var *kjn_kfill(vfuncptr, Var *);
+static Var *kjn_smoothy(vfuncptr, Var *);
+static Var *kjn_ramp(vfuncptr, Var *);
+static Var *kjn_corners(vfuncptr, Var *);
+static Var *kjn_sawtooth(vfuncptr, Var *);
+static Var *kjn_deplaid(vfuncptr, Var *);
+static Var *kjn_rectify(vfuncptr, Var *);
+static Var *kjn_coreg(vfuncptr, Var *);
+static Var *kjn_coreg2(vfuncptr, Var *);
+static Var *kjn_rdr_deplaid(vfuncptr func, Var *);
+static Var *kjn_supersample(vfuncptr func, Var *);
+static Var *kjn_ss_coreg(vfuncptr func, Var *);
+static Var *kjn_ss_pic(vfuncptr func, Var *);
+static Var *kjn_coreg_fill(vfuncptr func, Var *);
 
 static dvModuleFuncDesc exported_list[] = {
-  { "y_shear", (void *) ff_y_shear },
-  { "kfill", (void *) ff_kfill },
-  { "smoothy", (void *) ff_smoothy },
-  { "ramp", (void *) ff_ramp },
-  { "corners", (void *) ff_corners },
-  { "sawtooth", (void *) ff_sawtooth },
-  { "deplaid", (void *) ff_deplaid },
-  { "rectify", (void *) ff_rectify },
-  { "coreg", (void *) ff_coreg },
-  { "rdr_deplaid", (void *) ff_rdr_deplaid },
-  { "supersample", (void *) ff_supersample },
-  { "ss_coreg", (void *) ff_ss_coreg },
-  { "ss_pic", (void *) ff_ss_pic },
-  { "coreg_fill", (void *) ff_coreg_fill }
+  { "y_shear", (void *) kjn_y_shear },
+  { "kfill", (void *) kjn_kfill },
+  { "smoothy", (void *) kjn_smoothy },
+  { "ramp", (void *) kjn_ramp },
+  { "corners", (void *) kjn_corners },
+  { "sawtooth", (void *) kjn_sawtooth },
+  { "deplaid", (void *) kjn_deplaid },
+  { "rectify", (void *) kjn_rectify },
+  { "coreg", (void *) kjn_coreg },
+  { "coreg2", (void *) kjn_coreg2 },
+  { "rdr_deplaid", (void *) kjn_rdr_deplaid },
+  { "supersample", (void *) kjn_supersample },
+  { "ss_coreg", (void *) kjn_ss_coreg },
+  { "ss_pic", (void *) kjn_ss_pic },
+  { "coreg_fill", (void *) kjn_coreg_fill }
 };
 
 static dvModuleInitStuff is = {
@@ -66,7 +68,7 @@ dv_module_fini(const char *name)
 }
 
 Var *
-ff_y_shear(vfuncptr func, Var * arg)
+kjn_y_shear(vfuncptr func, Var * arg)
 {
   Var     *pic_v = NULL;            /* the picture */
   Var     *out;                     /* the output picture */
@@ -229,7 +231,7 @@ ff_y_shear(vfuncptr func, Var * arg)
 
 
 Var *
-ff_kfill(vfuncptr func, Var * arg)
+kjn_kfill(vfuncptr func, Var * arg)
 {
   Var *pic_v = NULL;                                    /* the picture */
   Var *wgt_v = NULL;	                                /* the weighting array */
@@ -464,7 +466,7 @@ ff_kfill(vfuncptr func, Var * arg)
 
 
 Var *
-ff_smoothy(vfuncptr func, Var * arg)
+kjn_smoothy(vfuncptr func, Var * arg)
 {
   Var *obj = NULL;                         /* the object to be smoothed */
   Var *kernel = NULL;                      /* the kernel with which to smooth */
@@ -692,13 +694,8 @@ float *smoothy(float *obj, float *kernel, int ox, int oy, int oz, int kx, int ky
 }
 
 
-
-
-
-
-
 Var *
-ff_ramp(vfuncptr func, Var * arg)
+kjn_ramp(vfuncptr func, Var * arg)
 {
     Var *pic_1 = NULL;		/* picture one */
     Var *pic_2 = NULL;		/* picture two */
@@ -718,13 +715,20 @@ ff_ramp(vfuncptr func, Var * arg)
     int ct = 1;			/* counter */
     int num = 2;		/* fill-in number */
     int olm1 = 2, olm2 = 2;	/* maximum values for the ol1 & ol2 arrays */
-	int up, down, left, right;	/* some neighborhood indices */
+    int up, down, left, right;	/* some neighborhood indices */
+    int expanded = 0;		/* a flag indicating that there's expected
+                                   to be a full pixel of null around the
+				   outside of an image 
+				*/
+    int verbose=0;
 
-    Alist alist[4];
+    Alist alist[6];
     alist[0] = make_alist("pic1", ID_VAL, NULL, &pic_1);
     alist[1] = make_alist("pic2", ID_VAL, NULL, &pic_2);
     alist[2] = make_alist("ignore", INT, NULL, &nullv);
-    alist[3].name = NULL;
+    alist[3] = make_alist("expanded", INT, NULL, &expanded);
+    alist[4] = make_alist("verbose", INT, NULL, &verbose);
+    alist[5].name = NULL;
 
     if (parse_args(func, arg, alist) == 0)
 	return (NULL);
@@ -770,12 +774,12 @@ ff_ramp(vfuncptr func, Var * arg)
     ol1 = (int *) calloc(sizeof(int), w * (z));
     ol2 = (int *) calloc(sizeof(int), w * (z));
 
-    /* extract the two pictures into their storage arrays */
     r1 = y+1;
     r2 = 0;
     c1 = x+1;
     c2 = 0;
 
+    /* extract the two pictures into their storage arrays */
     for (j = 1; j <= y ; j++) {
 	for (i = 1; i <= x ; i++) {
 	    t1 = j * w + i;
@@ -798,27 +802,27 @@ ff_ramp(vfuncptr func, Var * arg)
     */
     for (k = 0; k <= y+1 ; k++) {
 	t1 = k * w + 0;
-	pict1[t1] = nullv;
-	pict2[t1] = nullv;
+	pict1[t1] = expanded ? nullv+1 : nullv;
+	pict2[t1] = expanded ? nullv+1 : nullv;
 	ol1[t1] = -1;
 	ol2[t1] = -1;
 	
 	t1 = k * w + (x+1);
-	pict1[t1] = nullv;
-	pict2[t1] = nullv;
+	pict1[t1] = expanded ? nullv+1 : nullv;
+	pict2[t1] = expanded ? nullv+1 : nullv;
 	ol1[t1] = -1;
 	ol2[t1] = -1;
     }
     for (k = 0; k <= x+1 ; k++) {
 	t1 = 0 * w + k;
-	pict1[t1] = nullv;
-	pict2[t1] = nullv;
+	pict1[t1] = expanded ? nullv+1 : nullv;
+	pict2[t1] = expanded ? nullv+1 : nullv;
 	ol1[t1] = -1;
 	ol2[t1] = -1;
 
 	t1 = (y+1) * w + k;
-	pict1[t1] = nullv;
-	pict2[t1] = nullv;
+	pict1[t1] = expanded ? nullv+1 : nullv;
+	pict2[t1] = expanded ? nullv+1 : nullv;
 	ol1[t1] = -1;
 	ol2[t1] = -1;
     }
@@ -892,11 +896,19 @@ ff_ramp(vfuncptr func, Var * arg)
 	}
     }
 
-    free(ol1);
-    free(ol2);
+    if (verbose) {
+	    out = new_struct(0);
+	    add_struct(out, "ol1", newVal(BSQ, w,z,1,INT,ol1));
+	    add_struct(out, "ol2", newVal(BSQ, w,z,1,INT,ol2));
+	    add_struct(out, "out", newVal(BSQ, x, y, 1, FLOAT, pict1));
+	    return(out);
+    } else {
+	free(ol1);
+	free(ol2);
 
-    out = newVal(BSQ, x, y, 1, FLOAT, pict1);
-    return out;
+	out = newVal(BSQ, x, y, 1, FLOAT, pict1);
+	return out;
+    }
 }
 
 
@@ -905,7 +917,7 @@ ff_ramp(vfuncptr func, Var * arg)
 
 
 Var *
-ff_corners(vfuncptr func, Var * arg)
+kjn_corners(vfuncptr func, Var * arg)
 {
   Var     *pic_a = NULL;                               /* the input pic */
   float    nullval = 0;                                /* null value */
@@ -1097,7 +1109,7 @@ int *do_corners(Var *pic_a, float nullval)
 
 
 Var *
-ff_sawtooth(vfuncptr func, Var * arg)
+kjn_sawtooth(vfuncptr func, Var * arg)
 {
 
   Var *out;                   /* output array */
@@ -1169,7 +1181,7 @@ float *sawtooth(int x, int y, int z)
 
 
 Var *
-ff_deplaid(vfuncptr func, Var * arg)
+kjn_deplaid(vfuncptr func, Var * arg)
 {
 
   typedef unsigned char byte;
@@ -1632,7 +1644,7 @@ ff_deplaid(vfuncptr func, Var * arg)
 
 
 Var *
-ff_rectify(vfuncptr func, Var * arg)
+kjn_rectify(vfuncptr func, Var * arg)
 {
 
   typedef unsigned char byte;
@@ -1791,7 +1803,7 @@ ff_rectify(vfuncptr func, Var * arg)
 
 
 Var *
-ff_coreg(vfuncptr func, Var * arg)
+kjn_coreg(vfuncptr func, Var * arg)
 {
 
   typedef unsigned char byte;
@@ -1813,13 +1825,13 @@ ff_coreg(vfuncptr func, Var * arg)
   int      *pos;                                       /* final position returned */
   int       wt = 0;
 
-  Alist alist[6];
+  Alist alist[7];
   alist[0] = make_alist("pic1",     ID_VAL,	NULL,	&pic1_in);
   alist[1] = make_alist("pic2",     ID_VAL,     NULL,   &pic2_in);
   alist[2] = make_alist("search",   INT,        NULL,   &search);
   alist[3] = make_alist("null",     INT,        NULL,   &nullval);
   alist[4] = make_alist("space",    INT,        NULL,   &space);
-  alist[5].name = NULL;
+  alist[6].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);
   
@@ -1903,13 +1915,183 @@ ff_coreg(vfuncptr func, Var * arg)
   return out;
 }
 
+Var *
+kjn_coreg2(vfuncptr func, Var * arg)
+{
+  typedef unsigned char byte;
+
+  Var      *pic1_in = NULL;                            /* first picture to be coregistered */
+  Var      *pic2_in = NULL;                            /* second picture to be coregistered */
+  Var      *out = NULL;
+  int     ignore = 0;
+  float    *solution = NULL;                           /* map of solution space */
+  int       verbose = 0;                               /* flag to dump solution space at end */
+  int       search = 10;                               /* search radius */
+  int       s_dia = 21;                                /* search diameter */
+  int       x, y;                                      /* size of images */
+  int       a = 0, b = 0;                              /* position of lowval*/
+  int       i, j, m, n;                                /* loop indices */
+  float     lowval = 2e11;                             /* lowest value found by search */
+  float     curval = 0;                                /* current value */
+  int       p1, p2, v1, v2;
+  int      *pos;                                       /* final position returned */
+  int      *wt;
+  int random = 1000;
+  int ok = 0;
+  int count = 0;
+  int total = 0;
+  int sum = 0;
+  int force=0;
+
+  Alist alist[8];
+  alist[0] = make_alist("pic1",     ID_VAL,	NULL,	&pic1_in);
+  alist[1] = make_alist("pic2",     ID_VAL,     NULL,   &pic2_in);
+  alist[2] = make_alist("search",   INT,        NULL,   &search);
+  alist[3] = make_alist("ignore",   INT,        NULL,   &ignore);
+  alist[4] = make_alist("verbose",    INT,        NULL,   &verbose);
+  alist[5] = make_alist("random",   INT,        NULL,   &random);
+  alist[6] = make_alist("force",    INT,        NULL,   &force);
+  alist[7].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  /* if two pics did not get passed to the function */
+  if (pic1_in == NULL || pic2_in == NULL) {
+  	parse_error("images are no same size.\n");
+    return NULL;
+  }
+  
+  x = GetX(pic1_in);
+  y = GetY(pic1_in);
+  if (x != GetX(pic2_in) || y != GetY(pic2_in)) {
+  	parse_error("images are not same size.\n");
+	return(NULL);
+  }
+  
+  
+  if(search < 0) {
+    parse_error("please don't be dumb, use only positive search radii");
+    parse_error("radius being reset to 10");
+    search = 10;
+  }
+ 
+	s_dia = search*2 + 1;
+
+	solution = (float *)calloc(sizeof(float),(search*2+1)*(search*2+1));
+	wt = (int *)calloc(sizeof(int),(search*2+1)*(search*2+1));
+
+	if (random) {
+		/* 
+		** Random search
+		*/
+		while (count < random) {
+			/* stop when we've tried too many times */
+			if (++total > V_DSIZE(pic1_in)) break;
+			i = lrand48() % x;
+			j = lrand48() % y;
+			p1 = cpos(i, j, 0, pic1_in);
+			v1 = extract_int(pic1_in, p1);
+			if (v1 == ignore) continue;
+
+			ok = 0;
+			for(m=-search; m<(search+1); m++) {
+				if((j+m)<0 || (j+m)>=y) continue;
+				for(n=-search; n<(search+1); n++) {
+					if((i+n)<0 || (i+n)>=x) continue;
+
+					p2 = cpos(i+n,j+m,0,pic2_in);
+					v2 = extract_int(pic2_in, p2); 
+
+					if (v2 == ignore) continue;
+					ok = 1;
+
+					curval = ((float)v1-(float)v2)*((float)v1-(float)v2);
+					solution[(m+search)*(s_dia) + (n+search)] += curval;
+					wt[(m+search)*(s_dia) + (n+search)] += 1;
+				}
+			}
+			count += ok;
+		}
+	} else {
+		/*
+		** Exhaustive search, skipping pixels that are blank in both
+		*/
+		for (count = 0 ; count < V_DSIZE(pic1_in) ; count++) {
+			v1 = extract_int(pic1_in, count);
+			if (v1 == ignore) continue;
+
+			v2 = extract_int(pic2_in, count);
+			if (v2 == ignore) continue;
+
+			j = count/x;
+			i = count%x;
+
+			for(m=-search; m<(search+1); m++) {
+				if((j+m)<0 || (j+m)>=y) continue;
+				for(n=-search; n<(search+1); n++) {
+					if((i+n)<0 || (i+n)>=x) continue;
+
+					p2 = cpos(i+n,j+m,0,pic2_in);
+					v2 = extract_int(pic2_in, p2); 
+
+					if (v2 == ignore) continue;
+
+					curval = ((float)v1-(float)v2)*((float)v1-(float)v2);
+					solution[(m+search)*(s_dia) + (n+search)] += curval;
+					wt[(m+search)*(s_dia) + (n+search)] += 1;
+				}
+			}
+		}
+	}
+
+	a = -search;
+	b = -search;
+	lowval = solution[0]/wt[0];
+
+	for(m=-search; m<(search+1); m++) {
+		for(n=-search; n<(search+1); n++) {
+			p1 = (m+search)*s_dia + n+search;
+			if (wt[p1] > 0) {
+				solution[p1] = (float)solution[p1]/(float)wt[p1];
+				if(solution[p1] < lowval) {
+					lowval = solution[p1];     /* set lowval */
+					a = n;                     /* x position of lowval */
+					b = m;                     /* y position of lowval */
+				}
+			}
+		}
+	}
+
+	if (verbose > 0) {
+		pos = (int *) malloc(sizeof(int) * 2);
+		pos[0] = a;
+		pos[1] = b;
+
+		out = new_struct(2);
+		add_struct(out, "space", newVal(BSQ, s_dia, s_dia, 1, FLOAT, solution));
+		add_struct(out, "wt", newVal(BSQ, s_dia, s_dia, 1, INT, wt));
+		add_struct(out, "position", newVal(BSQ, 2, 1, 1, INT, pos));
+		add_struct(out, "count", newInt(count));
+		printf("count=%d/%d\n", count, total);
+		return(out);
+	}
+
+	free(solution);
+	free(wt);
+	pos = (int *)malloc(sizeof(int)*2);
+	pos[0] = a;
+	pos[1] = b;
+	out = newVal(BSQ, 2, 1, 1, INT, pos);
+	return out;
+}
+
 
 
 
 
 
 Var *
-ff_rdr_deplaid(vfuncptr func, Var * arg)
+kjn_rdr_deplaid(vfuncptr func, Var * arg)
 {
 
   Var      *data = NULL;                            /* the original radiance data */
@@ -2693,7 +2875,7 @@ static float *deplaid(float *data, int x, int y, int z, float nullval, int b10)
 
 
 Var *
-ff_supersample(vfuncptr func, Var * arg)
+kjn_supersample(vfuncptr func, Var * arg)
 {
 
   Var       *data = NULL;                  /* original input data */
@@ -2784,7 +2966,7 @@ ff_supersample(vfuncptr func, Var * arg)
 
 
 Var *
-ff_ss_coreg(vfuncptr func, Var * arg)
+kjn_ss_coreg(vfuncptr func, Var * arg)
 {
 
   Var        *pic = NULL;
@@ -2889,7 +3071,7 @@ ff_ss_coreg(vfuncptr func, Var * arg)
 
 
 Var *
-ff_ss_pic(vfuncptr func, Var * arg)
+kjn_ss_pic(vfuncptr func, Var * arg)
 {
 
   Var       *data_in = NULL;
@@ -2979,7 +3161,7 @@ ff_ss_pic(vfuncptr func, Var * arg)
 
 
 Var *
-ff_coreg_fill(vfuncptr func, Var * arg)
+kjn_coreg_fill(vfuncptr func, Var * arg)
 {
 
   Var     *data = NULL;

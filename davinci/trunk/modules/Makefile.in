@@ -67,6 +67,8 @@ F77 = @F77@
 FFLAGS = @FFLAGS@
 HAVE_LIBMAGICK_FALSE = @HAVE_LIBMAGICK_FALSE@
 HAVE_LIBMAGICK_TRUE = @HAVE_LIBMAGICK_TRUE@
+HAVE_MOTIF_FALSE = @HAVE_MOTIF_FALSE@
+HAVE_MOTIF_TRUE = @HAVE_MOTIF_TRUE@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
@@ -156,8 +158,6 @@ target_vendor = @target_vendor@
 @HAVE_LIBMAGICK_TRUE@dvmagick_la_SOURCES = dvmagick.c
 @HAVE_LIBMAGICK_TRUE@dvmagick_la_LDFLAGS = -module
 
-pkglib_LTLIBRARIES = mod1.la mod2.la pnm_mod.la gui.la $(MY_MAGICK_LIBRARY)
-
 mod1_la_SOURCES = mod1.c
 mod1_la_LDFLAGS = -module
 
@@ -167,23 +167,9 @@ mod2_la_LDFLAGS = -module
 pnm_mod_la_SOURCES = pnm_mod.c
 pnm_mod_la_LDFLAGS = -module
 
-@LOCAL_VICAR_TRUE@MY_VICAR_LIBADD = $(top_srcdir)/vicar/libvicar.la
+MY_GUI_LIBRARY = 
 
-gui_la_SOURCES = gui.c \
-	widget_arrowbutton.c widget_cascadebutton.c widget_command.c \
-	widget_drawnbutton.c widget_errordialog.c widget_fileselectionbox.c \
-	widget_form.c widget_frame.c widget_label.c \
-	widget_list.c widget_menubar.c widget_panedwindow.c \
-	widget_pushbutton.c widget_radiobox.c widget_rowcolumn.c \
-	widget_scale.c widget_scrollbar.c widget_scrolledlist.c \
-	widget_scrolledwindow.c widget_selectionbox.c widget_separator.c \
-	widget_text.c widget_textfield.c widget_togglebutton.c \
-	widget_toplevelshell.c widget_transientshell.c \
-	widget_vicar.c
-
-
-gui_la_LDFLAGS = -module
-gui_la_LIBADD = $(MY_VICAR_LIBADD)
+pkglib_LTLIBRARIES = mod1.la mod2.la pnm_mod.la $(MY_GUI_LIBRARY) $(MY_MAGICK_LIBRARY)
 subdir = modules
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/mkinstalldirs
@@ -195,20 +181,6 @@ dvmagick_la_LIBADD =
 am__dvmagick_la_SOURCES_DIST = dvmagick.c
 @HAVE_LIBMAGICK_TRUE@am_dvmagick_la_OBJECTS = dvmagick.lo
 dvmagick_la_OBJECTS = $(am_dvmagick_la_OBJECTS)
-@LOCAL_VICAR_TRUE@gui_la_DEPENDENCIES = $(top_srcdir)/vicar/libvicar.la
-@LOCAL_VICAR_FALSE@gui_la_DEPENDENCIES =
-am_gui_la_OBJECTS = gui.lo widget_arrowbutton.lo widget_cascadebutton.lo \
-	widget_command.lo widget_drawnbutton.lo widget_errordialog.lo \
-	widget_fileselectionbox.lo widget_form.lo widget_frame.lo \
-	widget_label.lo widget_list.lo widget_menubar.lo \
-	widget_panedwindow.lo widget_pushbutton.lo widget_radiobox.lo \
-	widget_rowcolumn.lo widget_scale.lo widget_scrollbar.lo \
-	widget_scrolledlist.lo widget_scrolledwindow.lo \
-	widget_selectionbox.lo widget_separator.lo widget_text.lo \
-	widget_textfield.lo widget_togglebutton.lo \
-	widget_toplevelshell.lo widget_transientshell.lo \
-	widget_vicar.lo
-gui_la_OBJECTS = $(am_gui_la_OBJECTS)
 mod1_la_LIBADD =
 am_mod1_la_OBJECTS = mod1.lo
 mod1_la_OBJECTS = $(am_mod1_la_OBJECTS)
@@ -222,36 +194,8 @@ pnm_mod_la_OBJECTS = $(am_pnm_mod_la_OBJECTS)
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/dvmagick.Plo ./$(DEPDIR)/gui.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/mod1.Plo ./$(DEPDIR)/mod2.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/pnm_mod.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_arrowbutton.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_cascadebutton.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_command.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_drawnbutton.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_errordialog.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_fileselectionbox.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_form.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_frame.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_label.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_list.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_menubar.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_panedwindow.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_pushbutton.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_radiobox.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_rowcolumn.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_scale.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_scrollbar.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_scrolledlist.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_scrolledwindow.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_selectionbox.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_separator.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_text.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_textfield.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_togglebutton.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_toplevelshell.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_transientshell.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/widget_vicar.Plo
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/dvmagick.Plo ./$(DEPDIR)/mod1.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mod2.Plo ./$(DEPDIR)/pnm_mod.Plo
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
@@ -259,10 +203,10 @@ LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-DIST_SOURCES = $(am__dvmagick_la_SOURCES_DIST) $(gui_la_SOURCES) \
-	$(mod1_la_SOURCES) $(mod2_la_SOURCES) $(pnm_mod_la_SOURCES)
+DIST_SOURCES = $(am__dvmagick_la_SOURCES_DIST) $(mod1_la_SOURCES) \
+	$(mod2_la_SOURCES) $(pnm_mod_la_SOURCES)
 DIST_COMMON = $(srcdir)/Makefile.in Makefile.am
-SOURCES = $(dvmagick_la_SOURCES) $(gui_la_SOURCES) $(mod1_la_SOURCES) $(mod2_la_SOURCES) $(pnm_mod_la_SOURCES)
+SOURCES = $(dvmagick_la_SOURCES) $(mod1_la_SOURCES) $(mod2_la_SOURCES) $(pnm_mod_la_SOURCES)
 
 all: all-am
 
@@ -303,8 +247,6 @@ clean-pkglibLTLIBRARIES:
 	done
 dvmagick.la: $(dvmagick_la_OBJECTS) $(dvmagick_la_DEPENDENCIES) 
 	$(LINK) -rpath $(pkglibdir) $(dvmagick_la_LDFLAGS) $(dvmagick_la_OBJECTS) $(dvmagick_la_LIBADD) $(LIBS)
-gui.la: $(gui_la_OBJECTS) $(gui_la_DEPENDENCIES) 
-	$(LINK) -rpath $(pkglibdir) $(gui_la_LDFLAGS) $(gui_la_OBJECTS) $(gui_la_LIBADD) $(LIBS)
 mod1.la: $(mod1_la_OBJECTS) $(mod1_la_DEPENDENCIES) 
 	$(LINK) -rpath $(pkglibdir) $(mod1_la_LDFLAGS) $(mod1_la_OBJECTS) $(mod1_la_LIBADD) $(LIBS)
 mod2.la: $(mod2_la_OBJECTS) $(mod2_la_DEPENDENCIES) 
@@ -319,37 +261,9 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvmagick.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gui.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod1.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod2.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pnm_mod.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_arrowbutton.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_cascadebutton.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_command.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_drawnbutton.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_errordialog.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_fileselectionbox.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_form.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_frame.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_label.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_list.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_menubar.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_panedwindow.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_pushbutton.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_radiobox.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_rowcolumn.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_scale.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_scrollbar.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_scrolledlist.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_scrolledwindow.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_selectionbox.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_separator.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_text.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_textfield.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_togglebutton.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_toplevelshell.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_transientshell.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/widget_vicar.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" \
@@ -571,15 +485,33 @@ uninstall-am: uninstall-info-am uninstall-pkglibLTLIBRARIES
 	tags uninstall uninstall-am uninstall-info-am \
 	uninstall-pkglibLTLIBRARIES
 
-	gui.h widget_arrowbutton.h widget_cascadebutton.h widget_command.h \
-	widget_drawnbutton.h widget_errordialog.h widget_fileselectionbox.h \
-	widget_form.h widget_frame.h widget_label.h widget_list.h \
-	widget_menubar.h widget_panedwindow.h widget_pushbutton.h \
-	widget_radiobox.h widget_rowcolumn.h widget_scale.h \
-	widget_scrollbar.h widget_scrolledlist.h widget_scrolledwindow.h \
-	widget_selectionbox.h widget_separator.h widget_textfield.h \
-	widget_text.h widget_togglebutton.h widget_toplevelshell.h \
-	widget_transientshell.h widget_vicar.h widget_xbaematrix.h
+
+@LOCAL_VICAR_TRUE@	  MY_VICAR_LIBADD = $(top_srcdir)/vicar/libvicar.la
+@HAVE_MOTIF_TRUE@	gui_la_SOURCES = gui.c \
+@HAVE_MOTIF_TRUE@		widget_arrowbutton.c widget_cascadebutton.c widget_command.c \
+@HAVE_MOTIF_TRUE@		widget_drawnbutton.c widget_errordialog.c widget_fileselectionbox.c \
+@HAVE_MOTIF_TRUE@		widget_form.c widget_frame.c widget_label.c \
+@HAVE_MOTIF_TRUE@		widget_list.c widget_menubar.c widget_panedwindow.c \
+@HAVE_MOTIF_TRUE@		widget_pushbutton.c widget_radiobox.c widget_rowcolumn.c \
+@HAVE_MOTIF_TRUE@		widget_scale.c widget_scrollbar.c widget_scrolledlist.c \
+@HAVE_MOTIF_TRUE@		widget_scrolledwindow.c widget_selectionbox.c widget_separator.c \
+@HAVE_MOTIF_TRUE@		widget_text.c widget_textfield.c widget_togglebutton.c \
+@HAVE_MOTIF_TRUE@		widget_toplevelshell.c widget_transientshell.c \
+@HAVE_MOTIF_TRUE@		widget_vicar.c
+@HAVE_MOTIF_TRUE@		gui.h widget_arrowbutton.h widget_cascadebutton.h widget_command.h \
+@HAVE_MOTIF_TRUE@		widget_drawnbutton.h widget_errordialog.h widget_fileselectionbox.h \
+@HAVE_MOTIF_TRUE@		widget_form.h widget_frame.h widget_label.h widget_list.h \
+@HAVE_MOTIF_TRUE@		widget_menubar.h widget_panedwindow.h widget_pushbutton.h \
+@HAVE_MOTIF_TRUE@		widget_radiobox.h widget_rowcolumn.h widget_scale.h \
+@HAVE_MOTIF_TRUE@		widget_scrollbar.h widget_scrolledlist.h widget_scrolledwindow.h \
+@HAVE_MOTIF_TRUE@		widget_selectionbox.h widget_separator.h widget_textfield.h \
+@HAVE_MOTIF_TRUE@		widget_text.h widget_togglebutton.h widget_toplevelshell.h \
+@HAVE_MOTIF_TRUE@		widget_transientshell.h widget_vicar.h widget_xbaematrix.h
+
+@HAVE_MOTIF_TRUE@	gui_la_LDFLAGS = -module
+@HAVE_MOTIF_TRUE@	gui_la_LIBADD = $(MY_VICAR_LIBADD)
+
+@HAVE_MOTIF_TRUE@	MY_GUI_LIBRARY = gui.la
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
