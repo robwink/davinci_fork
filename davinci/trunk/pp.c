@@ -1022,7 +1022,8 @@ pp_set_where(Var *id, Var *where, Var *exp)
         dval  = extract_double(exp, 0);
 
         for (i = 0 ; i < dsize ; i++) {
-            if (extract_int(where, i)) {
+            j = rpos(i, id, where);
+            if (extract_int(where, j)) {
                 switch (format) {
                 case BYTE:		((u_char *)V_DATA(id))[i] = ival; break;
                 case SHORT:		((short *)V_DATA(id))[i] = ival; break;

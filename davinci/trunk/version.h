@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.87";
+char *version = "@(#) daVinci Version #0.87a";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,9 @@ char *version = "@(#) daVinci Version #0.87";
 #include "build.h"
 
 /*
+Version 0.87a: Fri Mar  8 13:24:12 MST 2002
+	* Bug in [where] for single valued rhs.
+
 Version 0.87: Mon Feb 25 16:26:57 MST 2002
 	* Made ff_avg use doubles instead of floats
 	* Randy forgot to update the version when he fixed hdf5 reads
