@@ -52,7 +52,7 @@ OBJ=p.o pp.o symbol.o error.o \
 	ff_pause.o printf.o ff_ifill.o ff_xfrm.o newfunc.o ff_ix.o ff_avg.o \
 	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
 	x.o xrt_print_3d.o motif_tools.o ff_convolve.o ff_struct.o apifunc.o \
-	ff_plplot.o ff_pca.o ff_loadvan.o tools.o io_pds.o
+	ff_plplot.o ff_pca.o ff_loadvan.o io_pds.o
 
 all:	 davinci gplot
 
@@ -208,7 +208,6 @@ ff_projection.o: parser.h config.h system.h ufunc.h scope.h func.h
 apifunc.o: parser.h config.h system.h ufunc.h scope.h func.h api.h apidef.h
 ff_pca.o: ff_pca.c parser.h config.h system.h ufunc.h scope.h func.h \
  /usr/local/include/hdf5.h
-ff_loadvan.o: ff_loadvan.c tools.h toolbox.h parser.h config.h \
- system.h ufunc.h scope.h func.h /usr/local/include/hdf5.h van.regex.i
-tools.o: tools.c tools.h
+ff_loadvan.o: ff_loadvan.c parser.h config.h system.h ufunc.h scope.h \
+ func.h /usr/local/include/hdf5.h
 io_pds.o: parser.h config.h system.h io_lablib3.h

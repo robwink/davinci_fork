@@ -1,6 +1,9 @@
-char *version = "@(#) daVinci Version #0.56d";
+char *version = "@(#) daVinci Version #0.56e";
 
 /*
+Version 0.56e: Wed Apr  5 15:19:57 MST 2000
+	= load_vanilla() updated -- made faster
+	
 Version 0.56d: Mon Apr  3 18:51:48 MST 2000
 	* Bug: file pointer in read_lines() wasn't getting closed.
 	* Bug: signal handler for SIG_PIPE was disabled
