@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.79";
+char *version = "@(#) daVinci Version #0.79a";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,9 @@ char *version = "@(#) daVinci Version #0.79";
 #include "build.h"
 
 /*
+Version 0.79a: Fri Jun  8 20:29:21 MST 2001
+	* Someone overwrote with an old version of ff.h.  Fixed.
+
 Version 0.79: Tue May 29 18:43:38 MST 2001
 	* Brought all changes up to date between 0.7 tree and 0.6 tree.
 	* Fixed version numbering.
