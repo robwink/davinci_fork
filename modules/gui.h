@@ -17,6 +17,8 @@
 #ifndef DV_GUI_H
 #define DV_GUI_H
 
+/* #define DEBUG 1 */
+
 #define DV_INVALID_WIDGET_ID -1
 #define DV_MAX_XT_ARGS 1024
 

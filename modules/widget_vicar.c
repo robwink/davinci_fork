@@ -561,11 +561,6 @@ setImage(Widget widget, Var *value) {
       (vicImageData.width * vicImageData.height * 2);
   }
 
-#if DEBUG
-  fprintf(stderr, "DEBUG: calling XvicImageWrite()\n");
-#endif
-  XvicImageWrite(widget, &vicImageData, True);
-
   /* Set resources.
    * FIX: Not sure if this should be done before XvicImageWrite(), after,
    * or not at all.
@@ -592,6 +587,11 @@ setImage(Widget widget, Var *value) {
   XtSetArg(xtArgs[n], XvicNviewHeight, (XtArgVal) viewHeight); n++;
 
   XtSetValues(widget, xtArgs, n);
+
+#if DEBUG
+  fprintf(stderr, "DEBUG: calling XvicImageWrite()\n");
+#endif
+  XvicImageWrite(widget, &vicImageData, True);
 
   /* Free the old image, if any. */
   if (oldImageData != NULL) {
