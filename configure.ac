@@ -76,8 +76,11 @@ AC_CHECK_LIB(z, deflate)
 AC_CHECK_LIB(png, png_check_version)
 
 dnl Check for ImageMagic.
-dnl AC_CHECK_LIB(Magick, GetImageInfo, [],[have_libmagick=no])
-dnl AM_CONDITIONAL(HAVE_LIBMAGICK, [test "x$have_libmagick" = "xyes"])
+AC_CHECK_LIB(Magick, GetImageInfo, [have_libmagick=yes],[have_libmagick=no])
+if test "x$have_libmagic" = "xyes"; then
+	AC_DEFINE(HAVE_LIBMAGICK, 1, [ if you have libmagick] )
+fi
+AM_CONDITIONAL(HAVE_LIBMAGICK, [test "x$have_libmagick" = "xyes"])
 
 dnl This is a C++ library; set the language so the test succeeds.
 dnl FIX: not sure why we need both lib and header check..
