@@ -280,7 +280,9 @@ struct _vfuncptr vfunclist[] = {
 
 	 { "distance_map", ff_distance_map,         NULL },
 	 { "slant",        ff_slant,                NULL },
-	 { "unslant",        ff_unslant,                NULL },
+	 { "unslant",      ff_unslant,                NULL },
+
+	{ "hstretch",      ff_hstretch, 			NULL },
 
     { NULL,             NULL,                  NULL }
 };

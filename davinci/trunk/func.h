@@ -457,3 +457,6 @@ Var * ff_contains(vfuncptr func, Var * arg);
 Var * ff_distance_map(vfuncptr func, Var * arg);
 Var * ff_slant(vfuncptr func, Var * arg);
 Var * ff_unslant(vfuncptr func, Var * arg);
+
+Var *do_convolve(Var *obj, Var *kernel, int norm);
+Var *ff_hstretch(vfuncptr func, Var * arg);
