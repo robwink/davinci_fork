@@ -312,7 +312,7 @@ unsigned char cookie[]={0x00,0x00,0x06,0x7b,0x00,0x00,0x04,0x00};
 }
 
 int
-Count_Out_Bands(int b)
+Count_Out_Bands(int b, int *rot)
 {
 	int i;
 	int nob=0;
@@ -330,6 +330,7 @@ Count_Out_Bands(int b)
 
 	if (nob==0){
 		parse_error("This is a snapshot and contains all bands");
+		*rot=0;//If this is a snapshot, we DON'T want to rotate!!
 		return(0);
 	}
 
@@ -351,7 +352,7 @@ Count_Out_Bands(int b)
 
 
 int
-Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int verb)
+Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int verb, int *rot)
 {
 	int i;
 	msdp_Header	mh;
@@ -388,7 +389,7 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int v
 
 	*vis_width=width;
 
-	*nob=Count_Out_Bands((int)first_mh.bands);
+	*nob=Count_Out_Bands((int)first_mh.bands,rot);
 	
 	rewind(fp);
 
@@ -685,7 +686,7 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
     }
 
     else {
-        height=Process_SC_Vis(infile,&buf,&width,&nob,verb);
+        height=Process_SC_Vis(infile,&buf,&width,&nob,verb,&rotate);
 		  if (height) {
 				if (rotate)
 					Rotate_Buffer(buf,height,width,verb);
