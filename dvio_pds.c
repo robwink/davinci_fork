@@ -13,6 +13,7 @@ extern char * var_endian(Var * v);
 typedef struct _objectInfo
 {
 	int	count;
+	int	ptr_count;
 
 	int 	*obj_ptr;  /*File Byte offset of ^OBJECT = */
 	int 	*obj_size; /*In RECORD_BYTES */
@@ -779,7 +780,10 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 	}
 
 
-	else if ((!(strcasecmp("qube",name))) || (!(strcasecmp("image",name)))){ /*We're processing a qube*/
+	else if ((!(strcasecmp("spectral_qube",name))) || 
+				(!(strcasecmp("qube",name))) || 
+				(!(strcasecmp("image",name)))){ /*We're processing a qube*/
+
 		count = get_struct_count(v);
 		for (i=0;i<count;i++){ /*We could assume the DATA object is last, but that could lead to trouble */
 	 		get_struct_element(v,i, &struct_name, &tmpvar);
@@ -964,7 +968,7 @@ ProcessIntoLabel(FILE *fp,int record_bytes, Var *v, int depth, int *label_ptrs, 
 
 
 		else if (!(strncasecmp(name,"PTR_TO_",7))){
-			oi->obj_ptr[oi->count]=ftell(fp)+strlen((name+7))+4; /* +4 for the space and ='s*/
+			oi->obj_ptr[oi->ptr_count++]=ftell(fp)+strlen((name+7))+4; /* +4 for the space and ='s*/
 			tmpname=correct_name((name+7));
 			fprintf(fp,"%s^%s = %s\r\n",inset,tmpname,pad);
 			free(tmpname);
@@ -1156,6 +1160,8 @@ WritePDS(vfuncptr func, Var *arg)
 	oi.obj_size = (int *)malloc(sizeof(int)*MAXOBJ);
 	oi.obj_dirty = (int *)malloc(sizeof(int)*MAXOBJ);
 	oi.obj_data = (char **)malloc(sizeof(char *)*MAXOBJ);
+	oi.count=0;
+	oi.ptr_count=0;
 
 
 
