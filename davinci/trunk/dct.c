@@ -72,7 +72,7 @@ ff_dct(vfuncptr func, Var * arg)
 	z = GetBands(V_SIZE(obj), V_ORG(obj));
 	dsize = V_DSIZE(obj);
 
-	data = calloc(dsize, sizeof(double));
+	data = (double *)calloc(dsize, sizeof(double));
 
 	/**
 	 ** convert to an array of doubles
@@ -86,8 +86,8 @@ ff_dct(vfuncptr func, Var * arg)
 		}
 	}
 
-	u = calloc(max(x,max(y,z)), sizeof(double));
-	v = calloc(max(x,max(y,z)), sizeof(double));
+	u = (double *)calloc(max(x,max(y,z)), sizeof(double));
+	v = (double *)calloc(max(x,max(y,z)), sizeof(double));
 
 	/**
 	 ** process rows 

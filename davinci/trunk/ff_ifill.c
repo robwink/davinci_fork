@@ -222,7 +222,7 @@ ff_ifill(vfuncptr func, Var * arg)
 	    (strchr(pass, '1') || strchr(pass, '2'))) {
 			jfill_merge(data1, data2, fill, dsize);
 	} else if (strchr(pass, '1') || strchr(pass, '2')) {
-		void *t = data2;
+		float *t = data2;
 		data2 = data1;
 		data1 = t;
 	}
@@ -345,8 +345,8 @@ jfill_lr(Var *obj, int x, int y, int z, float *data, float fill, int radius, int
 	/**
 	 ** do across
 	 **/
-	d = calloc(x, sizeof(float));
-	p = calloc(x, sizeof(int));
+	d = (float *)calloc(x, sizeof(float));
+	p = (int *)calloc(x, sizeof(int));
 
     for (k = 0; k < z; k++) {
 		for (j = 0; j < y; j++) {
@@ -370,8 +370,8 @@ jfill_tb(Var *obj, int x, int y, int z, float *data, float fill, int radius)
     int i, j, k, *p;
     float m, *d;
 
-	d = calloc(y, sizeof(float));
-	p = calloc(y, sizeof(int));
+	d = (float *)calloc(y, sizeof(float));
+	p = (int *)calloc(y, sizeof(int));
 
     for (k = 0; k < z; k++) {
 		for (i = 0; i < x; i++) {
@@ -399,8 +399,8 @@ jfill_tr(Var *obj, int x, int y, int z, float *data, float fill, int radius)
 	 ** do top to right
 	 **/
 	n = max(x,y);
-	d = calloc(n, sizeof(float));
-	p = calloc(n, sizeof(int));
+	d = (float *)calloc(n, sizeof(float));
+	p = (int *)calloc(n, sizeof(int));
 
     for (k = 0; k < z; k++) {
 		for (i = 0 ; i < x ; i++) {
@@ -442,8 +442,8 @@ jfill_tl(Var *obj, int x, int y, int z, float *data, float fill, int radius)
 	 ** do top to right
 	 **/
 	n = max(x,y);
-	d = calloc(n, sizeof(float));
-	p = calloc(n, sizeof(int));
+	d = (float *)calloc(n, sizeof(float));
+	p = (int *)calloc(n, sizeof(int));
 
     for (k = 0; k < z; k++) {
 		for (i = 0 ; i < x ; i++) {

@@ -240,8 +240,8 @@ load_function(char *filename)
 			break;
 		}
 	}
-    yy_delete_buffer(handle);
-	yy_switch_to_buffer(parent_buffer);
+    yy_delete_buffer((struct yy_buffer_state *)handle);
+	yy_switch_to_buffer((struct yy_buffer_state *)parent_buffer);
 	f->ready = 1;
 
     return(f);

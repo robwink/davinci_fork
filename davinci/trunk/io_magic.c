@@ -33,9 +33,7 @@ Image *Var2Miff(Var *ob)//Write
   	XResourceInfo resource;
   	XrmDatabase resource_database;
 
-
-
-	char *data=V_DATA(ob);
+	char *data=(char *)V_DATA(ob);
 
 	unsigned char r,g,b;
 
@@ -72,7 +70,7 @@ Image *Var2Miff(Var *ob)//Write
 
 		if (image == (Image *) NULL){
 			parse_error("Can't allocate memory for image write");
-			return;
+			return(NULL);
 		}
 
 		if (First_Time)
@@ -86,7 +84,7 @@ Image *Var2Miff(Var *ob)//Write
   		if (image->pixels == (RunlengthPacket *) NULL) {
 			parse_error("Can't allocate memory for image write");
       			DestroyImage(image);
-			return;
+			return (NULL);
 		}
 	
 		layer2=x*y;
@@ -293,10 +291,10 @@ Var *ff_XImage_Display(vfuncptr func, Var * arg)
 
         make_args(&ac, &av, func, arg);
         if (parse_args(ac, av, alist))
-                return;
+                return (NULL);
 
 	if((image=Var2Miff(Obj))==NULL){
-		return;
+		return (NULL);
 	}
 
 
@@ -307,7 +305,7 @@ Var *ff_XImage_Display(vfuncptr func, Var * arg)
 
   	if (display == (Display *) NULL){
     		parse_error("Unable to display image...can't open X server");
-		return;
+		return (NULL);
 	}
 
   	XSetErrorHandler(XError);

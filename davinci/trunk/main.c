@@ -221,34 +221,34 @@ void get_file_input(XtPointer client_data, int *fid, XtInputId *id)
 void
 event_loop(void)
 {
-	if (interactive) {
-		if (windows && getenv("DISPLAY") != NULL)  {
-			char *argv[1];
-			char *av0 = "null";
-			int argc = 1;
-			XEvent event;
-			argv[0] = av0;
-			top = XtVaAppInitialize(&app, "Simple", NULL, 0,
-									&argc,
-									argv, NULL, NULL);
-		} else {
-			/**
-			 ** This is a hack to let us use the Xt event model, without
-			 ** needing an X server.  It is a bad idea.
-			 **/
-			XtToolkitInitialize();
-			app = XtCreateApplicationContext();
-		}
+    if (interactive) {
+        if (windows && getenv("DISPLAY") != NULL)  {
+            char *argv[1];
+            char *av0 = "null";
+            int argc = 1;
+            XEvent event;
+            argv[0] = av0;
+            top = XtVaAppInitialize(&app, "Simple", NULL, 0,
+                                    &argc,
+                                    argv, NULL, NULL);
+        } else {
+            /**
+            ** This is a hack to let us use the Xt event model, without
+            ** needing an X server.  It is a bad idea.
+            **/
+            XtToolkitInitialize();
+            app = XtCreateApplicationContext();
+        }
 
-		XtAppAddInput(app,
-					  fileno(stdin),
-					  (void *) XtInputReadMask,
-					  get_file_input,
-					  NULL);
-		rl_callback_handler_install("dv> ", lhandler);
+        XtAppAddInput(app,
+                      fileno(stdin),
+                      (void *) XtInputReadMask,
+                      get_file_input,
+                      NULL);
+        rl_callback_handler_install("dv> ", lhandler);
 
-		XtAppMainLoop(app);
-	}
+        XtAppMainLoop(app);
+    }
 }
 
 void lhandler(char *line)
@@ -273,7 +273,7 @@ void lhandler(char *line)
 
     if (*line) { 
         add_history((char *)line);
-		log_line(buf);
+        log_line(buf);
     }
 
     pp_line++;
@@ -281,12 +281,12 @@ void lhandler(char *line)
 
     parse_buffer(buf);
 
-	if (indent) {
-		sprintf(prompt, "%2d> ", indent);
-	} else {
-		sprintf(prompt, "dv> ", indent);
-	}
-	rl_callback_handler_install(prompt, lhandler);
+    if (indent) {
+        sprintf(prompt, "%2d> ", indent);
+    } else {
+        sprintf(prompt, "dv> ", indent);
+    }
+    rl_callback_handler_install(prompt, lhandler);
 
     /*
     ** Process anything pushed onto the stream stack by the last command.
@@ -299,21 +299,21 @@ process_streams(void)
 {
     extern FILE *ftos;
     extern int nfstack;
-	char buf[1024];
-	extern int pp_line;
+    char buf[1024];
+    extern int pp_line;
     /*
     ** Process anything that has been pushed onto the input stream stack.
     **/
 
-	while (nfstack) {
-		while (fgets(buf, 1024, ftos) != NULL) {
-			pp_line++;
-			parse_buffer(buf);
-		}
-		pop_input_file();
+    while (nfstack) {
+        while (fgets(buf, 1024, ftos) != NULL) {
+            pp_line++;
+            parse_buffer(buf);
+        }
+        pop_input_file();
     }
 
-	pp_line = 0;
+    pp_line = 0;
 }
 
 void
@@ -328,30 +328,30 @@ void
 parse_buffer(char *buf)
 {
     int i,j;
-	extern char *yytext;
-	extern FILE *save_fp;
-	int flag = 0;
+    extern char *yytext;
+    extern FILE *save_fp;
+    int flag = 0;
 
     parent_buffer = yy_scan_string(buf);
 
     while(i = yylex()) {
-		/*
-		** if this is a function definition, do no further parsing yet.
-		*/
-		if (save_fp) continue;
+        /*
+        ** if this is a function definition, do no further parsing yet.
+        */
+        if (save_fp) continue;
 
         j = yyparse(i, (Var *)yytext);
-		if (j == -1) quit();
+        if (j == -1) quit();
 
-		if (j == 1 && curnode != NULL) {
-			evaluate(curnode);
-			pp_print(pop(scope_tos()));
-			free_tree(curnode);
-			indent = 0;
-			cleanup(scope_tos());
-		}
+        if (j == 1 && curnode != NULL) {
+            evaluate(curnode);
+            pp_print(pop(scope_tos()));
+            free_tree(curnode);
+            indent = 0;
+            cleanup(scope_tos());
+        }
     }
-    yy_delete_buffer(parent_buffer);
+    yy_delete_buffer((struct yy_buffer_state *)parent_buffer);
 }
 
 void

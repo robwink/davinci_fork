@@ -64,7 +64,7 @@ ff_avg(vfuncptr func, Var * arg)
 
 
 	v = newVal(V_ORG(obj), out[0], out[1], out[2], FLOAT, NULL);
-	fdata = V_DATA(v) = calloc(V_DSIZE(v), sizeof(float));
+	fdata = (float *)V_DATA(v) = calloc(V_DSIZE(v), sizeof(float));
 
 	for (i = 0 ; i < dsize ; i++) {
 		fdata[rpos(i, obj, v)] += extract_float(obj, i);
@@ -83,7 +83,7 @@ ff_avg(vfuncptr func, Var * arg)
 	}
 
 	if (!strcmp(func->name, "stddev")) {
-		vx = calloc(dsize2, sizeof(float));
+		vx = (float *)calloc(dsize2, sizeof(float));
 		for (i = 0 ; i < dsize ; i++) {
 			j = rpos(i, obj, v);
 			f = extract_float(obj, i) - fdata[j];
@@ -154,7 +154,7 @@ ff_min(vfuncptr func, Var * arg)
 	v = newVal(V_ORG(obj), out[0], out[1], out[2], FLOAT, NULL);
 	dsize2 = V_DSIZE(v);
 
-	fdata = V_DATA(v) = calloc(dsize2, sizeof(float));
+	fdata = (float *)V_DATA(v) = calloc(dsize2, sizeof(float));
 	data = V_DATA(obj);
 
 
@@ -272,11 +272,11 @@ ff_convolve(vfuncptr func, Var * arg)
 	kernel_z_center = kernel_z/2;
 
 	dsize = V_DSIZE(obj);
-	if ((data = calloc(dsize, sizeof(float))) == NULL) {
+	if ((data = (float *)calloc(dsize, sizeof(float))) == NULL) {
 		parse_error("Unable to allocate memory");
 		return(NULL);
 	}
-	if ((wt = calloc(dsize, sizeof(int))) == NULL) {
+	if ((wt = (int *)calloc(dsize, sizeof(int))) == NULL) {
 		parse_error("Unable to allocate memory");
 		return(NULL);
 	}
@@ -380,22 +380,22 @@ ff_convolve3(vfuncptr func, Var * arg)
 
 
 	dsize = V_DSIZE(obj);
-	if ((data = calloc(dsize, sizeof(float))) == NULL) {
+	if ((data = (float *)calloc(dsize, sizeof(float))) == NULL) {
 		parse_error("Unable to allocate memory");
 		return(NULL);
 	}
 
-	if ((cache = calloc(V_DSIZE(kernel), sizeof(float))) == NULL) {
+	if ((cache = (float *)calloc(V_DSIZE(kernel), sizeof(float))) == NULL) {
 		parse_error("Unable to allocate memory for cache");
 		return(NULL);
 	}
 
-	if ((Mask = calloc(V_DSIZE(kernel), sizeof(float))) == NULL) {
+	if ((Mask = (float *)calloc(V_DSIZE(kernel), sizeof(float))) == NULL) {
 		parse_error("Unable to allocate memory for Mask");
 		return(NULL);
 	}
 
-	if ((Weight = calloc(V_DSIZE(kernel), sizeof(int))) == NULL) {
+	if ((Weight = (float *)calloc(V_DSIZE(kernel), sizeof(int))) == NULL) {
 		parse_error("Unable to allocate memory for Weights");
 		return(NULL);
 	}
@@ -572,9 +572,9 @@ ff_convolve3(vfuncptr func, Var * arg)
 			P[s]=P[s+1];
 			for(r=0;r<kOrd[Mode[1]];r++){
 			  for(q=0;q<kOrd[Mode[0]];q++){
-			    wt+=Weight[P[s]+r*kOrd[Mode[0]]+q];
-			    val+=cache[P[s]+r*kOrd[Mode[0]]+q]*
-				 Mask[s*kOrd[Mode[1]]*kOrd[Mode[0]]+r*kOrd[Mode[0]]+q];
+			    wt += Weight[P[s]+r*kOrd[Mode[0]]+q];
+			    val += cache[P[s]+r*kOrd[Mode[0]]+q]*
+                                Mask[s*kOrd[Mode[1]] * kOrd[Mode[0]] + r*kOrd[Mode[0]]+q];
 			  }
 			}	
 		    }
@@ -630,83 +630,3 @@ void View_Cache(float *cache,int *P,int Major,int Middle,int Minor)
 	  }
 	}
 }	
-Var *
-ff_convolve2(vfuncptr func, Var * arg)
-{
-	Var *obj=NULL, *kernel=NULL, *v;
-	int norm=1;
-
-	int dsize, i, j, k;
-	int a, b, c;
-	int x, y, z;
-	int kernel_x_center, kernel_x;
-	int kernel_y_center, kernel_y;
-	int kernel_z_center, kernel_z;
-	int *kpos;
-	float *data;
-
-	int ac;
-	Var **av;
-	Alist alist[4];
-	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
-	alist[1] = make_alist("kernel",  	ID_VAL,		NULL,	&kernel);
-	alist[2] = make_alist("normalize", 	INT, NULL, &norm);
-	alist[3].name = NULL;
-
-	make_args(&ac, &av, func, arg);
-	if (parse_args(ac, av, alist)) return(NULL);
-
-	if (obj == NULL) {
-		parse_error("%s: No object specified\n", func->name);
-		return(NULL);
-	}
-	if (kernel == NULL) {
-		parse_error("%s: No kernel specified\n", func->name);
-		return(NULL);
-	}
-
-	kernel_x = GetSamples(V_SIZE(kernel), V_ORG(kernel));
-	kernel_y = GetLines(V_SIZE(kernel), V_ORG(kernel));
-	kernel_z = GetBands(V_SIZE(kernel), V_ORG(kernel));
-
-	kernel_x_center = kernel_x/2;
-	kernel_y_center = kernel_y/2;
-	kernel_z_center = kernel_z/2;
-
-	dsize = V_DSIZE(obj);
-	data = calloc(dsize, sizeof(float));
-	kpos = calloc(V_DSIZE(kernel), sizeof(int));
-
-	/**
-	 ** compute initial offsets.
-	 **/
-	for (i = 0 ; i < V_DSIZE(kernel) ; i++) {
-		xpos(i, &x, &y, &z, kernel);
-		x -= kernel_x_center;
-		y -= kernel_y_center;
-		z -= kernel_z_center;
-		k = cpos(x, y, z, kernel);
-		kpos[i] = rpos(k, kernel, obj);
-	}
-
-	/**
-	 ** Each neightbor point can be determined by just applying 
-	 ** kpos[i] to this point's index
-	 **/
-	for (i = 0 ; i < dsize ; i++) {
-		fprintf(stderr, "Convolve %d\n", i);
-		for (j = 0 ; j < V_DSIZE(kernel) ; j++) {
-			data[i] += extract_float(kernel,j)*extract_float(obj, i+kpos[j]);
-			fprintf(stderr, "    %d\r", j);
-		}
-
-	}
-	if (VERBOSE) printf("\n");
-
-	return(newVal(V_ORG(obj), 
-		V_SIZE(obj)[0],
-		V_SIZE(obj)[1],
-		V_SIZE(obj)[2],
-		FLOAT, 
-		data));
-}

@@ -51,7 +51,7 @@ OBJ=p.o pp.o symbol.o error.o \
 	ff_header.o ff_text.o io_ers.o io_goes.o ff_bbr.o ff_vignette.o \
 	ff_pause.o printf.o ff_ifill.o ff_xfrm.o newfunc.o ff_ix.o ff_avg.o \
 	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
-	x.o xrt_print_3d.o motif_tools.o ff_convolve.c ff_struct.o
+	x.o xrt_print_3d.o motif_tools.o ff_convolve.o ff_struct.o
 
 all:	 davinci gplot
 
@@ -61,15 +61,15 @@ davinci:	$(OBJ)  $(READLINE_OBJ)
 readline/libreadline.a:
 	@(cd readline ; make )
 
-lexer.o:	lexer.c parser.o
+lexer.o:	lexer.C parser.o
 
-lexer.c:	lexer.l
+lexer.C:	lexer.l
 	flex lexer.l
-	mv lex.yy.c lexer.c
+	mv lex.yy.c lexer.C
 
-parser.c:	parser.y
-	bison -d parser.y
-	mv parser.tab.c parser.c
+parser.C:	parser.y
+	/opt/local/alt/bin/bison -d parser.y
+	mv parser.tab.c parser.C
 	mv parser.tab.h y_tab.h
 
 install:
@@ -82,7 +82,10 @@ install:
 # File specific dependancies
 #
 help.o:	help.c
-	$(CC) $(CFLAGS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $*.c
+	$(CC) $(CFLAGS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $<
+
+#help.o:	help.C
+#	$(CXX) $(CFLAGS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $<
 
 clean:
 	-rm -f *.o davinci dv core gplot TAGS config.cache config.h config.log
@@ -131,7 +134,7 @@ xrt_print_3d.o: xrt_print_3d.c
 p.o: parser.h config.h system.h ufunc.h scope.h func.h
 pp.o: parser.h config.h system.h ufunc.h scope.h func.h
 symbol.o: parser.h config.h system.h ufunc.h scope.h func.h
-ff.o: ff.h parser.h config.h system.h ufunc.h scope.h func.h apidef.h readline/history.h 
+ff.o: ff.h parser.h config.h system.h ufunc.h scope.h func.h apidef.h 
 ff_ascii.o: parser.h config.h system.h ufunc.h scope.h func.h
 error.o: 
 ff_cluster.o: parser.h config.h system.h ufunc.h scope.h func.h

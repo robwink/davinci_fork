@@ -16,7 +16,15 @@
         limiting the build to just on projection type           */
 
 #define PJ_LIST_H "my_list.h"
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "projects.h"
+#ifdef __cplusplus
+}
+#endif
 
 Var *ff_projection(vfuncptr func, Var * arg)
 {
@@ -70,7 +78,7 @@ Var *ff_projection(vfuncptr func, Var * arg)
         }
 
         for(i=0;i<NUM_PARAM;i++){
-                parameters[i]=calloc(20,sizeof(char));
+                parameters[i]=(char *)calloc(20,sizeof(char));
         }
 
 
@@ -195,7 +203,9 @@ xmin=pj_data.v;
 			step=j*size*z;
 			for (k=0;k<z;k++){
 				index=cpos(ix,iy,k,obj);
-				memcpy(&data[jump+step+k*size],&(V_DATA(obj)[index]),size);
+				memcpy(&((char *)data)[jump+step+k*size],
+                                       &((char *)V_DATA(obj))[index*size],
+                                       size);
 			}
 		}
 	}
