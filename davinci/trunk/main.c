@@ -64,13 +64,23 @@ void init_history(char *fname);
 void process_streams(void);
 void event_loop(void);
 
+#ifdef HAVE_LIBREADLINE
 #include <readline/readline.h>
+#endif
+
 char ** dv_complete_func(char *text, int start, int end);
+
+#if 0
+/* JAS FIX: these are all declared in readline.h and as far as I can tell
+   they are not used unless readline is present. */
+
 CPPFunction * rl_attempted_completion_function;
 
 #ifdef USE_X11_EVENTS
 void rl_callback_read_char();
 void rl_callback_handler_install(char *, void (*)(char *));
+#endif
+
 #endif
 
 jmp_buf env;
@@ -412,8 +422,9 @@ void lhandler(char *line)
         } else {
             sprintf(prompt, "dv> ");
         }
-        
+
 #ifdef USE_X11_EVENTS
+	/* JAS FIX: also check for defined(HAVE_LIBREADLINE) ?
 	rl_callback_handler_install(prompt, lhandler);
 #else
         line=(char *)readline(prompt);
@@ -755,6 +766,7 @@ init_history(char *fname)
     char buf[256];
     FILE *fp;
 
+    /* JAS FIX: what's up with the two empty if/endif below?
 #ifdef HAVE_LIBREADLINE
 #endif
 
