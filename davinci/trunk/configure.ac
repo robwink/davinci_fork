@@ -17,8 +17,8 @@ dnl Check for some required programs.
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_CXX
-AC_PROG_YACC
-AM_PROG_LEX
+dnl AC_PROG_YACC
+dnl AM_PROG_LEX
 AC_PROG_INSTALL
 dnl AC_PROG_RANLIB
 
@@ -128,7 +128,7 @@ if test "x$libreadline_found" = "xno"; then
 
 	AC_MSG_CHECKING(if local libreadline present)
 
-	if test -d readline; then
+	if test -x readline/configure; then
 		AC_MSG_RESULT(yes)
 		CFLAGS="$CFLAGS -Ireadline"
 		AC_DEFINE(HAVE_LIBREADLINE, 1)
@@ -150,7 +150,8 @@ if test "x$enable_vicar" != "xno"; then
 	if test -d vicar; then
 		AC_MSG_RESULT(yes)
 		dnl This should only be added to modules/Makefile.am's CFLAGS, but I'm sick of autoconf.
-		CFLAGS="$CFLAGS -I$(top_srcdir)/vicar"
+		dnl Not sure this is working either; doesn't look like $top_builddir gets set..
+		CFLAGS="$CFLAGS -I$top_builddir/vicar"
 		AC_DEFINE(HAVE_LIBVICAR, 1, [VICAR widget library is present])
 		local_vicar=yes
 	else
@@ -162,10 +163,10 @@ AM_CONDITIONAL(LOCAL_VICAR, test x$local_vicar = xyes)
 
 dnl Configure iomedley.
 
-if test "$enable_iomedley" != no; then
+if test "x$enable_iomedley" != "xno"; then
 
 	AC_MSG_CHECKING(if local libiomedley present)
-	if test -d iomedley; then
+	if test -x iomedley/configure; then
 		AC_MSG_RESULT(yes)
 		CFLAGS="$CFLAGS -Iiomedley"
 		AC_DEFINE(HAVE_LIBIOMEDLEY, 1, [iomedley library is present])
