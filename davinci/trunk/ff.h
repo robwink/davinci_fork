@@ -138,7 +138,7 @@ struct _vfuncptr vfunclist[] = {
     { "read_text",  ff_text,     NULL },
 	 { "read_lines",ff_textarray,NULL},
 
-#ifndef __MSDOS__
+#ifdef INCLUDE_API
     {"popen",	ff_popen,	NULL},
     {"pprint",	ff_pprint,	NULL},
     {"pplot",	ff_pplot,	NULL},
