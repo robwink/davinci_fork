@@ -221,6 +221,8 @@ iheader2var(struct _iheader *h)
 
     V_TYPE(v) = ID_VAL;
     V_FORMAT(v) = h->format;
+	if (V_FORMAT(v) == VAX_FLOAT) V_FORMAT(v) = FLOAT;
+	if (V_FORMAT(v) == VAX_INTEGER) V_FORMAT(v) = INT;
     V_ORDER(v) = h->org;
     V_DSIZE(v) = 1;
     for (i = 0 ; i < 3 ; i++) {
