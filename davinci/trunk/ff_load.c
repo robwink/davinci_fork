@@ -71,7 +71,8 @@ ff_load(vfuncptr func, Var * arg)
         if (input == NULL)    input = dv_LoadGOES(fp, fname, &h);
         if (input == NULL)    input = dv_LoadAVIRIS(fp, fname, &h);
 #ifdef HAVE_LIBMAGICK
-        if (input == NULL)    input = dv_LoadGFX_Image(fp, fname, &h);
+        if (input == NULL)    //input = dv_LoadGFX_Image(fp, fname, &h);
+	  input = dvReadImage(func, arg); // last gasp attempt.
 #endif /* HAVE_LIBMAGICK */
 
         fclose(fp);	/* These others open their own files */

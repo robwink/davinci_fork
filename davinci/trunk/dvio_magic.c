@@ -17,7 +17,7 @@ dv_LoadGFX_Image(FILE *fp, char *filename, struct iom_iheader *s)
     int   status;
 	char  hbuf[HBUFSIZE];
 
-    if (!(status = iom_GetGFXHeader(fp, filename, &h))){ return NULL; }
+	//    if (!(status = iom_GetGFXHeader(fp, filename, &h))){ return NULL; }
 
     if (s != NULL) {
         /** 
@@ -93,7 +93,7 @@ dv_WriteGFX_Image(Var *ob, char *filename, int force, char *GFX_type)
     }
     
     var2iom_iheader(ob, &h);
-    status = iom_WriteGFXImage(filename, V_DATA(ob), &h, force, GFX_type);
+    //    status = iom_WriteGFXImage(filename, V_DATA(ob), &h, force, GFX_type);
     iom_cleanup_iheader(&h);
     
     if (status == 0){
@@ -128,7 +128,7 @@ Var2Miff(Var *v)
 		return (NULL);
 	}
     
-    image = iom_ToMiff(V_DATA(v), x, y, z);
+	//    image = iom_ToMiff(V_DATA(v), x, y, z);
 
     return image;
 }
@@ -140,8 +140,9 @@ dv_Miff2Var(Image *image) /*  Read */
     int x, y, z;
     char *data = NULL;
 
-    if (!iom_ExtractMiffData(image, &x, &y, &z, (void *)&data)){ return NULL; }
-	return(newVal(BSQ,x,y,z,BYTE,data));
+    //    if (!iom_ExtractMiffData(image, &x, &y, &z, (void *)&data)){ return NULL; }
+    //return(newVal(BSQ,x,y,z,BYTE,data));
+    return NULL;
 }    
 
 /*
