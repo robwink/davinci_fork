@@ -137,9 +137,6 @@ x.o:    x.c
 xrt_print_3d.o: xrt_print_3d.c
 	$(CC) -c $(CFLAGS) $(XRTINCLUDE) $?
 
-van.regex.i:	van.regex
-	regcmp van.regex
-
 #########################################################################
 p.o: parser.h config.h system.h ufunc.h scope.h func.h
 pp.o: parser.h config.h system.h ufunc.h scope.h func.h
