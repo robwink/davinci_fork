@@ -1,8 +1,15 @@
-char *version = "@(#) daVinci Version #1.20";
+char *version = "@(#) daVinci Version #1.21";
 
 #include "build.h"
 
 /*
+
+Version 1.21: Thu Jan  8 14:27:41 MST 2004
+	+ Fixed GUI modules X resource setter to handle XmStringList sets with
+	  redundant elements.
+	+ Added gui.listcallbacks() function to GUI module to list supported
+	  callbacks for each widget.
+
 Version 1.20: Wed Dec 24 02:22:58 MST 2003
 	* Fixed embedded (){} in quotes for load_pds
 	* Fixed "first element looks like an int but rest are floats" in
