@@ -587,7 +587,7 @@ LoadSpecprHeader(FILE *fp, char *filename, int rec, char *element, Var **val)
     } else if (tval != NULL) {
         v = new(Var);
         V_TYPE(v) = ID_STRING;
-        V_STRING(v) = strndup((const char *)tval, range);
+        V_STRING(v) = strndup((char *)tval, range);
     }
 
     *val = v;
