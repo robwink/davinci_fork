@@ -1,8 +1,11 @@
 #include "parser.h"
 #include "func.h"
+#include <sys/stat.h>
+#include <sys/mman.h>
 
 #include "hdf5.h"
 
+Var *load_hdf5(hid_t parent);
 
 
 Var *
@@ -48,6 +51,7 @@ ff_struct(vfuncptr func, Var * arg)
     return(make_struct(ac-1, av+1));
 }
 
+void
 WriteHDF5(hid_t parent, char *name, Var *v)
 {
     hid_t dataset, datatype, dataspace, aid2, attr, child;
@@ -55,14 +59,14 @@ WriteHDF5(hid_t parent, char *name, Var *v)
     int org;
     int top = 0;
     int i;
-	Var *e;
+    Var *e;
 
     if (V_NAME(v) != NULL) {
         if ((e = eval(v)) != NULL) v = e;
     }
     if (v == NULL || V_TYPE(v) == ID_UNK) {
         parse_error("Can't find variable");
-        return(NULL);
+        return;
     }
         
 
@@ -78,11 +82,11 @@ WriteHDF5(hid_t parent, char *name, Var *v)
         ** member is a structure.  We need to create a sub-group
         ** with this name.
         */
-		if (top == 0) {
-			child = H5Gcreate(parent, name, 0);
-		} else {
-			child = parent;
-		}
+        if (top == 0) {
+            child = H5Gcreate(parent, name, 0);
+        } else {
+            child = parent;
+        }
         for (i = 0 ; i < V_STRUCT(v).count ; i++) {
             WriteHDF5(child, V_STRUCT(v).names[i], V_STRUCT(v).data[i]);
         }
@@ -123,10 +127,266 @@ WriteHDF5(hid_t parent, char *name, Var *v)
 
     }
     if (top) H5Fclose(parent);
-    return(NULL);
+    return;
+}
+
+/*
+** Make a VAR out of a HDF5 object
+*/
+herr_t group_iter(hid_t parent, const char *name, void *data)
+{
+    H5G_stat_t buf;
+    hid_t child, dataset, dataspace, datatype, attr;
+    int org, type, size[3],  dsize, i;
+    hsize_t datasize[3], maxsize[3];
+    Var *v;
+    void *databuf;
+
+    *((Var **)data) = NULL;
+
+    if (H5Gget_objinfo(parent, name, 1, &buf) < 0) return -1;
+    type = buf.type;
+
+    switch (type)  {
+    case H5G_GROUP:
+        child = H5Gopen(parent, name);
+        v = load_hdf5(child);
+        V_NAME(v) = strdup(name);
+        H5Gclose(child);
+        break;
+
+    case H5G_DATASET:
+        if ((dataset = H5Dopen(parent, name)) < 0) {
+            return;
+        }
+
+        datatype = H5Dget_type(dataset);
+
+        if (H5Tequal(datatype , H5T_NATIVE_UCHAR)) type = BYTE;
+        if (H5Tequal(datatype , H5T_NATIVE_SHORT)) type = SHORT;
+        if (H5Tequal(datatype , H5T_NATIVE_INT))   type = INT;
+        if (H5Tequal(datatype , H5T_NATIVE_FLOAT)) type = FLOAT;
+        if (H5Tequal(datatype , H5T_NATIVE_DOUBLE)) type = DOUBLE;
+
+        attr = H5Aopen_name(dataset, "org");
+        H5Aread(attr, H5T_NATIVE_INT, &org);
+        H5Aclose(attr);
+        
+        dataspace = H5Dget_space(dataset);
+        H5Sget_simple_extent_dims(dataspace, datasize, maxsize);
+        for (i = 0 ; i < 3 ; i++) {
+            size[i] = datasize[i];
+        }
+        dsize = H5Sget_simple_extent_npoints(dataspace);
+        databuf = calloc(dsize, NBYTES(type));
+        H5Dread(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, databuf);
+
+        H5Tclose(datatype);
+        H5Sclose(dataspace);
+        H5Dclose(dataset);
+
+        v = newVal(org, size[0], size[1], size[2], type, databuf);
+        V_NAME(v) = strdup(name);
+    }
+    *((Var **)data) = v;
+    return 1;
+}
+
+
+herr_t count_group(hid_t group, const char *name, void *data)
+{
+    *((int *)data) += 1;
+    return(0);
 }
 
 Var *
 LoadHDF5(char *filename)
 {
+    Var *v;
+    hid_t group;
+    hid_t file;
+
+    if (H5Fis_hdf5(filename) == 0) {
+        return(NULL);
+    } 
+
+    file = H5Fopen(filename, H5F_ACC_RDWR, H5P_DEFAULT);
+
+    if (file < 0) return(NULL);
+
+    group = H5Gopen(file, "/");
+
+    v = load_hdf5(group);
+
+    H5Gclose(group);
+    H5Fclose(file);
+    return(v);
+}
+
+
+Var *
+load_hdf5(hid_t parent)
+{
+    Var *o, *e;
+    int count = 0;
+    int idx = 0;
+    herr_t ret;
+
+    H5Giterate(parent, ".", NULL, count_group, &count);
+
+    if (count <= 0) {
+        parse_error("Group count < 0");
+        return(NULL);
+    }
+
+    o = new(Var);
+    V_TYPE(o) = ID_VSTRUCT;
+    V_STRUCT(o).count = count;
+    V_STRUCT(o).names = calloc(count, sizeof(char *));
+    V_STRUCT(o).data = calloc(count, sizeof(Var *));
+    
+    while ((ret = H5Giterate(parent, ".", &idx, group_iter, &e)) > 0)  {
+        V_STRUCT(o).names[idx] = V_NAME(e);
+        V_STRUCT(o).data[idx] = e;
+        V_NAME(e) = NULL;
+        idx++;
+    }
+    return(o);
+}
+
+
+Var *
+LoadVanilla(char *filename)
+{
+    int fd;
+    struct stat sbuf;
+    int rows;
+    int cols;
+    int len;
+    int i, j, k;
+    int state;
+    char *buf, *p, **data, c;
+    int *type;
+
+    rows = cols = 0;
+    
+    if (stat(filename, &sbuf) != 0) {
+        parse_error("Unable to open file: %s\n", filename);
+        return(NULL);
+    }
+    if ((len = sbuf.st_size) == 0) return(NULL);
+
+    if ((fd= open(filename, O_RDONLY)) < 0) {
+        parse_error("Unable to open file: %s", filename);
+        return(NULL);
+    }
+    buf =  mmap(NULL, len+1, (PROT_READ | PROT_WRITE), MAP_PRIVATE, fd, 0);
+    close(fd);
+
+    /*
+    ** Remove trailing spaces and newlines
+    */
+    for (i = len - 1; i > 0 ; i--) {
+        if (isspace(buf[i])) {
+            buf[i] = ' ';
+            continue;
+        }
+        break;
+    }
+    if (i == 0) return(NULL);			/* empty file? */
+
+    /*
+    ** How many rows?
+    */
+    rows = 1;
+    for (i = 0 ; i < len ; i++) {
+        if (buf[i] == '\n') rows++;
+    }
+
+    /*
+    ** If we wanted to be nice to the user, we could allow them
+    ** to create an empty structure with one line of header, no data.
+    */
+    if (rows == 1) {
+        parse_error("No data in file: %s\n", filename);
+        munmap(buf, len);
+        return(NULL);
+    }
+
+    /*
+    ** How many columns?
+    */
+    p = buf;
+    while (*p != '\n') {
+        while (*p == ' ' || *p == '\t') p++;
+        while (!isspace(*p)) p++;
+        cols++;
+        while (*p == ' ' || *p == '\t') p++;
+    }
+
+    type = calloc(cols, sizeof(int));
+    data = calloc(rows*cols, sizeof(char *));
+
+    /*
+    ** Find each column and verify the format of each column
+    */
+
+    i = j = 0;
+    state = 0;
+    while (i < len) {
+        c = buf[i];
+        if (state == 0) {		/* reading spaces */
+            if (!isspace(c)) {
+                if (j == rows*cols) {
+                    parse_error("Too many values in file");
+                    break;
+                }
+                data[j++] = buf+i;
+                state = 1;
+            }
+        } else {                        /* reading !spaces */
+            if (isspace(c)) {
+                buf[i] = '\0';
+                state = 0;
+            }
+        }
+
+		/*
+		** Update column type
+		*/
+		if (j-1 > cols) {
+            k = (j-1) % cols;
+            if (isdigit(c) || c == '+' || c == '-')  type[k] |= 1;
+            else if (strchr("Ee.", c))               type[k] |= 2;
+            else if (!isspace(c))                    type[k] |= 4;
+		}
+
+		/*
+		** verify we got enough columns per row
+		*/
+        if (c == '\n' && (j % cols) != 0) {
+            parse_error("Ragged row in file: %s row %d\n", filename, j / cols);
+            break;
+        }
+        i++;
+    }
+
+    /* error condition */
+    if (i != len || j != rows*cols) {
+        munmap(buf, len);
+        free(data);
+        return(NULL);
+    }
+
+	/*
+	** Ok, we have each column in text.  Create the Var and convert the data
+	*/
+	for (i = 0 ; i < cols ; i++) {
+		if (type[k] & 4) {
+		} else if (type[k] & 2) {
+		} else if (type[k] & 1) {
+		}
+	}
+
+	return(NULL);
 }

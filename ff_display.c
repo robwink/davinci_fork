@@ -79,21 +79,23 @@ ff_display(vfuncptr func, Var *arg)
     else if (bands == 1) {
 	fname = tempnam(NULL,NULL);
 	fp = fopen(fname, "w");
-	fprintf(fp, "P2\n%d %d\n",
+	fprintf(fp, "P5\n%d %d\n",
 		GetSamples(V_SIZE(object), V_ORG(object)),
 		GetLines(V_SIZE(object), V_ORG(object)));
-			
-	if (KwToInt("max",kw,&max) > 0) {
-	    fprintf(fp,"%d\n",max);
-	} else {
-	    fprintf(fp,"%d\n", (2 << (NBYTES(V_FORMAT(object))*8-1)));
-	}
-	count = 0;
-	for (i = 0 ; i < GetLines(V_SIZE(object), V_ORG(object)) ; i++) {
-	    for (j = 0 ; j < GetSamples(V_SIZE(object), V_ORG(object)) ; j++) {
-		fprintf(fp, "%d ", extract_int(object, count++));
-	    }
-	    fprintf(fp,"\n");
+
+	
+	switch(V_FORMAT(object)) {
+	    case BYTE:
+		fprintf(fp, "255\n");
+		fwrite(V_DATA(object), 1, V_DSIZE(object), fp);
+		break;
+	    case SHORT:
+		fprintf(fp, "65535\n");
+		fwrite(V_DATA(object), 2, V_DSIZE(object), fp);
+		break;
+	    default:
+		fprintf(stderr, "Unable to write format: %d\n", V_FORMAT(object));
+		return(NULL);
 	}
 	fclose(fp);
     }

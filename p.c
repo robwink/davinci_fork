@@ -399,7 +399,7 @@ evaluate(Var * n)
                 p3 = pop(scope);
                 p2 = pop(scope);
                 p1 = pop(scope);
-				push(scope, pp_set_struct(p1, p2, p3));
+                push(scope, pp_set_struct(p1, p2, p3));
             } else {
                 evaluate(left);
                 evaluate(right);

@@ -22,12 +22,12 @@ int GetGSEHeader (FILE *fp, struct _iheader *h)
 	rewind(fp);
 	fstat(fileno(fp),&filebuf);
 	Size=(filebuf.st_size)-1024;
-	rewind(fp);
 
 	if (Size <=0){
 		return(0);
 	}
 
+#if 0
 	if (fread((void *)Num,sizeof (unsigned int),6,fp)!=6){
 		return (0);
 	}
@@ -46,10 +46,19 @@ int GetGSEHeader (FILE *fp, struct _iheader *h)
 		return(NULL);
 	}
 
+/*
 	if (strcmp(Nibs[8],"ci1656.bin"))
 		nb=1;
 	else
 		nb=2;
+*/
+#endif
+	/**
+	*** I have hard-coded these values becase the header word sucks.
+	**/
+	Col = 1032;
+	Row = 1024;
+	nb = 2;
 
 	plane=(Row*Col*nb);
 	if (Size % plane) {

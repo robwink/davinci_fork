@@ -130,11 +130,13 @@ ff_load(vfuncptr func, Var * arg)
 
         fclose(fp);	/* ImageMagick opens its own files */
 
-	if (input == NULL)    input = LoadHDF5(filename);
+		if (input == NULL)    input = LoadHDF5(filename);
 
 #ifdef HAVE_LIBMAGICK
-	if (input == NULL)    input = LoadGFX_Image(filename);
+		if (input == NULL)    input = LoadGFX_Image(filename);
 #endif
+
+		if (input == NULL)    input = LoadVanilla(filename);
 
         if (input == NULL) {
             sprintf(error_buf, "Unable to determine file type: %s", filename);
