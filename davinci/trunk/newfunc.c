@@ -49,44 +49,48 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
     for (i = 1 ; i < ac ; i++) {
         v = av[i];
         if (v == NULL) continue;
-        if (V_TYPE(v) == ID_KEYWORD) {
-            ptr = V_NAME(v);
-            len = strlen(ptr);
-            /**
-             ** set up error_buf, in case more than one keyword matches
-             **/
-            sprintf(error_buf,
-                    "Non-unique keyword match: %s(...%s=...)\n"
-                    "Possible matches:\n",
-                    fname, ptr);
+        if (V_TYPE(v) == ID_KEYWORD && V_NAME(v) != NULL) {
+			ptr = V_NAME(v);
+			len = strlen(ptr);
+			/**
+			 ** set up error_buf, in case more than one keyword matches
+			 **/
+			sprintf(error_buf,
+					"Non-unique keyword match: %s(...%s=...)\n"
+					"Possible matches:\n",
+					fname, ptr);
 
-            for (count = k = 0 ; alist[k].name != NULL ; k++) {
-                if (!strncasecmp(alist[k].name, ptr, len)) {
-                    /**
-                     ** Append to error buf.  Again, just in case.
-                     **/
-                    sprintf(error_buf + strlen(error_buf),
-                            "\t%s\n", alist[k].name);
-                    count++;
-                    j = k;
-                }
-            }
-            if (count == 0) {
-                parse_error("Unknown keyword to function: %s(... %s= ...)",
-                            fname, ptr);
+			for (count = k = 0 ; alist[k].name != NULL ; k++) {
+				if (!strncasecmp(alist[k].name, ptr, len)) {
+					/**
+					 ** Append to error buf.  Again, just in case.
+					 **/
+					sprintf(error_buf + strlen(error_buf),
+							"\t%s\n", alist[k].name);
+					count++;
+					j = k;
+				}
+			}
+			if (count == 0) {
+				parse_error("Unknown keyword to function: %s(... %s= ...)",
+							fname, ptr);
 				free(av);
-                return(0);
-            }
-            if (count > 1) {
-                parse_error(NULL);
+				return(0);
+			}
+			if (count > 1) {
+				parse_error(NULL);
 				free(av);
-                return(0);
-            }
-            /**
-            ** Get just the argument part
-            **/
-            v = V_KEYVAL(v);
+				return(0);
+			}
+			/**
+			** Get just the argument part
+			**/
+			v = V_KEYVAL(v);
         } else {
+			/* special case created by create_args  */
+			if (V_TYPE(v) == ID_KEYWORD) {
+				v = V_KEYVAL(v);
+			}
             for (j = 0 ; alist[j].name != NULL ; j++) {
                 if (alist[j].filled == 0) break;
             }
@@ -376,4 +380,36 @@ make_alist(char *name, int type, void *limits, void *value)
     a.value = value;
     a.filled = 0;
     return(a);
+}
+
+#include <stdarg.h>
+
+Var *
+create_args(int ac, ...)
+{
+	Var *args, *tail = NULL;
+	va_list ap;
+
+	char *key;
+	Var *val, *v;
+
+	va_start(ap, ac);
+	while(1) {
+		key = va_arg(ap, char *);
+		val = va_arg(ap, Var *);
+		if (val == NULL) {
+			va_end(ap);
+			break;
+		}
+		v = newVar();
+		V_NAME(v) = (key ? strdup(key) : NULL);
+
+		if (tail == NULL) {
+			args = tail = pp_keyword_to_arg(v, val);
+		} else {
+			tail->next = pp_keyword_to_arg(v, val);
+			tail = tail->next;
+		}
+	}
+	return(args);
 }
