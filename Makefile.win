@@ -25,22 +25,20 @@ OBJ=p.obj pp.obj symbol.obj \
 	ff.obj ff_ascii.obj ff_cluster.obj ff_display.obj ff_gnoise.obj ff_gplot.obj \
 	ff_load.obj ff_rgb.obj ff_random.obj ff_source.obj ff_version.obj ff_write.obj \
 	reserved.obj array.obj string.obj pp_math.obj rpos.obj init.obj help.obj \
-	io_grd.obj io_isis.obj io_lablib3.obj io_pnm.obj io_specpr.obj io_vicar.obj \
-	io_aviris.obj io_imath.obj io_magic.obj io_themis.obj\
-	ff_moment.obj io_ascii.obj ff_interp.obj  \
+	ff_moment.obj ff_interp.obj  \
 	lexer.obj parser.obj main.obj fit.obj misc.obj ufunc.obj scope.obj \
-	ff_header.obj ff_text.obj io_ers.obj io_goes.obj ff_bbr.obj ff_vignette.obj \
+	ff_header.obj ff_text.obj ff_bbr.obj ff_vignette.obj \
 	ff_pause.obj printf.obj ff_ifill.obj ff_xfrm.obj newfunc.obj ff_ix.obj ff_avg.obj \
 	ff_sort.obj ff_fft.obj fft.obj matrix.obj fft_mayer.obj dct.obj fft2f.obj \
 	x.obj xrt_print_3d.obj motif_tools.obj ff_convolve.obj apifunc.obj \
 	ff_plplot.obj ff_pca.obj ff_loadvan.obj tools.obj header.obj \
-	io_pds.obj io_hdf.obj ff_pbm.obj ff_modules.obj module_io.obj \
+	dvio_pds.obj dvio_hdf.obj ff_pbm.obj ff_modules.obj module_io.obj \
 	win32/w_readline.obj win32/map.obj system.obj win32/regex.obj \
-	ff_raw.obj ff_ascii.obj ff_filetype.obj \
+	ff_raw.obj ff_filetype.obj \
 	dvio_ers.obj dvio_imath.obj dvio_pnm.obj dvio_aviris.obj dvio_goes.obj \
 	dvio_isis.obj dvio_raw.obj dvio_envi.obj dvio_grd.obj dvio_magic.obj \
-	dvio_vicar.obj dvio.obj ff_meta.obj \
-	util.obj
+	dvio_vicar.obj dvio.obj dvio_specpr.obj dvio_themis.obj dvio_ascii.obj \
+	ff_meta.obj util.obj
 
 MODSUPPLIBOBJS=error.obj ff_struct.obj darray.obj avl.obj shared_globals.obj
 
@@ -131,7 +129,7 @@ ff_gnoise.obj: ff_gnoise.c parser.h config.h system.h darray.h avl.h \
 ff_gplot.obj: ff_gplot.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
 ff_load.obj: ff_load.c parser.h config.h system.h darray.h avl.h \
- ff_modules.h ufunc.h scope.h func.h io_specpr.h
+ ff_modules.h ufunc.h scope.h func.h dvio_specpr.h
 ff_rgb.obj: ff_rgb.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
 ff_random.obj: ff_random.c parser.h config.h system.h darray.h avl.h \
@@ -155,30 +153,15 @@ rpos.obj: rpos.c parser.h config.h system.h darray.h avl.h ff_modules.h \
 init.obj: init.c
 help.obj: help.c parser.h config.h system.h darray.h avl.h ff_modules.h \
  ufunc.h scope.h func.h help.h
-io_grd.obj: io_grd.c parser.h config.h system.h darray.h avl.h \
- ff_modules.h ufunc.h scope.h func.h
-io_isis.obj: io_isis.c parser.h config.h system.h darray.h avl.h \
- ff_modules.h ufunc.h scope.h func.h io_lablib3.h toolbox.h
-io_lablib3.obj: io_lablib3.c header.h tools.h parser.h config.h system.h \
- darray.h avl.h ff_modules.h ufunc.h scope.h func.h proto.h \
- io_lablib3.h toolbox.h
 io_pnm.obj: io_pnm.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
-io_specpr.obj: io_specpr.c parser.h config.h system.h darray.h avl.h \
- ff_modules.h ufunc.h scope.h func.h io_specpr.h
-io_vicar.obj: io_vicar.c parser.h config.h system.h darray.h avl.h \
- ff_modules.h ufunc.h scope.h func.h io_vicar.h
-io_aviris.obj: io_aviris.c parser.h config.h system.h darray.h avl.h \
- ff_modules.h ufunc.h scope.h func.h io_vicar.h
-io_imath.obj: io_imath.c parser.h config.h system.h darray.h avl.h \
- ff_modules.h ufunc.h scope.h func.h
-io_magic.obj: io_magic.c config.h parser.h system.h darray.h avl.h \
- ff_modules.h ufunc.h scope.h func.h
-io_themis.obj: io_themis.c parser.h config.h system.h darray.h avl.h \
+dvio_specpr.obj: dvio_specpr.c parser.h config.h system.h darray.h avl.h \
+ ff_modules.h ufunc.h scope.h func.h dvio_specpr.h
+dvio_themis.obj: dvio_themis.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
 ff_moment.obj: ff_moment.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
-io_ascii.obj: io_ascii.c parser.h config.h system.h darray.h avl.h \
+dvio_ascii.obj: dvio_ascii.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
 ff_interp.obj: ff_interp.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
@@ -201,7 +184,7 @@ ufunc.obj: ufunc.c parser.h config.h system.h darray.h avl.h \
 scope.obj: scope.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
 ff_header.obj: ff_header.c parser.h config.h system.h darray.h avl.h \
- ff_modules.h ufunc.h scope.h func.h io_specpr.h
+ ff_modules.h ufunc.h scope.h func.h 
 ff_text.obj: ff_text.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
 io_ers.obj: io_ers.c parser.h config.h system.h darray.h avl.h \
@@ -257,11 +240,11 @@ tools.obj: tools.c tools.h parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
 header.obj: header.c header.h tools.h parser.h config.h system.h \
  darray.h avl.h ff_modules.h ufunc.h scope.h func.h proto.h \
- io_lablib3.h toolbox.h
-io_pds.obj: io_pds.c header.h tools.h parser.h config.h system.h \
+ iomedley/io_lablib3.h toolbox.h
+dvio_pds.obj: dvio_pds.c header.h tools.h parser.h config.h system.h \
  darray.h avl.h ff_modules.h ufunc.h scope.h func.h proto.h \
- io_lablib3.h toolbox.h
-io_hdf.obj: io_hdf.c parser.h config.h system.h darray.h avl.h \
+ toolbox.h
+dvio_hdf.obj: dvio_hdf.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
 darray.obj: darray.c darray.h avl.h
 avl.obj: avl.c avl.h
