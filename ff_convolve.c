@@ -62,7 +62,7 @@ ff_self_convolve(vfuncptr func, Var * arg)
 	d1 = V_DSIZE(v1);
 
 	n = d1 *2-1;
-	out = calloc(sizeof(float), n);
+	out = (float *)calloc(sizeof(float), n);
 
 	for (m = 0 ; m < d1 ; m++) {
 		for (n = 0 ; n < d1 ; n++) {

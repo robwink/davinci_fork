@@ -188,7 +188,6 @@ struct _vfuncptr vfunclist[] = {
 
     { "self_convolve",     ff_self_convolve,    NULL },
     { "convolve",      ff_convolve,     		NULL },
-    { "convolve2",     ff_convolve2,     		NULL },
     { "convolve3",     ff_convolve3,     		NULL },
 
 #ifdef HAVE_XM_XR3DT_H

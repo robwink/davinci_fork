@@ -4,10 +4,11 @@
 extern "C" {
 #endif
 char *readline(char *);
-/* void *add_history(char *); */
+void add_history();
 void rl_callback_handler_install(char *, void (*)(char *));
 struct _hist_state* history_get_history_state(void);
 void rl_callback_read_char ();
+void rl_callback_handler_remove();
 int yywrap ( void );
 
 #include "hdf5.h"
@@ -23,9 +24,8 @@ void yy_switch_to_buffer ( struct yy_buffer_state *new_buffer);
 
 
 
+int yyparse(int,YYSTYPE);
 void yyerror(char *s);
-int yyparse(int, Var *);
-
 void log_line(char *);
 int yylex(void);
 

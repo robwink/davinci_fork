@@ -42,8 +42,8 @@ ff_fft(vfuncptr func, Var * arg)
 
 	if (img == NULL && x == 2) {
 		n = y*z;
-		in = calloc(n, sizeof(COMPLEX));
-		out = calloc(n, sizeof(COMPLEX));
+		in = (COMPLEX *)calloc(n, sizeof(COMPLEX));
+		out = (COMPLEX *)calloc(n, sizeof(COMPLEX));
 		for (i = 0 ; i < y ; i++) {
 			for (j = 0 ; j < z ; j++) {
 				in[i].re = extract_double(real, cpos(0, i, j, real));
@@ -52,8 +52,8 @@ ff_fft(vfuncptr func, Var * arg)
 		}
 	} else {
 		n = V_DSIZE(real);
-		in = calloc(n, sizeof(COMPLEX));
-		out = calloc(n, sizeof(COMPLEX));
+		in = (COMPLEX *)calloc(n, sizeof(COMPLEX));
+		out = (COMPLEX *)calloc(n, sizeof(COMPLEX));
 		for (i = 0 ; i < n ; i++) {
 			in[i].re = extract_double(real, i);
 			in[i].im = (img == NULL ? 0.0 : extract_double(img, i));
@@ -66,7 +66,7 @@ ff_fft(vfuncptr func, Var * arg)
 		rft(in, n, out);
 	}
 
-	data = calloc(n*2, sizeof(double));
+	data = (double *)calloc(n*2, sizeof(double));
 
 	for (i = 0 ; i < n ; i++) {
 		data[i*2] = out[i].re;
@@ -99,8 +99,8 @@ ff_realfft(vfuncptr func, Var * arg)
 	}
 
 	n = V_DSIZE(obj);
-	in = calloc(n, sizeof(double));
-	out = calloc(n, sizeof(double));
+	in = (double *)calloc(n, sizeof(double));
+	out = (double *)calloc(n, sizeof(double));
 
 	for (i = 0 ; i < n ; i++) {
 		in[i] = extract_double(obj, i);
@@ -146,7 +146,7 @@ ff_realfft2(vfuncptr func, Var * arg)
 		return(NULL);
 	}
 
-	in = calloc(n, sizeof(double));
+	in = (double *)calloc(n, sizeof(double));
 
 	for (i = 0 ; i < n ; i++) {
 		in[i] = extract_double(obj, i);
@@ -213,7 +213,7 @@ ff_realfft3(vfuncptr func, Var * arg)
 		return(NULL);
 	}
 
-	in = calloc(n, sizeof(double));
+	in = (double *)calloc(n, sizeof(double));
 
 	for (i = 0 ; i < n ; i++) {
 		in[i] = extract_double(obj, i);
