@@ -15,6 +15,13 @@ extern int indent;
 extern int pp_count;
 
 int log_it = 0;
+char *pp_str;
+
+void out()
+{
+    printf("%s", pp_str);
+}
+
 %}
 
 %token WHILE CONTINUE BREAK RETURN FOR WHERE
@@ -31,14 +38,14 @@ int log_it = 0;
 %%
 
 start
-    : statement				{ curnode = $$ = $1;  YYACCEPT; }
+    : statement             { curnode = $$ = $1;  YYACCEPT; }
     | error separator       
-			{ 
-				indent = 0; 
-			  	curnode = NULL; 
-			  	YYACCEPT;
-			}
-	|
+            { 
+                indent = 0; 
+                curnode = NULL; 
+                YYACCEPT;
+            }
+    |
     ;
 
 
@@ -49,13 +56,13 @@ statement
     | compound_statement                    { $$ = $1; }
     | iteration_statement                   { $$ = $1; }
     | command_statement                     { $$ = $1; }
-	| SHELL                                 { $$ = pp_shell(yytext); }
+    | SHELL                                 { $$ = pp_shell(yytext); }
     | QUIT                                  { YYABORT; }
-	| FUNC_DEF separator                    { $$ = NULL; }
-	| FUNC_DEF id '(' args ')' compound_statement           
-											{ $$ = NULL; }
-	/* function body tree is captured somewhere else */
-	;
+    | FUNC_DEF separator                    { $$ = NULL; }
+    | FUNC_DEF id '(' args ')' compound_statement           
+                                            { $$ = NULL; }
+    /* function body tree is captured somewhere else */
+    ;
 
 command_statement
     : help_statement separator      { $$ = $1; }
@@ -70,7 +77,7 @@ help_statement
 
 expr_stmt
     : separator                     { $$ = NULL; }
-    | expr separator          { $$ = $1; }
+    | expr separator          { $$ = p_mknod(ID_LINE, $1, $2); }
     ;
 
 compound_statement
@@ -86,36 +93,50 @@ selection_statement
     : IF '(' expr ')' statement ELSE statement 
                             { $$ = p_mknod(ID_IF, $3, p_mknod(ID_ELSE, $5, $7)); }
     | IF '(' expr ')' statement 
-							{ $$ = p_mknod(ID_IF, $3, $5); }
-	;
+                            { $$ = p_mknod(ID_IF, $3, $5); }
+    ;
 
 
 separator
-    : ';'							{ $$ = NULL; }
-    | '\n'							{ pp_count = 0; $$ = NULL; }
+    : ';'                           {  
+                                        $$ = p_mkval(ID_STRING, pp_str); 
+                                    }
+    | '\n'                          { 
+                                        pp_count = 0; 
+                                        $$ = p_mkval(ID_STRING, pp_str); 
+                                    }
     ;
 
 
 iteration_statement
     : WHILE '(' expr ')' statement    { $$ = p_mknod(ID_WHILE, $3, $5); }
     | FOR '(' expr_stmt expr_stmt expr ')' statement
-										{ $$ = p_mknod(ID_LIST, $3,
-											   p_mknod(ID_WHILE, $4,
-											   p_mknod(ID_FOR, $7, $5))); }
+                                        { $$ = p_mknod(ID_LIST, $3,
+                                               p_mknod(ID_WHILE, $4,
+                                               p_mknod(ID_FOR, $7, $5))); }
     | FOR '(' expr_stmt expr_stmt ')' statement
-										{ $$ = p_mknod(ID_LIST, $3,
-											   p_mknod(ID_WHILE, $4,
-											   p_mknod(ID_FOR, $6, NULL))); }
+                                        { $$ = p_mknod(ID_LIST, $3,
+                                               p_mknod(ID_WHILE, $4,
+                                               p_mknod(ID_FOR, $6, NULL))); }
 ;
 
 jump_statement
-    : CONTINUE separator          { $$ = p_mknod(ID_CONT,NULL,NULL); }
-    | BREAK separator             { $$ = p_mknod(ID_BREAK,NULL,NULL); }
-    | RETURN expr separator  { $$ = p_mknod(ID_RETURN,$2,NULL); }
+    : CONTINUE separator          { $$ = p_mknod(ID_LINE, 
+                                        p_mknod(ID_CONT,NULL,NULL),
+                                        $2); 
+                                  }
+    | BREAK separator             { $$ = p_mknod(ID_LINE,
+                                         p_mknod(ID_BREAK,NULL,NULL),
+                                         $2); 
+                                    }
+    | RETURN expr separator  { $$ = p_mknod(ID_LINE, 
+                                    p_mknod(ID_RETURN,$2,NULL),
+                                    $3); }
     ;
 
 args
-    : arg                               { $$ = p_mknod(ID_ARGS, NULL, $1); }
+    :                                   { $$ = NULL; }
+    | arg                               { $$ = p_mknod(ID_ARGS, NULL, $1); }
     | args ',' arg                      { $$ = p_mknod(ID_ARGS, $1, $3); }
     ;
 
@@ -133,10 +154,10 @@ range2
     :                                 { $$ = p_mknod(ID_RANGE, NULL, NULL); }
     | expr                      { $$ = p_mknod(ID_RANGE, $1, $1); }
     | ':' ':' expr              { $$ = p_mknod(ID_RSTEP, NULL, $3); }
-	| range   					  	  { $$ = $1; }
-	| range ':' 					  { $$ = p_mknod(ID_RSTEP, $1, NULL); }
-	| range ':' expr			  { $$ = p_mknod(ID_RSTEP, $1, $3); }
-	;
+    | range                           { $$ = $1; }
+    | range ':'                       { $$ = p_mknod(ID_RSTEP, $1, NULL); }
+    | range ':' expr              { $$ = p_mknod(ID_RSTEP, $1, $3); }
+    ;
 
 range
     : ':' expr                  { $$ = p_mknod(ID_RANGE, NULL, $2); }
@@ -146,8 +167,8 @@ range
 
 expr
     : concat                            { $$ = $1; }
-	| assignment_expr					{ $$ = $1; }
-	;
+    | assignment_expr                   { $$ = $1; }
+    ;
 
 assignment_expr
     : postfix_expr '=' expr       { $$ = p_mknod(ID_SET,$1,$3); }
@@ -156,14 +177,14 @@ assignment_expr
     | postfix_expr MULSET_OP expr { $$ = p_mknod(ID_MULSET,$1,$3); }
     | postfix_expr DIVSET_OP expr { $$ = p_mknod(ID_DIVSET,$1,$3); }
     | postfix_expr '[' WHERE expr ']' '=' expr  
-										{ $$ = p_mknod(ID_SET,
+                                        { $$ = p_mknod(ID_SET,
                                                p_mknod(ID_WHERE, $1, $4), $7); }
     ;
 
 
 concat
     : logical_OR                        { $$ = $1; }
-    | concat CAT_OP logical_OR			{ $$ = p_mknod(ID_CAT, $1, $3); }
+    | concat CAT_OP logical_OR          { $$ = p_mknod(ID_CAT, $1, $3); }
     ;
 
 logical_OR
@@ -222,13 +243,22 @@ string: STRING            { $$ = p_mkval(ID_STRING, (char *)$1); free($1); }
 primary_expr
     : id                            { $$ = $1; }
     | '(' expr ')'                  { $$ = $2; }
-	;
+    ;
+
+/*
+postfix_expr
+    : primary_expr                  { $$ = $1; }
+    | postfix_expr '[' ranges ']'   { $$ = p_mknod(ID_ARRAY,$1,$3); }
+    | postfix_expr '.' id           { $$ = p_mknod(ID_DEREF,$1,$3); }
+    | postfix_expr '(' args ')'     { $$ = p_mknod(ID_FUNCT,$1,$3); }
+    | postfix_expr '(' '?' ')'      { $$ = pp_help($1); }
+    ;
+*/
 
 postfix_expr
     : primary_expr                  { $$ = $1; }
     | postfix_expr '[' ranges ']'   { $$ = p_mknod(ID_ARRAY,$1,$3); }
     | postfix_expr '.' id           { $$ = p_mknod(ID_DEREF,$1,$3); }
-    | postfix_expr '(' ')'     		{ $$ = p_mknod(ID_FUNCT,$1,NULL); }
     | postfix_expr '(' args ')'     { $$ = p_mknod(ID_FUNCT,$1,$3); }
     | postfix_expr '(' '?' ')'      { $$ = pp_help($1); }
     ;
@@ -238,12 +268,12 @@ rhs_postfix_expr
     | rval                                          { $$ = $1; }
     | string                                        { $$ = $1; }
     | postfix_expr                                  { $$ = $1; }
-    | '$' id              			{ $$ = p_mknod(ID_ARGV, $2, NULL); }
-    | '$' id '[' expr ']' 			{ $$ = p_mknod(ID_ARGV, $2, $4); }
-    | '$' ival              		{ $$ = p_mknod(ID_ARGV, $2, NULL); }
-    | '$' ival '[' expr ']' 		{ $$ = p_mknod(ID_ARGV, $2, $4); }
-	| '{' args '}'					{ $$ = p_mknod(ID_CONSTRUCT, $2, NULL); }
-	;
+    | '$' id                        { $$ = p_mknod(ID_ARGV, $2, NULL); }
+    | '$' id '[' expr ']'           { $$ = p_mknod(ID_ARGV, $2, $4); }
+    | '$' ival                      { $$ = p_mknod(ID_ARGV, $2, NULL); }
+    | '$' ival '[' expr ']'         { $$ = p_mknod(ID_ARGV, $2, $4); }
+    | '{' args '}'                  { $$ = p_mknod(ID_CONSTRUCT, $2, NULL); }
+    ;
 
 %%
 
