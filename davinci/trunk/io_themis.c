@@ -82,6 +82,14 @@ unsigned int StopStart_Sync = {0x8CABCAF0};
 extern unsigned char *Themis_Entry(unsigned char*, int *);
 #endif
 
+extern unsigned char * read_predictive(FILE *infile, 
+													int *total_size, 
+													int db, 
+													int size_guess);
+
+extern unsigned char * read_DCT(FILE *infile, 
+											int *total_size, 
+											int guess_size);
 
 
 int 
@@ -283,6 +291,7 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width)
 {
 	int i;
 	msdp_Header	mh;
+	msdp_Header	first_mh;
 	int count;
 	FILE *fp=infile;
 	int height=0;
@@ -298,11 +307,14 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width)
 	int	chunk_len;
 	unsigned int xcomp, pcomp, spacing, levels;
 	int huffman_table;
+	int quiet=0;
 
-	count=fread(&mh,sizeof(msdp_Header),1,fp);
+/* Read the 1st header for set-up perposes */
+
+	count=fread(&first_mh,sizeof(msdp_Header),1,fp);
 	if (!count)
 		return(0);
-	if (mh.bands==0)
+	if (first_mh.bands==0)
 		width=VIS_TEST_WIDTH;
 	else
 		width=VIS_WIDTH;
@@ -311,7 +323,8 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width)
 
 	rewind(fp);
 
-
+/* Now Take a run through the file to collect ALL header info which will tell us the size
+*/
 	while(1) {
 		count=fread(&mh,sizeof(msdp_Header),1,fp);
 		if (!(count))
@@ -328,53 +341,71 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width)
 	}
 
 	if ((height*width) != size) {
-		parse_error("Height*Width doesn't equate to size: %d vs %d\n",(height*width),size);
+/*		parse_error("Height*Width doesn't equate to size: %d vs %d\n",(height*width),size);*/
 		size=((height*width) > size ? (height*width):(size));
 		height=size/width; /*We took the larger of the two
 								sizes, need to correct for height*/
+		
 	}
-	*data=(unsigned char *)calloc(size,sizeof(char));
+
+	size+=1024; /*for the header*/
 
 	rewind(fp);
 
-	while (1) {
-		count=fread(&mh,sizeof(msdp_Header),1,fp);
-		if (!(count))
-			break;
-
-		swab((char *)&mh,(char *)&mh,sizeof(msdp_Header));
-		frag=(mh.len_lo | (mh.len_hi << 16));
-		swab((char *)&mh,(char *)&mh,sizeof(msdp_Header));
-
-		if(in_chunk!=NULL)
-			free(in_chunk);
-		in_chunk=(unsigned char *)calloc(frag,sizeof(char));
-		fread(in_chunk,frag,sizeof(char),fp);
-
-/*decode frag if necessary; offline for now
-
-		xcomp = (mh.comp[0] >> 2) & 3;
-		pcomp = (mh.comp[0] & 3);
-		spacing = mh.comp[4] | (mh.comp[5] << 8);
-		levels = (mh.comp[1] >> 5)+1;
-		huffman_table = mh.comp[1]&0xf;
-
-
-		if (xcomp || pcomp) {
-			out_chunk=decode_chunk(,,,);
-			memcpy((*data+idx),out_chunk,chunk_len);
-			idx+=chunk_len;
-		}
-
-		else {
-			memcpy((*data+idx),in_chunk,frag);
-			idx+=frag;
-		}
+/*  Okay, now we know how big it is, we can also figure out if it's compressed and
+**  if so, by which method.  Having determined this, we call the appropriate 
+**  data_read routine and return the buffer
 */
-		memcpy((*data+idx),in_chunk,frag);
-		idx+=frag;
-      fread(&dummy,1,1,fp);
-    }
+
+	if (first_mh.comp[0]==1) { /*Predictively Compressed*/
+		 parse_error("Reading Predictively Compressed Image");
+#ifdef HAVE_LIBMSSS_VIS
+		*data=read_predictive(infile,&size,quiet,size);
+		height=(size-1024)/width; /*Subtract off the header bytes which added in durring the read*/
+#else
+		parse_error("Sorry, you do not have the correct decompression library for this file...aborting");
+		return(0);
+#endif
+	}
+
+	else if (first_mh.comp[0]==8) { /* DCT Compressed */
+		 parse_error("Reading DCT Compressed Image");
+#ifdef HAVE_LIBMSSS_VIS
+		 *data=read_DCT(infile,&size,size);
+		 height=size/width; 
+		 size+=1024;/*Pad size, this routine doesn't add the 1024, so we gotta fake it for below*/
+#else
+		parse_error("Sorry, you do not have the correct decompression library for this file...aborting");
+		return(0);
+#endif
+	}
+
+	else {
+		  /* Raw data: Just read it on in...*/
+			 parse_error("Reading Raw Image");
+			 idx=1024;
+			 *data=(unsigned char *)calloc(size,sizeof(char));
+			  while (1) {
+				  count=fread(&mh,sizeof(msdp_Header),1,fp);
+				  if (!(count))
+					  break;
+
+				  swab((char *)&mh,(char *)&mh,sizeof(msdp_Header));
+				  frag=(mh.len_lo | (mh.len_hi << 16));
+				  swab((char *)&mh,(char *)&mh,sizeof(msdp_Header));
+
+				  if(in_chunk!=NULL)
+					  free(in_chunk);
+				  in_chunk=(unsigned char *)calloc(frag,sizeof(char));
+				  fread(in_chunk,frag,sizeof(char),fp);
+				  memcpy((*data+idx),in_chunk,frag);
+				  idx+=frag;
+		      fread(&dummy,1,1,fp);
+   		 }
+	}
+
+	memmove(*data,(*data+1024),(size-1024));
+	*data=realloc(*data,(size-1024));
 
     return(height);
 }
@@ -442,7 +473,10 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
 
     else {
         height=Process_SC_Vis(infile,&buf,&width);
-        return(newVal(BSQ,width,height,1,BYTE,buf));
+		  if (height)
+        	return(newVal(BSQ,width,height,1,BYTE,buf));
+		  else 
+			return(NULL);
     }
 	
 

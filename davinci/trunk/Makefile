@@ -24,7 +24,7 @@ XRTLIBS =
 
 CC     = gcc
 DEFS   = -DHAVE_CONFIG_H -Ilib
-LIBS   = $(READLINE_LIB) $(XLIBS) -lplplotFX -lMagick -ltiff -lproj -lz -lreadline -ltermcap -ljpeg -lusds -lhdf5 -lXm -lXext -lXt -lX11 -lm 
+LIBS   = $(READLINE_LIB) $(XLIBS) -lplplotFX -lMagick -ltiff -lproj -lz -lreadline -ltermcap -ljpeg -lmsss_vis -lusds -lhdf5 -lXm -lXext -lXt -lX11 -lm 
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<

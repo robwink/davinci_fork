@@ -24,6 +24,9 @@
 /*Define if you have Xm library*/
 #undef HAVE_LIBXM
 
+/*Define if you have the PlPlot library
+#undef HAVE_PLPLOT
+
 /*Define if you have plplotFX library*/
 #undef INCLUDE_API
 
@@ -68,6 +71,9 @@
 
 /* Define if you have the strdup function.  */
 #undef HAVE_STRDUP
+
+/* Define if you have the strndup function.  */
+#undef HAVE_STRNDUP
 
 /* Define if you have the strspn function.  */
 #undef HAVE_STRSPN
@@ -158,6 +164,9 @@
 
 /* Define if you have the m library (-lm).  */
 #undef HAVE_LIBM
+
+/* Define if you have the msss_vis library (-lmsss_vis).  */
+#undef HAVE_LIBMSSS_VIS
 
 /* Define if you have the proj library (-lproj).  */
 #undef HAVE_LIBPROJ

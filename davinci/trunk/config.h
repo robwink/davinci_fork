@@ -25,6 +25,9 @@
 /*Define if you have Xm library*/
 #define HAVE_LIBXM 1
 
+/*Define if you have the PlPlot library
+#define HAVE_PLPLOT 1
+
 /*Define if you have plplotFX library*/
 #define INCLUDE_API 1
 
@@ -69,6 +72,9 @@
 
 /* Define if you have the strdup function.  */
 #define HAVE_STRDUP 1
+
+/* Define if you have the strndup function.  */
+/* #undef HAVE_STRNDUP */
 
 /* Define if you have the strspn function.  */
 #define HAVE_STRSPN 1
@@ -159,6 +165,9 @@
 
 /* Define if you have the m library (-lm).  */
 #define HAVE_LIBM 1
+
+/* Define if you have the msss_vis library (-lmsss_vis).  */
+#define HAVE_LIBMSSS_VIS 1
 
 /* Define if you have the proj library (-lproj).  */
 #define HAVE_LIBPROJ 1
