@@ -111,15 +111,16 @@ logic_test() {
 string_logic_test() {
 	echo $ac_n "     string $1... $ac_c"
 	p1=""
-	p2=""
+	p2="BEGIN {"
 	for i in zero one two three
 	do
 		for j in zero one two three
 		do
 			p1=$p1" \"$i\" $1 \"$j\" ;"
-			p2=$p2'BEGIN { if ("'$i'"'"$1"'"'$j'") print 1; else print 0 } '
+			p2=$p2' if ("'$i'"'"$1"'"'$j'") print 1; else print 0; '
 		done
 	done
+	p2=$p2' }'
 	p2=`awk "$p2" | tr -d '[:space:]'`
 	p3=`davinci -qe "$p1" | tr -d '[:space:]'`
 	match_string "$p2" "$p3"
