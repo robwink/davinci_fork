@@ -245,8 +245,17 @@ int
 send_to_plot(char *s)
 {
 #ifdef GPLOT_CMD
+    char *gplot_cmd;
+
+    if (getenv("GPLOT_CMD") != NULL) {
+		gplot_cmd = strdup(getenv("GPLOT_CMD"));
+        // gplot_cmd = strchr(gplot_cmd,'=')+1;
+    } else {
+        gplot_cmd = GPLOT_CMD;
+    }
+
     if (pfp == NULL) {
-        if ((pfp = popen(GPLOT_CMD, "w")) == NULL) {
+        if ((pfp = popen(gplot_cmd, "w")) == NULL) {
             fprintf(stderr, "Unable to open gplot.\n");
             return(0);
         }
