@@ -740,7 +740,7 @@ ProcessVarIntoString(Var *element, char *name)
 
 		else if (V_FORMAT(element) == DOUBLE)
 		{
-			sprintf(tmp_string,"%lf",V_DOUBLE(element));
+			sprintf(tmp_string,"%.10g",V_DOUBLE(element));
 		}
 
 		else {
@@ -798,7 +798,7 @@ ProcessVarIntoString(Var *element, char *name)
 				break;
 
 		case DOUBLE:
-				sprintf(tmp_string,"%lf, ",extract_double(element,idx));
+				sprintf(tmp_string,"%.10g, ",extract_double(element,idx));
 				break;
 
 		}
@@ -1208,7 +1208,7 @@ output_big_var(FILE *out,Var *data,char *inset,char *name)
 
 		case DOUBLE:
 						dp=((double *)V_DATA(data));
-						fprintf(out,"%lf%s",dp[i],dmrk);	
+						fprintf(out,"%.10g%s",dp[i],dmrk);	
 						break;
 		}
 	}
