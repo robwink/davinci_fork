@@ -3,7 +3,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>Davinci - GUI Module</title>
-    <link rel="stylesheet" type="text/css" href="davinci.css"> 
+    <link rel="stylesheet" type="text/css" href="../davinci.css"> 
   </head>
 
   <body>
@@ -21,6 +21,11 @@
 	<li><a href="#basics">Basic Windows</a></li>
 	<li><a href="#hello">Hello, world!</a></li> 
 	<li><a href="#resources">Resource Manipulation</a></li>
+	<li><a href="#layout">Layout Managers</a></li>
+	<li><a href="#callbacks">Callbacks</a></li>
+	<li><a href="#examples">Example Applications</a></li>
+	<li><a href="#bugs">Known Bugs &amp; Outstanding Issues</a></li>
+	<li><a href="#contact">Contacting the Author</a></li>
       </ul>
 
     </div>
@@ -56,7 +61,9 @@
 
       <p>To load and initialize the GUI module, enter:</p>
 
-      <p class="code">load_module(&quot;gui&quot;)</p>
+      <pre class="code">
+load_module(&quot;gui&quot;)
+</pre>
 
     </div>
 
@@ -148,10 +155,8 @@
 
       <div class="widgetlist">
 	<table>
-	  <colgroup></colgroup>
-	  <colgroup></colgroup>
-	  <colgroup></colgroup>
-	  <colgroup></colgroup>
+	  <!-- This colgroup is necessary for styling. -->
+	  <colgroup><col><col><col><col></colgroup>
 	  <tr><th>Davinci Name</th><th>Xt Name</th><th>Description</th><th>Usability</th><th>Notes</th></tr>
 	  <tr><td>arrowButton</td><td>XmArrowButton</td><td>Arrow-shaped push button</td><td>Complete</td></tr>
 	  <tr><td>cascadeButton</td><td>XmCascadeButton</td><td>Menu support</td><td>None</td><td>Pending - menu implementation</td></tr>
@@ -204,7 +209,9 @@
 
       <p>To create a <i>TopLevelShell</i> widget, enter:</p>
 
-      <p class="code">top = gui.create(&quot;topLevelShell&quot;, name = &quot;My Davinci App&quot;)</p>
+      <pre class="code">
+top = gui.create(&quot;topLevelShell&quot;, name = &quot;My Davinci App&quot;)
+</pre>
 
       <p>The value stored in <code>top</code> is a Davinci handle to the underlying Xt widget.  You do not need to save the handle, however it is the only way to reference the widget later.  Except in the case of simple <i>Label</i> widgets and the like, you'll need to save most handles.</p>
 
@@ -220,12 +227,12 @@
 
       <p>The Davinci program below creates a simple window with a message in it:</p>
 
-      <p class="code">
-	load_module(&quot;gui&quot;)<br>
-	top = gui.create(&quot;topLevelShell&quot;, name = &quot;Hello!&quot;)<br>
-	label = gui.create(&quot;label&quot;, top, { labelString = &quot;Hello, world!&quot; })<br>
-	gui.realize(top)<br>
-      </p>
+      <pre class="code">
+load_module(&quot;gui&quot;)
+top = gui.create(&quot;topLevelShell&quot;, name = &quot;Hello!&quot;)
+label = gui.create(&quot;label&quot;, top, { labelString = &quot;Hello, world!&quot; })
+gui.realize(top)
+</pre>
 
       <p>This example may be entered interactively, placed into an executable Davinci script, or placed in a file and executed via <code>source()</code>.</p>
 
@@ -233,7 +240,9 @@
 
       <p>To destroy the window (and both widgets created), either destroy it in your window manager (usually by clicking <b>X</b> on the title bar), or enter:</p>
 
-      <p class="code">gui.destroy(top)</p>
+      <pre class="code">
+gui.destroy(top)
+</pre>
 
       <p>Either method will destroy the widgets completely.  While the variables <code>top</code> and <code>label</code> will still contain values, they will no longer be recognized as widget handles and should not be used.</p>
 
@@ -255,11 +264,11 @@
 
       <p>Building on the &quot;Hello, world!&quot; example, the <i>labelString</i> resource could have been set by explicitly creating a struct, as below:</p>
 
-      <p class="code">
-	labelResources = struct()<br>
-	labelResources.labelString = &quot;Hello, world!&quot;<br>
-	label = gui.create(&quot;label&quot;, top, labelResources)<br>
-      </p>
+      <pre class="code">
+labelResources = struct()
+labelResources.labelString = &quot;Hello, world!&quot;
+label = gui.create(&quot;label&quot;, top, labelResources)
+</pre>
 
       <p>Either method is acceptable, but explicitly creating the struct will make your code cleaner when dealing with a large number of resources.</p>
 
@@ -267,12 +276,12 @@
 
       <p>To set multiple resources on a widget at once, add more elements to the structure:</p>
 
-      <p class="code">
-	labelResources = struct()<br>
-	labelResources.labelString = &quot;Hello, world!&quot;<br>
-	labelResources.alignment = &quot;ALIGNMENT_END&quot;<br>
-	label = gui.create(&quot;label&quot;, top, labelResources)<br>
-      </p>
+      <pre class="code">
+labelResources = struct()
+labelResources.labelString = &quot;Hello, world!&quot;
+labelResources.alignment = &quot;ALIGNMENT_END&quot;
+label = gui.create(&quot;label&quot;, top, labelResources)
+</pre>
 
       <p>If you modify the example and add the <i>alignment</i> resource, you will see that the label now &quot;sticks&quot; to the side of the side of the window when you expand it, instead of staying centered.</p>
 
@@ -282,17 +291,17 @@
 
       <p>To obtain the resources for our label widget:</p>
 
-      <p class="code">
-	resources = gui.get(label)
-      </p>
+      <pre class="code">
+resources = gui.get(label)
+</pre>
 
       <p>If Davinci is in <i>verbose</i> mode, you will see the structure returned:</p>
 
-      <p class="output">
-	struct, 2 elements<br>
-	alignment: &quot;ALIGNMENT_END&quot;<br>
-	labelString: &quot;Hello, world!&quot;<br>
-      </p>
+      <pre class="output">
+struct, 2 elements
+  alignment: &quot;ALIGNMENT_END&quot;
+  labelString: &quot;Hello, world!&quot;
+</pre>
 
       <h3>Resource Visibility</h3>
 
@@ -302,90 +311,185 @@
 
       <p>Running <code>gui.get(label, all = 1)</code> from our example yields:</p>
 
-      <p class="output">
-	struct, 30 elements<br>
-	ancestorSensitive: &quot;true&quot;<br>
-	sensitive: &quot;true&quot;<br>
-	depth: 24	<br>
-	mappedWhenManaged: &quot;true&quot;<br>
-	numChildren: 1	<br>
-	allowShellResize: &quot;true&quot;<br>
-	saveUnder: &quot;false&quot;<br>
-	overrideRedirect: &quot;false&quot;<br>
-	title: &quot;Hello!&quot;<br>
-	wmTimeout: 5000	<br>
-	waitforwm: &quot;true&quot;<br>
-	transient: &quot;false&quot;<br>
-	baseWidth: -1	<br>
-	baseHeight: -1	<br>
-	minWidth: -1	<br>
-	minHeight: -1	<br>
-	maxWidth: -1	<br>
-	maxHeight: -1	<br>
-	widthInc: -1	<br>
-	heightInc: -1	<br>
-	minAspectX: -1	<br>
-	minAspectY: -1	<br>
-	maxAspectX: -1	<br>
-	maxAspectY: -1	<br>
-	iconX: -1	<br>
-	iconY: -1	<br>
-	clientLeader: -1	<br>
-	urgency: &quot;false&quot;<br>
-	iconName: &quot;Hello!&quot;<br>
-	iconic: &quot;false&quot;<br>
-      </p>
+      <pre class="output">
+struct, 30 elements
+  ancestorSensitive: &quot;true&quot;
+  sensitive: &quot;true&quot;
+  depth: 24	
+  mappedWhenManaged: &quot;true&quot;
+  numChildren: 1	
+  allowShellResize: &quot;true&quot;
+  saveUnder: &quot;false&quot;
+  overrideRedirect: &quot;false&quot;
+  title: &quot;Hello!&quot;
+  wmTimeout: 5000	
+  waitforwm: &quot;true&quot;
+  transient: &quot;false&quot;
+  baseWidth: -1	
+  baseHeight: -1	
+  minWidth: -1	
+  minHeight: -1	
+  maxWidth: -1	
+  maxHeight: -1	
+  widthInc: -1	
+  heightInc: -1	
+  minAspectX: -1	
+  minAspectY: -1	
+  maxAspectX: -1	
+  maxAspectY: -1	
+  iconX: -1	
+  iconY: -1	
+  clientLeader: -1	
+  urgency: &quot;false&quot;
+  iconName: &quot;Hello!&quot;
+  iconic: &quot;false&quot;
+</pre>
 
       <p>As you can see, a few resources were inherited from the parent, such as <code>title</code> and <code>iconName</code>.  Container and layout widgets all impart some resources on their children.  Most of these will never be used by the developer, hence the idea of &quot;default&quot; and hidden resources.</p>
 
       <p>Because some resource query operations may be costly (especially when images are involved), you can explicitly query specific resources.  To query a single resource:</p>
 
-      <p class="code">
-	gui.get(label, &quot;labelString&quot;)
-      </p>
+      <pre class="code">
+gui.get(label, &quot;labelString&quot;)
+</pre>
 
       <p>Which yields:</p>
 
-      <p class="output">
-	 struct, 1 elements<br>
-	 labelString: &quot;Hello, world!&quot;<br>
-      </p>
+      <pre class="output">
+struct, 1 elements
+  labelString: &quot;Hello, world!&quot;
+</pre>
 
       <p>To query multiple resources, build a resource list in either a <code>struct</code>:</p>
 
-      <p class="code">
-	structlist = { "labelString", "alignment" }<br>
-	gui.get(label, structlist)<br>
-      </p>
+      <pre class="code">
+structlist = { "labelString", "alignment" }
+gui.get(label, structlist)
+</pre>
 
       <p>...or a <code>text</code> object:</p>
 
-      <p class="code">
-	textlist = cat(&quot;labelString&quot;, &quot;alignment&quot;, axis = y)<br>
-	gui.get(label, textlist)<br>
-      </p>
+      <pre class="code">
+textlist = cat(&quot;labelString&quot;, &quot;alignment&quot;, axis = y)
+gui.get(label, textlist)
+</pre>
 
       <p>Both produce the same output:</p>
 
-      <p class="output">
-	 struct, 2 elements<br>
-	 labelString: &quot;Hello, world!&quot;<br>
-	 alignment: &quot;ALIGNMENT_END&quot;<br>
-      </p>
+      <pre class="output">
+struct, 2 elements
+  labelString: &quot;Hello, world!&quot;
+  alignment: &quot;ALIGNMENT_END&quot;
+      </pre>
 
       <h3>Pseudo-Object-Oriented Access</h3>
 
       <p>A natural side-effect of Davinci structure access allows you to access resources in a manner familiar to object-oriented developers:</p>
 
-      <p class="code">
-	lstring = gui.get(label).labelString
-      </p>
+      <pre class="code">
+lstring = gui.get(label).labelString
+</pre>
 
       <p>If you use this method, it's still a good idea to explicitly request the resource you need, for efficiency:</p>
 
-      <p class="code">
-	lstring = gui.get(label, "labelString").labelString
-      </p>
+      <pre class="code">
+lstring = gui.get(label, "labelString").labelString
+</pre>
+
+    </div>
+
+    <h2 id="layout">Layout Managers</h2>
+
+    <div class="box">
+
+      <h3>RowColumn</h3>
+
+      <p>The <i>RowColumn</i> widget is flexible and easy to use, providing a basic tabular layout style, very similar to HTML tables.  In its simplest usage, the number of either rows or columns is fixed, and the other axis expands as widgets are added.</p>
+
+      <p>A simple example which uses multiple <i>RowColumn</i> widgets to create a push-button calculator is referenced below.  The complete source code is available here:</p>
+      
+      <p class="example">[Example] <a href="examples/calculator.dav">Davinci Calc</a></p>
+
+      <p>When run, the calculator looks like this:</p>
+
+      <img class="example" src="calculator.png" alt="[Davinci Calc Application]">
+
+      <p>The example uses two <i>RowColumn</i> widgets:  one to layout the buttons, and the other to layout the keypad and the display.  It demonstrates two different packing styles.  See comments in the code for details.</p>
+
+    </div>
+
+    <h2 id="callbacks">Callbacks</h2>
+
+    <div class="box">
+
+      <p>Callbacks are what make Davinci GUIs interactive.  By registering a callback on widgets such as <i>PushButton</i> and <i>FileSelectionBox</i>, your Davinci application can react to user events.  The callback mechanism allows Davinci code to be run when a GUI event occurs.</p>
+
+      <p>By default, most events are ignored unless the developer explicitly registers a callback.  Some widgets have a default callback which is used when the developer has not overridden it.  See the Xt/Motif references for details.</p>
+
+      <p>To register a callback, you need to know the internal name of the callback, as defined by Xt, and you need to define a Davinci function to respond to the callback.</p>
+
+      <p>Here's a simple example:</p>
+
+      <pre class="code">
+load_module(&quot;gui&quot;)
+
+define buttonCallback() {
+  printf(&quot;You pressed the button!\n&quot;);
+}
+
+top = gui.create(&quot;topLevelShell&quot;, name = &quot;Hello!&quot;)
+pb = gui.create(&quot;pushButton&quot;, top, { labelString = &quot;Press Me!&quot; })
+gui.addcallback(pb, "activate", "buttonCallback()")
+gui.realize(top)
+</pre>
+
+    </div>
+
+    <h2 id="examples">Example Applications</h2>
+
+    <div class="box">
+
+      <h3>Davinci Calc</h3>
+
+      <p>Presents a simple calculator application using <i>PushButton</i>, <i>TextField</i>, and <i>RowColumn</i> widgets.  Callbacks are also demonstrated.</p>
+
+      <p class="example">[Example] <a href="examples/calculator.dav">Davinci Calc</a></p>
+
+      <h3>VICAR DCS Tool</h3>
+
+      <p>Presents an image manipulation tool highlighting the <i>VICAR</i> widget.  This example uses the <i>FileSelectionBox</i> widget and callbacks.</p>
+
+      <p class="note">NOTE: this example requires a 10-band ISIS projected cube.</p>
+
+      <p class="example">[Example] <a href="examples/vicar.dav">VICAR DCS Tool</a></p>
+
+    </div>
+
+    <h2 id="bugs">Known Bugs &amp; Outstanding Issues</h2>
+
+    <div class="box">
+      
+      <h3>Reporting Bugs</h3>
+
+      <p>Please report any bugs that you find, including instances of those mentioned below.  When possible, provide code that demonstrates the bug.</p>
+
+      <h3>Container/Layout Widgets</h3>
+
+      <p>If you place a layout manager widget--such as a <i>RowColumn</i>--inside another layout manager--such as a <i>Form</i>, it may not be possible to control the <i>Form</i> resources that the <i>RowColumn</i> widget inherits.</p>
+      
+      <p>You may notice similar problems if you place a complex widget--such as the <i>VICAR</i> widget--inside a container/layout manager.  Some widgets provide their own frame and layout, and do not conform to other layout manager constraints.  These widgets work best when give their own window frame.</p>
+
+      <h3>Memory Leaks</h3>
+
+      <p>There may be memory leaks, particularly widgets that do not clean up after themselves when destroyed as a side-effect of a window being closed by the user, or being destroyed when a parent is destroyed via <code>gui.destroy()</code>.</p>
+
+    </div>
+
+    <h2 id="contact">Contacting the Author</h2>
+
+    <div class="box">
+
+      <p>If you have any questions/comments/bug reports, please send email to <a href="mailto:Jim.Stewart@asu.edu">Jim.Stewart@asu.edu</a>.</p>
 
     </div>
 

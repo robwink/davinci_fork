@@ -1,0 +1,160 @@
+#!/usr/local/bin/davinci -ifv
+
+verbose = 1
+
+# Load the GUI module.
+
+load_module("gui")
+
+# Support Functions
+
+source("/themis/lib/themis_dvrca")
+
+define find_band(obj) {
+        bands = obj.qube.band_bin.band_bin_original_band
+        for (i = 1 ; i <= length(bands) ; i+=1) {
+                if (bands[i] == $1) return(i);
+        }
+        return(1)
+}
+
+# GUI functions.
+
+define errordialog() {
+  printf("%s: %s\n", $1, $2)
+}
+
+define showVicar(widgetMap) {
+
+  fileName = $1
+
+  # Load the selected cube.
+
+  data = load_pds(fileName)
+
+  if (dim(data.qube.data)[3] != 10) {
+    errordialog(fileName, "Only 10-band cubes are supported.")
+    return(0)
+  }
+
+  # Convert to BSQ for the VICAR widget.
+
+  data = data.qube.data
+  data[where data < 0] = 0
+  dpyData = bsq(cat(stretch(data[,,3]),stretch(data[,,5]),stretch(data[,,7]),z))
+
+  # Create a frame and a new VICAR widget inside it.
+
+  vtop = gui.create("topLevelShell", name=fileName)
+  vicar = gui.create("vicar", vtop, { image = dpyData })
+  gui.set(vicar, { inputMode = "MODE_SELECT" })
+
+  # Add a callback to handle selections.
+  # The widgetid is sent in to the callback to identify the widget.
+
+  callbackFunc = sprintf("vicarSelectionCallback(%d)", vicar)
+  gui.addcallback(vicar, "select", callbackFunc)
+
+  # Add the new widget to the global map.
+
+  newVicar = { vicarWidgetId = vicar, origData = data, dpyData = dpyData, fileName = fileName }
+  add_struct(widgetMap, name = sprintf("%d", vicar), value = newVicar)
+
+  # Make it visible to the user.
+
+  gui.realize(vtop)
+
+}
+
+#####
+#
+# Callbacks
+#
+#####
+
+define fileSelectCallback() {
+
+  # Bring required globals into scope.
+
+  global(fs)
+  global(map)
+
+  # Get the selected file path from the fileSelectionBox widget.
+
+  dirSpec = gui.get(fs, "dirSpec").dirSpec
+
+  # Create an display a VICAR widget.
+
+  showVicar(widgetMap = map, dirSpec)
+
+  return(0)
+
+}
+
+define vicarSelectionCallback() {
+
+  # The widgetid is passed in when the callback occurs.
+
+  vicarWidget = $1
+
+  # Bring required globals into scope.
+
+  global(map)
+
+  # Figure out what the user selected.
+
+  selection = gui.get(vicarWidget, "selection").selection
+  x = int(selection.x)
+  y = int(selection.y)
+  width = int(selection.width)
+  height = int(selection.height)
+
+  # Find the widget in the global map and process it.
+
+  for (i = 1; i <= length(map); i = i + 1) {
+    if (map[i].vicarWidgetId == vicarWidget) {
+      vicarInfo = map[i];
+
+      # Crop out the selected area, apply the DCS algorithm, replace the
+      # VICAR image data, and clear the selection.
+
+      crop = vicarInfo.origData[x:(x+width), y:(y+height), 3:7:2];
+      dcs = bsq(dcs(cat(crop[,,1],crop[,,2],crop[,,3],z),ignore=0))
+      for (yy = y; yy < (y + height); yy = yy + 1) {
+        for (xx = x; xx < (x + width); xx = xx + 1) {
+          vicarInfo.dpyData[xx,yy] = dcs[((xx-x)+1),((yy-y)+1)]
+        }
+      }
+      gui.set(vicarWidget, { image = vicarInfo.dpyData, selection = {} })
+    }
+  }
+
+  return(0)
+
+}
+
+#####
+#
+# Main
+#
+#####
+
+# Setup some global variables to maintain state.
+
+map = struct()
+
+# Create a container to hold the fileSelectionBox widget.
+
+top = gui.create("topLevelShell", name="Davinci")
+
+# Add the fileSelectionBox.
+
+fs = gui.create("fileSelectionBox", top, { pattern = "*.cub" })
+
+# Register a callback for the "OK" button.
+
+gui.addcallback(fs, "ok", "fileSelectCallback()")
+
+# Make everything visible to the user.
+
+gui.realize(top)
