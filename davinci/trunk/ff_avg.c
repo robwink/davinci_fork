@@ -127,7 +127,7 @@ Var *
 ff_min(vfuncptr func, Var * arg)
 {
 	Var *obj=NULL;
-	char *ptr;
+	char *ptr=NULL;
 	int axis = 0;
 	char *options[] =  {
 		"x", "y", "z", "xy", "yx", "xz", "zx", "yz", "zy",
