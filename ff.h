@@ -161,14 +161,16 @@ struct _vfuncptr vfunclist[] = {
     { "hsv2rgb",    ff_hsv2rgb,    		NULL },
 
     { "isis",     	ff_isis_summary,    NULL },
+    { "loadsuffix",	ff_read_suffix_plane, NULL},
     { "resize",     ff_resize,    		NULL },
     { "fork",     	ff_fork,    		NULL },
 
     { "minvert",     	ff_minvert,     NULL },
     { "dct",     	ff_dct,     NULL },
     { "entropy",     	ff_entropy,     NULL },
-   
+#ifdef HAVE_LIBPROJ   
     { "projection",	ff_projection,   NULL },
+#endif
 
     { "fft",     	ff_fft,     (void *)1 },
     { "ifft",     	ff_fft,     (void *)0 },
@@ -183,7 +185,7 @@ struct _vfuncptr vfunclist[] = {
     { "convolve",      ff_convolve,     (void *)0 },
     { "convolve2",     ff_convolve2,     (void *)0 },
 
-#ifdef HAVE_XRT
+#ifdef HAVE_XM_XR3DT_H
     { "xrt3d",     	ff_xrt3d,    NULL },
 #endif
 
