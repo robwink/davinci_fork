@@ -294,8 +294,9 @@ main(int ac, char **av)
     */
     process_streams();
     event_loop();
+	quit();
 
-    /* event_loop never returns */
+    /* event_loop never returns... unless we're not interactive */
 
     return(0);
 }
