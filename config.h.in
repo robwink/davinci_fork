@@ -32,6 +32,9 @@
    byte first (like Motorola and SPARC, unlike Intel and VAX).  */
 #undef WORDS_BIGENDIAN
 
+/* Define if the X Window System is missing or not being used.  */
+#undef X_DISPLAY_MISSING
+
 /*Define if you have module library*/
 #undef BUILD_MODULE_SUPPORT
 
@@ -52,6 +55,9 @@
 
 /*Define if you have xrt3d library*/
 #undef XRT_ENABLED
+
+/*Define if you have readline library */
+#undef HAVE_LIBREADLINE
 
 /* Define if you have the basename function.  */
 #undef HAVE_BASENAME
@@ -196,9 +202,6 @@
 
 /* Define if you have the png library (-lpng).  */
 #undef HAVE_LIBPNG
-
-/* Define if you have the readline library (-lreadline).  */
-#undef HAVE_LIBREADLINE
 
 /* Define if you have the termcap library (-ltermcap).  */
 #undef HAVE_LIBTERMCAP
