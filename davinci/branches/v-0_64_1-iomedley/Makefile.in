@@ -328,32 +328,32 @@ avl.o: avl.c avl.h
 ff_modules.o: ff_modules.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
 dvio.o: dvio.c parser.h system.h darray.h avl.h ff_modules.h \
- module_io.h ufunc.h scope.h func.h ../iomedley/iomedley.h \
- ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+ module_io.h ufunc.h scope.h func.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h 
 dvio_aviris.o: dvio_aviris.c parser.h system.h darray.h avl.h \
  ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
- ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+ iomedley/iomedley.h iomedley/io_lablib3.h iomedley/toolbox.h 
 dvio_goes.o: dvio_goes.c parser.h system.h darray.h avl.h ff_modules.h \
- module_io.h ufunc.h scope.h func.h dvio.h ../iomedley/iomedley.h \
- ../iomedley/io_lablib3.h ../iomedley/toolbox.h
+ module_io.h ufunc.h scope.h func.h dvio.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h
 dvio_grd.o: dvio_grd.c parser.h system.h darray.h avl.h ff_modules.h \
- module_io.h ufunc.h scope.h func.h dvio.h ../iomedley/iomedley.h \
- ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+ module_io.h ufunc.h scope.h func.h dvio.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h 
 dvio_imath.o: dvio_imath.c parser.h system.h darray.h avl.h \
  ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
- ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+ iomedley/iomedley.h iomedley/io_lablib3.h iomedley/toolbox.h 
 dvio_isis.o: dvio_isis.c parser.h system.h darray.h avl.h ff_modules.h \
- module_io.h ufunc.h scope.h func.h dvio.h ../iomedley/iomedley.h \
- ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+ module_io.h ufunc.h scope.h func.h dvio.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h 
 dvio_magic.o: dvio_magic.c config.h parser.h system.h darray.h avl.h \
  ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
- ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h
+ iomedley/iomedley.h iomedley/io_lablib3.h iomedley/toolbox.h
 dvio_pnm.o: dvio_pnm.c parser.h system.h darray.h avl.h ff_modules.h \
- module_io.h ufunc.h scope.h func.h ../iomedley/iomedley.h \
- ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+ module_io.h ufunc.h scope.h func.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h 
 dvio_vicar.o: dvio_vicar.c parser.h system.h darray.h avl.h \
  ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
- ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+ iomedley/iomedley.h iomedley/io_lablib3.h iomedley/toolbox.h 
 dvio_envi.o: dvio_envi.c parser.h system.h darray.h avl.h ff_modules.h \
- module_io.h ufunc.h scope.h func.h dvio.h ../iomedley/iomedley.h \
- ../iomedley/io_lablib3.h ../iomedley/toolbox.h
+ module_io.h ufunc.h scope.h func.h dvio.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h
