@@ -12,7 +12,7 @@ createThemisGhostImage(int ghostDown,
 					   int bytesPerPixel,
 					   void *imageDataBuff,
 					   void *ghostDataBuff,
-					   int reverse);
+					   int useTrackServer);
 Var * make_band(Var *in, int band);
 
 
@@ -26,7 +26,7 @@ ff_deghost(vfuncptr func, Var * arg)
 	void *out_data;
 	char *msg;
 	char prompt[256];
-	int reverse = 1;
+	int useTrackServer = 0;
 
 	Alist alist[7];
 	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
@@ -34,7 +34,7 @@ ff_deghost(vfuncptr func, Var * arg)
 	alist[2] = make_alist("down",  		ID_VAL,	    NULL,	&down);
 	alist[3] = make_alist("right",  	ID_VAL,	    NULL,	&right);
 	alist[4] = make_alist("id",  	    ID_STRING,	NULL,	&id);
-	alist[5] = make_alist("reverse",  	INT,	    NULL,	&reverse);
+	alist[5] = make_alist("usetrackserver", INT,    NULL,   &useTrackServer);
 	alist[6].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -84,9 +84,9 @@ ff_deghost(vfuncptr func, Var * arg)
 								x, 							/* width */
 								y, 							/* height */
 								nbytes, 					/* nbytes */
-								V_DATA(v), 			/* imageDataBuff */
-								out_data,           /* ghostDataBuff */
-								reverse); 			/* reverse direction */
+								V_DATA(v), 		/* imageDataBuff */
+								out_data,       /* ghostDataBuff */
+								useTrackServer);/* database vs trackserver */
 			if (msg != NULL) {
 				parse_error(msg);
 				return(NULL);
