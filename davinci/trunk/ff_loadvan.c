@@ -813,15 +813,20 @@ alloc_davinci_data_space(
 ** fields[] array.
 **
 ** Assumptions:
-**	-	All data blocks are pre-allocated.
-** -	Array data will be atmost two dimensional.
-**	-	Input data colums are organized in the form of parallel arrays.
-**	-	Integer and Reals columns both 1D and 2D are in a form of a
-**		single dimensional data block (i.e. a linear array).
-**	-	Strings are treated as rows of text, so they are accessed using
-**	-	double pointers, i.e. line[i] will give pointer to the i'th line.
-**	-	String arrays are concatenated together into lines with columns
-**		separated by spaces.
+** -	vpass1() has zeroed out the record- and field-delimiters, resulting
+**		in the input "data" being '\0' delimited (except may be for the last 
+**		column of the last record - which is handled differently).
+**	-	All data-storage blocks (as given by "data_ptrs") are pre-allocated.
+** -	Array data can be atmost two dimensional.
+**	-	Storage-data colums are organized in the form of parallel arrays.
+**		Thus we have an structure with a bunch of columns, with each of the
+**		column having "nrecs" records.
+**	-	Storage for Integer and Reals columns both 1D and 2D is in the 
+**		form of a single dimensional data block (i.e. a linear array).
+**	-	Storage for Strings is in the form of rows of text, with columns
+**		concatenated together with a space delimiter. Thus each line
+**		of text can be accessed by indexing a double pointer "**line" as
+**		line[i].
 */
 static int
 vpass2(
