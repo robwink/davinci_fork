@@ -532,7 +532,7 @@ ff_format(vfuncptr func, Var * arg)
         else if (!strcasecmp(format_str, "float")) ptr = "float";
         else if (!strcasecmp(format_str, "double")) ptr = "double";
 
-        return (V_func(ptr, obj));
+        return (V_func(ptr, create_args(1, NULL, obj, NULL, NULL)));
     }
 }
 
