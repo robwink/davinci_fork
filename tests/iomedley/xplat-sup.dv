@@ -1,0 +1,29 @@
+# File: xplat-sup.dv
+#
+# Support routines for cross-platform tests for daVinci
+# Associated files: xplat-s.dv, xplat-t.dv
+#
+
+# WriteAndVerify(obj, filename, filetype)
+
+define WriteAndVerify(3,3) {
+
+	system("rm "//$2//" 2>/dev/null");
+	write2($1,$2,type=$3,force=1);
+
+	e=0; e=load2($2);
+
+	di=dim($1);
+	de=dim(e);
+	if (de[1]==di[1] && de[2]==di[2] && de[3]==di[3]){
+		if (avg(abs(e-$1))!=0){
+			printf("Verify failed! Image data read <> Image data written.\n");
+			return(2);
+		}
+	} else {
+		printf("Verify failed! Image dim read <> Image dim written.\n");
+		return(1);
+	}
+
+	return(0);
+}
