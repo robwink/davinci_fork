@@ -96,7 +96,7 @@ ff_raw(vfuncptr func, Var * arg)
 		h.size[0] = z;
 		h.size[1] = x;
 		h.size[2] = y;
-		h.org = iom_BIL;
+		h.org = iom_BIP;
 	} else {
 		parse_error("Unrecognized org: %s\n", org);
 		return(NULL);
