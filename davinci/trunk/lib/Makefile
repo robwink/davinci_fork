@@ -15,7 +15,7 @@ INSTALL_DATA = ${INSTALL} -m 644
 
 CC     = gcc
 DEFS   = -I/usr/X11R6/include -DHAVE_CONFIG_H 
-LIBS   = -L/usr/X11R6/lib -lltdl -ltermcap -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -lreadline -lcurses -ldl
+LIBS   = -L/usr/X11R6/lib -lqmv -lltdl -ltermcap -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -lreadline -lcurses -ldl
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<

@@ -82,6 +82,11 @@ AC_CHECK_LIB(termcap, tgetent)
 AC_CHECK_LIB(ltdl, lt_dlopen)
 AC_CHECK_LIB(qmv, qmv_version)
 
+dnl This is a hack - think of a better way to handle it
+if test "$ac_cv_lib_z_deflate" = "yes"; then
+	AC_DEFINE(HAVE_LIBPNG)
+fi
+
 dnl AC_CHECK_LIB(jpeg,jpeg_simple_progression)
 dnl AC_CHECK_LIB(bz2,bzopen)
 dnl AC_CHECK_LIB(png,png_check_version)
