@@ -128,6 +128,9 @@
 /* Define if you have the <fcntl.h> header file.  */
 #undef HAVE_FCNTL_H
 
+/* Define if you have the <libgen.h> header file.  */
+#undef HAVE_LIBGEN_H
+
 /* Define if you have the <limits.h> header file.  */
 #undef HAVE_LIMITS_H
 
@@ -148,6 +151,9 @@
 
 /* Define if you have the <projects.h> header file.  */
 #undef HAVE_PROJECTS_H
+
+/* Define if you have the <qmv/hvector.h> header file.  */
+#undef HAVE_QMV_HVECTOR_H
 
 /* Define if you have the <sys/dir.h> header file.  */
 #undef HAVE_SYS_DIR_H
@@ -182,17 +188,14 @@
 /* Define if you have the Xt library (-lXt).  */
 #undef HAVE_LIBXT
 
-/* Define if you have the bz2 library (-lbz2).  */
-#undef HAVE_LIBBZ2
-
 /* Define if you have the curses library (-lcurses).  */
 #undef HAVE_LIBCURSES
 
 /* Define if you have the hdf5 library (-lhdf5).  */
 #undef HAVE_LIBHDF5
 
-/* Define if you have the jpeg library (-ljpeg).  */
-#undef HAVE_LIBJPEG
+/* Define if you have the ltdl library (-lltdl).  */
+#undef HAVE_LIBLTDL
 
 /* Define if you have the m library (-lm).  */
 #undef HAVE_LIBM
@@ -200,17 +203,11 @@
 /* Define if you have the msss_vis library (-lmsss_vis).  */
 #undef HAVE_LIBMSSS_VIS
 
-/* Define if you have the png library (-lpng).  */
-#undef HAVE_LIBPNG
+/* Define if you have the qmv library (-lqmv).  */
+#undef HAVE_LIBQMV
 
 /* Define if you have the termcap library (-ltermcap).  */
 #undef HAVE_LIBTERMCAP
-
-/* Define if you have the ltdl library (-lltdl).  */
-#undef HAVE_LIBLTDL
-
-/* Define if you have the tiff library (-ltiff).  */
-#undef HAVE_LIBTIFF
 
 /* Define if you have the usds library (-lusds).  */
 #undef HAVE_LIBUSDS

@@ -86,6 +86,7 @@ AC_CHECK_LIB(usds,Themis_Entry)
 AC_CHECK_LIB(msss_vis,read_DCT)
 AC_CHECK_LIB(termcap, tgetent)
 AC_CHECK_LIB(ltdl, lt_dlopen)
+AC_CHECK_LIB(qmv, qmv_version)
 
 dnl AC_CHECK_LIB(jpeg,jpeg_simple_progression)
 dnl AC_CHECK_LIB(bz2,bzopen)
@@ -290,7 +291,7 @@ if test "$enable_modules" = "yes"; then
 	if test "$GCC" = "yes" ; then
 		case "$target" in
 		hppa*-hp-hpux*) MODULE_LINKER="ld" MODULE_LINK_OPT="-B symbolic -b" ;;
-		*-linux-*)	MODULE_LINK_OPT="-shared" CFLAGS="$CFLAGS -rdynamic";;
+		*-linux-*)	MODULE_LINKER="gcc" MODULE_LINK_OPT="-shared" CFLAGS="$CFLAGS -rdynamic";;
 		*)              MODULE_LINKER="gcc" MODULE_LINK_OPT="-shared" ;;
 		esac
 	else
@@ -377,6 +378,7 @@ dnl Check for includes
 AC_CHECK_HEADERS(values.h)
 AC_CHECK_HEADERS(limits.h)
 AC_CHECK_HEADERS(libgen.h)
+AC_CHECK_HEADERS(qmv/hvector.h)
 
 dnl Checks for header files.
 AC_HEADER_DIRENT
@@ -424,6 +426,7 @@ AC_SUBST(MODULE_CC_OPT)
 AC_SUBST(MODULE_LINKER)
 AC_SUBST(MODULE_LINK_OPT)
 AC_SUBST(MODULE_ADDN_LIBS)
+AC_SUBST(QMV_LIB)
 
 AC_SUBST(READLINE_OBJ)
 AC_SUBST(READLINE_LIB)
