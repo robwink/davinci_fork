@@ -181,6 +181,7 @@ ff_load(vfuncptr func, Var * arg)
     char *p, *fname;
 	struct _iheader h;
 
+
 	int ac;
 	Var **av;
 	Alist alist[12];
@@ -237,11 +238,15 @@ ff_load(vfuncptr func, Var * arg)
         if (input == NULL)    input = Load_imath(fp, filename, &h);
         if (input == NULL)    input = LoadGOES(fp, filename, &h);
         if (input == NULL)    input = LoadAVIRIS(fp, filename, &h);
+
+        fclose(fp);//ImageMagick opens its own files
+#ifdef HAVE_LIBMAGICK
+	if (input == NULL)    input = LoadGFX_Image(filename);
+#endif
         if (input == NULL) {
             sprintf(error_buf, "Unable to determine file type: %s", filename);
             parse_error(NULL);
         }
-        fclose(fp);
     }
     if (fname)
         free(fname);
