@@ -23,6 +23,12 @@ AC_AIX
 dnl Check for endian
 AC_C_BIGENDIAN
 
+
+dnl Enable/Disable modules
+AC_ARG_ENABLE(modules,
+	[  --disable-modules       removes modules related code from davinci (default is --enable-modules)],,
+	enable_modules=yes)
+
 dnl Check input arguments for ImageMagick
 AC_ARG_WITH(magick,
 [  --without-magick        build without ImageMagick support (default is --with-magick)
@@ -87,26 +93,6 @@ then
 fi
 
 
-dnl CFLAGS="$CFLAGS -I."
-dnl LDFLAGS="$LDFLAGS -Lreadline"
-dnl 
-dnl dnl special check for readline. 
-dnl MAKEREAD=''
-dnl AC_CHECK_LIB(readline, rl_callback_handler_install)
-dnl if test "`echo $LIBS | grep readline`" = "" 
-dnl then
-dnl 	MAKEREAD='readline/libreadline.a readline/libhistory.a'
-dnl 	READLINE_LIB='-Lreadline -lhistory -lreadline'
-dnl 	AC_CONFIG_SUBDIRS(readline)
-dnl 
-dnl 	AC_MSG_WARN([libreadline not found. Assuming it is available through the readline subdirectory])
-dnl 	echo "*******************************************************************"
-dnl 	echo "**     !   !   !       N   O   T   I   C   E       !   !   !     **"
-dnl 	echo "** WAIT FOR CONFIGURE TO FINISH, BUILD readline/libreadline.a    **"
-dnl 	echo "** AND readline/libhistory.a, THEN RUN CONFIGURE AGAIN AFTER     **"
-dnl 	echo "** REMOVING config.cache AND config.log                          **"
-dnl 	echo "*******************************************************************"
-dnl fi 
 
 dnl check existence of usable readline library
 AC_MSG_CHECKING(if libreadline exists)
@@ -232,98 +218,128 @@ then
    AC_DEFINE(HAVE_LIBXM)
 fi
 
+
+dnl ========================================
+dnl -- start - modules related processing --
+dnl ========================================
+
 dnl
-dnl Determine how to make shared objects using compiler/loader
+dnl If module processing is disabled, bypass necessary stuff while running
+dnl configure. This should reduce configure time as well.
 dnl
 
-#############################################################
-# Determine which header file and which library is required
-# to build daVinci with module (shared objects) support.
-#
+if test "$enable_modules" = "yes"; then
 
-MODULE_LOAD_FUNC="dlopen"
-#ADDNL_LDFLAGS="-Wexport-dynamic"
+	dnl
+	dnl Determine how to make shared objects using compiler/loader
+	dnl
 
-case "$target" in
-hppa1.*-hp-hpux*)   MODULE_SUPP_LIB="dld" 
-	MODULE_LOAD_FUNC="shl_load"
-	ADDNL_LDFLAGS="-Wl,-E"
-	AC_DEFINE(USE_HPUX_SHL) ;;
-hppa2.*-hp-hpux*)   MODULE_SUPP_LIB="dl"   ;;
-*-linux-*)          MODULE_SUPP_LIB="dl"   ;;
-*-sgi-irix*)        MODULE_SUPP_LIB="c"    ;;
-*-sun-solaris*)     MODULE_SUPP_LIB="dl"   ;;
-*-ibm-aix4.3*)      MODULE_SUPP_LIB="c"    ;;
-esac
+	dnl
+	dnl Determine which header file and which library is required
+	dnl to build daVinci with module (shared objects) support.
+	dnl
 
-#############################################################
-# Determine the option to pass to the compiler to compile
-# shared object sources (into position independent object
-# code files).
-#
+	MODULE_LOAD_FUNC="dlopen"
+	#ADDNL_LDFLAGS="-Wexport-dynamic"
 
-if test "$GCC" = "yes" ; then
-	MODULE_CC_OPT="-fPIC"
+	case "$target" in
+	hppa1.*-hp-hpux*)   MODULE_SUPP_LIB="dld" 
+		MODULE_LOAD_FUNC="shl_load"
+		ADDNL_LDFLAGS="-Wl,-E"
+		AC_DEFINE(USE_HPUX_SHL) ;;
+	hppa2.*-hp-hpux*)   MODULE_SUPP_LIB="dl"   ;;
+	*-linux-*)          MODULE_SUPP_LIB="dl"   ;;
+	*-sgi-irix*)        MODULE_SUPP_LIB="c"    ;;
+	*-sun-solaris*)     MODULE_SUPP_LIB="dl"   ;;
+	*-ibm-aix4.3*)      MODULE_SUPP_LIB="c"    ;;
+	esac
+
+	dnl 
+	dnl Determine the option to pass to the compiler to compile
+	dnl shared object sources (into position independent object
+	dnl code files).
+	dnl 
+
+	if test "$GCC" = "yes" ; then
+		MODULE_CC_OPT="-fPIC"
+	else
+		case "$target" in
+		hppa1.*-hp-hpux*)   MODULE_CC_OPT="+z"    ;;
+		hppa2.*-hp-hpux*)   MODULE_CC_OPT="+Z"    ;;
+		*-linux-*)          MODULE_CC_OPT="-fPIC" ;;
+		*-sgi-irix*)        MODULE_CC_OPT="-KPIC" ;;
+		*-sun-solaris*)     MODULE_CC_OPT="-Kpic" ;;
+		*-ibm-aix4.3*)      MODULE_CC_OPT=""      ;;
+		esac
+	fi
+
+	dnl
+	dnl Determine the option to pass to the compiler & linker to
+	dnl build shared objects from position independent object files.
+	dnl
+
+	if test "$GCC" = "yes" ; then
+		case "$target" in
+		hppa*-hp-hpux*) MODULE_LINKER="ld" MODULE_LINK_OPT="-B symbolic -b" ;;
+		*)              MODULE_LINKER="gcc" MODULE_LINK_OPT="-shared" ;;
+		esac
+	else
+		MODULE_LINKER="cc"
+
+		case "$target" in
+		hppa*-hp-hpux*)  MODULE_LINKER="ld" MODULE_LINK_OPT="-B symbolic -b" ;;
+		*-linux-*)       MODULE_LINK_OPT="-shared" ;;
+		*-sgi-irix*)     MODULE_LINK_OPT="-shared" ;;
+		*-sun-solaris*)  MODULE_LINK_OPT="-G" ;;
+		*-ibm-aix4.3*)   MODULE_LINK_OPT="-K" ;;
+		esac
+
+	fi
+
+	dnl
+	dnl AIX requires that any function in the daVinci binary which
+	dnl will be called from a modules, must be explicitly linked
+	dnl to the module (shared object). We do this by creating a
+	dnl library called "libmodsupp.a" (not to be confused with
+	dnl the value in MODULE_SUPP_LIB -- which is the system library
+	dnl providing the dynamic linking functionality.)
+	dnl
+
+	case "$target" in
+	*-ibm-aix4.3*)  MODULE_ADDN_LIBS="-lmodsupp";
+	esac
+
+	dnl
+	dnl Check if the selected library has the required function
+	dnl in it. That is: shl_load() for HPPA1.x and dlopen() for 
+	dnl the rest.
+	dnl
+
+	AC_CHECK_LIB($MODULE_SUPP_LIB, $MODULE_LOAD_FUNC, module_build_possible=yes, module_build_possible=no,)
+
+	dnl
+	dnl If modules can be built then set the appropriate compiler/linker/loader/binder flags.
+	dnl
+	dnl NOTE: If there is a need for setting up the modules Makefile correctly even though that
+	dnl modules support is disabled, then the "if test "$enable_modules" = yes" should be moved
+	dnl here instead.
+	dnl
+
+	if test "$module_build_possible" = "yes"; then
+		AC_DEFINE(BUILD_MODULE_SUPPORT)
+		MODULE_SUPP_OBJS='$(MODULE_SUPP_OBJS)'
+		LIBS="$LIBS -l$MODULE_SUPP_LIB"
+		LDFLAGS="$LDFLAGS $ADDNL_LDFLAGS"
+		CFLAGS="$CFLAGS $ADDNL_CFLAGS"
+	fi
 else
-	case "$target" in
-	hppa1.*-hp-hpux*)   MODULE_CC_OPT="+z"    ;;
-	hppa2.*-hp-hpux*)   MODULE_CC_OPT="+Z"    ;;
-	*-linux-*)          MODULE_CC_OPT="-fPIC" ;;
-	*-sgi-irix*)        MODULE_CC_OPT="-KPIC" ;;
-	*-sun-solaris*)     MODULE_CC_OPT="-Kpic" ;;
-	*-ibm-aix4.3*)      MODULE_CC_OPT=""      ;;
-	esac
+	AC_MSG_WARN(Modules code disabled by user)
 fi
 
-#############################################################
-# Determine the option to pass to the compiler & linker to
-# build shared objects from position independent object files.
-#
+dnl ========================================
+dnl --  end - modules related processing  --
+dnl ========================================
 
-if test "$GCC" = "yes" ; then
-	case "$target" in
-	hppa*-hp-hpux*) MODULE_LINKER="ld" MODULE_LINK_OPT="-B symbolic -b" ;;
-	*)              MODULE_LINKER="gcc" MODULE_LINK_OPT="-shared" ;;
-	esac
-else
-	MODULE_LINKER="cc"
-
-	case "$target" in
-	hppa*-hp-hpux*)  MODULE_LINKER="ld" MODULE_LINK_OPT="-B symbolic -b" ;;
-	*-linux-*)       MODULE_LINK_OPT="-shared" ;;
-	*-sgi-irix*)     MODULE_LINK_OPT="-shared" ;;
-	*-sun-solaris*)  MODULE_LINK_OPT="-G" ;;
-	*-ibm-aix4.3*)   MODULE_LINK_OPT="-K" ;;
-	esac
-
-fi
-
-#############################################################
-# AIX requires that any function in the daVinci binary which
-# will be called from a modules, must be explicitly linked
-# to the module (shared object). We do this by creating a
-# library called "libmodsupp.a" (not to be confused with
-# the value in MODULE_SUPP_LIB -- which is the system library
-# providing the dynamic linking functionality.)
-#
-
-case "$target" in
-*-ibm-aix4.3*)  MODULE_ADDN_LIBS="-lmodsupp";
-esac
-
-#############################################################
-# Check if the selected library has the required function
-# in it. That is: shl_load() for HPPA1.x and dlopen() for 
-# the rest.
-#
-
-AC_CHECK_LIB($MODULE_SUPP_LIB, $MODULE_LOAD_FUNC, MODULE_SUPP_OBJS='$(MODULE_SUPP_OBJS)',,)
-if test "$MODULE_SUPP_OBJS" != "" ; then
- 	AC_DEFINE(BUILD_MODULE_SUPPORT)
-	LIBS="$LIBS -l$MODULE_SUPP_LIB"
-	LDFLAGS="$LDFLAGS $ADDNL_LDFLAGS"
-	CFLAGS="$CFLAGS $ADDNL_CFLAGS"
-fi
 
 dnl Check for includes
 AC_CHECK_HEADERS(values.h)

@@ -276,10 +276,12 @@ free_var(Var *v)
         free(V_TEXT(v).text);
         break;
 
+#ifdef BUILD_MODULE_SUPPORT
 	case ID_MODULE:
 		del_module(v);
 		if (V_NAME(v)) free(V_NAME(v));
 		break;
+#endif /* BUILD_MODULE_SUPPORT */
 
     default:
         if (V_NAME(v)) free(V_NAME(v));
