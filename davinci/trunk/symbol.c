@@ -19,14 +19,10 @@
 Var *
 HasValue(vfuncptr func, Var *arg)
 {
-	Var *v = newVal(BSQ, 1, 1, 1, INT, calloc(1, sizeof(int)));
-
-    if (arg == NULL || V_NAME(arg) == NULL || get_sym(V_NAME(arg)) == NULL) {
-        V_INT(v) = 0;
-    } else {
-        V_INT(v) = 1;
-	}
-	return(v);
+	Var *v;
+	if (arg == NULL || (v = eval(arg)) == NULL) 
+		return(newInt(0));
+	return(newInt(1));
 }
 
 
