@@ -26,7 +26,7 @@ ff_fft(vfuncptr func, Var * arg)
 	Alist alist[4];
 	alist[0] = make_alist( "real",    ID_VAL,    NULL,     &real);
 	alist[1] = make_alist( "img",    ID_VAL,    NULL,     &img);
-	alist[3].name = NULL;
+	alist[2].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
