@@ -988,7 +988,8 @@
  The system() function executes the specified command string using the
  C library system() call, and returns when the command exits.
 
- The system() function returns no value.
+ The system() function returns the value of the underlying C system
+ call and its interpretation is OS dependant.
 
  Example:
 
