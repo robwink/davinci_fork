@@ -178,10 +178,11 @@ WriteHDF5(hid_t parent, char *name, Var *v)
 		** Member is a string of characters
 		*/
 		lines=1;
-		length=strlen(V_STRING(v))+1;/*String+NULL*/
+		length=1;/*Set length to 1, and size to length*/
 		dataspace = H5Screate_simple(1,&length,NULL);
+		length=strlen(V_STRING(v))+1;/*String+NULL*/
 		datatype = H5Tcopy(H5T_C_S1);
-		H5Tset_size(datatype,strlen(V_STRING(v))+1);
+		H5Tset_size(datatype,length);
 		dataset = H5Dcreate(parent,name, datatype, dataspace, H5P_DEFAULT);
 		H5Dwrite(dataset, datatype,H5S_ALL, H5S_ALL, H5P_DEFAULT, V_STRING(v));
 
@@ -200,44 +201,51 @@ WriteHDF5(hid_t parent, char *name, Var *v)
 		break;
 
 	case ID_TEXT:
-		/*
-		**Multiline set of strings
-		*/
+	 {
+		unsigned char *big;
+		int big_size=0;
+		int stln=0;
+		int i;
 
 		/*Pack the array into a single buffer with newlines*/
-			length=strlen(V_TEXT(v).text[0]);
-			dataspace = H5Screate_simple(1,&length,NULL);	
-			datatype = H5Tcopy(H5T_C_S1);
-			H5Tset_size(datatype,length);
-			dataset = H5Dcreate(parent,name, datatype, dataspace, H5P_DEFAULT);
-			H5Dwrite(dataset, datatype,H5S_ALL, H5S_ALL, H5P_DEFAULT, V_TEXT(v).text[0]);
-/*
-			lines=V_TEXT(v).Row;
-			aid2 = H5Screate(H5S_SCALAR);
-  		    attr = H5Acreate(dataset, "lines", H5T_NATIVE_INT, aid2, H5P_DEFAULT);
-  		    H5Awrite(attr, H5T_NATIVE_INT, &lines);
-
-  		    H5Sclose(aid2);
-  		    H5Aclose(attr);
-*/
-			H5Tclose(datatype);
-			H5Sclose(dataspace);
-			H5Dclose(dataset);
-		for (i=1;i<V_TEXT(v).Row;i++){
-			sprintf(buf,"%d",i);
-			printf("Writing line: %s\n",buf);
-			length=strlen(V_TEXT(v).text[i]);
-			dataspace = H5Screate_simple(1,&length,NULL);	
-			datatype = H5Tcopy(H5T_C_S1);
-			H5Tset_size(datatype,length);
-			dataset = H5Dcreate(parent,buf, datatype, dataspace, H5P_DEFAULT);
-			H5Dwrite(dataset, datatype,H5S_ALL, H5S_ALL, H5P_DEFAULT, V_TEXT(v).text[i]);
-			H5Tclose(datatype);
-			H5Sclose(dataspace);
-			H5Dclose(dataset);
+		for (i=0;i<V_TEXT(v).Row;i++){
+			big_size+=strlen(V_TEXT(v).text[i])+1;/* Added 1 for \n char */
 		}
+		big_size++; /*Final NULL*/
+		big=(unsigned char *)calloc(big_size,sizeof(char));
+		big_size=0;
+		for (i=0;i<V_TEXT(v).Row;i++){
+			stln=strlen(V_TEXT(v).text[i]);
+			memcpy((big+big_size),V_TEXT(v).text[i],stln);
+			big_size+=stln;
+			big[big_size]='\n';
+			big_size++;
+		}
+		big[big_size]='\0';
+		big_size++;
+
+		/*Now we can write out this big fat array*/
+		length=1;
+		dataspace = H5Screate_simple(1,&length,NULL);	
+		datatype = H5Tcopy(H5T_C_S1);
+		H5Tset_size(datatype,big_size);
+		dataset = H5Dcreate(parent,name, datatype, dataspace, H5P_DEFAULT);
+		H5Dwrite(dataset, datatype,H5S_ALL, H5S_ALL, H5P_DEFAULT, big);
+		lines=V_TEXT(v).Row;
+		aid2 = H5Screate(H5S_SCALAR);
+  	   attr = H5Acreate(dataset, "lines", H5T_NATIVE_INT, aid2, H5P_DEFAULT);
+  	   H5Awrite(attr, H5T_NATIVE_INT, &lines);
+
+  		H5Sclose(aid2);
+  		H5Aclose(attr);
+		H5Tclose(datatype);
+		H5Sclose(dataspace);
+		H5Dclose(dataset);
+		free(big);
 	
-      break;
+	  }
+	
+     break;
 
     }
 
@@ -340,21 +348,37 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
 	 	 	V_TEXT(v).text=(unsigned char **)calloc(Lines,sizeof(char *));
 		 }
 
-		 for (i=0;i<Lines;i++){
 			dataspace = H5Dget_space(dataset);
 			H5Sget_simple_extent_dims(dataspace, datasize, maxsize);
 			for (i = 0 ; i < 3 ; i++) {
              size[i] = datasize[i];
        	}
-       	dsize = H5Sget_simple_extent_npoints(dataspace);
+/*       	dsize = H5Sget_simple_extent_npoints(dataspace);*/
+       	dsize = H5Tget_size(datatype);
        	databuf = (unsigned char *)calloc(dsize, sizeof(char));
        	H5Dread(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, databuf);
-		 	H5Sclose(dataspace);
 			if (Lines==1)
 				V_STRING(v)=databuf;
-			else
-				V_TEXT(v).text[i]=databuf;
-		 }
+			else { /*Now we have to dissable to the large block of text*/
+				int lm=0,nm=0;
+				int len=strlen(databuf);
+				int index=0;
+				/*send nm through databuf looking for \n.*/
+				while (nm < len) {
+					if (((char *)databuf)[nm]=='\n'){
+						V_TEXT(v).text[index]=malloc(nm-lm+1);
+						memcpy(V_TEXT(v).text[index],databuf+lm,(nm-lm+1));
+						V_TEXT(v).text[index][nm-lm]='\0';
+						index++;
+						nm++;/*Next line or end*/
+						lm=nm;
+					}
+					else 	
+						nm++;
+				}
+			}
+					
+						
 		 H5Sclose(dataspace);
        H5Dclose(dataset);
        V_NAME(v) = strdup(name);
