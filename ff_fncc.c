@@ -21,7 +21,7 @@ double f_sum(double *f, int f_row, int f_col, int x, int y, int t_cen_row,
 				 int t_cen_col,int row_even_mod,int col_even_mod,double *sots,
 				 int *ignore_count,double *ingnore);
 
-void find_max_point(int col, int row, double *cc, int *p);
+void find_max_point(int col, int row, double *cc, int *p, double *val);
 
 int build_running_sums(int trow,int tcol,int frow,int fcol,int grow,int gcol,double *f, double *rf, double *rf2);
 								
@@ -53,6 +53,8 @@ ff_fncc(vfuncptr func, Var * arg)
 
 	double *running_f = NULL;
 	double *running_f2 = NULL;
+	
+	double *max_p=(double *)malloc(sizeof(double));
 
 	Var *rf=NULL;
 	Var *rf2=NULL;
@@ -171,12 +173,13 @@ ff_fncc(vfuncptr func, Var * arg)
 
 	p = (int *) malloc(2 * sizeof(int));
 	p1 = (int *) malloc(2 * sizeof(int));
-	find_max_point(x,y,cc,p);
+	max_p[0]=MINFLOAT;
+	find_max_point(x,y,cc,p,max_p);
 	p[0]++;p[1]++;
 	p1[0]=p[0]-t_col+1;
 	p1[1]=p[1]-t_row+1;
 
-	result = new_struct(2);
+	result = new_struct(3);
 //	add_struct(result,"convolution",newVal(BSQ,x,y,1,DOUBLE,r));
 //	add_struct(result,"cross_correlation",newVal(BSQ,x,y,1,DOUBLE,cc));
 	free(cc);
@@ -186,6 +189,13 @@ ff_fncc(vfuncptr func, Var * arg)
 	add_struct(result,"max_point",newVal(BSQ,2,1,1,INT,p));
 /* Corner point is 0-indexed */
 	add_struct(result,"corner_point",newVal(BSQ,2,1,1,INT,p1));
+
+/* 
+** Our corner point is based on a peak value in the corelation matrix.
+** That value represents the strength of the match (1.0 would be a perfect match)
+*/
+	add_struct(result,"weight",newVal(BSQ,1,1,1,DOUBLE,max_p));
+
 
 //	add_struct(result,"running_sum",newVal(BSQ,x,y,1,DOUBLE,running_f));
 //	add_struct(result,"running_sum_squared",newVal(BSQ,x,y,1,DOUBLE,running_f2));
@@ -392,16 +402,18 @@ pad_template(int trow,int tcol,int frow,int fcol, double *t)
 }
 
 void 
-find_max_point(int col, int row, double *cc, int *p)
+find_max_point(int col, int row, double *cc, int *p, double *val)
 {
 	int i,j;
 	int x=0,y=0;
 	double max=cc[0];
 	
+	*val=max;
 	for(i=0;i<row;i++){
 		for(j=0;j<col;j++){
 			if (cc[i*col+j] > max) {
 				max = cc[i*col+j];
+				*val=max;
 				x = j; y = i;
 			}
 		}
