@@ -543,6 +543,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
         Cmd=FRAME;
         Band=-1;
     }
+
 #ifndef __MSDOS__
     if ((fd = open(filename, O_RDONLY))==-1){
         fprintf(stderr,"Can't open file: %s...aborting\n",filename);
@@ -573,8 +574,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 
 #ifdef HAVE_LIBUSDS
 	Col=320+_SIGINFO;
-#endif
-#ifndef HAVE_LIBUSDS
+#else
         Col=Output+2;			
 #endif
 
@@ -582,91 +582,81 @@ ff_PACI_Read(vfuncptr func, Var * arg)
             c_Band=0;
             c_Frame=0;
             if (Skip_To_Start_Sync(&i,buf,len) == -1) {
-                Done = 1;
+                break;
+            }
+
+            c_Band=*(buf+i+_BANDS)&0xf;
+            if (c_Band < 14 && c_Band > Max_Band) Max_Band=c_Band;
+            if (c_Band==0xE)  /*Last Frame*/
+                Done=1;
+
+            c_Frame=(((*(buf+i+_FRAMES) & 0xFF)<< 8) | (*(buf+i+_FRAMES+1) & 0xFF));
+            if ((Output=Skip_To_Stop_Sync(&i,buf,len)) == -1) {
+                break;
             } 
-            else {
-                c_Band=*(buf+i+_BANDS)&0xf;
-                if (c_Band < 14 && c_Band > Max_Band) Max_Band=c_Band;
-                if (c_Band==0xE)  /*Last Frame*/
-                    Done=1;
-                c_Frame=(((*(buf+i+_FRAMES) & 0xFF)<< 8) | (*(buf+i+_FRAMES+1) & 0xFF));
-                if ((Output=Skip_To_Stop_Sync(&i,buf,len)) == -1) {
-                    Done = 1;
-                } 
 
-
-
-                else {
-                    if (Keep(c_Band,c_Frame,Cmd,Frame,Band) && ((Output+2) <= 328 )){
-                        BandCount[c_Band]++;
-                        if (Data_Only && Cmd!=ALL){
-
+            if (Keep(c_Band,c_Frame,Cmd,Frame,Band) && ((Output+2) <= 328 )){
+                BandCount[c_Band]++;
 #ifdef HAVE_LIBUSDS
-                            if (Output-_DATA < 320){
-                                offset=Output-_DATA;
-                                if (decompress!=NULL)
-                                    free(decompress);
-                                decompress=Themis_Entry((buf+i-Output+_DATA),&offset);
-                                if (offset==320){
-                                    memcpy((data+Index),decompress,offset);
-                                    Index+=(offset);
-                                    Lines++;
-                                }
-                            }
-                            else {
-                                memcpy((data+Index),(buf+i-Output+_DATA),Output);
-                                Index+=(Output-_DATA);
-                                Lines++;
-                            }
-#else
-                            memcpy((data+Index),(buf+i-Output+_DATA),Output);
-                            Index+=(Output-_DATA);
+                if (Data_Only && Cmd!=ALL){
+                    if (Output-_DATA < 320){
+                        offset=Output-_DATA;
+                        if (decompress!=NULL)
+                            free(decompress);
+                        decompress=Themis_Entry((buf+i-Output+_DATA),&offset);
+                        if (offset==320){
+                            memcpy((data+Index),decompress,offset);
+                            Index+=(offset);
                             Lines++;
-
-#endif
-
-
-                        }
-                        else { 
-#ifdef HAVE_LIBUSDS
-                            if (Output-_DATA < 320){
-
-                                if (len < (Lines*Col+320)) { 	/*We're running out of room!*/
-                                    int guess=(len/(Output+2));/*Guess # of total lines*/
-                                    len = guess * Col; 			/*How big it needs to be*/
-                                    parse_error("Increasing Buffer sizes\n");
-                                    data=realloc(data,len);
-/*									newbuf=realloc(newbuf,len);*/
-                                }
-
-                                offset=Output-_DATA;
-                                if (decompress!=NULL)
-                                    free(decompress);
-                                decompress=Themis_Entry((buf+i-Output+_DATA),&offset);
-                                if (offset==320){
-                                    memcpy((data+Index),(buf+i-Output),_DATA);
-                                    Index+=_DATA;
-                                    memcpy((data+Index),decompress,offset);
-                                    Index+=(offset);
-                                    memcpy((data+Index),(buf+i),2);
-                                    Index+=2;
-                                    Lines++;
-                                }
-                            }
-                            else {
-                                memcpy(((char *)data+Index),(buf+i-Output),Output+2);
-                                Index+=Output+2;
-                                Lines++;
-                            }
-#else
-
-                            memcpy(((char *)data+Index),(buf+i-Output),Output+2);
-                            Index+=Output+2;
-                            Lines++;
-#endif
                         }
                     }
+                    else {
+                        memcpy((data+Index),(buf+i-Output+_DATA),Output);
+                        Index+=(Output-_DATA);
+                        Lines++;
+                    }
+                } else { 
+                    if (Output-_DATA < 320){
+
+                        if (len < (Lines*Col+320)) { 	/*We're running out of room!*/
+                            int guess=(len/(Output+2));/*Guess # of total lines*/
+                            len = guess * Col; 			/*How big it needs to be*/
+                            parse_error("Increasing Buffer sizes\n");
+                            data=realloc(data,len);
+/*									newbuf=realloc(newbuf,len);*/
+                        }
+
+                        offset=Output-_DATA;
+                        if (decompress!=NULL)
+                            free(decompress);
+                        decompress=Themis_Entry((buf+i-Output+_DATA),&offset);
+                        if (offset==320){
+                            memcpy((data+Index),(buf+i-Output),_DATA);
+                            Index+=_DATA;
+                            memcpy((data+Index),decompress,offset);
+                            Index+=(offset);
+                            memcpy((data+Index),(buf+i),2);
+                            Index+=2;
+                            Lines++;
+                        }
+                    }
+                    else {
+                        memcpy(((char *)data+Index),(buf+i-Output),Output+2);
+                        Index+=Output+2;
+                        Lines++;
+                    }
                 }
+#else
+                if (Data_Only && Cmd!=ALL){
+                    memcpy((data+Index),(buf+i-Output+_DATA),Output);
+                    Index+=(Output-_DATA);
+                    Lines++;
+                } else { 
+                    memcpy(((char *)data+Index),(buf+i-Output),Output+2);
+                    Index+=Output+2;
+                    Lines++;
+                }
+#endif
             }
         }
 
@@ -676,7 +666,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
             fclose(wp);
         }
 
-        if(Cmd==ALL){
+        if (Cmd==ALL) {
             int extra_frames=0;
             qsort((char *)data,Lines,Col,Themis_Sort);
             Max_Band_Count=BandCount[0];
@@ -705,7 +695,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                 int i;
                 int new_count=0;
                 parse_error("Missing Frames...zero-padded frames will be added\n");
-                for (i=0;i<Lines;i++){
+                for (i=0;i<Lines;i++) {
                     c_band=*((char *)data+(i*Col)+_BANDS)&0xf;
                     c_frame=(((*((char *)data+(i*Col)+_FRAMES) & 0xFF)<< 8) | 
                              (*((char *)data+(i*Col)+_FRAMES+1) & 0xFF));
@@ -743,16 +733,14 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                     frame_count++;
 			
                 }
-            }	
-
-            else {
+            } else {
 
                 int j,i;
                 unsigned short c_frame;
 
-                for (j=0;j<=Max_Band;j++){
+                for (j=0 ; j <= Max_Band ; j++) {
                     new_count=0;
-                    for (i=0;i<BandCount[0];i++){
+                    for (i=0 ; i < BandCount[0] ; i++) {
                         c_frame=(((*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES) & 0xFF)<< 8) | 
                                  (*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES+1) & 0xFF));
                         if (c_frame > (FrameBandStart[j]+i)) {
@@ -763,8 +751,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                                            j,(FrameBandStart[j]+i),
                                            c_frame-(FrameBandStart[j]+i),Col);
                             new_count+=c_frame-(FrameBandStart[j]+i);	
-                        }
-                        else if (c_frame < (FrameBandStart[j]+i)) {
+                        } else if (c_frame < (FrameBandStart[j]+i)) {
                             parse_error("Corrupted Frame Sequence...aborting\n");
                             return(NULL);
                         }
@@ -774,8 +761,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                     }
                 }
             }	
-        }
-        else {
+        } else {
             munmap(buf,old_len);
             close(fd);
             free(newbuf);
@@ -809,33 +795,30 @@ ff_PACI_Read(vfuncptr func, Var * arg)
         }
         return(newVal(BSQ,Col,(Bad_Flag ? frame_count:new_count),Max_Band+1,BYTE,newbuf));
 		
-    } 
-    else {
+    } else {
         int *band = (int *)calloc(32, sizeof(int));
         unsigned int minframe = MAXINT;
         int maxframe = -1;
         i = 0;
+
         while ((i < len) && !(Done)) {
             c_Band=0;
             c_Frame=0;
-            if (Skip_To_Start_Sync(&i,buf,len) >= 0) {
-                c_Band=*(buf+i+_BANDS);
-                if (c_Band==0xE) /*Last Frame*/
-                    Done=1;
-                c_Frame=(((*(buf+i+_FRAMES) & 0xFF)<< 8) | (*(buf+i+_FRAMES+1) & 0xFF));
-                if ((Output=Skip_To_Stop_Sync(&i,buf,len)) >= 0) {
-                    if (c_Frame > maxframe) maxframe = c_Frame;
-                    if (c_Frame < minframe) minframe = c_Frame;
-                    band[c_Band]++;
-                } 
-                else {
-                    Done++;
-                }
-            } 
-            else {
-                Done++;
+            if (Skip_To_Start_Sync(&i,buf,len) < 0) {
+                break;
             }
+            c_Band=*(buf+i+_BANDS);
+            if (c_Band==0xE) /*Last Frame*/
+                Done=1;
+            c_Frame=(((*(buf+i+_FRAMES) & 0xFF)<< 8) | (*(buf+i+_FRAMES+1) & 0xFF));
+            if ((Output=Skip_To_Stop_Sync(&i,buf,len)) < 0) {
+                break;
+            }
+            if (c_Frame > maxframe) maxframe = c_Frame;
+            if (c_Frame < minframe) minframe = c_Frame;
+            band[c_Band]++;
         }
+        
         printf("File: %s\n", filename);
         printf("First frame: %d\n", minframe);
         printf("Last Frame:  %d\n", maxframe);

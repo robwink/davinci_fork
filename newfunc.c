@@ -123,14 +123,14 @@ parse_args(int ac, Var **av, Alist *alist)
             vptr = (Var **)(alist[j].value);
             *vptr = v;
             alist[j].filled = 1;
-        } else if (alist[j].type == ID_VSTRUCT) {
+        } else if (alist[j].type == ID_STRUCT) {
             Var **vptr;
             if ((e = eval(v)) == NULL) {
                 parse_error("%s: Variable not found: %s", fname, V_NAME(v));
                 return(1);
             }
             v = e;
-            if (V_TYPE(v) != ID_VSTRUCT) {
+            if (V_TYPE(v) != ID_STRUCT) {
                 parse_error("Illegal argument %s(...%s=...), expected STRUCT", 
                             fname, alist[j].name);
                 return(1);

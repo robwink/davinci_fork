@@ -4,32 +4,53 @@
  ** Convert specified position to scalar value, by applying range
  **/
 
+int 
+fixup(int i, Range *in, Range *out, int maxsize)
+{
+	out->lo[i] = in->lo[i];
+	out->hi[i] = in->hi[i];
+	out->step[i] = in->step[i];
+
+	if (out->lo[i] == 0) out->lo[i] = 1;
+	if (out->hi[i] == 0) out->hi[i] = maxsize;
+	if (out->step[i] == 0) out->step[i] = 1;
+
+	if (out->lo[i] < 0 || 
+		out->hi[i] < 0 || 
+		out->step[i] < 0 ||
+		out->lo[i] > out->hi[i] || 
+		out->hi[i] > maxsize) {
+		return(0);
+	}
+	out->lo[i] = out->lo[i] -1;
+	out->hi[i] = out->hi[i] -1;
+
+	return(1);
+}
+
 
 int
 fixup_ranges(Var *v, Range *in, Range *out)
 {
     int i,j;
-    for (i = 0 ; i < 3 ; i++) {
-        j = orders[V_ORG(v)][i];
 
-        out->lo[i] = in->lo[i];
-        out->hi[i] = in->hi[i];
-        out->step[i] = in->step[i];
+	if (V_TYPE(v) == ID_STRUCT) {
+		/*
+		** Structures only have 1 dimension
+		*/
+		if (in->dim != 1) {
+			parse_error("Too many range values specified.");
+			return(0);
+		}
+		memset(out, 0, sizeof(*out));
+		if (fixup(0, in, out, V_STRUCT(v).count) == 0) return(0);
 
-        if (out->lo[i] == 0) out->lo[i] = 1;
-        if (out->hi[i] == 0) out->hi[i] = V_SIZE(v)[j];
-        if (out->step[i] == 0) out->step[i] = 1;
-
-        if (out->lo[i] < 0 || 
-            out->hi[i] < 0 || 
-			out->step[i] < 0 ||
-            out->lo[i] > out->hi[i] || 
-            out->hi[i] > V_SIZE(v)[j]) {
-            return(0);
-        }
-        out->lo[i] = out->lo[i] -1;
-        out->hi[i] = out->hi[i] -1;
-    }
+	} else {
+		for (i = 0 ; i < 3 ; i++) {
+			j = orders[V_ORG(v)][i];
+			if (fixup(i, in, out, V_SIZE(v)[j]) == 0) return(0);
+		}
+	}
     return(1);
 }
 /**

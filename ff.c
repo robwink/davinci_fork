@@ -1764,3 +1764,23 @@ ff_syscall(vfuncptr func, Var * arg)
 	return(o);
 }
 		
+Var *
+ff_dump(vfuncptr func, Var * arg)
+{
+	Var *v;
+
+	if (arg == NULL) return(NULL);
+	if (arg->next != NULL) {
+        parse_error("Too many arguments to function: %s()", func->name);
+		return(NULL);
+	}
+	v = eval(arg);
+	if (v == NULL) {
+        parse_error("Variable not found: %s", V_NAME(arg));
+        return (NULL);
+	}
+
+	dump_var(v, 0, 0);
+
+	return(NULL);
+}

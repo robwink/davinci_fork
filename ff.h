@@ -108,7 +108,6 @@ struct _vfuncptr vfunclist[] = {
     
     { "clone",      ff_replicate, NULL },
     { "cat",        ff_cat,       NULL },
-    { "vcat",       ff_vcat,       NULL },
     
     { "version",    ff_version,   NULL },
     { "translate",  ff_translate, NULL },
@@ -140,6 +139,7 @@ struct _vfuncptr vfunclist[] = {
     { "read_ascii", ff_ascii,    NULL },
     { "read_text",  ff_text,     NULL },
 	 { "read_lines",ff_textarray,NULL},
+
 #ifndef __MSDOS__
     {"popen",	ff_popen,	NULL},
     {"pprint",	ff_pprint,	NULL},
@@ -149,10 +149,6 @@ struct _vfuncptr vfunclist[] = {
     {"pbox",	ff_pbox,	NULL},
     {"pzoom",	ff_pzoom,	NULL},
 #endif
-    
-
-
-
     
 #if 0
     { "bbr",        ff_bbr,      NULL },    /* blackbody radiance   */
@@ -219,9 +215,11 @@ struct _vfuncptr vfunclist[] = {
 
     { "struct",     ff_struct,     NULL },
     { "eval",     ff_eval,     NULL },
-    { "add_struct",     ff_add_struct,     NULL },
-    { "get_struct",     ff_get_struct,     NULL },
-	 { "syscall",ff_syscall,NULL},
+    { "add_struct",     ff_add_struct,    NULL },
+    { "get_struct",     ff_get_struct,    NULL },
+	{ "syscall",       ff_syscall,        NULL},
+	{ "dump",          ff_dump,           NULL},
+	{ "global",        ff_global,         NULL},
 
     { NULL,         NULL,        NULL }
 };

@@ -239,6 +239,9 @@ ff_list(vfuncptr func, Var *arg)
 
 	for (s = scope->symtab ; s != NULL ; s = s->next) {
 		v = s->value;
+		if (V_NAME(v) != NULL) 
+			pp_print_var(v, V_NAME(v), 0);
+		/*
 		if (V_TYPE(v) == ID_STRING) {
 			sprintf(bytes, "%d", strlen(V_STRING(v)));
 			commaize(bytes);
@@ -257,6 +260,7 @@ ff_list(vfuncptr func, Var *arg)
 					Org2Str(V_ORG(v)),
 					bytes);
 		}
+		*/
 	}
 	return(NULL);
 }

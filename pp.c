@@ -57,35 +57,19 @@ V_DUP(Var *v)
     case ID_UNK:
         if (V_NAME(v)) V_NAME(r) = strdup(V_NAME(v));
         break;
-    case ID_VSTRUCT:
+    case ID_STRUCT:
     {
         int i;
         V_STRUCT(r).names = (char **)calloc(V_STRUCT(v).count, sizeof(char *));
         V_STRUCT(r).data = (Var **) calloc(V_STRUCT(v).count, sizeof(Var *));
         for (i = 0 ; i < V_STRUCT(r).count ; i++) {
             V_STRUCT(r).data[i] = V_DUP(V_STRUCT(v).data[i]);
-            V_STRUCT(r).names[i] = strdup(V_STRUCT(v).names[i]);
+            V_STRUCT(r).names[i] = V_STRUCT(v).names[i] ? strdup(V_STRUCT(v).names[i]) : 0;
+
         }
         V_STRUCT(r).count = V_STRUCT(v).count;
     }
     break;
-    case ID_VARRAY:
-    {
-        int i;
-        Var **out, **in;
-			
-        memcpy(V_SYM(r), V_SYM(v), sizeof(Sym));
-        dsize = V_DSIZE(v);
-        out = (Var **)calloc(dsize, sizeof(Var *));
-
-        in = (Var **)V_DATA(v);
-        for (i = 0 ; i < dsize ; i++) {
-            out[i] = V_DUP(in[i]);
-        }
-        V_DATA(r) = out;
-    }
-    break;
-
 
 	 case ID_TEXT:		/*Added: Thu Mar  2 16:49:11 MST 2000*/
 		{
@@ -122,7 +106,15 @@ pp_print(Var *v)
     s = eval(v);
     if (s != NULL) {
         v = s;
-    }
+		pp_print_var(v, V_NAME(v), 0);
+	} else {
+		parse_error("Unable to find variable: %s", V_NAME(v));
+	}
+
+	return(NULL);
+}
+
+#if 0
     switch (V_TYPE(v)) {
     case ID_STRING:
         printf("\"%s\"\n", V_STRING(v));
@@ -167,24 +159,12 @@ pp_print(Var *v)
 			}
         }
         break;
-    case ID_VSTRUCT:
+    case ID_STRUCT:
         pp_print_struct(v, 0);
-        break;
-    case ID_VARRAY:
-        pp_print_varray(v, 0);
         break;
 
 	 case ID_TEXT:		/*Added: Thu Mar  2 16:52:39 MST 2000*/
-		{
-			int i,row=(5 < V_TEXT(v).Row ? 5 : V_TEXT(v).Row);
-			printf("%s: Text Buffer with %d %s of text\n",
-                   V_NAME(v) ? V_NAME(v) : "", 	
-						 V_TEXT(v).Row,
-						 ((V_TEXT(v).Row==1) ? "lines" : "lines"));
-			for (i=0;i<row;i++){
-				printf("Line:%d\t%s\n",(i+1),V_TEXT(v).text[i]);
-			}
-		}
+		print_text(v, 0);
 		break;
 
     default:
@@ -193,27 +173,8 @@ pp_print(Var *v)
     }
     return(v);
 }
+#endif
 
-void
-pp_print_varray(Var *v, int indent) 
-{
-    int i;
-    int n = V_DSIZE(v);
-    Var **vdata;
-    char *name;
-    char name2[256];
-
-    name = V_NAME(v);
-    if (name == NULL) name = "";
-
-    printf("%*s%s: varray (%d elements)\n", indent, "", name, n);
-
-    vdata = (Var **)V_DATA(v);
-    for (i = 0 ; i < n ; i++) {
-        sprintf(name2, "%s[%d]", name, i+1);
-        pp_print_var(vdata[i], name2, indent+4);
-    }
-}
 
 void
 pp_print_struct(Var *v, int indent)
@@ -227,10 +188,10 @@ pp_print_struct(Var *v, int indent)
     if (v == NULL) return;
     if (VERBOSE == 0) return;
 
-    if (V_NAME(v)) printf("%s", V_NAME(v));
-    if (indent == 0) {
-        printf(": struct\n");
-    }
+//  if (V_NAME(v)) printf("%s", V_NAME(v));
+//  if (indent == 0) {
+//      printf(": struct\n");
+//  }
 
     indent += 4;
 
@@ -241,15 +202,55 @@ pp_print_struct(Var *v, int indent)
     }
 }
 
+dump_var(Var *v, int indent, int limit) 
+{
+	int i,j,k,c;
+	int x, y, z;
+	int row;
+
+	switch (V_TYPE(v)) {
+	case ID_VAL:
+		x = GetSamples(V_SIZE(v),V_ORG(v));
+		y = GetLines(V_SIZE(v),V_ORG(v));
+		z = GetBands(V_SIZE(v),V_ORG(v));
+		if (limit == 0 || (limit && V_DSIZE(v) <= limit)) {
+			for (k = 0 ; k < z ; k++) {
+			for (j = 0 ; j < y ; j++) {
+			for (i = 0 ; i < x ; i++) {
+				c = cpos(i,j,k,v);
+				switch (V_FORMAT(v)) {
+				case BYTE: printf("%d\t", ((u_char *)V_DATA(v))[c]); break;
+				case SHORT: printf("%d\t", ((short *)V_DATA(v))[c]); break;
+				case INT:  printf("%d\t", ((int *)V_DATA(v))[c]); break;
+				case FLOAT: printf("%#.*g\t", SCALE, ((float *)V_DATA(v))[c]); break;
+				case DOUBLE: printf("%#.*g\t", SCALE, ((double *)V_DATA(v))[c]); break;
+				}
+			}
+			printf("\n");
+			}
+			if (z > 1) printf("\n");
+			}
+		}
+		break;
+	case ID_TEXT:
+		row = V_TEXT(v).Row;
+		if (limit) row = min(limit, row);
+		for (i=0 ; i < row ; i++){
+			printf("%*s%d: %s\n", indent, "", (i+1), V_TEXT(v).text[i]);
+		}
+		break;
+	}
+}
+
 void
 pp_print_var(Var *v, char *name, int indent)
 {
     extern int SCALE;
     char bytes[32];
+	int x, y, z, row, i;
 
-    if (indent) printf("%*s", indent, " ");
-    if (name) printf("%s", name);
-    printf(": ");
+	if (name == NULL) name = "";
+	if (indent) printf("%*s%s: ", indent, "", name);
 
     switch (V_TYPE(v)) {
     case ID_STRING:
@@ -257,48 +258,47 @@ pp_print_var(Var *v, char *name, int indent)
         break;
     case ID_VAL:
         if (V_DSIZE(v) == 1) {
-            switch (V_FORMAT(v)) {
-            case BYTE: printf("%d\n", ((u_char *)V_DATA(v))[0]); break;
-            case SHORT: printf("%d\n", ((short *)V_DATA(v))[0]); break;
-            case INT:  printf("%d\n", ((int *)V_DATA(v))[0]); break;
-            case FLOAT: printf("%#.*g\n", SCALE, ((float *)V_DATA(v))[0]); break;
-            case DOUBLE: printf("%#.*g\n", SCALE, ((double *)V_DATA(v))[0]); break;
-            }
+			dump_var(v, indent, 1);
         } else {
+			x = GetSamples(V_SIZE(v),V_ORG(v));
+			y = GetLines(V_SIZE(v),V_ORG(v));
+			z = GetBands(V_SIZE(v),V_ORG(v));
             sprintf(bytes, "%d", NBYTES(V_FORMAT(v))*V_DSIZE(v));
             commaize(bytes);
-            printf("\t%dx%dx%d array of %s, %s format [%s bytes]\n",
-                   GetSamples(V_SIZE(v),V_ORG(v)),
-                   GetLines(V_SIZE(v),V_ORG(v)),
-                   GetBands(V_SIZE(v),V_ORG(v)),
+            printf("%dx%dx%d array of %s, %s format [%s bytes]\n",
+                   x, y, z,
                    Format2Str(V_FORMAT(v)),
                    Org2Str(V_ORG(v)),
                    bytes);
+			if (indent == 0) {
+				dump_var(v, 0, 100);
+			}
         }
         break;
-    case ID_VSTRUCT:
+    case ID_STRUCT:
         printf("struct\n");
         pp_print_struct(v, indent);
         break;
-    case ID_VARRAY:
-        pp_print_varray(v, indent);
-        break;
-
 	
 	 case ID_TEXT:		/*Added: Thu Mar  2 16:52:39 MST 2000*/
-		{
-			int i,row=(5 < V_TEXT(v).Row ? 5 : V_TEXT(v).Row);
-			printf("Text Buffer with %d %s of text\n",
-						 V_TEXT(v).Row,
-						 ((V_TEXT(v).Row==1) ? "lines" : "lines"));
-			for (i=0;i<row;i++){
-				printf("Line:%d\t%s\n",(i+1),V_TEXT(v).text[i]);
-			}
-		}
+		printf("Text Buffer with %d lines of text\n", V_TEXT(v).Row);
+		dump_var(v, indent+4, 10);
 		break;
-
-
     }
+}
+
+void
+print_text(Var *v, int indent)
+{
+	int i,row;
+
+	row = min(10, V_TEXT(v).Row);
+
+	printf("%*sText Buffer with %d lines of text\n", indent, "", V_TEXT(v).Row);
+
+	for (i=0;i<row;i++){
+		printf("%*s%d: \t%s\n", indent, "", (i+1), V_TEXT(v).text[i]);
+	}
 }
 
 /**
@@ -333,30 +333,29 @@ pp_set_var(Var *id, Var *range, Var *exp)
         
         r = V_RANGE(range);
 
-		  if (V_TYPE(v)==ID_TEXT) /*Need to intercept TEXT var's before fixup*/
-				return(set_text(v,r,exp));
+		if (V_TYPE(v)==ID_TEXT) /*Need to intercept TEXT var's before fixup*/
+			return(set_text(v,r,exp));
 
         if (fixup_ranges(v, r, &rout) == 0) {
             parse_error("Illegal range value.");
             return(NULL);
         }
 
+		if (V_TYPE(v) == ID_STRUCT) {
+			return(set_varray(v,&rout,exp));
+		}
+
         for (i =0 ; i < 3 ; i++) {
             size[i] = 1 + (rout.hi[i] - rout.lo[i])/rout.step[i];
             j = orders[V_ORG(exp)][i];
             if (V_SIZE(exp)[j] == 1) continue;
-            if (size[i] != V_SIZE(exp)[j] &&
-                !(V_TYPE(v) == ID_VARRAY && size[i] == 1)) {
+            if (size[i] != V_SIZE(exp)[j]) {
                 parse_error("Array sizes don't match");
                 return(NULL);
             }
         }
         r = &rout;
 
-        if (V_TYPE(v) == ID_VARRAY) {
-            return(set_varray(v, r, exp));
-        }
-        
         for (i = 0 ; i < size[0] ; i++) {
             for (j = 0 ; j < size[1] ; j++) {
                 for (k = 0 ; k < size[2] ; k++) {
@@ -398,9 +397,6 @@ pp_set_var(Var *id, Var *range, Var *exp)
         return(pp_range(id, range));
     }
 
-    /**
-    ** Check for reserved variables and verify their type.
-    **/
 
     /**
     ** this does the actual equivalence.
@@ -425,6 +421,9 @@ pp_set_var(Var *id, Var *range, Var *exp)
 
     V_NAME(exp) = strdup(V_NAME(id));
 
+    /**
+    ** Check for reserved variables and verify their type.
+    **/
     if (!strcmp(V_NAME(exp), "verbose")) VERBOSE = V_INT(exp);
     if (!strcmp(V_NAME(exp), "scale")) SCALE = V_INT(exp);
     if (!strcmp(V_NAME(exp), "debug")) debug = V_INT(exp);
@@ -465,14 +464,14 @@ pp_set_struct(Var *a, Var *b, Var *exp)
 		*/
 		if ((s = eval(a)) != NULL) a = s;
 
-		if (V_TYPE(a) != ID_VSTRUCT) {
+		if (V_TYPE(a) != ID_STRUCT) {
 			return(NULL);
 		}
 
 		count = V_STRUCT(a).count;
 		V_STRUCT(a).names = realloc(V_STRUCT(a).names, (count+1) * sizeof(char *));
 		V_STRUCT(a).data = realloc(V_STRUCT(a).data, (count+1) * sizeof(Var *));
-		V_STRUCT(a).names[count] = strdup(V_NAME(b));
+		V_STRUCT(a).names[count] = V_NAME(b) ? strdup(V_NAME(b)) : 0;
 		p = &(V_STRUCT(a).data[count]);
 		V_STRUCT(a).count++;
 		added = 1;
@@ -620,15 +619,15 @@ pp_range(Var *v, Var *r)
     if (V_TYPE(v) == ID_VAL) {
         return(extract_array(v,V_RANGE(r)));
         return(out);
-    } else if (V_TYPE(v) == ID_VARRAY) {
+    } else if (V_TYPE(v) == ID_STRUCT) {
         if (fixup_ranges(v, V_RANGE(r), &rout) == 0) {
             parse_error("Illegal range value.");
             return(NULL);
         }
         return(varray_subset(v, &rout));
     } else if (V_TYPE(v) == ID_TEXT) {
-			return(textarray_subset(v,r));
-	 }
+		return(textarray_subset(v,r));
+	}
 	
     parse_error( "Illegal type: %s", V_NAME(v));
     return(NULL);
@@ -797,7 +796,7 @@ pp_argv(Var *left, Var *right)
         return(dd_argc_var(scope));
     } else {
         strcpy(name, V_NAME(v));
-        if (strcasecmp(name, "argv")) {
+        if (!strcasecmp(name, "argv")) {
             parse_error("$ARGV requires an array index.");
             return(NULL);
         }
@@ -1250,3 +1249,4 @@ pp_set_where(Var *id, Var *where, Var *exp)
     }
     return(id);
 }
+
