@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <regex.h>
 
-#ifdef HAVE_LIBGEN_H
+#if defined(HAVE_LIBGEN_H) && !defined(_AIX)
+/* JAS FIX: conflicts with regex.h on AIX */
 #include <libgen.h>
 #endif
 
