@@ -2356,3 +2356,24 @@ ff_contains(vfuncptr func, Var * arg)
 	}
     return(newInt(ret));
 }
+
+Var *
+ff_chdir(vfuncptr func, Var * arg)
+{
+	char *dir = NULL;
+    Alist alist[2];
+    alist[0] = make_alist("dir",    ID_STRING,     NULL,     &dir);
+    alist[1].name = NULL;
+	
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (dir == NULL) {
+		parse_error("%s: No directory specified", func->name);
+	} else {
+		if (access(dir, F_OK) == 0) {
+			chdir(dir);
+			return(newString(strdup(dir)));
+		}
+	}
+	return(NULL);
+}
