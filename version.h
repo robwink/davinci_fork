@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.89";
+char *version = "@(#) daVinci Version #0.90";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,11 @@ char *version = "@(#) daVinci Version #0.89";
 #include "build.h"
 
 /*
+
+Version 0.89: Fri Mar 29 16:39:56 MST 2002
+	*Added SPECTRAL_QUBE as a legit PDS object 
+		to the pds READER and WRITER
+
 
 Version 0.89: Tue Mar 26 18:07:55 MST 2002
 	* Added atod()
