@@ -923,7 +923,10 @@ listfcns(void)
         i++;
         if (i == 20) {
             i = 0;
-            gets(buf);
+            // gets(buf);
+	    // The warning was driving me nuts. It's also an invite
+	    // to segfaults and possible hacks
+	    fgets(buf, 256, stdin);
         }
     }
     return 0;
