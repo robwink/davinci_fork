@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.93";
+char *version = "@(#) daVinci Version #0.94";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,10 @@ char *version = "@(#) daVinci Version #0.93";
 #include "build.h"
 
 /*
+
+Version 0.94: Tue May 28 13:45:12 MST 2002
+	+ added changes to support read/write IO modules, using libtool
+
 Version 0.93: Mon May  6 20:13:47 MST 2002
 	+ Modified dvio_specpr to read whole file if record not specified
 

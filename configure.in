@@ -86,6 +86,7 @@ AC_CHECK_LIB(usds,Themis_Entry)
 AC_CHECK_LIB(msss_vis,read_DCT)
 AC_CHECK_LIB(jpeg,jpeg_simple_progression)
 AC_CHECK_LIB(termcap, tgetent)
+AC_CHECK_LIB(ltdl, lt_dlopen)
 
 dnl
 dnl If we could not find libtermcap.a then see if we have
@@ -288,6 +289,7 @@ if test "$enable_modules" = "yes"; then
 	if test "$GCC" = "yes" ; then
 		case "$target" in
 		hppa*-hp-hpux*) MODULE_LINKER="ld" MODULE_LINK_OPT="-B symbolic -b" ;;
+		*-linux-*)	MODULE_LINK_OPT="-shared" CFLAGS="$CFLAGS -rdynamic";;
 		*)              MODULE_LINKER="gcc" MODULE_LINK_OPT="-shared" ;;
 		esac
 	else
@@ -295,7 +297,7 @@ if test "$enable_modules" = "yes"; then
 
 		case "$target" in
 		hppa*-hp-hpux*)  MODULE_LINKER="ld" MODULE_LINK_OPT="-B symbolic -b" ;;
-		*-linux-*)       MODULE_LINK_OPT="-shared" ;;
+		*-linux-*)       MODULE_LINK_OPT="-shared" CFLAGS="$CFLAGS -rdynamic";;
 		*-sgi-irix*)     MODULE_LINK_OPT="-shared" ;;
 		*-sun-solaris*)  MODULE_LINK_OPT="-G" ;;
 		*-ibm-aix4.3*)   MODULE_LINK_OPT="-K" ;;
