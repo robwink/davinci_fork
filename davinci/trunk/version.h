@@ -1,9 +1,12 @@
-char *version = "@(#) daVinci Version #1.25";
+char *version = "@(#) daVinci Version #1.26";
 
 #include "build.h"
 
 /*
-Version 1.24: Thu Apr 15 19:47:19  2004
+Version 1.26: Fri Jun  4 13:48:45 MST 2004
+	* Bug in ff_format related to new argument handling
+
+Version 1.25: Thu Apr 15 19:47:19  2004
 	* Hopefully the final cleanup for the new argument handling
 
 Version 1.24: Tue Feb 10 14:58:27 MST 2004
