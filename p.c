@@ -310,7 +310,13 @@ evaluate(Var * n)
                 p1 = pop(scope);
             }
 
+			/*
+			** If a variable is a module variable, we can have dereferences to
+			** functions within it. An ordinary variable, however, cannot have
+			** such a function dereference.
+			*/
 			if (V_TYPE(left) == ID_DEREF) {
+#ifdef BUILD_MODULE_SUPPORT
 				/* module dereference */
 				evaluate(left);
 
@@ -319,8 +325,11 @@ evaluate(Var * n)
 					push(scope, pp_call_dv_module_func(V_FUNC(p2), p1));
 				}
 				else {
-					parse_error("Dereference is not a function.");
+					parse_error("Function dereference allowed for module variables only.");
 				}
+#else /* no module support */
+				parse_error("Function dereference allowed for module variables only.");
+#endif /* BUILD_MODULE_SUPPORT */
 			}
 			else {
 				push(scope, pp_func(left, p1));
@@ -474,7 +483,9 @@ evaluate(Var * n)
 			if (p1 == NULL || p2 == NULL) {
 				parse_error("dereference with null value");
 				push(scope, NULL);
-			} else if (p3 = search_in_list_of_loaded_modules(V_NAME(p1))) {
+			}
+#ifdef BUILD_MODULE_SUPPORT
+			else if (p3 = search_in_list_of_loaded_modules(V_NAME(p1))) {
 				vfuncptr t;
 
 				if(t = find_module_func(&V_MODULE(p3), V_NAME(p2))){
@@ -491,7 +502,9 @@ evaluate(Var * n)
 
 					push(scope, NULL);
 				}
-			} else {
+			}
+#endif /* BUILD_MODULE_SUPPORT */
+			else {
 				if (find_struct(p1, p2, &p3) != -1) {
 					push(scope, p3);
 				}

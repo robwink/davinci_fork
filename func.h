@@ -83,7 +83,7 @@ vfuncptr find_module_func(dvModule *m, char *name);
 Var *ff_load_dv_module(vfuncptr func, Var *arg);
 Var *ff_unload_dv_module(vfuncptr func, Var *arg);
 Var *ff_list_dv_modules(vfuncptr func, Var *arg);
-#endif
+#endif /* BUILD_MODULE_SUPPORT */
 
 Var *V_DUP (Var *);
 Var *set_array (Var *, Var *, Var *);

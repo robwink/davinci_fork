@@ -228,9 +228,11 @@ pp_print_var(Var *v, char *name, int indent, int depth)
         dump_var(v, indent+4, 10);
         break;
 	
+#ifdef BUILD_MODULE_SUPPORT
     case ID_MODULE:
         pp_print_module_var(v);
         break;
+#endif  /* BUILD_MODULE_SUPPORT */
     }
 }
 

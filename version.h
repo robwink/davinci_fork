@@ -4,6 +4,7 @@ char *version = "@(#) daVinci Version #0.7.1";
 /*
 Version 0.7.1: Tue Apr  3 13:46:19 MST 2001
 	* Version just after merging the iomedley branch in.
+	* Made modules code conditional as well.
 
 Version 0.7: Mon Apr  2 17:57:21 MST 2001
 	* Version just before merging the iomedley branch in.
