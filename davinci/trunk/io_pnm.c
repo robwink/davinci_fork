@@ -294,11 +294,7 @@ LoadPNM(FILE *fp, char *filename, struct _iheader *s)
         V_FORMAT(v) = BYTE;
     } else if (bits == 16) {
 		int *data = (int *)calloc(4, x*y*z);
-#ifndef __MSDOS__
-                u_short *sdata = (u_short *)V_DATA(v);
-#else   
-                unsigned short *sdata = (unsigned short *)V_DATA(v);
-#endif
+		unsigned short *sdata = (unsigned short *)V_DATA(v);
 
 		for (i = 0 ; i < V_DSIZE(v) ; i++) {
 			data[i] = sdata[i];

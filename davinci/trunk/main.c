@@ -289,7 +289,8 @@ void get_file_input(XtPointer client_data, int *fid, XtInputId *id)
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ifndef __MSDOS__
+
+#ifdef HAVE_PLPLOT
 extern SetTopLevel(Widget *);
 #endif
 
@@ -302,7 +303,7 @@ event_loop(void)
 {
     if (interactive) {
 #ifdef __MSDOS__
-		lhandler((char *)readline("dv> "));
+	lhandler((char *)readline("dv> "));
 #else 
         if (windows && getenv("DISPLAY") != NULL)  {
             char *argv[1];
@@ -313,7 +314,9 @@ event_loop(void)
             top = XtVaAppInitialize(&app, "Simple", NULL, 0,
                                     &argc,
                                     argv, NULL, NULL);
-		    SetTopLevel(&top);
+#ifdef HAVE_PLPLOT
+            SetTopLevel(&top);
+#endif
         } else {
             /**
             ** This is a hack to let us use the Xt event model, without

@@ -11,7 +11,9 @@ void rl_callback_read_char ();
 void rl_callback_handler_remove();
 int yywrap ( void );
 
+#ifdef HAVE_LIBHDF5
 #include "hdf5.h"
+#endif
 
 #ifdef __cplusplus
 }
@@ -153,7 +155,6 @@ Var * LoadHDF5(char *filename);
 int WriteRaw(Var *, FILE *, char *);
 int WriteGRD(Var *, FILE *, char *);
 int WriteSpecpr(Var *, char *, char *);
-void WriteHDF5(hid_t, char *, Var *);
 int WriteISIS(Var *, FILE *, char *, char *);
 void WritePPM(Var *, FILE *, char *);
 void WritePGM(Var *, FILE *, char *);
@@ -161,11 +162,15 @@ int WriteVicar(Var *, FILE *, char *);
 int WriteAscii(Var *, FILE *, char *);
 int WriteERS(Var *, FILE *, char *);
 int WriteIMath(Var *s, FILE *fp, char *filename);
+
+#ifdef HAVE_LIBHDF5
 void WriteHDF5(hid_t parent, char *name, Var *v);
+#endif
 
 #ifdef HAVE_LIBMAGICK
 void WriteGFX_Image(Var *ob,char *filename,char *GFX_type);
 #endif
+
 int is_AVIRIS(FILE *);
 int is_GRD(FILE *);
 int is_Vicar(FILE *);

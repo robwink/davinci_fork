@@ -33,7 +33,7 @@ AC_CHECK_LIB(termcap, tgetent)
 
 dnl special check for readline. 
 MAKEREAD=''
-AC_CHECK_LIB(readline, readline)
+AC_CHECK_LIB(readline, rl_callback_handler_install)
 if test "`echo $LIBS | grep readline  `" = "" 
 then
 	MAKEREAD='readline/libreadline.a'
@@ -52,6 +52,7 @@ AC_CHECK_LIB(plplotFX,c_plinit,PL_LIB='-lplplotFX',,)
 if test "$PL_LIB" != ""
 then
 	AC_DEFINE(INCLUDE_API)
+	AC_DEFINE(HAVE_PLPLOT)
 fi
 
 

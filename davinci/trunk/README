@@ -1,28 +1,16 @@
 This is the README file for daVinci, a hyperspectral math engine,
 developed for JPL under contract #959904.  You can always obtain the
-latest version of daVinci from ftp://speclab.cr.usgs.gov/pub/davinci/dv.tar.Z
+latest version of daVinci from ftp://east.la.asu.edu/pub/software/davinci
 
 Compiling
 ---------
-DaVinci requires an ANSI C compiler, lex and yacc.  A configuration script
-has been included that should work on most systems.  To configure daVinci,
-just run the configure script from this directory.
+DaVinci requries an ANSI C compiler.  A configuration script has been 
+included to make compilation as straight forward as possible.  In
+most instances you should be able to run configure, and then run make:
 
-        % ./configure
-
-This will a Makefile, and a config.h header file, at which time, 
-you should be able to just run:
-
+		% ./configure
         % make
         % make install
-
-If for some reason your make is broken, you can probably compile most
-everything manually with something similar to the following:
-
-        % cc -D_NO_PROTO *.c -o davinci -lm
-
-If you don't have an ANSI compiler, see about getting gcc, a free ANSI C
-compiler available from prep.ai.mit.edu.
 
 
 Documentation
@@ -30,13 +18,12 @@ Documentation
     The documentation is in the docs directory.  You should find in there:
 
     In HTML format, viewable with any WWW browser (mosaic, netscape, etc)
-
-        intro.html          - an introductory page
         primer.html         - a basic tutorial
+        intro.html          - an introductory page
         davinci.html        - a comprehensive reference manual
 
     The same files are also available in Postscript (*.ps) and ASCII (*.txt)
-    
-    The file functions.txt, is a complete listing of all the available
-    functions, and describes each in detail.  This document will eventually
-    get converted to HTML format.
+	
+	The file functions.txt, is a complete listing of all the available
+	functions, and describes each in detail.  This document will eventually
+	get converted to HTML format.
