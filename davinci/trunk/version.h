@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.87b";
+char *version = "@(#) daVinci Version #0.87c";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,9 @@ char *version = "@(#) daVinci Version #0.87b";
 #include "build.h"
 
 /*
+Version 0.87b: Wed Mar 13 18:17:30  2002
+	+ structure addition
+
 Version 0.87b: Wed Mar 13 18:17:30  2002
 	* Added some #defines for windows compile
 	* Replaced gplot with gnuplot for ff_plot
