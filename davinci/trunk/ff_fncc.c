@@ -5,7 +5,8 @@ double * TwoD_Convolve(int trow,int tcol,int frow,int fcol, double *tdata, doubl
 void build_t_constants(double *t, int t_row, int t_col, double *t_avg, double *t_prime, double *t2_prime, double *ignore);
 
 double * fncc(double *r, int g_row,int g_col,int t_row,int t_col,int f_row,
-					int f_col,double *f, double t_var, double t_avg,double *ignore);
+					int f_col,double *f, double t_var, double t_avg,double *ignore,
+					double *rf, double *rf2);
 
 double f_sum(double *f, int f_row, int f_col, int x, int y, int t_cen_row, 
 				 int t_cen_col,int row_even_mod,int col_even_mod,double *sots,
@@ -13,22 +14,19 @@ double f_sum(double *f, int f_row, int f_col, int x, int y, int t_cen_row,
 
 void find_max_point(int col, int row, double *cc, int *p);
 
+int build_running_sums(int trow,int tcol,int frow,int fcol,int grow,int gcol,double *f, double *rf, double *rf2);
 								
-								 
-
 
 Var *
 ff_fncc(vfuncptr func, Var * arg)
 {
 	Var *obj=NULL;
 	Var *template=NULL;
+	Var *result;
 	int ac;
 	Var **av;
 	double *r;
 	double *cc;
-
-	char *results=NULL;
-	char *result_enums[] = {"new_image","max_point","max","corner_point","corner","ncc", NULL};	
 
 	int x,y;
 	int f_row,f_col;
@@ -42,14 +40,22 @@ ff_fncc(vfuncptr func, Var * arg)
 	double ig=MINFLOAT;
 	double ref = MINFLOAT;
 
-	int *p;
+	double *running_f = NULL;
+	double *running_f2 = NULL;
 
-	Alist alist[5];
+	Var *rf=NULL;
+	Var *rf2=NULL;
+
+	int *p;
+	int *p1;
+
+	Alist alist[6];
 	alist[0] = make_alist("template",     ID_VAL,     NULL, &template);
 	alist[1] = make_alist("object",     ID_VAL,     NULL, &obj);
-	alist[2] = make_alist("output",     ID_ENUM,     result_enums, &results);
-	alist[3] = make_alist("ignore",     DOUBLE,     NULL, &ig);
-	alist[4].name = NULL;
+	alist[2] = make_alist("rf",     ID_VAL,     NULL, &rf);
+	alist[3] = make_alist("r2",     ID_VAL,     NULL, &rf2);
+	alist[4] = make_alist("ignore",     DOUBLE,     NULL, &ig);
+	alist[5].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -78,6 +84,12 @@ ff_fncc(vfuncptr func, Var * arg)
 		parse_error("%s: Currently only works on single Band objects\n", func->name);
 		return(NULL);
 	}
+	
+	if ((rf == NULL && rf2 != NULL) || (rf!=NULL && rf2==NULL)){
+		parse_error("Hey, you can't sent just ONE running sum table...you HAVE to have both");
+		return(NULL);
+	}
+
 
 	f_row = GetY(obj);
 	f_col = GetX(obj);
@@ -93,6 +105,30 @@ ff_fncc(vfuncptr func, Var * arg)
 	if (ig != ref) 
 		ignore = &ig;
 
+	if (rf == NULL) { /* by the query above, we know BOTH are NULL */
+		running_f = (double *)malloc(x * y * sizeof(double));
+		running_f2 = (double *)malloc(x * y * sizeof(double));
+
+		if (running_f == NULL || running_f2 == NULL) {
+			parse_error("Memory Error: Not enough memory to support this call!");
+			return(NULL);
+		}
+
+		if (build_running_sums(t_row,t_col,f_row,f_col,y,x,f,running_f,running_f2))
+			/* If we're here, there wasn't enough memory to do this! */
+			return(NULL);
+	}
+	else {
+		if (GetX(rf) != x || GetX(rf2) != x ||
+			 GetY(rf) != y || GetY(rf2) != y  ){
+			
+			parse_error("The supplied tables are the wrong size for this template and object");
+			return(NULL);
+		}
+		running_f = (double *)V_DATA(rf);
+		running_f2 = (double *)V_DATA(rf2);
+	}
+
 	t_prime = (double *)malloc(t_col * t_row * sizeof(double));
 	parse_error("Building t constants");
 	build_t_constants(t,t_row,t_col,&t_avg,t_prime,&t_var,ignore);
@@ -103,46 +139,28 @@ ff_fncc(vfuncptr func, Var * arg)
 	r = TwoD_Convolve(t_row,t_col,f_row,f_col,t,f,ignore); 
 
 	parse_error("Building cross-correlation");
-	cc=fncc(r,y,x,t_row,t_col,f_row,f_col,f,t_var,t_avg,ignore);
+	cc=fncc(r,y,x,t_row,t_col,f_row,f_col,f,t_var,t_avg,ignore,running_f,running_f2);
 
 	free(t_prime);
 
 	free(r);
 
-	if (results == NULL)
-		return newVal(BSQ,x,y,1,DOUBLE,(void *)cc);
+	p = (int *) malloc(2 * sizeof(int));
+	p1 = (int *) malloc(2 * sizeof(int));
+	find_max_point(x,y,cc,p);
+	p[0]++;p[1]++;
+	p1[0]=p[0]-t_col+2;
+	p1[1]=p[1]-t_row+2;
 
-	else if (!strcmp(results,"ncc"))
-		return newVal(BSQ,x,y,1,DOUBLE,(void *)cc);
+	result = new_struct(5);
+	add_struct(result,"cross_correlation",newVal(BSQ,x,y,1,DOUBLE,cc));
+	add_struct(result,"max_point",newVal(BSQ,2,1,1,INT,p));
+	add_struct(result,"corner_point",newVal(BSQ,2,1,1,INT,p1));
+	add_struct(result,"running_sum",newVal(BSQ,x,y,1,DOUBLE,running_f));
+	add_struct(result,"running_sum_squared",newVal(BSQ,x,y,1,DOUBLE,running_f2));
 
-	else if (!strcmp(results,"max_point") ||
-				!strcmp(results,"max")			) {
 
-		p = (int *) malloc(2 * sizeof(int));
-
-		find_max_point(x,y,cc,p);
-
-		parse_error("Max Point:    [%d, %d]\n",p[0]+1,p[1]+1);
-		parse_error("Corner Point: [%d, %d]\n",(p[0]-t_col+2),(p[1]-t_row+2));
-		return newVal(BSQ,x,y,1,DOUBLE,(void *)cc);
-
-	}
-/*
-	else if (!strcmp(results,"corner_point") ||
-				!strcmp(results,"corner")			) {
-
-		p = (int *) malloc(2 * sizeof(int));
-
-		find_max_point(x,y,cc,p);
-
-		free(cc);
-		p[0]=p[0]-t_col+2;	
-		p[1]=p[1]-t_row+2;
-		return newVal(BSQ,2,1,1,INT,(void *)p);
-	}
-*/
-	else
-		return(NULL);
+	return(result);
 }
 
 void 
@@ -206,7 +224,8 @@ f_sum(double *f, int f_row, int f_col, int x, int y, int t_cen_row,
 
 double *
 fncc(double *r, int g_row,int g_col,int t_row,int t_col,int f_row,
-		int f_col,double *f, double t_var, double t_avg,double *ignore)
+		int f_col,double *f, double t_var, double t_avg,double *ignore, 
+		double *running_f, double *running_f2)
 {
 
 
@@ -250,8 +269,22 @@ fncc(double *r, int g_row,int g_col,int t_row,int t_col,int f_row,
 
 		for(j=0;j<g_col;j++){
 			x = j - t_cen_col;
-			fsum = f_sum(f,f_row,f_col,x,y,t_cen_row,t_cen_col,row_even_mod,col_even_mod,&sots,&f_ic,ignore);
+
+/*			fsum = f_sum(f,f_row,f_col,x,y,t_cen_row,t_cen_col,row_even_mod,col_even_mod,&sots,&f_ic,ignore); */
+
+			fsum = running_f[i*g_col+j];
+			sots = running_f2[i*g_col+j];
+
 			favg = (fsum*fsum)/(t_col*t_row-f_ic);
+
+
+/*
+			if ( fabs(fsum-running_f[i*g_col+j]) > tol) 
+				parse_error("@ %d,%d (row,col): fsum = %f while running_f = %f",i,j,fsum,running_f);
+			if (fabs(sots-running_f2[i*g_col+j]) > tol)
+				parse_error("@ %d,%d (row,col): sots = %f while running_f2 = %f",i,j,sots,running_f2);
+*/
+
 
 
 			{ /* For debugging purposes, I've broken up the expression to make sure we don't have dreck! */
@@ -260,7 +293,7 @@ fncc(double *r, int g_row,int g_col,int t_row,int t_col,int f_row,
 				p3 = (sots - favg)/(t_col*t_row-1-f_ic);
 
 				if ( p3 < 0. ) {
-					parse_error("Error at cell: %d,%d we have:",j,i);
+					parse_error("Error at cell: %d,%d we have: %g",j,i,p3);
 					g[i*g_col+j] = 0.;
 				}
 
@@ -337,6 +370,84 @@ build_t_constants(double *t, int t_row, int t_col, double *t_avg,
 	*t_var = (t2/(double)(t_row*t_col-1-ig_count));
 }
 
+int
+build_running_sums(int trow,int tcol,int frow,int fcol,int grow,
+						 int gcol,double *f, double *running_f, double *running_f2)
+{
+	double *s=NULL;
+	double *ss=NULL;
+
+	int x, y;
+	int u, v;
+
+	s = (double *)malloc(gcol * grow * sizeof(double));
+	ss = (double *)malloc(gcol * grow * sizeof(double));
+
+	if (s == NULL || ss == NULL ) {
+			parse_error("Could not allocate enough memory to perform this task...aborting");
+			if (s != NULL)
+				free(s);
+			if(ss != NULL)
+				free(ss);
+			return 1;
+	}
+
+/* 
+** First we build a set a cumulative tables
+*/
+
+	parse_error("Building first round tables");
+
+	for (v=0;v<grow;v++){
+		for(u=0;u<gcol;u++){
+			/* SUM of f */
+			s[v*gcol+u] = (((u >= fcol)||(v >= frow)) ? 0.0 : f[v * fcol + u]);
+			s[v*gcol+u]+= ((u == 0) ? 0.0 : s[v*gcol+(u-1)]);
+			s[v*gcol+u]+= ((v == 0) ? 0.0 : s[(v-1)*gcol+u]);
+			s[v*gcol+u]-= (((u == 0) || (v == 0)) ? 0.0 : s[(v-1)*gcol+(u-1)]);
+
+			/* SUM of f^2 */
+			ss[v*gcol+u] = (((u >= fcol)||(v >= frow)) ? 0.0 : (f[v * fcol + u] * f[v * fcol + u]));
+			ss[v*gcol+u]+= ((u == 0) ? 0.0 : ss[v*gcol+(u-1)]);
+			ss[v*gcol+u]+= ((v == 0) ? 0.0 : ss[(v-1)*gcol+u]);
+			ss[v*gcol+u]-= (((u == 0) || (v == 0)) ? 0.0 : ss[(v-1)*gcol+(u-1)]);
+		}
+	}
+			 
+/* 
+** Now we build the final sum tables
+*/
+	parse_error("Building second round tables");
+
+	for(y=-(trow-1);y<grow-(trow-1);y++){
+		v=y+(trow-1);
+		for(x=-(tcol-1);x<gcol-(tcol-1);x++){
+			u=x+(tcol-1);
+
+			/* Final f SUM */
+			running_f[v*gcol+u] = s[v*gcol+u];
+			running_f[v*gcol+u]-= ((x < 1) ? 0.0 : s[v*gcol+(x-1)]);
+			running_f[v*gcol+u]-= ((y < 1) ? 0.0 : s[(y-1)*gcol+u]);
+			running_f[v*gcol+u]+= (((x < 1) || (y < 1)) ? 0.0 : s[(y-1)*gcol+(x-1)]);
+
+			/* Final f^2 SUM */
+			running_f2[v*gcol+u] = ss[v*gcol+u];
+			running_f2[v*gcol+u]-= ((x < 1) ? 0.0 : ss[v*gcol+(x-1)]);
+			running_f2[v*gcol+u]-= ((y < 1) ? 0.0 : ss[(y-1)*gcol+u]);
+			running_f2[v*gcol+u]+= (((x < 1) || (y < 1)) ? 0.0 : ss[(y-1)*gcol+(x-1)]);
+		}
+	}
+
+			
+	parse_error("Done!");
+
+	free(s);
+	free(ss);
+
+	return 0;
+}
+
+
 	
 double *
 TwoD_Convolve(int trow,int tcol,int frow,int fcol, double *t, double *f, double *ignore)
@@ -366,6 +477,7 @@ TwoD_Convolve(int trow,int tcol,int frow,int fcol, double *t, double *f, double 
 
 	int ig_flag = 0;
 	double ig = MINFLOAT;
+
 
 /* 
 ** While this integer division seems poor, it actually acomplishes
