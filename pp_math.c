@@ -159,22 +159,10 @@ pp_math(Var * a, int op, Var * b)
         return (NULL);
     }
     count = 0;
-    for (i = 0; i < 3; i++) {
-        va = V_SIZE(a)[orders[V_ORDER(a)][i]];
-        vb = V_SIZE(b)[orders[V_ORDER(b)][i]];
-        if (va != 1 && vb != 1 && va != vb) {
-            parse_error("math operation illegal, sizes differ");
-            return (NULL);
-        }
-        if (va != vb) {
-            ca *= va;
-            cb *= vb;
-        }
-    }
-    if (ca != 1 && cb != 1) {
+	if (math_operable(a,b) == 0) {
         parse_error("math operation illegal, sizes differ on more than 1 axis");
         return (NULL);
-    }
+	}
     /**
     ** Figure out return type and size, and allocate space
     **
@@ -514,4 +502,28 @@ extract_double(Var * v, int i)
         return (((double *) V_DATA(v))[i]);
     }
     return (0);
+}
+
+int
+math_operable(Var *a, Var *b)
+{
+	int i;
+	int va,vb;
+    int ca = 1, cb = 1;
+
+    for (i = 0; i < 3; i++) {
+        va = V_SIZE(a)[orders[V_ORDER(a)][i]];
+        vb = V_SIZE(b)[orders[V_ORDER(b)][i]];
+        if (va != 1 && vb != 1 && va != vb) {
+			return(0);
+        }
+        if (va != vb) {
+            ca *= va;
+            cb *= vb;
+        }
+    }
+    if (ca != 1 && cb != 1) {
+		return(0);
+    }
+	return(1);
 }
