@@ -21,15 +21,15 @@ ff_avg2(vfuncptr func, Var * arg)
 	Var *obj=NULL, *v;
 	char *ptr = NULL;
 	int axis = 0, dsize, i, j;
-	float n;
+	double n;
 	int in[3], out[3];
-	float *sum, *sum2, *vx;
+	double *sum, *sum2, *vx;
 	char *options[] =  {
 		"x", "y", "z", "xy", "yx", "xz", "zx", "yz", "zy",
 		"xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL
 	};
 	int dsize2;
-	float x;
+	double x;
 	Var *both = NULL;
 	Var *avg = NULL, *stddev = NULL;
 	int f_avg =0, f_stddev = 0, f_sum = 0;
@@ -83,8 +83,8 @@ ff_avg2(vfuncptr func, Var * arg)
 		v = stddev = newVal(V_ORG(obj), out[0], out[1], out[2], FLOAT, NULL); 
 	}
 
-	sum= (float *)calloc(V_DSIZE(v), sizeof(float));
-	if (f_stddev) sum2= (float *)calloc(V_DSIZE(v), sizeof(float));
+	sum= (double *)calloc(V_DSIZE(v), sizeof(double));
+	if (f_stddev) sum2= (double *)calloc(V_DSIZE(v), sizeof(double));
 
 	/*
 	** The if avoids the x^2 computation on the case we don't need it.
@@ -108,7 +108,7 @@ ff_avg2(vfuncptr func, Var * arg)
 	}
 
 	dsize2 = V_DSIZE(v);
-	n = (float)dsize / (float)dsize2;
+	n = (double)dsize / (double)dsize2;
 
 	/*
 	** Perform required computations with sums
@@ -121,7 +121,7 @@ ff_avg2(vfuncptr func, Var * arg)
 	}
 
 	if (f_avg) {
-		n = (float)dsize2 / (float)dsize;
+		n = (double)dsize2 / (double)dsize;
 		for (i = 0 ; i < dsize2 ; i++) {
 			sum[i] = sum[i] * n;
 		}
