@@ -1224,6 +1224,16 @@
  The normalize option divides each bin by the total number of elements.
  The cumulative option produces a cumulative histogram.
 
+?functions hstats()
+?hstats()
+
+ hstats() - Generate statistics for a histogram
+
+ hstats(object=VAL)
+
+ The hstats() function generates statistics for 2 column input, like that
+ produced by the histogram function.  A structure is returned containing
+ the average and standard deviation for the input data.
 
 ?functions gnoise()
 ?gnoise()
