@@ -7,6 +7,10 @@ char *version = "@(#) daVinci Version #0.91";
 #include "build.h"
 
 /*
+Version 0.92: Tue Apr 18 11:09:06 MST 2002
+	+ separated out endian logic from HDF code, causing compile
+	  to fail when HDF not configured.
+
 Version 0.91: Mon Apr 15 19:07:21 MST 2002
 	+ Added hstats() to compute histogram statistics
 
