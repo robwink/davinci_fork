@@ -83,7 +83,7 @@ add_struct(Var *s, char *name, Var *exp)
 
 	names = realloc(names, (count+1)*sizeof(char *));
 	data = realloc(data, (count+1)*sizeof(Var *));
-	data[count] = V_DUP(exp);
+	data[count] = exp;
 	names[count] = name ? strdup(name) : 0;
 	mem_claim(data[count]);
 
@@ -91,6 +91,7 @@ add_struct(Var *s, char *name, Var *exp)
 	V_STRUCT(s).data = data;
 	V_STRUCT(s).count = count+1;
 }
+
 
 void
 WriteHDF5(hid_t parent, char *name, Var *v)
@@ -713,7 +714,7 @@ varray_subset(Var *v, Range *r)
 		data = V_STRUCT(v).data;
 
 		for (i = r->lo[0] ; i <= r->hi[0] ; i+= r->step[0])  {
-			add_struct(s, names[i], data[i]);
+			add_struct(s, names[i], V_DUP(data[i]));
 		}
 	}
 	return(s);
@@ -776,7 +777,7 @@ create_struct(Var *v)
 			free_var(s);
 			return(NULL);
 		}
-		add_struct(s, name, r);
+		add_struct(s, name, V_DUP(r));
 		p = q;
 	}
 	return(s);
