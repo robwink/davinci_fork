@@ -1,6 +1,13 @@
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
 
+/* Define if on AIX 3.
+   System headers sometimes define this.
+   We just want to avoid a redefinition error message.  */
+#ifndef _ALL_SOURCE
+/* #undef _ALL_SOURCE */
+#endif
+
 /* Define to empty if the keyword does not work.  */
 /* #undef const */
 
@@ -22,20 +29,24 @@
 /* Define if your <sys/time.h> declares struct tm.  */
 /* #undef TM_IN_SYS_TIME */
 
+/* Define if your processor stores words with the most significant
+   byte first (like Motorola and SPARC, unlike Intel and VAX).  */
+#define WORDS_BIGENDIAN 1
+
 /*Define if you have module library*/
 #define BUILD_MODULE_SUPPORT 1
 
 /*Define if you have projection library libproj*/
-/* #undef HAVE_LIBPROJ */
+#define HAVE_LIBPROJ 1
 
 /*Define if you have Xm library*/
 #define HAVE_LIBXM 1
 
 /*Define if you have the PlPlot library */
-/* #undef HAVE_PLPLOT */
+#define HAVE_PLPLOT 1
 
 /*Define if you have plplotFX library*/
-/* #undef INCLUDE_API */
+#define INCLUDE_API 1
 
 /*Define if you have use hpux shl library*/
 /* #undef USE_HPUX_SHL */
@@ -116,7 +127,7 @@
 #define HAVE_LIMITS_H 1
 
 /* Define if you have the <magick.h> header file.  */
-/* #undef HAVE_MAGICK_H */
+#define HAVE_MAGICK_H 1
 
 /* Define if you have the <magick/api.h> header file.  */
 #define HAVE_MAGICK_API_H 1
@@ -125,13 +136,13 @@
 #define HAVE_MALLOC_H 1
 
 /* Define if you have the <my_list.h> header file.  */
-/* #undef HAVE_MY_LIST_H */
+#define HAVE_MY_LIST_H 1
 
 /* Define if you have the <ndir.h> header file.  */
 /* #undef HAVE_NDIR_H */
 
 /* Define if you have the <projects.h> header file.  */
-/* #undef HAVE_PROJECTS_H */
+#define HAVE_PROJECTS_H 1
 
 /* Define if you have the <sys/dir.h> header file.  */
 /* #undef HAVE_SYS_DIR_H */
@@ -170,37 +181,34 @@
 /* #undef HAVE_LIBBZ2 */
 
 /* Define if you have the curses library (-lcurses).  */
-#define HAVE_LIBCURSES 1
+/* #undef HAVE_LIBCURSES */
 
 /* Define if you have the hdf5 library (-lhdf5).  */
 #define HAVE_LIBHDF5 1
 
-/* Define if you have the iomedley library (-liomedley).  */
-#define HAVE_LIBIOMEDLEY 1
-
 /* Define if you have the jpeg library (-ljpeg).  */
-/* #undef HAVE_LIBJPEG */
+#define HAVE_LIBJPEG 1
 
 /* Define if you have the m library (-lm).  */
 #define HAVE_LIBM 1
 
 /* Define if you have the msss_vis library (-lmsss_vis).  */
-/* #undef HAVE_LIBMSSS_VIS */
+#define HAVE_LIBMSSS_VIS 1
 
 /* Define if you have the png library (-lpng).  */
-#define HAVE_LIBPNG 1
+/* #undef HAVE_LIBPNG */
 
 /* Define if you have the readline library (-lreadline).  */
 #define HAVE_LIBREADLINE 1
 
 /* Define if you have the termcap library (-ltermcap).  */
-/* #undef HAVE_LIBTERMCAP */
+#define HAVE_LIBTERMCAP 1
 
 /* Define if you have the tiff library (-ltiff).  */
 #define HAVE_LIBTIFF 1
 
 /* Define if you have the usds library (-lusds).  */
-/* #undef HAVE_LIBUSDS */
+#define HAVE_LIBUSDS 1
 
 /* Define if you have the z library (-lz).  */
 #define HAVE_LIBZ 1

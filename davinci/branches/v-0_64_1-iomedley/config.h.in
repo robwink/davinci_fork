@@ -185,9 +185,6 @@
 /* Define if you have the hdf5 library (-lhdf5).  */
 #undef HAVE_LIBHDF5
 
-/* Define if you have the iomedley library (-liomedley).  */
-#undef HAVE_LIBIOMEDLEY
-
 /* Define if you have the jpeg library (-ljpeg).  */
 #undef HAVE_LIBJPEG
 

@@ -14,12 +14,12 @@ INSTALL = ./install-sh -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 
-XINCLUDES= $(XRTINCLUDE)
-XLIBS= $(XRTLIBS)
+XINCLUDES=-I/usr/openwin/include $(XRTINCLUDE)
+XLIBS=-L/usr/openwin/lib $(XRTLIBS)
 
-CPPFLAGS= -I/usr/include/X11
-CFLAGS=$(XINCLUDES) -Ilib -g -O2 -I. -INONE/include -I../iomedley  -I../iomedley
-LDFLAGS= -L${exec_prefix}/lib -Lreadline -LNONE/lib -L../iomedley  -L. -L../iomedley
+CPPFLAGS= -I/usr/local/include -I/usr/openwin/include -I/usr/openwin/include/X11 -I/usr/include/X11 -Ilib -Iiomedley
+CFLAGS=$(XINCLUDES) -g -O2 -I. -O  
+LDFLAGS= -L/usr/openwin/lib -L${exec_prefix}/lib -Lreadline -L/usr/local/lib -L/usr/openwin/lib -R/usr/openwin/lib 
 
 XRTINCLUDE=  
 XRTLIBS = 
@@ -27,9 +27,11 @@ XRTLIBS =
 
 CC     = gcc
 DEFS   = -DHAVE_CONFIG_H 
-LIBS   = -liomedley -lMagick -ltiff -lpng -lreadline -lcurses -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -lc  -lmodsupp -liomedley $(XLIBS)
+LIBS   =  -L. -Liomedley -lmodsupp -liomedley $(XLIBS) -lplplotFX -lMagick -ltiff -lproj -lreadline -ltermcap -ljpeg -lmsss_vis -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -L/opt/local/src/ImageMagick-4.2.9/magick -lMagick -ltiff -ljpeg -lpng -ldpstk -ldps -lXext -lXt -lX11 -lsocket -lnsl -lz -lm -ldl
 AR     = ar
 RANLIB = ranlib
+
+LIBIOMEDLEY = iomedley/libiomedley.a
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
@@ -56,7 +58,7 @@ OBJ=p.o pp.o symbol.o \
 	reserved.o array.o string.o pp_math.o rpos.o init.o help.o \
 	io_grd.o io_isis.o io_lablib3.o io_pnm.o io_specpr.o io_vicar.o \
 	io_aviris.o io_imath.o io_magic.o io_themis.o\
-	ff_moment.o io_ascii.o ff_interp.o  \
+	ff_moment.o io_ascii.o ff_interp.o ff_projection.o \
 	lexer.o parser.o main.o fit.o system.o misc.o ufunc.o scope.o \
 	ff_header.o ff_text.o io_ers.o io_goes.o ff_bbr.o ff_vignette.o \
 	ff_pause.o printf.o ff_ifill.o ff_xfrm.o newfunc.o ff_ix.o ff_avg.o \
@@ -72,8 +74,11 @@ OBJ=p.o pp.o symbol.o \
 
 all:	 davinci gplot
 
-davinci:	$(OBJ)  $(READLINE_OBJ) $(MOD_SUPP_LIB)
+davinci:	$(OBJ)  $(READLINE_OBJ) $(MOD_SUPP_LIB) $(LIBIOMEDLEY)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $@ $(READLINE_LIB) $(LIBS)
+
+$(LIBIOMEDLEY):
+	cd iomedley && $(MAKE)
 
 $(MOD_SUPP_LIB): $(MOD_SUPP_LIB_OBJS)
 	$(AR) qv $(MOD_SUPP_LIB) $(MOD_SUPP_LIB_OBJS)
@@ -149,7 +154,7 @@ gplot.o:	gplot.c
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(XINCLUDES) -Ilib $(CFLAGS) $< 
 
 gplot:	gplot.o lib/libXfred.a system.o
-	$(CC) $(CFLAGS) gplot.o system.o -o $@ $(LDFLAGS) -Llib -lXfred $(LIBS) $(XLIBS) -lX11
+	$(CC) $(CPPFLAGS) $(CFLAGS) gplot.o system.o -o $@ $(LDFLAGS) -Llib -lXfred $(LIBS) $(XLIBS) -lX11
 
 lib/libXfred.a:
 	@cd lib ; $(MAKE)
@@ -158,10 +163,10 @@ depend:
 	@gcc -MM $(OBJ:.o=.c)
 
 x.o:    x.c
-	$(CC) -c $(CFLAGS) $(DEFS) $(XRTINCLUDE) $<
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(XRTINCLUDE) $<
 
 xrt_print_3d.o: xrt_print_3d.c
-	$(CC) -c $(CFLAGS) $(XRTINCLUDE) $<
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(XRTINCLUDE) $<
 
 
 
