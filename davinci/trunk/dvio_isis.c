@@ -951,6 +951,8 @@ write_isis_planes(vfuncptr func, Var * arg)
     char *filename = NULL;
 	char *p;
 	int rec_len, lbl_length;
+	Var *zero;
+	int nsuffix[3] = { 0, 0, 0 };
 
 
     Alist alist[6];
@@ -978,6 +980,8 @@ write_isis_planes(vfuncptr func, Var * arg)
     size[0] = GetX(core);
     size[1] = GetY(core);
     size[2] = GetZ(core);
+
+	zero = newInt(0);
 
     /*
     ** Verify the size of each suffix plane
@@ -1141,6 +1145,9 @@ write_isis_planes(vfuncptr func, Var * arg)
 	}
 
     nbytes = GetNbytes(core);
+	nsuffix[0] = (suffix[0] ? get_struct_count(suffix[0]) : 0);
+	nsuffix[1] = (suffix[1] ? get_struct_count(suffix[1]) : 0);
+	nsuffix[2] = (suffix[2] ? get_struct_count(suffix[2]) : 0);
 
     if (V_ORG(core) == BSQ) {
         for (k = 0 ; k < size[2] ; k++) {
@@ -1148,52 +1155,44 @@ write_isis_planes(vfuncptr func, Var * arg)
                 pos = (k*size[1]+j)*size[0] * nbytes;
                 fwrite((char *)V_DATA(core) + pos, size[0], nbytes, fp);
 
-                if (suffix[0]) {
-                    for (n = 0 ; n < get_struct_count(suffix[0]) ; n++) {
-                        get_struct_element(suffix[0], n, NULL, &v);
-                        write_one(v, 0, j, k, fp);
-                    }
-                }
+				/* write sample suffix */
+				for (n = 0 ; n < nsuffix[0] ; n++) {
+					get_struct_element(suffix[0], n, NULL, &v);
+					write_one(v, 0, j, k, fp);
+				}
             }
-            if (suffix[1]) {
-                for (n = 0 ; n < get_struct_count(suffix[1]) ; n++) {
-                    get_struct_element(suffix[1], n, NULL, &v);
-                    write_row_x(v, 0, k, fp);
-                }
-            }
+			/* write line suffix */
+			for (n = 0 ; n < nsuffix[1] ; n++) {
+				get_struct_element(suffix[1], n, NULL, &v);
+				write_row_x(v, 0, k, fp, nsuffix[0]);
+			}
         }
-        if (suffix[2]) {
-            for (n = 0 ; n < get_struct_count(suffix[2]) ; n++) {
-                get_struct_element(suffix[2], n, NULL, &v);
-                write_plane(v, V_ORG(core), 2, fp);
-            }
-        }
+		/* write band suffix */
+		for (n = 0 ; n < nsuffix[2] ; n++) {
+			get_struct_element(suffix[2], n, NULL, &v);
+			write_plane(v, V_ORG(core), 2, fp, nsuffix[0], nsuffix[1]);
+		}
     } else if (V_ORG(core) == BIP) {
         for (k = 0 ; k < size[1] ; k++) {		/* y axis */
             for (j = 0 ; j < size[0] ; j++) {	/* z axis */
                 pos = (k*size[0]+j)*size[2] * nbytes;
                 fwrite((char *)V_DATA(core) + pos, size[2], nbytes, fp);
 
-                if (suffix[2]) {
-                    for (n = 0 ; n < get_struct_count(suffix[2]) ; n++) {
-                        get_struct_element(suffix[2], n, NULL, &v);
-                        write_one(v, j, k, 0, fp);
-                    }
-                }
+				for (n = 0 ; n < nsuffix[2] ; n++) {
+					get_struct_element(suffix[2], n, NULL, &v);
+					write_one(v, j, k, 0, fp);
+				}
             }
-            if (suffix[0]) {
-                for (n = 0 ; n < get_struct_count(suffix[0]) ; n++) {
-                    get_struct_element(suffix[0], n, NULL, &v);
-                    write_row_x(v, 0, k, fp);
-                }
-            }
+			for (n = 0 ; n < nsuffix[0] ; n++) {
+				get_struct_element(suffix[0], n, NULL, &v);
+				write_row_x(v, 0, k, fp, nsuffix[2]);
+			}
         }
-        if (suffix[1]) {
-            for (n = 0 ; n < get_struct_count(suffix[1]) ; n++) {
-                get_struct_element(suffix[1], n, NULL, &v);
-                write_plane(v, V_ORG(core), 1, fp);
-            }
-        }
+
+		for (n = 0 ; n < nsuffix[1] ; n++) {
+			get_struct_element(suffix[1], n, NULL, &v);
+			write_plane(v, V_ORG(core), 1, fp, nsuffix[2], nsuffix[0]);
+		}
 	}
     fclose(fp);
     return(NULL);
@@ -1215,67 +1214,85 @@ write_one(Var *v, int x, int y, int z, FILE *fp)
     fwrite((char *)V_DATA(v) + pos*nbytes, 1, nbytes, fp);
 } 
 
-write_row_x(Var *v, int y, int z, FILE *fp)
+write_row_x(Var *v, int y, int z, FILE *fp, int corner1)
 {
     int i;
     int x = GetX(v);
+    int zero = 0;
 
     for (i = 0 ; i < x ; i++) {
         write_one(v, i, y, z, fp);
     }
+	for (i = 0 ; i < corner1 ; i++) {
+        fwrite(&zero, 4, 1, fp);
+	}
 }
-write_row_y(Var *v, int x, int z, FILE *fp)
+write_row_y(Var *v, int x, int z, FILE *fp, int corner1)
 {
     int i;
     int y = GetY(v);
+    int zero = 0;
 
     for (i = 0 ; i < y ; i++) {
         write_one(v, x, i, z, fp);
     }
+	for (i = 0 ; i < corner1 ; i++) {
+        fwrite(&zero, 4, 1, fp);
+	}
 }
 
-write_row_z(Var *v, int x, int y, FILE *fp)
+write_row_z(Var *v, int x, int y, FILE *fp, int corner1)
 {
     int i;
     int z = GetZ(v);
+    int zero = 0;
 
     for (i = 0 ; i < z ; i++) {
         write_one(v, x, y, i, fp);
     }
+	for (i = 0 ; i < corner1 ; i++) {
+        fwrite(&zero, 4, 1, fp);
+	}
 }
 
-write_plane(Var *v, int org, int plane, FILE *fp) 
+write_plane(Var *v, int org, int plane, FILE *fp, int corner1, int corner2) 
 {
     int i;
     int x = GetX(v);
     int y = GetY(v);
     int z = GetZ(v);
+
+	/*
+	** corner1 : number of suffix elements on fastest changing axis
+	** corner2 : number of suffix elements on slowest changing axis
+	** Doesn't currently put in values for corner2.
+	*/
     
     if (plane == 0) {
         if (org == BIL) {		/* write rows of Y */
             for (i = 0 ; i < z ; i++) {
-                write_row_y(v, 0, i, fp);
+                write_row_y(v, 0, i, fp, corner1);
             }
         } else if (org == BIP) {	/* write rows of Z */
             for (i = 0 ; i < y ; i++) {
-                write_row_z(v, 0, i, fp);
+                write_row_z(v, 0, i, fp, corner1);
             }
         }
     }
     if (plane == 1) {
         if (org == BIL) {		/* write rows of x */
             for (i = 0 ; i < z ; i++) {
-                write_row_x(v, 0, i, fp);
+                write_row_x(v, 0, i, fp, corner1);
             }
         } else if (org == BIP) {	/* write rows of z */
             for (i = 0 ; i < x ; i++) {
-                write_row_z(v, i, 0, fp);
+                write_row_z(v, i, 0, fp, corner1);
             }
         }
     }
     if (plane == 2) {
         for (i = 0 ; i <y ; i++) {	/* write rows of X */
-            write_row_x(v, i, 0, fp);
+            write_row_x(v, i, 0, fp, corner1);
         }
     }
 }
