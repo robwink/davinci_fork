@@ -582,7 +582,7 @@ dv_asprintf(char **str, char *fmt, ...)
     va_list ap;
  
     va_start(ap, fmt);
-    ret = vasprintf(str, fmt, ap);
+    ret = dv_vasprintf(str, fmt, ap);
     va_end(ap);
     return (ret);
 }
