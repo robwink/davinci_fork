@@ -150,7 +150,7 @@ gui_getListPseudoResources(const Widget widget, Var *dvStruct)
   else {
     items = gui_getXmStringTableCount(widget, "items", 0, itemCount);
   }
-  add_struct(dvStruct, "items", items);
+  add_struct(dvStruct, "itemList", items);
 
   XtVaGetValues(widget, "selectedItemCount", &selectedItemCount, NULL);
   if (selectedItemCount == 0) {
@@ -160,7 +160,7 @@ gui_getListPseudoResources(const Widget widget, Var *dvStruct)
     selectedItems = gui_getXmStringTableCount(widget, "selectedItems", 0,
 					      selectedItemCount);
   }
-  add_struct(dvStruct, "selectedItems", selectedItems);
+  add_struct(dvStruct, "selectedItemList", selectedItems);
 
   return;
 
