@@ -275,8 +275,11 @@ struct _vfuncptr vfunclist[] = {
 
      { "bindct",        ff_bindct,              NULL },
 	 { "binidct",       ff_bindct,              NULL },
-	 { "rice",          ff_rice,                NULL },
-	 { "unrice",        ff_unrice,                NULL },
+    /* Noel was apparently int he middle of implementing the Rice 
+       compression algorithm when he checked this in.  Commented out for
+       now: rsk 14 Mar 2003 */
+    /*	 { "rice",          ff_rice,                NULL }, */
+    /*	 { "unrice",        ff_unrice,                NULL }, */
 
     { NULL,             NULL,                  NULL }
 };

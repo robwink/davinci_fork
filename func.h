@@ -450,3 +450,6 @@ Var * ff_bindct(vfuncptr func, Var * arg);
 Var * ff_deghost(vfuncptr func, Var * arg);
 Var * ff_deleted(vfuncptr func, Var * arg);
 Var * ff_set_deleted(vfuncptr func, Var * arg);
+Var * ff_contains(vfuncptr func, Var * arg);
+Var * ff_rice(vfuncptr func, Var * arg);
+Var * ff_unrice(vfuncptr func, Var * arg);
