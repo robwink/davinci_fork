@@ -24,7 +24,7 @@ XRTLIBS = @XRTLIBS@
 
 CC     = @CC@
 DEFS   = @DEFS@ -Ilib
-LIBS   = $(READLINE_LIB) $(XLIBS) @LIBS@
+LIBS   = $(READLINE_LIB) -lplplotFX $(XLIBS) @LIBS@
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
@@ -51,7 +51,7 @@ OBJ=p.o pp.o symbol.o error.o \
 	ff_header.o ff_text.o io_ers.o io_goes.o ff_bbr.o ff_vignette.o \
 	ff_pause.o printf.o ff_ifill.o ff_xfrm.o newfunc.o ff_ix.o ff_avg.o \
 	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
-	x.o xrt_print_3d.o motif_tools.o ff_convolve.o
+	x.o xrt_print_3d.o motif_tools.o ff_convolve.o ff_struct.o ff_plplot.o
 
 all:	@MAKEREAD@ davinci gplot
 
@@ -100,6 +100,17 @@ dist:	clean
 	tar chf `cat .ver`.tar `cat .ver`
 	compress `cat .ver`.tar
 	rm -rf `cat .ver` .ver
+
+win32dist:	clean
+		echo davinci-`head -1 version.h | sed -e 's/.* Version #//;s/".*//'` > .ver
+		rm -rf `cat .ver` `cat .ver`.zip
+		mkdir `cat .ver`
+		ln $(DIST) `cat .ver`
+		(cd `cat .ver`; mkdir readline; cd readline; ln -s ../../readline/readline.h; ln \
+			-s ../../readline/history.h)
+		(cd `cat .ver` ; ln -s ../docs ../tests ../win32 .)
+		zip -r `cat .ver`.zip `cat .ver`
+		rm -rf `cat .ver` .ver
 
 binary:	davinci gplot
 	strip davinci
