@@ -94,8 +94,11 @@ dv_module_fini(
 static Var *
 ff_pnmcut(vfuncptr f, Var *args)
 {
-    Var *obj = NULL;
-    int left, top, width, height = 0;
+    Var *obj   = NULL;
+    int left   = 0;
+    int top    = 0;
+    int width  = 0;
+    int height = 0;
 
     Alist alist[6];
     alist[0] = make_alist("object", ID_VAL, NULL, &obj);
@@ -190,7 +193,10 @@ ff_pnmcrop(vfuncptr f, Var *args)
     Var *obj = NULL;
 
     // By default crop all edges (unless options override)
-    int cLeft, cRight, cTop, cBottom = 1;
+    int cLeft   = 1;
+    int cRight  = 1;
+    int cTop    = 1;
+    int cBottom = 1;
 
     Alist alist[6];
     alist[0] = make_alist("object", ID_VAL, NULL, &obj);
@@ -234,7 +240,10 @@ ff_pnmpad(vfuncptr f, Var *args)
     Var *obj = NULL;
 
     // Default is to pad nothing on each side
-    int pLeft, pRight, pTop, pBottom = 0;
+    int pLeft   = 0; 
+    int pRight  = 0;
+    int pTop    = 0;
+    int pBottom = 0;
 
     // Default color is black
     int pColor = 0;
@@ -271,7 +280,9 @@ ff_pnmpad(vfuncptr f, Var *args)
 
 Var* pnmcut(Var* obj, int iLeft, int iTop, int iWidth, int iHeight)
 {
-    int x,y,z = 0;
+    int x = 0;
+    int y = 0;
+    int z = 0;
     Range r;
 
     // Read our Matrix
@@ -306,8 +317,11 @@ Var* pnmcut(Var* obj, int iLeft, int iTop, int iWidth, int iHeight)
 
 Var *pnmscale(Var* obj, int xsize, int ysize, float xscale, float yscale)
 {
-    int x,y,z = 0;
-    int newcols, newrows = 0;
+    int x = 0;
+    int y = 0;
+    int z = 0;
+    int newcols = 0;
+    int newrows = 0;
 
     float aratio = MAXFLOAT;
 
@@ -428,8 +442,11 @@ Var *pnmcrop(Var *obj, int left, int right, int top, int bottom)
 
 Var *pnmpad(Var *obj, int color, int left, int right, int top, int bottom)
 {
-    int x,y,z    = 0;
-    int nx,ny    = 0;
+    int x = 0;
+    int y = 0;
+    int z = 0;
+    int nx = 0;
+    int ny = 0;
     Var* output  = NULL;
     void* data   = NULL;
 
@@ -526,7 +543,10 @@ static Var *scale_doit(Var* obj, int x, int y, int z, int newcols, int newrows)
 static int fill_object_with_pad_color(int nx, int ny, int z, 
 		                      Var* output, void* data, int color)
 {
-    int i,j,k,k1 = 0;
+    int i = 0;
+    int j = 0;
+    int k = 0;
+    int k1 = 0;
 
     if (1 == color) // White
 	    color = 255;
@@ -569,7 +589,11 @@ static int fill_object_with_pad_color(int nx, int ny, int z,
 static int map_image(int x, int y, int z, int left, int top,
 		     Var* obj,Var* output, void* data)
 {
-    int i,j,k,k1,k2 = 0;
+    int i = 0;
+    int j = 0;
+    int k = 0;
+    int k1 = 0;
+    int k2 = 0;
 
     for (i = 0; i < x; i++)
     {
