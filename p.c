@@ -122,7 +122,7 @@ evaluate(Var * n)
     int  subtopics = 0;
     int  retval    = 0;
     char module_help[BUFSIZ] = "\0";
-    char keyword[BUFSIZ]     = "pnm_mod\0";
+    char keyword[BUFSIZ]     = "dvmagick\0";
     char* input_line = NULL;
 
     if (n == NULL) return (NULL);
@@ -506,7 +506,7 @@ evaluate(Var * n)
 						sprintf(module_help, "/usr/lib/davinci/modules");
 					}
 					sprintf(module_help, "%s/%s.gih", module_help, V_NAME(p3));
-				        retval = help(keyword, module_help, &subtopics);
+				        retval = help(V_NAME(p3), module_help, &subtopics);
 
 				        if (retval == H_FOUND)
         				{
