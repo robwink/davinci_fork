@@ -130,7 +130,7 @@ dist:	clean
 	rm -rf readline/config.cache
 	mkdir `cat .ver`
 	ln $(DIST) `cat .ver`
-	(cd `cat .ver` && ln -s ../docs ../tests ../readline ../lib .)
+	(cd `cat .ver` && ln -s ../docs ../tests ../readline ../lib ../iomedley .)
 	tar chf `cat .ver`.tar `cat .ver`
 	compress `cat .ver`.tar
 	rm -rf `cat .ver` .ver
