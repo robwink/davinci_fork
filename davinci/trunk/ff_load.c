@@ -85,8 +85,7 @@ ff_load(vfuncptr func, Var * arg)
             fname = dv_locate_file(filename);
         }
         if (fname == NULL) {
-            sprintf(error_buf, "Cannot find file: %s", filename);
-            parse_error(NULL);
+            parse_error( "Cannot find file: %s", filename);
             return (NULL);
         }
     }

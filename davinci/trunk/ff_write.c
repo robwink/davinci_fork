@@ -65,6 +65,7 @@ ff_write(vfuncptr func, Var *arg)
         parse_error("No filename specified.");
         return(NULL);
     }
+	filename = dv_locate_file(filename);
 
     if (type == NULL) {
         parse_error("No type specified.");
@@ -97,13 +98,7 @@ ff_write(vfuncptr func, Var *arg)
     /*    else if (!strcasecmp(type, "pnm"))    dv_WritePNM(ob, filename, force); */
     else if (!strcasecmp(type, "pgm"))    dv_WritePGM(ob, filename, force);
     else if (!strcasecmp(type, "ppm"))    dv_WritePPM(ob, filename, force);
-    else if (!strcasecmp(type, "ascii")){
-        if (!force && access(filename, F_OK)) {
-            parse_error("File %s already exists.\n", filename);
-            return NULL;
-        }
-        WriteAscii(ob, NULL, filename);
-    }
+    else if (!strcasecmp(type, "ascii"))  WriteAscii(ob, filename, force);
     else if (!strcasecmp(type, "ers"))    dv_WriteERS(ob, filename, force);
     else if (!strcasecmp(type, "imath"))  dv_WriteIMath(ob, filename, force);
     else if (!strcasecmp(type, "isis"))   dv_WriteISIS(ob, filename, force, title);

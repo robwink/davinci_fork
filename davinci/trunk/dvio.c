@@ -225,10 +225,7 @@ var2iom_iheader(
 
 
 /*
-** locate_file() - check path for filename.
-**
-** Locates the file according to the "$datapath" variable.
-** This variable is set within daVinci somewhere.
+** locate_file() - do filename expansion
 **
 ** On successful return a character string allocated using
 ** malloc() will be returned. It is the caller's responsibility
@@ -238,39 +235,13 @@ var2iom_iheader(
 char *
 dv_locate_file(char *fname)
 {
-    char *p, *q;
-    char *path = NULL;
-    FILE *fp = NULL;
-    char buf[1024];
-    Var *v;
-
-    strcpy(buf, fname);
-    fname = iom_expand_filename(buf);
-
-    if (fname != NULL && (fp = fopen(fname, "r")) == NULL) {
-        /**
-         ** Get data path
-         **/
-        v = get_sym("$datapath");
-        if (v != NULL) {
-            path = strdup(V_STRING(v)); /* dupd, so we can cut on it */
-        }
-        for (p = path; fp == NULL && p != NULL; p = q) {
-            if ((q = strchr(p, PATH_SEP)) != NULL) {
-                while (*q && *q == PATH_SEP)
-                    *q++ = '\0';
-            }
-            sprintf(buf, "%s/%s", p, fname);
-            fp = fopen(buf, "r");
-        }
-    }
-    if (path)
-        free(path);
-    if (fp != NULL) {
-        fclose(fp);
-        return (strdup(buf));
-    }
-    return (NULL);
+	char buf[2048];
+	strcpy(buf, fname);
+	fname = iom_expand_filename(buf);
+	if (fname) 
+		return(strdup(fname));
+	else 
+		return(NULL);
 }
 
 

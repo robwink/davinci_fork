@@ -612,6 +612,7 @@ ff_loadspecpr(vfuncptr func, Var *arg)
     char *filename = NULL;
     int record = -1;
 	FILE *fp;
+	char *fname;
     
     int ac;
     Var **av;
@@ -622,21 +623,25 @@ ff_loadspecpr(vfuncptr func, Var *arg)
     
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
-    if (filename == NULL) {
-        parse_error("No filename specified to load()");
-        return (NULL);
-    }
     if (record < 0) {
         parse_error("No record specified.");
         return (NULL);
     }
-    
+    if (filename == NULL) {
+        parse_error("%s: No filename specified\n", func->name);
+        return(NULL);
+    }
 
-    if ((fp = fopen(filename, "rb")) == NULL) {
+	if ((fname = dv_locate_file(filename)) == NULL) {
+        parse_error("%s: Unable to expand filename %s\n", func->name, filename);
+        return(NULL);
+    }
+
+    if ((fp = fopen(fname, "rb")) == NULL) {
         parse_error("Unable to open file: %s\n", filename);
         return(NULL);
     }
-    return(LoadSpecprHeaderStruct(fp, filename, record));
+    return(LoadSpecprHeaderStruct(fp, fname, record));
 }
 
 /**

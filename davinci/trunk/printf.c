@@ -89,7 +89,7 @@ ff_fprintf(vfuncptr func, Var *arg)
 		parse_error("fprintf: Expecting a filename for first argument\n");
 		return(NULL);
 	}
-	fname = V_STRING(f);
+	fname = dv_locate_file(V_STRING(f));
 
     p = do_sprintf(func,arg);
 

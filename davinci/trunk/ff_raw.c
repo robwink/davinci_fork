@@ -6,7 +6,7 @@ Var *
 ff_raw(vfuncptr func, Var * arg)
 {
 	unsigned char *buf;
-	char *filename=NULL;
+	char *filename=NULL, *fname;
 	FILE *fp;
 	int x = -1,y = -1,z =-1,header=0;
 	char *org = NULL;
@@ -33,18 +33,23 @@ ff_raw(vfuncptr func, Var * arg)
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (filename == NULL) {
-		parse_error("No filename specified to load()");
-		return (NULL);
-	}
 	if (x == -1 ||  y == -1 || z ==-1 || org == NULL || format==NULL) {
 		parse_error("usage: %s(filename=,x=,y=,z=,org=,format=,[header=])", 
 			func->name);
 		return(NULL);
 	}
 
+    if (filename == NULL) {
+        parse_error("%s: No filename specified\n", func->name);
+        return(NULL);
+    }
+	if ((fname = dv_locate_file(filename)) == NULL) {
+        parse_error("%s: Unable to expand filename %s\n", func->name, filename);
+        return(NULL);
+    }
+
 	if ((fp=fopen(filename,"rb"))==NULL){
-		parse_error("Can't find file: %s",filename);
+		parse_error("%s: Can't find file: %s",func->name, filename);
 		return(NULL);
 	}
 

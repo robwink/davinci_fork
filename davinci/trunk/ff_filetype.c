@@ -44,20 +44,9 @@ ff_filetype(vfuncptr func, Var * arg)
     }
     filename = V_STRING(v);
 
-    /** 
-     ** if open file fails, check for record suffix
-     **/
-
     if ((fname = dv_locate_file(filename)) == NULL) {
-        if ((p = strchr(filename, SPECPR_SUFFIX)) != NULL) {
-            *p = '\0';
-            fname = dv_locate_file(filename);
-        }
-        if (fname == NULL) {
-            sprintf(error_buf, "Cannot find file: %s", filename);
-            parse_error(NULL);
-            return (NULL);
-        }
+		parse_error("%s: Cannot find file %s", func->name, filename);
+		return (NULL);
     }
     if (fname && (fp = fopen(fname, "rb")) != NULL) {
         if (iom_is_compressed(fp))
@@ -65,7 +54,7 @@ ff_filetype(vfuncptr func, Var * arg)
 
         if (ostring == NULL && is_specpr(fp)) ostring = strdup("SPECPR");
         if (ostring == NULL && iom_isVicar(fp)) ostring = strdup("VICAR");
-        if (ostring == NULL && iom_isISIS(fp)) ostring = strdup("VICAR");
+        if (ostring == NULL && iom_isISIS(fp)) ostring = strdup("ISIS");
         if (ostring == NULL && iom_isGRD(fp)) ostring = strdup("GRD");
         if (ostring == NULL && iom_isAVIRIS(fp)) ostring = strdup("AVIRIS");
         if (ostring == NULL && iom_isPNM(fp)) ostring = strdup("PNM");

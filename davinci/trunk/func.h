@@ -171,9 +171,10 @@ int WriteISIS(Var *, FILE *, char *, char *);
 void WritePPM(Var *, FILE *, char *);
 void WritePGM(Var *, FILE *, char *);
 int WriteVicar(Var *, FILE *, char *);
-int WriteAscii(Var *, FILE *, char *);
 int WriteERS(Var *, FILE *, char *);
 int WriteIMath(Var *s, FILE *fp, char *filename);
+
+int WriteAscii(Var *, char *, int);
 
 #ifdef HAVE_LIBHDF5
 void WriteHDF5(hid_t parent, char *name, Var *v);
