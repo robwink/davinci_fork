@@ -17,9 +17,9 @@ INSTALL_DATA = ${INSTALL} -m 644
 XINCLUDES=-I/usr/openwin/include $(XRTINCLUDE)
 XLIBS=-L/usr/openwin/lib $(XRTLIBS)
 
-CPPFLAGS=-I$(srcdir)  -I/usr/include/X11 -Ilib -Iiomedley
-CFLAGS=$(XINCLUDES) -g -O2  
-LDFLAGS= -L/usr/openwin/lib -L${exec_prefix}/lib 
+CPPFLAGS=-I$(srcdir) -D_REENTRANT -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I/usr/local/include -I/usr/openwin/include -I/usr/openwin/include/X11  -I/usr/include/X11 -Ilib -Iiomedley
+CFLAGS=$(XINCLUDES) -g -O2 
+LDFLAGS=-L/usr/local/lib/static -L/usr/local/lib -L/usr/openwin/lib -R/usr/openwin/lib  -L/usr/openwin/lib -L${exec_prefix}/lib 
 
 XRTINCLUDE=  
 XRTLIBS = 
@@ -27,7 +27,7 @@ XRTLIBS =
 
 CC     = gcc
 DEFS   = -DHAVE_CONFIG_H 
-LIBS   =  -L. -Liomedley -lmodsupp -liomedley $(XLIBS) -lplplotFX -ltiff -lproj -ltermcap -ljpeg -lmsss_vis -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -lreadline -ldl
+LIBS   =  -L. -Liomedley -lmodsupp -liomedley $(XLIBS) -lplplotFX -lMagick -L/opt/local/ImageMagick-5.4.2/magick -lMagick -llcms -ltiff -ljpeg -lpng -ldpstk -ldps -lXext -lXt -lSM -lICE -lX11 -lsocket -lnsl -lz -lpthread -lm -ltiff -lproj -ltermcap -ljpeg -lmsss_vis -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -lreadline -ldl
 AR     = ar
 RANLIB = ranlib
 
@@ -70,7 +70,7 @@ OBJ=p.o pp.o symbol.o \
 	dvio_isis.o dvio_magic.o dvio_pnm.o dvio_vicar.o dvio.o \
 	dvio_ers.o dvio_envi.o dvio_raw.o dvio_specpr.o dvio_themis.o \
 	dvio_ascii.o dvio_pds.o dvio_hdf.o \
-	util.o ff_shade.o
+	util.o ff_shade.o dvmagick.o
 
 
 all:	 davinci gplot

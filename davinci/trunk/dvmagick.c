@@ -684,19 +684,19 @@ MODULE_TYPE int paramdvWriteImage(Var * image, char * fname, char *itype, int fo
       parse_error("Cannot open %s: %s", fname, strerror(errno));
       goto error_exit;
     }
-  }
-  else {
+  } else {
     /* Don't overwrite files if user told us not to */
     if (force == 0) {
       parse_error("File exists.  Specify force=1.");
       goto error_exit;
     }
+
     /* If we can't open the file in write mode, we have a problem. */
-    if ((fd = open(fname, O_WRONLY) == -1)) {
+	/* bug here: fd = -1 */
+    if ((fd = open(fname, O_WRONLY)) == -1) {
       parse_error("Cannot open %s: %s", fname, strerror(errno));
       goto error_exit;
-    }
-    else {
+    } else {
       close(fd);
     }
   }

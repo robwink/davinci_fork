@@ -169,7 +169,7 @@
 #define HAVE_VALUES_H 1
 
 /* Define if you have the Magick library (-lMagick).  */
-/* #undef HAVE_LIBMAGICK */
+#define HAVE_LIBMAGICK 1
 
 /* Define if you have the X11 library (-lX11).  */
 #define HAVE_LIBX11 1
