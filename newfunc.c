@@ -105,7 +105,7 @@ parse_args(int ac, Var **av, Alist *alist)
                     fname);
                 return(1);
             }
-            p = (alist[j].value);
+            p = (char **)(alist[j].value);
             *p = V_STRING(v);
             alist[j].filled = 1;
         } else if (alist[j].type == ID_VAL) {
@@ -120,7 +120,7 @@ parse_args(int ac, Var **av, Alist *alist)
                             fname, alist[j].name);
                 return(1);
             }
-            vptr = (alist[j].value);
+            vptr = (Var **)(alist[j].value);
             *vptr = v;
             alist[j].filled = 1;
         } else if (alist[j].type == INT) {
@@ -135,12 +135,12 @@ parse_args(int ac, Var **av, Alist *alist)
                             fname, alist[j].name);
                 return(1);
             }
-            iptr = (alist[j].value);
+            iptr = (int *)(alist[j].value);
             *iptr = extract_int(v, 0);
             alist[j].filled = 1;
         } else if (alist[j].type == ID_ENUM) {
             char **p, *q = NULL, *ptr;
-            char **values = alist[j].limits;
+            char **values = (char **)alist[j].limits;
 
             if (V_TYPE(v) == ID_STRING)
                 ptr = V_STRING(v);
@@ -173,7 +173,7 @@ parse_args(int ac, Var **av, Alist *alist)
                 return(1);
             }
 
-            p = (alist[j].value);
+            p = (char **)(alist[j].value);
             *p = q;
             alist[j].filled = 1;
         } else if (alist[j].type == ID_UNK) {
@@ -192,7 +192,7 @@ parse_args(int ac, Var **av, Alist *alist)
             }
 */
 
-            vptr = (alist[j].value);
+            vptr = (Var **)(alist[j].value);
             *vptr = v;
             alist[j].filled = 1;
 	}
@@ -200,6 +200,7 @@ parse_args(int ac, Var **av, Alist *alist)
     return(0);
 }
 
+int
 make_args(int *ac, Var ***av, vfuncptr func, Var *args)
 {
     int count = 0, i = 0;
@@ -208,7 +209,7 @@ make_args(int *ac, Var ***av, vfuncptr func, Var *args)
     for (v = args ; v != NULL ; v=v->next)
         count++;
 
-    *av = calloc(count+2, sizeof(Var *));
+    *av = (Var **)calloc(count+2, sizeof(Var *));
 
     (*av)[i++] = (Var *)func->name;
     for (v = args ; v != NULL ; v = next) {
@@ -217,6 +218,7 @@ make_args(int *ac, Var ***av, vfuncptr func, Var *args)
         v->next = NULL;
     }
     *ac = i;
+    return 0;
 }
 
 Alist

@@ -52,6 +52,7 @@ statement
 	| SHELL                                 { $$ = pp_shell(yytext); }
     | QUIT                                  { YYABORT; }
     | FUNC_DEF id '(' args ')' compound_statement { $$ = NULL; }
+	/* function body tree is captured somewhere else */
 	;
 
 command_statement

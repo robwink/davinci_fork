@@ -2,6 +2,7 @@
  * "ft.c", Pjotr '87.
  */
 
+#include <stdlib.h>
 #include	<math.h>
 #include	"fft.h"
 
@@ -59,6 +60,7 @@ int rft (COMPLEX *in, unsigned n, COMPLEX *out)
  * bevat out [n - 1] de cosinus komponent van de Nyquist frequentie. 
  * Extraatje: Na afloop is in onaangetast.
  */
+int
 realfft (double *in, unsigned n, double *out)
 {
 	COMPLEX *c_in, *c_out;
@@ -67,7 +69,7 @@ realfft (double *in, unsigned n, double *out)
 	if (n == 0 ||
 	    (c_in = (COMPLEX *) malloc (n * sizeof (COMPLEX))) == 0 ||
 	    (c_out = (COMPLEX *) malloc (n * sizeof (COMPLEX))) == 0)
-		return;
+		return 0;
 	
 	for (i = 0; i < n; i++) {
 		c_re (c_in [i]) = in [i];
@@ -86,6 +88,7 @@ realfft (double *in, unsigned n, double *out)
 
 	free ((char *) c_in);
 	free ((char *) c_out);
+        return 0;
 }
 
 /*
@@ -97,6 +100,7 @@ realfft (double *in, unsigned n, double *out)
  * bevat in [n - 1] de cosinus komponent van de Nyquist frequentie. 
  * Extraatje: Na afloop is in onaangetast.
  */
+int
 realrft (double *in, unsigned n, double *out)
 {
 	COMPLEX *c_in, *c_out;
@@ -105,7 +109,7 @@ realrft (double *in, unsigned n, double *out)
 	if (n == 0 ||
 	    (c_in = (COMPLEX *) malloc (n * sizeof (COMPLEX))) == 0 ||
 	    (c_out = (COMPLEX *) malloc (n * sizeof (COMPLEX))) == 0)
-		return;
+		return 0;
 	
 	c_re (c_in [0]) = in [0];		/* dc */
 	c_im (c_in [0]) = 0;
@@ -137,6 +141,7 @@ realrft (double *in, unsigned n, double *out)
  * of factors in the prime-decomposition of n (also the maximum
  * depth of the recursion), and ri is the i-th primefactor.
  */
+int
 Fourier (COMPLEX *in, unsigned n, COMPLEX *out)
 {
 	unsigned r;
@@ -144,6 +149,7 @@ Fourier (COMPLEX *in, unsigned n, COMPLEX *out)
 	if ((r = radix (n)) < n)
 		split (in, r, n / r, out);
 	join (in, n / r, n, out);
+        return 0;
 }
 
 /*

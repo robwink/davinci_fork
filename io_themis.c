@@ -121,12 +121,14 @@ struct	_iheader header;
 	free(fname);
     	fname = fname2;
 
-	if (GetGSEHeader(infile,&header)==NULL){
+	if (GetGSEHeader(infile,&header) == 0) {
 		parse_error("Your choice is not a valid GSE visible spectrum (ddd) file");
 		return (NULL);
 	}
 
 	data=read_qube_data(fileno(infile), &header);
+
+	fclose(infile);
 
 	return(newVal(header.org,header.size[0],header.size[1],header.size[2],header.format,data));
 }
@@ -137,126 +139,126 @@ struct	_iheader header;
 Var *
 ff_Frame_Grabber_Read(vfuncptr func, Var * arg)
 {
-	FILE	*infile;
+    FILE	*infile;
 
-	unsigned char *data_words;
-	unsigned short *sh_data_words;
-	unsigned char n;
-        int i,j,nvals, nframes,nbytes;
-        unsigned short fileType, nrows, npixels;
-        unsigned short GSEarg[6];
-        float ieeeVals[15];
-        char c, dateTime[32], pad[14];
+    unsigned char *data_words;
+    unsigned short *sh_data_words;
+    unsigned char n;
+    int i,j,nvals, nframes,nbytes;
+    unsigned short fileType, nrows, npixels;
+    unsigned short GSEarg[6];
+    float ieeeVals[15];
+    char c, dateTime[32], pad[14];
 
-    	int ac;
-    	Var **av, *v;
-    	Alist alist[2];
-	char	*filename,*fname,fname2[256];
-	int	X,Y,Z;
-	int	num_bytes;
+    int ac;
+    Var **av, *v;
+    Alist alist[2];
+    char	*filename,*fname,fname2[256];
+    int	X,Y,Z;
+    int	num_bytes;
 
-    	alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
-    	alist[1].name = NULL;
+    alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
+    alist[1].name = NULL;
 
 
-    	make_args(&ac, &av, func, arg);
-    	if (parse_args(ac, av, alist))
-       	 	return (NULL);
+    make_args(&ac, &av, func, arg);
+    if (parse_args(ac, av, alist))
+	    return (NULL);
 
-    	if (filename == NULL) {
-        	parse_error("No filename specified.");
-        	return (NULL);
-    	}
+    if (filename == NULL) {
+	    parse_error("No filename specified.");
+	    return (NULL);
+    }
 
-    	if ((fname = locate_file(filename)) == NULL ||
-        	(infile = fopen(fname, "r")) == NULL) {
-        	fprintf(stderr, "Unable to open file: %s\n", filename);
-        	return (NULL);
-    	}
+    if ((fname = locate_file(filename)) == NULL ||
+	    (infile = fopen(fname, "r")) == NULL) {
+	    fprintf(stderr, "Unable to open file: %s\n", filename);
+	    return (NULL);
+    }
 
-    	strcpy(fname2, fname);
-	free(fname);
-    	fname = fname2;
+    strcpy(fname2, fname);
+    free(fname);
+    fname = fname2;
 
-	fread (&fileType, sizeof(unsigned short), 1, infile);
-	fread (&nrows, sizeof(unsigned short), 1, infile);
-	fread (&npixels, sizeof(unsigned short), 1, infile);
-	fread (&nframes, sizeof(int), 1, infile);
-	fread (GSEarg, sizeof(unsigned short), 6, infile);
-	fread (ieeeVals, sizeof(float), 15, infile);
-	fread (dateTime, sizeof(char), 32, infile);
-	fread (pad, sizeof(char), 14, infile);
-	
-	switch (fileType)
-                        {
-                        case 00 :
-                        case 04 :
-                                /* full frame 8 bits */
-                                /* compute number of bytes of data */
-                                nbytes = nrows*npixels*nframes;
-                                nvals = npixels;
-                                data_words = (unsigned char *) calloc(sizeof(unsigned char), nbytes);
-                                fread (data_words, sizeof(unsigned char), nbytes, infile);
-				X=npixels;
-				Y=nrows;
-				Z=nframes;
-				num_bytes=1;
-				break;
-                        case 01 :
-                                /* line mode 8 bits */
-                                /* compute number of bytes of data */
-                                nbytes = 2*npixels*nframes;
-                                nvals = 2*npixels;
-                                data_words = (unsigned char *) calloc(sizeof(unsigned char), nbytes);
-                                fread (data_words, sizeof(unsigned char), nbytes, infile);
-				X=npixels;
-				Y=2;
-				Z=nframes;
-				num_bytes=1;
-				break;
- 			case 02 :
-                                /* Pixel mode 8 bits */
-                                /* compute number of bytes of data */
-                                nbytes = nrows*nframes;
-                                nvals = nrows;
-                                data_words = (unsigned char *) calloc(sizeof(unsigned char), nbytes);
-                                fread (data_words, sizeof(unsigned char), nbytes, infile);
-				X=1;
-				Y=nrows;
-				Z=nframes;
-				num_bytes=1;
-				break;
-                        case 03 :
-                                /* 9 Pixel mode 8 bits */
-                                /* compute number of bytes of data */
-                                nbytes = 36*nframes;
-                                data_words = (unsigned char *) calloc(sizeof(unsigned char), nbytes);
-                                fread (data_words, sizeof(unsigned char), nbytes, infile);
-				X=9;
-				Y=3;
-				Z=nframes;
-				num_bytes=1;	
-				break;
-                        case 10 :
-                        case 14 :
-                                /* full frame 12 bits */
-                                /* compute number of bytes of data */
-                                nbytes = nrows*npixels*nframes*2;
-                                nvals = 2*npixels;
-                                sh_data_words = (unsigned short *) calloc(sizeof(unsigned char), nbytes);
-                                fread (sh_data_words, sizeof(unsigned short), nbytes, infile);
-				X=npixels;
-				Y=nrows;
-				Z=nframes;
-				num_bytes=2;
-                                break;
-                        case 20 :
-                                parse_error("IEEE data file: (Consists of just header)");
-                                break;
-                        } /* switch fileType */
+    fread (&fileType, sizeof(unsigned short), 1, infile);
+    fread (&nrows, sizeof(unsigned short), 1, infile);
+    fread (&npixels, sizeof(unsigned short), 1, infile);
+    fread (&nframes, sizeof(int), 1, infile);
+    fread (GSEarg, sizeof(unsigned short), 6, infile);
+    fread (ieeeVals, sizeof(float), 15, infile);
+    fread (dateTime, sizeof(char), 32, infile);
+    fread (pad, sizeof(char), 14, infile);
+    
+    switch (fileType)
+    {
+    case 00 :
+    case 04 :
+	    /* full frame 8 bits */
+	    /* compute number of bytes of data */
+	    nbytes = nrows*npixels*nframes;
+	    nvals = npixels;
+	    data_words = (unsigned char *) calloc(sizeof(unsigned char), nbytes);
+	    fread (data_words, sizeof(unsigned char), nbytes, infile);
+	    X=npixels;
+	    Y=nrows;
+	    Z=nframes;
+	    num_bytes=1;
+	    break;
+    case 01 :
+	    /* line mode 8 bits */
+	    /* compute number of bytes of data */
+	    nbytes = 2*npixels*nframes;
+	    nvals = 2*npixels;
+	    data_words = (unsigned char *) calloc(sizeof(unsigned char), nbytes);
+	    fread (data_words, sizeof(unsigned char), nbytes, infile);
+	    X=npixels;
+	    Y=2;
+	    Z=nframes;
+	    num_bytes=1;
+	    break;
+    case 02 :
+	    /* Pixel mode 8 bits */
+	    /* compute number of bytes of data */
+	    nbytes = nrows*nframes;
+	    nvals = nrows;
+	    data_words = (unsigned char *) calloc(sizeof(unsigned char), nbytes);
+	    fread (data_words, sizeof(unsigned char), nbytes, infile);
+	    X=1;
+	    Y=nrows;
+	    Z=nframes;
+	    num_bytes=1;
+	    break;
+    case 03 :
+	    /* 9 Pixel mode 8 bits */
+	    /* compute number of bytes of data */
+	    nbytes = 36*nframes;
+	    data_words = (unsigned char *) calloc(sizeof(unsigned char), nbytes);
+	    fread (data_words, sizeof(unsigned char), nbytes, infile);
+	    X=9;
+	    Y=3;
+	    Z=nframes;
+	    num_bytes=1;	
+	    break;
+    case 10 :
+    case 14 :
+	    /* full frame 12 bits */
+	    /* compute number of bytes of data */
+	    nbytes = nrows*npixels*nframes*2;
+	    nvals = 2*npixels;
+	    sh_data_words = (unsigned short *) calloc(sizeof(unsigned char), nbytes);
+	    fread (sh_data_words, sizeof(unsigned short), nbytes, infile);
+	    X=npixels;
+	    Y=nrows;
+	    Z=nframes;
+	    num_bytes=2;
+	    break;
+    case 20 :
+	    parse_error("IEEE data file: (Consists of just header)");
+	    break;
+    } /* switch fileType */
 
-                fclose(infile);
+    fclose(infile);
 
-		return(newVal(BSQ,X,Y,Z,num_bytes,((num_bytes==2) ? ((void *)sh_data_words) : ((void *)data_words))));
+    return(newVal(BSQ,X,Y,Z,num_bytes,((num_bytes==2) ? ((void *)sh_data_words) : ((void *)data_words))));
 
 }

@@ -1,11 +1,4 @@
-#ifndef STANDALONE
 #include "parser.h" 
-#else
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#endif
-
 #include "io_specpr.h"
 
 char *

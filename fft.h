@@ -32,6 +32,6 @@ extern unsigned Nfactors;
 
 int fft (COMPLEX *in, unsigned n, COMPLEX *out);
 int rft (COMPLEX *in, unsigned n, COMPLEX *out);
-realfft (double *in, unsigned n, double *out);
-realrft (double *in, unsigned n, double *out);
-Fourier (COMPLEX *in, unsigned n, COMPLEX *out);
+int realfft (double *in, unsigned n, double *out);
+int realrft (double *in, unsigned n, double *out);
+int Fourier (COMPLEX *in, unsigned n, COMPLEX *out);

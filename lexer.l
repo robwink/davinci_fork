@@ -4,8 +4,6 @@
 #include "parser.h"
 #include "y_tab.h"
 
-char *yytext;
-
 
 extern int pp_count;
 #define YY_USER_ACTION pp_count+=yyleng;
@@ -22,7 +20,7 @@ void start_save()
 
     tmp = tempnam(NULL, NULL);
     strcpy(save_file, tmp);
-    xfree(tmp);
+    free(tmp);
 
     save_fp = fopen(save_file, "w");
 }

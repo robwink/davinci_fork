@@ -36,14 +36,14 @@ ff_minvert(vfuncptr func, Var * arg)
 	}
 
 	if (V_TYPE(obj) == DOUBLE) {
-		a = V_DATA(obj);
+		a = (double *)V_DATA(obj);
 	} else {
-		a = calloc(dsize, sizeof(double));
+		a = (double *)calloc(dsize, sizeof(double));
 		for (i = 0 ; i < dsize ; i++) {
 			a[i] = extract_double(obj, i);
 		}
 	}
-	b = calloc(dsize, sizeof(double));
+	b = (double *)calloc(dsize, sizeof(double));
 
 	matrix_LUinvert(x, a, b);
 

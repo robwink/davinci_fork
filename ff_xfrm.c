@@ -82,7 +82,7 @@ ff_mxm(vfuncptr func, Var * arg)
     Var **av;
     Alist alist[3];
 	alist[0] = make_alist("ob1",    ID_VAL,    NULL,       &ob1);
-	alist[1] = make_alist("ob2",    ID_VAL,    NULL,       &ob1);
+	alist[1] = make_alist("ob2",    ID_VAL,    NULL,       &ob2);
 	alist[2].name = NULL;
 
     make_args(&ac, &av, func, arg);

@@ -479,6 +479,7 @@ expand_filename(char *s)
                 strcat(buf, getenv("HOME"));
             } else {
                 strncpy(ebuf, p + 1, q - p - 1);
+				ebuf[q-p-1] = 0;
                 if ((pwent = getpwnam(ebuf)) == NULL) {
                     fprintf(stderr, "error: unknown user: %s\n", ebuf);
                     return (NULL);

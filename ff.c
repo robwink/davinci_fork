@@ -1448,6 +1448,7 @@ ff_history(vfuncptr func, Var * arg)
 	return(NULL);
 }
 
+void
 print_history(int i)
 {
 	HIST_ENTRY *h;

@@ -20,11 +20,11 @@ make_struct(int ac, Var **av)
     o = new(Var);
     V_TYPE(o) = ID_VSTRUCT;
     V_STRUCT(o).count = ac;
-    names = V_STRUCT(o).names = calloc(ac, sizeof(char *));
-    data = V_STRUCT(o).data = calloc(ac, sizeof(Var *));
+    names = V_STRUCT(o).names = (char **)calloc(ac, sizeof(char *));
+    data = V_STRUCT(o).data = (Var **)calloc(ac, sizeof(Var *));
 
     for (i = 0 ; i < ac ; i++) {
-        zero = calloc(1,1);
+        zero = (char *)calloc(1,1);
         /*
         ** check for duplicate names here
         */
@@ -157,7 +157,7 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
 
     case H5G_DATASET:
         if ((dataset = H5Dopen(parent, name)) < 0) {
-            return;
+            return 0;
         }
 
         datatype = H5Dget_type(dataset);
@@ -242,8 +242,8 @@ load_hdf5(hid_t parent)
     o = new(Var);
     V_TYPE(o) = ID_VSTRUCT;
     V_STRUCT(o).count = count;
-    V_STRUCT(o).names = calloc(count, sizeof(char *));
-    V_STRUCT(o).data = calloc(count, sizeof(Var *));
+    V_STRUCT(o).names = (char **)calloc(count, sizeof(char *));
+    V_STRUCT(o).data = (Var **)calloc(count, sizeof(Var *));
     
     while ((ret = H5Giterate(parent, ".", &idx, group_iter, &e)) > 0)  {
         V_STRUCT(o).names[idx] = V_NAME(e);
@@ -267,6 +267,8 @@ LoadVanilla(char *filename)
     int state;
     char *buf, *p, **data, c;
     int *type;
+    char **names;
+    Var *o, *v;
 
     rows = cols = 0;
     
@@ -324,8 +326,16 @@ LoadVanilla(char *filename)
         while (*p == ' ' || *p == '\t') p++;
     }
 
-    type = calloc(cols, sizeof(int));
-    data = calloc(rows*cols, sizeof(char *));
+
+    type = (int *)calloc(cols, sizeof(int));
+    data = (char **)calloc(rows*cols, sizeof(char *));
+	names = (char **)calloc(cols, sizeof(char *));
+	names[0] = strndup(buf, p-buf+1);
+
+	i = 0;
+	for (p = strtok(names[0], " \t\n") ; p && *p ; p = strtok(NULL, " \t\n")) {
+		names[i++] = p;
+	}
 
     /*
     ** Find each column and verify the format of each column
@@ -351,19 +361,19 @@ LoadVanilla(char *filename)
             }
         }
 
-		/*
-		** Update column type
-		*/
-		if (j-1 > cols) {
+        /*
+        ** Update column type
+        */
+        if (j-1 > cols) {
             k = (j-1) % cols;
             if (isdigit(c) || c == '+' || c == '-')  type[k] |= 1;
             else if (strchr("Ee.", c))               type[k] |= 2;
             else if (!isspace(c))                    type[k] |= 4;
-		}
+        }
 
-		/*
-		** verify we got enough columns per row
-		*/
+        /*
+        ** verify we got enough columns per row
+        */
         if (c == '\n' && (j % cols) != 0) {
             parse_error("Ragged row in file: %s row %d\n", filename, j / cols);
             break;
@@ -373,20 +383,48 @@ LoadVanilla(char *filename)
 
     /* error condition */
     if (i != len || j != rows*cols) {
+		fprintf(stderr, "Error condition\n");
         munmap(buf, len);
         free(data);
         return(NULL);
     }
 
-	/*
-	** Ok, we have each column in text.  Create the Var and convert the data
-	*/
-	for (i = 0 ; i < cols ; i++) {
-		if (type[k] & 4) {
-		} else if (type[k] & 2) {
-		} else if (type[k] & 1) {
-		}
-	}
 
-	return(NULL);
+    o = new(Var);
+    V_TYPE(o) = ID_VSTRUCT;
+    V_STRUCT(o).count = cols;
+    V_STRUCT(o).names = (char **)calloc(cols, sizeof(char *));
+    V_STRUCT(o).data = (Var **)calloc(cols, sizeof(Var *));
+
+    /*
+    ** Ok, we have each column in text.  Create the Var and convert the data
+    */
+    for (i = 0 ; i < cols ; i++) {
+        if (type[i] & 4) {			/* string */
+            char **out = (char **)calloc(rows, sizeof(char *));
+			char *zero;
+            for (j = 0 ; j < rows ; j++)  {
+                out[i] = strdup(data[(j*cols)+i]);
+            }
+            /* v = newString(1, cols, 1, out); */
+			zero = (char *)calloc(1,1);
+			v = newVal(BSQ, 1,1,1, BYTE, zero);
+        } else if (type[i] & 2) {	/* float */
+            float *out = (float *)calloc(rows, sizeof(float));
+            for (j = 0 ; j < rows ; j++)  {
+                out[i] = atof(data[(j*cols)+i]);
+            }
+            v = newVal(BSQ, 1, rows, 1, FLOAT, out);
+        } else if (type[i] & 1) {	/* int */
+            int *out = (int *)calloc(rows, sizeof(float));
+            for (j = 0 ; j < rows ; j++) {
+                out[i] = atoi(data[(j*cols)+i]);
+            }
+            v = newVal(BSQ, 1, rows, 1, INT, out);
+        }
+        V_STRUCT(o).names[i] = strdup(names[i]);
+        V_STRUCT(o).data[i] = v;
+    }
+
+    return(o);
 }
