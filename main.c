@@ -240,11 +240,8 @@ main(int ac, char **av)
             put_sym(v);
         }
     }
-	dv_set_iom_verbosity();
 
-	/* JAS FIX: always run interactive for GUI testing.. */
-	/* if (iflag) */
-        interactive = 1;
+    dv_set_iom_verbosity();
 
     env_vars();
     fake_data();
@@ -252,7 +249,8 @@ main(int ac, char **av)
     if (interactive) {
 
         if (logfile == NULL)
-            logfile = ".dvlog";
+	  logfile = ".dvlog";
+
         lfile = fopen(logfile, "a");
         log_time();
         if (quick == 0)
