@@ -264,7 +264,7 @@ ff_pplot(vfuncptr func, Var * arg)
 			parse_error("Given X-Axis doesn't agree with given data set");
 			return(NULL);
 		}
-		else if ((XOrd[1]!=1 && XOrd[2]!=1) || (XOrd[1]!=Ord[Mode[1]] && XOrd[2]!=Ord[Mode[2]])){
+		else if ((XOrd[1]!=1 && XOrd[2]!=1) && (XOrd[1]!=Ord[Mode[1]] && XOrd[2]!=Ord[Mode[2]])){
 			parse_error("Given X-Axis doesn't agree with given data set");
 			return(NULL);
 		}
