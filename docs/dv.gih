@@ -364,7 +364,7 @@
 
  See Also:
     filetype(), read(), rgb(), load_pds(), load_raw(), ascii(),
-    write_isis()
+    write_isis(), write_isis_cub(), load_bin5()
 
 ?functions filetype()
 ?filetype()
@@ -2096,6 +2096,16 @@ Davinci supports the following matrix functions:
  shorthand for "object.name", but in this case, name can be a string 
  variable.
 
+?functions get_struct_key()
+?get_struct_key()
+ get_struct_key() - Returns the name of structure element at the given index.
+
+ get_struct_key(object=STRUCT, index=INT)
+
+ get_struct_key() returns the name of the structure element at the
+ specified (1-based) index. If the element does not have a name attached
+ to it, an empty string is returned.
+
 ?functions remove_struct()
 ?remove_struct()
  remove_struct() - Remove an element from a structure
@@ -2151,7 +2161,8 @@ Davinci supports the following matrix functions:
   library.
 
  See also:
-    add_struct(), get_struct(), remove_struct(), insert_struct(), length()
+    add_struct(), get_struct(), remove_struct(), insert_struct(), length(),
+	get_struct_key()
 
 ?functions equals()
 ?equals()
@@ -2228,7 +2239,7 @@ Davinci supports the following matrix functions:
 ?load_pds()
  load_pds() - Read a PDS file into a structure
 
- load_pds(filename=PATH [, data=BOOLEAN])
+ load_pds(filename=PATH [, data=BOOLEAN] [, suffix_data=BOOLEAN])
 
  PDS files contain of NAME=VALUE pairs, and some rudimentary hierarchal
  structure via OBJECT and GROUP constructs.
@@ -2238,6 +2249,10 @@ Davinci supports the following matrix functions:
 
  The DATA argument specifies whether or not to load the data from
  any objects encountered in the file.  (0=don't load, default is 1)
+
+ The SUFFIX_DATA argument specifies whether or not to load the suffix
+ data planes from QUBE and SPECTRAL_QUBE objects.
+ (0=don't load, default is 0)
 
 ?functions coreg()
 ?coreg()
@@ -2257,6 +2272,25 @@ Davinci supports the following matrix functions:
  pixel is performed.
 
  The function returns the X and Y offset of image1 into image 2.
+
+
+?functions write_isis_cub()
+?io write_isis_cub()
+?write_isis_cub()
+ write_isis_cub() - Writes an ISIS ".cub" file
+
+ write_isis_cub(obj=STRUCT, filename=STRING [, force=1])
+ 
+ write_isis_cub() works in conjunction with load_pds() to facilitate
+ editing of ISIS ".cub" files.
+
+ Example:
+    a=load_pds("foo.cub", suffix_data=1)
+	a.qube.data = a.qube.data - 100
+	a.history.data.cubit.node_name="\"generic_node\""
+	a.history.data.cubit.user_name="\"generic_user\""
+    write_isis_cub(a, "bar.cub")
+
 
 ?functions load_bin5()
 ?io load_bin5()
