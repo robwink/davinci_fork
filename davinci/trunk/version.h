@@ -1,7 +1,28 @@
-char *version = "@(#) daVinci Version #0.64.1";
+char *version = "@(#) daVinci Version #0.67";
 #include "build.h"
 
 /*
+Version 0.67: Thu Mar 22 13:51:39 MST 2001
+    * This is a tag version before I start mucking with scope
+	* Fixed a bug with dereference of null structs.
+	* added length()
+	* fixed a bug for zero sized structures
+
+Version 0.66: Wed Mar 21 16:23:28 MST 2001
+	* fixed bug in syscall(), it could return 0 length arrays
+	* added fexists() and putenv()
+
+Version 0.65: Thu Mar  8 19:42:56 MST 2001
+    * Added ability to specify empty options for enums 
+	* bugs in WriteAscii().
+	* added identity()
+	* made if () handle arrays.  This is tricky.  
+	  It is possible for this to be false: (x < 1 || x > 1)
+	  The entire array of conditionals must be true to get true.
+
+Version 0.64.2: Thu Feb  1 17:50:00 MST 2001
+	* problem in reading detached labels
+
 Version 0.64.1: Fri Jan 19 11:54:50 MST 2001
 	* Fixed core dump on user-function return value
 	* Removed "readline/readline.h" from Makefile.in

@@ -283,6 +283,7 @@ struct _vfuncptr {
     char *name;
     vfunc fptr;
     void *fdata;
+    void *fdata2;
 };
 
 struct _iheader {

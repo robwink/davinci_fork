@@ -7,9 +7,9 @@
  **/
 
 struct _vfuncptr vfunclist[] = {
-    { "nop",        ff_nop,     NULL },
-    { "exit",       ff_exit,    NULL },
-    { "echo",       ff_echo,    NULL },
+    { "nop",        ff_nop,     NULL , NULL},
+    { "exit",       ff_exit,    NULL , NULL},
+    { "echo",       ff_echo,    NULL , NULL},
 
     /*
      * By using the third argument to hold a pointer to an actual library
@@ -22,242 +22,248 @@ struct _vfuncptr vfunclist[] = {
      */
 
 /* math functions  */
-    { "cos",        ff_dfunc,    (void *)cos},
-    { "sin",        ff_dfunc,    (void *)sin},
-    { "tan",        ff_dfunc,    (void *)tan},
-    { "acos",       ff_dfunc,    (void *)acos},
-    { "asin",       ff_dfunc,    (void *)asin},
-    { "atan",       ff_dfunc,    (void *)atan},
-    { "cosd",        ff_dfunc,    (void *)cosd},
-    { "sind",        ff_dfunc,    (void *)sind},
-    { "tand",        ff_dfunc,    (void *)tand},
-    { "acosd",       ff_dfunc,    (void *)acosd},
-    { "asind",       ff_dfunc,    (void *)asind},
-    { "atand",       ff_dfunc,    (void *)atand},
-    { "sqrt",       ff_dfunc,    (void *)sqrt},
-    { "log10",      ff_dfunc,    (void *)log10},
-    { "log",        ff_dfunc,    (void *)log},
-    { "ln",         ff_dfunc,    (void *)log},
-    { "exp",        ff_dfunc,    (void *)exp},
-    { "floor",      ff_dfunc,    (void *)floor},
-    { "ceil",       ff_dfunc,    (void *)ceil},
-    { "abs",        ff_dfunc,    (void *)fabs},
+    { "cos",        ff_dfunc,    (void *)cos, NULL},
+    { "sin",        ff_dfunc,    (void *)sin, NULL},
+    { "tan",        ff_dfunc,    (void *)tan, NULL},
+    { "acos",       ff_dfunc,    (void *)acos, NULL},
+    { "asin",       ff_dfunc,    (void *)asin, NULL},
+    { "atan",       ff_dfunc,    (void *)atan, NULL},
+    { "cosd",        ff_dfunc,    (void *)cosd, NULL},
+    { "sind",        ff_dfunc,    (void *)sind, NULL},
+    { "tand",        ff_dfunc,    (void *)tand, NULL},
+    { "acosd",       ff_dfunc,    (void *)acosd, NULL},
+    { "asind",       ff_dfunc,    (void *)asind, NULL},
+    { "atand",       ff_dfunc,    (void *)atand, NULL},
+    { "sqrt",       ff_dfunc,    (void *)sqrt, NULL},
+    { "log10",      ff_dfunc,    (void *)log10, NULL},
+    { "log",        ff_dfunc,    (void *)log, NULL},
+    { "ln",         ff_dfunc,    (void *)log, NULL},
+    { "exp",        ff_dfunc,    (void *)exp, NULL},
+    { "floor",      ff_dfunc,    (void *)floor, NULL},
+    { "ceil",       ff_dfunc,    (void *)ceil, NULL},
+    { "abs",        ff_dfunc,    (void *)fabs, NULL},
 
 /* new math functions */
 
-    { "pow",        ff_pow,  (void *)NULL},
+    { "pow",        ff_pow,  (void *)NULL, NULL},
     
 /* format conversion routines.  All just shorthand for ff_conv() */
     
-    { "char",       ff_conv, (void *)BYTE},
-    { "byte",       ff_conv, (void *)BYTE},
-    { "short",      ff_conv, (void *)SHORT},
-    { "int",        ff_conv, (void *)INT},
-    { "float",      ff_conv, (void *)FLOAT},
-    { "double",     ff_conv, (void *)DOUBLE},
+    { "char",       ff_conv, (void *)BYTE, NULL},
+    { "byte",       ff_conv, (void *)BYTE, NULL},
+    { "short",      ff_conv, (void *)SHORT, NULL},
+    { "int",        ff_conv, (void *)INT, NULL},
+    { "float",      ff_conv, (void *)FLOAT, NULL},
+    { "double",     ff_conv, (void *)DOUBLE, NULL},
     
 /* org conversion.  All just shorthand for ff_org() */
 
-    { "bil",        ff_org, (void *)(BIL+10)},
-    { "bsq",        ff_org, (void *)(BSQ+10)},
-    { "bip",        ff_org, (void *)(BIP+10)},
+    { "bil",        ff_org, (void *)(BIL+10), NULL},
+    { "bsq",        ff_org, (void *)(BSQ+10), NULL},
+    { "bip",        ff_org, (void *)(BIP+10), NULL},
     
 /* some generic information routines */
 
-    { "dim",        ff_dim,     NULL },
-    { "format",     ff_format,  NULL },
-    { "type",       ff_format,  NULL },
-    { "org",        ff_org,     NULL }, 
-    { "order",      ff_org,     NULL }, 
-    { "create",     ff_create,  NULL },
+    { "dim",        ff_dim,     NULL , NULL},
+    { "format",     ff_format,  NULL , NULL},
+    { "type",       ff_format,  NULL , NULL},
+    { "org",        ff_org,     NULL , NULL}, 
+    { "order",      ff_org,     NULL , NULL}, 
+    { "create",     ff_create,  NULL , NULL},
     
 /* i/o */
 
-    { "source",     ff_source,   NULL },
-    { "load",       ff_load,     NULL },
-    { "read",       ff_load,     NULL },        /* an alias */
-    { "import",     ff_load,     NULL },        /* an alias */
-    { "load_ir",    ff_Frame_Grabber_Read, NULL},
-    { "load_frame", ff_Frame_Grabber_Read, NULL},
-    { "load_vis",   ff_GSE_VIS_Read,    NULL},
-    { "load_paci",  ff_PACI_Read,       NULL},
-    { "load_specpr",ff_loadspecpr,      NULL},
+    { "source",     ff_source,   NULL , NULL},
+    { "load",       ff_load,     NULL , NULL},
+    { "read",       ff_load,     NULL , NULL},        /* an alias */
+    { "import",     ff_load,     NULL , NULL},        /* an alias */
+    { "load_ir",    ff_Frame_Grabber_Read, NULL, NULL},
+    { "load_frame", ff_Frame_Grabber_Read, NULL, NULL},
+    { "load_vis",   ff_GSE_VIS_Read,    NULL, NULL},
+    { "load_paci",  ff_PACI_Read,       NULL, NULL},
+    { "load_specpr",ff_loadspecpr,      NULL, NULL},
 
-    { "save",       ff_write,    NULL },
-    { "write",      ff_write,    NULL },        /* an alias */
-    { "export",     ff_write,    NULL },        /* an alias */
-    { "filetype",   ff_filetype, NULL },
-    { "ls",         ff_list,     NULL },
-    { "list",       ff_list,     NULL },
+    { "save",       ff_write,    NULL , NULL},
+    { "write",      ff_write,    NULL , NULL},        /* an alias */
+    { "export",     ff_write,    NULL , NULL},        /* an alias */
+    { "filetype",   ff_filetype, NULL , NULL},
+    { "ls",         ff_list,     NULL , NULL},
+    { "list",       ff_list,     NULL , NULL},
     
 /* string functions */
 
-    { "atoi",       ff_atoi,     NULL },
-    { "atof",       ff_atof,     NULL },
-    { "string",     ff_string,   NULL },
-    { "delim",      ff_delim,    NULL },
-    { "issubstring",ff_issubstring, NULL},
-    { "strlen",     ff_strlen,   NULL},
-    { "strstr",     ff_strstr,   NULL},
-    { "grep",       ff_grep,     NULL},
+    { "atoi",       ff_atoi,     NULL , NULL},
+    { "atof",       ff_atof,     NULL , NULL},
+    { "string",     ff_string,   NULL , NULL},
+    { "delim",      ff_delim,    NULL , NULL},
+    { "issubstring",ff_issubstring, NULL, NULL},
+    { "strlen",     ff_strlen,   NULL, NULL},
+    { "strstr",     ff_strstr,   NULL, NULL},
+    { "grep",       ff_grep,     NULL, NULL},
     
-    { "rgb",        ff_rgb,      NULL },
+    { "rgb",        ff_rgb,      NULL , NULL},
     
 /* speccial function */
 
-    { "gnoise",     ff_gnoise,   NULL },
-    { "cluster",    ff_cluster,  NULL },
-    { "ccount",     ff_ccount,   NULL },
+    { "gnoise",     ff_gnoise,   NULL , NULL},
+    { "cluster",    ff_cluster,  NULL , NULL},
+    { "ccount",     ff_ccount,   NULL , NULL},
 
-    { "rnoise",     ff_random,   (void *)"rnoise" },
-    { "rand",       ff_random,   (void *)"rand" },
-    { "random",     ff_random,   NULL },
+    { "rnoise",     ff_random,   (void *)"rnoise" , NULL},
+    { "rand",       ff_random,   (void *)"rand" , NULL},
+    { "random",     ff_random,   NULL , NULL},
     
-    { "clone",      ff_replicate, NULL },
-    { "cat",        ff_cat,       NULL },
+    { "clone",      ff_replicate, NULL , NULL},
+    { "cat",        ff_cat,       NULL , NULL},
     
-    { "version",    ff_version,   NULL },
-    { "translate",  ff_translate, NULL },
-    { "display",    ff_display,   NULL },
+    { "version",    ff_version,   NULL , NULL},
+    { "translate",  ff_translate, NULL , NULL},
+    { "display",    ff_display,   NULL , NULL},
     
         /* Could implement avg, stddev, etc, by making ff_moment recognize 
            the third argument and only return the expected values */
-    { "moment",     ff_moment,  NULL },   
-    { "avg",     ff_avg2,        NULL },   
-    { "stddev",  ff_avg2,        NULL },   
-    { "avg2",    ff_avg,        NULL },   
-    { "stddev2", ff_avg,        NULL },   
-    { "sum",     ff_avg,        NULL },   
-    { "min",     ff_min,        NULL },   
-    { "max",     ff_min,        NULL },   
-    { "sort",     ff_sort,      NULL },
-    { "minchan",  ff_findmin,   NULL },   
-    { "maxchan",  ff_findmin,   NULL },   
+    { "moment",     ff_moment,  NULL , NULL},   
+    { "avg",     ff_avg2,        NULL , NULL},   
+    { "stddev",  ff_avg2,        NULL , NULL},   
+    { "avg2",    ff_avg,        NULL , NULL},   
+    { "stddev2", ff_avg,        NULL , NULL},   
+    { "sum",     ff_avg,        NULL , NULL},   
+    { "min",     ff_min,        NULL , NULL},   
+    { "max",     ff_min,        NULL , NULL},   
+    { "sort",     ff_sort,      NULL , NULL},
+    { "minchan",  ff_findmin,   NULL , NULL},   
+    { "maxchan",  ff_findmin,   NULL , NULL},   
 
-    { "interp",     ff_interp,    NULL },
-    { "gplot",      ff_gplot,     NULL },
-    { "plot",       ff_plot,      NULL },
-    { "splot",      ff_splot,     NULL },
+    { "interp",     ff_interp,    NULL , NULL},
+    { "gplot",      ff_gplot,     NULL , NULL},
+    { "plot",       ff_plot,      NULL , NULL},
+    { "splot",      ff_splot,     NULL , NULL},
 
-    { "fit",        ff_fit,      NULL },
-    { "hasvalue",   HasValue,    NULL },
-    { "HasValue",   HasValue,    NULL },
-    { "edit",       ufunc_edit,  NULL },
-    { "header",     ff_header,   NULL },    /* read stuff from file headers */
-    { "ascii",      ff_ascii,    NULL },    
-    { "read_ascii", ff_ascii,    NULL },
-    { "read_text",  ff_read_text,     NULL },
-    { "read_lines", ff_read_lines,NULL},
+    { "fit",        ff_fit,      NULL , NULL},
+    { "hasvalue",   HasValue,    NULL , NULL},
+    { "HasValue",   HasValue,    NULL , NULL},
+    { "edit",       ufunc_edit,  NULL , NULL},
+    { "header",     ff_header,   NULL , NULL},    /* read stuff from file headers */
+    { "ascii",      ff_ascii,    NULL , NULL},    
+    { "read_ascii", ff_ascii,    NULL , NULL},
+    { "read_text",  ff_read_text,     NULL , NULL},
+    { "read_lines", ff_read_lines,NULL, NULL},
 
 #ifdef INCLUDE_API
-    {"popen",   ff_popen,   NULL},
-    {"pprint",  ff_pprint,  NULL},
-    {"pplot",   ff_pplot,   NULL},
-    {"ptext",   ff_ptext,   NULL},
-    {"pline",   ff_pline,   NULL},
-    {"pbox",    ff_pbox,    NULL},
-    {"pzoom",   ff_pzoom,   NULL},
+    {"popen",   ff_popen,   NULL, NULL},
+    {"pprint",  ff_pprint,  NULL, NULL},
+    {"pplot",   ff_pplot,   NULL, NULL},
+    {"ptext",   ff_ptext,   NULL, NULL},
+    {"pline",   ff_pline,   NULL, NULL},
+    {"pbox",    ff_pbox,    NULL, NULL},
+    {"pzoom",   ff_pzoom,   NULL, NULL},
 #endif
     
 #if 0
-    { "bbr",        ff_bbr,      NULL },    /* blackbody radiance   */
-    { "bbrf",       ff_bbrf,     NULL },    /* blackbody radiance[] */
-    { "btemp",      ff_btemp,    NULL },    /* added by kaq */
+    { "bbr",        ff_bbr,      NULL , NULL},    /* blackbody radiance   */
+    { "bbrf",       ff_bbrf,     NULL , NULL},    /* blackbody radiance[] */
+    { "btemp",      ff_btemp,    NULL , NULL},    /* added by kaq */
 #endif
 
-    { "bbr",        ff_bop,      (void *)bbr   },
-    { "btemp",      ff_bop,      (void *)btemp },
-    { "atan2",      ff_bop,      (void *)atan2 },
+    { "bbr",        ff_bop,      (void *)bbr   , NULL},
+    { "btemp",      ff_bop,      (void *)btemp , NULL},
+    { "atan2",      ff_bop,      (void *)atan2 , NULL},
 
-    { "vignette",   ff_vignette, NULL },
-    { "pause",      ff_pause,    NULL },    /* get input from user */
-    { "ifill",      ff_ifill,    NULL },    /* interpolated fill */
-    { "jfjll",      ff_jfill,    NULL },    /* jnterpolated fjll */
+    { "vignette",   ff_vignette, NULL , NULL},
+    { "pause",      ff_pause,    NULL , NULL},    /* get input from user */
+    { "ifill",      ff_ifill,    NULL , NULL},    /* interpolated fill */
+    { "jfjll",      ff_jfill,    NULL , NULL},    /* jnterpolated fjll */
 
-    { "printf",     ff_printf,    NULL },
-    { "sprintf",    ff_sprintf,   NULL },
-    { "fprintf",    ff_fprintf,   NULL },
-    { "system",     ff_system,    NULL },
-    { "fsize",      ff_fsize,    NULL },
-    { "history",    ff_history,    NULL },
-    { "h",          ff_history,    NULL },
+    { "printf",     ff_printf,    NULL , NULL},
+    { "sprintf",    ff_sprintf,   NULL , NULL},
+    { "fprintf",    ff_fprintf,   NULL , NULL},
+    { "system",     ff_system,    NULL , NULL},
+    { "fsize",      ff_fsize,    NULL , NULL},
+    { "history",    ff_history,    NULL , NULL},
+    { "h",          ff_history,    NULL , NULL},
 
 /* add additional functions here.  Don't forget the trailing comma. */
 
-	{ "audit",      ff_audit,      NULL },
+	{ "audit",      ff_audit,      NULL , NULL},
 
-    { "basis",      ff_basis,           NULL },
-    { "mxm",        ff_mxm,             NULL },
-    { "histogram",  ff_histogram,       NULL },
-    { "rgb2hsv",    ff_rgb2hsv,         NULL },
-    { "hsv2rgb",    ff_hsv2rgb,         NULL },
+    { "basis",      ff_basis,           NULL , NULL},
+    { "mxm",        ff_mxm,             NULL , NULL},
+    { "identity",   ff_identity,        NULL , NULL},
+    { "histogram",  ff_histogram,       NULL , NULL},
+    { "rgb2hsv",    ff_rgb2hsv,         NULL , NULL},
+    { "hsv2rgb",    ff_hsv2rgb,         NULL , NULL},
+    { "isis",   ff_read_suffix_plane, NULL, NULL},
+    { "resize",     ff_resize,          NULL , NULL},
+    { "fork",       ff_fork,            NULL , NULL},
 
-    { "isis",   ff_read_suffix_plane, NULL},
-    { "resize",     ff_resize,          NULL },
-    { "fork",       ff_fork,            NULL },
-
-    { "minvert",        ff_minvert,     NULL },
-    { "dct",        ff_dct,     NULL },
-    { "entropy",        ff_entropy,     NULL },
+    { "minvert",        ff_minvert,     NULL , NULL},
+    { "dct",        ff_dct,     NULL , NULL},
+    { "entropy",        ff_entropy,     NULL , NULL},
 #ifdef HAVE_LIBPROJ   
-    { "projection", ff_projection,   NULL },
+    { "projection", ff_projection,   NULL , NULL},
 #endif
 
 #ifdef HAVE_LIBMAGICK 
-    { "XIdisplay",  ff_XImage_Display, NULL},
+    { "XIdisplay",  ff_XImage_Display, NULL, NULL},
 #endif
 
-    { "fft",        ff_fft,     (void *)1 },
-    { "ifft",       ff_fft,     (void *)0 },
-    { "rfft",       ff_realfft,     (void *)1 },
-    { "irfft",      ff_realfft,     (void *)0 },
-    { "rfft2",      ff_realfft2,     (void *)1 },
-    { "irfft2",     ff_realfft2,     (void *)0 },
-    { "rfft3",      ff_realfft3,     (void *)1 },
-    { "irfft3",     ff_realfft3,     (void *)0 },
+    { "fft",        ff_fft,     (void *)1 , NULL},
+    { "ifft",       ff_fft,     (void *)0 , NULL},
+    { "rfft",       ff_realfft,     (void *)1 , NULL},
+    { "irfft",      ff_realfft,     (void *)0 , NULL},
+    { "rfft2",      ff_realfft2,     (void *)1 , NULL},
+    { "irfft2",     ff_realfft2,     (void *)0 , NULL},
+    { "rfft3",      ff_realfft3,     (void *)1 , NULL},
+    { "irfft3",     ff_realfft3,     (void *)0 , NULL},
 
-    { "self_convolve", ff_self_convolve,        NULL },
-    { "convolve",      ff_convolve,             NULL },
-    { "convolve3",     ff_convolve3,            NULL },
+    { "self_convolve", ff_self_convolve,        NULL , NULL},
+    { "convolve",      ff_convolve,             NULL , NULL},
+    { "convolve3",     ff_convolve3,            NULL , NULL},
 
 #ifdef HAVE_XM_XR3DT_H
-    { "xrt3d",          ff_xrt3d,              NULL },
+    { "xrt3d",          ff_xrt3d,              NULL , NULL},
 #endif
 
-    { "struct",         ff_struct,             NULL },
-    { "eval",           ff_eval,               NULL },
-    { "add_struct",     ff_add_struct,         NULL },
-    { "get_struct",     ff_get_struct,         NULL },
-    { "eigen",          ff_eigen,              NULL },
-    { "covar",          ff_corr_covar_and_scp, NULL },
-    { "corr",           ff_corr_covar_and_scp, NULL },
-    { "scp",            ff_corr_covar_and_scp, NULL },
-    { "pcs",            ff_pcs,                NULL },
-    { "syscall",        ff_syscall,            NULL},
-    { "basename",       ff_filename,           (void *)1},
-    { "dirname",        ff_filename,           (void *)2},
-    { "strsub",         ff_stringsubst,        NULL},
-    { "dump",           ff_dump,               NULL},
-    { "global",         ff_global,             NULL},
-    { "delete",         ff_delete,             NULL},
-    { "load_vanilla",   ff_loadvan,            NULL},
-    { "load_PDS",       ReadPDS,               NULL},
-    { "rtrim",          ff_rtrim,              NULL},
+    { "struct",         ff_struct,             NULL , NULL},
+    { "eval",           ff_eval,               NULL , NULL},
+    { "add_struct",     ff_add_struct,         NULL , NULL},
+    { "get_struct",     ff_get_struct,         NULL , NULL},
+    { "eigen",          ff_eigen,              NULL , NULL},
+    { "covar",          ff_corr_covar_and_scp, NULL , NULL},
+    { "corr",           ff_corr_covar_and_scp, NULL , NULL},
+    { "scp",            ff_corr_covar_and_scp, NULL , NULL},
+    { "pcs",            ff_pcs,                NULL , NULL},
 
-    { "equals",         ff_equals,             NULL},
-    { "xplot",          ff_xplot,              NULL},
-    { "killall",        ff_killchild,          NULL},
+    { "syscall",        ff_syscall,            NULL, NULL},
+    { "shell",        ff_syscall,            NULL, NULL},
+    { "basename",       ff_filename,           (void *)1, NULL},
+    { "dirname",        ff_filename,           (void *)2, NULL},
+    { "strsub",         ff_stringsubst,        NULL, NULL},
+    { "dump",           ff_dump,               NULL, NULL},
+    { "global",         ff_global,             NULL, NULL},
+    { "delete",         ff_delete,             NULL, NULL},
+    { "load_vanilla",   ff_loadvan,            NULL, NULL},
+    { "load_PDS",       ReadPDS,               NULL, NULL},
+    { "rtrim",          ff_rtrim,              NULL, NULL},
 
-    { "pnmcut",         ff_cut,                 NULL},
-    { "pnmcrop",        ff_crop,                NULL},
+    { "equals",         ff_equals,             NULL, NULL},
+    { "xplot",          ff_xplot,              NULL, NULL},
+    { "killall",        ff_killchild,          NULL, NULL},
+
+    { "pnmcut",         ff_cut,                 NULL, NULL},
+    { "pnmcrop",        ff_crop,                NULL, NULL},
 
 #ifdef BUILD_MODULE_SUPPORT
-    { "load_module",    ff_load_dv_module,     NULL},
-    { "unload_module",  ff_unload_dv_module,   NULL},
-	{ "list_modules",   ff_list_dv_modules,    NULL},
+    { "load_module",    ff_load_dv_module,     NULL, NULL},
+    { "unload_module",  ff_unload_dv_module,   NULL, NULL},
+	{ "list_modules",   ff_list_dv_modules,    NULL, NULL},
 #endif /* BUILD_MODULE_SUPPORT */
 
-	 { "load_raw",			ff_raw,						NULL},
+	 { "load_raw",			ff_raw,				NULL, NULL},
+	 { "fexists",			ff_exists,			NULL, NULL},
+	 { "putenv",			ff_putenv,			NULL, NULL},
+	 { "length",			ff_length,			NULL, NULL},
+
     { NULL,             NULL,                  NULL }
 };
 

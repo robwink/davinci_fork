@@ -82,7 +82,7 @@ if test "$PROJ_OBJS" != ""; then
 fi
 
 AC_CHECK_LIB(tiff,TIFFIsTiled)
-AC_CHECK_LIB(Magick, GetMagickInfo)
+AC_CHECK_LIB(Magick, GetImageInfo)
 
 PL_LIB=''
 AC_CHECK_LIB(plplotFX,c_plinit,PL_LIB='-lplplotFX',,)
@@ -226,7 +226,7 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h limits.h malloc.h sys/file.h sys/time.h unistd.h)
 
 CPPFLAGS="$CPPFLAGS -I/usr/include/X11"
-AC_CHECK_HEADERS(magick.h magick/api.h my_list.h Xm/Xrt3d.h)
+AC_CHECK_HEADERS(magick/magick.h magick/api.h my_list.h Xm/Xrt3d.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
