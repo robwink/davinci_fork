@@ -92,8 +92,10 @@ struct _vfuncptr vfunclist[] = {
     { "load_vanilla",   ff_loadvan,             NULL, NULL},
     { "load_PDS",       ReadPDS,                NULL, NULL},
     { "load_pds",       ReadPDS,                NULL, NULL},
+#ifdef HAVE_LIBCFITSIO
     { "load_fits",      ReadFITS,               NULL, NULL},
     { "write_fits",      WriteFITS,               NULL, NULL},
+#endif
     { "isis",           ff_read_suffix_plane,   NULL, NULL},
     { "load_raw",   ff_raw,         NULL, NULL},
     { "ascii",      ff_ascii,       NULL , NULL},    
