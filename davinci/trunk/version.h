@@ -1,6 +1,13 @@
-char *version = "@(#) daVinci Version #0.59a";
+char *version = "@(#) daVinci Version #0.60";
 
 /*
+
+Version 0.60: Wed Aug  9 17:42:00 MST 2000
+	+ Added "niter" parameter to ff_pcs() and ff_eigen().
+	  Use this parameter to increase the maximum number of 
+	  iterations performed by the Eigen Values convergence 
+	  algorithm before giving up.
+
 Version 0.59a: Wed Aug  2 16:17:03 MST 2000
 	* Fixed line nmumbers, again.  Pushes pp_lineno onto the stack for source()
 
