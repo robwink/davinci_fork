@@ -884,7 +884,7 @@ char *single_replace(char *line, regex_t *preg, char *replace)
 	
     int  index=0;
 
-    int  Max=100;
+    int  Max=strlen(line)+strlen(replace);
 
     int i;
 
