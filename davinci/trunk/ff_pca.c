@@ -46,6 +46,8 @@ static const char PCA[]="pca1";
 
 #define SIGN(a, b) ( (b) < 0 ? -fabs(a) : fabs(a) )
 
+#define DEFAULT_MAX_TQLI_ITER 30
+
 float **dstretch(
 	float	**data,	/* data[n][m] */
 	int	n,
@@ -65,14 +67,13 @@ float **eval_dstmat(
 void corcol();
 void covcol();
 void scpcol();
-void erhand();
 float *vector();
 float **matrix();
 void free_vector();
 void free_matrix();
 void scpcol();
 void tred2();
-void tqli();
+int tqli();
 void stddev(float **data, int n, int m, float *stddev);
 
 static float **mxm(
@@ -154,10 +155,12 @@ pca(
 									's' - use SSCP matrix
 							*/
 	float		*evals,	/* Eigen Values 1 x m vector */
-	float		**symmat	/* Eigen Vectors m x m matrix */
+	float		**symmat,	/* Eigen Vectors m x m matrix */
+	int      niter    /* Max no. of iterations during tqli convergence */
 )
 {
 	float		*interm;
+	int       success;
 
 	/* Look at analysis option; branch in accordance with this. */
 	switch (opt) {
@@ -188,7 +191,12 @@ pca(
 
 	/* Calculate Eigen values and vectors */
 	tred2(symmat, m, evals, interm);	/* Triangular decomposition */
-	tqli(evals, interm, m, symmat);		/* Reduction of sym. trid. matrix */
+	success = tqli(evals, interm, m, symmat, niter);		/* Reduction of sym. trid. matrix */
+	if (!success){
+		free_vector(interm, m);
+		return NULL;
+	}
+
 	/* evals now contains the eigenvalues,
 		columns of symmat now contain the associated eigenvectors. */
 
@@ -269,8 +277,9 @@ pcs(
 	int		n,
 	int		m,
 	char		opt,
-	float		*scale		/* scaling vector (m scaling values) or
+	float		*scale,		/* scaling vector (m scaling values) or
 									NULL for scaling of 1.0 (i.e. no scaling) */
+	int      niter			/* max number of iterations during tqli convergence */
 )
 {
 	float		*evals, **evecs, *v;
@@ -283,7 +292,7 @@ pcs(
 	/* Allocate storage for vector of eigenvalues */
 	evals = vector(m);
 
-	if (pca(data, n, m, opt, evals, evecs) == NULL){
+	if (pca(data, n, m, opt, evals, evecs, niter) == NULL){
 		free_matrix(evecs, m, m);
 		free_vector(evals, m);
 		return NULL;
@@ -363,13 +372,15 @@ ff_pcs(
 	int		ref[3] = {0, 1, 2};
 	int		n, m, offset;
 	int		i, j, k, index;
+	int      niter = DEFAULT_MAX_TQLI_ITER;
 
-	Alist		alist[5];
+	Alist		alist[6];
 	alist[0] = make_alist( "obj",    ID_VAL,    NULL,        &obj);
 	alist[1] = make_alist( "opt",    ID_ENUM,   opt_enums,   &opt_arg);
 	alist[2] = make_alist( "axis",   ID_ENUM,   axis_enums,  &axis_arg);
 	alist[3] = make_alist( "scale",  ID_VAL,    NULL,        &scale_arg);
-	alist[4].name = NULL;
+	alist[4] = make_alist( "niter",  INT,       NULL,        &niter);
+	alist[5].name = NULL;
 
 	make_args(&ac, &av, func, args);
 	if (parse_args(ac, av, alist)) return(NULL);
@@ -500,7 +511,7 @@ ff_pcs(
 	}
 
 	/* perform the Principal Component Stretch */
-	if (pcs(data, n, m, (strcmp(func->name, "pcsx")? tolower(opt): toupper(opt)), scale) == NULL){
+	if (pcs(data, n, m, (strcmp(func->name, "pcsx")? tolower(opt): toupper(opt)), scale, niter) == NULL){
 		free_matrix(data, n, m);
 		if(scale) { free_vector(scale, m); }
 		return NULL;
@@ -922,18 +933,7 @@ scpcol(data, n, m, symmat)
 
 }
 
-/**  Error handler  **************************************************/
 
-void 
-erhand(err_msg)
-     char err_msg[];
-/* Error handler */
-{
-	fprintf(stderr, "Run-time error:\n");
-	fprintf(stderr, "%s\n", err_msg);
-	fprintf(stderr, "Exiting to system.\n");
-	exit(1);
-}
 
 /**  Allocation of vector storage  ***********************************/
 
@@ -946,8 +946,10 @@ vector(n)
 	float *v;
 
 	v = (float *) malloc((unsigned) n * sizeof(float));
-	if (!v)
-		erhand("Allocation failure in vector().");
+	if (!v){
+		parse_error("Allocation failure in vector(). Aborting!");
+		exit(1);
+	}
 	return v - 1;
 
 }
@@ -964,15 +966,19 @@ matrix(n, m)
 
 	/* Allocate pointers to rows. */
 	mat = (float **) malloc((unsigned) (n) * sizeof(float *));
-	if (!mat)
-		erhand("Allocation failure 1 in matrix().");
+	if (!mat){
+		parse_error("Allocation failure 1 in matrix(). Aborting!");
+		exit(1);
+	}
 	mat -= 1;
 
 	/* Allocate rows and set pointers to them. */
 	for (i = 1; i <= n; i++) {
 		mat[i] = (float *) malloc((unsigned) (m) * sizeof(float));
-		if (!mat[i])
-			erhand("Allocation failure 2 in matrix().");
+		if (!mat[i]){
+			parse_error("Allocation failure 2 in matrix(). Aborting!");
+			exit(1);
+		}
 		mat[i] -= 1;
 	}
 
@@ -1088,14 +1094,14 @@ tred2(a, n, d, e)
 
 /**  Tridiagonal QL algorithm -- Implicit  **********************/
 
-void 
-tqli(d, e, n, z)
+int 
+tqli(d, e, n, z, niter)
      float d[], e[], **z;
-     int n;
+     int n, niter;
 {
 	int m, l, iter, i, k;
 	float s, r, p, g, f, dd, c, b;
-	void erhand();
+	char errmsg[1024];
 
 	for (i = 2; i <= n; i++)
 		e[i - 1] = e[i];
@@ -1109,8 +1115,10 @@ tqli(d, e, n, z)
 					break;
 			}
 			if (m != l) {
-				if (iter++ == 30)
-					erhand("No convergence in TLQI.");
+				if (iter++ >= niter){
+					parse_error("No convergence in Tridiagonal QL Algorithm in %d iterations. Giving up!", niter);
+					return 0;
+				}
 				g = (d[l + 1] - d[l]) / (2.0 * e[l]);
 				r = sqrt((g * g) + 1.0);
 				g = d[m] - d[l] + e[l] / (g + SIGN(r, g));
@@ -1147,6 +1155,8 @@ tqli(d, e, n, z)
 			}
 		} while (m != l);
 	}
+
+	return 1;
 }
 
 /***************************************************************************/
@@ -1167,10 +1177,13 @@ ff_eigen(
 	float		*fdata = NULL;
 	int		n, m, w;
 	int		i, j, index;
+	int      niter = DEFAULT_MAX_TQLI_ITER;
+	int      success;
 
-	Alist		alist[2];
+	Alist		alist[3];
 	alist[0] = make_alist( "obj",    ID_VAL,    NULL,        &obj);
-	alist[1].name = NULL;
+	alist[1] = make_alist( "niter",  INT,       NULL,        &niter);
+	alist[2].name = NULL;
 
 	make_args(&ac, &av, func, args);
 	if (parse_args(ac, av, alist)) return(NULL);
@@ -1225,7 +1238,16 @@ ff_eigen(
 
 	/* Calculate Eigen values and vectors */
 	tred2(symmat, m, evals, interm);	/* Triangular decomposition */
-	tqli(evals, interm, m, symmat);		/* Reduction of sym. trid. matrix */
+	success = tqli(evals, interm, m, symmat, niter);		/* Reduction of sym. trid. matrix */
+
+	if (!success){
+		free_vector(interm, m);
+		free_vector(evals, m);
+		free_matrix(symmat, m, m);
+
+		return NULL;
+	}
+
 	/* evals now contains the eigenvalues,
 		columns of symmat now contain the associated eigenvectors. */
 

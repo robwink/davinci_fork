@@ -1662,7 +1662,7 @@ Davinci supports the following matrix functions:
 ?pcs()
  pcs() - Performs Principal Component Stretch of the given data
 
- pcs(obj=VAL [, opt={r|v|s}] [, axis={x|y|z}] [, scale=VAL])
+ pcs(obj=VAL [, opt={r|v|s}] [, axis={x|y|z}] [, scale=VAL] [, niter=INT])
 
 		The pcs() function performs a Principal Component Stretch on the
 		input data.
@@ -1692,6 +1692,10 @@ Davinci supports the following matrix functions:
 		The 'scale' parameter specifies the scaling factor, if any, to be
 		applied to the stretched vectors during the stretch phase. If 
 		'scale' is not specified, it is assumed to be 1, i.e. no scaling.
+
+		The 'niter' parameter specifies the maximum number of iterations
+		allowed during Tridiagonal QL algorithm. If pcs() fails due to
+		'no convergence' error, try increasing this number.
 
 
  Example:
@@ -1783,11 +1787,16 @@ Davinci supports the following matrix functions:
  eigen() - Computes the Eigen Values and Eigen Vectors of a 
            Real Symmetric input matrix
 
- eigen(obj=VAL)
+ eigen(obj=VAL [, niter=INT])
 
 		The eigen() function computes the Eigen Values and Vectors for
 		a real symmetric [m x m x 1] matrix passed in as the 'obj'
 		parameter.
+
+		The 'niter' parameter specifies the maximum number of iterations
+		allowed during Tridiagonal QL algorithm. If pcs() fails due to
+		'no convergence' error, try increasing this number.
+
 
  Example:
 	Assume that 'a' is a [3x3x1] matrix, then the following line
