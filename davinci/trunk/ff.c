@@ -1562,8 +1562,9 @@ ff_fsize(vfuncptr func, Var * arg)
     }
 }
 
-
+#ifdef HAVE_LIBREADLINE
 #include <readline/history.h>
+#endif
 
 Var *
 ff_history(vfuncptr func, Var * arg)
