@@ -657,6 +657,7 @@ fake_data()
 
     // srand48(getpid());
     srand( (unsigned int) time( NULL ) ); 
+    srand48( (unsigned int) time( NULL ) ); 
     
     for (i = 0; i < 12; i++) {
         ((float *) V_DATA(v))[i + 12] = drand48();
