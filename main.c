@@ -248,6 +248,7 @@ void get_file_input(XtPointer client_data, int *fid, XtInputId *id)
 {
     rl_callback_read_char();
 }
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -273,7 +274,7 @@ event_loop(void)
             top = XtVaAppInitialize(&app, "Simple", NULL, 0,
                                     &argc,
                                     argv, NULL, NULL);
-            SetTopLevel(&top);
+		    SetTopLevel(&top);
         } else {
             /**
             ** This is a hack to let us use the Xt event model, without
