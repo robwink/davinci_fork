@@ -70,6 +70,8 @@ struct _vfuncptr vfunclist[] = {
     { "load",       ff_load,     NULL },
     { "read",       ff_load,     NULL },        /* an alias */
     { "import",     ff_load,     NULL },        /* an alias */
+    { "GSE_IR_load",   ff_Frame_Grabber_Read, NULL},
+    { "GSE_VIS_load", ff_GSE_VIS_Read,	NULL},
     { "save",       ff_write,    NULL },
     { "write",      ff_write,    NULL },        /* an alias */
     { "export",     ff_write,    NULL },        /* an alias */
@@ -160,8 +162,7 @@ struct _vfuncptr vfunclist[] = {
     { "rgb2hsv",    ff_rgb2hsv,    		NULL },
     { "hsv2rgb",    ff_hsv2rgb,    		NULL },
 
-    { "isis",     	ff_isis_summary,    NULL },
-    { "loadsuffix",	ff_read_suffix_plane, NULL},
+    { "isis",	ff_read_suffix_plane, NULL},
     { "resize",     ff_resize,    		NULL },
     { "fork",     	ff_fork,    		NULL },
 
@@ -170,6 +171,10 @@ struct _vfuncptr vfunclist[] = {
     { "entropy",     	ff_entropy,     NULL },
 #ifdef HAVE_LIBPROJ   
     { "projection",	ff_projection,   NULL },
+#endif
+
+#ifdef HAVE_LIBMAGICK 
+    { "XIdisplay",	ff_XImage_Display, NULL},
 #endif
 
     { "fft",     	ff_fft,     (void *)1 },
