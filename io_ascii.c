@@ -19,6 +19,17 @@ WriteAscii(Var *s, FILE *fp, char *filename)
         }
     }
 
+	if (V_TYPE(s)==ID_TEXT){
+		char cr='\n';
+		for (i=0;i<V_TEXT(s).Row;i++){
+			fwrite(V_TEXT(s).text[i],sizeof(char),strlen(V_TEXT(s).text[i]),fp);
+			fwrite(&cr,sizeof(char),1,fp);
+			
+		}
+		fclose(fp);
+	 	return(1);
+	}	
+
     dsize = V_DSIZE(s);
     format = V_FORMAT(s);
     d[0] = V_SIZE(s)[0];

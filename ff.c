@@ -661,7 +661,7 @@ ff_create(vfuncptr func, Var * arg)
     s = newVar();
     V_TYPE(s) = ID_VAL;
 
-    V_DATA(s) = calloc(NBYTES(format), dsize);
+    V_DATA(s) = calloc(dsize,NBYTES(format));
     V_FORMAT(s) = format;
     V_ORDER(s) = org;
     V_DSIZE(s) = dsize;
@@ -798,13 +798,13 @@ replicate_text(Var *ob, int x, int y)
 	V_TYPE(s)=ID_TEXT;
 	V_TEXT(s).Row=V_TEXT(ob).Row*y;
 	Row=V_TEXT(ob).Row;
-	V_TEXT(s).text=(unsigned char **)calloc(sizeof(char *),V_TEXT(s).Row);
+	V_TEXT(s).text=(unsigned char **)calloc(V_TEXT(s).Row,sizeof(char *));
 
 
 	for (j=0;j<y;j++){
 			for(l=0;l<Row;l++){
-				V_TEXT(s).text[j*Row+l]=(unsigned char *)calloc(sizeof(char),
-					strlen(V_TEXT(ob).text[l])*x);
+				V_TEXT(s).text[j*Row+l]=(unsigned char *)calloc(
+					strlen(V_TEXT(ob).text[l])*x,sizeof(char));
 				strcpy(V_TEXT(s).text[j*Row+l],V_TEXT(ob).text[l]);
 				for (i=1;i<x;i++){
 					strcat(V_TEXT(s).text[j*Row+l],V_TEXT(ob).text[l]);
@@ -1382,7 +1382,7 @@ ff_strlen(vfuncptr func, Var * arg)
 				*Result=V_TEXT(S1).Row;
 		  }
 
-		  else if (V_TYPE(S1)==-ID_STRING){
+		  else if (V_TYPE(S1)==ID_STRING){
 				*Result=strlen(V_STRING(S1));
 		  }
 
@@ -1709,3 +1709,58 @@ ff_eval(vfuncptr func, Var * arg)
 
     return(NULL);
 }
+
+Var *
+ff_syscall(vfuncptr func, Var * arg)
+{
+    int ac, i, j; 
+    Var **av;
+    char *expr;
+    FILE *fp;
+
+	 Var *o;
+	 unsigned char **text;
+	 int Row=0;
+	 int Max=100;
+	 char *ptr;
+
+    Alist alist[2];
+    alist[0] = make_alist("command",    ID_STRING,     NULL,     &expr);
+    alist[1].name = NULL;
+ 
+    make_args(&ac, &av, func, arg);
+    if (parse_args(ac, av, alist)) return(NULL); 
+ 
+    if (expr == NULL)  {
+        return(NULL);
+    }
+
+	if ((fp=popen(expr,"r"))==NULL)
+		return(NULL);
+
+	text=(unsigned char **)calloc(Max,sizeof(char *));	
+	while(getline(&ptr, fp) != EOF) {
+		if (Row >=Max){
+			Max+=100;
+			if((text=realloc(text,(Max*sizeof(char *))))==NULL){
+				parse_error("Couldn't allocate large enough buffer to hold result");
+				return(NULL);
+			}
+		}
+		if (ptr[strlen(ptr)-1]=='\n')
+			ptr[strlen(ptr)-1]='\0'; /*Strip off \n from end of line*/
+
+		text[Row]=strdup(ptr);
+		Row++;
+	}
+
+	pclose(fp);
+
+	o=newVar();
+	V_TYPE(o)=ID_TEXT;
+	V_TEXT(o).Row=Row;
+	V_TEXT(o).text=text;
+
+	return(o);
+}
+		

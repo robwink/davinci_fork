@@ -362,3 +362,5 @@ char *strndup(char *, int);
 Var *varray_subset(Var *v, Range *r);
 
 Var *set_varray(Var *v, Range *r, Var *e);
+
+Var *ff_syscall(vfuncptr func, Var * arg);

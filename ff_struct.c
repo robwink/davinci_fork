@@ -63,6 +63,8 @@ WriteHDF5(hid_t parent, char *name, Var *v)
     int i;
 	 hsize_t length;
     Var *e;
+	 int lines,bsize,index;
+	 unsigned char buf[256];
 
     if (V_NAME(v) != NULL) {
         if ((e = eval(v)) != NULL) v = e;
@@ -134,18 +136,70 @@ WriteHDF5(hid_t parent, char *name, Var *v)
 		/*
 		** Member is a string of characters
 		*/
+		lines=1;
 		length=strlen(V_STRING(v))+1;/*String+NULL*/
 		dataspace = H5Screate_simple(1,&length,NULL);
 		datatype = H5Tcopy(H5T_C_S1);
 		H5Tset_size(datatype,strlen(V_STRING(v))+1);
 		dataset = H5Dcreate(parent,name, datatype, dataspace, H5P_DEFAULT);
 		H5Dwrite(dataset, datatype,H5S_ALL, H5S_ALL, H5P_DEFAULT, V_STRING(v));
+
+		aid2 = H5Screate(H5S_SCALAR);
+      attr = H5Acreate(dataset, "lines", H5T_NATIVE_INT, aid2, H5P_DEFAULT);
+
+      H5Awrite(attr, H5T_NATIVE_INT, &lines);
+      H5Sclose(aid2);
+      H5Aclose(attr);
+
+
 		H5Tclose(datatype);
 		H5Sclose(dataspace);
 	 	H5Dclose(dataset);
+
 		break;
 
+	case ID_TEXT:
+		/*
+		**Multiline set of strings
+		*/
+
+		/*Pack the array into a single buffer with newlines*/
+			length=strlen(V_TEXT(v).text[0]);
+			dataspace = H5Screate_simple(1,&length,NULL);	
+			datatype = H5Tcopy(H5T_C_S1);
+			H5Tset_size(datatype,length);
+			dataset = H5Dcreate(parent,name, datatype, dataspace, H5P_DEFAULT);
+			H5Dwrite(dataset, datatype,H5S_ALL, H5S_ALL, H5P_DEFAULT, V_TEXT(v).text[0]);
+/*
+			lines=V_TEXT(v).Row;
+			aid2 = H5Screate(H5S_SCALAR);
+  		    attr = H5Acreate(dataset, "lines", H5T_NATIVE_INT, aid2, H5P_DEFAULT);
+  		    H5Awrite(attr, H5T_NATIVE_INT, &lines);
+
+  		    H5Sclose(aid2);
+  		    H5Aclose(attr);
+*/
+			H5Tclose(datatype);
+			H5Sclose(dataspace);
+			H5Dclose(dataset);
+		for (i=1;i<V_TEXT(v).Row;i++){
+			sprintf(buf,"%d",i);
+			printf("Writing line: %s\n",buf);
+			length=strlen(V_TEXT(v).text[i]);
+			dataspace = H5Screate_simple(1,&length,NULL);	
+			datatype = H5Tcopy(H5T_C_S1);
+			H5Tset_size(datatype,length);
+			dataset = H5Dcreate(parent,buf, datatype, dataspace, H5P_DEFAULT);
+			H5Dwrite(dataset, datatype,H5S_ALL, H5S_ALL, H5P_DEFAULT, V_TEXT(v).text[i]);
+			H5Tclose(datatype);
+			H5Sclose(dataspace);
+			H5Dclose(dataset);
+		}
+	
+      break;
+
     }
+
     if (top) H5Fclose(parent);
     return;
 }
@@ -163,6 +217,7 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
 	 H5T_class_t classtype;
     Var *v;
     void *databuf;
+	 int Lines=1;
 
     *((Var **)data) = NULL;
 
@@ -209,6 +264,13 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
        H5Aread(attr, H5T_NATIVE_INT, &org);
        H5Aclose(attr);
 	  }
+	  else {
+			attr = H5Aopen_name(dataset, "lines");
+			H5Aread(attr, H5T_NATIVE_INT, &Lines);
+			H5Aclose(attr);
+	  }
+
+	  if ((type!=ID_STRING)){
 
        dataspace = H5Dget_space(dataset);
        H5Sget_simple_extent_dims(dataspace, datasize, maxsize);
@@ -223,16 +285,40 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
        H5Sclose(dataspace);
        H5Dclose(dataset);
 
-		 if (type==ID_STRING){
-        	v = newVal(0, 0,0,0, BYTE, databuf);
-			V_STRING(v)=strdup(databuf);
+       v = newVal(org, size[0], size[1], size[2], type, databuf);
+       V_NAME(v) = strdup(name);
+	  }	
+
+	  else {
+		 v=newVar();
+		 if (Lines==1)
 			V_TYPE(v)=ID_STRING;
-        	V_NAME(v) = strdup(name);
+		 else {
+		 	V_TYPE(v)=ID_TEXT;
+		 	V_TEXT(v).Row=Lines;
+	 	 	V_TEXT(v).text=(unsigned char **)calloc(Lines,sizeof(char *));
 		 }
-       else {
-        	v = newVal(org, size[0], size[1], size[2], type, databuf);
-        	V_NAME(v) = strdup(name);
+
+		 for (i=0;i<Lines;i++){
+			dataspace = H5Dget_space(dataset);
+			H5Sget_simple_extent_dims(dataspace, datasize, maxsize);
+			for (i = 0 ; i < 3 ; i++) {
+             size[i] = datasize[i];
+       	}
+       	dsize = H5Sget_simple_extent_npoints(dataspace);
+       	databuf = (unsigned char *)calloc(dsize, sizeof(char));
+       	H5Dread(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, databuf);
+		 	H5Sclose(dataspace);
+			if (Lines==1)
+				V_STRING(v)=databuf;
+			else
+				V_TEXT(v).text[i]=databuf;
 		 }
+		 H5Sclose(dataspace);
+       H5Dclose(dataset);
+       V_NAME(v) = strdup(name);
+	  }
+
 
 
     }

@@ -10,17 +10,43 @@ ff_atoi(vfuncptr func, Var *arg)
 	int i;
 	Var *v,*s;
 
-	if ((v = verify_single_string(func, arg)) == NULL) return(NULL);
-
-	i = (int)strtod(V_STRING(v), NULL);
+	if (arg->next != NULL) {
+        parse_error("Too many arguments to function: %s()", func->name);
+        return (NULL);
+   }
+   if ((v = eval(arg)) == NULL) {
+        parse_error("Variable not found: %s", V_NAME(arg));
+        return (NULL);
+   }
+   if (V_TYPE(v) != ID_STRING || V_TYPE(v)!=ID_TEXT ){
+		parse_error("Invalid object type");
+		return(NULL);
+	}
 
 	s = newVar();
+
+	if (V_TYPE(v) == ID_STRING){
+		i = (int)strtod(V_STRING(v), NULL);
+		V_SIZE(s)[0] = V_SIZE(s)[1] = V_SIZE(s)[2] = V_DSIZE(s) = 1;
+		V_INT(s) = i;
+	}
+
+	else {
+		int l;
+		int *data = (int *)calloc(V_TEXT(v).Row, sizeof(int));
+		for (l=0;l<V_TEXT(v).Row;l++){
+			data[l]=strtod(V_TEXT(v).text[l],NULL);
+		}
+		V_SIZE(s)[0] = V_SIZE(s)[2] = 1;
+		V_SIZE(s)[1] = l;
+		V_DSIZE(s) = l;
+		V_DATA(v)=(void *)data;
+	}
+			
+
 	V_TYPE(s) = ID_VAL;
-	V_DATA(s) = calloc(1, sizeof(int));
-	V_INT(s) = i;
 	V_ORG(s) = BSQ;
 	V_FORMAT(s) = INT;
-	V_SIZE(s)[0] = V_SIZE(s)[1] = V_SIZE(s)[2] = V_DSIZE(s) = 1;
 
 	return(s);
 }
@@ -31,17 +57,43 @@ ff_atof(vfuncptr func, Var *arg)
 	Var *v, *s;
 	float f;
 
-	if ((v = verify_single_string(func, arg)) == NULL) return(NULL);
-
-	f = (float)strtod(V_STRING(v), NULL);
+	if (arg->next != NULL) {
+        parse_error("Too many arguments to function: %s()", func->name);
+        return (NULL);
+   }
+   if ((v = eval(arg)) == NULL) {
+        parse_error("Variable not found: %s", V_NAME(arg));
+        return (NULL);
+   }
+   if (V_TYPE(v) != ID_STRING || V_TYPE(v)!=ID_TEXT ){
+		parse_error("Invalid object type");
+		return(NULL);
+	}
 
 	s = newVar();
+
+	if (V_TYPE(v) == ID_STRING){
+		f = (float)strtod(V_STRING(v), NULL);
+		V_SIZE(s)[0] = V_SIZE(s)[1] = V_SIZE(s)[2] = V_DSIZE(s) = 1;
+		V_FLOAT(s) = f;
+	}
+
+	else {
+		int l;
+		float *data = (float *)calloc(V_TEXT(v).Row, sizeof(float));
+		for (l=0;l<V_TEXT(v).Row;l++){
+			data[l]=strtod(V_TEXT(v).text[l],NULL);
+		}
+		V_SIZE(s)[0] = V_SIZE(s)[2] = 1;
+		V_SIZE(s)[1] = l;
+		V_DSIZE(s) = l;
+		V_DATA(v)=(void *)data;
+	}
+			
+
 	V_TYPE(s) = ID_VAL;
-	V_DATA(s) = calloc(1, sizeof(float));
-	V_FLOAT(s) = f;
 	V_ORG(s) = BSQ;
 	V_FORMAT(s) = FLOAT;
-	V_SIZE(s)[0] = V_SIZE(s)[1] = V_SIZE(s)[2] = V_DSIZE(s) = 1;
 
 	return(s);
 }

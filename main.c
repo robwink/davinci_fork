@@ -68,21 +68,46 @@ void event_loop(void);
 #ifndef __MSDOS__
 void rl_callback_read_char();
 void rl_callback_handler_install(char *, void (char *));
+jmp_buf env;
 #endif
 
 void
 sighandler(int data)
 {
-    extern jmp_buf env;
+/*    extern jmp_buf env;*/
     Scope *scope;
+    char cmd[256];
+    char *path = getenv("TMPDIR");
 
-    while ((scope = scope_tos()) != global_scope()) {
-        dd_unput_argv(scope);
-        clean_scope(scope_pop());
-    }
 
-    signal(SIGINT, sighandler);
-    longjmp(env, 1);
+
+	switch (data) {
+
+	case (SIGSEGV):
+    	sprintf(cmd, "rm -rf %s &", path);
+    	system(cmd);
+		signal(SIGSEGV,SIG_DFL);
+		break;
+
+	case (SIGBUS):
+    	sprintf(cmd, "rm -rf %s &", path);
+    	system(cmd);
+		signal(SIGBUS,SIG_DFL);
+		break;
+
+	case (SIGINT):
+
+	    while ((scope = scope_tos()) != global_scope()) {
+   	     dd_unput_argv(scope);
+      	  clean_scope(scope_pop());
+    	}
+
+    	signal(SIGINT, sighandler);
+    	longjmp(env, 1);
+
+		break;
+
+	}
 }
 
 char *__progname = "davinci";
@@ -103,8 +128,12 @@ main(int ac, char **av)
     s = new_scope();
 
 #ifndef __MSDOS__
-    signal(SIGPIPE, SIG_IGN);
-    /* signal(SIGINT, sighandler); */
+    /*signal(SIGPIPE, SIG_IGN);*/
+    signal(SIGINT, sighandler); 
+	 signal(SIGSEGV, sighandler);
+	 signal(SIGBUS, sighandler);
+
+
 #endif
 
     scope_push(s);
@@ -227,13 +256,13 @@ extern Init_DLL(void);
         {  
                 char tmpbuf[128];  
                 _strtime( tmpbuf );  
-                sprintf(path, "c:\\windows\\temp\\dv_%s",tmpbuf);  
+                sprintf(path, "TMPDIR=c:\\windows\\temp\\dv_%s",tmpbuf);  
 				mkdir(path + 7, 0777);
 				putenv(path);
         }  
 #else
 	if ((p = getenv("TMPDIR")) == NULL) {
-		sprintf(path, "TMPDIR=%s/dv_%d", P_tmpdir, getpid());
+		sprintf(path, "TMPDIR=%sdv_%d", P_tmpdir, getpid());
 
 		mkdir(path + 7, 0777);
 		putenv(path);
@@ -258,8 +287,9 @@ void get_file_input(XtPointer client_data, int *fid, XtInputId *id)
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#ifndef __MSDOS__
 extern SetTopLevel(Widget *);
+#endif
 
 #ifdef __cplusplus
 }
@@ -339,6 +369,9 @@ while (1) {
     pp_count = 0;
 
     parse_buffer(buf);
+
+	 setjmp(env);
+
 
     if (indent) {
         sprintf(prompt, "%2d> ", indent);

@@ -1,19 +1,11 @@
 #include "parser.h"
 
-#include <sys/types.h>
-#include <time.h>
-
 
 
 #define XAXIS	1
 #define YAXIS	2
 #define ZAXIS	4
 
-
-int Benchmark(void)
-{
-	return ((int)(time(NULL)));
-}
 
 Var *
 ff_avg(vfuncptr func, Var * arg)
@@ -281,7 +273,6 @@ ff_convolve(vfuncptr func, Var * arg)
 		return(NULL);
 	}
 
-//	start=Benchmark();
 
 	for (i = 0 ; i < dsize ; i++) {
 		xpos(i, obj,&x, &y, &z);		/* compute current x,y,z */
@@ -402,7 +393,6 @@ ff_convolve3(vfuncptr func, Var * arg)
 
 
 
-	start=Benchmark();
 
 
 	/*****
@@ -605,8 +595,6 @@ ff_convolve3(vfuncptr func, Var * arg)
         Init_Cache=1;
       }
     }
-	stop=Benchmark();
-	fprintf(stderr,"Delta Time:%d\n",(stop-start));
     return(newVal(V_ORG(obj), 
 	V_SIZE(obj)[0],
 	V_SIZE(obj)[1],

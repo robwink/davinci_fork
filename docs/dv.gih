@@ -1203,8 +1203,9 @@
 		ptext()	-	Flexible labeling tool
 		pbox()	-	Set up limits and plot box with tick marks
 		pline()	-	Draw a set of connected line segments
+		pzoom()	-	Zoom in on a graph
 
-?functions popen
+?functions popen()
 popen
  popen() - Define, initialize and open a window for plotting
 
@@ -1219,7 +1220,7 @@ popen
 	portrait is a flag which define the graph as landscape (portrait=0, default) or
 		as portrait (portrait=1)
 
-?functions pplot
+?functions pplot()
 pplot
  pplot() - Plot a data cube along specified axis
 
@@ -1242,7 +1243,7 @@ pplot
 	  xhigh,xlow,yhigh and ylow can either be set by the user or automatically calculated
 		   if no value is given.
 	  	   
-?functions pprint
+?functions pprint()
 pprint
  pprint() - Print a current plot
 
@@ -1256,7 +1257,7 @@ pprint
 		psc - color postscript file
 		pbm - 640x480 graphics file (size is fixed)
 
-?functions ptext
+?functions ptext()
 ptext
  ptext() - Flexible labeling tool
 
@@ -1274,7 +1275,7 @@ ptext
 	kolor:  integer value from 0 to 15 (0 is background color), set color of ploted text
 	world:  flag, if set to 1, x & y need to be in world coord. else normalized (default)
 
-?functions pbox
+?functions pbox()
 pbox
  pbox() - Set up plot box with tick marks
 
@@ -1290,7 +1291,7 @@ pbox
 	m:   if non-zero uses micron labeling for x-axis
     	color : integer value between 0 and 15 (0 is background color)
 
-?functions pline
+?functions pline()
 pline
  pline() - Draw a set of connected line segments
 
@@ -1307,6 +1308,25 @@ pline
 		x & y must have the SAME number of points!
 
  	color: integer between 0 and 15 (0 is the background color).
+
+?functions pzoom()
+pzoom
+ pzoom() - Zoom in on a graph
+
+ pzoom(x_lo=INT,x_hi=INT,y_lo=INT,y_hi=INT,Xv=VAL,Yv=VAL,reset=1)
+
+	x_lo: new lower boundry for X-axis
+	x_hi: new upper boundry for X-axis
+	y_lo: new lower boundry for Y-axis
+	y_hi: new upper boundry for Y-axis
+
+				or
+   Xv:Cube of dim(2,1,1); Xv[1,1,1]=x_lo; Xv[2,1,1]=x_hi
+   Yv:Cube of dim(2,1,1); Yv[1,1,1]=y_lo; Yv[2,1,1]=y_hi
+
+	reset=1 puts graph back original settings
+
+
 
 ?functions xrt3d
 xrt3d

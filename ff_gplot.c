@@ -1,7 +1,9 @@
 #include "parser.h"
 
 FILE *gplot_pfp=NULL;
+#ifdef HAVE_LIBX11
 extern FILE *pfp;
+#endif
 float g_xlow;
 float g_xhigh;
 float g_ylow;
@@ -12,6 +14,7 @@ float g_yhigh;
 Var *
 ff_gplot(vfuncptr func, Var *arg)
 {
+#ifdef HAVE_LIBX11
     Var *xlow=NULL, *xhigh=NULL, *ylow=NULL, *yhigh=NULL;
     Var *object, *e;
     int i;
@@ -88,13 +91,14 @@ ff_gplot(vfuncptr func, Var *arg)
     fflush(gplot_pfp);
 
     free(fname);
-
+#endif
     return(NULL);
 }
 
 Var *
 ff_plot(vfuncptr func, Var *arg)
 {
+#ifdef HAVE_LIBX11
     Var *s,*v;
     FILE *fp;
     char *fname;
@@ -159,12 +163,14 @@ ff_plot(vfuncptr func, Var *arg)
         }
     }
     send_to_plot(buf);
+#endif
     return(NULL);
 }
 
 Var *
 ff_splot(vfuncptr func, Var *arg)
 {
+#ifdef HAVE_LIBX11
     Var *s,*v;
     FILE *fp;
     char *fname;
@@ -221,12 +227,14 @@ ff_splot(vfuncptr func, Var *arg)
         }
     }
     send_to_plot(buf);
+#endif
     return(NULL);
 }
 
 int
 send_to_plot(char *s)
 {
+#ifdef HAVE_LIBX11
     if (pfp == NULL) {
         if ((pfp = popen("gplot", "w")) == NULL) {
             fprintf(stderr, "Unable to open gplot.\n");
@@ -240,5 +248,6 @@ send_to_plot(char *s)
         send_to_plot(s);
     }
     write(fileno(pfp), "\n", 1);
+#endif
     return(1);
 }

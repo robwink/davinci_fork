@@ -1,9 +1,7 @@
 #include "parser.h"
+#include "config.h"
 
 
-#ifdef __MSDOS__
-extern Swap_Big_and_Little(Var *);
-#endif
 
 #ifdef HAVE_LIBMAGICK
 int ValidGfx(char *type,char *GFX_type)
@@ -50,6 +48,10 @@ int ValidGfx(char *type,char *GFX_type)
 Var *
 ff_write(vfuncptr func, Var *arg)
 {
+#ifdef __MSDOS__
+extern Swap_Big_and_Little(Var *);
+#endif
+
     Var *v, *e, *ob;
     char *filename;
     char *title;
@@ -180,7 +182,7 @@ ff_write(vfuncptr func, Var *arg)
     else if (!strcasecmp(type, "hdf"))    WriteHDF5(-1, filename, ob);
 #ifdef HAVE_LIBMAGICK
 #ifdef LITTLE_E
-    else if (ValidGfx(type,GFX_type))     {WriteGFX_Image(Swap_Big_And_Little(ob),filename,GFX_type); return(NULL);}
+    else if (ValidGfx(type,GFX_type))     {WriteGFX_Image(Swap_Big_and_Little(ob),filename,GFX_type); return(NULL);}
 #endif
 #ifndef LITTLE_E
     else if (ValidGfx(type,GFX_type))     {WriteGFX_Image(ob,filename,GFX_type);}
