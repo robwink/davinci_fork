@@ -95,23 +95,23 @@ setItems(const Widget widget, const String resourceName, const Var *value)
 {
 
   FreeStackListEntry	localFreeStack;
-  Narray		*stringList;
+  Darray		*stringList;
   int			stringCount;
   XtArgVal		itemTable;
   String		countResourceName;
 
   localFreeStack.head = localFreeStack.tail = NULL;
 
-  stringList = gui_extractStringList(value);
+  stringList = gui_extractDarray(value);
 
   if (stringList == NULL) {
     parse_error("Warning: keeping old item list setting.");
   }
   else {
-    stringCount = Narray_count(stringList);
+    stringCount = Darray_count(stringList);
     if (stringCount == -1) {
       /* Should never happen. */
-      parse_error("Internal error: Narray_count == -1 in setItems().");
+      parse_error("Internal error: Darray_count == -1 in setItems().");
     }
     else {
       if (stringCount > 0) {

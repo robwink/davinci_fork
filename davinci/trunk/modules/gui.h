@@ -202,8 +202,8 @@ Var *	 gui_getXmStringTableFree(const Widget, const String, const String);
 Var *	 gui_getXmStringTableCount(const Widget, const String, const int, const int);
 XtArgVal gui_setXmStringTable(const Widget, const String, const String,
 			      const Var *, FreeStackList);
-XtArgVal gui_setXmStringTableFromNarray(const Widget, const String,
-					const String, const Narray *,
+XtArgVal gui_setXmStringTableFromDarray(const Widget, const String,
+					const String, const Darray *,
 					FreeStackList);
 Var *	 gui_getTextPosition(const Widget, const String, const String);
 XtArgVal gui_setTextPosition(const Widget, const String, const String,
@@ -218,7 +218,8 @@ XtArgVal gui_setReadOnly(const Widget, const String, const String,
 /* FIX: this function is heinous, maybe return a struct. */
 void	gui_setResourceValues(Widget, WidgetClass, Var *, Arg *,
 			      Cardinal *, FreeStackList, Narray *);
-Narray *gui_extractStringList(const Var *);
+Darray *gui_extractDarray(const Var *);
+Narray *gui_extractNarray(const Var *);
 void	gui_freeStackPush(FreeStackList, void *);
 void	gui_freeStackFree(FreeStackList);
 void	gui_addEvent(Widget, String);
