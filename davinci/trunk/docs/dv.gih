@@ -293,6 +293,10 @@
         GOES weather satellite
         AVIRIS
 
+	Additionally, if davinci has been compiled with the ImageMagick
+	library, a large number of additional formats can be read and written.
+	See the help entry for libmagic to get a list of these.
+
     If the specified path is not absolute (ie: it doesn't start with a '/'),
     and the specified file cannot be found in the current directory, the
     DATAPATH variable is used as a list of directories to additionally search.
@@ -917,11 +921,14 @@
 ?avg()
  avg() - Compute average along specified axis
 
- avg(object=VAL, axis=[x][y][z])
+ avg(object=VAL, axis=[x][y][z], [both=BOOL])
 
  The avg() function computes the statistical average along one or
  more axis.  If no axis is specified, then the average is computed
  along all three.  avg() always returns a FLOAT.
+
+ If the both flag is set (both=1), then avg returns a structure
+ containing the both the avg and stddev.
 
  Example:
 
@@ -939,6 +946,9 @@
  The stddev() function computes the standard deviation along one or
  more axis.  If no axis is specified, then the standard deviation 
  is computed along all three.  stddev() returns a FLOAT.
+
+ If the both flag is set (both=1), then avg returns a structure
+ containing the both the avg and stddev.
 
  Example:
 
@@ -1071,7 +1081,26 @@
 
  histogram() - Generate a histogram
 
- histogram(object=VAL, compress=BOOL, normalize=BOOL);
+ histogram(object=VAL, 
+           [start=FLOAT], [size=FLOAT], [steps=INT],
+		   [compress=BOOL], [normalize=BOOL], [cumulative=BOOL]);
+
+ The histogram function sorts its input data into some number of bins, and
+ produces a 2xN array of FLOATs as output.  The first column of the output
+ contains the start value of each bin, and the second column contains the
+ number of input values that fell in that bin.
+
+ If the input object is in BYTE or SHORT format, the histogram will be
+ auto-scaled to the 2^8 or 2^16 bins and each bin will have a width of 1.
+ Otherwise, the user MUST provide at least the number of bins (steps)
+ to be included in the histogram.
+
+ If the start and size values aren't given, they are computed from the
+ the minimum and maximum values of the input data.
+
+ The compress options removes all bins with a value of 0.
+ The normalize option divides each bin by the total number of elements.
+ The cumulative option produces a cumulative histogram.
 
 ?functions basis()
 ?basis()
@@ -1761,3 +1790,46 @@ Davinci supports the following matrix functions:
 	
 	dv> a = load_vanilla("/tmp/foo")
 
+?extras libmagic
+?libmagic
+
+ The libmagic library has options to support reading and writing the
+ following file formats:
+
+    AVS   AVS X image file.
+    BMP   Microsoft Windows bitmap image file.
+    CMYK  Raw cyan, magenta, yellow, and black bytes.
+    GIF   CompuServe graphics interchange format; 8-bit color.
+    HISTOGRAM
+    JBIG  Joint Bi-level Image experts Group file interchange format.
+    JPEG  Joint Photographic Experts Group JFIF format; compressed 24-bit color
+.
+    MAP   colormap intensities and indices.
+    MATTE Raw matte bytes.
+    MIFF  Magick image file format.
+    MPEG  Motion Picture Experts Group file interchange format.
+    MTV   MTV Raytracing image format
+    PCD   Photo CD.
+    PCX   ZSoft IBM PC Paintbrush file.
+    PICT  Apple Macintosh QuickDraw/PICT file.
+    PLASMA plasma fractal image.
+    PNG   Portable Network Graphics.
+    PNM   Portable anymap.
+    PPM   Portable pixmap format (color).
+    PS    Adobe PostScript file.
+    PS2   Adobe Level II PostScript file.
+    RAD   Radiance image file.
+    RGB   Raw red, green, and blue bytes.
+    RGBA  Raw red, green, blue, and matte bytes.
+    RLE   Utah Run length encoded image file; read only.
+    SGI   Irix RGB image file.
+    SUN   SUN Rasterfile.
+    TGA   Truevision Targa image file.
+    TIFF  Tagged Image File Format.
+    TILE  tile image with a texture.
+    VID   Visual Image Directory.
+    VIFF  Khoros Visualization image file.
+    XC    constant image of X server color.
+    XPM   X Windows system pixmap file (color).
+    XWD   X Windows system window dump file (color).
+    YUV   CCIR 601 4:1:1 file.

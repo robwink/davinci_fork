@@ -24,64 +24,30 @@
  **             This only works with integer images.
  **/
 
+
 Var *
 ff_cluster(vfuncptr func, Var * arg)
 {
-    int radius;
-    int threshold;
-    Var *v, *e, *obj;
+    int radius=1;
+    int threshold = 1;
+    Var *obj = NULL;
     int i, j, a, b, x, y, z;
     u_char *data;
 
-    struct keywords kw[] =
-    {
-        {"object", NULL},
-        {"radius", NULL},
-        {"threshold", NULL},
-        {NULL, NULL}
-    };
-    if (evaluate_keywords(func, arg, kw)) {
-        return (NULL);
-    }
-    if ((v = get_kw("object", kw)) == NULL) {
-        parse_error("No target object specified");
-        return (NULL);
-    }
-    if ((e = eval(v)) != NULL) {
-        v = e;
-    }
-    if (V_TYPE(v) != ID_VAL || GetBands(V_SIZE(v), V_ORG(v)) != 1) {
-        sprintf(error_buf, "%s: Object must be an image of depth 1", func->name);
-        parse_error(error_buf);
-        return (NULL);
-    }
-    obj = v;
+	int ac;
+	Var **av;
+	Alist alist[4];
+	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
+	alist[1] = make_alist( "radius",    INT,    NULL,     &radius);
+	alist[2] = make_alist( "threshold", INT,    NULL,     &threshold);
+	alist[3].name = NULL;
 
-    if ((v = get_kw("radius", kw)) == NULL) {
-        radius = 1;
-    } else {
-        if ((e = eval(v)) != NULL) {
-            v = e;
-        }
-        if (V_TYPE(v) != ID_VAL || V_DSIZE(v) != 1 || V_FORMAT(v) != INT) {
-            sprintf(error_buf, "%s(): radius must be an integer", func->name);
-            parse_error(error_buf);
-        }
-        radius = extract_int(v, 0);
-    }
+	make_args(&ac, &av, func, arg);
+	if (parse_args(ac, av, alist)) return(NULL);
 
-
-    if ((v = get_kw("threshold", kw)) == NULL) {
-        threshold = 1;
-    } else {
-        if ((e = eval(v)) != NULL) {
-            v = e;
-        }
-        if (V_TYPE(v) != ID_VAL || V_DSIZE(v) != 1 || V_FORMAT(v) != INT) {
-            sprintf(error_buf, "%s(): illegal value for threshold", func->name);
-            parse_error(error_buf);
-        }
-        threshold = extract_int(v, 0);
+	if (obj == NULL || GetBands(V_SIZE(obj), V_ORG(obj)) != 1) {
+        parse_error("%s: Object must be an image of depth 1", func->name);
+        return (NULL);
     }
 
     x = GetSamples(V_SIZE(obj), V_ORG(obj));
@@ -102,84 +68,32 @@ ff_cluster(vfuncptr func, Var * arg)
             }
         }
     }
-
-    /** 
-     ** Put together return value
-     **/
-
-    v = newVar();
-    V_TYPE(v) = ID_VAL;
-    V_DATA(v) = data;
-    V_ORG(v) = V_ORG(obj);
-    V_DSIZE(v) = V_DSIZE(obj);
-    V_SIZE(v)[0] = V_SIZE(obj)[0];
-    V_SIZE(v)[1] = V_SIZE(obj)[1];
-    V_SIZE(v)[2] = V_SIZE(obj)[2];
-    V_FORMAT(v) = BYTE;
-
-    return (v);
+	return(newVal(V_ORG(obj), x, y, 1, BYTE, data));
 }
 
 
 Var *
 ff_ccount(vfuncptr func, Var * arg)
 {
-
     Var *v, *e, *obj;
-    int threshold, ignore, i, dsize;
+    int threshold = 2, ignore = 1, i, dsize;
     int top = 0, bottom = 0, value = 0;
 
-    struct keywords kw[] =
-    {
-        {"object", NULL},
-        {"threshold", NULL},
-        {"ignore", NULL},
-        {NULL, NULL}
-    };
+	int ac;
+	Var **av;
+	Alist alist[4];
+	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
+	alist[1] = make_alist( "threshold", INT,    NULL,    &threshold);
+	alist[2] = make_alist( "ignore",    INT,    NULL,     &ignore);
+	alist[3].name = NULL;
 
-    if (evaluate_keywords(func, arg, kw)) {
+	make_args(&ac, &av, func, arg);
+	if (parse_args(ac, av, alist)) return(NULL);
+
+    if (obj == NULL || GetBands(V_SIZE(v), V_ORG(v)) != 1) {
+        parse_error("%s: Object must be an image of depth 1", func->name);
         return (NULL);
     }
-    if ((v = get_kw("object", kw)) == NULL) {
-        parse_error("No target object specified");
-        return (NULL);
-    }
-    if ((e = eval(v)) != NULL) {
-        v = e;
-    }
-    if (V_TYPE(v) != ID_VAL || GetBands(V_SIZE(v), V_ORG(v)) != 1) {
-        sprintf(error_buf, "%s: Object must be an image of depth 1", func->name);
-        parse_error(error_buf);
-        return (NULL);
-    }
-    obj = v;
-
-    if ((v = get_kw("threshold", kw)) == NULL) {
-        threshold = 2;
-    } else {
-        if ((e = eval(v)) != NULL) {
-            v = e;
-        }
-        if (V_TYPE(v) != ID_VAL || V_DSIZE(v) != 1 || V_FORMAT(v) != INT) {
-            sprintf(error_buf, "%s(): threshold must be an integer", func->name);
-            parse_error(error_buf);
-        }
-        threshold = extract_int(v, 0);
-    }
-
-    if ((v = get_kw("ignore", kw)) == NULL) {
-        ignore = 1;
-    } else {
-        if ((e = eval(v)) != NULL) {
-            v = e;
-        }
-        if (V_TYPE(v) != ID_VAL || V_DSIZE(v) != 1 || V_FORMAT(v) != INT) {
-            sprintf(error_buf, "%s(): ignore must be an integer", func->name);
-            parse_error(error_buf);
-        }
-        ignore = extract_int(v, 0);
-    }
-
 
     dsize = V_DSIZE(obj);
 
@@ -191,13 +105,7 @@ ff_ccount(vfuncptr func, Var * arg)
             top++;
     }
 
-    v = newVar();
-    V_TYPE(v) = ID_VAL;
-    V_DATA(v) = calloc(3, sizeof(float));
-    V_DSIZE(v) = V_SIZE(v)[0] = 3;
-    V_SIZE(v)[1] = V_SIZE(v)[2] = 1;
-    V_ORG(v) = BSQ;
-    V_FORMAT(v) = FLOAT;
+	newVal(BSQ, 3, 1, 1, FLOAT, calloc(3, sizeof(float)));
 
     if (bottom == 0) {
         ((float *) V_DATA(v))[0] = (float) 0.0;
