@@ -2893,10 +2893,10 @@ if test "$libreadline_found" = "no"; then
 	echo $ac_n "checking whether to build local libreadline""... $ac_c" 1>&6
 echo "configure:2895: checking whether to build local libreadline" >&5
 
-		if test -d readline-4.3; then
+		if test -d readline; then
 		echo "$ac_t""yes" 1>&6
-		CFLAGS="$CFLAGS -I. -Ireadline-4.3" LDFLAGS="$LDFLAGS -Lreadline-4.3"
-		READLINE_LIB="-lreadline" READLINE_OBJ="readline-4.3/libreadline.a"
+		CFLAGS="$CFLAGS -I. -Ireadline" LDFLAGS="$LDFLAGS -Lreadline"
+		READLINE_LIB="-lreadline" READLINE_OBJ="readline/libreadline.a"
 		cat >> confdefs.h <<\EOF
 #define HAVE_LIBREADLINE 1
 EOF
@@ -4363,7 +4363,7 @@ CFLAGS="$CFLAGS $STATIC_CFLAGS"
 
 
 
-subdirs="iomedley readline-4.3"
+subdirs="iomedley readline"
 
 
 trap '' 1 2 15
@@ -4796,7 +4796,7 @@ if test "$no_recursion" != yes; then
     esac
   done
 
-  for ac_config_dir in iomedley readline-4.3; do
+  for ac_config_dir in iomedley readline; do
 
     # Do not complain, so a configure script can configure whichever
     # parts of a large source tree are present.
