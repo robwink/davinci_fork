@@ -19,9 +19,7 @@ if LOCAL_READLINE
   MY_READLINE_LDADD = readline/libreadline.a
 endif
 
-if LOCAL_IOMEDLEY
-  MY_IOMEDLEY_LDADD = iomedley/libiomedley.a
-endif
+MY_IOMEDLEY_LDADD =-Liomedley -liomedley
 
 SUBDIRS = @MY_SUBDIRS@ libltdl
 

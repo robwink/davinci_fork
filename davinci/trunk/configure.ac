@@ -181,17 +181,11 @@ AM_CONDITIONAL(LOCAL_READLINE, test "x$local_readline" = "xyes")
 dnl Configure iomedley.
 
 if test "x$enable_iomedley" != "xno"; then
-	AC_MSG_CHECKING(if local libiomedley present)
-	if test -x iomedley/configure; then
-		AC_MSG_RESULT(yes)
-		CFLAGS="$CFLAGS -I\$(top_srcdir)/iomedley"
-		AC_DEFINE(HAVE_LIBIOMEDLEY, 1, [iomedley library is present])
-		AC_CONFIG_SUBDIRS(iomedley)
-		MY_SUBDIRS="$MY_SUBDIRS iomedley"
-		local_iomedley=yes
-	else
-		AC_MSG_RESULT(no)
-	fi
+	CFLAGS="$CFLAGS -I\$(top_srcdir)/iomedley"
+	AC_DEFINE(HAVE_LIBIOMEDLEY, 1, [iomedley library is present])
+	AC_CONFIG_SUBDIRS(iomedley)
+	MY_SUBDIRS="$MY_SUBDIRS iomedley"
+	local_iomedley=yes
 fi
 AM_CONDITIONAL(LOCAL_IOMEDLEY, test x$local_iomedley = xyes)
 
