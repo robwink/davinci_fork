@@ -2089,6 +2089,21 @@ Davinci supports the following matrix functions:
 
  The remove_struct() function deletes an element from a structure.  The
  deleted element is returned.
+
+?functions insert_struct()
+?insert_struct()
+ insert_struct() - Insert an element in a structure at a given point
+
+ insert_struct(object=STRUCT, name=STRING, value=VAL, [before=STRING|INT])
+ insert_struct(object=STRUCT, name=STRING, value=VAL, [after=STRING|INT])
+
+ The insert_struct() function adds an element to a structure at a specfied
+ location.  The location can be specified as being either before or after
+ another named element, or an index position.
+
+ The name and value fields are optional.  Values inserted with no name
+ simply have no name (they can only be accessed by position), and 
+ names inserted with no value are given a value of zero.
  
 ?functions load_raw()
 ?load_raw()
@@ -2110,6 +2125,8 @@ Davinci supports the following matrix functions:
 
 ?structures
 
-  You can add structures:
+  You can create anonymous structure (with no name) using { name=value }.
+  You can add structures: { one=1 } + { two=2 }
 
-	{ one=1 } + { two=2 }
+ See also:
+ 	add_struct(), get_struct(), remove_struct(), insert_struct(), length()

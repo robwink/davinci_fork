@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.98a";
+char *version = "@(#) daVinci Version #0.98b";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,9 @@ char *version = "@(#) daVinci Version #0.98a";
 #include "build.h"
 
 /*
+Version 0.98b: Tue Jun 25 00:16:58 MST 2002
+	+ Added insert_struct, and add_struct is now just an alias
+
 Version 0.98a: Tue Jun 25 00:16:58 MST 2002
 	+ Added left and right shifting
 	* think I fixed the (arg=NULL) problem with function calls

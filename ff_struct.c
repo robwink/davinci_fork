@@ -91,20 +91,32 @@ add_struct(Var *s, char *name, Var *exp)
 }
 
 
+/*
+** add_struct()
+**
+**    (name=), append zero value with 'name' to end
+**    (value=), append unnamed value to end
+**    (name=,value=), append value as name
+*/
+
 
 Var *
-ff_add_struct(vfuncptr func, Var * arg)
+ff_insert_struct(vfuncptr func, Var * arg)
 {
     Var *a = NULL, b, *v = NULL, *e;
     char *name = NULL;
+	Var *before = NULL, *after = NULL;
+	int pos;
 
     int ac;
     Var **av;
-    Alist alist[4];
+    Alist alist[6];
     alist[0] = make_alist( "object",    ID_STRUCT,    NULL,     &a);
     alist[1] = make_alist( "name",      ID_STRING,     NULL,     &name);
     alist[2] = make_alist( "value",     ID_UNK,     NULL,     &v);
-    alist[3].name = NULL;
+    alist[3] = make_alist( "before",    ID_UNK,     NULL,     &before);
+    alist[4] = make_alist( "after",     ID_UNK,     NULL,     &after);
+    alist[5].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -112,21 +124,18 @@ ff_add_struct(vfuncptr func, Var * arg)
         parse_error("Object is null");
         return(NULL);
     }
+
+	if (before && after) {
+		parse_error("Only one of before= or after= can be specified");
+		return(NULL);
+	}
 	
 	/*
 	** If the user doesn't pass a name, then try to take the name from the
 	** incoming variable.
 	*/
-    if (name == NULL && (v == NULL || (v != NULL && V_NAME(v) == NULL))) {
-        parse_error("name is null");
-        return(NULL);
-    }
-
-    V_TYPE(&b) = ID_UNK;
-    if (name != NULL) {
-        V_NAME(&b) = name;
-    }  else if (v != NULL && V_NAME(v) != NULL) {
-        V_NAME(&b) = (V_NAME(v) ? strdup(V_NAME(v)) : 0);
+    if (name == NULL) {
+		if (v != NULL) name = V_NAME(v);
     }
 
     if (v == NULL) {
@@ -134,13 +143,91 @@ ff_add_struct(vfuncptr func, Var * arg)
     } else {
         e = eval(v);
         if (e == NULL) {
-            parse_error("Unable to find variable: %sn", V_NAME(v));
+            parse_error("Unable to find variable: %s", V_NAME(v));
             return(NULL);
         }
         v = e;
     }
 
-    return(pp_set_struct(a, &b, v));
+    if (V_NAME(v) != NULL || mem_claim(v) == NULL) {
+        /**
+         ** if we can't claim the memory, we can't use it.
+         **/
+        v = V_DUP(v);
+    }
+
+	if (name != NULL && find_struct(a, name, NULL) != -1) {
+		parse_error("Structure already contains element: %s", name);
+		return(NULL);
+	}
+
+	if (before != NULL) {
+		pos = struct_pos(a, before);
+		if (pos >= 0) {
+			insert_struct(a, pos, name, v);
+		} else {
+			parse_error("bad position");
+			return(NULL);
+		}
+	} else if (after) {
+		pos = struct_pos(a, after);
+		if (pos >= 0) {
+			insert_struct(a, pos+1, name, v);
+		} else {
+			parse_error("bad position");
+			return(NULL);
+		}
+	} else {
+		add_struct(a, name, v);
+	}
+
+    return(v);
+}
+
+/*
+** Evaluate a structure 'position'.  Returns (int) index into struct
+** This can be a named element, or it can be a numeric value.
+** Numbers come from the user and are 1 based
+*/
+
+int
+struct_pos(Var *a, Var *v)
+{
+	int pos = -1;
+	Var *e;
+	char *name;
+
+	if (V_TYPE(v) == ID_STRING) {
+		name = V_STRING(v);
+		pos = find_struct(a, V_STRING(v), NULL);
+		if (pos == -1) {
+			parse_error("Structure does not contain element: %s", name);
+		}
+	} else {
+		/* The user passed a number, it is one based */
+		e = eval(v);
+		if (e == NULL) {
+            parse_error("Unable to find variable: %s", V_NAME(v));
+            return(NULL);
+		}
+		v = e;
+		if (V_TYPE(v) == ID_VAL) {
+			pos = extract_int(v, 0);
+			if (pos > 0 && pos <= get_struct_count(a)) {
+				return(pos-1);
+			} else {
+				return(-1);
+			}
+		} else {
+			parse_error("Not a value");
+		}
+	}
+	return(pos);
+}
+
+insert_struct(Var *a, int pos, char *name, Var *data)
+{
+	Narray_insert(V_STRUCT(a), name, data, pos);
 }
 
 Var *
@@ -287,6 +374,11 @@ create_struct(Var *v)
     return(s);
 }
 
+/*
+** Find the position (and data) of a named structure element.
+** Returns: >= 0 if found,
+**            -1 if not found
+*/
 int
 find_struct(Var *a, char *b, Var **data)
 {
@@ -307,10 +399,7 @@ find_struct(Var *a, char *b, Var **data)
         return(-1);
     }
 
-    if ((i = Narray_find(V_STRUCT(a), b, (void **)data)) != -1) {
-        return(i);
-    }
-    return(-1);
+    return(Narray_find(V_STRUCT(a), b, (void **)data));
 }
 
 free_struct(Var *v)
@@ -432,7 +521,7 @@ concatenate_struct(Var *a, Var *b)
 }
 
 /**************************************************************************
-* ff_extract_struct() - Removes an element from a structure and returns it.
+* ff_remove_struct() - Removes an element from a structure and returns it.
 ***************************************************************************/
 Var *
 ff_remove_struct(vfuncptr func, Var * arg)

@@ -104,15 +104,44 @@ Darray_create(int size)
 int 
 Darray_add(Darray *d, void *New)
 {
+	return(Darray_insert(d, New, -1));
+
     if (d == NULL) return(-1);
     
     if (d->count >= d->size) {
         d->size *= 2;
         d->data = (void **)realloc(d->data, d->size * sizeof(void *));
     }
-    d->data[d->count++] = New;
+	d->data[d->count++] = New;
 
     return(d->count-1);
+}
+
+/*
+** Insert an element in a Darray
+**
+** Returns the element's index on success,
+** -1 on error
+*/
+int 
+Darray_insert(Darray *d, void *New, int pos)
+{
+	int i;
+    if (d == NULL) return(-1);
+    
+    if (d->count >= d->size) {
+        d->size *= 2;
+        d->data = (void **)realloc(d->data, d->size * sizeof(void *));
+    }
+	if (pos == -1) pos = d->count;
+
+	for (i = d->count ; i > pos ; i--) {
+		d->data[i] = d->data[i-1];
+	}
+	d->data[pos] = New;
+	d->count++;
+
+    return(pos);
 }
 
 /*
@@ -267,6 +296,8 @@ Narray_add(Narray *a, char *key, void *data)
     char *r;
     Nnode *n;
 
+	return(Narray_insert(a, key, data, -1));
+
     if (a == NULL) return(-1);
     /*
     ** See if this key already exists
@@ -287,6 +318,53 @@ Narray_add(Narray *a, char *key, void *data)
     ** Add the node to the array, and update the index.
     */
     n->index = Darray_add(a->data, n);
+    return(n->index);
+}
+/*
+** Insert inan element in the array.
+**
+** If the key already exists, abort and return an error
+**
+** If name is null, element is still added, but can only
+** be accessed via index.
+**
+** Returns index (>= 0) on success
+**        -1 on failure
+*/
+int
+Narray_insert(Narray *a, char *key, void *data, int pos)
+{
+    char *r;
+    Nnode *n;
+	int i;
+
+    if (a == NULL) return(-1);
+    /*
+    ** See if this key already exists
+    */
+    n = Nnode_create(key, data);
+    
+    if (key) {
+        r = avl_insert(a->tree, n);
+        if (r != NULL) {
+            /*
+            ** Key already exists.  Abort.
+            */
+            Nnode_free(n, NULL);
+            return(-1);
+        }
+    }
+    /*
+    ** Add the node to the array, and update the indexes.
+    */
+    n->index = Darray_insert(a->data, n, pos);
+	pos = n->index;
+
+	for (i = pos+1 ; i < a->data->count; i++) {
+		n = (Nnode *)a->data->data[i];
+		n->index++;
+	}
+
     return(n->index);
 }
 
@@ -391,6 +469,7 @@ Narray_get(Narray *a, int i, char **key, void **data)
     }
     return(-1);
 }
+
 
 int 
 Narray_count(Narray *a)
