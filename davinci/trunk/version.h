@@ -1,11 +1,14 @@
-char *version = "@(#) daVinci Version #1.08";
+char *version = "@(#) daVinci Version #1.09";
 
 
 #include "build.h"
 
 /*
-Version 1.08: Wed Jan  8 16:10:46 MST 2003
-	+ Merged in OS/X changes
+Version 1.09: Wed Jan 22 15:55:44 MST 2003
+	+ Fixes (again) to gplot to allow GPLOT_CMD environment variable.
+
+Version 1.08: 
+	+ Updates to ff_raw, and some other minor changes
 
 Version 1.07: Tue Oct  8 16:54:47 MST 2002
 	+ Merged in OS/X changes
