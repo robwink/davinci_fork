@@ -1,5 +1,12 @@
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
 
+/* Define if on AIX 3.
+   System headers sometimes define this.
+   We just want to avoid a redefinition error message.  */
+#ifndef _ALL_SOURCE
+#undef _ALL_SOURCE
+#endif
+
 /* Define to empty if the keyword does not work.  */
 #undef const
 
@@ -21,6 +28,13 @@
 /* Define if your <sys/time.h> declares struct tm.  */
 #undef TM_IN_SYS_TIME
 
+/* Define if your processor stores words with the most significant
+   byte first (like Motorola and SPARC, unlike Intel and VAX).  */
+#undef WORDS_BIGENDIAN
+
+/* Define if the X Window System is missing or not being used.  */
+#undef X_DISPLAY_MISSING
+
 /*Define if you have module library*/
 #undef BUILD_MODULE_SUPPORT
 
@@ -41,6 +55,9 @@
 
 /*Define if you have xrt3d library*/
 #undef XRT_ENABLED
+
+/*Define if you have readline library */
+#undef HAVE_LIBREADLINE
 
 /* Define if you have the basename function.  */
 #undef HAVE_BASENAME
@@ -114,11 +131,11 @@
 /* Define if you have the <limits.h> header file.  */
 #undef HAVE_LIMITS_H
 
-/* Define if you have the <magick.h> header file.  */
-#undef HAVE_MAGICK_H
-
 /* Define if you have the <magick/api.h> header file.  */
 #undef HAVE_MAGICK_API_H
+
+/* Define if you have the <magick/magick.h> header file.  */
+#undef HAVE_MAGICK_MAGICK_H
 
 /* Define if you have the <malloc.h> header file.  */
 #undef HAVE_MALLOC_H
@@ -165,6 +182,9 @@
 /* Define if you have the Xt library (-lXt).  */
 #undef HAVE_LIBXT
 
+/* Define if you have the bz2 library (-lbz2).  */
+#undef HAVE_LIBBZ2
+
 /* Define if you have the curses library (-lcurses).  */
 #undef HAVE_LIBCURSES
 
@@ -180,8 +200,8 @@
 /* Define if you have the msss_vis library (-lmsss_vis).  */
 #undef HAVE_LIBMSSS_VIS
 
-/* Define if you have the readline library (-lreadline).  */
-#undef HAVE_LIBREADLINE
+/* Define if you have the png library (-lpng).  */
+#undef HAVE_LIBPNG
 
 /* Define if you have the termcap library (-ltermcap).  */
 #undef HAVE_LIBTERMCAP

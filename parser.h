@@ -10,7 +10,7 @@
 #include <limits.h>
 
 #if   defined(HAVE_CONFIG_H)
-#include "config.h"
+#include <config.h>
 #endif
 
 #ifndef _WIN32
@@ -286,6 +286,8 @@ struct _vfuncptr {
     void *fdata2;
 };
 
+#if 0
+/* See iomdeley iom_iheader instead. */
 struct _iheader {
     int dptr;			/* offset in bytes to first data value    */
     int prefix[3];		/* size of prefix data (bytes)            */
@@ -303,6 +305,7 @@ struct _iheader {
 
     float gain, offset;	/* data multiplier and additive offset    */
 };
+#endif /* 0 */
 
 /**
  ** This structure used by parse_args.

@@ -1,5 +1,5 @@
 #include "parser.h" 
-#include "io_specpr.h"
+#include "dvio_specpr.h"
 
 char *
 decode_time(int s,char *buf)
