@@ -15,9 +15,6 @@ pnm_mod_la_LDFLAGS = -module
 
 MY_GUI_LIBRARY =
 
-if LOCAL_VICAR
-	  MY_VICAR_LIBADD = $(top_srcdir)/vicar/libvicar.la
-endif
 if HAVE_MOTIF
 	gui_la_SOURCES = gui.c \
 		widget_arrowbutton.c widget_cascadebutton.c widget_command.c \
@@ -41,7 +38,7 @@ if HAVE_MOTIF
 		widget_transientshell.h widget_vicar.h widget_xbaematrix.h
 
 	gui_la_LDFLAGS = -module
-	gui_la_LIBADD = $(MY_VICAR_LIBADD)
+	gui_la_LIBADD = $(top_srcdir)/vicar/libvicar.la
 
 	MY_GUI_LIBRARY = gui.la
 endif
