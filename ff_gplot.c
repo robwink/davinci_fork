@@ -288,10 +288,7 @@ ff_xplot(vfuncptr func, Var *arg)
 	FILE *fp;
 	char *fname;
 
-	int type;
-	char buf[5120] =
-	{0};			/* added factor of 10 */
-	int s0, s1;
+	char buf[5120] = {0};			/* added factor of 10 */
 	int count = 0;
 
 
@@ -304,13 +301,11 @@ ff_xplot(vfuncptr func, Var *arg)
 
 	int CE[3];
 
-	int dsize, xa_dsize;
 	int xFlag = 0;
 	char *Axis = NULL;
 	int obj_index;
 	float *x, *y;
 	int i, j, k;
-	Var *Ax;
 	int idx;
 	int Sep = 0;
 

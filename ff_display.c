@@ -10,15 +10,15 @@ Var *
 ff_display(vfuncptr func, Var *arg)
 {
     Var *object, *e;
-	 Var *name=NULL;
+    Var *name=NULL;
     FILE *fp;
     char *fname;
-	 char *title=NULL;
+    char *title=NULL;
     int i,j,count;
     int bands;
     char buf[256];
     int max,r,g,b;
-	char *viewer = NULL;
+    char *viewer = NULL;
 
     struct keywords kw[] = {
 	{ "object", NULL },

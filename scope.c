@@ -232,7 +232,6 @@ new_scope()
 void
 free_scope(Scope *s)
 {
-    int i;
     /* this looks wrong
        for (i = 0 ; i < s->dd->count ; i++) {
        free(s->dd->name);
@@ -465,7 +464,6 @@ mem_free(Scope *scope)
 void
 clean_scope(Scope *scope)
 {
-    int i;
 
     if (scope->dd) {
         free_var(scope->dd->value[0]);

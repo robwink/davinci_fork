@@ -22,7 +22,6 @@ V_func(char *name, Var * arg)
 {
     vfuncptr f;
     UFUNC *uf, *locate_ufunc(char *);
-    APIDEFS *api;
 
     /**
     ** Find and call the named function or its handler
@@ -330,7 +329,7 @@ ff_bop(vfuncptr func, Var * arg)
 Var *
 ff_org(vfuncptr func, Var * arg)
 {
-    Var *v, *s, *e, *ob = NULL;
+    Var *s, *ob = NULL;
     int i, j;
     void *from, *to;
     int org = -1, nbytes, format, dsize;
@@ -525,8 +524,8 @@ ff_dim(vfuncptr func, Var * arg)
 Var *
 ff_format(vfuncptr func, Var * arg)
 {
-    Var *v, *s, *object = NULL;
-    char *ptr;
+    Var *s, *object = NULL;
+    char *ptr = NULL;
     char *format_str = NULL;
     char *formats[] = { "byte", "short", "int", "float", "double", NULL };
 
@@ -593,7 +592,6 @@ ff_create(vfuncptr func, Var * arg)
     float v;
     char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
     char *formats[] = { "byte", "short", "int", "float", "double", NULL};
-    int size[3];
 
     int x = 1, y = 1, z = 1;
     int format = INT;
@@ -804,7 +802,7 @@ ff_replicate(vfuncptr func, Var * arg)
 {
     int x = 1, y = 1, z = 1;
     int org;
-    Var *v = NULL, *s, *e;
+    Var *v = NULL, *s;
 
     void *data1, *data2, *d1, *d2;
     int d1ptr, d2ptr, dptr;
@@ -1461,7 +1459,6 @@ Var *
 ff_pow(vfuncptr func, Var * arg)
 {
     Var *ob1 = NULL, *ob2 = NULL;
-    Var *v, *e;
     Alist alist[3];
     alist[0] = make_alist( "ob1", ID_VAL,   NULL,     &ob1);
     alist[1] = make_alist( "ob2", ID_VAL,   NULL,     &ob2);
@@ -1606,14 +1603,11 @@ ff_hedit(vfuncptr func, Var * arg)
     HISTORY_STATE *state;
     char *tmp, *editor, buf[256];
 
-    char *path=getenv("TMPDIR");
-
-
     Alist alist[2];
     alist[0] = make_alist("number",    ID_VAL,    NULL,     &value);
     alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (value == NULL)  {
         count=10;
@@ -1663,12 +1657,11 @@ ff_hedit(vfuncptr func, Var * arg)
 Var *
 ff_resize(vfuncptr func, Var * arg)
 {
-    int i, j;
     Var *obj;
     int x = 1,y = 1,z = 1;
     char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
     char *org_str = NULL;
-    int org;
+    int org = 0;
 
     Alist alist[6];
     alist[0] = make_alist("obj",    ID_VAL,     NULL,     &obj);
@@ -1727,9 +1720,7 @@ ff_fork(vfuncptr func, Var * arg)
 Var *
 ff_eval(vfuncptr func, Var * arg)
 {
-    int i, j;
     char *expr;
-    FILE *fp;
     char *buf;
 	
     Alist alist[2];
@@ -1756,7 +1747,6 @@ ff_eval(vfuncptr func, Var * arg)
 Var *
 ff_syscall(vfuncptr func, Var * arg)
 {
-    int i, j; 
     char *expr;
     FILE *fp;
 
@@ -1812,7 +1802,6 @@ Var *
 ff_dump(vfuncptr func, Var * arg)
 {
     Var *v;
-    int i, j; 
     int depth;
 
     Alist alist[3];
@@ -1837,7 +1826,6 @@ Var *
 ff_equals(vfuncptr func, Var * arg)
 {
     Var *v1 = NULL, *v2 = NULL, *v, *e;
-    int i, j; 
     Alist alist[3];
     char *data;
 
@@ -1927,6 +1915,7 @@ compare_vars(Var *a, Var *b)
         }
         return(1);
     }
+    return(0);
 }
 
 
@@ -1970,9 +1959,9 @@ double atand(double theta) { return(atan(theta)*180.0/M_PI); }
 Var *
 ff_exists(vfuncptr func, Var * arg)
 {
-	Var *v = NULL;
-	char *filename = NULL;
-	int n, i;
+  Var *v = NULL;
+  char *filename = NULL;
+  int n, i;
 
     Alist alist[2];
     alist[0] = make_alist("filename",    ID_UNK,     NULL,     &v);
@@ -2002,9 +1991,8 @@ ff_exists(vfuncptr func, Var * arg)
 Var *
 ff_putenv(vfuncptr func, Var * arg)
 {
-	Var *v = NULL;
-	char *name = NULL, *val=NULL;
-	char buf[4096];
+    char *name = NULL, *val=NULL;
+    char buf[4096];
 
     Alist alist[3];
     alist[0] = make_alist("name",    ID_STRING,     NULL,     &name);
@@ -2030,7 +2018,6 @@ Var *
 ff_length(vfuncptr func, Var * arg)
 {
     Var *obj;
-    int *iptr;
 
     Alist alist[2];
     alist[0] = make_alist("obj",    ID_UNK,     NULL,     &obj);

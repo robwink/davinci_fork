@@ -34,17 +34,17 @@ int
 parse_args(vfuncptr name, Var *args, Alist *alist)
 {
     int i,j,k,count;
-    Var *s, *v, *e;
+    Var *v, *e;
     char *fname;
     char *ptr;
     int len;
 
-	int ac;
-	Var **av;
+    int ac;
+    Var **av;
 
-	make_args(&ac, &av, name, args);
+    make_args(&ac, &av, name, args);
 
-	fname = av[0];
+    fname = (char *)av[0];
 
     for (i = 1 ; i < ac ; i++) {
         v = av[i];

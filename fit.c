@@ -124,12 +124,9 @@ Var * ff_fit(vfuncptr func, Var *args)
         return(NULL);
     }
 
-	 if (!(strcmp(ftype,"linear"))) {
-			FILE *fp;
-			s=lin_fit(x,y,V_DSIZE(x),plot);
-
-
-	 }
+    if (!(strcmp(ftype,"linear"))) {
+        s=lin_fit(x,y,V_DSIZE(x),plot);
+    }
 
 
 
@@ -156,13 +153,12 @@ lin_fit(Var *x, Var *y,int Row, int plot)
 	double **data;
 	char *tmp;
    char buf[256];
-   char buf2[256], *p;
+   char buf2[256];
 	FILE *fp;
 
 	int i;
 
 	double **A,**Cov,*B,*r;
-	double a,b;
 
 	A=dmatrix(2,2);
 	data=dmatrix(Row,2);

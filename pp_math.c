@@ -260,9 +260,8 @@ pp_compare(Var * a, Var * b)
     int count;
     int va, vb;
     int ca = 1, cb = 1;
-    int dzero=0;
 
-	val = &v;
+    val = &v;
 
     if (a == NULL) a = VZERO;	/* define this somewhere */
     if (b == NULL) return(0);	/* called with error */

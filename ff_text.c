@@ -44,7 +44,7 @@ ff_read_text(vfuncptr func, Var *arg)
     char *cdata;
     int count=0;
 
-    int i,j,k;
+    int i,j;
 
     int dsize;
     int x=0;
@@ -122,20 +122,16 @@ Var *
 ff_read_lines(vfuncptr func, Var *arg)
 {
     char    *filename;
-    Var     *v, *e, *s;
     char    *fname;
     FILE *fp;
     char *ptr;
     int rlen;
-    char *p, **t;
-    int len, size;
+    char **t;
+    int size;
 	
     Var *o;
 
-    int i,j,k;
     int count;
-    int ac;
-    Var **av;
 
     Alist alist[2];
     alist[0] = make_alist( "filename", ID_STRING,   NULL,     &filename);
@@ -362,11 +358,13 @@ textarray_subset(Var *v, Var *range)
         hi[i]=r->hi[i];
         step[i]=r->step[i];
         if (lo[i]==0) lo[i]=1;
-        if (hi[i]==0)
-            if (i==1)
+        if (hi[i]==0) {
+	    if (i==1) {
                 hi[i]=V_TEXT(v).Row;
-            else
+	    } else {
                 hi[i]=MAXINT; /*This is to fool it into using full length of string on given row*/
+	    }
+	}
         lo[i]--;
         hi[i]--;
         if (hi[i] < lo[i]){
@@ -438,7 +436,6 @@ string_dirname(Var *ob1)
 {
     char *s;
     int i;
-    int Flag=1;
 
     if (V_STRING(ob1)==NULL)
         return(NULL);
@@ -487,9 +484,6 @@ char *
 string_basename(Var *ob1, char *ext)
 {
     char *s, *q;
-    char *tmp;
-    int i;
-    int len;
 
     if (V_STRING(ob1)==NULL)
         return(NULL);
@@ -532,8 +526,6 @@ ff_filename(vfuncptr func, Var * arg)
 {
 
     Var *ob1;
-    int ac;
-    Var **av;
     Var *S = NULL;
     char *ext=NULL;
     int filefunc;
@@ -586,10 +578,8 @@ Var *
 ff_grep(vfuncptr func, Var * arg)
 {
     Var *ob1;
-    int ac;
-    Var **av;
     Var *S;
-    char *s1=NULL,*ptr=NULL;
+    char *s1=NULL;
 	int newcursor = 0;
     int count=0;
     int index=0;
@@ -720,13 +710,7 @@ ff_strstr(vfuncptr func, Var * arg)
 {
 
     Var *ob1;
-    int ac;
-    Var **av;
-    Var *S;
-    char *s1=NULL,*newcursor=NULL,*ptr=NULL;
-    int count=0;
-    int index=0;
-    int i;
+    char *s1=NULL,*newcursor=NULL;
     Alist alist[3];
     alist[0] = make_alist( "obj", ID_UNK,   NULL,     &ob1);
     alist[1] = make_alist( "pattern", ID_STRING,   NULL,     &s1);
@@ -770,15 +754,14 @@ set_text(Var *to,Range *r, Var *from)
     Var *src;
     Var *dest;
 
-    int i,Row;
+    int i;
     int lo[2],hi[2],step[2];
-    char *string;
+    char *string = NULL;
     int length;
     int height;
-    int string_length;
+    int string_length = 0;
     int cur_line_leng;
     int tmp_hi;
-    int tmp_lo;
 	 int counter=0;
 
 
@@ -788,11 +771,13 @@ set_text(Var *to,Range *r, Var *from)
         hi[i]=r->hi[i];
         step[i]=r->step[i];
         if (lo[i]==0) lo[i]=1;
-        if (hi[i]==0)
-            if (i==1)
+        if (hi[i]==0) {
+	    if (i==1) {
                 hi[i]=V_TEXT(to).Row;
-            else
+            } else {
                 hi[i]=MAXINT; /*This is to fool it into using full length of string on given row*/
+	    }
+	}
         lo[i]--;
         hi[i]--;
         if (hi[i] < lo[i]){
@@ -860,7 +845,7 @@ where_text(Var *id, Var *where, Var *exp)
 {
     int i;
     Var *temp;
-    int len;
+    int len = 0;
     char *text;
 
     if (V_TEXT(id).Row != V_SIZE(where)[1]){
@@ -898,11 +883,10 @@ char *single_replace(char *line, regex_t *preg, char *replace)
 	
 	
     int  index=0;
-    int  subst_index=0;
 
     int  Max=100;
 
-    int i, q, so, eo;
+    int i;
 
     int len=strlen(replace);
 
@@ -992,11 +976,6 @@ Var *ff_stringsubst(vfuncptr func, Var *arg)
 	Var *ob=NULL;
 	char *match=NULL;
 	char *subst=NULL;
-	char *replace=NULL;
-
-	Alist alist[4];
-   int ac;
-   Var **av;
 
 	int i,Row;	
 	Var *result;
@@ -1004,8 +983,7 @@ Var *ff_stringsubst(vfuncptr func, Var *arg)
 	regex_t preg;
 	int cflags=REG_EXTENDED;
 
-
-
+	Alist alist[4];
 	alist[0] = make_alist( "obj", ID_UNK,   NULL,     &ob);
 	alist[1] = make_alist( "match", ID_STRING,   NULL,     &match);
 	alist[2] = make_alist( "substitute", ID_STRING,   NULL,     &subst);
@@ -1111,15 +1089,10 @@ ff_rtrim(vfuncptr func, Var *arg)
 	Var *ob=NULL;
 	char *trim=NULL;
 
-   int ac;
-   Var **av;
-
 	int i,Row;	
-
-	Alist alist[3];
-
 	Var *s = NULL;
 
+	Alist alist[3];
 	alist[0] = make_alist( "obj", ID_UNK,   NULL,     &ob);
 	alist[1] = make_alist( "trim", ID_STRING,   NULL,     &trim);
 	alist[2].name = NULL;

@@ -30,11 +30,8 @@ Var *
 ff_histogram(vfuncptr func, Var * arg)
 {
 	Var *obj = NULL, *compress = NULL, *normalize = NULL, *cumulative=NULL;
-	int type = 0;
-	int x,y,z, n, i, j, dsize, low, high;
+	int x,y,z, i, j, dsize;
 	float *data;
-	char *ptr = NULL;
-	int count = 0;
 	float v;
 
 	float start = MAXFLOAT, size= MAXFLOAT;
@@ -118,13 +115,6 @@ ff_histogram(vfuncptr func, Var * arg)
 
 	data = (float *)calloc((steps+1) * 2, sizeof(float));
 
-	if (debug > 1) {
-		printf("debug: histogram:\n");
-		printf("debug:    start: %f\n", start);
-		printf("debug:    steps: %f\n", steps);
-		printf("debug:    size: %f\n", size);
-	}
-
 	/*
 	** X axis
 	*/
@@ -179,14 +169,12 @@ ff_rgb2hsv(vfuncptr func, Var * arg)
 {
 	Var *obj = NULL, *maxval = NULL;
 	float *data;
-	char *ptr = NULL;
 	double mval;
 	int x,y,z,i,j,k1,k2,k3;
 
 	RGB a;
 	HSV b;
 
-	int ac;
 	Var **av;
 	Alist alist[3];
 	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
@@ -217,8 +205,8 @@ ff_rgb2hsv(vfuncptr func, Var * arg)
 	z = GetBands(V_SIZE(obj), V_ORG(obj));
 
 	if (z != 3) {
-		parse_error("%s: Input must have 3 bands.\n", av[0]);
-		return(NULL);
+            parse_error("%s: Input must have 3 bands.\n", func->name);
+	    return(NULL);
 	}
 
 	data = (float *)calloc(4, 3*x*y);
@@ -249,17 +237,14 @@ ff_rgb2hsv(vfuncptr func, Var * arg)
 Var *
 ff_hsv2rgb(vfuncptr func, Var * arg)
 {
-	Var *obj = NULL, *maxval = NULL;
+  Var *obj = NULL;
 	float *data;
-	char *ptr = NULL;
 	double mval = 1.0;
 	int x,y,z,i,j,k1,k2,k3;
 
 	HSV a;
 	RGB b;
 
-	int ac;
-	Var **av;
 	Alist alist[3];
 	alist[0] = make_alist( "object",  ID_VAL,    NULL,     &obj);
 	alist[1] = make_alist( "maxval",  DOUBLE,    NULL,     &mval);
@@ -454,8 +439,6 @@ ff_entropy(vfuncptr func, Var * arg)
 	float p, ent = 0;
 	int (*cmp)(const void *, const void *);
 
-	int ac;
-	Var **av;
 	Alist alist[2];
 	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
 	alist[1].name = NULL;
