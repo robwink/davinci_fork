@@ -16,14 +16,22 @@
 Var *
 ff_moment(vfuncptr func, Var *arg)
 {
-    Var *v, *out;
+    Var *v=NULL, *out;
     float *fdata;
     int dsize;
     int i;
     double ave,adev,sdev,var,skew,curt,s,p;
     double maxval, minval, d;
 
-    if ((v = verify_single_arg(func, arg)) == NULL) return(NULL);
+	Alist alist[2];
+	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v);
+	alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (v == NULL) {
+		parse_error("Not enough arguments to function: %s()", func->name);
+		return(NULL);
+	}
 
     dsize = V_DSIZE(v);
 

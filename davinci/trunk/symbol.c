@@ -19,10 +19,14 @@
 Var *
 HasValue(vfuncptr func, Var *arg)
 {
-	Var *v;
-	if (arg == NULL || (v = eval(arg)) == NULL) 
-		return(newInt(0));
-	return(newInt(1));
+	int ac;
+	Var **av, *v;
+
+	make_args(&ac, &av, func, arg);
+	if (ac == 2 && (v = eval(av[1])) != NULL) {
+		return(newInt(1));
+	}
+	return(newInt(0));
 }
 
 

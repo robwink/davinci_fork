@@ -35,7 +35,7 @@ void start_save()
 	local_line = pp_line;
     tmp = make_temp_file_path();
     if (tmp == NULL || (save_fp = fopen(tmp, "w")) == NULL ) {
-        parse_error("%s: unable to open temp file", func->name);
+        parse_error("define: unable to open temp file");
         if (tmp) free(tmp);
         return(NULL);
     }

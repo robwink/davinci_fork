@@ -11,20 +11,20 @@
 Var *
 ff_pause(vfuncptr func, Var *arg)
 {
-    Var *v, *s;
 	char buf[256];
+	char *string = NULL;
 
-	if ((v = verify_single_string(func, arg)) != NULL) {
-		printf("%s", V_STRING(v));
+	Alist alist[2];
+	alist[0] = make_alist( "string",    ID_STRING,    NULL,    &string);
+	alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (string != NULL) {
+		printf("%s", string);
 		fflush(stdout);
 	}
-	fgets(buf, 256, stdin);
-    /**
-     ** Create the output object.
-     **/
-    s = newVar();
-    V_TYPE(s) = ID_STRING;
-	V_STRING(s) = strdup(buf);
 
-    return(s);
+	fgets(buf, 256, stdin);
+    return(newString(strdup(buf)));
 }

@@ -1,6 +1,4 @@
 #include "parser.h"
-#include <sys/types.h>
-#include <stdlib.h>
 #include <regex.h>
 
 #if defined(HAVE_LIBGEN_H) && !defined(_AIX)
@@ -35,7 +33,7 @@ newText(int rows, char **text)
 Var *
 ff_read_text(vfuncptr func, Var *arg)
 {
-    char    *filename;
+    char    *filename = NULL;
     Var     *v, *e, *s;
     char    *fname;
     FILE *fp;
@@ -51,38 +49,24 @@ ff_read_text(vfuncptr func, Var *arg)
     int x=0;
     int y=0;
 
-    struct keywords kw[] = {
-        { "filename", NULL },   /* filename to read */
-        { NULL, NULL }
-    };
+	Alist alist[2];
+	alist[0] = make_alist( "filename",    ID_STRING,    NULL,    &filename);
+	alist[1].name = NULL;
 
-    if (evaluate_keywords(func, arg, kw)) {
-        return(NULL);
-    }
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
-    if ((v = get_kw("filename", kw)) == NULL) {
+    if (filename == NULL) {
         sprintf(error_buf, "No filename specified: %s()", func->name);
         parse_error(NULL);
         return(NULL);
     }
-    if (V_TYPE(v) != ID_STRING) {
-        e = eval(v);
-        if (e == NULL || V_TYPE(e) != ID_STRING) {
-            sprintf(error_buf, "Illegal argument: %s(... filename=...)", 
-                    func->name);
-            parse_error(NULL);
-            return(NULL);
-        }
-        v = e;
-    }
-    filename = V_STRING(v);
 
     if ((fname = dv_locate_file(filename)) == NULL) {
-        parse_error( "Cannot find file: %s\n", filename);
+        parse_error("Cannot find file: %s\n", filename);
         return(NULL);
     }
     if ((fp = fopen(fname, "rb")) == NULL) {
-        parse_error( "Cannot open file: %s\n", fname);
+        parse_error("Cannot open file: %s\n", fname);
         return(NULL);
     }
     /**
@@ -112,9 +96,7 @@ ff_read_text(vfuncptr func, Var *arg)
         fprintf(stderr, "Read TEXT file: %dx%d (%d bytes)\n", x,y,count);
     }
 
-	s = newVal(BSQ, x, y, 1, BYTE, cdata);
-
-    return(s);
+	return(newVal(BSQ, x, y, 1, BYTE, cdata));
 }
 
 Var *
@@ -156,6 +138,7 @@ ff_read_lines(vfuncptr func, Var *arg)
     while((rlen = getline(&ptr, fp)) != EOF) {
         if (ptr[rlen-1] == '\n') ptr[rlen-1] = '\0';
         if (ptr[rlen-2] == '\r') ptr[rlen-2] = '\0';
+
         if (size == count) {
             t = realloc(t, size*2*sizeof(char *));
             size *= 2;
@@ -256,70 +239,43 @@ ff_delim_textarray(Var *ob,int item,char *delim)
 Var *
 ff_delim(vfuncptr func, Var *arg)
 {
-    Var *ob, *cval, *s, *v, *e;
-    char *delim;
+    Var *ob= NULL, *cval, *s, *v, *e;
+    char *delim= NULL;
     char *cdata;
     char *ptr;
-    int item, count;
+    int item = 0;
+	int count;
 
-    struct keywords kw[] = {
-        { "object", NULL },   	/* object to read */
-        { "delim",    NULL },   /* string of delimters to use */
-        { "count",    NULL },   /* string of delimters to use */
-        { NULL, NULL }
-    };
 
-    if (evaluate_keywords(func, arg, kw)) {
-        return(NULL);
-    }
+	Alist alist[5];
+	alist[0] = make_alist( "object",   ID_VAL,       NULL,    &ob);
+	alist[1] = make_alist( "delim",    ID_STRING,    NULL,    &delim);
+	alist[2] = make_alist( "count",    INT,          NULL,    &item);
+	alist[3].name = NULL;
 
-    if ((v = get_kw("object",kw)) == NULL) {
-        sprintf(error_buf, "No object specified: %s()\n", func->name);
-        parse_error(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+    if (ob == NULL) {
+        parse_error("No object specified: %s()\n", func->name);
         return(NULL);
     }
-    e = eval(v);
-    if (e == NULL) {
-        parse_error("Illegal argument to read_text(...object=...)");
-        return(NULL);
-    }
-    if (V_TYPE(e) == ID_VAL) {
-        if (V_FORMAT(e) != BYTE) {
-            parse_error("Illegal argument to read_text(...object=...), must be BYTE");
-            return(NULL);
-        }
-    } else if (V_TYPE(e) != ID_STRING && V_TYPE(e) != ID_TEXT) {
-        parse_error("Illegal argument to read_text(...object=...), must be BYTE");
-        return(NULL);
-    }
-    ob = e;
 	
-    if ((cval = RequireKeyword("count",  kw, ID_VAL, INT,  func)) == NULL) 
-        return(NULL);
-    item = V_INT(cval);
-
     if (item <= 0)  {
-        sprintf(error_buf, "%s(), count must be greater than 0", func->name);
-        parse_error(NULL);
+        parse_error( "%s(), count must be greater than 0", func->name);
         return(NULL);
     }
-
-    if ((v = get_kw("delim", kw)) != NULL) {
-        if ((e = eval(v)) != NULL) v = e;
-        if (V_TYPE(v) != ID_STRING) {
-            sprintf(error_buf, "%s(), delim must be a STRING", func->name);
-        }
-    }
-    delim = V_STRING(v);
 
     if (V_TYPE(ob)==ID_TEXT)
         return(ff_delim_textarray(ob,item,delim));
 
     if (V_TYPE(ob) == ID_VAL) {
         cdata = strdup((char *)V_DATA(ob));
-    } else {
+    } else if (V_TYPE(ob) == ID_STRING) {
         cdata = strdup((char *)V_STRING(ob));
-    }
+    } else {
+        parse_error( "%s(), only handles STRING, TEXT and VAL",func->name);
+        return(NULL);
+	}
 
     ptr = cdata;
     count = 0;
@@ -877,24 +833,15 @@ char *single_replace(char *line, regex_t *preg, char *replace)
     int eflags=0;
     char *newtext;
     char *Marker;
-
     int result;
-	
-	
     int  index=0;
-
-    int  Max=strlen(line)+strlen(replace);
-
+	int  Max=strlen(line)+strlen(replace);
     int i;
-
     int len=strlen(replace);
-
 	int numeral;
-
 	int delta;
 
 	newtext=malloc(Max);
-
 
 	result=regexec(preg,line,nmatch,pmatch,eflags);
 	Marker=line;

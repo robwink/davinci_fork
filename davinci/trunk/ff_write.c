@@ -1,13 +1,11 @@
-#include "config.h"
-#include <errno.h>
 #include "parser.h"
 #include "dvio.h"
+
+#include <errno.h>
 
 #ifdef __CYGWIN__
 #include <io.h>
 extern Swap_Big_and_Little(Var *);
-#else
-#include <unistd.h>
 #endif
 
 /* FIX: put these in a header */

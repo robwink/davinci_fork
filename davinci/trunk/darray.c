@@ -417,6 +417,43 @@ Narray_delete(Narray *a, char *key)
 }
 
 /*
+** Deletes the key from the Narray and returns the data
+** associated with it, and renumbers.
+*/
+void *
+Narray_remove(Narray *a, int index)
+{
+	int i;
+	Nnode n;
+	Nnode *found, *node;
+	void *data;
+
+	if (a == NULL) return NULL;
+	if (index > a->data->count) return(NULL);
+
+	node = Darray_remove(a->data, index);
+	data = node->value;
+
+	if (node->key != NULL) {
+		memset(&n, 0, sizeof(n));
+		n.key = node->key;
+		found = avl_find(a->tree, &n);
+		if (found){
+			node = avl_delete(a->tree, found);
+			Nnode_free(node, NULL);
+		}
+	}
+
+	for(i = 0; i < a->data->count; i++){
+		node = (Nnode *)a->data->data[i];
+		if (node->index > index){
+			node->index--;
+		}
+	}
+
+	return (data);
+}
+/*
 ** Return the array index of an element if it exists.
 ** otherwise, returns -1.
 */

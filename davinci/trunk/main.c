@@ -12,8 +12,8 @@
 #include <X11/Shell.h>
 #include <X11/Xatom.h>
 
-Widget		applicationShell = NULL;
-XtAppContext	applicationContext;
+Widget      applicationShell = NULL;
+XtAppContext    applicationContext;
 #endif
 
 int interactive = 1;
@@ -96,8 +96,8 @@ dv_sighandler(int data)
 {
     Scope *scope;
     char cmd[256];
-
     char *path = getenv("TMPDIR");
+
 
     switch (data) {
 
@@ -126,8 +126,6 @@ dv_sighandler(int data)
     }
 }
 
-
-
 /* char *__progname = "davinci"; */
 
 int 
@@ -137,7 +135,6 @@ main(int ac, char **av)
     Var *v;
     FILE *fp;
     char path[256];
-    char path2[256];
     int quick = 0;
     int i, j, k, flag = 0;
     char *logfile = NULL;
@@ -240,16 +237,14 @@ main(int ac, char **av)
             put_sym(v);
         }
     }
-
-    dv_set_iom_verbosity();
+	dv_set_iom_verbosity();
 
     env_vars();
     fake_data();
 
     if (interactive) {
-
         if (logfile == NULL)
-	  logfile = ".dvlog";
+            logfile = ".dvlog";
 
         lfile = fopen(logfile, "a");
         log_time();
@@ -272,18 +267,7 @@ main(int ac, char **av)
     ** set up temporary directory
     **/
     if ((p = getenv("TMPDIR")) == NULL) {
-#if 0
-	/* I'm not convinced we wont need this for cygwin yet */
-    {
-        char tmpbuf[128];
-        _strtime( tmpbuf );
-        sprintf(path, "TMPDIR=c:\\windows\\temp\\dv_%s",tmpbuf);
-        mkdir(path + 7, 0777);
-        putenv(path);
-    }
-#else
         sprintf(path, "TMPDIR=%s/dv_%d", P_tmpdir, getpid());
-#endif
 	} else {
         sprintf(path, "TMPDIR=%s/dv_%d", getenv("TMPDIR"), getpid());
 	}
@@ -321,6 +305,7 @@ extern "C" {
     extern SetTopLevel(Widget *);
 #endif
 #endif
+
 
 #ifdef HAVE_LIBXT
 
@@ -427,7 +412,6 @@ event_loop(void)
 #endif
     }
 }
-
 void lhandler(char *line)
 {
     char *buf;
@@ -517,14 +501,13 @@ Var *curnode;
 void
 parse_buffer(char *buf)
 {
-
     int i,j;
     extern char *yytext;
     Var *v = NULL;
     void *parent_buffer;
     void *buffer;
     Var *node;
-    extern char *pp_str;
+	extern char *pp_str;
 
     parent_buffer = (void *) get_current_buffer();
     buffer = (void *) yy_scan_string(buf);
@@ -606,7 +589,7 @@ quit(void)
     /**
     ** clean up temporary directory
     **/
-    rmrf(path);
+	rmrf(path);
     exit(0);
 }
 
@@ -660,6 +643,7 @@ fake_data()
         }
     }
 
+    // srand48(getpid());
     srand( (unsigned int) time( NULL ) ); 
     
     for (i = 0; i < 12; i++) {

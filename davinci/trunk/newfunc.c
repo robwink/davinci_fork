@@ -43,7 +43,6 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
     Var **av;
 
     make_args(&ac, &av, name, args);
-
     fname = (char *)av[0];
 
     for (i = 1 ; i < ac ; i++) {
@@ -87,7 +86,13 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
 			**/
 			v = V_KEYVAL(v);
         } else {
-			/* special case created by create_args  */
+			/* 
+			 * Unnamed arguments.
+			 */
+			/* special case created by create_args
+			 * where we have a keyword, with no name.
+			 * For the life of me, I don't recall how this came to be.
+			 */
 			if (V_TYPE(v) == ID_KEYWORD) {
 				v = V_KEYVAL(v);
 			}
@@ -354,19 +359,23 @@ make_args(int *ac, Var ***av, vfuncptr func, Var *args)
 {
     int count = 0, i = 0;
     Var *v, *next;
+	Var *p;
 
-    for (v = args ; v != NULL ; v=v->next)
-        count++;
-
+	if (args != NULL) {
+		count = Narray_count(V_ARGS(args));
+	}
     *av = (Var **)calloc(count+2, sizeof(Var *));
 
-    if (func) (*av)[i++] = (Var *)func->name;
-    for (v = args ; v != NULL ; v = next) {
-        (*av)[i++] = v;
-        next = v->next;
-        v->next = NULL;
+    if (func) (*av)[0] = (Var *)func->name;
+	for (i = 0 ; i < count ; i++) {
+
+        Narray_get(V_ARGS(args), i, NULL, &p);
+		if (V_TYPE(p) == ID_KEYWORD && V_NAME(p) == NULL) {
+			p = V_KEYVAL(p);
+		}
+		(*av)[i+1] = p;
     }
-    *ac = i;
+    *ac = count+1;
     return 0;
 }
 
@@ -382,12 +391,24 @@ make_alist(char *name, int type, void *limits, void *value)
     return(a);
 }
 
+Var *
+append_arg(Var *args, char *key, Var *val)
+{
+	Var *v;
+
+	v = newVar();
+	V_NAME(v) = (key ? strdup(key) : NULL);
+	args = pp_mk_arglist(args, pp_keyword_to_arg(v, val));
+
+	return(args);
+}
+
 #include <stdarg.h>
 
 Var *
 create_args(int ac, ...)
 {
-	Var *args, *tail = NULL;
+	Var *args = NULL, *tail = NULL;
 	va_list ap;
 
 	char *key;
@@ -401,15 +422,9 @@ create_args(int ac, ...)
 			va_end(ap);
 			break;
 		}
-		v = newVar();
-		V_NAME(v) = (key ? strdup(key) : NULL);
-
-		if (tail == NULL) {
-			args = tail = pp_keyword_to_arg(v, val);
-		} else {
-			tail->next = pp_keyword_to_arg(v, val);
-			tail = tail->next;
-		}
+		args = append_arg(args, key, val);
 	}
+	va_end(ap);
 	return(args);
 }
+

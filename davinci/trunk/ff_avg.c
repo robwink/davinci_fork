@@ -276,7 +276,7 @@ ff_avg(vfuncptr func, Var * arg)
 }
 
 
-Var * fb_min(Var *obj, int axis, int direction);
+Var * fb_min(Var *obj, int axis, int direction, float ignore);
 
 Var *
 ff_min(vfuncptr func, Var * arg)
@@ -288,13 +288,15 @@ ff_min(vfuncptr func, Var * arg)
 		"x", "y", "z", "xy", "yx", "xz", "zx", "yz", "zy",
 		"xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL
 	};
+	float ignore=MINFLOAT;
 
 	int ac;
 	Var **av;
-	Alist alist[3];
+	Alist alist[4];
 	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
 	alist[1] = make_alist("axis",  		ID_ENUM,	options,	&ptr);
-	alist[2].name = NULL;
+	alist[2] = make_alist("ignore",  	FLOAT,	options,	&ignore);
+	alist[3].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -311,7 +313,7 @@ ff_min(vfuncptr func, Var * arg)
 		return(NULL);
 	}
 
-	return(fb_min(obj, axis, (!strcmp(func->name, "min")) ? 0 : 1 ));
+	return(fb_min(obj, axis, (!strcmp(func->name, "min")) ? 0 : 1, ignore));
 }
 
 /*
@@ -322,7 +324,7 @@ ff_min(vfuncptr func, Var * arg)
 **     direction:  0 = min, 1 = max
 */
 Var *
-fb_min(Var *obj, int axis, int direction)
+fb_min(Var *obj, int axis, int direction, float ignore)
 {
 	Var *v;
 	char *ptr = NULL;
@@ -352,16 +354,16 @@ fb_min(Var *obj, int axis, int direction)
 	 ** Fill in defaults
 	 **/
 	for (i = 0 ; i < dsize2 ; i++) {
-		fdata[i] = extract_float(obj, rpos(i,v,obj));
+		fdata[i] = ignore;
 	}
 
 	for (i = 0 ; i < dsize ; i++) {
 		j = rpos(i, obj, v);
 		x = extract_float(obj, i);
 		if (direction == 0) {
-			if (x < fdata[j]) fdata[j] = x;
+			if (fdata[j] == ignore || x < fdata[j]) fdata[j] = x;
 		} else {
-			if (x > fdata[j]) fdata[j] = x;
+			if (fdata[j] == ignore || x > fdata[j]) fdata[j] = x;
 		}
 	}
 
@@ -376,12 +378,14 @@ ff_findmin(vfuncptr func, Var * arg)
 	float x, val;
 	int do_min = 0, do_max = 0;
 	int pos;
+	float ignore = MINFLOAT;
 
 	int ac;
 	Var **av;
-	Alist alist[2];
+	Alist alist[3];
 	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
-	alist[1].name = NULL;
+	alist[1] = make_alist("ignore",		FLOAT,		NULL,	&ignore);
+	alist[2].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -395,19 +399,16 @@ ff_findmin(vfuncptr func, Var * arg)
 
 	dsize = V_DSIZE(obj);
 
-	val = extract_float(obj, 0);
-	pos = 0;
-	for (i = 1 ; i < dsize ; i++) {
+	pos = -1;
+	val = ignore;
+	for (i = 0 ; i < dsize ; i++) {
 		x = extract_float(obj, i);
-		if (do_min && x < val) { val = x ; pos = i; }
-		if (do_max && x > val) { val = x ; pos = i; }
+		if (x == ignore) continue;
+		if (do_min && (x < val || val == ignore)) { val = x ; pos = i; }
+		if (do_max && (x > val || val == ignore)) { val = x ; pos = i; }
 	}
 
-	v = newVal(BSQ, 1, 1, 1, INT, NULL);
-	V_DATA(v) = calloc(1, sizeof(int));
-	V_INT(v) = pos+1;
-
-	return(v);
+	return(newInt(pos+1));
 }
 
 
@@ -444,7 +445,7 @@ ff_convolve(vfuncptr func, Var * arg)
 Var *do_convolve(Var *obj, Var *kernel, int norm, float ignore)
 {
 	Var *v;
-	float *data, val, tmp;
+	float *data, v1, v2;
 	int *wt;
 
 	int dsize, i, j, k;
@@ -492,20 +493,18 @@ Var *do_convolve(Var *obj, Var *kernel, int norm, float ignore)
 
 					j = cpos(x_pos, y_pos, z_pos, obj);
 					k = cpos(a, b, c, kernel);
-					val = extract_float(kernel,k);
-					tmp = extract_float(obj, j);
-					if (val != ignore && tmp != ignore) {
+					v1 = extract_float(kernel,k);
+					v2 = extract_float(obj, j);
+					if (v1 != ignore && v2 != ignore) {
 						wt[i]++;
-						data[i] += val * tmp;
+						data[i] += v1 * v2;
 					}
 				}
 			}
 		}
-		if (norm) 
-			if (wt[i])
-				data[i] /= (float)wt[i];
-			else
-				data[i] = ignore; /* If there are no weights, then we've only got ignore values */
+		if (norm && wt[i] > 0) {
+			data[i] /= (float)wt[i];
+		}
 	}
 
 	return(newVal(V_ORG(obj), 

@@ -5,6 +5,10 @@
 #include "rfunc.h"
 #endif
 
+#ifdef __CYGWIN__
+// #include <dos.h>
+#endif
+
 /**
  ** V_func - find and call named function
  **
@@ -67,62 +71,6 @@ V_func(char *name, Var * arg)
 
 
 /**
- ** verify_single_arg() - check arg list for valid argument.
- **
- ** Verify that the passed argument is:
- **             A named variable of type ID_VAL,
- **                     A unnamed variable of type ID_VAL
- ** and report any errors.
- **/
-
-Var *
-verify_single_arg(vfuncptr func, Var * arg)
-{
-    Var *v;
-
-    if (arg == NULL) {
-        return (NULL);
-    } else if (arg->next != NULL) {
-        parse_error( "Too many arguments to function: %s()", func->name);
-        return (NULL);
-    }
-    if (V_TYPE(arg) == ID_KEYWORD) {
-        arg = V_KEYVAL(arg);
-    }
-    if ((v = eval(arg)) == NULL) {
-        parse_error( "Variable not found: %s", V_NAME(arg));
-        return (NULL);
-    }
-    if (V_TYPE(v) != ID_VAL) {
-        parse_error( "Invalid argument to function: %s()", func->name);
-        return (NULL);
-    }
-    return (v);
-}
-
-Var *
-verify_single_string(vfuncptr func, Var * arg)
-{
-    Var *v;
-
-    if (arg == NULL) {
-        return (NULL);
-    } else if (arg->next != NULL) {
-        parse_error("Too many arguments to function: %s()", func->name);
-        return (NULL);
-    }
-    if ((v = eval(arg)) == NULL) {
-        parse_error("Variable not found: %s", V_NAME(arg));
-        return (NULL);
-    }
-    if (V_TYPE(v) != ID_STRING) {
-        parse_error("Invalid argument to function: %s()", func->name);
-        return (NULL);
-    }
-    return (v);
-}
-
-/**
  ** ff_dfunc() - function caller for intrinsic math (double) functions
  **
  ** This function iterates on all the elements of the passed argument,
@@ -136,7 +84,7 @@ verify_single_string(vfuncptr func, Var * arg)
 Var *
 ff_dfunc(vfuncptr func, Var * arg)
 {
-    Var *v, *s;
+    Var *v = NULL, *s;
     dfunc fptr;
     float *fdata;
     double *ddata;
@@ -145,8 +93,15 @@ ff_dfunc(vfuncptr func, Var * arg)
     int format, dsize;
     int i;
 
-    if ((v = verify_single_arg(func, arg)) == NULL)
-        return (NULL);
+	Alist alist[2];
+	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v);
+	alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (v == NULL) {
+		parse_error("Not enough arguments to function: %s()", func->name);
+		return(NULL);
+	}
 
     /**
     ** Find the named function.
@@ -207,7 +162,6 @@ ff_dfunc(vfuncptr func, Var * arg)
     s = newVar();
     memcpy(s, v, sizeof(Var));
     V_NAME(s) = NULL;
-    V_NEXT(s) = NULL;	/* just in case */
 
     memcpy(V_SYM(s), V_SYM(v), sizeof(Sym));
     V_FORMAT(s) = format;
@@ -237,28 +191,23 @@ ff_bop(vfuncptr func, Var * arg)
     int ca = 1, cb = 1;
     double v1, v2;
     double *ddata;
-    ddfunc fptr;
+    ddfunc fptr = (ddfunc) func->fdata;
 
-    fptr = (ddfunc) func->fdata;
+	Alist alist[3];
+	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &a);
+	alist[1] = make_alist( "object",    ID_VAL,    NULL,    &b);
+	alist[2].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (a == NULL || b == NULL) {
+		parse_error("Not enough arguments to function: %s()", func->name);
+		return(NULL);
+	}
 
     if (fptr == NULL) {	/* this should never happen */
         parse_error("Function not found.");
         return (NULL);
     }
-    if ((a = arg) == NULL || (b = arg->next) == NULL) {
-        parse_error("Not enough args: %s", func->name);
-        return (NULL);
-    }
-    if ((t = eval(a)) == NULL) {
-        parse_error("Variable not found: %s", V_NAME(a));
-        return (NULL);
-    }
-    a = t;
-    if ((t = eval(b)) == NULL) {
-        parse_error("Variable not found: %s", V_NAME(b));
-        return (NULL);
-    }
-    b = t;
 
     /**
     ** Verify that we can actually operate with these two objects.
@@ -267,10 +216,6 @@ ff_bop(vfuncptr func, Var * arg)
     **
     **/
 
-    if (V_TYPE(a) != ID_VAL || V_TYPE(b) != ID_VAL) {
-        parse_error( "%s: operation illegal on non-values", func->name);
-        return (NULL);
-    }
     count = 0;
     for (i = 0; i < 3; i++) {
         va = V_SIZE(a)[orders[V_ORDER(a)][i]];
@@ -409,21 +354,22 @@ ff_conv(vfuncptr func, Var * arg)
     int format;
     int dsize;
     void *data;
-    Var *v, *s;
+    Var *v = NULL, *s;
     int i;
 
     /**
     ** converting to type stored in vfunc->fdata.
     **/
 	
-    if (arg == NULL) return(NULL);
+	Alist alist[2];
+	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v);
+	alist[1].name = NULL;
 
-    if (V_TYPE(arg) != ID_VAL) {
-        if ((v = verify_single_arg(func, arg)) == NULL)
-            return (NULL);
-    } else {
-        v = arg;
-    }
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (v == NULL) {
+		parse_error("Not enough arguments to function: %s()", func->name);
+		return(NULL);
+	}
 
     format = (int) func->fdata;
     dsize = V_DSIZE(v);
@@ -484,7 +430,6 @@ ff_conv(vfuncptr func, Var * arg)
     s = newVar();
     memcpy(s, v, sizeof(Var));
     V_NAME(s) = NULL;;
-    V_NEXT(s) = NULL;
 
     memcpy(V_SYM(s), V_SYM(v), sizeof(Sym));
 
@@ -503,14 +448,18 @@ ff_conv(vfuncptr func, Var * arg)
 Var *
 ff_dim(vfuncptr func, Var * arg)
 {
-    Var *v, *s;
+    Var *v = NULL, *s;
     int *iptr;
 
-    if ((v = verify_single_arg(func, arg)) == NULL) {
-        return (NULL);
-    }
-    s = newVar();
-    V_TYPE(s) = ID_VAL;
+	Alist alist[2];
+	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v);
+	alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (v == NULL) {
+		parse_error("Not enough arguments to function: %s()", func->name);
+		return(NULL);
+	}
 
     iptr = (int *) calloc(3, sizeof(int));
 
@@ -518,14 +467,7 @@ ff_dim(vfuncptr func, Var * arg)
     iptr[1] = GetLines(V_SIZE(v), V_ORG(v));
     iptr[2] = GetBands(V_SIZE(v), V_ORG(v));
 
-    V_DATA(s) = iptr;
-    V_DSIZE(s) = 3;
-    V_FORMAT(s) = INT;
-    V_ORDER(s) = BSQ;
-    V_SIZE(s)[0] = 3;
-    V_SIZE(s)[2] = V_SIZE(s)[1] = 1;
-
-    return (s);
+	return(newVal(BSQ, 3, 1, 1, INT, iptr));
 }
 
 /**
@@ -590,7 +532,6 @@ ff_format(vfuncptr func, Var * arg)
         else if (!strcasecmp(format_str, "float")) ptr = "float";
         else if (!strcasecmp(format_str, "double")) ptr = "double";
 
-        obj->next = NULL;
         return (V_func(ptr, obj));
     }
 }
@@ -712,63 +653,6 @@ ff_create(vfuncptr func, Var * arg)
     }
     return (s);
 }
-
-/**
- ** For each arg, see if its in the keyword list.  
- **/
-
-int
-evaluate_keywords(vfuncptr func, Var * arg, struct keywords *kw)
-{
-    Var *v;
-    struct keywords *k;
-
-    for (v = arg; v != NULL; v = v->next) {
-        if (V_TYPE(v) == ID_KEYWORD) {
-            for (k = kw; k->name != NULL; k++) {
-                if (!strcasecmp(k->name, V_NAME(v))) {
-                    k->value = V_KEYVAL(v);
-                    break;
-                }
-            }
-            if (k->name == NULL) {
-                parse_error("Unknown keyword to function: %s(... %s= ...)",
-                            func->name, V_NAME(v));
-                return (1);
-            }
-        } else {
-            /**
-            ** not a keyword value.  Stuff it into the first open keyword
-            **/
-            for (k = kw; k->name != NULL; k++) {
-                if (k->value == NULL) {
-                    k->value = v;
-                    break;
-                }
-            }
-            if (k->name == NULL) {
-                parse_error("Too many arguements to function: %s()", func->name);
-                return (1);
-            }
-        }
-    }
-    return (0);
-}
-
-Var *
-get_kw(char *name, struct keywords * kw)
-{
-    struct keywords *k;
-
-    for (k = kw; k->name != NULL; k++) {
-        if (!strcmp(k->name, name)) {
-            return (k->value);
-            break;
-        }
-    }
-    return (NULL);
-}
-
 
 
 Var *
@@ -931,92 +815,10 @@ ff_replicate(vfuncptr func, Var * arg)
  **          >1 if an array of ints, returns first.
  **/
 
-int
-KwToInt(char *name, struct keywords *kw, int *val)
-{
-    Var *v, *e;
-    if ((v = get_kw(name, kw)) == NULL)
-        return (0);
-
-    if ((e = eval(v)) != NULL)
-        v = e;
-
-    if (V_TYPE(v) != ID_VAL || V_FORMAT(v) > INT) {
-        parse_error("Bad value.  Expecting an INT for keyword: %s", name);
-        return (-1);
-    }
-    *val = extract_int(v, 0);
-    if (V_DSIZE(v) != 1)
-        return (V_DSIZE(v));
-    return (1);
-}
-int
-KwToFloat(char *name, struct keywords *kw, float *val)
-{
-    Var *v, *e;
-    if ((v = get_kw(name, kw)) == NULL)
-        return (0);
-
-    if ((e = eval(v)) != NULL)
-        v = e;
-
-    if (V_TYPE(v) != ID_VAL) {
-        parse_error("Bad value.  Expecting a FLOAT for keyword: %s", name);
-        return (-1);
-    }
-    *val = extract_float(v, 0);
-    if (V_DSIZE(v) != 1)
-        return (V_DSIZE(v));
-    return (1);
-}
-
 /**
  ** Takes two objects, with the same ORG, FORMAT, and two matching axis,
  ** and concatenate them together along specified axis.
  **/
-
-#if 0
-Var *
-ff_cat(vfuncptr func, Var * arg)
-{
-    Var *v;
-    Var *ob1 = NULL, *ob2 = NULL;
-    char *axis_str = NULL;
-    int axis;
-    char *options[] = { "x", "y", "z", NULL };
-
-    Alist alist[4];
-    alist[0] = make_alist( "ob1", ID_UNK,   NULL,     &ob1);
-    alist[1] = make_alist( "ob2", ID_UNK,   NULL,     &ob2);
-    alist[2] = make_alist( "axis",   ID_ENUM,  options,     &axis_str);
-    alist[3].name = NULL;
-
-	if (parse_args(func, arg, alist) == 0) return(NULL);
-
-    if (axis_str == NULL) {
-        parse_error("%s(), No axis specified.", func->name);
-        return (NULL);
-    } else {
-        if (!strcasecmp(axis_str, "x")) axis = 0;
-        else if (!strcasecmp(axis_str, "y")) axis = 1;
-        else if (!strcasecmp(axis_str, "z")) axis = 2;
-    }
-
-    if (ob1 == NULL) {
-        parse_error("No objects specified");
-        return (NULL);
-    }
-    if (ob2 == NULL) {
-        parse_error("%s(), second object not specified", func->name);
-        return (NULL);
-    }
-    /**
-    ** convert axis from XYZ to ORDER
-    **/
-    return (do_cat(ob1, ob2, axis));
-}
-#endif
-
 
 Var *
 ff_cat(vfuncptr func, Var * arg)
@@ -1035,7 +837,10 @@ ff_cat(vfuncptr func, Var * arg)
 	}
 	/* find axis if specified */
 	for (i = 1 ; i < ac ; i++) {
-		if (V_TYPE(av[i]) == ID_KEYWORD && !strcasecmp(V_NAME(av[i]), "axis")) {
+		if (V_TYPE(av[i]) == ID_KEYWORD && 
+		    V_NAME(av[i]) != NULL && 
+			!strcasecmp(V_NAME(av[i]), "axis")) {
+
 			axis_var = V_KEYVAL(av[i]);
 			for (j = i ; j < ac-1 ; j++) {
 				av[j] = av[j+1];
@@ -1367,53 +1172,6 @@ enumerated_arg(Var * v, char **values)
     return (NULL);
 }
 
-Var *
-RequireKeyword(char *name, struct keywords * kw, int type, int format, vfuncptr func)
-{
-    Var *v, *e;
-    char *tstr;
-
-    if (name == NULL)
-        return (NULL);
-
-    if ((v = get_kw(name, kw)) == NULL) {
-        parse_error("Argument required: %s(%s)", func->name, name);
-        return (NULL);
-    }
-    if ((e = eval(v)) != NULL)
-        v = e;
-    if (V_TYPE(v) != type ||
-        (V_TYPE(v) == ID_VAL && format >= 0 && V_FORMAT(v) != format)) {
-        switch (type) {
-        case ID_VAL:
-            switch (format) {
-            case BYTE:
-                tstr = "BYTE";
-                break;
-            case SHORT:
-                tstr = "SHORT";
-                break;
-            case INT:
-                tstr = "INT";
-                break;
-            case FLOAT:
-                tstr = "FLOAT";
-                break;
-            case DOUBLE:
-                tstr = "DOUBLE";
-                break;
-            }
-            break;
-        case ID_STRING:
-            tstr = "STRING";
-            break;
-        }
-        parse_error("Expected %s for argument %s(%s)",
-                    tstr, func->name, name);
-        return (NULL);
-    }
-    return (v);
-}
 
 /**
  ** convert bytes to string
@@ -1422,41 +1180,27 @@ RequireKeyword(char *name, struct keywords * kw, int type, int format, vfuncptr 
 Var *
 ff_string(vfuncptr func, Var * arg)
 {
-    Var *v, *s;
+    Var *v = NULL, *s;
 
-    if ((v = verify_single_arg(func, arg)) == NULL)
-        return (NULL);
+	Alist alist[2];
+	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v);
+	alist[1].name = NULL;
 
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (v == NULL) {
+		parse_error("Not enough arguments to function: %s()", func->name);
+		return(NULL);
+	}
+	if (V_FORMAT(v) != BYTE) {
+		parse_error("%s(), argument must be BYTE format");
+		return(NULL);
+	}
 
     s = newVar();
     V_TYPE(s) = ID_STRING;
-    V_STRING(s) = (char *) memcpy(malloc(V_DSIZE(v)), V_DATA(v), V_DSIZE(v));
+    V_STRING(s) = (char *) memcpy(calloc(V_DSIZE(v)+1,1), V_DATA(v), V_DSIZE(v));
     return (s);
-}
-
-Var *
-ff_strlen(vfuncptr func, Var * arg)
-{
-    Var *S1=NULL;
-    int *Result=(int *)calloc(1,sizeof(int));
-    Alist alist[2];
-    alist[0] = make_alist("string",         ID_UNK,         NULL,   &S1);
-    alist[1].name = NULL;
-
-	if (parse_args(func, arg, alist) == 0) {
-		*Result=0;
-	} else if (S1 == NULL){
-        *Result=0;
-    } else if (V_TYPE(S1)==ID_TEXT){
-        *Result=V_TEXT(S1).Row;
-    } else if (V_TYPE(S1)==ID_STRING){
-        *Result=strlen(V_STRING(S1));
-    } else {
-        parse_error("Invalid type");
-        return(NULL);
-    }
-
-    return(newVal(BSQ,1,1,1, INT, Result));
 }
 
 
@@ -1465,6 +1209,7 @@ ff_issubstring(vfuncptr func, Var * arg)
 {
     char *S1=NULL,*S2=NULL;
     int *Result=(int *)calloc(1,sizeof(int));
+
     Alist alist[3];
     alist[0] = make_alist("target", ID_STRING, NULL, &S1);
     alist[1] = make_alist("source", ID_STRING, NULL, &S2);
@@ -1489,6 +1234,7 @@ Var *
 ff_pow(vfuncptr func, Var * arg)
 {
     Var *ob1 = NULL, *ob2 = NULL;
+
     Alist alist[3];
     alist[0] = make_alist( "ob1", ID_VAL,   NULL,     &ob1);
     alist[1] = make_alist( "ob2", ID_VAL,   NULL,     &ob2);
@@ -1510,10 +1256,17 @@ ff_pow(vfuncptr func, Var * arg)
 Var *
 ff_system(vfuncptr func, Var * arg)
 {
-    Var *v;
-    if ((v = verify_single_string(func, arg)) != NULL) {
-        system(V_STRING(v));
-    }
+    char *str= NULL;
+	Alist alist[2];
+	alist[0] = make_alist( "command",    ID_STRING,    NULL,    &str);
+	alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (str == NULL) {
+		parse_error("Not enough arguments to function: %s()", func->name);
+		return(NULL);
+	}
+	system(str);
     return (NULL);
 }
 
@@ -1635,23 +1388,17 @@ ff_hedit(vfuncptr func, Var * arg)
     char *tmp, *editor, buf[256];
 
     Alist alist[2];
-    alist[0] = make_alist("number",    ID_VAL,    NULL,     &value);
+    alist[0] = make_alist("number",    INT,    NULL,     &count);
     alist[1].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(NULL);
-
-    if (value == NULL)  {
-        count=10;
-    } else if ((i = extract_int(value, 0)) != 0) {
-        count = i;
-    }
 
     state = history_get_history_state();
     if (count >= state->length) {
         parse_error("%s: not that many history entires", func->name);
         return(NULL);
     }
-    tmp = make_temp_file_path();
+    tmp = make_temp_file_path(); 
     if (tmp == NULL || (fp = fopen(tmp, "w")) == NULL ) {
         parse_error("%s: unable to open temp file", func->name);
         if (tmp) free(tmp);
@@ -1663,17 +1410,18 @@ ff_hedit(vfuncptr func, Var * arg)
     }
     fclose(fp);
 
-#ifdef __CYGWIN__
+#if 0 /* fdef __CYGWIN__ */
     if ((editor = getenv("EDITOR")) == NULL) editor = "notepad";
-	if (_spawnlp(_P_NOWAIT, editor, editor, tmp, NULL) == -1){
-		parse_error("Unable to open editor.");
-		return(NULL);
-	}
-#else 
+    if (_spawnlp(_P_NOWAIT, editor, editor, tmp, NULL) == -1){
+        parse_error("Unable to open editor.");
+        return(NULL);
+    }
+#else
     if ((editor = getenv("EDITOR")) == NULL) editor = "/bin/vi";
-	sprintf(buf, "%s %s", editor, tmp);
-	system(buf);
+    sprintf(buf, "%s %s", editor, tmp);
+    system(buf);
 #endif /* __CYGWIN__ */
+
 
     fp = fopen(tmp, "r");
     unlink(tmp);
@@ -1753,7 +1501,7 @@ ff_fork(vfuncptr func, Var * arg)
 Var *
 ff_eval(vfuncptr func, Var * arg)
 {
-    char *expr;
+    char *expr = NULL;
     char *buf;
 	
     Alist alist[2];
@@ -1780,7 +1528,7 @@ ff_eval(vfuncptr func, Var * arg)
 Var *
 ff_syscall(vfuncptr func, Var * arg)
 {
-    char *expr;
+    char *expr = NULL;
     FILE *fp;
 
     Var *o;
@@ -1834,7 +1582,7 @@ ff_syscall(vfuncptr func, Var * arg)
 Var *
 ff_dump(vfuncptr func, Var * arg)
 {
-    Var *v;
+    Var *v = NULL;
     int indent = 0, depth = 0;
 
     Alist alist[4];

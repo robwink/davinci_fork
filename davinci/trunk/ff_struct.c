@@ -1,7 +1,7 @@
 #include "parser.h"
 #include "func.h"
-#include <sys/stat.h>
-#ifndef _WIN32
+
+#ifndef __CYGWIN__
 #include <sys/mman.h>
 #endif
 
@@ -50,13 +50,13 @@ make_struct(int ac, Var **av)
 Var *
 ff_struct(vfuncptr func, Var * arg)
 {
-	Var *v;
+    Var *v;
     int ac;
     Var **av;
 
     make_args(&ac, &av, func, arg);
-	v = make_struct(ac-1, av+1);
-	free(av);
+    v = make_struct(ac-1, av+1);
+    free(av);
     return(v);
 }
 
@@ -75,19 +75,19 @@ add_struct(Var *s, const char *name, Var *exp)
         if ((i = Narray_find(V_STRUCT(s), name, NULL)) != -1) {
             Narray_replace(V_STRUCT(s), i, exp, (void **)&old);
             if (old) {
-				/*
-				** Gotta claim the memory before we free it
-				*/
-				mem_claim(old);
-				free_var(old);
-			}
+                /*
+                ** Gotta claim the memory before we free it
+                */
+                mem_claim(old);
+                free_var(old);
+            }
         }
     }
-	/*
-	** This appears to be necessary to prevent structure elements from
-	** being free'd later.
-	*/
-	mem_claim(exp);
+    /*
+    ** This appears to be necessary to prevent structure elements from
+    ** being free'd later.
+    */
+    mem_claim(exp);
 }
 
 
@@ -105,8 +105,8 @@ ff_insert_struct(vfuncptr func, Var * arg)
 {
     Var *a = NULL, b, *v = NULL, *e;
     char *name = NULL;
-	Var *before = NULL, *after = NULL;
-	int pos;
+    Var *before = NULL, *after = NULL;
+    int pos;
 
     int ac;
     Var **av;
@@ -118,24 +118,24 @@ ff_insert_struct(vfuncptr func, Var * arg)
     alist[4] = make_alist( "after",     ID_UNK,     NULL,     &after);
     alist[5].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (a == NULL) {
         parse_error("Object is null");
         return(NULL);
     }
 
-	if (before && after) {
-		parse_error("Only one of before= or after= can be specified");
-		return(NULL);
-	}
-	
-	/*
-	** If the user doesn't pass a name, then try to take the name from the
-	** incoming variable.
-	*/
+    if (before && after) {
+        parse_error("Only one of before= or after= can be specified");
+        return(NULL);
+    }
+    
+    /*
+    ** If the user doesn't pass a name, then try to take the name from the
+    ** incoming variable.
+    */
     if (name == NULL) {
-		if (v != NULL) name = V_NAME(v);
+        if (v != NULL) name = V_NAME(v);
     }
 
     if (v == NULL) {
@@ -156,30 +156,30 @@ ff_insert_struct(vfuncptr func, Var * arg)
         v = V_DUP(v);
     }
 
-	if (name != NULL && find_struct(a, name, NULL) != -1) {
-		parse_error("Structure already contains element: %s", name);
-		return(NULL);
-	}
+    if (name != NULL && find_struct(a, name, NULL) != -1) {
+        parse_error("Structure already contains element: %s", name);
+        return(NULL);
+    }
 
-	if (before != NULL) {
-		pos = struct_pos(a, before);
-		if (pos >= 0) {
-			insert_struct(a, pos, name, v);
-		} else {
-			parse_error("bad position");
-			return(NULL);
-		}
-	} else if (after) {
-		pos = struct_pos(a, after);
-		if (pos >= 0) {
-			insert_struct(a, pos+1, name, v);
-		} else {
-			parse_error("bad position");
-			return(NULL);
-		}
-	} else {
-		add_struct(a, name, v);
-	}
+    if (before != NULL) {
+        pos = struct_pos(a, before);
+        if (pos >= 0) {
+            insert_struct(a, pos, name, v);
+        } else {
+            parse_error("bad position");
+            return(NULL);
+        }
+    } else if (after) {
+        pos = struct_pos(a, after);
+        if (pos >= 0) {
+            insert_struct(a, pos+1, name, v);
+        } else {
+            parse_error("bad position");
+            return(NULL);
+        }
+    } else {
+        add_struct(a, name, v);
+    }
 
     return(v);
 }
@@ -193,44 +193,42 @@ ff_insert_struct(vfuncptr func, Var * arg)
 int
 struct_pos(Var *a, Var *v)
 {
+    int pos = -1;
+    Var *e;
+    char *name;
 
-  int	pos = -1;
-  Var	*e;
-  char	*name;
-
-  if (V_TYPE(v) == ID_STRING) {
-    name = V_STRING(v);
-    pos = find_struct(a, V_STRING(v), NULL);
-    if (pos == -1) {
-      parse_error("Structure does not contain element: %s", name);
-    }
-  } else {
-    /* The user passed a number, it is one based */
-    e = eval(v);
-    if (e == NULL) {
-      parse_error("Unable to find variable: %s", V_NAME(v));
-      return(-1); /* JAS FIX: this was returning NULL */
-    }
-    v = e;
-    if (V_TYPE(v) == ID_VAL) {
-      pos = extract_int(v, 0);
-      if (pos > 0 && pos <= get_struct_count(a)) {
-	return(pos-1);
-      } else {
-	return(-1);
-      }
+    if (V_TYPE(v) == ID_STRING) {
+        name = V_STRING(v);
+        pos = find_struct(a, V_STRING(v), NULL);
+        if (pos == -1) {
+            parse_error("Structure does not contain element: %s", name);
+            return(-1);
+        }
     } else {
-      parse_error("Not a value");
+        /* The user passed a number, it is one based */
+        e = eval(v);
+        if (e == NULL) {
+            parse_error("Unable to find variable: %s", V_NAME(v));
+            return(-1);
+        }
+        v = e;
+        if (V_TYPE(v) == ID_VAL) {
+            pos = extract_int(v, 0);
+            if (pos > 0 && pos <= get_struct_count(a)) {
+                return(pos-1);
+            } else {
+                return(-1);
+            }
+        } else {
+            parse_error("Not a value");
+        }
     }
-  }
-
-  return(pos);
-
+    return(pos);
 }
 
 insert_struct(Var *a, int pos, char *name, Var *data)
 {
-	Narray_insert(V_STRUCT(a), name, data, pos);
+    Narray_insert(V_STRUCT(a), name, data, pos);
 }
 
 Var *
@@ -244,13 +242,13 @@ ff_get_struct(vfuncptr func, Var * arg)
     alist[1] = make_alist( "name",      ID_STRING,     NULL,     &name);
     alist[2].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (a == NULL) {
         parse_error("Object is null");
         return(NULL);
     }
-	
+    
     if (name == NULL) {
         parse_error("name is null");
         return(NULL);
@@ -263,50 +261,34 @@ ff_get_struct(vfuncptr func, Var * arg)
 Var *
 varray_subset(Var *v, Range *r)
 {
+    Var *s;
+    int size;
+    int i, j;
+    char *name;
+    Var *data;
 
-  Var	*s;
-  int	size;
-  int	i, j;
-  char	*name;
-  /* JAS FIX: not sure if this ever worked before..
-     Var	**data, *old;
-  */
-  Var	*data;
+    size = 1 + (r->hi[0] - r->lo[0]) / r->step[0];
 
-  size = 1 + (r->hi[0] - r->lo[0]) / r->step[0];
-
-  if (size == 1) {
-    get_struct_element(v, r->lo[0], NULL, &s);
-  } else {
-    /* this code is broken */
-    /*
-      s = new_struct(size);
-      for (i = 0 ; i < size ; i++) {
-      j = r->lo[0] + i *r->step[0];
-      get_struct_element(v, j, NULL, &data);
-      Narray_replace(V_STRUCT(s), i, data, (void **)&old);
-      if (old) free_var(old);
-      }
-    */
-    s = new_struct(size);
-    for (i = 0 ; i < size ; i++) {
-      j = r->lo[0] + i *r->step[0];
-      get_struct_element(v, j, &name, &data);
-      data = V_DUP(data);
-      Narray_add(V_STRUCT(s), name, data);
-      mem_claim(data);
+    if (size == 1) {
+        get_struct_element(v, r->lo[0], NULL, &s);
+    } else {
+        s = new_struct(size);
+        for (i = 0 ; i < size ; i++) {
+            j = r->lo[0] + i *r->step[0];
+            get_struct_element(v, j, &name, &data);
+            data = V_DUP(data);
+            Narray_add(V_STRUCT(s), name, data);
+            mem_claim(data);
+        }
     }
-  }
-
-  return(s);
-
+    return(s);
 }
 
 /*
 ** Set 1 to 1
 ** Set 1 to struct
-** Set many to 1		( replication )
-** Set many to many		( same size )
+** Set many to 1        ( replication )
+** Set many to many     ( same size )
 */
 
 Var *
@@ -358,13 +340,19 @@ create_struct(Var *v)
 {
     Var *p, *q, *r, *s, *tmp;
     char *name;
-    p = v;
+    int count;
+    int i;
 
-    s = new_struct(0);
+    count = 0;
+    if (v != NULL) {
+        count = Narray_count(V_ARGS(v));
+    }
+    s = new_struct(count);
 
-    while(p != NULL) {
-        q = p->next;
+    for (i = 0 ; i < count ; i++) {
         name = NULL;
+        Narray_get(V_ARGS(v), i, NULL, &p);
+
         if (V_TYPE(p) == ID_KEYWORD) {
             name = V_NAME(p);
             p = V_KEYVAL(p);
@@ -375,10 +363,9 @@ create_struct(Var *v)
             free_var(s);
             return(NULL);
         }
-		tmp = V_DUP(r);
-		mem_claim(tmp);
+        tmp = V_DUP(r);
+        mem_claim(tmp);
         add_struct(s, name, tmp);
-        p = q;
     }
     return(s);
 }
@@ -414,8 +401,9 @@ find_struct(Var *a, char *b, Var **data)
 void
 free_struct(Var *v)
 {
-  Narray_free(V_STRUCT(v), free_var);
+    Narray_free(V_STRUCT(v), free_var);
 }
+
 
 compare_struct(Var *a, Var *b)
 {
@@ -443,34 +431,33 @@ get_struct_element(const Var *v, const int i, char **name, Var **data)
 {
     Narray_get(V_STRUCT(v), i, name, (void **)data);
 }
-
 int
 get_struct_count(const Var *v) 
 {
-  return(Narray_count(V_STRUCT(v)));
+    return(Narray_count(V_STRUCT(v)));
 }
 
 int
 get_struct_names(const Var *v, char ***names, const char *prefix) 
 {
-	Var *data;
-	char *name;
-	int len = (prefix != NULL ? strlen(prefix) : 0);
-	int n = get_struct_count(v);
-	char **p = calloc(n+1, sizeof(char **));
-	int count = 0;
-	int i;
+    Var *data;
+    char *name;
+    int len = (prefix != NULL ? strlen(prefix) : 0);
+    int n = get_struct_count(v);
+    char **p = calloc(n+1, sizeof(char **));
+    int count = 0;
+    int i;
 
-	for (i = 0 ; i < n ; i++) {
-		name = NULL;
-		get_struct_element(v, i, &name, &data);
-		if (name != NULL && (len == 0 || !strncmp(prefix, name, len))) {
-			p[count++] = strdup(name);
-		}
-	}
-	p[count++] = NULL;
-	*names = p;
-	return(count);
+    for (i = 0 ; i < n ; i++) {
+        name = NULL;
+        get_struct_element(v, i, &name, &data);
+        if (name != NULL && (len == 0 || !strncmp(prefix, name, len))) {
+            p[count++] = strdup(name);
+        }
+    }
+    p[count++] = NULL;
+    *names = p;
+    return(count);
 }
 
 Var *
@@ -484,8 +471,8 @@ duplicate_struct(Var *v)
 
     for (i = 0 ; i < count ; i++) {
         get_struct_element(v, i, &name, &data);
-		data = V_DUP(data);
-		mem_claim(data);
+        data = V_DUP(data);
+        mem_claim(data);
         add_struct(r, name, data);
     }
     return(r);
@@ -501,33 +488,33 @@ duplicate_struct(Var *v)
 Var *
 concatenate_struct(Var *a, Var *b)
 {
-	int i;
-	char *name;
-	Var *c, *data;
-	Var *aa, *bb;
+    int i;
+    char *name;
+    Var *c, *data;
+    Var *aa, *bb;
 
-	/* verify that both args are usable */
-	if (V_TYPE(a) == NULL || V_TYPE(b) == NULL) return(NULL);
+    /* verify that both args are usable */
+    if (V_TYPE(a) == NULL || V_TYPE(b) == NULL) return(NULL);
 
-	/* verify that there's no name conflicts */
-	for (i = 0 ; i < get_struct_count(b) ; i++) {
-		get_struct_element(b, i, &name, NULL);
-		if (find_struct(a, name, NULL) >= 0) {
-			parse_error("Structures both contain element named: %s", name);
-			return(NULL);
-		}
-	}
-	/* ok to proceed */
+    /* verify that there's no name conflicts */
+    for (i = 0 ; i < get_struct_count(b) ; i++) {
+        get_struct_element(b, i, &name, NULL);
+        if (find_struct(a, name, NULL) >= 0) {
+            parse_error("Structures both contain element named: %s", name);
+            return(NULL);
+        }
+    }
+    /* ok to proceed */
 
-	aa = duplicate_struct(a);
+    aa = duplicate_struct(a);
 
-	for (i = 0 ; i < get_struct_count(b) ; i++) {
-		get_struct_element(b, i, &name, &data);
-		data = V_DUP(data);
-		mem_claim(data);
-		add_struct(aa, name, data);
-	}
-	return(aa);
+    for (i = 0 ; i < get_struct_count(b) ; i++) {
+        get_struct_element(b, i, &name, &data);
+        data = V_DUP(data);
+        mem_claim(data);
+        add_struct(aa, name, data);
+    }
+    return(aa);
 }
 
 /**************************************************************************
@@ -536,31 +523,31 @@ concatenate_struct(Var *a, Var *b)
 Var *
 ff_remove_struct(vfuncptr func, Var * arg)
 {
-	Var *v = NULL, *a= NULL, *s;
-	char *name = NULL;
+    Var *v = NULL, *a= NULL, *s;
+    char *name = NULL;
 
     Alist alist[3];
     alist[0] = make_alist( "structure",    ID_STRUCT,    NULL,     &a);
     alist[1] = make_alist( "name",         ID_STRING,     NULL,     &name);
     alist[2].name = NULL;
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (a == NULL ) {
-		parse_error("No structure specified.");
-		return(NULL);
-	}
-	if (name == NULL) {
-		parse_error("No name specified to remove from structure.");
-		return(NULL);
-	}
+    if (a == NULL ) {
+        parse_error("No structure specified.");
+        return(NULL);
+    }
+    if (name == NULL) {
+        parse_error("No name specified to remove from structure.");
+        return(NULL);
+    }
 
-	if (find_struct(a, name, NULL) < 0) {
-		parse_error("Structure does not contain element: %s", name);
-		return(NULL);
-	} else {
-		s = Narray_delete(V_STRUCT(a), name);
-		v = V_DUP(s);
-		free_var(s);
-	}
-	return(v);
+    if (find_struct(a, name, NULL) < 0) {
+        parse_error("Structure does not contain element: %s", name);
+        return(NULL);
+    } else {
+        s = Narray_delete(V_STRUCT(a), name);
+        v = V_DUP(s);
+        free_var(s);
+    }
+    return(v);
 }
