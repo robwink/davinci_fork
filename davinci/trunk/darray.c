@@ -59,6 +59,11 @@
  ** int Narray_replace(Narray *a, int i, void *new, void **old)
  **
  **    Replace the data element at index i, returning the old one
+ **
+ ** void * Narray_delete(Narray *a, char *key)
+ **
+ **    Deletes the key from the Narray and returns the data
+ **    associated with it.
  **/
 
 #include <stdio.h>
@@ -296,6 +301,7 @@ Narray_delete(Narray *a, char *key)
 	int i;
 	Nnode n;
 	Nnode *found, *node;
+	void *data;
 
 	if (a == NULL) return NULL;
 
@@ -322,8 +328,10 @@ Narray_delete(Narray *a, char *key)
 				node->index --;
 			}
 		}
-
-		return avl_delete(a->tree, found);
+		node = avl_delete(a->tree, found);
+		data = node->value;
+		Nnode_free(node, NULL);
+		return (data);
 	}
 
 	return NULL;

@@ -129,7 +129,7 @@ ff_add_struct(vfuncptr func, Var * arg)
     } else {
         e = eval(v);
         if (e == NULL) {
-            parse_error("Unable to find variable: %s\n", V_NAME(v));
+            parse_error("Unable to find variable: %sn", V_NAME(v));
             return(NULL);
         }
         v = e;
@@ -144,8 +144,6 @@ ff_get_struct(vfuncptr func, Var * arg)
     Var *a = NULL, b, *v;
     char *name = NULL;
 
-    int ac;
-    Var **av;
     Alist alist[3];
     alist[0] = make_alist( "object",    ID_STRUCT,    NULL,     &a);
     alist[1] = make_alist( "name",      ID_STRING,     NULL,     &name);
@@ -261,7 +259,7 @@ create_struct(Var *v)
         }
         r = eval(p);
         if (r == NULL) {
-            parse_error("Unable to find variable: %s\n", V_NAME(p));
+            parse_error("Unable to find variable: %s", V_NAME(p));
             free_var(s);
             return(NULL);
         }
@@ -398,7 +396,7 @@ concatenate_struct(Var *a, Var *b)
 	for (i = 0 ; i < get_struct_count(b) ; i++) {
 		get_struct_element(b, i, &name, NULL);
 		if (find_struct(a, name, NULL) >= 0) {
-			parse_error("Structures both contain element named: %s\n", name);
+			parse_error("Structures both contain element named: %s", name);
 			return(NULL);
 		}
 	}
@@ -413,4 +411,39 @@ concatenate_struct(Var *a, Var *b)
 		add_struct(aa, name, data);
 	}
 	return(aa);
+}
+
+/**************************************************************************
+* ff_extract_struct() - Removes an element from a structure and returns it.
+***************************************************************************/
+Var *
+ff_remove_struct(vfuncptr func, Var * arg)
+{
+	Var *v = NULL, *a= NULL, *s;
+	char *name = NULL;
+
+    Alist alist[3];
+    alist[0] = make_alist( "structure",    ID_STRUCT,    NULL,     &a);
+    alist[1] = make_alist( "name",         ID_STRING,     NULL,     &name);
+    alist[2].name = NULL;
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (a == NULL ) {
+		parse_error("No structure specified.");
+		return(NULL);
+	}
+	if (name == NULL) {
+		parse_error("No name specified to remove from structure.");
+		return(NULL);
+	}
+
+	if (find_struct(a, name, NULL) < 0) {
+		parse_error("Structure does not contain element: %s", name);
+		return(NULL);
+	} else {
+		s = Narray_delete(V_STRUCT(a), name);
+		v = V_DUP(s);
+		free_var(s);
+	}
+	return(v);
 }
