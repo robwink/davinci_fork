@@ -48,7 +48,7 @@
 
 #ifndef HELPFILE
 #ifndef __MSDOS__
-#define HELPFILE "/usr/local/lib/davinci.gih"
+#define HELPFILE "/usr/local/lib/dv.gih"
 #else
 #define HELPFILE "docs\\dv.gih"
 #endif

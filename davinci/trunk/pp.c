@@ -11,6 +11,7 @@ void pp_print_var(Var *v, char *name, int indent) ;
 
 extern Var * textarray_subset(Var *, Var *);
 extern Var * set_text(Var *, Range *,Var *);
+extern Var * where_text(Var *,Var *,Var *);
 
 /*
 void 
@@ -856,7 +857,60 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
             parse_error("Cannot perform boolean logic on type STRING");
             return(NULL);
         }
-    } else if (op != ID_ADD) {
+    } 
+	 
+	 else if ((V_TYPE(exp1) == ID_TEXT || V_TYPE(exp1) == ID_STRING) &&
+				(V_TYPE(exp2) == ID_STRING || V_TYPE(exp2) == ID_TEXT)) {
+		int *Data;
+		int f1,f2;
+		int Row;
+		Var *Tmp1,*Tmp2;
+
+		if (V_TYPE(exp1)==ID_TEXT)
+			f1=1;
+		else
+			f1=0;
+
+		if (V_TYPE(exp2)==ID_TEXT)
+			f2=1;
+		else
+			f2=0;
+		
+		if (f1 && f2 && V_TEXT(exp1).Row != V_TEXT(exp2).Row){
+			parse_error("Text arrays must be the same size");
+			return(NULL);
+		}
+
+		else if (op==ID_OR || op==ID_AND){
+			parse_error("Can't perform boolean operators on TEXT");
+			return(NULL);
+		}
+
+		if (f1)
+			Row=V_TEXT(exp1).Row;
+		else
+			Row=V_TEXT(exp2).Row;
+
+		Tmp1=newVar();
+		Tmp2=newVar();
+
+		V_TYPE(Tmp1)=ID_STRING;
+		V_TYPE(Tmp2)=ID_STRING;
+
+		Data=(int *)calloc(Row,sizeof(int));
+		
+		for (i=0;i<Row;i++){
+			V_STRING(Tmp1)=(f1 ? (char *)V_TEXT(exp1).text[i] : V_STRING(exp1));
+			V_STRING(Tmp2)=(f2 ? (char *)V_TEXT(exp2).text[i] : V_STRING(exp2));
+			Data[i]=extract_int((pp_relop(Tmp1,op,Tmp2)),0);
+		}
+		V_STRING(Tmp1)=NULL;
+		V_STRING(Tmp2)=NULL;
+		return(newVal(BSQ,1,Row,1,INT,Data));
+	 }	
+
+
+	 else if (op != ID_ADD) {
         parse_error("Operation not supported on string and non-string");
         return(NULL);
     } else {
@@ -912,7 +966,37 @@ pp_relop(Var *exp1, int op, Var *exp2)
             parse_error("Cannot perform boolean logic on type STRING");
             return(NULL);
         }
-    } else {
+    } 
+	 else if (V_TYPE(exp1) == ID_TEXT && V_TYPE(exp2) == ID_TEXT) {
+		Var *Tmp1, *Tmp2;
+		int *Data;
+		if (V_TEXT(exp1).Row != V_TEXT(exp2).Row){
+			parse_error("Text arrays must be the same size");
+			return(NULL);
+		}
+		else if (op==ID_OR || op==ID_AND){
+			parse_error("Can't perform boolean operators on TEXT");
+			return(NULL);
+		}
+
+		Tmp1=newVar();
+		Tmp2=newVar();
+		V_TYPE(Tmp1)=ID_STRING;
+		V_TYPE(Tmp2)=ID_STRING;
+		Data=(int *)calloc(V_TEXT(exp1).Row,sizeof(int));
+		
+		for (i=0;i<V_TEXT(exp1).Row;i++){
+			V_STRING(Tmp1)=V_TEXT(exp1).text[i];
+			V_STRING(Tmp2)=V_TEXT(exp2).text[i];
+			Data[i]=extract_int((pp_relop(Tmp1,op,Tmp2)),0);
+		}
+		V_STRING(Tmp1)=NULL;
+		V_STRING(Tmp2)=NULL;
+		return(newVal(BSQ,1,V_TEXT(exp1).Row,1,INT,Data));
+	 }	
+
+
+	 else {
         if (V_TYPE(exp1) != ID_VAL || V_TYPE(exp2) != ID_VAL) {
             parse_error("Relational operators require values.");
             return(NULL);
@@ -1086,6 +1170,10 @@ pp_set_where(Var *id, Var *where, Var *exp)
   return(NULL);
   }
   */
+	 if (V_TYPE(id)==ID_TEXT && 
+		  (V_TYPE(exp)==ID_STRING || V_TYPE(exp)==ID_TEXT) &&
+		  V_TYPE(where)==ID_VAL)
+			 return(where_text(id,where,exp));
 
     if (V_DSIZE(exp) != 1) {
         for (i = 0 ; i < 3 ; i++) {

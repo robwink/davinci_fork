@@ -121,7 +121,8 @@ pp_math(Var * a, int op, Var * b)
     **
     **/
 
-    if (V_TYPE(a) == ID_STRING || V_TYPE(b) == ID_STRING) {
+    if (V_TYPE(a) == ID_STRING || V_TYPE(b) == ID_STRING || 
+		  V_TYPE(a) == ID_TEXT	 || V_TYPE(b) == ID_TEXT) {
         return (pp_math_strings(a, op, b));
     }
     if (V_TYPE(a) != ID_VAL || V_TYPE(b) != ID_VAL) {	/* can this happen? */

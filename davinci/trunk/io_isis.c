@@ -476,7 +476,7 @@ WriteISIS(Var *s, FILE *fp, char *filename, char *title )
     memset(buf+strlen(buf), ' ', 1024-strlen(buf));
 
     if (fp == NULL) {
-        if ((fp = fopen(filename, "w")) == NULL) {
+        if ((fp = fopen(filename, "wb")) == NULL) {
             return 0;
         }
     }

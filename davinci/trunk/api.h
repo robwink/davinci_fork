@@ -6,106 +6,110 @@ extern "C" {
 #endif
 
 /* Prototypes; sorted in ascending order */
-void c_pladv(int page);
-void c_plaxes(float x0,float y0,char *xopt,float xtick,int nxsub,char *yopt,float ytick,int nysub);
-void c_plbin(int nbin,float *x,float *y,int center);
-void c_plbop();
-void c_plbox(char *xopt,float xtick,int nxsub,char *yopt,float ytick,int nysub);
-void c_plbox3(char *xopt,char *xlabel,float xtick,int nsubx,char *yopt,char *ylabel,float ytick,int nsuby,char *zopt,char *zlabel,float ztick,int nsubz);
-void c_plcol0(int icol0);
-void c_plcol1(float col1);
-void c_plcpstrm(int iplsr,int flags);
-void c_plend();
-void c_plend1();
-void c_plenv(float xmin,float xmax,float ymin,float ymax,int just,int axis);
-void c_pleop();
-void c_plerrx(int n,float *xmin,float *xmax,float *y);
-void c_plerry(int n,float *x,float *ymin,float *ymax);
-void c_plfamadv();
-void c_plfill(int n,float *x,float *y);
-void c_plflush();
-void c_plfont(int ifont);
-void c_plfontld(int fnt);
-void c_plgchr(float *p_def,float *p_ht);
-void c_plgcol0(int icol0,int *r,int *g,int *b);
-void c_plgcolbg(int *r,int *g,int *b);
-void c_plgdev(char *p_dev);
-void c_plgdidev(float *p_mar,float *p_aspect,float *p_jx,float *p_jy);
-void c_plgdiori(float *p_rot);
-void c_plgdiplt(float *p_xmin,float *p_ymin,float *p_xmax,float *p_ymax);
-void c_plgfam(int *p_fam,int *p_num,int *p_bmax);
-void c_plgfnam(char *fnam);
-void c_plglevel(int *p_level);
-void c_plgpage(float *p_xp,float *p_yp,int *p_xleng,int *p_yleng,int *p_xoff,int *p_yoff);
-void c_plgra();
-void c_plgspa(float *xmin,float *xmax,float *ymin,float *ymax);
-void c_plgstrm(int *p_strm);
-void c_plgver(char *p_ver);
-void c_plgxax(int *p_digmax,int *p_digits);
-void c_plgyax(int *p_digmax,int *p_digits);
-void c_plgzax(int *p_digmax,int *p_digits);
-void c_plhist(int n,float *data,float datmin,float datmax,int nbin,int oldwin);
-void c_plhls(float h,float l,float s);
-void c_plinit();
-void c_pljoin(float x1,float y1,float x2,float y2);
-void c_pllab(char *xlabel,char *ylabel,char *tlabel);
-void c_plline(int n,float *x,float *y);
-void c_plline3(int n,float *x,float *y,float *z);
-void c_pllsty(int lin);
-void c_plmkstrm(int *p_strm);
-void c_plmtex(char *side,float disp,float pos,float just,char *text);
-void c_plpat(int nlin,int *inc,int *del);
-void c_plpoin(int n,float *x,float *y,int code);
-void c_plpoin3(int n,float *x,float *y,float *z,int code);
-void c_plpoly3(int n,float *x,float *y,float *z,int *draw);
-void c_plprec(int setp,int prec);
-void c_plpsty(int patt);
-void c_plptex(float x,float y,float dx,float dy,float just,char *text);
-void c_plreplot();
-void c_plrgb(float r,float g,float b);
-void c_plrgb1(int r,int g,int b);
-void c_plschr(float def,float scale);
-void c_plscmap0(int *r,int *g,int *b,int ncol0);
-void c_plscmap0n(int ncol0);
-void c_plscmap1(int *r,int *g,int *b,int ncol1);
-void c_plscmap1l(int itype,int npts,float *intensity,float *coord1,float *coord2,float *coord3,int *rev);
-void c_plscmap1n(int ncol1);
-void c_plscol0(int icol0,int r,int g,int b);
-void c_plscolbg(int r,int g,int b);
-void c_plscolor(int color);
-void c_plsdev(char *devname);
-void c_plsdidev(float mar,float aspect,float jx,float jy);
-void c_plsdimap(int dimxmin,int dimxmax,int dimymin,int dimymax,float dimxpmm,float dimypmm);
-void c_plsdiori(float rot);
-void c_plsdiplt(float xmin,float ymin,float xmax,float ymax);
-void c_plsdiplz(float xmin,float ymin,float xmax,float ymax);
-void c_plsesc(char esc);
-void c_plsfam(int fam,int num,int bmax);
-void c_plsfnam(char *fnam);
-void c_plsmaj(float def,float scale);
-void c_plsmin(float def,float scale);
-void c_plsori(int ori);
-void c_plspage(float xp,float yp,int xleng,int yleng,int xoff,int yoff);
-void c_plspause(int pause);
-void c_plsstrm(int strm);
-void c_plssub(int nx,int ny);
-void c_plssym(float def,float scale);
-void c_plstar(int nx,int ny);
-void c_plstart(char *devname,int nx,int ny);
-void c_plstyl(int nms,int *mark,int *space);
-void c_plsvpa(float xmin,float xmax,float ymin,float ymax);
-void c_plsxax(int digmax,int digits);
-void c_plsyax(int digmax,int digits);
-void c_plsym(int n,float *x,float *y,int code);
-void c_plszax(int digmax,int digits);
-void c_pltext();
-void c_plvasp(float aspect);
-void c_plvpas(float xmin,float xmax,float ymin,float ymax,float aspect);
-void c_plvpor(float xmin,float xmax,float ymin,float ymax);
-void c_plvsta();
-void c_plw3d(float basex,float basey,float height,float xmin0,float xmax0,float ymin0,float ymax0,float zmin0,float zmax0,float alt,float az);
-void c_plwid(int width);
-void c_plwind(float xmin,float xmax,float ymin,float ymax);
+void pl_pladv(int page);
+void pl_plaxes(float x0,float y0,char *xopt,float xtick,int nxsub,char *yopt,float ytick,int nysub);
+void pl_plbin(int nbin,float *x,float *y,int center);
+void pl_plbop();
+void pl_plbox(char *xopt,float xtick,int nxsub,char *yopt,float ytick,int nysub);
+void pl_plbox3(char *xopt,char *xlabel,float xtick,int nsubx,char *yopt,char *ylabel,float ytick,int nsuby,char *zopt,char *zlabel,float ztick,int nsubz);
+void pl_plcol0(int icol0);
+void pl_plcol1(float col1);
+void pl_plcpstrm(int iplsr,int flags);
+void pl_plcross(float *x, float *y);
+void pl_plend();
+void pl_plend1();
+void pl_plenv(float xmin,float xmax,float ymin,float ymax,int just,int axis);
+void pl_pleop();
+void pl_plerrx(int n,float *xmin,float *xmax,float *y);
+void pl_plerry(int n,float *x,float *ymin,float *ymax);
+void pl_plfamadv();
+void pl_plfill(int n,float *x,float *y);
+void pl_plflush();
+void pl_plfont(int ifont);
+void pl_plfontld(int fnt);
+void pl_plgchr(float *p_def,float *p_ht);
+void pl_plgcol0(int icol0,int *r,int *g,int *b);
+void pl_plgcolbg(int *r,int *g,int *b);
+void pl_plgdev(char *p_dev);
+void pl_plgdidev(float *p_mar,float *p_aspect,float *p_jx,float *p_jy);
+void pl_plgdiori(float *p_rot);
+void pl_plgdiplt(float *p_xmin,float *p_ymin,float *p_xmax,float *p_ymax);
+void pl_plgfam(int *p_fam,int *p_num,int *p_bmax);
+void pl_plgfnam(char *fnam);
+void pl_plglevel(int *p_level);
+void pl_plgpage(float *p_xp,float *p_yp,int *p_xleng,int *p_yleng,int *p_xoff,int *p_yoff);
+void pl_plgra();
+void pl_plgspa(float *xmin,float *xmax,float *ymin,float *ymax);
+void pl_plgstrm(int *p_strm);
+void pl_plgver(char *p_ver);
+void pl_plgwid(int *width);
+void pl_plgxax(int *p_digmax,int *p_digits);
+void pl_plgyax(int *p_digmax,int *p_digits);
+void pl_plgzax(int *p_digmax,int *p_digits);
+void pl_plhist(int n,float *data,float datmin,float datmax,int nbin,int oldwin);
+void pl_plhls(float h,float l,float s);
+void pl_plinit();
+void pl_pljoin(float x1,float y1,float x2,float y2);
+void pl_pllab(char *xlabel,char *ylabel,char *tlabel);
+void pl_plline(int n,float *x,float *y);
+void pl_plline3(int n,float *x,float *y,float *z);
+void pl_pllsty(int lin);
+void pl_plmkstrm(int *p_strm);
+void pl_plmtex(char *side,float disp,float pos,float just,char *text);
+void pl_plpat(int nlin,int *inc,int *del);
+void pl_plpoin(int n,float *x,float *y,int code);
+void pl_plpoin3(int n,float *x,float *y,float *z,int code);
+void pl_plpoly3(int n,float *x,float *y,float *z,int *draw);
+void pl_plprec(int setp,int prec);
+void pl_plpsty(int patt);
+void pl_plptex(float x,float y,float dx,float dy,float just,char *text);
+void pl_plptexd(float x,float y,float dx,float dy,float just,char *text);
+void pl_plreplot();
+void pl_plrgb(float r,float g,float b);
+void pl_plrgb1(int r,int g,int b);
+void pl_plschr(float def,float scale);
+void pl_plscmap0(int *r,int *g,int *b,int ncol0);
+void pl_plscmap0n(int ncol0);
+void pl_plscmap1(int *r,int *g,int *b,int ncol1);
+void pl_plscmap1l(int itype,int npts,float *intensity,float *coord1,float *coord2,float *coord3,int *rev);
+void pl_plscmap1n(int ncol1);
+void pl_plscol0(int icol0,int r,int g,int b);
+void pl_plscolbg(int r,int g,int b);
+void pl_plscolor(int color);
+void pl_plsdev(char *devname);
+void pl_plsdidev(float mar,float aspect,float jx,float jy);
+void pl_plsdimap(int dimxmin,int dimxmax,int dimymin,int dimymax,float dimxpmm,float dimypmm);
+void pl_plsdiori(float rot);
+void pl_plsdiplt(float xmin,float ymin,float xmax,float ymax);
+void pl_plsdiplz(float xmin,float ymin,float xmax,float ymax);
+void pl_plsesc(char esc);
+void pl_plsfam(int fam,int num,int bmax);
+void pl_plsfnam(char *fnam);
+void pl_plsmaj(float def,float scale);
+void pl_plsmin(float def,float scale);
+void pl_plsori(int ori);
+void pl_plspage(float xp,float yp,int xleng,int yleng,int xoff,int yoff);
+void pl_plspause(int pause);
+void pl_plsplw(char *title);
+void pl_plsstrm(int strm);
+void pl_plssub(int nx,int ny);
+void pl_plssym(float def,float scale);
+void pl_plstar(int nx,int ny);
+void pl_plstart(char *devname,int nx,int ny);
+void pl_plstyl(int nms,int *mark,int *space);
+void pl_plsvpa(float xmin,float xmax,float ymin,float ymax);
+void pl_plsxax(int digmax,int digits);
+void pl_plsyax(int digmax,int digits);
+void pl_plsym(int n,float *x,float *y,int code);
+void pl_plszax(int digmax,int digits);
+void pl_pltext();
+void pl_plvasp(float aspect);
+void pl_plvpas(float xmin,float xmax,float ymin,float ymax,float aspect);
+void pl_plvpor(float xmin,float xmax,float ymin,float ymax);
+void pl_plvsta();
+void pl_plw3d(float basex,float basey,float height,float xmin0,float xmax0,float ymin0,float ymax0,float zmin0,float zmax0,float alt,float az);
+void pl_plwid(int width);
+void pl_plwind(float xmin,float xmax,float ymin,float ymax);
 
 void plClearOpts();
 char *plFindCommand(char *fn);
@@ -127,17 +131,17 @@ void plgesc(char *p_esc);
 void plsError(int *errcode,char *errmsg);
 void plsxwin(int window_id);
 /* Wrappers: */
-APIARGS c_pladv_args[]={
-	{ "c_pladv",VOID },
+APIARGS pl_pladv_args[]={
+	{ "pl_pladv",VOID },
 	{ "page",INT } };
 void
-c_pladv_wrapper(int ac,APIARGS *av){
-	c_pladv(*((int *)av[1].argval));	/* int page */
+pl_pladv_wrapper(int ac,APIARGS *av){
+	pl_pladv(*((int *)av[1].argval));	/* int page */
 
 }
 
-APIARGS c_plaxes_args[]={
-	{ "c_plaxes",VOID },
+APIARGS pl_plaxes_args[]={
+	{ "pl_plaxes",VOID },
 	{ "x0",FLOAT },
 	{ "y0",FLOAT },
 	{ "xopt",CONSTBIT | BYTE  | PTRBIT },
@@ -147,8 +151,8 @@ APIARGS c_plaxes_args[]={
 	{ "ytick",FLOAT },
 	{ "nysub",INT } };
 void
-c_plaxes_wrapper(int ac,APIARGS *av){
-	c_plaxes(*((float *)av[1].argval),	/* float x0 */
+pl_plaxes_wrapper(int ac,APIARGS *av){
+	pl_plaxes(*((float *)av[1].argval),	/* float x0 */
 		*((float *)av[2].argval),	/* float y0 */
 		(char *)av[3].argval,	/* char *xopt */
 		*((float *)av[4].argval),	/* float xtick */
@@ -159,30 +163,30 @@ c_plaxes_wrapper(int ac,APIARGS *av){
 
 }
 
-APIARGS c_plbin_args[]={
-	{ "c_plbin",VOID },
+APIARGS pl_plbin_args[]={
+	{ "pl_plbin",VOID },
 	{ "nbin",INT },
 	{ "x",FLOAT  | PTRBIT },
 	{ "y",FLOAT  | PTRBIT },
 	{ "center",INT } };
 void
-c_plbin_wrapper(int ac,APIARGS *av){
-	c_plbin(*((int *)av[1].argval),	/* int nbin */
+pl_plbin_wrapper(int ac,APIARGS *av){
+	pl_plbin(*((int *)av[1].argval),	/* int nbin */
 		(float *)av[2].argval,	/* float *x */
 		(float *)av[3].argval,	/* float *y */
 		*((int *)av[4].argval));	/* int center */
 
 }
 
-APIARGS c_plbop_args[]={
-	{ "c_plbop",VOID } };
+APIARGS pl_plbop_args[]={
+	{ "pl_plbop",VOID } };
 void
-c_plbop_wrapper(int ac,APIARGS *av){
-	c_plbop();
+pl_plbop_wrapper(int ac,APIARGS *av){
+	pl_plbop();
 }
 
-APIARGS c_plbox_args[]={
-	{ "c_plbox",VOID },
+APIARGS pl_plbox_args[]={
+	{ "pl_plbox",VOID },
 	{ "xopt",CONSTBIT | BYTE  | PTRBIT },
 	{ "xtick",FLOAT },
 	{ "nxsub",INT },
@@ -190,8 +194,8 @@ APIARGS c_plbox_args[]={
 	{ "ytick",FLOAT },
 	{ "nysub",INT } };
 void
-c_plbox_wrapper(int ac,APIARGS *av){
-	c_plbox((char *)av[1].argval,	/* char *xopt */
+pl_plbox_wrapper(int ac,APIARGS *av){
+	pl_plbox((char *)av[1].argval,	/* char *xopt */
 		*((float *)av[2].argval),	/* float xtick */
 		*((int *)av[3].argval),	/* int nxsub */
 		(char *)av[4].argval,	/* char *yopt */
@@ -200,8 +204,8 @@ c_plbox_wrapper(int ac,APIARGS *av){
 
 }
 
-APIARGS c_plbox3_args[]={
-	{ "c_plbox3",VOID },
+APIARGS pl_plbox3_args[]={
+	{ "pl_plbox3",VOID },
 	{ "xopt",CONSTBIT | BYTE  | PTRBIT },
 	{ "xlabel",CONSTBIT | BYTE  | PTRBIT },
 	{ "xtick",FLOAT },
@@ -215,8 +219,8 @@ APIARGS c_plbox3_args[]={
 	{ "ztick",FLOAT },
 	{ "nsubz",INT } };
 void
-c_plbox3_wrapper(int ac,APIARGS *av){
-	c_plbox3((char *)av[1].argval,	/* char *xopt */
+pl_plbox3_wrapper(int ac,APIARGS *av){
+	pl_plbox3((char *)av[1].argval,	/* char *xopt */
 		(char *)av[2].argval,	/* char *xlabel */
 		*((float *)av[3].argval),	/* float xtick */
 		*((int *)av[4].argval),	/* int nsubx */
@@ -231,51 +235,64 @@ c_plbox3_wrapper(int ac,APIARGS *av){
 
 }
 
-APIARGS c_plcol0_args[]={
-	{ "c_plcol0",VOID },
+APIARGS pl_plcol0_args[]={
+	{ "pl_plcol0",VOID },
 	{ "icol0",INT } };
 void
-c_plcol0_wrapper(int ac,APIARGS *av){
-	c_plcol0(*((int *)av[1].argval));	/* int icol0 */
+pl_plcol0_wrapper(int ac,APIARGS *av){
+	pl_plcol0(*((int *)av[1].argval));	/* int icol0 */
 
 }
 
-APIARGS c_plcol1_args[]={
-	{ "c_plcol1",VOID },
+APIARGS pl_plcol1_args[]={
+	{ "pl_plcol1",VOID },
 	{ "col1",FLOAT } };
 void
-c_plcol1_wrapper(int ac,APIARGS *av){
-	c_plcol1(*((float *)av[1].argval));	/* float col1 */
+pl_plcol1_wrapper(int ac,APIARGS *av){
+	pl_plcol1(*((float *)av[1].argval));	/* float col1 */
 
 }
 
-APIARGS c_plcpstrm_args[]={
-	{ "c_plcpstrm",VOID },
+APIARGS pl_plcpstrm_args[]={
+	{ "pl_plcpstrm",VOID },
 	{ "iplsr",INT },
 	{ "flags",INT } };
 void
-c_plcpstrm_wrapper(int ac,APIARGS *av){
-	c_plcpstrm(*((int *)av[1].argval),	/* int iplsr */
+pl_plcpstrm_wrapper(int ac,APIARGS *av){
+	pl_plcpstrm(*((int *)av[1].argval),	/* int iplsr */
 		*((int *)av[2].argval));	/* int flags */
 
 }
 
-APIARGS c_plend_args[]={
-	{ "c_plend",VOID } };
+
+APIARGS pl_plcross_args[]={
+	{ "pl_plcross",VOID },
+	{ "x",FLOAT  | PTRBIT },
+	{ "y",FLOAT  | PTRBIT }};
 void
-c_plend_wrapper(int ac,APIARGS *av){
-	c_plend();
+pl_plcross_wrapper(int ac,APIARGS *av){
+	pl_plcross((float *)av[1].argval,	/* float *x */
+		(float *)av[2].argval);	/* float *y */
+
 }
 
-APIARGS c_plend1_args[]={
-	{ "c_plend1",VOID } };
+
+APIARGS pl_plend_args[]={
+	{ "pl_plend",VOID } };
 void
-c_plend1_wrapper(int ac,APIARGS *av){
-	c_plend1();
+pl_plend_wrapper(int ac,APIARGS *av){
+	pl_plend();
 }
 
-APIARGS c_plenv_args[]={
-	{ "c_plenv",VOID },
+APIARGS pl_plend1_args[]={
+	{ "pl_plend1",VOID } };
+void
+pl_plend1_wrapper(int ac,APIARGS *av){
+	pl_plend1();
+}
+
+APIARGS pl_plenv_args[]={
+	{ "pl_plenv",VOID },
 	{ "xmin",FLOAT },
 	{ "xmax",FLOAT },
 	{ "ymin",FLOAT },
@@ -283,8 +300,8 @@ APIARGS c_plenv_args[]={
 	{ "just",INT },
 	{ "axis",INT } };
 void
-c_plenv_wrapper(int ac,APIARGS *av){
-	c_plenv(*((float *)av[1].argval),	/* float xmin */
+pl_plenv_wrapper(int ac,APIARGS *av){
+	pl_plenv(*((float *)av[1].argval),	/* float xmin */
 		*((float *)av[2].argval),	/* float xmax */
 		*((float *)av[3].argval),	/* float ymin */
 		*((float *)av[4].argval),	/* float ymax */
@@ -293,208 +310,208 @@ c_plenv_wrapper(int ac,APIARGS *av){
 
 }
 
-APIARGS c_pleop_args[]={
-	{ "c_pleop",VOID } };
+APIARGS pl_pleop_args[]={
+	{ "pl_pleop",VOID } };
 void
-c_pleop_wrapper(int ac,APIARGS *av){
-	c_pleop();
+pl_pleop_wrapper(int ac,APIARGS *av){
+	pl_pleop();
 }
 
-APIARGS c_plerrx_args[]={
-	{ "c_plerrx",VOID },
+APIARGS pl_plerrx_args[]={
+	{ "pl_plerrx",VOID },
 	{ "n",INT },
 	{ "xmin",FLOAT  | PTRBIT },
 	{ "xmax",FLOAT  | PTRBIT },
 	{ "y",FLOAT  | PTRBIT } };
 void
-c_plerrx_wrapper(int ac,APIARGS *av){
-	c_plerrx(*((int *)av[1].argval),	/* int n */
+pl_plerrx_wrapper(int ac,APIARGS *av){
+	pl_plerrx(*((int *)av[1].argval),	/* int n */
 		(float *)av[2].argval,	/* float *xmin */
 		(float *)av[3].argval,	/* float *xmax */
 		(float *)av[4].argval);	/* float *y */
 
 }
 
-APIARGS c_plerry_args[]={
-	{ "c_plerry",VOID },
+APIARGS pl_plerry_args[]={
+	{ "pl_plerry",VOID },
 	{ "n",INT },
 	{ "x",FLOAT  | PTRBIT },
 	{ "ymin",FLOAT  | PTRBIT },
 	{ "ymax",FLOAT  | PTRBIT } };
 void
-c_plerry_wrapper(int ac,APIARGS *av){
-	c_plerry(*((int *)av[1].argval),	/* int n */
+pl_plerry_wrapper(int ac,APIARGS *av){
+	pl_plerry(*((int *)av[1].argval),	/* int n */
 		(float *)av[2].argval,	/* float *x */
 		(float *)av[3].argval,	/* float *ymin */
 		(float *)av[4].argval);	/* float *ymax */
 
 }
 
-APIARGS c_plfamadv_args[]={
-	{ "c_plfamadv",VOID } };
+APIARGS pl_plfamadv_args[]={
+	{ "pl_plfamadv",VOID } };
 void
-c_plfamadv_wrapper(int ac,APIARGS *av){
-	c_plfamadv();
+pl_plfamadv_wrapper(int ac,APIARGS *av){
+	pl_plfamadv();
 }
 
-APIARGS c_plfill_args[]={
-	{ "c_plfill",VOID },
+APIARGS pl_plfill_args[]={
+	{ "pl_plfill",VOID },
 	{ "n",INT },
 	{ "x",FLOAT  | PTRBIT },
 	{ "y",FLOAT  | PTRBIT } };
 void
-c_plfill_wrapper(int ac,APIARGS *av){
-	c_plfill(*((int *)av[1].argval),	/* int n */
+pl_plfill_wrapper(int ac,APIARGS *av){
+	pl_plfill(*((int *)av[1].argval),	/* int n */
 		(float *)av[2].argval,	/* float *x */
 		(float *)av[3].argval);	/* float *y */
 
 }
 
-APIARGS c_plflush_args[]={
-	{ "c_plflush",VOID } };
+APIARGS pl_plflush_args[]={
+	{ "pl_plflush",VOID } };
 void
-c_plflush_wrapper(int ac,APIARGS *av){
-	c_plflush();
+pl_plflush_wrapper(int ac,APIARGS *av){
+	pl_plflush();
 }
 
-APIARGS c_plfont_args[]={
-	{ "c_plfont",VOID },
+APIARGS pl_plfont_args[]={
+	{ "pl_plfont",VOID },
 	{ "ifont",INT } };
 void
-c_plfont_wrapper(int ac,APIARGS *av){
-	c_plfont(*((int *)av[1].argval));	/* int ifont */
+pl_plfont_wrapper(int ac,APIARGS *av){
+	pl_plfont(*((int *)av[1].argval));	/* int ifont */
 
 }
 
-APIARGS c_plfontld_args[]={
-	{ "c_plfontld",VOID },
+APIARGS pl_plfontld_args[]={
+	{ "pl_plfontld",VOID },
 	{ "fnt",INT } };
 void
-c_plfontld_wrapper(int ac,APIARGS *av){
-	c_plfontld(*((int *)av[1].argval));	/* int fnt */
+pl_plfontld_wrapper(int ac,APIARGS *av){
+	pl_plfontld(*((int *)av[1].argval));	/* int fnt */
 
 }
 
-APIARGS c_plgchr_args[]={
-	{ "c_plgchr",VOID },
+APIARGS pl_plgchr_args[]={
+	{ "pl_plgchr",VOID },
 	{ "p_def",FLOAT  | PTRBIT },
 	{ "p_ht",FLOAT  | PTRBIT } };
 void
-c_plgchr_wrapper(int ac,APIARGS *av){
-	c_plgchr((float *)av[1].argval,	/* float *p_def */
+pl_plgchr_wrapper(int ac,APIARGS *av){
+	pl_plgchr((float *)av[1].argval,	/* float *p_def */
 		(float *)av[2].argval);	/* float *p_ht */
 
 }
 
-APIARGS c_plgcol0_args[]={
-	{ "c_plgcol0",VOID },
+APIARGS pl_plgcol0_args[]={
+	{ "pl_plgcol0",VOID },
 	{ "icol0",INT },
 	{ "r",INT  | PTRBIT },
 	{ "g",INT  | PTRBIT },
 	{ "b",INT  | PTRBIT } };
 void
-c_plgcol0_wrapper(int ac,APIARGS *av){
-	c_plgcol0(*((int *)av[1].argval),	/* int icol0 */
+pl_plgcol0_wrapper(int ac,APIARGS *av){
+	pl_plgcol0(*((int *)av[1].argval),	/* int icol0 */
 		(int *)av[2].argval,	/* int *r */
 		(int *)av[3].argval,	/* int *g */
 		(int *)av[4].argval);	/* int *b */
 
 }
 
-APIARGS c_plgcolbg_args[]={
-	{ "c_plgcolbg",VOID },
+APIARGS pl_plgcolbg_args[]={
+	{ "pl_plgcolbg",VOID },
 	{ "r",INT  | PTRBIT },
 	{ "g",INT  | PTRBIT },
 	{ "b",INT  | PTRBIT } };
 void
-c_plgcolbg_wrapper(int ac,APIARGS *av){
-	c_plgcolbg((int *)av[1].argval,	/* int *r */
+pl_plgcolbg_wrapper(int ac,APIARGS *av){
+	pl_plgcolbg((int *)av[1].argval,	/* int *r */
 		(int *)av[2].argval,	/* int *g */
 		(int *)av[3].argval);	/* int *b */
 
 }
 
-APIARGS c_plgdev_args[]={
-	{ "c_plgdev",VOID },
+APIARGS pl_plgdev_args[]={
+	{ "pl_plgdev",VOID },
 	{ "p_dev",BYTE  | PTRBIT } };
 void
-c_plgdev_wrapper(int ac,APIARGS *av){
-	c_plgdev((char *)av[1].argval);	/* char *p_dev */
+pl_plgdev_wrapper(int ac,APIARGS *av){
+	pl_plgdev((char *)av[1].argval);	/* char *p_dev */
 
 }
 
-APIARGS c_plgdidev_args[]={
-	{ "c_plgdidev",VOID },
+APIARGS pl_plgdidev_args[]={
+	{ "pl_plgdidev",VOID },
 	{ "p_mar",FLOAT  | PTRBIT },
 	{ "p_aspect",FLOAT  | PTRBIT },
 	{ "p_jx",FLOAT  | PTRBIT },
 	{ "p_jy",FLOAT  | PTRBIT } };
 void
-c_plgdidev_wrapper(int ac,APIARGS *av){
-	c_plgdidev((float *)av[1].argval,	/* float *p_mar */
+pl_plgdidev_wrapper(int ac,APIARGS *av){
+	pl_plgdidev((float *)av[1].argval,	/* float *p_mar */
 		(float *)av[2].argval,	/* float *p_aspect */
 		(float *)av[3].argval,	/* float *p_jx */
 		(float *)av[4].argval);	/* float *p_jy */
 
 }
 
-APIARGS c_plgdiori_args[]={
-	{ "c_plgdiori",VOID },
+APIARGS pl_plgdiori_args[]={
+	{ "pl_plgdiori",VOID },
 	{ "p_rot",FLOAT  | PTRBIT } };
 void
-c_plgdiori_wrapper(int ac,APIARGS *av){
-	c_plgdiori((float *)av[1].argval);	/* float *p_rot */
+pl_plgdiori_wrapper(int ac,APIARGS *av){
+	pl_plgdiori((float *)av[1].argval);	/* float *p_rot */
 
 }
 
-APIARGS c_plgdiplt_args[]={
-	{ "c_plgdiplt",VOID },
+APIARGS pl_plgdiplt_args[]={
+	{ "pl_plgdiplt",VOID },
 	{ "p_xmin",FLOAT  | PTRBIT },
 	{ "p_ymin",FLOAT  | PTRBIT },
 	{ "p_xmax",FLOAT  | PTRBIT },
 	{ "p_ymax",FLOAT  | PTRBIT } };
 void
-c_plgdiplt_wrapper(int ac,APIARGS *av){
-	c_plgdiplt((float *)av[1].argval,	/* float *p_xmin */
+pl_plgdiplt_wrapper(int ac,APIARGS *av){
+	pl_plgdiplt((float *)av[1].argval,	/* float *p_xmin */
 		(float *)av[2].argval,	/* float *p_ymin */
 		(float *)av[3].argval,	/* float *p_xmax */
 		(float *)av[4].argval);	/* float *p_ymax */
 
 }
 
-APIARGS c_plgfam_args[]={
-	{ "c_plgfam",VOID },
+APIARGS pl_plgfam_args[]={
+	{ "pl_plgfam",VOID },
 	{ "p_fam",INT  | PTRBIT },
 	{ "p_num",INT  | PTRBIT },
 	{ "p_bmax",INT  | PTRBIT } };
 void
-c_plgfam_wrapper(int ac,APIARGS *av){
-	c_plgfam((int *)av[1].argval,	/* int *p_fam */
+pl_plgfam_wrapper(int ac,APIARGS *av){
+	pl_plgfam((int *)av[1].argval,	/* int *p_fam */
 		(int *)av[2].argval,	/* int *p_num */
 		(int *)av[3].argval);	/* int *p_bmax */
 
 }
 
-APIARGS c_plgfnam_args[]={
-	{ "c_plgfnam",VOID },
+APIARGS pl_plgfnam_args[]={
+	{ "pl_plgfnam",VOID },
 	{ "fnam",BYTE  | PTRBIT } };
 void
-c_plgfnam_wrapper(int ac,APIARGS *av){
-	c_plgfnam((char *)av[1].argval);	/* char *fnam */
+pl_plgfnam_wrapper(int ac,APIARGS *av){
+	pl_plgfnam((char *)av[1].argval);	/* char *fnam */
 
 }
 
-APIARGS c_plglevel_args[]={
-	{ "c_plglevel",VOID },
+APIARGS pl_plglevel_args[]={
+	{ "pl_plglevel",VOID },
 	{ "p_level",INT  | PTRBIT } };
 void
-c_plglevel_wrapper(int ac,APIARGS *av){
-	c_plglevel((int *)av[1].argval);	/* int *p_level */
+pl_plglevel_wrapper(int ac,APIARGS *av){
+	pl_plglevel((int *)av[1].argval);	/* int *p_level */
 
 }
 
-APIARGS c_plgpage_args[]={
-	{ "c_plgpage",VOID },
+APIARGS pl_plgpage_args[]={
+	{ "pl_plgpage",VOID },
 	{ "p_xp",FLOAT  | PTRBIT },
 	{ "p_yp",FLOAT  | PTRBIT },
 	{ "p_xleng",INT  | PTRBIT },
@@ -502,8 +519,8 @@ APIARGS c_plgpage_args[]={
 	{ "p_xoff",INT  | PTRBIT },
 	{ "p_yoff",INT  | PTRBIT } };
 void
-c_plgpage_wrapper(int ac,APIARGS *av){
-	c_plgpage((float *)av[1].argval,	/* float *p_xp */
+pl_plgpage_wrapper(int ac,APIARGS *av){
+	pl_plgpage((float *)av[1].argval,	/* float *p_xp */
 		(float *)av[2].argval,	/* float *p_yp */
 		(int *)av[3].argval,	/* int *p_xleng */
 		(int *)av[4].argval,	/* int *p_yleng */
@@ -512,81 +529,91 @@ c_plgpage_wrapper(int ac,APIARGS *av){
 
 }
 
-APIARGS c_plgra_args[]={
-	{ "c_plgra",VOID } };
+APIARGS pl_plgra_args[]={
+	{ "pl_plgra",VOID } };
 void
-c_plgra_wrapper(int ac,APIARGS *av){
-	c_plgra();
+pl_plgra_wrapper(int ac,APIARGS *av){
+	pl_plgra();
 }
 
-APIARGS c_plgspa_args[]={
-	{ "c_plgspa",VOID },
+APIARGS pl_plgspa_args[]={
+	{ "pl_plgspa",VOID },
 	{ "xmin",FLOAT  | PTRBIT },
 	{ "xmax",FLOAT  | PTRBIT },
 	{ "ymin",FLOAT  | PTRBIT },
 	{ "ymax",FLOAT  | PTRBIT } };
 void
-c_plgspa_wrapper(int ac,APIARGS *av){
-	c_plgspa((float *)av[1].argval,	/* float *xmin */
+pl_plgspa_wrapper(int ac,APIARGS *av){
+	pl_plgspa((float *)av[1].argval,	/* float *xmin */
 		(float *)av[2].argval,	/* float *xmax */
 		(float *)av[3].argval,	/* float *ymin */
 		(float *)av[4].argval);	/* float *ymax */
 
 }
 
-APIARGS c_plgstrm_args[]={
-	{ "c_plgstrm",VOID },
+APIARGS pl_plgstrm_args[]={
+	{ "pl_plgstrm",VOID },
 	{ "p_strm",INT  | PTRBIT } };
 void
-c_plgstrm_wrapper(int ac,APIARGS *av){
-	c_plgstrm((int *)av[1].argval);	/* int *p_strm */
+pl_plgstrm_wrapper(int ac,APIARGS *av){
+	pl_plgstrm((int *)av[1].argval);	/* int *p_strm */
 
 }
 
-APIARGS c_plgver_args[]={
-	{ "c_plgver",VOID },
+APIARGS pl_plgver_args[]={
+	{ "pl_plgver",VOID },
 	{ "p_ver",BYTE  | PTRBIT } };
 void
-c_plgver_wrapper(int ac,APIARGS *av){
-	c_plgver((char *)av[1].argval);	/* char *p_ver */
+pl_plgver_wrapper(int ac,APIARGS *av){
+	pl_plgver((char *)av[1].argval);	/* char *p_ver */
 
 }
 
-APIARGS c_plgxax_args[]={
-	{ "c_plgxax",VOID },
+
+APIARGS pl_plgwid_args[]={
+	{ "pl_plgwid",VOID },
+	{ "p_wid",INT  | PTRBIT } };
+void
+pl_plgwid_wrapper(int ac,APIARGS *av){
+	pl_plgwid((int *)av[1].argval);	/* int *p_wid */
+
+}
+
+APIARGS pl_plgxax_args[]={
+	{ "pl_plgxax",VOID },
 	{ "p_digmax",INT  | PTRBIT },
 	{ "p_digits",INT  | PTRBIT } };
 void
-c_plgxax_wrapper(int ac,APIARGS *av){
-	c_plgxax((int *)av[1].argval,	/* int *p_digmax */
+pl_plgxax_wrapper(int ac,APIARGS *av){
+	pl_plgxax((int *)av[1].argval,	/* int *p_digmax */
 		(int *)av[2].argval);	/* int *p_digits */
 
 }
 
-APIARGS c_plgyax_args[]={
-	{ "c_plgyax",VOID },
+APIARGS pl_plgyax_args[]={
+	{ "pl_plgyax",VOID },
 	{ "p_digmax",INT  | PTRBIT },
 	{ "p_digits",INT  | PTRBIT } };
 void
-c_plgyax_wrapper(int ac,APIARGS *av){
-	c_plgyax((int *)av[1].argval,	/* int *p_digmax */
+pl_plgyax_wrapper(int ac,APIARGS *av){
+	pl_plgyax((int *)av[1].argval,	/* int *p_digmax */
 		(int *)av[2].argval);	/* int *p_digits */
 
 }
 
-APIARGS c_plgzax_args[]={
-	{ "c_plgzax",VOID },
+APIARGS pl_plgzax_args[]={
+	{ "pl_plgzax",VOID },
 	{ "p_digmax",INT  | PTRBIT },
 	{ "p_digits",INT  | PTRBIT } };
 void
-c_plgzax_wrapper(int ac,APIARGS *av){
-	c_plgzax((int *)av[1].argval,	/* int *p_digmax */
+pl_plgzax_wrapper(int ac,APIARGS *av){
+	pl_plgzax((int *)av[1].argval,	/* int *p_digmax */
 		(int *)av[2].argval);	/* int *p_digits */
 
 }
 
-APIARGS c_plhist_args[]={
-	{ "c_plhist",VOID },
+APIARGS pl_plhist_args[]={
+	{ "pl_plhist",VOID },
 	{ "n",INT },
 	{ "data",FLOAT  | PTRBIT },
 	{ "datmin",FLOAT },
@@ -594,8 +621,8 @@ APIARGS c_plhist_args[]={
 	{ "nbin",INT },
 	{ "oldwin",INT } };
 void
-c_plhist_wrapper(int ac,APIARGS *av){
-	c_plhist(*((int *)av[1].argval),	/* int n */
+pl_plhist_wrapper(int ac,APIARGS *av){
+	pl_plhist(*((int *)av[1].argval),	/* int n */
 		(float *)av[2].argval,	/* float *data */
 		*((float *)av[3].argval),	/* float datmin */
 		*((float *)av[4].argval),	/* float datmax */
@@ -604,110 +631,110 @@ c_plhist_wrapper(int ac,APIARGS *av){
 
 }
 
-APIARGS c_plhls_args[]={
-	{ "c_plhls",VOID },
+APIARGS pl_plhls_args[]={
+	{ "pl_plhls",VOID },
 	{ "h",FLOAT },
 	{ "l",FLOAT },
 	{ "s",FLOAT } };
 void
-c_plhls_wrapper(int ac,APIARGS *av){
-	c_plhls(*((float *)av[1].argval),	/* float h */
+pl_plhls_wrapper(int ac,APIARGS *av){
+	pl_plhls(*((float *)av[1].argval),	/* float h */
 		*((float *)av[2].argval),	/* float l */
 		*((float *)av[3].argval));	/* float s */
 
 }
 
-APIARGS c_plinit_args[]={
-	{ "c_plinit",VOID } };
+APIARGS pl_plinit_args[]={
+	{ "pl_plinit",VOID } };
 void
-c_plinit_wrapper(int ac,APIARGS *av){
-	c_plinit();
+pl_plinit_wrapper(int ac,APIARGS *av){
+	pl_plinit();
 }
 
-APIARGS c_pljoin_args[]={
-	{ "c_pljoin",VOID },
+APIARGS pl_pljoin_args[]={
+	{ "pl_pljoin",VOID },
 	{ "x1",FLOAT },
 	{ "y1",FLOAT },
 	{ "x2",FLOAT },
 	{ "y2",FLOAT } };
 void
-c_pljoin_wrapper(int ac,APIARGS *av){
-	c_pljoin(*((float *)av[1].argval),	/* float x1 */
+pl_pljoin_wrapper(int ac,APIARGS *av){
+	pl_pljoin(*((float *)av[1].argval),	/* float x1 */
 		*((float *)av[2].argval),	/* float y1 */
 		*((float *)av[3].argval),	/* float x2 */
 		*((float *)av[4].argval));	/* float y2 */
 
 }
 
-APIARGS c_pllab_args[]={
-	{ "c_pllab",VOID },
+APIARGS pl_pllab_args[]={
+	{ "pl_pllab",VOID },
 	{ "xlabel",CONSTBIT | BYTE  | PTRBIT },
 	{ "ylabel",CONSTBIT | BYTE  | PTRBIT },
 	{ "tlabel",CONSTBIT | BYTE  | PTRBIT } };
 void
-c_pllab_wrapper(int ac,APIARGS *av){
-	c_pllab((char *)av[1].argval,	/* char *xlabel */
+pl_pllab_wrapper(int ac,APIARGS *av){
+	pl_pllab((char *)av[1].argval,	/* char *xlabel */
 		(char *)av[2].argval,	/* char *ylabel */
 		(char *)av[3].argval);	/* char *tlabel */
 
 }
 
-APIARGS c_plline_args[]={
-	{ "c_plline",VOID },
+APIARGS pl_plline_args[]={
+	{ "pl_plline",VOID },
 	{ "n",INT },
 	{ "x",FLOAT  | PTRBIT },
 	{ "y",FLOAT  | PTRBIT } };
 void
-c_plline_wrapper(int ac,APIARGS *av){
-	c_plline(*((int *)av[1].argval),	/* int n */
+pl_plline_wrapper(int ac,APIARGS *av){
+	pl_plline(*((int *)av[1].argval),	/* int n */
 		(float *)av[2].argval,	/* float *x */
 		(float *)av[3].argval);	/* float *y */
 
 }
 
-APIARGS c_plline3_args[]={
-	{ "c_plline3",VOID },
+APIARGS pl_plline3_args[]={
+	{ "pl_plline3",VOID },
 	{ "n",INT },
 	{ "x",FLOAT  | PTRBIT },
 	{ "y",FLOAT  | PTRBIT },
 	{ "z",FLOAT  | PTRBIT } };
 void
-c_plline3_wrapper(int ac,APIARGS *av){
-	c_plline3(*((int *)av[1].argval),	/* int n */
+pl_plline3_wrapper(int ac,APIARGS *av){
+	pl_plline3(*((int *)av[1].argval),	/* int n */
 		(float *)av[2].argval,	/* float *x */
 		(float *)av[3].argval,	/* float *y */
 		(float *)av[4].argval);	/* float *z */
 
 }
 
-APIARGS c_pllsty_args[]={
-	{ "c_pllsty",VOID },
+APIARGS pl_pllsty_args[]={
+	{ "pl_pllsty",VOID },
 	{ "lin",INT } };
 void
-c_pllsty_wrapper(int ac,APIARGS *av){
-	c_pllsty(*((int *)av[1].argval));	/* int lin */
+pl_pllsty_wrapper(int ac,APIARGS *av){
+	pl_pllsty(*((int *)av[1].argval));	/* int lin */
 
 }
 
-APIARGS c_plmkstrm_args[]={
-	{ "c_plmkstrm",VOID },
+APIARGS pl_plmkstrm_args[]={
+	{ "pl_plmkstrm",VOID },
 	{ "p_strm",INT  | PTRBIT } };
 void
-c_plmkstrm_wrapper(int ac,APIARGS *av){
-	c_plmkstrm((int *)av[1].argval);	/* int *p_strm */
+pl_plmkstrm_wrapper(int ac,APIARGS *av){
+	pl_plmkstrm((int *)av[1].argval);	/* int *p_strm */
 
 }
 
-APIARGS c_plmtex_args[]={
-	{ "c_plmtex",VOID },
+APIARGS pl_plmtex_args[]={
+	{ "pl_plmtex",VOID },
 	{ "side",CONSTBIT | BYTE  | PTRBIT },
 	{ "disp",FLOAT },
 	{ "pos",FLOAT },
 	{ "just",FLOAT },
 	{ "text",CONSTBIT | BYTE  | PTRBIT } };
 void
-c_plmtex_wrapper(int ac,APIARGS *av){
-	c_plmtex((char *)av[1].argval,	/* char *side */
+pl_plmtex_wrapper(int ac,APIARGS *av){
+	pl_plmtex((char *)av[1].argval,	/* char *side */
 		*((float *)av[2].argval),	/* float disp */
 		*((float *)av[3].argval),	/* float pos */
 		*((float *)av[4].argval),	/* float just */
@@ -715,44 +742,44 @@ c_plmtex_wrapper(int ac,APIARGS *av){
 
 }
 
-APIARGS c_plpat_args[]={
-	{ "c_plpat",VOID },
+APIARGS pl_plpat_args[]={
+	{ "pl_plpat",VOID },
 	{ "nlin",INT },
 	{ "inc",INT  | PTRBIT },
 	{ "del",INT  | PTRBIT } };
 void
-c_plpat_wrapper(int ac,APIARGS *av){
-	c_plpat(*((int *)av[1].argval),	/* int nlin */
+pl_plpat_wrapper(int ac,APIARGS *av){
+	pl_plpat(*((int *)av[1].argval),	/* int nlin */
 		(int *)av[2].argval,	/* int *inc */
 		(int *)av[3].argval);	/* int *del */
 
 }
 
-APIARGS c_plpoin_args[]={
-	{ "c_plpoin",VOID },
+APIARGS pl_plpoin_args[]={
+	{ "pl_plpoin",VOID },
 	{ "n",INT },
 	{ "x",FLOAT  | PTRBIT },
 	{ "y",FLOAT  | PTRBIT },
 	{ "code",INT } };
 void
-c_plpoin_wrapper(int ac,APIARGS *av){
-	c_plpoin(*((int *)av[1].argval),	/* int n */
+pl_plpoin_wrapper(int ac,APIARGS *av){
+	pl_plpoin(*((int *)av[1].argval),	/* int n */
 		(float *)av[2].argval,	/* float *x */
 		(float *)av[3].argval,	/* float *y */
 		*((int *)av[4].argval));	/* int code */
 
 }
 
-APIARGS c_plpoin3_args[]={
-	{ "c_plpoin3",VOID },
+APIARGS pl_plpoin3_args[]={
+	{ "pl_plpoin3",VOID },
 	{ "n",INT },
 	{ "x",FLOAT  | PTRBIT },
 	{ "y",FLOAT  | PTRBIT },
 	{ "z",FLOAT  | PTRBIT },
 	{ "code",INT } };
 void
-c_plpoin3_wrapper(int ac,APIARGS *av){
-	c_plpoin3(*((int *)av[1].argval),	/* int n */
+pl_plpoin3_wrapper(int ac,APIARGS *av){
+	pl_plpoin3(*((int *)av[1].argval),	/* int n */
 		(float *)av[2].argval,	/* float *x */
 		(float *)av[3].argval,	/* float *y */
 		(float *)av[4].argval,	/* float *z */
@@ -760,16 +787,16 @@ c_plpoin3_wrapper(int ac,APIARGS *av){
 
 }
 
-APIARGS c_plpoly3_args[]={
-	{ "c_plpoly3",VOID },
+APIARGS pl_plpoly3_args[]={
+	{ "pl_plpoly3",VOID },
 	{ "n",INT },
 	{ "x",FLOAT  | PTRBIT },
 	{ "y",FLOAT  | PTRBIT },
 	{ "z",FLOAT  | PTRBIT },
 	{ "draw",INT  | PTRBIT } };
 void
-c_plpoly3_wrapper(int ac,APIARGS *av){
-	c_plpoly3(*((int *)av[1].argval),	/* int n */
+pl_plpoly3_wrapper(int ac,APIARGS *av){
+	pl_plpoly3(*((int *)av[1].argval),	/* int n */
 		(float *)av[2].argval,	/* float *x */
 		(float *)av[3].argval,	/* float *y */
 		(float *)av[4].argval,	/* float *z */
@@ -777,28 +804,28 @@ c_plpoly3_wrapper(int ac,APIARGS *av){
 
 }
 
-APIARGS c_plprec_args[]={
-	{ "c_plprec",VOID },
+APIARGS pl_plprepl_args[]={
+	{ "pl_plprec",VOID },
 	{ "setp",INT },
 	{ "prec",INT } };
 void
-c_plprec_wrapper(int ac,APIARGS *av){
-	c_plprec(*((int *)av[1].argval),	/* int setp */
+pl_plprepl_wrapper(int ac,APIARGS *av){
+	pl_plprec(*((int *)av[1].argval),	/* int setp */
 		*((int *)av[2].argval));	/* int prec */
 
 }
 
-APIARGS c_plpsty_args[]={
-	{ "c_plpsty",VOID },
+APIARGS pl_plpsty_args[]={
+	{ "pl_plpsty",VOID },
 	{ "patt",INT } };
 void
-c_plpsty_wrapper(int ac,APIARGS *av){
-	c_plpsty(*((int *)av[1].argval));	/* int patt */
+pl_plpsty_wrapper(int ac,APIARGS *av){
+	pl_plpsty(*((int *)av[1].argval));	/* int patt */
 
 }
 
-APIARGS c_plptex_args[]={
-	{ "c_plptex",VOID },
+APIARGS pl_plptex_args[]={
+	{ "pl_plptex",VOID },
 	{ "x",FLOAT },
 	{ "y",FLOAT },
 	{ "dx",FLOAT },
@@ -806,8 +833,8 @@ APIARGS c_plptex_args[]={
 	{ "just",FLOAT },
 	{ "text",CONSTBIT | BYTE  | PTRBIT } };
 void
-c_plptex_wrapper(int ac,APIARGS *av){
-	c_plptex(*((float *)av[1].argval),	/* float x */
+pl_plptex_wrapper(int ac,APIARGS *av){
+	pl_plptex(*((float *)av[1].argval),	/* float x */
 		*((float *)av[2].argval),	/* float y */
 		*((float *)av[3].argval),	/* float dx */
 		*((float *)av[4].argval),	/* float dy */
@@ -816,91 +843,110 @@ c_plptex_wrapper(int ac,APIARGS *av){
 
 }
 
-APIARGS c_plreplot_args[]={
-	{ "c_plreplot",VOID } };
+APIARGS pl_plptexd_args[]={
+	{ "pl_plptexd",VOID },
+	{ "x",FLOAT },
+	{ "y",FLOAT },
+	{ "dx",FLOAT },
+	{ "dy",FLOAT },
+	{ "just",FLOAT },
+	{ "text",CONSTBIT | BYTE  | PTRBIT } };
 void
-c_plreplot_wrapper(int ac,APIARGS *av){
-	c_plreplot();
+pl_plptexd_wrapper(int ac,APIARGS *av){
+	pl_plptexd(*((float *)av[1].argval),	/* float x */
+		*((float *)av[2].argval),	/* float y */
+		*((float *)av[3].argval),	/* float dx */
+		*((float *)av[4].argval),	/* float dy */
+		*((float *)av[5].argval),	/* float just */
+		(char *)av[6].argval);	/* char *text */
+
 }
 
-APIARGS c_plrgb_args[]={
-	{ "c_plrgb",VOID },
+APIARGS pl_plreplot_args[]={
+	{ "pl_plreplot",VOID } };
+void
+pl_plreplot_wrapper(int ac,APIARGS *av){
+	pl_plreplot();
+}
+
+APIARGS pl_plrgb_args[]={
+	{ "pl_plrgb",VOID },
 	{ "r",FLOAT },
 	{ "g",FLOAT },
 	{ "b",FLOAT } };
 void
-c_plrgb_wrapper(int ac,APIARGS *av){
-	c_plrgb(*((float *)av[1].argval),	/* float r */
+pl_plrgb_wrapper(int ac,APIARGS *av){
+	pl_plrgb(*((float *)av[1].argval),	/* float r */
 		*((float *)av[2].argval),	/* float g */
 		*((float *)av[3].argval));	/* float b */
 
 }
 
-APIARGS c_plrgb1_args[]={
-	{ "c_plrgb1",VOID },
+APIARGS pl_plrgb1_args[]={
+	{ "pl_plrgb1",VOID },
 	{ "r",INT },
 	{ "g",INT },
 	{ "b",INT } };
 void
-c_plrgb1_wrapper(int ac,APIARGS *av){
-	c_plrgb1(*((int *)av[1].argval),	/* int r */
+pl_plrgb1_wrapper(int ac,APIARGS *av){
+	pl_plrgb1(*((int *)av[1].argval),	/* int r */
 		*((int *)av[2].argval),	/* int g */
 		*((int *)av[3].argval));	/* int b */
 
 }
 
-APIARGS c_plschr_args[]={
-	{ "c_plschr",VOID },
+APIARGS pl_plschr_args[]={
+	{ "pl_plschr",VOID },
 	{ "def",FLOAT },
 	{ "scale",FLOAT } };
 void
-c_plschr_wrapper(int ac,APIARGS *av){
-	c_plschr(*((float *)av[1].argval),	/* float def */
+pl_plschr_wrapper(int ac,APIARGS *av){
+	pl_plschr(*((float *)av[1].argval),	/* float def */
 		*((float *)av[2].argval));	/* float scale */
 
 }
 
-APIARGS c_plscmap0_args[]={
-	{ "c_plscmap0",VOID },
+APIARGS pl_plscmap0_args[]={
+	{ "pl_plscmap0",VOID },
 	{ "r",INT  | PTRBIT },
 	{ "g",INT  | PTRBIT },
 	{ "b",INT  | PTRBIT },
 	{ "ncol0",INT } };
 void
-c_plscmap0_wrapper(int ac,APIARGS *av){
-	c_plscmap0((int *)av[1].argval,	/* int *r */
+pl_plscmap0_wrapper(int ac,APIARGS *av){
+	pl_plscmap0((int *)av[1].argval,	/* int *r */
 		(int *)av[2].argval,	/* int *g */
 		(int *)av[3].argval,	/* int *b */
 		*((int *)av[4].argval));	/* int ncol0 */
 
 }
 
-APIARGS c_plscmap0n_args[]={
-	{ "c_plscmap0n",VOID },
+APIARGS pl_plscmap0n_args[]={
+	{ "pl_plscmap0n",VOID },
 	{ "ncol0",INT } };
 void
-c_plscmap0n_wrapper(int ac,APIARGS *av){
-	c_plscmap0n(*((int *)av[1].argval));	/* int ncol0 */
+pl_plscmap0n_wrapper(int ac,APIARGS *av){
+	pl_plscmap0n(*((int *)av[1].argval));	/* int ncol0 */
 
 }
 
-APIARGS c_plscmap1_args[]={
-	{ "c_plscmap1",VOID },
+APIARGS pl_plscmap1_args[]={
+	{ "pl_plscmap1",VOID },
 	{ "r",INT  | PTRBIT },
 	{ "g",INT  | PTRBIT },
 	{ "b",INT  | PTRBIT },
 	{ "ncol1",INT } };
 void
-c_plscmap1_wrapper(int ac,APIARGS *av){
-	c_plscmap1((int *)av[1].argval,	/* int *r */
+pl_plscmap1_wrapper(int ac,APIARGS *av){
+	pl_plscmap1((int *)av[1].argval,	/* int *r */
 		(int *)av[2].argval,	/* int *g */
 		(int *)av[3].argval,	/* int *b */
 		*((int *)av[4].argval));	/* int ncol1 */
 
 }
 
-APIARGS c_plscmap1l_args[]={
-	{ "c_plscmap1l",VOID },
+APIARGS pl_plscmap1l_args[]={
+	{ "pl_plscmap1l",VOID },
 	{ "itype",INT },
 	{ "npts",INT },
 	{ "intensity",FLOAT  | PTRBIT },
@@ -909,8 +955,8 @@ APIARGS c_plscmap1l_args[]={
 	{ "coord3",FLOAT  | PTRBIT },
 	{ "rev",INT  | PTRBIT } };
 void
-c_plscmap1l_wrapper(int ac,APIARGS *av){
-	c_plscmap1l(*((int *)av[1].argval),	/* int itype */
+pl_plscmap1l_wrapper(int ac,APIARGS *av){
+	pl_plscmap1l(*((int *)av[1].argval),	/* int itype */
 		*((int *)av[2].argval),	/* int npts */
 		(float *)av[3].argval,	/* float *intensity */
 		(float *)av[4].argval,	/* float *coord1 */
@@ -920,78 +966,78 @@ c_plscmap1l_wrapper(int ac,APIARGS *av){
 
 }
 
-APIARGS c_plscmap1n_args[]={
-	{ "c_plscmap1n",VOID },
+APIARGS pl_plscmap1n_args[]={
+	{ "pl_plscmap1n",VOID },
 	{ "ncol1",INT } };
 void
-c_plscmap1n_wrapper(int ac,APIARGS *av){
-	c_plscmap1n(*((int *)av[1].argval));	/* int ncol1 */
+pl_plscmap1n_wrapper(int ac,APIARGS *av){
+	pl_plscmap1n(*((int *)av[1].argval));	/* int ncol1 */
 
 }
 
-APIARGS c_plscol0_args[]={
-	{ "c_plscol0",VOID },
+APIARGS pl_plscol0_args[]={
+	{ "pl_plscol0",VOID },
 	{ "icol0",INT },
 	{ "r",INT },
 	{ "g",INT },
 	{ "b",INT } };
 void
-c_plscol0_wrapper(int ac,APIARGS *av){
-	c_plscol0(*((int *)av[1].argval),	/* int icol0 */
+pl_plscol0_wrapper(int ac,APIARGS *av){
+	pl_plscol0(*((int *)av[1].argval),	/* int icol0 */
 		*((int *)av[2].argval),	/* int r */
 		*((int *)av[3].argval),	/* int g */
 		*((int *)av[4].argval));	/* int b */
 
 }
 
-APIARGS c_plscolbg_args[]={
-	{ "c_plscolbg",VOID },
+APIARGS pl_plscolbg_args[]={
+	{ "pl_plscolbg",VOID },
 	{ "r",INT },
 	{ "g",INT },
 	{ "b",INT } };
 void
-c_plscolbg_wrapper(int ac,APIARGS *av){
-	c_plscolbg(*((int *)av[1].argval),	/* int r */
+pl_plscolbg_wrapper(int ac,APIARGS *av){
+	pl_plscolbg(*((int *)av[1].argval),	/* int r */
 		*((int *)av[2].argval),	/* int g */
 		*((int *)av[3].argval));	/* int b */
 
 }
 
-APIARGS c_plscolor_args[]={
-	{ "c_plscolor",VOID },
+APIARGS pl_plscolor_args[]={
+	{ "pl_plscolor",VOID },
 	{ "color",INT } };
 void
-c_plscolor_wrapper(int ac,APIARGS *av){
-	c_plscolor(*((int *)av[1].argval));	/* int color */
+pl_plscolor_wrapper(int ac,APIARGS *av){
+	pl_plscolor(*((int *)av[1].argval));	/* int color */
 
 }
 
-APIARGS c_plsdev_args[]={
-	{ "c_plsdev",VOID },
+APIARGS pl_plsdev_args[]={
+	{ "pl_plsdev",VOID },
 	{ "devname",CONSTBIT | BYTE  | PTRBIT } };
 void
-c_plsdev_wrapper(int ac,APIARGS *av){
-	c_plsdev((char *)av[1].argval);	/* char *devname */
+pl_plsdev_wrapper(int ac,APIARGS *av){
+	pl_plsdev((char *)av[1].argval);	/* char *devname */
 
 }
 
-APIARGS c_plsdidev_args[]={
-	{ "c_plsdidev",VOID },
+APIARGS pl_plsdidev_args[]={
+	{ "pl_plsdidev",VOID },
 	{ "mar",FLOAT },
 	{ "aspect",FLOAT },
 	{ "jx",FLOAT },
 	{ "jy",FLOAT } };
 void
-c_plsdidev_wrapper(int ac,APIARGS *av){
-	c_plsdidev(*((float *)av[1].argval),	/* float mar */
+pl_plsdidev_wrapper(int ac,APIARGS *av){
+	pl_plsdidev(*((float *)av[1].argval),	/* float mar */
 		*((float *)av[2].argval),	/* float aspect */
 		*((float *)av[3].argval),	/* float jx */
 		*((float *)av[4].argval));	/* float jy */
 
 }
 
-APIARGS c_plsdimap_args[]={
-	{ "c_plsdimap",VOID },
+APIARGS pl_plsdimap_args[]={
+	{ "pl_plsdimap",VOID },
 	{ "dimxmin",INT },
 	{ "dimxmax",INT },
 	{ "dimymin",INT },
@@ -999,8 +1045,8 @@ APIARGS c_plsdimap_args[]={
 	{ "dimxpmm",FLOAT },
 	{ "dimypmm",FLOAT } };
 void
-c_plsdimap_wrapper(int ac,APIARGS *av){
-	c_plsdimap(*((int *)av[1].argval),	/* int dimxmin */
+pl_plsdimap_wrapper(int ac,APIARGS *av){
+	pl_plsdimap(*((int *)av[1].argval),	/* int dimxmin */
 		*((int *)av[2].argval),	/* int dimxmax */
 		*((int *)av[3].argval),	/* int dimymin */
 		*((int *)av[4].argval),	/* int dimymax */
@@ -1009,109 +1055,109 @@ c_plsdimap_wrapper(int ac,APIARGS *av){
 
 }
 
-APIARGS c_plsdiori_args[]={
-	{ "c_plsdiori",VOID },
+APIARGS pl_plsdiori_args[]={
+	{ "pl_plsdiori",VOID },
 	{ "rot",FLOAT } };
 void
-c_plsdiori_wrapper(int ac,APIARGS *av){
-	c_plsdiori(*((float *)av[1].argval));	/* float rot */
+pl_plsdiori_wrapper(int ac,APIARGS *av){
+	pl_plsdiori(*((float *)av[1].argval));	/* float rot */
 
 }
 
-APIARGS c_plsdiplt_args[]={
-	{ "c_plsdiplt",VOID },
+APIARGS pl_plsdiplt_args[]={
+	{ "pl_plsdiplt",VOID },
 	{ "xmin",FLOAT },
 	{ "ymin",FLOAT },
 	{ "xmax",FLOAT },
 	{ "ymax",FLOAT } };
 void
-c_plsdiplt_wrapper(int ac,APIARGS *av){
-	c_plsdiplt(*((float *)av[1].argval),	/* float xmin */
+pl_plsdiplt_wrapper(int ac,APIARGS *av){
+	pl_plsdiplt(*((float *)av[1].argval),	/* float xmin */
 		*((float *)av[2].argval),	/* float ymin */
 		*((float *)av[3].argval),	/* float xmax */
 		*((float *)av[4].argval));	/* float ymax */
 
 }
 
-APIARGS c_plsdiplz_args[]={
-	{ "c_plsdiplz",VOID },
+APIARGS pl_plsdiplz_args[]={
+	{ "pl_plsdiplz",VOID },
 	{ "xmin",FLOAT },
 	{ "ymin",FLOAT },
 	{ "xmax",FLOAT },
 	{ "ymax",FLOAT } };
 void
-c_plsdiplz_wrapper(int ac,APIARGS *av){
-	c_plsdiplz(*((float *)av[1].argval),	/* float xmin */
+pl_plsdiplz_wrapper(int ac,APIARGS *av){
+	pl_plsdiplz(*((float *)av[1].argval),	/* float xmin */
 		*((float *)av[2].argval),	/* float ymin */
 		*((float *)av[3].argval),	/* float xmax */
 		*((float *)av[4].argval));	/* float ymax */
 
 }
 
-APIARGS c_plsesc_args[]={
-	{ "c_plsesc",VOID },
+APIARGS pl_plsespl_args[]={
+	{ "pl_plsesc",VOID },
 	{ "esc",BYTE } };
 void
-c_plsesc_wrapper(int ac,APIARGS *av){
-	c_plsesc(*((char *)av[1].argval));	/* char esc */
+pl_plsespl_wrapper(int ac,APIARGS *av){
+	pl_plsesc(*((char *)av[1].argval));	/* char esc */
 
 }
 
-APIARGS c_plsfam_args[]={
-	{ "c_plsfam",VOID },
+APIARGS pl_plsfam_args[]={
+	{ "pl_plsfam",VOID },
 	{ "fam",INT },
 	{ "num",INT },
 	{ "bmax",INT } };
 void
-c_plsfam_wrapper(int ac,APIARGS *av){
-	c_plsfam(*((int *)av[1].argval),	/* int fam */
+pl_plsfam_wrapper(int ac,APIARGS *av){
+	pl_plsfam(*((int *)av[1].argval),	/* int fam */
 		*((int *)av[2].argval),	/* int num */
 		*((int *)av[3].argval));	/* int bmax */
 
 }
 
-APIARGS c_plsfnam_args[]={
-	{ "c_plsfnam",VOID },
+APIARGS pl_plsfnam_args[]={
+	{ "pl_plsfnam",VOID },
 	{ "fnam",CONSTBIT | BYTE  | PTRBIT } };
 void
-c_plsfnam_wrapper(int ac,APIARGS *av){
-	c_plsfnam((char *)av[1].argval);	/* char *fnam */
+pl_plsfnam_wrapper(int ac,APIARGS *av){
+	pl_plsfnam((char *)av[1].argval);	/* char *fnam */
 
 }
 
-APIARGS c_plsmaj_args[]={
-	{ "c_plsmaj",VOID },
+APIARGS pl_plsmaj_args[]={
+	{ "pl_plsmaj",VOID },
 	{ "def",FLOAT },
 	{ "scale",FLOAT } };
 void
-c_plsmaj_wrapper(int ac,APIARGS *av){
-	c_plsmaj(*((float *)av[1].argval),	/* float def */
+pl_plsmaj_wrapper(int ac,APIARGS *av){
+	pl_plsmaj(*((float *)av[1].argval),	/* float def */
 		*((float *)av[2].argval));	/* float scale */
 
 }
 
-APIARGS c_plsmin_args[]={
-	{ "c_plsmin",VOID },
+APIARGS pl_plsmin_args[]={
+	{ "pl_plsmin",VOID },
 	{ "def",FLOAT },
 	{ "scale",FLOAT } };
 void
-c_plsmin_wrapper(int ac,APIARGS *av){
-	c_plsmin(*((float *)av[1].argval),	/* float def */
+pl_plsmin_wrapper(int ac,APIARGS *av){
+	pl_plsmin(*((float *)av[1].argval),	/* float def */
 		*((float *)av[2].argval));	/* float scale */
 
 }
 
-APIARGS c_plsori_args[]={
-	{ "c_plsori",VOID },
+APIARGS pl_plsori_args[]={
+	{ "pl_plsori",VOID },
 	{ "ori",INT } };
 void
-c_plsori_wrapper(int ac,APIARGS *av){
-	c_plsori(*((int *)av[1].argval));	/* int ori */
+pl_plsori_wrapper(int ac,APIARGS *av){
+	pl_plsori(*((int *)av[1].argval));	/* int ori */
 
 }
 
-APIARGS c_plspage_args[]={
-	{ "c_plspage",VOID },
+APIARGS pl_plspage_args[]={
+	{ "pl_plspage",VOID },
 	{ "xp",FLOAT },
 	{ "yp",FLOAT },
 	{ "xleng",INT },
@@ -1119,8 +1165,8 @@ APIARGS c_plspage_args[]={
 	{ "xoff",INT },
 	{ "yoff",INT } };
 void
-c_plspage_wrapper(int ac,APIARGS *av){
-	c_plspage(*((float *)av[1].argval),	/* float xp */
+pl_plspage_wrapper(int ac,APIARGS *av){
+	pl_plspage(*((float *)av[1].argval),	/* float xp */
 		*((float *)av[2].argval),	/* float yp */
 		*((int *)av[3].argval),	/* int xleng */
 		*((int *)av[4].argval),	/* int yleng */
@@ -1129,172 +1175,172 @@ c_plspage_wrapper(int ac,APIARGS *av){
 
 }
 
-APIARGS c_plspause_args[]={
-	{ "c_plspause",VOID },
+APIARGS pl_plspause_args[]={
+	{ "pl_plspause",VOID },
 	{ "pause",INT } };
 void
-c_plspause_wrapper(int ac,APIARGS *av){
-	c_plspause(*((int *)av[1].argval));	/* int pause */
+pl_plspause_wrapper(int ac,APIARGS *av){
+	pl_plspause(*((int *)av[1].argval));	/* int pause */
 
 }
 
-APIARGS c_plsstrm_args[]={
-	{ "c_plsstrm",VOID },
+APIARGS pl_plsstrm_args[]={
+	{ "pl_plsstrm",VOID },
 	{ "strm",INT } };
 void
-c_plsstrm_wrapper(int ac,APIARGS *av){
-	c_plsstrm(*((int *)av[1].argval));	/* int strm */
+pl_plsstrm_wrapper(int ac,APIARGS *av){
+	pl_plsstrm(*((int *)av[1].argval));	/* int strm */
 
 }
 
-APIARGS c_plssub_args[]={
-	{ "c_plssub",VOID },
+APIARGS pl_plssub_args[]={
+	{ "pl_plssub",VOID },
 	{ "nx",INT },
 	{ "ny",INT } };
 void
-c_plssub_wrapper(int ac,APIARGS *av){
-	c_plssub(*((int *)av[1].argval),	/* int nx */
+pl_plssub_wrapper(int ac,APIARGS *av){
+	pl_plssub(*((int *)av[1].argval),	/* int nx */
 		*((int *)av[2].argval));	/* int ny */
 
 }
 
-APIARGS c_plssym_args[]={
-	{ "c_plssym",VOID },
+APIARGS pl_plssym_args[]={
+	{ "pl_plssym",VOID },
 	{ "def",FLOAT },
 	{ "scale",FLOAT } };
 void
-c_plssym_wrapper(int ac,APIARGS *av){
-	c_plssym(*((float *)av[1].argval),	/* float def */
+pl_plssym_wrapper(int ac,APIARGS *av){
+	pl_plssym(*((float *)av[1].argval),	/* float def */
 		*((float *)av[2].argval));	/* float scale */
 
 }
 
-APIARGS c_plstar_args[]={
-	{ "c_plstar",VOID },
+APIARGS pl_plstar_args[]={
+	{ "pl_plstar",VOID },
 	{ "nx",INT },
 	{ "ny",INT } };
 void
-c_plstar_wrapper(int ac,APIARGS *av){
-	c_plstar(*((int *)av[1].argval),	/* int nx */
+pl_plstar_wrapper(int ac,APIARGS *av){
+	pl_plstar(*((int *)av[1].argval),	/* int nx */
 		*((int *)av[2].argval));	/* int ny */
 
 }
 
-APIARGS c_plstart_args[]={
-	{ "c_plstart",VOID },
+APIARGS pl_plstart_args[]={
+	{ "pl_plstart",VOID },
 	{ "devname",CONSTBIT | BYTE  | PTRBIT },
 	{ "nx",INT },
 	{ "ny",INT } };
 void
-c_plstart_wrapper(int ac,APIARGS *av){
-	c_plstart((char *)av[1].argval,	/* char *devname */
+pl_plstart_wrapper(int ac,APIARGS *av){
+	pl_plstart((char *)av[1].argval,	/* char *devname */
 		*((int *)av[2].argval),	/* int nx */
 		*((int *)av[3].argval));	/* int ny */
 
 }
 
-APIARGS c_plstyl_args[]={
-	{ "c_plstyl",VOID },
+APIARGS pl_plstyl_args[]={
+	{ "pl_plstyl",VOID },
 	{ "nms",INT },
 	{ "mark",INT  | PTRBIT },
 	{ "space",INT  | PTRBIT } };
 void
-c_plstyl_wrapper(int ac,APIARGS *av){
-	c_plstyl(*((int *)av[1].argval),	/* int nms */
+pl_plstyl_wrapper(int ac,APIARGS *av){
+	pl_plstyl(*((int *)av[1].argval),	/* int nms */
 		(int *)av[2].argval,	/* int *mark */
 		(int *)av[3].argval);	/* int *space */
 
 }
 
-APIARGS c_plsvpa_args[]={
-	{ "c_plsvpa",VOID },
+APIARGS pl_plsvpa_args[]={
+	{ "pl_plsvpa",VOID },
 	{ "xmin",FLOAT },
 	{ "xmax",FLOAT },
 	{ "ymin",FLOAT },
 	{ "ymax",FLOAT } };
 void
-c_plsvpa_wrapper(int ac,APIARGS *av){
-	c_plsvpa(*((float *)av[1].argval),	/* float xmin */
+pl_plsvpa_wrapper(int ac,APIARGS *av){
+	pl_plsvpa(*((float *)av[1].argval),	/* float xmin */
 		*((float *)av[2].argval),	/* float xmax */
 		*((float *)av[3].argval),	/* float ymin */
 		*((float *)av[4].argval));	/* float ymax */
 
 }
 
-APIARGS c_plsxax_args[]={
-	{ "c_plsxax",VOID },
+APIARGS pl_plsxax_args[]={
+	{ "pl_plsxax",VOID },
 	{ "digmax",INT },
 	{ "digits",INT } };
 void
-c_plsxax_wrapper(int ac,APIARGS *av){
-	c_plsxax(*((int *)av[1].argval),	/* int digmax */
+pl_plsxax_wrapper(int ac,APIARGS *av){
+	pl_plsxax(*((int *)av[1].argval),	/* int digmax */
 		*((int *)av[2].argval));	/* int digits */
 
 }
 
-APIARGS c_plsyax_args[]={
-	{ "c_plsyax",VOID },
+APIARGS pl_plsyax_args[]={
+	{ "pl_plsyax",VOID },
 	{ "digmax",INT },
 	{ "digits",INT } };
 void
-c_plsyax_wrapper(int ac,APIARGS *av){
-	c_plsyax(*((int *)av[1].argval),	/* int digmax */
+pl_plsyax_wrapper(int ac,APIARGS *av){
+	pl_plsyax(*((int *)av[1].argval),	/* int digmax */
 		*((int *)av[2].argval));	/* int digits */
 
 }
 
-APIARGS c_plsym_args[]={
-	{ "c_plsym",VOID },
+APIARGS pl_plsym_args[]={
+	{ "pl_plsym",VOID },
 	{ "n",INT },
 	{ "x",FLOAT  | PTRBIT },
 	{ "y",FLOAT  | PTRBIT },
 	{ "code",INT } };
 void
-c_plsym_wrapper(int ac,APIARGS *av){
-	c_plsym(*((int *)av[1].argval),	/* int n */
+pl_plsym_wrapper(int ac,APIARGS *av){
+	pl_plsym(*((int *)av[1].argval),	/* int n */
 		(float *)av[2].argval,	/* float *x */
 		(float *)av[3].argval,	/* float *y */
 		*((int *)av[4].argval));	/* int code */
 
 }
 
-APIARGS c_plszax_args[]={
-	{ "c_plszax",VOID },
+APIARGS pl_plszax_args[]={
+	{ "pl_plszax",VOID },
 	{ "digmax",INT },
 	{ "digits",INT } };
 void
-c_plszax_wrapper(int ac,APIARGS *av){
-	c_plszax(*((int *)av[1].argval),	/* int digmax */
+pl_plszax_wrapper(int ac,APIARGS *av){
+	pl_plszax(*((int *)av[1].argval),	/* int digmax */
 		*((int *)av[2].argval));	/* int digits */
 
 }
 
-APIARGS c_pltext_args[]={
-	{ "c_pltext",VOID } };
+APIARGS pl_pltext_args[]={
+	{ "pl_pltext",VOID } };
 void
-c_pltext_wrapper(int ac,APIARGS *av){
-	c_pltext();
+pl_pltext_wrapper(int ac,APIARGS *av){
+	pl_pltext();
 }
 
-APIARGS c_plvasp_args[]={
-	{ "c_plvasp",VOID },
+APIARGS pl_plvasp_args[]={
+	{ "pl_plvasp",VOID },
 	{ "aspect",FLOAT } };
 void
-c_plvasp_wrapper(int ac,APIARGS *av){
-	c_plvasp(*((float *)av[1].argval));	/* float aspect */
+pl_plvasp_wrapper(int ac,APIARGS *av){
+	pl_plvasp(*((float *)av[1].argval));	/* float aspect */
 
 }
 
-APIARGS c_plvpas_args[]={
-	{ "c_plvpas",VOID },
+APIARGS pl_plvpas_args[]={
+	{ "pl_plvpas",VOID },
 	{ "xmin",FLOAT },
 	{ "xmax",FLOAT },
 	{ "ymin",FLOAT },
 	{ "ymax",FLOAT },
 	{ "aspect",FLOAT } };
 void
-c_plvpas_wrapper(int ac,APIARGS *av){
-	c_plvpas(*((float *)av[1].argval),	/* float xmin */
+pl_plvpas_wrapper(int ac,APIARGS *av){
+	pl_plvpas(*((float *)av[1].argval),	/* float xmin */
 		*((float *)av[2].argval),	/* float xmax */
 		*((float *)av[3].argval),	/* float ymin */
 		*((float *)av[4].argval),	/* float ymax */
@@ -1302,30 +1348,30 @@ c_plvpas_wrapper(int ac,APIARGS *av){
 
 }
 
-APIARGS c_plvpor_args[]={
-	{ "c_plvpor",VOID },
+APIARGS pl_plvpor_args[]={
+	{ "pl_plvpor",VOID },
 	{ "xmin",FLOAT },
 	{ "xmax",FLOAT },
 	{ "ymin",FLOAT },
 	{ "ymax",FLOAT } };
 void
-c_plvpor_wrapper(int ac,APIARGS *av){
-	c_plvpor(*((float *)av[1].argval),	/* float xmin */
+pl_plvpor_wrapper(int ac,APIARGS *av){
+	pl_plvpor(*((float *)av[1].argval),	/* float xmin */
 		*((float *)av[2].argval),	/* float xmax */
 		*((float *)av[3].argval),	/* float ymin */
 		*((float *)av[4].argval));	/* float ymax */
 
 }
 
-APIARGS c_plvsta_args[]={
-	{ "c_plvsta",VOID } };
+APIARGS pl_plvsta_args[]={
+	{ "pl_plvsta",VOID } };
 void
-c_plvsta_wrapper(int ac,APIARGS *av){
-	c_plvsta();
+pl_plvsta_wrapper(int ac,APIARGS *av){
+	pl_plvsta();
 }
 
-APIARGS c_plw3d_args[]={
-	{ "c_plw3d",VOID },
+APIARGS pl_plw3d_args[]={
+	{ "pl_plw3d",VOID },
 	{ "basex",FLOAT },
 	{ "basey",FLOAT },
 	{ "height",FLOAT },
@@ -1338,8 +1384,8 @@ APIARGS c_plw3d_args[]={
 	{ "alt",FLOAT },
 	{ "az",FLOAT } };
 void
-c_plw3d_wrapper(int ac,APIARGS *av){
-	c_plw3d(*((float *)av[1].argval),	/* float basex */
+pl_plw3d_wrapper(int ac,APIARGS *av){
+	pl_plw3d(*((float *)av[1].argval),	/* float basex */
 		*((float *)av[2].argval),	/* float basey */
 		*((float *)av[3].argval),	/* float height */
 		*((float *)av[4].argval),	/* float xmin0 */
@@ -1353,24 +1399,24 @@ c_plw3d_wrapper(int ac,APIARGS *av){
 
 }
 
-APIARGS c_plwid_args[]={
-	{ "c_plwid",VOID },
+APIARGS pl_plwid_args[]={
+	{ "pl_plwid",VOID },
 	{ "width",INT } };
 void
-c_plwid_wrapper(int ac,APIARGS *av){
-	c_plwid(*((int *)av[1].argval));	/* int width */
+pl_plwid_wrapper(int ac,APIARGS *av){
+	pl_plwid(*((int *)av[1].argval));	/* int width */
 
 }
 
-APIARGS c_plwind_args[]={
-	{ "c_plwind",VOID },
+APIARGS pl_plwind_args[]={
+	{ "pl_plwind",VOID },
 	{ "xmin",FLOAT },
 	{ "xmax",FLOAT },
 	{ "ymin",FLOAT },
 	{ "ymax",FLOAT } };
 void
-c_plwind_wrapper(int ac,APIARGS *av){
-	c_plwind(*((float *)av[1].argval),	/* float xmin */
+pl_plwind_wrapper(int ac,APIARGS *av){
+	pl_plwind(*((float *)av[1].argval),	/* float xmin */
 		*((float *)av[2].argval),	/* float xmax */
 		*((float *)av[3].argval),	/* float ymin */
 		*((float *)av[4].argval));	/* float ymax */
@@ -1610,106 +1656,109 @@ plsxwin_wrapper(int ac,APIARGS *av){
 
 /* APIDEFS */
 const APIDEFS apidefs[] = {
-	{ "c_pladv",c_pladv_args,2,c_pladv_wrapper },
-	{ "c_plaxes",c_plaxes_args,9,c_plaxes_wrapper },
-	{ "c_plbin",c_plbin_args,5,c_plbin_wrapper },
-	{ "c_plbop",c_plbop_args,1,c_plbop_wrapper },
-	{ "c_plbox",c_plbox_args,7,c_plbox_wrapper },
-	{ "c_plbox3",c_plbox3_args,13,c_plbox3_wrapper },
-	{ "c_plcol0",c_plcol0_args,2,c_plcol0_wrapper },
-	{ "c_plcol1",c_plcol1_args,2,c_plcol1_wrapper },
-	{ "c_plcpstrm",c_plcpstrm_args,3,c_plcpstrm_wrapper },
-	{ "c_plend",c_plend_args,1,c_plend_wrapper },
-	{ "c_plend1",c_plend1_args,1,c_plend1_wrapper },
-	{ "c_plenv",c_plenv_args,7,c_plenv_wrapper },
-	{ "c_pleop",c_pleop_args,1,c_pleop_wrapper },
-	{ "c_plerrx",c_plerrx_args,5,c_plerrx_wrapper },
-	{ "c_plerry",c_plerry_args,5,c_plerry_wrapper },
-	{ "c_plfamadv",c_plfamadv_args,1,c_plfamadv_wrapper },
-	{ "c_plfill",c_plfill_args,4,c_plfill_wrapper },
-	{ "c_plflush",c_plflush_args,1,c_plflush_wrapper },
-	{ "c_plfont",c_plfont_args,2,c_plfont_wrapper },
-	{ "c_plfontld",c_plfontld_args,2,c_plfontld_wrapper },
-	{ "c_plgchr",c_plgchr_args,3,c_plgchr_wrapper },
-	{ "c_plgcol0",c_plgcol0_args,5,c_plgcol0_wrapper },
-	{ "c_plgcolbg",c_plgcolbg_args,4,c_plgcolbg_wrapper },
-	{ "c_plgdev",c_plgdev_args,2,c_plgdev_wrapper },
-	{ "c_plgdidev",c_plgdidev_args,5,c_plgdidev_wrapper },
-	{ "c_plgdiori",c_plgdiori_args,2,c_plgdiori_wrapper },
-	{ "c_plgdiplt",c_plgdiplt_args,5,c_plgdiplt_wrapper },
-	{ "c_plgfam",c_plgfam_args,4,c_plgfam_wrapper },
-	{ "c_plgfnam",c_plgfnam_args,2,c_plgfnam_wrapper },
-	{ "c_plglevel",c_plglevel_args,2,c_plglevel_wrapper },
-	{ "c_plgpage",c_plgpage_args,7,c_plgpage_wrapper },
-	{ "c_plgra",c_plgra_args,1,c_plgra_wrapper },
-	{ "c_plgspa",c_plgspa_args,5,c_plgspa_wrapper },
-	{ "c_plgstrm",c_plgstrm_args,2,c_plgstrm_wrapper },
-	{ "c_plgver",c_plgver_args,2,c_plgver_wrapper },
-	{ "c_plgxax",c_plgxax_args,3,c_plgxax_wrapper },
-	{ "c_plgyax",c_plgyax_args,3,c_plgyax_wrapper },
-	{ "c_plgzax",c_plgzax_args,3,c_plgzax_wrapper },
-	{ "c_plhist",c_plhist_args,7,c_plhist_wrapper },
-	{ "c_plhls",c_plhls_args,4,c_plhls_wrapper },
-	{ "c_plinit",c_plinit_args,1,c_plinit_wrapper },
-	{ "c_pljoin",c_pljoin_args,5,c_pljoin_wrapper },
-	{ "c_pllab",c_pllab_args,4,c_pllab_wrapper },
-	{ "c_plline",c_plline_args,4,c_plline_wrapper },
-	{ "c_plline3",c_plline3_args,5,c_plline3_wrapper },
-	{ "c_pllsty",c_pllsty_args,2,c_pllsty_wrapper },
-	{ "c_plmkstrm",c_plmkstrm_args,2,c_plmkstrm_wrapper },
-	{ "c_plmtex",c_plmtex_args,6,c_plmtex_wrapper },
-	{ "c_plpat",c_plpat_args,4,c_plpat_wrapper },
-	{ "c_plpoin",c_plpoin_args,5,c_plpoin_wrapper },
-	{ "c_plpoin3",c_plpoin3_args,6,c_plpoin3_wrapper },
-	{ "c_plpoly3",c_plpoly3_args,6,c_plpoly3_wrapper },
-	{ "c_plprec",c_plprec_args,3,c_plprec_wrapper },
-	{ "c_plpsty",c_plpsty_args,2,c_plpsty_wrapper },
-	{ "c_plptex",c_plptex_args,7,c_plptex_wrapper },
-	{ "c_plreplot",c_plreplot_args,1,c_plreplot_wrapper },
-	{ "c_plrgb",c_plrgb_args,4,c_plrgb_wrapper },
-	{ "c_plrgb1",c_plrgb1_args,4,c_plrgb1_wrapper },
-	{ "c_plschr",c_plschr_args,3,c_plschr_wrapper },
-	{ "c_plscmap0",c_plscmap0_args,5,c_plscmap0_wrapper },
-	{ "c_plscmap0n",c_plscmap0n_args,2,c_plscmap0n_wrapper },
-	{ "c_plscmap1",c_plscmap1_args,5,c_plscmap1_wrapper },
-	{ "c_plscmap1l",c_plscmap1l_args,8,c_plscmap1l_wrapper },
-	{ "c_plscmap1n",c_plscmap1n_args,2,c_plscmap1n_wrapper },
-	{ "c_plscol0",c_plscol0_args,5,c_plscol0_wrapper },
-	{ "c_plscolbg",c_plscolbg_args,4,c_plscolbg_wrapper },
-	{ "c_plscolor",c_plscolor_args,2,c_plscolor_wrapper },
-	{ "c_plsdev",c_plsdev_args,2,c_plsdev_wrapper },
-	{ "c_plsdidev",c_plsdidev_args,5,c_plsdidev_wrapper },
-	{ "c_plsdimap",c_plsdimap_args,7,c_plsdimap_wrapper },
-	{ "c_plsdiori",c_plsdiori_args,2,c_plsdiori_wrapper },
-	{ "c_plsdiplt",c_plsdiplt_args,5,c_plsdiplt_wrapper },
-	{ "c_plsdiplz",c_plsdiplz_args,5,c_plsdiplz_wrapper },
-	{ "c_plsesc",c_plsesc_args,2,c_plsesc_wrapper },
-	{ "c_plsfam",c_plsfam_args,4,c_plsfam_wrapper },
-	{ "c_plsfnam",c_plsfnam_args,2,c_plsfnam_wrapper },
-	{ "c_plsmaj",c_plsmaj_args,3,c_plsmaj_wrapper },
-	{ "c_plsmin",c_plsmin_args,3,c_plsmin_wrapper },
-	{ "c_plsori",c_plsori_args,2,c_plsori_wrapper },
-	{ "c_plspage",c_plspage_args,7,c_plspage_wrapper },
-	{ "c_plspause",c_plspause_args,2,c_plspause_wrapper },
-	{ "c_plsstrm",c_plsstrm_args,2,c_plsstrm_wrapper },
-	{ "c_plssub",c_plssub_args,3,c_plssub_wrapper },
-	{ "c_plssym",c_plssym_args,3,c_plssym_wrapper },
-	{ "c_plstar",c_plstar_args,3,c_plstar_wrapper },
-	{ "c_plstart",c_plstart_args,4,c_plstart_wrapper },
-	{ "c_plstyl",c_plstyl_args,4,c_plstyl_wrapper },
-	{ "c_plsvpa",c_plsvpa_args,5,c_plsvpa_wrapper },
-	{ "c_plsxax",c_plsxax_args,3,c_plsxax_wrapper },
-	{ "c_plsyax",c_plsyax_args,3,c_plsyax_wrapper },
-	{ "c_plsym",c_plsym_args,5,c_plsym_wrapper },
-	{ "c_plszax",c_plszax_args,3,c_plszax_wrapper },
-	{ "c_pltext",c_pltext_args,1,c_pltext_wrapper },
-	{ "c_plvasp",c_plvasp_args,2,c_plvasp_wrapper },
-	{ "c_plvpas",c_plvpas_args,6,c_plvpas_wrapper },
-	{ "c_plvpor",c_plvpor_args,5,c_plvpor_wrapper },
-	{ "c_plvsta",c_plvsta_args,1,c_plvsta_wrapper },
-	{ "c_plw3d",c_plw3d_args,12,c_plw3d_wrapper },
-	{ "c_plwid",c_plwid_args,2,c_plwid_wrapper },
-	{ "c_plwind",c_plwind_args,5,c_plwind_wrapper },
+	{ "pl_pladv",pl_pladv_args,2,pl_pladv_wrapper },
+	{ "pl_plaxes",pl_plaxes_args,9,pl_plaxes_wrapper },
+	{ "pl_plbin",pl_plbin_args,5,pl_plbin_wrapper },
+	{ "pl_plbop",pl_plbop_args,1,pl_plbop_wrapper },
+	{ "pl_plbox",pl_plbox_args,7,pl_plbox_wrapper },
+	{ "pl_plbox3",pl_plbox3_args,13,pl_plbox3_wrapper },
+	{ "pl_plcol0",pl_plcol0_args,2,pl_plcol0_wrapper },
+	{ "pl_plcol1",pl_plcol1_args,2,pl_plcol1_wrapper },
+	{ "pl_plcpstrm",pl_plcpstrm_args,3,pl_plcpstrm_wrapper },
+	{ "pl_plcross",pl_plcross_args,3,pl_plcross_wrapper},
+	{ "pl_plend",pl_plend_args,1,pl_plend_wrapper },
+	{ "pl_plend1",pl_plend1_args,1,pl_plend1_wrapper },
+	{ "pl_plenv",pl_plenv_args,7,pl_plenv_wrapper },
+	{ "pl_pleop",pl_pleop_args,1,pl_pleop_wrapper },
+	{ "pl_plerrx",pl_plerrx_args,5,pl_plerrx_wrapper },
+	{ "pl_plerry",pl_plerry_args,5,pl_plerry_wrapper },
+	{ "pl_plfamadv",pl_plfamadv_args,1,pl_plfamadv_wrapper },
+	{ "pl_plfill",pl_plfill_args,4,pl_plfill_wrapper },
+	{ "pl_plflush",pl_plflush_args,1,pl_plflush_wrapper },
+	{ "pl_plfont",pl_plfont_args,2,pl_plfont_wrapper },
+	{ "pl_plfontld",pl_plfontld_args,2,pl_plfontld_wrapper },
+	{ "pl_plgchr",pl_plgchr_args,3,pl_plgchr_wrapper },
+	{ "pl_plgcol0",pl_plgcol0_args,5,pl_plgcol0_wrapper },
+	{ "pl_plgcolbg",pl_plgcolbg_args,4,pl_plgcolbg_wrapper },
+	{ "pl_plgdev",pl_plgdev_args,2,pl_plgdev_wrapper },
+	{ "pl_plgdidev",pl_plgdidev_args,5,pl_plgdidev_wrapper },
+	{ "pl_plgdiori",pl_plgdiori_args,2,pl_plgdiori_wrapper },
+	{ "pl_plgdiplt",pl_plgdiplt_args,5,pl_plgdiplt_wrapper },
+	{ "pl_plgfam",pl_plgfam_args,4,pl_plgfam_wrapper },
+	{ "pl_plgfnam",pl_plgfnam_args,2,pl_plgfnam_wrapper },
+	{ "pl_plglevel",pl_plglevel_args,2,pl_plglevel_wrapper },
+	{ "pl_plgpage",pl_plgpage_args,7,pl_plgpage_wrapper },
+	{ "pl_plgra",pl_plgra_args,1,pl_plgra_wrapper },
+	{ "pl_plgspa",pl_plgspa_args,5,pl_plgspa_wrapper },
+	{ "pl_plgstrm",pl_plgstrm_args,2,pl_plgstrm_wrapper },
+	{ "pl_plgver",pl_plgver_args,2,pl_plgver_wrapper },
+	{ "pl_plgwid",pl_plgwid_args,2,pl_plgwid_wrapper },
+	{ "pl_plgxax",pl_plgxax_args,3,pl_plgxax_wrapper },
+	{ "pl_plgyax",pl_plgyax_args,3,pl_plgyax_wrapper },
+	{ "pl_plgzax",pl_plgzax_args,3,pl_plgzax_wrapper },
+	{ "pl_plhist",pl_plhist_args,7,pl_plhist_wrapper },
+	{ "pl_plhls",pl_plhls_args,4,pl_plhls_wrapper },
+	{ "pl_plinit",pl_plinit_args,1,pl_plinit_wrapper },
+	{ "pl_pljoin",pl_pljoin_args,5,pl_pljoin_wrapper },
+	{ "pl_pllab",pl_pllab_args,4,pl_pllab_wrapper },
+	{ "pl_plline",pl_plline_args,4,pl_plline_wrapper },
+	{ "pl_plline3",pl_plline3_args,5,pl_plline3_wrapper },
+	{ "pl_pllsty",pl_pllsty_args,2,pl_pllsty_wrapper },
+	{ "pl_plmkstrm",pl_plmkstrm_args,2,pl_plmkstrm_wrapper },
+	{ "pl_plmtex",pl_plmtex_args,6,pl_plmtex_wrapper },
+	{ "pl_plpat",pl_plpat_args,4,pl_plpat_wrapper },
+	{ "pl_plpoin",pl_plpoin_args,5,pl_plpoin_wrapper },
+	{ "pl_plpoin3",pl_plpoin3_args,6,pl_plpoin3_wrapper },
+	{ "pl_plpoly3",pl_plpoly3_args,6,pl_plpoly3_wrapper },
+	{ "pl_plprec",pl_plprepl_args,3,pl_plprepl_wrapper },
+	{ "pl_plpsty",pl_plpsty_args,2,pl_plpsty_wrapper },
+	{ "pl_plptex",pl_plptex_args,7,pl_plptex_wrapper },
+	{ "pl_plptexd",pl_plptex_args,7,pl_plptex_wrapper },
+	{ "pl_plreplot",pl_plreplot_args,1,pl_plreplot_wrapper },
+	{ "pl_plrgb",pl_plrgb_args,4,pl_plrgb_wrapper },
+	{ "pl_plrgb1",pl_plrgb1_args,4,pl_plrgb1_wrapper },
+	{ "pl_plschr",pl_plschr_args,3,pl_plschr_wrapper },
+	{ "pl_plscmap0",pl_plscmap0_args,5,pl_plscmap0_wrapper },
+	{ "pl_plscmap0n",pl_plscmap0n_args,2,pl_plscmap0n_wrapper },
+	{ "pl_plscmap1",pl_plscmap1_args,5,pl_plscmap1_wrapper },
+	{ "pl_plscmap1l",pl_plscmap1l_args,8,pl_plscmap1l_wrapper },
+	{ "pl_plscmap1n",pl_plscmap1n_args,2,pl_plscmap1n_wrapper },
+	{ "pl_plscol0",pl_plscol0_args,5,pl_plscol0_wrapper },
+	{ "pl_plscolbg",pl_plscolbg_args,4,pl_plscolbg_wrapper },
+	{ "pl_plscolor",pl_plscolor_args,2,pl_plscolor_wrapper },
+	{ "pl_plsdev",pl_plsdev_args,2,pl_plsdev_wrapper },
+	{ "pl_plsdidev",pl_plsdidev_args,5,pl_plsdidev_wrapper },
+	{ "pl_plsdimap",pl_plsdimap_args,7,pl_plsdimap_wrapper },
+	{ "pl_plsdiori",pl_plsdiori_args,2,pl_plsdiori_wrapper },
+	{ "pl_plsdiplt",pl_plsdiplt_args,5,pl_plsdiplt_wrapper },
+	{ "pl_plsdiplz",pl_plsdiplz_args,5,pl_plsdiplz_wrapper },
+	{ "pl_plsesc",pl_plsespl_args,2,pl_plsespl_wrapper },
+	{ "pl_plsfam",pl_plsfam_args,4,pl_plsfam_wrapper },
+	{ "pl_plsfnam",pl_plsfnam_args,2,pl_plsfnam_wrapper },
+	{ "pl_plsmaj",pl_plsmaj_args,3,pl_plsmaj_wrapper },
+	{ "pl_plsmin",pl_plsmin_args,3,pl_plsmin_wrapper },
+	{ "pl_plsori",pl_plsori_args,2,pl_plsori_wrapper },
+	{ "pl_plspage",pl_plspage_args,7,pl_plspage_wrapper },
+	{ "pl_plspause",pl_plspause_args,2,pl_plspause_wrapper },
+	{ "pl_plsstrm",pl_plsstrm_args,2,pl_plsstrm_wrapper },
+	{ "pl_plssub",pl_plssub_args,3,pl_plssub_wrapper },
+	{ "pl_plssym",pl_plssym_args,3,pl_plssym_wrapper },
+	{ "pl_plstar",pl_plstar_args,3,pl_plstar_wrapper },
+	{ "pl_plstart",pl_plstart_args,4,pl_plstart_wrapper },
+	{ "pl_plstyl",pl_plstyl_args,4,pl_plstyl_wrapper },
+	{ "pl_plsvpa",pl_plsvpa_args,5,pl_plsvpa_wrapper },
+	{ "pl_plsxax",pl_plsxax_args,3,pl_plsxax_wrapper },
+	{ "pl_plsyax",pl_plsyax_args,3,pl_plsyax_wrapper },
+	{ "pl_plsym",pl_plsym_args,5,pl_plsym_wrapper },
+	{ "pl_plszax",pl_plszax_args,3,pl_plszax_wrapper },
+	{ "pl_pltext",pl_pltext_args,1,pl_pltext_wrapper },
+	{ "pl_plvasp",pl_plvasp_args,2,pl_plvasp_wrapper },
+	{ "pl_plvpas",pl_plvpas_args,6,pl_plvpas_wrapper },
+	{ "pl_plvpor",pl_plvpor_args,5,pl_plvpor_wrapper },
+	{ "pl_plvsta",pl_plvsta_args,1,pl_plvsta_wrapper },
+	{ "pl_plw3d",pl_plw3d_args,12,pl_plw3d_wrapper },
+	{ "pl_plwid",pl_plwid_args,2,pl_plwid_wrapper },
+	{ "pl_plwind",pl_plwind_args,5,pl_plwind_wrapper },
 	{ "plClearOpts",plClearOpts_args,1,plClearOpts_wrapper },
 	{ "plFindCommand",plFindCommand_args,2,plFindCommand_wrapper },
 	{ "plFindName",plFindName_args,2,plFindName_wrapper },
