@@ -2,10 +2,10 @@
 
 #ifdef HAVE_LIBMAGICK
 
-#include <magick/magick.h>
-#include <magick/api.h>
 #include "parser.h"
 #include "dvio.h"
+
+#include <magick/api.h>
 
 Var *
 dv_LoadGFX_Image(FILE *fp, char *filename, struct iom_iheader *s)
