@@ -3,6 +3,8 @@
 #include "parser.h"
 #include "isis_obj.h"
 
+static ISISKwdPtr get_keyword_value_pair (FILE *);
+
 #define ISIS_BUFSIZE 1024
 
 static int is_isis(FILE * fh) {
