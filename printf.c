@@ -543,7 +543,12 @@ dv_int_vasprintf (char **result, char *format, va_list args)
        to return NULL.  */
     int total_width = strlen (format) + 1;
     va_list ap;
+
+/*
+	This is a hack because va_copy isn't working on solaris.
     va_copy(ap, args);
+*/
+	ap = args;
 
     while (*p != '\0')
     {
