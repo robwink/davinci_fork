@@ -2275,28 +2275,10 @@ int OdlGetAllKwdValuesArray (KEYWORD *keyword, char ***array)
 #endif
 {
     TB_STRING_LIST *value_list = {NULL};
-    char *val_start = {NULL};
-    char *val_stop = {NULL};
-    char save_ch;
-    *array = NULL;
 
-    if (keyword != NULL)
-    {
-        if (keyword->value != NULL)
-        {
-            for (val_start=(char *)OdlValueStart(keyword->value);
-                     *val_start != '\0'; 
-                         val_start=(char *)OdlValueStart(val_stop+1))
-            {
-                val_stop = (char *) OdlValueEnd(val_start);
-                save_ch = *(val_stop + 1); *(val_stop + 1) = '\0';
-                AddStringToList(val_start, value_list)
-                *(val_stop + 1) = save_ch;
-            }
+	*array = NULL;
 
-        }  /*  End:  "if (keyword->value != NULL) ..."  */
-
-    }  /*  End:  "if (keyword != NULL) ..."  */
+	value_list = OdlGetAllKwdValues(keyword);
 
     if (value_list) {
         return(ListToArray(value_list, array));
