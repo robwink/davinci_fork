@@ -225,8 +225,7 @@ pp_math(Var * a, int op, Var * b)
             break;
         }
         if (dzero) {
-            sprintf(error_buf, "Divsion by zero, %d times\n", dzero);
-            parse_error(NULL);
+            parse_error("Division by zero, %d times", dzero);
         }
     }
 
