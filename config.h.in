@@ -85,9 +85,6 @@
 /* Define to 1 if you have the `X11' library (-lX11). */
 #undef HAVE_LIBX11
 
-/* Define to 1 if you have the `Xm' library (-lXm). */
-#undef HAVE_LIBXM
-
 /* Define to 1 if you have the `Xmu' library (-lXmu). */
 #undef HAVE_LIBXMU
 
@@ -108,6 +105,9 @@
 
 /* Define to 1 if you have the `mkdir' function. */
 #undef HAVE_MKDIR
+
+/* if all motif parts are present */
+#undef HAVE_MOTIF
 
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
@@ -188,6 +188,12 @@
 
 /* Define to 1 if you have the `vprintf' function. */
 #undef HAVE_VPRINTF
+
+/* Define to 1 if you have the <X11/Intrinsic.h> header file. */
+#undef HAVE_X11_INTRINSIC_H
+
+/* Define to 1 if you have the <Xm/Xm.h> header file. */
+#undef HAVE_XM_XM_H
 
 /* Define to 1 if you have the <Xm/Xrt3d.h> header file. */
 #undef HAVE_XM_XRT3D_H
