@@ -242,6 +242,7 @@ Var *ff_issubstring(vfuncptr func, Var * arg);
 Var *ff_strlen(vfuncptr func, Var * arg);
 Var *ff_atof(vfuncptr func, Var *arg);
 Var *ff_sprintf(vfuncptr func, Var *arg);
+Var *ff_fprintf(vfuncptr func, Var *arg);
 Var *ff_version(vfuncptr, Var *);
 Var *ff_random(vfuncptr, Var *);
 Var *ff_gnoise(vfuncptr func, Var *arg);
@@ -312,6 +313,8 @@ Var *ff_self_convolve(vfuncptr func, Var *arg);
 Var *ff_convolve(vfuncptr func, Var *arg);
 Var *ff_convolve2(vfuncptr func, Var *arg);
 Var *ff_convolve3(vfuncptr func, Var *arg);
+Var *ff_eval(vfuncptr func, Var *arg);
+
 
 #ifndef __MSDOS__
 Var *ff_popen(vfuncptr func, Var * arg);
@@ -323,6 +326,7 @@ Var *ff_pbox(vfuncptr func, Var * arg);
 #endif
 
 Var *ff_struct(vfuncptr func, Var *arg);
+Var *ff_vcat(vfuncptr func, Var *arg);
 
 Alist make_alist(char *name, int type, void *limits, void *value);
 
@@ -348,3 +352,6 @@ void vax_ieee_r(float *from, float *to);
 
 char *strndup(char *, int);
 
+Var *varray_subset(Var *v, Range *r);
+
+Var *set_varray(Var *v, Range *r, Var *e);

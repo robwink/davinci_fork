@@ -73,7 +73,7 @@ ff_gnoise(vfuncptr func, Var * arg)
 		seed = V_INT(v);
 	}
 
-	s = new(Var);
+	s = newVar();
 	V_TYPE(s) = ID_VAL;
 
 	V_DATA(s) = calloc(1, x * y * z);

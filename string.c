@@ -14,7 +14,7 @@ ff_atoi(vfuncptr func, Var *arg)
 
 	i = (int)strtod(V_STRING(v), NULL);
 
-	s = new(Var);
+	s = newVar();
 	V_TYPE(s) = ID_VAL;
 	V_DATA(s) = calloc(1, sizeof(int));
 	V_INT(s) = i;
@@ -35,7 +35,7 @@ ff_atof(vfuncptr func, Var *arg)
 
 	f = (float)strtod(V_STRING(v), NULL);
 
-	s = new(Var);
+	s = newVar();
 	V_TYPE(s) = ID_VAL;
 	V_DATA(s) = calloc(1, sizeof(float));
 	V_FLOAT(s) = f;
@@ -96,7 +96,7 @@ pp_add_strings(Var *a, Var *b)
 			strcat(ptr, buf);
 		}
 	}
-	s = new(Var);
+	s = newVar();
 	V_TYPE(s) = ID_STRING;
 	V_STRING(s) = ptr;
 
@@ -151,7 +151,7 @@ ff_basename(vfuncptr func, Var *arg)
 	}
 
 
-	v = new(Var);
+	v = newVar();
 	V_TYPE(v) = ID_STRING;
 	V_STRING(v) = strdup(p);
 

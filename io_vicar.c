@@ -219,7 +219,7 @@ iheader2var(struct _iheader *h)
     Var *v;
     int i;
 
-    v = new(Var);
+    v = newVar();
 
     V_TYPE(v) = ID_VAL;
     V_FORMAT(v) = h->format;
@@ -425,7 +425,7 @@ LoadVicarHeader(FILE *fp, char *filename, int rec, char *element, Var **var)
 		    !strcasecmp(element, "n4") ||
 		    !strcasecmp(element, "nbb") ||
 		    !strcasecmp(element, "nlb"))  {
-				v = new(Var);
+				v = newVar();
 				V_TYPE(v) = ID_VAL;
 				V_DSIZE(v) = V_SIZE(v)[0] = V_SIZE(v)[1] = V_SIZE(v)[2] = 1;
 				V_ORG(v) = BSQ;
@@ -433,7 +433,7 @@ LoadVicarHeader(FILE *fp, char *filename, int rec, char *element, Var **var)
 				V_DATA(v) = calloc(1, sizeof(int));
 				V_INT(v) = atoi(q);
 		} else {
-			v = new(Var);
+			v = newVar();
 			V_TYPE(v) = ID_STRING;
 			V_STRING(v) = strdup(q);
 		}

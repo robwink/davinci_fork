@@ -351,7 +351,7 @@ LoadSpecpr(FILE *fp,char *filename,int rec)
     }
 
     if (read_specpr(fileno(fp), rec, &label, (char **)&data) > 0) {
-        s = new(Var);
+        s = newVar();
         V_TYPE(s) = ID_VAL;
         V_DATA(s) = data;
         V_DSIZE(s) = label.itchan;
@@ -559,7 +559,7 @@ LoadSpecprHeader(FILE *fp, char *filename, int rec, char *element, Var **val)
     }
 
     if (ival != NULL) {
-        v = new(Var);
+        v = newVar();
         V_TYPE(v) = ID_VAL;
         V_DSIZE(v) = range;
         V_SIZE(v)[0] = range;
@@ -569,7 +569,7 @@ LoadSpecprHeader(FILE *fp, char *filename, int rec, char *element, Var **val)
         V_DATA(v) = calloc(range, sizeof(int));
         memcpy(V_DATA(v), ival, sizeof(int)*range);
     }  else if (fval != NULL) {
-        v = new(Var);
+        v = newVar();
         V_TYPE(v) = ID_VAL;
         V_DSIZE(v) = V_SIZE(v)[0] = range;
         V_SIZE(v)[1] = V_SIZE(v)[2] = 1;
@@ -578,7 +578,7 @@ LoadSpecprHeader(FILE *fp, char *filename, int rec, char *element, Var **val)
         V_DATA(v) = calloc(range, sizeof(float));
         memcpy(V_DATA(v), fval, sizeof(float)*range);
     } else if (tval != NULL) {
-        v = new(Var);
+        v = newVar();
         V_TYPE(v) = ID_STRING;
         V_STRING(v) = strndup((char *)tval, range);
     }

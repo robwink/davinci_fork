@@ -22,7 +22,7 @@ HasValue(vfuncptr func, Var *arg)
 	Scope *scope = scope_tos();
 	Symtable *s;
 	char *name;
-	Var *v = new(Var);
+	Var *v = newVar();
 	int i;
 
 	make_sym(v, INT, "0");

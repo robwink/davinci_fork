@@ -22,7 +22,7 @@ ff_pause(vfuncptr func, Var *arg)
     /**
      ** Create the output object.
      **/
-    s = new(Var);
+    s = newVar();
     V_TYPE(s) = ID_STRING;
 	V_STRING(s) = strdup(buf);
 

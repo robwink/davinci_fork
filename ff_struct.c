@@ -19,7 +19,7 @@ make_struct(int ac, Var **av)
     int i;
     char *zero;
 
-    o = new(Var);
+    o = newVar();
     V_TYPE(o) = ID_VSTRUCT;
     V_STRUCT(o).count = ac;
     names = V_STRUCT(o).names = (char **)calloc(ac, sizeof(char *));
@@ -241,7 +241,7 @@ load_hdf5(hid_t parent)
         return(NULL);
     }
 
-    o = new(Var);
+    o = newVar();
     V_TYPE(o) = ID_VSTRUCT;
     V_STRUCT(o).count = count;
     V_STRUCT(o).names = (char **)calloc(count, sizeof(char *));
@@ -265,7 +265,7 @@ LoadVanilla(char *filename)
 	extern void munmap(unsigned char *, int);
 	typedef	void*	caddr_t;
 #endif
-    
+ 
 	int fd;
     struct stat sbuf;
     int rows;
@@ -398,7 +398,7 @@ LoadVanilla(char *filename)
     }
 
 
-    o = new(Var);
+    o = newVar();
     V_TYPE(o) = ID_VSTRUCT;
     V_STRUCT(o).count = cols;
     V_STRUCT(o).names = (char **)calloc(cols, sizeof(char *));

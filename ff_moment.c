@@ -77,7 +77,7 @@ ff_moment(vfuncptr func, Var *arg)
     fdata[6] = (float) skew;
     fdata[7] = (float) curt;
 
-    out = new(Var);
+    out = newVar();
     V_TYPE(out) = ID_VAL;
 
     V_DATA(out) = fdata;

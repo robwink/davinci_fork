@@ -275,7 +275,7 @@ LoadPNM(FILE *fp, char *filename, struct _iheader *s)
         return(NULL);
     }
 
-    v = new(Var);
+    v = newVar();
     V_TYPE(v) = ID_VAL;
     V_DATA(v) = data;
     if (z == 1) {

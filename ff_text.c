@@ -85,7 +85,7 @@ ff_text(vfuncptr func, Var *arg)
 		fprintf(stderr, "Read TEXT file: %dx%d (%d bytes)\n", x,y,count);
     }
 
-    s = new(Var);
+    s = newVar();
     V_TYPE(s) = ID_VAL;
     V_DATA(s) = cdata;
     V_FORMAT(s) = BYTE;
@@ -172,7 +172,7 @@ ff_delim(vfuncptr func, Var *arg)
 	while((ptr = strtok(ptr, delim)) != NULL) {
 		count++;
 		if (count == item) {
-			s = new(Var);
+			s = newVar();
 			V_TYPE(s) = ID_STRING;
 			V_STRING(s) = strdup(ptr);
 			free(cdata);

@@ -384,7 +384,7 @@ ff_filetype(vfuncptr func, Var * arg)
         fclose(fp);
 
         if (ostring != NULL) {
-            s = new(Var);
+            s = newVar();
             V_TYPE(s) = ID_STRING;
             V_STRING(s) = ostring;
         }
@@ -484,7 +484,7 @@ expand_filename(char *s)
             p = q;
 	
         }
-    #ifndef __MSDOS__ 
+#ifndef __MSDOS__ 
 	    else if (*p == '~' && p == s) { /* home directory expansion */
             q = p + 1;
             while (*q && (isalnum(*q) || *q == '_')) {
@@ -504,7 +504,7 @@ expand_filename(char *s)
             }
             p = q;
         } 
-	#endif
+#endif
 	    else {
             strncat(buf, p, 1);
             p++;

@@ -123,7 +123,7 @@ Var * ff_fit(vfuncptr func, Var *args)
     if (dfit(x, y, ip, ftype, iter, &op, &nparam, plot)) {
         s = NULL;
     } else {
-        s = new(Var);
+        s = newVar();
         V_TYPE(s) = ID_VAL;
 
         V_DATA(s) = op;

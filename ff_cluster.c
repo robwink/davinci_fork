@@ -107,7 +107,7 @@ ff_cluster(vfuncptr func, Var * arg)
      ** Put together return value
      **/
 
-    v = new(Var);
+    v = newVar();
     V_TYPE(v) = ID_VAL;
     V_DATA(v) = data;
     V_ORG(v) = V_ORG(obj);
@@ -191,7 +191,7 @@ ff_ccount(vfuncptr func, Var * arg)
             top++;
     }
 
-    v = new(Var);
+    v = newVar();
     V_TYPE(v) = ID_VAL;
     V_DATA(v) = calloc(3, sizeof(float));
     V_DSIZE(v) = V_SIZE(v)[0] = 3;

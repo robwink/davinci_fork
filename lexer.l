@@ -1,23 +1,32 @@
 /******************************** lexer.l ******************************/
+
 %{
 
 #include "parser.h"
 #include "y_tab.h"
 
+#define MYECHO		if (save_fp) (void)fwrite( yytext, yyleng, 1, save_fp );
 
+int local_line;
+extern int pp_line;
 extern int pp_count;
-#define YY_USER_ACTION pp_count+=yyleng;
+extern int continuation;
+extern int in_comment;
+extern int in_string;
 
-#define MYECHO	if (save_fp) (void) fwrite( yytext, yyleng, 1, save_fp );
+#define YY_USER_ACTION pp_count+=yyleng;
 
 extern int indent;
 FILE *save_fp = NULL;
 char save_file[256];
 
+int caller;			/* used by flex to handle comments in multiple states */
+
 void start_save()
 {
     char *tmp;
 
+	local_line = pp_line;
     tmp = tempnam(NULL, NULL);
     strcpy(save_file, tmp);
     free(tmp);
@@ -27,10 +36,12 @@ void start_save()
 
 void end_save()
 {
+	fprintf(save_fp, "\n");
 	fclose(save_fp);
 	save_fp = NULL;
 	save_ufunc(save_file);
 }
+
 
 %}
 
@@ -44,57 +55,79 @@ rval    {real}|{ereal}
 var     [a-zA-Z_][a-zA-Z0-9_]*
 comment #.*
 
+
+%x comment ufunc
 %%
 
-"define"	{ start_save(); MYECHO; return(FUNC_DEF); }
-"for"		{ MYECHO; return(FOR); }
-"while"     { MYECHO; return(WHILE); }
-"where"     { MYECHO; return(WHERE); }
-"break"     { MYECHO; return(BREAK); }
-"continue"  { MYECHO; return(CONTINUE); }
-"if"        { MYECHO; return(IF); }
-"else"      { MYECHO; return(ELSE); }
-"return"    { MYECHO; return(RETURN); }
-"quit"      { MYECHO; return(QUIT); }
-"help"		{ MYECHO; return(HELP); }
+"define"	{ start_save(); MYECHO; BEGIN(ufunc); }
+"for"		{ return(FOR); }
+"while"     { return(WHILE); }
+"where"     { return(WHERE); }
+"break"     { return(BREAK); }
+"continue"  { return(CONTINUE); }
+"if"        { return(IF); }
+"else"      { return(ELSE); }
+"return"    { return(RETURN); }
+"quit"      { return(QUIT); }
+"help"		{ return(HELP); }
 
-"=="        { MYECHO; return(EQ_OP); }
-"!="        { MYECHO; return(NE_OP); }
-"<="        { MYECHO; return(LE_OP); }
-">="        { MYECHO; return(GE_OP); }
-">"         { MYECHO; return(GT_OP); }
-"<"         { MYECHO; return(LT_OP); }
+"=="        { return(EQ_OP); }
+"!="        { return(NE_OP); }
+"<="        { return(LE_OP); }
+">="        { return(GE_OP); }
+">"         { return(GT_OP); }
+"<"         { return(LT_OP); }
 
-"-="		{ MYECHO; return(DEC_OP); }
-"+="		{ MYECHO; return(INC_OP); }
+"-="		{ return(DEC_OP); }
+"+="		{ return(INC_OP); }
 
-"||"        { MYECHO; return(OR_OP); }
-"&&"        { MYECHO; return(AND_OP); }
-"//"        { MYECHO; return(CAT_OP); }
-
-"{"         { MYECHO; indent++; return('{'); }
-"}"         { MYECHO; indent--; 
-				if (save_fp && indent == 0) {
-					end_save();
-					/*
-					 * Lie to the parser.
-					 */
-					return('\n');
-				}
-				return('}'); 
-			}
+"||"        { return(OR_OP); }
+"&&"        { return(AND_OP); }
+"//"        { return(CAT_OP); }
 
 
-{ival}              { yytext = strdup(yytext); MYECHO; return(IVAL); }
-{rval}              { yytext = strdup(yytext); MYECHO; return(RVAL); }
-{var}               { yytext = strdup(yytext); MYECHO; return(ID); }
-\"(\\.|[^\\"\n])*\" { yytext = strdup(yytext); MYECHO; return(STRING); }
-\'(\\.|[^\\'\n])*\' { yytext = strdup(yytext); MYECHO; return(STRING); }
+"{"         { indent++; return('{'); }
+"}"         { indent--; return('}'); }
 
-{comment}   { MYECHO; }
+"/*"		{ caller = INITIAL; BEGIN(comment); in_comment = 1; }
 
-{ws}        { MYECHO; }
-"\n"        { MYECHO; return('\n'); }
-.           { MYECHO; return(yytext[0]); };
+{ival}              { yytext = strdup(yytext); return(IVAL); }
+{rval}              { yytext = strdup(yytext); return(RVAL); }
+{var}               { yytext = strdup(yytext); return(ID); }
 
+\"(\\.|[^\\"\n])*\" { yytext = strdup(yytext); return(STRING); }
+\'(\\.|[^\\'\n])*\' { yytext = strdup(yytext); return(STRING); }
+
+{comment}   { }
+{ws}        { }
+
+"\\\n"      { continuation=1; pp_line++; }
+"\n"        { return('\n'); }
+.           { return(yytext[0]); };
+
+<ufunc>\"(\\.|[^\\"\n])*\" { MYECHO; }
+<ufunc>\'(\\.|[^\\'\n])*\' { MYECHO; }
+
+<ufunc>"/*"		   { MYECHO; caller = ufunc; BEGIN(comment); in_comment = 1; }
+
+<ufunc>"{"         { MYECHO; indent++; } 
+<ufunc>"}"         { 
+					 	MYECHO; 
+						indent--; 
+						if (indent == 0) { 
+							BEGIN(INITIAL); 
+							end_save();
+							return('\n');
+						} 
+				   }
+<ufunc>"\\\n"      { MYECHO; continuation=1; }
+<ufunc>"\n"        { MYECHO; };
+<ufunc>{comment}   { MYECHO; }
+<ufunc>[^{}]*      { MYECHO; };
+
+
+<comment>[^*\n]*        { MYECHO; /* eat anything that's not a '*' */ }
+<comment>"*"+[^*/\n]*   { MYECHO; /* eat up '*'s not followed by '/'s */ }
+<comment>\n             { MYECHO; }
+<comment>"*"+"/"        { MYECHO; BEGIN(caller); in_comment = 0;}
 %%

@@ -534,12 +534,12 @@ LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var)
     if (key != NULL) {
         switch(OdlGetKwdValueType(key)) {
         case ODL_INTEGER:
-            v = new(Var);
+            v = newVar();
             make_sym(v, INT, key->value);
             V_TYPE(v) = ID_VAL;
             break;
         case ODL_REAL:
-            v = new(Var);
+            v = newVar();
             make_sym(v, FLOAT, key->value);
             V_TYPE(v) = ID_VAL;
             break;
@@ -548,7 +548,7 @@ LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var)
         case ODL_TEXT:
         case ODL_DATE:
         case ODL_DATE_TIME:
-            v = new(Var);
+            v = newVar();
             V_STRING(v) = strdup(key->value);
             V_TYPE(v) = ID_STRING;
             break;
@@ -573,7 +573,7 @@ LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var)
                 p = s+1;
             }
 
-            v = new(Var);
+            v = newVar();
             V_TYPE(v) = ID_VAL;
             V_ORG(v) = BSQ;
             V_DSIZE(v) = V_SIZE(v)[0] = count;

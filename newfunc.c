@@ -138,6 +138,21 @@ parse_args(int ac, Var **av, Alist *alist)
             iptr = (int *)(alist[j].value);
             *iptr = extract_int(v, 0);
             alist[j].filled = 1;
+        } else if (alist[j].type == FLOAT) {
+            float *fptr;
+            if ((e = eval(v)) == NULL) {
+                parse_error("%s: Variable not found: %s", fname, V_NAME(v));
+                return(1);
+            }
+            v = e;
+            if (V_TYPE(v) != ID_VAL) {
+                parse_error("Illegal argument %s(...%s=...), expected FLOAT", 
+                            fname, alist[j].name);
+                return(1);
+            }
+            fptr = (float *)(alist[j].value);
+            *fptr = extract_float(v, 0);
+            alist[j].filled = 1;
         } else if (alist[j].type == ID_ENUM) {
             char **p, *q = NULL, *ptr;
             char **values = (char **)alist[j].limits;
@@ -195,7 +210,9 @@ parse_args(int ac, Var **av, Alist *alist)
             vptr = (Var **)(alist[j].value);
             *vptr = v;
             alist[j].filled = 1;
-	}
+		} else {
+			fprintf(stderr, "parse_args: Bad programmer, no biscuit.\n");
+		}
     }
     return(0);
 }

@@ -127,7 +127,7 @@ struct _var {
 		Range range;
 		char *string;
 		Var *keyval;		/* used by $Keyword */
-		Vstruct vstruct;		/* used by $Keyword */
+		Vstruct vstruct;
 	} value; 
 	Var *next;
 };
@@ -157,7 +157,7 @@ struct _var {
 #define V_STRUCT(v)  (v)->value.vstruct
 
 
-#define new(type)	(type *)mem_malloc()
+#define newVar	(Var *)mem_malloc
 
 
 /**
@@ -172,6 +172,7 @@ struct _var {
 #define	ID_KEYWORD		ID_BASE+3		/* keyword argument */
 #define ID_VAL			ID_BASE+5		/* everything with dim != 0 */
 #define ID_VSTRUCT      ID_BASE+6		/* Structure */
+#define ID_VARRAY       ID_BASE+7		/* 1-D Array of vars */
 
 #define ID_IVAL         ID_BASE+10		/* Integer value */
 #define ID_RVAL         ID_BASE+11		/* real value */

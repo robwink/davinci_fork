@@ -10,6 +10,9 @@
 #endif
 
 int interactive = 1;
+int continuation = 0;
+int in_comment = 0;
+int in_string = 0;
 
 int debug = 0;
 char pp_input_buf[8192];
@@ -245,6 +248,15 @@ void get_file_input(XtPointer client_data, int *fid, XtInputId *id)
 {
     rl_callback_read_char();
 }
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern SetTopLevel(Widget *);
+
+#ifdef __cplusplus
+}
 #endif
 
 void
@@ -261,7 +273,7 @@ event_loop(void)
             top = XtVaAppInitialize(&app, "Simple", NULL, 0,
                                     &argc,
                                     argv, NULL, NULL);
-		SetTopLevel(&top);
+            SetTopLevel(&top);
         } else {
             /**
             ** This is a hack to let us use the Xt event model, without
@@ -324,11 +336,18 @@ while (1) {
 
     if (indent) {
         sprintf(prompt, "%2d> ", indent);
+    } else if (continuation) {
+		continuation = 0;
+        sprintf(prompt, "  > ", indent);
+    } else if (in_comment) {
+        sprintf(prompt, "/*> ", indent);
+    } else if (in_string) {
+        sprintf(prompt, "\" > ", indent);
     } else {
         sprintf(prompt, "dv> ", indent);
     }
 #ifndef __MSDOS__
-        rl_callback_handler_install(prompt, lhandler);
+	rl_callback_handler_install(prompt, lhandler);
 #endif
     /*
     ** Process anything pushed onto the stream stack by the last command.
@@ -354,8 +373,8 @@ process_streams(void)
 
     while (nfstack) {
         while (fgets(buf, 1024, ftos) != NULL) {
-            pp_line++;
             parse_buffer(buf);
+            pp_line++;
         }
         pop_input_file();
     }
@@ -380,8 +399,6 @@ parse_buffer(char *buf)
         /*
         ** if this is a function definition, do no further parsing yet.
         */
-        if (save_fp) continue;
-
         j = yyparse(i, (Var *)yytext);
         if (j == -1) quit();
 
@@ -450,7 +467,7 @@ fake_data()
     Var *v;
     int i, j;
 
-    v = new(Var);
+    v = newVar();
     V_NAME(v) = strdup("a");
     V_TYPE(v) = ID_VAL;
     v = put_sym(v);
@@ -495,7 +512,7 @@ fake_data()
     V_DATA(v) = calloc(1, sizeof(u_char));
     VZERO = v;
 
-    v = new(Var);
+    v = newVar();
     V_NAME(v) = strdup("tmp");
     V_TYPE(v) = ID_VAL;
     v = put_sym(v);
@@ -549,7 +566,7 @@ env_vars()
     Var *s;
 
     if ((path = getenv("DATAPATH")) != NULL) {
-        s = new(Var);
+        s = newVar();
         V_NAME(s) = strdup("datapath");
         V_TYPE(s) = ID_STRING;
         V_STRING(s) = strdup(path);

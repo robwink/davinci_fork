@@ -71,7 +71,7 @@ ff_rgb(vfuncptr func, Var *arg)
         data[count++] = ((u_char *)V_DATA(v[2]))[i];
     }
 
-    s = new(Var);
+    s = newVar();
     V_TYPE(s) = ID_VAL;
     V_DATA(s) = data;
     V_ORG(s) = BIP;

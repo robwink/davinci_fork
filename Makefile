@@ -22,6 +22,7 @@ XRTINCLUDE=
 XRTLIBS = 
 
 
+#CC     = g++ -fpermissive
 CC     = gcc
 DEFS   = -DHAVE_CONFIG_H -Ilib -DINCLUDE_API
 LIBS   = $(READLINE_LIB) $(XLIBS) -L $(LIBDIR) -lMagick -ltiff -lproj -lz -lreadline -ltermcap -ljpeg  -lplplotFX -lXext -lXm -lXt -lX11 -lm  -lhdf5
@@ -52,7 +53,9 @@ OBJ=p.o pp.o symbol.o error.o \
 	ff_pause.o printf.o ff_ifill.o ff_xfrm.o newfunc.o ff_ix.o ff_avg.o \
 	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
 	x.o xrt_print_3d.o motif_tools.o ff_convolve.c ff_struct.o apifunc.o \
-	ff_plplot.o
+	ff_plplot.o varray.o 
+
+# Val.o StringVar.o CVar.o:
 
 all:	 davinci gplot
 
@@ -66,7 +69,7 @@ lexer.o:	lexer.c parser.o
 
 lexer.c:	lexer.l
 	flex lexer.l
-	mv lex.yy.c lexer.~
+	mv lex.yy.c lexer.c
 
 parser.c:	parser.y
 	/opt/local/alt/bin/bison -d parser.y

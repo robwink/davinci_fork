@@ -33,7 +33,7 @@ ff_skel(vfuncptr func, Var * arg)
     /**
     ** Create the output object.
     **/
-    s = new(Var);
+    s = newVar();
     V_TYPE(s) = ID_STRING;
     V_STRING(s) = strdup(buf);
 
@@ -82,7 +82,7 @@ ff_jfill(vfuncptr func, Var * arg)
     ** Put together return value
     **/
 
-    v = new(Var);
+    v = newVar();
     V_TYPE(v) = ID_VAL;
     V_ORG(v) = V_ORG(obj);
     V_DSIZE(v) = V_DSIZE(obj);
@@ -227,7 +227,7 @@ ff_ifill(vfuncptr func, Var * arg)
 		data1 = t;
 	}
 
-    v = new(Var);
+    v = newVar();
     V_TYPE(v) = ID_VAL;
     V_ORG(v) = V_ORG(obj);
     V_DSIZE(v) = V_DSIZE(obj);

@@ -92,6 +92,9 @@ load_function(char *filename)
     int fd;
     int nlen = 0;
     char name[256];
+	char line[2048];
+	char *q;
+
     UFUNC *f = NULL;
     Scope *scope;
     void *handle;
@@ -99,6 +102,7 @@ load_function(char *filename)
 	extern Var *curnode;
 	FILE *fp;
 	extern void *parent_buffer;
+	extern int local_line;
 
     /**
      ** Get text from file
@@ -131,7 +135,9 @@ load_function(char *filename)
          ** the ufunc's here.
          **/
         free(buf);
-        parse_error("empty DEFINE statement.\n");
+
+		list_funcs();
+
         return(NULL);
     }
     name[nlen] = '\0';
@@ -231,18 +237,43 @@ load_function(char *filename)
     /**
      ** Shove the function into the stream for evaluation.
      **/
-	
-    handle = yy_scan_string(str);
-	while(i = yylex()) {
-		j = yyparse(i, (Var *)yytext);
-		if (j == 1) {
-			f->tree = curnode;
-			break;
-		}
+	if (debug) {
+		p = f->text;
+		q = f->body;
+		memcpy(line, p, q-p+1);
+		line[q-p+1] = '\0';
+		printf("%s", line);
 	}
-    yy_delete_buffer((struct yy_buffer_state *)handle);
+	
+	pp_line = local_line;
+	p = str;
+
+	while (p && *p) {
+		q = strchr(p, '\n');
+		if (q == NULL) q = p+strlen(p)-1;
+		memcpy(line, p, q-p+1);
+		line[q-p+1] = '\0';
+		if (debug) printf("%s", line);
+		handle = yy_scan_string(line);
+		pp_line++;
+		while(i = yylex()) {
+			j = yyparse(i, (Var *)yytext);
+
+			if (j == 1) {
+				f->tree = curnode;
+				break;
+			}
+		}
+		yy_delete_buffer((struct yy_buffer_state *)handle);
+		p = q+1;
+	}
 	yy_switch_to_buffer((struct yy_buffer_state *)parent_buffer);
 	f->ready = 1;
+
+	/*
+	** Take one off  because save_ufunc put one on.
+	*/
+	pp_line--;
 
     return(f);
 }
@@ -442,4 +473,13 @@ ufunc_edit(vfuncptr func , Var *arg)
 	} else if (filename && fname != filename) free(fname);
 
     return(NULL);
+}
+
+void
+list_funcs()
+{
+	int i;
+    for (i = 0 ; i < nufunc ; i++) {
+		printf("%s\n", ufunc_list[i]->name);
+	}
 }

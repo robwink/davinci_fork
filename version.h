@@ -1,7 +1,14 @@
-char *version = "@(#) daVinci Version #0.52";
+char *version = "@(#) daVinci Version #0.53";
 
 
 /*
+Version 0.53: Tue Feb  1 19:04:29 MST 2000
+	+ added line continuation  "\"
+	+ added C-style (multiline) comments 
+	* fixed line-number reporting in ufuncs.  It's a hack.
+	+ added eval(), but it can't return a value
+	* Found some missing NULL problems in various options declarations.
+
 Version 0.52a
     * Added stereo projection function
     * Added ImageMagick library for 40+ graphics file types (R/W) including Mpeg

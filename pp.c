@@ -6,6 +6,8 @@
  **/
 
 void commaize(char *);
+void pp_print_varray(Var *v, int indent) ;
+void pp_print_var(Var *v, char *name, int indent) ;
 
 /*
 void 
@@ -32,36 +34,53 @@ V_DUP(Var *v)
     Var *r;
     int dsize;
 
-    r = new(Var);
+    r = newVar();
     memcpy(r, v, sizeof(Var));
+    V_NAME(r) = NULL;
 
     switch (V_TYPE(v)) {
     case ID_VAL:
-		{
-			memcpy(V_SYM(r), V_SYM(v), sizeof(Sym));
-			dsize = V_DSIZE(v)*NBYTES(V_FORMAT(v));
-			V_SYM(r)->data = memcpy(malloc(dsize), V_SYM(v)->data, dsize);
-			if (V_TITLE(v)) V_TITLE(r) = strdup(V_TITLE(v));
-		}
-		break;
+    {
+        memcpy(V_SYM(r), V_SYM(v), sizeof(Sym));
+        dsize = V_DSIZE(v)*NBYTES(V_FORMAT(v));
+        V_SYM(r)->data = memcpy(malloc(dsize), V_SYM(v)->data, dsize);
+        if (V_TITLE(v)) V_TITLE(r) = strdup(V_TITLE(v));
+    }
+    break;
     case ID_STRING:
         V_STRING(r) = strdup(V_STRING(v));
         break;
     case ID_UNK:
         if (V_NAME(v)) V_NAME(r) = strdup(V_NAME(v));
         break;
-	case ID_VSTRUCT:
-		{
-			int i;
-			V_STRUCT(r).names = (char **)calloc(V_STRUCT(v).count, sizeof(char *));
-			V_STRUCT(r).data = (Var **) calloc(V_STRUCT(v).count, sizeof(Var *));
-			for (i = 0 ; i < V_STRUCT(r).count ; i++) {
-				V_STRUCT(r).data[i] = V_DUP(V_STRUCT(v).data[i]);
-				V_STRUCT(r).names[i] = strdup(V_STRUCT(v).names[i]);
-			}
-			V_STRUCT(r).count = V_STRUCT(v).count;
-		}
-		break;
+    case ID_VSTRUCT:
+    {
+        int i;
+        V_STRUCT(r).names = (char **)calloc(V_STRUCT(v).count, sizeof(char *));
+        V_STRUCT(r).data = (Var **) calloc(V_STRUCT(v).count, sizeof(Var *));
+        for (i = 0 ; i < V_STRUCT(r).count ; i++) {
+            V_STRUCT(r).data[i] = V_DUP(V_STRUCT(v).data[i]);
+            V_STRUCT(r).names[i] = strdup(V_STRUCT(v).names[i]);
+        }
+        V_STRUCT(r).count = V_STRUCT(v).count;
+    }
+    break;
+    case ID_VARRAY:
+    {
+        int i;
+        Var **out, **in;
+			
+        memcpy(V_SYM(r), V_SYM(v), sizeof(Sym));
+        dsize = V_DSIZE(v);
+        out = (Var **)calloc(dsize, sizeof(Var *));
+
+        in = (Var **)V_DATA(v);
+        for (i = 0 ; i < dsize ; i++) {
+            out[i] = V_DUP(in[i]);
+        }
+        V_DATA(r) = out;
+    }
+    break;
     }
     return(r);
 }
@@ -71,7 +90,8 @@ Var *
 pp_print(Var *v)
 {
     extern int SCALE;
-    int i;
+    int i, j, k, c;
+	int x, y, z;
     Var *s;
     char bytes[32];
 
@@ -97,43 +117,71 @@ pp_print(Var *v)
         sprintf(bytes, "%d", NBYTES(V_FORMAT(v))*V_DSIZE(v));
         commaize(bytes);
 
+	   x = GetSamples(V_SIZE(v),V_ORG(v));
+	   y = GetLines(V_SIZE(v),V_ORG(v));
+	   z = GetBands(V_SIZE(v),V_ORG(v));
+
         if (V_DSIZE(v) > 1) {
             printf("%s:\t%dx%dx%d array of %s, %s format [%s bytes]\n",
                    V_NAME(v) ? V_NAME(v) : "", 	
-                   GetSamples(V_SIZE(v),V_ORG(v)),
-                   GetLines(V_SIZE(v),V_ORG(v)),
-                   GetBands(V_SIZE(v),V_ORG(v)),
+                   x,
+                   y,
+                   z,
                    Format2Str(V_FORMAT(v)),
                    Org2Str(V_ORG(v)),
                    bytes);
         }
         if (V_DSIZE(v) < 100) {
-            for (i = 0 ; i < V_DSIZE(v) ; i++) {
-                if (i) {
-                    if (i % V_SIZE(v)[0] == 0)
-                        printf("\n");
-                    if (i % (V_SIZE(v)[1]*V_SIZE(v)[0]) == 0)
-                        printf("\n");
-                }
+			for (k = 0 ; k < z ; k++) {
+			for (j = 0 ; j < y ; j++) {
+			for (i = 0 ; i < x ; i++) {
+				c = cpos(i,j,k,v);
                 switch (V_FORMAT(v)) {
-                case BYTE: printf("%d\t", ((u_char *)V_DATA(v))[i]); break;
-                case SHORT: printf("%d\t", ((short *)V_DATA(v))[i]); break;
-                case INT:  printf("%d\t", ((int *)V_DATA(v))[i]); break;
-                case FLOAT: printf("%#.*g\t", SCALE, ((float *)V_DATA(v))[i]); break;
-                case DOUBLE: printf("%#.*g\t", SCALE, ((double *)V_DATA(v))[i]); break;
+                case BYTE: printf("%d\t", ((u_char *)V_DATA(v))[c]); break;
+                case SHORT: printf("%d\t", ((short *)V_DATA(v))[c]); break;
+                case INT:  printf("%d\t", ((int *)V_DATA(v))[c]); break;
+                case FLOAT: printf("%#.*g\t", SCALE, ((float *)V_DATA(v))[c]); break;
+                case DOUBLE: printf("%#.*g\t", SCALE, ((double *)V_DATA(v))[c]); break;
                 }
             }
             printf("\n");
+			}
+            if (z > 1) printf("\n");
+			}
         }
         break;
-	case ID_VSTRUCT:
-		pp_print_struct(v, 0);
-		break;
+    case ID_VSTRUCT:
+        pp_print_struct(v, 0);
+        break;
+    case ID_VARRAY:
+        pp_print_varray(v, 0);
+        break;
     default:
         printf("error: Unknown type.\n");
         break;
     }
     return(v);
+}
+
+void
+pp_print_varray(Var *v, int indent) 
+{
+    int i;
+    int n = V_DSIZE(v);
+    Var **vdata;
+    char *name;
+    char name2[256];
+
+    name = V_NAME(v);
+    if (name == NULL) name = "";
+
+    printf("%*s%s: varray (%d elements)\n", indent, "", name, n);
+
+    vdata = (Var **)V_DATA(v);
+    for (i = 0 ; i < n ; i++) {
+        sprintf(name2, "%s[%d]", name, i+1);
+        pp_print_var(vdata[i], name2, indent+4);
+    }
 }
 
 void
@@ -143,60 +191,68 @@ pp_print_struct(Var *v, int indent)
     int i;
     Var *s;
     char bytes[32];
+    char *name;
 	
     if (v == NULL) return;
     if (VERBOSE == 0) return;
 
-	if (V_NAME(v)) printf("%s", V_NAME(v));
-	if (indent == 0) {
-		printf(": struct\n");
-	}
+    if (V_NAME(v)) printf("%s", V_NAME(v));
+    if (indent == 0) {
+        printf(": struct\n");
+    }
 
-	indent += 4;
+    indent += 4;
 
-	for (i = 0 ; i < V_STRUCT(v).count ; i++) {
-		if (indent) printf("%*s", indent, " ");
-		printf("%s: ", V_STRUCT(v).names[i]);
-		s = V_STRUCT(v).data[i];
+    for (i = 0 ; i < V_STRUCT(v).count ; i++) {
+        name = V_STRUCT(v).names[i];
+        s = V_STRUCT(v).data[i];
+        pp_print_var(s, name, indent);
+    }
+}
 
-		switch (V_TYPE(s)) {
-		case ID_STRING:
-			printf("\"%s\"\n", V_STRING(s));
-			break;
-		case ID_VAL:
-			/**
-			** This should iterate in XYZ order, always.
-			**/
+void
+pp_print_var(Var *v, char *name, int indent)
+{
+    extern int SCALE;
+    char bytes[32];
 
-			if (V_DSIZE(s) == 1) {
-				switch (V_FORMAT(s)) {
-					case BYTE: printf("%d\n", ((u_char *)V_DATA(s))[0]); break;
-					case SHORT: printf("%d\n", ((short *)V_DATA(s))[0]); break;
-					case INT:  printf("%d\n", ((int *)V_DATA(s))[0]); break;
-					case FLOAT: printf("%#.*g\n", SCALE, ((float *)V_DATA(s))[0]); break;
-					case DOUBLE: printf("%#.*g\n", SCALE, ((double *)V_DATA(s))[0]); break;
-				}
-			} else {
-				sprintf(bytes, "%d", NBYTES(V_FORMAT(s))*V_DSIZE(s));
-				commaize(bytes);
-				printf("\t%dx%dx%d array of %s, %s format [%s bytes]\n",
-					   GetSamples(V_SIZE(s),V_ORG(s)),
-					   GetLines(V_SIZE(s),V_ORG(s)),
-					   GetBands(V_SIZE(s),V_ORG(s)),
-					   Format2Str(V_FORMAT(s)),
-					   Org2Str(V_ORG(s)),
-					   bytes);
-			}
-			break;
-		case ID_VSTRUCT:
-			printf("struct\n");
-			pp_print_struct(s, indent);
-			break;
-		default:
-			printf("error: Unknown type.\n");
-			break;
-		}
-	}
+    if (indent) printf("%*s", indent, " ");
+    if (name) printf("%s", name);
+    printf(": ");
+
+    switch (V_TYPE(v)) {
+    case ID_STRING:
+        printf("\"%s\"\n", V_STRING(v));
+        break;
+    case ID_VAL:
+        if (V_DSIZE(v) == 1) {
+            switch (V_FORMAT(v)) {
+            case BYTE: printf("%d\n", ((u_char *)V_DATA(v))[0]); break;
+            case SHORT: printf("%d\n", ((short *)V_DATA(v))[0]); break;
+            case INT:  printf("%d\n", ((int *)V_DATA(v))[0]); break;
+            case FLOAT: printf("%#.*g\n", SCALE, ((float *)V_DATA(v))[0]); break;
+            case DOUBLE: printf("%#.*g\n", SCALE, ((double *)V_DATA(v))[0]); break;
+            }
+        } else {
+            sprintf(bytes, "%d", NBYTES(V_FORMAT(v))*V_DSIZE(v));
+            commaize(bytes);
+            printf("\t%dx%dx%d array of %s, %s format [%s bytes]\n",
+                   GetSamples(V_SIZE(v),V_ORG(v)),
+                   GetLines(V_SIZE(v),V_ORG(v)),
+                   GetBands(V_SIZE(v),V_ORG(v)),
+                   Format2Str(V_FORMAT(v)),
+                   Org2Str(V_ORG(v)),
+                   bytes);
+        }
+        break;
+    case ID_VSTRUCT:
+        printf("struct\n");
+        pp_print_struct(v, indent);
+        break;
+    case ID_VARRAY:
+        pp_print_varray(v, indent);
+        break;
+    }
 }
 
 /**
@@ -225,9 +281,9 @@ pp_set_var(Var *id, Var *range, Var *exp)
         if ((e = eval(exp)) != NULL) exp = e;
 
         /**
-	 ** Verify that the src and destination pieces 
-	 ** are legal values, and the same size
-	 **/
+        ** Verify that the src and destination pieces 
+        ** are legal values, and the same size
+        **/
         
         r = V_RANGE(range);
         if (fixup_ranges(v, r, &rout) == 0) {
@@ -238,12 +294,18 @@ pp_set_var(Var *id, Var *range, Var *exp)
         for (i =0 ; i < 3 ; i++) {
             size[i] = 1 + (rout.hi[i] - rout.lo[i])/rout.step[i];
             j = orders[V_ORG(exp)][i];
-            if (size[i] != V_SIZE(exp)[j]) {
+            if (V_SIZE(exp)[j] == 1) continue;
+            if (size[i] != V_SIZE(exp)[j] &&
+                !(V_TYPE(v) == ID_VARRAY && size[i] == 1)) {
                 parse_error("Array sizes don't match");
                 return(NULL);
             }
         }
         r = &rout;
+
+        if (V_TYPE(v) == ID_VARRAY) {
+            return(set_varray(v, r, exp));
+        }
         
         for (i = 0 ; i < size[0] ; i++) {
             for (j = 0 ; j < size[1] ; j++) {
@@ -253,7 +315,7 @@ pp_set_var(Var *id, Var *range, Var *exp)
                              j*r->step[1] + r->lo[1],
                              k*r->step[2] + r->lo[2], v);
 
-                    s = cpos(i,j,k, exp);
+                    s = rpos(d, v, exp);
 
                     switch(V_FORMAT(v)) {
                     case BYTE:
@@ -300,10 +362,10 @@ pp_set_var(Var *id, Var *range, Var *exp)
         if (v != NULL) {
             exp = V_DUP(v);
         }
-		if (V_TYPE(exp) == ID_UNK) {
-			parse_error("Variable not found: %s", V_NAME(exp));
-			return(NULL);
-		}
+        if (V_TYPE(exp) == ID_UNK) {
+            parse_error("Variable not found: %s", V_NAME(exp));
+            return(NULL);
+        }
     } else if (mem_claim(exp) == NULL) {
         /**
         ** if we can't claim the memory, we can't use it.
@@ -315,6 +377,7 @@ pp_set_var(Var *id, Var *range, Var *exp)
 
     if (!strcmp(V_NAME(exp), "verbose")) VERBOSE = V_INT(exp);
     if (!strcmp(V_NAME(exp), "scale")) SCALE = V_INT(exp);
+    if (!strcmp(V_NAME(exp), "debug")) debug = V_INT(exp);
 
     put_sym(exp);
     return(id);
@@ -324,34 +387,59 @@ pp_set_var(Var *id, Var *range, Var *exp)
 Var *
 pp_set_struct(Var *a, Var *b, Var *exp)
 {
-	Var **p = find_struct(a, b);
-	Var *v;
+    Var **p;
+    Var *v, *s;
+	int count;
+	Var **data;
+	int added = 0;
 
-	if (exp == NULL) return(NULL);
+	if (a == NULL || b == NULL) return(NULL);
+    if (exp == NULL) return(NULL);
 
-	if (p != NULL) {
-		if (V_NAME(exp) != NULL) {
-			v = eval(exp);
-			if (v != NULL) {
-				exp = V_DUP(v);
-			}
-			if (V_TYPE(exp) == ID_UNK) {
-				parse_error("Variable not found: %s", V_NAME(exp));
-				return(NULL);
-			}
-		} else if (mem_claim(exp) == NULL) {
-			/**
-			** if we can't claim the memory, we can't use it.
-			**/
-			exp = V_DUP(exp);
+	if (V_NAME(exp) != NULL) {
+		v = eval(exp);
+		if (v != NULL) {
+			exp = V_DUP(v);
 		}
-		mem_claim(exp);
-		V_NAME(exp) = NULL;
-		free_var(*p);
-		*p = exp;
-		return(exp);
+		if (V_TYPE(exp) == ID_UNK) {
+			parse_error("Variable not found: %s", V_NAME(exp));
+			return(NULL);
+		}
 	}
-	return(NULL);
+
+	p = find_struct(a,b);
+
+	if (p == NULL) {
+		/*
+		** dynamic addition to structures  (EGADS!)
+		*/
+		if ((s = eval(a)) != NULL) a = s;
+
+		if (V_TYPE(a) != ID_VSTRUCT) {
+			return(NULL);
+		}
+
+		count = V_STRUCT(a).count;
+		V_STRUCT(a).names = realloc(V_STRUCT(a).names, count+1);
+		V_STRUCT(a).data = realloc(V_STRUCT(a).data, count+1);
+		V_STRUCT(a).names[count] = strdup(V_NAME(b));
+		p = &(V_STRUCT(a).data[count]);
+		V_STRUCT(a).count++;
+		added = 1;
+	}
+
+	if (V_NAME(exp) == NULL && mem_claim(exp) == NULL) {
+		/**
+		** if we can't claim the memory, we can't use it.
+		**/
+		exp = V_DUP(exp);
+	}
+
+	mem_claim(exp);
+	V_NAME(exp) = NULL;
+	if (!added) free_var(*p);
+	*p = exp;
+	return(exp);
 }
 /**
  ** Ranges:
@@ -388,7 +476,7 @@ pp_mk_range(Var *r1, Var *r2)
         v2 = extract_int(r2,0);
     }
 
-    v = new(Var);
+    v = newVar();
 
     V_RANGE(v)->lo[0] = v1;
     V_RANGE(v)->hi[0] = v2;
@@ -414,12 +502,12 @@ pp_mk_rstep(Var *r1, Var *r2)
     r2 = eval(r2);
 
     if (r1 == NULL) {
-		r1 = new(Var);
+        r1 = newVar();
     	V_RANGE(r1)->lo[0] = 0;
-		V_RANGE(r1)->hi[0] = 0;
-		V_RANGE(r1)->dim++;
-		V_TYPE(r1) = ID_RANGE;
-	}
+        V_RANGE(r1)->hi[0] = 0;
+        V_RANGE(r1)->dim++;
+        V_TYPE(r1) = ID_RANGE;
+    }
 
     if (r2) {
         format = V_FORMAT(r2);
@@ -465,6 +553,7 @@ pp_range(Var *v, Var *r)
 {
     Var *t;
     Var *out;
+    Range rout;
 
     /**
     ** Do some basic error detection
@@ -478,20 +567,19 @@ pp_range(Var *v, Var *r)
         return(NULL);
     }
     v = t;
-    if (V_TYPE(v) != ID_VAL) {
-        sprintf(error_buf, "Illegal type: %s", V_NAME(v));
-        parse_error(NULL);
-        return(NULL);
+    if (V_TYPE(v) == ID_VAL) {
+        return(extract_array(v,V_RANGE(r)));
+        return(out);
+    } else if (V_TYPE(v) == ID_VARRAY) {
+        if (fixup_ranges(v, V_RANGE(r), &rout) == 0) {
+            parse_error("Illegal range value.");
+            return(NULL);
+        }
+        return(varray_subset(v, &rout));
     }
-
-    /**
-    ** Swap array subsets to match $ORDER
-    swap_ranges(r); 
-    **/
-
-    out = extract_array(v,V_RANGE(r));
-
-    return(out);
+	
+    parse_error( "Illegal type: %s", V_NAME(v));
+    return(NULL);
 }
 
 /**
@@ -584,7 +672,7 @@ pp_shellArgs(Var *v)
     ** if symbol is not in symtab, put it there.
     **/
     if ((s = get_sym(name)) == NULL) {
-        s = new(Var);
+        s = newVar();
         V_TYPE(s) = ID_STRING;
         V_STRING(s) = strdup(value);
         V_NAME(s) = strdup(name);
@@ -595,7 +683,7 @@ pp_shellArgs(Var *v)
     ** it will have ->next already set.  Make a new Var containing
     ** just its name.
     **/
-    s = new(Var);
+    s = newVar();
     V_NAME(s) = strdup(name);
     V_TYPE(s) = ID_UNK;
 
@@ -658,9 +746,9 @@ pp_argv(Var *left, Var *right)
     } else {
         strcpy(name, V_NAME(v));
         if (strcasecmp(name, "argv")) {
-			parse_error("$ARGV requires an array index.");
-			return(NULL);
-		}
+            parse_error("$ARGV requires an array index.");
+            return(NULL);
+        }
         if ((value = get_env_var(name)) == NULL) {
             return(NULL);
         }
@@ -668,7 +756,7 @@ pp_argv(Var *left, Var *right)
         ** if symbol is not in symtab, put it there.
         **/
         if ((s = get_global_sym(name)) == NULL) {
-            s = new(Var);
+            s = newVar();
             V_TYPE(s) = ID_STRING;
             V_STRING(s) = strdup(value);
             V_NAME(s) = strdup(name);
@@ -711,20 +799,20 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
         case ID_GT:		k = (i > 0);	break;
         case ID_LE:		k = (i <= 0);	break;
         case ID_GE:		k = (i >= 0);	break;
-		case ID_ADD:	return(pp_add_strings(exp1, exp2)); break;
+        case ID_ADD:	return(pp_add_strings(exp1, exp2)); break;
         case ID_OR:
         case ID_AND:
             parse_error("Cannot perform boolean logic on type STRING");
             return(NULL);
         }
     } else if (op != ID_ADD) {
-		parse_error("Operation not supported on string and non-string");
-		return(NULL);
-	} else {
-		return(pp_add_strings(exp1, exp2));
-	}
+        parse_error("Operation not supported on string and non-string");
+        return(NULL);
+    } else {
+        return(pp_add_strings(exp1, exp2));
+    }
 
-    s = new(Var);
+    s = newVar();
     V_TYPE(s) = ID_VAL;
     V_SIZE(s)[0] = V_SIZE(s)[1] = V_SIZE(s)[2] = V_DSIZE(s) = 1;
     V_FORMAT(s) = INT;
@@ -819,7 +907,7 @@ pp_relop(Var *exp1, int op, Var *exp2)
         }
     }
 
-    s = new(Var);
+    s = newVar();
     V_TYPE(s) = ID_VAL;
     V_SIZE(s)[0] = V_SIZE(s)[1] = V_SIZE(s)[2] = V_DSIZE(s) = 1;
     V_FORMAT(s) = INT;
@@ -868,22 +956,22 @@ commaize(char *s)
 Var *
 pp_help(Var *s)
 {
-	char *p;
+    char *p;
 
-	if (s == NULL) p = NULL;
-	else if (V_NAME(s)) p = V_NAME(s);
-	else if (V_STRING(s)) p = V_STRING(s);
+    if (s == NULL) p = NULL;
+    else if (V_NAME(s)) p = V_NAME(s);
+    else if (V_STRING(s)) p = V_STRING(s);
 
-	do_help(p);
-	return(NULL);
+    do_help(p);
+    return(NULL);
 }
 
 Var *
 pp_shell(char *cmd)
 {
-	if (cmd[0] == '!') cmd++;
-	system(cmd);
-	return(NULL);
+    if (cmd[0] == '!') cmd++;
+    system(cmd);
+    return(NULL);
 }
 
 /**
@@ -910,116 +998,116 @@ pp_set_where(Var *id, Var *where, Var *exp)
     ** otherwise, use the memory directly.
     **/
 
-	if ((v = eval(exp)) == NULL) {
-		parse_error("rhs is NULL.\n");
-		return(NULL);
-	}
-	exp = v;
+    if ((v = eval(exp)) == NULL) {
+        parse_error("rhs is NULL.\n");
+        return(NULL);
+    }
+    exp = v;
 
 
-	if ((v = eval(id)) == NULL) {
-		parse_error("lhs does not exist\n");
-		return(NULL);
-	}
-	id = v;
+    if ((v = eval(id)) == NULL) {
+        parse_error("lhs does not exist\n");
+        return(NULL);
+    }
+    id = v;
 
-	if ((v = eval(where)) == NULL) {
-		parse_error("'where' does not exist\n");
-		return(NULL);
-	}
-	where = v;
+    if ((v = eval(where)) == NULL) {
+        parse_error("'where' does not exist\n");
+        return(NULL);
+    }
+    where = v;
 
 /*
-	if (V_ORG(id) != V_ORG(where) ||
-	    V_SIZE(id)[0] != V_SIZE(where)[0] ||
-	    V_SIZE(id)[1] != V_SIZE(where)[1] ||
-	    V_SIZE(id)[2] != V_SIZE(where)[2]) {
+  if (V_ORG(id) != V_ORG(where) ||
+  V_SIZE(id)[0] != V_SIZE(where)[0] ||
+  V_SIZE(id)[1] != V_SIZE(where)[1] ||
+  V_SIZE(id)[2] != V_SIZE(where)[2]) {
 
-		parse_error("'where' value doesn't match org/shape of lhs\n");
-		return(NULL);
-	}
-	if (V_ORG(id) != V_ORG(exp) ||
-	    V_SIZE(id)[0] != V_SIZE(exp)[0] ||
-	    V_SIZE(id)[1] != V_SIZE(exp)[1] ||
-	    V_SIZE(id)[2] != V_SIZE(exp)[2]) {
+  parse_error("'where' value doesn't match org/shape of lhs\n");
+  return(NULL);
+  }
+  if (V_ORG(id) != V_ORG(exp) ||
+  V_SIZE(id)[0] != V_SIZE(exp)[0] ||
+  V_SIZE(id)[1] != V_SIZE(exp)[1] ||
+  V_SIZE(id)[2] != V_SIZE(exp)[2]) {
 
-		parse_error("rhs doesn't match org/shape of lhs of where\n");
-		return(NULL);
-	}
-*/
+  parse_error("rhs doesn't match org/shape of lhs of where\n");
+  return(NULL);
+  }
+  */
 
-	if (V_DSIZE(exp) != 1) {
-		for (i = 0 ; i < 3 ; i++) {
-			j = V_SIZE(id)[orders[V_ORG(id)][i]];
-			k = V_SIZE(where)[orders[V_ORG(where)][i]];
-			l = V_SIZE(exp)[orders[V_ORG(exp)][i]];
-			if (j == 1) {
-				if (k == 1 || l == 1) continue;
-				if (k != l) {
-					parse_error("Sizes don't match\n");
-				}
-			}
-			if (k == 1) {
-				if (j == 1 || l == 1) continue;
-				if (j != l) {
-					parse_error("Sizes don't match\n");
-				}
-			}
-			if (l == 1) {
-				if (j == 1 || k == 1) continue;
-				if (j != k) {
-					parse_error("Sizes don't match\n");
-				}
-			}
-		}
-	}
+    if (V_DSIZE(exp) != 1) {
+        for (i = 0 ; i < 3 ; i++) {
+            j = V_SIZE(id)[orders[V_ORG(id)][i]];
+            k = V_SIZE(where)[orders[V_ORG(where)][i]];
+            l = V_SIZE(exp)[orders[V_ORG(exp)][i]];
+            if (j == 1) {
+                if (k == 1 || l == 1) continue;
+                if (k != l) {
+                    parse_error("Sizes don't match\n");
+                }
+            }
+            if (k == 1) {
+                if (j == 1 || l == 1) continue;
+                if (j != l) {
+                    parse_error("Sizes don't match\n");
+                }
+            }
+            if (l == 1) {
+                if (j == 1 || k == 1) continue;
+                if (j != k) {
+                    parse_error("Sizes don't match\n");
+                }
+            }
+        }
+    }
 
 
-	if (V_DSIZE(exp) == 1) {
-		dsize = V_DSIZE(id);
-		format = V_FORMAT(id);
-		ival  = extract_int(exp, 0);
-		dval  = extract_double(exp, 0);
+    if (V_DSIZE(exp) == 1) {
+        dsize = V_DSIZE(id);
+        format = V_FORMAT(id);
+        ival  = extract_int(exp, 0);
+        dval  = extract_double(exp, 0);
 
-		for (i = 0 ; i < dsize ; i++) {
-			if (extract_int(where, i)) {
-				switch (format) {
-					case BYTE:		((u_char *)V_DATA(id))[i] = ival; break;
-					case SHORT:		((short *)V_DATA(id))[i] = ival; break;
-					case INT:		((int *)V_DATA(id))[i] = ival; break;
-					case FLOAT:		((float *)V_DATA(id))[i] = dval; break;
-					case DOUBLE:	((double *)V_DATA(id))[i] = dval; break;
-				}
-			}
-		}
-	} else {
-		dsize = V_DSIZE(id);
-		format = V_FORMAT(id);
+        for (i = 0 ; i < dsize ; i++) {
+            if (extract_int(where, i)) {
+                switch (format) {
+                case BYTE:		((u_char *)V_DATA(id))[i] = ival; break;
+                case SHORT:		((short *)V_DATA(id))[i] = ival; break;
+                case INT:		((int *)V_DATA(id))[i] = ival; break;
+                case FLOAT:		((float *)V_DATA(id))[i] = dval; break;
+                case DOUBLE:	((double *)V_DATA(id))[i] = dval; break;
+                }
+            }
+        }
+    } else {
+        dsize = V_DSIZE(id);
+        format = V_FORMAT(id);
 
-		for (i = 0 ; i < dsize ; i++) {
-			j = rpos(i, id, where);
-			if (extract_int(where, j)) {
-				k = rpos(i, id, exp);
-				switch (format) {
-					case BYTE:		
-						((u_char *)V_DATA(id))[i] = extract_int(exp, k); 
-						break;
-					case SHORT:		
-						((short *)V_DATA(id))[i] = extract_int(exp, k); 
-						break;
-					case INT:		
-						((int *)V_DATA(id))[i] = extract_int(exp, k); 
-						break;
-					case FLOAT:		
-						((float *)V_DATA(id))[i] = extract_double(exp, k); 
-						break;
-					case DOUBLE:	
-						((double *)V_DATA(id))[i] = extract_double(exp, k); 
-						break;
-				}
-			}
-		}
+        for (i = 0 ; i < dsize ; i++) {
+            j = rpos(i, id, where);
+            if (extract_int(where, j)) {
+                k = rpos(i, id, exp);
+                switch (format) {
+                case BYTE:		
+                    ((u_char *)V_DATA(id))[i] = extract_int(exp, k); 
+                    break;
+                case SHORT:		
+                    ((short *)V_DATA(id))[i] = extract_int(exp, k); 
+                    break;
+                case INT:		
+                    ((int *)V_DATA(id))[i] = extract_int(exp, k); 
+                    break;
+                case FLOAT:		
+                    ((float *)V_DATA(id))[i] = extract_double(exp, k); 
+                    break;
+                case DOUBLE:	
+                    ((double *)V_DATA(id))[i] = extract_double(exp, k); 
+                    break;
+                }
+            }
+        }
 
-	}
+    }
     return(id);
 }

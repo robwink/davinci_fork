@@ -107,7 +107,7 @@ extract_array(Var *v, Range *r)
             }
         }
     }
-    out = new(Var);
+    out = newVar();
 
     V_DATA(out) = data;
     V_FORMAT(out) = V_FORMAT(v);
@@ -226,7 +226,7 @@ ff_translate(vfuncptr func, Var *arg)
     }
 
     v = object;
-    s = new(Var);
+    s = newVar();
     V_TYPE(s) = V_TYPE(v);
     V_DSIZE(s) = V_DSIZE(v);
     V_ORG(s) = V_ORG(v);

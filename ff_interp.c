@@ -86,7 +86,7 @@ ff_interp(vfuncptr func, Var *arg)
 	}
     }
 
-    s = new(Var);
+    s = newVar();
     V_TYPE(s) = ID_VAL;
 
     V_DATA(s) = (void *)fdata;

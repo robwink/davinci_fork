@@ -20,7 +20,7 @@ p_mknod(int type, Var * left, Var * right)
     Var *v;
     Node *n;
 
-    v = new(Var);
+    v = newVar();
 	mem_claim(v);
     n = V_NODE(v);
     v->type = type;
@@ -38,7 +38,7 @@ Var *
 p_mkval(int type, char *str)
 {
     Var *v;
-    v = new(Var);
+    v = newVar();
 	mem_claim(v);
 
     switch (type) {
@@ -434,6 +434,8 @@ evaluate(Var * n)
 				if (p3 != NULL) {
 					push(scope, *p3);
 				} else {
+					parse_error("structure doesn no contain member: %s",
+								V_NAME(p2));
 					push(scope, NULL);
 				}
 			}
@@ -593,7 +595,11 @@ find_struct(Var *a, Var *b)
 	}
 
 	if (V_TYPE(a) != ID_VSTRUCT) {
-		parse_error("%s: Not a struct", V_NAME(a));
+		if (V_NAME(a)) {
+			parse_error("%s: Not a struct", V_NAME(a));
+		} else {
+			parse_error("element is not a struct");
+		}
 		return(NULL);
 	}
 
@@ -602,7 +608,5 @@ find_struct(Var *a, Var *b)
 			return(V_STRUCT(a).data +i);
 		}
 	}
-
-	parse_error("Structure does not contain member '%s'", V_NAME(b));
 	return(NULL);
 }

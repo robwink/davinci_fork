@@ -1,5 +1,10 @@
 #include "parser.h"
 #include "apidef.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Prototypes; sorted in ascending order */
 void c_pladv(int page);
 void c_plaxes(float x0,float y0,char *xopt,float xtick,int nxsub,char *yopt,float ytick,int nysub);
@@ -1725,3 +1730,7 @@ const APIDEFS apidefs[] = {
 	{ "plsError",plsError_args,3,plsError_wrapper },
 	{ "plsxwin",plsxwin_args,2,plsxwin_wrapper }
 };
+
+#ifdef __cplusplus
+}
+#endif
