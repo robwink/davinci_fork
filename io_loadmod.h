@@ -34,8 +34,9 @@ typedef IOmod * IOmodPtr;
 
 struct _IOmod {
   char * modname;
+  char * modpath;
   MODHANDLE dlhandle;
-  unsigned char implement;
+  unsigned char implements;
   Var * (*read_func)(char *); /* read: takes filename as arg */
   Var * (*write_func)(Var *, char *, char *, int); /* write: takes Davinci object, filename, type, and a force argument */
   IOmodPtr next_list;
