@@ -1107,7 +1107,7 @@ rm -f conftest*
 
 
 case "$target" in
-*-ibm-aix4.3*)  LDFLAGS="$LDFLAGS -Wl,-bbigtoc";
+*-ibm-aix4.3*)  LDFLAGS="$LDFLAGS -Wl,-b,bigtoc";
 esac
 
 
