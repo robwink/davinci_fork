@@ -900,11 +900,11 @@ set_suffix(Var *suffix,Var **final)
 	int i = 0;
 	Var *element;
 	char *innername;
-	char *v_data;
+	void *v_data;
 	for(i=0;i<v_count;i++){ /*Need to skip first element, it's the Object=Name element*/
 		get_struct_element(tmp,i,&innername,&element);
 		v_data=V_DATA(element);
-		V_DATA(element)=var_endian(element);
+		V_DATA(element)=(void *)var_endian(element);
 		free(v_data);
 	}
 	final_block=tmp;
@@ -1028,10 +1028,10 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 			else if (!(strcasecmp("band_suffix",name_list[i])))
 				band_idx=i;
 
-			free(name_list[i]);
+			free(name_list[i]); 
 		}
 
-		free(name_list);
+		free(name_list); 
 
 		if (sample_idx >= 0) {
 	 		get_struct_element(v,sample_idx, &struct_name, &tmpvar);
@@ -1356,7 +1356,7 @@ ProcessIntoLabel(FILE *fp,int record_bytes, Var *v, int depth, int *label_ptrs, 
 						break;
 
 				case DOUBLE:
-						fprintf(fp,"%s%s = %12.6f\r\n",inset,tmpname,(*((double *)V_DATA(data))));
+						fprintf(fp,"%s%s = %12.6lf\r\n",inset,tmpname,(*((double *)V_DATA(data))));
 						break;
 				}/*Switch*/
 
@@ -1535,7 +1535,7 @@ WritePDS(vfuncptr func, Var *arg)
 		else {
 
 			if (write_PDS_Qube((Var *)oi.obj_data[i],oi.sample_suffix,oi.line_suffix,oi.band_suffix,fp)==NULL){
-				parse_error("Error Writting Qube!");
+				parse_error("Error Writing Qube!");
 				fclose(fp);
 				return(NULL);
 			}

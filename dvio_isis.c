@@ -39,9 +39,22 @@ write_PDS_Qube(Var *core, Var *side, Var *bottom, Var *back, FILE *fp)
 	suffix[1]=bottom;
 	suffix[2]=back;
 
-    size[0] = GetX(core);
-    size[1] = GetY(core);
-    size[2] = GetZ(core);
+   size[0] = GetX(core);
+   size[1] = GetY(core);
+   size[2] = GetZ(core);
+   nbytes = GetNbytes(core);
+
+
+
+	if (suffix[0] == NULL &&
+		 suffix[1] == NULL &&
+		 suffix[2] == NULL) { /* We're only writing the core, just dump it! */ 
+
+		fwrite(V_DATA(core),nbytes,size[0]*size[1]*size[2],fp);
+
+		return(core);
+	}
+
 
 	zero = newInt(0);
 
@@ -89,7 +102,6 @@ write_PDS_Qube(Var *core, Var *side, Var *bottom, Var *back, FILE *fp)
         }
     }
 
-   nbytes = GetNbytes(core);
 	nsuffix[0] = (suffix[0] ? get_struct_count(suffix[0]) : 0);
 	nsuffix[1] = (suffix[1] ? get_struct_count(suffix[1]) : 0);
 	nsuffix[2] = (suffix[2] ? get_struct_count(suffix[2]) : 0);
@@ -139,8 +151,8 @@ write_PDS_Qube(Var *core, Var *side, Var *bottom, Var *back, FILE *fp)
 			write_plane(v, V_ORG(core), 1, fp, nsuffix[2], nsuffix[0]);
 		}
 	}
-    fclose(fp);
-    return(v);
+
+   return(v);
 }
 
 
