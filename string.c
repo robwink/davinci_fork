@@ -103,6 +103,8 @@ pp_add_strings(Var *a, Var *b)
 	return(s);
 }
 
+
+/*
 Var *
 ff_basename(vfuncptr func, Var *arg)
 {
@@ -165,6 +167,7 @@ ff_basename(vfuncptr func, Var *arg)
 	return(v);
 }
 
+*/
 char *
 str3dup(char *s1, char *s2, char *s3)
 {

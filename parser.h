@@ -86,6 +86,7 @@ typedef struct _symbol Sym;
 typedef struct _range Range;
 typedef struct _tagnode Node;
 typedef struct _tagVstruct Vstruct;
+typedef struct _text TextArray;
 
 struct _range {
 	int dim;			/* dimension of data */
@@ -118,6 +119,12 @@ struct _tagVstruct {
 	Var **data;
 };
 
+struct _text {
+	int Row;
+	unsigned char **text;
+};
+
+
 struct _var {
 	int type;
     char *name;
@@ -128,6 +135,7 @@ struct _var {
 		char *string;
 		Var *keyval;		/* used by $Keyword */
 		Vstruct vstruct;
+		TextArray textarray;
 	} value; 
 	Var *next;
 };
@@ -155,7 +163,7 @@ struct _var {
 #define V_TITLE(v)   V_SYM(v)->title
 
 #define V_STRUCT(v)  (v)->value.vstruct
-
+#define V_TEXT(v)		(v)->value.textarray
 
 #define newVar	(Var *)mem_malloc
 
@@ -173,6 +181,7 @@ struct _var {
 #define ID_VAL			ID_BASE+5		/* everything with dim != 0 */
 #define ID_VSTRUCT      ID_BASE+6		/* Structure */
 #define ID_VARRAY       ID_BASE+7		/* 1-D Array of vars */
+#define ID_TEXT		   ID_BASE+8	   /*1-D Array of Strings*/
 
 #define ID_IVAL         ID_BASE+10		/* Integer value */
 #define ID_RVAL         ID_BASE+11		/* real value */

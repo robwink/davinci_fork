@@ -72,7 +72,7 @@ struct _vfuncptr vfunclist[] = {
     { "import",     ff_load,     NULL },        /* an alias */
     { "GSE_IR_load",   ff_Frame_Grabber_Read, NULL},
     { "GSE_VIS_load", ff_GSE_VIS_Read,	NULL},
-    { "PAKI_load",ff_PAKI_Read,NULL},
+    { "load_paci",	ff_PAKI_Read,	NULL},
     { "save",       ff_write,    NULL },
     { "write",      ff_write,    NULL },        /* an alias */
     { "export",     ff_write,    NULL },        /* an alias */
@@ -84,11 +84,14 @@ struct _vfuncptr vfunclist[] = {
 
     { "atoi",       ff_atoi,     NULL },
     { "atof",       ff_atof,     NULL },
-    { "basename",   ff_basename, NULL },
+    { "basename",   ff_filename, (void *)1},
+    { "dirname",   ff_filename,  (void *)2},
     { "string",     ff_string,   NULL },
     { "delim",      ff_delim,    NULL },
     { "issubstring",ff_issubstring,	NULL},
     { "strlen",	    ff_strlen,	NULL},
+    { "strstr",	    ff_strstr,	NULL},
+	 { "grep",		ff_grep,		NULL},
     
     { "rgb",        ff_rgb,      NULL },
     
@@ -135,6 +138,7 @@ struct _vfuncptr vfunclist[] = {
     { "ascii",      ff_ascii,    NULL },	
     { "read_ascii", ff_ascii,    NULL },
     { "read_text",  ff_text,     NULL },
+	 { "read_lines",ff_textarray,NULL},
 #ifndef __MSDOS__
     {"popen",	ff_popen,	NULL},
     {"pprint",	ff_pprint,	NULL},
@@ -142,6 +146,7 @@ struct _vfuncptr vfunclist[] = {
     {"ptext",	ff_ptext,	NULL},
     {"pline",	ff_pline,	NULL},
     {"pbox",	ff_pbox,	NULL},
+    {"pzoom",	ff_pzoom,	NULL},
 #endif
     
 
