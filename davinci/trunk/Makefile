@@ -5,7 +5,7 @@ CFLAGS=-g $(XINCLUDES)
 
 srcdir = .
 
-prefix= /opt/local
+prefix= /usr/local
 exec_prefix = $(prefix)
 BINDIR = $(exec_prefix)/bin
 LIBDIR = $(prefix)/lib
@@ -16,16 +16,15 @@ INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 
 XINCLUDES=-I/usr/openwin/include $(XRTINCLUDE)
-XLIBS=-L/usr/openwin/lib $(XRTLIBS) -L /user/east/asbms/davinci/plplot-990122/tmp
+XLIBS=-L/usr/openwin/lib $(XRTLIBS)
 
 XRTINCLUDE=  
 XRTLIBS = 
 
 
-#CC     = g++ -fpermissive
 CC     = gcc
-DEFS   = -DHAVE_CONFIG_H -Ilib -DINCLUDE_API
-LIBS   = $(READLINE_LIB) $(XLIBS) -L $(LIBDIR) -lMagick -ltiff -lproj -lz -lreadline -ltermcap -ljpeg  -lplplotFX -lXext -lXm -lXt -lX11 -lm  -lhdf5
+DEFS   = -DHAVE_CONFIG_H -Ilib
+LIBS   = $(READLINE_LIB) -lplplotFX $(XLIBS) -lhdf5 -lMagick -ltiff -lproj -lz -lreadline -ltermcap -ljpeg -lXm -lXext -lXt -lX11 -lm 
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
@@ -47,15 +46,13 @@ OBJ=p.o pp.o symbol.o error.o \
 	reserved.o array.o string.o pp_math.o rpos.o init.o help.o \
 	io_grd.o io_isis.o io_lablib3.o io_pnm.o io_specpr.o io_vicar.o \
 	io_aviris.o io_imath.o io_magic.o io_themis.o\
-	ff_moment.o io_ascii.o ff_interp.o ff_projection.o \
+	ff_moment.o io_ascii.o ff_interp.o ff_projection.o\
 	lexer.o parser.o main.o fit.o system.o misc.o ufunc.o scope.o \
 	ff_header.o ff_text.o io_ers.o io_goes.o ff_bbr.o ff_vignette.o \
 	ff_pause.o printf.o ff_ifill.o ff_xfrm.o newfunc.o ff_ix.o ff_avg.o \
 	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
-	x.o xrt_print_3d.o motif_tools.o ff_convolve.c ff_struct.o apifunc.o \
-	ff_plplot.o varray.o 
-
-# Val.o StringVar.o CVar.o:
+	x.o xrt_print_3d.o motif_tools.o ff_convolve.o ff_struct.o apifunc.o \
+	ff_plplot.o varray.o
 
 all:	 davinci gplot
 
@@ -86,10 +83,7 @@ install:
 # File specific dependancies
 #
 help.o:	help.c
-	$(CC) $(CFLAGS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $<
-
-#help.o:	help.C
-#	$(CXX) $(CFLAGS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $<
+	$(CC) $(CFLAGS) -DHELPFILE=\"$(LIBDIR)/dv.gih\" -c $*.c
 
 clean:
 	-rm -f *.o davinci dv core gplot TAGS config.cache config.h config.log
@@ -108,6 +102,17 @@ dist:	clean
 	compress `cat .ver`.tar
 	rm -rf `cat .ver` .ver
 
+win32dist:	clean
+		echo davinci-`head -1 version.h | sed -e 's/.* Version #//;s/".*//'` > .ver
+		rm -rf `cat .ver` `cat .ver`.zip
+		mkdir `cat .ver`
+		ln $(DIST) `cat .ver`
+		(cd `cat .ver`; mkdir readline; cd readline; ln -s ../../readline/readline.h; ln \
+			-s ../../readline/history.h)
+		(cd `cat .ver` ; ln -s ../docs ../tests ../win32 .)
+		zip -r `cat .ver`.zip `cat .ver`
+		rm -rf `cat .ver` .ver
+
 binary:	davinci gplot
 	strip davinci
 	strip gplot
@@ -122,9 +127,6 @@ gplot:	gplot.o lib/libXfred.a system.o
 
 lib/libXfred.a:
 	@cd lib ; $(MAKE)
-
-libplplotFX.a:
-	@cd plplot-990122/tmp ; $(MAKE)
 
 depend:
 	gcc -MM $(OBJ:.o=.c)
@@ -200,4 +202,4 @@ fft.o: fft.h
 matrix.o: parser.h config.h system.h ufunc.h scope.h func.h
 dct.o: parser.h config.h system.h ufunc.h scope.h func.h
 fft_mayer.o: trigtbl.h
-ff_projection.o: parser.h config.h system.h ufunc.h scope.h func.h
+ff_projection: parser.h config.h system.h ufunc.h scope.h func.h

@@ -45,6 +45,8 @@ AC_CHECK_LIB(proj,pj_fwd)
 AC_CHECK_LIB(tiff,TIFFIsTiled)
 AC_CHECK_LIB(Magick, GetMagickInfo)
 
+AC_CHECK_LIB(hdf5, H5Fcreate)
+
 
 #Check for the xrt3D lib and its dependancies
 AC_ARG_ENABLE(xrt3d,
