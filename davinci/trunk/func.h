@@ -131,6 +131,7 @@ Var *LoadAVIRIS (FILE *, char *, struct _iheader *);
 Var *Load_imath (FILE *, char *, struct _iheader *);
 #ifdef HAVE_LIBMAGICK
 Var *LoadGFX_Image(char *filename);
+Var *ff_XImage_Display(vfuncptr func, Var * arg);
 #endif
 int LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var);
 
@@ -211,6 +212,8 @@ Var *ff_org (vfuncptr, Var *);
 Var *ff_create (vfuncptr, Var *);
 Var *ff_source (vfuncptr, Var *);
 Var *ff_load (vfuncptr, Var *);
+Var *ff_Frame_Grabber_Read(vfuncptr func, Var * arg);
+Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg);
 Var *ff_write (vfuncptr, Var *);
 Var *ff_filetype(vfuncptr , Var *);
 Var *ff_list(vfuncptr, Var *);
@@ -269,7 +272,7 @@ Var *ff_rgb2hsv(vfuncptr func, Var *arg);
 Var *ff_hsv2rgb(vfuncptr func, Var *arg);
 Var *ff_resize(vfuncptr func, Var *arg);
 
-Var *ff_isis_summary(vfuncptr func, Var *arg);
+//Var *ff_isis_summary(vfuncptr func, Var *arg);
 Var *ff_read_suffix_plane(vfuncptr func, Var * arg);
 Var *ff_fork(vfuncptr func, Var *arg);
 Var *ff_xrt3d(vfuncptr func, Var *arg);
