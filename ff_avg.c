@@ -128,6 +128,8 @@ ff_avg2(vfuncptr func, Var * arg)
 		for (i = 0 ; i < dsize2 ; i++) {
 			if (count[i] > 1)  {
 				sum2[i] = sqrt((sum2[i] - (sum[i]*sum[i]/count[i]))/(count[i]-1));
+			} else {
+				sum2[i] = 0
 			}
 		}
 		V_DATA(stddev) = sum2;
