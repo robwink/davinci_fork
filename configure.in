@@ -24,6 +24,11 @@ dnl Check for endian
 AC_C_BIGENDIAN
 
 
+dnl Support for compiling fully static binaries
+AC_ARG_ENABLE(static,
+	[  --enable-static         build a self-contained davinci executable (default is --disable-static) and implies --disable-modules],,
+	enable_static=no)
+
 dnl Enable/Disable modules
 AC_ARG_ENABLE(modules,
 	[  --disable-modules       removes modules related code from davinci (default is --enable-modules)],,
@@ -62,12 +67,10 @@ dnl LINUX nuance:
 dnl    configure establishes /usr/X11R6/include as the X_INCLUDE path
 dnl    which creates problems for ImageMagick, which is located in
 dnl    /usr/include/X11 (= /usr/X11R6/include/X11) instead.
-dnl    Also, add the -rdynamic switch to linux compiles so dlopen()
-dnl    behaves the same way it does in Solaris. (rsk 4 Jan 2002)
 dnl AIX nuance:
 dnl    Enable linker on AIX to enable generating big TOCs.
 case "$target" in
-*-linux-gnu)  CFLAGS="$CFLAGS -rdynamic -I/usr/include/X11";;
+*-linux-gnu)  CFLAGS="$CFLAGS -I/usr/include/X11";;
 *-ibm-aix4.3*)  LDFLAGS="$LDFLAGS -Wl,-b,bigtoc";;
 esac
 
@@ -98,7 +101,7 @@ fi
 
 dnl check existence of usable readline library
 AC_MSG_CHECKING(if libreadline exists)
-save_LIBS="$LIBS" LIBS="$LIBS -lreadline"
+save_LIBS="$LIBS" LIBS="$LIBS -lreadline -lcurses"
 AC_TRY_LINK_FUNC(rl_callback_handler_install, [libreadline_found=yes],
 	[libreadline_found=no  LIBS="$save_LIBS"])
 
@@ -231,6 +234,7 @@ dnl If module processing is disabled, bypass necessary stuff while running
 dnl configure. This should reduce configure time as well.
 dnl
 
+if test "$enable_static" = "no"; then
 if test "$enable_modules" = "yes"; then
 
 	dnl
@@ -342,6 +346,24 @@ if test "$enable_modules" = "yes"; then
 else
 	AC_MSG_WARN(Modules code disabled by user)
 fi
+else dnl We are compiling a fully static binary.
+
+	AC_MSG_WARN(Compiling a fully static binary.  ** NO MODULE SUPPORT! **)
+	
+	if test "$GCC" = "yes" ; then
+		STATIC_CFLAGS="-fPIC -static"
+	else
+		case "$target" in
+		hppa1.*-hp-hpux*)   STATIC_CFLAGS="-noshared"    ;;
+		hppa2.*-hp-hpux*)   STATIC_CFLAGS="-noshared"    ;;
+		*-linux-*)          STATIC_CFLAGS="-fPIC -static" ;;
+		*-sgi-irix*)        STATIC_CFLAGS="-KPIC -static" ;;
+		*-sun-solaris*)     STATIC_CFLAGS="" ;;
+		*-ibm-aix4.3*)      STATIC_CFLAGS=""      ;;
+		esac
+	fi
+
+fi
 
 dnl ========================================
 dnl --  end - modules related processing  --
@@ -385,6 +407,8 @@ then
 else
 	XLIBS=''
 fi
+
+CFLAGS="$CFLAGS $STATIC_CFLAGS"
 
 AC_SUBST(PROJ_OBJS)
 AC_SUBST(MODULE_SUPP_OBJS)
