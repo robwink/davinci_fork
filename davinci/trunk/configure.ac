@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(davinci, 1.17)
+AC_INIT(davinci, 1.21)
 AC_CONFIG_AUX_DIR(config)
 
 dnl Do some AIX-specific pre-config.
