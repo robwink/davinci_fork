@@ -831,48 +831,48 @@ set_text(Var *to,Range *r, Var *from)
 	
     height = (hi[1]-lo[1])/step[1]+1;
 	
-    dest=V_DUP(to);
-    src=V_DUP(from);
+	dest=V_DUP(to);
+	src=V_DUP(from);
 
-    if (V_TYPE(from)==ID_STRING){
-        string=V_STRING(from);
-        string_length=strlen(string);
-    }
+	if (V_TYPE(from)==ID_STRING){
+		string=V_STRING(from);
+		string_length=strlen(string);
+	}
 
-    else {
-        if (((hi[1]-lo[1]/step[1]+1) != V_TEXT(from).Row) && (V_TEXT(from).Row > 1)) {
-            parse_error("Can't subset text arrays of different Row sizes");
-            return(NULL);
-        }
-    }
-
-
-    for (i=lo[1];i<=hi[1];i+=step[1]){
-        if (V_TYPE(from)==ID_TEXT){
-            string=V_TEXT(from).text[i];
-            string_length=strlen(string);
-        }
-
-        cur_line_leng=strlen(V_TEXT(to).text[i]);
-        if (lo[0] >= cur_line_leng) continue; /*Skip it*/
-        tmp_hi=min(hi[0],(cur_line_leng-1));
-        length = (tmp_hi-lo[0]+1);
-        free(V_TEXT(to).text[i]);
-        V_TEXT(to).text[i]=(unsigned char *)calloc(string_length+
-                                                   cur_line_leng-length+1,sizeof(char));
-        memcpy(V_TEXT(to).text[i],V_TEXT(dest).text[i],lo[0]);
-        memcpy((V_TEXT(to).text[i]+lo[0]),string,string_length);
-        memcpy((V_TEXT(to).text[i]+lo[0]+string_length),
-               (V_TEXT(dest).text[i]+tmp_hi+1),
-               (cur_line_leng-tmp_hi-1));
-        V_TEXT(to).text[i][lo[0]+
-                          string_length+
-                          (cur_line_leng-tmp_hi-1)]='\0';
-    }
+	else {
+		if (((hi[1]-lo[1]/step[1]+1) != V_TEXT(from).Row) && (V_TEXT(from).Row > 1)) {
+			parse_error("Can't subset text arrays of different Row sizes");
+			return(NULL);
+		}
+	}
 
 
-    free_var(dest);
-    return(src);
+	for (i=lo[1];i<=hi[1];i+=step[1]){
+		if (V_TYPE(from)==ID_TEXT){
+			string=V_TEXT(from).text[i];
+			string_length=strlen(string);
+		}
+
+		cur_line_leng=strlen(V_TEXT(to).text[i]);
+		if (lo[0] >= cur_line_leng) continue; /*Skip it*/
+		tmp_hi=min(hi[0],(cur_line_leng-1));
+		length = (tmp_hi-lo[0]+1);
+		free(V_TEXT(to).text[i]);
+		V_TEXT(to).text[i]=(unsigned char *)calloc(string_length+
+				cur_line_leng-length+1,sizeof(char));
+		memcpy(V_TEXT(to).text[i],V_TEXT(dest).text[i],lo[0]);
+		memcpy((V_TEXT(to).text[i]+lo[0]),string,string_length);
+		memcpy((V_TEXT(to).text[i]+lo[0]+string_length),
+				 (V_TEXT(dest).text[i]+tmp_hi+1),
+					(cur_line_leng-tmp_hi-1));
+		V_TEXT(to).text[i][lo[0]+
+			string_length+
+			(cur_line_leng-tmp_hi-1)]='\0';
+	}
+
+
+	free_var(dest);
+	return(src);
 }
 
 
@@ -927,85 +927,77 @@ char *single_replace(char *line, regex_t *preg, char *replace)
 
     int len=strlen(replace);
 
-    newtext=malloc(Max);
+	int numeral;
 
-    result=regexec(preg,line,nmatch,pmatch,eflags);
-    Marker=line;
+	int delta;
 
-    /*search string for every occurence of preg*/
+	newtext=malloc(Max);
 
-    while (!(result)) {
 
-        /*Check size limitation on newtext, extend if needed*/
-        if (index >= (Max-(Max/10))){ /*Keep a 10% margin of safty */
-            Max+=Max;
-            newtext=realloc(newtext,Max);
-        }
+	result=regexec(preg,line,nmatch,pmatch,eflags);
+	Marker=line;
 
-        /*Copy everything over, upto the occurence*/
-        memcpy((newtext+index),Marker,pmatch[0].rm_so);
-        index+=pmatch[0].rm_so;
+	/*search string for every occurence of preg*/
+	while (!(result)) {
 
-        /*copy replacement string into newtext*/
+		/*Check size limitation on newtext, extend if needed*/
+		if (index >= (Max-(Max/10))){ /*Keep a 10% margin of safty */
+			Max+=Max;
+			newtext=realloc(newtext,Max);
+		}
+
+		/*Copy everything over, upto the occurence*/
+		memcpy((newtext+index),Marker,pmatch[0].rm_so);
+		index+=pmatch[0].rm_so;
+
+		/*copy replacement string into newtext*/
 		
-        i=0;
-        while(i < len) {
-            /*look for special characters*/
-            if (replace[i]=='&') {
-                /*insert whole match pattern*/
-                memcpy((newtext+index),
-                       pmatch[0].rm_sp,
-                       (pmatch[0].rm_eo-pmatch[0].rm_so));
-                index+=pmatch[0].rm_eo-pmatch[0].rm_so;
-            }
-            else if (replace[i]=='\\'){
-                if (i < (len-1)) {
-                    i++;
-                    if (replace[i] >= '0' && replace[i] <= '9'){ /*substring*/
-                        q = replace[i]-'0';
-                        so = pmatch[q].rm_so;
-                        eo = pmatch[q].rm_eo;
-                        if (so >= 0){
-                            /*requested valid substring*/
-                            memcpy((newtext+index),
-                                   pmatch[q].rm_sp,
-                                   (eo-so));
-                            index += eo-so;
-                        }
-                    }
-#if 0
-                    /* this is unnecesary.   pmatch[0] works as is. */
-                    else if (replace[i]=='0'){/* Same as & */
-                        memcpy((newtext+index),pmatch[0].rm_sp,(pmatch[0].rm_eo-pmatch[0].rm_so));
-                        index+=pmatch[0].rm_eo-pmatch[0].rm_so;
-                    }
-#endif
-                    else { /*Otherwise just copy it over*/
-                        newtext[index]=replace[i];
-                        index++;
-                    }
-                }
-            }
+		i=0;
+		while(i < len) {
+			/*look for special characters*/
+			if (replace[i]=='&') {
+				/*insert whole match pattern*/
+				delta=pmatch[0].rm_eo-pmatch[0].rm_so;
+				memcpy((newtext+index),pmatch[0].rm_sp,delta);
+				index+=delta;
+			}
+			else if (replace[i]=='\\'){
+				if (i < (len-1)){
+					i++;
+					if (replace[i] >= '0' && replace[i] <= '9'){ /*substring*/
+						numeral=replace[i]-'0';
+						if (pmatch[numeral].rm_so >= 0){ /*requested valid substring*/
+							delta=pmatch[numeral].rm_eo-pmatch[numeral].rm_so;
+							memcpy((newtext+index),pmatch[numeral].rm_sp, delta);
+							index+=delta;
+						}
+					}
+					else { /*Otherwise just copy it over*/
+						newtext[index]=replace[i];
+						index++;
+					}
+				}
+			}
 
-            else {
-                newtext[index]=replace[i];
-                index++;
-            }
+			else {
+				newtext[index]=replace[i];
+				index++;
+			}
 
-            i++;
-        }
+			i++;
+		}
 
-        /*Set marker to end of match*/
-        Marker+=pmatch[0].rm_eo;
-        /* repeat as necessary */
-        result=regexec(preg,Marker,nmatch,pmatch,eflags);
-    }
+		/*Set marker to end of match*/
+		Marker+=pmatch[0].rm_eo;
+		/* repeat as necessary */
+		result=regexec(preg,Marker,nmatch,pmatch,eflags);
+	}
 
-    /*copy over any trailing chars after last match*/
-    if (strlen(Marker)){
-        memcpy((newtext+index),Marker,strlen(Marker));
-        index+=strlen(Marker);
-    }
+	/*copy over any trailing chars after last match*/
+	if (strlen(Marker)){
+			memcpy((newtext+index),Marker,strlen(Marker));
+			index+=strlen(Marker);
+	}
 
     newtext[index]='\0';
 
@@ -1018,85 +1010,85 @@ char *single_replace(char *line, regex_t *preg, char *replace)
 
 Var *ff_stringsubst(vfuncptr func, Var *arg)
 {
-    Var *ob=NULL;
-    char *match=NULL;
-    char *subst=NULL;
-    char *replace=NULL;
+	Var *ob=NULL;
+	char *match=NULL;
+	char *subst=NULL;
+	char *replace=NULL;
 
-    Alist alist[4];
-    int ac;
-    Var **av;
+	Alist alist[4];
+   int ac;
+   Var **av;
 
-    int i,Row;	
-    Var *result;
+	int i,Row;	
+	Var *result;
 
-    regex_t preg;
-    int cflags=REG_EXTENDED;
-
-
-
-    alist[0] = make_alist( "obj", ID_UNK,   NULL,     &ob);
-    alist[1] = make_alist( "match", ID_STRING,   NULL,     &match);
-    alist[2] = make_alist( "substitute", ID_STRING,   NULL,     &subst);
-    alist[3].name = NULL;
-
-    make_args(&ac, &av, func, arg);
-
-    if (parse_args(ac, av, alist)) return(NULL);
-
-    /*User error checking...silly user! */
-
-    if (ob==NULL || match==NULL){ /*No target or source */
-        return(NULL);
-    }
-
-    if (V_TYPE(ob) != ID_STRING && V_TYPE(ob) != ID_TEXT){
-        parse_error("This only works with string objects");
-        return(NULL);
-    }
-
-    if (subst==NULL) {/*Nothing to do */
-        return(NULL);
-    }
+	regex_t preg;
+	int cflags=0;
 
 
-    result=newVar();
 
-    /*Compile expression*/
-    if (regcomp(&preg,match,cflags)){	
-        parse_error("error compiling regular expression");
-        return(NULL);
-    }
+	alist[0] = make_alist( "obj", ID_UNK,   NULL,     &ob);
+	alist[1] = make_alist( "match", ID_STRING,   NULL,     &match);
+	alist[2] = make_alist( "substitute", ID_STRING,   NULL,     &subst);
+	alist[3].name = NULL;
 
-    /*If our object is just a string, run the single line replace function
-      and return it in the result object
-      */
+	make_args(&ac, &av, func, arg);
 
-    if (V_TYPE(ob)==ID_STRING){
-        V_TYPE(result)=ID_STRING;
-        if((V_STRING(result)=single_replace(V_STRING(ob),&preg,subst))==NULL){
-            V_STRING(result)=(char *)calloc(1,1);
-            V_STRING(result)='\0';
-        }
-    }
+	if (parse_args(ac, av, alist)) return(NULL);
 
-    /*If our object is a text array, run the single line replace function
-      for each Row in the array and store each replacement in the result
-      object
-      */
+	/*User error checking...silly user! */
 
-    else {
-        Row=V_TEXT(ob).Row;
-        V_TEXT(result).Row=Row;
-        V_TEXT(result).text=(unsigned char **)calloc(Row,sizeof(char *));
-        for (i=0;i<Row;i++){
-            if((V_TEXT(result).text[i]=single_replace(V_TEXT(ob).text[i],&preg,subst))==NULL){
-                V_TEXT(result).text[i]=(char *)calloc(1,1);
-                V_TEXT(result).text[i]='\0';
-            }
-        }
-    }
+	if (ob==NULL || match==NULL){ /*No target or source */
+		return(NULL);
+	}
 
+	if (V_TYPE(ob) != ID_STRING && V_TYPE(ob) != ID_TEXT){
+		parse_error("This only works with string objects");
+		return(NULL);
+	}
+
+	if (subst==NULL) {/*Nothing to do */
+		return(NULL);
+	}
+
+
+	result=newVar();
+
+	/*Compile expression*/
+	if (regcomp(&preg,match,cflags)){	
+		parse_error("error compiling regular expression");
+		return(NULL);
+	}
+
+	/*If our object is just a string, run the single line replace function
+		and return it in the result object
+	*/
+
+	if (V_TYPE(ob)==ID_STRING){
+		V_TYPE(result)=ID_STRING;
+		if((V_STRING(result)=single_replace(V_STRING(ob),&preg,subst))==NULL){
+			V_STRING(result)=(char *)calloc(1,1);
+			V_STRING(result)='\0';
+		}
+	}
+
+	/*If our object is a text array, run the single line replace function
+		for each Row in the array and store each replacement in the result
+		object
+	*/
+
+	else {
+		Row=V_TEXT(ob).Row;
+		V_TEXT(result).Row=Row;
+		V_TYPE(result)=ID_TEXT;
+		V_TEXT(result).text=(unsigned char **)calloc(Row,sizeof(char *));
+		for (i=0;i<Row;i++){
+			if((V_TEXT(result).text[i]=single_replace(V_TEXT(ob).text[i],&preg,subst))==NULL){
+				V_TEXT(result).text[i]=(char *)calloc(1,1);
+				V_TEXT(result).text[i]='\0';
+			}
+		}
+	}
     return(result);
 }
 
