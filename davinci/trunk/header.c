@@ -4,6 +4,9 @@ static char rcsver[] = "$Id$";
  ** $Source$
  **
  ** $Log$
+ ** Revision 1.4  2002/06/15 03:33:01  gorelick
+ ** Miscelaneous checking
+ **
  ** Revision 1.3  2001/01/12 00:29:22  gorelick
  ** Version 0.64
  **
@@ -65,28 +68,28 @@ LoadLabel(char *fname)
 
     ob = OdlParseLabelFile(fname, NULL, ODL_EXPAND_STRUCTURE, 1);
     if (ob == NULL) {
-        fprintf(stderr, "Unable to read file: %s\n", fname);
+        parse_error("Unable to read file: %s", fname);
         return (NULL);
     }
     /* find the first (and only?) table object */
     if ((tbl = OdlFindObjDesc(ob,"TABLE",NULL,NULL, 0, ODL_TO_END)) == NULL) {
-        fprintf(stderr, "Unable to find TABLE object: %s\n", fname);
-        fprintf(stderr, "Is this a vanilla file?\n");
+        parse_error("Unable to find TABLE object: %s", fname);
+        parse_error("Is this a vanilla file?");
         return (NULL);
     }
     if ((kw = OdlFindKwd(tbl, "ROW_BYTES", NULL,0, ODL_THIS_OBJECT)) != NULL) {
         reclen = atoi(OdlGetKwdValue(kw));
     } else {
-        fprintf(stderr, "Unable to find keyword: ROW_BYTES: %s\n", fname);
-        fprintf(stderr, "Is this a vanilla file?  Is it's ^STRUCTURE file ok?\n");
+        parse_error("Unable to find keyword: ROW_BYTES: %s", fname);
+        parse_error("Is this a vanilla file?  Is it's ^STRUCTURE file ok?");
         return (NULL);
     }
 
 	 if ((kw = OdlFindKwd(tbl, "ROWS", NULL,0, ODL_THIS_OBJECT)) != NULL) {
 		  nrows = atoi(OdlGetKwdValue(kw));
 	 } else {
-			fprintf(stderr, "Unable to find keyword: ROWS: %s\n", fname);
-			fprintf(stderr, "Is this a vanilla file?  Is it's ^STRUCTURE file ok?\n");
+			parse_error("Unable to find keyword: ROWS: %s", fname);
+			parse_error("Is this a vanilla file?  Is it's ^STRUCTURE file ok?");
 			return (NULL);
     }
 
@@ -94,7 +97,7 @@ LoadLabel(char *fname)
     if ((kw = OdlFindKwd(tbl, "COLUMNS", NULL, 0, ODL_THIS_OBJECT)) != NULL) {
         nfields = atoi(OdlGetKwdValue(kw));
     } else {
-        fprintf(stderr, "Unable to find keyword: COLUMNS\n");
+        parse_error("Unable to find keyword: COLUMNS");
         return (NULL);
     }
 
@@ -160,7 +163,7 @@ MakeField(OBJDESC *col, LABEL *l)
         f->label = l;
 
         if ((kw = GetKey(col, "NAME")) == NULL) {
-            fprintf(stderr, "Column %d has no name.\n", i);
+            parse_error("Column %d has no name.", i);
             break;
         }
         f->name = OdlGetKwdValue(kw);
@@ -172,13 +175,13 @@ MakeField(OBJDESC *col, LABEL *l)
 
 
         if ((kw = GetKey(col, "START_BYTE")) == NULL) {
-            fprintf(stderr, "Column %s: START_BYTE not specified.\n", f->name);
+            parse_error("Column %s: START_BYTE not specified.", f->name);
             break;
         }
         f->start = atoi(OdlGetKwdValue(kw)) - 1;
 
         if ((kw = GetKey(col, "BYTES")) == NULL) {
-            fprintf(stderr, "Column %s: BYTES not specified.\n", f->name);
+            parse_error("Column %s: BYTES not specified.", f->name);
             break;
         }
         f->size = atoi(OdlGetKwdValue(kw));
@@ -193,18 +196,18 @@ MakeField(OBJDESC *col, LABEL *l)
             if ((kw = GetKey(col, "ITEM_BYTES")) != NULL) {
                 f->size = atoi(OdlGetKwdValue(kw));
             } else {
-                fprintf(stderr, "Column %s: ITEM_BYTES not specified, dividing BYTES by ITEMS.\n", f->name);
+                parse_error("Column %s: ITEM_BYTES not specified, dividing BYTES by ITEMS.", f->name);
                 f->size = f->size / f->dimension;
             }
         }
 
         if ((kw = GetKey(col, "DATA_TYPE")) == NULL) {
-            fprintf(stderr, "Column %s: DATA_TYPE not specified.\n", f->name);
+            parse_error("Column %s: DATA_TYPE not specified.", f->name);
             break;
         }
 		f->type = OdlGetKwdValue(kw);
 		if ((f->eformat = ConvertType(f->type)) == INVALID_EFORMAT) {
-            fprintf(stderr, "Unrecognized type: %s, %s %d bytes\n",
+            parse_error("Unrecognized type: %s, %s %d bytes",
                     f->name, f->type, f->size);
 			break;
 		}
@@ -226,7 +229,7 @@ MakeField(OBJDESC *col, LABEL *l)
             if (!strcmp(ptr, "VAX_VARIABLE_LENGTH")) vardata->type = VAX_VAR;
             else if (!strcmp(ptr, "Q15")) vardata->type = Q15;
             else {
-                fprintf(stderr, "Unrecognized VAR_DATA_TYPE: %s\n", ptr);
+                parse_error("Unrecognized VAR_DATA_TYPE: %s", ptr);
             }
 
             if ((kw = GetKey(col, "VAR_ITEM_BYTES")) != NULL) {
@@ -235,17 +238,17 @@ MakeField(OBJDESC *col, LABEL *l)
                 if ((kw = GetKey(col, "VAR_DATA_TYPE")) != NULL) {
                     ptr = OdlGetKwdValue(kw);
                 } else {
-					fprintf(stderr, "VAR_DATA_TYPE not specified for field: %s\n", 
+					parse_error("VAR_DATA_TYPE not specified for field: %s", 
 								f->name);
 					exit(1);
 				}
                 if ((vardata->eformat = ConvertType(ptr)) == INVALID_EFORMAT) {
-                    fprintf(stderr, "Unrecognized vartype: %s, %s %d bytes\n",
+                    parse_error("Unrecognized vartype: %s, %s %d bytes",
                             f->name, ptr, vardata->size);
                 }
 				vardata->iformat = eformat_to_iformat(vardata->eformat);
             } else {
-				fprintf(stderr, "VAR_ITEM_BYTES not specified for field: %s\n", 
+				parse_error("VAR_ITEM_BYTES not specified for field: %s", 
 							f->name);
 				exit(1);
 			}
@@ -301,7 +304,7 @@ MakeBitField(OBJDESC *col, FIELD *f)
 		f2->bitfield = b;
 
         if ((kw = GetKey(col, "NAME")) == NULL) {
-            fprintf(stderr, "Bitfield %d has no name.\n", i);
+            parse_error("Bitfield %d has no name.", i);
             break;
         }
 		sprintf(name, "%s:%s", f->name, OdlGetKwdValue(kw));
@@ -313,7 +316,7 @@ MakeBitField(OBJDESC *col, FIELD *f)
 		}
 
         if ((kw = GetKey(col, "BIT_DATA_TYPE")) == NULL) {
-            fprintf(stderr, "Bitfield %s has no data type.\n", f2->name);
+            parse_error("Bitfield %s has no data type.", f2->name);
             break;
         }
 		ptr = OdlGetKwdValue(kw);
@@ -321,13 +324,13 @@ MakeBitField(OBJDESC *col, FIELD *f)
 		f2->iformat = eformat_to_iformat(b->type); /* Saadat - I think! */
 
 		if ((kw = GetKey(col, "START_BIT")) == NULL) {
-            fprintf(stderr, "Bitfield %s has no start bit.\n", f2->name);
+            parse_error("Bitfield %s has no start bit.", f2->name);
             break;
         }
 		b->start_bit = atoi(OdlGetKwdValue(kw));
 
 		if ((kw = GetKey(col, "BITS")) == NULL) {
-            fprintf(stderr, "Bitfield %s has no BITS value.\n", f2->name);
+            parse_error("Bitfield %s has no BITS value.", f2->name);
             break;
         }
 		b->bits = atoi(OdlGetKwdValue(kw));
@@ -365,7 +368,7 @@ eformat_to_iformat(EFORMAT e)
 			return ( STRING );
 
 		default:
-			fprintf(stderr, "Unrecognized etype: %d\n", e);
+			parse_error("Unrecognized etype: %d", e);
 	}
 
 	return INVALID_IFORMAT;
@@ -479,20 +482,20 @@ LoadFragment(char *fname, TABLE *table)
     struct stat sbuf;
 
     if (stat(fname, &sbuf) == -1) {
-        fprintf(stderr, "Unable to find file: %s\n", fname);
+        parse_error("Unable to find file: %s", fname);
         return(NULL);
     }
     
     ob = OdlParseLabelFile(fname, NULL, ODL_EXPAND_STRUCTURE, 1);
     if (ob == NULL) {
-        fprintf(stderr, "Unable to read file: %s\n", fname);
+        parse_error("Unable to read file: %s", fname);
         return (NULL);
     }
     
     if ((kw = OdlFindKwd(ob, "^TABLE", NULL, 0, ODL_THIS_OBJECT)) != NULL) {
         offset = atoi(OdlGetKwdValue(kw));
     } else {
-        fprintf(stderr, "Unable to find table pointer (^TABLE) in: %s\n",
+        parse_error("Unable to find table pointer (^TABLE) in: %s",
                 fname);
         return (NULL);
     }
@@ -500,14 +503,14 @@ LoadFragment(char *fname, TABLE *table)
 
     /* find the first (and only?) table object */
     if ((tbl = OdlFindObjDesc(ob, "TABLE", NULL, NULL, 0, ODL_TO_END)) == NULL) {
-        fprintf(stderr, "Unable to find TABLE object: %s\n", fname);
+        parse_error("Unable to find TABLE object: %s", fname);
         return (NULL);
     }
 
     if ((kw = OdlFindKwd(tbl, "ROWS", NULL,0, ODL_THIS_OBJECT)) != NULL) {
         rows = atoi(OdlGetKwdValue(kw));
     } else {
-        fprintf(stderr, "Unable to find keyword ROWS: %s\n", fname);
+        parse_error("Unable to find keyword ROWS: %s", fname);
         return (NULL);
     }
     
@@ -575,7 +578,7 @@ LoadFragment(char *fname, TABLE *table)
     f->sbuf = sbuf;
 
     if (sbuf.st_size != f->offset + f->nrows * table->label->reclen) {
-        fprintf(stderr, "File is an odd size: %s\n", fname);
+        parse_error("File is an odd size: %s", fname);
     }
 
     return(f);

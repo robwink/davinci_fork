@@ -75,7 +75,13 @@ ff_write(vfuncptr func, Var *arg)
     else if (!strcasecmp(type, "grd"))    dv_WriteGRD(ob, filename, force, title, "daVinci");
     else if (!strcasecmp(type, "pgm"))    dv_WritePGM(ob, filename, force);
     else if (!strcasecmp(type, "ppm"))    dv_WritePPM(ob, filename, force);
-    else if (!strcasecmp(type, "ascii")){
+    else if (!strcasecmp(type, "pnm"))    {
+		if (GetZ(ob) == 1) {
+			dv_WritePGM(ob, filename, force);
+		} else {
+			dv_WritePPM(ob, filename, force);
+		}
+	} else if (!strcasecmp(type, "ascii")){
         if (!force && access(filename, F_OK)){
             parse_error("File %s already exists.\n", filename);
             return NULL;

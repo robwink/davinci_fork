@@ -576,11 +576,13 @@ ff_covar(
 	int		ref[3] = {0, 1, 2};
 	int		n, m, offset;
 	int		i, j, k, index;
+	Var *ignore = NULL;
 
-	Alist		alist[3];
+	Alist		alist[4];
 	alist[0] = make_alist( "obj",    ID_VAL,    NULL,        &obj);
 	alist[1] = make_alist( "axis",   ID_ENUM,   axis_enums,  &axis_arg);
-	alist[2].name = NULL;
+	alist[2] = make_alist( "ignore",   ID_VAL,  NULL,  &ignore);
+	alist[3].name = NULL;
 
 	if (parse_args(func, args, alist) == 0) return(NULL);
 
@@ -590,20 +592,6 @@ ff_covar(
 		return(NULL);
 	}
 
-	switch(V_FORMAT(obj)){
-	case BYTE:
-	case SHORT:
-	case INT:
-	case FLOAT:
-	case DOUBLE:
-		/* Only the above data types are supported */
-		break;
-	
-	default:
-		parse_error("%s(): \"%s\" is of invalid format.\n",
-			func->name, alist[0].name);
-		return(NULL);
-	}
 
 	/*
 	** If axis is not specified, use the default, i.e. Z
@@ -655,6 +643,27 @@ ff_covar(
 				data[j*dim[ref[2]]+i+1][k+1] = extract_float(obj, index);
 			}
 		}
+	}
+
+	/* handle ignore cases */
+
+	if (ignore) {
+		float ign_val = extract_float(ignore, 0);
+		int i2 = 1;
+		int flag;
+
+		for (i = 1 ; i <= n ; i++) { 
+			flag = 0;
+			for (j = 1 ; j <= m ; j++) { 
+				if (data[i][j] == ign_val) {
+					flag++;
+					break;
+				}
+				data[i2][j] = data[i][j];
+			}
+			if (!flag) i2++;
+		}
+		n = i2-1;
 	}
 
 	/* allocate space for resultant matrix */

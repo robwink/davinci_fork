@@ -162,6 +162,7 @@ struct _vfuncptr vfunclist[] = {
     { "ccount",     ff_ccount,      NULL , NULL},
     
     { "moment",     ff_moment,      NULL , NULL},   
+    { "moments",     ff_moments,      NULL , NULL},   
     { "avg",     ff_avg2,           NULL , NULL},   
     { "stddev",  ff_avg2,           NULL , NULL},   
     { "avg2",    ff_avg,            NULL , NULL},   

@@ -319,17 +319,22 @@ pp_set_var(Var *id, Var *range, Var *exp)
         exp = V_DUP(exp);
     }
 
-    V_NAME(exp) = strdup(V_NAME(id));
+    /* looks like structs might not have names, so skip this for them */
+    if (V_NAME(id)) {
+        V_NAME(exp) = strdup(V_NAME(id));
 
-    /**
-     ** Check for reserved variables and verify their type.
-     **/
-    if (!strcmp(V_NAME(exp), "verbose")){ VERBOSE = V_INT(exp); dv_set_iom_verbosity(); }
-    if (!strcmp(V_NAME(exp), "SCALE")) SCALE = V_INT(exp);
-    if (!strcmp(V_NAME(exp), "debug")) debug = V_INT(exp);
-    if (!strcmp(V_NAME(exp), "DEPTH")) DEPTH = V_INT(exp);
+        /**
+         ** Check for reserved variables and verify their type.
+         **/
+        if (!strcmp(V_NAME(exp), "verbose")){ VERBOSE = V_INT(exp); dv_set_iom_verbosity(); }
+        if (!strcmp(V_NAME(exp), "SCALE")) SCALE = V_INT(exp);
+        if (!strcmp(V_NAME(exp), "debug")) debug = V_INT(exp);
+        if (!strcmp(V_NAME(exp), "DEPTH")) DEPTH = V_INT(exp);
 
-    return(put_sym(exp));
+        exp = put_sym(exp);
+    }
+
+    return(exp);
 }
 
 
