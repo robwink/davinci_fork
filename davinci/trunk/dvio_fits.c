@@ -1,7 +1,7 @@
-#ifdef HAVE_LIBCFITSIO
-
-#include <cfitsio/fitsio.h>
 #include "parser.h"
+
+#ifdef HAVE_LIBCFITSIO
+#include <cfitsio/fitsio.h>
 
 char     DVIO_FITS_err_text[64];
 

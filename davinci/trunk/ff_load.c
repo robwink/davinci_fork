@@ -126,10 +126,6 @@ do_load(char *filename, struct iom_iheader *h)
 	if (input == NULL)    input = dv_LoadGOES(fp, fname, h);
 	if (input == NULL)    input = dv_LoadAVIRIS(fp, fname, h);
 
-#ifdef HAVE_CFITSIO
-	if (input == NULL)    input = dv_LoadFITS(fp, fname, h);
-#endif
-
 #ifdef HAVE_LIBHDF5
         if (input == NULL)    input = LoadHDF5(fname);
 #endif
