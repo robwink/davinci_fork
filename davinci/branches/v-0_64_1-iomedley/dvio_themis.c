@@ -7,6 +7,7 @@
 #ifndef __MSDOS__
 #include <sys/mman.h>
 #endif
+#include "dvio.h"
 
 #define	_IMAGEID				2
 #define	_BANDS				3
@@ -231,7 +232,7 @@ int Keep(unsigned char B, unsigned short F, CMD Cmd, int Frame, int Band)
 }
 
 
-int GetGSEHeader (FILE *fp, struct _iheader *h)
+int GetGSEHeader (FILE *fp, struct iom_iheader *h)
 {
     unsigned char	Buf[1000];
     unsigned int	Num[6];
@@ -269,11 +270,13 @@ int GetGSEHeader (FILE *fp, struct _iheader *h)
 
 /*Okay, the file header is a GSE visible image; load the _iheader structure with info */
 	
-    h->org=BSQ;
+	iom_init_iheader(h);
+
+    h->org=iom_BSQ;
     h->size[0]=Col;
     h->size[1]=Row;
     h->size[2]=(Size/(Row*Col*nb));
-    h->format=((nb==1) ? (BYTE):(SHORT));
+    h->format=((nb==1) ? (iom_BYTE):(iom_SHORT));
     h->dptr=1024;
     h->gain=0.0;
     h->corner=0;
@@ -554,7 +557,7 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
 {
     FILE	*infile;
     void	*data;
-    struct	_iheader header;
+    struct	iom_iheader header;
     int i,j;
     int dsize;
     int gse=0;
@@ -581,7 +584,7 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
     }
 
 
-    if ((fname = locate_file(filename)) == NULL ||
+    if ((fname = dv_locate_file(filename)) == NULL ||
         (infile = fopen(fname, "r")) == NULL) {
         fprintf(stderr, "Unable to open file: %s\n", filename);
         return (NULL);
@@ -598,17 +601,23 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
             return (NULL);
     	}
 
-    	data=read_qube_data(fileno(infile), &header);
+    	data = iom_read_qube_data(fileno(infile), &header);
 
         fclose(infile);
-    	if (header.format=SHORT){ /*Data is actually 12-bit and needs the upper 4 bits cleaned off*/
+    	if (header.format=iom_SHORT){ /*Data is actually 12-bit and needs the upper 4 bits cleaned off*/
             dsize=header.size[0]*header.size[1]*header.size[2];
             for (i=0;i<dsize*2;i+=2){
                 ((short *)(data))[i] &= 4095;
             }
     	}
 
-    	return(newVal(header.org,header.size[0],header.size[1],header.size[2],header.format,data));
+		v = newVal(ihorg2vorg(header.org),
+			header.size[0],header.size[1],header.size[2],
+			ihfmt2vfmt(header.format),
+			data);
+
+		iom_cleanup_iheader(&header);
+    	return(v);
     }
 
     else {
@@ -657,7 +666,7 @@ ff_Frame_Grabber_Read(vfuncptr func, Var * arg)
         return (NULL);
     }
 
-    if ((fname = locate_file(filename)) == NULL ||
+    if ((fname = dv_locate_file(filename)) == NULL ||
         (infile = fopen(fname, "r")) == NULL) {
         fprintf(stderr, "Unable to open file: %s\n", filename);
         return (NULL);

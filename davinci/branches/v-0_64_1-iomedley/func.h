@@ -153,7 +153,6 @@ void *read_qube_data(int, struct _iheader *);
 Var *LoadSpecpr(FILE *,char *,int );
 Var *LoadSpecprHeaderStruct(FILE *,char *,int );
 Var *LoadVicar (FILE *, char *, struct _iheader *);
-Var *LoadISIS (FILE *, char *, struct _iheader *);
 Var *LoadGRD(FILE *,char *, struct _iheader *);
 Var *LoadPNM(FILE *, char *, struct _iheader *);
 Var *LoadGOES (FILE *, char *, struct _iheader *);
@@ -165,7 +164,7 @@ Var *LoadGFX_Image(char *filename);
 Var *ff_XImage_Display(vfuncptr func, Var * arg);
 #endif /* 0 */
 #endif
-int LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var);
+int dv_LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var);
 Var * LoadVanilla(char *filename);
 Var * LoadHDF5(char *filename);
 
@@ -199,7 +198,6 @@ int is_imath(FILE *);
 FILE *uncompress(FILE *, char *);
 
 
-char *locate_file(char *);
 
 Var *p_mknod();
 Var *p_mkval(int, char *);
@@ -229,7 +227,7 @@ void free_tree(Var *);
 Var *rm_symtab(Var *);
 
 int LoadSpecprHeader(FILE *, char *, int , char *, Var **);
-int LoadVicarHeader(FILE *, char *, int , char *, Var **);
+int dv_LoadVicarHeader(FILE *, char *, int , char *, Var **);
 
 Var *RequireKeyword(char *, struct keywords *, int, int, vfuncptr );
 Var *HasValue(vfuncptr, Var *);
@@ -253,8 +251,6 @@ Var *ff_org (vfuncptr, Var *);
 Var *ff_create (vfuncptr, Var *);
 Var *ff_source (vfuncptr, Var *);
 Var *ff_load (vfuncptr, Var *);
-Var *ff_load2(vfuncptr, Var *);
-Var *ff_write2(vfuncptr, Var *);
 Var *ff_Frame_Grabber_Read(vfuncptr func, Var * arg);
 Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg);
 Var *ff_PACI_Read(vfuncptr func, Var * arg);

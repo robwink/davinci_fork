@@ -143,7 +143,7 @@ ff_ascii(vfuncptr func, Var *arg)
      ** Got all the values.  Do something with 'em.
      **/
 
-    if ((fname = locate_file(filename)) == NULL) {
+    if ((fname = dv_locate_file(filename)) == NULL) {
         sprintf(error_buf, "Cannot find file: %s\n", filename);
         parse_error(NULL);
         return(NULL);

@@ -502,7 +502,7 @@ dv_LookupSuffix(
 }
 
 Var *
-ff_read_suffix_plane2(vfuncptr func, Var * arg)
+ff_read_suffix_plane(vfuncptr func, Var * arg)
 {
 
 /**************************

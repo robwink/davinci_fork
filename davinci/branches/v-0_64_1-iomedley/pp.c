@@ -649,6 +649,25 @@ pp_keyword_to_arg(Var *keyword, Var *ex)
 }
 
 
+char *
+get_env_var(char *name)
+{
+    char *value = NULL;
+
+    /**
+     ** Shell command line variables still have the '$' in front of them.
+     ** Environment variables shouldn't.
+     **/
+    if ((value = getenv(name)) == NULL) {
+        sprintf(error_buf, "Environment variable not found: %s", name);
+        parse_error(NULL);
+        return (NULL);
+    }
+    return (value);
+}
+
+
+
 /**
  ** pp_shellArgs() - return argument specified on the shell command line.
  **/

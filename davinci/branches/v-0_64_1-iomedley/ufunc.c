@@ -459,7 +459,7 @@ ufunc_edit(vfuncptr func , Var *arg)
     if (arg == NULL) return(NULL);
     if (V_TYPE(arg) == ID_STRING) {
         filename = V_STRING(arg);
-        if ((fname = locate_file(filename)) == NULL) {
+        if ((fname = dv_locate_file(filename)) == NULL) {
             fname = filename;
         }
     } else if (V_TYPE(arg) == ID_VAL) {
