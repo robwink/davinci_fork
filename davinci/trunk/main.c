@@ -70,7 +70,7 @@ CPPFunction * rl_attempted_completion_function;
 
 #ifdef USE_X11_EVENTS
 void rl_callback_read_char();
-void rl_callback_handler_install(char *, void (char *));
+void rl_callback_handler_install(char *, void (*)(char *));
 #endif
 
 jmp_buf env;
