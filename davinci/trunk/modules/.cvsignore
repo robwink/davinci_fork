@@ -8,3 +8,4 @@ config.status
 libtool
 *.lo
 stamp-h1
+Makefile.in
