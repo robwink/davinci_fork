@@ -73,13 +73,13 @@ void RedunBegone(char **buf, int *Lines, int Col,PACIstatus *Ps,
                  int quiet,int eflag, Var *err,int *BandCount);
 
 #ifdef WORDS_BIGENDIAN
-unsigned short Start_Sync = { 0xF0CA };
-unsigned short Stop_Sync = { 0xAB8C };
-unsigned int StopStart_Sync = {0xAB8CF0CA};
+unsigned char Start_Sync[] = { 0xF0,0xCA };
+unsigned char Stop_Sync[] = { 0xAB,0x8C };
+unsigned char StopStart_Sync[] = {0xAB,0x8C,0xF0,0xCA};
 #else /* little endian */
-unsigned short Start_Sync = { 0xCAF0 };
-unsigned short Stop_Sync = { 0x8CAB };
-unsigned int StopStart_Sync = {0x8CABCAF0};
+unsigned char Start_Sync[] = { 0xCA,0xF0 };
+unsigned char Stop_Sync[] = { 0x8C,0xAB };
+unsigned char StopStart_Sync[] = {0x8C,0xAB,0xCA,0xF0};
 #endif /* WORDS_BIGENDIAN */
 
 
@@ -149,7 +149,7 @@ int Skip_To_Stop_Sync(int *i, unsigned char *buf,int len)
     int result;	
 
     while ((*i)<len-1){
-        if (memcmp((buf+(*i)), &Stop_Sync, 2) == 0) {
+        if (memcmp((buf+(*i)), Stop_Sync, 2) == 0) {
             return (count);
         }
         else {
@@ -169,7 +169,7 @@ int Skip_To_StopStart_Sync(int *i, unsigned char *buf,int len)
     int result;	
 
     while ((*i)<len-3){
-        if (memcmp((buf+(*i)), &StopStart_Sync, 4) == 0) {
+        if (memcmp((buf+(*i)), StopStart_Sync, 4) == 0) {
             /*Set i (and count) to be past the stop sync, but
               at the begining of the start sync
               */
@@ -199,7 +199,7 @@ int Skip_To_Start_Sync(int *i, unsigned char *buf,int len)
     short V;
 
     while ((*i)<len-1){
-        if (memcmp((buf+(*i)), &Start_Sync, 2) == 0) {
+        if (memcmp((buf+(*i)), Start_Sync, 2) == 0) {
             return(1);
         }
         else
@@ -892,12 +892,12 @@ Add_Fake_Frame(void *newbuf,int band, int frame, int num_frames,int width,int ef
 
     for (i=0;i<num_frames;i++){
         new_frame=frame+i;	
-        memcpy((((unsigned char *)newbuf)+i*width),&Start_Sync,2);
+        memcpy((((unsigned char *)newbuf)+i*width),Start_Sync,2);
         memcpy((((unsigned char *)newbuf)+i*width+2),&pseudo_ID,1);
         memcpy((((unsigned char *)newbuf)+i*width+_BANDS),&band,1);
         memcpy((((unsigned char *)newbuf)+i*width+_FRAMES),&new_frame,2);
         memcpy((((unsigned char *)newbuf)+i*width+_DATA),blank,(width-8));
-        memcpy((((unsigned char *)newbuf)+i*width+(width-2)),&Stop_Sync,2);
+        memcpy((((unsigned char *)newbuf)+i*width+(width-2)),Stop_Sync,2);
     }
 
     free(blank);
@@ -1200,6 +1200,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
     PACIstatus Ps;
     int	   quiet=0;
     int 		EndFrame;
+	 int		PFBStart[16];
 
     int		debug=0;
     Var 		*err=NULL;
@@ -1448,9 +1449,11 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                 int Bc[16];
                 int idx=0;
                 int i;
-                for (i=0;i<=Max_Band;i++){
+                for (i=0;i<=Max_Band;i++){ //we don't always take all sequencial bands
+													   //Have to pack what we have
                     if (BandCount[i]){
                         Bc[idx]=BandCount[i];
+								PFBStart[idx]=	FrameBandStart[i];
                         idx++;
                         Ps.Mapping[i]=idx;
                     }
@@ -1466,8 +1469,8 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                 EndFrame=0xFFFF & (((unsigned char *)data)[(BandCount[i]-1)*Col+_FRAMES] << 8 |
                                    ((unsigned char *)data)[(BandCount[i]-1)*Col+_FRAMES+1]);
 
-                if (Max_Frame_Count < EndFrame-FrameBandStart[i]) 
-                    Max_Frame_Count=EndFrame-FrameBandStart[i];
+                if (Max_Frame_Count < EndFrame-PFBStart[i]) 
+                    Max_Frame_Count=EndFrame-PFBStart[i];
 			   	
             }
             for (i=0;i<=Max_Band;i++){ /*Now, gotta count the missing frames!*/
