@@ -75,6 +75,7 @@ Var *pp_shellArgs(Var *);               /* find shell command line args */
 Var *pp_argv(Var *, Var *);
 Var *pp_mk_rstep(Var *r1, Var *r2);		/* add a step value to ranges */
 Var *pp_help(Var *);
+Var *pp_exact_help(Var *);
 Var *pp_usage(Var *);
 void pp_set_cvar (Var *, Var *);	/* set control variable */
 Var *pp_get_cvar (char *);		/* get control variable */
@@ -450,6 +451,9 @@ Var * ff_bindct(vfuncptr func, Var * arg);
 Var * ff_deghost(vfuncptr func, Var * arg);
 Var * ff_deleted(vfuncptr func, Var * arg);
 Var * ff_set_deleted(vfuncptr func, Var * arg);
-Var * ff_contains(vfuncptr func, Var * arg);
 Var * ff_rice(vfuncptr func, Var * arg);
 Var * ff_unrice(vfuncptr func, Var * arg);
+Var * ff_contains(vfuncptr func, Var * arg);
+Var * ff_distance_map(vfuncptr func, Var * arg);
+Var * ff_slant(vfuncptr func, Var * arg);
+Var * ff_unslant(vfuncptr func, Var * arg);
