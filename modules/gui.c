@@ -1973,7 +1973,8 @@ dv_ListCallbacks(vfuncptr f, Var *args)
   CallbackMapEntry	*callbackMapEntry;
   Var			*dvEvalString;
   Boolean		foundEval;
-  int			i;
+  int			i, len;
+  char			*tmpString;
 
 #if DEBUG
   fprintf(stderr, "DEBUG: entering dv_AddCallback()\n");
@@ -2055,7 +2056,11 @@ dv_ListCallbacks(vfuncptr f, Var *args)
 	if (callbackMapEntry->widgetId == widgetId &&
 	    !strcmp(callbackMapEntry->dvCallbackName, callbacks[i].dvCallbackName)) {
 	  if (callbackMapEntry->evalString != NULL) {
-	    dvEvalString = newString(dupString(callbackMapEntry->evalString));
+	    /* Removing the trailing newline that dv_AddCallback() added. */
+	    len = strlen(callbackMapEntry->evalString);
+	    tmpString = (char *) calloc(len, sizeof(char)); /* Don't free; normally we'd dupString() anyway. */
+	    strncpy(tmpString, callbackMapEntry->evalString, len - 1);
+	    dvEvalString = newString(tmpString);
 	  }
 	  else {
 	    /* This shouldn't happen, but just in case.. */
