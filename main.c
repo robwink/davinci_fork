@@ -116,13 +116,13 @@ dv_sighandler(int data)
 #endif /* __CYGWIN__ */
 
     case (SIGINT):
-    	signal(SIGINT, dv_sighandler);
-
+		signal(SIGINT, SIG_IGN); 
         while ((scope = scope_tos()) != global_scope()) {
             dd_unput_argv(scope);
             clean_scope(scope_pop());
     	}
 
+		signal(SIGINT, dv_sighandler); 
     	longjmp(env, 1);
         break;
     }
@@ -452,7 +452,7 @@ void lhandler(char *line)
 
         parse_buffer(buf);
 
-	setjmp(env);
+	    setjmp(env);
 
         /*
         ** Process anything pushed onto the stream stack by the last command.
@@ -792,17 +792,29 @@ log_time()
     time_t t;
     char *uname;
     char tbuf[30];
+	char *host;
+	char cwd[1024];
     if (lfile) {
         t = time(0);
-        /* eandres: This really shouldn't be a problem, but it shouldn't be a crash, either. */
-        if ((uname = getenv("USER")) == NULL)
-              strcpy(uname, "<UNKNOWN>");
         /* eandres: ctime() seems to return invalid pointers on x86_64 systems.
          * ctime_r with a provided buffer fills the buffer correctly, but still
          * returns an invalid pointer. */
         ctime_r(&t, tbuf);
+
+        /* eandres: This really shouldn't be a problem, but it shouldn't be a crash, either. */
+        if ((uname = getenv("USER")) == NULL) {
+              uname = "<UNKNOWN>";
+		}
+		if ((host = getenv("HOST")) == NULL) {
+			host = "<UNKNOWN>";
+		}
+		if (getcwd(cwd, 1024) == NULL) {
+			strcpy(cwd, "<UNKNOWN>");
+		}
+
         fprintf(lfile, "###################################################\n");
         fprintf(lfile, "# User: %8.8s    Date: %26.26s", uname, tbuf);
+        fprintf(lfile, "# Host: %-11s Cwd: %s\n",  host, cwd);
         fprintf(lfile, "###################################################\n");
     }
 }
