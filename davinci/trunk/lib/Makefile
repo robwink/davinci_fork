@@ -9,13 +9,13 @@ bindir = $(exec_prefix)/bin
 datadir = $(prefix)/lib
 mandir = $(prefix)/man/man1
 
-INSTALL = /usr/bin/install -c
+INSTALL = /user/emily/gorelick/bin/install -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 
 CC     = gcc
-DEFS   = -I/usr/X11R6/include -DHAVE_CONFIG_H 
-LIBS   = -L/usr/X11R6/lib -lMagick -L/u/randy/lib/linux -lMagick -ltiff -lfreetype -ljpeg -lpng -ldpstk -ldps -lXext -lXt -lSM -lICE -lX11 -lbz2 -lz -lpthread -lm -ltiff -ltermcap -ljpeg -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -lreadline -ldl
+DEFS   = -I/usr/openwin/include -DHAVE_CONFIG_H 
+LIBS   = -L/usr/openwin/lib -lplplotFX -lMagick -L/opt/local/ImageMagick-5.4.2/magick -lMagick -llcms -ltiff -ljpeg -lpng -ldpstk -ldps -lXext -lXt -lSM -lICE -lX11 -lsocket -lnsl -lz -lpthread -lm -ltiff -lproj -ltermcap -ljpeg -lmsss_vis -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -lreadline -ldl
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
