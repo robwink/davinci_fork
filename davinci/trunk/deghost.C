@@ -1,3 +1,4 @@
+
 #include <ctype.h>
 #include <math.h>
 #include <stdio.h>
@@ -5,6 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <qmv/hvector.h>
+#include "config.h"
+
+#if defined(HAVE_LIBQMV) && defined(HAVE_QMV_HVECTOR_H)
 
 #define MYSQL_CMD "mysql -h mapserver1 -u dblogin2 -pthmsdb -D themis2"
 
@@ -715,4 +719,6 @@ main(int ac, char *av[])
 	writeGhost(fi, stdout);
 	fprintf(stderr, "Wrote ghost image file to stdout!\n");
  }
+#endif
+
 #endif
