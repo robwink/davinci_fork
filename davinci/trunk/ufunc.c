@@ -546,12 +546,23 @@ list_funcs()
 Var *
 ff_global(vfuncptr func, Var * arg)
 {
-	Var *e = get_global_sym(V_NAME(arg));
+	Var *e = NULL;
+	Var *aval = NULL;
+	Alist alist[2];
+	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &aval);
+	alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (aval == NULL) {return(NULL);}
+
+	e = get_global_sym(V_NAME(aval));
+
 	if (e != NULL) {
-        dd_put(scope_tos(), V_NAME(e), e);
+		dd_put(scope_tos(), V_NAME(e), e);
 	} else {
-        char *zero = (char *)calloc(1,1);
-        dd_put(scope_tos(), V_NAME(arg), newVal(BSQ, 1,1,1, BYTE, zero));
+		char *zero = (char *)calloc(1,1);
+		dd_put(scope_tos(), V_NAME(arg), newVal(BSQ, 1,1,1, BYTE, zero));
 	}
 	return(NULL);
 }
