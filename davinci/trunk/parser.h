@@ -134,74 +134,77 @@ struct _var {
  ** The following define the various types for Var->type
  **/
 
-#define ID_BASE		100                     /* in case of conflicts */
-#define ID_NONE         0			/* a non value */
-#define ID_ERROR	ID_BASE-1		
-#define ID_UNK  	ID_BASE+1               /* Unknown type */
-#define ID_STRING       ID_BASE+2               /* NULL terminated character string */
-#define	ID_KEYWORD	ID_BASE+3		/* keyword argument */
-#define ID_VAL		ID_BASE+5		/* everything with dim != 0 */
-#define ID_STRUCT       ID_BASE+6		/* Structure */
-#define ID_TEXT		ID_BASE+8	        /*1-D Array of Strings*/
+enum {
+	ID_NONE = 0,       /* a non value */
+	ID_ERROR = 99,  
+	ID_BASE = 100,     /* in case of conflicts */
+	ID_UNK,            /* Unknown type */
+	ID_STRING,         /* NULL terminated character string */
+	ID_KEYWORD,        /* keyword argument */
+	ID_VAL,            /* everything with dim != 0 */
+	ID_STRUCT,         /* Structure */
+	ID_TEXT,           /*1-D Array of Strings*/
 
-#define ID_IVAL         ID_BASE+10		/* Integer value */
-#define ID_RVAL         ID_BASE+11		/* real value */
-#define ID_ID           ID_BASE+12		/* Identifier */
+	ID_IVAL,           /* Integer value */
+	ID_RVAL,           /* real value */
+	ID_ID,             /* Identifier */
 
-#define ID_LIST         ID_BASE+14		/* Statement list */
-#define ID_IF           ID_BASE+15		/* if statement */
-#define ID_ELSE         ID_BASE+16		/* else statement */
-#define ID_WHILE        ID_BASE+17		/* while statement */
-#define ID_CONT         ID_BASE+18		/* continue statement */
-#define ID_BREAK        ID_BASE+19		/* break statement */
-#define ID_RETURN       ID_BASE+20		/* return statement */
+	ID_LIST,           /* Statement list */
+	ID_IF,             /* if statement */
+	ID_ELSE,           /* else statement */
+	ID_WHILE,          /* while statement */
+	ID_CONT,           /* continue statement */
+	ID_BREAK,          /* break statement */
+	ID_RETURN,         /* return statement */
+	
+	ID_RANGES,         /* list of ranges */
+	ID_RSTEP,          /* list of ranges */
+	ID_RANGE,          /* single range value */
+	ID_SET,            /* equivalence expression */
+	ID_OR,             /* logical (||) or */
+	ID_AND,            /* logical (&&) and */
+	ID_EQ,             /* logical (==) equals */
+	ID_NE,             /* logical (!=) not equals */
+	ID_LT,             /* logical (<) less than */
+	ID_GT,             /* logical (>) greater than */
+	ID_LE,             /* logical (<=) less than or equal */
+	ID_GE,             /* logical (>=) greater than or equal */
+	ID_ADD,            /* addition */
+	ID_SUB,            /* subtraction */
+	ID_MULT,           /* multiplcation */
+	ID_DIV,            /* division */
+	ID_MOD,            /* modulo divison */
+	ID_UMINUS,         /* unary minus */
+	ID_FUNCT,          /* function */
+	ID_ARRAY,          /* application of ranges to array */
+	ID_ARG,            /* list of arguments */
+	ID_ARGS,           /* single argument */
 
-#define ID_RANGES       ID_BASE+21		/* list of ranges */
-#define ID_RSTEP        ID_BASE+22		/* list of ranges */
-#define ID_RANGE        ID_BASE+23		/* single range value */
-#define ID_SET          ID_BASE+24		/* equivalence expression */
-#define ID_OR           ID_BASE+25		/* logical (||) or */
-#define ID_AND          ID_BASE+26		/* logical (&&) and */
-#define ID_EQ           ID_BASE+27		/* logical (==) equals */
-#define ID_NE           ID_BASE+28		/* logical (!=) not equals */
-#define ID_LT           ID_BASE+29		/* logical (<) less than */
-#define ID_GT           ID_BASE+30		/* logical (>) greater than */
-#define ID_LE           ID_BASE+31		/* logical (<=) less than or equal */
-#define ID_GE           ID_BASE+32		/* logical (>=) greater than or equal */
-#define ID_ADD          ID_BASE+33		/* addition */
-#define ID_SUB          ID_BASE+34		/* subtraction */
-#define ID_MULT         ID_BASE+35		/* multiplcation */
-#define ID_DIV          ID_BASE+36		/* division */
-#define ID_MOD          ID_BASE+37		/* modulo divison */
-#define ID_UMINUS       ID_BASE+38		/* unary minus */
-#define ID_FUNCT        ID_BASE+39		/* function */
-#define ID_ARRAY		ID_BASE+40		/* application of ranges to array */
-#define ID_ARG          ID_BASE+41		/* list of arguments */
-#define ID_ARGS         ID_BASE+42		/* single argument */
+	ID_FOR,            /* for loop */
+	ID_FOREACH,        /* foreach loop */
+	ID_EACH,           /* foreach val */
+	ID_ARGV,           /* $VALUE argument. Evalue at run */
 
-#define ID_FOR          ID_BASE+43		/* for loop */
-#define ID_FOREACH      ID_BASE+44		/* foreach loop */
-#define ID_EACH         ID_BASE+45		/* foreach val */
-#define ID_ARGV         ID_BASE+46		/* $VALUE argument.  Evalue at run */
+	ID_INC,            /* increment value */
+	ID_DEC,            /* decrement value */
+	ID_MULSET,         /* *= value */
+	ID_DIVSET,         /* /= value */
 
-#define ID_INC          ID_BASE+47		/* increment value */
-#define ID_DEC          ID_BASE+48		/* decrement value */
-#define ID_MULSET       ID_BASE+49		/* *=  value */
-#define ID_DIVSET       ID_BASE+50		/* /= value */
+	ID_POW,            /* exponent */
+	ID_CAT,            /* concatenate */
+	ID_ENUM,           /* enumerated argument, not parsed */
+	ID_DECL,           /* Declaration */
+	ID_WHERE,          /* Where */
+	ID_DEREF,          /* Structure dereference */
 
-#define ID_POW          ID_BASE+51		/* exponent */
-#define ID_CAT          ID_BASE+52		/* concatenate */
+	ID_CONSTRUCT,      /* Structure constructor */
+	ID_DECONSTRUCT,    /* Structure deconstructor */
 
-#define ID_ENUM         ID_BASE+53		/* enumerated argument, not parsed */
-#define ID_DECL         ID_BASE+54		/* Declaration */
-#define ID_WHERE        ID_BASE+55		/* Where */
-#define ID_DEREF        ID_BASE+56		/* Structure dereference */
+	ONE_AXIS,          /* argument options */
+	ANY_AXIS,          /* argument options */
 
-#define ID_CONSTRUCT    ID_BASE+57		/* Structure constructor */
-#define ID_DECONSTRUCT  ID_BASE+58		/* Structure deconstructor */
-
-#define ONE_AXIS  ID_BASE+59		/* argument options */
-#define ANY_AXIS  ID_BASE+60		/* argument options */
+	ID_LINE,           /* A lexical token */
+};
 
 
 
@@ -238,6 +241,9 @@ struct _var {
 #define GetSamples(s,org)	(s)[((org) == BIP ? 1 : 0)]
 #define GetLines(s,org)		(s)[((org) == BSQ ? 1 : 2)]
 #define GetBands(s,org)		(s)[((org) == BIP ? 0 : ((org) == BIL ? 1 : 2))]
+#define GetX(s)	        GetSamples(V_SIZE(s), V_ORG(s))
+#define GetY(s)		GetLines(V_SIZE(s), V_ORG(s))
+#define GetZ(s)		GetBands(V_SIZE(s), V_ORG(s))
 
 #define saturate(v,lo,hi)	((v) > (lo) ? ((v) < (hi) ? (v) : (hi)) : (lo))
 #define saturate_byte(v)	saturate(v,0,255)
