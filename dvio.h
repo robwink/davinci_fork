@@ -56,8 +56,9 @@ Var *dv_LoadGFX_Image(FILE *fp, char *filename, struct iom_iheader *s);
 Var *dv_LoadPNM(FILE *fp, char *filename, struct iom_iheader *s);
 Var *dv_LoadVicar(FILE *fp, char *filename, struct iom_iheader *s);
 Var *dv_LoadGRD(FILE *fp, char *filename, struct iom_iheader *s);
+Var *dv_LoadENVI(FILE *fp, char *filename, struct iom_iheader *s);
 
-int dv_WriteGRD(Var *s, char *filename, int force, char *title);
+int dv_WriteGRD(Var *s, char *filename, int force, char *title, char *task);
 int dv_WriteISIS(Var *s, char *filename, int force, char *title);
 int dv_WritePGM(Var *obj, char *filename, int force);
 int dv_WritePPM(Var *obj, char *filename, int force);
@@ -69,6 +70,8 @@ int dv_WriteGFX_Image(Var *ob, char *filename, int force, char *GFX_type);
 **   WriteGFX_Image can be broken down into individual type, e.g.
 **   WriteGIFC(), WriteGIFG(), WritePNG() etc.
 */
+
+int dvio_ValidGfx(char *type,char *GFX_type);
 
 
 /*

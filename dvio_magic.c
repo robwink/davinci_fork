@@ -2,17 +2,11 @@
 #include "config.h"
 #endif
 
-#if defined(HAVE_LIBMAGICK) && defined(HAVE_LIBX11)
+#ifdef HAVE_LIBMAGICK
 #include <magick/magick.h>
 #include <magick/api.h>
-#include <magick/xwindows.h>
-#include <X11/Intrinsic.h>
-#include <X11/Shell.h>
-#include <X11/Xatom.h>
 #include "parser.h"
 #include "dvio.h"
-
-extern Widget top;
 
 Var *
 dv_LoadGFX_Image(FILE *fp, char *filename, struct iom_iheader *s)
@@ -56,44 +50,44 @@ dv_WriteGFX_Image(Var *ob, char *filename, int force, char *GFX_type)
 	struct iom_iheader h;
     int status;
 
-	int x, y, z;
+    int x, y, z;
     int format,org;
 
-	format=V_FORMAT(ob);
-	org=V_ORG(ob);
+    format=V_FORMAT(ob);
+    org=V_ORG(ob);
     x=GetSamples(V_SIZE(ob), V_ORG(ob));
     y=GetLines(V_SIZE(ob), V_ORG(ob));
     z=GetBands(V_SIZE(ob), V_ORG(ob));
 
 
-	if(z>3 && (strcmp(GFX_type,"mpgc") && strcmp(GFX_type,"mpgg") && 
-		strcmp(GFX_type,"gifc") && strcmp(GFX_type,"gifg"))){
-		parse_error("A movie type must be specified if you have more than 3 bands");
-		return 0;
-	}
+    if(z>3 && (strcmp(GFX_type,"mpgc") && strcmp(GFX_type,"mpgg") && 
+	       strcmp(GFX_type,"gifc") && strcmp(GFX_type,"gifg"))){
+      parse_error("A movie type must be specified if you have more than 3 bands");
+      return 0;
+    }
 
-	if (z==2) {
-		parse_error("Incorrect number of bands to make an image...aborting");
-		return 0;
-	}
-
-	else if (org==BIL || org==BIP){
-		parse_error("BIL and BIP formats are not allowable...aborting");
-		return 0;
-	}
-
-	else if (format!=BYTE){
-		parse_error("Only BYTE type data is allowed...aborting");
-		return 0;
-	}
-
-	var2iom_iheader(ob, &h);
+    if (z==2) {
+      parse_error("Incorrect number of bands to make an image...aborting");
+      return 0;
+    }
+    
+    else if (org==BIL || org==BIP){
+      parse_error("BIL and BIP formats are not allowable...aborting");
+      return 0;
+    }
+    
+    else if (format!=BYTE){
+      parse_error("Only BYTE type data is allowed...aborting");
+      return 0;
+    }
+    
+    var2iom_iheader(ob, &h);
     status = iom_WriteGFXImage(filename, V_DATA(ob), &h, force, GFX_type);
     iom_cleanup_iheader(&h);
     
     if (status == 0){
-        parse_error("Failed writing file %s.\n", filename);
-        return 0;
+      parse_error("Failed writing file %s.\n", filename);
+      return 0;
     }
 
     return 1;
@@ -139,6 +133,57 @@ dv_Miff2Var(Image *image) /*  Read */
 	return(newVal(BSQ,x,y,z,BYTE,data));
 }    
 
+/*
+** Test for the types recognized by ImageMagic
+*/
+int
+dvio_ValidGfx(char *type,char *GFX_type)
+{
+ 
+    int nt=43;  /* Number of types
+                 * modify this number if you change the number of types
+                 */
+
+    char *Gfx_Types[]={"avs","bmp","cmyk",
+                       "gif","gifc","gifg",
+                       "hist","jbig","jpeg",
+                       "jpg","map","matte",
+                       "miff","mpeg","mpgg",
+                       "mpgc","mtv","pcd",
+                       "pcx","pict","pm",
+                       "pbm","pgm","ppm",
+                       "pnm","ras","rgb",
+                       "rgba","rle","sgi",
+                       "sun","tga","tif",
+                       "tiff","tile","vid",
+                       "viff","xc","xbm",
+                       "xpm","xv","xwd","yuv"};
+    int i;
+
+    for (i = 0 ; i < strlen(type) ; i++) {
+        if (isupper(type[i])) type[i] = tolower(type[i]);
+    }
+
+    for (i=0 ; i < nt ; i++){
+        if (!(strcmp(type, Gfx_Types[i]))){
+            strcpy(GFX_type, Gfx_Types[i]);
+            return (1);
+        }
+    }
+
+    return (0);
+}
+
+
+#if 0
+#ifdef HAVE_LIBX11
+
+#include <magick/xwindows.h>
+#include <X11/Intrinsic.h>
+#include <X11/Shell.h>
+#include <X11/Xatom.h>
+
+extern Widget top;
 
 Var *
 ff_XImage_Display2(vfuncptr func, Var * arg)
@@ -195,5 +240,7 @@ ff_XImage_Display2(vfuncptr func, Var * arg)
 		return(NULL);
 
 }
+#endif /* HAVE_LIBX11 */
+#endif /* 0 */
 
-#endif
+#endif /* HAVE_LIBMAGICK */

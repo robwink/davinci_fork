@@ -151,8 +151,8 @@ dv_WritePPM(Var *obj, char *filename, int force)
     }
 
     if (VERBOSE > 1)  {
-        fprintf(stderr, "Writing %s: %dx%d PPM file.\n",
-                filename, h.dim[0], h.dim[1]);
+        fprintf(stderr, "Writing %s: %dx%dx%d PPM file.\n",
+                filename, h.dim[0], h.dim[1], h.dim[2]);
     }   
 
     var2iom_iheader(obj, &h);

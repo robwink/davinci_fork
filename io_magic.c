@@ -4,17 +4,10 @@
 #endif /* HAVE_CONFIG_H */
 #endif
 #ifdef HAVE_LIBMAGICK
-#ifdef HAVE_LIBX11
 #include <magick/magick.h>
 #include <magick/api.h>
-#include <magick/xwindows.h>
-#include <X11/Intrinsic.h>
-#include <X11/Shell.h>
-#include <X11/Xatom.h>
 
 #include "parser.h"
-
-extern Widget top;
 
 Image *Var2Miff(Var *ob) /* Write */
 {
@@ -32,10 +25,13 @@ Image *Var2Miff(Var *ob) /* Write */
 	int scene=0;
 	QuantizeInfo quantize_info;
 	ImageInfo	tmp_info,image_info;
-	Display *display;
 	unsigned long state;
+
+/*
+	Display *display;
   	XResourceInfo resource;
   	XrmDatabase resource_database;
+*/
 
 	char *data=(char *)V_DATA(ob);
 
@@ -278,6 +274,16 @@ void WriteGFX_Image(Var *ob,char *filename,char *GFX_type)
 	free(newfn);
 }
 
+#if 0
+#ifdef HAVE_LIBX11
+#include <magick/xwindows.h>
+#include <X11/Intrinsic.h>
+#include <X11/Shell.h>
+#include <X11/Xatom.h>
+
+extern Widget top;
+
+
 Var *ff_XImage_Display(vfuncptr func, Var * arg)
 {
 	Var *Obj;
@@ -332,5 +338,7 @@ Var *ff_XImage_Display(vfuncptr func, Var * arg)
 
 }
 
-#endif
-#endif
+#endif /* HAVE_LIBX11 */
+#endif /* 0 */
+
+#endif /* HAVE_LIBMAGICK */
