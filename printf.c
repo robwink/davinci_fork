@@ -42,7 +42,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef __MSDOS__
+#ifndef _WIN32
 #include <unistd.h>
 #endif
 
@@ -289,7 +289,7 @@ do_sprintf(vfuncptr func, Var *arg)
             break;
         }
         default:
-            fprintf(stderr,"illegal format character %c",  convch, NULL);
+            fprintf(stderr,"illegal format character %c",  convch);
             free(out);
             return (NULL);
         }

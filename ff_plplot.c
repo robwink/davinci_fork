@@ -111,15 +111,15 @@ ff_pprint(vfuncptr func, Var * arg)
 	pl_plmkstrm(&Dummy);
 	pl_plsdev(Output);
 	pl_plsfnam(Title);
-//	pl_plsstrm(Stream);
-//	pl_plgcolbg(&r,&g,&b);
-//	pl_plsstrm(Dummy);
+/*	pl_plsstrm(Stream); */
+/*	pl_plgcolbg(&r,&g,&b); */
+/*	pl_plsstrm(Dummy); */
 	pl_plscolbg(255,255,255);/*White background for printing*/
 	pl_plcpstrm(Stream,0);
 	pl_plreplot();
 	pl_plend1();
 	pl_plsstrm(Stream);
-//	pl_plscolbg(r,g,b);/*Set background back to what it was*/
+/*	pl_plscolbg(r,g,b); */ /*Set background back to what it was*/ 
 
 
 	return(NULL);

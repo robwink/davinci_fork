@@ -4,7 +4,7 @@ int
 get_int(FILE *fp)
 {
     int i;
-    char c;
+    int c;
 
     while((c = getc(fp)) != EOF) {
         if (c == '#') {
@@ -26,7 +26,7 @@ get_int(FILE *fp)
 int
 getbit(FILE *fp)
 {
-    char c;
+    int c;
 
     while((c = getc(fp)) != EOF) {
         if (c == '#') {

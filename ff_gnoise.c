@@ -1,3 +1,10 @@
+#include <stdlib.h>
+#include <time.h>
+#ifdef _WIN32
+#include <process.h>
+#else
+#include <unistd.h>
+#endif /* _WIN32 */
 #include "parser.h"
 
 /**

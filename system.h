@@ -4,7 +4,7 @@
  ** This file contains all system specific dependencies, and defines
  ** some values that aren't on all systems
  **/
-#ifndef __MSDOS__
+#ifndef _WIN32
 #include <netinet/in.h>
 #endif
 
@@ -24,6 +24,13 @@
 #ifndef u_char
 #define u_char unsigned char
 #endif
+
+#ifdef NEED_UDEFS
+typedef unsigned int uint;
+typedef unsigned long ulong;
+typedef unsigned short ushort;
+typedef unsigned char uchar;
+#endif /* NEED_UDEFS */
 
 
 #ifndef HAVE_STRDUP

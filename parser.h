@@ -7,14 +7,18 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <limits.h>
 
-#ifndef __MSDOS__
+#if   defined(HAVE_CONFIG_H)
+#include "config.h"
+#endif
+
+#ifndef _WIN32
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include "config.h"
 #include <values.h>
 
 #else 
@@ -32,6 +36,8 @@
 #include "system.h"
 #include "darray.h"
 
+#include "ff_modules.h"
+
 #define memdup(p, l)	memcpy(malloc(l), (p), l)
 
 typedef struct _var Var;
@@ -41,6 +47,9 @@ typedef struct _range Range;
 typedef struct _tagnode Node;
 typedef struct _tagVstruct Vstruct;
 typedef struct _text TextArray;
+/* dvModule is defined in ff_modules.h */
+typedef struct _vfuncptr *vfuncptr;
+typedef Var * (*vfunc)(struct _vfuncptr *,Var *);	/* function caller */
 
 struct _range {
     int dim;			/* dimension of data */
@@ -97,6 +106,8 @@ struct _var {
         Var *keyval;		/* used by $Keyword */
         Narray *vstruct;
         TextArray textarray;
+		dvModule mod;         /* a dynamically loaded module */
+		vfuncptr function;   /* most likely a module function dereference */
     } value; 
     Var *next;
 };
@@ -126,6 +137,8 @@ struct _var {
 #define V_TEXT(v)		(v)->value.textarray
 
 #define V_STRUCT(v)  (v)->value.vstruct
+#define V_MODULE(v)  (v)->value.mod
+#define V_FUNC(v)    (v)->value.function
 
 #define newVar	(Var *)mem_malloc
 
@@ -204,6 +217,9 @@ enum {
 	ANY_AXIS,          /* argument options */
 
 	ID_LINE,           /* A lexical token */
+
+	ID_MODULE,         /* daVinci module variable ID */
+	ID_FUNCTION        /* daVinci module function variable ID */
 };
 
 
@@ -260,8 +276,6 @@ struct keywords {
     Var *value;
 };
 
-typedef struct _vfuncptr *vfuncptr;
-typedef Var * (*vfunc)(struct _vfuncptr *,Var *);	/* function caller */
 typedef double (*dfunc)(double);
 typedef double (*ddfunc)(double, double);
 
@@ -318,7 +332,7 @@ extern int DEPTH;
 extern int SCALE;
 extern int debug;
 
-#ifndef __MSDOS__ 
+#ifndef _WIN32 
 #define drand48()       ((double)lrand48()/(unsigned int)(1<<31))
 #else
 #define readline w_readline

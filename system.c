@@ -1,10 +1,17 @@
 #include <stdio.h>
 #include <string.h>
-#ifndef __MSDOS__
+
+#if   defined(HAVE_CONFIG_H)
+#include "config.h"
+#endif
+
+#ifndef _WIN32
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <unistd.h>
 #else 
 #include <sys/timeb.h>
+#include <direct.h>
 #endif
 #include <errno.h>
 #include <time.h>
@@ -12,12 +19,13 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+#include <limits.h>
+
 /* void xfree(void *data) { if (data) free(data); } */
 
-#include "config.h"
 
 #ifdef HAVE_SYS_TIME_H
-#ifndef __MSDOS__
+#ifndef _WIN32
 #include <sys/time.h>
 #else
 #include <sys/timeb.h>
@@ -45,6 +53,7 @@ rindex(char *str, char c)
 }
 #endif
 
+#ifndef _WIN32
 #ifndef HAVE_GETDTABLESIZE
 getdtablesize()
 {
@@ -54,6 +63,7 @@ getdtablesize()
 	return(rlp.rlim_cur);
 }
 #endif
+#endif /* _WIN32 */
 
 #ifndef HAVE_GETWD
 char *getwd(char *path)
@@ -95,6 +105,7 @@ char *getwd(char *path)
  *      internet:  mike@sherlock.med.ge.com     GEMS WIZARD e-mail: DYER
  */
 
+#ifndef _WIN32
 #ifndef HAVE_USLEEP
 int     usleep(microSeconds )
 unsigned long int microSeconds;
@@ -128,6 +139,8 @@ unsigned long int microSeconds;
         return 0;
 }
 #endif
+#endif /* _WIN32 */
+
 /*
  * Copyright (c) 1990 Regents of the University of California.
  * All rights reserved.

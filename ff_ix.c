@@ -22,6 +22,8 @@ typedef struct { float h, s, v; } HSV;
 RGB HSVToRGB(HSV hsv);
 HSV RGBToHSV(RGB rgb);
 
+Var * fb_min(Var *obj, int axis, int direction);
+
 Var *
 ff_histogram(vfuncptr func, Var * arg)
 {

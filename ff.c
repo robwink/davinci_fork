@@ -5,7 +5,7 @@
 #include "rfunc.h"
 #endif
 
-#ifdef __MSDOS__
+#ifdef _WIN32
 #include <dos.h>
 #endif
 
@@ -1670,7 +1670,7 @@ ff_resize(vfuncptr func, Var * arg)
 Var *
 ff_fork(vfuncptr func, Var * arg)
 {
-#ifndef __MSDOS__
+#ifndef _WIN32
     if (fork() == 0) {
         sleep(10);
     }
@@ -1903,10 +1903,12 @@ newFloat(float f)
 Var *
 ff_killchild(vfuncptr func, Var *arg)
 {
+#ifndef _WIN32
 	pid_t pid;
 	pid=getpgrp();
 	pid=-pid;
 	kill(pid,SIGUSR1);
+#endif /* _WIN32 */
 	return(NULL);
 }
 

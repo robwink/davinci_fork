@@ -8,6 +8,8 @@
  ** p_mknod() - Make a node of the specified type
  **/
 
+#define PRINTABLE_STR(s) ((s)? (s): "(null)")
+
 char *unescape(char *), *unquote(char *);
 
 /**
@@ -19,8 +21,8 @@ p_mknod(int type, Var * left, Var * right)
     Var *v;
     Node *n;
 
-    // v = newVar();
-	// mem_claim(v);
+    /* v = newVar(); */
+	/* mem_claim(v); */
     v = calloc(1, sizeof(Var));
     n = V_NODE(v);
     v->type = type;
@@ -39,8 +41,8 @@ Var *
 p_mkval(int type, char *str)
 {
     Var *v;
-    // v = newVar();
-	// mem_claim(v);
+    /* v = newVar(); */
+	/* mem_claim(v); */
     v = calloc(1, sizeof(Var));
 
     switch (type) {
@@ -295,8 +297,25 @@ evaluate(Var * n)
                 evaluate(right);
                 p1 = pop(scope);
             }
-            push(scope, pp_func(left, p1));
+
+			if (V_TYPE(left) == ID_DEREF) {
+				/* module dereference */
+				evaluate(left);
+
+				p2 = pop(scope);
+				if (p2 && V_TYPE(p2) == ID_FUNCTION){
+					push(scope, pp_call_dv_module_func(V_FUNC(p2), p1));
+				}
+				else {
+					parse_error("Dereference is not a function.");
+				}
+			}
+			else {
+				push(scope, pp_func(left, p1));
+			}
+
 			scope->returned = 0;
+
             break;
 
         case ID_ARGS:
@@ -430,7 +449,7 @@ evaluate(Var * n)
 
 		case ID_DEREF:
 			/*
-			** Derefernce of a structure element.
+			** Derefernce of a structure/module element.
 			** Push the assoicated Var
 			*/
 			evaluate(left);
@@ -439,10 +458,30 @@ evaluate(Var * n)
             p2 = pop(scope);
             p1 = pop(scope);
 
-			{
+			/* not a structure -- try modules */
+			if (p3 = search_in_list_of_loaded_modules(V_NAME(p1))){
+				vfuncptr t;
+
+				if(t = find_module_func(&V_MODULE(p3), V_NAME(p2))){
+					p1 = newVar();
+					p1->value.function = t;
+					p1->type = ID_FUNCTION;
+
+					/* push the function for the caller to grab */
+					push(scope, p1);
+				}
+				else {
+					parse_error("Module %s does not contain member: %s",
+						V_NAME(p3), PRINTABLE_STR(V_NAME(p2)));
+
+					push(scope, NULL);
+				}
+			}
+			else {
 				if (find_struct(p1, p2, &p3) != -1) {
 					push(scope, p3);
-				} else {
+				}
+				else {
 					parse_error("structure does not contain member: %s",
 								V_NAME(p2));
 					push(scope, NULL);

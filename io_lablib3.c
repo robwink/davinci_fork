@@ -5915,6 +5915,7 @@ basename(const char *name)
 
 #endif
 
+#if 0
 char *
 dirname(char *path)
 {
@@ -5941,6 +5942,7 @@ dirname(char *path)
 	newpath[length] = 0;
 	return newpath;
 }
+#endif
 
 char *uppercase(char *s)
 {

@@ -161,9 +161,9 @@ sym_put(Scope *scope, Var *s)
         *s = tmp;
 
         /* put the names back */
-        // tmp.name = v->name;
-        // v->name = s->name;
-        // s->name = tmp.name;
+        /* tmp.name = v->name; */
+        /* v->name = s->name; */
+        /* s->name = tmp.name; */
 
         free_var(s);
 		s = v;
@@ -276,6 +276,10 @@ free_var(Var *v)
         free(V_TEXT(v).text);
         break;
 
+	case ID_MODULE:
+		del_module(v);
+		if (V_NAME(v)) free(V_NAME(v));
+		break;
 
     default:
         if (V_NAME(v)) free(V_NAME(v));

@@ -280,7 +280,7 @@ load_function(char *filename)
 		memcpy(line, p, q-p+1);
 		line[q-p+1] = '\0';
 		if (debug) printf("%s", line);
-		handle = yy_scan_string(line);
+		handle = (void *)yy_scan_string(line);
 		pp_str = line;
 		pp_line++;
 		while(i = yylex()) {
