@@ -1168,6 +1168,41 @@
 
 	 The entropy() function always returns a FLOAT.
 
+?functions projection()
+?projection()
+ projection() - Compute a stereographic projection for each band of an object
+
+ projection(obj=VAL, [lat=FLOAT], [lon=FLOAT], [rad=FLOAT], [ppd=INT], type=STRING)
+
+     The projection() function will process each band of an object, projecting 
+	into a BIL organized dataset.  Format of the object does not matter. 
+	The lat and lon parameters specify the center point of the project, 
+	and the rad paramter is the radius extent of the projection.  The ppd 
+	paramter defines the size of the resultant image as stands for 
+	pixels per degree.  Therefore, if a radius of 20 is specified with 
+	ppd=5 the resulting band will be (2x20x5) in the X and Y directions.  
+	Type sets the parameters of distortion, that is if one is projecting
+	on the planet Mars as opposed to a sphere, there will be a slightly 
+	different result.  The projection types are as follows:
+		type: MARS
+		      EARTH
+		      SPHERE
+
+	The four optional paramters: defualt to the following values:
+		
+		lat=90.0
+		lon=0.0
+		rad=30.0
+		ppd=1
+
+	example:
+
+	dv> b = projection(obj=a,lat=0.0,rad=90,ppd=10,type=MARS)
+
+	will produce an equatorial projection (with lon defaulting to 0) with 
+	the poles at the top and botton of the image.  Each band in b will 
+	have the XY dimention of 1800 (2x90x10).
+
 ?functions Matrix
 Davinci supports the following matrix functions:
 

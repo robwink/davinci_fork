@@ -164,6 +164,8 @@ struct _vfuncptr vfunclist[] = {
     { "minvert",     	ff_minvert,     NULL },
     { "dct",     	ff_dct,     NULL },
     { "entropy",     	ff_entropy,     NULL },
+   
+    { "projection",	ff_projection,   NULL },
 
     { "fft",     	ff_fft,     (void *)1 },
     { "ifft",     	ff_fft,     (void *)0 },
