@@ -6,8 +6,7 @@
  **/
 
 void commaize(char *);
-void pp_print_varray(Var *v, int indent) ;
-void pp_print_var(Var *v, char *name, int indent) ;
+void pp_print_var(Var *v, char *name, int indent, int depth) ;
 
 extern Var * textarray_subset(Var *, Var *);
 extern Var * string_subset(Var *, Var *);
@@ -112,7 +111,7 @@ pp_print(Var *v)
     s = eval(v);
     if (s != NULL) {
         v = s;
-		pp_print_var(v, NULL, 0);
+		pp_print_var(v, NULL, 0, DEPTH);
 	} else {
 		parse_error("Unable to find variable: %s", V_NAME(v));
 	}
@@ -121,7 +120,7 @@ pp_print(Var *v)
 }
 
 void
-pp_print_struct(Var *v, int indent)
+pp_print_struct(Var *v, int indent, int depth)
 {
     extern int SCALE;
     int i;
@@ -142,7 +141,7 @@ pp_print_struct(Var *v, int indent)
     for (i = 0 ; i < V_STRUCT(v).count ; i++) {
         name = V_STRUCT(v).names[i];
         s = V_STRUCT(v).data[i];
-        pp_print_var(s, name, indent);
+        pp_print_var(s, name, indent, depth);
     }
 }
 
@@ -187,7 +186,7 @@ dump_var(Var *v, int indent, int limit)
 }
 
 void
-pp_print_var(Var *v, char *name, int indent)
+pp_print_var(Var *v, char *name, int indent, int depth)
 {
     extern int SCALE;
     char bytes[32];
@@ -223,8 +222,12 @@ pp_print_var(Var *v, char *name, int indent)
         }
         break;
     case ID_STRUCT:
-        printf("struct\n");
-        pp_print_struct(v, indent);
+		if (depth > 0)  {
+			printf("struct, %d elements\n", V_STRUCT(v).count);
+			pp_print_struct(v, indent, depth-1);
+		} else {
+			printf("struct, %d elements...\n", V_STRUCT(v).count);
+		}
         break;
 	
 	 case ID_TEXT:		/*Added: Thu Mar  2 16:52:39 MST 2000*/
@@ -313,7 +316,9 @@ pp_set_var(Var *id, Var *range, Var *exp)
                              j*r->step[1] + r->lo[1],
                              k*r->step[2] + r->lo[2], v);
 
-                    s = rpos(d, v, exp);
+					s = cpos(i,j,k,exp);
+
+                    // s = rpos(d, v, exp);
 
                     switch(V_FORMAT(v)) {
                     case BYTE:
@@ -376,6 +381,7 @@ pp_set_var(Var *id, Var *range, Var *exp)
     if (!strcmp(V_NAME(exp), "verbose")) VERBOSE = V_INT(exp);
     if (!strcmp(V_NAME(exp), "scale")) SCALE = V_INT(exp);
     if (!strcmp(V_NAME(exp), "debug")) debug = V_INT(exp);
+    if (!strcmp(V_NAME(exp), "depth")) DEPTH = V_INT(exp);
 
     put_sym(exp);
     return(id);

@@ -1770,17 +1770,19 @@ Var *
 ff_dump(vfuncptr func, Var * arg)
 {
 	Var *v;
+    int ac, i, j; 
+    Var **av;
+	int depth;
 
-	if (arg == NULL) return(NULL);
-	if (arg->next != NULL) {
-        parse_error("Too many arguments to function: %s()", func->name);
-		return(NULL);
-	}
-	v = eval(arg);
-	if (v == NULL) {
-        parse_error("Variable not found: %s", V_NAME(arg));
-        return (NULL);
-	}
+    Alist alist[2];
+    alist[0] = make_alist("object",    ID_VAL,     NULL,     &v);
+    alist[1] = make_alist("depth",    INT,     NULL,     &depth);
+    alist[2].name = NULL;
+ 
+    make_args(&ac, &av, func, arg);
+    if (parse_args(ac, av, alist)) return(NULL); 
+ 
+	if (v == NULL) return(NULL);
 
 	dump_var(v, 0, 0);
 

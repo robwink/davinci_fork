@@ -1,6 +1,9 @@
-char *version = "@(#) daVinci Version #0.56b";
+char *version = "@(#) daVinci Version #0.56c";
 
 /*
+Version 0.56c: Sat Apr  1 19:28:44 MST 2000
+	* bug in array.c.  Caused a scrolling effect in array replacement.
+
 Version 0.56b Wed Mar 29 15:19:05 MST 2000
 	+ load_vanilla() - Read vanilla generated text output files
 

@@ -17,6 +17,7 @@ struct _rlist {
     { "scale", RV_set_int },
     { "verbose", RV_set_int },
     { "debug", RV_set_int },
+    { "depth", RV_set_int },
     { NULL, NULL }
 };
 
@@ -117,6 +118,7 @@ RV_set_int(Var *id,Var *range,Var *exp)
     if (!strcmp(V_NAME(id), "verbose")) VERBOSE = V_INT(exp);
     if (!strcmp(V_NAME(id), "scale")) SCALE = V_INT(exp);
     if (!strcmp(V_NAME(id), "debug")) debug = V_INT(exp);
+    if (!strcmp(V_NAME(id), "depth")) DEPTH = V_INT(exp);
 		
     return(id);
 }

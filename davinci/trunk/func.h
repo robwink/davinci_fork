@@ -67,7 +67,7 @@ Var *pp_usage(Var *);
 void pp_set_cvar (Var *, Var *);	/* set control variable */
 Var *pp_get_cvar (char *);		/* get control variable */
 Var * pp_shell(char *cmd);
-void pp_print_struct(Var *v, int indent);
+void pp_print_struct(Var *v, int indent, int depth);
 
 Var *V_DUP (Var *);
 Var *set_array (Var *, Var *, Var *);

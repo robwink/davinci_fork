@@ -60,10 +60,17 @@ struct _symbol {
     char *title;
 };
 
+
 struct _tagnode {
 	Var *left;
 	Var *right;
 	Var *parent;
+
+	int type;			/* An identifier of what type of value this is:
+						   Possibilities: Constant
+										  Temporary
+						*/
+	int token_number;	/* Where in the value table is this puppy located? */
 };
 
 struct _tagVstruct {
@@ -296,6 +303,7 @@ extern char *FORMAT2STR[];
 extern int Argc;
 extern char **Argv;
 extern int VERBOSE;
+extern int DEPTH;
 extern int SCALE;
 extern int debug;
 

@@ -21,6 +21,7 @@ FILE *pfp = NULL;
 
 int SCALE = 6;
 int VERBOSE = 2;
+int DEPTH = 2;
 
 int allocs = 0;
 Var *VZERO;
