@@ -10,8 +10,11 @@
 #include "mem.h"
 #else
 #include <sys/mman.h>
-#include <libgen.h>
 #endif /* _WIN32 */
+
+#ifdef HAVE_LIBGEN_H
+#include <libgen.h>
+#endif
 
 #include <fcntl.h>
 #include <ctype.h>

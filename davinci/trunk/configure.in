@@ -375,6 +375,8 @@ dnl ========================================
 
 dnl Check for includes
 AC_CHECK_HEADERS(values.h)
+AC_CHECK_HEADERS(limits.h)
+AC_CHECK_HEADERS(libgen.h)
 
 dnl Checks for header files.
 AC_HEADER_DIRENT
@@ -400,8 +402,10 @@ AC_CHECK_FUNCS(dirname bcopy bcmp bzero)
 if test "$x_includes" != ""
 then
 	XINCLUDES=-I$x_includes
+	X_INCLUDE_DIR=$x_includes
 else
 	XINCLUDES=''
+	X_INCLUDE_DIR=''
 fi
 
 if test "$x_libraries" != ""
@@ -425,6 +429,7 @@ AC_SUBST(READLINE_OBJ)
 AC_SUBST(READLINE_LIB)
 AC_SUBST(MAKEREAD)
 AC_SUBST(XINCLUDES)
+AC_SUBST(X_INCLUDE_DIR)
 AC_SUBST(XLIBS)
 AC_SUBST(XRTINCLUDE)
 AC_SUBST(XRTLIBS)

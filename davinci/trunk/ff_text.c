@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include <regex.h>
 
-#if !defined(_WIN32) && !defined(_AIX)
+#ifdef HAVE_LIBGEN_H
 #include <libgen.h>
-#endif /* _WIN32 */
+#endif
 
 extern char *__loc1; /*Global char * for regex */
 

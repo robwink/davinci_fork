@@ -8,8 +8,11 @@
  * $Header$
  *
  * $Log$
- * Revision 1.1  1999/06/16 03:24:24  gorelick
- * Initial revision
+ * Revision 1.2  2002/10/09 00:14:10  gorelick
+ * Changes for OS/X
+ *
+ * Revision 1.1.1.1  1999/06/16 03:24:24  gorelick
+ * Initial import
  *
  * Revision 1.1  1999/06/16 01:40:52  gorelick
  * Initial install
@@ -28,10 +31,18 @@
 #define BLACK(d) BlackPixel(d, DefaultScreen(d))
 #define WHITE(d) WhitePixel(d, DefaultScreen(d))
 
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <values.h>
+
+#include <limits.h>
+#define MINSHORT        SHRT_MIN
+#define MININT          INT_MIN
+#define MINLONG         LONG_MIN
+
+#define MAXSHORT        SHRT_MAX
+#define MAXINT          INT_MAX
+#define MAXLONG         LONG_MAX
+
 #include <X11/Xos.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>

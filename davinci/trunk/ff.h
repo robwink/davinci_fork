@@ -265,8 +265,6 @@ struct _vfuncptr vfunclist[] = {
     { "shade",          ff_shade,              NULL },
     { "fexists",        ff_exists,              NULL },
 
-    { "bindct",        ff_bindct,              NULL },
-     { "binidct",       ff_bindct,              NULL },
 
 #if defined(HAVE_LIBQMV) && defined(HAVE_QMV_HVECTOR_H)
      { "geom_ghost",       ff_deghost,              NULL },
