@@ -10,19 +10,26 @@ static FILE **fstack=NULL;
 int nfstack=0;
 static int fsize=16;
 int sourced=0;
+int *flinenos;
+extern int pp_line;
 
 void
 push_input_stream(FILE *fptr)
 {
     if (fstack == NULL)  {
         fstack = (FILE **)calloc(fsize, sizeof(FILE *));
+		flinenos = (int *)calloc(fsize, sizeof(int));
     } else if (nfstack == fsize) {
         fsize *= 2;
         fstack = (FILE **)my_realloc(fstack, fsize * sizeof(FILE *));
+		flinenos = (int *)my_realloc(flinenos, fsize * sizeof(int));
     }
 
     fstack[nfstack] = fptr;
+	flinenos[nfstack] = pp_line;
+
     ftos = fstack[nfstack];
+    pp_line = 0;
     nfstack++;
 
     sourced++;
@@ -63,6 +70,8 @@ pop_input_file()
     ftos = NULL;
 
     fp = fstack[--nfstack];
+	pp_line = flinenos[nfstack];
+
     if (fileno(fp) != 0) {
         fclose(fp);
     }

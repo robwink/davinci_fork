@@ -416,8 +416,6 @@ process_streams(void)
         }
         pop_input_file();
     }
-
-    pp_line = 0;
 }
 
 Var *curnode;
