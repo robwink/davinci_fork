@@ -1043,15 +1043,25 @@
 ?load_vis()
  load_vis() - Load a VISIBLE Paci file
 
-	load_vis(filename=STRING, [gse=1], [nocube=1])
+	load_vis(filename=STRING, [gse=1], [nocube=1], [verbose=0], [rotate=1])
 
 	The load_vis function will read the four types of visible paci data that
-	currently exitis: (gse, raw, predictive, DCT).  If the data is from the
-	gse at Raytheon in Santa Barbara, then gse=1 MUST be issed (the defualt is
-	gse=0).  If the data contain multiple bands, then routine will return a data
+	currently exitis: (gse, raw, predictive, DCT).  
+
+	If the data contain multiple bands, then the routine will return a data
 	cube with each band on a different Z-plane.  If the user wants a single
 	band file then use: nocube=1 (defualt: nocube=0).  This will prevent the 
 	reader from stacking the bands.
+
+	There is a verbose mode which may be used.  This will increase the amount
+	of information which davinci returns reguarding what is going on during
+	the read.
+
+	The final flag is the rotate flag.  Right now, it WILL rotate by default
+	and the user must give a rotate=0 to prevent rotation (currently, only
+	spacecraft data is rotated, gse is NOT).  Rotation involves horizontal and
+	vertical flipping of EACH framelet (not the entire image). 
+
 
 ?functions load_paci()
 ?load_paci()
