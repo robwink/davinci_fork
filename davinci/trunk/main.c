@@ -538,7 +538,7 @@ quit(void)
     sprintf(cmd, "rm -rf %s &", path);
     system(cmd);
 #endif
-    exit(1);
+    exit(0);
 }
 
 void
