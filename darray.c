@@ -161,6 +161,7 @@ int Darray_count(Darray *d)
 void Darray_free(Darray *d, void (*fptr)()) 
 {
 	int i;
+
 	if (fptr) {
 		for (i = 0 ; i < d->count ; i++) {
 			if (d->data[i]) fptr(d->data[i]);
@@ -202,7 +203,7 @@ void
 Nnode_free(Nnode *a, void (*fptr)())
 {
 	if (a->key) free(a->key);
-	if (fptr) fptr(a->value);
+	if (fptr && a->value) fptr(a->value);
 	free(a);
 }
 
@@ -326,12 +327,13 @@ Narray_free(Narray *a, void (*fptr)())
 	int count = Darray_count(a->data);
 	Nnode *n;
 
+	avl_destroy(a->tree, NULL);
+
 	for (i = 0 ; i < count ; i++) {
 		Darray_get(a->data, i, (void **)&n);
 		Nnode_free(n, fptr);
-		Darray_free(a->data, NULL);
 	}
-	avl_free(a->tree);
+	Darray_free(a->data, NULL);
 }
 
 #ifdef TEST
