@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.88";
+char *version = "@(#) daVinci Version #0.89";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,11 @@ char *version = "@(#) daVinci Version #0.88";
 #include "build.h"
 
 /*
+
+Version 0.89: Tue Mar 26 18:07:55 MST 2002
+	* Added atod()
+	* Added remove_struct()
+	* From version 0.87c, added structure addition
 
 Version 0.88: Thu Mar 21 12:27:50 MST 2002
 	* Added a working rf_HISTORY function to dvio_pds

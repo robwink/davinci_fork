@@ -53,49 +53,54 @@ ff_atoi(vfuncptr func, Var *arg)
 }
 
 Var *
-ff_atof(vfuncptr func, Var *arg)
+ff_atof(vfuncptr func, Var * arg)
 {
-    Var *v, *s;
-    float f;
+	Var *v, *s;
+	float f;
 
-    if (arg->next != NULL) {
-        parse_error("Too many arguments to function: %s()", func->name);
-        return (NULL);
-    }
-    if ((v = eval(arg)) == NULL) {
-        parse_error("Variable not found: %s", V_NAME(arg));
-        return (NULL);
-    }
-    if (V_TYPE(v) != ID_STRING && V_TYPE(v)!=ID_TEXT ){
-        parse_error("Invalid object type");
-        return(NULL);
-    }
+	if (arg->next != NULL) {
+		parse_error("Too many arguments to function: %s()", func->name);
+		return (NULL);
+	}
+	if ((v = eval(arg)) == NULL) {
+		parse_error("Variable not found: %s", V_NAME(arg));
+		return (NULL);
+	}
+	if (V_TYPE(v) != ID_STRING && V_TYPE(v) != ID_TEXT) {
+		parse_error("Invalid object type");
+		return (NULL);
+	}
+	if (V_TYPE(v) == ID_STRING) {
+		if (!strcmp(func->name, "atof")) {
+			s = newVal(BSQ, 1, 1, 1, FLOAT, NULL);
+			V_DATA(s) = (float *) calloc(1, sizeof(float));
+			V_FLOAT(s) = (float) strtod(V_STRING(v), NULL);
+		} else if (!strcmp(func->name, "atod")) {
+			s = newVal(BSQ, 1, 1, 1, DOUBLE, NULL);
+			V_DATA(s) = (double *) calloc(1, sizeof(double));
+			V_FLOAT(s) = (double) strtod(V_STRING(v), NULL);
+		}
+	} else {
+		int line;
+		int nlines = V_TEXT(v).Row;
+		if (!strcmp(func->name, "atof")) {
+			float *data = (float *) calloc(nlines, sizeof(float));
+			s = newVal(BSQ, 1, nlines, 1, FLOAT, NULL);
+			for (line = 0; line < nlines; line++) {
+				data[line] = strtod(V_TEXT(v).text[line], NULL);
+			}
+		} else if (!strcmp(func->name, "atod")) {
+			double *data = (double *) calloc(nlines, sizeof(double));
+			s = newVal(BSQ, 1, nlines, 1, DOUBLE, NULL);
+			for (line = 0; line < nlines; line++) {
+				data[line] = strtod(V_TEXT(v).text[line], NULL);
+			}
+		}
+	}
 
-    s = newVar();
-
-    if (V_TYPE(v) == ID_STRING){
-        f = (float)strtod(V_STRING(v), NULL);
-        V_SIZE(s)[0] = V_SIZE(s)[1] = V_SIZE(s)[2] = V_DSIZE(s) = 1;
-        V_DATA(s) = (float *)calloc(1, sizeof(float));
-        V_FLOAT(s) = f;
-    } else {
-        int l;
-        float *data = (float *)calloc(V_TEXT(v).Row, sizeof(float));
-        for (l=0;l<V_TEXT(v).Row;l++){
-            data[l]=strtod(V_TEXT(v).text[l],NULL);
-        }
-        V_SIZE(s)[0] = V_SIZE(s)[2] = 1;
-        V_SIZE(s)[1] = l;
-        V_DSIZE(s) = l;
-        V_DATA(s)=(void *)data;
-    }
-
-    V_TYPE(s) = ID_VAL;
-    V_ORG(s) = BSQ;
-    V_FORMAT(s) = FLOAT;
-
-    return(s);
+	return (s);
 }
+
 
 /*
 ** Add something to a string.

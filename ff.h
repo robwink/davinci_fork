@@ -74,6 +74,7 @@ struct _vfuncptr vfunclist[] = {
     { "struct",         ff_struct,             NULL , NULL},
     { "add_struct",     ff_add_struct,         NULL , NULL},
     { "get_struct",     ff_get_struct,         NULL , NULL},
+    { "remove_struct",     ff_remove_struct,         NULL , NULL},
     
 /* i/o */
 
@@ -111,6 +112,7 @@ struct _vfuncptr vfunclist[] = {
 
     { "atoi",       ff_atoi,        NULL , NULL},
     { "atof",       ff_atof,        NULL , NULL},
+    { "atod",       ff_atof,        NULL , NULL},
     { "delim",      ff_delim,       NULL , NULL},
     { "issubstring", ff_issubstring, NULL, NULL},
     { "strlen",     ff_strlen,      NULL, NULL},
