@@ -824,7 +824,7 @@ MakeTextInput(d,win,x,y,w,h,fg,bg,text,align,func)
     if (func != NULL) XfAddButtonCallback(B, 0, func, NULL);
     XfActivateButton(B, 
 		ExposureMask | ButtonPressMask | 
-		KeyPressMask | Button1MotionMask);
+		KeyPressMask);
 
 	return(B);
 }
