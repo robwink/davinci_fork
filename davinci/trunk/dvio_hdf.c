@@ -233,7 +233,7 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
 
     case H5G_DATASET:
         if ((dataset = H5Dopen(parent, name)) < 0) {
-            return 0;
+            return -1;
         }
 
         datatype = H5Dget_type(dataset);
@@ -408,6 +408,7 @@ load_hdf5(hid_t parent)
     while ((ret = H5Giterate(parent, ".", &idx, group_iter, &e)) > 0)  {
         add_struct(o, V_NAME(e), e);
         V_NAME(e) = NULL;
+		if (idx == count) break;
     }
     return(o);
 }
