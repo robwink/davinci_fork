@@ -34,12 +34,11 @@ Var *LoadGFX_Image(char *filename)
 		Gray=1;
 	}
 
-	tmp_image=image->next;
+	tmp_image=image;
 	while (tmp_image->next!=NULL){
 		Frames++;
 		tmp_image=tmp_image->next;
 	}
-	Frames++;
 
 	if (Gray){
 		data=(char *)calloc(Frames*x*y,sizeof(char));
