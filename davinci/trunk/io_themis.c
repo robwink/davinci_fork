@@ -820,7 +820,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 					 else { 
                     if (Output-_SIGINFO < 320){
 
-                        if (len < (Lines*Col+320)) { 	/*We're running out of room!*/
+                        if (len <= (Lines*Col+320)) { 	/*We're running out of room!*/
                             int guess=(len/(Output));/*Guess # of total lines*/
                             len = guess * Col; 			/*How big it needs to be*/
                             parse_error("Increasing Buffer sizes\n");
