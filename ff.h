@@ -232,13 +232,13 @@ struct _vfuncptr vfunclist[] = {
     { "global",         ff_global,             NULL},
     { "delete",         ff_delete,             NULL},
     { "load_vanilla",   ff_loadvan,            NULL},
-    { "load_PDS",       ReadPDS,                      NULL},
-    { "rtrim",          ff_rtrim,                 NULL},
-
-    { "equals",         ff_equals,                 NULL},
-	 { "xplot",				ff_xplot,						NULL},
-	 { "killall",			ff_killchild,					NULL},
-
+    { "load_PDS",       ReadPDS,               NULL},
+    { "rtrim",          ff_rtrim,              NULL},
+    { "equals",         ff_equals,              NULL},
+    { "xplot",          ff_xplot,               NULL},
+    { "killall",        ff_killchild,           NULL},
+    { "pnmcut",         ff_cut,                 NULL},
+    { "pnmcrop",        ff_crop,                NULL},
     { NULL,             NULL,                  NULL }
 };
 
