@@ -18,7 +18,7 @@ LDLIBS=@MODULE_ADDN_LIBS@ -lc
 
 .SUFFIXES:	.dvm
 
-MODULES=mod1.dvm mod2.dvm
+MODULES=mod1.dvm mod2.dvm pnm_mod.dvm
 
 all:	$(MODULES)
 
@@ -37,5 +37,8 @@ clean:
 
 mod1.dvm:	mod1.o Makefile
 mod2.dvm:	mod2.o Makefile
+pnm_mod.dvm:	pnm_mod.o Makefile
 mod1.o:	mod1.c ../parser.h
 mod2.o:	mod2.c ../parser.h
+pnm_mod.o: pnm_mod.c ../parser.h
+
