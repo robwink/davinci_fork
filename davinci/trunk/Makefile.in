@@ -24,7 +24,7 @@ XRTLIBS = @XRTLIBS@
 
 CC     = @CC@
 DEFS   = @DEFS@ -Ilib
-LIBS   = $(READLINE_LIB) -lplplotFX $(XLIBS) @LIBS@
+LIBS   = $(READLINE_LIB) $(XLIBS) @LIBS@
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
