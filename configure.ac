@@ -137,7 +137,7 @@ if test "x$enable_iomedley" != "xno"; then
 	AC_MSG_CHECKING(if local libiomedley present)
 	if test -x iomedley/configure; then
 		AC_MSG_RESULT(yes)
-		CFLAGS="$CFLAGS -I./$ac_top_builddir/iomedley"
+		CFLAGS="$CFLAGS -I\$(top_srcdir)/iomedley"
 		AC_DEFINE(HAVE_LIBIOMEDLEY, 1, [iomedley library is present])
 		AC_CONFIG_SUBDIRS(iomedley)
 		MY_SUBDIRS="$MY_SUBDIRS iomedley"
@@ -178,7 +178,7 @@ if test "x$enable_modules" != "xno"; then
 			AC_CHECK_LIB(Xmu, XmuClientWindow)
 			dnl This should only be added to modules/Makefile.am's CFLAGS, but I'm sick of autoconf.
 			dnl Not sure this is working either; doesn't look like $ac_top_builddir gets set..
-			CFLAGS="$CFLAGS -I./$ac_top_builddir/vicar"
+			CFLAGS="$CFLAGS -I\$(top_srcdir)/vicar"
 			AC_DEFINE(HAVE_LIBVICAR, 1, [VICAR widget library is present])
 			MY_SUBDIRS="$MY_SUBDIRS vicar"
 			local_vicar=yes
@@ -197,9 +197,17 @@ AC_SUBST(MY_SUBDIRS)
 
 AC_OUTPUT([Makefile modules/Makefile modules/kjn/Makefile vicar/Makefile])
 
-PRINT_N() {
-	echo $ECHO_N "$1:  $ECHO_C" 
-	echo $ECHO_N "printf(\"$1:  $ECHO_C\");" >> build_summary
+PRINT_YES_NO() {
+  answer="Yes"
+  if test $# -lt 2; then
+    answer="No"
+  else
+      if test "$2" = "no"; then
+        answer="No"
+      fi
+  fi
+  echo "$1:  ${answer}"
+  echo "printf(\"$1:  ${answer}\n\");" >> build_summary
 }
 
 PRINT() {
@@ -207,41 +215,14 @@ PRINT() {
 	echo "printf(\"$1\n\");" >> build_summary
 }
 
-IF_YES_NO() {
-  if test $# -lt 1; then
-    PRINT "No"
-    return
-  else
-    while test $# -gt 0; do
-      if test "$1" = "no"; then
-        PRINT "No"
-        return
-      fi
-      shift
-    done
-  fi
-  PRINT "Yes"
-}
-
 rm -f build_summary
 
 PRINT ""
-PRINT   "Configuration Summary"
-PRINT   "--------------------------"
-
-PRINT_N "            Readline"
-IF_YES_NO "$have_readline"
-
-PRINT_N "              X11/Xt"
-IF_YES_NO "$have_xt"
-
-PRINT_N "               Motif"
-IF_YES_NO "$have_motif"
-
-PRINT_N "                HDF5"
-IF_YES_NO "$have_libhdf"
-
-PRINT_N "      Module Support"
-IF_YES_NO "$build_module_support"
-PRINT_N "    GUI/Vicar Module"
-IF_YES_NO "$local_vicar"
+PRINT        "Configuration Summary"
+PRINT        "----------------------"
+PRINT_YES_NO "        Readline" "$have_readline"
+PRINT_YES_NO "          X11/Xt" "$have_xt"
+PRINT_YES_NO "           Motif" "$have_motif"
+PRINT_YES_NO "            HDF5" "$have_libhdf"
+PRINT_YES_NO "  Module Support" "$build_module_support"
+PRINT_YES_NO "GUI/Vicar Module" "$local_vicar"
