@@ -232,6 +232,7 @@ main(int ac, char **av)
             put_sym(v);
         }
     }
+	dv_set_iom_verbosity();
 
     if (iflag)
         interactive = 1;
