@@ -343,7 +343,12 @@ dispatch_ufunc(UFUNC *f, Var *arg)
      **/
     for ( p = arg ; p != NULL ; p=p->next) {
         if (V_TYPE(p) == ID_KEYWORD) {
-            if (dd_find(scope, V_NAME(p)) == NULL) {
+			for (i = 0 ; i < f->nargs ; i++) {
+				if (!strcmp(f->args[i], V_NAME(p))) {
+					break;
+				}
+			}
+			if (i == f->nargs) {
                 sprintf(error_buf, "Unknown keyword to ufunc: %s(... %s= ...)",
                         f->name, V_NAME(p));
                 parse_error(NULL);
