@@ -805,11 +805,11 @@ dv_LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var)
 static void * 
 dv_read_qube_suffix(int fd, 
                     struct iom_iheader *h,
-                    int s_bytes,
-                    int plane_number,
+                    int s_bytes,       /* suffix (item) bytes */
+                    int plane_number,  /* plane serial number of the suffix-planes */
                     int s_item_byte_e, /* external data type as stored in file */
                     int *s_item_byte,  /* internal representation in memory */
-                    int ordinate,
+                    int ordinate,      /* sample/line/band in org-order */
                     int *size)
 {
 /*** ordinate: 0=minor, 1=middle, 2=major ***/
@@ -3163,7 +3163,7 @@ propagate_float_keyword(
     }
     
     p_set_real_key(fid, object, group, name, /* set */ 1, &nvals, vals,
-                   /* F-fmt */ 1, /* dec-digits */ 3, &rc);
+                   /* F-fmt */ 1, /* dec-digits */ 6, &rc);
 
     free(vals);
 
@@ -3200,7 +3200,7 @@ propagate_double_keyword(
     }
     
     p_set_dbl_key(fid, object, group, name, /* set */ 1, &nvals, vals,
-                  /* F-fmt */ 1, /* dec-digits */ 3, &rc);
+                  /* F-fmt */ 1, /* dec-digits */ 6, &rc);
 
     free(vals);
 
@@ -3634,7 +3634,7 @@ propagate_history_real_keyword(
         }
     }
     
-    u_put_real_key(4, indent, name, nvals, vals, 1, 3, &rc);
+    u_put_real_key(4, indent, name, nvals, vals, 1, 6, &rc);
 
     free(vals);
 
