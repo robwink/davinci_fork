@@ -321,13 +321,15 @@ ff_xplot(vfuncptr func, Var *arg)
 
 	make_args(&ac, &av, func, arg);		/*chop up the args into an array
 						   parse and remove them from the list */
+
 	for (i = 0; i < ac; i++) {
+		if (av[i] == NULL) continue;
+
 		if (V_TYPE(av[i]) == ID_KEYWORD) {
 			if (!(strcmp(av[i]->name, "Xaxis"))) {
 				Xaxis = eval(V_KEYVAL(av[i]));
 				if (Xaxis == NULL) {
-					parse_error("Variable not found: %s",
-						V_NAME(V_KEYVAL(av[i])));
+					parse_error("Variable not found: Xaxis=...");
 					free(av);
 					return (NULL);
 				}

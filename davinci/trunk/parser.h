@@ -189,6 +189,8 @@ enum {
 	ID_DIV,            /* division */
 	ID_MOD,            /* modulo divison */
 	ID_UMINUS,         /* unary minus */
+	ID_LSHIFT,         /* left shift */
+	ID_RSHIFT,         /* right shift */
 	ID_FUNCT,          /* function */
 	ID_ARRAY,          /* application of ranges to array */
 	ID_ARG,            /* list of arguments */

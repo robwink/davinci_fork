@@ -583,6 +583,17 @@ dv_RePackData(void *data, int file_bytes, iom_idf data_type, int data_chunk)
     return(p_data);
 }
 
+
+/*
+** LookupSuffix() - Find the type and position of a named suffix plane
+**
+** Type is: 0 - sample
+** Type is: 1 - line
+** Type is: 2 - band
+**
+** Position is zero based.
+*/
+
 static int
 dv_LookupSuffix(
     OBJDESC *qube,
@@ -625,7 +636,7 @@ dv_LookupSuffix(
                         ** check if this is an exact match and return if so
                         */
                         *plane=j;
-                        *type=iom_orders[h->org][i];
+                        *type=i;
                         count++;
                         if (!strcasecmp(list[j], name)) {
                             return(0);
@@ -939,6 +950,7 @@ write_isis_planes(vfuncptr func, Var * arg)
     int n;
     char *filename = NULL;
 	char *p;
+	int rec_len, lbl_length;
 
 
     Alist alist[6];
@@ -953,10 +965,6 @@ write_isis_planes(vfuncptr func, Var * arg)
 
     if (core == NULL) {
         parse_error("%s: No core object specified", func->name);
-        return(NULL);
-    }
-    if (V_ORG(core) != BSQ) {
-        parse_error("%s: only able to handle BSQ cores", func->name);
         return(NULL);
     }
 
@@ -1018,26 +1026,48 @@ write_isis_planes(vfuncptr func, Var * arg)
     /* write the headers */
 
     sprintf(buf            , "PDS_VERSION = 3.0\n");
-    sprintf(buf+strlen(buf), "RECORD_BYTES = 1\n");
+    sprintf(buf+strlen(buf), "RECORD_BYTES =       \n");
     sprintf(buf+strlen(buf), "^QUBE =        \n");
     sprintf(buf+strlen(buf), "OBJECT = QUBE\n");
     sprintf(buf+strlen(buf), "    AXES = 3\n");
-    sprintf(buf+strlen(buf), "    AXIS_NAME = (SAMPLE,LINE,BAND)\n");
-    sprintf(buf+strlen(buf), "    CORE_ITEMS = (%d,%d,%d)\n", size[0], size[1], size[2]);
+
+	if (V_ORG(core) == BSQ) {
+		sprintf(buf+strlen(buf), "    AXIS_NAME = (SAMPLE,LINE,BAND)\n");
+		rec_len = size[0]*GetNbytes(core);
+		if (suffix[0]) rec_len += get_struct_count(suffix[0])*4;
+	} else if (V_ORG(core) == BIP) {
+		sprintf(buf+strlen(buf), "    AXIS_NAME = (BAND,SAMPLE,LINE)\n");
+		rec_len = size[2]*GetNbytes(core);
+		if (suffix[2]) rec_len += get_struct_count(suffix[2])*4;
+	}
+	sprintf(buf+strlen(buf), "    CORE_ITEMS = (%d,%d,%d)\n", V_SIZE(core)[0], V_SIZE(core)[1], V_SIZE(core)[2]);
+	
+
     sprintf(buf+strlen(buf), "    CORE_ITEM_BYTES = %d\n", GetNbytes(core));
     sprintf(buf+strlen(buf), "    CORE_ITEM_TYPE = %s\n", iformat_to_eformat(core));
     sprintf(buf+strlen(buf), "    SUFFIX_BYTES = 4\n");
     sprintf(buf+strlen(buf), "    SUFFIX_ITEMS = (");
 
-    for (i = 0 ; i < 3 ; i++) {
-        if (i) sprintf(buf+strlen(buf),",");
-        if (suffix[i] == NULL)  sprintf(buf+strlen(buf), "0");
-        else sprintf(buf+strlen(buf), "%d", get_struct_count(suffix[i]));
-    }
+	if (V_ORG(core) == BSQ) {
+		sprintf(buf+strlen(buf), "%d", 
+			suffix[0] == NULL ? 0 : get_struct_count(suffix[0]));
+		sprintf(buf+strlen(buf), ",%d", 
+			suffix[1] == NULL ? 0 : get_struct_count(suffix[1]));
+		sprintf(buf+strlen(buf), ",%d", 
+			suffix[2] == NULL ? 0 : get_struct_count(suffix[2]));
+	} else if (V_ORG(core) == BIP) {
+		sprintf(buf+strlen(buf), "%d", 
+			suffix[2] == NULL ? 0 : get_struct_count(suffix[2]));
+		sprintf(buf+strlen(buf), ",%d", 
+			suffix[0] == NULL ? 0 : get_struct_count(suffix[0]));
+		sprintf(buf+strlen(buf), ",%d", 
+			suffix[1] == NULL ? 0 : get_struct_count(suffix[1]));
+	}
     sprintf(buf+strlen(buf), ")\n");
 
     for (i = 0 ; i < 3 ; i++) {
         char *suf_prefix;
+		int llen;
         if (suffix[i]) {
             switch (i) {
             case 0: suf_prefix = "    SAMPLE_SUFFIX"; break;
@@ -1046,28 +1076,43 @@ write_isis_planes(vfuncptr func, Var * arg)
             }
 
             /* names */
+			llen = strlen(buf);
             sprintf(buf+strlen(buf), "%s_NAME = (", suf_prefix);
             for (j = 0 ; j < get_struct_count(suffix[i]) ; j++) {
                 if (j) sprintf(buf+strlen(buf), ",");
                 get_struct_element(suffix[i], j, &name, &v);		
+				if ((strlen(buf) - llen + strlen(name)) > 72) {
+					sprintf(buf+strlen(buf), "\n        ");
+					llen = strlen(buf)-8;
+				}
                 sprintf(buf+strlen(buf), "%s", name);
             }
             sprintf(buf+strlen(buf), ")\n");
 
             /* size */
+			llen = strlen(buf);
             sprintf(buf+strlen(buf), "%s_ITEM_BYTES = (", suf_prefix);
             for (j = 0 ; j < get_struct_count(suffix[i]) ; j++) {
                 if (j) sprintf(buf+strlen(buf), ",");
                 get_struct_element(suffix[i], j, &name, &v);		
+				if ((strlen(buf) - llen) > 72) {
+					sprintf(buf+strlen(buf), "\n        ");
+					llen = strlen(buf)-8;
+				}
                 sprintf(buf+strlen(buf), "%d", GetNbytes(v));
             }
             sprintf(buf+strlen(buf), ")\n");
 
             /* type */
+			llen = strlen(buf);
             sprintf(buf+strlen(buf), "%s_ITEM_TYPE = (", suf_prefix);
             for (j = 0 ; j < get_struct_count(suffix[i]) ; j++) {
                 if (j) sprintf(buf+strlen(buf), ",");
                 get_struct_element(suffix[i], j, &name, &v);		
+				if ((strlen(buf) - llen) > 72) {
+					sprintf(buf+strlen(buf), "\n        ");
+					llen = strlen(buf)-8;
+				}
                 sprintf(buf+strlen(buf), "%s", iformat_to_eformat(v));
             }
             sprintf(buf+strlen(buf), ")\n");
@@ -1077,12 +1122,23 @@ write_isis_planes(vfuncptr func, Var * arg)
     sprintf(buf+strlen(buf), "END_OBJECT = QUBE\n");
     sprintf(buf+strlen(buf), "END\n");
 
+    p = strstr(buf, "RECORD_BYTES =");
+    p += strlen("RECORD_BYTES = ");
+    sprintf(lenstr, "%d", rec_len);
+    strncpy(p, lenstr, strlen(lenstr));
+
+    lbl_length = ceil(((float)strlen(buf))/rec_len);
+
     p = strstr(buf, "^QUBE =");
-    p += 8;
-    sprintf(lenstr, "%d", strlen(buf)+1);
+    p += strlen("^QUBE = ");
+    sprintf(lenstr, "%d", lbl_length+1);
     strncpy(p, lenstr, strlen(lenstr));
 
 	fwrite(buf, strlen(buf), 1, fp);
+
+	for (i = lbl_length*rec_len - strlen(buf) ; i > 0 ; i-=16) {
+		fwrite("                ", min(i, 16), 1, fp);
+	}
 
     nbytes = GetNbytes(core);
 
@@ -1112,7 +1168,33 @@ write_isis_planes(vfuncptr func, Var * arg)
                 write_plane(v, V_ORG(core), 2, fp);
             }
         }
-    }
+    } else if (V_ORG(core) == BIP) {
+        for (k = 0 ; k < size[1] ; k++) {		/* y axis */
+            for (j = 0 ; j < size[0] ; j++) {	/* z axis */
+                pos = (k*size[0]+j)*size[2] * nbytes;
+                fwrite((char *)V_DATA(core) + pos, size[2], nbytes, fp);
+
+                if (suffix[2]) {
+                    for (n = 0 ; n < get_struct_count(suffix[2]) ; n++) {
+                        get_struct_element(suffix[2], n, NULL, &v);
+                        write_one(v, j, k, 0, fp);
+                    }
+                }
+            }
+            if (suffix[0]) {
+                for (n = 0 ; n < get_struct_count(suffix[0]) ; n++) {
+                    get_struct_element(suffix[0], n, NULL, &v);
+                    write_row_x(v, 0, k, fp);
+                }
+            }
+        }
+        if (suffix[1]) {
+            for (n = 0 ; n < get_struct_count(suffix[1]) ; n++) {
+                get_struct_element(suffix[1], n, NULL, &v);
+                write_plane(v, V_ORG(core), 1, fp);
+            }
+        }
+	}
     fclose(fp);
     return(NULL);
 }

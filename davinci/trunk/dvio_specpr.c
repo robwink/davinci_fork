@@ -194,6 +194,10 @@ specpr_open(char *path)
     }
 }
 
+/*
+** This looks like it has a bug in it, re: tmpl
+*/
+
 
 void
 write_specpr(int fd, int i, struct _label *label, char *data)
