@@ -590,7 +590,7 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
     }
 
     if ((qube = OdlFindObjDesc(object, "QUBE", NULL, 0, 0, 0)) == NULL) {
-        parse_error(stderr, "%s: Not a qube object.", isisfile);
+        parse_error("%s: Not a qube object.", isisfile);
         return (NULL);
     }
 

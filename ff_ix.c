@@ -188,9 +188,10 @@ ff_rgb2hsv(vfuncptr func, Var * arg)
 
 	int ac;
 	Var **av;
-	Alist alist[2];
+	Alist alist[3];
 	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
 	alist[1] = make_alist( "maxval",  ID_VAL,    NULL,     &maxval);
+	alist[2].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -259,9 +260,10 @@ ff_hsv2rgb(vfuncptr func, Var * arg)
 
 	int ac;
 	Var **av;
-	Alist alist[2];
+	Alist alist[3];
 	alist[0] = make_alist( "object",  ID_VAL,    NULL,     &obj);
 	alist[1] = make_alist( "maxval",  DOUBLE,    NULL,     &mval);
+	alist[2].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 

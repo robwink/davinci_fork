@@ -1,4 +1,4 @@
-#!/opt/local/bin/davinci -fqv0
+#!../davinci -fqv0
 
 good = { ".", "/dev/null", "/tmp", "/bin/ls" }
 bad = { "", "/dev/null/foo", "/vmunix/mypants", "/etc/passwd/foo" }
