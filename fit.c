@@ -33,8 +33,8 @@ int     mrqfit(double **, struct data_order, int, int, int, double *,
                int, int, double **, double *, ifptr,int);
 int     alpha_beta_chisq(double **, struct data_order,int , int , double *,
                          int ,int , double **, double *, double *, ifptr);
-void    gd(Var *, Var *, char *);
-int     dfit(Var *, Var *, Var *, char *, int, double **, int *, int,int );
+void    gd(Var *, Var *, char *, double);
+int     dfit(Var *, Var *, Var *, char *, int, double **, int *, int,int, double );
 
 
 Var * ff_fit(vfuncptr func, Var *arg)
@@ -76,11 +76,13 @@ Var * ff_fit(vfuncptr func, Var *arg)
     }
 	/*
 	** we could provide a default X here if we wanted
+	**
+	** Ok, I did.
+    ** if (x == NULL) {
+    **     parse_error("%s: No x data specified (x=VAR)", func->name);
+    **     return(NULL);
+    ** }
 	*/ 
-    if (x == NULL) {
-        parse_error("%s: No x data specified (x=VAR)", func->name);
-        return(NULL);
-    }
 
     if (x && (V_DSIZE(x) != V_DSIZE(y))) {
         sprintf(error_buf, "X axis for data [%d points] not same size as Y axis [%d points]", 
@@ -96,7 +98,7 @@ Var * ff_fit(vfuncptr func, Var *arg)
 
     if (!(strcmp(ftype,"linear"))) {
         s=lin_fit(x,y,V_DSIZE(x),plot, ignore);
-    } else if (dfit(x, y, ip, ftype, iter, &op, &nparam, plot,verbose)) {
+    } else if (dfit(x, y, ip, ftype, iter, &op, &nparam, plot,verbose,ignore)) {
         s = NULL;
     } else {
         s = newVar();
@@ -140,17 +142,12 @@ lin_fit(Var *x, Var *y,int Row, int plot, double ignore)
 
 	count = 0;
 	for (i=0;i<Row;i++){
-		x1 = extract_double(x,i); /*a*/
+        x1 = ((x==NULL) ? i+1 : extract_double(x, i)); /* a */
 		y1 = extract_double(y,i); /*b*/
 
 		if (x1 == ignore || y1 == ignore) continue;
 
 		count++;
-
-/*
-		data[i][0]=x1;
-		data[i][1]=y1;
-*/
 
 		A[0][1]+=x1;
 		A[1][0]+=x1;
@@ -176,7 +173,7 @@ lin_fit(Var *x, Var *y,int Row, int plot, double ignore)
 		}
 
 		for (i = 0 ; i < Row ; i++) {
-			x1 = extract_double(x,i); /*a*/
+			x1 = ((x==NULL) ? i+1 : extract_double(x, i)); /* a */
 			y1 = extract_double(y,i); /*b*/
 			if (x1 == ignore || y1 == ignore) continue;
 			fprintf(fp, "%g %g\n", x1, y1);
@@ -227,7 +224,7 @@ ifptr           func = NULL;
 
 int
 dfit(Var *x, Var *y, Var *ip, char *fname, 
-     int iter, double **op, int *nparam, int plot,int verbose)
+     int iter, double **op, int *nparam, int plot,int verbose, double ignore)
 {
 
     FILE *fp;
@@ -237,7 +234,7 @@ dfit(Var *x, Var *y, Var *ip, char *fname,
     int status;
     int i;
 
-    gd(x,y,fname);              /* load data, and function */
+    gd(x,y,fname,ignore);              /* load data, and function */
 
     *op = a = dvector(ma+2);
     *nparam = ma;
@@ -356,15 +353,20 @@ first_guess(double *a, char *fname,int verbose)
 }
 
 void
-gd(Var *x, Var *y, char *fname)
+gd(Var *x, Var *y, char *fname, double ignore)
 {
     data = dmatrix(datacols, V_DSIZE(y));
-    ndata = V_DSIZE(y);
     jmax = 2;
+	ndata = 0;
     for (i = 0 ; i < V_DSIZE(y) ; i++) {
-        data[0][i] = ((x==NULL) ? i : extract_double(x, i));
+		/* this supplies a fake x axis if one isn't present. */
+		/* also handles an ignore value */
+        data[0][i] = ((x==NULL) ? i+1 : extract_double(x, i));
         data[1][i] = extract_double(y, i);
+		if (data[0][i] == ignore || data[1][i] == ignore) continue;
+
         data[jmax][i] = 1;      /* weighting column of ones */
+		ndata++;
     }
 
     order.nsig = jmax + 0;      /* data column to be all ones: no weighting */
