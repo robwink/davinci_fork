@@ -68,10 +68,11 @@ OBJ=p.o pp.o symbol.o \
 	ff_pbm.o ff_meta.o @MODULE_SUPP_OBJS@ \
 	ff_load.o ff_write.o ff_raw.o ff_ascii.o ff_filetype.o \
 	dvio_aviris.o dvio_goes.o dvio_grd.o dvio_imath.o \
-	dvio_isis.o dvio_magic.o dvio_pnm.o dvio_vicar.o dvio.o \
+	dvio_isis.o dvio_iomedley.o dvio_magic.o dvio_pnm.o dvio_vicar.o \
+	dvio.o \
 	dvio_ers.o dvio_envi.o dvio_raw.o dvio_specpr.o dvio_themis.o \
 	dvio_ascii.o dvio_pds.o dvio_hdf.o endian_norm.o \
-    error.o ff_struct.o darray.o avl.o \
+	error.o ff_struct.o darray.o avl.o \
 	util.o ff_shade.o @MAGICKOBJ@ \
 	binDCT.o ff_deghost.o deghost.o
 
@@ -328,6 +329,9 @@ dvio_imath.o: dvio_imath.c parser.h system.h darray.h avl.h \
 dvio_isis.o: dvio_isis.c parser.h system.h darray.h avl.h ff_modules.h \
  module_io.h ufunc.h scope.h func.h dvio.h iomedley/iomedley.h \
  iomedley/io_lablib3.h iomedley/toolbox.h 
+dvio_iomedley.o: dvio_iomedley.c parser.h system.h darray.h avl.h \
+ module_io.h ufunc.h scope.h func.h iomedley/iomedley.h \
+ iomedley/io_lablib3.h iomedley/toolbox.h
 dvio_magic.o: dvio_magic.c config.h parser.h system.h darray.h avl.h \
  ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
  iomedley/iomedley.h iomedley/io_lablib3.h iomedley/toolbox.h

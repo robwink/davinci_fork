@@ -13,7 +13,9 @@ extern Swap_Big_and_Little(Var *);
 #include <unistd.h>
 #endif
 
+/* FIX: put these in a header */
 
+static unsigned char const *iom_filetypes[] = { "gif", "jpg", "jpeg", "tif", "tiff", "png", 0 };
 
 Var *
 ff_write(vfuncptr func, Var *arg)
@@ -28,6 +30,7 @@ ff_write(vfuncptr func, Var *arg)
     struct iom_iheader h;
     void *data = NULL;
     FILE *fp = NULL;
+    unsigned short iom_type, iom_type_found;
 
     int ac;
     Var **av;
@@ -70,19 +73,22 @@ ff_write(vfuncptr func, Var *arg)
         title = "DV data product";
     }
 
-    if      (!strcasecmp(type, "raw"))    dv_WriteRaw(ob, filename, force);
+    /* Check type against list of types supported by iomedley. */
+
+    iom_type = iom_type_found = 0;
+
+    while (iom_filetypes[iom_type++]) {
+      iom_type_found = 1;
+    }
+
+    if (iom_type_found)                   dv_WriteIOM(ob, filename, type, force);
+    else if (!strcasecmp(type, "raw"))    dv_WriteRaw(ob, filename, force);
     else if (!strcasecmp(type, "vicar"))  dv_WriteVicar(ob, filename, force);
     else if (!strcasecmp(type, "grd"))    dv_WriteGRD(ob, filename, force, title, "daVinci");
     else if (!strcasecmp(type, "pgm"))    dv_WritePGM(ob, filename, force);
     else if (!strcasecmp(type, "ppm"))    dv_WritePPM(ob, filename, force);
-    else if (!strcasecmp(type, "pnm"))    {
-		if (GetZ(ob) == 1) {
-			dv_WritePGM(ob, filename, force);
-		} else {
-			dv_WritePPM(ob, filename, force);
-		}
-	} else if (!strcasecmp(type, "ascii")){
-        if (!force && access(filename, F_OK)){
+    else if (!strcasecmp(type, "ascii")){
+        if (!force && access(filename, F_OK)) {
             parse_error("File %s already exists.\n", filename);
             return NULL;
         }
