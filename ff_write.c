@@ -157,7 +157,7 @@ ff_write(vfuncptr func, Var *arg)
     else if (!strcasecmp(type, "imath"))  WriteIMath(ob, NULL, filename);
     else if (!strcasecmp(type, "isis"))   WriteISIS(ob, NULL, filename, title);
     else if (!strcasecmp(type, "specpr")) WriteSpecpr(ob, filename, title);
-    else if (!strcasecmp(type, "hd5"))    WriteHDF5(-1, filename, ob);
+    else if (!strcasecmp(type, "hdf"))    WriteHDF5(-1, filename, ob);
 #ifdef HAVE_LIBMAGICK
     else if (ValidGfx(type,GFX_type))     WriteGFX_Image(ob,filename,GFX_type);
 #endif
