@@ -29,6 +29,7 @@ static int convert_data(int from_type, void *from_data,
 static void get_suffix_buff_sizes(int core_items[3], int suffix_items[3],
                                   int suffix_item_sizes[3]);
 static int get_org_from_axis_names(char *axis_names[3], int *org);
+static void write_suffix_zeros(FILE *fp, int nel);
 
 
 static const char *axis_names[3] = {"sample", "line", "band"};
@@ -1617,10 +1618,15 @@ write_isis_planes(vfuncptr func, Var * arg)
 				write_row_x(v, 0, k, fp, nsuffix[0]);
 			}
         }
-		/* write band suffix */
+		/* write band suffix */ 
 		for (n = 0 ; n < nsuffix[2] ; n++) {
 			get_struct_element(suffix[2], n, NULL, &v);
+            /* write band suffix along with band-sample intersect */
 			write_plane(v, V_ORG(core), 2, fp, nsuffix[0], nsuffix[1]);
+            /* write band-line intersect */
+            for (k = 0; k < nsuffix[1];  k++){
+                write_suffix_zeros(fp, size[0]+nsuffix[0]);
+            }
 		}
     } else if (V_ORG(core) == BIP) {
         for (k = 0 ; k < size[1] ; k++) {		/* y axis */
@@ -1635,17 +1641,32 @@ write_isis_planes(vfuncptr func, Var * arg)
             }
 			for (n = 0 ; n < nsuffix[0] ; n++) {
 				get_struct_element(suffix[0], n, NULL, &v);
-				write_row_x(v, 0, k, fp, nsuffix[2]);
+                write_row_z(v, 0, k, fp, nsuffix[2]);
 			}
         }
 
 		for (n = 0 ; n < nsuffix[1] ; n++) {
 			get_struct_element(suffix[1], n, NULL, &v);
 			write_plane(v, V_ORG(core), 1, fp, nsuffix[2], nsuffix[0]);
+            for(k = 0; k < nsuffix[0]; k++){
+                write_suffix_zeros(fp, size[2]+nsuffix[2]);
+            }
 		}
+
 	}
     fclose(fp);
     return(NULL);
+}
+
+static void
+write_suffix_zeros(FILE *fp, int nel)
+{
+    int i;
+    int zero = 0;
+    
+    for(i = 0; i < nel; i++){
+        fwrite(&zero, 4, 1, fp);
+    }
 }
 
 /**
@@ -1751,6 +1772,7 @@ char *
 iformat_to_eformat(Var *obj) 
 {
     static char buf[256];
+#ifdef WORDS_BIGENDIAN
     switch (V_FORMAT(obj)) {
     case BYTE: sprintf(buf,"MSB_UNSIGNED_INTEGER"); break;
     case SHORT: sprintf(buf,"MSB_INTEGER"); break;
@@ -1758,6 +1780,15 @@ iformat_to_eformat(Var *obj)
     case FLOAT: sprintf(buf,"IEEE_REAL"); break;
     case DOUBLE: sprintf(buf,"IEEE_REAL"); break;
     }
+#else /* little-endian */
+    switch (V_FORMAT(obj)) {
+    case BYTE: sprintf(buf,"PC_UNSIGNED_INTEGER"); break;
+    case SHORT: sprintf(buf,"PC_INTEGER"); break;
+    case INT: sprintf(buf,"PC_INTEGER"); break;
+    case FLOAT: sprintf(buf,"PC_REAL"); break;
+    case DOUBLE: sprintf(buf,"PC_REAL"); break;
+    }
+#endif /* WORDS_BIGENDIAN */
     return(buf);
 }
 

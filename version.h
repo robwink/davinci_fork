@@ -1,8 +1,21 @@
-char *version = "@(#) daVinci Version #1.36";
+char *version = "@(#) daVinci Version #1.37";
 
 #include "build.h"
 
 /*
+Version 1.37: Thu Aug 12 09:39:52 MST 2004
+	* Fixed write_isis_planes() to correctly output all three
+	  suffix planes.
+	* Source before this fix is tagged before_isis_backplane_fix.
+	* Source before write_isis_cub() function was added is
+	+ New function write_isis_cub() added. As the name suggests,
+	  it an ISIS cube file writer. It is dependent upon ISIS
+	  libraries. "configure" script has been modified to check
+	  for the appropriate ISIS libraries.
+	+ Added a new option to load_pds() called "suffix_data". When
+	  set, the suffix data from PDS qubes is read in and is made
+	  available as *qube.suffix_data.
+
 Version 1.36: Tue Aug 10 02:40:22 MST 2004
 	* some leftover HAVE_LIBX11 macros caused the plotting stuff to not be on.
 	+ added C-style unary increment and decrement.  This is odd for strings.
