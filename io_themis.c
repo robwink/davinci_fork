@@ -281,76 +281,99 @@ int GetGSEHeader (FILE *fp, struct _iheader *h)
 int
 Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width)
 {
-    int i;
-    msdp_Header	mh;
-    int count;
-    FILE *fp=infile;
-    int height=0;
-    int width;
-    int size=0;
-    int frag;
-    int down;
-    int idx=0;
-    unsigned char dummy;
-    unsigned char *in_chunk=NULL;
-    unsigned char *out_chunk=NULL;
-    int	chunk_len;
-    unsigned int xcomp, pcomp, spacing, levels;
-    int huffman_table;
+	int i;
+	msdp_Header	mh;
+	int count;
+	FILE *fp=infile;
+	int height=0;
+	int width;
+	int size=0;
+	int frag;
+	int down;
+	int idx=0;
+	int head_count=0;
+	unsigned char dummy;
+	unsigned char *in_chunk=NULL;
+	unsigned char *out_chunk=NULL;
+	int	chunk_len;
+	unsigned int xcomp, pcomp, spacing, levels;
+	int huffman_table;
 
-    count=fread(&mh,sizeof(msdp_Header),1,fp);
-    if (!count)
-        return(0);
-    if (mh.bands==0)
-        width=VIS_TEST_WIDTH;
-    else
-        width=VIS_WIDTH;
+	count=fread(&mh,sizeof(msdp_Header),1,fp);
+	if (!count)
+		return(0);
+	if (mh.bands==0)
+		width=VIS_TEST_WIDTH;
+	else
+		width=VIS_WIDTH;
 
-    *vis_width=width;
+	*vis_width=width;
 
-    rewind(fp);
+	rewind(fp);
 
 
-    while(1) {
-        count=fread(&mh,sizeof(msdp_Header),1,fp);
-        if (!(count))
-            break;
+	while(1) {
+		count=fread(&mh,sizeof(msdp_Header),1,fp);
+		if (!(count))
+			break;
 
-        swab((char *)&mh,(char *)&mh,sizeof(msdp_Header));
+		head_count++;
+		swab((char *)&mh,(char *)&mh,sizeof(msdp_Header));
 
-        height+=(mh.line*16);
-        frag=(mh.len_lo | (mh.len_hi << 16));
-        size+=frag;
+		height+=(mh.line*16);
+		frag=(mh.len_lo | (mh.len_hi << 16));
+		size+=frag;
 
-        fseek(fp,(frag+1),SEEK_CUR); /*Gotta skip the checksum byte at the end*/
-    }
+		fseek(fp,(frag+1),SEEK_CUR); /*Gotta skip the checksum byte at the end*/
+	}
 
-    if ((height*width) != size) {
-        parse_error("Height*Width doesn't equate to size: %d vs %d\n",(height*width),size);
-    }
-    size=((height*width) > size ? (height*width):(size));
-    *data=(unsigned char *)calloc(size,sizeof(char));
+	if ((height*width) != size) {
+		parse_error("Height*Width doesn't equate to size: %d vs %d\n",(height*width),size);
+		size=((height*width) > size ? (height*width):(size));
+		height=size/width; /*We took the larger of the two
+								sizes, need to correct for height*/
+	}
+	*data=(unsigned char *)calloc(size,sizeof(char));
 
-    rewind(fp);
+	rewind(fp);
 
-    while (1) {
-        count=fread(&mh,sizeof(msdp_Header),1,fp);
-        if (!(count))
-            break;
+	while (1) {
+		count=fread(&mh,sizeof(msdp_Header),1,fp);
+		if (!(count))
+			break;
 
-        swab((char *)&mh,(char *)&mh,sizeof(msdp_Header));
-        frag=(mh.len_lo | (mh.len_hi << 16));
-        swab((char *)&mh,(char *)&mh,sizeof(msdp_Header));
+		swab((char *)&mh,(char *)&mh,sizeof(msdp_Header));
+		frag=(mh.len_lo | (mh.len_hi << 16));
+		swab((char *)&mh,(char *)&mh,sizeof(msdp_Header));
 
-        if(in_chunk!=NULL)
-            free(in_chunk);
-        in_chunk=(unsigned char *)calloc(frag,sizeof(char));
-        fread(in_chunk,frag,sizeof(char),fp);
+		if(in_chunk!=NULL)
+			free(in_chunk);
+		in_chunk=(unsigned char *)calloc(frag,sizeof(char));
+		fread(in_chunk,frag,sizeof(char),fp);
 
-        memcpy((*data+idx),in_chunk,frag);
-        idx+=frag;
+/*decode frag if necessary; offline for now
 
-        fread(&dummy,1,1,fp);
+		xcomp = (mh.comp[0] >> 2) & 3;
+		pcomp = (mh.comp[0] & 3);
+		spacing = mh.comp[4] | (mh.comp[5] << 8);
+		levels = (mh.comp[1] >> 5)+1;
+		huffman_table = mh.comp[1]&0xf;
+
+
+		if (xcomp || pcomp) {
+			out_chunk=decode_chunk(,,,);
+			memcpy((*data+idx),out_chunk,chunk_len);
+			idx+=chunk_len;
+		}
+
+		else {
+			memcpy((*data+idx),in_chunk,frag);
+			idx+=frag;
+		}
+*/
+		memcpy((*data+idx),in_chunk,frag);
+		idx+=frag;
+      fread(&dummy,1,1,fp);
     }
 
     return(height);
