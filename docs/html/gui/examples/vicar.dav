@@ -1,6 +1,8 @@
 #!/usr/local/bin/davinci -ifv
 
-verbose = 1
+# Quell spammy output during GUI setup.
+
+verbose = 0
 
 # Load the GUI module.
 
@@ -41,7 +43,7 @@ define showVicar(widgetMap) {
 
   data = data.qube.data
   data[where data < 0] = 0
-  dpyData = bsq(cat(stretch(data[,,3]),stretch(data[,,5]),stretch(data[,,7]),z))
+  dpyData = bsq(cat(stretch(data[,,3], "minmax"),stretch(data[,,5], "minmax"),stretch(data[,,7], "minmax"),z))
 
   # Create a frame and a new VICAR widget inside it.
 
@@ -72,7 +74,19 @@ define showVicar(widgetMap) {
 #
 #####
 
-define fileSelectCallback() {
+define fileSelectCancelCallback() {
+
+  # Close the file selection window.
+
+  global(top)
+
+  gui.destroy(top)
+
+  return(0)
+
+}
+
+define fileSelectOkCallback() {
 
   # Bring required globals into scope.
 
@@ -151,10 +165,15 @@ top = gui.create("topLevelShell", name="Davinci")
 
 fs = gui.create("fileSelectionBox", top, { pattern = "*.cub" })
 
-# Register a callback for the "OK" button.
+# Register callbacks for the "OK" and "Cancel" buttons.
 
-gui.addcallback(fs, "ok", "fileSelectCallback()")
+gui.addcallback(fs, "ok", "fileSelectOkCallback()")
+gui.addcallback(fs, "cancel", "fileSelectCancelCallback()")
 
 # Make everything visible to the user.
 
 gui.realize(top)
+
+# Enable normal verbose output for interactive use.
+
+verbose = 1
