@@ -305,6 +305,7 @@ Var *ff_pfill(vfuncptr func, Var *arg);
 Var *ff_bop(vfuncptr func, Var *arg);
 Var *ff_avg(vfuncptr func, Var *arg);
 Var *ff_avg2(vfuncptr func, Var *arg);
+Var *ff_avg3(vfuncptr func, Var *arg);
 Var *ff_basis(vfuncptr func, Var *arg);
 Var *ff_mxm(vfuncptr func, Var *arg);
 Var *ff_histogram(vfuncptr func, Var *arg);
@@ -482,5 +483,12 @@ Var *ff_fncc_fft_conv_real(vfuncptr func, Var *arg);
 Var *ff_fncc_write_mat(vfuncptr func, Var * arg);
 
 Var *ff_boxfilter(vfuncptr func, Var * arg);
+Var *ff_gconvolve(vfuncptr func, Var * arg);
+Var *ff_warp(vfuncptr func, Var * arg);
+Var *ff_median(vfuncptr func, Var * arg);
+Var *ff_window(vfuncptr func, Var * arg);
+Var *ff_radial_symmetry(vfuncptr func, Var * arg);
+Var *ff_radial_symmetry2(vfuncptr func, Var * arg);
+Var *ff_local_maximum(vfuncptr func, Var * arg);
 
 char *dv_locate_file(char *);

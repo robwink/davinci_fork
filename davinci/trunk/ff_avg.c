@@ -78,7 +78,7 @@ ff_avg2(vfuncptr func, Var * arg)
 		v = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL);
 	}
 
-	if (!strcmp(func->name, "avg") || both)  {
+	if (!strncmp(func->name, "avg", 3) || both)  {
 		f_avg = 1;
 		v = avg = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL); 
 	} 
@@ -143,6 +143,158 @@ ff_avg2(vfuncptr func, Var * arg)
 				sum[i] = sum[i] / count[i];
 			} else {
 				sum[i] = 0;
+			}
+		}
+		V_DATA(avg) = sum;
+	}
+
+	free(count);
+
+	if (f_sum) {
+		V_DATA(v) = sum;
+		return(v);
+	} else if (both) {
+		both = new_struct(0);
+		add_struct(both, "avg", avg);
+		add_struct(both, "stddev", stddev);
+		return(both);
+	} else if (f_stddev) {
+		return(stddev);
+	} else if (f_avg) {
+		return(avg);
+	} else {
+		parse_error("ff_avg: Shouldn't ever get here.\n");
+		return(NULL);
+	}
+}
+
+Var *
+ff_avg3(vfuncptr func, Var * arg)
+{
+	Var *obj=NULL, *v;
+	char *ptr = NULL;
+	int axis = 0, dsize, i, j;
+	double n;
+	int in[3], out[3];
+	double *sum, *sum2;
+	int *count;
+	char *options[] =  {
+		"x", "y", "z", "xy", "yx", "xz", "zx", "yz", "zy",
+		"xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL
+	};
+	int dsize2;
+	double x;
+	Var *both = NULL;
+	Var *avg = NULL, *stddev = NULL;
+	int f_avg =0, f_stddev = 0, f_sum = 0;
+	Var *ignore = NULL;
+	double ignore_val;
+
+	Alist alist[5];
+	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
+	alist[1] = make_alist("axis",  		ID_ENUM,	options,	&ptr);
+	alist[2] = make_alist("both",  		ID_VAL,	    NULL,	&both);
+	alist[3] = make_alist("ignore",  	ID_VAL,	    NULL,	&ignore);
+	alist[4].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (ptr == NULL) {
+		axis = XAXIS | YAXIS | ZAXIS;		/* all of them */
+	} else {
+		if (strchr(ptr, 'x') || strchr(ptr, 'X')) axis |= XAXIS;
+		if (strchr(ptr, 'y') || strchr(ptr, 'Y')) axis |= YAXIS;
+		if (strchr(ptr, 'z') || strchr(ptr, 'Z')) axis |= ZAXIS;
+	}
+
+	if (obj == NULL) {
+		parse_error("%s: No object specified\n", func->name);
+		return(NULL);
+	}
+
+	dsize = V_DSIZE(obj);
+	for (i = 0 ; i < 3 ; i++) {
+		in[i] = out[i] = V_SIZE(obj)[i];
+	}
+
+	if (axis & XAXIS) out[orders[V_ORG(obj)][0]] = 1;
+	if (axis & YAXIS) out[orders[V_ORG(obj)][1]] = 1;
+	if (axis & ZAXIS) out[orders[V_ORG(obj)][2]] = 1;
+
+	/*
+	** Decide what operations to perform and setup output variables
+	** v is a generic variable with the right output sizes.
+	*/
+	if (!strcmp(func->name, "sum"))  {
+		f_sum = 1;
+		v = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL);
+	}
+
+	if (!strncmp(func->name, "avg", 3) || both)  {
+		f_avg = 1;
+		v = avg = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL); 
+	} 
+
+	if (!strcmp(func->name, "stddev") || both)  {
+		f_stddev = 1;
+		v = stddev = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL); 
+	}
+
+	sum= (double *)calloc(V_DSIZE(v), sizeof(double));
+	count= (int *)calloc(V_DSIZE(v), sizeof(int));
+	if (f_stddev) sum2= (double *)calloc(V_DSIZE(v), sizeof(double));
+
+	if (ignore) ignore_val = extract_double(ignore, 0);
+
+	/*
+	** The if avoids the x^2 computation on the case we don't need it.
+	*/
+	if (f_stddev) {
+		/*
+		** Sum the data
+		*/
+		for (i = 0 ; i < dsize ; i++) {
+			x = extract_float(obj, i);
+			if (ignore && x==ignore_val) continue;
+			j = rpos(i, obj, v);
+			sum[j] += x;
+			sum2[j] += x*x;
+			count[j]++;
+		}
+	} else {
+		for (i = 0 ; i < dsize ; i++) {
+			x = extract_float(obj, i);
+			if (ignore && x==ignore_val) continue;
+			j = rpos(i, obj, v);
+			sum[j] += x;
+			count[j]++;
+		}
+	}
+
+	dsize2 = V_DSIZE(v);
+	// n = (double)dsize / (double)dsize2;
+
+	/*
+	** Perform required computations with sums
+	*/
+	if (f_stddev) {
+		for (i = 0 ; i < dsize2 ; i++) {
+			if (count[i] > 1)  {
+				sum2[i] = sqrt((sum2[i] - (sum[i]*sum[i]/count[i]))/(count[i]-1));
+			} else {
+				sum2[i] = 0;
+			}
+		}
+		V_DATA(stddev) = sum2;
+	}
+
+	if (f_avg) {
+		// n = (double)dsize2 / (double)dsize;
+		for (i = 0 ; i < dsize2 ; i++) {
+			if (count[i] > 0) {
+				sum[i] = sum[i] / count[i];
+			} else {
+				sum[i] = ignore_val;
 			}
 		}
 		V_DATA(avg) = sum;

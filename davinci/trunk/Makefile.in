@@ -211,7 +211,8 @@ davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	xrt_print_3d.h avl.h endian_norm.h io_loadmod.h scope.h \
 	ff.h isis_obj.h system.h ff_modules.h module_io.h \
 	toolbox.h configwin.h fft.h motif_tools.h tools.h \
-	lexer.c parser.c parser.h y_tab.h
+	lexer.c parser.c parser.h y_tab.h \
+	ff_gconvolve.c ff_warp.c ff_median.c ff_window.c
 
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -261,7 +262,9 @@ am_davinci_OBJECTS = apifunc.$(OBJEXT) array.$(OBJEXT) avl.$(OBJEXT) \
 	rice.$(OBJEXT) rpos.$(OBJEXT) scope.$(OBJEXT) spread.$(OBJEXT) \
 	string.$(OBJEXT) symbol.$(OBJEXT) system.$(OBJEXT) \
 	tools.$(OBJEXT) ufunc.$(OBJEXT) util.$(OBJEXT) x.$(OBJEXT) \
-	xrt_print_3d.$(OBJEXT) lexer.$(OBJEXT) parser.$(OBJEXT)
+	xrt_print_3d.$(OBJEXT) lexer.$(OBJEXT) parser.$(OBJEXT) \
+	ff_gconvolve.$(OBJEXT) ff_warp.$(OBJEXT) ff_median.$(OBJEXT) \
+	ff_window.$(OBJEXT)
 davinci_OBJECTS = $(am_davinci_OBJECTS)
 @LOCAL_READLINE_FALSE@@MODULE_SUPPORT_TRUE@davinci_DEPENDENCIES = \
 @LOCAL_READLINE_FALSE@@MODULE_SUPPORT_TRUE@	libmodsupp.a
@@ -299,11 +302,12 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/ff_convolve.Po ./$(DEPDIR)/ff_coreg.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_deghost.Po ./$(DEPDIR)/ff_display.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_fft.Po ./$(DEPDIR)/ff_filetype.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ff_fncc.Po ./$(DEPDIR)/ff_gnoise.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ff_gplot.Po ./$(DEPDIR)/ff_header.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ff_hstretch.Po ./$(DEPDIR)/ff_ifill.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ff_interp.Po ./$(DEPDIR)/ff_ix.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ff_load.Po ./$(DEPDIR)/ff_loadvan.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ff_fncc.Po ./$(DEPDIR)/ff_gconvolve.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ff_gnoise.Po ./$(DEPDIR)/ff_gplot.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ff_header.Po ./$(DEPDIR)/ff_hstretch.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ff_ifill.Po ./$(DEPDIR)/ff_interp.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ff_ix.Po ./$(DEPDIR)/ff_load.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ff_loadvan.Po ./$(DEPDIR)/ff_median.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_meta.Po ./$(DEPDIR)/ff_modules.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_moment.Po ./$(DEPDIR)/ff_pause.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_pbm.Po ./$(DEPDIR)/ff_pca.Po \
@@ -315,7 +319,8 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/ff_sort.Po ./$(DEPDIR)/ff_source.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_struct.Po ./$(DEPDIR)/ff_text.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_version.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ff_vignette.Po ./$(DEPDIR)/ff_write.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ff_vignette.Po ./$(DEPDIR)/ff_warp.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ff_window.Po ./$(DEPDIR)/ff_write.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_xfrm.Po ./$(DEPDIR)/fft.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/fft2f.Po ./$(DEPDIR)/fft_mayer.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/fit.Po ./$(DEPDIR)/header.Po \
@@ -490,6 +495,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_fft.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_filetype.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_fncc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_gconvolve.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_gnoise.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_gplot.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_header.Po@am__quote@
@@ -499,6 +505,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_ix.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_load.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_loadvan.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_median.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_meta.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_modules.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_moment.Po@am__quote@
@@ -519,6 +526,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_text.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_version.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_vignette.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_warp.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_window.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_write.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_xfrm.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fft.Po@am__quote@

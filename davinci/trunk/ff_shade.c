@@ -25,6 +25,83 @@ void sphrec(float lon, float lat, float *x, float *y, float *z);
 Var *
 ff_shade(vfuncptr func, Var * arg) 
 {
+	int i, j;
+    float *odata;
+    double		gx, gy, gz, sx, sy, sz;
+    int x, y;
+	int pos;
+	double left, up, val;
+
+    Var *obj, *out;
+	double sun_elevation = 45;
+	double sun_azimuth = 45;
+	double cosI, cosE;
+	double scale = 1.0;
+	
+    Alist alist[5];
+    alist[0] = make_alist( "object",    ID_VAL,    NULL, &obj);
+    alist[1] = make_alist( "angle",     DOUBLE,    NULL,    &sun_elevation);
+    alist[2] = make_alist( "azimuth",     DOUBLE,    NULL,  &sun_azimuth);
+    alist[3] = make_alist( "scale",     DOUBLE,    NULL,  &scale);
+    alist[4].name = NULL;
+
+    if (parse_args(func, arg, alist) == 0) return(NULL);
+
+    if (obj == NULL) {
+        parse_error("No object specified.\n");
+        return(NULL);
+    }
+
+    x = GetX(obj);
+    y = GetY(obj);
+
+    /*
+     * Get ground to sun vector
+     *   (-1,0,0)  Sun setting in west
+     *   ( 0,0,1)  Sun at noon
+     *   ( 1,0,0)  Sun rising in east
+     */
+	sx = cos(sun_azimuth * M_PI/180.0);
+	sy = sin(sun_azimuth * M_PI/180.0);
+    sz = sin((M_PI/2) - (sun_elevation * M_PI/180.0));
+
+    printf("Sun vector: %.4f %.4f %.4f\n", sx, sy, sz);
+
+    odata = calloc(x*y, sizeof(float));
+    out = newVal(BSQ, x, y, 1, FLOAT, odata);
+
+	for (j = 1 ; j < y ; j+=1) {
+		for (i = 1 ; i < x ; i+=1) {
+			left = extract_double(obj, cpos(i-1, j, 0, obj));
+			up = extract_double(obj, cpos(i, j-1, 0, obj));
+			val = extract_double(obj, cpos(i, j, 0, obj));
+
+			gx = (val - left) / scale;
+			gy = (val - up) / scale;
+			gz = 1.0 / sqrt(gx*gx + gy*gy);
+
+			/* n = H(gx, gy, gz) */
+			/* E = H(0,0,1) . n */
+			/* I = sun . n */
+			/* R = 1/(1+cos(E)/cos(I)) */
+			
+			/*  
+			v1 = H(-1, 0, gx/scale)
+			v2 = H(0, -1, gy/scale)
+			n = (gx, -gy, gz)
+			*/
+
+			cosE = gz;
+			cosI = sx*gx + sy*gy + sz*gz;
+			odata[cpos(i,j, 0, obj)] = 1.0/ (1.0+cosE/cosI);
+		}
+	}
+	return(out);
+}
+
+Var *
+ff_shade2(vfuncptr func, Var * arg) 
+{
     int		i, n;
     int		l, s;
     unsigned char     *bdata;
@@ -49,10 +126,10 @@ ff_shade(vfuncptr func, Var * arg)
 	
     Alist alist[5];
     alist[0] = make_alist( "object",    ID_VAL,    NULL, &obj);
-    alist[2] = make_alist( "pixdist",   DOUBLE,     NULL,    &dx);
-    alist[1] = make_alist( "angle",     DOUBLE,    NULL,    &sun_angle);
-    alist[1] = make_alist( "noshadow",  INT,       NULL,    &no_shade);
-    alist[3].name = NULL;
+    alist[1] = make_alist( "pixdist",   DOUBLE,     NULL,    &dx);
+    alist[2] = make_alist( "angle",     DOUBLE,    NULL,    &sun_angle);
+    alist[3] = make_alist( "noshadow",  INT,       NULL,    &no_shade);
+    alist[4].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(NULL);
 

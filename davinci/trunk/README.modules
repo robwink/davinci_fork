@@ -1,4 +1,3 @@
-
 BASICS
 
 
@@ -11,64 +10,7 @@ text below to refer to any one of these variations. Shared objects
 are compiled as "position-independent-code" (which is different
 from relocatable code).
 
-Modules are named with a ".dvm" extension for consistency sake.
-
-Each compiler and each system has a different way of make shared
-objects.  Various options that I've encountered thus far are given
-below:
-
-Solaris 7 - Sparc
-	position independent compile: -Kpic
-	linker option to generate shared object: -G
-	
-
-RedHat Linux - PC
-	position independent compile: -fPIC
-	linker option to generate shared object: -shared
-
-Windows NT - PC
-	does not require compile in position independent fashion
-	compiler option to generate shared object (DLL): -ML
-		(-MLd for debuggable DLL)
-
-HPUX 11 - hppa1.1
-	position independent compile: +z
-	linker option to generate shared object: -B symbolic -b
-	** linking by passing options through compiler does not work
-	   use system linker
-
-IRIX - SGI
-	position independent compile: -KPIC
-	linker option to generate shared object: -shared
-
-AIX 4.3 - RS/6000
-	position independent compile: -K
-
-
-** NOTE: The options listed above are for the default compiler and
-linker that comes with the system. If gcc is available and it works on
-the platform, then compile and link usiing -fPIC and -shared
-respectively.
-
-The "davinci" executable has to be linked with appropriate library to
-do dynamic link. Moreover, the executable should export all symbols
-in it so that modules can use functions available in davinci. Note
-however, that it does not seem possible to do in Windows.
-
-Microsoft Windows require that the functions exported by DLLs (our
-modules) be declared using a special DLL declaration (as given in
-"ff_modules.h" DV_MOD_EXPORT macro).  Moreover, the DLLs cannot use
-functions from within the executable. So, common functions and
-variables must be taken out and built into a separate library. This
-library is then linked to both davinci executable and the modules.
-
-
-
-
-
-
 WRITING MODULES
-
 
 daVinci modules must have the following in them:
 

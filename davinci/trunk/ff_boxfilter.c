@@ -107,7 +107,7 @@ init_sums(Var *data, int w, int h, int d, Var **rn, Var **rs, Var **rcount, Var 
 
 				west = i-(w/2)-1;
 				north = j-(h/2)-1;
-				back = k-(d/w)-1;
+				back = k-(d/2)-1;
 
 				p1 = cpos(east, south, front, data);
 				count = n[p1];
@@ -133,25 +133,25 @@ init_sums(Var *data, int w, int h, int d, Var **rn, Var **rs, Var **rcount, Var 
 
 				if (back >= 0) {
 					p5 = cpos(east, south, back, data);
-					count += n[p5];
-					sum   += s[p5];
+					count -= n[p5];
+					sum   -= s[p5];
 
 					if (west >= 0) {
 						p6 = cpos(west, south, back, data);
-						count -= n[p6];
-						sum   -= s[p6];
+						count += n[p6];
+						sum   += s[p6];
 					}
 
 					if (north >= 0) {
 						p7 = cpos(east, north, back, data);
-						count -= n[p7];
-						sum   -= s[p7];
+						count += n[p7];
+						sum   += s[p7];
 					}
 
 					if (north >= 0 && west >= 0) {
 						p8 = cpos(west,north,back,data);
-						count += n[p8];
-						sum   += s[p8];
+						count -= n[p8];
+						sum   -= s[p8];
 					}
 				}
 
@@ -247,3 +247,15 @@ ff_boxfilter(vfuncptr func, Var * arg)
 		return(rmean);
 	}
 }
+
+/*
+filter(type=STRING, size=INT, x=INT, y=INT, z=INT, ignore=, gsigma=FLOAT)
+
+	"box"		- box filter, uniform XxY convolution
+	"lpf"		- same as box filter
+	"gaussian"	- gaussian filter
+		gsigma		- width of gaussian
+	"median"   	- median filter
+	"sobel"		- sobel edge detection filter
+	"unsharp"	- unsharp filter
+*/

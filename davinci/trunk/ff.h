@@ -169,9 +169,7 @@ struct _vfuncptr vfunclist[] = {
     { "moments",     ff_moments,      NULL , NULL},   
     { "avg",     ff_avg2,           NULL , NULL},   
     { "stddev",  ff_avg2,           NULL , NULL},   
-    { "avg2",    ff_avg,            NULL , NULL},   
-    { "stddev2", ff_avg,            NULL , NULL},   
-    { "sum",     ff_avg,            NULL , NULL},   
+    { "sum",     ff_avg2,            NULL , NULL},   
     { "min",     ff_min,            NULL , NULL},   
     { "max",     ff_min,            NULL , NULL},   
     { "sort",     ff_sort,          NULL , NULL},
@@ -297,6 +295,13 @@ struct _vfuncptr vfunclist[] = {
     
     { "hstretch",   ff_hstretch, 		NULL }, 
     { "coreg",      ff_coreg, 			NULL }, 
+    { "gconvolve",  ff_gconvolve, 			NULL }, 
+    { "warp",  ff_warp, 			NULL }, 
+    { "median",  ff_median, 			NULL }, 
+    { "window",  ff_window, 			NULL }, 
+    { "radial_symmetry",  ff_radial_symmetry, 			NULL }, 
+    { "radial_symmetry2",  ff_radial_symmetry2, 			NULL }, 
+    { "local_maximum",  ff_local_maximum, 			NULL }, 
 
 #ifdef HAVE_LIBISIS
     { "write_isis_cub",     ff_write_isis_cub,          NULL },
