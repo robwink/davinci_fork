@@ -49,9 +49,6 @@
 /* Define to 1 if you have the <libgen.h> header file. */
 #undef HAVE_LIBGEN_H
 
-/* Define to 1 if you have the `hdf5' library (-lhdf5). */
-#undef HAVE_LIBHDF5
-
 /* iomedley library is present */
 #undef HAVE_LIBIOMEDLEY
 
@@ -70,7 +67,7 @@
 /* Define to 1 if you have the `qmv' library (-lqmv). */
 #undef HAVE_LIBQMV
 
-/* Define to 1 if you have the `readline' library (-lreadline). */
+/* have readline library */
 #undef HAVE_LIBREADLINE
 
 /* Define to 1 if you have the `termcap' library (-ltermcap). */
@@ -81,9 +78,6 @@
 
 /* VICAR widget library is present */
 #undef HAVE_LIBVICAR
-
-/* Define to 1 if you have the `X11' library (-lX11). */
-#undef HAVE_LIBX11
 
 /* Define to 1 if you have the `Xmu' library (-lXmu). */
 #undef HAVE_LIBXMU

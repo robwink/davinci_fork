@@ -69,6 +69,7 @@ HAVE_LIBMAGICK_FALSE = @HAVE_LIBMAGICK_FALSE@
 HAVE_LIBMAGICK_TRUE = @HAVE_LIBMAGICK_TRUE@
 HAVE_MOTIF_FALSE = @HAVE_MOTIF_FALSE@
 HAVE_MOTIF_TRUE = @HAVE_MOTIF_TRUE@
+INCLDTL = @INCLDTL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
@@ -486,7 +487,6 @@ uninstall-am: uninstall-info-am uninstall-pkglibLTLIBRARIES
 	uninstall-pkglibLTLIBRARIES
 
 
-@LOCAL_VICAR_TRUE@	  MY_VICAR_LIBADD = $(top_srcdir)/vicar/libvicar.la
 @HAVE_MOTIF_TRUE@	gui_la_SOURCES = gui.c \
 @HAVE_MOTIF_TRUE@		widget_arrowbutton.c widget_cascadebutton.c widget_command.c \
 @HAVE_MOTIF_TRUE@		widget_drawnbutton.c widget_errordialog.c widget_fileselectionbox.c \
@@ -509,7 +509,7 @@ uninstall-am: uninstall-info-am uninstall-pkglibLTLIBRARIES
 @HAVE_MOTIF_TRUE@		widget_transientshell.h widget_vicar.h widget_xbaematrix.h
 
 @HAVE_MOTIF_TRUE@	gui_la_LDFLAGS = -module
-@HAVE_MOTIF_TRUE@	gui_la_LIBADD = $(MY_VICAR_LIBADD)
+@HAVE_MOTIF_TRUE@	gui_la_LIBADD = $(top_srcdir)/vicar/libvicar.la
 
 @HAVE_MOTIF_TRUE@	MY_GUI_LIBRARY = gui.la
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
