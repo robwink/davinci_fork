@@ -155,6 +155,7 @@ write_PDS_Qube(Var *core, Var *side, Var *bottom, Var *back, FILE *fp)
    return(v);
 }
 
+int * fix_unsigned(struct iom_iheader *h, unsigned short *s);
 
 Var *dv_LoadISISFromPDS(FILE *fp, char *fn, int dptr)
 {
@@ -289,6 +290,12 @@ Var *dv_LoadISISFromPDS(FILE *fp, char *fn, int dptr)
 
 	OdlFreeTree(ob);
 	data = iom_read_qube_data(fileno(fp), h);
+
+	/*
+	** We need do promote unsigned short to signed int here
+	*/
+	data = fix_unsigned(h, data);
+
 	v = iom_iheader2var(h);
 	V_DATA(v) = data;
 
@@ -297,6 +304,26 @@ Var *dv_LoadISISFromPDS(FILE *fp, char *fn, int dptr)
 }
 
 
+int *
+fix_unsigned(struct iom_iheader *h, unsigned short *s)
+{
+	int len;
+	int *data = s;
+	int i;
+
+	if (h->eformat == iom_MSB_INT_2 || h->eformat == iom_LSB_INT_2) {
+		len = h->size[0] * h->size[1] * h->size[2];
+		data = calloc(len, sizeof(int));
+		for (i = 0 ; i < len ; i++) {
+			data[i] = (unsigned short)s[i];
+		}
+		free(s);
+		if (h->eformat == iom_MSB_INT_2) h->eformat = iom_MSB_INT_4;
+		if (h->eformat == iom_LSB_INT_2) h->eformat = iom_LSB_INT_4;
+		h->format = iom_INT;
+	}
+	return(data);
+}
 
 
 
