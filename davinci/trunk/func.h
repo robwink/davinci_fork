@@ -135,6 +135,7 @@ Var *ff_XImage_Display(vfuncptr func, Var * arg);
 #endif
 int LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var);
 
+int WriteRaw(Var *, FILE *, char *);
 int WriteGRD(Var *, FILE *, char *);
 int WriteSpecpr(Var *, char *, char *);
 int WriteISIS(Var *, FILE *, char *, char *);
