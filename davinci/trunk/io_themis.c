@@ -678,6 +678,23 @@ ff_PACI_Read(vfuncptr func, Var * arg)
         if (Cmd==ALL) {
             int extra_frames=0;
             qsort((char *)data,Lines,Col,Themis_Sort);
+				/*Pack Bands: this throws out empty bands*/
+				{
+					int Bc[16];
+					int idx=0;
+					int i;
+					for (i=0;i<Max_Band;i++){
+						if (BandCount[i]){
+							Bc[idx]=BandCount[i];
+							idx++;
+						}
+					}
+					Max_Band=idx;
+					for(i=0;i<Max_Band;i++){
+						BandCount[i]=Bc[i];
+					}
+				}
+	
             Max_Band_Count=BandCount[0];
             for (i=0;i<Max_Band;i++){
                 if (BandCount[i]!=BandCount[i+1]) {
@@ -709,6 +726,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                     c_frame=(((*((char *)data+(i*Col)+_FRAMES) & 0xFF)<< 8) | 
                              (*((char *)data+(i*Col)+_FRAMES+1) & 0xFF));
                     if (last_band != c_band) {
+								parse_error("Keeping Band: %d\n",c_band);
                         if (frame_count < Max_Band_Count) {/*Missing ending data*/
                             Add_Fake_Frame((((unsigned char *)newbuf)+new_count*Col),
 									(int)c_band,
