@@ -17,6 +17,7 @@
 
 /* FIX: put these in a header */
 
+extern int iom_isBMP(FILE *);
 extern int iom_isGIF(FILE *);
 extern int iom_isJPEG(FILE *);
 extern int iom_isTIFF(FILE *);
@@ -26,6 +27,7 @@ extern int iom_isPNG(FILE *);
 extern int iom_isPNM(FILE *);
 #endif
 
+extern int iom_GetBMPHeader(FILE *, char *, struct iom_iheader *);
 extern int iom_GetGIFHeader(FILE *, char *, struct iom_iheader *);
 extern int iom_GetJPEGHeader(FILE *, char *, struct iom_iheader *);
 extern int iom_GetTIFFHeader(FILE *, char *, struct iom_iheader *);
@@ -34,6 +36,7 @@ extern int iom_GetTIFFHeader(FILE *, char *, struct iom_iheader *);
 extern int iom_GetPNMHeader(FILE *, char *, struct iom_iheader *);
 #endif
 
+extern int iom_WriteBMP();
 extern int iom_WriteGIF();
 extern int iom_WriteJPEG();
 extern int iom_WriteTIFF();
@@ -63,6 +66,7 @@ typedef struct {
 
 static const char *gif_extensions[]  = { "gif", NULL };
 static const char *jpeg_extensions[] = { "jpg", "jpeg", NULL };
+static const char *bmp_extensions[]  = { "bmp", NULL };
 static const char *tiff_extensions[] = { "tif", "tiff", NULL };
 
 #if 0
@@ -81,6 +85,7 @@ static iom_io_interface	interfaces[] = {
   { "GIF",  gif_extensions,  iom_isGIF,  iom_GetGIFHeader,  iom_WriteGIF,  1 },
   { "JPEG", jpeg_extensions, iom_isJPEG, iom_GetJPEGHeader, iom_WriteJPEG, 1 },
   { "TIFF", tiff_extensions, iom_isTIFF, iom_GetTIFFHeader, iom_WriteTIFF, 2 },
+  { "BMP",  bmp_extensions,  iom_isBMP,  iom_GetBMPHeader,  iom_WriteBMP,  1 },
 #ifdef HAVE_LIBPNG
   { "PNG",  png_extensions,  iom_isPNG,  iom_GetPNGHeader,  iom_WritePNG,  2 },
 #endif
