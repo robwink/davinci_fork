@@ -1,9 +1,12 @@
-char *version = "@(#) daVinci Version #1.04";
+char *version = "@(#) daVinci Version #1.05";
 
 
 #include "build.h"
 
 /*
+Version 1.05: Fri Sep 20 22:56:35 MST 2002
+	+ load_pds() table reader didn't handle endian_ness
+
 Version 1.04: Mon Sep 23 10:35:34  2002
 	+ Added a new version of HDF5 library and enabled it.
 	+ Moved HDF5 in its own subdir in the win32 directory 
