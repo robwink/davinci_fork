@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.85";
+char *version = "@(#) daVinci Version #0.86";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,10 @@ char *version = "@(#) daVinci Version #0.85";
 #include "build.h"
 
 /*
+
+Version 0.86: Thu Feb 21 13:32:54 MST 2002
+	* Modified ff_interp so that it caches the slopes and the
+	  y-intercepts of all the line segments in domain.
 
 Version 0.85: Wed Feb 20 18:42:58 MST 2002
 	* Modified ff_interp to use binary-searching for searching 
