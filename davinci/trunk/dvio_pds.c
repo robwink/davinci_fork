@@ -39,6 +39,10 @@ PFI VrF[]={rf_QUBE,rf_TABLE,rf_IMAGE,rf_HISTOGRAM_IMAGE,rf_HISTORY};
 static char *keyName[]={"QUBE","TABLE","IMAGE","HISTOGRAM_IMAGE","HISTORY",NULL};
 static int num_data_Keys;
 
+
+/*Need to figure this out*/
+int pds_record_bytes;
+
 char *
 fix_name(char *input_name)
 {
@@ -417,6 +421,22 @@ Traverse_Tree(OBJDESC * ob,Var *v)
 		/*Keyword before object*/
 		else if (key->line_number < next_ob->line_number) {
 				keyname=mod_name_if_necessary(key->name);
+			
+/*
+** We want to note the Record_Bytes.  
+** If we have multiple objects in this file
+** this is value which everything is aligned to.
+** Therefore, if we have a qube and a table, while the table
+** maybe have rows of size N, the record bytes might be of
+** size M.  Therefore, any pointers in the file will
+** be in units of M (ie ^TABLE = Q ==> the table is at
+** address Q*M.  However, after reaching the table, we'll
+** be reading it in chunks of N.  So....
+*/
+	
+				if (!(strcmp(keyname,"RECORD_BYTES")))
+					pds_record_bytes=atoi(key->value);
+
 
 				/*Check to see if this is a pointer*/
 				if (key->is_a_pointer){/* then check to see if it's an object we want*/
@@ -552,7 +572,7 @@ int rf_QUBE(char *fn, Var *ob,char * val)
 	FILE *fp;
 	Var *data=NULL;
 	fp=fopen(fn,"r");
-	data=dv_LoadISIS(fp,fn,NULL);
+	data=(Var *)dv_LoadISIS(fp,fn,NULL);
 	if (data!=NULL){
 		add_struct(ob,fix_name("DATA"),data);
 		fclose(fp);
@@ -596,7 +616,14 @@ int rf_TABLE(char *fn, Var *ob,char * val)
 
 		Bufs[j]=(char *)calloc((label->nrows*size[j]),sizeof(char));
 	}
- 	Offset=(atoi(val)-1)*label->reclen;	
+
+	if (label->reclen != pds_record_bytes)
+		Offset=(atoi(val)-1)*pds_record_bytes;
+
+	else
+ 		Offset=(atoi(val)-1)*label->reclen;	
+
+
 	fp=open(fn,O_RDONLY,0);
 	lseek(fp,Offset,SEEK_SET);
 	for (i=0;i<label->nrows;i++){
@@ -832,7 +859,7 @@ int rf_IMAGE(char *fn, Var *ob,char * val)
 	FILE *fp;
 	Var *data=NULL;
 	fp=fopen(fn,"r");
-	data=dv_LoadISIS(fp,fn,NULL);
+	data=(Var *)dv_LoadISIS(fp,fn,NULL);
 	if (data!=NULL){
 		add_struct(ob,fix_name("IMAGE"),data);
 		fclose(fp);
