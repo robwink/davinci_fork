@@ -299,8 +299,8 @@ xpos(int i, Var *v, int *x, int *y, int *z)
     d[2] = i / (V_SIZE(v)[0] * V_SIZE(v)[1]);
 
     *x = d[orders[V_ORG(v)][0]];
-    *y = d[orders[V_ORG(v)][0]];
-    *z = d[orders[V_ORG(v)][0]];
+    *y = d[orders[V_ORG(v)][1]];
+    *z = d[orders[V_ORG(v)][2]];
 }
 
 

@@ -19,7 +19,7 @@ XLIBS=-L/usr/lib/X11R5 $(XRTLIBS)
 XRTINCLUDE= -I$(XRTHOME)/include
 XRTLIBS = -L$(XRTHOME)/lib -L/usr/lib/Motif1.2 -lxrt3d -lpdsutil -lMrm -lXm -lXpm
 
-CC     = gcc
+# CC     = gcc
 CFLAGS = -g -DHAVE_CONFIG_H -Ilib -DHAVE_XRT -I/user/east/asbms/Project4/include
 LIBS   = $(XLIBS) -L/user/east/asbms/Project4/lib -lproj -lreadline -ltermcap -lXt -lX11 -lm 
 
