@@ -2935,38 +2935,4 @@ static Var * dvWaveImage(vfuncptr f, Var *args) {
   return(dvoutput);
 }
 
-static Var *dvhelp(vfuncptr f, Var *args)
-{
-  /* Method to call help for ImageMagick functions, shamelessly plundered
-     from Gary Rigg's code in the pnm module.
-  */
-	int   subtopics = 0;
-	int   retval    = 0;
-
-	char  keyword[BUFSIZ] = "modules dvmagick\0"; // Leave space for return
-	char* filenme = "docs/dvmagick.gih\0";
-	char* input_line = NULL;
-	Alist alist[1];
-
-	alist[0].name = NULL;
-	if (0==parse_args(f,args,alist))
-		printf("\n\nNo arguments should be passed to help.\n\n");
-
-	retval = help(keyword, filenme, &subtopics);
-
-	if (retval == H_FOUND) // Ok, bad me, using subtopics as retval
-	{
-		input_line = cleanup_input(readline("Subtopic: "));
-		
-	        if (strlen(input_line))
-		{	
-			subtopics = 0;
-			sprintf(keyword, "%s %s\0",keyword,input_line);
-			retval = help(keyword, filenme, &subtopics);
-			if (retval == H_FOUND) return(dvhelp(f,args));
-		}
-	}
-        return(NULL);
-}
-
 #endif /* DAVINCI_MODULE */
