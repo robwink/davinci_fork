@@ -76,7 +76,7 @@ void pp_print_struct(Var *v, int indent, int depth);
 Var *V_DUP (Var *);
 Var *set_array (Var *, Var *, Var *);
 Var *extract_array (Var *, Range *);
-Var ** find_struct(Var *a, Var *b);
+int find_struct(Var *a, Var *b, Var **);
 
 /* symbol.c */
 Var *get_sym (char *name);	/* retrieve named Sym from table */

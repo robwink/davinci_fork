@@ -21,8 +21,8 @@ scope_push(Scope *s)
 {
     if (scope_count == scope_size) {
         scope_size = max(scope_size*2, 2);
-		scope_stack = (Scope **)my_realloc(scope_stack, 
-										  scope_size * sizeof(Scope *));
+        scope_stack = (Scope **)my_realloc(scope_stack, 
+                                           scope_size * sizeof(Scope *));
     }
     scope_stack[scope_count++] = s;
 }
@@ -111,10 +111,10 @@ dd_put_argv(Scope *s, Var *v)
         dd->value = (Var **)my_realloc(dd->value, sizeof(Var *) * dd->size);
         dd->name = (char **)my_realloc(dd->name, sizeof(char *) * dd->size);
     }
-	/*
-	** WARNING: This looks like it will break if you try to global a
-	**          value that was passed.
-	*/
+    /*
+    ** WARNING: This looks like it will break if you try to global a
+    **          value that was passed.
+    */
     dd->value[dd->count] = v;
     dd->name[dd->count] = V_NAME(v);
     V_NAME(v) = NULL;
@@ -122,8 +122,8 @@ dd_put_argv(Scope *s, Var *v)
     dd->count++;
 
     /**
-     ** subtract 1 for $0
-     **/
+    ** subtract 1 for $0
+    **/
     V_INT(dd->value[0]) = dd->count - 1;
 
     return(dd->count-1);
@@ -133,7 +133,7 @@ void
 dd_unput_argv(Scope *s)
 {
     Dictionary *dd = s->args;
-	Var *v;
+    Var *v;
     int i;
 
     for (i = 1 ; i < dd->count ; i++) {
@@ -147,8 +147,8 @@ int
 dd_argc(Scope *s)
 {
     /**
-     ** subtract 1 for $0
-     **/
+    ** subtract 1 for $0
+    **/
     return(s->args->count - 1);
 }
 
@@ -171,8 +171,8 @@ new_dd()
     d->count = 1;
 
     /**
-     ** Make a var for $argc
-     **/
+    ** Make a var for $argc
+    **/
     d->value[0] = (Var *)calloc(1, sizeof(Var));
     make_sym(d->value[0], INT, "0");
     V_TYPE(d->value[0]) = ID_VAL;
@@ -199,13 +199,13 @@ void
 free_scope(Scope *s)
 {
     int i;
-	/* this looks wrong
-    for (i = 0 ; i < s->dd->count ; i++) {
-        free(s->dd->name);
-    }
-	*/
+    /* this looks wrong
+       for (i = 0 ; i < s->dd->count ; i++) {
+       free(s->dd->name);
+       }
+       */
 
-	if (s->dd->value) free(s->dd->value);
+    if (s->dd->value) free(s->dd->value);
     if (s->dd) free(s->dd);
 
     free(s->args->value);
@@ -219,8 +219,8 @@ push(Scope *scope, Var *v)
     Stack *stack = scope->stack;
     if (stack->top == stack->size) {
         stack->size = max(stack->size*2, 2);
-		stack->value = (Var **) my_realloc(stack->value, 
-										   stack->size * sizeof(Var *));
+        stack->value = (Var **) my_realloc(stack->value, 
+                                           stack->size * sizeof(Var *));
     }
     stack->value[stack->top++] = v;
 }
@@ -296,15 +296,18 @@ mem_malloc(void)
 Var *
 mem_claim_struct(Var *v)
 {
-	int i;
-	Var **vdata;
+    int i;
+    int count;
+    Var *data;
 
-	if (V_TYPE(v) == ID_STRUCT) {
-		for (i = 0 ; i < V_STRUCT(v).count ; i++) {
-			mem_claim(V_STRUCT(v).data[i]);
-		}
-	}
-	return(v);
+    if (V_TYPE(v) == ID_STRUCT) {
+        count = get_struct_count(v);
+        for (i = 0 ; i < count ; i++) {
+            get_struct_element(v, i, NULL, &data);
+            mem_claim(data);
+        }
+    }
+    return(v);
 }
 
 /**
@@ -329,7 +332,7 @@ mem_claim(Var *ptr)
                 tmp = sym->next;
                 sym->next = sym->next->next;
                 free(tmp);
-				return(mem_claim_struct(ptr));
+                return(mem_claim_struct(ptr));
             }
             sym = sym->next;
         }
@@ -373,11 +376,11 @@ clean_scope(Scope *scope)
     if (scope->dd) {
         free_var(scope->dd->value[0]);
         free(scope->dd->value);
-		/* this looks wrong
-        for (i = 1 ; i< scope->dd->count ; i++) {
-            free(scope->dd->name[i]);
-        }
-		*/
+        /* this looks wrong
+           for (i = 1 ; i< scope->dd->count ; i++) {
+           free(scope->dd->name[i]);
+           }
+           */
         if (scope->dd->name) free(scope->dd->name);
         free(scope->dd);
     }

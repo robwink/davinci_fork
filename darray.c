@@ -56,7 +56,7 @@
  **
  ** 	Returns number of elements in array, or -1 on error.
  **
- ** int Narray_replace_data(Narray *a, int i, void *new, void **old)
+ ** int Narray_replace(Narray *a, int i, void *new, void **old)
  **
  **    Replace the data element at index i, returning the old one
  **/
@@ -192,7 +192,7 @@ Nnode *
 Nnode_create(char *key, void *value)
 {
     Nnode *a = (Nnode *)calloc(1, sizeof(Nnode));
-    a->key = (char *)strdup(key);
+	if (key) a->key = (char *)strdup(key);
     a->value = value;
     a->index = -1;      /* unassigned */
     return(a);
@@ -286,7 +286,7 @@ Narray_find(Narray *a, char *key, void **data)
 */
 
 int
-Narray_replace_data(Narray *a, int i, void *new, void **old)
+Narray_replace(Narray *a, int i, void *new, void **old)
 {
     Nnode *n;
 	if (Darray_get(a->data, i, (void **)&n) == 1) {

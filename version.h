@@ -1,6 +1,8 @@
-char *version = "@(#) daVinci Version #0.60";
+char *version = "@(#) daVinci Version #0.61";
 
 /*
+Version 0.61: Thu Sep 14 17:55:05 MST 2000
+	* Changed structures to use Narray associative arrays
 
 Version 0.60: Wed Aug  9 17:42:00 MST 2000
 	+ Added "niter" parameter to ff_pcs() and ff_eigen().
@@ -10,7 +12,6 @@ Version 0.60: Wed Aug  9 17:42:00 MST 2000
 
 Version 0.59a: Wed Aug  2 16:17:03 MST 2000
 	* Fixed line nmumbers, again.  Pushes pp_lineno onto the stack for source()
-
 
 Version 0.59: Wed Jul 26 15:15:16 MST 2000
 	* Modifications to io_specpr

@@ -28,9 +28,9 @@
 #include <ctype.h>
 #include <signal.h>
 
-#include "avl.h"
 
 #include "system.h"
+#include "darray.h"
 
 #define memdup(p, l)	memcpy(malloc(l), (p), l)
 
@@ -43,10 +43,10 @@ typedef struct _tagVstruct Vstruct;
 typedef struct _text TextArray;
 
 struct _range {
-	int dim;			/* dimension of data */
-	int lo[3];
-	int hi[3];
-	int step[3];
+    int dim;			/* dimension of data */
+    int lo[3];
+    int hi[3];
+    int step[3];
 };
 
 struct _symbol {
@@ -56,62 +56,62 @@ struct _symbol {
     int order;			/* axis application order */
     void *data;
 
-	void *null;			/* null value */
+    void *null;			/* null value */
 
     char *title;
 };
 
 
 struct _tagnode {
-	Var *left;
-	Var *right;
-	Var *parent;
+    Var *left;
+    Var *right;
+    Var *parent;
 
-	int type;			/* An identifier of what type of value this is:
-						   Possibilities: Constant
-										  Temporary
-						*/
-	int token_number;	/* Where in the value table is this puppy located? */
+    int type;			/* An identifier of what type of value this is:
+                                   Possibilities: Constant
+                                   Temporary
+                                   */
+    int token_number;	/* Where in the value table is this puppy located? */
 };
 
 struct _tagVstruct {
-	int count;
-	char **names;
-	Var **data;
+    int x_count;
+    char **x_names;
+    Var **x_data;
 };
 
 struct _text {
-	int Row;
-	char **text;
+    int Row;
+    char **text;
 };
 
 
 struct _var {
-	int type;
+    int type;
     char *name;
     union {
         Node node;
-		Sym sym;
-		Range range;
-		char *string;
-		Var *keyval;		/* used by $Keyword */
-		Vstruct vstruct;
-		TextArray textarray;
-	} value; 
-	Var *next;
+        Sym sym;
+        Range range;
+        char *string;
+        Var *keyval;		/* used by $Keyword */
+        Narray *vstruct;
+        TextArray textarray;
+    } value; 
+    Var *next;
 };
 
-#define V_NEXT(v)	(v)->next				/* pointer to next value in table */
-#define V_NAME(v)	(v)->name				/* NAME of SYMbol in union */
-#define V_TYPE(v)	(v)->type				/* type of var */
+#define V_NEXT(v)	(v)->next		/* pointer to next value in table */
+#define V_NAME(v)	(v)->name		/* NAME of SYMbol in union */
+#define V_TYPE(v)	(v)->type		/* type of var */
 
-#define V_KEYVAL(v)	(v)->value.keyval		/* keyword value */
+#define V_KEYVAL(v)	(v)->value.keyval	/* keyword value */
 #define V_STRING(v)	(v)->value.string
 #define V_RANGE(v)	(&((v)->value.range))	/* range value */
 #define V_NODE(v)	(&((v)->value.node))
-#define	V_SYM(v)	(&((v)->value.sym))		/* SYMbol value in union */
+#define	V_SYM(v)	(&((v)->value.sym))	/* SYMbol value in union */
 
-#define V_DATA(v)	V_SYM(v)->data			/* pointer to data */
+#define V_DATA(v)	V_SYM(v)->data		/* pointer to data */
 #define V_INT(v)	(*((int *)V_DATA(v)))	/* derefernce as a single int */
 #define V_FLOAT(v)	(*((float *)V_DATA(v)))	/* derefernce as a single float */
 #define V_FORMAT(v)	V_SYM(v)->format
@@ -134,15 +134,15 @@ struct _var {
  ** The following define the various types for Var->type
  **/
 
-#define ID_BASE			100				/* in case of conflicts */
-#define ID_NONE         0				/* a non value */
-#define ID_ERROR		ID_BASE-1		
-#define ID_UNK  		ID_BASE+1       /* Unknown type */
-#define ID_STRING       ID_BASE+2       /* NULL terminated character string */
-#define	ID_KEYWORD		ID_BASE+3		/* keyword argument */
-#define ID_VAL			ID_BASE+5		/* everything with dim != 0 */
-#define ID_STRUCT      ID_BASE+6		/* Structure */
-#define ID_TEXT		   ID_BASE+8	   /*1-D Array of Strings*/
+#define ID_BASE		100                     /* in case of conflicts */
+#define ID_NONE         0			/* a non value */
+#define ID_ERROR	ID_BASE-1		
+#define ID_UNK  	ID_BASE+1               /* Unknown type */
+#define ID_STRING       ID_BASE+2               /* NULL terminated character string */
+#define	ID_KEYWORD	ID_BASE+3		/* keyword argument */
+#define ID_VAL		ID_BASE+5		/* everything with dim != 0 */
+#define ID_STRUCT       ID_BASE+6		/* Structure */
+#define ID_TEXT		ID_BASE+8	        /*1-D Array of Strings*/
 
 #define ID_IVAL         ID_BASE+10		/* Integer value */
 #define ID_RVAL         ID_BASE+11		/* real value */
@@ -250,8 +250,8 @@ struct _var {
 #define PATH_SEP ' '
 
 struct keywords {
-	char *name;
-	Var *value;
+    char *name;
+    Var *value;
 };
 
 typedef struct _vfuncptr *vfuncptr;
@@ -260,9 +260,9 @@ typedef double (*dfunc)(double);
 typedef double (*ddfunc)(double, double);
 
 struct _vfuncptr {
-	char *name;
-	vfunc fptr;
-	void *fdata;
+    char *name;
+    vfunc fptr;
+    void *fdata;
 };
 
 struct _iheader {
@@ -273,8 +273,8 @@ struct _iheader {
     int s_lo[3];        /* subset lower range (pixels)            */
     int s_hi[3];		/* subset upper range (pixels)            */
     int s_skip[3];		/* subset skip interval (pixels)          */
-	int dim[3];			/* final dimension size */
-	int corner;          /* size of 1 whole plane */
+    int dim[3];			/* final dimension size */
+    int corner;          /* size of 1 whole plane */
 
     int byte_order;		/* byteorder of data                      */
     int format;			/* data format (INT, FLOAT, etc)          */
