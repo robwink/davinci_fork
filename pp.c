@@ -493,7 +493,6 @@ pp_mk_range(Var *r1, Var *r2)
     V_RANGE(v)->step[0] = 0;
     V_RANGE(v)->dim++;
     V_TYPE(v) = ID_RANGE;
-    V_NEXT(v) = NULL;
 
     return(v);
 }
@@ -528,7 +527,6 @@ pp_mk_rstep(Var *r1, Var *r2)
     }
 
     V_RANGE(r1)->step[0] = v1;
-    V_NEXT(r1) = NULL;
 
     return(r1);
 }
@@ -629,37 +627,31 @@ Var *
 pp_mk_arglist(Var *arglist, Var *arg) 
 {
     /*
-    ** force some next pointers to be NULL here
     */
     Var *p;
     if (arglist == NULL) {
 		if (arg == NULL) return(NULL);
-        arglist = arg;
-        arg->next = NULL;
-        return(arglist);
-    }
-    if (arg == NULL) {
-        return(arglist);
+		arglist = newVar();
+		V_TYPE(arglist) = ID_ARGS;
+		V_ARGS(arglist) = Narray_create(2);
     }
 
-    for (p = arglist ; p != NULL ; p = p->next) {
-        if (p->next == NULL) {
-            p->next = arg;
-            arg->next = NULL;
-            break;
-        }
+    if (arg != NULL) {
+		Narray_add(V_ARGS(arglist), NULL, arg);
     }
+
     return(arglist);
 }
 
 /* convert keyword pair to arg */
+/* This should eventually be modified to put the name of
+ * the keyword into the V_ARG Narray as a named element
+ */
 Var *
 pp_keyword_to_arg(Var *keyword, Var *ex) 
 {
     V_TYPE(keyword) = ID_KEYWORD;
     V_KEYVAL(keyword) = ex;
-    keyword->next = NULL;
-	if (ex) ex->next = NULL;
     return(keyword);
 }
 
@@ -679,54 +671,6 @@ get_env_var(char *name)
         return (NULL);
     }
     return (strdup(value));
-}
-
-
-
-/**
- ** pp_shellArgs() - return argument specified on the shell command line.
- **/
-
-Var *
-pp_shellArgs(Var *v)
-{
-    int n;
-    char name[256];
-    Var *s=NULL;
-    char *value;
-
-    if (V_TYPE(v) == ID_VAL) {
-        n = V_INT(v);
-        sprintf(name,"$%d", n);
-    } else {
-        strcpy(name, V_NAME(v));
-    }
-
-    if ((value = get_env_var(name)) == NULL) {
-        return(NULL);
-    }
-	
-
-    /**
-     ** if symbol is not in symtab, put it there.
-     **/
-    if ((s = get_sym(name)) == NULL) {
-        s = newVar();
-        V_TYPE(s) = ID_STRING;
-        V_STRING(s) = strdup(value);
-        V_NAME(s) = strdup(name);
-        put_sym(s);
-    }
-    /**
-     ** This cannot return the Var we just put into the symtab, cause 
-     ** it will have ->next already set.  Make a new Var containing
-     ** just its name.
-     **/
-    s = newVar();
-    V_NAME(s) = strdup(name);
-    V_TYPE(s) = ID_UNK;
-
-    return(s);
 }
 
 /**

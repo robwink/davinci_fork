@@ -13,54 +13,27 @@ Var *
 ff_header(vfuncptr func, Var *arg)
 {
 	Var *input = NULL, *v, *e;
-	char *filename, *fname, *element;
-	int frec;
+	char *filename= NULL, *fname, *element= NULL;
+	int frec = 0;
 	FILE *fp;
 	char *p;
 
-    struct keywords kw[] = {
-		{"filename", NULL},
-		{"element", NULL},
-		{"record", NULL},
-		{NULL, NULL}
-	};
+	Alist alist[4];
+	alist[0] = make_alist( "filename",  ID_STRING,    NULL,    &filename);
+	alist[1] = make_alist( "element",   ID_STRING,    NULL,    &element);
+	alist[2] = make_alist( "record",    INT,          NULL,    &frec);
+	alist[3].name = NULL;
 
-    if (evaluate_keywords(func, arg, kw)) {
-        return (NULL);
-    }
-    /**
-     ** get filename keyword.  Verify type
-     **/
-	if ((v = RequireKeyword("filename", kw, ID_STRING, 0, func)) == NULL) 
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (filename == NULL) {
+		parse_error("%s: No filename specified", func->name);
 		return(NULL);
-    filename = V_STRING(v);
-
-	if ((v = RequireKeyword("element", kw, ID_STRING, 0, func)) == NULL) 
+	}
+	if (element == NULL) {
+		parse_error("%s: No element specified", func->name);
 		return(NULL);
-    element = V_STRING(v);
+	}
 
-    /** 
-     ** If a record was specified as a keyword, get it.
-	 ** By the way, this looks at strings, to allow $N shell variables.
-     **/
-    if ((v = get_kw("record", kw)) != NULL) {
-        if (V_TYPE(v) != ID_VAL) {
-            e = eval(v);
-            if (e == NULL) {
-                parse_error("Illegal argument to load(...record=...)");
-            }
-            v = e;
-        }
-        if (V_TYPE(v) == ID_STRING) {
-            frec = atoi(V_STRING(v));
-        } else {
-            if (V_TYPE(v) != ID_VAL || V_FORMAT(v) != INT || V_DSIZE(v) != 1) {
-                parse_error("Illegal argument to load(...record=...)");
-                return (NULL);
-            }
-            frec = V_INT(v);
-        }
-    }
     /** 
      ** if open file fails, check for record suffix
      **/

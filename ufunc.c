@@ -322,9 +322,10 @@ Var *
 dispatch_ufunc(UFUNC *f, Var *arg)
 {
     Scope *scope = new_scope();
-    int i, argc;
+    int i, argc, j;
     Var *v, *p, *e;
     int insert = 0;
+	int ac = 0;
 
     /**
      ** Create identifiers for all the named arguments.  These dont
@@ -339,8 +340,17 @@ dispatch_ufunc(UFUNC *f, Var *arg)
      ** keyword, store it in ARGV
      **
      ** Total number of args is stored in $0
+	 **
+	 **** In the future, we might be able to use the V_ARGS(narray) as
+	 **** a new scope, directly
      **/
-    for ( p = arg ; p != NULL ; p=p->next) {
+
+	if (arg) {
+		ac = Narray_count(V_ARGS(arg));
+	}
+	for (j = 0 ; j < ac ; j++) {
+		Narray_get(V_ARGS(arg), j, NULL, &p);
+
         if (V_TYPE(p) == ID_KEYWORD) {
 			for (i = 0 ; i < f->nargs ; i++) {
 				if (!strcmp(f->args[i], V_NAME(p))) {
@@ -459,20 +469,29 @@ ufunc_edit(vfuncptr func , Var *arg)
     char buf[256];
     char *fname, *filename, *editor;
     int temp = 0;
+	Var *function;
 
-    if (arg == NULL) return(NULL);
-    if (V_TYPE(arg) == ID_STRING) {
-        filename = V_STRING(arg);
+	/*
+	** This function does not call parse_args, as it uses a
+	** polymorphic argument which can be an unknown enumeration
+	** (ie: a function name, unquoted)
+	*/
+
+	if (arg == NULL) return(NULL);
+	Narray_get(V_ARGS(arg), 0, NULL, &function);
+
+    if (V_TYPE(function) == ID_STRING) {
+        filename = V_STRING(function);
         if ((fname = dv_locate_file(filename)) == NULL) {
             fname = filename;
         }
-    } else if (V_TYPE(arg) == ID_VAL) {
+    } else if (V_TYPE(function) == ID_VAL) {
 		/**
 		 ** Numeric arg, call hedit to do history editing()
 		 **/
 		 return(ff_hedit(func,arg));
 	} else {
-        if ((name  = V_NAME(arg)) == NULL) {
+        if ((name  = V_NAME(function)) == NULL) {
             return(NULL);
         }
 

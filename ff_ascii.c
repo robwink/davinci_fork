@@ -51,7 +51,7 @@ ff_ascii(vfuncptr func, Var *arg)
     float *fdata;
     double *ddata;
     int count=0;
-	char delim[256] = " \t";
+	char *delim = " \t";
 
     int i,j,k;
 
@@ -62,82 +62,35 @@ ff_ascii(vfuncptr func, Var *arg)
     int format=0;
     int column=0;
     int row=0;
+    char *formats[] = { "byte", "short", "int", "float", "double", NULL };
+    char *format_str = NULL;
 
+	Alist alist[9];
+	alist[0] = make_alist( "filename",  ID_STRING, NULL,    &filename);
+	alist[1] = make_alist( "x",    		INT,    NULL,    &x);
+	alist[2] = make_alist( "y",    		INT,    NULL,    &y);
+	alist[3] = make_alist( "z",    		INT,    NULL,    &z);
+	alist[4] = make_alist( "format",    ID_ENUM,   formats, &format_str);
+	alist[5] = make_alist( "column",    INT,    NULL,    &column);
+	alist[6] = make_alist( "row",    	INT,    NULL,    &row);
+	alist[7] = make_alist( "delim",     ID_STRING, NULL,    &delim);
+	alist[8].name = NULL;
 
-    struct keywords kw[] = {
-        { "filename", NULL },   /* filename to read */
-        { "x",        NULL },   /* size in x */
-        { "y",        NULL },   /* size in y */
-        { "z",        NULL },   /* size in z */
-        { "format",   NULL },   /* data format */
-        { "column",   NULL },   /* start column (number to skip) */
-        { "row",      NULL },   /* start row (number to skip) */
-		{ "delim",    NULL },   /* string of delimters to use */
-        { NULL, NULL }
-    };
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
-
-    if (evaluate_keywords(func, arg, kw)) {
+    if (filename == NULL) {
+        parse_error("No filename specified: %s()", func->name);
         return(NULL);
     }
 
-    if ((v = get_kw("filename", kw)) == NULL) {
-        sprintf(error_buf, "No filename specified: %s()", func->name);
-        parse_error(NULL);
-        return(NULL);
-    }
-    if (V_TYPE(v) != ID_STRING) {
-        e = eval(v);
-        if (e == NULL || V_TYPE(e) != ID_STRING) {
-            sprintf(error_buf, "Illegal argument: %s(... filename=...)", 
-                    func->name);
-            parse_error(NULL);
-            return(NULL);
-        }
-        v = e;
-    }
-    filename = V_STRING(v);
-
-    if (KwToInt("x", kw, &x) == -1 ||
-        KwToInt("y", kw, &y) == -1 ||
-        KwToInt("z", kw, &z) == -1 ||
-        KwToInt("column", kw, &column) == -1 ||
-        KwToInt("row", kw, &row) == -1) 
-        return(NULL);
-
-    if ((v = get_kw("format", kw)) != NULL) {
-        ptr = V_NAME(v);
-        if (ptr == NULL) 
-            ptr = V_STRING(v);
-        while (1) {
-            if (!strcasecmp(ptr, "byte")) format = BYTE;
-            else if (!strcasecmp(ptr, "short")) format = SHORT;
-            else if (!strcasecmp(ptr, "int")) format = INT;
-            else if (!strcasecmp(ptr, "float")) format = FLOAT;
-            else if (!strcasecmp(ptr, "double")) format = DOUBLE;
-            else {
-                if ((e = eval(v)) == NULL) {
-                    sprintf(error_buf, "Unrecognized value for keyword: %s=%s", 
-                            "format", ptr);
-                    parse_error(NULL);
-                    return(NULL);
-                }
-                ptr = V_STRING(e);
-                v = NULL;
-                continue;
-            }
-            break;
-        }
+    if (format_str != NULL) {
+        if (!strcasecmp(format_str, "byte")) format = BYTE;
+        else if (!strcasecmp(format_str, "short")) format = SHORT;
+        else if (!strcasecmp(format_str, "int")) format = INT;
+        else if (!strcasecmp(format_str, "float")) format = FLOAT;
+        else if (!strcasecmp(format_str, "double")) format = DOUBLE;
     }
 
-    if ((v = get_kw("delim", kw)) != NULL) {
-		if ((e = eval(v)) != NULL) v = e;
-		if (V_TYPE(v) != ID_STRING) {
-			parse_error("Expected string for keyword 'delim'");
-			return(NULL);
-		}
-		strcpy(delim, V_STRING(v));
-	}
 
     /**
      ** Got all the values.  Do something with 'em.

@@ -12,41 +12,36 @@ Var *
 ff_filetype(vfuncptr func, Var * arg)
 {
     Var *v, *s = NULL, *e;
-    char *filename, *fname;
+    char *filename = NULL, *fname;
     FILE *fp;
     char *p;
     char *ostring = NULL;
 	char format[256];
 
-    struct keywords kw[] =
-            {
-                {"filename", NULL},
-                {NULL, NULL}
-            };
+    Alist alist[2];
+    alist[0] = make_alist( "filename",    ID_STRING,    NULL,    &filename);
+    alist[1].name = NULL;
 
-    if (evaluate_keywords(func, arg, kw)) {
+    if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (filename == NULL) {
+        parse_error("No filename specified: %s()", func->name);
         return (NULL);
     }
-    if ((v = get_kw("filename", kw)) == NULL) {
-        sprintf(error_buf, "No filename specified: %s()", func->name);
-        parse_error(NULL);
-        return (NULL);
-    }
-    if (V_TYPE(v) != ID_STRING) {
-        e = eval(v);
-        if (e == NULL || V_TYPE(e) != ID_STRING) {
-            sprintf(error_buf, "Illegal argument: %s(... filename=...)",
-                    func->name);
+
+    /** 
+     ** if open file fails, check for record suffix
+     **/
+
+    if ((fname = dv_locate_file(filename)) == NULL) {
+        if ((p = strchr(filename, SPECPR_SUFFIX)) != NULL) {
+            *p = '\0';
+            fname = dv_locate_file(filename);
+        }
+        if (fname == NULL) {
+            sprintf(error_buf, "Cannot find file: %s", filename);
             parse_error(NULL);
             return (NULL);
         }
-        v = e;
-    }
-    filename = V_STRING(v);
-
-    if ((fname = dv_locate_file(filename)) == NULL) {
-		parse_error("%s: Cannot find file %s", func->name, filename);
-		return (NULL);
     }
     if (fname && (fp = fopen(fname, "rb")) != NULL) {
         if (iom_is_compressed(fp))

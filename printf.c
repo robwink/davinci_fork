@@ -69,52 +69,93 @@
 
 static int	 asciicode __P((void));
 static void	 escape __P((char *));
-static int	 getchr __P((char *));
-static int	 getdouble __P((double *));
-static int	 getint __P((int *));
-static int	 getstr __P((char **));
+static int	 getchr    __P((Var *,char *));
+static int	 getdouble __P((Var *,double *));
+static int	 getint    __P((Var *,int *));
+static int	 getstr    __P((Var *,char **));
 static char	*mklong __P((char *, int));
 static void	 usage __P((void));
 static int dv_asprintf(char **, char *, ...);
+char *do_sprintf(int ac, Var **av);
 
-static Var *gv;
-char *do_sprintf(vfuncptr func, Var *arg);
+char *dv_locate_file(char *fname);
 
 Var *
 ff_fprintf(vfuncptr func, Var *arg)
 {
 	FILE *fp;
     char *p;
-	Var *f= arg;
+	char *filename = NULL;
 	char *fname;
-	arg = arg->next;
+	Var *v, *e;
+	int ac;
+	Var **av;
+	int i;
+	char buf[1024];
 
-	if (V_TYPE(f) != ID_STRING) {
-		parse_error("fprintf: Expecting a filename for first argument\n");
+	make_args(&ac, &av, func, arg);
+	if (ac < 2) {
+		parse_error("%s: expected a filename and a format string");
+		free(av);
 		return(NULL);
 	}
-	fname = dv_locate_file(V_STRING(f));
+	v = av[1];
+	/* pop off the first argument.
+	   In theory, this could search for a "filename" kwyword first
+	 */
+	for (i = 2; i < ac ; i++) {
+		av[i-1] = av[i];
+	}
+	ac-=1;
 
-    p = do_sprintf(func,arg);
+	if ((e = eval(v)) != NULL) {
+		v =e;
+	}
+	if (V_TYPE(v) != ID_STRING) {
+		parse_error("%s: expected a filename and a format string");
+		free(av);
+		return(NULL);
+	}
 
-    if (p) {
-		fp = fopen(fname, "a");
-		if (fp == NULL) {
-			parse_error("fprintf: Unable to open file: %s\n", fname);
-			return(NULL);
-		}
+/* CHECK THIS??? */
+	filename = V_STRING(v);
+	strcpy(buf, filename);
+	fname = dv_locate_file(filename);
+
+	if (fname == NULL) {
+		parse_error("fprintf: Unable to find file: %s\n", filename);
+		free(av);
+		return(NULL);
+	}
+
+	p = do_sprintf(ac, av);
+
+	fp = fopen(fname, "a");
+	if (fp) {
 		fputs(p, fp);
 		fclose(fp);
+	} else {
+		parse_error("fprintf: Unable to open file: %s\n", fname);
+		free(av);
+		return(NULL);
 	}
-    return(NULL);
+
+	free(av);
+	return(NULL);
 }
 
 Var *
 ff_printf(vfuncptr func, Var *arg)
 {
-    char *p;
-    p = do_sprintf(func,arg);
+	char *p;
+	int ac;
+	Var **av;
+
+	make_args(&ac, &av, func, arg);
+
+    p = do_sprintf(ac, av);
     if (p) fputs(p, stdout);
+
     return(NULL);
 }
 
@@ -123,12 +164,14 @@ ff_sprintf(vfuncptr func, Var *arg)
 {
     char *p;
 	Var *s = NULL;
+	int ac;
+	Var **av;
 
-    p = do_sprintf(func,arg);
+	make_args(&ac, &av, func, arg);
+
+    p = do_sprintf(ac, av);
     if (p) {
-		s = newVar();
-		V_TYPE(s) = ID_STRING;
-		V_STRING(s) = p;
+		s = newString(p);
 	}
     return(s);
 }
@@ -142,15 +185,15 @@ str_append(char *s1, char *s2)
     return(s1);
 }
 
-
 char *
-do_sprintf(vfuncptr func, Var *arg)
+do_sprintf(int ac, Var **av)
 {
     static char *skip1, *skip2;
     int end, fieldwidth, precision;
     char convch, nextch, *format, *fmt, *start;
     Var *v, *e;
     char *out;
+	int gv;
 
     /*
      * Basic algorithm is to scan the format string for conversion
@@ -163,11 +206,11 @@ do_sprintf(vfuncptr func, Var *arg)
     skip1 = "#-+ 0";
     skip2 = "0123456789";
 
-    if (arg == NULL) {
+    if (ac < 2) {
         parse_error("Format string must be first paramter");
         return(NULL);
     }
-    v = arg;
+    v = av[1];
     if ((e = eval(v)) != NULL) v = e;
     if (V_TYPE(v) != ID_STRING) {
         parse_error("Format string not specified");
@@ -176,7 +219,7 @@ do_sprintf(vfuncptr func, Var *arg)
 
     out = (char *)calloc(1,1);
     escape(fmt = format = V_STRING(v));		/* backslash interpretation */
-    gv = arg->next;
+    gv = 2;
 
     for (;;) {
         end = 0;
@@ -186,14 +229,14 @@ do_sprintf(vfuncptr func, Var *arg)
             if (!*fmt) {
                 /* avoid infinite loop */
                 if (end == 1) {
-		    fprintf(stderr,"missing format character");
+		            fprintf(stderr,"missing format character");
                     free(out);
                     return (NULL);
                 }
                 end = 1;
                 if (fmt > start)
                     out = str_append(out, start);
-                if (gv == NULL) {
+                if (gv == ac) {
                     return(out);
                 }
                 fmt = format;
@@ -212,7 +255,7 @@ do_sprintf(vfuncptr func, Var *arg)
         /* skip to field width */
         for (; strchr(skip1, *fmt); ++fmt);
         if (*fmt == '*') {
-            if (getint(&fieldwidth)) {
+            if (getint(av[gv++], &fieldwidth)) {
                 free(out);
                 return (NULL);
             }
@@ -227,7 +270,7 @@ do_sprintf(vfuncptr func, Var *arg)
             /* precision present? */
             ++fmt;
             if (*fmt == '*') {
-                if (getint(&precision)) {
+                if (getint(av[gv++], &precision)) {
                     free(out);
                     return (NULL);
                 }
@@ -253,7 +296,7 @@ do_sprintf(vfuncptr func, Var *arg)
         case 'c': {
             char p;
 
-            if (getchr(&p)) {
+            if (getchr(av[gv++], &p)) {
                 free(out);
                 return(NULL);
             }
@@ -264,7 +307,7 @@ do_sprintf(vfuncptr func, Var *arg)
         case 's': {
             char *p;
 
-            if (getstr(&p)) {
+            if (getstr(av[gv++], &p)) {
                 free(out);
                 return(NULL);
             }       
@@ -275,7 +318,7 @@ do_sprintf(vfuncptr func, Var *arg)
             int p;
             char *f;
 
-            if ((f = mklong(start, convch)) == NULL || getint(&p)) {
+            if ((f = mklong(start, convch)) == NULL || getint(av[gv++], &p)) {
                 free(out);
                 return (NULL);
             }
@@ -285,7 +328,7 @@ do_sprintf(vfuncptr func, Var *arg)
         case 'e': case 'E': case 'f': case 'g': case 'G': {
             double p;
 
-            if (getdouble(&p)) {
+            if (getdouble(av[gv++], &p)) {
                 free(out);
                 return(NULL);
             }
@@ -379,11 +422,9 @@ escape(register char *fmt)
 }
 
 static int
-getchr(char *p)
+getchr(Var *v, char *p)
 {
-    Var *v = gv, *e;
-
-    gv = gv->next;
+    Var *e;
 
     if (v == NULL) return(1);
     if ((e = eval(v)) == NULL) {
@@ -402,12 +443,10 @@ getchr(char *p)
 }
 
 static int
-getstr(char **ip)
+getstr(Var *v, char **ip)
 {
-    Var *v = gv, *e;
+    Var *e;
 
-    gv = gv->next;
- 
     if (v == NULL) return(1);
     if ((e = eval(v)) == NULL) {
         sprintf(error_buf, "Variable not found: %s", V_NAME(v));
@@ -425,11 +464,9 @@ getstr(char **ip)
 }
 
 static int
-getint(int *ip)
+getint(Var *v, int *ip)
 {
-    Var *v = gv, *e;
- 
-    gv = gv->next;
+    Var *e;
 
     if (v == NULL) return(1);
     if ((e = eval(v)) == NULL) {
@@ -449,11 +486,9 @@ getint(int *ip)
 }
 
 static int
-getdouble(double *ip)
+getdouble(Var *v, double *ip)
 {
-    Var *v = gv, *e;
-
-    gv = gv->next;
+    Var *e;
  
     if (v == NULL) return(0);
     if ((e = eval(v)) == NULL) {
@@ -492,12 +527,10 @@ License along with libiberty; see the file COPYING.LIB.  If
 not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#if 0
-/* JAS FIX: moving these to the top in an attempt to satify Purify. */
-#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#endif
+#include <stdarg.h>
+
 
 unsigned long strtoul ();
 /* char *malloc (); */
@@ -519,8 +552,8 @@ dv_int_vasprintf (char **result, char *format, va_list args)
                 ++p;
             if (*p == '*')
 	    {
-	      ++p;
-	      total_width += abs (va_arg(args, int));
+                ++p;
+                total_width += abs (va_arg (args, int));
 	    }
             else
                 total_width += strtoul (p, &p, 10);

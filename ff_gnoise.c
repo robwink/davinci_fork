@@ -21,64 +21,18 @@ Var *
 ff_gnoise(vfuncptr func, Var * arg)
 {
 	Var *v, *s;
-	int x, y, z;
+	int x=512, y=512, z=10;
 	int seed = 0;
 	int i, j, d;
 
-	struct keywords kw[] =
-	{
-		{"x", NULL},
-		{"y", NULL},
-		{"z", NULL},
-		{"seed", NULL},
-		{NULL, NULL}
-	};
+    Alist alist[2];
+    alist[0] = make_alist( "x",    INT,    NULL,    &x);
+    alist[1] = make_alist( "y",    INT,    NULL,    &y);
+    alist[2] = make_alist( "z",    INT,    NULL,    &z);
+    alist[3] = make_alist( "seed", INT,    NULL,    &seed);
+    alist[1].name = NULL;
 
-	if (evaluate_keywords(func, arg, kw)) {
-		return (NULL);
-	}
-	if ((v = get_kw("x", kw)) == NULL) {
-		x = 512;
-	} else {
-		if (V_TYPE(v) != ID_VAL || V_DSIZE(v) != 1 || V_FORMAT(v) != INT) {
-			sprintf(error_buf, "Illegal value: %s(...x=...)", func->name);
-			parse_error(NULL);
-			return (NULL);
-		}
-		x = V_INT(v);
-	}
-
-	if ((v = get_kw("y", kw)) == NULL) {
-		y = 512;
-	} else {
-		if (V_TYPE(v) != ID_VAL || V_DSIZE(v) != 1 || V_FORMAT(v) != INT) {
-			sprintf(error_buf, "Illegal value: %s(...y=...)", func->name);
-			parse_error(NULL);
-			return (NULL);
-		}
-		y = V_INT(v);
-	}
-
-	if ((v = get_kw("z", kw)) == NULL) {
-		z = 10;
-	} else {
-		if (V_TYPE(v) != ID_VAL || V_DSIZE(v) != 1 || V_FORMAT(v) != INT) {
-			sprintf(error_buf, "Illegal value: %s(...z=...)", func->name);
-			parse_error(NULL);
-			return (NULL);
-		}
-		z = V_INT(v);
-	}
-	if ((v = get_kw("seed", kw)) == NULL) {
-		seed = 0;
-	} else {
-		if (V_TYPE(v) != ID_VAL || V_DSIZE(v) != 1 || V_FORMAT(v) != INT) {
-			sprintf(error_buf, "Illegal value: %s(...seed=...)", func->name);
-			parse_error(NULL);
-			return (NULL);
-		}
-		seed = V_INT(v);
-	}
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	s = newVar();
 	V_TYPE(s) = ID_VAL;

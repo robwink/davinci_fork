@@ -17,37 +17,25 @@ ff_interp(vfuncptr func, Var *arg)
     float *m, *c; /* slopes and y-intercepts */
     int fromsz, tosz; /* number of elements in from & to arrays */
 
+	Alist alist[4];
+	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v[0]);
+	alist[1] = make_alist( "from",      ID_VAL,    NULL,    &v[1]);
+	alist[2] = make_alist( "to",        ID_VAL,    NULL,    &v[2]);
+	alist[3].name = NULL;
 
-    struct keywords kw[] = {
-        { "object", NULL },
-        { "from", NULL },
-        { "to", NULL },
-        { NULL, NULL }
-    };
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
-    if (evaluate_keywords(func, arg, kw)) {
-        return(NULL);
-    }
-
-    if ((v[0] = get_kw("object", kw)) == NULL) {
+    if (v[0] == NULL) {
         parse_error("Object= not specified");
         return(NULL);
     }
-    if ((v[1] = get_kw("from", kw)) == NULL) {
+    if (v[1] == NULL) {
         parse_error("From= not specified");
         return(NULL);
     }
-    if ((v[2] = get_kw("to", kw)) == NULL) {
+    if (v[2] == NULL) {
         parse_error("To= not specified");
         return(NULL);
-    }
-
-    for (i = 0 ; i< 3 ; i++) {
-        if ((e = eval(v[i])) != NULL) v[i] = e;
-        if (V_TYPE(v[i]) != ID_VAL) {
-            parse_error("Objects must be Values\n");
-            return(NULL);
-        }
     }
 
     if (V_DSIZE(v[0]) != V_DSIZE(v[1])) {

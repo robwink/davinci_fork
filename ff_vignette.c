@@ -38,50 +38,38 @@ vignette(int width, int height, float r0, float offset, float i0)
 Var *
 ff_vignette(vfuncptr func, Var *arg)
 {
-    int width, height;
-    float radius, offset, intensity;
+    int width =0, height=0;
+    float radius=MAXFLOAT, offset=MAXFLOAT, intensity=MAXFLOAT;
     Var *s;
 
     /**
      ** List the keywords this function can accept.  Order is important.
      **/
-    struct keywords kw[] = {
-        { "width", NULL },
-        { "height", NULL },
-        { "radius", NULL },
-        { "offset", NULL },
-        { "intensity", NULL },
-        { NULL, NULL }                      /* end with NULL */
-    };
+	Alist alist[6];
+	alist[0] = make_alist( "width",    INT,    NULL,    &width);
+	alist[1] = make_alist( "height",    INT,    NULL,    &height);
+	alist[2] = make_alist( "radius",    FLOAT,    NULL,    &radius);
+	alist[3] = make_alist( "offset",    FLOAT,    NULL,    &offset);
+	alist[4] = make_alist( "intensity",    FLOAT,    NULL,    &intensity);
+	alist[5].name = NULL;
 
-    /**
-     ** Parse up the arguments.
-     **/
-    if (evaluate_keywords(func, arg, kw)) {
-        return(NULL);
-    }
-
-    /**
-     ** Extract the value for each keyword.  
-     ** Bail (with an error message) if any important ones weren't given
-     **/
-    if (KwToInt("width", kw, &width) <= 0) {
+	if (width <= 0) {
         parse_error("Invalid value for \"width\"");
         return(NULL);
     }
-    if (KwToInt("height", kw, &height) <= 0) {
+    if (height <= 0) {
         parse_error("Invalid value for \"height\"");
         return(NULL);
     }
-    if (KwToFloat("radius", kw, &radius) <= 0) {
+    if (radius == MAXFLOAT) {
         parse_error("Invalid value for \"radius\"");
         return(NULL);
     }
-    if (KwToFloat("offset", kw, &offset) <= 0) {
+    if (offset == MAXFLOAT) {
         parse_error("Invalid value for \"offset\"");
         return(NULL);
     }
-    if (KwToFloat("intensity", kw, &intensity) <= 0) {
+    if (intensity == MAXFLOAT) {
         parse_error("Invalid value for \"intensity\"");
         return(NULL);
     }

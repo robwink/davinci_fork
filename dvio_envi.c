@@ -40,11 +40,13 @@ dv_LoadENVI(
 	if (h.dptr == 0) {
 		path = strdup(filename);
 		sprintf(path+strlen(path)-4, ".img");
-		if ((fp = fopen(path, "rb")) == NULL) {
+		if (access(path, R_OK) != 0) {
 			parse_error("Unable to find .img file for deteached label: %s\n", path);
 			free(path);
 			return(NULL);
 		}
+		fclose(fp);
+		fp = fopen(path, "rb");
 		free(path);
 		data = iom_read_qube_data(fileno(fp), &h);
 	} else {

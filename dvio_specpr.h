@@ -3,6 +3,7 @@
 
 #define SPECPR_SUFFIX   '#'
 
+
 #define check_bit(i,n) ((i & (1 << n)) != 0)
 #define set_bit(i,n,m) i = ((i & (~(1<<n))) | (m<<n))
 
@@ -57,5 +58,29 @@ struct _tlabel {
 
 char *decode_time();
 char *decode_date();
+
+#ifdef _LITTLE_ENDIAN
+
+static char ctmp;
+typedef char *cptr;
+#define swp(c1, c2)     (ctmp = (c1) , (c1) = (c2) , (c2) = ctmp)
+
+#define MSB8(s)         (swp(((cptr)(s))[0], ((cptr)(s))[7]), \
+                                        swp(((cptr)(s))[1], ((cptr)(s))[6]), \
+                                        swp(((cptr)(s))[2], ((cptr)(s))[5]), \
+                                        swp(((cptr)(s))[3], ((cptr)(s))[4]),(s))
+
+#define MSB4(s)         (swp(((cptr)(s))[0], ((cptr)(s))[3]), \
+                                        swp(((cptr)(s))[1], ((cptr)(s))[2]),(s))
+
+#define MSB2(s)         (swp(((cptr)(s))[0], ((cptr)(s))[1]),(s))
+
+#else
+
+#define MSB8(s)         (s)
+#define MSB4(s)         (s)
+#define MSB2(s)         (s)
+
+#endif 
 
 #endif /* _SPECPR_H */

@@ -52,7 +52,9 @@
 #ifndef MAXDOUBLE
 #define MAXDOUBLE       DBL_MAX
 #endif
-/* #define MAXFLOAT        FLT_MAX */
+#ifndef MAXFLOAT
+#define MAXFLOAT        FLT_MAX
+#endif
 #ifndef MINDOUBLE
 #define MINDOUBLE       DBL_MIN
 #endif
@@ -144,11 +146,12 @@ struct _var {
         char *string;
         Var *keyval;		/* used by $Keyword */
         Narray *vstruct;
+        Narray *args;		/* an array of function arguments (same as struct) */
         TextArray textarray;
 		dvModule mod;         /* a dynamically loaded module */
 		vfuncptr function;   /* most likely a module function dereference */
     } value; 
-    Var *next;
+    // Var *next;
 };
 
 #define V_NEXT(v)	(v)->next		/* pointer to next value in table */
@@ -177,6 +180,7 @@ struct _var {
 #define V_TEXT(v)		(v)->value.textarray
 
 #define V_STRUCT(v)  (v)->value.vstruct
+#define V_ARGS(v)    (v)->value.args
 #define V_MODULE(v)  (v)->value.mod
 #define V_FUNC(v)    (v)->value.function
 
@@ -262,7 +266,8 @@ enum {
 
 	ID_MODULE,         /* daVinci module variable ID */
 	ID_FUNCTION,       /* daVinci module function variable ID */
-	ID_PARALLEL        /* parallelization */
+	ID_PARALLEL,       /* parallelization */
+	ID_VARARGS         /* varargs arguments */
 };
 
 

@@ -1,3 +1,13 @@
+#if 0
+
+/*
+ * This file was an attempt to make a generic function dispatcher that
+ * could operate on a specific axis set.  Like: do(this, obj, axis=x), would
+ * apply this() to every line of x.
+ * 
+ * It is grossly unfinished, and likely never will be
+ */
+
 #include <stddef.h>
 #include "parser.h"
 #include "rfunc.h"
@@ -227,3 +237,4 @@ Var *rf_cat(ArgsRegister *r, Var *vargs)
     printf("%d %s\n", V_INT(args.obj), args.axis ? args.axis : "(null)");
     return(NULL);
 }
+#endif

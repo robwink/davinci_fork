@@ -8,68 +8,57 @@ Var *
 ff_atoi(vfuncptr func, Var *arg)
 {
     int i;
-    Var *v,*s;
+	Var *v = NULL;
 
-    if (arg->next != NULL) {
-        parse_error("Too many arguments to function: %s()", func->name);
-        return (NULL);
-    }
-    if ((v = eval(arg)) == NULL) {
-        parse_error("Variable not found: %s", V_NAME(arg));
+	Alist alist[2];
+	alist[0] = make_alist( "object",    ID_UNK,    NULL,    &v);
+	alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (v == NULL) {
+        parse_error("%s(): expected a string.", func->name);
         return (NULL);
     }
     if (V_TYPE(v) != ID_STRING && V_TYPE(v)!=ID_TEXT ){
-        parse_error("Invalid object type");
+        parse_error("%s: Invalid object type", func->name);
         return(NULL);
     }
 
-    s = newVar();
-
     if (V_TYPE(v) == ID_STRING){
-        i = (int)strtod(V_STRING(v), NULL);
-        V_SIZE(s)[0] = V_SIZE(s)[1] = V_SIZE(s)[2] = V_DSIZE(s) = 1;
-        V_DATA(s) = (int *)calloc(1, sizeof(int));
-        V_INT(s) = i;
-    }
-
-    else {
+		return(newInt(strtod(V_STRING(v), NULL)));
+    } else {
         int l;
         int *data = (int *)calloc(V_TEXT(v).Row, sizeof(int));
         for (l=0;l<V_TEXT(v).Row;l++){
             data[l]=strtod(V_TEXT(v).text[l],NULL);
         }
-        V_SIZE(s)[0] = V_SIZE(s)[2] = 1;
-        V_SIZE(s)[1] = l;
-        V_DSIZE(s) = l;
-        V_DATA(s)=(void *)data;
+		return(newVal(BSQ, 1, l, 1, INT, data));
     }
-			
-
-    V_TYPE(s) = ID_VAL;
-    V_ORG(s) = BSQ;
-    V_FORMAT(s) = INT;
-
-    return(s);
 }
 
 Var *
 ff_atof(vfuncptr func, Var * arg)
 {
-	Var *v, *s;
+	Var *v = NULL, *s;
 	float f;
 
-	if (arg->next != NULL) {
-		parse_error("Too many arguments to function: %s()", func->name);
-		return (NULL);
+	Alist alist[2];
+	alist[0] = make_alist( "object",    ID_UNK,    NULL,    &v);
+	alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (v == NULL) {
+        parse_error("%s(): expected a string.", func->name);
+        return (NULL);
 	}
-	if ((v = eval(arg)) == NULL) {
-		parse_error("Variable not found: %s", V_NAME(arg));
-		return (NULL);
-	}
+
 	if (V_TYPE(v) != ID_STRING && V_TYPE(v) != ID_TEXT) {
 		parse_error("Invalid object type");
 		return (NULL);
 	}
+
 	if (V_TYPE(v) == ID_STRING) {
 		if (!strcmp(func->name, "atof")) {
 			s = newVal(BSQ, 1, 1, 1, FLOAT, NULL);
@@ -330,4 +319,39 @@ set_string(Var *to,Range *r, Var *from)
     string[count]='\0';
 
     return(src);
+}
+
+Var *ff_strlen(vfuncptr func, Var * arg)
+{
+    Var *s1 = NULL;
+	int i;
+    Alist alist[2];
+
+    alist[0] = make_alist("string", ID_UNK, NULL, &s1);
+    alist[1].name = NULL;
+
+    if (parse_args(func, arg, alist) == 0)
+        return (NULL);
+    if (s1 == NULL) {
+        parse_error("Not enough arguments to function: %s()", func->name);
+        return (NULL);
+    }
+
+    if (V_TYPE(s1) == ID_TEXT) {
+        int n = V_TEXT(s1).Row;
+        int *r = calloc(n, sizeof(int));
+        for (i = 0; i < n; i += 1) {
+            if (V_TEXT(s1).text[i]) {
+                r[i] = strlen(V_TEXT(s1).text[i]);
+            } else {
+                r[i] = 0;
+            }
+        }
+		return (newVal(BSQ, 1, n, 1, INT, r));
+    } else if (V_TYPE(s1) == ID_STRING) {
+        return (newInt(strlen(V_STRING(s1))));
+    } else {
+        parse_error("Invalid type");
+        return (NULL);
+    }
 }

@@ -155,94 +155,49 @@ subset(Var *v,
 Var *
 ff_translate(vfuncptr func, Var *arg)
 {
-    Var *object, *v,*s,*e;
+    Var *object = NULL, *v,*s,*e;
     int from;
     int to;
     int d[3];
     int count;
     char *ptr;
-    int flip;
+    int flip = 0;
     int nbytes;
     int in_size[3], out_size[3];
     int i,j,k,l,t;
+    char *options[] = { "x", "y", "z", NULL };
+	char *axis1_str=NULL, *axis2_str = NULL;
 
-    struct keywords kw[] = {
-        { "object", NULL },
-        { "from", NULL },
-        { "to", NULL },
-        { "flip", NULL },
-        { NULL, NULL }
-    };
+	Alist alist[5];
+	alist[0] = make_alist( "object",  ID_VAL,    NULL,       &object);
+	alist[1] = make_alist( "from",    ID_ENUM,    options,    &axis1_str);
+	alist[2] = make_alist( "to",      ID_ENUM,    options,    &axis2_str);
+	alist[3] = make_alist( "flip",    INT,       NULL,       &flip);
+	alist[4].name = NULL;
 
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
-    if (evaluate_keywords(func, arg, kw)) {
-        return(NULL);
-    }
+	if (object == NULL) {
+        parse_error("%s(), No object specified.", func->name);
+        return (NULL);
+	}
 
-    if ((v = get_kw("object", kw)) == NULL) {
-        sprintf(error_buf, "%s: No object specified\n", func->name);
-        parse_error(NULL);
-        return(NULL);
-    }
-    if ((e = eval(v)) != NULL) v = e;
-    object = v;
-
-    if ((v = get_kw("from", kw)) == NULL) {
-        sprintf(error_buf, "Improper value specified: %s(...%s=...)",
-                func->name, "from");
-        parse_error(NULL);
-        return(NULL);
+    if (axis1_str == NULL) {
+        parse_error("%s(), No from axis specified.", func->name);
+        return (NULL);
     } else {
-        ptr = V_NAME(v);
-        if (ptr == NULL) ptr = V_STRING(v);
-        while(1) {
-            if (!strcasecmp(ptr, "x")) from = 0;
-            else if (!strcasecmp(ptr, "y")) from = 1;
-            else if (!strcasecmp(ptr, "z")) from = 2;
-            else {
-                if ((e = eval(v)) == NULL) {
-                    sprintf(error_buf, "Unrecognized value for keyword: %s=%s", 
-                            "from", ptr);
-                    parse_error(NULL);
-                    return(NULL);
-                }
-                ptr = V_STRING(e);
-                v = NULL;
-                continue;
-            }
-            break;
-        }
-    }
-    if ((v = get_kw("to", kw)) == NULL) {
-        sprintf(error_buf, "Improper value specified: %s(...%s=...)",
-                func->name, "to");
-        parse_error(NULL);
-        return(NULL);
-    } else {
-        ptr = V_NAME(v);
-        if (ptr == NULL) ptr = V_STRING(v);
-        while(1) {
-            if (!strcasecmp(ptr, "x")) to = 0;
-            else if (!strcasecmp(ptr, "y")) to = 1;
-            else if (!strcasecmp(ptr, "z")) to = 2;
-            else {
-                if ((e = eval(v)) == NULL) {
-                    sprintf(error_buf, "Unrecognized value for keyword: %s=%s", 
-                            "to", ptr);
-                    parse_error(NULL);
-                    return(NULL);
-                }
-                ptr = V_STRING(e);
-                v = NULL;
-                continue;
-            }
-            break;
-        }
+        if (!strcasecmp(axis1_str, "x")) from = 0;
+        else if (!strcasecmp(axis1_str, "y")) from = 1;
+        else if (!strcasecmp(axis1_str, "z")) from = 2;
     }
 
-    flip = 0;
-    if ((v = get_kw("flip", kw)) != NULL) {
-        flip = 1;
+    if (axis2_str == NULL) {
+        parse_error("%s(), No to axis specified.", func->name);
+        return (NULL);
+    } else {
+        if (!strcasecmp(axis2_str, "x")) to = 0;
+        else if (!strcasecmp(axis2_str, "y")) to = 1;
+        else if (!strcasecmp(axis2_str, "z")) to = 2;
     }
 
     v = object;

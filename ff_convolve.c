@@ -47,9 +47,9 @@ ff_self_convolve(vfuncptr func, Var * arg)
 
 	int ac;
 	Var **av;
-	Alist alist[3];
+	Alist alist[2];
 	alist[0] = make_alist( "obj1",    ID_VAL,    NULL,     &v1);
-	alist[2].name = NULL;
+	alist[1].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -71,5 +71,5 @@ ff_self_convolve(vfuncptr func, Var * arg)
 		}
 	}
 
-	return(newVal(V_ORG(v1), 1, n, 1, FLOAT, out));
+	return(newVal(V_ORG(v1), V_SIZE(v1)[0], V_SIZE(v1)[1], V_SIZE(v1)[2], FLOAT, out));
 }

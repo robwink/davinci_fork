@@ -222,7 +222,7 @@ struct _vfuncptr vfunclist[] = {
     { "self_convolve", ff_self_convolve,        NULL , NULL},
     { "convolve",      ff_convolve,             NULL , NULL},
     { "convolve3",     ff_convolve3,            NULL , NULL},
-	 { "fncc",			  ff_fncc,						NULL, NULL},
+    { "fncc",		  ff_fncc,						NULL, NULL},
 
     { "pnmcut",         ff_cut,                 NULL, NULL},
     { "pnmcrop",        ff_crop,                NULL, NULL},
@@ -285,7 +285,7 @@ struct _vfuncptr vfunclist[] = {
 
 	 { "chdir",      ff_chdir,                NULL },
 
-/*	{ "hstretch",      ff_hstretch, 			NULL }, */
+     { "hstretch",      ff_hstretch, 			NULL }, 
 
     { NULL,             NULL,                  NULL }
 };

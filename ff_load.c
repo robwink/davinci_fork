@@ -3,22 +3,24 @@
 #include "dvio.h"
 #include "dvio_specpr.h"
 
+Var *do_load(char *filename, struct iom_iheader *h);
 
 Var *
-ff_load_many(vfuncptr func, Var * arg)
+ff_load_many(Var * list, struct iom_iheader *h )
 {
 	int i;
 	char *filename;
 	Var *s, *t;
-	if (arg == NULL || V_TYPE(arg) != ID_TEXT) {
-        parse_error("No filenames specified to %s()", func->name);
+
+	if (list == NULL || V_TYPE(list) != ID_TEXT) {
+        parse_error("No filenames specified.");
         return (NULL);
 	}
 
-	s = new_struct(V_TEXT(arg).Row);
-	for (i = 0 ; i < V_TEXT(arg).Row ; i++) {
-		filename = strdup(V_TEXT(arg).text[i]);
-		t = ff_load(func, newString(filename));
+	s = new_struct(V_TEXT(list).Row);
+	for (i = 0 ; i < V_TEXT(list).Row ; i++) {
+		filename = strdup(V_TEXT(list).text[i]);
+		t = do_load(filename, h);
 		if (t) add_struct(s, filename, t);
 	}
 	if (get_struct_count(s)) {
@@ -59,14 +61,19 @@ ff_load(vfuncptr func, Var * arg)
 	alist[10] = make_alist( "zskip",     INT,    	NULL,     &h.s_skip[2]);
 	alist[11].name = NULL;
 
+
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (fvar == NULL) {
         parse_error("No filename specified to load()");
         return (NULL);
 	}
+
+	/* this is a hack only used by specpr files */
+	if (record != -1) h.s_lo[2] = h.s_hi[2] = record;
+
 	if (V_TYPE(fvar) == ID_TEXT) {
-		return(ff_load_many(func, fvar));
+		return(ff_load_many(fvar, &h));
 	} else if (V_TYPE(fvar) == ID_STRING) {
 		filename = V_STRING(fvar);
 	} else {
@@ -74,6 +81,16 @@ ff_load(vfuncptr func, Var * arg)
 			func->name, "filename");
         return (NULL);
 	}
+	return(do_load(filename, &h));
+}
+
+Var *
+do_load(char *filename, struct iom_iheader *h) 
+{
+    int record = -1;
+    FILE *fp = NULL;
+    Var  *input = NULL;
+    char *p, *fname;
 
     /** 
      ** if open file fails, check for record suffix
@@ -85,28 +102,29 @@ ff_load(vfuncptr func, Var * arg)
             fname = dv_locate_file(filename);
         }
         if (fname == NULL) {
-            parse_error( "Cannot find file: %s", filename);
+            sprintf(error_buf, "Cannot find file: %s", filename);
+            parse_error(NULL);
             return (NULL);
         }
     }
 
-	if (record != -1) h.s_lo[2] = h.s_hi[2] = record;
-
     if (fname && (fp = fopen(fname, "rb")) != NULL) {
         if (iom_is_compressed(fp)) {
-	  fprintf(stderr, "is compressed\n");	/* FIX: remove */
-	  fp = iom_uncompress(fp, fname);
+	         fprintf(stderr, "is compressed\n");	/* FIX: remove */
+			 fclose(fp);
+			 fname = iom_uncompress_with_name(fname);
+			 fp = fopen(fname, "rb");
 	}
 
-	if (input == NULL)    input = dv_LoadIOM(fp, fname, &h);
-	if (input == NULL)    input = dv_LoadPNM(fp, fname, &h);	
+	if (input == NULL)    input = dv_LoadIOM(fp, fname, h);
+	if (input == NULL)    input = dv_LoadPNM(fp, fname, h);	
 	if (input == NULL)    input = LoadSpecpr(fp, fname, record);
-	if (input == NULL)    input = dv_LoadVicar(fp, fname, &h);
-	if (input == NULL)    input = dv_LoadISIS(fp, fname, &h);
-	if (input == NULL)    input = dv_LoadGRD(fp, fname, &h);
-	if (input == NULL)    input = dv_LoadIMath(fp, fname, &h);
-	if (input == NULL)    input = dv_LoadGOES(fp, fname, &h);
-	if (input == NULL)    input = dv_LoadAVIRIS(fp, fname, &h);
+	if (input == NULL)    input = dv_LoadVicar(fp, fname, h);
+	if (input == NULL)    input = dv_LoadISIS(fp, fname, h);
+	if (input == NULL)    input = dv_LoadGRD(fp, fname, h);
+	if (input == NULL)    input = dv_LoadIMath(fp, fname, h);
+	if (input == NULL)    input = dv_LoadGOES(fp, fname, h);
+	if (input == NULL)    input = dv_LoadAVIRIS(fp, fname, h);
 
 #ifdef HAVE_LIBHDF5
         if (input == NULL)    input = LoadHDF5(fname);
@@ -123,7 +141,6 @@ ff_load(vfuncptr func, Var * arg)
 #endif
 
         fclose(fp);
-		
 
         if (input == NULL) {
             sprintf(error_buf, "Unable to determine file type: %s", filename);
