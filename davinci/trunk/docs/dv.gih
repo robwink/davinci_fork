@@ -1194,6 +1194,120 @@
 
      The entropy() function always returns a FLOAT.
 
+?functions plplot
+	ALL plplot library  commands are availible to the user.  Several davinci commands
+	were created to faciliate ease of use:
+		popen()	-	Define, initialize and open a window for plotting
+		pplot()	-	Plot a data cube along specified axis
+		pprint()-	Print a current plot
+		ptext()	-	Flexible labeling tool
+		pbox()	-	Set up limits and plot box with tick marks
+		pline()	-	Draw a set of connected line segments
+
+?functions popen
+popen
+ popen() - Define, initialize and open a window for plotting
+
+ popen(xpos=INT, ypos=INT, xpixels=INT, ypixels=INT,title=STRING,portrait=int)
+
+	This funtions opens up an X-Windows for plotting data using the plplot library.
+	xpos is the initial x-position (relative to the desktop) of the new windows
+	ypos is the initial y-position
+	xpixels is the number of pixels in the x direction (number of pixel collumns)
+	ypixels is the number of pixels in the y direction (number of pixel rows)
+ 	title is a string which can go in the window title bar
+	portrait is a flag which define the graph as landscape (portrait=0, default) or
+		as portrait (portrait=1)
+
+?functions pplot
+pplot
+ pplot() - Plot a data cube along specified axis
+
+ pplot(obj=VAL, axis={X,Y or Z}, [append=INT, window=INT, Xaxis=VAL, color=int, xhigh=FLOAT
+	xlow=FLOAT, yhigh=FLOAT, ylow=FLOAT])
+
+	Pplot takes a dataset (obj) and plots it as a set of vector data along a specified axis.
+	Options include:
+	  append:  Draw over previous graph using previous min/max settings (append=1)
+		   erase previous graph, (append=0,i defualt)
+	
+  	  window:  ID of window to draw in.  Popen returns a integer ID value for 
+		   the window it creates.  Save this value if you open more than one window.
+
+	  Xaxis:   Dataset object containing x-axis values.  Must be either of size (X,1,1) 
+		   where X is the same value as the x-dimention for obj or the same size as obj
+
+	  color:   Ineger value between 0 and 15.  0 is the background color
+
+	  xhigh,xlow,yhigh and ylow can either be set by the user or automatically calculated
+		   if no value is given.
+	  	   
+?functions pprint
+pprint
+ pprint() - Print a current plot
+
+ pprint(id=INT, title=STRING, type={ps,psc,pbm})
+
+     pprint will create a printer file (or graphic file) of an already existing plot.
+	id specifies the window ID (as returned by popen) of the window to plot.
+	title is a string containing the filename for the printer file.
+	type sets what kind of file is produced:
+		ps - b&w postscript file
+		psc - color postscript file
+		pbm - 640x480 graphics file (size is fixed)
+
+?functions ptext
+ptext
+ ptext() - Flexible labeling tool
+
+ ptext(c=INT, e=FLOAT, x=FLOAT, y=FLOAT, angle=INT, text=STRING, kolor=INT, world=INT)
+
+     ptext prints labels and text on a plot allowing the user to specify a number of 
+     formating options.  Many of these options are here for MONGO graphing compatibility
+
+	c:  (MONGO) text alignment relative to (x,y) position
+	e:  (MONGO) text font expansion
+	x & y: x and y position are specified in terms of normalized coordinates (0,1)
+	angle: (MONGO) integer value (in degrees) which specifies the desired rotation of
+		of the text
+	text:	quoted string containing the text to put on the plot
+	kolor:  integer value from 0 to 15 (0 is background color), set color of ploted text
+	world:  flag, if set to 1, x & y need to be in world coord. else normalized (default)
+
+?functions pbox
+pbox
+ pbox() - Set up plot box with tick marks
+
+ pbox(e=FLOAT, lt=INT, x=INT, y=INT, X=INT, Y=INT, m=INT, color=INT)
+	pbox draws a box with tick marks and X & Y axis values.
+
+	e:   text font expansion
+	lt:  line thickness (defualt=1)
+	x:   if non-zero, draw x-axis values (defualt)
+   	y:   if non-zero, draw y-axis values (defualt)
+ 	X:   if non-zero, uses logrthymic values for x-axis
+	Y:   if non-zero, uses logrthymic values for y-axis
+	m:   if non-zero uses micron labeling for x-axis
+    	color : integer value between 0 and 15 (0 is background color)
+
+?functions pline
+pline
+ pline() - Draw a set of connected line segments
+
+ pline(ls=INT,lt=INT, x=VAL, y=VAL, color=INT)
+
+ pline plots set a of n points as n-1 conneted line segments, where xy point n-1 is
+	connected to xy point n, which is then connected to xy point n+1.
+
+ 	ls:	line style (0=solid (defualt), 1=dashed, >1 more dashed styles)
+	lt:	line thickness (defult =1)
+	x:	dataset of x values (expected cube: (N,1,1)) N-number of points
+	y:	dataset of y values (expected cube: (N,1,1)) N-number of points
+
+		x & y must have the SAME number of points!
+
+ 	color: integer between 0 and 15 (0 is the background color).
+
 ?functions xrt3d
 xrt3d
  xrt3d() - Display data using an XRT3D widget
@@ -1275,6 +1389,8 @@ Davinci supports the following matrix functions:
     minvert() - matrix inversion
     convolve() - sliding window kernel convolution
 
+
+
 ?functions convolve()
 ?convolve()
  convolve() - Kernel convolution
@@ -1302,6 +1418,14 @@ Davinci supports the following matrix functions:
         1       1       1
         1       1       1
         dv> convolve(img, b)
+
+?functions convolve3()
+?convolve3()
+ convolve3() - Kernel convolution
+
+ convolve3(object=VAL, kernel=VAL, norm=BOOL)
+
+    Same as convolve, only a somewhat faster algorthm is used.
     
 ?news
  DaVinci News
