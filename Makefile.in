@@ -62,7 +62,7 @@ OBJ=p.o pp.o symbol.o \
 	lexer.o parser.o main.o fit.o system.o misc.o ufunc.o scope.o \
 	ff_header.o ff_text.o ff_bbr.o ff_vignette.o \
 	ff_pause.o printf.o ff_ifill.o ff_xfrm.o newfunc.o ff_ix.o ff_avg.o \
-	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
+	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o ff_fncc.o \
 	x.o xrt_print_3d.o motif_tools.o ff_convolve.o apifunc.o \
 	ff_plplot.o ff_pca.o ff_loadvan.o tools.o header.o \
 	ff_pbm.o ff_meta.o @MODULE_SUPP_OBJS@ \
