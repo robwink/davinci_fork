@@ -11,6 +11,8 @@ extern char * var_endian(Var * v);
 #endif
 
 
+Var * write_PDS_Qube(Var *core, Var *side, Var *bottom, Var *back, FILE *fp);
+
 /*
 ** If the object is a QUBE AND has suffix planes, we need to run special software to process,
 ** therefore we need to save the suffix structures without interfering with the object
@@ -982,7 +984,7 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 					V_SIZE(tmpvar)[2]*
 					NBYTES(V_FORMAT(tmpvar)));				
 
-
+#ifdef BUTTHOLE
 				/* Check for alignment and pad as needed */
 
 				if (oi->obj_size[oi->count] % record_bytes){ 
@@ -1004,6 +1006,7 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 				}
 				else
 					oi->obj_size[oi->count]/=record_bytes;
+#endif
 			
 				if (!(strcasecmp("image",name)))
 					oi->obj_type[oi->count]=PDS_IMAGE;
@@ -1471,7 +1474,6 @@ WritePDS(vfuncptr func, Var *arg)
 			if (write_PDS_Qube((Var *)oi.obj_data[i],oi.sample_suffix,oi.line_suffix,oi.band_suffix,fp)==NULL){
 				parse_error("Error Writting Qube!");
 				fclose(fp);
-				unlink(fp);
 				return(NULL);
 			}
 			
