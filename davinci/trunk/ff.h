@@ -85,8 +85,6 @@ struct _vfuncptr vfunclist[] = {
 
     { "atoi",       ff_atoi,     NULL },
     { "atof",       ff_atof,     NULL },
-    { "basename",   ff_filename, (void *)1},
-    { "dirname",   ff_filename,  (void *)2},
     { "string",     ff_string,   NULL },
     { "delim",      ff_delim,    NULL },
     { "issubstring",ff_issubstring,	NULL},
@@ -215,9 +213,12 @@ struct _vfuncptr vfunclist[] = {
 
     { "struct",     ff_struct,     NULL },
     { "eval",     ff_eval,     NULL },
-    { "add_struct",     ff_add_struct,    NULL },
-    { "get_struct",     ff_get_struct,    NULL },
-	{ "syscall",       ff_syscall,        NULL},
+    { "add_struct",     ff_add_struct,     NULL },
+    { "get_struct",     ff_get_struct,     NULL },
+	 { "syscall",ff_syscall,NULL},
+    { "basename",   ff_filename, (void *)1},
+    { "dirname",   ff_filename,  (void *)2},
+    { "strsub",   ff_stringsubst,  NULL},
 	{ "dump",          ff_dump,           NULL},
 	{ "global",        ff_global,         NULL},
 
