@@ -211,18 +211,22 @@ struct _vfuncptr vfunclist[] = {
     { "xrt3d",     	ff_xrt3d,    NULL },
 #endif
 
-    { "struct",         ff_struct,         NULL },
-    { "eval",           ff_eval,           NULL },
-    { "add_struct",     ff_add_struct,     NULL },
-    { "get_struct",     ff_get_struct,     NULL },
-	{ "syscall",        ff_syscall,        NULL},
-    { "basename",       ff_filename,       (void *)1},
-    { "dirname",        ff_filename,       (void *)2},
-    { "strsub",         ff_stringsubst,    NULL},
-	{ "dump",           ff_dump,           NULL},
-	{ "global",         ff_global,         NULL},
-	{ "delete",         ff_delete,         NULL},
-
-    { NULL,         NULL,        NULL }
+    { "struct",         ff_struct,             NULL },
+    { "eval",           ff_eval,               NULL },
+    { "add_struct",     ff_add_struct,         NULL },
+    { "get_struct",     ff_get_struct,         NULL },
+    { "eigen",          ff_eigen,              NULL },
+    { "covar",          ff_corr_covar_and_scp, NULL },
+    { "corr",           ff_corr_covar_and_scp, NULL },
+    { "scp",            ff_corr_covar_and_scp, NULL },
+    { "pcs",            ff_pcs,                NULL },
+    { "syscall",        ff_syscall,            NULL},
+    { "basename",       ff_filename,           (void *)1},
+    { "dirname",        ff_filename,           (void *)2},
+    { "strsub",         ff_stringsubst,        NULL},
+    { "dump",           ff_dump,               NULL},
+    { "global",         ff_global,             NULL},
+    { "delete",         ff_delete,             NULL},
+    { NULL,             NULL,                  NULL }
 };
 

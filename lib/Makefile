@@ -15,7 +15,7 @@ INSTALL_DATA = ${INSTALL} -m 644
 
 CC     = gcc
 DEFS   = -I/usr/openwin/include -DHAVE_CONFIG_H 
-LIBS   = -L/usr/openwin/lib -lreadline -ltermcap -lXt -lX11 -lm 
+LIBS   = -L/usr/openwin/lib -lMagick -ltiff -lproj -lz -lreadline -ltermcap -ljpeg -lusds -lhdf5 -lXm -lXext -lXt -lX11 -lm 
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<

@@ -1583,3 +1583,144 @@ Davinci supports the following matrix functions:
 
 	dv> a = create(3,3,1)
 
+?functions pcs()
+?pcs()
+ pcs() - Performs Principal Component Stretch of the given data
+
+ pcs(obj=VAL [, opt={r|v|s}] [, axis={x|y|z}] [, scale=VAL])
+
+		The pcs() function performs a Principal Component Stretch on the
+		input data.
+		 
+		The 'opt' parameter selects the statistical method to be used on
+		the input data for the whole analysis. Various values taken by
+		this parameter have the following meaning:
+
+			'v' (default) - chooses Principal Component Analysis based on
+				the covariance matrix
+			
+			'r' - chooses Principal Component Analysis based on the
+				correlation matrix
+
+			's' - chooses Principal Component Analysis based on the
+				the "sum of cross products" matrix
+
+		The 'axis' parameter specifies the dimension along with the
+		vectors are laid out. Say, the input 'obj' is an [m x n x w]
+		matrix and the 'axis' has been specified as 'z' then:
+
+			'w' is the dimension of the a single input vector, and
+			there are 'm x n' of them in the image cube.
+
+			The default value for this parameter is 'z'.
+
+		The 'scale' parameter specifies the scaling factor, if any, to be
+		applied to the stretched vectors during the stretch phase. If 
+		'scale' is not specified, it is assumed to be 1, i.e. no scaling.
+
+
+ Example:
+	Assume that m1 is an image cube of dimensions [3x4x5], then the
+	following line will do the principal component stretch of the
+	input data based on the covariance matrix of 4x5=20 input vectors
+	of dimension=3.
+
+	dv> m2 = pcs(m1, v, x)
+
+?functions covar()
+?covar()
+ covar() - Computes the Covariance matrix of the input data
+
+ covar(obj=VAL [, axis={x|y|z}])
+
+		The covar() function computes the covariance matrix for
+		the vectors specified in the 'obj' cube.
+
+		The 'axis' parameter specifies the dimension along with the
+		vectors are laid out. Say, the input 'obj' is an [m x n x w]
+		matrix and the 'axis' has been specified as 'z' then:
+
+			'w' is the dimension of the a single input vector, and
+			there are 'm x n' of them in the image cube.
+
+			The default value for this parameter is 'z'.
+
+ Example:
+	Assume that 'm' is a data cube of dimensions [3x4x5], then the
+	following line will compute the covariance matrix 'c' for the
+	3x5=15 input vectors of dimension=4 each.
+
+	dv> c = covar(m, y)
+
+?functions corr()
+?corr()
+ corr() - Computes the Correlation matrix of the input data
+
+ corr(obj=VAL [, axis={x|y|z}])
+
+		The corr() function computes the correlation matrix for
+		the vectors specified in the 'obj' cube.
+
+		The 'axis' parameter specifies the dimension along with the
+		vectors are laid out. Say, the input 'obj' is an [m x n x w]
+		matrix and the 'axis' has been specified as 'z' then:
+
+			'w' is the dimension of the a single input vector, and
+			there are 'm x n' of them in the image cube.
+
+			The default value for this parameter is 'z'.
+
+ Example:
+	Assume that 'm' is a data cube of dimensions [3x4x5], then the
+	following line will compute the correlation matrix 'c' for the
+	3x5=15 input vectors of dimension=4 each.
+
+	dv> c = corr(m, y)
+
+?functions scp()
+?scp()
+ scp() - Computes the sums of cross products matrix for the input data
+
+ scp(obj=VAL [, axis={x|y|z}])
+
+		The scp() function computes the sums of cross products matrix for
+		the vectors specified in the 'obj' cube.
+
+		The 'axis' parameter specifies the dimension along with the
+		vectors are laid out. Say, the input 'obj' is an [m x n x w]
+		matrix and the 'axis' has been specified as 'z' then:
+
+			'w' is the dimension of the a single input vector, and
+			there are 'm x n' of them in the image cube.
+
+			The default value for this parameter is 'z'.
+
+ Example:
+	Assume that 'm' is a data cube of dimensions [3x4x5], then the
+	following line will compute the sums of cross products matrix 'c'
+	for the 3x5=15 input vectors of dimension=4 each.
+
+	dv> c = scp(m, y)
+
+
+?functions eigen()
+?eigen()
+ eigen() - Computes the Eigen Values and Eigen Vectors of a 
+           Real Symmetric input matrix
+
+ eigen(obj=VAL)
+
+		The eigen() function computes the Eigen Values and Vectors for
+		a real symmetric [m x m x 1] matrix passed in as the 'obj'
+		parameter.
+
+ Example:
+	Assume that 'a' is a [3x3x1] matrix, then the following line
+	will compute the Eigen Values and Eigen vectors of matrix 'a'.
+
+	The return value 'e' is a [4x3x1] matrix, with the first column
+	containing the Eigen Values and the next three columns containing
+	the Eigen Vectors.
+
+	dv> e = eigen(a)
+
