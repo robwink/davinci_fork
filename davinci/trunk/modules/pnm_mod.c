@@ -28,6 +28,7 @@ static int fill_object_with_pad_color(int nx, int ny, int z,
 static int map_image(int x, int y, int z, int left, int top, 
 		     Var* obj,Var* output, void* data);
 static int size_object(Var *output, int nx, int ny, int z);
+static double GetPixel(Var *obj, int width, int height, float orgX, float orgY, int z);
 
 // Usage functions
 static void print_cut_usage(void);
@@ -522,10 +523,14 @@ int cut_convert_and_check_ranges(int *iLeft, int *iTop, int iWidth, int iHeight,
 static Var *scale_doit(Var* obj, int x, int y, int z, int newcols, int newrows)
 {
     // Ratios
-    float colratio = newcols/x;
-    float rowratio = newrows/y;
+    float colratio = (float)newcols/(float)x;
+    float rowratio = (float)newrows/(float)y;
+    float orgX     = 0.0;
+    float orgY     = 0.0;
+    int   k1       = 0;
     Var*  output   = NULL;
-
+    void* data     = NULL;
+    int   i,j,k    = 0;
     output         = newVar();
 
     V_TYPE(output)   = V_TYPE(obj);   
@@ -533,10 +538,52 @@ static Var *scale_doit(Var* obj, int x, int y, int z, int newcols, int newrows)
     V_ORG(output)    = V_ORG(obj);
     V_FORMAT(output) = V_FORMAT(obj);
     V_DATA(output)   = calloc(NBYTES(V_FORMAT(obj)), (newcols * newrows * z));
+    data             = calloc(NBYTES(V_FORMAT(obj)), (newcols * newrows * z));
 
     if (!size_object(output, newcols, newrows, z))
 	    return(NULL);
 
+    for (i = 0; i < newcols; i++)
+    {
+	    for (j = 0; j < newrows; j++)
+	    {
+		for (k = 0; k < z; k++)
+		{
+		    orgX = (float)i/colratio; // Relative pos in original
+		    orgY = (float)j/rowratio; // Relative pos in original
+		    k1   = cpos(i,j,k,output);  // Writing position
+
+		    switch(V_FORMAT(output)) {
+			case BYTE: 
+	                  ((u_char*)data)[k1]
+				  = (u_char)GetPixel(obj,x,y,orgX,orgY,k); 
+			  break;
+			case SHORT:
+			  ((short*)data)[k1] 
+				  = (short)GetPixel(obj,orgX,x,y,orgY,k);
+			  break;
+			case INT:
+			  ((int*)data)[k1] 
+				  = (int)GetPixel(obj,orgX,x,y,orgY,k);
+			  break;
+			case FLOAT:
+		          ((float*)data)[k1] 
+				  = (float)GetPixel(obj,x,y,orgX,orgY,k);
+			  break;
+			case DOUBLE:
+		          ((double*)data)[k1] 
+				  = GetPixel(obj,x,y,orgX,orgY,k);
+			  break;
+		 	default:
+		          printf("\n\nUnsupported type for Scale\n\n");
+			  return(NULL);
+			  break;
+		    }
+    	        }
+     	    }
+    }
+    free(V_DATA(output));
+    V_DATA(output) = data;
     return(output);
 }
 
@@ -656,6 +703,52 @@ static int size_object(Var *output, int nx, int ny, int z)
     return(1);
 }
 
+static double GetPixel(Var *obj, int width, int height, float orgX, float orgY, int z)
+{
+    float XPan = orgX-(int)orgX; // i.e., floating point part for
+    float YPan = orgY-(int)orgY; // when pixel not in original
+	
+    double color    = 0.0;
+
+    int k1 = cpos((int)orgX, (int)orgY, z, obj);
+
+    color = extract_double(obj,k1);
+
+    if (XPan && YPan) // Pixel non-existent on both planes
+    {
+	    // So, we need to do some averaging
+	    if (orgX < (width-1))
+	    {
+		    k1 = cpos(orgX+1, orgY, z, obj);
+		    color += extract_double(obj,k1); color /= 2.0;
+	    }
+	    if (orgY < (height-1) && orgX < (width-1))
+	    {
+		    k1 = cpos(orgX, orgY+1, z, obj);
+		    color += extract_double(obj,k1); color /= 2.0;
+
+		    k1 = cpos(orgX+1, orgY+1, z, obj);
+		    color += extract_double(obj,k1); color /= 2.0;
+	    }
+	    else if (orgY < (height-1))
+	    {
+		    k1 = cpos(orgX,orgY+1, z, obj);
+		    color += extract_double(obj,k1); color /= 2.0;
+	    }
+    }
+    else if (XPan && orgX < width)
+    {
+	    k1 = cpos(orgX+1, orgY, z, obj);
+	    color += extract_double(obj,k1); color /= 2.0;
+    }
+    else if (YPan && orgY < height)
+    {
+	    k1 = cpos(orgX,orgY+1,z,obj);
+	    color += extract_double(obj,k1); color /= 2.0;
+    }
+    return color;
+}
+
 ///////////////////////////////////////////////
 //       SECTION FOUR - USAGE FUNCTIONS      // 
 ///////////////////////////////////////////////
@@ -671,12 +764,13 @@ void print_cut_usage(void)
 
 void print_scale_usage(void)
 {
-    printf("\nUsage: scale(object, xsize, ysize, xscale, yscale, pixels)\n\n");
+    printf("\nUsage: scale(object, xsize, ysize, xscale, yscale)\n\n");
     printf("You may specify a SINGLE axis change.  For example, xsize OR\n");
-    printf("xscale.  The other axis will be scaled accordingly.\n\n");
+    printf("xscale. The aspect ratio will be maintained.\n\n");
     printf("You may also specify BOTH axis. For example, xscale & yscale.\n\n");
     printf("SIZE values are literal (i.e., pixels) whereas SCALE values are\n");
     printf("factors.  I.e., < 1 implies SHRINK, > 1 implies GROW.\n\n");
+    printf("Function uses BILINEAR FILTERING for Smoothing.\n\n");
 }
 
 void print_crop_usage(void)
