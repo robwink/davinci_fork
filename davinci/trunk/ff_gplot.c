@@ -104,7 +104,7 @@ ff_plot(vfuncptr func, Var *arg)
     char *fname;
     int x,y,z,i;
     int type;
-    char buf[512];
+    char buf[5120];		/* added factor of 10 */
     int s0,s1;
     int count = 0;
     
