@@ -78,13 +78,11 @@ ff_read_text(vfuncptr func, Var *arg)
     filename = V_STRING(v);
 
     if ((fname = dv_locate_file(filename)) == NULL) {
-        sprintf(error_buf, "Cannot find file: %s\n", filename);
-        parse_error(NULL);
+        parse_error( "Cannot find file: %s\n", filename);
         return(NULL);
     }
-    if ((fp = fopen(fname, "r")) == NULL) {
-        sprintf(error_buf, "Cannot open file: %s\n", fname);
-        parse_error(NULL);
+    if ((fp = fopen(fname, "rb")) == NULL) {
+        parse_error( "Cannot open file: %s\n", fname);
         return(NULL);
     }
     /**
@@ -145,7 +143,7 @@ ff_read_lines(vfuncptr func, Var *arg)
         parse_error(NULL);
         return(NULL);
     }
-    if ((fp = fopen(fname, "r")) == NULL) {
+    if ((fp = fopen(fname, "rb")) == NULL) {
         sprintf(error_buf, "Cannot open file: %s\n", fname);
         parse_error(NULL);
         return(NULL);
@@ -157,6 +155,7 @@ ff_read_lines(vfuncptr func, Var *arg)
 
     while((rlen = getline(&ptr, fp)) != EOF) {
         if (ptr[rlen-1] == '\n') ptr[rlen-1] = '\0';
+        if (ptr[rlen-2] == '\r') ptr[rlen-2] = '\0';
         if (size == count) {
             t = realloc(t, size*2*sizeof(char *));
             size *= 2;

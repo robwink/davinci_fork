@@ -4,7 +4,7 @@
  **/
 
 int
-WriteAscii(Var *s, FILE *fp, char *filename)
+WriteAscii(Var *s, char *filename, int force)
 {
     int dsize;
     int format;
@@ -14,12 +14,17 @@ WriteAscii(Var *s, FILE *fp, char *filename)
     int i, j, k;
 	int x, y, z;
 	int pos;
+	FILE *fp;
 
-    if (fp == NULL) {
-        if ((fp = fopen(filename, "w")) == NULL) {
-            return 0;
-        }
+    if (!force && access(filename, F_OK) == 0) {
+		parse_error("File %s already exists.", filename);
+        return 0;
     }
+
+	if ((fp = fopen(filename, "w")) == NULL) {
+        parse_error("Unable to open file: %s\n", filename);
+		return 0;
+	}
 
 	if (V_TYPE(s)==ID_STRING) {
 		fwrite(V_STRING(s), strlen(V_STRING(s)), 1, fp);

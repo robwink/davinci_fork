@@ -1160,15 +1160,17 @@ write_isis_planes(vfuncptr func, Var * arg)
 	int rec_len, lbl_length;
 	Var *zero;
 	int nsuffix[3] = { 0, 0, 0 };
+	char *fname;
+	int force=0;
 
-
-    Alist alist[6];
+    Alist alist[7];
     alist[0] = make_alist( "core",    	ID_VAL,    	NULL,    &core);
     alist[1] = make_alist( "side", 	ID_STRUCT,  NULL,    &suffix[0]);
     alist[2] = make_alist( "bottom",	ID_STRUCT,  NULL,    &suffix[1]);
     alist[3] = make_alist( "back",  	ID_STRUCT,  NULL,    &suffix[2]);
     alist[4] = make_alist( "filename",  ID_STRING,  NULL,    &filename);
-    alist[5].name = NULL;
+    alist[5] = make_alist( "force",  INT,  NULL,    &force);
+    alist[6].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -1181,8 +1183,20 @@ write_isis_planes(vfuncptr func, Var * arg)
         parse_error("%s: No filename specified\n", func->name);
         return(NULL);
     }
+	if ((fname = dv_locate_file(filename)) == NULL) {
+        parse_error("%s: Unable to expand filename %s\n", func->name, filename);
+        return(NULL);
+    }
 
-    fp = fopen(filename, "wb");
+    if (!force && access(fname, F_OK) == 0){
+		parse_error("%s: File %s already exists.", func->name, filename);
+        return(NULL);
+    }
+
+	if ((fp = fopen(fname, "wb")) == NULL) {
+        parse_error("%s: Unable to open file: %s\n", func->name, filename);
+        return (NULL);
+    }
 
     size[0] = GetX(core);
     size[1] = GetY(core);

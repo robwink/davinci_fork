@@ -1460,7 +1460,6 @@ Fix_Label(FILE *fp,int record_bytes,int *label_ptr, objectInfo *oi)
 Var *
 WritePDS(vfuncptr func, Var *arg)
 {
-	Alist alist[4];
 	Var *v=NULL;
 	FILE *fp;
 	int force=0;
@@ -1470,11 +1469,45 @@ WritePDS(vfuncptr func, Var *arg)
 	int flag;
 	int count;
 	int i;
-	char *fn=NULL;
+	char *filename=NULL, *fname = NULL;
 	int record_bytes; /*		Gotta keep track of this baby!*/
 	Var *result;
 	int label_ptr[4];
 	objectInfo	oi;
+
+	Alist alist[4];
+    alist[0] = make_alist( "object", ID_STRUCT,   NULL,     &v);
+    alist[1] = make_alist( "filename", ID_STRING,   NULL,     &filename);
+    alist[2] = make_alist( "force", INT,   NULL,     &force);
+    alist[3].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (v == NULL) {
+		parse_error("%s: No object specfiied.", func->name);
+		return(NULL);
+	}
+
+	if (filename == NULL) {
+		parse_error("%s: No filename specfiied.", func->name);
+		return(NULL);
+	}
+
+	if ((fname = dv_locate_file(filename)) == NULL) {
+        parse_error("%s: Unable to expand filename %s\n", func->name, filename);
+        return(NULL);
+    }
+
+    if (!force && access(fname, F_OK) == 0){
+		parse_error("%s: File %s already exists.", func->name, filename);
+        return(NULL);
+    }
+
+	if ((fp = fopen(fname, "wb")) == NULL) {
+        fprintf(stderr, "%s: Unable to open file: %s\n", func->name, filename);
+        return (NULL);
+    }
+
 	oi.obj_ptr = (int *)malloc(sizeof(int)*MAXOBJ);
 	oi.obj_size = (int *)malloc(sizeof(int)*MAXOBJ);
 	oi.obj_dirty = (int *)malloc(sizeof(int)*MAXOBJ);
@@ -1490,42 +1523,6 @@ WritePDS(vfuncptr func, Var *arg)
 	oi.total_band_count=0;
 	oi.Qub_Pad=0;
 
-
-
-   alist[0] = make_alist( "object", ID_STRUCT,   NULL,     &v);
-   alist[1] = make_alist( "filename", ID_STRING,   NULL,     &fn);
-   alist[2] = make_alist( "force", INT,   NULL,     &force);
-   alist[3].name = NULL;
-
-	if (parse_args(func, arg, alist) == 0) return(NULL);
-
-	if (fn == NULL) {
-		parse_error("Hey, I need a filename so I know where to write the information...sheesh!");
-		return(NULL);
-	}
-
-	else if (strlen(fn) < 1) {
-		 parse_error("Hey, I need a non-zero length filename so I know where to write the information...sheesh!");
-      return(NULL);
-   }
-
-	if (v==NULL) {
-		parse_error("Can't write out an empty file...please supply an object");
-		return(NULL);
-	}
-
-	if ((fp=fopen(fn,"r"))!=NULL){
-		if (!(force)){
-			parse_error("File already exists (use force=1 to overwite)...aborting");
-			fclose(fp);
-			return(NULL);
-		}
-		fclose(fp);
-	}
-
-	if (strstr(fn,"foo")!=NULL)
-		parse_error("You're naming your file %s...how original.",fn);
-
 	count=get_struct_count(v);
 	i=0;
 	while(count >= 0)  {
@@ -1538,14 +1535,7 @@ WritePDS(vfuncptr func, Var *arg)
 	}
 	if (count < 0) {
 		parse_error("Your object doesn't contain the necessary elements for a PDS label");
-		return(NULL);
-	}
-
-	fp=fopen(fn,"wb");
-
-
-	if (fp==NULL) {
-		parse_error("Can't open file: %s for writing...sorry, but you're hosed.",fn);
+		fclose(fp);
 		return(NULL);
 	}
 
@@ -1562,15 +1552,11 @@ WritePDS(vfuncptr func, Var *arg)
 
 	for(i=0;i<oi.count;i++){
 		if (oi.obj_type[i] != PDS_QUBE) {
-
 			fwrite(oi.obj_data[i],sizeof(char), (oi.obj_size[i]*record_bytes),fp);
-
-			if (oi.obj_dirty[i])
+			if (oi.obj_dirty[i]) {
 				free(oi.obj_data[i]);
-		}
-
-		else {
-
+			}
+		} else {
 			if (write_PDS_Qube((Var *)oi.obj_data[i],oi.sample_suffix,oi.line_suffix,oi.band_suffix,fp)==NULL){
 				parse_error("Error Writing Qube!");
 				fclose(fp);
@@ -1581,15 +1567,10 @@ WritePDS(vfuncptr func, Var *arg)
 				memset(pad,0x20,oi.Qub_Pad);
 				fwrite(pad,sizeof(char),oi.Qub_Pad,fp);
 			}
-
 		}
-
 	}
-
-	
 	fclose(fp);
 	return(NULL);
-
 }
 
 Var *
@@ -1631,7 +1612,7 @@ ReadPDS(vfuncptr func, Var *arg)
 	int	obn=1;
 	Var *fn;
 	int record_bytes;
-	char *filename;
+	char *filename = NULL, *fname = NULL;
 	int data = 1;
 
 	FILE *fp;
@@ -1656,14 +1637,19 @@ ReadPDS(vfuncptr func, Var *arg)
         return (NULL);
    }
 
+    if (filename == NULL) {
+        parse_error("%s: No filename specified\n", func->name);
+        return(NULL);
+    }
+	if ((fname = dv_locate_file(filename)) == NULL) {
+        parse_error("%s: Unable to expand filename %s\n", func->name, filename);
+        return(NULL);
+    }
 
-	if((fp=fopen(filename,"r"))==NULL){
-		parse_error("Can't find file: %s",filename);
-		return(NULL);
-	}
-
-	fclose(fp);
-
+    if (access(fname, R_OK) != 0){
+		parse_error("%s: Unable to find file %s.", func->name, filename);
+        return(NULL);
+    }
 
 	Init_Obj_Table();
 
