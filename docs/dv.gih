@@ -1811,10 +1811,12 @@ Davinci supports the following matrix functions:
  of any suffix planes.
 
  Individual suffix planes can be extracted by name or by location,
- by speficying either a string or an integer to the PLANE parameter.
+ by speficying either a the plane's name or the plane's number.
+ The plane's name can be abbreviated to the shortest unique prefix.
 
- The TYPE parameter is necessary when extracting planes by location.  It
- specifies which suffix to extract from.
+ The TYPE parameter is necessary when extracting planes by number.  
+ It specifies which suffix to extract from.  Planes are numbered 
+ starting from zero.
  
  Example:
 
@@ -1823,7 +1825,7 @@ Davinci supports the following matrix functions:
 
 	dv> a = isis( filename="my_file", plane="background")
  
- This example extracts the third band_suffix plane:
+ This example extracts the band suffix plane #3: 
 
 	dv> a = isis( filename="my_file", plane=3, type=band)
 
