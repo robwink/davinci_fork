@@ -585,26 +585,6 @@ free_tree(Var *n)
     }
 }
 
-int
-valid_decl(Var *type, Var *string)
-{
-	char *ptr = V_NAME(type);
-
-	if (0) {
-	} else if (!strcmp(ptr, "byte")) {
-	} else if (!strcmp(ptr, "char")) {
-	} else if (!strcmp(ptr, "short")) {
-	} else if (!strcmp(ptr, "int")) {
-	} else if (!strcmp(ptr, "float")) {
-	} else if (!strcmp(ptr, "double")) {
-	} else {
-		return(0);
-	}
-	printf("decl: %s\n", ptr);
-	return(1);
-}
-
-
 Var **
 find_struct(Var *a, Var *b)
 {
@@ -631,4 +611,370 @@ find_struct(Var *a, Var *b)
 		}
 	}
 	return(NULL);
+}
+
+
+Var *
+byte_compile(Var * n)
+{
+    Var *left, *right, *range, *where;
+    Var *p1 = NULL, *p2 = NULL, *p3 = NULL;
+    Scope *scope = scope_tos();
+    int type;
+
+    if (n == NULL) return (NULL);
+    type = V_TYPE(n);
+
+    /**
+     ** These are not nodes, but merely vals.  push 'em. and return; 
+     **/
+    switch (type) {
+        case ID_IVAL:
+        case ID_RVAL:
+        case ID_ID:
+        case ID_UNK:
+        case ID_STRING:
+        case ID_VAL:
+            return (NULL);
+    }
+
+    left = V_NODE(n)->left;
+    right = V_NODE(n)->right;
+
+    if (type == ID_ARGV) {
+		if (left) {
+			evaluate(left);
+			p1 = pop(scope);
+		}
+
+		if (right) {
+			evaluate(right);
+			p2 = pop(scope);
+		}
+        push(scope, pp_argv(p1, p2));
+        return (NULL);
+    }
+
+
+    switch (type) {
+        case ID_OR: /* binary operators */
+        case ID_AND:
+        case ID_EQ:
+        case ID_NE:
+        case ID_LT:
+        case ID_GT:
+        case ID_LE:
+        case ID_GE:
+        case ID_ADD:
+        case ID_SUB:
+        case ID_MULT:
+        case ID_DIV:
+        case ID_MOD:
+        case ID_POW:
+            p1 = byte_compile(left);
+            p2 = byte_compile(right);
+            push(scope, pp_math(p1, type, p2));
+            break;
+
+		case ID_INC:
+		case ID_DEC:
+            if (left) byte_compile(left);
+            if (right) byte_compile(right);
+			p2 = pop(scope);
+			p1 = pop(scope);
+
+			switch (type) {
+				case ID_INC: p3 = pp_math(p1, ID_ADD, p2); break;
+				case ID_DEC: p3 = pp_math(p1, ID_SUB, p2); break;
+			}
+
+			if (V_TYPE(left) == ID_DEREF) {
+				byte_compile(V_NODE(left)->left);
+				byte_compile(V_NODE(left)->right);
+
+                p2 = pop(scope);
+                p1 = pop(scope);
+                push(scope, pp_set_struct(p1, p2, p3));
+			} else {
+				push(scope, pp_set_var(p1, NULL, p3));
+			}
+			break;
+
+        case ID_UMINUS:
+            if (left) byte_compile(left);
+            if (right) byte_compile(right);
+            p1 = pop(scope);
+            push(scope, pp_math(NULL, ID_SUB, p1));
+            break;
+
+        case ID_RETURN:
+			if (left != NULL) {
+				cleanup(scope);
+				byte_compile(left);
+				p1 = pop(scope);
+				if ((p2 = eval(p1)) != NULL) p1 = p2;
+				scope->rval = p1;
+			}
+			scope->returned = 1;
+            break;
+
+        case ID_BREAK:
+            scope->broken = scope->loop;
+            break;
+
+        case ID_CONT:
+            scope->broken = scope->loop + 1;
+            break;
+
+        case ID_FOR:    /* just a special holder for while loops */
+            if (left) byte_compile(left);
+            if (!scope->returned) cleanup(scope);
+            break;
+
+        case ID_WHILE:
+            scope->loop++;
+            while (1) {
+                if (left != NULL) {
+                    byte_compile(left);
+                    if (is_zero(pop(scope)))
+						break;
+                }
+                scope->broken = 0;
+                byte_compile(right);
+                if (scope->returned != 0 || 
+						(scope->broken != 0 && scope->broken <= scope->loop)) {
+                    break;
+                }
+            /**
+             ** special case for FOR loops.
+             **/
+                if (V_TYPE(right) == ID_FOR) {
+                    byte_compile(V_NODE(right)->right);
+                }
+				if (!scope->returned) {
+					cleanup(scope);
+					if (scope->broken > scope->loop) {
+						continue;
+					}
+				}
+            }
+            scope->loop--;
+            scope->broken = 0;
+            if (!scope->returned) cleanup(scope);
+            break;
+
+
+        case ID_LIST:
+            while (!scope->returned && !scope->broken && V_TYPE(n) == ID_LIST) {
+                byte_compile(left);
+                if (scope->broken == 0 && scope->returned == 0) {
+                    n = right;
+                    left = V_NODE(n)->left;
+                    right = V_NODE(n)->right;
+                }
+                if (!scope->returned) cleanup(scope);
+            }
+            if (scope->broken == 0 && scope->returned == 0)
+                byte_compile(n);
+            break;
+
+        case ID_ELSE:
+			/**
+			 ** A true and a false option.  Run the true one.
+			 **/
+            byte_compile(left);
+            break;
+
+        case ID_IF:
+            byte_compile(left);
+            if (!is_zero(pop(scope))) {
+                byte_compile(right);
+            } else if (right && V_TYPE(right) == ID_ELSE) {
+				/**
+				 ** In the event of a test that fails, and our child node
+				 ** is an else, run the false node.
+				 **/
+                byte_compile(V_NODE(right)->right);
+            }
+            break;
+
+        case ID_FUNCT:
+            p1 = NULL;
+            if (right != NULL) {
+                byte_compile(right);
+                p1 = pop(scope);
+            }
+            push(scope, pp_func(left, p1));
+			scope->returned = 0;
+            break;
+
+        case ID_ARGS:
+            if (left) byte_compile(left);
+            if (right) byte_compile(right);
+            if (right) p2 = pop(scope);
+            if (left) p1 = pop(scope);
+            push(scope, pp_mk_arglist(p1, p2));
+            break;
+
+        case ID_ARG:
+            if (left != NULL) {
+                byte_compile(left);
+                byte_compile(right);
+                p2 = pop(scope);
+                p1 = pop(scope);
+                push(scope, pp_keyword_to_arg(p1, p2));
+            } else {
+                byte_compile(right);
+            }
+            break;
+
+        case ID_ARRAY:
+			byte_compile(left);
+			byte_compile(right);
+			p2 = pop(scope);
+			p1 = pop(scope);
+			push(scope, pp_range(p1, p2));
+			break;
+
+        case ID_RANGE:  /* pair of range values */
+            if (left) {
+				byte_compile(left);
+				p1 = pop(scope);
+			}
+			if (right) {
+				byte_compile(right);
+				p2 = pop(scope);
+			}
+            push(scope, pp_mk_range(p1, p2));
+            break;
+
+        case ID_RSTEP:  /* ranges, with a step value */
+            if (left) {
+				byte_compile(left);
+				p1 = pop(scope);
+			}
+			if (right) {
+				byte_compile(right);
+				p2 = pop(scope);
+			}
+            push(scope, pp_mk_rstep(p1, p2));
+            break;
+
+        case ID_RANGES: /* list of range values */
+            if (left == NULL) {
+				/**
+				 ** A single range value.  mk_range will deal with it.
+				 **/
+                byte_compile(right);
+			} else {
+				byte_compile(left);
+				byte_compile(right);
+                p2 = pop(scope);
+                p1 = pop(scope);
+				push(scope, pp_add_range(p1,p2));
+			}
+            break;
+
+        case ID_SET:    /* equivalence */
+            if (V_TYPE(left) == ID_ARRAY) {
+                byte_compile(V_NODE(left)->left);
+                byte_compile(V_NODE(left)->right);
+                byte_compile(right);
+
+                p2 = pop(scope);
+                range = pop(scope);
+                p1 = pop(scope);
+
+                push(scope, pp_set_var(p1, range, p2));
+			} else if (V_TYPE(left) == ID_WHERE) {
+
+/*
+                                    ID_SET
+                                  /        \
+                           ID_WHERE          EXPR
+                          /        \
+                         ID       VAL
+*/
+				byte_compile(V_NODE(left)->left);
+				byte_compile(V_NODE(left)->right);
+				byte_compile(right);
+
+                p2 = pop(scope);
+                where = pop(scope);
+                p1 = pop(scope);
+				push(scope, pp_set_where(p1, where, p2));
+
+			} else if (V_TYPE(left) == ID_DEREF) {
+
+/*
+                                    ID_SET
+                                  /        \
+                           ID_DEREF          EXPR
+                          /        \
+                         ID         ID 
+*/
+				byte_compile(V_NODE(left)->left);
+				byte_compile(V_NODE(left)->right);
+				byte_compile(right);
+
+                p3 = pop(scope);
+                p2 = pop(scope);
+                p1 = pop(scope);
+                push(scope, pp_set_struct(p1, p2, p3));
+            } else {
+                byte_compile(left);
+                byte_compile(right);
+                p2 = pop(scope);
+                p1 = pop(scope);
+                push(scope, pp_set_var(p1, NULL, p2));
+            }
+            break;
+	    case ID_CAT:
+            if (left) byte_compile(left);
+            if (right) byte_compile(right);
+            p2 = pop(scope);
+            p1 = pop(scope);
+			if (p1 != NULL && p2 != NULL)  {
+				push(scope, do_cat(p1, p2, 0));
+			}
+		    break;
+
+		case ID_DEREF:
+			/*
+			** Derefernce of a structure element.
+			** Push the assoicated Var
+			*/
+			byte_compile(left);
+			byte_compile(right);
+
+            p2 = pop(scope);
+            p1 = pop(scope);
+
+			{
+				Var **p3 = find_struct(p1, p2);
+				if (p3 != NULL) {
+					push(scope, *p3);
+				} else {
+					parse_error("structure doesn no contain member: %s",
+								V_NAME(p2));
+					push(scope, NULL);
+				}
+			}
+			
+			break;
+
+		case ID_CONSTRUCT:
+			/*
+			** Construct a structure from the passed arguments
+			*/
+			byte_compile(left);
+			p1 = pop(scope);
+			push(scope, create_struct(p1));
+
+			break;
+
+		default:
+			fprintf(stderr, "Unknown type: %d\n", type);
+    }
+    return (NULL);
 }

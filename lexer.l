@@ -14,7 +14,7 @@ extern int continuation;
 extern int in_comment;
 extern int in_string;
 
-#define YY_USER_ACTION pp_count+=yyleng;
+#define YY_USER_ACTION pp_count+=yyleng; MYECHO
 
 YY_BUFFER_STATE
 get_current_buffer()
@@ -28,6 +28,14 @@ char save_file[256];
 
 int caller;			/* used by flex to handle comments in multiple states */
 
+
+void end_save()
+{
+	fprintf(save_fp, "\n");
+	fclose(save_fp);
+	save_fp = NULL;
+}
+
 void start_save()
 {
     char *tmp;
@@ -38,16 +46,9 @@ void start_save()
     free(tmp);
 
     save_fp = fopen(save_file, "w");
+	fprintf(save_fp, "define %s", yytext);
+	fflush(save_fp);
 }
-
-void end_save()
-{
-	fprintf(save_fp, "\n");
-	fclose(save_fp);
-	save_fp = NULL;
-	save_ufunc(save_file);
-}
-
 
 %}
 
@@ -65,7 +66,7 @@ comment #.*
 %x comment ufunc
 %%
 
-"define"	{ start_save(); MYECHO; BEGIN(ufunc); }
+"define"	{ return(FUNC_DEF); }
 "for"		{ return(FOR); }
 "while"     { return(WHILE); }
 "where"     { return(WHERE); }
@@ -125,7 +126,7 @@ comment #.*
 						if (indent == 0) { 
 							BEGIN(INITIAL); 
 							end_save();
-							return('\n');
+							return(END_DEF);
 						} 
 				   }
 <ufunc>"\\\n"      { MYECHO; continuation=1; }
@@ -139,3 +140,4 @@ comment #.*
 <comment>\n             { MYECHO; }
 <comment>"*"+"/"        { MYECHO; BEGIN(caller); in_comment = 0;}
 %%
+

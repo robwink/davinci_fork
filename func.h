@@ -355,7 +355,7 @@ int parse_args(int ac, Var **av, Alist *alist);
 void print_history(int i);
 
 void xfree(void *);
-void save_ufunc(char *filename);
+/* void save_ufunc(char *filename); */
 void vax_ieee_r(float *from, float *to);
 
 char *strndup(char *, int);
@@ -369,3 +369,4 @@ Var *ff_syscall(vfuncptr func, Var * arg);
 
 Var * ff_dump(vfuncptr func, Var * arg);
 Var * ff_global(vfuncptr func, Var * arg);
+Var * ff_delete(vfuncptr func, Var *arg);

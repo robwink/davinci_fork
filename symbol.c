@@ -105,6 +105,25 @@ rm_symtab(Var *v)
 }
 
 Var *
+ff_delete(vfuncptr func, Var *arg)
+{
+	Var *e;
+
+	if (arg == NULL) return(NULL);
+	
+	e = eval(arg);
+	e = rm_symtab(e);
+
+	if (e) {
+		free_var(e);
+	} else {
+		parse_error("%s not found.", V_NAME(arg));
+	}
+
+	return(NULL);
+}
+
+Var *
 search_symtab(Scope *scope, char *name) 
 {
 	Symtable *s;
@@ -199,6 +218,7 @@ sym_put(Scope *scope, Var *s)
 	mem_claim(s);
 	return(s);
 }
+
 
 Var *
 put_sym(Var *s)

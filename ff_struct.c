@@ -47,6 +47,7 @@ make_struct(int ac, Var **av)
         data[i] = newVal(BSQ, 1,1,1, BYTE, zero);
         mem_claim(data[i]);
     }
+	V_STRUCT(o).count = ac;
     return(o);
 }
 

@@ -10,8 +10,10 @@ UFUNC **ufunc_list = NULL;
 int nufunc = 0;
 int ufsize = 16;
 extern int pp_line;
+extern char save_file[];
 
 void list_funcs();
+UFUNC * make_ufunc(Var *id, Var *args, Var *body);
 
 UFUNC *
 locate_ufunc(char *name) 
@@ -55,20 +57,24 @@ store_ufunc(UFUNC *f)
 void
 free_ufunc(UFUNC *f) 
 {
-    free(f->text);
-    free(f->name);
+	int i;
+    if (f->text) free(f->text);
+    if (f->name) free(f->name);
     if (f->argbuf) free(f->argbuf);
-    if (f->args) free(f->args);
+    if (f->args) {
+		for (i = 0 ; i < f->nargs ; i++) free(f->args[i]);
+		free(f->args);
+	}
     if (f->tree) free_tree(f->tree);
     free(f);
 }
 
 void
-save_ufunc(char *filename)
+save_ufunc(Var *id, Var *args, Var *body)
 {
     UFUNC *f;
 
-    f = load_function(filename);
+    f = make_ufunc(id, args, body);
     if (f == NULL) return;
     /**
      ** If a ufunc with this name exists, destroy it
@@ -80,208 +86,6 @@ save_ufunc(char *filename)
             fprintf(stderr, "Loaded function %s\n", f->name);
     }
     store_ufunc(f);
-}
-
-UFUNC *
-load_function(char *filename)
-{
-    /**
-     ** locate and verify important portions of function definition
-     **/
-    int i,j;
-    struct stat sbuf;
-    char *buf, *str, *p;
-    int fd;
-    int nlen = 0;
-    char name[256];
-	char line[2048];
-	char *q;
-
-    UFUNC *f = NULL;
-    Scope *scope;
-    void *handle;
-	extern char *yytext;
-	extern Var *curnode;
-	FILE *fp;
-	void *parent_buffer;
-	extern int local_line;
-
-    /**
-     ** Get text from file
-     **/
-    if (stat(filename, &sbuf) != 0) {
-        fprintf(stderr, "Internal error: load_function, no file\n");
-        return(NULL);
-    }
-    buf = (char *)calloc(1, sbuf.st_size+1);
-	fp = fopen(filename, "r");
-    fread(buf, sbuf.st_size, 1, fp);
-	fclose(fp);
-
-	unlink(filename);
-
-    buf[sbuf.st_size] = '\0';
-
-    str = buf;
-
-    while(isspace(*str)) str++;
-    if (strncasecmp(str, "define", 6)) {
-        free(buf);
-        fprintf(stderr, "Internal error: load_function, no 'define' in file\n");
-        return(NULL);
-    }
-    str += 6;
-    while(*str && isspace(*str)) str++;
-    while(*str && (isalnum(*str) || *str == '_')) name[nlen++] = *str++;
-    if (nlen == 0) {
-        /**
-         ** If we want to be nice to the user, we could spit out all
-         ** the ufunc's here.
-         **/
-        free(buf);
-
-		list_funcs();
-
-        return(NULL);
-    }
-    name[nlen] = '\0';
-    if (!(isalpha(*name) || *name == '_')) {
-        sprintf(error_buf,"Function name must begin with a letter: %s", name);
-        parse_error(NULL);
-        free(buf);
-        return(NULL);
-    }
-
-    f = (UFUNC *)calloc(1, sizeof(UFUNC));
-    f->name = strdup(name);
-    f->text = buf;
-    f->ready = 0;
-
-    /**
-     ** should now find '( args )'.
-     ** args should be limited to ids, space and numbers
-     **/
-    while(*str && isspace(*str)) str++;
-
-    if (*str && *str == '(') {
-        str++;
-        p = str;
-        while(*str && (isalnum(*str) || isspace(*str) || strchr(",_", *str))) 
-            str++;
-        if (*str && *str == ')') {
-            /**
-             ** Believe we found a complete args section.  Parse 'em up.
-             ** Duplicate the string for cutting on.
-             **/
-            if (p != str) {
-                f->argbuf = strndup((char *)p, str-p);
-                split_string(f->argbuf, &f->nargs, &f->args, ",");
-            }
-            /**
-             ** verify arg limits
-             **/
-            f->min_args = -1;
-            f->max_args = -1;
-            if (f->nargs) {
-                if (strspn(f->args[f->nargs-1], "0123456789")) {
-                    f->min_args = atoi(f->args[f->nargs-1]);
-                    f->nargs--;
-                    if (f->nargs && strspn(f->args[f->nargs-1], "0123456789")) {
-                        f->max_args = f->min_args;
-                        f->min_args = atoi(f->args[f->nargs-1]);
-                        f->nargs--;
-                    }
-                }
-                if (f->max_args != -1 && f->min_args > f->max_args) {
-                    parse_error("min_args > max_args.\n");
-                    return(f);
-                }
-            }
-            /**
-             ** Verify arg names.
-             **/
-            for (i = 0 ; i < f->nargs ; i++) {
-                if (!(isalpha(f->args[i][0]))) {
-                    sprintf(error_buf, "Illegal argument name: %s", f->args[i]);
-                    parse_error(NULL);
-                    return(f);
-                }
-                for (j = 0 ; j < strlen(f->args[i]) ; j++) {
-                    if (!(isalnum(f->args[i][j]) || f->args[i][j] == '_')) {
-                        sprintf(error_buf, "Illegal argument name: %s", f->args[i]);
-                        parse_error(NULL);
-                        return(f);
-                    }
-                }
-            }
-        } else {
-            /**
-             ** Next character is not ')'.  Panic.
-             **/
-            sprintf(error_buf, "function %s, bad args.", f->name);
-            parse_error(NULL);
-            return(f);
-        }
-    } else {
-        /**
-         ** If we wanted to be nice to the user, we could spit out the
-         ** contents of the function named in f->name here.
-         **/
-        sprintf(error_buf, "loading function %s, no args.", f->name);
-        parse_error(NULL);
-        return(f);
-    }
-    str++;
-
-    /**
-     ** Presumably, everything else is body.
-     **/
-    if (*str) f->body = str;
-
-    /**
-     ** Shove the function into the stream for evaluation.
-     **/
-	if (debug) {
-		p = f->text;
-		q = f->body;
-		memcpy(line, p, q-p+1);
-		line[q-p+1] = '\0';
-		printf("%s", line);
-	}
-	
-	pp_line = local_line;
-	p = str;
-
-	parent_buffer = (void *)get_current_buffer();
-
-	while (p && *p) {
-		q = strchr(p, '\n');
-		if (q == NULL) q = p+strlen(p)-1;
-		memcpy(line, p, q-p+1);
-		line[q-p+1] = '\0';
-		if (debug) printf("%s", line);
-		handle = yy_scan_string(line);
-		pp_line++;
-		while(i = yylex()) {
-			j = yyparse(i, (Var *)yytext);
-
-			if (j == 1) {
-				f->tree = curnode;
-				break;
-			}
-		}
-		yy_delete_buffer((struct yy_buffer_state *)handle);
-		p = q+1;
-	}
-	yy_switch_to_buffer((struct yy_buffer_state *)parent_buffer);
-	f->ready = 1;
-
-	/*
-	** Take one off  because save_ufunc put one on.
-	*/
-	pp_line--;
-
-    return(f);
 }
 
 
@@ -447,6 +251,10 @@ ufunc_edit(vfuncptr func , Var *arg)
         }
 
         if ((ufunc = locate_ufunc(name)) == NULL) return(NULL);
+		/*
+		parse_error("Unable to edit function: %s", name);
+		return(NULL);
+		*/
 
         fname = tempnam(NULL,NULL);
         fp = fopen(fname, "w");
@@ -500,4 +308,77 @@ ff_global(vfuncptr func, Var * arg)
 		parse_error("%s: variable %s not found", func->name, V_NAME(arg));
 	}
 	return(NULL);
+}
+
+UFUNC *
+make_ufunc(Var *id, Var *args, Var *body)
+{
+	UFUNC *f;
+	int ac;
+	Var **av;
+	int i;
+
+	struct stat sbuf;
+	FILE *fp;
+
+    f = (UFUNC *)calloc(1, sizeof(UFUNC));
+    f->name = strdup(V_NAME(id));
+    f->text = NULL;
+    f->ready = 0;
+
+    /**
+     ** Get text from file
+     **/
+    if (stat(save_file, &sbuf) != 0) {
+		perror(save_file);
+        return(NULL);
+    }
+    f->text = (char *)calloc(1, sbuf.st_size+1);
+	fp = fopen(save_file, "r");
+    fread(f->text, sbuf.st_size, 1, fp);
+	fclose(fp);
+
+	unlink(save_file);
+
+    /**
+     ** should now find '( args )'.
+     ** args should be limited to ids, space and numbers
+     **/
+
+	f->min_args = -1;
+	f->max_args = -1;
+
+	if (args != NULL) {
+		make_args(&ac, &av, NULL, args);
+		if (av[ac-1] == ID_VAL) {
+			f->min_args = V_INT(av[ac-1]);
+			ac--;
+			if (av[ac-1] == ID_VAL) {
+				f->max_args = f->min_args;
+				f->min_args = V_INT(av[ac-1]);
+				ac--;
+			}
+		}
+		if (f->max_args != -1 && f->min_args > f->max_args) {
+			parse_error("min_args > max_args.\n");
+			return(f);
+		}
+
+		f->nargs = 0;
+		f->args = calloc(ac, sizeof(char *));
+		for (i = 0 ; i < av ; i++) {
+			if (V_TYPE(av[i]) != ID_ID) {
+				parse_error("Illegal argument to function: %s", f->name);
+				free_ufunc(f);
+				return(NULL);
+			}
+			f->args[i] = V_NAME(av[i]);
+			f->nargs++;
+		}
+	}
+
+	f->ready = 1;
+	f->tree = body;
+
+    return(f);
 }
