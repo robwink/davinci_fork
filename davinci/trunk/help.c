@@ -55,6 +55,7 @@
 #endif
 
 #include "parser.h"
+#include <errno.h>
 extern int errno;
 
 #define SAME    0       /* for strcmp() */
