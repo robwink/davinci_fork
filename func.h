@@ -340,6 +340,8 @@ Var *ff_eigen(vfuncptr func, Var *arg);
 Var *ff_pcs(vfuncptr func, Var *arg);
 Var *ff_corr_covar_and_scp(vfuncptr func, Var *arg);
 
+Var *ff_loadvan(vfuncptr func, Var *arg);
+
 Alist make_alist(char *name, int type, void *limits, void *value);
 
 
@@ -374,3 +376,11 @@ Var *ff_syscall(vfuncptr func, Var * arg);
 Var * ff_dump(vfuncptr func, Var * arg);
 Var * ff_global(vfuncptr func, Var * arg);
 Var * ff_delete(vfuncptr func, Var *arg);
+
+/* internal functions for structures */
+Var *new_struct(int ac);
+void add_struct(Var *s, char *name, Var *exp);
+
+/* internal functions for text arrays */
+Var *newString(char *str);
+Var *newText(int rows, char **text);

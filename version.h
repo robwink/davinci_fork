@@ -1,6 +1,9 @@
-char *version = "@(#) daVinci Version #0.56a";
+char *version = "@(#) daVinci Version #0.56b";
 
 /*
+Version 0.56b Wed Mar 29 15:19:05 MST 2000
+	+ load_vanilla() - Read vanilla generated text output files
+
 Version 0.56a Thu Mar 23 14:45:30 MST 2000
    + pcs() - Principal Component Stretch
    + covar() - Covariance Matrix

@@ -1724,3 +1724,40 @@ Davinci supports the following matrix functions:
 
 	dv> e = eigen(a)
 
+?functions load_vanilla()
+?load_vanilla()
+ load_vanilla() - Loads vanilla text output from a file
+
+ load_vanilla(file=STRING [, delim=STRING)
+
+		The load_vanilla() function loads a text output file generated
+		by a run of vanilla. Fields with same names are combined into
+		arrays and the data types are guessed from the data itself.
+
+		The output is stored in a structure of parallel arrays of fields
+		detected in the file. Field names are picked from the first line
+		of the input file.
+
+		Optional 'delim' character-string parameter may be specified 
+		to enumerate field/column delimiters in the input file. Default
+		delimiters are spaces and tabs.
+
+		NOTE: load_vanilla() will work on text files with fixed number
+		of columns per line. Thus, while selecting variable data fields,
+		qualify them with indices, e.g. instead of saying "cal_rad[]"
+		use some range of values, like, "cal_rad[3-144]".
+
+ Example:
+	The following command will load the vanilla output generated from an
+	earlier vanilla run into a variable named 'a'. The data (stored in
+	variable a) will be a structure of two fields, named, "sclk_time" and
+	"temps". Each of these fields will be an array of 'n'-records. Where,
+	'n' is the number of lines minus 1 (#lines - 1) in the input file.
+	(#lines - 1: because the first line contains the header info)
+
+	dv> system("vanilla ./data -fields 'sclk_time temps[1-4]' > /tmp/foo")
+
+	                (some time later)
+	
+	dv> a = load_vanilla("/tmp/foo")
+

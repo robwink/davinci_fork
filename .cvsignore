@@ -46,3 +46,6 @@ gplot
 .dvlog
 davinci
 other
+.pure
+config.log
+config.cache
