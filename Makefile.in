@@ -51,7 +51,7 @@ OBJ=p.o pp.o symbol.o error.o \
 	ff_header.o ff_text.o io_ers.o io_goes.o ff_bbr.o ff_vignette.o \
 	ff_pause.o printf.o ff_ifill.o ff_xfrm.o newfunc.o ff_ix.o ff_avg.o \
 	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
-	x.o xrt_print_3d.o motif_tools.o ff_convolve.c
+	x.o xrt_print_3d.o motif_tools.o ff_convolve.o
 
 all:	@MAKEREAD@ davinci gplot
 
@@ -68,7 +68,7 @@ lexer.c:	lexer.l
 	mv lex.yy.c lexer.c
 
 parser.c:	parser.y
-	bison -d parser.y
+	/opt/local/alt/bin/bison -d parser.y
 	mv parser.tab.c parser.c
 	mv parser.tab.h y_tab.h
 
