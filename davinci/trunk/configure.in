@@ -25,6 +25,8 @@ AC_CHECK_LIB(X11, XOpenDisplay)
 AC_CHECK_LIB(Xt, XtToolkitInitialize)
 AC_CHECK_LIB(Xext,XShmPutImage)
 AC_CHECK_LIB(Xm,XmCreateForm)
+AC_CHECK_LIB(hdf5,H5open)
+AC_CHECK_LIB(usds,Themis_Entry)
 
 AC_CHECK_LIB(jpeg,jpeg_simple_progression)
 AC_CHECK_LIB(termcap, tgetent)
@@ -45,7 +47,12 @@ AC_CHECK_LIB(proj,pj_fwd)
 AC_CHECK_LIB(tiff,TIFFIsTiled)
 AC_CHECK_LIB(Magick, GetMagickInfo)
 
-AC_CHECK_LIB(hdf5, H5Fcreate)
+PL_LIB=''
+AC_CHECK_LIB(plplotFX,c_plinit,PL_LIB='-lplplotFX',,)
+if test "$PL_LIB" != ""
+then
+	AC_DEFINE(INCLUDE_API)
+fi
 
 
 #Check for the xrt3D lib and its dependancies
