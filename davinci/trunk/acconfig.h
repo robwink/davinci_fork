@@ -35,6 +35,9 @@
 /*Define if you have xrt3d library*/
 #undef XRT_ENABLED
 
+/*Define if you have readline library */
+#undef HAVE_LIBREADLINE
+
 
 
 /* Leave that blank line there!!  Autoheader needs it.

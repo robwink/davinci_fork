@@ -76,7 +76,7 @@ ff_read_text(vfuncptr func, Var *arg)
     }
     filename = V_STRING(v);
 
-    if ((fname = locate_file(filename)) == NULL) {
+    if ((fname = dv_locate_file(filename)) == NULL) {
         sprintf(error_buf, "Cannot find file: %s\n", filename);
         parse_error(NULL);
         return(NULL);
@@ -143,7 +143,7 @@ ff_read_lines(vfuncptr func, Var *arg)
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
-    if ((fname = locate_file(filename)) == NULL) {
+    if ((fname = dv_locate_file(filename)) == NULL) {
         sprintf(error_buf, "Cannot find file: %s\n", filename);
         parse_error(NULL);
         return(NULL);

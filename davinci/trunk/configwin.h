@@ -58,6 +58,9 @@
 #define _MSDOS_
 #endif
 
+#ifndef __MSDOS__
+#define __MSDOS__
+#endif /* __MSDOS__ */
 
 
 /*
@@ -65,6 +68,15 @@
 ** available in our include path.
 */
 
-#define HAVE_STRING_H
+#define HAVE_STRING_H 1
 
-#endif
+/* The following macro is defined for big-endian machines */
+#undef WORDS_BIGENDIAN
+
+/* The following macro is defined if we have libMagick */
+#undef HAVE_LIBMAGICK
+
+/* The following macro is defined if we have libreadline */
+#define HAVE_LIBREADLINE 1
+
+#endif /* _CONFIGWIN_H_ */

@@ -25,7 +25,7 @@ typedef unsigned long ulong;
 #define MAP_PRIVATE 1
 #endif /* 0 */
 
-#define _LITTLE_ENDIAN
+
 #else
 #include <unistd.h>
 #include <sys/mman.h>
@@ -223,7 +223,13 @@ typedef struct {
 
 #include "proto.h"
 
-#ifdef _LITTLE_ENDIAN
+#ifdef WORDS_BIGENDIAN
+
+#define MSB8(s) 	(s)
+#define MSB4(s) 	(s)
+#define MSB2(s) 	(s)
+
+#else /* little endian */
 
 char ctmp;
 
@@ -240,13 +246,7 @@ typedef char *cptr;
 
 #define MSB2(s) 	(swp(((cptr)(s))[0], ((cptr)(s))[1]),(s))
 
-#else /* _BIG_ENDIAN */
-
-#define MSB8(s) 	(s)
-#define MSB4(s) 	(s)
-#define MSB2(s) 	(s)
-
-#endif
+#endif /* WORDS_BIGENDIAN */
 
 #define ListElement(a, b, c)    ((a*)(b)->ptr)[c]
 

@@ -75,10 +75,12 @@ void rl_callback_handler_install(char *, void (char *));
 
 jmp_buf env;
 
+#ifndef _WIN32
 void user_sighandler(int data)
 {
    signal(SIGUSR1, user_sighandler);
 }
+#endif /* _WIN32 */
 
 void
 sighandler(int data)
@@ -96,22 +98,23 @@ sighandler(int data)
         signal(SIGSEGV,SIG_DFL);
         break;
 
+#ifndef _WIN32
     case (SIGBUS):
     	sprintf(cmd, "rm -rf %s &", path);
     	system(cmd);
         signal(SIGBUS,SIG_DFL);
         break;
+#endif /* _WIN32 */
 
     case (SIGINT):
+    	signal(SIGINT, sighandler);
 
         while ((scope = scope_tos()) != global_scope()) {
             dd_unput_argv(scope);
             clean_scope(scope_pop());
     	}
 
-    	signal(SIGINT, sighandler);
     	longjmp(env, 1);
-
         break;
     }
 }
@@ -134,12 +137,11 @@ main(int ac, char **av)
     s = new_scope();
 
 #ifndef __MSDOS__
-    signal(SIGPIPE, SIG_IGN);
     signal(SIGINT, sighandler); 
     signal(SIGSEGV, sighandler);
+    signal(SIGPIPE, SIG_IGN);
     signal(SIGBUS, sighandler);
     signal(SIGUSR1, user_sighandler);
-
 #endif
 
     scope_push(s);
@@ -387,9 +389,7 @@ void lhandler(char *line)
 
         parse_buffer(buf);
 
-#ifndef __MSDOS__
-        setjmp(env);
-#endif
+	setjmp(env);
 
         /*
         ** Process anything pushed onto the stream stack by the last command.
