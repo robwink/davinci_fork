@@ -1,8 +1,11 @@
-char *version = "@(#) daVinci Version #1.42a";
+char *version = "@(#) daVinci Version #1.43";
 
 #include "build.h"
 
 /*
+Version 1.43: Thu Mar 24 15:41:25 MST 2005
+	* Fixed lingering module dependency (module_help) for when
+       modules aren't included.
 
 Version 1.42a: Wed Mar 23 16:45:01 MST 2005
         * Changed system() semantics slightly.
