@@ -80,11 +80,11 @@ ff_mxm(vfuncptr func, Var * arg)
 
     int ac;
     Var **av;
-    Alist alist[] = {
-        { "ob1",    ID_VAL,    NULL,       &ob1},
-        { "ob2",    ID_VAL,    NULL,       &ob2},
-        NULL
-    };
+    Alist alist[3];
+	alist[0] = make_alist("ob1",    ID_VAL,    NULL,       &ob1);
+	alist[1] = make_alist("ob2",    ID_VAL,    NULL,       &ob1);
+	alist[2].name = NULL;
+
     make_args(&ac, &av, func, arg);
     if (parse_args(ac, av, alist)) return(NULL);
 
