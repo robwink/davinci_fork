@@ -127,7 +127,7 @@ main(int ac, char **av)
     Scope *s;
     Var *v;
     FILE *fp;
-    char path[256], cmd[256];
+    char path[256];
     int quick = 0;
     int i, j, k, flag = 0;
     char *logfile = NULL;
@@ -294,6 +294,10 @@ main(int ac, char **av)
     */
     process_streams();
     event_loop();
+
+    /* event_loop never returns */
+
+    return(0);
 }
 
 #ifdef USE_X11_EVENTS
@@ -327,7 +331,6 @@ event_loop(void)
             char *argv[1];
             char *av0 = "null";
             int argc = 1;
-            XEvent event;
             argv[0] = av0;
             top = XtVaAppInitialize(&app, "Simple", NULL, 0,
                                     &argc,
@@ -358,7 +361,6 @@ event_loop(void)
 
 void lhandler(char *line)
 {
-    int i,j;
     char *buf;
     char prompt[256];
     extern int pp_line;
@@ -401,13 +403,13 @@ void lhandler(char *line)
             sprintf(prompt, "%2d> ", indent);
         } else if (continuation) {
             continuation = 0;
-            sprintf(prompt, "  > ", indent);
+            sprintf(prompt, "  > ");
         } else if (in_comment) {
-            sprintf(prompt, "/*> ", indent);    /* nothing */
+            sprintf(prompt, "/*> ");    /* nothing */
         } else if (in_string) {
-            sprintf(prompt, "\" > ", indent);
+            sprintf(prompt, "\" > ");
         } else {
-            sprintf(prompt, "dv> ", indent);
+            sprintf(prompt, "dv> ");
         }
         
 #ifdef USE_X11_EVENTS
@@ -446,8 +448,6 @@ parse_buffer(char *buf)
 {
     int i,j;
     extern char *yytext;
-    extern FILE *save_fp;
-    int flag = 0;
     Var *v = NULL;
     void *parent_buffer;
     void *buffer;
@@ -458,7 +458,7 @@ parse_buffer(char *buf)
     buffer = yy_scan_string(buf);
 	pp_str = buf;
 
-    while(i = yylex()) {
+    while((i = yylex()) != 0) {
         /*
         ** if this is a function definition, do no further parsing yet.
         */
@@ -489,8 +489,6 @@ eval_buffer(char *buf)
 {
     int i,j;
     extern char *yytext;
-    extern FILE *save_fp;
-    int flag = 0;
     Var *v = NULL;
     void *parent_buffer;
     void *buffer;
@@ -499,7 +497,7 @@ eval_buffer(char *buf)
     parent_buffer = get_current_buffer();
     buffer = yy_scan_string(buf);
 
-    while(i = yylex()) {
+    while((i = yylex()) != 0) {
         /*
         ** if this is a function definition, do no further parsing yet.
         */

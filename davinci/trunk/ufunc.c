@@ -91,14 +91,12 @@ load_function(char *filename)
     int i,j;
     struct stat sbuf;
     char *buf, *str, *p;
-    int fd;
     int nlen = 0;
     char name[256];
 	char line[2048];
 	char *q;
 
     UFUNC *f = NULL, *f2 = NULL;
-    Scope *scope;
     void *handle;
 	extern char *yytext;
 	extern Var *curnode;
@@ -283,7 +281,7 @@ load_function(char *filename)
 		handle = (void *)yy_scan_string(line);
 		pp_str = line;
 		pp_line++;
-		while(i = yylex()) {
+		while((i = yylex()) != 0) {
 			j = yyparse(i, (Var *)yytext);
 
 			if (j == 1) {

@@ -29,13 +29,11 @@ ff_avg2(vfuncptr func, Var * arg)
 		"xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL
 	};
 	int dsize2;
-	float f, x;
+	float x;
 	Var *both = NULL;
 	Var *avg = NULL, *stddev = NULL;
 	int f_avg =0, f_stddev = 0, f_sum = 0;
 
-	int ac;
-	Var **av;
 	Alist alist[4];
 	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
 	alist[1] = make_alist("axis",  		ID_ENUM,	options,	&ptr);

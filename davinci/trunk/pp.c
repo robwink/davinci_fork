@@ -87,11 +87,7 @@ V_DUP(Var *v)
 Var *
 pp_print(Var *v)
 {
-    extern int SCALE;
-    int i, j, k, c;
-    int x, y, z;
     Var *s;
-    char bytes[32];
 
     if (v == NULL) return(v);
     if (VERBOSE == 0) return(v);
@@ -114,10 +110,8 @@ pp_print(Var *v)
 void
 pp_print_struct(Var *v, int indent, int depth)
 {
-    extern int SCALE;
     int i, count;
     Var *s;
-    char bytes[32];
     char *name;
 	
     if (v == NULL) return;
@@ -139,6 +133,7 @@ pp_print_struct(Var *v, int indent, int depth)
     }
 }
 
+void
 dump_var(Var *v, int indent, int limit) 
 {
     int i,j,k,c;
@@ -182,9 +177,8 @@ dump_var(Var *v, int indent, int limit)
 void
 pp_print_var(Var *v, char *name, int indent, int depth)
 {
-    extern int SCALE;
     char bytes[32];
-    int x, y, z, row, i;
+    int x, y, z;
     int npassed = (name != NULL);
 
     if (name == NULL) {
@@ -259,8 +253,6 @@ Var *
 pp_set_var(Var *id, Var *range, Var *exp) 
 {
     Var *v, *e;
-    int i,j,k;
-    int size[3],  d, s;
     Range *r, rout;
 
     /**
@@ -408,11 +400,7 @@ array_replace(Var *dst, Var *src, Range *r)
 Var *
 pp_set_struct(Var *a, Var *b, Var *exp)
 {
-    Var **p;
     Var *v, *s;
-    int count;
-    Var **data;
-    int added = 0;
 
     if ((s = eval(a)) != NULL) a = s;
     if (a == NULL || b == NULL) return(NULL);
@@ -501,7 +489,6 @@ pp_mk_rstep(Var *r1, Var *r2)
 {
     int v1=0;
     int format;
-    Var *v;
 
     r1 = eval(r1);
     r2 = eval(r2);
@@ -733,7 +720,7 @@ pp_argv(Var *left, Var *right)
 {
     int n;
     char name[256];
-    Var *s=NULL, *v;
+    Var *v;
     char *value;
     Scope *scope;
 
@@ -782,7 +769,7 @@ pp_argv(Var *left, Var *right)
 int 
 compare_strings(char *s1, int op, char *s2)
 {
-    int i, k;
+    int i, k = 0;
     i = strcmp(s1, s2);
     switch (op) {
     case ID_EQ:		k = (i == 0);	break;
@@ -801,7 +788,6 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
     Var *s,*e, *text;
 
     int i,k;
-    double d1,d2;
     char *ptr;
     int rows;
     int *data;
@@ -918,7 +904,7 @@ commaize(char *s)
 Var *
 pp_help(Var *s)
 {
-    char *p;
+    char *p = NULL;
 
     if (s == NULL) p = NULL;
     else if (V_NAME(s)) p = V_NAME(s);

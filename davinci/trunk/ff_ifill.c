@@ -44,18 +44,15 @@ ff_skel(vfuncptr func, Var * arg)
 Var *
 ff_jfill(vfuncptr func, Var * arg)
 {
-    char *fname;
-    Var *v, *ev, *obj;
-	float val[10], dist[10];
+    Var *v, *obj;
+    float val[10], dist[10];
     int ecount, xpos[10], ypos[10], width, height, depth;
     int i, j, k, e, x, y, band, pos;
     float *data, d;
-	int wrap = 0;			/* left to right wrap around */
+    int wrap = 0;			/* left to right wrap around */
     int radius = 3;			/* distance to search */
-	int neighbors = 5;		/* minimum number of neighbors */
+    int neighbors = 5;		/* minimum number of neighbors */
     float fill = 0.0;		/* fill value */
-	int ac;
-	Var **av;
 
 	Alist alist[6];
 	alist[0] = make_alist( "object",    ID_VAL, NULL, &obj);
@@ -158,17 +155,13 @@ ff_jfill(vfuncptr func, Var * arg)
 Var *
 ff_ifill(vfuncptr func, Var * arg)
 {
-    char *fname;
-    Var *v, *ev, *obj;
+    Var *v, *obj;
     int radius = 3, wrap=0;
     float fill = 0.0;
-    float *data1, *data2, *data3, d;
-	int state=0;
+    float *data1, *data2, *data3;
 	int width,height,depth, dsize;
 	char *pass = "1234";
 
-	int ac;
-	Var **av;
 	Alist alist[6];
 	alist[0] = make_alist( "object",    ID_VAL, NULL, &obj);
 	alist[1] = make_alist( "fill",      FLOAT,  NULL, &fill);
@@ -338,7 +331,7 @@ void
 jfill_lr(Var *obj, int x, int y, int z, float *data, float fill, int radius, int wrap)
 {
     int i, j, k, *p;
-    float m, *d;
+    float *d;
 
 	/**
 	 ** do across
@@ -366,7 +359,7 @@ void
 jfill_tb(Var *obj, int x, int y, int z, float *data, float fill, int radius)
 {
     int i, j, k, *p;
-    float m, *d;
+    float *d;
 
 	d = (float *)calloc(y, sizeof(float));
 	p = (int *)calloc(y, sizeof(int));
@@ -391,7 +384,7 @@ void
 jfill_tr(Var *obj, int x, int y, int z, float *data, float fill, int radius)
 {
     int n, i, j, k, l, *p;
-    float m, *d;
+    float *d;
 
 	/**
 	 ** do top to right
@@ -434,7 +427,7 @@ void
 jfill_tl(Var *obj, int x, int y, int z, float *data, float fill, int radius)
 {
     int n, i, j, k, l, *p;
-    float m, *d;
+    float *d;
 
 	/**
 	 ** do top to right

@@ -55,8 +55,7 @@ ff_random(vfuncptr func, Var * arg)
 
     char *options[] = { "normal", "gaussian", "rand", "random", 
                         "mrand48", "drand48", "uniform", "rnoise", NULL};
-    int ac;
-    Var **av, *seedvar = NULL;
+    Var *seedvar = NULL;
     Alist alist[6];
 	alist[0] = make_alist("x", INT, NULL, &x);
 	alist[1] = make_alist("y", INT, NULL, &y);

@@ -8,12 +8,10 @@ ff_basis(vfuncptr func, Var * arg)
     Var *v, *obj = NULL;
     int size = 0;
     int type = 0;
-    int x,y,z, n, i, j;
-    double *basis, *data;
+    int x,y,z, n;
+    double *basis;
     char *ptr = NULL;
 
-    int ac;
-    Var **av;
     char *options[] = { "hadamard", "haar", NULL };
     Alist alist[4];
 	alist[0] = make_alist("object",    ID_VAL,    NULL,       &obj);
@@ -75,10 +73,8 @@ ff_mxm(vfuncptr func, Var * arg)
     int i,j,k, x1, y1, z1, x2, y2, z2;
     double *data;
     Var *ob1 = NULL, *ob2 = NULL;
-    Var *v, *e;
+    Var *v;
 
-    int ac;
-    Var **av;
     Alist alist[3];
 	alist[0] = make_alist("ob1",    ID_VAL,    NULL,       &ob1);
 	alist[1] = make_alist("ob2",    ID_VAL,    NULL,       &ob2);

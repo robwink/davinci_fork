@@ -143,7 +143,7 @@ char *
 do_sprintf(vfuncptr func, Var *arg)
 {
     static char *skip1, *skip2;
-    int ch, end, fieldwidth, precision;
+    int end, fieldwidth, precision;
     char convch, nextch, *format, *fmt, *start;
     Var *v, *e;
     char *out;
@@ -182,7 +182,7 @@ do_sprintf(vfuncptr func, Var *arg)
             if (!*fmt) {
                 /* avoid infinite loop */
                 if (end == 1) {
-                    fprintf(stderr,"missing format character", NULL, NULL);
+		    fprintf(stderr,"missing format character");
                     free(out);
                     return (NULL);
                 }
@@ -237,7 +237,7 @@ do_sprintf(vfuncptr func, Var *arg)
         } else
             precision = 0;
         if (!*fmt) {
-            fprintf(stderr,"missing format character", NULL, NULL);
+            fprintf(stderr,"missing format character");
             free(out);
             return (NULL);
         }

@@ -34,8 +34,6 @@ ff_cluster(vfuncptr func, Var * arg)
     int i, j, a, b, x, y, z;
     u_char *data;
 
-	int ac;
-	Var **av;
 	Alist alist[4];
 	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
 	alist[1] = make_alist( "radius",    INT,    NULL,     &radius);
@@ -80,12 +78,10 @@ ff_cluster(vfuncptr func, Var * arg)
 Var *
 ff_ccount(vfuncptr func, Var * arg)
 {
-    Var *v, *e, *obj = NULL;
+    Var *v, *obj = NULL;
     int threshold = 2, ignore = 1, i, dsize;
     int top = 0, bottom = 0, value = 0;
 
-	int ac;
-	Var **av;
 	Alist alist[4];
 	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
 	alist[1] = make_alist( "threshold", INT,    NULL,    &threshold);

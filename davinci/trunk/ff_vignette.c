@@ -40,7 +40,6 @@ ff_vignette(vfuncptr func, Var *arg)
 {
     int width, height;
     float radius, offset, intensity;
-    float *data;
     Var *s;
 
     /**

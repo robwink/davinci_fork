@@ -216,7 +216,6 @@ ff_list(vfuncptr func, Var *arg)
     Symtable *s= scope->symtab;
 
     Var *v;
-    char bytes[256];
 
     for (s = scope->symtab ; s != NULL ; s = s->next) {
         v = s->value;

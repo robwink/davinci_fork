@@ -106,7 +106,6 @@ char *
 do_add_strings(char *s1, Var *v, int flag)
 {
     int len;
-    Var *s = NULL;
     char buf[256];
     char *ptr, *s2;
 
@@ -197,13 +196,6 @@ do_add_text(Var *text, Var *v, int flag)
 Var *
 pp_add_strings(Var *a, Var *b)
 {
-    int len;
-    Var *v,*s = NULL;
-    char *p1;
-    int i;
-    int rows;
-    char **data;
-
     if (V_TYPE(a) == ID_TEXT) {
         return(do_add_text(a, b, 0));
     } else if (V_TYPE(b) == ID_TEXT) {
@@ -268,13 +260,12 @@ set_string(Var *to,Range *r, Var *from)
 
     Var *src;
     Var *dest;
-    int i,lo,hi,step;
+    int lo,hi,step;
     int count=0;
     int target_length;
     int dest_length;
     int src_length;
     char *string;
-    Var *o;
 
     /*Get high/low/step in x (hey, it's only a string so's there only x)*/
 

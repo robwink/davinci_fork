@@ -17,7 +17,6 @@ Var *
 ff_moment(vfuncptr func, Var *arg)
 {
     Var *v, *out;
-    void *data;
     float *fdata;
     int dsize;
     int i;
