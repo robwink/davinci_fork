@@ -1,4 +1,6 @@
 #include "parser.h"
+#include "fft.h"
+#include <errno.h>
 
 extern int mayer_realfft(int n, double *out);
 extern int mayer_realifft(int n, double *out);
@@ -893,3 +895,537 @@ flip_t(int trow,int tcol,double *t)
 	return(tt);
 }
 
+
+
+#define reverse4(x) { unsigned char *p=(char *)&(x), t; t=p[0]; p[0]=p[3]; p[3]=t; t=p[1]; p[1]=p[2]; p[2]=t; }
+
+Var *
+ff_fncc_write_mat(vfuncptr func, Var * arg)
+{
+    FILE  *fp      = NULL;
+	Var   *obj     = NULL;
+	char  *fname   = NULL;
+	long   complex = 0;    /* assume strided complex planes in the z-direction */
+	int    force   = 0;    /* write the file even when it already exists */
+	long   x, y, z;
+	long   hdr_type;
+	char  *obj_name = NULL;
+	long   namelen;
+	int    i, j, k;
+
+	long   ii, ll;
+	short  ss;
+	char   bb;
+	double dd;
+	float  ff;
+
+	Alist alist[4];
+	alist[0] = make_alist( "obj",       ID_UNK,     NULL,     &obj);
+	alist[1] = make_alist( "filename",  ID_STRING,  NULL,     &fname);
+	alist[2] = make_alist( "force",     INT,        NULL,     &force);
+	alist[3].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(newInt(0));
+
+	if (obj == NULL) {
+        parse_error("%s: missing obj.", func->name); return (newInt(0));
+	}
+
+	if (fname == NULL){
+		parse_error("%s: missing filename.\n", func->name); return(newInt(0));
+	}
+
+
+	x = GetX(obj); y = GetY(obj); z = GetZ(obj);
+	if (!(z == 2 || z == 1)){
+		parse_error("%s: data size must be XxYx1 for real and XxYx2 for complex.\n", func->name);
+		return newInt(0);
+	}
+
+	complex = (z == 2);
+
+#ifdef WORDS_BIGENDIAN
+	hdr_type = 1000;
+#else
+	hdr_type = 0000;
+#endif /* WORDS_BIGENDIAN */
+
+	switch(V_FORMAT(obj)){
+	case BYTE:   hdr_type += 50; break;
+	case SHORT:  hdr_type += 40; break;
+	case INT:    hdr_type += 20; break;
+	case FLOAT:  hdr_type += 10; break;
+	case DOUBLE: hdr_type += 00; break;
+	default:
+		parse_error("%s: Unsupported data type %s in obj.\n",
+			func->name, Format2Str(V_FORMAT(obj)));
+		return newInt(0);
+		break;
+	}
+
+	if (access(fname, F_OK) == 0 && !force){
+		parse_error("%s: File %s already exists. Use \"force\".\n", func->name, fname);
+		return newInt(0);
+	}
+
+	if ((fp = fopen(fname, "wb")) == NULL){
+		parse_error("%s: Unable to write file %s. Reason: %s.\n",
+			func->name, fname, strerror(errno));
+		return newInt(0);
+	}
+
+
+	/* construct mat-file header */
+
+	obj_name = (obj->name == NULL)? "obj": obj->name;
+	namelen = strlen(obj_name) + 1;
+
+	for(i = 0; i < 5; i++){
+		switch(i){
+		case 0: ll = hdr_type; break;
+		case 1: ll = y; break;
+		case 2: ll = x; break;
+		case 3: ll = complex; break;
+		case 4: ll = namelen; break;
+		}
+#ifndef WORDS_BIGENDIAN
+		/* reverse4(ll); */
+#endif /* WORDS_BIGENDIAN */
+		fwrite(&ll, sizeof(long), 1, fp);
+	}
+	fwrite(obj_name, sizeof(char), namelen, fp);
+
+	for(k = 0; k < z; k++){
+		for(i = 0; i < x; i++){
+			for(j = 0; j < y; j++){
+				switch(V_FORMAT(obj)){
+				case BYTE:
+					bb = extract_int(obj, cpos(i,j,k,obj));
+					fwrite(&bb, sizeof(bb), 1, fp);
+					break;
+				case SHORT:
+					ss = extract_int(obj, cpos(i,j,k,obj));
+					fwrite(&ss, sizeof(ss), 1, fp);
+					break;
+				case INT:
+					ii = extract_int(obj, cpos(i,j,k,obj));
+					fwrite(&ii, sizeof(ii), 1, fp);
+					break;
+				case FLOAT:
+					ff = extract_double(obj, cpos(i,j,k,obj));
+					fwrite(&ff, sizeof(ff), 1, fp);
+					break;
+				case DOUBLE:
+					dd = extract_double(obj, cpos(i,j,k,obj));
+					fwrite(&dd, sizeof(dd), 1, fp);
+					break;
+				default:
+					parse_error("%s: INTERNAL ERROR: %s:%d reached. Giving up!\n",
+						func->name, __FILE__, __LINE__);
+					fclose(fp);
+					return newInt(0);
+				}
+			}
+		}
+	}
+
+	fclose(fp);
+    return newInt(1);
+}
+
+static double *fft_convolve_real(double *a, int arows, int acols, double *b, int brows, int bcols, int *rows, int *cols);
+static COMPLEX *complex_multiply(COMPLEX *c1, COMPLEX *c2, int rows, int cols);
+static COMPLEX *fft2d(COMPLEX *input, int rows, int cols);
+static COMPLEX *ifft2d(COMPLEX *input, int rows, int cols);
+
+Var *
+ff_fncc_fft2d(vfuncptr func, Var *arg)
+{
+	Var *obj = NULL;
+    double *output = NULL;
+    int cols, rows, depth;
+    int i, j, k;
+    double v;
+    COMPLEX *input = NULL, *result = NULL;
+
+	Alist alist[2];
+	alist[0] = make_alist("obj",     ID_VAL,     NULL, &obj);
+	alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (obj == NULL) {
+		parse_error("%s: obj not specified\n", func->name);
+		return(NULL);
+	}
+
+	cols = GetX(obj); rows = GetY(obj); depth = GetZ(obj);
+    if (depth > 2){
+            parse_error("%s: Depth can either be 1 (real data) or 2 (complex data)\n", func->name);
+            return NULL;
+    }
+
+    input = (COMPLEX *)calloc(sizeof(COMPLEX), rows*cols);
+    if (input == NULL){
+            parse_error("%s: calloc(%d,%d) failed\n", sizeof(COMPLEX), rows*cols, func->name);
+            return NULL;
+    }
+
+    for(k=0; k<depth; k++){
+            for(j=0; j<rows; j++){
+                    for(i=0; i<cols; i++){
+                            v = extract_double(obj, cpos(i,j,k,obj));
+                            if (k == 0){ input[j*cols+i].re = v; }
+                            else       { input[j*cols+i].im = v; }
+                    }
+            }
+    }
+
+    result = fft2d(input, rows, cols);
+    free(input);
+
+    output = (double *)calloc(sizeof(double), rows*cols*2);
+    for(j=0; j<rows; j++){
+            for(i=0; i<cols; i++){
+                    output[0*(rows*cols)+j*cols+i] = result[j*cols+i].re;
+                    output[1*(rows*cols)+j*cols+i] = result[j*cols+i].im;
+            }
+    }
+    free(result);
+
+    return(newVal(BSQ, cols, rows, 2, DOUBLE, output));
+}
+
+Var *
+ff_fncc_ifft2d(vfuncptr func, Var *arg)
+{
+	Var *obj = NULL;
+    double *output = NULL;
+    int cols, rows, depth;
+    int i, j, k;
+    double v;
+    COMPLEX *input = NULL, *result = NULL;
+
+	Alist alist[2];
+	alist[0] = make_alist("obj",     ID_VAL,     NULL, &obj);
+	alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (obj == NULL) {
+		parse_error("%s: obj not specified\n", func->name);
+		return(NULL);
+	}
+
+	cols = GetX(obj); rows = GetY(obj); depth = GetZ(obj);
+    if (depth > 2){
+            parse_error("%s: Depth can either be 1 (real data) or 2 (complex data)\n", func->name);
+            return NULL;
+    }
+
+    input = (COMPLEX *)calloc(sizeof(COMPLEX), rows*cols);
+    if (input == NULL){
+            parse_error("%s: calloc(%d,%d) failed\n", sizeof(COMPLEX), rows*cols, func->name);
+            return NULL;
+    }
+
+    for(k=0; k<depth; k++){
+            for(j=0; j<rows; j++){
+                    for(i=0; i<cols; i++){
+                            v = extract_double(obj, cpos(i,j,k,obj));
+                            if (k == 0){ input[j*cols+i].re = v; }
+                            else       { input[j*cols+i].im = v; }
+                    }
+            }
+    }
+
+    result = ifft2d(input, rows, cols);
+    free(input);
+
+    output = (double *)calloc(sizeof(double), rows*cols*2);
+    for(j=0; j<rows; j++){
+            for(i=0; i<cols; i++){
+                    output[0*(rows*cols)+j*cols+i] = result[j*cols+i].re;
+                    output[1*(rows*cols)+j*cols+i] = result[j*cols+i].im;
+            }
+    }
+    free(result);
+
+    return(newVal(BSQ, cols, rows, 2, DOUBLE, output));
+}
+
+Var *
+ff_fncc_cmplx_mul(vfuncptr func, Var *arg)
+{
+	Var *obj1 = NULL, *obj2 = NULL, *obj = NULL;
+    COMPLEX *i1 = NULL, *i2 = NULL, *input = NULL;
+    COMPLEX *result = NULL;
+    double *output = NULL;
+    int cols, rows, depth;
+    int i, j, k, o;
+    double v;
+
+	Alist alist[3];
+	alist[0] = make_alist("obj1",     ID_VAL,     NULL, &obj1);
+	alist[1] = make_alist("obj2",     ID_VAL,     NULL, &obj2);
+	alist[2].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (obj1 == NULL || obj2 == NULL) {
+		parse_error("%s: Either one of obj1 or obj2 was not specified\n", func->name);
+		return(NULL);
+	}
+
+	cols = GetX(obj1);
+	rows = GetY(obj1);
+    depth = GetZ(obj1);
+
+    if (depth != 2){
+            parse_error("%s: Depth cannot be other than 2 (real plane + imag plane)\n", func->name);
+            return NULL;
+    }
+
+    if (cols != GetX(obj2) || rows != GetY(obj2) || depth != GetZ(obj2)){
+            parse_error("%s: obj1 and obj2 must have the same dimension\n", func->name);
+            return NULL;
+    }
+
+    i1 = (COMPLEX *)calloc(sizeof(COMPLEX), rows*cols);
+    i2 = (COMPLEX *)calloc(sizeof(COMPLEX), rows*cols);
+    if (i1 == NULL || i2 == NULL){
+            parse_error("%s: calloc(%d,%d)*2 failed\n", sizeof(COMPLEX), rows*cols, func->name);
+            free(i1); free(i2);
+            return NULL;
+    }
+
+    for(o=0; o<2; o++){
+            if (o==0){ obj = obj1; input = i1; }
+            else { obj = obj2; input = i2; }
+            
+            for(k=0; k<depth; k++){
+                    for(j=0; j<rows; j++){
+                            for(i=0; i<cols; i++){
+                                    v = extract_double(obj, cpos(i,j,k,obj));
+                                    if (k==0){ input[j*cols+i].re = v; }
+                                    else     { input[j*cols+i].im = v; }
+                            }
+                    }
+            }
+    }
+    result = complex_multiply(i1, i2, rows, cols);
+    free(i1); free(i2);
+
+    output = (double *)calloc(sizeof(double), rows*cols*2);
+    if (output == NULL){
+            parse_error("%s: calloc(%d,%d)*2 failed\n", sizeof(double), rows*cols, func->name);
+            free(result);
+            return NULL;
+    }
+    for(k=0; k<2; k++){
+            for(j=0; j<rows; j++){
+                    for(i=0; i<cols; i++){
+                            output[k*rows*cols+j*cols+i] = k==0? result[j*cols+i].re: result[j*cols+i].im;
+                    }
+            }
+    }
+    free(result);
+
+    return(newVal(BSQ, cols, rows, depth, DOUBLE, output));
+}
+
+
+Var *
+ff_fncc_fft_conv_real(vfuncptr func, Var *arg)
+{
+    Var *obj[2] = { NULL, NULL };
+    double *input[2] = { NULL, NULL };
+    double *result = NULL;
+    int cols[2], rows[2], depth[2];
+    int outrows, outcols;
+    int i, j, o;
+    double v;
+
+	Alist alist[3];
+	alist[0] = make_alist("obj1",     ID_VAL,     NULL, &obj[0]);
+	alist[1] = make_alist("obj2",     ID_VAL,     NULL, &obj[1]);
+	alist[2].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+
+	if (obj[0] == NULL || obj[1] == NULL) {
+		parse_error("%s: Either one of obj1 or obj2 was not specified\n", func->name);
+		return(NULL);
+	}
+
+    for(o=0; o<2; o++){
+            cols[o] = GetX(obj[o]); rows[o] = GetY(obj[o]); depth[o] = GetZ(obj[o]);
+    }
+    
+    if (depth[0] != 1 && depth[1] != 1){
+            parse_error("%s: Depth of objs cannot be other than 1\n", func->name);
+            return NULL;
+    }
+
+    for(o=0; o<2; o++){
+            input[o] = (double *)calloc(sizeof(double), rows[o]*cols[o]);
+            if (input[o] == NULL){
+                    parse_error("%s: calloc(%d,%d) failed\n",
+                                sizeof(double), rows[o]*cols[o], func->name);
+                    free(input[0]); free(input[1]);
+                    return NULL;
+            }
+    }
+
+    for(o=0; o<2; o++){
+            for(j=0; j<rows[o]; j++){
+                    for(i=0; i<cols[o]; i++){
+                            v = extract_double(obj[o], cpos(i,j,0,obj[o]));
+                            input[o][j*cols[o]+i] = v;
+                    }
+            }
+    }
+    result = fft_convolve_real(input[0], rows[0], cols[0], input[1], rows[1], cols[1], &outrows, &outcols);
+    free(input[0]); free(input[1]);
+	if (result == NULL){
+		parse_error("%g: Mem allocation failure in fft_convolve_real()\n", func->name);
+		return NULL;
+	}
+
+    return(newVal(BSQ, outcols, outrows, 1, DOUBLE, result));
+}
+
+
+static double *
+fft_convolve_real(
+        double *a, int arows, int acols,
+        double *b, int brows, int bcols,
+        int *rows, int *cols)
+{
+        COMPLEX *data, *afft, *bfft, *result;
+        double *output;
+        int i,j;
+
+        *rows = arows+brows-1;
+        *cols = acols+bcols-1;
+
+        data = (COMPLEX *)calloc(sizeof(COMPLEX), (*rows)*(*cols));
+		if (data == NULL){ return NULL; }
+        for(j=0; j<arows; j++){
+                for(i=0; i<acols; i++){
+                        data[j*(*cols)+i].re = a[j*acols+i];
+                        data[j*(*cols)+i].im = 0.0;
+                }
+        }
+        afft = fft2d(data, *rows, *cols);
+
+        memset(data, 0, sizeof(COMPLEX)*(*rows)*(*cols));
+        for(j=0; j<brows; j++){
+                for(i=0; i<bcols; i++){
+                        data[j*(*cols)+i].re = b[j*bcols+i];
+                        data[j*(*cols)+i].im = 0.0;
+                }
+        }
+        bfft = fft2d(data, *rows, *cols);
+        
+        free(data);
+        data = complex_multiply(afft, bfft, *rows, *cols);
+        free(afft); free(bfft);
+		if (data == NULL){ return NULL; }
+
+        result = ifft2d(data, *rows, *cols); free(data);
+		if (result == NULL){ return NULL; }
+
+        /* pull the real part out - we only care about the real part */
+        output = (double *)calloc(sizeof(double), (*rows)*(*cols));
+		if (output == NULL){ free(result); return NULL; }
+        for(j=0; j<*rows; j++){
+                for(i=0; i<*cols; i++){
+                        output[j*(*cols)+i] = result[j*(*cols)+i].re;
+                }
+        }
+        free(result);
+
+        return output;
+}
+
+static COMPLEX *
+complex_multiply(COMPLEX *c1, COMPLEX *c2, int rows, int cols)
+{
+        int i, j;
+        double a, b, c, d;
+        COMPLEX *result = (COMPLEX *)calloc(sizeof(COMPLEX), rows*cols);
+
+		if (result == NULL){ return NULL; }
+        
+        for(j=0; j<rows; j++){
+                for(i=0; i<cols; i++){
+                        a = c1[j*cols+i].re; b = c1[j*cols+i].im;
+                        c = c2[j*cols+i].re; d = c2[j*cols+i].im;
+                        
+                        result[j*cols+i].re = a*c - b*d;
+                        result[j*cols+i].im = a*d + b*c;
+                }
+        }
+        return result;
+}
+
+static COMPLEX *
+fft2d(COMPLEX *input, int rows, int cols)
+{
+        COMPLEX *result = (COMPLEX *)calloc(sizeof(COMPLEX), rows*cols);
+        COMPLEX *col = (COMPLEX *)calloc(sizeof(COMPLEX), rows);
+        COMPLEX *col_result = (COMPLEX *)calloc(sizeof(COMPLEX), rows);
+        int i, j;
+
+		if (result == NULL || col == NULL || col_result == NULL){
+			free(result); free(col); free(col_result); return NULL;
+		}
+
+        for(j=0; j<rows; j++){
+                fft(&input[j*cols], cols, &result[j*cols]);
+        }
+        for(i=0; i<cols; i++){
+                for(j=0; j<rows; j++){ col[j] = result[j*cols+i]; }
+                fft(col, rows, col_result);
+                for(j=0; j<rows; j++){
+					result[j*cols+i] = col_result[j];
+					result[j*cols+i].re *= (rows*cols);
+					result[j*cols+i].im *= (rows*cols);
+				}
+        }
+
+        free(col); free(col_result);
+
+        return result;
+}
+
+static COMPLEX *
+ifft2d(COMPLEX *input, int rows, int cols)
+{
+        COMPLEX *result = (COMPLEX *)calloc(sizeof(COMPLEX), rows*cols);
+        COMPLEX *col = (COMPLEX *)calloc(sizeof(COMPLEX), rows);
+        COMPLEX *col_result = (COMPLEX *)calloc(sizeof(COMPLEX), rows);
+        int i, j;
+
+		if (result == NULL || col == NULL || col_result == NULL){
+			free(result); free(col); free(col_result); return NULL;
+		}
+
+        for(j=0; j<rows; j++){
+                rft(&input[j*cols], cols, &result[j*cols]);
+        }
+        for(i=0; i<cols; i++){
+                for(j=0; j<rows; j++){ col[j] = result[j*cols+i]; }
+                rft(col, rows, col_result);
+                for(j=0; j<rows; j++){
+					result[j*cols+i] = col_result[j];
+					result[j*cols+i].re /= (rows*cols);
+					result[j*cols+i].im /= (rows*cols);
+				}
+        }
+
+        free(col); free(col_result);
+
+        return result;
+}

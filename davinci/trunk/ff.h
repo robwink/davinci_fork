@@ -285,6 +285,12 @@ struct _vfuncptr vfunclist[] = {
 
 	 { "chdir",      ff_chdir,                NULL },
 
+    { "fncc_fft2d",         ff_fncc_fft2d,              NULL },
+    { "fncc_ifft2d",        ff_fncc_ifft2d,             NULL },
+    { "fncc_cmplx_mul",     ff_fncc_cmplx_mul,          NULL },
+    { "fncc_fft_conv_real", ff_fncc_fft_conv_real,      NULL },
+    { "fncc_write_mat",     ff_fncc_write_mat,          NULL },
+    
      { "hstretch",      ff_hstretch, 			NULL }, 
 
     { NULL,             NULL,                  NULL }

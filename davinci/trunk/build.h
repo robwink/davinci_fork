@@ -1,2 +1,2 @@
-char *build = "Fri Jun 11 15:44:18 MST 2004";
-char *builder = "nbaugh@vopc";
+char *build = "Fri Jun 18 09:23:15 MST 2004";
+char *builder = "saadat@cerberus";
