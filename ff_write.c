@@ -30,7 +30,7 @@ ff_write(vfuncptr func, Var *arg)
     struct iom_iheader h;
     void *data = NULL;
     FILE *fp = NULL;
-    unsigned short iom_type, iom_type_found;
+    unsigned short iom_type_idx, iom_type_found;
 
     int ac;
     Var **av;
@@ -75,10 +75,14 @@ ff_write(vfuncptr func, Var *arg)
 
     /* Check type against list of types supported by iomedley. */
 
-    iom_type = iom_type_found = 0;
+    iom_type_idx = iom_type_found = 0;
 
-    while (iom_filetypes[iom_type++]) {
-      iom_type_found = 1;
+    while (iom_filetypes[iom_type_idx]) {
+      if (!strcasecmp(type, iom_filetypes[iom_type_idx])) {
+	iom_type_found = 1;
+	break;
+      }
+      iom_type_idx++;
     }
 
     if (iom_type_found)                   dv_WriteIOM(ob, filename, type, force);
