@@ -1906,6 +1906,7 @@ compare_vars(Var *a, Var *b)
     }
 }
 
+
 Var *
 newInt(int i)
 {
@@ -1916,7 +1917,18 @@ newInt(int i)
 Var *
 newFloat(float f)
 {
-    Var *v = newVal(BSQ, 1, 1,1, FLOAT, calloc(1, sizeof(float)));	
-    V_FLOAT(v) = f;
-    return(v);
+	Var *v = newVal(BSQ, 1, 1,1, FLOAT, calloc(1, sizeof(float)));	
+	V_FLOAT(v) = f;
+	return(v);
 }
+
+Var *
+ff_killchild(vfuncptr func, Var *arg)
+{
+	pid_t pid;
+	pid=getpgrp();
+	pid=-pid;
+	kill(pid,SIGUSR1);
+	return(NULL);
+}
+
