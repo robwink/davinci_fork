@@ -36,9 +36,11 @@ OBJ=p.obj pp.obj symbol.obj \
 	ff_plplot.obj ff_pca.obj ff_loadvan.obj tools.obj header.obj \
 	io_pds.obj io_hdf.obj ff_pbm.obj ff_modules.obj module_io.obj \
 	win32/w_readline.obj win32/map.obj system.obj win32/regex.obj \
+	ff_raw.obj ff_ascii.obj ff_filetype.obj \
 	dvio_ers.obj dvio_imath.obj dvio_pnm.obj dvio_aviris.obj dvio_goes.obj \
 	dvio_isis.obj dvio_raw.obj dvio_envi.obj dvio_grd.obj dvio_magic.obj \
-	dvio_vicar.obj dvio.obj ff_write2.obj ff_load2.obj ff_meta.obj
+	dvio_vicar.obj dvio.obj ff_meta.obj \
+	util.obj
 
 MODSUPPLIBOBJS=error.obj ff_struct.obj darray.obj avl.obj shared_globals.obj
 
