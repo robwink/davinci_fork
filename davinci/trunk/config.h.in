@@ -61,9 +61,6 @@
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
 
-/* Define to 1 if you have the `Magick' library (-lMagick). */
-#undef HAVE_LIBMAGICK
-
 /* Define to 1 if you have the `msss_vis' library (-lmsss_vis). */
 #undef HAVE_LIBMSSS_VIS
 
@@ -85,14 +82,8 @@
 /* VICAR widget library is present */
 #undef HAVE_LIBVICAR
 
-/* Define to 1 if you have the `X11' library (-lX11). */
-#undef HAVE_LIBX11
-
 /* Define to 1 if you have the `Xmu' library (-lXmu). */
 #undef HAVE_LIBXMU
-
-/* Define to 1 if you have the `Xt' library (-lXt). */
-#undef HAVE_LIBXT
 
 /* Define to 1 if you have the `z' library (-lz). */
 #undef HAVE_LIBZ
@@ -200,6 +191,9 @@
 
 /* Define to 1 if you have the <Xm/Xrt3d.h> header file. */
 #undef HAVE_XM_XRT3D_H
+
+/* headers and libraries for X11 and Xt */
+#undef HAVE_XT
 
 /* Name of package */
 #undef PACKAGE

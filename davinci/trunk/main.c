@@ -4,7 +4,7 @@
 
 #include "y_tab.h"
 
-#ifdef HAVE_LIBXT
+#ifdef HAVE_XT
 #define USE_X11_EVENTS 1
 #endif
 
@@ -319,7 +319,7 @@ extern "C" {
 #endif
 
 
-#ifdef HAVE_LIBXT
+#ifdef HAVE_XT
 
 /* FIX: move to gui.c */
 
