@@ -407,3 +407,4 @@ Var *ff_killchild(vfuncptr func, Var *arg);
 Var * ff_make_debug(vfuncptr func, Var * arg);
 Var * ff_cut(vfuncptr func, Var * arg);
 Var * ff_crop(vfuncptr func, Var * arg);
+Var * ff_raw(vfuncptr func, Var * arg);

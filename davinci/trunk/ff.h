@@ -239,6 +239,7 @@ struct _vfuncptr vfunclist[] = {
     { "killall",        ff_killchild,           NULL},
     { "pnmcut",         ff_cut,                 NULL},
     { "pnmcrop",        ff_crop,                NULL},
+	 { "load_raw",			ff_raw,						NULL},
     { NULL,             NULL,                  NULL }
 };
 

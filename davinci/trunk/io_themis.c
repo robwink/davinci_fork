@@ -17,7 +17,8 @@
 #define	MINDATA	128
 #define NUMBER_OF_GUESSES 4
 #define	INVALID_DATA	0
-#define VIS_WIDTH 1032
+#define VIS_WIDTH 1024
+#define VIS_TEST_WIDTH 1032
 
 int Compressed;
 
@@ -346,14 +347,14 @@ int GetGSEHeader (FILE *fp, struct _iheader *h)
 
 
 int
-Process_SC_Vis(FILE *infile,unsigned char **data)
+Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width)
 {
 	int i;
 	msdp_Header	mh;
 	int count;
 	FILE *fp=infile;
 	int height=0;
-	int width=VIS_WIDTH;
+	int width;
 	int size=0;
 	int frag;
 	int down;
@@ -364,6 +365,18 @@ Process_SC_Vis(FILE *infile,unsigned char **data)
 	int	chunk_len;
 	unsigned int xcomp, pcomp, spacing, levels;
 	int huffman_table;
+
+	count=fread(&mh,sizeof(msdp_Header),1,fp);
+	if (!count)
+		return(0);
+	if (mh.bands==0)
+		width=VIS_TEST_WIDTH;
+	else
+		width=VIS_WIDTH;
+
+	*vis_width=width;
+
+	rewind(fp);
 
 
 	while(1) {
@@ -493,7 +506,7 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
 	}
 
 	else {
-		height=Process_SC_Vis(infile,&buf);
+		height=Process_SC_Vis(infile,&buf,&width);
 		return(newVal(BSQ,width,height,1,BYTE,buf));
 	}
 	
