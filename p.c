@@ -499,7 +499,13 @@ evaluate(Var * n)
 				// Support for help
 				if (strcmp((V_NAME(p2)), MODULE_HELP)==0)
 				{
-					sprintf(module_help, "docs/%s.gih", V_NAME(p3));
+					sprintf(module_help, getenv("DV_MOD_PATH"));
+
+					if (NULL == module_help) // use default
+					{
+						sprintf(module_help, "/usr/lib/davinci/modules");
+					}
+					sprintf(module_help, "%s/%s.gih", module_help, V_NAME(p3));
 				        retval = help(keyword, module_help, &subtopics);
 
 				        if (retval == H_FOUND)
