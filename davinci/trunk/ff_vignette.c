@@ -90,7 +90,7 @@ ff_vignette(vfuncptr func, Var *arg)
     /**
      ** Create the output object.  All of these are required.
      **/
-    s = new(Var);
+    s = newVar();
     V_TYPE(s) = ID_VAL;             /* typical */
     V_DSIZE(s) = width*height;      /* number of elements */
     V_FORMAT(s) = FLOAT;            /* data format */

@@ -175,7 +175,7 @@ pp_math(Var * a, int op, Var * b)
 
     data = calloc(dsize, NBYTES(out_format));
 
-    val = new(Var);
+    val = newVar();
     V_TYPE(val) = ID_VAL;
     V_FORMAT(val) = out_format;
     V_DSIZE(val) = dsize;

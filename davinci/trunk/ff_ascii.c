@@ -285,7 +285,7 @@ ff_ascii(vfuncptr func, Var *arg)
         fprintf(stderr, "Read ASCII file: %dx%dx%d\n", x,y,z);
     }
 
-    s = new(Var);
+    s = newVar();
     V_TYPE(s) = ID_VAL;
     V_DATA(s) = data;
     V_FORMAT(s) = format;

@@ -104,6 +104,7 @@ struct _vfuncptr vfunclist[] = {
     
     { "clone",      ff_replicate, NULL },
     { "cat",        ff_cat,       NULL },
+    { "vcat",       ff_vcat,       NULL },
     
     { "version",    ff_version,   NULL },
     { "translate",  ff_translate, NULL },
@@ -164,6 +165,7 @@ struct _vfuncptr vfunclist[] = {
 
     { "printf",     ff_printf,    NULL },
     { "sprintf",    ff_sprintf,   NULL },
+    { "fprintf",    ff_fprintf,   NULL },
     { "system",     ff_system,    NULL },
     { "fsize",      ff_fsize,    NULL },
     { "history",    ff_history,    NULL },
@@ -210,6 +212,7 @@ struct _vfuncptr vfunclist[] = {
 #endif
 
     { "struct",     ff_struct,     NULL },
+    { "eval",     ff_eval,     NULL },
 
     { NULL,         NULL,        NULL }
 };

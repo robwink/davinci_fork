@@ -293,9 +293,16 @@ Var *
 mem_claim_struct(Var *v)
 {
 	int i;
+	Var **vdata;
+
 	if (V_TYPE(v) == ID_VSTRUCT) {
 		for (i = 0 ; i < V_STRUCT(v).count ; i++) {
 			mem_claim(V_STRUCT(v).data[i]);
+		}
+	} else if (V_TYPE(v) == ID_VARRAY) {
+		vdata = V_DATA(v);
+		for (i = 0 ; i < V_DSIZE(v) ; i++) {
+			mem_claim(vdata[i]);
 		}
 	}
 	return(v);

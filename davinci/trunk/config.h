@@ -23,7 +23,7 @@
 /* #undef TM_IN_SYS_TIME */
 
 /*Define if you have Xm library*/
-/* #undef HAVE_LIBXM */
+#define HAVE_LIBXM 1
 
 /*Define if you have xrt3d library*/
 /* #undef XRT_ENABLED */

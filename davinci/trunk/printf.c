@@ -76,6 +76,34 @@ static int asprintf(char **, char *, ...);
 static Var *gv;
 char *do_sprintf(vfuncptr func, Var *arg);
 
+Var *
+ff_fprintf(vfuncptr func, Var *arg)
+{
+	FILE *fp;
+    char *p;
+	Var *f= arg;
+	char *fname;
+	arg = arg->next;
+
+	if (V_TYPE(f) != ID_STRING) {
+		parse_error("fprintf: Expecting a filename for first argument\n");
+		return(NULL);
+	}
+	fname = V_STRING(f);
+
+    p = do_sprintf(func,arg);
+
+    if (p) {
+		fp = fopen(fname, "a");
+		if (fp == NULL) {
+			parse_error("fprintf: Unable to open file: %s\n", fname);
+			return(NULL);
+		}
+		fputs(p, fp);
+		fclose(fp);
+	}
+    return(NULL);
+}
 
 Var *
 ff_printf(vfuncptr func, Var *arg)
@@ -94,7 +122,7 @@ ff_sprintf(vfuncptr func, Var *arg)
 
     p = do_sprintf(func,arg);
     if (p) {
-		s = new(Var);
+		s = newVar();
 		V_TYPE(s) = ID_STRING;
 		V_STRING(s) = p;
 	}
