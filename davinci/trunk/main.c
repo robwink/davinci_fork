@@ -324,6 +324,8 @@ extern "C" {
 #endif
 #endif
 
+#ifdef HAVE_LIBXT
+
 /* FIX: move to gui.c */
 
 static String defaultAppResources[] = {
@@ -379,6 +381,8 @@ static String defaultAppResources[] = {
   /* NOTE: end of long string. */
   NULL
 };
+
+#endif
 
 void
 event_loop(void)
