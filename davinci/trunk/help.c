@@ -209,7 +209,8 @@ help(
      */
     errno = 0;
     if (strncmp(oldpath, path, PATHSIZE) != SAME)
-        FreeHelp();
+    	FreeHelp();
+    
     if (keys == NULL) {
         status = LoadHelp(path);
         if (status == H_ERROR)
@@ -368,10 +369,9 @@ sortkeys()
     keys = (KEY *) malloc((unsigned int) ((keycount + 1) * sizeof(KEY)));
     if (keys == NULL)
         parse_error("not enough memory to store help file");
-
     /* copy info from list to array, freeing list */
     for (p = keylist, i = 0; p != NULL; p = n, i++) {
-        keys[i].key = p->key;
+ 	keys[i].key = p->key;
         keys[i].pos = p->pos;
         keys[i].text = p->text;
         keys[i].primary = p->primary;
@@ -413,6 +413,10 @@ FreeHelp()
     }
     free((char *) keys);
     keys = NULL;
+
+    free(keylist);
+    keylist = NULL;
+
     keycount = 0;
 }
 
