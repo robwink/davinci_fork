@@ -11,7 +11,7 @@
 #if defined(HAVE_LIBQMV) && defined(HAVE_QMV_HVECTOR_H)
 #include <qmv/hvector.h>
 
-#define MYSQL_CMD "mysql -h mapserver1 -u dblogin2 -pthmsdb -D themis2"
+#define MYSQL_CMD "dblogin2"
 #define WGET_CMD "wget -q -O -"
 
 // For every pixel DOWN in image for the ghost, we ADD this much
