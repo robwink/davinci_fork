@@ -756,6 +756,7 @@ init_history(char *fname)
     FILE *fp;
 
 #ifdef HAVE_LIBREADLINE
+#endif
 
     if ((fp = fopen(fname, "r")) == NULL)
         return;
@@ -767,6 +768,7 @@ init_history(char *fname)
         buf[strlen(buf) - 1] = '\0';
         add_history((char *)buf);
     }
+#if 0
 #endif
 }
 
@@ -778,6 +780,7 @@ dv_complete_func(char *text, int start, int end)
 }
 
 
+#if 0
 #ifndef HAVE_LIBREADLINE
 
 void add_history () { }
@@ -792,4 +795,5 @@ char *readline(char *prompt)
 		return(NULL);
 	}
 }
+#endif
 #endif

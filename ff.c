@@ -1545,12 +1545,14 @@ print_history(int i)
     int j;
 
 #ifdef HAVE_LIBREADLINE
+#endif
     state = history_get_history_state();
     if (i == -1) i = state->length;
     for (j = state->length-i ; j < state->length ; j++) {
         h = state->entries[j];
         printf("%6d   %s\n", j+1, h->line);
     }
+#if 0
 #endif
 }
 
@@ -1568,6 +1570,7 @@ ff_hedit(vfuncptr func, Var * arg)
     char *path=getenv("TMPDIR");
 
 #ifdef HAVE_LIBREADLINE
+#endif
 
     Alist alist[2];
     alist[0] = make_alist("number",    ID_VAL,    NULL,     &value);
@@ -1609,6 +1612,7 @@ ff_hedit(vfuncptr func, Var * arg)
     push_input_stream(fp);
 
     free(tmp);
+#if 0
 #endif
     return(NULL);
 }
