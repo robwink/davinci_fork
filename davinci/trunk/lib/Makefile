@@ -9,7 +9,7 @@ bindir = $(exec_prefix)/bin
 datadir = $(prefix)/lib
 mandir = $(prefix)/man/man1
 
-INSTALL = /user/emily/gorelick/bin/install -c
+INSTALL = .././install-sh -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 
