@@ -2048,7 +2048,10 @@ compare_SfxDataSpecs(const void *v1, const void *v2)
 static int
 has_dim(Var *v, int x, int y, int z)
 {
-    return (GetX(v) == x && GetY(v) == y && GetZ(v) == z);
+    if (V_TYPE(v) == ID_VAL){
+        return (GetX(v) == x && GetY(v) == y && GetZ(v) == z);
+    }
+    return 0;
 }
 
 /**
@@ -2058,7 +2061,14 @@ has_dim(Var *v, int x, int y, int z)
 static int
 has_n_rows(Var *v, int n)
 {
-    return (V_TEXT(v).Row == n);
+    switch(V_TYPE(v)){
+    case ID_STRING:
+        return (n == 1);
+    case ID_TEXT:
+        return (V_TEXT(v).Row == n);
+    }
+
+    return 0;
 }
 
 /**
@@ -2242,9 +2252,11 @@ get_data_attrs_from_lbl(
         a->suffix_plane_order[kk] =
             (char **)calloc(a->suffix_items[kk], sizeof(char *));
         for(i = 0; i < a->suffix_items[kk]; i++){
-            lcase(a->suffix_plane_order[kk][i] = strdup(V_TEXT(v).text[i]));
+            a->suffix_plane_order[kk][i] =
+                strdup(V_TYPE(v) == ID_STRING? V_STRING(v): V_TEXT(v).text[i]);
+            lcase(a->suffix_plane_order[kk][i]);
             a->suffix_attr[kk][i] = new_SfxDataSpecs();
-            lcase(a->suffix_attr[kk][i]->name = strdup(V_TEXT(v).text[i]));
+            a->suffix_attr[kk][i]->name = strdup(a->suffix_plane_order[kk][i]);
         }
         
         /* get qube.xxx_suffix_item_bytes */
@@ -2266,7 +2278,8 @@ get_data_attrs_from_lbl(
             free_CoreDataSpecs(&a); return NULL;
         }
         for(i = 0; i < a->suffix_items[kk]; i++){
-            a->suffix_attr[kk][i]->item_type_str = strdup(V_TEXT(v).text[i]);
+            a->suffix_attr[kk][i]->item_type_str =
+                strdup(V_TYPE(v) == ID_STRING? V_STRING(v): V_TEXT(v).text[i]);
 
             /* convert string representation of type to internal representation */
             sprintf(buff, "%d", a->suffix_attr[kk][i]->item_bytes); lcase(buff);
@@ -2292,7 +2305,8 @@ get_data_attrs_from_lbl(
             free_CoreDataSpecs(&a); return NULL;
         }
         for(i = 0; i < a->suffix_items[kk]; i++){
-            a->suffix_attr[kk][i]->unit = strdup(V_TEXT(v).text[i]);
+            a->suffix_attr[kk][i]->unit =
+                strdup(V_TYPE(v) == ID_STRING? V_STRING(v): V_TEXT(v).text[i]);
         }
         
 
