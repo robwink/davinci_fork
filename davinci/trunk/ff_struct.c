@@ -63,7 +63,7 @@ ff_struct(vfuncptr func, Var * arg)
 /*
 */
 void
-add_struct(Var *s, char *name, Var *exp)
+add_struct(Var *s, const char *name, Var *exp)
 {
     int i;
     Var *old = NULL;

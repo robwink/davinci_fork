@@ -16,7 +16,7 @@ typedef struct _Narray {
 
 Darray *	Darray_create(int size);
 int		Darray_add(Darray *d, void *New);
-int		Darray_get(Darray *d, int i, void **ret);
+int		Darray_get(const Darray *d, const int i, void **ret);
 int		Darray_replace(Darray *d, int i, void *in, void **out);
 int		Darray_count(const Darray *d);
 void		Darray_release(Darray *d, void (*fptr)(void *));
