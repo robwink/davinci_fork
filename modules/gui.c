@@ -3614,7 +3614,13 @@ gui_setXmString(const Widget widget,
   }
 
   strValue = XmStringCreateLocalized(V_STRING(value));
-  gui_freeStackPush(freeStack, strValue);
+  /* 
+  ** offhand, I think this is wrong.  The string will get
+  ** returned and should NOT be freed.
+  */
+  /*
+   * gui_freeStackPush(freeStack, strValue);
+   */
 
   return (XtArgVal) strValue;
 
