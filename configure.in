@@ -39,7 +39,6 @@ then
 fi 
 
 
-
 AC_CHECK_LIB(z,deflate)
 AC_CHECK_LIB(proj,pj_fwd)
 AC_CHECK_LIB(tiff,TIFFIsTiled)

@@ -45,7 +45,7 @@ OBJ=p.o pp.o symbol.o error.o \
 	ff_load.o ff_rgb.o ff_random.o ff_source.o ff_version.o ff_write.o \
 	reserved.o array.o string.o pp_math.o rpos.o init.o help.o \
 	io_grd.o io_isis.o io_lablib3.o io_pnm.o io_specpr.o io_vicar.o \
-	io_aviris.o io_imath.o io_magic.o\
+	io_aviris.o io_imath.o io_magic.o io_themis.o\
 	ff_moment.o io_ascii.o ff_interp.o ff_projection.o\
 	lexer.o parser.o main.o fit.o system.o misc.o ufunc.o scope.o \
 	ff_header.o ff_text.o io_ers.o io_goes.o ff_bbr.o ff_vignette.o \
