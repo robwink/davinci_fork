@@ -60,7 +60,7 @@ static void * portable_dlsym(MODHANDLE module, char * function) {
 #elif defined(_WIN32)
   return (WIN_DLL_IMPORT)GetProcAddress(module, function);
 #else /* default case */
-  return dlsym(module, func_name);
+  return dlsym(module, function);
 #endif /* USE_HPUX_SHL */
 }
 
@@ -314,7 +314,7 @@ static IOmodPtr open_io_module(char * modname, char * modpath) {
      if successful, returns a new IOmod structure, NULL if it fails.
   */
   IOmodPtr new_module = NULL;
-  lt_dlhandle cand;
+  MODHANDLE cand;
   void (*init_func)(TypelistPtr *);
   TypelistPtr init_list;
 

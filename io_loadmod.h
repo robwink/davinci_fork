@@ -18,6 +18,7 @@
 #elif defined(_WIN32)
 #define MODHANDLE HMODULE
 #else 
+#include <dlfcn.h>
 #define	MODHANDLE void *
 #endif /* _WIN32 */
 #endif /* HAVE_LIBLTDL */
