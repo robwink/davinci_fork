@@ -40,6 +40,8 @@ ff_load(vfuncptr func, Var * arg)
 	struct iom_iheader h;
 	Var *fvar = NULL;
 
+	/* Set data extraction ranges for iom_read_qube_data(). */
+
 	Alist alist[12];
 	alist[0] = make_alist( "filename",  ID_UNK,  NULL,     &fvar);
 	alist[1] = make_alist( "record",    INT,    	NULL,     &record);
@@ -90,18 +92,19 @@ ff_load(vfuncptr func, Var * arg)
 	if (record != -1) h.s_lo[2] = h.s_hi[2] = record;
 
     if (fname && (fp = fopen(fname, "rb")) != NULL) {
-        if (iom_is_compressed(fp))
-            fp = iom_uncompress(fp, fname);
+        if (iom_is_compressed(fp)) {
+	  fprintf(stderr, "is compressed\n");	/* FIX: remove */
+	  fp = iom_uncompress(fp, fname);
+	}
 
-        if (input == NULL)    input = LoadSpecpr(fp, fname, record);
-        if (input == NULL)    input = dv_LoadVicar(fp, fname, &h);
-        if (input == NULL)    input = dv_LoadISIS(fp, fname, &h);
-        if (input == NULL)    input = dv_LoadGRD(fp, fname, &h);
-        if (input == NULL)    input = dv_LoadPNM(fp, fname, &h);
-        if (input == NULL)    input = dv_LoadIMath(fp, fname, &h);
-        if (input == NULL)    input = dv_LoadGOES(fp, fname, &h);
-        if (input == NULL)    input = dv_LoadAVIRIS(fp, fname, &h);
-        if (input == NULL)    input = dv_LoadENVI(fp, fname, &h);
+	if (input == NULL)    input = dv_LoadIOM(fp, fname, &h);
+	if (input == NULL)    input = LoadSpecpr(fp, fname, record);
+	if (input == NULL)    input = dv_LoadVicar(fp, fname, &h);
+	if (input == NULL)    input = dv_LoadISIS(fp, fname, &h);
+	if (input == NULL)    input = dv_LoadGRD(fp, fname, &h);
+	if (input == NULL)    input = dv_LoadIMath(fp, fname, &h);
+	if (input == NULL)    input = dv_LoadGOES(fp, fname, &h);
+	if (input == NULL)    input = dv_LoadAVIRIS(fp, fname, &h);
 
 #ifdef HAVE_LIBHDF5
         if (input == NULL)    input = LoadHDF5(fname);

@@ -50,7 +50,7 @@ int _iheader2iom_iheader(struct _iheader *h, struct iom_iheader *iomh);
 int iom_iheader2_iheader(struct iom_iheader *iomh, struct _iheader *h);
 #endif /* 0 */
 
-
+Var *dv_LoadIOM(FILE *, char *, struct iom_iheader *);
 Var *dv_LoadAVIRIS(FILE *fp, char *filename, struct iom_iheader *s);
 Var *dv_LoadGOES(FILE *fp, char *filename, struct iom_iheader *s);
 Var *dv_LoadIMath(FILE *fp, char *filename, struct iom_iheader *s);
@@ -63,6 +63,7 @@ Var *dv_LoadVicar(FILE *fp, char *filename, struct iom_iheader *s);
 Var *dv_LoadGRD(FILE *fp, char *filename, struct iom_iheader *s);
 Var *dv_LoadENVI(FILE *fp, char *filename, struct iom_iheader *s);
 
+int dv_WriteIOM(Var *, char *, char *, int);	  /* FIX: const? */
 int dv_WriteGRD(Var *s, char *filename, int force, char *title, char *task);
 int dv_WriteISIS(Var *s, char *filename, int force, char *title);
 int dv_WritePGM(Var *obj, char *filename, int force);
