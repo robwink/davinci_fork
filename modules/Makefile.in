@@ -1,0 +1,41 @@
+SHELL = /bin/sh
+
+srcdir = @srcdir@
+prefix= @prefix@
+exec_prefix = $(prefix)
+BINDIR = $(exec_prefix)/bin
+LIBDIR = $(prefix)/lib
+mandir = $(prefix)/man/man1
+
+
+CC     = @CC@
+DEFS   = @DEFS@ 
+LINK   = @MODULE_LINKER@
+
+CFLAGS=-g -I.. @MODULE_CC_OPT@
+LDFLAGS=-L.. @MODULE_LINK_OPT@
+LDLIBS=@MODULE_ADDN_LIBS@ -lc
+
+.SUFFIXES:	.dvm
+
+MODULES=mod1.dvm mod2.dvm
+
+all:	$(MODULES)
+
+.o.dvm:
+	$(LINK) $(LDFLAGS) $< $(LDLIBS) -o $@
+	
+.c.o:
+	$(CC) -c $(CFLAGS) $(DEFS) $< -o $@
+
+clean:
+	-rm -f *.o *.dvm
+
+######################################################
+# Dependencies
+#
+
+mod1.dvm:	mod1.o Makefile
+mod2.dvm:	mod2.o Makefile
+mod1.o:	mod1.c ../parser.h
+mod2.o:	mod2.c ../parser.h

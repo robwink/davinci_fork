@@ -14,17 +14,27 @@
    Leave the following blank line there!!  Autoheader needs it.  */
 
 
+/*Define if you have module library*/
+#undef BUILD_MODULE_SUPPORT
+
+/*Define if you have projection library libproj*/
+#undef HAVE_LIBPROJ
+
 /*Define if you have Xm library*/
 #undef HAVE_LIBXM
 
-/*Define if you have the PlPlot library
+/*Define if you have the PlPlot library */
 #undef HAVE_PLPLOT
 
 /*Define if you have plplotFX library*/
 #undef INCLUDE_API
 
+/*Define if you have use hpux shl library*/
+#undef USE_HPUX_SHL
+
 /*Define if you have xrt3d library*/
 #undef XRT_ENABLED
+
 
 
 /* Leave that blank line there!!  Autoheader needs it.
