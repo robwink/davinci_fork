@@ -33,11 +33,13 @@ void start_save()
     char *tmp;
 
 	local_line = pp_line;
-    tmp = tempnam(NULL, NULL);
+    tmp = make_temp_file_path();
+    if (tmp == NULL || (save_fp = fopen(tmp, "w")) == NULL ) {
+        parse_error("%s: unable to open temp file", func->name);
+        if (tmp) free(tmp);
+        return(NULL);
+    }
     strcpy(save_file, tmp);
-    free(tmp);
-
-    save_fp = fopen(save_file, "w");
 }
 
 void end_save()

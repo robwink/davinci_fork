@@ -45,11 +45,15 @@ ff_display(vfuncptr func, Var *arg)
         return(NULL);
     }
 
-    fname = tempnam(NULL,NULL);
+    fname = make_temp_file_path();
+    if (fname == NULL) {
+        parse_error("%s: unable to open temp file", func->name);
+        return(NULL);
+    }
 	if (z == 1) {
-		dv_WritePGM(obj, fname, 0);
+		dv_WritePGM(obj, fname, 1);
 	} else {
-		dv_WritePPM(obj, fname, 0);
+		dv_WritePPM(obj, fname, 1);
 	}
     
     viewer=getenv("DV_VIEWER");

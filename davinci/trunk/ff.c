@@ -1655,10 +1655,10 @@ ff_hedit(vfuncptr func, Var * arg)
         parse_error("%s: not that many history entires", func->name);
         return(NULL);
     }
-    tmp = tempnam(NULL, NULL);
-    if ((fp = fopen(tmp, "w")) == NULL ) {
-        parse_error("%s: unable to open temp file: %s", func->name, tmp);
-        free(tmp);
+    tmp = make_temp_file_path();
+    if (tmp == NULL || (fp = fopen(tmp, "w")) == NULL ) {
+        parse_error("%s: unable to open temp file", func->name);
+        if (tmp) free(tmp);
         return(NULL);
     }
 

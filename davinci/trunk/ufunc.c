@@ -478,8 +478,12 @@ ufunc_edit(vfuncptr func , Var *arg)
 
         if ((ufunc = locate_ufunc(name)) == NULL) return(NULL);
 
-        fname = tempnam(NULL,NULL);
-        fp = fopen(fname, "w");
+		fname = make_temp_file_path();
+		if (fname == NULL || (fp = fopen(fname, "w")) == NULL ) {
+			parse_error("%s: unable to open temp file", func->name);
+			if (fname) free(fname);
+			return(NULL);
+		}
         fputs(ufunc->text, fp);
         fclose(fp);
         temp=1;
