@@ -539,31 +539,50 @@ ff_dim(vfuncptr func, Var * arg)
 Var *
 ff_format(vfuncptr func, Var * arg)
 {
-    Var *s, *object = NULL;
+    Var *s, *obj = NULL;
     char *ptr = NULL;
+	char *type = NULL;
     char *format_str = NULL;
     char *formats[] = { "byte", "short", "int", "float", "double", NULL };
 
     Alist alist[4];
-    alist[0] = make_alist( "object", ID_VAL,   NULL,        &object);
+    alist[0] = make_alist( "object", ID_UNK,   NULL,        &obj);
     alist[1] = make_alist( "format", ID_ENUM,  formats,     &format_str);
     alist[2] = make_alist( "type",   ID_ENUM,  formats,     &format_str);
     alist[3].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
+	if (obj == NULL) {
+		parse_error("No object specified: %s()", func->name);
+		return (NULL);
+	}
+
+	if ((s = eval(obj)) != NULL) obj = s;
+
     if (format_str == NULL) {
-        /**
-        ** no format specified.  Print out the format of the passed object.
-        **/
-        if (V_TYPE(object) != ID_VAL) {
-            parse_error("Incorrect type of object specified to format()");
-            return (NULL);
-        }
-        s = newVar();
-        V_TYPE(s) = ID_STRING;
-        V_STRING(s) = strdup(Format2Str(V_FORMAT(object)));
-        return (s);
+		switch (V_TYPE(obj)) {
+		case ID_VAL:
+			/**
+			** no format specified.  Print out the format of the passed object.
+			**/
+			type = Format2Str(V_FORMAT(obj));
+			break;
+		case ID_STRING:
+			type = "STRING";
+			break;
+		case ID_STRUCT:
+			type = "STRUCT";
+			break;
+		case ID_TEXT:
+			type = "TEXT";
+			break;
+
+		default:
+			type = "UNDEFINED";
+			break;
+		}
+		return(newString(strdup(type)));
     } else {
         /**
         ** v specifies format.
@@ -575,8 +594,8 @@ ff_format(vfuncptr func, Var * arg)
         else if (!strcasecmp(format_str, "float")) ptr = "float";
         else if (!strcasecmp(format_str, "double")) ptr = "double";
 
-        object->next = NULL;
-        return (V_func(ptr, object));
+        obj->next = NULL;
+        return (V_func(ptr, obj));
     }
 }
 
@@ -2336,4 +2355,3 @@ ff_contains(vfuncptr func, Var * arg)
 	}
     return(newInt(ret));
 }
-
