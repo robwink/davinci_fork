@@ -358,7 +358,7 @@ ff_entropy(vfuncptr func, Var * arg)
 	a = data;
 	count = 0;
 	for (i = 0 ; i < dsize ; i++) {
-		b = a + nbytes;
+		b = ((char *)a) + nbytes;
 		if (!cmp(a, b) && (i+1) < dsize) {
 			count++;
 		} else {
