@@ -245,8 +245,10 @@ struct _vfuncptr vfunclist[] = {
 
 /* add additional functions here.  Don't forget the trailing comma. */
 
-	 { "vis_downshift",	ff_GSE_VIS_downshift,NULL,NULL},
-	 { "vis_upshift",	ff_GSE_VIS_upshift,NULL,NULL},
+	 { "vis_downshift",	ff_GSE_VIS_downshift,   NULL,NULL},
+	 { "vis_upshift",	ff_GSE_VIS_upshift,     NULL,NULL},
+
+	 { "write_isis",	write_isis_planes,      NULL,NULL},
 
 /* */
     { NULL,             NULL,                  NULL }
