@@ -22,9 +22,11 @@
 
 /* This is file avl.c in libavl. */
 
+/*
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
+*/
 #if PSPP
 #include "common.h"
 #include "arena.h"
