@@ -804,7 +804,17 @@ Set_Col_Var(Var **Data,FIELD **f,LABEL *label,int *size, char **Bufs)
 
 int rf_IMAGE(char *fn, Var *ob,char * val)
 {
-	return(0);
+
+	FILE *fp;
+	Var *data=NULL;
+	fp=fopen(fn,"r");
+	data=LoadISIS(fp,fn,NULL);
+	if (data!=NULL){
+		add_struct(ob,"IMAGE",data);
+		return(0);
+	}
+
+	return(1);
 }
 int rf_HISTOGRAM_IMAGE(char *fn, Var *ob,char * val)
 {
