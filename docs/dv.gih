@@ -285,17 +285,15 @@
     function can automatically recognize and load the following file 
     formats:
         SpecPR_FS2
-        VICAR Grayscale
+        VICAR
         PDS/ISIS Qube and Image
         PBMPlus: PBM, PGM and PPM formats
         USGS GRD
         Imath
         GOES weather satellite
         AVIRIS
-
-    Additionally, if davinci has been compiled with the ImageMagick
-    library, a large number of additional formats can be read and written.
-    See the help entry for libmagic to get a list of these.
+		GIF, JPEG, TIFF, PNG, BMP
+		HDF5
 
     If the specified path is not absolute (ie: it doesn't start with a '/'),
     and the specified file cannot be found in the current directory, the
@@ -321,7 +319,8 @@
     The functions load() and import() are aliases for the read() function.
 
  See Also:
-    write(), filetype(), datapath, verbose
+    write(), filetype(), load_pds(), load_raw(), load_vanilla(), 
+    ascii(), isis(), datapath, verbose
 
 ?functions write()
 ?write()
@@ -335,20 +334,27 @@
         specpr  - SpecPR
         vicar   - Vicar grayscale
         grd     - USGS Grid
-        pgm     - Pbmplus grayscale
-        ppm     - Pbmplus true-color
+        pgm     - Pbmplus 8-bit grayscale
+        ppm     - Pbmplus 24-bit true-color
         isis    - PDS/ISIS
         ascii   - Columnar ascii matrix
         imath   - Imath format
         ers     - ER Mapper Raster
+		gif     - Compuserve GIF format
+		tiff    - Tagged Image File Format
+		jpeg    - Joint Photographic Experts Group
+		png		- Portable Network Graphics
+		bmp		- Microsoft Bitmap
+		raw     - Binary output, no header
     
     If the force keyword is included, then any existing file of the same
     name is overwritten.  Without this keyword, the write is aborted
     if the filename already exists.
 
     Notes: 
-        The PPM type requires a 3-plane BIP cube of byte values, as produced
-        by the rgb() function.
+        The standard graphics formats (GIF, TIFF, JPEG, PNG, BMP, PPM),
+		all expect either 1 or 3 band, byte images.  A 3-band image is
+		interpreted to be a red band, a green band and a blue band.
 
         The PGM and GRD formats can not handle multiplane data.
 
@@ -357,7 +363,8 @@
         header.  This is the standard for ERS files.
 
  See Also:
-    filetype(), read(), rgb()
+    filetype(), read(), rgb(), load_pds(), load_raw(), ascii(),
+	write_isis()
 
 ?functions filetype()
 ?filetype()
@@ -372,9 +379,14 @@
         "GRD"    - USGS GRD
         "ISIS"   - PDS/ISIS
         "PNM"    - PBMPlus 
+		"AVIRIS" - AVIRIS
+		"IMATH"  - VM IMath format
+		"ENVI"   - ENVI format
 
     The output from the filetype() function is suitable for input to the
     type value of the write() function.
+
+	This funCtion is almost always not up to date with the latest stuff.
 
 ?functions source()
 ?source()
