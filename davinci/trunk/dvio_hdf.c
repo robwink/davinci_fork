@@ -7,6 +7,71 @@
 #include <hdf5.h>
 Var *load_hdf5(hid_t parent);
 
+#define intswap(i) (i) = ((((i) >> 24) & 0xFF) | (((i) >> 8) & 0xFF00) | \
+	       (((i) << 8) &0xFF0000) | (((i) << 24) & 0xFF000000))
+
+char * flip_endian(unsigned char * data, unsigned int data_elem,
+		   unsigned int word_size) {
+  /* Ensure the data is always read and written in big endian format.
+     Try not to call this on big endian machines, since it's just a
+     wasterful copy operation in that case. 
+  */
+  unsigned char * new_buf;
+  unsigned int data_size, i = 0;
+  
+  data_size = data_elem * word_size;
+  new_buf = calloc(data_elem, word_size);
+  if (new_buf == NULL) {
+    parse_error("Malloc failed. (Low memory?)");
+    return NULL;
+  }
+#ifdef WORDS_BIGENDIAN
+  for (i=0; i<data_size; i++) new_buf[i] = data[i];
+#else
+  for (i=0; i<data_size; i+=word_size) {
+    switch (word_size) {
+    case 1:
+      new_buf[i] = data[i];
+      break;
+    case 2:
+      new_buf[i+1] = data[i];
+      new_buf[i] = data[i+1];
+      break;
+    case 4:
+      new_buf[i+3] = data[i];
+      new_buf[i+2] = data[i+1];
+      new_buf[i+1] = data[i+2];
+      new_buf[i] = data[i+3];
+      break;
+    case 8:
+      new_buf[i+7] = data[i];
+      new_buf[i+6] = data[i+1];
+      new_buf[i+5] = data[i+2];
+      new_buf[i+4] = data[i+3];
+      new_buf[i+3] = data[i+4];
+      new_buf[i+2] = data[i+5];
+      new_buf[i+1] = data[i+6];
+      new_buf[i] = data[i+7];
+      break;
+    default:
+      new_buf[i] = data[i];
+      break;
+    }
+  }
+#endif /* WORDS_BIGENDIAN */
+  return new_buf;
+}
+
+
+char * var_endian(Var * v) {
+  unsigned int ws = 0;
+  unsigned int el = 0;
+  
+  el = V_SIZE(v)[0] * V_SIZE(v)[1] * V_SIZE(v)[2];
+  ws = NBYTES(V_TYPE(v));
+  return flip_endian(V_DATA(v), el, ws);
+}
+
 void
 WriteHDF5(hid_t parent, char *name, Var *v)
 {
@@ -18,6 +83,7 @@ WriteHDF5(hid_t parent, char *name, Var *v)
     hsize_t length;
     Var *e;
     int lines,bsize,index;
+    char * temp_data;
     unsigned char buf[256];
 
     if (V_NAME(v) != NULL) {
@@ -27,7 +93,7 @@ WriteHDF5(hid_t parent, char *name, Var *v)
         parse_error("Can't find variable");
         return;
     }
-        
+    
 
     if (parent < 0) {
         top = 1;
@@ -68,20 +134,31 @@ WriteHDF5(hid_t parent, char *name, Var *v)
         org = V_ORG(v);
         dataspace = H5Screate_simple(3, size, NULL);
         switch(V_FORMAT(v)) {
-        case BYTE:  datatype = H5Tcopy(H5T_NATIVE_UCHAR); break;
-        case SHORT: datatype = H5Tcopy(H5T_NATIVE_SHORT); break;
-        case INT:   datatype = H5Tcopy(H5T_NATIVE_INT); break;
-        case FLOAT: datatype = H5Tcopy(H5T_NATIVE_FLOAT); break;
-        case DOUBLE: datatype = H5Tcopy(H5T_NATIVE_DOUBLE); break;
+        case BYTE:  datatype = H5Tcopy(H5T_STD_U8BE); break;
+        case SHORT: datatype = H5Tcopy(H5T_STD_I16BE); break;
+        case INT:   datatype = H5Tcopy(H5T_STD_I32BE); break;
+        case FLOAT: datatype = H5Tcopy(H5T_IEEE_F32BE); break;
+        case DOUBLE: datatype = H5Tcopy(H5T_IEEE_F64BE); break;
         }
         dataset = H5Dcreate(parent, name, datatype, dataspace, H5P_DEFAULT);
+#ifdef WORDS_BIGENDIAN
         H5Dwrite(dataset, datatype, 
                  H5S_ALL, H5S_ALL, H5P_DEFAULT, V_DATA(v));
+#else
+	temp_data = var_endian(v);
+	if (temp_data != NULL) {
+	  H5Dwrite(dataset, datatype,
+		   H5S_ALL, H5S_ALL, H5P_DEFAULT, temp_data);
+	  free(temp_data);
+	}
+#endif
 
         aid2 = H5Screate(H5S_SCALAR);
-        attr = H5Acreate(dataset, "org", H5T_NATIVE_INT, aid2, H5P_DEFAULT);
-
-        H5Awrite(attr, H5T_NATIVE_INT, &org);
+        attr = H5Acreate(dataset, "org", H5T_STD_I32BE, aid2, H5P_DEFAULT);
+#ifndef WORDS_BIGENDIAN
+	intswap(org);
+#endif
+        H5Awrite(attr, H5T_STD_U32BE, &org);
         H5Sclose(aid2);
         H5Aclose(attr);
 
@@ -105,9 +182,11 @@ WriteHDF5(hid_t parent, char *name, Var *v)
         H5Dwrite(dataset, datatype,H5S_ALL, H5S_ALL, H5P_DEFAULT, V_STRING(v));
 
         aid2 = H5Screate(H5S_SCALAR);
-        attr = H5Acreate(dataset, "lines", H5T_NATIVE_INT, aid2, H5P_DEFAULT);
-
-        H5Awrite(attr, H5T_NATIVE_INT, &lines);
+        attr = H5Acreate(dataset, "lines", H5T_STD_I32BE, aid2, H5P_DEFAULT);
+#ifndef WORDS_BIGENDIAN
+	intswap(lines);
+#endif
+        H5Awrite(attr, H5T_STD_I32BE, &lines);
         H5Sclose(aid2);
         H5Aclose(attr);
 
@@ -151,8 +230,11 @@ WriteHDF5(hid_t parent, char *name, Var *v)
         H5Dwrite(dataset, datatype,H5S_ALL, H5S_ALL, H5P_DEFAULT, big);
         lines=V_TEXT(v).Row;
         aid2 = H5Screate(H5S_SCALAR);
-        attr = H5Acreate(dataset, "lines", H5T_NATIVE_INT, aid2, H5P_DEFAULT);
-        H5Awrite(attr, H5T_NATIVE_INT, &lines);
+        attr = H5Acreate(dataset, "lines", H5T_STD_I32BE, aid2, H5P_DEFAULT);
+#ifndef WORDS_BIGENDIAN
+	intswap(lines);
+#endif
+        H5Awrite(attr, H5T_STD_I32BE, &lines);
 
         H5Sclose(aid2);
         H5Aclose(attr);
@@ -183,7 +265,7 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
     hsize_t datasize[3], maxsize[3];
     H5T_class_t classtype;
     Var *v;
-    void *databuf;
+    void *databuf, *databuf2;
     int Lines=1;
 	extern int VERBOSE;
 
@@ -210,17 +292,17 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
         classtype=(H5Tget_class(datatype));
 
         if (classtype==H5T_INTEGER){
-            if (H5Tequal(datatype , H5T_NATIVE_UCHAR)) 
+            if (H5Tequal(datatype , H5T_STD_U8BE) || H5Tequal(datatype, H5T_NATIVE_UCHAR)) 
                 type = BYTE;
-            else if (H5Tequal(datatype , H5T_NATIVE_SHORT)) 
+            else if (H5Tequal(datatype , H5T_STD_I16BE) || H5Tequal(datatype, H5T_NATIVE_SHORT)) 
                 type = SHORT;
-            else if (H5Tequal(datatype , H5T_NATIVE_INT))   
+            else if (H5Tequal(datatype , H5T_STD_I32BE) || H5Tequal(datatype, H5T_NATIVE_INT))   
                 type = INT;
         }
         else if (classtype==H5T_FLOAT){
-            if (H5Tequal(datatype , H5T_NATIVE_FLOAT)) 
+            if (H5Tequal(datatype , H5T_IEEE_F32BE) || H5Tequal(datatype, H5T_NATIVE_FLOAT)) 
                 type = FLOAT;
-            else if (H5Tequal(datatype , H5T_NATIVE_DOUBLE)) 
+            else if (H5Tequal(datatype , H5T_IEEE_F64BE) || H5Tequal(datatype, H5T_NATIVE_DOUBLE)) 
                 type = DOUBLE;
         }
 
@@ -230,12 +312,18 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
 
         if (type!=ID_STRING){
             attr = H5Aopen_name(dataset, "org");
-            H5Aread(attr, H5T_NATIVE_INT, &org);
+            H5Aread(attr, H5T_STD_I32BE, &org);
+#ifndef WORDS_BIGENDIAN
+	    intswap(org);
+#endif
             H5Aclose(attr);
         }
         else {
             attr = H5Aopen_name(dataset, "lines");
-            H5Aread(attr, H5T_NATIVE_INT, &Lines);
+            H5Aread(attr, H5T_STD_I32BE, &Lines);
+#ifndef WORDS_BIGENDIAN
+	    intswap(Lines);
+#endif
             H5Aclose(attr);
         }
 
@@ -249,12 +337,17 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
             dsize = H5Sget_simple_extent_npoints(dataspace);
             databuf = calloc(dsize, NBYTES(type));
             H5Dread(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, databuf);
-
+#ifndef WORDS_BIGENDIAN
+	    databuf2 = flip_endian(databuf, dsize, NBYTES(type));
+	    free(databuf);
+	    databuf = databuf2;
+#endif /* WORDS_BIGENDIAN */
             H5Tclose(datatype);
             H5Sclose(dataspace);
             H5Dclose(dataset);
-
+	    
             v = newVal(org, size[0], size[1], size[2], type, databuf);
+
             V_NAME(v) = strdup(name);
         }	
 
@@ -361,7 +454,7 @@ load_hdf5(hid_t parent)
         parse_error("Group count < 0");
         return(NULL);
     }
-
+    
     o = new_struct(count);
     
     while ((ret = H5Giterate(parent, ".", &idx, group_iter, &e)) > 0)  {
