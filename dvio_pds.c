@@ -1622,7 +1622,6 @@ Var *
 ReadPDS(vfuncptr func, Var *arg)
 {
 
-   Alist alist[2];
    int ac;
    Var **av;
 
@@ -1633,13 +1632,16 @@ ReadPDS(vfuncptr func, Var *arg)
 	Var *fn;
 	int record_bytes;
 	char *filename;
+	int data = 1;
 
 	FILE *fp;
 
 	Var *v = new_struct(0);
 
+   Alist alist[3];
    alist[0] = make_alist( "filename", ID_UNK,   NULL,     &fn);
-   alist[1].name = NULL;
+   alist[1] = make_alist( "data",     INT,      NULL,     &data);
+   alist[2].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -1674,7 +1676,9 @@ ReadPDS(vfuncptr func, Var *arg)
 	
 	Traverse_Tree(ob,v,record_bytes);
 
-	Read_Object(v);
+	if (data) {
+		Read_Object(v);
+	}
 
 	return(v);
 }
