@@ -780,7 +780,6 @@ dv_complete_func(char *text, int start, int end)
 }
 
 
-#if 0
 #ifndef HAVE_LIBREADLINE
 
 void add_history () { }
@@ -795,5 +794,4 @@ char *readline(char *prompt)
 		return(NULL);
 	}
 }
-#endif
 #endif
