@@ -26,8 +26,21 @@ _iheader2iom_iheader(
     memcpy(iomh->dim, h->dim, sizeof(int)*3);
     iomh->byte_order = h->byte_order;
     iomh->corner = h->corner;
-    iomh->eformat = iom_EDF_INVALID;
     iomh->format = vfmt2ihfmt(h->format);
+
+	switch(iomh->format){
+    case iom_BYTE:   iomh->eformat = iom_NATIVE_INT_1;        break;
+    case iom_SHORT:  iomh->eformat = iom_NATIVE_INT_2;        break;
+    case iom_INT:    iomh->eformat = iom_NATIVE_INT_4;        break;
+    case iom_FLOAT:  iomh->eformat = iom_NATIVE_IEEE_REAL_4;  break;
+    case iom_DOUBLE: iomh->eformat = iom_NATIVE_IEEE_REAL_8;  break;
+	default:
+		iomh->eformat = iom_EDF_INVALID;
+		fprintf(stderr, "Error! Internal format %d not recognized.\n",
+			iomh->format);
+		break;
+	}
+
     iomh->transposed = 0;
     iomh->org = vorg2ihorg(h->org);
     iomh->gain = h->gain;
