@@ -125,6 +125,7 @@ struct _var {
 #define V_DATA(v)	V_SYM(v)->data		/* pointer to data */
 #define V_INT(v)	(*((int *)V_DATA(v)))	/* derefernce as a single int */
 #define V_FLOAT(v)	(*((float *)V_DATA(v)))	/* derefernce as a single float */
+#define V_DOUBLE(v)	(*((double *)V_DATA(v)))	/* derefernce as a single dbl */
 #define V_FORMAT(v)	V_SYM(v)->format
 #define V_DSIZE(v)	V_SYM(v)->dsize
 #define V_SIZE(v)	V_SYM(v)->size
