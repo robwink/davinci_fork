@@ -1255,7 +1255,7 @@ case 86:
     break;}
 case 87:
 #line 224 "parser.y"
-{ yyval = NULL; ;
+{ yyval = p_mknod(ID_STRUCT,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 88:
 #line 225 "parser.y"

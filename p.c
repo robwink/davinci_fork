@@ -9,6 +9,7 @@
  **/
 
 char *unescape(char *), *unquote(char *);
+Var ** find_struct(Var *a, Var *b);
 
 /**
  ** p_mknod() - Make a node of the specified type
@@ -382,6 +383,23 @@ evaluate(Var * n)
                 p1 = pop(scope);
 				push(scope, pp_set_where(p1, where, p2));
 
+			} else if (V_TYPE(left) == ID_STRUCT) {
+
+/*
+                                    ID_SET
+                                  /        \
+                           ID_STRUCT          EXPR
+                          /        \
+                         ID         ID 
+*/
+				evaluate(V_NODE(left)->left);
+				evaluate(V_NODE(left)->right);
+				evaluate(right);
+
+                p3 = pop(scope);
+                p2 = pop(scope);
+                p1 = pop(scope);
+				push(scope, pp_set_struct(p1, p2, p3));
             } else {
                 evaluate(left);
                 evaluate(right);
@@ -402,16 +420,24 @@ evaluate(Var * n)
 
 		case ID_STRUCT:
 			/*
+			** Derefernce of a structure element.
+			** Push the assoicated Var
+			*/
 			evaluate(left);
 			evaluate(right);
 
-			printf("Struct:\n");
             p2 = pop(scope);
             p1 = pop(scope);
 
-			pp_print(p1);
-			pp_print(p2);
-			*/
+			{
+				Var **p3 = find_struct(p1, p2);
+				if (p3 != NULL) {
+					push(scope, *p3);
+				} else {
+					push(scope, NULL);
+				}
+			}
+			
 			break;
 
 
@@ -554,3 +580,29 @@ valid_decl(Var *type, Var *string)
 	return(1);
 }
 
+
+Var **
+find_struct(Var *a, Var *b)
+{
+	Var *s;
+	int i;
+	if (a == NULL || b == NULL) return(NULL);
+
+	if ((s = eval(a)) != NULL) {
+		a = s;
+	}
+
+	if (V_TYPE(a) != ID_VSTRUCT) {
+		parse_error("%s: Not a struct", V_NAME(a));
+		return(NULL);
+	}
+
+	for (i = 0; i < V_STRUCT(a).count ; i++) {
+		if (!strcmp(V_STRUCT(a).names[i], V_NAME(b))) {
+			return(V_STRUCT(a).data +i);
+		}
+	}
+
+	parse_error("Structure does not contain member '%s'", V_NAME(b));
+	return(NULL);
+}

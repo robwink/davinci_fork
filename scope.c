@@ -290,6 +290,18 @@ mem_malloc(void)
     return(sym->value);
 }
 
+Var *
+mem_claim_struct(Var *v)
+{
+	int i;
+	if (V_TYPE(v) == ID_VSTRUCT) {
+		for (i = 0 ; i < V_STRUCT(v).count ; i++) {
+			mem_claim(V_STRUCT(v).data[i]);
+		}
+	}
+	return(v);
+}
+
 /**
  ** claim memory in the scope tmp list, so it doesn't get free'd
  ** return NULL if it isn't here.
@@ -305,20 +317,21 @@ mem_claim(Var *ptr)
     if (sym->value == ptr) {
         scope->tmp = scope->tmp->next;
         free(sym);
-        return(ptr);
+        return(mem_claim_struct(ptr));
     } else {
         while(sym->next != NULL) {
             if (sym->next->value == ptr) {
                 tmp = sym->next;
                 sym->next = sym->next->next;
                 free(tmp);
-                return(ptr);
+				return(mem_claim_struct(ptr));
             }
             sym = sym->next;
         }
     }
     return(NULL);
 }
+
 
 /**
  ** free the scope tmp list

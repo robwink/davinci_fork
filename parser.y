@@ -221,7 +221,7 @@ primary_expr
 postfix_expr
     : primary_expr                  { $$ = $1; }
     | postfix_expr '[' ranges ']'   { $$ = p_mknod(ID_ARRAY,$1,$3); }
-    | postfix_expr '.' id           { $$ = NULL; }
+    | postfix_expr '.' id           { $$ = p_mknod(ID_STRUCT,$1,$3); }
     | postfix_expr '(' ')'     		{ $$ = p_mknod(ID_FUNCT,$1,NULL); }
     | postfix_expr '(' args ')'     { $$ = p_mknod(ID_FUNCT,$1,$3); }
     | postfix_expr '(' '?' ')'      { $$ = pp_help($1); }

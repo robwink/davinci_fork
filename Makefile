@@ -20,8 +20,8 @@ XRTINCLUDE= -I$(XRTHOME)/include
 XRTLIBS = -L$(XRTHOME)/lib -L/usr/lib/Motif1.2 -lxrt3d -lpdsutil -lMrm -lXm -lXpm
 
 # CC     = gcc
-CFLAGS = -O -g -DHAVE_CONFIG_H -Ilib -DHAVE_XRT -I/user/east/asbms/Project4/include
-LIBS   = $(XLIBS) -L/user/east/asbms/Project4/lib -lproj -lreadline -ltermcap -lXt -lX11 -lm 
+CFLAGS = -O -g -DHAVE_CONFIG_H -Ilib -DHAVE_XRT -I/user/east/asbms/Project4/include -DINCLUDE_API
+LIBS   = $(XLIBS) -L/user/east/asbms/Project4/lib -lproj -lreadline -ltermcap -lXt -lX11 -lplplotfX -lm -lhdf5
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
@@ -49,7 +49,7 @@ OBJ=p.o pp.o symbol.o error.o \
 	ff_pause.o printf.o ff_ifill.o ff_xfrm.o newfunc.o ff_ix.o ff_avg.o \
 	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
 	x.o xrt_print_3d.o motif_tools.o ff_projection.o \
-	ff_convolve.o 
+	ff_convolve.o  io_themis.o ff_struct.o  apifunc.o
 #   rfunc.o
 #	input.o 
 
@@ -73,8 +73,6 @@ parser.c:	parser.y
 	/opt/local/alt/bin/bison -d parser.y
 	mv parser.tab.c parser.c
 	mv parser.tab.h y_tab.h
-
-
 
 install:
 	cp davinci $(BINDIR)

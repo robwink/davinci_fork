@@ -24,11 +24,9 @@ Widget top=NULL;
 XtAppContext    app;
 
 #ifdef HAVE_LIBXM
-int windows = 1;
-#endif
-
-#ifndef HAVE_LIBXM
-int windows = 0;
+static int windows = 1;
+#else
+static int windows = 0;
 #endif
 
 /**

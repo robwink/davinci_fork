@@ -265,6 +265,7 @@ void
 free_var(Var *v)
 {
 	int type;
+	int i;
 	if (v == NULL) return;
 
 	type=V_TYPE(v);
@@ -279,6 +280,14 @@ free_var(Var *v)
 			if (V_STRING(v)) free(V_STRING(v));
 			if (V_NAME(v)) free(V_NAME(v));
 			break;
+		case ID_STRUCT:
+			for (i = 0 ; i < V_STRUCT(v).count ; i++) {
+				free_var(V_STRUCT(v).data[i]);
+				free(V_STRUCT(v).names[i]);
+			}
+			if (V_NAME(v)) free(V_NAME(v));
+			break;
+
 		default:
 			if (V_NAME(v)) free(V_NAME(v));
 			break;

@@ -8,6 +8,8 @@ extern "C" void rl_callback_read_char ();
 extern "C" int yywrap ( void );
 #endif
 
+#include "hdf5.h"
+
 struct yy_buffer_state;
 void yy_delete_buffer ( struct yy_buffer_state *b );
 struct yy_buffer_state *yy_scan_string( const char *yy_str );
@@ -138,6 +140,7 @@ int LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var);
 int WriteRaw(Var *, FILE *, char *);
 int WriteGRD(Var *, FILE *, char *);
 int WriteSpecpr(Var *, char *, char *);
+int WriteHDF5(hid_t, char *, Var *);
 int WriteISIS(Var *, FILE *, char *, char *);
 void WritePPM(Var *, FILE *, char *);
 void WritePGM(Var *, FILE *, char *);
@@ -290,6 +293,8 @@ Var *ff_projection(vfuncptr func, Var *arg);
 Var *ff_self_convolve(vfuncptr func, Var *arg);
 Var *ff_convolve(vfuncptr func, Var *arg);
 Var *ff_convolve2(vfuncptr func, Var *arg);
+
+Var *ff_struct(vfuncptr func, Var *arg);
 
 Alist make_alist(char *name, int type, void *limits, void *value);
 
