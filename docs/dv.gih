@@ -277,9 +277,9 @@
  read() - Load a data from file
 
  read(filename="path" [,record=INT],
-	  [,xlow=INT] [,xhigh=INT] [,xskip=INT]
-	  [,ylow=INT] [,yhigh=INT] [,yskip=INT]
-	  [,zlow=INT] [,zhigh=INT] [,zskip=INT])
+      [,xlow=INT] [,xhigh=INT] [,xskip=INT]
+      [,ylow=INT] [,yhigh=INT] [,yskip=INT]
+      [,zlow=INT] [,zhigh=INT] [,zskip=INT])
 
     The read() function loads the specified data file.   The read() 
     function can automatically recognize and load the following file 
@@ -293,9 +293,9 @@
         GOES weather satellite
         AVIRIS
 
-	Additionally, if davinci has been compiled with the ImageMagick
-	library, a large number of additional formats can be read and written.
-	See the help entry for libmagic to get a list of these.
+    Additionally, if davinci has been compiled with the ImageMagick
+    library, a large number of additional formats can be read and written.
+    See the help entry for libmagic to get a list of these.
 
     If the specified path is not absolute (ie: it doesn't start with a '/'),
     and the specified file cannot be found in the current directory, the
@@ -311,9 +311,9 @@
     another file type, it is used as the high and low value for a Z axis 
     subset, causing a single image to be extracted from cubes.
 
-	The values low, high and skip can be specified for each axis (ie: xlow,
-	zhigh, etc) to specify a precise subset to be read.  All the subsetting
-	arguments are optional.
+    The values low, high and skip can be specified for each axis (ie: xlow,
+    zhigh, etc) to specify a precise subset to be read.  All the subsetting
+    arguments are optional.
 
     Reading a PPM image produces a 3-plane, BIP cube of byte values.
     Each plane represents the red, green and blue values respectivly.
@@ -673,40 +673,40 @@
 
  xplot([axis={X,Y,Z}],[Xaxis=VAL],VAL1,[VAL2...])
 
-	The xplot function will take a data block (or several data blocks)
-	and plot them using axis as a kind of delimiter.  Example:
-		a=create(1,7,20)
-		xplot(a, axis=Y)
+    The xplot function will take a data block (or several data blocks)
+    and plot them using axis as a kind of delimiter.  Example:
+        a=create(1,7,20)
+        xplot(a, axis=Y)
 
-	will create a set of 20 data plots (all the same color) of 7 data 
-	points each.  Alternatively:
-		xplot(a,axis=Z) 
+    will create a set of 20 data plots (all the same color) of 7 data 
+    points each.  Alternatively:
+        xplot(a,axis=Z) 
 
-	will reate a set of 7 data plots (all the same color) of 20 data points
-	each.  To seperate data sets (in terms of color/symbol) then specify
-	them as different objects:
-		xplot(a1,a2,axis=Y)
+    will reate a set of 7 data plots (all the same color) of 20 data points
+    each.  To seperate data sets (in terms of color/symbol) then specify
+    them as different objects:
+        xplot(a1,a2,axis=Y)
 
-	will produce (on the same graph) two plots of 20 data sets of 7 data
-	points each (assumeing a1 and a2 have the same configuration as our
-	original a).
+    will produce (on the same graph) two plots of 20 data sets of 7 data
+    points each (assumeing a1 and a2 have the same configuration as our
+    original a).
 
-	An X-Axis can also be specified to provide a horizontal scale of
-	a particular nature:
-	
-		MyAxis=create(1,7,1,format=float)
-		MyAxis=MyAxis/max(MyAxis) /*My Axis is now 0->1 in 7 steps */
-		xplot(axis=Y,a,a1,a2,Xaxis=Myaxis)
+    An X-Axis can also be specified to provide a horizontal scale of
+    a particular nature:
+    
+        MyAxis=create(1,7,1,format=float)
+        MyAxis=MyAxis/max(MyAxis) /*My Axis is now 0->1 in 7 steps */
+        xplot(axis=Y,a,a1,a2,Xaxis=Myaxis)
 
-	Now we will get three color plots of 20 data sets (each) of 7
-	data points each and the X-axis will go from 0 to 1 in seven steps.
+    Now we will get three color plots of 20 data sets (each) of 7
+    data points each and the X-axis will go from 0 to 1 in seven steps.
 
-	Alternatively, we could have specified MyAxis as follows:
+    Alternatively, we could have specified MyAxis as follows:
 
-		MyAxis=create(1,7,20,format=float)
+        MyAxis=create(1,7,20,format=float)
 
-	Now there is an X-axis per data set (NOTE: this can be abused so use
-	with caution).
+    Now there is an X-axis per data set (NOTE: this can be abused so use
+    with caution).
 
 ?functions gplot()
 ?gplot()
@@ -979,7 +979,7 @@
     dv> a = avg(object=data, axis=xy)
 
  Note: The avg function uses a one-pass accumulator that can experience
-	   round off error with lots of numbers.
+       round off error with lots of numbers.
 
 ?functions stddev()
 ?stddev()
@@ -1002,7 +1002,7 @@
     dv> sigma = stddev(object=data, axis=xy)
 
  Note: The stddev function uses a one-pass accumulator that can experience
-	   round off error with lots of numbers.
+       round off error with lots of numbers.
 
 ?functions sum()
 ?sum()
@@ -1129,7 +1129,7 @@
 
  histogram(object=VAL, 
            [start=FLOAT], [size=FLOAT], [steps=INT],
-		   [compress=BOOL], [normalize=BOOL], [cumulative=BOOL]);
+           [compress=BOOL], [normalize=BOOL], [cumulative=BOOL]);
 
  The histogram function sorts its input data into some number of bins, and
  produces a 2xN array of FLOATs as output.  The first column of the output
@@ -1273,15 +1273,15 @@
      The entropy() function always returns a FLOAT.
 
 ?functions plplot
-	ALL plplot library  commands are availible to the user.  Several davinci commands
-	were created to faciliate ease of use:
-		popen()	-	Define, initialize and open a window for plotting
-		pplot()	-	Plot a data cube along specified axis
-		pprint()-	Print a current plot
-		ptext()	-	Flexible labeling tool
-		pbox()	-	Set up limits and plot box with tick marks
-		pline()	-	Draw a set of connected line segments
-		pzoom()	-	Zoom in on a graph
+    ALL plplot library  commands are availible to the user.  Several davinci commands
+    were created to faciliate ease of use:
+        popen() -   Define, initialize and open a window for plotting
+        pplot() -   Plot a data cube along specified axis
+        pprint()-   Print a current plot
+        ptext() -   Flexible labeling tool
+        pbox()  -   Set up limits and plot box with tick marks
+        pline() -   Draw a set of connected line segments
+        pzoom() -   Zoom in on a graph
 
 ?functions popen()
 ?popen
@@ -1289,85 +1289,96 @@
 
  popen(xpos=INT, ypos=INT, xpixels=INT, ypixels=INT,title=STRING,portrait=int)
 
-	This funtions opens up an X-Windows for plotting data using the plplot library.
-	xpos is the initial x-position (relative to the desktop) of the new windows
-	ypos is the initial y-position
-	xpixels is the number of pixels in the x direction (number of pixel collumns)
-	ypixels is the number of pixels in the y direction (number of pixel rows)
- 	title is a string which can go in the window title bar
-	portrait is a flag which define the graph as landscape (portrait=0, default) or
-		as portrait (portrait=1)
+    This funtions opens up an X-Windows for plotting data using the
+    plplot library.
+
+    xpos is the initial x-position (relative to the desktop) of the new windows
+    ypos is the initial y-position
+    xpixels is the number of pixels columns
+    ypixels is the number of pixels rows
+    title is a string which can go in the window title bar
+    portrait is a flag which define the graph as landscape 
+    (portrait=0, default) or as portrait (portrait=1)
 
 ?functions pplot()
 ?pplot
  pplot() - Plot a data cube along specified axis
 
- pplot(obj=VAL, axis={X,Y or Z}, [append=INT, window=INT, Xaxis=VAL, color=int, xhigh=FLOAT
-	xlow=FLOAT, yhigh=FLOAT, ylow=FLOAT])
+ pplot(obj=VAL, axis={X,Y,Z}, 
+       [append=INT, window=INT, Xaxis=VAL, color=int, 
+        xhigh=FLOAT, xlow=FLOAT, yhigh=FLOAT, ylow=FLOAT])
 
-	Pplot takes a dataset (obj) and plots it as a set of vector data along a specified axis.
-	Options include:
-	  append:  Draw over previous graph using previous min/max settings (append=1)
-		   erase previous graph, (append=0,i defualt)
-	
-  	  window:  ID of window to draw in.  Popen returns a integer ID value for 
-		   the window it creates.  Save this value if you open more than one window.
+ Pplot takes a dataset (obj) and plots it as a set of vector data
+ along a specified axis.  Options include:
 
-	  Xaxis:   Dataset object containing x-axis values.  Must be either of size (X,1,1) 
-		   where X is the same value as the x-dimention for obj or the same size as obj
+      append:  Draw over previous graph without erasing
+    
+      window:  ID of window to draw in.  Popen returns a integer ID value for 
+               the window it creates.  Save this value if you open more 
+               than one window.
 
-	  color:   Ineger value between 0 and 15.  0 is the background color
+      Xaxis:   Dataset object containing x-axis values.  Must be either 
+                the same size as obj, or of size (X,1,1) where X is the 
+                same value as the x-dimension of obj.
 
-	  xhigh,xlow,yhigh and ylow can either be set by the user or automatically calculated
-		   if no value is given.
-	  	   
+      color:   Ineger value between 0 and 15.  0 is the background color
+
+      xhigh,xlow,yhigh and ylow can either be set by the user or 
+                                automatically calculated if no value is given.
+           
 ?functions pprint()
 ?pprint
  pprint() - Print a current plot
 
  pprint(id=INT, title=STRING, type={ps,psc,pbm})
 
-     pprint will create a printer file (or graphic file) of an already existing plot.
-	id specifies the window ID (as returned by popen) of the window to plot.
-	title is a string containing the filename for the printer file.
-	type sets what kind of file is produced:
-		ps - b&w postscript file
-		psc - color postscript file
-		pbm - 640x480 graphics file (size is fixed)
+ pprint will create a printer file (or graphic file) of an already
+ existing plot.  id specifies the window ID (as returned by popen) of
+ the window to plot.  title is a string containing the filename for the
+ printer file.  The type parameter sets what kind of file is produced:
+
+        ps - b&w postscript file
+        psc - color postscript file
+        pbm - 640x480 graphics file (size is fixed)
 
 ?functions ptext()
 ?ptext
  ptext() - Flexible labeling tool
 
- ptext(c=INT, e=FLOAT, x=FLOAT, y=FLOAT, angle=INT, text=STRING, kolor=INT, world=INT)
+ ptext(c=INT, e=FLOAT, x=FLOAT, y=FLOAT, angle=INT, 
+       text=STRING, kolor=INT, world=INT)
 
-     ptext prints labels and text on a plot allowing the user to specify a number of 
-     formating options.  Many of these options are here for MONGO graphing compatibility
+  ptext prints labels and text on a plot allowing the user to specify
+  a number of formating options.  Many of these options are here for
+  MONGO graphing compatibility
 
-	c:  (MONGO) text alignment relative to (x,y) position
-	e:  (MONGO) text font expansion
-	x & y: x and y position are specified in terms of normalized coordinates (0,1)
-	angle: (MONGO) integer value (in degrees) which specifies the desired rotation of
-		of the text
-	text:	quoted string containing the text to put on the plot
-	kolor:  integer value from 0 to 15 (0 is background color), set color of ploted text
-	world:  flag, if set to 1, x & y need to be in world coord. else normalized (default)
+    c:  (MONGO) text alignment relative to (x,y) position
+    e:  (MONGO) text font expansion
+    x & y: x and y position are specified in terms of normalized 
+           coordinates (0,1)
+    angle: (MONGO) integer value (in degrees) which specifies the 
+           desired rotation of of the text
+    text:   quoted string containing the text to put on the plot
+    kolor:  integer value from 0 to 15 (0 is background color), set color 
+            of ploted text
+    world:  flag, if set to 1, x & y need to be in world coord. else 
+            normalized (default)
 
 ?functions pbox()
 ?pbox
  pbox() - Set up plot box with tick marks
 
  pbox(e=FLOAT, lt=INT, x=INT, y=INT, X=INT, Y=INT, m=INT, color=INT)
-	pbox draws a box with tick marks and X & Y axis values.
+    pbox draws a box with tick marks and X & Y axis values.
 
-	e:   text font expansion
-	lt:  line thickness (defualt=1)
-	x:   if non-zero, draw x-axis values (defualt)
-   	y:   if non-zero, draw y-axis values (defualt)
- 	X:   if non-zero, uses logrthymic values for x-axis
-	Y:   if non-zero, uses logrthymic values for y-axis
-	m:   if non-zero uses micron labeling for x-axis
-    	color : integer value between 0 and 15 (0 is background color)
+    e:   text font expansion
+    lt:  line thickness (defualt=1)
+    x:   if non-zero, draw x-axis values (defualt)
+    y:   if non-zero, draw y-axis values (defualt)
+    X:   if non-zero, uses logrthymic values for x-axis
+    Y:   if non-zero, uses logrthymic values for y-axis
+    m:   if non-zero uses micron labeling for x-axis
+        color : integer value between 0 and 15 (0 is background color)
 
 ?functions pline()
 ?pline
@@ -1375,17 +1386,17 @@
 
  pline(ls=INT,lt=INT, x=VAL, y=VAL, color=INT)
 
- pline plots set a of n points as n-1 conneted line segments, where xy point n-1 is
-	connected to xy point n, which is then connected to xy point n+1.
+ pline plots set a of n points as n-1 conneted line segments, where xy 
+ point n-1 is connected to xy point n, which is then connected to xy point n+1.
 
- 	ls:	line style (0=solid (defualt), 1=dashed, >1 more dashed styles)
-	lt:	line thickness (defult =1)
-	x:	dataset of x values (expected cube: (N,1,1)) N-number of points
-	y:	dataset of y values (expected cube: (N,1,1)) N-number of points
+    ls: line style (0=solid (defualt), 1=dashed, >1 more dashed styles)
+    lt: line thickness (defult =1)
+    x:  dataset of x values (expected cube: (N,1,1)) N-number of points
+    y:  dataset of y values (expected cube: (N,1,1)) N-number of points
 
-		x & y must have the SAME number of points!
+        x & y must have the SAME number of points!
 
- 	color: integer between 0 and 15 (0 is the background color).
+    color: integer between 0 and 15 (0 is the background color).
 
 ?functions pzoom()
 ?pzoom
@@ -1393,16 +1404,16 @@
 
  pzoom(x_lo=INT,x_hi=INT,y_lo=INT,y_hi=INT,Xv=VAL,Yv=VAL,reset=1)
 
-	x_lo: new lower boundry for X-axis
-	x_hi: new upper boundry for X-axis
-	y_lo: new lower boundry for Y-axis
-	y_hi: new upper boundry for Y-axis
+    x_lo: new lower boundry for X-axis
+    x_hi: new upper boundry for X-axis
+    y_lo: new lower boundry for Y-axis
+    y_hi: new upper boundry for Y-axis
 
-				or
+                or
    Xv:Cube of dim(2,1,1); Xv[1,1,1]=x_lo; Xv[2,1,1]=x_hi
    Yv:Cube of dim(2,1,1); Yv[1,1,1]=y_lo; Yv[2,1,1]=y_hi
 
-	reset=1 puts graph back original settings
+    reset=1 puts graph back original settings
 
 ?functions read_lines()
 ?read_lines
@@ -1410,8 +1421,7 @@
 
  read_lines(filename=STRING)
 
-  read_lines will read in a text file and for ever newline, a row inside
-  a text array will be created.  The function then returns the text array
+  The read_lines() reads a text file and returns it as a TEXT array.
 
 ?functions dirname()
 ?dirname
@@ -1419,18 +1429,16 @@
 
  dirname(object = STRING | TEXT)
 
-  dirname will take either a STRING object or a TEXT array
-  object and return the directory portion of either (assuming
-  the STRING or TEXT was a valid path).
+  The dirname() function returns the directory portion of a path.
+  When passed a TEXT array, it operates on each line of the TEXT array.
 
 ?functions issubstring()
-?issubstring
+?issubstring()
  issubstring() - tests whether one string is a substring of another
 
  issubstring(targert = STRING, source = STRING)
 
-  issubstring will return TRUE if target contains source and 
-  FALSE otherwise.
+  issubstring will return 1 if target contains source and 0 otherwise.
 
 ?functions delim()
 ?delim
@@ -1448,11 +1456,8 @@
 
  grep(object = TEXT, pattern = STRING)
 
-  grep will search each row of a TEXT object for pattern
-  and returns another TEXT object.  The new TEXT object will
-  contain rows that are  either a blank line if pattern is not 
-  in that row in Object or Object's line is pattern is in that row
-  of Object.
+  The grep() function copys each row of the passed TEXT object that 
+  contains the specified pattern.  grep() supports regex patterns.
 
 ?functions strsub()
 ?strsub
@@ -1463,13 +1468,14 @@
   strsub traverses a string looking for match and replaces it
   with subst.  For a TEXT object, this operation is done on
   everyrow using the same match and subst.  
-  Note: match and subst can contain SED like notation
+
+  Note: match and subst can contain SED like regular expressions
 
   ex:
   strsub("xxxxxzzzxxxxxzzzxxxxxzzzxxxx","z\(z\)z","QQ\1QQ")
   will replace zzz with QQzQQ
 
-  double \\ must be used within davinci
+  double back-slashes (\\) must be used within davinci
 
 ?functions strstr()
 ?strstr
@@ -1490,7 +1496,6 @@
 
  syscall executes STRING in a command shell and returns any output
  in a TEXT object.
-
 
 ?functions xrt3d
 ?xrt3d
@@ -1533,32 +1538,36 @@
 ?projection()
  projection() - Compute a stereographic projection for each band of an object
 
- projection(obj=VAL, [lat=FLOAT], [lon=FLOAT], [rad=FLOAT], [ppd=INT], type=STRING)
+ projection(obj=VAL, [lat=FLOAT], [lon=FLOAT], [rad=FLOAT], 
+            [ppd=INT], type=STRING)
 
-The projection() function will process each band of an object, projecting
-into a BIL organized dataset.  Format of the object does not matter.
-The lat and lon parameters specify the center point of the projection,
-and the rad paramter is the radius extent of the projection in degrees.
-The ppd paramter specified pixels per degree, and when combined with
-the radius value, defines the size of the output image.  Therefore,
-if a radius of 20 is specified with ppd=5 the resulting band will be
-(2x20x5) pixels on each side.  The type parameter sets the parameters of
-distortion, that is if one is projecting on the planet Mars as opposed
-to a sphere, there will be a slightly different result.  The projection
-types are as follows:
+ The projection() function will process each band of an object, projecting
+ into a BIL organized dataset.  Format of the object does not matter.
+
+ lat and lon specify the center point of the projection,
+ rad specifys the radius extent of the projection in degrees.
+
+ The ppd paramter specified pixels per degree, and when combined with
+ the radius value, defines the size of the output image.  Therefore,
+ if a radius of 20 is specified with ppd=5 the resulting band will be
+ 200 pixels (2x20x5) on each side.  
+ 
+ The type parameter sets the parameters of distortion, that is if one 
+ is projecting on the planet Mars as opposed to a sphere, there will 
+ be a slightly different result.  The projection types are as follows:
 
     type: MARS
           EARTH
           SPHERE
 
-    The four optional paramters: default to the following values:
+ The four optional paramters default to the following values:
         
         lat=90.0
         lon=0.0
         rad=30.0
         ppd=1
 
-    example:
+ Example:
 
     dv> projection(obj=a,lat=0.0,rad=90,ppd=10,type=MARS)
 
@@ -1572,8 +1581,6 @@ Davinci supports the following matrix functions:
     mxm()     - matrix multiply
     minvert() - matrix inversion
     convolve() - sliding window kernel convolution
-
-
 
 ?functions convolve()
 ?convolve()
@@ -1611,24 +1618,6 @@ Davinci supports the following matrix functions:
 
     Same as convolve, only a somewhat faster algorthm is used.
     
-?news
- DaVinci News
-
- 1999/10/22 - Added windowing convolution, useful for LPF, etc.
-
- 1999/06/08 - Released version 0.50.
-              + Added xrt3d()
-              * rewrote text interface to use the Xt event model
-              * Wrote a push parser for bison, and started using it.
-                (This means the average user can't make parser.c from parser.y
-                anymore, but doesn't need to because parser.c is provided.)
-
- 1999/03/24 - Version 0.48
-            + added minvert(), matrix inversion (LU decomposition)
-            * updated io_vicar to write new vicar format, but is sun specific
-            * speedup to array.c
-            + added limited support for 16-bit pgm files
-
 ?functions create()
 ?create()
  create() - Create an array of values
@@ -1636,27 +1625,27 @@ Davinci supports the following matrix functions:
  create(x=INT, y=INT, z=INT, [org=ORG, format=FORMAT, start=VAL, step=VAL])
 
      The create() function creates an array of data of the specified
-	 size, format and organization.
+     size, format and organization.
 
      The 'x', 'y' and 'z' parameters specify the size of each axis.
-	 If a value is not given, it is assumed to be 1.
+     If a value is not given, it is assumed to be 1.
 
-	 The 'org' and 'format' parameters specify the organization (one of
-	 bil, bip, bsq, xyz, xzy, zxy) and format (one of byte, short, int,
-	 float or double).  The default organization is bsq.  The default
-	 format is int.
+     The 'org' and 'format' parameters specify the organization (one of
+     bil, bip, bsq, xyz, xzy, zxy) and format (one of byte, short, int,
+     float or double).  The default organization is bsq.  The default
+     format is int.
 
-	 The array is filled with a ramp.  The first element is numbered from
-	 the 'start' parameter (default of 1) and each successive element is 
-	 incremented by the step size (default of 1).
-	 
+     The array is filled with a ramp.  The first element is numbered from
+     the 'start' parameter (default of 1) and each successive element is 
+     incremented by the step size (default of 1).
+     
 
  Example:
 
     This example creates a 3x3x1 image.  The elements are automatically 
-	numbered from 1 to 9.
+    numbered from 1 to 9.
 
-	dv> a = create(3,3,1)
+    dv> a = create(3,3,1)
 
 ?functions pcs()
 ?pcs()
@@ -1664,47 +1653,47 @@ Davinci supports the following matrix functions:
 
  pcs(obj=VAL [, opt={r|v|s}] [, axis={x|y|z}] [, scale=VAL] [, niter=INT])
 
-		The pcs() function performs a Principal Component Stretch on the
-		input data.
-		 
-		The 'opt' parameter selects the statistical method to be used on
-		the input data for the whole analysis. Various values taken by
-		this parameter have the following meaning:
+        The pcs() function performs a Principal Component Stretch on the
+        input data.
+         
+        The 'opt' parameter selects the statistical method to be used on
+        the input data for the whole analysis. Various values taken by
+        this parameter have the following meaning:
 
-			'v' (default) - chooses Principal Component Analysis based on
-				the covariance matrix
-			
-			'r' - chooses Principal Component Analysis based on the
-				correlation matrix
+            'v' (default) - chooses Principal Component Analysis based on
+                the covariance matrix
+            
+            'r' - chooses Principal Component Analysis based on the
+                correlation matrix
 
-			's' - chooses Principal Component Analysis based on the
-				the "sum of cross products" matrix
+            's' - chooses Principal Component Analysis based on the
+                the "sum of cross products" matrix
 
-		The 'axis' parameter specifies the dimension along with the
-		vectors are laid out. Say, the input 'obj' is an [m x n x w]
-		matrix and the 'axis' has been specified as 'z' then:
+        The 'axis' parameter specifies the dimension along with the
+        vectors are laid out. Say, the input 'obj' is an [m x n x w]
+        matrix and the 'axis' has been specified as 'z' then:
 
-			'w' is the dimension of the a single input vector, and
-			there are 'm x n' of them in the image cube.
+            'w' is the dimension of the a single input vector, and
+            there are 'm x n' of them in the image cube.
 
-			The default value for this parameter is 'z'.
+            The default value for this parameter is 'z'.
 
-		The 'scale' parameter specifies the scaling factor, if any, to be
-		applied to the stretched vectors during the stretch phase. If 
-		'scale' is not specified, it is assumed to be 1, i.e. no scaling.
+        The 'scale' parameter specifies the scaling factor, if any, to be
+        applied to the stretched vectors during the stretch phase. If 
+        'scale' is not specified, it is assumed to be 1, i.e. no scaling.
 
-		The 'niter' parameter specifies the maximum number of iterations
-		allowed during Tridiagonal QL algorithm. If pcs() fails due to
-		'no convergence' error, try increasing this number.
+        The 'niter' parameter specifies the maximum number of iterations
+        allowed during Tridiagonal QL algorithm. If pcs() fails due to
+        'no convergence' error, try increasing this number.
 
 
  Example:
-	Assume that m1 is an image cube of dimensions [3x4x5], then the
-	following line will do the principal component stretch of the
-	input data based on the covariance matrix of 4x5=20 input vectors
-	of dimension=3.
+    Assume that m1 is an image cube of dimensions [3x4x5], then the
+    following line will do the principal component stretch of the
+    input data based on the covariance matrix of 4x5=20 input vectors
+    of dimension=3.
 
-	dv> m2 = pcs(m1, v, x)
+    dv> m2 = pcs(m1, v, x)
 
 ?functions covar()
 ?covar()
@@ -1712,24 +1701,24 @@ Davinci supports the following matrix functions:
 
  covar(obj=VAL [, axis={x|y|z}])
 
-		The covar() function computes the covariance matrix for
-		the vectors specified in the 'obj' cube.
+        The covar() function computes the covariance matrix for
+        the vectors specified in the 'obj' cube.
 
-		The 'axis' parameter specifies the dimension along with the
-		vectors are laid out. Say, the input 'obj' is an [m x n x w]
-		matrix and the 'axis' has been specified as 'z' then:
+        The 'axis' parameter specifies the dimension along with the
+        vectors are laid out. Say, the input 'obj' is an [m x n x w]
+        matrix and the 'axis' has been specified as 'z' then:
 
-			'w' is the dimension of the a single input vector, and
-			there are 'm x n' of them in the image cube.
+            'w' is the dimension of the a single input vector, and
+            there are 'm x n' of them in the image cube.
 
-			The default value for this parameter is 'z'.
+            The default value for this parameter is 'z'.
 
  Example:
-	Assume that 'm' is a data cube of dimensions [3x4x5], then the
-	following line will compute the covariance matrix 'c' for the
-	3x5=15 input vectors of dimension=4 each.
+    Assume that 'm' is a data cube of dimensions [3x4x5], then the
+    following line will compute the covariance matrix 'c' for the
+    3x5=15 input vectors of dimension=4 each.
 
-	dv> c = covar(m, y)
+    dv> c = covar(m, y)
 
 ?functions corr()
 ?corr()
@@ -1737,24 +1726,24 @@ Davinci supports the following matrix functions:
 
  corr(obj=VAL [, axis={x|y|z}])
 
-		The corr() function computes the correlation matrix for
-		the vectors specified in the 'obj' cube.
+        The corr() function computes the correlation matrix for
+        the vectors specified in the 'obj' cube.
 
-		The 'axis' parameter specifies the dimension along with the
-		vectors are laid out. Say, the input 'obj' is an [m x n x w]
-		matrix and the 'axis' has been specified as 'z' then:
+        The 'axis' parameter specifies the dimension along with the
+        vectors are laid out. Say, the input 'obj' is an [m x n x w]
+        matrix and the 'axis' has been specified as 'z' then:
 
-			'w' is the dimension of the a single input vector, and
-			there are 'm x n' of them in the image cube.
+            'w' is the dimension of the a single input vector, and
+            there are 'm x n' of them in the image cube.
 
-			The default value for this parameter is 'z'.
+            The default value for this parameter is 'z'.
 
  Example:
-	Assume that 'm' is a data cube of dimensions [3x4x5], then the
-	following line will compute the correlation matrix 'c' for the
-	3x5=15 input vectors of dimension=4 each.
+    Assume that 'm' is a data cube of dimensions [3x4x5], then the
+    following line will compute the correlation matrix 'c' for the
+    3x5=15 input vectors of dimension=4 each.
 
-	dv> c = corr(m, y)
+    dv> c = corr(m, y)
 
 ?functions scp()
 ?scp()
@@ -1762,24 +1751,24 @@ Davinci supports the following matrix functions:
 
  scp(obj=VAL [, axis={x|y|z}])
 
-		The scp() function computes the sums of cross products matrix for
-		the vectors specified in the 'obj' cube.
+        The scp() function computes the sums of cross products matrix for
+        the vectors specified in the 'obj' cube.
 
-		The 'axis' parameter specifies the dimension along with the
-		vectors are laid out. Say, the input 'obj' is an [m x n x w]
-		matrix and the 'axis' has been specified as 'z' then:
+        The 'axis' parameter specifies the dimension along with the
+        vectors are laid out. Say, the input 'obj' is an [m x n x w]
+        matrix and the 'axis' has been specified as 'z' then:
 
-			'w' is the dimension of the a single input vector, and
-			there are 'm x n' of them in the image cube.
+            'w' is the dimension of the a single input vector, and
+            there are 'm x n' of them in the image cube.
 
-			The default value for this parameter is 'z'.
+            The default value for this parameter is 'z'.
 
  Example:
-	Assume that 'm' is a data cube of dimensions [3x4x5], then the
-	following line will compute the sums of cross products matrix 'c'
-	for the 3x5=15 input vectors of dimension=4 each.
+    Assume that 'm' is a data cube of dimensions [3x4x5], then the
+    following line will compute the sums of cross products matrix 'c'
+    for the 3x5=15 input vectors of dimension=4 each.
 
-	dv> c = scp(m, y)
+    dv> c = scp(m, y)
 
 
 ?functions eigen()
@@ -1789,24 +1778,55 @@ Davinci supports the following matrix functions:
 
  eigen(obj=VAL [, niter=INT])
 
-		The eigen() function computes the Eigen Values and Vectors for
-		a real symmetric [m x m x 1] matrix passed in as the 'obj'
-		parameter.
+        The eigen() function computes the Eigen Values and Vectors for
+        a real symmetric [m x m x 1] matrix passed in as the 'obj'
+        parameter.
 
-		The 'niter' parameter specifies the maximum number of iterations
-		allowed during Tridiagonal QL algorithm. If pcs() fails due to
-		'no convergence' error, try increasing this number.
+        The 'niter' parameter specifies the maximum number of iterations
+        allowed during Tridiagonal QL algorithm. If pcs() fails due to
+        'no convergence' error, try increasing this number.
 
 
  Example:
-	Assume that 'a' is a [3x3x1] matrix, then the following line
-	will compute the Eigen Values and Eigen vectors of matrix 'a'.
+    Assume that 'a' is a [3x3x1] matrix, then the following line
+    will compute the Eigen Values and Eigen vectors of matrix 'a'.
 
-	The return value 'e' is a [4x3x1] matrix, with the first column
-	containing the Eigen Values and the next three columns containing
-	the Eigen Vectors.
+    The return value 'e' is a [4x3x1] matrix, with the first column
+    containing the Eigen Values and the next three columns containing
+    the Eigen Vectors.
 
-	dv> e = eigen(a)
+    dv> e = eigen(a)
+
+?functions isis()
+?isis()
+ isis() - Enumerate or extract suffix planes of an ISIS cube
+
+ isis(filename=STRING, [plane=STRING])
+ isis(filename=STRING, [plane=INT, type={band,line,sample}]
+
+ The isis() function decodes ISIS suffix planes.
+
+ When called with just a filename, the isis() function will print
+ details about the specified file, including the name and location
+ of any suffix planes.
+
+ Individual suffix planes can be extracted by name or by location,
+ by speficying either a string or an integer to the PLANE parameter.
+
+ The TYPE parameter is necessary when extracting planes by location.  It
+ specifies which suffix to extract from.
+ 
+ Example:
+
+ The following example extracts the plane named 'background' from the 
+ file "my_file":
+
+	dv> a = isis( filename="my_file", plane="background")
+ 
+ This example extracts the third band_suffix plane:
+
+	dv> a = isis( filename="my_file", plane=3, type=band)
+
 
 ?functions load_vanilla()
 ?load_vanilla()
@@ -1814,36 +1834,37 @@ Davinci supports the following matrix functions:
 
  load_vanilla(file=STRING [, delim=STRING)
 
-		The load_vanilla() function loads a text output file generated
-		by a run of vanilla. Fields with same names are combined into
-		arrays and the data types are guessed from the data itself.
+  The load_vanilla() function loads a text output file generated
+  by a run of vanilla. Fields with same names are combined into
+  arrays and the data types are guessed from the data itself.
 
-		The output is stored in a structure of parallel arrays of fields
-		detected in the file. Field names are picked from the first line
-		of the input file.
+  The output is stored in a structure of parallel arrays of fields
+  detected in the file. Field names are picked from the first line
+  of the input file.
 
-		Optional 'delim' character-string parameter may be specified 
-		to enumerate field/column delimiters in the input file. Default
-		delimiters are spaces and tabs.
+  Optional 'delim' character-string parameter may be specified 
+  to enumerate field/column delimiters in the input file. Default
+  delimiters are spaces and tabs.
 
-		NOTE: load_vanilla() will work on text files with fixed number
-		of columns per line. Thus, while selecting variable data fields,
-		qualify them with indices, e.g. instead of saying "cal_rad[]"
-		use some range of values, like, "cal_rad[3-144]".
+  NOTE: load_vanilla() will work on text files with fixed number
+  of columns per line. Thus, while selecting variable data fields,
+  qualify them with indices, e.g. instead of saying "cal_rad[]"
+  use some range of values, like, "cal_rad[3-144]".
 
  Example:
-	The following command will load the vanilla output generated from an
-	earlier vanilla run into a variable named 'a'. The data (stored in
-	variable a) will be a structure of two fields, named, "sclk_time" and
-	"temps". Each of these fields will be an array of 'n'-records. Where,
-	'n' is the number of lines minus 1 (#lines - 1) in the input file.
-	(#lines - 1: because the first line contains the header info)
 
-	dv> system("vanilla ./data -fields 'sclk_time temps[1-4]' > /tmp/foo")
+    The following command will load the vanilla output generated from an
+    earlier vanilla run into a variable named 'a'. The data (stored in
+    variable a) will be a structure of two fields, named, "sclk_time" and
+    "temps". Each of these fields will be an array of 'n'-records. Where,
+    'n' is the number of lines minus 1 (#lines - 1) in the input file.
+    (#lines - 1: because the first line contains the header info)
 
-	                (some time later)
-	
-	dv> a = load_vanilla("/tmp/foo")
+    dv> system("vanilla ./data -fields 'sclk_time temps[1-4]' > /tmp/foo")
+
+                    (some time later)
+    
+    dv> a = load_vanilla("/tmp/foo")
 
 ?extras libmagic
 ?libmagic
