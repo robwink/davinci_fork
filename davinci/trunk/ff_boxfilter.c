@@ -1,36 +1,5 @@
 #include "parser.h"
 
-void init_sums(Var *data, int w, int h, Var **rcount, Var **rmean, double ignore);
-
-Var *
-ff_boxfilter(vfuncptr func, Var * arg)
-{
-	Var *v= NULL;
-	Var *rcount, *rmean;
-	Var *a;
-	int w=0;
-	int h=0;
-	double ignore=MINFLOAT;
-
-    Alist alist[5];
-    alist[0] = make_alist("obj",    ID_VAL,     NULL,     &v);
-    alist[1] = make_alist("width",  INT,     NULL,     &w);
-    alist[2] = make_alist("height", INT,     NULL,     &h);
-    alist[3] = make_alist("ignore", DOUBLE,     NULL,     &ignore);
-    alist[4].name = NULL;
-	
-	if (parse_args(func, arg, alist) == 0) return(NULL);
-	if (v == NULL) {
-		parse_error("%s(): No object specified\n", func->name);
-		return(NULL);
-	}
-	init_sums(v, w, h, &rcount, &rmean, ignore);
-
-	a = new_struct(0);
-	add_struct(a, "rcount", rcount);
-	add_struct(a, "rmean", rmean);
-	return(a);
-}
 
 /*
 ** compute_windowed_mean() - computes the mean and count of the pixels
@@ -38,16 +7,18 @@ ff_boxfilter(vfuncptr func, Var * arg)
 ** Returns the mean and count for each pixel. 
 */
 void
-init_sums(Var *data, int w, int h, Var **rcount, Var **rmean, double ignore) 
+init_sums(Var *data, int w, int h, int d, Var **rn, Var **rs, Var **rcount, Var **rmean, double ignore) 
 {
 	int x, y, z, u, v;
 	int i, j, k;
-	int p1, p2, p3, p4;
-	int east, south;
+	int p1, p2, p3, p4, p5, p6, p7, p8;
+	int east, south, north, west, front, back;
 
 	double *s;
 	int *n;
 	float *mean;
+	int *c;
+
 	double value;
 	float sum;
 	int count;
@@ -59,6 +30,7 @@ init_sums(Var *data, int w, int h, Var **rcount, Var **rmean, double ignore)
 	s = calloc(x*y*z,sizeof(double));		/* running sum */
 	n = calloc(x*y*z,sizeof(int));			/* running count */
 	mean = calloc(x*y*z,sizeof(float));
+	c = calloc(x*y*z,sizeof(int));
 
 	/*
 	** compute the running sum and count of V
@@ -91,6 +63,26 @@ init_sums(Var *data, int w, int h, Var **rcount, Var **rmean, double ignore)
 					s[p1] -= s[p4];
 					n[p1] -= n[p4];
 				}
+				if (k) {
+					p5 = cpos(i,j,k-1, data);
+					s[p1] += s[p5];
+					n[p1] += n[p5];
+					if (i) {
+						p6 = cpos(i-1, j,   k-1, data);
+						s[p1] -= s[p6];
+						n[p1] -= n[p6];
+					}
+					if (j) {
+						p7 = cpos(i,   j-1, k-1, data);
+						s[p1] -= s[p7];
+						n[p1] -= n[p7];
+					}
+					if (i && j) {
+						p8 = cpos(i-1, j-1, k-1, data);
+						s[p1] += s[p8];
+						n[p1] += n[p8];
+					}
+				}
 			}
 		}
 	}
@@ -109,27 +101,58 @@ init_sums(Var *data, int w, int h, Var **rcount, Var **rmean, double ignore)
 	for (k = 0 ; k < z ; k++) {
 		for (j = 0 ; j < y ; j++) {
 			for (i = 0 ; i < x ; i++) {
-				east = min(i+w-1, x-1);
-				south = min(j+h-1, y-1);
+				east = min(i+(w/2), x-1);
+				south = min(j+(h/2), y-1);
+				front = min(k+(d/2), z-1);
 
-				p1 = cpos(east, south, k, data);
+				west = i-(w/2)-1;
+				north = j-(h/2)-1;
+				back = k-(d/w)-1;
+
+				p1 = cpos(east, south, front, data);
 				count = n[p1];
 				sum   = s[p1];
 
-				if (i) {
-					p2 = cpos(i-1, south, k, data);
+				if (west >= 0) {
+					p2 = cpos(west, south, front, data);
 					count -= n[p2];
 					sum   -= s[p2];
 				}
-				if (j) {
-					p3 = cpos(east, j-1, k, data);
+
+				if (north >= 0) {
+					p3 = cpos(east, north, front, data);
 					count -= n[p3];
 					sum   -= s[p3];
 				}
-				if (i && j) {
-					p4 = cpos(i-1,j-1,k,data);
+
+				if (north >= 0 && west >= 0) {
+					p4 = cpos(west,north,front,data);
 					count += n[p4];
 					sum   += s[p4];
+				}
+
+				if (back >= 0) {
+					p5 = cpos(east, south, back, data);
+					count += n[p5];
+					sum   += s[p5];
+
+					if (west >= 0) {
+						p6 = cpos(west, south, back, data);
+						count -= n[p6];
+						sum   -= s[p6];
+					}
+
+					if (north >= 0) {
+						p7 = cpos(east, north, back, data);
+						count -= n[p7];
+						sum   -= s[p7];
+					}
+
+					if (north >= 0 && west >= 0) {
+						p8 = cpos(west,north,back,data);
+						count += n[p8];
+						sum   += s[p8];
+					}
 				}
 
 /*
@@ -139,19 +162,88 @@ init_sums(Var *data, int w, int h, Var **rcount, Var **rmean, double ignore)
 				sum += (i == 0 || j == 0 ? 0.0 : s[cpos(i-1,j-1,k,data)]);
 */
 				if (count) {
-					mean[cpos(i,j,k,data)] = sum/count;
+					p1 = cpos(i,j,k, data);
+					mean[p1] = sum/count;
+					c[p1] = count;
 				} else {
 					mean[cpos(i,j,k,data)] = ignore;
+					c[p1] = ignore;
 				}
 			}
 		}
 	}
 
-	*rcount = newVal(V_ORG(data), 
+	*rn = newVal(V_ORG(data), 
 					V_SIZE(data)[0], V_SIZE(data)[1], V_SIZE(data)[2], 
 					INT, n);
+	*rs = newVal(V_ORG(data), 
+					V_SIZE(data)[0], V_SIZE(data)[1], V_SIZE(data)[2], 
+					DOUBLE, s);
+	*rcount = newVal(V_ORG(data), 
+					V_SIZE(data)[0], V_SIZE(data)[1], V_SIZE(data)[2], 
+					INT, c);
 	*rmean = newVal(V_ORG(data), 
 					V_SIZE(data)[0], V_SIZE(data)[1], V_SIZE(data)[2], 
 					FLOAT, mean);
-	free(s);
+}
+
+Var *
+ff_boxfilter(vfuncptr func, Var * arg)
+{
+	Var *v= NULL;
+	Var *rcount, *rmean, *rs, *rn;
+	Var *a;
+	int x=0;
+	int y=0;
+	int z=0;
+	int size=0;
+	double ignore=MINFLOAT;
+	int verbose=0;
+
+    Alist alist[8];
+    alist[0] = make_alist("obj",    ID_VAL,     NULL,     &v);
+    alist[1] = make_alist("x",      INT,     NULL,     &x);
+    alist[2] = make_alist("y",      INT,     NULL,     &y);
+    alist[3] = make_alist("z",      INT,     NULL,     &z);
+    alist[4] = make_alist("size",   INT,     NULL,     &size);
+    alist[5] = make_alist("ignore", DOUBLE,  NULL,     &ignore);
+    alist[6] = make_alist("verbose", INT,    NULL,     &verbose);
+    alist[7].name = NULL;
+	
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (v == NULL) {
+		parse_error("%s(): No object specified\n", func->name);
+		return(NULL);
+	}
+	if (x && y && size) {
+		parse_error("%s(): Specify either size or (x, y, z), not both", 
+			func->name);
+		return(NULL);
+
+	}
+	if (x == 0) x = 1;
+	if (y == 0) y = 1;
+	if (z == 0) z = 1;
+	if (size != 0) x=y=size;
+
+	if (x == 0 || y == 0) {
+		parse_error("%s(): No x or y specified", func->name);
+		return(NULL);
+	}
+
+	init_sums(v, x, y, z, &rn, &rs, &rcount, &rmean, ignore);
+
+	if (verbose) {
+		a = new_struct(0);
+		add_struct(a, "count", rcount);
+		add_struct(a, "mean", rmean);
+		add_struct(a, "n", rn);
+		add_struct(a, "s", rs);
+		return(a);
+	} else {
+		mem_claim(rcount); free_var(rcount);
+		mem_claim(rn);     free_var(rn);
+		mem_claim(rs);     free_var(rs);
+		return(rmean);
+	}
 }

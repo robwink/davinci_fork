@@ -1,8 +1,14 @@
-char *version = "@(#) daVinci Version #1.35";
+char *version = "@(#) daVinci Version #1.36";
 
 #include "build.h"
 
 /*
+Version 1.36: Tue Aug 10 02:40:22 MST 2004
+	* some leftover HAVE_LIBX11 macros caused the plotting stuff to not be on.
+	+ added C-style unary increment and decrement.  This is odd for strings.
+	+ ff_boxfilter()  (in 3-D even!)
+	* fixed broken echo, left over from fixing args back from around v1.29
+
 Version 1.35: Fri Aug  6 16:04:28 MST 2004
 	* The penultimate check-in for the new autoconf stuff
 

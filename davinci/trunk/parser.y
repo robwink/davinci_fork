@@ -28,7 +28,7 @@ void out()
 %token IF ELSE
 %token IVAL RVAL STRING
 %token ID
-%token DEC_OP INC_OP MULSET_OP DIVSET_OP
+%token DEC_OP INC_OP INCSET_OP DECSET_OP MULSET_OP DIVSET_OP
 %token LT_OP GT_OP GE_OP LE_OP EQ_OP NE_OP
 %token AND_OP OR_OP CAT_OP LSHIFT_OP RSHIFT_OP
 %token QUIT HELP LIST
@@ -177,8 +177,10 @@ expr
 
 assignment_expr
     : postfix_expr '=' expr       { $$ = p_mknod(ID_SET,$1,$3); }
-    | postfix_expr INC_OP expr    { $$ = p_mknod(ID_INC,$1,$3); }
-    | postfix_expr DEC_OP expr    { $$ = p_mknod(ID_DEC,$1,$3); }
+    | postfix_expr INC_OP         { $$ = p_mknod(ID_INC,$1,p_mkval(ID_IVAL, (char *)strdup("1"))); }
+    | postfix_expr DEC_OP         { $$ = p_mknod(ID_DEC,$1,p_mkval(ID_IVAL, (char *)strdup("1"))); }
+    | postfix_expr INCSET_OP expr { $$ = p_mknod(ID_INC,$1,$3); }
+    | postfix_expr DECSET_OP expr { $$ = p_mknod(ID_DEC,$1,$3); }
     | postfix_expr MULSET_OP expr { $$ = p_mknod(ID_MULSET,$1,$3); }
     | postfix_expr DIVSET_OP expr { $$ = p_mknod(ID_DIVSET,$1,$3); }
     | postfix_expr '[' WHERE expr ']' '=' expr  
