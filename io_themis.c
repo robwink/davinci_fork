@@ -8,18 +8,25 @@
 #include <sys/mman.h>
 #endif
 
-
+#define	_IMAGEID	2
 #define	_BANDS	3
 #define	_FRAMES	4
-#define _DATA	6
+#define  _DATA		6
+#define 	_SIGINFO	8
+#define	MAXDATA	320
+#define	MINDATA	128
+#define NUMBER_OF_GUESSES 4
+#define	INVALID_DATA	0
 
 
 enum _CMD {BAND,FRAME,SINGLE,ALL};
+int FrameBandStart[]={16,32,58,84,110,136,162,188,213,239};
 
 typedef enum _CMD CMD;
 int Skip_To_Stop_Sync(int *i, char *buf,int len);
 int Skip_To_Start_Sync(int *i, char *buf,int len);
 int Keep(unsigned char B, unsigned short F, CMD Cmd, int Frame, int Band);
+int Read_Ahead_For_Best_Collumn_Guess(int *Width,unsigned char *buf,int len);
 
 #ifndef LITTLE_E
 unsigned short Start_Sync = { 0xF0CA };
@@ -29,15 +36,62 @@ unsigned short Start_Sync = { 0xCAF0 };
 unsigned short Stop_Sync = { 0x8CAB };
 #endif
 
+
+int 
+Read_Ahead_For_Best_Collumn_Guess(int *Width,unsigned char *buf,int len)
+{
+	int i,j;
+	int Done=0;
+
+	int LineCount=0;
+	int Guesses[NUMBER_OF_GUESSES];
+
+	i=0;
+	
+
+	while (!Done) {
+
+		if(Skip_To_Start_Sync(&i,buf,len) < 0){
+			return(++Done);
+		}
+			
+		if( (Guesses[LineCount]=Skip_To_Stop_Sync(&i,buf,len)) < 0){
+				return(++Done);
+		}
+
+		if (Guesses[LineCount] <= (MAXDATA+_SIGINFO) &&
+			 	Guesses[LineCount] >= (MINDATA+_SIGINFO)){
+			 LineCount++;
+		}
+
+		if (LineCount == NUMBER_OF_GUESSES) {
+			for (j=0;j<NUMBER_OF_GUESSES-1;j++){
+				if(Guesses[j]!=Guesses[j+1]){
+					j=NUMBER_OF_GUESSES;
+					LineCount=0;/*Start again*/
+				}
+			}
+			if (LineCount) {/*Got a good guess!*/
+				*Width=(Guesses[0]+2)/*Add two for the stop sync*/;
+				return(0);
+			}
+		}
+	}
+	return (1);
+}	
+			
+
+
+
+
 int Skip_To_Stop_Sync(int *i, char *buf,int len)
 {
     int count=0;
     int Tmp=*i;
-	short V;
+	unsigned short V;
 
     while ((*i)<len-1){
-		V=*((short *)(buf+(*i)));
-        if (memcmp(&V, &Stop_Sync, 2) == 0) {
+        if (memcmp((buf+(*i)), &Stop_Sync, 2) == 0) {
             return (count);
         }
         else {
@@ -56,8 +110,7 @@ int Skip_To_Start_Sync(int *i, char *buf,int len)
 	short V;
 
     while ((*i)<len-1){
-		V=*((short *)(buf+(*i)));
-        if (memcmp(&V, &Start_Sync, 2) == 0) {
+        if (memcmp((buf+(*i)), &Start_Sync, 2) == 0) {
             return(1);
         }
         else
@@ -151,7 +204,7 @@ int GetGSEHeader (FILE *fp, struct _iheader *h)
 
 	plane=(Row*Col*nb);
 	if (Size % plane) {
-		parse_error("File contains incomplete frame");
+		parse_error("File contains incomplete frame\n");
 	}
 
 
@@ -181,6 +234,7 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
 	void	*data;
 struct	_iheader header;
         int i,j;
+			int dsize;
     	int ac;
     	Var **av, *v;
     	Alist alist[2];
@@ -218,6 +272,12 @@ struct	_iheader header;
 	data=read_qube_data(fileno(infile), &header);
 
 	fclose(infile);
+	if (header.format=SHORT){ /*Data is actually 12-bit and needs the upper 4 bits cleaned off*/
+		dsize=header.size[0]*header.size[1]*header.size[2];
+		for (i=0;i<dsize*2;i+=2){
+			(*((short *)(data+i))) &=4095;
+		}
+	}
 
 	return(newVal(header.org,header.size[0],header.size[1],header.size[2],header.format,data));
 }
@@ -352,6 +412,57 @@ ff_Frame_Grabber_Read(vfuncptr func, Var * arg)
 
 }
 
+static int Themis_Sort(char *A, char *B)
+{
+	unsigned char A_c_Band;
+   unsigned short A_c_Frame;
+	unsigned char B_c_Band;
+   unsigned short B_c_Frame;
+
+	A_c_Band=*(A+_BANDS)&0xf;
+	B_c_Band=*(B+_BANDS)&0xf;
+
+	if (A_c_Band > B_c_Band)
+		return(1);
+	else if (A_c_Band < B_c_Band)
+		return(-1);
+	else {
+   	A_c_Frame=(((*(A+_FRAMES) & 0xFF)<< 8) | (*(A+_FRAMES+1) & 0xFF));
+   	B_c_Frame=(((*(B+_FRAMES) & 0xFF)<< 8) | (*(B+_FRAMES+1) & 0xFF));
+
+		if (A_c_Frame > B_c_Frame)
+			return(1);
+		else if (A_c_Frame < B_c_Frame) 
+			return(-1);
+		else
+			return(0);
+	}
+
+	return(0);
+}
+
+void
+Add_Fake_Frame(void *newbuf,int band, int frame, int num_frames,int width)
+{
+	int i;
+	unsigned char pseudo_ID=99;
+	unsigned short new_frame;
+	char *blank=malloc(width-8);
+	memset(blank,INVALID_DATA,width);
+
+	for (i=0;i<num_frames;i++){
+		new_frame=frame+i;	
+		memcpy((newbuf+i*width),&Start_Sync,2);
+		memcpy((newbuf+i*width+2),&pseudo_ID,1);
+		memcpy((newbuf+i*width+_BANDS),&band,1);
+		memcpy((newbuf+i*width+_FRAMES),&new_frame,2);
+		memcpy((newbuf+i*width+_DATA),blank,(width-8));
+		memcpy((newbuf+i*width+(width-2)),&Stop_Sync,2);
+	}
+}
+
+
+	
 
 Var *
 ff_PAKI_Read(vfuncptr func, Var * arg)
@@ -362,6 +473,7 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 	typedef	void*	caddr_t;
 #endif
 	void		*data;
+	void		*newbuf;
 	char 		*filename,*fname,fname2[256];
 	int 		Frame=-1;
 	int 		Band=-1;
@@ -380,6 +492,12 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 	int		Lines=0;
 	int		Data_Only=0;
 	int		Index=0;
+	int		BandCount[16]={0};
+	int		Bad_Flag=0;
+	int		Max_Band=-1;
+	int		Max_Band_Count=0;
+	int		new_count;
+	unsigned short frame_count=0xFFFF;
 
     	Var **av, *v;
     	int ac;
@@ -415,7 +533,7 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 		Band=-1;
 	}
 #ifndef __MSDOS__
-	if ((fd = open(filename, O_RDONLY))==NULL){
+	if ((fd = open(filename, O_RDONLY))==-1){
 #else
 	if ((fd = open(filename, O_RDONLY | O_BINARY))==-1){
 #endif
@@ -426,14 +544,22 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 
 	fstat(fd, &sbuf);
 	len = sbuf.st_size;
-	data=malloc(len);
+	if ((data=malloc(len))==NULL){
+		parse_error("Couldn't allocate temporary buffer...aborting\n");
+		return(NULL);
+	}
+
+	if ((newbuf=malloc(len))==NULL){
+      parse_error("Couldn't allocate transfer buffer...aborting\n");
+      return(NULL);
+	}
+
 	buf = mmap((caddr_t)0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-//#ifndef LITTLE_E
 	swab(buf, buf, len);
-//#endif
 
 
 	if (!report) {
+		Done=Read_Ahead_For_Best_Collumn_Guess(&Col,buf,len);
 		i = 0;
 		while ((i < len) && !(Done)) {
 			c_Band=0;
@@ -442,7 +568,8 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 				Done = 1;
 			} 
 			else {
-				c_Band=*(buf+i+_BANDS);
+				c_Band=*(buf+i+_BANDS)&0xf;
+				if (c_Band < 14 && c_Band > Max_Band) Max_Band=c_Band;
 				if (c_Band==0xE)  /*Last Frame*/
 					Done=1;
 				c_Frame=(((*(buf+i+_FRAMES) & 0xFF)<< 8) | (*(buf+i+_FRAMES+1) & 0xFF));
@@ -450,22 +577,123 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 					Done = 1;
 				} 
 				else {
-					if (Keep(c_Band,c_Frame,Cmd,Frame,Band)){
-						if (Data_Only){
+					if (Keep(c_Band,c_Frame,Cmd,Frame,Band) && ((Output+2) <= 328 && (Output+2) >=128)){
+						BandCount[c_Band]++;
+						if (Data_Only && Cmd!=ALL){
 							memcpy(((char *)data+Index),(buf+i-Output+_DATA),Output);
 							Index+=(Output-_DATA);
-							Col=Output-_DATA;
 						}
-						else {
+						else { 
 							memcpy(((char *)data+Index),(buf+i-Output),Output+2);
 							Index+=Output+2;
-							Col=Output+2;
 						}
 						Lines++;
 					}
 				}
 			}
 		}
+		if(Cmd==ALL){
+			qsort((char *)data,Lines,Col,Themis_Sort);
+			Max_Band_Count=BandCount[0];
+			for (i=0;i<Max_Band;i++){
+				if (BandCount[i]!=BandCount[i+1]) {
+					Bad_Flag=1;
+					if (Max_Band_Count < BandCount[i+1]) Max_Band_Count=BandCount[i+1];
+				}
+		  	}
+
+			if (Bad_Flag){ /*We have uneven Band counts! Gotta do things differently! */
+				unsigned char c_band;
+				unsigned char last_band=255;
+				unsigned short c_frame;
+				int i;
+				int new_count=0;
+				parse_error("Missing Frames...zero-padded frames will be added\n");
+				for (i=0;i<Lines;i++){
+					c_band=*((char *)data+(i*Col)+_BANDS)&0xf;
+					c_frame=(((*((char *)data+(i*Col)+_FRAMES) & 0xFF)<< 8) | 
+								(*((char *)data+(i*Col)+_FRAMES+1) & 0xFF));
+					if (last_band != c_band) {
+						if (frame_count < Max_Band_Count) {/*Missing ending data*/
+							Add_Fake_Frame((newbuf+new_count*Col),c_band,
+								frame_count,(Max_Band_Count-frame_count),Col);
+							new_count+=(Max_Band_Count-frame_count)+1;
+						}
+						frame_count=0;
+						last_band=c_band;
+					}
+					if (c_frame > FrameBandStart[c_band]+frame_count){
+						Add_Fake_Frame((newbuf+new_count*Col),c_band,FrameBandStart[c_band]+frame_count,
+								c_frame-(FrameBandStart[c_band]+frame_count),Col);
+						new_count+=c_frame-(FrameBandStart[c_band]+frame_count);
+						frame_count+=c_frame-(FrameBandStart[c_band]+frame_count);
+					}
+					else if (c_frame < FrameBandStart[c_band]+frame_count){
+						parse_error("Corrupted Frame Sequence...aborting\n");
+						return(NULL);
+					}
+				
+					memcpy((newbuf+((new_count++)*Col)),(data+i*Col),Col);
+					frame_count++;
+			
+				}
+			}	
+
+			else {
+
+				int j,i;
+				unsigned short c_frame;
+
+				for (j=0;j<=Max_Band;j++){
+					new_count=0;
+					for (i=0;i<BandCount[0];i++){
+						c_frame=(((*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES) & 0xFF)<< 8) | 
+									(*((char *)data+(j*BandCount[0]*Col)+i*Col+_FRAMES+1) & 0xFF));
+						if (c_frame > (FrameBandStart[j]+i)) {
+							Add_Fake_Frame((newbuf+j*BandCount[0]*Col+new_count*Col),
+												j,(FrameBandStart[j]+i),
+												c_frame-(FrameBandStart[j]+i),Col);
+							new_count+=c_frame-(FrameBandStart[j]+i);	
+						}
+						else if (c_frame < (FrameBandStart[j]+i)) {
+							parse_error("Corrupted Frame Sequence...aborting\n");
+							return(NULL);
+						}
+						
+						memcpy((newbuf+j*BandCount[0]*Col+(new_count++)*Col),
+								 (data+j*BandCount[0]*Col+i*Col),Col);
+					}
+				}
+			}	
+		}
+		else {
+			munmap(buf,len);
+			close(fd);
+			free(newbuf);
+			if (Data_Only){
+				return(newVal(BSQ,(Col-_SIGINFO),Lines,1,BYTE,data));
+			}
+			else {
+				return(newVal(BSQ,Col,Lines,1,BYTE,data));
+			}
+		}
+
+		munmap(buf,len);
+		close(fd);
+		if (Data_Only){
+			int count = (Bad_Flag ? frame_count:new_count);
+			count*=(Max_Band+1);
+			for (i=0;i<count;i++){
+				memcpy((newbuf+(i*(Col-_SIGINFO))),(data+(i*Col)+_DATA),(Col-_SIGINFO));
+			}
+				free(data);
+			   return(newVal(BSQ,(Col-_SIGINFO),
+						(Bad_Flag ? frame_count:new_count),
+						Max_Band+1,BYTE,newbuf)); 
+		}
+		free(data);
+		return(newVal(BSQ,Col,(Bad_Flag ? frame_count:new_count),Max_Band+1,BYTE,newbuf));
+		
 	} 
 	else {
 		int *band = (int *)calloc(32, sizeof(int));
@@ -505,7 +733,7 @@ ff_PAKI_Read(vfuncptr func, Var * arg)
 	
 	munmap(buf,len);
 	close(fd);
-	return(newVal(BSQ,Col,Lines,1,BYTE,data)); 
+	return(NULL);
 
 }
 
