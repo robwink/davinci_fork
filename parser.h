@@ -261,7 +261,8 @@ enum {
 	ID_LINE,           /* A lexical token */
 
 	ID_MODULE,         /* daVinci module variable ID */
-	ID_FUNCTION        /* daVinci module function variable ID */
+	ID_FUNCTION,       /* daVinci module function variable ID */
+	ID_PARALLEL        /* parallelization */
 };
 
 
