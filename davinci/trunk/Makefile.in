@@ -94,8 +94,8 @@ build.h:	$(OBJ:ff_version.o=)
 	echo 'char *build = "'`date`'";' > build.h
 	echo 'char *builder = "'`whoami`'@'`hostname`'";' >> build.h
 
-readline-4.3/libreadline.a:
-	@(cd readline-4.3 && $(MAKE) static)
+readline/libreadline.a:
+	@(cd readline && $(MAKE) static)
 
 lexer.o:	lexer.c parser.o
 
@@ -123,7 +123,7 @@ help.o:	help.c
 clean:
 	-rm -f *.o davinci dv core gplot TAGS config.cache config.log $(MOD_SUPP_LIB)
 	-rm -f .dvlog */.dvlog .nfs* */.nfs* *~ */*~
-	-(cd readline-4.3 && $(MAKE) clean)
+	-(cd readline && $(MAKE) clean)
 	-(cd lib && $(MAKE) clean)
 	-(cd modules && $(MAKE) clean)
 	-(cd $(LIBIOMEDLEYDIR) && $(MAKE) clean)
@@ -131,10 +131,10 @@ clean:
 dist:	clean
 	echo davinci-`head -1 version.h | sed -e 's/.* Version #//;s/".*//'` > .ver
 	rm -rf `cat .ver` `cat .ver`.tar.Z
-	rm -rf readline-4.3/config.cache
+	rm -rf readline/config.cache
 	mkdir `cat .ver`
 	ln $(DIST) `cat .ver`
-	(cd `cat .ver` && ln -s ../docs ../tests ../readline-4.3 ../lib ../iomedley .)
+	(cd `cat .ver` && ln -s ../docs ../tests ../readline ../lib ../iomedley .)
 	tar chf `cat .ver`.tar `cat .ver`
 	compress `cat .ver`.tar
 	rm -rf `cat .ver` .ver
@@ -144,8 +144,8 @@ win32dist:	clean
 		rm -rf `cat .ver` `cat .ver`.zip
 		mkdir `cat .ver`
 		ln $(DIST) `cat .ver`
-		(cd `cat .ver`; mkdir readline-4.3; cd readline-4.3; ln -s ../../readline-4.3/readline.h; ln \
-			-s ../../readline-4.3/history.h)
+		(cd `cat .ver`; mkdir readline; cd readline; ln -s ../../readline/readline.h; ln \
+			-s ../../readline/history.h)
 		(cd `cat .ver` ; ln -s ../docs ../tests ../win32 .)
 		zip -r `cat .ver`.zip `cat .ver`
 		rm -rf `cat .ver` .ver
