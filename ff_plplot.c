@@ -1,5 +1,5 @@
 #include "parser.h"
-#ifndef __MSDOS__
+#ifdef INCLUDE_API
 #include "api_extern_defs.h"
 #include <limits.h>
 #define SCALECONST	25.0

@@ -323,7 +323,7 @@ Var *ff_add_struct(vfuncptr func, Var *arg);
 Var *ff_get_struct(vfuncptr func, Var *arg);
 
 
-#ifndef __MSDOS__
+#ifdef INCLUDE_API
 Var *ff_popen(vfuncptr func, Var * arg);
 Var *ff_pprint(vfuncptr func, Var * arg);
 Var *ff_pplot(vfuncptr func, Var * arg);
