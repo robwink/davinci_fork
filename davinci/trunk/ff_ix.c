@@ -154,9 +154,9 @@ ff_rgb2hsv(vfuncptr func, Var * arg)
 	data = (float *)calloc(4, 3*x*y);
 	for (i = 0 ; i < y ; i++) {
 		for (j = 0 ; j < x ; j++) {
-			k1 = cpos(i,j,0, obj);
-			k2 = cpos(i,j,1, obj);
-			k3 = cpos(i,j,2, obj);
+			k1 = cpos(j,i,0, obj);
+			k2 = cpos(j,i,1, obj);
+			k3 = cpos(j,i,2, obj);
 
 			a.r = extract_double(obj, k1) / mval;
 			a.g = extract_double(obj, k2) / mval;
@@ -169,7 +169,11 @@ ff_rgb2hsv(vfuncptr func, Var * arg)
 			data[k3] = b.v;
 		}
 	}
-	return(newVal(V_ORG(obj), x, y, z, FLOAT, data));
+	return(newVal(V_ORG(obj), 
+		V_SIZE(obj)[0], 
+		V_SIZE(obj)[1], 
+		V_SIZE(obj)[2], 
+		FLOAT, data));
 }
 
 Var *
@@ -215,9 +219,9 @@ ff_hsv2rgb(vfuncptr func, Var * arg)
 	data = (float *)calloc(4, 3*x*y);
 	for (i = 0 ; i < y ; i++) {
 		for (j = 0 ; j < x ; j++) {
-			k1 = cpos(i,j,0, obj);
-			k2 = cpos(i,j,1, obj);
-			k3 = cpos(i,j,2, obj);
+			k1 = cpos(j,i,0, obj);
+			k2 = cpos(j,i,1, obj);
+			k3 = cpos(j,i,2, obj);
 
 			a.h = extract_double(obj, k1);
 			a.s = extract_double(obj, k2);
@@ -230,7 +234,11 @@ ff_hsv2rgb(vfuncptr func, Var * arg)
 			data[k3] = b.b*mval;
 		}
 	}
-	return(newVal(V_ORG(obj), x, y, z, FLOAT, data));
+	return(newVal(V_ORG(obj), 
+		V_SIZE(obj)[0], 
+		V_SIZE(obj)[1], 
+		V_SIZE(obj)[2], 
+		FLOAT, data));
 }
 
 
