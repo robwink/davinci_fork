@@ -426,7 +426,7 @@ LoadHDF5(char *filename)
         return(NULL);
     } 
 
-    file = H5Fopen(filename, H5F_ACC_RDWR, H5P_DEFAULT);
+    file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
 
     if (file < 0) return(NULL);
 
