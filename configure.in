@@ -92,7 +92,7 @@ dnl Check for iomedley - which depends upon libMagick if libMagick exists
 CFLAGS="$CFLAGS -I../iomedley"
 LDFLAGS="$LDFLAGS -L../iomedley"
 AC_CHECK_LIB(iomedley, iom_read_qube_data)
-if eval "echo \"$LIB\" | grep -e 'iomedley'"; then
+if ! eval "echo \"$LIB\" | grep -e 'iomedley'"; then
 	AC_MSG_ERROR(libiomedley not found in its default location ../iomedley.)
 fi
 

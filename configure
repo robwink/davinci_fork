@@ -2294,7 +2294,7 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-if eval "echo \"$LIB\" | grep -e 'iomedley'"; then
+if ! eval "echo \"$LIB\" | grep -e 'iomedley'"; then
 	{ echo "configure: error: libiomedley not found in its default location ../iomedley." 1>&2; exit 1; }
 fi
 
