@@ -68,3 +68,5 @@ readline/config.status
 readline/stamp-h
 readline/Makefile
 cscope.out
+Makefile
+modules/Makefile
