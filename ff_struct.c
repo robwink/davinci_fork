@@ -487,15 +487,16 @@ LoadVanilla(char *filename)
 Var *
 ff_add_struct(vfuncptr func, Var * arg)
 {
-	Var *a = NULL, b, *v;
+	Var *a = NULL, b, *v = NULL, *e;
 	char *name = NULL;
 
 	int ac;
 	Var **av;
-	Alist alist[3];
+	Alist alist[4];
 	alist[0] = make_alist( "object",    ID_VSTRUCT,    NULL,     &a);
 	alist[1] = make_alist( "name",      ID_STRING,     NULL,     &name);
-	alist[2].name = NULL;
+	alist[2] = make_alist( "value",     ID_UNK,     NULL,     &v);
+	alist[3].name = NULL;
 
 	make_args(&ac, &av, func, arg);
 	if (parse_args(ac, av, alist)) return(NULL);
@@ -505,15 +506,28 @@ ff_add_struct(vfuncptr func, Var * arg)
 		return(NULL);
 	}
 	
-	if (name == NULL) {
+	if (name == NULL && (v == NULL || (v != NULL && V_NAME(v) == NULL))) {
 		parse_error("name is null");
 		return(NULL);
 	}
 
 	V_TYPE(&b) = ID_UNK;
-	V_NAME(&b) = name;
+	if (name != NULL) {
+		V_NAME(&b) = name;
+	}  else if (v != NULL && V_NAME(v) != NULL) {
+		V_NAME(&b) = strdup(V_NAME(v));
+	}
 
-	v = newVal(BSQ, 1, 1, 1, BYTE, calloc(1,1));
+	if (v == NULL) {
+		v = newVal(BSQ, 1, 1, 1, BYTE, calloc(1,1));
+	} else {
+		e = eval(v);
+		if (e == NULL) {
+			parse_error("Unable to find variable: %s\n", V_NAME(v));
+			return(NULL);
+		}
+		v = e;
+	}
 
 	return(pp_set_struct(a, &b, v));
 }
