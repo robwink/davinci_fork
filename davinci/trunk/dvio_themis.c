@@ -353,7 +353,7 @@ Count_Out_Bands(int b, int *rot)
 
 
 int
-Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int verb, int *rot)
+Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int verb, int *rot,char *filename)
 {
 	int i;
 	msdp_Header	mh;
@@ -435,15 +435,36 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int v
 
 	if (first_mh.comp[0]==1) { /*Predictively Compressed*/
 		 parse_error("Reading Predictively Compressed Image");
+//		*data=read_predictive(infile,&size,quiet,size);
+      {
+         struct stat filebuf;
+         char cmd[1024];
+         FILE *fp;
+         char tmpname[]="/tmp/Iwannabelikemike_XXXXXX";
 
-#ifdef HAVE_LIBMSSS_VIS
-		*data=read_predictive(infile,&size,quiet,size);
+         mkstemp(tmpname);
+         sprintf(cmd,"/themis/bin/marci-pdecom < %s > %s 2>/dev/null",filename,tmpname);
+         system(cmd);
+         if ((fp=fopen("core","r"))!=NULL){
+            fclose(infile);
+            sprintf(cmd,"rm -f core %s",tmpname);
+            system(cmd);
+            return(-1);
+         }
+
+         fp=fopen(tmpname,"r");
+         fstat(fileno(fp),&filebuf);
+         size = filebuf.st_size;
+         *data=(char *)malloc(size);
+//       fseek(fp,1024,SEEK_SET);
+         fread(*data,sizeof(char),size,fp);
+
+         fclose(fp);
+         sprintf(cmd,"rm -f %s",tmpname);
+         system(cmd);
+      }
 		height=(size-1024)/width; /*Subtract off the header bytes which are added in durring the read*/
 
-#else
-		parse_error("Sorry, you do not have the correct decompression library for this file...aborting");
-		return(0);
-#endif
 
 	}
 
@@ -688,7 +709,7 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
     }
 
     else {
-        height=Process_SC_Vis(infile,&buf,&width,&nob,verb,&rotate);
+        height=Process_SC_Vis(infile,&buf,&width,&nob,verb,&rotate,filename);
 		  if (height) {
 				if (rotate)
 					Rotate_Buffer(buf,height,width,verb);

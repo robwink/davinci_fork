@@ -15,7 +15,7 @@ void build_t_constants(double *t, int t_row, int t_col, double *t_avg, double *t
 
 double * fncc(double *r, int g_row,int g_col,int t_row,int t_col,int f_row,
 					int f_col,double *f, double t_var, double t_avg,double *ignore,
-					double *rf, double *rf2);
+					double *rf, double *rf2, int rec);
 
 double f_sum(double *f, int f_row, int f_col, int x, int y, int t_cen_row, 
 				 int t_cen_col,int row_even_mod,int col_even_mod,double *sots,
@@ -41,6 +41,8 @@ ff_fncc(vfuncptr func, Var * arg)
 	int x,y;
 	int f_row,f_col;
 	int t_row,t_col;
+	int rec = 0;
+
 	double *f=NULL;
 	double *t=NULL;
 	double *tmp_t=NULL;
@@ -62,14 +64,15 @@ ff_fncc(vfuncptr func, Var * arg)
 	int *p;
 	int *p1;
 
-	Alist alist[7];
+	Alist alist[8];
 	alist[0] = make_alist("template",     ID_VAL,     NULL, &template);
 	alist[1] = make_alist("object",     ID_VAL,     NULL, &obj);
 	alist[2] = make_alist("rf",     ID_VAL,     NULL, &rf);
 	alist[3] = make_alist("r2",     ID_VAL,     NULL, &rf2);
 	alist[4] = make_alist("fft",     INT,     NULL, &fft);
 	alist[5] = make_alist("ignore",     DOUBLE,     NULL, &ig);
-	alist[6].name = NULL;
+	alist[6] = make_alist("rectify",     INT,     NULL, &rec);
+	alist[7].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -169,7 +172,7 @@ ff_fncc(vfuncptr func, Var * arg)
 		r = TwoD_Convolve(t_row,t_col,f_row,f_col,t,f,ignore); 
 
 	parse_error("Building cross-correlation");
-	cc=fncc(r,y,x,t_row,t_col,f_row,f_col,f,t_var,t_avg,ignore,running_f,running_f2);
+	cc=fncc(r,y,x,t_row,t_col,f_row,f_col,f,t_var,t_avg,ignore,running_f,running_f2,rec);
 
 	p = (int *) malloc(2 * sizeof(int));
 	p1 = (int *) malloc(2 * sizeof(int));
@@ -465,7 +468,7 @@ f_sum(double *f, int f_row, int f_col, int x, int y, int t_cen_row,
 double *
 fncc(double *r, int g_row,int g_col,int t_row,int t_col,int f_row,
 		int f_col,double *f, double t_var, double t_avg,double *ignore, 
-		double *running_f, double *running_f2)
+		double *running_f, double *running_f2, int rec)
 {
 
 
@@ -542,8 +545,17 @@ fncc(double *r, int g_row,int g_col,int t_row,int t_col,int f_row,
 
 				else {
 
-					g[i*g_col+j] = (r[i*g_col+j] - (fsum*t_avg))/(t_col*t_row-1-f_ic);
-					g[i*g_col+j] /= sqrt( p3 * t_var);
+					if (rec) {
+						float denom;
+						g[i*g_col+j] = (r[i*g_col+j] - (fsum*t_avg))*(r[i*g_col+j] - (fsum*t_avg));
+						denom = (t_col*t_row-1-f_ic)*sqrt( p3 * t_var);
+						g[i*g_col+j] /= (denom*denom);
+					}
+
+					else {
+						g[i*g_col+j] = (r[i*g_col+j] - (fsum*t_avg))/(t_col*t_row-1-f_ic);
+						g[i*g_col+j] /= sqrt( p3 * t_var);
+					}
 				}
 			}
 		}
