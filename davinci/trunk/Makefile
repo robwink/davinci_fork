@@ -62,7 +62,7 @@ davinci:	$(OBJ)  $(READLINE_OBJ)
 readline/libreadline.a:
 	@(cd readline ; make )
 
-lexer.o:	lexer.C parser.o
+lexer.o:	lexer.c parser.o
 
 lexer.c:	lexer.l
 	flex lexer.l
