@@ -182,7 +182,7 @@ davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	dvio_aviris.c dvio_envi.c dvio_ers.c dvio_goes.c dvio_grd.c \
 	dvio_hdf.c dvio_imath.c dvio_iomedley.c dvio_isis.c dvio_magic.c \
 	dvio_pds.c dvio_pnm.c dvio_raw.c dvio_specpr.c \
-	dvio_themis.c dvio_vicar.c endian_norm.c  dvio_fits.c \
+	dvio_themis.c dvio_vicar.c endian_norm.c \
 	error.c ff.c ff_ascii.c ff_avg.c \
 	ff_bbr.c ff_cluster.c ff_convolve.c ff_deghost.c ff_display.c \
 	ff_fft.c ff_filetype.c ff_fncc.c ff_gnoise.c ff_gplot.c \
@@ -212,7 +212,7 @@ davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ff.h isis_obj.h system.h ff_modules.h module_io.h \
 	toolbox.h configwin.h fft.h motif_tools.h tools.h \
 	lexer.c parser.c parser.h y_tab.h \
-	ff_gconvolve.c ff_warp.c ff_median.c ff_window.c
+	ff_gconvolve.c ff_warp.c ff_median.c ff_window.c dvio_fits.c
 
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -237,7 +237,7 @@ am_davinci_OBJECTS = apifunc.$(OBJEXT) array.$(OBJEXT) avl.$(OBJEXT) \
 	dvio_imath.$(OBJEXT) dvio_iomedley.$(OBJEXT) \
 	dvio_isis.$(OBJEXT) dvio_magic.$(OBJEXT) dvio_pds.$(OBJEXT) \
 	dvio_pnm.$(OBJEXT) dvio_raw.$(OBJEXT) dvio_specpr.$(OBJEXT) \
-	dvio_themis.$(OBJEXT) dvio_vicar.$(OBJEXT) dvio_fits.$(OBJEXT) \
+	dvio_themis.$(OBJEXT) dvio_vicar.$(OBJEXT) \
 	endian_norm.$(OBJEXT) error.$(OBJEXT) ff.$(OBJEXT) \
 	ff_ascii.$(OBJEXT) ff_avg.$(OBJEXT) ff_bbr.$(OBJEXT) \
 	ff_cluster.$(OBJEXT) ff_convolve.$(OBJEXT) ff_deghost.$(OBJEXT) \
@@ -264,7 +264,7 @@ am_davinci_OBJECTS = apifunc.$(OBJEXT) array.$(OBJEXT) avl.$(OBJEXT) \
 	tools.$(OBJEXT) ufunc.$(OBJEXT) util.$(OBJEXT) x.$(OBJEXT) \
 	xrt_print_3d.$(OBJEXT) lexer.$(OBJEXT) parser.$(OBJEXT) \
 	ff_gconvolve.$(OBJEXT) ff_warp.$(OBJEXT) ff_median.$(OBJEXT) \
-	ff_window.$(OBJEXT)
+	ff_window.$(OBJEXT) dvio_fits.$(OBJEXT)
 davinci_OBJECTS = $(am_davinci_OBJECTS)
 @LOCAL_READLINE_FALSE@@MODULE_SUPPORT_TRUE@davinci_DEPENDENCIES = \
 @LOCAL_READLINE_FALSE@@MODULE_SUPPORT_TRUE@	libmodsupp.a
@@ -284,16 +284,15 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/deghost.Po ./$(DEPDIR)/dvio.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/dvio_ascii.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/dvio_aviris.Po ./$(DEPDIR)/dvio_envi.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/dvio_ers.Po ./$(DEPDIR)/dvio_goes.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/dvio_grd.Po ./$(DEPDIR)/dvio_hdf.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/dvio_imath.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/dvio_ers.Po ./$(DEPDIR)/dvio_fits.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/dvio_goes.Po ./$(DEPDIR)/dvio_grd.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/dvio_hdf.Po ./$(DEPDIR)/dvio_imath.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/dvio_iomedley.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/dvio_isis.Po ./$(DEPDIR)/dvio_magic.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/dvio_pds.Po ./$(DEPDIR)/dvio_pnm.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/dvio_raw.Po ./$(DEPDIR)/dvio_specpr.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/dvio_themis.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/dvio_vicar.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/dvio_fits.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/endian_norm.Po ./$(DEPDIR)/error.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff.Po ./$(DEPDIR)/ff_ascii.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_avg.Po ./$(DEPDIR)/ff_bbr.Po \
@@ -465,6 +464,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_aviris.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_envi.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_ers.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_fits.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_goes.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_grd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_hdf.Po@am__quote@
@@ -478,7 +478,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_specpr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_themis.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_vicar.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_fits.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/endian_norm.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/error.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff.Po@am__quote@
