@@ -52,18 +52,18 @@ parent_scope()
 }
 
 
-int
+Var *
 dd_find(Scope *s, char *name)
 {
     Dictionary *dd = s->dd;
 
     int i;
     for (i = 1 ;  i < dd->count ; i++) {
-        if (!strcmp(dd->name[i], name)) {
-            return(1);
+        if (dd->name[i] && !strcmp(dd->name[i], name)) {
+            return(dd->value[i]);
         }
     }
-    return(0);
+    return(NULL);
 }
 
 Var *
