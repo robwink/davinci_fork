@@ -233,7 +233,7 @@ insert_struct(Var *a, int pos, char *name, Var *data)
 Var *
 ff_get_struct(vfuncptr func, Var * arg)
 {
-    Var *a = NULL, b, *v = NULL;
+    Var *a = NULL, *v = NULL;
     char *name = NULL;
 
     Alist alist[3];
