@@ -2296,7 +2296,7 @@ get_data_attrs_from_lbl(
         sprintf(buff, "%s_suffix_unit", a->axis_name[kk]); lcase(buff);
         if (find_struct(qube, buff, &v) < 0){
             for(i = 0; i < a->suffix_items[kk]; i++){
-                a->suffix_attr[kk][i]->unit = strdup("");
+                a->suffix_attr[kk][i]->unit = strdup("DIMENSIONLESS");
             }
         }
         else if (!has_n_rows(v, a->suffix_items[kk])){
@@ -2304,9 +2304,11 @@ get_data_attrs_from_lbl(
                         buff, a->suffix_items[kk]);
             free_CoreDataSpecs(&a); return NULL;
         }
-        for(i = 0; i < a->suffix_items[kk]; i++){
-            a->suffix_attr[kk][i]->unit =
-                strdup(V_TYPE(v) == ID_STRING? V_STRING(v): V_TEXT(v).text[i]);
+        else {
+            for(i = 0; i < a->suffix_items[kk]; i++){
+                a->suffix_attr[kk][i]->unit =
+                    strdup(V_TYPE(v) == ID_STRING? V_STRING(v): V_TEXT(v).text[i]);
+            }
         }
         
 
@@ -2314,26 +2316,36 @@ get_data_attrs_from_lbl(
         sprintf(buff, "%s_suffix_base", a->axis_name[kk]); lcase(buff);
         if (find_struct(qube, buff, &v) < 0){
             for(i = 0; i < a->suffix_items[kk]; i++){
-                a->suffix_attr[kk][i]->scale[0] = extract_float(v, cpos(i, 0, 0, v));
+                a->suffix_attr[kk][i]->scale[0] = 0.0;
             }
         }
         else if (!has_dim(v, a->suffix_items[kk], 1, 1)){
             parse_error("Expecting qube.%s with dim: %dx%dx%d\n",
                         buff, a->suffix_items[kk], 1, 1);
             free_CoreDataSpecs(&a); return NULL;
+        }
+        else {
+            for(i = 0; i < a->suffix_items[kk]; i++){
+                a->suffix_attr[kk][i]->scale[0] = extract_float(v, cpos(i, 0, 0, v));
+            }
         }
 
         /* get qube.xxx_suffix_multiplier */
         sprintf(buff, "%s_suffix_multiplier", a->axis_name[kk]); lcase(buff);
         if (find_struct(qube, buff, &v) < 0){
             for(i = 0; i < a->suffix_items[kk]; i++){
-                a->suffix_attr[kk][i]->scale[1] = extract_float(v, cpos(i, 0, 0, v));
+                a->suffix_attr[kk][i]->scale[1] = 1.0;
             }
         }
         else if (!has_dim(v, a->suffix_items[kk], 1, 1)){
             parse_error("Expecting qube.%s with dim: %dx%dx%d\n",
                         buff, a->suffix_items[kk], 1, 1);
             free_CoreDataSpecs(&a); return NULL;
+        }
+        else {
+            for(i = 0; i < a->suffix_items[kk]; i++){
+                a->suffix_attr[kk][i]->scale[1] = extract_float(v, cpos(i, 0, 0, v));
+            }
         }
 
         
@@ -2594,7 +2606,7 @@ concat_column_data(
     
     for(i = 0; i < rows; i++){
         memcpy(p, data, data_item_bytes);
-        p += rec_len - data_item_bytes;
+        p += rec_len;
         data += data_item_bytes;
     }
 
@@ -2635,7 +2647,7 @@ concat_row_data(
         data += data_item_bytes;
     }
 
-    *row_pos += (rec_len - columns * data_item_bytes);
+    *row_pos += rec_len; /*  - columns * data_item_bytes); */
 
     return 1;
 }
@@ -2698,7 +2710,8 @@ extract_suffix_data_for_band(
            the data should be output. Convert one internal type to
            the other */
         if (!convert_data(V_FORMAT(s->data_var), buff1,
-                          s->item_type, buff2, side_items)){
+                          s->item_type, buff2,
+                          core_specs->core_items[line_idx])){
             parse_error("%s -> %s conversion failed.\n",
                         get_type_string(V_FORMAT(s->data_var)),
                         get_type_string(s->item_type));
@@ -2742,7 +2755,8 @@ extract_suffix_data_for_band(
            external data type (size differences usually). Convert
            one internal type to the other. */
         if (!convert_data(V_FORMAT(s->data_var), buff1,
-                          s->item_type, buff2, bot_items)){
+                          s->item_type, buff2,
+                          core_specs->core_items[sample_idx])){
             parse_error("%s -> %s conversion failed.\n",
                         get_type_string(V_FORMAT(s->data_var)),
                         get_type_string(s->item_type));
@@ -3726,7 +3740,9 @@ propagate_history_group(
     propagate_history_group_keywords(hg, group_name, 1, 1);
     
     h_end_parm();
-    h_put(fid, &rc);
+    /* h_put(fid, &rc); when left here caused the last history
+       entry to be duplicated. Moving this call before the
+       history group is written seems to fix the problem. */
 
     return(rc == 0);
 }
@@ -3752,6 +3768,8 @@ propagate_history(
     char *norm_group_name;
     regex_t serial_extended_group_pattern;
     regmatch_t matches[1];
+    int rc;
+    int entry_no = 0;
 
     regcomp(&serial_extended_group_pattern, "_[0-9][0-9]*$", 0);
     
@@ -3769,7 +3787,10 @@ propagate_history(
             if (regexec(&serial_extended_group_pattern, norm_group_name, 1, matches, 0) == 0){
                 norm_group_name[matches[0].rm_so] = '\0';
             }
-            
+
+            if (++entry_no > 1){
+                h_put(fid, &rc);
+            }
             propagate_history_group(fid, norm_group_name, v);
             free(norm_group_name);
         }
