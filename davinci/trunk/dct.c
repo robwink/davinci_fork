@@ -2,7 +2,7 @@
 
 #define alpha(k, N) (k == 0 ? sqrt(1.0/(double)N) : sqrt(2.0/(double)N))
 
-double dct(double *u, double *v, int N)
+void dct(double *u, double *v, int N)
 {
 	int n,k;
 	double q1, q2;
@@ -18,7 +18,7 @@ double dct(double *u, double *v, int N)
 	}
 }
 
-double idct(double *v, double *u, int N)
+void idct(double *v, double *u, int N)
 {
 	int n,k;
 	double q1, q2;

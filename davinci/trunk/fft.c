@@ -131,6 +131,8 @@ realrft (double *in, unsigned n, double *out)
 
 	free ((char *) c_in);
 	free ((char *) c_out);
+
+	return(1);
 }
 
 /*

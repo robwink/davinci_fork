@@ -413,8 +413,6 @@ ff_convolve(vfuncptr func, Var * arg)
 	int x,y,z;
 
 
-	int start,stop;
-
 	int ac;
 	Var **av;
 	Alist alist[4];
@@ -481,10 +479,6 @@ ff_convolve(vfuncptr func, Var * arg)
 		if (norm) data[i] /= (float)wt[i];
 	}
 
-
-
-	fprintf(stderr,"Delta Time:%d\n",(stop-start));
-	
 	return(newVal(V_ORG(obj), 
 		V_SIZE(obj)[0],
 		V_SIZE(obj)[1],
@@ -519,9 +513,6 @@ ff_convolve3(vfuncptr func, Var * arg)
 	int Center_Index;
 
 	int I;
-
-	int start,stop;
-
 
 	int ac;
 	Var **av;
