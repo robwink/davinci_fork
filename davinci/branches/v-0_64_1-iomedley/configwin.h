@@ -1,0 +1,70 @@
+/*
+** File: configwin.h
+**
+** This file should be used instead of config.h when compiling
+** on the Windows platform.
+*/
+
+#ifndef _CONFIGWIN_H_
+#define _CONFIGWIN_H_
+
+/*
+** Makes uint, ufloat, ushort type definitions available. Use
+** only when these are not already built in.
+*/
+#define NEED_UDEFS
+
+
+/*
+** Announce that this application is a Windows Console App.
+*/
+
+#define _CONSOLE 
+
+
+/*
+** Undefine HAVE_STRTOUL if strtoul is available int the headers.
+*/
+
+#define HAVE_STRTOUL 
+
+
+/*
+** Define to build module support into davinci. When undefined,
+** ff_modules.c may still be compiled. See Makefile.win.
+*/
+
+#define BUILD_MODULE_SUPPORT 
+
+
+/*
+** Various different macros meaning that the code is being compiled 
+** for Microsoft Windows.
+*/
+
+#ifndef _WIN32
+#define _WIN32
+#endif
+
+#ifndef MSDOS
+#define MSDOS
+#endif
+
+#ifndef _MSDOS
+#define _MSDOS
+#endif
+
+#ifndef _MSDOS_
+#define _MSDOS_
+#endif
+
+
+
+/*
+** Defined for regex.[ch]. Basically means that we have "string.h"
+** available in our include path.
+*/
+
+#define HAVE_STRING_H
+
+#endif
