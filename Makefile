@@ -14,7 +14,7 @@ INSTALL = ./install-sh -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 
-XINCLUDES=-I/usr/openwin/include $(XRTINCLUDE)
+XINCLUDES=-I/usr/openwin/include $(XRTINCLUDE) -I/usr/local/include
 XLIBS=-L/usr/openwin/lib $(XRTLIBS)
 
 CPPFLAGS= -I/usr/include/X11
@@ -169,7 +169,7 @@ symbol.o: symbol.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
 error.o: error.c
 ff.o: ff.c ff.h parser.h config.h system.h darray.h avl.h ff_modules.h \
- ufunc.h scope.h func.h apidef.h readline/history.h
+ ufunc.h scope.h func.h apidef.h 
 ff_ascii.o: ff_ascii.c parser.h config.h system.h darray.h avl.h \
  ff_modules.h ufunc.h scope.h func.h
 ff_cluster.o: ff_cluster.c parser.h config.h system.h darray.h avl.h \
