@@ -17,9 +17,9 @@ INSTALL_DATA = @INSTALL_DATA@
 XINCLUDES=@XINCLUDES@ $(XRTINCLUDE)
 XLIBS=@XLIBS@ $(XRTLIBS)
 
-CPPFLAGS=@CPPFLAGS@
-CFLAGS=$(XINCLUDES) -Ilib @CFLAGS@ -I../iomedley
-LDFLAGS=@LDFLAGS@ -L. -L../iomedley
+CPPFLAGS=@CPPFLAGS@ -Ilib -Iiomedley
+CFLAGS=$(XINCLUDES) @CFLAGS@ 
+LDFLAGS=@LDFLAGS@
 
 XRTINCLUDE= @XRTINCLUDE@ 
 XRTLIBS = @XRTLIBS@
@@ -27,9 +27,11 @@ XRTLIBS = @XRTLIBS@
 
 CC     = @CC@
 DEFS   = @DEFS@ 
-LIBS   = @LIBS@  -lmodsupp -liomedley $(XLIBS)
+LIBS   =  -L. -Liomedley -lmodsupp -liomedley $(XLIBS) @LIBS@
 AR     = ar
 RANLIB = @RANLIB@
+
+LIBIOMEDLEY = iomedley/libiomedley.a
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
@@ -72,8 +74,11 @@ OBJ=p.o pp.o symbol.o \
 
 all:	@MAKEREAD@ davinci gplot
 
-davinci:	$(OBJ)  $(READLINE_OBJ) $(MOD_SUPP_LIB)
+davinci:	$(OBJ)  $(READLINE_OBJ) $(MOD_SUPP_LIB) $(LIBIOMEDLEY)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $@ $(READLINE_LIB) $(LIBS)
+
+$(LIBIOMEDLEY):
+	cd iomedley && $(MAKE)
 
 $(MOD_SUPP_LIB): $(MOD_SUPP_LIB_OBJS)
 	$(AR) qv $(MOD_SUPP_LIB) $(MOD_SUPP_LIB_OBJS)
@@ -149,7 +154,7 @@ gplot.o:	gplot.c
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(XINCLUDES) -Ilib $(CFLAGS) $< 
 
 gplot:	gplot.o lib/libXfred.a system.o
-	$(CC) $(CFLAGS) gplot.o system.o -o $@ $(LDFLAGS) -Llib -lXfred $(LIBS) $(XLIBS) -lX11
+	$(CC) $(CPPFLAGS) $(CFLAGS) gplot.o system.o -o $@ $(LDFLAGS) -Llib -lXfred $(LIBS) $(XLIBS) -lX11
 
 lib/libXfred.a:
 	@cd lib ; $(MAKE)
@@ -158,10 +163,10 @@ depend:
 	@gcc -MM $(OBJ:.o=.c)
 
 x.o:    x.c
-	$(CC) -c $(CFLAGS) $(DEFS) $(XRTINCLUDE) $<
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(XRTINCLUDE) $<
 
 xrt_print_3d.o: xrt_print_3d.c
-	$(CC) -c $(CFLAGS) $(XRTINCLUDE) $<
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(XRTINCLUDE) $<
 
 
 
