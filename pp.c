@@ -813,9 +813,11 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
             parse_error("Cannot perform boolean logic on type STRING");
             return(NULL);
         }
-    } 
-	 
-	 else if ((V_TYPE(exp1) == ID_TEXT || V_TYPE(exp1) == ID_STRING) &&
+		s = newVal(BSQ,1,1,1,INT,calloc(1, sizeof(int)));
+		V_INT(s) = k;
+		return(s);
+
+    } else if ((V_TYPE(exp1) == ID_TEXT || V_TYPE(exp1) == ID_STRING) &&
 				(V_TYPE(exp2) == ID_STRING || V_TYPE(exp2) == ID_TEXT)) {
 		int *Data;
 		int f1,f2;
@@ -858,30 +860,23 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
 		for (i=0;i<Row;i++){
 			V_STRING(Tmp1)=(f1 ? (char *)V_TEXT(exp1).text[i] : V_STRING(exp1));
 			V_STRING(Tmp2)=(f2 ? (char *)V_TEXT(exp2).text[i] : V_STRING(exp2));
-			Data[i]=extract_int((pp_relop(Tmp1,op,Tmp2)),0);
+			Data[i]=extract_int((pp_math(Tmp1,op,Tmp2)),0);
 		}
 		V_STRING(Tmp1)=NULL;
 		V_STRING(Tmp2)=NULL;
 		return(newVal(BSQ,1,Row,1,INT,Data));
-	 }	
 
+    } else if (op != ID_ADD) {
 
-	 else if (op != ID_ADD) {
         parse_error("Operation not supported on string and non-string");
         return(NULL);
+
     } else {
+		/*
+		** Just adding stuff
+		*/
         return(pp_add_strings(exp1, exp2));
     }
-
-    s = newVar();
-    V_TYPE(s) = ID_VAL;
-    V_SIZE(s)[0] = V_SIZE(s)[1] = V_SIZE(s)[2] = V_DSIZE(s) = 1;
-    V_FORMAT(s) = INT;
-    V_ORG(s) = BSQ;
-    V_DATA(s) = calloc(1, sizeof(int));
-    V_INT(s) = k;
-
-    return(s);
 }
 
 Var *

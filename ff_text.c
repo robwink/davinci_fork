@@ -393,7 +393,7 @@ textarray_subset(Var *v, Var *range)
             if (i==1)
                 hi[i]=V_TEXT(v).Row;
             else
-                hi[i]=INT_MAX; /*This is to fool it into using full length of string on given row*/
+                hi[i]=MAXINT; /*This is to fool it into using full length of string on given row*/
         lo[i]--;
         hi[i]--;
         if (hi[i] < lo[i]){
@@ -845,7 +845,7 @@ set_text(Var *to,Range *r, Var *from)
             if (i==1)
                 hi[i]=V_TEXT(to).Row;
             else
-                hi[i]=INT_MAX; /*This is to fool it into using full length of string on given row*/
+                hi[i]=MAXINT; /*This is to fool it into using full length of string on given row*/
         lo[i]--;
         hi[i]--;
         if (hi[i] < lo[i]){

@@ -146,14 +146,6 @@ evaluate(Var * n)
         case ID_GT:
         case ID_LE:
         case ID_GE:
-			/*
-            if (left) evaluate(left);
-            if (right) evaluate(right);
-            p2 = pop(scope);
-            p1 = pop(scope);
-            push(scope, pp_relop(p1, type, p2));
-            break;
-			*/
         case ID_ADD:
         case ID_SUB:
         case ID_MULT:

@@ -136,7 +136,9 @@ ff_load(vfuncptr func, Var * arg)
 
         fclose(fp);	/* These others open their own files */
 		
+#ifdef HAVE_LIBHDF5
 	  	  if (input == NULL)    input = LoadHDF5(filename);
+#endif
 
 #ifdef LITTLE_E
         if (input!=NULL)
@@ -146,10 +148,6 @@ ff_load(vfuncptr func, Var * arg)
 #ifdef HAVE_LIBMAGICK
 		if (input == NULL)    input = LoadGFX_Image(filename);
 #endif
-
-
-
-		if (input == NULL)    input = LoadVanilla(filename);
 
         if (input == NULL) {
             sprintf(error_buf, "Unable to determine file type: %s", filename);

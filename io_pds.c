@@ -1,6 +1,6 @@
 #include "header.h"
 #include "parser.h"
-#include "/tes/src/vanilla/io_lablib3.h"
+#include "io_lablib3.h"
 
 
 void Set_Col_Var(Var **,FIELD **,LABEL * ,int *size, char **);

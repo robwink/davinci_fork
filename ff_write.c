@@ -1,9 +1,13 @@
 #include "parser.h"
 #include "config.h"
 
+#ifdef __MSDOS__
+extern Swap_Big_and_Little(Var *);
+#endif
 
-
-#ifdef HAVE_LIBMAGICK
+/*
+** Test for the types recognized by ImageMagic
+*/
 int ValidGfx(char *type,char *GFX_type)
 {
  
@@ -38,19 +42,13 @@ int ValidGfx(char *type,char *GFX_type)
         }
     }
 
-    //	fprintf(stderr,"%s is not a supported image file type\n",type);
-
     return (0);
 }
-#endif
 
 
 Var *
 ff_write(vfuncptr func, Var *arg)
 {
-#ifdef __MSDOS__
-extern Swap_Big_and_Little(Var *);
-#endif
 
     Var *v, *e, *ob;
     char *filename;
@@ -168,7 +166,6 @@ extern Swap_Big_and_Little(Var *);
     ob=(Var *)Swap_Big_and_Little(ob);
 #endif
 
-
     if      (!strcasecmp(type, "raw"))    WriteRaw(ob, NULL, filename);
     else if (!strcasecmp(type, "vicar"))  WriteVicar(ob, NULL, filename); 
     else if (!strcasecmp(type, "grd"))    WriteGRD(ob, NULL, filename);
@@ -179,14 +176,23 @@ extern Swap_Big_and_Little(Var *);
     else if (!strcasecmp(type, "imath"))  WriteIMath(ob, NULL, filename);
     else if (!strcasecmp(type, "isis"))   WriteISIS(ob, NULL, filename, title);
     else if (!strcasecmp(type, "specpr")) WriteSpecpr(ob, filename, title);
+
+/*
+** Below here are optional packages
+*/
+#ifdef HAVE_LIBHDF5
     else if (!strcasecmp(type, "hdf"))    WriteHDF5(-1, filename, ob);
+#endif
+
 #ifdef HAVE_LIBMAGICK
+	else if (ValidGfx(type, GFX_type)) {
 #ifdef LITTLE_E
-    else if (ValidGfx(type,GFX_type))     {WriteGFX_Image(Swap_Big_and_Little(ob),filename,GFX_type); return(NULL);}
+		WriteGFX_Image(Swap_Big_and_Little(ob), filename, GFX_type);
+#else
+		WriteGFX_Image(ob, filename, GFX_type);
 #endif
-#ifndef LITTLE_E
-    else if (ValidGfx(type,GFX_type))     {WriteGFX_Image(ob,filename,GFX_type);}
-#endif
+		return (NULL);
+	}
 #endif
     else {
         sprintf(error_buf, "Unrecognized type: %s", type);

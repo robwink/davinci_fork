@@ -1,6 +1,9 @@
-char *version = "@(#) daVinci Version #0.56e";
+char *version = "@(#) daVinci Version #0.56fe";
 
 /*
+Version 0.56f: Tue Apr 11 19:37:10 MST 2000
+	* Fixed a bunch of compile problems without plplot and hdf.
+
 Version 0.56e: Wed Apr  5 15:19:57 MST 2000
 	= load_vanilla() updated -- made faster
 	

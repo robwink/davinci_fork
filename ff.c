@@ -1774,7 +1774,7 @@ ff_dump(vfuncptr func, Var * arg)
     Var **av;
 	int depth;
 
-    Alist alist[2];
+    Alist alist[3];
     alist[0] = make_alist("object",    ID_VAL,     NULL,     &v);
     alist[1] = make_alist("depth",    INT,     NULL,     &depth);
     alist[2].name = NULL;
@@ -1787,4 +1787,25 @@ ff_dump(vfuncptr func, Var * arg)
 	dump_var(v, 0, 0);
 
 	return(NULL);
+}
+
+Var *
+ff_same(vfuncptr func, Var * arg)
+{
+}
+
+Var *
+ff_equals(vfuncptr func, Var * arg)
+{
+	Var *v1, *v2;
+    Alist alist[2];
+    int ac, i, j; 
+    Var **av;
+
+    alist[0] = make_alist("obj1",    ID_VAL,     NULL,     &v1);
+    alist[1] = make_alist("obj2",    ID_VAL,     NULL,     &v2);
+    alist[2].name = NULL;
+
+    make_args(&ac, &av, func, arg);
+    if (parse_args(ac, av, alist)) return(NULL); 
 }
