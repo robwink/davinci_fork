@@ -20,6 +20,9 @@ int VERBOSE = 2;
 int allocs = 0;
 Var *VZERO;
 
+Widget top=NULL;
+XtAppContext    app;
+
 #ifdef HAVE_LIBXM
 int windows = 1;
 #endif
@@ -216,8 +219,6 @@ void get_file_input(XtPointer client_data, int *fid, XtInputId *id)
     rl_callback_read_char();
 }
 
-Widget top=NULL;
-XtAppContext    app;
 
 void
 event_loop(void)
