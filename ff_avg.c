@@ -1,4 +1,5 @@
 #include "parser.h"
+#include <math.h>
 
 
 
@@ -129,7 +130,7 @@ ff_avg2(vfuncptr func, Var * arg)
 			if (count[i] > 1)  {
 				sum2[i] = sqrt((sum2[i] - (sum[i]*sum[i]/count[i]))/(count[i]-1));
 			} else {
-				sum2[i] = 0
+				sum2[i] = 0;
 			}
 		}
 		V_DATA(stddev) = sum2;
@@ -415,6 +416,7 @@ ff_convolve(vfuncptr func, Var * arg)
 {
 	Var *obj=NULL, *kernel=NULL;
 	int norm=1;
+	float ignore = MINFLOAT;
 
 	int ac;
 	Var **av;
@@ -422,6 +424,7 @@ ff_convolve(vfuncptr func, Var * arg)
 	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
 	alist[1] = make_alist("kernel",  	ID_VAL,		NULL,	&kernel);
 	alist[2] = make_alist("normalize", 	INT, NULL, &norm);
+	alist[2] = make_alist("ignore", 	FLOAT, NULL, &ignore);
 	alist[3].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -434,11 +437,11 @@ ff_convolve(vfuncptr func, Var * arg)
 		parse_error("%s: No kernel specified\n", func->name);
 		return(NULL);
 	}
-	return(do_convolve(obj, kernel, norm));
+	return(do_convolve(obj, kernel, norm, ignore));
 }
 
 
-Var *do_convolve(Var *obj, Var *kernel, int norm)
+Var *do_convolve(Var *obj, Var *kernel, int norm, float ignore)
 {
 	Var *v;
 	float *data, val;
@@ -490,8 +493,10 @@ Var *do_convolve(Var *obj, Var *kernel, int norm)
 					j = cpos(x_pos, y_pos, z_pos, obj);
 					k = cpos(a, b, c, kernel);
 					val = extract_float(kernel,k);
-					wt[i]++;
-					data[i] += val * extract_float(obj, j);
+					if (val != ignore) {
+						wt[i]++;
+						data[i] += val * extract_float(obj, j);
+					}
 				}
 			}
 		}

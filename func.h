@@ -459,6 +459,6 @@ Var * ff_distance_map(vfuncptr func, Var * arg);
 Var * ff_slant(vfuncptr func, Var * arg);
 Var * ff_unslant(vfuncptr func, Var * arg);
 
-Var *do_convolve(Var *obj, Var *kernel, int norm);
+Var *do_convolve(Var *obj, Var *kernel, int norm, float ignore);
 Var *ff_hstretch(vfuncptr func, Var * arg);
 Var *ff_chdir(vfuncptr func, Var * arg);

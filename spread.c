@@ -120,7 +120,7 @@ ff_distance_map(vfuncptr func, Var * arg)
 		r.hi[1]= ymax;
 		r.lo[2]= r.hi[2]= 0;
 		data = extract_array(dval, &r);
-		s = do_convolve(data, mask, 1);
+		s = do_convolve(data, mask, 1, MINFLOAT);
 		t = V_DUP(dval);
         array_replace(t, s,  &r);
 		add_struct(a, "mask", mask);
