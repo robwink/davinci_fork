@@ -11,6 +11,10 @@ dv_LoadAVIRIS(FILE *fp, char *filename, struct iom_iheader *s)
     void *data;
     char hbuf[HBUFSIZE];
 
+    if (iom_isAVIRIS(fp) == 0){
+        return NULL;
+    }
+    
     if (iom_GetAVIRISHeader(fp, filename, &h) == 0) {
         return(NULL);
     }
