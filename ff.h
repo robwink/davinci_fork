@@ -112,7 +112,9 @@ struct _vfuncptr vfunclist[] = {
     { "sum",     ff_avg,    	NULL },   
     { "min",     ff_min,    	NULL },   
     { "max",     ff_min,    	NULL },   
-    { "sort",     ff_sort,    NULL },
+    { "sort",     ff_sort,      NULL },
+    { "minchan",  ff_findmin,   NULL },   
+    { "maxchan",  ff_findmin,   NULL },   
 
     { "interp",     ff_interp,    NULL },
     { "gplot",      ff_gplot,     NULL },
@@ -136,6 +138,7 @@ struct _vfuncptr vfunclist[] = {
 
     { "bbr",        ff_bop,      (void *)bbr   },
     { "btemp",      ff_bop,      (void *)btemp },
+    { "atan2",      ff_bop,      (void *)atan2 },
 
     { "vignette",   ff_vignette, NULL },
     { "pause",      ff_pause,    NULL },	/* get input from user */
@@ -175,6 +178,8 @@ struct _vfuncptr vfunclist[] = {
     { "irfft2",     ff_realfft2,     (void *)0 },
     { "rfft3",     	ff_realfft3,     (void *)1 },
     { "irfft3",     ff_realfft3,     (void *)0 },
+
+    { "self_convolve",     ff_self_convolve,     (void *)0 },
 
 #ifdef HAVE_XRT
     { "xrt3d",     	ff_xrt3d,    NULL },

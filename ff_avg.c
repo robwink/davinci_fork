@@ -163,3 +163,46 @@ ff_min(vfuncptr func, Var * arg)
 
 	return(v);
 }
+
+Var *
+ff_findmin(vfuncptr func, Var * arg)
+{
+	Var *obj=NULL, *v;
+	int dsize, i;
+	float x, val;
+	int do_min = 0, do_max = 0;
+	int pos;
+
+	int ac;
+	Var **av;
+	Alist alist[2];
+	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
+	alist[1].name = NULL;
+
+	make_args(&ac, &av, func, arg);
+	if (parse_args(ac, av, alist)) return(NULL);
+
+	if (obj == NULL) {
+		parse_error("%s: No object specified\n", func->name);
+		return(NULL);
+	}
+
+	if (!strcmp(func->name, "minchan")) do_min = 1;
+	if (!strcmp(func->name, "maxchan")) do_max = 1;
+
+	dsize = V_DSIZE(obj);
+
+	val = extract_float(obj, 0);
+	pos = 0;
+	for (i = 1 ; i < dsize ; i++) {
+		x = extract_float(obj, i);
+		if (do_min && x < val) { val = x ; pos = i; }
+		if (do_max && x > val) { val = x ; pos = i; }
+	}
+
+	v = newVal(BSQ, 1, 1, 1, INT, NULL);
+	V_DATA(v) = calloc(1, sizeof(int));
+	V_INT(v) = pos+1;
+
+	return(v);
+}

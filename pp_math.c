@@ -73,6 +73,7 @@ is_relop(int op)
     case ID_LE:
     case ID_GE:
     case ID_OR:
+    case ID_AND:
         return(1);
     }
     return(0);

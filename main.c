@@ -215,7 +215,7 @@ void
 event_loop(void)
 {
 	if (interactive) {
-		if (windows)  {
+		if (windows && getenv("DISPLAY") != NULL)  {
 			char *argv[1];
 			char *av0 = "null";
 			int argc = 1;

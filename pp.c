@@ -542,6 +542,10 @@ pp_argv(Var *left, Var *right)
         return(dd_argc_var(scope));
     } else {
         strcpy(name, V_NAME(v));
+        if (strcasecmp(name, "argv")) {
+			parse_error("$ARGV requires an array index.");
+			return(NULL);
+		}
         if ((value = get_env_var(name)) == NULL) {
             return(NULL);
         }

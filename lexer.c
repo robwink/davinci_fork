@@ -264,6 +264,7 @@ static void yy_flex_free YY_PROTO(( void * ));
 typedef unsigned char YY_CHAR;
 FILE *yyin = (FILE *) 0, *yyout = (FILE *) 0;
 typedef int yy_state_type;
+extern char *yytext;
 #define yytext_ptr yytext
 
 static yy_state_type yy_get_previous_state YY_PROTO(( void ));
@@ -427,6 +428,7 @@ static char *yy_last_accepting_cpos;
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
+char *yytext;
 #line 1 "lexer.l"
 #define INITIAL 0
 /******************************** lexer.l ******************************/
@@ -453,7 +455,7 @@ void start_save()
 
     tmp = tempnam(NULL, NULL);
     strcpy(save_file, tmp);
-    free(tmp);
+    xfree(tmp);
 
     save_fp = fopen(save_file, "w");
 }

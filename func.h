@@ -258,6 +258,7 @@ Var *ff_history(vfuncptr func, Var *arg);
 Var *ff_hedit(vfuncptr func, Var *arg);
 Var *ff_sort(vfuncptr func, Var *arg);
 Var *ff_min(vfuncptr func, Var *arg);
+Var *ff_findmin(vfuncptr func, Var *arg);
 Var *ff_rgb2hsv(vfuncptr func, Var *arg);
 Var *ff_hsv2rgb(vfuncptr func, Var *arg);
 Var *ff_resize(vfuncptr func, Var *arg);
@@ -273,6 +274,7 @@ Var *ff_minvert(vfuncptr func, Var *arg);
 Var *ff_dct(vfuncptr func, Var *arg);
 Var *ff_entropy(vfuncptr func, Var *arg);
 Var *ff_projection(vfuncptr func, Var *arg);
+Var *ff_self_convolve(vfuncptr func, Var *arg);
 
 Alist make_alist(char *name, int type, void *limits, void *value);
 
