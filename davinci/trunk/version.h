@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.98b";
+char *version = "@(#) daVinci Version #0.99";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,7 +7,10 @@ char *version = "@(#) daVinci Version #0.98b";
 #include "build.h"
 
 /*
-Version 0.98b: Tue Jun 25 00:16:58 MST 2002
+Version 0.99: Wed Jun 26 17:33:23 MST 2002
+	+ Added a real envi io module
+	
+Version 0.98b:
 	+ Added insert_struct, and add_struct is now just an alias
 
 Version 0.98a: Tue Jun 25 00:16:58 MST 2002

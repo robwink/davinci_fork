@@ -101,6 +101,7 @@ ff_load(vfuncptr func, Var * arg)
         if (input == NULL)    input = dv_LoadIMath(fp, fname, &h);
         if (input == NULL)    input = dv_LoadGOES(fp, fname, &h);
         if (input == NULL)    input = dv_LoadAVIRIS(fp, fname, &h);
+        if (input == NULL)    input = dv_LoadENVI(fp, fname, &h);
 
 #ifdef HAVE_LIBHDF5
         if (input == NULL)    input = LoadHDF5(fname);
