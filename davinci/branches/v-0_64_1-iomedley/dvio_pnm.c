@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "parser.h"
-#include "iomedley.h"
+#include "dvio.h"
 
 Var *
 dv_LoadPNM(
@@ -20,21 +20,32 @@ dv_LoadPNM(
     Var *v;
 
     
-    /*
-    ** NOTE: We completely ignore the _iheader structure here.
-    */
+    if (iom_isPNM(fp) == 0){ return NULL; }
 
-
-    /**
-    *** Get format
-    **/
-
-    /*
-    ** This reads and attaches the data to h->data
-    */
     if (!(status = iom_GetPNMHeader(fp, filename, &h))){
         return NULL;
     }
+
+    if (s != NULL) {
+        /** 
+         ** Set subsets
+         **/
+        iom_MergeHeaderAndSlice(&h, s);
+    }
+
+    data = iom_read_qube_data(fileno(fp), &h);
+    if (data){
+        v = iom_iheader2var(&h);
+        V_DATA(v) = data;
+    }
+    else {
+        v = NULL;
+    }
+
+    iom_cleanup_iheader(&h);
+
+
+#if 0    
 	x = h.size[0];
 	y = h.size[1];
 	z = h.size[2];
@@ -75,82 +86,83 @@ dv_LoadPNM(
         V_FORMAT(v) = INT;
 		parse_error("Warning: 16 bit PGM file being promoted to 32-bit int.");
 	}
+#endif
 
     return(v);
 }
 
-void
-dv_WritePGM(Var *obj, FILE *fp, char *filename)
+int
+dv_WritePGM(Var *obj, char *filename, int force)
 {
     struct iom_iheader h;
+    int status;
 
     if (V_TYPE(obj) != ID_VAL || V_FORMAT(obj) != BYTE) {
         sprintf(error_buf, "Data for PGM file must be byte()");
         parse_error(NULL);
-        return;
+        return 0;
     }
-
-    iom_var2iheader(obj, &h);
 
     if (GetBands(V_SIZE(obj), V_ORG(obj)) != 1) {
         sprintf(error_buf, "Data for PGM file must have depth=1");
         parse_error(NULL);
-        return;
+        return 0;
     }
-
-    if (fp == NULL) {
-        fp = fopen(filename, "w");
-    }
-    if (fp == NULL) return;
 
     if (VERBOSE > 1)  {
         fprintf(stderr, "Writing %s: %dx%d PGM file.\n",
-                filename, h.dim[0], h.dim[1]);
+                filename, h.size[0], h.size[1]);
     }   
 
-    iom_WritePNM(fp, filename, V_DATA(obj), &h);
-    fclose(fp);
+    var2iom_iheader(obj, &h);
+    status = iom_WritePNM(filename, V_DATA(obj), &h, force);
+    iom_cleanup_iheader(&h);
     
-    return;
+    if (status == 0){
+        parse_error("Writing of PGM file %s failed.\n", filename);
+        return 0;
+    }
+    
+    return 1;
 }
 
-void
-dv_WritePPM(Var *obj, FILE *fp, char *filename)
+int
+dv_WritePPM(Var *obj, char *filename, int force)
 {
     struct iom_iheader h;
+    int status;
 
     if (V_TYPE(obj) != ID_VAL || V_FORMAT(obj) != BYTE) {
         sprintf(error_buf, "Data for PPM output must be byte()");
         parse_error(NULL);
-        return;
+        return 0;
     }
-
-    iom_var2iheader(obj, &h);
 
     if (GetBands(V_SIZE(obj), V_ORG(obj)) != 3) {
         sprintf(error_buf, "Data for PPM output must have depth=3");
         parse_error(NULL);
-        return;
+        return 0;
     }
 
     if (V_ORG(obj) != BIP) {
         sprintf(error_buf, "Data for PPM output must be in BIP format");
         parse_error(NULL);
-        return;
+        return 0;
     }
-
-    if (fp == NULL) {
-        fp = fopen(filename, "w");
-    }
-    if (fp == NULL) return;
 
     if (VERBOSE > 1)  {
         fprintf(stderr, "Writing %s: %dx%d PPM file.\n",
                 filename, h.dim[0], h.dim[1]);
     }   
 
-    iom_WritePNM(fp, filename, V_DATA(obj), &h);
-    fclose(fp);
+    var2iom_iheader(obj, &h);
+    status = iom_WritePNM(filename, V_DATA(obj), &h, force);
+    iom_cleanup_iheader(&h);
     
-    return;
+    if (status == 0){
+        parse_error("Writing of PPM file %s fialed.\n", filename);
+        return 0;
+    }
+    
+    return 1;
 }

@@ -17,6 +17,8 @@ dv_LoadVicar(
     char hbuf[HBUFSIZE];
 	int i, j;
 
+    if (iom_isVicar(fp) == 0){ return NULL; }
+    
     if (iom_GetVicarHeader(fp, filename, &h) == 0) { return(NULL); }
 
     /**
@@ -48,10 +50,25 @@ dv_LoadVicar(
     if (VERBOSE > 1) {
         parse_error(hbuf);
     }
-    V_TITLE(v) = strdup(hbuf);
-
     iom_cleanup_iheader(&h);
 
     return(v);
 }
 
+int
+dv_WriteVicar(Var *ob, char *filename, int force)
+{
+    struct iom_iheader h;
+    int status;
+
+    var2iom_iheader(ob, &h);
+    status = iom_WriteVicar(filename, V_DATA(ob), &h, force);
+    iom_cleanup_iheader(&h);
+
+    if (status == 0){
+        parse_error("Writing VICAR file %s failed.\n", filename);
+        return 0;
+    }
+    
+    return  1;
+}

@@ -35,8 +35,6 @@ dv_LoadGOES(FILE *fp, char *filename, struct iom_iheader *s)
         parse_error(hbuf);
     }
     
-    V_TITLE(v) = strdup(hbuf);
-
     iom_cleanup_iheader(&h);
     
     return(v);

@@ -87,6 +87,7 @@ struct _vfuncptr vfunclist[] = {
     { "save",       ff_write,    NULL },
     { "write",      ff_write,    NULL },        /* an alias */
     { "export",     ff_write,    NULL },        /* an alias */
+	{ "write2",     ff_write2,   NULL },
     { "filetype",   ff_filetype, NULL },
     { "ls",         ff_list,     NULL },
     { "list",       ff_list,     NULL },

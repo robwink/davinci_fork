@@ -33,15 +33,10 @@ dv_LoadIMath(
     ht = h.dim[0];
     wt = h.dim[1];
 	
-    if (VERBOSE > 1) {
-        fprintf(stderr, "Imath file: %d x %d doubles\n", wt, ht);
-    }
-
     data = (double *)iom_read_qube_data(fileno(fp), &h);
 
     if (h.transposed) {
         double *data2 = (double *)calloc(wt * ht, sizeof(double));
-        if (VERBOSE > 1) fprintf(stderr, "transposed\n");
 
         k = 0;
         for (i = 0 ; i < ht ; i++) {				/* 13 */
@@ -59,8 +54,32 @@ dv_LoadIMath(
 
     v = iom_iheader2var(&h);
     V_DATA(v) = data;
+    
+    if (VERBOSE > 1) {
+        parse_error("Imath file: %d x %d doubles. %s.",
+                    wt, ht, (h.transposed? "transposed": ""));
+    }
 
     iom_cleanup_iheader(&h);
-
     return(v);
+}
+
+
+
+int
+dv_WriteIMath(Var *ob, char *filename, int force)
+{
+    struct iom_iheader h;
+    int status;
+
+    var2iom_iheader(ob, &h);
+    status = iom_WriteIMath(filename, V_DATA(ob), &h, force);
+    iom_cleanup_iheader(&h);
+
+    if (status == 0){
+        parse_error("Failed to write IMath file %s.\n", filename);
+        return 0;
+    }
+
+    return 1;
 }

@@ -1,9 +1,12 @@
+/*
+** File: dvio.c
+** Related files: dvio.h dvio_*.c
+**
+** Bridging code between daVinci and iomedley
+*/
+
 #include "parser.h"
 #include "iomedley.h"
-
-/*
-** Bridging code.
-*/
 
 int
 _iheader2iom_iheader(
@@ -39,7 +42,7 @@ iom_iheader2_iheader(
     struct _iheader *h
     )
 {
-    memset(iomh, 0, sizeof(struct _iheader));
+    memset(h, 0, sizeof(struct _iheader));
     h->dptr = iomh->dptr;
     memcpy(h->prefix, iomh->prefix, sizeof(int)*3);
     memcpy(h->suffix, iomh->suffix, sizeof(int)*3);
@@ -134,8 +137,8 @@ vfmt2ihfmt(int vfmt)
 ** It works for very simple applications. The only fields
 ** transferred across are:
 **    org     (as V_ORDER)
-**    format  (as V_FORMAT)
 **    dim     (as V_SIZE & V_DSIZE)
+**    format  (as V_FORMAT)
 */
 
 Var *
@@ -165,6 +168,7 @@ iom_iheader2var(struct iom_iheader *h)
         V_SIZE(v)[i] = (((h->dim)[i] -1)/h->s_skip[i])+1;
         V_DSIZE(v) *= V_SIZE(v)[i];
     }
+
     return(v);
 }
 
@@ -182,12 +186,12 @@ iom_iheader2var(struct iom_iheader *h)
 ** handfull of fields are filled within the _iheader
 ** structure. These fields are:
 **    org    (from V_ORDER)
-**    dim    (from V_SIZE)
+**    size   (from V_SIZE)       <------- NOTE THE DIFFERENCE
 **    format (from V_FORMAT)
 */
 
 void
-iom_var2iheader(
+var2iom_iheader(
     Var *v,
     struct iom_iheader *h
     )
@@ -198,18 +202,26 @@ iom_var2iheader(
     h->org = vorg2ihorg(V_ORDER(v));
 
     for (i = 0; i < 3; i++){
-        h->dim[i] = V_SIZE(v)[i];
+        h->size[i] = V_SIZE(v)[i];
     }
 
     h->format = vfmt2ihfmt(V_FORMAT(v));
 }
 
-/**
- ** locate_file() - check path for filename.
- **/
+
+/*
+** locate_file() - check path for filename.
+**
+** Locates the file according to the "$datapath" variable.
+** This variable is set within daVinci somewhere.
+**
+** On successful return a character string allocated using
+** malloc() will be returned. It is the caller's responsibility
+** to free it after use.
+*/
 
 char *
-iom_locate_file(char *fname)
+dv_locate_file(char *fname)
 {
     char *p, *q;
     char *path = NULL;
@@ -245,4 +257,3 @@ iom_locate_file(char *fname)
     }
     return (NULL);
 }
-

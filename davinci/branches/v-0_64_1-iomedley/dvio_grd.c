@@ -29,7 +29,6 @@ dv_LoadGRD(FILE *fp, char *filename, struct iom_iheader *s)
     v = iom_iheader2var(&h);
 
     V_DATA(v) = data;
-    V_TITLE(v) = strdup(h.title);
 
     iom_cleanup_iheader(&h);
     
@@ -37,7 +36,7 @@ dv_LoadGRD(FILE *fp, char *filename, struct iom_iheader *s)
 }
 
 int
-dv_WriteGRD(Var *s, FILE *fp, char *filename)
+dv_WriteGRD(Var *s, char *filename, int force, char *title)
 {
     struct iom_iheader h;
     int status;
@@ -53,11 +52,12 @@ dv_WriteGRD(Var *s, FILE *fp, char *filename)
         return 0;
     }
     
-    iom_var2iheader(s, &h);
+    var2iom_iheader(s, &h);
+    status = iom_WriteGRD(filename, V_DATA(s), &h, force, title, "daVinci      ");
+    iom_cleanup_iheader(&h);
     
-    status = iom_WriteGRD(fp, filename, V_DATA(s), &h, V_TITLE(s), "dv           ");
     if (status == 0){
-        parse_error("Writing %s failed.\n", filename);
+        parse_error("Writing of GRD file %s failed.\n", filename);
     }
     
     return (status == 1);

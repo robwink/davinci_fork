@@ -1,7 +1,6 @@
 #include "parser.h"
 #include "dvio.h"
 
-
 Var *
 dv_LoadISIS(FILE *fp, char *filename, struct iom_iheader *s)
 {
@@ -13,10 +12,22 @@ dv_LoadISIS(FILE *fp, char *filename, struct iom_iheader *s)
     int i,j;
     char *datafile = NULL;
     int fd;
+    char *msg_file = NULL;
 
     if (iom_isISIS(fp) == 0) return(NULL);
 
-    if (iom_GetISISHeader(fp, filename, &h, NULL) == 0) {
+    if (VERBOSE){
+        msg_file = NULL;
+    }
+    else {
+#ifdef _WIN32
+        msg_file = "nul:";
+#else
+        msg_file = "/dev/null";
+#endif /* _WIN32 */
+    }
+    
+    if (iom_GetISISHeader(fp, filename, &h, msg_file, NULL) == 0) {
         return(NULL);
     }
 
@@ -65,7 +76,6 @@ dv_LoadISIS(FILE *fp, char *filename, struct iom_iheader *s)
             iom_EFormat2Str(h.format), iom_NBYTESI(h.format)*8);
 
     if (VERBOSE > 1) { parse_error(hbuf); }
-    V_TITLE(v) = strdup(hbuf);
 
     iom_cleanup_iheader(&h);
     
@@ -74,18 +84,26 @@ dv_LoadISIS(FILE *fp, char *filename, struct iom_iheader *s)
 
 
 int 
-dv_WriteISIS(Var *s, FILE *fp, char *filename, char *title )
+dv_WriteISIS(Var *s, char *filename, int force, char *title)
 {
     struct iom_iheader h;
+    int status;
 
     /*
     ** Build an _iheader structure from the "Var *s" that
     ** is suitable for writing an ISIS output file.
     */
 
-    iom_var2iheader(s, &h);
-    iom_WriteISIS(fp, filename, V_DATA(s), &h, V_TITLE(s) == NULL? "(none)": V_TITLE(s));
-    return(1);
+    var2iom_iheader(s, &h);
+    status = iom_WriteISIS(filename, V_DATA(s), &h, force, title);
+    iom_cleanup_iheader(&h);
+
+    if (status == 0){
+        parse_error("Unable to write ISIS file %s.\n", filename);
+        return 0;
+    }
+    
+    return 1;
 }
 
 
@@ -517,7 +535,9 @@ ff_read_suffix_plane2(vfuncptr func, Var * arg)
     char suffix_item_type[80];
     char suffix_item_name[80];
     char *datafile = NULL;
+    char *msg_file = NULL;
 
+    
     int ac;
     Var **av;
     Alist alist[4];
@@ -534,7 +554,7 @@ ff_read_suffix_plane2(vfuncptr func, Var * arg)
         return (NULL);
     }
 
-    if ((fname = iom_locate_file(isisfile)) == NULL ||
+    if ((fname = dv_locate_file(isisfile)) == NULL ||
         (fp = fopen(fname, "r")) == NULL) {
         fprintf(stderr, "Unable to open file: %s\n", isisfile);
         return (NULL);
@@ -544,7 +564,19 @@ ff_read_suffix_plane2(vfuncptr func, Var * arg)
     free(fname);
     fname = fname2;
 
-    if (iom_GetISISHeader(fp, fname, &s, &object) == 0) {
+    
+    if (VERBOSE){
+        msg_file = NULL;
+    }
+    else {
+#ifdef _WIN32
+        msg_file = "nul:";
+#else
+        msg_file = "/dev/null";
+#endif /* _WIN32 */
+    }
+
+    if (iom_GetISISHeader(fp, fname, &s, msg_file, &object) == 0) {
         free(fname);
         return (NULL);
     }

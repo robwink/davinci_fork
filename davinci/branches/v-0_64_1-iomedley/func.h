@@ -252,6 +252,7 @@ Var *ff_create (vfuncptr, Var *);
 Var *ff_source (vfuncptr, Var *);
 Var *ff_load (vfuncptr, Var *);
 Var *ff_load2(vfuncptr, Var *);
+Var *ff_write2(vfuncptr, Var *);
 Var *ff_Frame_Grabber_Read(vfuncptr func, Var * arg);
 Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg);
 Var *ff_PACI_Read(vfuncptr func, Var * arg);

@@ -67,3 +67,4 @@ readline/config.h
 readline/config.status
 readline/stamp-h
 readline/Makefile
+cscope.out

@@ -1,6 +1,7 @@
-#ifndef _WIN32
+#if !defined(_WIN32) && defined(HAVE_CONFIG_H)
 #include "config.h"
 #endif
+
 #if defined(HAVE_LIBMAGICK) && defined(HAVE_LIBX11)
 #include <magick.h>
 #include <magick/api.h>
@@ -10,32 +11,37 @@
 #include <X11/Xatom.h>
 #include "parser.h"
 #include "dvio.h"
-#include "iomedley.h"
 
 extern Widget top;
 
 Var *
-dv_LoadGFX_Image(char *filename)
+dv_LoadGFX_Image(FILE *fp, char *filename, struct iom_iheader *s)
 {
     Var *v;
     struct iom_iheader h;
     void *image_data = NULL;
     int   status;
 
-    if (!(status = iom_GetGFXHeader(filename, &h))){ return NULL; }
-    
-    image_data = iom_detach_iheader_data(&h);
-    if (!image_data){ iom_cleanup_iheader(&h); return NULL; }
+    if (!(status = iom_GetGFXHeader(fp, filename, &h))){ return NULL; }
 
-	/*
-	** iheader2var() uses _iheader.dim[3] to determine the size of 
-	** the data cube-slice read.
-	*/
-	h.dim[0] = h.size[0];
-	h.dim[1] = h.size[1];
-	h.dim[2] = h.size[2];
+    if (s != NULL) {
+        /** 
+         ** Set subsets
+         **/
+        iom_MergeHeaderAndSlice(&h, s);
+    }
 
-    if (v = iom_iheader2var(&h)){ V_DATA(v) = image_data; }
+    image_data = iom_read_qube_data(fileno(fp), &h);
+    if (image_data){
+        v = iom_iheader2var(&h);
+        V_DATA(v) = image_data;
+    }
+    else {
+        parse_error("Read from ImageMagick file %s failed.", filename);
+        v = NULL;
+    }
+
+    iom_cleanup_iheader(&h);
 
     return v;
 }
@@ -43,10 +49,12 @@ dv_LoadGFX_Image(char *filename)
 
 
 int
-dv_WriteGFX_Image(Var *ob,char *filename,char *GFX_type)
+dv_WriteGFX_Image(Var *ob, char *filename, int force, char *GFX_type)
 {
 	Image *image;
   	ImageInfo image_info;
+	struct iom_iheader h;
+    int status;
 
 	int x, y, z;
     int format,org;
@@ -79,7 +87,11 @@ dv_WriteGFX_Image(Var *ob,char *filename,char *GFX_type)
 		return 0;
 	}
 
-    if (!iom_WriteGFXImage(V_DATA(ob), x, y, z, filename, GFX_type)){
+	var2iom_iheader(ob, &h);
+    status = iom_WriteGFXImage(filename, V_DATA(ob), &h, force, GFX_type);
+    iom_cleanup_iheader(&h);
+    
+    if (status == 0){
         parse_error("Failed writing file %s.\n", filename);
         return 0;
     }
@@ -111,7 +123,7 @@ Var2Miff(Var *v)
 		return (NULL);
 	}
     
-    image = ToMiff(V_DATA(v), x, y, z);
+    image = iom_ToMiff(V_DATA(v), x, y, z);
 
     return image;
 }

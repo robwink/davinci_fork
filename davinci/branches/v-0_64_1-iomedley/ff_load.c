@@ -179,19 +179,19 @@ ff_load(vfuncptr func, Var * arg)
         if (is_compressed(fp))
             fp = uncompress(fp, fname);
 
-        if (input == NULL)    input = LoadSpecpr(fp, filename, record);
-        if (input == NULL)    input = LoadVicar(fp, filename, &h);
-        if (input == NULL)    input = LoadISIS(fp, filename, &h);
-        if (input == NULL)    input = LoadGRD(fp, filename, &h);
-        if (input == NULL)    input = LoadPNM(fp, filename, &h);
-        if (input == NULL)    input = Load_imath(fp, filename, &h);
-        if (input == NULL)    input = LoadGOES(fp, filename, &h);
-        if (input == NULL)    input = LoadAVIRIS(fp, filename, &h);
+        if (input == NULL)    input = LoadSpecpr(fp, fname, record);
+        if (input == NULL)    input = LoadVicar(fp, fname, &h);
+        if (input == NULL)    input = LoadISIS(fp, fname, &h);
+        if (input == NULL)    input = LoadGRD(fp, fname, &h);
+        if (input == NULL)    input = LoadPNM(fp, fname, &h);
+        if (input == NULL)    input = Load_imath(fp, fname, &h);
+        if (input == NULL)    input = LoadGOES(fp, fname, &h);
+        if (input == NULL)    input = LoadAVIRIS(fp, fname, &h);
 
         fclose(fp);	/* These others open their own files */
 		
 #ifdef HAVE_LIBHDF5
-	  	  if (input == NULL)    input = LoadHDF5(filename);
+	  	  if (input == NULL)    input = LoadHDF5(fname);
 #endif
 
 #ifdef LITTLE_E
@@ -200,7 +200,7 @@ ff_load(vfuncptr func, Var * arg)
 #endif
 
 #ifdef HAVE_LIBMAGICK
-		if (input == NULL)    input = LoadGFX_Image(filename);
+		if (input == NULL)    input = LoadGFX_Image(fname);
 #endif
 
         if (input == NULL) {

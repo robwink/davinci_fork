@@ -66,7 +66,8 @@ OBJ=p.o pp.o symbol.o \
 	io_pds.o io_hdf.o ff_pbm.o ff_meta.o $(MODULE_SUPP_OBJS) \
 	dvio.o dvio_aviris.o dvio_goes.o dvio_grd.o dvio_imath.o \
 	dvio_isis.o dvio_magic.o dvio_pnm.o dvio_vicar.o \
-	ff_load2.o
+	dvio_raw.o dvio_ers.o \
+	ff_load2.o ff_write2.o
 
 
 all:	 davinci gplot
