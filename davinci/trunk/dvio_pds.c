@@ -1378,7 +1378,7 @@ ProcessIntoLabel(FILE *fp,int record_bytes, Var *v, int depth, int *label_ptrs, 
 						break;
 
 				case DOUBLE:
-						fprintf(fp,"%s%s = %12.6lf\r\n",inset,tmpname,(*((double *)V_DATA(data))));
+						fprintf(fp,"%s%s = %.10g\r\n",inset,tmpname,(*((double *)V_DATA(data))));
 						break;
 				}/*Switch*/
 
