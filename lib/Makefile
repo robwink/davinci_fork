@@ -15,7 +15,7 @@ INSTALL_DATA = ${INSTALL} -m 644
 
 CC     = gcc
 DEFS   = -I/usr/openwin/include -DHAVE_CONFIG_H 
-LIBS   = -L/usr/openwin/lib -lplplotFX -lMagick -ltiff -lproj -lreadline -ltermcap -ljpeg -lmsss_vis -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -ldl
+LIBS   = -L/usr/openwin/lib -lplplotFX -lMagick -ltiff -lproj -ltermcap -ljpeg -lmsss_vis -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -lreadline -L/opt/local/src/ImageMagick-4.2.9/magick -lMagick -ltiff -ljpeg -lpng -ldpstk -ldps -lXext -lXt -lX11 -lsocket -lnsl -lz -lm -ldl
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
