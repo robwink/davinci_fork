@@ -685,7 +685,6 @@ do_help(char *input)
 	boolean more_help;
 	boolean only;		/* TRUE if only printing subtopics */
 	int subtopics;		/* 0 if no subtopics for this topic */
-	int start;		/* starting token of help string */
 	char *help_ptr;		/* name of help file */
 	char *input_line;
 

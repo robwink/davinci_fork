@@ -316,11 +316,6 @@ process_streams(void)
     pp_line = 0;
 }
 
-void
-parse_stream(FILE *fp)
-{
-}
-
 Var *curnode;
 void *parent_buffer;
 

@@ -65,7 +65,7 @@ ff_load(vfuncptr func, Var * arg)
 {
     int record = -1;
     FILE *fp = NULL;
-    Var *v, *e, *input = NULL;
+    Var  *input = NULL;
     char *filename = NULL;
     char *p, *fname;
 	struct _iheader h;

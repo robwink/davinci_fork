@@ -1200,7 +1200,7 @@ char *OdlGetObjDescClassName (OBJDESC *object)
 /*                                                                      */
 /*  Component:                                                          */
 /*                                                                      */
-/*      OdlGetObjDescChildCount 
+/*      OdlGetObjDescChildCount                                         */
 /*                                                                      */
 /*  Author:                                                             */
 /*                                                                      */
@@ -1742,7 +1742,7 @@ KEYWORD *OdlPasteKwd (KEYWORD *keyword, OBJDESC *object)
 /*                                                                      */
 /*  Component:                                                          */
 /*                                                                      */
-/*      OdlPasteKwdBefore 
+/*      OdlPasteKwdBefore                                               */
 /*                                                                      */
 /*  Author:                                                             */
 /*                                                                      */
@@ -2711,7 +2711,6 @@ FILE *OdlOpenMessageFile (char *message_fname, FILE *message_fptr)
 #endif
 {
     FILE *fptr = {stdout};
-    char *c = message_fname;
 
     if (message_fptr != NULL)
         fptr = message_fptr;

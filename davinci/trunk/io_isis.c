@@ -45,7 +45,6 @@ GetISISHeader(FILE *fp, char *filename, struct _iheader *h, OBJDESC **r_obj)
     OBJDESC * ob, *qube, *image;
     KEYWORD * key;
     int rlen;
-    char        buf[256];
     int scope = ODL_THIS_OBJECT;
     char        *ptr, p1[16], p2[16],p3[16];
     int org, format, size[3];
@@ -375,7 +374,6 @@ LoadISIS(FILE *fp, char *filename, struct _iheader *s)
     Var *v;
     char hbuf[HBUFSIZE];
     void *data;
-    int vax = 0;
 	int i,j;
 
     if (is_ISIS(fp) == 0) return(NULL);
@@ -716,8 +714,6 @@ void * read_qube_suffix(int fd, struct _iheader *h,
     int dsize;
     int i, x, y, z;
     int c_bytes;
-    int dim[3];                 /* dimension of output data */
-    int d[3];                   /* total dimension of file */
     int plane;
     int count;
     int err;
@@ -880,7 +876,7 @@ void *RePackData(void *data, int file_bytes, int data_type,int data_chunk)
 	int data_bytes=NBYTES(data_type);
  	int data_size=(data_chunk/file_bytes);
  	void *p_data;
-        int i,j,k,l;
+        int i,j,l;
 
 	if ((p_data=malloc(data_size*data_bytes))==NULL){
 		fprintf(stderr, "Unable to allocate memory.\n");
@@ -961,8 +957,7 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
     FILE *fp;
     int suffix[3] = {0, 0, 0};
     int suffix_bytes;
-    int sfx, n, i, j;
-    char *which_qube = NULL;
+    int n, i, j;
     void *data;
     char *isisfile;
     char *name;
@@ -979,7 +974,7 @@ Var * ff_read_suffix_plane(vfuncptr func, Var * arg)
     char suffix_item_type[80];
 
     int ac;
-    Var **av, *v;
+    Var **av;
     Alist alist[4];
 
     alist[0] = make_alist("filename", ID_STRING, NULL, &isisfile);

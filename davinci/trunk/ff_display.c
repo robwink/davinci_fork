@@ -7,7 +7,7 @@ ff_display(vfuncptr func, Var *arg)
     Var *object, *e;
     FILE *fp;
     char *fname;
-    int i,j,k,count;
+    int i,j,count;
     int bands;
     char buf[256];
     int max,r,g,b;
