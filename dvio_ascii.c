@@ -21,7 +21,11 @@ WriteAscii(Var *s, FILE *fp, char *filename)
         }
     }
 
-	if (V_TYPE(s)==ID_TEXT){
+	if (V_TYPE(s)==ID_STRING) {
+		fwrite(V_STRING(s), strlen(V_STRING(s)), 1, fp);
+		fclose(fp);
+		return(1);
+	} else if (V_TYPE(s)==ID_TEXT){
 		char cr='\n';
 		for (i=0;i<V_TEXT(s).Row;i++){
 			fwrite(V_TEXT(s).text[i],sizeof(char),strlen(V_TEXT(s).text[i]),fp);

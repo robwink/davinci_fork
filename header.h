@@ -31,13 +31,13 @@ typedef unsigned long ulong;
 #include <sys/mman.h>
 #endif
 
-
 enum _external_format {
     INVALID_EFORMAT = -1,
     CHARACTER = 1,
     MSB_INTEGER, MSB_UNSIGNED_INTEGER, 
     IEEE_REAL, ASCII_INTEGER, ASCII_REAL,
-	BYTE_OFFSET, MSB_BIT_FIELD
+    BYTE_OFFSET, MSB_BIT_FIELD, LSB_BIT_FIELD,
+	LSB_INTEGER, LSB_UNSIGNED_INTEGER, PC_REAL
 };
 
 enum _internal_format {
