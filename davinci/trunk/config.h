@@ -22,14 +22,23 @@
 /* Define if your <sys/time.h> declares struct tm.  */
 /* #undef TM_IN_SYS_TIME */
 
+/*Define if you have module library*/
+#define BUILD_MODULE_SUPPORT 1
+
+/*Define if you have projection library libproj*/
+#define HAVE_LIBPROJ 1
+
 /*Define if you have Xm library*/
 #define HAVE_LIBXM 1
 
-/*Define if you have the PlPlot library
+/*Define if you have the PlPlot library */
 #define HAVE_PLPLOT 1
 
 /*Define if you have plplotFX library*/
 #define INCLUDE_API 1
+
+/*Define if you have use hpux shl library*/
+/* #undef USE_HPUX_SHL */
 
 /*Define if you have xrt3d library*/
 /* #undef XRT_ENABLED */
@@ -157,6 +166,9 @@
 /* Define if you have the Xt library (-lXt).  */
 #define HAVE_LIBXT 1
 
+/* Define if you have the curses library (-lcurses).  */
+/* #undef HAVE_LIBCURSES */
+
 /* Define if you have the hdf5 library (-lhdf5).  */
 #define HAVE_LIBHDF5 1
 
@@ -168,9 +180,6 @@
 
 /* Define if you have the msss_vis library (-lmsss_vis).  */
 #define HAVE_LIBMSSS_VIS 1
-
-/* Define if you have the proj library (-lproj).  */
-#define HAVE_LIBPROJ 1
 
 /* Define if you have the readline library (-lreadline).  */
 #define HAVE_LIBREADLINE 1
