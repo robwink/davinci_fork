@@ -78,3 +78,5 @@ libtool
 stamp-h
 stamp-h.in
 stamp-h1
+.libs
+autom4te.cache

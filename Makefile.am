@@ -1,9 +1,14 @@
-bin_PROGRAMS = davinci
+## Makefile.am
+##
+## Jim Stewart
+## 20 Nov 2003
+##
+## Used by automake and autoconf to build a Makefile.
+
+## FIX: put config.h.in, configure.ac, Makefile.am somewhere so make dist works?
 
 if MODULE_SUPPORT
-  noinst_LIBRARIES = libmodsupp.a
-  libmodsupp_a_SOURCES = ff_modules.c module_io.c io_loadmod.c
-  MY_MODULE_LDADD = libmodsupp.a
+  MY_MODULES_LIB = libmodsupp.a
   MY_MODULES_SUBDIR = modules
 endif
 
@@ -23,7 +28,15 @@ endif
 
 SUBDIRS = $(MY_READLINE_SUBDIR) $(MY_IOMEDLEY_SUBDIR) $(MY_VICAR_SUBDIR) $(MY_MODULES_SUBDIR) libltdl
 
-davinci_LDADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULE_LDADD)
+bin_PROGRAMS = davinci
+
+BUILT_SOURCES = config.h
+
+noinst_LIBRARIES = $(MY_MODULES_LIB)
+
+libmodsupp_a_SOURCES = ff_modules.c module_io.c io_loadmod.c
+
+davinci_LDADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULES_LIB)
 davinci_LDFLAGS = -export-dynamic
 
 davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
@@ -54,4 +67,10 @@ davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	system.c tools.c \
 	ufunc.c util.c \
 	x.c xrt_print_3d.c \
-	lexer.c parser.c
+	XformTable.h darray.h fit.h trigtbl.h api.h dos.h func.h \
+	products.h ufunc.h api_extern_defs.h dvio.h header.h \
+	proto.h version.h apidef.h dvio_specpr.h help.h rfunc.h \
+	xrt_print_3d.h avl.h endian_norm.h io_loadmod.h scope.h \
+	build.h ff.h isis_obj.h system.h ff_modules.h module_io.h \
+	toolbox.h configwin.h fft.h motif_tools.h tools.h \
+	lexer.c parser.c parser.h y_tab.h
