@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.56fe";
+char *version = "@(#) daVinci Version #0.56f";
 
 /*
 Version 0.56f: Tue Apr 11 19:37:10 MST 2000
