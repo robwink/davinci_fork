@@ -1,3 +1,4 @@
+#include <time.h>
 #include <setjmp.h>
 #include "parser.h"
 
@@ -785,11 +786,18 @@ log_time()
 {
     time_t t;
     char *uname;
+    char tbuf[30];
     if (lfile) {
         t = time(0);
-        uname = getenv("USER");
+        /* eandres: This really shouldn't be a problem, but it shouldn't be a crash, either. */
+        if ((uname = getenv("USER")) == NULL)
+              strcpy(uname, "<UNKNOWN>");
+        /* eandres: ctime() seems to return invalid pointers on x86_64 systems.
+         * ctime_r with a provided buffer fills the buffer correctly, but still
+         * returns an invalid pointer. */
+        ctime_r(&t, tbuf);
         fprintf(lfile, "###################################################\n");
-        fprintf(lfile, "# User: %8.8s    Date: %26.26s", uname, ctime(&t));
+        fprintf(lfile, "# User: %8.8s    Date: %26.26s", uname, tbuf);
         fprintf(lfile, "###################################################\n");
     }
 }
