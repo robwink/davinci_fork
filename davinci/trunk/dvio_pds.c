@@ -2226,10 +2226,19 @@ char *history_parse_buffer(FILE * in)
     return (TheString);
 }
 
+/*
+** history_remove_isis_indents - removes the history-indent
+** marks from ISIS history objects. It removes these indents
+** blindly.
+** Returned history is new memory block - it is the
+** caller's responsibility to free() it.
+*/
 static char *
 history_remove_isis_indents(const char *history)
 {
     char *src_hist = strdup(history);
+	int   src_hist_len = strlen(history);
+	char *tgt_hist = NULL;
     char *line, **lines;
     char *p;
     LIST *lines_list;
@@ -2264,16 +2273,17 @@ history_remove_isis_indents(const char *history)
 
     regfree(&indent_regex);
 
-    strcpy(history, "");
+	tgt_hist = (char *)calloc(sizeof(char), src_hist_len+10);
+    strcpy(tgt_hist, "");
     for(i = 0; i < n; i++){
-        if (i > 0){ strcat(history, "\n"); }
-        strcat(history, lines[i]);
+        if (i > 0){ strcat(tgt_hist, "\n"); }
+        strcat(tgt_hist, lines[i]);
     }
 
     list_free(lines_list);
     free(src_hist);
     
-	return history;
+	return tgt_hist;
 }
 
 int rf_HISTORY(char *fn, Var * ob, char *val, int dptr)
@@ -2285,7 +2295,7 @@ int rf_HISTORY(char *fn, Var * ob, char *val, int dptr)
     int size = 0;
     FILE *in;
     Var *data = new_struct(0);
-    char *history;
+    char *history, *p;
     OBJDESC *top;
 
 
@@ -2302,7 +2312,12 @@ int rf_HISTORY(char *fn, Var * ob, char *val, int dptr)
     fclose(in);
 
     /* Assuming ISIS history object: remove any indent marks */
-    history_remove_isis_indents(history);
+    p = history_remove_isis_indents(history);
+	if (p != NULL){
+		/* replace history text with history-text-without-indent-marks */
+		free(history);
+		history = p;
+	}
 
 /*Call the OdlParseLabelString fucntion and make it an ODL object*/
     top =

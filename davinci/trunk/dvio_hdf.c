@@ -212,7 +212,7 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
     int var_type;
     hsize_t datasize[3], maxsize[3];
     H5T_class_t classtype;
-    Var *v;
+    Var *v = NULL;
     void *databuf, *databuf2;
     int Lines=1;
 	extern int VERBOSE;
