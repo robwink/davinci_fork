@@ -24,7 +24,7 @@ XRTLIBS =
 
 CC     = gcc
 DEFS   = -DHAVE_CONFIG_H -Ilib
-LIBS   = $(READLINE_LIB) -lplplotFX $(XLIBS) -lMagick -ltiff -lproj -lz -lreadline -ltermcap -ljpeg -lusds -lhdf5 -lXm -lXext -lXt -lX11 -lm 
+LIBS   = $(READLINE_LIB) $(XLIBS) -lplplotFX -lMagick -ltiff -lproj -lz -lreadline -ltermcap -ljpeg -lusds -lhdf5 -lXm -lXext -lXt -lX11 -lm 
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
@@ -209,6 +209,5 @@ apifunc.o: parser.h config.h system.h ufunc.h scope.h func.h api.h apidef.h
 ff_pca.o: ff_pca.c parser.h config.h system.h ufunc.h scope.h func.h 
 io_pds.o: parser.h config.h system.h io_lablib3.h
 ff_loadvan.o: ff_loadvan.c parser.h config.h system.h ufunc.h scope.h func.h 
-io_pds.o: parser.h config.h system.h header.h io_lablib3.h
-header.o: header.h tools.h parser.h config.h system.h io_lablib3.h
-tools.o: tools.h 
+header.o:  header.h tools.h parser.h config.h system.h io_lablib3.h
+tools.o: tools.h
