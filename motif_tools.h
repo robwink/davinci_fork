@@ -89,7 +89,7 @@ typedef struct _MenuItem {
 	String		name;
 	String		label;
 	WidgetClass	*w_class;
-	void		(*callback)();
+	void		(*callback)(_WidgetRec *, void *, void *);
 	XtPointer	data;
 	int			toggle_button_type;		/* XmRADIOBUTTON or XmCHECKBUTTON */
 	struct _MenuItem *subitems;			/* pullright menu items, if not NULL */
@@ -104,7 +104,7 @@ typedef struct _MenuOptionItem {
 typedef struct {
 	String		name;
 	String		label;
-	void		(*callback)();
+	void		(*callback)(_WidgetRec *, void *, void *);
 	XtPointer	data;
 	Boolean		set;
 } ButtonItem;
@@ -112,7 +112,7 @@ typedef struct {
 typedef struct {
 	String		name;
 	String		label;
-	void		(*callback)();
+	void		(*callback)(_WidgetRec *, void *, void *);
 	XtPointer	data;
 	int			length;
 	String		value;
@@ -127,8 +127,8 @@ typedef struct {
 typedef struct {
 	String		name;
 	String		label;
-	void		(*drag_callback)();
-	void		(*value_callback)();
+	void		(*drag_callback)(_WidgetRec *, void *, void *);
+	void		(*value_callback)(_WidgetRec *, void *, void *);
 	XtPointer	data;
 	int			min;
 	int			max;
@@ -140,11 +140,11 @@ typedef struct {
 	String		cancel_label;		/* NULL = "Cancel" */
 	String		help_label;			/* NULL = "Help" */
 	String		dir_mask;
-	void		(*ok_callback)();
+	void		(*ok_callback)(_WidgetRec *, void *, void *);
 	XtPointer	ok_data;
-	void		(*cancel_callback)();
+	void		(*cancel_callback)(_WidgetRec *, void *, void *);
 	XtPointer	cancel_data;
-	void		(*help_callback)();
+	void		(*help_callback)(_WidgetRec *, void *, void *);
 	XtPointer	help_data;
 } FileSelectionData;
 
@@ -172,7 +172,7 @@ typedef Widget (*MtCreatePopupChildProc)(
 #define Datatype int
 #endif
 
-typedef Widget (*WorkAreaFunc)();
+typedef Widget (*WorkAreaFunc)(...);
 
 #if defined(__cplusplus)
 extern "C" {
