@@ -260,6 +260,7 @@ enum {
 #define GetX(s)	        GetSamples(V_SIZE(s), V_ORG(s))
 #define GetY(s)		GetLines(V_SIZE(s), V_ORG(s))
 #define GetZ(s)		GetBands(V_SIZE(s), V_ORG(s))
+#define GetNbytes(s)   NBYTES(V_FORMAT(s))
 
 #define saturate(v,lo,hi)	((v) > (lo) ? ((v) < (hi) ? (v) : (hi)) : (lo))
 #define saturate_byte(v)	saturate(v,0,255)

@@ -422,3 +422,4 @@ Var * ff_length(vfuncptr func, Var * arg);
 
 Var *	ff_GSE_VIS_downshift(vfuncptr func, Var * arg);
 Var *	ff_GSE_VIS_upshift(vfuncptr func, Var * arg);
+Var * write_isis_planes(vfuncptr func, Var * arg);
