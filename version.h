@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.99a";
+char *version = "@(#) daVinci Version #0.99d";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,9 @@ char *version = "@(#) daVinci Version #0.99a";
 #include "build.h"
 
 /*
+Version 0.99d: Wed Jun 26 17:33:23 MST 2002
+	+ merged everything together
+
 Version 0.99a: Wed Jun 26 17:33:23 MST 2002
 	+ geom_deghost
 
