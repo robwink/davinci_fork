@@ -8,8 +8,6 @@
 
 #include "io_specpr.h"
 
-char *strndup(const char *, int);
-
 char *
 decode_time(int s,char *buf)
 {

@@ -22,4 +22,3 @@ struct Args_registration {
 
 Var * dispatch_rfunc(ArgsRegister *r, Var *arg) ;
 void * MakeArgs(ArgsRegister *r, Var *arg);
-Var *rf_cat(char *name, void *vargs);

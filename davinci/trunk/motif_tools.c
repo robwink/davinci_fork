@@ -263,7 +263,7 @@ MtCreatePopupShell(Widget parent, MtCreatePopupChildProc create_proc,
 typedef struct {
     int		min, max;
     Widget	container, text, up_arrow, down_arrow;
-    void	(*callback)(...);
+    void	(*callback)();
 } Counter;
 
 /*
@@ -2921,7 +2921,11 @@ MtSeedRandom()
 #endif
 }
 
+#ifdef __cplusplus
     extern	"C" double drand48();
+#else
+    extern	double drand48();
+#endif
 /*
  *  Return a random integer in the range [a, b).
  *  NOTE: drand48() returns a random value in

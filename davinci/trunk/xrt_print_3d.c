@@ -760,7 +760,7 @@ print_reset()
     if (print_format != PRINT_POSTSCRIPT)		{
         SetRadioSensitive(dest_radio, FALSE);
     }
-    set_dest((enum PrintTo)print_dest);
+    set_dest((PrintTo)print_dest);
 }
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

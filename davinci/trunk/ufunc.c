@@ -11,8 +11,6 @@ int nufunc = 0;
 int ufsize = 16;
 extern int pp_line;
 
-char *strndup(const char *, int);
-
 UFUNC *
 locate_ufunc(char *name) 
 {
