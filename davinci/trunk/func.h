@@ -1,3 +1,4 @@
+//#include "config.h"
 #ifdef __cplusplus
 extern "C" char *readline(char *);
 extern "C" void *add_history(char *);
@@ -128,6 +129,9 @@ Var *LoadPNM(FILE *, char *, struct _iheader *);
 Var *LoadGOES (FILE *, char *, struct _iheader *);
 Var *LoadAVIRIS (FILE *, char *, struct _iheader *);
 Var *Load_imath (FILE *, char *, struct _iheader *);
+#ifdef HAVE_LIBMAGICK
+Var *LoadGFX_Image(char *filename);
+#endif
 int LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var);
 
 int WriteGRD(Var *, FILE *, char *);
@@ -139,7 +143,9 @@ int WriteVicar(Var *, FILE *, char *);
 int WriteAscii(Var *, FILE *, char *);
 int WriteERS(Var *, FILE *, char *);
 int WriteIMath(Var *s, FILE *fp, char *filename);
-
+#ifdef HAVE_LIBMAGICK
+void iriieGFX_Image(Var *ob,char *filename,char *GFX_type);
+#endif
 int is_AVIRIS(FILE *);
 int is_GRD(FILE *);
 int is_Vicar(FILE *);
@@ -264,6 +270,7 @@ Var *ff_hsv2rgb(vfuncptr func, Var *arg);
 Var *ff_resize(vfuncptr func, Var *arg);
 
 Var *ff_isis_summary(vfuncptr func, Var *arg);
+Var *ff_read_suffix_plane(vfuncptr func, Var * arg);
 Var *ff_fork(vfuncptr func, Var *arg);
 Var *ff_xrt3d(vfuncptr func, Var *arg);
 Var *ff_fft(vfuncptr func, Var *arg);
@@ -273,7 +280,9 @@ Var *ff_realfft3(vfuncptr func, Var *arg);
 Var *ff_minvert(vfuncptr func, Var *arg);
 Var *ff_dct(vfuncptr func, Var *arg);
 Var *ff_entropy(vfuncptr func, Var *arg);
+#ifdef HAVE_LIBPROJ
 Var *ff_projection(vfuncptr func, Var *arg);
+#endif
 Var *ff_self_convolve(vfuncptr func, Var *arg);
 Var *ff_convolve(vfuncptr func, Var *arg);
 Var *ff_convolve2(vfuncptr func, Var *arg);
