@@ -176,7 +176,23 @@ parse_args(int ac, Var **av, Alist *alist)
             p = (alist[j].value);
             *p = q;
             alist[j].filled = 1;
-        }
+        } else if (alist[j].type == ID_UNK) {
+            Var **vptr;
+            if ((e = eval(v)) == NULL) {
+                parse_error("%s: Variable not found: %s", fname, V_NAME(v));
+                return(1);
+            }
+			v = e;
+            if (V_TYPE(v) != ID_STRING) {
+                parse_error(
+                    "Illegal argument to function %s(), expected STRING", 
+                    fname);
+                return(1);
+            }
+            vptr = (alist[j].value);
+            *vptr = v;
+            alist[j].filled = 1;
+		}
     }
     return(0);
 }

@@ -23,7 +23,7 @@
 /* #undef TM_IN_SYS_TIME */
 
 /* Define if you have the basename function.  */
-#define HAVE_BASENAME 1
+/* #undef HAVE_BASENAME */
 
 /* Define if you have the bcmp function.  */
 #define HAVE_BCMP 1
@@ -35,7 +35,7 @@
 #define HAVE_BZERO 1
 
 /* Define if you have the dirname function.  */
-#define HAVE_DIRNAME 1
+/* #undef HAVE_DIRNAME */
 
 /* Define if you have the getdtablesize function.  */
 #define HAVE_GETDTABLESIZE 1

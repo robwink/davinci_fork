@@ -258,11 +258,19 @@ ff_convolve(vfuncptr func, Var * arg)
 	kernel_z_center = kernel_z/2;
 
 	dsize = V_DSIZE(obj);
-	data = calloc(dsize, sizeof(float));
-	wt = calloc(dsize, sizeof(int));
+	if ((data = calloc(dsize, sizeof(float))) == NULL) {
+		parse_error("Unable to allocate memory");
+		return(NULL);
+	}
+	if ((wt = calloc(dsize, sizeof(int))) == NULL) {
+		parse_error("Unable to allocate memory");
+		return(NULL);
+	}
 
 	for (i = 0 ; i < dsize ; i++) {
 		xpos(i, obj,&x, &y, &z);		/* compute current x,y,z */
+		fprintf(stderr, "Convolve: %d %d %d\r", x, y,z);
+
 		for (a = 0 ; a < kernel_x ; a++) {
 			x_pos = x + a - kernel_x_center;
 			if (x_pos < 0 || x_pos >= obj_x) continue;
@@ -356,10 +364,15 @@ ff_convolve2(vfuncptr func, Var * arg)
 	 ** kpos[i] to this point's index
 	 **/
 	for (i = 0 ; i < dsize ; i++) {
+		fprintf(stderr, "Convolve %d\n", i);
 		for (j = 0 ; j < V_DSIZE(kernel) ; j++) {
 			data[i] += extract_float(kernel,j)*extract_float(obj, i+kpos[j]);
+			fprintf(stderr, "    %d\r", j);
 		}
+
 	}
+	if (VERBOSE) printf("\n");
+
 	return(newVal(V_ORG(obj), 
 		V_SIZE(obj)[0],
 		V_SIZE(obj)[1],
