@@ -14,7 +14,7 @@ new_struct(int ac)
 {
     Var *o = newVar();
 
-	V_TYPE(o) = ID_STRUCT;
+    V_TYPE(o) = ID_STRUCT;
     V_STRUCT(o) = Narray_create(max(ac, 1));
 
     return(o);
@@ -69,7 +69,7 @@ void
 add_struct(Var *s, char *name, Var *exp)
 {
     int i;
-    Var *old;
+    Var *old = NULL;
 
     if (Narray_add(V_STRUCT(s), name, exp) == -1) {
         /*
@@ -362,7 +362,7 @@ varray_subset(Var *v, Range *r)
             j = r->lo[0] + i *r->step[0];
             get_struct_element(v, i, NULL, &data);
             Narray_replace(V_STRUCT(s), j, data, (void **)&old);
-			if (old) free_var(old);
+            if (old) free_var(old);
         }
     }
     return(s);
@@ -484,6 +484,8 @@ duplicate_struct(Var *v)
 
     for (i = 0 ; i < count ; i++) {
         get_struct_element(v, i, &name, &data);
+		data = V_DUP(data);
+		mem_claim(data);
         add_struct(r, name, data);
     }
     return(r);
@@ -499,8 +501,8 @@ compare_struct(Var *a, Var *b)
 {
     int i;
     int count = get_struct_count(a);
-	char *name_a, *name_b;
-	Var *data_a, *data_b;
+    char *name_a, *name_b;
+    Var *data_a, *data_b;
 
     if (get_struct_count(b) != count) return(0);
     
@@ -524,4 +526,27 @@ int
 get_struct_count(Var *v) 
 {
     return(Narray_count(V_STRUCT(v)));
+}
+
+int
+get_struct_names(Var *v, char ***names, char *prefix) 
+{
+	Var *data;
+	char *name;
+	int len = (prefix != NULL ? strlen(prefix) : 0);
+	int n = get_struct_count(v);
+	char **p = calloc(n+1, sizeof(char **));
+	int count = 0;
+	int i;
+
+	for (i = 0 ; i < n ; i++) {
+		name = NULL;
+		get_struct_element(v, i, &name, &data);
+		if (name != NULL && (len == 0 || !strncmp(prefix, name, len))) {
+			p[count++] = strdup(name);
+		}
+	}
+	p[count++] = NULL;
+	*names = p;
+	return(count);
 }
