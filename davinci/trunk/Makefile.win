@@ -1,7 +1,7 @@
 CC=cl
-CPPFLAGS=-I. -Ilib -Iwin32 -Iiomedley
+CPPFLAGS=-Iwin32/hdf5/include -Iwin32/zlib -I. -Ilib -Iwin32 -Iiomedley
 CFLAGS=-Yd -nologo -ZI -GZ
-LDFLAGS=-libpath:win32 -libpath:iomedley
+LDFLAGS=-libpath:win32/hdf5/lib -libpath:win32/zlib -libpath:win32 -libpath:iomedley
 DEFS    = -DHAVE_CONFIG_H
 MAKE=nmake
 
@@ -11,7 +11,7 @@ MAKE=nmake
 #MOD_SUPP_LIB=modsupp.lib
 #MOD_SUPP_LIB_OBJS=error.obj ff_struct.obj darray.obj avl.obj shared_globals.obj
 
-LIBS   = hdf5.lib iomedley.lib 
+LIBS   = hdf5.lib zlib.lib iomedley.lib
 
 LIBIOMEDLEYDIR = iomedley
 LIBIOMEDLEY = $(LIBIOMEDLEYDIR)/iomedley.lib
