@@ -1,6 +1,11 @@
-char *version = "@(#) daVinci Version #0.57";
+char *version = "@(#) daVinci Version #0.57a";
 
 /*
+Version 0.57a Thu Jun  1 09:16:56 MST 2000
+	*Have made several modifications to io_themis to increase
+		it's robusticity for reading corrupted datasets.
+	*Have also added more informational output to io_themis
+
 Version 0.57: Thu Apr 20 15:00:49 MST 2000
 	* Modified structure subsetting to return the actual var, not a copy.
 	  This might have ramifications, but was necessary to make a.b.c work.
