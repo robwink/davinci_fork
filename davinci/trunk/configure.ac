@@ -55,13 +55,25 @@ LIBS="$X_PRE_LIBS $X_LIBS $X_EXTRA_LIBS $LIBS"
 dnl Check for Xt and X libraries
 dnl    We don't really care if any of these are found, we just want to know
 dnl    if they're NOT found
-have_xt=yes
-AC_CHECK_LIB(X11, XOpenDisplay,[LIBS="$LIBS -lX11"],[have_xt=no])
-AC_CHECK_LIB(Xt, XtToolkitInitialize,[LIBS="$LIBS -lXt"],[have_xt=no])
-AC_CHECK_HEADERS(X11/Intrinsic.h,[ /bin/true ],[have_xt=no])
-if test "x$have_xt" = "xyes"; then
+AC_CHECK_LIB(X11, XOpenDisplay)
+AC_CHECK_LIB(Xt, XtToolkitInitialize)
+AC_CHECK_HEADERS(X11/Intrinsic.h)
+
+if test "x$ac_cv_lib_X11_XOpenDisplay" = "xyes" -a \
+        "x$ac_cv_lib_Xt_XtToolkitInitialize" = "xyes" -a \
+        "x$ac_cv_header_X11_Intrinsic_h" = "xyes"; then
+	have_xt="yes"
 	AC_DEFINE(HAVE_XT, 1, [ headers and libraries for X11 and Xt ])
+	AC_CHECK_HEADERS(Xm/Xm.h)
+	AC_CHECK_LIB(Xm, XmCreateForm)
+	have_motif="no"
+	if test "x$ac_cv_header_Xm_Xm_h" = "xyes" -a \
+			"x$ac_cv_lib_Xm_XmCreateForm" = "xyes"; then
+		AC_DEFINE(HAVE_MOTIF, 1, [if all motif parts are present])
+		have_motif="yes";
+	fi
 fi
+AM_CONDITIONAL(HAVE_MOTIF, [test "x$have_motif" = "xyes"])
 
 dnl Check for miscellaneous libraries.
 AC_CHECK_LIB(m, sqrt,, [echo "ERROR: unable to locate libm"; exit 1])
@@ -79,6 +91,12 @@ dnl AC_CHECK_LIB(readline, rl_callback_handler_install)
 
 AC_CHECK_LIB(z, deflate)
 AC_CHECK_LIB(png, png_check_version)
+AC_CHECK_LIB(cfitsio, ffopen)
+
+if test "x$ac_cv_lib_cfitsio_ffopen" = "xyes"; then
+	have_cfitsio="yes"
+fi
+
 
 dnl Check for ImageMagic.
 AC_CHECK_LIB(Magick, GetImageInfo, [have_libmagick=yes],[have_libmagick=no])
@@ -189,14 +207,6 @@ if test "x$enable_iomedley" != "xno"; then
 fi
 AM_CONDITIONAL(LOCAL_IOMEDLEY, test x$local_iomedley = xyes)
 
-dnl Check for Motif 
-AC_CHECK_LIB(Xm, XmCreateForm, [have_motif=yes], [have_motif=no])
-AC_CHECK_HEADERS(Xm/Xm.h, , [have_motif=no])
-if test "x$have_xt" = "xyes" -a "x$have_motif" = "xyes"; then
-	AC_DEFINE(HAVE_MOTIF, 1, [if all motif parts are present])
-	have_motif=yes
-fi
-AM_CONDITIONAL(HAVE_MOTIF, [test "x$have_motif" = "xyes"])
 
 dnl Add module support.
 if test "x$enable_modules" != "xno"; then
@@ -267,3 +277,4 @@ PRINT_YES_NO "            HDF5" "$have_libhdf"
 PRINT_YES_NO "  Module Support" "$build_module_support"
 PRINT_YES_NO "GUI/Vicar Module" "$local_vicar"
 PRINT_YES_NO "         libisis" "$have_libisis"
+PRINT_YES_NO "            FITS" "$have_cfitsio"
