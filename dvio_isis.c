@@ -861,18 +861,22 @@ dv_read_qube_suffix(int fd,
 
 
     if (ordinate==2) {
-        plane=h->size[0]*h->size[1]*s_bytes;
-        dsize=plane;
-        offset1=plane_number*s_bytes*h->size[0]*h->size[1];
+        plane=h->size[0]*h->size[1]*s_bytes +
+                h->suffix[0]*h->size[1] +
+                h->suffix[1]*h->size[0] +
+                h->corner;
+        dsize=h->size[0]*h->size[1]*s_bytes;
+        offset1=plane_number*plane;
         offset2=0;
-        offset3=h->size[0]*s_bytes;
+        offset3=h->size[0]*s_bytes + h->suffix[0];
     }
 
     else if (ordinate==1) {
-        plane=h->size[0]*h->suffix[1];
+        plane=h->size[0]*h->suffix[1] +
+                (h->suffix[0]/s_bytes)*h->suffix[1];
         dsize=h->size[2]*h->size[0]*s_bytes;
         offset1=h->size[1]*h->size[0]*c_bytes+h->size[1]*h->suffix[0];
-        offset2=h->size[0]*s_bytes*plane_number;
+        offset2=(h->size[0]*s_bytes+h->suffix[0])*plane_number;
         offset3=0;
     }
 
@@ -910,8 +914,10 @@ dv_read_qube_suffix(int fd,
 
     for (z=h->s_lo[2];z<h->s_hi[2];z+=h->s_skip[2]){
         /*  printf("Z:=%d\n",z); */
-        lseek(fd,h->dptr+z*(h->size[0]*
-                            h->size[1]*c_bytes+
+        int zz;
+
+        if (z <= h->size[2]){ zz = z; } else { zz = h->size[2]-1; }
+        lseek(fd,h->dptr+zz*(h->size[0]*h->size[1]*c_bytes+
                             h->size[0]*h->suffix[1]+
                             h->size[1]*h->suffix[0]+h->corner)+
               offset1,0);
@@ -922,11 +928,13 @@ dv_read_qube_suffix(int fd,
             break;
         }
 
-        if (ordinate==2 && h->s_skip[0]==1 && h->s_skip[1]==1){
+        if (ordinate==2 && h->s_skip[0]==1 && h->s_skip[1]==1 &&
+            h->suffix[0] == 0 && h->suffix[1] == 0){
             memcpy((char *)data,(char *)p_data,plane);
         } else {
             for (y=h->s_lo[1];y<h->s_hi[1];y+=h->s_skip[1]){ 
-                if (ordinate==1 && h->s_skip[0]==1 && h->s_skip[2]==1){
+                if (ordinate==1 && h->s_skip[0]==1 && h->s_skip[2]==1 &&
+                    h->suffix[0] == 0){
                     memcpy((char *)data+count,
                            (char *)p_data+offset2,
                            h->size[0]*s_bytes);
