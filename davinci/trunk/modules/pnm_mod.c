@@ -27,6 +27,7 @@ static int fill_object_with_pad_color(int nx, int ny, int z,
 		                      Var* output, void* data, int color);
 static int map_image(int x, int y, int z, int left, int top, 
 		     Var* obj,Var* output, void* data);
+static int size_object(Var *output, int nx, int ny, int z);
 
 // Usage functions
 static void print_cut_usage(void);
@@ -445,9 +446,10 @@ Var *pnmpad(Var *obj, int color, int left, int right, int top, int bottom)
     V_FORMAT(output)  = V_FORMAT(obj);
     V_DATA(output)    = calloc(NBYTES(V_FORMAT(obj)), (nx * ny * z) ); 
     data              = calloc(NBYTES(V_FORMAT(obj)), (nx*ny*z));
-    V_SIZE(output)[0] = nx;
-    V_SIZE(output)[1] = ny;
-    V_SIZE(output)[2] = z;
+
+    // Size according to format
+    if (!size_object(output, nx, ny, z))
+    	    return(NULL);
 
     // Phase 1: Fill new object will PAD color
     if (!fill_object_with_pad_color(nx,ny,z,output,data,color))
@@ -513,9 +515,10 @@ static Var *scale_doit(Var* obj, int x, int y, int z, int newcols, int newrows)
     V_DATA(output) = calloc(GetNBytes(obj), (newcols * newrows * z) ); 
 
     V_DSIZE(output)     = (newcols * newrows * z);
-    V_SIZE(output)[0]   = newcols;
-    V_SIZE(output)[1]   = newrows;
-    V_SIZE(output)[2]   = z;
+
+    if (!size_object(output, newcols, newrows, z))
+	    return(NULL);
+
     V_ORDER(output)     = V_ORG(obj);
     V_FORMAT(output)    = V_FORMAT(obj);
 }
@@ -524,6 +527,10 @@ static int fill_object_with_pad_color(int nx, int ny, int z,
 		                      Var* output, void* data, int color)
 {
     int i,j,k,k1 = 0;
+
+    if (1 == color) // White
+	    color = 255;
+    // Else color is black and zero is fine
 
     for (i = 0; i < nx; i++)
     {
@@ -595,6 +602,32 @@ static int map_image(int x, int y, int z, int left, int top,
 		    }
     	        }
      	    }
+    }
+    return(1);
+}
+
+static int size_object(Var *output, int nx, int ny, int z)
+{
+    switch(V_ORG(output)) {
+	    case BSQ:
+		    V_SIZE(output)[0] = nx;
+		    V_SIZE(output)[1] = ny;
+		    V_SIZE(output)[2] = z;
+		    break;
+	    case BIP:
+		    V_SIZE(output)[0] = z;
+		    V_SIZE(output)[1] = nx;
+		    V_SIZE(output)[2] = ny;
+		    break;
+	    case BIL:
+		    V_SIZE(output)[0] = nx;
+		    V_SIZE(output)[1] = z;
+		    V_SIZE(output)[2] = ny;
+		    break;
+    	    default:
+		    printf("\n\nUnsupported format - not BSQ/BIP or BIL.\n\n");
+		    return(0);
+		    break;
     }
     return(1);
 }
