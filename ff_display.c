@@ -7,10 +7,10 @@ ff_display(vfuncptr func, Var *arg)
     Var *object, *e;
     FILE *fp;
     char *fname;
-    int i,j,count;
+    int i,j,k,count;
     int bands;
     char buf[256];
-    int max;
+    int max,r,g,b;
 
     struct keywords kw[] = {
 	{ "object", NULL },
@@ -51,8 +51,32 @@ ff_display(vfuncptr func, Var *arg)
 	return(NULL);
     }
 
+    if (bands == 3 && V_ORG(object) == BIP) {
+	fname = tempnam(NULL,NULL);
+	fp = fopen(fname, "w");
+	fprintf(fp, "P3\n%d %d\n",
+		GetSamples(V_SIZE(object), V_ORG(object)),
+		GetLines(V_SIZE(object), V_ORG(object)));
+	if (KwToInt("max",kw,&max) > 0) {
+	    fprintf(fp,"%d\n",max);
+	} else {
+	    fprintf(fp,"%d\n", (2 << (NBYTES(V_FORMAT(object))*8-1)));
+	}
+	count = 0;
+	for (i = 0 ; i < GetLines(V_SIZE(object), V_ORG(object)) ; i++) {
+	    for (j = 0 ; j < GetSamples(V_SIZE(object), V_ORG(object)) ; j++) {
+		r=extract_int(object, count);
+		g=extract_int(object, (count+1));
+		b=extract_int(object, (count+2));
+		fprintf(fp,"%d %d %d ",r,g,b);
+		count+=3;
+	    }
+	    fprintf(fp,"\n");
+	}
+	fclose(fp);
+    }
 
-    if (bands == 1) {
+    else if (bands == 1) {
 	fname = tempnam(NULL,NULL);
 	fp = fopen(fname, "w");
 	fprintf(fp, "P2\n%d %d\n",
