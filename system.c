@@ -275,13 +275,11 @@ basename (const char *name)
 {
   const char *base = name;
 
-  while (*name)
-    {
-      if (*name++ == '/')
-	{
-	  base = name;
-	}
-    }
+  while (*name) {
+      if (*name++ == '/') {
+		  base = name;
+	  }
+  }
   return (char *) base;
 }
 

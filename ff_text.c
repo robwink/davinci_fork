@@ -477,11 +477,16 @@ text_dirname(Var *ob1)
 
 
 
+/* This was badly written and wrong */
+/*
+** basename() can both modify its argument and return static memory.  
+** Be careful about return values.
+*/
 
 char *
 string_basename(Var *ob1, char *ext)
 {
-    char *s;
+    char *s, *q;
     char *tmp;
     int i;
     int len;
@@ -489,32 +494,17 @@ string_basename(Var *ob1, char *ext)
     if (V_STRING(ob1)==NULL)
         return(NULL);
 
-    len=i=strlen(V_STRING(ob1));
+	q = strdup(V_STRING(ob1));
+	s = basename(q);
 
-    while ((i--)>=0) {
-        if (V_STRING(ob1)[i]=='/'){
-            if ((i+1)==len){/*No name*/
-                s=(char *)calloc(1,1);
-                s[0]='\0';
-            }
-            else {
-                tmp=strdup((V_STRING(ob1)+i+1));
-                /*Now look for the extention */
-                if (ext != NULL){
-                    char *end=strstr(tmp,ext);
-                    if (end!=NULL)	
-                        if (strlen(end)==strlen(ext))
-                            tmp[strlen(tmp)-strlen(ext)]='\0';
-                }
+	if (ext) {
+		if (!strcmp(s+strlen(s)-strlen(ext), ext)) {
+			*(s + strlen(s) - strlen(ext)) = '\0';
+		}
+	}
 
-                s=tmp;
-            }
-            return (s);
-        }
-    }
-
-    s=strdup((V_STRING(ob1)));
-
+	s = strdup(s);
+	free(q);
     return(s);
 }
 
@@ -544,7 +534,7 @@ ff_filename(vfuncptr func, Var * arg)
     Var *ob1;
     int ac;
     Var **av;
-    Var *S;
+    Var *S = NULL;
     char *ext=NULL;
     int filefunc;
     Alist alist[3];
@@ -560,49 +550,35 @@ ff_filename(vfuncptr func, Var * arg)
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
-    if (ob1==NULL){
+    if (ob1==NULL) {
         return(NULL);
     }
 
 
-    if (V_TYPE(ob1)==ID_STRING){
-        S=newVar();
-        V_TYPE(S)=ID_STRING;
+    if (V_TYPE(ob1)==ID_STRING) {
         if (filefunc==1){
-            V_STRING(S)=string_basename(ob1,ext);
-        }
-
-        else if (filefunc==2){
-            V_STRING(S)=string_dirname(ob1);
-        }
-
-        else {
+			S = newString(string_basename(ob1, ext));
+        } else if (filefunc==2){
+			S = newString(string_dirname(ob1));
+        } else {
             parse_error("Bad Functions");
             return(NULL);
         }
         return(S);
-    }
-	
-    else if (V_TYPE(ob1)==ID_TEXT){
+    } else if (V_TYPE(ob1)==ID_TEXT){
         if (filefunc==1){
             S=text_basename(ob1,ext);
-        }
-        else if (filefunc==2){
+        } else if (filefunc==2){
             S=text_dirname(ob1);
-        }
-
-        else {
+        } else {
             parse_error("Bad Functions");
             return(NULL);
         }
         return(S);
-    }
-
-    else {
+    } else {
         parse_error("Only STRING and TEXT types are allowed");
         return(NULL);
     }
-
 }
 
 

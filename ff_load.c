@@ -70,16 +70,19 @@ ff_load(vfuncptr func, Var * arg)
         if (input == NULL)    input = dv_LoadIMath(fp, fname, &h);
         if (input == NULL)    input = dv_LoadGOES(fp, fname, &h);
         if (input == NULL)    input = dv_LoadAVIRIS(fp, fname, &h);
-#ifdef HAVE_LIBMAGICK
-        if (input == NULL)    //input = dv_LoadGFX_Image(fp, fname, &h);
-	  input = dvReadImage(func, arg); // last gasp attempt.
-#endif /* HAVE_LIBMAGICK */
 
-        fclose(fp);	/* These others open their own files */
-		
 #ifdef HAVE_LIBHDF5
         if (input == NULL)    input = LoadHDF5(fname);
 #endif
+
+		/* Libmagic should always be the last chance */
+#ifdef HAVE_LIBMAGICK
+        if (input == NULL)
+	         input = dvReadImage(func, arg); // last gasp attempt.
+#endif /* HAVE_LIBMAGICK */
+
+        fclose(fp);
+		
 
         if (input == NULL) {
             sprintf(error_buf, "Unable to determine file type: %s", filename);
