@@ -831,6 +831,7 @@ init_history(char *fname)
 {
     char buf[256];
     FILE *fp;
+	int count = 0;
 
     /* JAS FIX: what's up with the two empty if/endif below? */
 #ifdef HAVE_LIBREADLINE

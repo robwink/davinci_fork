@@ -3,20 +3,20 @@
  **
  ** Darray * Darray_create( int size )
  **
- ** 	Create an array with an initial estimated size
+ **     Create an array with an initial estimated size
  **
  ** int Darray_add( array, int item )
  **
- ** 	Append item to array.  Returns item's index or -1 on error
+ **     Append item to array.  Returns item's index or -1 on error
  **
  ** int Darray_get( array, int index, void **item )
  **
- ** 	Get item at index from array.  Returns 1 on success.
+ **     Get item at index from array.  Returns 1 on success.
  **
  ** int Darray_replace( array, int index, void *new, void **old)
  **
- ** 	Replace item at index with new value.  Retrieves old value.
- ** 	Returns 1 on success.
+ **     Replace item at index with new value.  Retrieves old value.
+ **     Returns 1 on success.
  **
  ** void Darray_free( array, void (*function_pointer)()) 
  **
@@ -31,30 +31,30 @@
  **
  ** Narray * Narray_create(int size)
  **
- ** 	Create an associative array with an estimated size.
+ **     Create an associative array with an estimated size.
  **     It is ok to pass 0 for size.
  **
  ** int Narray_add(Narray *a, char *key, void *data)
  **
- ** 	Append data to the end of the array and add key to the lookup table.
- ** 	Returns the element's index in the array on success or -1 on error.
+ **     Append data to the end of the array and add key to the lookup table.
+ **     Returns the element's index in the array on success or -1 on error.
  **     Will fail if key already exists.
  **
  ** int Narray_find(Narray *a, char *key, void **data)
  **
- ** 	Find the element with associated key.  Get its data and
- ** 	return its index on success.  Ok to pass a NULL for data.
+ **     Find the element with associated key.  Get its data and
+ **     return its index on success.  Ok to pass a NULL for data.
  **     Fails if key doesn't exist.  Returns -1 on error.
  **
  ** int Narray_get(Narray *a, int index, char **key, void **data)
  **
- ** 	Get the key and data of the element at index.
+ **     Get the key and data of the element at index.
  **     Ok to pass either key or data as NULL.
- ** 	Returns 1 on success, -1 on error.
+ **     Returns 1 on success, -1 on error.
  **
  ** int Narray_count(Narray *a)
  **
- ** 	Returns number of elements in array, or -1 on error.
+ **     Returns number of elements in array, or -1 on error.
  **
  ** int Narray_replace(Narray *a, int i, void *new, void **old)
  **
@@ -86,7 +86,7 @@ Darray_create(int size)
 {
     Darray *d;
 
-    if (size <= 0) size = 16;		/* a reasonable default size */
+    if (size <= 0) size = 16;       /* a reasonable default size */
 
     d = (Darray *)calloc(1, sizeof(Darray));
     d->size = size;
@@ -104,17 +104,7 @@ Darray_create(int size)
 int 
 Darray_add(Darray *d, void *New)
 {
-	return(Darray_insert(d, New, -1));
-
-    if (d == NULL) return(-1);
-    
-    if (d->count >= d->size) {
-        d->size *= 2;
-        d->data = (void **)realloc(d->data, d->size * sizeof(void *));
-    }
-	d->data[d->count++] = New;
-
-    return(d->count-1);
+    return(Darray_insert(d, New, -1));
 }
 
 /*
@@ -126,20 +116,20 @@ Darray_add(Darray *d, void *New)
 int 
 Darray_insert(Darray *d, void *New, int pos)
 {
-	int i;
+    int i;
     if (d == NULL) return(-1);
     
     if (d->count >= d->size) {
         d->size *= 2;
         d->data = (void **)realloc(d->data, d->size * sizeof(void *));
     }
-	if (pos == -1) pos = d->count;
+    if (pos == -1) pos = d->count;
 
-	for (i = d->count ; i > pos ; i--) {
-		d->data[i] = d->data[i-1];
-	}
-	d->data[pos] = New;
-	d->count++;
+    for (i = d->count ; i > pos ; i--) {
+        d->data[i] = d->data[i-1];
+    }
+    d->data[pos] = New;
+    d->count++;
 
     return(pos);
 }
@@ -150,16 +140,16 @@ Darray_insert(Darray *d, void *New, int pos)
 void *
 Darray_remove(Darray *d, int i)
 {
-	void *el = NULL;
+    void *el = NULL;
 
-	if (d == NULL || i >= d->count || i < 0) return NULL;
+    if (d == NULL || i >= d->count || i < 0) return NULL;
 
-	el = d->data[i];
-	memmove(&d->data[i], &d->data[i+1], sizeof(char *) * (d->count - i - 1));
+    el = d->data[i];
+    memmove(&d->data[i], &d->data[i+1], sizeof(char *) * (d->count - i - 1));
 
-	d->count --;
+    d->count --;
 
-	return el;
+    return el;
 }
 
 /*
@@ -214,21 +204,21 @@ int Darray_count(const Darray *d)
 
 void Darray_release(Darray *d, void (*fptr)(void *)) 
 {
-	int i;
+    int i;
 
-	if (fptr) {
-		for (i = 0 ; i < d->count ; i++) {
-			if (d->data[i]) fptr(d->data[i]);
-		}
-	}
-	d->count =0;
+    if (fptr) {
+        for (i = 0 ; i < d->count ; i++) {
+            if (d->data[i]) fptr(d->data[i]);
+        }
+    }
+    d->count =0;
 }
 
 void Darray_free(Darray *d, void (*fptr)(void *)) 
 {
-	Darray_release(d, fptr);
-	free(d->data);
-	free(d);
+    Darray_release(d, fptr);
+    free(d->data);
+    free(d);
 }
 
 
@@ -265,9 +255,9 @@ Nnode_create(char *key, void *value)
 void
 Nnode_free(Nnode *a, void (*fptr)(void *))
 {
-	if (a->key) free(a->key);
-	if (fptr && a->value) fptr(a->value);
-	free(a);
+    if (a->key) free(a->key);
+    if (fptr && a->value) fptr(a->value);
+    free(a);
 }
 
 Narray *
@@ -297,7 +287,7 @@ Narray_add(Narray *a, char *key, void *data)
     char *r;
     Nnode *n;
 
-	return(Narray_insert(a, key, data, -1));
+    return(Narray_insert(a, key, data, -1));
 
     if (a == NULL) return(-1);
     /*
@@ -337,7 +327,7 @@ Narray_insert(Narray *a, char *key, void *data, int pos)
 {
     char *r;
     Nnode *n;
-	int i;
+    int i;
 
     if (a == NULL) return(-1);
     /*
@@ -359,12 +349,12 @@ Narray_insert(Narray *a, char *key, void *data, int pos)
     ** Add the node to the array, and update the indexes.
     */
     n->index = Darray_insert(a->data, n, pos);
-	pos = n->index;
+    pos = n->index;
 
-	for (i = pos+1 ; i < a->data->count; i++) {
-		n = (Nnode *)a->data->data[i];
-		n->index++;
-	}
+    for (i = pos+1 ; i < a->data->count; i++) {
+        n = (Nnode *)a->data->data[i];
+        n->index++;
+    }
 
     return(n->index);
 }
@@ -377,43 +367,43 @@ Narray_insert(Narray *a, char *key, void *data, int pos)
 void *
 Narray_delete(Narray *a, char *key)
 {
-	int i;
-	Nnode n;
-	Nnode *found, *node;
-	void *data;
+    int i;
+    Nnode n;
+    Nnode *found, *node;
+    void *data;
 
-	if (a == NULL) return NULL;
+    if (a == NULL) return NULL;
 
-	memset(&n, 0, sizeof(n));
-	n.key = key;
+    memset(&n, 0, sizeof(n));
+    n.key = key;
 
-	found = avl_find(a->tree, &n);
+    found = avl_find(a->tree, &n);
 
-	if (found){
+    if (found){
 
-		/* remove element from the linearly ordered array */
-		Darray_remove(a->data, found->index);
+        /* remove element from the linearly ordered array */
+        Darray_remove(a->data, found->index);
 
-		/*
-		** Re-index the nodes which have indices higher than
-		** found->index.
-		**
-		** Don't know of a better way as yet!
-		*/
+        /*
+        ** Re-index the nodes which have indices higher than
+        ** found->index.
+        **
+        ** Don't know of a better way as yet!
+        */
 
-		for(i = 0; i < a->data->count; i++){
-			node = (Nnode *)a->data->data[i];
-			if (node->index > found->index){
-				node->index --;
-			}
-		}
-		node = avl_delete(a->tree, found);
-		data = node->value;
-		Nnode_free(node, NULL);
-		return (data);
-	}
+        for(i = 0; i < a->data->count; i++){
+            node = (Nnode *)a->data->data[i];
+            if (node->index > found->index){
+                node->index --;
+            }
+        }
+        node = avl_delete(a->tree, found);
+        data = node->value;
+        Nnode_free(node, NULL);
+        return (data);
+    }
 
-	return NULL;
+    return NULL;
 }
 
 /*
@@ -423,35 +413,35 @@ Narray_delete(Narray *a, char *key)
 void *
 Narray_remove(Narray *a, int index)
 {
-	int i;
-	Nnode n;
-	Nnode *found, *node;
-	void *data;
+    int i;
+    Nnode n;
+    Nnode *found, *node;
+    void *data;
 
-	if (a == NULL) return NULL;
-	if (index > a->data->count) return(NULL);
+    if (a == NULL) return NULL;
+    if (index > a->data->count) return(NULL);
 
-	node = Darray_remove(a->data, index);
-	data = node->value;
+    node = Darray_remove(a->data, index);
+    data = node->value;
 
-	if (node->key != NULL) {
-		memset(&n, 0, sizeof(n));
-		n.key = node->key;
-		found = avl_find(a->tree, &n);
-		if (found){
-			node = avl_delete(a->tree, found);
-			Nnode_free(node, NULL);
-		}
-	}
+    if (node->key != NULL) {
+        memset(&n, 0, sizeof(n));
+        n.key = node->key;
+        found = avl_find(a->tree, &n);
+        if (found){
+            node = avl_delete(a->tree, found);
+            Nnode_free(node, NULL);
+        }
+    }
 
-	for(i = 0; i < a->data->count; i++){
-		node = (Nnode *)a->data->data[i];
-		if (node->index > index){
-			node->index--;
-		}
-	}
+    for(i = 0; i < a->data->count; i++){
+        node = (Nnode *)a->data->data[i];
+        if (node->index > index){
+            node->index--;
+        }
+    }
 
-	return (data);
+    return (data);
 }
 /*
 ** Return the array index of an element if it exists.
@@ -485,12 +475,12 @@ int
 Narray_replace(Narray *a, int i, void *New, void **old)
 {
     Nnode *n;
-	if (Darray_get(a->data, i, (void **)&n) == 1) {
-		*old = n->value;
-		n->value = New;
-		return(1);
-	}
-	return(-1);
+    if (Darray_get(a->data, i, (void **)&n) == 1) {
+        *old = n->value;
+        n->value = New;
+        return(1);
+    }
+    return(-1);
 }
 
 /*
@@ -520,17 +510,17 @@ Narray_count(const Narray *a)
 void
 Narray_free(Narray *a, void (*fptr)(void *))
 {
-	int i;
-	int count = Darray_count(a->data);
-	Nnode *n;
+    int i;
+    int count = Darray_count(a->data);
+    Nnode *n;
 
-	avl_destroy(a->tree, NULL);
+    avl_destroy(a->tree, NULL);
 
-	for (i = 0 ; i < count ; i++) {
-		Darray_get(a->data, i, (void **)&n);
-		Nnode_free(n, fptr);
-	}
-	Darray_free(a->data, NULL);
+    for (i = 0 ; i < count ; i++) {
+        Darray_get(a->data, i, (void **)&n);
+        Nnode_free(n, fptr);
+    }
+    Darray_free(a->data, NULL);
 }
 
 #ifdef TEST

@@ -69,7 +69,8 @@ davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	xrt_print_3d.h avl.h endian_norm.h io_loadmod.h scope.h \
 	ff.h isis_obj.h system.h ff_modules.h module_io.h \
 	toolbox.h configwin.h fft.h motif_tools.h tools.h \
-	lexer.c parser.c parser.h y_tab.h
+	lexer.c parser.c parser.h y_tab.h \
+	ff_gconvolve.c ff_warp.c ff_median.c ff_window.c
 
 build.h: Makefile
 	echo 'char *build = "'`date`'";' > $@

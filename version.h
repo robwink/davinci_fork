@@ -1,8 +1,11 @@
-char *version = "@(#) daVinci Version #1.41";
+char *version = "@(#) daVinci Version #1.42";
 
 #include "build.h"
 
 /*
+Version 1.42: Mon Feb  7 19:49:59 MST 2005
+	* Commited ff_window, ff_gconvolve, ff_warp and ff_median.
+
 Version 1.41: Fri Oct  1 11:06:45 MST 2004
 	+ Fixed typo in the definition of get_struct_key()
 	  where the "index" parameter was incorrectly labelled
