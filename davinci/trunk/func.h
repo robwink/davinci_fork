@@ -1,4 +1,4 @@
-//#include "config.h"
+/* #include "config.h" */
 
 #ifdef __cplusplus
 extern "C" {
@@ -76,7 +76,7 @@ void pp_print_struct(Var *v, int indent, int depth);
 Var *V_DUP (Var *);
 Var *set_array (Var *, Var *, Var *);
 Var *extract_array (Var *, Range *);
-int find_struct(Var *a, Var *b, Var **);
+int find_struct(Var *a, Var *b, Var **c);
 
 /* symbol.c */
 Var *get_sym (char *name);	/* retrieve named Sym from table */
@@ -308,7 +308,6 @@ Var *ff_rgb2hsv(vfuncptr func, Var *arg);
 Var *ff_hsv2rgb(vfuncptr func, Var *arg);
 Var *ff_resize(vfuncptr func, Var *arg);
 
-//Var *ff_isis_summary(vfuncptr func, Var *arg);
 Var *ff_read_suffix_plane(vfuncptr func, Var * arg);
 Var *ff_fork(vfuncptr func, Var *arg);
 Var *ff_xrt3d(vfuncptr func, Var *arg);
@@ -405,3 +404,6 @@ Var * newFloat(float f);
 Var *ff_xplot(vfuncptr func, Var *arg);
 Var *ff_killchild(vfuncptr func, Var *arg); 
 
+Var * ff_make_debug(vfuncptr func, Var * arg);
+Var * ff_cut(vfuncptr func, Var * arg);
+Var * ff_crop(vfuncptr func, Var * arg);
