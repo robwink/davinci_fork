@@ -686,9 +686,9 @@ int rf_TABLE(char *fn, Var *ob,char * val, int dptr)
 double
 Scale(int size, void *ptr, FIELD *f)
 {
-	char	*cp;
-	int	*ip;
-	short *sp;
+	 unsigned char	*cp;
+	 unsigned int	*ip;
+	 unsigned short *sp;
 	float *fp;
 	double *dp;
 	char num[9];
@@ -822,8 +822,10 @@ Set_Col_Var(Var **Data,FIELD **f,LABEL *label,int *size, char **Bufs)
 
 		case IEEE_REAL:
 			/*Easier to make a newVal, so free current instance*/
-			data=calloc(size[j]*label->nrows,sizeof(char));
-			memcpy(data,Bufs[j],size[j]*label->nrows);
+/*			data=calloc(size[j]*label->nrows,sizeof(char)); */
+			data=calloc(f[j]->size*label->nrows,sizeof(char));
+/*			memcpy(data,Bufs[j],size[j]*label->nrows); */
+			memcpy(data,Bufs[j],f[j]->size*label->nrows);
 			switch (f[j]->size) {
 				case 8:
 					v=newVal(BSQ,dim,label->nrows,1,DOUBLE,data);
