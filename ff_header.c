@@ -1,5 +1,5 @@
 #include "parser.h"
-#include "io_specpr.h"
+#include "dvio_specpr.h"
 
 /**
  ** header() - extract information from a files header.
@@ -64,11 +64,11 @@ ff_header(vfuncptr func, Var *arg)
     /** 
      ** if open file fails, check for record suffix
      **/
-    if ((fname = locate_file(filename)) == NULL) {
+    if ((fname = dv_locate_file(filename)) == NULL) {
         if ((p = strchr(filename, SPECPR_SUFFIX)) != NULL) {
             *p = '\0';
             frec = atoi(p + 1);
-            fname = locate_file(filename);
+            fname = dv_locate_file(filename);
         }
         if (fname == NULL) {
             sprintf(error_buf, "Cannot find file: %s", filename);
@@ -78,13 +78,13 @@ ff_header(vfuncptr func, Var *arg)
     }
     if (fname && (fp = fopen(fname, "r")) != NULL) {
 
-        if (is_compressed(fp))
-            fp = uncompress(fp, fname);
+        if (iom_is_compressed(fp))
+            fp = iom_uncompress(fp, fname);
 
 		while(1) {
 			if (LoadSpecprHeader(fp, filename, frec, element, &input)) break;
-			if (LoadVicarHeader(fp, filename, frec, element, &input)) break;
-			if (LoadISISHeader(fp, filename, frec, element, &input)) break;
+			if (dv_LoadVicarHeader(fp, filename, frec, element, &input)) break;
+			if (dv_LoadISISHeader(fp, filename, frec, element, &input)) break;
 			sprintf(error_buf, "Unable to determine file type: %s", filename);
 			parse_error(NULL);
 			break;

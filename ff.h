@@ -75,7 +75,6 @@ struct _vfuncptr vfunclist[] = {
 
     { "source",     ff_source,   NULL },
     { "load",       ff_load,     NULL },
-	{ "load2",      ff_load2,    NULL },
     { "read",       ff_load,     NULL },        /* an alias */
     { "import",     ff_load,     NULL },        /* an alias */
     { "load_ir",    ff_Frame_Grabber_Read, NULL},
@@ -87,7 +86,6 @@ struct _vfuncptr vfunclist[] = {
     { "save",       ff_write,    NULL },
     { "write",      ff_write,    NULL },        /* an alias */
     { "export",     ff_write,    NULL },        /* an alias */
-	{ "write2",     ff_write2,   NULL },
     { "filetype",   ff_filetype, NULL },
     { "ls",         ff_list,     NULL },
     { "list",       ff_list,     NULL },

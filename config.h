@@ -150,9 +150,6 @@
 /* Define if you have the <projects.h> header file.  */
 #define HAVE_PROJECTS_H 1
 
-/* Define if you have the <readline/history.h> header file.  */
-#define HAVE_READLINE_HISTORY_H 1
-
 /* Define if you have the <sys/dir.h> header file.  */
 /* #undef HAVE_SYS_DIR_H */
 

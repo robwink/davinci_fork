@@ -78,3 +78,85 @@ dv_WriteVicar(Var *ob, char *filename, int force)
     
     return  1;
 }
+
+
+/**
+ ** Check for a specific element in the header.
+ **/
+
+int
+dv_LoadVicarHeader(FILE *fp, char *filename, int rec, char *element, Var **var)
+{
+	Var *v= NULL;
+    char *p, *q, *str;
+    int s = 0;
+
+    rewind(fp);
+
+    p = (char *)malloc(65);
+    fread(p, 1, 64, fp);
+    p[64] = '\0';
+    sscanf(p, "LBLSIZE=%d", &s);
+
+    if (s <= 0) {
+        free(p);
+        return(0);
+    }
+
+    p = (char *)my_realloc(p, s+1);
+
+    /**
+     ** Read entire label, and parse it.
+     **/
+
+    fread(p+64, 1, s-64, fp);
+    p[s] = '\0';
+
+	if ((q = get_value(p, element)) != NULL) {
+		while(isspace(*q) || *q == '=') q++;
+		if (*q == '\'' || *q == '"') {
+			/**
+			 ** find matching quote
+			 **/
+			for (str = q+1 ; *str && *str != *q ; str++) ;
+			*str = '\0';
+			q++;		/* skip over starting quote */
+		} else {
+			str = q;
+			while(!isspace(*str)) str++;
+			*str = '\0';
+		}
+
+		/**
+		 ** convert those we know to be ints
+		 **/
+		if (!strcasecmp(element, "lblsize") ||
+		    !strcasecmp(element, "bufsize") ||
+		    !strcasecmp(element, "dim") ||
+		    !strcasecmp(element, "recsize") ||
+		    !strcasecmp(element, "nl") ||
+		    !strcasecmp(element, "ns") ||
+		    !strcasecmp(element, "nb") ||
+		    !strcasecmp(element, "n1") ||
+		    !strcasecmp(element, "n2") ||
+		    !strcasecmp(element, "n3") ||
+		    !strcasecmp(element, "n4") ||
+		    !strcasecmp(element, "nbb") ||
+		    !strcasecmp(element, "nlb"))  {
+				v = newVar();
+				V_TYPE(v) = ID_VAL;
+				V_DSIZE(v) = V_SIZE(v)[0] = V_SIZE(v)[1] = V_SIZE(v)[2] = 1;
+				V_ORG(v) = BSQ;
+				V_FORMAT(v) = INT;
+				V_DATA(v) = calloc(1, sizeof(int));
+				V_INT(v) = atoi(q);
+		} else {
+			v = newVar();
+			V_TYPE(v) = ID_STRING;
+			V_STRING(v) = strdup(q);
+		}
+	}
+	free(p);
+	*var = v;
+	return(1);
+}
