@@ -26,22 +26,39 @@
 
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
+#endif
 
+
+#ifndef MINSHORT
 #define MINSHORT        SHRT_MIN
+#endif
+#ifndef MININT
 #define MININT          INT_MIN
+#endif
+#ifndef MINLONG
 #define MINLONG         LONG_MIN
-
+#endif
+#ifndef MAXSHORT
 #define MAXSHORT        SHRT_MAX
+#endif
+#ifndef MAXINT
 #define MAXINT          INT_MAX
+#endif
+#ifndef MAXLONG
 #define MAXLONG         LONG_MAX
-
 #endif
 
 #include <float.h>
+#ifndef MAXDOUBLE
 #define MAXDOUBLE       DBL_MAX
+#endif
 /* #define MAXFLOAT        FLT_MAX */
+#ifndef MINDOUBLE
 #define MINDOUBLE       DBL_MIN
+#endif
+#ifndef MINFLOAT
 #define MINFLOAT        FLT_MIN
+#endif
 
 #else 
 
