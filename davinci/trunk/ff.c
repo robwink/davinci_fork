@@ -1842,8 +1842,8 @@ ff_dump(vfuncptr func, Var * arg)
     Alist alist[4];
     alist[0] = make_alist("object",    ID_UNK,     NULL,     &v);
     alist[1] = make_alist("indent",    INT,     NULL,     &indent);
-    alist[3] = make_alist("depth",    INT,     NULL,     &depth);
-    alist[4].name = NULL;
+    alist[2] = make_alist("depth",    INT,     NULL,     &depth);
+    alist[3].name = NULL;
  
     if (parse_args(func, arg, alist) == 0) return(NULL);
  
