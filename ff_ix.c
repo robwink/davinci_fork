@@ -25,19 +25,27 @@ HSV RGBToHSV(RGB rgb);
 Var *
 ff_histogram(vfuncptr func, Var * arg)
 {
-	Var *obj = NULL, *compress = NULL, *normalize = NULL;
+	Var *obj = NULL, *compress = NULL, *normalize = NULL, *cumulative=NULL;
 	int type = 0;
 	int x,y,z, n, i, j, dsize, low, high, v;
-	int *data;
+	float *data;
 	char *ptr = NULL;
+	int count = 0;
+
+	float start = MAXFLOAT, size= MAXFLOAT;
+	int steps = MAXINT;
 
 	int ac;
 	Var **av;
-	Alist alist[4];
-	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
-	alist[1] = make_alist( "compress",  ID_VAL,    NULL,     &compress);
-	alist[2] = make_alist( "normalize", ID_VAL,    NULL,     &normalize);
-	alist[3].name = NULL;
+	Alist alist[9];
+	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &obj);
+	alist[1] = make_alist( "compress",  ID_VAL,    NULL,    &compress);
+	alist[2] = make_alist( "normalize", ID_VAL,    NULL,    &normalize);
+	alist[3] = make_alist( "cumulative",ID_VAL,    NULL,    &cumulative);
+	alist[4] = make_alist( "start",     FLOAT,     NULL,    &start);
+	alist[5] = make_alist( "size",      FLOAT,     NULL,    &size);
+	alist[6] = make_alist( "steps",      INT,       NULL,    &steps);
+	alist[7].name = NULL;
 
 	make_args(&ac, &av, func, arg);
 	if (parse_args(ac, av, alist)) return(NULL);
@@ -54,37 +62,86 @@ ff_histogram(vfuncptr func, Var * arg)
 
 	switch(V_FORMAT(obj)) {
 		case BYTE: 
-			low = 0; 
-			high = 255; 
+			if (start == MAXFLOAT) start = 0;
+			if (size == MAXFLOAT) size = 1;
+			if (steps == MAXINT) steps = 256;
 			break;
 		case SHORT: 
-			low = -32768;
-			high = 32767;
+			if (start == MAXFLOAT) start = -32768;
+			if (size == MAXFLOAT) size = 1;
+			if (steps == MAXINT) steps = 65536;
 			break;
 		case INT:
-			parse_error("%s(): %s not supported.\n", func->name, "INT");
-			return(NULL);
+			if (steps == MAXFLOAT) {
+				parse_error("%s(...steps=...) required for INT format.", func->name);
+				return(NULL);
+			}
+			break;
 		case FLOAT:
-			parse_error("%s(): %s not supported.\n", func->name, "FLOAT");
-			return(NULL);
+			if (steps == MAXFLOAT) {
+				parse_error("%s(...steps=...) required for FLOAT format.", func->name);
+				return(NULL);
+			}
+			break;
 		case DOUBLE:
-			parse_error("%s(): %s not supported.\n", func->name, "DOUBLE");
-			return(NULL);
+			if (steps == MAXFLOAT) {
+				parse_error("%s(...steps=...) required for DOUBLE format.", func->name);
+				return(NULL);
+			}
+			break;
 	}
 
-	data = (int *)calloc((high-low+1) * 2, sizeof(int));
-	for (i = 0 ; i < high-low+1 ; i++) {
-		data[i*2] = i+low;
+	/*
+	** Find minimum if necessary
+	*/
+	if (start == MAXFLOAT) {
+		Var *vmin;
+		vmin = fb_min(obj, 7, 0);
+		if (vmin) start = V_FLOAT(vmin);
+	}
+
+	/*
+	** find maximum if necessary
+	*/
+	if (size == MAXFLOAT) {
+		Var *vmax;
+		vmax = fb_min(obj, 7, 1);
+		if (vmax) size = (V_FLOAT(vmax) - start) / steps;
+	}
+
+	if (start == MAXFLOAT || steps == MAXINT || steps == 0 || size == MAXFLOAT) {
+		parse_error("Unable to determine start, steps or size");
+		return(NULL);
+	}
+
+	data = (float *)calloc((steps+1) * 2, sizeof(float));
+
+	/*
+	** X axis
+	*/
+	for (i = 0 ; i < steps ; i++) {
+		data[i*2] = start + i *size;
 	}
 
 	for (i = 0 ; i < dsize ; i++) {
 		v = extract_int(obj, i);
-		data[(v-low)*2+1]++;
+		j = (v - start) / size;
+		if (j < 0) {
+			j = 0;
+		} else if (j >= steps) {
+			j = steps-1;
+		}
+		data[j*2+1]++;
 	}
 
-	j = high-low+1;
+/*
+** Exercise the options to compress, accumulate or normalize
+*/
+
+	j = steps;
 	if (compress != NULL) {
-		for (i = j = 0 ; i < high-low+1 ; i++) {
+		j = 0;
+		for (i = j = 0 ; i < steps ; i++) {
 			if (data[i*2+1] != 0) {
 				data[j*2] = data[i*2];
 				data[j*2+1] = data[i*2+1];
@@ -92,17 +149,20 @@ ff_histogram(vfuncptr func, Var * arg)
 			}
 		}
 	}
+
 	if (normalize) {
-		float *fdata = (float *)calloc(2*j, sizeof(float));
 		for (i = 0 ; i < j ; i++) {
-			fdata[i*2] = data[i*2];
-			fdata[i*2+1] = (float)data[i*2+1]/(float)dsize;
+			data[i*2+1] = (float)data[i*2+1]/(float)dsize;
 		}
-		free(data);
-		return(newVal(BSQ, 2, j, 1, FLOAT, fdata));
-	} else {
-		return(newVal(BSQ, 2, j, 1, INT, data));
 	}
+
+	if (cumulative != NULL) {
+		for (i = 1 ; i < j ; i++) {
+			data[i*2+1] += data[(i-1)*2+1];
+		}
+	}
+
+	return(newVal(BSQ, 2, j, 1, FLOAT, data));
 }
 
 Var *

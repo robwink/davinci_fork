@@ -6,6 +6,11 @@
 #define YAXIS	2
 #define ZAXIS	4
 
+/*
+** sum, avg and stddev
+**
+** If the user passes the 'both' option, you get a struct with both a & s
+*/
 
 Var *
 ff_avg(vfuncptr func, Var * arg)
@@ -99,12 +104,13 @@ ff_avg(vfuncptr func, Var * arg)
 	for (i = 0 ; i < dsize2 ; i++) {
 		vx[i]=sqrt(vx[i]*f);
 	}
+	V_DATA(v) = vx;
+
 	/*
 	** If user hasn't asked for both avg and stddev, free avg
 	*/
 	if (!both) {
 		free(fdata);
-		V_DATA(v) = vx;
 		return(v);
 	}
 
@@ -115,16 +121,14 @@ ff_avg(vfuncptr func, Var * arg)
 }
 
 
+Var * fb_min(Var *obj, int axis, int direction);
+
 Var *
 ff_min(vfuncptr func, Var * arg)
 {
-	Var *obj=NULL, *v;
-	char *ptr = NULL;
-	int axis = 0, dsize, dsize2, i, j;
-	int in[3], out[3];
-	float *fdata, x;
-	void *data;
-	int do_min = 0, do_max = 0;
+	Var *obj=NULL;
+	char *ptr;
+	int axis = 0;
 	char *options[] =  {
 		"x", "y", "z", "xy", "yx", "xz", "zx", "yz", "zy",
 		"xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL
@@ -153,8 +157,25 @@ ff_min(vfuncptr func, Var * arg)
 		return(NULL);
 	}
 
-	if (!strcmp(func->name, "min")) do_min = 1;
-	if (!strcmp(func->name, "max")) do_max = 1;
+	return(fb_min(obj, axis, (!strcmp(func->name, "min")) ? 0 : 1 ));
+}
+
+/*
+** Do min/max.  
+**     axis:1, x axis
+**     axis:2, y axis
+**     axis:3, z axis
+**     direction:  0 = min, 1 = max
+*/
+Var *
+fb_min(Var *obj, int axis, int direction)
+{
+	Var *v;
+	char *ptr = NULL;
+	int dsize, dsize2, i, j;
+	float *fdata, x;
+	void *data;
+	int in[3], out[3];
 
 	dsize = V_DSIZE(obj);
 	for (i = 0 ; i < 3 ; i++) {
@@ -183,8 +204,11 @@ ff_min(vfuncptr func, Var * arg)
 	for (i = 0 ; i < dsize ; i++) {
 		j = rpos(i, obj, v);
 		x = extract_float(obj, i);
-		if (do_min && x < fdata[j]) fdata[j] = x;
-		if (do_max && x > fdata[j]) fdata[j] = x;
+		if (direction == 0) {
+			if (x < fdata[j]) fdata[j] = x;
+		} else {
+			if (x > fdata[j]) fdata[j] = x;
+		}
 	}
 
 	return(v);
