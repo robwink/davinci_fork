@@ -20,7 +20,12 @@ Var *
 ff_deghost(vfuncptr func, Var * arg)
 {
 
-	Var *obj, *down, *right, *bands, *v, *out;
+	Var *obj = NULL,
+	    *down = NULL,
+	    *right = NULL,
+	    *bands = NULL,
+	    *v = NULL,
+	    *out = NULL;
 	char *id;
 	int z, y, x, nbytes, i;
 	void *out_data;
