@@ -65,7 +65,7 @@ AC_CHECK_LIB(usds, Themis_Entry)
 AC_CHECK_LIB(msss_vis, read_DCT)
 AC_CHECK_LIB(termcap, tgetent)
 AC_CHECK_LIB(ltdl, lt_dlopen)
-AC_CHECK_LIB(png, png_libpng_ver)
+AC_CHECK_LIB(png, png_check_version)
 AC_CHECK_LIB(readline, rl_callback_handler_install,, [libreadline_found=no])
 dnl AC_CHECK_LIB(readline, rl_callback_handler_install)
 
