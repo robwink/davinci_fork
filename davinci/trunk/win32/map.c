@@ -2,6 +2,7 @@
 #include <sys/types.h>
 #include <malloc.h>
 #include <io.h>
+#include <stdlib.h>
 
 void *mmap(void *x0, size_t len, int x1, int x2, int fd, size_t off)
 {
