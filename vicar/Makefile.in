@@ -1,0 +1,22 @@
+SHELL = /bin/sh
+
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+
+CPPFLAGS = @CPPFLAGS@
+CFLAGS = $(CPPFLAGS) @CFLAGS@ -I. @X_CFLAGS@
+
+VICARLIB = vicar.a
+
+.c.o:
+	$(CC) -c $(CFLAGS) $<
+
+OBJS = XvicBasicImage.o XvicCopyRaw.o XvicImage.o XvicImageOverlay.o XvicRegion.o XvicStringCursor.o
+
+all: $(OBJS)
+	$(AR) ruv $(VICARLIB) $(OBJS)
+	$(RANLIB) $(VICARLIB)
+
+clean:
+	rm -f $(OBJS) $(VICARLIB)
