@@ -1837,18 +1837,19 @@ Var *
 ff_dump(vfuncptr func, Var * arg)
 {
     Var *v;
-    int depth;
+    int indent = 0, depth = 0;
 
-    Alist alist[3];
+    Alist alist[4];
     alist[0] = make_alist("object",    ID_UNK,     NULL,     &v);
-    alist[1] = make_alist("depth",    INT,     NULL,     &depth);
-    alist[2].name = NULL;
+    alist[1] = make_alist("indent",    INT,     NULL,     &indent);
+    alist[3] = make_alist("depth",    INT,     NULL,     &depth);
+    alist[4].name = NULL;
  
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
  
     if (v == NULL) return(NULL);
 
-    dump_var(v, 0, 0);
+    dump_var(v, indent, depth);
 
     return(NULL);
 }

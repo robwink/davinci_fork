@@ -166,6 +166,16 @@ dump_var(Var *v, int indent, int limit)
             }
         }
         break;
+
+    case ID_STRUCT:
+        if (limit > 0)  {
+            printf("struct, %d elements\n", get_struct_count(v));
+            pp_print_struct(v, indent, limit-1);
+        } else {
+            printf("struct, %d elements...\n", get_struct_count(v));
+        }
+        break;
+
     case ID_TEXT:
         row = V_TEXT(v).Row;
         if (limit) row = min(limit, row);
