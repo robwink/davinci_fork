@@ -1,8 +1,20 @@
-char *version = "@(#) daVinci Version #1.31";
+char *version = "@(#) daVinci Version #1.33";
 
 #include "build.h"
 
 /*
+Version 1.33: Tue Aug  3 13:21:04 MST 2004
+	* Checked in a bunch of pending minor changes.  Maybe autoconf isn't
+	  quite right though.
+
+Version 1.32: 
+	* Fixed fit to use ignore for types other than linear.
+	* Fixed fit to use default x axis if one isn't supplied.  It's one based.
+	* Finished fixing the HAVE_DRAND48 business
+
+Version 1.31a: Thu Jul  1 18:09:24 MST 2004
+	* Part of a hack to fix HAVE_DRAND48
+
 Version 1.31: Wed Jun 30 03:35:03 MST 2004
 	* Minor changes to hdf reader to be compatible with new version
           of the library

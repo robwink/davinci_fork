@@ -367,6 +367,7 @@ Alist make_alist(char *name, int type, void *limits, void *value);
 
 Var * ReadPDS(vfuncptr func, Var * arg);
 Var * WritePDS(vfuncptr func, Var * arg);
+Var * WritePDS2(vfuncptr func, Var * arg);
 
 double bbr(double, double);
 double btemp(double, double);
@@ -462,9 +463,14 @@ Var * ff_unslant(vfuncptr func, Var * arg);
 Var *do_convolve(Var *obj, Var *kernel, int norm, float ignore);
 Var *ff_hstretch(vfuncptr func, Var * arg);
 Var *ff_chdir(vfuncptr func, Var * arg);
+Var *ff_coreg(vfuncptr func, Var * arg);
 
 Var *ff_fncc_fft2d(vfuncptr func, Var *arg);
 Var *ff_fncc_ifft2d(vfuncptr func, Var *arg);
 Var *ff_fncc_cmplx_mul(vfuncptr func, Var *arg);
 Var *ff_fncc_fft_conv_real(vfuncptr func, Var *arg);
 Var *ff_fncc_write_mat(vfuncptr func, Var * arg);
+
+Var *ff_boxfilter(vfuncptr func, Var * arg);
+
+char *dv_locate_file(char *);
