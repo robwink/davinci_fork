@@ -35,6 +35,18 @@ printf("Creating "//tmpdir//" directory.\n")
 system("mkdir "//tmpdir//" 2>/dev/null")
 
 printf("Loading "//src_img//" file.\n")
+rc = syscall("test -f "//src_img//" && echo found || echo notfound")
+if (rc[,1]=="notfound"){
+
+	# If isis file not found, check for a uuencoded version
+	rc = syscall("test -f "//src_img//".uu && echo found || echo notfound")
+	if (rc[,1]=="found"){
+		system("uudecode "//src_img//".uu")
+	} else {
+		printf("Src file %s not found. Aborting...\n", src_img)
+		exit(2)
+	}
+}
 d = load2(src_img) * 128
 
 printf("Writing test formats ...\n")
