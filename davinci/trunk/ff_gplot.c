@@ -257,6 +257,23 @@ send_to_plot(char *s)
     return(1);
 }
 
+char 
+Find_Axis( char *R,Var *Obj)
+{
+	int axis=0;
+
+   if (GetSamples(V_SIZE(Obj), V_ORG(Obj))==1) axis |= 1;
+   if (GetLines(V_SIZE(Obj), V_ORG(Obj))==1) axis |= 2;
+   if (GetBands(V_SIZE(Obj), V_ORG(Obj))==1) axis |= 4;
+
+	
+	if (axis==7) *R='\0';
+
+	if (axis == 6) *R='X';	
+	else if (axis == 5) *R='Y';
+	else if (axis == 3) *R='Z';
+	else *R='Y';
+}
 
 Var *
 ff_xplot(vfuncptr func, Var *arg)
@@ -294,6 +311,9 @@ ff_xplot(vfuncptr func, Var *arg)
 	int i,j,k;
 	Var *Ax;
 	int idx;
+	int Sep=0;
+
+	char axs;
 
 	int ac;
 	Var **av;
@@ -305,7 +325,8 @@ ff_xplot(vfuncptr func, Var *arg)
 			if(!(strcmp(av[i]->name,"Xaxis")))	{
 				Xaxis=eval(V_KEYVAL(av[i]));
 				if (Xaxis==NULL){
-					parse_error("%s: Variable not found: %s", fname, V_NAME(v));
+					parse_error("Variable not found: %s", 
+						V_NAME(V_KEYVAL(av[i])));
 					return(NULL);
 				}
 			}
@@ -319,6 +340,11 @@ ff_xplot(vfuncptr func, Var *arg)
 
 			}
 
+			else if (!(strcmp(av[i]->name,"seperate"))) {
+				Sep=1;
+			}
+
+
 			else {
 				parse_error("Illegal keyword %s\n",av[i]->name);
 				return(NULL);
@@ -329,42 +355,65 @@ ff_xplot(vfuncptr func, Var *arg)
 
 	if (Xaxis!=NULL)
 		xFlag=1;
-	if (Axis==NULL)
-		Axis=strdup("X");
+
+	if (Axis==NULL){
+
+		for (idx=1;idx<ac;idx++) {
+			if (av[idx]==NULL)
+				continue;
+
+			s=av[idx];
+
+			if (V_TYPE(s) == ID_UNK){
+				if ((s=eval(av[idx]))==NULL){
+					parse_error("Unknown Variable\n");
+					return(NULL);
+				}
+			}
+
+			if (V_TYPE(s)!=ID_VAL)
+				continue;
+
+			Find_Axis(&axs,s);
+
+			if(axs=='\0')
+				return(NULL); 	
+
+			Axis=strdup(&axs);
+			break;
+		}
+	}
 		
-
-
    switch (*Axis) {
 
-   case 'X':
+	case 'X':
    case 'x':
-      Mode[0]=0;
-      Mode[1]=1;
-      Mode[2]=2;
-      break;
-
-   case 'Y':
-   case 'y':
-      Mode[0]=1;
-      Mode[1]=0;
-      Mode[2]=2;
-      break;
-
-   case 'Z':
-   case 'z':
-      Mode[0]=2;
-      Mode[1]=0;
-      Mode[2]=1;
-      break;
-
+	 	Mode[0]=0;
+ 		Mode[1]=1;
+ 		Mode[2]=2;
+ 		break;
+	case 'Y':
+	case 'y':
+		Mode[0]=1;
+		Mode[1]=0;
+		Mode[2]=2;
+		break;
+	case 'Z':
+	case 'z':
+		Mode[0]=2;
+		Mode[1]=0;
+		Mode[2]=1;
+		break;
 	default :
-      Mode[0]=0;
-      Mode[1]=1;
-      Mode[2]=2;
-      break;
+		Mode[0]=1;
+		Mode[1]=0;
+		Mode[2]=2;
+		break;
+	}
 
-   }
-  
+
+
+
    if (Xaxis!=NULL){
       XOrd[0] = GetSamples(V_SIZE(Xaxis), V_ORG(Xaxis));
       XOrd[1] = GetLines(V_SIZE(Xaxis), V_ORG(Xaxis));
@@ -400,8 +449,11 @@ ff_xplot(vfuncptr func, Var *arg)
 				count++;
 				break;
 			case ID_VAL: 
-				fname = tempnam(NULL,NULL);
-				fp = fopen(fname, "w");
+				if (!(Sep)) {
+					fname = tempnam(NULL,NULL);
+					fp = fopen(fname, "w");
+				}
+
 				if ((v= eval(s)) == NULL) v = s;
 
 				Ord[0] = GetSamples(V_SIZE(v), V_ORG(v));
@@ -426,6 +478,13 @@ ff_xplot(vfuncptr func, Var *arg)
 
    			for (i=0;i<Ord[Mode[2]];i++){
      				for (j=0;j<Ord[Mode[1]];j++){
+					
+						if (Sep) {
+							fname = tempnam(NULL,NULL);
+							fp = fopen(fname, "w");
+						}
+
+
        				for (k=0;k<Ord[Mode[0]];k++){
       					CE[Mode[2]]=i;
       					CE[Mode[1]]=j;
@@ -457,17 +516,30 @@ ff_xplot(vfuncptr func, Var *arg)
       					}
        					fprintf(fp,"%g\t %g\n",x[k],y[k]);
        				}
-		 				fprintf(fp,"\n");
+
+						if (Sep) {
+							fclose(fp);
+        					if (count++) strcat(buf, ",");
+         					sprintf(buf + strlen(buf), "'%s'", fname);
+							if (V_NAME(v)) 
+								sprintf(buf + strlen(buf), "title '%s'", V_NAME(v));
+							free(fname);
+						}
+
+						else
+		 					fprintf(fp,"\n");
      				}
    			}
 				free(x);
 				free(y);
-				fclose(fp);
-        		if (count++) strcat(buf, ",");
-         		sprintf(buf + strlen(buf), "'%s'", fname);
-				if (V_NAME(v)) 
-					sprintf(buf + strlen(buf), "title '%s'", V_NAME(v));
-				free(fname);
+				if (!(Sep)){
+					fclose(fp);
+        			if (count++) strcat(buf, ",");
+         			sprintf(buf + strlen(buf), "'%s'", fname);
+					if (V_NAME(v)) 
+						sprintf(buf + strlen(buf), "title '%s'", V_NAME(v));
+					free(fname);
+				}
 			}
 		}
 	}
