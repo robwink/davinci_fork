@@ -88,6 +88,7 @@ struct _vfuncptr vfunclist[] = {
     { "load_specpr",    ff_loadspecpr,          NULL, NULL},
     { "load_vanilla",   ff_loadvan,             NULL, NULL},
     { "load_PDS",       ReadPDS,                NULL, NULL},
+    { "load_pds",       ReadPDS,                NULL, NULL},
     { "isis",           ff_read_suffix_plane,   NULL, NULL},
     { "load_raw",   ff_raw,         NULL, NULL},
     { "ascii",      ff_ascii,       NULL , NULL},    
@@ -134,7 +135,6 @@ struct _vfuncptr vfunclist[] = {
     { "shell",      ff_syscall,     NULL, NULL},
     { "system",     ff_system,      NULL , NULL},
     { "fsize",      ff_fsize,       NULL , NULL},
-    { "fexists",    ff_exists,      NULL, NULL},
     { "pause",      ff_pause,       NULL , NULL},    /* get input from user */
     { "eval",       ff_eval,        NULL , NULL},
     { "putenv",     ff_putenv,      NULL, NULL},
@@ -176,7 +176,6 @@ struct _vfuncptr vfunclist[] = {
     { "xplot",      ff_xplot,       NULL, NULL},
     { "display",    ff_display,     NULL , NULL},
     { "fit",        ff_fit,         NULL , NULL},
-
     
     { "bbr",        ff_bop,      (void *)bbr   , NULL},
     { "btemp",      ff_bop,      (void *)btemp , NULL},
@@ -185,7 +184,6 @@ struct _vfuncptr vfunclist[] = {
     { "vignette",   ff_vignette, NULL , NULL},
     { "ifill",      ff_ifill,    NULL , NULL},    /* interpolated fill */
     { "jfjll",      ff_jfill,    NULL , NULL},    /* jnterpolated fjll */
-
 
     { "basis",      ff_basis,       NULL , NULL},
     { "mxm",        ff_mxm,         NULL , NULL},
@@ -231,29 +229,6 @@ struct _vfuncptr vfunclist[] = {
     { "pzoom",   ff_pzoom,   NULL, NULL},
 #endif
 
-    { "struct",         ff_struct,             NULL , NULL},
-    { "eval",           ff_eval,               NULL , NULL},
-    { "add_struct",     ff_add_struct,         NULL , NULL},
-    { "get_struct",     ff_get_struct,         NULL , NULL},
-    { "eigen",          ff_eigen,              NULL , NULL},
-    { "pcs",            ff_pcs,                NULL , NULL},
-
-    { "syscall",        ff_syscall,            NULL, NULL},
-    { "shell",        ff_syscall,            NULL, NULL},
-    { "basename",       ff_filename,           (void *)1, NULL},
-    { "dirname",        ff_filename,           (void *)2, NULL},
-    { "strsub",         ff_stringsubst,        NULL, NULL},
-    { "dump",           ff_dump,               NULL, NULL},
-    { "global",         ff_global,             NULL, NULL},
-    { "delete",         ff_delete,             NULL, NULL},
-    { "load_vanilla",   ff_loadvan,            NULL, NULL},
-    { "load_PDS",       ReadPDS,               NULL, NULL},
-    { "load_pds",       ReadPDS,               NULL, NULL},
-    { "rtrim",          ff_rtrim,              NULL, NULL},
-
-    { "equals",         ff_equals,             NULL, NULL},
-    { "xplot",          ff_xplot,              NULL, NULL},
-    { "killall",        ff_killchild,          NULL, NULL},
 #ifdef HAVE_LIBPROJ   
     { "projection", ff_projection,   NULL , NULL},
 #endif
@@ -270,10 +245,6 @@ struct _vfuncptr vfunclist[] = {
 
 /* add additional functions here.  Don't forget the trailing comma. */
 
-	 { "load_raw",			ff_raw,				NULL, NULL},
-	 { "fexists",			ff_exists,			NULL, NULL},
-	 { "putenv",			ff_putenv,			NULL, NULL},
-	 { "length",			ff_length,			NULL, NULL},
 	 { "vis_downshift",	ff_GSE_VIS_downshift,NULL,NULL},
 	 { "vis_upshift",	ff_GSE_VIS_upshift,NULL,NULL},
 
