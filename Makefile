@@ -18,8 +18,8 @@ XINCLUDES=-I/usr/openwin/include $(XRTINCLUDE) -I/usr/local/include
 XLIBS=-L/usr/openwin/lib $(XRTLIBS)
 
 CPPFLAGS= -I/usr/include/X11
-CFLAGS=$(XINCLUDES) -Ilib -g -O2 -I. 
-LDFLAGS= -L/usr/openwin/lib -L${exec_prefix}/lib -Lreadline  -L.
+CFLAGS=$(XINCLUDES) -Ilib -g -O2 -I.  -I../iomedley
+LDFLAGS= -L/usr/openwin/lib -L${exec_prefix}/lib -Lreadline  -L. -L../iomedley
 
 XRTINCLUDE=  
 XRTLIBS = 
@@ -27,12 +27,12 @@ XRTLIBS =
 
 CC     = gcc
 DEFS   = -DHAVE_CONFIG_H 
-LIBS   = $(XLIBS) -lplplotFX -lMagick -ltiff -lproj -lreadline -ltermcap -ljpeg -lmsss_vis -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -ldl  -lmodsupp
+LIBS   = $(XLIBS) -lplplotFX -lMagick -ltiff -lproj -lreadline -ltermcap -ljpeg -lmsss_vis -lusds -lhdf5 -lz -lXm -lXext -lXt -lX11 -lm  -ldl  -lmodsupp -liomedley
 AR     = ar
 RANLIB = ranlib
 
 .c.o:
-	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
+	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $< -o $@
 
 ###
 ### If you are unable to compile readline, comment the following three lines
@@ -63,9 +63,14 @@ OBJ=p.o pp.o symbol.o \
 	ff_sort.o ff_fft.o fft.o matrix.o fft_mayer.o dct.o fft2f.o \
 	x.o xrt_print_3d.o motif_tools.o ff_convolve.o apifunc.o \
 	ff_plplot.o ff_pca.o ff_loadvan.o tools.o header.o \
-	io_pds.o io_hdf.o ff_pbm.o ff_meta.o $(MODULE_SUPP_OBJS)
+	io_pds.o io_hdf.o ff_pbm.o ff_meta.o $(MODULE_SUPP_OBJS) \
+	dvio.o dvio_aviris.o dvio_goes.o dvio_grd.o dvio_imath.o \
+	dvio_isis.o dvio_magic.o dvio_pnm.o dvio_vicar.o \
+	ff_load2.o
+
 
 all:	 davinci gplot
+
 
 davinci:	$(OBJ)  $(READLINE_OBJ) $(MOD_SUPP_LIB)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $@ $(READLINE_LIB) $(LIBS)
