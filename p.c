@@ -87,21 +87,9 @@ is_zero(Var * v)
             case DOUBLE:
                 return (extract_float(v, 0) == 0.0);
         }
-    } else {
-		int i;
-		for (i = 0 ; i < V_DSIZE(v) ; i++) {
-			switch (V_FORMAT(v)) {
-				case BYTE:
-				case SHORT:
-				case INT:
-					if (extract_int(v, i) == 0) return(1);
-				case FLOAT:
-				case DOUBLE:
-					if (extract_float(v, i) == 0.0) return(1);
-			}
-		}
-		return (0);
-	}
+    }
+	parse_error("if () doesn't work on arrays");
+    return (1);
 }
 
 /**
@@ -471,10 +459,7 @@ evaluate(Var * n)
             p1 = pop(scope);
 
 			/* not a structure -- try modules */
-			if (p1 == NULL || p2 == NULL) {
-				parse_error("dereference with null value");
-				push(scope, NULL);
-			} else if (p3 = search_in_list_of_loaded_modules(V_NAME(p1))) {
+			if (p3 = search_in_list_of_loaded_modules(V_NAME(p1))){
 				vfuncptr t;
 
 				if(t = find_module_func(&V_MODULE(p3), V_NAME(p2))){
@@ -491,7 +476,8 @@ evaluate(Var * n)
 
 					push(scope, NULL);
 				}
-			} else {
+			}
+			else {
 				if (find_struct(p1, p2, &p3) != -1) {
 					push(scope, p3);
 				}
@@ -508,12 +494,8 @@ evaluate(Var * n)
 			/*
 			** Construct a structure from the passed arguments
 			*/
-			if (left != NULL) {
-				evaluate(left);
-				p1 = pop(scope);
-			} else {
-				p1 = NULL;
-			}
+			evaluate(left);
+			p1 = pop(scope);
 			push(scope, create_struct(p1));
 
 			break;

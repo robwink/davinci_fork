@@ -1,5 +1,9 @@
+#ifdef _WIN32
+#include <time.h>
+#else
 #include <unistd.h>
 #include <sys/times.h>
+#endif /* _WIN32 */
 #include "parser.h"
 
 
@@ -9,6 +13,11 @@
 Var *
 ff_audit(vfuncptr func, Var *arg)
  {
+
+#ifdef _WIN32
+	parse_error("This function is not supported under windows.");
+	return NULL;
+#else
 	struct tms faketime;
 	clock_t realtime;
 	void *ptr;
@@ -27,4 +36,5 @@ ff_audit(vfuncptr func, Var *arg)
 	s_data[3] = realtime;
 
 	return  s;
+#endif /* _WIN32 */
  }

@@ -1,4 +1,4 @@
-/* #include "config.h" */
+/* #include <config.h> */
 
 #ifdef __cplusplus
 extern "C" {
@@ -153,7 +153,6 @@ void *read_qube_data(int, struct _iheader *);
 Var *LoadSpecpr(FILE *,char *,int );
 Var *LoadSpecprHeaderStruct(FILE *,char *,int );
 Var *LoadVicar (FILE *, char *, struct _iheader *);
-Var *LoadISIS (FILE *, char *, struct _iheader *);
 Var *LoadGRD(FILE *,char *, struct _iheader *);
 Var *LoadPNM(FILE *, char *, struct _iheader *);
 Var *LoadGOES (FILE *, char *, struct _iheader *);
@@ -161,9 +160,11 @@ Var *LoadAVIRIS (FILE *, char *, struct _iheader *);
 Var *Load_imath (FILE *, char *, struct _iheader *);
 #ifdef HAVE_LIBMAGICK
 Var *LoadGFX_Image(char *filename);
+#if 0
 Var *ff_XImage_Display(vfuncptr func, Var * arg);
+#endif /* 0 */
 #endif
-int LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var);
+int dv_LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var);
 Var * LoadVanilla(char *filename);
 Var * LoadHDF5(char *filename);
 
@@ -197,7 +198,6 @@ int is_imath(FILE *);
 FILE *uncompress(FILE *, char *);
 
 
-char *locate_file(char *);
 
 Var *p_mknod();
 Var *p_mkval(int, char *);
@@ -227,7 +227,7 @@ void free_tree(Var *);
 Var *rm_symtab(Var *);
 
 int LoadSpecprHeader(FILE *, char *, int , char *, Var **);
-int LoadVicarHeader(FILE *, char *, int , char *, Var **);
+int dv_LoadVicarHeader(FILE *, char *, int , char *, Var **);
 
 Var *RequireKeyword(char *, struct keywords *, int, int, vfuncptr );
 Var *HasValue(vfuncptr, Var *);
@@ -431,9 +431,3 @@ double asind(double);
 double atand(double);
 
 Var * ff_audit(vfuncptr func, Var *arg);
-Var * ff_identity(vfuncptr func, Var *arg);
-Var * per_pixel(vfuncptr func, Var *arg);
-
-Var * ff_exists(vfuncptr func, Var * arg);
-Var * ff_putenv(vfuncptr func, Var * arg);
-Var * ff_length(vfuncptr func, Var * arg);
