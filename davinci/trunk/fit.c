@@ -25,7 +25,7 @@
  **  data values.
  **/
 
-
+Var * lin_fit(Var *x, Var *y,int Row,int plot);
 void    first_guess(double *, char *);
 int     fit(int);
 ifptr   getfcnptr(char *, int *, int *, int *, char *);
@@ -120,7 +120,16 @@ Var * ff_fit(vfuncptr func, Var *args)
         return(NULL);
     }
 
-    if (dfit(x, y, ip, ftype, iter, &op, &nparam, plot)) {
+	 if (!(strcmp(ftype,"linear"))) {
+			FILE *fp;
+			s=lin_fit(x,y,V_DSIZE(x),plot);
+
+
+	 }
+
+
+
+   else if (dfit(x, y, ip, ftype, iter, &op, &nparam, plot)) {
         s = NULL;
     } else {
         s = newVar();
@@ -136,6 +145,81 @@ Var * ff_fit(vfuncptr func, Var *args)
 
     return(s);
 }
+
+Var *
+lin_fit(Var *x, Var *y,int Row, int plot)
+{
+	double **data;
+	char *tmp;
+   char buf[256];
+   char buf2[256], *p;
+	FILE *fp;
+
+	int i;
+
+	double **A,**Cov,*B,*r;
+	double a,b;
+
+	A=dmatrix(2,2);
+	data=dmatrix(Row,2);
+	Cov=dmatrix(2,2);
+	B=dvector(2);
+	r=dvector(2);
+
+		Cov[0][0]=A[0][0]=0.0;
+		Cov[0][1]=A[0][1]=0.0;
+		r[0]=B[0]=Cov[1][0]=A[1][0]=0.0;
+		r[1]=B[1]=Cov[1][1]=A[1][1]=0.0;
+
+
+	A[0][0]=(float)Row;
+
+
+	for (i=0;i<Row;i++){
+		data[i][0]=extract_double(x,i); /*a*/
+		data[i][1]=extract_double(y,i); /*b*/
+
+		A[0][1]+=data[i][0];
+		A[1][0]+=data[i][0];
+		A[1][1]+=(data[i][0]*data[i][0]);
+
+		B[0]+=data[i][1];
+		B[1]+=(data[i][0]*data[i][1]);
+	}
+
+	solve_for_da(A,Cov,B,r,2);
+
+	free_dmatrix(A,2,2);
+	free_dmatrix(Cov,2,2);
+	free(B);
+
+	if (plot) {
+		tmp = tempnam(NULL,NULL);
+		fp = fopen(tmp, "w");
+
+		for (i = 0 ; i < Row ; i++) {
+			fprintf(fp, "%g %g\n", data[i][0], data[i][1]);
+		}
+
+		fclose(fp);
+
+		for (i = 0 ; i < 2 ; i++) {
+			sprintf(buf, "a%d=%g\n", i, r[i]);
+			send_to_plot(buf);
+		}
+
+//		strcpy(buf2, comment);
+//		p = strchr(buf2, '=');
+		send_to_plot("set noparametric\n");
+		sprintf(buf, "plot \"%s\" using 1:2 with points, %s with lines\n", tmp, "a0+a1*x");
+		free(tmp);
+		send_to_plot(buf);
+	}
+
+	free_dmatrix(data,Row,2);	
+
+	return(newVal(BSQ,2,1,1,DOUBLE,r));
+}	
 
 
 
