@@ -104,8 +104,8 @@ Var *ff_projection(vfuncptr func, Var * arg)
 	case 2:
        		sprintf(parameters[1],"lon_0=%f",Lon);
         	sprintf(parameters[2],"lat_0=%f",Lat);
-        	sprintf(parameters[3],"a=%f",3399200.0);
-        	sprintf(parameters[4],"b=%f",3376100.0);
+        	strcpy(parameters[3],"ellps=MERIT");
+        	strcpy(parameters[4],"");
 		break;
 	case 3:
        		sprintf(parameters[1],"lon_0=%f",Lon);
