@@ -77,11 +77,12 @@ static MODHANDLE portable_dlopen(char * fname) {
     parse_error("Error opening DLL %s: Get a real operating system.\n");
   }
 #else
-  rtn = dlopen(fname, RTLD_LAZY);
+  rtn = dlopen(fname, RTLD_LAZY); 
   if (rtn == NULL) {
     parse_error("Error opening shared lib %s: %s\n", fname, dlerror());
   }
 #endif
+  return rtn;
 }
 
 static void * portable_dlsym(MODHANDLE solib, char * function) {
@@ -107,7 +108,7 @@ IOmodPtr new_io_module() {
   /* initialize the struct */
   new_mod->modname = NULL;
   new_mod->dlhandle = NULL;
-  new_mod->implement = 0;
+  new_mod->implements = 0;
   new_mod->read_func = NULL;
   new_mod->write_func = NULL;
   new_mod->next_list = NULL;
@@ -148,6 +149,11 @@ void destroy_io_module(IOmodPtr killme) {
     free(killme->modname);
     killme->modname = NULL;
   }
+  if (killme->modpath != NULL) {
+    free(killme->modpath);
+    killme->modpath = NULL;
+  }
+
   free(killme);
   return;
 } 
@@ -157,20 +163,42 @@ IOmodPtr open_io_module(char * modname, char * modpath) {
      if successful, returns a new IOmod structure, NULL if it fails.
   */
   IOmodPtr new_module = NULL;
-  MODHANDLE candidate;
+  MODHANDLE cand;
+  char * funcname;
 
-  candidate = portable_dlopen(modpath);
-  if (candidate == NULL) goto error_exit;
+  cand = portable_dlopen(modpath);
+  if (cand == NULL) goto error_exit;
   new_module = new_io_module();
-  new_module->dlhandle = candidate;
+  new_module->dlhandle = cand;
   if ((new_module->modname = malloc(strlen(modname)+1)) == NULL) {
     parse_error("Can't malloc a string for IO module.\n");
+    goto error_exit;
+  }
+  if ((new_module->modpath = malloc(strlen(modpath)+1)) == NULL) {
+    parse_error("Can't malloc string for IO module.\n");
     goto error_exit;
   }
   if (duplicate_name(modname)) {
     parse_error("Duplicate module name '%s'.\n", modname);
     goto error_exit;
   }
+  if ((funcname = malloc(strlen(modname)+8)) == NULL) {
+    parse_error("Can't malloc string for IO module.\n");
+    goto error_exit;
+  }
+  
+  /* determine the module I/O function names, and if present,
+     set the appropriate pointers. */
+
+  sprintf(funcname, "%s_read", modname);
+  if ((new_module->read_func = portable_dlsym(cand, funcname)) != NULL) {
+    new_module->implements |= IO_MOD_READ;
+  }
+  sprintf(funcname, "%s_write", modname);
+  if ((new_module->write_func = portable_dlsym(cand, funcname)) != NULL) {
+    new_module->implements |= IO_MOD_WRITE;
+  }
+
 
   return new_module;
  error_exit:
