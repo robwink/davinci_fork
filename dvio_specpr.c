@@ -93,7 +93,7 @@ read_record(int fd, int i, char *label)
 /**
  ** read_specpr() - read a specpr record.
  **
- ** returns: 	1 on success
+ ** returns:  > 0 on success
  ** 			0 on failure (specified record is a continuation record)
  **			   -1 on file failure (EOF, error)
  **
@@ -338,43 +338,56 @@ LoadSpecpr(FILE *fp,char *filename,int rec)
     struct _label label;
     float *data;
     Var *s;
+	Var *v, *q;
+	int err;
 
     /**
     ** Verify file type.
     **/
     if (!is_specpr(fp)) return(NULL); 
 
-    if (rec == 0) {
-        parse_error("No record specified.");
-        return(NULL);
-    }
-
-    if (read_specpr(fileno(fp), rec, &label, (char **)&data) > 0) {
-        s = newVar();
-        V_TYPE(s) = ID_VAL;
-        V_DATA(s) = data;
-        V_DSIZE(s) = label.itchan;
-        V_SIZE(s)[0] = 1;
-        V_SIZE(s)[1] = 1;
-        V_SIZE(s)[2] = label.itchan;
-        V_FORMAT(s) = FLOAT;
-        V_ORDER(s) = BSQ;
-
-        V_TITLE(s) = (char *)malloc(41);
-        strncpy(V_TITLE(s), label.ititl, 40);
-        V_TITLE(s)[40] = '\0';
-
-        if (VERBOSE > 1)  {
-            fprintf(stderr, "%s#%d: SpecPR record: %d channels\nTitle: %s\n",
-                    filename, rec, V_DSIZE(s), V_TITLE(s));
-        }
-
-        return(s);
+    if (rec <= 0) {
+		rec = 1;
+		q = new_struct(0);
+		while ((err = read_specpr(fileno(fp), rec, &label, (char **)&data)) >= 0) {
+			if (err > 0) {
+				s = new_struct(2);
+				v = newVal(BSQ, 1, 1, label.itchan, FLOAT, data);
+				add_struct(s, "data", v);
+				add_struct(s, "title", newString(strndup(label.ititl, 40)));
+				add_struct(q, NULL, s);
+			}
+			rec += err;
+		}
+		return(q);
     } else {
-        sprintf(error_buf, "continuation record %s#%d", filename, rec);
-        parse_error(NULL);
-        return(NULL);
-    }
+		if (read_specpr(fileno(fp), rec, &label, (char **)&data) > 0) {
+			s = newVar();
+			V_TYPE(s) = ID_VAL;
+			V_DATA(s) = data;
+			V_DSIZE(s) = label.itchan;
+			V_SIZE(s)[0] = 1;
+			V_SIZE(s)[1] = 1;
+			V_SIZE(s)[2] = label.itchan;
+			V_FORMAT(s) = FLOAT;
+			V_ORDER(s) = BSQ;
+
+			V_TITLE(s) = (char *)malloc(41);
+			strncpy(V_TITLE(s), label.ititl, 40);
+			V_TITLE(s)[40] = '\0';
+
+			if (VERBOSE > 1)  {
+				fprintf(stderr, "%s#%d: SpecPR record: %d channels\nTitle: %s\n",
+						filename, rec, V_DSIZE(s), V_TITLE(s));
+			}
+
+			return(s);
+		} else {
+			sprintf(error_buf, "continuation record %s#%d", filename, rec);
+			parse_error(NULL);
+			return(NULL);
+		}
+	}
 }
 
 

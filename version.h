@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #0.91";
+char *version = "@(#) daVinci Version #0.93";
 
 /*
 ** saadat, stop setting the version number to X.Y.Z.
@@ -7,6 +7,9 @@ char *version = "@(#) daVinci Version #0.91";
 #include "build.h"
 
 /*
+Version 0.93: Mon May  6 20:13:47 MST 2002
+	+ Modified dvio_specpr to read whole file if record not specified
+
 Version 0.92: Tue Apr 18 11:09:06 MST 2002
 	+ separated out endian logic from HDF code, causing compile
 	  to fail when HDF not configured.
