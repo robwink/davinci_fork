@@ -1,6 +1,146 @@
 #include "parser.h"
 #include "dvio.h"
 
+char *iformat_to_eformat(Var *obj);
+
+
+Var *dv_LoadISISFromPDS(FILE *fp, char *fn, int dptr)
+{
+/* Want to read label and pull out only the minimal key words
+	needed to define the header strucure for iom_read_qube_data.
+	The offset will be suplied and only a few things about
+	the label will be used (classic qube label reading can get confused)
+*/
+
+   OBJDESC 		*ob,*qube;
+   char 			*err_file=NULL;
+	KEYWORD 		*key,*key1,*key2;
+	int 			size[3]={0};
+	int 			prefix[3]={0};
+	int 			suffix[3]={0};
+	int			suffix_size[3]={0};
+	int 			org;
+	char			*ptr, p1[16], p2[16],p3[16];
+	float 		gain;
+	float			offset;
+	int 			suffix_bytes = 0;
+	struct 		iom_iheader *h = (struct iom_iheader *)malloc(sizeof(struct iom_iheader));
+	Var 			*v=NULL;
+	void			*data=NULL;
+	int			scope=ODL_THIS_OBJECT;
+	int			format;
+	int 			i;
+
+	iom_init_iheader(h);
+
+	ob = (OBJDESC *)OdlParseLabelFile(fn, err_file,ODL_EXPAND_STRUCTURE, 0);
+	if ((qube = OdlFindObjDesc(ob, "QUBE", NULL, 0, 0, 0)) == NULL) {
+		parse_error("Bad Call: this is PDS file doesn't contain a QUBE");
+		return(NULL);
+	}
+
+
+	org = -1;
+	if ((key = OdlFindKwd(qube, "AXES_NAME", NULL, 0, scope)) 
+	|| (key = OdlFindKwd(qube, "AXIS_NAME", NULL, 0, scope))) {
+		ptr = key->value;
+		sscanf(ptr, " ( %[^,] , %[^,] , %[^)] ) ", p1, p2, p3);
+		if (!strcmp(p1,"SAMPLE") && !strcmp(p2,"LINE") && !strcmp(p3,"BAND"))
+			org = iom_BSQ;
+		else if (!strcmp(p1,"SAMPLE") && !strcmp(p2,"BAND") && !strcmp(p3,"LINE"))
+			org = iom_BIL;
+		else if (!strcmp(p1,"BAND") && !strcmp(p2,"SAMPLE") && !strcmp(p3,"LINE"))
+			org = iom_BIP;
+		else {
+			if (iom_is_ok2print_unsupp_errors()){
+				fprintf(stderr, "Unrecognized data organization: %s = %s",
+					"AXIS_NAME", key->value);
+			}
+		}
+	}
+
+	/**
+	** Size of data
+	**/
+
+	if ((key = OdlFindKwd(qube, "CORE_ITEMS", NULL, 0, scope))) {
+		sscanf(key->value, "(%d,%d,%d)", &size[0], &size[1], &size[2]);
+	}
+
+	/**
+	** Format
+	**/
+
+	key2 = OdlFindKwd(qube, "CORE_ITEM_BYTES", NULL, 0, scope);
+
+	/**
+	** This tells us if we happen to be using float vs int
+	**/
+
+	key1 = OdlFindKwd(qube, "CORE_ITEM_TYPE", NULL, 0, scope);
+
+	format = iom_ConvertISISType(key1 ? key1->value : NULL,
+		NULL, key2 ? key2->value : NULL);
+
+	if (format == iom_EDF_INVALID){
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "%s has unsupported/illegal SIZE+TYPE combination.\n",
+				fn);
+		}
+			return 0;
+	}
+
+	if ((key = OdlFindKwd(qube, "CORE_BASE", NULL, 0, scope))) {
+		offset = atof(key->value);
+	}
+
+	if ((key = OdlFindKwd(qube, "CORE_MULTIPLIER", NULL, 0, scope))) {
+		gain = atof(key->value);
+	}
+
+
+	if ((key = OdlFindKwd(qube, "SUFFIX_ITEMS", NULL, 0, scope))) {
+		sscanf(key->value, "(%d,%d,%d)", &suffix[0], &suffix[1], &suffix[2]);
+	}
+
+	if ((key = OdlFindKwd(qube, "SUFFIX_BYTES", NULL, 0, scope))) {
+		suffix_bytes = atoi(key->value);
+	}
+
+	for (i = 0 ; i < 3 ; i++) {
+		if (suffix[i]) {
+			suffix_size[i] = suffix[i] * suffix_bytes;
+		}
+	}
+
+	h->org = org;           /* data organization */
+	h->size[0] = size[0];
+	h->size[1] = size[1];
+	h->size[2] = size[2];
+	h->eformat = (iom_edf)format;
+	h->offset = offset;
+	h->gain = gain;
+	h->prefix[0] = h->prefix[1] = h->prefix[2] = 0;
+	h->suffix[0] = suffix_size[0];
+	h->suffix[1] = suffix_size[1];
+	h->suffix[2] = suffix_size[2];
+	h->corner = suffix[0]*suffix[1]*suffix_bytes;
+
+	h->dptr = dptr;
+
+	OdlFreeTree(ob);
+	data = iom_read_qube_data(fileno(fp), h);
+	v = iom_iheader2var(h);
+	V_DATA(v) = data;
+
+	iom_cleanup_iheader(h);
+	return(v);
+}
+
+
+
+
+
 Var *
 dv_LoadISIS(FILE *fp, char *filename, struct iom_iheader *s)
 {
