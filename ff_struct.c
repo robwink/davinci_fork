@@ -83,6 +83,11 @@ add_struct(Var *s, char *name, Var *exp)
 			}
         }
     }
+	/*
+	** This appears to be necessary to prevent structure elements from
+	** being free'd later.
+	*/
+	mem_claim(exp);
 }
 
 
