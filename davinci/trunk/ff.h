@@ -264,6 +264,7 @@ struct _vfuncptr vfunclist[] = {
 
     { "shade",          ff_shade,              NULL },
     { "fexists",        ff_exists,              NULL },
+    { "contains",        ff_contains,              NULL },
 
 
 #if defined(HAVE_LIBQMV) && defined(HAVE_QMV_HVECTOR_H)
@@ -271,6 +272,12 @@ struct _vfuncptr vfunclist[] = {
 #endif
      { "deleted",       ff_deleted,              NULL },
      { "set_deleted",       ff_set_deleted,              NULL },
+
+     { "bindct",        ff_bindct,              NULL },
+	 { "binidct",       ff_bindct,              NULL },
+	 { "rice",          ff_rice,                NULL },
+	 { "unrice",        ff_unrice,                NULL },
+
     { NULL,             NULL,                  NULL }
 };
 
