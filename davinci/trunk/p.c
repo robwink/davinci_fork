@@ -19,8 +19,9 @@ p_mknod(int type, Var * left, Var * right)
     Var *v;
     Node *n;
 
-    v = newVar();
-	mem_claim(v);
+    // v = newVar();
+	// mem_claim(v);
+    v = calloc(1, sizeof(Var));
     n = V_NODE(v);
     v->type = type;
 
@@ -38,8 +39,9 @@ Var *
 p_mkval(int type, char *str)
 {
     Var *v;
-    v = newVar();
-	mem_claim(v);
+    // v = newVar();
+	// mem_claim(v);
+    v = calloc(1, sizeof(Var));
 
     switch (type) {
         case ID_STRING:
@@ -114,7 +116,7 @@ evaluate(Var * n)
         case ID_UNK:
         case ID_STRING:
         case ID_VAL:
-		  case ID_TEXT:					/*Added: Thu Mar  2 16:00:18 MST 2000*/
+        case ID_TEXT:					/*Added: Thu Mar  2 16:00:18 MST 2000*/
             push(scope, V_DUP(n));
             return (NULL);
     }
@@ -138,6 +140,12 @@ evaluate(Var * n)
 
 
     switch (type) {
+		case ID_LINE:
+		{
+			if (debug && right) printf("--> %s", V_STRING(right));
+			return(evaluate(left));
+			break;
+		}
         case ID_OR: /* binary operators */
         case ID_AND:
         case ID_EQ:
@@ -553,24 +561,24 @@ free_tree(Var *n)
          ** These are not nodes, but merely vals.  free 'em. and return; 
          **/
         switch (type) {
-	    case ID_IVAL:
-	    case ID_RVAL:
-	    case ID_VAL:
-	    case ID_STRING:
-	    case ID_ID:
-	    case ID_UNK:
-	    case ID_KEYWORD:
-		 case ID_TEXT:			/*Added: Thu Mar  2 16:01:19 MST 2000*/
-	       free_var(n);
-	       return;
+			case ID_IVAL:
+			case ID_RVAL:
+			case ID_VAL:
+			case ID_STRING:
+			case ID_ID:
+			case ID_UNK:
+			case ID_KEYWORD:
+			case ID_TEXT:			/*Added: Thu Mar  2 16:01:19 MST 2000*/
+			   free_var(n);
+			   return;
         }
 	
         left = V_NODE(n)->left;
         right = V_NODE(n)->right;
 
-	if (left != NULL && left != right) free_tree(left);
-	free(n);
-	n = right;
+		if (left != NULL && left != right) free_tree(left);
+		free(n);
+		n = right;
     }
 }
 
