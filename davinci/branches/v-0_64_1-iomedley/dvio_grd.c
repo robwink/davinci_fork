@@ -36,7 +36,7 @@ dv_LoadGRD(FILE *fp, char *filename, struct iom_iheader *s)
 }
 
 int
-dv_WriteGRD(Var *s, char *filename, int force, char *title)
+dv_WriteGRD(Var *s, char *filename, int force, char *title, char *task)
 {
     struct iom_iheader h;
     int status;
@@ -53,7 +53,7 @@ dv_WriteGRD(Var *s, char *filename, int force, char *title)
     }
     
     var2iom_iheader(s, &h);
-    status = iom_WriteGRD(filename, V_DATA(s), &h, force, title, "daVinci      ");
+    status = iom_WriteGRD(filename, V_DATA(s), &h, force, title, task);
     iom_cleanup_iheader(&h);
     
     if (status == 0){

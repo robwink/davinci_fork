@@ -197,36 +197,48 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
             else
                 ptr = V_NAME(v);
 
-            /**
-            ** try once with, hopefully, a passed string
-            **/
-            for (p = values; p && *p; p++) {
-                if (ptr && !strcasecmp(ptr, *p)) {
-                    q = *p;
-                }
-            }
-            if (q == NULL) {
-                if ((e = eval(v)) != NULL) {
-                    if (V_TYPE(e) == ID_STRING) {
-                        ptr = V_STRING(e);
-                        for (p = values; p && *p; p++) {
-                            if (ptr && !strcasecmp(ptr, *p)) {
-                                q = *p;
-                            }
-                        }
-                    }
-                }
-            }
-            if (q == NULL) {
-                parse_error("Illegal argument to function %s(...%s...)", 
-                            fname, alist[j].name);
-				free(av);
-                return(0);
-            }
+			/*
+			** This is in case we don't know what we're looking for
+			*/
 
-            p = (char **)(alist[j].value);
-            *p = q;
-            alist[j].filled = 1;
+			if (values == NULL) {
+				if (ptr != NULL) {
+					alist[j].filled = 1;
+					p = (char **)(alist[j].value);
+					*p = ptr;
+				}
+			} else {
+				/**
+				** try once with, hopefully, a passed string
+				**/
+				for (p = values; p && *p; p++) {
+					if (ptr && !strcasecmp(ptr, *p)) {
+						q = *p;
+					}
+				}
+				if (q == NULL) {
+					if ((e = eval(v)) != NULL) {
+						if (V_TYPE(e) == ID_STRING) {
+							ptr = V_STRING(e);
+							for (p = values; p && *p; p++) {
+								if (ptr && !strcasecmp(ptr, *p)) {
+									q = *p;
+								}
+							}
+						}
+					}
+				}
+				if (q == NULL) {
+					parse_error("Illegal argument to function %s(...%s...)", 
+								fname, alist[j].name);
+					free(av);
+					return(0);
+				}
+
+				p = (char **)(alist[j].value);
+				*p = q;
+				alist[j].filled = 1;
+			}
         } else if (alist[j].type == ID_UNK) {
             Var **vptr;
             if ((e = eval(v)) == NULL) {

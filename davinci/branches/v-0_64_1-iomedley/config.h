@@ -119,7 +119,7 @@
 /* #undef HAVE_MAGICK_H */
 
 /* Define if you have the <magick/api.h> header file.  */
-/* #undef HAVE_MAGICK_API_H */
+#define HAVE_MAGICK_API_H 1
 
 /* Define if you have the <malloc.h> header file.  */
 #define HAVE_MALLOC_H 1

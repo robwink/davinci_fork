@@ -161,7 +161,9 @@ Var *LoadAVIRIS (FILE *, char *, struct _iheader *);
 Var *Load_imath (FILE *, char *, struct _iheader *);
 #ifdef HAVE_LIBMAGICK
 Var *LoadGFX_Image(char *filename);
+#if 0
 Var *ff_XImage_Display(vfuncptr func, Var * arg);
+#endif /* 0 */
 #endif
 int LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var);
 Var * LoadVanilla(char *filename);

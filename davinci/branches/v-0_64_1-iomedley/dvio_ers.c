@@ -18,7 +18,7 @@ dv_WriteERS(Var *s, char *filename, int force)
         return 0;
     }
 
-	if (GetBands(V_SIZE(s), V_ORG(s)) > 1 && V_ORG(s) != BIL) {
+    if (GetBands(V_SIZE(s), V_ORG(s)) > 1 && V_ORG(s) != BIL) {
         parse_error("ERS files must be BIL format");
         return 0;
     }

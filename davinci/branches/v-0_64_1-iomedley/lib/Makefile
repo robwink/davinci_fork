@@ -14,7 +14,7 @@ INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 
 CC     = gcc
-DEFS   = -I/usr/X11R6/include -DHAVE_CONFIG_H 
+DEFS   = -I/usr/X11R6/include/X11 -DHAVE_CONFIG_H 
 LIBS   = -L/usr/X11R6/lib -liomedley -lMagick -ltiff -lpng -lbz2 -lreadline -ltermcap -ljpeg -lz -lXext -lXt -lX11 -lm  -ldl
 
 .c.o:

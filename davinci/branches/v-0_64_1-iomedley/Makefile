@@ -4,7 +4,7 @@ SHELL = /bin/sh
 
 srcdir = .
 
-prefix= /home/saadat/transient
+prefix= /usr/local
 exec_prefix = $(prefix)
 BINDIR = $(exec_prefix)/bin
 LIBDIR = $(prefix)/lib
@@ -14,12 +14,12 @@ INSTALL = /usr/bin/install -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 
-XINCLUDES=-I/usr/X11R6/include $(XRTINCLUDE)
+XINCLUDES=-I/usr/X11R6/include/X11 $(XRTINCLUDE)
 XLIBS=-L/usr/X11R6/lib $(XRTLIBS)
 
 CPPFLAGS= -I/usr/include/X11
-CFLAGS=$(XINCLUDES) -Ilib -g -O2 -I. -I/home/saadat/transient/include -I../iomedley  -I../iomedley
-LDFLAGS= -L/usr/X11R6/lib -L${exec_prefix}/lib -Lreadline -L/home/saadat/transient/lib -L../iomedley  -L. -L../iomedley
+CFLAGS=$(XINCLUDES) -Ilib -g -O2 -I. -INONE/include -I../iomedley  -I../iomedley
+LDFLAGS= -L/usr/X11R6/lib -L${exec_prefix}/lib -Lreadline -LNONE/lib -L../iomedley  -L. -L../iomedley
 
 XRTINCLUDE=  
 XRTLIBS = 
@@ -27,7 +27,7 @@ XRTLIBS =
 
 CC     = gcc
 DEFS   = -DHAVE_CONFIG_H 
-LIBS   = $(XLIBS) -liomedley -lMagick -ltiff -lpng -lbz2 -lreadline -ltermcap -ljpeg -lz -lXext -lXt -lX11 -lm  -ldl  -lmodsupp -liomedley
+LIBS   = -liomedley -lMagick -ltiff -lpng -lbz2 -lreadline -ltermcap -ljpeg -lz -lXext -lXt -lX11 -lm  -ldl  -lmodsupp -liomedley $(XLIBS)
 AR     = ar
 RANLIB = ranlib
 
@@ -64,10 +64,10 @@ OBJ=p.o pp.o symbol.o \
 	x.o xrt_print_3d.o motif_tools.o ff_convolve.o apifunc.o \
 	ff_plplot.o ff_pca.o ff_loadvan.o tools.o header.o \
 	io_pds.o io_hdf.o ff_pbm.o ff_meta.o $(MODULE_SUPP_OBJS) \
+	ff_load2.o ff_write2.o \
 	dvio_aviris.o dvio_goes.o dvio_grd.o dvio_imath.o \
 	dvio_isis.o dvio_magic.o dvio_pnm.o dvio_vicar.o dvio.o \
-	dvio_ers.o dvio_raw.o \
-	ff_load2.o ff_write2.o
+	dvio_ers.o dvio_envi.o dvio_raw.o 
 
 
 all:	 davinci gplot
@@ -349,3 +349,6 @@ dvio_pnm.o: dvio_pnm.c parser.h system.h darray.h avl.h ff_modules.h \
 dvio_vicar.o: dvio_vicar.c parser.h system.h darray.h avl.h \
  ff_modules.h module_io.h ufunc.h scope.h func.h dvio.h \
  ../iomedley/iomedley.h ../iomedley/io_lablib3.h ../iomedley/toolbox.h 
+dvio_envi.o: dvio_envi.c parser.h system.h darray.h avl.h ff_modules.h \
+ module_io.h ufunc.h scope.h func.h dvio.h ../iomedley/iomedley.h \
+ ../iomedley/io_lablib3.h ../iomedley/toolbox.h

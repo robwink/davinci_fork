@@ -73,7 +73,7 @@ dv_LoadISIS(FILE *fp, char *filename, struct iom_iheader *s)
             iom_GetSamples(h.size, h.org), 
             iom_GetLines(h.size, h.org), 
             iom_GetBands(h.size, h.org), 
-            iom_EFormat2Str(h.format), iom_NBYTESI(h.format)*8);
+            iom_Format2Str(h.format), iom_NBYTESI(h.format)*8);
 
     if (VERBOSE > 1) { parse_error(hbuf); }
 
