@@ -1064,7 +1064,7 @@ ProcessObjectIntoLabel(FILE *fp,int record_bytes, Var *v,char *name,objectInfo *
 				oi->obj_data[oi->count]=data;
 				oi->obj_dirty[oi->count]=1;
 #else
-				oi->obj_data[oi->count]= tmpvar); 
+				oi->obj_data[oi->count]= tmpvar; 
 					/*Now we should have a pointer to the data*/
 				oi->obj_dirty[oi->count]=0;
 #endif
