@@ -390,11 +390,27 @@ mem_malloc(void)
 {
     Scope *scope = scope_tos();
     Var *v = (Var *)calloc(1, sizeof(Var));
+	Var *top = NULL;
+	Var *junk = NULL;
+	int count = 0;
 
 	if (scope->tmp == NULL) scope->tmp = Darray_create(0);
 
-    Darray_add(scope->tmp, v);
+/*
+** FIXED: If the top of the tmp scope is null, insert there, instead
+** of adding a new one.  This will prevent the temp list from
+** gowing indefinitely.
+**
+** Fri Apr 29 21:22:45 MST 2005, NsG
+*/
+    if ((count = Darray_count(scope->tmp)) > 0) {
+		if (Darray_get(scope->tmp, count-1, (void **)&top) == 1 && top == NULL) {
+			Darray_replace(scope->tmp, count-1, v, junk);
+			return(v);
+		}
+	} 
 
+	Darray_add(scope->tmp, v);
     return(v);
 }
 
