@@ -1,8 +1,16 @@
-char *version = "@(#) daVinci Version #1.43a";
+char *version = "@(#) daVinci Version #1.44";
 
 #include "build.h"
 
 /*
+Version 1.44: Fri Apr 29 21:38:52 MST 2005
+	* 'fixed' scope temporarys to insert if the last element is null,
+	  instead of making the temporary stack longer. This should help to
+	  prevent really long things from running out of memory by overloading
+	  the stack of temporaries.
+	* Removed an apparently extraneous mem_claim from duplicate_struct,
+	  however with the above fix, this is less brilliant.
+
 Version 1.43a: Thu Mar 24 16:47:07 MST 2005
 	* Missing prototype in isis_obj.c
 

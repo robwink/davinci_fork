@@ -505,7 +505,10 @@ duplicate_struct(Var *v)
     for (i = 0 ; i < count ; i++) {
         get_struct_element(v, i, &name, &data);
         data = V_DUP(data);
-        mem_claim(data);
+		/*
+		** add_struct definietely does a mem_claim, don't do it here too.
+        ** ** mem_claim(data);
+		*/
         add_struct(r, name, data);
     }
     return(r);

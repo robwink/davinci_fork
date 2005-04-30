@@ -184,9 +184,9 @@ Darray_replace(Darray *d, int i, void *in, void **out)
 {
     if (d == NULL) return(-1);
         
-    *out = NULL;
+    if (out != NULL) *out = NULL;
     if (i < d->count) {
-        *out = d->data[i];
+        if (out != NULL) *out = d->data[i];
         d->data[i] = in;
         return(1);
     }
