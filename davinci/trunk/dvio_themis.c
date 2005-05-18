@@ -73,15 +73,15 @@ int Read_Ahead_For_Best_Collumn_Guess(int *Width,unsigned char *buf,int len);
 void RedunBegone(char **buf, int *Lines, int Col,PACIstatus *Ps,
                  int quiet,int eflag, Var *err,int *BandCount);
 
-#ifdef WORDS_BIGENDIAN
+//#ifdef WORDS_BIGENDIAN
 unsigned char Start_Sync[] = { 0xF0,0xCA };
 unsigned char Stop_Sync[] = { 0xAB,0x8C };
 unsigned char StopStart_Sync[] = {0xAB,0x8C,0xF0,0xCA};
-#else /* little endian */
-unsigned char Start_Sync[] = { 0xCA,0xF0 };
-unsigned char Stop_Sync[] = { 0x8C,0xAB };
-unsigned char StopStart_Sync[] = {0x8C,0xAB,0xCA,0xF0};
-#endif /* WORDS_BIGENDIAN */
+//#else /* little endian */
+//unsigned char Start_Sync[] = { 0xCA,0xF0 };
+//unsigned char Stop_Sync[] = { 0x8C,0xAB };
+//unsigned char StopStart_Sync[] = {0x8C,0xAB,0xCA,0xF0};
+//#endif /* WORDS_BIGENDIAN */
 
 
 #ifdef HAVE_LIBUSDS
