@@ -2,13 +2,44 @@
 
 #ifdef HAVE_LIBCFITSIO
 #include <cfitsio/fitsio.h>
+#include <dvio_fits.h>
 
-char     DVIO_FITS_err_text[64];
+int
+Write_FITS_Image(fitsfile *fptr, Var *obj)
+{
+	int		naxis;
+	long		naxes[3];
+	int		bitpix;
+	int		datatype;
+	int		*size;
+	int		i;
+	int		status=0;
+   int		fpixel[3]={1,1,1};
 
-#define QUERY_FITS_ERROR(status)    if (status) { \
-      fits_get_errstatus(status,DVIO_FITS_err_text); \
-      parse_error("cfitsio ERROR occured:\n\t%s\n",DVIO_FITS_err_text); \
-      return(NULL); }
+	VarType2FitsType(obj,&bitpix,&datatype);
+
+	size = V_SIZE(obj);
+	naxis = 0;
+	for(i=0;i<3;i++) {
+		if (size[i]) {
+			naxis++;
+			naxes[i] = size[i];
+		}
+		else
+			naxes[i] = 0;
+	}
+	fits_create_img(fptr,bitpix,naxis,naxes,&status);
+	QUERY_FITS_ERROR(status);
+
+	for(i=0;i<3;i++) 
+		if(!(naxes[i])) size[i]=1; //I don't think this is needed, but just in case V_SIZE() returns a 0 in one of the size slots
+
+	fits_write_pix(fptr,datatype,(long *)fpixel,size[0]*size[1]*size[2],(void *)V_DATA(obj),&status);
+	QUERY_FITS_ERROR(status);
+
+	return(1);
+}
+
 
 Var *
 Read_FITS_Image(fitsfile *fptr)
@@ -101,13 +132,20 @@ makeVarFromFITSLabel(char *fits_value,char key_type)
    switch (key_type) {
 
    case 'C':
-   case 'L':
                v = newString(strdup(fits_value));
                break;
 
    case 'I':   
                i = (int *)calloc(1,sizeof(int));
                *i = atoi(fits_value);
+               v = newVal(BSQ,1,1,1,INT,i);
+               break;
+   case 'L':
+					i = (int *)calloc(1,sizeof(int));
+					if (!strcmp(fits_value,"T"))
+						*i=1;
+					else
+						*i=0;
                v = newVal(BSQ,1,1,1,INT,i);
                break;
 
@@ -264,6 +302,168 @@ FITS_Read_Entry(char *fits_filename)
    return(head); 
 
 }
+int
+VarType2FitsType(Var *obj, int *bitpix, int *datatype)
+{
+	switch (V_FORMAT(obj)) {
+		case BYTE:
+			*bitpix = BYTE_IMG;
+			*datatype = TBYTE;
+			break;
+
+		case SHORT:
+			*bitpix = SHORT_IMG;
+			*datatype = TSHORT;
+			break;
+
+		case INT:
+			*bitpix = LONG_IMG; /* Yeah, I know, it says long...but it means 32-bit */
+			*datatype = TINT; /*Future's so bright...*/
+			break;
+
+		case FLOAT:
+			*bitpix = FLOAT_IMG;
+			*datatype = TFLOAT;
+			break;
+
+		case DOUBLE:
+			*bitpix = DOUBLE_IMG;
+			*datatype = TDOUBLE;
+			break;
+
+		default:
+			return(1);
+
+	}
+
+	return(0);
+}
+
+void ScratchFITS(fitsfile *fptr, char *name)
+{
+	int status=0;
+
+	fits_close_file(fptr,&status);
+
+	unlink(name);
+}
+
+/*
+** Valid Object: 
+** This method takes a structure and checks for a minimum of exiting
+** key/value pairs that would make the strucutre a legal label for
+** a FITS object in a FITS file.  The int idx flags the function
+** as to whether this is the FIRST object to go into the FITS file
+** and therefore as some different rule checks or if its > 1st object.
+*/
+
+int ValidObject(Var *obj, int idx)
+{
+	return(1);
+}
+
+int  Write_FITS_Record(fitsfile *fptr,Var *obj, char *obj_name)
+{
+	char	key[9];
+	char	val[72];
+	char	card[81];
+	int	status=0;
+	int	i;
+	int	len = strlen(obj_name);
+	int	datatype;
+	int	bitpix;
+
+
+/*
+** Currently we deal with two davinci object types:
+**   ID_STRING
+**   ID_VAL (of dim 1,1,1; ie Byte, Short, etc...)
+**	
+**	If it's a string, we have to build an 80 character "card".
+** If it's a value, we'll let the library handle formating.
+*/
+
+
+	if (V_TYPE(obj) == ID_STRING) {
+		for(i=0;i<8;i++){
+			if (i < len)
+				key[i] = obj_name[i];
+			else
+				key[i]=' ';
+		}
+		key[8]='\0';
+
+		//This is currently a mindless <72 char copy...no multi-line possibilities at this point
+		strncpy(val,V_STRING(obj),70);
+
+		val[71]='\0'; //just in case
+
+		sprintf(card,"%s= %s",key,val);
+
+		fits_write_record(fptr,card,&status);
+		QUERY_FITS_ERROR(status);
+
+		return(1);
+
+	}
+
+	if (V_TYPE(obj) ==ID_VAL) {
+		if (!strcasecmp(obj_name,"simple")) //special case for the first entry for the first obj
+			datatype = TLOGICAL;
+		else
+			VarType2FitsType(obj,&bitpix,&datatype);
+
+		fits_write_key(fptr,datatype,obj_name,V_DATA(obj),NULL,&status);
+		QUERY_FITS_ERROR(status);
+
+		return(1);
+	}
+
+	return(1);
+}
+
+
+/*
+** WriteSingleStrucutre:
+**	This function takes a Var structure, and parses it
+** using it's members names for the FITS label keys
+** and member values for the key's values.  If the item
+** contains a member named 'data', it is used to create
+** an image object with all the assoicted bit/axes information.
+** Before the object is parsed and written out the the FITS
+** files, it is validated for minimal label content and correctness.
+** If validation fails, a non-zero value is returned, other-wise
+** the structure is written out and a zero value is returned.
+*/
+int WriteSingleStructure(fitsfile *fptr,Var *obj,int index)
+{
+	Var *element;
+	int i;
+	int count;
+	char	*obj_name;
+
+	if (!ValidObject(obj,index))
+		return(1);
+
+	count=get_struct_count(obj);
+
+	for(i=0;i<count;i++){
+		get_struct_element(obj,i,&obj_name,&element);
+		if(!(strcasecmp(obj_name,"data"))){
+
+			if (!(int )Write_FITS_Image(fptr,element))
+				return(1);
+
+		}
+
+		else {
+			if (!(int )Write_FITS_Record(fptr,element,obj_name))
+				return(1);
+		}
+	}
+
+	return(0);
+}
 
 /*
 ** This is one entry point for crearting a FITS file.
@@ -281,6 +481,60 @@ FITS_Read_Entry(char *fits_filename)
 Var *
 FITS_Write_Structure(char *fits_filename, Var *obj, int force)
 {
+	int i;
+	Var *Tmp;
+	int count;
+	char *name;
+	char *obj_name;
+	fitsfile *fptr;
+	int status=0;
+/* 
+** All incoming FITS object are themselves placed into a structure, thus
+** obj should be strcuture of structures (at least one, anyway).  The first
+** portion of validation is to check that each object in obj IS of type
+** ID_STRUCT.  If it is, a single strucutre writter is called.
+** Slightly different rules exist for the first structure as opposed to the
+** rest, so that fact (whether this obj is the first or not the first) is
+** is signaled in the parameter list.  If any strucutre fails validation,
+** the file is scratched and nothing is written.
+*/
+
+	if (force) {
+		name = (char *)calloc(strlen(fits_filename)+2,1);
+		strcpy(name,"!");
+		strcat(name,fits_filename); /* the '!'-prefix tells the cfitsio 
+												 lib to overwrite existing file */
+	}
+	else
+		name = strdup(fits_filename);
+	
+	fits_create_file(&fptr,name,&status);
+	QUERY_FITS_ERROR(status);
+
+	count = get_struct_count(obj);
+
+	for(i=0;i<count;i++){
+		get_struct_element(obj,i,&obj_name,&Tmp);
+
+		if (V_TYPE(Tmp) != ID_STRUCT) {
+			parse_error("Encountered a non-FITS item in the list of items: %s\n",obj_name);
+			ScratchFITS(fptr,name);
+			return(NULL);
+		}
+
+		if (WriteSingleStructure(fptr,Tmp,i)){
+			parse_error("Invalid items in structure labeled: %s\nCannot write this object as a FITS file\n",obj_name);
+			ScratchFITS(fptr,name);
+			return(NULL);
+		}
+	}
+	
+	fits_close_file(fptr,&status);
+
+	QUERY_FITS_ERROR(status);
+
+	return(NULL);
+
 }
 
 
@@ -330,51 +584,17 @@ FITS_Write_Var(char *fits_filename, Var *obj, int force)
 	fits_create_file(&fptr,name,&status);
 	QUERY_FITS_ERROR(status);
 
-	switch (V_FORMAT(obj)) {
-		case BYTE:
-			bitpix = BYTE_IMG;
-			datatype = TBYTE;
-			break;
+/*
+** Here we would descide if the Var was a table 
+** or an image, and then do the right thing, but
+** for now, we only do images.
+*/
 
-		case SHORT:
-			bitpix = SHORT_IMG;
-			datatype = TSHORT;
-			break;
-
-		case INT:
-			bitpix = LONG_IMG; /* Yeah, I know, it says long...but it means 32-bit */
-			datatype = TINT; /*Future's so bright...*/
-			break;
-
-		case FLOAT:
-			bitpix = FLOAT_IMG;
-			datatype = TFLOAT;
-			break;
-
-		case DOUBLE:
-			bitpix = DOUBLE_IMG;
-			datatype = TDOUBLE;
-			break;
+	if (!(int)Write_FITS_Image(fptr,obj)) {
+		parse_error("An error was generated trying to write your data as a FITS image\n");
+		ScratchFITS(fptr,name);
+		return(NULL);
 	}
-
-	size = V_SIZE(obj);
-	naxis = 0;
-	for(i=0;i<3;i++) {
-		if (size[i]) {
-			naxis++;
-			naxes[i] = size[i];
-		}
-		else
-			naxes[i] = 0;
-	}
-	for(i=0;i<3;i++) 
-		if(!(naxes[i])) naxes[i]=1;
-
-	fits_create_img(fptr,bitpix,naxis,naxes,&status);
-	QUERY_FITS_ERROR(status);
-
-	fits_write_pix(fptr,datatype,(long *)fpixel,size[0]*size[1]*size[2],(void *)V_DATA(obj),&status);
-	QUERY_FITS_ERROR(status);
 
 	fits_close_file(fptr,&status);
 

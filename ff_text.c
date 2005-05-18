@@ -248,7 +248,7 @@ ff_delim(vfuncptr func, Var *arg)
 
 
 	Alist alist[5];
-	alist[0] = make_alist( "object",   ID_VAL,       NULL,    &ob);
+	alist[0] = make_alist( "object",   ID_UNK,       NULL,    &ob);
 	alist[1] = make_alist( "delim",    ID_STRING,    NULL,    &delim);
 	alist[2] = make_alist( "count",    INT,          NULL,    &item);
 	alist[3].name = NULL;

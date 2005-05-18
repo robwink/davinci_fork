@@ -111,6 +111,7 @@ struct _vfuncptr vfunclist[] = {
     { "list",       ff_list,        NULL , NULL},
 	 { "save_pds",	  WritePDS,       NULL , NULL},
 	 { "write_pds",	  WritePDS,       NULL , NULL},
+    { "write_fits",      WriteFITS,               NULL, NULL},
     
 /* string functions */
 

@@ -3,6 +3,11 @@ char *version = "@(#) daVinci Version #1.44";
 #include "build.h"
 
 /*
+version 1.44a: Wed May 18 11:05:56 MST 2005
+	+ Fixed a bug in load_paci for linux machines
+   + Minor change to ff_text.c ID_VAL --> ID_UNK; more flexibility
+   + Added a simple FITS writing routine
+
 Version 1.44: Fri Apr 29 21:38:52 MST 2005
 	* 'fixed' scope temporarys to insert if the last element is null,
 	  instead of making the temporary stack longer. This should help to
@@ -23,6 +28,13 @@ Version 1.42a: Wed Mar 23 16:45:01 MST 2005
 
 Version 1.42: Mon Feb  7 19:49:59 MST 2005
 	* Commited ff_window, ff_gconvolve, ff_warp and ff_median.
+
+	+ Added load_fits() and write_fits(), read/write
+		routines for FITS type data.  Currrently, tables
+		are not supported; their labels are read, but the
+		data contained in the table is NOT. write_fits
+		currently writes out single VAR objects and slaps
+		a default label on them. 
 
 Version 1.41: Fri Oct  1 11:06:45 MST 2004
 	+ Fixed typo in the definition of get_struct_key()
