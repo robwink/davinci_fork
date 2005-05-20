@@ -1,8 +1,14 @@
-char *version = "@(#) daVinci Version #1.44";
+char *version = "@(#) daVinci Version #1.46";
 
 #include "build.h"
 
 /*
+Version 1.46: Fri May 20 11:41:13 MST 2005
+	* Fixed crash in ff_text:single_replace (don't ask me why)
+
+Version 1.45: Thu May 19 13:30:22 MST 2005
+	* Updates to window() for histogram functions min/max.
+
 version 1.44a: Wed May 18 11:05:56 MST 2005
 	+ Fixed a bug in load_paci for linux machines
    + Minor change to ff_text.c ID_VAL --> ID_UNK; more flexibility
