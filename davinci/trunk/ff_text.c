@@ -911,7 +911,7 @@ char *single_replace(char *line, regex_t *preg, char *replace)
     newtext[index]='\0';
 
     /*Shrink to fit*/
-    newtext=realloc(newtext,strlen(newtext)+1);
+    // newtext=realloc(newtext,index+1);
 	
     return(newtext);
 }
