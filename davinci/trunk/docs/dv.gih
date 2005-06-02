@@ -2343,4 +2343,20 @@ Davinci supports the following matrix functions:
 	  C_END  is the sentinal which marks the end of label
 
 
+?functions boxfilter()
+?boxfilter()
+ boxfilter() - fast convolve (average) for uniform, rectangular masks
+
+ boxfilter(obj=VAR, [x=INT, y=INT] | [size=INT], ignore=VAL, verbose=BOOL)
+
+    Peforms a boxcar filter.  Computes the average within the rectangular
+    window specified for each pixel in the input.
+    You can specify either an x and y for rectangular windows, or just size 
+    for a square window.  Returns windowed average for all non-ignore
+    pixels.  
+    If you specify verbose, it will return a structure containing the 
+    windowed mean, pixel count and standard deviation under the window 
+    (plus some other stuff for working with running sums).  
+
+    Note: boxfilter() can use 24 bytes of memory per input pixel.
 
