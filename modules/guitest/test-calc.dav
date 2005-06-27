@@ -1,4 +1,4 @@
-#!/u/jim/src/davinci/davinci -ifv
+#!davinci -ifv
 
 verbose = 0
 
