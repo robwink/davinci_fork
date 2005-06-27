@@ -25,7 +25,12 @@
  *
  *****************************************************************************/
 
-/* No callbacks. */
+static CallbackEntry pushButtonCallbacks[] = {
+	{ "ok",			XmNokCallback,		gui_defaultCallback },
+	{ "cancel",		XmNcancelCallback,	gui_defaultCallback },
+	{ "help",		XmNhelpCallback,	gui_defaultCallback },
+	{ NULL,	NULL, NULL },
+};
 
 /*****************************************************************************
  *
@@ -44,80 +49,58 @@
 int
 gui_isErrorDialog(const char *name)
 {
-  const char *aliases[] = { "errorDialog", NULL };
-  return gui_isDefault(aliases, name);
+	const char *aliases[] = { "errorDialog", NULL };
+	return gui_isDefault(aliases, name);
 }
 
 WidgetClass
 gui_getErrorDialogClass(void)
 {
-  return xmMessageBoxWidgetClass;
+	return xmMessageBoxWidgetClass;
 }
 
 Widget
 gui_initErrorDialog(const char *dvName, WidgetClass class, Widget parent,
-		      Var *dvResources, void **instanceData,
-		      Narray *publicResources)
+	Var *dvResources, void **instanceData,
+	Narray *publicResources)
 {
-
-  Widget		dialog;
-  Arg			xtArgs[DV_MAX_XT_ARGS];
-  Cardinal		xtArgCount;
-  FreeStackListEntry	freeStack;
+	Widget				dialog;
+	Arg					xtArgs[DV_MAX_XT_ARGS];
+	Cardinal			xtArgCount;
+	FreeStackListEntry	freeStack;
 
 #if DEBUG
-  fprintf(stderr, "DEBUG: gui_initErrorDialog(dvName = \"%s\", class = %ld, "
-	  "parent = %ld, instanceData = %ld)\n", dvName, class, parent,
-	  instanceData);
+	fprintf(stderr, "DEBUG: gui_initErrorDialog(dvName = \"%s\", class = %ld, "
+		"parent = %ld, instanceData = %ld)\n", dvName, class, parent,
+		instanceData);
 #endif  
 
-  /* Parse resources, if the user supplied any. */
+	/* Parse resources, if the user supplied any. */
 
-  xtArgCount = 0;
-  freeStack.head = freeStack.tail = NULL; /* FIX: free these */
-  if (dvResources != NULL) {
-    gui_setResourceValues(NULL, widgetClass, dvResources,
-			  xtArgs, &xtArgCount, &freeStack,
-			  publicResources);
-  }
+	xtArgCount = 0;
+	freeStack.head = freeStack.tail = NULL; /* FIX: free these */
+	if (dvResources != NULL) {
+		xtArgCount = gui_setResourceValues(NULL, widgetClass, dvResources,
+			xtArgs, &freeStack, publicResources);
+	}
 
-  /* Set the screen, required for popups. */
+	/* Set the screen, required for popups. */
 
-  XtSetArg(xtArgs[xtArgCount], XmNscreen,
-	   DefaultScreenOfDisplay(XtDisplay(parent)));
-  xtArgCount++;
+	XtSetArg(xtArgs[xtArgCount], XmNscreen,
+		DefaultScreenOfDisplay(XtDisplay(parent)));
+	xtArgCount++;
 
-  dialog = XmCreateErrorDialog(parent, (char *) dvName, xtArgs, xtArgCount);
-  XtManageChild(dialog);
+	dialog = XmCreateErrorDialog(parent, (char *) dvName, xtArgs, xtArgCount);
+	XtManageChild(dialog);
 
-  /* Free anything in the free stack. */
-  gui_freeStackFree(&freeStack);
+	/* Free anything in the free stack. */
+	gui_freeStackFree(&freeStack);
 
-  return dialog;
-
+	return dialog;
 }
 
-#if 0
-
-Narray *
-gui_getErrorDialogPublicResources()
+CallbackList
+gui_getErrorDialogCallbacks(void)
 {
-
-  Narray	*resErrorDialog;
-  int		i, num;
-
-#if DEBUG
-  fprintf(stderr, "DEBUG: gui_getErrorDialogPublicResources()\n");
-#endif
-
-  num = sizeof(errorDialogPublicResources) / sizeof(errorDialogPublicResources[0]);
-  resErrorDialog = Narray_create(num);
-  for (i = 0; i < num; i++) {
-    Narray_add(resErrorDialog, (char *) errorDialogPublicResources[i], NULL);
-  }
-
-  return resErrorDialog;
-
+	return pushButtonCallbacks;
 }
-
-#endif

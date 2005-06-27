@@ -41,17 +41,17 @@ gui_isMenuBar(const char *name)
 }
 
 Widget
-gui_initMenuBar(const char *dvName, WidgetClass class, Widget parent,
-		void **optData)
+gui_initMenuBar (const char *dvName, WidgetClass class, Widget parent,
+	Var *dvResources, void **instanceData,
+	Narray *publicResources, Widget *outerWidget)
 {
-  /* FIX:  return XmCreateMenuBar(parent, dvName, NULL, 0); */
-  return NULL;
+	return XmCreateMenuBar(parent, dvName, NULL, 0);
 }
 
 WidgetClass
 gui_getMenuBarClass(void)
 {
-  /* FIX: return xmMenuBarWidgetClass; */
-  return NULL;
+	// return xmMenuBarWidgetClass;
+	return xmRowColumnWidgetClass;
 }
 

@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_MENUBAR_H
 #define DV_WIDGET_MENUBAR_H
 
-/* FIX: why isn't there a header declaring XmCreateMenuBar()? */
 #include "gui.h"
+#include <Xm/RowColumn.h>
 
 /*****************************************************************************
  *
@@ -23,8 +23,8 @@
  *
  *****************************************************************************/
 
-int		gui_isMenuBar(const char *);
-Widget		gui_initMenuBar(const char *, WidgetClass, Widget, void **);
+int			gui_isMenuBar(const char *);
+Widget		gui_initMenuBar(const char *, WidgetClass, Widget, Var *, void **, Narray *, Widget *);
 WidgetClass	gui_getMenuBarClass(void);
 
 #endif /* DV_WIDGET_MENUBAR_H */

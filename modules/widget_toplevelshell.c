@@ -78,8 +78,8 @@ gui_initTopLevelShell(const char *dvName, WidgetClass class, Widget parent,
   xtArgCount = 0;
   freeStack.head = freeStack.tail = NULL; /* FIX: free these */
   if (dvResources != NULL) {
-    gui_setResourceValues(NULL, widgetClass, dvResources,
-			  xtArgs, &xtArgCount, &freeStack,
+    xtArgCount = gui_setResourceValues(NULL, widgetClass, dvResources,
+			  xtArgs, &freeStack,
 			  publicResources);
   }
 
