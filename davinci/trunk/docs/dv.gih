@@ -2343,6 +2343,73 @@ Davinci supports the following matrix functions:
 	  C_END  is the sentinal which marks the end of label
 
 
+?functions extract()
+?extract()
+ extract() - Extract portions of a VAL orthogonal to a given mask
+
+ extract (object=VAR, mask=VAR, [axis=STRING])
+   object: data to extract from
+   mask  : non-zero location specifies data to extract
+   axis  : indicates how to arrange extracted pieces
+
+ This routine will extract portions of the object orthogonal to the mask
+ and coresponding to the points where the mask is set.  This function is
+ intended to speed the extraction of higher dimensional data from lower
+ dimensional masks.  For example, the commands
+
+   obj = create (10,10,10);
+   mask = create(10,10,1, format=BYTE, start=0, step=0);
+   mask[1,1] = mask[2,2] = mask[3,3] = 1;
+   data = extract (obj, mask, axis="x");
+
+ would extract and return 'data' as a 3x1x10 VAR.  The extract()
+ function locates each non-zero bit in 'mask', and grabs the portion of
+ 'obj' that is specified by that mask bit.  Visualize the 10x10x1 'mask' as
+ a 2D plane and the 10x10x10 'obj' as a 3D cube.  Any point in the 2D 'mask'
+ plane then uniquely specifies a 1x1x10 line in the 'obj' cube.
+
+ The extract() function extracts each of these 1x1x10 objects and stacks
+ them together.  The pieces can be stacked together along either the x or
+ y axes.  Since the function has no assumptions about what the user wants,
+ the user must specify the axis that pieces should be added along.  To get
+ a 1x3x10 VAR in 'data', the user could have specified axis="y" instead.
+
+ When the mask can be described as a 1D line and the object as a 3D cube,
+ each mask bit specifies a 2D plane.  The planes can be stacked together in
+ only one way, so the user does not have to specify an axis in that case.
+
+ The VAL/mask combinations are listed below, with example sizes in the last
+ three columns.  The N used in the outputs is the number of mask bits set.
+
+   VAL  Mask  Pieces  VAL    Mask   Output
+   1D   1D    points  5x1x1  5x1x1  Nx1x1 (axis="x")
+   2D   2D    points  5x5x1  5x5x1  Nx1x1 (axis="x")
+   3D   3D    points  5x5x5  5x5x5  Nx1x1 (axis="x")
+   2D   1D    lines   5x5x1  1x5x1  5xNx1 (axis="y")
+   3D   2D    lines   5x5x5  5x5x1  Nx1x5 (axis="x")
+   3D   1D    planes  5x5x5  1x1x5  5x5xN (axis may be omitted)
+   1D   2D    n/a     n/a    n/a    n/a
+   1D   3D    n/a     n/a    n/a    n/a
+   2D   3D    n/a     n/a    n/a    n/a
+
+ Spectra Selection Example:
+
+   # load PDS qube to select spectra from
+   qube = load_pds(filename).qube.data;
+
+   # user wants to view the spectra under every 20th pixel in the x/y plane
+   mask = create(dim(qube)[1],dim(qube)[2],1, format=BYTE);
+   mask[] = 0;
+   mask[1::20,1::20] = 1;
+
+   # extract the selections and shape them into Nx1xZ VAR, where N is the
+   # num. of mask bits set and Z is the num. of bands in the qube.
+   spectra = extract (qube,mask,axis="x");
+
+   # plot the selections
+   xplot (spectra, axis=z);
+
+
 ?functions boxfilter()
 ?boxfilter()
  boxfilter() - fast convolve (average) for uniform, rectangular masks
@@ -2359,4 +2426,869 @@ Davinci supports the following matrix functions:
     (plus some other stuff for working with running sums).  
 
     Note: boxfilter() can use 24 bytes of memory per input pixel.
+
+
+?gui
+
+?gui Introduction
+ This Davinci module provides a basic graphical user interface.
+ Davinci commands can create, destroy, and handle user interaction
+ with Motif-style X applications.
+
+ The Davinci GUI module presents the developer with a limited set of
+ Xt and Motif widget bindings, facilitating the construction of
+ basic GUI-driven Davinci applications.
+
+ Since the module widgets are based on Xt and Motif, most of the
+ properties and behavior of the widgets are defined by the
+ underlying Xt widget API. Actions are handled via callbacks, and
+ attributes via key-value pairs (implemented using Davinci structs).
+ All widgets are contained inside other widgets in a hierarchal
+ fashion.
+
+ This document assumes a basic familiarity with GUI concepts,
+ specifically the X Window System and Xt/Motif widgets. You will need
+ a Motif reference in order to familiarize yourself with individual
+ widgets and their attributes and callbacks. The module author used
+ O'Reilly & Associates' X Window System series as the implementation
+ reference.
+
+ To quickly learn some basic usage, see the examples in the widget
+ section.
+
+ Davinci must be built with module support at compile time, and the
+ GUI module must be loaded before the bindings are available.
+
+ Davinci will look for modules in its default installation directory
+ (/usr/local/lib/davinci, if not changed at build time), or if the
+ environment variable DV_MOD_PATH is set, in that directory.
+
+ To load and initialize the GUI module, enter:
+
+     load_module("gui")
+
+ To create a window and add controls to it, Davinci commands are
+ executed to create a container shell of some type, and then children
+ are created inside of it.  Here is a simple Hello World example:
+
+     load_module("gui")
+     top = gui.create("topLevelShell", name = "Hello!")
+     label = gui.create("label", top, { labelString = "Hello, world!" })
+     gui.realize(top)
+
+ This example may be entered interactively, placed into an executable
+ Davinci script, or placed in a file and executed via source().
+
+ Note that the interactive Davinci command prompt is still available
+ while the GUI window is displayed. Take care not to alter the widget
+ handle variables while the widgets are in use.
+
+ To destroy the window (and both widgets created), either destroy it
+ in your window manager (usually by clicking X on the title bar), or
+ enter:
+
+     gui.destroy(top)
+
+ Either method will destroy the widgets completely. While the
+ variables top and label will still contain values, they will no
+ longer be recognized as widget handles and should not be used.
+
+?gui resources
+ All resources manipulation is performed via Davinci struct variables.
+ The simplest resources are key/value pairs with scalar values,
+ however arbitrarily complex objects can be used for compound
+ resource values, such as lists of strings or multi-value feedback
+ structures.
+
+ CSG deals with when resources can be modified.
+
+ Structure considers the alternatives available for conveniently
+ getting and setting resources.
+
+ Visibility describes how and why certain resources are hidden.
+
+ Objects describes using the gui module in an object-oriented
+ fashion.
+
+ Getting and settings resources are considered in detail in the
+ function descriptions.
+
+?gui resources CSG
+?gui resources csg
+ CSG: Create, Set, Get
+
+ While most resources can be manipulated at will, some can only be set
+ at widget creation time, and become read-only thereafter, and some
+ are always read-only and can never be changed by the developer. In Xt
+ reference guides, these resources are usually labeled in a CSG
+ column, where C, S, and G are treated as flags.
+
+ If you try to set a read-only resource, or set a create-only resource
+ after creation time, the value will be ignored. Refer to a Motif
+ reference manual for details.
+
+?gui resources Structure
+ Resource Structure
+
+ Building on the "Hello, world!" example, the labelString resource
+ could have been set by explicitly creating a struct, as below:
+
+     labelResources = struct()
+     labelResources.labelString = "Hello, world!"
+     label = gui.create("label", top, labelResources)
+
+ Either method is acceptable, but explicitly creating the struct will
+ make your code cleaner when dealing with a large number of resources.
+
+?gui resources Visibility
+ Resource Visibility
+
+ Calling gui.get(widgetid) will return only the default resources.
+ These resources are the ones most commonly associated with using the
+ particular widget. The default resource list is meant to be small and
+ manageable, and can help developers learn what features a widget
+ supports.
+
+ Additional resources are available on every widget, and are normally
+ hidden to reduce spam. If you'd like to see all the widgets
+ available, use gui.get(widgetid, all = 1).
+
+ This will display all supported widget resources, including those
+ inherited from parent widgets. See the section on inheritance for
+ further details.
+
+?gui resources Inheritance
+ Resource Inheritance
+
+ All widgets except the high level shell are placed inside of a
+ parent widget.  The parent may need to keep some state on each child
+ inside of it.  This state is kept in the child's list of resources.
+ These are called inherited resources.
+
+ Most widgets are placed inside of some kind of container widget.
+ The container widget manages the position and size of the child.
+ It is common for the child's inherited resources to specify how the
+ child is managed. For example, on a form widget, the leftAttachment
+ resource is inherited by any widget placed inside a form widget, and
+ specifies how the left edge of the child is positioned.
+
+ Container and layout widgets all impart some resources on their
+ children. Most of these will never be used by the developer, hence
+ the idea of "default" and hidden resources.
+
+?gui resources Objects
+ Pseudo-Object-Oriented Access
+
+ A natural side-effect of Davinci structure access allows you to
+ access resources in a manner familiar to object-oriented developers:
+
+     lstring = gui.get(label).labelString
+
+ If you use this method, it's still a good idea to explicitly request
+ the resource you need, for efficiency:
+
+     lstring = gui.get(label, "labelString").labelString
+
+?gui resources Special
+ Special resources
+
+ davinciPrivate
+
+ The gui module adds a special resource named "davinciPrivate" to each
+ widget.  When developing applications using the GUI module, data must
+ often be shared between widgets.  Rather than use global variables,
+ the developer of the script can use davinciPrivate to hold the data
+ for as long as the widget is alive.  When the widget is destroyed,
+ the contents of the structure are removed.
+
+ xhandle
+
+ The gui module adds a special resource named "xhandle" to each
+ widget.  This resource is set to the X Windows handle.  This allows
+ certain other applications to draw into the Davinci GUI module
+ widget space.  Certain versions of GNUPlot have this capability,
+ for example.
+
+?gui widgets
+ The gui module supports a variety of widgets from the X Motif widget
+ library.  There are several custom widgets as well which are not
+ included in the standard Motif library.
+
+ Each of the examples included in the individual widget descriptions
+ assumes that the GUI module has already been loaded by the command:
+
+     load_module('gui')
+
+?gui widgets arrowButton
+ Motif Class Name: XmArrowButton
+ 
+ This creates an arrow-shaped push button. Resources can specify arrow
+ direction.
+
+ Example:
+     top=gui.create('topLevelShell')
+     arrow=gui.create('arrowbutton',top,{arrowDirection="ARROW_RIGHT"})
+     gui.realize(top);
+
+?gui widgets comboBox
+ Motif Class Name: XmComboBox
+
+ This creates a combobox. Resources can specify whether the box is a
+ drop-down type combobox, or a list with a text widget to display the
+ current selection.
+
+ Example:
+     top=gui.create("topLevelShell",name="combobox")
+     data=cat("a","b","c","d",axis=y)
+     r=gui.create("rowcolumn",top)
+     
+     gui.create("label",r,{labelString="combo box list"})
+     a=gui.create("combobox",r,resources={comboBoxType="COMBO_LIST"})
+     gui.set(a,{itemCount=length(data),items=data})
+     gui.addcallback(a,"selectionCallback","echo('selected')")
+     
+     gui.realize(top)
+     gui.get(a,all=1)
+
+?gui widgets command
+ Motif Class Name: XmCommand
+
+ This creates a command entry dialog that automatically displays a
+ scrolling history of commands entered.
+
+ Example:
+     define cb_changed (set)
+     {
+         printf ("changed\n")
+         cmd = gui.get(set.cmd,"command").command
+         if (HasValue(cmd)) echo(cmd)
+     }
+ 
+     define cb_entered (set)
+     {
+         printf ("entered\n")
+         h = gui.get(set.cmd).historyItems
+         cmd = h[,length(h)]
+         if (HasValue(cmd)) system(cmd)
+     }
+ 
+     set = struct()
+     set.top = gui.create ("topLevelShell", name="command")
+     set.cmd = gui.create ("command", set.top)
+     gui.set (set.cmd, {promptString="> "})
+     gui.addcallback (set.cmd, "commandEntered", "cb_entered(set=set)")
+     gui.addcallback (set.cmd, "commandChanged", "cb_changed(set=set)") 
+     gui.realize(set.top)
+
+?gui widgets fileSelectionBox
+ Motif Class Name: XmFileSelectionBox
+
+ Standard Motif file/directory selection dialog.  This presents a
+ standard interface for locating and selecting file system objects.
+
+ Example:
+    define cb_load(set)
+    {
+        fs  = $1
+        top = $2
+        sel = gui.get(fs,"dirSpec").dirSpec
+        if (type(sel)=="STRING") if (length(sel) > 0) if (fexists(sel)) {
+			printf ("Valid file has been selected\n");
+        } else {
+			printf ("Unable to locate that file\n");
+		}
+    }
+    
+    top = gui.create ("topLevelShell",name="Load...")
+    fs = gui.create ("fileSelectionBox", top)
+    gui.addcallback (fs, "ok", sprintf("cb_load(%d,%d,set=set)",fs,top))
+    gui.addcallback (fs, "cancel", sprintf("gui.destroy(%d)",top))
+    gui.realize(top)
+
+?gui widgets form
+ Motif Class Name: XmForm
+
+ Free form layout manager.  It provides exceptional docking control
+ over children placed inside, at the expense of being rather complex.
+ The full description of form's subtleties is left to the Motif
+ documentation.
+ 
+ Example:
+     top=gui.create('topLevelShell',name="Form")
+     form=gui.create('form',top)
+     pb1=gui.create('pushbutton',form)
+     pb2=gui.create('pushbutton',form)
+
+     gui.set(pb1,{topAttachment="ATTACH_FORM"})
+     gui.set(pb1,{leftAttachment="ATTACH_FORM"})
+     gui.set(pb1,{bottomAttachment="ATTACH_FORM"})
+     gui.set(pb1,{rightAttachment="ATTACH_POSITION"})
+     gui.set(pb1,{rightPosition=50})
+
+     gui.set(pb2,{topAttachment="ATTACH_FORM"})
+     gui.set(pb2,{bottomAttachment="ATTACH_FORM"})
+     gui.set(pb2,{rightAttachment="ATTACH_FORM"})
+     gui.set(pb2,{leftAttachment="ATTACH_POSITION"})
+     gui.set(pb2,{leftPosition=50})
+
+     gui.set(top,{width=400,height=400})
+     gui.realize(top)
+
+ This example first creates a top shell, the form, and two buttons
+ inside it.  The first button is then attached to the form on the
+ left and position 50 out of 100 on the right.  The other button
+ is attached in the opposite way so they share the form's space
+ along a vertical line between them.  The shell is then sized so
+ the user can see it and the application is realized.
+
+ This small example does not illustrate all of form's features.
+ There are other more complex attachment methods, such as
+ ATTACH_WIDGET.  See the Motif Programmer's Reference for further
+ information.
+
+?gui widgets frame
+ Motif Class Name: XmFrame
+
+ Provides a window frame/border.  This widget does very minimal
+ management, simply providing a visual border around its children.
+
+ Example:
+     top=gui.create("topLevelShell",name="frame")
+     f=gui.create("frame",top)
+     gui.realize(top)
+
+?gui widgets label
+ Motif Class Name: XmLabel
+
+ Basic text label.  Provides a variety of callbacks.  Text entry is
+ limited to a single line.
+
+ Example:
+    top=gui.create("topLevelShell",name="label")
+	gui.set(top,resources={width=500,height=500})
+	label=gui.create("label",top,{labelString="Hello World"})
+    gui.realize(top)
+
+?gui widgets lineBox
+ LineBox
+
+ This is a custom widget developed here at the ASU Mars Spaceflight
+ Center.  It allows the user a more interactive experience when
+ creating and changing a stretch function to apply to image data.
+
+ This widget was developed for a particular purpose, so no example
+ has been provided.
+ 
+?gui widgets list
+ Motif Class Name: XmList
+
+ Basic ordered list of items.  A Davinci text object can be set into
+ this widget.  Each line in the text object becomes a line in the list
+ and the user can select among them.
+
+ Example:
+     define cb_browseSelection () { echo ('browse') }
+     define cb_defaultAction () { echo ('dflt action') }
+     define cb_extendedAction () { echo ('ext. action') }
+     define cb_multSelection () { echo ('mult.select.') }
+     define cb_singleSelect () { echo ('sing.select.') }
+    
+     top=gui.create("topLevelShell",name="list")
+	 gui.set(top,resources={width=500,height=500})
+     list = cat("a","b","c","d",axis=y)
+     wid=gui.create("list",top)
+     gui.set(wid,{itemList=list})
+     gui.addcallback (wid,"browseSelection","cb_browseSelection()")
+     gui.addcallback (wid,"defaultAction","cb_defaultAction()")
+     gui.addcallback (wid,"extendedSelection","cb_extendedAction()")
+     gui.addcallback (wid,"multipleSelection","cb_multSelection()")
+     gui.addcallback (wid,"singleSelection","cb_singleSelect()")
+     gui.realize(top)
+     gui.get(wid,all=1)
+
+gui widgets panedWindow
+ Motif Class Name: XmPanedWindow
+ 
+ Layout manager attaches children together in vertical or horizontal
+ 'panes'.  A separator allows the user to resize each space allocated
+ for a child.
+
+ Example:
+     top=gui.create("topLevelShell",name="panedwindow");
+     gui.set(top,resources={width=500,height=500});
+     r=gui.create("rowcolumn",top)
+     wid=gui.create("panedWindow",r)
+     p1 = gui.create("pushbutton",wid,{labelString="PB 1"})
+     p2 = gui.create("pushbutton",wid,{labelString="PB 2"})
+     p3 = gui.create("pushbutton",wid,{labelString="PB 3"})
+     gui.realize(top)
+     gui.set(wid,{height=400})
+
+?gui widgets pushButton
+ Motif Class Name: XmPushButton
+
+ Generic push button can display a text label and handle user events.
+
+ Example:
+     top=gui.create('topLevelShell',name="pushbutton")
+     pb=gui.create('pushbutton',top,{labelString="Hello"})
+     gui.addcallback(pb,'activate','printf("hello world\\n")')
+     gui.realize(top)
+
+?gui widgets radioBox
+ Motif Class Name: XmRadioBox
+
+ Layout manager for radio buttons.  
+
+ Example:
+     top=gui.create("topLevelShell",name="radiobox")
+	 gui.set(top,resources={width=500,height=500})
+     wid=gui.create("radiobox",top)
+     p1=gui.create("togglebutton",wid,{labelString="choice 1"})
+     p2=gui.create("togglebutton",wid,{labelString="choice 2"})
+     p3=gui.create("togglebutton",wid,{labelString="choice 3"})
+     gui.addcallback (wid,"entry","echo('entry')")
+	 gui.addcallback (p1,"valueChanged","echo('choice 1 changed')")
+	 gui.addcallback (p2,"valueChanged","echo('choice 2 changed')")
+	 gui.addcallback (p3,"valueChanged","echo('choice 3 changed')")
+     gui.realize(top)
+
+?gui widgets rowColumn
+ Motif Class Name: XmRowColumn
+
+ Layout manager provides a simple grid, if all children are the same
+ size, or a row of width equal to the children and height equal to
+ the heighest child, or a column with width equal to the widest child
+ and height equal to the height of all children.
+
+ Example:
+     top=gui.create('topLevelShell',name="rowcolumn")
+     row=gui.create('rowcolumn',top,{orientation="HORIZONTAL"})
+     pb1=gui.create('pushbutton',row,{labelString="Pushbutton 1"})
+     pb2=gui.create('pushbutton',row,{labelString="Pushbutton 2"})
+     gui.realize(top)
+
+?gui widgets scale
+ Motif Class Name: XmScale
+
+ Sliding ranged value selector.  This slider bar lets a user quickly
+ pick a value within a fixed range.
+
+ Example:
+     top=gui.create('topLevelShell',name='scale')
+     scale=gui.create('scale',top)
+     gui.set(scale,{width=400,height=50,orientation="HORIZONTAL"})
+     gui.set(scale,{minimum=0,maximum=2000,value=800})
+     gui.addcallback(scale,'valueChanged','printf("valueChanged\\n")')
+     gui.addcallback(scale,'drag','printf("drag\\n")')
+     gui.realize(top)
+
+?gui widgets scrolledList
+ Motif Class Name: XmScrolledList
+
+ As the list widget, but with scrollbars when the contents cannot fit
+ in the space allowed.
+
+?gui widgets scrolledWindow
+ Motif Class Name: XmScrolledWindow
+
+ Layout manager provides a scrollable area for other widgets that are
+ too large to display in the scrolledwindow's parent all at once.  It
+ essentially uses the scrollbars to determine how to map a (smaller)
+ screen space into a (larger) virtual space.
+
+ Example:
+     top=gui.create("topLevelShell",name="scrolledwindow")
+	 gui.set(top,resources={width=500,height=500})
+     wid=gui.create("scrolledwindow",top)
+	 string="
+     string = "Hello World, Hello World, Hello World, Hello World, " \
+            + "Hello World, Hello World, Hello World, Hello World, " \
+            + "Hello World, Hello World, Hello World, Hello World, " \
+            + "Hello World, Hello World, Hello World, Hello World, " \
+            + "Hello World, Hello World, Hello World, Hello World, " \
+            + "Hello World, Hello World, Hello World, Hello World, " \
+            + "Hello World, Hello World, Hello World, Hello World, "
+     text=gui.create("text",wid,{value=string});
+     gui.set(text,{cursorPosition=length(gui.get(text,"value").value)})
+     gui.realize(top)
+
+?gui widgets selectionBox
+ Motif Class Name: XmSelectionBox
+
+ List with item selection.
+
+ Example:
+     top=gui.create("topLevelShell",name="selectionbox")
+	 gui.set(top,resources={width=500,height=500})
+     list = cat("a","b","c","d",axis=y)
+     wid=gui.create("selectionbox",top,{mustMatch="true"})
+     gui.set(wid,{listItems=list})
+     gui.addcallback(wid,"ok","echo('ok')")
+     gui.addcallback(wid,"cancel","echo('cancel')")
+     gui.addcallback(wid,"help","echo('help')")
+     gui.addcallback(wid,"noMatch","echo('noMatch')")
+     gui.realize(top)
+
+?gui widgets separator
+ Motif Class Name: XmSeparator
+
+ Dividing line between widgets.
+
+ Example:
+     top=gui.create("topLevelShell",name="separator");
+     gui.set(top,resources={width=500,height=500});
+     r = gui.create("rowcolumn", top)
+     p1 = gui.create("pushbutton",r,{labelString="pb1"})
+     w1=gui.create("separator",r, {separatorType="SINGLE_LINE"})
+     p2 = gui.create("pushbutton",r,{labelString="pb2"})
+     w1=gui.create("separator",r, {separatorType="DOUBLE_LINE"})
+     p3 = gui.create("pushbutton",r,{labelString="pb3"})
+     w1=gui.create("separator",r, {separatorType="SINGLE_DASHED_LINE"})
+     p4 = gui.create("pushbutton",r,{labelString="pb4"})
+     w1=gui.create("separator",r, {separatorType="DOUBLE_DASHED_LINE"})
+     p5 = gui.create("pushbutton",r,{labelString="pb5"})
+     w1=gui.create("separator",r, {separatorType="SHADOW_ETCHED_IN"})
+     p6 = gui.create("pushbutton",r,{labelString="pb6"})
+     w1=gui.create("separator",r, {separatorType="SHADOW_ETCHED_OUT"})
+     p7 = gui.create("pushbutton",r,{labelString="pb7"})
+     gui.realize(top)
+
+?gui widgets textfield
+ Motif Class Name: XmTextField
+
+ Single-line text entry field.
+
+ Example:
+     top=gui.create("topLevelShell",name="textfield")
+	 gui.set(top,resources={width=500,height=500})
+     r=gui.create("rowcolumn",top)
+
+     w1=gui.create("textfield",r)
+     gui.addcallback(w1,"activate","echo('activated 1')")
+     gui.addcallback(w1,"focus","echo('got focus 1')")
+     gui.addcallback(w1,"losingFocus","echo('lost focus 1')")
+     gui.addcallback(w1,"modifyVerify","echo('verify 1')")
+     gui.addcallback(w1,"valueChanged","echo('changed 1')")
+
+     w2=gui.create("textfield",r)
+     gui.addcallback(w2,"activate","echo('activated 2')")
+     gui.addcallback(w2,"focus","echo('got focus 2')")
+     gui.addcallback(w2,"losingFocus","echo('lost focus 2')")
+     gui.addcallback(w2,"modifyVerify","echo('verify 2')")
+     gui.addcallback(w2,"valueChanged","echo('changed 2')")
+
+     gui.realize(top)
+
+?gui widgets text
+ Motif Class Name: XmText
+
+ Multi-line text entry window.
+
+ Example:
+     top=gui.create("topLevelShell",name="text")
+	 gui.set(top,resources={width=500,height=500})
+     r=gui.create("rowcolumn",top)
+
+     w1=gui.create("text",r)
+     gui.addcallback(w1,"activate","echo('activated 1')")
+     gui.addcallback(w1,"focus","echo('got focus 1')")
+     gui.addcallback(w1,"losingFocus","echo('lost focus 1')")
+     gui.addcallback(w1,"modifyVerify","echo('verify 1')")
+     gui.addcallback(w1,"valueChanged","echo('changed 1')")
+
+     w2=gui.create("text",r)
+     gui.addcallback(w2,"activate","echo('activated 2')")
+     gui.addcallback(w2,"focus","echo('got focus 2')")
+     gui.addcallback(w2,"losingFocus","echo('lost focus 2')")
+     gui.addcallback(w2,"modifyVerify","echo('verify 2')")
+     gui.addcallback(w2,"valueChanged","echo('changed 2')")
+
+     gui.realize(top)
+
+?gui widgets toggleButton
+ Motif Class Name: XmToggleButton
+
+ Boolean state button used inside RadioBox or menus.  See MenuBar and
+ RadioBox for further details.
+
+ Example:
+     define cb_changed (set)
+     {
+         sum = 0
+         if (gui.get(set.w1,"set").set == "TOGGLE_SET") sum += 1;
+         if (gui.get(set.w2,"set").set == "TOGGLE_SET") sum += 1;
+         if (gui.get(set.w3,"set").set == "TOGGLE_SET") sum += 1;
+         if (gui.get(set.w4,"set").set == "TOGGLE_SET") sum += 1;
+         if (sum == 4) echo ('Need a forklift for that?');
+     }
+ 
+     top=gui.create("topLevelShell",name="togglebutton")
+	 gui.set(top,resources={width=300,height=300})
+     r=gui.create("rowcolumn",top)
+     l=gui.create("label",r,{labelString="Choose Extras:"})
+
+     set = struct()
+     set.w1=gui.create("togglebutton",r,{labelString="Lettuce"})
+     set.w2=gui.create("togglebutton",r,{labelString="Tomato"})
+     set.w3=gui.create("togglebutton",r,{labelString="Pickle"})
+     set.w4=gui.create("togglebutton",r,{labelString="Onions"})
+     gui.addcallback (set.w1,"valueChanged","cb_changed(set=set)")
+     gui.addcallback (set.w2,"valueChanged","cb_changed(set=set)")
+     gui.addcallback (set.w3,"valueChanged","cb_changed(set=set)")
+     gui.addcallback (set.w4,"valueChanged","cb_changed(set=set)")
+
+     gui.realize(top)
+
+?gui widgets topLevelShell
+ TopLevelShell
+
+ Framed & titled window.  This is the top-level shell used by nearly
+ all GUI module window applications.  The widget provides the standard
+ X/Motif buttons in the upper corners, and defaults to the size of its
+ children.
+
+ See other examples for the extent of general usage.
+
+?gui widgets vicar
+ xvicBasicImageWidget
+
+ This is a third-party Motif widget developed by JPL.  See the Davinci
+ ./docs/html directory for the Programmer's Vicar Reference.
+
+ The Vicar widget is a powerful image display & manipulation widget.
+ This widget tiles an input image to allow rapid scrolling within
+ regions much larger than the Vicar screen area.  It allows mouse-
+ or scrollbar-based scrolling of the image area.
+ 
+ Vicar supports nearly all X Windows configurations and color schemes.
+ It provides several color lookup table and dithering options based on
+ the available X Server support.
+ 
+ For a comprehensive list of functionality, see the Vicar Reference.
+
+ The image resource must be set at creation time.
+
+ Example:
+     top=gui.create('topLevelShell',name='vicar')
+     img=load(filename)
+     vic=gui.create('vicar',top,{image=img})
+     gui.realize(top)
+
+ Given a string, filename, this example constructs a Vicar widget to
+ display that file.
+
+?gui widgets cascadeButton
+ Motif Class Name: XmCascadeButton
+
+ Pending - menu implementation not yet complete.
+
+?gui widgets drawnButton
+ Motif Class Name: XmDrawnButton
+
+ Graphical push button useful to display icons or graphics on a button
+ instead of text.  Not yet fully implemented.  Currently, pixmaps are
+ not supported.
+
+ This button's drawing area is not managed by any widget.  By
+ accessing the xhandle resource, this widget can serve as a drawing
+ target for other applications outside of Davinci.
+
+?gui widgets errorDialog
+ Motif Class Name: XmErrorDialog
+
+ Error message modal dialog, not currently functional.  Modal dialogs
+ are not yet supported.
+
+?gui widgets menuBar
+ Motif Class Name: XmMenuBar
+
+ Menu support widget.  Provides the basic container widget for normal
+ menu contents.  This widget is not yet functional.
+ 
+?gui widgets transientShell
+TransientShell
+
+ Modal dialog shell, not yet implemented.
+
+?gui widgets scrollBar
+ Motif Class Name: XmScrollBar
+
+ Scrollbar implementation not fully implemented.
+ Use ScrolledList/ScrolledWindow instead
+
+?gui functions
+ The gui module presents several basic functions to the user.  The
+ normal module syntax is used, for example:
+
+     top = gui.create('topLevelShell')
+
+ These functions take or return a widget ID.  This is a handle into
+ the GUI module, so it can keep track of widgets in the X/Motif
+ environment using a simple number in the Davinci environment.
+
+?gui functions create
+ gui.create(widgetclass, parent, resources, name)
+     widgetclass: Xt/Motif WidgetClass or Davinci alias.
+     parent     : The widgetid of the parent widget. Default is the
+	              application shell.
+     resources  : A struct of resource key/values.
+     name       : Arbitrary name for the widget. Most widgets ignore
+	              this value.
+
+ Create a new widget and return its handle.
+
+?gui functions destroy
+ gui.destroy(widgetid)
+     widgetid   : The handle of the widget to act on.
+
+ Destroy widgetid. This will recursively destroy all of the widget's
+ children as well. Any widgets which are realized (visible) when
+ destroyed will be unrealized first.
+
+ Note that once a widget is destroyed, even if it's a child widget
+ destroyed as a side-effect, its Davinci handle will no longer be
+ valid and should not be used in any GUI module functions.
+
+?gui functions get
+ gui.get(widgetid, resources, all)
+     widgetid : The handle of the widget to act on.
+     resources: A list of resource names to retrieve.
+	            Accepts struct, text, or string.
+     all      : If 1, return all resources, including hidden
+	            resources.  Otherwise return public resources only.
+     showEnums: If 1, prints a list of possible values for enumerated
+	            resources. Useful to learn an enumerated resource's
+				supported states.
+
+ Retrieve the default list of resources, the resources specified in
+ resources, or all widget resources if all = 1 is specified.
+ Resources are returned in a Davinci struct.
+
+ The list of public resources is defined initially for each widget
+ type.  When the user sets a resource, this list is updated.  See
+ the section in visibility for more details.
+
+ The widget need not be realized to query its resources.  Some values
+ may change as a side-effect of "invisible" user actions, such as
+ resizing windows.
+
+ Because some resource query operations may be costly (especially when
+ images are involved), you can explicitly query specific resources. To
+ query a single resource:
+
+     gui.get(label, "labelString")
+
+ Which yields:
+
+     struct, 1 elements
+     labelString: "Hello, world!"
+
+ To query multiple resources, build a resource list in either a struct:
+
+     structlist = { "labelString", "alignment" }
+     gui.get(label, structlist)
+
+ ...or a text object:
+
+     textlist = cat("labelString", "alignment", axis = y)
+     gui.get(label, textlist)
+
+ Both produce the same output:
+
+     struct, 2 elements
+     labelString: "Hello, world!"
+     alignment: "ALIGNMENT_END"
+
+?gui functions set
+ gui.set(widgetid, resources)
+     widgetid : The handle of the widget to act on.
+     resources: A list of resource names to retrieve.
+	            Accepts struct, text, or string.
+
+ Set one or more resources on the specified widget.
+
+ The resource names and values must be in a Davinci struct. The struct
+ from a gui.get() call may be modified and used in a gui.set() call.
+ You may also use anonymous structs.
+
+ Setting Multiple Resources
+
+ To set multiple resources on a widget at once, add more elements to
+ the structure:
+
+     labelResources = struct()
+     labelResources.labelString = "Hello, world!"
+     labelResources.alignment = "ALIGNMENT_END"
+     label = gui.create("label", top, labelResources)
+
+ If you modify the example and add the alignment resource, you will
+ see that the label now "sticks" to the side of the side of the window
+ when you expand it, instead of staying centered.
+
+?gui functions realize
+ gui.realize(widgetid)
+     widgetid : The handle of the widget to act on.
+
+ Make the specified widget visible. This recursively applies to all of
+ the widget's children as well.
+
+ It is best to create and configure the widget and all its children
+ before realizing the outermost widget, to avoid display problems.
+
+?gui functions addcallback
+ gui.addcallback(widgetid, callback, eval)
+     widgetid : The handle of the widget to act on.
+     callback : The Xt callback name or Davinci alias string.
+     eval     : A string of Davinci code to evaluate when the callback
+	            occurs.
+
+ Add the named callback to widgetid. The code in eval must be a string
+ of Davinci code, which will be evaluated each time the callback event
+ occurs. If you use a function name, arbitrarily complex Davinci
+ functions can be executed.
+
+ Callbacks are what make Davinci GUIs interactive. By registering a
+ callback on widgets such as PushButton and FileSelectionBox, your
+ Davinci application can react to user events. The callback mechanism
+ allows Davinci code to be run when a GUI event occurs.
+
+ By default, most events are ignored unless the developer explicitly
+ registers a callback. Some widgets have a default callback which is
+ used when the developer has not overridden it. See the Xt/Motif
+ references for details.
+
+ To register a callback, you need to know the internal name of the
+ callback, as defined by Xt, and you need to define a Davinci function
+ to respond to the callback.
+
+ Example:
+     define buttonCallback() {
+         printf("You pressed the button!\n");
+     }
+
+     top = gui.create("topLevelShell", name = "Hello!")
+     pb = gui.create("pushButton", top, { labelString = "Press Me!" })
+     gui.addcallback(pb, "activate", "buttonCallback()")
+     gui.realize(top)
+
+?gui functions removecallback
+ gui.removecallback(widgetid, callback)
+     widgetid : The handle of the widget to act on.
+     callback : The Xt callback name or Davinci alias.
+
+ Remove the specified callback from widgetid. The widget will no
+ longer call any Davinci code when the callback occurs, however any
+ internal callback handling will still occur (such as changing
+ RadioButton states).
+
+?gui functions listcallbacks
+ gui.listcallbacks(widgetid)
+     widgetid : The handle of the widget to act on.
+
+ Returns the supported callbacks for widgetid in a Davinci struct.
+ Each struct name/value are the callback string and eval string for
+ that callback.  Useful both to learn what callbacks a widget supports
+ and as a reminder of the current setting.
+
 
