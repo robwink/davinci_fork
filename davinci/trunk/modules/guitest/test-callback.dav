@@ -1,20 +1,12 @@
-#!/u/jim/src/davinci/davinci -ifv
+#!davinci -ifv
 
 load_module("gui")
 
 define myCallback() {
-	printf("widget = %d, event = %s\n", $1, $2);
+	printf("widget = %d\n", $1);
 }
 
-top = gui.create("topLevelShell", "callback test")
-
-pushb = gui.create("pushbutton", "Push Me!", top)
-
-gui.set(pushb, { davinciPrivate = "myCallback" });
-
+top = gui.create("topLevelShell", name="callback test")
+pushb = gui.create("pushbutton", top, {labelString="Push Me!"})
+gui.addcallback (pushb, "activate", sprintf("myCallback(%d)",pushb))
 gui.realize(top);
-
-while (1) {
-	event = gui.wait()
-	eval(gui.get(event.widget).davinciPrivate + "(" + event.widget + ",\"" + event.event + "\")");
-}

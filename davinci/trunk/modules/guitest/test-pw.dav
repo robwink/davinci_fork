@@ -1,4 +1,4 @@
-#!/u/jim/src/davinci/davinci -qf
+#!davinci -qf
 
 verbose=1
 
