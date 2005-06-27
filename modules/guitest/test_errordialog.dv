@@ -1,0 +1,8 @@
+load_module("gui")
+top=gui.create("topLevelShell",name="test_errordialog.dv")
+f=gui.create("errorDialog",top)
+gui.addcallback (f,"ok","echo ('ok')")
+gui.addcallback (f,"cancel","echo ('cancel')")
+gui.addcallback (f,"help","echo ('help')")
+gui.realize(top)
+
