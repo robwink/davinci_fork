@@ -302,6 +302,7 @@ struct _vfuncptr vfunclist[] = {
     { "warp",  ff_warp, 			NULL }, 
     { "median",  ff_median, 			NULL }, 
     { "window",  ff_window, 			NULL }, 
+	{ "extract", ff_extract, NULL },
     { "radial_symmetry",  ff_radial_symmetry, 			NULL }, 
     { "radial_symmetry2",  ff_radial_symmetry2, 			NULL }, 
     { "local_maximum",  ff_local_maximum, 			NULL }, 
