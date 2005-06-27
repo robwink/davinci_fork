@@ -17,7 +17,7 @@
 #ifndef DV_GUI_H
 #define DV_GUI_H
 
-/* #define DEBUG 1 /**/
+/* #define DEBUG 1 */
 
 #define DV_INVALID_WIDGET_ID -1
 #define DV_MAX_XT_ARGS 1024
@@ -64,11 +64,11 @@ typedef struct _CallbackEntry *CallbackList;
 /* Public functions */
 
 MyWidgetList	gui_getWidgetListEntryFromWidget(Widget);
-int		gui_isDefault(const char **, const char *);
-void		gui_defaultCallback(Widget, XtPointer, XtPointer);
-void		gui_pseudoCallback(Widget, String);
-
-/* FIX: split or re-merge.. */
+int				gui_isDefault(const char **, const char *);
+void			gui_defaultCallback(Widget, XtPointer, XtPointer);
+void			gui_pseudoCallback(Widget, String);
+Widget			gui_initDefault(const char *, WidgetClass, Widget, Var *,
+					void **, Narray *, Widget *);
 
 /* resources.h
  *
@@ -171,60 +171,70 @@ typedef struct _WidgetResourceEntry *ResourceList;
 Var *	 gui_getIgnore(const Widget, const String, const String);
 Var *	 gui_getEnum(const Widget, const String, const String);
 XtArgVal gui_setEnum(const Widget, const String, const String,
-		     const Var *, FreeStackList);
+			const Var *, FreeStackList);
 Var *	 gui_getWidget(const Widget, const String, const String);
 XtArgVal gui_setWidget(const Widget, const String, const String,
-		       const Var *, FreeStackList);
+			const Var *, FreeStackList);
 Var *	 gui_getBoolean(const Widget, const String, const String);
 XtArgVal gui_setBoolean(const Widget, const String, const String,
 			const Var *, FreeStackList);
+Var *	 gui_getBool(const Widget, const String, const String);
+XtArgVal gui_setBool(const Widget, const String, const String,
+			const Var *, FreeStackList);
 Var *	 gui_getByte(const Widget, const String, const String);
 XtArgVal gui_setByte(const Widget, const String, const String,
-		     const Var *, FreeStackList);
+			const Var *, FreeStackList);
 Var *	 gui_getShort(const Widget, const String, const String);
 XtArgVal gui_setShort(const Widget, const String, const String,
-		      const Var *, FreeStackList);
+			const Var *, FreeStackList);
+Var *	 gui_getFloat(const Widget, const String, const String);
+XtArgVal gui_setFloat(const Widget, const String, const String,
+			const Var *, FreeStackList);
+Var *	 gui_getDouble(const Widget, const String, const String);
+XtArgVal gui_setDouble(const Widget, const String, const String,
+			const Var *, FreeStackList);
 Var *	 gui_getInt(const Widget, const String, const String);
 XtArgVal gui_setInt(const Widget, const String, const String,
-		    const Var *, FreeStackList);
+			const Var *, FreeStackList);
 Var *	 gui_getCardinal(const Widget, const String, const String);
 XtArgVal gui_setCardinal(const Widget, const String, const String,
-			 const Var *, FreeStackList);
+			const Var *, FreeStackList);
 Var *	 gui_getDimension(const Widget, const String, const String);
 XtArgVal gui_setDimension(const Widget, const String, const String,
-			  const Var *, FreeStackList);
+			const Var *, FreeStackList);
 Var *	 gui_getString(const Widget, const String, const String);
 XtArgVal gui_setString(const Widget, const String, const String,
-		       const Var *, FreeStackList);
+			const Var *, FreeStackList);
 Var *	 gui_getXmString(const Widget, const String, const String);
 XtArgVal gui_setXmString(const Widget, const String, const String,
-			 const Var *, FreeStackList);
+			const Var *, FreeStackList);
 Var *	 gui_getXmStringTable(const Widget, const String, const String);
 Var *	 gui_getXmStringTableFree(const Widget, const String, const String);
 Var *	 gui_getXmStringTableCount(const Widget, const String, const int, const int);
 XtArgVal gui_setXmStringTable(const Widget, const String, const String,
-			      const Var *, FreeStackList);
+			const Var *, FreeStackList);
 XtArgVal gui_setXmStringTableFromDarray(const Widget, const String,
-					const String, const Darray *,
-					FreeStackList);
+			const String, const Darray *, FreeStackList);
 Var *	 gui_getTextPosition(const Widget, const String, const String);
 XtArgVal gui_setTextPosition(const Widget, const String, const String,
-			     const Var *, FreeStackList);
+			const Var *, FreeStackList);
 XtArgVal gui_setListItems(const Widget, const String, const String,
-			  const Var *, FreeStackList);
+			const Var *, FreeStackList);
 XtArgVal gui_setReadOnly(const Widget, const String, const String,
-			 const Var *, FreeStackList);
+			const Var *, FreeStackList);
 
 #endif /* DV_GUI_RESOURCES_H */
 
 /* FIX: this function is heinous, maybe return a struct. */
-void	gui_setResourceValues(Widget, WidgetClass, Var *, Arg *,
-			      Cardinal *, FreeStackList, Narray *);
+Cardinal gui_setResourceValues(Widget, WidgetClass, Var *, Arg *,
+			FreeStackList, Narray *);
 Darray *gui_extractDarray(const Var *);
 Narray *gui_extractNarray(const Var *);
 void	gui_freeStackPush(FreeStackList, void *);
 void	gui_freeStackFree(FreeStackList);
 void	gui_addEvent(Widget, String);
 char *	dupString(const char *);
+void	dbgprintf (char *fmt, ...);
+void    gui_setFloatNow (Widget w, char *name, float val);
 
 #endif /* DV_GUI_H */
