@@ -17,6 +17,10 @@ static float *deplaid(float *data, int x, int y, int z, float nullval, int b10);
 static float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval);
 static float *tb2rad(float *btemp, Var *temp_rad, int *bandlist, int bx, float nullval, int x, int y);
 static emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1, int b2);
+static float *bbrw_k(float *btemp, int *bandlist, int x, int y, int z, float nullval);
+static double *radcorrspace(Var *measured, float *bbody);
+static double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_start, double *rad_end, double *slopes);
+static Var *do_ipi(Var *coords_array, Var *values_array);
 
 static Var *kjn_y_shear(vfuncptr, Var *);
 static Var *kjn_kfill(vfuncptr, Var *);
@@ -34,6 +38,8 @@ static Var *kjn_coreg_fill(vfuncptr func, Var *);
 static Var *kjn_rad2tb(vfuncptr func, Var *);
 static Var *kjn_themissivity(vfuncptr func, Var *);
 static Var *kjn_whitey(vfuncptr func, Var *);
+static Var *kjn_radcorr(vfuncptr func, Var * arg);
+static Var *kjn_ipi(vfuncptr func, Var * arg);
 
 static dvModuleFuncDesc exported_list[] = {
   { "y_shear", (void *) kjn_y_shear },
@@ -44,18 +50,20 @@ static dvModuleFuncDesc exported_list[] = {
   { "sawtooth", (void *) kjn_sawtooth },
   { "deplaid", (void *) kjn_deplaid },
   { "rectify", (void *) kjn_rectify },
-  { "coreg", (void *) kjn_coreg },
-  { "supersample", (void *) kjn_supersample },
+  //  { "coreg", (void *) kjn_coreg },
+  //  { "supersample", (void *) kjn_supersample },
   { "ss_coreg", (void *) kjn_ss_coreg },
-  { "ss_pic", (void *) kjn_ss_pic },
+  //  { "ss_pic", (void *) kjn_ss_pic },
   { "coreg_fill", (void *) kjn_coreg_fill },
   { "rad2tb", (void *) kjn_rad2tb },
   { "themissivity", (void *) kjn_themissivity},
-  { "whitey", (void *) kjn_whitey}
+  { "whitey", (void *) kjn_whitey},
+  { "radcorr", (void *) kjn_radcorr},
+  { "ipi", (void *) kjn_ipi}
 };
 
 static dvModuleInitStuff is = {
-  exported_list, 16,
+  exported_list, 15,
   NULL, 0
 };
 
@@ -1280,7 +1288,7 @@ kjn_deplaid(vfuncptr func, Var * arg)
   /* create row and mask arrays */
   row_avg = (float *)calloc(sizeof(float), y*z);
   row_wt = (int *)calloc(sizeof(int), y*z);
-  blackmask = (byte *)malloc(sizeof(byte)*x*y);
+  blackmask = (byte *)calloc(sizeof(byte),x*y);
   tmask = (float *)calloc(sizeof(float), x*y);
   ct_map = (byte *)calloc(sizeof(byte), x*y);
   row_ct = (byte *)calloc(sizeof(byte), y);
@@ -1547,15 +1555,15 @@ kjn_deplaid(vfuncptr func, Var * arg)
   //row_brights = smoothy(row_bright, filt2, 1, y, 1, 1, 7, 1, 1, 0);
 
   /* remove brightness information from row_avg */
-  if(z > 1) {
-    for(k=0; k<z; k++) {
-      if(k != b10) {
-	for(j=0; j<y; j++) {
-	  row_avg[k*y + j] -= row_bright[j];                         /* brightness difference removed from row_avg */
-	}
-      }
-    }
-  }
+  //if(z > 1) {
+  //for(k=0; k<z; k++) {
+  //if(k != b10) {
+  //for(j=0; j<y; j++) {
+  //row_avg[k*y + j] -= row_bright[j];                         /* brightness difference removed from row_avg */
+  //}
+  //}
+  //}
+  //}
 
   /* clean up row arrays */
   //free(row_brights);
@@ -1588,17 +1596,17 @@ kjn_deplaid(vfuncptr func, Var * arg)
   //  col_brights = smoothy(col_bright, filt1, x, chunks, 1, filt_len, 1, 1, 1, 0);
   
   /* remove brightness information */
-  if(z > 1) {
-    for(k=0; k<z; k++) {
-      if(k != b10) {
-	for(j=0; j<chunks; j++) {
-	  for(i=0; i<x; i++) {
-	    col_avg[k*chunks*x + j*x + i] -= col_bright[j*x + i];                  /* brightness difference removed from col_avg */
-	  }
-	}
-      }
-    }
-  }
+  //if(z > 1) {
+  //for(k=0; k<z; k++) {
+  //if(k != b10) {
+  //for(j=0; j<chunks; j++) {
+  //for(i=0; i<x; i++) {
+  //col_avg[k*chunks*x + j*x + i] -= col_bright[j*x + i];                  /* brightness difference removed from col_avg */
+  //}
+  //}
+  //}
+  //}
+  //}
 
   /* clean up column arrays*/
   free(col_avgs);
@@ -1769,9 +1777,9 @@ kjn_rectify(vfuncptr func, Var * arg)
   pic = (float *)malloc(sizeof(float)*z*u*width);
 
   /* extract the data into a sheared and slanted array */
-  for (k = 0; k < z; k++) {
-    for(j = 0; j < u; j++) {
-      for(i = 0; i < width; i++) {
+  for(k=0; k<z; k++) {
+    for(j=0; j<u; j++) {
+      for(i=0; i<width; i++) {
 	/* set all values to nullv */
 	pic[k*u*width + j*width + i] = nullv;
 
@@ -3112,7 +3120,7 @@ kjn_themissivity(vfuncptr func, Var * arg)
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   if (rad == NULL) {
-    parse_error("themissivity() - 7/07/04");
+    parse_error("themissivity() - 5/25/05");
     parse_error("THEMIS radiance to THEMIS emissivity converter\n");
     parse_error("Syntax:  b = kjn.themissivity(rad,bandlist,null,temp_rad_path,b1,b2)");
     parse_error("example: b = kjn.themissivity(a)");
@@ -3128,7 +3136,6 @@ kjn_themissivity(vfuncptr func, Var * arg)
   }
 
   if (bandlist != NULL) {
-    return(bandlist);
     bx = GetX(bandlist);
     blist = (int *)malloc(sizeof(int)*bx);
     for(i=0;i<bx;i++) {
@@ -3225,7 +3232,7 @@ emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1,
   e_struct->maxbtemp = (float *)calloc(sizeof(float), x*y);
 
   /* find max_b_temp */
-  for(k=b1-1;k<=b2;k++) {
+  for(k=b1-1;k<b2;k++) {
     for(j=0;j<y;j++) {
       for(i=0;i<x;i++) {
 	if(b_temps[k*x*y + j*x + i] > e_struct->maxbtemp[j*x + i]) e_struct->maxbtemp[j*x + i] = b_temps[k*x*y + j*x + i];
@@ -3420,6 +3427,425 @@ kjn_whitey(vfuncptr func, Var * arg)
 
   out = newVal(BSQ, x, y, z, FLOAT, emiss);
   return out;
+}
+
+
+
+double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_start, double *rad_end, double *slopes)
+{
+  int          i, j, k;
+  int          x, y, z;
+  int          w;
+  double      *em = NULL;
+  double       para_rad_min = 0, para_em_min = 0;
+  double       rs = 0.000005;                                
+  double      *min_coords=NULL;
+  double      *rad = NULL;
+  double      *val = NULL;
+  double       val_parabola = 0;
+
+  /* returns a 2xNx1 float array with em and rad minimized values (in that order) */
+
+  /* measured is the original radiance cube */
+  /* bbody is the black body theoretical radiance */
+  /* em_start is the starting value for the em multiplier */
+  /* rad_start is the starting value for the rad offset */
+  /* slope is rad/em. slope=0 is 0 em_step */
+  /* assumes that there will never be a slope of infinity (rad must always change to minimize function) */
+
+  x = GetX(measured);
+  y = GetY(measured);
+  z = GetZ(measured);
+
+  em         = (double *)malloc(sizeof(double) * 3);
+  min_coords = (double *)calloc(sizeof(double), z*2);
+  rad        = (double *)malloc(sizeof(double) * 3);
+  val        = (double *)malloc(sizeof(double) * 3);
+
+  if(z == 10) z=9;                    // there is no need to rad_corr band 10
+
+  /* loop through all bands in the provided themis image */
+  for(k=0; k<z; k++){
+
+    /*  reset val array */
+    for(w=0; w<3; w++){ val[w] = 0; }
+
+    /* initializing rad and em for 1-D search */
+    if(slopes[k] == 0){
+      for(w=0; w<3; w++){ 
+	rad[w] = 0 + rs*w; 
+	em[w]  = em_start;
+      }
+    }
+
+    /* initializing rad and em for search through the trough */
+    else{
+      rad[0] = rad_start[k*2];
+      rad[2] = rad_end[k*2];
+      rad[1] = (0.2 + (slopes[k]*rad[0]))/slopes[k];
+     
+      em[0] = 0.8;
+      em[1] = 1.0;
+      em[2] = 1.2;
+    }
+
+    /* acquire vals for each initial search points */
+    for(w=0; w<3; w++){
+      for(j=0; j<y; j++){
+	for(i=0; i<x; i++){
+	  if(bbody[k*x*y + j*x + i] != 0) val[w] += pow((extract_float(measured,cpos(i,j,k,measured)) - (em[w]*bbody[k*x*y + j*x + i] + rad[w])), 2);
+	}
+      }
+    }
+
+    /* locate coordinates of minimal point in rad/val parabola */
+    if(slopes[k] == 0){
+      para_rad_min = rad[1]-.5*(pow(rad[1]-rad[0],2)*(val[1]-val[2]) - pow(rad[1]-rad[2],2)*(val[1]-val[0]))/((rad[1]-rad[0])*(val[1]-val[2]) - (rad[1]-rad[2])*(val[1]-val[0])); 
+      para_em_min = em_start;
+    }
+    else{
+      para_em_min = em[1]-.5*(pow(em[1]-em[0],2)*(val[1]-val[2]) - pow(em[1]-em[2],2)*(val[1]-val[0]))/((em[1]-em[0])*(val[1]-val[2]) - (em[1]-em[2])*(val[1]-val[0])); 
+      para_rad_min = (para_em_min - (em[0] - slopes[k]*rad[0]))/slopes[k];
+    }
+
+    /* store minimal points to min_coords array */
+    min_coords[0+k*2] = para_rad_min;
+    min_coords[1+k*2] = para_em_min;
+
+    /* calculate val at given rad/em spot */
+    val_parabola = 0;
+    for(j=0; j<y; j++){
+      for(i=0; i<x; i++){
+	if(bbody[k*y*x + j*x + i] != 0) val_parabola += pow((extract_float(measured,cpos(i,j,k,measured)) - (para_em_min*bbody[k*y*x + j*x + i] + para_rad_min)), 2);
+      }
+    }
+  }
+
+  /* clean up */
+  free(em);
+  free(rad);
+  free(val);
+  
+  return(min_coords);
+}
+
+
+
+double *radcorrspace(Var *measured, float *bbody)
+{
+  int     x, y, z;                   // size of arrays
+  int     i, j, k;                   // loop indices
+  int     m, n;
+  double  em_off = 0.8;              // em offset
+  double  rad_off = -0.0001;         // rad offset
+  double  em_step = 0.001;
+  double  rad_step = 0.0000005;
+  double *rcspace = NULL;
+
+  x = GetX(measured);
+  y = GetY(measured);
+  z = GetZ(measured);
+
+  rcspace = (double *)calloc(sizeof(double), z*400*400);
+
+  for(k=0;k<z;k++) {                      /* looping through bands */
+    parse_error("band=%d",k);
+    for(m=0;m<400;m++) {                  /* looping through em */
+      em_off = 0.8 + m*em_step;
+      for(n=0;n<400;n++) {                /* looping through rad */
+	rad_off = -0.0001 + n*rad_step;
+	for(j=0;j<y;j++) {
+	  for(i=0;i<x;i++) {
+	    if(bbody[k*x*y + j*x + i] != 0) rcspace[k*400*400+m*400+n]+=pow((extract_float(measured,cpos(i,j,k,measured)) - (em_off*bbody[k*x*y + j*x + i] + rad_off)),2);
+	  }
+	}
+      }
+    }
+  }
+  parse_error("x-axis is rad and y-axis is em");
+  return(rcspace);
+}
+
+
+
+
+
+
+
+float *bbrw_k(float *btemp, int *bandlist, int x, int y, int z, float nullval)
+{
+  /* compute spectral radiance in units of W cm-2 str-1 micron-1
+     see DeWitt and Incropera in Thermal Radiometry
+     input temperatures in K
+     z MUST be the number of bands in bandlist
+     btemp is a single band of maximum brightness temperature with dimensions x*y */
+
+  int         i, j, k;
+  float      *irads = NULL;
+  float      *wavelengths = NULL;
+  float       c1 = 11911.0;                          // a constant in units of W cm-2 micron^4 str-1 
+  float       c2 = 14387.9;                          // c constant in units of micron K
+  int         wl = 0;                                // current themis band in bandlist
+  float       numerator = 0.0;
+
+  /* wavelengths of themis bands in microns */
+  wavelengths = (float *)calloc(sizeof(FLOAT), 10);
+  wavelengths[0] = 6.76665;
+  wavelengths[1] = 6.76665;
+  wavelengths[2] = 7.88883;
+  wavelengths[3] = 8.51176;
+  wavelengths[4] = 9.30155;
+  wavelengths[5] = 10.1658;
+  wavelengths[6] = 10.9904;
+  wavelengths[7] = 11.7530;
+  wavelengths[8] = 12.5552;
+  wavelengths[9] = 14.8079;
+
+  /* create new calculated radiance array */
+  irads = (float *)calloc(sizeof(FLOAT), x*y*z);
+
+  for(k=0; k<z; k++) {
+    wl = bandlist[k] - 1;
+    numerator = (c1/pow(wavelengths[wl],5));
+
+    for(j=0; j<y; j++) {
+      for(i=0; i<x; i++) {
+	if(btemp[j*x + i] != nullval) {
+	  irads[k*y*x + j*x + i] = numerator/(exp(c2/(wavelengths[wl] * btemp[j*x + i]))-1.0);
+	}
+      }
+    }
+  }
+
+  free(wavelengths);
+  return(irads);
+}
+
+
+
+
+
+
+Var *kjn_radcorr(vfuncptr func, Var * arg)
+{
+  char       *fname = NULL;                  // the pointer to the filename
+  double     *min_try1 = NULL;               // holds minimal coordinates for em 0.8
+  double     *min_try2 = NULL;               // holds minimal coordinates for em 1.2
+  double     *min_try3 = NULL;               // holds minimal coordinates for trough 
+  double     *slopes = NULL;                 // defined as em/rads
+  FILE       *fp = NULL;
+  float      *btemps = NULL;
+  float      *maxbtemp = NULL;               // max brightness temp of radiance returned from maxbtemp()
+  float       nullval = -32768;
+  float      *irad = NULL;
+  int         b1=3, b2=9;                    // band limits for maxbtemp search
+  int        *blist = NULL;                  // the integer list of bands extracted from bandlist or created
+  int         a, b, bx; 
+  int         i, j, k;
+  int         x, y, z;
+  int         space = 0;                     // set to anything other than 0 to return rad corr space
+  struct      iom_iheader h;                 // temp_rad_v4 header structure
+  Var        *rad = NULL;                    // original input data
+  Var        *out = NULL;                    // output
+  Var        *bandlist = NULL;               // list of bands to be converted to brightness temperature
+  Var        *temp_rad = NULL;
+
+
+  Alist alist[8];
+  alist[0] = make_alist("radiance",      ID_VAL,         NULL,	 &rad);
+  alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
+  alist[2] = make_alist("null",          FLOAT,          NULL,   &nullval);
+  alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
+  alist[4] = make_alist("b1",            INT,            NULL,   &b1);
+  alist[5] = make_alist("b2",            INT,            NULL,   &b2);
+  alist[6] = make_alist("space",         INT,            NULL,   &space);
+  alist[7].name = NULL;
+
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+
+  /* if no data got passed to the function */
+  if (rad == NULL) {
+    parse_error("\nradcorr() - 06/13/2005\n");
+    parse_error("b=radcorr(radiance, bandlist, null, temp_rad_path, b1, b2, space)\n");
+    parse_error("b=radcorr(a.data) for 10-band cubes");
+    parse_error("space = 1 returns the N band radcorr solution space");
+    return NULL;
+  }
+
+  if (bandlist != NULL) {
+    bx = GetX(bandlist);
+    blist = (int *)malloc(sizeof(int)*bx);
+    for(k=0;k<bx;k++) {
+      blist[k] = extract_int(bandlist,cpos(k,0,0,bandlist));
+    }
+  }
+
+  if (bandlist == NULL) {
+    blist = (int *)malloc(sizeof(int)*10);
+    for(i=0;i<10;i++) {
+      blist[i] = i+1;
+    }
+    bx = 10;
+  }
+
+  /* get dimensions of the radiance cube */
+  x = GetX(rad);
+  y = GetY(rad);
+  z = GetZ(rad);
+
+  if(z != bx){
+    parse_error("bandlist not same dimension as input radiance!");
+    return(out);
+  }
+
+  /* initialize temp_rad header */
+  iom_init_iheader(&h);
+
+  if (fname == NULL) fname = strdup("/themis/calib/temp_rad_v4");
+
+  fp = fopen(fname, "rb");
+
+  if (fp == NULL) {
+    parse_error("Can't open look up table /themis/calib/temp_rad_v4!\n");
+    return(NULL);
+  }
+
+  temp_rad = dv_LoadVicar(fp, fname, &h);
+  fclose(fp);
+  free(fname);
+
+  maxbtemp = (float *)calloc(sizeof(float), x*y);
+  slopes = (double *)calloc(sizeof(double),z);
+
+  /* initialize slopes' array to 0, for minimize_1d to be able to use slope array */
+  for(k=0; k<z; k++){ slopes[k] = 0.0; }
+
+  /* convert to brightness temperature */
+  btemps = rad2tb(rad, temp_rad, blist, bx, nullval);
+
+  /* loop through btemps eliminating all pixels not containing a full set of bands*/
+  for(j=0; j<y; j++) {
+    for(i=0; i<x; i++) {
+      bx = 1;                                          // using bx as a temporary flag value from now on
+      for(k=0; k<z; k++) {
+	if(btemps[k*x*y + j*x + i] == 0.0) bx = 0;
+      }
+      for(k=0; k<z; k++) {
+	if(bx == 0) btemps[k*x*y + j*x + i] = 0;
+      }
+    }
+  }
+
+  /* find max_b_temp */
+  for(k=b1-1;k<b2;k++) {
+    for(j=0;j<y;j++) {
+      for(i=0;i<x;i++) {
+	if(btemps[k*x*y + j*x + i] > maxbtemp[j*x + i]) maxbtemp[j*x + i] = btemps[k*x*y + j*x + i];
+      }
+    }
+  }
+
+  free(btemps);
+
+  /* Calculate radiance from maxbtemp same as bbrw written by Phil */
+  irad = bbrw_k(maxbtemp, blist, x, y, z, 0);
+
+  free(maxbtemp);
+  free(blist);
+
+  /* return radcorrspace to user */
+  if(space != 0) {
+    min_try1 = radcorrspace(rad, irad);
+    
+    free(slopes);
+    free(irad);
+    
+    out = newVal(BSQ, 400, 400, z, DOUBLE, min_try1);
+    return(out);
+  }
+
+  /* find minimal points in solution space along em = .8 and em = 1.2 */
+  min_try1 = minimize_1d(rad, irad, 0.8, NULL, NULL, slopes);
+  min_try2 = minimize_1d(rad, irad, 1.2, NULL, NULL, slopes);
+
+  /* determine slope of the trough */
+  for(k=0; k<z; k++){
+    slopes[k] = (min_try2[k*2 + 1] - min_try1[k*2 + 1])/(min_try2[k*2] - min_try1[k*2]); 
+  }
+
+  // find minimal point along the trough //
+  min_try3 = minimize_1d(rad, irad, 0.0, min_try1, min_try2, slopes);
+  
+  out = newVal(BSQ, 2, 1, z, DOUBLE, min_try3);
+
+  // free up heap objects //
+  free(irad);
+  free(min_try2);
+  free(min_try1);
+  free(slopes);
+
+  return(out);
+}
+
+
+
+Var *do_ipi(Var *coords_array, Var *values_array){
+  float        coords[3];                                             // more useable form of coordinate list //
+  float        values[3];                                             // more useable form of values list //
+  float       *result;                                                // the coordinate where the lowest value is //
+  int          i;                                                     // the ubiquituous i var for loops //
+
+  // translate information from davincin Var structure to the array //
+  for(i=0; i<3; i++){
+    coords[i] = extract_float(coords_array,cpos(i,0,0,coords_array));
+    values[i] = extract_float(values_array,cpos(i,0,0,values_array));
+  }
+  
+  // this is absolutely stupid but newVal demands a pointer for conversion //
+  result = (float *)malloc(sizeof(float));
+  
+  // perform ipi which is just one equation //
+  result[0] = coords[1] - .5*(pow(coords[1]-coords[0],2)*(values[1]-values[2]) - 
+			      pow(coords[1]-coords[2],2)*(values[1]-values[0])) /
+    ((coords[1]-coords[0])*(values[1]-values[2]) - (coords[1]-coords[2])*(values[1]-values[0]));
+  
+  return(newVal(BSQ, 1 ,1, 1, FLOAT, result));
+}
+
+
+Var *kjn_ipi(vfuncptr func, Var * arg){
+  Var         *coords_array = NULL;                                   // list of coordinates //
+  Var         *values_array = NULL;                                   // list of values of f(x) where x is supplied by coords //
+  Var         *out = NULL;                                            // return structure to davinci enviornment //
+  
+  
+  Alist alist[3];
+  alist[0] = make_alist("coordinates",  ID_VAL,   NULL,     &coords_array);
+  alist[1] = make_alist("values",       ID_VAL,   NULL,     &values_array);
+  alist[2].name = NULL;
+  
+  // immediately exit function if the argument list is empty //
+  if(parse_args(func, arg, alist) == 0) return(NULL);
+  
+  // if no coordinates and/or values passed into the argument list //
+  if((coords_array == NULL)||(values_array == NULL)){
+    parse_error("");
+    parse_error("The function calculuates the coordinates of a minimum by taking in a 3x1x1 array of coordinate and its correlated");
+    parse_error("values, also in a 3x1x1 array, and applying an inverse parabolic interpolation algorithm");
+    parse_error("");
+    parse_error("The function outputs a single float number indicating the coordinate at which the minimum is located.");
+    parse_error("");
+    parse_error("Syntax:  \touput=ipi(array_of_coordinates, array_of_values)");
+    parse_error("");
+    parse_error("Example: \ta=ipi(coordinates, values)");
+    parse_error("         \t\t where for example:");
+    parse_error("         \t\t coordinates =  {-10, -4, 5}");
+    parse_error("         \t\t values = {81, 9, 36}");
+    
+    return(NULL);
+  }
+  
+  return(do_ipi(coords_array,values_array));
 }
 
 
