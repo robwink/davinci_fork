@@ -111,7 +111,6 @@ struct _vfuncptr vfunclist[] = {
     { "list",       ff_list,        NULL , NULL},
 	 { "save_pds",	  WritePDS,       NULL , NULL},
 	 { "write_pds",	  WritePDS,       NULL , NULL},
-    { "write_fits",      WriteFITS,               NULL, NULL},
     
 /* string functions */
 
@@ -300,12 +299,12 @@ struct _vfuncptr vfunclist[] = {
     { "coreg",      ff_coreg, 			NULL }, 
     { "gconvolve",  ff_gconvolve, 			NULL }, 
     { "warp",  ff_warp, 			NULL }, 
-    { "median",  ff_median, 			NULL }, 
     { "window",  ff_window, 			NULL }, 
 	{ "extract", ff_extract, NULL },
     { "radial_symmetry",  ff_radial_symmetry, 			NULL }, 
     { "radial_symmetry2",  ff_radial_symmetry2, 			NULL }, 
-    { "local_maximum",  ff_local_maximum, 			NULL }, 
+    { "local_max",  ff_local_maximum, 			NULL }, 
+    { "drawshape",  ff_drawshape, 			NULL }, 
 
 #ifdef HAVE_LIBISIS
     { "write_isis_cub",     ff_write_isis_cub,          NULL },
