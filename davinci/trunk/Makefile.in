@@ -212,7 +212,8 @@ davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ff.h isis_obj.h system.h ff_modules.h module_io.h \
 	toolbox.h configwin.h fft.h motif_tools.h tools.h \
 	lexer.c parser.c parser.h y_tab.h \
-	ff_gconvolve.c ff_warp.c ff_median.c ff_window.c dvio_fits.c
+	ff_gconvolve.c ff_warp.c ff_median.c ff_radial.c ff_window.c \
+	ff_extract.c dvio_fits.c
 
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -265,7 +266,8 @@ am_davinci_OBJECTS = apifunc.$(OBJEXT) array.$(OBJEXT) avl.$(OBJEXT) \
 	tools.$(OBJEXT) ufunc.$(OBJEXT) util.$(OBJEXT) x.$(OBJEXT) \
 	xrt_print_3d.$(OBJEXT) lexer.$(OBJEXT) parser.$(OBJEXT) \
 	ff_gconvolve.$(OBJEXT) ff_warp.$(OBJEXT) ff_median.$(OBJEXT) \
-	ff_window.$(OBJEXT) dvio_fits.$(OBJEXT)
+	ff_radial.$(OBJEXT) ff_window.$(OBJEXT) ff_extract.$(OBJEXT) \
+	dvio_fits.$(OBJEXT)
 davinci_OBJECTS = $(am_davinci_OBJECTS)
 @LOCAL_READLINE_FALSE@@MODULE_SUPPORT_TRUE@davinci_DEPENDENCIES = \
 @LOCAL_READLINE_FALSE@@MODULE_SUPPORT_TRUE@	libmodsupp.a
@@ -314,12 +316,12 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/ff_pbm.Po ./$(DEPDIR)/ff_pca.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_plplot.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_projection.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ff_random.Po ./$(DEPDIR)/ff_raw.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ff_rgb.Po ./$(DEPDIR)/ff_rice.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ff_shade.Po ./$(DEPDIR)/ff_slant.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ff_sort.Po ./$(DEPDIR)/ff_source.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ff_struct.Po ./$(DEPDIR)/ff_text.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ff_version.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ff_radial.Po ./$(DEPDIR)/ff_random.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ff_raw.Po ./$(DEPDIR)/ff_rgb.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ff_rice.Po ./$(DEPDIR)/ff_shade.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ff_slant.Po ./$(DEPDIR)/ff_sort.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ff_source.Po ./$(DEPDIR)/ff_struct.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ff_text.Po ./$(DEPDIR)/ff_version.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_vignette.Po ./$(DEPDIR)/ff_warp.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_window.Po ./$(DEPDIR)/ff_write.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_xfrm.Po ./$(DEPDIR)/fft.Po \
@@ -516,6 +518,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_pca.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_plplot.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_projection.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_radial.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_random.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_raw.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_rgb.Po@am__quote@
