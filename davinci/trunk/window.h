@@ -2,8 +2,10 @@ typedef struct tag_Window {
     int width;
     int height;
     int format;     /* data format of one data value */
+    void *handle;   /* actual holder for malloc'd data */
     void *data;     /* contiguous memory to hold all data values */
     void **row;     /* pointers into data for start of each row */
+    void **rows;     /* memory to hold rows (negative indexed) */
 } Window;
 
 /*
@@ -47,3 +49,18 @@ void roll_window(Window *w, Var *obj, int x1, int y1, float ignore);
 void dump_window(Window *w);
 void free_window(Window *w);
 void load_row(Window *w, Var *obj, int x1, int y1, int row, float ignore);
+
+typedef struct tag_Histogram {
+	int count;
+	int min;
+	int max;
+	short *hist;
+	void *arena; /* block to hold allocated memory */
+} Histogram;
+
+Histogram *create_histogram();
+Histogram *load_histogram(Histogram *h, Window *w, int ignore);
+void roll_histogram(Histogram *h, Window *w, int ignore);
+short histogram_min(Histogram *h, int ignore);
+short histogram_max(Histogram *h, int ignore);
+void free_histogram(Histogram *h);
