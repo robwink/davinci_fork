@@ -489,6 +489,8 @@ Var *ff_window(vfuncptr func, Var * arg);
 Var *ff_radial_symmetry(vfuncptr func, Var * arg);
 Var *ff_radial_symmetry2(vfuncptr func, Var * arg);
 Var *ff_local_maximum(vfuncptr func, Var * arg);
-Var *ff_extract (vfuncptr func, Var * arg);
+Var *ff_drawshape(vfuncptr func, Var * arg);
+Var *ff_extract(vfuncptr func, Var * arg);
 
 char *dv_locate_file(char *);
+
