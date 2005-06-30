@@ -548,7 +548,11 @@ dv_int_vasprintf (char **result, char *format, va_list args)
 	This is a hack because va_copy isn't working on solaris.
     va_copy(ap, args);
 */
+#ifdef SOLARIS
 	ap = args;
+#else
+    va_copy(ap, args);
+#endif
 
     while (*p != '\0')
     {
