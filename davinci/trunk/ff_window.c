@@ -46,10 +46,15 @@ create_window(int width, int height, int format)
 
     w->width = width;
     w->height = height;
-    w->data = calloc(width*height, nbytes);
-    w->row = calloc(height, sizeof(void *));
-    for (i = 0 ; i < height ; i++) {
-        w->row[i] = ((char *)w->data)+ i*width*nbytes;
+
+	/* changes to handle row[-1]  for histogram window */
+	w->handle = calloc(width*(height+1), nbytes); 
+    w->rows = calloc(height+1, sizeof(void *));
+
+    w->data = ((char *)w->handle) + width*nbytes;
+    w->row = &(w->rows[1]);
+    for (i = -1 ; i < height ; i++) {
+        w->row[i] = ((char *)w->handle)+ (i+1)*width*nbytes;
     }
     return(w);
 }
@@ -106,8 +111,8 @@ roll_window(Window *w, Var *obj, int x1, int y1, float ignore)
     ** shift the Window pointers to drop a row and add a new one.
     */
     int i;
-    void *t = w->row[0];
-    for (i = 0 ; i < w->height-1 ; i+=1 ) {
+    void *t = w->row[-1];
+    for (i = -1 ; i < w->height-1 ; i+=1 ) {
         w->row[i] = w->row[i+1];
     }
     w->row[w->height-1] = t;
@@ -117,11 +122,130 @@ roll_window(Window *w, Var *obj, int x1, int y1, float ignore)
 void
 free_window(Window *w)
 {
-    free(w->row);
-    free(w->data);
+    free(w->rows);
+    free(w->handle);
     free(w);
 }
 
+
+/*
+** Rolling window histogram operations
+*/
+
+
+Histogram *
+create_histogram()
+{
+	Histogram *h = calloc(1, sizeof(Histogram));
+	h->hist = calloc(65536, sizeof(short));
+	h->hist = &(h->hist[32767]);
+	return(h);
+}
+
+Histogram *
+load_histogram(Histogram *h, Window *w, int ignore) 
+{
+	int i, j;
+	int count;
+	short *hist;
+	int width = w->width;
+	int height = w->height;
+	int min, max, x;
+	float **row = ((float **)w->row);
+
+	if (h == NULL) {
+		h = create_histogram();
+	} else {
+		memset(&(h->hist[-32767]), 0, 65536*2);
+	}
+
+	hist = h->hist;
+	max = min = ignore;
+	count = 0;
+
+	for (j = 0 ; j < height;  j++) {
+		for (i = 0 ; i < width; i++) {
+			x = row[j][i];
+			if (x != ignore) {
+				hist[x]++;
+				if (count == 0 || x > max) max = x;
+				if (count == 0 || x < min) min = x;
+				count++;
+			}
+		}
+	}
+	h->min = min;
+	h->max = max;
+	h->count = count;
+	h->hist = hist;
+	return(h);
+}
+
+void
+roll_histogram(Histogram *h, Window *w, int ignore)
+{
+	/* take out the entires in row[-1]; */
+	int i, j;
+	int x;
+	float **row = ((float **)w->row);
+	int width = w->width;
+	int height = w->height;
+
+	for (i = 0 ; i < width ; i++) {
+		if ((x = row[-1][i]) != ignore) {
+			h->hist[x]--;
+			h->count--;
+			if (h->hist[x] == 0 && x <= h->min) {
+				/* find new min */
+				for (j = x+1 ; j <= h->max ; j++) {
+					if (h->hist[j] > 0) {
+						h->min = j;
+						break;
+					}
+				}
+			}
+			if (h->hist[x] == 0 && x >= h->max ) {
+				/* find new max */
+				for (j = x-1 ; j >= h->min ; j--) {
+					if (h->hist[j] > 0) {
+						h->max = j;
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	/* add entries from row[height] */
+	for (i = 0 ; i < width ; i++) {
+		if ((x = row[height-1][i]) != ignore) {
+			h->hist[x]++;
+			if (h->count == 0 || x < h->min) h->min = x; 
+			if (h->count == 0 || x > h->max) h->max = x;
+			h->count++;
+		}
+	}
+}
+
+short
+histogram_min(Histogram *h, int ignore)
+{
+	if (h->count == 0) return(ignore);
+	return(h->min);
+}
+
+short
+histogram_max(Histogram *h, int ignore)
+{
+	if (h->count == 0) return(ignore);
+	return(h->max);
+}
+
+void free_histogram(Histogram *h) 
+{
+	free(h->arena);
+	free(h);
+}
 /*
 ** non-linear window filters
 **
@@ -144,34 +268,38 @@ Var *
 ff_window(vfuncptr func, Var * arg)
 {
     Var *obj = NULL, *rval = NULL;
-    float ignore=MINFLOAT;
-    float *out;
-    int dim[3];
-    int format, nbytes;
-    float *s1, *s2;
-    int a,b,x,y,z,pos, i,j,k;
+    float ignore=MAXFLOAT;
+    float *f_out;
+	short *s_out;
+    int x,y,z,pos, i,j,k;
     int size = 0, width = 0, height = 0;
     char *type = NULL;
+	Var *mask;
     /*
     ** algorithms that could fit into this framework.
     */
-    char *types[] = { "median", 
+    char *types[] = { "min", "max", "median", NULL };
+
+/*
                       "gauss", "guassian", 
                       "box", "lpf", "low",
                       "edge", "sobel",
                       "radial_symmetry",
+                      "avg","stddev",
                       NULL
                     };
+*/
     Window *w;
 
     Alist alist[9];
-    alist[0] = make_alist( "object",    ID_VAL,    NULL,   &obj);
-    alist[1] = make_alist( "type",    ID_ENUM,   types,   &type);
-    alist[2] = make_alist( "x",     INT,    NULL,      &width);
-    alist[3] = make_alist( "y",    INT,    NULL,      &height);
-    alist[4] = make_alist( "size",    INT,    NULL,      &size);
-    alist[5] = make_alist( "ignore",    FLOAT,    NULL,    &ignore);
-    alist[6].name = NULL;
+    alist[0] = make_alist( "object",  ID_VAL,   NULL,  &obj);
+    alist[1] = make_alist( "type",    ID_ENUM,  types, &type);
+    alist[2] = make_alist( "x",       INT,      NULL,  &width);
+    alist[3] = make_alist( "y",       INT,      NULL,  &height);
+    alist[4] = make_alist( "size",    INT,      NULL,  &size);
+    alist[5] = make_alist( "ignore",  FLOAT,    NULL,  &ignore);
+    alist[6] = make_alist( "mask",    ID_VAL,   NULL,  &mask);
+    alist[7].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -188,7 +316,7 @@ ff_window(vfuncptr func, Var * arg)
         width = height = size;
     }
     if (width ==0 || height ==0) {
-        parse_error("%s: Invalid size specified (%dx%d\n", func->name, width, height);
+        parse_error("%s: Invalid size specified (%dx%d)\n", func->name, width, height);
         return(NULL);
     }
 
@@ -202,17 +330,68 @@ ff_window(vfuncptr func, Var * arg)
         ** Median reorders the data (sorts), so you can't roll the window,
         ** you have to reload it each time.
         */
-        out = calloc(x*y, sizeof(float));
-        rval = newVal(BSQ, x, y, 1, FLOAT, out);
+        f_out = calloc(x*y, sizeof(float));
+        rval = newVal(BSQ, x, y, 1, FLOAT, f_out);
         for (j = 0 ; j < y ; j+=1) {
             for (i = 0 ; i < x ; i+=1) {
                 load_window(w, obj, i, j, ignore);
-                out[cpos(i, j, 0, rval)] = median_window(w->data, 
+                f_out[cpos(i, j, 0, rval)] = median_window(w->data, 
                                                     width, height, ignore);
             }
         }
-    }
+	} else if (!strcmp(type, "min") || !strcmp(type, "max")) {
+		/* histogram operators */
+		Histogram *h = NULL;
+		short (*hf)(Histogram *, int);
+
+		if (!strcmp(type, "min")) {
+			hf = histogram_min;
+		} else if (!strcmp(type, "max")) {
+			hf = histogram_max;
+		}
+		s_out = calloc(x*y, sizeof(short));
+		rval = newVal(BSQ, x, y, 1, SHORT, s_out);
+		for (i = 0 ; i < x ; i+=1) {
+			load_window(w, obj, i, 0, ignore);
+			h = load_histogram(h, w, ignore);
+			for (j = 0 ; j < y ; j+=1) {
+				if (j) {
+					roll_window(w, obj, i, j, ignore);
+					roll_histogram(h, w, ignore);
+				}
+				s_out[cpos(i, j, 0, rval)] = hf(h, ignore);
+			}
+		}
+		free_histogram(h);
+	}
 
     free_window(w);
     return(rval);
+}
+
+
+static int cmp(float *a, float *b) { return((*a)-(*b)); }
+
+float median_window(float *s1, int width, int height, float ignore)
+{
+    int sum = 0;
+    int i, j;
+    int c1 = 0, c2 = 0;
+    float r;
+
+    qsort(s1, width*height, sizeof(float), cmp);
+
+    /* count number of ignore values */
+    for (i = 0 ; i < width*height ; i++) {
+        if (s1[i] != ignore) c1++;
+    }
+    /* Count N/2 smalles values */
+    for (i = 0 ; i < width*height ; i++) {
+        if (s1[i] != ignore) {
+            if (c2++ >= c1/2) {
+                return(s1[i]);
+            }
+        }
+    }
+    return(ignore);
 }
