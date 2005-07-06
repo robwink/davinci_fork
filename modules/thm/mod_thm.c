@@ -105,12 +105,13 @@ thm_y_shear(vfuncptr func, Var * arg)
   int      i, j, k;                 /* loop indices */
   int      nx, ni, nj;              /* memory locations */
 
-  Alist alist[5];
+  Alist alist[6];
   alist[0] = make_alist("picture",		ID_VAL,		NULL,	&pic_v);
   alist[1] = make_alist("angle",		FLOAT,		NULL,	&angle);
-  alist[2] = make_alist("null",                 FLOAT,          NULL,   &nullv);
+  alist[2] = make_alist("ignore",               FLOAT,          NULL,   &nullv);
   alist[3] = make_alist("trim",		        INT,		NULL,    &trim);
-  alist[4].name = NULL;
+  alist[4] = make_alist("null",                 FLOAT,          NULL,   &nullv); // can be removed once all legacy programs are dead
+  alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -118,12 +119,11 @@ thm_y_shear(vfuncptr func, Var * arg)
   if (pic_v == NULL){
     parse_error("y_shear() - 4/25/04");
     parse_error("It takes an input array and shears the y position of each pixel according to a shear angle in degrees.\n");
-    parse_error("Syntax:  b = thm.y_shear(picture,angle,null,trim)");
-    parse_error("example: b = thm.y_shear(picture=a,angle=8,null=-32768,trim=1)");
+    parse_error("Syntax:  b = thm.y_shear(picture,angle,ignore,trim)");
+    parse_error("example: b = thm.y_shear(picture=a,angle=8,ignore=-32768,trim=1)");
     parse_error("example: b = thm.y_shear(a,8,-32768,1)\n");
     parse_error("The shear angle may be between -80 and 80 degrees");
     parse_error("The null option fills in a specified value into all blank space");
-    parse_error("hello");
     parse_error("If you want to unshear the array an equal but opposite angle and want it to have the same dimensions as the original, then use the \"trim=1\" option\n");
     return NULL;
   }
@@ -257,10 +257,10 @@ thm_y_shear(vfuncptr func, Var * arg)
 Var *
 thm_kfill(vfuncptr func, Var * arg)
 {
-  Var *pic_v = NULL;                                    /* the picture */
-  Var *wgt_v = NULL;	                                /* the weighting array */
-  Var *itr_v = NULL;	                                /* the number of iterations */
-  Var *out;		                                /* the output picture */
+  Var   *pic_v = NULL;                                  /* the picture */
+  Var   *wgt_v = NULL;	                                /* the weighting array */
+  Var   *itr_v = NULL;	                                /* the number of iterations */
+  Var   *out;		                                /* the output picture */
   int    w;                                             /* width of the weight matrix (= height) */
   int    x,y,z;
   float *wgt = NULL;                                    /* storage location of the weight array */
@@ -939,7 +939,7 @@ thm_corners(vfuncptr func, Var * arg)
   
   Alist alist[3];
   alist[0] = make_alist("picture",		ID_VAL,		NULL,	&pic_a);
-  alist[1] = make_alist("null",                 FLOAT,          NULL,   &nullval);
+  alist[1] = make_alist("ignore",               FLOAT,          NULL,   &nullval);
   alist[2].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -949,10 +949,10 @@ thm_corners(vfuncptr func, Var * arg)
     parse_error("corners() - 4/25/04");
     parse_error("Feed corners() a 1-band projected ISIS image and a null value.");
     parse_error("It will return the x and y values of the four corners.\n");
-    parse_error("Syntax:  b = corners(picture,null)");
-    parse_error("example: b = corners(a,null=-32768)");
+    parse_error("Syntax:  b = corners(picture,ignore)");
+    parse_error("example: b = corners(a,ignore=-32768)");
     parse_error("picture - any 3-D projected image.");
-    parse_error("null - the non-data pixel values. Default is 0.");
+    parse_error("ignore - the non-data pixel values. Default is 0.");
     parse_error("If an image is passed with more than one band, corners will only use the first band.\n");
     return NULL;
   }
@@ -1212,7 +1212,7 @@ thm_deplaid(vfuncptr func, Var * arg)
   byte     *row_ct, *col_ct;                        /* max number of bands in all rows and all columns */
   byte     *blackmask;                              /* the blackmask and temperature mask */
   float    *tmask;                                  /* the temporary temperature mask */
-  float     nullval = -32768;                       /* the null value */
+  float     nullval = -32768;                       /* the null value assigned by incoming arguments "null" and/or "ignore"*/
   float     tmask_max = 1.15;                       /* maximum threshold for temperature masking */
   float     tmask_min = 0.80;                       /* minimum threshold for temperature masking */
   int       filt_len = 150;                         /* filter length */
@@ -1228,15 +1228,16 @@ thm_deplaid(vfuncptr func, Var * arg)
   int       b10 = 10;                               /* the band-10 designation */
   float    *b_avg, *b_ct;                           /* band average and band count - used to normalize bands for blackmask */
 
-  Alist alist[8];
+  Alist alist[9];
   alist[0] = make_alist("data", 		ID_VAL,		NULL,	&data);
-  alist[1] = make_alist("null",                 FLOAT,          NULL,   &nullval);
+  alist[1] = make_alist("ignore",               FLOAT,          NULL,   &nullval);
   alist[2] = make_alist("tmask_max",            FLOAT,          NULL,   &tmask_max);
   alist[3] = make_alist("tmask_min",            FLOAT,          NULL,   &tmask_min);
   alist[4] = make_alist("filt_len",             INT,            NULL,   &filt_len);
   alist[5] = make_alist("b10",                  INT,            NULL,   &b10);
   alist[6] = make_alist("dump",                 INT,            NULL,   &dump);
-  alist[7].name = NULL;
+  alist[7] = make_alist("null",                 FLOAT,          NULL,   &nullval); // can be removed when all legacy programs are dead
+  alist[8].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -1244,13 +1245,13 @@ thm_deplaid(vfuncptr func, Var * arg)
   if (data == NULL) {
     parse_error("\nDeplaid() - July 06 2005\n");
     parse_error("Deplaids multiband THEMIS spectral cubes\n");
-    parse_error("Syntax: b = thm.deplaid(data,null,tmask_max,tmask_min,filt_len,b10)");
+    parse_error("Syntax: b = thm.deplaid(data,ignore,tmask_max,tmask_min,filt_len,b10)");
     parse_error("example b = thm.deplaid(a)");
-    parse_error("example b = thm.deplaid(data=a,null=-32768,tmask_max=1.25,tmask_min=.85,filt_len=200,b10=3)");
+    parse_error("example b = thm.deplaid(data=a,ignore=-32768,tmask_max=1.25,tmask_min=.85,filt_len=200,b10=3)");
     parse_error("example b = thm.deplaid(a,0,tmask_max=1.21)");
     parse_error("example b = thm.deplaid(a,0,1.10,.90,180,8)\n");
     parse_error("data:       geometrically projected and rectified radiance cube of at most 10 bands");
-    parse_error("null:       the value of non-data pixels -                         default is -32768");
+    parse_error("ignore:     the value of non-data pixels -                         default is -32768");
     parse_error("tmask_max:  max threshold used to create the temperature mask -    default is 1.15");
     parse_error("tmask_min:  min threshold used to create the temperature mask -    default is 0.80");
     parse_error("filt_len:   length of filter used in plaid removal -               default is 150");
@@ -1629,11 +1630,12 @@ thm_rectify(vfuncptr func, Var * arg)
   float    angle1 = 0, angle2 = 0;     /* possible angle variables */
   float    trust = 0;                  /* use top corners or bottom corners */
 
-  Alist alist[4];
+  Alist alist[5];
   alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
-  alist[1] = make_alist("null",                 FLOAT,          NULL,   &nullo);
+  alist[1] = make_alist("ignore",               FLOAT,          NULL,   &nullo);
   alist[2] = make_alist("trust",                FLOAT,          NULL,   &trust);
-  alist[3].name = NULL;
+  alist[3] = make_alist("null",                 FLOAT,          NULL,   &nullo); //can be removed when all legacy programs are dead
+  alist[4].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return NULL;
 
@@ -1641,16 +1643,16 @@ thm_rectify(vfuncptr func, Var * arg)
   if (obj == NULL){
     parse_error("rectify() - 4/29/04");
     parse_error("Extracts rectangle of data from projected cubes\n");
-    parse_error("Syntax:  b = thm.rectify(obj,null,trust)");
+    parse_error("Syntax:  b = thm.rectify(obj,ignore,trust)");
     parse_error("example: b = thm.rectify(obj=a)");
     parse_error("example: b = thm.rectify(a)");
-    parse_error("example: b = thm.rectify(obj=a,null=0,trust=2)\n");
+    parse_error("example: b = thm.rectify(obj=a,ignore=0,trust=2)\n");
     parse_error("obj - any projected cube");
-    parse_error("null - the value in non-data pixels of projected cube. Default is -3.402822655e+38.");
+    parse_error("ignore - the value in non-data pixels of projected cube. Default is -3.402822655e+38.");
     parse_error("trust - where in the image the angle should be determined.");
     parse_error("        0 = top, 1 = bottom, .25 = 25 percent down the image, etc.  Default is 0 (top).\n");
     parse_error("TROUBLESHOOTING");
-    parse_error("The null value will ALWAYS be set to -32768 when rectifying!\n");
+    parse_error("The ignore value will ALWAYS be set to -32768 when rectifying!\n");
     return NULL;
   }
 
@@ -1779,10 +1781,11 @@ thm_reconst(vfuncptr func, Var * arg)
   float   shift;                    /* tan of the shift */
   
   
-  Alist alist[3]; 
-  alist[0] = make_alist("rect",      ID_STRUCT,  NULL,  &obj);
-  alist[1] = make_alist("null",      FLOAT,      NULL,  &null);
-  alist[2].name = NULL;
+  Alist alist[4]; 
+  alist[0] = make_alist("rect",        ID_STRUCT,  NULL,  &obj);
+  alist[1] = make_alist("ignore",      FLOAT,      NULL,  &null);
+  alist[2] = make_alist("null",        FLOAT,      NULL,  &null); // can be removed when all legacy programs are dead
+  alist[3].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);
   
@@ -1790,8 +1793,9 @@ thm_reconst(vfuncptr func, Var * arg)
     parse_error("\nTakes rectified cubes and returns");
     parse_error("them to projected geometry\n");
     parse_error("$1 = rectify structure");
-    parse_error("null = null value of the data (default -32768)\n");
-    parse_error("c.edwards 12/15/04\n");
+    parse_error("ignore = value of the null data (default -32768)\n");
+    parse_error("c.edwards 12/15/04");
+    parse_error("k.nowicki 07/06/05\n");
     return NULL;
   }
   
@@ -2373,12 +2377,13 @@ thm_rad2tb(vfuncptr func, Var * arg)
   int          bx = 0;                         /* x-dimension of the bandlist */
   int          i;                              /* loop index */
   
-  Alist alist[5];
-  alist[0] = make_alist("rad", 		 ID_VAL,         NULL,   &rad);
-  alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
-  alist[2] = make_alist("null",          FLOAT,          NULL,   &nullval);
-  alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
-  alist[4].name = NULL;
+  Alist alist[6];
+  alist[0] = make_alist("rad",              ID_VAL,          NULL,   &rad);
+  alist[1] = make_alist("bandlist",         ID_VAL,          NULL,   &bandlist);
+  alist[2] = make_alist("ignore",            FLOAT,          NULL,   &nullval);
+  alist[3] = make_alist("temp_rad_path", ID_STRING,          NULL,   &fname);
+  alist[4] = make_alist("null",              FLOAT,          NULL,   &nullval); //can be removed when all legacy programs are dead
+  alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -2387,13 +2392,13 @@ thm_rad2tb(vfuncptr func, Var * arg)
     parse_error("THEMIS radiance to THEMIS Brightness Temperature Converter\n");
     parse_error("Uses /themis/calib/temp_rad_v4 as conversion table.");
     parse_error("Assumes 10 bands of radiance for right now.\n");
-    parse_error("Syntax:  b = thm.rad2tb(rad,bandlist,null,temp_rad_path)");
+    parse_error("Syntax:  b = thm.rad2tb(rad,bandlist,ignore,temp_rad_path)");
     parse_error("example: b = thm.rad2tb(a)");
     parse_error("example: b = thm.rad2tb(a,1//2//3//4//5//6//7//8//9,0)");
-    parse_error("example: b = thm.rad2tb(rad=a,bandlist=4//9//10,null=-32768,temp_rad_path=\"/themis/calib/temp_rad_v3\")");
+    parse_error("example: b = thm.rad2tb(rad=a,bandlist=4//9//10,ignore=-32768,temp_rad_path=\"/themis/calib/temp_rad_v3\")");
     parse_error("rad - any float valued 3-D radiance array.");
     parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
-    parse_error("null - non-data pixel value. Default is -32768 AND 0.");
+    parse_error("ignore - non-data pixel value. Default is -32768 AND 0.");
     parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is /themis/calib/temp_rad_v4.\n");
     return NULL;
   }
@@ -2646,27 +2651,28 @@ thm_themissivity(vfuncptr func, Var * arg)
   int          bx, x, y, z;                    /* size of the original array */
   emissobj    *e_struct;                       /* emissivity structure output from themissivity */
   
-  Alist alist[7];
+  Alist alist[8];
   alist[0] = make_alist("rad", 		 ID_VAL,         NULL,   &rad);
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
-  alist[2] = make_alist("null",          FLOAT,          NULL,   &nullval);
+  alist[2] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
   alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
   alist[4] = make_alist("b1",            INT,            NULL,   &b1);
   alist[5] = make_alist("b2",            INT,            NULL,   &b2);
-  alist[6].name = NULL;
+  alist[6] = make_alist("null",          FLOAT,          NULL,   &nullval); //can be removed when all legacy programs are dead
+  alist[7].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   if (rad == NULL) {
     parse_error("themis_emissivity() - 7/07/04");
     parse_error("THEMIS radiance to THEMIS emissivity converter\n");
-    parse_error("Syntax:  b = thm.themis_emissivity(rad,bandlist,null,temp_rad_path,b1,b2)");
+    parse_error("Syntax:  b = thm.themis_emissivity(rad,bandlist,ignore,temp_rad_path,b1,b2)");
     parse_error("example: b = thm.themis_emissivity(a)");
     parse_error("example: b = thm.themis_emissivity(a,1//2//3//4//5//6//7//8//9,0,b1=4,b2=8)");
-    parse_error("example: b = thm.themis_emissivity(rad=a,bandlist=4//9//10,null=-2,temp_rad_path=\"/themis/calib/temp_rad_v3\")");
+    parse_error("example: b = thm.themis_emissivity(rad=a,bandlist=4//9//10,ignore=-2,temp_rad_path=\"/themis/calib/temp_rad_v3\")");
     parse_error("rad - any 3-D radiance array.");
     parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
-    parse_error("null - non-data pixel value. Default is -32768 AND 0.");
+    parse_error("ignore - non-data pixel value. Default is -32768 AND 0.");
     parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is /themis/calib/temp_rad_v4.");
     parse_error("b1 - first band to search for maximum brightness temperature. Default is 3. ");
     parse_error("b2 - end band to search for maximum brightness temperature. Default is 9.\n");
@@ -2831,14 +2837,15 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
   int          b1 = 3, b2 = 9;                 /* the boundary bands used to determine highest brightness temperature */
   int          k_size = 7;                     /* size of the smoothing kernel */
   
-  Alist alist[7];
+  Alist alist[8];
   alist[0] = make_alist("rad", 		 ID_VAL,         NULL,   &rad);
   alist[1] = make_alist("k_size",        INT,            NULL,   &k_size);
   alist[2] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
-  alist[3] = make_alist("null",          FLOAT,          NULL,   &nullval);
+  alist[3] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
   alist[4] = make_alist("b1",            INT,            NULL,   &b1);
   alist[5] = make_alist("b2",            INT,            NULL,   &b2);
-  alist[6].name = NULL;
+  alist[6] = make_alist("null",          FLOAT,          NULL,   &nullval); //can be removed when all legacy programs are dead
+  alist[7].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -2846,14 +2853,14 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
     parse_error("white_noise_remove1() - 7/10/04");
     parse_error("White noise removal algorithm for THEMIS radiance cubes");
     parse_error("Converts to emissivity, smoothes and multiplies by unsmoothed brightness temperature\n");
-    parse_error("Syntax:  b = thm.white_noise_remove1(rad,k_size,bandlist,null,b1,b2)");
+    parse_error("Syntax:  b = thm.white_noise_remove1(rad,k_size,bandlist,ignore,b1,b2)");
     parse_error("example: b = thm.white_noise_remove1(a)");
     parse_error("example: b = thm.white_noise_remove1(a,7,1//2//3//4//5//6//7//8//9,0,b1=4,b2=8)");
-    parse_error("example: b = thm.white_noise_remove1(rad=a,k_size=7,bandlist=4//9//10,null=-2)");
+    parse_error("example: b = thm.white_noise_remove1(rad=a,k_size=7,bandlist=4//9//10,ignore=-2)");
     parse_error("rad - any 3-D radiance array.");
     parse_error("k_size - the size of the smoothing kernel. Default is 5.");
     parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
-    parse_error("null - non-data pixel value. Default is -32768 AND 0.");
+    parse_error("ignore - non-data pixel value. Default is -32768 AND 0.");
     parse_error("b1 - first band to search for maximum brightness temperature. Default is 3. ");
     parse_error("b2 - end band to search for maximum brightness temperature. Default is 9.\n");
     return NULL;
@@ -3338,13 +3345,14 @@ thm_white_noise_remove2(vfuncptr func, Var *arg)
   int     kernsize;                 /* number of kern elements */ 
   int     vb=1;                     /* verbosity for updataes */
 
-  Alist alist[6]; 
+  Alist alist[7]; 
   alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-  alist[1] = make_alist("null",      FLOAT,     NULL,  &nullval);
+  alist[1] = make_alist("ignore",    FLOAT,     NULL,  &nullval);
   alist[2] = make_alist("b10",       INT,       NULL,  &b10);
   alist[3] = make_alist("filt",      INT,       NULL,  &filt);
   alist[4] = make_alist("verbose",   INT,       NULL,  &vb);
-  alist[5].name = NULL;
+  alist[5] = make_alist("null",      FLOAT,     NULL,  &nullval); // can be removed when all legacy programs are dead
+  alist[6].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
  
@@ -3352,7 +3360,7 @@ thm_white_noise_remove2(vfuncptr func, Var *arg)
     parse_error("\nUsed to remove white noise from data");
     parse_error("More bands are better\n");
     parse_error("$1 = the data to remove the noise from");
-    parse_error("null = null value for the image (Default is -32768)");
+    parse_error("ignore = null-data value for the image (Default is -32768)");
     parse_error("b10 = the atmospheric band (Default is 10)");
     parse_error("If b10=0, then there is no band 10 information");
     parse_error("filt = the filter size to use (Default is 7)\n");
@@ -3823,7 +3831,7 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
   Alist alist[8];
   alist[0] = make_alist("radiance",      ID_VAL,         NULL,	 &rad);
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
-  alist[2] = make_alist("null",          FLOAT,          NULL,   &nullval);
+  alist[2] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
   alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
   alist[4] = make_alist("b1",            INT,            NULL,   &b1);
   alist[5] = make_alist("b2",            INT,            NULL,   &b2);
@@ -3838,11 +3846,11 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
     parse_error("Produces a 2x1x10 float array containing the radiance correction and em offset values for a given array");
     parse_error("Values are minimized RMS differences of radiance from blackbody of same temperature");
     parse_error("Uses inverse parabolic interpolation for minimization algorithm\n");
-    parse_error("Usage:b=thm.radcorr(radiance, bandlist, null, temp_rad_path, b1, b2, space)");
+    parse_error("Usage:b=thm.radcorr(radiance, bandlist, ignore, temp_rad_path, b1, b2, space)");
     parse_error("      b=thm.radcorr(a.data[x1,x2,y1,y2])\n");
     parse_error("\'radiance\' is a small (50x50x10 pixels) array selected from the entire radiance array");
     parse_error("\'bandlist\' is a list of THEMIS bands in radiance array. Default is ordered bands 1-10");
-    parse_error("\'null\' is non data value. Default is -32768");
+    parse_error("\'ignore\' is non-data value. Default is -32768");
     parse_error("\'temp_rad_path\' is the path and filename of the temperature vs radiance lookup table");
     parse_error("\'b1\' is the first band in the ordered list to search for the maximum brightness temperature. Default = 3");
     parse_error("\'b2\' is the last band in the ordered list to search for the maximum brightness temperature. Default = 9");
