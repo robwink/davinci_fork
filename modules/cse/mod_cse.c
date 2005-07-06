@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "math.h"
 #include "ff_modules.h"
+/* I am making this comment so that the point gets across */
 
 static float *sstretch_sobel(float *data, float ignore, int x, int y, int z); 
 static float *smooth(float *obj, float *kernel, int ox, int oy, int oz, int kx, int ky, int kz, int norm, float ignore);
