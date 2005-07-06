@@ -1,4 +1,4 @@
-pkglib_LTLIBRARIES = kjn.la
+pkglib_LTLIBRARIES = cse.la
 
-kjn_la_SOURCES = mod_kjn.c
-kjn_la_LDFLAGS = -module
+cse_la_SOURCES = mod_cse.c
+cse_la_LDFLAGS = -module
