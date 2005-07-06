@@ -154,25 +154,25 @@ target_alias = @target_alias@
 target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
-pkglib_LTLIBRARIES = kjn.la
+pkglib_LTLIBRARIES = cse.la
 
-kjn_la_SOURCES = mod_kjn.c
-kjn_la_LDFLAGS = -module
-subdir = modules/kjn
+cse_la_SOURCES = mod_cse.c
+cse_la_LDFLAGS = -module
+subdir = modules/cse
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
 
-kjn_la_LIBADD =
-am_kjn_la_OBJECTS = mod_kjn.lo
-kjn_la_OBJECTS = $(am_kjn_la_OBJECTS)
+cse_la_LIBADD =
+am_cse_la_OBJECTS = mod_cse.lo
+cse_la_OBJECTS = $(am_cse_la_OBJECTS)
 
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/mod_kjn.Plo
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/mod_cse.Plo
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
@@ -180,9 +180,9 @@ LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-DIST_SOURCES = $(kjn_la_SOURCES)
+DIST_SOURCES = $(cse_la_SOURCES)
 DIST_COMMON = $(srcdir)/Makefile.in Makefile.am
-SOURCES = $(kjn_la_SOURCES)
+SOURCES = $(cse_la_SOURCES)
 
 all: all-am
 
@@ -190,7 +190,7 @@ all: all-am
 .SUFFIXES: .c .lo .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am  $(top_srcdir)/configure.ac $(ACLOCAL_M4)
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  modules/kjn/Makefile
+	  $(AUTOMAKE) --gnu  modules/cse/Makefile
 Makefile: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)
 pkglibLTLIBRARIES_INSTALL = $(INSTALL)
@@ -221,8 +221,8 @@ clean-pkglibLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-kjn.la: $(kjn_la_OBJECTS) $(kjn_la_DEPENDENCIES) 
-	$(LINK) -rpath $(pkglibdir) $(kjn_la_LDFLAGS) $(kjn_la_OBJECTS) $(kjn_la_LIBADD) $(LIBS)
+cse.la: $(cse_la_OBJECTS) $(cse_la_DEPENDENCIES) 
+	$(LINK) -rpath $(pkglibdir) $(cse_la_LDFLAGS) $(cse_la_OBJECTS) $(cse_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT) core *.core
@@ -230,7 +230,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_kjn.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_cse.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" \
