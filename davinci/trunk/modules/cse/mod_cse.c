@@ -189,7 +189,7 @@ static float *unslantc(float *data, int *leftedge, int width, int x, int y, int 
 {
   /* set up variables */
   int i,j,k,p;
-  float *odata;
+  float *odata=NULL;
   
   /* allocate memory for the new data */
   odata = calloc(width*y*z, sizeof(float));
@@ -206,7 +206,8 @@ static float *unslantc(float *data, int *leftedge, int width, int x, int y, int 
       }
     }
   } 
-
+  
+  free(data);
   /* return the data */
   return(odata);
 }
@@ -221,7 +222,7 @@ static float *unshearc(float *w_pic, float angle, int x, int y, int z, float nul
   int      lshift;                  /* the largest shift (int) */
   int      i, j, k;                 /* loop indices */
   int      nx, ni, nj;              /* memory locations */
-  Var     *out;
+  Var     *out=NULL;
 
   /* calculating the number of rows to add to the picture to accomodate the shear */
   shift = tan((M_PI / 180.0) * angle);
@@ -269,6 +270,7 @@ static float *unshearc(float *w_pic, float angle, int x, int y, int z, float nul
       }
     }
   }
+  free(w_pic);
   return(pic);
 }
 
@@ -551,13 +553,14 @@ cse_rmnoise(vfuncptr func, Var *arg)
   int     kernsize;                 /* number of kern elements */ 
   int     vb=1;                     /* verbosity for updataes */
 
-  Alist alist[6]; 
+  Alist alist[7]; 
   alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
   alist[1] = make_alist("null",      FLOAT,     NULL,  &nullval);
   alist[2] = make_alist("b10",       INT,       NULL,  &b10);
   alist[3] = make_alist("filt",      INT,       NULL,  &filt);
   alist[4] = make_alist("verbose",   INT,       NULL,  &vb);
-  alist[5].name = NULL;
+  alist[5] = make_alist("ignore",    FLOAT,     NULL,  &nullval);
+  alist[6].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
  
@@ -565,7 +568,7 @@ cse_rmnoise(vfuncptr func, Var *arg)
     parse_error("\nUsed to remove white noise from data");
     parse_error("More bands are better\n");
     parse_error("$1 = the data to remove the noise from");
-    parse_error("null = null value for the image (Default is -32768)");
+    parse_error("ignore = null value for the image (Default is -32768)");
     parse_error("b10 = the atmospheric band (Default is 10)");
     parse_error("If b10=0, then there is no band 10 information");
     parse_error("filt = the filter size to use (Default is 7)\n");
@@ -723,10 +726,11 @@ cse_find_shift(vfuncptr func, Var * arg)
   float    tvleft=0;                /* temporary pixel value */
   float    nullval=-32768;          /* null value */
 
-  Alist alist[3];
+  Alist alist[4];
   alist[0] = make_alist("data",      ID_VAL,     NULL,  &data);
   alist[1] = make_alist("null",      FLOAT,      NULL,  &nullval);
-  alist[2].name = NULL;
+  alist[2] = make_alist("ignore",    FLOAT,      NULL,  &nullval);
+  alist[3].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -734,7 +738,7 @@ cse_find_shift(vfuncptr func, Var * arg)
     parse_error("\nUsed to find the side of the mosaic that contains data");
     parse_error("Which is then used to shift/unshift data for deplaiding \n");
     parse_error("$1 =  the data (should be part of a davinci mosaic)\n");
-    parse_error("null = the null value of the image (default -32768)");
+    parse_error("ignore = the null value of the image (default -32768)");
     parse_error("Companion functions are shift/unshift\n");
     parse_error("c.edwards 6/4/04\n");
     return NULL;
@@ -782,18 +786,19 @@ cse_shift(vfuncptr func, Var * arg)
   int     *newshift=NULL;           /* new left edge */ 
   int      opt;                     /* the way to shift pixels */
 
-  Alist alist[4];
+  Alist alist[5];
   alist[0] = make_alist("data",      ID_VAL,     NULL,  &data);
   alist[1] = make_alist("null",      FLOAT,      NULL,  &nullval);
   alist[2] = make_alist("side",      INT,        NULL,  &opt);
-  alist[3].name = NULL;
+  alist[3] = make_alist("ignore",    FLOAT,      NULL,  &nullval);
+  alist[4].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   if(data == NULL) {
     parse_error("\nUsed to shift pixels for mosaics for deplaiding\n");
     parse_error("$1 = the data to shift (must be rectified \n");
-    parse_error("null = the null value of the image (default -32768)");
+    parse_error("ignore = the null value of the image (default -32768)");
     parse_error("side = 1 data is on right and shift will be left");
     parse_error("side = 2 data is on left and shift will be right");
     parse_error("side = 0 no shift (returns NULL)");
@@ -914,11 +919,12 @@ cse_unshift(vfuncptr func, Var * arg)
   int     *newshift=NULL;           /* new edge */ 
   int      opt;                     /* the way to unshift pixels */
  
-  Alist alist[4];
+  Alist alist[5];
   alist[0] = make_alist("rect",      ID_STRUCT,  NULL,  &rect);
   alist[1] = make_alist("null",      FLOAT,      NULL,  &nullval);
   alist[2] = make_alist("side",      INT,        NULL,  &opt);
-  alist[3].name = NULL;
+  alist[3] = make_alist("ignore",    FLOAT,      NULL,  &nullval);
+  alist[4].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);
  
@@ -926,7 +932,7 @@ cse_unshift(vfuncptr func, Var * arg)
     parse_error("\nUsed to unshift pixels for mosaics for deplaiding\n");
     parse_error("$1 = the data to unshift (must be shift"); 
     parse_error("structure w/ \"shift_edge\" and \"data\")\n");
-    parse_error("null = the null value of the image (default -32768)");
+    parse_error("ignore = the null value of the image (default -32768)");
     parse_error("side = 1 data is on right and unshift will be right");
     parse_error("side = 2 data is on left and unshift will be left");
     parse_error("side = 0 no shift (returns null)");
@@ -1036,7 +1042,7 @@ cse_tes_shift(vfuncptr func, Var * arg)
   int     maxshift=-32768;   /* maxshift */ 
 
   Alist alist[3];
-  alist[0] = make_alist("data",      ID_VAL,     NULL,  &data);
+  alist[0] = make_alist("data",      ID_VAL,      NULL,  &data);
   alist[1] = make_alist("shifts",    ID_VAL,      NULL,  &shifts);
   alist[2].name = NULL;
 
@@ -1300,11 +1306,11 @@ cse_reconst(vfuncptr func, Var * arg)
 {
   
   Var    *obj=NULL;                 /* input rectify structre */
-  Var    *out;                      /* output data */
+  Var    *out=NULL;                 /* output data */
   Var    *vdata=NULL;               /* data  var */
   Var    *vleftedge=NULL;           /* leftedge var */
-  Var    *w,*a;                     /* width and angle var */ 
-  int    *leftedge;                 /* leftedge array */
+  Var    *w=NULL,*a=NULL;           /* width and angle var */ 
+  int    *leftedge=NULL;            /* leftedge array */
   float   angle=0;                  /* angle value */
   int     width=0;                  /* width value */
   int     x,y,z;                    /* rectified image size */
@@ -1315,10 +1321,11 @@ cse_reconst(vfuncptr func, Var * arg)
   float   shift;                    /* tan of the shift */
   
   
-  Alist alist[3]; 
+  Alist alist[4]; 
   alist[0] = make_alist("rect",      ID_STRUCT,  NULL,  &obj);
   alist[1] = make_alist("null",      FLOAT,      NULL,  &null);
-  alist[2].name = NULL;
+  alist[2] = make_alist("ignore",    FLOAT,      NULL,  &null); 
+  alist[3].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);
   
@@ -1326,7 +1333,7 @@ cse_reconst(vfuncptr func, Var * arg)
     parse_error("\nTakes rectified cubes and returns");
     parse_error("them to projected geometry\n");
     parse_error("$1 = rectify structure");
-    parse_error("null = null value of the data (default -32768)\n");
+    parse_error("ignore = null value of the data (default -32768)\n");
     parse_error("c.edwards 10/9/04\n");
     return NULL;
   }
@@ -1383,7 +1390,8 @@ cse_reconst(vfuncptr func, Var * arg)
   
   /* run unshearc */
   new_data=unshearc(new_data,angle,width,y,z,null);
-  
+  free(leftedge);
+
   /* return the data */  
   out = newVal(BSQ, width, y-abs(lshift), z, FLOAT, new_data);
   return(out);
@@ -1531,8 +1539,6 @@ cse_sstretch2(vfuncptr func, Var * arg)
 
 
 
-
-
 Var *
 cse_unscale(vfuncptr func, Var * arg)
 {
@@ -1545,35 +1551,37 @@ cse_unscale(vfuncptr func, Var * arg)
   Var      *bin=NULL;                    /* band_bin struct */
   Var      *baset, *multt;               /* base/multiplier temp*/
   double   *mult, *base;                 /* base/multiplier */
+  Var      *c_null=NULL;                 /* core_null var */
   float     core_null=-32768;            /* core null value */
   int       i, j, k;                     /* loop indices */
   int       x=0, y=0, z=0, x1=0;         /* size of the picture */
   float     tv1=0;
   float     tv2=0;                       /* temp pixel value */
   
-  
+ 
   Alist alist[2];
   alist[0] = make_alist("obj",        ID_STRUCT,     NULL,   &pds);
   alist[1].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
-  /* get structures */
-  find_struct(pds,"spectral_qube",&struc);
-  find_struct(struc,"data",&w_pds);
-  /*weird line that doesn't work hard sets core_null vals*/
-  //core_null = find_struct(struc,"core_null",NULL);
-  find_struct(struc,"band_bin",&bin);
-  find_struct(bin,"band_bin_multiplier",&multt);
-  find_struct(bin,"band_bin_base",&baset);
- 
-  if(pds==NULL || struc==NULL || w_pds==NULL || multt==NULL || baset==NULL) {
+  if(pds==NULL) {
     parse_error("\nUsed to unscale a pds from short to float data\n");
     parse_error("$1 = the pds structure\n");
     parse_error("core_null values will be set to -32768");
-    parse_error("c.edwards 5/17/05\n");
+    parse_error("c.edwards 7/6/05\n");
     return NULL;
   }
+
+  /* get structures */
+  find_struct(pds,"spectral_qube",&struc);
+  find_struct(struc,"data",&w_pds);
+  find_struct(struc,"core_null",&c_null);
+  core_null=extract_float(c_null, 0);
+  find_struct(struc,"band_bin",&bin);
+  find_struct(bin,"band_bin_multiplier",&multt);
+  find_struct(bin,"band_bin_base",&baset);
+  
   
   /* set up base and multiplier arrays */
   x1 = GetX(multt);
@@ -1608,7 +1616,7 @@ cse_unscale(vfuncptr func, Var * arg)
     }
   }
   
-  printf("Core_null values set to -32768.0\n");
+  printf("core_null values set to -32768.0\n");
   
   /* clean up and return data */
   free(base);
