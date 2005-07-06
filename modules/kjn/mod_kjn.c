@@ -42,7 +42,6 @@ static Var *kjn_whitey(vfuncptr func, Var *);
 static Var *kjn_radcorr(vfuncptr func, Var * arg);
 static Var *kjn_ipi(vfuncptr func, Var * arg);
 static Var *kjn_src_col_fill(vfuncptr func, Var * arg);
-static Var *kjn_edeplaid(vfuncptr, Var *);
 
 static dvModuleFuncDesc exported_list[] = {
   { "y_shear", (void *) kjn_y_shear },
@@ -59,16 +58,15 @@ static dvModuleFuncDesc exported_list[] = {
   { "ss_pic", (void *) kjn_ss_pic },
   { "coreg_fill", (void *) kjn_coreg_fill },
   { "rad2tb", (void *) kjn_rad2tb },
-  { "themissivity", (void *) kjn_themissivity},
-  { "whitey", (void *) kjn_whitey},
-  { "radcorr", (void *) kjn_radcorr},
-  { "ipi", (void *) kjn_ipi},
-  { "src_col_fill", (void *) kjn_src_col_fill},
-  { "edeplaid", (void *) kjn_edeplaid }
+  { "themissivity", (void *) kjn_themissivity },
+  { "whitey", (void *) kjn_whitey },
+  { "radcorr", (void *) kjn_radcorr },
+  { "ipi", (void *) kjn_ipi },
+  { "src_col_fill", (void *) kjn_src_col_fill }
 };
 
 static dvModuleInitStuff is = {
-  exported_list, 20,
+  exported_list, 19,
   NULL, 0
 };
 
@@ -94,6 +92,8 @@ dv_module_fini(const char *name)
 Var *
 kjn_y_shear(vfuncptr func, Var * arg)
 {
+  /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
+
   Var     *pic_v = NULL;            /* the picture */
   Var     *out;                     /* the output picture */
   float   *pic = NULL;              /* the new sheared picture */
@@ -106,12 +106,13 @@ kjn_y_shear(vfuncptr func, Var * arg)
   int      i, j, k;                 /* loop indices */
   int      nx, ni, nj;              /* memory locations */
 
-  Alist alist[5];
+  Alist alist[6];
   alist[0] = make_alist("picture",		ID_VAL,		NULL,	&pic_v);
   alist[1] = make_alist("angle",		FLOAT,		NULL,	&angle);
-  alist[2] = make_alist("null",                 FLOAT,          NULL,   &nullv);
+  alist[2] = make_alist("ignore",               FLOAT,          NULL,   &nullv);
   alist[3] = make_alist("trim",		        INT,		NULL,    &trim);
-  alist[4].name = NULL;
+  alist[4] = make_alist("null",                 FLOAT,          NULL,   &nullv); // can be removed once all legacy programs are dead
+  alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -119,11 +120,11 @@ kjn_y_shear(vfuncptr func, Var * arg)
   if (pic_v == NULL){
     parse_error("y_shear() - 4/25/04");
     parse_error("It takes an input array and shears the y position of each pixel according to a shear angle in degrees.\n");
-    parse_error("Syntax:  b = kjn.y_shear(picture,angle,null,trim)");
-    parse_error("example: b = kjn.y_shear(picture=a,angle=8,null=-32768,trim=1)");
+    parse_error("Syntax:  b = kjn.y_shear(picture,angle,ignore,trim)");
+    parse_error("example: b = kjn.y_shear(picture=a,angle=8,ignore=-32768,trim=1)");
     parse_error("example: b = kjn.y_shear(a,8,-32768,1)\n");
     parse_error("The shear angle may be between -80 and 80 degrees");
-    parse_error("The null option fills in a specified value into all blank space");
+    parse_error("The \'ignore\' option fills in a specified value into all blank space");
     parse_error("If you want to unshear the array an equal but opposite angle and want it to have the same dimensions as the original, then use the \"trim=1\" option\n");
     return NULL;
   }
@@ -252,6 +253,10 @@ kjn_y_shear(vfuncptr func, Var * arg)
   } 
   return out;
 }
+
+
+
+
 
 
 Var *
@@ -933,26 +938,28 @@ kjn_ramp(vfuncptr func, Var * arg)
 Var *
 kjn_corners(vfuncptr func, Var * arg)
 {
+  /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
+
   Var     *pic_a = NULL;                               /* the input pic */
   float    nullval = 0;                                /* null value */
   int     *cns = NULL;                                 /* corners output array */
   
   Alist alist[3];
   alist[0] = make_alist("picture",		ID_VAL,		NULL,	&pic_a);
-  alist[1] = make_alist("null",                 FLOAT,          NULL,   &nullval);
+  alist[1] = make_alist("ignore",               FLOAT,          NULL,   &nullval);
   alist[2].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   /* if no picture got passed to the function */
   if (pic_a == NULL) {
-    parse_error("corners() - 4/25/04");
+    parse_error("corners() - 07/06/2005");
     parse_error("Feed corners() a 1-band projected ISIS image and a null value.");
     parse_error("It will return the x and y values of the four corners.\n");
-    parse_error("Syntax:  b = corners(picture,null)");
-    parse_error("example: b = corners(a,null=-32768)");
+    parse_error("Syntax:  b = corners(picture,ignore)");
+    parse_error("example: b = corners(a,ignore=-32768)");
     parse_error("picture - any 3-D projected image.");
-    parse_error("null - the non-data pixel values. Default is 0.");
+    parse_error("ignore - the non-data pixel values. Default is 0.");
     parse_error("If an image is passed with more than one band, corners will only use the first band.\n");
     return NULL;
   }
@@ -1150,6 +1157,9 @@ kjn_sawtooth(vfuncptr func, Var * arg)
   return out;
 }
 
+
+
+
 float *sawtooth(int x, int y, int z)
 {
   float *kernel;                           /* the end kernel array */
@@ -1197,6 +1207,8 @@ float *sawtooth(int x, int y, int z)
 Var *
 kjn_deplaid(vfuncptr func, Var * arg)
 {
+  /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
+  /* this version differs from the "thm.deplaid" because it still contains the legacy code commented out */
 
   typedef unsigned char byte;
 
@@ -1230,29 +1242,30 @@ kjn_deplaid(vfuncptr func, Var * arg)
   int       b10 = 10;                               /* the band-10 designation */
   float    *b_avg, *b_ct;                           /* band average and band count - used to normalize bands for blackmask */
 
-  Alist alist[8];
+  Alist alist[9];
   alist[0] = make_alist("data", 		ID_VAL,		NULL,	&data);
-  alist[1] = make_alist("null",                 FLOAT,          NULL,   &nullval);
+  alist[1] = make_alist("ignore",               FLOAT,          NULL,   &nullval);
   alist[2] = make_alist("tmask_max",            FLOAT,          NULL,   &tmask_max);
   alist[3] = make_alist("tmask_min",            FLOAT,          NULL,   &tmask_min);
   alist[4] = make_alist("filt_len",             INT,            NULL,   &filt_len);
   alist[5] = make_alist("b10",                  INT,            NULL,   &b10);
   alist[6] = make_alist("dump",                 INT,            NULL,   &dump);
-  alist[7].name = NULL;
+  alist[7] = make_alist("null",                 FLOAT,          NULL,   &nullval);
+  alist[8].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   /* if no data got passed to the function */
   if (data == NULL) {
-    parse_error("\nDeplaid() - 5/19/04\n");
+    parse_error("\nDeplaid() - July 06 2005\n");
     parse_error("Deplaids multiband THEMIS spectral cubes\n");
-    parse_error("Syntax: b = kjn.deplaid(data,null,tmask_max,tmask_min,filt_len,b10)");
+    parse_error("Syntax: b = kjn.deplaid(data,ignore,tmask_max,tmask_min,filt_len,b10)");
     parse_error("example b = kjn.deplaid(a)");
-    parse_error("example b = kjn.deplaid(data=a,null=-32768,tmask_max=1.25,tmask_min=.85,filt_len=200,b10=3)");
+    parse_error("example b = kjn.deplaid(data=a,ignore=-32768,tmask_max=1.25,tmask_min=.85,filt_len=200,b10=3)");
     parse_error("example b = kjn.deplaid(a,0,tmask_max=1.21)");
     parse_error("example b = kjn.deplaid(a,0,1.10,.90,180,8)\n");
     parse_error("data:       geometrically projected and rectified radiance cube of at most 10 bands");
-    parse_error("null:       the value of non-data pixels -                         default is -32768");
+    parse_error("ignore:     the value of non-data pixels -                         default is -32768");
     parse_error("tmask_max:  max threshold used to create the temperature mask -    default is 1.15");
     parse_error("tmask_min:  min threshold used to create the temperature mask -    default is 0.80");
     parse_error("filt_len:   length of filter used in plaid removal -               default is 150");
@@ -1660,6 +1673,7 @@ kjn_deplaid(vfuncptr func, Var * arg)
 Var *
 kjn_rectify(vfuncptr func, Var * arg)
 {
+  /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
 
   typedef unsigned char byte;
 
@@ -1683,11 +1697,12 @@ kjn_rectify(vfuncptr func, Var * arg)
   float    angle1 = 0, angle2 = 0;     /* possible angle variables */
   float    trust = 0;                  /* use top corners or bottom corners */
 
-  Alist alist[4];
+  Alist alist[5];
   alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
-  alist[1] = make_alist("null",                 FLOAT,          NULL,   &nullo);
+  alist[1] = make_alist("ignore",               FLOAT,          NULL,   &nullo);
   alist[2] = make_alist("trust",                FLOAT,          NULL,   &trust);
-  alist[3].name = NULL;
+  alist[3] = make_alist("null",                 FLOAT,          NULL,   &nullo);
+  alist[4].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return NULL;
 
@@ -1695,16 +1710,16 @@ kjn_rectify(vfuncptr func, Var * arg)
   if (obj == NULL){
     parse_error("rectify() - 4/29/04");
     parse_error("Extracts rectangle of data from projected cubes\n");
-    parse_error("Syntax:  b = kjn.rectify(obj,null,trust)");
+    parse_error("Syntax:  b = kjn.rectify(obj,ignore,trust)");
     parse_error("example: b = kjn.rectify(obj=a)");
     parse_error("example: b = kjn.rectify(a)");
-    parse_error("example: b = kjn.rectify(obj=a,null=0,trust=2)\n");
+    parse_error("example: b = kjn.rectify(obj=a,ignore=0,trust=2)\n");
     parse_error("obj - any projected cube");
-    parse_error("null - the value in non-data pixels of projected cube. Default is -3.402822655e+38.");
+    parse_error("ignore - the value in non-data pixels of projected cube. Default is -3.402822655e+38.");
     parse_error("trust - where in the image the angle should be determined.");
     parse_error("        0 = top, 1 = bottom, .25 = 25 percent down the image, etc.  Default is 0 (top).\n");
     parse_error("TROUBLESHOOTING");
-    parse_error("The null value will ALWAYS be set to -32768 when rectifying!\n");
+    parse_error("The ignore value will ALWAYS be set to -32768 when rectifying!\n");
     return NULL;
   }
 
@@ -1819,6 +1834,7 @@ kjn_rectify(vfuncptr func, Var * arg)
 Var *
 kjn_coreg(vfuncptr func, Var * arg)
 {
+  /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
 
   typedef unsigned char byte;
 
@@ -1843,7 +1859,7 @@ kjn_coreg(vfuncptr func, Var * arg)
   alist[0] = make_alist("pic1",     ID_VAL,	NULL,	&pic1_in);
   alist[1] = make_alist("pic2",     ID_VAL,     NULL,   &pic2_in);
   alist[2] = make_alist("search",   INT,        NULL,   &search);
-  alist[3] = make_alist("null",     INT,        NULL,   &nullval);
+  alist[3] = make_alist("ignore",   INT,        NULL,   &nullval);
   alist[4] = make_alist("space",    INT,        NULL,   &space);
   alist[5].name = NULL;
   
@@ -1853,13 +1869,13 @@ kjn_coreg(vfuncptr func, Var * arg)
   if (pic1_in == NULL || pic2_in == NULL) {
     parse_error("coreg() - 5/04/04");
     parse_error("Feed this two pictures of the same size, and it will return the x and y shift for coregistration.\n");
-    parse_error("Syntax:  kjn.coreg(pic1, pic2, search, null, space)");
-    parse_error("Example: kjn.coreg(pic1=a1, pic2=a2, search=20, null=0, space=1)");
+    parse_error("Syntax:  kjn.coreg(pic1, pic2, search, ignore, space)");
+    parse_error("Example: kjn.coreg(pic1=a1, pic2=a2, search=20, ignore=0, space=1)");
     parse_error("Example: kjn.corect(a1,a2)\n");
     parse_error("pic1: any integer or byte image of size m*n*1.");
     parse_error("pic2: any integer or byte image of size m*n*1.");
     parse_error("search: radius of search.  Default is 10 pixels.");
-    parse_error("null: the non-data value.");
+    parse_error("ignore: the non-data value.");
     parse_error("space: option to return the solution space. Default is 0 (no).");
     return NULL;
   }
@@ -2823,6 +2839,7 @@ kjn_coreg_fill(vfuncptr func, Var * arg)
 Var *
 kjn_rad2tb(vfuncptr func, Var * arg)
 {
+  /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
 
   /* wrapper used to call rad2tb */
 
@@ -2840,12 +2857,13 @@ kjn_rad2tb(vfuncptr func, Var * arg)
   int          bx = 0;                         /* x-dimension of the bandlist */
   int          i;                              /* loop index */
   
-  Alist alist[5];
+  Alist alist[6];
   alist[0] = make_alist("rad", 		 ID_VAL,         NULL,   &rad);
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
-  alist[2] = make_alist("null",          FLOAT,          NULL,   &nullval);
+  alist[2] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
   alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
-  alist[4].name = NULL;
+  alist[4] = make_alist("null",          FLOAT,          NULL,   &nullval);
+  alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -2854,13 +2872,13 @@ kjn_rad2tb(vfuncptr func, Var * arg)
     parse_error("THEMIS radiance to THEMIS Brightness Temperature Converter\n");
     parse_error("Uses /themis/calib/temp_rad_v4 as conversion table.");
     parse_error("Assumes 10 bands of radiance for right now.\n");
-    parse_error("Syntax:  b = kjn.rad2tb(rad,bandlist,null,temp_rad_path)");
+    parse_error("Syntax:  b = kjn.rad2tb(rad,bandlist,ignore,temp_rad_path)");
     parse_error("example: b = kjn.rad2tb(a)");
     parse_error("example: b = kjn.rad2tb(a,1//2//3//4//5//6//7//8//9,0)");
-    parse_error("example: b = kjn.rad2tb(rad=a,bandlist=4//9//10,null=-32768,temp_rad_path=\"/themis/calib/temp_rad_v3\")");
+    parse_error("example: b = kjn.rad2tb(rad=a,bandlist=4//9//10,ignore=-32768,temp_rad_path=\"/themis/calib/temp_rad_v3\")");
     parse_error("rad - any float valued 3-D radiance array.");
     parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
-    parse_error("null - non-data pixel value. Default is -32768 AND 0.");
+    parse_error("ignore - non-data pixel value. Default is -32768 AND 0.");
     parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is /themis/calib/temp_rad_v4.\n");
     return NULL;
   }
@@ -3101,6 +3119,7 @@ float *tb2rad(float *btemp, Var *temp_rad, int *bandlist, int bx, float nullval,
 Var *
 kjn_themissivity(vfuncptr func, Var * arg)
 {
+  /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
 
   Var         *rad = NULL;                     /* the original radiance */
   Var         *bandlist = NULL;                /* list of bands to be converted to brightness temperature */
@@ -3113,27 +3132,28 @@ kjn_themissivity(vfuncptr func, Var * arg)
   int          bx, x, y, z;                    /* size of the original array */
   emissobj    *e_struct;                       /* emissivity structure output from themissivity */
   
-  Alist alist[7];
+  Alist alist[8];
   alist[0] = make_alist("rad", 		 ID_VAL,         NULL,   &rad);
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
-  alist[2] = make_alist("null",          FLOAT,          NULL,   &nullval);
+  alist[2] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
   alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
   alist[4] = make_alist("b1",            INT,            NULL,   &b1);
   alist[5] = make_alist("b2",            INT,            NULL,   &b2);
-  alist[6].name = NULL;
+  alist[6] = make_alist("null",          FLOAT,          NULL,   &nullval); // can be deleted when all legacy programs are dead
+  alist[7].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   if (rad == NULL) {
     parse_error("themissivity() - 5/25/05");
     parse_error("THEMIS radiance to THEMIS emissivity converter\n");
-    parse_error("Syntax:  b = kjn.themissivity(rad,bandlist,null,temp_rad_path,b1,b2)");
+    parse_error("Syntax:  b = kjn.themissivity(rad,bandlist,ignore,temp_rad_path,b1,b2)");
     parse_error("example: b = kjn.themissivity(a)");
     parse_error("example: b = kjn.themissivity(a,1//2//3//4//5//6//7//8//9,0,b1=4,b2=8)");
-    parse_error("example: b = kjn.themissivity(rad=a,bandlist=4//9//10,null=-2,temp_rad_path=\"/themis/calib/temp_rad_v3\")");
+    parse_error("example: b = kjn.themissivity(rad=a,bandlist=4//9//10,ignore=-2,temp_rad_path=\"/themis/calib/temp_rad_v3\")");
     parse_error("rad - any 3-D radiance array.");
     parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
-    parse_error("null - non-data pixel value. Default is -32768 AND 0.");
+    parse_error("ignore - non-data pixel value. Default is -32768 AND 0.");
     parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is /themis/calib/temp_rad_v4.");
     parse_error("b1 - first band to search for maximum brightness temperature. Default is 3. ");
     parse_error("b2 - end band to search for maximum brightness temperature. Default is 9.\n");
@@ -3275,6 +3295,7 @@ emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1,
 Var *
 kjn_whitey(vfuncptr func, Var * arg)
 {
+  /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
 
   Var         *rad = NULL;                     /* the original radiance */
   Var         *bandlist = NULL;                /* list of bands to be converted to brightness temperature */
@@ -3302,7 +3323,7 @@ kjn_whitey(vfuncptr func, Var * arg)
   alist[0] = make_alist("rad", 		 ID_VAL,         NULL,   &rad);
   alist[1] = make_alist("k_size",        INT,            NULL,   &k_size);
   alist[2] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
-  alist[3] = make_alist("null",          FLOAT,          NULL,   &nullval);
+  alist[3] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
   alist[4] = make_alist("b1",            INT,            NULL,   &b1);
   alist[5] = make_alist("b2",            INT,            NULL,   &b2);
   alist[6].name = NULL;
@@ -3313,14 +3334,14 @@ kjn_whitey(vfuncptr func, Var * arg)
     parse_error("whitey() - 7/10/04");
     parse_error("White noise removal algorithm for THEMIS radiance cubes");
     parse_error("Converts to emissivity, smoothes and multiplies by unsmoothed brightness temperature\n");
-    parse_error("Syntax:  b = kjn.whitey(rad,k_size,bandlist,null,b1,b2)");
+    parse_error("Syntax:  b = kjn.whitey(rad,k_size,bandlist,ignore,b1,b2)");
     parse_error("example: b = kjn.whitey(a)");
     parse_error("example: b = kjn.whitey(a,7,1//2//3//4//5//6//7//8//9,0,b1=4,b2=8)");
-    parse_error("example: b = kjn.whitey(rad=a,k_size=7,bandlist=4//9//10,null=-2)");
+    parse_error("example: b = kjn.whitey(rad=a,k_size=7,bandlist=4//9//10,ignore=-2)");
     parse_error("rad - any 3-D radiance array.");
     parse_error("k_size - the size of the smoothing kernel. Default is 5.");
     parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
-    parse_error("null - non-data pixel value. Default is -32768 AND 0.");
+    parse_error("ignore - non-data pixel value. Default is -32768 AND 0.");
     parse_error("b1 - first band to search for maximum brightness temperature. Default is 3. ");
     parse_error("b2 - end band to search for maximum brightness temperature. Default is 9.\n");
     return NULL;
@@ -3633,6 +3654,8 @@ float *bbrw_k(float *btemp, int *bandlist, int x, int y, int z, float nullval)
 
 Var *kjn_radcorr(vfuncptr func, Var * arg)
 {
+  /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
+
   char       *fname = NULL;                  // the pointer to the filename
   double     *min_try1 = NULL;               // holds minimal coordinates for em 0.8
   double     *min_try2 = NULL;               // holds minimal coordinates for em 1.2
@@ -3656,15 +3679,16 @@ Var *kjn_radcorr(vfuncptr func, Var * arg)
   Var        *temp_rad = NULL;
 
 
-  Alist alist[8];
+  Alist alist[9];
   alist[0] = make_alist("radiance",      ID_VAL,         NULL,	 &rad);
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
-  alist[2] = make_alist("null",          FLOAT,          NULL,   &nullval);
+  alist[2] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
   alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
   alist[4] = make_alist("b1",            INT,            NULL,   &b1);
   alist[5] = make_alist("b2",            INT,            NULL,   &b2);
   alist[6] = make_alist("space",         INT,            NULL,   &space);
-  alist[7].name = NULL;
+  alist[7] = make_alist("null",          FLOAT,          NULL,   &nullval);
+  alist[8].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -3674,11 +3698,11 @@ Var *kjn_radcorr(vfuncptr func, Var * arg)
     parse_error("Produces a 2x1x10 float array containing the radiance correction and em offset values for a given array");
     parse_error("Values are minimized RMS differences of radiance from blackbody of same temperature");
     parse_error("Uses inverse parabolic interpolation for minimization algorithm\n");
-    parse_error("Usage:b=radcorr(radiance, bandlist, null, temp_rad_path, b1, b2, space)");
+    parse_error("Usage:b=radcorr(radiance, bandlist, ignore, temp_rad_path, b1, b2, space)");
     parse_error("      b=radcorr(a.data[x1,x2,y1,y2])\n");
     parse_error("\'radiance\' is a small (50x50x10 pixels) array selected from the entire radiance array");
     parse_error("\'bandlist\' is a list of THEMIS bands in radiance array. Default is ordered bands 1-10");
-    parse_error("\'null\' is non data value. Default is -32768");
+    parse_error("\'ignore\' is non data value. Default is -32768");
     parse_error("\'temp_rad_path\' is the path and filename of the temperature vs radiance lookup table");
     parse_error("\'b1\' is the first band in the ordered list to search for the maximum brightness temperature. Default = 3");
     parse_error("\'b2\' is the last band in the ordered list to search for the maximum brightness temperature. Default = 9");
@@ -3932,6 +3956,8 @@ kjn_src_col_fill(vfuncptr func, Var * arg)
 
 
 
+
+
 float *column_fill(float *column, int y, int z, int csize, float ignore)
 {
   float   *kern = NULL;                                   /* convolve kernel */
@@ -4013,424 +4039,3 @@ float *column_fill(float *column, int y, int z, int csize, float ignore)
 
 
 
-
-
-
-
-
-
-
-Var *
-kjn_edeplaid(vfuncptr func, Var * arg)
-{
-
-  typedef unsigned char byte;
-
-  Var      *data = NULL;                            /* the original radiance data */
-  Var      *out = NULL;                             /* the output array */
-  float    *rdata = NULL;                           /* the deplaided array */
-  float    *row_sum;                                /* a row sum array used to determine blackmask */
-  float    *row_avg, *row_avgs;                     /* the row and smoothed row average arrays */
-  float    *col_avg;                                /* the column average of both runs combined */
-  float    *col_avga, *col_avgb;                    /* the column averages of run a and b */
-  float    *col_avgs;                               /* the smoothed column averages of run a and b */
-  byte     *ct_map;                                 /* map of # of bands per pixel */
-  byte     *row_ct, *col_ct;                        /* max number of bands in all rows and all columns */
-  byte     *blackmask;                              /* the blackmask and temperature mask */
-  float    *tmask;                                  /* the temporary temperature mask */
-  float     nullval = -32768;                       /* the null value */
-  float     tmask_max = 1.15;                       /* maximum threshold for temperature masking */
-  float     tmask_min = 0.80;                       /* minimum threshold for temperature masking */
-  int       filt_len = 150;                         /* filter length */
-  int      *row_wt, *col_wt, *col_wta, *col_wtb;    /* weight arrays for row and column averages */
-  int       x = 0, y = 0, z = 0;                    /* dimensions of the pic */
-  int       i, j, k;                                /* loop indices */
-  int       chunks = 0, chunksa = 0, chunksb = 0;   /* number of chunks image is broken into */
-  int       cca = 0, ccb = 250;                     /* line indices for the chunk a and chunk b calculations */
-  int       ck = 0, cka = 0, ckb = 0;               /* number of chunk that calculation is on */
-  float     tv = 0;                                 /* temporary pixel value */
-  float    *filt1, *filt2, *sawkern;                /* various convolve kernels */
-  int       dump = 0;                               /* flag to return the temperature mask */
-  int       b10 = 10;                               /* the band-10 designation */
-  float    *b_avg, *b_ct;                           /* band average and band count - used to normalize bands for blackmask */
-
-  Alist alist[8];
-  alist[0] = make_alist("data", 		ID_VAL,		NULL,	&data);
-  alist[1] = make_alist("null",                 FLOAT,          NULL,   &nullval);
-  alist[2] = make_alist("tmask_max",            FLOAT,          NULL,   &tmask_max);
-  alist[3] = make_alist("tmask_min",            FLOAT,          NULL,   &tmask_min);
-  alist[4] = make_alist("filt_len",             INT,            NULL,   &filt_len);
-  alist[5] = make_alist("b10",                  INT,            NULL,   &b10);
-  alist[6] = make_alist("dump",                 INT,            NULL,   &dump);
-  alist[7].name = NULL;
-  
-  if (parse_args(func, arg, alist) == 0) return(NULL);
-
-  /* if no data got passed to the function */
-  if (data == NULL) {
-    parse_error("\nDeplaid() - 5/19/04\n");
-    parse_error("Deplaids multiband THEMIS spectral cubes\n");
-    parse_error("Syntax: b = kjn.deplaid(data,null,tmask_max,tmask_min,filt_len,b10)");
-    parse_error("example b = kjn.deplaid(a)");
-    parse_error("example b = kjn.deplaid(data=a,null=-32768,tmask_max=1.25,tmask_min=.85,filt_len=200,b10=3)");
-    parse_error("example b = kjn.deplaid(a,0,tmask_max=1.21)");
-    parse_error("example b = kjn.deplaid(a,0,1.10,.90,180,8)\n");
-    parse_error("data:       geometrically projected and rectified radiance cube of at most 10 bands");
-    parse_error("null:       the value of non-data pixels -                         default is -32768");
-    parse_error("tmask_max:  max threshold used to create the temperature mask -    default is 1.15");
-    parse_error("tmask_min:  min threshold used to create the temperature mask -    default is 0.80");
-    parse_error("filt_len:   length of filter used in plaid removal -               default is 150");
-    parse_error("b10:        the band (1 - 10) in the data that is THEMIS band 10 - default is 10\n");
-    parse_error("TROUBLESHOOTING");
-    parse_error("You should designate b10 when NOT feeding deplaid 10 band data, b10 = 0 for no band-10 data.");
-    parse_error("You can return the blackmask/temperature mask by using \"dump=1\".");
-    parse_error("If you get brightness smear, then bring the tmask_max and/or min closer to 1.0.");
-    parse_error("If you still see long-wavelength plaid, such as in cold images, increase filt_len.");
-    parse_error("If the image looks washed-out check your null value.\n");
-    return NULL;
-  }
-
-  /* x, y and z dimensions of the data */
-  x = GetX(data);
-  y = GetY(data);
-  z = GetZ(data);
-
-  /* setting the band-10 of the data */
-  b10 -= 1;
-  if(b10 >= z || b10 <-1) {
-    parse_error("Invalid band 10 designation!");
-    if(z == 10) {
-      parse_error("b10 being reset to 10\n");
-      b10 = 9;
-    } else {
-      parse_error("assuming NO band 10 data, b10 being reset to %d\n",z-1);
-      b10 == z-1;
-    }
-  }
-
-  /* number of chunks of data in the y direction */
-  chunksa = ((y-100)/500) + 1;                                 /* number of 500-line chunks starting at zero */
-  chunksb = ((y-350)/500) + 2;                                 /* number of 500-line chunks starting at -250 */
-  if(y<350) chunksb = 1;
-  chunks = ((y-100)/250) + 1;                                  /* total number of 250-line chunks */
-
-  /* create row and mask arrays */
-  row_avg = (float *)calloc(sizeof(float), y*z);
-  row_wt = (int *)calloc(sizeof(int), y*z);
-  blackmask = (byte *)calloc(sizeof(byte),x*y);
-  tmask = (float *)calloc(sizeof(float), x*y);
-  ct_map = (byte *)calloc(sizeof(byte), x*y);
-  row_ct = (byte *)calloc(sizeof(byte), y);
-  col_ct = (byte *)calloc(sizeof(byte), x);
-
-  /* check to make sure that tmask_max, tmask_min and filt_len are reasonable values */
-  if(tmask_max < tmask_min || tmask_max == 0) {
-    parse_error("tmask_max must be larger than tmask_min, dopo!");
-    parse_error("you should keep tmask_max > 1.0 and tmask_min < 1.0");
-    parse_error("values are being reset to 1.15 and 0.80");
-    tmask_max = 1.15;
-    tmask_min = 0.80;
-  }
-  if(filt_len < 1) {
-    parse_error("the filter must have some length, you tool!");
-    parse_error("filter being reset to 150");
-    filt_len = 150;
-  }
-
-  /* b_avg is a 1xNx1 array of the average of each of the N bands */
-  b_avg = (float *)calloc(sizeof(float), z);
-  /* c_ct is the weight array for b_avg */
-  b_ct = (float *)calloc(sizeof(float), z);
-
-  /* find the averages of each band so's I can normalize them */
-  for(k=0; k<z; k++) {
-    for(j=0; j<y; j++) {
-      for(i=0; i<x; i++) {
-	tv = extract_float(data, cpos(i,j,k, data));
-
-	if(tv != nullval) {
-	  b_avg[k] += tv;
-	  b_ct[k] += 1;
-	}
-      }
-    }
-    b_avg[k] /= b_ct[k];
-  }
-
-  free(b_ct);
-
-  /* construct blackmask, tempmask and row_avg */
-  for(k=0; k<z; k++) {
-    for(j=0; j<y; j++) {
-      for(i=0; i<x; i++) {
-	tv = extract_float(data, cpos(i,j,k, data));
-
-	if(tv != nullval) {
-	  blackmask[x*j + i] = 1;
-	  tmask[x*j + i] += tv/b_avg[k];                             /* tmask is sum of all bands */
-	  row_avg[j] += tv/b_avg[k];                                 /* calculating row totals for tmask */
-	  ct_map[x*j + i] += 1;                                      /* incrementing pixel count_map */
-	  row_wt[j] += 1;                                            /* calculating row weight for tmask */
-	}
-
-	/* setting the col and row count arrays */
-	if(k==z-1) {
-	  if(row_ct[j] < ct_map[j*x + i]) row_ct[j] = ct_map[j*x + i];
-	  if(col_ct[i] < ct_map[j*x + i]) col_ct[i] = ct_map[j*x + i];
-	  if(ct_map[x*j + i] != 0) tmask[x*j + i] /= (float)ct_map[x*j + i];
-	}
-      }
-
-      if(k == z-1 && row_wt[j] != 0) {
-	row_avg[j] /= row_wt[j];                                     /* calculating row avg for tmask */
-	row_wt[j] = 0;
-      }
-    }
-  }
-
-  /* continue to construct the temperature mask */
-  /* smooth the row avg of tempmask with a sawtooth filter */
-  sawkern = sawtooth(1, 301, 1);
-  row_sum = smoothy(row_avg, sawkern, 1, y, 1, 1, 301, 1, 1, 0);
-  free(sawkern);
-  free(ct_map);
-  free(b_avg);
-
-  /* loop through setting the tempmask values */
-  /* pixels with tmask values greater than 1.25 or less than .8 of the row avg are set to zero */
-  for(j=0; j<y; j++) {
-    for(i=0; i<x; i++) {
-      if(tmask[x*j+i] < row_sum[j]*tmask_max && tmask[x*j+i] > row_sum[j]*tmask_min) blackmask[x*j+i] += 1;
-    }
-    for(k=0; k<z; k++) {
-      row_avg[k*y + j] = 0;
-    }
-  }
-  free(tmask);
-  free(row_sum);
-
-  /* return the temperature mask if dump = 1 */
-  if(dump == 1) {
-    free(row_avg);
-    free(row_wt);
-    out = newVal(BSQ, x, y, 1, BYTE, blackmask);
-    return out;
-  }
-
-  /* more initialization */
-  col_avg = (float *)calloc(sizeof(float), x*chunks*z);      /* col_avg contains enough space for all 250 line chunks */
-  col_avga = (float *)calloc(sizeof(float), x*chunksa*z);    /* the first chunk in col_avga contains 500 lines */
-  col_avgb = (float *)calloc(sizeof(float), x*chunksb*z);    /* the first chunk in col_avgb contains only 250 lines */
-  col_wta = (int *)calloc(sizeof(int), x*chunksa*z);
-  col_wtb = (int *)calloc(sizeof(int), x*chunksb*z);
-
-  if(col_avg == NULL || col_avga == NULL || col_avgb == NULL || col_wta == NULL || col_wtb == NULL) { 
-    parse_error("Could not allocate enough memory to continue\n");
-    return NULL;
-  }
-
-  /* remove the horizontal and vertical plaid */
-  /* loop through data and extract row_avg, and all necessary column averages */
-  for(k=0; k<z; k++) {
-    for(j=0; j<y; j++) {
-      for(i=0; i<x; i++) {
-	tv = extract_float(data, cpos(i,j,k, data));
-
-	/* if not a null val and tempmask ok */
-	if(tv != nullval && ((blackmask[x*j + i] > 1 && k != b10) || k == b10)) {
-
-	  if(col_ct[i] == z) {
-	    row_avg[y*k + j] += tv;                                  /* calculate tempmasked row total of data */
-	    row_wt[y*k + j] += 1;                                    /* calculate tempmasked row weight of data */
-	  }
-	  
-	  if(row_ct[j] == z) {
-	    col_avga[k*chunksa*x + cka*x + i] += tv;                 /* calculate tempmasked col total of chunka */
-	    col_avgb[k*chunksb*x + ckb*x + i] += tv;                 /* calculate tempmasked col total of chunkb */
-	    col_wta[k*chunksa*x + cka*x + i] += 1;                   /* calculate tempmasked col weight of chunka */
-	    col_wtb[k*chunksb*x + ckb*x + i] += 1;                   /* calculate tempmasked col weight of chunkb */
-	  }
-	}
- 
-	/* if at the end of a chunk and there is less than 100 rows of data left, keep going in present chunk */
-	if(((y-j) <= 100) && (ccb == 499 || cca == 499)) {
-	  cca -= 100; 
-	  ccb -= 100;
-	}
-
-	/* if at the end of chunk then divide column total by column weight and construct chunk of col_avg */
-	if(cca == 499) {
-	  /* divide col_avga by the number of non-zero lines summed to create average */
-	  if(col_wta[k*chunksa*x + cka*x + i] > 0) {
-	    col_avga[k*chunksa*x + cka*x + i] /= (float)col_wta[k*chunksa*x + cka*x + i];
-	  } else { /* if col_wta is 0 don't divide */
-	    col_avga[k*chunksa*x + cka*x + i] = 0;
-	  }
-	  /* avg col_avga and col_avgb for the 250 line chunk */
-	  col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + cka*x + i] + col_avgb[k*chunksb*x + (ckb-1)*x + i]);
-	  if(col_avga[k*chunksa*x + cka*x + i] > 0 && col_avgb[k*chunksb*x + (ckb-1)*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
-	}
-
-	if(ccb == 499) {
-	  /* divide col_avgb by the number of non-zero lines summed to create average */
-	  if(col_wtb[k*chunksb*x + ckb*x + i] > 0) {
-	    col_avgb[k*chunksb*x + ckb*x + i] /= (float)col_wtb[k*chunksb*x + ckb*x + i];
-	  } else { /* if col_wtb is 0 don't divide */
-	    col_avgb[k*chunksb*x + ckb*x + i] = 0;
-	  }
-	  /* avg col_avga and col_avgb for the 250 line chunk */
-	  if(ckb > 0) {
-	    col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + (cka-1)*x + i] + col_avgb[k*chunksb*x + ckb*x + i]);
-	    if(col_avga[k*chunksa*x + (cka-1)*x + i] > 0 && col_avgb[k*chunksb*x + ckb*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
-	  }
-	}
-
-	/* last line of the image */
-	if(j == y-1) {
-	  /* case where there was actual data in the last chunka */
-	  if(col_wta[k*chunksa*x + cka*x + i] > 0) {
-	    col_avga[k*chunksa*x + cka*x + i] /= (float)col_wta[k*chunksa*x + cka*x + i];
-	  } else {  // no data in final chunka, set to zero
-	    col_avga[k*chunksa*x + cka*x + i] = 0;
-	  }
-	  /* case where there was actual data in the last chunkb */
-	  if(col_wtb[k*chunksb*x + ckb*x + i] > 0) {
-	    col_avgb[k*chunksb*x + ckb*x + i] /= (float)col_wtb[k*chunksb*x + ckb*x + i];
-	  } else {  // no data in final chunkb, set to zero
-	    col_avgb[k*chunksb*x + ckb*x + i] = 0;
-	  }
-	  /* avg col_avga and col_avgb for second to last 250 line chunk */
-	  /* if there are more leftover lines after last full 500 line chunka than in chunkb */
-	  if(cca>ccb && chunksb > 1) {
-	    col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + cka*x + i] + col_avgb[k*chunksb*x + (ckb-1)*x + i]);
-	    if(col_avga[k*chunksa*x + cka*x + i] > 0 && col_avgb[k*chunksb*x + (ckb-1)*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
-	  }
-	  /* if there are more leftover lines after last full 500 line chunkb than in chunka */
-	  if(ccb>cca && chunksa > 1) {
-	    col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + (cka-1)*x + i] + col_avgb[k*chunksb*x + ckb*x + i]);
-	    if(col_avga[k*chunksa*x + (cka-1)*x + i] > 0 && col_avgb[k*chunksb*x + ckb*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
-	  }
-	  /* avg col_avga and col_avgb for the final 250 line chunk */
-	  if(ck<chunks-1 && chunksb > 1) {
-	    col_avg[k*chunks*x + (ck+1)*x + i] = (col_avga[k*chunksa*x + cka*x + i] + col_avgb[k*chunksb*x + ckb*x + i]);
-	    if(col_avga[k*chunksa*x + cka*x + i] > 0 && col_avgb[k*chunksb*x + ckb*x + i] > 0) col_avg[k*chunks*x + (ck+1)*x + i] /= 2.0;
-	  }
-	  if(chunksa == 1 && chunksb == 1) {
-	    col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + cka*x + i] + col_avgb[k*chunksb*x + ckb*x + i]);
-	    if(col_avga[k*chunksa*x + cka*x + i] > 0 && col_avgb[k*chunksb*x + ckb*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
-	  }
-	}
-      }
-
-      cca += 1;                                              /* increment the chunka line indice */
-      ccb += 1;                                              /* increment the chunkb line indice */
-      if(cca == 500) {                                       /* if at end of chunk, start new chunk */
-	cca = 0;
-	cka += 1;
-	ck += 1;
-      }
-      if(ccb == 500) {                                       /* if at end of chunk, start new chunk */
-	ccb = 0;
-	if(ckb > 0) ck += 1;                                 /* don't increment the ck until cka and ckb have at least one finished chunk */
-	ckb += 1;
-      }
-
-      if(row_avg[y*k + j] != 0 && row_wt[y*k + j] != 0) {
-	row_avg[y*k + j] /= (float)row_wt[y*k + j];          /* perform division for row_avg values*/
-	row_wt[y*k + j] = 0;
-      }
-    }
-    cka = 0;
-    ckb = 0;
-    cca = 0;
-    ccb = 250;
-    ck = 0;
-  }
-
-  /* clean up col_avg arrays */
-  free(col_avga);
-  free(col_avgb);
-  free(col_wta);
-  free(col_wtb);
-  free(row_ct);
-  free(col_ct);
-  free(blackmask);
-
-  /* operate on the row_avg and row_avgs arrays */
-
-  /* create filt1 & filt2 */
-  filt1 = (float *)malloc(sizeof(float)*filt_len);
-  for(i=0; i<filt_len; i++) {
-    filt1[i] = 1.0;
-  }
-
-  /* smooth row_avg array */
-  row_avgs = smoothy(row_avg, filt1, 1, y, z, 1, filt_len, 1, 1, 0);
-
-  for(k=0; k<z; k++) {
-    for(j=0; j<y; j++) {
-      row_avg[k*y + j] -= row_avgs[k*y + j];                                /* subtract smoothed from original row_avg */
-    }
-  }
-
-  /* clean up row arrays */
-  free(row_avgs);
-  free(row_wt);
-
-  /* operate on the col_avg arrays */
-  col_wt = (int *)calloc(sizeof(int), x*chunks);
-
-  /* smooth the col_avg array */
-  col_avgs = smoothy(col_avg, filt1, x, chunks, z, filt_len, 1, 1, 1, 0);
-  free(filt1);
-
-  out = newVal(BSQ,x,chunks,z,FLOAT,col_avg);
-  return out;
-
-  for(k=0; k<z; k++) {
-    for(j=0; j<chunks; j++) {
-      for(i=0; i<x; i++) {
-	col_avg[k*chunks*x + j*x + i] -= col_avgs[k*chunks*x + j*x + i];             /* subtract smoothed from original col_avg */
-      }
-    }
-  }
-
-  out = newVal(BSQ,x,chunks,z,FLOAT,col_avg);
-  return out;
-
-  /* clean up column arrays*/
-  free(col_avgs);
-  free(col_wt);
- 
-  /* extract data into rdata removing plaid along the way */
-  /* create rdata array */
-  rdata = (float *)malloc(sizeof(float)*x*y*z);
-
-  for(k=0; k<z; k++) {
-    cca = 0;
-    ck = 0;
-    for(j=0; j<y; j++) {
-      for(i=0; i<x; i++) {
-	tv = extract_float(data, cpos(i,j,k, data));
-	if(tv != nullval) {
-	  rdata[x*y*k + x*j + i] = tv - row_avg[k*y + j] - col_avg[k*chunks*x + ck*x + i];
-	} else {
-	  rdata[x*y*k + x*j + i] = tv;
-	}
-      }
-      cca += 1;
-      if(cca == 250 && ck<(chunks-1)) {
-	cca = 0;
-	ck+=1;                                                                         /* chunk tracker */
-      }
-    }
-  }
-
-  /* final memory cleanup */
-  free(row_avg);
-  free(col_avg);
-
-  /* return array */
-  out = newVal(BSQ, x, y, z, FLOAT, rdata);
-  return out;
-}
