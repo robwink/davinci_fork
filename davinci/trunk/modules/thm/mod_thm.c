@@ -20,6 +20,7 @@ static float *bbrw_k(float *btemp, int *bandlist, int x, int y, int z, float nul
 static double *radcorrspace(Var *measured, float *bbody);
 static double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_start, double *rad_end, double *slopes);
 static Var *do_ipi(Var *coords_array, Var *values_array);
+static float *column_fill(float *column, int y, int z, int csize, float ignore);
 
 static Var *thm_y_shear(vfuncptr, Var *);
 static Var *thm_kfill(vfuncptr, Var *);
@@ -41,6 +42,8 @@ static Var *thm_white_noise_remove2(vfuncptr func, Var *);
 static Var *thm_sstretch2(vfuncptr func, Var *);
 static Var *thm_radcorr(vfuncptr func, Var * arg);
 static Var *thm_ipi(vfuncptr func, Var * arg);
+static Var *thm_column_fill(vfuncptr func, Var * arg);
+static Var *thm_supersample(vfuncptr func, Var *);
 
 static dvModuleFuncDesc exported_list[] = {
   { "deplaid", (void *) thm_deplaid },
@@ -63,10 +66,12 @@ static dvModuleFuncDesc exported_list[] = {
   { "sstretch", (void *) thm_sstretch2 },
   { "radcorr", (void *) thm_radcorr },
   { "ipi", (void *) thm_ipi },
+  { "column_fill", (void *) thm_column_fill },
+  { "supersample", (void *) thm_supersample }
 };
 
 static dvModuleInitStuff is = {
-  exported_list, 20,
+  exported_list, 22,
   NULL, 0
 };
 
@@ -1199,6 +1204,7 @@ Var *
 thm_deplaid(vfuncptr func, Var * arg)
 {
   /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
+  /* updated after the comparison with neglecting luminosity conservation. 07/13/05 - kjn */
 
   typedef unsigned char byte;
 
@@ -1210,6 +1216,7 @@ thm_deplaid(vfuncptr func, Var * arg)
   float    *col_avg;                                /* the column average of both runs combined */
   float    *col_avga, *col_avgb;                    /* the column averages of run a and b */
   float    *col_avgs;                               /* the smoothed column averages of run a and b */
+  float    *row_bright, *col_bright;                /* brightness arrays */
   byte     *ct_map;                                 /* map of # of bands per pixel */
   byte     *row_ct, *col_ct;                        /* max number of bands in all rows and all columns */
   byte     *blackmask;                              /* the blackmask and temperature mask */
@@ -1245,7 +1252,7 @@ thm_deplaid(vfuncptr func, Var * arg)
 
   /* if no data got passed to the function */
   if (data == NULL) {
-    parse_error("\nDeplaid() - July 06 2005\n");
+    parse_error("\nDeplaid() - July 13 2005\n");
     parse_error("Deplaids multiband THEMIS spectral cubes\n");
     parse_error("Syntax: b = thm.deplaid(data,ignore,tmask_max,tmask_min,filt_len,b10)");
     parse_error("example b = thm.deplaid(a)");
@@ -1536,16 +1543,39 @@ thm_deplaid(vfuncptr func, Var * arg)
     filt1[i] = 1.0;
   }
 
+  /* create brightness arrays for luminosity conservation */
+  row_bright = (float *)calloc(sizeof(float), y);
+  col_bright = (float *)calloc(sizeof(float), chunks*x);
+
   /* smooth row_avg array */
   row_avgs = convolve(row_avg, filt1, 1, y, z, 1, filt_len, 1, 1, 0);
 
   for(k=0; k<z; k++) {
     for(j=0; j<y; j++) {
       row_avg[k*y + j] -= row_avgs[k*y + j];                                /* subtract smoothed from original row_avg */
+
+      if(z > 1 && k != b10) {                                               /* if there is more than one band and current band isn't band 10 */
+	row_bright[j] += row_avg[k*y + j];                                  /* add up the brightness information */
+	row_wt[j] += 1;
+      }
+      
+      if(z > 1 && k == z-1) row_bright[j] /= (float)row_wt[j];              /* make row_bright an avg rather than a sum */
+    }
+  }
+
+  /* remove brightness information from row_avg */
+  if(z > 1) {
+    for(k=0; k<z; k++) {
+      if(k != b10) {
+	for(j=0; j<y; j++) {
+	  row_avg[k*y + j] -= row_bright[j];                         /* brightness difference removed from row_avg */
+	}
+      }
     }
   }
 
   /* clean up row arrays */
+  free(row_bright);
   free(row_avgs);
   free(row_wt);
 
@@ -1560,11 +1590,31 @@ thm_deplaid(vfuncptr func, Var * arg)
     for(j=0; j<chunks; j++) {
       for(i=0; i<x; i++) {
 	col_avg[k*chunks*x + j*x + i] -= col_avgs[k*chunks*x + j*x + i];             /* subtract smoothed from original col_avg */
+
+	if(z>1 && k != b10) {                                                        /* if more than one band and not band 10 */
+	  col_bright[j*x + i] += col_avg[k*chunks*x + j*x + i];                      /* sum column brightness excluding band 10 */
+	  col_wt[j*x + i] += 1;                                                      /* sum column weight array excluding band 10 */
+	}
+	if(z > 1 && k == z-1) col_bright[j*x + i] /= (float)col_wt[j*x + i];         /* make col_bright an avg rather than a sum */
+      }
+    }
+  }
+  
+  /* remove brightness information */
+  if(z > 1) {
+    for(k=0; k<z; k++) {
+      if(k != b10) {
+	for(j=0; j<chunks; j++) {
+	  for(i=0; i<x; i++) {
+	    col_avg[k*chunks*x + j*x + i] -= col_bright[j*x + i];                  /* brightness difference removed from col_avg */
+	  }
+	}
       }
     }
   }
 
   /* clean up column arrays*/
+  free(col_bright);
   free(col_avgs);
   free(col_wt);
  
@@ -3348,7 +3398,7 @@ double *radcorrspace(Var *measured, float *bbody)
   rcspace = (double *)calloc(sizeof(double), z*400*400);
 
   for(k=0;k<z;k++) {                      /* looping through bands */
-    parse_error("band=%d",k);
+    parse_error("band=%d",k+1);
     for(m=0;m<400;m++) {                  /* looping through em */
       em_off = 0.8 + m*em_step;
       for(n=0;n<400;n++) {                /* looping through rad */
@@ -3595,6 +3645,11 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
 
 
 
+
+
+
+
+
 Var *do_ipi(Var *coords_array, Var *values_array){
   float        coords[3];                                             // more useable form of coordinate list //
   float        values[3];                                             // more useable form of values list //
@@ -3617,6 +3672,11 @@ Var *do_ipi(Var *coords_array, Var *values_array){
   
   return(newVal(BSQ, 1 ,1, 1, FLOAT, result));
 }
+
+
+
+
+
 
 
 Var *thm_ipi(vfuncptr func, Var * arg){
@@ -3648,3 +3708,252 @@ Var *thm_ipi(vfuncptr func, Var * arg){
   return(do_ipi(coords_array,values_array));
 }
 
+
+
+
+
+Var *
+thm_column_fill(vfuncptr func, Var * arg)
+{
+  Var     *col_in = NULL;                                 /* the input column */
+  Var     *out;		                                  /* the output */
+  float   *column = NULL;                                 /* extracted input column */
+  float    ignore = -32768.0;                             /* the null data value */
+  int      csize = 10;                                    /* default csize of 10 corresponding to 500 lines chunks */
+  int      x=0,y=0,z=0;                                   /* dimensions of column */
+  int      i,j,k;                                         /* array counters */
+  float   *column_out = NULL;                             /* filled and ready to be returned column */
+  float   sum = 0;                                        /* the sum of column to check if any values exist */
+
+  Alist alist[2];
+  alist[0] = make_alist("column",		ID_VAL,		NULL,	&col_in);
+  alist[1] = make_alist("chunk_size",           INT,            NULL,   &csize);
+  alist[2] = make_alist("ignore",               FLOAT,          NULL,   &ignore);
+  alist[3].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if (col_in == NULL){
+    parse_error("column_fill() - 7/13/05");
+    parse_error("Takes a partially filled column, calculates averages over number of lines specified in \'chunk_size\'");
+    parse_error("Fills in null points by linear interpolation of nearest neighbors and fills array.");
+    parse_error("To be used to produce a column of radiation correction values ");
+    parse_error("Syntax:  b = thm.column_fill(column,chunk_size,ignore)");
+    parse_error("example: b = thm.column_fill(b,ignore=0)");
+    parse_error("  \'column\'     can be any 1xNxM array");
+    parse_error("  \'chunk_size\' defaulted to 10 to correspond to a 500 line chunk.");
+    parse_error("  \'ignore\'     is defaulted to -32768");
+    return NULL;
+  }
+
+  x = GetX(col_in);
+  y = GetY(col_in);
+  z = GetZ(col_in);
+
+  if (x != 1) {
+    parse_error("Error occurred while running src_col_fill()");
+    parse_error("ERROR!, Not a column. Try again bozo!");
+    return NULL;
+  }
+
+  /* extract col_in into column */
+  column = (float *)calloc(sizeof(float),y*z);
+ 
+  for(k=0;k<z;k++) {
+    for(j=0;j<y;j++) {
+      column[k*y + j] = extract_float(col_in, cpos(0,j,k,col_in));
+       /* make sure there are values in column before calling d_SCF */
+      if(column[k*y + j] != ignore) sum += column[k*y + j];
+    }
+  }
+
+  if(sum == 0) {
+    out = newVal(BSQ, x, y, z, FLOAT, column);
+    return out;
+  }
+
+  /* call do_SCF() to do the work */
+  column_out = column_fill(column,y,z,csize,ignore);
+
+  free(column);
+
+  out = newVal(BSQ, x, y, z, FLOAT, column_out);
+  return out;
+}
+
+
+
+
+
+
+
+float *column_fill(float *column, int y, int z, int csize, float ignore)
+{
+  float   *kern = NULL;                                   /* convolve kernel */
+  float   *cols = NULL;                                   /* smoothed column */
+  float   *colss = NULL;                                  /* second smoothed column */
+  int      j=0, k=0;                                      /* loop indices */
+  int      position_before=0, position_after=0;           /* position of nearest filled points before and after the current pixel */
+  float    val_before=-32768, val_after=-32768;           /* value of nearest filled points before and after the current pixel */
+  int      flag_before=0, flag_after=0;                   /* flags to keep looking for nearest point */
+  float    dist_before=0.0, dist_after=0.0;               /* distance to the bounding points */
+
+  /* create smoothing kernel same size as chunk_size */
+  kern = (float *)calloc(sizeof(float),csize);
+
+  for(j=0;j<csize;j+=1){
+    kern[j] = 1.0;
+  }
+
+  /* smooth column by kern using smoothy() */
+  cols = convolve(column, kern, 1, y, z, 1, csize, 1, 1, ignore);
+
+  /* linearly interpolate and fill blank spaces in the array */
+  /* for each point we look before and after to look for the nearest values with which to interpolate */
+  /* if we arrive at the end of the array then we use the single bounding value and fill to the edge */
+  for(k=0;k<z;k++) {
+    if(k!=9) {
+      for(j=0;j<y;j++) {
+	val_before=ignore;
+	val_after=ignore;
+	flag_before=0;
+	flag_after=0;
+
+	if(cols[k*y + j] == ignore) {
+	  position_before = j-1;
+	  position_after = j+1;
+	  while(flag_before == 0 || flag_after == 0) {
+	    if(position_before<0) flag_before=1;
+	    if(position_after>=y) flag_after=1;
+	    
+	    if(flag_before==0 && cols[k*y + position_before] != ignore) {
+	      val_before = cols[k*y + position_before];
+	      flag_before = 1;
+	    }
+	    
+	    if(flag_after==0 && cols[k*y + position_after] != ignore) {
+	      val_after = cols[k*y + position_after];
+	      flag_after = 1;
+	    }
+	    
+	    if(flag_before==0) position_before -= 1;
+	    if(flag_after==0) position_after += 1;
+	  }
+	  /* now we should have the position and values of the nearest filled points */
+	  
+	  /* take care of the first pixel in the array */
+	  if(j==0) cols[k*y + j] = val_after;
+	
+	  /* now for every other pixel */
+	  if(val_after == ignore & j!=0) cols[k*y + j] = val_before;
+	  if(val_after != ignore && j!=0) {
+	    dist_before = fabs(position_before-j);
+	    dist_after = fabs(position_after-j);
+	    cols[k*y + j] = (dist_after*val_before + dist_before*val_after)/(dist_before+dist_after);
+	  }
+	}
+      }
+    }
+  }
+
+  /* smooth the data again */
+  colss = convolve(cols, kern, 1, y, z, 1, csize, 1, 1, ignore);
+
+  /* clean up and return data */
+  free(kern);
+  free(cols);
+
+  return colss;
+}
+
+
+
+
+
+
+Var *
+thm_supersample(vfuncptr func, Var * arg)
+{
+
+  Var       *data = NULL;                  /* original input data */
+  Var       *out = NULL;                   /* final output davinci object */
+  int        x,y,z;                        /* size of data */
+  int        i,j,k;                        /* loop indices */
+  int        nx,ny,ni;                     /* indices */
+  int        mx,my;                        /* indices */
+  int        type = 0;                     /* type of supersample */
+  int        factor = 3;                   /* factor of supersample */
+  float     *ssdata = NULL;                /* supersampled data */
+
+  Alist alist[4];
+  alist[0] = make_alist("data", 		ID_VAL,		NULL,	&data);
+  alist[1] = make_alist("type",                 INT,            NULL,   &type);
+  alist[2] = make_alist("factor",               INT,            NULL, &factor);
+  alist[3].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+
+  /* if no data got passed to the function */
+  if (data == NULL) {
+    parse_error("\nsupersample() - 7/13/2005\n");
+    parse_error("Takes any 3-d array and supersamples to N times the angular resolution.");
+    parse_error("Syntax:  thm.supersample(data, type, factor)");
+    parse_error("Example: thm.supersample(data=a, type=1, factor=5)");
+    parse_error("Example: thm.supersample(a, 2)\n");
+    parse_error("data: any 3-d array where data is to be supersampled in the xy plane.");
+    parse_error("type: supersample method to use. Default is 0.");
+    parse_error("      type=0: each original pixel is placed in the center of the supersampled pixel grid.");
+    parse_error("              all other pixels in the supersampled grid are filled with 0.");
+    //    parse_error("      type=1: same as type 0 but all pixels are linearly interpolated from original pixels.");
+    parse_error("      type=2: fills every pixel in supersampled pixel grid with original pixel value.\n");
+    parse_error("factor: multiplication factor of original pixel to supersample grid. Default is 3.");
+    parse_error("        so a factor=3 takes 1 pixel and makes a 3x3 pixel array.\n");
+    return NULL;
+  }
+
+  /* get dimensions of the data */
+  x = GetX(data);
+  y = GetY(data);
+  z = GetZ(data);
+
+  /* make new array */
+  ssdata = (float *)calloc(sizeof(float), factor*x*factor*y*z);
+
+  /* extract data into larger array for types 0 and 1 */
+  if(type<2) {
+    for(k=0;k<z;k++) {
+      for(j=0;j<factor*y;j++) {
+	ny = j/factor;
+	my = j%factor;
+	for(i=0;i<factor*x;i++) {
+	  ni = k*factor*factor*x*y + j*factor*x + i;
+	  nx = i/factor;
+	  mx = i%factor;
+	  if(mx == 1 && my == 1) ssdata[ni] = extract_float(data, cpos(nx,ny,k,data));
+	}
+      }
+    }
+  }
+
+  /* fill in other pixels with interpolated pixels for type 1 */
+  if(type==1) {
+  }
+
+  /* extract data into larger array for type 2 */
+  if(type==2) {
+    for(k=0;k<z;k++) {
+      for(j=0;j<factor*y;j++) {
+	ny = j/factor;
+	for(i=0;i<factor*x;i++) {
+	  ni = k*factor*factor*x*y + j*factor*x + i;
+	  nx = i/factor;
+	  ssdata[ni] = extract_float(data, cpos(nx,ny,k,data));
+	}
+      }
+    }
+  }
+
+  /* final output */
+  out = newVal(BSQ, factor*x, factor*y, z, FLOAT, ssdata);
+  return(out);
+}
