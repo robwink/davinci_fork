@@ -2427,6 +2427,25 @@ Davinci supports the following matrix functions:
 
     Note: boxfilter() can use 24 bytes of memory per input pixel.
 
+?functions drawshape()
+?drawshape()
+ drawshape() - draw a shape at each "on" point in an image
+
+ drawshape(obj=VAR, shape=["cross"|"box"|"circle"], ignore=VAL)
+
+	For each point in the input image (band 1 only), that is greater
+	than zero and not equal to the ignore value, a shape is draw centered
+	on that point, with a radius/size equal to the value of the point.
+
+	This example returns an image contining two circles, one centered at 
+	3,4 of radius 3, and another centered at 6,8 with radius 5.  
+
+	The returned image is a byte image containing only 0s (unset) and 1s (set).
+
+	a = clone(0,10,10)
+	a[3,4] = 3
+	a[6,8] = 5
+	drawshape(a, type="circle")
 
 ?gui
 
@@ -3290,5 +3309,3 @@ TransientShell
  Each struct name/value are the callback string and eval string for
  that callback.  Useful both to learn what callbacks a widget supports
  and as a reminder of the current setting.
-
-

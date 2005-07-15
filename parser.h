@@ -397,4 +397,9 @@ extern int debug;
 #include "ufunc.h"
 #include "scope.h"
 #include "func.h"
+
+#if 0
+#include "dmalloc.h"
+#endif
+
 #endif /* PARSER_H */

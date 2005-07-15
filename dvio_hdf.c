@@ -406,8 +406,10 @@ load_hdf5(hid_t parent)
     o = new_struct(count);
     
     while ((ret = H5Giterate(parent, ".", &idx, group_iter, &e)) > 0)  {
-        add_struct(o, V_NAME(e), e);
-        V_NAME(e) = NULL;
+		if (e != NULL) {
+			add_struct(o, V_NAME(e), e);
+			V_NAME(e) = NULL;
+		}
 		if (idx == count) break;
     }
     return(o);

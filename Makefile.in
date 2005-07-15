@@ -193,7 +193,7 @@ davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ff_shade.c ff_slant.c ff_sort.c ff_source.c ff_struct.c \
 	ff_text.c ff_version.c ff_vignette.c ff_write.c ff_xfrm.c \
 	fft.c fft2f.c fft_mayer.c fit.c ff_coreg.c ff_boxfilter.c \
-	ff_bin5.c ff_extract.c \
+	ff_bin5.c \
 	header.c \
 	help.c init.c \
 	isis_obj.c main.c matrix.c \
@@ -219,7 +219,7 @@ subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/mkinstalldirs
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES =
+CONFIG_CLEAN_FILES = modules/cse/Makefile modules/thm/Makefile
 LIBRARIES = $(noinst_LIBRARIES)
 
 libmodsupp_a_AR = $(AR) cru
@@ -255,13 +255,12 @@ am_davinci_OBJECTS = apifunc.$(OBJEXT) array.$(OBJEXT) avl.$(OBJEXT) \
 	ff_version.$(OBJEXT) ff_vignette.$(OBJEXT) ff_write.$(OBJEXT) \
 	ff_xfrm.$(OBJEXT) fft.$(OBJEXT) fft2f.$(OBJEXT) \
 	fft_mayer.$(OBJEXT) fit.$(OBJEXT) ff_coreg.$(OBJEXT) \
-	ff_boxfilter.$(OBJEXT) ff_bin5.$(OBJEXT) ff_extract.$(OBJEXT) \
-	header.$(OBJEXT) help.$(OBJEXT) init.$(OBJEXT) \
-	isis_obj.$(OBJEXT) main.$(OBJEXT) matrix.$(OBJEXT) \
-	misc.$(OBJEXT) motif_tools.$(OBJEXT) newfunc.$(OBJEXT) \
-	p.$(OBJEXT) pp.$(OBJEXT) pp_math.$(OBJEXT) printf.$(OBJEXT) \
-	reserved.$(OBJEXT) rfunc.$(OBJEXT) rice.$(OBJEXT) \
-	rpos.$(OBJEXT) scope.$(OBJEXT) spread.$(OBJEXT) \
+	ff_boxfilter.$(OBJEXT) ff_bin5.$(OBJEXT) header.$(OBJEXT) \
+	help.$(OBJEXT) init.$(OBJEXT) isis_obj.$(OBJEXT) main.$(OBJEXT) \
+	matrix.$(OBJEXT) misc.$(OBJEXT) motif_tools.$(OBJEXT) \
+	newfunc.$(OBJEXT) p.$(OBJEXT) pp.$(OBJEXT) pp_math.$(OBJEXT) \
+	printf.$(OBJEXT) reserved.$(OBJEXT) rfunc.$(OBJEXT) \
+	rice.$(OBJEXT) rpos.$(OBJEXT) scope.$(OBJEXT) spread.$(OBJEXT) \
 	string.$(OBJEXT) symbol.$(OBJEXT) system.$(OBJEXT) \
 	tools.$(OBJEXT) ufunc.$(OBJEXT) util.$(OBJEXT) x.$(OBJEXT) \
 	xrt_print_3d.$(OBJEXT) lexer.$(OBJEXT) parser.$(OBJEXT) \
@@ -302,9 +301,8 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/ff_cluster.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_convolve.Po ./$(DEPDIR)/ff_coreg.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_deghost.Po ./$(DEPDIR)/ff_display.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ff_extract.Po ./$(DEPDIR)/ff_fft.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ff_filetype.Po ./$(DEPDIR)/ff_fncc.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ff_gconvolve.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ff_fft.Po ./$(DEPDIR)/ff_filetype.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ff_fncc.Po ./$(DEPDIR)/ff_gconvolve.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_gnoise.Po ./$(DEPDIR)/ff_gplot.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_header.Po ./$(DEPDIR)/ff_hstretch.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_ifill.Po ./$(DEPDIR)/ff_interp.Po \
@@ -409,6 +407,10 @@ $(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(top_srcdir)/configure.ac $(ACLOC
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
+modules/cse/Makefile: $(top_builddir)/config.status $(top_srcdir)/modules/cse/Makefile.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+modules/thm/Makefile: $(top_builddir)/config.status $(top_srcdir)/modules/thm/Makefile.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
@@ -494,7 +496,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_coreg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_deghost.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_display.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_extract.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_fft.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_filetype.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_fncc.Po@am__quote@
@@ -786,7 +787,7 @@ distcleancheck_listfiles = find . -type f -print
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkinstalldirs) $(distdir)/config
+	$(mkinstalldirs) $(distdir)/config $(distdir)/modules/cse $(distdir)/modules/thm
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

@@ -1,9 +1,9 @@
-char *version = "@(#) daVinci Version #1.47";
+char *version = "@(#) daVinci Version #1.48";
 
 #include "build.h"
 
 /*
-Version 1.47: Mon May 27 15:53:58 MST 2005
+Version 1.48: Mon May 27 15:53:58 MST 2005
 	* Fixed variety of gui module bugs
 	* Fixed example scripts in modules/guitest
 	* Fixed gui module's constraint resource handling
@@ -13,6 +13,11 @@ Version 1.47: Mon May 27 15:53:58 MST 2005
 	* Added rectf overlay support to gui module's Vicar interface
 	* Added lookup table set/get functions to gui module's Vicar interface
 	* Added LineBox widget to gui module
+
+Version 1.47: Fri May 20 11:41:13 MST 2005
+	* Bugs in ff_text were all related to an off by one counting 
+	  in single_replace.  Fixed, and the other bogosities in there
+	  also removed.
 
 Version 1.46: Fri May 20 11:41:13 MST 2005
 	* Fixed crash in ff_text:single_replace (don't ask me why)

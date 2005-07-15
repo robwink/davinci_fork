@@ -835,7 +835,7 @@ char *single_replace(char *line, regex_t *preg, char *replace)
     char *Marker;
     int result;
     int  index=0;
-	int  Max=strlen(line)+strlen(replace);
+	int  Max=strlen(line)+strlen(replace)+1;
     int i;
     int len=strlen(replace);
 	int numeral;
@@ -911,7 +911,7 @@ char *single_replace(char *line, regex_t *preg, char *replace)
     newtext[index]='\0';
 
     /*Shrink to fit*/
-    // newtext=realloc(newtext,index+1);
+    newtext=realloc(newtext,index+1);
 	
     return(newtext);
 }
@@ -923,7 +923,8 @@ Var *ff_stringsubst(vfuncptr func, Var *arg)
 	char *match=NULL;
 	char *subst=NULL;
 
-	int i,Row;	
+	int i,n;	
+	char *r, **rows;
 	Var *result;
 
 	regex_t preg;
@@ -952,9 +953,6 @@ Var *ff_stringsubst(vfuncptr func, Var *arg)
 		return(NULL);
 	}
 
-
-	result=newVar();
-
 	/*Compile expression*/
 	if (regcomp(&preg,match,cflags)){	
 		parse_error("error compiling regular expression");
@@ -965,33 +963,30 @@ Var *ff_stringsubst(vfuncptr func, Var *arg)
 		and return it in the result object
 	*/
 
+	result = NULL;
+
 	if (V_TYPE(ob)==ID_STRING){
-		V_TYPE(result)=ID_STRING;
-		if((V_STRING(result)=single_replace(V_STRING(ob),&preg,subst))==NULL){
-			V_STRING(result)=(char *)calloc(1,1);
-			V_STRING(result)='\0';
+		r = single_replace(V_STRING(ob),&preg,subst);
+		if (r == NULL) {
+			result = newString(strdup(""));
+		} else {
+			result = newString(strdup(r));
 		}
-	}
-
-	/*If our object is a text array, run the single line replace function
-		for each Row in the array and store each replacement in the result
-		object
-	*/
-
-	else {
-		Row=V_TEXT(ob).Row;
-		V_TEXT(result).Row=Row;
-		V_TYPE(result)=ID_TEXT;
-		V_TEXT(result).text=(char **)calloc(Row,sizeof(char *));
-		for (i=0;i<Row;i++){
-			if((V_TEXT(result).text[i]=single_replace(V_TEXT(ob).text[i],&preg,subst))==NULL){
-				V_TEXT(result).text[i]=(char *)calloc(1,1);
-				V_TEXT(result).text[i]='\0';
-			}
+	} else if (V_TYPE(ob) == ID_TEXT) {
+		/*If our object is a text array, run the single line replace function
+			for each Row in the array and store each replacement in the result
+			object
+		*/
+		n = V_TEXT(ob).Row;
+		rows = (char **)calloc(n,sizeof(char *));
+		for (i=0 ; i < n ; i++) {
+			rows[i] = single_replace(V_TEXT(ob).text[i], &preg, subst);
+			if (rows[i] == NULL) rows[i] = strdup("");
 		}
+		result = newText(n, rows);
 	}
-	 regfree(&preg);
-    return(result);
+	regfree(&preg);
+	return(result);
 }
 
 char *
