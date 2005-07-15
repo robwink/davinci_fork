@@ -7,20 +7,21 @@
 ** Returns the mean and count for each pixel. 
 */
 void
-init_sums(Var *data, int w, int h, int d, Var **rn, Var **rs, Var **rcount, Var **rmean, double ignore) 
+init_sums(Var *data, int w, int h, int d, Var **rn, Var **rs, Var **rcount, Var **rmean, Var **rsigma, double ignore) 
 {
 	int x, y, z, u, v;
 	int i, j, k;
 	int p1, p2, p3, p4, p5, p6, p7, p8;
 	int east, south, north, west, front, back;
 
-	double *s;
+	double *s, *s2;
 	int *n;
 	float *mean;
+	float *sigma;
 	int *c;
 
 	double value;
-	float sum;
+	double sum, sum2;
 	int count;
 
 	x = GetX(data);
@@ -28,8 +29,10 @@ init_sums(Var *data, int w, int h, int d, Var **rn, Var **rs, Var **rcount, Var 
 	z = GetZ(data);
 
 	s = calloc(x*y*z,sizeof(double));		/* running sum */
+	s2 = calloc(x*y*z,sizeof(double));		/* running sum */
 	n = calloc(x*y*z,sizeof(int));			/* running count */
 	mean = calloc(x*y*z,sizeof(float));
+	sigma = calloc(x*y*z,sizeof(float));
 	c = calloc(x*y*z,sizeof(int));
 
 	/*
@@ -46,40 +49,48 @@ init_sums(Var *data, int w, int h, int d, Var **rn, Var **rs, Var **rcount, Var 
 				value = extract_double(data, p1);
 				if (value != ignore) {
 					s[p1] = value;
+					s2[p1] = value*value;
 					n[p1] = 1;
 				}
 				if (i) {
 					p2 = cpos(i-1, j,   k, data);
 					s[p1] += s[p2];
+					s2[p1] += s2[p2];
 					n[p1] += n[p2];
 				}
 				if (j) {
 					p3 = cpos(i,   j-1, k, data);
 					s[p1] += s[p3];
+					s2[p1] += s2[p3];
 					n[p1] += n[p3];
 				}
 				if (i && j) {
 					p4 = cpos(i-1, j-1, k, data);
 					s[p1] -= s[p4];
+					s2[p1] -= s2[p4];
 					n[p1] -= n[p4];
 				}
 				if (k) {
 					p5 = cpos(i,j,k-1, data);
 					s[p1] += s[p5];
+					s2[p1] += s2[p5];
 					n[p1] += n[p5];
 					if (i) {
 						p6 = cpos(i-1, j,   k-1, data);
 						s[p1] -= s[p6];
+						s2[p1] -= s2[p6];
 						n[p1] -= n[p6];
 					}
 					if (j) {
 						p7 = cpos(i,   j-1, k-1, data);
 						s[p1] -= s[p7];
+						s2[p1] -= s2[p7];
 						n[p1] -= n[p7];
 					}
 					if (i && j) {
 						p8 = cpos(i-1, j-1, k-1, data);
 						s[p1] += s[p8];
+						s2[p1] += s2[p8];
 						n[p1] += n[p8];
 					}
 				}
@@ -112,46 +123,54 @@ init_sums(Var *data, int w, int h, int d, Var **rn, Var **rs, Var **rcount, Var 
 				p1 = cpos(east, south, front, data);
 				count = n[p1];
 				sum   = s[p1];
+				sum2  = s2[p1];
 
 				if (west >= 0) {
 					p2 = cpos(west, south, front, data);
 					count -= n[p2];
 					sum   -= s[p2];
+					sum2   -= s2[p2];
 				}
 
 				if (north >= 0) {
 					p3 = cpos(east, north, front, data);
 					count -= n[p3];
 					sum   -= s[p3];
+					sum2   -= s2[p3];
 				}
 
 				if (north >= 0 && west >= 0) {
 					p4 = cpos(west,north,front,data);
 					count += n[p4];
 					sum   += s[p4];
+					sum2   += s2[p4];
 				}
 
 				if (back >= 0) {
 					p5 = cpos(east, south, back, data);
 					count -= n[p5];
 					sum   -= s[p5];
+					sum2   -= s2[p5];
 
 					if (west >= 0) {
 						p6 = cpos(west, south, back, data);
 						count += n[p6];
 						sum   += s[p6];
+						sum2   += s2[p6];
 					}
 
 					if (north >= 0) {
 						p7 = cpos(east, north, back, data);
 						count += n[p7];
 						sum   += s[p7];
+						sum2   += s2[p7];
 					}
 
 					if (north >= 0 && west >= 0) {
 						p8 = cpos(west,north,back,data);
 						count -= n[p8];
 						sum   -= s[p8];
+						sum2   -= s2[p8];
 					}
 				}
 
@@ -164,14 +183,22 @@ init_sums(Var *data, int w, int h, int d, Var **rn, Var **rs, Var **rcount, Var 
 				if (count) {
 					p1 = cpos(i,j,k, data);
 					mean[p1] = sum/count;
+					if (count > 1) {
+						sigma[p1] = sqrt((sum2-(sum*sum/count))/(count-1));
+					} else {
+						sigma[p1] = ignore;
+					}
 					c[p1] = count;
 				} else {
 					mean[cpos(i,j,k,data)] = ignore;
+					sigma[cpos(i,j,k,data)] = ignore;
 					c[p1] = ignore;
 				}
 			}
 		}
 	}
+
+	free(s2);
 
 	*rn = newVal(V_ORG(data), 
 					V_SIZE(data)[0], V_SIZE(data)[1], V_SIZE(data)[2], 
@@ -185,13 +212,16 @@ init_sums(Var *data, int w, int h, int d, Var **rn, Var **rs, Var **rcount, Var 
 	*rmean = newVal(V_ORG(data), 
 					V_SIZE(data)[0], V_SIZE(data)[1], V_SIZE(data)[2], 
 					FLOAT, mean);
+	*rsigma = newVal(V_ORG(data), 
+					V_SIZE(data)[0], V_SIZE(data)[1], V_SIZE(data)[2], 
+					FLOAT, sigma);
 }
 
 Var *
 ff_boxfilter(vfuncptr func, Var * arg)
 {
 	Var *v= NULL;
-	Var *rcount, *rmean, *rs, *rn;
+	Var *rcount, *rmean, *rs, *rn, *rsigma;
 	Var *a;
 	int x=0;
 	int y=0;
@@ -231,12 +261,13 @@ ff_boxfilter(vfuncptr func, Var * arg)
 		return(NULL);
 	}
 
-	init_sums(v, x, y, z, &rn, &rs, &rcount, &rmean, ignore);
+	init_sums(v, x, y, z, &rn, &rs, &rcount, &rmean, &rsigma, ignore);
 
 	if (verbose) {
 		a = new_struct(0);
 		add_struct(a, "count", rcount);
 		add_struct(a, "mean", rmean);
+		add_struct(a, "sigma", rsigma);
 		add_struct(a, "n", rn);
 		add_struct(a, "s", rs);
 		return(a);

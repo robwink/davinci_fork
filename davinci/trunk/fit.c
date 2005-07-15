@@ -358,14 +358,15 @@ gd(Var *x, Var *y, char *fname, double ignore)
     data = dmatrix(datacols, V_DSIZE(y));
     jmax = 2;
 	ndata = 0;
+	
     for (i = 0 ; i < V_DSIZE(y) ; i++) {
 		/* this supplies a fake x axis if one isn't present. */
 		/* also handles an ignore value */
-        data[0][i] = ((x==NULL) ? i+1 : extract_double(x, i));
-        data[1][i] = extract_double(y, i);
-		if (data[0][i] == ignore || data[1][i] == ignore) continue;
+        data[0][ndata] = ((x==NULL) ? i+1 : extract_double(x, i));
+        data[1][ndata] = extract_double(y, i);
+		if (data[0][ndata] == ignore || data[1][ndata] == ignore) continue;
 
-        data[jmax][i] = 1;      /* weighting column of ones */
+        data[jmax][ndata] = 1;      /* weighting column of ones */
 		ndata++;
     }
 
