@@ -94,6 +94,17 @@ dv_module_fini(const char *name)
   parse_error("Unloaded module thm.");
 }
 
+
+/**
+*** For positive angles, shift the right hand side of the image upwards.
+*** When unshearing (using negative angles), trim will cut off the part
+*** that gets left blank.
+***
+*** The only difference between trim/notrim is keeping track of the signs.
+*** Keith claims it was easier to handle separately.
+***
+*** This routine uses direct array indexing, so will not be 64-bit compliant.
+**/
 Var *
 thm_y_shear(vfuncptr func, Var * arg)
 {
@@ -259,6 +270,19 @@ thm_y_shear(vfuncptr func, Var * arg)
   return out;
 }
 
+
+/**
+***
+*** This computes the weighted average of all pixels within a neighborhood,
+*** where the neighborhood is no larger than the input weighting mask, and
+*** the actual (rectangular) limits of which are found by searching for
+*** neighbors in the 4 cardinal directions.  If a neighbor isn't found, a
+*** distance is determined as the average of the found neighbors.
+***
+*** This assumes that 0.0 is the ignore value
+*** This makes two complete copies of the input data (in float), both
+*** with an extra kernel/2 border.
+**/
 
 Var *
 thm_kfill(vfuncptr func, Var * arg)
@@ -935,7 +959,14 @@ thm_ramp(vfuncptr func, Var * arg)
 
 
 
-
+/**
+*** This returns x-y pairs stretched out into a 1x8 array (x1,y1,x2,y2...)
+***
+*** This makes an implicit assertion that the ignore value is exactly above
+*** or below all values in the image.  It also calculates the row and column
+*** summations, and assumes that these are not zero.
+***
+**/
 Var *
 thm_corners(vfuncptr func, Var * arg)
 {
@@ -1023,8 +1054,8 @@ int *do_corners(Var *pic_a, float nullval)
       if(pic_val != nullval) {
 	//printf("%f ",pic_val);
 	pic[j*x+i] = 1;
-	row_avg[j] += pic[j*x+i];
-	col_avg[i] += pic[j*x+i];
+	row_avg[j] += pic[j*x+i];		// <- possible problem, see comment at top
+	col_avg[i] += pic[j*x+i];		// <- possible problem
       }
     }
     //printf("%d\n",row_avg[j]);
@@ -1196,9 +1227,12 @@ float *sawtooth(int x, int y, int z)
 
 
 
-
-
-
+/**
+*** Steps:
+***    Compute a blackmask that excludes any pixels that have a difference more than 1.15x 
+***    or 0.80x from the smoothed row average.
+***
+**/
 
 Var *
 thm_deplaid(vfuncptr func, Var * arg)
@@ -1294,7 +1328,7 @@ thm_deplaid(vfuncptr func, Var * arg)
 
   /* number of chunks of data in the y direction */
   chunksa = ((y-100)/500) + 1;                                 /* number of chunks starting at zero */
-  chunksb = ((y-350)/500) + 2;                                 /* number of chunks starting at 250 */
+  chunksb = ((y-350)/500) + 2;                                 /* number of chunks starting at -250 */
   if(y<350) chunksb = 1;
   chunks = ((y-100)/250) + 1;
 
@@ -1381,7 +1415,7 @@ thm_deplaid(vfuncptr func, Var * arg)
   free(b_avg);
 
   /* loop through setting the tempmask values */
-  /* pixels with tmask values greater than 1.25 or less than .8 of the row avg are set to zero */
+  /* pixels with tmask values greater than 1.15 or less than .8 of the row avg are set to zero */
   for(j=0; j<y; j++) {
     for(i=0; i<x; i++) {
       if(tmask[x*j+i] < row_sum[j]*tmask_max && tmask[x*j+i] > row_sum[j]*tmask_min) blackmask[x*j+i] += 1;
@@ -1753,6 +1787,11 @@ thm_rectify(vfuncptr func, Var * arg)
 	if(lshift<0) ni = (j+(int)(fabs(shift)*i+0.5))*x + i;
 
 	/* finding the x, y and z in the sheared array */
+		/* This appears to improperly compute the z index, but it
+		   turns out to be zero in all cases, so it appears to wash out 
+		   It also appears to be computing the newX and newY values, which
+		   are just equivalent to (y-shift) and x  [[ not confirmed yet]]
+		 */
 	nz = ni/(u*x);
 	nu = (ni - nz*u*x)/x;
 	nx = ni - nz*u*x - nu*x;
@@ -1767,6 +1806,10 @@ thm_rectify(vfuncptr func, Var * arg)
       }
     }
   }
+/**
+*** Find the maximum width of the non-ignore pixels
+*** which is equal to the width of the output image
+**/
   for (j = 0; j < u; j++) {
     w = rightmost[j] - leftmost[j] + 1;
     if(w > width) width = w;
@@ -1775,6 +1818,17 @@ thm_rectify(vfuncptr func, Var * arg)
   free(rightmost);
 
   /* fix leftmost to allow for maximum width */
+/**
+*** The apparent intent here (with the min(), below) was to make sure 
+*** that pixels above and below the actual image data (where 
+*** leftmost=x-1 and rightmost=0) get handled properly (by not 
+*** copying over imaginary pixels).
+***
+*** The reality is there's a small chance that a few lines at the top
+*** or bottom of a particularly strangely shaped image (wider at top/bottom
+*** and very little blank space on the rhs), could have a few lines cropped
+*** off the corners.
+**/
   for (j = 0; j < u; j++) {
     leftmost[j] = min(leftmost[j], x-width);
   }
@@ -2005,16 +2059,6 @@ static float *unshearc(float *w_pic, float angle, int x, int y, int z, float nul
   return(pic);
 }
 
-
-
-
-
-
-
-
-
-
-
 Var *
 thm_rad2tb(vfuncptr func, Var * arg)
 {
@@ -2169,10 +2213,9 @@ float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval
       for(i=0;i<x;i++) {
 	cur_val = extract_float(radiance,cpos(i,j,k,radiance));
 
-	if(cur_val == -32768 || cur_val == 0 || cur_val == nullval) btemps[k*y*x + j*x + i] = 0;
-
-	if(cur_val != -32768 && cur_val != 0 && cur_val != nullval) {
-
+	if(cur_val == -32768 || cur_val == 0 || cur_val == nullval) {
+		btemps[k*y*x + j*x + i] = 0;
+	} else {
 	  /* locate the two bounding points in the rads array containing the radiance value */
 	  pt1 = 0;
 	  pt2 = w;
