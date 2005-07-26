@@ -756,203 +756,195 @@ float *convolve(float *obj, float *kernel, int ox, int oy, int oz, int kx, int k
 Var *
 thm_ramp(vfuncptr func, Var * arg)
 {
-    Var *pic_1 = NULL;		/* picture one */
-    Var *pic_2 = NULL;		/* picture two */
-    Var *out;			/* the output picture */
-    float *pict1 = NULL;	/* storage location of picture 1 */
-    float *pict2 = NULL;	/* storage location of picture 2 */
-    int *ol1 = NULL;		/* the overlap in picture 1 */
-    int *ol2 = NULL;		/* the overlap in picture 2 */
-    int nullv = 0;		/* the null value that is to be ignored when calculating overlap */
-    int r1 = -1, r2 = -1;	/* beginning and ending rows of the overlap */
-    int c1 = -1, c2 = -1;	/* beginning and ending columns of the overlap */
-    int i, j, k;			/* loop indices */
-    int w, x, y, z;		/* dimensions of the input pictures */
-    int u, v;			/* dimensions of the overlapping area */
-    int m, n;			/* fill-in value and zero value */
-    int t1, t2;			/* memory location */
-    int ct = 1;			/* counter */
-    int num = 2;		/* fill-in number */
-    int olm1 = 2, olm2 = 2;	/* maximum values for the ol1 & ol2 arrays */
-	int up, down, left, right;	/* some neighborhood indices */
-
-    Alist alist[4];
-    alist[0] = make_alist("pic1", ID_VAL, NULL, &pic_1);
-    alist[1] = make_alist("pic2", ID_VAL, NULL, &pic_2);
-    alist[2] = make_alist("ignore", INT, NULL, &nullv);
-    alist[3].name = NULL;
-
-    if (parse_args(func, arg, alist) == 0)
-	return (NULL);
-
-    /* if no pictures got passed to the function */
-    if (pic_1 == NULL || pic_2 == NULL) {
-	parse_error("ramp() - 4/25/04");
-	parse_error
-	    ("Calculates a 0 - 1 float ramp between two overlapping pictures.");
-	parse_error
-	    ("You need to pass me two overlapping pictures contained in arrays of identical size, and an ignore value.\n");
-	parse_error("Syntax:  b = thm.ramp(pic1,pic2,ignore)");
-	parse_error("example: b = thm.ramp(a1,a2,ignore=-32768");
-	parse_error
-	    ("pic1 - may be any 2-d array - float, int, short, etc.");
-	parse_error
-	    ("pic2 - may be any 2-d array - float, int, short, etc.");
-	parse_error("ignore - the non-data pixel values. Default is 0.\n");
-	return NULL;
+  Var *pic_1 = NULL;		/* picture one */
+  Var *pic_2 = NULL;		/* picture two */
+  Var *out;			/* the output picture */
+  float *pict1 = NULL;	        /* storage location of picture 1 */
+  float *pict2 = NULL;	        /* storage location of picture 2 */
+  int *ol1 = NULL;		/* the overlap in picture 1 */
+  int *ol2 = NULL;		/* the overlap in picture 2 */
+  int nullv = 0;		/* the null value that is to be ignored when calculating overlap */
+  int r1 = -1, r2 = -1;	        /* beginning and ending rows of the overlap */
+  int c1 = -1, c2 = -1;	        /* beginning and ending columns of the overlap */
+  int i, j, k;			/* loop indices */
+  int w, x, y, z;		/* dimensions of the input pictures */
+  int u, v;			/* dimensions of the overlapping area */
+  int m, n;			/* fill-in value and zero value */
+  int t1, t2;			/* memory location */
+  int ct = 1;			/* counter */
+  int num = 2;		        /* fill-in number */
+  int olm1 = 2, olm2 = 2;	/* maximum values for the ol1 & ol2 arrays */
+  int up, down, left, right;	/* some neighborhood indices */
+  
+  Alist alist[4];
+  alist[0] = make_alist("pic1", ID_VAL, NULL, &pic_1);
+  alist[1] = make_alist("pic2", ID_VAL, NULL, &pic_2);
+  alist[2] = make_alist("ignore", INT, NULL, &nullv);
+  alist[3].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return (NULL);
+  
+  /* if no pictures got passed to the function */
+  if (pic_1 == NULL || pic_2 == NULL) {
+    parse_error("ramp() - 4/25/04");
+    parse_error("Calculates a 0 - 1 float ramp between two overlapping pictures.");
+    parse_error("You need to pass me two overlapping pictures contained in arrays of identical size, and an ignore value.\n");
+    parse_error("Syntax:  b = thm.ramp(pic1,pic2,ignore)");
+    parse_error("example: b = thm.ramp(a1,a2,ignore=-32768");
+    parse_error("pic1 - may be any 2-d array - float, int, short, etc.");
+    parse_error("pic2 - may be any 2-d array - float, int, short, etc.");
+    parse_error("ignore - the non-data pixel values. Default is 0.\n");
+    return NULL;
+  }
+  
+  /* x and y dimensions of the original pictures */
+  x = GetX(pic_1);
+  y = GetY(pic_1);
+  w = GetX(pic_2);
+  z = GetY(pic_2);
+  
+  if (x != w || y != z) {
+    parse_error
+      ("The two pictures need to be of the exact same dimensions.\n");
+    return NULL;
+  }
+  
+  /* keith is using an array that is +-1 larger, so that he doesn't
+   * accidentially hit an edge 
+   */
+  w = x+2;
+  z = y+2;
+  
+  /* create the two picture arrays and the overlap arrays */
+  pict1 = (float *) calloc(sizeof(float), w * (z));
+  pict2 = (float *) calloc(sizeof(float), w * (z));
+  ol1 = (int *) calloc(sizeof(int), w * (z));
+  ol2 = (int *) calloc(sizeof(int), w * (z));
+  
+  /* extract the two pictures into their storage arrays */
+  r1 = y+1;
+  r2 = 0;
+  c1 = x+1;
+  c2 = 0;
+  
+  for (j = 1; j <= y ; j++) {
+    for (i = 1; i <= x ; i++) {
+      t1 = j * w + i;
+      pict1[t1] = extract_float(pic_1, cpos(i - 1, j - 1, 0, pic_1));
+      pict2[t1] = extract_float(pic_2, cpos(i - 1, j - 1, 0, pic_2));
+      
+      /* find left and right limits */
+      if (pict1[t1] != nullv && pict2[t1] != nullv) {
+	if (j < r1) { r1 = j; }
+	if (j > r2) { r2 = j; }
+	if (i < c1) { c1 = i; }
+	if (i > c2) { c2 = i; }
+      }
+      
     }
-
-    /* x and y dimensions of the original pictures */
-    x = GetX(pic_1);
-    y = GetY(pic_1);
-    w = GetX(pic_2);
-    z = GetY(pic_2);
-
-    if (x != w || y != z) {
-	parse_error
-	    ("The two pictures need to be of the exact same dimensions.\n");
-	return NULL;
-    }
-
-    /* keith is using an array that is +-1 larger, so that he doesn't
-     * accidentially hit an edge 
-     */
-    w = x+2;
-    z = y+2;
-
-    /* create the two picture arrays and the overlap arrays */
-    pict1 = (float *) calloc(sizeof(float), w * (z));
-    pict2 = (float *) calloc(sizeof(float), w * (z));
-    ol1 = (int *) calloc(sizeof(int), w * (z));
-    ol2 = (int *) calloc(sizeof(int), w * (z));
-
-    /* extract the two pictures into their storage arrays */
-    r1 = y+1;
-    r2 = 0;
-    c1 = x+1;
-    c2 = 0;
-
-    for (j = 1; j <= y ; j++) {
-	for (i = 1; i <= x ; i++) {
-	    t1 = j * w + i;
-	    pict1[t1] = extract_float(pic_1, cpos(i - 1, j - 1, 0, pic_1));
-	    pict2[t1] = extract_float(pic_2, cpos(i - 1, j - 1, 0, pic_2));
-
-	    /* find left and right limits */
-	    if (pict1[t1] != nullv && pict2[t1] != nullv) {
-		if (j < r1) { r1 = j; }
-		if (j > r2) { r2 = j; }
-		if (i < c1) { c1 = i; }
-		if (i > c2) { c2 = i; }
-	    }
-
+  }
+  
+  /*
+  ** set all the edge values
+  */
+  for (k = 0; k <= y+1 ; k++) {
+    t1 = k * w + 0;
+    pict1[t1] = nullv;
+    pict2[t1] = nullv;
+    ol1[t1] = -1;
+    ol2[t1] = -1;
+    
+    t1 = k * w + (x+1);
+    pict1[t1] = nullv;
+    pict2[t1] = nullv;
+    ol1[t1] = -1;
+    ol2[t1] = -1;
+  }
+  for (k = 0; k <= x+1 ; k++) {
+    t1 = 0 * w + k;
+    pict1[t1] = nullv;
+    pict2[t1] = nullv;
+    ol1[t1] = -1;
+    ol2[t1] = -1;
+    
+    t1 = (y+1) * w + k;
+    pict1[t1] = nullv;
+    pict2[t1] = nullv;
+    ol1[t1] = -1;
+    ol2[t1] = -1;
+  }
+  
+  /* loop through the picts one time to find the edge */
+  /* if any of my src neighbors are null, then set me to 1 */
+  for (j = r1; j <= r2; j++) {
+    for (i = c1; i <= c2; i++) {
+      t1 = j * w + i;
+      if (pict1[t1] != nullv && pict2[t1] != nullv) {
+	up = (j-1) * w + i;
+	down = (j+1) * w + i;
+	left = t1-1;
+	right = t1+1;
+	if (pict1[left] == nullv || pict1[right] == nullv
+	    || pict1[up] == nullv || pict1[down] == nullv) {
+	  ol1[t1] = 1;
 	}
+	if (pict2[left] == nullv || pict2[right] == nullv
+	    || pict2[up] == nullv || pict2[down] == nullv) {
+	  ol2[t1] = 1;
+	}
+      }
     }
-
-    /*
-    ** set all the edge values
-    */
-    for (k = 0; k <= y+1 ; k++) {
-	t1 = k * w + 0;
-	pict1[t1] = nullv;
-	pict2[t1] = nullv;
-	ol1[t1] = -1;
-	ol2[t1] = -1;
-	
-	t1 = k * w + (x+1);
-	pict1[t1] = nullv;
-	pict2[t1] = nullv;
-	ol1[t1] = -1;
-	ol2[t1] = -1;
-    }
-    for (k = 0; k <= x+1 ; k++) {
-	t1 = 0 * w + k;
-	pict1[t1] = nullv;
-	pict2[t1] = nullv;
-	ol1[t1] = -1;
-	ol2[t1] = -1;
-
-	t1 = (y+1) * w + k;
-	pict1[t1] = nullv;
-	pict2[t1] = nullv;
-	ol1[t1] = -1;
-	ol2[t1] = -1;
-    }
-
-    /* loop through the picts one time to find the edge */
-    /* if any of my src neighbors are null, then set me to 1 */
+  }
+  
+  /* loop through the overlap arrays filling the appropriate value in */
+  while (ct > 0) {
+    ct = 0;
     for (j = r1; j <= r2; j++) {
-	for (i = c1; i <= c2; i++) {
-	    t1 = j * w + i;
-	    if (pict1[t1] != nullv && pict2[t1] != nullv) {
-		up = (j-1) * w + i;
-		down = (j+1) * w + i;
-		left = t1-1;
-		right = t1+1;
-		if (pict1[left] == nullv || pict1[right] == nullv
-		    || pict1[up] == nullv || pict1[down] == nullv) {
-		    ol1[t1] = 1;
-		}
-		if (pict2[left] == nullv || pict2[right] == nullv
-		    || pict2[up] == nullv || pict2[down] == nullv) {
-		    ol2[t1] = 1;
-		}
-	    }
+      for (i = c1; i <= c2; i++) {
+	t1 = j * w + i;
+	if (pict1[t1] != nullv && pict2[t1] != nullv) {
+	  up = (j-1) * w + i;
+	  down = (j+1) * w + i;
+	  left = t1 - 1;
+	  right = t1 + 1;
+	  n = num-1;
+	  if (ol1[t1] == 0
+	      && ((ol1[left] == n) || (ol1[right] == n)
+		  || (ol1[up] == n) || (ol1[down] == n))) {
+	    ol1[t1] = num;
+	    ct += 1;
+	  }
+	  if (ol2[t1] == 0
+	      && ((ol2[left] == n) || (ol2[right] == n)
+		  || (ol2[up] == n) || (ol2[up] == n))) {
+	    ol2[t1] = num;
+	    ct += 1;
+	  }
 	}
+      }
     }
-
-    /* loop through the overlap arrays filling the appropriate value in */
-    while (ct > 0) {
-	ct = 0;
-	for (j = r1; j <= r2; j++) {
-	    for (i = c1; i <= c2; i++) {
-		t1 = j * w + i;
-		if (pict1[t1] != nullv && pict2[t1] != nullv) {
-		    up = (j-1) * w + i;
-		    down = (j+1) * w + i;
-		    left = t1 - 1;
-		    right = t1 + 1;
-		    n = num-1;
-		    if (ol1[t1] == 0
-			&& ((ol1[left] == n) || (ol1[right] == n)
-			    || (ol1[up] == n) || (ol1[down] == n))) {
-			ol1[t1] = num;
-			ct += 1;
-		    }
-		    if (ol2[t1] == 0
-			&& ((ol2[left] == n) || (ol2[right] == n)
-			    || (ol2[up] == n) || (ol2[up] == n))) {
-			ol2[t1] = num;
-			ct += 1;
-		    }
-		}
-	    }
-	}
-	num += 1;
+    num += 1;
+  }
+  
+  /* reallocate the size of pict1 for use as an output array and free pict2 */
+  free(pict1);
+  free(pict2);
+  pict1 = (float *) calloc(sizeof(float), x * y);
+  
+  /* loop through one last time creating the output array */
+  for (j = 0; j < y; j++) {
+    for (i = 0; i < x; i++) {
+      t1 = j * x + i;
+      t2 = (j + 1) * w + i + 1;
+      if (ol1[t2] > 0) pict1[t1] = (float) (ol2[t2]) / (float) (ol2[t2] + ol1[t2]);
     }
-
-    /* reallocate the size of pict1 for use as an output array and free pict2 */
-    free(pict1);
-    free(pict2);
-    pict1 = (float *) calloc(sizeof(float), x * y);
-
-    /* loop through one last time creating the output array */
-    for (j = 0; j < y; j++) {
-	for (i = 0; i < x; i++) {
-	    t1 = j * x + i;
-	    t2 = (j + 1) * w + i + 1;
-	    if (ol1[t2] > 0) {
-		pict1[t1] =
-		    (float) (ol2[t2]) / (float) (ol2[t2] + ol1[t2]);
-	    }
-	}
-    }
-
-    free(ol1);
-    free(ol2);
-
-    out = newVal(BSQ, x, y, 1, FLOAT, pict1);
-    return out;
+  }
+  
+  free(ol1);
+  free(ol2);
+  
+  out = newVal(BSQ, x, y, 1, FLOAT, pict1);
+  return out;
 }
 
 
@@ -1693,7 +1685,9 @@ thm_deplaid(vfuncptr func, Var * arg)
 Var *
 thm_rectify(vfuncptr func, Var * arg)
 {
-  /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
+  /* updated 07/06/2005 to change "null" arguments to accept "ignore".     - kjn */
+  /* updated 07/19/2005 fixed bug that sometimes chopped off ends of data. - kjn */
+  /* updated 07/26/2005 to check for ignore value before running corners.  - kjn */
 
   typedef unsigned char byte;
 
@@ -1716,30 +1710,36 @@ thm_rectify(vfuncptr func, Var * arg)
   int     *cns = NULL;                 /* the corners array */
   float    angle1 = 0, angle2 = 0;     /* possible angle variables */
   float    trust = 0;                  /* use top corners or bottom corners */
+  int      force = 0;                  /* provides an option to override ignore value safety check */
+  float    ign = 0;                    /* the value rectify believes to be the correct ignore value */
 
-  Alist alist[5];
+  Alist alist[6];
   alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
   alist[1] = make_alist("ignore",               FLOAT,          NULL,   &nullo);
   alist[2] = make_alist("trust",                FLOAT,          NULL,   &trust);
-  alist[3] = make_alist("null",                 FLOAT,          NULL,   &nullo); //can be removed when all legacy programs are dead
-  alist[4].name = NULL;
+  alist[3] = make_alist("force",                INT,            NULL,   &force);
+  alist[4] = make_alist("null",                 FLOAT,          NULL,   &nullo); //can be removed when all legacy programs are dead
+  alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return NULL;
 
   /* if no picture got passed to the function */
   if (obj == NULL){
-    parse_error("rectify() - 4/29/04");
+    parse_error("rectify2() - 7/26/05");
     parse_error("Extracts rectangle of data from projected cubes\n");
-    parse_error("Syntax:  b = thm.rectify(obj,ignore,trust)");
+    parse_error("Syntax:  b = thm.rectify(obj,ignore,trust,force)");
     parse_error("example: b = thm.rectify(obj=a)");
     parse_error("example: b = thm.rectify(a)");
-    parse_error("example: b = thm.rectify(obj=a,ignore=0,trust=2)\n");
-    parse_error("obj - any projected cube");
+    parse_error("example: b = thm.rectify(obj=a,ignore=0,trust=2,force=1)\n");
+    parse_error("obj    - any projected cube");
     parse_error("ignore - the value in non-data pixels of projected cube. Default is -3.402822655e+38.");
-    parse_error("trust - where in the image the angle should be determined.");
-    parse_error("        0 = top, 1 = bottom, .25 = 25 percent down the image, etc.  Default is 0 (top).\n");
+    parse_error("trust  - where in the image the angle should be determined.");
+    parse_error("         0 = top, 1 = bottom, .25 = 25 percent down the image, etc.  Default is 0 (top).");
+    parse_error("force  - forces rectify() to use an ignore value even if it complains. Default is 0.\n");
     parse_error("TROUBLESHOOTING");
-    parse_error("The ignore value will ALWAYS be set to -32768 when rectifying!\n");
+    parse_error("The ignore value will ALWAYS be set to -32768 when rectifying!");
+    parse_error("Rectify checks for appropriate ignore value before running.");
+    parse_error("You can override ignore value warning by setting force = 1\n");
     return NULL;
   }
 
@@ -1747,6 +1747,22 @@ thm_rectify(vfuncptr func, Var * arg)
   x = GetX(obj);
   y = GetY(obj);
   z = GetZ(obj);    
+
+  /* Perform check to make sure ignore value is appropriate for the cube */
+  /* do_corners will crash davinci if ignore value is wrong.             */
+  /* Assumes that the ignore value will be found in the first row in the */
+  /* first band, and that the ignore value will always be the smallest   */
+  /* value in the array.                                                 */
+  for(i=0; i<x; i++) {
+    yiz = extract_float(obj, cpos(i, 0, 0, obj));
+    ign = (yiz<ign)?yiz:ign;
+  }
+  if(ign != nullo && force == 0) {
+    parse_error("/nERROR: The ignore value specified could not be found in the first row!");
+    parse_error("I believe the real ignore value is %f",ign);
+    parse_error("If you believe the ignore value specified is correct set force = 1 and re-run\n");
+    return NULL;
+  }
 
   /* calling corners to find the angle */
   cns = do_corners(obj,nullo);
@@ -1787,14 +1803,8 @@ thm_rectify(vfuncptr func, Var * arg)
 	if(lshift<0) ni = (j+(int)(fabs(shift)*i+0.5))*x + i;
 
 	/* finding the x, y and z in the sheared array */
-		/* This appears to improperly compute the z index, but it
-		   turns out to be zero in all cases, so it appears to wash out 
-		   It also appears to be computing the newX and newY values, which
-		   are just equivalent to (y-shift) and x  [[ not confirmed yet]]
-		 */
-	nz = ni/(u*x);
-	nu = (ni - nz*u*x)/x;
-	nx = ni - nz*u*x - nu*x;
+	nu = ni/x;
+	nx = ni - nu*x;
 
 	yiz = extract_float(obj, cpos(i, j, k, obj));
 
@@ -1806,10 +1816,11 @@ thm_rectify(vfuncptr func, Var * arg)
       }
     }
   }
-/**
-*** Find the maximum width of the non-ignore pixels
-*** which is equal to the width of the output image
-**/
+
+  /**
+  *** Find the maximum width of the non-ignore pixels
+  *** which is equal to the width of the output image
+  **/
   for (j = 0; j < u; j++) {
     w = rightmost[j] - leftmost[j] + 1;
     if(w > width) width = w;
@@ -1817,42 +1828,38 @@ thm_rectify(vfuncptr func, Var * arg)
 
   free(rightmost);
 
-  /* fix leftmost to allow for maximum width */
-/**
-*** The apparent intent here (with the min(), below) was to make sure 
-*** that pixels above and below the actual image data (where 
-*** leftmost=x-1 and rightmost=0) get handled properly (by not 
-*** copying over imaginary pixels).
-***
-*** The reality is there's a small chance that a few lines at the top
-*** or bottom of a particularly strangely shaped image (wider at top/bottom
-*** and very little blank space on the rhs), could have a few lines cropped
-*** off the corners.
-**/
-  for (j = 0; j < u; j++) {
-    leftmost[j] = min(leftmost[j], x-width);
-  }
+  /**
+  *** The remaining issue with rectify is that rows at the top and the
+  *** bottom of the image can slope away from being rectilinear.  This
+  *** is because the leftedge is computed by looking for the farthest
+  *** left point in all bands.  Unfortunately the bands do not overlap
+  *** perfectly and the leftedge trails away.  Simply throwing out these
+  *** rows will not work either.  The leftedge must be fixed at this
+  *** point before the data is extracted.
+  **/
 
   /* assign memory to sheared and slanted array */
   pic = (float *)malloc(sizeof(float)*z*u*width);
 
   /* extract the data into a sheared and slanted array */
-  for (k = 0; k < z; k++) {
-    for(j = 0; j < u; j++) {
-      for(i = 0; i < width; i++) {
+  for (j = 0; j < u; j++) {
+    for (i = 0; i < width; i++) {
+
+      /* create the new x and y values in the rectified array */
+      nx = i + leftmost[j];
+      /* top of image leans to the left of the bottom, i.e. angle < 0 */
+      if (lshift < 0) nu = j - (int)(fabs(shift)*nx+0.5);
+      /* top of image leans to the right of the bottom, i.e. angle > 0 */
+      if (lshift > 0) nu = j + (int)(nx*shift+0.5) - abs(lshift);
+
+      for (k = 0; k < z; k++) {
 	/* set all values to nullv */
 	pic[k*u*width + j*width + i] = nullv;
 
-	/* if not above the data */
-        if (leftmost[j] != x-width) {
-	  nx = i + leftmost[j];
-
-	  /* top of image leans to the left of the bottom, i.e. angle < 0 */
-	  if (lshift < 0) nu = j - (int)(fabs(shift)*nx+0.5);
-	  /* top of image leans to the right of the bottom, i.e. angle > 0 */
-	  if (lshift > 0) nu = j + (int)(nx*shift+0.5) - abs(lshift);
-
-	  if (nu >= 0 && nu <= y && nx >= 0 && nx <= x && (yiz = extract_float(obj, cpos(nx,nu,k,obj))) != nullo) pic[k*u*width + j*width + i] = yiz;
+	/* if not above the data nor looking off the original array */
+	/* I removed this condition (leftmost[j] != x-1 && i + leftmost[j] < x) from the following if statement */
+	if (nu >= 0 && nu <= y && nx >= 0 && nx <= x && (yiz = extract_float(obj, cpos(nx,nu,k,obj))) != nullo){ 
+	  pic[k*u*width + j*width + i] = yiz;
 	}
       }
     }
@@ -1866,6 +1873,9 @@ thm_rectify(vfuncptr func, Var * arg)
   add_struct(out, "angle", newFloat(angle));
   return out;
 }
+
+
+
 
 
 Var*
