@@ -11,8 +11,6 @@ static float *convolve(float *obj, float *kernel, int ox, int oy, int oz, int kx
 static Var *do_my_convolve(Var *obj, Var *kernel, int norm, float ignore, int kernreduce);
 static float *sawtooth(int x, int y, int z);
 static int *do_corners(Var *pic_a, float nullval);
-static float *unslantc(float *data, int *leftedge, int width, int x, int y, int z, float ignore);
-static float *unshearc(float *w_pic, float angle, int x, int y, int z, float nullv);
 static float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval);
 static float *tb2rad(float *btemp, Var *temp_rad, int *bandlist, int bx, float nullval, int x, int y);
 static emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1, int b2);
@@ -1688,6 +1686,8 @@ thm_rectify(vfuncptr func, Var * arg)
   /* updated 07/06/2005 to change "null" arguments to accept "ignore".     - kjn */
   /* updated 07/19/2005 fixed bug that sometimes chopped off ends of data. - kjn */
   /* updated 07/26/2005 to check for ignore value before running corners.  - kjn */
+  /* updated 07/27/2005 to fix top and bottom leftedge values.             - kjn */
+  /* updated 07/27/2005 to handle errors from un-rectifiable arrays.       - kjn */
 
   typedef unsigned char byte;
 
@@ -1725,7 +1725,7 @@ thm_rectify(vfuncptr func, Var * arg)
 
   /* if no picture got passed to the function */
   if (obj == NULL){
-    parse_error("rectify2() - 7/26/05");
+    parse_error("rectify() - 7/27/05");
     parse_error("Extracts rectangle of data from projected cubes\n");
     parse_error("Syntax:  b = thm.rectify(obj,ignore,trust,force)");
     parse_error("example: b = thm.rectify(obj=a)");
@@ -1758,7 +1758,7 @@ thm_rectify(vfuncptr func, Var * arg)
     ign = (yiz<ign)?yiz:ign;
   }
   if(ign != nullo && force == 0) {
-    parse_error("/nERROR: The ignore value specified could not be found in the first row!");
+    parse_error("\nERROR: The ignore value specified could not be found in the first row!");
     parse_error("I believe the real ignore value is %f",ign);
     parse_error("If you believe the ignore value specified is correct set force = 1 and re-run\n");
     return NULL;
@@ -1766,6 +1766,14 @@ thm_rectify(vfuncptr func, Var * arg)
 
   /* calling corners to find the angle */
   cns = do_corners(obj,nullo);
+
+  /* exit if corners are on the edge of the image */
+  if(cns[2]-cns[0] == x-1 || cns[6]-cns[4] == x-1 || cns[5]-cns[1] == y-1 || cns[7]-cns[3] == y-1){
+    parse_error("ERROR! Cannot find the corners of the image!");
+    free(cns);
+    return NULL;
+  }
+
   if (trust == 0) angle = (360.0/(2.0*3.14159265))*(atan2((cns[3]-cns[1]),(cns[2]-cns[0])));
   if (trust == 1) angle = (360.0/(2.0*3.14159265))*(atan2((cns[7]-cns[5]),(cns[6]-cns[4])));
   if (trust > 0 && trust < 1) {
@@ -1835,8 +1843,63 @@ thm_rectify(vfuncptr func, Var * arg)
   *** left point in all bands.  Unfortunately the bands do not overlap
   *** perfectly and the leftedge trails away.  Simply throwing out these
   *** rows will not work either.  The leftedge must be fixed at this
-  *** point before the data is extracted.
+  *** point before the data is extracted. This may result in a leftedge
+  *** value that is negative, but that's ok.
   **/
+
+  /* from the top of leftmost */
+  /* search through leftmost from top looking for first value != x-1 */
+  k = 0;    // position counter
+  while(leftmost[k] == x-1){ k++; }  // position of the first real value
+
+  /* look into the array 20 pixels and 120 pixels to calculate leftmost angle */
+  j = k+20;
+  /* if leftmost[j] is a dropout, keep searching */
+  while(leftmost[j] == x-1 && j<u){ j++; }
+
+  i = k+120;
+  /* if leftmost[i] is a dropout, keep searching */
+  while(leftmost[i] == x-1 && i<u){ i++; }
+
+  /* reuse 'angle1' to hold the slope of the leftmost */
+  angle1 = (leftmost[i] - leftmost[j])/((float)i-(float)j);
+
+  /* now force the first 20 values to that slope */
+  for(j=k; j<=k+20; j++) {
+    /* now calculate slope between current point and leftmost[i] above */
+    angle2 = (leftmost[i] - leftmost[j])/((float)i-(float)j);
+    /* if the slopes differ by more than 5 percent force leftmost[j] to conform to good slope */
+    if(fabs(1.0 - angle2/angle1) > .05) {
+      leftmost[j] = leftmost[i] - (i-j)*angle1;
+    }
+  }
+
+  /* now from the bottom of leftmost */
+  /* search through leftmost from bottom looking for first value != x-1 */
+  k = u-1;    // position counter
+  while(leftmost[k] == x-1){ k--; }  // position of the first real value
+
+  /* look into the array 20 pixels and 120 pixels to calculate leftmost angle */
+  j = k-20;
+  /* if leftmost[j] is a dropout, keep searching */
+  while(leftmost[j] == x-1 && j>=0){ j--; }
+
+  i = k-120;
+  /* if leftmost[i] is a dropout, keep searching */
+  while(leftmost[i] == x-1 && i>=0){ i--; }
+
+  /* reuse 'angle1' to hold the slope of the leftmost */
+  angle1 = (leftmost[i] - leftmost[j])/((float)i-(float)j);
+
+  /* now force the first 20 values to that slope */
+  for(j=k; j>=k-20; j--) {
+    /* now calculate slope between current point and leftmost[i] above */
+    angle2 = (leftmost[i] - leftmost[j])/((float)i-(float)j);
+    /* if the slopes differ by more than 5 percent force leftmost[j] to conform to good slope */
+    if(fabs(1.0 - angle2/angle1) > .05) {
+      leftmost[j] = leftmost[i] - (i-j)*angle1;
+    }
+  }
 
   /* assign memory to sheared and slanted array */
   pic = (float *)malloc(sizeof(float)*z*u*width);
@@ -1878,196 +1941,104 @@ thm_rectify(vfuncptr func, Var * arg)
 
 
 
+
 Var*
 thm_reconstitute(vfuncptr func, Var * arg)
 {
-    /* updated to change "null" arguments to accept "ignore" and fix memory leak.*/
-    /* 07/06/2005 - kjn*/
+  /* replaced older version.  Makes only one copy of array. 07/27/05 - kjn */
 
-  Var    *obj=NULL;                 /* input rectify structre */
-  Var    *out=NULL;                 /* output data */
-  Var    *vdata=NULL;               /* data  var */
-  Var    *vleftedge=NULL;           /* leftedge var */
-  Var    *w=NULL,*a=NULL;           /* width and angle var */ 
-  int    *leftedge=NULL;            /* leftedge array */
-  float   angle=0;                  /* angle value */
-  int     width=0;                  /* width value */
-  int     x,y,z;                    /* rectified image size */
-  int     i,j,k;                    /* loop indices */
-  float  *new_data=NULL;            /* changing data size */
-  float   null=-32768;              /* null value */
-  int     lshift;                   /* vert shift max shift */
-  float   shift;                    /* tan of the shift */
-  
-  
-  Alist alist[4]; 
-  alist[0] = make_alist("rect",        ID_STRUCT,  NULL,  &obj);
-  alist[1] = make_alist("ignore",      FLOAT,      NULL,  &null);
-  alist[2] = make_alist("null",        FLOAT,      NULL,  &null); // can be removed when all legacy programs are dead
-  alist[3].name = NULL;
+  Var    *obj = NULL;               /* input rectify structre    */
+  Var    *out = NULL;               /* output data               */
+  Var    *vdata = NULL;             /* data var                  */
+  Var    *vleftedge = NULL;         /* leftedge var              */
+  Var    *w = NULL,*a = NULL;       /* width and angle var       */ 
+  float  *new_data = NULL;          /* reconstituted float data  */
+  float   angle = 0;                /* angle value               */
+  float   ign = -32768;             /* null data value           */
+  int     x,y,z;                    /* rectified image size      */
+  int     nx = 0, ny = 0;           /* new image x and y sizes   */
+  int     ni = 0, nj = 0;           /* parameterized coordinates */
+  int     i,j,k;                    /* loop indices              */
+  int     lshift;                   /* vert shift max shift      */
+  float   shift;                    /* tan of the shift          */
+  int     leftedge = 0;             /* temporary leftedge value  */
+
+  Alist alist[2]; 
+  alist[0] = make_alist("structure", ID_STRUCT, NULL, &obj);
+  alist[1].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);
   
   if(obj==NULL ) {
-    parse_error("\nTakes rectified cubes and returns");
-    parse_error("them to projected geometry\n");
-    parse_error("$1 = rectify structure");
-    parse_error("ignore = value of the null data (default -32768)\n");
-    parse_error("c.edwards 12/15/04");
-    parse_error("k.nowicki 07/06/05\n");
+    parse_error("reconstitute() - 7/27/05");
+    parse_error("Unslants and unshears an output structure from rectify()");
+    parse_error("Syntax:  b = thm.reconstitute(structure)");
+    parse_error("example: b = thm.reconstitute(a)\n");
+    parse_error("\'structure\' is the output from rectify()");
+    parse_error("The structure must contain .data, .leftedge, .angle, and .width elements.");
+    parse_error("The output will have null data values set to -32768\n");
     return NULL;
   }
   
-  /* get stuff from structre */
+  /* get stuff from structure */
   find_struct(obj,"data",&vdata);
   find_struct(obj,"leftedge",&vleftedge);
   find_struct(obj,"angle",&a);
   find_struct(obj,"width",&w);
-  width = extract_int(w, 0);
-  angle = -extract_float(a,0);
-  
-  if(angle == 0) {
-    parse_error("Why did you bother to shear the data by a 0 angle?\n"); return NULL;
-  }
-  if(angle > 80 || angle < -80) {
-    parse_error("Try to stay between -80 and 80, love.  Our motto is \"No Crashy Crashy.\""); return NULL;
-  }
-  
+  nx = extract_int(w,0);
+  angle = extract_float(a,0);
+
   /* get x,y,z */
   x=GetX(vdata);
   y=GetY(vdata);
   z=GetZ(vdata);
-  new_data=(float *)calloc(sizeof(float),x*y*z);
-  leftedge=(int *)calloc(sizeof(int),y);
-  
-  /* extract the data  and leftedge*/
-  for(j=0;j<y;j++) {
-    leftedge[j]=extract_int(vleftedge,cpos(0,j,0,vleftedge));
-  }
-  for (k=0;k<z;k++) {
-    for (j=0;j<y;j++) {
-      for (i=0;i<x;i++) {
-	new_data[x*y*k + x*j + i]=extract_float(vdata,cpos(i,j,k,vdata));
+
+  /* calculate shift, lshift and new y dimension */
+  shift = tan((M_PI / 180.0) * angle);
+  lshift = (int)(nx*fabs(shift)+0.5)*(shift/fabs(shift));
+  ny = y - abs(lshift);
+
+  /* create new array and loop through and set all points to ignore value */
+  new_data=(float *)malloc(sizeof(float)*nx*ny*z);
+
+  for(k=0; k<z; k++) {
+    for(j=0; j<ny; j++) {
+      for(i=0; i<nx; i++) {
+	new_data[k*nx*ny + j*nx + i] = -32768;
       }
     }
   }
 
-  /* run unslantc */
-  new_data=unslantc(new_data,leftedge,width,x,y,z,null);
-  
-  /* calculating the number of rows to add to the picture to accomodate the shear */
-  shift = tan((M_PI / 180.0) * angle);
-  lshift = (int)((width*fabs(shift)-0.5)+1)*(shift/fabs(shift));
+  /* extract data directly into unsheared and unslanted array */
+  for(j=0; j<y; j++){
+    leftedge = extract_int(vleftedge,cpos(0,j,0,vleftedge));
+    for(i=0; i<x; i++){
 
-  /* error handling */
-  if(lshift == 0) {
-    parse_error("The shear is too small to accomplish anything. Try again bozo.\n"); return NULL;
+      /* parameterize the rectified coordinates */
+      ni = i + leftedge;
+      /* top of image leans to the left of the bottom, i.e. angle < 0 */
+      if (lshift < 0) nj = j - (int)(fabs(shift)*ni + 0.5);
+       /* top of image leans to the right of the bottom, i.e. angle > 0 */
+      if (lshift > 0) nj = j + (int)(ni*shift + 0.5) - abs(lshift);
+
+      for(k=0; k<z; k++){
+	/* if not outside of the reconstituted cube */
+	if (nj >= 0 && nj < ny && ni >= 0 && ni < nx){ 
+	  new_data[k*ny*nx + nj*nx + ni] = extract_float(vdata,cpos(i,j,k,vdata));
+	}
+      }
+    }
   }
-  if(y-abs(lshift)<=0) {
-    parse_error("The trimmed array has a length of %d, you nincompoop. Stop trying to crash me.\n", y-abs(lshift));
-    return NULL;
-  }
-  
-  /* run unshearc */
-  new_data=unshearc(new_data,angle,width,y,z,null);
-  
+
   /* return the data */  
-  out = newVal(BSQ, width, y-abs(lshift), z, FLOAT, new_data);
+  out = newVal(BSQ, nx, ny, z, FLOAT, new_data);
   return(out);
 }
 
 
 
 
-static float *unslantc(float *data, int *leftedge, int width, int x, int y, int z, float ignore)
-{
-  /* set up variables */
-  int    i,j,k,p;
-  float *odata=NULL;
-  
-  /* allocate memory for the new data */
-  odata = calloc(width*y*z, sizeof(float));
-  
-  /* extract the data and shift it */
-  for (j=0;j<y;j++) {
-    for (i=0;i<width;i++) {
-      for (k=0;k<z;k++) {
- 	if (i >= leftedge[j] && i < leftedge[j]+x) {
-	  odata[width*y*k + width*j +i] = data[x*y*k + x*j + (i-leftedge[j])];
-	} else {
-	  odata[width*y*k + width*j +i] = ignore;
-	}
-      }
-    }
-  } 
 
-  free(data);
-  /* return the data */
-  return(odata);
-}
-
-
-
-
-static float *unshearc(float *w_pic, float angle, int x, int y, int z, float nullv)
-{
-
-  float   *pic=NULL;
-  float    shift;                   /* the shift/pixel */
-  int      lshift;                  /* the largest shift (int) */
-  int      i, j, k;                 /* loop indices */
-  int      nx, ni, nj;              /* memory locations */
-  Var     *out=NULL;
-
-  /* calculating the number of rows to add to the picture to accomodate the shear */
-  shift = tan((M_PI / 180.0) * angle);
-  lshift = (int)((x*fabs(shift)-0.5)+1)*(shift/fabs(shift));
-  
-   /*create the new picture array */
-  pic = (float *)calloc(sizeof(float), x*z*(y-abs(lshift)));
-  
-  if (pic == NULL) {
-    parse_error("ERROR! Unable to allocate %d bytes\n", sizeof(float)*x*z*(y+abs(lshift)));
-    return NULL;
-  }
-  
-  /* fill in the null value into all pic elements */
-  if(nullv != 0) {
-    for(k=0; k<z; k++) {
-      for(j=0; j<y-abs(lshift); j++) {
-	for(i=0; i<x; i++) {
-	  ni = k*(y-abs(lshift))*x + j*x + i;
-	  pic[ni] = nullv;
-	}
-      }
-    }
-  }
-  
-  /* extract the picture directly into a sheared, but trimmed, array */
-  for(k=0; k<z; k++) {
-    for(j=0; j<y-abs(lshift); j++) {
-      for(i=0; i<x; i++) {
-	
-	/* the index of the new array */
-	nx = k*(y-abs(lshift))*x + j*x + i;
-	
-	/* the shifted y pixel */
-	/* if the angle is greater than 0 */
-	if(lshift>0) {
-	  nj = j + (int)(fabs(shift)*i+0.5);
-	}
-	
-	/* if the angle is less than 0 */
-	if(lshift<0) {
-	  nj = j + abs(lshift) - (int)(fabs(shift)*i+0.5);
-	}
-	pic[nx] = w_pic[x*y*k + nj*x + i];
-      }
-    }
-  }
-  free(w_pic);
-  return(pic);
-}
 
 Var *
 thm_rad2tb(vfuncptr func, Var * arg)
