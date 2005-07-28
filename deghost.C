@@ -10,8 +10,10 @@
 
 #if defined(HAVE_LIBQMV) && defined(HAVE_QMV_HVECTOR_H)
 #include <qmv/hvector.h>
+#include <qmv/nearest.h>
+#include <qmv/intersection.h>
 
-#define MYSQL_CMD "dblogin2"
+#define MYSQL_CMD "mysql -h mapserver1 -udeghost_user -pdghstpsswrd themis2"
 #define WGET_CMD "wget -q -O -"
 
 // For every pixel DOWN in image for the ghost, we ADD this much
@@ -24,7 +26,26 @@
 // Defines rounding tolerance for the edges of the framelets
 #define ZERO (1.0/512)
 
+// Defines the reference slant distance used for altitude correction
+// of the along-track ghosting offset values. This is the average
+// slant distance for image I01076010.
+//#define REFERENCE_DISTANCE 402.4
+#define REFERENCE_IMAGE "I01076010"
+
 static char ERRMSG[5000];
+
+static Ellipsoid MARS(3397,3397,3375);
+
+#define MOLA_DATA_FILE "/mgs/mola/megdr/megr90n000cb.img"
+
+// The raw mola planetary radii bytes, at 4 pixels per degree, indexed
+// by east-leading areocentric longitude and latitude, two bytes per
+// pixel. Measured in meters, relative to a base offset of
+// MOLA_OFFSET.
+#define MOLA_COLS (4 * 360)
+#define MOLA_ROWS (4 * 180)
+#define MOLA_OFFSET 3396000.0
+static unsigned char mola[MOLA_COLS * MOLA_ROWS * 2];
 
 struct Point
  {
@@ -69,6 +90,62 @@ rotateP(HVector orig, HVector axis, double theta)
 	return  orig*cos(theta) + dir*sin(theta);
  }
 
+static double
+ellipsoid_altitude(const HVector &pt)
+ {
+	Nearest_point np(MARS, pt);
+	if(np.error)
+	 {
+		fprintf(stderr,
+				"********* DE-GHOST STRANGENESS!!! ERROR=%d\n"
+				"********* Tell Michael the OLD altitude function failed.\n",
+				np.error);
+		return  NAN;
+	 }
+ }
+
+// Returns non-zero if mola is available, zero if it's not.
+inline static int
+mola_loaded()
+ {
+	static int load_attempted = 0;
+	static int load_successful = 0;
+
+	if(!load_attempted)
+	 {
+		load_attempted = 1;
+
+		FILE *fp = fopen(MOLA_DATA_FILE, "r");
+		if(!fp)
+		 {
+			fprintf(stderr,
+					"******* DE-GHOST STRANGENESS!!!\n"
+					"******* Unable to open MOLA data file "
+					MOLA_DATA_FILE "\n");
+			perror("******* perror says");
+		 }
+		else
+		 {
+			// We offer to read an extra byte so that we can detect if
+			// the file is bigger than it should be.
+			unsigned char *mola2 = new unsigned char[sizeof(mola) + 1];
+			size_t bytes_read = fread(mola2, 1, sizeof(mola)+1, fp);
+			if(bytes_read != sizeof(mola))
+				fprintf(stderr,
+						"********* DE-GHOST STRANGENESS!!!\n"
+						"********* The mola data file was too big. "
+						MOLA_DATA_FILE "\n");
+			else
+				load_successful = 1;
+			memcpy(mola, mola2, sizeof(mola));
+			delete[] mola2;
+			fclose(fp);
+		 }
+	 }
+
+	return  load_successful;
+ }
+
 static double inline
 toRadians(double deg)
  {
@@ -81,17 +158,21 @@ toDegrees(double rad)
 	return  rad / M_PI * 180.0;
  }
 
-static HVector
-toVec(Point2D& pt)
+inline static HVector
+toVec(const double &lon, const double &lat)
  {
-	double& lon = pt.x;
-	double& lat = pt.y;
 	return
 		HVector(
 			cos(toRadians(lat)) * cos(toRadians(-lon)),
 			cos(toRadians(lat)) * sin(toRadians(-lon)),
 			sin(toRadians(lat))
 			);
+ }
+
+inline static HVector
+toVec(const Point2D& pt)
+ {
+	return  toVec(pt.x, pt.y);
  }
 
 static double
@@ -128,6 +209,57 @@ toLonLat(const HVector& v)
 					lat(v));
  }
 
+static int MSB = 0;
+static int LSB = 1;
+
+// Takes west-leading longitude, even though mola operates in
+// east-leading. Returns the MOLA radius at the given point, in
+// kilometers (even though MOLA's stored in meters).
+inline static double
+getMolaRadius(double lon, double lat)
+ {
+	if(!mola_loaded())
+		return  NAN;
+
+	lat = 90-lat; // north pole to zero, south pole to 180
+	lon = 360 - lon; // west-leading converted to east-leading
+
+	int idxLon = int(lon * 4 + 0.5) % MOLA_COLS;
+	int idxLat = int(lat * 4 + 0.5);
+
+	int msb = mola[(idxLon + idxLat*MOLA_COLS) * 2 + MSB];
+	int lsb = mola[(idxLon + idxLat*MOLA_COLS) * 2 + LSB];
+
+	signed short meters = msb<<8 | lsb;
+//	printf("lsb\t%d\t(%d)\n", lsb, (signed short)(lsb<<8));
+//	printf("msb\t%d =\t(%d)\n", msb, (signed short)(msb<<8));
+//	printf("%6d\t", meters);
+
+	return  (MOLA_OFFSET + meters) / 1000.0;
+ }
+
+// Given a lon/lat and a slant distance, calculates a vector relative
+// to the ellipsoid's surface (but not in a normal-to-the-surface
+// direction). Returns a vector with the given areoCENTRIC
+// west-leading lon/lat, but whose radius vector extends slant_dist
+// beyond the ellipsoid's surface.
+inline static HVector
+surfaceVector(double lon, double lat, double slant_dist)
+ {
+	static HVector ORIGIN(0,0,0);
+	HVector unit = toVec(lon, lat);
+	HVector pt = Intersection(Ray(ORIGIN,unit), MARS).point1;
+	return  unit * (pt.norm() + slant_dist);
+ }
+
+// Given a lon/lat in west-leading areocentric coordinates, returns a
+// radial vector whose magnitude comes from MOLA topography.
+inline static HVector
+molaVector(double lon, double lat)
+ {
+	return  toVec(lon, lat) * getMolaRadius(lon, lat);
+ }
+
 struct Cell
  {
 	// Each of the cell's border points
@@ -155,6 +287,20 @@ struct Cell
 	double wePlaneSpan;
 	double snPlaneSpan;
 
+	// Pre-calculatable stuff for interpolate()
+	HVector s_normal;
+	HVector n_normal;
+	HVector e_normal;
+	HVector w_normal;
+	HVector nperc_axis;
+	HVector eperc_axis;
+	double ns_maxangle;
+	double ew_maxangle;
+
+	// Distance from center of planet to the spacecraft, averaged for
+	// this framelet.
+	double radius;
+
 	// Adapted (and improved) from SpatialGraphicsSpOb.uninterpolate().
 	Point2D uninterpolate(HVector pt)
 	 {
@@ -173,16 +319,16 @@ struct Cell
 	// Copied in from SpatialGraphicsSpOb
 	HVector interpolate(double x, double y)
 	 {
-		HVector s_normal = (sw % se).unit();
-		HVector n_normal = (nw % ne).unit();
-		HVector e_normal = (ne % se).unit();
-		HVector w_normal = (nw % sw).unit();
+// 		HVector s_normal = (sw % se).unit();
+// 		HVector n_normal = (nw % ne).unit();
+// 		HVector e_normal = (ne % se).unit();
+// 		HVector w_normal = (nw % sw).unit();
 
-		HVector nperc_axis = (s_normal % n_normal).unit();
-		HVector eperc_axis = (w_normal % e_normal).unit();
+// 		HVector nperc_axis = (s_normal % n_normal).unit();
+// 		HVector eperc_axis = (w_normal % e_normal).unit();
 
-		double ns_maxangle = acos(s_normal ^ n_normal);
-		double ew_maxangle = acos(e_normal ^ w_normal);
+// 		double ns_maxangle = acos(s_normal ^ n_normal);
+// 		double ew_maxangle = acos(e_normal ^ w_normal);
 
 		//// ABOVE: pre-calculatable / BELOW: dynamic ////
 
@@ -225,15 +371,19 @@ struct Cell
 	 }
 
 	void
-	set(const HVector& sw,
-		const HVector& se,
-		const HVector& ne,
-		const HVector& nw)
+	set(const HVector& _sw,
+		const HVector& _se,
+		const HVector& _ne,
+		const HVector& _nw)
 	 {
-		this->sw = sw;
-		this->se = se;
-		this->ne = ne;
-		this->nw = nw;
+		this->sw = _sw;
+		this->se = _se;
+		this->ne = _ne;
+		this->nw = _nw;
+		this->radius = ( sw.normalize() +
+						 se.normalize() +
+						 ne.normalize() +
+						 nw.normalize() ) / 4;
 
 //		chain = new HVector[] { sw, se, ne, nw, sw };
 		chain[0] = sw;
@@ -270,6 +420,19 @@ struct Cell
 		snPlane = (n % s).unit();
 		wePlaneSpan = M_PI - separation(e,w).value;
 		snPlaneSpan = M_PI - separation(s,n).value;
+
+		// pre-calculatable stuff for interpolate()
+
+		s_normal = (sw % se).unit();
+		n_normal = (nw % ne).unit();
+		e_normal = (ne % se).unit();
+		w_normal = (nw % sw).unit();
+
+		nperc_axis = (s_normal % n_normal).unit();
+		eperc_axis = (w_normal % e_normal).unit();
+
+		ns_maxangle = acos(s_normal ^ n_normal);
+		ew_maxangle = acos(e_normal ^ w_normal);
 	 }
  };
 
@@ -287,6 +450,29 @@ struct FramedImage
 	FramedImage()
 	 : lastCell(0)
 	 { }
+
+	// Returns (in lonlat) the lon/lat coordinates of the ghost for
+	// pixel x,y (given downtrack offset d and cross-track offset
+	// r). The actual function return value is non-zero if the offsets
+	// push us past the bounds of the image.
+	inline int pixel2ghostll(int x, int y,
+							 const int r, const int d,
+							 Point2D &lonlat)
+	 {
+		x -= r; // add in offsets
+		y -= d;
+		if(x < 0  ||  x >= imageW  ||
+		   y < 0  ||  y >= imageH  )
+			return  1;
+
+		// Convert the uncorrected pixel to a lon/lat
+		lonlat = toLonLat(toSpatial(x, y));
+
+		// Subtract time out of the longitude of the spatial coordinate.
+		lonlat.x += (d / (double)PIXEL_FRAC_SEC) * 360.0 / MARS_DAY;
+
+		return  0;
+	 }
 
 	HVector toSpatial(int x, int y)
 	 {
@@ -340,6 +526,26 @@ struct FramedImage
 
 		return  Point((int) rint(    unitPt.x  * (imageW    - 1)    ),
 					  (int) rint( (1-unitPt.y) * (realCellH - 1) ) + n*cellH);
+	 }
+
+	double getRadius(int y)
+	 {
+		if(y < 0  ||  y >= imageH)
+		 {
+			fprintf(stderr, "WOAH! Bad coordinate requested: %d / %d\n",
+					y, imageH);
+			return  NAN;
+		 }
+
+		int n = y / cellH;
+		if(n > count)
+		 {
+			fprintf(stderr, "WOAH! Cell %d requested2, only have %d cells.\n",
+					n, count);
+			return  NAN;
+		 }
+
+		return  cells[n].radius;
 	 }
  };
 
@@ -428,7 +634,7 @@ readCellsFromTrackServer(const char *stamp, FramedImage& fi)
 	int ycount = 2;
 	sprintf(cmd,
 			WGET_CMD " 'http://mapserver1.la.asu.edu/jmars/time_track.phtml"
-			"?format=c"
+			"?format=C"
 			"&xmin=%f&xdelta=%f&xcount=%d"
 			"&ymin=%f&ydelta=%f&ycount=%d'",
 			xmin, xdelta, xcount,
@@ -518,7 +724,7 @@ readCellsFromTrackServer(const char *stamp, FramedImage& fi)
 		fi.cells[i].set(pts[i*2+2],
 						pts[i*2+3],
 						pts[i*2+1],
-						pts[i*2  ] );
+						pts[i*2  ]);
 
 	return  1;
  }
@@ -531,7 +737,7 @@ readCellsFromGeometryDB(const char *stamp, FramedImage& fi)
 
 	char cmd[1000];
 	sprintf(cmd,
-			MYSQL_CMD " -B -s -e \"select frame_id, find_in_set(point_type, 'LL,LR,UL,UR'), %slon, lat from geometry_detail where filename='%s' and point_type != 'CT' order by frame_id, point_type\"",
+			MYSQL_CMD " -B -s -e \"select frame_id, find_in_set(point_type, 'LL,LR,UL,UR'), %slon, lat, slant_distance from geometry_detail where filename='%s' and point_type != 'CT' and band_idx=1 order by frame_id, point_type\"",
 			reverseLon ? "360-" : "", stamp);
 
 	FILE *fp = popen(cmd, "r");
@@ -548,7 +754,7 @@ readCellsFromGeometryDB(const char *stamp, FramedImage& fi)
 		return  0;
 	 }
 
-	Point2D pts[3000]; // 256 frames max, rounded up (TIMES POINTS PER FRAME!)
+	HVector pts[3000]; // 256 frames max, rounded up (TIMES POINTS PER FRAME!)
 
 	// Priming values that would've resulted from record number -1
 	int last_frame_id = -1;
@@ -568,15 +774,17 @@ readCellsFromGeometryDB(const char *stamp, FramedImage& fi)
 		int read_point_type;
 		double read_lon;
 		double read_lat;
+		double read_dist;
 		int read_items;
 		read_items = sscanf(line_buff,
-							"%d %d %lf %lf",
+							"%d %d %lf %lf %lf",
 							&read_frame_id,
 							&read_point_type,
 							&read_lon,
-							&read_lat);
+							&read_lat,
+							&read_dist);
 
-		if(read_items != 4)
+		if(read_items != 5)
 		 {
 			sprintf(ERRMSG,
 					LINES
@@ -615,8 +823,8 @@ readCellsFromGeometryDB(const char *stamp, FramedImage& fi)
 		// Save them!
 		last_frame_id = read_frame_id;
 		last_point_type = read_point_type;
-		pts[last_frame_id * 4 + last_point_type - 1].x = read_lon;
-		pts[last_frame_id * 4 + last_point_type - 1].y = read_lat;
+		int idx = last_frame_id * 4 + last_point_type - 1;
+		pts[idx] = surfaceVector(read_lon, read_lat, read_dist);
 	 }
 	pclose(fp);
 
@@ -650,10 +858,10 @@ readCellsFromGeometryDB(const char *stamp, FramedImage& fi)
 	// Finally... turn the border points into full-fledged Cell objects
 	fi.cells = new Cell[last_frame_id];
 	for(int i=1; i<=last_frame_id; i++)
-		fi.cells[i-1].set(toVec(pts[i * 4 + 0]),
-						  toVec(pts[i * 4 + 1]),
-						  toVec(pts[i * 4 + 3]),
-						  toVec(pts[i * 4 + 2]));
+		fi.cells[i-1].set(pts[i * 4 + 0],
+						  pts[i * 4 + 1],
+						  pts[i * 4 + 3],
+						  pts[i * 4 + 2]);
 
 	// Success!
 	fi.count = last_frame_id;
@@ -721,42 +929,69 @@ readImage(const char *fname, FramedImage& fi)
  }
 
 static void
-createGhost(FramedImage& fi, int gd, int gr, const char *msg)
+createGhost(FramedImage& fi, int gd0, int gr, const char *msg,
+			double REF_DISTANCE)
  {
+	double dist = NAN;
+	int gd = gd0;
+	Point2D lonlat;
+	char notice[100];
+	FILE *log = NULL;
+	char *logfname = getenv("DVGHOST_LOG");
+
+	if(logfname)
+	 {
+		fprintf(stderr, "Verbose logging to file $DVGHOST_LOG = %s\n",
+				logfname);
+		log = fopen(logfname, "w");
+		if(!log)
+			perror("UNABLE TO OPEN $DVGHOST_LOG");
+	 }
+	else
+		fprintf(stderr, "Set $DVGHOST_LOG if you want a verbose log file.\n");
+
+	if(log)
+		fprintf(log, "#frame\tline\tsample\tlon\tlat\tdist\toffset\n");
+
 	for(int gy=0; gy<fi.imageH; gy++)
 	 {
 		if(msg  &&  gy % 10 == 0)
-			fprintf(stderr, "\r%s %d / %d", msg, gy, fi.imageH);
+		 {
+			sprintf(notice, "%s %d / %d (dist=%.1fkm, offset=%d->%d)",
+					msg, gy, fi.imageH, dist, gd0, gd);
+			fprintf(stderr, "\r%s ", notice);
+		 }
+
+		// Use cell interpolation for the spacecraft vector's
+		// direction, and the stored average cell radius for its
+		// magnitude.
+		HVector spacecraft = fi.toSpatial(fi.imageW/2, gy) * fi.getRadius(gy);
+
 		for(int gx=0; gx<fi.imageW; gx++)
 		 {
-			// Offset from target ghost pixel to an uncorrected source
-			// image pixel.
-			int ix = gx - gr;
-			int iy = gy - gd;
-			if(ix < 0  ||  ix > fi.imageW  ||
-			   iy < 0  ||  iy > fi.imageH  )
-				continue;
+			// Calculate ghost lon/lat without altitude compensation,
+			// then use mola to derive a radial vector.
+			if(fi.pixel2ghostll(gx, gy, gr, gd0, lonlat)) // output in lonlat
+				continue; // ghosted to outside the image
+			HVector target = molaVector(lonlat.x, lonlat.y);
 
-			// Convert the uncorrected pixel to a spatial coordinate.
-			HVector spatial = fi.toSpatial(ix, iy);
+			// Calculate distance to target, revise downtrack offset.
+			dist = (spacecraft - target).norm();
+			gd = (int) round(gd0 * dist / REF_DISTANCE);
 
-			// Subtract time out of the longitude of the spatial coordinate.
-			Point2D lonlat = toLonLat(spatial);
-			lonlat.x += (gd / (double)PIXEL_FRAC_SEC) * 360.0 / MARS_DAY;
-			spatial = toVec(lonlat);
+			if(log  &&  gx%8==0  &&  gy%8==0)
+				fprintf(log, "%d\t%d\t%d\t%f\t%f\t%f\t%d\n",
+						gy / 256, gy, gx, lonlat.x, lonlat.y, dist, gd);
 
-			// Convert back to pixel coordinates, this is the actual
-			// imaged pixel for the ghost.
-//			fprintf(stderr, "%d %d\t", ix, iy);
-			Point sourcePt = fi.toPixel(spatial);
-			ix = sourcePt.x;
-			iy = sourcePt.y;
-//  			if(gx != ix  ||  gy != iy)
-//  			 {
-//  				printf("%d %d", gx, gy);
-//  				printf(" %d", fi.whichCell(spatial));
-//  				printf("    %d %d\n", ix, iy);
-//  			 }
+			// Re-calculate ghost lon/lat with the distance-compensated offset
+			if(fi.pixel2ghostll(gx, gy, gr, gd, lonlat)) // output in lonlat
+				continue; // ghosted to outside the image
+
+			// Finally, interpolate the latest lonlat back to an image pixel
+			Point sourcePt = fi.toPixel(toVec(lonlat));
+
+			int ix = sourcePt.x;
+			int iy = sourcePt.y;
 			if(ix == -1)
 				continue;
 
@@ -770,9 +1005,7 @@ createGhost(FramedImage& fi, int gd, int gr, const char *msg)
 		 }
 	 }
 	if(msg)
-		fprintf(stderr, "\r%*s\r",
-				int( strlen(msg) + ceil(log10(fi.imageH)) * 2 + 2),
-				"");
+		fprintf(stderr, "\r%*s\r", strlen(notice), "");
  }
 
 static void
@@ -832,6 +1065,64 @@ testUninterpolate(Cell& cell)
 	exit(0);
  }
 
+static double getRefDistance(int gd, int gr, int useTrackServer)
+ {
+	static double distances[2] = { 0, 0 };
+
+	useTrackServer = !!useTrackServer; // forces zero or one
+
+	if(distances[useTrackServer] == 0)
+	 {
+		FramedImage fi;
+		fi.imageW = 320;
+		fi.imageH = 999999;
+		fi.cellH = 256;
+		readCells(REFERENCE_IMAGE, fi, useTrackServer);
+
+		int count = 0;
+		for(int i=0; i<fi.count-1; i++) // ignore the last (partial) cell
+		 {
+			double dist;
+			int gx = fi.imageW / 2;
+			int gy = fi.cellH/2 + i*fi.cellH;
+			Point2D lonlat;
+
+			// Use cell interpolation for the spacecraft vector's
+			// direction, and the stored average cell radius for its
+			// magnitude.
+			HVector spacecraft =
+				fi.toSpatial(fi.imageW/2, gy) * fi.getRadius(gy);
+//			fprintf(stderr, "Spacecraft radius: %f\n", spacecraft.norm());
+//			fprintf(stderr, "Cell radius: %f\n", fi.getRadius(gy));
+
+			// Calculate ghost lon/lat without altitude compensation,
+			// then use mola to derive a radial vector.
+			if(fi.pixel2ghostll(gx, gy, gr, gd, lonlat)) // output in lonlat
+				continue; // ghosted to outside the image
+			HVector target = molaVector(lonlat.x, lonlat.y);
+//			fprintf(stderr, "target radius: %f\n", target.norm());
+//			fprintf(stderr, "mola radius: %f\n", getMolaRadius(lonlat.x,
+//															   lonlat.y));
+
+			// Calculate distance to target, revise downtrack offset.
+			dist = (spacecraft - target).norm();
+
+//			fprintf(stderr, "Distance = %f\n", dist);
+			distances[useTrackServer] += dist;
+			++count;
+		 }
+		distances[useTrackServer] /= count;
+
+		fprintf(stderr, "Calculated reference distance for %s as %.1f\n",
+				REFERENCE_IMAGE,
+				distances[useTrackServer]);
+
+		delete[] fi.cells;
+	 }
+
+	return  distances[useTrackServer];
+ }
+
 /**
  ** Writes into ghostDataBuff the predicted ghost image. A null return
  ** value indicates success, a non-null return value contains an error
@@ -871,6 +1162,10 @@ createThemisGhostImage(int ghostDown,
 	if(!readCells(stamp_id, fi, useTrackServer))
 		return  ERRMSG;
 
+	double REF_DISTANCE = getRefDistance(ghostDown, ghostRight,
+										 useTrackServer);
+
+
 /*MCW
 	for(int i=0; i<fi.count; i++)
 	 {
@@ -884,16 +1179,116 @@ createThemisGhostImage(int ghostDown,
 	exit(0);
 */
 
-	createGhost(fi, ghostDown, ghostRight, msg);
+	createGhost(fi, ghostDown, ghostRight, msg, REF_DISTANCE);
 
 	delete[] fi.cells;
 
 	return  NULL;
  }
 
-#ifdef GHOST_MAIN
-main(int ac, char *av[])
+int
+test_main()
  {
+	char buff[100];
+	while(fgets(buff, sizeof(buff), stdin))
+	 {
+		buff[strlen(buff)-1] = 0;
+		FramedImage fi;
+		fi.imageW = 320;
+		fi.imageH = 999999;
+		fi.cellH = 256;
+		Point2D lonlat;
+
+		int i = 0;
+		int gr = 0;
+		int gd = 80;
+
+		double dist0;
+		if(!readCells(buff, fi, 0))
+		 {
+			fprintf(stderr, "Skipping %s:\n%s\n", buff, ERRMSG);
+			continue;
+		 }
+		else
+		 {
+			int gx = fi.imageW / 2;
+			int gy = fi.cellH/2 + i*fi.cellH;
+
+			// Use cell interpolation for the spacecraft vector's
+			// direction, and the stored average cell radius for its
+			// magnitude.
+			HVector spacecraft =
+				fi.toSpatial(fi.imageW/2, gy) * fi.getRadius(gy);
+
+			// Calculate ghost lon/lat without altitude compensation,
+			// then use mola to derive a radial vector.
+			if(fi.pixel2ghostll(gx, gy, gr, gd, lonlat)) // output in lonlat
+				continue; // ghosted to outside the image
+			HVector target = molaVector(lonlat.x, lonlat.y);
+
+			// Calculate distance to target, revise downtrack offset.
+			dist0 = (spacecraft - target).norm();
+
+			printf("%f\t%f\t", lonlat.y, dist0);
+			delete[] fi.cells;
+		 }
+
+		double dist1;
+		if(!readCells(buff, fi, 1))
+		 {
+			fprintf(stderr, "Skipping2 %s: %s\n", buff, ERRMSG);
+			continue;
+		 }
+		else
+		 {
+			int gx = fi.imageW / 2;
+			int gy = fi.cellH/2 + i*fi.cellH;
+
+			// Use cell interpolation for the spacecraft vector's
+			// direction, and the stored average cell radius for its
+			// magnitude.
+			HVector spacecraft =
+				fi.toSpatial(fi.imageW/2, gy) * fi.getRadius(gy);
+
+			// Calculate ghost lon/lat without altitude compensation,
+			// then use mola to derive a radial vector.
+			if(fi.pixel2ghostll(gx, gy, gr, gd, lonlat)) // output in lonlat
+				continue; // ghosted to outside the image
+			HVector target = molaVector(lonlat.x, lonlat.y);
+
+			// Calculate distance to target, revise downtrack offset.
+			dist1 = (spacecraft - target).norm();
+
+			printf("%f\t%f\n", lonlat.y, dist1);
+			delete[] fi.cells;
+		 }
+	 }
+ }
+
+#ifdef GHOST_MAIN
+int main(int ac, char *av[])
+ {
+/*
+	++av;
+	--ac;
+	if(!strcmp(av[ac-1],"lsb"))
+	 {
+		--ac;
+		MSB = 1;
+		LSB = 0;
+	 }
+		
+	while(ac)
+	 {
+		double lon = atof(av[0]);
+		double lat = atof(av[1]);
+		printf("%g W\t%g\t", lon, lat);
+		printf("%f\n", getMolaRadius(lon, lat));
+		av += 2;
+		ac -= 2;
+	 }
+	exit(-1);
+*/
 	if(ac != 4)
 	 {
 		fprintf(stderr, "USAGE: stampid.pgm ghostDown {ts|db}\n");
