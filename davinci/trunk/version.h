@@ -1,8 +1,16 @@
-char *version = "@(#) daVinci Version #1.48";
+char *version = "@(#) daVinci Version #1.49";
 
 #include "build.h"
 
 /*
+Version 1.49: Thu Jul 28 14:24:05 MST 2005
+        * Finally formally committing the deghost updates developed back in
+	  sept of 2004.
+	* Basically, these use actual MOLA data and geometry_detail
+	  interpolation to derive a more accurate ghost estimate, instead of
+	  using the single reference values originally derived for a particular
+	  altitude.
+
 Version 1.48: Mon May 27 15:53:58 MST 2005
 	* Fixed variety of gui module bugs
 	* Fixed example scripts in modules/guitest
