@@ -42,6 +42,7 @@ static Var *thm_radcorr(vfuncptr func, Var * arg);
 static Var *thm_ipi(vfuncptr func, Var * arg);
 static Var *thm_column_fill(vfuncptr func, Var * arg);
 static Var *thm_supersample(vfuncptr func, Var *);
+static Var *thm_destripe(vfuncptr func, Var *arg);
 
 static dvModuleFuncDesc exported_list[] = {
   { "deplaid", (void *) thm_deplaid },
@@ -65,11 +66,12 @@ static dvModuleFuncDesc exported_list[] = {
   { "radcorr", (void *) thm_radcorr },
   { "ipi", (void *) thm_ipi },
   { "column_fill", (void *) thm_column_fill },
-  { "supersample", (void *) thm_supersample }
+  { "supersample", (void *) thm_supersample },
+  { "destripe", (void *) thm_destripe }
 };
 
 static dvModuleInitStuff is = {
-  exported_list, 22,
+  exported_list, 23,
   NULL, 0
 };
 
@@ -2671,8 +2673,430 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
 
 
 
+
+Var *thm_maxpos(vfuncptr func, Var *arg){
+
+  /* written by Jason Ki 08/01/05, placed in thm module by k.nowicki */
+  /* replaces the maxpos algorithm written by c.edwards */
+  /* handles multiple searches of values faster than it's predecessor */
+
+  int         *pos = NULL;                                            // a [3x1xpts] array to hold the position of all the elements in values //
+  int          pts = 1;                                               // the nth max numbers in the given array //
+  int          start,end;                                             // use to adjust the looping through the link list //
+  int          xdim,ydim,zdim;                                        // the dimensions of the given data array //
+  int          c,d,i,j,k;
+  float       *val = NULL;                                            // a [1x1xpts] array to hold the nth max values //
+  float        ignore = -42285;                                       // any potential ignore values //
+  float        tvalue = 0;                                            // temporary variable to hold extraction //
+  Var         *data = NULL;                                           // the acutal data //
+  Var         *out = NULL;
+
+  // structure containing the nth maximum value along with its location in the data //
+  struct numinfo{
+    float             maxnum;
+    int               x,y,z;
+    struct numinfo   *next;
+    struct numinfo   *prev;
+  };
+  
+  struct numinfo   *cursor = NULL;                                    // cursor that traverses the link list //
+  struct numinfo   *head = NULL;                                      // head of the list //
+  struct numinfo   *mid = NULL;                                       // the middle point of the list //
+  struct numinfo   *pcursor = NULL;                                   // the previous node the cursor visited //
+  struct numinfo   *tail = NULL;                                      // tail of the list //
+  struct numinfo   *temp = NULL;                                      // use to hold the newly created node //
+  struct numinfo   *tnxt = NULL;                                      // use to hold the address of the next node for insertion purposes //
+
+  Alist alist[4];
+  alist[0] = make_alist("data",    ID_VAL,   NULL, &data);
+  alist[1] = make_alist("ignore",  FLOAT,    NULL, &ignore);
+  alist[2] = make_alist("points",  INT,      NULL, &pts);
+  alist[3].name = NULL;
+
+  if(parse_args(func, arg, alist) == 0) return(NULL);
+  if(data == NULL){
+    parse_error("\nFunction finds the maximum value of a given data set.");
+    parse_error("Syntax:  a=maxpos(dataset,[ignore],[points])");
+    parse_error("   where:");
+    parse_error("   dataset  - any 3-d array of any organization or type");
+    parse_error("   [points] - number of values to return; default is set to return 1 point\n");
+    parse_error("Example: maxpos(a)");
+    parse_error("    out=maxpos(a,ignore=422,points=10)\n");
+    return(NULL);
+  }
+  if(pts > GetX(data)*GetY(data)*GetZ(data)){
+    parse_error("Too many points and not enough data, lower the point value.");
+    return(NULL);
+  }
+  else{
+    xdim = GetX(data);	 ydim = GetY(data);	 zdim = GetZ(data);
+    
+    cursor = head = mid = tail = NULL;                                // make everything point to nothing //
+    
+    for(i=0; i<pts; i++){
+      temp = (struct numinfo*)malloc(sizeof(struct numinfo));         // create the node //
+      temp->maxnum = -i;                                              // set to default value //
+      temp->x = 0;
+      temp->y = 0;
+      temp->z = 0;
+      temp->next = NULL;                                              // doing end-chaining thus the end will always point to nowhere //
+      
+      if(i == 0){                                                     // deal with linking issue for the first node //
+	temp->prev = NULL;                                            // since it is the first node created, theres nothing to point backward to //
+	head = mid = tail = cursor = temp;                            // update the head marker and the cursor //
+      }
+      else if((i != 0)&&(i != pts-1)){                                // deal with linking issue for the middle nodes //
+	temp->prev = cursor;                                          // set the previous link to the last node created //
+	cursor->next = temp;                                          // attach the newly created node to the end of the list //
+	cursor = temp;                                                // move the cursor to the newly created node //
+	if(i == (int)(pts/2)){
+	  mid = cursor;                                               // if it is near the middle, set the mid marker //
+	}
+      }
+      else if(i == pts-1){                                            // deal with linking issue for the last node //
+	temp->prev = cursor;
+	cursor->next = temp; 
+	cursor = tail = temp;                                         // update the cursor and tail marker //
+      }
+    }
+    
+    for(k=0; k<zdim; k++){
+      for(j=0; j<ydim; j++){
+	for(i=0; i<xdim; i++){
+	  
+	  tvalue = extract_float(data,cpos(i,j,k,data));              // extract a value //
+	  
+	  cursor = head;
+	  // start looping through either the upper or lower half of the array //
+	  for(c=0; c<pts; c++){
+	    
+	    // if the number exist in the list, skip onto the next number in the array; also if ignore skip as well //
+	    if((tvalue == ignore)||(fabs(tvalue - cursor->maxnum) <= 0.0000000001)){ break; }
+	    if((c == 0)&&(tvalue > head->maxnum)){
+	      temp = (struct numinfo*)malloc(sizeof(struct numinfo)); // create a new node //
+	      temp->maxnum = tvalue;                                  // set values //
+	      temp->x=i+1;
+	      temp->y=j+1;
+	      temp->z=k+1;
+	      head->prev = temp;                                      // make the previous link of the head to the new node //
+	      temp->next = head;                                      // set the new node's next link to the head //
+	      temp->prev = NULL;                                      // since it is the new head, it will point backward to nothingness //
+	      
+	      head = temp;                                            // update the head of the list //
+	      mid = mid->prev;                                        // shift the mid marker up one //
+	      temp = tail->prev;                                      // store location of the second to last node //
+	      free(tail);                                             // delete the last node //
+	      temp->next = NULL;                                      // set the now tail node to go to nothingness //
+	      tail = temp;                                            // update the tail marker //
+	      
+	      break;                                                  // stop searching the list //
+	    }
+	    
+	    // **************************************************************************************************** //
+	    // * note: the following checks four condition before whacking the last node and replacing it:        * //
+	    // *                                                                                                  * //
+	    // *       -check to see if its the first run, because there's no point to keep checking every itera- * //
+	    // *        tion since it is a special case scenario                                                  * //
+	    // *       -check to see if the entire list is full before doing this special ops, because obviously  * //
+	    // *        most if not all values will be bigger than the -32768                                     * //
+	    // *       -check to see if the last value is smaller than the current tvalue, no duh                 * //
+	    // *       -beats me, but need to check to see if the current value is smaller than the previous node * //
+	    // *        otherwise it will spike in the end, again don't know why it does that                     * //
+	    // **************************************************************************************************** //
+	    
+	    if((c==0)&&(tail->maxnum != -32768)&&(tvalue > tail->maxnum)&&(tvalue < (tail->prev)->maxnum)){
+	      temp = (struct numinfo*)malloc(sizeof(struct numinfo)); // create a new node //
+	      temp->maxnum = tvalue;                                  // set values //
+	      temp->x=i+1;
+	      temp->y=j+1;
+	      temp->z=k+1;				  
+	      
+	      pcursor = tail->prev;                                   // get the addy of the second to last node //
+	      free(tail);                                             // delete the tail node //
+	      pcursor->next = temp;                                   // have the second to last node point to the new node //
+	      temp->prev = pcursor;                                   // reciprocate action //
+	      tail = temp;                                            // update tail marker //
+	      
+	      break;                                                  // stop searching the list //
+	    }
+	    
+	    if((c != 0)&&(tvalue > cursor->maxnum)){
+	      temp = (struct numinfo*)malloc(sizeof(struct numinfo)); // create a new node //
+	      temp->maxnum = tvalue;                                  // set values //
+	      temp->x=i+1;
+	      temp->y=j+1;
+	      temp->z=k+1;			
+
+	      pcursor->next = temp;                                   // set the previous node to the new node //
+	      temp->prev = pcursor;                                   // reciprocate action //
+	      temp->next = cursor;                                    // set the temp node to go to the next node //
+	      cursor->prev = temp;                                    // reciprocate action //
+	      temp = tail->prev;                                      // location of the second to last node //
+	      free(tail);                                             // delete the last element //
+	      temp->next = NULL;                                      // make the second to last node point to nothingness as it will be the tail //
+	      tail = temp;                                            // update tail marker //
+	      
+	      if(c < (int)(pts/2)){ mid = mid->prev; }                // update the mid marker //
+	      
+	      break;                                                  // stop searching the list //
+	    }
+	    
+	    pcursor = cursor;                                         // make the previous cursor the current cursor //
+	    cursor = cursor->next;                                    // move the current cursor onto the next node //
+	  }
+	}
+      }
+    }
+    
+    val = (float *)malloc(sizeof(float)*pts);                         // allocate output array of n points //
+    pos = (int *)malloc(sizeof(int)*3*pts);                           // allocate output array of 3*x points //
+    
+    cursor = head;
+    for(i=0; i<pts; i++){
+      val[(i*1)+0] = cursor->maxnum;                                  // store the maximum value //
+      pos[(i*3)+0] = cursor->x;                                       // store the location of the maximum value //
+      pos[(i*3)+1] = cursor->y;
+      pos[(i*3)+2] = cursor->z;
+      cursor = cursor->next;                                          // move onto the next node //
+    }
+    
+    // perform garbage collection //
+    cursor = tail;
+    for(i=0; i<pts; i++){
+      cursor = cursor->prev;
+      free(tail);
+      tail = cursor;
+    }
+    
+    if(pts == 1){
+      printf("Max value is: %f\n",val[0]);
+      printf("located at: [%d,%d,%d]\n\n\n",pos[0],pos[1],pos[2]);
+    }
+    
+    out = new_struct(2);
+    add_struct(out, "pos", newVal(BSQ,3,pts,1,INT,pos));
+    add_struct(out, "val", newVal(BSQ,1,pts,1,FLOAT,val)); 
+    return(out);
+  }
+}
+
+
+
+
+
+
+Var *thm_minpos(vfuncptr func, Var *arg){
+
+  /* written by Jason Ki 08/01/05, placed in thm module by k.nowicki */
+  /* replaces the minpos algorithm written by c.edwards */
+  /* handles multiple searches of values faster than it's predecessor */
+
+  int         *pos = NULL;                                            // a [3x1xpts] array to hold the position of all the elements in values //
+  int          pts = 1;                                               // the nth min numbers in the given array //
+  int          start,end;                                             // use to adjust the looping through the link list //
+  int          xdim,ydim,zdim;                                        // the dimensions of the given data array //
+  int          c,d,i,j,k;
+  float       *val = NULL;                                            // a [1x1xpts] array to hold the nth min values //
+  float        ignore = -42285;                                       // any potential ignore values //
+  float        tvalue = 0;                                            // temporary variable to hold extraction //
+  Var         *data = NULL;                                           // the acutal data //
+  Var         *out = NULL;
+
+  // structure containing the nth minimum value along with its location in the data //
+  struct numinfo{
+    float             minnum;
+    int               x,y,z;
+    struct numinfo   *next;
+    struct numinfo   *prev;
+  };
+  
+  struct numinfo   *cursor = NULL;                                    // cursor that traverses the link list //
+  struct numinfo   *head = NULL;                                      // head of the list //
+  struct numinfo   *mid = NULL;                                       // the middle point of the list //
+  struct numinfo   *pcursor = NULL;                                   // the previous node the cursor visited //
+  struct numinfo   *tail = NULL;                                      // tail of the list //
+  struct numinfo   *temp = NULL;                                      // use to hold the newly created node //
+  struct numinfo   *tnxt = NULL;                                      // use to hold the address of the next node for insertion purposes //
+
+  Alist alist[4];
+  alist[0] = make_alist("data",    ID_VAL,   NULL, &data);
+  alist[1] = make_alist("ignore",  FLOAT,    NULL, &ignore);
+  alist[2] = make_alist("points",  INT,      NULL, &pts);
+  alist[3].name = NULL;
+
+  if(parse_args(func, arg, alist) == 0) return(NULL);
+  if(data == NULL){
+    parse_error("\nFunction finds the minimum value of a given data set.");
+    parse_error("Syntax:  a=minpos(dataset,[ignore],[points])");
+    parse_error("   where:");
+    parse_error("   dataset  - any 3-d array of any organization or type");
+    parse_error("   [points] - number of values to return; default is set to return 1 point\n");
+    parse_error("Example: minpos(a)");
+    parse_error("    out=minpos(a,ignore=422,points=10)\n");
+    return(NULL);
+  }
+  if(pts > GetX(data)*GetY(data)*GetZ(data)){
+    parse_error("Too many points and not enough data, lower the point value.");
+    return(NULL);
+  }
+  else{
+    xdim = GetX(data);	 ydim = GetY(data);	 zdim = GetZ(data);
+    
+    cursor = head = mid = tail = NULL;                                // make everything point to nothing //
+    
+    for(i=0; i<pts; i++){
+      temp = (struct numinfo*)malloc(sizeof(struct numinfo));         // create the node //
+      temp->minnum = -i;                                              // set to default value //
+      temp->x = 0;
+      temp->y = 0;
+      temp->z = 0;
+      temp->next = NULL;                                              // doing end-chaining thus the end will always point to nowhere //
+      
+      if(i == 0){                                                     // deal with linking issue for the first node //
+	temp->prev = NULL;                                            // since it is the first node created, theres nothing to point backward to //
+	head = mid = tail = cursor = temp;                            // update the head marker and the cursor //
+      }
+      else if((i != 0)&&(i != pts-1)){                                // deal with linking issue for the middle nodes //
+	temp->prev = cursor;                                          // set the previous link to the last node created //
+	cursor->next = temp;                                          // attach the newly created node to the end of the list //
+	cursor = temp;                                                // move the cursor to the newly created node //
+	if(i == (int)(pts/2)){
+	  mid = cursor;                                               // if it is near the middle, set the mid marker //
+	}
+      }
+      else if(i == pts-1){                                            // deal with linking issue for the last node //
+	temp->prev = cursor;
+	cursor->next = temp; 
+	cursor = tail = temp;                                         // update the cursor and tail marker //
+      }
+    }
+    
+    for(k=0; k<zdim; k++){
+      for(j=0; j<ydim; j++){
+	for(i=0; i<xdim; i++){
+	  
+	  tvalue = extract_float(data,cpos(i,j,k,data));              // extract a value //
+	  
+	  cursor = head;
+	  // start looping through either the upper or lower half of the array //
+	  for(c=0; c<pts; c++){
+	    
+	    // if the number exist in the list, skip onto the next number in the array; also if ignore skip as well //
+	    if((tvalue == ignore)||(fabs(tvalue - cursor->minnum) <= 0.0000000001)){ break; }
+	    if((c == 0)&&(tvalue < head->minnum)){
+	      temp = (struct numinfo*)malloc(sizeof(struct numinfo)); // create a new node //
+	      temp->minnum = tvalue;                                  // set values //
+	      temp->x=i+1;
+	      temp->y=j+1;
+	      temp->z=k+1;
+	      head->prev = temp;                                      // make the previous link of the head to the new node //
+	      temp->next = head;                                      // set the new node's next link to the head //
+	      temp->prev = NULL;                                      // since it is the new head, it will point backward to nothingness //
+	      
+	      head = temp;                                            // update the head of the list //
+	      mid = mid->prev;                                        // shift the mid marker up one //
+	      temp = tail->prev;                                      // store location of the second to last node //
+	      free(tail);                                             // delete the last node //
+	      temp->next = NULL;                                      // set the now tail node to go to nothingness //
+	      tail = temp;                                            // update the tail marker //
+	      
+	      break;                                                  // stop searching the list //
+	    }
+	    
+	    // **************************************************************************************************** //
+	    // * note: the following checks four condition before whacking the last node and replacing it:        * //
+	    // *                                                                                                  * //
+	    // *       -check to see if its the first run, because there's no point to keep checking every itera- * //
+	    // *        tion since it is a special case scenario                                                  * //
+	    // *       -check to see if the entire list is full before doing this special ops, because obviously  * //
+	    // *        most if not all values will be bigger than the -32768                                     * //
+	    // *       -check to see if the last value is smaller than the current tvalue, no duh                 * //
+	    // *       -beats me, but need to check to see if the current value is smaller than the previous node * //
+	    // *        otherwise it will spike in the end, again don't know why it does that                     * //
+	    // **************************************************************************************************** //
+	    
+	    if((c==0)&&(tail->minnum != -32768)&&(tvalue < tail->minnum)&&(tvalue > (tail->prev)->minnum)){
+	      temp = (struct numinfo*)malloc(sizeof(struct numinfo)); // create a new node //
+	      temp->minnum = tvalue;                                  // set values //
+	      temp->x=i+1;
+	      temp->y=j+1;
+	      temp->z=k+1;				  
+	      
+	      pcursor = tail->prev;                                   // get the addy of the second to last node //
+	      free(tail);                                             // delete the tail node //
+	      pcursor->next = temp;                                   // have the second to last node point to the new node //
+	      temp->prev = pcursor;                                   // reciprocate action //
+	      tail = temp;                                            // update tail marker //
+	      
+	      break;                                                  // stop searching the list //
+	    }
+	    
+	    if((c != 0)&&(tvalue < cursor->minnum)){
+	      temp = (struct numinfo*)malloc(sizeof(struct numinfo)); // create a new node //
+	      temp->minnum = tvalue;                                  // set values //
+	      temp->x=i+1;
+	      temp->y=j+1;
+	      temp->z=k+1;			
+	      
+	      pcursor->next = temp;                                   // set the previous node to the new node //
+	      temp->prev = pcursor;                                   // reciprocate action //
+	      temp->next = cursor;                                    // set the temp node to go to the next node //
+	      cursor->prev = temp;                                    // reciprocate action //
+	      temp = tail->prev;                                      // location of the second to last node //
+	      free(tail);                                             // delete the last element //
+	      temp->next = NULL;                                      // make the second to last node point to nothingness as it will be the tail //
+	      tail = temp;                                            // update tail marker //
+	      
+	      if(c < (int)(pts/2)){ mid = mid->prev; }                // update the mid marker //
+	      
+	      break;                                                  // stop searching the list //
+	    }
+	    
+	    pcursor = cursor;                                         // make the previous cursor the current cursor //
+	    cursor = cursor->next;                                    // move the current cursor onto the next node //
+	  }
+	}
+      }
+    }
+    
+    val = (float *)malloc(sizeof(float)*pts);                         // allocate output array of n points //
+    pos = (int *)malloc(sizeof(int)*3*pts);                           // allocate output array of 3*x points //
+    
+    cursor = head;
+    for(i=0; i<pts; i++){
+      val[(i*1)+0] = cursor->minnum;                                  // store the minimum value //
+      pos[(i*3)+0] = cursor->x;                                       // store the location of the minimum value //
+      pos[(i*3)+1] = cursor->y;
+      pos[(i*3)+2] = cursor->z;
+      cursor = cursor->next;                                          // move onto the next node //
+    }
+    
+    // perform garbage collection //
+    cursor = tail;
+    for(i=0; i<pts; i++){
+      cursor = cursor->prev;
+      free(tail);
+      tail = cursor;
+    }
+    
+    if(pts == 1){
+      printf("Min value is: %f\n",val[0]);
+      printf("located at: [%d,%d,%d]\n\n\n",pos[0],pos[1],pos[2]);
+    }
+    out = new_struct(2);
+    add_struct(out, "pos", newVal(BSQ,3,pts,1,INT,pos));
+    add_struct(out, "val", newVal(BSQ,1,pts,1,FLOAT,val)); 
+    return(out);
+  }
+}
+
+
+
+
+
+
 Var*
-thm_maxpos(vfuncptr func, Var *arg)
+thm_maxpos2(vfuncptr func, Var *arg)
 {
  
   Var    *data = NULL;                      /* the orignial data */
@@ -2763,7 +3187,7 @@ thm_maxpos(vfuncptr func, Var *arg)
 
 
 Var*
-thm_minpos(vfuncptr func, Var *arg)
+thm_minpos2(vfuncptr func, Var *arg)
 {
 
   Var    *data = NULL;                 /* the orignial data */
@@ -2886,10 +3310,11 @@ thm_unscale(vfuncptr func, Var * arg)
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   if(pds==NULL) {
+    parse_error("unscale() - 07/06/05\n");
     parse_error("\nUsed to unscale a pds from short to float data\n");
     parse_error("$1 = the pds structure\n");
     parse_error("core_null values will be set to -32768");
-    parse_error("c.edwards 7/06/05\n");
+    parse_error("c.edwards\n");
     return NULL;
   }
 
@@ -3051,6 +3476,7 @@ thm_white_noise_remove2(vfuncptr func, Var *arg)
   if (parse_args(func, arg, alist) == 0) return(NULL);
  
   if (data == NULL) {
+    parse_error("white_noise_remove2() - 08/10/04\n");
     parse_error("\nUsed to remove white noise from data");
     parse_error("More bands are better\n");
     parse_error("$1 = the data to remove the noise from");
@@ -3230,12 +3656,13 @@ thm_sstretch2(vfuncptr func, Var * arg)
   if (parse_args(func, arg, alist) == 0) return(NULL);
   
   if (data == NULL) {
-    parse_error("\nUsed to sstretch data band by band");
+    parse_error("\nsstretch2() - 03/26/05\n");
+    parse_error("Used to sstretch data band by band");
     parse_error("Similar to the davinci function sstretch()\n");
     parse_error("$1=data to be stretched");
     parse_error("ignore=value to ignore (Default=-32768)");
     parse_error("variance=variance of the stretch (Default=40)\n");
-    parse_error("c.edwards 3/26/05\n");
+    parse_error("c.edwards\n");
     return NULL;
   }
 
@@ -3536,7 +3963,7 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
 
   /* if no data got passed to the function */
   if (rad == NULL) {
-    parse_error("\nthm.radcorr() - 07/04/2005\n");
+    parse_error("\nradcorr() - 07/04/2005\n");
     parse_error("Produces a 2x1x10 float array containing the radiance correction and em offset values for a given array");
     parse_error("Values are minimized RMS differences of radiance from blackbody of same temperature");
     parse_error("Uses inverse parabolic interpolation for minimization algorithm\n");
@@ -3653,12 +4080,11 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
     slopes[k] = (min_try2[k*2 + 1] - min_try1[k*2 + 1])/(min_try2[k*2] - min_try1[k*2]); 
   }
 
-  // find minimal point along the trough //
+  /* find minimum along the trough */
   min_try3 = minimize_1d(rad, irad, 0.0, min_try1, min_try2, slopes);
   
   out = newVal(BSQ, 2, 1, z, DOUBLE, min_try3);
 
-  // free up heap objects //
   free(irad);
   free(min_try2);
   free(min_try1);
@@ -3675,26 +4101,23 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
 
 
 Var *do_ipi(Var *coords_array, Var *values_array){
-  float        coords[3];                                             // more useable form of coordinate list //
-  float        values[3];                                             // more useable form of values list //
-  float       *result;                                                // the coordinate where the lowest value is //
-  int          i;                                                     // the ubiquituous i var for loops //
+  float        coords[3];                 /* more useable form of coordinate list     */
+  float        values[3];                 /* more useable form of values list         */
+  float        result;                    /* the coordinate of the lowest value       */
+  int          i;                         /* the ubiquituous i var for loops          */
 
-  // translate information from davincin Var structure to the array //
+  /* translate information from davinci Var structure to the array */
   for(i=0; i<3; i++){
     coords[i] = extract_float(coords_array,cpos(i,0,0,coords_array));
     values[i] = extract_float(values_array,cpos(i,0,0,values_array));
   }
   
-  // this is absolutely stupid but newVal demands a pointer for conversion //
-  result = (float *)malloc(sizeof(float));
-  
-  // perform ipi which is just one equation //
-  result[0] = coords[1] - .5*(pow(coords[1]-coords[0],2)*(values[1]-values[2]) - 
-			      pow(coords[1]-coords[2],2)*(values[1]-values[0])) /
+  /* inverse parabolic interpolation calculation */
+  result = coords[1] - 
+    .5*(pow(coords[1]-coords[0],2)*(values[1]-values[2]) - pow(coords[1]-coords[2],2)*(values[1]-values[0])) /
     ((coords[1]-coords[0])*(values[1]-values[2]) - (coords[1]-coords[2])*(values[1]-values[0]));
   
-  return(newVal(BSQ, 1 ,1, 1, FLOAT, result));
+  return(newFloat(result));
 }
 
 
@@ -3704,20 +4127,19 @@ Var *do_ipi(Var *coords_array, Var *values_array){
 
 
 Var *thm_ipi(vfuncptr func, Var * arg){
-  Var         *coords_array = NULL;                                   // list of coordinates //
-  Var         *values_array = NULL;                                   // list of values of f(x) where x is supplied by coords //
-  Var         *out = NULL;                                            // return structure to davinci enviornment //
-  
+  Var         *coords_array = NULL;        /* list of coordinates                                  */
+  Var         *values_array = NULL;        /* list of values of f(x) where x is supplied by coords */
+  Var         *out = NULL;                 /* return structure to davinci enviornment              */
   
   Alist alist[3];
   alist[0] = make_alist("coordinates",  ID_VAL,   NULL,     &coords_array);
   alist[1] = make_alist("values",       ID_VAL,   NULL,     &values_array);
   alist[2].name = NULL;
   
-  // immediately exit function if the argument list is empty //
+  /* immediately exit function if the argument list is empty */
   if(parse_args(func, arg, alist) == 0) return(NULL);
   
-  // if no coordinates and/or values passed into the argument list //
+  /* if no coordinates and/or values passed into the argument list */
   if((coords_array == NULL)||(values_array == NULL)){
     parse_error("thm.ipi() - 07/04/2005");
     parse_error("The function calculates the coordinates of a minimum by taking in a 3x1x1 array of coordinate and its correlated");
@@ -3979,5 +4401,311 @@ thm_supersample(vfuncptr func, Var * arg)
 
   /* final output */
   out = newVal(BSQ, factor*x, factor*y, z, FLOAT, ssdata);
+  return(out);
+}
+
+
+
+
+
+
+Var *thm_destripe(vfuncptr func, Var *arg){
+ 
+  int         filt_size = 9;                               /* convolution kernel size */
+  int         ignore = -32768;                             /* non-data pixel value */
+  Var        *data = NULL;                                 /* the unscaled, calibrated EDR */
+  Var        *out = NULL;                                  /* return structure */
+  Var        *t_level = NULL;                              /* user defined threshold level for spikes */
+
+  Alist alist[5];
+  alist[0] = make_alist("data",         ID_VAL,   NULL,  &data);
+  alist[1] = make_alist("ignore",       INT,      NULL,  &ignore);
+  alist[2] = make_alist("filt_size",    INT,      NULL,  &filt_size);
+  alist[3] = make_alist("t_level",      ID_VAL,   NULL,  &t_level);
+  alist[4].name = NULL;
+
+  /* immediately exit the function upon verification of an empty argument list */
+  if(parse_args(func, arg, alist) == 0){ return(NULL);  }
+
+  /* if no data is supplied, then display help information about the function */
+  if(data == NULL){
+    parse_error("\ndestripe() - 08/01/05\n");
+    parse_error("Removes both vertical and horizontal stripes in calibrated EDR images.\n");
+    parse_error("Syntax:  result = c_destripe(image,[ignore],[filt_size],[t_level])");
+    parse_error("Example: result = c_destripe(img)");
+    parse_error("         result = c_destripe(img,ignore=422)\n");
+    parse_error("\'image\'     - the calibrated EDR image");
+    parse_error("[ignore]    - optional ignore values.          Default = -32768");
+    parse_error("[filt_size] - optional filt_size for convolve. Default = 9");
+    parse_error("[t_level]   - set spike threshold level.       Default = 2*sigma");
+    parse_error("NOTE: the t_level array must be of the same bandlength as the image");
+    return(NULL);
+  }
+
+  if((t_level != NULL)&&(GetZ(t_level) != GetZ(data))){
+    parse_error("Error! The supplied threshold array is not of the same bandlength as the supplied image.");
+    return(NULL);
+  }
+
+  float     *avg = NULL;                       /* the average of the image along a particular axis */
+  float     *bxcr_filt = NULL;                 /* boxcar kernel */
+  float     *data_array = NULL;                /* float data array */
+  float     *high_pass = NULL;                 /* the high-pass filter of the average */
+  float     *new_avg = NULL;                   /* used to hold a copy of average that will be manipulated to be feed into a high-pass filter */
+  float     *mean = NULL;                      /* the mean of a band */
+  float     *std = NULL;                       /* standard deviation */
+  float      aleft,aright;                     /* the good left/right value of a spike for spike re-adjustment */
+  int        axis;                             /* the axis of destripe */
+  int        count;
+  int        idel, i_neighbor;                 /* location of temp position for spike smoothing */
+  int        spike_width = 7;                  /* the range of a spike */
+  int        x, y, z;                          /* the dimensions of the image */
+  int        i, j, k;
+  
+  out = new_struct(3);
+  
+  /* retrieve the dimensions of the image that will be destriped */
+  x = GetX(data);
+  y = GetY(data);
+  z = GetZ(data);  
+  
+  /* allocate memory for the array */
+  data_array = (float *)malloc(sizeof(float)*x*y*z);
+  
+  /* extract davinci array into a float array for use */
+  for(k=0; k<z; k++){
+    for(j=0; j<y; j++){
+      for(i=0; i<x; i++){ 
+	data_array[k*x*y + j*x+ i] = extract_float(data,cpos(i,j,k,data)); 
+      }
+    }
+  }
+  
+  /*   the axis loop is to go through data_array[] twice, once for the          **
+  **   y-axis destripe (which finds a X*1*Z row correction) and then again for  **
+  **   x-axis destripe (a 1*Y*Z column correction) on the y-destriped image     */
+  
+  for(axis=0; axis<=1; axis++){
+    
+    /* transpose the image by transposing the definition of the boundary */
+    if(axis == 1){ x = GetY(data);   y = GetX(data); }
+    
+    /* average along the y-direction yields an array of [x,1,z] */
+    avg = (float *)malloc(sizeof(float)*x*z);
+    
+    for(k=0; k<z; k++){
+      
+      /* cycling through columns (axis = 0) or rows (axis = 1) */
+      for(i=0; i<x; i++){
+	
+	/* reset the average of that column/row */
+	avg[k*x + i] = 0;
+	count = 0;
+	
+	for(j=0; j<y; j++){
+	  /* sum the non-ignore values in the column/row */
+	  if(axis == 0 && data_array[k*x*y + j*x + i] != ignore){ 
+	    avg[k*x + i] += data_array[k*x*y + j*x + i];
+	    count++;
+	  }
+	  if(axis == 1 && data_array[k*y*x + i*y + j] != ignore){ 
+	    avg[k*x + i] += data_array[k*y*x + i*y + j]; 
+	    count++;
+	  }
+	}
+	/* calculate the average */
+	if(count != 0)  avg[k*x + i] /= (float)count;
+
+	/* set dropout row/columns to the ignore value */
+	if(count == 0)  avg[k*x + i] = ignore;
+      }
+    }
+
+    /* create the boxcar convolve kernel */
+    bxcr_filt = (float *)malloc(sizeof(float)*filt_size);
+    for(i=0; i<filt_size; i++){ bxcr_filt[i] = 1.0; };
+    
+    /* although a misnomer here, high_pass is the low_pass filter of the average */
+    high_pass = convolve(avg, bxcr_filt, x, 1, z, filt_size, 1, 1, 1, ignore);   
+    
+    /* now high_pass is a high-pass filter of average */
+    for(k=0; k<z; k++){ 
+      for(i=0; i<x; i++){ 
+	high_pass[k*x + i] = avg[k*x + i] - high_pass[k*x + i]; 
+      }
+    }
+    
+    // **************************************************************************************************** //
+    // * note: in the previous version, there was a sub-diff array to hold the array diff[3:], but this   * //
+    // *       is circumvented this time by going ahead and accessing the diff array for purpose of cal-  * //
+    // *       culating the standard deviation; also the first and last pixel of the diff array is not    * //
+    // *       included because they are well outside the boundary of the rest of the data set            * //
+    // *                                                                                                  * //
+    // **************************************************************************************************** //
+    
+    if(t_level == NULL){
+      /* allocate space for the mean of high_pass[1:x-1] */
+      mean = (float *)malloc(sizeof(float)*z);
+      
+      for(k=0; k<z; k++){
+	/* reset the mean of each band */
+	mean[k] = 0;
+	for(i=2; i<x; i++){ mean[k] += high_pass[k*x + i]; }
+	mean[k] /= (float)(x-2);
+      }
+      
+      /* allocate space of the same dimensions as mean */
+      std = (float *)malloc(sizeof(float)*z);
+      
+      /* standard deviation */
+      for(k=0; k<z; k++){
+	std[k] = 0;
+	/* top of equation */
+	for(i=2; i<x; i++){ std[k] += pow(high_pass[k*x + i] - mean[k],2); }
+	/* divide the top by n-1 */
+	std[k] /= (float)(x-3);
+	/* take square root and double to get twice sigma */
+	std[k] = pow(std[k],0.5)*2.0;
+      }
+    }
+
+    free(mean);
+    
+    /* extract values if user provides a custom threshold level */
+    if(t_level != NULL){ 
+      for(k=0; k<z; k++){ 
+	std[k] = extract_float(t_level,cpos(0,0,k,t_level)); 
+      }
+    }
+    
+    /* everywhere in the difference array that has values below the stddev*2 value, set it to zero */
+    for(k=0; k<z; k++){
+      for(i=0; i<x; i++){ 
+	if(fabs(high_pass[k*x + i]) < std[k]) high_pass[k*x + i] = 0; 
+      } 
+    }
+
+    free(std);
+
+    /* allocate memory for average array without stripes */
+    new_avg = (float *)malloc(sizeof(float)*x*z);
+    for(k=0; k<z; k++){ 
+      for(i=0; i<x; i++){ 
+	new_avg[k*x+i] = avg[k*x + i]; 
+      }
+    }
+    
+    /* dealing with spike values, look to the left and right up to 7 values away 
+       to find values to be averaged then to replace the spike's value.           */
+    for(j=0; j<z; j++){
+      for(i=1; i<=x-2; i++){
+	
+	/* check for spikes */
+	if(high_pass[j*x+i] != 0){
+	  
+	  /******* Searching to the left of the spike  *******/
+	  /* set 'aleft' to default value in the event the following cases are not matched */
+	  aleft = new_avg[j*x+i];
+	  
+	  /* verify that to the left of the spike, neighboring values aren't also spikes up to distance of 7 */
+	  for(idel=1; idel<=spike_width; idel++){
+	    /* location of a neighboring value */
+	    i_neighbor = i - idel;
+	    
+	    /* if we run off the edge of the array, use spike value */
+	    if(i_neighbor < 0){ 
+	      aleft = new_avg[j*x + i];
+	      break;
+	    }
+	    
+	    /* Phil's assumption is that if a high_pass pixel is 0 then there isn't a spike there.  **
+	    ** Unfortunately, zero values also occur in dropouts. So I've added the extra condition **
+	    ** of new_avg not being the ignore value.                                               */
+	    if(high_pass[j*x + i_neighbor] == 0 && new_avg[j*x + i_neighbor] != ignore){ 
+	      aleft = new_avg[j*x + i_neighbor];
+	      break;
+	    }
+	  }
+	  
+	  /******* Searching to the right of the spike  *******/
+	  /* set 'aright' to default value in the even the following cases are not matched */
+	  aright = new_avg[j*x+i];
+	  
+	  /* verify that to the right of the spike, neighboring values aren't also spikes up to distance of 7 */
+	  for(idel=1; idel<=spike_width; idel++){
+	    /* location of neighboring value */
+	    i_neighbor = i + idel;
+	    
+	    /* if we run off the edge of the array, use immediate right */
+	    if(i_neighbor > x-1){
+	      aright = new_avg[j*x + i];
+	      break;
+	    }
+	    
+	    /* Again, I need to add the condition of non-dropout points as above */
+	    if(high_pass[j*x + i_neighbor] == 0 && new_avg[j*x + i_neighbor] != ignore){
+	      aright = new_avg[j*x + i_neighbor];
+	      break;
+	    }
+	  }
+	  
+	  /* replace spike with the average of the left and right bounding values     **
+	  ** Here, once again, I have to add the condition that neither of the points **
+	  ** to the left or the right are dropouts.  If they are then the new_avg     **
+	  ** should be set to ignore and the high_pass filter will overpass it.       */
+	  if(aleft != ignore && aright == ignore) { new_avg[j*x+i] = aleft; }
+	  else if(aleft == ignore && aright != ignore) { new_avg[j*x+i] = aright; }
+	  else { new_avg[j*x + i] = (aleft+aright)/2.0; }
+	}
+      }
+    }
+    
+    /* destroy high_pass to be recreated by convolve */
+    free(high_pass);
+    
+    /* peform a high-pass filter over the average of the image */
+    high_pass = convolve(new_avg, bxcr_filt, x, 1, z, filt_size, 1, 1, 1, ignore);
+    
+    for(k=0; k<z; k++){ 
+      for(i=0; i<x; i++){ 
+	high_pass[k*x + i] = avg[k*x + i] - high_pass[k*x + i]; 
+      } 
+    }
+
+    free(bxcr_filt);
+    free(new_avg);
+    free(avg);
+    
+    /* subtract the high_pass from every pixel in the array */
+    for(k=0; k<z; k++){
+      if(axis == 0){ 
+	for(j=0; j<y; j++){ 
+	  for(i=0; i<x; i++){ 
+	    data_array[k*x*y + j*x + i] -= high_pass[k*x + i]; 
+	  } 
+	} 
+      }
+      if(axis == 1){ 
+	for(i=0; i<y; i++){ 
+	  for(j=0; j<x; j++){ 
+	    data_array[k*x*y + j*y + i] -= high_pass[k*x + j]; 
+	  } 
+	} 
+      }  	  
+    }
+    
+    /* reset the axes */
+    if(axis == 1){
+      x = GetX(data);   
+      y = GetY(data); 
+    }
+    
+    /* output the difference array */
+    if(axis == 0){ add_struct(out, "diffrow", newVal(BSQ,x,1,z,FLOAT,high_pass)); }
+    if(axis == 1){ add_struct(out, "diffcol", newVal(BSQ,1,y,z,FLOAT,high_pass)); }
+  }
+  
+  add_struct(out, "data", newVal(BSQ,x,y,z,FLOAT,data_array));
+  
   return(out);
 }
