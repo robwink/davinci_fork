@@ -737,7 +737,7 @@ readCellsFromGeometryDB(const char *stamp, FramedImage& fi)
 
 	char cmd[1000];
 	sprintf(cmd,
-			MYSQL_CMD " -B -s -e \"select frame_id, find_in_set(point_type, 'LL,LR,UL,UR'), %slon, lat, slant_distance from geometry_detail where filename='%s' and point_type != 'CT' and band_idx=1 order by frame_id, point_type\"",
+			MYSQL_CMD " -B -s -e \"select framelet_id, find_in_set(point_id, 'LL,LR,UL,UR'), %slon, lat, slant_distance from themis3.frmgeom where file_id='%s' and point_id != 'CT' order by framelet_id, concat(point_id)\"",
 			reverseLon ? "360-" : "", stamp);
 
 	FILE *fp = popen(cmd, "r");

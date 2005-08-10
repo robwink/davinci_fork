@@ -1,8 +1,12 @@
-char *version = "@(#) daVinci Version #1.49";
+char *version = "@(#) daVinci Version #1.50";
 
 #include "build.h"
 
 /*
+Version 1.50: Wed Aug 10 15:58:22 MST 2005
+	* Modified the deghost routine to use themis3.frmgeom instead of
+	  themis2.geometry_detail, for retrieving framelet corners.
+
 Version 1.49: Thu Jul 28 14:24:05 MST 2005
         * Finally formally committing the deghost updates developed back in
 	  sept of 2004.
