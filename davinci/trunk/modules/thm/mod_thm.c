@@ -43,6 +43,7 @@ static Var *thm_ipi(vfuncptr func, Var * arg);
 static Var *thm_column_fill(vfuncptr func, Var * arg);
 static Var *thm_supersample(vfuncptr func, Var *);
 static Var *thm_destripe(vfuncptr func, Var *arg);
+static Var *thm_marsbin(vfuncptr func, Var *arg);
 
 static dvModuleFuncDesc exported_list[] = {
   { "deplaid", (void *) thm_deplaid },
@@ -67,11 +68,12 @@ static dvModuleFuncDesc exported_list[] = {
   { "ipi", (void *) thm_ipi },
   { "column_fill", (void *) thm_column_fill },
   { "supersample", (void *) thm_supersample },
-  { "destripe", (void *) thm_destripe }
+  { "destripe", (void *) thm_destripe },
+  { "mars_bin", (void *) thm_marsbin }
 };
 
 static dvModuleInitStuff is = {
-  exported_list, 23,
+  exported_list, 24,
   NULL, 0
 };
 
@@ -4708,4 +4710,142 @@ Var *thm_destripe(vfuncptr func, Var *arg){
   add_struct(out, "data", newVal(BSQ,x,y,z,FLOAT,data_array));
   
   return(out);
+}
+
+
+Var *thm_marsbin(vfuncptr func, Var *arg){
+  double      *calc_plane = NULL;                                     // holds the data_plane only mirrored reversed across both axises //
+  double      *data_plane = NULL;                                     // the plane that holds all the data //
+  float        ignore = 0;                                            // user define stuff //
+  float        latitude,longitude;                                    // the non-tampered lat, lon ranges to determine if they are within user's bound //
+  float        lower_lat, lower_lon, upper_lat, upper_lon;            // user define stuff //
+  float        resolution;                                            // more user define stuff //
+  int          ignore_flag = 0;                                       // trigger flag //
+  int          lat_range, lon_range;                                  // the size of the data_plane //
+  int          xdim, ydim;                                            // the size of the incoming txt file //
+  int          i,j;  
+  int         *lat = NULL;                                            // modified latitude values based on user defined boundaries //
+  int         *lon = NULL;                                            // modified longitude values based on user defined boundaries //
+  int         *inv_plane = NULL;                                      // holds the obs_plane only mirrored resversed across both axises //
+  int         *obs_plane = NULL;                                      // keeps track of how many samples are at a given lat/lon point //
+  Var         *data = NULL;                                           // the incoming data file //
+  Var         *out = NULL;                                            // the outgoing 
+
+  double *hi = NULL;
+
+  Alist alist[8];
+  alist[0] = make_alist("upper_longitude",   FLOAT,    NULL, &upper_lon);
+  alist[1] = make_alist("lower_longitude",   FLOAT,    NULL, &lower_lon);
+  alist[2] = make_alist("upper_latitude",    FLOAT,    NULL, &upper_lat);
+  alist[3] = make_alist("lower_latitude",    FLOAT,    NULL, &lower_lat);
+  alist[4] = make_alist("resolution",        FLOAT,    NULL, &resolution);
+  alist[5] = make_alist("data",              ID_VAL,   NULL, &data);
+  alist[6] = make_alist("ignore",            FLOAT,    NULL, &ignore);
+  alist[7].name = NULL;
+
+  // immediately exit the function upon verification of an empty argument list //
+  if(parse_args(func, arg, alist) == 0){ return(NULL);  }
+
+  if(data == NULL){
+	 parse_error("");
+    parse_error("Function takes an array of values of which each element in the array corresponds to a");
+    parse_error("unique longitude and latitude and plots each element into a generic X by X array. If");
+    parse_error("mulitple values corresponds to a specific cell in the generic X by X array, then that");
+    parse_error("value is averaged with previous values.");
+    parse_error("");
+    parse_error("The function outputs a davinci structure that has two components, the first being the");
+    parse_error("array of averaged values, and the second being an array tallying occurences in each cell");
+    parse_error("");
+    parse_error("Syntax:  output=marsbin(upper longitude, lower longitude, upper latitude, lower latitude");
+	 parse_error("                        ,resolution, value array, [ignore])");
+	 parse_error("           *where: [ignore] - an optional argument to ignore certain values x");
+    parse_error("Example: b=marsbin(360,0,90,-90,1,a)");
+    return(NULL);
+  }
+  else{
+	 xdim = GetX(data);                                                // retrieve how many sample data column there is //
+	 ydim = GetY(data);                                                // retrieve how many sample there is //
+
+	 // allocate memory for ydim size array to hold latitude and longitude values individually //
+	 lat = (int *)malloc(sizeof(int)*ydim);
+	 lon = (int *)malloc(sizeof(int)*ydim);
+
+	 // translate float latitudes and longitudes into integer format //
+	 for(i=0; i<ydim; i++){
+		lat[i] = (int)((extract_float(data,cpos(1,i,0,data)) - lower_lat)*resolution)+1;
+		lon[i] = (int)((extract_float(data,cpos(0,i,0,data)) - lower_lon)*resolution)+1;
+
+		if(lat[i] == 0.0){ lat[i] = -1; }
+		if(lon[i] == 0.0){ lon[i] = -1; }
+	 }
+
+	 // calculate the dimension of the output image //
+	 lat_range = (int)((upper_lat-lower_lat)*resolution);
+	 lon_range = (int)((upper_lon-lower_lon)*resolution);
+
+	 // allocate memory for the data plane and the observation plane //
+	 calc_plane = (double *)malloc(sizeof(double)*lat_range*lon_range*(xdim-2));
+	 data_plane = (double *)malloc(sizeof(double)*lat_range*lon_range*(xdim-2));
+	 inv_plane  = (int *)malloc(sizeof(int)*lat_range*lon_range);
+	 obs_plane  = (int *)malloc(sizeof(int)*lat_range*lon_range);
+
+    // clear both arrays of any memory junk values //
+	 for(i=0; i<lat_range*lon_range*(xdim-2); i++){ data_plane[i] = 0.0; }
+	 for(i=0; i<lat_range*lon_range; i++){ obs_plane[i] = 0; }
+
+	 // begin inputting data into the data_plane and updating the obs_plane //
+	 for(i=0; i<ydim; i++){
+
+      // check to see if the lat & lon is within range, can't use lat[] and lon[] for they have been reformated //
+      longitude = extract_float(data, cpos(0,i,0,data));
+      latitude =  extract_float(data, cpos(1,i,0,data));
+
+		// check to see if any of the data in a lat/lon pixel has an ignore value //
+		for(j=0; j<xdim-2; j++){ if(fabs(extract_float(data, cpos((j+2),i,0,data)) - (float)(ignore)) < .005){ ignore_flag = 1; } }
+
+		// check to see if the sample data is within the user defined boundary //
+		if((latitude <= upper_lat)&&(latitude >= lower_lat)&&(longitude <= upper_lon)&&(longitude >= lower_lon)&&(ignore_flag != 1)){ 
+
+		  // update observation plane //
+		  obs_plane[(lat[i]-1)*lon_range + lon[i]] += 1; 
+		  
+		  // put data from file to specific location denoted by <array_x, array_y> in each plane //
+		  for(j=0; j<xdim-2; j++){ data_plane[(j*lat_range*lon_range)+((lat[i]-1)*lon_range)+(lon[i])] += extract_double(data,cpos((j+2),i,0,data)); }
+		}
+		else{ ignore_flag = 0; }                                        //this might potentially be a fatal mistake, but at this point i will leave it //
+	 }
+
+    // divide each data plane with observation plane //
+    for(i=0; i<(lat_range*lon_range); i++){
+      if(obs_plane[i] != 0){
+		  for(j=0; j<xdim-2; j++){ data_plane[(j*lat_range*lon_range)+i] /= obs_plane[i]; }
+      }
+	 }	
+
+	 // flip the data_plane and the obs_plane across both the x and y axis //
+	 j = lat_range*lon_range*(xdim-2);
+	 for(i=0; i<lat_range*lon_range*(xdim-2); i++){
+		calc_plane[j] = data_plane[i];
+		j--;
+	 }
+	 j = lat_range*lon_range;
+	 for(i=0; i<lat_range*lon_range; i++){
+		inv_plane[j]  = obs_plane[i];
+		j--;
+	 }
+
+	 // clean up the unused arrays //
+	 free(data_plane);
+	 free(lat);
+	 free(lon);
+	 free(obs_plane);
+	 
+	 out = new_struct(2);
+	 add_struct(out, "nobs", newVal(BSQ,lon_range,lat_range,1,INT,inv_plane));
+	 add_struct(out, "cube", newVal(BSQ,lon_range,lat_range,xdim-2,DOUBLE,calc_plane));
+
+	 return(out);
+
+  }
+
 }
