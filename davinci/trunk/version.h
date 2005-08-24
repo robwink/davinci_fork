@@ -1,8 +1,14 @@
-char *version = "@(#) daVinci Version #1.50";
+char *version = "@(#) daVinci Version #1.51";
 
 #include "build.h"
 
 /*
+
+Version 1.51: Tue Aug 23 19:10:49 MST 2005
+	* Upgraded LoadPDS() to handle compressed files
+	* Fixed problems detailed in tests/regression_0508023
+	* Added "position parameter to replace_struct
+
 Version 1.50: Wed Aug 10 15:58:22 MST 2005
 	* Modified the deghost routine to use themis3.frmgeom instead of
 	  themis2.geometry_detail, for retrieving framelet corners.

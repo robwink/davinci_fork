@@ -1779,7 +1779,19 @@ Var *ReadPDS(vfuncptr func, Var * arg)
 
     Init_Obj_Table();
 
-    ob = (OBJDESC *) OdlParseLabelFile(filename, err_file,
+/**
+*** What about compression?
+**/
+    if ((fp = fopen(fname, "rb")) != NULL) {
+        if (iom_is_compressed(fp)) {
+             fprintf(stderr, "is compressed\n");    /* FIX: remove */
+             fclose(fp);
+             fname = iom_uncompress_with_name(fname);
+             fp = fopen(fname, "rb");
+		} 
+	}
+
+    ob = (OBJDESC *) OdlParseLabelFile(fname, err_file,
                                        ODL_EXPAND_STRUCTURE, VERBOSE == 0);
     if ((key =
          OdlFindKwd(ob, "RECORD_BYTES", NULL, 0,
