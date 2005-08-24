@@ -607,6 +607,10 @@ ff_create(vfuncptr func, Var * arg)
         else if (!strcasecmp(format_str, "float")) format = FLOAT;
         else if (!strcasecmp(format_str, "double")) format = DOUBLE;
     }
+	if (x <= 0 || y <= 0 || z <=0) {
+		parse_error("create(): invalid dimensions: %dx%dx%d\n", x,y,z);
+		return(NULL);
+	}
 
     s = newVar();
     V_TYPE(s) = ID_VAL;
@@ -665,7 +669,7 @@ Var *
 ff_echo(vfuncptr func, Var * arg)
 {
     int t = VERBOSE;
-	Var *obj;
+	Var *obj = NULL;
     Alist alist[2];
     alist[0] = make_alist( "obj",    ID_UNK,   NULL,     &obj);
     alist[1].name = NULL;
@@ -677,8 +681,12 @@ ff_echo(vfuncptr func, Var * arg)
      **/
     VERBOSE = 1;
 
-    pp_print(obj);
+	if (obj == NULL) {
+		parse_error("echo(): null argument passed");
+		return(NULL);
+	} 
 
+    pp_print(obj);
     VERBOSE = t;
     return (NULL);
 }

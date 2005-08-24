@@ -561,29 +561,52 @@ ff_remove_struct(vfuncptr func, Var * arg)
 {
     Var *v = NULL, *a= NULL, *s;
     char *name = NULL;
+	int pos = 0;
 
-    Alist alist[3];
+    Alist alist[4];
     alist[0] = make_alist( "structure",    ID_STRUCT,    NULL,     &a);
     alist[1] = make_alist( "name",         ID_STRING,     NULL,     &name);
-    alist[2].name = NULL;
+    alist[2] = make_alist( "position",     INT,     NULL,     &pos);
+    alist[3].name = NULL;
     if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (a == NULL ) {
         parse_error("No structure specified.");
         return(NULL);
     }
-    if (name == NULL) {
-        parse_error("No name specified to remove from structure.");
+    if (name == NULL && pos == 0) {
+        parse_error("No name or position specified to remove from structure.");
         return(NULL);
     }
+	if (name != NULL && pos != 0) {
+        parse_error("Cannot specify both name and position to remove");
+        return(NULL);
+	}
+	if (pos < 0) {
+        parse_error("Illegal structure position for remove");
+        return(NULL);
+	}
 
-    if (find_struct(a, name, NULL) < 0) {
-        parse_error("Structure does not contain element: %s", name);
-        return(NULL);
-    } else {
-        s = Narray_delete(V_STRUCT(a), name);
-        v = V_DUP(s);
-        free_var(s);
-    }
+	if (name != NULL) {
+		if (find_struct(a, name, NULL) < 0) {
+			parse_error("Structure does not contain element: %s", name);
+			return(NULL);
+		} else {
+			s = Narray_delete(V_STRUCT(a), name);
+			/* I don't understand why we have to DUP and free this */
+			v = V_DUP(s);
+			free_var(s);
+		}
+	} else if (pos != 0) {
+		if (pos > Narray_count(V_STRUCT(a))) {
+			parse_error("Structure position out of range", name);
+			return(NULL);
+		} else {
+			s = Narray_remove(V_STRUCT(a), pos-1);
+			/* I don't understand why we have to DUP and free this */
+			v = V_DUP(s);
+			free_var(s);
+		}
+	}
     return(v);
 }

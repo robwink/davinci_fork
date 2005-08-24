@@ -878,7 +878,17 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
     }
     exp2 = e;
 
-    if (op == ID_ADD) return(pp_add_strings(exp1, exp2));
+	/*
+	// test/regression_050823 (NsG)
+	*/
+    if (op == ID_ADD) {
+		if ((V_TYPE(exp1) == ID_STRUCT || V_TYPE(exp2) == ID_STRUCT)) {
+			parse_error("unable to add strings and structs");
+			return(NULL);
+		}
+		return(pp_add_strings(exp1, exp2));
+	}
+
 
     if (V_TYPE(exp1) == ID_STRING && V_TYPE(exp2) == ID_STRING) {
         /*
@@ -904,11 +914,8 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
                                       V_TEXT(exp2).text[i]);
         }
         return(newVal(BSQ,1,rows,1,INT,data));
-    } else if ((V_TYPE(exp1) != ID_STRING && V_TYPE(exp1) != ID_TEXT) ||
-               (V_TYPE(exp2) != ID_STRING && V_TYPE(exp2) != ID_TEXT)) {
-        parse_error("unable to compare strings and non-strings");
-        return(NULL);
-    } else {
+    } else if ((V_TYPE(exp1) == ID_STRING && V_TYPE(exp2) == ID_TEXT) ||
+               (V_TYPE(exp2) == ID_STRING && V_TYPE(exp1) == ID_TEXT)) {
         /*
         ** one text, one string
         */
@@ -928,6 +935,9 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
             if (V_TYPE(exp1) != ID_TEXT) data[i] = -data[i];
         }
         return(newVal(BSQ,1,rows,1,INT,data));
+    } else {
+        parse_error("unable to compare strings and non-strings");
+        return(NULL);
     }
 }
 
