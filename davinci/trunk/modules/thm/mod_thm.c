@@ -1794,7 +1794,7 @@ thm_rectify(vfuncptr func, Var * arg)
   u = y + abs(lshift);
 
   /* assign memory to leftmost and rightmost arrays */
-  leftmost = malloc(sizeof(int)*u);
+  leftmost = calloc(sizeof(int), u);
   rightmost = calloc(sizeof(int), u);
   
   /* set leftmost array values to maximum x */
