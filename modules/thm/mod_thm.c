@@ -45,7 +45,6 @@ static Var *thm_supersample(vfuncptr func, Var *);
 static Var *thm_destripe(vfuncptr func, Var *arg);
 static Var *thm_marsbin(vfuncptr func, Var *arg);
 
-void foo(vfuncptr func, Var * arg) { return(NULL);}
 
 static dvModuleFuncDesc exported_list[] = {
   { "deplaid", (void *) thm_deplaid },
@@ -72,11 +71,10 @@ static dvModuleFuncDesc exported_list[] = {
   { "supersample", (void *) thm_supersample },
   { "destripe", (void *) thm_destripe },
   { "mars_bin", (void *) thm_marsbin },
-  { "foo", (void *) foo }
 };
 
 static dvModuleInitStuff is = {
-  exported_list, 25,
+  exported_list, 24,
   NULL, 0
 };
 
