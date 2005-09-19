@@ -45,6 +45,8 @@ static Var *thm_supersample(vfuncptr func, Var *);
 static Var *thm_destripe(vfuncptr func, Var *arg);
 static Var *thm_marsbin(vfuncptr func, Var *arg);
 
+void foo(vfuncptr func, Var * arg) { return(NULL);}
+
 static dvModuleFuncDesc exported_list[] = {
   { "deplaid", (void *) thm_deplaid },
   { "rectify", (void *) thm_rectify },
@@ -69,11 +71,12 @@ static dvModuleFuncDesc exported_list[] = {
   { "column_fill", (void *) thm_column_fill },
   { "supersample", (void *) thm_supersample },
   { "destripe", (void *) thm_destripe },
-  { "mars_bin", (void *) thm_marsbin }
+  { "mars_bin", (void *) thm_marsbin },
+  { "foo", (void *) foo }
 };
 
 static dvModuleInitStuff is = {
-  exported_list, 24,
+  exported_list, 25,
   NULL, 0
 };
 
@@ -95,6 +98,8 @@ dv_module_fini(const char *name)
 {
   parse_error("Unloaded module thm.");
 }
+
+
 
 
 /**
@@ -1692,6 +1697,8 @@ thm_rectify(vfuncptr func, Var * arg)
   /* updated 07/26/2005 to check for ignore value before running corners.  - kjn */
   /* updated 07/27/2005 to fix top and bottom leftedge values.             - kjn */
   /* updated 07/27/2005 to handle errors from un-rectifiable arrays.       - kjn */
+  /* Mon Sep 19 15:14:21 MST 2005 (NsG), Fixed out of bounds error in final loop*/
+
 
   typedef unsigned char byte;
 
@@ -1925,7 +1932,8 @@ thm_rectify(vfuncptr func, Var * arg)
 
 	/* if not above the data nor looking off the original array */
 	/* I removed this condition (leftmost[j] != x-1 && i + leftmost[j] < x) from the following if statement */
-	if (nu >= 0 && nu <= y && nx >= 0 && nx <= x && (yiz = extract_float(obj, cpos(nx,nu,k,obj))) != nullo){ 
+	/* bug here: nu and nx were allowed to go upto and equal to the bounds.  */ 
+	if (nu >= 0 && nu < y && nx >= 0 && nx < x && (yiz = extract_float(obj, cpos(nx,nu,k,obj))) != nullo){ 
 	  pic[k*u*width + j*width + i] = yiz;
 	}
       }
