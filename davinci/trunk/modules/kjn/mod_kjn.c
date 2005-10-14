@@ -37,11 +37,14 @@ static Var *kjn_ss_coreg(vfuncptr func, Var *);
 static Var *kjn_ss_pic(vfuncptr func, Var *);
 static Var *kjn_coreg_fill(vfuncptr func, Var *);
 static Var *kjn_rad2tb(vfuncptr func, Var *);
+static Var *kjn_tb2rad(vfuncptr func, Var *);
 static Var *kjn_themissivity(vfuncptr func, Var *);
+static Var *kjn_emiss2rad(vfuncptr func, Var *);
 static Var *kjn_whitey(vfuncptr func, Var *);
 static Var *kjn_radcorr(vfuncptr func, Var * arg);
 static Var *kjn_ipi(vfuncptr func, Var * arg);
 static Var *kjn_src_col_fill(vfuncptr func, Var * arg);
+static Var *kjn_deplaid2(vfuncptr func, Var * arg);
 
 static dvModuleFuncDesc exported_list[] = {
   { "y_shear", (void *) kjn_y_shear },
@@ -58,15 +61,19 @@ static dvModuleFuncDesc exported_list[] = {
   { "ss_pic", (void *) kjn_ss_pic },
   { "coreg_fill", (void *) kjn_coreg_fill },
   { "rad2tb", (void *) kjn_rad2tb },
+  { "tb2rad", (void *) kjn_tb2rad },
   { "themissivity", (void *) kjn_themissivity },
+  { "emiss2rad", (void *) kjn_emiss2rad },
   { "whitey", (void *) kjn_whitey },
   { "radcorr", (void *) kjn_radcorr },
   { "ipi", (void *) kjn_ipi },
-  { "src_col_fill", (void *) kjn_src_col_fill }
+  { "src_col_fill", (void *) kjn_src_col_fill },
+  { "deplaid2", (void *) kjn_deplaid2 },
+
 };
 
 static dvModuleInitStuff is = {
-  exported_list, 19,
+  exported_list, 22,
   NULL, 0
 };
 
@@ -731,25 +738,27 @@ float *smoothy(float *obj, float *kernel, int ox, int oy, int oz, int kx, int ky
 Var *
 kjn_ramp(vfuncptr func, Var * arg)
 {
-    Var *pic_1 = NULL;		/* picture one */
-    Var *pic_2 = NULL;		/* picture two */
-    Var *out;			/* the output picture */
-    float *pict1 = NULL;	/* storage location of picture 1 */
-    float *pict2 = NULL;	/* storage location of picture 2 */
-    int *ol1 = NULL;		/* the overlap in picture 1 */
-    int *ol2 = NULL;		/* the overlap in picture 2 */
-    int nullv = 0;		/* the null value that is to be ignored when calculating overlap */
-    int r1 = -1, r2 = -1;	/* beginning and ending rows of the overlap */
-    int c1 = -1, c2 = -1;	/* beginning and ending columns of the overlap */
-    int i, j, k;			/* loop indices */
-    int w, x, y, z;		/* dimensions of the input pictures */
-    int u, v;			/* dimensions of the overlapping area */
-    int m, n;			/* fill-in value and zero value */
-    int t1, t2;			/* memory location */
-    int ct = 1;			/* counter */
-    int num = 2;		/* fill-in number */
-    int olm1 = 2, olm2 = 2;	/* maximum values for the ol1 & ol2 arrays */
-	int up, down, left, right;	/* some neighborhood indices */
+  /* made more efficient and fixed several bugs Oct 12, 2005 */
+
+    Var    *pic_1 = NULL;		/* picture one */
+    Var    *pic_2 = NULL;		/* picture two */
+    Var    *out;			/* the output picture */
+    float  *ramp = NULL; 	        /* storage location of output ramp */
+    int    *ol1 = NULL;		        /* the overlap in picture 1 */
+    int    *ol2 = NULL;		        /* the overlap in picture 2 */
+    float   nullv = 0;		        /* the ignore value */
+    float   tmpval = 0.0;               /* a temporary extracted value from the pictures */
+    int     r1 = -1, r2 = -1;	        /* beginning and ending rows of the overlap */
+    int     c1 = -1, c2 = -1;	        /* beginning and ending columns of the overlap */
+    int     i, j, k;		        /* loop indices */
+    int     w, x, y, z;		        /* dimensions of the input pictures */
+    int     u, v;			/* dimensions of the overlapping area */
+    int     m, n;			/* fill-in value and zero value */
+    int     t1, t2;			/* memory location */
+    int     ct = 1;			/* counter */
+    int     num = 2;		        /* fill-in number */
+    int     olm1 = 2, olm2 = 2;	        /* maximum values for the ol1 & ol2 arrays */
+    int     up, down, left, right;	/* some neighborhood indices */
 
     Alist alist[4];
     alist[0] = make_alist("pic1", ID_VAL, NULL, &pic_1);
@@ -762,18 +771,18 @@ kjn_ramp(vfuncptr func, Var * arg)
 
     /* if no pictures got passed to the function */
     if (pic_1 == NULL || pic_2 == NULL) {
-	parse_error("ramp() - 4/25/04");
-	parse_error
-	    ("Calculates a 0 - 1 float ramp between two overlapping pictures.");
-	parse_error
-	    ("You need to pass me two overlapping pictures contained in arrays of identical size, and an ignore value.\n");
+	parse_error("ramp() - ?");
+	parse_error("Calculates a 0 - 1 float ramp between two overlapping pictures.");
+	parse_error("You need to pass me two overlapping pictures contained in arrays of identical size, and an ignore value.\n");
 	parse_error("Syntax:  b = kjn.ramp(pic1,pic2,ignore)");
 	parse_error("example: b = kjn.ramp(a1,a2,ignore=-32768");
-	parse_error
-	    ("pic1 - may be any 2-d array - float, int, short, etc.");
-	parse_error
-	    ("pic2 - may be any 2-d array - float, int, short, etc.");
+	parse_error("pic1 - may be any 2-d array - float, int, short, etc.");
+	parse_error("pic2 - may be any 2-d array - float, int, short, etc.");
 	parse_error("ignore - the non-data pixel values. Default is 0.\n");
+	parse_error("NOTES:\n");
+	parse_error("You need to multiply the ramp*pic2 and (1-ramp)*pic1.");
+	parse_error("The ramp is only found for OVERLAPPING regions.");
+	parse_error("Non-overlapping regions from pic1 and pic2 need to be added to make a full blend.");
 	return NULL;
     }
 
@@ -782,151 +791,122 @@ kjn_ramp(vfuncptr func, Var * arg)
     y = GetY(pic_1);
     w = GetX(pic_2);
     z = GetY(pic_2);
-
+    
     if (x != w || y != z) {
-	parse_error
-	    ("The two pictures need to be of the exact same dimensions.\n");
-	return NULL;
+      parse_error("The two pictures need to be of the exact same dimensions.\n");
+      return NULL;
     }
 
-    /* keith is using an array that is +-1 larger, so that he doesn't
-     * accidentially hit an edge 
-     */
-    w = x+2;
-    z = y+2;
-
-    /* create the two picture arrays and the overlap arrays */
-    pict1 = (float *) calloc(sizeof(float), w * (z));
-    pict2 = (float *) calloc(sizeof(float), w * (z));
-    ol1 = (int *) calloc(sizeof(int), w * (z));
-    ol2 = (int *) calloc(sizeof(int), w * (z));
+    /* create the two overlap arrays */
+    ol1 = (int *) malloc(sizeof(int)*w*z);
+    ol2 = (int *) malloc(sizeof(int)*w*z);
 
     /* extract the two pictures into their storage arrays */
-    r1 = y+1;
+    r1 = y;
     r2 = 0;
-    c1 = x+1;
+    c1 = x;
     c2 = 0;
 
-    for (j = 1; j <= y ; j++) {
-	for (i = 1; i <= x ; i++) {
-	    t1 = j * w + i;
-	    pict1[t1] = extract_float(pic_1, cpos(i - 1, j - 1, 0, pic_1));
-	    pict2[t1] = extract_float(pic_2, cpos(i - 1, j - 1, 0, pic_2));
+    for (j = 0; j < y ; j++) {
+      for (i = 0; i < x ; i++) {
+	t1 = j * x + i;
+	ol1[t1] = -1;
+	ol2[t1] = -1;
 
-	    /* find left and right limits */
-	    if (pict1[t1] != nullv && pict2[t1] != nullv) {
-		if (j < r1) { r1 = j; }
-		if (j > r2) { r2 = j; }
-		if (i < c1) { c1 = i; }
-		if (i > c2) { c2 = i; }
-	    }
+	tmpval = extract_float(pic_1, cpos(i, j, 0, pic_1));
+	if(tmpval != nullv) ol1[t1] = 0;
 
+	tmpval = extract_float(pic_2, cpos(i, j, 0, pic_2));
+	if(tmpval != nullv) ol2[t1] = 0;
+
+	/* find left and right limits */
+	if (ol1[t1] != -1 && ol2[t1] != -1) {
+	  if (j < r1) { r1 = j; }
+	  if (j > r2) { r2 = j; }
+	  if (i < c1) { c1 = i; }
+	  if (i > c2) { c2 = i; }
 	}
+      }
     }
 
-    /*
-    ** set all the edge values
-    */
-    for (k = 0; k <= y+1 ; k++) {
-	t1 = k * w + 0;
-	pict1[t1] = nullv;
-	pict2[t1] = nullv;
-	ol1[t1] = -1;
-	ol2[t1] = -1;
-	
-	t1 = k * w + (x+1);
-	pict1[t1] = nullv;
-	pict2[t1] = nullv;
-	ol1[t1] = -1;
-	ol2[t1] = -1;
-    }
-    for (k = 0; k <= x+1 ; k++) {
-	t1 = 0 * w + k;
-	pict1[t1] = nullv;
-	pict2[t1] = nullv;
-	ol1[t1] = -1;
-	ol2[t1] = -1;
-
-	t1 = (y+1) * w + k;
-	pict1[t1] = nullv;
-	pict2[t1] = nullv;
-	ol1[t1] = -1;
-	ol2[t1] = -1;
-    }
-
-    /* loop through the picts one time to find the edge */
-    /* if any of my src neighbors are null, then set me to 1 */
+    /* loop through the picts one time to find the edge      **
+    ** if any of my src neighbors are null, then set me to 1 */
     for (j = r1; j <= r2; j++) {
-	for (i = c1; i <= c2; i++) {
-	    t1 = j * w + i;
-	    if (pict1[t1] != nullv && pict2[t1] != nullv) {
-		up = (j-1) * w + i;
-		down = (j+1) * w + i;
-		left = t1-1;
-		right = t1+1;
-		if (pict1[left] == nullv || pict1[right] == nullv
-		    || pict1[up] == nullv || pict1[down] == nullv) {
-		    ol1[t1] = 1;
-		}
-		if (pict2[left] == nullv || pict2[right] == nullv
-		    || pict2[up] == nullv || pict2[down] == nullv) {
-		    ol2[t1] = 1;
-		}
-	    }
+      for (i = c1; i <= c2; i++) {
+	t1 = j * w + i;
+	if (ol1[t1] != -1 && ol2[t1] != -1) {
+	  up = (j-1) * w + i;
+	  if(j==0) up = t1;      // safety against falling off edge
+	  down = (j+1) * w + i;
+          if(j==y-1) down = t1;  // again safety
+	  left = t1-1;
+          if(i==0) left = t1;    // again safety
+	  right = t1+1;
+          if(i==x-1) right = t1; // again safety
+	  if (ol1[left] == -1 || ol1[right] == -1
+	      || ol1[up] == -1 || ol1[down] == -1) {
+	    ol1[t1] = 1;
+	  }
+	  if (ol2[left] == -1 || ol2[right] == -1
+	      || ol2[up] == -1 || ol2[down] == -1) {
+	    ol2[t1] = 1;
+	  }
 	}
+      }
     }
-
-    /* loop through the overlap arrays filling the appropriate value in */
+    
+    /* loop through the overlap arrays filling in the appropriate value */
     while (ct > 0) {
-	ct = 0;
-	for (j = r1; j <= r2; j++) {
-	    for (i = c1; i <= c2; i++) {
-		t1 = j * w + i;
-		if (pict1[t1] != nullv && pict2[t1] != nullv) {
-		    up = (j-1) * w + i;
-		    down = (j+1) * w + i;
-		    left = t1 - 1;
-		    right = t1 + 1;
-		    n = num-1;
-		    if (ol1[t1] == 0
-			&& ((ol1[left] == n) || (ol1[right] == n)
-			    || (ol1[up] == n) || (ol1[down] == n))) {
-			ol1[t1] = num;
-			ct += 1;
-		    }
-		    if (ol2[t1] == 0
-			&& ((ol2[left] == n) || (ol2[right] == n)
-			    || (ol2[up] == n) || (ol2[up] == n))) {
-			ol2[t1] = num;
-			ct += 1;
-		    }
-		}
+      ct = 0;
+      for (j = r1; j <= r2; j++) {
+	for (i = c1; i <= c2; i++) {
+	  t1 = j * w + i;
+	  if (ol1[t1] != -1 && ol2[t1] != -1) {
+	    up = (j-1) * w + i;
+	    if(j==0) up = t1;      // safety against falling off edge
+	    down = (j+1) * w + i;
+	    if(j==y-1) down = t1;  // again safety
+	    left = t1 - 1;
+	    if(i==0) left = t1;    // again safety
+	    right = t1 + 1;
+	    if(i==x-1) right = t1; // again safety
+	    n = num-1;
+	    if (ol1[t1] == 0
+		&& ((ol1[left] == n) || (ol1[right] == n)
+		    || (ol1[up] == n) || (ol1[down] == n))) {
+	      ol1[t1] = num;
+	      ct += 1;
 	    }
+	    if (ol2[t1] == 0
+		&& ((ol2[left] == n) || (ol2[right] == n)
+		    || (ol2[up] == n) || (ol2[down] == n))) {
+	      ol2[t1] = num;
+	      ct += 1;
+	    }
+	  }
 	}
-	num += 1;
+      }
+      num += 1;
     }
 
-    /* reallocate the size of pict1 for use as an output array and free pict2 */
-    free(pict1);
-    free(pict2);
-    pict1 = (float *) calloc(sizeof(float), x * y);
+    /* create ramp */
+    ramp = (float *) calloc(sizeof(float), x*y);
 
     /* loop through one last time creating the output array */
     for (j = 0; j < y; j++) {
-	for (i = 0; i < x; i++) {
-	    t1 = j * x + i;
-	    t2 = (j + 1) * w + i + 1;
-	    if (ol1[t2] > 0) {
-		pict1[t1] =
-		    (float) (ol2[t2]) / (float) (ol2[t2] + ol1[t2]);
-	    }
+      for (i = 0; i < x; i++) {
+	t1 = j*x + i;
+	t2 = (j + 1) * w + i + 1;
+	if (ol1[t2] > 0) {
+	  ramp[t1] = (float)(ol2[t2]) / (float)(ol2[t2] + ol1[t2]);
 	}
+      }
     }
-
+    
     free(ol1);
     free(ol2);
 
-    out = newVal(BSQ, x, y, 1, FLOAT, pict1);
+    out = newVal(BSQ, x, y, 1, FLOAT, ramp);
     return out;
 }
 
@@ -1220,7 +1200,7 @@ kjn_deplaid(vfuncptr func, Var * arg)
   float    *col_avg;                                /* the column average of both runs combined */
   float    *col_avga, *col_avgb;                    /* the column averages of run a and b */
   float    *col_avgs;                               /* the smoothed column averages of run a and b */
-  //float    *row_bright, *col_bright;                /* brightness arrays */
+  float    *row_bright, *col_bright;                /* brightness arrays */
   //float    *row_brights, *col_brights;              /* deplaided brightness arrays */
   byte     *ct_map;                                 /* map of # of bands per pixel */
   byte     *row_ct, *col_ct;                        /* max number of bands in all rows and all columns */
@@ -1550,8 +1530,8 @@ kjn_deplaid(vfuncptr func, Var * arg)
   //filt2 = sawtooth(7,1,1);
 
   /* */
-  //row_bright = (float *)calloc(sizeof(float), y);
-  //col_bright = (float *)calloc(sizeof(float), chunks*x);
+  row_bright = (float *)calloc(sizeof(float), y);
+  col_bright = (float *)calloc(sizeof(float), chunks*x);
 
   /* smooth row_avg array */
   row_avgs = smoothy(row_avg, filt1, 1, y, z, 1, filt_len, 1, 1, 0);
@@ -1560,12 +1540,12 @@ kjn_deplaid(vfuncptr func, Var * arg)
     for(j=0; j<y; j++) {
       row_avg[k*y + j] -= row_avgs[k*y + j];                                /* subtract smoothed from original row_avg */
 
-      //if(z > 1 && k != b10) {                                               /* if there is more than one band and current band isn't band 10 */
-      //row_bright[j] += row_avg[k*y + j];                                  /* add up the brightness information */
-      //row_wt[j] += 1;
-      //}
-
-      //if(z > 1 && k == z-1) row_bright[j] /= (float)row_wt[j];              /* make row_bright an avg rather than a sum */
+      if(z > 1 && k != b10) {                                               /* if there is more than one band and current band isn't band 10 */
+	row_bright[j] += row_avg[k*y + j];                                  /* add up the brightness information */
+	row_wt[j] += 1;
+      }
+      
+      if(z > 1 && k == z-1) row_bright[j] /= (float)row_wt[j];              /* make row_bright an avg rather than a sum */
     }
   }
 
@@ -1573,19 +1553,19 @@ kjn_deplaid(vfuncptr func, Var * arg)
   //row_brights = smoothy(row_bright, filt2, 1, y, 1, 1, 7, 1, 1, 0);
 
   /* remove brightness information from row_avg */
-  //if(z > 1) {
-  //for(k=0; k<z; k++) {
-  //if(k != b10) {
-  //for(j=0; j<y; j++) {
-  //row_avg[k*y + j] -= row_bright[j];                         /* brightness difference removed from row_avg */
-  //}
-  //}
-  //}
-  //}
+  if(z > 1) {
+    for(k=0; k<z; k++) {
+      if(k != b10) {
+	for(j=0; j<y; j++) {
+	  row_avg[k*y + j] -= row_bright[j];                         /* brightness difference removed from row_avg */
+	}
+      }
+    }
+  }
 
   /* clean up row arrays */
   //free(row_brights);
-  //free(row_bright);
+  free(row_bright);
   free(row_avgs);
   free(row_wt);
 
@@ -1601,11 +1581,11 @@ kjn_deplaid(vfuncptr func, Var * arg)
       for(i=0; i<x; i++) {
 	col_avg[k*chunks*x + j*x + i] -= col_avgs[k*chunks*x + j*x + i];             /* subtract smoothed from original col_avg */
 
-	//if(z>1 && k != b10) {                                                        /* if more than one band and not band 10 */
-	//col_bright[j*x + i] += col_avg[k*chunks*x + j*x + i];                      /* sum column brightness excluding band 10 */
-	//col_wt[j*x + i] += 1;                                                      /* sum column weight array excluding band 10 */
-	//}
-	//if(z > 1 && k == z-1) col_bright[j*x + i] /= (float)col_wt[j*x + i];         /* make col_bright an avg rather than a sum */
+	if(z>1 && k != b10) {                                                        /* if more than one band and not band 10 */
+	  col_bright[j*x + i] += col_avg[k*chunks*x + j*x + i];                      /* sum column brightness excluding band 10 */
+	  col_wt[j*x + i] += 1;                                                      /* sum column weight array excluding band 10 */
+	}
+	if(z > 1 && k == z-1) col_bright[j*x + i] /= (float)col_wt[j*x + i];         /* make col_bright an avg rather than a sum */
       }
     }
   }
@@ -1614,22 +1594,22 @@ kjn_deplaid(vfuncptr func, Var * arg)
   //  col_brights = smoothy(col_bright, filt1, x, chunks, 1, filt_len, 1, 1, 1, 0);
   
   /* remove brightness information */
-  //if(z > 1) {
-  //for(k=0; k<z; k++) {
-  //if(k != b10) {
-  //for(j=0; j<chunks; j++) {
-  //for(i=0; i<x; i++) {
-  //col_avg[k*chunks*x + j*x + i] -= col_bright[j*x + i];                  /* brightness difference removed from col_avg */
-  //}
-  //}
-  //}
-  //}
-  //}
+  if(z > 1) {
+    for(k=0; k<z; k++) {
+      if(k != b10) {
+	for(j=0; j<chunks; j++) {
+	  for(i=0; i<x; i++) {
+	    col_avg[k*chunks*x + j*x + i] -= col_bright[j*x + i];                  /* brightness difference removed from col_avg */
+	  }
+	}
+      }
+    }
+  }
 
   /* clean up column arrays*/
   free(col_avgs);
   //  free(col_brights);
-  //free(col_bright);
+  free(col_bright);
   free(col_wt);
  
   /* extract data into rdata removing plaid along the way */
@@ -3022,6 +3002,114 @@ float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval
 
 
 
+
+Var *
+kjn_tb2rad(vfuncptr func, Var * arg)
+{
+  /* created 09/22/2005 - kjn*/
+
+  /* wrapper used to call tb2rad */
+
+  Var         *btemps = NULL;                  /* the original brightness temperatures */
+  Var         *bandlist = NULL;                /* list of bands to be converted to brightness temperature */
+  Var         *temp_rad = NULL;                /* temperature/radiance lookup file */
+  Var         *out = NULL;                     /* end product */
+  char        *fname = NULL;                   /* the pointer to the filename */
+  FILE        *fp = NULL;                      /* pointer to file */
+  struct       iom_iheader h;                  /* temp_rad_v4 header structure */
+  float        nullval = -32768;               /* default null value of radiance data */
+  float       *bbrads = NULL;                  /* blackbody radiance computed by tb2rad */
+  float       *btemp = NULL;                   /* float version of the Var */
+  int         *blist = NULL;                   /* the integer list of bands extracted from bandlist or created */
+  int          x, y, z;                        /* dimensions of the data */
+  int          bx = 0;                         /* x-dimension of the bandlist */
+  int          i, j, k;                        /* loop indices */
+  
+  Alist alist[6];
+  alist[0] = make_alist("btemps",        ID_VAL,         NULL,   &btemps);
+  alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
+  alist[2] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
+  alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
+  alist[4] = make_alist("null",          FLOAT,          NULL,   &nullval);
+  alist[5].name = NULL;
+
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+
+  if (btemps == NULL) {
+    parse_error("tb2rad() - 9/22/05");
+    parse_error("THEMIS Brightness Temperature to THEMIS Radiance Converter\n");
+    parse_error("Uses /themis/calib/temp_rad_v4 as conversion table.");
+    parse_error("Syntax:  b = kjn.tb2rad(btemps,bandlist,ignore,temp_rad_path)");
+    parse_error("example: b = kjn.tb2rad(a)");
+    parse_error("example: b = kjn.tb2rad(a,1//2//3//4//5//6//7//8//9,0)");
+    parse_error("example: b = kjn.tb2rad(btemps=a,bandlist=4//9//10,ignore=-32768,temp_rad_path=\"/themis/calib/temp_rad_v3\")");
+    parse_error("rad - any float valued 3-D radiance array.");
+    parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
+    parse_error("ignore - non-data pixel value. Default is -32768 AND 0.");
+    parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is /themis/calib/temp_rad_v4.\n");
+    return NULL;
+  }
+
+  if (bandlist != NULL) {
+    bx = GetX(bandlist);
+    blist = (int *)malloc(sizeof(int)*bx);
+    for(i=0;i<bx;i++) {
+      blist[i] = extract_int(bandlist,cpos(i,0,0,bandlist));
+    }
+  }
+
+  if (bandlist == NULL) {
+    blist = (int *)malloc(sizeof(int)*10);
+    for(i=0;i<10;i++) {
+      blist[i] = i+1;
+    }
+    bx = 10;
+  }
+
+  x = GetX(btemps);
+  y = GetY(btemps);
+  z = GetZ(btemps);
+
+  if (z > 1) {
+    parse_error("brightness temperatures must be only one band deep.");
+    return NULL;
+  }
+
+  /* initialize temp_rad header */
+  iom_init_iheader(&h);
+
+  /* load temp_rad_v4 table into memory */
+  if (fname == NULL) fname = strdup("/themis/calib/temp_rad_v4");
+  fp = fopen(fname, "rb");
+
+  if (fp == NULL) {
+    parse_error("Can't open look up table /themis/calib/temp_rad_v4!\n");
+    return(NULL);
+  }
+
+  temp_rad = dv_LoadVicar(fp, fname, &h);
+  fclose(fp);
+  free(fname);
+
+  /* extract the damn brightness temperatures into a float array */
+  btemp = (float *)malloc(sizeof(float)*x*y);
+  for(j=0; j<y; j++) {
+    for(i=0; i<x; i++) {
+      btemp[j*x + i] = extract_float(btemps,cpos(i,j,0,btemps));
+    }
+  }
+
+  /* convert btemps to radiance and return */
+  bbrads = tb2rad(btemp, temp_rad, blist, bx, nullval, x, y);
+
+  free(blist);
+  free(btemp);
+  out = newVal(BSQ, x, y, bx, FLOAT, bbrads);
+  return(out);
+ 
+}
+
+
 float *tb2rad(float *btemp, Var *temp_rad, int *bandlist, int bx, float nullval, int x, int y)
 {
 
@@ -3036,7 +3124,7 @@ float *tb2rad(float *btemp, Var *temp_rad, int *bandlist, int bx, float nullval,
   float     cur_val = 0.0;                /* temporary extracted radiance value*/
 
   /*
-    btemp is a single THEMIS brightness temperature map
+    btemp is a single band THEMIS brightness temperature map
     temp_rad is the radiance/temperature conversion table
     bandlist is an integer list of which THEMIS bands are in the radiance cube
     bx is the number of elements in bandlist, also the number of bands in the radiance cube
@@ -3288,6 +3376,126 @@ emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1,
   return(e_struct);
 }
 
+
+
+
+Var *
+kjn_emiss2rad(vfuncptr func, Var * arg)
+{
+  /* created 09/22/2005 - kjn*/
+
+  Var         *estruct = NULL;                 /* the emissivity structure                                     */
+  Var         *bandlist = NULL;                /* list of bands to be converted to brightness temperature      */
+  Var         *temp_rad = NULL;                /* temperature/radiance lookup file                             */
+  Var         *emiss = NULL;                   /* emissivity component of the emissivity structure             */
+  Var         *btemps = NULL;                  /* brightness temperature component of the emissivity structure */
+  Var         *out = NULL;                     /* end product                                                  */
+  char        *fname = NULL;                   /* the pointer to the filename                                  */
+  FILE        *fp = NULL;                      /* pointer to file                                              */
+  struct       iom_iheader h;                  /* temp_rad_v4 header structure                                 */
+  float        nullval = -32768;               /* default null value of radiance data                          */
+  float       *rad = NULL;                     /* radiance computed from emissivity                            */
+  float       *btemp = NULL;                   /* float version of Var btemps                                  */
+  int         *blist = NULL;                   /* the integer list of bands extracted from bandlist or created */
+  int          x, y, z;                        /* dimensions of the data                                       */
+  int          bx = 0;                         /* x-dimension of the bandlist                                  */
+  int          i, j, k;                        /* loop indices                                                 */
+  
+  Alist alist[5];
+  alist[0] = make_alist("estruct",       ID_STRUCT,      NULL,   &estruct);
+  alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
+  alist[2] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
+  alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
+  alist[4].name = NULL;
+
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+
+  if (estruct == NULL) {
+    parse_error("emiss2rad() - 9/23/05");
+    parse_error("THEMIS Emissivity to THEMIS Radiance Converter\n");
+    parse_error("Uses /themis/calib/temp_rad_v4 as conversion table.");
+    parse_error("Syntax:  b = kjn.emiss2rad(emiss,bandlist,ignore,temp_rad_path)");
+    parse_error("example: b = kjn.emiss2rad(a)");
+    parse_error("example: b = kjn.emiss2rad(a,1//2//3//4//5//6//7//8//9,0)");
+    parse_error("example: b = kjn.emiss2rad(rad=a,bandlist=4//9//10,ignore=-32768,temp_rad_path=\"/themis/calib/temp_rad_v3\")");
+    parse_error("emiss - the product of kjn.themissivity containing .emiss and .maxbtemp components.");
+    parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
+    parse_error("ignore - non-data pixel value. Default is -32768 AND 0.");
+    parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is /themis/calib/temp_rad_v4.\n");
+    return NULL;
+  }
+
+  if (bandlist != NULL) {
+    bx = GetX(bandlist);
+    blist = (int *)malloc(sizeof(int)*bx);
+    for(i=0;i<bx;i++) {
+      blist[i] = extract_int(bandlist,cpos(i,0,0,bandlist));
+    }
+  }
+
+  if (bandlist == NULL) {
+    blist = (int *)malloc(sizeof(int)*10);
+    for(i=0;i<10;i++) {
+      blist[i] = i+1;
+    }
+    bx = 10;
+  }
+
+  /* extract structure elements */
+  find_struct(estruct,"emiss",&emiss);
+  find_struct(estruct,"maxbtemp",&btemps);
+
+  x = GetX(emiss);
+  y = GetY(emiss);
+  z = GetZ(emiss);
+
+  /* initialize temp_rad header */
+  iom_init_iheader(&h);
+
+  /* load temp_rad_v4 table into memory */
+  if (fname == NULL) fname = strdup("/themis/calib/temp_rad_v4");
+  fp = fopen(fname, "rb");
+
+  if (fp == NULL) {
+    parse_error("Can't open look up table /themis/calib/temp_rad_v4!\n");
+    return(NULL);
+  }
+
+  temp_rad = dv_LoadVicar(fp, fname, &h);
+  fclose(fp);
+  free(fname);
+
+  /* extract the brightness temperatures into a float array */
+  btemp = (float *)malloc(sizeof(float)*x*y);
+  for(j=0;j<y;j++) {
+    for(i=0;i<x;i++) {
+      btemp[j*x + i] = extract_float(btemps,cpos(i,j,0,btemps));
+    }
+  }
+
+  /* convert maxbtemp to radiance */
+  rad = tb2rad(btemp, temp_rad, blist, bx, nullval, x, y);
+  free(btemp);
+  free(blist);
+
+  /* bbrads will now be a multi-band blackbody radiance cube **
+  ** it must be multiplied by the emissivity cube to produce **
+  ** the measured THEMIS radiances.                          */
+
+  /* multiply blackbody radiance by emissivities */
+  for(k=0;k<z;k++) {
+    for(j=0;j<y;j++) {
+      for(i=0;i<x;i++) {
+	rad[k*y*x + j*x + i] *= extract_float(emiss,cpos(i,j,k,emiss));
+	if(rad[k*y*x + j*x + i] == 0) rad[k*y*x + j*x + i] = nullval;
+      }
+    }
+  }
+
+  out = newVal(BSQ, x, y, z, FLOAT, rad);
+  return(out);
+ 
+}
 
 
 
@@ -4038,4 +4246,468 @@ float *column_fill(float *column, int y, int z, int csize, float ignore)
 }
 
 
+
+Var *
+kjn_deplaid2(vfuncptr func, Var * arg)
+{
+  /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
+  /* this version differs from the "thm.deplaid" because it still contains the legacy code commented out */
+
+  typedef unsigned char byte;
+
+  Var      *data = NULL;                            /* the original radiance data */
+  Var      *out = NULL;                             /* the output array */
+  float    *rdata = NULL;                           /* the deplaided array */
+  float    *row_sum;                                /* a row sum array used to determine blackmask */
+  float    *row_avg, *row_avgs;                     /* the row and smoothed row average arrays */
+  float    *col_avg;                                /* the column average of both runs combined */
+  float    *col_avga, *col_avgb;                    /* the column averages of run a and b */
+  float    *col_avgs;                               /* the smoothed column averages of run a and b */
+  //float    *row_bright, *col_bright;                /* brightness arrays */
+  //float    *row_brights, *col_brights;              /* deplaided brightness arrays */
+  byte     *ct_map;                                 /* map of # of bands per pixel */
+  byte     *row_ct, *col_ct;                        /* max number of bands in all rows and all columns */
+  byte     *blackmask;                              /* the blackmask and temperature mask */
+  float    *tmask;                                  /* the temporary temperature mask */
+  float     nullval = -32768;                       /* the null value */
+  float     tmask_max = 1.15;                       /* maximum threshold for temperature masking */
+  float     tmask_min = 0.80;                       /* minimum threshold for temperature masking */
+  int       filt_len = 150;                         /* filter length */
+  int      *row_wt, *col_wt, *col_wta, *col_wtb;    /* weight arrays for row and column averages */
+  int       x = 0, y = 0, z = 0;                    /* dimensions of the pic */
+  int       i, j, k;                                /* loop indices */
+  int       chunks = 0, chunksa = 0, chunksb = 0;   /* number of chunks image is broken into */
+  int       cca = 0, ccb = 250;                     /* line indices for the chunk a and chunk b calculations */
+  int       ck = 0, cka = 0, ckb = 0;               /* number of chunk that calculation is on */
+  float     tv = 0;                                 /* temporary pixel value */
+  float    *filt1, *filt2, *sawkern;                /* various convolve kernels */
+  int       dump = 0;                               /* flag to return the temperature mask */
+  int       b10 = 10;                               /* the band-10 designation */
+  float    *b_avg, *b_ct;                           /* band average and band count - used to normalize bands for blackmask */
+
+  Alist alist[9];
+  alist[0] = make_alist("data", 		ID_VAL,		NULL,	&data);
+  alist[1] = make_alist("ignore",               FLOAT,          NULL,   &nullval);
+  alist[2] = make_alist("tmask_max",            FLOAT,          NULL,   &tmask_max);
+  alist[3] = make_alist("tmask_min",            FLOAT,          NULL,   &tmask_min);
+  alist[4] = make_alist("filt_len",             INT,            NULL,   &filt_len);
+  alist[5] = make_alist("b10",                  INT,            NULL,   &b10);
+  alist[6] = make_alist("dump",                 INT,            NULL,   &dump);
+  alist[7] = make_alist("null",                 FLOAT,          NULL,   &nullval);
+  alist[8].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+
+  /* if no data got passed to the function */
+  if (data == NULL) {
+    parse_error("\nDeplaid() - July 06 2005\n");
+    parse_error("Deplaids multiband THEMIS spectral cubes\n");
+    parse_error("Syntax: b = kjn.deplaid(data,ignore,tmask_max,tmask_min,filt_len,b10)");
+    parse_error("example b = kjn.deplaid(a)");
+    parse_error("example b = kjn.deplaid(data=a,ignore=-32768,tmask_max=1.25,tmask_min=.85,filt_len=200,b10=3)");
+    parse_error("example b = kjn.deplaid(a,0,tmask_max=1.21)");
+    parse_error("example b = kjn.deplaid(a,0,1.10,.90,180,8)\n");
+    parse_error("data:       geometrically projected and rectified radiance cube of at most 10 bands");
+    parse_error("ignore:     the value of non-data pixels -                         default is -32768");
+    parse_error("tmask_max:  max threshold used to create the temperature mask -    default is 1.15");
+    parse_error("tmask_min:  min threshold used to create the temperature mask -    default is 0.80");
+    parse_error("filt_len:   length of filter used in plaid removal -               default is 150");
+    parse_error("b10:        the band (1 - 10) in the data that is THEMIS band 10 - default is 10\n");
+    parse_error("TROUBLESHOOTING");
+    parse_error("You should designate b10 when NOT feeding deplaid 10 band data, b10 = 0 for no band-10 data.");
+    parse_error("You can return the blackmask/temperature mask by using \"dump=1\".");
+    parse_error("If you get brightness smear, then bring the tmask_max and/or min closer to 1.0.");
+    parse_error("If you still see long-wavelength plaid, such as in cold images, increase filt_len.");
+    parse_error("If the image looks washed-out check your null value.\n");
+    return NULL;
+  }
+
+  /* x, y and z dimensions of the data */
+  x = GetX(data);
+  y = GetY(data);
+  z = GetZ(data);
+
+  /* setting the band-10 of the data */
+  b10 -= 1;
+  if(b10 >= z || b10 <-1) {
+    parse_error("Invalid band 10 designation!");
+    if(z == 10) {
+      parse_error("b10 being reset to 10\n");
+      b10 = 9;
+    } else {
+      parse_error("assuming NO band 10 data, b10 being reset to %d\n",z-1);
+      b10 == z-1;
+    }
+  }
+
+  /* number of chunks of data in the y direction */
+  chunksa = ((y-100)/500) + 1;                                 /* number of chunks starting at zero */
+  chunksb = ((y-350)/500) + 2;                                 /* number of chunks starting at 250 */
+  if(y<350) chunksb = 1;
+  chunks = ((y-100)/250) + 1;
+
+  /* create row and mask arrays */
+  row_avg = (float *)calloc(sizeof(float), y*z);
+  row_wt = (int *)calloc(sizeof(int), y*z);
+  blackmask = (byte *)calloc(sizeof(byte),x*y);
+  tmask = (float *)calloc(sizeof(float), x*y);
+  ct_map = (byte *)calloc(sizeof(byte), x*y);
+  row_ct = (byte *)calloc(sizeof(byte), y);
+  col_ct = (byte *)calloc(sizeof(byte), x);
+
+  /* check to make sure that tmask_max, tmask_min and filt_len are reasonable values */
+  if(tmask_max < tmask_min || tmask_max == 0) {
+    parse_error("tmask_max must be larger than tmask_min, dopo!");
+    parse_error("you should keep tmask_max > 1.0 and tmask_min < 1.0");
+    parse_error("values are being reset to 1.15 and 0.80");
+    tmask_max = 1.15;
+    tmask_min = 0.80;
+  }
+  if(filt_len < 1) {
+    parse_error("the filter must have some length, you tool!");
+    parse_error("filter being reset to 150");
+    filt_len = 150;
+  }
+
+  /* b_avg is a 1xNx1 array of the average of each of the N bands */
+  b_avg = (float *)calloc(sizeof(float), z);
+  /* c_ct is the weight array for b_avg */
+  b_ct = (float *)calloc(sizeof(float), z);
+
+  /* find the averages of each band so's I can normalize them */
+  for(k=0; k<z; k++) {
+    for(j=0; j<y; j++) {
+      for(i=0; i<x; i++) {
+	tv = extract_float(data, cpos(i,j,k, data));
+
+	if(tv != nullval) {
+	  b_avg[k] += tv;
+	  b_ct[k] += 1;
+	}
+      }
+    }
+    b_avg[k] /= b_ct[k];
+  }
+
+  free(b_ct);
+
+  /* construct blackmask, tempmask and row_avg */
+  for(k=0; k<z; k++) {
+    for(j=0; j<y; j++) {
+      for(i=0; i<x; i++) {
+	tv = extract_float(data, cpos(i,j,k, data));
+
+	if(tv != nullval) {
+	  blackmask[x*j + i] = 1;
+	  tmask[x*j + i] += tv/b_avg[k];                             /* tmask is sum of all bands */
+	  row_avg[j] += tv/b_avg[k];                                 /* calculating row totals for tmask */
+	  ct_map[x*j + i] += 1;                                      /* incrementing pixel count_map */
+	  row_wt[j] += 1;                                            /* calculating row weight for tmask */
+	}
+
+	/* setting the col and row count arrays */
+	if(k==z-1) {
+	  if(row_ct[j] < ct_map[j*x + i]) row_ct[j] = ct_map[j*x + i];
+	  if(col_ct[i] < ct_map[j*x + i]) col_ct[i] = ct_map[j*x + i];
+	  if(ct_map[x*j + i] != 0) tmask[x*j + i] /= (float)ct_map[x*j + i];
+	}
+      }
+
+      if(k == z-1 && row_wt[j] != 0) {
+	row_avg[j] /= row_wt[j];                                     /* calculating row avg for tmask */
+	row_wt[j] = 0;
+      }
+    }
+  }
+
+  /* continue to construct the temperature mask */
+  /* smooth the row avg of tempmask with a sawtooth filter */
+  sawkern = sawtooth(1, 301, 1);
+  row_sum = smoothy(row_avg, sawkern, 1, y, 1, 1, 301, 1, 1, 0);
+  free(sawkern);
+  free(ct_map);
+  free(b_avg);
+
+  /* loop through setting the tempmask values */
+  /* pixels with tmask values greater than 1.25 or less than .8 of the row avg are set to zero */
+  for(j=0; j<y; j++) {
+    for(i=0; i<x; i++) {
+      if(tmask[x*j+i] < row_sum[j]*tmask_max && tmask[x*j+i] > row_sum[j]*tmask_min) blackmask[x*j+i] += 1;
+    }
+    for(k=0; k<z; k++) {
+      row_avg[k*y + j] = 0;
+    }
+  }
+  free(tmask);
+  free(row_sum);
+
+  /* return the temperature mask if dump = 1 */
+  if(dump == 1) {
+    free(row_avg);
+    free(row_wt);
+    out = newVal(BSQ, x, y, 1, BYTE, blackmask);
+    return out;
+  }
+
+  /* more initialization */
+  col_avg = (float *)calloc(sizeof(float), x*chunks*z);      /* col_avg contains enough space for all 250 line chunks */
+  col_avga = (float *)calloc(sizeof(float), x*chunksa*z);
+  col_avgb = (float *)calloc(sizeof(float), x*chunksb*z);
+  col_wta = (int *)calloc(sizeof(int), x*chunksa*z);
+  col_wtb = (int *)calloc(sizeof(int), x*chunksb*z);
+
+  if(col_avg == NULL || col_avga == NULL || col_avgb == NULL || col_wta == NULL || col_wtb == NULL) { 
+    parse_error("Could not allocate enough memory to continue\n");
+    return NULL;
+  }
+
+  /* remove the horizontal and vertical plaid */
+  /* loop through data and extract row_avg, and all necessary column averages */
+  for(k=0; k<z; k++) {
+    for(j=0; j<y; j++) {
+      for(i=0; i<x; i++) {
+	tv = extract_float(data, cpos(i,j,k, data));
+
+	/* if not a null val and tempmask ok */
+	if(tv != nullval && ((blackmask[x*j + i] > 1 && k != b10) || k == b10)) {
+
+	  if(col_ct[i] == z) {
+	    row_avg[y*k + j] += tv;                                  /* calculate tempmasked row total of data */
+	    row_wt[y*k + j] += 1;                                    /* calculate tempmasked row weight of data */
+	  }
+	  
+	  if(row_ct[j] == z) {
+	    col_avga[k*chunksa*x + cka*x + i] += tv;                 /* calculate tempmasked col total of chunka */
+	    col_avgb[k*chunksb*x + ckb*x + i] += tv;                 /* calculate tempmasked col total of chunkb */
+	    col_wta[k*chunksa*x + cka*x + i] += 1;                   /* calculate tempmasked col weight of chunka */
+	    col_wtb[k*chunksb*x + ckb*x + i] += 1;                   /* calculate tempmasked col weight of chunkb */
+	  }
+	}
+ 
+	/* if at the end of a chunk and there is less than 100 rows of data left, keep going in present chunk */
+	if(((y-j) <= 100) && (ccb == 499 || cca == 499)) {
+	  cca -= 100; 
+	  ccb -= 100;
+	}
+
+	/* if at the end of chunk then divide column total by column weight and construct chunk of col_avg */
+	if(cca == 499) {
+	  /* divide col_avga by the number of non-zero lines summed to create average */
+	  if(col_wta[k*chunksa*x + cka*x + i] > 0) {
+	    col_avga[k*chunksa*x + cka*x + i] /= (float)col_wta[k*chunksa*x + cka*x + i];
+	  } else { /* if col_wta is 0 don't divide */
+	    col_avga[k*chunksa*x + cka*x + i] = 0;
+	  }
+	  /* avg col_avga and col_avgb for the 250 line chunk */
+	  col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + cka*x + i] + col_avgb[k*chunksb*x + (ckb-1)*x + i]);
+	  if(col_avga[k*chunksa*x + cka*x + i] > 0 && col_avgb[k*chunksb*x + (ckb-1)*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
+	}
+
+	if(ccb == 499) {
+	  /* divide col_avgb by the number of non-zero lines summed to create average */
+	  if(col_wtb[k*chunksb*x + ckb*x + i] > 0) {
+	    col_avgb[k*chunksb*x + ckb*x + i] /= (float)col_wtb[k*chunksb*x + ckb*x + i];
+	  } else { /* if col_wtb is 0 don't divide */
+	    col_avgb[k*chunksb*x + ckb*x + i] = 0;
+	  }
+	  /* avg col_avga and col_avgb for the 250 line chunk */
+	  if(ckb > 0) {
+	    col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + (cka-1)*x + i] + col_avgb[k*chunksb*x + ckb*x + i]);
+	    if(col_avga[k*chunksa*x + (cka-1)*x + i] > 0 && col_avgb[k*chunksb*x + ckb*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
+	  }
+	}
+
+	if(j == y-1) {
+	  if(col_wta[k*chunksa*x + cka*x + i] > 0) {
+	    col_avga[k*chunksa*x + cka*x + i] /= (float)col_wta[k*chunksa*x + cka*x + i];
+	  } else {
+	    col_avga[k*chunksa*x + cka*x + i] = 0;
+	  }
+	  if(col_wtb[k*chunksb*x + ckb*x + i] > 0) {
+	    col_avgb[k*chunksb*x + ckb*x + i] /= (float)col_wtb[k*chunksb*x + ckb*x + i];
+	  } else {
+	    col_avgb[k*chunksb*x + ckb*x + i] = 0;
+	  }
+	  /* avg col_avga and col_avgb for second to last 250 line chunk */
+	  if(cca>ccb && chunksb > 1) {
+	    col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + cka*x + i] + col_avgb[k*chunksb*x + (ckb-1)*x + i]);
+	    if(col_avga[k*chunksa*x + cka*x + i] > 0 && col_avgb[k*chunksb*x + (ckb-1)*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
+	  }
+	  if(ccb>cca && chunksa > 1) {
+	    col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + (cka-1)*x + i] + col_avgb[k*chunksb*x + ckb*x + i]);
+	    if(col_avga[k*chunksa*x + (cka-1)*x + i] > 0 && col_avgb[k*chunksb*x + ckb*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
+	  }
+	  /* avg col_avga and col_avgb for the final 250 line chunk */
+	  if(ck<chunks-1 && chunksb > 1) {
+	    col_avg[k*chunks*x + (ck+1)*x + i] = (col_avga[k*chunksa*x + cka*x + i] + col_avgb[k*chunksb*x + ckb*x + i]);
+	    if(col_avga[k*chunksa*x + cka*x + i] > 0 && col_avgb[k*chunksb*x + ckb*x + i] > 0) col_avg[k*chunks*x + (ck+1)*x + i] /= 2.0;
+	  }
+	  if(chunksa == 1 && chunksb == 1) {
+	    col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + cka*x + i] + col_avgb[k*chunksb*x + ckb*x + i]);
+	    if(col_avga[k*chunksa*x + cka*x + i] > 0 && col_avgb[k*chunksb*x + ckb*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
+	  }
+	}
+      }
+
+      cca += 1;                                              /* increment the chunka line indice */
+      ccb += 1;                                              /* increment the chunkb line indice */
+      if(cca == 500) {                                       /* if at end of chunk, start new chunk */
+	cca = 0;
+	cka += 1;
+	ck += 1;
+      }
+      if(ccb == 500) {                                       /* if at end of chunk, start new chunk */
+	ccb = 0;
+	if(ckb > 0) ck += 1;                                 /* don't increment the ck until cka and ckb have at least one finished chunk */
+	ckb += 1;
+      }
+
+      if(row_avg[y*k + j] != 0 && row_wt[y*k + j] != 0) {
+	row_avg[y*k + j] /= (float)row_wt[y*k + j];          /* perform division for row_avg values*/
+	row_wt[y*k + j] = 0;
+      }
+    }
+    cka = 0;
+    ckb = 0;
+    cca = 0;
+    ccb = 250;
+    ck = 0;
+  }
+
+  /* clean up col_avg arrays */
+  free(col_avga);
+  free(col_avgb);
+  free(col_wta);
+  free(col_wtb);
+  free(row_ct);
+  free(col_ct);
+  free(blackmask);
+
+  /* operate on the row_avg and row_avgs arrays */
+
+  /* create filt1 & filt2 */
+  filt1 = (float *)malloc(sizeof(float)*filt_len);
+  for(i=0; i<filt_len; i++) {
+    filt1[i] = 1.0;
+  }
+  //filt2 = sawtooth(7,1,1);
+
+  /* */
+  //row_bright = (float *)calloc(sizeof(float), y);
+  //col_bright = (float *)calloc(sizeof(float), chunks*x);
+
+  /* smooth row_avg array */
+  row_avgs = smoothy(row_avg, filt1, 1, y, z, 1, filt_len, 1, 1, 0);
+
+  for(k=0; k<z; k++) {
+    for(j=0; j<y; j++) {
+      row_avg[k*y + j] -= row_avgs[k*y + j];                                /* subtract smoothed from original row_avg */
+
+      //if(z > 1 && k != b10) {                                               /* if there is more than one band and current band isn't band 10 */
+      //row_bright[j] += row_avg[k*y + j];                                  /* add up the brightness information */
+      //row_wt[j] += 1;
+      //}
+
+      //if(z > 1 && k == z-1) row_bright[j] /= (float)row_wt[j];              /* make row_bright an avg rather than a sum */
+    }
+  }
+
+  /* smooth the row brightness array to deplaid the luminosity */
+  //row_brights = smoothy(row_bright, filt2, 1, y, 1, 1, 7, 1, 1, 0);
+
+  /* remove brightness information from row_avg */
+  //if(z > 1) {
+  //for(k=0; k<z; k++) {
+  //if(k != b10) {
+  //for(j=0; j<y; j++) {
+  //row_avg[k*y + j] -= row_bright[j];                         /* brightness difference removed from row_avg */
+  //}
+  //}
+  //}
+  //}
+
+  /* clean up row arrays */
+  //free(row_brights);
+  //free(row_bright);
+  free(row_avgs);
+  free(row_wt);
+
+  /* operate on the col_avg arrays */
+  col_wt = (int *)calloc(sizeof(int), x*chunks);
+
+  /* smooth the col_avg array */
+  col_avgs = smoothy(col_avg, filt1, x, chunks, z, filt_len, 1, 1, 1, 0);
+  free(filt1);
+
+  for(k=0; k<z; k++) {
+    for(j=0; j<chunks; j++) {
+      for(i=0; i<x; i++) {
+	col_avg[k*chunks*x + j*x + i] -= col_avgs[k*chunks*x + j*x + i];             /* subtract smoothed from original col_avg */
+
+	//if(z>1 && k != b10) {                                                        /* if more than one band and not band 10 */
+	//col_bright[j*x + i] += col_avg[k*chunks*x + j*x + i];                      /* sum column brightness excluding band 10 */
+	//col_wt[j*x + i] += 1;                                                      /* sum column weight array excluding band 10 */
+	//}
+	//if(z > 1 && k == z-1) col_bright[j*x + i] /= (float)col_wt[j*x + i];         /* make col_bright an avg rather than a sum */
+      }
+    }
+  }
+
+  out = newVal(BSQ, x, chunks, z, FLOAT, col_avg);
+  return out;
+
+  /* smooth the column brightness array to deplaid the luminosity */
+  //  col_brights = smoothy(col_bright, filt1, x, chunks, 1, filt_len, 1, 1, 1, 0);
+  
+  /* remove brightness information */
+  //if(z > 1) {
+  //for(k=0; k<z; k++) {
+  //if(k != b10) {
+  //for(j=0; j<chunks; j++) {
+  //for(i=0; i<x; i++) {
+  //col_avg[k*chunks*x + j*x + i] -= col_bright[j*x + i];                  /* brightness difference removed from col_avg */
+  //}
+  //}
+  //}
+  //}
+  //}
+
+  /* clean up column arrays*/
+  free(col_avgs);
+  //  free(col_brights);
+  //free(col_bright);
+  free(col_wt);
+ 
+  /* extract data into rdata removing plaid along the way */
+  /* create rdata array */
+  rdata = (float *)malloc(sizeof(float)*x*y*z);
+
+  for(k=0; k<z; k++) {
+    cca = 0;
+    ck = 0;
+    for(j=0; j<y; j++) {
+      for(i=0; i<x; i++) {
+	tv = extract_float(data, cpos(i,j,k, data));
+	if(tv != nullval) {
+	  rdata[x*y*k + x*j + i] = tv - row_avg[k*y + j] - col_avg[k*chunks*x + ck*x + i];
+	} else {
+	  rdata[x*y*k + x*j + i] = tv;
+	}
+      }
+      cca += 1;
+      if(cca == 250 && ck<(chunks-1)) {
+	cca = 0;
+	ck+=1;                                                                         /* chunk tracker */
+      }
+    }
+  }
+
+  /* final memory cleanup */
+  free(row_avg);
+  free(col_avg);
+
+  /* return array */
+  out = newVal(BSQ, x, y, z, FLOAT, rdata);
+  return out;
+}
 
