@@ -761,197 +761,177 @@ float *convolve(float *obj, float *kernel, int ox, int oy, int oz, int kx, int k
 Var *
 thm_ramp(vfuncptr func, Var * arg)
 {
-  Var *pic_1 = NULL;		/* picture one */
-  Var *pic_2 = NULL;		/* picture two */
-  Var *out;			/* the output picture */
-  float *pict1 = NULL;	        /* storage location of picture 1 */
-  float *pict2 = NULL;	        /* storage location of picture 2 */
-  int *ol1 = NULL;		/* the overlap in picture 1 */
-  int *ol2 = NULL;		/* the overlap in picture 2 */
-  int nullv = 0;		/* the null value that is to be ignored when calculating overlap */
-  int r1 = -1, r2 = -1;	        /* beginning and ending rows of the overlap */
-  int c1 = -1, c2 = -1;	        /* beginning and ending columns of the overlap */
-  int i, j, k;			/* loop indices */
-  int w, x, y, z;		/* dimensions of the input pictures */
-  int u, v;			/* dimensions of the overlapping area */
-  int m, n;			/* fill-in value and zero value */
-  int t1, t2;			/* memory location */
-  int ct = 1;			/* counter */
-  int num = 2;		        /* fill-in number */
-  int olm1 = 2, olm2 = 2;	/* maximum values for the ol1 & ol2 arrays */
-  int up, down, left, right;	/* some neighborhood indices */
-  
-  Alist alist[4];
-  alist[0] = make_alist("pic1", ID_VAL, NULL, &pic_1);
-  alist[1] = make_alist("pic2", ID_VAL, NULL, &pic_2);
-  alist[2] = make_alist("ignore", INT, NULL, &nullv);
-  alist[3].name = NULL;
-  
-  if (parse_args(func, arg, alist) == 0) return (NULL);
-  
-  /* if no pictures got passed to the function */
-  if (pic_1 == NULL || pic_2 == NULL) {
-    parse_error("ramp() - 4/25/04");
-    parse_error("Calculates a 0 - 1 float ramp between two overlapping pictures.");
-    parse_error("You need to pass me two overlapping pictures contained in arrays of identical size, and an ignore value.\n");
-    parse_error("Syntax:  b = thm.ramp(pic1,pic2,ignore)");
-    parse_error("example: b = thm.ramp(a1,a2,ignore=-32768");
-    parse_error("pic1 - may be any 2-d array - float, int, short, etc.");
-    parse_error("pic2 - may be any 2-d array - float, int, short, etc.");
-    parse_error("ignore - the non-data pixel values. Default is 0.\n");
-    return NULL;
-  }
-  
-  /* x and y dimensions of the original pictures */
-  x = GetX(pic_1);
-  y = GetY(pic_1);
-  w = GetX(pic_2);
-  z = GetY(pic_2);
-  
-  if (x != w || y != z) {
-    parse_error
-      ("The two pictures need to be of the exact same dimensions.\n");
-    return NULL;
-  }
-  
-  /* keith is using an array that is +-1 larger, so that he doesn't
-   * accidentially hit an edge 
-   */
-  w = x+2;
-  z = y+2;
-  
-  /* create the two picture arrays and the overlap arrays */
-  pict1 = (float *) calloc(sizeof(float), w * (z));
-  pict2 = (float *) calloc(sizeof(float), w * (z));
-  ol1 = (int *) calloc(sizeof(int), w * (z));
-  ol2 = (int *) calloc(sizeof(int), w * (z));
-  
-  /* extract the two pictures into their storage arrays */
-  r1 = y+1;
-  r2 = 0;
-  c1 = x+1;
-  c2 = 0;
-  
-  for (j = 1; j <= y ; j++) {
-    for (i = 1; i <= x ; i++) {
-      t1 = j * w + i;
-      pict1[t1] = extract_float(pic_1, cpos(i - 1, j - 1, 0, pic_1));
-      pict2[t1] = extract_float(pic_2, cpos(i - 1, j - 1, 0, pic_2));
-      
-      /* find left and right limits */
-      if (pict1[t1] != nullv && pict2[t1] != nullv) {
-	if (j < r1) { r1 = j; }
-	if (j > r2) { r2 = j; }
-	if (i < c1) { c1 = i; }
-	if (i > c2) { c2 = i; }
-      }
-      
+  /* made more efficient and fixed several bugs Oct 12, 2005 */
+
+    Var    *pic_1 = NULL;		/* picture one */
+    Var    *pic_2 = NULL;		/* picture two */
+    Var    *out;			/* the output picture */
+    float  *ramp = NULL; 	        /* storage location of output ramp */
+    int    *ol1 = NULL;		        /* the overlap in picture 1 */
+    int    *ol2 = NULL;		        /* the overlap in picture 2 */
+    float   nullv = 0;		        /* the ignore value */
+    float   tmpval = 0.0;               /* a temporary extracted value from the pictures */
+    int     r1 = -1, r2 = -1;	        /* beginning and ending rows of the overlap */
+    int     c1 = -1, c2 = -1;	        /* beginning and ending columns of the overlap */
+    int     i, j, k;		        /* loop indices */
+    int     w, x, y, z;		        /* dimensions of the input pictures */
+    int     u, v;			/* dimensions of the overlapping area */
+    int     m, n;			/* fill-in value and zero value */
+    int     t1, t2;			/* memory location */
+    int     ct = 1;			/* counter */
+    int     num = 2;		        /* fill-in number */
+    int     olm1 = 2, olm2 = 2;	        /* maximum values for the ol1 & ol2 arrays */
+    int     up, down, left, right;	/* some neighborhood indices */
+
+    Alist alist[4];
+    alist[0] = make_alist("pic1", ID_VAL, NULL, &pic_1);
+    alist[1] = make_alist("pic2", ID_VAL, NULL, &pic_2);
+    alist[2] = make_alist("ignore", FLOAT, NULL, &nullv);
+    alist[3].name = NULL;
+
+    if (parse_args(func, arg, alist) == 0)
+	return (NULL);
+
+    /* if no pictures got passed to the function */
+    if (pic_1 == NULL || pic_2 == NULL) {
+	parse_error("ramp() - Fri Oct 14 10:41:19 MST 2005");
+	parse_error("Calculates a 0 - 1 float ramp between two overlapping pictures.");
+	parse_error("You need to pass me two overlapping pictures contained in arrays of identical size, and an ignore value.\n");
+	parse_error("Syntax:  b = thm.ramp(pic1,pic2,ignore)");
+	parse_error("example: b = thm.ramp(a1,a2,ignore=-32768");
+	parse_error("pic1 - may be any 2-d array - float, int, short, etc.");
+	parse_error("pic2 - may be any 2-d array - float, int, short, etc.");
+	parse_error("ignore - the non-data pixel values. Default is 0.\n");
+	parse_error("NOTES:\n");
+	parse_error("You need to multiply the ramp*pic2 and (1-ramp)*pic1.");
+	parse_error("The ramp is only found for OVERLAPPING regions.");
+	parse_error("Non-overlapping regions from pic1 and pic2 need to be added to make a full blend.");
+	return NULL;
     }
-  }
-  
-  /*
-  ** set all the edge values
-  */
-  for (k = 0; k <= y+1 ; k++) {
-    t1 = k * w + 0;
-    pict1[t1] = nullv;
-    pict2[t1] = nullv;
-    ol1[t1] = -1;
-    ol2[t1] = -1;
+
+    /* x and y dimensions of the original pictures */
+    x = GetX(pic_1);
+    y = GetY(pic_1);
+    w = GetX(pic_2);
+    z = GetY(pic_2);
     
-    t1 = k * w + (x+1);
-    pict1[t1] = nullv;
-    pict2[t1] = nullv;
-    ol1[t1] = -1;
-    ol2[t1] = -1;
-  }
-  for (k = 0; k <= x+1 ; k++) {
-    t1 = 0 * w + k;
-    pict1[t1] = nullv;
-    pict2[t1] = nullv;
-    ol1[t1] = -1;
-    ol2[t1] = -1;
-    
-    t1 = (y+1) * w + k;
-    pict1[t1] = nullv;
-    pict2[t1] = nullv;
-    ol1[t1] = -1;
-    ol2[t1] = -1;
-  }
-  
-  /* loop through the picts one time to find the edge */
-  /* if any of my src neighbors are null, then set me to 1 */
-  for (j = r1; j <= r2; j++) {
-    for (i = c1; i <= c2; i++) {
-      t1 = j * w + i;
-      if (pict1[t1] != nullv && pict2[t1] != nullv) {
-	up = (j-1) * w + i;
-	down = (j+1) * w + i;
-	left = t1-1;
-	right = t1+1;
-	if (pict1[left] == nullv || pict1[right] == nullv
-	    || pict1[up] == nullv || pict1[down] == nullv) {
-	  ol1[t1] = 1;
-	}
-	if (pict2[left] == nullv || pict2[right] == nullv
-	    || pict2[up] == nullv || pict2[down] == nullv) {
-	  ol2[t1] = 1;
+    if (x != w || y != z) {
+      parse_error("The two pictures need to be of the exact same dimensions.\n");
+      return NULL;
+    }
+
+    /* create the two overlap arrays */
+    ol1 = (int *) malloc(sizeof(int)*w*z);
+    ol2 = (int *) malloc(sizeof(int)*w*z);
+
+    /* extract the two pictures into their storage arrays */
+    r1 = y;
+    r2 = 0;
+    c1 = x;
+    c2 = 0;
+
+    for (j = 0; j < y ; j++) {
+      for (i = 0; i < x ; i++) {
+	t1 = j * x + i;
+	ol1[t1] = -1;
+	ol2[t1] = -1;
+
+	tmpval = extract_float(pic_1, cpos(i, j, 0, pic_1));
+	if(tmpval != nullv) ol1[t1] = 0;
+
+	tmpval = extract_float(pic_2, cpos(i, j, 0, pic_2));
+	if(tmpval != nullv) ol2[t1] = 0;
+
+	/* find left and right limits */
+	if (ol1[t1] != -1 && ol2[t1] != -1) {
+	  if (j < r1) { r1 = j; }
+	  if (j > r2) { r2 = j; }
+	  if (i < c1) { c1 = i; }
+	  if (i > c2) { c2 = i; }
 	}
       }
     }
-  }
-  
-  /* loop through the overlap arrays filling the appropriate value in */
-  while (ct > 0) {
-    ct = 0;
+
+    /* loop through the picts one time to find the edge      **
+    ** if any of my src neighbors are null, then set me to 1 */
     for (j = r1; j <= r2; j++) {
       for (i = c1; i <= c2; i++) {
 	t1 = j * w + i;
-	if (pict1[t1] != nullv && pict2[t1] != nullv) {
+	if (ol1[t1] != -1 && ol2[t1] != -1) {
 	  up = (j-1) * w + i;
+	  if(j==0) up = t1;      // safety against falling off edge
 	  down = (j+1) * w + i;
-	  left = t1 - 1;
-	  right = t1 + 1;
-	  n = num-1;
-	  if (ol1[t1] == 0
-	      && ((ol1[left] == n) || (ol1[right] == n)
-		  || (ol1[up] == n) || (ol1[down] == n))) {
-	    ol1[t1] = num;
-	    ct += 1;
+          if(j==y-1) down = t1;  // again safety
+	  left = t1-1;
+          if(i==0) left = t1;    // again safety
+	  right = t1+1;
+          if(i==x-1) right = t1; // again safety
+	  if (ol1[left] == -1 || ol1[right] == -1
+	      || ol1[up] == -1 || ol1[down] == -1) {
+	    ol1[t1] = 1;
 	  }
-	  if (ol2[t1] == 0
-	      && ((ol2[left] == n) || (ol2[right] == n)
-		  || (ol2[up] == n) || (ol2[up] == n))) {
-	    ol2[t1] = num;
-	    ct += 1;
+	  if (ol2[left] == -1 || ol2[right] == -1
+	      || ol2[up] == -1 || ol2[down] == -1) {
+	    ol2[t1] = 1;
 	  }
 	}
       }
     }
-    num += 1;
-  }
-  
-  /* reallocate the size of pict1 for use as an output array and free pict2 */
-  free(pict1);
-  free(pict2);
-  pict1 = (float *) calloc(sizeof(float), x * y);
-  
-  /* loop through one last time creating the output array */
-  for (j = 0; j < y; j++) {
-    for (i = 0; i < x; i++) {
-      t1 = j * x + i;
-      t2 = (j + 1) * w + i + 1;
-      if (ol1[t2] > 0) pict1[t1] = (float) (ol2[t2]) / (float) (ol2[t2] + ol1[t2]);
+    
+    /* loop through the overlap arrays filling in the appropriate value */
+    while (ct > 0) {
+      ct = 0;
+      for (j = r1; j <= r2; j++) {
+	for (i = c1; i <= c2; i++) {
+	  t1 = j * w + i;
+	  if (ol1[t1] != -1 && ol2[t1] != -1) {
+	    up = (j-1) * w + i;
+	    if(j==0) up = t1;      // safety against falling off edge
+	    down = (j+1) * w + i;
+	    if(j==y-1) down = t1;  // again safety
+	    left = t1 - 1;
+	    if(i==0) left = t1;    // again safety
+	    right = t1 + 1;
+	    if(i==x-1) right = t1; // again safety
+	    n = num-1;
+	    if (ol1[t1] == 0
+		&& ((ol1[left] == n) || (ol1[right] == n)
+		    || (ol1[up] == n) || (ol1[down] == n))) {
+	      ol1[t1] = num;
+	      ct += 1;
+	    }
+	    if (ol2[t1] == 0
+		&& ((ol2[left] == n) || (ol2[right] == n)
+		    || (ol2[up] == n) || (ol2[down] == n))) {
+	      ol2[t1] = num;
+	      ct += 1;
+	    }
+	  }
+	}
+      }
+      num += 1;
     }
-  }
-  
-  free(ol1);
-  free(ol2);
-  
-  out = newVal(BSQ, x, y, 1, FLOAT, pict1);
-  return out;
-}
 
+    /* create ramp */
+    ramp = (float *) calloc(sizeof(float), x*y);
+
+    /* loop through one last time creating the output array */
+    for (j = 0; j < y; j++) {
+      for (i = 0; i < x; i++) {
+	t1 = j*x + i;
+	t2 = (j + 1) * w + i + 1;
+	if (ol1[t2] > 0) {
+	  ramp[t1] = (float)(ol2[t2]) / (float)(ol2[t2] + ol1[t2]);
+	}
+      }
+    }
+    
+    free(ol1);
+    free(ol2);
+
+    out = newVal(BSQ, x, y, 1, FLOAT, ramp);
+    return out;
+}
 
 
 
@@ -3453,6 +3433,7 @@ Var*
 thm_white_noise_remove2(vfuncptr func, Var *arg)
 {
   /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
+  /* updated Fri Oct 14 10:41:19 MST 2005 to have better help section - kjn */
 
   typedef unsigned char byte;
 
@@ -3470,34 +3451,32 @@ thm_white_noise_remove2(vfuncptr func, Var *arg)
   float  *band_10;                  /* band 10 to smooth */
   int     filt=7;                   /* the filter size */
   int     kernsize;                 /* number of kern elements */ 
-  int     vb=1;                     /* verbosity for updataes */
 
-  Alist alist[7]; 
+  Alist alist[5]; 
   alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-  alist[1] = make_alist("ignore",    FLOAT,     NULL,  &nullval);
+  alist[1] = make_alist("filt",      INT,       NULL,  &filt);
   alist[2] = make_alist("b10",       INT,       NULL,  &b10);
-  alist[3] = make_alist("filt",      INT,       NULL,  &filt);
-  alist[4] = make_alist("verbose",   INT,       NULL,  &vb);
-  alist[5] = make_alist("null",      FLOAT,     NULL,  &nullval); // can be removed when all legacy programs are dead
-  alist[6].name = NULL;
+  alist[3] = make_alist("ignore",    FLOAT,     NULL,  &nullval);
+  alist[4].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
  
   if (data == NULL) {
-    parse_error("white_noise_remove2() - 08/10/04\n");
-    parse_error("\nUsed to remove white noise from data");
-    parse_error("More bands are better\n");
-    parse_error("$1 = the data to remove the noise from");
-    parse_error("ignore = null-data value for the image (Default is -32768)");
-    parse_error("b10 = the atmospheric band (Default is 10)");
-    parse_error("If b10=0, then there is no band 10 information");
-    parse_error("filt = the filter size to use (Default is 7)\n");
+    parse_error("white_noise_remove2() - 7/10/04");
+    parse_error("White noise removal algorithm for THEMIS radiance cubes");
+    parse_error("Low-pass filtered in \'relative color space\'\n");
+    parse_error("Syntax:  b = thm.white_noise_remove2(data,filt,b10,ignore)");
+    parse_error("example: b = thm.white_noise_remove2(a)");
+    parse_error("example: b = thm.white_noise_remove2(a,filt=9,b10=3,ignore=0)");
+    parse_error("data - any 3-D radiance array.");
+    parse_error("filt - the size of the smoothing kernel. Default is 7.");
+    parse_error("b10 - the z location of THEMIS band 10. Default is 10.");
+    parse_error("ignore - non-data pixel value. Default is -32768./n");
     parse_error("NOTE: This WILL CHANGE the data and");
     parse_error("should only be used for \"pretty pictures\"");
     parse_error("Band 10 will be smoothed by convolution\n");
-    parse_error("Last Modified by c.edwards 8/10/04");
-    parse_error("Added filt and band 10 smooth\n");
-    parse_error("There is yet another option to clean images");
+    parse_error("Last Modified by k.nowicki Fri Oct 14 10:41:19 MST 2005/n");
+    parse_error("NOTE: A more advanced function exists.");
     parse_error("You must source \"/u/cedwards/christopher.dvrc\"");
     parse_error("The function is rmnoise_pca()");
     parse_error("It has more limitations but retains more color information");
@@ -3522,7 +3501,6 @@ thm_white_noise_remove2(vfuncptr func, Var *arg)
     printf("\nSorry you need more bands to remove noise\n\n");
     return NULL;
   }
-  if(vb==1) printf("\nMORE UPDATES! CHECK THE HELP!\n");
 
   /* allocate memory for the data */
   bc = (byte *)calloc(sizeof(byte), x*y);
@@ -3630,6 +3608,11 @@ thm_white_noise_remove2(vfuncptr func, Var *arg)
   out=newVal(BSQ,x,y,z,FLOAT,w_pic2);
   return out;
 }
+
+
+
+
+
 
 
 Var * 
