@@ -756,182 +756,178 @@ float *convolve(float *obj, float *kernel, int ox, int oy, int oz, int kx, int k
 
 
 
-
-
 Var *
 thm_ramp(vfuncptr func, Var * arg)
 {
-  /* made more efficient and fixed several bugs Oct 12, 2005 */
+  /* made more efficient and fixed several bugs Oct 14, 2005                         **
+  ** added ability to speed up ramp calculation by setting a maximum # of iterations **
+  ** Fri Oct 14 16:36:44 MST 2005                                                    */
 
-    Var    *pic_1 = NULL;		/* picture one */
-    Var    *pic_2 = NULL;		/* picture two */
-    Var    *out;			/* the output picture */
-    float  *ramp = NULL; 	        /* storage location of output ramp */
-    int    *ol1 = NULL;		        /* the overlap in picture 1 */
-    int    *ol2 = NULL;		        /* the overlap in picture 2 */
-    float   nullv = 0;		        /* the ignore value */
-    float   tmpval = 0.0;               /* a temporary extracted value from the pictures */
-    int     r1 = -1, r2 = -1;	        /* beginning and ending rows of the overlap */
-    int     c1 = -1, c2 = -1;	        /* beginning and ending columns of the overlap */
-    int     i, j, k;		        /* loop indices */
-    int     w, x, y, z;		        /* dimensions of the input pictures */
-    int     u, v;			/* dimensions of the overlapping area */
-    int     m, n;			/* fill-in value and zero value */
-    int     t1, t2;			/* memory location */
-    int     ct = 1;			/* counter */
-    int     num = 2;		        /* fill-in number */
-    int     olm1 = 2, olm2 = 2;	        /* maximum values for the ol1 & ol2 arrays */
-    int     up, down, left, right;	/* some neighborhood indices */
+  Var    *pic_1 = NULL;		 /* picture one                                   */
+  Var    *pic_2 = NULL;		 /* picture two                                   */
+  Var    *out = NULL;		 /* the output picture                            */
+  float  *ramp = NULL; 	         /* storage location of output ramp               */
+  int    *ol1 = NULL;	         /* the overlap in picture 1                      */
+  int    *ol2 = NULL;	         /* the overlap in picture 2                      */
+  float   nullv = 0.0;	         /* the ignore value                              */
+  float   tmpval = 0.0;          /* a temporary extracted value from the pictures */
+  int     r1 = -1, r2 = -1;      /* beginning and ending rows of the overlap      */
+  int     c1 = -1, c2 = -1;      /* beginning and ending columns of the overlap   */
+  int     i, j, k;	         /* loop indices                                  */
+  int     x, y;		         /* dimensions of the input pictures              */
+  int     t1;  			 /* memory location                               */
+  int     ct = 1;		 /* counter                                       */
+  int     n=-1, num = 1;	 /* fill-in number                                */
+  int     up, down, left, right; /* some neighborhood indices                     */
+  int     pare = 100000;         /* maximum # of pixels away from edge to search  */
 
-    Alist alist[4];
-    alist[0] = make_alist("pic1", ID_VAL, NULL, &pic_1);
-    alist[1] = make_alist("pic2", ID_VAL, NULL, &pic_2);
-    alist[2] = make_alist("ignore", FLOAT, NULL, &nullv);
-    alist[3].name = NULL;
+  Alist alist[5];
+  alist[0] = make_alist("pic1",   ID_VAL, NULL, &pic_1);
+  alist[1] = make_alist("pic2",   ID_VAL, NULL, &pic_2);
+  alist[2] = make_alist("stop",   INT,    NULL, &pare);
+  alist[3] = make_alist("ignore", FLOAT,  NULL, &nullv);
+  alist[4].name = NULL;
 
-    if (parse_args(func, arg, alist) == 0)
-	return (NULL);
-
-    /* if no pictures got passed to the function */
-    if (pic_1 == NULL || pic_2 == NULL) {
-	parse_error("ramp() - Fri Oct 14 10:41:19 MST 2005");
-	parse_error("Calculates a 0 - 1 float ramp between two overlapping pictures.");
-	parse_error("You need to pass me two overlapping pictures contained in arrays of identical size, and an ignore value.\n");
-	parse_error("Syntax:  b = thm.ramp(pic1,pic2,ignore)");
-	parse_error("example: b = thm.ramp(a1,a2,ignore=-32768");
-	parse_error("pic1 - may be any 2-d array - float, int, short, etc.");
-	parse_error("pic2 - may be any 2-d array - float, int, short, etc.");
-	parse_error("ignore - the non-data pixel values. Default is 0.\n");
-	parse_error("NOTES:\n");
-	parse_error("You need to multiply the ramp*pic2 and (1-ramp)*pic1.");
-	parse_error("The ramp is only found for OVERLAPPING regions.");
-	parse_error("Non-overlapping regions from pic1 and pic2 need to be added to make a full blend.");
-	return NULL;
-    }
-
-    /* x and y dimensions of the original pictures */
-    x = GetX(pic_1);
-    y = GetY(pic_1);
-    w = GetX(pic_2);
-    z = GetY(pic_2);
-    
-    if (x != w || y != z) {
-      parse_error("The two pictures need to be of the exact same dimensions.\n");
-      return NULL;
-    }
-
-    /* create the two overlap arrays */
-    ol1 = (int *) malloc(sizeof(int)*w*z);
-    ol2 = (int *) malloc(sizeof(int)*w*z);
-
-    /* extract the two pictures into their storage arrays */
-    r1 = y;
-    r2 = 0;
-    c1 = x;
-    c2 = 0;
-
-    for (j = 0; j < y ; j++) {
-      for (i = 0; i < x ; i++) {
-	t1 = j * x + i;
-	ol1[t1] = -1;
-	ol2[t1] = -1;
-
-	tmpval = extract_float(pic_1, cpos(i, j, 0, pic_1));
-	if(tmpval != nullv) ol1[t1] = 0;
-
-	tmpval = extract_float(pic_2, cpos(i, j, 0, pic_2));
-	if(tmpval != nullv) ol2[t1] = 0;
-
-	/* find left and right limits */
-	if (ol1[t1] != -1 && ol2[t1] != -1) {
-	  if (j < r1) { r1 = j; }
-	  if (j > r2) { r2 = j; }
-	  if (i < c1) { c1 = i; }
-	  if (i > c2) { c2 = i; }
-	}
+  if (parse_args(func, arg, alist) == 0)
+    return (NULL);
+  
+  /* if no pictures got passed to the function */
+  if (pic_1 == NULL || pic_2 == NULL) {
+    parse_error("ramp() - Fri Oct 14 14:45:09 MST 2005");
+    parse_error("Calculates a 0 - 1 float ramp between two overlapping pictures.");
+    parse_error("You need to pass me two overlapping pictures contained in arrays\nof identical size, and an ignore value.\n");
+    parse_error("Syntax:  b = thm.ramp(pic1, pic2, stop, ignore)");
+    parse_error("example: b = thm.ramp(a1, a2, stop=100, ignore=-32768");
+    parse_error("pic1 - may be any 2-d array - float, int, short, etc.");
+    parse_error("pic2 - may be any 2-d array - float, int, short, etc.");
+    parse_error("stop - maximum number of pixels away from edge to search. Default 100000");
+    parse_error("ignore - the non-data pixel values. Default is 0.\n");
+    parse_error("NOTES:\n");
+    parse_error("You need to multiply the ramp*pic2 and (1-ramp)*pic1.");
+    parse_error("The ramp is only found for OVERLAPPING regions.");
+    parse_error("Non-overlapping regions from pic1 and pic2 need to be added to make a full blend.");
+    parse_error("You can speed up ramp calculation by setting \'stop\'. 100 works well.");
+    return NULL;
+  }
+  
+  /* x and y dimensions of the original pictures */
+  x = GetX(pic_1);
+  y = GetY(pic_1);
+  
+  if (x != GetX(pic_2) || y != GetY(pic_2)) {
+    parse_error("The two pictures need to be of the exact same dimensions.\n");
+    return NULL;
+  }
+  
+  /* create the two overlap arrays */
+  ol1 = (int *) malloc(sizeof(int)*x*y);
+  ol2 = (int *) malloc(sizeof(int)*x*y);
+  
+  /* lines and columns bounding data */
+  r1 = y-1;
+  r2 = 0;
+  c1 = x-1;
+  c2 = 0;
+  
+  /* extract profiles of images */
+  for (j = 0; j < y ; j++) {
+    for (i = 0; i < x ; i++) {
+      t1 = j * x + i;
+      ol1[t1] = -1;
+      ol2[t1] = -1;
+      
+      tmpval = extract_float(pic_1, cpos(i, j, 0, pic_1));
+      if(tmpval != nullv) ol1[t1] = 0;
+      
+      tmpval = extract_float(pic_2, cpos(i, j, 0, pic_2));
+      if(tmpval != nullv) ol2[t1] = 0;
+      
+      /* find left and right limits of overlapping area */
+      if (ol1[t1] != -1 && ol2[t1] != -1) {
+	if (j < r1) { r1 = j; }
+	if (j > r2) { r2 = j; }
+	if (i < c1) { c1 = i; }
+	if (i > c2) { c2 = i; }
       }
     }
-
-    /* loop through the picts one time to find the edge      **
-    ** if any of my src neighbors are null, then set me to 1 */
+  }
+ 
+  /* loop through the overlap arrays filling in the appropriate value.   **
+  ** On the first iteration we search for any pixels with a neighbor of  **
+  ** -1 and we set that pixel to 1.  On all other iterations we look for **
+  ** neighbors with values num-1. If "stop" number is specified, we stop **
+  ** searching for distances and set all values to value of "pare".      */
+  k=1;
+  while (ct > 0) {
+    ct = 0;
+    
     for (j = r1; j <= r2; j++) {
       for (i = c1; i <= c2; i++) {
-	t1 = j * w + i;
-	if (ol1[t1] != -1 && ol2[t1] != -1) {
-	  up = (j-1) * w + i;
-	  if(j==0) up = t1;      // safety against falling off edge
-	  down = (j+1) * w + i;
-          if(j==y-1) down = t1;  // again safety
-	  left = t1-1;
-          if(i==0) left = t1;    // again safety
-	  right = t1+1;
-          if(i==x-1) right = t1; // again safety
-	  if (ol1[left] == -1 || ol1[right] == -1
-	      || ol1[up] == -1 || ol1[down] == -1) {
-	    ol1[t1] = 1;
-	  }
-	  if (ol2[left] == -1 || ol2[right] == -1
-	      || ol2[up] == -1 || ol2[down] == -1) {
-	    ol2[t1] = 1;
-	  }
+	t1 = j * x + i;
+	
+	/* neighbor pixel positions */
+	up = (j-1) * x + i;
+	down = (j+1) * x + i;
+	left = t1 - 1;
+	right = t1 + 1;
+	
+	/* safety against falling off the edge */
+	if(j==0) up = t1;
+	if(j==y-1) down = t1;
+	if(i==0) left = t1;
+	if(i==x-1) right = t1;
+	
+	if (ol1[t1] == 0
+	    && ((ol1[left] == n) || (ol1[right] == n)
+		|| (ol1[up] == n) || (ol1[down] == n))) {
+	  ol1[t1] = num;
+	  ct += 1;
+	}
+	if (ol2[t1] == 0
+	    && ((ol2[left] == n) || (ol2[right] == n)
+		|| (ol2[up] == n) || (ol2[down] == n))) {
+	  ol2[t1] = num;
+	  ct += 1;
 	}
       }
     }
-    
-    /* loop through the overlap arrays filling in the appropriate value */
-    while (ct > 0) {
-      ct = 0;
+    num += 1;
+    n = num-1;
+    k+=1;
+
+    /* we've searched enough. Set all remaining values to 'pare' */
+    if(k==pare) {
       for (j = r1; j <= r2; j++) {
 	for (i = c1; i <= c2; i++) {
-	  t1 = j * w + i;
-	  if (ol1[t1] != -1 && ol2[t1] != -1) {
-	    up = (j-1) * w + i;
-	    if(j==0) up = t1;      // safety against falling off edge
-	    down = (j+1) * w + i;
-	    if(j==y-1) down = t1;  // again safety
-	    left = t1 - 1;
-	    if(i==0) left = t1;    // again safety
-	    right = t1 + 1;
-	    if(i==x-1) right = t1; // again safety
-	    n = num-1;
-	    if (ol1[t1] == 0
-		&& ((ol1[left] == n) || (ol1[right] == n)
-		    || (ol1[up] == n) || (ol1[down] == n))) {
-	      ol1[t1] = num;
-	      ct += 1;
-	    }
-	    if (ol2[t1] == 0
-		&& ((ol2[left] == n) || (ol2[right] == n)
-		    || (ol2[up] == n) || (ol2[down] == n))) {
-	      ol2[t1] = num;
-	      ct += 1;
-	    }
-	  }
+	  t1 = j * x + i;
+	  if (ol1[t1] == 0) ol1[t1] = pare;
+	  if (ol2[t1] == 0) ol2[t1] = pare;
 	}
       }
-      num += 1;
+      ct=0;
     }
+  }
 
-    /* create ramp */
-    ramp = (float *) calloc(sizeof(float), x*y);
-
-    /* loop through one last time creating the output array */
-    for (j = 0; j < y; j++) {
-      for (i = 0; i < x; i++) {
-	t1 = j*x + i;
-	t2 = (j + 1) * w + i + 1;
-	if (ol1[t2] > 0) {
-	  ramp[t1] = (float)(ol2[t2]) / (float)(ol2[t2] + ol1[t2]);
-	}
+  /* loop through last time and create ramp */
+  ramp = (float *) calloc(sizeof(float), x*y);
+  
+  for (j = 0; j < y; j++) {
+    for (i = 0; i < x; i++) {
+      t1 = j*x + i;
+      if (ol1[t1] != -1 && ol2[t1] != -1) {
+	ramp[t1] = (float)(ol2[t1]) / (float)(ol2[t1] + ol1[t1]);
       }
     }
-    
-    free(ol1);
-    free(ol2);
-
-    out = newVal(BSQ, x, y, 1, FLOAT, ramp);
-    return out;
+  }
+  
+  free(ol1);
+  free(ol2);
+  
+  out = newVal(BSQ, x, y, 1, FLOAT, ramp);
+  return out;
 }
+
+
 
 
 
