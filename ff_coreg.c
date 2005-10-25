@@ -104,8 +104,10 @@ ff_coreg(vfuncptr func, Var * arg)
 			v1 = extract_int(pic1_in, count);
 			if (v1 == ignore) continue;
 
+			/*
 			v2 = extract_int(pic2_in, count);
 			if (v2 == ignore) continue;
+			*/
 
 			j = count/x;
 			i = count%x;

@@ -1793,6 +1793,8 @@ Var *ReadPDS(vfuncptr func, Var * arg)
 
     ob = (OBJDESC *) OdlParseLabelFile(fname, err_file,
                                        ODL_EXPAND_STRUCTURE, VERBOSE == 0);
+	fclose(fp);
+
     if ((key =
          OdlFindKwd(ob, "RECORD_BYTES", NULL, 0,
                     ODL_THIS_OBJECT)) == NULL) {
