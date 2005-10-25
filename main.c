@@ -104,26 +104,26 @@ dv_sighandler(int data)
     switch (data) {
 
     case (SIGSEGV):
-		rmrf(path);
+        rmrf(path);
         signal(SIGSEGV,SIG_DFL);
         break;
 
 #ifndef __CYGWIN__
     case (SIGBUS):
-		rmrf(path);
+        rmrf(path);
         signal(SIGBUS,SIG_DFL);
         break;
 #endif /* __CYGWIN__ */
 
     case (SIGINT):
-		signal(SIGINT, SIG_IGN); 
+        signal(SIGINT, SIG_IGN); 
         while ((scope = scope_tos()) != global_scope()) {
             dd_unput_argv(scope);
             clean_scope(scope_pop());
-    	}
+        }
 
-		signal(SIGINT, dv_sighandler); 
-    	longjmp(env, 1);
+        signal(SIGINT, dv_sighandler); 
+        longjmp(env, 1);
         break;
     }
 }
@@ -142,8 +142,8 @@ main(int ac, char **av)
     char *logfile = NULL;
     int iflag = 0;
     char *p;
-	int history = 1;
-	
+    int history = 1;
+    
     s = new_scope();
 
     signal(SIGINT, dv_sighandler); 
@@ -168,7 +168,7 @@ main(int ac, char **av)
     **/
     for (i = 1; i < ac; i++) {
         k = 0;
-        if (!flag && av[i] && av[i][0] == '-') {
+        if (!flag && av[i] && av[i][0] == '-' && strlen(av[i]) <= 2) {
             for (j = 1; j < strlen(av[i]); j++) {
                 switch (av[i][j]) {
                 case '-':   /* last option */
@@ -208,12 +208,12 @@ main(int ac, char **av)
                         VERBOSE = av[i][j + 1] - '0';
                     } else {
                         k++;
-						if (i+k >= ac) {
-							exit(usage(av[0]));
-						} else {
-							VERBOSE = atoi(av[i + k]);
-							av[i + k] = NULL;
-						}
+                        if (i+k >= ac) {
+                            exit(usage(av[0]));
+                        } else {
+                            VERBOSE = atoi(av[i + k]);
+                            av[i + k] = NULL;
+                        }
                     }
                     break;
                 }
@@ -228,7 +228,7 @@ main(int ac, char **av)
                     break;
                 }
                 case 'h':{
-					/* force loading of the history, even in quick mode */
+                    /* force loading of the history, even in quick mode */
                     history = 1;
                     break;
                 }
@@ -249,7 +249,7 @@ main(int ac, char **av)
             put_sym(v);
         }
     }
-	dv_set_iom_verbosity();
+    dv_set_iom_verbosity();
 
     env_vars();
     fake_data();
@@ -263,8 +263,8 @@ main(int ac, char **av)
         if (quick == 0 || history == 1)
             init_history(logfile);
 #ifdef HAVE_LIBREADLINE
-	/* JAS FIX */
-		rl_attempted_completion_function = dv_complete_func; 
+    /* JAS FIX */
+        rl_attempted_completion_function = dv_complete_func; 
 #endif
     }
     if (quick == 0) {
@@ -280,19 +280,19 @@ main(int ac, char **av)
     **/
     if ((p = getenv("TMPDIR")) == NULL) {
         sprintf(path, "TMPDIR=%s/dv_%d", P_tmpdir, getpid());
-	} else {
+    } else {
         sprintf(path, "TMPDIR=%s/dv_%d", getenv("TMPDIR"), getpid());
-	}
+    }
 
-	mkdir(path + 7, 0777);
-	putenv(path);
+    mkdir(path + 7, 0777);
+    putenv(path);
 
     /*
     ** Before we get to events, process any pushed files
     */
     process_streams();
     event_loop();
-	quit();
+    quit();
 
     /* event_loop never returns... unless we're not interactive */
 
@@ -337,42 +337,42 @@ static String defaultAppResources[] = {
   "*vicar.shadowThickness: 1",
   /* NOTE: the following is one long string.  Don't add commas. */
   "*vicar.translations: #augment \\n "
-  "~Shift<Btn2Down>:			MousePanStart() \\n "
-  "~Shift<Btn2Motion>:			MousePan() \\n "
-  "~Shift~Ctrl~Meta<Key>osfLeft:	PanOne(left) \\n "
-  "~Shift~Ctrl~Meta<Key>osfRight:	PanOne(right) \\n "
-  "~Shift~Ctrl~Meta<Key>osfUp:		PanOne(up) \\n "
-  "~Shift~Ctrl~Meta<Key>osfDown:	PanOne(down) \\n "
-  "Ctrl~Shift~Meta<Key>osfLeft:		PanEdge(left) \\n "
-  "Ctrl~Shift~Meta<Key>osfRight:	PanEdge(right) \\n "
-  "Ctrl~Shift~Meta<Key>osfUp:		PanEdge(up) \\n "
-  "Ctrl~Shift~Meta<Key>osfDown:		PanEdge(down) \\n "
-  "Shift~Ctrl~Meta<Key>osfLeft:		PanHalfView(left) \\n "
-  "Shift~Ctrl~Meta<Key>osfRight:	PanHalfView(right) \\n "
-  "Shift~Ctrl~Meta<Key>osfUp:		PanHalfView(up) \\n "
-  "Shift~Ctrl~Meta<Key>osfDown:		PanHalfView(down) \\n "
-  "<Key>osfActivate:			Input(\"Return hit\") \\n "
-  "<Btn1Down>:				Input(\"Draw\",\"start\") \\n "
-  "Button2<Key>space:			Input(\"Draw\",\"mark\") \\n "
-  "<Btn1Motion>:			Input(\"Draw\",\"drag\") \\n "
-  "<Btn1Up>:				Input(\"Draw\",\"end\") \\n "
-  "<Key>osfEscape:			CursorMode(toggle) \\n "
-  "~Shift<Key>grave:			CursorMode(toggle) \\n "
-  "<Key>asciitilde:			CursorMode(toggle,true) \\n "
-  "Shift<Key>grave:			CursorMode(toggle,true) \\n "
-  "<Key>plus:				CursorMode(floating) \\n "
-  "<Key>minus:				CursorMode(planted) \\n "
-  "Shift<Motion>:			MoveCursorMouse() \\n "
-  "<Key>c:				MoveCursorMouse() \\n "
-  "Shift Ctrl<Key>osfLeft:		MoveCursor(left) \\n "
-  "Shift Ctrl<Key>osfRight:		MoveCursor(right) \\n "
-  "Shift Ctrl<Key>osfUp:		MoveCursor(up) \\n "
-  "Shift Ctrl<Key>osfDown:		MoveCursor(down) \\n "
-  "Meta<Key>osfLeft:			MoveCursorScreen(left) \\n "
-  "Meta<Key>osfRight:			MoveCursorScreen(right) \\n "
-  "Meta<Key>osfUp:			MoveCursorScreen(up) \\n "
-  "Meta<Key>osfDown:			MoveCursorScreen(down) \\n "
-  "<Visible>:				Input(\"VisibilityNotify\")",
+  "~Shift<Btn2Down>:            MousePanStart() \\n "
+  "~Shift<Btn2Motion>:          MousePan() \\n "
+  "~Shift~Ctrl~Meta<Key>osfLeft:    PanOne(left) \\n "
+  "~Shift~Ctrl~Meta<Key>osfRight:   PanOne(right) \\n "
+  "~Shift~Ctrl~Meta<Key>osfUp:      PanOne(up) \\n "
+  "~Shift~Ctrl~Meta<Key>osfDown:    PanOne(down) \\n "
+  "Ctrl~Shift~Meta<Key>osfLeft:     PanEdge(left) \\n "
+  "Ctrl~Shift~Meta<Key>osfRight:    PanEdge(right) \\n "
+  "Ctrl~Shift~Meta<Key>osfUp:       PanEdge(up) \\n "
+  "Ctrl~Shift~Meta<Key>osfDown:     PanEdge(down) \\n "
+  "Shift~Ctrl~Meta<Key>osfLeft:     PanHalfView(left) \\n "
+  "Shift~Ctrl~Meta<Key>osfRight:    PanHalfView(right) \\n "
+  "Shift~Ctrl~Meta<Key>osfUp:       PanHalfView(up) \\n "
+  "Shift~Ctrl~Meta<Key>osfDown:     PanHalfView(down) \\n "
+  "<Key>osfActivate:            Input(\"Return hit\") \\n "
+  "<Btn1Down>:              Input(\"Draw\",\"start\") \\n "
+  "Button2<Key>space:           Input(\"Draw\",\"mark\") \\n "
+  "<Btn1Motion>:            Input(\"Draw\",\"drag\") \\n "
+  "<Btn1Up>:                Input(\"Draw\",\"end\") \\n "
+  "<Key>osfEscape:          CursorMode(toggle) \\n "
+  "~Shift<Key>grave:            CursorMode(toggle) \\n "
+  "<Key>asciitilde:         CursorMode(toggle,true) \\n "
+  "Shift<Key>grave:         CursorMode(toggle,true) \\n "
+  "<Key>plus:               CursorMode(floating) \\n "
+  "<Key>minus:              CursorMode(planted) \\n "
+  "Shift<Motion>:           MoveCursorMouse() \\n "
+  "<Key>c:              MoveCursorMouse() \\n "
+  "Shift Ctrl<Key>osfLeft:      MoveCursor(left) \\n "
+  "Shift Ctrl<Key>osfRight:     MoveCursor(right) \\n "
+  "Shift Ctrl<Key>osfUp:        MoveCursor(up) \\n "
+  "Shift Ctrl<Key>osfDown:      MoveCursor(down) \\n "
+  "Meta<Key>osfLeft:            MoveCursorScreen(left) \\n "
+  "Meta<Key>osfRight:           MoveCursorScreen(right) \\n "
+  "Meta<Key>osfUp:          MoveCursorScreen(up) \\n "
+  "Meta<Key>osfDown:            MoveCursorScreen(down) \\n "
+  "<Visible>:               Input(\"VisibilityNotify\")",
   /* NOTE: end of long string. */
   NULL
 };
@@ -385,23 +385,23 @@ event_loop(void)
     if (interactive) {
 #if !defined(USE_X11_EVENTS) || !defined(HAVE_LIBREADLINE)
       /* JAS FIX */
-	lhandler((char *)readline("dv> "));
+    lhandler((char *)readline("dv> "));
 #else
-	// JAS FIX: this should work even with a null DISPLAY, if -display is set..i think there are better
-	// ways to get the display as well..
+    // JAS FIX: this should work even with a null DISPLAY, if -display is set..i think there are better
+    // ways to get the display as well..
         if (windows && getenv("DISPLAY") != NULL)  {
-	  // JAS FIX: what is this argv/argv manglation?
+      // JAS FIX: what is this argv/argv manglation?
             char *argv[1];
             char *av0 = "null";
             int argc = 1;
             argv[0] = av0;
             applicationShell = XtVaAppInitialize(&applicationContext,
-						 "Davinci", NULL, 0,
-						 &argc, argv,
-						 defaultAppResources, NULL);
+                         "Davinci", NULL, 0,
+                         &argc, argv,
+                         defaultAppResources, NULL);
 
 #ifdef INCLUDE_API
-	    /* FIX: what's this for? -JAS */
+        /* FIX: what's this for? -JAS */
             SetTopLevel(&applicationShell);
 #endif
         } else {
@@ -442,7 +442,7 @@ void lhandler(char *line)
         if (line == NULL) {
             quit();
         }
-		
+        
 
         buf = (char *)malloc(strlen(line)+2);
         strcpy(buf, line);
@@ -458,7 +458,7 @@ void lhandler(char *line)
 
         parse_buffer(buf);
 
-	    setjmp(env);
+        setjmp(env);
 
         /*
         ** Process anything pushed onto the stream stack by the last command.
@@ -479,8 +479,8 @@ void lhandler(char *line)
         }
 
 #if defined(USE_X11_EVENTS) && defined(HAVE_LIBREADLINE)
-	/* JAS FIX */
-	rl_callback_handler_install(prompt, lhandler);
+    /* JAS FIX */
+    rl_callback_handler_install(prompt, lhandler);
 #else
         line=(char *)readline(prompt);
     }
@@ -519,11 +519,11 @@ parse_buffer(char *buf)
     void *parent_buffer;
     void *buffer;
     Var *node;
-	extern char *pp_str;
+    extern char *pp_str;
 
     parent_buffer = (void *) get_current_buffer();
     buffer = (void *) yy_scan_string(buf);
-	pp_str = buf;
+    pp_str = buf;
 
     while((i = yylex()) != 0) {
         /*
@@ -593,7 +593,7 @@ quit(void)
     if (interactive) {
         printf("\n");
 #if defined(USE_X11_EVENTS) && defined(HAVE_LIBREADLINE)
-	/* JAS FIX */
+    /* JAS FIX */
         rl_callback_handler_remove();
 #endif
     }
@@ -601,7 +601,7 @@ quit(void)
     /**
     ** clean up temporary directory
     **/
-	rmrf(path);
+    rmrf(path);
     exit(0);
 }
 
@@ -742,8 +742,8 @@ unquote(char *name)
 {
     char *p = name;
 
-	if (name == NULL) return(NULL);
-	if (*name == 0) return(name);
+    if (name == NULL) return(NULL);
+    if (*name == 0) return(name);
     if (*name == '"') {
         p++;
         name++;
@@ -772,24 +772,24 @@ unescape(char *str)
     char *p = str;
     char *q = str;
 
-	if (str && *str) {
-		while (*p) {
-			if (*p == '\\') {
-				if (*(p + 1) == 't')
-					*q = '\t';
-				else if (*(p + 1) == 'n')
-					*q = '\n';
-				else
-					*q = *(p + 1);
-				p++;
-			} else {
-				*q = *p;
-			}
-			p++;
-			q++;
-		}
-		*q = *p;
-	}
+    if (str && *str) {
+        while (*p) {
+            if (*p == '\\') {
+                if (*(p + 1) == 't')
+                    *q = '\t';
+                else if (*(p + 1) == 'n')
+                    *q = '\n';
+                else
+                    *q = *(p + 1);
+                p++;
+            } else {
+                *q = *p;
+            }
+            p++;
+            q++;
+        }
+        *q = *p;
+    }
     return (str);
 }
 
@@ -799,8 +799,8 @@ log_time()
     time_t t;
     char *uname;
     char tbuf[30];
-	char *host;
-	char cwd[1024];
+    char *host;
+    char cwd[1024];
     if (lfile) {
         t = time(0);
         /* eandres: ctime() seems to return invalid pointers on x86_64 systems.
@@ -811,13 +811,13 @@ log_time()
         /* eandres: This really shouldn't be a problem, but it shouldn't be a crash, either. */
         if ((uname = getenv("USER")) == NULL) {
               uname = "<UNKNOWN>";
-		}
-		if ((host = getenv("HOST")) == NULL) {
-			host = "<UNKNOWN>";
-		}
-		if (getcwd(cwd, 1024) == NULL) {
-			strcpy(cwd, "<UNKNOWN>");
-		}
+        }
+        if ((host = getenv("HOST")) == NULL) {
+            host = "<UNKNOWN>";
+        }
+        if (getcwd(cwd, 1024) == NULL) {
+            strcpy(cwd, "<UNKNOWN>");
+        }
 
         fprintf(lfile, "###################################################\n");
         fprintf(lfile, "# User: %8.8s    Date: %26.26s", uname, tbuf);
@@ -831,7 +831,7 @@ init_history(char *fname)
 {
     char buf[256];
     FILE *fp;
-	int count = 0;
+    int count = 0;
 
     /* JAS FIX: what's up with the two empty if/endif below? */
 #ifdef HAVE_LIBREADLINE
@@ -855,7 +855,7 @@ init_history(char *fname)
 char **
 dv_complete_func(char *text, int start, int end)
 {
-	return(NULL);
+    return(NULL);
 }
 
 
@@ -864,21 +864,21 @@ dv_complete_func(char *text, int start, int end)
 void add_history () { }
 char *readline(char *prompt) 
 {
-	char buf[256];
-	fputs(prompt, stdout); 
-	fflush(stdout);
-	if (fgets(buf, 256, stdin) != NULL) {
-		return(strdup(buf));
-	} else {
-		return(NULL);
-	}
+    char buf[256];
+    fputs(prompt, stdout); 
+    fflush(stdout);
+    if (fgets(buf, 256, stdin) != NULL) {
+        return(strdup(buf));
+    } else {
+        return(NULL);
+    }
 }
 #endif
 
 int
 usage(char *prog) {
-	fprintf(stderr, 
-		"usage: %s [-Viwq] [-v#] [-l logfile] [-e cmd] [-f script] args\n",
-		prog);
-	return(1);
+    fprintf(stderr, 
+        "usage: %s [-Viwq] [-v#] [-l logfile] [-e cmd] [-f script] args\n",
+        prog);
+    return(1);
 }
