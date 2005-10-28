@@ -1034,6 +1034,7 @@ pp_exact_help(Var *s)
 
     if (s == NULL) p = NULL;
 	else if (V_TYPE(s) == ID_DEREF) {
+#ifdef BUILD_MODULE_SUPPORT 
 		/* This is help on a module function */
 		p1 = V_NODE(s)->left;
 		p2 = V_NODE(s)->right;
@@ -1050,6 +1051,10 @@ pp_exact_help(Var *s)
 			module_help(module, function);
 			return(NULL);
 		}
+#else 
+		parse_error("Module support not enabled.\n");
+		return(NULL);
+#endif
 	} else if (V_NAME(s)) p = V_NAME(s);
     else if (V_STRING(s)) p = V_STRING(s);
 
