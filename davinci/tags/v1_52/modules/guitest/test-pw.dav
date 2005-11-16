@@ -1,0 +1,61 @@
+#!davinci -qf
+
+verbose=1
+
+load_module("gui")
+
+##### Functions
+
+define dvpw() {
+
+  items = $1
+  if (HasValue(items) == 0 || format(items) != "TEXT") {
+    printf("Error: expecting TEXT argument\n")
+    return(0)
+  }
+
+  # Create the top level widget.  Every window needs a top level.
+  top = gui.create("topLevelShell", name="DavinciPW")
+
+  # Create the list widget, inside top.
+  itemCount = length(items)
+  visCount = int(min(30//int(max(10//itemCount))))
+  resources = { listItems = items, \
+                visibleItemCount = visCount, \
+                scrollBarDisplayPolicy = "STATIC" }
+  list = gui.create("list", top, resources)
+
+  # Realize the top level (and thus the list).
+  gui.realize(top)
+
+  # Wait for events on the list forever.
+  while (1) {
+    e = gui.wait(list)
+    if (e.event == "defaultAction") {
+      item = gui.get(list).selectedItems[,1]
+      mainWindow(item)
+    }
+  }
+
+}
+
+define mainWindow() {
+
+  fileName = $1
+
+  # Load the PDS file.
+  data = 0
+  data = load_pds(fileName)
+  if (data == 0) {
+    printf("Error: unable to access file '%s'\n", fileName)
+    return(0)
+  }
+  bands = data.qube.band_bin.band_bin_original_band
+  data = data.qube.data
+
+  # Create the control widget for selecting bands, etc.
+  top = gui.create("topLevelShell", name="DavinciPW")
+  rc = gui.create("radioBox", top)
+  buttons = 
+
+}

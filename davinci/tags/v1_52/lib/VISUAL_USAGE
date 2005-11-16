@@ -1,0 +1,52 @@
+XfPixmapVisual:
+
+struct VisualInfo* XfCreateVisual(XfAny generic, int x, int y,
+                                  int width, int height, unsigned long fg,
+                                  unsigned long bg, int type, int depth,
+                                  Pixmap map)
+
+
+XfTextVisual:
+
+struct VisualInfo* XfCreateVisual(XfAny generic, int x, int y,
+                                  int width, int height, unsigned long fg,
+                                  unsigned long bg, int type, char* text,
+                                  Font font, int align)
+
+
+XfXImageVisual:
+
+struct VisualInfo* XfCreateVisual(XfAny generic, int x, int y,
+                                  int width, int height, unsigned long fg,
+                                  unsigned long bg, int type, int depth,
+                                  int format, char* data)
+
+
+XfTiledVisual:
+
+struct VisualInfo* XfCreateVisual(XfAny generic, int x, int y,
+                                  int width, int height, unsigned long fg,
+                                  unsigned long bg, int type, Pixmap map)
+
+
+XfStippledVisual:
+XfOpaqueStippledVisual:
+
+struct VisualInfo* XfCreateVisual(XfAny generic, int x, int y,
+                                  int width, int height, unsigned long fg,
+                                  unsigned long bg, int type, char* data,
+                                  int stipple_width, int stipple_height)
+
+
+XfSolidVisual:
+
+struct VisualInfo* XfCreateVisual(XfAny generic, int x, int y,
+                                  int width, int height, unsigned long fg,
+                                  unsigned long bg, int type)
+
+XfHersheyVisual:
+struct VisualInfo* XfCreateVisual(XfAny generic, int x, int y,
+                                  int width, int height, unsigned long fg,
+                                  unsigned long bg, int type,
+                                  char *text, int cset, 
+                                  int align, float scale, float angle)

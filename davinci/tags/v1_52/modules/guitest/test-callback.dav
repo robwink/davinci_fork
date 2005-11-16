@@ -1,0 +1,12 @@
+#!davinci -ifv
+
+load_module("gui")
+
+define myCallback() {
+	printf("widget = %d\n", $1);
+}
+
+top = gui.create("topLevelShell", name="callback test")
+pushb = gui.create("pushbutton", top, {labelString="Push Me!"})
+gui.addcallback (pushb, "activate", sprintf("myCallback(%d)",pushb))
+gui.realize(top);

@@ -1,0 +1,72 @@
+load_module("gui")
+
+define find_band(obj) {
+	bands = obj.qube.band_bin.band_bin_original_band
+	for (i = 1 ; i <= length(bands) ; i+=1) {
+		if (bands[i] == $1) return(i);
+	}
+	return(1)
+}
+
+define sstretch(variance) {
+	b = avg($1, ignore=-32768, both=1)
+	v = 40
+	if (HasValue(variance)) {
+		v = variance
+	}
+	c = ($1 - float(b.avg))/float(b.stddev)*v+127
+	return(byte(c))
+}
+
+define cb_scalechange (m) {
+	for (i = 1; i <= length(m); i = i + 1) {
+		vicarInfo = m[i];
+		restretch(vicarInfo)
+	}
+}
+
+define showVicar(map) {
+	fileName = $1
+	data = load_pds(fileName)
+	band = find_band(obj = data, 3)
+	data = data.qube.data[,,band]
+	#  data[where data < 0] = 0
+	vtop = gui.create("topLevelShell", name=fileName)
+	vrc = gui.create("rowcolumn", vtop, { orientation = "HORIZONTAL" })
+	variance = 50
+	scale = gui.create("scale", vrc, { value = variance })
+	gui.addcallback (scale, "valueChanged", "cb_scalechange(m=map)");
+	vicar = gui.create("vicar", vrc, { image = sstretch(data, variance = variance) })
+	gui.realize(vtop)
+	newVicar = { vicarWidgetId = vicar, scaleWidgetId = scale, data = data }
+	add_struct(map, name = sprintf("%d", scale), value = newVicar)
+	add_struct(map, name = sprintf("%d", vicar), value = newVicar)
+}
+
+define restretch() {
+	vicarInfo = $1
+	vicarId = vicarInfo.vicarWidgetId
+	stretchValue = gui.get(vicarInfo.scaleWidgetId).value
+	gui.set(vicarId, { image = sstretch(vicarInfo.data, variance = stretchValue + 1) })
+}
+
+define cb_cancel () {
+	id = $1
+	gui.destroy (id)
+}
+
+define cb_help () {
+	printf("\n\nSelect a file in the FileSelectionBox and click OK to spawn a VICAR widget.\n\n")
+}
+
+define cb_ok (m,fs_id) {
+	showVicar(map=m,gui.get(fs_id).dirSpec)
+}
+
+map = struct()
+top = gui.create("topLevelShell", name="Davinci")
+fs = gui.create("fileSelectionBox", top, { pattern = "/themis/tmp2/misc/*.qub" })
+gui.addcallback (fs,"ok",sprintf("cb_ok(m=map,fs_id=%d)",fs));
+gui.addcallback (fs,"cancel",sprintf ("cb_cancel(%d)",top));
+gui.addcallback (fs,"help","cb_help()");
+gui.realize(top);
