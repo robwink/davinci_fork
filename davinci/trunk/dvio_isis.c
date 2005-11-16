@@ -3654,7 +3654,7 @@ propagate_history_real_keyword(
     )
 {
     int     nvals;
-    double *vals;
+    float  *vals;
     int     rc;
     int     x, y, z;
     int     xn, yn, zn;
@@ -3662,13 +3662,13 @@ propagate_history_real_keyword(
 
     xn = GetX(v); yn = GetY(v); zn=GetZ(v);
     nvals = xn * yn * zn;
-    vals = (double *)calloc(nvals, sizeof(double));
+    vals = (float *)calloc(nvals, sizeof(float));
 
     i = 0;
     for(z = 0; z < zn; z++){
         for(y = 0; y < yn; y++){
             for(x = 0; x < xn; x++){
-                vals[i++] = extract_double(v, cpos(x, y, z, v));
+                vals[i++] = extract_float(v, cpos(x, y, z, v));
             }
         }
     }
