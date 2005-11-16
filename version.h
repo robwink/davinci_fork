@@ -1,8 +1,13 @@
-char *version = "@(#) daVinci Version #1.51";
+char *version = "@(#) daVinci Version #1.52";
 
 #include "build.h"
 
 /*
+
+Version 1.52: Wed Nov 16 14:58:20 MST 2005
+	* Fixed bug#136: Real valued array history keywords
+	  were not being properly written out. The function
+	  call expected floats while doubles were being passed.
 
 Version 1.51: Tue Aug 23 19:10:49 MST 2005
 	* Upgraded LoadPDS() to handle compressed files
