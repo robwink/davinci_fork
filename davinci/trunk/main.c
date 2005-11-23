@@ -165,10 +165,13 @@ main(int ac, char **av)
     ** until we get something that doesn't.
     **
     ** The user can force this with --, as well.
+	**
+	** We now pass all "--options" as ARGV parameters.
     **/
     for (i = 1; i < ac; i++) {
         k = 0;
-        if (!flag && av[i] && av[i][0] == '-' && strlen(av[i]) <= 2) {
+        if (!flag && av[i] && av[i][0] == '-' &&
+				!(strlen(av[i]) > 2 && av[i][1] == '-')) {
             for (j = 1; j < strlen(av[i]); j++) {
                 switch (av[i][j]) {
                 case '-':   /* last option */
