@@ -28,22 +28,23 @@ static Var *thm_corners(vfuncptr, Var *);
 static Var *thm_sawtooth(vfuncptr, Var *);
 static Var *thm_deplaid(vfuncptr, Var *);
 static Var *thm_rectify(vfuncptr, Var *);
-static Var *thm_reconstitute(vfuncptr func, Var *arg);
-static Var *thm_rad2tb(vfuncptr func, Var *);
-static Var *thm_themissivity(vfuncptr func, Var *);
-static Var *thm_white_noise_remove1(vfuncptr func, Var *);
-static Var *thm_maxpos(vfuncptr func, Var *);
-static Var *thm_minpos(vfuncptr func, Var *);
-static Var *thm_unscale(vfuncptr func, Var *);
-static Var *thm_cleandcs(vfuncptr func, Var *);
+static Var *thm_reconstitute(vfuncptr, Var *);
+static Var *thm_rad2tb(vfuncptr, Var *);
+static Var *thm_themissivity(vfuncptr, Var *);
+static Var *thm_emiss2rad(vfuncptr, Var*);
+static Var *thm_white_noise_remove1(vfuncptr, Var *);
+static Var *thm_maxpos(vfuncptr, Var *);
+static Var *thm_minpos(vfuncptr, Var *);
+static Var *thm_unscale(vfuncptr, Var *);
+static Var *thm_cleandcs(vfuncptr, Var *);
 static Var *thm_white_noise_remove2(vfuncptr func, Var *);
-static Var *thm_sstretch2(vfuncptr func, Var *);
-static Var *thm_radcorr(vfuncptr func, Var * arg);
-static Var *thm_ipi(vfuncptr func, Var * arg);
-static Var *thm_column_fill(vfuncptr func, Var * arg);
-static Var *thm_supersample(vfuncptr func, Var *);
-static Var *thm_destripe(vfuncptr func, Var *arg);
-static Var *thm_marsbin(vfuncptr func, Var *arg);
+static Var *thm_sstretch2(vfuncptr, Var *);
+static Var *thm_radcorr(vfuncptr, Var *);
+static Var *thm_ipi(vfuncptr, Var *);
+static Var *thm_column_fill(vfuncptr, Var *);
+static Var *thm_supersample(vfuncptr, Var *);
+static Var *thm_destripe(vfuncptr, Var *);
+static Var *thm_marsbin(vfuncptr, Var *);
 
 
 static dvModuleFuncDesc exported_list[] = {
@@ -53,6 +54,7 @@ static dvModuleFuncDesc exported_list[] = {
   { "convolve", (void *) thm_convolve },
   { "rad2tb", (void *) thm_rad2tb },
   { "themis_emissivity", (void *) thm_themissivity },
+  { "emiss2rad", (void *) thm_emiss2rad },
   { "maxpos", (void *) thm_maxpos },
   { "minpos", (void *) thm_minpos },
   { "kfill", (void *) thm_kfill },
@@ -61,20 +63,17 @@ static dvModuleFuncDesc exported_list[] = {
   { "y_shear", (void *) thm_y_shear },
   { "corners", (void *) thm_corners },
   { "sawtooth", (void *) thm_sawtooth },
-  { "cleandcs", (void *) thm_cleandcs },
   { "white_noise_remove1", (void *) thm_white_noise_remove1 },
   { "white_noise_remove2", (void *) thm_white_noise_remove2 },
+  { "supersample", (void *) thm_supersample },
   { "sstretch", (void *) thm_sstretch2 },
   { "radcorr", (void *) thm_radcorr },
-  { "ipi", (void *) thm_ipi },
   { "column_fill", (void *) thm_column_fill },
-  { "supersample", (void *) thm_supersample },
-  { "destripe", (void *) thm_destripe },
   { "mars_bin", (void *) thm_marsbin },
 };
 
 static dvModuleInitStuff is = {
-  exported_list, 24,
+  exported_list, 22,
   NULL, 0
 };
 
@@ -1671,8 +1670,8 @@ thm_rectify(vfuncptr func, Var * arg)
   /* updated 07/26/2005 to check for ignore value before running corners.  - kjn */
   /* updated 07/27/2005 to fix top and bottom leftedge values.             - kjn */
   /* updated 07/27/2005 to handle errors from un-rectifiable arrays.       - kjn */
-  /* Mon Sep 19 15:14:21 MST 2005 (NsG), Fixed out of bounds error in final loop*/
-
+  /* Mon Sep 19 15:14:21 MST 2005 (NsG), Fixed out of bounds error in final loop */
+  /* Mon Oct 17 18:28:45 MST 2005 added zero angle error handle            - kjn */
 
   typedef unsigned char byte;
 
@@ -1747,6 +1746,7 @@ thm_rectify(vfuncptr func, Var * arg)
     parse_error("I believe the real ignore value is %f",ign);
     parse_error("If you believe the ignore value specified is correct set force = 1 and re-run\n");
     return NULL;
+    //return(newInt(101));
   }
 
   /* calling corners to find the angle */
@@ -1757,6 +1757,7 @@ thm_rectify(vfuncptr func, Var * arg)
     parse_error("ERROR! Cannot find the corners of the image!");
     free(cns);
     return NULL;
+    //return(newInt(102));
   }
 
   if (trust == 0) angle = (360.0/(2.0*3.14159265))*(atan2((cns[3]-cns[1]),(cns[2]-cns[0])));
@@ -1765,7 +1766,26 @@ thm_rectify(vfuncptr func, Var * arg)
     angle1 = (360.0/(2.0*3.14159265))*(atan2((cns[3]-cns[1]),(cns[2]-cns[0])));
     angle2 = (360.0/(2.0*3.14159265))*(atan2((cns[7]-cns[5]),(cns[6]-cns[4])));
     angle = ((1-trust)*angle1)+(trust*angle2);
-  }    
+  }
+
+  if(angle == 0) {
+    parse_error("Total y_shear angle is zero.  Cannot rectify.");
+    parse_error("A possible reason is that the cube is off of the image edge.");
+
+    angle2 = (360.0/(2.0*3.14159265))*(atan2((cns[7]-cns[5]),(cns[6]-cns[4])));
+    free(cns);
+
+    if(angle2 != 0) {
+      parse_error("The angle of the bottom of the cube is %f",angle2);
+      parse_error("Rerun rectify with trust=1 option");
+      return NULL;
+      //return(newInt(103));
+    }
+    return NULL;
+    //return(newInt(104));
+  }
+
+  free(cns);
 
   /* calculating the number of rows to add to the picture to accomodate the shear */
   shift = tan((M_PI / 180.0) * angle);
@@ -2481,6 +2501,129 @@ emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1,
 
 
 
+
+Var *
+thm_emiss2rad(vfuncptr func, Var * arg)
+{
+  /* created 09/22/2005 - kjn*/
+
+  Var         *estruct = NULL;                 /* the emissivity structure                                     */
+  Var         *bandlist = NULL;                /* list of bands to be converted to brightness temperature      */
+  Var         *temp_rad = NULL;                /* temperature/radiance lookup file                             */
+  Var         *emiss = NULL;                   /* emissivity component of the emissivity structure             */
+  Var         *btemps = NULL;                  /* brightness temperature component of the emissivity structure */
+  Var         *out = NULL;                     /* end product                                                  */
+  char        *fname = NULL;                   /* the pointer to the filename                                  */
+  FILE        *fp = NULL;                      /* pointer to file                                              */
+  struct       iom_iheader h;                  /* temp_rad_v4 header structure                                 */
+  float        nullval = -32768;               /* default null value of radiance data                          */
+  float       *rad = NULL;                     /* radiance computed from emissivity                            */
+  float       *btemp = NULL;                   /* float version of Var btemps                                  */
+  int         *blist = NULL;                   /* the integer list of bands extracted from bandlist or created */
+  int          x, y, z;                        /* dimensions of the data                                       */
+  int          bx = 0;                         /* x-dimension of the bandlist                                  */
+  int          i, j, k;                        /* loop indices                                                 */
+  
+  Alist alist[5];
+  alist[0] = make_alist("estruct",       ID_STRUCT,      NULL,   &estruct);
+  alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
+  alist[2] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
+  alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
+  alist[4].name = NULL;
+
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+
+  if (estruct == NULL) {
+    parse_error("emiss2rad() - 9/23/05");
+    parse_error("THEMIS Emissivity to THEMIS Radiance Converter\n");
+    parse_error("Uses /themis/calib/temp_rad_v4 as conversion table.");
+    parse_error("Syntax:  b = thm.emiss2rad(emiss,bandlist,ignore,temp_rad_path)");
+    parse_error("example: b = thm.emiss2rad(a)");
+    parse_error("example: b = thm.emiss2rad(a,1//2//3//4//5//6//7//8//9,0)");
+    parse_error("example: b = thm.emiss2rad(rad=a,bandlist=4//9//10,ignore=-32768,temp_rad_path=\"/themis/calib/temp_rad_v3\")");
+    parse_error("emiss - the product of thm.themissivity containing .emiss and .maxbtemp components.");
+    parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
+    parse_error("ignore - non-data pixel value. Default is -32768 AND 0.");
+    parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is /themis/calib/temp_rad_v4.\n");
+    return NULL;
+  }
+
+  if (bandlist != NULL) {
+    bx = GetX(bandlist);
+    blist = (int *)malloc(sizeof(int)*bx);
+    for(i=0;i<bx;i++) {
+      blist[i] = extract_int(bandlist,cpos(i,0,0,bandlist));
+    }
+  }
+
+  if (bandlist == NULL) {
+    blist = (int *)malloc(sizeof(int)*10);
+    for(i=0;i<10;i++) {
+      blist[i] = i+1;
+    }
+    bx = 10;
+  }
+
+  /* extract structure elements */
+  find_struct(estruct,"emiss",&emiss);
+  find_struct(estruct,"maxbtemp",&btemps);
+
+  x = GetX(emiss);
+  y = GetY(emiss);
+  z = GetZ(emiss);
+
+  /* initialize temp_rad header */
+  iom_init_iheader(&h);
+
+  /* load temp_rad_v4 table into memory */
+  if (fname == NULL) fname = strdup("/themis/calib/temp_rad_v4");
+  fp = fopen(fname, "rb");
+
+  if (fp == NULL) {
+    parse_error("Can't open look up table /themis/calib/temp_rad_v4!\n");
+    return(NULL);
+  }
+
+  temp_rad = dv_LoadVicar(fp, fname, &h);
+  fclose(fp);
+  free(fname);
+
+  /* extract the brightness temperatures into a float array */
+  btemp = (float *)malloc(sizeof(float)*x*y);
+  for(j=0;j<y;j++) {
+    for(i=0;i<x;i++) {
+      btemp[j*x + i] = extract_float(btemps,cpos(i,j,0,btemps));
+    }
+  }
+
+  /* convert maxbtemp to radiance */
+  rad = tb2rad(btemp, temp_rad, blist, bx, nullval, x, y);
+  free(btemp);
+  free(blist);
+
+  /* bbrads will now be a multi-band blackbody radiance cube **
+  ** it must be multiplied by the emissivity cube to produce **
+  ** the measured THEMIS radiances.                          */
+
+  /* multiply blackbody radiance by emissivities */
+  for(k=0;k<z;k++) {
+    for(j=0;j<y;j++) {
+      for(i=0;i<x;i++) {
+	rad[k*y*x + j*x + i] *= extract_float(emiss,cpos(i,j,k,emiss));
+	if(rad[k*y*x + j*x + i] == 0) rad[k*y*x + j*x + i] = nullval;
+      }
+    }
+  }
+
+  out = newVal(BSQ, x, y, z, FLOAT, rad);
+  return(out);
+ 
+}
+
+
+
+
+
 Var *
 thm_white_noise_remove1(vfuncptr func, Var * arg)
 {
@@ -2657,8 +2800,195 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
 
 
 
+Var*
+thm_maxpos(vfuncptr func, Var *arg)
+{
+ 
+  Var    *data = NULL;                      /* the orignial data */
+  Var    *out = NULL;                       /* the output structure */
+  int    *pos = NULL;                       /* the output position */
+  float   ignore = -32768;                  /* null value */
+  float  *val = NULL;                       /* the output values */
+  int     i, j, k, l;                       /* loop indices */
+  int     x=0, y=0, z=0;                    /* size of the data */
+  float   ni1=0, ni2=-32798, ni3=-852;      /* temp values and positions */
+  int     opt=0;                            /* return array option */
+  int     iter=1;                           /* number of iterations to include */
+   
+  Alist alist[5];
+  alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
+  alist[1] = make_alist("ret",       INT,       NULL,  &opt);
+  alist[2] = make_alist("iter",      INT,       NULL,  &iter);
+  alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
+  alist[4].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if (data == NULL) {
+    parse_error("\nUsed to find the position of the max point in an array\n");
+    parse_error("$1 = the data");
+    parse_error("Prints the value and location\n");
+    parse_error("ret=1 returns the value and location in a structure\n");
+    parse_error("iter= # of points to find in the data");
+    parse_error("if iter >1 it will automatically return the points\n");
+    parse_error("ignore = the value to ignore\n");
+    parse_error("c.edwards 5/19/04\n");
+    return NULL;
+  }
 
-Var *thm_maxpos(vfuncptr func, Var *arg){
+  if (iter > 1 ) {
+    opt=1;
+  }
+
+  /* create array for postion */
+  pos = (int *)calloc(sizeof(int), 3*iter);
+  val = (float *)calloc(sizeof(float), iter);
+  
+  /* x, y and z dimensions of the data */
+  x = GetX(data);
+  y = GetY(data);
+  z = GetZ(data);
+
+  /* find the maximum point and its position */  
+  for(l=0; l<iter; l++) {
+    for(k=0; k<z; k++) {
+      for(j=0; j<y; j++) {
+	for(i=0; i<x; i++) {
+	  
+	  /* ni1 = current value */
+	  /* ni2 = curent max value */
+	  /* ni3 = old max val */
+	  ni1 = extract_float(data, cpos(i,j,k,data));
+	  if(ni1>ni2 && (ni3 == -852 || (ni1<ni3 && ni3 != -852)) && ni1 != ignore) {
+	    ni2=ni1;
+	    pos[3*l+2]=k+1;
+	    pos[3*l+1]=j+1;
+	    pos[3*l+0]=i+1;
+	  }
+	}
+      }
+    }
+    ni3=ni2;
+    val[l]=ni2;
+    ni2=-32798;
+  }
+
+  if(iter==1) {
+    /* return the findings */
+    printf("\nLocation: %i,%i,%i\n",pos[0],pos[1],pos[2]);
+    printf("%.13f\n\n",ni3);
+    
+    if(opt==0) return NULL;
+  }
+
+  if(opt!=0) {
+    out = new_struct(2);
+    add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
+    add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
+    return out;
+  }
+}
+
+
+
+Var*
+thm_minpos(vfuncptr func, Var *arg)
+{
+
+  Var    *data = NULL;                 /* the orignial data */
+  Var    *out = NULL;                  /* the output struture */
+  int    *pos = NULL;                  /* the output postion */
+  float   ignore = -32768;             /* null value */
+  float  *val = NULL;                  /* the output values */
+  int     i, j, k, l;                  /* loop indices */
+  int     x=0, y=0, z=0;               /* size of the data */
+  float   ni1=0, ni2=32798, ni3=852;   /* temp values and positions */
+  int     opt=0;                       /* return array option */
+  int     iter=1;                      /* number of iterations to include */
+
+  Alist alist[5];
+  alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
+  alist[1] = make_alist("ret",       INT,       NULL,  &opt);
+  alist[2] = make_alist("iter",      INT,       NULL,  &iter);
+  alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
+  alist[4].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+ 
+  if (data == NULL) {
+    parse_error("\nUsed to find the position of the min point in an array\n");
+    parse_error("$1 = the data");
+    parse_error("Prints the value and location\n");
+    parse_error("ret = 1 returns the value and location in a structure\n");
+    parse_error("iter = # of points to find in the data");
+    parse_error("if iter >1 it will automatically return the points\n");
+    parse_error("ignore = the value to ignore\n");
+    parse_error("c.edwards 5/19/04\n");
+    return NULL;
+  }
+
+  if (iter > 1 ) {
+    opt=1;
+  }
+  
+  /* create array for position and value*/
+  pos = (int *)calloc(sizeof(int), 3*iter);
+  val = (float *)calloc(sizeof(float), iter);
+  
+  /* x, y and z dimensions of the data */
+  x = GetX(data);
+  y = GetY(data);
+  z = GetZ(data);
+
+  /* find the minimum point and its position */  
+  for(l=0; l<iter; l++) {
+    for(k=0; k<z; k++) {
+      for(j=0; j<y; j++) {
+	for(i=0; i<x; i++) {
+	  
+	  /* ni1 = current value */
+	  /* ni2 = curent max value */
+	  /* ni3 = old max val */
+	  ni1 = extract_float(data, cpos(i,j,k,data));
+	  if(ni1<ni2 && (ni3 == 852 || (ni1>ni3 && ni3 != 852)) && ni1 != ignore) {
+	    ni2=ni1;
+	    pos[3*l+2]=k+1;
+	    pos[3*l+1]=j+1;
+	    pos[3*l+0]=i+1;
+	  }
+	}
+      }
+    }
+    ni3=ni2;
+    val[l]=ni2;
+    ni2=32798;
+  }
+
+  /* return the findings */
+  if(iter==1) {    
+    printf("\nLocation: %i,%i,%i\n",pos[0],pos[1],pos[2]);
+    if(ni2<-32768) {
+      printf("%.9e\n\n",ni3);
+    }
+    if(ni2>=-32768) {
+      printf("%.9f\n\n",ni3);
+    }
+    if(opt==0) return NULL;
+  }
+
+  if(opt!=0) {
+    out = new_struct(2);
+    add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
+    add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
+    return out;
+  }
+}
+
+
+
+
+
+Var *thm_maxpos_broken(vfuncptr func, Var *arg){
 
   /* written by Jason Ki 08/01/05, placed in thm module by k.nowicki */
   /* replaces the maxpos algorithm written by c.edwards */
@@ -2670,7 +3000,7 @@ Var *thm_maxpos(vfuncptr func, Var *arg){
   int          xdim,ydim,zdim;                                        // the dimensions of the given data array //
   int          c,d,i,j,k;
   float       *val = NULL;                                            // a [1x1xpts] array to hold the nth max values //
-  float        ignore = -42285;                                       // any potential ignore values //
+  float        ignore = -32768;                                       // any potential ignore values //
   float        tvalue = 0;                                            // temporary variable to hold extraction //
   Var         *data = NULL;                                           // the acutal data //
   Var         *out = NULL;
@@ -2869,7 +3199,7 @@ Var *thm_maxpos(vfuncptr func, Var *arg){
 
 
 
-Var *thm_minpos(vfuncptr func, Var *arg){
+Var *thm_minpos_broken(vfuncptr func, Var *arg){
 
   /* written by Jason Ki 08/01/05, placed in thm module by k.nowicki */
   /* replaces the minpos algorithm written by c.edwards */
@@ -4698,6 +5028,12 @@ Var *thm_destripe(vfuncptr func, Var *arg){
 }
 
 
+
+
+
+
+
+
 Var *thm_marsbin(vfuncptr func, Var *arg){
   double      *calc_plane = NULL;                                     // holds the data_plane only mirrored reversed across both axises //
   double      *data_plane = NULL;                                     // the plane that holds all the data //
@@ -4732,105 +5068,103 @@ Var *thm_marsbin(vfuncptr func, Var *arg){
   if(parse_args(func, arg, alist) == 0){ return(NULL);  }
 
   if(data == NULL){
-	 parse_error("");
+    parse_error("");
     parse_error("Function takes an array of values of which each element in the array corresponds to a");
-    parse_error("unique longitude and latitude and plots each element into a generic X by X array. If");
-    parse_error("mulitple values corresponds to a specific cell in the generic X by X array, then that");
+    parse_error("unique longitude and latitude and plots each element into a generic NxN array. If");
+    parse_error("multiple values correspond to a specific cell in the generic NxN array, then that");
     parse_error("value is averaged with previous values.");
     parse_error("");
     parse_error("The function outputs a davinci structure that has two components, the first being the");
     parse_error("array of averaged values, and the second being an array tallying occurences in each cell");
     parse_error("");
     parse_error("Syntax:  output=marsbin(upper longitude, lower longitude, upper latitude, lower latitude");
-	 parse_error("                        ,resolution, value array, [ignore])");
-	 parse_error("           *where: [ignore] - an optional argument to ignore certain values x");
+    parse_error("                        ,resolution, value array, [ignore])");
+    parse_error("           *where: [ignore] - an optional argument to ignore certain values x");
     parse_error("Example: b=marsbin(360,0,90,-90,1,a)");
     return(NULL);
   }
   else{
-	 xdim = GetX(data);                                                // retrieve how many sample data column there is //
-	 ydim = GetY(data);                                                // retrieve how many sample there is //
-
-	 // allocate memory for ydim size array to hold latitude and longitude values individually //
-	 lat = (int *)malloc(sizeof(int)*ydim);
-	 lon = (int *)malloc(sizeof(int)*ydim);
-
-	 // translate float latitudes and longitudes into integer format //
-	 for(i=0; i<ydim; i++){
-		lat[i] = (int)((extract_float(data,cpos(1,i,0,data)) - lower_lat)*resolution)+1;
-		lon[i] = (int)((extract_float(data,cpos(0,i,0,data)) - lower_lon)*resolution)+1;
-
-		if(lat[i] == 0.0){ lat[i] = -1; }
-		if(lon[i] == 0.0){ lon[i] = -1; }
-	 }
-
-	 // calculate the dimension of the output image //
-	 lat_range = (int)((upper_lat-lower_lat)*resolution);
-	 lon_range = (int)((upper_lon-lower_lon)*resolution);
-
-	 // allocate memory for the data plane and the observation plane //
-	 calc_plane = (double *)malloc(sizeof(double)*lat_range*lon_range*(xdim-2));
-	 data_plane = (double *)malloc(sizeof(double)*lat_range*lon_range*(xdim-2));
-	 inv_plane  = (int *)malloc(sizeof(int)*lat_range*lon_range);
-	 obs_plane  = (int *)malloc(sizeof(int)*lat_range*lon_range);
-
+    xdim = GetX(data);                                                // retrieve how many sample data column there is //
+    ydim = GetY(data);                                                // retrieve how many sample there is //
+    
+    // allocate memory for ydim size array to hold latitude and longitude values individually //
+    lat = (int *)malloc(sizeof(int)*ydim);
+    lon = (int *)malloc(sizeof(int)*ydim);
+    
+    // translate float latitudes and longitudes into integer format //
+    for(i=0; i<ydim; i++){
+      lat[i] = (int)((extract_float(data,cpos(1,i,0,data)) - lower_lat)*resolution)+1;
+      lon[i] = (int)((extract_float(data,cpos(0,i,0,data)) - lower_lon)*resolution)+1;
+      
+      if(lat[i] == 0.0){ lat[i] = -1; }
+      if(lon[i] == 0.0){ lon[i] = -1; }
+    }
+    
+    // calculate the dimension of the output image //
+    lat_range = (int)((upper_lat-lower_lat)*resolution);
+    lon_range = (int)((upper_lon-lower_lon)*resolution);
+    
+    // allocate memory for the data plane and the observation plane //
+    calc_plane = (double *)malloc(sizeof(double)*lat_range*lon_range*(xdim-2));
+    data_plane = (double *)malloc(sizeof(double)*lat_range*lon_range*(xdim-2));
+    inv_plane  = (int *)malloc(sizeof(int)*lat_range*lon_range);
+    obs_plane  = (int *)malloc(sizeof(int)*lat_range*lon_range);
+    
     // clear both arrays of any memory junk values //
-	 for(i=0; i<lat_range*lon_range*(xdim-2); i++){ data_plane[i] = 0.0; }
-	 for(i=0; i<lat_range*lon_range; i++){ obs_plane[i] = 0; }
-
-	 // begin inputting data into the data_plane and updating the obs_plane //
-	 for(i=0; i<ydim; i++){
-
+    for(i=0; i<lat_range*lon_range*(xdim-2); i++){ data_plane[i] = 0.0; }
+    for(i=0; i<lat_range*lon_range; i++){ obs_plane[i] = 0; }
+    
+    // begin inputting data into the data_plane and updating the obs_plane //
+    for(i=0; i<ydim; i++){
+      
       // check to see if the lat & lon is within range, can't use lat[] and lon[] for they have been reformated //
       longitude = extract_float(data, cpos(0,i,0,data));
       latitude =  extract_float(data, cpos(1,i,0,data));
-
-		// check to see if any of the data in a lat/lon pixel has an ignore value //
-		for(j=0; j<xdim-2; j++){ if(fabs(extract_float(data, cpos((j+2),i,0,data)) - (float)(ignore)) < .005){ ignore_flag = 1; } }
-
-		// check to see if the sample data is within the user defined boundary //
-		if((latitude <= upper_lat)&&(latitude >= lower_lat)&&(longitude <= upper_lon)&&(longitude >= lower_lon)&&(ignore_flag != 1)){ 
-
-		  // update observation plane //
-		  obs_plane[(lat[i]-1)*lon_range + lon[i]] += 1; 
-		  
-		  // put data from file to specific location denoted by <array_x, array_y> in each plane //
-		  for(j=0; j<xdim-2; j++){ data_plane[(j*lat_range*lon_range)+((lat[i]-1)*lon_range)+(lon[i])] += extract_double(data,cpos((j+2),i,0,data)); }
-		}
-		else{ ignore_flag = 0; }                                        //this might potentially be a fatal mistake, but at this point i will leave it //
-	 }
-
+      
+      // check to see if any of the data in a lat/lon pixel has an ignore value //
+      for(j=0; j<xdim-2; j++){ if(fabs(extract_float(data, cpos((j+2),i,0,data)) - (float)(ignore)) < .005){ ignore_flag = 1; } }
+      
+      // check to see if the sample data is within the user defined boundary //
+      if((latitude <= upper_lat)&&(latitude >= lower_lat)&&(longitude <= upper_lon)&&(longitude >= lower_lon)&&(ignore_flag != 1)){ 
+	
+	// update observation plane //
+	obs_plane[(lat[i]-1)*lon_range + lon[i]] += 1; 
+	
+	// put data from file to specific location denoted by <array_x, array_y> in each plane //
+	for(j=0; j<xdim-2; j++){ data_plane[(j*lat_range*lon_range)+((lat[i]-1)*lon_range)+(lon[i])] += extract_double(data,cpos((j+2),i,0,data)); }
+      }
+      else{ ignore_flag = 0; }                                        //this might potentially be a fatal mistake, but at this point i will leave it //
+    }
+    
     // divide each data plane with observation plane //
     for(i=0; i<(lat_range*lon_range); i++){
       if(obs_plane[i] != 0){
-		  for(j=0; j<xdim-2; j++){ data_plane[(j*lat_range*lon_range)+i] /= obs_plane[i]; }
+	for(j=0; j<xdim-2; j++){ data_plane[(j*lat_range*lon_range)+i] /= obs_plane[i]; }
       }
-	 }	
-
-	 // flip the data_plane and the obs_plane across both the x and y axis //
-	 j = lat_range*lon_range*(xdim-2);
-	 for(i=0; i<lat_range*lon_range*(xdim-2); i++){
-		calc_plane[j] = data_plane[i];
-		j--;
-	 }
-	 j = lat_range*lon_range;
-	 for(i=0; i<lat_range*lon_range; i++){
-		inv_plane[j]  = obs_plane[i];
-		j--;
-	 }
-
-	 // clean up the unused arrays //
-	 free(data_plane);
-	 free(lat);
-	 free(lon);
-	 free(obs_plane);
-	 
-	 out = new_struct(2);
-	 add_struct(out, "nobs", newVal(BSQ,lon_range,lat_range,1,INT,inv_plane));
-	 add_struct(out, "cube", newVal(BSQ,lon_range,lat_range,xdim-2,DOUBLE,calc_plane));
-
-	 return(out);
-
+    }	
+    
+    // flip the data_plane and the obs_plane across both the x and y axis //
+    j = lat_range*lon_range*(xdim-2);
+    for(i=0; i<lat_range*lon_range*(xdim-2); i++){
+      calc_plane[j] = data_plane[i];
+      j--;
+    }
+    j = lat_range*lon_range;
+    for(i=0; i<lat_range*lon_range; i++){
+      inv_plane[j]  = obs_plane[i];
+      j--;
+    }
+    
+    // clean up the unused arrays //
+    free(data_plane);
+    free(lat);
+    free(lon);
+    free(obs_plane);
+    
+    out = new_struct(2);
+    add_struct(out, "nobs", newVal(BSQ,lon_range,lat_range,1,INT,inv_plane));
+    add_struct(out, "cube", newVal(BSQ,lon_range,lat_range,xdim-2,DOUBLE,calc_plane));
+    
+    return(out);
   }
-
 }
