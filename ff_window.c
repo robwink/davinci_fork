@@ -36,6 +36,31 @@
 ** 
 */
 
+static int cmp(float *a, float *b) { return((*a)-(*b)); }
+
+float median_window(float *s1, int width, int height, float ignore)
+{
+    int sum = 0;
+    int i, j;
+    int c1 = 0, c2 = 0;
+    float r;
+
+    qsort(s1, width*height, sizeof(float), cmp);
+
+    /* count number of ignore values */
+    for (i = 0 ; i < width*height ; i++) {
+        if (s1[i] != ignore) c1++;
+    }
+    /* Count N/2 smalles values */
+    for (i = 0 ; i < width*height ; i++) {
+        if (s1[i] != ignore) {
+            if (c2++ >= c1/2) {
+                return(s1[i]);
+            }
+        }
+    }
+    return(ignore);
+}
 
 Window *
 create_window(int width, int height, int format)
@@ -370,28 +395,3 @@ ff_window(vfuncptr func, Var * arg)
 }
 
 
-static int cmp(float *a, float *b) { return((*a)-(*b)); }
-
-float median_window(float *s1, int width, int height, float ignore)
-{
-    int sum = 0;
-    int i, j;
-    int c1 = 0, c2 = 0;
-    float r;
-
-    qsort(s1, width*height, sizeof(float), cmp);
-
-    /* count number of ignore values */
-    for (i = 0 ; i < width*height ; i++) {
-        if (s1[i] != ignore) c1++;
-    }
-    /* Count N/2 smalles values */
-    for (i = 0 ; i < width*height ; i++) {
-        if (s1[i] != ignore) {
-            if (c2++ >= c1/2) {
-                return(s1[i]);
-            }
-        }
-    }
-    return(ignore);
-}
