@@ -758,7 +758,9 @@ thm_ramp(vfuncptr func, Var * arg)
 {
   /* made more efficient and fixed several bugs Oct 14, 2005                         **
   ** added ability to speed up ramp calculation by setting a maximum # of iterations **
-  ** Fri Oct 14 16:36:44 MST 2005                                                    */
+  ** Fri Oct 14 16:36:44 MST 2005                                                    **
+  ** added completely overlapping picture functionality                              **
+  ** Fri Mar  3 13:31:47 MST 2006                                                                                */
 
   Var    *pic_1 = NULL;		 /* picture one                                   */
   Var    *pic_2 = NULL;		 /* picture two                                   */
@@ -791,7 +793,7 @@ thm_ramp(vfuncptr func, Var * arg)
   
   /* if no pictures got passed to the function */
   if (pic_1 == NULL || pic_2 == NULL) {
-    parse_error("ramp() - Fri Oct 14 14:45:09 MST 2005");
+    parse_error("ramp() - Fri Mar  3 13:31:47 MST 2006");
     parse_error("Calculates a 0 - 1 float ramp between two overlapping pictures.");
     parse_error("You need to pass me two overlapping pictures contained in arrays\nof identical size, and an ignore value.\n");
     parse_error("Syntax:  b = thm.ramp(pic1, pic2, stop, ignore)");
