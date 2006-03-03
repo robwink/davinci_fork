@@ -1689,7 +1689,6 @@ cse_ramp(vfuncptr func, Var * arg)
   /* x and y dimensions of the original pictures */
   x = GetX(pic_1);
   y = GetY(pic_1);
-  //  parse_error("%i,%i\n",x,y);
   
   if (x != GetX(pic_2) || y != GetY(pic_2)) {
     parse_error("The two pictures need to be of the exact same dimensions.\n");
@@ -1719,7 +1718,7 @@ cse_ramp(vfuncptr func, Var * arg)
       tmpval = extract_float(pic_2, cpos(i, j, 0, pic_2));
       if(tmpval != nullv) ol2[t1] = 0;
   
-      sum+=ol1[t1]+ol2[t1];
+      if(ol1[t1] == 0) sum+=ol2[t1];
       /* find left and right limits of overlapping area */
       if (ol1[t1] != -1 && ol2[t1] != -1) {
 	if (j < r1) { r1 = j; }
@@ -1734,12 +1733,12 @@ cse_ramp(vfuncptr func, Var * arg)
   ** setting the outteredges of both ol1 and ol2 to -1 fixed the problem.*/ 
   if(sum==0) {
     for(i = 0; i < x; i++){
-      ol1[x*y-(i+1)]=ol2[x*y-(i+1)]=-1;
-      ol1[i]=ol2[i]=-1;
+      ol1[x*y-(i+1)]=-1;
+      ol1[i]=-1;
     }
     for(j = 1; j < y; j++){
-      ol1[x*j]=ol2[x*j]=-1;
-      ol1[x*j-1]=ol2[x*j-1]=-1;
+      ol1[x*j]=-1;
+      ol1[x*j-1]=-1;
     }
   }
   
@@ -1774,11 +1773,14 @@ cse_ramp(vfuncptr func, Var * arg)
 	  ol1[t1] = num;
 	  ct += 1;
 	}
-	if (ol2[t1] == 0
-	    && ((ol2[left] == n) || (ol2[right] == n)
-		|| (ol2[up] == n) || (ol2[down] == n))) {
-	  ol2[t1] = num;
-	  ct += 1;
+	/* If the sum of the overlap == 0 then we don't need to do this part */
+	if(sum!=0) {
+	  if (ol2[t1] == 0
+	      && ((ol2[left] == n) || (ol2[right] == n)
+		  || (ol2[up] == n) || (ol2[down] == n))) {
+	    ol2[t1] = num;
+	    ct += 1;
+	  }
 	}
       }
     }
@@ -1792,21 +1794,23 @@ cse_ramp(vfuncptr func, Var * arg)
 	for (i = c1; i <= c2; i++) {
 	  t1 = j * x + i;
 	  if (ol1[t1] == 0) ol1[t1] = pare;
-	  if (ol2[t1] == 0) ol2[t1] = pare;
+	  if(sum!=0) {
+	    if (ol2[t1] == 0) ol2[t1] = pare;
+	  }
 	}
       }
       ct=0;
     }
   }
-
-  /* loop through last time and create ramp */
+  
+  /* loop through last time and create ramp using the special cases*/
   ramp = (float *) calloc(sizeof(float), x*y);
   for (j = 0; j < y; j++) {
     for (i = 0; i < x; i++) {
       t1 = j*x + i;
       if (ol1[t1] != -1 && ol2[t1] != -1) {
 	if(sum!=0)  ramp[t1] = (float)(ol2[t1]) / (float)(ol2[t1] + ol1[t1]);
-	if(sum==0)  ramp[t1] = (float)(ol2[t1]) / (float)(2*k);
+	if(sum==0)  ramp[t1] = (float)(1 -((float)(ol1[t1]) / (float)(2*k)));
       }
     }
   }
