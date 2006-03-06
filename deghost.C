@@ -633,7 +633,7 @@ readCellsFromTrackServer(const char *stamp, FramedImage& fi)
 	double ydelta = 8/15.;
 	int ycount = 2;
 	sprintf(cmd,
-			WGET_CMD " 'http://mapserver1.la.asu.edu/jmars/time_track.phtml"
+			WGET_CMD " 'http://cutter1.mars.asu.edu/jmars/time_track.phtml"
 			"?format=C"
 			"&xmin=%f&xdelta=%f&xcount=%d"
 			"&ymin=%f&ydelta=%f&ycount=%d'",
