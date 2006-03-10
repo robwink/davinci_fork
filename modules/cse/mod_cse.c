@@ -1038,7 +1038,7 @@ cse_tes_shift(vfuncptr func, Var * arg)
   Var    *data=NULL;         /* tes map to be shifted */
   Var    *out=NULL;          /* output data */
   Var    *shifts=NULL;       /* shift info */
-  byte   *w_data=NULL;       /* working data */
+  float  *w_data=NULL;       /* working data */
   int     w_shifts;          /* working shifts */  
   int     x,y,i,j;           /* dims and indices */
   int     tv=-32768;         /* tmpval */
@@ -1075,18 +1075,18 @@ cse_tes_shift(vfuncptr func, Var * arg)
     if(tv>maxshift) maxshift=tv;
   }
   /*memory allocation */
-  w_data=(byte *)calloc(sizeof(byte),(x+maxshift)*y);
+  w_data=(float *)calloc(sizeof(float),(x+maxshift)*y);
   
   /* get shifts, extract and shift the data */
   for(j=0;j<y;j++) {
     w_shifts=extract_int(shifts,cpos(0,j,0,shifts));
     for(i=0;i<x;i++) {
-      w_data[(x+maxshift)*j +(maxshift-w_shifts+i)]=(byte)extract_int(data,cpos(i,j,0,data));
+      w_data[(x+maxshift)*j +(maxshift-w_shifts+i)]=(float)extract_float(data,cpos(i,j,0,data));
     }
   }
 
   /* return the data */
-  out=newVal(BSQ,x+maxshift,y,1,BYTE,w_data);
+  out=newVal(BSQ,x+maxshift,y,1,FLOAT,w_data);
   return out;
 }
 
