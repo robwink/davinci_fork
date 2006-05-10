@@ -7,111 +7,109 @@
 int
 Write_FITS_Image(fitsfile *fptr, Var *obj)
 {
-	int		naxis;
-	long		naxes[3];
-	int		bitpix;
-	int		datatype;
-	int		*size;
-	int		i;
-	int		status=0;
-   int		fpixel[3]={1,1,1};
-
-	VarType2FitsType(obj,&bitpix,&datatype);
-
-	size = V_SIZE(obj);
-	naxis = 0;
-	for(i=0;i<3;i++) {
-		if (size[i]) {
-			naxis++;
-			naxes[i] = size[i];
-		}
-		else
-			naxes[i] = 0;
-	}
-	fits_create_img(fptr,bitpix,naxis,naxes,&status);
-	QUERY_FITS_ERROR(status);
-
-	for(i=0;i<3;i++) 
-		if(!(naxes[i])) size[i]=1; //I don't think this is needed, but just in case V_SIZE() returns a 0 in one of the size slots
-
-	fits_write_pix(fptr,datatype,(long *)fpixel,size[0]*size[1]*size[2],(void *)V_DATA(obj),&status);
-	QUERY_FITS_ERROR(status);
-
-	return(1);
+  int		naxis;
+  long		naxes[3];
+  int		bitpix;
+  int		datatype;
+  int  	       *size;
+  int		i;
+  int		status=0;
+  int		fpixel[3]={1,1,1};
+  
+  VarType2FitsType(obj,&bitpix,&datatype);
+  
+  size = V_SIZE(obj);
+  naxis = 0;
+  for(i=0;i<3;i++) {
+    if (size[i]) {
+      naxis++;
+      naxes[i] = size[i];
+    }
+    else
+      naxes[i] = 0;
+  }
+  fits_create_img(fptr,bitpix,naxis,naxes,&status);
+  QUERY_FITS_ERROR(status);
+  
+  for(i=0;i<3;i++) 
+    if(!(naxes[i])) size[i]=1; //I don't think this is needed, but just in case V_SIZE() returns a 0 in one of the size slots
+  
+  fits_write_pix(fptr,datatype,(long *)fpixel,size[0]*size[1]*size[2],(void *)V_DATA(obj),&status);
+  QUERY_FITS_ERROR(status);
+  
+  return(1);
 }
 
 
 Var *
 Read_FITS_Image(fitsfile *fptr)
 {
-   char *data;
-   int format;
-   int fits_type;
-   int i;
-   int dim;
-   int size[3]={0,0,0};
-   int fpixel[3]={1,1,1};
-   int datatype;
-   int status=0;
+  char *data;
+  int format;
+  int fits_type;
+  int i;
+  int dim;
+  int size[3]={0,0,0};
+  int fpixel[3]={1,1,1};
+  int datatype;
+  int status=0;
+  
+  fits_get_img_dim(fptr,&dim,&status);
+  QUERY_FITS_ERROR(status);
+  
+  if (dim > 3) {
+    parse_error("Data objects of greater than 3 dimensions are not handled.");
+    return(NULL);
+  }
+  
+  fits_get_img_type(fptr,&fits_type,&status);
+  QUERY_FITS_ERROR(status);
+  
+  fits_get_img_size(fptr,dim,(long *)size,&status);
+  QUERY_FITS_ERROR(status);
+  
+  for(i=0;i<3;i++) 
+    if(!size[i]) {
+      size[i]=1;
+      fpixel[i]=0;
+    }
+  
+  
+  switch (fits_type) {
+    
+  case BYTE_IMG:    
+    format = BYTE;
+    datatype = TBYTE;
+    break;
+    
+  case SHORT_IMG:    
+    format = SHORT;
+    datatype = TSHORT;
+    break;
+    
+  case LONG_IMG:    
+    format = INT;
+    datatype = TINT;
+    break;
+    
+  case FLOAT_IMG:    
+    format = FLOAT;
+    datatype = TFLOAT;
+    break;
+    
+  case DOUBLE_IMG:    
+    format = DOUBLE;
+    datatype = TDOUBLE;
+    break;
+    
+  }
 
-   fits_get_img_dim(fptr,&dim,&status);
-   QUERY_FITS_ERROR(status);
-
-   if (dim > 3) {
-      parse_error("Data objects of greater than 3 dimensions are not handled.");
-      return(NULL);
-   }
-
-   fits_get_img_type(fptr,&fits_type,&status);
-   QUERY_FITS_ERROR(status);
-
-   fits_get_img_size(fptr,dim,(long *)size,&status);
-   QUERY_FITS_ERROR(status);
-   
-   for(i=0;i<3;i++) 
-      if(!size[i]) {
-         size[i]=1;
-         fpixel[i]=0;
-      }
-   
-
-   switch (fits_type) {
-
-      case BYTE_IMG:    
-                     format = BYTE;
-                     datatype = TBYTE;
-                     break;
-
-      case SHORT_IMG:    
-                     format = SHORT;
-                     datatype = TSHORT;
-                     break;
-
-      case LONG_IMG:    
-                     format = INT;
-                     datatype = TINT;
-                     break;
-
-      case FLOAT_IMG:    
-                     format = FLOAT;
-                     datatype = TFLOAT;
-                     break;
-
-      case DOUBLE_IMG:    
-                     format = DOUBLE;
-                     datatype = TDOUBLE;
-                     break;
-
-   }
-
-   data = (char *)calloc(size[0]*size[1]*size[2],NBYTES(format));
-
-   fits_read_pix(fptr,datatype,(long *)fpixel,(size[0]*size[1]*size[2]),NULL,(void *)data,NULL,&status);
-   QUERY_FITS_ERROR(status);
-
-   
-
-   return(newVal(BSQ,size[0],size[1],size[2],format,data));
+  data = (char *)calloc(size[0]*size[1]*size[2],NBYTES(format));
+  
+  fits_read_pix(fptr,datatype,(long *)fpixel,(size[0]*size[1]*size[2]),NULL,(void *)data,NULL,&status);
+  QUERY_FITS_ERROR(status);
+  
+  return(newVal(BSQ,size[0],size[1],size[2],format,data));
 }
 
 
@@ -124,84 +122,84 @@ Read_FITS_Table(fitsfile *fptr)
 Var *
 makeVarFromFITSLabel(char *fits_value,char key_type)
 {
-   int   *i;
-   float *f;
-
-   Var *v;
-
-   switch (key_type) {
-
-   case 'C':
-               v = newString(strdup(fits_value));
-               break;
-
-   case 'I':   
-               i = (int *)calloc(1,sizeof(int));
-               *i = atoi(fits_value);
-               v = newVal(BSQ,1,1,1,INT,i);
-               break;
-   case 'L':
-					i = (int *)calloc(1,sizeof(int));
-					if (!strcmp(fits_value,"T"))
-						*i=1;
-					else
-						*i=0;
-               v = newVal(BSQ,1,1,1,INT,i);
-               break;
-
-   case 'F':
-               f = (float *)calloc(1,sizeof(float));
-               *f = atof(fits_value);
-               v = newVal(BSQ,1,1,1,FLOAT,f);
-               break;
-
-   case 'X':
-               parse_error("Unclear how to parse this...keeping as string");
-               v = newString(strdup(fits_value));
-               break;
-   }
-
-   return(v);
+  int   *i;
+  float *f;
+  
+  Var *v;
+  
+  switch (key_type) {
+    
+  case 'C':
+    v = newString(strdup(fits_value));
+    break;
+    
+  case 'I':   
+    i = (int *)calloc(1,sizeof(int));
+    *i = atoi(fits_value);
+    v = newVal(BSQ,1,1,1,INT,i);
+    break;
+  case 'L':
+    i = (int *)calloc(1,sizeof(int));
+    if (!strcmp(fits_value,"T"))
+      *i=1;
+    else
+      *i=0;
+    v = newVal(BSQ,1,1,1,INT,i);
+    break;
+    
+  case 'F':
+    f = (float *)calloc(1,sizeof(float));
+    *f = atof(fits_value);
+    v = newVal(BSQ,1,1,1,FLOAT,f);
+    break;
+    
+  case 'X':
+    parse_error("Unclear how to parse this...keeping as string");
+    v = newString(strdup(fits_value));
+    break;
+  }
+  
+  return(v);
 }
-               
+
 
 void
 Parse_Name(char *card, char **name)
 {
 
-   char *p;
-   char *in = strdup(card);
-
-   if (strlen(in) > 80) {
-      *name=NULL;
-      free(in);
-      return;
-   }
-
-   if(!(p=strstr(in,"="))){ //no key/value pair...toss it for now
-      *name=NULL;
-      free(in);
-      return;
-   }
-
-   if (p-in > 8) { //yeah, it's an ='s sign, but deep in line, probably a comment...toss it for now
-      *name=NULL;
-      free(in);
-      return;
-   }
-
-   *p='\0';
-
-// Need to trim name:
-
-   p--; // _=_ should put us at first _ location
-
-   while (*p == ' ' && p!=(*name))
-      p--;
-   p++;
-   *p='\0';
-   *name=strdup(in);
-   free(in);
+  char *p;
+  char *in = strdup(card);
+  
+  if (strlen(in) > 80) {
+    *name=NULL;
+    free(in);
+    return;
+  }
+  
+  if(!(p=strstr(in,"="))){ //no key/value pair...toss it for now
+    *name=NULL;
+    free(in);
+    return;
+  }
+  
+  if (p-in > 8) { //yeah, it's an ='s sign, but deep in line, probably a comment...toss it for now
+    *name=NULL;
+    free(in);
+    return;
+  }
+  
+  *p='\0';
+  
+  // Need to trim name:
+  
+  p--; // _=_ should put us at first _ location
+  
+  while (*p == ' ' && p!=(*name))
+    p--;
+  p++;
+  *p='\0';
+  *name=strdup(in);
+  free(in);
 }
    
 
@@ -220,18 +218,15 @@ Var *
 FITS_Read_Entry(char *fits_filename)
 {
    fitsfile *fptr;
-   char     header_entry[FLEN_CARD];
-   int      status=0;
-   int      i,j;
-   int      num_objects;
-   int      cur_object;
-   int      num_header_entries;
-   int      object_type;
-
-
+   char      header_entry[FLEN_CARD];
+   int       status=0;
+   int       i,j;
+   int       num_objects;
+   int       cur_object;
+   int       num_header_entries;
+   int       object_type;
    char     *name;
-
-   char     fits_value[128],fits_comment[128];
+   char      fits_value[128],fits_comment[128];
 
    Var      *head=new_struct(0);
    Var      *sub;
@@ -672,17 +667,19 @@ ReadFITS(vfuncptr func, Var * arg)
    char *filename = NULL;
    char *extension = NULL;
    char *fe=NULL;
-   
    Var  *data=NULL;
-
 
    Alist alist[3];
    alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
    alist[1] = make_alist("extension",ID_STRING, NULL, &extension);
    alist[2].name = NULL;
 
-   if (parse_args(func, arg, alist) == 0)
-      return (NULL);
+   if (parse_args(func, arg, alist) == 0) return (NULL);
+
+   if (filename == NULL) {
+     parse_error("Expected filename");
+     return(NULL);
+   }
 
    if (extension) {
       fe = (char *)calloc(strlen(extension)+strlen(filename)+1,1);

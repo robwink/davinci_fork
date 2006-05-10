@@ -19,193 +19,193 @@ void jfill(float *data, int n, float fill, int radius, int wrap);
 Var *
 ff_jfill(vfuncptr func, Var * arg)
 {
-    Var *v, *obj;
-    float val[10], dist[10];
-    int ecount, xpos[10], ypos[10], width, height, depth;
-    int i, j, k, e, x, y, band, pos;
-    float *data, d;
-    int wrap = 0;			/* left to right wrap around */
-    int radius = 3;			/* distance to search */
-    int neighbors = 5;		/* minimum number of neighbors */
-    float fill = 0.0;		/* fill value */
-
-	Alist alist[6];
-	alist[0] = make_alist( "object",    ID_VAL, NULL, &obj);
-	alist[1] = make_alist( "fill",      FLOAT,  NULL, &fill);
-	alist[2] = make_alist( "radius",    INT,    NULL, &radius);
-	alist[3] = make_alist( "wrap",      INT,    NULL, &wrap);
-	alist[4] = make_alist( "neighbors",      INT,    NULL, &neighbors);
-	alist[5].name = NULL;
-
-	if (parse_args(func, arg, alist) == 0) return(NULL);
-
-	if (obj == NULL) {
-		parse_error("%s: No object specified\n", func->name);
-		return(NULL);
+  Var *v = NULL, *obj = NULL;
+  float val[10], dist[10];
+  int ecount, xpos[10], ypos[10], width, height, depth;
+  int i, j, k, e, x, y, band, pos;
+  float *data = NULL, d;
+  int wrap = 0;			/* left to right wrap around */
+  int radius = 3;			/* distance to search */
+  int neighbors = 5;		/* minimum number of neighbors */
+  float fill = 0.0;		/* fill value */
+  
+  Alist alist[6];
+  alist[0] = make_alist( "object",    ID_VAL, NULL, &obj);
+  alist[1] = make_alist( "fill",      FLOAT,  NULL, &fill);
+  alist[2] = make_alist( "radius",    INT,    NULL, &radius);
+  alist[3] = make_alist( "wrap",      INT,    NULL, &wrap);
+  alist[4] = make_alist( "neighbors",      INT,    NULL, &neighbors);
+  alist[5].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if (obj == NULL) {
+    parse_error("%s: No object specified\n", func->name);
+    return(NULL);
+  }
+  
+  width = GetSamples(V_SIZE(obj), V_ORG(obj));
+  height = GetLines(V_SIZE(obj), V_ORG(obj));
+  depth = GetBands(V_SIZE(obj), V_ORG(obj));
+  data = (float *) calloc(sizeof(float), width * height * depth);
+  
+  /** 
+   ** Put together return value
+   **/
+  
+  v = newVar();
+  V_TYPE(v) = ID_VAL;
+  V_ORG(v) = V_ORG(obj);
+  V_DSIZE(v) = V_DSIZE(obj);
+  V_SIZE(v)[0] = V_SIZE(obj)[0];
+  V_SIZE(v)[1] = V_SIZE(obj)[1];
+  V_SIZE(v)[2] = V_SIZE(obj)[2];
+  V_FORMAT(v) = FLOAT;
+  V_DATA(v) = data;
+  
+  for (band = 0; band < depth; band++) {
+    for (j = 0; j < height; j++) {
+      for (i = 0; i < width; i++) {
+	pos = cpos(i, j, band, obj);
+	d = extract_double(obj, pos);
+	data[pos] = d;
+	if (d != fill) {
+	  continue;
 	}
-
-    width = GetSamples(V_SIZE(obj), V_ORG(obj));
-    height = GetLines(V_SIZE(obj), V_ORG(obj));
-    depth = GetBands(V_SIZE(obj), V_ORG(obj));
-    data = (float *) calloc(sizeof(float), width * height * depth);
-
-    /** 
-    ** Put together return value
-    **/
-
-    v = newVar();
-    V_TYPE(v) = ID_VAL;
-    V_ORG(v) = V_ORG(obj);
-    V_DSIZE(v) = V_DSIZE(obj);
-    V_SIZE(v)[0] = V_SIZE(obj)[0];
-    V_SIZE(v)[1] = V_SIZE(obj)[1];
-    V_SIZE(v)[2] = V_SIZE(obj)[2];
-    V_FORMAT(v) = FLOAT;
-    V_DATA(v) = data;
-
-    for (band = 0; band < depth; band++) {
-        for (j = 0; j < height; j++) {
-            for (i = 0; i < width; i++) {
-                pos = cpos(i, j, band, obj);
-                d = extract_double(obj, pos);
-                data[pos] = d;
-                if (d != fill) {
-                    continue;
-                }
-                ecount = 0;
-                for (k = 1; k < radius; k++) {
-                    for (e = 1; e <= 9; e++) {
-                        if (k == 1)
-                            val[e] = fill;
-                        if (val[e] == fill) {
-                            x = i + xcorner(e, k);
-                            y = j + ycorner(e, k);
-                            if (x < 0 || x >= width) {
-								if (wrap) {
-									x = (x+width) % width;
-								} else {
-									continue;
-								}
-							}
-
-							if (y < 0 || y >= height) {
-                                continue;
-							}
-
-                            val[e] = extract_float(obj, cpos(x, y, band, obj));
-                            xpos[e] = x;
-                            ypos[e] = y;
-                            dist[e] = 1.0 / (k * k);
-                            if (val[e] != fill)
-                                ecount++;
-                        }
-                    }
-                    if (ecount >= neighbors) {
-                        d = 0;
-                        for (e = 1; e <= 9; e++) {
-                            /**
-                            ** compute weighted average
-                            **/
-                            if (e == 5)
-                                continue;
-                            if (val[e] != fill) {
-                                val[5] += val[e] * dist[e];
-                                d += dist[e];
-                            }
-                        }
-                        data[pos] = val[5] / d;
-                        /**
-                        ** stop everything.
-                        **/
-                        e = 10; 
-                        k = radius;
-                    }
-                }
-            }
-        }
+	ecount = 0;
+	for (k = 1; k < radius; k++) {
+	  for (e = 1; e <= 9; e++) {
+	    if (k == 1)
+	      val[e] = fill;
+	    if (val[e] == fill) {
+	      x = i + xcorner(e, k);
+	      y = j + ycorner(e, k);
+	      if (x < 0 || x >= width) {
+		if (wrap) {
+		  x = (x+width) % width;
+		} else {
+		  continue;
+		}
+	      }
+	      
+	      if (y < 0 || y >= height) {
+		continue;
+	      }
+	      
+	      val[e] = extract_float(obj, cpos(x, y, band, obj));
+	      xpos[e] = x;
+	      ypos[e] = y;
+	      dist[e] = 1.0 / (k * k);
+	      if (val[e] != fill)
+		ecount++;
+	    }
+	  }
+	  if (ecount >= neighbors) {
+	    d = 0;
+	    for (e = 1; e <= 9; e++) {
+	      /**
+	       ** compute weighted average
+	       **/
+	      if (e == 5)
+		continue;
+	      if (val[e] != fill) {
+		val[5] += val[e] * dist[e];
+		d += dist[e];
+	      }
+	    }
+	    data[pos] = val[5] / d;
+	    /**
+	     ** stop everything.
+	     **/
+	    e = 10; 
+	    k = radius;
+	  }
+	}
+      }
     }
-    return (v);
+  }
+  return (v);
 }
 
 Var *
 ff_ifill(vfuncptr func, Var * arg)
 {
-    Var *v, *obj;
-    int radius = 3, wrap=0;
-    float fill = 0.0;
-    float *data1, *data2, *data3;
-	int width,height,depth, dsize;
-	char *pass = "1234";
+  Var *v = NULL, *obj = NULL;
+  int radius = 3, wrap=0;
+  float fill = 0.0;
+  float *data1 = NULL, *data2 = NULL, *data3 = NULL;
+  int width,height,depth, dsize;
+  char *pass = "1234";
 
-	Alist alist[6];
-	alist[0] = make_alist( "object",    ID_VAL, NULL, &obj);
-	alist[1] = make_alist( "fill",      FLOAT,  NULL, &fill);
-	alist[2] = make_alist( "radius",    INT,    NULL, &radius);
-	alist[3] = make_alist( "wrap",      INT,    NULL, &wrap);
-	alist[4] = make_alist( "pass",      ID_STRING,    NULL, &pass);
-	alist[5].name = NULL;
+  Alist alist[6];
+  alist[0] = make_alist( "object",    ID_VAL, NULL, &obj);
+  alist[1] = make_alist( "fill",      FLOAT,  NULL, &fill);
+  alist[2] = make_alist( "radius",    INT,    NULL, &radius);
+  alist[3] = make_alist( "wrap",      INT,    NULL, &wrap);
+  alist[4] = make_alist( "pass",      ID_STRING,    NULL, &pass);
+  alist[5].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if (obj == NULL) {
+    parse_error("%s: No object specified\n", func->name);
+    return(NULL);
+  }
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+  width = GetSamples(V_SIZE(obj), V_ORG(obj));
+  height = GetLines(V_SIZE(obj), V_ORG(obj));
+  depth = GetBands(V_SIZE(obj), V_ORG(obj));
+  dsize = width*height*depth;
+  data1 = (float *) calloc(sizeof(float), dsize);
+  data2 = (float *) calloc(sizeof(float), dsize);
+  data3 = (float *) calloc(sizeof(float), dsize);
 
-	if (obj == NULL) {
-		parse_error("%s: No object specified\n", func->name);
-		return(NULL);
-	}
+  /** 
+   ** Put together return value
+   **/
 
-    width = GetSamples(V_SIZE(obj), V_ORG(obj));
-    height = GetLines(V_SIZE(obj), V_ORG(obj));
-    depth = GetBands(V_SIZE(obj), V_ORG(obj));
-	dsize = width*height*depth;
-    data1 = (float *) calloc(sizeof(float), dsize);
-    data2 = (float *) calloc(sizeof(float), dsize);
-    data3 = (float *) calloc(sizeof(float), dsize);
-
-    /** 
-    ** Put together return value
-    **/
-
-	if (strchr(pass, '3') && strchr(pass, '4')) {
-		jfill_tl(obj, width, height, depth, data1, fill, radius);
-		jfill_tr(obj, width, height, depth, data2, fill, radius);
-		jfill_merge(data1, data2, fill, dsize);
-	} else if (strchr(pass, '4')) {
-		jfill_tl(obj, width, height, depth, data1, fill, radius);
-	} else if (strchr(pass, '3')) {
-		jfill_tr(obj, width, height, depth, data1, fill, radius);
-	}
-
-	if (strchr(pass, '1') && strchr(pass, '2')) {
-		jfill_tb(obj, width, height, depth, data2, fill, radius);
-		jfill_lr(obj, width, height, depth, data3, fill, radius, wrap);
-		jfill_merge(data2, data3, fill, dsize);
-	} else if (strchr(pass, '1')) {
-		jfill_tb(obj, width, height, depth, data2, fill, radius);
-	} else if (strchr(pass, '2')) {
-		jfill_lr(obj, width, height, depth, data2, fill, radius, wrap);
-	}
-
-	if ((strchr(pass, '3') || strchr(pass, '4')) &&
-	    (strchr(pass, '1') || strchr(pass, '2'))) {
-			jfill_merge(data1, data2, fill, dsize);
-	} else if (strchr(pass, '1') || strchr(pass, '2')) {
-		float *t = data2;
-		data2 = data1;
-		data1 = t;
-	}
-
-    v = newVar();
-    V_TYPE(v) = ID_VAL;
-    V_ORG(v) = V_ORG(obj);
-    V_DSIZE(v) = V_DSIZE(obj);
-    V_SIZE(v)[0] = V_SIZE(obj)[0];
-    V_SIZE(v)[1] = V_SIZE(obj)[1];
-    V_SIZE(v)[2] = V_SIZE(obj)[2];
-    V_FORMAT(v) = FLOAT;
-    V_DATA(v) = data1;
-
-	free(data2);
-	free(data3);
-    return (v);
+  if (strchr(pass, '3') && strchr(pass, '4')) {
+    jfill_tl(obj, width, height, depth, data1, fill, radius);
+    jfill_tr(obj, width, height, depth, data2, fill, radius);
+    jfill_merge(data1, data2, fill, dsize);
+  } else if (strchr(pass, '4')) {
+    jfill_tl(obj, width, height, depth, data1, fill, radius);
+  } else if (strchr(pass, '3')) {
+    jfill_tr(obj, width, height, depth, data1, fill, radius);
+  }
+  
+  if (strchr(pass, '1') && strchr(pass, '2')) {
+    jfill_tb(obj, width, height, depth, data2, fill, radius);
+    jfill_lr(obj, width, height, depth, data3, fill, radius, wrap);
+    jfill_merge(data2, data3, fill, dsize);
+  } else if (strchr(pass, '1')) {
+    jfill_tb(obj, width, height, depth, data2, fill, radius);
+  } else if (strchr(pass, '2')) {
+    jfill_lr(obj, width, height, depth, data2, fill, radius, wrap);
+  }
+  
+  if ((strchr(pass, '3') || strchr(pass, '4')) &&
+      (strchr(pass, '1') || strchr(pass, '2'))) {
+    jfill_merge(data1, data2, fill, dsize);
+  } else if (strchr(pass, '1') || strchr(pass, '2')) {
+    float *t = data2;
+    data2 = data1;
+    data1 = t;
+  }
+  
+  v = newVar();
+  V_TYPE(v) = ID_VAL;
+  V_ORG(v) = V_ORG(obj);
+  V_DSIZE(v) = V_DSIZE(obj);
+  V_SIZE(v)[0] = V_SIZE(obj)[0];
+  V_SIZE(v)[1] = V_SIZE(obj)[1];
+  V_SIZE(v)[2] = V_SIZE(obj)[2];
+  V_FORMAT(v) = FLOAT;
+  V_DATA(v) = data1;
+  
+  free(data2);
+  free(data3);
+  return (v);
 }
 
 void
