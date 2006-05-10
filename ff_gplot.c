@@ -12,69 +12,69 @@ extern FILE *pfp;
 Var *
 ff_gplot(vfuncptr func, Var *arg)
 {
-    Var *object, *e;
-    int i;
-    FILE *fp;
-    char *fname;
-    float g_xlow = MAXFLOAT;
-    float g_xhigh = MAXFLOAT;
-    float g_ylow = MAXFLOAT;
-    float g_yhigh = MAXFLOAT;
-
-    Alist alist[6];
-    alist[0] = make_alist( "object",  ID_VAL,   NULL,    &object);
-    alist[1] = make_alist( "xlow",    FLOAT,    NULL,    &g_xlow);
-    alist[2] = make_alist( "xhigh",   FLOAT,    NULL,    &g_xhigh);
-    alist[3] = make_alist( "ylow",    FLOAT,    NULL,    &g_ylow);
-    alist[4] = make_alist( "yhigh",   FLOAT,    NULL,    &g_yhigh);
-    alist[5].name = NULL;
-
-    if (parse_args(func, arg, alist) == 0) return(NULL);
-
-    if (object == NULL || V_TYPE(object) != ID_VAL) {
-        fprintf(stderr, "Expected value for keyword: object\n");
-        return(NULL);
-    }
-
-    if (gplot_pfp == NULL) gplot_pfp = popen("gnuplot","w");
-
-    fname = make_temp_file_path();
-    if (fname == NULL || (fp = fopen(fname, "w")) == NULL ) {
-        parse_error("%s: unable to open temp file", func->name);
-        if (fname) free(fname);
-        return(NULL);
-    }
-
-    for (i = 0 ; i < V_DSIZE(object) ; i++) {
-        switch (V_FORMAT(object)) {
-        case BYTE:
-        case SHORT:
-        case INT:
-            fprintf(fp, "%d\n", extract_int(object, i)); break;
-        case FLOAT:
-        case DOUBLE:
-            fprintf(fp, "%g\n", extract_double(object, i)); break;
-        }
-    }
-
-    fclose(fp);
-
-    fprintf(gplot_pfp, "plot ");
-    fprintf(gplot_pfp, "[ ");
-    if (g_xlow != MAXFLOAT) fprintf(gplot_pfp, "%g", g_xlow);
-    fprintf(gplot_pfp, ":");
-    if (g_xhigh != MAXFLOAT) fprintf(gplot_pfp, "%g", g_xhigh);
-    fprintf(gplot_pfp, "] ");
-
-    fprintf(gplot_pfp, "[ ");
-    if (g_ylow != MAXFLOAT) fprintf(gplot_pfp, "%g", g_ylow);
-    fprintf(gplot_pfp, ":");
-    if (g_yhigh != MAXFLOAT) fprintf(gplot_pfp, "%g", g_yhigh);
-    fprintf(gplot_pfp, "] \"%s\" with linespoints\n", fname);
-    fflush(gplot_pfp);
-
-    free(fname);
+  Var *object = NULL, *e = NULL;
+  int i;
+  FILE *fp = NULL;
+  char *fname = NULL;
+  float g_xlow = MAXFLOAT;
+  float g_xhigh = MAXFLOAT;
+  float g_ylow = MAXFLOAT;
+  float g_yhigh = MAXFLOAT;
+  
+  Alist alist[6];
+  alist[0] = make_alist( "object",  ID_VAL,   NULL,    &object);
+  alist[1] = make_alist( "xlow",    FLOAT,    NULL,    &g_xlow);
+  alist[2] = make_alist( "xhigh",   FLOAT,    NULL,    &g_xhigh);
+  alist[3] = make_alist( "ylow",    FLOAT,    NULL,    &g_ylow);
+  alist[4] = make_alist( "yhigh",   FLOAT,    NULL,    &g_yhigh);
+  alist[5].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if (object == NULL || V_TYPE(object) != ID_VAL) {
+    fprintf(stderr, "Expected value for keyword: object\n");
     return(NULL);
+  }
+  
+  if (gplot_pfp == NULL) gplot_pfp = popen("gnuplot","w");
+  
+  fname = make_temp_file_path();
+  if (fname == NULL || (fp = fopen(fname, "w")) == NULL ) {
+    parse_error("%s: unable to open temp file", func->name);
+    if (fname) free(fname);
+    return(NULL);
+  }
+  
+  for (i = 0 ; i < V_DSIZE(object) ; i++) {
+    switch (V_FORMAT(object)) {
+    case BYTE:
+    case SHORT:
+    case INT:
+      fprintf(fp, "%d\n", extract_int(object, i)); break;
+    case FLOAT:
+    case DOUBLE:
+      fprintf(fp, "%g\n", extract_double(object, i)); break;
+    }
+  }
+  
+  fclose(fp);
+  
+  fprintf(gplot_pfp, "plot ");
+  fprintf(gplot_pfp, "[ ");
+  if (g_xlow != MAXFLOAT) fprintf(gplot_pfp, "%g", g_xlow);
+  fprintf(gplot_pfp, ":");
+  if (g_xhigh != MAXFLOAT) fprintf(gplot_pfp, "%g", g_xhigh);
+  fprintf(gplot_pfp, "] ");
+  
+  fprintf(gplot_pfp, "[ ");
+  if (g_ylow != MAXFLOAT) fprintf(gplot_pfp, "%g", g_ylow);
+  fprintf(gplot_pfp, ":");
+  if (g_yhigh != MAXFLOAT) fprintf(gplot_pfp, "%g", g_yhigh);
+  fprintf(gplot_pfp, "] \"%s\" with linespoints\n", fname);
+  fflush(gplot_pfp);
+  
+  free(fname);
+  return(NULL);
 }
 
 Var *

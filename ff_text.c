@@ -102,64 +102,67 @@ ff_read_text(vfuncptr func, Var *arg)
 Var *
 ff_read_lines(vfuncptr func, Var *arg)
 {
-    char    *filename;
-    char    *fname;
-    FILE *fp;
-    char *ptr;
-    int rlen;
-    char **t;
-    int size;
-	
-    Var *o;
+  char    *filename = NULL;
+  char    *fname = NULL;
+  FILE    *fp = NULL;
+  char    *ptr = NULL;
+  int      rlen;
+  char   **t = NULL;
+  int      size;
+  Var     *o = NULL;
+  int      count;
+  
+  Alist alist[2];
+  alist[0] = make_alist( "filename", ID_STRING,   NULL,     &filename);
+  alist[1].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
 
-    int count;
-
-    Alist alist[2];
-    alist[0] = make_alist( "filename", ID_STRING,   NULL,     &filename);
-    alist[1].name = NULL;
-
-	if (parse_args(func, arg, alist) == 0) return(NULL);
-
-    if ((fname = dv_locate_file(filename)) == NULL) {
-        sprintf(error_buf, "Cannot find file: %s\n", filename);
-        parse_error(NULL);
-        return(NULL);
+  if (filename == NULL) {
+    parse_error("Expected filename");
+    return(NULL);
+  }
+  
+  if ((fname = dv_locate_file(filename)) == NULL) {
+    sprintf(error_buf, "Cannot find file: %s\n", filename);
+    parse_error(NULL);
+    return(NULL);
+  }
+  if ((fp = fopen(fname, "rb")) == NULL) {
+    sprintf(error_buf, "Cannot open file: %s\n", fname);
+    parse_error(NULL);
+    return(NULL);
+  }
+  
+  count = 0;
+  size = 64;
+  t = calloc(size, sizeof(char *));
+  
+  while((rlen = getline(&ptr, fp)) != EOF) {
+    if (ptr[rlen-1] == '\n') ptr[rlen-1] = '\0';
+    if (ptr[rlen-2] == '\r') ptr[rlen-2] = '\0';
+    
+    if (size == count) {
+      t = realloc(t, size*2*sizeof(char *));
+      size *= 2;
     }
-    if ((fp = fopen(fname, "rb")) == NULL) {
-        sprintf(error_buf, "Cannot open file: %s\n", fname);
-        parse_error(NULL);
-        return(NULL);
-    }
-
-    count = 0;
-    size = 64;
-    t = calloc(size, sizeof(char *));
-
-    while((rlen = getline(&ptr, fp)) != EOF) {
-        if (ptr[rlen-1] == '\n') ptr[rlen-1] = '\0';
-        if (ptr[rlen-2] == '\r') ptr[rlen-2] = '\0';
-
-        if (size == count) {
-            t = realloc(t, size*2*sizeof(char *));
-            size *= 2;
-        }
-        t[count++] = strdup(ptr);
-    }
-	 fclose(fp);
-
-    t = realloc(t, count*sizeof(char *));
-
-    o=newVar();
-    V_TEXT(o).Row=count;
-    V_TEXT(o).text = t;
-
-    if (VERBOSE > 1) {
-        fprintf(stderr, "Read TEXT file: %d lines\n", count);
-    }
-
-    V_TYPE(o) = ID_TEXT;
-
-    return(o);
+    t[count++] = strdup(ptr);
+  }
+  fclose(fp);
+  
+  t = realloc(t, count*sizeof(char *));
+  
+  o=newVar();
+  V_TEXT(o).Row=count;
+  V_TEXT(o).text = t;
+  
+  if (VERBOSE > 1) {
+    fprintf(stderr, "Read TEXT file: %d lines\n", count);
+  }
+  
+  V_TYPE(o) = ID_TEXT;
+  
+  return(o);
 }
 
 /**
@@ -480,52 +483,54 @@ Var *
 ff_filename(vfuncptr func, Var * arg) 
 {
 
-    Var *ob1;
-    Var *S = NULL;
-    char *ext=NULL;
-    int filefunc;
-    Alist alist[3];
-    alist[0] = make_alist( "obj", ID_UNK,   NULL,     &ob1);
-    alist[1] = make_alist( "ext", ID_STRING,   NULL,     &ext);
-    alist[2].name = NULL;
+  Var   *ob1 = NULL;
+  Var   *S = NULL;
+  char  *ext=NULL;
+  int    filefunc;
 
-    filefunc=(int)func->fdata;
-    if (filefunc==0){
-        parse_error("Bad function");
-        return(NULL);
-    }	
+  Alist alist[3];
+  alist[0] = make_alist( "obj", ID_UNK,   NULL,     &ob1);
+  alist[1] = make_alist( "ext", ID_STRING,   NULL,     &ext);
+  alist[2].name = NULL;
+    
+  if (ob1==NULL) {
+    parse_error("Expected obj");
+    return(NULL);
+  }
+  
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+  filefunc=(int)func->fdata;
+  if (filefunc==0){
+    parse_error("Bad function");
+    return(NULL);
+  }	
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
 
-    if (ob1==NULL) {
-        return(NULL);
-    }
-
-
-    if (V_TYPE(ob1)==ID_STRING) {
-        if (filefunc==1){
-			S = newString(string_basename(ob1, ext));
-        } else if (filefunc==2){
-			S = newString(string_dirname(ob1));
-        } else {
-            parse_error("Bad Functions");
-            return(NULL);
-        }
-        return(S);
-    } else if (V_TYPE(ob1)==ID_TEXT){
-        if (filefunc==1){
-            S=text_basename(ob1,ext);
-        } else if (filefunc==2){
-            S=text_dirname(ob1);
-        } else {
-            parse_error("Bad Functions");
-            return(NULL);
-        }
-        return(S);
+  if (V_TYPE(ob1)==ID_STRING) {
+    if (filefunc==1){
+      S = newString(string_basename(ob1, ext));
+    } else if (filefunc==2){
+      S = newString(string_dirname(ob1));
     } else {
-        parse_error("Only STRING and TEXT types are allowed");
-        return(NULL);
+      parse_error("Bad Functions");
+      return(NULL);
     }
+    return(S);
+  } else if (V_TYPE(ob1)==ID_TEXT){
+    if (filefunc==1){
+      S=text_basename(ob1,ext);
+    } else if (filefunc==2){
+      S=text_dirname(ob1);
+    } else {
+      parse_error("Bad Functions");
+      return(NULL);
+    }
+    return(S);
+  } else {
+    parse_error("Only STRING and TEXT types are allowed");
+    return(NULL);
+  }
 }
 
 

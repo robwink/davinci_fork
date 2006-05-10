@@ -180,102 +180,103 @@ ff_dfunc(vfuncptr func, Var * arg)
 Var *
 ff_bop(vfuncptr func, Var * arg)
 {
-    int format;
-    int size[3];
-    int dsize = 0;
-    int i;
-    int order;
-    Var *val, *t, *a, *b;
-    int count;
-    int va, vb;
-    int ca = 1, cb = 1;
-    double v1, v2;
-    double *ddata;
-    ddfunc fptr = (ddfunc) func->fdata;
+  int format;
+  int size[3];
+  int dsize = 0;
+  int i;
+  int order;
+  Var *val = NULL, *t = NULL, *a = NULL, *b = NULL;
+  int count;
+  int va, vb;
+  int ca = 1, cb = 1;
+  double v1, v2;
+  double *ddata = NULL;
+  ddfunc fptr = (ddfunc) func->fdata;
 
-	Alist alist[3];
-	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &a);
-	alist[1] = make_alist( "object",    ID_VAL,    NULL,    &b);
-	alist[2].name = NULL;
+  Alist alist[3];
+  alist[0] = make_alist( "object",    ID_VAL,    NULL,    &a);
+  alist[1] = make_alist( "object",    ID_VAL,    NULL,    &b);
+  alist[2].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
-	if (a == NULL || b == NULL) {
-		parse_error("Not enough arguments to function: %s()", func->name);
-		return(NULL);
-	}
-
-    if (fptr == NULL) {	/* this should never happen */
-        parse_error("Function not found.");
-        return (NULL);
+  if (a == NULL || b == NULL) {
+    parse_error("Not enough arguments to function: %s()", func->name);
+    return(NULL);
+  }
+  
+  if (fptr == NULL) {	/* this should never happen */
+    parse_error("Function not found.");
+    return (NULL);
+  }
+  
+  /**
+   ** Verify that we can actually operate with these two objects.
+   **
+   ** Okay if:	dimensions are the same or 1.	(size == size)
+   **
+   **/
+  
+  count = 0;
+  for (i = 0; i < 3; i++) {
+    va = V_SIZE(a)[orders[V_ORDER(a)][i]];
+    vb = V_SIZE(b)[orders[V_ORDER(b)][i]];
+    if (va != 1 && vb != 1 && va != vb) {
+      
+      parse_error("%s: operation illegal, sizes differ", func->name);
+      return (NULL);
     }
-
-    /**
-    ** Verify that we can actually operate with these two objects.
-    **
-    ** Okay if:	dimensions are the same or 1.	(size == size)
-    **
-    **/
-
-    count = 0;
-    for (i = 0; i < 3; i++) {
-        va = V_SIZE(a)[orders[V_ORDER(a)][i]];
-        vb = V_SIZE(b)[orders[V_ORDER(b)][i]];
-        if (va != 1 && vb != 1 && va != vb) {
-
-            parse_error("%s: operation illegal, sizes differ", func->name);
-            return (NULL);
-        }
-        if (va != vb) {
-            ca *= va;
-            cb *= vb;
-        }
+    if (va != vb) {
+      ca *= va;
+      cb *= vb;
     }
-    if (ca != 1 && cb != 1) {
-        parse_error("%s: operation illegal, sizes differ on more than 1 axis",
-                    func->name);
-        return (NULL);
-    }
-    format = DOUBLE;
-    dsize = 1;
-    for (i = 0; i < 3; i++) {
-        size[i] = max(V_SIZE(a)[orders[V_ORDER(a)][i]],
-                      V_SIZE(b)[orders[V_ORDER(b)][i]]);
-        dsize *= size[i];
-    }
-    order = (V_DSIZE(a) > V_DSIZE(b) ? V_ORDER(a) : V_ORDER(b));
-
-    if (dsize == 0)
-        dsize = 1;	/* impossible? */
-
-    /**
-    ** can we reuse one of the input values here?
-    **/
-    ddata = (double *)calloc(dsize, NBYTES(format));
-
-    val = newVar();
-    V_TYPE(val) = ID_VAL;
-    V_FORMAT(val) = format;
-    V_DSIZE(val) = dsize;
-    V_ORDER(val) = order;
-    V_DATA(val) = ddata;
-
-/** size was extracted as x,y,z.  put it back appropriately **/
-
-    V_SIZE(val)[orders[order][0]] = size[0];
-    V_SIZE(val)[orders[order][1]] = size[1];
-    V_SIZE(val)[orders[order][2]] = size[2];
-
-
-    /**
-    ** For each output element (0-size), de-compute relative position using
-    ** order, and re-compute offset to that element in the other var.
-    **/
-    for (i = 0; i < dsize; i++) {
-        v1 = extract_double(a, rpos(i, val, a));
-        v2 = extract_double(b, rpos(i, val, b));
-        ddata[i] = (*fptr)(v1, v2);
-    }
-    return (val);
+  }
+  if (ca != 1 && cb != 1) {
+    parse_error("%s: operation illegal, sizes differ on more than 1 axis",
+		func->name);
+    return (NULL);
+  }
+  format = DOUBLE;
+  dsize = 1;
+  for (i = 0; i < 3; i++) {
+    size[i] = max(V_SIZE(a)[orders[V_ORDER(a)][i]],
+		  V_SIZE(b)[orders[V_ORDER(b)][i]]);
+    dsize *= size[i];
+  }
+  order = (V_DSIZE(a) > V_DSIZE(b) ? V_ORDER(a) : V_ORDER(b));
+  
+  if (dsize == 0)
+    dsize = 1;	/* impossible? */
+  
+  /**
+   ** can we reuse one of the input values here?
+   **/
+  ddata = (double *)calloc(dsize, NBYTES(format));
+  
+  val = newVar();
+  V_TYPE(val) = ID_VAL;
+  V_FORMAT(val) = format;
+  V_DSIZE(val) = dsize;
+  V_ORDER(val) = order;
+  V_DATA(val) = ddata;
+  
+  /** size was extracted as x,y,z.  put it back appropriately **/
+  
+  V_SIZE(val)[orders[order][0]] = size[0];
+  V_SIZE(val)[orders[order][1]] = size[1];
+  V_SIZE(val)[orders[order][2]] = size[2];
+  
+  
+  /**
+   ** For each output element (0-size), de-compute relative position using
+   ** order, and re-compute offset to that element in the other var.
+   **/
+  for (i = 0; i < dsize; i++) {
+    v1 = extract_double(a, rpos(i, val, a));
+    v2 = extract_double(b, rpos(i, val, b));
+    ddata[i] = (*fptr)(v1, v2);
+  }
+  return (val);
 }
 
 /**
@@ -285,65 +286,70 @@ ff_bop(vfuncptr func, Var * arg)
 Var *
 ff_org(vfuncptr func, Var * arg)
 {
-    Var *s, *ob = NULL;
-    int i, j;
-    void *from, *to;
-    int org = -1, nbytes, format, dsize;
-    char *org_str = NULL;
-    char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
-
-    Alist alist[4];
-    alist[0] = make_alist( "object", ID_VAL,   NULL,     &ob);
-    alist[1] = make_alist( "org",    ID_ENUM,  orgs,     &org_str);
-    alist[2] = make_alist( "order",  ID_ENUM,  orgs,     &org_str);
-    alist[3].name = NULL;
-
-	if (parse_args(func, arg, alist) == 0) return(NULL);
-
-    if (func->fdata != NULL) {
-        org = (int) (func->fdata) - 10;
-    } else {
-        if (org_str == NULL) {
-            /**
-            ** no order specified.  Print out the org of the passed object.
-            **/
-            s = newVar();
-            V_TYPE(s) = ID_STRING;
-            V_STRING(s) = strdup(Org2Str(V_ORG(ob)));
-            return (s);
-        } else { 
-            if (!strcasecmp(org_str, "bsq")) org = BSQ;
-            else if (!strcasecmp(org_str, "xyz")) org = BSQ;
-            else if (!strcasecmp(org_str, "bil")) org = BIL;
-            else if (!strcasecmp(org_str, "xzy")) org = BIL;
-            else if (!strcasecmp(org_str, "bip")) org = BIP;
-            else if (!strcasecmp(org_str, "zxy")) org = BIP;
-        }
+  Var *s = NULL, *ob = NULL;
+  int i, j;
+  void *from = NULL, *to = NULL;
+  int org = -1, nbytes, format, dsize;
+  char *org_str = NULL;
+  char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
+  
+  Alist alist[4];
+  alist[0] = make_alist( "object", ID_VAL,   NULL,     &ob);
+  alist[1] = make_alist( "org",    ID_ENUM,  orgs,     &org_str);
+  alist[2] = make_alist( "order",  ID_ENUM,  orgs,     &org_str);
+  alist[3].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if (ob == NULL) {
+    parse_error("'object' not found");
+    return(NULL);
+  }
+  
+  if (func->fdata != NULL) {
+    org = (int) (func->fdata) - 10;
+  } else {
+    if (org_str == NULL) {
+      /**
+       ** no order specified.  Print out the org of the passed object.
+       **/
+      s = newVar();
+      V_TYPE(s) = ID_STRING;
+      V_STRING(s) = strdup(Org2Str(V_ORG(ob)));
+      return (s);
+    } else { 
+      if (!strcasecmp(org_str, "bsq")) org = BSQ;
+      else if (!strcasecmp(org_str, "xyz")) org = BSQ;
+      else if (!strcasecmp(org_str, "bil")) org = BIL;
+      else if (!strcasecmp(org_str, "xzy")) org = BIL;
+      else if (!strcasecmp(org_str, "bip")) org = BIP;
+      else if (!strcasecmp(org_str, "zxy")) org = BIP;
     }
-
-    /**
-    ** create output variable
-    **/
-    dsize = V_DSIZE(ob);
-    format = V_FORMAT(ob);
-    s = newVar();
-    V_TYPE(s) = ID_VAL;
-    memcpy(V_SYM(s), V_SYM(ob), sizeof(Sym));
-    V_DATA(s) = calloc(dsize, NBYTES(format));
-    V_ORG(s) = org;
-
-    for (i = 0; i < 3; i++) {
-        V_SIZE(s)[orders[org][i]] = V_SIZE(ob)[orders[V_ORG(ob)][i]];
-    }
-
-    nbytes = NBYTES(format);
-    from = V_DATA(ob);
-    to = V_DATA(s);
-    for (i = 0; i < V_DSIZE(s); i++) {
-        j = rpos(i, ob, s);
-        memcpy(((char *) to) + (j * nbytes), ((char *) from) + (i * nbytes), nbytes);
-    }
-    return (s);
+  }
+  
+  /**
+   ** create output variable
+   **/
+  dsize = V_DSIZE(ob);
+  format = V_FORMAT(ob);
+  s = newVar();
+  V_TYPE(s) = ID_VAL;
+  memcpy(V_SYM(s), V_SYM(ob), sizeof(Sym));
+  V_DATA(s) = calloc(dsize, NBYTES(format));
+  V_ORG(s) = org;
+  
+  for (i = 0; i < 3; i++) {
+    V_SIZE(s)[orders[org][i]] = V_SIZE(ob)[orders[V_ORG(ob)][i]];
+  }
+  
+  nbytes = NBYTES(format);
+  from = V_DATA(ob);
+  to = V_DATA(s);
+  for (i = 0; i < V_DSIZE(s); i++) {
+    j = rpos(i, ob, s);
+    memcpy(((char *) to) + (j * nbytes), ((char *) from) + (i * nbytes), nbytes);
+  }
+  return (s);
 }
 
 
@@ -1453,53 +1459,53 @@ ff_hedit(vfuncptr func, Var * arg)
 Var *
 ff_resize(vfuncptr func, Var * arg)
 {
-    Var *obj;
-    int x = 1,y = 1,z = 1;
-    char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
-    char *org_str = NULL;
-    int org = 0;
+  Var *obj = NULL;
+  int x = 1,y = 1,z = 1;
+  char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
+  char *org_str = NULL;
+  int org = 0;
+  
+  Alist alist[6];
+  alist[0] = make_alist("obj",    ID_VAL,     NULL,     &obj);
+  alist[1] = make_alist("x",    	INT,    	NULL,     &x);
+  alist[2] = make_alist("y",    	INT,    	NULL,     &y);
+  alist[3] = make_alist("z",    	INT,    	NULL,     &z);
+  alist[4] = make_alist("org",    ID_ENUM,    orgs,     &org_str);
+  alist[5].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if (obj == NULL)  {
+    parse_error("No argument specified: %s(...obj=...)", func->name);
+    return(NULL);
+  }
+  
+  if (x < 0 || y < 0 || z < 0) {
+    parse_error("Illegal dimensions: %dx%dx%d\n", x, y, z);
+    return(NULL);
+  }
+  if (x*y*z != V_DSIZE(obj)) {
+    parse_error("Illegal dimensions: %dx%dx%d != %d\n", 
+		x, y, z, V_DSIZE(obj));
+    return(NULL);
+  }
+  
 
-    Alist alist[6];
-    alist[0] = make_alist("obj",    ID_VAL,     NULL,     &obj);
-    alist[1] = make_alist("x",    	INT,    	NULL,     &x);
-    alist[2] = make_alist("y",    	INT,    	NULL,     &y);
-    alist[3] = make_alist("z",    	INT,    	NULL,     &z);
-    alist[4] = make_alist("org",    ID_ENUM,    orgs,     &org_str);
-    alist[5].name = NULL;
-
-	if (parse_args(func, arg, alist) == 0) return(NULL);
-
-    if (obj == NULL)  {
-        parse_error("No argument specified: %s(...obj=...)", func->name);
-        return(NULL);
-    }
-
-    if (x < 0 || y < 0 || z < 0) {
-        parse_error("Illegal dimensions: %dx%dx%d\n", x, y, z);
-        return(NULL);
-    }
-    if (x*y*z != V_DSIZE(obj)) {
-        parse_error("Illegal dimensions: %dx%dx%d != %d\n", 
-                    x, y, z, V_DSIZE(obj));
-        return(NULL);
-    }
-
-
-    if (org_str != NULL) {
-        if (!strcasecmp(org_str, "bsq")) org = BSQ;
-        else if (!strcasecmp(org_str, "xyz")) org = BSQ;
-        else if (!strcasecmp(org_str, "bil")) org = BIL;
-        else if (!strcasecmp(org_str, "xzy")) org = BIL;
-        else if (!strcasecmp(org_str, "bip")) org = BIP;
-        else if (!strcasecmp(org_str, "zxy")) org = BIP;
-        V_ORG(obj) = org;
-    }
-
-    V_SIZE(obj)[orders[V_ORG(obj)][0]] = x;
-    V_SIZE(obj)[orders[V_ORG(obj)][1]] = y;
-    V_SIZE(obj)[orders[V_ORG(obj)][2]] = z;
-
-    return(obj);
+  if (org_str != NULL) {
+    if (!strcasecmp(org_str, "bsq")) org = BSQ;
+    else if (!strcasecmp(org_str, "xyz")) org = BSQ;
+    else if (!strcasecmp(org_str, "bil")) org = BIL;
+    else if (!strcasecmp(org_str, "xzy")) org = BIL;
+    else if (!strcasecmp(org_str, "bip")) org = BIP;
+    else if (!strcasecmp(org_str, "zxy")) org = BIP;
+    V_ORG(obj) = org;
+  }
+  
+  V_SIZE(obj)[orders[V_ORG(obj)][0]] = x;
+  V_SIZE(obj)[orders[V_ORG(obj)][1]] = y;
+  V_SIZE(obj)[orders[V_ORG(obj)][2]] = z;
+  
+  return(obj);
 }
 
 Var *
@@ -1821,23 +1827,27 @@ ff_putenv(vfuncptr func, Var * arg)
 Var *
 ff_length(vfuncptr func, Var * arg)
 {
-    Var *obj;
-	int len;
+  Var *obj = NULL;
+  int len;
+  
+  Alist alist[2];
+  alist[0] = make_alist("obj",    ID_UNK,     NULL,     &obj);
+  alist[1].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if (obj == NULL) {
+    parse_error("Expected object");
+    return(NULL);
+  }
 
-    Alist alist[2];
-    alist[0] = make_alist("obj",    ID_UNK,     NULL,     &obj);
-    alist[1].name = NULL;
-
-	if (parse_args(func, arg, alist) == 0) return(NULL);
-
-	len = v_length(obj);
-	if (len >= 0) {
-		return(newInt(v_length(obj)));
-	} else {
-		parse_error("%s: unrecognized type", func->name);
-		return(NULL);
-	}
-
+  len = v_length(obj);
+  if (len >= 0) {
+    return(newInt(v_length(obj)));
+  } else {
+    parse_error("%s: unrecognized type", func->name);
+    return(NULL);
+  }
 }	
 
 int

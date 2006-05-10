@@ -1,8 +1,17 @@
-char *version = "@(#) daVinci Version #1.52";
+char *version = "@(#) daVinci Version #1.55";
 
 #include "build.h"
 
 /*
+
+Version 1.55: Wed May 10 10:49:35 MST 2006
+        * Inserted error handing for functions:
+          bil()     bip()       bsq()        org()      order()
+          load_ir() load_fits() read_lines() basename() dirname()
+          length()  resize()    interp()     gplot()    bbr()
+          btemp()   atan2()     jfjll()      ifill()    slant()
+          ascii()   and         read_ascii()
+          to not crash when no arguments are provided.
 
 Version 1.52: Wed Nov 16 14:58:20 MST 2005
 	* Fixed bug#136: Real valued array history keywords
