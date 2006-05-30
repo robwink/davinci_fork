@@ -209,6 +209,10 @@ eval(Var *v)
 /**
  ** enumerate the symbol table.
  **/
+
+extern UFUNC **ufunc_list;
+extern int nufunc;
+
 Var *
 ff_list(vfuncptr func, Var *arg)
 {
@@ -216,32 +220,27 @@ ff_list(vfuncptr func, Var *arg)
     Symtable *s= scope->symtab;
 
     Var *v;
+	int i;
+	int list_ufuncs = 0;
+	Alist alist[2];
+	alist[0] = make_alist( "ufunc",    INT,    NULL,    &list_ufuncs);
+	alist[1].name = NULL;
 
-    for (s = scope->symtab ; s != NULL ; s = s->next) {
-        v = s->value;
-        if (V_NAME(v) != NULL) 
-            pp_print_var(v, V_NAME(v), 0);
-        /*
-          if (V_TYPE(v) == ID_STRING) {
-          sprintf(bytes, "%d", strlen(V_STRING(v)));
-          commaize(bytes);
-          printf("%s:\tstring [%s bytes]\n",
-          V_NAME(v), bytes);
-          } else if (V_NAME(v) != NULL && V_TYPE(v) == ID_VAL) {
-          sprintf(bytes, "%d", NBYTES(V_FORMAT(v))*V_DSIZE(v));
-          commaize(bytes);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
-          printf("%s:\t%dx%dx%d array of %s, %s format [%s bytes]\n",
-          V_NAME(v) ? V_NAME(v) : "", 	
-          GetSamples(V_SIZE(v),V_ORG(v)),
-          GetLines(V_SIZE(v),V_ORG(v)),
-          GetBands(V_SIZE(v),V_ORG(v)),
-          Format2Str(V_FORMAT(v)),
-          Org2Str(V_ORG(v)),
-          bytes);
-          }
-          */
-    }
+	if (list_ufuncs == 0) {
+		for (s = scope->symtab ; s != NULL ; s = s->next) {
+			v = s->value;
+			if (V_NAME(v) != NULL) pp_print_var(v, V_NAME(v), 0);
+		}
+	} else {
+		char **names = calloc(nufunc, sizeof(char *));
+		for (i = 0 ; i < nufunc ; i++) {
+			names[i] = strdup(ufunc_list[i]->name);
+		}
+		return(newText(nufunc, names));
+	}
+
     return(NULL);
 }
 

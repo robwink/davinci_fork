@@ -153,6 +153,7 @@ ff_radial_symmetry2(vfuncptr func, Var * arg)
     return(rval);
 }
 
+
 /*
 ** This takes a rectangular window and extracts points around the center
 */
@@ -281,6 +282,7 @@ radial_symmetry2(void **data_in,
 	}
 	return(ret);
 }
+
 void draw_cross(Var *obj, int x, int y, float ignore, char *out) ;
 void draw_box(Var *obj, int x, int y, float ignore, char *out) ;
 void draw_circle(Var *obj, int x, int y, float ignore, char *out) ;
@@ -428,3 +430,152 @@ draw_circle(Var *obj, int x, int y, float ignore, char *out)
 		}
 	}
 }
+
+/* 
+	Try computing all the R values for radius N to M in one pass.
+*/
+
+/*
+** General algorithm
+
+**		Extract a box as large as the largest radii
+**      For each value in that box, compute its distance from the origin
+**      Add that value (and its opposite) to bins for radii ceil(d)
+**      To get R for radii N, bin[N] = bin[N] +  bin[N-1]
+**
+**      Odd vs even must be handled separately
+**
+**      What's necessary to do chirping at this level?
+**          Bilinear interpolation?
+**
+**          If we add a binsize to this algorithm, then can we just
+**          offset everyone's distance to simulate moving the origin?
+** 
+*/
+Var *
+ff_radial_symmetry3(vfuncptr func, Var * arg)
+{
+    Var *obj = NULL;
+    float ignore=MINFLOAT;
+    int width=0, height=0;
+	int start=0, end=1;
+	Var *rval = NULL;
+	int x,y,z;
+    float *out;
+    Window *w;
+
+	double *accum, *sumx, *sumy, *sumxx, *sumyy, *sumxy, *count;
+	double *distance;
+	int dx, dy;
+	double ssxx, ssyy, ssxy;
+	int i, j, p, q, r;
+	double v1, v2;
+	int d;
+
+    Alist alist[9];
+    alist[0] = make_alist( "object",    ID_VAL, NULL,   &obj);
+    alist[1] = make_alist( "size",      INT,    NULL,   &end);
+    alist[2] = make_alist( "ignore",    FLOAT,  NULL,   &ignore);
+    alist[3].name = NULL;
+
+    if (parse_args(func, arg, alist) == 0) return(NULL);
+
+    if (obj == NULL) {
+        parse_error("%s: No object specified\n", func->name);
+        return(NULL);
+    }
+
+	if (end <= 0) {
+		parse_error("%s: Invalid end value specified\n", func->name);
+		return(NULL);
+	}
+
+    x = GetX(obj);
+    y = GetY(obj);
+
+	width = end*2+1;
+	height = end*2+1;
+
+	out = calloc(x*y*end, sizeof(float));
+	rval = newVal(BSQ, x, y, end, FLOAT, out);
+
+    w = create_window(width, height, FLOAT);
+
+	/* precompute the distance of every point in the window */
+	distance = calloc(width*height, sizeof(double));
+	for (i = 0 ; i < width ; i++) {
+		dx = i-(width/2);
+		for (j = 0 ; j < height ; j++) {
+			dy = j-(height/2);
+			distance[i+j*width] = sqrt(dx*dx+dy*dy);
+		}
+	}
+
+
+	accum = calloc(end*6, sizeof(double));
+	sumx = accum+0;
+	sumy = accum+end;
+	sumxx = accum+(end*2);
+	sumyy = accum+(end*3);
+	sumxy = accum+(end*4);
+	count = accum+(end*5);
+
+	/* run a window over every pixel and do the math */
+    for (i = 0 ; i < x ; i+=1) {
+        load_window(w, obj, i, 0, ignore);
+        for (j = 0 ; j < y ; j+=1) {
+            if (j) roll_window(w, obj, i, j, ignore);
+
+			memset(accum, 0, end*6*sizeof(double));
+			for (q = 0 ; q < height ; q++) {
+				for (p = 0 ; p < width ; p++) {
+					/* At the point where we get to ourself, we're done */
+					if (p == width-p && q == height-q) break;
+					v1 = ((float **)w->row)[q][p];
+					v2 = ((float **)w->row)[(height-1)-q][(width-1)-p];
+					if (v1 == ignore || v2 == ignore) continue;
+
+					d = ceil(distance[p+q*width]);
+					if (d < end) {
+						sumx[d] += v1;
+						sumy[d] += v2;
+						sumxx[d] += v1*v1;
+						sumyy[d] += v2*v2;
+						sumxy[d] += v1*v2;
+						count[d] += 1;
+					}
+				}
+			}
+
+			/* now compute correlation from per-radii accumulators */
+			out[cpos(i,j,0,rval)] = 0;
+			for (r = 1 ; r < end ; r++) {
+				/* sum the values below us */
+				if (count[r-1] > 0) {
+					sumx[r] += sumx[r-1];
+					sumy[r] += sumy[r-1];
+					sumxx[r] += sumxx[r-1];
+					sumyy[r] += sumyy[r-1];
+					sumxy[r] += sumxy[r-1];
+					count[r] += count[r-1];
+				}
+				ssxx = sumxx[r] - sumx[r]*sumx[r]/count[r];
+				ssyy = sumyy[r] - sumy[r]*sumy[r]/count[r];
+				ssxy = sumxy[r] - sumx[r]*sumy[r]/count[r];
+
+				if ((ssxx*ssyy) != 0) {
+					out[cpos(i,j,r,rval)] = sqrt(ssxy*ssxy / (ssxx*ssyy));
+				} else {
+					out[cpos(i,j,r,rval)] = 0;
+				}
+			}
+		}
+    }
+
+    free_window(w);
+	free(distance);
+	free(accum);
+
+    return(rval);
+}
+

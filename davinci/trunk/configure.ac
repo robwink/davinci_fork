@@ -217,7 +217,7 @@ if test "x$enable_modules" != "xno"; then
 	CFLAGS="$CFLAGS $LTDLINCL"
 	AC_DEFINE(BUILD_MODULE_SUPPORT, 1, [loadable module support])
 	build_module_support=yes
-	MY_SUBDIRS="$MY_SUBDIRS modules libltdl"
+	MY_SUBDIRS="$MY_SUBDIRS modules libltdl modules/thm"
 
 	dnl We're including this, so it'll always be there.
 	dnl This define is to satisfy some ifdefs in io_loadmod.c.
@@ -231,7 +231,7 @@ if test "x$enable_modules" != "xno"; then
 			dnl Not sure this is working either; doesn't look like $ac_top_builddir gets set..
 			CFLAGS="$CFLAGS -I\$(top_srcdir)/vicar"
 			AC_DEFINE(HAVE_LIBVICAR, 1, [VICAR widget library is present])
-			MY_SUBDIRS="$MY_SUBDIRS vicar"
+			MY_SUBDIRS="$MY_SUBDIRS vicar modules/gui"
 			local_vicar=yes
 		else
 			AC_MSG_RESULT(no)
@@ -245,7 +245,7 @@ dnl FIX: this stuff can go away if libtool is used.
 
 AC_SUBST(MY_SUBDIRS)
 
-AC_OUTPUT([Makefile modules/Makefile modules/kjn/Makefile modules/cse/Makefile modules/thm/Makefile vicar/Makefile])
+AC_OUTPUT([Makefile modules/Makefile modules/kjn/Makefile modules/cse/Makefile modules/thm/Makefile modules/gui/Makefile vicar/Makefile])
 
 PRINT_YES_NO() {
   answer="Yes"

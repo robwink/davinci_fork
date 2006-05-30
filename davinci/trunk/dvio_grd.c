@@ -8,9 +8,6 @@ dv_LoadGRD(FILE *fp, char *filename, struct iom_iheader *s)
     void *data;
     Var *v;
 	struct iom_iheader h;
-    struct GRD *grd;
-    char buf[256];
-    int size,size2;
     int status;
 	char hbuf[1024];
 

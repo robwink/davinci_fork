@@ -26030,7 +26030,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 	build_module_support=yes
-	MY_SUBDIRS="$MY_SUBDIRS modules libltdl"
+	MY_SUBDIRS="$MY_SUBDIRS modules libltdl modules/thm"
 
 
 cat >>confdefs.h <<\_ACEOF
@@ -26120,7 +26120,7 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBVICAR 1
 _ACEOF
 
-			MY_SUBDIRS="$MY_SUBDIRS vicar"
+			MY_SUBDIRS="$MY_SUBDIRS vicar modules/gui"
 			local_vicar=yes
 		else
 			echo "$as_me:$LINENO: result: no" >&5
@@ -26143,7 +26143,7 @@ fi
 
 
 
-                                                            ac_config_files="$ac_config_files Makefile modules/Makefile modules/kjn/Makefile modules/cse/Makefile modules/thm/Makefile vicar/Makefile"
+                                                                      ac_config_files="$ac_config_files Makefile modules/Makefile modules/kjn/Makefile modules/cse/Makefile modules/thm/Makefile modules/gui/Makefile vicar/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -26754,6 +26754,7 @@ do
   "modules/kjn/Makefile" ) CONFIG_FILES="$CONFIG_FILES modules/kjn/Makefile" ;;
   "modules/cse/Makefile" ) CONFIG_FILES="$CONFIG_FILES modules/cse/Makefile" ;;
   "modules/thm/Makefile" ) CONFIG_FILES="$CONFIG_FILES modules/thm/Makefile" ;;
+  "modules/gui/Makefile" ) CONFIG_FILES="$CONFIG_FILES modules/gui/Makefile" ;;
   "vicar/Makefile" ) CONFIG_FILES="$CONFIG_FILES vicar/Makefile" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;

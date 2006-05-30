@@ -303,6 +303,7 @@ struct _vfuncptr vfunclist[] = {
 	{ "extract", ff_extract, NULL },
     { "radial_symmetry",  ff_radial_symmetry, 			NULL }, 
     { "radial_symmetry2",  ff_radial_symmetry2, 			NULL }, 
+    { "radial_symmetry3",  ff_radial_symmetry3, 			NULL }, 
     { "local_max",  ff_local_maximum, 			NULL }, 
     { "drawshape",  ff_drawshape, 			NULL }, 
 

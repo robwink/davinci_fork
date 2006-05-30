@@ -200,7 +200,7 @@ main(int ac, char **av)
                         fputs(av[i + k], fp);
                         fputc('\n', fp);
                         rewind(fp);
-                        push_input_stream(fp);
+                        push_input_stream(fp, ":command line:");
                         interactive = 0;
                     }
                     av[i + k] = NULL;
@@ -274,7 +274,7 @@ main(int ac, char **av)
         sprintf(path, "%s/.dvrc", getenv("HOME"));
         if ((fp = fopen(path, "r")) != NULL) {
             printf("reading file: %s\n", path);
-            push_input_stream(fp);
+            push_input_stream(fp, path);
         }
     }
 

@@ -1446,7 +1446,7 @@ ff_hedit(vfuncptr func, Var * arg)
 
     fp = fopen(tmp, "r");
     unlink(tmp);
-    push_input_stream(fp);
+    push_input_stream(fp, ":history:");
 
     free(tmp);
 #endif
