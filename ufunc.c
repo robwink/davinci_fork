@@ -105,6 +105,16 @@ load_function(char *filename)
 	extern int local_line;
 	extern char *pp_str;
 
+	// these are all necessary to tell me what file and line number
+	// functions come from
+	extern char **fnamestack;
+	extern int ftosIndex;
+	extern int *flinenos;
+
+	char *fname;
+	int fline;
+
+
     /**
      ** Get text from file
      **/
@@ -155,6 +165,15 @@ load_function(char *filename)
     f->name = strdup(name);
     f->text = buf;
     f->ready = 0;
+
+	fname = fnamestack[ftosIndex];
+	fline = local_line+1;
+	if (fname == NULL) {
+		fname = ":no filename:";
+	}
+
+	f->fname = strdup(fnamestack[ftosIndex]);
+	f->fline = local_line+1;
 
 	/*
 	** Added 09/29/00, 
@@ -265,6 +284,7 @@ load_function(char *filename)
 		memcpy(line, p, q-p+1);
 		line[q-p+1] = '\0';
 		printf("%s", line);
+		fflush(stdout);
 	}
 	
 	pp_line = local_line;
@@ -277,7 +297,10 @@ load_function(char *filename)
 		if (q == NULL) q = p+strlen(p)-1;
 		memcpy(line, p, q-p+1);
 		line[q-p+1] = '\0';
-		if (debug) printf("%s", line);
+		if (debug) {
+			printf("%s", line);
+			fflush(stdout);
+		}
 		handle = (void *)yy_scan_string(line);
 		pp_str = line;
 		pp_line++;
@@ -503,6 +526,7 @@ ufunc_edit(vfuncptr func , Var *arg)
 			if (fname) free(fname);
 			return(NULL);
 		}
+		fprintf(fp, "# Original location: %s:%d\n", ufunc->fname, ufunc->fline);
         fputs(ufunc->text, fp);
         fclose(fp);
         temp=1;
@@ -521,7 +545,7 @@ ufunc_edit(vfuncptr func , Var *arg)
     if (stat(fname, &sbuf) == 0) {
         if (time != sbuf.st_mtime) {
             fp = fopen(fname, "r");
-            push_input_stream(fp);
+            push_input_stream(fp, ":ufunc edit:");
         } else {
             fprintf(stderr, "File not changed.\n");
         }

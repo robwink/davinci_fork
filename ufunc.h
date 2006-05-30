@@ -12,6 +12,8 @@ typedef struct {
 	int max_args;
 	int ready;
 	Var *tree;		/* code tree */
+	char *fname;
+	int fline;
 } UFUNC;
 UFUNC *load_function(char *);
 Var *dispatch_ufunc(UFUNC *, Var *);

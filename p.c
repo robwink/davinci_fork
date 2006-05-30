@@ -160,8 +160,10 @@ evaluate(Var * n)
     switch (type) {
     case ID_LINE:
     {
-        if (debug && right)
+        if (debug && right) {
             printf("--> %s", V_STRING(right));
+			fflush(stdout);
+		}
         return (evaluate(left));
         break;
     }

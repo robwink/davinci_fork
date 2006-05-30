@@ -535,6 +535,19 @@ Boston, MA 02111-1307, USA.  */
 unsigned long strtoul ();
 /* char *malloc (); */
 
+#ifndef va_copy
+# ifdef __va_copy
+#  define va_copy(DEST,SRC) __va_copy((DEST),(SRC))
+# else
+#  ifdef HAVE_VA_LIST_AS_ARRAY
+#   define va_copy(DEST,SRC) (*(DEST) = *(SRC))
+#  else
+#   define va_copy(DEST,SRC) ((DEST) = (SRC))
+#  endif
+# endif
+#endif
+
+
 static int
 dv_int_vasprintf (char **result, char *format, va_list args)
 {
@@ -544,15 +557,7 @@ dv_int_vasprintf (char **result, char *format, va_list args)
     int total_width = strlen (format) + 1;
     va_list ap;
 
-/*
-	This is a hack because va_copy isn't working on solaris.
     va_copy(ap, args);
-*/
-#ifdef SOLARIS
-	ap = args;
-#else
-    va_copy(ap, args);
-#endif
 
     while (*p != '\0')
     {

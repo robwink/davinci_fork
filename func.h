@@ -205,7 +205,7 @@ Var * p_rlist(int , Var *, Var *);
 Var * p_llist(int , Var *, Var *);
 
 
-void push_input_stream(FILE *);
+void push_input_stream(FILE *, char *filename);
 int rpos(int, Var *, Var *);
 Var * pp_print(Var *);
 
@@ -488,9 +488,12 @@ Var *ff_median(vfuncptr func, Var * arg);
 Var *ff_window(vfuncptr func, Var * arg);
 Var *ff_radial_symmetry(vfuncptr func, Var * arg);
 Var *ff_radial_symmetry2(vfuncptr func, Var * arg);
+Var *ff_radial_symmetry3(vfuncptr func, Var * arg);
 Var *ff_local_maximum(vfuncptr func, Var * arg);
 Var *ff_drawshape(vfuncptr func, Var * arg);
 Var *ff_extract(vfuncptr func, Var * arg);
 
-char *dv_locate_file(char *);
+Var *ff_foo(vfuncptr func, Var * arg);
 
+char *dv_locate_file(char *);
+void dump_version();

@@ -36,14 +36,14 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_triplet = i686-pc-linux-gnu
-ACLOCAL = ${SHELL} /u/knowicki/davinci/config/missing --run aclocal-1.7
+ACLOCAL = ${SHELL} /u/gorelick/davinci3/config/missing --run aclocal-1.7
 AMDEP_FALSE = #
 AMDEP_TRUE = 
-AMTAR = ${SHELL} /u/knowicki/davinci/config/missing --run tar
+AMTAR = ${SHELL} /u/gorelick/davinci3/config/missing --run tar
 AR = ar
-AUTOCONF = ${SHELL} /u/knowicki/davinci/config/missing --run autoconf
-AUTOHEADER = ${SHELL} /u/knowicki/davinci/config/missing --run autoheader
-AUTOMAKE = ${SHELL} /u/knowicki/davinci/config/missing --run automake-1.7
+AUTOCONF = ${SHELL} /u/gorelick/davinci3/config/missing --run autoconf
+AUTOHEADER = ${SHELL} /u/gorelick/davinci3/config/missing --run autoheader
+AUTOMAKE = ${SHELL} /u/gorelick/davinci3/config/missing --run automake-1.7
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -88,10 +88,10 @@ LTLIBOBJS =
 MAINT = #
 MAINTAINER_MODE_FALSE = 
 MAINTAINER_MODE_TRUE = #
-MAKEINFO = ${SHELL} /u/knowicki/davinci/config/missing --run makeinfo
+MAKEINFO = ${SHELL} /u/gorelick/davinci3/config/missing --run makeinfo
 MODULE_SUPPORT_FALSE = #
 MODULE_SUPPORT_TRUE = 
-MY_SUBDIRS =  iomedley modules libltdl vicar
+MY_SUBDIRS =  iomedley modules libltdl modules/thm vicar modules/gui
 OBJEXT = o
 PACKAGE = davinci
 PACKAGE_BUGREPORT = 
@@ -137,7 +137,7 @@ host_os = linux-gnu
 host_vendor = pc
 includedir = ${prefix}/include
 infodir = ${prefix}/info
-install_sh = /u/knowicki/davinci/config/install-sh
+install_sh = /u/gorelick/davinci3/config/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localstatedir = ${prefix}/var
@@ -163,7 +163,7 @@ MY_MODULES_LIB = libmodsupp.a
 
 MY_IOMEDLEY_LDADD = -Liomedley -liomedley
 
-SUBDIRS =  iomedley modules libltdl vicar libltdl
+SUBDIRS =  iomedley modules libltdl modules/thm vicar modules/gui libltdl
 
 bin_PROGRAMS = davinci
 
@@ -219,7 +219,7 @@ subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/mkinstalldirs
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES = modules/cse/Makefile modules/thm/Makefile
+CONFIG_CLEAN_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
 
 libmodsupp_a_AR = $(AR) cru
@@ -409,10 +409,6 @@ $(srcdir)/config.h.in: # $(top_srcdir)/configure.ac $(ACLOCAL_M4)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
-modules/cse/Makefile: $(top_builddir)/config.status $(top_srcdir)/modules/cse/Makefile.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-modules/thm/Makefile: $(top_builddir)/config.status $(top_srcdir)/modules/thm/Makefile.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
 
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
@@ -790,7 +786,7 @@ distcleancheck_listfiles = find . -type f -print
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkinstalldirs) $(distdir)/config $(distdir)/modules/cse $(distdir)/modules/thm
+	$(mkinstalldirs) $(distdir)/config
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

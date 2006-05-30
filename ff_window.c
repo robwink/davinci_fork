@@ -35,6 +35,7 @@
 **  Internal function to load one row of data.
 ** 
 */
+float median_window(float *s1, int width, int height, float ignore);
 
 static int cmp(float *a, float *b) { return((*a)-(*b)); }
 

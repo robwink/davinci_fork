@@ -67,6 +67,8 @@ local_maximum(Window *w, float threshold, float ignore)
 	float max;
 
 	v = ((float *)w->row[w->height/2])[w->width/2];
+	maxj = w->height/2;
+	maxi = w->width/2;
 	if (v == ignore) return(ignore);
 
 	for (i = 0 ; i < w->width ; i+=1) {
