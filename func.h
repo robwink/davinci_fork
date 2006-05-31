@@ -233,7 +233,7 @@ Var *ufunc_edit(vfuncptr, Var *);
 
 int fixup_ranges(Var *v, Range *in, Range *out);
 void split_string(char *buf, int *argc, char ***argv, char *s);
-int getline(char **ptr, FILE *fp);
+int dv_getline(char **ptr, FILE *fp);
 
 /**
  ** All the internal functions are declared here.
@@ -397,7 +397,9 @@ void print_history(int i);
 /* void save_ufunc(char *filename); */
 void vax_ieee_r(float *from, float *to);
 
+#ifndef HAVE_STRNDUP
 char *strndup(char *, int);
+#endif
 
 Var *varray_subset(Var *v, Range *r);
 

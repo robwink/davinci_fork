@@ -1,8 +1,12 @@
-char *version = "@(#) daVinci Version #1.56";
+char *version = "@(#) daVinci Version #1.57";
 
 #include "build.h"
 
 /*
+Version 1.57: Wed May 31 14:49:02 MST 2006
+	* changed all occurances of getline to dv_getline for cygwin conflict.
+	* put #ifdef around strndup declaration, again for cygwin
+
 Version 1.56: Tue May 30 16:35:20 MST 2006
     * Merged in a bunch of changes from trip to hawaii
         * fixed printf stdarg compile problem

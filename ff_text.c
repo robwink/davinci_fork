@@ -75,7 +75,7 @@ ff_read_text(vfuncptr func, Var *arg)
 
     x = y = 0;
     count = 0;
-    while(getline(&ptr, fp) != EOF) {
+    while(dv_getline(&ptr, fp) != EOF) {
         if ((int)strlen(ptr) > x) 
             x = (int)strlen(ptr);
         y++;
@@ -87,7 +87,7 @@ ff_read_text(vfuncptr func, Var *arg)
     cdata = (char *)calloc(dsize,sizeof(char));
 
     for (j = 0 ; j < y ; j++) {
-        if ((rlen = getline(&ptr, fp)) == -1) break;
+        if ((rlen = dv_getline(&ptr, fp)) == -1) break;
         memcpy(cdata+(x*j), ptr, strlen(ptr));
     }
 	fclose(fp);
@@ -138,7 +138,7 @@ ff_read_lines(vfuncptr func, Var *arg)
   size = 64;
   t = calloc(size, sizeof(char *));
   
-  while((rlen = getline(&ptr, fp)) != EOF) {
+  while((rlen = dv_getline(&ptr, fp)) != EOF) {
     if (ptr[rlen-1] == '\n') ptr[rlen-1] = '\0';
     if (ptr[rlen-2] == '\r') ptr[rlen-2] = '\0';
     

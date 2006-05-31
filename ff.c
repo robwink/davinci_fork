@@ -1572,7 +1572,7 @@ ff_syscall(vfuncptr func, Var * arg)
         return(NULL);
 
     text=(char **)calloc(Max,sizeof(char *));	
-    while(getline(&ptr, fp) != EOF) {
+    while(dv_getline(&ptr, fp) != EOF) {
         if (Row >=Max){
             Max+=100;
             if((text=realloc(text,(Max*sizeof(char *))))==NULL){
