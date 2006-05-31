@@ -1,7 +1,7 @@
 #include "parser.h"
 
 int 
-getline(char **ptr, FILE *fp)
+dv_getline(char **ptr, FILE *fp)
 {
   static char *line=NULL;
   static int len=0;
@@ -110,14 +110,14 @@ ff_ascii(vfuncptr func, Var *arg)
     
     /* skip some rows */
     for (i = 0 ; i < row ; i ++) {
-      getline(&ptr, fp);
+      dv_getline(&ptr, fp);
       if (ptr == NULL) {
 	fprintf(stderr, "Early EOF, aborting.\n");
 	return(NULL);
       }
     }
     
-    while(getline(&ptr, fp) != EOF) {
+    while(dv_getline(&ptr, fp) != EOF) {
       if (ptr[0] == '\n') {
 	z++;
 	continue;
@@ -167,7 +167,7 @@ ff_ascii(vfuncptr func, Var *arg)
    ** Skip N rows.
    **/
   for (i = 0 ; i < row ; i ++) {
-    getline(&ptr, fp);
+    dv_getline(&ptr, fp);
     if (ptr == NULL) {
       fprintf(stderr, "Early EOF, aborting.\n");
       return(NULL);
@@ -178,12 +178,12 @@ ff_ascii(vfuncptr func, Var *arg)
       /**
        ** skip to end of block
        **/
-      while (getline(&ptr, fp) > 1)
+      while (dv_getline(&ptr, fp) > 1)
 	;       
     }
     
     for (j = 0 ; j < y ; j++) {
-      if ((rlen = getline(&ptr, fp)) == -1) break;
+      if ((rlen = dv_getline(&ptr, fp)) == -1) break;
       
       /**
        ** skip columns
