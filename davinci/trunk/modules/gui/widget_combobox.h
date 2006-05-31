@@ -14,6 +14,7 @@
 #ifndef DV_WIDGET_COMBOBOX_H
 #define DV_WIDGET_COMBOBOX_H
 
+#include <Xm/Xm.h>			/* necessary addition for solaris.  */
 #include <Xm/ComboBox.h>
 #include "gui.h"
 
