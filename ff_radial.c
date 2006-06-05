@@ -526,6 +526,9 @@ ff_radial_symmetry3(vfuncptr func, Var * arg)
         for (j = 0 ; j < y ; j+=1) {
             if (j) roll_window(w, obj, i, j, ignore);
 
+			v1 = ((float **)w->row)[height/2][width/2];
+			if (v1 == ignore) continue;
+
 			memset(accum, 0, end*6*sizeof(double));
 			for (q = 0 ; q < height ; q++) {
 				for (p = 0 ; p < width ; p++) {
@@ -548,7 +551,7 @@ ff_radial_symmetry3(vfuncptr func, Var * arg)
 			}
 
 			/* now compute correlation from per-radii accumulators */
-			out[cpos(i,j,0,rval)] = 0;
+			/* out[cpos(i,j,0,rval)] = 0; */
 			for (r = 1 ; r < end ; r++) {
 				/* sum the values below us */
 				if (count[r-1] > 0) {
@@ -559,17 +562,18 @@ ff_radial_symmetry3(vfuncptr func, Var * arg)
 					sumxy[r] += sumxy[r-1];
 					count[r] += count[r-1];
 				}
-				ssxx = sumxx[r] - sumx[r]*sumx[r]/count[r];
-				ssyy = sumyy[r] - sumy[r]*sumy[r]/count[r];
-				ssxy = sumxy[r] - sumx[r]*sumy[r]/count[r];
-
-				if ((ssxx*ssyy) != 0) {
-					out[cpos(i,j,r,rval)] = sqrt(ssxy*ssxy / (ssxx*ssyy));
-				} else {
-					out[cpos(i,j,r,rval)] = 0;
+				if (count[r] > 0) {
+					ssxx = sumxx[r] - sumx[r]*sumx[r]/count[r];
+					ssyy = sumyy[r] - sumy[r]*sumy[r]/count[r];
+					ssxy = sumxy[r] - sumx[r]*sumy[r]/count[r];
+					if ((ssxx*ssyy) != 0) {
+						out[cpos(i,j,r,rval)] = sqrt(ssxy*ssxy / (ssxx*ssyy));
+					}
 				}
 			}
 		}
+		printf("%d/%d\r", i, x);
+		fflush(stdout);
     }
 
     free_window(w);
