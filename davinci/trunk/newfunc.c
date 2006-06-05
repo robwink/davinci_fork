@@ -110,6 +110,10 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
         /**
         ** putting av[i] into alist[j]
         **/
+		if (v == NULL) {
+			parse_error("Illegal argument to function %s()\n", fname);
+			return(0);
+		}
 
         if (alist[j].type == ID_STRING) {
             char **p;

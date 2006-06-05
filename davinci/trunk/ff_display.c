@@ -9,7 +9,7 @@
 Var *
 ff_display(vfuncptr func, Var *arg)
 {
-    Var *obj, *e;
+    Var *obj=NULL, *e;
     Var *name=NULL;
     char *fname;
     char *title=NULL;
