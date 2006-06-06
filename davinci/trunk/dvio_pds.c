@@ -1650,29 +1650,6 @@ Var *WritePDS(vfuncptr func, Var * arg)
     return (NULL);
 }
 
-Var *ff_load_many_pds(vfuncptr func, Var * arg)
-{
-    int i;
-    char *filename;
-    Var *s, *t;
-    if (arg == NULL || V_TYPE(arg) != ID_TEXT) {
-        parse_error("No filenames specified to %s()", func->name);
-        return (NULL);
-    }
-
-    s = new_struct(V_TEXT(arg).Row);
-    for (i = 0; i < V_TEXT(arg).Row; i++) {
-        filename = strdup(V_TEXT(arg).text[i]);
-        t = ReadPDS(func, newString(filename));
-        if (t)
-            add_struct(s, filename, t);
-    }
-    if (get_struct_count(s)) {
-        return (s);
-    } else {
-        return (NULL);
-    }
-}
 
 #ifdef HAVE_LIBISIS
 Var *
@@ -1719,26 +1696,16 @@ ff_write_isis_cub(vfuncptr func, Var *args)
  ** For now, I am controlling loading of suffix data using the
  ** following global variable.
  **/
+Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data);
+
 static int LOAD_SUFFIX_DATA = 0;
 Var *ReadPDS(vfuncptr func, Var * arg)
 {
-
-    int ac;
-    Var **av;
-
-    OBJDESC *ob;
-    KEYWORD *key;
-    char *err_file = NULL;
-    int obn = 1;
-    Var *fn;
-    int record_bytes;
-    char *filename = NULL, *fname = NULL;
+    Var *fn = NULL;
+    char *filename = NULL;
     int data = 1;
     int suffix_data = 0;
-
-    FILE *fp;
-
-    Var *v = new_struct(0);
+	int i;
 
     Alist alist[4];
     alist[0] = make_alist("filename", ID_UNK, NULL, &fn);
@@ -1752,15 +1719,49 @@ Var *ReadPDS(vfuncptr func, Var * arg)
     /* see the comment above LOAD_SUFFIX_DATA's declaration */
     LOAD_SUFFIX_DATA = suffix_data;
 
+	/* Handle loading many filenames */
     if (V_TYPE(fn) == ID_TEXT) {
-        return (ff_load_many_pds(func, fn));
+		Var *s = new_struct(V_TEXT(fn).Row);
+		for (i = 0; i < V_TEXT(fn).Row; i++) {
+			filename = strdup(V_TEXT(fn).text[i]);
+			Var *t = do_loadPDS(func, filename, data, suffix_data);
+			if (t) { 
+				add_struct(s, filename, t);
+			}
+		}
+		if (get_struct_count(s)) {
+			return (s);
+		} else {
+			free_struct(s);
+			return (NULL);
+		}
     } else if (V_TYPE(fn) == ID_STRING) {
         filename = V_STRING(fn);
+		return(do_loadPDS(func, filename, data, suffix_data));
     } else {
         parse_error("Illegal argument to function %s(%s), expected STRING",
                     func->name, "filename");
         return (NULL);
     }
+}
+
+
+Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
+{
+    int ac;
+    Var **av;
+
+    OBJDESC *ob;
+    KEYWORD *key;
+    char *err_file = NULL;
+    int obn = 1;
+    Var *fn = NULL;
+    int record_bytes;
+	char *fname;
+
+    FILE *fp;
+
+    Var *v = new_struct(0);
 
     if (filename == NULL) {
         parse_error("%s: No filename specified\n", func->name);
