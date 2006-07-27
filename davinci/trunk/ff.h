@@ -41,6 +41,7 @@ struct _vfuncptr vfunclist[] = {
     { "floor",      ff_dfunc,   (void *)floor,  NULL},
     { "ceil",       ff_dfunc,   (void *)ceil,   NULL},
     { "abs",        ff_dfunc,   (void *)fabs,   NULL},
+    { "round",        ff_dfunc,   (void *)round,   NULL},
 
     { "pow",        ff_pow,     (void *)NULL,   NULL},
     
