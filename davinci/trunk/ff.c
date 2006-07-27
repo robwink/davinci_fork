@@ -2148,3 +2148,8 @@ ff_chdir(vfuncptr func, Var * arg)
 	}
 	return(NULL);
 }
+
+/*
+** A real function to deal with the fact that round() is really a macro
+*/
+double my_round(double d) { return(round(d)); }

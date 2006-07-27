@@ -499,3 +499,4 @@ Var *ff_foo(vfuncptr func, Var * arg);
 
 char *dv_locate_file(char *);
 void dump_version();
+double my_round(double);
