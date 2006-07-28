@@ -707,45 +707,36 @@ cmp_mod_ver(
 ** Returns NULL if the name is not found or an error occurrs.
 */
 
-static char *
-locate_latest_dv_module_in_path(
+static int
+get_module_versions(
 	const char *mod_name, /* Name of the module to be found */
-	char *path            /* A ":" separated list of dirs to find the name in  */
+	char *path,           /* A ":" separated list of dirs to find the name in  */
+	char ***retlist			/* array of strings to be returned */
 )
 {
 	char *q;
-#ifdef _WIN32
-	struct _finddata_t finfo;
-	long   fhand, rc;
-	struct _stat sbuf;
-#else  /* _WIN32 */
 	DIR  *d;
 	struct dirent *de;
-#endif /* _WIN32 */
-	char *latest = NULL;
-	char *vcurr = NULL, *vlatest = NULL;
 	char *dir_name;
 	int   strsz;
 	char  name[1024];
 	/* char *lasts = NULL; */
 	char *fname;
 
+	int nlist = 0;
+	int retsize = 0;
+	char **ret;
+
+	ret = NULL;
+
+	/*
+	** Process each of the directories in the search path
+	** to find the module with the latest version.
+	*/
 	sprintf(name, "%s.%s", mod_name, DVM_EXT);
-
-	/* for(q = path; dir_name = strtok_r(q, ":", &lasts); q = NULL){ */
 	for(q = path; dir_name = strtok(q, ":"); q = NULL){
-		/*
-		** Process each of the directories in the search path
-		** to find the module with the latest version.
-		*/
-
-#ifdef _WIN32
-		if (_stat(dir_name, &sbuf) < 0){
-#else  /* _WIN32 */
 		d = opendir(dir_name);
 		if (d == NULL){
-#endif /* _WIN32 */
-
 			/*
 			** Directory does not exist: warn and continue.
 			*/
@@ -754,69 +745,56 @@ locate_latest_dv_module_in_path(
 				parse_error("Unusable dir %s in path. Reason: %s.",
 					dir_name, strerror(errno));
 			}
-
 			continue;
 		}
 
 		errno = 0;  /* clear error indicator */
 
-#ifdef _WIN32
-
-		/* DOS/Windows can directly search for the specified file. */
-		sprintf(name, "%s/%s.%s*", dir_name, mod_name, DVM_EXT);
-
-		for(rc = fhand = _findfirst(name, &finfo); rc != -1; rc = _findnext(fhand, &finfo)){
-			fname = finfo.name;
-
-#else  /* _WIN32 */
 		while(de = find_next_file_with_prefix(d, name)){
 			fname = de->d_name;
-
-#endif /* _WIN32 */
-
-			vcurr = extract_dv_mod_ver_from_fname(mod_name, fname);
-
-			if (cmp_mod_ver(vcurr, vlatest) > 0){
-
-				/*
-				** If the current module is the latest module, then
-				** replace the value in "latest".
-				*/
-
-				strsz = strlen(dir_name) + strlen(fname) + 2;
-				latest = (char *)realloc(latest, strsz);
-
-				if (latest == NULL){
-					parse_error("Mem allocation failure.");
-#ifdef _WIN32
-					_findclose(fhand);
-#else  /* _WIN32 */
-					closedir(d);
-#endif /* _WIN32 */
-					return NULL;
-				}
-
-				/* save the fully qualified name */
-				sprintf(latest, "%s/%s", dir_name, fname);
-				vlatest = extract_dv_mod_ver_from_fname(mod_name, basename(latest));
+			if (nlist >= retsize) {
+				if (retsize == 0) retsize = 16;
+				else retsize *= 2;
+				ret = (char **)realloc(ret, retsize * sizeof(char *));
 			}
+			strsz = strlen(dir_name) + strlen(fname) + 2;
+			ret[nlist] = realloc(ret[nlist], strsz);
+			sprintf(ret[nlist++], "%s/%s", dir_name, fname);
 		}
-
-#ifndef _WIN32
-		if (errno != 0){
-			/* generate warning and continue on */
-			parse_error("Error while processing directory %s. Reason: %s.",
-				dir_name, strerror(errno));
-		}
-#endif
-
-#ifdef _WIN32
-		_findclose(fhand);
-#else  /* _WIN32 */
-		closedir(d);
-#endif /* _WIN32 */
 	}
+	closedir(d);
+	*retlist = ret;
+	return(nlist);
+}
 
+static char *
+locate_latest_dv_module_in_path(
+	const char *mod_name, /* Name of the module to be found */
+	char *path            /* A ":" separated list of dirs to find the name in  */
+)
+{
+	char *latest = NULL;
+	char *vcurr = NULL, *vlatest = NULL;
+	char  name[1024];
+	/* char *lasts = NULL; */
+	char *fname;
+
+	int i;
+	char **modules = NULL;
+	int nmodules = get_module_versions(mod_name, path, &modules);
+
+	for (i = 0 ; i < nmodules ; i++) {
+		fname = modules[i];
+		vcurr = extract_dv_mod_ver_from_fname(mod_name, fname);
+
+		if (cmp_mod_ver(vcurr, vlatest) > 0) {
+			if (latest) free(latest);
+			latest = strdup(fname);
+			vlatest = vcurr;
+		}
+		free(fname);
+	}
+	free(modules);
 	return latest;
 }
 
@@ -840,14 +818,8 @@ locate_versioned_dv_module_in_path(
 )
 {
 	char *q;
-#ifdef _WIN32
-	struct _finddata_t finfo;
-	long   fhand, rc;
-	struct _stat sbuf;
-#else  /* _WIN32 */
 	DIR  *d;
 	struct dirent *de;
-#endif /* _WIN32 */
 	char *latest = NULL;
 	char *vcurr = NULL, *vlatest = NULL;
 	char *dir_name;
@@ -856,83 +828,28 @@ locate_versioned_dv_module_in_path(
 	char  name[1024];
 	/* char *lasts = NULL; */
 	char *fname;
+	int i;
 
-	sprintf(name, "%s.%s", mod_name, DVM_EXT);
+	char **modules = NULL;
+	int nmodules = get_module_versions(mod_name, path, &modules);
 
-	/* for(q = path; dir_name = strtok_r(q, ":", &lasts); q = NULL){ */
-	for(q = path; dir_name = strtok(q, ":"); q = NULL){
-		/*
-		** Process each of the directories in the search path
-		** to find the module with the latest version.
-		*/
+	for (i = 0 ; i < nmodules ; i++) {
+		fname = modules[i];
+		vcurr = extract_dv_mod_ver_from_fname(mod_name, fname);
 
-#ifdef _WIN32
-		if (_stat(dir_name, &sbuf) < 0){
-#else  /* _WIN32 */
-		d = opendir(dir_name);
-		if (d == NULL){
-#endif /* _WIN32 */
-			/* directory does not exist: warn and continue */
-			parse_error("Unable to open dir %s. Reason: %s.",
-				dir_name, strerror(errno));
+		replace_reqd = 0;
+		if ((offset == 0 && cmp_mod_ver(vcurr, ver) == 0) ||
+			(offset > 0 && cmp_mod_ver(vcurr, ver) >= 0 && cmp_mod_ver(vcurr, vlatest) > 0) ||
+			(offset < 0 && cmp_mod_ver(vcurr, ver) <= 0 && cmp_mod_ver(vcurr, vlatest) > 0)){
+
+			if (latest) free(latest);
+			latest = strdup(fname);
+			vlatest = vcurr;
+			free(fname);
 		}
-
-		errno = 0;  /* clear error indicator */
-
-#ifdef _WIN32
-
-		/* DOS/Windows can directly search for the specified file. */
-		sprintf(name, "%s/%s.%s*", dir_name, mod_name, DVM_EXT);
-
-		for(rc = fhand = _findfirst(name, &finfo); rc != -1; rc = _findnext(fhand, &finfo)){
-			fname = finfo.name;
-
-#else  /* _WIN32 */
-		while(de = find_next_file_with_prefix(d, name)){
-			fname = de->d_name;
-
-#endif /* _WIN32 */
-
-			vcurr = extract_dv_mod_ver_from_fname(mod_name, fname);
-
-			replace_reqd = 0;
-			if ((offset == 0 && cmp_mod_ver(vcurr, ver) == 0) ||
-				(offset > 0 && cmp_mod_ver(vcurr, ver) >= 0 && cmp_mod_ver(vcurr, vlatest) > 0) ||
-				(offset < 0 && cmp_mod_ver(vcurr, ver) <= 0 && cmp_mod_ver(vcurr, vlatest) > 0)){
-
-				strsz = strlen(dir_name) + strlen(fname) + 2;
-				latest = (char *)realloc(latest, strsz);
-
-				if (latest == NULL){
-					parse_error("Mem allocation failure.");
-#ifdef _WIN32
-					_findclose(fhand);
-#else  /* _WIN32 */
-					closedir(d);
-#endif /* _WIN32 */
-					return NULL;
-				}
-
-				/* save the fully qualified name */
-				sprintf("%s/%s", dir_name, fname);
-				vlatest = extract_dv_mod_ver_from_fname(mod_name, basename(latest));
-			}
-		}
-
-#ifndef _WIN32
-		if (errno != 0){
-			/* generate warning and continue on */
-			parse_error("Error while processing directory %s. Reason: %s.",
-				dir_name, strerror(errno));
-		}
-#endif /* _WIN32 */
-
-#ifdef _WIN32
-		_findclose(fhand);
-#else  /* _WIN32 */
-		closedir(d);
-#endif /* _WIN32 */
 	}
+	free(modules);
+
 
 	return latest;
 }
