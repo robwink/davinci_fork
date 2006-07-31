@@ -84,6 +84,8 @@ typedef struct {
 	Var				*imageData;
 	VicarInputMode	inputMode;
 	double			pointX, pointY;
+	double			AnchorX, AnchorY;
+	double			DragX, DragY;
 
 	/* Selection overlays are for programatically or interactively set selection
 	 * area demarcation.  All other overlays are for static programmatically set
@@ -584,6 +586,8 @@ getPoint(Widget widget)
 
 	add_struct(o, "x", newDouble(vicarData->pointX));
 	add_struct(o, "y", newDouble(vicarData->pointY));
+	add_struct(o, "dx", newDouble(vicarData->DragX));
+	add_struct(o, "dy", newDouble(vicarData->DragY));
 
 	return o;
 }
@@ -1483,12 +1487,18 @@ handleInput(Widget widget, XtPointer clientData, XtPointer callData)
 				}
 
 				if (strcmp(cb->input_params[0], "Draw") == 0) {
-					if (strcmp(cb->input_params[1], "end") == 0) {
-						vicarData->pointX = cb->x_fp;
-						vicarData->pointY = cb->y_fp;
-
-						/* Trigger a pseudo-callback. */
-						gui_pseudoCallback(widget, "point");
+					if (strcmp(cb->input_params[1], "start") == 0) {
+						vicarData->AnchorX = cb->x_fp;
+						vicarData->AnchorY = cb->y_fp;
+					} else {
+						if (strcmp(cb->input_params[1], "end") == 0) {
+							vicarData->pointX = cb->x_fp;
+							vicarData->pointY = cb->y_fp;
+							vicarData->DragX = cb->x_fp - vicarData->AnchorX;
+							vicarData->DragY = cb->y_fp - vicarData->AnchorY;
+							/* Trigger a pseudo-callback. */
+							gui_pseudoCallback(widget, "point");
+						}
 					}
 				}
 				/* Ignoring others for now. */
