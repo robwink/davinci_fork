@@ -20,6 +20,10 @@ static double *minimize_1d(Var *measured, float *bbody, double em_start, double 
 static Var *do_ipi(Var *coords_array, Var *values_array);
 static float *column_fill(float *column, int y, int z, int csize, float ignore);
 static float round_dp(float input, float decimal);
+static int round(float numf);
+static Var *rotation(Var *obj, float angle, float ign);
+static void position_fill(int *pos, int elem, int iter, Var *obj);
+
 
 static Var *thm_y_shear(vfuncptr, Var *);
 static Var *thm_kfill(vfuncptr, Var *);
@@ -48,6 +52,7 @@ static Var *thm_destripe(vfuncptr, Var *);
 static Var *thm_marsbin(vfuncptr, Var *);
 static Var *thm_interp2d(vfuncptr, Var *);
 static Var *thm_contour(vfuncptr, Var *);
+static Var *thm_rotation(vfuncptr, Var *);
 
  
 static dvModuleFuncDesc exported_list[] = {
@@ -74,11 +79,12 @@ static dvModuleFuncDesc exported_list[] = {
   { "column_fill", (void *) thm_column_fill },
   { "mars_bin", (void *) thm_marsbin },
   { "interp2d", (void *) thm_interp2d},
-  { "contour",  (void *) thm_contour}
+  { "contour",  (void *) thm_contour},
+  { "rotate", (void *) thm_rotation}
 }; 
 
 static dvModuleInitStuff is = {
-  exported_list, 24,
+  exported_list, 25,
   NULL, 0
 };
 
@@ -2997,799 +3003,197 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
 
 
 
-
 Var*
 thm_maxpos(vfuncptr func, Var *arg)
 {
  
-  Var    *data = NULL;                      /* the orignial data */
-  Var    *out = NULL;                       /* the output structure */
-  int    *pos = NULL;                       /* the output position */
-  float   ignore = -32768;                  /* null value */
-  float  *val = NULL;                       /* the output values */
-  int     i, j, k, l;                       /* loop indices */
-  int     x=0, y=0, z=0;                    /* size of the data */
-  float   ni1=0, ni2=-32798, ni3=-852;      /* temp values and positions */
-  int     opt=0;                            /* return array option */
-  int     iter=1;                           /* number of iterations to include */
-   
+  Var    *data = NULL;                      /* the orignial data               */
+  Var    *out = NULL;                       /* the output structure            */
+  int    *pos = NULL;                       /* the output position             */
+  float   minval = -3.402822655e+38;        /* the most negative float value   */
+  float   ignore = minval;                  /* null value                      */
+  int     i, j, l, ck=0;                    /* loop indices and flags          */
+  float   ni1=0, ni2=0, ni3=0;              /* temp values and positions       */
+  int     iter = 1;                         /* number of iterations to include */
+  int     elems = 0;
+  int     curr_elem = 0;
+  int    *elements = NULL;
+  float   lt = minval;                      /* search for maximum values less than this value */
+
   Alist alist[5];
   alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-  alist[1] = make_alist("ret",       INT,       NULL,  &opt);
-  alist[2] = make_alist("iter",      INT,       NULL,  &iter);
-  alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
+  alist[1] = make_alist("iter",      INT,       NULL,  &iter);
+  alist[2] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
+  alist[3] = make_alist("lt",        FLOAT,     NULL,  &lt);
   alist[4].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
   
   if (data == NULL) {
-    parse_error("\nUsed to find the position of the max point in an array\n");
-    parse_error("$1 = the data");
-    parse_error("Prints the value and location\n");
-    parse_error("ret=1 returns the value and location in a structure\n");
-    parse_error("iter= # of points to find in the data");
-    parse_error("if iter >1 it will automatically return the points\n");
-    parse_error("ignore = the value to ignore\n");
-    parse_error("c.edwards 5/19/04\n");
+    parse_error("\nReturns the x, y and z positions of maximum element in array");
+    parse_error("\nSyntax: maxpos(data=VAL, iter=INT, ignore=VAL, lt=VAL)");
+    parse_error("Example: maxpos(a, iter=5, ignore=0)");
+    parse_error("Example: maxpos(a, iter=2, lt=20000)");
+    parse_error("  'data'   - any numeric array of any organization");
+    parse_error("  'iter'   - number of highest values to locate");
+    parse_error("  'ignore' - an optional value to ignore in the search");
+    parse_error("  'lt'     - an optional 'less than' value to search for the maximum");
+    parse_error("\nReturns a 3xNx1 float array, where N=iter\n");
     return NULL;
   }
 
-  if (iter > 1 ) {
-    opt=1;
-  }
-
-  /* create array for postion */
+  /* create array for position */
   pos = (int *)calloc(sizeof(int), 3*iter);
-  val = (float *)calloc(sizeof(float), iter);
-  
-  /* x, y and z dimensions of the data */
-  x = GetX(data);
-  y = GetY(data);
-  z = GetZ(data);
+  elements = (int *)calloc(sizeof(int), iter);
 
-  /* find the maximum point and its position */  
+  /* size of the data */
+  elems = V_DSIZE(data);
+
+  /* set initial max values */
+  ni2 = ni3 = minval;
+
+  /* set ni3 for less than value */
+  if(lt != minval) ni3 = lt;
+
+  /* ni1 = current value     **
+  ** ni2 = current max value **
+  ** ni3 = old max val       */
+
+  /* find the maximum point and its position */
   for(l=0; l<iter; l++) {
-    for(k=0; k<z; k++) {
-      for(j=0; j<y; j++) {
-	for(i=0; i<x; i++) {
-	  
-	  /* ni1 = current value */
-	  /* ni2 = curent max value */
-	  /* ni3 = old max val */
-	  ni1 = extract_float(data, cpos(i,j,k,data));
-	  if(ni1>ni2 && (ni3 == -852 || (ni1<ni3 && ni3 != -852)) && ni1 != ignore) {
-	    ni2=ni1;
-	    pos[3*l+2]=k+1;
-	    pos[3*l+1]=j+1;
-	    pos[3*l+0]=i+1;
-	  }
+    for(i=0; i<elems; i++) {
+      ni1 = extract_float(data, i);
+
+      if(ni1 > ni2 && ni1 != ignore && 
+	 (lt != minval && l == 0 && ni1 <= ni3 || 
+	  l == 0 && lt == minval || 
+	  ni1 <= ni3 && l > 0)) {
+
+	/* check to see if it's the same element as a previous entry */
+	ck = 0;
+	for(j=l-1; j>=0; j--) {
+	  if(i == elements[j]) ck = 1;
+	}
+
+	if(ck == 0) {
+	  ni2 = ni1;
+	  curr_elem = i;
 	}
       }
     }
-    ni3=ni2;
-    val[l]=ni2;
-    ni2=-32798;
+
+    ni3 = ni2;
+    elements[l] = curr_elem;
+    position_fill(pos, curr_elem, l, data);
+    ni2 = minval;
+    curr_elem = 0;
   }
 
-  if(iter==1) {
-    /* return the findings */
-    printf("\nLocation: %i,%i,%i\n",pos[0],pos[1],pos[2]);
-    printf("%.13f\n\n",ni3);
-    
-    if(opt==0) return NULL;
-  }
+  free(elements);
 
-  if(opt!=0) {
-    out = new_struct(2);
-    add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
-    add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
-    return out;
-  }
+  /* return the findings */
+  out = newVal(BSQ, 3, iter, 1, INT, pos);
+  return(out);
 }
+
 
 
 
 Var*
 thm_minpos(vfuncptr func, Var *arg)
 {
-
-  Var    *data = NULL;                 /* the orignial data */
-  Var    *out = NULL;                  /* the output struture */
-  int    *pos = NULL;                  /* the output postion */
-  float   ignore = -32768;             /* null value */
-  float  *val = NULL;                  /* the output values */
-  int     i, j, k, l;                  /* loop indices */
-  int     x=0, y=0, z=0;               /* size of the data */
-  float   ni1=0, ni2=32798, ni3=852;   /* temp values and positions */
-  int     opt=0;                       /* return array option */
-  int     iter=1;                      /* number of iterations to include */
-
-  Alist alist[5];
-  alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-  alist[1] = make_alist("ret",       INT,       NULL,  &opt);
-  alist[2] = make_alist("iter",      INT,       NULL,  &iter);
-  alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
-  alist[4].name = NULL;
-  
-  if (parse_args(func, arg, alist) == 0) return(NULL);
- 
-  if (data == NULL) {
-    parse_error("\nUsed to find the position of the min point in an array\n");
-    parse_error("$1 = the data");
-    parse_error("Prints the value and location\n");
-    parse_error("ret = 1 returns the value and location in a structure\n");
-    parse_error("iter = # of points to find in the data");
-    parse_error("if iter >1 it will automatically return the points\n");
-    parse_error("ignore = the value to ignore\n");
-    parse_error("c.edwards 5/19/04\n");
-    return NULL;
-  }
-
-  if (iter > 1 ) {
-    opt=1;
-  }
-  
-  /* create array for position and value*/
-  pos = (int *)calloc(sizeof(int), 3*iter);
-  val = (float *)calloc(sizeof(float), iter);
-  
-  /* x, y and z dimensions of the data */
-  x = GetX(data);
-  y = GetY(data);
-  z = GetZ(data);
-
-  /* find the minimum point and its position */  
-  for(l=0; l<iter; l++) {
-    for(k=0; k<z; k++) {
-      for(j=0; j<y; j++) {
-	for(i=0; i<x; i++) {
-	  
-	  /* ni1 = current value */
-	  /* ni2 = curent max value */
-	  /* ni3 = old max val */
-	  ni1 = extract_float(data, cpos(i,j,k,data));
-	  if(ni1<ni2 && (ni3 == 852 || (ni1>ni3 && ni3 != 852)) && ni1 != ignore) {
-	    ni2=ni1;
-	    pos[3*l+2]=k+1;
-	    pos[3*l+1]=j+1;
-	    pos[3*l+0]=i+1;
-	  }
-	}
-      }
-    }
-    ni3=ni2;
-    val[l]=ni2;
-    ni2=32798;
-  }
-
-  /* return the findings */
-  if(iter==1) {    
-    printf("\nLocation: %i,%i,%i\n",pos[0],pos[1],pos[2]);
-    if(ni2<-32768) {
-      printf("%.9e\n\n",ni3);
-    }
-    if(ni2>=-32768) {
-      printf("%.9f\n\n",ni3);
-    }
-    if(opt==0) return NULL;
-  }
-
-  if(opt!=0) {
-    out = new_struct(2);
-    add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
-    add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
-    return out;
-  }
-}
-
-
-
-
-
-Var *thm_maxpos_broken(vfuncptr func, Var *arg){
-
-  /* written by Jason Ki 08/01/05, placed in thm module by k.nowicki */
-  /* replaces the maxpos algorithm written by c.edwards */
-  /* handles multiple searches of values faster than it's predecessor */
-
-  int         *pos = NULL;                                            // a [3x1xpts] array to hold the position of all the elements in values //
-  int          pts = 1;                                               // the nth max numbers in the given array //
-  int          start,end;                                             // use to adjust the looping through the link list //
-  int          xdim,ydim,zdim;                                        // the dimensions of the given data array //
-  int          c,d,i,j,k;
-  float       *val = NULL;                                            // a [1x1xpts] array to hold the nth max values //
-  float        ignore = -32768;                                       // any potential ignore values //
-  float        tvalue = 0;                                            // temporary variable to hold extraction //
-  Var         *data = NULL;                                           // the acutal data //
-  Var         *out = NULL;
-
-  // structure containing the nth maximum value along with its location in the data //
-  struct numinfo{
-    float             maxnum;
-    int               x,y,z;
-    struct numinfo   *next;
-    struct numinfo   *prev;
-  };
-  
-  struct numinfo   *cursor = NULL;                                    // cursor that traverses the link list //
-  struct numinfo   *head = NULL;                                      // head of the list //
-  struct numinfo   *mid = NULL;                                       // the middle point of the list //
-  struct numinfo   *pcursor = NULL;                                   // the previous node the cursor visited //
-  struct numinfo   *tail = NULL;                                      // tail of the list //
-  struct numinfo   *temp = NULL;                                      // use to hold the newly created node //
-  struct numinfo   *tnxt = NULL;                                      // use to hold the address of the next node for insertion purposes //
-
-  Alist alist[4];
-  alist[0] = make_alist("data",    ID_VAL,   NULL, &data);
-  alist[1] = make_alist("ignore",  FLOAT,    NULL, &ignore);
-  alist[2] = make_alist("points",  INT,      NULL, &pts);
-  alist[3].name = NULL;
-
-  if(parse_args(func, arg, alist) == 0) return(NULL);
-  if(data == NULL){
-    parse_error("\nFunction finds the maximum value of a given data set.");
-    parse_error("Syntax:  a=maxpos(dataset,[ignore],[points])");
-    parse_error("   where:");
-    parse_error("   dataset  - any 3-d array of any organization or type");
-    parse_error("   [points] - number of values to return; default is set to return 1 point\n");
-    parse_error("Example: maxpos(a)");
-    parse_error("    out=maxpos(a,ignore=422,points=10)\n");
-    return(NULL);
-  }
-  if(pts > GetX(data)*GetY(data)*GetZ(data)){
-    parse_error("Too many points and not enough data, lower the point value.");
-    return(NULL);
-  }
-  else{
-    xdim = GetX(data);	 ydim = GetY(data);	 zdim = GetZ(data);
-    
-    cursor = head = mid = tail = NULL;                                // make everything point to nothing //
-    
-    for(i=0; i<pts; i++){
-      temp = (struct numinfo*)malloc(sizeof(struct numinfo));         // create the node //
-      temp->maxnum = -i;                                              // set to default value //
-      temp->x = 0;
-      temp->y = 0;
-      temp->z = 0;
-      temp->next = NULL;                                              // doing end-chaining thus the end will always point to nowhere //
-      
-      if(i == 0){                                                     // deal with linking issue for the first node //
-	temp->prev = NULL;                                            // since it is the first node created, theres nothing to point backward to //
-	head = mid = tail = cursor = temp;                            // update the head marker and the cursor //
-      }
-      else if((i != 0)&&(i != pts-1)){                                // deal with linking issue for the middle nodes //
-	temp->prev = cursor;                                          // set the previous link to the last node created //
-	cursor->next = temp;                                          // attach the newly created node to the end of the list //
-	cursor = temp;                                                // move the cursor to the newly created node //
-	if(i == (int)(pts/2)){
-	  mid = cursor;                                               // if it is near the middle, set the mid marker //
-	}
-      }
-      else if(i == pts-1){                                            // deal with linking issue for the last node //
-	temp->prev = cursor;
-	cursor->next = temp; 
-	cursor = tail = temp;                                         // update the cursor and tail marker //
-      }
-    }
-    
-    for(k=0; k<zdim; k++){
-      for(j=0; j<ydim; j++){
-	for(i=0; i<xdim; i++){
-	  
-	  tvalue = extract_float(data,cpos(i,j,k,data));              // extract a value //
-	  
-	  cursor = head;
-	  // start looping through either the upper or lower half of the array //
-	  for(c=0; c<pts; c++){
-	    
-	    // if the number exist in the list, skip onto the next number in the array; also if ignore skip as well //
-	    if((tvalue == ignore)||(fabs(tvalue - cursor->maxnum) <= 0.0000000001)){ break; }
-	    if((c == 0)&&(tvalue > head->maxnum)){
-	      temp = (struct numinfo*)malloc(sizeof(struct numinfo)); // create a new node //
-	      temp->maxnum = tvalue;                                  // set values //
-	      temp->x=i+1;
-	      temp->y=j+1;
-	      temp->z=k+1;
-	      head->prev = temp;                                      // make the previous link of the head to the new node //
-	      temp->next = head;                                      // set the new node's next link to the head //
-	      temp->prev = NULL;                                      // since it is the new head, it will point backward to nothingness //
-	      
-	      head = temp;                                            // update the head of the list //
-	      mid = mid->prev;                                        // shift the mid marker up one //
-	      temp = tail->prev;                                      // store location of the second to last node //
-	      free(tail);                                             // delete the last node //
-	      temp->next = NULL;                                      // set the now tail node to go to nothingness //
-	      tail = temp;                                            // update the tail marker //
-	      
-	      break;                                                  // stop searching the list //
-	    }
-	    
-	    // **************************************************************************************************** //
-	    // * note: the following checks four condition before whacking the last node and replacing it:        * //
-	    // *                                                                                                  * //
-	    // *       -check to see if its the first run, because there's no point to keep checking every itera- * //
-	    // *        tion since it is a special case scenario                                                  * //
-	    // *       -check to see if the entire list is full before doing this special ops, because obviously  * //
-	    // *        most if not all values will be bigger than the -32768                                     * //
-	    // *       -check to see if the last value is smaller than the current tvalue, no duh                 * //
-	    // *       -beats me, but need to check to see if the current value is smaller than the previous node * //
-	    // *        otherwise it will spike in the end, again don't know why it does that                     * //
-	    // **************************************************************************************************** //
-	    
-	    if((c==0)&&(tail->maxnum != -32768)&&(tvalue > tail->maxnum)&&(tvalue < (tail->prev)->maxnum)){
-	      temp = (struct numinfo*)malloc(sizeof(struct numinfo)); // create a new node //
-	      temp->maxnum = tvalue;                                  // set values //
-	      temp->x=i+1;
-	      temp->y=j+1;
-	      temp->z=k+1;				  
-	      
-	      pcursor = tail->prev;                                   // get the addy of the second to last node //
-	      free(tail);                                             // delete the tail node //
-	      pcursor->next = temp;                                   // have the second to last node point to the new node //
-	      temp->prev = pcursor;                                   // reciprocate action //
-	      tail = temp;                                            // update tail marker //
-	      
-	      break;                                                  // stop searching the list //
-	    }
-	    
-	    if((c != 0)&&(tvalue > cursor->maxnum)){
-	      temp = (struct numinfo*)malloc(sizeof(struct numinfo)); // create a new node //
-	      temp->maxnum = tvalue;                                  // set values //
-	      temp->x=i+1;
-	      temp->y=j+1;
-	      temp->z=k+1;			
-
-	      pcursor->next = temp;                                   // set the previous node to the new node //
-	      temp->prev = pcursor;                                   // reciprocate action //
-	      temp->next = cursor;                                    // set the temp node to go to the next node //
-	      cursor->prev = temp;                                    // reciprocate action //
-	      temp = tail->prev;                                      // location of the second to last node //
-	      free(tail);                                             // delete the last element //
-	      temp->next = NULL;                                      // make the second to last node point to nothingness as it will be the tail //
-	      tail = temp;                                            // update tail marker //
-	      
-	      if(c < (int)(pts/2)){ mid = mid->prev; }                // update the mid marker //
-	      
-	      break;                                                  // stop searching the list //
-	    }
-	    
-	    pcursor = cursor;                                         // make the previous cursor the current cursor //
-	    cursor = cursor->next;                                    // move the current cursor onto the next node //
-	  }
-	}
-      }
-    }
-    
-    val = (float *)malloc(sizeof(float)*pts);                         // allocate output array of n points //
-    pos = (int *)malloc(sizeof(int)*3*pts);                           // allocate output array of 3*x points //
-    
-    cursor = head;
-    for(i=0; i<pts; i++){
-      val[(i*1)+0] = cursor->maxnum;                                  // store the maximum value //
-      pos[(i*3)+0] = cursor->x;                                       // store the location of the maximum value //
-      pos[(i*3)+1] = cursor->y;
-      pos[(i*3)+2] = cursor->z;
-      cursor = cursor->next;                                          // move onto the next node //
-    }
-    
-    // perform garbage collection //
-    cursor = tail;
-    for(i=0; i<pts; i++){
-      cursor = cursor->prev;
-      free(tail);
-      tail = cursor;
-    }
-    
-    if(pts == 1){
-      printf("Max value is: %f\n",val[0]);
-      printf("located at: [%d,%d,%d]\n\n\n",pos[0],pos[1],pos[2]);
-    }
-    
-    out = new_struct(2);
-    add_struct(out, "pos", newVal(BSQ,3,pts,1,INT,pos));
-    add_struct(out, "val", newVal(BSQ,1,pts,1,FLOAT,val)); 
-    return(out);
-  }
-}
-
-
-
-
-
-
-Var *thm_minpos_broken(vfuncptr func, Var *arg){
-
-  /* written by Jason Ki 08/01/05, placed in thm module by k.nowicki */
-  /* replaces the minpos algorithm written by c.edwards */
-  /* handles multiple searches of values faster than it's predecessor */
-
-  int         *pos = NULL;                                            // a [3x1xpts] array to hold the position of all the elements in values //
-  int          pts = 1;                                               // the nth min numbers in the given array //
-  int          start,end;                                             // use to adjust the looping through the link list //
-  int          xdim,ydim,zdim;                                        // the dimensions of the given data array //
-  int          c,d,i,j,k;
-  float       *val = NULL;                                            // a [1x1xpts] array to hold the nth min values //
-  float        ignore = -42285;                                       // any potential ignore values //
-  float        tvalue = 0;                                            // temporary variable to hold extraction //
-  Var         *data = NULL;                                           // the acutal data //
-  Var         *out = NULL;
-
-  // structure containing the nth minimum value along with its location in the data //
-  struct numinfo{
-    float             minnum;
-    int               x,y,z;
-    struct numinfo   *next;
-    struct numinfo   *prev;
-  };
-  
-  struct numinfo   *cursor = NULL;                                    // cursor that traverses the link list //
-  struct numinfo   *head = NULL;                                      // head of the list //
-  struct numinfo   *mid = NULL;                                       // the middle point of the list //
-  struct numinfo   *pcursor = NULL;                                   // the previous node the cursor visited //
-  struct numinfo   *tail = NULL;                                      // tail of the list //
-  struct numinfo   *temp = NULL;                                      // use to hold the newly created node //
-  struct numinfo   *tnxt = NULL;                                      // use to hold the address of the next node for insertion purposes //
-
-  Alist alist[4];
-  alist[0] = make_alist("data",    ID_VAL,   NULL, &data);
-  alist[1] = make_alist("ignore",  FLOAT,    NULL, &ignore);
-  alist[2] = make_alist("points",  INT,      NULL, &pts);
-  alist[3].name = NULL;
-
-  if(parse_args(func, arg, alist) == 0) return(NULL);
-  if(data == NULL){
-    parse_error("\nFunction finds the minimum value of a given data set.");
-    parse_error("Syntax:  a=minpos(dataset,[ignore],[points])");
-    parse_error("   where:");
-    parse_error("   dataset  - any 3-d array of any organization or type");
-    parse_error("   [points] - number of values to return; default is set to return 1 point\n");
-    parse_error("Example: minpos(a)");
-    parse_error("    out=minpos(a,ignore=422,points=10)\n");
-    return(NULL);
-  }
-  if(pts > GetX(data)*GetY(data)*GetZ(data)){
-    parse_error("Too many points and not enough data, lower the point value.");
-    return(NULL);
-  }
-  else{
-    xdim = GetX(data);	 ydim = GetY(data);	 zdim = GetZ(data);
-    
-    cursor = head = mid = tail = NULL;                                // make everything point to nothing //
-    
-    for(i=0; i<pts; i++){
-      temp = (struct numinfo*)malloc(sizeof(struct numinfo));         // create the node //
-      temp->minnum = -i;                                              // set to default value //
-      temp->x = 0;
-      temp->y = 0;
-      temp->z = 0;
-      temp->next = NULL;                                              // doing end-chaining thus the end will always point to nowhere //
-      
-      if(i == 0){                                                     // deal with linking issue for the first node //
-	temp->prev = NULL;                                            // since it is the first node created, theres nothing to point backward to //
-	head = mid = tail = cursor = temp;                            // update the head marker and the cursor //
-      }
-      else if((i != 0)&&(i != pts-1)){                                // deal with linking issue for the middle nodes //
-	temp->prev = cursor;                                          // set the previous link to the last node created //
-	cursor->next = temp;                                          // attach the newly created node to the end of the list //
-	cursor = temp;                                                // move the cursor to the newly created node //
-	if(i == (int)(pts/2)){
-	  mid = cursor;                                               // if it is near the middle, set the mid marker //
-	}
-      }
-      else if(i == pts-1){                                            // deal with linking issue for the last node //
-	temp->prev = cursor;
-	cursor->next = temp; 
-	cursor = tail = temp;                                         // update the cursor and tail marker //
-      }
-    }
-    
-    for(k=0; k<zdim; k++){
-      for(j=0; j<ydim; j++){
-	for(i=0; i<xdim; i++){
-	  
-	  tvalue = extract_float(data,cpos(i,j,k,data));              // extract a value //
-	  
-	  cursor = head;
-	  // start looping through either the upper or lower half of the array //
-	  for(c=0; c<pts; c++){
-	    
-	    // if the number exist in the list, skip onto the next number in the array; also if ignore skip as well //
-	    if((tvalue == ignore)||(fabs(tvalue - cursor->minnum) <= 0.0000000001)){ break; }
-	    if((c == 0)&&(tvalue < head->minnum)){
-	      temp = (struct numinfo*)malloc(sizeof(struct numinfo)); // create a new node //
-	      temp->minnum = tvalue;                                  // set values //
-	      temp->x=i+1;
-	      temp->y=j+1;
-	      temp->z=k+1;
-	      head->prev = temp;                                      // make the previous link of the head to the new node //
-	      temp->next = head;                                      // set the new node's next link to the head //
-	      temp->prev = NULL;                                      // since it is the new head, it will point backward to nothingness //
-	      
-	      head = temp;                                            // update the head of the list //
-	      mid = mid->prev;                                        // shift the mid marker up one //
-	      temp = tail->prev;                                      // store location of the second to last node //
-	      free(tail);                                             // delete the last node //
-	      temp->next = NULL;                                      // set the now tail node to go to nothingness //
-	      tail = temp;                                            // update the tail marker //
-	      
-	      break;                                                  // stop searching the list //
-	    }
-	    
-	    // **************************************************************************************************** //
-	    // * note: the following checks four condition before whacking the last node and replacing it:        * //
-	    // *                                                                                                  * //
-	    // *       -check to see if its the first run, because there's no point to keep checking every itera- * //
-	    // *        tion since it is a special case scenario                                                  * //
-	    // *       -check to see if the entire list is full before doing this special ops, because obviously  * //
-	    // *        most if not all values will be bigger than the -32768                                     * //
-	    // *       -check to see if the last value is smaller than the current tvalue, no duh                 * //
-	    // *       -beats me, but need to check to see if the current value is smaller than the previous node * //
-	    // *        otherwise it will spike in the end, again don't know why it does that                     * //
-	    // **************************************************************************************************** //
-	    
-	    if((c==0)&&(tail->minnum != -32768)&&(tvalue < tail->minnum)&&(tvalue > (tail->prev)->minnum)){
-	      temp = (struct numinfo*)malloc(sizeof(struct numinfo)); // create a new node //
-	      temp->minnum = tvalue;                                  // set values //
-	      temp->x=i+1;
-	      temp->y=j+1;
-	      temp->z=k+1;				  
-	      
-	      pcursor = tail->prev;                                   // get the addy of the second to last node //
-	      free(tail);                                             // delete the tail node //
-	      pcursor->next = temp;                                   // have the second to last node point to the new node //
-	      temp->prev = pcursor;                                   // reciprocate action //
-	      tail = temp;                                            // update tail marker //
-	      
-	      break;                                                  // stop searching the list //
-	    }
-	    
-	    if((c != 0)&&(tvalue < cursor->minnum)){
-	      temp = (struct numinfo*)malloc(sizeof(struct numinfo)); // create a new node //
-	      temp->minnum = tvalue;                                  // set values //
-	      temp->x=i+1;
-	      temp->y=j+1;
-	      temp->z=k+1;			
-	      
-	      pcursor->next = temp;                                   // set the previous node to the new node //
-	      temp->prev = pcursor;                                   // reciprocate action //
-	      temp->next = cursor;                                    // set the temp node to go to the next node //
-	      cursor->prev = temp;                                    // reciprocate action //
-	      temp = tail->prev;                                      // location of the second to last node //
-	      free(tail);                                             // delete the last element //
-	      temp->next = NULL;                                      // make the second to last node point to nothingness as it will be the tail //
-	      tail = temp;                                            // update tail marker //
-	      
-	      if(c < (int)(pts/2)){ mid = mid->prev; }                // update the mid marker //
-	      
-	      break;                                                  // stop searching the list //
-	    }
-	    
-	    pcursor = cursor;                                         // make the previous cursor the current cursor //
-	    cursor = cursor->next;                                    // move the current cursor onto the next node //
-	  }
-	}
-      }
-    }
-    
-    val = (float *)malloc(sizeof(float)*pts);                         // allocate output array of n points //
-    pos = (int *)malloc(sizeof(int)*3*pts);                           // allocate output array of 3*x points //
-    
-    cursor = head;
-    for(i=0; i<pts; i++){
-      val[(i*1)+0] = cursor->minnum;                                  // store the minimum value //
-      pos[(i*3)+0] = cursor->x;                                       // store the location of the minimum value //
-      pos[(i*3)+1] = cursor->y;
-      pos[(i*3)+2] = cursor->z;
-      cursor = cursor->next;                                          // move onto the next node //
-    }
-    
-    // perform garbage collection //
-    cursor = tail;
-    for(i=0; i<pts; i++){
-      cursor = cursor->prev;
-      free(tail);
-      tail = cursor;
-    }
-    
-    if(pts == 1){
-      printf("Min value is: %f\n",val[0]);
-      printf("located at: [%d,%d,%d]\n\n\n",pos[0],pos[1],pos[2]);
-    }
-    out = new_struct(2);
-    add_struct(out, "pos", newVal(BSQ,3,pts,1,INT,pos));
-    add_struct(out, "val", newVal(BSQ,1,pts,1,FLOAT,val)); 
-    return(out);
-  }
-}
-
-
-
-
-
-
-Var*
-thm_maxpos2(vfuncptr func, Var *arg)
-{
  
   Var    *data = NULL;                      /* the orignial data */
   Var    *out = NULL;                       /* the output structure */
   int    *pos = NULL;                       /* the output position */
-  float   ignore = -32768;                  /* null value */
-  float  *val = NULL;                       /* the output values */
-  int     i, j, k, l;                       /* loop indices */
-  int     x=0, y=0, z=0;                    /* size of the data */
-  float   ni1=0, ni2=-32798, ni3=-852;      /* temp values and positions */
-  int     opt=0;                            /* return array option */
-  int     iter=1;                           /* number of iterations to include */
-   
-  Alist alist[5];
-  alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-  alist[1] = make_alist("ret",       INT,       NULL,  &opt);
-  alist[2] = make_alist("iter",      INT,       NULL,  &iter);
-  alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
-  alist[4].name = NULL;
-  
-  if (parse_args(func, arg, alist) == 0) return(NULL);
-  
-  if (data == NULL) {
-    parse_error("\nUsed to find the position of the max point in an array\n");
-    parse_error("$1 = the data");
-    parse_error("Prints the value and location\n");
-    parse_error("ret=1 returns the value and location in a structure\n");
-    parse_error("iter= # of points to find in the data");
-    parse_error("if iter >1 it will automatically return the points\n");
-    parse_error("ignore = the value to ignore\n");
-    parse_error("c.edwards 5/19/04\n");
-    return NULL;
-  }
-
-  if (iter > 1 ) {
-    opt=1;
-  }
-
-  /* create array for postion */
-  pos = (int *)calloc(sizeof(int), 3*iter);
-  val = (float *)calloc(sizeof(float), iter);
-  
-  /* x, y and z dimensions of the data */
-  x = GetX(data);
-  y = GetY(data);
-  z = GetZ(data);
-
-  /* find the maximum point and its position */  
-  for(l=0; l<iter; l++) {
-    for(k=0; k<z; k++) {
-      for(j=0; j<y; j++) {
-	for(i=0; i<x; i++) {
-	  
-	  /* ni1 = current value */
-	  /* ni2 = curent max value */
-	  /* ni3 = old max val */
-	  ni1 = extract_float(data, cpos(i,j,k,data));
-	  if(ni1>ni2 && (ni3 == -852 || (ni1<ni3 && ni3 != -852)) && ni1 != ignore) {
-	    ni2=ni1;
-	    pos[3*l+2]=k+1;
-	    pos[3*l+1]=j+1;
-	    pos[3*l+0]=i+1;
-	  }
-	}
-      }
-    }
-    ni3=ni2;
-    val[l]=ni2;
-    ni2=-32798;
-  }
-
-  if(iter==1) {
-    /* return the findings */
-    printf("\nLocation: %i,%i,%i\n",pos[0],pos[1],pos[2]);
-    printf("%.13f\n\n",ni3);
-    
-    if(opt==0) return NULL;
-  }
-
-  if(opt!=0) {
-    out = new_struct(2);
-    add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
-    add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
-    return out;
-  }
-}
-
-
-
-Var*
-thm_minpos2(vfuncptr func, Var *arg)
-{
-
-  Var    *data = NULL;                 /* the orignial data */
-  Var    *out = NULL;                  /* the output struture */
-  int    *pos = NULL;                  /* the output postion */
-  float   ignore = -32768;             /* null value */
-  float  *val = NULL;                  /* the output values */
-  int     i, j, k, l;                  /* loop indices */
-  int     x=0, y=0, z=0;               /* size of the data */
-  float   ni1=0, ni2=32798, ni3=852;   /* temp values and positions */
-  int     opt=0;                       /* return array option */
-  int     iter=1;                      /* number of iterations to include */
+  float   maxval = 3.402822655e+38;         /* the most negative float value */
+  float   ignore = maxval;                  /* null value */
+  int     i, j, l, ck=0;                    /* loop indices and flags */
+  float   ni1=0, ni2=0, ni3=0;              /* temp values and positions */
+  int     iter = 1;                         /* number of iterations to include */
+  int     elems = 0;
+  int     curr_elem = 0;
+  int    *elements = NULL;
+  float   gt = maxval;                      /* search for minimum values more than this value */
 
   Alist alist[5];
   alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-  alist[1] = make_alist("ret",       INT,       NULL,  &opt);
-  alist[2] = make_alist("iter",      INT,       NULL,  &iter);
-  alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
+  alist[1] = make_alist("iter",      INT,       NULL,  &iter);
+  alist[2] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
+  alist[3] = make_alist("gt",        FLOAT,     NULL,  &gt);
   alist[4].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
- 
+  
   if (data == NULL) {
-    parse_error("\nUsed to find the position of the min point in an array\n");
-    parse_error("$1 = the data");
-    parse_error("Prints the value and location\n");
-    parse_error("ret = 1 returns the value and location in a structure\n");
-    parse_error("iter = # of points to find in the data");
-    parse_error("if iter >1 it will automatically return the points\n");
-    parse_error("ignore = the value to ignore\n");
-    parse_error("c.edwards 5/19/04\n");
+    parse_error("\nReturns the x, y and z position of minimum element in array");
+    parse_error("\nSyntax: minpos(data=VAL, iter=INT, ignore=VAL, gt=VAL)");
+    parse_error("Example: minpos(a, iter=5, ignore=0");
+    parse_error("Example: minpos(a, iter=2, gt=-10");
+    parse_error("  'data'   - any numeric array of any organization");
+    parse_error("  'iter'   - number of lowest values to locate");
+    parse_error("  'ignore' - a value to ignore in the search");
+    parse_error("  'gt'     - an optional 'greater than' value to search for the minimum");
+    parse_error("\nReturns a 3xNx1 int array, where N=iter\n");
     return NULL;
   }
 
-  if (iter > 1 ) {
-    opt=1;
-  }
-  
-  /* create array for position and value*/
-  pos = (int *)calloc(sizeof(int), 3*iter);
-  val = (float *)calloc(sizeof(float), iter);
-  
-  /* x, y and z dimensions of the data */
-  x = GetX(data);
-  y = GetY(data);
-  z = GetZ(data);
+  /* create array for position */
+  pos = (int *)calloc(sizeof(int), 4*iter);
+  elements = (int *)calloc(sizeof(int), iter);
 
-  /* find the minimum point and its position */  
+  /* size of the data */
+  elems = V_DSIZE(data);
+
+  /* set initial max values */
+  ni2 = ni3 = maxval;
+
+  /* set ni3 for less than value */
+  if(gt != maxval) ni3 = gt;
+
+  /* ni1 = current value     **
+  ** ni2 = current min value **
+  ** ni3 = old min val       */
+
+  /* find the maximum point and its position */
   for(l=0; l<iter; l++) {
-    for(k=0; k<z; k++) {
-      for(j=0; j<y; j++) {
-	for(i=0; i<x; i++) {
-	  
-	  /* ni1 = current value */
-	  /* ni2 = curent max value */
-	  /* ni3 = old max val */
-	  ni1 = extract_float(data, cpos(i,j,k,data));
-	  if(ni1<ni2 && (ni3 == 852 || (ni1>ni3 && ni3 != 852)) && ni1 != ignore) {
-	    ni2=ni1;
-	    pos[3*l+2]=k+1;
-	    pos[3*l+1]=j+1;
-	    pos[3*l+0]=i+1;
-	  }
+    for(i=0; i<elems; i++) {
+      ni1 = extract_float(data, i);
+
+      if(ni1 < ni2 && ni1 != ignore && 
+	 (gt != maxval && l == 0 && ni1 >= ni3 || 
+	  l == 0 && gt == maxval || 
+	  ni1 >= ni3 && l > 0)) {
+
+	/* check to see if it's the same element as a previous entry */
+	ck = 0;
+	for(j=l-1; j>=0; j--) {
+	  if(i == elements[j]) ck = 1;
+	}
+
+	if(ck == 0) {
+	  ni2 = ni1;
+	  curr_elem = i;
 	}
       }
     }
-    ni3=ni2;
-    val[l]=ni2;
-    ni2=32798;
+
+    ni3 = ni2;
+    elements[l] = curr_elem;
+    position_fill(pos, curr_elem, l, data);
+    ni2 = maxval;
+    curr_elem = 0;
   }
+
+  free(elements);
 
   /* return the findings */
-  if(iter==1) {    
-    printf("\nLocation: %i,%i,%i\n",pos[0],pos[1],pos[2]);
-    if(ni2<-32768) {
-      printf("%.9e\n\n",ni3);
-    }
-    if(ni2>=-32768) {
-      printf("%.9f\n\n",ni3);
-    }
-    if(opt==0) return NULL;
-  }
-
-  if(opt!=0) {
-    out = new_struct(2);
-    add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
-    add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
-    return out;
-  }
+  out = newVal(BSQ, 3, iter, 1, INT, pos);
+  return(out);
 }
+
+
+
 
 
 
@@ -5596,4 +5000,295 @@ thm_contour(vfuncptr func, Var *arg)
   /* return the contoured data */
   out=newVal(BSQ,x,y,z,FLOAT,w_data);
   return out;
+}
+
+
+
+
+
+
+
+Var*
+thm_rotation(vfuncptr func, Var * arg)
+{
+
+  Var   *obj = NULL;
+  Var   *out = NULL;
+  float  ign = 0.0;
+  float  angle = 0.0;
+
+  Alist alist[4];
+  alist[0] = make_alist( "object",      ID_VAL,   NULL,     &obj);
+  alist[1] = make_alist( "angle",  	FLOAT,    NULL,     &angle);
+  alist[2] = make_alist( "ignore",      FLOAT,    NULL,     &ign);
+  alist[3].name = NULL;
+
+  if (parse_args(func, arg, alist) == 0) return NULL;
+  
+  if (obj == NULL) {
+    parse_error("rotate() - Mon Feb 13 14:35:25 MST 2006");
+    parse_error("Rotates an array a specified angle in degrees");
+    parse_error("Uses 3 shear Paeth algorithm.\n");
+    parse_error("Syntax:  b = rotate(obj,angle,ignore)");
+    parse_error("example: b = rotate(a,5.0)");
+    parse_error("example: b = rotate(a,-64.3,ignore=-32768)");
+    parse_error("obj     - any 3-d BSQ array.");
+    parse_error("angle   - desired angle of rotation in degrees.");
+    parse_error("ignore  - the value in non-data pixels. Default is 0.");
+    return NULL;
+  }
+
+  out=rotation(obj, angle, ign);
+  return(out);
+}
+
+
+
+union DATA {
+    char   b;
+    short  s;
+    int    i;
+    float  f;
+    double d;
+};
+
+
+
+Var *rotation(Var *obj, float angle, float ign)
+{
+
+  Var   *out = NULL, *s = NULL;
+  int    x=0, y=0, z=0;              /* input dimensions                      */
+  int    rx=0, ry=0;
+  int    i, j, k;                    /* array indices                         */
+  int   *roffset = NULL;
+  char  *robj = NULL;
+  float  pi = 3.141592653589;
+  float  ang = 0.0;                  /* the rotation angle in radians         */
+  int   *xshear = NULL;              /* first and third shears in three shear */
+  int   *yshear = NULL;              /* second shear in three shear operation */
+  int    xdim_shr1 = 0;              /* x dimension after first x shear       */
+  int    ydim_shr1 = 0;              /* y dimension after first y shear       */
+  int    xdim_shr2 = 0;              /* x dimension after second x shear      */
+  int    ti = 0;                     /* temporary integer value               */
+  float  tf = 0.0;                   /* temporary float value                 */
+  int    minx1=0, minx2=0, miny=0;
+  int    maxx1=0, maxx2=0, maxy=0;
+  int    top,bot,lef,rig;
+  int    x_1=0, y_1=0, x_2=0;
+  int    flpflg = 0;
+  int    nbytes = 0;
+  union DATA ign_resized; /* properly resized value of ignore */
+
+  switch(V_FORMAT(obj)){
+  case BYTE:
+      ign_resized.b = ign;
+      break;
+  case SHORT:
+      ign_resized.s = ign;
+      break;
+  case INT:
+      ign_resized.i = ign;
+      break;
+  case FLOAT:
+      ign_resized.f = ign;
+      break;
+  case DOUBLE:
+      ign_resized.d = ign;
+      break;
+  default:
+      break;
+  }
+  
+  x = GetX(obj);
+  y = GetY(obj);
+  z = GetZ(obj);
+
+  /* set the angle between -pi/2.0 and pi/2.0 */
+  ang = angle - ((int)angle/360)*360;
+  if(ang < 0) ang = ang + 360;  // ang is now between 0 and 360
+  if(ang > 180.0) ang -= 360;   // ang is now between -180 and 180
+  ang = ang*2*pi/360.0;         // ang is now betweeen -pi and pi
+  if(ang > pi/2.0) {
+    ang = ang - pi;
+    flpflg = 1;                 // this means I've assumed the image to be flipped 180 degrees
+  }
+  if(ang < -pi/2.0) {
+    ang = ang + pi;
+    flpflg = 1;                 // this means I've assumed the image to be flipped 180 degrees
+  }
+
+  /* x-dimension of array after the first x-shear */
+  tf = (float)y * tan(ang/2.0);
+  ti = round(tf);
+  xdim_shr1 = x + abs(ti);
+  if(ti < minx1) minx1 = ti;
+  if(ti > maxx1) maxx1 = ti;
+
+  /* y-dimension of array after the first y-shear */
+  tf = (float)xdim_shr1 * -1 * sin(ang);
+  ti = round(tf);
+  ydim_shr1 = y + abs(ti);
+  if(ti < miny) miny = ti;
+  if(ti > maxy) maxy = ti;
+
+  /* x-dimension of array after the second x-shear */
+  tf = (float)ydim_shr1 * tan(ang/2.0);
+  ti = round(tf);
+  xdim_shr2 = xdim_shr1 + abs(ti);
+  if(ti < minx2) minx2 = ti;
+  if(ti > maxx2) maxx2 = ti;
+
+  /* create shear lookup arrays */
+  yshear = (int *)malloc(sizeof(int)*xdim_shr2);
+  xshear = (int *)malloc(sizeof(int)*ydim_shr1);
+
+  /* fill in shearing lookup arrays */
+  for(i=0;i<xdim_shr2;i++) { yshear[i] = round((float)i * sin(ang)); }
+  for(j=0;j<ydim_shr1;j++) { xshear[j] = round((float)j * -1 * tan(ang/2.0)); }
+
+  /* set the default edges of rotated array */
+  top = ydim_shr1;
+  bot = ydim_shr1*-1;
+  lef = xdim_shr2;
+  rig = xdim_shr2*-1;
+
+  /* search for edges of data in rotated array */
+  for(j=0;j<y;j++) {
+    for(i=0;i<x;i++) {
+      x_1 = i - xshear[j] - minx1;
+      y_1 = j - yshear[x_1] - miny;
+      x_2 = x_1 - xshear[y_1] - minx2;
+      
+      for(k=0;k<z;k++) {
+	if(flpflg == 1) {
+	  tf = extract_float(obj, cpos((x-1)-i,(y-1)-j,k,obj));
+	} else {
+	  tf = extract_float(obj, cpos(i,j,k,obj));
+	}
+      
+	if (tf != ign) {
+	  if (y_1 < top) top = y_1;
+	  if (y_1 > bot) bot = y_1;
+	  if (x_2 < lef) lef = x_2;
+	  if (x_2 > rig) rig = x_2;
+	}
+      }
+    }
+  }
+
+  /* create roffset */
+  roffset = (int *)malloc(sizeof(int)*2);
+  roffset[0] = lef;
+  roffset[1] = top;
+
+  /* create robj */
+  rx = rig-lef+1;
+  ry = bot-top+1;
+
+  /* create new output var */
+  s = newVar();
+  V_TYPE(s) = V_TYPE(obj);
+  V_ORG(s) = V_ORG(obj);
+  V_FORMAT(s) = V_FORMAT(obj);
+  V_SIZE(s)[orders[V_ORG(s)][0]] = rx;
+  V_SIZE(s)[orders[V_ORG(s)][1]] = ry;
+  V_SIZE(s)[orders[V_ORG(s)][2]] = z;
+  V_DSIZE(s) = rx*ry*z;
+  V_DATA(s) = calloc(nbytes = NBYTES(V_FORMAT(s)), V_DSIZE(s));
+  robj = (char *)V_DATA(s);
+
+  /* fill in every element of rotated array with null value */
+  for(k=0;k<rx*ry*z;k++) { memcpy(robj+k*nbytes, &ign_resized, nbytes); }
+
+  /* every element in robj must be filled in */
+  for(j=0;j<y;j++) {
+    for(i=0;i<x;i++) {
+      x_1 = i - xshear[j] - minx1;
+      y_1 = j - yshear[x_1] - miny;
+      x_2 = x_1 - xshear[y_1] - minx2;
+      
+      /* if not outside data fill in with value */
+      if(x_2 >= lef && x_2 <= rig && y_1 >= top && y_1 <= bot) {
+	for(k=0;k<z;k++) {
+	  int xx, yy, zz;
+	  
+	  xx = flpflg? (x-1)-i: i;
+	  yy = flpflg? (y-1)-j: j;
+	  zz = k;
+	  tf = extract_float(obj, cpos(xx,yy,zz,obj));
+			     
+	  if(tf != ign) {
+	    memcpy(((char *)V_DATA(s))+cpos(x_2-lef,y_1-top,k,s)*nbytes,
+		   ((char *)V_DATA(obj))+cpos(xx,yy,zz,obj)*nbytes,
+		   nbytes); 
+	  }
+	}
+      }
+    }
+  }
+
+  /* clean up */
+  free(yshear);
+  free(xshear);
+
+  /* final output */
+  //free(roffset);
+  //return(s);
+
+
+  out = new_struct(0);
+  add_struct(out, "data", s);
+  add_struct(out, "angle", newFloat(angle));
+  add_struct(out, "offset", newVal(BSQ, 2, 1, 1, INT, roffset));
+  return out;
+}
+
+
+
+
+void position_fill(int *pos, int elem, int iter, Var *obj) {
+  int x,y,z;
+  int org;
+  int i,j,k;
+
+  x = GetX(obj);
+  y = GetY(obj);
+  z = GetZ(obj);
+  i = 0;
+  j = 0;
+  k = 0;
+  org = V_ORG(obj);
+
+  if (org == 0) {          // bsq organization
+    k = elem/(x*y);
+    j = (elem - k*x*y)/x;
+    i = elem - k*x*y - j*x;
+  } else if (org == 1) {   // bil organization
+    j = elem/(x*z);
+    k = (elem - j*x*z)/x;
+    i = elem - j*x*z - k*x;
+  } else if (org == 2) {   // bip organization
+    j = elem/(z*x);
+    i = (elem - j*z*x)/z;
+    k = elem - j*z*x - k*z;
+  }
+  pos[iter*3 + 2] = (float)(k + 1); // z position
+  pos[iter*3 + 1] = (float)(j + 1); // y position
+  pos[iter*3 + 0] = (float)(i + 1); // x position
+}
+
+
+
+int round(float numf) {
+  float    m;
+  int      numi;
+
+  /* calculate the rotated y coordinate */
+  numi = (int)numf;
+  m = numf - (float)numi;
+  if (m >= 0.5) { numi += 1; }
+  if (m <= -0.5) { numi -= 1; }
+
+  return(numi);
 }
