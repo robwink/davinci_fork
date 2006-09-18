@@ -445,6 +445,10 @@ draw_circle(Var *obj, int x, int y, float ignore, char *out)
 **
 **      Odd vs even must be handled separately
 **
+**      Note: several short-cuts in this code skip output for
+**      "null" values.  That means they're zero (from calloc).  
+**      Otherwise we'll have to pre-init the whole output array.
+**
 **      What's necessary to do chirping at this level?
 **          Bilinear interpolation?
 **
@@ -464,13 +468,23 @@ ff_radial_symmetry3(vfuncptr func, Var * arg)
     float *out;
     Window *w;
 
-	double *accum, *sumx, *sumy, *sumxx, *sumyy, *sumxy, *count;
-	double *distance;
+	int *distance, d;
 	int dx, dy;
 	double ssxx, ssyy, ssxy;
-	int i, j, p, q, r;
-	double v1, v2;
-	int d;
+	int i, j, k, p, q, r;
+	int p1,q1, h2,w2;
+	float v1, v2;
+	int total;
+	float *r1, *r2;
+
+	struct dstore {
+		double sumx;
+		double sumy;
+		double sumxx;
+		double sumyy;
+		double sumxy;
+		int count;
+	} *accum, *a1, *a2;
 
     Alist alist[9];
     alist[0] = make_alist( "object",    ID_VAL, NULL,   &obj);
@@ -495,30 +509,33 @@ ff_radial_symmetry3(vfuncptr func, Var * arg)
 
 	width = end*2+1;
 	height = end*2+1;
-
-	out = calloc(x*y*end, sizeof(float));
-	rval = newVal(BSQ, x, y, end, FLOAT, out);
-
     w = create_window(width, height, FLOAT);
 
-	/* precompute the distance of every point in the window */
-	distance = calloc(width*height, sizeof(double));
+	/* cache some frequently used computed values */
+	h2 = height/2;
+	w2 = width/2;
+	total = width*height;
+
+	/* precompute the distance of every point in a given sized window 
+	** to the center of the window.
+	** 
+	** In theory, this only needs to be 1 quadrant of the window, but that's
+	** too hard to bookkeep, and doesn't save much.
+	*/
+	distance = calloc(total, sizeof(int));
 	for (i = 0 ; i < width ; i++) {
-		dx = i-(width/2);
+		dx = i-w2;
 		for (j = 0 ; j < height ; j++) {
-			dy = j-(height/2);
-			distance[i+j*width] = sqrt(dx*dx+dy*dy);
+			dy = j-h2;
+			distance[i+j*width] = ceil(sqrt(dx*dx+dy*dy));
+			/* precheck for values outside the largest circle */
+			if (distance[i+j*width] >= end) distance[i+j*width] = 0;
 		}
 	}
 
-
-	accum = calloc(end*6, sizeof(double));
-	sumx = accum+0;
-	sumy = accum+end;
-	sumxx = accum+(end*2);
-	sumyy = accum+(end*3);
-	sumxy = accum+(end*4);
-	count = accum+(end*5);
+	out = calloc(x*y*end, sizeof(float));
+	rval = newVal(BSQ, x, y, end, FLOAT, out);
+	accum = calloc(end, sizeof(struct dstore));
 
 	/* run a window over every pixel and do the math */
     for (i = 0 ; i < x ; i+=1) {
@@ -526,47 +543,67 @@ ff_radial_symmetry3(vfuncptr func, Var * arg)
         for (j = 0 ; j < y ; j+=1) {
             if (j) roll_window(w, obj, i, j, ignore);
 
-			v1 = ((float **)w->row)[height/2][width/2];
-			if (v1 == ignore) continue;
+			v1 = ((float **)w->row)[h2][w2];
+			if (v1 == ignore) {
+				continue;
+			}
 
-			memset(accum, 0, end*6*sizeof(double));
-			for (q = 0 ; q < height ; q++) {
-				for (p = 0 ; p < width ; p++) {
-					/* At the point where we get to ourself, we're done */
-					if (p == width-p && q == height-q) break;
-					v1 = ((float **)w->row)[q][p];
-					v2 = ((float **)w->row)[(height-1)-q][(width-1)-p];
+			memset(accum, 0, end*sizeof(struct dstore));
+
+			/*
+			** pick a pair of opposing points, and add them to the
+			** accumulator for their given distance.  We'll sum all the
+			** accumulators later for a complete result from dist 1..N.
+			*/
+
+			for (q = 0 ; q <= h2 ; q++) {
+				/* one of the double-derefs moved to here for speed */
+				r1 = ((float **)w->rows)[q];
+				r2 = ((float **)w->rows)[(height-1)-q];
+				for (p = 0 ; p <= width ; p++) {
+					if (q == h2 && p == w2) {
+						/* We only run the window up to the center point  */
+						break;
+					}
+
+					v1 = r1[p];
+					v2 = r2[(width-1)-p];
 					if (v1 == ignore || v2 == ignore) continue;
 
-					d = ceil(distance[p+q*width]);
-					if (d < end) {
-						sumx[d] += v1;
-						sumy[d] += v2;
-						sumxx[d] += v1*v1;
-						sumyy[d] += v2*v2;
-						sumxy[d] += v1*v2;
-						count[d] += 1;
+					if ((d = distance[p+q*width]) != 0) {
+						a1 = &(accum[d]);
+						a1->sumx  += v1;
+						a1->sumy  += v2;
+						a1->sumxx += v1*v1;
+						a1->sumyy += v2*v2;
+						a1->sumxy += v1*v2;
+						a1->count++;
 					}
 				}
 			}
 
 			/* now compute correlation from per-radii accumulators */
-			/* out[cpos(i,j,0,rval)] = 0; */
 			for (r = 1 ; r < end ; r++) {
-				/* sum the values below us */
-				if (count[r-1] > 0) {
-					sumx[r] += sumx[r-1];
-					sumy[r] += sumy[r-1];
-					sumxx[r] += sumxx[r-1];
-					sumyy[r] += sumyy[r-1];
-					sumxy[r] += sumxy[r-1];
-					count[r] += count[r-1];
+				/* sum the values in preceeding bins */
+				a1 = &accum[r-1];
+				a2 = &accum[r];
+				if (a1->count) {
+					a2->sumx += a1->sumx;
+					a2->sumy += a1->sumy;
+					a2->sumxx += a1->sumxx;
+					a2->sumyy += a1->sumyy;
+					a2->sumxy += a1->sumxy;
+					a2->count += a1->count;
 				}
-				if (count[r] > 0) {
-					ssxx = sumxx[r] - sumx[r]*sumx[r]/count[r];
-					ssyy = sumyy[r] - sumy[r]*sumy[r]/count[r];
-					ssxy = sumxy[r] - sumx[r]*sumy[r]/count[r];
-					if ((ssxx*ssyy) != 0) {
+				// Don't bother if at least 1/2 the box isn't ignore values
+				// this is M_PI_4 because we're only counting half the pixels
+				// to begin with.
+				if (a2->count > r*r*M_PI_4) {
+					double c = a2->count;
+					ssxx = a2->sumxx - a2->sumx*a2->sumx/c;
+					ssyy = a2->sumyy - a2->sumy*a2->sumy/c;
+					ssxy = a2->sumxy - a2->sumx*a2->sumy/c;
+					if (ssxx != 0 && ssyy != 0) {
 						out[cpos(i,j,r,rval)] = sqrt(ssxy*ssxy / (ssxx*ssyy));
 					}
 				}

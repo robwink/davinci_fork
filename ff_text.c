@@ -479,58 +479,58 @@ text_basename(Var *ob1,char *ext)
 }
 
 
-Var *
-ff_filename(vfuncptr func, Var * arg) 
+Var *ff_filename(vfuncptr func, Var * arg)
 {
 
-  Var   *ob1 = NULL;
-  Var   *S = NULL;
-  char  *ext=NULL;
-  int    filefunc;
+    Var *ob1 = NULL;
+    Var *S = NULL;
+    char *ext = NULL;
+    int filefunc;
 
-  Alist alist[3];
-  alist[0] = make_alist( "obj", ID_UNK,   NULL,     &ob1);
-  alist[1] = make_alist( "ext", ID_STRING,   NULL,     &ext);
-  alist[2].name = NULL;
-    
-  if (ob1==NULL) {
-    parse_error("Expected obj");
-    return(NULL);
-  }
-  
+    Alist alist[3];
+    alist[0] = make_alist("obj", ID_UNK, NULL, &ob1);
+    alist[1] = make_alist("ext", ID_STRING, NULL, &ext);
+    alist[2].name = NULL;
 
-  filefunc=(int)func->fdata;
-  if (filefunc==0){
-    parse_error("Bad function");
-    return(NULL);
-  }	
-  
-  if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0)
+        return (NULL);
 
-  if (V_TYPE(ob1)==ID_STRING) {
-    if (filefunc==1){
-      S = newString(string_basename(ob1, ext));
-    } else if (filefunc==2){
-      S = newString(string_dirname(ob1));
-    } else {
-      parse_error("Bad Functions");
-      return(NULL);
+    if (ob1 == NULL) {
+        parse_error("%s: No filename passed", func->name);
+        return (NULL);
     }
-    return(S);
-  } else if (V_TYPE(ob1)==ID_TEXT){
-    if (filefunc==1){
-      S=text_basename(ob1,ext);
-    } else if (filefunc==2){
-      S=text_dirname(ob1);
-    } else {
-      parse_error("Bad Functions");
-      return(NULL);
+
+    filefunc = (int) func->fdata;
+    if (filefunc == 0) {
+        parse_error("Bad function");
+        return (NULL);
     }
-    return(S);
-  } else {
-    parse_error("Only STRING and TEXT types are allowed");
-    return(NULL);
-  }
+
+
+    if (V_TYPE(ob1) == ID_STRING) {
+        if (filefunc == 1) {
+            S = newString(string_basename(ob1, ext));
+        } else if (filefunc == 2) {
+            S = newString(string_dirname(ob1));
+        } else {
+            parse_error("Bad Functions");
+            return (NULL);
+        }
+        return (S);
+    } else if (V_TYPE(ob1) == ID_TEXT) {
+        if (filefunc == 1) {
+            S = text_basename(ob1, ext);
+        } else if (filefunc == 2) {
+            S = text_dirname(ob1);
+        } else {
+            parse_error("Bad Functions");
+            return (NULL);
+        }
+        return (S);
+    } else {
+        parse_error("Only STRING and TEXT types are allowed");
+        return (NULL);
+    }
 }
 
 

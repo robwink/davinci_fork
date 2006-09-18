@@ -313,6 +313,7 @@ struct _vfuncptr vfunclist[] = {
 #endif /* HAVE_LIBISIS */
 
 	{ "load_bin5",      ff_load_bin5,          NULL },
+	{ "load_tdb",      ff_load_tdb,                NULL },
 
     { NULL,             NULL,                  NULL }
 };

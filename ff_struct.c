@@ -610,3 +610,13 @@ ff_remove_struct(vfuncptr func, Var * arg)
 	}
     return(v);
 }
+
+Var *
+remove_struct(Var *s, int pos) 
+{
+	if (pos < 0 || pos > Narray_count(V_STRUCT(s))) {
+		return(NULL);
+	}
+
+	return(Narray_remove(V_STRUCT(s), pos));
+}
