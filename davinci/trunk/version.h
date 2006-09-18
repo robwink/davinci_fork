@@ -1,8 +1,14 @@
-char *version = "@(#) daVinci Version #1.57";
+char *version = "@(#) daVinci Version #1.58";
 
 #include "build.h"
 
 /*
+
+Version 1.58:  Mon Sep 18 12:34:11 MST 2006
+	Fixed isis() to not dump on numeric plane number
+	Added round() to dfunc
+	Added load_tdb()
+
 Version 1.57: Wed May 31 14:49:02 MST 2006
 	* changed all occurances of getline to dv_getline for cygwin conflict.
 	* put #ifdef around strndup declaration, again for cygwin

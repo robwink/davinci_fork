@@ -1111,7 +1111,7 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
     int n, i, j;
     void *data;
     char *isisfile;
-    char *name;
+    char *name = NULL;
     int type=2, plane=0;
     Var *Suffix=NULL;
     int s_suffix_item_bytes;
@@ -1119,7 +1119,7 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
     int format;
     
     
-    char *options[]={"Sample","Line","Band",NULL};
+    char *options[]={"sample","line","band",NULL};
 
     char *axis[]={"SAMPLE_","LINE_","BAND_"};
     char suffix_item_byte[80];
@@ -1270,10 +1270,28 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
             return(NULL);
         }
     } else {
+		// User provided a numeric value for plane.
         plane=extract_int(Suffix,0);
-        if (!strcasecmp(name, "Band")) type=2;
-        if (!strcasecmp(name, "Line")) type=1;
-        if (!strcasecmp(name, "Sample")) type=0;
+		if (name) {
+			if (!strcasecmp(name, "band")) type=2;
+			if (!strcasecmp(name, "line")) type=1;
+			if (!strcasecmp(name, "sample")) type=0;
+		} else {
+			// If there's more than 1 set of suffix planes, we have to stop
+			// Otherwise take the one that's set.
+			int count = 0;
+			for (i = 0 ; i < 3 ; i++) {
+				if (suffix[iom_orders[s.org][i]]) {
+					count++;
+					type = i;
+				}
+			}
+			if (count > 1) {
+				parse_error("%s: Error.  No suffix type specified, and there's more than one.\n", func->name);
+				fclose(fp);
+				return(NULL);
+			}
+		}
     }
 
     /*
@@ -1347,8 +1365,6 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
                              &format, /* data now s_suffix_item_bytes -> format */
                              iom_orders[s.org][type],&chunk);
 
-    fclose(fp);
-    
     s.s_hi[iom_orders[s.org][type]]=1;
 
 /*
@@ -1356,6 +1372,7 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
         data=dv_RePackData(data,suffix_bytes,format,chunk);
 */
     
+    fclose(fp);
     return(newVal(s.org,
                   s.s_hi[0],
                   s.s_hi[1],

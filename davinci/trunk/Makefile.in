@@ -122,6 +122,8 @@ am__fastdepCXX_TRUE = @am__fastdepCXX_TRUE@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
+am__tar = @am__tar@
+am__untar = @am__untar@
 bindir = @bindir@
 build = @build@
 build_alias = @build_alias@
@@ -142,6 +144,7 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localstatedir = @localstatedir@
 mandir = @mandir@
+mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
@@ -213,7 +216,7 @@ davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	toolbox.h configwin.h fft.h motif_tools.h tools.h \
 	lexer.c parser.c parser.h y_tab.h \
 	ff_gconvolve.c ff_warp.c ff_median.c ff_radial.c ff_window.c \
-	dvio_fits.c ff_extract.c
+	dvio_fits.c ff_extract.c dvio_tdb.c
 
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -266,7 +269,7 @@ am_davinci_OBJECTS = apifunc.$(OBJEXT) array.$(OBJEXT) avl.$(OBJEXT) \
 	xrt_print_3d.$(OBJEXT) lexer.$(OBJEXT) parser.$(OBJEXT) \
 	ff_gconvolve.$(OBJEXT) ff_warp.$(OBJEXT) ff_median.$(OBJEXT) \
 	ff_radial.$(OBJEXT) ff_window.$(OBJEXT) dvio_fits.$(OBJEXT) \
-	ff_extract.$(OBJEXT)
+	ff_extract.$(OBJEXT) dvio_tdb.$(OBJEXT)
 davinci_OBJECTS = $(am_davinci_OBJECTS)
 @LOCAL_READLINE_FALSE@@MODULE_SUPPORT_TRUE@davinci_DEPENDENCIES = \
 @LOCAL_READLINE_FALSE@@MODULE_SUPPORT_TRUE@	libmodsupp.a
@@ -293,7 +296,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/dvio_isis.Po ./$(DEPDIR)/dvio_magic.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/dvio_pds.Po ./$(DEPDIR)/dvio_pnm.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/dvio_raw.Po ./$(DEPDIR)/dvio_specpr.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/dvio_themis.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/dvio_tdb.Po ./$(DEPDIR)/dvio_themis.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/dvio_vicar.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/endian_norm.Po ./$(DEPDIR)/error.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff.Po ./$(DEPDIR)/ff_ascii.Po \
@@ -479,6 +482,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_pnm.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_raw.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_specpr.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_tdb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_themis.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_vicar.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/endian_norm.Po@am__quote@

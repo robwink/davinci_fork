@@ -415,6 +415,7 @@ Var * ff_delete(vfuncptr func, Var *arg);
 /* internal functions for structures */
 Var *new_struct(int ac);
 void add_struct(Var *s, const char *name, Var *exp);
+Var *remove_struct(Var *, int);
 void free_struct(Var *);
 
 /* internal functions for text arrays */
@@ -496,6 +497,7 @@ Var *ff_drawshape(vfuncptr func, Var * arg);
 Var *ff_extract(vfuncptr func, Var * arg);
 
 Var *ff_foo(vfuncptr func, Var * arg);
+Var *ff_load_tdb(vfuncptr, Var *);
 
 char *dv_locate_file(char *);
 void dump_version();

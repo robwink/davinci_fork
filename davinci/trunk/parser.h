@@ -269,7 +269,9 @@ enum {
 	ID_MODULE,         /* daVinci module variable ID */
 	ID_FUNCTION,       /* daVinci module function variable ID */
 	ID_PARALLEL,       /* parallelization */
-	ID_VARARGS         /* varargs arguments */
+	ID_VARARGS,        /* varargs arguments */
+
+	ID_FPTR         /* a function pointer */
 };
 
 

@@ -36,14 +36,14 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_triplet = i686-pc-linux-gnu
-ACLOCAL = ${SHELL} /u/gorelick/davinci3/config/missing --run aclocal-1.7
+ACLOCAL = ${SHELL} /u/gorelick/davinci/config/missing --run aclocal-1.9
 AMDEP_FALSE = #
 AMDEP_TRUE = 
-AMTAR = ${SHELL} /u/gorelick/davinci3/config/missing --run tar
+AMTAR = ${SHELL} /u/gorelick/davinci/config/missing --run tar
 AR = ar
-AUTOCONF = ${SHELL} /u/gorelick/davinci3/config/missing --run autoconf
-AUTOHEADER = ${SHELL} /u/gorelick/davinci3/config/missing --run autoheader
-AUTOMAKE = ${SHELL} /u/gorelick/davinci3/config/missing --run automake-1.7
+AUTOCONF = ${SHELL} /u/gorelick/davinci/config/missing --run autoconf
+AUTOHEADER = ${SHELL} /u/gorelick/davinci/config/missing --run autoheader
+AUTOMAKE = ${SHELL} /u/gorelick/davinci/config/missing --run automake-1.9
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -88,7 +88,7 @@ LTLIBOBJS =
 MAINT = #
 MAINTAINER_MODE_FALSE = 
 MAINTAINER_MODE_TRUE = #
-MAKEINFO = ${SHELL} /u/gorelick/davinci3/config/missing --run makeinfo
+MAKEINFO = ${SHELL} /u/gorelick/davinci/config/missing --run makeinfo
 MODULE_SUPPORT_FALSE = #
 MODULE_SUPPORT_TRUE = 
 MY_SUBDIRS =  iomedley modules libltdl modules/thm vicar modules/gui
@@ -122,6 +122,8 @@ am__fastdepCXX_TRUE =
 am__include = include
 am__leading_dot = .
 am__quote = 
+am__tar = ${AMTAR} chof - "$$tardir"
+am__untar = ${AMTAR} xf -
 bindir = ${exec_prefix}/bin
 build = i686-pc-linux-gnu
 build_alias = 
@@ -137,11 +139,12 @@ host_os = linux-gnu
 host_vendor = pc
 includedir = ${prefix}/include
 infodir = ${prefix}/info
-install_sh = /u/gorelick/davinci3/config/install-sh
+install_sh = /u/gorelick/davinci/config/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localstatedir = ${prefix}/var
 mandir = ${prefix}/man
+mkdir_p = mkdir -p --
 oldincludedir = /usr/include
 prefix = /usr/local
 program_transform_name = s,x,x,
@@ -213,7 +216,7 @@ davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	toolbox.h configwin.h fft.h motif_tools.h tools.h \
 	lexer.c parser.c parser.h y_tab.h \
 	ff_gconvolve.c ff_warp.c ff_median.c ff_radial.c ff_window.c \
-	dvio_fits.c ff_extract.c
+	dvio_fits.c ff_extract.c dvio_tdb.c
 
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -266,7 +269,7 @@ am_davinci_OBJECTS = apifunc.$(OBJEXT) array.$(OBJEXT) avl.$(OBJEXT) \
 	xrt_print_3d.$(OBJEXT) lexer.$(OBJEXT) parser.$(OBJEXT) \
 	ff_gconvolve.$(OBJEXT) ff_warp.$(OBJEXT) ff_median.$(OBJEXT) \
 	ff_radial.$(OBJEXT) ff_window.$(OBJEXT) dvio_fits.$(OBJEXT) \
-	ff_extract.$(OBJEXT)
+	ff_extract.$(OBJEXT) dvio_tdb.$(OBJEXT)
 davinci_OBJECTS = $(am_davinci_OBJECTS)
 davinci_DEPENDENCIES = \
 	libmodsupp.a
@@ -293,7 +296,7 @@ DEP_FILES = ./$(DEPDIR)/apifunc.Po ./$(DEPDIR)/array.Po \
 	./$(DEPDIR)/dvio_isis.Po ./$(DEPDIR)/dvio_magic.Po \
 	./$(DEPDIR)/dvio_pds.Po ./$(DEPDIR)/dvio_pnm.Po \
 	./$(DEPDIR)/dvio_raw.Po ./$(DEPDIR)/dvio_specpr.Po \
-	./$(DEPDIR)/dvio_themis.Po \
+	./$(DEPDIR)/dvio_tdb.Po ./$(DEPDIR)/dvio_themis.Po \
 	./$(DEPDIR)/dvio_vicar.Po \
 	./$(DEPDIR)/endian_norm.Po ./$(DEPDIR)/error.Po \
 	./$(DEPDIR)/ff.Po ./$(DEPDIR)/ff_ascii.Po \
@@ -479,6 +482,7 @@ include ./$(DEPDIR)/dvio_pds.Po
 include ./$(DEPDIR)/dvio_pnm.Po
 include ./$(DEPDIR)/dvio_raw.Po
 include ./$(DEPDIR)/dvio_specpr.Po
+include ./$(DEPDIR)/dvio_tdb.Po
 include ./$(DEPDIR)/dvio_themis.Po
 include ./$(DEPDIR)/dvio_vicar.Po
 include ./$(DEPDIR)/endian_norm.Po
