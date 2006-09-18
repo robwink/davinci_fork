@@ -3,7 +3,7 @@
 #include <sys/stat.h>
 
 #define swap(a,b)  { char t = a; a = b; b = t; }
-#if WORDS_BIGENDIAN
+#ifndef WORDS_BIGENDIAN
 #define MSB8(a) msb8((char *)(&(a)))
 #define MSB4(a) msb4((char *)(&(a)))
 #define MSB2(a) msb2((char *)(&(a)))
