@@ -388,14 +388,14 @@ ff_load_tdb(vfuncptr func, Var *arg)
 	int     ac;
 	Var   **av;
 	char *fname, *filename;
-	int compress = 0;
+	int reform = 0;
 	int distribute = 0;
 	Var *out;
 
 	Alist   alist[4];
 	/* make arguments list */
 	alist[0] = make_alist("filename", ID_STRING, NULL, &fname);
-	alist[1] = make_alist("compress", INT, NULL, &compress);
+	alist[1] = make_alist("reform", INT, NULL, &reform);
 	alist[2] = make_alist("distribute", INT, NULL, &distribute);
 	alist[3].name = NULL;
 
@@ -416,7 +416,7 @@ ff_load_tdb(vfuncptr func, Var *arg)
 		distribute_xaxis(out);
 	}
 
-	if (out && compress) {
+	if (out && reform) {
 		Var *scopes, *keys, *values;
 		scopes = collect_scopes(out);
 		keys = collect_keys(out, scopes);
