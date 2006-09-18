@@ -27063,7 +27063,7 @@ fi
 
 
 
-                                                                                ac_config_files="$ac_config_files Makefile modules/Makefile modules/kjn/Makefile modules/cse/Makefile modules/thm/Makefile modules/etk/Makefile modules/gui/Makefile vicar/Makefile"
+                                                                      ac_config_files="$ac_config_files Makefile modules/Makefile modules/kjn/Makefile modules/cse/Makefile modules/thm/Makefile modules/gui/Makefile vicar/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -27674,7 +27674,6 @@ do
   "modules/kjn/Makefile" ) CONFIG_FILES="$CONFIG_FILES modules/kjn/Makefile" ;;
   "modules/cse/Makefile" ) CONFIG_FILES="$CONFIG_FILES modules/cse/Makefile" ;;
   "modules/thm/Makefile" ) CONFIG_FILES="$CONFIG_FILES modules/thm/Makefile" ;;
-  "modules/etk/Makefile" ) CONFIG_FILES="$CONFIG_FILES modules/etk/Makefile" ;;
   "modules/gui/Makefile" ) CONFIG_FILES="$CONFIG_FILES modules/gui/Makefile" ;;
   "vicar/Makefile" ) CONFIG_FILES="$CONFIG_FILES vicar/Makefile" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
