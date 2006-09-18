@@ -245,7 +245,7 @@ dnl FIX: this stuff can go away if libtool is used.
 
 AC_SUBST(MY_SUBDIRS)
 
-AC_OUTPUT([Makefile modules/Makefile modules/kjn/Makefile modules/cse/Makefile modules/thm/Makefile modules/etk/Makefile modules/gui/Makefile vicar/Makefile])
+AC_OUTPUT([Makefile modules/Makefile modules/kjn/Makefile modules/cse/Makefile modules/thm/Makefile modules/gui/Makefile vicar/Makefile])
 
 PRINT_YES_NO() {
   answer="Yes"
