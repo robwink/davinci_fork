@@ -1058,7 +1058,7 @@ pp_exact_help(Var *s)
 	} else if (V_NAME(s)) p = V_NAME(s);
     else if (V_STRING(s)) p = V_STRING(s);
 
-	q = malloc(strlen(p) + 2);
+	q = malloc(strlen(p) + 3);
 	sprintf(q, "%s()",p);
 
     do_help(q, NULL);
