@@ -1,0 +1,44 @@
+              Histo-Scope Widget Set Version 1.1 Release Notes
+
+NEW FEATURES/ENHANCEMENTS
+
+1) The XY Plot widget has been enhanced.  New features include:
+
+   * Histogram support - The XY Plot widget can draw histograms in addition
+                         to line/curve plots.  Various line types, marker types,
+			 fill patterns, and color drawing can be specified.  
+			 Error bars and adaptive histograms can also be drawn.
+			 
+   * Overlaid plots - Multiple sets of data can be passed to the XY Plot widget.
+		      Multiple curves or histograms are drawn overlaid - each
+		      succeeding curve or histogram is displayed "on top of"
+		      the preceeding one.  The intent of overlaying plots is
+		      so that the user can discern the shape differences of
+		      plots with similar scales.  Thus if the scales of the
+		      overlaid curves or histograms vary widely, the plot will
+		      not be particularly useful.
+		      
+   * Marker plots - an XY plot can be drawn with/without lines and 
+   		    with/without markers.  Even histogram data can be drawn
+		    with "line-styles" that define marker types.
+		    
+   * New XY dialogs - New XY dialogs are available for new features such as 
+                      histogram and marker styles.  A new dialog is also
+		      available for setting pre-defined colors.
+
+3) Various bugs have been fixed in all the widgets.
+
+4) The plot widget documentation, widgets.doc, has been updated.  Please refer
+   to this documentation for further information.
+
+KNOWN BUGS/RESTRICTIONS
+
+1) The Marker and Line Style dialog for the XY widget can not be used under
+   Motif 1.1.
+
+2) The 3DScat Widget gives no indication that holding the control key will
+   make it display continuously
+   
+3) On some Silicon Graphics workstations, partially obscuring a window with
+   any of the widgets which do image drawing (2DHist, 3DScat, 2DScat), can
+   cause the data to be drawn with incorrect offset.

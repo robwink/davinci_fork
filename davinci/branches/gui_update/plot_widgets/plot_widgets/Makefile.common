@@ -1,0 +1,71 @@
+#
+# Platform independent part of make procedure for plotting widgets, 
+# included by machine specific makefiles.
+#
+OBJS = Scat.o XY.o H1D.o Curves.o Cell.o 2DHist.o 2DHistCalls.o 3DScat.o \
+       3DPara.o 3DRot.o 3DRotCube.o uniLab.o uniLabLog.o axes.o axes_ps.o \
+       segment_name.o 2DGeom.o 3DGeom.o geometry.o fltRange.o imaggen.o \
+       readhist.o labels.o psgen.o apsgen.o 2DHistZLabels.o adaptHist.o	\
+       aimaggen.o aHistRead.o uniLab_2DHInt.o drawAxes.o dragAxes.o \
+       XYDialogs.o LineBox.o
+
+all: libPlotW.a
+
+libPlotW.a: $(OBJS)
+	$(AR) -urs libPlotW.a $(OBJS)
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.
+
+Scat.o: ../util/psUtils.h drawAxes.h dragAxes.h ScatP.h Scat.h
+XY.o: ../util/psUtils.h drawAxes.h dragAxes.h XYP.h XY.h
+H1D.o: ../util/psUtils.h drawAxes.h dragAxes.h H1DP.h H1D.h
+LineBox.o: ../util/psUtils.h drawAxes.h dragAxes.h LineBoxP.h LineBox.h
+Curves.o: ../util/psUtils.h ../util/DialogF.h ../util/misc.h drawAxes.h
+Curves.o: dragAxes.h CurvesP.h Curves.h
+Cell.o: ../util/psUtils.h drawAxes.h dragAxes.h CellP.h Cell.h
+2DHist.o: 2DGeom.h 2DHistDefs.h 2DHist.h uniLab.h labels.h 2DHistP.h
+2DHist.o: 2DHistMalloc.h imaggen.h 2DHistZLabels.h fltRange.h uniLab_2DHInt.h
+2DHistCalls.o: 2DGeom.h 2DHistDefs.h 2DHist.h uniLab.h labels.h 2DHistP.h
+2DHistCalls.o: 2DHistMalloc.h fltRange.h
+3DScat.o: 2DGeom.h 3DGeom.h 3DRot.h 3DPara.h 3DRotCube.h uniLab.h axes.h
+3DScat.o: 3DScat.h 3DScatP.h
+3DPara.o: 2DGeom.h 3DGeom.h 3DPara.h
+3DRot.o: geometry.h 2DGeom.h 3DGeom.h 3DRot.h
+3DRotCube.o: 2DGeom.h 3DGeom.h geometry.h 3DRot.h 3DPara.h 3DRotCube.h
+uniLab.o: 2DGeom.h uniLab.h uniLabLog.h segment_name.h
+uniLabLog.o: 2DGeom.h uniLab.h uniLabLog.h
+axes.o: 2DGeom.h fltRange.h uniLab.h axes.h
+axes_ps.o: 2DGeom.h uniLab.h axes.h
+segment_name.o: 2DGeom.h uniLab.h segment_name.h
+2DGeom.o: 2DGeom.h
+3DGeom.o: 2DGeom.h 3DGeom.h
+geometry.o: geometry.h
+fltRange.o: fltRange.h
+imaggen.o: 2DHist.h 2DGeom.h 2DHistDefs.h uniLab.h labels.h 2DHistP.h
+imaggen.o: 2DHistMalloc.h aimaggen.h imaggen.h
+readhist.o: 2DHist.h readhist.h
+labels.o: 2DGeom.h 2DHistDefs.h 2DHist.h uniLab.h labels.h 2DHistP.h
+labels.o: 2DHistMalloc.h imaggen.h
+psgen.o: 2DGeom.h 2DHistDefs.h 2DHist.h uniLab.h axes.h labels.h 2DHistP.h
+psgen.o: 2DHistMalloc.h imaggen.h
+apsgen.o: 2DGeom.h 2DHistDefs.h 2DHist.h uniLab.h labels.h 2DHistP.h
+apsgen.o: 2DHistMalloc.h imaggen.h aimaggen.h
+2DHistZLabels.o: 2DGeom.h 2DHistDefs.h 2DHist.h uniLab.h labels.h 2DHistP.h
+2DHistZLabels.o: 2DHistMalloc.h 2DHistZLabels.h
+adaptHist.o: 2DHist.h adaptHist.h fltRange.h
+aimaggen.o: 2DHist.h 2DGeom.h 2DHistDefs.h uniLab.h labels.h 2DHistP.h
+aimaggen.o: 2DHistMalloc.h imaggen.h aimaggen.h
+aHistRead.o: 2DHist.h readhist.h adaptHist.h fltRange.h
+uniLab_2DHInt.o: 2DHistMalloc.h 2DHist.h 2DGeom.h 2DHistDefs.h uniLab.h
+uniLab_2DHInt.o: labels.h 2DHistP.h
+drawAxes.o: ../util/psUtils.h drawAxes.h
+dragAxes.o: dragAxes.h
+XYDialogs.o: XY.h XYDialogs.h
+testH1D.o: H1D.h
+testScat.o: Scat.h
+testXY.o: XY.h XYDialogs.h ../util/printUtils.h
+testCurves.o: CurvesP.h Curves.h ../util/misc.h ../util/printUtils.h
+testAH1D.o: H1D.h
+2DHistTest.o: 2DGeom.h uniLab.h 2DHistDefs.h 2DHist.h labels.h 2DHistP.h
+2DHistTest.o: 2DHistMalloc.h readhist.h aHistRead.h
+3DScatTest.o: 3DScat.h

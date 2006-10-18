@@ -1,0 +1,10 @@
+#
+# Makefile for widget examples (IBM version)
+#
+CC=cc
+AR=ar
+CFLAGS = -g
+#CFLAGS =
+LIBS = -lXm -lXt -lX11 -lm -lbsd
+
+include Makefile.common

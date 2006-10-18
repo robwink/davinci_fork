@@ -1,0 +1,2376 @@
+		Histo-Scope Plotting Widget Set Release 1.1
+
+
+Software by: 	Mark Edel, Konstantin Iorcha, Joy Kyriakopulos,
+		Paul Lebrun, and Jeff Kallenbach
+
+Document by:	George Dimas & Mark Edel
+		Updated 3/23/98 by Joy Kyriakopulos
+		Fermi National Accelerator Laboratory
+
+
+Introduction
+
+The Histo-Scope Widget Set is a collection of six Motif widgets for graphing
+and plotting.  It features the high performance and screen stability necessary
+for animation, and includes interactive controls for direct manipulation with
+the mouse.  The widgets were developed for an interactive data browsing tool
+called Histo-Scope, but are very general and easy to incorporate into other
+Motif applications.
+
+Widgets include line plots, 2-D and 3-D scatter plots, 1 and 2 dimensional
+histograms, and several specialty plots:
+
+ * Generic X vs Y two-dimensional line/marker plot
+ * 2-dimensional (X vs Y) scatter plot
+ * 3-dimensional (XYZ) scatter plot
+ * 1-dimensional (conventional) histogram, (also does adaptive histogram)
+ * 2-dimensional histogram (lego plot), (also does 2D adaptive histogram)
+ * Cell plot (alternative to 2D histogram representation)
+
+Most of the widgets have some support for color, though not all have the
+ability to color arbitrary elements.
+
+The widgets are dependent on Motif, and on a few private routines in the Motif
+widget set.  (Mostly they rely upon Motif for Motif specific behavior, such as
+keyboard traversal and drawing shadows, though they also follow Motif naming
+conventions and use XmStrings, so employing them outside of the Motif
+environment would take some additional work.)
+
+In addition to the widgets, the distribution kit contains a number of
+additional utility routines for Motif programming, most of which are not
+required for using the widgets.  These are common among various tools produced
+by our group, including the NEdit text editor, and are included for your
+programming enjoyment, but are documented only by the source code comments. 
+They are also subject to radical change in future releases of the widget set,
+Histo-Scope, and NEdit.
+
+
+Interactive Features
+
+All of the widgets can be scaled, panned, and zoomed by dragging with the left
+mouse button.   3-dimensional plots like the XYZ scatter plot and 2-D histogram
+can also be rotated by dragging.
+	
+Users can change the scale of the plot by placing the mouse pointer on the axes
+(just outside of the plot) and dragging the mouse.  Grabbing near the lower
+half of the axis changes the minimum axis value, starting near the upper half
+changes the maximum axis value.  This will zoom in or out, depending on the
+direction in which the axis is dragged.
+
+After scaling a plot, it is possible to grab a point inside the plot and pan
+the plot, moving it around inside the axes by dragging the mouse.
+
+3-dimensional plots like the XYZ scatter plot and 2-D histogram can be rotated
+by dragging on the remaining (non-axis) parts of the plot, as if the mouse were
+a hand on an invisible trackball over the plot.
+
+
+Conventions
+
+Interface: For the most part the widgets have a standard widget interface as
+described in the X Toolkit Intrinsics - C Language Interface, or any of the
+excellent third party books on the subject of X Windows (and specifically X
+toolkit) programming.  In general, the .h file for each widget contains the
+full specification for its interface.
+
+Memory Usage: Except where noted, the widgets copy any data passed through
+resources or interface routines, so arrays and strings used to pass data to the
+widgets do not need to be retained by the caller.
+
+
+XY Plot
+
+Include: XY.h
+Widget Class: xyWidgetClass
+
+The XY Plot widget is a generic two dimensional plotting widget which draws
+lines, markers, error bars, and strings.  It can also draw 1-D Histogram plots
+from histogram data.  Optionally, up to 39 fill patterns can be set for
+histograms, and histograms can be drawn as a marker with/without error bars. 
+
+Multiple sets of data can be passed to the XY Plot widget.  Multiple curves or 
+histograms are drawn overlaid - each succeeding curve or histogram is displayed
+"on top of" the preceeding one.  Be aware, of course, that if the scales of the
+overlaid curves or histograms vary widely, the plot will not be particularly
+useful.  The intent of overlaying plots is so that the user can discern the
+shape differences of plots with similar scales.
+
+To use the XY widget, include the file XY.h in your C program, create the XY
+widget, and pass your data to the widget.  The XY Widget accepts data in two 
+forms: an XYCurve data structure or an XYHistogram data structure.  String 
+information is passed via the XYString data structure.
+
+The XYCurve data structure associates a list of x-y coordinate pairs with style 
+information and optional error bar data.  An XYCurve data structure has the 
+following format:
+
+	typedef struct _XYCurve {
+	    XmString name;
+	    char markerStyle;
+	    char markerSize;
+	    char lineStyle;
+	    Pixel markerPixel;
+	    Pixel linePixel;
+	    int nPoints;
+	    XYPoint *points;
+	    XYErrorBar *horizBars;
+	    XYErrorBar *vertBars;
+	} XYCurve;
+
+The name assigned to the curve is used in the legend when it is displayed.
+
+Marker styles can be selected from the following options: XY_NO_MARK,
+XY_SQUARE_MARK, XY_CIRCLE_MARK, XY_STAR_MARK, XY_X_MARK, XY_TRIANGLE_MARK,
+XY_SOLID_SQUARE_MARK, XY_SOLID_CIRCLE_MARK, XY_THICK_SQUARE_MARK,
+XY_THICK_CIRCLE_MARK
+
+Marker sizes from: XY_TINY, XY_SMALL, XY_MEDIUM, XY_LARGE
+
+Line styles from: XY_NO_LINE, XY_PLAIN_LINE, XY_FINE_DASH, XY_MED_FINE_DASH,
+XY_DASH, XY_LONG_DASH, XY_X_LONG_DASH, XY_1_DOT_DASH, XY_2_DOT_DASH,
+XY_3_DOT_DASH, XY_4_DOT_DASH, XY_THICK_LINE, XY_X_THICK_LINE
+
+The color fields markerPixel and linePixel are required, and must be a pixel
+value.  For a simple black and white plot, they can be set to:
+BlackPixelOfScreen(XtScreen(widget)). For color plots, obtaining a desired
+color requires knowing about the color environment and either allocating color
+cells or color tables (see the Xlib Reference or User's Guide) to obtain a
+valid pixel value.
+
+nPoints is the number of XYPoint coordinate pairs in the points array.  The
+XYPoint data structure has the following format:
+
+	typedef struct _XYPoint {
+	    float x, y;
+	} XYPoint;
+
+horizBars and vertBars specify optional arrays of XYErrorBar data structures,
+which provide data for drawing horizontal or vertical error bars around
+corresponding points in the points array.  If provided, horizBars and vertBars
+should have the same dimension as points.  To leave off either set of error
+bars, set horizBars and/or vertBars to NULL.  The XYErrorBar data structure
+has the following format:
+
+	typedef struct _XYErrorBar {
+	    float min, max;
+	} XYErrorBar;
+
+
+The XYHistogram data structure specifies a set of bin values, minimum value, 
+maximum value, and number of bins that describes a 1-Dimensional Histogram.  
+An XYHistogram data structure has the following format:
+ 
+	typedef struct _XYHistogram {
+	    XmString name;
+	    char lineStyle;
+	    unsigned fillStyle;
+	    Pixel linePixel;
+	    Pixel fillPixel;
+	    float xMin, xMax;
+	    int nBins;
+	    float *bins;
+	    float *edges;
+	    float barSeparation;
+	    XYErrorBar *errorBars;
+	} XYHistogram;
+
+The name assigned to the histogram is used in the legend when it is displayed
+(see resource XmNshowLegend).
+
+Line styles from: XY_NO_LINE, XY_PLAIN_LINE, XY_FINE_DASH, XY_MED_FINE_DASH,
+XY_DASH, XY_LONG_DASH, XY_X_LONG_DASH, XY_1_DOT_DASH, XY_2_DOT_DASH,
+XY_3_DOT_DASH, XY_4_DOT_DASH, XY_THICK_LINE, XY_X_THICK_LINE
+
+"Line" styles which make histograms appear as markers instead of lines from
+XY_HIST_SQUARE_MARK (= XY_N_LINE_STYLES), XY_HIST_CIRCLE_MARK, XY_HIST_X_MARK, 
+XY_HIST_SOLID_SQUARE_MARK, XY_HIST_SOLID_CIRCLE_MARK.
+
+Fill styles include:  XY_NO_FILL, XY_SOLID_FILL, XY_FINE_HORIZ_FILL, 
+XY_COARSE_HORIZ_FILL, XY_FINE_VERT_FILL, XY_COARSE_VERT_FILL, XY_FINE_GRID_FILL,
+XY_COARSE_GRID_FILL, XY_FINE_X_FILL, XY_COARSE_X_FILL, XY_FINE_45DEG_FILL,
+XY_MED_45DEG_FILL, XY_COARSE_45DEG_FILL, XY_FINE_30DEG_FILL,
+XY_COARSE_30DEG_FILL, XY_FINE_60DEG_FILL, XY_COARSE_60DEG_FILL, 
+XY_R_FINE_45DEG_FILL, XY_R_MED_45DEG_FILL, XY_R_COARSE_45DEG_FILL,
+XY_R_FINE_30DEG_FILL, XY_R_COARSE_30DEG_FILL, XY_R_FINE_60DEG_FILL,  
+XY_R_COARSE_60DEG_FILL, XY_L_FINE_HORIZ_FILL, XY_L_COARSE_HORIZ_FILL,
+XY_L_FINE_VERT_FILL, XY_L_COARSE_VERT_FILL, XY_L_FINE_GRID_FILL,
+XY_L_COARSE_GRID_FILL, XY_L_FINE_X_FILL, XY_L_COARSE_X_FILL, 
+XY_L_FINE_45DEG_FILL, XY_L_MED_45DEG_FILL, XY_L_COARSE_45DEG_FILL,
+XY_L_FINE_30DEG_FILL, XY_L_COARSE_30DEG_FILL, XY_L_FINE_60DEG_FILL.
+XY_L_COARSE_60DEG_FILL
+
+The color fields linePixel and fillPixel are required, and must be a pixel
+value.  For a simple black and white plot, they can be set to:
+BlackPixelOfScreen(XtScreen(widget)).  For color plots, obtaining a desired
+color requires knowing about the color environment and either allocating color
+cells or color tables (see the Xlib Reference or User's Guide) to obtain a
+valid pixel value.
+
+xMin and xMax specify the limits of the histogram.  (xMax is, strictly speaking,
+outside of the histogram, i.e. overflow).  nBins is the number of bins in the
+histogram and therefore the dimension of the bins array, the bin value for 
+each bin.
+
+The edges array is used to draw adaptive histograms.  The edge value is given
+in data coordinates and specifies where to draw the edge of the bin. Thus the
+bin center for a particular bin will be the average of the edge value for the
+bin and the value supplied for the next bin, i.e.: x coordinate of the of bin
+center = (edges[i] + edges[i+1]) / 2.  If provided, edges should have the same
+dimension as bins PLUS 1.  Normal (non-adaptive) histograms should have edges
+set to NULL.
+
+Histogram bins can be drawn separated if barSeparation is nonzero. This 
+separation factor is expressed as a percentage of the bin width.
+
+errorBars specifies an optional array of XYErrorBar data structures, which
+provide data for drawing vertical error bars for corresponding bins in the
+bins array.  If provided, errorBars should have the same dimension as
+bins.  To leave off error bars, set errorBars to NULL.
+
+The XY Widget can also display strings inside of a plot.  The XYString data 
+structure is used for this and specifies position, font, color, and alignment 
+in addition to the text string itself.  See XYSetStrings for additional 
+information.
+
+	typedef struct _XYString {
+	    float x, y;
+	    XmFontList font;
+	    Pixel color;
+	    int alignment;
+	    XmString string;
+	} XYString;
+
+
+XY Widget Resources
+
+The XY widget inherits behavior and resources from XmPrimitive.  For a
+description of the XmPrimitive resources, refer to the OSF/Motif Programmer's
+Reference.
+
+The following table shows the resources understood by the XY widget in addition
+to those defined for XmPrimitive.  The codes in the access column indicate if
+the given resource can be set at creation time (C), set by using XtSetValues
+(S), or retrieved by using XtGetValues (G).
+
+
+                           XY Widget Resource Set
+						        	 
+   Name 		 Class  	       Default  Type	    Access
+   -----------------------------------------------------------------------
+   XmNdoubleBuffer	 XmCDoubleBuffer       False	Boolean     CSG
+   XmNshowLegend	 XmCShowLegend         True	Boolean     CSG
+   XmNxLogScaling	 XmCXLogScaling        False	Boolean     CSG
+   XmNyLogScaling	 XmCYLogScaling        False	Boolean     CSG
+   XmNmarginPercent	 XmCMarginPercent      5	int	    CSG
+   XmNfontList		 XmCFontList           NULL	XmFontList  CG
+   XmNresizeCallback	 XmCresizeCallback     NULL	XmCallback  C
+   XmNbtn2Callback	 XmCBtn2Callback       NULL	XmCallback  C
+   XmNbtn3Callback	 XmCBtn3Callback       NULL	XmCallback  C
+   XmNxAxisLabel	 XmCXAxisLabel         NULL	XmString    CSG
+   XmNyAxisLabel	 XmCYAxisLabel         NULL	XmString    CSG
+   XmNredisplayCallback  XmCRedisplayCallback  NULL	XmCallback  C
+
+XmNdoubleBuffer
+Specifies the way the program draws moving graphics in X-Windows.  If the value
+is True, it allocates and draws to an off-screen pixmap.  If the value is
+False, drawing is done directly into the window.  On some systems
+double-buffering results in smoother animation; on others, the performance
+penalty of the extra drawing reduces the animation quality. 
+
+XmNshowLegend
+Hides or shows the plot legend.  The plot legend is drawn underneath the plot
+to correspond mark and line styles with curve names.  Valid values are True
+or False.
+
+XmNxLogScaling
+Specifies how the x-axis should be displayed.  If the value is True, display
+the x-axis as log x.  If the value is False display the x-axis as linear.
+ 
+XmNyLogScaling
+Specifies how the y-axis should be displayed.  If the value is True, display
+the y-axis as log y.  If the value is False display the y-axis as linear.
+
+XmNymarginPercent
+Amount of extra space to leave around the edges of the plot, expressed as a
+percentage of its width and height.
+
+XmNfontList
+Specifies the font for text used in the widget.
+
+XmNresizeCallback
+Callback routine to be called if the widget is resized.
+
+XmNbtn2Callback
+Callback routine to be called if button 2 is pressed.
+
+XmNbtn3Callback
+Callback routine to be called if button 3 is pressed.
+
+XmNxAxisLabel
+Label name to be displayed on the x axis.  The value must be a compound string.
+
+XmNyAxisLabel
+Label name to be displayed on the y axis.  The value must be a compound string.
+
+XmNredisplayCallback
+Callback routine that is called after the widget has been redisplayed.  This
+callback routine is provided so that an application which draws on the H1D
+widget can refresh its graphics.
+
+
+XY Widget Callback Structure
+
+If callback routines are registered, you will receive an XYCallbackStruct
+structure that contains the following information:
+
+	typedef struct {
+	    int reason;
+	    XEvent *event;
+	    XYTransform *xform;
+	} XYCallbackStruct;
+
+As part of this callback structure, you will receive transformation information
+that allows conversion of data coordinates to window coordinates and vice versa:
+
+	typedef struct {
+	    char xLogScaling, yLogScaling;
+	    double minXData, minYData, minXLim, minYLim;
+	    double xScale, yScale, minXPix, maxYPix;
+	    int xOrigin, yOrigin;
+	} XYTransform;
+
+This conversion data can be used in the routines XYDataToWindowX, 
+XYDataToWindowY, XYWindowToDataX, and XYWindowToDataY.
+
+
+XY Widget Routines
+
+void XYSetCurves(Widget w, XYCurve *curves, int nCurves, int rescaleMode,
+    	         int redisplay)
+Widget	   w		An xy widget
+XYCurve	   *curves	An array of curves to display
+int	   nCurves	The number of curves specified in curves
+int	   rescaleMode	One of: XY_NO_RESCALE, XY_RESCALE, XY_RESCALE_AT_MAX,
+			or XY_GROW_ONLY.  Tells the widget how to change its 
+			display to incorporate the new contents.
+int	   redisplay   	True to refresh display, False to hold screen update 
+                        until a later call (to prevent unnecessary flashing).
+
+XYSetCurves specifies points and/or lines to be displayed by the XY widget in
+the form of sets of points in 2D space.  Each set has a distinct marker and/or
+connecting line style, and possibly associated error bars (horizontal and/or
+vertical). The data and appearance information for each set is called a
+curve.  XYSetCurves takes an array of XYCurve data structures which contain
+all of this data, and passes it along to the XY widget to display. The Curve
+data structure is described above.
+
+The rescale modes adjust the viewable boundaries of the plot as follows:
+
+   XY_NO_RESCALE      - Do not rescale the plot.
+   XY_RESCALE         - Rescale the plot according to the limits of the newly-
+                        supplied data.
+   XY_RESCALE_AT_MAX  - If the viewing boundaries of the plot are currently the 
+                        same as the data boundaries (i.e. showing all the data),
+                        then expand or shrink the range of the plot based on
+                        the range of the new data.
+   XY_GROW_ONLY       - If the viewing boundaries of the plot are currently at 
+                        or beyond the data boundaries (i.e. showing all the 
+                        data), then expand, but do NOT shrink, the range of the
+                        plot based on the range of the new data.  
+
+
+void XYSetHistograms(Widget w, XYHistogram *histograms, int nHistograms,
+    	             int rescaleMode, int redisplay)
+Widget	     w		  An xy widget
+XYHistogram  *histograms  An array of histograms to display
+int	     nHistograms  The number of histograms specified in histograms
+int	     rescaleMode  One of: XY_NO_RESCALE, XY_RESCALE, XY_RESCALE_AT_MAX,
+			  XY_GROW_ONLY, or XY_REBIN_MODE.  Tells the widget how
+                          to change its display to  incorporate the new 
+                          contents.
+int	     redisplay    True to refresh display, False to hold screen update 
+                          until a later call (to prevent unnecessary flashing).
+
+XYSetHistograms specifies both data and appearance information for one or more
+histograms presented in the form of XYHistogram data structures.  Each set has
+a distinct line and/or fill style, and possibly associated error bars and
+edges.  XYSetHistograms takes an array of XYHistogram data structures which
+contain all of this data, and passes it along to the XY widget to display. The
+Histogram data structure is described above.
+
+The rescale modes adjust the viewable boundaries of the plot as follows:
+
+   XY_NO_RESCALE     - Do not rescale the plot.
+   XY_RESCALE        - Rescale the plot according to the limits of the newly-
+                       supplied data.
+   XY_RESCALE_AT_MAX - If the viewing boundaries of the plot are currently the
+                       same as the data boundaries (i.e. showing all the data),
+                       then expand or shrink the range of the plot based on
+                       the range of the new data.
+   XY_GROW_ONLY      - If the viewing boundaries of the plot are currently at 
+                       or beyond the data boundaries (i.e. showing all the 
+                       data), then expand, but do NOT shrink, the range of the
+                       plot based on the range of the new data. 
+   XY_REBIN_MODE     - Adjusts the viewing boundaries of the plot based on the
+                       new rebin value.  Useful when dynamically rebinning
+                       histograms.
+
+
+void XYSetStrings(Widget w, XYString *strings, int nStrings)
+Widget	   w		An xy widget
+XYString   *strings	Array of XYStrings data structures containing
+			string, position, font, color, and alignment
+			information
+int	   nStrings	The number of XYString data structures contained
+			in strings above
+
+XYSetStrings displays a set of text strings in the plot area of the widget.
+Calling this routine removes any strings which were displayed previously and
+replaces them with the ones passed here.  The strings are in the form of
+XYString data structures, which contain position, font, color, and alignment
+for the string in addition to the text string itself.  In the XYString
+structure, font can be passed as NULL, and will default to the widget's
+fontList resource.
+
+
+void XYSetVisibleRange(w, minXLim, minYLim, maxXLim, maxYLim)
+Widget	   w		An XY widget.
+double	   minXLim	Start of visible range along the x-axis.
+double	   minYLim	End of visible range along the x-axis.
+double	   maxXLim	Start of visible range along the y-axis.
+double	   maxYLim	End of visible range along the y-axis.
+
+XYSetVisibleRange sets the range of data that is visible i.e. displayed
+in the plot.  This can differ from the actual range of the data.  In
+particular, unlike the widget's interactive controls, the range can be set
+beyond the limits imposed by the actual minimum and maximum values of the
+data.  Setting a larger range than implied by the data sets a new limit for
+the interactive controls, allowing users to zoom out beyond the minimum and
+maximum data values.  
+
+
+void XYGetVisibleRange(w, minXLim, minYLim, maxXLim, maxYLim)
+Widget	   w		An XY widget.
+double	   *minXLim	Start of visible range along the x-axis.
+double	   *minYLim	End of visible range along the x-axis.
+double	   *maxXLim	Start of visible range along the y-axis.
+double	   *maxYLim	End of visible range along the y-axis.
+
+XYGetVisibleRange retrieves the range of data that is currently visible to a
+user viewing the widget.
+
+
+void XYDrawMarker(display, drawBuf,  gc, iize, style, color, x, y)
+Display	   *display	X display
+Drawable   drawBuf	X window to draw in
+GC	   gc		X graphics context to use for drawing.  Color,
+			line thickness and line style will be altered.
+int	   size		One of: XY_TINY, XY_SMALL, XY_MEDIUM, or XY_LARGE
+int	   style	One of the valid marker styles as listed in the
+			description of the curves data structure above.
+Pixel	   color	Pixel value for the marker
+int	   x,y		Position in window coordinates of the center of the
+			marker
+
+XYDrawMarker draws a marker in an external window (for use with external 
+dialogs for setting marker styles).
+
+
+void XYUpdateCurveStyles(w, curves, redisplay)
+Widget     w  	      An XY widget
+XYCurve    *curves    An array of curve data structures containing the
+     		      new style information, with the same number of 
+     		      elements as were passed originally in the nCurves
+     		      argument to XYSetCurves.
+int        redisplay  True to refresh display, False to hold screen update 
+		      until a later call (to prevent unnecessary flashing).
+
+XYUpdateCurveStyles updates the style information (marker style, line style,
+color, and marker size) for the curves currently displayed by the widget,
+keeping the existing data, and ignoring the data fields in the curves
+structures. The number of curves must be the same as the currently displayed
+data.
+
+
+void XYUpdateHistogramStyles(w, histograms, redisplay)
+Widget       w  	  An XY widget
+XYHistogram  *histograms  An array of histogram data structures containing the
+     			  new style information, with the same number of
+     			  elements as were passed originally in the nHistograms
+     			  argument to XYSetHistograms.
+int           redisplay   True to refresh display, False to hold screen update 
+		          until a later call (to prevent unnecessary flashing).
+
+XYUpdateHistogramStyles updates the style information (line style, fill
+style, line color, and fill color) for the histograms currently displayed
+by the widget, keeping the existing data, and ignoring the data fields in
+the histogram structures. The number of histograms must be the same as the
+currently displayed data
+
+
+void XYUpdateCurveData(w, curves, rescaleMode, redisplay)
+Widget     w  	        An XY widget
+XYCurve    *curves      An array of curve data structures containing the
+     		        new data to display, with the same number of 
+     		        elements as were passed originally in the nCurves
+     		        argument to XYSetCurves.  
+int        rescaleMode	One of: XY_NO_RESCALE, XY_RESCALE, XY_RESCALE_AT_MAX,
+			or XY_GROW_ONLY.  Tells the widget how to change its 
+			display to incorporate the new contents.  See 
+			XYSetCurves for further details.
+int        redisplay   	True to refresh display, False to hold screen update 
+    	    	        until a later call (to prevent unnecessary flashing).
+
+XYUpdateCurveData updates the curves displayed by the widget, using the new
+data in the curves structure, ignoring style, color, and name information.
+The number of curves must be the same as the currently displayed data.
+
+
+void XYUpdateHistogramData(w, *histograms, rescaleMode, redisplay)
+Widget       w  	   An XY widget
+XYHistogram  *histograms   An array of histogram data structures containing the
+     			   new data to display, with the same number of 
+     		           elements as were passed originally in the nHistograms
+     			   argument to XYSetHistograms.
+int          rescaleMode   One of: XY_NO_RESCALE, XY_RESCALE, XY_RESCALE_AT_MAX,
+			   XY_GROW_ONLY, or XY_REBIN_MODE.  Tells the widget how
+                           to change its display to  incorporate the new 
+                           contents.  See XYSetHistograms for further details.
+int          redisplay     True to refresh display, False to hold screen update 
+    	                   until a later call (to prevent unnecessary flashing).
+
+XYUpdateHistogramData updates the histograms displayed by the widget, using
+the new data in the histogram structures, ignoring style, color, and name
+information. The number of histograms must be the same as the currently
+displayed data.
+
+
+void XYDrawLine(display, drawBuf, gc, style, color, x1, y1, x2,  y2)
+Display	   *display	X display
+Drawable   drawBuf	X window to draw in
+GC	   gc		X graphics context to use for drawing.  Color,
+			line thickness and line style will be altered.
+int	   style	One of the valid line styles as listed in the
+			description of the curves data structure above.
+Pixel	   color	Pixel value for the line
+int	   x1,y1	Position in window coordinates of the start of the
+			line
+int	   x2,y2	Position in window coordinates of the end of the
+			line
+
+XYDrawLine draws a line in an external window (for use with external dialogs
+for setting line styles).
+
+
+void XYDrawFill(display, drawBuf, gc, style, color, xMin, yMin, xMax, yMax);
+Display	   *display	X display
+Drawable   drawBuf	X window to draw in
+GC	   gc		X graphics context to use for drawing.  Color,
+			line thickness and line style will be altered.
+unsigned   style	One of the valid line styles as listed in the
+			description of the curves data structure above.
+Pixel	   color	Pixel value for the line
+int        xMin, yMin	top left corner of the rectangle to fill
+int        xMax, yMax	bottom right corner of the rectangle to fill
+
+XYDrawFill draws a histogram fill pattern in an external window (for use with
+external dialogs for setting line styles).
+
+
+void XYDrawMarker(display, drawBuf, gc, size, style, color, int x, int y)
+Display	   *display	X display
+Drawable   drawBuf	X window to draw in
+GC	   gc		X graphics context to use for drawing.  Color, line
+                        thickness and line style will be altered.  
+int        size		One of: XY_TINY, XY_SMALL, XY_MEDIUM, or XY_LARGE
+int        style	One of the valid marker styles as listed in the
+		        description of the curves data structure above.
+Pixel      color	Pixel value for the marker
+int        x, y		Position in window coordinates of the center of the
+		        marker.
+		        
+XYDrawMarker draws a marker in an external window (for use with external
+dialogs for setting marker styles).
+
+
+void XYDrawHistMarker(display, drawBuf, gc, style, color, x, y)
+Display	   *display	X display
+Drawable   drawBuf	X window to draw in
+GC	   gc		X graphics context to use for drawing.  Color, line
+                        thickness and line style will be altered.  
+int        style	One of the valid histogram "line" styles beyond
+                        XY_N_LINE_STYLES (i.e. XY_HIST_SQUARE_MARK,
+                        XY_HIST_CIRCLE_MARK, XY_HIST_X_MARK, 
+                        XY_HIST_SOLID_SQUARE_MARK, XY_HIST_SOLID_CIRCLE_MARK).
+Pixel      color	Pixel value for the marker
+int        x, y		Position in window coordinates of the center of the
+		        marker.
+XYDrawHistMarker draws a marker in an external window (for use with external
+dialogs for setting marker styles), using a histogram "line" style, rather than
+the standard marker size and marker styles used by XYDrawMarker.  The lineStyle
+field in an XYHistogram can contain additional values (beyond the line styles
+used in an XYCurve) which cause the widget to draw markers instead of histogram
+outlines.
+
+
+void XYZoomOut(w)
+Widget	   w		An XY widget.
+
+XYZoomOut zooms out from the visible range.  It increases the x,y coordinates
+by a pre-defined factor of 0.25.
+
+
+void XYZoomIn(w)
+Widget	   w		An XY widget.
+
+XYZoomIn zooms in from the visible range.  Decreases the x,y coordinates by the
+pre-defined factor.  XYZoomIn and XYZoomOut are centered on the current center
+of the plot.
+
+
+void XYResetZoom(w)
+Widget	   w		An XY widget.
+
+XYResetZoom resets the view to the original state, making all data visible.
+However, if log scaling has been set, the plot limits may be adjusted to omit
+negative and/or zero values.
+
+
+void XYPrintContents(w, psFileName)
+Widget	   w		An XY widget.
+char	   *psFileName	Name for the PostScript file to create
+
+XYPrintContents creates an encapsulated PostScript file of the plot. 		
+
+
+double XYDataToWindowX(xform, value)
+XYTransform   *xform   transformation data structure from XYCallbackStruct
+double        value    data value to convert to window coordinates
+
+XYDataToWindowX takes as input an X-coordinate data value and the transformation
+structure passed via the XYCallbackStruct structure and returns the 
+corresponding X-coordinate in window coordinates.  This is useful if drawing
+one's own graphics on top of the XY Widget's display.
+
+
+double XYDataToWindowY(xform, value)
+XYTransform   *xform   transformation data structure from XYCallbackStruct
+double        value    data value to convert to window coordinates
+
+XYDataToWindowY takes as input a Y-coordinate data value and the transformation
+structure passed via the XYCallbackStruct structure and returns the 
+corresponding Y-coordinate in window coordinates.  This is useful if drawing
+one's own graphics on top of the XY Widget's display.
+
+
+double XYWindowToDataX(xform, value)
+XYTransform   *xform   transformation data structure from XYCallbackStruct
+double        value    window value to convert to data coordinates
+
+XYWindowToDataX takes as input an X-coordinate window value and the
+transformation structure passed via the XYCallbackStruct structure and returns
+the  corresponding X-coordinate in data coordinates.  This may be useful if
+drawing one's own graphics on top of the XY Widget's display.
+
+
+double XYWindowToDataY(xform, value)
+XYTransform   *xform   transformation data structure from XYCallbackStruct
+double        value    window value to convert to data coordinates
+
+XYWindowToDataY takes as input an Y-coordinate window value and the
+transformation structure passed via the XYCallbackStruct structure and returns
+the  corresponding Y-coordinate in data coordinates.  This may be useful if
+drawing one's own graphics on top of the XY Widget's display.
+
+
+XY Widget Dialog Routines
+
+For convenience, a set of routines are available to allow the user to 
+interactively change some characteristics of an XY widget.  These 
+characteristics include line style, line color, fill pattern, fill color, 
+marker color, marker size, and marker type.  (On greyscale or black and white
+displays, color options will not be displayed.)  The dialogs use predefined
+characteristics from which the user may select.  The programmer creates
+these dialogs by including XYDialogs.h in his program and calling the
+appropriate create call:
+
+Widget XYCreateCurveStylesDialog(parent, curves, nCurves, okCallback, okArg,
+	applyCallback, applyArg, dismissCallback, dismissArg)
+
+Widget  parent	    - Parent widget for dialog
+XYCurve *curves	    - Array of XYCurves data structures containing style
+		      information to alter.  XYCreateCurveStylesDialog
+		      modifies this data when the user makes his selections
+		      and presses ok or apply, therefore, this must data
+		      must be preserved after the call to this routine,
+		      until the styles dialog is popped down.
+int     nCurves	    - The number of curves data structures in curves above.
+XYMarkLineCallbackProc okCallback - Routine to call when the user presses OK 
+                      in the dialog.  Signals that the dialog has been removed
+		      and set of curves has been altered with the new
+		      style information.
+void    *okArg	    - Arbitrary data to pass to the ok callback routine.
+XYMarkLineCallbackProc applyCallback - Routine to call when the user presses 
+                      Apply in the styles dialog.  Signals that the data in 
+                      the curves array has been altered, but the dialog is 
+                      still up.  If this is passed as NULL, no apply button 
+                      is displayed.
+void    *applyArg   - Arbitrary data to pass to the apply callback routine.
+XYMarkLineCallbackProc dismissCallback - Routine to call when the user presses 
+                      Dismiss in the styles dialog.  Signals that the dialog 
+                      has been popped down without altering the curve 
+                      structures.
+void    *dismissArg - Arbitrary data to pass to the dismiss callback routine.
+
+Display a dialog for setting marker and line styles for a set of curves
+for display by the XY widget.  Returns immediately but leaves up the
+dialog with callbacks attached to the ok, apply, and dismiss buttons.
+When the user presses the OK or Apply buttons, the original set of curves
+structures passed to XYCreateCurveStylesDialog is altered and passed back to
+the apply or ok callback routine.
+
+The dialog may be popped down by the caller by destroying the widget
+returned by this routine.  Since the ok and dismiss buttons automatically
+handle popping down the dialog, this is usually not necessary.
+
+
+int XYEditCurveStyles(parent, curves, nCurves)
+Widget   parent	  Parent widget for dialog
+XYCurve  *curves  Array of XYCurve data structures containing style
+		  information to alter.  XYEditStyles modifies
+		  this data to match the style information selected
+		  by the user.
+int      nCurves  The number of curves data structures in curves above.
+
+Prompt user for marker and line styles for a set of curves for display
+by the XY widget.  This is a simpler version of XYCreateCurveStylesDialog,
+which presents the same dialog, except with no Apply button.  The routine
+returns when the user has selected a new set of styles for the curves,
+and alters the array curves to reflect the user's changes.
+
+
+Widget XYCreateHistogramStylesDialog(parent, histograms, nHistograms, 
+	okCallback, okArg, applyCallback, applyArg, dismissCallback, dismissArg)
+Widget       parent      - Parent widget for dialog
+XYHistogram  *histograms - Array of XYHistogram data structures containing 
+                           style information to alter.  
+                           XYCreateHistogramStylesDialog modifies this data 
+                           when the user makes his selections and presses ok 
+                           or apply; therefore, this data must be preserved 
+                           after the call to this routine until the styles 
+                           dialog is popped down.
+int          nHistograms - The number of data structures in histograms above.
+XYHistCallbackProc okCallback - Routine to call when the user presses OK in the
+		           dialog.  Signals that the dialog has been removed
+		           and the set of histograms has been altered with the 
+		           new style information.
+void         *okArg      - Arbitrary data to pass to the ok callback routine.
+XYHistCallbackProc applyCallback - Routine to call when the user presses Apply 
+                           in the styles dialog.  Signals that the data in the
+		           histograms array has been altered, but the dialog 
+		           is still up. If this is passed as NULL, no apply 
+		           button is displayed.
+void         *applyArg   - Arbitrary data to pass to the apply callback routine.
+XYHistCallbackProc dismissCallback - Routine to call when the user presses 
+                           Dismiss in the styles dialog.  Signals that the 
+                           dialog has been popped down without altering the 
+                           histogram structures.
+void         *dismissArg - Arbitrary data to pass to the dismiss callback 
+                            routine.
+
+Display a dialog for line styles and fill styles for a set of histograms for
+display by the XY widget.  Returns immediately but leaves up the dialog with
+callbacks attached to the ok, apply, and dismiss buttons. When the user
+presses the OK or Apply buttons, the original set of histogram structures
+passed to XYCreateHistogramStylesDialog is altered and passed back to the
+apply or ok callback routine.
+
+The dialog may be popped down by the caller by destroying the widget returned
+by this routine.  Since the ok and dismiss buttons automatically handle
+popping down the dialog, this is usually not necessary.
+
+
+int XYEditHistogramStyles(parent, histograms, nHistograms)
+Widget        parent	   Parent widget for dialog
+XYHistogram   *histograms  Array of XYHistogram data structures containing 
+                           style information to alter.  XYEditHistogramStyles 
+                           modifies this data to match the style information 
+                           selected by the user.
+int           nHistograms  The number of histogram data structures in histograms
+                           above.
+
+Prompt user for fill patterns and line styles for a set of histograms for
+display by the XY widget.  This is a simpler version of
+XYCreateHistogramStylesDialog, which presents the same dialog, except with
+no Apply button.  The routine returns when the user has selected a new set
+of styles for the histograms, and alters the array histograms to reflect the
+user's changes.
+
+
+
+Obsolete Interface Routines (for compatability with V1.0 release):
+
+   void XYSetContents(w, curves, nCurves, rescaleMode)
+   Widget   w            An xy widget
+   XYCurve  *curves      An array of curves to display
+   int      nCurves      The number of curves specified in curves
+   int      rescaleMode  One of: XY_NO_RESCALE, XY_RESCALE, or XY_GROW_ONLY.
+
+   Tells the widget how to change its display to incorporate the new contents.
+
+   Specify the contents of the xy widget in the form of sets of points  in
+   2D space. Each set has a distinct marker and/or connecting line style,
+   and  possibly associated error bars (horizontal and/or vertical).  The
+   data  and appearance information for each set is called a curve.
+   XYSetContents takes a n array of XYCurve data structures which contain
+   all of this data, and passes  it along to the XY widget to display.  The
+   Curve data structure is described above.
+ 
+ 
+   void XYUpdateStyles(w, curves)
+   Widget   w        An xy widget
+   XYCurve  *curves  An array of curve data structures containing the new
+                     style information, with the same number of elements
+                     as were passed originally in the nCurves argument to 
+                     XYSetContents.
+
+   Update the style information (marker style, line style, color, and
+   marker size) for the data currently displayed by the widget, keeping the
+   existing  data, and ignoring the data fields in the curves structures.
+   The number of curves must be the same as the currently displayed data
+
+
+   void XYUpdateData(w, curves, rescaleMode)
+   Widget   w            An xy widget
+   XYCurve  *curves      An array of curve data structures containing the
+                         new data to display, with the same number of
+                         elements as were passed originally in the nCurves
+                         argument to XYSetContents.
+   int      rescaleMode	 One of: XY_NO_RESCALE, XY_RESCALE, or XY_GROW_ONLY.
+                         Tells the widget how to change its display to
+                         incorporate the new contents.
+
+   Update the data displayed by the widget, using the new data in the curves
+   structure, ignoring style, color, and name information.  The number of 
+   curves must be the same as the currently displayed data
+
+
+
+Example Program:  xySimple.c
+
+#include <Xm/Xm.h>
+#include <stdio.h>
+#include "../plot_widgets/XY.h"
+
+#define NUM_POINTS  10
+static XYPoint Points[NUM_POINTS] = {{1,4}, {2,5}, {3,7}, {4,8}, {5,0},
+	{6,3}, {7,9}, {8,6}, {9,2}, {10,1}};
+
+main(int argc, char *argv[])
+{
+    XtAppContext app_context;
+    Widget toplevel, xyW;
+    XmString s1, s2;
+    XYCurve curve;
+    
+    /* Initialize X and the X toolkit */
+    toplevel = XtAppInitialize(&app_context, "CurvesTest", NULL,
+	    0, &argc, argv, NULL, NULL, 0);    
+    		
+    /* Create an XY widget */
+    xyW = XtVaCreateManagedWidget("XYWidget", xyWidgetClass, toplevel, 
+    	    XmNxAxisLabel, s1=XmStringCreateSimple("X Axis Label"),
+    	    XmNyAxisLabel, s2=XmStringCreateSimple("Y Axis Label"),
+    	    NULL);
+    XmStringFree(s1);
+    XmStringFree(s2);
+
+    /* Set the contents */
+    curve.name = XmStringCreateSimple("Variable 1");
+    curve.markerStyle = XY_CIRCLE_MARK;
+    curve.markerSize = XY_MEDIUM;
+    curve.lineStyle = XY_PLAIN_LINE;
+    curve.markerPixel = BlackPixelOfScreen(XtScreen(xyW));
+    curve.linePixel = curve.markerPixel;
+    curve.nPoints = NUM_POINTS;
+    curve.points = Points;
+    curve.horizBars = NULL;
+    curve.vertBars = NULL;
+    XYSetCurves(xyW, &curve, 1, XY_RESCALE, True); 
+    XmStringFree(curve.name);
+  
+    /* Realize widgets and call XtMainLoop to continuously process events */
+    XtRealizeWidget(toplevel);
+    XtAppMainLoop(app_context);
+}
+
+XY Scatter Plot
+
+Include: Scat.h
+Widget Class: scatWidgetClass
+
+The XY Scatter Plot widget plots data in the form of coordinate pairs as dots
+in 2D space.  To use the Scat widget, include the file Scat.h in your C program,
+create the widget, and pass your data to the widget.  The Scat Widget accepts
+data in the form of ScatPoint data structures:
+
+	typedef struct _ScatPoint {
+	    Pixel pixel;
+	    float x, y;
+	} ScatPoint;
+
+where pixel denotes the color of the dot to draw at coordinate [x,y]. 
+For a simple black and white plot, the pixel value can be set to
+BlackPixelOfScreen(XtScreen(widget)).  For color plots, obtaining a desired
+color requires knowing about the color environment and either allocating color
+cells or color tables to obtain a valid pixel value (see the Xlib Reference 
+or User's Guide).
+
+
+Scat Widget Resources
+
+The Scat widget inherits behavior and resources from XmPrimitive.  For a
+description of the XmPrimitive resources, refer to the OSF/Motif Programmer's
+Reference.
+
+The following table shows the resources understood by the Scat widget in
+addition to those defined for XmPrimitive.  The codes in the access column
+indicate if the given resource can be set at creation time (C), set by using
+XtSetValues (S), or retrieved by using XtGetValues (G).
+
+			Scat Widget Resource Set
+
+   Name 	         Class		       Default  Type	     Access
+   ------------------------------------------------------------------------
+   XmNdoubleBuffer       XmCDoubleBuffer       False	Boolean      CSG
+   XmNdarkerPoints       XmCDarkerPoints       True	Boolean      CSG
+   XmNxLogScaling        XmCXLogScaling        False	Boolean      CSG
+   XmNyLogScaling        XmCYLogScaling        False	Boolean      CSG
+   XmNfontList		 XmCFontList           NULL	XmFontList   CG
+   XmNresizeCallback	 XmCresizeCallback     NULL	XmCallback   C
+   XmNbtn2Callback       XmCBtn2Callback       NULL	XmCallback   C
+   XmNbtn3Callback       XmCBtn3Callback       NULL	XmCallback   C
+   XmNxAxisLabel         XmCXAxisLabel	       NULL	XmString     CSG
+   XmNyAxisLabel         XmCYAxisLabel	       NULL	XmString     CSG
+   XmNredisplayCallback  XmCRedisplayCallback  NULL	XmCallback   C
+						     
+
+XmNdoubleBuffer
+Specifies the way the program draws moving graphics in X-Windows.  If the
+value is True, it allocates and draws to an off screen pixmap.  If the value
+is False, drawing is done directly into the window.  On some systems double-
+buffering results in smoother animation, on others, the performance penalty of
+the extra drawing reduces the animation quality.
+
+XmNdarkerPoints
+Specifies the size of the pixel to represent the dot.  If the value is True,
+display dots as two pixels wide.  If the value is False, display dots as one
+pixel wide.
+
+XmNxLogScaling
+Specifies how the x-axis should be displayed.  If the value is True, display
+the x-axis as log x.  If the value is False display the x-axis as linear.
+The Scat widget checks that log scaling is possible with the current data.
+If it is not possible, XmNxLogScaling will be set back to False.
+
+XmNyLogScaling
+Specifies how the y-axis should be displayed.  If the value is True, display
+the y-axis as log y.  If the value is False display the y-axis as linear.
+The Scat widget checks that log scaling is possible with the current data.
+If it is not possible, XmNyLogScaling will be set back to False.
+
+XmNfontList
+Specifies the font for text used in the widget.
+
+XmNresizeCallback
+Callback routine to be called if the widget is resized.
+
+XmNbtn2Callback
+Callback routine to be called if button 2 is pressed.
+
+XmNbtn3Callback
+Callback routine to be called if button 3 is pressed.
+
+XmNxAxisLabel
+The name to be displayed on the x axis.  The value must be a compound string.
+
+XmNyAxisLabel
+The name to be displayed on the y axis.  The value must be a compound string.
+
+XmNredisplayCallback
+Callback routine that is called after the widget has been redisplayed.  This
+callback routine is provided so that an application which draws on the Scat
+widget can refresh its graphics.
+
+
+Scat Widget Routines
+
+void ScatSetContents(w, points, nPoints, rescale)
+Widget	    w		A Scat widget.
+ScatPoint   *points	An array of points to display.
+int	    nPoints	The number of elements specified in points.
+int	    rescale	One of: SCAT_NO_RESCALE, SCAT_RESCALE, SCAT_GROW_ONLY,
+			or SCAT_RESCALE_AT_MAX.  Specifies to the widget
+			how to change its display to incorporate the
+			new contents.
+
+ScatSetContents specifies the contents of the Scat widget in the form of points
+in 2D space.  It takes as input an array of ScatPoint data structures which
+contain a pixel value and an x, y coordinate pair.  The pixel value sets the
+color for the point, and must be initialized for every point.  (If you don't 
+care about color, just set it to BlackPixelOfScreen(XtScreen(w)).)  Note also 
+that using color significantly reduces the performance of the widget.
+
+The rescale modes adjust the viewable boundaries of the plot as follows:
+
+   SCAT_NO_RESCALE      - Do not rescale the plot.
+   SCAT_RESCALE         - Rescale the plot according to the limits of the
+                          newly-supplied data.
+   SCAT_RESCALE_AT_MAX  - If the viewing boundaries of the plot are currently
+                          the  same as the data boundaries (i.e. showing all
+                          the data), then expand or shrink the range of the
+                          plot based on the range of the new data.
+   SCAT_GROW_ONLY       - If the viewing boundaries of the plot are currently
+                          at or beyond the data boundaries (i.e. showing all
+                          the data), then expand, but do NOT shrink, the range
+                          of the plot based on the range of the new data.
+
+
+void ScatSetVisibleRange(w, minXLim, minYLim, maxXLim, maxYLim)
+Widget	    w		A Scat widget.
+double	    minXLim	Start of visible range along the x-axis.
+double	    minYLim	End of visible range along the x-axis.
+double	    maxXLim	Start of visible range along the y-axis.
+double	    maxYLim	End of visible range along the y-axis.
+
+ScatSetVisibleRange sets the range of data that is visible, i.e. initially
+displayed in the plot.  This can differ from the actual range of the data.  
+In particular, unlike the widget's interactive controls, the range can be set
+beyond the limits imposed by the actual minimum and maximum values of the
+data.  Setting a larger range than implied by the data, sets a new limit for
+the interactive controls, allowing users to zoom out beyond the minimum and
+maximum data values.
+
+
+void ScatGetVisibleRange(w, minXLim, minYLim, maxXLim, maxYLim)
+Widget	    w		A Scat widget.
+double	    *minXLim	Start of visible range along the x-axis.
+double	    *minYLim	End of visible range along the x-axis.
+double	    *maxXLim	Start of visible range along the y-axis.
+double	    *maxYLim	End of visible range along the y-axis.
+
+ScatGetVisibleRange retrieves the range of data that is currently visible to a
+user viewing the widget.
+
+
+void ScatZoomOut(w)
+Widget	  w	A Scat widget.
+
+ScatZoomOut zooms out from the visible range.  It increases the x,y coordinates
+by a pre-defined factor of 0.25.  ScatZoomIn and ScatZoomOut are centered on 
+the current center of the plot.
+
+
+void ScatZoomIn(w)
+Widget	  w	A Scat widget.
+
+ScatZoomIn zooms in from the visible range.  It decreases the x,y coordinates 
+by the pre-defined factor.  ScatZoomIn and ScatZoomOut are centered on the 
+current center of the plot.
+
+
+void ScatResetZoom(w)
+Widget	  w	A Scat widget.
+
+ScatResetZoom resets the view to the original state, making all data visible.
+
+
+void ScatPrintContents(w, psFileName)
+Widget	  w		A Scat widget.
+char	  *psFileName	Name of the PostScript file to create.
+
+ScatPrintContents creates an encapsulated PostScript file of the scatter plot.
+
+
+void ScatWritePS(w, fp)
+Widget	  w		A Scat widget.
+FILE      *fp		File pointer for an open file in which to write the 
+                        drawing commands.
+
+ScatWritePS writes out PostScript drawing commands to draw the contents of the
+widget to an open file.  The PostScript code written does not stand alone.  It
+depends on the preamble definitions and scaling normally provided by OpenPS in
+the utilities directory.  To get the bounding rectangle, use XGetGeometry on
+the XtWindow of the widget to get the width and height.  The plot is drawn
+between 0,0 and the width and height of the widget.
+
+
+
+Example Program:  scatSimple.c
+
+#include <limits.h>
+#include <math.h>
+#include <Xm/Xm.h>
+#include "../plot_widgets/Scat.h"
+
+#define NUM_POINTS 10000
+
+main(int argc, char *argv[])
+{
+    XtAppContext appContext;
+    Widget toplevel, scat; 
+    XmString s1, s2; 
+    int i;
+    ScatPoint *point, points[NUM_POINTS];
+    
+    /* Initialize X and Xt */   
+    toplevel = XtAppInitialize(&appContext, "ScatTest", NULL,
+            0, &argc, argv, NULL, NULL, 0);
+    
+    /* Create a scat widget to display the points */
+    scat = XtVaCreateManagedWidget("Scat", scatWidgetClass, toplevel,
+            XmNxAxisLabel, s1=XmStringCreateSimple("X Axis Label"),
+            XmNyAxisLabel, s2=XmStringCreateSimple("Y Axis Label"),
+            XmNdarkerPoints, False,
+            NULL); 
+    XmStringFree(s1);    	
+    XmStringFree(s2);
+    
+    /* Create data for the plot and display it */
+    srandom(1);
+    for (point = points, i=0; i<NUM_POINTS; i++, point++) {
+        point->x = pow((float)random() / LONG_MAX - .5, 3);
+        point->y = pow((float)random() / LONG_MAX - .5, 3);
+        point->pixel = BlackPixelOfScreen(XtScreen(scat));
+    }
+    ScatSetContents(scat, points, NUM_POINTS, SCAT_RESCALE);
+    
+    /* Realize the widgets and call XtMainLoop to continuously process events */
+    XtRealizeWidget(toplevel);
+    XtAppMainLoop(appContext);
+}
+
+
+XYZ Scatter Plot
+
+Include: 3DScat.h
+Widget Class: scat3DWidgetClass
+
+The XYZ Scatter Plot widget plots data in the form of coordinate triplets as
+dots in 3D space.  To use the Scat3D widget, include the file 3DScat.h in your 
+C program, create the widget, and pass your data to the widget.  The Scat3D 
+Widget accepts data in the form of Scat3DPoint data structures:
+
+	typedef struct _scatPoint {
+	    float x, y, z;
+	} Scat3DPoint;
+
+
+Scat3D Widget Resources
+
+The Scat3D widget inherits behavior and resources from XmPrimitive.  For a
+description of the XmPrimitive resources, refer to the OSF/Motif Programmer's
+Reference.
+
+The following table shows the resources understood by the Scat3D widget in
+addition to those defined for XmPrimitive.  The codes in the access column
+indicate if the given resource can be set at creation time (C), set by using
+XtSetValues (S), or retrieved by using XtGetValues (G).
+
+                      
+			Scat3D Widget Resource Set
+		        		     
+  Name			Class		       Default  Type	    Access
+  ------------------------------------------------------------------------
+  XmNdoubleBuffer	XmCDoubleBuffer        False	Boolean     CSG
+  XmNdarkerPoints	XmCDarkerPoints        True	Boolean     CSG
+  XmNuseBitmap		XmCUseBitmap	       True	Boolean     CSG
+  XmNbitmapStrategyAuto XmCBitmapStrategyAuto  True	Boolean     CSG
+  XmNxLogScaling	XmCXLogScaling	       False	Boolean     CSG
+  XmNyLogScaling	XmCYLogScaling	       False	Boolean     CSG
+  XmNzLogScaling	XmCZLogScaling	       False	Boolean     CSG
+  XmNdataColor		XmCDataColor	       Black	Pixel	    CG
+  XmNaxesColor		XmCAxesColor	       Black	Pixel	    CG
+  XmNlabeledEdgeColor	XmCLabeledEdgeColor    Black	Pixel	    CG
+  XmNunLabeledEdgeColor XmCUnLabeledEdgeColor  Black	Pixel	    CG
+  XmNfrontEdgeColor	XmCFrontEdgeColor      Black	Pixel	    CG
+  XmNbackEdgeColor	XmCBackEdgeColor       Black	Pixel	    CG
+  XmNbackEdgeDashes	XmCBackEdgeDashes      2	int	    CG
+  XmNbackEdgeDashOffset XmCBackEdgeDashOffset  1	int	    CG
+  XmNfontList		XmCFontList            NULL	XmFontList  CG
+  XmNresizeCallback	XmCresizeCallback      NULL	XmCallback  C
+  XmNbtn2Callback	XmCBtn2Callback        NULL	XmCallback  C
+  XmNbtn3Callback	XmCBtn3Callback        NULL	XmCallback  C
+  XmNredisplayCallback	XmCRedisplayCallback   NULL	XmCallback  C
+				  
+
+XmNdoubleBuffer
+Specifies the way the program draws moving graphics in X-Windows.  If the
+value is True, it allocates and draws to an off-screen pixmap.  If the value
+is False, drawing is done directly into the window.  On some systems
+double-buffering results in smoother animation, on others, the performance
+penalty of the extra drawing reduces the animation quality.
+
+XmNdarkerPoints
+Specifies the size of the pixel to represent the dot.  If the value is True,
+display dots as two pixels wide.  If the value is False, display dots as one
+pixel wide.
+
+XmNuseBitmap
+Specifies the drawing method when the number of points become large.  If the
+value is True, drawing is done on a bitmap.  If the value is False, drawing is
+done using the routine XDrawPoints.
+
+XmNbitmapStrategyAuto
+Specifies when switching between point drawing and bitmap drawing mode should
+occur.  If the value is True, switching is done automatically, based on the
+amount of data.
+
+XmNxLogScaling
+Specifies how the x-axis should be displayed.  If the value is True, display
+the x-axis as log x.  If the value is False display the x-axis as linear.
+
+XmNyLogScaling
+Specifies how the y-axis should be displayed.  If the value is True, display
+the y-axis as log y.  If the value is False display the y-axis as linear.
+
+XmNzLogScaling
+Specifies how the z-axis should be displayed.  If the value is True, display
+the z-axis as log z.  If the value is False display the z-axis as linear.
+
+XmNdataColor
+Specifies the color to represent the data points.  The value should be a valid
+pixel value.  The color cannot be changed after widget creation.
+
+XmNaxesColor
+Specifies the color to represent the axes.  The value should be a valid pixel
+value.  The color cannot be changed after widget creation.
+
+XmNlabeledEdgeColor
+Specifies the color to represent the labeled edge.  The value should be a valid
+pixel value.  The color cannot be changed after widget creation.
+
+XmNunLabeledEdgeColor
+Specifies the color to represent the unlabeled edge.  The value should be a 
+valid pixel value.  The color cannot be changed after widget creation.
+
+XmNfrontEdgeColor
+Specifies the color to represent the front edge.  The value should be a valid
+pixel value.  The color cannot be changed after widget creation.
+
+XmNbackEdgeColor
+Specifies the color to represent the back edge.  The value should be a valid
+pixel value.  The color cannot be changed after widget creation.
+
+XmNbackEdgeDashes
+Specifies the back edge dash length in pixels.  (The gaps between the dashes
+will also be the same length.)  The number should not exceed 255, and if <= 0
+will cause a solid line to be drawn.  The number cannot be changed after
+widget creation.
+
+XmNbackEdgeDashOffset
+Specifies the number of pixels for the back edge dash offset (the starting
+point for dashed lines).  The number cannot be changed after widget creation.
+
+XmNfontList
+Specifies the font for text used in the widget.
+
+XmNresizeCallback
+Callback routine to be called if the widget is resized.
+
+XmNbtn2Callback
+Specifies a callback routine called when button 2 is pressed.
+
+XmNbtn3Callback
+Specifies a callback routine called when button 3 is pressed.
+
+XmNredisplayCallback
+Specifies a callback routine that is called after the widget has been
+redisplayed.  This callback routine is provided so an application which draws
+on the scat3D widget can refresh its graphics.
+
+
+Scat 3D Widget Routines
+
+void Scat3DSetContents(w, points, nPoints, rescale)
+Widget	    	    w	      A 3DScat widget.
+Scat3DPoint	    *points   An array of points to display.
+int		    nPoints   The number of elements specified in points.
+Scat3DRescaleModes  rescale   One of:  SCAT3D_NO_RESCALE, SCAT3D_RESCALE,
+			      or SCAT3D_RESCALE_AT_MAX.  Specifies to the
+			      widget how to change its display to
+			      incorporate the new contents.
+
+Scat3DSetContents specifies the contents of the Scat3D widget in the form of
+points in 3D space.  It takes as input an array of Scat3DPoint data structures
+which contains the x,y,z coordinates of the points.  It calculates the scale
+and limits for the widget and decides the drawing method based on how sparse or
+dense the data is and the settings of the XmNuseBitmap and XmNbitmapStrategyAuto
+resources.  Then it draws and displays the Scat3D widget on the screen.
+
+The rescale modes adjust the viewable boundaries of the plot as follows:
+
+   SCAT3D_NO_RESCALE     - Do not rescale the plot.
+   SCAT3D_RESCALE        - Rescale the plot according to the limits of the
+                           newly-supplied data.
+   SCAT3D_RESCALE_AT_MAX - If the viewing boundaries of the plot are currently
+                           the  same as the data boundaries (i.e. showing all
+                           the data), then expand or shrink the range of the
+                           plot based on the range of the new data.
+   SCAT3D_GROW_ONLY      - If the viewing boundaries of the plot are currently
+                           at or beyond the data boundaries (i.e. showing all
+                           the data), then expand, but do NOT shrink, the range
+                           of the plot based on the range of the new data.
+
+
+void Scat3DSetAxesNames(w, xName, yName, zName)
+Widget		w	    A Scat3D widget.
+char		*xName	    A name to be placed on the x-axis.
+char		*yName	    A name to be placed on the y-axis.
+char		*zName	    A name to be placed on the z-axis.
+
+Scat3DSetAxesNames sets the labels to be displayed on each axis
+
+
+void Scat3DSetLimits(w, xMin, xMax, yMin, yMax, zMin, zMax)
+Widget		w	    A Scat3D widget.
+float		xMin	    The x-axis minimum limit.
+float		xMax	    The x-axis maximum limit.
+float		yMin	    The y-axis minimum limit.
+float		yMax	    The y-axis maximum limit.
+float		zMin	    The z-axis minimum limit.
+float		zMax	    The z-axis maximum limit.
+
+Scat3DSetLimits sets the limits for the interactive controls.  The default
+limits are the minimum and maximum data points in each dimension.  (Use 
+Scat3DSetVisiblePart to set the range of data that is visible.) 
+
+If log scaling for an axis has been previously set to True and the minimum
+limit of that axis is set to a value <= 0 (zero) by Scat3DSetLimits, then log
+scaling for that axis will be disabled and the axis is displayed as linear.
+
+
+void Scat3DSetVisiblePart(w, xMin, xMax, yMin, yMax, zMin, zMax) 
+Widget		w	    A Scat3D widget.
+float		xMin	    Start of visible range along x-axis.
+float		xMax	    End of visible range along x-axis.
+float		yMin	    Start of visible range along y-axis.
+float		yMax	    End of visible range along y-axis.
+float		zMin	    Start of visible range along z-axis.
+float		zMax	    End of visible range along z-axis.
+
+Scat3DSetVisiblePart sets the range of data that is visible i.e. initially
+displayed in the plot.  Note that unlike the other widgets, this call does not
+reset the limits for the interactive controls.  The control limits must be set
+with an additional call to Scat3DSetLimits.
+
+
+void Scat3DGetVisiblePart(w, xMin, xMax, yMin, yMax, zMin, zMax) 
+Widget		w	    A Scat3D widget.
+float		*xMin	    Start of visible range along x-axis.
+float		*xMax	    End of visible range along x-axis.
+float		*yMin	    Start of visible range along y-axis.
+float		*yMax	    End of visible range along y-axis.
+float		*zMin	    Start of visible range along z-axis.
+float		*zMax	    End of visible range along z-axis.
+
+Scat3DGetVisiblePart retrieves the range of data that is currently visible to a
+user viewing the widget.
+
+
+void Scat3DResetView(w)
+Widget		w	    A Scat3D widget.
+
+Scat3DResetView resets the view to the original state.  Displays the Scat3D
+widget with its original range and all the data points.  The viewing rotation
+is reset to the original setting of [pi/4, -pi/3, 0] and scaling is reset to
+linear on all axes.
+
+
+void Scat3DZoom(w, factor)
+Widget		w	    A 3DScat widget.
+float		factor	    The zoom factor.
+
+Scat3DZoom zooms in if factor is less than one, or out if factor is greater
+than one.  The new view is centered on the current center of the visible range.
+
+
+void Scat3DZoomOut(w)
+Widget		w	    A 3DScat widget.
+
+Scat3DZoomOut zooms out by increasing the x,y,z coordinates by a pre-set factor
+of 2.0.
+
+
+void Scat3DZoomIn(w)
+Widget		w	    A 3DScat widget.
+
+Scat3DZoomIn zooms in by decreasing the x,y,z coordinates by a pre-set factor
+of 0.5.
+
+
+void Scat3DGetViewEulerAngles (w, alpha, beta, gamma) 
+Widget		w	    A Scat3D widget.
+double          *alpha      First Euler angle.
+double          *beta       Second Euler angle. 
+double          *agamma     Third Euler angle. 
+     
+Scat3DGetViewEulerAngles is a utility routine to retrieve the current viewing
+rotation as represented by the three Euler angles alpha, beta, and gamma.
+
+
+void Scat3DSetViewEulerAngles (w, alpha, beta, gamma) 
+Widget		w	    A Scat3D widget.
+double          alpha       First Euler angle.
+double          beta        Second Euler angle. 
+double          agamma      Third Euler angle. 
+     
+Scat3DSetViewEulerAngles is a utility routine to set the current viewing
+rotation as represented by the three Euler angles alpha, beta, and gamma.
+
+
+void Scat3DPrintContents(w, psFileName)
+Widget		w	    A Scat3D widget.
+char		*psFileName Name for the PostScript file to create
+
+Scat3DPrintContents creates an encapsulated PostScript file of the 3D scatter
+plot.	
+
+
+void Scat3DWritePS(w, fp)
+Widget	  w		A Scat3D widget.
+FILE      *fp		File pointer for an open file in which to write the 
+                        drawing commands.
+
+Scat3DWritePS writes out PostScript drawing commands to draw the contents of
+the widget to an open file.  The PostScript code written does not stand alone.
+It depends on the preamble definitions and scaling normally provided by OpenPS
+in the utilities directory.  To get the bounding rectangle, use XGetGeometry on
+the XtWindow of the widget to get the width and height.  The plot is drawn
+between 0,0 and the width and height of the widget.
+
+
+
+Example Program:  scat3DExample.c
+#include <limits.h>
+#include <math.h>
+#include <Xm/Xm.h>
+#include "../plot_widgets/3DScat.h"
+
+#define NUM_POINTS 10000
+
+main(int argc, char *argv[])
+{
+    XtAppContext appContext;
+    Widget toplevel, scat3D;
+    int i, c;
+    Scat3DPoint *point, points[NUM_POINTS];
+    
+    /* Initialize X and Xt */   
+    toplevel = XtAppInitialize(&appContext, "Scat3DTest", NULL,
+            0, &argc, argv, NULL, NULL, 0);
+
+    /* Create a Scat3D widget to display the points. */
+    scat3D = XtVaCreateManagedWidget("Scat3D", scat3DWidgetClass, toplevel,
+            XmNdarkerPoints, FALSE,
+            NULL); 
+    
+    /* Label the axes */
+    Scat3DSetAxesNames(scat3D, "X Axis", "Y Axis", "Z Axis");
+    
+    /* Create data for the plot */
+    srandom(1);
+    for (point = points, i=0; i<NUM_POINTS; i++, point++) {
+        point->x = pow((float)random() / LONG_MAX - .5, 3);
+        point->y = pow((float)random() / LONG_MAX - .5, 3);
+        point->z = pow((float)random() / LONG_MAX - .5, 3);
+    }
+    
+    /* Display the data */
+    Scat3DSetContents(scat3D, points, NUM_POINTS, SCAT3D_RESCALE);
+    
+    /* Realize the widgets and call XtMainLoop to continuously process events */
+    XtRealizeWidget(toplevel);
+    XtAppMainLoop(appContext);
+}
+
+
+
+One-Dimensional Histogram
+
+Include: H1D.h
+Widget Class: h1DWidgetClass
+
+A one-dimensional histogram is a plot of a set of values, over a pre-specified
+range, divided into a number of bins.  The one dimensional histogram widget
+can also display a specialty plot called an adaptive histogram.  An adaptive
+histogram is a histogram whose bins, rather than being spaced evenly, are
+partitioned according to the density of the data.
+
+
+H1D Widget Resources
+
+The H1D widget inherits behavior and resources from XmPrimitive.  For a
+description of the XmPrimitive resources, refer to the OSF/Motif Programmer's
+Reference.
+
+The following table shows the resources understood by the H1D widget in
+addition to those defined for XmPrimitive.  The codes in the access column
+indicate if the given resource can be set at creation time (C), set by using
+XtSetValues (S), or retrieved by using XtGetValues (G).
+                         
+			 H1D Widget Resource Set
+
+   Name 		 Class  	       Default  Type	    Access
+   -----------------------------------------------------------------------
+   XmNdoubleBuffer	 XmCDoubleBuffer       False	Boolean     CSG
+   XmNlogScaling	 XmCLogScaling         False	Boolean     CSG
+   XmNbinEdgeLabeling	 XmCBinEdgeLabeling    False	Boolean     CSG
+   XmNbarSeparation	 XmCBarSeparation      0	int	    CSG
+   XmNfontList		 XmCFontList           NULL	XmFontList  CG
+   XmNresizeCallback	 XmCresizeCallback     NULL	XmCallback  C
+   XmNbtn2Callback	 XmCBtn2Callback       NULL	XmCallback  C
+   XmNbtn3Callback	 XmCBtn3Callback       NULL	XmCallback  C
+   XmNxAxisLabel	 XmCXAxisLabel         NULL	XmString    CSG
+   XmNyAxisLabel	 XmCYAxisLabel         NULL	XmString    CSG
+   XmNredisplayCallback  XmCRedisplayCallback  NULL	XmCallback  C
+				  		      
+
+XmNdoubleBuffer
+Specifies the way the program draws moving graphics in X-Windows.  If the
+value is True, it allocates and draws to an off screen pixmap.  If the value
+is False, drawing is done directly into the window.  On some systems
+double-buffering results in smoother animation, on others, the performance
+penalty of the extra drawing reduces the animation quality. 
+
+XmNlogScaling
+Specifies how the vertical axis should be displayed.  If the value is True,
+display the axes as log.  If the value is False display the axes as linear.
+
+XmNbinEdgeLabeling
+Specifies how to label the bin edges.  If the value is True, try to place tic
+marks and labels exactly on the bin edges.
+
+XmNbarSeparation
+Specifies the space between bars as percentage of bin width.
+
+XmNfontList
+Specifies the font for text used in the widget.
+
+XmNresizeCallback
+Callback routine to be called if the widget is resized.
+
+XmNbtn2Callback
+Callback routine to be called if button 2 is pressed.
+
+XmNbtn3Callback
+Callback routine to be called if button 3 is pressed.
+
+XmNxAxisLabel
+Label name to be displayed on the x axis.  The value must be a compound string.
+
+XmNyAxisLabel
+Label name to be displayed on the y axis.  The value must be a compound string.
+
+XmNredisplayCallback
+Callback routine that is called after the widget has been redisplayed.  This
+callback routine is provided so that an application which draws on the H1D
+widget can refresh its graphics.
+
+
+H1D Widget Routines
+
+void H1DSetContents(w, xMin, xMax, nBins, bins, upErr, lowErr, rescale)
+Widget	   w		An H1D widget.
+float	   xMin		Low edge of first bin.
+float	   xMax		Right edge of last bin.
+int	   nBins	The number of bins in the histogram.
+float	   *bins	The bin contents, an array of floats nBins long.
+float	   uppErr	Upper error bar data stored as offset from top of
+			bin, array of floats nBins long.
+float	   lowErr	Lower error bar data stored as offset from top of
+			bin, array of floats nBins long.
+int	   rescale	One of:  H1D_RESCALE, H1D_NO_RESCALE, H1D_GROW_ONLY,
+			H1D_RESCALE_AT_MAX, or H1D_REBIN_MODE.  Specifies
+			to the widget how to change its display to
+			incorporate the new contents.
+
+H1DSetContents specifies the contents of the H1D widget in the form of lines in
+2D space.  It takes as input an array of bin values and optional arrays of 
+error data and draws the histogram on the screen.
+		
+
+void H1DSetContentsAdaptive(w, nBins, bins, edges, rescale)
+Widget	   w		An H1D widget.
+int	   nBins	The number of bins in the histogram.
+float	   *bins	The bin contents, an array of floats nBins long.
+float	   *edges	The bin edges in data coordinates nBins + 1 long.
+int	   rescale	One of:  H1D_RESCALE, H1D_NO_RESCALE, H1D_GROW_ONLY,
+			H1D_RESCALE_AT_MAX, or H1D_REBIN_MODE. Specifies
+			to the widget how to change its display to
+			incorporate the new contents.
+
+H1DSetContentsAdaptive specifies the contents of the H1D widget as an adaptive
+histogram in the form of lines in 2D space.  It takes as input an array of bin
+values and an array of values for positioning the edge of each bin.
+
+ 
+void H1DSetVisibleRange(w, minXLim, minYLim, maxXLim, maxYLim)
+Widget	   w		An H1D widget.
+double	   minXLim	Start of visible range along x-axis.
+double	   minYLim	End of visible range along x-axis.
+double	   maxXLim	Start of visible range along y-axis.
+double	   maxYLim	End of visible range along y-axis.
+
+H1DSetVisibleRange sets the range of data that is visible, i.e. initially 
+displayed in the plot.  This can differ from the actual range of the data. 
+In particular, unlike the widget's interactive controls, the range can be set
+beyond the limits imposed by the actual minimum and maximum values of the
+data.  Setting a larger range than implied by the data, sets a new limit for
+the interactive controls, allowing users to zoom out beyond the minimum and
+maximum data values.
+
+
+void H1DGetVisibleRange(w, minXLim, minYLim, maxXLim, maxYLim)
+Widget	   w		An H1D widget.
+double	   *minXLim	The x-axis minimum point.
+double	   *minYLim	The y-axis minimum point.
+double	   *maxXLim	The x-axis maximum point.
+double	   *maxYLim	The y-axis maximum point.
+
+H1DGetVisibleRange retrieves the range of data that is currently visible to a
+user viewing the widget.
+
+
+void H1DZoomOut(w)
+Widget	   w		An H1D widget.
+
+H1DZoomOut zooms out from the visible range.  Increases the x,y coordinates by
+a pre-defined factor of 0.25.
+
+
+void H1DZoomIn(w)
+Widget	   w		An H1D widget.
+
+H1DZoomIn zooms in from the visible range.  Decreases the x,y coordinates by
+the pre-defined factor.  H1DZoomIn and H1DZoomOut are centered on the current
+center of the plot.
+
+
+void H1DResetZoom(w)
+Widget	   w		An H1D widget.
+
+H1DResetZoom resets the view to the original state, making all data visible.  
+
+
+void H1DPrintContents(w, psFileName)
+Widget	   w	An H1D widget.
+char	   *psFileName	Specifies the name for the postscript file to create.
+
+H1DPrintContents creates an encapsulated postscript file of the histogram. 
+
+
+Example Program:  H1DSimple.c
+
+#include <Xm/Xm.h>
+#include "../plot_widgets/H1D.h"
+
+#define NUM_BINS   50
+#define X_MIN      0.0
+#define X_MAX      100.0
+
+main(int argc, char *argv[])
+{
+    XtAppContext appContext;
+    Widget toplevel, h1dWidget;
+    XmString s1, s2;
+    float bins[NUM_BINS], *bin;
+    int i;
+    
+    /* Initialize the X and Xt and create a shell */
+    toplevel = XtAppInitialize(&appContext, "H1DTest", NULL, 0, &argc, argv,
+    	    NULL, NULL, 0);
+    	
+    /* Create a H1D widget */
+    h1dWidget = XtVaCreateManagedWidget("h1dWidget", h1DWidgetClass, toplevel,
+    	    XmNlogScaling, FALSE,
+    	    XmNxAxisLabel, s1=XmStringCreateSimple("This is the X axis label"),
+    	    XmNyAxisLabel, s2=XmStringCreateSimple("This is the Y axis label"),
+    	    NULL);
+    XmStringFree(s1);
+    XmStringFree(s2);
+    
+    /* Set the bin contents */
+    for (i = 0, bin = bins; i < NUM_BINS; i++, bin++) {
+        *bin = (float)i;
+        if (i > NUM_BINS / 2) 
+            *bin = NUM_BINS - *bin;
+    }
+    H1DSetContents(h1dWidget, X_MIN, X_MAX, NUM_BINS, bins, NULL, NULL,
+    	    H1D_RESCALE);
+    	
+    /* Realize the top level widget and give control to the X event loop */
+    XtRealizeWidget(toplevel);
+    XtAppMainLoop(appContext);
+}
+
+
+Two-Dimensional Histogram
+
+Include: 2DHist.h
+Widget Class: hist2DWidgetClass
+
+A two-dimensional histogram is a plot of a set of paired values, over a
+pre-specified range, divided into a number of bins.  The two dimensional
+histogram widget can also display a specialty plot called an adaptive
+histogram.  An adaptive histogram is a histogram whose bins, rather than being
+spaced evenly, are partitioned according to the density of the data.
+
+Hist2D Widget Resources
+
+The Hist2D widget inherits behavior and resources from XmPrimitive.  For a
+description of the XmPrimitive resources, refer to the OSF/Motif Programmer's
+Reference.
+
+The following table shows the resources understood by the Hist2D widget in
+addition to those defined for XmPrimitive.  The codes in the access column
+indicate if the given resource can be set at creation time (C), set by using
+XtSetValues (S), or retrieved by using XtGetValues (G).
+                      
+			Hist2D Widget Resource Set
+
+   Name 	         Class  	       Default  Type	    Access
+   -----------------------------------------------------------------------
+   XmNdoubleBuffer       XmCDoubleBuffer       False    Boolean     CSG
+   XmNzLogScaling        XmCZlogScaling        False    Boolean     CSG
+   XmNbinEdgeLabeling    XmCBinEdgeLabeling    False    Boolean     CSG
+   XmNerrorBarsOn        XmCErrorBarsOn        True     Boolean     CSG
+   XmNtopPlaneColor	 XmCTopPlaneColor      NULL     Pixel	    CG
+   XmNleftPlaneColor	 XmCLeftPlaneColor     NULL     Pixel	    CG
+   XmNrightPlaneColor	 XmCRightPlaneColor    NULL     Pixel	    CG
+   XmNleftPlanePixmap	 XmCLeftPlanePixmap    NULL     Pixmap	    CG
+   XmNrightPlanePixmap	 XmCRightPlanePixmap   NULL     Pixmap	    CG
+   XmNclippingColor	 XmCClippingColor      NULL     Pixel	    CG
+   XmNbackPlanesOn	 XmCBackPlanesOn       True     Boolean     CSG
+   XmNfontList		 XmCFontList           NULL	XmFontList  CG
+   XmNresizeCallback	 XmCresizeCallback     NULL	XmCallback  C
+   XmNbtn2Callback	 XmCBtn2Callback       NULL     XmCallback  C
+   XmNbtn3Callback	 XmCBtn3Callback       NULL     XmCallback  C
+   XmNredisplayCallback  XmCRedisplayCallback  NULL     XmCallback  C
+   		        	  
+
+XmNdoubleBuffer
+Specifies the way the program draws moving graphics in X-Windows.  If the
+value is True, it allocates and draws to an off screen pixmap.  On some
+systems this results in smoother animation, on others, the performance penalty
+of the extra drawing reduces the animation quality.  If the value is False,
+drawing is done directly into the window.
+
+XmNzLogScaling
+Specifies how the z-axis should be displayed.  If the value is True, display
+the z-axis as log z.  If the value is False display the z-axis as linear.
+
+XmNbinEdgeLabeling
+Specifies how to label the bin edges.  If the value is True, try to label the
+bin edges exactly.
+
+XmNbarSeparation
+Specifies the space between bars as percentage of bin width.
+
+XmNerrorBarsOn
+Specifies whether error bars should be displayed when the histogram is
+displayed with error data.  If the value is True, display error bars.  If
+the value is False, do not display error bars.
+
+XmNtopPlaneColor
+Specifies the color to represent the top plane of the shaded model.  The
+color should be a legal color name.  This and all other color resources
+cannot be changed after Hist2D widget creation.
+
+XmNleftPlaneColor
+Specifies the color to represent the left plane of the shaded model.  The
+color should be a legal color name.  This and all other color resources
+cannot be changed after Hist2D widget creation.
+
+XmNrightPlaneColor
+Specifies the color to represent the right plane of the shaded model.  The
+color should be a legal color name.  This and all other color resources
+cannot be changed after Hist2D widget creation.
+
+XmNleftPlanePixmap
+Specifies the left plane pixmap of the shaded model.
+
+XmNrightPlanePixmap
+Specifies the right plane pixmap of the shaded model.
+
+XmNclippingColor
+Specifies the color to represent the clipping edge.  The color should be
+a legal color name.  This and all other color resources cannot be changed 
+after Hist2D widget creation.
+
+XmNbackPlanesOn
+Specifies if the back planes should be displayed.  If the value is True,
+display back planes.  If the value is False, do not display back planes.
+
+XmNfontList
+Specifies the font for text used in the widget.
+
+XmNresizeCallback
+Callback routine to be called if the widget is resized.
+
+XmNbtn2Callback
+Specifies a callback routine if button 2 is pressed.
+
+XmNbtn3Callback
+Specifies a callback routine if button 3 is pressed.
+
+XmNredisplayCallback
+Specifies a callback routine that is called after the widget has been
+redisplayed.  This callback routine is called so an application which draws on
+the Hist2D widget can refresh its graphics.
+
+
+Hist2D Widget Routines
+
+void hist2DSetHistogram(w, hist)
+Widget		w	A Hist2D widget.
+h2DHistSetup	*hist	Specifies the histogram for viewing.
+
+hist2DSetHistogram specifies the contents to be displayed by the Hist2D
+widget.  It takes as input a h2DHistSetUp data structure which contains the
+histogram bin data and other settings, such as the view angles and the viewable
+area.
+ 
+The hist2DSetHistogram data structure contains the following fields, which
+should all be filled in before calling hist2DSetHistogram.
+
+    int             nXBins         Number of bins along x axis of histogram
+    int             nYBins         Number of bins along y axis of histogram
+    double          xMin           Low edge of first x axis bin
+    double          xMax           High edge of last x axis bin
+    double          yMin           Low edge of first y axis bin
+    double          yMax           High edge of last x axis bin
+    h2DScaleType    xScaleType     How x data is binned: linear, or log, one
+                                      of H2D_LINEAR or H2D_LOG
+    float           ScaleBase      Base for x axis log scaling, i.e. 10, e
+    h2DScaleType    ScaleType      How y data is binned: linear, or log, one
+                                      of H2D_LINEAR or H2D_LOG
+    float           yScaleBase     Base for y axis log scaling, i.e. 10, e
+    char            *xLabel        Label for histogram x axis
+    char            *yLabel        Label for histogram y axis
+    char            *zLabel        Label for histogram z (vertical) axis
+    float           *bins          The histogram data (a 2 dim. array)
+
+The example below creates a h2DHistSetup structure for a 10x10 histogram.
+
+    h2DHistSetup hist;
+    float bins[10][10];
+    int i, j;
+
+    hist.nXBins = 10.;
+    hist.nYBins = 10.;
+    hist.xMin = 0.;
+    hist.xMax = 99.;
+    hist.yMin = 0.;
+    hist.yMax = 99.;
+    hist.xScaleType = H2D_LINEAR;
+    hist.xScaleBase = 0.;
+    hist.yScaleType = H2D_LINEAR;
+    hist.yScaleBase = 0.;
+    hist.xLabel = "X Axis";
+    hist.yLabel = "Y Axis";
+    hist.zLabel = "Z Axis";
+    hist.bins = bins
+
+    for (i=0; i<10; i++)
+	for (j=0; j<10; j++)
+	     bins[i][j] = random();	
+    hist2DSetHistogram(w, &hist);
+
+
+void hist2DSetAdaptiveHistogramData(w, aHist, sMode)
+Widget		w		A Hist2D widget.
+aHistStruct	*aHist		Specifies the adaptive histogram data.
+scalingMode	sMode		One of:  HIST2D_SCALING,  HIST2D_NO_SCALING,
+				or   HIST2D_RESCALE_AT_MAX.  Specifies to
+				the widget how to change its display to
+				incorporate the new contents.
+
+hist2DSetAdaptiveHistogramData specifies the contents of the Hist2D widget as
+an adaptive histogram in the form of points in 3D space.  It takes as input an
+aHistStruct data structure which contains the adaptive histogram data points
+and displays the adaptive histogram on the screen.  A two-dimensional histogram
+must be set up first with the function hist2DSetHistogram before an adaptive
+histogram can be created.  To create an aHistStruct data structure, use the
+routine Bin2DAdaptHist and include the file adaptHist.h in your program.
+
+
+void hist2DUpdateHistogramData(w, data, topErrors, bottomErrors, sMode)
+Widget		w		A Hist2D widget.
+float		*data		Specifies the new histogram data.
+float		*topErrors	Specifies the new top errors data. 
+float		*bottomErrors	Specifies the new bottom errors data.
+scalingMode	sMode		One of: HIST2D_SCALING, HIST2D_NO_SCALING,
+				or HIST2D_RESCALE_AT_MAX.  Specifies to
+				the widget how to  change its display to
+				incorporate the new contents.
+
+hist2DUpdateHistogramData is an alternative method for changing the histogram
+data after it has been set with a call to hist2DSetHistogram.  It changes the
+histogram data more smoothly, and without altering rotation or, optionally,
+the scale.  hist2DUpdateHistogramData also allows the attachment of error bars
+to the histogram.  HIST2D_RESCALE_AT_MAX scaling mode is particularly well
+suited for data animation because it respects the settings of the interactive
+controls.  If the user has zoomed in to view a particular portion of the data,
+the widget will not alter his view of the histogram when new data arrives.  If
+the user is looking at all of the data, the histogram will automatically scale
+to include the new data.  This call cannot be used with adaptive histograms.
+
+
+void hist2DSetRebinnedData(w, data, topErrors, bottomErrors, nXBins, nYBins,
+			   xMin, xMax, yMin, yMax, sMode)
+Widget		w		A Hist2D widget.
+float		*data		Specifies the new histogram data.
+float		*topErrors	Specifies the new top error data.
+float		*bottomErrors	Specifies the new bottom error data.
+int		nXBins		Specifies the new number of bins along the
+				x-axis.
+int		nYBins		Specifies the new number of bins along the
+				y-axis.
+float		*xMin		Specifies the x minimum range of histogram
+float		*xMax		Specifies the x maximum range of histogram.
+float		*yMin		Specifies the y minimum range of histogram.
+float		*yMax		Specifies the y maximum range of histogram.
+scalingMode	sMode		One of: HIST2D_SCALING, HIST2D_NO_SCALING,
+				or HIST2D_RESCALE_AT_MAX.  Specifies to the
+				widget how to  change its display to
+				incorporate the new contents.
+
+hist2DSetRebinnedData is an alternative method for changing the histogram data
+after it has been set with a call to hist2DSetHistogram.  It is similar to
+hist2DUpdateHistogram data, in that it works more smoothly, preserves rotation
+and gives you control of the scaling method.  It is different in that it can be
+used to change the number of bins and the range of the data displayed.  This
+call cannot be used with adaptive histograms.
+
+
+void hist2DClearHistogramData(w)
+Widget	w	 A Hist2D widget.
+
+hist2DClearHistogramData removes the histogram data and errors from the Hist2D
+widget.
+
+
+void hist2DSetVisiblePart(w, xMin, xMax, yMin, yMax, zMin, zMax)
+Widget	w	An Hist2D widget.
+double	xMin	Start of visible part along the x-axis.
+double	xMax	End of visible part along the x-axis.
+double	yMin	Start of visible part along the y-axis.
+double	yMax	End of visible part along the y-axis.
+double	zMin	Start of visible part along the z-axis.
+double	zMax	End of visible part along the z-axis.
+
+hist2DSetVisiblePart sets the range of data that is visible, i.e. initially 
+displayed, in the plot.  This can differ from the actual range of the data.  
+In particular, unlike the widget's interactive controls, the range can be set
+beyond the limits imposed by the actual minimum and maximum values of the
+data.  Setting a larger range than implied by the data, sets a new limit for
+the interactive controls, allowing users to zoom out beyond the minimum and
+maximum data values.
+
+
+void hist2DGetVisiblePart(w, xMin, xMax, yMin, yMax, zMin, zMax)
+Widget	w	A Hist2D widget.
+double	*xMin	Start of visible part along the x-axis.
+double	*xMax	End of visible part along the x-axis.
+double	*yMin	Start of visible part along the y-axis.
+double	*yMax	End of visible part along the y-axis.
+double	*zMin	Start of visible part along the z-axis.
+double	*zMax	End of visible part along the z-axis.
+
+hist2DGetVisiblePart retrieves the range of data that is currently visible to a
+user viewing the widget.
+
+
+void hist2DZoom(w, factor)
+Widget	w	A Hist2D widget.
+double	factor	A zoom factor to be multiplied.
+
+hist2DZoom zooms in or out depending on the factor.  If factor is less than
+one, zoom in.  If factor is greater than one, zoom out.  Zooming is centered
+on the current center of the visible range.
+
+
+void hist2DZoomIn(w)
+Widget	w	A Hist2D widget.
+
+hist2DZoomIn zooms in from the visible range.  Decreases the x,y,z coordinates
+by a pre-defined factor of 0.5.  hist2DZoomIn and hist2DZoomOut are centered on
+the current center of the plot.
+
+
+void hist2DZoomOut(w)
+Widget	w	A Hist2D widget.
+
+hist2DZoomOut zooms out from the visible range.  Increases the x,y,z
+coordinates by a pre-defined factor of 2.0.
+
+
+void hist2DGetViewAngles(w, fi, psi)
+Widget	w	An Hist2D widget.
+double	*fi	The turn of view direction projection on the XY plane
+		from the x-axis.
+double	*psi	The angle between view direction and the z-axis.
+
+hist2DGetViewAngles retrieves the current view angles of the two-dimensional
+histogram representation.
+
+
+void hist2DSetViewAngles(w, fi, psi)
+Widget	w	An Hist2D widget.
+double	fi	The turn of view direction projection on the XY plane
+		from the x-axis.
+double	psi	The angle between view direction and the z-axis.
+
+hist2DSetViewAngles sets up  the current view angles for the two-dimensional
+histogram representation and redraws the visible range.
+
+
+void hist2DResetView(w)
+Widget	w	An Hist2D widget.
+
+hist2DResetView resets the view to the original state.  Displays the Hist2D
+widget with its original range with all of the data visible.
+
+
+void hist2DmakePsImage(w, psFileName)
+Widget	w		An H2D widget.
+char	*psFileName	Specifies the name for the postscript file to create.
+
+hist2DmakePsImage creates a postscript file of the two-dimensional histogram. 
+
+
+void hist2DwritePs(Widget wid, char * fileName)
+Widget	w		An H2D widget.
+char	*fileName	File pointer for an open file in which to write the 
+                        drawing commands.
+
+hist2DwritePs generates the PostScript code to draw widget graphics, as it is
+at the time of the call, to a file.  The widget's image is drawn if the widget
+has any graphics generated.  Otherwise (e.g. if the widget in its current state
+has no data) hist2DwritePs does not write anything to the file.
+
+
+
+Example Program:  2DHistSimple.c
+
+#include <Xm/Xm.h>
+#include "../plot_widgets/2DHist.h"
+
+#define NUM_X_BINS     20
+#define NUM_Y_BINS     20
+
+main(int argc, char *argv[])
+{
+    XtAppContext app_context;
+    Widget toplevel, hist;
+    h2DHistSetup histSetup;  
+    float bins[NUM_X_BINS][NUM_Y_BINS]; 
+    int x, y;
+    
+    /* Initialize the Intrinsics */
+    toplevel = XtAppInitialize(&app_context, "Hist2DTest", NULL,
+            0, &argc, argv, NULL, NULL, 0);
+    
+    /* Create a hist2D widget */
+    hist = XtVaCreateManagedWidget("Histo2DWidget",
+            hist2DWidgetClass, toplevel, NULL);
+  
+    /* Create sample data */
+    for (x=0; x<NUM_X_BINS; x++) {
+        for (y=0; y<NUM_Y_BINS; y++) {
+   	    bins[x][y] = (x < NUM_X_BINS/2 ? x : NUM_X_BINS - x) +
+    	    	    (y < NUM_Y_BINS/2 ? y : NUM_Y_BINS - y);
+        }
+    }
+    
+    /* Create the histogram data structure */ 
+    histSetup.nXBins = NUM_X_BINS;
+    histSetup.nYBins = NUM_Y_BINS;
+    histSetup.xMin = -1.0;
+    histSetup.xMax = 1.0;
+    histSetup.yMin = -1.0;
+    histSetup.yMax = 1.0;
+    histSetup.xScaleType = H2D_LINEAR;
+    histSetup.xScaleBase = 0.0;
+    histSetup.yScaleType = H2D_LINEAR;
+    histSetup.yScaleBase = 0.0;
+    histSetup.xLabel = "X Axis Label";
+    histSetup.yLabel = "Y Axis Label";
+    histSetup.zLabel = "Z Axis Label";
+    histSetup.bins = (float *)bins; 
+    hist2DSetHistogram(hist, &histSetup);
+    
+    /* Realize the top level widget and give control to the X event loop */
+    XtRealizeWidget(toplevel);
+    XtAppMainLoop(app_context);
+}
+
+
+Cell Plot
+
+Include: Cell.h
+Widget Class: cellWidgetClass
+
+A cell plot is an alternative representation to a two dimensional histogram
+which can present binned histogram data in a form similar to a scatter plot. 
+The widget draws rectangles whose size represents the quantity in the histogram
+bin to simulate the kind of density view that a user viewing a scatter plot
+would get.
+
+To use the Cell widget, include the file Cell.h in your C program, create the
+widget, and pass your data to the widget.  The Cell widget accepts data in the 
+form of CellRect data structures:
+
+	typedef struct _CellRect {
+	    Pixel pixel;
+	    float x, y;
+	    float dx, dy;
+	} CellRect;
+
+
+Cell Widget Resources
+
+The Cell widget inherits behavior and resources from XmPrimitive.  For a
+description of the XmPrimitive resources, refer to the OSF/Motif Programmer's
+Reference.
+
+The following table shows the resources understood by the Cell widget in
+addition to those defined for XmPrimitive.  The codes in the access column
+indicate if the given resource can be set at creation time (C), set by using
+XtSetValues (S), or retrieved by using XtGetValues (G).
+                        
+			Cell Widget Resource Set
+
+   Name 		 Class  	       Default  Type	    Access
+   -----------------------------------------------------------------------
+   XmNdoubleBuffer	 XmCDoubleBuffer       False	Boolean     CSG
+   XmNfontList		 XmCFontList           NULL	XmFontList  CG
+   XmNresizeCallback	 XmCresizeCallback     NULL	XmCallback  C
+   XmNbtn2Callback	 XmCBtn2Callback       NULL	XmCallback  C
+   XmNbtn3Callback	 XmCBtn3Callback       NULL	XmCallback  C
+   XmNxAxisLabel	 XmCXAxisLabel         NULL	XmString    CSG
+   XmNyAxisLabel	 XmCYAxisLabel         NULL	XmString    CSG
+   XmNredisplayCallback  XmCRedisplayCallback  NULL	XmCallback  C
+ 			 			       
+
+XmNdoubleBuffer
+Specifies the way the program draws moving graphics in X-Windows.  If the
+value is True, it allocates and draws to an off screen pixmap.  If the value
+is False, drawing is done directly into the window.  On some systems
+double-buffering results in smoother animation; on others, the performance
+penalty of the extra drawing reduces the animation quality. 
+
+XmNfontList
+Specifies the font for text used in the widget.
+
+XmNresizeCallback
+Callback routine to be called if the widget is resized.
+
+XmNbtn2Callback
+Callback to be called routine if button 2 is pressed.
+
+XmNbtn3Callback
+Callback to be called routine if button 3 is pressed.
+
+XmNxAxisLabel
+Label name to be displayed on the x axis.  The value must be a compound string.
+
+XmNyAxisLabel
+Label name to be displayed on the y axis.  The value must be a compound string.
+
+XmNredisplayCallback
+Callback routine that is called after the widget has been redisplayed.  This
+callback routine is provided so that an application which draws on the Cell
+widget can refresh its graphics.
+
+
+Cell Widget Routines
+
+void CellSetContents(w, points, nPoints, rescale)
+Widget	   w		A Cell widget.
+CellRect   *points	An array of rectangles to display.
+int	   nPoints	The number of elements specified in points.
+int	   rescale	One of: CELL_NO_RESCALE, CELL_RESCALE, 
+			CELL_RESCALE_AT_MAX or CELL_GROW_ONLY.  Specifies to
+			the widget how to change its display to incorporate
+			the new contents.
+
+CellSetContents specifies the contents of the Cell widget in the form of
+rectangles in 2D space.  It takes as input an array of CellRect data structures
+which contain the the x,y coordinates of the center of each rectangle, along
+with a width and height, all in arbitrary data coordinates.  The CellRect
+structure requires a pixel value to set the color for the rectangle.  This must
+be initialized for every point.  If you don't care about color, just set it to
+BlackPixelOfScreen(XtScreen(w)).
+
+The rescale modes adjust the viewable boundaries of the plot as follows:
+
+   CELL_NO_RESCALE      - Do not rescale the plot.
+   CELL_RESCALE         - Rescale the plot according to the limits of the
+                          newly-supplied data.
+   CELL_RESCALE_AT_MAX  - If the viewing boundaries of the plot are currently
+                          the  same as the data boundaries (i.e. showing all
+                          the data), then expand or shrink the range of the
+                          plot based on the range of the new data.
+   CELL_GROW_ONLY       - If the viewing boundaries of the plot are currently
+                          at or beyond the data boundaries (i.e. showing all
+                          the data), then expand, but do NOT shrink, the range
+                          of the plot based on the range of the new data.
+
+
+
+void CellSetVisibleRange(w, minXLim, minYLim, maxXLim,  maxYLim)
+Widget	   w		A Cell widget.
+double	   minXLim	Start of visible range along x-axis.
+double	   minYLim	Start of visible range along y-axis.
+double	   maxXLim	End of visible range along x-axis.
+double	   maxYLim	End of visible range along y-axis.
+
+CellSetVisibleRange sets the range of data that is visible i.e. initially dis-
+played in the plot.  This can differ from the actual range of the data.  In
+particular, unlike the widget's interactive controls, the range can be set
+beyond the limits imposed by the actual minimum and maximum values of the
+data.  Setting a larger range than implied by the data, sets a new limit for
+the interactive controls, allowing users to zoom out beyond the mini mum and
+maximum data values.
+
+
+void CellGetVisibleRange(w, minXLim, minYLim, maxXLim,  maxYLim)
+Widget	   w		A Cell widget.
+double	   *minXLim	Start of visible range along x-axis.
+double	   *minYLim	Start of visible range along y-axis.
+double	   *maxXLim	End of visible range along x-axis.
+double	   *maxYLim	End of visible range along y-axis.
+
+CellGetVisibleRange retrieves the range of data that is currently visible to a
+user viewing the widget.
+
+
+void CellZoomOut(w)
+Widget	   w		A Cell widget.
+
+CellZoomOut zooms out from the visible range.  Increases the x,y coordinates by
+a pre-defined factor of 0.25.  CellZoomIn and CellZoomOut are centered on the 
+current center of the plot.
+
+void CellZoomIn(w)
+Widget	   w		A Cell widget.
+
+CellZoomIn zooms in from the visible range.  Decreases the x,y coordinates by
+the pre-defined factor of 0.25.  CellZoomIn and CellZoomOut are centered on the 
+current center of the plot.
+
+
+void CellResetZoom(w)
+Widget	   w		A Cell widget.
+
+CellResetZoom resets the view to the original state.  Displays the Cell widget
+with its original range and all the data points.
+
+
+void CellPrintContents(w, psFileName)
+Widget	   w		A Cell widget.
+char	   *psFileName	Specifies the name of the postscript file.
+
+
+CellPrintContents creates an encapsulated postscript file of the cell plot
+
+
+void CellWritePS(w, fp)
+Widget	   w		A Cell widget.
+FILE       *fp		File pointer for an open file in which to write the 
+                        drawing commands.
+
+CellWritePS writes out PostScript drawing commands to draw the contents of the
+widget to an open file.  The PostScript code written does not stand alone.  It
+depends on the preamble definitions and scaling normally provided by OpenPS in
+the utilities directory.  To get the bounding rectangle, use XGetGeometry on
+the XtWindow of the widget to get the width and height.  The plot is drawn
+between 0,0 and the width and height of the widget.
+
+
+
+Example Program:  cellExample.c
+
+#include <Xm/Xm.h>
+#include "../plot_widgets/Cell.h"
+
+#define NUM_X_BINS 50
+#define NUM_Y_BINS 30
+#define X_MIN 0.
+#define X_MAX 20.
+#define Y_MIN 0.
+#define Y_MAX 10.
+
+main(int argc, char *argv[])
+{
+    XtAppContext appContext;
+    Widget toplevel, cell;
+    float bins[NUM_X_BINS][NUM_Y_BINS];
+    float minBinValue, maxBinValue, xBinWidth, yBinWidth, xScale, yScale;
+    CellRect *rect, rects[NUM_X_BINS * NUM_Y_BINS];
+    XmString s1, s2;
+    int x, y;
+    
+    /* Initialize X and Xt */
+    toplevel = XtAppInitialize(&appContext, "CellTest", NULL,
+            0, &argc, argv, NULL, NULL, 0);    	
+    
+    /* Create a Cell widget */
+    cell = XtVaCreateManagedWidget("CellWidget", cellWidgetClass, toplevel,
+            XmNxAxisLabel, s1=XmStringCreateSimple("X Axis Label"),
+            XmNyAxisLabel, s2=XmStringCreateSimple("Y Axis Label"),
+            NULL);
+    XmStringFree(s1);
+    XmStringFree(s2);
+    
+    /* Create sample data */
+    for (x=0; x<NUM_X_BINS; x++) {
+        for (y=0; y<NUM_Y_BINS; y++) {
+            bins[x][y] = (x < NUM_X_BINS/2 ? x : NUM_X_BINS - x) +
+                    (y < NUM_Y_BINS/2 ? y : NUM_Y_BINS - y);
+        }
+    }
+
+    /* Calculate constants used in creating rectangles for cell widget */
+    minBinValue = 0;
+    maxBinValue = NUM_X_BINS/2 + NUM_Y_BINS/2;
+    xBinWidth = (X_MAX - X_MIN)/NUM_X_BINS;
+    yBinWidth = (Y_MAX - Y_MIN)/NUM_Y_BINS;
+    xScale = xBinWidth / (maxBinValue - minBinValue);
+    yScale = yBinWidth / (maxBinValue - minBinValue);
+    
+    /* Create the rectangles for the cell widget to draw */
+    rect = rects;
+    for (x=0; x<NUM_X_BINS; x++) {
+        for (y=0; y<NUM_Y_BINS; y++) {
+            rect->x = X_MIN + x*xBinWidth + xBinWidth/2;
+            rect->y = Y_MIN + y*yBinWidth + yBinWidth/2;
+            rect->dx = (bins[x][y] - minBinValue) * xScale;
+            rect->dy = (bins[x][y] - minBinValue) * yScale;
+            rect->pixel = BlackPixel(XtDisplay(cell), 0);
+            rect++;
+        }
+    }
+    
+    /* Give the rectangles to the cell widget to display */
+    CellSetContents(cell, rects, NUM_X_BINS * NUM_Y_BINS, CELL_RESCALE);
+    
+    /* Realize widgets and call XtMainLoop to continuously process events */
+    XtRealizeWidget(toplevel);
+    XtAppMainLoop(appContext);
+}
+
+

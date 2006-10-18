@@ -110,7 +110,7 @@ ff_write(vfuncptr func, Var *arg)
 */
 #ifdef HAVE_LIBHDF5
     else if (!strcasecmp(type, "hdf")){
-        if (!force && access(filename, F_OK)){
+        if (!force && 0 == access(filename, F_OK)) {
             parse_error("File %s already exists.\n", filename);
             return NULL;
         }

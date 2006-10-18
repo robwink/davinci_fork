@@ -138,17 +138,18 @@ ff_insert_struct(vfuncptr func, Var * arg)
     Var *a = NULL, b, *v = NULL, *e;
     char *name = NULL;
     Var *before = NULL, *after = NULL;
-    int pos;
+    int pos, force = 0;
 
     int ac;
     Var **av;
-    Alist alist[6];
-    alist[0] = make_alist( "object",    ID_STRUCT,    NULL,     &a);
+    Alist alist[7];
+    alist[0] = make_alist( "object",    ID_STRUCT,  NULL,     &a);
     alist[1] = make_alist( "value",     ID_UNK,     NULL,     &v);
-    alist[2] = make_alist( "name",      ID_STRING,     NULL,     &name);
+    alist[2] = make_alist( "name",      ID_STRING,  NULL,     &name);
     alist[3] = make_alist( "before",    ID_UNK,     NULL,     &before);
     alist[4] = make_alist( "after",     ID_UNK,     NULL,     &after);
-    alist[5].name = NULL;
+    alist[5] = make_alist( "force",		INT,		NULL,     &force);
+	alist[6].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -188,7 +189,7 @@ ff_insert_struct(vfuncptr func, Var * arg)
         v = V_DUP(v);
     }
 
-    if (name != NULL && find_struct(a, name, NULL) != -1) {
+    if (force == 0 && name != NULL && find_struct(a, name, NULL) != -1) {
         parse_error("Structure already contains element: %s", name);
         return(NULL);
     }

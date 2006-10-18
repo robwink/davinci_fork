@@ -1,0 +1,10 @@
+#
+# Makefile for plot widgets (Silicon Graphics version)
+#
+CC=cc
+AR=ar
+#CFLAGS = -g2 -DFUNCPROTO
+CFLAGS = -Olimit 2000 -O2 -DFUNCPROTO
+LIBS = -lXm -lXt -lX11 -lm 
+
+include Makefile.common

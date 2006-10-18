@@ -26,47 +26,15 @@
  *****************************************************************************/
 
 static CallbackEntry scrollBarCallbacks[] = {
-  {
-    "decrement",
-    XmNdecrementCallback,
-    gui_defaultCallback
-  },
-  {
-    "increment",
-    XmNincrementCallback,
-    gui_defaultCallback
-  },
-  {
-    "pageDecrement",
-    XmNpageDecrementCallback,
-    gui_defaultCallback
-  },
-  {
-    "pageIncrement",
-    XmNpageIncrementCallback,
-    gui_defaultCallback
-  },
-  {
-    "drag",
-    XmNdragCallback,
-    gui_defaultCallback
-  },
-  {
-    "toBottom",
-    XmNtoBottomCallback,
-    gui_defaultCallback
-  },
-  {
-    "toTop",
-    XmNtoTopCallback,
-    gui_defaultCallback
-  },
-  {
-    "valueChanged",
-    XmNvalueChangedCallback,
-    gui_defaultCallback
-  },
-  { NULL, NULL, NULL }
+	{ "decrement",		XmNdecrementCallback,		gui_defaultCallback },
+	{ "increment",		XmNincrementCallback,		gui_defaultCallback },
+	{ "pageDecrement",	XmNpageDecrementCallback,	gui_defaultCallback },
+	{ "pageIncrement",	XmNpageIncrementCallback,	gui_defaultCallback },
+	{ "drag",			XmNdragCallback,			gui_defaultCallback },
+	{ "toBottom",		XmNtoBottomCallback,		gui_defaultCallback },
+	{ "toTop",			XmNtoTopCallback,			gui_defaultCallback },
+	{ "valueChanged",	XmNvalueChangedCallback,	gui_defaultCallback },
+	{ NULL,				NULL,						NULL }
 };
 
 /*****************************************************************************
@@ -78,18 +46,18 @@ static CallbackEntry scrollBarCallbacks[] = {
 int
 gui_isScrollBar(const char *name)
 {
-  const char *aliases[] = { "scrollbar", "xmScrollBarWidgetClass", NULL };
-  return gui_isDefault(aliases, name);
+	const char *aliases[] = { "scrollbar", "xmScrollBarWidgetClass", NULL };
+	return gui_isDefault(aliases, name);
 }
 
 WidgetClass
 gui_getScrollBarClass(void)
 {
-  return xmScrollBarWidgetClass;
+	return xmScrollBarWidgetClass;
 }
 
 CallbackList
 gui_getScrollBarCallbacks(void)
 {
-  return scrollBarCallbacks;
+	return scrollBarCallbacks;
 }

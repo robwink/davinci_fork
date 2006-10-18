@@ -696,11 +696,18 @@
 ?display()
  display() - Display a grayscale image
 
- display(VAL)
+ display(VAL, [geometry=VAL])
 
 
     The display function passes the specified argument to an external
     viewer, as a grayscale image.
+
+    The geometry argument is used to specify a pixel size for the image.
+    The first number specifies the width in pixels. The second number
+    specifies the height in pixels. This example loads an image and
+    displays it in a 50 x 50 pixel window:
+        img = load('image file');
+        display(img, geometry=50//50);
 
 ?functions xplot()
 ?xplot()
@@ -1597,9 +1604,11 @@
 ?issubstring()
  issubstring() - tests whether one string is a substring of another
 
- issubstring(targert = STRING, source = STRING)
+ issubstring(target = STRING, source = STRING [, ignorecase = INT])
 
   issubstring will return 1 if target contains source and 0 otherwise.
+  If ignorecase is set to a non-zero number, target/source comparison
+  will be case-insensitive.
 
 ?functions delim()
 ?delim()
@@ -2120,8 +2129,10 @@ Davinci supports the following matrix functions:
 ?insert_struct()
  insert_struct() - Insert an element in a structure at a given point
 
- insert_struct(object=STRUCT, name=STRING, value=VAL, [before=STRING|INT])
- insert_struct(object=STRUCT, name=STRING, value=VAL, [after=STRING|INT])
+ insert_struct(object=STRUCT, name=STRING, value=VAL,
+     [before=STRING|INT], [force=1])
+ insert_struct(object=STRUCT, name=STRING, value=VAL,
+     [after=STRING|INT], [force=1])
 
  The insert_struct() function adds an element to a structure at a specfied
  location.  The location can be specified as being either before or after
@@ -2130,6 +2141,10 @@ Davinci supports the following matrix functions:
  The name and value fields are optional.  Values inserted with no name
  simply have no name (they can only be accessed by position), and 
  names inserted with no value are given a value of zero.
+
+ The force field is optional.  When unspecified or set to 0, the function
+ will refuse to insert values for existing names.  When force=1, however,
+ name's old value is replaced with VAL.
  
 ?functions load_raw()
 ?load_raw()
@@ -2712,10 +2727,10 @@ Davinci supports the following matrix functions:
         top = $2
         sel = gui.get(fs,"dirSpec").dirSpec
         if (type(sel)=="STRING") if (length(sel) > 0) if (fexists(sel)) {
-			printf ("Valid file has been selected\n");
+            printf ("Valid file has been selected\n");
         } else {
-			printf ("Unable to locate that file\n");
-		}
+            printf ("Unable to locate that file\n");
+        }
     }
     
     top = gui.create ("topLevelShell",name="Load...")
@@ -2805,6 +2820,13 @@ Davinci supports the following matrix functions:
  this widget.  Each line in the text object becomes a line in the list
  and the user can select among them.
 
+ The items and itemCount resources define the items in the list.  The
+ selectedItems and selectedItemCount resources define the selected
+ items in the list.  The itemList and selectedItemList are pseudo-
+ resources that exist in the GUI module as a convenience to Davinci
+ users.  Both of these latter resources take the Davinci TEXT array
+ and compute the size automatically.
+
  Example:
      define cb_browseSelection () { echo ('browse') }
      define cb_defaultAction () { echo ('dflt action') }
@@ -2817,6 +2839,7 @@ Davinci supports the following matrix functions:
      list = cat("a","b","c","d",axis=y)
      wid=gui.create("list",top)
      gui.set(wid,{itemList=list})
+     # OR: gui.set(wid,{items=list, itemCount=length(list)})
      gui.addcallback (wid,"browseSelection","cb_browseSelection()")
      gui.addcallback (wid,"defaultAction","cb_defaultAction()")
      gui.addcallback (wid,"extendedSelection","cb_extendedAction()")
@@ -3136,6 +3159,78 @@ TransientShell
  Scrollbar implementation not fully implemented.
  Use ScrolledList/ScrolledWindow instead
 
+?gui widgets notebook
+ Motif Class Name: XmNotebook
+
+ A manager widget that provides a paging system.  Intended to hold a
+ variety of other manager widgets, each associated with a page number.
+ Pages can be accessed directly with tabs, programmatically through
+ the currentPageNumber resource, or through a SpinBox.
+
+ The notebook widget always creates a spinbox to move through the
+ pages.  Use the showScroller pseudo resource to enable or disable the
+ spinbox.
+
+ The most common use of the notebook widget is as a general purpose
+ tab manager.  The notebook's default resource settings cause it to
+ look like a spiral-bound notebook.  To get a more recognizable tabbed
+ interface requires setting several resources during creation.
+
+ The children of the notebook resource have two constraint resources
+ that require comment:
+
+ - pageNumber: pages range from 1 to N.  All children use this
+ constraint to associate the data to the correct tab / spinbox value.
+
+ - childType:  Normal use of the notebook widget requires adding a
+ pushbutton and a manager, as a pair, for each tab you need.  This
+ constraint determines the role a child serves.  Pushbuttons default
+ to a tab button, manager widgets default to a page area.  If another
+ value is required, it must be set at create time.
+
+ Example:
+     # create a general-purpose tabbed interface with two pages
+     top=gui.create('toplevelshell')
+     nb=gui.create('notebook',top, {\
+     	orientation="VERTICAL",\
+     	bindingType="NONE",\
+     	showScroller="false",\
+     	backPagePlacement="TOP_RIGHT",\
+     	backPageNumber=0,\
+     	firstPageNumber=1,\
+     	lastPageNumber=2,\
+     	backPageSize=0})
+
+     t1=gui.create('pushbutton',nb,{labelString="Tab1"});
+     f1=gui.create('form',nb)
+     p1=gui.create('text',f1,{\
+     	value="hello 1",\
+     	topAttachment="ATTACH_FORM",\
+     	leftAttachment="ATTACH_FORM",\
+     	rightAttachment="ATTACH_FORM",\
+     	bottomAttachment="ATTACH_FORM"})
+
+     t2=gui.create('pushbutton',nb,{labelString="Tab2"})
+     f2=gui.create('form',nb)
+     p2=gui.create('text',f2,{\
+     	value="hello 2",\
+     	topAttachment="ATTACH_FORM",\
+     	leftAttachment="ATTACH_FORM",\
+     	rightAttachment="ATTACH_FORM",\
+     	bottomAttachment="ATTACH_FORM"})
+
+     # Page numbers are finnicky
+     # gui.set() crashes in the Xt lib if pageNumber is set
+     # before gui.realize()
+
+     gui.realize(top)
+     gui.set(t1,{pageNumber=1})
+     gui.set(f1,{pageNumber=1})
+     gui.set(t2,{pageNumber=2})
+     gui.set(f2,{pageNumber=2})
+
+     gui.set(nb,{width=400,height=400})
+
 ?gui functions
  The gui module presents several basic functions to the user.  The
  normal module syntax is used, for example:
@@ -3254,6 +3349,20 @@ TransientShell
 
  It is best to create and configure the widget and all its children
  before realizing the outermost widget, to avoid display problems.
+
+?gui functions show
+ gui.show(widgetid)
+     widgetid : The handle of the widget to act on.
+
+ Show, or manage, the specified widget. This function reveals a widget
+ if it was previously hidden.
+
+?gui functions hide
+ gui.hide(widgetid)
+     widgetid : The handle of the widget to act on.
+
+ Hide, or unmanage, the specified widget. This function conceals a
+ widget if it was previously shown and realized.
 
 ?gui functions addcallback
  gui.addcallback(widgetid, callback, eval)

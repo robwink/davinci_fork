@@ -1,0 +1,63 @@
+#
+# Platform independent part of make procedure for plotting widget 
+# examples, included by machine specific makefiles.
+#
+PROGS = 2DHistDemo 2DHistSimple 3DScatDemo 3DScatSimple cellDemo cellSimple \
+	h1DDemo h1DSimple scatDemo scatSimple xyDemo xySimple LineBoxDemo
+OBJS = 2DHistDemo.o 2DHistSimple.o 3DScatDemo.o 3DScatSimple.o cellDemo.o \
+	cellSimple.o h1DDemo.o h1DSimple.o scatDemo.o scatSimple.o \
+	xyDemo.o xySimple.o LineBoxDemo.o
+
+all: $(PROGS)
+
+2DHistDemo: 2DHistDemo.o demoUtils.o ../plot_widgets/libPlotW.a \
+	   	 ../util/libNUtil.a
+	$(CC) $(CFLAGS) 2DHistDemo.o  -o $@ demoUtils.o \
+		../plot_widgets/libPlotW.a ../util/libNUtil.a $(LIBS)
+2DHistSimple: 2DHistSimple.o  ../plot_widgets/libPlotW.a ../util/libNUtil.a
+	$(CC) $(CFLAGS) 2DHistSimple.o -o $@ ../plot_widgets/libPlotW.a \
+		../util/libNUtil.a $(LIBS)
+
+3DScatDemo: 3DScatDemo.o demoUtils.o ../plot_widgets/libPlotW.a \
+		../util/libNUtil.a
+	$(CC) $(CFLAGS) 3DScatDemo.o -o $@ demoUtils.o ../plot_widgets/libPlotW.a \
+		../util/libNUtil.a $(LIBS)
+3DScatSimple: 3DScatSimple.o ../plot_widgets/libPlotW.a ../util/libNUtil.a
+	$(CC) $(CFLAGS) 3DScatSimple.o  -o $@ ../plot_widgets/libPlotW.a \
+		../util/libNUtil.a $(LIBS)
+
+cellDemo: cellDemo.o demoUtils.o ../plot_widgets/libPlotW.a ../util/libNUtil.a
+	$(CC) $(CFLAGS) cellDemo.o -o $@ demoUtils.o \
+		../plot_widgets/libPlotW.a ../util/libNUtil.a $(LIBS)
+cellSimple: cellSimple.o ../plot_widgets/libPlotW.a ../util/libNUtil.a
+	$(CC) $(CFLAGS) cellSimple.o -o $@ ../plot_widgets/libPlotW.a \
+		../util/libNUtil.a $(LIBS)
+
+h1DDemo: h1DDemo.o demoUtils.o ../plot_widgets/libPlotW.a ../util/libNUtil.a
+	$(CC) $(CFLAGS) h1DDemo.o -o $@ demoUtils.o \
+		../plot_widgets/libPlotW.a ../util/libNUtil.a $(LIBS)
+
+LineBoxDemo: LineBoxDemo.o demoUtils.o ../plot_widgets/libPlotW.a ../util/libNUtil.a
+	$(CC) $(CFLAGS) LineBoxDemo.o -o $@ demoUtils.o \
+		../plot_widgets/libPlotW.a ../util/libNUtil.a $(LIBS)
+
+h1DSimple: h1DSimple.o  ../plot_widgets/libPlotW.a ../util/libNUtil.a
+	$(CC) $(CFLAGS) h1DSimple.o -o $@ ../plot_widgets/libPlotW.a \
+		../util/libNUtil.a $(LIBS)
+
+scatDemo: scatDemo.o demoUtils.o ../plot_widgets/libPlotW.a ../util/libNUtil.a
+	$(CC) $(CFLAGS) scatDemo.o -o $@ demoUtils.o \
+		../plot_widgets/libPlotW.a ../util/libNUtil.a $(LIBS)
+scatSimple: scatSimple.o  ../plot_widgets/libPlotW.a ../util/libNUtil.a
+	$(CC) $(CFLAGS) scatSimple.o -o $@ ../plot_widgets/libPlotW.a \
+		../util/libNUtil.a $(LIBS)
+
+xyDemo: xyDemo.o demoUtils.o ../plot_widgets/libPlotW.a ../util/libNUtil.a
+	$(CC) $(CFLAGS) xyDemo.o -o $@ demoUtils.o \
+		../plot_widgets/libPlotW.a ../util/libNUtil.a $(LIBS)
+xySimple: xySimple.o ../plot_widgets/libPlotW.a ../util/libNUtil.a
+	$(CC) $(CFLAGS) xySimple.o -o $@ ../plot_widgets/libPlotW.a \
+		../util/libNUtil.a $(LIBS)
+
+clean:
+	rm -f $(OBJS) $(PROGS)

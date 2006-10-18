@@ -1,0 +1,22 @@
+# SCCS ID: Makefile.sgi 1.2 4/9/92
+#
+# Makefile for scatter plot widget (Silicon Graphics version)
+#
+CC=cc
+AR=ar
+# Note: log10 function on SGI behaves incorrectly in some cases (it sometimes
+# returns natural log instead of log!).  Technical support at SGI provided us
+# with a patch and also said that the existing log10 function should work at
+# optimization level 2 (it seems to work better, but not 100%).  The workaround
+# implemented below is to use the patch that SGI provided, which now resides
+# in /nirvana/sgi_lib.  Two possible alternatives are: CFLAGS = -Dlog10=flog10,
+# or CFLAGS = -O2.
+#CFLAGS = -g
+CFLAGS = -O2
+LIBS = -lXm -lXt -lX11 ../sgi_4_lib/log10_patch.o -lm 
+MAKEDEPEND=xxxx Use nmakedepend on ultrix system
+SCCS=xxxx Use sccs on ultrix system
+NLIBDIR = ../sgi_4_lib
+NBINDIR = ../sgi_4_bin
+
+include Makefile.common

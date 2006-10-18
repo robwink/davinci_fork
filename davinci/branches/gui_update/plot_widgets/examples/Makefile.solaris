@@ -1,0 +1,11 @@
+#
+# Makefile for plot widgets (Solaris version)
+#
+CC=/opt/SUNWspro/bin/cc
+AR=ar
+DEBUG=-g
+CFLAGS=$(DEBUG) -I/usr/openwin/include -I/opt/SUNWmotif/include
+LIBS= -L/usr/openwin/lib -L/opt/SUNWmotif/lib -lm -lXm \
+	-lXt -lX11 -lgen -R /usr/openwin/lib -R /opt/SUNWmotif/lib
+
+include Makefile.common

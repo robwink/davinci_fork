@@ -1229,20 +1229,32 @@ ff_issubstring(vfuncptr func, Var * arg)
 {
     char *S1=NULL,*S2=NULL;
     int *Result=(int *)calloc(1,sizeof(int));
+	int ignorecase = 0;
 
-    Alist alist[3];
+    Alist alist[4];
     alist[0] = make_alist("target", ID_STRING, NULL, &S1);
     alist[1] = make_alist("source", ID_STRING, NULL, &S2);
-    alist[2].name = NULL;
+	alist[2] = make_alist("ignorecase", INT, NULL, &ignorecase);
+    alist[3].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) {
 		*Result=0;
 	} else if (S1 == NULL || S2 == NULL){
         *Result=0;
-    } else if ((strstr(S1,S2))==NULL){
-        *Result=0;
     } else {
-        *Result=1;
+		if (ignorecase) {
+			if ((strcasestr(S1,S2))==NULL){
+				*Result=0;
+			} else {
+				*Result=1;
+			}
+		} else {
+			if ((strstr(S1,S2))==NULL){
+				*Result=0;
+			} else {
+				*Result=1;
+			}
+		}
 	}
 
     return(newVal(BSQ,1,1,1, INT, Result));

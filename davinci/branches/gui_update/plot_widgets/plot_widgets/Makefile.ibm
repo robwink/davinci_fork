@@ -1,0 +1,11 @@
+#
+# Makefile for plot widgets (IBM AIX version)
+#
+CC=cc
+AR=ar
+#CFLAGS = -g
+CFLAGS =
+LIBS = -lXm -lXt -lX11 -lm
+# LIBS = -lXm -lXt -lX11 -lm -lbsd
+
+include Makefile.common

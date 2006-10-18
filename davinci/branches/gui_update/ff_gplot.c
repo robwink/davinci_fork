@@ -242,7 +242,7 @@ send_to_plot(char *s)
 #ifdef GPLOT_CMD
     char *gplot_cmd;
 
-    if (pfp == NULL) {
+    if (pfp == NULL || -1 == fileno(pfp)) {
         if (getenv("GPLOT_CMD") != NULL) {
             gplot_cmd = strdup(getenv("GPLOT_CMD"));
         } else {

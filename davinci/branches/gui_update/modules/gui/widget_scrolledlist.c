@@ -131,11 +131,15 @@ gui_initScrolledList(const char *dvName, WidgetClass class, Widget parent,
 	}
 
 	if (xtArgCount == 0) {
-		widget = XmCreateScrolledList(parent, widgetName, NULL, xtArgCount);
+		widget = XmCreateScrolledList(parent, widgetName, NULL, 0);
 	}
 	else {
 		widget = XmCreateScrolledList(parent, widgetName, xtArgs, xtArgCount);
 	}
+
+	/* The list creates itself inside a scolledwindow, which will have the
+	   constraints from 'parent', so force outerWidget to the scrolledwindow */
+	*outerWidget = XtParent (widget);
 
 	/* Free anything in the free stack. */
 	gui_freeStackFree(&freeStack);
@@ -155,7 +159,6 @@ static void
 setItems(const Widget widget, const String resourceName,
 	const String countResourceName, const Var *value)
 {
-
 	FreeStackListEntry	localFreeStack;
 	Darray		*stringList;
 	int			stringCount;
@@ -233,12 +236,9 @@ gui_getScrolledListPseudoResources(const Widget widget, Var *dvStruct)
 	}
 	add_struct(dvStruct, "selectedItems", selectedItems);
 
-	if (XmListGetSelectedPos(widget, &selectedList, &N_selectedList) == TRUE) {
-		add_struct(dvStruct, "selectedPosition",
-			newVal(BSQ, 1, N_selectedList, 1, INT, selectedList));
-	} else {
-		add_struct(dvStruct, "selectedPosition", newInt(-1));
-	}
+	XmListGetSelectedPos(widget, &selectedList, &N_selectedList);
+	add_struct(dvStruct, "selectedPosition",
+		newVal(BSQ, 1, N_selectedList, 1, INT, selectedList));
 }
 
 /* gui_setScrolledListPseudoResources()
@@ -255,10 +255,10 @@ void
 gui_setScrolledListPseudoResources(Widget widget, Var *dvStruct,
 	Narray *publicResources)
 {
-
 	int		i, cont;
 	char	*name;
 	Var		*value;
+	unsigned char savePolicy;
 
 #if DEBUG
 	fprintf(stderr, "DEBUG: gui_setListPseudoResources(widget = %ld, "
@@ -289,6 +289,61 @@ gui_setScrolledListPseudoResources(Widget widget, Var *dvStruct,
 				setItems(widget, "selectedItems", "selectedItemCount", value);
 				Narray_add(publicResources, name, NULL);
 				free_var(Narray_delete(V_STRUCT(dvStruct), "selectedItemList"));
+				cont = 1;
+				break;
+			}
+			if (!strcmp(name, "selectedPosition")) {
+				int oldsize, newsize, oldidx, newidx, oldval, newval;
+				int *newpos, *oldpos;
+
+				/*
+				if (V_TYPE != INT) {
+				// TODO: warn and skip
+				}
+				*/
+
+				/* must enable multiple selection for this routine to work, so
+				 * save the previous selection policy, do the work, and restore */
+
+				newsize = GetY(value);
+				newpos = (newsize > 0 ? V_DATA(value) : NULL);
+				XtVaGetValues(widget,
+					"selectedPositions", &oldpos,
+					"selectedPositionCount", &oldsize,
+					"selectionPolicy", &savePolicy, NULL,
+					NULL);
+
+				if (oldsize > 0) {
+					int *copy = (int *) calloc (oldsize, sizeof(int));
+					memcpy (copy, oldpos, oldsize * sizeof(int));
+					oldpos = copy;
+				}
+
+				XtVaSetValues (widget, "selectionPolicy", XmMULTIPLE_SELECT, NULL);
+				oldidx = oldsize - 1;
+				newidx = newsize - 1;
+				while (oldidx >= 0 || newidx >= 0) {
+					oldval = (oldidx >= 0 ? oldpos[oldidx] : -1);
+					newval = (newidx >= 0 ? newpos[newidx] : -1);
+					if (oldval < newval) {
+						XmListSelectPos (widget, newval, FALSE);
+						newidx --;
+					} else if (oldval > newval) {
+						XmListDeselectPos (widget, oldval);
+						oldidx --;
+					} else {
+						newidx --;
+						oldidx --;
+					}
+				}
+
+				if (oldsize > 0) {
+					free (oldpos);
+				}
+
+				XtVaSetValues (widget, "selectionPolicy", savePolicy, NULL);
+				Narray_add(publicResources, name, NULL);
+				free_var(Narray_delete(V_STRUCT(dvStruct), name));
 				cont = 1;
 				break;
 			}

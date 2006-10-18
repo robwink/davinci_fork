@@ -1,0 +1,10 @@
+#
+# Makefile for plot widgets (Ultrix version)
+#
+CC = cc
+AR = ar
+#CFLAGS = -g
+CFLAGS = -Olimit 2000
+LIBS = -lXm -lXt -lX11 -lm
+
+include Makefile.common
