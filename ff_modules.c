@@ -753,9 +753,13 @@ get_module_versions(
 		while(de = find_next_file_with_prefix(d, name)){
 			fname = de->d_name;
 			if (nlist >= retsize) {
-				if (retsize == 0) retsize = 16;
-				else retsize *= 2;
-				ret = (char **)realloc(ret, retsize * sizeof(char *));
+				if (retsize == 0) {
+					retsize = 16;
+					ret = (char **)calloc(retsize , sizeof(char *));
+				} else {
+					retsize *= 2;
+					ret = (char **)realloc(ret, retsize * sizeof(char *));
+				}
 			}
 			strsz = strlen(dir_name) + strlen(fname) + 2;
 			ret[nlist] = realloc(ret[nlist], strsz);
