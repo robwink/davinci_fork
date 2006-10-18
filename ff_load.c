@@ -124,6 +124,7 @@ do_load(char *filename, struct iom_iheader *h)
 	if (input == NULL)    input = dv_LoadGRD(fp, fname, h);
 	if (input == NULL)    input = dv_LoadIMath(fp, fname, h);
 	if (input == NULL)    input = dv_LoadGOES(fp, fname, h);
+	if (input == NULL)    input = dv_LoadENVI(fp, fname, h);
 	if (input == NULL)    input = dv_LoadAVIRIS(fp, fname, h);
 
 #ifdef HAVE_LIBHDF5
