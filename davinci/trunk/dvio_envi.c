@@ -36,17 +36,44 @@ dv_LoadENVI(
 
 	/*
 	** if this is obviously a detachd header, try loading the image
+	**
+	** Try the following options:
+	**  	filename.img
+	** 		filename.img.hdr
 	*/
 	if (h.dptr == 0) {
-		path = strdup(filename);
-		sprintf(path+strlen(path)-4, ".img");
-		if (access(path, R_OK) != 0) {
+		char *found = NULL;
+		char *ptr = NULL;
+		path = calloc(1,strlen(filename)+5);
+		sprintf(path, "%s.img", filename);
+		if (access(path, R_OK) == 0) {
+			found = path;
+		}
+
+		if (found == NULL) {
+			strcpy(path, filename);
+			ptr = strrchr(path, '.');
+			if (ptr && *ptr) *ptr = '\0';
+			if (access(path, R_OK) == 0) {
+				found = path;
+			}
+		}
+
+		if (found == NULL) {
+			strcat(path, ".img");
+			if (access(path, R_OK) == 0) {
+				found = path;
+			}
+		}
+		
+
+		if (found == NULL) {
 			parse_error("Unable to find .img file for deteached label: %s\n", path);
 			free(path);
 			return(NULL);
 		}
 		fclose(fp);
-		fp = fopen(path, "rb");
+		fp = fopen(found, "rb");
 		free(path);
 		data = iom_read_qube_data(fileno(fp), &h);
 	} else {
