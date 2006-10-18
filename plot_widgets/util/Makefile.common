@@ -1,0 +1,30 @@
+#
+# Platform independent part of make procedure for utilities directory, 
+# included by machine specific makefiles.
+#
+
+OBJS = DialogF.o stringUtils.o getfiles.o printUtils.o psUtils.o \
+	misc.o fileUtils.o help.o prefFile.o fontsel.o
+
+all: libNUtil.a
+
+libNUtil.a: $(OBJS)
+	$(AR) -urs libNUtil.a $(OBJS)
+
+printUtils.o: printUtils.c
+	$(CC) -c $(CFLAGS) $(PRINTFLAGS) printUtils.c
+	
+# DO NOT DELETE THIS LINE -- make depend depends on it.
+
+DialogF.o: DialogF.h
+stringUtils.o: stringUtils.h
+getfiles.o: fileUtils.h
+getfiles.o: getfiles.h
+printUtils.o: DialogF.h
+printUtils.o: printUtils.h
+psUtils.o: psUtils.h
+misc.o: DialogF.h
+misc.o: misc.h
+fileUtils.o: fileUtils.h
+help.o: misc.h
+help.o: help.h

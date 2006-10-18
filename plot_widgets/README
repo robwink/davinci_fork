@@ -1,0 +1,385 @@
+
+                                 R E A D M E
+
+
+Product Name:           plot-widgets
+Product Version:        V1_1
+Date (mm/dd/yyyy):      03/23/1998
+
+--------------------------------------------------------------------------
+
+                                   ORIGIN
+                                   ======
+Authors
+
+        Mark Edel  
+        Konstantine Iourha  
+        Jeff Kallenbach  
+        Joy Kyriakopulos 
+        Paul Lebrun  
+        Baolin Ren 
+        George Dimas
+
+    Fermi National Accelerator Laboratory - Mail Station 234
+    P.O Box 500
+    Batavia, IL 60510
+    Internet: histoscope_support@fnal.gov
+
+Fermilab Standard Government Sponsorship Notice
+
+    This work was performed at Fermi National Accelerator Laboratory,
+    which is operated by Universities Research Association, Inc., under
+    contract DE-AC02-76CHO3000 with the U.S. Department of Energy.
+
+Acknowledgements
+
+    Thank-you to George Dimas for writing the original documentation and 
+    Joy Kyriakopulos for subsequent edits.
+
+
+--------------------------------------------------------------------------
+
+                             TERMS AND CONDITIONS
+                             ====================
+
+This software has been made freely available with a request for
+collaborative input subject to standard Fermitools Terms and Conditions
+given in full below.
+
+--------------------------------------------------------------------------
+
+                             PRODUCT DESCRIPTION
+                             ===================
+The Histo-Scope Widget Set is a collection of six Motif widgets for graphing 
+and plotting.  It features the high performance and screen stability 
+necessary for animation, and includes interactive controls for direct 
+manipulation with the mouse.  The widgets were developed for an interactive 
+data browsing tool called Histo-Scope, but are very general and easy to 
+incorporate into other Motif applications. 
+ 
+The widgets include line plots, 2-D and 3-D scatter plots, 1 and 2 dimensional 
+histograms, and several specialty plots: 
+ 
+ * Generic X vs. Y two-dimensional line/marker plot 
+ * 2-dimensional (X vs. Y) scatter plot 
+ * 3-dimensional (XYZ) scatter plot 
+ * 1-dimensional (conventional) histogram, (also does adaptive histogram) 
+ * 2-dimensional histogram (lego plot), (also does 2D adaptive histogram) 
+ * Cell plot (alternative to 2D histogram representation) 
+ 
+Most of the widgets have some support for color, though not all have the 
+ability to color arbitrary elements. 
+ 
+The widgets are dependent on Motif, and on a few private routines in the 
+Motif widget set.  (Mostly they rely upon Motif for Motif-specific behavior, 
+such as keyboard traversal and drawing shadows, though they also follow 
+Motif naming conventions and use XmStrings, so employing them outside of 
+the Motif environment would take some additional work.) 
+ 
+In addition to the widgets, the distribution kit contains a number of 
+additional utility routines for Motif programming, most of which are not 
+required for using the widgets.  These are common among various tools 
+produced by our group, including the NEdit text editor, and are included 
+for your programming enjoyment, but are documented only by the source code 
+comments.  They are also subject to radical change in future releases of 
+the widget set, Histo-Scope, and NEdit.
+
+
+Documentation
+-------------
+The plain-text document, widgets.doc, in the distribution kit, explains 
+the resources and subroutine interfaces to the widgets.  It is expected 
+that users already know how to use Motif and widgets in general. 
+
+
+Required Hardware and Software
+------------------------------
+The plot widgets kit contains Makefiles for the following systems:
+
+                        DEC/ULTRIX  
+                        DEC/Unix  
+                        SGI/IRIX  
+                        Sun/Solaris  
+                        IBM/AIX  
+                        PC/Linux  
+
+The sources have been compiled and proven to work on these systems.   
+                                         
+Graphics Support:       X-based workstation or X-Terminal  
+ 
+
+
+Product Installation
+--------------------
+To install the Plot Widgets and build the example programs, make sure
+you have the following requirements or prerequisites:
+
+     * a C compiler, include files for compiling and libraries for linking
+     * X11 include files and libraries
+     * Motif include files and libraries
+
+For Unix systems follow these two steps:
+
+1)   Un-tar the source tar file.  For example:
+
+              % tar xvf plot_widgets.tar
+
+     You will find the following source directories have been created:
+
+              util
+              plot_widgets
+              examples
+      
+2)    Run the Makefile for the system you have, for example:
+
+              % make sgi
+
+      Makefiles are supplied to automate the building of the plot widget
+      library, the utility library, and the example programs on the following
+      systems:
+      
+              sgi
+              dec
+              ibm
+              linux
+              solaris
+              sunos
+              ultrix
+
+      (The "dec" makefile is for Digital Alpha Unix systems, previously OSF-1).
+
+      These all run with the configurations, compilers, and operating
+      system versions that we have and support.  It is possible that you
+      may have to modify the makefiles for your system if, for example,
+      your Motif libraries are located in a different directory than
+      the one assumed by the makefile or you want to build the plot widgets
+      for a system without a supplied makefile.  If you want to look over 
+      or edit the makefiles before trying the build, see the section on
+      Makefiles below.
+      
+      Documentation describing the widgets and example programs can be found 
+      in the file widgets.doc.
+      
+For VMS Systems, command files are provided for compiling and linking files
+in all three source directories.  comutil.com compiles the files in the util
+directory and produces two library files, vmsutils.olb and libutil.olb.
+comwidgets.com compiles the files in the plot_widgets directory, and
+comexamples.com compiles and links the files in the examples directory to
+produce the example executables.
+        
+                
+Makefiles
+---------
+      The makefiles in the source directories consist of two parts, a
+      machine-dependent part and a machine-independent part.  The machine-
+      dependent makefiles contain machine specific header information and
+      invoke a common machine-independent part called Makefile.common.  The
+      master makefile executes the machine-dependent makefile for each
+      source directory based on the machine-type you give it.  So, for
+      example, if you type "make sgi" you will see something like
+      the following:
+      
+              % cd util
+              % make -f Makefile.sgi clean all install
+      
+      Each directory contains the following makefiles:  
+      
+              Makefile.sgi
+              Makefile.dec
+              Makefile.ibm
+              Makefile.linux
+              Makefile.solaris
+              Makefile.sunos
+              Makefile.ultrix
+              
+      (The "dec" makefile is for Digital Alpha Unix systems, previously OSF-1.)
+
+      You may want to take a moment to look over the makefile for your system
+      and ascertain whether it correctly pertains to your system.  Or use one
+      of these as a guide to create a Makefile for your own Unix system.
+      To add a new machine type or configuration, copy one of the existing
+      machine dependent makefiles and give it the name of the new system, 
+      for example: Makefile.sony.  Then, make any required changes in the 
+      new makefile and create a target for your "sony" system in the top-level
+      makefile.
+      
+      Each source directory has its own set of makefiles. The directories 
+      should be built in the order listed below:
+      
+              util                 - cross-project utility routines
+              plot_widgets         - plotting widgets
+              examples             - example programs
+              
+      The utility and plot_widget directories build library files which are
+      used by the examples makefile.
+
+      If you find that the makefiles stopped with an error, it is probably 
+      due to system variations such as a different location for Motif include
+      files or a different compiler.  The system-specific makefile must then
+      be modified to correct the problem or, if necessary, the  source files
+      themselves.  If you need to start completely afresh in a source
+      directory, you can first type "make clean" which will delete all object
+      and executable files so that a subsequent make command will start from
+      the beginning.
+      
+      On Solaris systems, expect a few warnings during the compilation of
+      Scat.c, Cell.c, XYDialogs.c, and many warnings during the compilation 
+      of 2DHelp.xbm, 2DHistHelp.xbm, and 3DHelp.xbm.
+      
+
+The Source Directories
+----------------------
+The makefiles in the util directory build a library file called libNUtil.a,
+which is used mostly for the example programs, but contains one module required
+by all of the wigets.  Unless you re-arrange the libraries, you will need to
+include libNUtil.a in any link to use the plotting widgets.  However, most of
+the real widget code is in the plot_widgets directory.
+
+The plot_widgets directory builds libPlotW.a, which contains the object code
+for the widgets themselves.  The directory also contains the include files
+necessary to use the widgets in a program.
+
+The examples directory builds two example programs for each widget: a simple
+one, which just creates a widget with simple data, and a demo program which
+exercises more of the features of the widget.
+
+The makefiles in all three source directories consist of two parts, a machine-
+dependent part and a machine-independent part.  The machine-dependent makefiles
+contain machine-specific header information and invoke a common machine-
+independent part called Makefile.common.  To compile the files in any of
+these directories, issue the command: "make -f Makefile.<machine-type>"; where
+<machine type> is one of the supported machine types.  For example, on a
+Silicon Graphics machine, you would type:
+
+        make -f Makefile.sgi
+
+To add a new machine type or configuration, copy one of the existing machine-
+dependent makefiles and give it the name of the new system, for example:
+Makefile.sony.  Then, make any required changes in the new makefile.
+
+
+Using the Widgets in a Program
+------------------------------
+To link your own programs with the widgets, you need both libPlotW.a from the
+plot_widgets directory, and libNUtil.a from the util directory, as well as 
+some of the include files from plot_widgets.  The file widgets.doc explains 
+the resources and subroutine interfaces to the widgets, but it is also 
+expected that users already know how to use Motif and widgets in general.
+
+Since we most users are interested in source code for just one or two of the
+widgets, we haven't gone to any particular trouble to package the libraries or
+arrange the directories nicely.  They are just arranged as they are in our own
+source directory tree for our own software products.
+
+
+
+
+-------------------------------------------------------------------------
+
+                                   SUPPORT
+                                   =======
+
+Help with the installation or use of plot-widgets is available by sending 
+mail to:
+
+                        histoscope_support@fnal.gov
+
+which is auto-forwarded to the group in charge of plot-widgets support at 
+Fermilab.
+
+This software is furnished by Fermilab on an "as is" basis as a service 
+to the wider community with the goal of stimulating collaborative use and 
+further development.
+
+Provision of the software implies no commitment of support by Fermilab.
+
+The Fermilab Computing Division is open to discussing other levels of 
+support for use of the software with responsible and committed users and 
+collaborators.
+
+Use of the software in experiments at Fermilab will be assured of a level 
+of support as agreed to through the standard Memorandum Of Understanding 
+process.
+
+Users may send mail to the mail address given above, with the expectation 
+that it will be read and noted.
+
+
+--------------------------------------------------------------------------
+
+                         TERMS AND CONDITIONS IN FULL
+                         ============================
+
+------------------------------------------------------------------------
+Fermitools Software Legal Information (Modified BSD licence)- 12/01/2001
+------------------------------------------------------------------------
+
+
+COPYRIGHT STATUS:  
+ Dec 1st 2001, Fermi National Accelerator Laboratory (FNAL) documents and
+ software are sponsored by the U.S. Department of Energy under Contract No.
+ DE-AC02-76CH03000. Therefore, the U.S. Government retains a  world-wide 
+ non-exclusive, royalty-free license to publish or reproduce these documents 
+ and software for U.S. Government purposes.  All documents and software 
+ available from this server are protected under the U.S. and Foreign 
+ Copyright Laws, and FNAL reserves all rights. 
+
+
+   Distribution of the software available from this server is free of 
+   charge subject to the user following the terms of the Fermitools 
+   Software Legal Information.
+
+   Redistribution and/or modification of the software shall be accompanied 
+   by the Fermitools Software Legal Information  (including the copyright 
+   notice).
+
+   The user is asked to feed back problems, benefits, and/or suggestions 
+   about the software to the Fermilab Software Providers. 
+
+
+   Neither the name of Fermilab, the  URA, nor the names of the contributors
+   may be used to endorse or promote products derived from this software 
+   without specific prior written permission.
+
+
+
+ DISCLAIMER OF LIABILITY (BSD): 
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED  WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED  WARRANTIES OF MERCHANTABILITY AND FITNESS
+ FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL FERMILAB,
+ OR THE URA, OR THE U.S. DEPARTMENT of ENERGY, OR CONTRIBUTORS BE LIABLE
+ FOR  ANY  DIRECT, INDIRECT,  INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ CONSEQUENTIAL DAMAGES  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ OF SUBSTITUTE  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
+ BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY  OF
+ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT  OF THE USE OF THIS
+ SOFTWARE, EVEN IF ADVISED OF THE  POSSIBILITY OF SUCH DAMAGE.
+   
+
+ Liabilities of the Government: 
+
+ This software is provided by URA, independent from its Prime Contract 
+ with the U.S. Department of Energy. URA is acting independently from 
+ the Government and in its own private capacity and is not acting on 
+ behalf of the U.S. Government, nor as its contractor nor its agent. 
+ Correspondingly, it is understood and agreed that the U.S. Government 
+ has no connection to this software and in no manner whatsoever shall 
+ be liable for nor assume any responsibility or obligation for any claim, 
+ cost, or damages arising out of or resulting from the use of the software 
+ available from this server.
+
+
+ Export Control:
+
+ All documents and software available from this server are subject to U.S. 
+ export control laws.  Anyone downloading information from this server is 
+ obligated to secure any necessary Government licenses before exporting 
+ documents or software obtained from this server. 
+
+
+ 
+
+

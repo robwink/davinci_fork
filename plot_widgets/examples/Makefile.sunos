@@ -1,0 +1,13 @@
+# SCCS ID: Makefile.sunos 1.2 4/9/92
+#
+# Makefile for scatter plot widget (SunOS version)
+#
+CC = acc 
+CFLAGS=  -g
+#CFLAGS= -g -I/usr/products/openwin/v3_0/include
+#CFLAGS= -I/usr/products/openwin/v3_0/include
+LIBS = -L/usr/lib/X11 -lXm -lXt -lX11 -lm
+#LIBS = -L/usr/products/motif/usr/lib -lXm -lXt -lX11 -lm
+AR=/usr/5bin/ar
+
+include Makefile.common

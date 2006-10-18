@@ -1,0 +1,21 @@
+#
+# Makefile for Plot Widgets (OSF/1 version)
+#
+CC=cc
+AR=ar
+F77=f77
+#CFLAGS=-g -DXTFUNCPROTO -DFUNCPROTO
+CFLAGS=-Olimit 2000
+FFLAGS=-g
+#FFLAGS=
+#LIBS=-lXm -lXt -lX11 -lm -lF77 -lI77 -lU77 -lots -lfor -lutil -li
+LIBS=-lXm -lXt -lX11 -lm 
+#CCLIBS=-lm -lF77 -lI77 -lU77 -lots -lfor -lutil -li
+CCLIBS=-lm -lfor -lots
+CFLIBS=-lm
+MAKEDEPEND=xxxx Use nmakedepend on ultrix system
+SCCS=xxxx Use sccs on ultrix system
+NLIBDIR = ../osf_lib
+NBINDIR = ../osf_bin
+
+include Makefile.common

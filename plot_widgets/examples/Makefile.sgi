@@ -1,0 +1,9 @@
+#
+# Makefile for widget examples (Silicon Graphics version)
+#
+CC=cc
+#CFLAGS = -g -DFUNCPROTO
+CFLAGS = -O -DFUNCPROTO
+LIBS = -lXm -lXt -lX11 -lm 
+
+include Makefile.common

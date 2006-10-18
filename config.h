@@ -60,7 +60,7 @@
 #define HAVE_LIBIOMEDLEY 1
 
 /* headers and libraries for libisis */
-#define HAVE_LIBISIS 1
+/* #undef HAVE_LIBISIS */
 
 /* ltdl library present */
 #define HAVE_LIBLTDL 1

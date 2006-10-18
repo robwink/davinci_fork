@@ -58,19 +58,20 @@ am__installdirs = "$(DESTDIR)$(pkglibdir)"
 pkglibLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
 gui_la_DEPENDENCIES = $(top_srcdir)/vicar/libvicar.la
-am_gui_la_OBJECTS = gui.lo widget_arrowbutton.lo \
-	widget_cascadebutton.lo widget_command.lo \
-	widget_drawnbutton.lo widget_errordialog.lo \
-	widget_fileselectionbox.lo widget_form.lo widget_frame.lo \
-	widget_label.lo widget_list.lo widget_menubar.lo \
-	widget_panedwindow.lo widget_pushbutton.lo widget_radiobox.lo \
-	widget_rowcolumn.lo widget_scale.lo widget_scrollbar.lo \
-	widget_scrolledlist.lo widget_scrolledwindow.lo \
-	widget_selectionbox.lo widget_separator.lo widget_text.lo \
-	widget_textfield.lo widget_togglebutton.lo \
-	widget_toplevelshell.lo widget_transientshell.lo \
-	widget_vicar.lo widget_combobox.lo LineBox.lo \
-	widget_linebox.lo
+am_gui_la_OBJECTS = gui.lo LineBox.lo widget_arrowbutton.lo \
+	widget_cascadebutton.lo widget_combobox.lo widget_command.lo \
+	widget_drawingarea.lo widget_drawnbutton.lo \
+	widget_errordialog.lo widget_fileselectionbox.lo \
+	widget_form.lo widget_frame.lo widget_label.lo \
+	widget_linebox.lo widget_list.lo widget_mainwindow.lo \
+	widget_menubar.lo widget_menupopup.lo widget_menupulldown.lo \
+	widget_notebook.lo widget_panedwindow.lo widget_pushbutton.lo \
+	widget_radiobox.lo widget_rowcolumn.lo widget_scale.lo \
+	widget_scrollbar.lo widget_scrolledlist.lo \
+	widget_scrolledwindow.lo widget_selectionbox.lo \
+	widget_separator.lo widget_text.lo widget_textfield.lo \
+	widget_togglebutton.lo widget_toplevelshell.lo \
+	widget_transientshell.lo widget_vicar.lo widget_xyplot.lo
 gui_la_OBJECTS = $(am_gui_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
@@ -88,14 +89,14 @@ DIST_SOURCES = $(gui_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /u/gorelick/davinci/config/missing --run aclocal-1.9
+ACLOCAL = ${SHELL} /u/eengle/davinci/config/missing --run aclocal-1.9
 AMDEP_FALSE = #
 AMDEP_TRUE = 
-AMTAR = ${SHELL} /u/gorelick/davinci/config/missing --run tar
+AMTAR = ${SHELL} /u/eengle/davinci/config/missing --run tar
 AR = ar
-AUTOCONF = ${SHELL} /u/gorelick/davinci/config/missing --run autoconf
-AUTOHEADER = ${SHELL} /u/gorelick/davinci/config/missing --run autoheader
-AUTOMAKE = ${SHELL} /u/gorelick/davinci/config/missing --run automake-1.9
+AUTOCONF = ${SHELL} /u/eengle/davinci/config/missing --run autoconf
+AUTOHEADER = ${SHELL} /u/eengle/davinci/config/missing --run autoheader
+AUTOMAKE = ${SHELL} /u/eengle/davinci/config/missing --run automake-1.9
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -127,7 +128,7 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = ${SHELL} $(install_sh) -c -s
 LDFLAGS =  -L/usr/local/isis/isisr/lib
 LIBOBJS = 
-LIBS = -lXmu -lqmv -lcfitsio -lz -lreadline -lhdf5 -lltdl -ltermcap -lusds -lm -lXm -lXt -lX11  -lSM -lICE  -L/usr/X11R6/lib   -lisis -lisisbind -lisisgen -lg2c
+LIBS = -lXmu -lqmv -lcfitsio -lz -lreadline -lhdf5 -lltdl -ltermcap -lusds -lm -lXm -lXt -lX11  -lSM -lICE  -L/usr/X11R6/lib  
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LN_S = ln -s
 LOCAL_IOMEDLEY_FALSE = #
@@ -140,7 +141,7 @@ LTLIBOBJS =
 MAINT = #
 MAINTAINER_MODE_FALSE = 
 MAINTAINER_MODE_TRUE = #
-MAKEINFO = ${SHELL} /u/gorelick/davinci/config/missing --run makeinfo
+MAKEINFO = ${SHELL} /u/eengle/davinci/config/missing --run makeinfo
 MODULE_SUPPORT_FALSE = #
 MODULE_SUPPORT_TRUE = 
 MY_SUBDIRS =  iomedley modules libltdl modules/thm vicar modules/gui
@@ -191,14 +192,14 @@ host_os = linux-gnu
 host_vendor = pc
 includedir = ${prefix}/include
 infodir = ${prefix}/info
-install_sh = /u/gorelick/davinci/config/install-sh
+install_sh = /u/eengle/davinci/config/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localstatedir = ${prefix}/var
 mandir = ${prefix}/man
 mkdir_p = mkdir -p --
 oldincludedir = /usr/include
-prefix = /usr/local
+prefix = /u/eengle/software
 program_transform_name = s,x,x,
 sbindir = ${exec_prefix}/sbin
 sharedstatedir = ${prefix}/com
@@ -209,27 +210,82 @@ target_alias =
 target_cpu = i686
 target_os = linux-gnu
 target_vendor = pc
-gui_la_SOURCES = gui.c \
-	widget_arrowbutton.c widget_cascadebutton.c widget_command.c \
-	widget_drawnbutton.c widget_errordialog.c widget_fileselectionbox.c \
-	widget_form.c widget_frame.c widget_label.c \
-	widget_list.c widget_menubar.c widget_panedwindow.c \
-	widget_pushbutton.c widget_radiobox.c widget_rowcolumn.c \
-	widget_scale.c widget_scrollbar.c widget_scrolledlist.c \
-	widget_scrolledwindow.c widget_selectionbox.c widget_separator.c \
-	widget_text.c widget_textfield.c widget_togglebutton.c \
-	widget_toplevelshell.c widget_transientshell.c \
-	widget_vicar.c widget_combobox.c LineBox.c widget_linebox.c \
-	gui.h widget_arrowbutton.h widget_cascadebutton.h widget_command.h \
-	widget_drawnbutton.h widget_errordialog.h widget_fileselectionbox.h \
-	widget_form.h widget_frame.h widget_label.h widget_list.h \
-	widget_menubar.h widget_panedwindow.h widget_pushbutton.h \
-	widget_radiobox.h widget_rowcolumn.h widget_scale.h \
-	widget_scrollbar.h widget_scrolledlist.h widget_scrolledwindow.h \
-	widget_selectionbox.h widget_separator.h widget_textfield.h \
-	widget_text.h widget_togglebutton.h widget_toplevelshell.h \
-	widget_transientshell.h widget_vicar.h widget_xbaematrix.h \
-	widget_combobox.h widget_linebox.h LineBox.h LineBoxP.h
+gui_la_SOURCES = \
+    gui.c \
+    LineBox.c \
+    widget_arrowbutton.c \
+    widget_cascadebutton.c \
+    widget_combobox.c \
+    widget_command.c \
+    widget_drawingarea.c \
+    widget_drawnbutton.c \
+    widget_errordialog.c \
+    widget_fileselectionbox.c \
+    widget_form.c \
+    widget_frame.c \
+    widget_label.c \
+    widget_linebox.c \
+    widget_list.c \
+    widget_mainwindow.c \
+    widget_menubar.c \
+    widget_menupopup.c \
+    widget_menupulldown.c \
+    widget_notebook.c \
+    widget_panedwindow.c \
+    widget_pushbutton.c \
+    widget_radiobox.c \
+    widget_rowcolumn.c \
+    widget_scale.c \
+    widget_scrollbar.c \
+    widget_scrolledlist.c \
+    widget_scrolledwindow.c \
+    widget_selectionbox.c \
+    widget_separator.c \
+    widget_text.c \
+    widget_textfield.c \
+    widget_togglebutton.c \
+    widget_toplevelshell.c \
+    widget_transientshell.c \
+    widget_vicar.c \
+    widget_xyplot.c \
+    gui.h \
+    LineBox.h \
+    LineBoxP.h \
+    widget_arrowbutton.h \
+    widget_cascadebutton.h \
+    widget_combobox.h \
+    widget_command.h \
+    widget_drawingarea.h \
+    widget_drawnbutton.h \
+    widget_errordialog.h \
+    widget_fileselectionbox.h \
+    widget_form.h \
+    widget_frame.h \
+    widget_label.h \
+    widget_linebox.h \
+    widget_list.h \
+    widget_mainwindow.h \
+    widget_menubar.h \
+    widget_menupopup.h \
+    widget_menupulldown.h \
+    widget_notebook.h \
+    widget_panedwindow.h \
+    widget_pushbutton.h \
+    widget_radiobox.h \
+    widget_rowcolumn.h \
+    widget_scale.h \
+    widget_scrollbar.h \
+    widget_scrolledlist.h \
+    widget_scrolledwindow.h \
+    widget_selectionbox.h \
+    widget_separator.h \
+    widget_textfield.h \
+    widget_text.h \
+    widget_togglebutton.h \
+    widget_toplevelshell.h \
+    widget_transientshell.h \
+    widget_vicar.h \
+    widget_xyplot.h
 
 gui_la_LDFLAGS = -module
 gui_la_LIBADD = $(top_srcdir)/vicar/libvicar.la
@@ -309,6 +365,7 @@ include ./$(DEPDIR)/widget_arrowbutton.Plo
 include ./$(DEPDIR)/widget_cascadebutton.Plo
 include ./$(DEPDIR)/widget_combobox.Plo
 include ./$(DEPDIR)/widget_command.Plo
+include ./$(DEPDIR)/widget_drawingarea.Plo
 include ./$(DEPDIR)/widget_drawnbutton.Plo
 include ./$(DEPDIR)/widget_errordialog.Plo
 include ./$(DEPDIR)/widget_fileselectionbox.Plo
@@ -317,7 +374,11 @@ include ./$(DEPDIR)/widget_frame.Plo
 include ./$(DEPDIR)/widget_label.Plo
 include ./$(DEPDIR)/widget_linebox.Plo
 include ./$(DEPDIR)/widget_list.Plo
+include ./$(DEPDIR)/widget_mainwindow.Plo
 include ./$(DEPDIR)/widget_menubar.Plo
+include ./$(DEPDIR)/widget_menupopup.Plo
+include ./$(DEPDIR)/widget_menupulldown.Plo
+include ./$(DEPDIR)/widget_notebook.Plo
 include ./$(DEPDIR)/widget_panedwindow.Plo
 include ./$(DEPDIR)/widget_pushbutton.Plo
 include ./$(DEPDIR)/widget_radiobox.Plo
@@ -334,6 +395,7 @@ include ./$(DEPDIR)/widget_togglebutton.Plo
 include ./$(DEPDIR)/widget_toplevelshell.Plo
 include ./$(DEPDIR)/widget_transientshell.Plo
 include ./$(DEPDIR)/widget_vicar.Plo
+include ./$(DEPDIR)/widget_xyplot.Plo
 
 .c.o:
 	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -538,6 +600,10 @@ uninstall-am: uninstall-info-am uninstall-pkglibLTLIBRARIES
 
 $(top_srcdir)/vicar/libvicar.la :
 	make -C $(top_srcdir)/vicar
+$(top_srcdir)/plot_widgets/plot_widgets/libPlotW.a :
+	make -C $(top_srcdir)/plot_widgets
+$(top_srcdir)/plot_widgets/util/libNUtil.a :
+	make -C $(top_srcdir)/plot_widgets/util
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

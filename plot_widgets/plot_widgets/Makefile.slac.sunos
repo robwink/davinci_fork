@@ -1,0 +1,26 @@
+# SCCS ID: Makefile.sun 1.2 4/9/92
+#
+# Makefile for scatter plot widget (Sun version)
+#
+
+CC = acc 
+AR=/usr/5bin/ar
+
+CFLAGS=  -g -I/usr/local/X11R5/include
+
+LIBS= -Bstatic \
+      -L/usr/local/X11R5/lib.sun4 -lXm -lXt -lX11
+
+
+#CFLAGS= -g -I/usr/products/openwin/v3_0/include
+#CFLAGS= -I/usr/products/openwin/v3_0/include
+#LIBS = -L/usr/lib/X11 -lXm -lXt -lX11 -lm
+#LIBS = -Bstatic -L/usr/products/motif/usr/lib -lXm -lXt -lX11 -lm
+
+
+MAKEDEPEND=xxxx Use nmakedepend on ultrix system xxxx 
+SCCS=xxxx Use sccs on ultrix system xxxx 
+NLIBDIR = ../sun_lib
+NBINDIR = ../sun_bin
+
+include Makefile.common

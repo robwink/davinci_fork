@@ -49,6 +49,8 @@
 /* First widget ID to use. */
 #define DV_GUI_APPSHELL_WIDGETID 0
 
+#define PLOT_WIDGETS
+
 /*****************************************************************************
  *
  * INCLUDES
@@ -86,6 +88,11 @@
 #include "widget_label.h"
 #include "widget_list.h"
 #include "widget_menubar.h"
+#include "widget_menupulldown.h"
+#include "widget_menupopup.h"
+#include "widget_notebook.h"
+#include "widget_drawingarea.h"
+#include "widget_mainwindow.h"
 #include "widget_pushbutton.h"
 #include "widget_panedwindow.h"
 #include "widget_radiobox.h"
@@ -101,7 +108,7 @@
 #include "widget_togglebutton.h"
 #include "widget_toplevelshell.h"
 #include "widget_transientshell.h"
-#if PLOT_WIDGETS
+#ifdef PLOT_WIDGETS
 #include "widget_xyplot.h"
 #endif
 #include "widget_linebox.h"
@@ -148,10 +155,9 @@ static Var *dv_Realize(vfuncptr, Var *);
 static Var *dv_AddCallback(vfuncptr, Var *);
 static Var *dv_ListCallbacks(vfuncptr, Var *);
 static Var *dv_RemoveCallback(vfuncptr, Var *);
-#if 0
 static Var *dv_WidgetShow(vfuncptr, Var *);
 static Var *dv_WidgetHide(vfuncptr, Var *);
-#endif
+static Var * dv_WidgetUnhook(vfuncptr f, Var * args);
 
 /* Default widget initializer/destroyers, misc. */
 
@@ -284,7 +290,12 @@ static const char *ignoreTypes[] = {
 	"MatchBehavior",		/* XmList */
 	"PrimaryOwnership",		/* XmList */
 	"SelectColor",			/* XmList */
-	"SelectionMode",		/* XmList */
+	"Atom",
+	"Window",
+	"Bitmap",
+	"Gravity",
+	"InitialState",
+	"Visual",				/* XmTopLevelShell */
 	NULL
 };
 
@@ -346,6 +357,15 @@ static const char *enumTypes[] = {
 	XmRScrollingPolicy,			/* XmScrolledWindow */
 	XmRResizePolicy,			/* XmBulletinBoard, XmForm, etc. */
 	XmCComboBoxType,			/* XmComboBox */
+	XmCNotebookChildType,		/* XmNotebook constraint */
+	XmCBackPagePlacement,		/* XmNotebook resource */
+	XmCBindingType,				/* XmNotebook resource */
+	XmCScrolledWindowChildType,	/* XmScrolledWindow */
+	XmCVisualPolicy,			/* XmScrolledWindow */
+	XmCFrameChildType,			/* XmFrame */
+	XmCChildHorizontalAlignment,/* XmFrame */
+	XmCChildVerticalAlignment,	/* XmFrame */
+	XmCLayoutDirection,			/* XmMenuShell */
 #ifdef HAVE_LIBVICAR
 	XvicCDataSavePolicy,			/* VICAR */
 	XvicCDataType,
@@ -389,57 +409,57 @@ static ResourceTypeMapEntry ResourceTypeMap[] = {
 static EnumNameEntry alignmentEnums[] = {
 	{ "ALIGNMENT_BEGINNING",		XmALIGNMENT_BEGINNING },
 	{ "ALIGNMENT_CENTER",			XmALIGNMENT_CENTER },
-	{ "ALIGNMENT_END",			XmALIGNMENT_END },
+	{ "ALIGNMENT_END",				XmALIGNMENT_END },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry arrowDirectionEnums[] = {
-	{ "ARROW_UP",				XmARROW_UP },
-	{ "ARROW_DOWN",			XmARROW_DOWN },
-	{ "ARROW_LEFT",			XmARROW_LEFT },
-	{ "ARROW_RIGHT",			XmARROW_RIGHT },
+	{ "ARROW_UP",					XmARROW_UP },
+	{ "ARROW_DOWN",					XmARROW_DOWN },
+	{ "ARROW_LEFT",					XmARROW_LEFT },
+	{ "ARROW_RIGHT",				XmARROW_RIGHT },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry fileTypeMaskEnums[] = {
-	{ "DIRECTORY",			XmFILE_DIRECTORY },
-	{ "REGULAR",				XmFILE_REGULAR },
-	{ "ANY_TYPE",				XmFILE_ANY_TYPE },
+	{ "DIRECTORY",					XmFILE_DIRECTORY },
+	{ "REGULAR",					XmFILE_REGULAR },
+	{ "ANY_TYPE",					XmFILE_ANY_TYPE },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry multiClickEnums[] = {
-	{ "MULTICLICK_DISCARD",		XmMULTICLICK_DISCARD },
+	{ "MULTICLICK_DISCARD",			XmMULTICLICK_DISCARD },
 	{ "MULTICLICK_KEEP",			XmMULTICLICK_KEEP },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry orientationEnums[] = {
-	{ "VERTICAL",				XmVERTICAL },
-	{ "HORIZONTAL",			XmHORIZONTAL },
+	{ "VERTICAL",					XmVERTICAL },
+	{ "HORIZONTAL",					XmHORIZONTAL },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry resizePolicyEnums[] = {
-	{ "RESIZE_NONE",			XmRESIZE_NONE },
-	{ "RESIZE_GROW",			XmRESIZE_GROW },
-	{ "RESIZE_ANY",			XmRESIZE_ANY  },
+	{ "RESIZE_NONE",				XmRESIZE_NONE },
+	{ "RESIZE_GROW",				XmRESIZE_GROW },
+	{ "RESIZE_ANY",					XmRESIZE_ANY  },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry shadowTypeEnums[] = {
-	{ "SHADOW_IN",			XmSHADOW_IN },
-	{ "SHADOW_OUT",			XmSHADOW_OUT },
+	{ "SHADOW_IN",					XmSHADOW_IN },
+	{ "SHADOW_OUT",					XmSHADOW_OUT },
 	{ "SHADOW_ETCHED_IN",			XmSHADOW_ETCHED_IN },
-	{ "SHADOW_ETCHED_OUT",		XmSHADOW_ETCHED_OUT },
+	{ "SHADOW_ETCHED_OUT",			XmSHADOW_ETCHED_OUT },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry unitTypeEnums[] = {
-	{ "PIXELS",				XmPIXELS },
-	{ "100TH_MILLIMETERS",		Xm100TH_MILLIMETERS },
-	{ "1000TH_INCHES",			Xm1000TH_INCHES },
-	{ "100TH_POINTS",			Xm100TH_POINTS },
+	{ "PIXELS",						XmPIXELS },
+	{ "100TH_MILLIMETERS",			Xm100TH_MILLIMETERS },
+	{ "1000TH_INCHES",				Xm1000TH_INCHES },
+	{ "100TH_POINTS",				Xm100TH_POINTS },
 	{ "100TH_FONT_UNITS",			Xm100TH_FONT_UNITS },
 	{ NULL,				0 }
 };
@@ -450,6 +470,15 @@ static EnumNameEntry verticalAlignmentEnums[] = {
 	{ "ALIGNMENT_CENTER",			XmALIGNMENT_CENTER },
 	{ "ALIGNMENT_CONTENTS_BOTTOM",	XmALIGNMENT_CONTENTS_BOTTOM },
 	{ "ALIGNMENT_CONTENTS_TOP",		XmALIGNMENT_CONTENTS_TOP },
+	{ NULL,				0 }
+};
+
+static EnumNameEntry frameVerticalAlignmentEnums[] = {
+	{ "ALIGNMENT_BASELINE_BOTTOM",	XmALIGNMENT_BASELINE_BOTTOM },
+	{ "ALIGNMENT_BASELINE_TOP",		XmALIGNMENT_BASELINE_TOP },
+	{ "ALIGNMENT_WIDGET_TOP",		XmALIGNMENT_WIDGET_TOP },
+	{ "ALIGNMENT_CENTER",			XmALIGNMENT_CENTER },
+	{ "ALIGNMENT_WIDGET_BOTTOM",	XmALIGNMENT_WIDGET_BOTTOM },
 	{ NULL,				0 }
 };
 
@@ -470,44 +499,44 @@ static EnumNameEntry listSizePolicyEnums[] = {
 };
 
 static EnumNameEntry scrollBarDisplayPolicyEnums[] = {
-	{ "STATIC",				XmSTATIC },
-	{ "AS_NEEDED",			XmAS_NEEDED },
+	{ "STATIC",					XmSTATIC },
+	{ "AS_NEEDED",				XmAS_NEEDED },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry scrollBarPlacementEnums[] = {
 	{ "TOP_LEFT",				XmTOP_LEFT },
 	{ "BOTTOM_LEFT",			XmBOTTOM_LEFT },
-	{ "TOP_RIGHT",			XmTOP_RIGHT },
+	{ "TOP_RIGHT",				XmTOP_RIGHT },
 	{ "BOTTOM_RIGHT",			XmBOTTOM_RIGHT },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry scrollingPolicyEnums[] = {
-	{ "AUTOMATIC",			XmAUTOMATIC },
-	{ "APPLICATION_DEFINED",		XmAPPLICATION_DEFINED },
+	{ "AUTOMATIC",				XmAUTOMATIC },
+	{ "APPLICATION_DEFINED",	XmAPPLICATION_DEFINED },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry selectionPolicyEnums[] = {
 	{ "SINGLE_SELECT",			XmSINGLE_SELECT },
-	{ "MULTIPLE_SELECT",			XmMULTIPLE_SELECT },
+	{ "MULTIPLE_SELECT",		XmMULTIPLE_SELECT },
 	{ "BROWSE_SELECT",			XmBROWSE_SELECT },
-	{ "EXTENDED_SELECT",			XmEXTENDED_SELECT },
+	{ "EXTENDED_SELECT",		XmEXTENDED_SELECT },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry packingEnums[] = {
-	{ "PACK_TIGHT",			XmPACK_TIGHT },
+	{ "PACK_TIGHT",				XmPACK_TIGHT },
 	{ "PACK_COLUMN",			XmPACK_COLUMN }, 
-	{ "PACK_NONE",			XmPACK_NONE },
+	{ "PACK_NONE",				XmPACK_NONE },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry rowColumnTypeEnums[] = {
-	{ "WORK_AREA",			XmWORK_AREA },
+	{ "WORK_AREA",				XmWORK_AREA },
 	{ "MENU_BAR",				XmMENU_BAR },
-	{ "MENU_POPUP",			XmMENU_POPUP },
+	{ "MENU_POPUP",				XmMENU_POPUP },
 	{ "MENU_PULLDOWN",			XmMENU_PULLDOWN },
 	{ "MENU_OPTION",			XmMENU_OPTION },
 	{ NULL,				0 }
@@ -515,19 +544,19 @@ static EnumNameEntry rowColumnTypeEnums[] = {
 
 static EnumNameEntry tearOffModelEnums[] = {
 	{ "TEAR_OFF_DISABLED",		XmTEAR_OFF_DISABLED },
-	{ "TEAR_OFF_ENABLED",			XmTEAR_OFF_ENABLED },
+	{ "TEAR_OFF_ENABLED",		XmTEAR_OFF_ENABLED },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry stringDirectionEnums[] = {
-	{ "STRING_DIRECTION_L_TO_R",		XmSTRING_DIRECTION_L_TO_R },
-	{ "STRING_DIRECTION_R_TO_L",		XmSTRING_DIRECTION_R_TO_L },
-	{ "STRING_DIRECTION_DEFAULT",		XmSTRING_DIRECTION_DEFAULT },
+	{ "STRING_DIRECTION_L_TO_R",	XmSTRING_DIRECTION_L_TO_R },
+	{ "STRING_DIRECTION_R_TO_L",	XmSTRING_DIRECTION_R_TO_L },
+	{ "STRING_DIRECTION_DEFAULT",	XmSTRING_DIRECTION_DEFAULT },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry processingDirectionEnums[] = {
-	{ "MAX_ON_TOP",			XmMAX_ON_TOP },
+	{ "MAX_ON_TOP",				XmMAX_ON_TOP },
 	{ "MAX_ON_BOTTOM",			XmMAX_ON_BOTTOM },
 	{ "MAX_ON_LEFT",			XmMAX_ON_LEFT },
 	{ "MAX_ON_RIGHT",			XmMAX_ON_RIGHT },
@@ -540,13 +569,13 @@ static EnumNameEntry separatorTypeEnums[] = {
 	{ "DOUBLE_LINE",			XmDOUBLE_LINE },
 	{ "SINGLE_DASHED_LINE",		XmSINGLE_DASHED_LINE },
 	{ "DOUBLE_DASHED_LINE",		XmDOUBLE_DASHED_LINE },
-	{ "SHADOW_ETCHED_IN",			XmSHADOW_ETCHED_IN },
+	{ "SHADOW_ETCHED_IN",		XmSHADOW_ETCHED_IN },
 	{ "SHADOW_ETCHED_OUT",		XmSHADOW_ETCHED_OUT },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry indicatorTypeEnums[] = {
-	{ "N_OF_MANY",			XmN_OF_MANY },
+	{ "N_OF_MANY",				XmN_OF_MANY },
 	{ "ONE_OF_MANY",			XmONE_OF_MANY },
 	{ NULL,				0 }
 };
@@ -554,10 +583,10 @@ static EnumNameEntry indicatorTypeEnums[] = {
 static EnumNameEntry attachmentEnums[] = {
 	{ "ATTACH_NONE",			XmATTACH_NONE },
 	{ "ATTACH_FORM",			XmATTACH_FORM },
-	{ "ATTACH_OPPOSITE_FORM",		XmATTACH_OPPOSITE_FORM },
+	{ "ATTACH_OPPOSITE_FORM",	XmATTACH_OPPOSITE_FORM },
 	{ "ATTACH_WIDGET",			XmATTACH_WIDGET },
-	{ "ATTACH_OPPOSITE_WIDGET",		XmATTACH_OPPOSITE_WIDGET },
-	{ "ATTACH_POSITION",			XmATTACH_POSITION },
+	{ "ATTACH_OPPOSITE_WIDGET",	XmATTACH_OPPOSITE_WIDGET },
+	{ "ATTACH_POSITION",		XmATTACH_POSITION },
 	{ "ATTACH_SELF",			XmATTACH_SELF },
 	{ NULL,				0 }
 };
@@ -579,6 +608,72 @@ static EnumNameEntry comboBoxTypeEnums[] = {
 	{ "COMBO_LIST",				XmCOMBO_BOX },
 	{ "COMBO_DROPEDIT",			XmDROP_DOWN_COMBO_BOX },
 	{ "COMBO_DROP",				XmDROP_DOWN_LIST },
+	{ NULL,						0 }
+};
+
+static EnumNameEntry notebookChildTypeEnums[] = {
+	{ "PAGE",					XmPAGE },
+	{ "MAJOR_TAB",				XmMAJOR_TAB },
+	{ "MINOR_TAB",				XmMINOR_TAB },
+	{ "STATUS_AREA",			XmSTATUS_AREA },
+	{ "PAGE_SCROLLER",			XmPAGE_SCROLLER },
+	{ NULL,						0 }
+};
+
+static EnumNameEntry layoutDirectionEnums[] = {
+	{ "LEFT_TO_RIGHT",					XmLEFT_TO_RIGHT },
+	{ "RIGHT_TO_LEFT",					XmRIGHT_TO_LEFT },
+	{ "BOTTOM_TO_TOP",					XmBOTTOM_TO_TOP },
+	{ "TOP_TO_BOTTOM",					XmTOP_TO_BOTTOM },
+	{ "BOTTOM_TO_TOP_LEFT_TO_RIGHT",	XmBOTTOM_TO_TOP_LEFT_TO_RIGHT },
+	{ "BOTTOM_TO_TOP_RIGHT_TO_LEFT",	XmBOTTOM_TO_TOP_RIGHT_TO_LEFT },
+	{ "TOP_TO_BOTTOM_LEFT_TO_RIGHT",	XmTOP_TO_BOTTOM_LEFT_TO_RIGHT },
+	{ "TOP_TO_BOTTOM_RIGHT_TO_LEFT",	XmTOP_TO_BOTTOM_RIGHT_TO_LEFT },
+	{ "LEFT_TO_RIGHT_BOTTOM_TO_TOP",	XmLEFT_TO_RIGHT_BOTTOM_TO_TOP },
+	{ "RIGHT_TO_LEFT_BOTTOM_TO_TOP",	XmRIGHT_TO_LEFT_BOTTOM_TO_TOP },
+	{ "LEFT_TO_RIGHT_TOP_TO_BOTTOM",	XmLEFT_TO_RIGHT_TOP_TO_BOTTOM },
+	{ "RIGHT_TO_LEFT_TOP_TO_BOTTOM",	XmRIGHT_TO_LEFT_TOP_TO_BOTTOM },
+	{ NULL,						0 }
+};
+
+static EnumNameEntry backPagePlacementEnums[] = {
+	{ "BOTTOM_RIGHT",			XmBOTTOM_RIGHT },
+	{ "BOTTOM_LEFT",			XmBOTTOM_LEFT },
+	{ "TOP_RIGHT",				XmTOP_RIGHT },
+	{ "TOP_LEFT",				XmTOP_LEFT },
+	{ NULL,						0 }
+};
+
+static EnumNameEntry bindingTypeEnums[] = {
+	{ "NONE",					XmNONE },
+	{ "SOLID",					XmSOLID },
+	{ "SPIRAL",					XmSPIRAL },
+	{ "PIXMAP",					XmPIXMAP },
+	{ "PIXMAP_OVERLAP_ONLY",	XmPIXMAP_OVERLAP_ONLY },
+	{ NULL,						0 }
+};
+
+static EnumNameEntry scrolledWindowChildTypeEnums[] = {
+	{ "HOR_SCROLLBAR",			XmHOR_SCROLLBAR },
+	{ "VERT_SCROLLBAR",			XmVERT_SCROLLBAR },
+	{ "SCROLL_HOR",				XmSCROLL_HOR },
+	{ "SCROLL_VERT",			XmSCROLL_VERT },
+	{ "WORK_AREA",				XmWORK_AREA },
+	{ "CLIP_WINDOW",			XmCLIP_WINDOW },
+	{ "NO_SCROLL",				XmNO_SCROLL },
+	{ NULL,						0 }
+};
+
+static EnumNameEntry visualPolicyEnums[] = {
+	{ "CONSTANT", 				XmCONSTANT },
+	{ "VARIABLE",				XmVARIABLE },
+	{ NULL,						0 }
+};
+
+static EnumNameEntry frameChildTypeEnums[] = {
+	{ "FRAME_TITLE_CHILD",		XmFRAME_TITLE_CHILD },
+	{ "FRAME_WORKAREA_CHILD",	XmFRAME_WORKAREA_CHILD },
+	{ "FRAME_GENERIC_CHILD",	XmFRAME_GENERIC_CHILD },
 	{ NULL,						0 }
 };
 
@@ -605,30 +700,30 @@ static EnumNameEntry vicarDataTypeEnums[] = {
 
 static EnumNameEntry vicarDitherModeEnums[] = {
 	{ "NONE",				XvicNONE },
-	{ "ORDERED",				XvicORDERED },
+	{ "ORDERED",			XvicORDERED },
 	{ "KAGELS",				XvicKAGELS },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry vicarImageModeEnums[] = {
 	{ "COLOR",				XvicCOLOR },
-	{ "BW",				XvicBW },
+	{ "BW",					XvicBW },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry vicarLutTypeEnums[] = {
-	{ "STRETCH",				XvicSTRETCH },
+	{ "STRETCH",			XvicSTRETCH },
 	{ "RAW",				XvicRAW },
 	{ "PSEUDO",				XvicPSEUDO },
-	{ "PSEUDO_ONLY",			XvicPSEUDO_ONLY },
+	{ "PSEUDO_ONLY",		XvicPSEUDO_ONLY },
 	{ NULL,				0 }
 };
 
 static EnumNameEntry vicarLut16TypeEnums[] = {
-	{ "STRETCH",				XvicSTRETCH },
+	{ "STRETCH",			XvicSTRETCH },
 	{ "RAW",				XvicRAW },
 	{ "PSEUDO",				XvicPSEUDO },
-	{ "PSEUDO_ONLY",			XvicPSEUDO_ONLY },
+	{ "PSEUDO_ONLY",		XvicPSEUDO_ONLY },
 	{ NULL,				0 }
 };
 
@@ -648,8 +743,8 @@ static EnumNameEntry vicarColormapPolicyEnums[] = {
 };
 
 static EnumNameEntry vicarVisualTypeEnums[] = {
-	{ "USE_DEFAULT",			XvicUSE_DEFAULT },
-	{ "USE_8BIT",				XvicUSE_8BIT },
+	{ "USE_DEFAULT",		XvicUSE_DEFAULT },
+	{ "USE_8BIT",			XvicUSE_8BIT },
 	{ "USE_24BIT",			XvicUSE_24BIT },
 	{ NULL,				0 }
 };
@@ -664,44 +759,53 @@ static EnumNameEntry vicarWorkProcPolicyEnums[] = {
 #endif
 
 static EnumTypeNameMapEntry EnumTypeNameMap[] = {
-	{ XmRUnitType,				unitTypeEnums },
-	{ XmRVerticalAlignment,		verticalAlignmentEnums },
-	{ XmRRowColumnType,			rowColumnTypeEnums },
-	{ XmRAlignment,				alignmentEnums },
-	{ XtROrientation,			orientationEnums },
-	{ XmRPacking,				packingEnums },
-	{ XmRLabelType,				labelTypeEnums },
-	{ XmRStringDirection,		stringDirectionEnums },
-	{ XmRArrowDirection,		arrowDirectionEnums },
-	{ XmRMultiClick,			multiClickEnums },
-	{ XmRShadowType,			shadowTypeEnums },
-	{ XmRSelectionPolicy,		selectionPolicyEnums },
-	{ XmRListSizePolicy,		listSizePolicyEnums },
-	{ XmRProcessingDirection,	processingDirectionEnums },
-	{ XmRSeparatorType,			separatorTypeEnums },
-	{ XmRIndicatorType,			indicatorTypeEnums },
+	{ XmRUnitType,					unitTypeEnums },
+	{ XmRVerticalAlignment,			verticalAlignmentEnums },
+	{ XmRRowColumnType,				rowColumnTypeEnums },
+	{ XmRAlignment,					alignmentEnums },
+	{ XtROrientation,				orientationEnums },
+	{ XmRPacking,					packingEnums },
+	{ XmRLabelType,					labelTypeEnums },
+	{ XmRStringDirection,			stringDirectionEnums },
+	{ XmRArrowDirection,			arrowDirectionEnums },
+	{ XmRMultiClick,				multiClickEnums },
+	{ XmRShadowType,				shadowTypeEnums },
+	{ XmRSelectionPolicy,			selectionPolicyEnums },
+	{ XmRListSizePolicy,			listSizePolicyEnums },
+	{ XmRProcessingDirection,		processingDirectionEnums },
+	{ XmRSeparatorType,				separatorTypeEnums },
+	{ XmRIndicatorType,				indicatorTypeEnums },
 	/* FIX: confirm XmRTearOffModel */
-	{ XmRTearOffModel,			tearOffModelEnums },
-	{ XmRAttachment,			attachmentEnums },
-	{ XmRFileTypeMask,			fileTypeMaskEnums },
-	{ XmRScrollBarDisplayPolicy,scrollBarDisplayPolicyEnums },
-	{ XmRScrollBarPlacement,	scrollBarPlacementEnums },
-	{ XmRScrollingPolicy,		scrollingPolicyEnums },
-	{ XmRResizePolicy,			resizePolicyEnums },
-	{ XmCSet,					toggleEnums },
-	{ XmCEditMode,				editModeEnums },
-	{ XmCComboBoxType,			comboBoxTypeEnums },
+	{ XmRTearOffModel,				tearOffModelEnums },
+	{ XmRAttachment,				attachmentEnums },
+	{ XmRFileTypeMask,				fileTypeMaskEnums },
+	{ XmRScrollBarDisplayPolicy,	scrollBarDisplayPolicyEnums },
+	{ XmRScrollBarPlacement,		scrollBarPlacementEnums },
+	{ XmRScrollingPolicy,			scrollingPolicyEnums },
+	{ XmRResizePolicy,				resizePolicyEnums },
+	{ XmCSet,						toggleEnums },
+	{ XmCEditMode,					editModeEnums },
+	{ XmCComboBoxType,				comboBoxTypeEnums },
+	{ XmCNotebookChildType,			notebookChildTypeEnums },
+	{ XmCLayoutDirection,			layoutDirectionEnums },
+	{ XmCBackPagePlacement,			backPagePlacementEnums },
+	{ XmCBindingType,				bindingTypeEnums },
+	{ XmCScrolledWindowChildType,	scrolledWindowChildTypeEnums },
+	{ XmCVisualPolicy,				visualPolicyEnums },
+	{ XmCFrameChildType,			frameChildTypeEnums },
+	{ XmCChildHorizontalAlignment,	alignmentEnums },
+	{ XmCChildVerticalAlignment,	frameVerticalAlignmentEnums },
 #ifdef HAVE_LIBVICAR
-	{ XvicCDataSavePolicy,		vicarDataSavePolicyEnums },
-	{ XvicCDataType,			vicarDataTypeEnums },
-	{ XvicCDitherMode,			vicarDitherModeEnums },
-	{ XvicCImageMode,			vicarImageModeEnums },
-	{ XvicCLutType,				vicarLutTypeEnums },
-	{ XvicCLut16Type,			vicarLut16TypeEnums },
-	{ XvicCStretchPolicy,		vicarStretchPolicyEnums },
-	{ XvicCColormapPolicy,		vicarColormapPolicyEnums },
-	{ XvicCVisualType,			vicarVisualTypeEnums },
-	{ XvicCWorkProcPolicy,		vicarWorkProcPolicyEnums },
+	{ XvicCDataSavePolicy,			vicarDataSavePolicyEnums },
+	{ XvicCDataType,				vicarDataTypeEnums },
+	{ XvicCDitherMode,				vicarDitherModeEnums },
+	{ XvicCImageMode,				vicarImageModeEnums },
+	{ XvicCLutType,					vicarLutTypeEnums },
+	{ XvicCLut16Type,				vicarLut16TypeEnums },
+	{ XvicCStretchPolicy,			vicarStretchPolicyEnums },
+	{ XvicCColormapPolicy,			vicarColormapPolicyEnums },
+	{ XvicCVisualType,				vicarVisualTypeEnums },
+	{ XvicCWorkProcPolicy,			vicarWorkProcPolicyEnums },
 #endif
 	{ NULL,				NULL }
 };
@@ -900,6 +1004,17 @@ static WidgetMapEntry WidgetMap[] = {
 		gui_setCommandPseudoResources,
 		gui_getCommandPublicResources
 	},
+	/* xmDrawingAreaClass */
+	{
+		gui_isDrawingArea,
+		gui_initDefault,
+		gui_destroyDefault,
+		gui_getDrawingAreaClass,
+		gui_getDrawingAreaCallbacks,
+		NULL,
+		NULL,
+		NULL
+	},
 	/* xmDrawnButtonWidgetClass */
 	{
 		gui_isDrawnButton,
@@ -944,6 +1059,61 @@ static WidgetMapEntry WidgetMap[] = {
 		NULL,
 		NULL
 	},
+	/* xmMainWindowClass */
+	{
+		gui_isMainWindow,
+		gui_initDefault,
+		gui_destroyDefault,
+		gui_getMainWindowClass,
+		NULL,
+		NULL,
+		NULL,
+		NULL
+	},
+	/* xmMenuBarWidgetClass */
+	{
+		gui_isMenuBar,
+		gui_initMenuBar,
+		gui_destroyDefault,
+		gui_getMenuBarClass,
+		NULL,
+		NULL,
+		NULL,
+		NULL
+	},
+	/* xmMenuPulldownClass */
+	{
+		gui_isMenuPulldown,
+		gui_initMenuPulldown,
+		gui_destroyDefault,
+		gui_getMenuPulldownClass,
+		NULL,
+		NULL,
+		NULL,
+		NULL
+	},
+	/* xmMenuPopupClass */
+	{
+		gui_isMenuPopup,
+		gui_initMenuPopup,
+		gui_destroyDefault,
+		gui_getMenuPopupClass,
+		NULL,
+		NULL,
+		NULL,
+		NULL
+	},
+	/* xmNotebookClass */
+	{
+		gui_isNotebook,
+		gui_initDefault,
+		gui_destroyDefault,
+		gui_getNotebookClass,
+		gui_getNotebookCallbacks,
+		gui_getNotebookPseudoResources,
+		gui_setNotebookPseudoResources,
+		NULL
+	},
 	/* xmPanedWindowWidgetClass */
 	{
 		gui_isPanedWindow,
@@ -965,17 +1135,6 @@ static WidgetMapEntry WidgetMap[] = {
 		NULL,
 		NULL,
 		gui_getPushButtonPublicResources
-	},
-	/* xmMenuBarWidgetClass */
-	{
-		gui_isMenuBar,
-		gui_initMenuBar,
-		gui_destroyDefault,
-		gui_getMenuBarClass,
-		NULL,
-		NULL,
-		NULL,
-		NULL
 	},
 	/* RadioBox */
 	{
@@ -1091,11 +1250,11 @@ static WidgetMapEntry WidgetMap[] = {
 	/* xyWidgetClass */
 	{
 		gui_isXYPlot,
-		gui_initDefault,
+		gui_initXYPlot,
 		gui_destroyDefault,
 		gui_getXYPlotClass,
-		NULL,
-		NULL,
+		gui_getXYPlotCallbacks,
+		gui_getXYPlotPseudoResources,
 		gui_setXYPlotPseudoResources,
 		NULL
 	},
@@ -1147,8 +1306,6 @@ static WidgetMapEntry WidgetMap[] = {
  *
  *****************************************************************************/
 
-#define DV_MODULE_FUNC_COUNT 8 /* NOTE! If export_funcs changes, so must this */
-
 static dvModuleFuncDesc export_funcs [] = {
 	{ "create", 		dv_CreateWidget },
 	{ "destroy",		dv_DestroyWidget },
@@ -1159,12 +1316,13 @@ static dvModuleFuncDesc export_funcs [] = {
 	{ "addcallback", 	dv_AddCallback },
 	{ "listcallbacks", 	dv_ListCallbacks },
 	{ "removecallback",	dv_RemoveCallback },
-#if 0
 	{ "show",    		dv_WidgetShow },
 	{ "hide",    		dv_WidgetHide },
-#endif
+	{ "unhook",			dv_WidgetUnhook },
 	{ NULL,      		NULL }
 };
+
+#define DV_MODULE_FUNC_COUNT (sizeof(export_funcs)/sizeof(export_funcs[0])-1)
 
 /* Davinci does not need to load any dependencies.. */
 
@@ -1195,9 +1353,6 @@ void	dv_module_fini(const char *);
 
 /* Callback/event functions. */
 
-/* FIX: moved to gui.h; uncomment this if it is not needed externally. */
-/* void gui_defaultCallback(Widget, XtPointer, XtPointer); */
-
 #if 0
 static void		registerCallbacks(Widget, CallbackList); /* FIX: remove this proc and supporting procs */
 #endif
@@ -1217,8 +1372,8 @@ void dbgprintf (char *fmt, ...)
 #ifdef DEBUG
 	va_list list;
 	va_start (list, fmt);
-	vsprintf (stderr, "DEBUG: ");
-	vsprintf (stderr, fmt, list);
+	fprintf (stderr, "DEBUG: ");
+	vfprintf (stderr, fmt, list);
 #endif
 }
 
@@ -1566,14 +1721,14 @@ dv_XEventFlush(vfuncptr f, Var *args)
 
 void
 gui_defaultDestroyCallback(Widget widget,
-		XtPointer clientData, XtPointer callData)
+	XtPointer clientData, XtPointer callData)
 {
 
 	MyWidgetList		widgetListEntry;
 	CallbackMapEntry	*callbackMapEntry;
 
 	dbgprintf ("gui_defaultDestroyCallback(widget = %ld, "
-			"clientData = %ld, callData = %ld)\n", widget, clientData, callData);
+		"clientData = %ld, callData = %ld)\n", widget, clientData, callData);
 
 #if 0
 	gui_addEvent(widget, "destroy");
@@ -1685,7 +1840,6 @@ getWidgetFromId(int id) {
 	}
 
 	return (Widget)NULL;
-
 }
 
 #if 0
@@ -1785,7 +1939,6 @@ gui_getWidgetListEntryFromWidget(Widget widget) {
 	}
 
 	return NULL;
-
 }
 
 /* int
@@ -2548,23 +2701,82 @@ gui_destroyWidget(Widget widget)
 	free(widgetListEntry);
 }
 
-#if 0
-
-/* FIX: is this needed?  if so, implement.. */
-
+/* show a widget */
 static Var *
-dv_WidgetShow(vfuncptr f, Var * args) {
+dv_WidgetShow(vfuncptr f, Var * args)
+{
+	Alist alist[2];
+	int widgetid = -1;
+	Widget widget;
+	alist[0] = make_alist("widget", INT, NULL, &widgetid);
+	alist[1].name = NULL;
+
+	if (parse_args(f, args, alist) == 0) {
+		parse_error("Usage: gui.show(widgetId)");
+	} else if (-1 == widgetid) {
+		parse_error ("gui.show: Unable to show, invalid widget id");
+	} else {
+		widget = getWidgetFromId (widgetid);
+		if (widget == NULL) {
+			parse_error ("gui.show: Unable to show, invalid widget id");
+		} else {
+			XtManageChild(widget);
+		}
+	}
 	return NULL;
 }
 
-/* FIX: is this needed?  if so, implement.. */
-
 static Var *
-dv_WidgetHide(vfuncptr f, Var * args) {
+dv_WidgetHide(vfuncptr f, Var * args)
+{
+	Alist alist[2];
+	int widgetid = -1;
+	Widget widget;
+	alist[0] = make_alist("widget", INT, NULL, &widgetid);
+	alist[1].name = NULL;
+
+	if (parse_args(f, args, alist) == 0) {
+		parse_error("Usage: gui.hide(widgetId)");
+	} else if (-1 == widgetid) {
+		parse_error ("gui.hide: Unable to hide, invalid widget id");
+	} else {
+		widget = getWidgetFromId (widgetid);
+		if (widget == NULL) {
+			parse_error ("gui.hide: Unable to hide, invalid widget id");
+		} else {
+			XtUnmanageChild(widget);
+		}
+	}
 	return NULL;
 }
 
-#endif
+/* TODO: should this be added permanently?
+   Unhooks all input selections from this widget */
+static Var *
+dv_WidgetUnhook(vfuncptr f, Var * args)
+{
+	Alist alist[2];
+	int widgetid = -1;
+	Widget widget;
+	alist[0] = make_alist("widget", INT, NULL, &widgetid);
+	alist[1].name = NULL;
+
+	if (parse_args(f, args, alist) == 0) {
+		parse_error("Usage: gui.unhook(widgetId)");
+	} else if (-1 == widgetid) {
+		parse_error ("gui.unhook: Unable to unhook, invalid widget id");
+	} else {
+		widget = getWidgetFromId (widgetid);
+		if (widget == NULL) {
+			parse_error ("gui.unhook: Unable to unhook, invalid widget id");
+		} else if (!XtIsRealized(widget)) {
+			parse_error ("gui.unhook: Unable to unhook, widget not realized");
+		} else {
+			XSelectInput (XtDisplay(widget), XtWindow(widget), 0);
+		}
+	}
+	return NULL;
+}
 
 /* Var *
 * dv_Realize(f, args)
@@ -4135,7 +4347,7 @@ gui_setByte(const Widget widget,
 	/* Range checking. */
 	if (intVal > MAXBYTE) {
 		parse_error("attempt to set byte resource to value "
-				"outside allowed range.");
+			"outside allowed range.");
 		return (XtArgVal) oldValue;
 	}
 
@@ -4277,6 +4489,21 @@ gui_setInt(const Widget widget,
 
 	return (XtArgVal) intValue;
 }
+
+/* TODO: finish this up
+Var *
+gui_getPixel (
+	const Widget widget,
+	const String resourceName,
+	const String resourceType)
+{
+	unsigned long pixelValue;
+	dbgprintf ("gui_getPixel(widget = %ld, "
+			"resourceName = '%s', resourceType = '%s')\n",
+			resourceName, resourceType);
+	XtVaGetValues(widget, resourceName, &pixelValue, NULL);
+}
+*/
 
 /* FIX: Cardinal is unsigned int, Davinci has no unsigned and no long.
 *      Returning an int for now, but this sucks.  I don't want to use

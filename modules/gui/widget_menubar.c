@@ -36,8 +36,8 @@
 int
 gui_isMenuBar(const char *name)
 {
-  const char *aliases[] = { "menubar", "xmMenuBarWidgetClass", NULL };
-  return gui_isDefault(aliases, name);
+	const char *aliases[] = { "menubar", "xmMenuBarWidgetClass", NULL };
+	return gui_isDefault(aliases, name);
 }
 
 Widget

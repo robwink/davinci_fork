@@ -1,0 +1,10 @@
+#
+# Makefile for widget examples (OSF/1 version)
+#
+CC = cc
+AR = ar
+CFLAGS = -g
+#CFLAGS = -O2
+LIBS = -lXm -lXt -lX11 -lm
+
+include Makefile.common
