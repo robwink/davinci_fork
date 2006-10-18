@@ -1,0 +1,44 @@
+verbose = 1
+load_module("gui")
+
+define showVicar(widgetMap) {
+
+  fileName = $1
+
+  # Pop up a dialog informing the user that the file is loading, since this
+  # might take a few seconds.
+
+  data = load_pds(fileName)
+
+  if (dim(data.qube.data)[3] != 10) {
+    dialog("Only 10-band cubes are supported.")
+    return(-1)
+  }
+
+  data = data.qube.data
+  data[where data < 0] = 0
+  dpyData = cat(stretch(data[,,3]), stretch(data[,,5]), stretch(data[,,7]),z)
+  dpyData = bsq(dpyData)
+
+  vtop = gui.create("topLevelShell", name=fileName)
+  vicar = gui.create("vicar", vtop, { image = dpyData })
+
+  gui.set(vicar, { inputMode = "MODE_SELECT" })
+  gui.realize(vtop)
+
+  # Save this VICAR widget's details for use later.
+
+  newVicar = { vicarWidgetId = vicar, origData = data, dpyData = dpyData, fileName = fileName }
+  add_struct(widgetMap, name = sprintf("%d", vicar), value = newVicar)
+
+  # Add selection callback.
+
+#  gui.addcallback(newVicar, "select", sprintf("vicarSelectionCallback(%d)", newVicar))
+
+  return(vtop)
+
+}
+
+map = struct()
+
+showVicar(widgetMap = map, "/u/jim/test/I03661001RDR.irmc.bp.cub")
