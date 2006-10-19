@@ -1,8 +1,11 @@
-char *version = "@(#) daVinci Version #1.58";
+char *version = "@(#) daVinci Version #1.59";
 
 #include "build.h"
 
 /*
+Version 1.59: Wed Oct 18 20:38:31 MST 2006
+	Several realloc bugs reported by gcc 4.0.2, 
+	    including load_module() and help()
 
 Version 1.58:  Mon Sep 18 12:34:11 MST 2006
 	Fixed isis() to not dump on numeric plane number
