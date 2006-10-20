@@ -213,6 +213,13 @@ gui_setListPseudoResources(Widget widget, Var *dvStruct, Narray *publicResources
 				cont = 1;
 				break;
 			}
+			if (!strcmp(name, "selectedPosition")) {
+				XmListSelectPos(widget, extract_int(value,0), 0);
+				Narray_add(publicResources, name, NULL);
+				free_var(Narray_delete(V_STRUCT(dvStruct), "selectedPosition"));
+				cont = 1;
+				break;
+			}
 			/* ...new comparisons go here. */
 		}
 	}
