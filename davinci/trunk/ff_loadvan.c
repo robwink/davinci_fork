@@ -457,6 +457,10 @@ vlex_next_tok(
 ** NOTE 2:
 ** Code that checks for minimum size required by a field is not being
 ** used right now, but it can be activated pretty easily.
+
+**
+** NOTE 3: This function does a lot of memory cleanup on failure.  So much
+** that the parent is likely double-freeing a bunch of stuff.
 */
 static int
 vpass1(
@@ -508,8 +512,13 @@ vpass1(
 
                 /* keep "toka" multiple of "2" as we use two slots per field */
                 if (ntok >= toka){
-                    toka = (toka == 0)? 256: toka * 2;
-                    tokl = (char **)realloc(tokl, toka * sizeof(char *));
+					if (tokl == NULL) {
+						toka = 256;
+						tokl = (char **)calloc(toka , sizeof(char *));
+					} else {
+						toka = toka * 2;
+						tokl = (char **)realloc(tokl, toka * sizeof(char *));
+					}
                 }
 
                 /* add start and end of current field to the list of tokens */
@@ -525,6 +534,7 @@ vpass1(
                 fprintf(stderr, "Jagged input record #%d.\n", nrecs);
                 if (tokl) free(tokl);
                 if (*cols) free_coldefs(*cols, *ncols);
+				*cols = NULL;
                 return EINPUT;
             }
 
@@ -535,6 +545,7 @@ vpass1(
                     fprintf(stderr, "Jagged input record #%d.\n", nrecs);
                     if (tokl) free(tokl);
                     if (*cols) free_coldefs(*cols, *ncols);
+					*cols = NULL;
                     return EINPUT;
                 }
 
@@ -578,6 +589,7 @@ vpass1(
                 fprintf(stderr, "Aborting first pass of data.\n");
                 if (tokl) free(tokl);
                 if (*cols) free_coldefs(*cols, *ncols);
+				*cols = NULL;
                 return EINPUT;
 
             default:
@@ -585,6 +597,7 @@ vpass1(
                         __FILE__, __LINE__);
                 if (tokl) free(tokl);
                 if (*cols) free_coldefs(*cols, *ncols);
+				*cols = NULL;
                 return EINPUT;
             }
         }
@@ -1059,6 +1072,7 @@ vanread(
     if (rc < 0){
         munmap(data, sbuf.st_size);
         if(cols) free_coldefs(cols, ncols);
+		cols = NULL;
         return EINPUT;
     }
 
@@ -1069,6 +1083,7 @@ vanread(
     rc = nfields = guess_struct(cols, ncols, &fields);
     if (rc < 0){
         free_coldefs(cols, ncols);
+		cols = NULL;
         munmap(data, sbuf.st_size);
         return rc;
     }
@@ -1080,6 +1095,7 @@ vanread(
     data_ptrs = (void **)calloc(nfields, sizeof(void *));
     if (data_ptrs == NULL){
         free_coldefs(cols, ncols);
+		cols = NULL;
         free(fields);
         munmap(data, sbuf.st_size);
         return EMEM;
@@ -1092,6 +1108,7 @@ vanread(
     *v_return = alloc_davinci_data_space(fields, nfields, nrecs-1);
     if ((*v_return) == NULL){
         free_coldefs(cols, ncols);
+		cols = NULL;
         free(fields);
         free(data_ptrs);
         munmap(data, sbuf.st_size);

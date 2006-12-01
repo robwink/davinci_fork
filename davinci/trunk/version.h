@@ -1,8 +1,16 @@
-char *version = "@(#) daVinci Version #1.59";
+char *version = "@(#) daVinci Version #1.61";
 
 #include "build.h"
 
 /*
+
+Version 1.61: Thu Nov 30 17:38:16 MST 2006, NsG
+	added a "get all" default behavior to get_struct_keys().
+	fixed segfault in load_vanilla related to double free on error
+
+Version 1.60: Tue Nov  7 13:11:37 MST 2006
+	Fixes to do stream processing after X is initialized
+
 Version 1.59: Wed Oct 18 20:38:31 MST 2006
 	Several realloc bugs reported by gcc 4.0.2, 
 	    including load_module() and help()
