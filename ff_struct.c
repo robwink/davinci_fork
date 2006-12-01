@@ -66,6 +66,8 @@ ff_get_struct_key(vfuncptr func, Var* arg)
     Var *s = NULL, *v = NULL;
     int  index = 0;
     char *key = NULL;
+	int count;
+	int i;
 
     int ac;
     Var **av;
@@ -80,16 +82,32 @@ ff_get_struct_key(vfuncptr func, Var* arg)
         parse_error("Object is null");
         return(NULL);
     }
+	count = get_struct_count(s);
 
-    if (index <= 0 || index > get_struct_count(s)){
+    if (index < 0 || index > count) {
         parse_error("Index is out of bounds");
         return(NULL);
     }
     
-    get_struct_element(s, index-1, &key, &v);
-    if (key == NULL){ key = ""; }
+	// Return all the keys as strings 
+	if (index == 0) {
+		char **keys = calloc(count, sizeof(char *));
+		for (i = 0 ; i < count ; i++) {
+			get_struct_element(s, i, &keys[i], &v);
+			if (keys[i] == NULL) { 
+				keys[i] = ""; 
+			}
+			keys[i] = strdup(keys[i]);
+		}
+		return newText(count, keys);
+	} else {
+		get_struct_element(s, index-1, &key, &v);
+		if (key == NULL) { 
+			key = ""; 
+		}
+		return newString(strdup(key));
+	}
     
-    return newString(strdup(key));
 }
 
 /*
