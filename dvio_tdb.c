@@ -2,6 +2,8 @@
 #include "func.h"
 #include <sys/stat.h>
 
+
+#if 0
 #define swap(a,b)  { char t = a; a = b; b = t; }
 #ifndef WORDS_BIGENDIAN
 #define MSB8(a) msb8((char *)(&(a)))
@@ -14,23 +16,24 @@
 #define MSB2(a)
 #define MSB4n(a,n)
 #endif
-void msb8(char *a)
+static void msb8(char *a)
 {
     swap(a[0],a[7]);
     swap(a[1],a[6]);
     swap(a[2],a[5]);
     swap(a[3],a[4]);
 }
-void msb4(char *a)
+static void msb4(char *a)
 {
     swap(a[0],a[3]);
     swap(a[1],a[2]);
 }
 
-void msb2(char *a)
+static void msb2(char *a)
 {
     swap(a[0],a[1]);
 }
+#endif
 
 
 /*
@@ -41,6 +44,31 @@ void msb2(char *a)
 		rec_hdr
 
 */
+#ifdef WORDS_BIGENDIAN
+
+#define MSB8(s)         (s)
+#define MSB4(s)         (s)
+#define MSB2(s)         (s)
+
+#else /* little endian */
+
+char ctmp;
+
+typedef char *cptr;
+#define swp(c1, c2)     (ctmp = (c1) , (c1) = (c2) , (c2) = ctmp)
+
+#define MSB8(s)         (swp(((cptr)(s))[0], ((cptr)(s))[7]), \
+                                        swp(((cptr)(s))[1], ((cptr)(s))[6]), \
+                                        swp(((cptr)(s))[2], ((cptr)(s))[5]), \
+                                        swp(((cptr)(s))[3], ((cptr)(s))[4]),(s))
+
+#define MSB4(s)         (swp(((cptr)(s))[0], ((cptr)(s))[3]), \
+                                        swp(((cptr)(s))[1], ((cptr)(s))[2]),(s))
+
+#define MSB2(s)         (swp(((cptr)(s))[0], ((cptr)(s))[1]),(s))
+
+#endif /* WORDS_BIGENDIAN */
+
 
 
 typedef union rechdr
@@ -145,7 +173,7 @@ copy_nonwhite(char *from, char *to, int tolen)
 }
 
 
-char *
+static char *
 grab_keyval(char *line, char *key, char *val, int keylen, int vallen)
 {
      *key = (char) 0;
@@ -315,9 +343,9 @@ LoadTDB(char *filename)
 			break;
 		}
 		c = (CACHE_HDR *)data;
-		MSB2(c->df_sym_loc);
-		MSB2(c->n_df_syms);
-		MSB4(c->whichscope);
+		MSB2(&c->df_sym_loc);
+		MSB2(&c->n_df_syms);
+		MSB4(&c->whichscope);
 
 		if (c->n_df_syms) {
 			member = new_struct(c->n_df_syms);
@@ -325,13 +353,13 @@ LoadTDB(char *filename)
 						newString(strdup(scopes[c->whichscope])));
 			for (i = 0 ; i < c->n_df_syms ; i++) {
 				d = (data+c->df_sym_loc+(i * sizeof(DF_SYM)));
-				MSB4(d->type);
-				MSB4(d->dim);
+				MSB4(&d->type);
+				MSB4(&d->dim);
 				for (j = 0 ; j < d->dim ; j++) {
-					MSB4(d->dim_size[j]);
+					MSB4(&d->dim_size[j]);
 				}
-				MSB4(d->loc);
-				MSB4(d->size);
+				MSB4(&d->loc);
+				MSB4(&d->size);
 				
 				v1 = NULL;
 				switch(d->type) {
@@ -350,7 +378,7 @@ LoadTDB(char *filename)
 						dbl = calloc(sizeof(double), size);
 						memcpy(dbl, data +(d->loc+hdr_size), size*sizeof(double));
 						for (j = 0 ; j < size ; j++) {
-							MSB8(dbl[j]);
+							MSB8(&dbl[j]);
 						}
 						v1 = newVal(BSQ, 
 							d->dim_size[0] ? d->dim_size[0] : 1,
