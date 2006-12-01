@@ -293,7 +293,10 @@ main(int ac, char **av)
     /*
     ** Before we get to events, process any pushed files
     */
-    process_streams();
+	/* moved the process_streams into the event loop so
+	that it happens after Xt is initialized, but before
+	the endless loop starts
+	*/
     event_loop();
     quit();
 
@@ -388,6 +391,7 @@ event_loop(void)
     if (interactive) {
 #if !defined(USE_X11_EVENTS) || !defined(HAVE_LIBREADLINE)
       /* JAS FIX */
+    process_streams();
     lhandler((char *)readline("dv> "));
 #else
     // JAS FIX: this should work even with a null DISPLAY, if -display is set..i think there are better
@@ -421,8 +425,9 @@ event_loop(void)
                       (void *) XtInputReadMask,
                       get_file_input,
                       NULL);
-        rl_callback_handler_install("dv> ", lhandler);
 
+		process_streams();
+        rl_callback_handler_install("dv> ", lhandler);
         XtAppMainLoop(applicationContext);
 #endif
     }
