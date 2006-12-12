@@ -64,18 +64,15 @@ rm_symtab(Var *v)
 Var *
 ff_delete(vfuncptr func, Var *arg)
 {
-    Var *e;
+	Var *obj;
+	Alist alist[2];
+	alist[0] = make_alist( "obj", ID_UNK,    NULL,    &obj);
+	alist[1].name = NULL;
 
-    if (arg == NULL) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (obj == NULL) return(NULL);
 	
-    e = eval(arg);
-    e = rm_symtab(e);
-
-    if (e) {
-        free_var(e);
-    } else {
-        parse_error("%s not found.", V_NAME(arg));
-    }
+	free_var(obj);
 
     return(NULL);
 }
