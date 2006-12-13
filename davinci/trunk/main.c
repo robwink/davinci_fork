@@ -430,7 +430,11 @@ event_loop(void)
         rl_callback_handler_install("dv> ", lhandler);
         XtAppMainLoop(applicationContext);
 #endif
-    }
+    } else {
+		/* not interactive, but still have to process the input streams,
+		   or -e (and scripts) will never work. */
+		process_streams();
+	}
 }
 void lhandler(char *line)
 {
