@@ -20,7 +20,7 @@ static double *minimize_1d(Var *measured, float *bbody, double em_start, double 
 static Var *do_ipi(Var *coords_array, Var *values_array);
 static float *column_fill(float *column, int y, int z, int csize, float ignore);
 static float round_dp(float input, float decimal);
-static int round(float numf);
+static int thm_round(float numf);
 static Var *rotation(Var *obj, float angle, float ign);
 static void position_fill(int *pos, int elem, int iter, Var *obj);
 
@@ -5120,21 +5120,21 @@ Var *rotation(Var *obj, float angle, float ign)
 
   /* x-dimension of array after the first x-shear */
   tf = (float)y * tan(ang/2.0);
-  ti = round(tf);
+  ti = thm_round(tf);
   xdim_shr1 = x + abs(ti);
   if(ti < minx1) minx1 = ti;
   if(ti > maxx1) maxx1 = ti;
 
   /* y-dimension of array after the first y-shear */
   tf = (float)xdim_shr1 * -1 * sin(ang);
-  ti = round(tf);
+  ti = thm_round(tf);
   ydim_shr1 = y + abs(ti);
   if(ti < miny) miny = ti;
   if(ti > maxy) maxy = ti;
 
   /* x-dimension of array after the second x-shear */
   tf = (float)ydim_shr1 * tan(ang/2.0);
-  ti = round(tf);
+  ti = thm_round(tf);
   xdim_shr2 = xdim_shr1 + abs(ti);
   if(ti < minx2) minx2 = ti;
   if(ti > maxx2) maxx2 = ti;
@@ -5144,8 +5144,8 @@ Var *rotation(Var *obj, float angle, float ign)
   xshear = (int *)malloc(sizeof(int)*ydim_shr1);
 
   /* fill in shearing lookup arrays */
-  for(i=0;i<xdim_shr2;i++) { yshear[i] = round((float)i * sin(ang)); }
-  for(j=0;j<ydim_shr1;j++) { xshear[j] = round((float)j * -1 * tan(ang/2.0)); }
+  for(i=0;i<xdim_shr2;i++) { yshear[i] = thm_round((float)i * sin(ang)); }
+  for(j=0;j<ydim_shr1;j++) { xshear[j] = thm_round((float)j * -1 * tan(ang/2.0)); }
 
   /* set the default edges of rotated array */
   top = ydim_shr1;
@@ -5280,7 +5280,7 @@ void position_fill(int *pos, int elem, int iter, Var *obj) {
 
 
 
-int round(float numf) {
+int thm_round(float numf) {
   float    m;
   int      numi;
 
