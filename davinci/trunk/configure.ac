@@ -83,16 +83,12 @@ AC_CHECK_LIB(usds, Themis_Entry)
 AC_CHECK_LIB(msss_vis, read_DCT)
 AC_CHECK_LIB(termcap, tgetent)
 AC_CHECK_LIB(ltdl, lt_dlopen)
-dnl I think we call these twice so that the default symbol will be set, and
-dnl also so we can manually set these other have_ variables.
 AC_CHECK_LIB(hdf5, H5open)
 AC_CHECK_LIB(hdf5, H5open,[have_libhdf=yes],[have_libhdf=no])
-AC_CHECK_LIB(readline, rl_callback_handler_install)
-AC_CHECK_LIB(readline, rl_callback_handler_install, [have_readline=yes],[have_readline=no])
-dnl AC_CHECK_LIB(readline, rl_callback_handler_install)
+
 
 AC_CHECK_LIB(z, deflate)
-AC_CHECK_LIB(png, png_init_io)
+AC_CHECK_LIB(png, png_check_version)
 AC_CHECK_LIB(cfitsio, ffopen)
 
 if test "x$ac_cv_lib_cfitsio_ffopen" = "xyes"; then
@@ -182,7 +178,12 @@ dnl fi
 
 dnl Check for and configure local readline if not found yet.
 
-if test "x$have_readline" = "xno"; then
+AC_CHECK_LIB(readline, rl_callback_handler_install)
+AC_CHECK_LIB(readline, rl_callback_handler_install, [have_readline=yes],[have_readline=no])
+dnl AC_CHECK_LIB(readline, rl_callback_handler_install)
+AC_CHECK_LIB(readline, history_get_history_state, [need_libhistory=no],[need_libhistory=yes])
+
+if test "x$have_readline" = "xno" -o "x$need_libhistory" = "xyes"; then
 	AC_MSG_CHECKING(if local libreadline present)
 	if test -x readline/configure; then
 		AC_MSG_RESULT(yes)
@@ -192,10 +193,15 @@ if test "x$have_readline" = "xno"; then
 		MY_SUBDIRS="$MY_SUBDIRS readline"
 		local_readline=yes
 		have_readline=yes
+		dnl this looks a little fishy, but seems to work.
+		if test "x$need_libhistory" = "xyes"; then
+			LIBS="$LIBS -Lreadline -lhistory"
+		fi
 	else
 		AC_MSG_RESULT(no)
 	fi
 fi
+
 AM_CONDITIONAL(LOCAL_READLINE, test "x$local_readline" = "xyes")
 
 dnl Configure iomedley.
