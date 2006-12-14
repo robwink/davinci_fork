@@ -88,7 +88,7 @@ AC_CHECK_LIB(hdf5, H5open,[have_libhdf=yes],[have_libhdf=no])
 
 
 AC_CHECK_LIB(z, deflate)
-AC_CHECK_LIB(png, png_check_version)
+AC_CHECK_LIB(png, png_read_info)
 AC_CHECK_LIB(cfitsio, ffopen)
 
 if test "x$ac_cv_lib_cfitsio_ffopen" = "xyes"; then
