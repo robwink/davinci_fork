@@ -194,8 +194,12 @@ if test "x$have_readline" = "xno" -o "x$need_libhistory" = "xyes"; then
 		local_readline=yes
 		have_readline=yes
 		dnl this looks a little fishy, but seems to work.
+		dnl this is causing modules to compile against ./readline, which
+		dnl doesn't exist.  At a minimum, this needs something like a ${local}
+		dnl prefix, but modules don't need this at all, so can we remove 
+		dnl it instead?
 		if test "x$need_libhistory" = "xyes"; then
-			LIBS="$LIBS -Lreadline -lhistory"
+			LIBS="$LIBS -L\$(top_srcdir)/readline -lhistory"
 		fi
 	else
 		AC_MSG_RESULT(no)

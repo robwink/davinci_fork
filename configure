@@ -11393,8 +11393,8 @@ subdirs="$subdirs readline"
 		MY_SUBDIRS="$MY_SUBDIRS readline"
 		local_readline=yes
 		have_readline=yes
-				if test "x$need_libhistory" = "xyes"; then
-			LIBS="$LIBS -Lreadline -lhistory"
+												if test "x$need_libhistory" = "xyes"; then
+			LIBS="$LIBS -L\$(top_srcdir)/readline -lhistory"
 		fi
 	else
 		echo "$as_me:$LINENO: result: no" >&5
