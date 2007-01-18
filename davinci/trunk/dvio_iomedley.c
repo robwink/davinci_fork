@@ -128,6 +128,7 @@ dv_LoadIOM(FILE *fp, char *filename, struct iom_iheader *s)
 
   /* Read file and populate header, including image data. */
 
+
   if (!(*interfaces[interface].header)(fp, filename, &h)) {
     return NULL;
   }
@@ -145,6 +146,8 @@ dv_LoadIOM(FILE *fp, char *filename, struct iom_iheader *s)
   if (data) {
     v = iom_iheader2var(&h);
     V_DATA(v) = data;
+	// I think data was being double free'd here.
+	h.data = NULL;
   } else {
     v = NULL;
   }
