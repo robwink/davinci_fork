@@ -1,8 +1,11 @@
-char *version = "@(#) daVinci Version #1.61";
+char *version = "@(#) daVinci Version #1.62";
 
 #include "build.h"
 
 /*
+
+Version 1.62: Wed Jan 17 18:31:15 MST 2007 NsG
+	Fixed a bug related to iomedley data being double free'd
 
 Version 1.61: Thu Nov 30 17:38:16 MST 2006, NsG
 	added a "get all" default behavior to get_struct_keys().
