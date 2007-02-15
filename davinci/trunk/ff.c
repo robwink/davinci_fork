@@ -1395,6 +1395,11 @@ print_history(int i)
 #endif
 }
 
+// This is probably overriden in config.h
+#ifndef EDITOR
+#define EDITOR "/bin/vi"
+#endif
+
 
 Var *
 ff_hedit(vfuncptr func, Var * arg)
@@ -1431,18 +1436,9 @@ ff_hedit(vfuncptr func, Var * arg)
     }
     fclose(fp);
 
-#if 0 /* fdef __CYGWIN__ */
-    if ((editor = getenv("EDITOR")) == NULL) editor = "notepad";
-    if (_spawnlp(_P_NOWAIT, editor, editor, tmp, NULL) == -1){
-        parse_error("Unable to open editor.");
-        return(NULL);
-    }
-#else
-    if ((editor = getenv("EDITOR")) == NULL) editor = "/bin/vi";
+    if ((editor = getenv("EDITOR")) == NULL) editor = EDITOR;
     sprintf(buf, "%s %s", editor, tmp);
     system(buf);
-#endif /* __CYGWIN__ */
-
 
     fp = fopen(tmp, "r");
     unlink(tmp);

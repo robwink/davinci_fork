@@ -230,13 +230,17 @@ main(int ac, char **av)
                     quick = 1;
                     break;
                 }
-                case 'h':{
+                case 'H':{
                     /* force loading of the history, even in quick mode */
                     history = 1;
                     break;
                 }
                 case 'V':{
                     dump_version();
+                    exit(1);
+                }
+                case 'h':{
+                    usage(av[0]);
                     exit(1);
                 }
                 }
@@ -887,10 +891,26 @@ char *readline(char *prompt)
 }
 #endif
 
+
+char *usage_str = 
+"usage: %s [-Viwq] [-v#] [-l logfile] [-e cmd] [-f script] args\n"
+" Options:\n"
+"    -V            dump version information\n"
+"    -i            force interactive mode\n"
+"    -w            don't use X windows\n"
+"    -q            quick startup.  Don't load history or .dvrc\n"
+"    -H            force loadig of history, even in quick mode\n"
+"    -h            print this help\n"
+"    -l logfile    use logfile for loading/saving history instead of ./.dvrc\n"
+"    -e cmd        execute the specified command and exit\n"
+"    -f script     exectue the specified script and exit\n"
+"    --            indicates this is the last command line option\n"
+""
+"  Note: Any --option style options are always passed as $ARGV values\n";
+
+
 int
 usage(char *prog) {
-    fprintf(stderr, 
-        "usage: %s [-Viwq] [-v#] [-l logfile] [-e cmd] [-f script] args\n",
-        prog);
+    fprintf(stderr, usage_str, prog);
     return(1);
 }
