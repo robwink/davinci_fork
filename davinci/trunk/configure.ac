@@ -78,13 +78,20 @@ AM_CONDITIONAL(HAVE_MOTIF, [test "x$have_motif" = "xyes"])
 dnl Check for miscellaneous libraries.
 AC_CHECK_LIB(m, sqrt,, [echo "ERROR: unable to locate libm"; exit 1])
 
-have_libhdf=yes
+
+# Ask user for path to hdf5 stuff:.
+if test "x$have_libhdf" == "xno"; then
+AC_ARG_WITH(hdf5,
+    [  --with-hdf5=<path>      prefix of hdf5 installation. e.g. /usr/local or /usr],
+    [LDFLAGS="$LDFLAGS -L$withval/lib" ; CFLAGS="$CFLAGS -I$withval/include"]
+)
+AC_CHECK_LIB(hdf5, H5open)
+AC_CHECK_LIB(hdf5, H5open,[have_libhdf=yes],[have_libhdf=no])
+
 AC_CHECK_LIB(usds, Themis_Entry)
 AC_CHECK_LIB(msss_vis, read_DCT)
 AC_CHECK_LIB(termcap, tgetent)
 AC_CHECK_LIB(ltdl, lt_dlopen)
-AC_CHECK_LIB(hdf5, H5open)
-AC_CHECK_LIB(hdf5, H5open,[have_libhdf=yes],[have_libhdf=no])
 
 
 AC_CHECK_LIB(z, deflate)
@@ -252,6 +259,10 @@ if test "x$enable_modules" != "xno"; then
 fi
 
 AM_CONDITIONAL(LOCAL_VICAR, [test "x$have_motif" = "xyes" -a "x$local_vicar" = "xyes"])
+
+
+dnl Need to handle gnuplot and display defaults
+
 
 dnl FIX: this stuff can go away if libtool is used.
 
