@@ -1,8 +1,13 @@
-char *version = "@(#) daVinci Version #1.62";
+char *version = "@(#) daVinci Version #1.63";
 
 #include "build.h"
 
 /*
+Version 1.63: Thu Feb 15 16:51:24 MST 2007
+	* Modifications to move external program configurations into
+	  configure and report them during the configure process
+    * Maybe fixed --with-hdf in configure to sue a path.
+	  Only concern is that -lz is hardcoded.
 
 Version 1.62: Wed Jan 17 18:31:15 MST 2007 NsG
 	Fixed a bug related to iomedley data being double free'd
