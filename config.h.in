@@ -3,6 +3,18 @@
 /* loadable module support */
 #undef BUILD_MODULE_SUPPORT
 
+/* Path to davinci help file */
+#undef DVHELP
+
+/* Path to image display program for display() function */
+#undef DV_VIEWER
+
+/* Path to text file editor for edit() function */
+#undef EDITOR
+
+/* Path to gnuplot program for plot() function */
+#undef GPLOT_CMD
+
 /* Define to 1 if you have the `basename' function. */
 #undef HAVE_BASENAME
 

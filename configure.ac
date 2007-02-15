@@ -79,14 +79,6 @@ dnl Check for miscellaneous libraries.
 AC_CHECK_LIB(m, sqrt,, [echo "ERROR: unable to locate libm"; exit 1])
 
 
-# Ask user for path to hdf5 stuff:.
-if test "x$have_libhdf" == "xno"; then
-AC_ARG_WITH(hdf5,
-    [  --with-hdf5=<path>      prefix of hdf5 installation. e.g. /usr/local or /usr],
-    [LDFLAGS="$LDFLAGS -L$withval/lib" ; CFLAGS="$CFLAGS -I$withval/include"]
-)
-AC_CHECK_LIB(hdf5, H5open)
-AC_CHECK_LIB(hdf5, H5open,[have_libhdf=yes],[have_libhdf=no])
 
 AC_CHECK_LIB(usds, Themis_Entry)
 AC_CHECK_LIB(msss_vis, read_DCT)
@@ -97,6 +89,16 @@ AC_CHECK_LIB(ltdl, lt_dlopen)
 AC_CHECK_LIB(z, deflate)
 AC_CHECK_LIB(png, png_read_info)
 AC_CHECK_LIB(cfitsio, ffopen)
+
+# Ask user for path to hdf5 stuff:.
+have_libhdf=yes
+AC_ARG_WITH(hdf5,
+    [  --with-hdf5=<path>      prefix of hdf5 installation. e.g. /usr/local or /usr],
+    [LDFLAGS="$LDFLAGS -L$withval/lib -lz" ; CFLAGS="$CFLAGS -I$withval/include"]
+)
+dnl with the path the specified, see if we can find libhdf.
+AC_CHECK_LIB(hdf5, H5open)
+AC_CHECK_LIB(hdf5, H5open,[have_libhdf=yes],[have_libhdf=no])
 
 if test "x$ac_cv_lib_cfitsio_ffopen" = "xyes"; then
 	have_cfitsio="yes"
@@ -263,6 +265,37 @@ AM_CONDITIONAL(LOCAL_VICAR, [test "x$have_motif" = "xyes" -a "x$local_vicar" = "
 
 dnl Need to handle gnuplot and display defaults
 
+dnl AC_ARG_VAR(DV_VIEWER, [default image display program])
+dnl AC_ARG_VAR(GPLOT_CMD, [default gnuplot program])
+dnl AC_ARG_VAR(DVHELP,    [default path for helpfile])
+dnl AC_ARG_VAR(EDITOR,    [default text editor])
+
+AC_ARG_WITH(viewer, 
+    [  --with-viewer=<path>    Path to image display program (default: xv)],
+    [DV_VIEWER=$withval],
+    [AC_PATH_PROG(DV_VIEWER, [xv])]
+)
+AC_ARG_WITH(gplot, 
+    [  --with-gnuplot=<path>   Path to gnuplot program (default: gnuplot) ],
+    [GPLOT_CMD=$withval],
+	[AC_PATH_PROG(GPLOT_CMD, [gnuplot])]
+)
+AC_ARG_WITH(editor, 
+    [  --with-editor=<path>    Path to text file editor (default: vim)],
+    [EDITOR=$withval],
+	[AC_PATH_PROGS(EDITOR,[vim vi emacs edit])]
+)
+AC_ARG_WITH(dvhelp, 
+    [  --with-help=<path>      Path to davinci help file (default: /usr/local/lib/davinci/dv.gih)],
+    [DVHELP=$withval],
+    [DVHELP="/usr/local/lib/davinci/dv.gih"]
+)
+
+AC_DEFINE_UNQUOTED(DV_VIEWER, "$DV_VIEWER", Path to image display program for display() function)
+AC_DEFINE_UNQUOTED(GPLOT_CMD, "$GPLOT_CMD",  Path to gnuplot program for plot() function)
+AC_DEFINE_UNQUOTED(EDITOR, "$EDITOR", Path to text file editor for edit() function)
+AC_DEFINE_UNQUOTED(DVHELP, "$DVHELP", Path to davinci help file)
+
 
 dnl FIX: this stuff can go away if libtool is used.
 
@@ -301,3 +334,9 @@ PRINT_YES_NO "  Module Support" "$build_module_support"
 PRINT_YES_NO "GUI/Vicar Module" "$local_vicar"
 PRINT_YES_NO "         libisis" "$have_libisis"
 PRINT_YES_NO "            FITS" "$have_cfitsio"
+
+PRINT        ""
+PRINT        " display program:  $DV_VIEWER"
+PRINT        "plotting program:  $GPLOT_CMD"
+PRINT        "     text editor:  $EDITOR"
+PRINT        "   helpfile path:  $DVHELP"

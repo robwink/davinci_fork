@@ -46,11 +46,11 @@
  *         info-gnuplot-beta@dartmouth.edu
  */
 
-#ifndef HELPFILE
+#ifndef DVHELP
 #ifndef __CYGWIN__
-#define HELPFILE "/usr/local/lib/dv.gih"
+#define DVHELP "/usr/local/lib/dv.gih"
 #else
-#define HELPFILE "docs\\dv.gih"
+#define DVHELP "docs\\dv.gih"
 #endif
 #endif
 
@@ -699,8 +699,8 @@ do_help(char *input, char *path)
 
 	if (path == NULL) {
 		if ((help_ptr = getenv("DVHELP")) == (char *) NULL) {
-			/* if can't find environment variable then just use HELPFILE */
-			help_ptr = HELPFILE;
+			/* if can't find environment variable then just use DVHELP */
+			help_ptr = DVHELP;
 		}
 	} else {
 		help_ptr = path;

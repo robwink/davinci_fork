@@ -4,7 +4,10 @@
 #endif /* _CYGWIN__ */
 #include <errno.h>
 
-#define DV_DEFAULT_VIEWER "xv"
+// This is probably overriden in config.h
+#ifndef  DV_VIEWER
+#define DV_VIEWER "xv"
+#endif
 
 Var *
 ff_display(vfuncptr func, Var *arg)
@@ -57,8 +60,8 @@ ff_display(vfuncptr func, Var *arg)
 	}
     
     viewer=getenv("DV_VIEWER");
-    if (viewer == NULL){ viewer=DV_DEFAULT_VIEWER; }
-    if (strcmp(viewer,DV_DEFAULT_VIEWER) == 0 && title != NULL){
+    if (viewer == NULL){ viewer=DV_VIEWER; }
+    if (strcmp(viewer,DV_VIEWER) == 0 && title != NULL){
         sprintf(buf, "%s -na \"%s\" %s &", viewer,title,fname);
     }
     else {

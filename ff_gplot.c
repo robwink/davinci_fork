@@ -1,6 +1,9 @@
 #include "parser.h"
 
+// This is probably overriden in config.h
+#ifndef GPLOT_CMD
 #define GPLOT_CMD "gnuplot"
+#endif
 
 FILE *gplot_pfp=NULL;
 #ifdef GPLOT_CMD
@@ -254,6 +257,7 @@ send_to_plot(char *s)
         }
         send_to_plot("set data style linespoints\n");
         send_to_plot("set parametric\n");
+        send_to_plot("set mouse\n");
     }
     if (write(fileno(pfp), s, strlen(s)) < 0) {
         pfp=NULL;
