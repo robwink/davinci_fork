@@ -24,6 +24,7 @@ static Var *cse_sstretch2(vfuncptr func, Var *arg);
 static Var *cse_unscale(vfuncptr func, Var *arg);
 static Var *cse_ramp(vfuncptr func, Var * arg);
 static Var *cse_interp2d(vfuncptr func, Var * arg);
+static Var *cse_columnator(vfuncptr func, Var * arg);
 
 static dvModuleFuncDesc exported_list[] = {
   { "contour", (void *) cse_contour },
@@ -41,11 +42,12 @@ static dvModuleFuncDesc exported_list[] = {
   { "sstretch", (void *) cse_sstretch2},
   { "unscale", (void *) cse_unscale},
   { "ramp", (void *) cse_ramp},
-  { "interp2d", (void *) cse_interp2d}
+  { "interp2d", (void *) cse_interp2d},
+  { "columnator", (void *) cse_columnator}
 };
 
 static dvModuleInitStuff is = {
-  exported_list, 16,
+  exported_list, 17,
   NULL, 0
 };
 
@@ -2055,3 +2057,60 @@ cse_interp2d(vfuncptr func, Var *arg)
   return out;
 }
 
+
+
+Var*
+cse_columnator(vfuncptr func, Var * arg)
+{
+  
+  Var    *data=NULL;                 /* input rectify structre */
+  Var    *out=NULL;                 /* output data */
+  int     x,y,z;                    /* rectified image size */
+  int     i,j,k;                    /* loop indices */
+  float  *wdata=NULL;            /* changing data size */
+  float   null=-32768;              /* null value */
+  int     count=0;                  /* count*/
+
+  Alist alist[3]; 
+  alist[0] = make_alist("data",      ID_VAL,  NULL,  &data);
+  alist[1] = make_alist("ignore",    FLOAT,      NULL,  &null); 
+  alist[2].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if(data==NULL ) {
+    return NULL;
+  }
+  
+  /* get x,y,z */
+  x=GetX(data);
+  y=GetY(data);
+  
+  for (j=0;j<y;j++) {
+    for (i=0;i<x;i++) {
+      if(extract_float(data,cpos(i,j,0,data))!=null) {
+	count+=1;
+      }
+    }
+  }
+  
+  /*memory allocation*/
+  wdata=(float *)calloc(sizeof(float),3*count);
+
+  count=0;
+  /*fill in the loop*/
+  for (j=0;j<y;j++) {
+    for (i=0;i<x;i++) {
+      if(extract_float(data,cpos(i,j,0,data))!=null) {
+	wdata[3*count + 1]=(float)i;
+	wdata[3*count + 2]=(float)j;
+	wdata[3*count + 3]=extract_float(data,cpos(i,j,0,data));
+	 count+=1;
+      }
+    }
+  }
+  
+  /* return the data */  
+  out = newVal(BSQ, 3, count, 1, FLOAT, wdata);
+  return(out);
+}
