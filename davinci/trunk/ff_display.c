@@ -53,11 +53,8 @@ ff_display(vfuncptr func, Var *arg)
         parse_error("%s: unable to open temp file", func->name);
         return(NULL);
     }
-	if (z == 1) {
-		dv_WritePGM(obj, fname, 1);
-	} else {
-		dv_WritePPM(obj, fname, 1);
-	}
+
+    dv_WriteIOM(obj, fname, "png", 1);
     
     viewer=getenv("DV_VIEWER");
     if (viewer == NULL){ viewer=DV_VIEWER; }
