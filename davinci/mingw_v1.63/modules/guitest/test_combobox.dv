@@ -1,0 +1,25 @@
+# unable to set combo box type; need different than XmVaSetValues()
+
+load_module('gui')
+top=gui.create("topLevelShell")
+data=cat("a","b","c","d",axis=y)
+r=gui.create("rowcolumn",top)
+
+gui.create("label",r,{labelString="combo box list"})
+a=gui.create("combobox",r,resources={comboBoxType="COMBO_LIST"})
+gui.set(a,{itemCount=length(data),items=data})
+gui.addcallback(a,"selectionCallback","echo('selected')")
+
+# gui.create("label",r,{labelString="combo box dropedit"})
+# b=gui.create("combobox",r,resources={comboBoxType="COMBO_DROPEDIT"})
+# gui.set(b,{itemCount=length(data),items=data})
+# gui.addcallback(b,"selectionCallback","echo('selected 2')")
+
+# gui.create("label",r,{labelString="combo box drop"})
+# c=gui.create("combobox",r,resources={comboBoxType="COMBO_DROP"})
+# gui.set(c,{itemCount=length(data),items=data})
+# gui.addcallback(c,"selectionCallback","echo('selected 3')")
+
+gui.realize(top)
+gui.get(a,all=1)
+
