@@ -1,0 +1,4 @@
+SOLARIS COMPILE PROBELMS?
+
+There's a bug with older versions of gcc and sparcs.  The solution is
+(apparently) to just use -O instead of -O2.
