@@ -2,8 +2,31 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#if defined(___CYGWIN__)
+#if defined(___CYGWIN__) || defined(__MINGW32__) 
 #include "mem.h"
+#include "win32/win_mmap.h"
+
+void *mmap(void *x0, size_t len, int x1, int x2, int fd, size_t off)
+{
+	char *buf;
+
+    lseek(fd, off, SEEK_SET);
+	if ((buf = (char *)malloc(len)) == NULL) {
+		fprintf(stderr, "Unable to allocate memory for mmap.\n");
+		exit(1);
+	}
+	read(fd, buf, len);
+	return(buf);
+}
+
+void munmap(void *buf,int len)
+{
+	free(buf);
+}
+
+
+#define mkstemp(p) open(_mktemp(p), _O_CREAT | _O_SHORT_LIVED | _O_EXCL)
+
 #else
 #include <sys/mman.h>
 #endif /* __CYGWIN__ */
@@ -1180,7 +1203,7 @@ Check_Swap(unsigned char *buf, int len)
 Var *
 ff_PACI_Read(vfuncptr func, Var * arg)
 {
-#ifdef __MSDOS__
+#ifdef __WIN32__
     extern unsigned char *mmap(void *, size_t , int, int , int , size_t );
     extern void munmap(unsigned char *,int);
     typedef	void*	caddr_t;
