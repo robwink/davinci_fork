@@ -13,10 +13,13 @@
 #include <config.h>
 #endif
 
-#ifndef _WIN32
 #include <unistd.h>
+
+#ifndef _WIN32
 #include <sys/socket.h>
 #include <sys/un.h>
+#endif
+
 #include <sys/types.h>
 #include <sys/time.h>
 
@@ -62,11 +65,11 @@
 #define MINFLOAT        FLT_MIN
 #endif
 
-#else 
+//#else 
 
-#include "dos.h"
+//#include "dos.h"
 
-#endif
+//#endif
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -388,12 +391,6 @@ extern int VERBOSE;
 extern int DEPTH;
 extern int SCALE;
 extern int debug;
-
-#ifdef _WIN32 
-#define readline w_readline
-#define add_history w_add_history
-#define history_get_history_state w_history_get_history_state
-#endif
 
 
 #include "ufunc.h"
