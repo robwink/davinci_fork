@@ -8060,7 +8060,7 @@ if test "${ac_cv_lib_hdf5_H5open+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lhdf5  $LIBS"
+LIBS="-lhdf5  -lwsock32 $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
