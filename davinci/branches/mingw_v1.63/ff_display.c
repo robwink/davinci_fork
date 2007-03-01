@@ -65,14 +65,16 @@ ff_display(vfuncptr func, Var *arg)
         sprintf(buf, "%s %s &", viewer, fname);
     }
 
-#ifdef __CYGWIN__
-	fprintf(stderr, "spawning xv\n");
+#if  (defined(__CYGWIN__) || defined(__MINGW32__))
+	fprintf(stderr, "spawning %s\n", viewer);
     if (_spawnlp(_P_NOWAIT, viewer, viewer, fname, NULL) == -1){
         parse_error("Error spawning the viewer %s. Reason: %s.",
                     viewer, strerror(errno));
     }
 #else
-    system(buf);
+
+system(buf);
+
 #endif /* _WIN32 */
     free(fname);
 
