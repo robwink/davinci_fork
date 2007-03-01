@@ -2,7 +2,7 @@
 #include <string.h>
 
 #ifdef _WIN32
-#include "dos.h"
+//#include "dos.h"
 #endif /* _WIN32 */
 
 /*
