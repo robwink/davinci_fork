@@ -1,7 +1,7 @@
 #include "parser.h"
 #include "func.h"
 
-#ifndef __CYGWIN__
+#if !( defined( __CYGWIN__) || defined(__MINGW32__))
 #include <sys/mman.h>
 #endif
 
