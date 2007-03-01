@@ -10,8 +10,10 @@
 #include <sys/resource.h>
 #include <unistd.h>
 #else 
+#include <sys/stat.h>
 #include <sys/timeb.h>
 #include <direct.h>
+#include <fcntl.h>
 #endif
 #include <errno.h>
 #include <time.h>
@@ -20,6 +22,9 @@
 #include <stdlib.h>
 
 #include <limits.h>
+
+
+
 
 /* void xfree(void *data) { if (data) free(data); } */
 
@@ -515,8 +520,22 @@ make_temp_file_path()
         if (tmpdir == NULL) tmpdir = "/tmp";
 
         sprintf(pathbuf, "%s/XXXXXX", tmpdir);
-        fd = mkstemp(pathbuf);
-        if (fd == -1) {
+
+/** To handle racing issues, since mkstemp does not exist in MINGW **/
+#ifdef __MINGW32__
+	if (mktemp (pathbuf))
+	do
+	fd = open (pathbuf, O_CREAT | O_EXCL, S_IREAD | S_IWRITE);
+	while (!(fd == NULL && errno == EEXIST) && mktemp (pathbuf));
+	else
+	fd = NULL;
+#else
+	fd = mkstemp(pathbuf);
+#endif
+
+	
+
+	if (fd == -1) {
                 return(NULL);
         }
         close(fd);
