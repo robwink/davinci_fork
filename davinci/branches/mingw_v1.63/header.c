@@ -65,7 +65,7 @@ LoadLabel(char *fname)
     LIST *list;
     LABEL *l;
     int i;
-    ushort scope;
+    unsigned short scope;
     int reclen, nfields, nrows;
     char *name, *alias = NULL;
 
@@ -276,7 +276,7 @@ MakeField(OBJDESC *col, LABEL *l)
 void
 MakeBitFields(OBJDESC *col, FIELD *f, LIST *list)
 {
-    ushort scope;
+    unsigned short scope;
 	FIELD *b;
 
     scope = ODL_CHILDREN_ONLY;
