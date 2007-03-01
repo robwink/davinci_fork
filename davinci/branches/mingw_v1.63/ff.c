@@ -1507,7 +1507,7 @@ ff_resize(vfuncptr func, Var * arg)
 Var *
 ff_fork(vfuncptr func, Var * arg)
 {
-#ifndef __CYGWIN__
+#if !(defined(__CYGWIN__) || !defined(__MINGW32))
     if (fork() == 0) {
         sleep(10);
     }
@@ -1743,7 +1743,7 @@ newDouble(double d)
 Var *
 ff_killchild(vfuncptr func, Var *arg)
 {
-#ifndef __CYGWIN__
+#if !(defined(__CYGWIN__) || defined(__MINGW32__))
 	pid_t pid;
 	pid=getpgrp();
 	pid=-pid;
