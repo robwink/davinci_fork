@@ -7,6 +7,7 @@
 
 #ifdef _WIN32
 #include <io.h>
+#include "win32/win_mmap.h"
 #include "mem.h"
 #else
 #include <sys/mman.h>
@@ -153,7 +154,7 @@ fill_pseudo_symbols(
     int   psyms[257]
     )
 {
-    uint     i, n;
+    unsigned int     i, n;
     psym_cat c;
 
     for (i = 0; i < 256; i++){
@@ -249,8 +250,8 @@ vlex_next_tok(
     )
 {
     int      state;   /* current state */
-    uint     l;       /* current input symbol */
-    uint     lc;      /* input symbol's category pattern of ORed "psym_cat"s */
+    unsigned int     l;       /* current input symbol */
+    unsigned int     lc;      /* input symbol's category pattern of ORed "psym_cat"s */
     int      zflag;   /* zero out field- and record- separators? */
     char     *p, *q;  /* p = start of lexeme, q = end of lexeme + 1 */
     char     *dend;   /* end of data pointer */
