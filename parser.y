@@ -102,12 +102,16 @@ separator
     : ';'                           {  
 										if (pp_str && strlen(pp_str) > 1) {
 											$$ = p_mkval(ID_STRING, pp_str); 
+										} else {
+											$$ = NULL;
 										}
                                     }
     | '\n'                          { 
                                         pp_count = 0; 
 										if (pp_str && strlen(pp_str) > 1) {
 											$$ = p_mkval(ID_STRING, pp_str); 
+										} else {
+											$$ = NULL;
 										}
                                     }
     ;
