@@ -524,12 +524,12 @@ process_streams(void)
     }
 }
 
-Var *curnode;
+Var *curnode = NULL;
 
 void
 parse_buffer(char *buf)
 {
-    int i,j;
+    int i,j = 0;
     extern char *yytext;
     Var *v = NULL;
     void *parent_buffer;
@@ -540,6 +540,8 @@ parse_buffer(char *buf)
     parent_buffer = (void *) get_current_buffer();
     buffer = (void *) yy_scan_string(buf);
     pp_str = buf;
+
+	curnode = NULL;
 
     while((i = yylex()) != 0) {
         /*

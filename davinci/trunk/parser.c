@@ -178,16 +178,16 @@ static const short yyrhs[] = {    59,
 static const short yyrline[] = { 0,
     41,    42,    48,    53,    54,    55,    56,    57,    58,    59,
     60,    61,    62,    68,    72,    73,    74,    75,    76,    80,
-    81,    85,    89,    90,    94,    96,   102,   107,   117,   118,
-   122,   129,   133,   137,   143,   144,   145,   149,   150,   154,
-   155,   159,   160,   161,   162,   163,   164,   168,   169,   170,
-   174,   175,   179,   180,   181,   182,   183,   184,   185,   186,
-   193,   194,   198,   199,   203,   204,   208,   209,   210,   214,
-   215,   216,   217,   218,   222,   223,   224,   228,   229,   230,
-   234,   235,   236,   237,   241,   242,   246,   247,   250,   251,
-   252,   253,   257,   258,   263,   264,   265,   266,   267,   268,
-   269,   270,   274,   275,   276,   277,   278,   279,   280,   281,
-   282
+    81,    85,    89,    90,    94,    96,   102,   109,   121,   122,
+   126,   133,   137,   141,   147,   148,   149,   153,   154,   158,
+   159,   163,   164,   165,   166,   167,   168,   172,   173,   174,
+   178,   179,   183,   184,   185,   186,   187,   188,   189,   190,
+   197,   198,   202,   203,   207,   208,   212,   213,   214,   218,
+   219,   220,   221,   222,   226,   227,   228,   232,   233,   234,
+   238,   239,   240,   241,   245,   246,   250,   251,   254,   255,
+   256,   257,   261,   262,   267,   268,   269,   270,   271,   272,
+   273,   274,   278,   279,   280,   281,   282,   283,   284,   285,
+   286
 };
 #endif
 
@@ -1068,361 +1068,365 @@ case 27:
 {  
 										if (pp_str && strlen(pp_str) > 1) {
 											yyval = p_mkval(ID_STRING, pp_str); 
+										} else {
+											yyval = NULL;
 										}
                                     ;
     break;}
 case 28:
-#line 107 "parser.y"
+#line 109 "parser.y"
 { 
                                         pp_count = 0; 
 										if (pp_str && strlen(pp_str) > 1) {
 											yyval = p_mkval(ID_STRING, pp_str); 
+										} else {
+											yyval = NULL;
 										}
                                     ;
     break;}
 case 29:
-#line 117 "parser.y"
+#line 121 "parser.y"
 { yyval = p_mknod(ID_WHILE, yyvsp[-2], yyvsp[0]); ;
     break;}
 case 30:
-#line 119 "parser.y"
+#line 123 "parser.y"
 { yyval = p_mknod(ID_LIST, yyvsp[-4],
                                                p_mknod(ID_WHILE, yyvsp[-3],
                                                p_mknod(ID_FOR, yyvsp[0], yyvsp[-2]))); ;
     break;}
 case 31:
-#line 123 "parser.y"
+#line 127 "parser.y"
 { yyval = p_mknod(ID_LIST, yyvsp[-3],
                                                p_mknod(ID_WHILE, yyvsp[-2],
                                                p_mknod(ID_FOR, yyvsp[0], NULL))); ;
     break;}
 case 32:
-#line 129 "parser.y"
+#line 133 "parser.y"
 { yyval = p_mknod(ID_LINE, 
                                         p_mknod(ID_CONT,NULL,NULL),
                                         yyvsp[0]); 
                                   ;
     break;}
 case 33:
-#line 133 "parser.y"
+#line 137 "parser.y"
 { yyval = p_mknod(ID_LINE,
                                          p_mknod(ID_BREAK,NULL,NULL),
                                          yyvsp[0]); 
                                     ;
     break;}
 case 34:
-#line 137 "parser.y"
+#line 141 "parser.y"
 { yyval = p_mknod(ID_LINE, 
                                     p_mknod(ID_RETURN,yyvsp[-1],NULL),
                                     yyvsp[0]); ;
     break;}
 case 35:
-#line 143 "parser.y"
+#line 147 "parser.y"
 { yyval = NULL; ;
     break;}
 case 36:
-#line 144 "parser.y"
+#line 148 "parser.y"
 { yyval = p_mknod(ID_ARGS, NULL, yyvsp[0]); ;
     break;}
 case 37:
-#line 145 "parser.y"
+#line 149 "parser.y"
 { yyval = p_mknod(ID_ARGS, yyvsp[-2], yyvsp[0]); ;
     break;}
 case 38:
-#line 149 "parser.y"
+#line 153 "parser.y"
 { yyval = p_mknod(ID_ARG, NULL, yyvsp[0]); ;
     break;}
 case 39:
-#line 150 "parser.y"
+#line 154 "parser.y"
 { yyval = p_mknod(ID_ARG, yyvsp[-2], yyvsp[0]); ;
     break;}
 case 40:
-#line 154 "parser.y"
+#line 158 "parser.y"
 { yyval = p_mknod(ID_RANGES, NULL, yyvsp[0]); ;
     break;}
 case 41:
-#line 155 "parser.y"
+#line 159 "parser.y"
 { yyval = p_mknod(ID_RANGES, yyvsp[-2], yyvsp[0]) ; ;
     break;}
 case 42:
-#line 159 "parser.y"
+#line 163 "parser.y"
 { yyval = p_mknod(ID_RANGE, NULL, NULL); ;
     break;}
 case 43:
-#line 160 "parser.y"
+#line 164 "parser.y"
 { yyval = p_mknod(ID_RANGE, yyvsp[0], yyvsp[0]); ;
     break;}
 case 44:
-#line 161 "parser.y"
+#line 165 "parser.y"
 { yyval = p_mknod(ID_RSTEP, NULL, yyvsp[0]); ;
     break;}
 case 45:
-#line 162 "parser.y"
+#line 166 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 46:
-#line 163 "parser.y"
+#line 167 "parser.y"
 { yyval = p_mknod(ID_RSTEP, yyvsp[-1], NULL); ;
     break;}
 case 47:
-#line 164 "parser.y"
+#line 168 "parser.y"
 { yyval = p_mknod(ID_RSTEP, yyvsp[-2], yyvsp[0]); ;
     break;}
 case 48:
-#line 168 "parser.y"
+#line 172 "parser.y"
 { yyval = p_mknod(ID_RANGE, NULL, yyvsp[0]); ;
     break;}
 case 49:
-#line 169 "parser.y"
+#line 173 "parser.y"
 { yyval = p_mknod(ID_RANGE, yyvsp[-1], NULL); ;
     break;}
 case 50:
-#line 170 "parser.y"
+#line 174 "parser.y"
 { yyval = p_mknod(ID_RANGE, yyvsp[-2], yyvsp[0]); ;
     break;}
 case 51:
-#line 174 "parser.y"
+#line 178 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 52:
-#line 175 "parser.y"
+#line 179 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 53:
-#line 179 "parser.y"
+#line 183 "parser.y"
 { yyval = p_mknod(ID_SET,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 54:
-#line 180 "parser.y"
+#line 184 "parser.y"
 { yyval = p_mknod(ID_INC,yyvsp[-1],p_mkval(ID_IVAL, (char *)strdup("1"))); ;
     break;}
 case 55:
-#line 181 "parser.y"
+#line 185 "parser.y"
 { yyval = p_mknod(ID_DEC,yyvsp[-1],p_mkval(ID_IVAL, (char *)strdup("1"))); ;
     break;}
 case 56:
-#line 182 "parser.y"
+#line 186 "parser.y"
 { yyval = p_mknod(ID_INC,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 57:
-#line 183 "parser.y"
+#line 187 "parser.y"
 { yyval = p_mknod(ID_DEC,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 58:
-#line 184 "parser.y"
+#line 188 "parser.y"
 { yyval = p_mknod(ID_MULSET,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 59:
-#line 185 "parser.y"
+#line 189 "parser.y"
 { yyval = p_mknod(ID_DIVSET,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 60:
-#line 187 "parser.y"
+#line 191 "parser.y"
 { yyval = p_mknod(ID_SET,
                                                p_mknod(ID_WHERE, yyvsp[-6], yyvsp[-3]), yyvsp[0]); ;
     break;}
 case 61:
-#line 193 "parser.y"
+#line 197 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 62:
-#line 194 "parser.y"
+#line 198 "parser.y"
 { yyval = p_mknod(ID_CAT, yyvsp[-2], yyvsp[0]); ;
     break;}
 case 63:
-#line 198 "parser.y"
+#line 202 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 64:
-#line 199 "parser.y"
+#line 203 "parser.y"
 { yyval = p_mknod(ID_OR ,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 65:
-#line 203 "parser.y"
+#line 207 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 66:
-#line 204 "parser.y"
+#line 208 "parser.y"
 { yyval = p_mknod(ID_AND ,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 67:
-#line 208 "parser.y"
+#line 212 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 68:
-#line 209 "parser.y"
+#line 213 "parser.y"
 { yyval = p_mknod(ID_EQ ,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 69:
-#line 210 "parser.y"
+#line 214 "parser.y"
 { yyval = p_mknod(ID_NE ,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 70:
-#line 214 "parser.y"
+#line 218 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 71:
-#line 215 "parser.y"
+#line 219 "parser.y"
 { yyval = p_mknod(ID_LT ,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 72:
-#line 216 "parser.y"
+#line 220 "parser.y"
 { yyval = p_mknod(ID_GT ,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 73:
-#line 217 "parser.y"
+#line 221 "parser.y"
 { yyval = p_mknod(ID_LE ,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 74:
-#line 218 "parser.y"
+#line 222 "parser.y"
 { yyval = p_mknod(ID_GE ,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 75:
-#line 222 "parser.y"
+#line 226 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 76:
-#line 223 "parser.y"
+#line 227 "parser.y"
 { yyval = p_mknod(ID_LSHIFT,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 77:
-#line 224 "parser.y"
+#line 228 "parser.y"
 { yyval = p_mknod(ID_RSHIFT,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 78:
-#line 228 "parser.y"
+#line 232 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 79:
-#line 229 "parser.y"
+#line 233 "parser.y"
 { yyval = p_mknod(ID_ADD,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 80:
-#line 230 "parser.y"
+#line 234 "parser.y"
 { yyval = p_mknod(ID_SUB,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 81:
-#line 234 "parser.y"
+#line 238 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 82:
-#line 235 "parser.y"
+#line 239 "parser.y"
 { yyval = p_mknod(ID_MULT, yyvsp[-2], yyvsp[0]); ;
     break;}
 case 83:
-#line 236 "parser.y"
+#line 240 "parser.y"
 { yyval = p_mknod(ID_DIV, yyvsp[-2], yyvsp[0]); ;
     break;}
 case 84:
-#line 237 "parser.y"
+#line 241 "parser.y"
 { yyval = p_mknod(ID_MOD, yyvsp[-2], yyvsp[0]); ;
     break;}
 case 85:
-#line 241 "parser.y"
+#line 245 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 86:
-#line 242 "parser.y"
+#line 246 "parser.y"
 { yyval = p_mknod(ID_POW,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 87:
-#line 246 "parser.y"
+#line 250 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 88:
-#line 247 "parser.y"
+#line 251 "parser.y"
 { yyval = p_mknod(ID_UMINUS,NULL,yyvsp[0]); ;
     break;}
 case 89:
-#line 250 "parser.y"
+#line 254 "parser.y"
 { yyval = p_mkval(ID_ID, (char *)yyvsp[0]); free(yyvsp[0]); ;
     break;}
 case 90:
-#line 251 "parser.y"
+#line 255 "parser.y"
 { yyval = p_mkval(ID_IVAL, (char *)yyvsp[0]); free(yyvsp[0]);  ;
     break;}
 case 91:
-#line 252 "parser.y"
+#line 256 "parser.y"
 { yyval = p_mkval(ID_RVAL, (char *)yyvsp[0]); free(yyvsp[0]); ;
     break;}
 case 92:
-#line 253 "parser.y"
+#line 257 "parser.y"
 { yyval = p_mkval(ID_STRING, (char *)yyvsp[0]); free(yyvsp[0]); ;
     break;}
 case 93:
-#line 257 "parser.y"
+#line 261 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 94:
-#line 258 "parser.y"
+#line 262 "parser.y"
 { yyval = yyvsp[-1]; ;
     break;}
 case 95:
-#line 263 "parser.y"
+#line 267 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 96:
-#line 264 "parser.y"
+#line 268 "parser.y"
 { yyval = p_mknod(ID_ARRAY,yyvsp[-3],yyvsp[-1]); ;
     break;}
 case 97:
-#line 265 "parser.y"
+#line 269 "parser.y"
 { yyval = p_mknod(ID_DEREF,yyvsp[-2],yyvsp[0]); ;
     break;}
 case 98:
-#line 266 "parser.y"
+#line 270 "parser.y"
 { yyval = p_mknod(ID_FUNCT,yyvsp[-3],yyvsp[-1]); ;
     break;}
 case 99:
-#line 267 "parser.y"
+#line 271 "parser.y"
 { yyval = p_mknod(ID_PARALLEL,yyvsp[-3],yyvsp[-1]); ;
     break;}
 case 100:
-#line 268 "parser.y"
+#line 272 "parser.y"
 { yyval = p_mknod(ID_PARALLEL,NULL,yyvsp[-1]); ;
     break;}
 case 101:
-#line 269 "parser.y"
+#line 273 "parser.y"
 { yyval = pp_exact_help(yyvsp[-3]); ;
     break;}
 case 102:
-#line 270 "parser.y"
+#line 274 "parser.y"
 { yyval = pp_exact_help(yyvsp[-2]); ;
     break;}
 case 103:
-#line 274 "parser.y"
+#line 278 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 104:
-#line 275 "parser.y"
+#line 279 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 105:
-#line 276 "parser.y"
+#line 280 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 106:
-#line 277 "parser.y"
+#line 281 "parser.y"
 { yyval = yyvsp[0]; ;
     break;}
 case 107:
-#line 278 "parser.y"
+#line 282 "parser.y"
 { yyval = p_mknod(ID_ARGV, yyvsp[0], NULL); ;
     break;}
 case 108:
-#line 279 "parser.y"
+#line 283 "parser.y"
 { yyval = p_mknod(ID_ARGV, yyvsp[-3], yyvsp[-1]); ;
     break;}
 case 109:
-#line 280 "parser.y"
+#line 284 "parser.y"
 { yyval = p_mknod(ID_ARGV, yyvsp[0], NULL); ;
     break;}
 case 110:
-#line 281 "parser.y"
+#line 285 "parser.y"
 { yyval = p_mknod(ID_ARGV, yyvsp[-3], yyvsp[-1]); ;
     break;}
 case 111:
-#line 282 "parser.y"
+#line 286 "parser.y"
 { yyval = p_mknod(ID_CONSTRUCT, yyvsp[-1], NULL); ;
     break;}
 }
@@ -1649,7 +1653,7 @@ yyerrhandle:
   yysetup = 0;
   return -1;
 }
-#line 285 "parser.y"
+#line 289 "parser.y"
 
 
 
