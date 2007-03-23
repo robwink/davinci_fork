@@ -25,6 +25,10 @@ static Var *cse_unscale(vfuncptr func, Var *arg);
 static Var *cse_ramp(vfuncptr func, Var * arg);
 static Var *cse_interp2d(vfuncptr func, Var * arg);
 static Var *cse_columnator(vfuncptr func, Var * arg);
+static Var *cse_cubicspline(vfuncptr func, Var * arg);
+static Var *cse_resample(vfuncptr func, Var * arg);
+
+
 
 static dvModuleFuncDesc exported_list[] = {
   { "contour", (void *) cse_contour },
@@ -43,11 +47,13 @@ static dvModuleFuncDesc exported_list[] = {
   { "unscale", (void *) cse_unscale},
   { "ramp", (void *) cse_ramp},
   { "interp2d", (void *) cse_interp2d},
-  { "columnator", (void *) cse_columnator}
+  { "columnator", (void *) cse_columnator},
+  { "cubicspline",(void *) cse_cubicspline},
+  { "resample",(void *) cse_resample}
 };
 
 static dvModuleInitStuff is = {
-  exported_list, 17,
+  exported_list, 19,
   NULL, 0
 };
 
@@ -2112,5 +2118,223 @@ cse_columnator(vfuncptr func, Var * arg)
   
   /* return the data */  
   out = newVal(BSQ, 3, count, 1, FLOAT, wdata);
+  return(out);
+}
+
+
+
+Var*
+cse_cubicspline(vfuncptr func, Var * arg)
+{
+  
+
+  Var    *oldx=NULL;                 /*old x*/
+  Var    *oldy=NULL;                 /*old y*/
+  Var    *newx=NULL;                 /*new x*/
+  Var    *out=NULL;                  /*output array*/
+  int     ox,oy,nx,ny;               /* rectified image size */
+  int     i,count;                     /* loop indices */
+  float  *nya=NULL;                  /* new y array */
+  float  *nxa=NULL;                  /* new y array */
+  float  *oya=NULL;                  /* new y array */
+  float  *oxa=NULL;                  /* new y array */
+  float  *slope=NULL;
+  float  *exag=NULL;
+  float  *vals=NULL;
+  float   cpy1,cpy2;
+  float   cpx1,cpx2;
+  float   A,B,C,D;
+  
+  Alist alist[4]; 
+  alist[0] = make_alist("oldy",    ID_VAL,      NULL,  &oldy);
+  alist[1] = make_alist("oldx",    ID_VAL,      NULL,  &oldx); 
+  alist[2] = make_alist("newx",    ID_VAL,      NULL,  &newx); 
+  alist[3].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if(oldx==NULL || oldy==NULL || newx==NULL) {
+    return NULL;
+  }
+  
+  /* get x,y,z */
+  ox=GetZ(oldx);
+  nx=GetZ(newx);
+
+  /* create the three input arrays */
+  nya = (float *) calloc(sizeof(float),nx);
+  nxa = (float *) calloc(sizeof(float),nx);
+  oya = (float *) calloc(sizeof(float),ox);
+  oxa = (float *) calloc(sizeof(float),ox);
+  slope = (float *) calloc(sizeof(float),ox);
+  exag = (float *)calloc(sizeof(float),ox);
+
+  /*extract data */
+  for(i=0;i<nx;i+=1) {
+    nxa[i]=extract_float(newx,cpos(0,0,i,newx));
+  }
+  for(i=0;i<ox;i+=1) {
+    oya[i]=extract_float(oldy,cpos(0,0,i,oldy));
+    oxa[i]=extract_float(oldx,cpos(0,0,i,oldx));
+  }  
+
+  /* calculate the slope at every point */
+  for(i=1;i<ox-1;i++) {
+    slope[i]=(float)(oya[i+1]-oya[i-1])/(oxa[i+1]-oxa[i-1]);
+    exag[i]=(oxa[i+1]-oxa[i])/4;
+  }
+  
+  /*do the interpolation loop*/
+  count=0;
+  for(i=0;i<ox;i++) { 
+    /*check to make sure that the values of the new x are within the values of the old x*/
+    while(oxa[i]>=nxa[count] && oxa[i]<nxa[count] && count<nx){
+      printf("%f,%f\n",nxa[count],oxa[i]);
+      /*calculate the positions of the control points*/
+      cpx1=oxa[i]+exag[i];
+      cpy1=oya[i]+exag[i]*slope[i];
+      cpx2=oxa[i+1]-exag[i+1];
+      cpy2=oya[i+1]-exag[i+1]*slope[i+1];
+      
+      /*Bernstein polynomial*/
+      A = oya[i+1] - 3*cpy2 + 3*cpy1 - oya[i];
+      B =            3*cpy2 - 6*cpy1 + 3*oya[i];
+      C =                     3*cpy1 - 3*oya[i];
+      D =                                oya[i];
+      nya[count] = D + nxa[count]*(C + nxa[count]*(B + nxa[count]*(A)));
+      count++;
+    } 
+    
+  }
+  
+  out = newVal(BSQ, 1, 1, nx, FLOAT, nya);
+  return(out);
+}
+
+
+
+Var*
+cse_resample(vfuncptr func, Var * arg)
+{
+  
+
+  Var    *oldx=NULL;                 //old x
+  Var    *oldy=NULL;                 //old y
+  Var    *newx=NULL;                 //new x
+  Var    *out=NULL;                  //output array
+  float  *ynew=NULL;                 //new y array
+  float  *y=NULL;                    //old y array
+  float  *xnew=NULL;                 //new x array
+  float  *xold=NULL;                 //old x array
+  float  *y2d=NULL;                  //second derivative array
+  float  *u=NULL;                    //u array
+  int     i,npts,new_npts;           //indices and sizes
+  int     start_count,stop_count;    //stop and start locations               
+  float   sig,p,h,a,b;               //cubic spline variables
+  int     samp_hi,samp_lo,samp_new;  //hi,lo,new samples
+  float   min=0,max=0;               //min and max values
+
+  Alist alist[4]; 
+  alist[0] = make_alist("oldy",    ID_VAL,      NULL,  &oldy);
+  alist[1] = make_alist("oldx",    ID_VAL,      NULL,  &oldx); 
+  alist[2] = make_alist("newx",    ID_VAL,      NULL,  &newx); 
+  alist[3].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if(oldx==NULL || oldy==NULL || newx==NULL) {
+    printf (" \n");
+    printf (" Resample a spectrum to a given scale \n");
+    printf (" $1 = spectra to be resampled \n");
+    printf (" $2 = old scale \n");
+    printf (" $3 = new scale \n");
+    printf (" \n");
+    return NULL;
+  }
+  
+  /* get z of old array and allocate memory*/
+  npts=GetZ(oldx);
+  y = (float *) calloc(sizeof(float),npts);
+  xold = (float *) calloc(sizeof(float),npts);
+  y2d = (float *) calloc(sizeof(float),npts);
+  u = (float *) calloc(sizeof(float),npts-1);
+  
+  /*set boundary spline conditions; Second derivative is 0. */
+  
+  min=extract_float(oldx,cpos(0,0,0,oldx));
+  max=extract_float(oldx,cpos(0,0,npts-1,oldx));
+  for(i=0;i<npts;i++) {
+    y[i]=extract_float(oldy,cpos(0,0,i,oldy));
+    xold[i]=extract_float(oldx,cpos(0,0,i,oldx));
+    if(xold[i] < min) { min=xold[i]; }
+    if(xold[i] > max) { max=xold[i]; }
+    y2d[i]=y[i]-y[i];
+    if(i<npts-1) {
+      u[i]=y2d[i];
+    }
+  }  
+  
+  /*Set start and end points in case many values are zeroed.*/
+  start_count=1;
+  while (y[start_count] == 0. && start_count <= npts) {
+    start_count=start_count+1;
+  }
+  stop_count=npts;
+  while (y[stop_count] == 0. && stop_count >=1) {
+    stop_count=stop_count-1;
+  }
+  
+  /* Do the decomposition loop of the tridiagonal algorithm */
+  for (i=(start_count+1); i<=(stop_count-1); i+=1) {
+    sig=(xold[i]-xold[(i-1)])/(xold[(i+1)]-xold[(i-1)]);
+    p=sig*y2d[(i-1)]+2.;
+    y2d[i]=(sig-1.)/p;
+    u[i]=(y[(i+1)]-y[i])/(xold[(i+1)]-xold[i]) - (y[i]-y[(i-1)])/(xold[i]-xold[(i-1)]);
+    u[i]=(6.*u[i]/(xold[(i+1)]-xold[(i-1)]) - sig*u[(i-1)])/p;
+  }
+  
+  for (i=(stop_count-1); i>=start_count; i-=1) {
+    y2d[i]=y2d[i]*y2d[(i+1)] + u[i];
+  }
+  
+  /* Now that we have the second derivative //
+  // we can evaluate our y with respect to the new xaxis // 
+  // get the size of the new xaxis and alloate the memory */
+  new_npts=GetZ(newx);
+  ynew = (float *) calloc(sizeof(float),new_npts);
+  xnew = (float *) calloc(sizeof(float),new_npts);
+  for(i=0;i<new_npts;i++) {
+    xnew[i]=extract_float(newx,cpos(0,0,i,newx));
+  }
+
+  for (i=0; i<new_npts; i+=1) {
+    samp_hi=npts;
+    samp_lo=1;
+    while (samp_hi-samp_lo > 1) {
+      samp_new=(samp_hi+samp_lo)/2;
+      if (xold[samp_new] > xnew[i]) {
+	samp_hi=samp_new;
+      }
+      if (xold[samp_new] <= xnew[i]) {
+	samp_lo=samp_new;
+      }
+    }
+    h=xold[samp_hi]-xold[samp_lo];
+    a=(xold[samp_hi]-xnew[i])/h;
+    b=(xnew[i]-xold[samp_lo])/h;
+    if(xnew[i]<=max && xnew[i]>=min) {
+      ynew[i]=a*y[samp_lo]+b*y[samp_hi]+((a*a*a-a)*y2d[samp_lo]+(b*b*b-b)*y2d[samp_hi])*(h*h)/6.;
+    } 
+  }
+  if(xnew[0]==xold[0]) {
+    ynew[0]=y[0];
+  }
+
+  free(y);
+  free(xnew);
+  free(xold);
+  free(y2d);
+  free(u);
+  out = newVal(BSQ, 1, 1, new_npts, FLOAT, ynew);
   return(out);
 }
