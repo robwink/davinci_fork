@@ -2249,6 +2249,7 @@ cse_resample(vfuncptr func, Var * arg)
     printf (" $2 = old scale \n");
     printf (" $3 = new scale \n");
     printf (" \n");
+    printf (" c.edwards 03-23-07");
     return NULL;
   }
   
