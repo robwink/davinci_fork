@@ -39,7 +39,9 @@ static Var *thm_themissivity(vfuncptr, Var *);
 static Var *thm_emiss2rad(vfuncptr, Var*);
 static Var *thm_white_noise_remove1(vfuncptr, Var *);
 static Var *thm_maxpos(vfuncptr, Var *);
+static Var *thm_maxpos_v1(vfuncptr, Var *);
 static Var *thm_minpos(vfuncptr, Var *);
+static Var *thm_minpos_v1(vfuncptr, Var *);
 static Var *thm_unscale(vfuncptr, Var *);
 static Var *thm_cleandcs(vfuncptr, Var *);
 static Var *thm_white_noise_remove2(vfuncptr, Var *);
@@ -53,6 +55,7 @@ static Var *thm_marsbin(vfuncptr, Var *);
 static Var *thm_interp2d(vfuncptr, Var *);
 static Var *thm_contour(vfuncptr, Var *);
 static Var *thm_rotation(vfuncptr, Var *);
+static Var *thm_resample(vfuncptr, Var *);
 
  
 static dvModuleFuncDesc exported_list[] = {
@@ -65,6 +68,8 @@ static dvModuleFuncDesc exported_list[] = {
   { "emiss2rad", (void *) thm_emiss2rad },
   { "maxpos", (void *) thm_maxpos },
   { "minpos", (void *) thm_minpos },
+  { "maxpos_v1", (void *) thm_maxpos_v1 },
+  { "minpos_v1", (void *) thm_minpos_v1 },
   { "kfill", (void *) thm_kfill },
   { "ramp", (void *) thm_ramp },
   { "unscale", (void *) thm_unscale },
@@ -80,11 +85,12 @@ static dvModuleFuncDesc exported_list[] = {
   { "mars_bin", (void *) thm_marsbin },
   { "interp2d", (void *) thm_interp2d},
   { "contour",  (void *) thm_contour},
-  { "rotate", (void *) thm_rotation}
+  { "rotate", (void *) thm_rotation},
+  { "resample", (void *) thm_resample}
 }; 
 
 static dvModuleInitStuff is = {
-  exported_list, 25,
+  exported_list, 28,
   NULL, 0
 };
 
@@ -3194,7 +3200,189 @@ thm_minpos(vfuncptr func, Var *arg)
 
 
 
+Var*
+thm_maxpos_v1(vfuncptr func, Var *arg)
+{
+ 
+  Var    *data = NULL;                      /* the orignial data */
+  Var    *out = NULL;                       /* the output structure */
+  int    *pos = NULL;                       /* the output position */
+  float   ignore = -32768;                  /* null value */
+  float  *val = NULL;                       /* the output values */
+  int     i, j, k, l;                       /* loop indices */
+  int     x=0, y=0, z=0;                    /* size of the data */
+  float   ni1=0, ni2=-32798, ni3=-852;      /* temp values and positions */
+  int     opt=0;                            /* return array option */
+  int     iter=1;                           /* number of iterations to include */
+   
+  Alist alist[5];
+  alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
+  alist[1] = make_alist("ret",       INT,       NULL,  &opt);
+  alist[2] = make_alist("iter",      INT,       NULL,  &iter);
+  alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
+  alist[4].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if (data == NULL) {
+    parse_error("\nUsed to find the position of the max point in an array\n");
+    parse_error("$1 = the data");
+    parse_error("Prints the value and location\n");
+    parse_error("ret=1 returns the value and location in a structure\n");
+    parse_error("iter= # of points to find in the data");
+    parse_error("if iter >1 it will automatically return the points\n");
+    parse_error("ignore = the value to ignore\n");
+    parse_error("c.edwards 5/19/04\n");
+    return NULL;
+  }
 
+  if (iter > 1 ) {
+    opt=1;
+  }
+
+  /* create array for postion */
+  pos = (int *)calloc(sizeof(int), 3*iter);
+  val = (float *)calloc(sizeof(float), iter);
+  
+  /* x, y and z dimensions of the data */
+  x = GetX(data);
+  y = GetY(data);
+  z = GetZ(data);
+
+  /* find the maximum point and its position */  
+  for(l=0; l<iter; l++) {
+    for(k=0; k<z; k++) {
+      for(j=0; j<y; j++) {
+	for(i=0; i<x; i++) {
+	  
+	  /* ni1 = current value */
+	  /* ni2 = curent max value */
+	  /* ni3 = old max val */
+	  ni1 = extract_float(data, cpos(i,j,k,data));
+	  if(ni1>ni2 && (ni3 == -852 || (ni1<ni3 && ni3 != -852)) && ni1 != ignore) {
+	    ni2=ni1;
+	    pos[3*l+2]=k+1;
+	    pos[3*l+1]=j+1;
+	    pos[3*l+0]=i+1;
+	  }
+	}
+      }
+    }
+    ni3=ni2;
+    val[l]=ni2;
+    ni2=-32798;
+  }
+
+  if(iter==1) {
+    /* return the findings */
+    printf("\nLocation: %i,%i,%i\n",pos[0],pos[1],pos[2]);
+    printf("%.13f\n\n",ni3);
+    
+    if(opt==0) return NULL;
+  }
+
+  if(opt!=0) {
+    out = new_struct(2);
+    add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
+    add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
+    return out;
+  }
+}
+
+
+
+Var*
+thm_minpos_v1(vfuncptr func, Var *arg)
+{
+
+  Var    *data = NULL;                 /* the orignial data */
+  Var    *out = NULL;                  /* the output struture */
+  int    *pos = NULL;                  /* the output postion */
+  float   ignore = -32768;             /* null value */
+  float  *val = NULL;                  /* the output values */
+  int     i, j, k, l;                  /* loop indices */
+  int     x=0, y=0, z=0;               /* size of the data */
+  float   ni1=0, ni2=32798, ni3=852;   /* temp values and positions */
+  int     opt=0;                       /* return array option */
+  int     iter=1;                      /* number of iterations to include */
+
+  Alist alist[5];
+  alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
+  alist[1] = make_alist("ret",       INT,       NULL,  &opt);
+  alist[2] = make_alist("iter",      INT,       NULL,  &iter);
+  alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
+  alist[4].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+ 
+  if (data == NULL) {
+    parse_error("\nUsed to find the position of the min point in an array\n");
+    parse_error("$1 = the data");
+    parse_error("Prints the value and location\n");
+    parse_error("ret = 1 returns the value and location in a structure\n");
+    parse_error("iter = # of points to find in the data");
+    parse_error("if iter >1 it will automatically return the points\n");
+    parse_error("ignore = the value to ignore\n");
+    parse_error("c.edwards 5/19/04\n");
+    return NULL;
+  }
+
+  if (iter > 1 ) {
+    opt=1;
+  }
+  
+  /* create array for position and value*/
+  pos = (int *)calloc(sizeof(int), 3*iter);
+  val = (float *)calloc(sizeof(float), iter);
+  
+  /* x, y and z dimensions of the data */
+  x = GetX(data);
+  y = GetY(data);
+  z = GetZ(data);
+
+  /* find the minimum point and its position */  
+  for(l=0; l<iter; l++) {
+    for(k=0; k<z; k++) {
+      for(j=0; j<y; j++) {
+	for(i=0; i<x; i++) {
+	  
+	  /* ni1 = current value */
+	  /* ni2 = curent max value */
+	  /* ni3 = old max val */
+	  ni1 = extract_float(data, cpos(i,j,k,data));
+	  if(ni1<ni2 && (ni3 == 852 || (ni1>ni3 && ni3 != 852)) && ni1 != ignore) {
+	    ni2=ni1;
+	    pos[3*l+2]=k+1;
+	    pos[3*l+1]=j+1;
+	    pos[3*l+0]=i+1;
+	  }
+	}
+      }
+    }
+    ni3=ni2;
+    val[l]=ni2;
+    ni2=32798;
+  }
+
+  /* return the findings */
+  if(iter==1) {    
+    printf("\nLocation: %i,%i,%i\n",pos[0],pos[1],pos[2]);
+    if(ni2<-32768) {
+      printf("%.9e\n\n",ni3);
+    }
+    if(ni2>=-32768) {
+      printf("%.9f\n\n",ni3);
+    }
+    if(opt==0) return NULL;
+  }
+
+  if(opt!=0) {
+    out = new_struct(2);
+    add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
+    add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
+    return out;
+  }
+}
 
 
 
@@ -5291,4 +5479,133 @@ int thm_round(float numf) {
   if (m <= -0.5) { numi -= 1; }
 
   return(numi);
+}
+
+
+
+Var*
+thm_resample(vfuncptr func, Var * arg)
+{
+  
+
+  Var    *oldx=NULL;                 //old x
+  Var    *oldy=NULL;                 //old y
+  Var    *newx=NULL;                 //new x
+  Var    *out=NULL;                  //output array
+  float  *ynew=NULL;                 //new y array
+  float  *y=NULL;                    //old y array
+  float  *xnew=NULL;                 //new x array
+  float  *xold=NULL;                 //old x array
+  float  *y2d=NULL;                  //second derivative array
+  float  *u=NULL;                    //u array
+  int     i,npts,new_npts;           //indices and sizes
+  int     start_count,stop_count;    //stop and start locations               
+  float   sig,p,h,a,b;               //cubic spline variables
+  int     samp_hi,samp_lo,samp_new;  //hi,lo,new samples
+  float   min=0,max=0;               //min and max values
+
+  Alist alist[4]; 
+  alist[0] = make_alist("oldy",    ID_VAL,      NULL,  &oldy);
+  alist[1] = make_alist("oldx",    ID_VAL,      NULL,  &oldx); 
+  alist[2] = make_alist("newx",    ID_VAL,      NULL,  &newx); 
+  alist[3].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if(oldx==NULL || oldy==NULL || newx==NULL) {
+    printf (" \n");
+    printf (" Resample a spectrum to a given scale using cubic spline interpolation\n");
+    printf (" $1 = spectra to be resampled \n");
+    printf (" $2 = old scale \n");
+    printf (" $3 = new scale \n");
+    printf (" \n");
+    printf (" c.edwards 03-23-07\n\n");
+    return NULL;
+  }
+  
+  /* get z of old array and allocate memory*/
+  npts=GetZ(oldx);
+  y = (float *) calloc(sizeof(float),npts);
+  xold = (float *) calloc(sizeof(float),npts);
+  y2d = (float *) calloc(sizeof(float),npts);
+  u = (float *) calloc(sizeof(float),npts-1);
+  
+  /*set boundary spline conditions; Second derivative is 0. */
+  
+  min=extract_float(oldx,cpos(0,0,0,oldx));
+  max=extract_float(oldx,cpos(0,0,npts-1,oldx));
+  for(i=0;i<npts;i++) {
+    y[i]=extract_float(oldy,cpos(0,0,i,oldy));
+    xold[i]=extract_float(oldx,cpos(0,0,i,oldx));
+    if(xold[i] < min) { min=xold[i]; }
+    if(xold[i] > max) { max=xold[i]; }
+    y2d[i]=y[i]-y[i];
+    if(i<npts-1) {
+      u[i]=y2d[i];
+    }
+  }  
+  
+  /*Set start and end points in case many values are zeroed.*/
+  start_count=1;
+  while (y[start_count] == 0. && start_count <= npts) {
+    start_count=start_count+1;
+  }
+  stop_count=npts;
+  while (y[stop_count] == 0. && stop_count >=1) {
+    stop_count=stop_count-1;
+  }
+  
+  /* Do the decomposition loop of the tridiagonal algorithm */
+  for (i=(start_count+1); i<=(stop_count-1); i+=1) {
+    sig=(xold[i]-xold[(i-1)])/(xold[(i+1)]-xold[(i-1)]);
+    p=sig*y2d[(i-1)]+2.;
+    y2d[i]=(sig-1.)/p;
+    u[i]=(y[(i+1)]-y[i])/(xold[(i+1)]-xold[i]) - (y[i]-y[(i-1)])/(xold[i]-xold[(i-1)]);
+    u[i]=(6.*u[i]/(xold[(i+1)]-xold[(i-1)]) - sig*u[(i-1)])/p;
+  }
+  
+  for (i=(stop_count-1); i>=start_count; i-=1) {
+    y2d[i]=y2d[i]*y2d[(i+1)] + u[i];
+  }
+  
+  /* Now that we have the second derivative //
+  // we can evaluate our y with respect to the new xaxis // 
+  // get the size of the new xaxis and alloate the memory */
+  new_npts=GetZ(newx);
+  ynew = (float *) calloc(sizeof(float),new_npts);
+  xnew = (float *) calloc(sizeof(float),new_npts);
+  for(i=0;i<new_npts;i++) {
+    xnew[i]=extract_float(newx,cpos(0,0,i,newx));
+  }
+
+  for (i=0; i<new_npts; i+=1) {
+    samp_hi=npts;
+    samp_lo=1;
+    while (samp_hi-samp_lo > 1) {
+      samp_new=(samp_hi+samp_lo)/2;
+      if (xold[samp_new] > xnew[i]) {
+	samp_hi=samp_new;
+      }
+      if (xold[samp_new] <= xnew[i]) {
+	samp_lo=samp_new;
+      }
+    }
+    h=xold[samp_hi]-xold[samp_lo];
+    a=(xold[samp_hi]-xnew[i])/h;
+    b=(xnew[i]-xold[samp_lo])/h;
+    if(xnew[i]<=max && xnew[i]>=min) {
+      ynew[i]=a*y[samp_lo]+b*y[samp_hi]+((a*a*a-a)*y2d[samp_lo]+(b*b*b-b)*y2d[samp_hi])*(h*h)/6.;
+    } 
+  }
+  if(xnew[0]==xold[0]) {
+    ynew[0]=y[0];
+  }
+
+  free(y);
+  free(xnew);
+  free(xold);
+  free(y2d);
+  free(u);
+  out = newVal(BSQ, 1, 1, new_npts, FLOAT, ynew);
+  return(out);
 }
