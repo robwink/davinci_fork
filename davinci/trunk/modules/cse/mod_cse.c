@@ -2244,12 +2244,12 @@ cse_resample(vfuncptr func, Var * arg)
   
   if(oldx==NULL || oldy==NULL || newx==NULL) {
     printf (" \n");
-    printf (" Resample a spectrum to a given scale \n");
+    printf (" Resample a spectrum to a given scale using cubic spline interpolation \n");
     printf (" $1 = spectra to be resampled \n");
     printf (" $2 = old scale \n");
     printf (" $3 = new scale \n");
     printf (" \n");
-    printf (" c.edwards 03-23-07");
+    printf (" c.edwards 03-23-07\n\n");
     return NULL;
   }
   
