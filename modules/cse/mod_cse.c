@@ -2274,7 +2274,8 @@ cse_resample(vfuncptr func, Var * arg)
       u[i]=y2d[i];
     }
   }  
-  
+
+
   /*Set start and end points in case many values are zeroed.*/
   start_count=1;
   while (y[start_count] == 0. && start_count <= npts) {
@@ -2286,18 +2287,20 @@ cse_resample(vfuncptr func, Var * arg)
   }
   
   /* Do the decomposition loop of the tridiagonal algorithm */
-  for (i=(start_count+1); i<=(stop_count-1); i+=1) {
+  for (i=(start_count); i<=(stop_count-1); i+=1) {
     sig=(xold[i]-xold[(i-1)])/(xold[(i+1)]-xold[(i-1)]);
     p=sig*y2d[(i-1)]+2.;
     y2d[i]=(sig-1.)/p;
-    u[i]=(y[(i+1)]-y[i])/(xold[(i+1)]-xold[i]) - (y[i]-y[(i-1)])/(xold[i]-xold[(i-1)]);
-    u[i]=(6.*u[i]/(xold[(i+1)]-xold[(i-1)]) - sig*u[(i-1)])/p;
+    if(xold[(i+1)]-xold[i] !=0 ) { u[i]=(y[(i+1)]-y[i])/(xold[(i+1)]-xold[i]);}
+    if(xold[i]-xold[(i-1)] !=0 ) { u[i]= u[i] - (y[i]-y[(i-1)])/(xold[i]-xold[(i-1)]); }
+    if(xold[(i+1)]-xold[(i-1)] !=0) { u[i]=(6.*u[i]/(xold[(i+1)]-xold[(i-1)]) - sig*u[(i-1)])/p;}
   }
-  
+
   for (i=(stop_count-1); i>=start_count; i-=1) {
     y2d[i]=y2d[i]*y2d[(i+1)] + u[i];
   }
   
+
   /* Now that we have the second derivative //
   // we can evaluate our y with respect to the new xaxis // 
   // get the size of the new xaxis and alloate the memory */
@@ -2309,8 +2312,8 @@ cse_resample(vfuncptr func, Var * arg)
   }
 
   for (i=0; i<new_npts; i+=1) {
-    samp_hi=npts;
-    samp_lo=1;
+    samp_hi=npts-1;
+    samp_lo=0;
     while (samp_hi-samp_lo > 1) {
       samp_new=(samp_hi+samp_lo)/2;
       if (xold[samp_new] > xnew[i]) {
