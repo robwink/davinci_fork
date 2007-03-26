@@ -498,6 +498,7 @@ Var *ff_extract(vfuncptr func, Var * arg);
 
 Var *ff_foo(vfuncptr func, Var * arg);
 Var *ff_load_tdb(vfuncptr, Var *);
+Var *ff_cinterp(vfuncptr, Var *);
 
 char *dv_locate_file(char *);
 void dump_version();

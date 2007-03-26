@@ -316,8 +316,8 @@ enum {
 
 #define saturate(v,lo,hi)	((v) > (lo) ? ((v) < (hi) ? (v) : (hi)) : (lo))
 #define saturate_byte(v)	saturate(v,0,255)
-#define saturate_short(v)	saturate(v,(MINSHORT),(MAXSHORT));
-#define saturate_int(v)		saturate(v,(MININT), (MAXINT));
+#define saturate_short(v)	saturate(v,(MINSHORT),(MAXSHORT))
+#define saturate_int(v)		saturate(v,(MININT), (MAXINT))
 #define saturate_float(v)	v
 #define saturate_double(v)	v
 

@@ -622,6 +622,7 @@ ff_create(vfuncptr func, Var * arg)
     V_TYPE(s) = ID_VAL;
 
     V_DATA(s) = calloc(dsize,NBYTES(format));
+	memset(V_DATA(s), -1, dsize*NBYTES(format));
     V_FORMAT(s) = format;
     V_ORDER(s) = org;
     V_DSIZE(s) = dsize;
@@ -657,7 +658,7 @@ ff_create(vfuncptr func, Var * arg)
                 case DOUBLE: 
                     ddata[c] = v;
                     break;
-		}
+				}
             }
         }
     }

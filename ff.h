@@ -42,6 +42,7 @@ struct _vfuncptr vfunclist[] = {
     { "ceil",       ff_dfunc,   (void *)ceil,   NULL},
     { "abs",        ff_dfunc,   (void *)fabs,   NULL},
     { "round",        ff_dfunc,   (void *)my_round,   NULL},
+    { "my_round",        ff_dfunc,   (void *)my_round,   NULL},
 
     { "pow",        ff_pow,     (void *)NULL,   NULL},
     
@@ -314,6 +315,7 @@ struct _vfuncptr vfunclist[] = {
 
 	{ "load_bin5",      ff_load_bin5,          NULL },
 	{ "load_tdb",      ff_load_tdb,                NULL },
+	{ "cinterp",      ff_cinterp,                NULL },
 
     { NULL,             NULL,                  NULL }
 };

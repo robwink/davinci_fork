@@ -1,8 +1,17 @@
-char *version = "@(#) daVinci Version #1.63";
+char *version = "@(#) daVinci Version #1.65";
 
 #include "build.h"
 
 /*
+Version 1.65: Mon Mar 26 13:43:12 MST 2007
+	Maintenance version for hdf libraries
+	+ Added ff_cinterp
+	+ Added type and ignore to interp.
+
+Version 1.64:
+	* Maintenance version for cfitsio library problem.
+	+ make display() output pngs not ppms
+
 Version 1.63: Thu Feb 15 16:51:24 MST 2007
 	* Modifications to move external program configurations into
 	  configure and report them during the configure process
