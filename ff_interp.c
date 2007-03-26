@@ -81,11 +81,8 @@ Var *linear_interp(Var *v0, Var *v1, Var *v2, float ignore)
     fromsz = V_DSIZE(v0);
     tosz = V_DSIZE(v2);
     
-    fdata = (float *)calloc(sizeof(FLOAT), tosz);
     x = (float *)calloc(sizeof(FLOAT), fromsz);
     y = (float *)calloc(sizeof(FLOAT), fromsz);
-    m = (float *)calloc(sizeof(FLOAT), fromsz-1);
-    c = (float *)calloc(sizeof(FLOAT), fromsz-1);
 
     count = 0;
     for (i = 0 ; i < fromsz ; i++) {
@@ -93,8 +90,19 @@ Var *linear_interp(Var *v0, Var *v1, Var *v2, float ignore)
         y[count] = extract_float(v0,i);
         if (is_deleted(x[count]) || is_deleted(y[count]) ||
 		x[count] == ignore || y[count] == ignore) continue;
+		if (count && x[count] <= x[count-1]) {
+			parse_error("Error: data is not monotonically increasing x1[%d] = %f", i, x[count]);
+			free(fdata);
+			free(x);
+			free(y);
+			return(NULL);
+		}
         count++;
     }
+
+    fdata = (float *)calloc(sizeof(FLOAT), tosz);
+    m = (float *)calloc(sizeof(FLOAT), fromsz-1);
+    c = (float *)calloc(sizeof(FLOAT), fromsz-1);
 
     /* evaluate & cache slopes & y-intercepts */
     for (i = 1; i < fromsz; i++){
@@ -190,12 +198,13 @@ ff_cinterp(vfuncptr func, Var *arg)
 Var *
 cubic_interp(Var *v0, Var *v1, Var *v2, char *type, float ignore)
 {
-	float **yd, *out, *xp, *yp;
+	float **yd, *out, *xp, *yp, *arena;
 	int npts, nout;
 	int i, j;
 	float x0, x1, x, h;
 	int done;
 	int count = 0;
+	int error = 0;
 
 	npts = V_DSIZE(v0);
 	nout = V_DSIZE(v2);
@@ -204,17 +213,34 @@ cubic_interp(Var *v0, Var *v1, Var *v2, char *type, float ignore)
 	yd = calloc(npts, sizeof(float *));
 	xp = calloc(sizeof(float), npts);
 	yp = calloc(sizeof(float), npts);
+	arena = calloc(sizeof(float), npts*4);
 	out = calloc(nout, sizeof(float));
 
 	for (i = 0 ; i < npts ; i++) {
 		xp[count] = extract_float(v1, i);
 		yp[count] = extract_float(v0, i);
-		yd[count] = calloc(4, sizeof(float));
+		yd[count] = arena + 4*count;
+		/* Handle deleted points and non-increasing data */
 		if (xp[count] == ignore || yp[count] == ignore) {
 			continue;
 		}
+		if (count && xp[count] <= xp[count-1]) {
+			parse_error("Error: data is not monotonically increasing x1[%d] = %f", i, xp[count]);
+			error= 1;
+			break;
+		}
 		count++;
 	}
+
+	/* this is the case if we're not monotonic increasing */
+	if (error) {
+		free(arena);
+		free(yd);
+		free(xp);
+		free(yp);
+		return(NULL);
+	}
+
 	npts = count;
 
 	cakima(npts, xp, yp, yd);
@@ -242,9 +268,7 @@ cubic_interp(Var *v0, Var *v1, Var *v2, char *type, float ignore)
 		}
 	}
 
-	for (i = 0 ; i < npts ; i++) {
-		free(yd[i]);
-	}
+	free(arena);
 	free(yd);
 	free(xp);
 	free(yp);
