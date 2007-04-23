@@ -3,43 +3,47 @@ char *version = "@(#) daVinci Version #1.65";
 #include "build.h"
 
 /*
+Version 1.66: 
+    * Fixed crashing bug in xplot for "struct.val" being undefined
+    * Fixed crashing bug when assinging to TEXTs beyond end
+
 Version 1.65: Mon Mar 26 13:43:12 MST 2007
-	Maintenance version for hdf libraries
-	+ Added ff_cinterp
-	+ Added type and ignore to interp.
+    Maintenance version for hdf libraries
+    + Added ff_cinterp
+    + Added type and ignore to interp.
 
 Version 1.64:
-	* Maintenance version for cfitsio library problem.
-	+ make display() output pngs not ppms
+    * Maintenance version for cfitsio library problem.
+    + make display() output pngs not ppms
 
 Version 1.63: Thu Feb 15 16:51:24 MST 2007
-	* Modifications to move external program configurations into
-	  configure and report them during the configure process
+    * Modifications to move external program configurations into
+      configure and report them during the configure process
     * Maybe fixed --with-hdf in configure to sue a path.
-	  Only concern is that -lz is hardcoded.
+      Only concern is that -lz is hardcoded.
 
 Version 1.62: Wed Jan 17 18:31:15 MST 2007 NsG
-	Fixed a bug related to iomedley data being double free'd
+    Fixed a bug related to iomedley data being double free'd
 
 Version 1.61: Thu Nov 30 17:38:16 MST 2006, NsG
-	added a "get all" default behavior to get_struct_keys().
-	fixed segfault in load_vanilla related to double free on error
+    added a "get all" default behavior to get_struct_keys().
+    fixed segfault in load_vanilla related to double free on error
 
 Version 1.60: Tue Nov  7 13:11:37 MST 2006
-	Fixes to do stream processing after X is initialized
+    Fixes to do stream processing after X is initialized
 
 Version 1.59: Wed Oct 18 20:38:31 MST 2006
-	Several realloc bugs reported by gcc 4.0.2, 
-	    including load_module() and help()
+    Several realloc bugs reported by gcc 4.0.2, 
+        including load_module() and help()
 
 Version 1.58:  Mon Sep 18 12:34:11 MST 2006
-	Fixed isis() to not dump on numeric plane number
-	Added round() to dfunc
-	Added load_tdb()
+    Fixed isis() to not dump on numeric plane number
+    Added round() to dfunc
+    Added load_tdb()
 
 Version 1.57: Wed May 31 14:49:02 MST 2006
-	* changed all occurances of getline to dv_getline for cygwin conflict.
-	* put #ifdef around strndup declaration, again for cygwin
+    * changed all occurances of getline to dv_getline for cygwin conflict.
+    * put #ifdef around strndup declaration, again for cygwin
 
 Version 1.56: Tue May 30 16:35:20 MST 2006
     * Merged in a bunch of changes from trip to hawaii

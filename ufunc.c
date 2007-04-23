@@ -412,8 +412,8 @@ dispatch_ufunc(UFUNC *f, Var *arg)
                 "Not enough arguments to ufunc: %s().  Expecting %d.", 
                 f->name, f->min_args);
         parse_error(NULL);
-        free_scope(scope);
 		dd_unput_argv(scope);
+        free_scope(scope);
         return(NULL);
     }
     /**

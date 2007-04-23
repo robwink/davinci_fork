@@ -52,9 +52,10 @@ Var * ff_fit(vfuncptr func, Var *arg)
 	int verbose =0;
 	Var *ignore_val = NULL;
 	double ignore=MINFLOAT;
+	int ret;
 
     char *fits[] = { "gauss", "gaussc", "gaussl", "ngauss", "lorenz",
-                     "2lorenz", "linear", "quad", "cube", "poly", 
+                     "2lorenz", "linear", "linear_chi", "quad", "cube", "poly", 
 					 "nexp", "xyquad", "xygauss", "sincos", NULL };
 
 	Alist alist[9];
@@ -98,19 +99,29 @@ Var * ff_fit(vfuncptr func, Var *arg)
 
     if (!(strcmp(ftype,"linear"))) {
         s=lin_fit(x,y,V_DSIZE(x),plot, ignore);
-    } else if (dfit(x, y, ip, ftype, iter, &op, &nparam, plot,verbose,ignore)) {
-        s = NULL;
-    } else {
-        s = newVar();
-        V_TYPE(s) = ID_VAL;
+		return(s);
+	}
 
-        V_DATA(s) = op;
-        V_DSIZE(s) = nparam+2;
-        V_FORMAT(s) = DOUBLE;
-        V_ORDER(s) = BSQ;
-        V_SIZE(s)[0] = nparam+2;
-        V_SIZE(s)[2] = V_SIZE(s)[1] = 1;
-    }
+	if (!strcmp(ftype, "linear_chi")) {
+		ftype = "linear";
+		ret = dfit(x, y, ip, ftype, iter, &op, &nparam, plot,verbose,ignore);
+	} else {
+		ret = dfit(x, y, ip, ftype, iter, &op, &nparam, plot,verbose,ignore);
+	}
+
+	if (ret != 0) {
+		return(NULL);
+	}
+
+	s = newVar();
+	V_TYPE(s) = ID_VAL;
+
+	V_DATA(s) = op;
+	V_DSIZE(s) = nparam+2;
+	V_FORMAT(s) = DOUBLE;
+	V_ORDER(s) = BSQ;
+	V_SIZE(s)[0] = nparam+2;
+	V_SIZE(s)[2] = V_SIZE(s)[1] = 1;
 
     return(s);
 }
