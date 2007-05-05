@@ -15,6 +15,9 @@
 /* Path to gnuplot program for plot() function */
 #undef GPLOT_CMD
 
+/* Use aqua instead of X11 */
+#undef HAVE_AQUA
+
 /* Define to 1 if you have the `basename' function. */
 #undef HAVE_BASENAME
 
