@@ -272,6 +272,9 @@ int send_to_plot(char *s)
         send_to_plot("set data style linespoints\n");
         send_to_plot("set parametric\n");
         send_to_plot("set mouse\n");
+#ifdef HAVE_AQUA
+	send_to_plot("set term aqua\n");
+#endif
     }
     if (write(fileno(pfp), s, strlen(s)) < 0) {
         pfp = NULL;
