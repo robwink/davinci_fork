@@ -1,11 +1,15 @@
-char *version = "@(#) daVinci Version #1.65";
+char *version = "@(#) daVinci Version #1.66";
 
 #include "build.h"
 
 /*
+Version 
+	* Added flag for using aqua under darwin (gplot needs this)
+
 Version 1.66: 
     * Fixed crashing bug in xplot for "struct.val" being undefined
     * Fixed crashing bug when assinging to TEXTs beyond end
+    + added ignore to xplot
 
 Version 1.65: Mon Mar 26 13:43:12 MST 2007
     Maintenance version for hdf libraries

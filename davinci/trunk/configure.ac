@@ -47,6 +47,28 @@ AC_ARG_ENABLE([libisis],
     AC_HELP_STRING([--disable-libisis],
                    [disable use of libisis and hence ISIS cube writer.]))
 
+dnl Aqua build for OSX/dawrin
+case $host in
+	*-*-darwin*)
+		AC_ARG_ENABLE([aqua],
+			AC_HELP_STRING([--disable-aqua], [remove AQUA widget support.]))
+	;;
+esac
+
+case $host in
+	*-*-darwin*)
+		if test "x$enable_aqua" != "xno" ; then 
+			echo "Configuring with aqua"
+			AC_DEFINE(HAVE_AQUA, 1, [ Use aqua instead of X11 ])
+		else
+			echo "Configuring without aqua"
+		fi
+	;;
+esac
+
+
+
+
 dnl Add X paths.
 AC_PATH_XTRA
 CFLAGS="$CFLAGS $X_CFLAGS"
