@@ -39,7 +39,6 @@ ff_local_maximum(vfuncptr func, Var * arg)
 
     x = GetX(obj);
     y = GetY(obj);
-    z = GetZ(obj);
     w = create_window(size, size, FLOAT);
 
 	out = calloc(x*y, sizeof(float));
