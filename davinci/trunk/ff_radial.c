@@ -242,20 +242,22 @@ radial_symmetry2(void **data_in,
     int yc = height/2;
 
     double ret = ignore;
-    double ssxx, ssyy, ssxy;
+    double ssxx = 0 , ssyy = 0, ssxy = 0;
     double sumx=0,sumy=0,sumxx=0,sumyy=0,sumxy=0;
     double n = 0;
 
-	for (i = 0 ; i < width ; i+=1) {
-		for (j = 0 ; j < height ; j+=1) {
+	for (j = 0 ; j <= height/2 ; j+=1) {
+		for (i = 0 ; i < width ; i+=1) {
 			/* skip pixels outside the radius */
-			if ((xc-i)*(xc-i) + (yc-j)*(yc-j) > width*height)
+			/* this doens't look right */
+			/*
+			if ((xc-i)*(xc-i) + (yc-j)*(yc-j) > xc*yc)
 				continue;
+			*/
 
 			/* skip correlating the pixel with itself */
-			if (i == (width-1)-i && j == (height-1)-j) {
-				continue;
-			}
+			if (i >= width/2 && j >= height/2) break;
+
 			x1 = data[j][i];
 			y1 = data[(height-1)-j][(width-1)-i];
         
@@ -269,6 +271,7 @@ radial_symmetry2(void **data_in,
 			sumyy += y1*y1;
 			sumxy += x1*y1;
 			n += 1;
+
 		}
 	}
 
@@ -281,6 +284,203 @@ radial_symmetry2(void **data_in,
 		}
 	}
 	return(ret);
+}
+
+/* 
+	Try computing all the R values for radius N to M in one pass.
+	This is different than radial_symmetry2, which uses a diameter instead
+	    of a radii.  This will have some effect on even numbers.
+*/
+
+/*
+** General algorithm
+
+**		Extract a box as large as the largest radii
+**      For each value in that box, compute its distance from the origin
+**      Add that value (and its opposite) to bins for radii ceil(d)
+**      To get R for radii N, bin[N] = bin[N] +  bin[N-1]
+**
+**      Odd vs even must be handled separately
+**
+**      Note: several short-cuts in this code skip output for
+**      "null" values.  That means they're zero (from calloc).  
+**      Otherwise we'll have to pre-init the whole output array.
+**
+**      What's necessary to do chirping at this level?
+**          Bilinear interpolation?
+**
+**          If we add a binsize to this algorithm, then can we just
+**          offset everyone's distance to simulate moving the origin?
+** 
+*/
+
+
+Var *
+ff_radial_symmetry3(vfuncptr func, Var * arg)
+{
+    Var *obj = NULL;
+    float ignore=MINFLOAT;
+    int width=0, height=0;
+	int start=0, end=1;
+	Var *rval = NULL;
+	int x,y,z;
+    float *out;
+    Window *w;
+
+	int *distance, d;
+	int dx, dy;
+	double ssxx, ssyy, ssxy;
+	int i, j, k, p, q, r;
+	int p1,q1, h2,w2;
+	float v1, v2;
+	int total;
+	float *r1, *r2;
+
+	struct dstore {
+		double sumx;
+		double sumy;
+		double sumxx;
+		double sumyy;
+		double sumxy;
+		int count;
+	} *accum, *a1, *a2;
+
+    Alist alist[9];
+    alist[0] = make_alist( "object",    ID_VAL, NULL,   &obj);
+    alist[1] = make_alist( "size",      INT,    NULL,   &end);
+    alist[2] = make_alist( "ignore",    FLOAT,  NULL,   &ignore);
+    alist[3].name = NULL;
+
+    if (parse_args(func, arg, alist) == 0) return(NULL);
+
+    if (obj == NULL) {
+        parse_error("%s: No object specified\n", func->name);
+        return(NULL);
+    }
+
+	if (end <= 0) {
+		parse_error("%s: Invalid end value specified\n", func->name);
+		return(NULL);
+	}
+
+    x = GetX(obj);
+    y = GetY(obj);
+
+	width = end*2+1;
+	height = end*2+1;
+	// width = end;
+	// height = end;
+    w = create_window(width, height, FLOAT);
+
+	/* cache some frequently used computed values */
+	h2 = height/2;
+	w2 = width/2;
+	total = width*height;
+
+	/* precompute the distance of every point in a given sized window 
+	** to the center of the window.
+	** 
+	** In theory, this only needs to be 1 quadrant of the window, but that's
+	** too hard to bookkeep, and doesn't save much.
+	*/
+	distance = calloc(total, sizeof(int));
+	for (i = 0 ; i < width ; i++) {
+		dx = i-w2;
+		for (j = 0 ; j < height ; j++) {
+			dy = j-h2;
+			distance[i+j*width] = floor(sqrt(dx*dx+dy*dy));
+			/* precheck for values outside the largest circle */
+			if (distance[i+j*width] > end) distance[i+j*width] = 0;
+		}
+	}
+
+	out = calloc(x*y*(end+1), sizeof(float));
+	rval = newVal(BSQ, x, y, end+1, FLOAT, out);
+	accum = calloc(end+1, sizeof(struct dstore));
+
+	/* run a window over every pixel and do the math */
+    for (i = 0 ; i < x ; i+=1) {
+        load_window(w, obj, i, 0, ignore);
+        for (j = 0 ; j < y ; j+=1) {
+            if (j) roll_window(w, obj, i, j, ignore);
+
+			v1 = ((float **)w->row)[h2][w2];
+
+			if (v1 == ignore) {
+				continue;
+			}
+
+			memset(accum, 0, (end+1)*sizeof(struct dstore));
+
+			/*
+			** pick a pair of opposing points, and add them to the
+			** accumulator for their given distance.  We'll sum all the
+			** accumulators later for a complete result from dist 1..N.
+			*/
+
+			for (q = 0 ; q <= h2 ; q++) {
+				/* one of the double-derefs moved to here for speed */
+				r1 = ((float **)w->row)[q];
+				r2 = ((float **)w->row)[(height-1)-q];
+				for (p = 0 ; p < width ; p++) {
+					if (q == h2 && p == w2) {
+						/* We only run the window up to the center point  */
+						break;
+					}
+
+					v1 = r1[p];
+					v2 = r2[(width-1)-p];
+
+					if (v1 == ignore || v2 == ignore) continue;
+
+					if ((d = distance[p+q*width]) != 0) {
+						a1 = &(accum[d]);
+						a1->sumx  += v1;
+						a1->sumy  += v2;
+						a1->sumxx += v1*v1;
+						a1->sumyy += v2*v2;
+						a1->sumxy += v1*v2;
+						a1->count++;
+					}
+				}
+			}
+
+			/* now compute correlation from per-radii accumulators */
+			for (r = 1 ; r <= end ; r++) {
+				/* sum the values in preceeding bins */
+				a1 = &accum[r-1];
+				a2 = &accum[r];
+				if (a1->count) {
+					a2->sumx += a1->sumx;
+					a2->sumy += a1->sumy;
+					a2->sumxx += a1->sumxx;
+					a2->sumyy += a1->sumyy;
+					a2->sumxy += a1->sumxy;
+					a2->count += a1->count;
+				}
+				// Don't bother if at least 1/2 the box isn't ignore values
+				// this is M_PI_4 because we're only counting half the pixels
+				// to begin with.
+				if (a2->count > r*r*M_PI_4) {
+					double c = a2->count;
+					ssxx = a2->sumxx - a2->sumx*a2->sumx/c;
+					ssyy = a2->sumyy - a2->sumy*a2->sumy/c;
+					ssxy = a2->sumxy - a2->sumx*a2->sumy/c;
+					if (ssxx != 0 && ssyy != 0) {
+						out[cpos(i,j,r,rval)] = sqrt(ssxy*ssxy / (ssxx*ssyy));
+					}
+				}
+			}
+		}
+		printf("%d/%d\r", i, x);
+		fflush(stdout);
+    }
+
+    free_window(w);
+	free(distance);
+	free(accum);
+
+    return(rval);
 }
 
 void draw_cross(Var *obj, int x, int y, float ignore, char *out) ;
@@ -429,194 +629,5 @@ draw_circle(Var *obj, int x, int y, float ignore, char *out)
 			}
 		}
 	}
-}
-
-/* 
-	Try computing all the R values for radius N to M in one pass.
-*/
-
-/*
-** General algorithm
-
-**		Extract a box as large as the largest radii
-**      For each value in that box, compute its distance from the origin
-**      Add that value (and its opposite) to bins for radii ceil(d)
-**      To get R for radii N, bin[N] = bin[N] +  bin[N-1]
-**
-**      Odd vs even must be handled separately
-**
-**      Note: several short-cuts in this code skip output for
-**      "null" values.  That means they're zero (from calloc).  
-**      Otherwise we'll have to pre-init the whole output array.
-**
-**      What's necessary to do chirping at this level?
-**          Bilinear interpolation?
-**
-**          If we add a binsize to this algorithm, then can we just
-**          offset everyone's distance to simulate moving the origin?
-** 
-*/
-Var *
-ff_radial_symmetry3(vfuncptr func, Var * arg)
-{
-    Var *obj = NULL;
-    float ignore=MINFLOAT;
-    int width=0, height=0;
-	int start=0, end=1;
-	Var *rval = NULL;
-	int x,y,z;
-    float *out;
-    Window *w;
-
-	int *distance, d;
-	int dx, dy;
-	double ssxx, ssyy, ssxy;
-	int i, j, k, p, q, r;
-	int p1,q1, h2,w2;
-	float v1, v2;
-	int total;
-	float *r1, *r2;
-
-	struct dstore {
-		double sumx;
-		double sumy;
-		double sumxx;
-		double sumyy;
-		double sumxy;
-		int count;
-	} *accum, *a1, *a2;
-
-    Alist alist[9];
-    alist[0] = make_alist( "object",    ID_VAL, NULL,   &obj);
-    alist[1] = make_alist( "size",      INT,    NULL,   &end);
-    alist[2] = make_alist( "ignore",    FLOAT,  NULL,   &ignore);
-    alist[3].name = NULL;
-
-    if (parse_args(func, arg, alist) == 0) return(NULL);
-
-    if (obj == NULL) {
-        parse_error("%s: No object specified\n", func->name);
-        return(NULL);
-    }
-
-	if (end <= 0) {
-		parse_error("%s: Invalid end value specified\n", func->name);
-		return(NULL);
-	}
-
-    x = GetX(obj);
-    y = GetY(obj);
-
-	width = end*2+1;
-	height = end*2+1;
-    w = create_window(width, height, FLOAT);
-
-	/* cache some frequently used computed values */
-	h2 = height/2;
-	w2 = width/2;
-	total = width*height;
-
-	/* precompute the distance of every point in a given sized window 
-	** to the center of the window.
-	** 
-	** In theory, this only needs to be 1 quadrant of the window, but that's
-	** too hard to bookkeep, and doesn't save much.
-	*/
-	distance = calloc(total, sizeof(int));
-	for (i = 0 ; i < width ; i++) {
-		dx = i-w2;
-		for (j = 0 ; j < height ; j++) {
-			dy = j-h2;
-			distance[i+j*width] = ceil(sqrt(dx*dx+dy*dy));
-			/* precheck for values outside the largest circle */
-			if (distance[i+j*width] >= end) distance[i+j*width] = 0;
-		}
-	}
-
-	out = calloc(x*y*end, sizeof(float));
-	rval = newVal(BSQ, x, y, end, FLOAT, out);
-	accum = calloc(end, sizeof(struct dstore));
-
-	/* run a window over every pixel and do the math */
-    for (i = 0 ; i < x ; i+=1) {
-        load_window(w, obj, i, 0, ignore);
-        for (j = 0 ; j < y ; j+=1) {
-            if (j) roll_window(w, obj, i, j, ignore);
-
-			v1 = ((float **)w->row)[h2][w2];
-			if (v1 == ignore) {
-				continue;
-			}
-
-			memset(accum, 0, end*sizeof(struct dstore));
-
-			/*
-			** pick a pair of opposing points, and add them to the
-			** accumulator for their given distance.  We'll sum all the
-			** accumulators later for a complete result from dist 1..N.
-			*/
-
-			for (q = 0 ; q <= h2 ; q++) {
-				/* one of the double-derefs moved to here for speed */
-				r1 = ((float **)w->rows)[q];
-				r2 = ((float **)w->rows)[(height-1)-q];
-				for (p = 0 ; p <= width ; p++) {
-					if (q == h2 && p == w2) {
-						/* We only run the window up to the center point  */
-						break;
-					}
-
-					v1 = r1[p];
-					v2 = r2[(width-1)-p];
-					if (v1 == ignore || v2 == ignore) continue;
-
-					if ((d = distance[p+q*width]) != 0) {
-						a1 = &(accum[d]);
-						a1->sumx  += v1;
-						a1->sumy  += v2;
-						a1->sumxx += v1*v1;
-						a1->sumyy += v2*v2;
-						a1->sumxy += v1*v2;
-						a1->count++;
-					}
-				}
-			}
-
-			/* now compute correlation from per-radii accumulators */
-			for (r = 1 ; r < end ; r++) {
-				/* sum the values in preceeding bins */
-				a1 = &accum[r-1];
-				a2 = &accum[r];
-				if (a1->count) {
-					a2->sumx += a1->sumx;
-					a2->sumy += a1->sumy;
-					a2->sumxx += a1->sumxx;
-					a2->sumyy += a1->sumyy;
-					a2->sumxy += a1->sumxy;
-					a2->count += a1->count;
-				}
-				// Don't bother if at least 1/2 the box isn't ignore values
-				// this is M_PI_4 because we're only counting half the pixels
-				// to begin with.
-				if (a2->count > r*r*M_PI_4) {
-					double c = a2->count;
-					ssxx = a2->sumxx - a2->sumx*a2->sumx/c;
-					ssyy = a2->sumyy - a2->sumy*a2->sumy/c;
-					ssxy = a2->sumxy - a2->sumx*a2->sumy/c;
-					if (ssxx != 0 && ssyy != 0) {
-						out[cpos(i,j,r,rval)] = sqrt(ssxy*ssxy / (ssxx*ssyy));
-					}
-				}
-			}
-		}
-		printf("%d/%d\r", i, x);
-		fflush(stdout);
-    }
-
-    free_window(w);
-	free(distance);
-	free(accum);
-
-    return(rval);
 }
 
