@@ -347,6 +347,8 @@ Var *ff_xplot(vfuncptr func, Var * arg)
     int ac;
     int argcount = 0;
     Var **av;
+    float ignore;
+    int iflag = 0;
 
     make_args(&ac, &av, func, arg);     /*chop up the args into an array */
     /* make_args puts func->name into av[0] and ac == 2 */
@@ -372,6 +374,15 @@ Var *ff_xplot(vfuncptr func, Var * arg)
 
             } else if (!(strcmp(av[i]->name, "separate"))) {
                 Sep = 1;
+            } else if (!(strcmp(av[i]->name, "ignore"))) {
+                if (V_KEYVAL(av[i]) != NULL) {
+                    ignore = extract_float(V_KEYVAL(av[i]), 0);
+                    iflag = 1;
+                } else {
+                    parse_error("Bad value for ignore");
+                    free(av);
+                    return (NULL);
+                }
             } else {
                 parse_error("Illegal keyword %s\n", av[i]->name);
                 free(av);
@@ -519,9 +530,9 @@ Var *ff_xplot(vfuncptr func, Var * arg)
                                             func->name);
                                 if (fname) {
                                     free(fname);
-								}
+                                }
                                 free(av);
-								return (NULL);
+                                return (NULL);
                             }
                         }
                         for (k = 0; k < Ord[Mode[0]]; k++) {
@@ -559,7 +570,10 @@ Var *ff_xplot(vfuncptr func, Var * arg)
                             } else {
                                 x[k] = (float) k;
                             }
-                            fprintf(fp, "%g\t %g\n", x[k], y[k]);
+                            if (iflag == 0
+                                || (x[k] != ignore && y[k] != ignore)) {
+                                fprintf(fp, "%g\t %g\n", x[k], y[k]);
+                            }
                         }
 
                         if (Sep) {
@@ -581,11 +595,12 @@ Var *ff_xplot(vfuncptr func, Var * arg)
                     fclose(fp);
                     if (count++) {
                         strcat(buf, ",");
-					}
+                    }
                     sprintf(buf + strlen(buf), "'%s'", fname);
                     if (V_NAME(v)) {
-                        sprintf(buf + strlen(buf), "title '%s'", V_NAME(v));
-					}
+                        sprintf(buf + strlen(buf), "title '%s'",
+                                V_NAME(v));
+                    }
                     free(fname);
                 }
             }
@@ -634,6 +649,9 @@ Var *ff_xplot2(vfuncptr func, Var * arg)
 
     int ac;
     Var **av;
+    float ignore;
+    int iflag = 0;
+
 
     make_args(&ac, &av, func, arg);     /*chop up the args into an array */
     /* make_args puts func->name into av[0] and ac == 2 */
@@ -659,8 +677,17 @@ Var *ff_xplot2(vfuncptr func, Var * arg)
 
             } else if (!(strcmp(av[i]->name, "separate"))) {
                 Sep = 1;
+            } else if (!(strcmp(av[i]->name, "ignore"))) {
+                if (V_KEYVAL(av[i]) != NULL) {
+                    ignore = extract_float(V_KEYVAL(av[i]), 0);
+                    iflag = 1;
+                } else {
+                    parse_error("Bad value for ignore");
+                    free(av);
+                    return (NULL);
+                }
             } else {
-                parse_error("Illegal keyword %s\n", av[i]->name);
+                parse_error("Illegal keyword %s", av[i]->name);
                 free(av);
                 return (NULL);
             }
@@ -787,6 +814,9 @@ Var *ff_xplot2(vfuncptr func, Var * arg)
                         return (NULL);
                     }
                 }
+                // It's unclear why these are arrays. 
+                // It doesn't appear that the values are used
+                // outside of the for loop.
                 x = calloc(Ord[Mode[0]], sizeof(float));
                 y = calloc(Ord[Mode[0]], sizeof(float));
 
@@ -799,8 +829,10 @@ Var *ff_xplot2(vfuncptr func, Var * arg)
                                 || (fp = fopen(fname, "w")) == NULL) {
                                 parse_error("%s: unable to open temp file",
                                             func->name);
-                                if (fname)
+                                if (fname) {
                                     free(fname);
+                                }
+                                // Lots of memory leaks here
                                 return (NULL);
                             }
                         }
@@ -839,7 +871,9 @@ Var *ff_xplot2(vfuncptr func, Var * arg)
                             } else {
                                 x[k] = (float) k;
                             }
-                            fprintf(fp, "%g\t %g\n", x[k], y[k]);
+                            if (iflag && x[k] != ignore && y[k] != ignore) {
+                                fprintf(fp, "%g\t %g\n", x[k], y[k]);
+                            }
                         }
 
                         if (Sep) {
