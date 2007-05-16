@@ -299,6 +299,7 @@ struct _vfuncptr vfunclist[] = {
     
     { "hstretch",   ff_hstretch, 		NULL }, 
     { "coreg",      ff_coreg, 			NULL }, 
+    { "coreg2",      ff_coreg2, 			NULL }, 
     { "gconvolve",  ff_gconvolve, 			NULL }, 
     { "warp",  ff_warp, 			NULL }, 
     { "window",  ff_window, 			NULL }, 

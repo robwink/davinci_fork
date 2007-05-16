@@ -26,7 +26,6 @@ ff_coreg(vfuncptr func, Var * arg)
   int count = 0;
   int total = 0;
   int sum = 0;
-  int force=0;
 
   Alist alist[8];
   alist[0] = make_alist("pic1",     ID_VAL,	NULL,	&pic1_in);
@@ -35,8 +34,7 @@ ff_coreg(vfuncptr func, Var * arg)
   alist[3] = make_alist("ignore",   INT,        NULL,   &ignore);
   alist[4] = make_alist("verbose",    INT,        NULL,   &verbose);
   alist[5] = make_alist("random",   INT,        NULL,   &random);
-  alist[6] = make_alist("force",    INT,        NULL,   &force);
-  alist[7].name = NULL;
+  alist[6].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);
   
@@ -169,4 +167,109 @@ ff_coreg(vfuncptr func, Var * arg)
 	pos[1] = b;
 	out = newVal(BSQ, 2, 1, 1, INT, pos);
 	return out;
+}
+
+
+#include "window.h"
+Var *ff_coreg2(vfuncptr func, Var * arg)
+{
+    Var *obj1 = NULL;
+    Var *obj2 = NULL;
+    Var *out = NULL;
+    float ignore = 0;
+    int *solution = NULL;
+    int verbose = 0;
+    int x, y;
+    int i, j, k, m;
+	int size = 10;
+	float v1, v2;
+    Window *w;
+	Var *sval;
+	int diameter;
+	int *answer;
+	int maxval;
+
+
+    Alist alist[8];
+    alist[0] = make_alist("obj1", ID_VAL, NULL, &obj1);
+    alist[1] = make_alist("obj2", ID_VAL, NULL, &obj2);
+    alist[2] = make_alist("size", INT, NULL, &size);
+    alist[3] = make_alist("ignore", FLOAT, NULL, &ignore);
+    alist[4] = make_alist("verbose", INT, NULL, &verbose);
+    alist[5].name = NULL;
+
+    if (parse_args(func, arg, alist) == 0)
+        return (NULL);
+
+    if (obj1 == NULL || obj2 == NULL) {
+        parse_error("%s: no objects specified.\n", func->name);
+        return NULL;
+    }
+
+    x = GetX(obj1);
+    y = GetY(obj2);
+    if (x != GetX(obj2) || y != GetY(obj2)) {
+        parse_error("%s: images are not same size.\n", func->name);
+        return (NULL);
+    }
+
+    if (size <= 0) {
+        parse_error("Invalid value: %s(...size=%d)\n", func->name);
+        return (NULL);
+    }
+
+	
+	diameter = size*2+1;
+    solution = (int *) calloc(sizeof(int), diameter*diameter);
+	sval = newVal(BSQ, diameter, diameter, 1, INT, solution);
+
+    /*
+     ** Exhaustive search, skipping pixels that are blank in both
+	 **
+	 ** Right now this just counts non-ignore pixels that align.
+     */
+    for (i = 0 ; i < x ; i++) {
+        for (j = 0 ; j < y ; j++) {
+            v1 = extract_float(obj1, cpos(i, j, 0, obj1));
+            if (v1 == ignore) continue;
+
+			/* 
+			** TODO: i*j load_windows will be expensive, but 
+			** we're expecting sparse data for now, so it'll be
+			** cheaper than i*j rolls 
+			*/
+			for (k = -size ; k <= size ; k++) {
+				for (m = -size ; m <= size ; m++) {
+					if (i+k >= 0 && i+k < x && j+m >= 0 && j+m < y) {
+						v2 = extract_float(obj2, cpos(i+k, j+m, 0, obj2));
+						if (v2 == ignore) continue;
+						((int *)(V_DATA(sval)))[cpos(k+size, m+size, 0, sval)] += 1;
+					}
+				}
+			}
+        }
+    }
+
+	answer = (int *)calloc(2, sizeof(int));
+	maxval = extract_int(sval, cpos(size, size, 0, sval));
+	for (k = -size ; k <= size ; k++) {
+		for (m = -size ; m <= size ; m++) {
+
+			v1 = extract_int(sval, cpos(k+size, m+size, 0, sval));
+			if (v1 > maxval) {
+				maxval = v1;
+				answer[0] = k;
+				answer[1] = m;
+			}
+		}
+	}
+
+	if (verbose) {
+		Var *s = new_struct(2);
+		add_struct(s, "position", newVal(BSQ, 2, 1, 1, INT, answer));
+		add_struct(s, "counts", sval);
+		return(s);
+	} else {
+		return(newVal(BSQ, 2, 1, 1, INT, answer));
+	}
 }
