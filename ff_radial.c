@@ -321,7 +321,7 @@ ff_radial_symmetry3(vfuncptr func, Var * arg)
     Var *obj = NULL;
     float ignore=MINFLOAT;
     int width=0, height=0;
-	int start=0, end=1;
+	int end=1;
 	Var *rval = NULL;
 	int x,y,z;
     float *out;
@@ -335,6 +335,7 @@ ff_radial_symmetry3(vfuncptr func, Var * arg)
 	float v1, v2;
 	int total;
 	float *r1, *r2;
+	int start = 0, step = 1;
 
 	struct dstore {
 		double sumx;
@@ -345,11 +346,13 @@ ff_radial_symmetry3(vfuncptr func, Var * arg)
 		int count;
 	} *accum, *a1, *a2;
 
-    Alist alist[9];
+    Alist alist[6];
     alist[0] = make_alist( "object",    ID_VAL, NULL,   &obj);
     alist[1] = make_alist( "size",      INT,    NULL,   &end);
     alist[2] = make_alist( "ignore",    FLOAT,  NULL,   &ignore);
-    alist[3].name = NULL;
+    alist[3] = make_alist( "start",    INT,  NULL,   &start);
+    alist[4] = make_alist( "step",    INT,  NULL,   &step);
+    alist[5].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -394,8 +397,8 @@ ff_radial_symmetry3(vfuncptr func, Var * arg)
 		}
 	}
 
-	out = calloc(x*y*(end+1), sizeof(float));
-	rval = newVal(BSQ, x, y, end+1, FLOAT, out);
+	out = calloc(x*y*((end - start) / step +1), sizeof(float));
+	rval = newVal(BSQ, x, y, ((end-start)/step +1), FLOAT, out);
 	accum = calloc(end+1, sizeof(struct dstore));
 
 	/* run a window over every pixel and do the math */
@@ -461,14 +464,16 @@ ff_radial_symmetry3(vfuncptr func, Var * arg)
 				// Don't bother if at least 1/2 the box isn't ignore values
 				// this is M_PI_4 because we're only counting half the pixels
 				// to begin with.
+				if ((r - start) % step == 0) {
 				if (a2->count > r*r*M_PI_4) {
 					double c = a2->count;
 					ssxx = a2->sumxx - a2->sumx*a2->sumx/c;
 					ssyy = a2->sumyy - a2->sumy*a2->sumy/c;
 					ssxy = a2->sumxy - a2->sumx*a2->sumy/c;
 					if (ssxx != 0 && ssyy != 0) {
-						out[cpos(i,j,r,rval)] = sqrt(ssxy*ssxy / (ssxx*ssyy));
+						out[cpos(i,j,((r-start)/step),rval)] = sqrt(ssxy*ssxy / (ssxx*ssyy));
 					}
+				}
 				}
 			}
 		}
