@@ -15,6 +15,11 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+
+#ifdef __MINGW32__
+#include <dirent.h>
+#endif
+
 #ifdef _WIN32
 #include <io.h>
 #else
@@ -668,7 +673,6 @@ extract_dv_mod_ver_from_fname(
 }
 
 
-#ifndef _WIN32
 static struct dirent *
 find_next_file_with_prefix(DIR *d, const char *pfx)
 {
@@ -684,7 +688,6 @@ find_next_file_with_prefix(DIR *d, const char *pfx)
 
 	return NULL;
 }
-#endif /* _WIN32 */
 
 static int
 cmp_mod_ver(
