@@ -6,7 +6,9 @@
 #endif
 #include <errno.h>
 
-
+#ifdef __MINGW32__
+#define	strtok_r(s,d,p) strtok(s,d)
+#endif
 
 #define DV_MOD_LIBPATH "/usr/local/lib/davinci"
 #define DV_MOD_ENV "DV_MOD_PATH"
