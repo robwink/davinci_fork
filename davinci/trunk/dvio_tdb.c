@@ -87,8 +87,8 @@ typedef union rechdr
 
 typedef struct cache_hdr
 {
-     ushort     df_sym_loc;             /* Where is disk sym tab located */
-     ushort     n_df_syms;              /* # of sym's in disk sym tab */
+     unsigned short     df_sym_loc;             /* Where is disk sym tab located */
+     unsigned short     n_df_syms;              /* # of sym's in disk sym tab */
      int        whichscope;
      /*char     data_scope[MAXNAMELEN]; /* Data type of this entry */
 } CACHE_HDR;
