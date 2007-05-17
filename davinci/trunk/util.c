@@ -1,9 +1,6 @@
 #include <stddef.h>
 #include <string.h>
 
-#ifdef _WIN32
-#include "dos.h"
-#endif /* _WIN32 */
 
 /*
 ** Retruns VALUE from a string of the form:
