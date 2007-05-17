@@ -17,6 +17,10 @@ Widget      applicationShell = NULL;
 XtAppContext    applicationContext;
 #endif
 
+#ifdef __MINGW32__
+#define ctime_r(n, m) ctime(n)
+#endif
+
 int interactive = 1;
 int continuation = 0;
 int in_comment = 0;
@@ -89,8 +93,13 @@ void rl_callback_handler_install(char *, void (*)(char *));
 jmp_buf env;
 
 void user_sighandler(int data)
-{
-   signal(SIGUSR1, user_sighandler);
+{ 
+#ifndef __MINGW32__
+     	signal(SIGUSR1, user_sighandler);
+#else
+	parse_error("Function not spported under Windows.");
+#endif
+
 }
 
 void
@@ -108,11 +117,13 @@ dv_sighandler(int data)
         signal(SIGSEGV,SIG_DFL);
         break;
 
-#ifndef __CYGWIN__
+#if !(defined(__CYGWIN__) || defined(__MINGW32__))
     case (SIGBUS):
         rmrf(path);
         signal(SIGBUS,SIG_DFL);
         break;
+#else
+	parse_error("Function not spported under Windows.");	
 #endif /* __CYGWIN__ */
 
     case (SIGINT):
@@ -148,10 +159,11 @@ main(int ac, char **av)
 
     signal(SIGINT, dv_sighandler); 
     signal(SIGSEGV, dv_sighandler);
+#ifndef __MINGW32__
     signal(SIGPIPE, SIG_IGN);
     signal(SIGBUS, dv_sighandler);
     signal(SIGUSR1, user_sighandler);
-
+#endif
     scope_push(s);
     /**
     ** handle $0 specially.
@@ -291,7 +303,11 @@ main(int ac, char **av)
         sprintf(path, "TMPDIR=%s/dv_%d", getenv("TMPDIR"), getpid());
     }
 
+#ifndef _WIN32
     mkdir(path + 7, 0777);
+#else
+	mkdir(path + 7);
+#endif    
     putenv(path);
 
     /*
@@ -678,7 +694,14 @@ fake_data()
     srand48( (unsigned int) time( NULL ) ); 
     
     for (i = 0; i < 12; i++) {
-        ((float *) V_DATA(v))[i + 12] = drand48();
+#ifdef __MINGW32__
+       ((float *) V_DATA(v))[i + 12] = ((double) rand())/((double)(RAND_MAX));
+					//for some reason calling drand48() 
+					//messes up the application
+#else
+       ((float *) V_DATA(v))[i + 12] = drand48();
+#endif
+
     }
 
     v = (Var *) calloc(1, sizeof(Var));
