@@ -14,6 +14,7 @@ extern FILE *pfp;
 
 Var *ff_gplot(vfuncptr func, Var * arg)
 {
+    char *gplot_cmd;
     Var *object = NULL, *e = NULL;
     int i;
     FILE *fp = NULL;
@@ -39,9 +40,17 @@ Var *ff_gplot(vfuncptr func, Var * arg)
         return (NULL);
     }
 
-    if (gplot_pfp == NULL)
-        gplot_pfp = popen("gnuplot", "w");
-
+    if (gplot_pfp == NULL){
+        if (getenv("GPLOT_CMD") != NULL) {
+            gplot_cmd = strdup(getenv("GPLOT_CMD"));
+        } else {
+            gplot_cmd = GPLOT_CMD;
+        }
+        if ((gplot_pfp = popen(gplot_cmd, "w")) == NULL) {
+            fprintf(stderr, "Unable to open gplot.\n");
+            return (0);
+        }
+    }
     fname = make_temp_file_path();
     if (fname == NULL || (fp = fopen(fname, "w")) == NULL) {
         parse_error("%s: unable to open temp file", func->name);
@@ -81,7 +90,7 @@ Var *ff_gplot(vfuncptr func, Var * arg)
     fprintf(gplot_pfp, ":");
     if (g_yhigh != MAXFLOAT)
         fprintf(gplot_pfp, "%g", g_yhigh);
-    fprintf(gplot_pfp, "] \"%s\" with linespoints\n", fname);
+    fprintf(gplot_pfp, "] '%s' with linespoints\n", fname);
     fflush(gplot_pfp);
 
     free(fname);
