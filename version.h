@@ -1,11 +1,14 @@
-char *version = "@(#) daVinci Version #1.67";
+char *version = "@(#) daVinci Version #1.68";
 
 #include "build.h"
 
 /*
 Version 
-	* Added flag for using aqua under darwin (gplot needs this)
-	* Checked in changes for radial symmetry
+	* Added MINGW32 support
+
+Version 1.67:
+    * Added flag for using aqua under darwin (gplot needs this)
+    * Checked in changes for radial symmetry
 
 Version 1.66: 
     * Fixed crashing bug in xplot for "struct.val" being undefined
