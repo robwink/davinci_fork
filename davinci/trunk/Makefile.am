@@ -19,6 +19,18 @@ if LOCAL_READLINE
   MY_READLINE_LDADD = readline/libreadline.a
 endif
 
+if HAVE_LIBREGEX
+  MINGW32_LIBREGEX_LDADD = -lregex	
+endif
+
+if HAVE_LIBWSOCK32
+  MINGW32_LIBWSOCK32_LDADD = -lwsock32
+endif
+
+if HAVE_LIBLTDLC
+  MINGW32_LIBLTDLC_LDADD = -Llibltdl -lltdlc
+endif
+
 MY_IOMEDLEY_LDADD =-Liomedley -liomedley
 
 SUBDIRS = @MY_SUBDIRS@ libltdl
@@ -31,7 +43,8 @@ noinst_LIBRARIES = $(MY_MODULES_LIB)
 
 libmodsupp_a_SOURCES = ff_modules.c module_io.c io_loadmod.c
 
-davinci_LDADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULES_LIB) 
+davinci_LDADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULES_LIB)  \
+		$(MINGW32_LIBREGEX_LDADD) $(MINGW32_LIBWSOCK32_LDADD) $(MINGW32_LIBLTDLC_LDADD)
 davinci_LDFLAGS = -export-dynamic
 
 davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \

@@ -4,6 +4,21 @@
 /* loadable module support */
 #define BUILD_MODULE_SUPPORT 1
 
+/* Path to davinci help file */
+#define DVHELP "/usr/local/lib/davinci/dv.gih"
+
+/* Path to image display program for display() function */
+#define DV_VIEWER "/usr/local/bin/xv"
+
+/* Path to text file editor for edit() function */
+#define EDITOR "/bin/vi"
+
+/* Path to gnuplot program for plot() function */
+#define GPLOT_CMD "/usr/local/bin/gnuplot"
+
+/* Use aqua instead of X11 */
+/* #undef HAVE_AQUA */
+
 /* Define to 1 if you have the `basename' function. */
 #define HAVE_BASENAME 1
 
@@ -75,7 +90,7 @@
 /* #undef HAVE_LIBMSSS_VIS */
 
 /* Define to 1 if you have the `png' library (-lpng). */
-/* #undef HAVE_LIBPNG */
+#define HAVE_LIBPNG 1
 
 /* Define to 1 if you have the `qmv' library (-lqmv). */
 #define HAVE_LIBQMV 1

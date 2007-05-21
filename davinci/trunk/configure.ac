@@ -106,7 +106,17 @@ AC_CHECK_LIB(usds, Themis_Entry)
 AC_CHECK_LIB(msss_vis, read_DCT)
 AC_CHECK_LIB(termcap, tgetent)
 AC_CHECK_LIB(ltdl, lt_dlopen)
+AC_CHECK_LIB(ltdlc, lt_dlopen, [have_libltdlc=yes], [have_libltdlc=no],[-Llibltdl/.libs])
+# Used for MINGW
+AM_CONDITIONAL(HAVE_LIBLTDLC, [test "x$have_libltdlc" = "xyes"])
 
+# Used for MINGW
+AC_CHECK_LIB(wsock32, main, [have_libwsock32=yes], [have_libwsock32=no])
+AM_CONDITIONAL(HAVE_LIBWSOCK32, [test "x$have_libwsock32" = "xyes"])
+
+# Used for MINGW
+AC_CHECK_LIB(regex, main, [have_libregex=yes],[have_libregex=no])
+AM_CONDITIONAL(HAVE_LIBREGEX, [test "x$have_libregex" = "xyes"])
 
 AC_CHECK_LIB(z, deflate)
 AC_CHECK_LIB(png, png_read_info)
@@ -119,7 +129,12 @@ AC_ARG_WITH(hdf5,
     [LDFLAGS="$LDFLAGS -L$withval/lib -lz" ; CFLAGS="$CFLAGS -I$withval/include"]
 )
 dnl with the path the specified, see if we can find libhdf.
-AC_CHECK_LIB(hdf5, H5open)
+## For MINGW since wsock32 is needed for hdf5
+if test "x$have_libwsock32" = "xyes"; then
+   AC_CHECK_LIB(hdf5, H5open,,,[-lwsock32])
+else
+   AC_CHECK_LIB(hdf5, H5open)
+fi
 AC_CHECK_LIB(hdf5, H5open,[have_libhdf=yes],[have_libhdf=no])
 
 if test "x$ac_cv_lib_cfitsio_ffopen" = "xyes"; then
