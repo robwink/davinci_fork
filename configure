@@ -465,7 +465,7 @@ ac_includes_default="\
 ac_subdirs_all="$ac_subdirs_all readline"
 ac_subdirs_all="$ac_subdirs_all iomedley"
 ac_subdirs_all="$ac_subdirs_all libltdl"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE MODULE_SUPPORT_TRUE MODULE_SUPPORT_FALSE X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS HAVE_MOTIF_TRUE HAVE_MOTIF_FALSE HAVE_LIBMAGICK_TRUE HAVE_LIBMAGICK_FALSE CXXCPP LIBOBJS subdirs LOCAL_READLINE_TRUE LOCAL_READLINE_FALSE LOCAL_IOMEDLEY_TRUE LOCAL_IOMEDLEY_FALSE LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB F77 FFLAGS ac_ct_F77 LIBTOOL LOCAL_VICAR_TRUE LOCAL_VICAR_FALSE DV_VIEWER GPLOT_CMD EDITOR MY_SUBDIRS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE MODULE_SUPPORT_TRUE MODULE_SUPPORT_FALSE X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS HAVE_MOTIF_TRUE HAVE_MOTIF_FALSE HAVE_LIBLTDLC_TRUE HAVE_LIBLTDLC_FALSE HAVE_LIBWSOCK32_TRUE HAVE_LIBWSOCK32_FALSE HAVE_LIBREGEX_TRUE HAVE_LIBREGEX_FALSE HAVE_LIBMAGICK_TRUE HAVE_LIBMAGICK_FALSE CXXCPP LIBOBJS subdirs LOCAL_READLINE_TRUE LOCAL_READLINE_FALSE LOCAL_IOMEDLEY_TRUE LOCAL_IOMEDLEY_FALSE LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB F77 FFLAGS ac_ct_F77 LIBTOOL LOCAL_VICAR_TRUE LOCAL_VICAR_FALSE DV_VIEWER GPLOT_CMD EDITOR MY_SUBDIRS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -7848,6 +7848,238 @@ _ACEOF
 
 fi
 
+echo "$as_me:$LINENO: checking for lt_dlopen in -lltdlc" >&5
+echo $ECHO_N "checking for lt_dlopen in -lltdlc... $ECHO_C" >&6
+if test "${ac_cv_lib_ltdlc_lt_dlopen+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lltdlc -Llibltdl/.libs $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char lt_dlopen ();
+int
+main ()
+{
+lt_dlopen ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_ltdlc_lt_dlopen=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_ltdlc_lt_dlopen=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_ltdlc_lt_dlopen" >&5
+echo "${ECHO_T}$ac_cv_lib_ltdlc_lt_dlopen" >&6
+if test $ac_cv_lib_ltdlc_lt_dlopen = yes; then
+  have_libltdlc=yes
+else
+  have_libltdlc=no
+fi
+
+# Used for MINGW
+
+
+if test "x$have_libltdlc" = "xyes"; then
+  HAVE_LIBLTDLC_TRUE=
+  HAVE_LIBLTDLC_FALSE='#'
+else
+  HAVE_LIBLTDLC_TRUE='#'
+  HAVE_LIBLTDLC_FALSE=
+fi
+
+
+# Used for MINGW
+echo "$as_me:$LINENO: checking for main in -lwsock32" >&5
+echo $ECHO_N "checking for main in -lwsock32... $ECHO_C" >&6
+if test "${ac_cv_lib_wsock32_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lwsock32  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_wsock32_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_wsock32_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_wsock32_main" >&5
+echo "${ECHO_T}$ac_cv_lib_wsock32_main" >&6
+if test $ac_cv_lib_wsock32_main = yes; then
+  have_libwsock32=yes
+else
+  have_libwsock32=no
+fi
+
+
+
+if test "x$have_libwsock32" = "xyes"; then
+  HAVE_LIBWSOCK32_TRUE=
+  HAVE_LIBWSOCK32_FALSE='#'
+else
+  HAVE_LIBWSOCK32_TRUE='#'
+  HAVE_LIBWSOCK32_FALSE=
+fi
+
+
+# Used for MINGW
+echo "$as_me:$LINENO: checking for main in -lregex" >&5
+echo $ECHO_N "checking for main in -lregex... $ECHO_C" >&6
+if test "${ac_cv_lib_regex_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lregex  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_regex_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_regex_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_regex_main" >&5
+echo "${ECHO_T}$ac_cv_lib_regex_main" >&6
+if test $ac_cv_lib_regex_main = yes; then
+  have_libregex=yes
+else
+  have_libregex=no
+fi
+
+
+
+if test "x$have_libregex" = "xyes"; then
+  HAVE_LIBREGEX_TRUE=
+  HAVE_LIBREGEX_FALSE='#'
+else
+  HAVE_LIBREGEX_TRUE='#'
+  HAVE_LIBREGEX_FALSE=
+fi
 
 
 
@@ -8082,6 +8314,83 @@ if test "${with_hdf5+set}" = set; then
   LDFLAGS="$LDFLAGS -L$withval/lib -lz" ; CFLAGS="$CFLAGS -I$withval/include"
 
 fi;
+## For MINGW since wsock32 is needed for hdf5
+if test "x$have_libwsock32" = "xyes"; then
+
+echo "$as_me:$LINENO: checking for H5open in -lhdf5" >&5
+echo $ECHO_N "checking for H5open in -lhdf5... $ECHO_C" >&6
+if test "${ac_cv_lib_hdf5_H5open+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lhdf5 -lwsock32 $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char H5open ();
+int
+main ()
+{
+H5open ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_hdf5_H5open=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_hdf5_H5open=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_hdf5_H5open" >&5
+echo "${ECHO_T}$ac_cv_lib_hdf5_H5open" >&6
+if test $ac_cv_lib_hdf5_H5open = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBHDF5 1
+_ACEOF
+
+  LIBS="-lhdf5 $LIBS"
+
+fi
+
+else
 
 echo "$as_me:$LINENO: checking for H5open in -lhdf5" >&5
 echo $ECHO_N "checking for H5open in -lhdf5... $ECHO_C" >&6
@@ -8156,6 +8465,7 @@ _ACEOF
 
 fi
 
+fi
 echo "$as_me:$LINENO: checking for H5open in -lhdf5" >&5
 echo $ECHO_N "checking for H5open in -lhdf5... $ECHO_C" >&6
 if test "${ac_cv_lib_hdf5_H5open+set}" = set; then
@@ -12040,7 +12350,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 12043 "configure"' > conftest.$ac_ext
+  echo '#line 12353 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -12681,7 +12991,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:12684:" \
+echo "$as_me:12994:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -13779,11 +14089,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13782: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14092: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13786: \$? = $ac_status" >&5
+   echo "$as_me:14096: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14041,11 +14351,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14044: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14354: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14048: \$? = $ac_status" >&5
+   echo "$as_me:14358: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14103,11 +14413,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14106: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14416: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14110: \$? = $ac_status" >&5
+   echo "$as_me:14420: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15488,7 +15798,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 15491 "configure"' > conftest.$ac_ext
+    echo '#line 15801 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -16359,7 +16669,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 16362 "configure"
+#line 16672 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -16457,7 +16767,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 16460 "configure"
+#line 16770 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -18705,11 +19015,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:18708: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:19018: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:18712: \$? = $ac_status" >&5
+   echo "$as_me:19022: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -18767,11 +19077,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:18770: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:19080: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:18774: \$? = $ac_status" >&5
+   echo "$as_me:19084: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -19282,7 +19592,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 19285 "configure"' > conftest.$ac_ext
+    echo '#line 19595 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -20153,7 +20463,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 20156 "configure"
+#line 20466 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -20251,7 +20561,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 20254 "configure"
+#line 20564 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -21136,11 +21446,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:21139: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:21449: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:21143: \$? = $ac_status" >&5
+   echo "$as_me:21453: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -21198,11 +21508,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:21201: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:21511: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:21205: \$? = $ac_status" >&5
+   echo "$as_me:21515: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -22563,7 +22873,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 22566 "configure"' > conftest.$ac_ext
+    echo '#line 22876 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -23336,11 +23646,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:23339: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:23649: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:23343: \$? = $ac_status" >&5
+   echo "$as_me:23653: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -23598,11 +23908,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:23601: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:23911: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:23605: \$? = $ac_status" >&5
+   echo "$as_me:23915: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -23660,11 +23970,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:23663: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:23973: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:23667: \$? = $ac_status" >&5
+   echo "$as_me:23977: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -25045,7 +25355,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 25048 "configure"' > conftest.$ac_ext
+    echo '#line 25358 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -25916,7 +26226,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 25919 "configure"
+#line 26229 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -26014,7 +26324,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 26017 "configure"
+#line 26327 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -27499,6 +27809,27 @@ echo "$as_me: error: conditional \"HAVE_MOTIF\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
+if test -z "${HAVE_LIBLTDLC_TRUE}" && test -z "${HAVE_LIBLTDLC_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"HAVE_LIBLTDLC\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"HAVE_LIBLTDLC\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${HAVE_LIBWSOCK32_TRUE}" && test -z "${HAVE_LIBWSOCK32_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"HAVE_LIBWSOCK32\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"HAVE_LIBWSOCK32\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${HAVE_LIBREGEX_TRUE}" && test -z "${HAVE_LIBREGEX_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"HAVE_LIBREGEX\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"HAVE_LIBREGEX\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
 if test -z "${HAVE_LIBMAGICK_TRUE}" && test -z "${HAVE_LIBMAGICK_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"HAVE_LIBMAGICK\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
@@ -28134,6 +28465,12 @@ s,@X_LIBS@,$X_LIBS,;t t
 s,@X_EXTRA_LIBS@,$X_EXTRA_LIBS,;t t
 s,@HAVE_MOTIF_TRUE@,$HAVE_MOTIF_TRUE,;t t
 s,@HAVE_MOTIF_FALSE@,$HAVE_MOTIF_FALSE,;t t
+s,@HAVE_LIBLTDLC_TRUE@,$HAVE_LIBLTDLC_TRUE,;t t
+s,@HAVE_LIBLTDLC_FALSE@,$HAVE_LIBLTDLC_FALSE,;t t
+s,@HAVE_LIBWSOCK32_TRUE@,$HAVE_LIBWSOCK32_TRUE,;t t
+s,@HAVE_LIBWSOCK32_FALSE@,$HAVE_LIBWSOCK32_FALSE,;t t
+s,@HAVE_LIBREGEX_TRUE@,$HAVE_LIBREGEX_TRUE,;t t
+s,@HAVE_LIBREGEX_FALSE@,$HAVE_LIBREGEX_FALSE,;t t
 s,@HAVE_LIBMAGICK_TRUE@,$HAVE_LIBMAGICK_TRUE,;t t
 s,@HAVE_LIBMAGICK_FALSE@,$HAVE_LIBMAGICK_FALSE,;t t
 s,@CXXCPP@,$CXXCPP,;t t
