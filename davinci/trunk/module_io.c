@@ -7,13 +7,7 @@
 
 #include "module_io.h"
 
-#if   defined(USE_HPUX_SHL)
-#include <dl.h>
-#elif defined(_WIN32)
-#include <windows.h>
-#else
-#include <dlfcn.h>
-#endif
+#include "ltdl.h"
 
 extern void parse_error(char *fmt, ...);
 
@@ -22,19 +16,8 @@ extern void parse_error(char *fmt, ...);
 ** module handle.
 */
 typedef struct {
-#if   defined(USE_HPUX_SHL)
-	shl_t handle;
-#elif defined(_WIN32)
-	HMODULE handle;
-#else 
-	void *handle;
-#endif
+	lt_dlhandle handle;
 } dvIModuleHandle;
-
-
-#if  defined(_WIN32)
-typedef __declspec(dllimport) void (*WIN_DLL_IMPORT)(void);
-#endif
 
 
 /*
@@ -53,25 +36,12 @@ open_dv_module_file(
 		return NULL;
 	}
 
-#if   defined(USE_HPUX_SHL)
-	mh->handle = shl_load(fname, BIND_DEFERRED, BIND_VERBOSE);
-#elif defined(_WIN32)
-	mh->handle = LoadLibrary(fname);
-#else  /* default case */
-	mh->handle = dlopen(fname, RTLD_LAZY);
-#endif /* USE_HPUX_SHL */
-
-	/* Caution! mh->handle is "int" for HPUX and "void *" for others */
+	lt_dlinit();
+	mh->handle = lt_dlopen(fname);
 
 	if (!mh->handle){
-	  /* I imagine this needs to be something different for Hockey Pux.
-	     I don't have one to play with at the moment. */
-#if defined(_WIN32) || defined(USE_HPUX_SHL)
-		parse_error("Unable to open module %s.\n", fname);
-#else
 		parse_error("Unable to open module %s. Reason: %s.",
-					fname, dlerror());
-#endif /* defined(_WIN32) || defined(USE_HPUX_SHL) */
+					fname, lt_dlerror());
 
 		free(mh);
 		return NULL;
@@ -84,14 +54,7 @@ void
 close_dv_module_file(dvModuleHandle emh)
 {
 	dvIModuleHandle *mh = (dvIModuleHandle *)emh;
-#if   defined(USE_HPUX_SHL)
-	shl_unload(mh->handle);
-#elif defined(_WIN32)
-	FreeLibrary(mh->handle);
-#else /* default case */
-	dlclose(mh->handle);
-#endif /* USE_HPUX_SHL */
-
+	lt_dlclose(mh->handle);
 	free(mh);
 }
 
@@ -110,18 +73,7 @@ locate_dv_module_func_in_slib(
 	void *foo = NULL;
 	dvIModuleHandle *mh = (dvIModuleHandle *)emh;
 
-#if   defined(USE_HPUX_SHL)
-	/*
-	** Note! we are searching in functions list only.
-	** Variables are handled differently in HPUX
-	*/
-	if (shl_findsym(&mh->handle, func_name, TYPE_PROCEDURE, &foo) < 0){ foo = NULL; }
-#elif defined(_WIN32)
-	foo = (WIN_DLL_IMPORT)GetProcAddress(mh->handle, func_name);
-#else /* default case */
-	foo = dlsym(mh->handle, func_name);
-#endif /* USE_HPUX_SHL */
-
+	foo = lt_dlsym(mh->handle, func_name);
 	return foo;
 }
 
