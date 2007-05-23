@@ -202,13 +202,14 @@ eval(Var *v)
     return(v);
 }
 
-
 /**
  ** enumerate the symbol table.
  **/
 
 extern UFUNC **ufunc_list;
 extern int nufunc;
+extern struct _vfuncptr vfunclist[];
+extern int nsfunc;
 
 Var *
 ff_list(vfuncptr func, Var *arg)
@@ -218,28 +219,54 @@ ff_list(vfuncptr func, Var *arg)
 
     Var *v;
 	int i;
-	int list_ufuncs = 0;
-	Alist alist[2];
+	int list_ufuncs = 0, list_sfuncs = 0;
+	Alist alist[3];
 	alist[0] = make_alist( "ufunc",    INT,    NULL,    &list_ufuncs);
-	alist[1].name = NULL;
+	alist[1] = make_alist( "sfunc",    INT,    NULL,    &list_sfuncs);
+	alist[2].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (list_ufuncs == 0) {
+	if (list_ufuncs == 0 && list_sfuncs == 0) {
 		for (s = scope->symtab ; s != NULL ; s = s->next) {
 			v = s->value;
 			if (V_NAME(v) != NULL) pp_print_var(v, V_NAME(v), 0);
 		}
 	} else {
-		char **names = calloc(nufunc, sizeof(char *));
-		for (i = 0 ; i < nufunc ; i++) {
-			names[i] = strdup(ufunc_list[i]->name);
-		}
-		return(newText(nufunc, names));
+	  int nfuncs = 0, nsfunc;
+	  int count = 0;
+	  char **names;
+
+	  if (list_ufuncs){
+	    nfuncs += nufunc;
+	  }
+	  if (list_sfuncs){
+	    nsfunc = 0;
+	    while(vfunclist[nsfunc].name != NULL)
+	      nsfunc++;
+
+	    nfuncs += nsfunc;
+	  }
+
+	  
+	  names = calloc(nfuncs, sizeof(char *));
+	  if (list_ufuncs){
+	    for (i = 0 ; i < nufunc ; i++) {
+	      names[i] = strdup(ufunc_list[i]->name);
+	    }
+	    count += nufunc;
+	  }
+	  if (list_sfuncs){
+	    for (i = 0 ; i < nsfunc ; i++) {
+	      names[i+count] = strdup(vfunclist[i].name);
+	    }
+	  }
+	  return(newText(nfuncs, names));
 	}
 
     return(NULL);
 }
+
 
 void
 free_var(Var *v)
