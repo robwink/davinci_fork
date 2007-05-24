@@ -48,7 +48,7 @@ static const char ver_any_str[] = "(any)";
 #define printable_ver_str(ver) ((ver)? (ver): ver_any_str)
 
 /* daVinci module file extension */
-static const char DVM_EXT[] = "so";
+static const char DVM_EXT[] = "la";
 
 /* Environment variable for module lookup */
 static const char DV_MOD_PATH_ENV[] = "DV_MOD_PATH";
@@ -187,50 +187,74 @@ ff_list_dv_modules(
 	char **mnlst;
 	int    len;
 	dvModule *m;
+	Var *v = NULL;
+	char *module_name = NULL;
 	
+	Alist  alist[2]; /* arguments list */
 
-	n = Narray_count(loaded_modules);
+	alist[0] = make_alist("module", ID_STRING, NULL, &module_name);
+	alist[1].name = NULL;
 
-	mnlst = (char **)calloc(n, sizeof(char *));
-	if (mnlst == NULL){ return NULL; }
-
-	for (i = 0; i < n; i++){
-		Narray_get(loaded_modules, i, &mod_name, (void **)&mod_var);
-		m = &V_MODULE(mod_var);
-
-		len = strlen(mod_name)+1;
-		if (m->ver){
-			len += strlen(m->ver) + 1;
-		}
-
-		mnlst[i] = (char *)calloc(len, sizeof(char));
-
-		if (mnlst[i] == NULL){
-
-			/* memory failure */
-
-			parse_error("Mem allocation error.\n");
-
-			while(--i >= 0){ free(mnlst[i]); }
-			free(mnlst);
-
-			return NULL;
-		}
-
-		if (m->ver && strcmp(m->ver, "") == 0){
-			/* include version */
-			sprintf(mnlst[i], "%s.%s", mod_name, m->ver);
-		}
-		else {
-			/* no version associated with the module */
-			sprintf(mnlst[i], "%s", mod_name);
-		}
-
+	if (parse_args(func, args, alist) == 0) {
+		parse_error("%s(): argument parsing failed.", func->name);
+		return NULL;
 	}
 
-	mlst = newText(n, mnlst);
+	if (module_name != NULL){
+		// Find all the stuff in the specified module.
 
-	return mlst;
+		// Locate the module
+		if ( Narray_find(loaded_modules, module_name, (void *)&v) != -1) {
+			char *func_name;
+			m = &(V_MODULE(v));
+			n = Narray_count(m->functions);
+			mnlst = (char **)calloc(n, sizeof(char *));
+			for (i = 0; i < n; i++) {
+				Narray_get(m->functions, i, &func_name, NULL);
+				mnlst[i] = strdup(func_name);
+			}
+			return(newText(n, mnlst));
+		} else {
+			parse_error("Unable to find module %s\n", module_name);
+			return(NULL);
+		}
+	} else {
+		n = Narray_count(loaded_modules);
+		mnlst = (char **)calloc(n, sizeof(char *));
+		if (mnlst == NULL){ return NULL; }
+
+		for (i = 0; i < n; i++){
+			Narray_get(loaded_modules, i, &mod_name, (void **)&mod_var);
+			m = &V_MODULE(mod_var);
+
+			len = strlen(mod_name)+1;
+			if (m->ver){
+				len += strlen(m->ver) + 1;
+			}
+
+			mnlst[i] = (char *)calloc(len, sizeof(char));
+
+			if (mnlst[i] == NULL){ /* memory failure */
+				parse_error("Mem allocation error.\n");
+				while(--i >= 0){ free(mnlst[i]); }
+				free(mnlst);
+				return NULL;
+			}
+
+			if (m->ver && strcmp(m->ver, "") == 0){
+				/* include version */
+				sprintf(mnlst[i], "%s.%s", mod_name, m->ver);
+			}
+			else {
+				/* no version associated with the module */
+				sprintf(mnlst[i], "%s", mod_name);
+			}
+		}
+
+		mlst = newText(n, mnlst);
+		return mlst;
+	}
+
 }
 
 /***************************************************************/
