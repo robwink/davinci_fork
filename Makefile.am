@@ -67,7 +67,7 @@ davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ff_bin5.c \
 	header.c \
 	help.c init.c \
-	isis_obj.c main.c matrix.c \
+	isis_obj.c main.c globals.c matrix.c \
 	misc.c motif_tools.c \
 	newfunc.c p.c pp.c \
 	pp_math.c printf.c reserved.c \
