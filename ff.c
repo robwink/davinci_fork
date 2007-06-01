@@ -9,6 +9,8 @@
 // #include <dos.h>
 #endif
 
+Var *eval_buffer(char *buf);
+
 /**
  ** V_func - find and call named function
  **
