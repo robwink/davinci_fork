@@ -40,6 +40,7 @@ ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
 AMTAR = @AMTAR@
+AR = @AR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -117,6 +118,7 @@ X_CFLAGS = @X_CFLAGS@
 X_EXTRA_LIBS = @X_EXTRA_LIBS@
 X_LIBS = @X_LIBS@
 X_PRE_LIBS = @X_PRE_LIBS@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_F77 = @ac_ct_F77@
@@ -127,7 +129,10 @@ am__fastdepCC_TRUE = @am__fastdepCC_TRUE@
 am__fastdepCXX_FALSE = @am__fastdepCXX_FALSE@
 am__fastdepCXX_TRUE = @am__fastdepCXX_TRUE@
 am__include = @am__include@
+am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
+am__tar = @am__tar@
+am__untar = @am__untar@
 bindir = @bindir@
 build = @build@
 build_alias = @build_alias@
@@ -148,6 +153,7 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localstatedir = @localstatedir@
 mandir = @mandir@
+mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
@@ -210,7 +216,7 @@ davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ff_bin5.c \
 	header.c \
 	help.c init.c \
-	isis_obj.c main.c matrix.c \
+	isis_obj.c main.c globals.c matrix.c \
 	misc.c motif_tools.c \
 	newfunc.c p.c pp.c \
 	pp_math.c printf.c reserved.c \
@@ -271,10 +277,11 @@ am_davinci_OBJECTS = apifunc.$(OBJEXT) array.$(OBJEXT) avl.$(OBJEXT) \
 	fft_mayer.$(OBJEXT) fit.$(OBJEXT) ff_coreg.$(OBJEXT) \
 	ff_boxfilter.$(OBJEXT) ff_bin5.$(OBJEXT) header.$(OBJEXT) \
 	help.$(OBJEXT) init.$(OBJEXT) isis_obj.$(OBJEXT) main.$(OBJEXT) \
-	matrix.$(OBJEXT) misc.$(OBJEXT) motif_tools.$(OBJEXT) \
-	newfunc.$(OBJEXT) p.$(OBJEXT) pp.$(OBJEXT) pp_math.$(OBJEXT) \
-	printf.$(OBJEXT) reserved.$(OBJEXT) rfunc.$(OBJEXT) \
-	rice.$(OBJEXT) rpos.$(OBJEXT) scope.$(OBJEXT) spread.$(OBJEXT) \
+	globals.$(OBJEXT) matrix.$(OBJEXT) misc.$(OBJEXT) \
+	motif_tools.$(OBJEXT) newfunc.$(OBJEXT) p.$(OBJEXT) \
+	pp.$(OBJEXT) pp_math.$(OBJEXT) printf.$(OBJEXT) \
+	reserved.$(OBJEXT) rfunc.$(OBJEXT) rice.$(OBJEXT) \
+	rpos.$(OBJEXT) scope.$(OBJEXT) spread.$(OBJEXT) \
 	string.$(OBJEXT) symbol.$(OBJEXT) system.$(OBJEXT) \
 	tools.$(OBJEXT) ufunc.$(OBJEXT) util.$(OBJEXT) x.$(OBJEXT) \
 	xrt_print_3d.$(OBJEXT) lexer.$(OBJEXT) parser.$(OBJEXT) \
@@ -395,22 +402,23 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/ff_window.Po ./$(DEPDIR)/ff_write.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ff_xfrm.Po ./$(DEPDIR)/fft.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/fft2f.Po ./$(DEPDIR)/fft_mayer.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/fit.Po ./$(DEPDIR)/header.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/help.Po ./$(DEPDIR)/init.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/io_loadmod.Po ./$(DEPDIR)/isis_obj.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/lexer.Po ./$(DEPDIR)/main.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/matrix.Po ./$(DEPDIR)/misc.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/module_io.Po ./$(DEPDIR)/motif_tools.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/newfunc.Po ./$(DEPDIR)/p.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/parser.Po ./$(DEPDIR)/pp.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/pp_math.Po ./$(DEPDIR)/printf.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/reserved.Po ./$(DEPDIR)/rfunc.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/rice.Po ./$(DEPDIR)/rpos.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/scope.Po ./$(DEPDIR)/spread.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/string.Po ./$(DEPDIR)/symbol.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/system.Po ./$(DEPDIR)/tools.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ufunc.Po ./$(DEPDIR)/util.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/x.Po ./$(DEPDIR)/xrt_print_3d.Po
+@AMDEP_TRUE@	./$(DEPDIR)/fit.Po ./$(DEPDIR)/globals.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/header.Po ./$(DEPDIR)/help.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/init.Po ./$(DEPDIR)/io_loadmod.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/isis_obj.Po ./$(DEPDIR)/lexer.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/main.Po ./$(DEPDIR)/matrix.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/misc.Po ./$(DEPDIR)/module_io.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/motif_tools.Po ./$(DEPDIR)/newfunc.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/p.Po ./$(DEPDIR)/parser.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/pp.Po ./$(DEPDIR)/pp_math.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/printf.Po ./$(DEPDIR)/reserved.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/rfunc.Po ./$(DEPDIR)/rice.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/rpos.Po ./$(DEPDIR)/scope.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/spread.Po ./$(DEPDIR)/string.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/symbol.Po ./$(DEPDIR)/system.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/tools.Po ./$(DEPDIR)/ufunc.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/util.Po ./$(DEPDIR)/x.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/xrt_print_3d.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 LTCXXCOMPILE = $(LIBTOOL) --mode=compile $(CXX) $(DEFS) \
@@ -433,10 +441,10 @@ RECURSIVE_TARGETS = info-recursive dvi-recursive pdf-recursive \
 	all-recursive install-data-recursive install-exec-recursive \
 	installdirs-recursive install-recursive uninstall-recursive \
 	check-recursive installcheck-recursive
-DIST_COMMON = README COPYING INSTALL Makefile.am Makefile.in aclocal.m4 \
-	config.h.in config/config.guess config/config.sub \
-	config/depcomp config/install-sh config/ltmain.sh \
-	config/missing config/mkinstalldirs configure configure.ac
+DIST_COMMON = README Makefile.am Makefile.in aclocal.m4 config.h.in \
+	config/config.guess config/config.sub config/depcomp \
+	config/install-sh config/ltmain.sh config/missing \
+	config/mkinstalldirs configure configure.ac
 DIST_SUBDIRS = $(SUBDIRS)
 SOURCES = $(libmodsupp_a_SOURCES) $(davinci_SOURCES)
 
@@ -478,8 +486,6 @@ $(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(top_srcdir)/configure.ac $(ACLOC
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
-
-AR = ar
 
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
@@ -610,6 +616,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fft2f.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fft_mayer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fit.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/globals.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/header.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/help.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/init.Po@am__quote@
