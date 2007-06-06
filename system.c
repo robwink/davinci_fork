@@ -5,7 +5,12 @@
 
 #include "config.h"
 
+#ifdef __MINGW32__
+#include <windows.h>
+#endif
+
 #ifndef _WIN32
+
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
@@ -511,7 +516,8 @@ char *
 make_temp_file_path()
 {
         int fd;
-		char pathbuf[256];
+	unsigned int uretval;
+	char pathbuf[256];
         char *tmpdir = getenv("TMPDIR");
 
         if (tmpdir == NULL) tmpdir = "/tmp";
@@ -520,18 +526,20 @@ make_temp_file_path()
 
 /** To handle racing issues, since mkstemp does not exist in MINGW **/
 #ifdef __MINGW32__
-	if (mktemp (pathbuf))
-	do
-	fd = open (pathbuf, O_CREAT | O_EXCL, S_IREAD | S_IWRITE);
-	while (!(fd == NULL && errno == EEXIST) && mktemp (pathbuf));
-	else
-	fd = NULL;
+	uretval = GetTempFileName(tmpdir, // directory for tmp files
+				  "dv",        // temp file name prefix 
+				  0,            // create unique name 
+				  pathbuf);  // buffer for name 
+	if (uretval == 0){
+	    return(NULL);
+	}
 #else
 	fd = mkstemp(pathbuf);
 #endif
 
         if (fd == -1) {
-                return(NULL);
+
+	       return(NULL);
         }
         close(fd);
         return(strdup(pathbuf));
