@@ -77,6 +77,71 @@ max_rec(int fd)
     return(i / LABELSIZE -1);
 }
 
+/* RED 06/09/2004 Added byteorder and checkendian routines derived             */
+/*                from specpr code for byteswapping in the read_specpr and     */
+/*                write_specpr routines if executing on little endian          */
+/*                (i.e. Intel) system                                          */
+
+int chkendian ()
+{
+  /* Return 0 if Big Endian (HPUX, SUN Solaris,..) */
+  /* Return 1 then we are Little Endian (Intel)    */
+  union
+  {
+    long l;
+    char c[sizeof (long)];
+  } u;
+  u.l = 1;
+  if (u.c[sizeof (long) - 1] == 1) return(0);
+  return (1);
+}
+
+static char bytetemp;
+typedef char *byteptr;
+#define swap1byte(c1, c2) (bytetemp = (c1) , (c1) = (c2) , (c2) = bytetemp)
+#define swap4byte(s)     (swap1byte(((byteptr)(s))[0], ((byteptr)(s))[3]), \
+                         swap1byte(((byteptr)(s))[1], ((byteptr)(s))[2]),(s))
+void
+byteorder(a,iflag)
+int *a,iflag;
+{
+        int itmp,i;
+
+        itmp=0;
+
+        if (iflag == 1) swap4byte(&((int *)a)[0]);  /* swap byte order on bitflags */
+        i=(int)a[0];
+
+        if (check_bit(i,0) == 0 && check_bit(i,1) == 1) {
+                /* 1st text data record */
+                swap4byte(&((int *)a)[13]);  /* swap byte order on text pointer */
+                swap4byte(&((int *)a)[14]);  /* swap byte order on text size    */
+
+        } else if (check_bit(i,0) == 1 && check_bit(i,1) == 1) {
+                /* Continuation text data record */
+                        /* do something in the block but really nothing to do. */
+                itmp =0;
+        } else if (check_bit(i,0) == 0 && check_bit(i,1) == 0) {
+                /* 1st data record */
+                for (i = 13; i <= 28; i++) {
+                        swap4byte(&((int *)a)[i]);
+                }
+                for (i = 118; i <= 383; i++) {
+                        swap4byte(&((int *)a)[i]);
+                }
+        } else if (check_bit(i,0) == 1 && check_bit(i,1) == 0) {
+                /* Continuation data record */
+                for (i = 1; i <= 383; i++) {
+                        swap4byte(&((int *)a)[i]);
+                }
+        }
+
+        if (iflag == 2) swap4byte(&((int *)a)[0]);  /* swap byte order on bitflags */
+
+        return;
+}
+
+
 int
 read_record(int fd, int i, char *label)
 {
@@ -87,6 +152,15 @@ read_record(int fd, int i, char *label)
     if (read(fd, label, LABELSIZE) != LABELSIZE) {
         return(-2);
     }
+
+    /* RED 06/09/2004                                   */
+    /* Check if running on little endian system.        */
+    /* If so, swapbytes from big endian format file     */
+
+    if (chkendian()) {
+        byteorder(label,1);
+    }
+
     return(check_bit(((int*)label)[0], 0));
 }
 
@@ -111,7 +185,8 @@ read_specpr(int fd, int i, struct _label *label, char **data)
 
     if ((j = read_record(fd, i, (char *)label)) == 0) {
         tlabel = (struct _tlabel *)label;
-        if (check_bit(label->icflag,1)) {
+        /* RED Changed following to include == 1 for consistency */
+        if (check_bit(label->icflag,1) == 1) {
             /* text */
             if (data) {
                 size = 1476;
@@ -158,6 +233,14 @@ write_record(int fd, int i, struct _label *label)
 
     if (check_bit(label->icflag, 0) == 0 && check_bit(label->icflag,1) == 0) {
         label->irecno = i;
+    }
+
+    /* RED 06/09/2004                                     */
+    /* Check if running on little endian system.          */
+    /* If so, swapbytes to ensure big endian format file  */
+
+    if (chkendian()) {
+        byteorder(label,2);
     }
 
     if (write(fd, label, LABELSIZE) != LABELSIZE) {
@@ -217,6 +300,8 @@ write_specpr(int fd, int i, struct _label *label, char *data)
     int count;
 
     tlabel = (struct _tlabel *)label;
+/* RED Zero the flag since cannot guarantee its init value */
+    tmpl.icflag = 0;
 
     switch(check_bit(label->icflag,1)) {
     case 0:
