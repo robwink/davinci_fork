@@ -41,13 +41,14 @@ BUILT_SOURCES = config.h build.h
 
 noinst_LIBRARIES = $(MY_MODULES_LIB)
 
+
 libmodsupp_a_SOURCES = ff_modules.c module_io.c io_loadmod.c
 
-davinci_LDADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULES_LIB)  \
+lib_LTLIBRARIES = libdavinci.la
+libdavinci_la_LIBADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULES_LIB)  \
 		$(MINGW32_LIBREGEX_LDADD) $(MINGW32_LIBWSOCK32_LDADD) $(MINGW32_LIBLTDLC_LDADD)
-davinci_LDFLAGS = -export-dynamic
 
-davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
+libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	darray.c \
 	dct.c deghost.C dvio.c dvio_ascii.c \
 	dvio_aviris.c dvio_envi.c dvio_ers.c dvio_goes.c dvio_grd.c \
@@ -67,7 +68,7 @@ davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ff_bin5.c \
 	header.c \
 	help.c init.c \
-	isis_obj.c main.c globals.c matrix.c \
+	isis_obj.c globals.c matrix.c \
 	misc.c motif_tools.c \
 	newfunc.c p.c pp.c \
 	pp_math.c printf.c reserved.c \
@@ -85,6 +86,14 @@ davinci_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	lexer.c parser.c parser.h y_tab.h \
 	ff_gconvolve.c ff_warp.c ff_median.c ff_radial.c ff_window.c \
 	dvio_fits.c ff_extract.c dvio_tdb.c
+
+
+
+
+davinci_LDADD = -ldavinci
+davinci_LDFLAGS = -export-dynamic
+davinci_SOURCES = main.c
+
 
 build.h: Makefile
 	echo 'char *build = "'`date`'";' > $@
