@@ -27,9 +27,9 @@ if HAVE_LIBWSOCK32
   MINGW32_LIBWSOCK32_LDADD = -lwsock32
 endif
 
-if HAVE_LIBLTDLC
+#if HAVE_LIBLTDLC
   MINGW32_LIBLTDLC_LDADD = -Llibltdl -lltdlc
-endif
+#endif
 
 MY_IOMEDLEY_LDADD =-Liomedley -liomedley
 
@@ -90,7 +90,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 
 
 
-davinci_LDADD = -ldavinci
+davinci_LDADD = -ldavinci  $(MINGW32_LIBLTDLC_LDADD)
 davinci_LDFLAGS = -export-dynamic
 davinci_SOURCES = main.c
 
