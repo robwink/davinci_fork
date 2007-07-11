@@ -109,7 +109,7 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_davinci_OBJECTS = main.$(OBJEXT)
 davinci_OBJECTS = $(am_davinci_OBJECTS)
-davinci_DEPENDENCIES =
+davinci_DEPENDENCIES = $(am__DEPENDENCIES_2)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__depfiles_maybe = depfiles
@@ -185,8 +185,6 @@ EXEEXT = @EXEEXT@
 F77 = @F77@
 FFLAGS = @FFLAGS@
 GPLOT_CMD = @GPLOT_CMD@
-HAVE_LIBLTDLC_FALSE = @HAVE_LIBLTDLC_FALSE@
-HAVE_LIBLTDLC_TRUE = @HAVE_LIBLTDLC_TRUE@
 HAVE_LIBMAGICK_FALSE = @HAVE_LIBMAGICK_FALSE@
 HAVE_LIBMAGICK_TRUE = @HAVE_LIBMAGICK_TRUE@
 HAVE_LIBREGEX_FALSE = @HAVE_LIBREGEX_FALSE@
@@ -288,7 +286,10 @@ EXTRA_DIST = README.modules README_FF docs gplot.c lexer.l lib moddvmagick parse
 @LOCAL_READLINE_TRUE@MY_READLINE_LDADD = readline/libreadline.a
 @HAVE_LIBREGEX_TRUE@MINGW32_LIBREGEX_LDADD = -lregex	
 @HAVE_LIBWSOCK32_TRUE@MINGW32_LIBWSOCK32_LDADD = -lwsock32
-@HAVE_LIBLTDLC_TRUE@MINGW32_LIBLTDLC_LDADD = -Llibltdl -lltdlc
+
+#if HAVE_LIBLTDLC
+MINGW32_LIBLTDLC_LDADD = -Llibltdl -lltdlc
+#endif
 MY_IOMEDLEY_LDADD = -Liomedley -liomedley
 SUBDIRS = @MY_SUBDIRS@ libltdl
 BUILT_SOURCES = config.h build.h
@@ -337,7 +338,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ff_gconvolve.c ff_warp.c ff_median.c ff_radial.c ff_window.c \
 	dvio_fits.c ff_extract.c dvio_tdb.c
 
-davinci_LDADD = -ldavinci
+davinci_LDADD = -ldavinci  $(MINGW32_LIBLTDLC_LDADD)
 davinci_LDFLAGS = -export-dynamic
 davinci_SOURCES = main.c
 all: $(BUILT_SOURCES) config.h
