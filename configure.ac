@@ -106,9 +106,10 @@ AC_CHECK_LIB(usds, Themis_Entry)
 AC_CHECK_LIB(msss_vis, read_DCT)
 AC_CHECK_LIB(termcap, tgetent)
 AC_CHECK_LIB(ltdl, lt_dlopen)
-AC_CHECK_LIB(ltdlc, lt_dlopen, [have_libltdlc=yes], [have_libltdlc=no],[-Llibltdl/.libs])
+have_libltdlc=yes
+#AC_CHECK_LIB(ltdlc, lt_dlopen, [have_libltdlc=yes], [have_libltdlc=no],[-Llibltdl/.libs])
 # Used for MINGW
-AM_CONDITIONAL(HAVE_LIBLTDLC, [test "x$have_libltdlc" = "xyes"])
+#AM_CONDITIONAL(HAVE_LIBLTDLC, [test "x$have_libltdlc" = "xyes"])
 
 # Used for MINGW
 AC_CHECK_LIB(wsock32, main, [have_libwsock32=yes], [have_libwsock32=no])
