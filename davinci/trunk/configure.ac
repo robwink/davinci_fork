@@ -323,7 +323,7 @@ AC_ARG_WITH(editor,
     [EDITOR=$withval],
 	[AC_PATH_PROGS(EDITOR,[vim vi emacs edit])]
 )
-AC_ARG_WITH(dvhelp, 
+AC_ARG_WITH(help, 
     [  --with-help=<path>      Path to davinci help file (default: /usr/local/lib/davinci/dv.gih)],
     [DVHELP=$withval],
     [DVHELP="/usr/local/lib/davinci/dv.gih"]
