@@ -13,8 +13,15 @@ set -x
 
 # and then recreates the basic redhat dirs, like SOURCES SPECS there.
 
-davinci_src=`echo $0 |  sed -e 's|\(.*\)\/\(.*\)$|\1|'`
 
+##Get davinci source absolute path
+davinci_src=`echo $0 |  sed -e 's|\(.*\)\/\(.*\)$|\1|'`
+if [ "${davinci_src}" = "." ]
+then
+	davinci_src=`pwd`
+else
+	davinci_src=`pwd`/${davinci_src}
+fi
 
 
 version=`grep 'daVinci Version #' version.h | sed -e 's/\(.*\)#\(.*\)";/\2/'`
@@ -28,8 +35,6 @@ then
 fi
 
 
-## If previously was built
-make clean
 
 ##Remove the previous rpms
 rm -f ${davinci_src}/*.rpm
@@ -50,6 +55,7 @@ s=${r}/SOURCES
 spec=${o}.spec
 
 
+## Create rpm dirs (if they don't exist)
 mkdir -p ${r}
 mkdir -p ${r}/SOURCES
 mkdir -p ${r}/SRPMS
@@ -57,8 +63,15 @@ mkdir -p ${r}/SPECS
 mkdir -p ${r}/BUILD
 mkdir -p ${r}/RPMS
 
-# First setup and copy the source.
-rm -rf ${s}/${o}*
+## Remove previous files (if they exist)
+rm -rf ${r}/SOURCES/${o}*
+rm -rf ${r}/SRPMS/${o}*
+rm -rf ${r}/SPECS/${o}*
+rm -rf ${r}/BUILD/${o}*
+rm -rf ${r}/RPMS/${o}*
+
+
+
 mkdir ${s}/${o}
 cp -rf ${davinci_src}/* ${s}/${o} 
 
@@ -77,5 +90,6 @@ gzip ${o}.tar
 
 # Now build the binaries and the rpms.
 rpmbuild -ba ${r}/SPECS/${spec}
+
 # Copy back to the dacinci directory
-cp -f  ${r}/RPMS/*.rpm ${davinci_src}
+cp -f  ${r}/RPMS/i386/*.rpm ${davinci_src}
