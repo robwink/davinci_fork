@@ -28,9 +28,9 @@ URL:          http://davinci.asu.edu
 Vendor:       Mars Space Flight Facility at Arizona State University
 Packager:     Betim Deva <betim@asu.edu>  
 Distribution: Fedora Core 4 (MSFF)
-Group:        Development/Languages/Davinci
+Group:        Applications/Science/Davinci
 License:      GPLv2
-Version:      1.68
+Version:	1.68
 Release:      1
 
 #   list of sources
@@ -58,6 +58,10 @@ Requires:	hdf5, readline, zlib
 %build
 ./configure --prefix=/usr  --with-help=%{_libdir}/davinci/dv.gih
 make
+
+
+%define __spec_install_post %{nil}
+%define debug_package %{nil}
 
 %install
 rm -rf $RPM_BUILD_ROOT
