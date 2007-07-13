@@ -92,4 +92,5 @@ gzip ${o}.tar
 rpmbuild -ba ${r}/SPECS/${spec}
 
 # Copy back to the dacinci directory
+cp -f  ${r}/SRPMS/*.rpm ${davinci_src}
 cp -f  ${r}/RPMS/i386/*.rpm ${davinci_src}
