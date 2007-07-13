@@ -1062,7 +1062,7 @@ Optional Packages:
   --with-viewer=<path>    Path to image display program (default: xv)
   --with-gnuplot=<path>   Path to gnuplot program (default: gnuplot)
   --with-editor=<path>    Path to text file editor (default: vim)
-  --with-help=<path>      Path to davinci help file (default: /usr/local/lib/davinci/dv.gih)
+  --with-help=<path>      Path to davinci help file (default: /usr/share/davinci/docs/dv.gih)
 
 Some influential environment variables:
   CC          C compiler command
@@ -27569,7 +27569,7 @@ if test "${with_help+set}" = set; then
   withval="$with_help"
   DVHELP=$withval
 else
-  DVHELP="/usr/local/lib/davinci/dv.gih"
+  DVHELP="/usr/share/davinci/docs/dv.gih"
 
 fi;
 

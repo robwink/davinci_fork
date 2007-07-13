@@ -324,9 +324,9 @@ AC_ARG_WITH(editor,
 	[AC_PATH_PROGS(EDITOR,[vim vi emacs edit])]
 )
 AC_ARG_WITH(help, 
-    [  --with-help=<path>      Path to davinci help file (default: /usr/local/lib/davinci/dv.gih)],
+    [  --with-help=<path>      Path to davinci help file (default: /usr/share/davinci/docs/dv.gih)],
     [DVHELP=$withval],
-    [DVHELP="/usr/local/lib/davinci/dv.gih"]
+    [DVHELP="/usr/share/davinci/docs/dv.gih"]
 )
 
 AC_DEFINE_UNQUOTED(DV_VIEWER, "$DV_VIEWER", Path to image display program for display() function)
