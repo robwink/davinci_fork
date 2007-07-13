@@ -1,10 +1,18 @@
-char *version = "@(#) daVinci Version #1.68";
+char *version = "@(#) daVinci Version #1.69";
 
 #include "build.h"
 
 /*
 Version 
-	* Added MINGW32 support
+    * Splited the main.c with the rest of davinci (libavinci shared lib)
+    * Changed the default paths for modules, help, etc from /usr/local to just /usr
+    * Fixed --with-help in configure.ac to sue a path
+    * Help file is also distributed when installed
+    * libdavinci and it's header files are distributed under 
+      /usr/lib and /usr/include/davinci respectively
+
+Version 1.68
+    * Added MINGW32 support
 
 Version 1.67:
     * Added flag for using aqua under darwin (gplot needs this)
