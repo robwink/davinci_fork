@@ -16,6 +16,8 @@
 
 
 
+
+
 SOURCES = $(libmodsupp_a_SOURCES) $(libdavinci_la_SOURCES) $(davinci_SOURCES)
 
 srcdir = @srcdir@
@@ -42,12 +44,12 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 bin_PROGRAMS = davinci$(EXEEXT)
-DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
-	$(top_srcdir)/configure AUTHORS COPYING ChangeLog INSTALL NEWS \
-	config/config.guess config/config.sub config/depcomp \
-	config/install-sh config/ltmain.sh config/missing \
-	config/mkinstalldirs
+DIST_COMMON = README $(am__configure_deps) $(library_include_HEADERS) \
+	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
+	$(srcdir)/config.h.in $(top_srcdir)/configure AUTHORS COPYING \
+	ChangeLog INSTALL NEWS config/config.guess config/config.sub \
+	config/depcomp config/install-sh config/ltmain.sh \
+	config/missing config/mkinstalldirs
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -71,7 +73,9 @@ am__vpath_adj = case $$p in \
     *) f=$$p;; \
   esac;
 am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
-am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)"
+am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
+	"$(DESTDIR)$(docsdir)" "$(DESTDIR)$(dvrcdir)" \
+	"$(DESTDIR)$(library_includedir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 @LOCAL_READLINE_TRUE@am__DEPENDENCIES_1 = readline/libreadline.a
@@ -139,6 +143,11 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	install-recursive installcheck-recursive installdirs-recursive \
 	pdf-recursive ps-recursive uninstall-info-recursive \
 	uninstall-recursive
+docsDATA_INSTALL = $(INSTALL_DATA)
+dvrcDATA_INSTALL = $(INSTALL_DATA)
+DATA = $(docs_DATA) $(dvrc_DATA)
+library_includeHEADERS_INSTALL = $(INSTALL_HEADER)
+HEADERS = $(library_include_HEADERS)
 ETAGS = etags
 CTAGS = ctags
 DIST_SUBDIRS = $(SUBDIRS)
@@ -286,10 +295,7 @@ EXTRA_DIST = README.modules README_FF docs gplot.c lexer.l lib moddvmagick parse
 @LOCAL_READLINE_TRUE@MY_READLINE_LDADD = readline/libreadline.a
 @HAVE_LIBREGEX_TRUE@MINGW32_LIBREGEX_LDADD = -lregex	
 @HAVE_LIBWSOCK32_TRUE@MINGW32_LIBWSOCK32_LDADD = -lwsock32
-
-#if HAVE_LIBLTDLC
-MINGW32_LIBLTDLC_LDADD = -Llibltdl -lltdlc
-#endif
+MY_LIBLTDLC_LDADD = -Llibltdl -lltdlc
 MY_IOMEDLEY_LDADD = -Liomedley -liomedley
 SUBDIRS = @MY_SUBDIRS@ libltdl
 BUILT_SOURCES = config.h build.h
@@ -297,7 +303,7 @@ noinst_LIBRARIES = $(MY_MODULES_LIB)
 libmodsupp_a_SOURCES = ff_modules.c module_io.c io_loadmod.c
 lib_LTLIBRARIES = libdavinci.la
 libdavinci_la_LIBADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULES_LIB)  \
-		$(MINGW32_LIBREGEX_LDADD) $(MINGW32_LIBWSOCK32_LDADD) $(MINGW32_LIBLTDLC_LDADD)
+		$(MINGW32_LIBREGEX_LDADD) $(MINGW32_LIBWSOCK32_LDADD) $(MY_LIBLTDLC_LDADD)
 
 libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	darray.c \
@@ -338,9 +344,27 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ff_gconvolve.c ff_warp.c ff_median.c ff_radial.c ff_window.c \
 	dvio_fits.c ff_extract.c dvio_tdb.c
 
-davinci_LDADD = -ldavinci  $(MINGW32_LIBLTDLC_LDADD)
+library_includedir = $(includedir)/@PACKAGE@
+library_include_HEADERS = $(wildcard *.h)
+davinci_LDADD = -ldavinci  $(MY_LIBLTDLC_LDADD)
 davinci_LDFLAGS = -export-dynamic
 davinci_SOURCES = main.c
+dvrc = library
+dvrcdir = $(datadir)/@PACKAGE@/$(dvrc)
+dvrc_DATA = $(dvrc)/data_manipulation.dvrc \
+	$(dvrc)/general_science.dvrc \
+	$(dvrc)/image_stretch.dvrc \
+	$(dvrc)/library.dvrc \
+	$(dvrc)/misc.dvrc \
+	$(dvrc)/mosaic_tools.dvrc \
+	$(dvrc)/plot_tools.dvrc \
+	$(dvrc)/scriptlist.txt \
+	$(dvrc)/spectral_tools.dvrc \
+	$(dvrc)/themis_science.dvrc \
+	$(dvrc)/v_mosaic.dvrc
+
+docsdir = $(datadir)/@PACKAGE@/docs
+docs_DATA = docs/dv.gih README README_FF README.modules
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -638,6 +662,57 @@ clean-libtool:
 distclean-libtool:
 	-rm -f libtool
 uninstall-info-am:
+install-docsDATA: $(docs_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(docsdir)" || $(mkdir_p) "$(DESTDIR)$(docsdir)"
+	@list='$(docs_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(docsDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(docsdir)/$$f'"; \
+	  $(docsDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(docsdir)/$$f"; \
+	done
+
+uninstall-docsDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(docs_DATA)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(docsdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(docsdir)/$$f"; \
+	done
+install-dvrcDATA: $(dvrc_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(dvrcdir)" || $(mkdir_p) "$(DESTDIR)$(dvrcdir)"
+	@list='$(dvrc_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(dvrcDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(dvrcdir)/$$f'"; \
+	  $(dvrcDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(dvrcdir)/$$f"; \
+	done
+
+uninstall-dvrcDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(dvrc_DATA)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(dvrcdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(dvrcdir)/$$f"; \
+	done
+install-library_includeHEADERS: $(library_include_HEADERS)
+	@$(NORMAL_INSTALL)
+	test -z "$(library_includedir)" || $(mkdir_p) "$(DESTDIR)$(library_includedir)"
+	@list='$(library_include_HEADERS)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(library_includeHEADERS_INSTALL) '$$d$$p' '$(DESTDIR)$(library_includedir)/$$f'"; \
+	  $(library_includeHEADERS_INSTALL) "$$d$$p" "$(DESTDIR)$(library_includedir)/$$f"; \
+	done
+
+uninstall-library_includeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(library_include_HEADERS)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(library_includedir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(library_includedir)/$$f"; \
+	done
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run `make' without going through this Makefile.
@@ -916,12 +991,13 @@ distcleancheck: distclean
 check-am: all-am
 check: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-recursive
-all-am: Makefile $(LIBRARIES) $(LTLIBRARIES) $(PROGRAMS) config.h
+all-am: Makefile $(LIBRARIES) $(LTLIBRARIES) $(PROGRAMS) $(DATA) \
+		$(HEADERS) config.h
 install-binPROGRAMS: install-libLTLIBRARIES
 
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(docsdir)" "$(DESTDIR)$(dvrcdir)" "$(DESTDIR)$(library_includedir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
 install: $(BUILT_SOURCES)
@@ -972,7 +1048,8 @@ info: info-recursive
 
 info-am:
 
-install-data-am:
+install-data-am: install-docsDATA install-dvrcDATA \
+	install-library_includeHEADERS
 
 install-exec-am: install-binPROGRAMS install-libLTLIBRARIES
 
@@ -1002,8 +1079,9 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-info-am \
-	uninstall-libLTLIBRARIES
+uninstall-am: uninstall-binPROGRAMS uninstall-docsDATA \
+	uninstall-dvrcDATA uninstall-info-am uninstall-libLTLIBRARIES \
+	uninstall-library_includeHEADERS
 
 uninstall-info: uninstall-info-recursive
 
@@ -1016,16 +1094,18 @@ uninstall-info: uninstall-info-recursive
 	distclean-libtool distclean-recursive distclean-tags \
 	distcleancheck distdir distuninstallcheck dvi dvi-am html \
 	html-am info info-am install install-am install-binPROGRAMS \
-	install-data install-data-am install-exec install-exec-am \
-	install-info install-info-am install-libLTLIBRARIES \
+	install-data install-data-am install-docsDATA install-dvrcDATA \
+	install-exec install-exec-am install-info install-info-am \
+	install-libLTLIBRARIES install-library_includeHEADERS \
 	install-man install-strip installcheck installcheck-am \
 	installdirs installdirs-am maintainer-clean \
 	maintainer-clean-generic maintainer-clean-recursive \
 	mostlyclean mostlyclean-compile mostlyclean-generic \
 	mostlyclean-libtool mostlyclean-recursive pdf pdf-am ps ps-am \
 	tags tags-recursive uninstall uninstall-am \
-	uninstall-binPROGRAMS uninstall-info-am \
-	uninstall-libLTLIBRARIES
+	uninstall-binPROGRAMS uninstall-docsDATA uninstall-dvrcDATA \
+	uninstall-info-am uninstall-libLTLIBRARIES \
+	uninstall-library_includeHEADERS
 
 
 build.h: Makefile
