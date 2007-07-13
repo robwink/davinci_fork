@@ -39,7 +39,7 @@ Source:      ftp://ftp.mars.asu.edu/pub/software/davinci/%{name}-%{version}.tar.
 #   build information
 #BuildPreReq:  make, gcc
 BuildRoot: %{_tmppath}/%{name}-%{version}-buildroot
-Requires:	hdf5, readline, zlib
+Requires:	hdf5, hdf5-devel, cfitsio, readline, zlib
 #Provides:     MTA, smtpdaemon
 #Obsoletes:    sendmail
 #Conflicts:    exim, postfix, qmail
@@ -56,7 +56,7 @@ Requires:	hdf5, readline, zlib
 %setup -q
 
 %build
-./configure --prefix=/usr  --with-help=%{_libdir}/davinci/dv.gih
+./configure --prefix=/usr  --disable-libisis
 make
 
 
@@ -76,6 +76,14 @@ rm -rf $RPM_BUILD_ROOT
  %defattr(-,root,root)
  %{_bindir}/davinci
  %{_libdir}/*
+ %{_datadir}/*
+ %{_prefix}/include/%{name}/*
+
+
+
+
+
+ 
 
 %changelog
 * Tue Jul 10 2007 Betim Deva <betim@asu.edu> 1.6.8-1
