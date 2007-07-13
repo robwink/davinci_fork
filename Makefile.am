@@ -3,12 +3,22 @@
 ## Jim Stewart
 ## 20 Nov 2003
 ##
+
+
+## Change Logs:
+##
+## Jul 12, 2007 (Betim Deva)
+## - Split the main.c (davinci binary) from the rest of davinci (libdavinci.la)
+## - Made the basic docs installable
+## - Made the library (davinci scripts) installable
+##
+
 ## Used by automake and autoconf to build a Makefile.
 
 ## FIX: put config.h.in, configure.ac, Makefile.am somewhere so make dist works?
 
 ## DIST_SUBDIRS = config docs lib libltdl moddvmagick modules tests vicar win32
-EXTRA_DIST = README.modules README_FF docs gplot.c lexer.l lib moddvmagick parser.y push.skel tests win32
+EXTRA_DIST =  README.modules README_FF docs gplot.c lexer.l lib moddvmagick parser.y push.skel tests win32
 ## EXTRA_DIST = README.modules README_FF docs push.skel? shared_globals.c? tests win32
 
 if MODULE_SUPPORT
@@ -27,9 +37,9 @@ if HAVE_LIBWSOCK32
   MINGW32_LIBWSOCK32_LDADD = -lwsock32
 endif
 
-#if HAVE_LIBLTDLC
-  MINGW32_LIBLTDLC_LDADD = -Llibltdl -lltdlc
-#endif
+##Now use the internal ltdl instead of the system one
+MY_LIBLTDLC_LDADD = -Llibltdl -lltdlc
+
 
 MY_IOMEDLEY_LDADD =-Liomedley -liomedley
 
@@ -44,9 +54,10 @@ noinst_LIBRARIES = $(MY_MODULES_LIB)
 
 libmodsupp_a_SOURCES = ff_modules.c module_io.c io_loadmod.c
 
+## Install libdavinci  under /usr/lib
 lib_LTLIBRARIES = libdavinci.la
 libdavinci_la_LIBADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULES_LIB)  \
-		$(MINGW32_LIBREGEX_LDADD) $(MINGW32_LIBWSOCK32_LDADD) $(MINGW32_LIBLTDLC_LDADD)
+		$(MINGW32_LIBREGEX_LDADD) $(MINGW32_LIBWSOCK32_LDADD) $(MY_LIBLTDLC_LDADD)
 
 libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	darray.c \
@@ -88,13 +99,39 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	dvio_fits.c ff_extract.c dvio_tdb.c
 
 
+## Install header files under /usr/include/davinci
+library_includedir=$(includedir)/@PACKAGE@
+library_include_HEADERS = $(wildcard *.h)
 
 
-davinci_LDADD = -ldavinci  $(MINGW32_LIBLTDLC_LDADD)
+davinci_LDADD = -ldavinci  $(MY_LIBLTDLC_LDADD)
 davinci_LDFLAGS = -export-dynamic
 davinci_SOURCES = main.c
 
 
+## Install davinci library (scripts) under /usr/share/davinci/library
+dvrc = library
+dvrcdir = $(datadir)/@PACKAGE@/$(dvrc)
+dvrc_DATA = $(dvrc)/data_manipulation.dvrc \
+	$(dvrc)/general_science.dvrc \
+	$(dvrc)/image_stretch.dvrc \
+	$(dvrc)/library.dvrc \
+	$(dvrc)/misc.dvrc \
+	$(dvrc)/mosaic_tools.dvrc \
+	$(dvrc)/plot_tools.dvrc \
+	$(dvrc)/scriptlist.txt \
+	$(dvrc)/spectral_tools.dvrc \
+	$(dvrc)/themis_science.dvrc \
+	$(dvrc)/v_mosaic.dvrc
+
+
+## Install basic docs under /usr/share/davinci/docs
+docsdir = $(datadir)/@PACKAGE@/docs
+docs_DATA = docs/dv.gih README README_FF README.modules
+
 build.h: Makefile
 	echo 'char *build = "'`date`'";' > $@
 	echo 'char *builder = "'`id | sed -e 's/[^(]*(\([^)]*\)).*/\1/'`'@'`hostname`'";' >> $@
+
+
+
