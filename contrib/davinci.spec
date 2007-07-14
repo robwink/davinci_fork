@@ -37,7 +37,7 @@ Release:      1
 Source:      ftp://ftp.mars.asu.edu/pub/software/davinci/%{name}-%{version}.tar.gz
 
 #   build information
-#BuildPreReq:  make, gcc
+BuildPreReq:  make, gcc, hdf5, hdf5-devel, cfitsio, cfitsio-devel, readline, readline-devel, zlib, zlib-devel	
 BuildRoot: %{_tmppath}/%{name}-%{version}-buildroot
 Requires:	hdf5, hdf5-devel, cfitsio, readline, zlib
 #Provides:     MTA, smtpdaemon
@@ -81,6 +81,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 
+
+
+%post
+##To avoid SELINUX  security message
+chcon -t textrel_shlib %{_libdir}/libdavinci*
 
 
  
