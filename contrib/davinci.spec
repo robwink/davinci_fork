@@ -85,7 +85,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %post
 ##To avoid SELINUX  security message
-chcon -t textrel_shlib %{_libdir}/libdavinci*
+chcon -f -t textrel_shlib_t %{_libdir}/libdavinci*
 
 
  
