@@ -54,7 +54,7 @@ static const char DVM_EXT[] = "la";
 static const char DV_MOD_PATH_ENV[] = "DV_MOD_PATH";
 
 /* Default module lookup path if the environment is not set */
-static const char DV_MOD_PATH_DEF[] = "/usr/local/lib/davinci";
+static const char DV_MOD_PATH_DEF[] = "/usr/lib/davinci";
 
 static char DV_MODULE_INIT_FUNC_NAME[] = "dv_module_init";
 static char DV_MODULE_FINI_FUNC_NAME[] = "dv_module_fini";

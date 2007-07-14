@@ -1,18 +1,14 @@
 #!/bin/sh
-# Build a davinci rpm set. 
-# Uses temp space here, does not touch the source.
-# Runnable as myself, does not use root permission at all.
+# Script: Fedora/Redhat rpm builder for Davinci
+# Author: Betim Deva (betim@asu.edu)
+#
+# Build a davinci rpm set. This will setup a neccessary environment for 
+# davinci rpm based on the latest davinci version, invoke rpmbuild,
+# and copy over the rpm files to the davinci source
+# 
+#
+#
 set -x
-# Relies on ~/.rpmmacros setting _topdir to what is here 
-
-
-
-
-
-
-
-# and then recreates the basic redhat dirs, like SOURCES SPECS there.
-
 
 ##Get davinci source absolute path
 davinci_src=`echo $0 |  sed -e 's|\(.*\)\/\(.*\)$|\1|'`
@@ -46,6 +42,8 @@ if [ ! -f "${HOME}/.rpmmacros" ]
 then
 	echo "%_topdir  ${r}" >> ${HOME}/.rpmmacros
 	echo "%_tmppath ${r}/tmp" >> ${HOME}/.rpmmacros
+
+##Otherwise use whats in the .rpmmacros
 else	
 	r=`cat ~/.rpmmacros | grep "%_topdir" | sed 's|^\(.\+\)\([ \t]\+\)\(.\+\)$|\3|'`
 fi
