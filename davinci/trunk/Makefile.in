@@ -354,7 +354,9 @@ dvrcdir = $(datadir)/@PACKAGE@/$(dvrc)
 dvrc_DATA = $(dvrc)/data_manipulation.dvrc \
 	$(dvrc)/general_science.dvrc \
 	$(dvrc)/image_stretch.dvrc \
-	$(dvrc)/library.dvrc \
+	$(dvrc)/library_linux.dvrc \
+	$(dvrc)/library_win.dvrc \
+	$(dvrc)/library_mac.dvrc \
 	$(dvrc)/misc.dvrc \
 	$(dvrc)/mosaic_tools.dvrc \
 	$(dvrc)/plot_tools.dvrc \
