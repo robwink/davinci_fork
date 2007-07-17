@@ -465,7 +465,7 @@ ac_includes_default="\
 ac_subdirs_all="$ac_subdirs_all readline"
 ac_subdirs_all="$ac_subdirs_all iomedley"
 ac_subdirs_all="$ac_subdirs_all libltdl"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE MODULE_SUPPORT_TRUE MODULE_SUPPORT_FALSE X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS HAVE_MOTIF_TRUE HAVE_MOTIF_FALSE HAVE_LIBWSOCK32_TRUE HAVE_LIBWSOCK32_FALSE HAVE_LIBREGEX_TRUE HAVE_LIBREGEX_FALSE HAVE_LIBMAGICK_TRUE HAVE_LIBMAGICK_FALSE CXXCPP LIBOBJS subdirs LOCAL_READLINE_TRUE LOCAL_READLINE_FALSE LOCAL_IOMEDLEY_TRUE LOCAL_IOMEDLEY_FALSE LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB F77 FFLAGS ac_ct_F77 LIBTOOL LOCAL_VICAR_TRUE LOCAL_VICAR_FALSE DV_VIEWER GPLOT_CMD EDITOR MY_SUBDIRS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE MODULE_SUPPORT_TRUE MODULE_SUPPORT_FALSE X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS HAVE_MOTIF_TRUE HAVE_MOTIF_FALSE HAVE_LIBWSOCK32_TRUE HAVE_LIBWSOCK32_FALSE HAVE_LIBREGEX_TRUE HAVE_LIBREGEX_FALSE HAVE_LIBMAGICK_TRUE HAVE_LIBMAGICK_FALSE CXXCPP LIBOBJS subdirs LOCAL_READLINE_TRUE LOCAL_READLINE_FALSE LOCAL_IOMEDLEY_TRUE LOCAL_IOMEDLEY_FALSE LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB F77 FFLAGS ac_ct_F77 LIBTOOL LOCAL_VICAR_TRUE LOCAL_VICAR_FALSE DV_VIEWER GPLOT_CMD EDITOR DV_LIBRARY_TRUE DV_LIBRARY_FALSE DV_EXAMPLES_TRUE DV_EXAMPLES_FALSE MY_SUBDIRS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1040,7 +1040,7 @@ Optional Features:
   --disable-iomedley      remove iomedley support.
   --disable-vicar         remove VICAR widget support.
   --disable-libisis       disable use of libisis and hence ISIS cube writer.
-  --disable-aqua          remove AQUA widget support.
+  --enable-aqua           add AQUA widget support.
   --enable-shared[=PKGS]
                           build shared libraries [default=yes]
   --enable-static[=PKGS]
@@ -1063,6 +1063,8 @@ Optional Packages:
   --with-gnuplot=<path>   Path to gnuplot program (default: gnuplot)
   --with-editor=<path>    Path to text file editor (default: vim)
   --with-help=<path>      Path to davinci help file (default: /usr/share/davinci/docs/dv.gih)
+  --without-library      Don't install Davinci library scripts
+  --without-examples      Don't install Davinci examples
 
 Some influential environment variables:
   CC          C compiler command
@@ -5228,6 +5230,7 @@ esac
 
 
 
+
 # Check whether --enable-modules or --disable-modules was given.
 if test "${enable_modules+set}" = set; then
   enableval="$enable_modules"
@@ -5262,12 +5265,15 @@ if test "${enable_libisis+set}" = set; then
 
 fi;
 
+
 case $host in
 	*-*-darwin*)
 		# Check whether --enable-aqua or --disable-aqua was given.
 if test "${enable_aqua+set}" = set; then
   enableval="$enable_aqua"
-
+  enable_aqua=yes
+else
+  enable_aqua=no
 fi;
 	;;
 esac
@@ -12273,7 +12279,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 12276 "configure"' > conftest.$ac_ext
+  echo '#line 12282 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -12914,7 +12920,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:12917:" \
+echo "$as_me:12923:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -14012,11 +14018,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14015: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14021: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14019: \$? = $ac_status" >&5
+   echo "$as_me:14025: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14274,11 +14280,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14277: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14283: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14281: \$? = $ac_status" >&5
+   echo "$as_me:14287: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14336,11 +14342,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14339: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14345: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14343: \$? = $ac_status" >&5
+   echo "$as_me:14349: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15721,7 +15727,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 15724 "configure"' > conftest.$ac_ext
+    echo '#line 15730 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -16592,7 +16598,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 16595 "configure"
+#line 16601 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -16690,7 +16696,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 16693 "configure"
+#line 16699 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -18938,11 +18944,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:18941: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:18947: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:18945: \$? = $ac_status" >&5
+   echo "$as_me:18951: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -19000,11 +19006,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:19003: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:19009: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:19007: \$? = $ac_status" >&5
+   echo "$as_me:19013: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -19515,7 +19521,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 19518 "configure"' > conftest.$ac_ext
+    echo '#line 19524 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -20386,7 +20392,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 20389 "configure"
+#line 20395 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -20484,7 +20490,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 20487 "configure"
+#line 20493 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -21369,11 +21375,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:21372: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:21378: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:21376: \$? = $ac_status" >&5
+   echo "$as_me:21382: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -21431,11 +21437,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:21434: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:21440: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:21438: \$? = $ac_status" >&5
+   echo "$as_me:21444: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -22796,7 +22802,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 22799 "configure"' > conftest.$ac_ext
+    echo '#line 22805 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -23569,11 +23575,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:23572: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:23578: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:23576: \$? = $ac_status" >&5
+   echo "$as_me:23582: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -23831,11 +23837,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:23834: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:23840: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:23838: \$? = $ac_status" >&5
+   echo "$as_me:23844: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -23893,11 +23899,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:23896: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:23902: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:23900: \$? = $ac_status" >&5
+   echo "$as_me:23906: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -25278,7 +25284,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 25281 "configure"' > conftest.$ac_ext
+    echo '#line 25287 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -26149,7 +26155,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 26152 "configure"
+#line 26158 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -26247,7 +26253,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 26250 "configure"
+#line 26256 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -27573,6 +27579,105 @@ else
 
 fi;
 
+# Check whether --with-library or --without-library was given.
+if test "${with_library+set}" = set; then
+  withval="$with_library"
+  DV_LIBRARY="no"
+else
+  echo "$as_me:$LINENO: checking for library/utils.dvrc" >&5
+echo $ECHO_N "checking for library/utils.dvrc... $ECHO_C" >&6
+if test "${ac_cv_file_library_utils_dvrc+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "library/utils.dvrc"; then
+  ac_cv_file_library_utils_dvrc=yes
+else
+  ac_cv_file_library_utils_dvrc=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file_library_utils_dvrc" >&5
+echo "${ECHO_T}$ac_cv_file_library_utils_dvrc" >&6
+if test $ac_cv_file_library_utils_dvrc = yes; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBRARY_UTILS_DVRC 1
+_ACEOF
+
+DV_LIBRARY="yes"
+else
+  DV_LIBRARY="no"
+fi
+
+
+fi;
+
+
+if test "x$DV_LIBRARY" != "xno"; then
+  DV_LIBRARY_TRUE=
+  DV_LIBRARY_FALSE='#'
+else
+  DV_LIBRARY_TRUE='#'
+  DV_LIBRARY_FALSE=
+fi
+
+
+
+# Check whether --with-examples or --without-examples was given.
+if test "${with_examples+set}" = set; then
+  withval="$with_examples"
+  DV_EXAMPLES="no"
+else
+  echo "$as_me:$LINENO: checking for examples/day_maps_final.vicar" >&5
+echo $ECHO_N "checking for examples/day_maps_final.vicar... $ECHO_C" >&6
+if test "${ac_cv_file_examples_day_maps_final_vicar+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "examples/day_maps_final.vicar"; then
+  ac_cv_file_examples_day_maps_final_vicar=yes
+else
+  ac_cv_file_examples_day_maps_final_vicar=no
+fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_file_examples_day_maps_final_vicar" >&5
+echo "${ECHO_T}$ac_cv_file_examples_day_maps_final_vicar" >&6
+if test $ac_cv_file_examples_day_maps_final_vicar = yes; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_EXAMPLES_DAY_MAPS_FINAL_VICAR 1
+_ACEOF
+
+DV_EXAMPLES="yes"
+else
+  DV_EXAMPLES="no"
+fi
+
+
+fi;
+
+
+if test "x$DV_EXAMPLES" != "xno"; then
+  DV_EXAMPLES_TRUE=
+  DV_EXAMPLES_FALSE='#'
+else
+  DV_EXAMPLES_TRUE='#'
+  DV_EXAMPLES_FALSE=
+fi
+
+
+
+
+
+
+
+
 
 cat >>confdefs.h <<_ACEOF
 #define DV_VIEWER "$DV_VIEWER"
@@ -27592,6 +27697,17 @@ _ACEOF
 cat >>confdefs.h <<_ACEOF
 #define DVHELP "$DVHELP"
 _ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define DV_EXAMPLES "$DV_EXAMPLES"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define DV_LIBRARY "$DV_LIBRARY"
+_ACEOF
+
 
 
 
@@ -27771,6 +27887,20 @@ if test -z "${LOCAL_VICAR_TRUE}" && test -z "${LOCAL_VICAR_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"LOCAL_VICAR\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"LOCAL_VICAR\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${DV_LIBRARY_TRUE}" && test -z "${DV_LIBRARY_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"DV_LIBRARY\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"DV_LIBRARY\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${DV_EXAMPLES_TRUE}" && test -z "${DV_EXAMPLES_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"DV_EXAMPLES\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"DV_EXAMPLES\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -28409,6 +28539,10 @@ s,@LOCAL_VICAR_FALSE@,$LOCAL_VICAR_FALSE,;t t
 s,@DV_VIEWER@,$DV_VIEWER,;t t
 s,@GPLOT_CMD@,$GPLOT_CMD,;t t
 s,@EDITOR@,$EDITOR,;t t
+s,@DV_LIBRARY_TRUE@,$DV_LIBRARY_TRUE,;t t
+s,@DV_LIBRARY_FALSE@,$DV_LIBRARY_FALSE,;t t
+s,@DV_EXAMPLES_TRUE@,$DV_EXAMPLES_TRUE,;t t
+s,@DV_EXAMPLES_FALSE@,$DV_EXAMPLES_FALSE,;t t
 s,@MY_SUBDIRS@,$MY_SUBDIRS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
@@ -29341,3 +29475,5 @@ PRINT        " display program:  $DV_VIEWER"
 PRINT        "plotting program:  $GPLOT_CMD"
 PRINT        "     text editor:  $EDITOR"
 PRINT        "   helpfile path:  $DVHELP"
+PRINT_YES_NO " Davinci library"  "$DV_LIBRARY"
+PRINT_YES_NO "Davinci examples"  "$DV_EXAMPLES"
