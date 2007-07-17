@@ -75,7 +75,7 @@ am__vpath_adj = case $$p in \
 am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(docsdir)" "$(DESTDIR)$(dvrcdir)" \
-	"$(DESTDIR)$(library_includedir)"
+	"$(DESTDIR)$(examplesdir)" "$(DESTDIR)$(library_includedir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 @LOCAL_READLINE_TRUE@am__DEPENDENCIES_1 = readline/libreadline.a
@@ -145,7 +145,8 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 docsDATA_INSTALL = $(INSTALL_DATA)
 dvrcDATA_INSTALL = $(INSTALL_DATA)
-DATA = $(docs_DATA) $(dvrc_DATA)
+examplesDATA_INSTALL = $(INSTALL_DATA)
+DATA = $(docs_DATA) $(dvrc_DATA) $(examples_DATA)
 library_includeHEADERS_INSTALL = $(INSTALL_HEADER)
 HEADERS = $(library_include_HEADERS)
 ETAGS = etags
@@ -183,6 +184,10 @@ CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DV_EXAMPLES_FALSE = @DV_EXAMPLES_FALSE@
+DV_EXAMPLES_TRUE = @DV_EXAMPLES_TRUE@
+DV_LIBRARY_FALSE = @DV_LIBRARY_FALSE@
+DV_LIBRARY_TRUE = @DV_LIBRARY_TRUE@
 DV_VIEWER = @DV_VIEWER@
 ECHO = @ECHO@
 ECHO_C = @ECHO_C@
@@ -349,22 +354,12 @@ library_include_HEADERS = $(wildcard *.h)
 davinci_LDADD = -ldavinci  $(MY_LIBLTDLC_LDADD)
 davinci_LDFLAGS = -export-dynamic
 davinci_SOURCES = main.c
-dvrc = library
-dvrcdir = $(datadir)/@PACKAGE@/$(dvrc)
-dvrc_DATA = $(dvrc)/data_manipulation.dvrc \
-	$(dvrc)/general_science.dvrc \
-	$(dvrc)/image_stretch.dvrc \
-	$(dvrc)/library_linux.dvrc \
-	$(dvrc)/library_win.dvrc \
-	$(dvrc)/library_mac.dvrc \
-	$(dvrc)/misc.dvrc \
-	$(dvrc)/mosaic_tools.dvrc \
-	$(dvrc)/plot_tools.dvrc \
-	$(dvrc)/scriptlist.txt \
-	$(dvrc)/spectral_tools.dvrc \
-	$(dvrc)/themis_science.dvrc \
-	$(dvrc)/v_mosaic.dvrc
-
+@DV_LIBRARY_TRUE@dvrc = library
+@DV_LIBRARY_TRUE@dvrcdir = $(datadir)/@PACKAGE@/$(dvrc)
+@DV_LIBRARY_TRUE@dvrc_DATA = $(wildcard $(dvrc)/*.dvrc)
+@DV_EXAMPLES_TRUE@examples = examples
+@DV_EXAMPLES_TRUE@examplesdir = $(datadir)/@PACKAGE@/$(examples)
+@DV_EXAMPLES_TRUE@examples_DATA = $(wildcard $(examples)/*)
 docsdir = $(datadir)/@PACKAGE@/docs
 docs_DATA = docs/dv.gih README README_FF README.modules
 all: $(BUILT_SOURCES) config.h
@@ -698,6 +693,23 @@ uninstall-dvrcDATA:
 	  echo " rm -f '$(DESTDIR)$(dvrcdir)/$$f'"; \
 	  rm -f "$(DESTDIR)$(dvrcdir)/$$f"; \
 	done
+install-examplesDATA: $(examples_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(examplesdir)" || $(mkdir_p) "$(DESTDIR)$(examplesdir)"
+	@list='$(examples_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(examplesDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(examplesdir)/$$f'"; \
+	  $(examplesDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(examplesdir)/$$f"; \
+	done
+
+uninstall-examplesDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(examples_DATA)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(examplesdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(examplesdir)/$$f"; \
+	done
 install-library_includeHEADERS: $(library_include_HEADERS)
 	@$(NORMAL_INSTALL)
 	test -z "$(library_includedir)" || $(mkdir_p) "$(DESTDIR)$(library_includedir)"
@@ -999,7 +1011,7 @@ install-binPROGRAMS: install-libLTLIBRARIES
 
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(docsdir)" "$(DESTDIR)$(dvrcdir)" "$(DESTDIR)$(library_includedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(docsdir)" "$(DESTDIR)$(dvrcdir)" "$(DESTDIR)$(examplesdir)" "$(DESTDIR)$(library_includedir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
 install: $(BUILT_SOURCES)
@@ -1051,7 +1063,7 @@ info: info-recursive
 info-am:
 
 install-data-am: install-docsDATA install-dvrcDATA \
-	install-library_includeHEADERS
+	install-examplesDATA install-library_includeHEADERS
 
 install-exec-am: install-binPROGRAMS install-libLTLIBRARIES
 
@@ -1082,8 +1094,8 @@ ps: ps-recursive
 ps-am:
 
 uninstall-am: uninstall-binPROGRAMS uninstall-docsDATA \
-	uninstall-dvrcDATA uninstall-info-am uninstall-libLTLIBRARIES \
-	uninstall-library_includeHEADERS
+	uninstall-dvrcDATA uninstall-examplesDATA uninstall-info-am \
+	uninstall-libLTLIBRARIES uninstall-library_includeHEADERS
 
 uninstall-info: uninstall-info-recursive
 
@@ -1097,17 +1109,17 @@ uninstall-info: uninstall-info-recursive
 	distcleancheck distdir distuninstallcheck dvi dvi-am html \
 	html-am info info-am install install-am install-binPROGRAMS \
 	install-data install-data-am install-docsDATA install-dvrcDATA \
-	install-exec install-exec-am install-info install-info-am \
-	install-libLTLIBRARIES install-library_includeHEADERS \
-	install-man install-strip installcheck installcheck-am \
-	installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic maintainer-clean-recursive \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool mostlyclean-recursive pdf pdf-am ps ps-am \
-	tags tags-recursive uninstall uninstall-am \
+	install-examplesDATA install-exec install-exec-am install-info \
+	install-info-am install-libLTLIBRARIES \
+	install-library_includeHEADERS install-man install-strip \
+	installcheck installcheck-am installdirs installdirs-am \
+	maintainer-clean maintainer-clean-generic \
+	maintainer-clean-recursive mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool mostlyclean-recursive \
+	pdf pdf-am ps ps-am tags tags-recursive uninstall uninstall-am \
 	uninstall-binPROGRAMS uninstall-docsDATA uninstall-dvrcDATA \
-	uninstall-info-am uninstall-libLTLIBRARIES \
-	uninstall-library_includeHEADERS
+	uninstall-examplesDATA uninstall-info-am \
+	uninstall-libLTLIBRARIES uninstall-library_includeHEADERS
 
 
 build.h: Makefile

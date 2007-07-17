@@ -6,6 +6,12 @@
 /* Path to davinci help file */
 #undef DVHELP
 
+/* Path to davinci examples */
+#undef DV_EXAMPLES
+
+/* Path to davinci library scripts */
+#undef DV_LIBRARY
+
 /* Path to image display program for display() function */
 #undef DV_VIEWER
 
@@ -45,6 +51,9 @@
 
 /* Define to 1 if you have the `drand48' function. */
 #undef HAVE_DRAND48
+
+/* Define to 1 if you have the file `AC_File'. */
+#undef HAVE_EXAMPLES_DAY_MAPS_FINAL_VICAR
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
@@ -93,6 +102,9 @@
 
 /* Define to 1 if you have the `qmv' library (-lqmv). */
 #undef HAVE_LIBQMV
+
+/* Define to 1 if you have the file `AC_File'. */
+#undef HAVE_LIBRARY_UTILS_DVRC
 
 /* have readline library */
 #undef HAVE_LIBREADLINE

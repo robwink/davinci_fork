@@ -110,21 +110,18 @@ davinci_SOURCES = main.c
 
 
 ## Install davinci library (scripts) under /usr/share/davinci/library
+if DV_LIBRARY
 dvrc = library
 dvrcdir = $(datadir)/@PACKAGE@/$(dvrc)
-dvrc_DATA = $(dvrc)/data_manipulation.dvrc \
-	$(dvrc)/general_science.dvrc \
-	$(dvrc)/image_stretch.dvrc \
-	$(dvrc)/library_linux.dvrc \
-	$(dvrc)/library_win.dvrc \
-	$(dvrc)/library_mac.dvrc \
-	$(dvrc)/misc.dvrc \
-	$(dvrc)/mosaic_tools.dvrc \
-	$(dvrc)/plot_tools.dvrc \
-	$(dvrc)/scriptlist.txt \
-	$(dvrc)/spectral_tools.dvrc \
-	$(dvrc)/themis_science.dvrc \
-	$(dvrc)/v_mosaic.dvrc
+dvrc_DATA =  $(wildcard $(dvrc)/*.dvrc)
+endif
+
+
+if DV_EXAMPLES
+examples = examples
+examplesdir = $(datadir)/@PACKAGE@/$(examples)
+examples_DATA =  $(wildcard $(examples)/*)
+endif
 
 
 ## Install basic docs under /usr/share/davinci/docs

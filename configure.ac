@@ -27,6 +27,7 @@ AC_PROG_MAKE_SET
 dnl Check endianness.
 AC_C_BIGENDIAN
 
+
 dnl Handle user-controllable options.
 
 dnl Enable/disable loadable modules (default = yes).
@@ -47,11 +48,13 @@ AC_ARG_ENABLE([libisis],
     AC_HELP_STRING([--disable-libisis],
                    [disable use of libisis and hence ISIS cube writer.]))
 
+
 dnl Aqua build for OSX/dawrin
 case $host in
 	*-*-darwin*)
 		AC_ARG_ENABLE([aqua],
-			AC_HELP_STRING([--disable-aqua], [remove AQUA widget support.]))
+			AC_HELP_STRING([--enable-aqua], [add AQUA widget support.]),
+			enable_aqua=yes, enable_aqua=no)
 	;;
 esac
 
@@ -328,11 +331,33 @@ AC_ARG_WITH(help,
     [DVHELP=$withval],
     [DVHELP="/usr/share/davinci/docs/dv.gih"]
 )
+AC_ARG_WITH(library, 
+	[  --without-library      Don't install Davinci library scripts],
+	[DV_LIBRARY="no"],
+	[AC_CHECK_FILES(library/utils.dvrc, [DV_LIBRARY="yes"],[DV_LIBRARY="no"])]
+)
+AM_CONDITIONAL(DV_LIBRARY, [test "x$DV_LIBRARY" != "xno"])
+
+AC_ARG_WITH(examples, 
+	[  --without-examples      Don't install Davinci examples],
+	[DV_EXAMPLES="no"],
+	[AC_CHECK_FILES(examples/day_maps_final.vicar,[DV_EXAMPLES="yes"],[DV_EXAMPLES="no"])]
+)
+AM_CONDITIONAL(DV_EXAMPLES, [test "x$DV_EXAMPLES" != "xno"])
+
+
+
+
+
+
 
 AC_DEFINE_UNQUOTED(DV_VIEWER, "$DV_VIEWER", Path to image display program for display() function)
 AC_DEFINE_UNQUOTED(GPLOT_CMD, "$GPLOT_CMD",  Path to gnuplot program for plot() function)
 AC_DEFINE_UNQUOTED(EDITOR, "$EDITOR", Path to text file editor for edit() function)
 AC_DEFINE_UNQUOTED(DVHELP, "$DVHELP", Path to davinci help file)
+AC_DEFINE_UNQUOTED(DV_EXAMPLES, "$DV_EXAMPLES", Path to davinci examples)
+AC_DEFINE_UNQUOTED(DV_LIBRARY, "$DV_LIBRARY", Path to davinci library scripts)
+
 
 
 dnl FIX: this stuff can go away if libtool is used.
@@ -378,3 +403,5 @@ PRINT        " display program:  $DV_VIEWER"
 PRINT        "plotting program:  $GPLOT_CMD"
 PRINT        "     text editor:  $EDITOR"
 PRINT        "   helpfile path:  $DVHELP"
+PRINT_YES_NO " Davinci library"  "$DV_LIBRARY"
+PRINT_YES_NO "Davinci examples"  "$DV_EXAMPLES"
