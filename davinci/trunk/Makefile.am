@@ -104,7 +104,7 @@ library_includedir=$(includedir)/@PACKAGE@
 library_include_HEADERS = $(wildcard *.h)
 
 
-davinci_LDADD = -ldavinci  $(MY_LIBLTDLC_LDADD)
+davinci_LDADD = -ldavinci $(MY_MODULES_LIB)  $(MY_LIBLTDLC_LDADD)
 davinci_LDFLAGS = -export-dynamic
 davinci_SOURCES = main.c
 
