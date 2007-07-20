@@ -113,7 +113,7 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_davinci_OBJECTS = main.$(OBJEXT)
 davinci_OBJECTS = $(am_davinci_OBJECTS)
-davinci_DEPENDENCIES = $(am__DEPENDENCIES_2)
+davinci_DEPENDENCIES = $(am__DEPENDENCIES_3) $(am__DEPENDENCIES_2)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__depfiles_maybe = depfiles
@@ -351,7 +351,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 
 library_includedir = $(includedir)/@PACKAGE@
 library_include_HEADERS = $(wildcard *.h)
-davinci_LDADD = -ldavinci  $(MY_LIBLTDLC_LDADD)
+davinci_LDADD = -ldavinci $(MY_MODULES_LIB)  $(MY_LIBLTDLC_LDADD)
 davinci_LDFLAGS = -export-dynamic
 davinci_SOURCES = main.c
 @DV_LIBRARY_TRUE@dvrc = library
