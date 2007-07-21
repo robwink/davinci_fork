@@ -84,21 +84,36 @@ AC_CHECK_LIB(X11, XOpenDisplay)
 AC_CHECK_LIB(Xt, XtToolkitInitialize)
 AC_CHECK_HEADERS(X11/Intrinsic.h)
 
+
+# Ask user for path to motif stuff:
+AC_ARG_WITH(motif,
+    [  --with-motif=<path>     prefix of motif installation. e.g. /usr/local or /usr],
+    [LDFLAGS="$LDFLAGS -L$withval/lib" ; CFLAGS="$CFLAGS -I$withval/include"]
+)
+
 if test "x$ac_cv_lib_X11_XOpenDisplay" = "xyes" -a \
         "x$ac_cv_lib_Xt_XtToolkitInitialize" = "xyes" -a \
         "x$ac_cv_header_X11_Intrinsic_h" = "xyes"; then
 	have_xt="yes"
 	AC_DEFINE(HAVE_XT, 1, [ headers and libraries for X11 and Xt ])
-	AC_CHECK_HEADERS(Xm/Xm.h)
-	AC_CHECK_LIB(Xm, XmCreateForm)
+
+	AC_CHECK_HEADERS(Xm/Xm.h,[have_xm1=yes], [have_xm1=no])
+#	AC_CHECK_LIB(Xm, XmCreateForm)
+	AC_CHECK_LIB(Xm, main,[have_xm2=yes], [have_xm2=no])
+
+	
 	have_motif="no"
-	if test "x$ac_cv_header_Xm_Xm_h" = "xyes" -a \
-			"x$ac_cv_lib_Xm_XmCreateForm" = "xyes"; then
+#	if test "x$ac_cv_header_Xm_Xm_h" = "xyes" -a \
+#			"x$ac_cv_lib_Xm_XmCreateForm" = "xyes"; then
+	if test "x$have_xm1" = "xyes" -a \
+		"x$have_xm2" = "xyes"; then
 		AC_DEFINE(HAVE_MOTIF, 1, [if all motif parts are present])
 		have_motif="yes";
 	fi
 fi
 AM_CONDITIONAL(HAVE_MOTIF, [test "x$have_motif" = "xyes"])
+
+
 
 dnl Check for miscellaneous libraries.
 AC_CHECK_LIB(m, sqrt,, [echo "ERROR: unable to locate libm"; exit 1])
@@ -124,7 +139,13 @@ AM_CONDITIONAL(HAVE_LIBREGEX, [test "x$have_libregex" = "xyes"])
 
 AC_CHECK_LIB(z, deflate)
 AC_CHECK_LIB(png, png_read_info)
-AC_CHECK_LIB(cfitsio, ffopen)
+
+#check for cfitsio
+AC_ARG_WITH(cfitsio,
+    [  --with-cfitsio=<path>      prefix of cfitsio installation. e.g. /usr/local or /usr],
+    [LDFLAGS="$LDFLAGS -L$withval/lib" ; CFLAGS="$CFLAGS -I$withval/include"]
+)
+AC_CHECK_LIB(cfitsio, ffopen,[have_cfitsio=yes],[have_cfitsio=no])
 
 # Ask user for path to hdf5 stuff:.
 have_libhdf=yes
@@ -141,9 +162,9 @@ else
 fi
 AC_CHECK_LIB(hdf5, H5open,[have_libhdf=yes],[have_libhdf=no])
 
-if test "x$ac_cv_lib_cfitsio_ffopen" = "xyes"; then
-	have_cfitsio="yes"
-fi
+#if test "x$ac_cv_lib_cfitsio_ffopen" = "xyes"; then
+#	have_cfitsio="yes"
+#fi
 
 
 dnl Check for ImageMagic.
@@ -332,7 +353,7 @@ AC_ARG_WITH(help,
     [DVHELP="/usr/share/davinci/docs/dv.gih"]
 )
 AC_ARG_WITH(library, 
-	[  --without-library      Don't install Davinci library scripts],
+	[  --without-library       Don't install Davinci library scripts],
 	[DV_LIBRARY="no"],
 	[AC_CHECK_FILES(library/utils.dvrc, [DV_LIBRARY="yes"],[DV_LIBRARY="no"])]
 )
@@ -350,10 +371,18 @@ AM_CONDITIONAL(DV_EXAMPLES, [test "x$DV_EXAMPLES" != "xno"])
 
 
 
-
+if test "$DV_VIEWER" != "" ; then
 AC_DEFINE_UNQUOTED(DV_VIEWER, "$DV_VIEWER", Path to image display program for display() function)
+fi
+
+if test "$GPLOT_CMD" != "" ; then
 AC_DEFINE_UNQUOTED(GPLOT_CMD, "$GPLOT_CMD",  Path to gnuplot program for plot() function)
+fi
+
+if test "$EDITOR" != "" ; then
 AC_DEFINE_UNQUOTED(EDITOR, "$EDITOR", Path to text file editor for edit() function)
+fi
+
 AC_DEFINE_UNQUOTED(DVHELP, "$DVHELP", Path to davinci help file)
 AC_DEFINE_UNQUOTED(DV_EXAMPLES, "$DV_EXAMPLES", Path to davinci examples)
 AC_DEFINE_UNQUOTED(DV_LIBRARY, "$DV_LIBRARY", Path to davinci library scripts)
