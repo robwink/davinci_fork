@@ -281,8 +281,14 @@ int send_to_plot(char *s)
         send_to_plot("set data style linespoints\n");
         send_to_plot("set parametric\n");
         send_to_plot("set mouse\n");
+	
 #ifdef HAVE_AQUA
-	send_to_plot("set term aqua\n");
+	if(getenv("DV_AQUA")) {
+	  char *have_aqua = strdup(getenv("DV_AQUA"));
+	  if(have_aqua  != NULL &&  strcmp(have_aqua, "1") == 0){
+	    send_to_plot("set term aqua\n");
+	  }
+	}
 #endif
     }
     if (write(fileno(pfp), s, strlen(s)) < 0) {
