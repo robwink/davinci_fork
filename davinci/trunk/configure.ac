@@ -98,13 +98,10 @@ if test "x$ac_cv_lib_X11_XOpenDisplay" = "xyes" -a \
 	AC_DEFINE(HAVE_XT, 1, [ headers and libraries for X11 and Xt ])
 
 	AC_CHECK_HEADERS(Xm/Xm.h,[have_xm1=yes], [have_xm1=no])
-#	AC_CHECK_LIB(Xm, XmCreateForm)
-	AC_CHECK_LIB(Xm, main,[have_xm2=yes], [have_xm2=no])
+	AC_CHECK_LIB(Xm, XmCreateForm,[have_xm2=yes], [have_xm2=no])
 
 	
 	have_motif="no"
-#	if test "x$ac_cv_header_Xm_Xm_h" = "xyes" -a \
-#			"x$ac_cv_lib_Xm_XmCreateForm" = "xyes"; then
 	if test "x$have_xm1" = "xyes" -a \
 		"x$have_xm2" = "xyes"; then
 		AC_DEFINE(HAVE_MOTIF, 1, [if all motif parts are present])
@@ -117,17 +114,11 @@ AM_CONDITIONAL(HAVE_MOTIF, [test "x$have_motif" = "xyes"])
 
 dnl Check for miscellaneous libraries.
 AC_CHECK_LIB(m, sqrt,, [echo "ERROR: unable to locate libm"; exit 1])
-
-
-
 AC_CHECK_LIB(usds, Themis_Entry)
 AC_CHECK_LIB(msss_vis, read_DCT)
 AC_CHECK_LIB(termcap, tgetent)
 AC_CHECK_LIB(ltdl, lt_dlopen)
 have_libltdlc=yes
-#AC_CHECK_LIB(ltdlc, lt_dlopen, [have_libltdlc=yes], [have_libltdlc=no],[-Llibltdl/.libs])
-# Used for MINGW
-#AM_CONDITIONAL(HAVE_LIBLTDLC, [test "x$have_libltdlc" = "xyes"])
 
 # Used for MINGW
 AC_CHECK_LIB(wsock32, main, [have_libwsock32=yes], [have_libwsock32=no])
