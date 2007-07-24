@@ -96,21 +96,16 @@ if test "x$ac_cv_lib_X11_XOpenDisplay" = "xyes" -a \
         "x$ac_cv_header_X11_Intrinsic_h" = "xyes"; then
 	have_xt="yes"
 	AC_DEFINE(HAVE_XT, 1, [ headers and libraries for X11 and Xt ])
-
-	AC_CHECK_HEADERS(Xm/Xm.h,[have_xm1=yes], [have_xm1=no])
-	AC_CHECK_LIB(Xm, XmCreateForm,[have_xm2=yes], [have_xm2=no])
-
-	
+	AC_CHECK_HEADERS(Xm/Xm.h)
+	AC_CHECK_LIB(Xm, XmCreateForm)
 	have_motif="no"
-	if test "x$have_xm1" = "xyes" -a \
-		"x$have_xm2" = "xyes"; then
+	if test "x$ac_cv_header_Xm_Xm_h" = "xyes" -a \
+			"x$ac_cv_lib_Xm_XmCreateForm" = "xyes"; then
 		AC_DEFINE(HAVE_MOTIF, 1, [if all motif parts are present])
 		have_motif="yes";
 	fi
 fi
 AM_CONDITIONAL(HAVE_MOTIF, [test "x$have_motif" = "xyes"])
-
-
 
 dnl Check for miscellaneous libraries.
 AC_CHECK_LIB(m, sqrt,, [echo "ERROR: unable to locate libm"; exit 1])
