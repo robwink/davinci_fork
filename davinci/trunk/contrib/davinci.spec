@@ -56,7 +56,7 @@ Requires:	hdf5, hdf5-devel, cfitsio, readline, zlib
 %setup -q
 
 %build
-./configure --prefix=/usr  --disable-libisis
+./configure --prefix=/usr  --disable-libisis   --with-viewer=/usr/bin/display
 make
 
 
