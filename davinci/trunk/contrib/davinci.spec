@@ -1,6 +1,8 @@
 ##
 ##  davinci spec -- Mars Space Flight Facility RPM Package Specification
-##  
+##  This is a base SPEC file for davinci. This file may be modified 
+##  and written to a new file, if the rpms are built from the build_rom.sh
+##  script in order to modify the Version field.
 ##
 ##  Permission to use, copy, modify, and distribute this software for
 ##  any purpose with or without fee is hereby granted, provided that
@@ -30,19 +32,20 @@ Packager:     Betim Deva <betim@asu.edu>
 Distribution: Fedora Core 4 (MSFF)
 Group:        Applications/Science/Davinci
 License:      GPLv2
-Version:	1.68
+Version:	1.69
 Release:      1
 
 #   list of sources
 Source:      ftp://ftp.mars.asu.edu/pub/software/davinci/%{name}-%{version}.tar.gz
 
 #   build information
-BuildPreReq:  make, gcc, hdf5, hdf5-devel, cfitsio, cfitsio-devel, readline, readline-devel, zlib, zlib-devel	
+BuildPreReq:  automake, autoconf, make, gcc, hdf5, hdf5-devel, cfitsio, cfitsio-devel, readline, readline-devel, zlib, zlib-devel	
 BuildRoot: %{_tmppath}/%{name}-%{version}-buildroot
-Requires:	hdf5, hdf5-devel, cfitsio, readline, zlib
-#Provides:     MTA, smtpdaemon
-#Obsoletes:    sendmail
-#Conflicts:    exim, postfix, qmail
+Requires:	gnuplot, hdf5, hdf5-devel, cfitsio, readline, zlib
+#Provides:     
+#Obsoletes:    
+#Conflicts:    
+Prefix: %_prefix
 
 %description
 	Davinci is an interpreted language that looks and feels a lot like C, 
@@ -56,7 +59,10 @@ Requires:	hdf5, hdf5-devel, cfitsio, readline, zlib
 %setup -q
 
 %build
-./configure --prefix=/usr  --disable-libisis   --with-viewer=/usr/bin/display
+./configure --prefix=/usr  --disable-libisis   --with-viewer=/usr/bin/display \
+--with-modpath=%{_libdir}/%{name} --with-help=%{_datadir}/%{name}/docs/dv.gih
+
+
 make
 
 
@@ -74,10 +80,12 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
  %defattr(-,root,root)
- %{_bindir}/davinci
- %{_libdir}/*
- %{_datadir}/*
- %{_prefix}/include/%{name}/*
+ %{_bindir}/%{name}
+ %{_libdir}/libdavinci*
+ %{_libdir}/libiomedley*
+ %{_libdir}/%{name}*
+ %{_datadir}/%{name}*
+ %{_includedir}/%{name}*
 
 
 
