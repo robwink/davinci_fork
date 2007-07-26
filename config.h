@@ -5,7 +5,16 @@
 #define BUILD_MODULE_SUPPORT 1
 
 /* Path to davinci help file */
-#define DVHELP "/usr/local/lib/davinci/dv.gih"
+#define DVHELP "/usr/local/share/davinci/docs/dv.gih"
+
+/* Path to davinci examples */
+#define DV_EXAMPLES "no"
+
+/* Path to davinci library scripts */
+#define DV_LIBRARY "no"
+
+/* Path to davinci loadable modules (if enabled) */
+#define DV_MOD_PATH "/usr/local/lib/davinci"
 
 /* Path to image display program for display() function */
 #define DV_VIEWER "/usr/local/bin/xv"
@@ -47,6 +56,9 @@
 /* Define to 1 if you have the `drand48' function. */
 #define HAVE_DRAND48 1
 
+/* Define to 1 if you have the file `AC_File'. */
+/* #undef HAVE_EXAMPLES_DAY_MAPS_FINAL_VICAR */
+
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
 
@@ -61,9 +73,6 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
-
-/* Define to 1 if you have the `cfitsio' library (-lcfitsio). */
-#define HAVE_LIBCFITSIO 1
 
 /* Define to 1 if you have the <libgen.h> header file. */
 #define HAVE_LIBGEN_H 1
@@ -94,6 +103,9 @@
 
 /* Define to 1 if you have the `qmv' library (-lqmv). */
 #define HAVE_LIBQMV 1
+
+/* Define to 1 if you have the file `AC_File'. */
+/* #undef HAVE_LIBRARY_UTILS_DVRC */
 
 /* have readline library */
 #define HAVE_LIBREADLINE 1
@@ -242,13 +254,13 @@
 #define PACKAGE_NAME "davinci"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "davinci 1.21"
+#define PACKAGE_STRING "davinci 1.69"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "davinci"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.21"
+#define PACKAGE_VERSION "1.69"
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -263,7 +275,7 @@
 /* #undef TM_IN_SYS_TIME */
 
 /* Version number of package */
-#define VERSION "1.21"
+#define VERSION "1.69"
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
