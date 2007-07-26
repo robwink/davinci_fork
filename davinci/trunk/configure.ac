@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(davinci, 1.21)
+AC_INIT(davinci, 1.69)
 AC_CONFIG_AUX_DIR(config)
 
 dnl Do some AIX-specific pre-config.
@@ -12,6 +12,10 @@ dnl Setup automake.
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AM_CONFIG_HEADER(config.h)
+
+
+#Default prefix
+#AC_PREFIX_DEFAULT(/usr/local)
 
 dnl Check for some required programs.
 AC_PROG_CC
@@ -334,10 +338,17 @@ AC_ARG_WITH(editor,
 	[AC_PATH_PROGS(EDITOR,[vim vi emacs edit])]
 )
 AC_ARG_WITH(help, 
-    [  --with-help=<path>      Path to davinci help file (default: /usr/share/davinci/docs/dv.gih)],
+    [  --with-help=<path>      Path to davinci help file (default: /usr/local/share/davinci/docs/dv.gih)],
     [DVHELP=$withval],
-    [DVHELP="/usr/share/davinci/docs/dv.gih"]
+    [DVHELP="/usr/local/share/davinci/docs/dv.gih"]
 )
+
+AC_ARG_WITH(modpath, 
+    [  --with-modpath=<path>   Path to davinci loadable modules (if enabled) (default: /usr/local/lib/davinci)],
+    [DV_MOD_PATH=$withval],
+    [DV_MOD_PATH="/usr/local/lib/davinci"]
+)
+
 AC_ARG_WITH(library, 
 	[  --without-library       Don't install Davinci library scripts],
 	[DV_LIBRARY="no"],
@@ -357,6 +368,7 @@ AM_CONDITIONAL(DV_EXAMPLES, [test "x$DV_EXAMPLES" != "xno"])
 
 
 
+
 if test "$DV_VIEWER" != "" ; then
 AC_DEFINE_UNQUOTED(DV_VIEWER, "$DV_VIEWER", Path to image display program for display() function)
 fi
@@ -370,6 +382,7 @@ AC_DEFINE_UNQUOTED(EDITOR, "$EDITOR", Path to text file editor for edit() functi
 fi
 
 AC_DEFINE_UNQUOTED(DVHELP, "$DVHELP", Path to davinci help file)
+AC_DEFINE_UNQUOTED(DV_MOD_PATH, "$DV_MOD_PATH", Path to davinci loadable modules (if enabled))
 AC_DEFINE_UNQUOTED(DV_EXAMPLES, "$DV_EXAMPLES", Path to davinci examples)
 AC_DEFINE_UNQUOTED(DV_LIBRARY, "$DV_LIBRARY", Path to davinci library scripts)
 
@@ -408,15 +421,21 @@ PRINT_YES_NO "        Readline" "$have_readline"
 PRINT_YES_NO "          X11/Xt" "$have_xt"
 PRINT_YES_NO "           Motif" "$have_motif"
 PRINT_YES_NO "            HDF5" "$have_libhdf"
-PRINT_YES_NO "  Module Support" "$build_module_support"
 PRINT_YES_NO "GUI/Vicar Module" "$local_vicar"
 PRINT_YES_NO "         libisis" "$have_libisis"
 PRINT_YES_NO "            FITS" "$have_cfitsio"
 
-PRINT        ""
-PRINT        " display program:  $DV_VIEWER"
-PRINT        "plotting program:  $GPLOT_CMD"
-PRINT        "     text editor:  $EDITOR"
-PRINT        "   helpfile path:  $DVHELP"
+PRINT ""
+
+PRINT_YES_NO "  Module Support" "$build_module_support"
+if test "x$build_module_support" = "xyes"; then
+PRINT        "Modules Lib Path:  $DV_MOD_PATH"
+fi
+
+PRINT        " Display program:  $DV_VIEWER"
+PRINT        "Plotting program:  $GPLOT_CMD"
+PRINT        "     Text editor:  $EDITOR"
+PRINT        "   Helpfile path:  $DVHELP"
 PRINT_YES_NO " Davinci library"  "$DV_LIBRARY"
 PRINT_YES_NO "Davinci examples"  "$DV_EXAMPLES"
+PRINT ""

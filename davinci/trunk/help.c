@@ -48,7 +48,7 @@
 
 #ifndef DVHELP
 #ifndef __CYGWIN__
-#define DVHELP "/usr/share/davinci/docs/dv.gih"
+#define DVHELP "/usr/local/share/davinci/docs/dv.gih"
 #else
 #define DVHELP "docs\\dv.gih"
 #endif
