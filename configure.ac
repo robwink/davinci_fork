@@ -1,5 +1,15 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(davinci, 1.69)
+
+## libdavinci version
+LIB_CURRENT=0
+LIB_REVISION=0
+LIB_AGE=0
+AC_SUBST(LIB_CURRENT)
+AC_SUBST(LIB_REVISION)
+AC_SUBST(LIB_AGE)
+
+
 AC_CONFIG_AUX_DIR(config)
 
 dnl Do some AIX-specific pre-config.
