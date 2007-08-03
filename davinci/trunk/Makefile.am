@@ -18,6 +18,8 @@
 ## FIX: put config.h.in, configure.ac, Makefile.am somewhere so make dist works?
 
 ## DIST_SUBDIRS = config docs lib libltdl moddvmagick modules tests vicar win32
+
+
 EXTRA_DIST =  README.modules README_FF docs gplot.c lexer.l lib moddvmagick parser.y push.skel tests win32
 ## EXTRA_DIST = README.modules README_FF docs push.skel? shared_globals.c? tests win32
 
@@ -58,6 +60,9 @@ libmodsupp_a_SOURCES = ff_modules.c module_io.c io_loadmod.c
 lib_LTLIBRARIES = libdavinci.la
 libdavinci_la_LIBADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULES_LIB)  \
 		$(MINGW32_LIBREGEX_LDADD) $(MINGW32_LIBWSOCK32_LDADD) $(MY_LIBLTDLC_LDADD)
+
+##See configure.ac for libdavinci version
+libdavinci_la_LDFLAGS =  -version-info @LIB_CURRENT@:@LIB_REVISION@:@LIB_AGE@ -shrext .so
 
 libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	darray.c \
