@@ -1,0 +1,14 @@
+#! /u/eengle/davinci/davinci -qf
+load_module ("gui")
+top = gui.create("topLevelShell", name="guitest");
+a = gui.create("rowcolumn", top, name="container")
+b = create(20,1,1)
+for (i=0; i<20; i = i+1) {
+	b[i] = gui.create("pushbutton", a, name=sprintf("Button %i", i+1));
+	string = sprintf ("printf (\"clicked #%d",i+1) + "\\n\");";
+	gui.addcallback (b[i], "activate", string);
+}
+slider = gui.create("scrollbar", a, name="scroll");
+quit_button = gui.create("pushbutton", a, name="Quit");
+gui.addcallback (quit_button, "activate", sprintf("gui.destroy(%d)", top));
+gui.realize(top)
