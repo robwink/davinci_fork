@@ -14,4 +14,4 @@ pnm_mod_la_SOURCES = pnm_mod.c
 pnm_mod_la_LDFLAGS = -module
 
 pkglib_LTLIBRARIES = mod1.la mod2.la pnm_mod.la $(MY_MAGICK_LIBRARY)
-SUBDIRS = thm
+SUBDIRS = thm cse kjn
