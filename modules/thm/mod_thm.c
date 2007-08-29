@@ -4278,7 +4278,7 @@ thm_column_fill(vfuncptr func, Var * arg)
   float   *column_out = NULL;                             /* filled and ready to be returned column */
   float   sum = 0;                                        /* the sum of column to check if any values exist */
 
-  Alist alist[2];
+  Alist alist[4];
   alist[0] = make_alist("column",		ID_VAL,		NULL,	&col_in);
   alist[1] = make_alist("chunk_size",           INT,            NULL,   &csize);
   alist[2] = make_alist("ignore",               FLOAT,          NULL,   &ignore);
