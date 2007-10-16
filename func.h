@@ -319,6 +319,7 @@ Var *ff_findmin(vfuncptr func, Var *arg);
 Var *ff_rgb2hsv(vfuncptr func, Var *arg);
 Var *ff_hsv2rgb(vfuncptr func, Var *arg);
 Var *ff_resize(vfuncptr func, Var *arg);
+Var *ff_image_resize(vfuncptr func, Var *arg);
 
 Var *ff_read_suffix_plane(vfuncptr func, Var * arg);
 Var *ff_fork(vfuncptr func, Var *arg);

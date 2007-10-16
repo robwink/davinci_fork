@@ -155,6 +155,7 @@ struct _vfuncptr vfunclist[] = {
     { "history",    ff_history,     NULL , NULL},
     { "h",          ff_history,     NULL , NULL},
 
+    { "image_resize",      ff_image_resize,       NULL , NULL},
     { "resize",     ff_resize,      NULL , NULL},
     { "fork",       ff_fork,        NULL , NULL},
     { "audit",      ff_audit,       NULL , NULL},
