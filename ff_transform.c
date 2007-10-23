@@ -9,28 +9,26 @@ ff_image_resize(vfuncptr func, Var * arg){
 	Var *data = NULL;	
 
 	Var *out = NULL;
-	float x_factor = 0,y_factor=0, factor = 0;
+	double x_factor = 0,y_factor=0, factor = 0;
 	int xx,yy,zz;
 	int new_xx = 0, new_yy = 0, new_zz, new_size;
 
-	int new_x, new_y, new_z;
-	int interpl_x,interpl_y;
-	int calc_x, calc_y;
+	int x_floor, x_ceil, y_floor, y_ceil;
+	double fraction_x,fraction_y;
 	int pos;
 	int preserve_ratio = 0;
 
-	int p1x,p2x, p1y,p2y;
 
-	double d_c11,d_c12,d_c21,d_c22, d_new_c1, d_new_c2, d_new_c;	
-	int i_c11,i_c12,i_c21,i_c22, i_new_c1, i_new_c2, i_new_c;	
+	double d_c1,d_c2,d_c3,d_c4, d_new_cc1, d_new_cc2, d_new_c;  
+	int i_c1,i_c2,i_c3,i_c4, i_new_cc1, i_new_cc2, i_new_c;	
 	int i,j,k;
 
 	Alist alist[8];
 
 	alist[0] = make_alist( "data", ID_VAL, NULL, &data);
-	alist[1] = make_alist( "factor", FLOAT, NULL, &factor);
-	alist[2] = make_alist( "xfactor", FLOAT, NULL, &x_factor);
-	alist[3] = make_alist( "yfactor", FLOAT, NULL, &y_factor);
+	alist[1] = make_alist( "factor", DOUBLE, NULL, &factor);
+	alist[2] = make_alist( "xfactor", DOUBLE, NULL, &x_factor);
+	alist[3] = make_alist( "yfactor", DOUBLE, NULL, &y_factor);
 	alist[4] = make_alist( "width",  INT, NULL, &new_xx);
 	alist[5] = make_alist( "height", INT, NULL, &new_yy);
 	alist[6] = make_alist( "preserve_ratio", INT, NULL, &preserve_ratio);
@@ -80,8 +78,8 @@ ff_image_resize(vfuncptr func, Var * arg){
 	}
 
 	/* x, y and z dimensions of the new data */
-	new_xx = (int)(xx*x_factor);
-	new_yy = (int)(yy*y_factor);
+	new_xx = (int)round(xx*x_factor);
+	new_yy = (int)round(yy*y_factor);
 	new_zz = zz;
 	new_size = new_xx * new_yy * new_zz;
 
@@ -99,8 +97,8 @@ ff_image_resize(vfuncptr func, Var * arg){
 				y_factor = x_factor;
 			}
 			/* x, y and z dimensions of the new data */
-			new_xx = (int)(xx*x_factor);
-			new_yy = (int)(yy*y_factor);
+			new_xx = (int)round(xx*x_factor);
+			new_yy = (int)round(yy*y_factor);
 			new_zz = zz;
 			new_size = new_xx * new_yy * new_zz;
 		}		
@@ -116,60 +114,65 @@ ff_image_resize(vfuncptr func, Var * arg){
 	V_SIZE(out)[orders[V_ORG(out)][1]] = new_yy;
 	V_SIZE(out)[orders[V_ORG(out)][2]] = new_zz;
 	V_DATA(out) = calloc(new_size, NBYTES(V_FORMAT(data)));
+	if(V_DATA(out) == NULL){
+		parse_error("Error: Could not allocate enough memory\n");
+		return NULL;
+	}
 
 	/** Bi-Linear interpolation **/
 	/* z-axis */
 	for(k=0; k < new_zz; k++){		
 		/* y-axis */
 		for(j=0; j < new_yy; j++){
-			new_y = j/y_factor;
-			interpl_y = new_y ^ 0; 		//bit xor
-			calc_y = new_y - interpl_y;			
-			/* x-axis */
-			for(i=0; i< new_xx; i++){
-				new_x = i/x_factor;	
-				interpl_x = new_x ^ 0;	//bit xor
-				calc_x = new_x - interpl_x;
+			y_floor = (int)floor(j/y_factor);
+			y_ceil = y_floor + 1;
+			if(y_ceil >= yy){
+				y_ceil = yy-1;
+			}
+			fraction_y = (j/y_factor - y_floor);
+		
 
-				p1x = min(interpl_x + 1, xx-1);
-				p2x = min(interpl_x + 2, xx-1);
-				p1y = min(interpl_y + 1, yy-1);
-				p2y = min(interpl_y + 2, yy-1);
-				
-				if(calc_x != 0 ||calc_y != 0){
-				   parse_error("%d %d\n", calc_x, calc_y);	
+			/* x-axis */
+			for(i=0; i< new_xx ; i++){
+				x_floor = (int)floor(i/x_factor);
+				x_ceil = x_floor + 1;
+				if(x_ceil >= xx){
+					x_ceil = xx-1;
 				}
+				fraction_x = (i/x_factor - x_floor);
+
+
 			     	/*  get the 4 pixels around the interpolated one */
 				// Integer
 				if(V_FORMAT(data) == BYTE || V_FORMAT(data) == SHORT || V_FORMAT(data) == INT){				   
-					i_c11 = extract_int(data, cpos(p1x, p1y, k, data));
-					i_c21 = extract_int(data, cpos(p2x, p1y, k, data));
-					i_c12 = extract_int(data, cpos(p1x, p2y, k, data));
-					i_c22 = extract_int(data, cpos(p2x, p2y, k, data));
+					i_c1 = extract_int(data, cpos(x_floor, y_floor, k, data));
+					i_c2 = extract_int(data, cpos(x_ceil,  y_floor, k, data));
+					i_c3 = extract_int(data, cpos(x_floor, y_ceil, k, data));
+					i_c4 = extract_int(data, cpos(x_ceil,  y_ceil, k, data));
 		
-					i_new_c1 = i_c11 * (1 - calc_y) + i_c12 * calc_y;
-					i_new_c2 = i_c21 * (1 - calc_y) + i_c22 * calc_y;				
-					i_new_c = i_new_c1 * (1 - calc_x) + i_new_c2 * calc_x;
+    					i_new_cc1 = i_c1 * (1 - fraction_y) + i_c2 * fraction_y;
+					i_new_cc2 = i_c3 * (1 - fraction_y) + i_c4 * fraction_y;
+					i_new_c = i_new_cc1 * (1 - fraction_x) + i_new_cc2 * fraction_x;
 				//Floats
 				}else{
-					d_c11 = extract_float(data, cpos(p1x, p1y, k, data));
-					d_c21 = extract_float(data, cpos(p2x, p1y, k, data));
-					d_c12 = extract_float(data, cpos(p1x, p2y, k, data));
-					d_c22 = extract_float(data, cpos(p2x, p2y, k, data));
-	
-					d_new_c1 = d_c11 * (1 - calc_y) + d_c12 * calc_y;
-					d_new_c2 = d_c21 * (1 - calc_y) + d_c22 * calc_y;				
-					d_new_c = d_new_c1 * (1 - calc_x) + d_new_c2 * calc_x;
+					d_c1 = extract_float(data, cpos(x_floor, y_floor, k, data));
+					d_c2 = extract_float(data, cpos(x_ceil,  y_floor, k, data));
+					d_c3 = extract_float(data, cpos(x_floor, y_ceil, k, data));
+					d_c4 = extract_float(data, cpos(x_ceil,  y_ceil, k, data));
+		
+    					d_new_cc1 = d_c1 * (1 - fraction_y) + d_c2 * fraction_y;
+					d_new_cc2 = d_c3 * (1 - fraction_y) + d_c4 * fraction_y;
+					d_new_c = d_new_cc1 * (1 - fraction_x) + d_new_cc2 * fraction_x;
 				}
 
 				/*  Set this pixel into the new image */
 				pos = cpos(i,j,k, out);
 				switch(V_FORMAT(data)){
 					case BYTE:	((u_char *)V_DATA(out))[pos] = i_new_c;	break;
-					case SHORT:	((short *)V_DATA(out))[pos] = i_new_c;	break;
-					case INT:	((int *)V_DATA(out))[pos] = i_new_c; 	break;
-					case FLOAT:	((float *)V_DATA(out))[pos] = d_new_c;	break;
-					case DOUBLE:	((double *)V_DATA(out))[pos]= d_new_c;	break;
+					case SHORT:	((short *)V_DATA(out))[pos]	 = i_new_c;	break;
+					case INT:	((int *)V_DATA(out))[pos]	 = i_new_c; 	break;
+					case FLOAT:	((float *)V_DATA(out))[pos]	 = d_new_c;	break;
+					case DOUBLE:	((double *)V_DATA(out))[pos] = d_new_c;	break;
 				}
 			}
 		}
