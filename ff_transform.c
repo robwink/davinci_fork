@@ -21,8 +21,9 @@ ff_image_resize(vfuncptr func, Var * arg){
 	int new_xx = 0, new_yy = 0, new_zz, new_size;
 	
 	int pos;
-	int preserve_ratio = 0;
-	int suspected_touched_ratio = 0;
+	int lockratio = 0;
+	int suspected_touched_ratio_x = 0;
+	int suspected_touched_ratio_y = 0;
 
 	double x,y,x1,y1,z; //interpolation indeces for the old image
 	int i,j,k; 	//indeces of the new image
@@ -30,7 +31,7 @@ ff_image_resize(vfuncptr func, Var * arg){
 	int i_new_c;
 	double d_new_c;
 
-       char *usage = "usage: %s(data [, factor] [, xfactor] [, yfactor] [,width] [,height] [,preserve_ratio={'0'|'1'}] [,type={'bilinear'|'bicubic'}]";
+       char *usage = "usage: %s(data [, factor] [, xfactor] [, yfactor] [,width] [,height] [,lockratio={'0'|'1'}] [,type={'bilinear'|'bicubic'}]";
        char *type = NULL;
 	int itype = 0;
        char *types[] = {"bilinear", "bicubic", NULL};
@@ -43,7 +44,7 @@ ff_image_resize(vfuncptr func, Var * arg){
 	alist[3] = make_alist( "yfactor", DOUBLE, NULL, &y_factor);
 	alist[4] = make_alist( "width",  INT, NULL, &new_xx);
 	alist[5] = make_alist( "height", INT, NULL, &new_yy);
-	alist[6] = make_alist( "preserve_ratio", INT, NULL, &preserve_ratio);
+	alist[6] = make_alist( "lockratio", INT, NULL, &lockratio);
 	alist[7] = make_alist( "type",    ID_ENUM,    types,    &type);
 	alist[8].name = NULL;
     
@@ -94,20 +95,20 @@ ff_image_resize(vfuncptr func, Var * arg){
 		// calculate x-factor
 		if(new_xx != 0){
 			x_factor = new_xx/(double)xx;
-			suspected_touched_ratio = 1;
+			suspected_touched_ratio_x = 1;
 		}else if(x_factor == 0){
 			x_factor = 1; //default
 		}else{
-		 	suspected_touched_ratio = 1;
+		 	suspected_touched_ratio_x = 1;
 		}
 		// calculate y-factor
 		if(new_yy != 0){
 			y_factor = new_yy/(double)yy;
-		 	suspected_touched_ratio = 1;
+		 	suspected_touched_ratio_y = 1;
 		}else if(y_factor == 0){
 			y_factor = 1; //default	
 		}else{
-		 	suspected_touched_ratio = 1;
+		 	suspected_touched_ratio_y = 1;
 		}
 	}
 
@@ -118,11 +119,13 @@ ff_image_resize(vfuncptr func, Var * arg){
 	new_size = new_xx * new_yy * new_zz;
 
 	//If ratio preservation is required, try to preserve it or die
-	if(preserve_ratio == 1){
-		if(suspected_touched_ratio == 1 && new_xx/(double)new_yy != xx/(double)yy){
+	if(lockratio == 1){
+	 	if(suspected_touched_ratio_x == 1 && suspected_touched_ratio_y == 1){
+		      if(new_xx/(double)new_yy != xx/(double)yy){
 				parse_error("Argument conflict: Ratio could not be preserved\n");
 				parse_error(usage, func->name);
 				return NULL;
+		      }
 		}
 		if(x_factor == 1){
 			x_factor = y_factor;
@@ -274,14 +277,15 @@ double  get_image_bilinear_interp(Var *obj,  double x, double y, double z){
 }
 
 
+/* Used by get_image_bicubic_interp */
 double get_my_cubic(double offset, double v0, double v1, double v2, double v3){
-// offset is the offset of the sampled value between v1 and v2
+	// offset is the offset of the sampled value between v1 and v2
 return   (((( -7 * v0 + 21 * v1 - 21 * v2 + 7 * v3 ) * offset +
 	     ( 15 * v0 - 36 * v1 + 27 * v2 - 6 * v3 ) ) * offset +
 	    ( -9 * v0 + 9 * v2 ) ) * offset + (v0 + 16 * v1 + v2) ) / 18.0;
 }
 
-
+/* Used by get_image_bicubic_interp */
 double get_my_cubic_row(Var *obj, int x, int y, int z, double offset){
 	double c0,c1,c2,c3;
 	int xx = GetX(obj);
@@ -339,8 +343,10 @@ double get_my_cubic_row(Var *obj, int x, int y, int z, double offset){
 
 
 
-/** Bi-cubic interpolation **/
-
+/*
+ * Bi-cubic interpolation 
+ * based on http://pippin.gimp.org/image_processing/chap_resampling.html  
+ */
 double  get_image_bicubic_interp(Var *obj,  double x, double y, double z){
 	double fraction_x, fraction_y;
 
@@ -368,7 +374,10 @@ double  get_image_bicubic_interp(Var *obj,  double x, double y, double z){
 
 
 
-/* Takes an average value of the given area, and returns the average color value */
+/*
+ * Takes an average value of the given area, and returns the average color value 
+ * based on http://pippin.gimp.org/image_processing/chap_resampling.html  
+ */
 double get_image_box_average(Var *obj, double x0, double y0, double x1, double y1, double z){
 	double area = 0;
 	double sum = 0;
