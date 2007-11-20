@@ -2,11 +2,13 @@
 #include "math.h"
 #include "ff_modules.h"
 
+static void floodFillScanline(int x, int y, int h, int w,  int newColor, int oldColor, unsigned char *screenBuffer);
 static float *sstretch_sobel(float *data, float ignore, int x, int y, int z); 
 static float *smooth(float *obj, float *kernel, int ox, int oy, int oz, int kx, int ky, int kz, int norm, float ignore);
 static float *unslantc(float *data, int *leftedge, int width, int x, int y, int z, float ignore);
 static float *unshearc(float *w_pic, float angle, int x, int y, int z, float nullv);
 static float round_dp(float input, float decimal);
+
 
 static Var *cse_contour(vfuncptr func, Var *arg);
 static Var *cse_maxpos(vfuncptr func, Var *arg);
@@ -27,6 +29,7 @@ static Var *cse_interp2d(vfuncptr func, Var * arg);
 static Var *cse_columnator(vfuncptr func, Var * arg);
 static Var *cse_cubicspline(vfuncptr func, Var * arg);
 static Var *cse_resample(vfuncptr func, Var * arg);
+static Var *cse_fFill(vfuncptr func, Var * arg);
 
 
 
@@ -49,31 +52,97 @@ static dvModuleFuncDesc exported_list[] = {
   { "interp2d", (void *) cse_interp2d},
   { "columnator", (void *) cse_columnator},
   { "cubicspline",(void *) cse_cubicspline},
-  { "resample",(void *) cse_resample}
+  { "resample",(void *) cse_resample},
+	{ "floodfill", (void *) cse_fFill}
 };
 
 static dvModuleInitStuff is = {
-  exported_list, 19,
+  exported_list, 20,
   NULL, 0
 };
 
 dv_module_init(
-    const char *name,
-    dvModuleInitStuff *init_stuff
-    )
+							 const char *name,
+							 dvModuleInitStuff *init_stuff
+							 )
 {
-    *init_stuff = is;
-    
-    parse_error("Loaded module cse.");
-
-    return 1; /* return initialization success */
-
+	*init_stuff = is;
+  
+	parse_error("Loaded module cse.");
+	
+	return 1; /* return initialization success */
+	
 }
 
 void
 dv_module_fini(const char *name)
 {
   parse_error("Unloaded module cse.");
+}
+
+//stack friendly and fast floodfill algorithm
+static void floodFillScanline(int x, int y, int h, int w,  int newColor, int oldColor, unsigned char *screenBuffer)
+{
+    if(oldColor == newColor) return;
+    if(screenBuffer[y*w + x] != oldColor) return;
+      
+    int y1;
+    
+    //draw current scanline from start position to the top
+    y1 = y;
+    while(y1 < h && screenBuffer[y1*w + x] == oldColor)
+    {
+        screenBuffer[y1*w + x] = newColor;
+        y1++;
+    }    
+    
+    //draw current scanline from start position to the bottom
+    y1 = y - 1;
+    while(y1 >= 0 && screenBuffer[y1*w + x] == oldColor)
+    {
+        screenBuffer[y1*w + x] = newColor;
+        y1--;
+    }
+    
+    //test for new scanlines to the left
+    y1 = y;
+    while(y1 < h && screenBuffer[y1*w + x] == newColor)
+    {
+        if(x > 0 && screenBuffer[x - 1 + y1*w] == oldColor) 
+        {
+					floodFillScanline(x - 1, y1, h, w, newColor, oldColor, screenBuffer);
+        } 
+        y1++;
+    }
+    y1 = y - 1;
+    while(y1 >= 0 && screenBuffer[y1*w + x] == newColor)
+    {
+        if(x > 0 && screenBuffer[x - 1 + y1*w] == oldColor) 
+        {
+					floodFillScanline(x - 1, y1, h,w, newColor, oldColor, screenBuffer);
+        }
+        y1--;
+    } 
+    
+    //test for new scanlines to the right 
+    y1 = y;
+    while(y1 < h && screenBuffer[y1*w + x] == newColor)
+    {
+			if(x < w - 1 && screenBuffer[x + 1 + y1*w] == oldColor) 
+        {           
+					floodFillScanline(x + 1, y1, h,w, newColor, oldColor, screenBuffer);
+        } 
+        y1++;
+    }
+    y1 = y - 1;
+    while(y1 >= 0 && screenBuffer[y1*w + x] == newColor)
+    {
+        if(x < w - 1 && screenBuffer[x + 1 + y1*w] == oldColor) 
+        {
+					floodFillScanline(x + 1, y1, h,w, newColor, oldColor, screenBuffer);
+        }
+        y1--;
+    }
 }
 
 
@@ -88,7 +157,7 @@ static float round_dp(float input, float decimal) {
   float    multiplier = 1.0;
   int      topval = 0;
   float    remainder = 0.0;
-
+	
   // determine the multiplier value
   if (decimal > 1.0) {
     for (mult = 1.0; decimal >= 10.0; mult/=10){
@@ -101,7 +170,7 @@ static float round_dp(float input, float decimal) {
       multiplier*=10;
     }
   }
-
+	
   val = (double)input;
   val*=multiplier;
   topval = (int)val;
@@ -322,8 +391,6 @@ static float *unshearc(float *w_pic, float angle, int x, int y, int z, float nul
   free(w_pic);
   return(pic);
 }
-
-
 
 
 
@@ -2341,4 +2408,60 @@ cse_resample(vfuncptr func, Var * arg)
   free(u);
   out = newVal(BSQ, 1, 1, new_npts, FLOAT, ynew);
   return(out);
+}
+
+
+Var *cse_fFill(vfuncptr func, Var * arg)
+{
+
+  Var    *pic = NULL;            /* the orignial dcs pic */
+  Var    *out = NULL;            /* the output pic */
+  unsigned char *w_pic;                 /* modified image */
+  int     i, j, k;               /* loop indices */
+  int     x=0, y=0;      			   /* size of the picture */
+	int			sx=0,sy=0;						 /* starting x and y positions*/
+	int     fill=0,val=0;
+
+  Alist alist[6];
+  alist[0] = make_alist("data",      ID_VAL,     NULL,  &pic);
+	alist[1] = make_alist("xpos",      INT,        NULL,  &sx);
+	alist[2] = make_alist("ypos",      INT,        NULL,  &sy);
+	alist[3] = make_alist("fill",      INT,        NULL,  &fill);
+  alist[4] = make_alist("value",     INT,        NULL,  &val);
+  alist[5].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+
+  if (pic == NULL) {
+    parse_error("\nUsed to remove extraneous color from a dcs image\n");
+    parse_error("data = picture to be filled");
+    parse_error("xpos = start x search position");
+    parse_error("ypos = start y search position");
+    parse_error("fill = fill value");
+    parse_error("value = search value\n");
+    parse_error("c.edwards 11/15/07\n");
+    return NULL;
+  }
+
+  /* x, y and z dimensions of the data */
+  x = GetX(pic);
+  y = GetY(pic);
+  
+  /* allocate memory for the picture */
+  w_pic = (unsigned char *)calloc(sizeof(char), x*y);
+  
+  if(w_pic == NULL) return NULL;
+
+  /* loop through data and extract new points with null value of 0 ignored */
+	for(i=0; i<x; i++) {
+		for(j=0; j<y; j++) {
+		 	w_pic[j*x + i] = (unsigned char)extract_int(pic, cpos(i,j,0, pic));
+		}
+  }
+
+	floodFillScanline(sx, sy, y, x, fill, val, w_pic);
+	  
+  /* return the modified data */
+  out = newVal(BSQ, x, y, 1, BYTE, w_pic);
+  return out;
 }
