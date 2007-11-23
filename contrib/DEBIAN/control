@@ -1,0 +1,15 @@
+Package: davinci
+Version: 1.69
+Section: Science
+Priority: extra
+Architecture: i386
+Depends: libc6 (>= 2.3.6-6), libgcc1 (>= 1:4.1.1-12), libice6 (>= 1:1.0.0), libpng12-0 (>= 1.2.13-4), libreadline5 (>= 5.2), libsm6, libstdc++6 (>= 4.1.1-12), libx11-6, libxt6, zlib1g (>= 1:1.2.1), libncurses5-dev (>= 5.5-5), libhdf5-serial-1.6.5-0 (>= 1.6.5), libhdf5-serial-dev (>=1.6.5), libcfitsio3 (>=3.006), gnuplot (>= 4.0.0), imagemagick (>= 6.2.4)
+Installed-Size: 28864
+Maintainer: Christopher Edwards (cedwards@mars.asu.edu)
+Description: Davinci - A tool to manipulate and view various types of data, developed in Mars Space Flight Facility
+         Davinci is an interpreted language that looks and feels a lot like C,
+         but has additional vector oriented features that make working with blocks
+         of data a lot easier. This makes davinci well suited for use as a data
+         processing tool, allowing symbolic and mathematical manipulation of
+         hyperspectral data for imaging spectroscopy applications.  See http://davinci.asu.edu for more details.
+ .
