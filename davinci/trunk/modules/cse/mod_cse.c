@@ -83,66 +83,66 @@ dv_module_fini(const char *name)
 //stack friendly and fast floodfill algorithm
 static void floodFillScanline(int x, int y, int h, int w,  int newColor, int oldColor, unsigned char *screenBuffer)
 {
-    if(oldColor == newColor) return;
-    if(screenBuffer[y*w + x] != oldColor) return;
-      
-    int y1;
-    
-    //draw current scanline from start position to the top
-    y1 = y;
-    while(y1 < h && screenBuffer[y1*w + x] == oldColor)
-    {
-        screenBuffer[y1*w + x] = newColor;
-        y1++;
-    }    
-    
-    //draw current scanline from start position to the bottom
-    y1 = y - 1;
-    while(y1 >= 0 && screenBuffer[y1*w + x] == oldColor)
-    {
-        screenBuffer[y1*w + x] = newColor;
-        y1--;
-    }
-    
-    //test for new scanlines to the left
-    y1 = y;
-    while(y1 < h && screenBuffer[y1*w + x] == newColor)
-    {
-        if(x > 0 && screenBuffer[x - 1 + y1*w] == oldColor) 
-        {
-					floodFillScanline(x - 1, y1, h, w, newColor, oldColor, screenBuffer);
-        } 
-        y1++;
-    }
-    y1 = y - 1;
-    while(y1 >= 0 && screenBuffer[y1*w + x] == newColor)
-    {
-        if(x > 0 && screenBuffer[x - 1 + y1*w] == oldColor) 
-        {
-					floodFillScanline(x - 1, y1, h,w, newColor, oldColor, screenBuffer);
-        }
-        y1--;
-    } 
-    
-    //test for new scanlines to the right 
-    y1 = y;
-    while(y1 < h && screenBuffer[y1*w + x] == newColor)
-    {
-			if(x < w - 1 && screenBuffer[x + 1 + y1*w] == oldColor) 
-        {           
-					floodFillScanline(x + 1, y1, h,w, newColor, oldColor, screenBuffer);
-        } 
-        y1++;
-    }
-    y1 = y - 1;
-    while(y1 >= 0 && screenBuffer[y1*w + x] == newColor)
-    {
-        if(x < w - 1 && screenBuffer[x + 1 + y1*w] == oldColor) 
-        {
-					floodFillScanline(x + 1, y1, h,w, newColor, oldColor, screenBuffer);
-        }
-        y1--;
-    }
+	if(oldColor == newColor) return;
+	if(screenBuffer[y*w + x] != oldColor) return;
+  
+	int y1;
+  
+	//draw current scanline from start position to the top
+	y1 = y;
+	while(y1 < h && screenBuffer[y1*w + x] == oldColor)
+	{
+		screenBuffer[y1*w + x] = newColor;
+		y1++;
+	}    
+  
+	//draw current scanline from start position to the bottom
+	y1 = y - 1;
+	while(y1 >= 0 && screenBuffer[y1*w + x] == oldColor)
+	{
+		screenBuffer[y1*w + x] = newColor;
+		y1--;
+	}
+  
+	//test for new scanlines to the left
+	y1 = y;
+	while(y1 < h && screenBuffer[y1*w + x] == newColor)
+	{
+		if(x > 0 && screenBuffer[x - 1 + y1*w] == oldColor) 
+		{
+			floodFillScanline(x - 1, y1, h, w, newColor, oldColor, screenBuffer);
+		} 
+		y1++;
+	}
+	y1 = y - 1;
+	while(y1 >= 0 && screenBuffer[y1*w + x] == newColor)
+	{
+		if(x > 0 && screenBuffer[x - 1 + y1*w] == oldColor) 
+		{
+			floodFillScanline(x - 1, y1, h,w, newColor, oldColor, screenBuffer);
+		}
+		y1--;
+	} 
+  
+	//test for new scanlines to the right 
+	y1 = y;
+	while(y1 < h && screenBuffer[y1*w + x] == newColor)
+	{
+		if(x < w - 1 && screenBuffer[x + 1 + y1*w] == oldColor) 
+		{           
+			floodFillScanline(x + 1, y1, h,w, newColor, oldColor, screenBuffer);
+		} 
+		y1++;
+	}
+	y1 = y - 1;
+	while(y1 >= 0 && screenBuffer[y1*w + x] == newColor)
+	{
+		if(x < w - 1 && screenBuffer[x + 1 + y1*w] == oldColor) 
+		{
+			floodFillScanline(x + 1, y1, h,w, newColor, oldColor, screenBuffer);
+		}
+		y1--;
+	}
 }
 
 
