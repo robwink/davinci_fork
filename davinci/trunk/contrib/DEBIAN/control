@@ -3,7 +3,7 @@ Version: 1.69
 Section: Science
 Priority: extra
 Architecture: i386
-Depends: libc6 (>= 2.3.6-6), libgcc1 (>= 1:4.1.1-12), libice6 (>= 1:1.0.0), libpng12-0 (>= 1.2.13-4), libreadline5 (>= 5.2), libsm6, libstdc++6 (>= 4.1.1-12), libx11-6, libxt6, zlib1g (>= 1:1.2.1), libncurses5-dev (>= 5.5-5), libhdf5-serial-1.6.5-0 (>= 1.6.5), libhdf5-serial-dev (>=1.6.5), libcfitsio3 (>= 3), gnuplot (>= 4.0), imagemagick (>= 6.2), libreadline5-dev (>= 5.2), libx11-dev (>= 1.0), libcfitsio3-dev (>= 3)
+Depends: libx11-dev (>= 1.0), libc6, libgcc1, libice6,  libxmu-dev, libxmu-headers, libxt6,libxt-dev, libxext6, libxext-dev,  libsm6, libstdc++6, libx11-6, libncurses5-dev (>= 5.5-5), libpng12-0 (>= 1.2.13-4), zlib1g (>= 1:1.2.1), zlib1g-dev (>= 1:1.2.1), libreadline5 (>= 5.2), libreadline5-dev (>= 5.2), libhdf5-serial-1.6.5-0 (>= 1.6.5), libhdf5-serial-dev (>=1.6.5), libcfitsio3 (>= 3.006-1.3), libcfitsio3-dev (>= 3.006-1.3), gnuplot (>= 4.0), imagemagick (>= 6.2)
 Installed-Size: 28864
 Maintainer: Christopher Edwards (cedwards@mars.asu.edu)
 Description: Davinci - A tool to manipulate and view various types of data, developed in Mars Space Flight Facility
