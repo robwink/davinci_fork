@@ -139,6 +139,12 @@ AM_CONDITIONAL(HAVE_LIBREGEX, [test "x$have_libregex" = "xyes"])
 
 AC_CHECK_LIB(z, deflate)
 AC_CHECK_LIB(png, png_read_info)
+AC_CHECK_LIB(png, png_read_image,[have_libpng2=yes],[have_libpng2=no],
+				[$LDFLAGS -lpng -Liomedley/libpng-1.2.3])
+
+if test "x$have_libpng2" = "xyes"; then
+	AC_DEFINE(HAVE_LIBPNG, 1, [ if you have libpng] )
+fi
 
 #check for cfitsio
 AC_ARG_WITH(cfitsio,
