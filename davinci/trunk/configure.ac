@@ -151,9 +151,9 @@ AC_ARG_WITH(cfitsio,
     [  --with-cfitsio=<path>      prefix of cfitsio installation. e.g. /usr/local or /usr],
     [LDFLAGS="$LDFLAGS -L$withval/lib" ; CFLAGS="$CFLAGS -I$withval/include"]
 )
-AC_CHECK_LIB(cfitsio, ffopen,[have_cfitsio=yes],[have_cfitsio=no])
-if test "x$have_cfitsio" = "xyes"; then
-	AC_DEFINE(HAVE_LIBCFITSIO, 1, [ if you have cfitsio] )
+AC_CHECK_LIB(cfitsio, ffopen)
+if test "x$ac_cv_lib_cfitsio_ffopen" = "xyes"; then
+	have_cfitsio="yes"
 fi
 
 # Ask user for path to hdf5 stuff:.
@@ -171,9 +171,6 @@ else
 fi
 AC_CHECK_LIB(hdf5, H5open,[have_libhdf=yes],[have_libhdf=no])
 
-#if test "x$ac_cv_lib_cfitsio_ffopen" = "xyes"; then
-#	have_cfitsio="yes"
-#fi
 
 
 dnl Check for ImageMagic.

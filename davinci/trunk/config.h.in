@@ -73,7 +73,7 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* if you have cfitsio */
+/* Define to 1 if you have the `cfitsio' library (-lcfitsio). */
 #undef HAVE_LIBCFITSIO
 
 /* Define to 1 if you have the <libgen.h> header file. */
