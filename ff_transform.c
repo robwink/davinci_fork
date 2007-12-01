@@ -1,9 +1,12 @@
 #include "parser.h"
 
+double get_none_interp(Var *, double, double, double);
 double get_image_bilinear_interp(Var *,double, double, double);
-double  get_image_bicubic_interp(Var *,  double, double, double);
-
+double get_image_bicubic_interp(Var *,  double, double, double);
 double get_image_box_average(Var *, double, double, double, double, double);
+
+
+
 /** ff_image_resize - Resizes the dimensions of the image
  * using bilinear algorithm
  * betim@asu.edu
@@ -28,16 +31,18 @@ ff_image_resize(vfuncptr func, Var * arg){
 	double x,y,x1,y1,z; //interpolation indeces for the old image
 	int i,j,k; 	//indeces of the new image
 
-	int i_new_c;
-	double d_new_c;
-
-       char *usage = "usage: %s(data [, factor] [, xfactor] [, yfactor] [,width] [,height] [,lockratio={'0'|'1'}] [,type={'bilinear'|'bicubic'}]";
+	int i_new_c, i_new_c_temp;
+	double d_new_c, d_new_c_temp;
+	double ignore_color = MINDOUBLE;
+	int ignore_color_found = 0;
+					
+       char *usage = "usage: %s(data [, factor] [, xfactor] [, yfactor] [,width] [,height] [,lockratio={'0'|'1'}] [,interp={'bilinear'|'bicubic'|'none'}] [,ignore]";
        char *type = NULL;
 	int itype = 0;
-       char *types[] = {"bilinear", "bicubic", NULL};
+       char *types[] = {"bilinear", "bicubic", "none", NULL};
 
 
-	Alist alist[9];
+	Alist alist[10];
 	alist[0] = make_alist( "data", ID_VAL, NULL, &data);
 	alist[1] = make_alist( "factor", DOUBLE, NULL, &factor);
 	alist[2] = make_alist( "xfactor", DOUBLE, NULL, &x_factor);
@@ -45,8 +50,9 @@ ff_image_resize(vfuncptr func, Var * arg){
 	alist[4] = make_alist( "width",  INT, NULL, &new_xx);
 	alist[5] = make_alist( "height", INT, NULL, &new_yy);
 	alist[6] = make_alist( "lockratio", INT, NULL, &lockratio);
-	alist[7] = make_alist( "type",    ID_ENUM,    types,    &type);
-	alist[8].name = NULL;
+	alist[7] = make_alist( "interp",    ID_ENUM,    types,    &type);
+	alist[8] = make_alist( "ignore",    DOUBLE, NULL,    &ignore_color);
+	alist[9].name = NULL;
     
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -75,6 +81,8 @@ ff_image_resize(vfuncptr func, Var * arg){
 		itype=0;
 	} else if (!strncasecmp(type, "bicubic", 7)) {
 		itype =1;
+	} else if (!strncasecmp(type, "none", 4)) {
+		itype =2;
 	} else {
 		parse_error("%s: Unrecognized type: %s\n", func->name, type);
 		parse_error(usage, func->name);
@@ -159,6 +167,7 @@ ff_image_resize(vfuncptr func, Var * arg){
 	/* Loop over the bands and do appropriate scaling  */
 
 	/* z-axis */
+
 	for(k=0; k < new_zz; k++){		
 		z = k;
 		/* y-axis */
@@ -167,8 +176,29 @@ ff_image_resize(vfuncptr func, Var * arg){
 			/* x-axis */
 			for(i=0; i< new_xx ; i++){
 				x = i/x_factor;
-				//scale down
-				if(x_factor < 1 && y_factor < 1){						
+
+				ignore_color_found = 0;
+				// Integers
+				if(V_FORMAT(data) == BYTE || V_FORMAT(data) == SHORT || V_FORMAT(data) == INT){
+					i_new_c = (int)my_round(get_none_interp(data, x,  y, z));
+					i_new_c_temp = (int)my_round(get_none_interp(data, x+1,  y+1, z));
+					if(i_new_c == ignore_color || i_new_c_temp == ignore_color){
+					   ignore_color_found = 1;
+					}
+				//Doubles
+				}else{
+					d_new_c = get_none_interp(data, x,  y, z);
+					d_new_c_temp = get_none_interp(data, x+1,  y+1, z);
+	
+					if(d_new_c == ignore_color || d_new_c_temp == ignore_color){
+					   ignore_color_found = 1;
+					}
+				}
+
+				//If ignore value was not found, no need for color finding.
+				if(ignore_color_found == 0){			
+				   //scale down
+				   if(x_factor < 1 && y_factor < 1 && itype !=2 ){
 					//Average in 0.5 pixel offset
 					y1= (j+0.5)/y_factor;
 					x1= (i+0.5)/x_factor;
@@ -177,15 +207,18 @@ ff_image_resize(vfuncptr func, Var * arg){
 					   i_new_c = (int)my_round(get_image_box_average(data, x,  y, x1, y1, z));
 					//Doubles
 					}else{
-						d_new_c = get_image_box_average(data, x,  y, x1, y1, z);
+					   d_new_c = get_image_box_average(data, x,  y, x1, y1, z);
 					}
-				//scale up
-				}else{
+				  //scale up
+				   }else{
 					// Integers
 					if(V_FORMAT(data) == BYTE || V_FORMAT(data) == SHORT || V_FORMAT(data) == INT){
 						//bicubic
 						if(itype == 1){
 						   i_new_c = (int)my_round(get_image_bicubic_interp(data, x,  y, z));
+						//none
+						}else if(itype == 2){
+						   //calculated above when checking for ignore value
 						//bilinear
 						}else{
 						   i_new_c = (int)my_round(get_image_bilinear_interp(data, x,  y, z));	
@@ -193,12 +226,16 @@ ff_image_resize(vfuncptr func, Var * arg){
 					}else{
 						//bicubic
 						if(itype == 1){
-							d_new_c = get_image_bicubic_interp(data, x,  y, z);
+						   d_new_c = get_image_bicubic_interp(data, x,  y, z);
+						//none
+						}else if(itype == 2){
+						   //calculated above when checking for ignore value
 						//bilinear
 						}else{
-							d_new_c = get_image_bilinear_interp(data, x,  y, z);
+						   d_new_c = get_image_bilinear_interp(data, x,  y, z);
 						}
 					}
+				   }
 				}
 
 				/*  Set this pixel into the new image */
@@ -218,11 +255,40 @@ ff_image_resize(vfuncptr func, Var * arg){
 	return(out);
 }
 
+/* No interpolation */
+double  get_none_interp(Var *obj,  double x, double y, double z){
+	double d_new_c;  
+	int i_new_c;	
+	int xx = GetX(obj);
+	int yy = GetY(obj);
+
+	int y_floor = (int)floor(y);
+	int x_floor = (int)floor(x);
+
+
+	if(x_floor >= xx){
+		x_floor = xx-1;
+	}
+	if(y_floor >= yy){
+		y_floor = yy-1;
+	}
+     	/*  get the 4 pixels around the interpolated one */
+	// Integers
+	if(V_FORMAT(obj) == BYTE || V_FORMAT(obj) == SHORT || V_FORMAT(obj) == INT){				   
+		i_new_c = extract_int(obj, cpos(x_floor, y_floor, z, obj));
+		return (double)i_new_c;
+	//Floats
+	}else{
+		d_new_c = extract_double(obj, cpos(x_floor, y_floor, z, obj));
+		return (double)d_new_c;
+	}
+}
 
 
 /** Bi-Linear interpolation **/
 /*  get the 4 pixels around the interpolated one */
 double  get_image_bilinear_interp(Var *obj,  double x, double y, double z){
+
 	double fraction_x, fraction_y;
 	int xx = GetX(obj);
 	int yy = GetY(obj);
@@ -257,10 +323,11 @@ double  get_image_bilinear_interp(Var *obj,  double x, double y, double z){
 		i_c3 = extract_int(obj, cpos(x_floor, y_ceil, z, obj));
 		i_c4 = extract_int(obj, cpos(x_ceil,  y_ceil, z, obj));
 		//bilinear expressions	
-		i_new_cc1 = i_c1 * (1 - fraction_y) + i_c2 * fraction_y;
-		i_new_cc2 = i_c3 * (1 - fraction_y) + i_c4 * fraction_y;
+		i_new_cc1 = i_c1 * (1 - fraction_y) + i_c3 * fraction_y;
+		i_new_cc2 = i_c2 * (1 - fraction_y) + i_c4 * fraction_y;
 		i_new_c = i_new_cc1 * (1 - fraction_x) + i_new_cc2 * fraction_x;
 	
+//		printf("x=%f, y=%f cc1=%d cc2=%d cc=%d\n",x,y,  i_new_cc1, i_new_cc2, i_new_c);
 		return (double)i_new_c;
 	//Floats
 	}else{
@@ -269,8 +336,8 @@ double  get_image_bilinear_interp(Var *obj,  double x, double y, double z){
 		d_c3 = extract_double(obj, cpos(x_floor, y_ceil, z, obj));
 		d_c4 = extract_double(obj, cpos(x_ceil,  y_ceil, z, obj));		
 		//bilinear expressions	
-    		d_new_cc1 = d_c1 * (1 - fraction_y) + d_c2 * fraction_y;
-		d_new_cc2 = d_c3 * (1 - fraction_y) + d_c4 * fraction_y;
+    		d_new_cc1 = d_c1 * (1 - fraction_y) + d_c3 * fraction_y;
+		d_new_cc2 = d_c2 * (1 - fraction_y) + d_c4 * fraction_y;
 		d_new_c = d_new_cc1 * (1 - fraction_x) + d_new_cc2 * fraction_x;
 		return (double)d_new_c;
 	}
@@ -338,6 +405,7 @@ double get_my_cubic_row(Var *obj, int x, int y, int z, double offset){
 		c2 = extract_double(obj, cpos(x2, y, z, obj));
 		c3 = extract_double(obj, cpos(x3, y, z, obj));
 	}
+
 	return get_my_cubic(offset,c0,c1,c2,c3);
 }
 
@@ -369,7 +437,6 @@ double  get_image_bicubic_interp(Var *obj,  double x, double y, double z){
 	
 	return c;
 }
-
 
 
 
