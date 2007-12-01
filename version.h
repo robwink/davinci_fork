@@ -1,9 +1,10 @@
-char *version = "@(#) daVinci Version #1.69";
+char *version = "@(#) daVinci Version #1.70";
 
 #include "build.h"
 
 /*
 Version 
+    * Fixed CFITSIO configure/make problem
     * Fixed a memory allocation bug in thm.column_fill 
     + Created ff_transform.c file and added ff_image_rescale function 
 
