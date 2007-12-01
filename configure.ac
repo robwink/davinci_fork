@@ -152,6 +152,9 @@ AC_ARG_WITH(cfitsio,
     [LDFLAGS="$LDFLAGS -L$withval/lib" ; CFLAGS="$CFLAGS -I$withval/include"]
 )
 AC_CHECK_LIB(cfitsio, ffopen,[have_cfitsio=yes],[have_cfitsio=no])
+if test "x$have_cfitsio" = "xyes"; then
+	AC_DEFINE(HAVE_LIBCFITSIO, 1, [ if you have cfitsio] )
+fi
 
 # Ask user for path to hdf5 stuff:.
 have_libhdf=yes

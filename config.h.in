@@ -73,6 +73,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* if you have cfitsio */
+#undef HAVE_LIBCFITSIO
+
 /* Define to 1 if you have the <libgen.h> header file. */
 #undef HAVE_LIBGEN_H
 
@@ -97,7 +100,7 @@
 /* Define to 1 if you have the `msss_vis' library (-lmsss_vis). */
 #undef HAVE_LIBMSSS_VIS
 
-/* Define to 1 if you have the `png' library (-lpng). */
+/* if you have libpng */
 #undef HAVE_LIBPNG
 
 /* Define to 1 if you have the `qmv' library (-lqmv). */
