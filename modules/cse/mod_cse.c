@@ -57,7 +57,7 @@ static dvModuleFuncDesc exported_list[] = {
 };
 
 static dvModuleInitStuff is = {
-  exported_list, sizeof(exported_list)/sizeof(dvModuleFuncDesc),,
+  exported_list, sizeof(exported_list)/sizeof(dvModuleFuncDesc),
   NULL, 0
 };
 
