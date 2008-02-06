@@ -2,95 +2,66 @@
 #include "ff_modules.h"
 #include "dvio.h"
 
+/* Enviornment Variable set up for THEMIS Radiance Temperature conversion table */
+static const char *DV_EX_ENV="DV_EX";
+static const char *RAD_TEMP_DEFAULT_PATH="/themis/calib";
+static const char *RAD_TEMP_LOOKUP_TBL="temp_rad_v4";
+
+/* Define emissivity structure type */
 typedef struct {
   float *emiss;
   float *maxbtemp;
 } emissobj;
 
+/* Static Dependencies */
+static float *column_fill(float *column, int y, int z, int csize, float ignore);
 static float *convolve(float *obj, float *kernel, int ox, int oy, int oz, int kx, int ky, int kz, int norm, float ignore);
-static Var *do_my_convolve(Var *obj, Var *kernel, int norm, float ignore, int kernreduce);
-static float *sawtooth(int x, int y, int z);
 static int *do_corners(Var *pic_a, float nullval);
-static float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval);
+static float *sawtooth(int x, int y, int z); 
+static float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval, float maxem);
 static float *tb2rad(float *btemp, Var *temp_rad, int *bandlist, int bx, float nullval, int x, int y);
-static emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1, int b2);
+static emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1, int b2, float maxem);
 static float *bbrw_k(float *btemp, int *bandlist, int x, int y, int z, float nullval);
 static double *radcorrspace(Var *measured, float *bbody);
 static double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_start, double *rad_end, double *slopes);
-static Var *do_ipi(Var *coords_array, Var *values_array);
-static float *column_fill(float *column, int y, int z, int csize, float ignore);
-static float round_dp(float input, float decimal);
-static int thm_round(float numf);
-static Var *rotation(Var *obj, float angle, float ign);
-static void position_fill(int *pos, int elem, int iter, Var *obj);
 
-
-static Var *thm_y_shear(vfuncptr, Var *);
-static Var *thm_kfill(vfuncptr, Var *);
-static Var *thm_convolve(vfuncptr, Var *);
-static Var *thm_ramp(vfuncptr, Var *);
+/* THM Module Functions */
 static Var *thm_corners(vfuncptr, Var *);
-static Var *thm_sawtooth(vfuncptr, Var *);
-static Var *thm_deplaid(vfuncptr, Var *);
-static Var *thm_rectify(vfuncptr, Var *);
-static Var *thm_reconstitute(vfuncptr, Var *);
-static Var *thm_rad2tb(vfuncptr, Var *);
-static Var *thm_themissivity(vfuncptr, Var *);
-static Var *thm_emiss2rad(vfuncptr, Var*);
-static Var *thm_white_noise_remove1(vfuncptr, Var *);
-static Var *thm_maxpos(vfuncptr, Var *);
-static Var *thm_maxpos_v1(vfuncptr, Var *);
-static Var *thm_minpos(vfuncptr, Var *);
-static Var *thm_minpos_v1(vfuncptr, Var *);
-static Var *thm_unscale(vfuncptr, Var *);
-static Var *thm_cleandcs(vfuncptr, Var *);
-static Var *thm_white_noise_remove2(vfuncptr, Var *);
-static Var *thm_sstretch2(vfuncptr, Var *);
-static Var *thm_radcorr(vfuncptr, Var *);
-static Var *thm_ipi(vfuncptr, Var *);
 static Var *thm_column_fill(vfuncptr, Var *);
-static Var *thm_supersample(vfuncptr, Var *);
-static Var *thm_destripe(vfuncptr, Var *);
-static Var *thm_marsbin(vfuncptr, Var *);
-static Var *thm_interp2d(vfuncptr, Var *);
-static Var *thm_contour(vfuncptr, Var *);
-static Var *thm_rotation(vfuncptr, Var *);
-static Var *thm_resample(vfuncptr, Var *);
+static Var *thm_deplaid(vfuncptr, Var *);
+static Var *thm_emiss2rad(vfuncptr, Var*);
+static Var *thm_rad2tb(vfuncptr, Var *);
+static Var *thm_radcorr(vfuncptr, Var *);
+static Var *thm_reconstitute(vfuncptr, Var *);
+static Var *thm_rectify(vfuncptr, Var *);
+static Var *thm_themissivity(vfuncptr, Var *);
+static Var *thm_unscale(vfuncptr, Var *);
+static Var *thm_white_noise_remove1(vfuncptr, Var *);
+static Var *thm_white_noise_remove2(vfuncptr, Var *);
 
- 
+
 static dvModuleFuncDesc exported_list[] = {
-  { "deplaid", (void *) thm_deplaid },
-  { "rectify", (void *) thm_rectify },
-  { "reconstitute", (void *) thm_reconstitute },
-  { "convolve", (void *) thm_convolve },
-  { "rad2tb", (void *) thm_rad2tb },
-  { "themis_emissivity", (void *) thm_themissivity },
-  { "emiss2rad", (void *) thm_emiss2rad },
-  { "maxpos", (void *) thm_maxpos },
-  { "minpos", (void *) thm_minpos },
-  { "maxpos_v1", (void *) thm_maxpos_v1 },
-  { "minpos_v1", (void *) thm_minpos_v1 },
-  { "kfill", (void *) thm_kfill },
-  { "ramp", (void *) thm_ramp },
-  { "unscale", (void *) thm_unscale },
-  { "y_shear", (void *) thm_y_shear },
+	{ "column_fill", (void *) thm_column_fill},
+  { "convolve", (void *) ff_convolve2 },
   { "corners", (void *) thm_corners },
-  { "sawtooth", (void *) thm_sawtooth },
-  { "white_noise_remove1", (void *) thm_white_noise_remove1 },
-  { "white_noise_remove2", (void *) thm_white_noise_remove2 },
-  { "supersample", (void *) thm_supersample },
-  { "sstretch", (void *) thm_sstretch2 },
+  { "deplaid", (void *) thm_deplaid },
+  { "emiss2rad", (void *) thm_emiss2rad },
+	{ "kfill", (void *) ff_kfill },
+	{ "ipi", (void *) ff_ipi },
+  { "rad2tb", (void *) thm_rad2tb },
   { "radcorr", (void *) thm_radcorr },
-  { "column_fill", (void *) thm_column_fill },
-  { "mars_bin", (void *) thm_marsbin },
-  { "interp2d", (void *) thm_interp2d},
-  { "contour",  (void *) thm_contour},
-  { "rotate", (void *) thm_rotation},
-  { "resample", (void *) thm_resample}
+  { "ramp", (void *) ff_ramp },
+  { "reconstitute", (void *) thm_reconstitute },
+  { "rectify", (void *) thm_rectify },
+	{ "sstretch", (void *) ff_sstretch2 },
+  { "themis_emissivity", (void *) thm_themissivity },
+  { "unscale", (void *) thm_unscale },
+  { "white_noise_remove1", (void *) thm_white_noise_remove1 },
+  { "white_noise_remove2", (void *) thm_white_noise_remove2 }
 }; 
 
 static dvModuleInitStuff is = {
-  exported_list, 28,
+  exported_list, sizeof(exported_list)/sizeof(dvModuleFuncDesc),
   NULL, 0
 };
 
@@ -112,1033 +83,6 @@ dv_module_fini(const char *name)
 {
   parse_error("Unloaded module thm.");
 }
-
-
-
-
-/**
-*** For positive angles, shift the right hand side of the image upwards.
-*** When unshearing (using negative angles), trim will cut off the part
-*** that gets left blank.
-***
-*** The only difference between trim/notrim is keeping track of the signs.
-*** Keith claims it was easier to handle separately.
-***
-*** This routine uses direct array indexing, so will not be 64-bit compliant.
-**/
-Var *
-thm_y_shear(vfuncptr func, Var * arg)
-{
-  /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
-
-  Var     *pic_v = NULL;            /* the picture */
-  Var     *out;                     /* the output picture */
-  float   *pic = NULL;              /* the new sheared picture */
-  float    angle = 0;               /* the shear angle */
-  float    shift;                   /* the shift/pixel */
-  float    nullv = 0;               /* the null value to put in all blank space */
-  int	   trim = 0;		    /* whether to trim the data or not */
-  int      lshift;                  /* the largest shift (int) */
-  int      x, y, z;                 /* dimensions of the original picture */
-  int      i, j, k;                 /* loop indices */
-  int      nx, ni, nj;              /* memory locations */
-
-  Alist alist[6];
-  alist[0] = make_alist("picture",		ID_VAL,		NULL,	&pic_v);
-  alist[1] = make_alist("angle",		FLOAT,		NULL,	&angle);
-  alist[2] = make_alist("ignore",               FLOAT,          NULL,   &nullv);
-  alist[3] = make_alist("trim",		        INT,		NULL,    &trim);
-  alist[4] = make_alist("null",                 FLOAT,          NULL,   &nullv); // can be removed once all legacy programs are dead
-  alist[5].name = NULL;
-
-  if (parse_args(func, arg, alist) == 0) return(NULL);
-
-  /* if no picture got passed to the function */
-  if (pic_v == NULL){
-    parse_error("y_shear() - 4/25/04");
-    parse_error("It takes an input array and shears the y position of each pixel according to a shear angle in degrees.\n");
-    parse_error("Syntax:  b = thm.y_shear(picture,angle,ignore,trim)");
-    parse_error("example: b = thm.y_shear(picture=a,angle=8,ignore=-32768,trim=1)");
-    parse_error("example: b = thm.y_shear(a,8,-32768,1)\n");
-    parse_error("The shear angle may be between -80 and 80 degrees");
-    parse_error("The null option fills in a specified value into all blank space");
-    parse_error("If you want to unshear the array an equal but opposite angle and want it to have the same dimensions as the original, then use the \"trim=1\" option\n");
-    return NULL;
-  }
-
-  /* x, y, and z dimensions of the original picture */
-  x = GetX(pic_v);
-  y = GetY(pic_v);
-  z = GetZ(pic_v);
-
-  if (angle == 0) {
-    parse_error("Why did you bother to shear the data by a 0 angle?\n"); return NULL;
-  }
-
-  if (angle > 80 || angle < -80) {
-    parse_error("Try to stay between -80 and 80, love.  Our motto is \"No Crashy Crashy.\""); return NULL;
-  }
-
-  /* calculating the number of rows to add to the picture to accomodate the shear */
-  shift = tan((M_PI / 180.0) * angle);
-  lshift = (int)((x*fabs(shift)-0.5)+1)*(shift/fabs(shift));
-
-  if (lshift == 0) {
-    parse_error("The shear is too small to accomplish anything. Try again bozo.\n"); return NULL;
-  }
-
-  /* for trim == 0 */
-  if(trim == 0) {
-
-    /* create the new picture array */
-    pic = (float *)calloc(sizeof(float), x*z*(y+abs(lshift)));
-
-    if (pic == NULL) {
-      parse_error("ERROR! Unable to allocate %d bytes\n", sizeof(float)*x*z*(y+abs(lshift)));
-      return NULL;
-    }
-
-    /* fill in the null value into all pic elements */
-    if(nullv != 0) {
-      for(k=0; k<z; k++) {
-	for(j=0; j<y+abs(lshift); j++) {
-	  for(i=0; i<x; i++) {
-	    ni = k*(y+abs(lshift))*x + j*x + i;
-	    pic[ni] = nullv;
-	  }
-	}
-      }
-    }
-
-    /* extract the picture directly into a sheared picture */
-    for(k=0; k<z; k++) {
-      for(j=0; j<y; j++) {
-        for(i=0; i<x; i++) {
-
-          /* the shifted y pixel */
-	    /* if the angle is greater than 0 */
- 	    if(lshift>0) {
-	      ni = k*(y+abs(lshift))*x + ((int)(j+abs(lshift)-(int)(shift*i+0.5)))*x + i;
-	    }
-
-	    /* if the angle is less than 0 */
-	    if(lshift<0) {
-	      ni = k*(y+abs(lshift))*x + (j+(int)(fabs(shift)*i+0.5))*x + i;
-	    }
-
-	    pic[ni] = extract_float(pic_v, cpos(i, j, k, pic_v));
-        }
-      }
-    }
-    /* final output */
-    out = newVal(BSQ, x, y+abs(lshift), z, FLOAT, pic);
-  }
-
-  /* for trim != 0 */
-  if(trim != 0) {
-
-    if(y-abs(lshift)<=0) {
-      parse_error("The trimmed array has a length of %d, you nincompoop. Stop trying to crash me.\n", y-abs(lshift));
-      return NULL;
-    }
-
-    /*create the new picture array */
-    pic = (float *)calloc(sizeof(float), x*z*(y-abs(lshift)));
-
-    if (pic == NULL) {
-      parse_error("ERROR! Unable to allocate %d bytes\n", sizeof(float)*x*z*(y+abs(lshift)));
-      return NULL;
-    }
-
-    /* fill in the null value into all pic elements */
-    if(nullv != 0) {
-      for(k=0; k<z; k++) {
-	for(j=0; j<y-abs(lshift); j++) {
-	  for(i=0; i<x; i++) {
-	    ni = k*(y-abs(lshift))*x + j*x + i;
-	    pic[ni] = nullv;
-	  }
-	}
-      }
-    }
-
-    /* extract the picture directly into a sheared, but trimmed, array */
-    for(k=0; k<z; k++) {
-      for(j=0; j<y-abs(lshift); j++) {
-        for(i=0; i<x; i++) {
-
-          /* the index of the new array */
-          nx = k*(y-abs(lshift))*x + j*x + i;
-
-          /* the shifted y pixel */
-	    /* if the angle is greater than 0 */
- 	    if(lshift>0) {
-            nj = j + (int)(fabs(shift)*i+0.5);
-          }
-
-          /* if the angle is less than 0 */
-          if(lshift<0) {
-            nj = j + abs(lshift) - (int)(fabs(shift)*i+0.5);
-          }
-
-          pic[nx] = extract_float(pic_v, cpos(i, nj, k, pic_v));
-        }
-      }
-    }
-    /* final output */
-    out = newVal(BSQ, x, y-abs(lshift), z, FLOAT, pic);
-  } 
-  return out;
-}
-
-
-/**
-***
-*** This computes the weighted average of all pixels within a neighborhood,
-*** where the neighborhood is no larger than the input weighting mask, and
-*** the actual (rectangular) limits of which are found by searching for
-*** neighbors in the 4 cardinal directions.  If a neighbor isn't found, a
-*** distance is determined as the average of the found neighbors.
-***
-*** This assumes that 0.0 is the ignore value
-*** This makes two complete copies of the input data (in float), both
-*** with an extra kernel/2 border.
-**/
-
-Var *
-thm_kfill(vfuncptr func, Var * arg)
-{
-  Var   *pic_v = NULL;                                  /* the picture */
-  Var   *wgt_v = NULL;	                                /* the weighting array */
-  Var   *itr_v = NULL;	                                /* the number of iterations */
-  Var   *out;		                                /* the output picture */
-  int    w;                                             /* width of the weight matrix (= height) */
-  int    x,y,z;
-  float *wgt = NULL;                                    /* storage location of the weight array */
-  int    c;                                             /* general array counter */
-  int    n;                                             /* number of elements - generally */
-  int    i, j, k, mi, mj;                               /* general array counters */
-  float  min_wgt;                                       /* minimum value of weight */
-  float *pic = NULL, *pic2 = NULL, *tpic = NULL;
-  float  pixel;                                         /* working var */
-  int    wth;                                           /* (w-1)/2 */
-  int    pic_x, pic_y;                                  /* dims of the expanded picture */
-  int    px, py, pi;
-  int    pl, pr, pu, pd, r, pave;                       /* the nearest neighbor positions */
-  float  sum_non_zero_mask;
-  int    nn;
-  int    niter = 0;
-  int    nzeroes = 0;
-
-  
-  Alist alist[4];
-  alist[0] = make_alist("picture",		ID_VAL,		NULL,	&pic_v);
-  alist[1] = make_alist("weight",		ID_VAL,		NULL,	&wgt_v);
-  alist[2] = make_alist("iterations", 		ID_VAL,		NULL,	&itr_v);
-  alist[3].name = NULL;
-  
-  if (parse_args(func, arg, alist) == 0) return(NULL);
-  
-  if (pic_v == NULL && wgt_v == NULL){
-    parse_error("kfill() - 4/25/04");
-    parse_error("Fills in null points of a 2 dimensional float array by linear interpolation of nearest neighbors.");
-    parse_error("Will not handle 3-d arrays!\n");
-    parse_error("Syntax:  b = thm.kfill(picture,weight,iterations)");
-    parse_error("example: b = thm.kfill(b,wt)");
-    parse_error("Set iterations to limit the maximum number of pixels away nearest neighbor must be to be valid.");
-    parse_error("The weight array is produced by weight_array() - written by Phil.\n");
-    return NULL;
-  }
-  if (pic_v == NULL) {
-    parse_error("ERROR! picture not specified.\n"); return NULL;
-  }
-  
-  if (wgt_v == NULL){
-    parse_error("ERROR! weight matrix not specified.\n"); return NULL;
-  }
-  
-  x = GetX(pic_v);		  /* get the x dimension of the image */
-  y = GetY(pic_v);		  /* get the y dimension of the image */
-  z = GetZ(pic_v);                /* get the z dimension of the image */
-  if (z > 1){
-    parse_error("Will not handle 3D arrays.\n"); return NULL;
-  }
-
-  w = GetX(wgt_v);		  /* get the x dimension of the weighting array */
-  if (GetY(wgt_v) != w || GetZ(wgt_v) > 1){
-    parse_error("Weight array must be the same dim in X & Y with a Z dim of 1.\n");
-    return NULL;
-  }
-
-  if ((w%2) == 0 || w < 7){
-    parse_error("Width should be an odd number greater than 5.\n");
-    return NULL;
-  }
-
-  if (itr_v != NULL){
-    niter = extract_int(itr_v, cpos(0, 0, 0, itr_v));
-  }
-
-  /* extract weight data */
-  wgt = (float *)calloc(sizeof(float), w*w);
-  if (wgt == NULL){
-    parse_error("ERROR! Unable to alloc %d bytes.\n", sizeof(float)*w*w);
-    return NULL;
-  }
-
-  c = 0;
-  for(j = 0; j < w; j++){
-    for(i = 0; i < w; i++){
-      wgt[c++] = extract_float(wgt_v, cpos(i, j, 0, wgt_v));
-    }
-  }
-  
-  wth = (w-1)/2;		  /* the "radius" of the weighting array */
-  
-  /* extract picture data */
-  pic_x = x+2*wth; pic_y = y+2*wth;
-  pic = (float *)calloc(sizeof(float), pic_x*pic_y);
-  if (pic == NULL){
-    parse_error("ERROR! Unable to alloc %d bytes.\n", sizeof(float)*pic_x*pic_y);
-    free(wgt); /* cleanup before exit */
-    return NULL;
-  }
-
-  pic2 = (float *)calloc(sizeof(float), pic_x*pic_y);
-  if (pic2 == NULL){
-    parse_error("ERROR! Unable to alloc %d bytes.\n", sizeof(float)*pic_x*pic_y);
-    free(wgt); /* cleanup before exit */
-    free(pic);
-    return NULL;
-  }
-
-  for(j = 0; j < y; j++){
-    for(i = 0; i < x; i++){
-      pic[(j+wth)*pic_x+(i+wth)] = extract_float(pic_v, cpos(i, j, 0, pic_v));
-    }
-  }
-
-  /* find min of the weight array */
-  n = w*w;
-  min_wgt = wgt[0]; /* assume minimum */
-  for(i = 1; i < n; i++){
-    if (wgt[i] < min_wgt){ min_wgt = wgt[i]; }
-  }
-
-  if (min_wgt == 0.0){ min_wgt = 1.0; } /* sanity */
-
-  /* divide wgt array by the minimum */
-  for(i = 0; i < n; i++){ wgt[i] = wgt[i] / min_wgt; }
-
-  /* iterate through data */
-  for(k = 1; (k <= niter) || (niter == 0); k++){
-
-    /* copy pic onto pic2 */
-    memcpy(pic2, pic, sizeof(float)*pic_x*pic_y);
-    nzeroes = 0;
-
-    for(j = 0; j < y; j++){
-      for(i = 0; i < x; i++){  
-	
-	py = j+wth; px = i+wth;
-	pi = py * pic_x + px;
-	
-	if (pic[pi] == 0.0){
-
-	  pl = 0;
-	  pr = 0;
-	  pu = 0;
-	  pd = 0;
-	  r = 1;
-	  pave = 0;
-	  nn = 0;
-
-	  /* loop through the data to find the nearest neighbors in the 4 cardinal directions */
-	  while(r <= wth) {
-	    pl = (pl == 0 && pic[pi - r] > 0)?r:pl;
-	    pr = (pr == 0 && pic[pi + r] > 0)?r:pr;
-	    pu = (pu == 0 && pic[pi - r * pic_x] > 0)?r:pu;
-	    pd = (pd == 0 && pic[pi + r * pic_x] > 0)?r:pd;
-
-	    /* in the case that we don't have any near neighbors, set values to ave p */
-	    if (r == wth) {
-              nn = ((pl>0)?1:0) + ((pr>0)?1:0) + ((pu>0)?1:0) + ((pd>0)?1:0);
-              if (nn > 0) {
-		pave = (pl + pr + pu + pd) / nn;
-		pl = (pl == 0)?pave:pl;
-		pr = (pr == 0)?pave:pr;
-		pu = (pu == 0)?pave:pu;
-		pd = (pd == 0)?pave:pd;
-	      }
-	    }
-
-	    r += 1;
-	  }
-
-	  if (nn>1) {
-	    nzeroes++;
-	    pixel = 0.0;
-	    sum_non_zero_mask = 0.0;
-	  
-	    for(mj = wth - pu; mj <= wth + pd; mj++){
-	      for(mi = wth - pl; mi <= wth + pr; mi++){
-		pixel += pic[(j+mj)*pic_x+(i+mi)] * wgt[mj*w+mi];
-		if (pic[(j+mj)*pic_x+(i+mi)] > 0.0){sum_non_zero_mask += wgt[mj*w+mi];}
-	      }
-	    }
-
-	    if (sum_non_zero_mask == 0.0){ sum_non_zero_mask = 1.0; } /* sanity */
-
-	    /* divide by weight */
-	    /* assign pixel to location */
-	    pic2[pi] = pixel / sum_non_zero_mask;
-	  }
-	}
-      }
-    }
-
-    /* swap pic & pic2 arrays */
-    tpic = pic; pic = pic2; pic2 = tpic;
-
-    if (nzeroes == 0){
-      break;
-    }
-  }
-
-  if (niter == 0){
-    parse_error("Done in %d iterations.\n", k);
-  }
-
-  /* construct return value */
-  pic2 = (float *)realloc(pic2, sizeof(float)*x*y);
-  if (pic2 == NULL){
-    parse_error("blah");
-    free(wgt);
-    free(pic);
-    return NULL;
-  }
-
-  /* copy data out */
-  for(j = 0; j < y; j++){
-    for(i = 0; i < x; i++){
-      pic2[j*x+i] = pic[(j+wth)*pic_x+(i+wth)];
-    }
-  }
-  out = newVal(BSQ, x, y, 1, FLOAT, pic2);
-
-  /* cleanup before exit */
-  free(wgt);
-  free(pic);
-
-  return out;
-}
-
-
-
-
-
-
-
-
-Var *
-thm_convolve(vfuncptr func, Var * arg)
-{
-  Var *obj = NULL;                         /* the object to be smoothed */
-  Var *kernel = NULL;                      /* the kernel with which to smooth */
-  int norm = 1;                            /* initializing normalization to 1 */
-  float ignore = 0;                        /* initializing ignore to 0 */
-  int kernreduce = 0;                      /* option to use kernel reduction near obj boundaries */
-
-  Alist alist[6];
-  alist[0] = make_alist("object",       ID_VAL,         NULL,	      &obj);
-  alist[1] = make_alist("kernel",       ID_VAL,         NULL,      &kernel);
-  alist[2] = make_alist("normalize",    INT,            NULL,        &norm);
-  alist[3] = make_alist("ignore",       FLOAT,          NULL,      &ignore);
-  alist[4] = make_alist("kernreduce",   INT,            NULL,  &kernreduce);
-  alist[5].name = NULL;
-  
-  if (parse_args(func, arg, alist) == 0) return(NULL);
-  
-  if (obj == NULL && kernel == NULL) {
-    parse_error("Convolve() - 4/25/04");
-    parse_error("Convolve function that will NOT fill in nullvalues of smoothed array with interpolated points.");
-    parse_error("Instead it will fill null pixels in with the null value.");
-    parse_error("Also provides for kernels that contain float values.\n");
-    parse_error("Syntax:  b = thm.convolve(object, kernel, normalize, ignore, kernreduce)");
-    parse_error("example: b = thm.convolve(a,clone(1.0,10,10,1,),ignore=0,0)");
-    parse_error("object - may be any 1,2 or 3-D array.");
-    parse_error("kernel - the convolve kernel, may also be any 1,2 or 3-d array.");
-    parse_error("normalize - whether or not to normalize the output to the weight of the kernel. Default is 1 (yes).");
-    parse_error("ignore - the null value of pixels to be ignored in calculation. Default is 0.");
-    parse_error("kernreduce - whether to reduce the kernel on both sides as calculation approaches object boundary. Default is 0 (no).\n");
-    return NULL;
-  }
-  if (obj == NULL) {
-    parse_error("No object specified\n");
-    return NULL;
-  }
-  if (kernel == NULL) {
-    parse_error("No kernel specified\n");
-    return NULL;
-  }
-
-  return(do_my_convolve(obj, kernel, norm, ignore, kernreduce));
-}
-
-static Var *do_my_convolve(Var *obj, Var *kernel, int norm, float ignore, int kernreduce)
-{
-
-  float *data;                             /* the smoothed array */
-  int a, b, c;                             /* x, y, z position of kernel element */
-  int x_pos, y_pos, z_pos;                 /* x, y, z position of object element */
-  int obj_x, obj_y, obj_z;                 /* total x, y, z dimensions of object */
-  int kx_center, krn_x;                    /* x radius and total x dimension of kernel */
-  int ky_center, krn_y;                    /* y radius and total y dimension of kernel */
-  int kz_center, krn_z;                    /* z radius and total z dimension of kernel */
-  int x, y, z;                             /* x, y, z position of object convolved element */
-  int i, j, k;                             /* memory locations */
-  float kval, oval;                        /* value of kernel and object element */
-  float *wt;                               /* array of number of elements in sum */
-  int objsize;                             /* total 1-d size of object */
-  int a_opp, b_opp, c_opp;                 /* x, y, z position of anti-symmetric kernel element */
-  int x_opp, y_opp, z_opp;                 /* x, y, z position of anti-symmetric kernel element */
-
-  obj_x = GetX(obj);
-  obj_y = GetY(obj);
-  obj_z = GetZ(obj);
-  krn_x = GetX(kernel);
-  krn_y = GetY(kernel);
-  krn_z = GetZ(kernel);
-  kx_center = krn_x/2;
-  ky_center = krn_y/2;
-  kz_center = krn_z/2;
-  
-  objsize = obj_x * obj_y * obj_z;
-
-  data = (float *)calloc(sizeof(float), objsize);
-  wt = (float *)calloc(sizeof(float), objsize);
-
-  if (data == NULL || wt == NULL) {
-    parse_error("Unable to allocate memory");
-    return NULL ;
-  }
-
-  if(kernreduce==0) {
- 
-    for (i = 0 ; i < objsize ; i++) {                           /* loop through every element in object */
-      if(extract_float(obj, i) == ignore) { data[i] = ignore; continue; }
-      xpos(i, obj, &x, &y, &z);                                 /* compute current x,y,z position in object */
-      for (a = 0 ; a < krn_x ; a++) {                           /* current x position of kernel */
-	x_pos = x + a - kx_center;                              /* where the current operation is being done in x */
-	if (x_pos < 0 || x_pos >= obj_x) continue;
-	for (b = 0 ; b < krn_y ; b++) {                         /* current y position of kernel */    
-	  y_pos = y + b - ky_center;                            /* where the current operation is being done in y */
-	  if (y_pos < 0 || y_pos >= obj_y) continue;
-	  for (c = 0 ; c < krn_z ; c++) {                       /* current z position of kernel */
-	    z_pos = z + c - kz_center;                          /* where the current operation is being done in z */
-	    if (z_pos < 0 || z_pos >= obj_z) continue;
-	    j = cpos(x_pos, y_pos, z_pos, obj);                 /* position in 1-D object at (x_pos,y_pos,z_pos) */
-	    k = cpos(a, b, c, kernel);                          /* position in 1-D kernel at (a,b,c) */
-	    kval = extract_float(kernel,k);                     /* value of kernel at (k) */
-	    oval = extract_float(obj, j);                       /* value of object at (j) */
-	    if (oval != ignore && kval != ignore) {
-	      wt[i] += kval;                                    /* sum of values in used pixels of kernel*/
-	      data[i] += kval * oval;
-	    }
-	  } 
-	}
-      }
-
-      if (norm != 0 && wt[i] != 0) {
-	data[i] /= wt[i];
-      }
-    } 
-  }
-
-  if(kernreduce==1) {
-
-    for (i = 0 ; i < objsize ; i++) {                           /* loop through every element in object */
-      if(extract_float(obj, i) == ignore) { data[i] = ignore; continue; }
-      xpos(i, obj, &x, &y, &z);                                 /* compute current x,y,z position in object */
-      for (a = 0 ; a < krn_x ; a++) {                           /* current x position of kernel */
-	a_opp = krn_x - a - 1;                                  /* anti-symmetric x position of kernel */
-	x_pos = x + a - kx_center;                              /* where the current operation is being done in x */
-	x_opp = x + a_opp - kx_center;                          /* anti-symmetric x position of object */
-	if (x_pos < 0 || x_pos >= obj_x || x_opp < 0 || x_opp >= obj_x) continue;
-	for (b = 0 ; b < krn_y ; b++) {                         /* current y position of kernel */    
-	  b_opp = krn_y - b - 1;                                /* anti-symmetric y position of kernel */
-	  y_pos = y + b - ky_center;                            /* where the current operation is being done in y */
-	  y_opp = y + b_opp - ky_center;                        /* anti-symmetric y position in object */
-	  if (y_pos < 0 || y_pos >= obj_y || y_opp < 0 || y_opp >= obj_y) continue;
-	  for (c = 0 ; c < krn_z ; c++) {                       /* current z position of kernel */
-	    c_opp = krn_z - c - 1;                              /* anti-symmetric z position of kernel */
-	    z_pos = z + c - kz_center;                          /* where the current operation is being done in z */
-	    z_opp = z + c_opp - kz_center;                      /* anti-symmetric z position in object */
-	    if (z_pos < 0 || z_pos >= obj_z || z_opp < 0 || z_opp >= obj_z) continue;
-	    j = cpos(x_pos, y_pos, z_pos, obj);                 /* position in 1-D object at (x_pos,y_pos,z_pos) */
-	    k = cpos(a, b, c, kernel);                          /* position in 1-D kernel at (a,b,c) */
-	    kval = extract_float(kernel,k);                     /* value of kernel at (k) */
-	    oval = extract_float(obj, j);                       /* value of object at (j) */
-	    if (oval != ignore && kval != ignore) {
-	      wt[i] += kval;                                    /* sum of used pixels in kernel */
-	      data[i] += kval * oval;
-	    }
-	  } 
-	}
-      }
-
-      if (norm != 0 && wt[i] != 0) {
-	data[i] /= wt[i];
-      }
-    } 
-  }
-
-  free(wt);
-  return(newVal(V_ORG(obj), V_SIZE(obj)[0], V_SIZE(obj)[1], V_SIZE(obj)[2], FLOAT, data));
-}
-
-
-
-
-
-
-float *convolve(float *obj, float *kernel, int ox, int oy, int oz, int kx, int ky, int kz, int norm, float ignore)
-{
-
-  float   *data;                                /* the smoothed array */
-  float   *wt;                                  /* array of number of elements in sum */
-  int      a, b, c;                             /* x, y, z position of kernel element */
-  int      x_pos, y_pos, z_pos;                 /* x, y, z position of object element */
-  int      kx_center;                           /* x radius and total x dimension of kernel */
-  int      ky_center;                           /* y radius and total y dimension of kernel */
-  int      kz_center;                           /* z radius and total z dimension of kernel */
-  int      x, y, z;                             /* x, y, z position of object convolved element */
-  int      i, j, k;                             /* memory locations */
-  float    kval, oval;                          /* value of kernel and object element */
-  int      objsize;                             /* total 1-d size of object */
-
-  kx_center = kx/2;
-  ky_center = ky/2;
-  kz_center = kz/2;
-  
-  objsize = ox * oy * oz;
-
-  data = (float *)calloc(sizeof(float), objsize);
-  wt = (float *)calloc(sizeof(float), objsize);
-
-  if (data == NULL || wt == NULL) {
-    parse_error("Unable to allocate memory");
-    return NULL ;
-  }
- 
-  for (i = 0 ; i < objsize ; i++) {                               /* loop through every element in object */
-    if(obj[i] == ignore) { data[i] = ignore; continue; }
-
-    z = i/(ox*oy);                                                /* current x position in object */
-    y = (i - z*ox*oy)/ox ;                                        /* current y position in object */
-    x =  i - z*ox*oy - y*ox;                                      /* current z position in object */
-
-    for (a = 0 ; a < kx ; a++) {                                  /* current x position of kernel */
-      x_pos = x + a - kx_center;                                  /* where the current operation is being done in x */
-      if (x_pos < 0 || x_pos >= ox) continue;
-      for (b = 0 ; b < ky ; b++) {                                /* current y position of kernel */    
-	y_pos = y + b - ky_center;                                /* where the current operation is being done in y */
-	if (y_pos < 0 || y_pos >= oy) continue;
-	for (c = 0 ; c < kz ; c++) {                              /* current z position of kernel */
-	  z_pos = z + c - kz_center;                              /* where the current operation is being done in z */
-	  if (z_pos < 0 || z_pos >= oz) continue;
-	  j = z_pos*ox*oy + y_pos*ox + x_pos;                     /* position in 1-D object at (x_pos,y_pos,z_pos) */
-	  k = c*kx*ky + b*kx + a;                                 /* position in 1-D kernel at (a,b,c) */
-	  kval = kernel[k];                                       /* value of kernel at (k) */
-	  oval = obj[j];                                          /* value of object at (j) */
-	  if (oval != ignore && kval != ignore) {
-	    wt[i] += kval;                                        /* sum of values of pixels of the kernel used */
-	    data[i] += (kval * oval);
-	  }
-	} 
-      }
-    }
-
-    if (norm != 0 && wt[i] != 0) {
-      data[i] /= (float)wt[i];
-    }
-  } 
-
-  free(wt);
-  return(data);
-}
-
-
-
-Var *
-thm_ramp(vfuncptr func, Var * arg)
-{
-  /* made more efficient and fixed several bugs Oct 14, 2005                         **
-  ** added ability to speed up ramp calculation by setting a maximum # of iterations **
-  ** Fri Oct 14 16:36:44 MST 2005                                                    **
-  ** added completely overlapping picture functionality                              **
-  ** Fri Mar  3 13:31:47 MST 2006                                                                                */
-
-  Var    *pic_1 = NULL;		 /* picture one                                   */
-  Var    *pic_2 = NULL;		 /* picture two                                   */
-  Var    *out = NULL;		 /* the output picture                            */
-  float  *ramp = NULL; 	         /* storage location of output ramp               */
-  int    *ol1 = NULL;	         /* the overlap in picture 1                      */
-  int    *ol2 = NULL;	         /* the overlap in picture 2                      */
-  float   nullv = 0.0;	         /* the ignore value                              */
-  float   tmpval = 0.0;          /* a temporary extracted value from the pictures */
-  int     r1 = -1, r2 = -1;      /* beginning and ending rows of the overlap      */
-  int     c1 = -1, c2 = -1;      /* beginning and ending columns of the overlap   */
-  int     i, j, k;	         /* loop indices                                  */
-  int     x, y;		         /* dimensions of the input pictures              */
-  int     t1;  			 /* memory location                               */
-  int     ct = 1;		 /* counter                                       */
-  int     n=-1, num = 1;	 /* fill-in number                                */
-  int     up, down, left, right; /* some neighborhood indices                     */
-  int     pare = 100000;         /* maximum # of pixels away from edge to search  */
-  float   sum=0;  
-
-  Alist alist[5];
-  alist[0] = make_alist("pic1",   ID_VAL, NULL, &pic_1);
-  alist[1] = make_alist("pic2",   ID_VAL, NULL, &pic_2);
-  alist[2] = make_alist("stop",   INT,    NULL, &pare);
-  alist[3] = make_alist("ignore", FLOAT,  NULL, &nullv);
-  alist[4].name = NULL;
-
-  if (parse_args(func, arg, alist) == 0)
-    return (NULL);
-  
-  /* if no pictures got passed to the function */
-  if (pic_1 == NULL || pic_2 == NULL) {
-    parse_error("ramp() - Fri Mar  3 13:31:47 MST 2006");
-    parse_error("Calculates a 0 - 1 float ramp between two overlapping pictures.");
-    parse_error("You need to pass me two overlapping pictures contained in arrays\nof identical size, and an ignore value.\n");
-    parse_error("Syntax:  b = thm.ramp(pic1, pic2, stop, ignore)");
-    parse_error("example: b = thm.ramp(a1, a2, stop=100, ignore=-32768");
-    parse_error("pic1 - may be any 2-d array - float, int, short, etc.");
-    parse_error("pic2 - may be any 2-d array - float, int, short, etc.");
-    parse_error("stop - maximum number of pixels away from edge to search. Default 100000");
-    parse_error("ignore - the non-data pixel values. Default is 0.\n");
-    parse_error("NOTES:\n");
-    parse_error("You need to multiply the ramp*pic2 and (1-ramp)*pic1.");
-    parse_error("The ramp is only found for OVERLAPPING regions.");
-    parse_error("Non-overlapping regions from pic1 and pic2 need to be added to make a full blend.");
-    parse_error("You can speed up ramp calculation by setting \'stop\'. 100 works well.");
-    return NULL;
-  }
-  
-  /* x and y dimensions of the original pictures */
-  x = GetX(pic_1);
-  y = GetY(pic_1);
-  
-  if (x != GetX(pic_2) || y != GetY(pic_2)) {
-    parse_error("The two pictures need to be of the exact same dimensions.\n");
-    return NULL;
-  }
-  
-  /* create the two overlap arrays */
-  ol1 = (int *) malloc(sizeof(int)*x*y);
-  ol2 = (int *) malloc(sizeof(int)*x*y);
-  
-  /* lines and columns bounding data */
-  r1 = y-1;
-  r2 = 0;
-  c1 = x-1;
-  c2 = 0;
-  
-  /* extract profiles of images */
-  for (j = 0; j < y ; j++) {
-    for (i = 0; i < x ; i++) {
-      t1 = j * x + i;
-      ol1[t1] = -1;
-      ol2[t1] = -1;
-      
-      tmpval = extract_float(pic_1, cpos(i, j, 0, pic_1));
-      if(tmpval != nullv) ol1[t1] = 0;
-      
-      tmpval = extract_float(pic_2, cpos(i, j, 0, pic_2));
-      if(tmpval != nullv) ol2[t1] = 0;
-  
-      if(ol1[t1] == 0) sum+=ol2[t1];
-      /* find left and right limits of overlapping area */
-      if (ol1[t1] != -1 && ol2[t1] != -1) {
-	if (j < r1) { r1 = j; }
-	if (j > r2) { r2 = j; }
-	if (i < c1) { c1 = i; }
-	if (i > c2) { c2 = i; }
-      }
-    }
-  }
-  
-  /* ol1 and ol2 were being left zero (sum==0) causing the ramp to fail  **
-  ** setting the outteredges of both ol1 and ol2 to -1 fixed the problem.*/ 
-  if(sum==0) {
-    for(i = 0; i < x; i++){
-      ol1[x*y-(i+1)]=-1;
-      ol1[i]=-1;
-    }
-    for(j = 1; j < y; j++){
-      ol1[x*j]=-1;
-      ol1[x*j-1]=-1;
-    }
-  }
-  
-  /* loop through the overlap arrays filling in the appropriate value.   **
-  ** On the first iteration we search for any pixels with a neighbor of  **
-  ** -1 and we set that pixel to 1.  On all other iterations we look for **
-  ** neighbors with values num-1. If "stop" number is specified, we stop **
-  ** searching for distances and set all values to value of "pare".      */
-  k=1;
-  while (ct > 0) {
-    ct = 0;
-    
-    for (j = r1; j <= r2; j++) {
-      for (i = c1; i <= c2; i++) {
-	t1 = j * x + i;
-	
-	/* neighbor pixel positions */
-	up = (j-1) * x + i;
-	down = (j+1) * x + i;
-	left = t1 - 1;
-	right = t1 + 1;
-	
-	/* safety against falling off the edge */
-	if(j==0) up = t1;
-	if(j==y-1) down = t1;
-	if(i==0) left = t1;
-	if(i==x-1) right = t1;
-	
-	if (ol1[t1] == 0
-	    && ((ol1[left] == n) || (ol1[right] == n)
-		|| (ol1[up] == n) || (ol1[down] == n))) {
-	  ol1[t1] = num;
-	  ct += 1;
-	}
-	/* If the sum of the overlap == 0 then we don't need to do this part */
-	if(sum!=0) {
-	  if (ol2[t1] == 0
-	      && ((ol2[left] == n) || (ol2[right] == n)
-		  || (ol2[up] == n) || (ol2[down] == n))) {
-	    ol2[t1] = num;
-	    ct += 1;
-	  }
-	}
-      }
-    }
-    num += 1;
-    n = num-1;
-    k+=1;
-
-    /* we've searched enough. Set all remaining values to 'pare' (stop in spanish) */
-    if(k==pare) {
-      for (j = r1; j <= r2; j++) {
-	for (i = c1; i <= c2; i++) {
-	  t1 = j * x + i;
-	  if (ol1[t1] == 0) ol1[t1] = pare;
-	  if(sum!=0) {
-	    if (ol2[t1] == 0) ol2[t1] = pare;
-	  }
-	}
-      }
-      ct=0;
-    }
-  }
-  
-  /* loop through last time and create ramp using the special cases*/
-  ramp = (float *) calloc(sizeof(float), x*y);
-  for (j = 0; j < y; j++) {
-    for (i = 0; i < x; i++) {
-      t1 = j*x + i;
-      if (ol1[t1] != -1 && ol2[t1] != -1) {
-	if(sum!=0)  ramp[t1] = (float)(ol2[t1]) / (float)(ol2[t1] + ol1[t1]);
-	if(sum==0)  ramp[t1] = (float)(1 -((float)(ol1[t1]) / (float)(2*k)));
-      }
-    }
-  }
-  
-  free(ol1);
-  free(ol2);
-  
-  out = newVal(BSQ, x, y, 1, FLOAT, ramp);
-  return out;
-}
-
-
-
-Var *
-thm_rampold(vfuncptr func, Var * arg)
-{
-  /* made more efficient and fixed several bugs Oct 14, 2005                         **
-  ** added ability to speed up ramp calculation by setting a maximum # of iterations **
-  ** Fri Oct 14 16:36:44 MST 2005                                                    */
-
-  Var    *pic_1 = NULL;		 /* picture one                                   */
-  Var    *pic_2 = NULL;		 /* picture two                                   */
-  Var    *out = NULL;		 /* the output picture                            */
-  float  *ramp = NULL; 	         /* storage location of output ramp               */
-  int    *ol1 = NULL;	         /* the overlap in picture 1                      */
-  int    *ol2 = NULL;	         /* the overlap in picture 2                      */
-  float   nullv = 0.0;	         /* the ignore value                              */
-  float   tmpval = 0.0;          /* a temporary extracted value from the pictures */
-  int     r1 = -1, r2 = -1;      /* beginning and ending rows of the overlap      */
-  int     c1 = -1, c2 = -1;      /* beginning and ending columns of the overlap   */
-  int     i, j, k;	         /* loop indices                                  */
-  int     x, y;		         /* dimensions of the input pictures              */
-  int     t1;  			 /* memory location                               */
-  int     ct = 1;		 /* counter                                       */
-  int     n=-1, num = 1;	 /* fill-in number                                */
-  int     up, down, left, right; /* some neighborhood indices                     */
-  int     pare = 100000;         /* maximum # of pixels away from edge to search  */
-
-  Alist alist[5];
-  alist[0] = make_alist("pic1",   ID_VAL, NULL, &pic_1);
-  alist[1] = make_alist("pic2",   ID_VAL, NULL, &pic_2);
-  alist[2] = make_alist("stop",   INT,    NULL, &pare);
-  alist[3] = make_alist("ignore", FLOAT,  NULL, &nullv);
-  alist[4].name = NULL;
-
-  if (parse_args(func, arg, alist) == 0)
-    return (NULL);
-  
-  /* if no pictures got passed to the function */
-  if (pic_1 == NULL || pic_2 == NULL) {
-    parse_error("ramp() - Fri Oct 14 14:45:09 MST 2005");
-    parse_error("Calculates a 0 - 1 float ramp between two overlapping pictures.");
-    parse_error("You need to pass me two overlapping pictures contained in arrays\nof identical size, and an ignore value.\n");
-    parse_error("Syntax:  b = thm.ramp(pic1, pic2, stop, ignore)");
-    parse_error("example: b = thm.ramp(a1, a2, stop=100, ignore=-32768");
-    parse_error("pic1 - may be any 2-d array - float, int, short, etc.");
-    parse_error("pic2 - may be any 2-d array - float, int, short, etc.");
-    parse_error("stop - maximum number of pixels away from edge to search. Default 100000");
-    parse_error("ignore - the non-data pixel values. Default is 0.\n");
-    parse_error("NOTES:\n");
-    parse_error("You need to multiply the ramp*pic2 and (1-ramp)*pic1.");
-    parse_error("The ramp is only found for OVERLAPPING regions.");
-    parse_error("Non-overlapping regions from pic1 and pic2 need to be added to make a full blend.");
-    parse_error("You can speed up ramp calculation by setting \'stop\'. 100 works well.");
-    return NULL;
-  }
-  
-  /* x and y dimensions of the original pictures */
-  x = GetX(pic_1);
-  y = GetY(pic_1);
-  
-  if (x != GetX(pic_2) || y != GetY(pic_2)) {
-    parse_error("The two pictures need to be of the exact same dimensions.\n");
-    return NULL;
-  }
-  
-  /* create the two overlap arrays */
-  ol1 = (int *) malloc(sizeof(int)*x*y);
-  ol2 = (int *) malloc(sizeof(int)*x*y);
-  
-  /* lines and columns bounding data */
-  r1 = y-1;
-  r2 = 0;
-  c1 = x-1;
-  c2 = 0;
-  
-  /* extract profiles of images */
-  for (j = 0; j < y ; j++) {
-    for (i = 0; i < x ; i++) {
-      t1 = j * x + i;
-      ol1[t1] = -1;
-      ol2[t1] = -1;
-      
-      tmpval = extract_float(pic_1, cpos(i, j, 0, pic_1));
-      if(tmpval != nullv) ol1[t1] = 0;
-      
-      tmpval = extract_float(pic_2, cpos(i, j, 0, pic_2));
-      if(tmpval != nullv) ol2[t1] = 0;
-      
-      /* find left and right limits of overlapping area */
-      if (ol1[t1] != -1 && ol2[t1] != -1) {
-	if (j < r1) { r1 = j; }
-	if (j > r2) { r2 = j; }
-	if (i < c1) { c1 = i; }
-	if (i > c2) { c2 = i; }
-      }
-    }
-  }
- 
-  /* loop through the overlap arrays filling in the appropriate value.   **
-  ** On the first iteration we search for any pixels with a neighbor of  **
-  ** -1 and we set that pixel to 1.  On all other iterations we look for **
-  ** neighbors with values num-1. If "stop" number is specified, we stop **
-  ** searching for distances and set all values to value of "pare".      */
-  k=1;
-  while (ct > 0) {
-    ct = 0;
-    
-    for (j = r1; j <= r2; j++) {
-      for (i = c1; i <= c2; i++) {
-	t1 = j * x + i;
-	
-	/* neighbor pixel positions */
-	up = (j-1) * x + i;
-	down = (j+1) * x + i;
-	left = t1 - 1;
-	right = t1 + 1;
-	
-	/* safety against falling off the edge */
-	if(j==0) up = t1;
-	if(j==y-1) down = t1;
-	if(i==0) left = t1;
-	if(i==x-1) right = t1;
-	
-	if (ol1[t1] == 0
-	    && ((ol1[left] == n) || (ol1[right] == n)
-		|| (ol1[up] == n) || (ol1[down] == n))) {
-	  ol1[t1] = num;
-	  ct += 1;
-	}
-	if (ol2[t1] == 0
-	    && ((ol2[left] == n) || (ol2[right] == n)
-		|| (ol2[up] == n) || (ol2[down] == n))) {
-	  ol2[t1] = num;
-	  ct += 1;
-	}
-      }
-    }
-    num += 1;
-    n = num-1;
-    k+=1;
-
-    /* we've searched enough. Set all remaining values to 'pare' */
-    if(k==pare) {
-      for (j = r1; j <= r2; j++) {
-	for (i = c1; i <= c2; i++) {
-	  t1 = j * x + i;
-	  if (ol1[t1] == 0) ol1[t1] = pare;
-	  if (ol2[t1] == 0) ol2[t1] = pare;
-	}
-      }
-      ct=0;
-    }
-  }
-
-  /* loop through last time and create ramp */
-  ramp = (float *) calloc(sizeof(float), x*y);
-  
-  for (j = 0; j < y; j++) {
-    for (i = 0; i < x; i++) {
-      t1 = j*x + i;
-      if (ol1[t1] != -1 && ol2[t1] != -1) {
-	ramp[t1] = (float)(ol2[t1]) / (float)(ol2[t1] + ol1[t1]);
-      }
-    }
-  }
-  
-  free(ol1);
-  free(ol2);
-  
-  out = newVal(BSQ, x, y, 1, FLOAT, ramp);
-  return out;
-}
-
-
-
-
 
 
 /**
@@ -1178,233 +122,6 @@ thm_corners(vfuncptr func, Var * arg)
 
   cns = do_corners(pic_a, nullval);
   return(newVal(BSQ, 1, 8, 1, INT, cns));
-}
-
-
-int *do_corners(Var *pic_a, float nullval)
-{
-  typedef unsigned char byte;
-
-  byte    *pic = NULL;                                 /* the modified pic */
-  int      x, y;                                       /* dimensions of the original pic */
-  int      i, j;                                       /* loop indices */
-  int      trx = -1, try = -1, tlx = -1, tly = -1;     /* xy positions of top corners */
-  int      brx = -1, bry = -1, blx = -1, bly = -1;     /* xy positions of bottom corners */
-  int      tmyv = -1, bmyv = -1;                       /* top most y val, bottom most y val */
-  int      lmxv = -1, rmxv = -1;                       /* left most x val, right most x val */
-  int      lmyv = -1, rmyv = -1;                       /* left most y val, right most y val */
-  int      lmyva = -1, rmyva = -1;                     /* opposite approach of y lmyv, rmyv */
-  int     *row_avg, *col_avg;                          /* row and column avg */
-  int     *corners = NULL;                             /* corners array */
-  float    pic_val = 0;                                /* extracted float val from pic */
-
-  /* x and y dimensions of the original picture */
-  x = GetX(pic_a);
-  y = GetY(pic_a);
-
-  /* create row_avg and col_avg arrays */
-  row_avg = (int *)calloc(sizeof(int), y);
-  col_avg = (int *)calloc(sizeof(int), x);
-
-  /* create corners array */
-  corners = (int *)calloc(sizeof(int),8);
-  for(i=0;i<=7;i++) {
-    corners[i] = -1;
-  }
-  
-  if (row_avg == NULL) {
-    parse_error("\nError! Unable to allocate %d bytes for row_avg\n", sizeof(int)*y);
-    return NULL;
-  }
-  if (col_avg == NULL) {
-    parse_error("\nError! Unable to allocate %d bytes for col_avg\n", sizeof(int)*x);
-    return NULL;
-  }
-  
-  /* allocate memory for the pic */
-  pic = (byte *)calloc(sizeof(byte),y*x);
-  
-  if (pic == NULL) {
-    parse_error("\nERROR! AHHHHH...I can't remember the picture!\n");
-    return NULL;
-  }
-  
-  /* extract the picture, row_avg and col_avg */
-  for(j=0; j<y; j++) {
-    for(i=0; i<x; i++) {
-      pic_val = extract_float(pic_a, cpos(i, j, 0, pic_a));
-      if(pic_val != nullval) {
-	//printf("%f ",pic_val);
-	pic[j*x+i] = 1;
-	row_avg[j] += pic[j*x+i];		// <- possible problem, see comment at top
-	col_avg[i] += pic[j*x+i];		// <- possible problem
-      }
-    }
-    //printf("%d\n",row_avg[j]);
-  }
-
-  /* loop through row_avg */
-  j=0;
-  while(tmyv == -1 || bmyv == -1 && j < y) {
-    if(row_avg[j] != 0 && tmyv == -1) {
-      tmyv = j;
-    }
-    if(row_avg[y-j-1] != 0 && bmyv == -1) {
-      bmyv=y-j-1;
-    }
-    j+=1;
-  }
-
-  /* loop through col_avg */
-  i=0;
-  while(lmxv == -1 || rmxv == -1 && i < x) {
-    if(col_avg[i] != 0 && lmxv == -1) {
-      lmxv = i;
-    }
-    if(col_avg[x-i-1] != 0 && rmxv == -1) {
-      rmxv=x-i-1;
-    }
-    i+=1;
-  }
-
-  /* find corresponding y vals to the left most and right most x vals */
-  j=0;
-  while(lmyv == -1 || rmyv == -1 && j < y) {
-    if(pic[j*x+lmxv] != 0 && lmyv == -1) {
-      lmyv = j;
-    }
-    if(pic[(y-j-1)*x+lmxv] != 0 && lmyva == -1) {
-      lmyva = y-j-1;
-    }
-    if(pic[(y-j-1)*x+rmxv] != 0 && rmyv == -1) {
-      rmyv = y-j-1;
-    }
-    if(pic[j*x+rmxv] != 0 && rmyva == -1) {
-      rmyva=j;
-    }
-    j+=1;
-  }
-
-  /* case where top of image leans to the left of the bottom of the image */
-  /* approach top most x value from the right */
-  if(rmyv>=lmyv) {
-    i=0;
-    while(corners[2] == -1 || corners[4] == -1 && i < x) {
-      if(pic[tmyv*x+(x-i-1)] != 0 && corners[2] == -1) {
-	corners[2] = x-i;
-	corners[3] = tmyv + 1;
-	corners[0] = lmxv + 1;
-	corners[1] = lmyv + 1;
-      }
-      if(pic[bmyv*x+i] != 0 && corners[4] == -1 ) {
-	corners[4] = i + 1;
-	corners[5] = bmyv + 1;
-	corners[6] = rmxv + 1;
-        corners[7] = rmyv + 1;
-      }
-      i+=1;
-    } 
-  }
-  
-  /* case where top of image leans to the right of the bottom of the image */
-  /* approach top most x value from the left */
-  if(lmyv>=rmyv) {
-    i=0;
-    while(corners[0] == -1 || corners[6] == -1 && i < x) {
-      if(pic[tmyv*x+i] != 0 && corners[0] == -1) {
-	corners[0] = i + 1;
-	corners[1] = tmyv + 1;
-	corners[2] = rmxv + 1;
-	corners[3] = rmyva + 1;
-      }
-      if(pic[bmyv*x+(x-i-1)] != 0 && corners[6] == -1 ) {
-	corners[6] = x-i;
-	corners[7] = bmyv + 1;
-	corners[4] = lmxv + 1;
-	corners[5] = lmyva + 1;
-      }
-      i+=1;
-    }
-  }
-
-  /* clean up memory */
-  free(pic);
-  free(col_avg);
-  free(row_avg);
-
-  /* return array */  
-  return(corners);
-}
-
-
-
-
-
-
-Var *
-thm_sawtooth(vfuncptr func, Var * arg)
-{
-
-  Var *out;                   /* output array */
-  float *tooth;               /* the output of sawtooth routine */
-  int x = 0, y = 0, z = 0;
-
-  Alist alist[4];
-  alist[0] = make_alist("x",       INT,         NULL,	&x);
-  alist[1] = make_alist("y",       INT,         NULL,	&y);
-  alist[2] = make_alist("z",       INT,         NULL,   &z);
-  alist[3].name = NULL;
-  
-  if (parse_args(func, arg, alist) == 0) return(NULL);
-
-  if (x == 0 || y == 0 || z == 0) {
-    parse_error("sawtooth() - 4/25/04");
-    parse_error("Creates a sawtooth filter kernel of size x by y by z\n");
-    parse_error("Syntax: a = thm.sawtooth(1,300,1)\n");
-    return NULL;
-  }
-
-  tooth = sawtooth(x, y, z);
-  out = newVal(BSQ, x, y, z, FLOAT, tooth);
-  return out;
-}
-
-float *sawtooth(int x, int y, int z)
-{
-  float *kernel;                           /* the end kernel array */
-  int i, j, k;                             /* loop indices */
-  float xp, yp, zp;                        /* value of orthogonal parts */
-  float xm, ym, zm;                        /* multiplier value in x, y, z */
-  float total;                             /* sum value of filter */
-
-  kernel = (float *)calloc(sizeof(float), x*y*z);
-  xm = (x>1)?4.0/((float)x):1.0;
-  ym = (y>1)?4.0/((float)y):1.0;
-  zm = (z>1)?4.0/((float)z):1.0;
-
-  for(k=0; k<z; k++) {
-    zp = (z>1)?(((z+1)/2)-abs((z/2)-k))*zm:1.0;
-    for(j=0; j<y; j++) {
-      yp = (y>1)?(((y+1)/2)-abs((y/2)-j))*ym:1.0;
-      for(i=0; i<x; i++) {
-	xp = (x>1)?(((x+1)/2)-abs((x/2)-i))*xm:1.0;
-	kernel[k*x*y + j*x + i] = xp*yp*zp;
-	total += xp*yp*zp;
-      }
-    }
-  }
-
-  total = (float)x*(float)y*(float)z/total;
-
-  for(k=0; k<z; k++) {
-    for(j=0; j<y; j++) {
-      for(i=0; i<x; i++) {
-	kernel[k*x*y + j*x + i] = kernel[k*x*y + j*x + i]*total;
-      }
-    }
-  }
-
-  return(kernel);
 }
 
 
@@ -1580,7 +297,6 @@ thm_deplaid(vfuncptr func, Var * arg)
 	  if(ct_map[x*j + i] != 0) tmask[x*j + i] /= (float)ct_map[x*j + i];
 	}
       }
-
       if(k == z-1 && row_wt[j] != 0) {
 	row_avg[j] /= row_wt[j];                                     /* calculating row avg for tmask */
 	row_wt[j] = 0;
@@ -1716,23 +432,23 @@ thm_deplaid(vfuncptr func, Var * arg)
 	  }
 	}
       }
-
+			
       cca += 1;                                              /* increment the chunka line indice */
       ccb += 1;                                              /* increment the chunkb line indice */
       if(cca == 500) {                                       /* if at end of chunk, start new chunk */
-	cca = 0;
-	cka += 1;
-	ck += 1;
+				cca = 0;
+				cka += 1;
+				ck += 1;
       }
       if(ccb == 500) {                                       /* if at end of chunk, start new chunk */
-	ccb = 0;
-	if(ckb > 0) ck += 1;                                 /* don't increment the ck until cka and ckb have at least one finished chunk */
-	ckb += 1;
+				ccb = 0;
+				if(ckb > 0) ck += 1;                                 /* don't increment the ck until cka and ckb have at least one finished chunk */
+				ckb += 1;
       }
-
+			
       if(row_avg[y*k + j] != 0 && row_wt[y*k + j] != 0) {
-	row_avg[y*k + j] /= (float)row_wt[y*k + j];          /* perform division for row_avg values*/
-	row_wt[y*k + j] = 0;
+				row_avg[y*k + j] /= (float)row_wt[y*k + j];          /* perform division for row_avg values*/
+				row_wt[y*k + j] = 0;
       }
     }
     cka = 0;
@@ -1869,7 +585,72 @@ thm_deplaid(vfuncptr func, Var * arg)
 
 
 
+Var *
+thm_sawtooth(vfuncptr func, Var * arg)
+{
 
+  Var *out;                   /* output array */
+  float *tooth;               /* the output of sawtooth routine */
+  int x = 0, y = 0, z = 0;
+
+  Alist alist[4];
+  alist[0] = make_alist("x",       INT,         NULL,	&x);
+  alist[1] = make_alist("y",       INT,         NULL,	&y);
+  alist[2] = make_alist("z",       INT,         NULL,   &z);
+  alist[3].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+
+  if (x == 0 || y == 0 || z == 0) {
+    parse_error("sawtooth() - 4/25/04");
+    parse_error("Creates a sawtooth filter kernel of size x by y by z\n");
+    parse_error("Syntax: a = thm.sawtooth(1,300,1)\n");
+    return NULL;
+  }
+
+  tooth = sawtooth(x, y, z);
+  out = newVal(BSQ, x, y, z, FLOAT, tooth);
+  return out;
+}
+
+
+float *sawtooth(int x, int y, int z)
+{
+  float *kernel;                           /* the end kernel array */
+  int i, j, k;                             /* loop indices */
+  float xp, yp, zp;                        /* value of orthogonal parts */
+  float xm, ym, zm;                        /* multiplier value in x, y, z */
+  float total;                             /* sum value of filter */
+
+  kernel = (float *)calloc(sizeof(float), x*y*z);
+  xm = (x>1)?4.0/((float)x):1.0;
+  ym = (y>1)?4.0/((float)y):1.0;
+  zm = (z>1)?4.0/((float)z):1.0;
+
+  for(k=0; k<z; k++) {
+    zp = (z>1)?(((z+1)/2)-abs((z/2)-k))*zm:1.0;
+    for(j=0; j<y; j++) {
+      yp = (y>1)?(((y+1)/2)-abs((y/2)-j))*ym:1.0;
+      for(i=0; i<x; i++) {
+	xp = (x>1)?(((x+1)/2)-abs((x/2)-i))*xm:1.0;
+	kernel[k*x*y + j*x + i] = xp*yp*zp;
+	total += xp*yp*zp;
+      }
+    }
+  }
+
+  total = (float)x*(float)y*(float)z/total;
+
+  for(k=0; k<z; k++) {
+    for(j=0; j<y; j++) {
+      for(i=0; i<x; i++) {
+				kernel[k*x*y + j*x + i] = kernel[k*x*y + j*x + i]*total;
+      }
+    }
+  }
+
+  return(kernel);
+}
 
 
 Var *
@@ -2039,7 +820,7 @@ thm_rectify(vfuncptr func, Var * arg)
       }
     }
   }
-
+	
   /**
   *** Find the maximum width of the non-ignore pixels
   *** which is equal to the width of the output image
@@ -2252,15 +1033,11 @@ thm_reconstitute(vfuncptr func, Var * arg)
 }
 
 
-
-
-
-
 Var *
 thm_rad2tb(vfuncptr func, Var * arg)
 {
-  /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
-
+  /* updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
+  /* updated 11/17/2007 to allow the setting of a maximum emissivity. - kjn*/
   /* wrapper used to call rad2tb */
 
   Var         *rad = NULL;                     /* the original radiance */
@@ -2272,6 +1049,7 @@ thm_rad2tb(vfuncptr func, Var * arg)
   struct       iom_iheader h;                  /* temp_rad_v4 header structure */
   float        nullval = -32768;               /* default null value of radiance data */
   float       *b_temps = NULL;                 /* brightness temperatures computed by rad2tb */
+  float        maxem = 1.0;
   int         *blist = NULL;                   /* the integer list of bands extracted from bandlist or created */
   int          x, y, z;                        /* dimensions of the data */
   int          bx = 0;                         /* x-dimension of the bandlist */
@@ -2280,26 +1058,27 @@ thm_rad2tb(vfuncptr func, Var * arg)
   Alist alist[6];
   alist[0] = make_alist("rad",              ID_VAL,          NULL,   &rad);
   alist[1] = make_alist("bandlist",         ID_VAL,          NULL,   &bandlist);
-  alist[2] = make_alist("ignore",            FLOAT,          NULL,   &nullval);
-  alist[3] = make_alist("temp_rad_path", ID_STRING,          NULL,   &fname);
-  alist[4] = make_alist("null",              FLOAT,          NULL,   &nullval); //can be removed when all legacy programs are dead
+  alist[2] = make_alist("ignore",           FLOAT,           NULL,   &nullval);
+  alist[3] = make_alist("temp_rad_path",    ID_STRING,       NULL,   &fname);
+  alist[4] = make_alist("max_emiss",        FLOAT,           NULL,   &maxem);
   alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   if (rad == NULL) {
-    parse_error("rad2tb() - 7/07/04");
+    parse_error("rad2tb() - 11/17/07");
     parse_error("THEMIS radiance to THEMIS Brightness Temperature Converter\n");
-    parse_error("Uses /themis/calib/temp_rad_v4 as conversion table.");
+    parse_error("Uses temp_rad_v4 in $DV_EX or /themis/calib as the default conversion table.");
     parse_error("Assumes 10 bands of radiance for right now.\n");
-    parse_error("Syntax:  b = thm.rad2tb(rad,bandlist,ignore,temp_rad_path)");
+    parse_error("Syntax:  b = thm.rad2tb(rad,bandlist,ignore,temp_rad_path,max_emiss)");
     parse_error("example: b = thm.rad2tb(a)");
     parse_error("example: b = thm.rad2tb(a,1//2//3//4//5//6//7//8//9,0)");
     parse_error("example: b = thm.rad2tb(rad=a,bandlist=4//9//10,ignore=-32768,temp_rad_path=\"/themis/calib/temp_rad_v3\")");
     parse_error("rad - any float valued 3-D radiance array.");
     parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
     parse_error("ignore - non-data pixel value. Default is -32768 AND 0.");
-    parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is /themis/calib/temp_rad_v4.\n");
+    parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is $DV_EX/temp_rad_v4.\n");
+    parse_error("max_emiss - maximum allowable value for emissivity. Default is 1.0");
     return NULL;
   }
 
@@ -2327,12 +1106,21 @@ thm_rad2tb(vfuncptr func, Var * arg)
   iom_init_iheader(&h);
 
   /* load temp_rad_v4 table into memory */
-  if (fname == NULL) fname = strdup("/themis/calib/temp_rad_v4");
-  fp = fopen(fname, "rb");
+  if (fname == NULL) {
+      const char *dv_ex_val = getenv(DV_EX_ENV);
+      if (dv_ex_val == NULL){
+          dv_ex_val = RAD_TEMP_DEFAULT_PATH;
+      }
 
+      fname = calloc(1, strlen(dv_ex_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
+      sprintf(fname,"%s/%s",dv_ex_val, RAD_TEMP_LOOKUP_TBL);
+  }
+  
+  fp = fopen(fname, "rb");
   if (fp == NULL) {
-    parse_error("Can't open look up table /themis/calib/temp_rad_v4!\n");
-    return(NULL);
+      printf("Can't open look up table: %s\n",fname);
+      free(fname);
+      return(NULL);
   }
 
   temp_rad = dv_LoadVicar(fp, fname, &h);
@@ -2340,7 +1128,7 @@ thm_rad2tb(vfuncptr func, Var * arg)
   free(fname);
 
   /* convert to brightness temperature and return */
-  b_temps = rad2tb(rad, temp_rad, blist, bx, nullval);
+  b_temps = rad2tb(rad, temp_rad, blist, bx, nullval, maxem);
 
   free(blist);
   out = newVal(BSQ, x, y, z, FLOAT, b_temps);
@@ -2349,7 +1137,7 @@ thm_rad2tb(vfuncptr func, Var * arg)
 }
 
 
-float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval)
+float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval, float maxem)
 {
 
   float    *btemps;                       /* the output interpolated brightness temperature data */
@@ -2369,6 +1157,7 @@ float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval
     bandlist is an integer list of which THEMIS bands are in the radiance cube
     bx is the number of elements in bandlist, also the number of bands in the radiance cube
     nullval is the null data value
+    maxem is the maximum allowable emissivity value
   */
 
   x = GetX(radiance);
@@ -2394,7 +1183,7 @@ float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval
 
     band = bandlist[k];
 
-    /* extract linear radiances array */
+    /* extract linear radiances to temperatures array */
     for(i=0;i<w;i++) {
       rads[i] = extract_float(temp_rad,cpos(band,i,0,temp_rad));
     }
@@ -2409,6 +1198,9 @@ float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval
     for(j=0;j<y;j++) {
       for(i=0;i<x;i++) {
 	cur_val = extract_float(radiance,cpos(i,j,k,radiance));
+
+	/* correct for maximum emissivity designation */
+	cur_val *= 1.0/maxem;
 
 	if(cur_val == -32768 || cur_val == 0 || cur_val == nullval) {
 		btemps[k*y*x + j*x + i] = 0;
@@ -2497,30 +1289,30 @@ float *tb2rad(float *btemp, Var *temp_rad, int *bandlist, int bx, float nullval,
     /* work on a point at a time */
     for(j=0;j<y;j++) {
       for(i=0;i<x;i++) {
-	cur_val = btemp[j*x + i];
-	if(cur_val == 0) irads[k*y*x + j*x + i] = nullval;
-
-	if(cur_val > 0) {
-
-	  /* locate the two bounding points in the temps array containing the temperature value */
-	  pt1 = 0;
-	  pt2 = w;
-	  mid = 0;
-	
-	  while((pt2-pt1) > 1) {
-	    mid = (pt1+pt2)/2;
-	    if(cur_val > temps[mid]) pt1 = mid;
-	    if(cur_val < temps[mid]) pt2 = mid;
-	    if(cur_val == temps[mid]) pt1 = pt2 = mid;
-	  }
-
-	  if(rads[pt2] == rads[pt1]) irads[k*y*x + j*x + i] = rads[pt1];
-	  else irads[k*y*x + j*x + i] = m[pt1]*cur_val + b[pt1];
-	}
+				cur_val = btemp[j*x + i];
+				if(cur_val == 0) irads[k*y*x + j*x + i] = nullval;
+				
+				if(cur_val > 0) {
+					
+					/* locate the two bounding points in the temps array containing the temperature value */
+					pt1 = 0;
+					pt2 = w;
+					mid = 0;
+					
+					while((pt2-pt1) > 1) {
+						mid = (pt1+pt2)/2;
+						if(cur_val > temps[mid]) pt1 = mid;
+						if(cur_val < temps[mid]) pt2 = mid;
+						if(cur_val == temps[mid]) pt1 = pt2 = mid;
+					}
+					
+					if(rads[pt2] == rads[pt1]) irads[k*y*x + j*x + i] = rads[pt1];
+					else irads[k*y*x + j*x + i] = m[pt1]*cur_val + b[pt1];
+				}
       }
     }
   }
-
+	
   free(temps);
   free(rads);
   free(m);
@@ -2530,20 +1322,17 @@ float *tb2rad(float *btemp, Var *temp_rad, int *bandlist, int bx, float nullval,
 
 
 
-
-
-
-
-
 Var *
 thm_themissivity(vfuncptr func, Var * arg)
 {
-  /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
-
+  /* updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
+  /* updated 11/17/2007 to allow input of maximum emissivity to synthesize slopes in spectra. - kjn*/
+	
   Var         *rad = NULL;                     /* the original radiance */
   Var         *bandlist = NULL;                /* list of bands to be converted to brightness temperature */
   Var         *out = NULL;                     /* end product */
   float        nullval = -32768;               /* default null value of radiance data */
+  float        maxem = 1.0;                    /* maximum value for emissivity */
   char        *fname = NULL;                   /* the pointer to the filename */
   int          b1 = 3, b2 = 9;                 /* the boundary bands used to determine highest brightness temperature */
   int         *blist = NULL;                   /* the integer list of bands extracted from bandlist or created */
@@ -2558,24 +1347,25 @@ thm_themissivity(vfuncptr func, Var * arg)
   alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
   alist[4] = make_alist("b1",            INT,            NULL,   &b1);
   alist[5] = make_alist("b2",            INT,            NULL,   &b2);
-  alist[6] = make_alist("null",          FLOAT,          NULL,   &nullval); //can be removed when all legacy programs are dead
+  alist[6] = make_alist("max_emiss",     FLOAT,          NULL,   &maxem);
   alist[7].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   if (rad == NULL) {
-    parse_error("themis_emissivity() - 7/07/04");
-    parse_error("THEMIS radiance to THEMIS emissivity converter\n");
-    parse_error("Syntax:  b = thm.themis_emissivity(rad,bandlist,ignore,temp_rad_path,b1,b2)");
+    parse_error("themis_emissivity() - THEMIS radiance to THEMIS emissivity converter\n");
+    parse_error("Syntax:  b = thm.themis_emissivity(rad=VAL[,bandlist=VAL][,ignore=FLOAT][,temp_rad_path=STRING][,b1=INT][,b2=INT][,max_emiss=FLOAT])");
     parse_error("example: b = thm.themis_emissivity(a)");
     parse_error("example: b = thm.themis_emissivity(a,1//2//3//4//5//6//7//8//9,0,b1=4,b2=8)");
     parse_error("example: b = thm.themis_emissivity(rad=a,bandlist=4//9//10,ignore=-2,temp_rad_path=\"/themis/calib/temp_rad_v3\")");
+    parse_error("example: b = thm.themis_emissivity(a,max_emiss=0.95)");
     parse_error("rad - any 3-D radiance array.");
     parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
     parse_error("ignore - non-data pixel value. Default is -32768 AND 0.");
-    parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is /themis/calib/temp_rad_v4.");
+    parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is $DV_EX/temp_rad_v4.");
     parse_error("b1 - first band to search for maximum brightness temperature. Default is 3. ");
-    parse_error("b2 - end band to search for maximum brightness temperature. Default is 9.\n");
+    parse_error("b2 - end band to search for maximum brightness temperature. Default is 9.");
+    parse_error("max_emiss - maximum allowed emissivity for highest brightness temperature. Default is 1.\n");
     return NULL;
   }
 
@@ -2604,19 +1394,26 @@ thm_themissivity(vfuncptr func, Var * arg)
     return(out);
   }
 
-  if (fname == NULL) fname = strdup("/themis/calib/temp_rad_v4");
-
-  e_struct = themissivity(rad, blist, nullval, fname, b1, b2);
+  /* load temp_rad_v4 table into memory */
+  if (fname == NULL) {
+      const char *dv_ex_val = getenv(DV_EX_ENV);
+      if (dv_ex_val == NULL){
+          dv_ex_val = RAD_TEMP_DEFAULT_PATH;
+      }
+      fname = calloc(1, strlen(dv_ex_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
+      sprintf(fname,"%s/%s",dv_ex_val, RAD_TEMP_LOOKUP_TBL);
+  }
+  
+  e_struct = themissivity(rad, blist, nullval, fname, b1, b2, maxem);
 
   if(e_struct) {
     out = new_struct(2);
     add_struct(out, "emiss", newVal(BSQ, x, y, z, FLOAT, e_struct->emiss));
     add_struct(out, "maxbtemp", newVal(BSQ, x, y, 1, FLOAT, e_struct->maxbtemp));
-
+		
     free(e_struct);
     return(out);
   }
-
   else {
     return(NULL);
   }
@@ -2625,7 +1422,7 @@ thm_themissivity(vfuncptr func, Var * arg)
 
 
 
-emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1, int b2)
+emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1, int b2, float maxem)
 {
 
   Var         *temp_rad = NULL;                /* temperature/radiance lookup file */
@@ -2647,7 +1444,7 @@ emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1,
   z = GetZ(rad);
 
   /* stuff for b1 and b2 */
-  if(b2>z){
+  if(b1 < 1 || b2 > z || b1 > z || b2 < 1 || (b1 > b2)){
     parse_error("Bad limits for max_b_temp. Setting b1 = 1 and b2 = %d",z);
     b1 = 1;
     b2 = z;
@@ -2658,18 +1455,18 @@ emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1,
 
   /* load temp_rad_v4 table into memory */
   fp = fopen(fname, "rb");
-
   if (fp == NULL) {
-    parse_error("Can't open look up table /themis/calib/temp_rad_v4!\n");
-    return(NULL);
+		printf("Can't open look up table: %s\n",fname);
+		free(fname);
+		return(NULL);
   }
-
+	
   temp_rad = dv_LoadVicar(fp, fname, &h);
   fclose(fp);
   free(fname);
 
   /* convert to brightness temperature and return */
-  b_temps = rad2tb(rad, temp_rad, blist, z, nullval);
+  b_temps = rad2tb(rad, temp_rad, blist, z, nullval, maxem);
 
   e_struct = (emissobj *)calloc(sizeof(emissobj),1);
   e_struct->emiss = (float *)calloc(sizeof(float), x*y*z);
@@ -2693,10 +1490,10 @@ emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1,
   for(k=0;k<z;k++) {
     for(j=0;j<y;j++) {
       for(i=0;i<x;i++) {
-	temp_val = extract_float(rad,cpos(i,j,k,rad));
-	if (temp_val != 0 && irad[k*y*x + j*x + i] != 0 && temp_val != nullval && irad[k*y*x + j*x + i] != nullval) {
-	  e_struct->emiss[k*y*x + j*x + i] = temp_val / irad[k*y*x + j*x + i];
-	}
+				temp_val = extract_float(rad,cpos(i,j,k,rad));
+				if (temp_val != 0 && irad[k*y*x + j*x + i] != 0 && temp_val != nullval && irad[k*y*x + j*x + i] != nullval) {
+					e_struct->emiss[k*y*x + j*x + i] = temp_val / irad[k*y*x + j*x + i];
+				}
       }
     }
   }
@@ -2709,13 +1506,11 @@ emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1,
 
 
 
-
-
-
 Var *
 thm_emiss2rad(vfuncptr func, Var * arg)
 {
   /* created 09/22/2005 - kjn*/
+  /* caught segmentation fault bug when improperly called. 11/18/2007 - kjn */
 
   Var         *estruct = NULL;                 /* the emissivity structure                                     */
   Var         *bandlist = NULL;                /* list of bands to be converted to brightness temperature      */
@@ -2746,7 +1541,7 @@ thm_emiss2rad(vfuncptr func, Var * arg)
   if (estruct == NULL) {
     parse_error("emiss2rad() - 9/23/05");
     parse_error("THEMIS Emissivity to THEMIS Radiance Converter\n");
-    parse_error("Uses /themis/calib/temp_rad_v4 as conversion table.");
+    parse_error("Uses temp_rad_v4 in $DV_EX or /themis/calib as the default conversion table.");
     parse_error("Syntax:  b = thm.emiss2rad(emiss,bandlist,ignore,temp_rad_path)");
     parse_error("example: b = thm.emiss2rad(a)");
     parse_error("example: b = thm.emiss2rad(a,1//2//3//4//5//6//7//8//9,0)");
@@ -2754,7 +1549,7 @@ thm_emiss2rad(vfuncptr func, Var * arg)
     parse_error("emiss - the product of thm.themissivity containing .emiss and .maxbtemp components.");
     parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
     parse_error("ignore - non-data pixel value. Default is -32768 AND 0.");
-    parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is /themis/calib/temp_rad_v4.\n");
+    parse_error("tem_rad_path - alternate path to temp_rad lookup table.  Default is $DV_EX/temp_rad_v4.\n");
     return NULL;
   }
 
@@ -2786,19 +1581,34 @@ thm_emiss2rad(vfuncptr func, Var * arg)
   iom_init_iheader(&h);
 
   /* load temp_rad_v4 table into memory */
-  if (fname == NULL) fname = strdup("/themis/calib/temp_rad_v4");
-  fp = fopen(fname, "rb");
-
-  if (fp == NULL) {
-    parse_error("Can't open look up table /themis/calib/temp_rad_v4!\n");
-    return(NULL);
+  if (fname == NULL) {
+		const char *dv_ex_val = getenv(DV_EX_ENV);
+		if (dv_ex_val == NULL){
+			dv_ex_val = RAD_TEMP_DEFAULT_PATH;
+		}
+		
+		fname = calloc(1, strlen(dv_ex_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
+		sprintf(fname,"%s/%s",dv_ex_val, RAD_TEMP_LOOKUP_TBL);
   }
-
+  
+  fp = fopen(fname, "rb");
+  if (fp == NULL) {
+		printf("Can't open look up table: %s\n",fname);
+		free(fname);
+		return(NULL);
+  }
+	
   temp_rad = dv_LoadVicar(fp, fname, &h);
   fclose(fp);
   free(fname);
 
   /* extract the brightness temperatures into a float array */
+  if(btemps == NULL) {
+    parse_error("The input struct did not contain a maxbtemp element");
+    free(blist);
+    return(NULL);
+  }
+
   btemp = (float *)malloc(sizeof(float)*x*y);
   for(j=0;j<y;j++) {
     for(i=0;i<x;i++) {
@@ -2829,8 +1639,6 @@ thm_emiss2rad(vfuncptr func, Var * arg)
   return(out);
  
 }
-
-
 
 
 
@@ -2921,12 +1729,21 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
   iom_init_iheader(&h);
 
   /* load temp_rad_v4 table into memory */
-  fname = strdup("/themis/calib/temp_rad_v4");
+  if (fname == NULL) {
+		const char *dv_ex_val = getenv(DV_EX_ENV);
+		if (dv_ex_val == NULL){
+			dv_ex_val = RAD_TEMP_DEFAULT_PATH;
+		}
+		
+		fname = calloc(1, strlen(dv_ex_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
+		sprintf(fname,"%s/%s",dv_ex_val, RAD_TEMP_LOOKUP_TBL);
+  }
+  
   fp = fopen(fname, "rb");
-
   if (fp == NULL) {
-    parse_error("Can't open look up table /themis/calib/temp_rad_v4!\n");
-    return(NULL);
+		printf("Can't open look up table: %s\n",fname);
+		free(fname);
+		return(NULL);
   }
 
   temp_rad = dv_LoadVicar(fp, fname, &h);
@@ -2934,7 +1751,7 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
   free(fname);
 
   /* convert to brightness temperature and return */
-  b_temps = rad2tb(rad, temp_rad, blist, bx, nullval);
+  b_temps = rad2tb(rad, temp_rad, blist, bx, nullval, 1.0);
 
   /* allocate memory for max_b_temp */
   max_b_temp = (float *)calloc(sizeof(FLOAT), x*y);
@@ -2943,7 +1760,7 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
   for(k=b1-1;k<=b2;k++) {
     for(j=0;j<y;j++) {
       for(i=0;i<x;i++) {
-	if(b_temps[k*x*y + j*x + i] > max_b_temp[j*x + i]) max_b_temp[j*x + i] = b_temps[k*x*y + j*x + i];
+				if(b_temps[k*x*y + j*x + i] > max_b_temp[j*x + i]) max_b_temp[j*x + i] = b_temps[k*x*y + j*x + i];
       }
     }
   }
@@ -2960,10 +1777,10 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
   for(k=0;k<z;k++) {
     for(j=0;j<y;j++) {
       for(i=0;i<x;i++) {
-	temp_val = extract_float(rad,cpos(i,j,k,rad));
-	if (temp_val != 0 && irad[k*y*x + j*x + i] != 0 && temp_val != nullval && irad[k*y*x + j*x + i] != nullval) {
-	  emiss[k*y*x + j*x + i] = temp_val / irad[k*y*x + j*x + i];
-	}
+				temp_val = extract_float(rad,cpos(i,j,k,rad));
+				if (temp_val != 0 && irad[k*y*x + j*x + i] != 0 && temp_val != nullval && irad[k*y*x + j*x + i] != nullval) {
+					emiss[k*y*x + j*x + i] = temp_val / irad[k*y*x + j*x + i];
+				}
       }
     }
   }
@@ -2985,7 +1802,7 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
   for(k=0;k<z;k++) {
     for(j=0;j<y;j++) {
       for(i=0;i<x;i++) {
-	emiss[k*y*x + j*x + i] = s_emiss[k*y*x + j*x + i] * irad[k*y*x + j*x + i];
+				emiss[k*y*x + j*x + i] = s_emiss[k*y*x + j*x + i] * irad[k*y*x + j*x + i];
       }
     }
   }
@@ -2994,7 +1811,7 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
   for(k=0;k<z;k++) {
     for(j=0;j<y;j++) {
       for(i=0;i<x;i++) {
-	if(emiss[k*y*x + j*x + i]==0) emiss[k*y*x + j*x + i]=nullval;
+				if(emiss[k*y*x + j*x + i]==0) emiss[k*y*x + j*x + i]=nullval;
       }
     }
   }
@@ -3005,385 +1822,6 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
   out = newVal(BSQ, x, y, z, FLOAT, emiss);
   return out;
 }
-
-
-
-
-Var*
-thm_maxpos(vfuncptr func, Var *arg)
-{
- 
-  Var    *data = NULL;                      /* the orignial data               */
-  Var    *out = NULL;                       /* the output structure            */
-  int    *pos = NULL;                       /* the output position             */
-  float   minval = -3.402822655e+38;        /* the most negative float value   */
-  float   ignore = minval;                  /* null value                      */
-  int     i, j, l, ck=0;                    /* loop indices and flags          */
-  float   ni1=0, ni2=0, ni3=0;              /* temp values and positions       */
-  int     iter = 1;                         /* number of iterations to include */
-  int     elems = 0;
-  int     curr_elem = 0;
-  int    *elements = NULL;
-  float   lt = minval;                      /* search for maximum values less than this value */
-
-  Alist alist[5];
-  alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-  alist[1] = make_alist("iter",      INT,       NULL,  &iter);
-  alist[2] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
-  alist[3] = make_alist("lt",        FLOAT,     NULL,  &lt);
-  alist[4].name = NULL;
-
-  if (parse_args(func, arg, alist) == 0) return(NULL);
-  
-  if (data == NULL) {
-    parse_error("\nReturns the x, y and z positions of maximum element in array");
-    parse_error("\nSyntax: maxpos(data=VAL, iter=INT, ignore=VAL, lt=VAL)");
-    parse_error("Example: maxpos(a, iter=5, ignore=0)");
-    parse_error("Example: maxpos(a, iter=2, lt=20000)");
-    parse_error("  'data'   - any numeric array of any organization");
-    parse_error("  'iter'   - number of highest values to locate");
-    parse_error("  'ignore' - an optional value to ignore in the search");
-    parse_error("  'lt'     - an optional 'less than' value to search for the maximum");
-    parse_error("\nReturns a 3xNx1 float array, where N=iter\n");
-    return NULL;
-  }
-
-  /* create array for position */
-  pos = (int *)calloc(sizeof(int), 3*iter);
-  elements = (int *)calloc(sizeof(int), iter);
-
-  /* size of the data */
-  elems = V_DSIZE(data);
-
-  /* set initial max values */
-  ni2 = ni3 = minval;
-
-  /* set ni3 for less than value */
-  if(lt != minval) ni3 = lt;
-
-  /* ni1 = current value     **
-  ** ni2 = current max value **
-  ** ni3 = old max val       */
-
-  /* find the maximum point and its position */
-  for(l=0; l<iter; l++) {
-    for(i=0; i<elems; i++) {
-      ni1 = extract_float(data, i);
-
-      if(ni1 > ni2 && ni1 != ignore && 
-	 (lt != minval && l == 0 && ni1 <= ni3 || 
-	  l == 0 && lt == minval || 
-	  ni1 <= ni3 && l > 0)) {
-
-	/* check to see if it's the same element as a previous entry */
-	ck = 0;
-	for(j=l-1; j>=0; j--) {
-	  if(i == elements[j]) ck = 1;
-	}
-
-	if(ck == 0) {
-	  ni2 = ni1;
-	  curr_elem = i;
-	}
-      }
-    }
-
-    ni3 = ni2;
-    elements[l] = curr_elem;
-    position_fill(pos, curr_elem, l, data);
-    ni2 = minval;
-    curr_elem = 0;
-  }
-
-  free(elements);
-
-  /* return the findings */
-  out = newVal(BSQ, 3, iter, 1, INT, pos);
-  return(out);
-}
-
-
-
-
-Var*
-thm_minpos(vfuncptr func, Var *arg)
-{
- 
-  Var    *data = NULL;                      /* the orignial data */
-  Var    *out = NULL;                       /* the output structure */
-  int    *pos = NULL;                       /* the output position */
-  float   maxval = 3.402822655e+38;         /* the most negative float value */
-  float   ignore = maxval;                  /* null value */
-  int     i, j, l, ck=0;                    /* loop indices and flags */
-  float   ni1=0, ni2=0, ni3=0;              /* temp values and positions */
-  int     iter = 1;                         /* number of iterations to include */
-  int     elems = 0;
-  int     curr_elem = 0;
-  int    *elements = NULL;
-  float   gt = maxval;                      /* search for minimum values more than this value */
-
-  Alist alist[5];
-  alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-  alist[1] = make_alist("iter",      INT,       NULL,  &iter);
-  alist[2] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
-  alist[3] = make_alist("gt",        FLOAT,     NULL,  &gt);
-  alist[4].name = NULL;
-
-  if (parse_args(func, arg, alist) == 0) return(NULL);
-  
-  if (data == NULL) {
-    parse_error("\nReturns the x, y and z position of minimum element in array");
-    parse_error("\nSyntax: minpos(data=VAL, iter=INT, ignore=VAL, gt=VAL)");
-    parse_error("Example: minpos(a, iter=5, ignore=0");
-    parse_error("Example: minpos(a, iter=2, gt=-10");
-    parse_error("  'data'   - any numeric array of any organization");
-    parse_error("  'iter'   - number of lowest values to locate");
-    parse_error("  'ignore' - a value to ignore in the search");
-    parse_error("  'gt'     - an optional 'greater than' value to search for the minimum");
-    parse_error("\nReturns a 3xNx1 int array, where N=iter\n");
-    return NULL;
-  }
-
-  /* create array for position */
-  pos = (int *)calloc(sizeof(int), 4*iter);
-  elements = (int *)calloc(sizeof(int), iter);
-
-  /* size of the data */
-  elems = V_DSIZE(data);
-
-  /* set initial max values */
-  ni2 = ni3 = maxval;
-
-  /* set ni3 for less than value */
-  if(gt != maxval) ni3 = gt;
-
-  /* ni1 = current value     **
-  ** ni2 = current min value **
-  ** ni3 = old min val       */
-
-  /* find the maximum point and its position */
-  for(l=0; l<iter; l++) {
-    for(i=0; i<elems; i++) {
-      ni1 = extract_float(data, i);
-
-      if(ni1 < ni2 && ni1 != ignore && 
-	 (gt != maxval && l == 0 && ni1 >= ni3 || 
-	  l == 0 && gt == maxval || 
-	  ni1 >= ni3 && l > 0)) {
-
-	/* check to see if it's the same element as a previous entry */
-	ck = 0;
-	for(j=l-1; j>=0; j--) {
-	  if(i == elements[j]) ck = 1;
-	}
-
-	if(ck == 0) {
-	  ni2 = ni1;
-	  curr_elem = i;
-	}
-      }
-    }
-
-    ni3 = ni2;
-    elements[l] = curr_elem;
-    position_fill(pos, curr_elem, l, data);
-    ni2 = maxval;
-    curr_elem = 0;
-  }
-
-  free(elements);
-
-  /* return the findings */
-  out = newVal(BSQ, 3, iter, 1, INT, pos);
-  return(out);
-}
-
-
-
-Var*
-thm_maxpos_v1(vfuncptr func, Var *arg)
-{
- 
-  Var    *data = NULL;                      /* the orignial data */
-  Var    *out = NULL;                       /* the output structure */
-  int    *pos = NULL;                       /* the output position */
-  float   ignore = -32768;                  /* null value */
-  float  *val = NULL;                       /* the output values */
-  int     i, j, k, l;                       /* loop indices */
-  int     x=0, y=0, z=0;                    /* size of the data */
-  float   ni1=0, ni2=-32798, ni3=-852;      /* temp values and positions */
-  int     opt=0;                            /* return array option */
-  int     iter=1;                           /* number of iterations to include */
-   
-  Alist alist[5];
-  alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-  alist[1] = make_alist("ret",       INT,       NULL,  &opt);
-  alist[2] = make_alist("iter",      INT,       NULL,  &iter);
-  alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
-  alist[4].name = NULL;
-  
-  if (parse_args(func, arg, alist) == 0) return(NULL);
-  
-  if (data == NULL) {
-    parse_error("\nUsed to find the position of the max point in an array\n");
-    parse_error("$1 = the data");
-    parse_error("Prints the value and location\n");
-    parse_error("ret=1 returns the value and location in a structure\n");
-    parse_error("iter= # of points to find in the data");
-    parse_error("if iter >1 it will automatically return the points\n");
-    parse_error("ignore = the value to ignore\n");
-    parse_error("c.edwards 5/19/04\n");
-    return NULL;
-  }
-
-  if (iter > 1 ) {
-    opt=1;
-  }
-
-  /* create array for postion */
-  pos = (int *)calloc(sizeof(int), 3*iter);
-  val = (float *)calloc(sizeof(float), iter);
-  
-  /* x, y and z dimensions of the data */
-  x = GetX(data);
-  y = GetY(data);
-  z = GetZ(data);
-
-  /* find the maximum point and its position */  
-  for(l=0; l<iter; l++) {
-    for(k=0; k<z; k++) {
-      for(j=0; j<y; j++) {
-	for(i=0; i<x; i++) {
-	  
-	  /* ni1 = current value */
-	  /* ni2 = curent max value */
-	  /* ni3 = old max val */
-	  ni1 = extract_float(data, cpos(i,j,k,data));
-	  if(ni1>ni2 && (ni3 == -852 || (ni1<ni3 && ni3 != -852)) && ni1 != ignore) {
-	    ni2=ni1;
-	    pos[3*l+2]=k+1;
-	    pos[3*l+1]=j+1;
-	    pos[3*l+0]=i+1;
-	  }
-	}
-      }
-    }
-    ni3=ni2;
-    val[l]=ni2;
-    ni2=-32798;
-  }
-
-  if(iter==1) {
-    /* return the findings */
-    printf("\nLocation: %i,%i,%i\n",pos[0],pos[1],pos[2]);
-    printf("%.13f\n\n",ni3);
-    
-    if(opt==0) return NULL;
-  }
-
-  if(opt!=0) {
-    out = new_struct(2);
-    add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
-    add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
-    return out;
-  }
-}
-
-
-
-Var*
-thm_minpos_v1(vfuncptr func, Var *arg)
-{
-
-  Var    *data = NULL;                 /* the orignial data */
-  Var    *out = NULL;                  /* the output struture */
-  int    *pos = NULL;                  /* the output postion */
-  float   ignore = -32768;             /* null value */
-  float  *val = NULL;                  /* the output values */
-  int     i, j, k, l;                  /* loop indices */
-  int     x=0, y=0, z=0;               /* size of the data */
-  float   ni1=0, ni2=32798, ni3=852;   /* temp values and positions */
-  int     opt=0;                       /* return array option */
-  int     iter=1;                      /* number of iterations to include */
-
-  Alist alist[5];
-  alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-  alist[1] = make_alist("ret",       INT,       NULL,  &opt);
-  alist[2] = make_alist("iter",      INT,       NULL,  &iter);
-  alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
-  alist[4].name = NULL;
-  
-  if (parse_args(func, arg, alist) == 0) return(NULL);
- 
-  if (data == NULL) {
-    parse_error("\nUsed to find the position of the min point in an array\n");
-    parse_error("$1 = the data");
-    parse_error("Prints the value and location\n");
-    parse_error("ret = 1 returns the value and location in a structure\n");
-    parse_error("iter = # of points to find in the data");
-    parse_error("if iter >1 it will automatically return the points\n");
-    parse_error("ignore = the value to ignore\n");
-    parse_error("c.edwards 5/19/04\n");
-    return NULL;
-  }
-
-  if (iter > 1 ) {
-    opt=1;
-  }
-  
-  /* create array for position and value*/
-  pos = (int *)calloc(sizeof(int), 3*iter);
-  val = (float *)calloc(sizeof(float), iter);
-  
-  /* x, y and z dimensions of the data */
-  x = GetX(data);
-  y = GetY(data);
-  z = GetZ(data);
-
-  /* find the minimum point and its position */  
-  for(l=0; l<iter; l++) {
-    for(k=0; k<z; k++) {
-      for(j=0; j<y; j++) {
-	for(i=0; i<x; i++) {
-	  
-	  /* ni1 = current value */
-	  /* ni2 = curent max value */
-	  /* ni3 = old max val */
-	  ni1 = extract_float(data, cpos(i,j,k,data));
-	  if(ni1<ni2 && (ni3 == 852 || (ni1>ni3 && ni3 != 852)) && ni1 != ignore) {
-	    ni2=ni1;
-	    pos[3*l+2]=k+1;
-	    pos[3*l+1]=j+1;
-	    pos[3*l+0]=i+1;
-	  }
-	}
-      }
-    }
-    ni3=ni2;
-    val[l]=ni2;
-    ni2=32798;
-  }
-
-  /* return the findings */
-  if(iter==1) {    
-    printf("\nLocation: %i,%i,%i\n",pos[0],pos[1],pos[2]);
-    if(ni2<-32768) {
-      printf("%.9e\n\n",ni3);
-    }
-    if(ni2>=-32768) {
-      printf("%.9f\n\n",ni3);
-    }
-    if(opt==0) return NULL;
-  }
-
-  if(opt!=0) {
-    out = new_struct(2);
-    add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
-    add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
-    return out;
-  }
-}
-
 
 
 
@@ -3728,116 +2166,6 @@ thm_white_noise_remove2(vfuncptr func, Var *arg)
 
 
 
-
-
-
-Var * 
-thm_sstretch2(vfuncptr func, Var * arg)
-{
-
-  /* takes data and stretches it similar to sstretch() davinci function*/
-  /* but does it band by band */
-
-  typedef unsigned char byte;
-  
-  Var       *data=NULL;         /* input */
-  Var       *out=NULL;          /* output */
-  float     *w_data=NULL;       /* working data2 */
-  byte      *w_data2=NULL;      /* working data */
-  float      ignore=-32768;     /* ignore value*/
-  int        x,y,z;             /* indices */
-  double     sum = 0;           /* sum of elements in data */
-  double     sumsq = 0;         /* sum of the square of elements in data */
-  double     stdv = 0;          /* standard deviation */
-  int        cnt = 0;           /* total number of non-null points */
-  int        i,j,k;
-  float      tv,max=-32768;
-  float      v=40; 
-  
-  Alist alist[4];
-  alist[0] = make_alist("data", 	  ID_VAL,	NULL,	&data);
-  alist[1] = make_alist("ignore", 	  FLOAT,	NULL,	&ignore);
-  alist[2] = make_alist("variance",       FLOAT,        NULL,   &v);
-  alist[3].name = NULL;
-  
-  if (parse_args(func, arg, alist) == 0) return(NULL);
-  
-  if (data == NULL) {
-    parse_error("\nsstretch2() - 03/26/05\n");
-    parse_error("Used to sstretch data band by band");
-    parse_error("Similar to the davinci function sstretch()\n");
-    parse_error("$1=data to be stretched");
-    parse_error("ignore=value to ignore (Default=-32768)");
-    parse_error("variance=variance of the stretch (Default=40)\n");
-    parse_error("c.edwards\n");
-    return NULL;
-  }
-
-  /* x, y and z dimensions of the data */
-  x = GetX(data);
-  y = GetY(data);
-  z = GetZ(data);
-  max = ignore;
-
-  /* create out array */
-  w_data = (float *)calloc(sizeof(float), x*y*z);
-  w_data2 = (byte *)calloc(sizeof(byte),x*y*z);
-  
-  /* stretch each band separately */
-  for(k=0;k<z;k++) {
-    sum = 0;
-    sumsq = 0;
-    stdv = 0;
-    cnt = 0;
-    tv = 0;
-    
-    /* calculate the sum and the sum of squares */
-    for(j=0; j<y; j++) {
-      for(i=0; i<x; i++) {
-	tv=extract_float(data, cpos(i,j,k, data));
-	w_data[k*y*x + j*x + i]=tv;
-	if( tv != ignore){
-	  sum += (double)tv;
-	  sumsq += (double)(tv*tv);
-	  cnt += 1;
-	}
-      }
-    }
-    
-    /* calculate standard deviation */
-    stdv = sqrt((sumsq - (sum*sum/cnt))/(cnt-1));
-    sum /= (double)cnt;
-    
-    /* fill in stretched values */
-    for(j=0; j<y; j++) {
-      for(i=0; i<x; i++) {
-	if(w_data[k*y*x + j*x + i] != ignore) w_data[k*y*x + j*x + i] = (float)((w_data[k*y*x + j*x + i] - sum)*(v/stdv)+127);
-	if(w_data[k*y*x + j*x + i] < 0) w_data[k*y*x + j*x + i] = 0; 
-	if(w_data[k*y*x + j*x + i] > 255) w_data[k*y*x + j*x + i] = 255; 
-      }
-    }
-  }
-  
-  /*convert to bip */
-  for(j=0; j<y; j++) {
-    for(i=0; i<x; i++) {
-      for(k=0; k<z; k++) {
-	w_data2[j*x*z + i*z + k]=(byte)w_data[k*y*x + j*x + i];
-      }
-    }
-  }
-  
-  /* clean up and return data */
-  free(w_data);
-  out = newVal(BIP,z, x, y, BYTE, w_data2);	
-  return(out);
-}
-
-
-
-
-
-
 double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_start, double *rad_end, double *slopes)
 {
   int          i, j, k;
@@ -3938,6 +2266,8 @@ double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_st
 
 
 
+
+
 double *radcorrspace(Var *measured, float *bbody)
 {
   int     x, y, z;                   // size of arrays
@@ -3960,20 +2290,18 @@ double *radcorrspace(Var *measured, float *bbody)
     for(m=0;m<400;m++) {                  /* looping through em */
       em_off = 0.8 + m*em_step;
       for(n=0;n<400;n++) {                /* looping through rad */
-	rad_off = -0.0001 + n*rad_step;
-	for(j=0;j<y;j++) {
-	  for(i=0;i<x;i++) {
-	    if(bbody[k*x*y + j*x + i] != 0) rcspace[k*400*400+m*400+n]+=pow((extract_float(measured,cpos(i,j,k,measured)) - (em_off*bbody[k*x*y + j*x + i] + rad_off)),2);
-	  }
-	}
+				rad_off = -0.0001 + n*rad_step;
+				for(j=0;j<y;j++) {
+					for(i=0;i<x;i++) {
+						if(bbody[k*x*y + j*x + i] != 0) rcspace[k*400*400+m*400+n]+=pow((extract_float(measured,cpos(i,j,k,measured)) - (em_off*bbody[k*x*y + j*x + i] + rad_off)),2);
+					}
+				}
       }
     }
   }
   parse_error("x-axis is rad and y-axis is em");
   return(rcspace);
 }
-
-
 
 
 
@@ -4115,13 +2443,22 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
   /* initialize temp_rad header */
   iom_init_iheader(&h);
 
-  if (fname == NULL) fname = strdup("/themis/calib/temp_rad_v4");
-
+  /* load temp_rad_v4 table into memory */
+  if (fname == NULL) {
+		const char *dv_ex_val = getenv(DV_EX_ENV);
+		if (dv_ex_val == NULL){
+			dv_ex_val = RAD_TEMP_DEFAULT_PATH;
+		}
+		
+		fname = calloc(1, strlen(dv_ex_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
+		sprintf(fname,"%s/%s",dv_ex_val, RAD_TEMP_LOOKUP_TBL);
+  }
+  
   fp = fopen(fname, "rb");
-
   if (fp == NULL) {
-    parse_error("Can't open look up table /themis/calib/temp_rad_v4!\n");
-    return(NULL);
+		printf("Can't open look up table: %s\n",fname);
+		free(fname);
+		return(NULL);
   }
 
   temp_rad = dv_LoadVicar(fp, fname, &h);
@@ -4135,7 +2472,7 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
   for(k=0; k<z; k++){ slopes[k] = 0.0; }
 
   /* convert to brightness temperature */
-  btemps = rad2tb(rad, temp_rad, blist, bx, nullval);
+  btemps = rad2tb(rad, temp_rad, blist, bx, nullval, 1.0);
 
   /* loop through btemps eliminating all pixels not containing a full set of bands*/
   for(j=0; j<y; j++) {
@@ -4199,69 +2536,6 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
 
   return(out);
 }
-
-
-
-
-
-
-
-
-Var *do_ipi(Var *coords_array, Var *values_array){
-  float        coords[3];                 /* more useable form of coordinate list     */
-  float        values[3];                 /* more useable form of values list         */
-  float        result;                    /* the coordinate of the lowest value       */
-  int          i;                         /* the ubiquituous i var for loops          */
-
-  /* translate information from davinci Var structure to the array */
-  for(i=0; i<3; i++){
-    coords[i] = extract_float(coords_array,cpos(i,0,0,coords_array));
-    values[i] = extract_float(values_array,cpos(i,0,0,values_array));
-  }
-  
-  /* inverse parabolic interpolation calculation */
-  result = coords[1] - 
-    .5*(pow(coords[1]-coords[0],2)*(values[1]-values[2]) - pow(coords[1]-coords[2],2)*(values[1]-values[0])) /
-    ((coords[1]-coords[0])*(values[1]-values[2]) - (coords[1]-coords[2])*(values[1]-values[0]));
-  
-  return(newFloat(result));
-}
-
-
-
-
-
-
-
-Var *thm_ipi(vfuncptr func, Var * arg){
-  Var         *coords_array = NULL;        /* list of coordinates                                  */
-  Var         *values_array = NULL;        /* list of values of f(x) where x is supplied by coords */
-  Var         *out = NULL;                 /* return structure to davinci enviornment              */
-  
-  Alist alist[3];
-  alist[0] = make_alist("coordinates",  ID_VAL,   NULL,     &coords_array);
-  alist[1] = make_alist("values",       ID_VAL,   NULL,     &values_array);
-  alist[2].name = NULL;
-  
-  /* immediately exit function if the argument list is empty */
-  if(parse_args(func, arg, alist) == 0) return(NULL);
-  
-  /* if no coordinates and/or values passed into the argument list */
-  if((coords_array == NULL)||(values_array == NULL)){
-    parse_error("thm.ipi() - 07/04/2005");
-    parse_error("The function calculates the coordinates of a minimum by taking in a 3x1x1 array of coordinate and its correlated");
-    parse_error("values, also in a 3x1x1 array, and applying an inverse parabolic interpolation algorithm");
-    parse_error("The function outputs a single float number indicating the coordinate at which the minimum is located.\n");
-    parse_error("Syntax:  output=ipi(array_of_coordinates, array_of_values)");
-    parse_error("Example: a=ipi(coordinates, values)");
-    parse_error("  where for example:coordinates =  -10//-4//5 and values = 81//9//36");
-    return(NULL);
-  }
-  
-  return(do_ipi(coords_array,values_array));
-}
-
-
 
 
 
@@ -4424,95 +2698,478 @@ float *column_fill(float *column, int y, int z, int csize, float ignore)
 
 
 
-Var *
-thm_supersample(vfuncptr func, Var * arg)
+
+/* Static Functions */
+int *do_corners(Var *pic_a, float nullval)
 {
+  typedef unsigned char byte;
 
-  Var       *data = NULL;                  /* original input data */
-  Var       *out = NULL;                   /* final output davinci object */
-  int        x,y,z;                        /* size of data */
-  int        i,j,k;                        /* loop indices */
-  int        nx,ny,ni;                     /* indices */
-  int        mx,my;                        /* indices */
-  int        type = 0;                     /* type of supersample */
-  int        factor = 3;                   /* factor of supersample */
-  float     *ssdata = NULL;                /* supersampled data */
+  byte    *pic = NULL;                                 /* the modified pic */
+  int      x, y;                                       /* dimensions of the original pic */
+  int      i, j;                                       /* loop indices */
+  int      trx = -1, try = -1, tlx = -1, tly = -1;     /* xy positions of top corners */
+  int      brx = -1, bry = -1, blx = -1, bly = -1;     /* xy positions of bottom corners */
+  int      tmyv = -1, bmyv = -1;                       /* top most y val, bottom most y val */
+  int      lmxv = -1, rmxv = -1;                       /* left most x val, right most x val */
+  int      lmyv = -1, rmyv = -1;                       /* left most y val, right most y val */
+  int      lmyva = -1, rmyva = -1;                     /* opposite approach of y lmyv, rmyv */
+  int     *row_avg, *col_avg;                          /* row and column avg */
+  int     *corners = NULL;                             /* corners array */
+  float    pic_val = 0;                                /* extracted float val from pic */
 
-  Alist alist[4];
-  alist[0] = make_alist("data", 		ID_VAL,		NULL,	&data);
-  alist[1] = make_alist("type",                 INT,            NULL,   &type);
-  alist[2] = make_alist("factor",               INT,            NULL, &factor);
-  alist[3].name = NULL;
+  /* x and y dimensions of the original picture */
+  x = GetX(pic_a);
+  y = GetY(pic_a);
+
+  /* create row_avg and col_avg arrays */
+  row_avg = (int *)calloc(sizeof(int), y);
+  col_avg = (int *)calloc(sizeof(int), x);
+
+  /* create corners array */
+  corners = (int *)calloc(sizeof(int),8);
+  for(i=0;i<=7;i++) {
+    corners[i] = -1;
+  }
   
-  if (parse_args(func, arg, alist) == 0) return(NULL);
-
-  /* if no data got passed to the function */
-  if (data == NULL) {
-    parse_error("\nsupersample() - 7/13/2005\n");
-    parse_error("Takes any 3-d array and supersamples to N times the angular resolution.");
-    parse_error("Syntax:  thm.supersample(data, type, factor)");
-    parse_error("Example: thm.supersample(data=a, type=1, factor=5)");
-    parse_error("Example: thm.supersample(a, 2)\n");
-    parse_error("data: any 3-d array where data is to be supersampled in the xy plane.");
-    parse_error("type: supersample method to use. Default is 0.");
-    parse_error("      type=0: each original pixel is placed in the center of the supersampled pixel grid.");
-    parse_error("              all other pixels in the supersampled grid are filled with 0.");
-    //    parse_error("      type=1: same as type 0 but all pixels are linearly interpolated from original pixels.");
-    parse_error("      type=2: fills every pixel in supersampled pixel grid with original pixel value.\n");
-    parse_error("factor: multiplication factor of original pixel to supersample grid. Default is 3.");
-    parse_error("        so a factor=3 takes 1 pixel and makes a 3x3 pixel array.\n");
+  if (row_avg == NULL) {
+    parse_error("\nError! Unable to allocate %d bytes for row_avg\n", sizeof(int)*y);
     return NULL;
   }
-
-  /* get dimensions of the data */
-  x = GetX(data);
-  y = GetY(data);
-  z = GetZ(data);
-
-  /* make new array */
-  ssdata = (float *)calloc(sizeof(float), factor*x*factor*y*z);
-
-  /* extract data into larger array for types 0 and 1 */
-  if(type<2) {
-    for(k=0;k<z;k++) {
-      for(j=0;j<factor*y;j++) {
-	ny = j/factor;
-	my = j%factor;
-	for(i=0;i<factor*x;i++) {
-	  ni = k*factor*factor*x*y + j*factor*x + i;
-	  nx = i/factor;
-	  mx = i%factor;
-	  if(mx == 1 && my == 1) ssdata[ni] = extract_float(data, cpos(nx,ny,k,data));
-	}
+  if (col_avg == NULL) {
+    parse_error("\nError! Unable to allocate %d bytes for col_avg\n", sizeof(int)*x);
+    return NULL;
+  }
+  
+  /* allocate memory for the pic */
+  pic = (byte *)calloc(sizeof(byte),y*x);
+  
+  if (pic == NULL) {
+    parse_error("\nERROR! AHHHHH...I can't remember the picture!\n");
+    return NULL;
+  }
+  
+  /* extract the picture, row_avg and col_avg */
+  for(j=0; j<y; j++) {
+    for(i=0; i<x; i++) {
+      pic_val = extract_float(pic_a, cpos(i, j, 0, pic_a));
+      if(pic_val != nullval) {
+	//printf("%f ",pic_val);
+	pic[j*x+i] = 1;
+	row_avg[j] += pic[j*x+i];		// <- possible problem, see comment at top
+	col_avg[i] += pic[j*x+i];		// <- possible problem
       }
+    }
+    //printf("%d\n",row_avg[j]);
+  }
+
+  /* loop through row_avg */
+  j=0;
+  while(tmyv == -1 || bmyv == -1 && j < y) {
+    if(row_avg[j] != 0 && tmyv == -1) {
+      tmyv = j;
+    }
+    if(row_avg[y-j-1] != 0 && bmyv == -1) {
+      bmyv=y-j-1;
+    }
+    j+=1;
+  }
+
+  /* loop through col_avg */
+  i=0;
+  while(lmxv == -1 || rmxv == -1 && i < x) {
+    if(col_avg[i] != 0 && lmxv == -1) {
+      lmxv = i;
+    }
+    if(col_avg[x-i-1] != 0 && rmxv == -1) {
+      rmxv=x-i-1;
+    }
+    i+=1;
+  }
+
+  /* find corresponding y vals to the left most and right most x vals */
+  j=0;
+  while(lmyv == -1 || rmyv == -1 && j < y) {
+    if(pic[j*x+lmxv] != 0 && lmyv == -1) {
+      lmyv = j;
+    }
+    if(pic[(y-j-1)*x+lmxv] != 0 && lmyva == -1) {
+      lmyva = y-j-1;
+    }
+    if(pic[(y-j-1)*x+rmxv] != 0 && rmyv == -1) {
+      rmyv = y-j-1;
+    }
+    if(pic[j*x+rmxv] != 0 && rmyva == -1) {
+      rmyva=j;
+    }
+    j+=1;
+  }
+
+  /* case where top of image leans to the left of the bottom of the image */
+  /* approach top most x value from the right */
+  if(rmyv>=lmyv) {
+    i=0;
+    while(corners[2] == -1 || corners[4] == -1 && i < x) {
+      if(pic[tmyv*x+(x-i-1)] != 0 && corners[2] == -1) {
+	corners[2] = x-i;
+	corners[3] = tmyv + 1;
+	corners[0] = lmxv + 1;
+	corners[1] = lmyv + 1;
+      }
+      if(pic[bmyv*x+i] != 0 && corners[4] == -1 ) {
+	corners[4] = i + 1;
+	corners[5] = bmyv + 1;
+	corners[6] = rmxv + 1;
+        corners[7] = rmyv + 1;
+      }
+      i+=1;
+    } 
+  }
+  
+  /* case where top of image leans to the right of the bottom of the image */
+  /* approach top most x value from the left */
+  if(lmyv>=rmyv) {
+    i=0;
+    while(corners[0] == -1 || corners[6] == -1 && i < x) {
+      if(pic[tmyv*x+i] != 0 && corners[0] == -1) {
+	corners[0] = i + 1;
+	corners[1] = tmyv + 1;
+	corners[2] = rmxv + 1;
+	corners[3] = rmyva + 1;
+      }
+      if(pic[bmyv*x+(x-i-1)] != 0 && corners[6] == -1 ) {
+	corners[6] = x-i;
+	corners[7] = bmyv + 1;
+	corners[4] = lmxv + 1;
+	corners[5] = lmyva + 1;
+      }
+      i+=1;
     }
   }
 
-  /* fill in other pixels with interpolated pixels for type 1 */
-  if(type==1) {
-  }
+  /* clean up memory */
+  free(pic);
+  free(col_avg);
+  free(row_avg);
 
-  /* extract data into larger array for type 2 */
-  if(type==2) {
-    for(k=0;k<z;k++) {
-      for(j=0;j<factor*y;j++) {
-	ny = j/factor;
-	for(i=0;i<factor*x;i++) {
-	  ni = k*factor*factor*x*y + j*factor*x + i;
-	  nx = i/factor;
-	  ssdata[ni] = extract_float(data, cpos(nx,ny,k,data));
-	}
+  /* return array */  
+  return(corners);
+}
+
+
+float *convolve(float *obj, float *kernel, int ox, int oy, int oz, int kx, int ky, int kz, int norm, float ignore)
+{
+
+  float   *data;                                /* the smoothed array */
+  float   *wt;                                  /* array of number of elements in sum */
+  int      a, b, c;                             /* x, y, z position of kernel element */
+  int      x_pos, y_pos, z_pos;                 /* x, y, z position of object element */
+  int      kx_center;                           /* x radius and total x dimension of kernel */
+  int      ky_center;                           /* y radius and total y dimension of kernel */
+  int      kz_center;                           /* z radius and total z dimension of kernel */
+  int      x, y, z;                             /* x, y, z position of object convolved element */
+  int      i, j, k;                             /* memory locations */
+  float    kval, oval;                          /* value of kernel and object element */
+  int      objsize;                             /* total 1-d size of object */
+
+  kx_center = kx/2;
+  ky_center = ky/2;
+  kz_center = kz/2;
+  
+  objsize = ox * oy * oz;
+
+  data = (float *)calloc(sizeof(float), objsize);
+  wt = (float *)calloc(sizeof(float), objsize);
+
+  if (data == NULL || wt == NULL) {
+    parse_error("Unable to allocate memory");
+    return NULL ;
+  }
+ 
+  for (i = 0 ; i < objsize ; i++) {                               /* loop through every element in object */
+    if(obj[i] == ignore) { data[i] = ignore; continue; }
+
+    z = i/(ox*oy);                                                /* current x position in object */
+    y = (i - z*ox*oy)/ox ;                                        /* current y position in object */
+    x =  i - z*ox*oy - y*ox;                                      /* current z position in object */
+
+    for (a = 0 ; a < kx ; a++) {                                  /* current x position of kernel */
+      x_pos = x + a - kx_center;                                  /* where the current operation is being done in x */
+      if (x_pos < 0 || x_pos >= ox) continue;
+      for (b = 0 ; b < ky ; b++) {                                /* current y position of kernel */    
+	y_pos = y + b - ky_center;                                /* where the current operation is being done in y */
+	if (y_pos < 0 || y_pos >= oy) continue;
+	for (c = 0 ; c < kz ; c++) {                              /* current z position of kernel */
+	  z_pos = z + c - kz_center;                              /* where the current operation is being done in z */
+	  if (z_pos < 0 || z_pos >= oz) continue;
+	  j = z_pos*ox*oy + y_pos*ox + x_pos;                     /* position in 1-D object at (x_pos,y_pos,z_pos) */
+	  k = c*kx*ky + b*kx + a;                                 /* position in 1-D kernel at (a,b,c) */
+	  kval = kernel[k];                                       /* value of kernel at (k) */
+	  oval = obj[j];                                          /* value of object at (j) */
+	  if (oval != ignore && kval != ignore) {
+	    wt[i] += kval;                                        /* sum of values of pixels of the kernel used */
+	    data[i] += (kval * oval);
+	  }
+	} 
       }
     }
-  }
 
-  /* final output */
-  out = newVal(BSQ, factor*x, factor*y, z, FLOAT, ssdata);
-  return(out);
+    if (norm != 0 && wt[i] != 0) {
+      data[i] /= (float)wt[i];
+    }
+  } 
+
+  free(wt);
+  return(data);
+}
+
+/* Static Ported Dependencies */
+//static Var *do_my_convolve(Var *obj, Var *kernel, int norm, float ignore, int kernreduce); - ported to ff_convolve.c
+//static Var *do_ipi(Var *coords_array, Var *values_array); - ported to ff_ipi.c 
+//static float round_dp(float input, float decimal);  - ported to ff_contour.c 
+//static Var *rotation(Var *obj, float angle, float ign); ported to ff_rotate.c
+
+/* Ported Davinci Functions */
+//static Var *thm_kfill(vfuncptr, Var *); - ported to ff_ifill.c 
+//static Var *thm_convolve(vfuncptr, Var *); - ported to ff_convolve.c
+//static Var *thm_ramp(vfuncptr, Var *); -ported to ff_ramp.c
+//static Var *thm_sawtooth(vfuncptr, Var *); - ported to ff_filter.c
+//static Var *thm_maxpos(vfuncptr, Var *); - ported to ff_avg.c
+//static Var *thm_minpos(vfuncptr, Var *); - ported to ff_avg.c
+//static Var *thm_valpos(vfuncptr, Var *); - ported to ff_avg.c
+//static Var *thm_sstretch2(vfuncptr, Var *); - ported to ff_hstretch.c
+//static Var *thm_ipi(vfuncptr, Var *); - ported to ff_ipi.c
+//static Var *thm_interp2d(vfuncptr, Var *); - ported to ff_interp.c
+//static Var *thm_contour(vfuncptr, Var *); - ported to ff_contour.c 
+//static Var *thm_rotation(vfuncptr, Var *); - ported to ff_rotate.c
+//static Var *thm_resample(vfuncptr, Var *); - ported to ff_resample.c 
+
+
+/* Old functions */
+static void position_fill(int *pos, int elem, int iter, Var *obj);
+static Var *thm_minpos_v1(vfuncptr, Var *);
+static Var *thm_maxpos_v1(vfuncptr, Var *);
+//static Var *thm_cleandcs(vfuncptr, Var *);
+static Var *thm_y_shear(vfuncptr, Var *);
+static Var *thm_marsbin(vfuncptr, Var *);
+static Var *thm_destripe(vfuncptr, Var *);
+static Var *thm_supersample(vfuncptr, Var *);
+
+void position_fill(int *pos, int elem, int iter, Var *obj) {
+  int x,y,z;
+  int org;
+  int i,j,k;
+
+  x = GetX(obj);
+  y = GetY(obj);
+  z = GetZ(obj);
+  i = 0;
+  j = 0;
+  k = 0;
+  org = V_ORG(obj);
+
+  if (org == 0) {          // bsq organization
+    k = elem/(x*y);
+    j = (elem - k*x*y)/x;
+    i = elem - k*x*y - j*x;
+  } else if (org == 1) {   // bil organization
+    j = elem/(x*z);
+    k = (elem - j*x*z)/x;
+    i = elem - j*x*z - k*x;
+  } else if (org == 2) {   // bip organization
+    j = elem/(z*x);
+    i = (elem - j*z*x)/z;
+    k = elem - j*z*x - k*z;
+  }
+  pos[iter*3 + 2] = (float)(k + 1); // z position
+  pos[iter*3 + 1] = (float)(j + 1); // y position
+  pos[iter*3 + 0] = (float)(i + 1); // x position
 }
 
 
 
+Var*
+thm_maxpos_v1(vfuncptr func, Var *arg)
+{
+ 
+  Var    *data = NULL;                      /* the orignial data */
+  Var    *out = NULL;                       /* the output structure */
+  int    *pos = NULL;                       /* the output position */
+  float   ignore = -32768;                  /* null value */
+  float  *val = NULL;                       /* the output values */
+  int     i, j, k, l;                       /* loop indices */
+  int     x=0, y=0, z=0;                    /* size of the data */
+  float   ni1=0, ni2=-32798, ni3=-852;      /* temp values and positions */
+  int     opt=0;                            /* return array option */
+  int     iter=1;                           /* number of iterations to include */
+   
+  Alist alist[5];
+  alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
+  alist[1] = make_alist("ret",       INT,       NULL,  &opt);
+  alist[2] = make_alist("iter",      INT,       NULL,  &iter);
+  alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
+  alist[4].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if (data == NULL) {
+    parse_error("\nUsed to find the position of the max point in an array\n");
+    parse_error("$1 = the data");
+    parse_error("Prints the value and location\n");
+    parse_error("ret=1 returns the value and location in a structure\n");
+    parse_error("iter= # of points to find in the data");
+    parse_error("if iter >1 it will automatically return the points\n");
+    parse_error("ignore = the value to ignore\n");
+    parse_error("c.edwards 5/19/04\n");
+    return NULL;
+  }
+
+  if (iter > 1 ) {
+    opt=1;
+  }
+
+  /* create array for postion */
+  pos = (int *)calloc(sizeof(int), 3*iter);
+  val = (float *)calloc(sizeof(float), iter);
+  
+  /* x, y and z dimensions of the data */
+  x = GetX(data);
+  y = GetY(data);
+  z = GetZ(data);
+
+  /* find the maximum point and its position */  
+  for(l=0; l<iter; l++) {
+    for(k=0; k<z; k++) {
+      for(j=0; j<y; j++) {
+				for(i=0; i<x; i++) {
+					
+					/* ni1 = current value */
+					/* ni2 = curent max value */
+					/* ni3 = old max val */
+					ni1 = extract_float(data, cpos(i,j,k,data));
+					if(ni1>ni2 && (ni3 == -852 || (ni1<ni3 && ni3 != -852)) && ni1 != ignore) {
+						ni2=ni1;
+						pos[3*l+2]=k+1;
+						pos[3*l+1]=j+1;
+						pos[3*l+0]=i+1;
+					}
+				}
+      }
+    }
+    ni3=ni2;
+    val[l]=ni2;
+    ni2=-32798;
+  }
+	
+  if(iter==1) {
+    /* return the findings */
+    printf("\nLocation: %i,%i,%i\n",pos[0],pos[1],pos[2]);
+    printf("%.13f\n\n",ni3);
+    
+    if(opt==0) return NULL;
+  }
+
+  if(opt!=0) {
+    out = new_struct(2);
+    add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
+    add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
+    return out;
+  }
+}
+
+
+
+Var*
+thm_minpos_v1(vfuncptr func, Var *arg)
+{
+
+  Var    *data = NULL;                 /* the orignial data */
+  Var    *out = NULL;                  /* the output struture */
+  int    *pos = NULL;                  /* the output postion */
+  float   ignore = -32768;             /* null value */
+  float  *val = NULL;                  /* the output values */
+  int     i, j, k, l;                  /* loop indices */
+  int     x=0, y=0, z=0;               /* size of the data */
+  float   ni1=0, ni2=32798, ni3=852;   /* temp values and positions */
+  int     opt=0;                       /* return array option */
+  int     iter=1;                      /* number of iterations to include */
+
+  Alist alist[5];
+  alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
+  alist[1] = make_alist("ret",       INT,       NULL,  &opt);
+  alist[2] = make_alist("iter",      INT,       NULL,  &iter);
+  alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
+  alist[4].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+ 
+  if (data == NULL) {
+    parse_error("\nUsed to find the position of the min point in an array\n");
+    parse_error("$1 = the data");
+    parse_error("Prints the value and location\n");
+    parse_error("ret = 1 returns the value and location in a structure\n");
+    parse_error("iter = # of points to find in the data");
+    parse_error("if iter >1 it will automatically return the points\n");
+    parse_error("ignore = the value to ignore\n");
+    parse_error("c.edwards 5/19/04\n");
+    return NULL;
+  }
+
+  if (iter > 1 ) {
+    opt=1;
+  }
+  
+  /* create array for position and value*/
+  pos = (int *)calloc(sizeof(int), 3*iter);
+  val = (float *)calloc(sizeof(float), iter);
+  
+  /* x, y and z dimensions of the data */
+  x = GetX(data);
+  y = GetY(data);
+  z = GetZ(data);
+
+  /* find the minimum point and its position */  
+  for(l=0; l<iter; l++) {
+    for(k=0; k<z; k++) {
+      for(j=0; j<y; j++) {
+	for(i=0; i<x; i++) {
+	  
+	  /* ni1 = current value */
+	  /* ni2 = curent max value */
+	  /* ni3 = old max val */
+	  ni1 = extract_float(data, cpos(i,j,k,data));
+	  if(ni1<ni2 && (ni3 == 852 || (ni1>ni3 && ni3 != 852)) && ni1 != ignore) {
+	    ni2=ni1;
+	    pos[3*l+2]=k+1;
+	    pos[3*l+1]=j+1;
+	    pos[3*l+0]=i+1;
+	  }
+	}
+      }
+    }
+    ni3=ni2;
+    val[l]=ni2;
+    ni2=32798;
+  }
+
+  /* return the findings */
+  if(iter==1) {    
+    printf("\nLocation: %i,%i,%i\n",pos[0],pos[1],pos[2]);
+    if(ni2<-32768) {
+      printf("%.9e\n\n",ni3);
+    }
+    if(ni2>=-32768) {
+      printf("%.9f\n\n",ni3);
+    }
+    if(opt==0) return NULL;
+  }
+
+  if(opt!=0) {
+    out = new_struct(2);
+    add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
+    add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
+    return out;
+  }
+}
 
 
 
@@ -4818,12 +3475,6 @@ Var *thm_destripe(vfuncptr func, Var *arg){
 }
 
 
-
-
-
-
-
-
 Var *thm_marsbin(vfuncptr func, Var *arg){
   double      *calc_plane = NULL;                                     // holds the data_plane only mirrored reversed across both axises //
   double      *data_plane = NULL;                                     // the plane that holds all the data //
@@ -4960,653 +3611,349 @@ Var *thm_marsbin(vfuncptr func, Var *arg){
 }
 
 
-
-Var*
-thm_interp2d(vfuncptr func, Var *arg)
+Var *
+thm_rampold(vfuncptr func, Var * arg)
 {
-  
-  Var    *xdata = NULL;                /* the orignial data */
-  Var    *ydata = NULL;                /* the orignial data */ 
-  Var    *table = NULL;                /* look up table */
-  Var    *out = NULL;                  /* the output struture */
-  int     i,j,k;                       /* loop indices */
-  float   p1, p2;                      /* percentages */
-  int     xx,xy,xz,yx,yy,yz;           /* data size */
-  float  *wdata = NULL;                /* working data */
-  float   sx=1,dx=1,sy=1,dy=1;         /* start and delta values */
-  float   tvx,tvy;                     /* data values */
-  int     xi,yi;                       /* new x and y positions */
-  float   tv1,tv2;                     /* temporary values */
-  
-  Alist alist[8];
-  alist[0] = make_alist("table",     ID_VAL,    NULL,  &table);
-  alist[1] = make_alist("xdata",     ID_VAL,    NULL,  &xdata);
-  alist[2] = make_alist("ydata",     ID_VAL,    NULL,  &ydata);
-  alist[3] = make_alist("startx",    FLOAT,     NULL,  &sx);
-  alist[4] = make_alist("deltax",    FLOAT,     NULL,  &dx);
-  alist[5] = make_alist("starty",    FLOAT,     NULL,  &sy);
-  alist[6] = make_alist("deltay",    FLOAT,     NULL,  &dy);
-  alist[7].name = NULL;
-  
-  if (parse_args(func, arg, alist) == 0) return(NULL);
-  
-  if (table == NULL) {
-    parse_error("\ninterp2d()- Thu Apr 27 16:20:31 MST 2006");
-    parse_error("Bilinear interpolation algorithm");
-    parse_error("\nInputs and Outputs:");
-    parse_error("table - table of values of a standard delta value for each axis");
-    parse_error("xdata - the x data to interpolate");
-    parse_error("ydata - the y data to interpolate");
-    parse_error("startx - starting x value for the table");
-    parse_error("deltax - delta  x value for the table");
-    parse_error("starty - starting y value for the table");
-    parse_error("deltay - delta y value for the table");
-    parse_error("Returns a 1 d, array the size of x and y data\n");
-    parse_error("c.edwards");
+  /* made more efficient and fixed several bugs Oct 14, 2005                         **
+  ** added ability to speed up ramp calculation by setting a maximum # of iterations **
+  ** Fri Oct 14 16:36:44 MST 2005                                                    */
+
+  Var    *pic_1 = NULL;		 /* picture one                                   */
+  Var    *pic_2 = NULL;		 /* picture two                                   */
+  Var    *out = NULL;		 /* the output picture                            */
+  float  *ramp = NULL; 	         /* storage location of output ramp               */
+  int    *ol1 = NULL;	         /* the overlap in picture 1                      */
+  int    *ol2 = NULL;	         /* the overlap in picture 2                      */
+  float   nullv = 0.0;	         /* the ignore value                              */
+  float   tmpval = 0.0;          /* a temporary extracted value from the pictures */
+  int     r1 = -1, r2 = -1;      /* beginning and ending rows of the overlap      */
+  int     c1 = -1, c2 = -1;      /* beginning and ending columns of the overlap   */
+  int     i, j, k;	         /* loop indices                                  */
+  int     x, y;		         /* dimensions of the input pictures              */
+  int     t1;  			 /* memory location                               */
+  int     ct = 1;		 /* counter                                       */
+  int     n=-1, num = 1;	 /* fill-in number                                */
+  int     up, down, left, right; /* some neighborhood indices                     */
+  int     pare = 100000;         /* maximum # of pixels away from edge to search  */
+
+  Alist alist[5];
+  alist[0] = make_alist("pic1",   ID_VAL, NULL, &pic_1);
+  alist[1] = make_alist("pic2",   ID_VAL, NULL, &pic_2);
+  alist[2] = make_alist("stop",   INT,    NULL, &pare);
+  alist[3] = make_alist("ignore", FLOAT,  NULL, &nullv);
+  alist[4].name = NULL;
+
+  if (parse_args(func, arg, alist) == 0)
     return (NULL);
+  
+  /* if no pictures got passed to the function */
+  if (pic_1 == NULL || pic_2 == NULL) {
+    parse_error("ramp() - Fri Oct 14 14:45:09 MST 2005");
+    parse_error("Calculates a 0 - 1 float ramp between two overlapping pictures.");
+    parse_error("You need to pass me two overlapping pictures contained in arrays\nof identical size, and an ignore value.\n");
+    parse_error("Syntax:  b = thm.ramp(pic1, pic2, stop, ignore)");
+    parse_error("example: b = thm.ramp(a1, a2, stop=100, ignore=-32768");
+    parse_error("pic1 - may be any 2-d array - float, int, short, etc.");
+    parse_error("pic2 - may be any 2-d array - float, int, short, etc.");
+    parse_error("stop - maximum number of pixels away from edge to search. Default 100000");
+    parse_error("ignore - the non-data pixel values. Default is 0.\n");
+    parse_error("NOTES:\n");
+    parse_error("You need to multiply the ramp*pic2 and (1-ramp)*pic1.");
+    parse_error("The ramp is only found for OVERLAPPING regions.");
+    parse_error("Non-overlapping regions from pic1 and pic2 need to be added to make a full blend.");
+    parse_error("You can speed up ramp calculation by setting \'stop\'. 100 works well.");
+    return NULL;
   }
+  
+  /* x and y dimensions of the original pictures */
+  x = GetX(pic_1);
+  y = GetY(pic_1);
+  
+  if (x != GetX(pic_2) || y != GetY(pic_2)) {
+    parse_error("The two pictures need to be of the exact same dimensions.\n");
+    return NULL;
+  }
+  
+  /* create the two overlap arrays */
+  ol1 = (int *) malloc(sizeof(int)*x*y);
+  ol2 = (int *) malloc(sizeof(int)*x*y);
+  
+  /* lines and columns bounding data */
+  r1 = y-1;
+  r2 = 0;
+  c1 = x-1;
+  c2 = 0;
+  
+  /* extract profiles of images */
+  for (j = 0; j < y ; j++) {
+    for (i = 0; i < x ; i++) {
+      t1 = j * x + i;
+      ol1[t1] = -1;
+      ol2[t1] = -1;
+      
+      tmpval = extract_float(pic_1, cpos(i, j, 0, pic_1));
+      if(tmpval != nullv) ol1[t1] = 0;
+      
+      tmpval = extract_float(pic_2, cpos(i, j, 0, pic_2));
+      if(tmpval != nullv) ol2[t1] = 0;
+      
+      /* find left and right limits of overlapping area */
+      if (ol1[t1] != -1 && ol2[t1] != -1) {
+	if (j < r1) { r1 = j; }
+	if (j > r2) { r2 = j; }
+	if (i < c1) { c1 = i; }
+	if (i > c2) { c2 = i; }
+      }
+    }
+  }
+ 
+  /* loop through the overlap arrays filling in the appropriate value.   **
+  ** On the first iteration we search for any pixels with a neighbor of  **
+  ** -1 and we set that pixel to 1.  On all other iterations we look for **
+  ** neighbors with values num-1. If "stop" number is specified, we stop **
+  ** searching for distances and set all values to value of "pare".      */
+  k=1;
+  while (ct > 0) {
+    ct = 0;
     
-  /*size of xdata*/
-  xx = GetX(xdata);
-  xy = GetY(xdata);
-  xz = GetZ(xdata);
+    for (j = r1; j <= r2; j++) {
+      for (i = c1; i <= c2; i++) {
+	t1 = j * x + i;
+	
+	/* neighbor pixel positions */
+	up = (j-1) * x + i;
+	down = (j+1) * x + i;
+	left = t1 - 1;
+	right = t1 + 1;
+	
+	/* safety against falling off the edge */
+	if(j==0) up = t1;
+	if(j==y-1) down = t1;
+	if(i==0) left = t1;
+	if(i==x-1) right = t1;
+	
+	if (ol1[t1] == 0
+	    && ((ol1[left] == n) || (ol1[right] == n)
+					|| (ol1[up] == n) || (ol1[down] == n))) {
+	  ol1[t1] = num;
+	  ct += 1;
+	}
+	if (ol2[t1] == 0
+	    && ((ol2[left] == n) || (ol2[right] == n)
+					|| (ol2[up] == n) || (ol2[down] == n))) {
+	  ol2[t1] = num;
+	  ct += 1;
+	}
+      }
+    }
+    num += 1;
+    n = num-1;
+    k+=1;
 
-  /*size of ydata*/
-  yx = GetX(ydata);
-  yy = GetY(ydata);
-  yz = GetZ(ydata);
-
-  /*error handling, they must be the same size and one band*/
-  if(xx!=yx || xy!=yy || xz!=1 || yz != 1) { 
-    parse_error("\nThe x and y data must have the same dimensions and only one band\n");
-    return NULL;
-  }
-
-  /*memory allocation*/
-  wdata=(float *)calloc(sizeof(float),xx*xy*1);
-  
-  for(i=0;i<xx;i+=1) {
-    for(j=0;j<xy;j+=1) {
-      
-      /*extract values from original data*/
-      tvx=extract_float(xdata,cpos(i,j,0,xdata));
-      tvy=extract_float(ydata,cpos(i,j,0,ydata));
-      
-      /*apply start and delta to the extracted values*/
-      tvx=(tvx-sx)/dx;
-      tvy=(tvy-sy)/dy;
-      if(tvx<0) tvx=0;
-      if(tvy<0) tvy=0;
-      if(tvx>xx) tvx=xx-1;
-      if(tvy>xy) tvy=xy-1;     
-      
-      /*calculate percentages */
-      p1=(float)(tvx-floor(tvx));
-      p2=(float)(tvy-floor(tvy));
-      xi=(int)floor(tvx);
-      yi=(int)floor(tvy);
-      
-      /*   apply the bilinear interpolation algorithm                  **
-      **   val=(f(1,1)*(1-p1)+f(2,1)*p1)*(1-p2)+(f(1,2)*(1-p1)+f(2,2)*p1)*p2    **
-      */
-
-      tv1=(extract_float(table,cpos(xi,yi,0,table))*(1-p1)+extract_float(table,cpos(xi+1,yi,0,table))*(p1))*(1-p2);
-      tv2=(extract_float(table,cpos(xi,yi+1,0,table))*(1-p1)+extract_float(table,cpos(xi+1,yi+1,0,table))*(p1))*(p2);
-      wdata[xx*j + i]=(float)(tv1+tv2);
+    /* we've searched enough. Set all remaining values to 'pare' */
+    if(k==pare) {
+      for (j = r1; j <= r2; j++) {
+				for (i = c1; i <= c2; i++) {
+					t1 = j * x + i;
+					if (ol1[t1] == 0) ol1[t1] = pare;
+					if (ol2[t1] == 0) ol2[t1] = pare;
+				}
+      }
+      ct=0;
     }
   }
-  out=newVal(BSQ, xx, xy, 1, FLOAT, wdata);
+
+  /* loop through last time and create ramp */
+  ramp = (float *) calloc(sizeof(float), x*y);
+  
+  for (j = 0; j < y; j++) {
+    for (i = 0; i < x; i++) {
+      t1 = j*x + i;
+      if (ol1[t1] != -1 && ol2[t1] != -1) {
+				ramp[t1] = (float)(ol2[t1]) / (float)(ol2[t1] + ol1[t1]);
+      }
+    }
+  }
+  
+  free(ol1);
+  free(ol2);
+  
+  out = newVal(BSQ, x, y, 1, FLOAT, ramp);
   return out;
 }
 
 
-
-float round_dp(float input, float decimal) {
-  int      i = 0;
-  double   val = 0.0;
-  float    output = 0;
-  float    mult = 0.0; 
-  float    multiplier = 1.0;
-  int      topval = 0;
-  float    remainder = 0.0;
-
-  // determine the multiplier value
-  if (decimal > 1.0) {
-    for (mult = 1.0; decimal >= 10.0; mult/=10){
-      decimal/=10;
-      multiplier/=10;
-    }
-  } else if (decimal < 1.0) {
-    for (mult = 1.0; decimal < 1.0; mult*=10) {
-      decimal*=10;
-      multiplier*=10;
-    }
-  }
-
-  val = (double)input;
-  val*=multiplier;
-  topval = (int)val;
-  remainder = val - topval;
-  if(remainder > 0.5) topval = topval + 1;
-  if(remainder < -0.5) topval = topval - 1;
-  output = (float)topval/multiplier;
-  
-  return(output);
-}
-
-
-
-Var*
-thm_contour(vfuncptr func, Var *arg)
+/**
+*** For positive angles, shift the right hand side of the image upwards.
+*** When unshearing (using negative angles), trim will cut off the part
+*** that gets left blank.
+***
+*** The only difference between trim/notrim is keeping track of the signs.
+*** Keith claims it was easier to handle separately.
+***
+*** This routine uses direct array indexing, so will not be 64-bit compliant.
+**/
+Var *
+thm_y_shear(vfuncptr func, Var * arg)
 {
-  
-  Var    *data = NULL;                      /* the orignial data */
-  Var    *out = NULL;                       /* the output structure */
-  float   bin = 10;                         /* contour interval */
-  float  *w_data;                           /* contoured image */
-  int     i, j, k;                          /* loop indices */
-  int     x=0, y=0, z=0;                    /* size of the data */ 
-  float   tv=0,tv2=0;                       /* temporary value */
-  int     startx=0, starty=0;               /* start x and y vals */
-  int     endx=0, endy=0;                   /* end x and y vals */
-  int     i1=0,j1=0;                        /* small loop indices */
-  int     fill=0;                           /* pixel fill check */
-  float   zero=0;                           /* zero point */
+  /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
 
-  Alist alist[4];
-  alist[0] = make_alist("data",           ID_VAL,    NULL,  &data);
-  alist[1] = make_alist("interval",       FLOAT,     NULL,  &bin);
-  alist[2] = make_alist("zero",           FLOAT,     NULL,  &zero);
-  alist[3].name = NULL;
-  
+  Var     *pic_v = NULL;            /* the picture */
+  Var     *out;                     /* the output picture */
+  float   *pic = NULL;              /* the new sheared picture */
+  float    angle = 0;               /* the shear angle */
+  float    shift;                   /* the shift/pixel */
+  float    nullv = 0;               /* the null value to put in all blank space */
+  int	   trim = 0;		    /* whether to trim the data or not */
+  int      lshift;                  /* the largest shift (int) */
+  int      x, y, z;                 /* dimensions of the original picture */
+  int      i, j, k;                 /* loop indices */
+  int      nx, ni, nj;              /* memory locations */
+
+  Alist alist[6];
+  alist[0] = make_alist("picture",		ID_VAL,		NULL,	&pic_v);
+  alist[1] = make_alist("angle",		FLOAT,		NULL,	&angle);
+  alist[2] = make_alist("ignore",               FLOAT,          NULL,   &nullv);
+  alist[3] = make_alist("trim",		        INT,		NULL,    &trim);
+  alist[4] = make_alist("null",                 FLOAT,          NULL,   &nullv); // can be removed once all legacy programs are dead
+  alist[5].name = NULL;
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
-  if (data == NULL) { 
-    parse_error("\ncontour() - Thu Aug 10 14:14:13 MST 2006");
-    parse_error("Create contour map");
-    parse_error("\nInputs and Outputs:");
-    parse_error("data - input data array");
-    parse_error("interval - contour interval (Default = 10)");
-    parse_error("zero - zero level (or \"sea level\") of data (Default = 0)");
-    parse_error("\nreturns an array of contours of the same dimensions as the");
-    parse_error("input with contours of a multiplicative of the interval value\n") ;
-    parse_error("c.edwards\n");
-    return (NULL);
+
+  /* if no picture got passed to the function */
+  if (pic_v == NULL){
+    parse_error("y_shear() - 4/25/04");
+    parse_error("It takes an input array and shears the y position of each pixel according to a shear angle in degrees.\n");
+    parse_error("Syntax:  b = thm.y_shear(picture,angle,ignore,trim)");
+    parse_error("example: b = thm.y_shear(picture=a,angle=8,ignore=-32768,trim=1)");
+    parse_error("example: b = thm.y_shear(a,8,-32768,1)\n");
+    parse_error("The shear angle may be between -80 and 80 degrees");
+    parse_error("The null option fills in a specified value into all blank space");
+    parse_error("If you want to unshear the array an equal but opposite angle and want it to have the same dimensions as the original, then use the \"trim=1\" option\n");
+    return NULL;
   }
-  
-  /* x, y and z dimensions of the data */
-  x = GetX(data);
-  y = GetY(data);
-  z = GetZ(data);
-  
-  /* allocate memory for the picture */
-  w_data = (float *)calloc(sizeof(float), x*y*z);
-  
-  /* loop through data and extract points and fill in contours*/
-  for(i=0; i<x; i++) {
-    for(j=0; j<y; j++) {
+
+  /* x, y, and z dimensions of the original picture */
+  x = GetX(pic_v);
+  y = GetY(pic_v);
+  z = GetZ(pic_v);
+
+  if (angle == 0) {
+    parse_error("Why did you bother to shear the data by a 0 angle?\n"); return NULL;
+  }
+
+  if (angle > 80 || angle < -80) {
+    parse_error("Try to stay between -80 and 80, love.  Our motto is \"No Crashy Crashy.\""); return NULL;
+  }
+
+  /* calculating the number of rows to add to the picture to accomodate the shear */
+  shift = tan((M_PI / 180.0) * angle);
+  lshift = (int)((x*fabs(shift)-0.5)+1)*(shift/fabs(shift));
+
+  if (lshift == 0) {
+    parse_error("The shear is too small to accomplish anything. Try again bozo.\n"); return NULL;
+  }
+
+  /* for trim == 0 */
+  if(trim == 0) {
+
+    /* create the new picture array */
+    pic = (float *)calloc(sizeof(float), x*z*(y+abs(lshift)));
+
+    if (pic == NULL) {
+      parse_error("ERROR! Unable to allocate %d bytes\n", sizeof(float)*x*z*(y+abs(lshift)));
+      return NULL;
+    }
+
+    /* fill in the null value into all pic elements */
+    if(nullv != 0) {
       for(k=0; k<z; k++) {
+				for(j=0; j<y+abs(lshift); j++) {
+					for(i=0; i<x; i++) {
+						ni = k*(y+abs(lshift))*x + j*x + i;
+						pic[ni] = nullv;
+					}
+				}
+      }
+    }
 
-	/* extract temporary binned value */
-	tv=(round_dp((extract_float(data, cpos(i,j,k,data))-zero)/bin,1))*bin;
+    /* extract the picture directly into a sheared picture */
+    for(k=0; k<z; k++) {
+      for(j=0; j<y; j++) {
+        for(i=0; i<x; i++) {
 
-	/* set up small loop start and end points */
-	startx=i-1;
-	endx=i+1;
-	starty=j-1;
-	endy=j+1;
-
-	/* edge protection */
-	if(startx<0) startx=0;
-	if(endx>=x) endx=x-1;
-	if(starty<0) starty=0;
-	if(endy>=y) endy=y-1;
-	
-	/* small loop indices and fill flag */
-	i1=startx;
-	j1=starty;
-	fill=0;
-	
-	/* dooo the looop */
-	while(fill==0 && i1<=endx) {
-	  while(fill==0 && j1<=endy) {
-	    /* make sure not to check comparison value */
-	    if(i1!=i && j1!=j) {
-	      /*perform the check and fill in data when it is triggered */
-	      if(tv<(round_dp((extract_float(data, cpos(i1,j1,k,data))-zero)/bin,1))*bin) {
-		w_data[x*y*k + x*j + i]=tv;
-		fill=1;
-	      }
+          /* the shifted y pixel */
+	    /* if the angle is greater than 0 */
+ 	    if(lshift>0) {
+	      ni = k*(y+abs(lshift))*x + ((int)(j+abs(lshift)-(int)(shift*i+0.5)))*x + i;
 	    }
-	    j1+=1;
-	  }
-	  j1=starty;
-	  i1+=1;
-	}
+
+	    /* if the angle is less than 0 */
+	    if(lshift<0) {
+	      ni = k*(y+abs(lshift))*x + (j+(int)(fabs(shift)*i+0.5))*x + i;
+	    }
+
+	    pic[ni] = extract_float(pic_v, cpos(i, j, k, pic_v));
+        }
       }
     }
+    /* final output */
+    out = newVal(BSQ, x, y+abs(lshift), z, FLOAT, pic);
   }
-  /* return the contoured data */
-  out=newVal(BSQ,x,y,z,FLOAT,w_data);
+
+  /* for trim != 0 */
+  if(trim != 0) {
+
+    if(y-abs(lshift)<=0) {
+      parse_error("The trimmed array has a length of %d, you nincompoop. Stop trying to crash me.\n", y-abs(lshift));
+      return NULL;
+    }
+
+    /*create the new picture array */
+    pic = (float *)calloc(sizeof(float), x*z*(y-abs(lshift)));
+
+    if (pic == NULL) {
+      parse_error("ERROR! Unable to allocate %d bytes\n", sizeof(float)*x*z*(y+abs(lshift)));
+      return NULL;
+    }
+
+    /* fill in the null value into all pic elements */
+    if(nullv != 0) {
+      for(k=0; k<z; k++) {
+				for(j=0; j<y-abs(lshift); j++) {
+					for(i=0; i<x; i++) {
+						ni = k*(y-abs(lshift))*x + j*x + i;
+						pic[ni] = nullv;
+					}
+				}
+      }
+    }
+
+    /* extract the picture directly into a sheared, but trimmed, array */
+    for(k=0; k<z; k++) {
+      for(j=0; j<y-abs(lshift); j++) {
+        for(i=0; i<x; i++) {
+
+          /* the index of the new array */
+          nx = k*(y-abs(lshift))*x + j*x + i;
+
+          /* the shifted y pixel */
+	    /* if the angle is greater than 0 */
+ 	    if(lshift>0) {
+            nj = j + (int)(fabs(shift)*i+0.5);
+          }
+
+          /* if the angle is less than 0 */
+          if(lshift<0) {
+            nj = j + abs(lshift) - (int)(fabs(shift)*i+0.5);
+          }
+
+          pic[nx] = extract_float(pic_v, cpos(i, nj, k, pic_v));
+        }
+      }
+    }
+    /* final output */
+    out = newVal(BSQ, x, y-abs(lshift), z, FLOAT, pic);
+  } 
   return out;
-}
-
-
-
-
-
-
-
-Var*
-thm_rotation(vfuncptr func, Var * arg)
-{
-
-  Var   *obj = NULL;
-  Var   *out = NULL;
-  float  ign = 0.0;
-  float  angle = 0.0;
-
-  Alist alist[4];
-  alist[0] = make_alist( "object",      ID_VAL,   NULL,     &obj);
-  alist[1] = make_alist( "angle",  	FLOAT,    NULL,     &angle);
-  alist[2] = make_alist( "ignore",      FLOAT,    NULL,     &ign);
-  alist[3].name = NULL;
-
-  if (parse_args(func, arg, alist) == 0) return NULL;
-  
-  if (obj == NULL) {
-    parse_error("rotate() - Mon Feb 13 14:35:25 MST 2006");
-    parse_error("Rotates an array a specified angle in degrees");
-    parse_error("Uses 3 shear Paeth algorithm.\n");
-    parse_error("Syntax:  b = rotate(obj,angle,ignore)");
-    parse_error("example: b = rotate(a,5.0)");
-    parse_error("example: b = rotate(a,-64.3,ignore=-32768)");
-    parse_error("obj     - any 3-d BSQ array.");
-    parse_error("angle   - desired angle of rotation in degrees.");
-    parse_error("ignore  - the value in non-data pixels. Default is 0.");
-    return NULL;
-  }
-
-  out=rotation(obj, angle, ign);
-  return(out);
-}
-
-
-
-union DATA {
-    char   b;
-    short  s;
-    int    i;
-    float  f;
-    double d;
-};
-
-
-
-Var *rotation(Var *obj, float angle, float ign)
-{
-
-  Var   *out = NULL, *s = NULL;
-  int    x=0, y=0, z=0;              /* input dimensions                      */
-  int    rx=0, ry=0;
-  int    i, j, k;                    /* array indices                         */
-  int   *roffset = NULL;
-  char  *robj = NULL;
-  float  pi = 3.141592653589;
-  float  ang = 0.0;                  /* the rotation angle in radians         */
-  int   *xshear = NULL;              /* first and third shears in three shear */
-  int   *yshear = NULL;              /* second shear in three shear operation */
-  int    xdim_shr1 = 0;              /* x dimension after first x shear       */
-  int    ydim_shr1 = 0;              /* y dimension after first y shear       */
-  int    xdim_shr2 = 0;              /* x dimension after second x shear      */
-  int    ti = 0;                     /* temporary integer value               */
-  float  tf = 0.0;                   /* temporary float value                 */
-  int    minx1=0, minx2=0, miny=0;
-  int    maxx1=0, maxx2=0, maxy=0;
-  int    top,bot,lef,rig;
-  int    x_1=0, y_1=0, x_2=0;
-  int    flpflg = 0;
-  int    nbytes = 0;
-  union DATA ign_resized; /* properly resized value of ignore */
-
-  switch(V_FORMAT(obj)){
-  case BYTE:
-      ign_resized.b = ign;
-      break;
-  case SHORT:
-      ign_resized.s = ign;
-      break;
-  case INT:
-      ign_resized.i = ign;
-      break;
-  case FLOAT:
-      ign_resized.f = ign;
-      break;
-  case DOUBLE:
-      ign_resized.d = ign;
-      break;
-  default:
-      break;
-  }
-  
-  x = GetX(obj);
-  y = GetY(obj);
-  z = GetZ(obj);
-
-  /* set the angle between -pi/2.0 and pi/2.0 */
-  ang = angle - ((int)angle/360)*360;
-  if(ang < 0) ang = ang + 360;  // ang is now between 0 and 360
-  if(ang > 180.0) ang -= 360;   // ang is now between -180 and 180
-  ang = ang*2*pi/360.0;         // ang is now betweeen -pi and pi
-  if(ang > pi/2.0) {
-    ang = ang - pi;
-    flpflg = 1;                 // this means I've assumed the image to be flipped 180 degrees
-  }
-  if(ang < -pi/2.0) {
-    ang = ang + pi;
-    flpflg = 1;                 // this means I've assumed the image to be flipped 180 degrees
-  }
-
-  /* x-dimension of array after the first x-shear */
-  tf = (float)y * tan(ang/2.0);
-  ti = thm_round(tf);
-  xdim_shr1 = x + abs(ti);
-  if(ti < minx1) minx1 = ti;
-  if(ti > maxx1) maxx1 = ti;
-
-  /* y-dimension of array after the first y-shear */
-  tf = (float)xdim_shr1 * -1 * sin(ang);
-  ti = thm_round(tf);
-  ydim_shr1 = y + abs(ti);
-  if(ti < miny) miny = ti;
-  if(ti > maxy) maxy = ti;
-
-  /* x-dimension of array after the second x-shear */
-  tf = (float)ydim_shr1 * tan(ang/2.0);
-  ti = thm_round(tf);
-  xdim_shr2 = xdim_shr1 + abs(ti);
-  if(ti < minx2) minx2 = ti;
-  if(ti > maxx2) maxx2 = ti;
-
-  /* create shear lookup arrays */
-  yshear = (int *)malloc(sizeof(int)*xdim_shr2);
-  xshear = (int *)malloc(sizeof(int)*ydim_shr1);
-
-  /* fill in shearing lookup arrays */
-  for(i=0;i<xdim_shr2;i++) { yshear[i] = thm_round((float)i * sin(ang)); }
-  for(j=0;j<ydim_shr1;j++) { xshear[j] = thm_round((float)j * -1 * tan(ang/2.0)); }
-
-  /* set the default edges of rotated array */
-  top = ydim_shr1;
-  bot = ydim_shr1*-1;
-  lef = xdim_shr2;
-  rig = xdim_shr2*-1;
-
-  /* search for edges of data in rotated array */
-  for(j=0;j<y;j++) {
-    for(i=0;i<x;i++) {
-      x_1 = i - xshear[j] - minx1;
-      y_1 = j - yshear[x_1] - miny;
-      x_2 = x_1 - xshear[y_1] - minx2;
-      
-      for(k=0;k<z;k++) {
-	if(flpflg == 1) {
-	  tf = extract_float(obj, cpos((x-1)-i,(y-1)-j,k,obj));
-	} else {
-	  tf = extract_float(obj, cpos(i,j,k,obj));
-	}
-      
-	if (tf != ign) {
-	  if (y_1 < top) top = y_1;
-	  if (y_1 > bot) bot = y_1;
-	  if (x_2 < lef) lef = x_2;
-	  if (x_2 > rig) rig = x_2;
-	}
-      }
-    }
-  }
-
-  /* create roffset */
-  roffset = (int *)malloc(sizeof(int)*2);
-  roffset[0] = lef;
-  roffset[1] = top;
-
-  /* create robj */
-  rx = rig-lef+1;
-  ry = bot-top+1;
-
-  /* create new output var */
-  s = newVar();
-  V_TYPE(s) = V_TYPE(obj);
-  V_ORG(s) = V_ORG(obj);
-  V_FORMAT(s) = V_FORMAT(obj);
-  V_SIZE(s)[orders[V_ORG(s)][0]] = rx;
-  V_SIZE(s)[orders[V_ORG(s)][1]] = ry;
-  V_SIZE(s)[orders[V_ORG(s)][2]] = z;
-  V_DSIZE(s) = rx*ry*z;
-  V_DATA(s) = calloc(nbytes = NBYTES(V_FORMAT(s)), V_DSIZE(s));
-  robj = (char *)V_DATA(s);
-
-  /* fill in every element of rotated array with null value */
-  for(k=0;k<rx*ry*z;k++) { memcpy(robj+k*nbytes, &ign_resized, nbytes); }
-
-  /* every element in robj must be filled in */
-  for(j=0;j<y;j++) {
-    for(i=0;i<x;i++) {
-      x_1 = i - xshear[j] - minx1;
-      y_1 = j - yshear[x_1] - miny;
-      x_2 = x_1 - xshear[y_1] - minx2;
-      
-      /* if not outside data fill in with value */
-      if(x_2 >= lef && x_2 <= rig && y_1 >= top && y_1 <= bot) {
-	for(k=0;k<z;k++) {
-	  int xx, yy, zz;
-	  
-	  xx = flpflg? (x-1)-i: i;
-	  yy = flpflg? (y-1)-j: j;
-	  zz = k;
-	  tf = extract_float(obj, cpos(xx,yy,zz,obj));
-			     
-	  if(tf != ign) {
-	    memcpy(((char *)V_DATA(s))+cpos(x_2-lef,y_1-top,k,s)*nbytes,
-		   ((char *)V_DATA(obj))+cpos(xx,yy,zz,obj)*nbytes,
-		   nbytes); 
-	  }
-	}
-      }
-    }
-  }
-
-  /* clean up */
-  free(yshear);
-  free(xshear);
-
-  /* final output */
-  //free(roffset);
-  //return(s);
-
-
-  out = new_struct(0);
-  add_struct(out, "data", s);
-  add_struct(out, "angle", newFloat(angle));
-  add_struct(out, "offset", newVal(BSQ, 2, 1, 1, INT, roffset));
-  return out;
-}
-
-
-
-
-void position_fill(int *pos, int elem, int iter, Var *obj) {
-  int x,y,z;
-  int org;
-  int i,j,k;
-
-  x = GetX(obj);
-  y = GetY(obj);
-  z = GetZ(obj);
-  i = 0;
-  j = 0;
-  k = 0;
-  org = V_ORG(obj);
-
-  if (org == 0) {          // bsq organization
-    k = elem/(x*y);
-    j = (elem - k*x*y)/x;
-    i = elem - k*x*y - j*x;
-  } else if (org == 1) {   // bil organization
-    j = elem/(x*z);
-    k = (elem - j*x*z)/x;
-    i = elem - j*x*z - k*x;
-  } else if (org == 2) {   // bip organization
-    j = elem/(z*x);
-    i = (elem - j*z*x)/z;
-    k = elem - j*z*x - k*z;
-  }
-  pos[iter*3 + 2] = (float)(k + 1); // z position
-  pos[iter*3 + 1] = (float)(j + 1); // y position
-  pos[iter*3 + 0] = (float)(i + 1); // x position
-}
-
-
-
-int thm_round(float numf) {
-  float    m;
-  int      numi;
-
-  /* calculate the rotated y coordinate */
-  numi = (int)numf;
-  m = numf - (float)numi;
-  if (m >= 0.5) { numi += 1; }
-  if (m <= -0.5) { numi -= 1; }
-
-  return(numi);
-}
-
-Var*
-thm_resample(vfuncptr func, Var * arg)
-{
-  
-
-  Var    *oldx=NULL;                 //old x
-  Var    *oldy=NULL;                 //old y
-  Var    *newx=NULL;                 //new x
-  Var    *out=NULL;                  //output array
-  float  *ynew=NULL;                 //new y array
-  float  *y=NULL;                    //old y array
-  float  *xnew=NULL;                 //new x array
-  float  *xold=NULL;                 //old x array
-  float  *y2d=NULL;                  //second derivative array
-  float  *u=NULL;                    //u array
-  int     i,npts,new_npts;           //indices and sizes
-  int     start_count,stop_count;    //stop and start locations               
-  float   sig,p,h,a,b;               //cubic spline variables
-  int     samp_hi,samp_lo,samp_new;  //hi,lo,new samples
-  float   min=0,max=0;               //min and max values
-
-  Alist alist[4]; 
-  alist[0] = make_alist("oldy",    ID_VAL,      NULL,  &oldy);
-  alist[1] = make_alist("oldx",    ID_VAL,      NULL,  &oldx); 
-  alist[2] = make_alist("newx",    ID_VAL,      NULL,  &newx); 
-  alist[3].name = NULL;
-  
-  if (parse_args(func, arg, alist) == 0) return(NULL);
-  
-  if(oldx==NULL || oldy==NULL || newx==NULL) {
-    printf (" \n");
-    printf (" Resample a spectrum to a given scale using cubic spline interpolation \n");
-    printf (" $1 = spectra to be resampled \n");
-    printf (" $2 = old scale \n");
-    printf (" $3 = new scale \n");
-    printf (" \n");
-    printf (" c.edwards 03-23-07\n\n");
-    return NULL;
-  }
-  
-  /* get z of old array and allocate memory*/
-  npts=GetZ(oldx);
-  y = (float *) calloc(sizeof(float),npts);
-  xold = (float *) calloc(sizeof(float),npts);
-  y2d = (float *) calloc(sizeof(float),npts);
-  u = (float *) calloc(sizeof(float),npts-1);
-  
-  /*set boundary spline conditions; Second derivative is 0. */
-  
-  min=extract_float(oldx,cpos(0,0,0,oldx));
-  max=extract_float(oldx,cpos(0,0,npts-1,oldx));
-  for(i=0;i<npts;i++) {
-    y[i]=extract_float(oldy,cpos(0,0,i,oldy));
-    xold[i]=extract_float(oldx,cpos(0,0,i,oldx));
-    if(xold[i] < min) { min=xold[i]; }
-    if(xold[i] > max) { max=xold[i]; }
-    y2d[i]=y[i]-y[i];
-    if(i<npts-1) {
-      u[i]=y2d[i];
-    }
-  }  
-
-
-  /*Set start and end points in case many values are zeroed.*/
-  start_count=1;
-  while (y[start_count] == 0. && start_count <= npts) {
-    start_count=start_count+1;
-  }
-  stop_count=npts;
-  while (y[stop_count] == 0. && stop_count >=1) {
-    stop_count=stop_count-1;
-  }
-  
-  /* Do the decomposition loop of the tridiagonal algorithm */
-  for (i=(start_count); i<=(stop_count-1); i+=1) {
-    sig=(xold[i]-xold[(i-1)])/(xold[(i+1)]-xold[(i-1)]);
-    p=sig*y2d[(i-1)]+2.;
-    y2d[i]=(sig-1.)/p;
-    if(xold[(i+1)]-xold[i] !=0 ) { u[i]=(y[(i+1)]-y[i])/(xold[(i+1)]-xold[i]);}
-    if(xold[i]-xold[(i-1)] !=0 ) { u[i]= u[i] - (y[i]-y[(i-1)])/(xold[i]-xold[(i-1)]); }
-    if(xold[(i+1)]-xold[(i-1)] !=0) { u[i]=(6.*u[i]/(xold[(i+1)]-xold[(i-1)]) - sig*u[(i-1)])/p;}
-  }
-
-  for (i=(stop_count-1); i>=start_count; i-=1) {
-    y2d[i]=y2d[i]*y2d[(i+1)] + u[i];
-  }
-  
-
-  /* Now that we have the second derivative //
-  // we can evaluate our y with respect to the new xaxis // 
-  // get the size of the new xaxis and alloate the memory */
-  new_npts=GetZ(newx);
-  ynew = (float *) calloc(sizeof(float),new_npts);
-  xnew = (float *) calloc(sizeof(float),new_npts);
-  for(i=0;i<new_npts;i++) {
-    xnew[i]=extract_float(newx,cpos(0,0,i,newx));
-  }
-
-  for (i=0; i<new_npts; i+=1) {
-    samp_hi=npts-1;
-    samp_lo=0;
-    while (samp_hi-samp_lo > 1) {
-      samp_new=(samp_hi+samp_lo)/2;
-      if (xold[samp_new] > xnew[i]) {
-	samp_hi=samp_new;
-      }
-      if (xold[samp_new] <= xnew[i]) {
-	samp_lo=samp_new;
-      }
-    }
-    h=xold[samp_hi]-xold[samp_lo];
-    a=(xold[samp_hi]-xnew[i])/h;
-    b=(xnew[i]-xold[samp_lo])/h;
-    if(xnew[i]<=max && xnew[i]>=min) {
-      ynew[i]=a*y[samp_lo]+b*y[samp_hi]+((a*a*a-a)*y2d[samp_lo]+(b*b*b-b)*y2d[samp_hi])*(h*h)/6.;
-    } 
-  }
-  if(xnew[0]==xold[0]) {
-    ynew[0]=y[0];
-  }
-
-  free(y);
-  free(xnew);
-  free(xold);
-  free(y2d);
-  free(u);
-  out = newVal(BSQ, 1, 1, new_npts, FLOAT, ynew);
-  return(out);
 }
