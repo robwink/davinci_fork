@@ -330,3 +330,103 @@ int rnd(float f)
 }
 
 
+Var * ff_sstretch2(vfuncptr func, Var * arg)
+{
+
+  /* takes data and stretches it similar to sstretch() davinci function*/
+  /* but does it band by band */
+
+  typedef unsigned char byte;
+  
+  Var       *data=NULL;         /* input */
+  Var       *out=NULL;          /* output */
+  float     *w_data=NULL;       /* working data2 */
+  byte      *w_data2=NULL;      /* working data */
+  float      ignore=-32768;     /* ignore value*/
+  int        x,y,z;             /* indices */
+  double     sum = 0;           /* sum of elements in data */
+  double     sumsq = 0;         /* sum of the square of elements in data */
+  double     stdv = 0;          /* standard deviation */
+  int        cnt = 0;           /* total number of non-null points */
+  int        i,j,k;
+  float      tv,max=-32768;
+  float      v=40; 
+  
+  Alist alist[4];
+  alist[0] = make_alist("data", 	  ID_VAL,	NULL,	&data);
+  alist[1] = make_alist("ignore", 	  FLOAT,	NULL,	&ignore);
+  alist[2] = make_alist("variance",       FLOAT,        NULL,   &v);
+  alist[3].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if (data == NULL) {
+    parse_error("\nsstretch() - 03/26/05\n");
+    parse_error("Used to sstretch data band by band");
+    parse_error("Similar to the davinci function sstretch()\n");
+    parse_error("$1=data to be stretched");
+    parse_error("ignore=value to ignore (Default=-32768)");
+    parse_error("variance=variance of the stretch (Default=40)\n");
+    parse_error("c.edwards\n");
+    return NULL;
+  }
+
+  /* x, y and z dimensions of the data */
+  x = GetX(data);
+  y = GetY(data);
+  z = GetZ(data);
+  max = ignore;
+
+  /* create out array */
+  w_data = (float *)calloc(sizeof(float), x*y*z);
+  w_data2 = (byte *)calloc(sizeof(byte),x*y*z);
+  
+  /* stretch each band separately */
+  for(k=0;k<z;k++) {
+    sum = 0;
+    sumsq = 0;
+    stdv = 0;
+    cnt = 0;
+    tv = 0;
+    
+    /* calculate the sum and the sum of squares */
+    for(j=0; j<y; j++) {
+      for(i=0; i<x; i++) {
+	tv=extract_float(data, cpos(i,j,k, data));
+	w_data[k*y*x + j*x + i]=tv;
+	if( tv != ignore){
+	  sum += (double)tv;
+	  sumsq += (double)(tv*tv);
+	  cnt += 1;
+	}
+      }
+    }
+    
+    /* calculate standard deviation */
+    stdv = sqrt((sumsq - (sum*sum/cnt))/(cnt-1));
+    sum /= (double)cnt;
+    
+    /* fill in stretched values */
+    for(j=0; j<y; j++) {
+      for(i=0; i<x; i++) {
+	if(w_data[k*y*x + j*x + i] != ignore) w_data[k*y*x + j*x + i] = (float)((w_data[k*y*x + j*x + i] - sum)*(v/stdv)+127);
+	if(w_data[k*y*x + j*x + i] < 0) w_data[k*y*x + j*x + i] = 0; 
+	if(w_data[k*y*x + j*x + i] > 255) w_data[k*y*x + j*x + i] = 255; 
+      }
+    }
+  }
+  
+  /*convert to bip */
+  for(j=0; j<y; j++) {
+    for(i=0; i<x; i++) {
+      for(k=0; k<z; k++) {
+	w_data2[j*x*z + i*z + k]=(byte)w_data[k*y*x + j*x + i];
+      }
+    }
+  }
+  
+  /* clean up and return data */
+  free(w_data);
+  out = newVal(BIP,z, x, y, BYTE, w_data2);	
+  return(out);
+}
