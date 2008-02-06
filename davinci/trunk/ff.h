@@ -178,17 +178,26 @@ struct _vfuncptr vfunclist[] = {
     { "min",     ff_min,            NULL , NULL},   
     { "max",     ff_min,            NULL , NULL},   
     { "sort",     ff_sort,          NULL , NULL},
+    { "unique",     ff_unique,          NULL , NULL},
     { "minchan",  ff_findmin,       NULL , NULL},   
     { "maxchan",  ff_findmin,       NULL , NULL},   
+		{ "maxpos",  ff_maxpos,       NULL , NULL},   
+		{ "minpos",  ff_minpos,       NULL , NULL},   
+		{ "valpos",  ff_valpos,       NULL , NULL},   
+		
 
     { "interp",     ff_interp,      NULL , NULL},
+		//    { "resample",   ff_resample,    NULL , NULL},
+    { "interp2d",   ff_interp2d,    NULL , NULL},
+    { "flood_fill", ff_flood_fill,    NULL , NULL},
     { "gplot",      ff_gplot,       NULL , NULL},
     { "plot",       ff_plot,        NULL , NULL},
     { "splot",      ff_splot,       NULL , NULL},
     { "xplot",      ff_xplot,       NULL, NULL},
     { "display",    ff_display,     NULL , NULL},
     { "fit",        ff_fit,         NULL , NULL},
-    
+    { "ipi",        ff_ipi,         NULL , NULL},
+
     { "bbr",        ff_bop,      (void *)bbr   , NULL},
     { "btemp",      ff_bop,      (void *)btemp , NULL},
     { "atan2",      ff_bop,      (void *)atan2 , NULL},
@@ -196,6 +205,10 @@ struct _vfuncptr vfunclist[] = {
     { "vignette",   ff_vignette, NULL , NULL},
     { "ifill",      ff_ifill,    NULL , NULL},    /* interpolated fill */
     { "jfjll",      ff_jfill,    NULL , NULL},    /* jnterpolated fjll */
+    { "kfill",      ff_kfill,    NULL , NULL},    
+		{ "contour",    ff_contour,    NULL , NULL},    
+		{ "rotate",    ff_rotation,    NULL , NULL},    
+		
 
     { "basis",      ff_basis,       NULL , NULL},
     { "mxm",        ff_mxm,         NULL , NULL},
@@ -212,6 +225,8 @@ struct _vfuncptr vfunclist[] = {
     { "rgb2hsv",    ff_rgb2hsv,         NULL , NULL},
     { "hsv2rgb",    ff_hsv2rgb,         NULL , NULL},
     { "rgb",        ff_rgb,             NULL , NULL},
+    { "ramp",       ff_ramp,             NULL , NULL},
+    { "sawtooth",       ff_sawtooth,             NULL , NULL},
 
     { "entropy",        ff_entropy,     NULL , NULL},
 
@@ -227,6 +242,7 @@ struct _vfuncptr vfunclist[] = {
 
     { "self_convolve", ff_self_convolve,        NULL , NULL},
     { "convolve",      ff_convolve,             NULL , NULL},
+    { "convolve2",     ff_convolve2,            NULL , NULL},
     { "convolve3",     ff_convolve3,            NULL , NULL},
     { "fncc",		  ff_fncc,						NULL, NULL},
 
@@ -270,6 +286,7 @@ struct _vfuncptr vfunclist[] = {
 /* */
 
     { "shade",          ff_shade,              NULL },
+		{ "shade2",         ff_shade2,             NULL },
     { "fexists",        ff_exists,              NULL },
     { "contains",        ff_contains,              NULL },
 
@@ -299,6 +316,7 @@ struct _vfuncptr vfunclist[] = {
     { "boxfilter",          ff_boxfilter,          NULL },
     
     { "hstretch",   ff_hstretch, 		NULL }, 
+    { "sstretch",   ff_sstretch2, 		NULL }, 
     { "coreg",      ff_coreg, 			NULL }, 
     { "coreg2",      ff_coreg2, 			NULL }, 
     { "gconvolve",  ff_gconvolve, 			NULL }, 

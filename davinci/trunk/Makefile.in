@@ -91,23 +91,25 @@ am_libdavinci_la_OBJECTS = apifunc.lo array.lo avl.lo binDCT.lo \
 	dvio_grd.lo dvio_hdf.lo dvio_imath.lo dvio_iomedley.lo \
 	dvio_isis.lo dvio_magic.lo dvio_pds.lo dvio_pnm.lo dvio_raw.lo \
 	dvio_specpr.lo dvio_themis.lo dvio_vicar.lo endian_norm.lo \
-	error.lo ff.lo ff_ascii.lo ff_avg.lo ff_bbr.lo ff_cluster.lo \
-	ff_convolve.lo ff_deghost.lo ff_display.lo ff_fft.lo \
-	ff_filetype.lo ff_fncc.lo ff_gnoise.lo ff_gplot.lo \
+	ff_resample.lo ff_ffill.lo error.lo ff.lo ff_ascii.lo \
+	ff_avg.lo ff_ipi.lo ff_contour.lo ff_rotate.lo ff_bbr.lo \
+	ff_cluster.lo ff_convolve.lo ff_deghost.lo ff_display.lo \
+	ff_fft.lo ff_filetype.lo ff_fncc.lo ff_gnoise.lo ff_gplot.lo \
 	ff_header.lo ff_hstretch.lo ff_ifill.lo ff_interp.lo ff_ix.lo \
-	ff_load.lo ff_loadvan.lo ff_meta.lo ff_moment.lo ff_pause.lo \
-	ff_pbm.lo ff_pca.lo ff_plplot.lo ff_projection.lo ff_random.lo \
-	ff_raw.lo ff_rgb.lo ff_rice.lo ff_shade.lo ff_slant.lo \
-	ff_sort.lo ff_source.lo ff_struct.lo ff_text.lo ff_version.lo \
-	ff_vignette.lo ff_write.lo ff_xfrm.lo fft.lo fft2f.lo \
-	fft_mayer.lo fit.lo ff_coreg.lo ff_boxfilter.lo ff_bin5.lo \
-	ff_transform.lo header.lo help.lo init.lo isis_obj.lo \
-	globals.lo matrix.lo misc.lo motif_tools.lo newfunc.lo p.lo \
-	pp.lo pp_math.lo printf.lo reserved.lo rfunc.lo rice.lo \
-	rpos.lo scope.lo spread.lo string.lo symbol.lo system.lo \
-	tools.lo ufunc.lo util.lo x.lo xrt_print_3d.lo lexer.lo \
-	parser.lo ff_gconvolve.lo ff_warp.lo ff_median.lo ff_radial.lo \
-	ff_window.lo dvio_fits.lo ff_extract.lo dvio_tdb.lo
+	ff_load.lo ff_loadvan.lo ff_meta.lo ff_ramp.lo ff_filter.lo \
+	ff_moment.lo ff_pause.lo ff_pbm.lo ff_pca.lo ff_plplot.lo \
+	ff_projection.lo ff_random.lo ff_raw.lo ff_rgb.lo ff_rice.lo \
+	ff_shade.lo ff_slant.lo ff_sort.lo ff_source.lo ff_struct.lo \
+	ff_text.lo ff_version.lo ff_vignette.lo ff_write.lo ff_xfrm.lo \
+	fft.lo fft2f.lo fft_mayer.lo fit.lo ff_coreg.lo \
+	ff_boxfilter.lo ff_bin5.lo ff_transform.lo header.lo help.lo \
+	init.lo isis_obj.lo globals.lo matrix.lo misc.lo \
+	motif_tools.lo newfunc.lo p.lo pp.lo pp_math.lo printf.lo \
+	reserved.lo rfunc.lo rice.lo rpos.lo scope.lo spread.lo \
+	string.lo symbol.lo system.lo tools.lo ufunc.lo util.lo x.lo \
+	xrt_print_3d.lo lexer.lo parser.lo ff_gconvolve.lo ff_warp.lo \
+	ff_median.lo ff_radial.lo ff_window.lo dvio_fits.lo \
+	ff_extract.lo dvio_tdb.lo
 libdavinci_la_OBJECTS = $(am_libdavinci_la_OBJECTS)
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
@@ -320,12 +322,12 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	dvio_aviris.c dvio_envi.c dvio_ers.c dvio_goes.c dvio_grd.c \
 	dvio_hdf.c dvio_imath.c dvio_iomedley.c dvio_isis.c dvio_magic.c \
 	dvio_pds.c dvio_pnm.c dvio_raw.c dvio_specpr.c \
-	dvio_themis.c dvio_vicar.c endian_norm.c \
-	error.c ff.c ff_ascii.c ff_avg.c \
+	dvio_themis.c dvio_vicar.c endian_norm.c ff_resample.c ff_ffill.c\
+	error.c ff.c ff_ascii.c ff_avg.c ff_ipi.c ff_contour.c ff_rotate.c\
 	ff_bbr.c ff_cluster.c ff_convolve.c ff_deghost.c ff_display.c \
 	ff_fft.c ff_filetype.c ff_fncc.c ff_gnoise.c ff_gplot.c \
 	ff_header.c ff_hstretch.c ff_ifill.c ff_interp.c ff_ix.c \
-	ff_load.c ff_loadvan.c ff_meta.c \
+	ff_load.c ff_loadvan.c ff_meta.c ff_ramp.c ff_filter.c\
 	ff_moment.c ff_pause.c ff_pbm.c ff_pca.c ff_plplot.c \
 	ff_projection.c ff_random.c ff_raw.c ff_rgb.c ff_rice.c \
 	ff_shade.c ff_slant.c ff_sort.c ff_source.c ff_struct.c \
@@ -531,13 +533,16 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_bin5.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_boxfilter.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_cluster.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_contour.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_convolve.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_coreg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_deghost.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_display.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_extract.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_ffill.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_fft.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_filetype.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_filter.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_fncc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_gconvolve.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_gnoise.Plo@am__quote@
@@ -546,6 +551,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_hstretch.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_ifill.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_interp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_ipi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_ix.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_load.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_loadvan.Plo@am__quote@
@@ -559,10 +565,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_plplot.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_projection.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_radial.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_ramp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_random.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_raw.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_resample.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_rgb.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_rice.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_rotate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_shade.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_slant.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_sort.Plo@am__quote@
