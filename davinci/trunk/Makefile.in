@@ -91,10 +91,10 @@ am_libdavinci_la_OBJECTS = apifunc.lo array.lo avl.lo binDCT.lo \
 	dvio_grd.lo dvio_hdf.lo dvio_imath.lo dvio_iomedley.lo \
 	dvio_isis.lo dvio_magic.lo dvio_pds.lo dvio_pnm.lo dvio_raw.lo \
 	dvio_specpr.lo dvio_themis.lo dvio_vicar.lo endian_norm.lo \
-	ff_resample.lo ff_ffill.lo error.lo ff.lo ff_ascii.lo \
-	ff_avg.lo ff_ipi.lo ff_contour.lo ff_rotate.lo ff_bbr.lo \
-	ff_cluster.lo ff_convolve.lo ff_deghost.lo ff_display.lo \
-	ff_fft.lo ff_filetype.lo ff_fncc.lo ff_gnoise.lo ff_gplot.lo \
+	ff_ffill.lo error.lo ff.lo ff_ascii.lo ff_avg.lo ff_ipi.lo \
+	ff_contour.lo ff_rotate.lo ff_bbr.lo ff_cluster.lo \
+	ff_convolve.lo ff_deghost.lo ff_display.lo ff_fft.lo \
+	ff_filetype.lo ff_fncc.lo ff_gnoise.lo ff_gplot.lo \
 	ff_header.lo ff_hstretch.lo ff_ifill.lo ff_interp.lo ff_ix.lo \
 	ff_load.lo ff_loadvan.lo ff_meta.lo ff_ramp.lo ff_filter.lo \
 	ff_moment.lo ff_pause.lo ff_pbm.lo ff_pca.lo ff_plplot.lo \
@@ -322,7 +322,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	dvio_aviris.c dvio_envi.c dvio_ers.c dvio_goes.c dvio_grd.c \
 	dvio_hdf.c dvio_imath.c dvio_iomedley.c dvio_isis.c dvio_magic.c \
 	dvio_pds.c dvio_pnm.c dvio_raw.c dvio_specpr.c \
-	dvio_themis.c dvio_vicar.c endian_norm.c ff_resample.c ff_ffill.c\
+	dvio_themis.c dvio_vicar.c endian_norm.c ff_ffill.c\
 	error.c ff.c ff_ascii.c ff_avg.c ff_ipi.c ff_contour.c ff_rotate.c\
 	ff_bbr.c ff_cluster.c ff_convolve.c ff_deghost.c ff_display.c \
 	ff_fft.c ff_filetype.c ff_fncc.c ff_gnoise.c ff_gplot.c \
@@ -568,7 +568,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_ramp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_random.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_raw.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_resample.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_rgb.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_rice.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_rotate.Plo@am__quote@
