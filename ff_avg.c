@@ -974,3 +974,430 @@ void View_Cache(float *cache,int *P,int Major,int Middle,int Minor)
 	  }
 	}
 }	
+
+
+static void position_fill(int *pos, int elem, int iter, Var *obj);
+
+Var*
+ff_maxpos(vfuncptr func, Var *arg)
+{
+ 
+  /* Transferred from thm module to davinci core 11/17/2007      **
+  ** Rewritten to offer user option to return pixel value - kjn  */
+
+  Var    *data = NULL;                      /* the original data               */
+  Var    *out = NULL;                       /* the output structure            */
+  int    *pos = NULL;                       /* the output position             */
+  float  *posv = NULL;                      /* the output position plus value  */
+  float  *vals = NULL;
+  float   minval = -3.402822655e+38;        /* the most negative float value   */
+  float   ignore = minval;                  /* null value                      */
+  int     i, j, l, ck=0;                    /* loop indices and flags          */
+  float   ni1=0, ni2=0, ni3=0;              /* temp values and positions       */
+  int     iter = 1;                         /* number of iterations to include */
+  int     elems = 0;
+  int     curr_elem = 0;
+  int    *elements = NULL;
+  int     showval = 0;                      /* flag to return value with array */
+  float   lt = minval;                      /* search for maximum values less than this value */
+
+  Alist alist[6];
+  alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
+  alist[1] = make_alist("iter",      INT,       NULL,  &iter);
+  alist[2] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
+  alist[3] = make_alist("lt",        FLOAT,     NULL,  &lt);
+  alist[4] = make_alist("showval",   INT,       NULL,  &showval);
+  alist[5].name = NULL;
+
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if (data == NULL) {
+    parse_error("\nReturns the X, Y and Z positions of maximum element in array");
+    parse_error("\nSyntax: maxpos(data=VAL [, iter=INT] [, ignore=VAL] [, lt=VAL] [, showval=INT])");
+    parse_error("Example: maxpos(a, iter=5, ignore=0)");
+    parse_error("Example: maxpos(a, iter=2, lt=20000)");
+    parse_error("  'data'    - any numeric array of any organization");
+    parse_error("  'iter'    - number of highest values to locate");
+    parse_error("  'ignore'  - an optional value to ignore in the search");
+    parse_error("  'lt'      - an optional 'less than' value to search for the maximum");
+    parse_error("  'showval' - an optional flag to return pixel value with position");
+    parse_error("\nReturns a 3xNx1 INT array, where N=iter");
+    parse_error("\nOr a 4xNx1 FLOAT array containing X, Y, Z and pixel value");
+    parse_error("11/17/2007");
+    return NULL;
+  }
+
+  /* create array for position */
+  pos = (int *)calloc(sizeof(int), 3*iter);
+  vals = (float *) calloc(sizeof(float), iter);
+  elements = (int *)calloc(sizeof(int), iter);
+
+  if(showval != 0) {
+    posv = (float *)calloc(sizeof(float), 4*iter);
+  }
+
+  /* size of the data */
+  elems = V_DSIZE(data);
+
+  /* set initial max values */
+  ni2 = ni3 = minval;
+
+  /* set ni3 for less than value */
+  if(lt != minval) ni3 = lt;
+
+  /* ni1 = current value     **
+  ** ni2 = current max value **
+  ** ni3 = old max val       */
+
+  /* find the maximum point and its position */
+  for(l=0; l<iter; l++) {
+    for(i=0; i<elems; i++) {
+      ni1 = extract_float(data, i);
+
+      if(ni1 > ni2 && ni1 != ignore && 
+	 (lt != minval && l == 0 && ni1 <= ni3 || 
+	  l == 0 && lt == minval || 
+	  ni1 <= ni3 && l > 0)) {
+
+	/* check to see if it's the same element as a previous entry */
+	ck = 0;
+	for(j=l-1; j>=0; j--) {
+	  if(i == elements[j]) ck = 1;
+	}
+
+	if(ck == 0) {
+	  ni2 = ni1;
+	  curr_elem = i;
+	}
+      }
+    }
+
+    ni3 = ni2;
+    elements[l] = curr_elem;
+    position_fill(pos, curr_elem, l, data);
+    vals[l] = ni3;
+    ni2 = minval;
+    curr_elem = 0;
+  }
+
+  free(elements);
+
+  /* Concatenate position with value if flagged */
+  if(showval != 0) {
+    for(j=0;j<iter;j+=1) {
+      posv[j*4 + 0] = (float)pos[j*3 + 0]; 
+      posv[j*4 + 1] = (float)pos[j*3 + 1];
+      posv[j*4 + 2] = (float)pos[j*3 + 2];
+      posv[j*4 + 3] = vals[j];
+      
+      free(vals);
+      free(pos);
+
+      out = newVal(BSQ, 4, iter, 1, FLOAT, posv);
+      return(out);
+    }
+  }
+
+  /* return the findings */
+  free(vals);
+
+  out = newVal(BSQ, 3, iter, 1, INT, pos);
+  return(out);
+}
+
+
+
+
+
+
+
+Var*
+ff_minpos(vfuncptr func, Var *arg)
+{
+  /* Transferred from thm module to davinci core 11/17/2007      **
+  ** Rewritten to offer user option to return pixel value - kjn  */
+ 
+  Var    *data = NULL;                      /* the original data               */
+  Var    *out = NULL;                       /* the output structure            */
+  int    *pos = NULL;                       /* the output position             */
+  float  *vals = NULL;
+  float  *posv = NULL;                      /* the output position plus value  */
+  float   maxval = 3.402822655e+38;         /* the most negative float value   */
+  float   ignore = maxval;                  /* null value                      */
+  int     i, j, l, ck=0;                    /* loop indices and flags          */
+  float   ni1=0, ni2=0, ni3=0;              /* temp values and positions       */
+  int     iter = 1;                         /* number of iterations to include */
+  int     elems = 0;
+  int     curr_elem = 0;
+  int    *elements = NULL;
+  int     showval = 0;                      /* flag to return value with array */
+  float   gt = maxval;                      /* search for minimum values more than this value */
+
+  Alist alist[6];
+  alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
+  alist[1] = make_alist("iter",      INT,       NULL,  &iter);
+  alist[2] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
+  alist[3] = make_alist("gt",        FLOAT,     NULL,  &gt);
+  alist[4] = make_alist("showval",   INT,       NULL,  &showval);
+  alist[5].name = NULL;
+
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if (data == NULL) {
+    parse_error("\nReturns the x, y and z position of minimum element in array");
+    parse_error("\nSyntax: minpos(data=VAL [, iter=INT] [, ignore=VAL] [, gt=VAL] [, showval=INT])");
+    parse_error("Example: minpos(a, iter=5, ignore=0)");
+    parse_error("Example: minpos(a, iter=2, gt=-10)");
+    parse_error("  'data'   - any numeric array of any organization");
+    parse_error("  'iter'   - number of lowest values to locate");
+    parse_error("  'ignore' - a value to ignore in the search");
+    parse_error("  'gt'     - an optional 'greater than' value to search for the minimum");
+    parse_error("  'showval' - an optional flag to return pixel value with position");
+    parse_error("\nReturns a 3xNx1 INT array, where N=iter");
+    parse_error("\nOr a 4xNx1 FLOAT array containing X, Y, Z and pixel value");
+    parse_error("11/17/2007");
+    return NULL;
+  }
+
+  /* create array for position */
+  pos = (int *)calloc(sizeof(int), 4*iter);
+  vals = (float *) calloc(sizeof(float), iter);
+  elements = (int *)calloc(sizeof(int), iter);
+
+  if(showval != 0) {
+    posv = (float *)calloc(sizeof(float), 4*iter);
+  }
+
+  /* size of the data */
+  elems = V_DSIZE(data);
+
+  /* set initial max values */
+  ni2 = ni3 = maxval;
+
+  /* set ni3 for less than value */
+  if(gt != maxval) ni3 = gt;
+
+  /* ni1 = current value     **
+  ** ni2 = current min value **
+  ** ni3 = old min val       */
+
+  /* find the maximum point and its position */
+  for(l=0; l<iter; l++) {
+    for(i=0; i<elems; i++) {
+      ni1 = extract_float(data, i);
+
+      if(ni1 < ni2 && ni1 != ignore && 
+	 (gt != maxval && l == 0 && ni1 >= ni3 || 
+	  l == 0 && gt == maxval || 
+	  ni1 >= ni3 && l > 0)) {
+
+	/* check to see if it's the same element as a previous entry */
+	ck = 0;
+	for(j=l-1; j>=0; j--) {
+	  if(i == elements[j]) ck = 1;
+	}
+
+	if(ck == 0) {
+	  ni2 = ni1;
+	  curr_elem = i;
+	}
+      }
+    }
+
+    ni3 = ni2;
+    elements[l] = curr_elem;
+    position_fill(pos, curr_elem, l, data);
+    vals[l] = ni3;
+    ni2 = maxval;
+    curr_elem = 0;
+  }
+
+  free(elements);
+
+  /* Concatenate position with value if flagged */
+  if(showval != 0) {
+    for(j=0;j<iter;j+=1) {
+      posv[j*4 + 0] = (float)pos[j*3 + 0]; 
+      posv[j*4 + 1] = (float)pos[j*3 + 1];
+      posv[j*4 + 2] = (float)pos[j*3 + 2];
+      posv[j*4 + 3] = vals[j];
+      
+      free(vals);
+      free(pos);
+
+      out = newVal(BSQ, 4, iter, 1, FLOAT, posv);
+      return(out);
+    }
+  }
+
+  /* return the findings */
+  out = newVal(BSQ, 3, iter, 1, INT, pos);
+  return(out);
+}
+
+
+
+
+
+
+
+Var*
+ff_valpos(vfuncptr func, Var *arg)
+{
+ 
+  Var    *data = NULL;                      /* the original data               */
+  Var    *out = NULL;                       /* the output structure            */
+  int    *pos = NULL;                       /* the output position             */
+  float  *posv = NULL;                      /* the output position plus value  */
+  float  *vals = NULL;
+  float   maxval = 3.402822655e+38;         /* the most positive float value   */
+  float   ignore = maxval;                  /* null value                      */
+  int     i, j, l, ck=0;                    /* loop indices and flags          */
+  float   ni1=0, ni2=0, ni3=0, ni4=0;       /* temp values and positions       */
+  int     iter = 1;                         /* number of iterations to include */
+  int     elems = 0;
+  int     curr_elem = 0;
+  int    *elements = NULL;
+  int     showval = 0;                      /* flag to return value with array */
+  float   myval = 0.0;                      /* the damned value you want       */
+
+  Alist alist[6];
+  alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
+  alist[1] = make_alist("value",     FLOAT,     NULL,  &myval);
+  alist[2] = make_alist("iter",      INT,       NULL,  &iter);
+  alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
+  alist[4] = make_alist("showval",   INT,       NULL,  &showval);
+  alist[5].name = NULL;
+
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+  
+  if (data == NULL) {
+    parse_error("\nReturns the X, Y and Z positions of the element in the array");
+    parse_error("whose value is closest to the desired value\n");
+    parse_error("\nSyntax: valpos(data=VAL,value=VAL[,iter=INT][,ignore=VAL][,showval=INT])");
+    parse_error("Example: valpos(a, 22.5, iter=5, ignore=0)");
+    parse_error("Example: valpos(a, -1, showval=1)");
+    parse_error("  'data'    - any numeric array of any organization");
+    parse_error("  'value'   - the numeric value you wish to find");
+    parse_error("  'iter'    - number of occurrences to locate");
+    parse_error("  'ignore'  - an optional value to ignore in the search");
+    parse_error("  'showval' - an optional flag to return pixel value with position");
+    parse_error("\nReturns a 3xNx1 INT array, where N=iter");
+    parse_error("\nOr a 4xNx1 FLOAT array containing X, Y, Z and pixel value");
+    parse_error("11/17/2007");
+    return NULL;
+  }
+
+  /* create array for position */
+  pos = (int *)calloc(sizeof(int), 3*iter);
+  vals = (float *)calloc(sizeof(float), iter);
+  elements = (int *)calloc(sizeof(int), iter);
+
+  if(showval != 0) {
+    posv = (float *)calloc(sizeof(float), 4*iter);
+  }
+
+  /* size of the data */
+  elems = V_DSIZE(data);
+
+  /* set initial max values */
+  ni3 = maxval;
+  ni4 = 0;
+
+  /* ni1 = current value                             **
+  ** ni2 = current difference  abs(ni1-myval)        **
+  ** ni3 = current closest val                       **
+  ** ni4 = old closest difference                    */
+
+  /* find the closest value and its position */
+  for(l=0; l<iter; l++) {
+    ni3 = maxval;
+    for(i=0; i<elems; i++) {
+      ni1 = extract_float(data,i);
+      ni2 = fabs((float)ni1 - (float)myval);
+
+      if(ni2 < fabs((float)ni3 - (float)myval) && ni1 != ignore && ni2 >= ni4) {
+
+	/* check to see if it's the same element as a previous entry */
+	ck = 0;
+	if(l > 0) {
+	  for(j=l-1; j>=0; j--) {
+	    if(i == elements[j]) ck = 1;
+	  }
+	}
+
+	if(ck == 0) {
+	  ni3 = ni1;
+	  curr_elem = i;
+	}
+      }
+    }
+
+    ni4 = fabs((float)ni3 - (float)myval);
+    elements[l] = curr_elem;
+    position_fill(pos, curr_elem, l, data);
+    vals[l] = ni3;
+    ni2 = maxval;
+    curr_elem = 0;
+  }
+
+  free(elements);
+
+  /* Concatenate position with value if flagged */
+  if(showval != 0) {
+    for(j=0;j<iter;j+=1) {
+      posv[j*4 + 0] = (float)pos[j*3 + 0]; 
+      posv[j*4 + 1] = (float)pos[j*3 + 1];
+      posv[j*4 + 2] = (float)pos[j*3 + 2];
+      posv[j*4 + 3] = vals[j];
+    }
+
+    free(vals);
+    free(pos);
+    
+    out = newVal(BSQ, 4, iter, 1, FLOAT, posv);
+    return(out);
+  }
+
+  /* return the findings */
+  free(vals);
+
+  out = newVal(BSQ, 3, iter, 1, INT, pos);
+  return(out);
+}
+
+
+
+
+
+
+void position_fill(int *pos, int elem, int iter, Var *obj) {
+  int x,y,z;
+  int org;
+  int i,j,k;
+
+  x = GetX(obj);
+  y = GetY(obj);
+  z = GetZ(obj);
+  i = 0;
+  j = 0;
+  k = 0;
+  org = V_ORG(obj);
+
+  if (org == 0) {          // bsq organization
+    k = elem/(x*y);
+    j = (elem - k*x*y)/x;
+    i = elem - k*x*y - j*x;
+  } else if (org == 1) {   // bil organization
+    j = elem/(x*z);
+    k = (elem - j*x*z)/x;
+    i = elem - j*x*z - k*x;
+  } else if (org == 2) {   // bip organization
+    j = elem/(z*x);
+    i = (elem - j*z*x)/z;
+    k = elem - j*z*x - k*z;
+  }
+  pos[iter*3 + 2] = (float)(k + 1); // z position
+  pos[iter*3 + 1] = (float)(j + 1); // y position
+  pos[iter*3 + 0] = (float)(i + 1); // x position
+}
