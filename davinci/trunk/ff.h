@@ -187,7 +187,7 @@ struct _vfuncptr vfunclist[] = {
 		
 
     { "interp",     ff_interp,      NULL , NULL},
-		//    { "resample",   ff_resample,    NULL , NULL},
+		{ "resample",   ff_resample,    NULL , NULL},
     { "interp2d",   ff_interp2d,    NULL , NULL},
     { "flood_fill", ff_flood_fill,    NULL , NULL},
     { "gplot",      ff_gplot,       NULL , NULL},
