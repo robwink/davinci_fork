@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <strings.h>
 #include <assert.h>
 #include <sys/types.h>
@@ -6,6 +10,7 @@
 #include "dvio.h"
 
 #ifdef HAVE_LIBISIS
+#include "isistypes.h"
 #include "isisdef.h"
 #include "q.h"
 #endif /* HAVE_LIBISIS */
