@@ -180,13 +180,27 @@ if test "x$have_libmagic" = "xyes"; then
 fi
 AM_CONDITIONAL(HAVE_LIBMAGICK, [test "x$have_libmagick" = "xyes"])
 
+
+AC_ARG_WITH(qmv,
+    [  --with-qmv=<path>       prefix of qmv installation. e.g. /usr/local or /usr],
+    [LDFLAGS="$LDFLAGS -L$withval/lib" ; CFLAGS="$CFLAGS -I$withval/include" ; CPPFLAGS="$CPPFLAGS -I$withval/include"]
+)
+
 dnl This is a C++ library; set the language so the test succeeds.
 dnl FIX: not sure why we need both lib and header check..
-
 AC_LANG_PUSH(C++)
 AC_CHECK_LIB(qmv, qmv_version)
 AC_CHECK_HEADERS(qmv/hvector.h)
+
+have_qmv=no
+if test "x$ac_cv_lib_qmv_qmv_version" = "xyes"; then
+	if test "x$ac_cv_header_qmv_hvector_h" = "xyes"; then
+		have_qmv=yes
+	fi
+fi
+
 AC_LANG_POP
+
 
 dnl Check for headers.
 AC_HEADER_DIRENT
@@ -440,6 +454,7 @@ PRINT_YES_NO "            HDF5" "$have_libhdf"
 PRINT_YES_NO "GUI/Vicar Module" "$local_vicar"
 PRINT_YES_NO "         libisis" "$have_libisis"
 PRINT_YES_NO "            FITS" "$have_cfitsio"
+PRINT_YES_NO "             QMV" "$have_qmv"
 
 PRINT ""
 
