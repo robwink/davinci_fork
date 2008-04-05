@@ -899,7 +899,11 @@ thm_rectify(vfuncptr func, Var * arg)
 
   /* assign memory to sheared and slanted array */
   pic = (float *)malloc(sizeof(float)*z*u*width);
-
+  if (pic == NULL) {
+    parse_error("Memory allocation for pic failed: z=%i, u=%i, width=%i", z, u, width);
+    parse_error("Probable cause: the image is too big to be rectified with this algorithm.");
+    return NULL;
+  }
   /* extract the data into a sheared and slanted array */
   for (j = 0; j < u; j++) {
     for (i = 0; i < width; i++) {
