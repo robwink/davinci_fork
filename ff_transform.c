@@ -3,7 +3,7 @@
 double get_none_interp(Var *, double, double, double);
 double get_image_bilinear_interp(Var *,double, double, double);
 double get_image_bicubic_interp(Var *,  double, double, double);
-double get_image_box_average(Var *, double, double, double, double, double);
+double get_image_box_average(Var *, double, double, double, double, double, double);
 
 
 
@@ -204,10 +204,10 @@ ff_image_resize(vfuncptr func, Var * arg){
 					x1= (i+0.5)/x_factor;
 					// Integers
 					if(V_FORMAT(data) == BYTE || V_FORMAT(data) == SHORT || V_FORMAT(data) == INT){					   
-					   i_new_c = (int)my_round(get_image_box_average(data, x,  y, x1, y1, z));
+					   i_new_c = (int)my_round(get_image_box_average(data, x,  y, x1, y1, z, ignore_color));
 					//Doubles
 					}else{
-					   d_new_c = get_image_box_average(data, x,  y, x1, y1, z);
+					   d_new_c = get_image_box_average(data, x,  y, x1, y1, z, ignore_color);
 					}
 				  //scale up
 				   }else{
@@ -445,7 +445,7 @@ double  get_image_bicubic_interp(Var *obj,  double x, double y, double z){
  * Takes an average value of the given area, and returns the average color value 
  * based on http://pippin.gimp.org/image_processing/chap_resampling.html  
  */
-double get_image_box_average(Var *obj, double x0, double y0, double x1, double y1, double z){
+double get_image_box_average(Var *obj, double x0, double y0, double x1, double y1, double z, double ignore){
 	double area = 0;
 	double sum = 0;
 
@@ -499,8 +499,11 @@ double get_image_box_average(Var *obj, double x0, double y0, double x1, double y
 				if ( x > x1){
 					 size = size * (1.0 - (x-x1));
 				}
-				sum  += i_c*size;
-				area += size;
+
+				if(i_c != ignore){
+					sum  += i_c*size;
+					area += size;
+				}	
 			//Floats
 			}else{
 				d_c = extract_double(obj, cpos(x_,y_, z_, obj));
@@ -510,8 +513,10 @@ double get_image_box_average(Var *obj, double x0, double y0, double x1, double y
 				if ( x > x1){
 					 size = size * (1.0 - (x-x1));
 				}
-				sum  += d_c*size;
-				area += size;
+				if(d_c != ignore){
+					sum  += d_c*size;
+					area += size;
+				}
 		      	}
 		}
 	}  
