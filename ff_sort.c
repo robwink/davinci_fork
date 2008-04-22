@@ -111,60 +111,60 @@ void *reorgByIndex(Var *object, Var *index, int *sortList)
   if(doX && doY)
     for(k = 0; k < sortListNum; k++)
       for(i = 0; i < x; i++)
-	for(j = 0; j < y; j++) {
-	  to = cpos(i, j, k, object);
-	  from = cpos(i, j, sortList[k], object);
-	  
-	  reorg(to, data, from, V_DATA(object), NBYTES(format));
-	}
+				for(j = 0; j < y; j++) {
+					to = cpos(i, j, k, object);
+					from = cpos(i, j, sortList[k], object);
+					
+					reorg(to, data, from, V_DATA(object), NBYTES(format));
+				}
   // sort(object, index=[1, ,1])
   else if(doX && doZ)
     for(j = 0; j < sortListNum; j++)
       for(i = 0; i < x; i++)
-	for(k = 0; k < z; k++) {
-	  to = cpos(i, j, k, object);
-	  from = cpos(i, sortList[j], k, object);
-	  
-	  reorg(to, data, from, V_DATA(object), NBYTES(format));
-	}
+				for(k = 0; k < z; k++) {
+					to = cpos(i, j, k, object);
+					from = cpos(i, sortList[j], k, object);
+					
+					reorg(to, data, from, V_DATA(object), NBYTES(format));
+				}
   // sort(object, index=[ ,1,1])
   else if(doY && doZ)
     for(i = 0; i < sortListNum; i++)
       for(j = 0; j < y; j++)
-	for(k = 0; k < z; k++) {
-	  to = cpos(i, j, k, object);
-	  from = cpos(sortList[i], j, k, object);
-	  
-	  reorg(to, data, from, V_DATA(object), NBYTES(format));
-	}
+				for(k = 0; k < z; k++) {
+					to = cpos(i, j, k, object);
+					from = cpos(sortList[i], j, k, object);
+					
+					reorg(to, data, from, V_DATA(object), NBYTES(format));
+				}
   // sort(object, index=[1, , ])
   else if(doX)
     for(cntr = 0; cntr < sortListNum; cntr++)
       for(i = 0; i < x; i++) {
-	to = cpos(i, cntr % y, cntr / y, object);
-	from = cpos(i, sortList[cntr] % y, sortList[cntr] / y, object);
-	
-	reorg(to, data, from, V_DATA(object), NBYTES(format));
+				to = cpos(i, cntr % y, cntr / y, object);
+				from = cpos(i, sortList[cntr] % y, sortList[cntr] / y, object);
+				
+				reorg(to, data, from, V_DATA(object), NBYTES(format));
       }
   // sort(object, index=[ ,1, ])
   else if(doY)
     for(cntr = 0; cntr < sortListNum; cntr++)
       for(j = 0; j < y; j++) {
-	to = cpos(cntr % x, j, cntr / x, object);
-	from = cpos(sortList[cntr] % x, j, sortList[cntr] / x, object);
-	
-	reorg(to, data, from, V_DATA(object), NBYTES(format));
+				to = cpos(cntr % x, j, cntr / x, object);
+				from = cpos(sortList[cntr] % x, j, sortList[cntr] / x, object);
+				
+				reorg(to, data, from, V_DATA(object), NBYTES(format));
       }
   // sort(object, index=[ , ,1])
   else if(doZ)
     for(cntr = 0; cntr < sortListNum; cntr++)
       for(k = 0; k < z; k++) {
-	to = cpos(cntr % x, cntr / x, k, object);
-	from = cpos(sortList[cntr] % x, sortList[cntr] / x, k, object);
-	
-	reorg(to, data, from, V_DATA(object), NBYTES(format));
+				to = cpos(cntr % x, cntr / x, k, object);
+				from = cpos(sortList[cntr] % x, sortList[cntr] / x, k, object);
+				
+				reorg(to, data, from, V_DATA(object), NBYTES(format));
       }
-
+	
   return data;
 }
 
@@ -212,7 +212,7 @@ void quicksort(void *base, size_t num, size_t width, int (*cmp) (),
   for (i = left + 1; i <= right; i++)
     if (cmp(base + i * width, base + left * width) < 0)
       qswap(base, (++last), i, width, sortList);
-  
+	
   qswap(base, left, last, width, sortList);
   quicksort(base, num, width, cmp, sortList, left, last - 1);
   quicksort(base, num, width, cmp, sortList, last + 1, right);
@@ -371,31 +371,31 @@ Var *ff_sort(vfuncptr func, Var * arg)
 			
       if(V_TYPE(object) == ID_VAL) {
 				//parse_error("Object = ID_VAL, byObj = ID_VAL");
-	//parse_error("works");
+				//parse_error("works");
         data = reorgByIndex(object, byObj, indexList);
-	
-	result = newVal(V_ORG(object), V_SIZE(object)[0], V_SIZE(object)[1], 
-			V_SIZE(object)[2], format, data);
-	free(indexList);
-	return(result);
-
+				
+				result = newVal(V_ORG(object), V_SIZE(object)[0], V_SIZE(object)[1], 
+												V_SIZE(object)[2], format, data);
+				free(indexList);
+				return(result);
+				
       } else if(V_TYPE(object) == ID_TEXT) {
-	//parse_error("Object = ID_TEXT, byObj = ID_VAL");
+				//parse_error("Object = ID_TEXT, byObj = ID_VAL");
        	//parse_error("works");
-	rows = V_TEXT(object).Row;
-	tlines = (char **) calloc(rows, sizeof(char *));
-
-	for(i=0; i<rows; i+=1) {
-	  j=indexList[i];
-	  tlines[i] = strdup(V_TEXT(object).text[j]);
-	}
-	result = newText(rows, tlines);
-	free(indexList);
-	return(result);
+				rows = V_TEXT(object).Row;
+				tlines = (char **) calloc(rows, sizeof(char *));
+				
+				for(i=0; i<rows; i+=1) {
+					j=indexList[i];
+					tlines[i] = strdup(V_TEXT(object).text[j]);
+				}
+				result = newText(rows, tlines);
+				free(indexList);
+				return(result);
       }
     }
   } else if (V_TYPE(sortVar) == ID_TEXT) {
-
+		
     cmp = cmp_string;
     rows = V_TEXT(sortVar).Row;
     tlines = (char **) calloc(rows, sizeof(char *));
@@ -403,59 +403,59 @@ Var *ff_sort(vfuncptr func, Var * arg)
     for (i = 0; i < rows; i++) {
       tlines[i] = strdup(V_TEXT(sortVar).text[i]);
       if (tlines[i] == NULL)
-	tlines[i] = strdup("");
+				tlines[i] = strdup("");
     }
-
+		
     indexList = calloc(rows, sizeof(int));
-
+		
     for (i = 0; i < rows; i++)
       indexList[i] = i;
     
     quicksort(tlines, rows, sizeof(char *), cmp_string, indexList, 0, rows - 1);
-
+		
     /* flip the bitches? */
     if(descend > 0) {
       for(i=0;i<(rows/2);i+=1){
-	oneline = tlines[i];
-	tlines[i] = tlines[rows-i-1];
-	tlines[rows-i-1] = oneline;
-	
-	j=indexList[i];
-	indexList[i] = indexList[rows-i-1];
-	indexList[rows-i-1] = j;
+				oneline = tlines[i];
+				tlines[i] = tlines[rows-i-1];
+				tlines[rows-i-1] = oneline;
+				
+				j=indexList[i];
+				indexList[i] = indexList[rows-i-1];
+				indexList[rows-i-1] = j;
       }
     }
-
+		
     if(byObj == NULL){
       //parse_error("Object = ID_TEXT, byObj = NULL");
       //parse_error("works");
       free(indexList);
       result = newText(rows, tlines);
       return(result);
-
+			
     } else {
       if(V_TYPE(object) == ID_VAL) {
-	//parse_error("Object = ID_VAL, byObj = ID_TEXT");
-	//parse_error("works, but has possible memory leak");
-	args = newVal(BSQ, 1, rows, 1, INT, indexList);
-	data = reorgByIndex(object, args, indexList);
-	result = newVal(V_ORG(object), V_SIZE(object)[0], V_SIZE(object)[1], 
-			V_SIZE(object)[2], V_FORMAT(object), data);
-	//free(indexList);
-	return(result);
-
+				//parse_error("Object = ID_VAL, byObj = ID_TEXT");
+				//parse_error("works, but has possible memory leak");
+				args = newVal(BSQ, 1, rows, 1, INT, indexList);
+				data = reorgByIndex(object, args, indexList);
+				result = newVal(V_ORG(object), V_SIZE(object)[0], V_SIZE(object)[1], 
+												V_SIZE(object)[2], V_FORMAT(object), data);
+				//free(indexList);
+				return(result);
+				
       } else if(V_TYPE(object) == ID_TEXT) {
-	//parse_error("Object = ID_TEXT, byObj = ID_TEXT");
-	//parse_error("works");
-	rows = V_TEXT(object).Row;
-
-	for(i=0; i<rows; i+=1) {
-	  j=indexList[i];
-	  tlines[i] = strdup(V_TEXT(object).text[j]);
-	}
-	result = newText(rows, tlines);
-	free(indexList);
-	return(result);
+				//parse_error("Object = ID_TEXT, byObj = ID_TEXT");
+				//parse_error("works");
+				rows = V_TEXT(object).Row;
+				
+				for(i=0; i<rows; i+=1) {
+					j=indexList[i];
+					tlines[i] = strdup(V_TEXT(object).text[j]);
+				}
+				result = newText(rows, tlines);
+				free(indexList);
+				return(result);
       }
     }
     
@@ -521,7 +521,7 @@ ff_unique(vfuncptr func, Var * arg)
     sx = 1;
     sy = V_TEXT(searchVar).Row;
     sz = 1;
-
+		
     indexList = malloc(sizeof(int)*sy);
     for(j=0;j<sy;j+=1)
       indexList[j] = 1;
@@ -529,47 +529,47 @@ ff_unique(vfuncptr func, Var * arg)
     /* Compare all elements marking duplicates with a 0 in indexList */
     for(j=0;j<sy;j+=1) {
       if(indexList[j] == 1) {
-	for(i=j+1;i<sy;i+=1)
-	  if(strcmp(V_TEXT(searchVar).text[j],V_TEXT(searchVar).text[i]) == 0)
-	    indexList[i] = 0;
+				for(i=j+1;i<sy;i+=1)
+					if(strcmp(V_TEXT(searchVar).text[j],V_TEXT(searchVar).text[i]) == 0)
+						indexList[i] = 0;
       }
     }
-
+		
   } else if (V_TYPE(searchVar) == ID_VAL) {
     sx = GetX(searchVar);
     sy = GetY(searchVar);
     sz = GetZ(searchVar);
-
+		
     k=sx*sy*sz;
     indexList = calloc(sizeof(int),k);
     for(i=0;i<(sx*sy*sz);i+=1)
       indexList[i] = 1;
-
+		
     /* Compare all elements marking duplicates with a 0 in indexList */
     for(k=0;k<sz*sy*sx;k+=1) {
       if(indexList[k] == 1) {
-	m = extract_float(searchVar,k);
-	for(j=k+1;j<sz*sy*sx;j+=1)
-	  if(m == extract_float(searchVar,j))
-	    indexList[j] = 0;
+				m = extract_float(searchVar,k);
+				for(j=k+1;j<sz*sy*sx;j+=1)
+					if(m == extract_float(searchVar,j))
+						indexList[j] = 0;
       }
     }
-
+		
     if(!byObj) {
       uniqElems = 0;
       for(i=0;i<sx*sy*sz;i+=1)
-	uniqElems=uniqElems+indexList[i];
-
+				uniqElems=uniqElems+indexList[i];
+			
       uniqData = calloc(uniqElems,sizeof(float));
-
+			
       j=0;
       for(k=0;k<sz*sy*sx;k++) {
-	if(indexList[k] == 1) {
-	  uniqData[j] = extract_float(searchVar,k);
-	  j++;
-	}
+				if(indexList[k] == 1) {
+					uniqData[j] = extract_float(searchVar,k);
+					j++;
+				}
       }
-
+			
       result = newVal(BSQ, 1, uniqElems, 1, FLOAT, uniqData);
       free(indexList);
       return(result);
@@ -581,25 +581,25 @@ ff_unique(vfuncptr func, Var * arg)
   }
 
   if(V_TYPE(object) == ID_TEXT) {
-
+		
     uniqElems = 0;
     for(i=0;i<sy;i+=1)
       uniqElems=uniqElems+indexList[i];
-
+		
     uniqText = (char **) calloc(k, sizeof(char *));
     
     j=0;
     for(i=0; i<sy; i++) {
       if(indexList[i] == 1) {
-	uniqText[j] = strdup(V_TEXT(object).text[i]);
-	j++;
+				uniqText[j] = strdup(V_TEXT(object).text[i]);
+				j++;
       }
     }
-
+		
     result = newText(uniqElems, uniqText);
     free(indexList);
     return(result);
-
+		
   } else if (V_TYPE(object) == ID_VAL) {
 
     k=sx*sy*sz;
@@ -608,62 +608,62 @@ ff_unique(vfuncptr func, Var * arg)
       parse_error("Error: \'by\' object must be 1 dimensional.");
       return(NULL);
     }
-
+		
     x = GetX(object);
     y = GetY(object);
     z = GetZ(object);
-
+		
     uniqElems = 0;
     for(i=0; i<k; i+=1)
       uniqElems=uniqElems+indexList[i];
-
+		
     if(sx != 1) {
       uniqData = calloc(uniqElems*y*z, NBYTES(V_FORMAT(object)));
-
+			
       l=-1;
       for(i=0;i<x;i++) {
-	if(indexList[i] == 1) {
-	  l+=1;
-	  for(k=0;k<z;k++) {
-	    for(j=0;j<y;j++) {  
-	      uniqData[k*y*uniqElems + j*uniqElems + l] = extract_float(object,cpos(i,j,k,object));
-	    }
-	  }
-	}
+				if(indexList[i] == 1) {
+					l+=1;
+					for(k=0;k<z;k++) {
+						for(j=0;j<y;j++) {  
+							uniqData[k*y*uniqElems + j*uniqElems + l] = extract_float(object,cpos(i,j,k,object));
+						}
+					}
+				}
       }
       result = newVal(BSQ,uniqElems,y,z,FLOAT,uniqData);
       return(result);
-
+			
     } else if(sy != 1) {
       uniqData = calloc(uniqElems*x*z, NBYTES(V_FORMAT(object)));
-
+			
       l=-1;
       for(j=0;j<y;j++) {
-	if(indexList[j] == 1) {
-	  l+=1;
-	  for(k=0;k<z;k++) {
-	    for(i=0;i<x;i++) {
-	      uniqData[k*uniqElems*x + l*x + i] = extract_float(object,cpos(i,j,k,object));
-	    }
-	  }
-	}
+				if(indexList[j] == 1) {
+					l+=1;
+					for(k=0;k<z;k++) {
+						for(i=0;i<x;i++) {
+							uniqData[k*uniqElems*x + l*x + i] = extract_float(object,cpos(i,j,k,object));
+						}
+					}
+				}
       }
       result = newVal(BSQ,x,uniqElems,z,FLOAT,uniqData);
       return(result);
-
+			
     } else if(sz != 1) {
       uniqData = calloc(uniqElems*x*z, NBYTES(V_FORMAT(object)));
       
       l=-1;
       for(k=0;k<z;k++) {
-	if(indexList[k] == 1) {
-	  l+=1;
-	  for(j=0;j<y;j++) {
-	    for(i=0;i<x;i++) {
-	      uniqData[l*y*x + j*x + i] = extract_float(object,cpos(i,j,k,object));
-	    }
-	  }
-	}
+				if(indexList[k] == 1) {
+					l+=1;
+					for(j=0;j<y;j++) {
+						for(i=0;i<x;i++) {
+							uniqData[l*y*x + j*x + i] = extract_float(object,cpos(i,j,k,object));
+						}
+					}
+				}
       }
       result = newVal(BSQ,x,y,uniqElems,FLOAT,uniqData);
       return(result);
