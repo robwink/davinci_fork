@@ -73,7 +73,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	dvio_themis.c dvio_vicar.c endian_norm.c ff_ffill.c\
 	error.c ff.c ff_ascii.c ff_avg.c ff_ipi.c ff_contour.c ff_rotate.c\
 	ff_bbr.c ff_cluster.c ff_convolve.c ff_deghost.c ff_display.c \
-	ff_fft.c ff_filetype.c ff_fncc.c ff_gnoise.c ff_gplot.c \
+	ff_fft.c ff_filetype.c ff_fncc.c ff_gnoise.c ff_gplot.c ff_vplot.c\
 	ff_header.c ff_hstretch.c ff_ifill.c ff_interp.c ff_ix.c \
 	ff_load.c ff_loadvan.c ff_meta.c ff_ramp.c ff_filter.c\
 	ff_moment.c ff_pause.c ff_pbm.c ff_pca.c ff_plplot.c \

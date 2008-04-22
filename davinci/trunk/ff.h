@@ -194,6 +194,7 @@ struct _vfuncptr vfunclist[] = {
     { "plot",       ff_plot,        NULL , NULL},
     { "splot",      ff_splot,       NULL , NULL},
     { "xplot",      ff_xplot,       NULL, NULL},
+		{ "vplot",      ff_vplot,       NULL, NULL},
     { "display",    ff_display,     NULL , NULL},
     { "fit",        ff_fit,         NULL , NULL},
     { "ipi",        ff_ipi,         NULL , NULL},

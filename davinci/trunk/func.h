@@ -445,6 +445,7 @@ Var * newInt(int i);
 Var * newFloat(float f);
 Var * newDouble(double f);
 Var *ff_xplot(vfuncptr func, Var *arg);
+Var *ff_vplot(vfuncptr func, Var *arg);
 Var *ff_killchild(vfuncptr func, Var *arg); 
 
 Var * ff_make_debug(vfuncptr func, Var * arg);
