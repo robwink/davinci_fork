@@ -76,6 +76,9 @@
 /* Define to 1 if you have the `cfitsio' library (-lcfitsio). */
 #undef HAVE_LIBCFITSIO
 
+/* Define to 1 if you have the `curl' library (-lcurl). */
+#undef HAVE_LIBCURL
+
 /* Define to 1 if you have the <libgen.h> header file. */
 #undef HAVE_LIBGEN_H
 
