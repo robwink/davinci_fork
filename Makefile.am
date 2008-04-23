@@ -101,7 +101,8 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	toolbox.h configwin.h fft.h motif_tools.h tools.h \
 	lexer.c parser.c parser.h y_tab.h \
 	ff_gconvolve.c ff_warp.c ff_median.c ff_radial.c ff_window.c \
-	dvio_fits.c ff_extract.c dvio_tdb.c
+	dvio_fits.c ff_extract.c dvio_tdb.c \
+	url_create_file.c
 
 
 ## Install header files under /usr/include/davinci

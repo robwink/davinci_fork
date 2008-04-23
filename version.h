@@ -1,9 +1,22 @@
-char *version = "@(#) daVinci Version #1.71";
+char *version = "@(#) daVinci Version #1.72";
 
 #include "build.h"
 
 /*
-Version 
+Version 1.72
+    + Added vplot function which will eventually replace xplot
+    * Fixed the image_resize downsampling method (fixed ignore value)
+    * Load vanilla input now has filename expansion (i.e. can use ~/user)
+    + Added remote file loading functionality (using libcurl).
+      Protocols supported: HTTP, HTTPS, FTP, SFTP, FILE.
+      Involved core dvio change
+
+Version 1.71
+    * Rearrangement of Modules functions to core functions
+      such as minpos, maxpos, valpos, sort, unique, sstretch
+      contour, convolve2, ipi and other relevant funcs.
+
+Version 1.70
     * Fixed CFITSIO configure/make problem
     * Fixed a memory allocation bug in thm.column_fill 
     + Created ff_transform.c file and added ff_image_rescale function 

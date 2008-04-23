@@ -1033,14 +1033,21 @@ vanread(
     vlexc    *h;
     void     **data_ptrs = NULL;
     Var *d;
-
+    char * fname = NULL;
     *v_return = NULL;
 
-    if (stat(filename, &sbuf) < 0){
+
+
+    if ((fname = dv_locate_file(filename)) == (char*)NULL) {
+        parse_error("Unable to expand filename %s\n", filename);
+        return (NULL);
+    }
+
+    if (stat(fname, &sbuf) < 0){
         return EFILE;
     }
 
-    if((fd = open(filename, O_RDONLY)) < 0){
+    if((fd = open(fname, O_RDONLY)) < 0){
         return EFILE;
     }
 

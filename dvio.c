@@ -4,6 +4,9 @@
 **
 ** Bridging code between daVinci and iomedley
 */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
 
 #include "parser.h"
 #include "iomedley.h"
@@ -236,8 +239,17 @@ char *
 dv_locate_file(char *fname)
 {
 	char buf[2048];
+
 	strcpy(buf, fname);
-	fname = iom_expand_filename(buf);
+	fname = buf;
+
+//Check if it is a remote file. Download it and make it local
+#ifdef HAVE_LIBCURL		
+	//Update the fname only if the load was successfull
+	fname = try_remote_load(fname);
+#endif
+	fname = iom_expand_filename(fname);
+
 	if (fname) 
 		return(strdup(fname));
 	else 
