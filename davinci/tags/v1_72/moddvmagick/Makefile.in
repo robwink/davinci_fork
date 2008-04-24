@@ -1,0 +1,39 @@
+SHELL = /bin/sh
+
+srcdir = @srcdir@
+prefix= @prefix@
+exec_prefix = $(prefix)
+BINDIR = $(exec_prefix)/bin
+LIBDIR = $(prefix)/lib
+mandir = $(prefix)/man/man1
+
+
+CC     = @CC@
+DEFS   = @DEFS@ 
+LINK   = @MODULE_LINKER@
+
+CFLAGS=-g -I.. @MODULE_CC_OPT@
+LDFLAGS=-L.. @MODULE_LINK_OPT@
+LDLIBS=@MODULE_ADDN_LIBS@ -lc
+
+.SUFFIXES:	.dvm
+
+MODULES=dvmagick.dvm
+
+all:	$(MODULES)
+
+.o.dvm:
+	$(LINK) $(LDFLAGS) $< $(LDLIBS) -o $@
+	
+.c.o:
+	$(CC) -c $(CFLAGS) $(DEFS) $< -o $@
+
+clean:
+	-rm -f *.o *.dvm
+
+######################################################
+# Dependencies
+#
+
+dvmagick.dvm:	dvmagick.o Makefile
+dvmagick.o:	dvmagick.c ../parser.h

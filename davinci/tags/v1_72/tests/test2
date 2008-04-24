@@ -1,0 +1,14 @@
+#!/opt/local/bin/davinci -fq
+
+printf("Single line comment #\t... ");
+
+# if (1) { printf("failed\n"); exit(1); } else {
+printf("passed\n");
+# }
+
+printf("Block comment /* */\t... ");
+/* 
+if (1) { printf("failed\n"); exit(1); } else {
+*/
+printf("passed\n");
+/* } */
