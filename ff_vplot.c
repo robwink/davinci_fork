@@ -1,5 +1,7 @@
 #include "parser.h"
 
+
+
 //This is probably overriden in config.h
 #ifndef GPLOT_CMD
 #define GPLOT_CMD "gnuplot -xrm 'gnuplot*background:black' -xrm 'gnuplot*axisColor:white' -xrm 'gnuplot*textColor:white' -xrm 'gnuplot*borderColor:white'"
