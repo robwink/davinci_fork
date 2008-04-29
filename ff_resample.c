@@ -14,14 +14,14 @@ Var* ff_resample(vfuncptr func, Var * arg)
 	float    *newy_float=NULL;                 //new y array
 	
 	Var    *out=NULL;                  //output array
-	Var    *v_label=NULL;              //label var
+	Var    *v_label = NULL;              //label var
 	Var    **av;                       //argument values
 	Var    *st = NULL;                 //structure
 	Alist  alist[4];                   //argument list
 	int    ac;                            //argument count
 	
 	//arrays and indices
-	char   *label=NULL;                //label char
+	Var   *label=NULL;                //label char
 	float  *oldx_float=NULL;                 //old x array
 	float  *newx_float=NULL;                 //old y array
 	float  *newy_tmp=NULL;
@@ -29,11 +29,12 @@ Var* ff_resample(vfuncptr func, Var * arg)
 	int    i,j,k,npts,new_npts;       //indices and sizes
 	int    xi,yi;	                   //dimensions
 	int    l_type=0;                   //label type (sample_name or label)
-	
+
 	
 	/*input handing....yuck*/
 	make_args(&ac, &av, func, arg);	
 	ac=ac-1;
+
 
 	if (ac == 2) {
 		alist[0] = make_alist("object", ID_STRUCT, NULL, &st);
@@ -41,14 +42,19 @@ Var* ff_resample(vfuncptr func, Var * arg)
 		alist[2].name = NULL;
 		if (parse_args(func, arg, alist) == 0) return(NULL);
 		
+
 		find_struct(st,"data",&oldy_var);
 		find_struct(st,"label",&v_label);
 		find_struct(st,"xaxis",&oldx_var);
-		
+
+
+
 		if(oldy_var==NULL) {
 			parse_error("Structure does not contain element .data"); 
 			return(NULL);
 		}
+
+
 		if (!(v_label != NULL && (V_TYPE(v_label) == ID_STRING || V_TYPE(v_label) == ID_TEXT))){
 			find_struct(st,"sample_name",&v_label);
 			l_type=1;
@@ -61,17 +67,21 @@ Var* ff_resample(vfuncptr func, Var * arg)
 			parse_error("Structure does not contain element .xaxis"); 
 			return(NULL);
 		}
-		if (V_TYPE(v_label)==ID_STRING) label = strdup(V_STRING(v_label));
-  }
-  else if (ac == 3) {
+	      
+
+		label = V_DUP(v_label);
+
+	}
+	else if (ac == 3) {
 		alist[0] = make_alist("oldy",    ID_VAL,      NULL,  &oldy_var);
 		alist[1] = make_alist("oldx",    ID_VAL,      NULL,  &oldx_var); 
 		alist[2] = make_alist("newx",    ID_VAL,      NULL,  &newx_var); 
 		alist[3].name = NULL;
 		
 		if (parse_args(func, arg, alist) == 0) return(NULL);
-		
-		label = strdup("(null)");
+
+		label = newString(strdup("(null)"));
+
 	}	else {
 		printf ("\n resample() - 12/1/2007\n");
 		printf (" Resample a spectrum to a given scale using cubic spline interpolation \n");
@@ -104,6 +114,36 @@ Var* ff_resample(vfuncptr func, Var * arg)
 	/* allocate memory for the output data */
 	newy_float=(float *) calloc(sizeof(float),xi*yi*new_npts);
 
+	if(GetZ(oldx_var) != GetZ(oldy_var)) {
+
+	   free(oldx_float);
+	   free(newx_float);
+	   free(oldy_tmp);
+	   free(newy_tmp);
+	   parse_error("data and old scale must have same z size");
+	   return(NULL);
+	}
+
+	if(GetX(oldx_var)>1 || GetY(oldx_var)>1 || GetZ(oldx_var)==1) {
+
+	   free(oldx_float);
+	   free(newx_float);
+	   free(oldy_tmp);
+	   free(newy_tmp);
+	   
+	   parse_error("Not a valid old scale.  Data must be in z direction");
+	   return(NULL);
+	}
+	if(GetX(newx_var)>1 || GetY(newx_var)>1 || GetZ(newx_var)==1) {
+	   free(oldx_float);
+	   free(newx_float);
+	   free(oldy_tmp);
+	   free(newy_tmp);
+	   
+	   parse_error("Not a valid new scale.  Data must be in z direction");
+	   return(NULL);
+	}
+
 	//extract oldx 
 	for(k=0;k<npts;k++) {
 		oldx_float[k]=extract_float(oldx_var,cpos(0,0,k,oldx_var));
@@ -114,6 +154,36 @@ Var* ff_resample(vfuncptr func, Var * arg)
 		newx_float[i]=extract_float(newx_var,cpos(0,0,i,newx_var));
 	}
 	
+	if(npts==new_npts) {
+		if(memcmp(newx_float,oldx_float,sizeof(float)*npts)==0) {
+			parse_error("Axis are the same, no need for resample");
+			//free stuff (check to make sure this is all)
+			free(newx_float);
+			free(oldy_tmp);
+			free(newy_tmp);
+			for(i=0;i<xi*yi*npts;i+=1) {
+				newy_float[i]=extract_float(oldy_var,i);
+			}
+			
+
+
+			/* create the output structure */
+			out=new_struct(3);
+			add_struct(out,"data", newVal(BSQ, xi, yi, npts, FLOAT, newy_float));
+
+			if(l_type==0) {	
+				add_struct(out,"label",label);
+			}
+			if(l_type==1) {
+				add_struct(out,"sample_name",label);
+			}
+			add_struct(out,"xaxis", newVal(BSQ, 1, 1, npts, FLOAT, oldx_float));
+			return(out);
+		}
+	}
+	
+
+
 	//make copies of each array section and then resample and replace in to proper output array
 	for(i=0;i<xi;i+=1) {
 		for(j=0;j<yi;j+=1) {
@@ -127,26 +197,20 @@ Var* ff_resample(vfuncptr func, Var * arg)
 	free(oldy_tmp);
 	free(newy_tmp);
 	free(oldx_float);
-	
+
 	/* create the output structure */
 	out=new_struct(3);
 	add_struct(out,"data", newVal(BSQ,xi,yi,new_npts,FLOAT,newy_float));
-	if(V_TYPE(v_label)==ID_TEXT) {
-		if(l_type==0) {	
-			add_struct(out,"label",v_label);
-		}
-		if(l_type==1) {
-			add_struct(out,"sample_name",v_label);
-		}
-	} else {
-		if(l_type==0) {	
-			add_struct(out,"label", newString(label));
-		}
-		if(l_type==1) {
-			add_struct(out,"sample_name", newString(label));
-		}
+
+	if(l_type==0) {	
+		add_struct(out,"label",label);
+	}else if(l_type==1) {
+		add_struct(out,"sample_name",label);
 	}
+
 	add_struct(out,"xaxis", newVal(BSQ, 1, 1, new_npts, FLOAT, newx_float));
+
+	
 	return(out);
 }
 
@@ -183,7 +247,7 @@ static float *do_resample(float *y, float *xold, float *xnew, int npts, int new_
 	int     samp_hi,samp_lo,samp_new;  //hi,lo,new samples
 	float   min=0,max=0;               //min and max values
 	int     i;
-
+	
 	y2d = (float *) calloc(sizeof(float),npts);
 	u = (float *) calloc(sizeof(float),npts-1);
 	
