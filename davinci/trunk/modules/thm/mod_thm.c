@@ -34,6 +34,7 @@ static Var *thm_rad2tb(vfuncptr, Var *);
 static Var *thm_radcorr(vfuncptr, Var *);
 static Var *thm_reconstitute(vfuncptr, Var *);
 static Var *thm_rectify(vfuncptr, Var *);
+static Var *thm_supersample(vfuncptr, Var *);
 static Var *thm_themissivity(vfuncptr, Var *);
 static Var *thm_unscale(vfuncptr, Var *);
 static Var *thm_white_noise_remove1(vfuncptr, Var *);
@@ -54,6 +55,7 @@ static dvModuleFuncDesc exported_list[] = {
   { "reconstitute", (void *) thm_reconstitute },
   { "rectify", (void *) thm_rectify },
 	{ "sstretch", (void *) ff_sstretch2 },
+  { "supersample", (void *) thm_supersample },
   { "themis_emissivity", (void *) thm_themissivity },
   { "unscale", (void *) thm_unscale },
   { "white_noise_remove1", (void *) thm_white_noise_remove1 },
@@ -1035,6 +1037,93 @@ thm_reconstitute(vfuncptr func, Var * arg)
   out = newVal(BSQ, nx, ny, z, FLOAT, new_data);
   return(out);
 }
+
+Var *
+thm_supersample(vfuncptr func, Var * arg)
+{
+  Var       *data = NULL;                  /* original input data */
+  Var       *out = NULL;                   /* final output davinci object */
+  int        x,y,z;                        /* size of data */
+  int        i,j,k;                        /* loop indices */
+  int        nx,ny,ni;                     /* indices */
+  int        mx,my;                        /* indices */
+  int        type = 0;                     /* type of supersample */
+  int        factor = 3;                   /* factor of supersample */
+  float     *ssdata = NULL;                /* supersampled data */
+
+  Alist alist[4];
+  alist[0] = make_alist("data", 		ID_VAL,		NULL,	&data);
+  alist[1] = make_alist("type",                 INT,            NULL,   &type);
+  alist[2] = make_alist("factor",               INT,            NULL, &factor);
+  alist[3].name = NULL;
+  
+  if (parse_args(func, arg, alist) == 0) return(NULL);
+
+  /* if no data got passed to the function */
+  if (data == NULL) {
+    parse_error("\nsupersample() - 7/13/2005\n");
+    parse_error("Takes any 3-d array and supersamples to N times the angular resolution.");
+    parse_error("Syntax:  thm.supersample(data, type, factor)");
+    parse_error("Example: thm.supersample(data=a, type=1, factor=5)");
+    parse_error("Example: thm.supersample(a, 2)\n");
+    parse_error("data: any 3-d array where data is to be supersampled in the xy plane.");
+    parse_error("type: supersample method to use. Default is 0.");
+    parse_error("      type=0: each original pixel is placed in the center of the supersampled pixel grid.");
+    parse_error("              all other pixels in the supersampled grid are filled with 0.");
+    //    parse_error("      type=1: same as type 0 but all pixels are linearly interpolated from original pixels.");
+    parse_error("      type=2: fills every pixel in supersampled pixel grid with original pixel value.\n");
+    parse_error("factor: multiplication factor of original pixel to supersample grid. Default is 3.");
+    parse_error("        so a factor=3 takes 1 pixel and makes a 3x3 pixel array.\n");
+    return NULL;
+  }
+
+  /* get dimensions of the data */
+  x = GetX(data);
+  y = GetY(data);
+  z = GetZ(data);
+
+  /* make new array */
+  ssdata = (float *)calloc(sizeof(float), factor*x*factor*y*z);
+	
+  /* extract data into larger array for types 0 and 1 */
+  if(type<2) {
+    for(k=0;k<z;k++) {
+      for(j=0;j<factor*y;j++) {
+				ny = j/factor;
+				my = j%factor;
+				for(i=0;i<factor*x;i++) {
+					ni = k*factor*factor*x*y + j*factor*x + i;
+					nx = i/factor;
+					mx = i%factor;
+					if(mx == 1 && my == 1) ssdata[ni] = extract_float(data, cpos(nx,ny,k,data));
+				}
+      }
+    }
+  }
+
+  /* fill in other pixels with interpolated pixels for type 1 */
+  if(type==1) {
+  }
+
+  /* extract data into larger array for type 2 */
+  if(type==2) {
+    for(k=0;k<z;k++) {
+      for(j=0;j<factor*y;j++) {
+				ny = j/factor;
+				for(i=0;i<factor*x;i++) {
+					ni = k*factor*factor*x*y + j*factor*x + i;
+					nx = i/factor;
+					ssdata[ni] = extract_float(data, cpos(nx,ny,k,data));
+				}
+      }
+    }
+  }
+
+  /* final output */
+  out = newVal(BSQ, factor*x, factor*y, z, FLOAT, ssdata);
+  return(out);
+}
+
 
 
 Var *
@@ -2956,7 +3045,6 @@ static Var *thm_maxpos_v1(vfuncptr, Var *);
 static Var *thm_y_shear(vfuncptr, Var *);
 static Var *thm_marsbin(vfuncptr, Var *);
 static Var *thm_destripe(vfuncptr, Var *);
-static Var *thm_supersample(vfuncptr, Var *);
 
 void position_fill(int *pos, int elem, int iter, Var *obj) {
   int x,y,z;
