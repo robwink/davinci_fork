@@ -1184,11 +1184,32 @@ thm_rad2tb(vfuncptr func, Var * arg)
   }
 
   if (bandlist == NULL) {
-    blist = (int *)malloc(sizeof(int)*10);
-    for(i=0;i<10;i++) {
-      blist[i] = i+1;
-    }
-    bx = 10;
+    bx = GetZ(rad);
+    if(bx == 10) {
+      blist = (int *)malloc(sizeof(int)*10);
+      for(i=0;i<10;i++) {
+	blist[i] = i+1;
+      }
+      bx = 10;
+    } else if(bx == 3) {
+      parse_error("Warning! Assuming that rad is a 3 band night time radiance image");
+      parse_error("Setting bandlist to 4//9//10.  If this is incorrect, please specify the bandlist");
+      blist = (int *)malloc(sizeof(int)*3);
+      blist[0] = 4;
+      blist[1] = 9;
+      blist[2] = 10;
+      bx = 3;      
+    } else if(bx == 1) {
+      parse_error("Warning! Assuming that rad is a 1 band night time radiance image");
+      parse_error("Assuming band 9.  If this is incorrect, please specify the bandlist");
+      blist = (int *)malloc(sizeof(int)*1);
+      blist[0] = 9;
+      bx = 1;
+    } else {
+      parse_error("Warning! rad contains a non-standard number of bands");
+      parse_error("Please specify the bandlist");
+      return(NULL);
+    }      
   }
 
   x = GetX(rad);
