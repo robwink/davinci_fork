@@ -13,8 +13,8 @@ static char *make_gnuplot_file_path(char *dir);
 static int name_check(char *actual_input, char *name, int limit);
 int send2plot(char *s);
 static void findAxis(char *R, Var * Obj, int flag);
-static int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuffer, Var *Xaxis, char *Axis, char *dir);
-static int handle_errorbars(Var *errorb, Var *v, int *Mode, char *style);
+static int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuffer, Var *Xaxis, char *Axis, float *globalNums, char *Style, char *dir);
+static int handle_errorbars(Var *errorb, Var *v, int *Mode, char *style, int Onum);
 static int *make_errorbar_indices(Var *v, int *Mode, int *CE);
 
 
@@ -161,6 +161,7 @@ ff_vplot(vfuncptr func, Var *arg)
   Var     *v = NULL;
   Var     *Xaxis = NULL;
   char    *Axis = NULL;
+  char    *Style = NULL;
   char    *dir = NULL;
   int      i,j,k;                       // loop index
   int      start_ct = 0;
@@ -169,26 +170,28 @@ ff_vplot(vfuncptr func, Var *arg)
   int      plotchoppererror = 0;
   int      Onum = 0;
   int      gcommand = 0;
+  float   *globalNums = NULL;
 
   make_args(&ac, &av, func, arg);
 
   if (ac == 1) {
-    parse_error("    plot() - A portal to Gnuplot plotting.\n");
+    parse_error("    plot() - Cinco De Mayo Version\n");
     parse_error(" Syntax: plot(VAL");
-    parse_error("         [, Xaxis = VAL]        (Xaxis to use on all plots)");
-    parse_error("         [, Axis = x|y|z|X|Y|Z] (Axis to use on all plots)");
+    parse_error("         [, label = STRING]     (default = \'vector #\')");
     parse_error("         [, xaxis = VAL]        (axis to use on one plot)");
     parse_error("         [, axis = x|y|z|X|Y|Z] (xaxis to use on one plot)");
     parse_error("         [, ignore = VAL]       (value to skip while plotting)");
-    parse_error("         [, iabove = VAL]       (ignore above)");
-    parse_error("         [, ibelow = VAL]       (ignore below)");
+    parse_error("         [, iabove = VAL]       (ignore y above)");
+    parse_error("         [, ibelow = VAL]       (ignore y below)");
+    parse_error("         [, ixabove = VAL]      (ignore x above)");
+    parse_error("         [, ixbelow = VAL]      (ignore x below)");
     parse_error("         [, errorbars = VAL]    (x and/or y errorbars)");
     parse_error("         [, separate = BOOL]    (default = 0)");
-    parse_error("         [, label = STRING]     (default = \'vector #\')");
     parse_error("         [, width = INT]        (thickness of plot)");
     parse_error("         [, color = INT]        (color of plot)");
     parse_error("         [, style = lines|points|dots|linespoints|steps|");
     parse_error("                    boxes|xerrorbars|yerrorbars|xyerrorbars]");
+    parse_error("         [, smooth = csplines|bezier]  (Gnuplot line fit)");
     parse_error("         [, dir = STRING]       (path to store files)");
     parse_error("         [, gcommand = BOOL]    (print Gnuplot command to screen])");
     parse_error(" or");
@@ -205,6 +208,10 @@ ff_vplot(vfuncptr func, Var *arg)
     return(NULL);
   }
 
+  // Set up globalNums array.  It is a 16 element float array to hold
+  // flags and values for numeric global keywords
+  globalNums = calloc(15, sizeof(float));  
+  
   /* Loop through the entire argument list extracting Xaxis, Axis, **
   ** dir and gcommand if they exist.                               */
   i=1;
@@ -224,39 +231,209 @@ ff_vplot(vfuncptr func, Var *arg)
   for(i=1; i<ac; i+=1) {
 
     if(V_TYPE(av[i]) == ID_KEYWORD) {
-      if(name_check(V_NAME(av[i]),"Xaxis",1) == 0) {
+
+      if(!name_check(V_NAME(av[i]),"Xaxis",1)) {
 	if(V_KEYVAL(av[i]) != NULL){
 	  Xaxis = eval(V_KEYVAL(av[i]));
 	  if(V_TYPE(Xaxis) == ID_STRING || 
 	     V_TYPE(Xaxis) == ID_STRUCT || 
 	     V_TYPE(Xaxis) == ID_TEXT) {
+	    //printf("%c[1;31mInvalid Xaxis type. Numeric arrays only!%c[1;37m\n",27,27);
 	    parse_error("Invalid Xaxis type. Numeric arrays only!");
 	    return(NULL);
 	  }
 	}
-      }
 
-      if(name_check(V_NAME(av[i]),"Axis",1) == 0) {
+      } else if(!name_check(V_NAME(av[i]),"Axis",1)) {
 	v = V_KEYVAL(av[i]);
-	if(!strcasecmp(V_NAME(v),"x") || 
-	   !strcasecmp(V_NAME(v),"y") ||
-	   !strcasecmp(V_NAME(v),"z")) {
+	if (V_TYPE(v) == ID_STRING)
+	  Axis = strdup(V_STRING(v));
+	else
 	  Axis = strdup(V_NAME(v));
-	} else {
+	
+	if(strcasecmp(Axis,"x") &&
+	   strcasecmp(Axis,"y") &&
+	   strcasecmp(Axis,"z")) {
 	  parse_error("Invalid Axis designation. x y z only.");
 	  return(NULL);
-	}
-      }
+	} else {
+	  parse_error("Invalid designation for Axis");
+	  parse_error("Keyword 'Axis' must be x, y or z");
+	  return(NULL);
+	}	  
 
-      if(name_check(V_NAME(av[i]),"dir",1) == 0) {
+      } else if (!name_check(V_NAME(av[i]), "Ignore", 2)) {
+	if (V_KEYVAL(av[i]) != NULL) {
+	  if(V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
+	    v = V_KEYVAL(av[i]);
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	      globalNums[0] = 1;
+	      globalNums[1] = (float)extract_int(v,0);
+	    } else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
+	      globalNums[0] = 1;
+	      globalNums[1] = extract_float(v,0);
+	    }
+	  } else {
+	    parse_error("Invalid designation for Ignore");
+	    parse_error("Keyword 'Ignore' must be a numeric value");
+	    return(NULL);
+	  }
+	} else {
+	  parse_error("Cannot find value for Ignore");
+	  return(NULL);
+	}
+
+      } else if (!name_check(V_NAME(av[i]), "Iabove", 2)) {
+	if (V_KEYVAL(av[i]) != NULL) {
+	  if(V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
+	    v = V_KEYVAL(av[i]);
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	      globalNums[2] = 1;
+	      globalNums[3] = (float)extract_int(v,0);
+	    } else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
+	      globalNums[2] = 1;
+	      globalNums[3] = extract_float(v,0);
+	    }
+	  } else {
+	    parse_error("Invalid designation for Iabove");
+	    parse_error("Keyword 'Iabove' must be a numeric value");
+	    return(NULL);
+	  }
+	} else {
+	  parse_error("Cannot find value for Iabove");
+	  return(NULL);
+	}
+	
+      } else if (!name_check(V_NAME(av[i]), "Ibelow", 2)) {
+	if (V_KEYVAL(av[i]) != NULL) {
+	  if(V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
+	    v = V_KEYVAL(av[i]);
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	      globalNums[4] = 1;
+	      globalNums[5] = (float)extract_int(v,0);
+	    } else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
+	      globalNums[4] = 1;
+	      globalNums[5] = extract_float(v,0);
+	    }
+	  } else {
+	    parse_error("Invalid designation for Ibelow");
+	    parse_error("Keyword 'Ibelow' must be a numeric value");
+	    return(NULL);
+	  }
+	} else {
+	  parse_error("Cannot find value for Ibelow");
+	  return(NULL);
+	}
+
+      } else if (!name_check(V_NAME(av[i]), "Ixabove", 3)) {
+	if (V_KEYVAL(av[i]) != NULL) {
+	  if(V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
+	    v = V_KEYVAL(av[i]);
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	      globalNums[6] = 1;
+	      globalNums[7] = (float)extract_int(v,0);
+	    } else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
+	      globalNums[6] = 1;
+	      globalNums[7] = extract_float(v,0);
+	    }
+	  } else {
+	    parse_error("%c[1;31mInvalid designation for Ixabove",27);
+	    parse_error("Keyword 'Ixabove' must be a numeric value%c[1;37m",27);
+	    return(NULL);
+	  }
+	} else {
+	  parse_error("Value for Ixabove does not exist");
+	  return(NULL);
+	}
+	
+      } else if (!name_check(V_NAME(av[i]), "Ixbelow", 3)) {
+	if (V_KEYVAL(av[i]) != NULL) {
+	  if(V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
+	    v = V_KEYVAL(av[i]);
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	      globalNums[8] = 1;
+	      globalNums[9] = (float)extract_int(v,0);
+	    } else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
+	      globalNums[8] = 1;
+	      globalNums[9] = extract_float(v,0);
+	    }
+	  } else {
+	    parse_error("Invalid designation for Ixbelow");
+	    parse_error("Keyword 'Ixbelow' must be a numeric value");
+	    return(NULL);
+	  }
+	} else {
+	  parse_error("Cannot find value for Ignore");
+	  return(NULL);
+	}
+
+      } else if (!name_check(V_NAME(av[i]), "Color", 1)) {
+	if (V_KEYVAL(av[i]) != NULL) {
+	  v = V_KEYVAL(av[i]);
+	  if(V_TYPE(v) == ID_VAL) {
+	    globalNums[10] = 1;
+	    globalNums[11] = (int)extract_float(v,0);
+	  } else {
+	    parse_error("Invalid designation for Color");
+	    return(NULL);
+	  }
+	} else {
+	  parse_error("Cannot find value for Color");
+	  return(NULL);
+	}
+	
+      } else if (!name_check(V_NAME(av[i]), "Width", 1)) {
+	if (V_KEYVAL(av[i]) != NULL) {
+	  v =V_KEYVAL(av[i]);
+	  if(V_TYPE(v) == ID_VAL) {
+	    globalNums[12] = 1;
+	    globalNums[13] = (int)extract_float(v,0);
+	  } else {
+	    parse_error("Invalid designation for line Width");
+	    return(NULL);
+	  }
+	} else {
+	  parse_error("Cannot find value for Width");
+	  return(NULL);
+	}
+	
+      } else if (!name_check(V_NAME(av[i]), "Style", 2)) {
+	if(V_KEYVAL(av[i]) != NULL) {
+	  v = V_KEYVAL(av[i]);
+	  
+	  if(V_TYPE(v) == ID_STRING)
+	    Style = V_STRING(v);
+	  else
+	    Style = strdup(V_NAME(v));
+	  
+	  if(name_check(Style,"lines",1) && 
+	     name_check(Style,"linespoints",6) &&
+	     name_check(Style,"dots",1) && 
+	     name_check(Style,"points",1) &&
+	     name_check(Style,"boxes",1) && 
+	     name_check(Style,"steps",1) &&
+	     name_check(Style,"impulses",1)) {
+	    parse_error("Invalid designation for Style");
+	    parse_error("Only: lines, points, dots, linespoints, boxes, steps or impulses");
+	    parse_error("Continuing plot with default style");
+	    Style = NULL;
+	  }
+	  v = NULL;
+	} else {
+	  parse_error("Cannot find value for Style");
+	  return(NULL);
+	}
+
+      } else if (!name_check(V_NAME(av[i]), "Separate", 2)) {
+	globalNums[14] = 1;
+
+      } else if(!name_check(V_NAME(av[i]),"dir",1)) {
 	if(V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_STRING){
 	  dir = strdup(V_STRING(V_KEYVAL(av[i])));
 	}
-      }
-
-      if(name_check(V_NAME(av[i]),"gcommand",1) == 0) {
+	
+      } else if(!name_check(V_NAME(av[i]),"gcommand",1))
 	gcommand = 1;
-      }
     }
   }
 
@@ -274,7 +451,7 @@ ff_vplot(vfuncptr func, Var *arg)
       j = 0;
     }
 
-    plotchoppererror = plot_chopper(av, start_ct, end_ct, Onum, CommandBuffer, Xaxis, Axis, dir);
+    plotchoppererror = plot_chopper(av, start_ct, end_ct, Onum, CommandBuffer, Xaxis, Axis, globalNums, Style, dir);
     j+=1;
 
     // There was an error somewhere in plot_chopper()
@@ -316,7 +493,7 @@ ff_vplot(vfuncptr func, Var *arg)
 
 
 
-int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuffer, Var *Xaxis, char *Axis, char *dir)
+int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuffer, Var *Xaxis, char *Axis, float *globalNums, char *Style, char *dir)
 {
   
   /* The code of plot_chopper is the canibalized descendent of xplot()*/
@@ -337,6 +514,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
   float *Err1 = NULL, *Err2 = NULL;   // Vars to be used if errorbars are used
   float *Err3 = NULL, *Err4 = NULL;   // Vars to be used if errorbars are used
   int   *EI = NULL;
+  int    sef = 0;                     // sum of error flags
 
   int    i, j, k;                     // loop indices
   char   axs;                         // temporary axis string
@@ -346,9 +524,13 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
   float  ignore;                      // ignore value for data
   float  ignore_above;                // 'ignore above' value for data
   float  ignore_below;                // 'ignore below' value for data
+  float  ignore_x_above;              // 'ignore above' x value for data
+  float  ignore_x_below;              // 'ignore above' y value for data
   int    iflag = 0;                   // was there an ignore value?
   int    iaflag = 0;                  // was there an iabove value?
   int    ibflag = 0;                  // was there an ibelow value?
+  int    ixaflag = 0;
+  int    ixbflag = 0;
   int    sep = 0;                     // was separate used?
   int    color = -10;                 // color of plot
   int    width = -10;                 // width of plot
@@ -381,167 +563,288 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
       }
 
       if(V_TYPE(s) == ID_STRUCT){
+	v = NULL;
+
+	find_struct(s,"data",&v);
+	if(v == NULL) {
+	  parse_error("This struct doesn't have a conforming architecture.");
+	  parse_error("It must contain at least the element .data to be plotted");
+	  return(1);
+	}
 
 	find_struct(s,"xaxis",&v);
 	if(v!=NULL) {
-	  xaxis_i = v;
+	  if(V_TYPE(v) == ID_VAL)
+	    xaxis_i = v;
+	  else {
+	    parse_error("Invalid xaxis element in structure: Object %d",Onum);
+	    parse_error("xaxis must be a numeric array. Continuing with default xaxis.\n");
+	  }
 	  v = NULL;
 	}
 
 	find_struct(s,"axis",&v);
 	if(v!=NULL) {
-	  if (V_TYPE(v) == ID_STRING)
+	  if(V_TYPE(v) == ID_STRING) {
 	    axis_i = V_STRING(v);
-	  else
-	    axis_i = V_NAME(v);
-
-	  if(strcasecmp(axis_i,"x") && 
-	     strcasecmp(axis_i,"y") &&
-	     strcasecmp(axis_i,"z")) {
-	    parse_error("Invalid axis designation. x y z only.");
+	    
+	    if(strcasecmp(axis_i,"x") && 
+	       strcasecmp(axis_i,"y") &&
+	       strcasecmp(axis_i,"z")) {
+	      parse_error("Invalid axis designation. x y z only.");
 	    return(1);
+	    }
+	  } else {
+	    parse_error("Invalid axis element in structure: Object %d",Onum);
+	    parse_error("axis must be a string. Continuing with default axis.\n");
 	  }
-
-	  v = NULL;
-	}
-
-	find_struct(s,"Xaxis",&v);
-	if(v!=NULL) {
-	  Xaxis = v;
-	  v = NULL;
-	}
-
-	find_struct(s,"Axis",&v);
-	if(v!=NULL) {
-	  if (V_TYPE(v) == ID_STRING)
-	    Axis = V_STRING(v);
-	  else
-	    Axis = V_NAME(v);
-
-	  if(strcasecmp(Axis,"x") && 
-	     strcasecmp(Axis,"y") &&
-	     strcasecmp(Axis,"z")) {
-	    parse_error("Invalid Axis designation. x y z only.");
-	    return(1);
-	  }
-
 	  v = NULL;
 	}
 
 	find_struct(s,"errorbars",&v);
 	if(v!=NULL) {
-	  errorb = v;
+	  if(V_TYPE(v) == ID_VAL)
+	    errorb = v;
+	  else {
+	    parse_error("Invalid errorbars element in structure: Object %d",Onum);
+	    parse_error("errorbars must be a numeric array. Continuing without errorbars.\n");
+	  }
 	  v = NULL;
 	}
 
 	find_struct(s,"label",&v);
 	if(v!=NULL) {
-	  label = strdup(V_STRING(v));
+	  if(V_TYPE(v) == ID_STRING)
+	    label = strdup(V_STRING(v));
+	  else {
+	    parse_error("Invalid label element in structure: Object %d",Onum);
+	    parse_error("label must be a string. Continuing with default label.\n");
+	  }
 	  v = NULL;
 	}
 
 	find_struct(s,"smooth",&v);
 	if(v!=NULL) {
-	  if (V_TYPE(v) == ID_STRING)
-	    smooth = V_STRING(v);
-	  else
-	    smooth = V_NAME(v);
-
-	  if(name_check(smooth,"bezier",1) && 
-	     name_check(smooth,"csplines",1)) {
-	    parse_error("smooth must be bezier, csplines");
-	    parse_error("continuing without smooth");
-	    smooth = NULL;
-	    return(1); 
+	  if(V_TYPE(v) == ID_STRING) {
+	    smooth = strdup(V_STRING(v));
+	    
+	    if(name_check(smooth,"bezier",1) && 
+	       name_check(smooth,"csplines",1)) {
+	      parse_error("smooth must be bezier, csplines");
+	      parse_error("continuing without smooth");
+	      smooth = NULL;
+	      return(1); 
+	    }
+	  } else {
+	    parse_error("Invalid smooth element in structure: Object %d",Onum);
+	    parse_error("smooth must be string \'bezier\' or \'csplines\'. Continuing without smooth.\n");
 	  }
-
 	  v = NULL;
 	}
 
 	//here's for stupid emcal
 	find_struct(s,"sample_name",&v);
-	if(v!=NULL) {
+	if(v!=NULL && V_TYPE(v) == ID_STRING)
 	  label = strdup(V_STRING(v));
-	  v = NULL;
-	}
+	v = NULL;
 
 	find_struct(s,"width",&v);
 	if(v!=NULL) {
-	  width = extract_int(v,0);
+	  if(V_TYPE(v) == ID_VAL) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
+	      width = extract_int(v,0);
+	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
+	      width = (int)extract_float(v,0);
+	  } else {
+	    parse_error("Invalid width element in structure: Object %d",Onum);
+	    parse_error("width must be an integer. Continuing with default width.\n");
+	  }	  
 	  v = NULL;
 	}
 
+
 	find_struct(s,"style",&v);
 	if(v!=NULL) {
-	  style = strdup(V_STRING(v));
-	  v = NULL;
-
-	  if(name_check(style,"lines",1) && 
-	     name_check(style,"linespoints",6) &&
-	     name_check(style,"dots",1) && 
-	     name_check(style,"points",1) &&
-	     name_check(style,"boxes",1) && 
-	     name_check(style,"steps",1) &&
-	     name_check(style,"impulses",1) && 
-	     name_check(style,"xerrorbars",2) &&
-	     name_check(style,"yerrorbars",2) &&
-	     name_check(style,"xyerrorbars",3)) {
-	    parse_error("Invalid designation for style");
-	    parse_error("Only: lines, points, dots, linespoints, boxes, steps, impulses");
-	    parse_error("      xerrorbars, yerrorbars or xyerrorbars");
-	    parse_error("Continuing plot with default style");
-	    style = NULL;
+	  if(V_TYPE(v) == ID_STRING) {
+	    style = strdup(V_STRING(v));
+	    
+	    if(name_check(style,"lines",1) && 
+	       name_check(style,"linespoints",6) &&
+	       name_check(style,"dots",1) && 
+	       name_check(style,"points",1) &&
+	       name_check(style,"boxes",1) && 
+	       name_check(style,"steps",1) &&
+	       name_check(style,"impulses",1) && 
+	       name_check(style,"xerrorbars",2) &&
+	       name_check(style,"yerrorbars",2) &&
+	       name_check(style,"xyerrorbars",3)) {
+	      parse_error("Invalid designation for style");
+	      parse_error("Only: lines, points, dots, linespoints, boxes, steps, impulses");
+	      parse_error("      xerrorbars, yerrorbars or xyerrorbars");
+	      parse_error("Continuing plot with default style");
+	      style = NULL;
+	    }
+	  } else {
+	    parse_error("Invalid style element in structure: Object %d",Onum);
+	    parse_error("style must be a string. Continuing with default style.\n");
 	  }
-	}	
+	  v = NULL;
+	}
 
 	find_struct(s,"color",&v);
 	if(v!=NULL) {
-	  color = extract_int(v,0);
+	  if(V_TYPE(v) == ID_VAL) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
+	      color = extract_int(v,0);
+	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
+	      color = (int)extract_float(v,0);	  
+	  } else {
+	    parse_error("Invalid color element in structure: Object %d",Onum);
+	    parse_error("color must be an integer. Continuing with default color.\n");
+	  }
 	  v = NULL;
 	}
 
 	find_struct(s,"separate",&v);
-	if(v!=NULL) {
+	if(v!=NULL)
 	  sep = 1;
-	  v = NULL;
-	}
+	v = NULL;
+
 
 	find_struct(s,"ignore",&v);
 	if(v!=NULL) {
-	  ignore = extract_float(v,0);
-	  iflag = 1;
+	  if(V_TYPE(v) == ID_VAL) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	      ignore = (float)extract_int(v,0);
+	      iflag = 1;
+	    }
+	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
+	      ignore = extract_float(v,0);
+	      iflag = 1;
+	    }
+	    else {
+	      parse_error("Invalid format for ignore in Object %d",Onum);
+	    }
+	  } else {
+	    parse_error("Invalid ignore element in structure: Object %d",Onum);
+	    parse_error("ignore must be a number. Continuing without ignore.\n");
+	  }
 	  v = NULL;
 	}
 
 	find_struct(s,"iabove",&v);
 	if(v!=NULL) {
-	  ignore_above = extract_float(v,0);
-	  iaflag = 1;
+	  if(V_TYPE(v) == ID_VAL) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	      ignore_above = (float)extract_int(v,0);
+	      iaflag = 1;
+	    }
+	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
+	      ignore_above = extract_float(v,0);
+	      iaflag = 1;
+	    }
+	    else {
+	      parse_error("Invalid format for iabove in Object %d",Onum);
+	    }
+	  } else {
+	    parse_error("Invalid iabove element in structure: Object %d",Onum);
+	    parse_error("iabove must be a number. Continuing without iabove.\n");
+	  }
 	  v = NULL;
 	}
 
 	find_struct(s,"ibelow",&v);
 	if(v!=NULL) {
-	  ignore_below = extract_float(v,0);
-	  ibflag = 1;
+	  if(V_TYPE(v) == ID_VAL) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	      ignore_below = (float)extract_int(v,0);
+	      ibflag = 1;
+	    }
+	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
+	      ignore_below = extract_float(v,0);
+	      ibflag = 1;
+	    }
+	    else {
+	      parse_error("Invalid format for ibelow in Object %d",Onum);
+	    }
+	  } else {
+	    parse_error("Invalid ibelow element in structure: Object %d",Onum);
+	    parse_error("ibelow must be a number. Continuing without ibelow.\n");
+	  }
+	  v = NULL;
+	}
+
+	find_struct(s,"ixabove",&v);
+	if(v!=NULL) {
+	  if(V_TYPE(v) == ID_VAL) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	      ignore_x_above = (float)extract_int(v,0);
+	      ixaflag = 1;
+	    }
+	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
+	      ignore_x_above = extract_float(v,0);
+	      ixaflag = 1;
+	    }
+	    else {
+	      parse_error("Invalid format for ixabove in Object %d",Onum);
+	    }
+	  } else {
+	    parse_error("Invalid ixabove element in structure: Object %d",Onum);
+	    parse_error("ixabove must be a number. Continuing without ixabove.\n");
+	  }
+	  v = NULL;
+	}
+
+	find_struct(s,"ixbelow",&v);
+	if(v!=NULL) {
+	  if(V_TYPE(v) == ID_VAL) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	      ignore_x_below = (float)extract_int(v,0);
+	      ixbflag = 1;
+	    }
+	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
+	      ignore_x_below = extract_float(v,0);
+	      ixbflag = 1;
+	    }
+	    else {
+	      parse_error("Invalid format for ixbelow in Object %d",Onum);
+	    }
+	  } else {
+	    parse_error("Invalid ixbelow element in structure: Object %d",Onum);
+	    parse_error("ixbelow must be a number. Continuing without ixbelow.\n");
+	  }
 	  v = NULL;
 	}
       }
     }
     
     if (V_TYPE(av[i]) == ID_KEYWORD) {
-      
       if (!(name_check(av[i]->name, "Xaxis", 1))) {
       } else if (!(name_check(av[i]->name, "Axis", 1))) {
-      } else if(!(name_check(av[i]->name, "gcommand", 1))) {
-      } else if(!(name_check(av[i]->name, "dir", 1))) {
+      } else if (!(name_check(av[i]->name, "Ignore", 2))) {
+      } else if (!(name_check(av[i]->name, "Iabove", 2))) {
+      } else if (!(name_check(av[i]->name, "Ibelow", 2))) {
+      } else if (!(name_check(av[i]->name, "Ixabove", 3))) {
+      } else if (!(name_check(av[i]->name, "Ixbelow", 3))) {
+      } else if (!(name_check(av[i]->name, "Color", 1))) {
+      } else if (!(name_check(av[i]->name, "Width", 1))) {
+      } else if (!(name_check(av[i]->name, "Style", 2))) {
+      } else if (!(name_check(av[i]->name, "Separate", 2))) {
+      } else if (!(name_check(av[i]->name, "dir", 1))) {
+      } else if (!(name_check(av[i]->name, "gcommand", 1))) {
 
       } else if (!(name_check(av[i]->name, "xaxis", 1))) {
 	xaxis_i = eval(V_KEYVAL(av[i]));
 	if (xaxis_i == NULL) {
 	  parse_error("Variable not found: \'xaxis\'");
 	  free(av);
-	  return (1);
+	  return(1);
+	}
+	if (V_TYPE(xaxis_i) != ID_VAL) {
+	  parse_error("xaxis in Object %d does not conform!",Onum);
+	  parse_error("xaxis must be a numeric array.\n");
+	  free(av);
+	  return(1);
 	}
 	
       } else if (!(name_check(av[i]->name, "axis",1))) {
@@ -555,6 +858,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	   strcasecmp(axis_i,"y") &&
 	   strcasecmp(axis_i,"z")) {
 	  parse_error("Invalid axis designation. x y z only.");
+	  free(av);
 	  return(1);
 	}
 
@@ -566,38 +870,40 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  free(av);
 	  return (1);
 	}
+	if (V_TYPE(errorb) != ID_VAL) {
+	  parse_error("errorbars in Object %d does not conform!",Onum);
+	  parse_error("errorbars must be a numeric array.\n");
+	  free(av);
+	  return(1);
+	}
 	
       } else if (!(name_check(av[i]->name, "separate",2))) {
 	sep = 1;
 	
       } else if (!(name_check(av[i]->name, "ignore",2))) {
 	if (V_KEYVAL(av[i]) != NULL) {
-	  ignore = extract_float(V_KEYVAL(av[i]), 0);
-	  iflag = 1;
-	} else {
-	  parse_error("Bad value for ignore");
-	  free(av);
-	  return (1);
+	  v = V_KEYVAL(av[i]);
+	  if(V_TYPE(v) == ID_VAL) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
+	      ignore = (float)extract_int(v,0);
+	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
+	      ignore = extract_float(v,0);
+	    iflag = 1;
+	  } else {
+	    parse_error("Invalid ignore value for Object %d",Onum);
+	    parse_error("ignore must be a number. Continuing without ignore.\n");
+	    free(av);
+	    return (1);
+	  }
 	}
 
-      } else if (!(name_check(av[i]->name, "smooth",1))) {
-	v = V_KEYVAL(av[i]);
-	if (V_TYPE(v) == ID_STRING)
-	  smooth = V_STRING(v);
-	else
-	  smooth = V_NAME(v);
-
-	if(name_check(smooth,"bezier",1) && 
-	   name_check(smooth,"csplines",1)) {
-	  parse_error("smooth must be bezier, csplines");
-	  parse_error("continuing without smooth");
-	  smooth = NULL;
-	  return(1);
-	}
-	
       } else if (!(name_check(av[i]->name, "iabove", 2))) {
-	if (V_KEYVAL(av[i]) != NULL) {
-	  ignore_above = extract_float(V_KEYVAL(av[i]),0);
+	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
+	  v = V_KEYVAL(av[i]);
+	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
+	    ignore_above = (float)extract_int(v,0);
+	  else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
+	    ignore_above = extract_float(v,0);
 	  iaflag = 1;
 	} else {
 	  parse_error("Invalid designation for iabove");
@@ -605,16 +911,46 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	}
 	
       } else if (!(name_check(av[i]->name, "ibelow", 2))) {
-	if (V_KEYVAL(av[i]) != NULL) {
-	  ignore_below = extract_float(V_KEYVAL(av[i]),0);
+	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
+	  v = V_KEYVAL(av[i]);
+	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
+	    ignore_below = (float)extract_int(v,0);
+	  else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
+	    ignore_below = extract_float(v,0);
 	  ibflag = 1;
 	} else {
 	  parse_error("Invalid designation for ibelow");
 	  parse_error("Continuing plot without value");
 	}
+
+      } else if (!(name_check(av[i]->name, "ixabove", 3))) {
+	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
+	  v = V_KEYVAL(av[i]);
+	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
+	    ignore_x_above = extract_int(v,0);
+	  else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
+	    ignore_x_above = (int)extract_float(v,0);
+	  ixaflag = 1;
+	} else {
+	  parse_error("Invalid designation for ixabove");
+	  parse_error("Continuing plot without value");
+	}
+	
+      } else if (!(name_check(av[i]->name, "ixbelow", 3))) {
+	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
+	  v = V_KEYVAL(av[i]);
+	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
+	    ignore_x_below = (float)extract_int(v,0);
+	  else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
+	    ignore_x_below = extract_float(v,0);
+	  ixbflag = 1;
+	} else {
+	  parse_error("Invalid designation for ixbelow");
+	  parse_error("Continuing plot without value");
+	}
 	
       } else if (!(name_check(av[i]->name, "color", 1))) {
-	if (V_KEYVAL(av[i]) != NULL) {
+	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	  if(V_FORMAT(av[i]) == FLOAT || V_FORMAT(av[i]) == DOUBLE)
 	    color = (int)extract_float(V_KEYVAL(av[i]),0);
 	  else
@@ -629,7 +965,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	}
 	
       } else if (!(name_check(av[i]->name, "width", 1))) {
-	if (V_KEYVAL(av[i]) != NULL) {
+	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	  width = (int)extract_float(V_KEYVAL(av[i]),0);
 	} else {
 	  parse_error("Invalid designation for line width");
@@ -640,8 +976,11 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	v = V_KEYVAL(av[i]);
 	if (V_TYPE(v) == ID_STRING){
 	  style = V_STRING(v);
-	} else {
+	} else if (V_TYPE(v) != ID_VAL) {
 	  style = strdup(V_NAME(v));
+	} else {
+	  parse_error("Invalid designation for style");
+	  return(1);
 	}
 
 	if(name_check(style,"lines",1) && 
@@ -659,6 +998,21 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  parse_error("      xerrorbars, yerrorbars or xyerrorbars");
 	  parse_error("Continuing plot with default style");
 	  style = NULL;
+	}
+	
+      } else if (!(name_check(av[i]->name, "smooth",1))) {
+	v = V_KEYVAL(av[i]);
+	if (V_TYPE(v) == ID_STRING)
+	  smooth = V_STRING(v);
+	else
+	  smooth = V_NAME(v);
+
+	if(name_check(smooth,"bezier",1) && 
+	   name_check(smooth,"csplines",1)) {
+	  parse_error("smooth must be bezier, csplines");
+	  parse_error("continuing without smooth");
+	  smooth = NULL;
+	  return(1);
 	}
 	
       } else if (!(name_check(av[i]->name, "label", 1))) {      
@@ -702,17 +1056,57 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
    ***********************************************/
   
   // Find or set xaxis_i
-  if (xaxis_i == NULL && Xaxis != NULL)
+  if (Xaxis != NULL)
     xaxis_i = Xaxis;
   
   if (xaxis_i != NULL) {
     XOrd[0] = GetSamples(V_SIZE(xaxis_i), V_ORG(xaxis_i));
     XOrd[1] = GetLines(V_SIZE(xaxis_i), V_ORG(xaxis_i));
     XOrd[2] = GetBands(V_SIZE(xaxis_i), V_ORG(xaxis_i));
+    xFlag = 1;
   }
 
-  if (xaxis_i != NULL)
-    xFlag = 1;
+  //Override of local keywords by global keywords
+  if(Axis != NULL)
+    axis_i = Axis;
+
+  if(globalNums[0]) {
+    iflag = 1;
+    ignore = globalNums[1];
+  }
+
+  if(globalNums[2]) {
+    iaflag = 1;
+    ignore_above = globalNums[3];
+  }
+
+  if(globalNums[4]) {
+    ibflag = 1;
+    ignore_below = globalNums[5];
+  }
+
+  if(globalNums[6]) {
+    ixaflag = 1;
+    ignore_x_above = globalNums[7];
+  }
+
+  if(globalNums[8]) {
+    ixbflag = 1;
+    ignore_x_below = globalNums[9];
+  }
+
+  if(globalNums[10]) 
+    color = globalNums[11];
+
+  if(globalNums[12])
+    width = globalNums[13];
+
+  if(globalNums[14])
+    sep = 1;
+
+  if(Style != NULL)
+    style = Style;
+
 
   //Here's our next object in argument list
   s = av[start_ct];
@@ -723,7 +1117,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
       label = V_NAME(s);
       parse_error("%s does not exist\n", label);
       free(av);
-      return (1);
+      return(1);
     }
   }
 
@@ -742,10 +1136,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
     // Here is the case where axis wasn't given
     if (axis_i == NULL) {
       
-      if(Axis != NULL)
-	axis_i = Axis;
-
-      else if(xaxis_i != NULL) {
+      if(xaxis_i != NULL) {
 	findAxis(&axs, xaxis_i, 0);
 	axis_i = strdup(&axs);
       }
@@ -803,13 +1194,13 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
     //Check the xaxis against the object.
     if (xFlag) {
       if (XOrd[Mode[0]] != Ord[Mode[0]]) {
-	parse_error("Length of x-axis vector is different than object vector");
+	parse_error("Length of x-axis vector is different than Object %d vector",Onum);
 	free(av);
 	return (1);
 	
       } else if ((XOrd[1] != 1 && XOrd[2] != 1) && 
 		 (XOrd[1] != Ord[Mode[1]] || XOrd[2] != Ord[Mode[2]])) {
-	parse_error("Given x-axis doesn't agree with given data set");
+	parse_error("Given x-axis doesn't agree with Object %d",Onum);
 	parse_error("Dimensions of the xaxis array must be 1");
 	parse_error("or match the object array.");
 	free(av);
@@ -828,7 +1219,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 
     //Errorbars are being used
     if (errorb) {
-      i = handle_errorbars(errorb, v, Mode, style);
+      i = handle_errorbars(errorb, v, Mode, style, Onum);
       if(i == 0) {
 	free(av);
 	return(1);
@@ -902,30 +1293,44 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	    case BYTE:
 	    case SHORT:
 	    case INT:
-	      Err1[k] = (float)extract_int(errorb, cpos(EI[0], EI[1], EI[2], errorb));
-	      if(Err2 != NULL)
-		Err2[k] = (float)extract_int(errorb, cpos(EI[3], EI[4], EI[5], errorb));
-	      if(Err3 != NULL){
-		Err3[k] = (float)extract_int(errorb, cpos(EI[6], EI[7], EI[8], errorb));
-		Err4[k] = (float)extract_int(errorb, cpos(EI[9], EI[10], EI[11], errorb));
+	      if(V_DSIZE(errorb) == 1)
+		Err1[k] = (float)extract_int(errorb,0);
+	      else {
+		Err1[k] = (float)extract_int(errorb, cpos(EI[0], EI[1], EI[2], errorb));
+		if(Err2 != NULL)
+		  Err2[k] = (float)extract_int(errorb, cpos(EI[3], EI[4], EI[5], errorb));
+		if(Err3 != NULL){
+		  Err3[k] = (float)extract_int(errorb, cpos(EI[6], EI[7], EI[8], errorb));
+		  Err4[k] = (float)extract_int(errorb, cpos(EI[9], EI[10], EI[11], errorb));
+		}
 	      }
 	    case FLOAT:
 	    case DOUBLE:
-	      Err1[k] = extract_float(errorb, cpos(EI[0], EI[1], EI[2], errorb));
-	      if(Err2 != NULL){
-		Err2[k] = extract_float(errorb, cpos(EI[3], EI[4], EI[5], errorb));
-	      }
-	      if(Err3 != NULL){
-		Err3[k] = extract_float(errorb, cpos(EI[6], EI[7], EI[8], errorb));
-		Err4[k] = extract_float(errorb, cpos(EI[9], EI[10], EI[11], errorb));
+	      if(V_DSIZE(errorb) == 1)
+		Err1[k] = extract_float(errorb,0);
+	      else {
+		Err1[k] = extract_float(errorb, cpos(EI[0], EI[1], EI[2], errorb));
+		if(Err2 != NULL){
+		  Err2[k] = extract_float(errorb, cpos(EI[3], EI[4], EI[5], errorb));
+		}
+		if(Err3 != NULL){
+		  Err3[k] = extract_float(errorb, cpos(EI[6], EI[7], EI[8], errorb));
+		  Err4[k] = extract_float(errorb, cpos(EI[9], EI[10], EI[11], errorb));
+		}
 	      }
 	    }
 	  }
 	  
 	  //Here we finally fucking handle the glorious ignore values!
-	  if ((iaflag != 0 && y[k] > ignore_above) ||
-	      (ibflag != 0 && y[k] < ignore_below) ||
-	      (iflag != 0 && y[k] == ignore)) {
+	  sef = 0; // Sum of the Error Flags
+	  sef = (iflag != 0 && y[k] == ignore)?sef+1:sef;
+	  sef = (iaflag != 0 && y[k] > ignore_above)?sef+1:sef;
+	  sef = (ibflag != 0 && y[k] < ignore_below)?sef+1:sef;
+	  sef = (ixaflag != 0 && ixbflag == 0 && x[k] > ignore_x_above)?sef+1:sef;
+	  sef = (ixaflag == 0 && ixbflag != 0 && x[k] < ignore_x_below)?sef+1:sef;
+	  sef = (ixaflag != 0 && ixbflag != 0 && x[k] > ignore_x_above && x[k] < ignore_x_below)?sef+1:sef;
+
+	  if (sef) {
 	    fprintf(fp, "\n");
 	  } else {
 	    if(errorb == NULL) {
@@ -1028,7 +1433,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 
 
 
-static int handle_errorbars(Var *errorb, Var *v, int *Mode, char *style) {
+static int handle_errorbars(Var *errorb, Var *v, int *Mode, char *style, int Onum) {
 
   int    AX;
   int    EM1, EM2;
@@ -1050,8 +1455,18 @@ static int handle_errorbars(Var *errorb, Var *v, int *Mode, char *style) {
   EM1 = e_dim[Mode[1]];
   EM2 = e_dim[Mode[2]];
 
+  // The case where errorbars was just a single number, not an array
+  if(e_dim[0] == 1 && e_dim[1] == 1 && e_dim[2] == 1) {
+    if(!name_check(style,"xyerrorbars",2)) {
+      parse_error("Invalid style for number of errorbar inputs.\nUsing style=yerrorbars");
+      sprintf(style,"yerrorbars");
+    }
+    return(EM1);
+  }    
+
+  //Errorbars is an array, check it!
   if(e_dim[AX] != v_dim[AX]) {
-    parse_error("Length of errorbar vectors are different than object vectors.");
+    parse_error("Length of errorbar vectors are different than for Object %d.", Onum);
     return(0);
   }
 
@@ -1059,7 +1474,7 @@ static int handle_errorbars(Var *errorb, Var *v, int *Mode, char *style) {
   if ((EM1 == 1 || EM1 == 2 || EM1 == 4 && EM2 == v_dim[Mode[2]]) || 
       (EM2 == 1 || EM2 == 2 || EM2 == 4 && EM1 == v_dim[Mode[1]])) {
   } else {
-    parse_error("Given errorbars don't agree with given data set");
+    parse_error("Given errorbars don't agree with Object %d", Onum);
     parse_error("There are the correct number of errorbar inputs,");
     parse_error("but a different number of errorbar vectors than object vectors");
     parse_error("Must have 1,2 or 4 errorbar inputs per vector.");
