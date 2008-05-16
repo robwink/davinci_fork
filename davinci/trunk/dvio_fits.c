@@ -1,7 +1,15 @@
 #include "parser.h"
 
-#ifdef HAVE_LIBCFITSIO
+#if defined(HAVE_LIBCFITSIO) && ( defined(HAVE_CFITSIO_FITSIO_H) || defined(HAVE_FITSIO_H))
+
+
+#ifdef HAVE_FITSIO_H
+#include <fitsio.h>
+#else
 #include <cfitsio/fitsio.h>
+#endif
+
+
 #include <dvio_fits.h>
 
 int
