@@ -151,9 +151,17 @@ AC_ARG_WITH(cfitsio,
     [  --with-cfitsio=<path>      prefix of cfitsio installation. e.g. /usr/local or /usr],
     [LDFLAGS="$LDFLAGS -L$withval/lib" ; CFLAGS="$CFLAGS -I$withval/include"]
 )
+#For some nonstandard installations (make it more flexible)
+AC_CHECK_HEADERS([fitsio.h]) 
+
+#The standard location
+AC_CHECK_HEADERS([cfitsio/fitsio.h])
+
 AC_CHECK_LIB(cfitsio, ffopen)
 if test "x$ac_cv_lib_cfitsio_ffopen" = "xyes"; then
-	have_cfitsio="yes"
+	 if test "x$ac_cv_header_fitsio_h" = "xyes" -o  "x$ac_cv_header_cfitsio_fitsio_h" = "xyes"; then 
+				have_cfitsio="yes"
+	 fi
 fi
 
 # Ask user for path to hdf5 stuff:.
