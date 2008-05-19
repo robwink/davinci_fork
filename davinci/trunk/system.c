@@ -544,3 +544,39 @@ make_temp_file_path()
         close(fd);
         return(strdup(pathbuf));
 }
+
+
+char * 
+make_temp_file_path_in_dir(char *dir)
+{
+  int fd;
+  unsigned int uretval;
+  char pathbuf[256];
+  char *tmpdir = getenv("TMPDIR");
+  
+  if (tmpdir == NULL) tmpdir = "/tmp";
+  if (dir != NULL) tmpdir = dir;
+  
+  sprintf(pathbuf, "%s/XXXXXX", tmpdir);
+  
+  /** To handle racing issues, since mkstemp does not exist in MINGW **/
+#ifdef __MINGW32__
+  uretval = GetTempFileName(tmpdir, // directory for tmp files
+			    "dv",        // temp file name prefix 
+			    0,            // create unique name 
+			    pathbuf);  // buffer for name 
+  if (uretval == 0){
+    return(NULL);
+  }
+#else
+  fd = mkstemp(pathbuf);
+#endif
+  
+  if (fd == -1) {
+    
+    return(NULL);
+  }
+  close(fd);
+  return(strdup(pathbuf));
+}
+
