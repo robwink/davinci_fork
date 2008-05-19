@@ -238,17 +238,27 @@ var2iom_iheader(
 char *
 dv_locate_file(char *fname)
 {
+
 	char buf[2048];
+	char buf2[2048];
+	char *fname2 = NULL;
 
 	strcpy(buf, fname);
+	strcpy(buf2, fname);
 	fname = buf;
 
 //Check if it is a remote file. Download it and make it local
 #ifdef HAVE_LIBCURL		
-	//Update the fname only if the load was successfull
-	fname = try_remote_load(fname);
+	//Update the fname2 only if the load was successfull
+	fname2 = try_remote_load(buf2);
 #endif
-	fname = iom_expand_filename(fname);
+	//If download didn't happen
+	if(strcmp(fname, fname2) == 0){
+		fname = iom_expand_filename(fname);
+	//Now the filename is the tmp filename
+	}else{
+		fname = fname2;
+	}
 
 	if (fname) 
 		return(strdup(fname));
