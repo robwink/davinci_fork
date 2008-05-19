@@ -9,7 +9,7 @@
 extern FILE *pfp;
 #endif
 
-static char *make_gnuplot_file_path(char *dir);
+
 static int name_check(char *actual_input, char *name, int limit);
 int send2plot(char *s);
 static void findAxis(char *R, Var * Obj, int flag);
@@ -19,38 +19,7 @@ static int *make_errorbar_indices(Var *v, int *Mode, int *CE);
 
 
 
-static char *make_gnuplot_file_path(char *dir)
-{
-  int fd;
-  unsigned int uretval;
-  char pathbuf[256];
-  char *tmpdir = getenv("TMPDIR");
-  
-  if (tmpdir == NULL) tmpdir = "/tmp";
-  if (dir != NULL) tmpdir = dir;
-  
-  sprintf(pathbuf, "%s/XXXXXX", tmpdir);
-  
-  /** To handle racing issues, since mkstemp does not exist in MINGW **/
-#ifdef __MINGW32__
-  uretval = GetTempFileName(tmpdir, // directory for tmp files
-			    "dv",        // temp file name prefix 
-			    0,            // create unique name 
-			    pathbuf);  // buffer for name 
-  if (uretval == 0){
-    return(NULL);
-  }
-#else
-  fd = mkstemp(pathbuf);
-#endif
-  
-  if (fd == -1) {
-    
-    return(NULL);
-  }
-  close(fd);
-  return(strdup(pathbuf));
-}
+
 
 
 
@@ -1174,7 +1143,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 
 
     if (!(sep)) {
-      fname = make_gnuplot_file_path(dir);
+      fname = make_temp_file_path_in_dir(dir);
       if (fname == NULL || (fp = fopen(fname, "w")) == NULL) {
 	parse_error("Unable to open temp file");
 	if (fname)
