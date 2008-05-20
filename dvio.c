@@ -253,7 +253,7 @@ dv_locate_file(char *fname)
 	fname2 = try_remote_load(buf2);
 #endif
 	//If download didn't happen
-	if(strcmp(fname, fname2) == 0){
+	if(fname == NULL || fname2 == NULL || strcmp(fname, fname2) == 0){
 		fname = iom_expand_filename(fname);
 	//Now the filename is the tmp filename
 	}else{
