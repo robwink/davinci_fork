@@ -59,6 +59,13 @@ Prefix: %_prefix
 %setup -q
 
 %build
+#Iomedley
+cd iomedley
+./configure
+make 
+cd ../
+
+#Davinci
 ./configure --prefix=/usr  --disable-libisis   --with-viewer=/usr/bin/display \
 --with-modpath=%{_libdir}/%{name} --with-help=%{_datadir}/%{name}/docs/dv.gih
 
