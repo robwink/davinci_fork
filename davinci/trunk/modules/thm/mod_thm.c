@@ -3,7 +3,7 @@
 #include "dvio.h"
 
 /* Enviornment Variable set up for THEMIS Radiance Temperature conversion table */
-static const char *DV_EX_ENV="DV_EX";
+static const char *DV_SCRIPT_FILES_ENV="DV_SCRIPT_FILES";
 static const char *RAD_TEMP_DEFAULT_PATH="/themis/calib";
 static const char *RAD_TEMP_LOOKUP_TBL="temp_rad_v4";
 
@@ -1161,7 +1161,7 @@ thm_rad2tb(vfuncptr func, Var * arg)
   if (rad == NULL) {
     parse_error("rad2tb() - 11/17/07");
     parse_error("THEMIS radiance to THEMIS Brightness Temperature Converter\n");
-    parse_error("Uses temp_rad_v4 in $DV_EX or /themis/calib as the default conversion table.");
+    parse_error("Uses temp_rad_v4 in $DV_SCRIPT_FILES or /themis/calib as the default conversion table.");
     parse_error("Assumes 10 bands of radiance for right now.\n");
     parse_error("Syntax:  b = thm.rad2tb(rad,bandlist,ignore,temp_rad_path,max_emiss)");
     parse_error("example: b = thm.rad2tb(a)");
@@ -1170,7 +1170,7 @@ thm_rad2tb(vfuncptr func, Var * arg)
     parse_error("rad - any float valued 3-D radiance array.");
     parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
     parse_error("ignore - non-data pixel value. Default is -32768 AND 0.");
-    parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is $DV_EX/temp_rad_v4.\n");
+    parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is $DV_SCRIPT_FILES/temp_rad_v4.\n");
     parse_error("max_emiss - maximum allowable value for emissivity. Default is 1.0");
     return NULL;
   }
@@ -1221,13 +1221,13 @@ thm_rad2tb(vfuncptr func, Var * arg)
 
   /* load temp_rad_v4 table into memory */
   if (fname == NULL) {
-      const char *dv_ex_val = getenv(DV_EX_ENV);
-      if (dv_ex_val == NULL){
-          dv_ex_val = RAD_TEMP_DEFAULT_PATH;
+      const char *dv_sfiles_val = getenv(DV_SCRIPT_FILES_ENV);
+      if (dv_sfiles_val == NULL){
+          dv_sfiles_val = RAD_TEMP_DEFAULT_PATH;
       }
 
-      fname = calloc(1, strlen(dv_ex_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
-      sprintf(fname,"%s/%s",dv_ex_val, RAD_TEMP_LOOKUP_TBL);
+      fname = calloc(1, strlen(dv_sfiles_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
+      sprintf(fname,"%s/%s",dv_sfiles_val, RAD_TEMP_LOOKUP_TBL);
   }
   
   fp = fopen(fname, "rb");
@@ -1476,7 +1476,7 @@ thm_themissivity(vfuncptr func, Var * arg)
     parse_error("rad - any 3-D radiance array.");
     parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
     parse_error("ignore - non-data pixel value. Default is -32768 AND 0.");
-    parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is $DV_EX/temp_rad_v4.");
+    parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is $DV_SCRIPT_FILES/temp_rad_v4.");
     parse_error("b1 - first band to search for maximum brightness temperature. Default is 3. ");
     parse_error("b2 - end band to search for maximum brightness temperature. Default is 9.");
     parse_error("max_emiss - maximum allowed emissivity for highest brightness temperature. Default is 1.\n");
@@ -1510,12 +1510,12 @@ thm_themissivity(vfuncptr func, Var * arg)
 
   /* load temp_rad_v4 table into memory */
   if (fname == NULL) {
-      const char *dv_ex_val = getenv(DV_EX_ENV);
-      if (dv_ex_val == NULL){
-          dv_ex_val = RAD_TEMP_DEFAULT_PATH;
+      const char *dv_sfiles_val = getenv(DV_SCRIPT_FILES_ENV);
+      if (dv_sfiles_val == NULL){
+          dv_sfiles_val = RAD_TEMP_DEFAULT_PATH;
       }
-      fname = calloc(1, strlen(dv_ex_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
-      sprintf(fname,"%s/%s",dv_ex_val, RAD_TEMP_LOOKUP_TBL);
+      fname = calloc(1, strlen(dv_sfiles_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
+      sprintf(fname,"%s/%s",dv_sfiles_val, RAD_TEMP_LOOKUP_TBL);
   }
   
   e_struct = themissivity(rad, blist, nullval, fname, b1, b2, maxem);
@@ -1655,7 +1655,7 @@ thm_emiss2rad(vfuncptr func, Var * arg)
   if (estruct == NULL) {
     parse_error("emiss2rad() - 9/23/05");
     parse_error("THEMIS Emissivity to THEMIS Radiance Converter\n");
-    parse_error("Uses temp_rad_v4 in $DV_EX or /themis/calib as the default conversion table.");
+    parse_error("Uses temp_rad_v4 in $DV_SCRIPT_FILES or /themis/calib as the default conversion table.");
     parse_error("Syntax:  b = thm.emiss2rad(emiss,bandlist,ignore,temp_rad_path)");
     parse_error("example: b = thm.emiss2rad(a)");
     parse_error("example: b = thm.emiss2rad(a,1//2//3//4//5//6//7//8//9,0)");
@@ -1663,7 +1663,7 @@ thm_emiss2rad(vfuncptr func, Var * arg)
     parse_error("emiss - the product of thm.themissivity containing .emiss and .maxbtemp components.");
     parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
     parse_error("ignore - non-data pixel value. Default is -32768 AND 0.");
-    parse_error("tem_rad_path - alternate path to temp_rad lookup table.  Default is $DV_EX/temp_rad_v4.\n");
+    parse_error("tem_rad_path - alternate path to temp_rad lookup table.  Default is $DV_SCRIPT_FILES/temp_rad_v4.\n");
     return NULL;
   }
 
@@ -1696,13 +1696,13 @@ thm_emiss2rad(vfuncptr func, Var * arg)
 
   /* load temp_rad_v4 table into memory */
   if (fname == NULL) {
-		const char *dv_ex_val = getenv(DV_EX_ENV);
-		if (dv_ex_val == NULL){
-			dv_ex_val = RAD_TEMP_DEFAULT_PATH;
+		const char *dv_sfiles_val = getenv(DV_SCRIPT_FILES_ENV);
+		if (dv_sfiles_val == NULL){
+			dv_sfiles_val = RAD_TEMP_DEFAULT_PATH;
 		}
 		
-		fname = calloc(1, strlen(dv_ex_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
-		sprintf(fname,"%s/%s",dv_ex_val, RAD_TEMP_LOOKUP_TBL);
+		fname = calloc(1, strlen(dv_sfiles_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
+		sprintf(fname,"%s/%s",dv_sfiles_val, RAD_TEMP_LOOKUP_TBL);
   }
   
   fp = fopen(fname, "rb");
@@ -1844,13 +1844,13 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
 
   /* load temp_rad_v4 table into memory */
   if (fname == NULL) {
-		const char *dv_ex_val = getenv(DV_EX_ENV);
-		if (dv_ex_val == NULL){
-			dv_ex_val = RAD_TEMP_DEFAULT_PATH;
+		const char *dv_sfiles_val = getenv(DV_SCRIPT_FILES_ENV);
+		if (dv_sfiles_val == NULL){
+			dv_sfiles_val = RAD_TEMP_DEFAULT_PATH;
 		}
 		
-		fname = calloc(1, strlen(dv_ex_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
-		sprintf(fname,"%s/%s",dv_ex_val, RAD_TEMP_LOOKUP_TBL);
+		fname = calloc(1, strlen(dv_sfiles_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
+		sprintf(fname,"%s/%s",dv_sfiles_val, RAD_TEMP_LOOKUP_TBL);
   }
   
   fp = fopen(fname, "rb");
@@ -2559,13 +2559,13 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
 
   /* load temp_rad_v4 table into memory */
   if (fname == NULL) {
-		const char *dv_ex_val = getenv(DV_EX_ENV);
-		if (dv_ex_val == NULL){
-			dv_ex_val = RAD_TEMP_DEFAULT_PATH;
+		const char *dv_sfiles_val = getenv(DV_SCRIPT_FILES_ENV);
+		if (dv_sfiles_val == NULL){
+			dv_sfiles_val = RAD_TEMP_DEFAULT_PATH;
 		}
 		
-		fname = calloc(1, strlen(dv_ex_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
-		sprintf(fname,"%s/%s",dv_ex_val, RAD_TEMP_LOOKUP_TBL);
+		fname = calloc(1, strlen(dv_sfiles_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
+		sprintf(fname,"%s/%s",dv_sfiles_val, RAD_TEMP_LOOKUP_TBL);
   }
   
   fp = fopen(fname, "rb");
