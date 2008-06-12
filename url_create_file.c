@@ -32,8 +32,8 @@ size_t	url_callback(char *, size_t , size_t, void *);
  * changes
  */
 char * try_remote_load(char * filename){
-	char * tmpfilename;
-      
+	char * tmpfilename = NULL;
+        char * rtnfilename = NULL; 
 #ifdef HAVE_LIBCURL	
 
 	if(filename != NULL){
@@ -46,7 +46,7 @@ char * try_remote_load(char * filename){
 				tmpfilename = (char *)make_temp_file_path();
  				//Now filename means URL
 				if(tmpfilename != NULL  && url_create_file(tmpfilename, filename) == 0){
-				   strcpy(filename, tmpfilename);
+				   rtnfilename = strdup(tmpfilename);
 				}				
 
 				if(tmpfilename != NULL){
@@ -56,7 +56,8 @@ char * try_remote_load(char * filename){
 	}  
 
 #endif
-	 return filename;   
+	if (rtnfilename == NULL) rtnfilename = strdup(filename);
+        return rtnfilename;
 }
 
 #ifdef HAVE_LIBCURL	
