@@ -36,6 +36,7 @@ static int check_ISIS_env() {
             setup_correct = 1;
         }
     }
+    delete isisprefs;
     if (setup_correct == 0) {
         parse_error("Warning: ISIS Environment not setup correctly to use ISIS3 API.\nPlease set your ISISROOT environment variable to the root of an ISIS3 install.");
     }
