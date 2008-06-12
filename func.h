@@ -136,7 +136,11 @@ void pop_input_file (void);
 int is_file (char *name);
 
 /* error.c */
+#ifdef __cplusplus
+extern "C" void parse_error(char *, ...);
+#else
 void parse_error(char *, ...);
+#endif
 
 /* reserved.c */
 int is_reserved_var (char *);
@@ -396,8 +400,11 @@ Var * ff_write_isis_cub(vfuncptr func, Var *args);
 
 double bbr(double, double);
 double btemp(double, double);
+#ifdef __cplusplus
+extern "C" Var *newVal(int org, int x, int y, int z, int format, void *data);
+#else
 Var *newVal(int org, int x, int y, int z, int format, void *data);
-
+#endif
 int cmp_byte(const void *, const void *);
 int cmp_short(const void *, const void *);
 int cmp_int(const void *, const void *);

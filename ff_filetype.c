@@ -54,7 +54,10 @@ ff_filetype(vfuncptr func, Var * arg)
         if (ostring == NULL && iom_isAVIRIS(fp)) ostring = strdup("AVIRIS");
         if (ostring == NULL && iom_isPNM(fp)) ostring = strdup("PNM");
         if (ostring == NULL && iom_isIMath(fp)) ostring = strdup("IMATH");
-		if (ostring == NULL && iom_isENVI(fp)) ostring = strdup("ENVI");
+	if (ostring == NULL && iom_isENVI(fp)) ostring = strdup("ENVI");
+#ifdef HAVE_ISIS3
+        if (ostring == NULL && iom_isISIS3(fname)) ostring = strdup("ISIS3");
+#endif
         if (ostring == NULL) {
             sprintf(error_buf, "Unable to determine file type: %s", filename);
             parse_error(NULL);
