@@ -1,5 +1,8 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(davinci, 1.69)
+AC_INIT(davinci, 1.72)
+
+
+
 
 ## libdavinci version
 LIB_CURRENT=0
@@ -197,6 +200,11 @@ AC_ARG_WITH(qmv,
 
 dnl This is a C++ library; set the language so the test succeeds.
 dnl FIX: not sure why we need both lib and header check..
+dnl Note for FIX above: You may have the library installed on a system, but
+dnl not the header files. davinci already compiled with qmv support will run on
+dnl a system with just the library, but a recompile will fail on deghost.C if you
+dnl do not check for the header file, too.
+
 AC_LANG_PUSH(C++)
 AC_CHECK_LIB(qmv, qmv_version)
 AC_CHECK_HEADERS(qmv/hvector.h)
@@ -210,6 +218,47 @@ fi
 
 AC_LANG_POP
 
+dnl ISIS3 and Qt 4.x support.  ISIS3 requires Qt4, so we will include it and check
+dnl for both if ISIS3 support is desired.
+
+
+AC_ARG_WITH(isis3,
+    [  --with-isis3=<path>     prefix of isis3 installation. e.g. /mars/common/isis3/PLATFORM/isis, requires Qt 4 and iomedley ], [ ISIS3LDFLAGS="-Xlinker -rpath-link -Xlinker $withval/3rdParty/lib -L$withval/lib -lisis3 -L$withval/3rdParty/lib -lcspice -lgeos -lgslcblas -lgsl -lqwt -lxerces-c" ; ISIS3CFLAGS="-I$withval/inc" ; ISIS3CPPFLAGS="-I$withval/inc" ; ISIS3_SAVE_LDLP=$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$withval/lib:$withval/3rdParty/lib" ; try_isis3="yes" ; ISIS3DIR=$withval ]
+) 
+have_isis3=no
+if test "$try_isis3" = "yes"; then
+        if test "x$enable_iomedley" = "xno"; then
+            AC_MSG_FAILURE([ISIS3 support requires iomedley (enabled by default). Remove --disable-iomedley or --with-isis])
+        fi
+        dnl Horribly non-portable... need to have something that determines the
+        dnl right dynamic lib extension (dll, so, etc.)
+        AM_PATH_QT([4.0.0], "so", have_qt=yes, have_qt=no, ISIS3)
+        if test "$have_qt" = "yes"; then
+                AC_MSG_CHECKING([for existence of ISIS3 files])
+                if test -e $ISIS3DIR/lib/libisis3.so; then
+                    if test -e $ISIS3DIR/inc/Cube.h; then
+                        AC_MSG_RESULT([OK])
+                        have_isis3=yes
+                    else
+                        AC_MSG_RESULT([ISIS3 includes are missing])
+                    fi
+                else
+                    AC_MSG_RESULT([ISIS3 libraries are missing])
+                fi
+                if test "$have_isis3" = "no"; then
+                    AC_MSG_FAILURE([Needed ISIS3 files are missing. Either configure without ISIS3 support, or point --with-isis3 to a correct ISIS3 installation.])
+                fi              
+        else
+                AC_MSG_FAILURE([--with-isis3 cannot work without a working Qt4 install.])
+        fi
+fi
+
+if test "$have_isis3" = "yes"; then
+    AC_DEFINE(HAVE_ISIS3, 1, [ISIS3 Read/Write support])
+    LDFLAGS="$LDFLAGS $ISIS3LDFLAGS $QT_LIBS"
+    CFLAGS="$CFLAGS $ISIS3CFLAGS "
+    CPPFLAGS="$CPPFLAGS $ISIS3CPPFLAGS $QT_CXXFLAGS"
+fi
 
 dnl Check for headers.
 AC_HEADER_DIRENT
@@ -312,6 +361,7 @@ dnl Configure iomedley.
 
 if test "x$enable_iomedley" != "xno"; then
 	CFLAGS="$CFLAGS -I\$(top_srcdir)/iomedley"
+	CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/iomedley"
 	AC_DEFINE(HAVE_LIBIOMEDLEY, 1, [iomedley library is present])
 	AC_CONFIG_SUBDIRS(iomedley)
 	MY_SUBDIRS="$MY_SUBDIRS iomedley"
@@ -464,6 +514,8 @@ PRINT_YES_NO "GUI/Vicar Module" "$local_vicar"
 PRINT_YES_NO "         libisis" "$have_libisis"
 PRINT_YES_NO "            FITS" "$have_cfitsio"
 PRINT_YES_NO "             QMV" "$have_qmv"
+PRINT_YES_NO "        libisis3" "$have_isis3"
+PRINT_YES_NO "             Qt4" "$have_qt"
 
 PRINT ""
 
