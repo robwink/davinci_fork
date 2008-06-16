@@ -32,11 +32,15 @@ static int check_ISIS_env() {
     if (getenv("ISISROOT") != NULL) {
         isisprefs = new std::string(getenv("ISISROOT"));
         isisprefs->append("/IsisPreferences");
+        std::cout << "Checking ISIS Prefs: " << isisprefs;
         if (stat(isisprefs->data(), &dummy) == 0) {
             setup_correct = 1;
         }
+        delete isisprefs;
     }
-    delete isisprefs;
+    else {
+        parse_error("ISISROOT is null. setup_correct = %i", setup_correct);
+    }
     if (setup_correct == 0) {
         parse_error("Warning: ISIS Environment not setup correctly to use ISIS3 API.\nPlease set your ISISROOT environment variable to the root of an ISIS3 install.");
     }
