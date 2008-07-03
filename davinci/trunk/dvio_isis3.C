@@ -32,20 +32,171 @@ static int check_ISIS_env() {
     if (getenv("ISISROOT") != NULL) {
         isisprefs = new std::string(getenv("ISISROOT"));
         isisprefs->append("/IsisPreferences");
-        std::cout << "Checking ISIS Prefs: " << isisprefs;
         if (stat(isisprefs->data(), &dummy) == 0) {
             setup_correct = 1;
         }
         delete isisprefs;
     }
     else {
-        parse_error("ISISROOT is null. setup_correct = %i", setup_correct);
+        //parse_error("ISISROOT is null. setup_correct = %i", setup_correct);
     }
     if (setup_correct == 0) {
         parse_error("Warning: ISIS Environment not setup correctly to use ISIS3 API.\nPlease set your ISISROOT environment variable to the root of an ISIS3 install.");
     }
     return setup_correct;
 }
+
+#define KWD_TO_CHAR_PTR(x) strdup((char *)((x).ToQt().toAscii().data()))
+
+static void explode_keyword(Isis::PvlKeyword kwd, Var * names, 
+                             Var * values) {
+    /* Take an ISIS keyword, append its name to the davinci structure pointed
+       at in names, and append its value to the davinci structure pointed at
+       by values.  If the ISIS keyword contains a single value, the value
+       appended is a a string.  If the ISIS keyword contains multiple values,
+       the value appended is a structure of strings, each member containing
+       one value.  Function returns nothing, but the Var structures pointed
+       at by names and values are altered.
+    */
+    Var * varlist;
+    add_struct(names, NULL, newString(strdup((char *)(kwd.Name().data()))));
+    if (kwd.Size() == 1) {
+        add_struct(values, NULL, newString(KWD_TO_CHAR_PTR(kwd[0])));
+    }
+    else {
+        varlist = new_struct(kwd.Size());
+        for (int j=0; j<kwd.Size(); j++) {
+        add_struct(varlist, NULL, newString(KWD_TO_CHAR_PTR(kwd[j])));
+        }
+        add_struct(values, NULL, varlist);
+    }
+}
+
+static Var * get_keywords(Isis::PvlContainer * pvl) {
+    /* Extract keywords from any pvl instance */
+    Var * rtn_value;
+    Var * names;
+    Var * values;
+    rtn_value = NULL;
+    if (pvl->Keywords() > 0) {
+        rtn_value = new_struct(2);
+        names = new_struct(pvl->Keywords());
+        values = new_struct(pvl->Keywords());
+        for (int i=0; i<pvl->Keywords(); i++)
+            explode_keyword((*pvl)[i], names, values);
+        add_struct(rtn_value, "name", names);
+        add_struct(rtn_value, "value", values);
+    }
+    return rtn_value;
+}
+
+static Var * explode_object(Isis::PvlObject o) {
+    Var * rtn_value;
+    Var * objects;
+    Var * obj_names;
+    Var * obj_structures;
+    Var * groups;
+    Var * group_names;
+    Var * group_structures;
+    Var * kwds;
+    rtn_value = new_struct(3);
+    if (o.Objects() > 0) {
+        objects = new_struct(2);
+        obj_names = new_struct(o.Objects());
+        obj_structures = new_struct(o.Objects());
+        for (int i=0; i<o.Objects(); i++) {
+            add_struct(obj_names, NULL, newString(strdup((char *)o.Object(i).Name().data())));
+            add_struct(obj_structures, NULL, explode_object(o.Object(i)));
+        }
+        add_struct(objects, "name", obj_names);
+        add_struct(objects, "structure", obj_structures);
+        add_struct(rtn_value, "object", objects);
+    }
+    if (o.Groups() > 0) {
+        groups = new_struct(2);
+        group_names = new_struct(o.Groups());
+        group_structures = new_struct(o.Groups());
+        for (int i=0; i<o.Groups(); i++) {
+            add_struct(group_names, NULL, newString(strdup((char *)o.Group(i).Name().data())));
+            add_struct(group_structures, NULL, get_keywords(&(o.Group(i))));
+        }
+        add_struct(groups, "name", group_names);
+        add_struct(groups, "keyword", group_structures);
+        add_struct(rtn_value, "group", groups); 
+    }
+    if ((kwds = get_keywords(&o)) != NULL) {
+        add_struct(rtn_value, "keyword", kwds);
+    }    
+    return rtn_value;
+}
+
+static Var * get_keywords_from_cube(Isis::Cube * cube) {
+    /* Extract the keywords from a cube object */
+    Var * rtn_value = NULL;
+    Isis::Pvl * label;
+    Var * names;
+    Var * values;
+    Var * varlist;
+    Isis::PvlKeyword  * current_kwd;
+    label = cube->Label();
+    rtn_value = new_struct(2);
+    names = new_struct(label->Keywords());
+    values = new_struct(label->Keywords());
+    for (int i=0; i<label->Keywords(); i++) 
+        explode_keyword((*label)[i], names, values);
+    add_struct(rtn_value, "name", names);
+    add_struct(rtn_value, "value", values);
+    return rtn_value;
+}
+
+
+static Var * get_groups(Isis::Cube * cube) {
+    /* Extract the groups from a cube object */
+    Var * rtn_value = NULL;
+    Isis::Pvl * label;
+    Var * names;
+    Var * structures;
+    Var * current_var;
+    label = cube->Label();
+    if (label->Groups() > 0) {
+        rtn_value = new_struct(2);
+        names = new_struct(label->Groups());
+        structures = new_struct(label->Groups());
+        for (int i=0; i<label->Groups(); i++) {
+            add_struct(names, NULL, newString(strdup((char *)label->Group(i).Name().data())));
+            add_struct(structures, NULL, get_keywords(&(label->Group(i))));
+        }
+        add_struct(rtn_value, "name", names);
+        add_struct(rtn_value, "keyword", structures);
+    }
+    return rtn_value;
+}
+
+static Var * get_objects(Isis::Cube * cube) {
+    /* get the root level objects from a cube */
+    Isis::Pvl * label;
+    Var * current_var;
+    Var * rtn_value = NULL;
+    Var * names;
+    Var * structures;
+    char namebuf[80];
+    label = cube->Label();
+    if (label->Objects() > 0) {
+        rtn_value = new_struct(2);
+        names = new_struct(label->Objects());
+        structures = new_struct(label->Objects());
+    
+        for (int i=0; i<label->Objects(); i++) {
+            current_var = explode_object(label->Object(i));
+            add_struct(names, NULL, newString(strdup((char*)label->Object(i).Name().data())));
+            add_struct(structures, NULL, current_var);
+        }
+        add_struct(rtn_value, "name", names);
+        add_struct(rtn_value, "structure", structures);
+    }
+    return rtn_value;
+}
+
 
 extern "C" Var *
 dv_LoadISIS3(FILE *fp, char *filename, struct iom_iheader *sub) {
@@ -63,7 +214,6 @@ dv_LoadISIS3(FILE *fp, char *filename, struct iom_iheader *sub) {
         cube->Open(filename);
     }
     catch (Isis::iException &e) {
-        parse_error("Nope.\n");
         delete cube;
         return NULL;
     } 
@@ -99,10 +249,17 @@ dv_LoadISIS3(FILE *fp, char *filename, struct iom_iheader *sub) {
             (*brick)++;
         }
     }
+    rtnvar = new_struct(4);
+    Var * objs = get_objects(cube);
+    if (objs != NULL) add_struct(rtnvar, "object", objs);
+    Var * grps = get_groups(cube);
+    if (grps != NULL) add_struct(rtnvar, "group", grps);
+    Var * kwds = get_keywords(cube->Label());
+    if (kwds != NULL) add_struct(rtnvar, "keyword", kwds);
+    add_struct(rtnvar, "cube", newVal(BSQ, x, y, z, fmt, dvdata));
     cube->Close();
     delete cube;
     delete brick;
-    rtnvar = newVal(BSQ, x, y, z, fmt, dvdata);
     return rtnvar;
 
 }

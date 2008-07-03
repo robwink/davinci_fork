@@ -435,22 +435,34 @@ Var * ff_global(vfuncptr func, Var * arg);
 Var * ff_delete(vfuncptr func, Var *arg);
 
 /* internal functions for structures */
+#ifdef __cplusplus
+extern "C" {
+#endif
 Var *new_struct(int ac);
 void add_struct(Var *s, const char *name, Var *exp);
 Var *remove_struct(Var *, int);
 void free_struct(Var *);
-
 /* internal functions for text arrays */
 Var *newString(char *str);
 Var *newText(int rows, char **text);
+#ifdef __cplusplus
+}
+#endif
 
 /*Text/string functions*/
 Var *ff_rtrim(vfuncptr func, Var *arg);
 
 Var *ff_equals(vfuncptr func, Var *arg);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 Var * newInt(int i);
 Var * newFloat(float f);
 Var * newDouble(double f);
+#ifdef __cplusplus
+}
+#endif
 Var *ff_xplot(vfuncptr func, Var *arg);
 Var *ff_vplot(vfuncptr func, Var *arg);
 Var *ff_killchild(vfuncptr func, Var *arg); 
