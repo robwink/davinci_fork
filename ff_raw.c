@@ -84,6 +84,7 @@ ff_raw(vfuncptr func, Var * arg)
 		h.format = iom_DOUBLE;
 	} else {
 		parse_error("Unrecognized format: %s\n", format);
+		fclose(fp);
 		return(NULL);
 	}
 
@@ -104,6 +105,7 @@ ff_raw(vfuncptr func, Var * arg)
 		h.org = iom_BIP;
 	} else {
 		parse_error("Unrecognized org: %s\n", org);
+		fclose(fp);
 		return(NULL);
 	}
 
@@ -116,6 +118,8 @@ ff_raw(vfuncptr func, Var * arg)
 	data = iom_read_qube_data(fileno(fp), &h);
 	v = iom_iheader2var(&h);
 	V_DATA(v)  = data;
+
+	fclose(fp);
 
 	return(v);
 }
