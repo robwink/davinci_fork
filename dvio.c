@@ -239,8 +239,8 @@ char *
 dv_locate_file(char *fname)
 {
 
-	char buf[2048];
-	char buf2[2048];
+	char buf[4096];
+	char buf2[4096];
 	char *fname2 = NULL;
 
 	strcpy(buf, fname);
