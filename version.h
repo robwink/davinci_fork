@@ -1,8 +1,11 @@
-char *version = "@(#) daVinci Version #1.72";
+char *version = "@(#) daVinci Version #1.72a";
 
 #include "build.h"
 
 /*
+Version 1.72a
+    * Minor Clean ups
+
 Version 1.72
     + Added vplot function which will eventually replace xplot
     * Fixed the image_resize downsampling method (fixed ignore value)

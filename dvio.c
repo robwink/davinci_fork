@@ -240,30 +240,19 @@ dv_locate_file(char *fname)
 {
 
 	char buf[4096];
-	char buf2[4096];
-	char *fname2 = NULL;
-
 	strcpy(buf, fname);
-	strcpy(buf2, fname);
-	fname = buf;
 
-//Check if it is a remote file. Download it and make it local
-#ifdef HAVE_LIBCURL		
-	//Update the fname2 only if the load was successfull
-	fname2 = try_remote_load(buf2);
-#endif
-	//If download didn't happen
-	if((fname == NULL || fname2 == NULL || strcmp(fname, fname2)) == 0){
-		fname = iom_expand_filename(fname);
-	//Now the filename is the tmp filename
-	}else{
-		fname = fname2;
+	//Check if it is a remote file. Download it and make it local
+	//Return a memory(strdup) with the new filename if necessary, otherwise return the same name.
+	fname = try_remote_load(buf);
+
+	//If download didn't happen (meaning the fname equals fname2)
+	if(fname != NULL && strcmp(fname, buf) == 0){
+		free(fname); //free the try_remote_load malloc
+		//return a strdup
+		fname = iom_expand_filename(buf);
 	}
-        if (fname2 != NULL) free(fname2);
-	if (fname) 
-		return(strdup(fname));
-	else 
-		return(NULL);
+	return fname;
 }
 
 
