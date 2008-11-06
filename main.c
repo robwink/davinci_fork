@@ -690,7 +690,13 @@ log_time()
         /* eandres: ctime() seems to return invalid pointers on x86_64 systems.
          * ctime_r with a provided buffer fills the buffer correctly, but still
          * returns an invalid pointer. */
+
+#ifdef __sun
+        ctime_r(&t, tbuf, sizeof(tbuf));
+#else
         ctime_r(&t, tbuf);
+#endif
+
 
         /* eandres: This really shouldn't be a problem, but it shouldn't be a crash, either. */
         if ((uname = getenv("USER")) == NULL) {
