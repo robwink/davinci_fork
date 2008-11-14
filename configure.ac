@@ -182,6 +182,12 @@ else
 fi
 AC_CHECK_LIB(hdf5, H5open,[have_libhdf=yes],[have_libhdf=no])
 
+## Force HDF5 Version 1.6
+if test "x$have_libhdf" = "xyes"; then
+	AC_DEFINE(H5_USE_16_API, 1, [use HDF5 1.6 API])
+fi
+
+
 
 AC_CHECK_LIB([curl],[curl_global_init])
 
