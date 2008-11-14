@@ -24,6 +24,9 @@
 /* Path to gnuplot program for plot() function */
 #undef GPLOT_CMD
 
+/* use HDF5 1.6 API */
+#undef H5_USE_16_API
+
 /* Use aqua instead of X11 */
 #undef HAVE_AQUA
 
