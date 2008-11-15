@@ -320,10 +320,13 @@ static IOmodPtr open_io_module(char * modname, char * modpath) {
   IOmodPtr new_module = NULL;
   MODHANDLE cand;
   void (*init_func)(TypelistPtr *);
-  TypelistPtr init_list;
+  TypelistPtr init_list = NULL;
 
   cand = portable_dlopen(modpath);
-  if (cand == NULL) goto error_exit;
+  if (cand == NULL) {
+      parse_error("portable_dlopen of %s failed.", modpath);
+      goto error_exit;
+  }
   new_module = new_io_module();
   new_module->dlhandle = cand;
   if ((new_module->modname = malloc(strlen(modname)+1)) == NULL) {
@@ -520,7 +523,7 @@ Var * ff_lsmod(struct _vfuncptr *f, Var *args) {
 /* The read and write methods to be called from the read and write commands
    in Davinci */
 
-Var * read_from_io_module(FILE * fh) {
+Var * read_from_io_module(FILE * fh, char * fname) {
   /* this function implements the read function for a module.  It determines
      the proper IO module by calling the read method on each module with a 
      read method until one succeeds.
@@ -535,7 +538,7 @@ Var * read_from_io_module(FILE * fh) {
   use_module = IOmodList;
   while (use_module != NULL) {
     if (use_module->implements & IO_MOD_READ) 
-      rtnval = use_module->read_func(fh);
+      rtnval = use_module->read_func(fh, fname);
     if (rtnval != NULL) break;
     fseek(fh, 0, SEEK_SET); /* rewind the file to the start */
     use_module=use_module->next_list;
@@ -587,7 +590,7 @@ Var * write_to_io_module(Var * dv_obj, char * filename,
   }
 
   /* good to go!  call the write module's write method */
-  call_return = use_module->write_func(dv_obj, type, fh);
+  call_return = use_module->write_func(dv_obj, type, fh, filename);
   fclose(fh);
  error_exit:
   return newInt(call_return);

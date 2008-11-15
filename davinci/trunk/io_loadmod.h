@@ -60,8 +60,8 @@ struct _IOmod {
   char * modpath;
   MODHANDLE dlhandle;
   unsigned char implements;
-  Var * (*read_func)(FILE *); /* read: takes filename as arg */
-  int (*write_func)(Var *, char *, FILE *); /* write: takes Davinci object,type and a filehandle arg */
+  Var * (*read_func)(FILE *, char *); /* read: takes file handle and filename as arg */
+  int (*write_func)(Var *, char *, FILE *, char *); /* write: takes Davinci object,type filehandle and filename arg */
   IOmodPtr next_list;
   IOmodPtr prev_list;
   IOmodPtr next_heap;
@@ -76,7 +76,7 @@ extern TypelistPtr AvailableTypes;
 Var * ff_insmod(struct _vfuncptr *, Var *);
 Var * ff_rmmod(struct _vfuncptr *, Var *);
 Var * ff_lsmod(struct _vfuncptr *, Var *);
-Var * read_from_io_module(FILE *);
+Var * read_from_io_module(FILE *, char *);
 Var * write_to_io_module(Var *, char *, char *, int);
 int iomod_handler_for_type(char *);
 
