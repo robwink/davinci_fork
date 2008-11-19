@@ -44,6 +44,8 @@ AC_PROG_MAKE_SET
 dnl Check endianness.
 AC_C_BIGENDIAN
 
+dnl Enable Position Independent Code (often required by 64-bit systems)
+export CFLAGS="${CFLAGS} -fPIC"
 
 dnl Handle user-controllable options.
 
@@ -151,7 +153,7 @@ fi
 
 #check for cfitsio
 AC_ARG_WITH(cfitsio,
-    [  --with-cfitsio=<path>      prefix of cfitsio installation. e.g. /usr/local or /usr],
+    [  --with-cfitsio=<path>   prefix of cfitsio installation. e.g. /usr/local or /usr],
     [LDFLAGS="$LDFLAGS -L$withval/lib" ; CFLAGS="$CFLAGS -I$withval/include"]
 )
 #For some nonstandard installations (make it more flexible)
@@ -332,6 +334,11 @@ dnl 	AC_DEFINE(HAVE_PLPLOT, 1, [plplot library is present])
 dnl fi
 
 dnl Check for and configure local readline if not found yet.
+
+AC_ARG_WITH(readline,
+    [  --with-readline=<path>  prefix of realine installation. e.g. /usr/local or /usr or /opt/csw ],
+    [LDFLAGS="$LDFLAGS -L$withval/lib" ; CFLAGS="$CFLAGS -I$withval/include"]
+)
 
 AC_CHECK_LIB(readline, rl_callback_handler_install)
 AC_CHECK_LIB(readline, rl_callback_handler_install, [have_readline=yes],[have_readline=no])
