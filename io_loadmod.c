@@ -31,8 +31,13 @@ TypelistPtr AvailableTypes = NULL;
 
 static MODHANDLE portable_dlopen(char * fname) {
   /* a simple Cross platform dlopen routine */
+  MODHANDLE hand;
   if (should_lt_dl_init) should_lt_dl_init = lt_dlinit();
-  return lt_dlopen(fname);
+  hand = lt_dlopen(fname);
+  if (hand == NULL) {
+    parse_error("lt_dlopen failed: %s", lt_dlerror());
+  }
+  return hand;
 }
 
 static void * portable_dlsym(MODHANDLE module, char * function) {
