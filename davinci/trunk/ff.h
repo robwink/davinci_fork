@@ -181,20 +181,20 @@ struct _vfuncptr vfunclist[] = {
     { "unique",     ff_unique,          NULL , NULL},
     { "minchan",  ff_findmin,       NULL , NULL},   
     { "maxchan",  ff_findmin,       NULL , NULL},   
-		{ "maxpos",  ff_maxpos,       NULL , NULL},   
-		{ "minpos",  ff_minpos,       NULL , NULL},   
-		{ "valpos",  ff_valpos,       NULL , NULL},   
+    { "maxpos",  ff_maxpos,       NULL , NULL},   
+    { "minpos",  ff_minpos,       NULL , NULL},   
+    { "valpos",  ff_valpos,       NULL , NULL},   
 		
 
     { "interp",     ff_interp,      NULL , NULL},
-		{ "resample",   ff_resample,    NULL , NULL},
+    { "resample",   ff_resample,    NULL , NULL},
     { "interp2d",   ff_interp2d,    NULL , NULL},
     { "flood_fill", ff_flood_fill,    NULL , NULL},
     { "gplot",      ff_gplot,       NULL , NULL},
-    { "plot",       ff_plot,        NULL , NULL},
+    { "plot",       ff_vplot,        NULL , NULL}, //former ff_plot
     { "splot",      ff_splot,       NULL , NULL},
     { "xplot",      ff_xplot,       NULL, NULL},
-		{ "vplot",      ff_vplot,       NULL, NULL},
+    { "vplot",      ff_vplot,       NULL, NULL},
     { "display",    ff_display,     NULL , NULL},
     { "fit",        ff_fit,         NULL , NULL},
     { "ipi",        ff_ipi,         NULL , NULL},
@@ -207,8 +207,8 @@ struct _vfuncptr vfunclist[] = {
     { "ifill",      ff_ifill,    NULL , NULL},    /* interpolated fill */
     { "jfjll",      ff_jfill,    NULL , NULL},    /* jnterpolated fjll */
     { "kfill",      ff_kfill,    NULL , NULL},    
-		{ "contour",    ff_contour,    NULL , NULL},    
-		{ "rotate",    ff_rotation,    NULL , NULL},    
+    { "contour",    ff_contour,    NULL , NULL},    
+    { "rotate",    ff_rotation,    NULL , NULL},    
 		
 
     { "basis",      ff_basis,       NULL , NULL},
