@@ -96,7 +96,7 @@ Var *ff_gplot(vfuncptr func, Var * arg)
     free(fname);
     return (NULL);
 }
-
+/* Not used anymore, replaced with ff_vplot */
 Var *ff_plot(vfuncptr func, Var * arg)
 {
     Var *s, *v;
