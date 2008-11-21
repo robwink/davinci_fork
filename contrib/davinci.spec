@@ -39,7 +39,7 @@ Release:      1
 Source:      ftp://ftp.mars.asu.edu/pub/software/davinci/%{name}-%{version}.tar.gz
 
 #   build information
-BuildPreReq:  automake, autoconf, make, gcc, hdf5, hdf5-devel, cfitsio, cfitsio-devel, readline, readline-devel, zlib, zlib-devel	
+BuildPreReq:  automake, autoconf, make, gcc, gcc-c++, hdf5, hdf5-devel, cfitsio, cfitsio-devel, readline, readline-devel, zlib, zlib-devel	
 BuildRoot: %{_tmppath}/%{name}-%{version}-buildroot
 Requires:	gnuplot, hdf5, hdf5-devel, cfitsio, readline, zlib
 #Provides:     
