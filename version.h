@@ -1,4 +1,4 @@
-char *version = "@(#) daVinci Version #1.72a";
+char *version = "@(#) daVinci Version #1.73";
 
 #include "build.h"
 
