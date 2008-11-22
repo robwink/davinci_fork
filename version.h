@@ -3,6 +3,17 @@ char *version = "@(#) daVinci Version #1.73";
 #include "build.h"
 
 /*
+Version 1.73
+    * updated ff_vplot
+    * Fixed an issue with dv_locate_file, iom_expand_filename 
+      (when expanding names with ~user, or $ENV)
+    + Configure script has more options (--with-readline) 
+      as well as CFLAGS have -fPIC for 64 bit systems      
+    + ISIS3 code is put in tree (still under development)    
+    * plot now points to ff_vplot instead of ff_plot (which is backcompatible also
+    * Fixed minor of other bugs
+)
+
 Version 1.72a
     * Minor Clean ups
 
