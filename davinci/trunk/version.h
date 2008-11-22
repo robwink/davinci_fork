@@ -12,6 +12,7 @@ Version 1.73
     + ISIS3 code is put in tree (still under development)    
     * plot now points to ff_vplot instead of ff_plot (which is backcompatible also
     * Fixed minor of other bugs
+    * Fixed issues with Solaris
 )
 
 Version 1.72a
