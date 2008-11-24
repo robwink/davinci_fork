@@ -112,7 +112,7 @@ struct _vfuncptr vfunclist[] = {
   { "ls",         ff_list,        NULL , NULL},
   { "list",       ff_list,        NULL , NULL},
   { "save_pds",   WritePDS,       NULL , NULL},
-  { "write_pds",  WritePDS,       NULL , NULL},
+  { "write_pds",      WritePDS,       NULL , NULL},
 
   /* string functions */
 
@@ -151,49 +151,17 @@ struct _vfuncptr vfunclist[] = {
   { "eval",       ff_eval,        NULL , NULL},
   { "putenv",     ff_putenv,      NULL, NULL},
 
-    { "image_resize",      ff_image_resize,       NULL , NULL},
-    { "resize",     ff_resize,      NULL , NULL},
-    { "fork",       ff_fork,        NULL , NULL},
-    { "audit",      ff_audit,       NULL , NULL},
-    { "header",     ff_header,      NULL , NULL},
-    { "killall",    ff_killchild,   NULL, NULL},
-    { "version",    ff_version,     NULL , NULL},
-    
-    { "rand",       ff_random,      (void *)"rand" , NULL},
-    { "random",     ff_random,      NULL , NULL},
-    { "rnoise",     ff_random,      (void *)"rnoise" , NULL},
-    { "gnoise",     ff_gnoise,      NULL , NULL},
-    { "cluster",    ff_cluster,     NULL , NULL},
-    { "ccount",     ff_ccount,      NULL , NULL},
-    
-    { "moment",     ff_moment,      NULL , NULL},   
-    { "moments",     ff_moments,      NULL , NULL},   
-    { "avg",     ff_avg2,           NULL , NULL},   
-    { "stddev",  ff_avg2,           NULL , NULL},   
-    { "sum",     ff_avg2,            NULL , NULL},   
-    { "min",     ff_min,            NULL , NULL},   
-    { "max",     ff_min,            NULL , NULL},   
-    { "sort",     ff_sort,          NULL , NULL},
-    { "unique",     ff_unique,          NULL , NULL},
-    { "minchan",  ff_findmin,       NULL , NULL},   
-    { "maxchan",  ff_findmin,       NULL , NULL},   
-    { "maxpos",  ff_maxpos,       NULL , NULL},   
-    { "minpos",  ff_minpos,       NULL , NULL},   
-    { "valpos",  ff_valpos,       NULL , NULL},   
-		
+  { "edit",       ufunc_edit,     NULL , NULL},
+  { "history",    ff_history,     NULL , NULL},
+  { "h",          ff_history,     NULL , NULL},
 
-    { "interp",     ff_interp,      NULL , NULL},
-    { "resample",   ff_resample,    NULL , NULL},
-    { "interp2d",   ff_interp2d,    NULL , NULL},
-    { "flood_fill", ff_flood_fill,    NULL , NULL},
-    { "gplot",      ff_gplot,       NULL , NULL},
-    { "plot",       ff_vplot,        NULL , NULL}, //former ff_plot
-    { "splot",      ff_splot,       NULL , NULL},
-    { "xplot",      ff_xplot,       NULL, NULL},
-    { "vplot",      ff_vplot,       NULL, NULL},
-    { "display",    ff_display,     NULL , NULL},
-    { "fit",        ff_fit,         NULL , NULL},
-    { "ipi",        ff_ipi,         NULL , NULL},
+  { "image_resize",      ff_image_resize,       NULL , NULL},
+  { "resize",     ff_resize,      NULL , NULL},
+  { "fork",       ff_fork,        NULL , NULL},
+  { "audit",      ff_audit,       NULL , NULL},
+  { "header",     ff_header,      NULL , NULL},
+  { "killall",    ff_killchild,   NULL, NULL},
+  { "version",    ff_version,     NULL , NULL},
 
   { "rand",       ff_random,      (void *)"rand" , NULL},
   { "random",     ff_random,      NULL , NULL},
@@ -202,20 +170,28 @@ struct _vfuncptr vfunclist[] = {
   { "cluster",    ff_cluster,     NULL , NULL},
   { "ccount",     ff_ccount,      NULL , NULL},
 
-    { "vignette",   ff_vignette, NULL , NULL},
-    { "ifill",      ff_ifill,    NULL , NULL},    /* interpolated fill */
-    { "jfjll",      ff_jfill,    NULL , NULL},    /* jnterpolated fjll */
-    { "kfill",      ff_kfill,    NULL , NULL},    
-    { "contour",    ff_contour,    NULL , NULL},    
-    { "rotate",    ff_rotation,    NULL , NULL},    
-		
+  { "moment",     ff_moment,      NULL , NULL},
+  { "moments",     ff_moments,      NULL , NULL},
+  { "avg",     ff_avg2,           NULL , NULL},
+  { "stddev",  ff_avg2,           NULL , NULL},
+  { "sum",     ff_avg2,            NULL , NULL},
+  { "min",     ff_min,            NULL , NULL},
+  { "max",     ff_min,            NULL , NULL},
+  { "sort",     ff_sort,          NULL , NULL},
+  { "unique",     ff_unique,          NULL , NULL},
+  { "minchan",  ff_findmin,       NULL , NULL},
+  { "maxchan",  ff_findmin,       NULL , NULL},
+  { "maxpos",  ff_maxpos,       NULL , NULL},
+  { "minpos",  ff_minpos,       NULL , NULL},
+  { "valpos",  ff_valpos,       NULL , NULL},
+
 
   { "interp",     ff_interp,      NULL , NULL},
   { "resample",   ff_resample,    NULL , NULL},
   { "interp2d",   ff_interp2d,    NULL , NULL},
   { "flood_fill", ff_flood_fill,    NULL , NULL},
   { "gplot",      ff_gplot,       NULL , NULL},
-  { "plot",       ff_plot,        NULL , NULL},
+  { "plot",       ff_vplot,        NULL , NULL}, //former ff_plot
   { "splot",      ff_splot,       NULL , NULL},
   { "xplot",      ff_xplot,       NULL, NULL},
   { "vplot",      ff_vplot,       NULL, NULL},
@@ -232,7 +208,7 @@ struct _vfuncptr vfunclist[] = {
   { "jfjll",      ff_jfill,    NULL , NULL},    /* jnterpolated fjll */
   { "kfill",      ff_kfill,    NULL , NULL},
   { "contour",    ff_contour,    NULL , NULL},
-  { "rotate",     ff_rotation,    NULL , NULL},
+  { "rotate",    ff_rotation,    NULL , NULL},
 
 
   { "basis",      ff_basis,       NULL , NULL},
@@ -245,33 +221,34 @@ struct _vfuncptr vfunclist[] = {
   { "scp",        ff_covar,       NULL , NULL},
   { "pcs",        ff_pcs,         NULL , NULL},
 
-  { "histogram",  ff_histogram,   NULL , NULL},
-  { "hstats",     ff_hstats,      NULL , NULL},
-  { "rgb2hsv",    ff_rgb2hsv,     NULL , NULL},
-  { "hsv2rgb",    ff_hsv2rgb,     NULL , NULL},
-  { "rgb",        ff_rgb,         NULL , NULL},
-  { "ramp",       ff_ramp,        NULL , NULL},
-  { "sawtooth",   ff_sawtooth,    NULL , NULL},
-  { "entropy",    ff_entropy,     NULL , NULL},
+  { "histogram",  ff_histogram,       NULL , NULL},
+  { "hstats",     ff_hstats,          NULL , NULL},
+  { "rgb2hsv",    ff_rgb2hsv,         NULL , NULL},
+  { "hsv2rgb",    ff_hsv2rgb,         NULL , NULL},
+  { "rgb",        ff_rgb,             NULL , NULL},
+  { "ramp",       ff_ramp,             NULL , NULL},
+  { "sawtooth",       ff_sawtooth,             NULL , NULL},
 
-  { "dct",        ff_dct,          NULL , NULL},
-  { "fft",        ff_fft,          (void *)1 , NULL},
-  { "ifft",       ff_fft,          (void *)0 , NULL},
-  { "rfft",       ff_realfft,      (void *)1 , NULL},
-  { "irfft",      ff_realfft,      (void *)0 , NULL},
+  { "entropy",        ff_entropy,     NULL , NULL},
+
+  { "dct",        ff_dct,     NULL , NULL},
+  { "fft",        ff_fft,     (void *)1 , NULL},
+  { "ifft",       ff_fft,     (void *)0 , NULL},
+  { "rfft",       ff_realfft,     (void *)1 , NULL},
+  { "irfft",      ff_realfft,     (void *)0 , NULL},
   { "rfft2",      ff_realfft2,     (void *)1 , NULL},
   { "irfft2",     ff_realfft2,     (void *)0 , NULL},
   { "rfft3",      ff_realfft3,     (void *)1 , NULL},
   { "irfft3",     ff_realfft3,     (void *)0 , NULL},
 
-  { "self_convolve", ff_self_convolve, NULL , NULL},
-  { "convolve",      ff_convolve,      NULL , NULL},
-  { "convolve2",     ff_convolve2,     NULL , NULL},
-  { "convolve3",     ff_convolve3,     NULL , NULL},
-  { "fncc",          ff_fncc,          NULL, NULL},
+  { "self_convolve", ff_self_convolve,        NULL , NULL},
+  { "convolve",      ff_convolve,             NULL , NULL},
+  { "convolve2",     ff_convolve2,            NULL , NULL},
+  { "convolve3",     ff_convolve3,            NULL , NULL},
+  { "fncc",       ff_fncc,                      NULL, NULL},
 
-  { "pnmcut",        ff_cut,          NULL, NULL},
-  { "pnmcrop",       ff_crop,         NULL, NULL},
+  { "pnmcut",         ff_cut,                 NULL, NULL},
+  { "pnmcrop",        ff_crop,                NULL, NULL},
 
 #ifdef INCLUDE_API
   { "popen",   ff_popen,   NULL, NULL},
@@ -295,75 +272,74 @@ struct _vfuncptr vfunclist[] = {
   { "load_module",    ff_load_dv_module,     NULL, NULL},
   { "unload_module",  ff_unload_dv_module,   NULL, NULL},
   { "list_modules",   ff_list_dv_modules,    NULL, NULL},
-  { "insmod",         ff_insmod,             NULL, NULL},
-  { "rmmod",          ff_rmmod,              NULL, NULL},
-  { "lsmod",          ff_lsmod,              NULL, NULL},
+  { "insmod", ff_insmod, NULL, NULL},
+  { "rmmod", ff_rmmod, NULL, NULL},
+  { "lsmod", ff_lsmod, NULL, NULL},
 #endif /* BUILD_MODULE_SUPPORT */
 
   /* add additional functions here.  Don't forget the trailing comma. */
 
-  { "vis_downshift",  ff_GSE_VIS_downshift,   NULL,NULL},
-  { "vis_upshift",    ff_GSE_VIS_upshift,     NULL,NULL},
+  { "vis_downshift", ff_GSE_VIS_downshift,  NULL,NULL},
+  { "vis_upshift",   ff_GSE_VIS_upshift,    NULL,NULL},
 
-  { "write_isis",     write_isis_planes,      NULL,NULL},
+  { "write_isis",    write_isis_planes,     NULL,NULL},
 
   /* */
 
-  { "shade",          ff_shade,              NULL },
-  { "shade2",         ff_shade2,             NULL },
-  { "fexists",        ff_exists,             NULL },
-  { "contains",       ff_contains,           NULL },
+  { "shade",         ff_shade,              NULL,NULL },
+  { "shade2",        ff_shade2,             NULL,NULL },
+  { "fexists",       ff_exists,             NULL,NULL },
+  { "contains",      ff_contains,           NULL,NULL },
 
 
 #if defined(HAVE_LIBQMV) && defined(HAVE_QMV_HVECTOR_H)
-  { "geom_ghost",    ff_deghost,             NULL, NULL },
+  { "geom_ghost",    ff_deghost,            NULL,NULL },
 #endif
-  { "deleted",       ff_deleted,             NULL, NULL },
-  { "set_deleted",   ff_set_deleted,         NULL, NULL },
+  { "deleted",       ff_deleted,            NULL,NULL },
+  { "set_deleted",   ff_set_deleted,        NULL,NULL },
 
-  { "bindct",        ff_bindct,              NULL, NULL },
-  { "binidct",       ff_bindct,              NULL, NULL },
-  { "rice",          ff_rice,                NULL, NULL },
-  { "unrice",        ff_unrice,              NULL, NULL },
+  { "bindct",        ff_bindct,             NULL, NULL },
+  { "binidct",       ff_bindct,             NULL, NULL },
+  { "rice",          ff_rice,               NULL, NULL },
+  { "unrice",        ff_unrice,             NULL, NULL },
 
-  { "distance_map", ff_distance_map,         NULL, NULL },
-  { "slant",        ff_slant,                NULL, NULL },
-  { "unslant",      ff_unslant,              NULL, NULL },
-  { "unslant_shear", ff_unslant_shear,       NULL, NULL },
-  { "chdir",      ff_chdir,                  NULL, NULL },
+  { "distance_map",  ff_distance_map,       NULL, NULL },
+  { "slant",         ff_slant,              NULL, NULL },
+  { "unslant",       ff_unslant,            NULL, NULL },
+  { "unslant_shear", ff_unslant_shear,      NULL, NULL },
+  { "chdir",         ff_chdir,              NULL, NULL },
 
-  { "fncc_fft2d",         ff_fncc_fft2d,     NULL },
-  { "fncc_ifft2d",        ff_fncc_ifft2d,    NULL },
-  { "fncc_cmplx_mul",     ff_fncc_cmplx_mul, NULL },
-  { "fncc_fft_conv_real", ff_fncc_fft_conv_real,      NULL },
-  { "fncc_write_mat",     ff_fncc_write_mat, NULL },
-  { "boxfilter",          ff_boxfilter,      NULL },
+  { "fncc_fft2d",         ff_fncc_fft2d,    NULL,NULL },
+  { "fncc_ifft2d",        ff_fncc_ifft2d,   NULL,NULL },
+  { "fncc_cmplx_mul",     ff_fncc_cmplx_mul, NULL,NULL },
+  { "fncc_fft_conv_real", ff_fncc_fft_conv_real, NULL, NULL },
+  { "fncc_write_mat",     ff_fncc_write_mat, NULL, NULL },
+  { "boxfilter",          ff_boxfilter,     NULL, NULL },
 
-  { "hstretch",   ff_hstretch,    NULL, NULL },
-  { "sstretch",   ff_sstretch2,   NULL, NULL },
-  { "coreg",      ff_coreg,       NULL, NULL },
-  { "coreg2",     ff_coreg2,      NULL, NULL },
-  { "gconvolve",  ff_gconvolve,   NULL, NULL },
-  { "warp",       ff_warp,        NULL, NULL },
-  { "window",     ff_window,      NULL, NULL },
-  { "extract",    ff_extract,     NULL, NULL },
-  { "drawshape",  ff_drawshape,      NULL, NULL },
-  { "local_max",  ff_local_maximum,  NULL, NULL },
-  { "radial_symmetry",   ff_radial_symmetry,  NULL, NULL },
+  { "hstretch",          ff_hstretch,       NULL, NULL },
+  { "sstretch",          ff_sstretch2,      NULL, NULL },
+  { "coreg",             ff_coreg,          NULL, NULL },
+  { "coreg2",            ff_coreg2,         NULL, NULL },
+  { "gconvolve",         ff_gconvolve,      NULL, NULL },
+  { "warp",              ff_warp,           NULL, NULL },
+  { "window",            ff_window,         NULL, NULL },
+  { "extract",           ff_extract,        NULL, NULL },
+  { "radial_symmetry",   ff_radial_symmetry, NULL, NULL },
   { "radial_symmetry2",  ff_radial_symmetry2, NULL, NULL },
   { "radial_symmetry3",  ff_radial_symmetry3, NULL, NULL },
+  { "local_max",         ff_local_maximum,  NULL, NULL },
+  { "drawshape",         ff_drawshape,      NULL, NULL },
 
 #ifdef HAVE_LIBISIS
-  { "write_isis_cub",     ff_write_isis_cub,          NULL },
+  { "write_isis_cub",    ff_write_isis_cub, NULL, NULL },
 #endif /* HAVE_LIBISIS */
 
-  { "load_bin5",    ff_load_bin5,   NULL, NULL },
-  { "load_tdb",     ff_load_tdb,    NULL, NULL },
-  { "cinterp",      ff_cinterp,     NULL, NULL },
+  { "load_bin5",         ff_load_bin5,      NULL, NULL },
+  { "load_tdb",          ff_load_tdb,       NULL, NULL },
+  { "cinterp",           ff_cinterp,        NULL, NULL },
+  { "blend",             ff_blend,          NULL, NULL },
 
-  { "blend",      ff_blend,     NULL, NULL },
-
-  { NULL,             NULL,                  NULL, NULL }
+  { NULL,                NULL,              NULL, NULL }
 };
 
 #endif
