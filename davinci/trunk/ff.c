@@ -14,7 +14,7 @@ Var *eval_buffer(char *buf);
 /**
  ** V_func - find and call named function
  **
- ** This is the function dispatcher.  It locates the function 
+ ** This is the function dispatcher.  It locates the function
  ** handler for a named function and exectues it.
  **/
 
@@ -32,11 +32,11 @@ V_func(char *name, Var * arg)
     ** This needs to check ALL the args to determine if there's any
     ** that need to be parallelized
     */
-	/*
+    /*
     if (parallel_args(arg)) {
         return(parallel_handler(name, arg));
     }
-	*/
+    */
 
     /*
     ** Find and call the named function or its handler
@@ -95,22 +95,22 @@ ff_dfunc(vfuncptr func, Var * arg)
     int format, dsize;
     int i;
 
-	Alist alist[2];
-	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v);
-	alist[1].name = NULL;
+    Alist alist[2];
+    alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v);
+    alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
-	if (v == NULL) {
-		parse_error("Not enough arguments to function: %s()", func->name);
-		return(NULL);
-	}
+    if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (v == NULL) {
+        parse_error("Not enough arguments to function: %s()", func->name);
+        return(NULL);
+    }
 
     /**
     ** Find the named function.
     **/
 
     fptr = (dfunc) func->fdata;
-    if (fptr == NULL) {	/* this should never happen */
+    if (fptr == NULL) { /* this should never happen */
         parse_error("Function not found.");
         return (NULL);
     }
@@ -174,6 +174,122 @@ ff_dfunc(vfuncptr func, Var * arg)
     return (s);
 }
 
+/**
+ ** Worker function for bop, broken out so we can reuse it for other things.
+ **/
+
+Var *
+ff_binary_op(char *name,                     // Function name, for errors
+             Var *a, Var *b,                 // operands
+             double (*fptr)(double, double), // function pointer
+             int format)                     // output format
+{
+  int size[3];
+  int dsize = 0;
+  int i;
+  int order;
+  Var *val = NULL, *t = NULL;
+  int count;
+  int va, vb;
+  int dsizea = 1, dsizeb = 1;
+  double v1, v2, v3;
+
+  u_char *cdata;
+  short *sdata;
+  int *idata;
+  float *fdata;
+  double *ddata;
+
+  /**
+   ** Verify that we can actually operate with these two objects.
+   **
+   ** Okay if: dimensions are the same or 1.  (size == size)
+   **
+   **/
+
+  count = 0;
+  for (i = 0; i < 3; i++) {
+    va = V_SIZE(a)[orders[V_ORDER(a)][i]];
+    vb = V_SIZE(b)[orders[V_ORDER(b)][i]];
+    if (va != 1 && vb != 1 && va != vb) {
+      parse_error("%s: operation illegal, sizes differ", name);
+      return (NULL);
+    }
+    if (va != vb) {
+      dsizea *= va;
+      dsizeb *= vb;
+    }
+  }
+  if (dsizea != 1 && dsizeb != 1) {
+    parse_error("%s: operation illegal, sizes differ on more than 1 axis",
+                name);
+    return (NULL);
+  }
+  dsize = 1;
+  for (i = 0; i < 3; i++) {
+    size[i] = max(V_SIZE(a)[orders[V_ORDER(a)][i]],
+                  V_SIZE(b)[orders[V_ORDER(b)][i]]);
+    dsize *= size[i];
+  }
+  order = (V_DSIZE(a) > V_DSIZE(b) ? V_ORDER(a) : V_ORDER(b));
+
+  if (dsize == 0)
+    dsize = 1;           /* impossible? */
+
+  /**
+   ** can we reuse one of the input values here?
+   **/
+
+  // Initalize the return object
+
+  val = newVar();
+  V_TYPE(val) = ID_VAL;
+  V_FORMAT(val) = format;
+  V_DSIZE(val) = dsize;
+  V_ORDER(val) = order;
+  V_DATA(val) = ddata;
+
+  /** size was extracted as x,y,z.  put it back appropriately **/
+
+  V_SIZE(val)[orders[order][0]] = size[0];
+  V_SIZE(val)[orders[order][1]] = size[1];
+  V_SIZE(val)[orders[order][2]] = size[2];
+
+  V_DATA(val) = (double *)calloc(dsize, NBYTES(format));
+  cdata = (u_char *) V_DATA(val);
+  sdata = (short *) V_DATA(val);
+  idata = (int *) V_DATA(val);
+  fdata = (float *) V_DATA(val);
+  ddata = (double *) V_DATA(val);
+
+  /**
+   ** For each output element (0-size), de-compute relative position using
+   ** order, and re-compute offset to that element in the other var.
+   **/
+  for (i = 0; i < dsize; i++) {
+    v1 = extract_double(a, rpos(i, val, a));
+    v2 = extract_double(b, rpos(i, val, b));
+    v3 = (*fptr)(v1, v2);
+    switch (format) {
+      case BYTE:
+        cdata[i] = saturate_byte(v3);
+        break;
+      case SHORT:
+        sdata[i] = saturate_short(v3);
+        break;
+      case INT:
+        idata[i] = saturate_int(v3);
+        break;
+      case FLOAT:
+        fdata[i] = saturate_float(v3);
+        break;
+      case DOUBLE:
+        ddata[i] = v3;
+        break;
+    }
+  }
+  return (val);
+}
 
 /**
  ** binary operator function, double
@@ -182,104 +298,29 @@ ff_dfunc(vfuncptr func, Var * arg)
 Var *
 ff_bop(vfuncptr func, Var * arg)
 {
-  int format;
-  int size[3];
-  int dsize = 0;
-  int i;
-  int order;
-  Var *val = NULL, *t = NULL, *a = NULL, *b = NULL;
-  int count;
-  int va, vb;
-  int ca = 1, cb = 1;
-  double v1, v2;
-  double *ddata = NULL;
+  Var *a = NULL, *b = NULL;
   ddfunc fptr = (ddfunc) func->fdata;
 
   Alist alist[3];
   alist[0] = make_alist( "object",    ID_VAL,    NULL,    &a);
   alist[1] = make_alist( "object",    ID_VAL,    NULL,    &b);
   alist[2].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   if (a == NULL || b == NULL) {
     parse_error("Not enough arguments to function: %s()", func->name);
     return(NULL);
   }
-  
-  if (fptr == NULL) {	/* this should never happen */
-    parse_error("Function not found.");
+
+  if (fptr == NULL) {              /* this should never happen */
+    parse_error("Function not found: %s.", func->name);
     return (NULL);
   }
-  
-  /**
-   ** Verify that we can actually operate with these two objects.
-   **
-   ** Okay if:	dimensions are the same or 1.	(size == size)
-   **
-   **/
-  
-  count = 0;
-  for (i = 0; i < 3; i++) {
-    va = V_SIZE(a)[orders[V_ORDER(a)][i]];
-    vb = V_SIZE(b)[orders[V_ORDER(b)][i]];
-    if (va != 1 && vb != 1 && va != vb) {
-      
-      parse_error("%s: operation illegal, sizes differ", func->name);
-      return (NULL);
-    }
-    if (va != vb) {
-      ca *= va;
-      cb *= vb;
-    }
-  }
-  if (ca != 1 && cb != 1) {
-    parse_error("%s: operation illegal, sizes differ on more than 1 axis",
-		func->name);
-    return (NULL);
-  }
-  format = DOUBLE;
-  dsize = 1;
-  for (i = 0; i < 3; i++) {
-    size[i] = max(V_SIZE(a)[orders[V_ORDER(a)][i]],
-		  V_SIZE(b)[orders[V_ORDER(b)][i]]);
-    dsize *= size[i];
-  }
-  order = (V_DSIZE(a) > V_DSIZE(b) ? V_ORDER(a) : V_ORDER(b));
-  
-  if (dsize == 0)
-    dsize = 1;	/* impossible? */
-  
-  /**
-   ** can we reuse one of the input values here?
-   **/
-  ddata = (double *)calloc(dsize, NBYTES(format));
-  
-  val = newVar();
-  V_TYPE(val) = ID_VAL;
-  V_FORMAT(val) = format;
-  V_DSIZE(val) = dsize;
-  V_ORDER(val) = order;
-  V_DATA(val) = ddata;
-  
-  /** size was extracted as x,y,z.  put it back appropriately **/
-  
-  V_SIZE(val)[orders[order][0]] = size[0];
-  V_SIZE(val)[orders[order][1]] = size[1];
-  V_SIZE(val)[orders[order][2]] = size[2];
-  
-  
-  /**
-   ** For each output element (0-size), de-compute relative position using
-   ** order, and re-compute offset to that element in the other var.
-   **/
-  for (i = 0; i < dsize; i++) {
-    v1 = extract_double(a, rpos(i, val, a));
-    v2 = extract_double(b, rpos(i, val, b));
-    ddata[i] = (*fptr)(v1, v2);
-  }
-  return (val);
+
+  return(ff_binary_op(func->name, a, b, fptr, DOUBLE));
 }
+
 
 /**
  ** convert organization
@@ -294,20 +335,20 @@ ff_org(vfuncptr func, Var * arg)
   int org = -1, nbytes, format, dsize;
   char *org_str = NULL;
   char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
-  
+
   Alist alist[4];
   alist[0] = make_alist( "object", ID_VAL,   NULL,     &ob);
   alist[1] = make_alist( "org",    ID_ENUM,  orgs,     &org_str);
   alist[2] = make_alist( "order",  ID_ENUM,  orgs,     &org_str);
   alist[3].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
-  
+
   if (ob == NULL) {
     parse_error("'object' not found");
     return(NULL);
   }
-  
+
   if (func->fdata != NULL) {
     org = (int) (func->fdata) - 10;
   } else {
@@ -319,7 +360,7 @@ ff_org(vfuncptr func, Var * arg)
       V_TYPE(s) = ID_STRING;
       V_STRING(s) = strdup(Org2Str(V_ORG(ob)));
       return (s);
-    } else { 
+    } else {
       if (!strcasecmp(org_str, "bsq")) org = BSQ;
       else if (!strcasecmp(org_str, "xyz")) org = BSQ;
       else if (!strcasecmp(org_str, "bil")) org = BIL;
@@ -328,7 +369,7 @@ ff_org(vfuncptr func, Var * arg)
       else if (!strcasecmp(org_str, "zxy")) org = BIP;
     }
   }
-  
+
   /**
    ** create output variable
    **/
@@ -339,11 +380,11 @@ ff_org(vfuncptr func, Var * arg)
   memcpy(V_SYM(s), V_SYM(ob), sizeof(Sym));
   V_DATA(s) = calloc(dsize, NBYTES(format));
   V_ORG(s) = org;
-  
+
   for (i = 0; i < 3; i++) {
     V_SIZE(s)[orders[org][i]] = V_SIZE(ob)[orders[V_ORG(ob)][i]];
   }
-  
+
   nbytes = NBYTES(format);
   from = V_DATA(ob);
   to = V_DATA(s);
@@ -368,16 +409,16 @@ ff_conv(vfuncptr func, Var * arg)
     /**
     ** converting to type stored in vfunc->fdata.
     **/
-	
-	Alist alist[2];
-	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v);
-	alist[1].name = NULL;
+    
+    Alist alist[2];
+    alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v);
+    alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
-	if (v == NULL) {
-		parse_error("Not enough arguments to function: %s()", func->name);
-		return(NULL);
-	}
+    if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (v == NULL) {
+        parse_error("Not enough arguments to function: %s()", func->name);
+        return(NULL);
+    }
 
     format = (int) func->fdata;
     dsize = V_DSIZE(v);
@@ -459,15 +500,15 @@ ff_dim(vfuncptr func, Var * arg)
     Var *v = NULL, *s;
     int *iptr;
 
-	Alist alist[2];
-	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v);
-	alist[1].name = NULL;
+    Alist alist[2];
+    alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v);
+    alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
-	if (v == NULL) {
-		parse_error("Not enough arguments to function: %s()", func->name);
-		return(NULL);
-	}
+    if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (v == NULL) {
+        parse_error("Not enough arguments to function: %s()", func->name);
+        return(NULL);
+    }
 
     iptr = (int *) calloc(3, sizeof(int));
 
@@ -475,7 +516,7 @@ ff_dim(vfuncptr func, Var * arg)
     iptr[1] = GetLines(V_SIZE(v), V_ORG(v));
     iptr[2] = GetBands(V_SIZE(v), V_ORG(v));
 
-	return(newVal(BSQ, 3, 1, 1, INT, iptr));
+    return(newVal(BSQ, 3, 1, 1, INT, iptr));
 }
 
 /**
@@ -487,7 +528,7 @@ ff_format(vfuncptr func, Var * arg)
 {
     Var *s, *obj = NULL;
     char *ptr = NULL;
-	char *type = NULL;
+    char *type = NULL;
     char *format_str = NULL;
     char *formats[] = { "byte", "short", "int", "float", "double", NULL };
 
@@ -497,38 +538,38 @@ ff_format(vfuncptr func, Var * arg)
     alist[2] = make_alist( "type",   ID_ENUM,  formats,     &format_str);
     alist[3].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (obj == NULL) {
-		parse_error("No object specified: %s()", func->name);
-		return (NULL);
-	}
+    if (obj == NULL) {
+        parse_error("No object specified: %s()", func->name);
+        return (NULL);
+    }
 
-	if ((s = eval(obj)) != NULL) obj = s;
+    if ((s = eval(obj)) != NULL) obj = s;
 
     if (format_str == NULL) {
-		switch (V_TYPE(obj)) {
-		case ID_VAL:
-			/**
-			** no format specified.  Print out the format of the passed object.
-			**/
-			type = Format2Str(V_FORMAT(obj));
-			break;
-		case ID_STRING:
-			type = "STRING";
-			break;
-		case ID_STRUCT:
-			type = "STRUCT";
-			break;
-		case ID_TEXT:
-			type = "TEXT";
-			break;
+        switch (V_TYPE(obj)) {
+        case ID_VAL:
+            /**
+            ** no format specified.  Print out the format of the passed object.
+            **/
+            type = Format2Str(V_FORMAT(obj));
+            break;
+        case ID_STRING:
+            type = "STRING";
+            break;
+        case ID_STRUCT:
+            type = "STRUCT";
+            break;
+        case ID_TEXT:
+            type = "TEXT";
+            break;
 
-		default:
-			type = "UNDEFINED";
-			break;
-		}
-		return(newString(strdup(type)));
+        default:
+            type = "UNDEFINED";
+            break;
+        }
+        return(newString(strdup(type)));
     } else {
         /**
         ** v specifies format.
@@ -595,7 +636,7 @@ ff_create(vfuncptr func, Var * arg)
     alist[6] = make_alist( "step",   FLOAT,    NULL,     &step);
     alist[7].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
     dsize = x*y*z;
 
@@ -615,16 +656,16 @@ ff_create(vfuncptr func, Var * arg)
         else if (!strcasecmp(format_str, "float")) format = FLOAT;
         else if (!strcasecmp(format_str, "double")) format = DOUBLE;
     }
-	if (x <= 0 || y <= 0 || z <=0) {
-		parse_error("create(): invalid dimensions: %dx%dx%d\n", x,y,z);
-		return(NULL);
-	}
+    if (x <= 0 || y <= 0 || z <=0) {
+        parse_error("create(): invalid dimensions: %dx%dx%d\n", x,y,z);
+        return(NULL);
+    }
 
     s = newVar();
     V_TYPE(s) = ID_VAL;
 
     V_DATA(s) = calloc(dsize,NBYTES(format));
-	memset(V_DATA(s), -1, dsize*NBYTES(format));
+    memset(V_DATA(s), -1, dsize*NBYTES(format));
     V_FORMAT(s) = format;
     V_ORDER(s) = org;
     V_DSIZE(s) = dsize;
@@ -645,22 +686,22 @@ ff_create(vfuncptr func, Var * arg)
                 v = (count++) * step + start;
                 c = cpos(i,j,k,s);
                 switch (format) {
-                case BYTE: 
+                case BYTE:
                     cdata[c] = saturate_byte(v);
                     break;
-                case SHORT: 
+                case SHORT:
                     sdata[c] = saturate_short(v);
                     break;
-                case INT: 
+                case INT:
                     idata[c] = saturate_int(v);
                     break;
-                case FLOAT: 
+                case FLOAT:
                     fdata[c] = saturate_float(v);
                     break;
-                case DOUBLE: 
+                case DOUBLE:
                     ddata[c] = v;
                     break;
-				}
+                }
             }
         }
     }
@@ -678,22 +719,22 @@ Var *
 ff_echo(vfuncptr func, Var * arg)
 {
     int t = VERBOSE;
-	Var *obj = NULL;
+    Var *obj = NULL;
     Alist alist[2];
     alist[0] = make_alist( "obj",    ID_UNK,   NULL,     &obj);
     alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
     /**
     ** The cheap version.  Should expand this for proper use someday.
      **/
     VERBOSE = 1;
 
-	if (obj == NULL) {
-		parse_error("echo(): null argument passed");
-		return(NULL);
-	} 
+    if (obj == NULL) {
+        parse_error("echo(): null argument passed");
+        return(NULL);
+    }
 
     pp_print(obj);
     VERBOSE = t;
@@ -756,7 +797,7 @@ ff_replicate(vfuncptr func, Var * arg)
     alist[3] = make_alist( "z",   INT, NULL,  &z);
     alist[4].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (v == NULL) {
         parse_error("clone: No object specified\n");
@@ -773,10 +814,10 @@ ff_replicate(vfuncptr func, Var * arg)
 
     org = V_ORG(v);
 
-	if (x <= 0 || y <= 0 || z <= 0) {
-		parse_error("Bad dimension value");
-		return(NULL);
-	}
+    if (x <= 0 || y <= 0 || z <= 0) {
+        parse_error("Bad dimension value");
+        return(NULL);
+    }
 
     len[orders[org][0]] = x;
     len[orders[org][1]] = y;
@@ -846,65 +887,65 @@ ff_replicate(vfuncptr func, Var * arg)
 Var *
 ff_cat(vfuncptr func, Var * arg)
 {
-	int ac;
-	Var **av;
-	Var *axis_var = NULL, *p, *q, *v;
-	char *axis_str;
-	int i, j, axis;
+    int ac;
+    Var **av;
+    Var *axis_var = NULL, *p, *q, *v;
+    char *axis_str;
+    int i, j, axis;
 
-	make_args(&ac, &av, func, arg);
+    make_args(&ac, &av, func, arg);
 
-	if (ac < 4) {
-		parse_error("Not enough arguments to cat()");
-		return(NULL);
-	}
-	/* find axis if specified */
-	for (i = 1 ; i < ac ; i++) {
-		if (V_TYPE(av[i]) == ID_KEYWORD && 
-		    V_NAME(av[i]) != NULL && 
-			!strcasecmp(V_NAME(av[i]), "axis")) {
+    if (ac < 4) {
+        parse_error("Not enough arguments to cat()");
+        return(NULL);
+    }
+    /* find axis if specified */
+    for (i = 1 ; i < ac ; i++) {
+        if (V_TYPE(av[i]) == ID_KEYWORD &&
+            V_NAME(av[i]) != NULL &&
+            !strcasecmp(V_NAME(av[i]), "axis")) {
 
-			axis_var = V_KEYVAL(av[i]);
-			for (j = i ; j < ac-1 ; j++) {
-				av[j] = av[j+1];
-			}
-			ac--;
-			break;
-		}
-	}
-	if (axis_var == NULL) {
-		axis_var = av[ac-1];
-		ac--;
-	}
+            axis_var = V_KEYVAL(av[i]);
+            for (j = i ; j < ac-1 ; j++) {
+                av[j] = av[j+1];
+            }
+            ac--;
+            break;
+        }
+    }
+    if (axis_var == NULL) {
+        axis_var = av[ac-1];
+        ac--;
+    }
 
-	if (V_TYPE(axis_var) == ID_STRING) {
-		axis_str = V_STRING(axis_var);
-	} else if ((v = eval(axis_var)) != NULL && V_TYPE(v) == ID_STRING) {
-		axis_str = V_STRING(v);
-	} else if (V_NAME(axis_var) != NULL) {
-		axis_str = V_NAME(axis_var);
-	} else {
-		parse_error("cat(): No axis specified");
-		return(NULL);
-	}
-	if (!strcasecmp(axis_str, "x")) axis = 0;
-	else if (!strcasecmp(axis_str, "y")) axis = 1;
-	else if (!strcasecmp(axis_str, "z")) axis = 2;
-	else {
-		parse_error("cat(): Invalid axis specified");
-		return(NULL);
-	}
+    if (V_TYPE(axis_var) == ID_STRING) {
+        axis_str = V_STRING(axis_var);
+    } else if ((v = eval(axis_var)) != NULL && V_TYPE(v) == ID_STRING) {
+        axis_str = V_STRING(v);
+    } else if (V_NAME(axis_var) != NULL) {
+        axis_str = V_NAME(axis_var);
+    } else {
+        parse_error("cat(): No axis specified");
+        return(NULL);
+    }
+    if (!strcasecmp(axis_str, "x")) axis = 0;
+    else if (!strcasecmp(axis_str, "y")) axis = 1;
+    else if (!strcasecmp(axis_str, "z")) axis = 2;
+    else {
+        parse_error("cat(): Invalid axis specified");
+        return(NULL);
+    }
 
-	p = av[1];
-	for (i = 2 ; i < ac ; i++) {
-		q = do_cat(p,av[i],axis);
-		if (q == NULL) {
-			return(NULL);
-		}
-		p = q;
-	}
-	free(av);
-	return(p);
+    p = av[1];
+    for (i = 2 ; i < ac ; i++) {
+        q = do_cat(p,av[i],axis);
+        if (q == NULL) {
+            return(NULL);
+        }
+        p = q;
+    }
+    free(av);
+    return(p);
 }
 
 Var *
@@ -975,7 +1016,7 @@ cat_mixed_text(Var * ob1, Var * ob2, int axis)
 
 Var *
 cat_string_text(Var * ob1, Var * ob2, int axis)
-{ 
+{
     Var *s=newVar();
 
     if (axis==2) { /*Can't cat Text or Strings in Z*/
@@ -1020,7 +1061,7 @@ cat_string_text(Var * ob1, Var * ob2, int axis)
                                    strlen(V_STRING(ob2))+1);
         strcpy(V_STRING(s),V_STRING(ob1));
         strcat(V_STRING(s),V_STRING(ob2));
-	
+    
         return(s);
     }
 
@@ -1031,12 +1072,12 @@ cat_string_text(Var * ob1, Var * ob2, int axis)
             parse_error("Objects must have equal number of rows");
             return(NULL);
         }
-		
+        
         V_TYPE(s)=ID_TEXT;
         Row=V_TEXT(ob1).Row;
         V_TEXT(s).Row=Row;
         V_TEXT(s).text=(char **)calloc(sizeof(char *),Row);
-        for (i=0;i<Row;i++){	
+        for (i=0;i<Row;i++){    
             V_TEXT(s).text[i]=(char *)calloc(sizeof(char),strlen(V_TEXT(ob1).text[i])+
                                              strlen(V_TEXT(ob2).text[i])+1);
             strcpy(V_TEXT(s).text[i],V_TEXT(ob1).text[i]);
@@ -1048,7 +1089,7 @@ cat_string_text(Var * ob1, Var * ob2, int axis)
 
     return(NULL);
 }
-			
+            
 
 Var *
 do_cat(Var * ob1, Var * ob2, int axis)
@@ -1081,7 +1122,7 @@ do_cat(Var * ob1, Var * ob2, int axis)
         return (NULL);
     }
 
-    if ((ob1_type == ID_VAL && ob2_type!=ID_VAL) || 
+    if ((ob1_type == ID_VAL && ob2_type!=ID_VAL) ||
         (ob1_type!=ID_VAL && ob2_type==ID_VAL)){
         parse_error( "cat(), Can't mix numbers with non-numbers!");
         return(NULL);
@@ -1205,20 +1246,20 @@ ff_string(vfuncptr func, Var * arg)
 {
     Var *v = NULL, *s;
 
-	Alist alist[2];
-	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v);
-	alist[1].name = NULL;
+    Alist alist[2];
+    alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v);
+    alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (v == NULL) {
-		parse_error("Not enough arguments to function: %s()", func->name);
-		return(NULL);
-	}
-	if (V_FORMAT(v) != BYTE) {
-		parse_error("%s(), argument must be BYTE format");
-		return(NULL);
-	}
+    if (v == NULL) {
+        parse_error("Not enough arguments to function: %s()", func->name);
+        return(NULL);
+    }
+    if (V_FORMAT(v) != BYTE) {
+        parse_error("%s(), argument must be BYTE format");
+        return(NULL);
+    }
 
     s = newVar();
     V_TYPE(s) = ID_STRING;
@@ -1238,15 +1279,15 @@ ff_issubstring(vfuncptr func, Var * arg)
     alist[1] = make_alist("source", ID_STRING, NULL, &S2);
     alist[2].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) {
-		*Result=0;
-	} else if (S1 == NULL || S2 == NULL){
+    if (parse_args(func, arg, alist) == 0) {
+        *Result=0;
+    } else if (S1 == NULL || S2 == NULL){
         *Result=0;
     } else if ((strstr(S1,S2))==NULL){
         *Result=0;
     } else {
         *Result=1;
-	}
+    }
 
     return(newVal(BSQ,1,1,1, INT, Result));
 }
@@ -1263,7 +1304,7 @@ ff_pow(vfuncptr func, Var * arg)
     alist[1] = make_alist( "ob2", ID_VAL,   NULL,     &ob2);
     alist[2].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (ob1 == NULL) {
         parse_error("%s(), two objects required.", func->name);
@@ -1281,17 +1322,17 @@ ff_system(vfuncptr func, Var * arg)
 {
     char *str= NULL;
     int sys_rtnval;
-	Alist alist[2];
-	alist[0] = make_alist( "command",    ID_STRING,    NULL,    &str);
-	alist[1].name = NULL;
+    Alist alist[2];
+    alist[0] = make_alist( "command",    ID_STRING,    NULL,    &str);
+    alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
-	if (str == NULL) {
-		parse_error("Not enough arguments to function: %s()", func->name);
-		return(NULL);
-	}
-	sys_rtnval = system(str);
-	return newInt(sys_rtnval);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (str == NULL) {
+        parse_error("Not enough arguments to function: %s()", func->name);
+        return(NULL);
+    }
+    sys_rtnval = system(str);
+    return newInt(sys_rtnval);
 }
 
 Var *
@@ -1317,7 +1358,7 @@ ff_exit(vfuncptr func, Var * arg)
     alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
     alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (obj == NULL) {
         exit(0);
@@ -1339,7 +1380,7 @@ ff_fsize(vfuncptr func, Var * arg)
     alist[0] = make_alist("filename",    ID_STRING,    NULL,     &filename);
     alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (filename == NULL) {
         fprintf(stderr, "%s: No filename specified\n", func->name);
@@ -1368,7 +1409,7 @@ ff_history(vfuncptr func, Var * arg)
     alist[0] = make_alist( "count",    ID_VAL,    NULL,     &value);
     alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (value == NULL)  {
         count=-1;
@@ -1390,7 +1431,7 @@ print_history(int i)
 
     state = history_get_history_state();
     if (i == -1) i = state->length;
-	if (i > state->length) i = state->length;
+    if (i > state->length) i = state->length;
     for (j = state->length-i ; j < state->length ; j++) {
         h = state->entries[j];
         printf("%6d   %s\n", j+1, h->line);
@@ -1427,7 +1468,7 @@ ff_hedit(vfuncptr func, Var * arg)
         parse_error("%s: not that many history entires", func->name);
         return(NULL);
     }
-    tmp = make_temp_file_path(); 
+    tmp = make_temp_file_path();
     if (tmp == NULL || (fp = fopen(tmp, "w")) == NULL ) {
         parse_error("%s: unable to open temp file", func->name);
         if (tmp) free(tmp);
@@ -1463,32 +1504,32 @@ ff_resize(vfuncptr func, Var * arg)
   char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
   char *org_str = NULL;
   int org = 0;
-  
+
   Alist alist[6];
   alist[0] = make_alist("obj",    ID_VAL,     NULL,     &obj);
-  alist[1] = make_alist("x",    	INT,    	NULL,     &x);
-  alist[2] = make_alist("y",    	INT,    	NULL,     &y);
-  alist[3] = make_alist("z",    	INT,    	NULL,     &z);
+  alist[1] = make_alist("x",        INT,        NULL,     &x);
+  alist[2] = make_alist("y",        INT,        NULL,     &y);
+  alist[3] = make_alist("z",        INT,        NULL,     &z);
   alist[4] = make_alist("org",    ID_ENUM,    orgs,     &org_str);
   alist[5].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
-  
+
   if (obj == NULL)  {
     parse_error("No argument specified: %s(...obj=...)", func->name);
     return(NULL);
   }
-  
+
   if (x < 0 || y < 0 || z < 0) {
     parse_error("Illegal dimensions: %dx%dx%d\n", x, y, z);
     return(NULL);
   }
   if (x*y*z != V_DSIZE(obj)) {
-    parse_error("Illegal dimensions: %dx%dx%d != %d\n", 
-		x, y, z, V_DSIZE(obj));
+    parse_error("Illegal dimensions: %dx%dx%d != %d\n",
+        x, y, z, V_DSIZE(obj));
     return(NULL);
   }
-  
+
 
   if (org_str != NULL) {
     if (!strcasecmp(org_str, "bsq")) org = BSQ;
@@ -1499,11 +1540,11 @@ ff_resize(vfuncptr func, Var * arg)
     else if (!strcasecmp(org_str, "zxy")) org = BIP;
     V_ORG(obj) = org;
   }
-  
+
   V_SIZE(obj)[orders[V_ORG(obj)][0]] = x;
   V_SIZE(obj)[orders[V_ORG(obj)][1]] = y;
   V_SIZE(obj)[orders[V_ORG(obj)][2]] = z;
-  
+
   return(obj);
 }
 
@@ -1523,17 +1564,17 @@ ff_eval(vfuncptr func, Var * arg)
 {
     char *expr = NULL;
     char *buf;
-	
+    
     Alist alist[2];
     alist[0] = make_alist("expr",    ID_STRING,     NULL,     &expr);
     alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (expr == NULL)  {
         return(NULL);
     }
-	
+    
     /*
     ** gotta stick a newline terminator on the end
     */
@@ -1560,9 +1601,9 @@ ff_syscall(vfuncptr func, Var * arg)
     Alist alist[2];
     alist[0] = make_alist("command",    ID_STRING,     NULL,     &expr);
     alist[1].name = NULL;
- 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
- 
+
+    if (parse_args(func, arg, alist) == 0) return(NULL);
+
     if (expr == NULL)  {
         return(NULL);
     }
@@ -1570,7 +1611,7 @@ ff_syscall(vfuncptr func, Var * arg)
     if ((fp=popen(expr,"r"))==NULL)
         return(NULL);
 
-    text=(char **)calloc(Max,sizeof(char *));	
+    text=(char **)calloc(Max,sizeof(char *));   
     while(dv_getline(&ptr, fp) != EOF) {
         if (Row >=Max){
             Max+=100;
@@ -1587,9 +1628,9 @@ ff_syscall(vfuncptr func, Var * arg)
     }
 
     pclose(fp);
-	if (Row == 0) {
-		return(NULL);
-	}
+    if (Row == 0) {
+        return(NULL);
+    }
 
     o=newVar();
     V_TYPE(o)=ID_TEXT;
@@ -1598,7 +1639,7 @@ ff_syscall(vfuncptr func, Var * arg)
 
     return(o);
 }
-		
+        
 Var *
 ff_dump(vfuncptr func, Var * arg)
 {
@@ -1610,9 +1651,9 @@ ff_dump(vfuncptr func, Var * arg)
     alist[1] = make_alist("indent",    INT,     NULL,     &indent);
     alist[2] = make_alist("depth",    INT,     NULL,     &depth);
     alist[3].name = NULL;
- 
+
     if (parse_args(func, arg, alist) == 0) return(NULL);
- 
+
     if (v == NULL) return(NULL);
 
     dump_var(v, indent, depth);
@@ -1635,7 +1676,7 @@ ff_equals(vfuncptr func, Var * arg)
     alist[1] = make_alist("obj2",    ID_UNK,     NULL,     &v2);
     alist[2].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if ((e = eval(v1)) != NULL) v1 = e;
     if ((e = eval(v2)) != NULL) v2 = e;
@@ -1660,7 +1701,7 @@ compare_vars(Var *a, Var *b)
     switch (V_TYPE(a)) {
     case ID_STRUCT:
         return(compare_struct(a, b));
-		
+        
     case ID_TEXT:
         if (V_TEXT(a).Row != V_TEXT(b).Row) return(0);
         rows = V_TEXT(a).Row;
@@ -1724,37 +1765,37 @@ compare_vars(Var *a, Var *b)
 Var *
 newInt(int i)
 {
-    Var *v = newVal(BSQ, 1, 1,1, INT, calloc(1, sizeof(int)));	
+    Var *v = newVal(BSQ, 1, 1,1, INT, calloc(1, sizeof(int)));  
     V_INT(v) = i;
     return(v);
 }
 Var *
 newFloat(float f)
 {
-	Var *v = newVal(BSQ, 1, 1,1, FLOAT, calloc(1, sizeof(float)));	
-	V_FLOAT(v) = f;
-	return(v);
+    Var *v = newVal(BSQ, 1, 1,1, FLOAT, calloc(1, sizeof(float)));  
+    V_FLOAT(v) = f;
+    return(v);
 }
 Var *
 newDouble(double d)
 {
-	Var *v = newVal(BSQ, 1, 1,1, DOUBLE, calloc(1, sizeof(double)));	
-	V_DOUBLE(v) = d;
-	return(v);
+    Var *v = newVal(BSQ, 1, 1,1, DOUBLE, calloc(1, sizeof(double)));    
+    V_DOUBLE(v) = d;
+    return(v);
 }
 
 Var *
 ff_killchild(vfuncptr func, Var *arg)
 {
 #if !(defined(__CYGWIN__) || defined(__MINGW32__))
-	pid_t pid;
-	pid=getpgrp();
-	pid=-pid;
-	kill(pid,SIGUSR1);
+    pid_t pid;
+    pid=getpgrp();
+    pid=-pid;
+    kill(pid,SIGUSR1);
 #else
-	parse_error("Function not supported under DOS/Windows.");
+    parse_error("Function not supported under DOS/Windows.");
 #endif /* __CYGWIN__ */
-	return(NULL);
+    return(NULL);
 }
 
 
@@ -1776,25 +1817,25 @@ ff_exists(vfuncptr func, Var * arg)
     alist[0] = make_alist("filename",    ID_UNK,     NULL,     &v);
     alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (v == NULL) {
+    if (v == NULL) {
         parse_error( "%s: No filename specified.", func->name);
-		return(NULL);
-	} else if (V_TYPE(v) == ID_STRING) {
-		filename = V_STRING(v);
-		return(newInt(access(filename, F_OK) == 0));
-	} else if (V_TYPE(v) == ID_TEXT) {
-		int *data = calloc(n, sizeof(int));
-		n = V_TEXT(v).Row;
-		for (i = 0 ; i < n ; i++) {
-			data[i] = (access(V_TEXT(v).text[i], F_OK) == 0);
-		}
-		return(newVal(BSQ, 1, n, 1, INT, data));
-	} else {
+        return(NULL);
+    } else if (V_TYPE(v) == ID_STRING) {
+        filename = V_STRING(v);
+        return(newInt(access(filename, F_OK) == 0));
+    } else if (V_TYPE(v) == ID_TEXT) {
+        int *data = calloc(n, sizeof(int));
+        n = V_TEXT(v).Row;
+        for (i = 0 ; i < n ; i++) {
+            data[i] = (access(V_TEXT(v).text[i], F_OK) == 0);
+        }
+        return(newVal(BSQ, 1, n, 1, INT, data));
+    } else {
         parse_error( "%s: Argument is not a filename.", func->name);
-		return(NULL);
-	}
+        return(NULL);
+    }
 }
 
 Var *
@@ -1808,19 +1849,19 @@ ff_putenv(vfuncptr func, Var * arg)
     alist[1] = make_alist("value",    ID_STRING,     NULL,     &val);
     alist[2].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (name == NULL) {
+    if (name == NULL) {
         parse_error( "%s: No name specified.", func->name);
-		return(NULL);
-	}
-	if (val == NULL) {
+        return(NULL);
+    }
+    if (val == NULL) {
         parse_error( "%s: No value specified.", func->name);
-		return(NULL);
-	}
-	sprintf(buf, "%s=%s", name, val);
-	putenv(strdup(buf));
-	return(NULL);
+        return(NULL);
+    }
+    sprintf(buf, "%s=%s", name, val);
+    putenv(strdup(buf));
+    return(NULL);
 }
 
 Var *
@@ -1828,13 +1869,13 @@ ff_length(vfuncptr func, Var * arg)
 {
   Var *obj = NULL;
   int len;
-  
+
   Alist alist[2];
   alist[0] = make_alist("obj",    ID_UNK,     NULL,     &obj);
   alist[1].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
-  
+
   if (obj == NULL) {
     parse_error("Expected object");
     return(NULL);
@@ -1847,23 +1888,23 @@ ff_length(vfuncptr func, Var * arg)
     parse_error("%s: unrecognized type", func->name);
     return(NULL);
   }
-}	
+}   
 
 int
 v_length(Var *obj)
 {
-	switch (V_TYPE(obj))  {
-		case ID_STRUCT:
-			return(get_struct_count(obj));
-		case ID_TEXT:
-			return(V_TEXT(obj).Row);
-		case ID_STRING:
-			return(strlen(V_STRING(obj)));
-		case ID_VAL:
-			return(V_DSIZE(obj));
-		default:
-			return(-1);
-	}
+    switch (V_TYPE(obj))  {
+        case ID_STRUCT:
+            return(get_struct_count(obj));
+        case ID_TEXT:
+            return(V_TEXT(obj).Row);
+        case ID_STRING:
+            return(strlen(V_STRING(obj)));
+        case ID_VAL:
+            return(V_DSIZE(obj));
+        default:
+            return(-1);
+    }
 }
 
 /*
@@ -1876,12 +1917,12 @@ Var *
 ff_deleted(vfuncptr func, Var * arg)
 {
     Var *obj = NULL;
-	Var *str_value = NULL, *v;
-	char vbuf[16] = { 0 };
-	int bytes;
-	int nbytes, dsize;
-	unsigned char *data, *out;
-	int i;
+    Var *str_value = NULL, *v;
+    char vbuf[16] = { 0 };
+    int bytes;
+    int nbytes, dsize;
+    unsigned char *data, *out;
+    int i;
 
 
     Alist alist[3];
@@ -1889,113 +1930,113 @@ ff_deleted(vfuncptr func, Var * arg)
     alist[1] = make_alist("value",  ID_UNK,     NULL,     &str_value);
     alist[2].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (obj == NULL) {
+    if (obj == NULL) {
         parse_error( "%s: No value specified for keyword: object.", func->name);
-		return(NULL);
-	}
-	if (str_value == NULL) {
+        return(NULL);
+    }
+    if (str_value == NULL) {
         parse_error( "%s: No value specified for keyword: value.", func->name);
-		return(NULL);
-	}
+        return(NULL);
+    }
 
-	if (V_TYPE(str_value) == ID_STRING) {
-		bytes = decode_hexstring(V_STRING(str_value), vbuf);
-	}
+    if (V_TYPE(str_value) == ID_STRING) {
+        bytes = decode_hexstring(V_STRING(str_value), vbuf);
+    }
 
-	if (bytes == 0) {
-		parse_error("Unrecognized value: %s", V_STRING(str_value));
-		return(NULL);
-	}
+    if (bytes == 0) {
+        parse_error("Unrecognized value: %s", V_STRING(str_value));
+        return(NULL);
+    }
 
-	dsize = V_DSIZE(obj);
-	data = V_DATA(obj);
-	nbytes = NBYTES(V_FORMAT(obj));
-	if (bytes != nbytes) {
-		parse_error("Word sizes differ");
-		return(NULL);
-	}
-	out = calloc(dsize, 1);
+    dsize = V_DSIZE(obj);
+    data = V_DATA(obj);
+    nbytes = NBYTES(V_FORMAT(obj));
+    if (bytes != nbytes) {
+        parse_error("Word sizes differ");
+        return(NULL);
+    }
+    out = calloc(dsize, 1);
 
-	for (i = 0 ; i < dsize ; i++) {
-		if (memcmp(data+(i*nbytes), vbuf, bytes) == 0) {
-			out[i] = 1;
-		}
-	}
+    for (i = 0 ; i < dsize ; i++) {
+        if (memcmp(data+(i*nbytes), vbuf, bytes) == 0) {
+            out[i] = 1;
+        }
+    }
 
-	v = newVar();
-	V_TYPE(v) = ID_VAL;
-	V_ORG(v) = V_ORG(obj);
-	V_FORMAT(v) = BYTE;
-	V_SIZE(v)[0] = V_SIZE(obj)[0];
-	V_SIZE(v)[1] = V_SIZE(obj)[1];
-	V_SIZE(v)[2] = V_SIZE(obj)[2];
-	V_DSIZE(v) = V_DSIZE(obj);
-	V_DATA(v) = out;
+    v = newVar();
+    V_TYPE(v) = ID_VAL;
+    V_ORG(v) = V_ORG(obj);
+    V_FORMAT(v) = BYTE;
+    V_SIZE(v)[0] = V_SIZE(obj)[0];
+    V_SIZE(v)[1] = V_SIZE(obj)[1];
+    V_SIZE(v)[2] = V_SIZE(obj)[2];
+    V_DSIZE(v) = V_DSIZE(obj);
+    V_DATA(v) = out;
 
-	return(v);
+    return(v);
 }
 
 int
 decode_hexstring(char *str, char *buf)
 {
-	char *vbuf = buf;
-	int char_count = 0;
-	int base, shift;
+    char *vbuf = buf;
+    int char_count = 0;
+    int base, shift;
 
-	char *p, *q;
-	/*
-	** Try to decode value into a hex block
-	*/
-	if (str[0] == '#') {
-		p = str;
-		q = strchr(str+1, '#');
-		if (p && q) {
-			base = atoi(p+1);
-			switch(base) {
-				case 16: shift=4; break;
-				default:
-					return(0);
-			}
-			p = q+1;
-			/*
-			** this is a hacky hardcode for #16#.
-			*/
-			while (*p) {
-				if (*p >= '0' && *p <= '9') {
-					*vbuf += *p - '0';
-				} else if (*p >= 'a' && *p <= 'f') {
-					*vbuf += *p - 'a' + 10;
-				} else if (*p >= 'A' && *p <= 'F') {
-					*vbuf += *p - 'A' + 10;
-				} else {
-					return(0);
-				}
-				char_count++;
-				p++;
-				if (char_count % 2 == 0) {
-					vbuf++;
-				} else {
-					*vbuf = *vbuf << 4;
-				}
-			}
-		}
-		return(char_count/2);
-	}
-	return(0);
+    char *p, *q;
+    /*
+    ** Try to decode value into a hex block
+    */
+    if (str[0] == '#') {
+        p = str;
+        q = strchr(str+1, '#');
+        if (p && q) {
+            base = atoi(p+1);
+            switch(base) {
+                case 16: shift=4; break;
+                default:
+                    return(0);
+            }
+            p = q+1;
+            /*
+            ** this is a hacky hardcode for #16#.
+            */
+            while (*p) {
+                if (*p >= '0' && *p <= '9') {
+                    *vbuf += *p - '0';
+                } else if (*p >= 'a' && *p <= 'f') {
+                    *vbuf += *p - 'a' + 10;
+                } else if (*p >= 'A' && *p <= 'F') {
+                    *vbuf += *p - 'A' + 10;
+                } else {
+                    return(0);
+                }
+                char_count++;
+                p++;
+                if (char_count % 2 == 0) {
+                    vbuf++;
+                } else {
+                    *vbuf = *vbuf << 4;
+                }
+            }
+        }
+        return(char_count/2);
+    }
+    return(0);
 }
 
 Var *
 ff_set_deleted(vfuncptr func, Var * arg)
 {
     Var *obj = NULL, *mask=NULL;
-	Var *str_value = NULL, *v;
-	char vbuf[16] = { 0 };
-	int bytes;
-	int nbytes, dsize;
-	unsigned char *data, *out;
-	int i;
+    Var *str_value = NULL, *v;
+    char vbuf[16] = { 0 };
+    int bytes;
+    int nbytes, dsize;
+    unsigned char *data, *out;
+    int i;
 
 
     Alist alist[4];
@@ -2004,60 +2045,60 @@ ff_set_deleted(vfuncptr func, Var * arg)
     alist[2] = make_alist("value",  ID_UNK,     NULL,     &str_value);
     alist[3].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (obj == NULL) {
+    if (obj == NULL) {
         parse_error( "%s: No value specified for keyword: object.", func->name);
-		return(NULL);
-	}
-	if (mask == NULL) {
+        return(NULL);
+    }
+    if (mask == NULL) {
         parse_error( "%s: No value specified for keyword: mask.", func->name);
-		return(NULL);
-	}
-	if (str_value == NULL) {
+        return(NULL);
+    }
+    if (str_value == NULL) {
         parse_error( "%s: No value specified for keyword: value.", func->name);
-		return(NULL);
-	}
+        return(NULL);
+    }
 
-	if (math_operable(obj,mask) == 0) {
-		parse_error("Sizes don't match");
-		return(NULL);
-	}
+    if (math_operable(obj,mask) == 0) {
+        parse_error("Sizes don't match");
+        return(NULL);
+    }
 
-	if (V_TYPE(str_value) == ID_STRING) {
-		bytes = decode_hexstring(V_STRING(str_value), vbuf);
-	}
+    if (V_TYPE(str_value) == ID_STRING) {
+        bytes = decode_hexstring(V_STRING(str_value), vbuf);
+    }
 
-	if (bytes == 0) {
-		parse_error("Unrecognized value: %s", V_STRING(str_value));
-		return(NULL);
-	}
+    if (bytes == 0) {
+        parse_error("Unrecognized value: %s", V_STRING(str_value));
+        return(NULL);
+    }
 
-	dsize = V_DSIZE(obj); 
-	nbytes = NBYTES(V_FORMAT(obj));
-	if (bytes != nbytes) {
-		parse_error("Word sizes differ");
-		return(NULL);
-	}
-	v = V_DUP(obj); 
-	data = V_DATA(v); 
+    dsize = V_DSIZE(obj);
+    nbytes = NBYTES(V_FORMAT(obj));
+    if (bytes != nbytes) {
+        parse_error("Word sizes differ");
+        return(NULL);
+    }
+    v = V_DUP(obj);
+    data = V_DATA(v);
 
-	for (i = 0 ; i < dsize ; i++) {
-		if (extract_int(mask, i)) {
-			memcpy(data+(nbytes*i), vbuf, bytes);
-		}
-	}
-	return(v);
+    for (i = 0 ; i < dsize ; i++) {
+        if (extract_int(mask, i)) {
+            memcpy(data+(nbytes*i), vbuf, bytes);
+        }
+    }
+    return(v);
 }
 
 Var *
 ff_contains(vfuncptr func, Var * arg)
 {
     Var *obj = NULL, *value=NULL;
-	int dsize;
-	int i, ret = 0;
-	int vi;
-	double vd;
+    int dsize;
+    int i, ret = 0;
+    int vi;
+    double vd;
 
 
     Alist alist[4];
@@ -2065,87 +2106,87 @@ ff_contains(vfuncptr func, Var * arg)
     alist[1] = make_alist("value",   ID_VAL,     NULL,    &value);
     alist[2].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (obj == NULL) {
+    if (obj == NULL) {
         parse_error( "%s: No value specified for keyword: object.", func->name);
-		return(NULL);
-	}
-	if (value == NULL) {
+        return(NULL);
+    }
+    if (value == NULL) {
         parse_error( "%s: No value specified for keyword: value.", func->name);
-		return(NULL);
-	}
-	dsize = V_DSIZE(obj);
+        return(NULL);
+    }
+    dsize = V_DSIZE(obj);
 
-	switch (V_FORMAT(obj)) {
-		case BYTE:
-			vi = extract_int(value, 0);
-			for (i = 0 ; i < dsize ; i++) {
-				if (((unsigned char *)V_DATA(obj))[i] == vi) {
-					ret = 1;
-					break;
-				}
-			}
-			break;
-		case SHORT:
-			vi = extract_int(value, 0);
-			for (i = 0 ; i < dsize ; i++) {
-				if (((short *)V_DATA(obj))[i] == vi) {
-					ret = 1;
-					break;
-				}
-			}
-			break;
-		case INT:
-			vi = extract_int(value, 0);
-			for (i = 0 ; i < dsize ; i++) {
-				if (((int *)V_DATA(obj))[i] == vi) {
-					ret = 1;
-					break;
-				}
-			}
-			break;
-		case FLOAT:
-			vd = extract_float(value, 0);
-			for (i = 0 ; i < dsize ; i++) {
-				if (((float *)V_DATA(obj))[i] == vd) {
-					ret = 1;
-					break;
-				}
-			}
-			break;
-		case DOUBLE:
-			vd = extract_double(value, 0);
-			for (i = 0 ; i < dsize ; i++) {
-				if (((double *)V_DATA(obj))[i] == vd) {
-					ret = 1;
-					break;
-				}
-			}
-			break;
-	}
+    switch (V_FORMAT(obj)) {
+        case BYTE:
+            vi = extract_int(value, 0);
+            for (i = 0 ; i < dsize ; i++) {
+                if (((unsigned char *)V_DATA(obj))[i] == vi) {
+                    ret = 1;
+                    break;
+                }
+            }
+            break;
+        case SHORT:
+            vi = extract_int(value, 0);
+            for (i = 0 ; i < dsize ; i++) {
+                if (((short *)V_DATA(obj))[i] == vi) {
+                    ret = 1;
+                    break;
+                }
+            }
+            break;
+        case INT:
+            vi = extract_int(value, 0);
+            for (i = 0 ; i < dsize ; i++) {
+                if (((int *)V_DATA(obj))[i] == vi) {
+                    ret = 1;
+                    break;
+                }
+            }
+            break;
+        case FLOAT:
+            vd = extract_float(value, 0);
+            for (i = 0 ; i < dsize ; i++) {
+                if (((float *)V_DATA(obj))[i] == vd) {
+                    ret = 1;
+                    break;
+                }
+            }
+            break;
+        case DOUBLE:
+            vd = extract_double(value, 0);
+            for (i = 0 ; i < dsize ; i++) {
+                if (((double *)V_DATA(obj))[i] == vd) {
+                    ret = 1;
+                    break;
+                }
+            }
+            break;
+    }
     return(newInt(ret));
 }
 
 Var *
 ff_chdir(vfuncptr func, Var * arg)
 {
-	char *dir = NULL;
+    char *dir = NULL;
     Alist alist[2];
     alist[0] = make_alist("dir",    ID_STRING,     NULL,     &dir);
     alist[1].name = NULL;
-	
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (dir == NULL) {
-		parse_error("%s: No directory specified", func->name);
-	} else {
-		if (access(dir, F_OK) == 0) {
-			chdir(dir);
-			return(newString(strdup(dir)));
-		}
-	}
-	return(NULL);
+    if (dir == NULL) {
+        parse_error("%s: No directory specified", func->name);
+    } else {
+        if (access(dir, F_OK) == 0) {
+            chdir(dir);
+            return(newString(strdup(dir)));
+        }
+    }
+    return(NULL);
 }
 
 /*

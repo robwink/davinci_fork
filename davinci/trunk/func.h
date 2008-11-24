@@ -537,7 +537,11 @@ Var *ff_extract(vfuncptr func, Var * arg);
 Var *ff_foo(vfuncptr func, Var * arg);
 Var *ff_load_tdb(vfuncptr, Var *);
 Var *ff_cinterp(vfuncptr, Var *);
+Var *ff_blend(vfuncptr, Var *);
 
 char *dv_locate_file(char *);
 void dump_version();
 double my_round(double);
+
+Var * ff_binary_op(char *name, Var *a, Var *b,
+                   double (*)(double, double), int);
