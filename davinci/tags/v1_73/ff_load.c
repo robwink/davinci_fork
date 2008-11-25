@@ -120,7 +120,7 @@ do_load(char *filename, struct iom_iheader *h)
 	if (input == NULL)    input = dv_LoadPNM(fp, fname, h);	
 	if (input == NULL)    input = LoadSpecpr(fp, fname, record);
 	if (input == NULL)    input = dv_LoadVicar(fp, fname, h);
-	//if (input == NULL)    input = dv_LoadISIS(fp, fname, h);
+	if (input == NULL)    input = dv_LoadISIS(fp, fname, h);
 #ifdef HAVE_ISIS3
         if (input == NULL)    input = dv_LoadISIS3(fp, fname, h);
 #endif
