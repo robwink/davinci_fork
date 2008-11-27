@@ -54,7 +54,11 @@ ff_display(vfuncptr func, Var *arg)
         return(NULL);
     }
 
+#ifdef HAVE_LIBPNG
     dv_WriteIOM(obj, fname, "png", 1);
+#else
+    dv_WriteIOM(obj, fname, "jpg", 1);
+#endif
     
     viewer=getenv("DV_VIEWER");
     if (viewer == NULL){ viewer=DV_VIEWER; }
@@ -66,8 +70,6 @@ ff_display(vfuncptr func, Var *arg)
     }
 
 #if  (defined(__CYGWIN__) || defined(__MINGW32__))
-	fprintf(stderr, "spawning %s\n", viewer);
-
     if (_spawnlp(_P_NOWAIT, viewer, viewer, fname, NULL) == -1){
         parse_error("Error spawning the viewer %s. Reason: %s.",
                     viewer, strerror(errno));
