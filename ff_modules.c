@@ -22,7 +22,9 @@
 
 #ifdef _WIN32
 #include <io.h>
+#define PATH_SEPARATOR ";"
 #else
+#define PATH_SEPARATOR ":"
 #include <dirent.h>
 #include <libgen.h>
 #endif /* _WIN32 */
@@ -761,7 +763,7 @@ get_module_versions(
 	** to find the module with the latest version.
 	*/
 	sprintf(name, "%s.%s", mod_name, DVM_EXT);
-	for(q = path; dir_name = strtok(q, ":"); q = NULL){
+	for(q = path; dir_name = strtok(q, PATH_SEPARATOR); q = NULL){
 		d = opendir(dir_name);
 		if (d == NULL){
 			/*
