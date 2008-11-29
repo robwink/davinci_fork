@@ -17,10 +17,6 @@ Widget      applicationShell = NULL;
 XtAppContext    applicationContext;
 #endif
 
-#ifdef __MINGW32__
-#define ctime_r(n, m) ctime(n)
-#endif
-
 extern int interactive;
 extern int continuation;
 extern int in_comment;
@@ -691,7 +687,10 @@ log_time()
          * ctime_r with a provided buffer fills the buffer correctly, but still
          * returns an invalid pointer. */
 
-#ifdef __sun
+#ifdef __MINGW32__
+	 time(&t);
+	 strcpy(tbuf,ctime(&t));
+#elif __sun
         ctime_r(&t, tbuf, sizeof(tbuf));
 #else
         ctime_r(&t, tbuf);
