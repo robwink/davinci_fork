@@ -515,18 +515,20 @@ void rmrf(char *path)
 char *
 make_temp_file_path()
 {
-        int fd;
+	int fd;
 	unsigned int uretval;
+	char dirbuf[256];
 	char pathbuf[256];
-        char *tmpdir = getenv("TMPDIR");
+	char *tmpdir = getenv("TMPDIR");
 
-        if (tmpdir == NULL) tmpdir = "/tmp";
+	if (tmpdir == NULL) tmpdir = "/tmp";
 
-        sprintf(pathbuf, "%s/XXXXXX", tmpdir);
+
 
 /** To handle racing issues, since mkstemp does not exist in MINGW **/
 #ifdef __MINGW32__
-	uretval = GetTempFileName(tmpdir, // directory for tmp files
+	sprintf(dirbuf, "%s", tmpdir);	
+	uretval = GetTempFileName(dirbuf, // directory for tmp files
 				  "dv",        // temp file name prefix 
 				  0,            // create unique name 
 				  pathbuf);  // buffer for name 
@@ -534,14 +536,13 @@ make_temp_file_path()
 	    return(NULL);
 	}
 #else
+	sprintf(pathbuf, "%s/XXXXXX", tmpdir);
 	fd = mkstemp(pathbuf);
-#endif
-
         if (fd == -1) {
-
 	       return(NULL);
         }
         close(fd);
+#endif
         return(strdup(pathbuf));
 }
 
@@ -551,17 +552,19 @@ make_temp_file_path_in_dir(char *dir)
 {
   int fd;
   unsigned int uretval;
+  char dirbuf[256];
   char pathbuf[256];
   char *tmpdir = getenv("TMPDIR");
   
   if (tmpdir == NULL) tmpdir = "/tmp";
   if (dir != NULL) tmpdir = dir;
   
-  sprintf(pathbuf, "%s/XXXXXX", tmpdir);
+
   
   /** To handle racing issues, since mkstemp does not exist in MINGW **/
 #ifdef __MINGW32__
-  uretval = GetTempFileName(tmpdir, // directory for tmp files
+  sprintf(dirbuf, "%s", tmpdir);	
+  uretval = GetTempFileName(dirbuf, // directory for tmp files
 			    "dv",        // temp file name prefix 
 			    0,            // create unique name 
 			    pathbuf);  // buffer for name 
@@ -569,14 +572,16 @@ make_temp_file_path_in_dir(char *dir)
     return(NULL);
   }
 #else
+  sprintf(pathbuf, "%s/XXXXXX", tmpdir);
   fd = mkstemp(pathbuf);
-#endif
-  
   if (fd == -1) {
     
     return(NULL);
   }
   close(fd);
+#endif
+  
+
   return(strdup(pathbuf));
 }
 

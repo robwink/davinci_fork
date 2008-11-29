@@ -33,7 +33,7 @@ size_t	url_callback(char *, size_t , size_t, void *);
  */
 char * try_remote_load(char * filename){
 	char * tmpfilename = NULL;
-        char * rtnfilename = NULL; 
+       char * rtnfilename = NULL; 
 #ifdef HAVE_LIBCURL	
 
 	if(filename != NULL){
@@ -43,7 +43,7 @@ char * try_remote_load(char * filename){
 			(strncasecmp(filename, HTTPS_PREFIX, strlen(HTTPS_PREFIX)) == 0) ||
 			(strncasecmp(filename, FTP_PREFIX, strlen(FTP_PREFIX)) == 0) ||
 			(strncasecmp(filename, SFTP_PREFIX, strlen(SFTP_PREFIX)) == 0)){
-				tmpfilename = (char *)make_temp_file_path();
+				tmpfilename = make_temp_file_path();
  				//Now filename means URL
 				if(tmpfilename != NULL  && url_create_file(tmpfilename, filename) == 0){
 				   rtnfilename = strdup(tmpfilename);
@@ -61,7 +61,7 @@ char * try_remote_load(char * filename){
 }
 
 #ifdef HAVE_LIBCURL	
-int  url_create_file(char * filename, char * url){
+int  url_create_file(const char * filename, const char * url){
 	CURL *curl;
 	CURLcode res;
 	char errorbuff[CURL_ERROR_SIZE];
