@@ -61,20 +61,25 @@ ff_display(vfuncptr func, Var *arg)
 #endif
     
     viewer=getenv("DV_VIEWER");
-    if (viewer == NULL){ viewer=DV_VIEWER; }
+    if (viewer == NULL){ 
+	viewer=DV_VIEWER; 
+    }
+
+
+#if  (defined(__CYGWIN__) || defined(__MINGW32__))
+    //copy viewer to buf
+    sprintf(buf, "%s", viewer);	
+    if (_spawnlp(_P_NOWAIT, buf, buf, fname, NULL) == -1){
+        parse_error("Error spawning the viewer %s. Reason: %s.",
+                    viewer, strerror(errno));
+    }
+#else
     if (strcmp(viewer,DV_VIEWER) == 0 && title != NULL){
         sprintf(buf, "%s -na \"%s\" %s &", viewer,title,fname);
     }
     else {
         sprintf(buf, "%s %s &", viewer, fname);
     }
-
-#if  (defined(__CYGWIN__) || defined(__MINGW32__))
-    if (_spawnlp(_P_NOWAIT, viewer, viewer, fname, NULL) == -1){
-        parse_error("Error spawning the viewer %s. Reason: %s.",
-                    viewer, strerror(errno));
-    }
-#else
     system(buf);
 #endif /* _WIN32 */
     free(fname);
