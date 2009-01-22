@@ -457,10 +457,13 @@ array_replace(Var *dst, Var *src, Range *r)
     int size[3];
     int x, y, z;
     size_t d, s;
+	size_t src_nbytes;
 
     x = GetX(src);
     y = GetY(src);
     z = GetZ(src);
+
+	src_nbytes = NBYTES(V_FORMAT(src));
 
     for (i =0 ; i < 3 ; i++) {
         size[i] = 1 + (r->hi[i] - r->lo[i])/r->step[i];
@@ -485,28 +488,35 @@ array_replace(Var *dst, Var *src, Range *r)
 				*/
                 s = cpos(i % x,j % y,k % z,src);
 
-                switch(V_FORMAT(dst)) {
-                case BYTE:
-                    ((u_char *)V_DATA(dst))[d] =
-                        saturate_byte(extract_int(src, s));
-                    break;
-                case SHORT:
-                    ((short *)V_DATA(dst))[d] =
-                        saturate_short(extract_int(src, s));
-                    break;
-                case INT:
-                    ((int *)V_DATA(dst))[d] =
-                        saturate_int(extract_int(src, s));
-                    break;
-                case FLOAT:
-                    ((float *)V_DATA(dst))[d] =
-                        extract_float(src, s);
-                    break;
-                case DOUBLE:
-                    ((double *)V_DATA(dst))[d] =
-                        extract_double(src, s);
-                    break;
-                }
+				if (V_FORMAT(dst) == V_FORMAT(src)){
+					memcpy(((char *)V_DATA(dst))+d*src_nbytes,
+						((char *)V_DATA(src))+s*src_nbytes,
+						src_nbytes);
+				}
+				else {
+					switch(V_FORMAT(dst)) {
+					case BYTE:
+						((u_char *)V_DATA(dst))[d] =
+							saturate_byte(extract_int(src, s));
+						break;
+					case SHORT:
+						((short *)V_DATA(dst))[d] =
+							saturate_short(extract_int(src, s));
+						break;
+					case INT:
+						((int *)V_DATA(dst))[d] =
+							saturate_int(extract_int(src, s));
+						break;
+					case FLOAT:
+						((float *)V_DATA(dst))[d] =
+							extract_float(src, s);
+						break;
+					case DOUBLE:
+						((double *)V_DATA(dst))[d] =
+							extract_double(src, s);
+						break;
+					}
+				}
             }
         }
     }

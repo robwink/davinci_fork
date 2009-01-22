@@ -622,6 +622,7 @@ ff_create(vfuncptr func, Var * arg)
     int org = BSQ;
     float start = 0;
     float step = 1.0;
+	int init = 1;
     char *format_str = NULL, *org_str = NULL;
 
     u_char *cdata;
@@ -630,7 +631,7 @@ ff_create(vfuncptr func, Var * arg)
     float *fdata;
     double *ddata;
 
-    Alist alist[8];
+    Alist alist[9];
     alist[0] = make_alist( "x",      INT,      NULL,     &x);
     alist[1] = make_alist( "y",      INT,      NULL,     &y);
     alist[2] = make_alist( "z",      INT,      NULL,     &z);
@@ -638,7 +639,8 @@ ff_create(vfuncptr func, Var * arg)
     alist[4] = make_alist( "format", ID_ENUM,  formats,  &format_str);
     alist[5] = make_alist( "start",  FLOAT,    NULL,     &start);
     alist[6] = make_alist( "step",   FLOAT,    NULL,     &step);
-    alist[7].name = NULL;
+    alist[7] = make_alist( "init",   INT,      NULL,     &init);
+    alist[8].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -688,47 +690,49 @@ ff_create(vfuncptr func, Var * arg)
     fdata = (float *) V_DATA(s);
     ddata = (double *) V_DATA(s);
 
-	if (step == 0){
-		if (dsize > 0){
-			unsigned char *data = (char *)V_DATA(s);
-			unsigned int nbytes = NBYTES(format);
-			size_t i;
+	if (init){
+		if (step == 0){
+			if (dsize > 0){
+				unsigned char *data = (char *)V_DATA(s);
+				unsigned int nbytes = NBYTES(format);
+				size_t i;
 
-			v = start;
-			switch (format) {
-			case BYTE: cdata[0] = saturate_byte(v); break;
-			case SHORT: sdata[0] = saturate_short(v); break;
-			case INT: idata[0] = saturate_int(v); break;
-			case FLOAT: fdata[0] = saturate_float(v); break;
-			case DOUBLE: ddata[0] = v; break;
-			}
-			for(i=1; i<dsize; i++){
-				memcpy(data+i*nbytes, data, nbytes);
+				v = start;
+				switch (format) {
+				case BYTE: cdata[0] = saturate_byte(v); break;
+				case SHORT: sdata[0] = saturate_short(v); break;
+				case INT: idata[0] = saturate_int(v); break;
+				case FLOAT: fdata[0] = saturate_float(v); break;
+				case DOUBLE: ddata[0] = v; break;
+				}
+				for(i=1; i<dsize; i++){
+					memcpy(data+i*nbytes, data, nbytes);
+				}
 			}
 		}
-	}
-	else {
-		for (k = 0 ; k < z ; k++) {
-			for (j = 0 ; j < y ; j++) {
-				for (i = 0 ; i < x ; i++) {
-					v = (count++) * step + start;
-					c = cpos(i,j,k,s);
-					switch (format) {
-					case BYTE:
-						cdata[c] = saturate_byte(v);
-						break;
-					case SHORT:
-						sdata[c] = saturate_short(v);
-						break;
-					case INT:
-						idata[c] = saturate_int(v);
-						break;
-					case FLOAT:
-						fdata[c] = saturate_float(v);
-						break;
-					case DOUBLE:
-						ddata[c] = v;
-						break;
+		else {
+			for (k = 0 ; k < z ; k++) {
+				for (j = 0 ; j < y ; j++) {
+					for (i = 0 ; i < x ; i++) {
+						v = (count++) * step + start;
+						c = cpos(i,j,k,s);
+						switch (format) {
+						case BYTE:
+							cdata[c] = saturate_byte(v);
+							break;
+						case SHORT:
+							sdata[c] = saturate_short(v);
+							break;
+						case INT:
+							idata[c] = saturate_int(v);
+							break;
+						case FLOAT:
+							fdata[c] = saturate_float(v);
+							break;
+						case DOUBLE:
+							ddata[c] = v;
+							break;
+						}
 					}
 				}
 			}
