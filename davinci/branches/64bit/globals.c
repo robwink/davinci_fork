@@ -77,6 +77,8 @@ eval_buffer(char *buf)
     void *parent_buffer;
     void *buffer;
     Var *node;
+	extern void *get_current_buffer();
+	extern void *yy_scan_string(char *);
 
     parent_buffer = (void *) get_current_buffer();
     buffer = (void *) yy_scan_string(buf);

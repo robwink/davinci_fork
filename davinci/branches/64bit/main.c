@@ -472,7 +472,10 @@ void lhandler(char *line)
         }
         
 
-        buf = (char *)malloc(strlen(line)+2);
+        if ((buf = (char *)malloc(strlen(line)+2)) == NULL){
+			parse_error("Unable to alloc %ld bytes.\n", strlen(line)+2);
+			quit();
+		}
         strcpy(buf, line);
         strcat(buf, "\n");
 
@@ -548,6 +551,8 @@ parse_buffer(char *buf)
     void *buffer;
     Var *node;
     extern char *pp_str;
+	extern void *get_current_buffer();
+	extern void *yy_scan_string(char *);
 
     parent_buffer = (void *) get_current_buffer();
     buffer = (void *) yy_scan_string(buf);

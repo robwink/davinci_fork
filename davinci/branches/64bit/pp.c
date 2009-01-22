@@ -14,6 +14,10 @@ extern Var * string_subset(Var *, Var *);
 extern Var * set_text(Var *, Range *,Var *);
 extern Var * set_string(Var *, Range *,Var *);
 extern Var * where_text(Var *,Var *,Var *);
+extern Var * duplicate_struct(Var *v);
+extern Var * dd_get_argc(Scope *s);
+extern Var * dd_make_arglist(Scope *s);
+
 
 /*
 void 
@@ -38,7 +42,7 @@ Var *
 V_DUP(Var *v)
 {
     Var *r;
-    int dsize;
+    size_t dsize;
 
 	if (v == NULL) return(NULL);
 
@@ -138,7 +142,8 @@ pp_print_struct(Var *v, int indent, int depth)
 void
 dump_var(Var *v, int indent, int limit) 
 {
-    int i,j,k,c;
+    int i,j,k;
+	size_t c;
     int x, y, z;
     int row;
 
@@ -189,7 +194,7 @@ dump_var(Var *v, int indent, int limit)
 void
 pp_print_var(Var *v, char *name, int indent, int depth)
 {
-    char bytes[32];
+    char bytes[64];
     int x, y, z;
     int npassed = (name != NULL);
 
@@ -209,7 +214,7 @@ pp_print_var(Var *v, char *name, int indent, int depth)
             x = GetSamples(V_SIZE(v),V_ORG(v));
             y = GetLines(V_SIZE(v),V_ORG(v));
             z = GetBands(V_SIZE(v),V_ORG(v));
-            sprintf(bytes, "%d", NBYTES(V_FORMAT(v))*V_DSIZE(v));
+            sprintf(bytes, "%ld", NBYTES(V_FORMAT(v))*V_DSIZE(v));
             commaize(bytes);
             printf("%dx%dx%d array of %s, %s format [%s bytes]\n",
                    x, y, z,
@@ -448,10 +453,10 @@ pp_inc_var(Var *id, Var *range, Var *exp)
 int
 array_replace(Var *dst, Var *src, Range *r)
 {
-    int i, j, k;
+    size_t i, j, k;
     int size[3];
     int x, y, z;
-    int d, s;
+    size_t d, s;
 
     x = GetX(src);
     y = GetY(src);

@@ -322,7 +322,7 @@ do_sprintf(int ac, Var **av)
                 free(out);
                 return (NULL);
             }
-            PF(out, f, p);
+            PF(out, f, (long)p);
             break;
         }
         case 'e': case 'E': case 'f': case 'g': case 'G': {

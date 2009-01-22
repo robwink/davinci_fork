@@ -330,7 +330,9 @@ int rnd(float f)
 }
 
 
-Var * ff_sstretch2(vfuncptr func, Var * arg)
+
+Var *
+ff_sstretch2(vfuncptr func, Var * arg)
 {
 
   /* takes data and stretches it similar to sstretch() davinci function*/
@@ -340,15 +342,14 @@ Var * ff_sstretch2(vfuncptr func, Var * arg)
   
   Var       *data=NULL;         /* input */
   Var       *out=NULL;          /* output */
-  float     *w_data=NULL;       /* working data2 */
   byte      *w_data2=NULL;      /* working data */
   float      ignore=-32768;     /* ignore value*/
-  int        x,y,z;             /* indices */
+  size_t     x,y,z;             /* indices */
   double     sum = 0;           /* sum of elements in data */
   double     sumsq = 0;         /* sum of the square of elements in data */
   double     stdv = 0;          /* standard deviation */
-  int        cnt = 0;           /* total number of non-null points */
-  int        i,j,k;
+  size_t     cnt = 0;           /* total number of non-null points */
+  size_t     i,j,k,idx;
   float      tv,max=-32768;
   float      v=40; 
   
@@ -378,8 +379,12 @@ Var * ff_sstretch2(vfuncptr func, Var * arg)
   max = ignore;
 
   /* create out array */
-  w_data = (float *)calloc(sizeof(float), x*y*z);
   w_data2 = (byte *)calloc(sizeof(byte),x*y*z);
+
+  if (w_data2 == NULL){
+  	parse_error("sstretch: Unable to allocate %ld bytes.\n", sizeof(byte)*x*y*z);
+	return NULL;
+  }
   
   /* stretch each band separately */
   for(k=0;k<z;k++) {
@@ -389,15 +394,62 @@ Var * ff_sstretch2(vfuncptr func, Var * arg)
     cnt = 0;
     tv = 0;
     
+    for(j=0; j<y; j++) {
+		for(i=0; i<x; i++) {
+			if ((tv = extract_float(data, cpos(i,j,k, data))) != ignore){
+				sum += tv;
+				sumsq += ((double)tv)*((double)tv);
+				cnt ++;
+			}
+		}
+    }
+
+	stdv = sqrt((sumsq - (sum*sum/cnt))/(cnt-1));
+	sum /= cnt;
+
+	/*convert to bip */
+	for(j=0; j<y; j++) {
+		for(i=0; i<x; i++) {
+			if ((tv = extract_float(data, cpos(i,j,k, data))) != ignore){
+				tv = (float)((tv - sum)*(v/stdv)+127);
+			}
+			if (tv < 0) tv = 0;
+			if (tv > 255) tv = 255;
+
+			w_data2[j*x*z + i*z + k]=(byte)tv;
+		}
+	}
+  }
+  
+  
+  /* clean up and return data */
+  out = newVal(BIP,z, x, y, BYTE, w_data2);	
+  return(out);
+}
+
+
+static void
+sstretch2_impl(float *w_data, size_t x, size_t y, float v, float ignore)
+{
+	double     sum = 0;           /* sum of elements in data */
+	double     sumsq = 0;         /* sum of the square of elements in data */
+	double     stdv = 0;          /* standard deviation */
+	size_t     cnt = 0;           /* total number of non-null points */
+	size_t     i,j,idx;
+
+    sum = 0;
+    sumsq = 0;
+    stdv = 0;
+    cnt = 0;
+    
     /* calculate the sum and the sum of squares */
     for(j=0; j<y; j++) {
       for(i=0; i<x; i++) {
-	tv=extract_float(data, cpos(i,j,k, data));
-	w_data[k*y*x + j*x + i]=tv;
-	if( tv != ignore){
-	  sum += (double)tv;
-	  sumsq += (double)(tv*tv);
-	  cnt += 1;
+			idx = j*x + i;
+			if (w_data[idx] != ignore){
+				sum += (double)w_data[idx];
+				sumsq += (double)(w_data[idx]*w_data[idx]);
+				cnt ++;
 	}
       }
     }
@@ -409,24 +461,13 @@ Var * ff_sstretch2(vfuncptr func, Var * arg)
     /* fill in stretched values */
     for(j=0; j<y; j++) {
       for(i=0; i<x; i++) {
-	if(w_data[k*y*x + j*x + i] != ignore) w_data[k*y*x + j*x + i] = (float)((w_data[k*y*x + j*x + i] - sum)*(v/stdv)+127);
-	if(w_data[k*y*x + j*x + i] < 0) w_data[k*y*x + j*x + i] = 0; 
-	if(w_data[k*y*x + j*x + i] > 255) w_data[k*y*x + j*x + i] = 255; 
-      }
+			idx = j*x + i;
+			if(w_data[idx] != ignore){
+				w_data[idx] = (float)((w_data[idx] - sum)*(v/stdv)+127);
+			}
+			if(w_data[idx] < 0) w_data[idx] = 0; 
+			if(w_data[idx] > 255) w_data[idx] = 255; 
+		}
     }
-  }
-  
-  /*convert to bip */
-  for(j=0; j<y; j++) {
-    for(i=0; i<x; i++) {
-      for(k=0; k<z; k++) {
-	w_data2[j*x*z + i*z + k]=(byte)w_data[k*y*x + j*x + i];
-      }
-    }
-  }
-  
-  /* clean up and return data */
-  free(w_data);
-  out = newVal(BIP,z, x, y, BYTE, w_data2);	
-  return(out);
 }
+

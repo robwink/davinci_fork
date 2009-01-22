@@ -77,7 +77,7 @@ Var* ff_contour(vfuncptr func, Var *arg)
   z = GetZ(data);
   
   /* allocate memory for the picture */
-  w_data = (float *)calloc(sizeof(float), x*y*z);
+  w_data = (float *)calloc(sizeof(float), ((size_t)x)*((size_t)y)*((size_t)z));
   
   /* loop through data and extract points and fill in contours*/
   for(i=0; i<x; i++) {
@@ -111,7 +111,7 @@ Var* ff_contour(vfuncptr func, Var *arg)
 	    if(i1!=i && j1!=j) {
 	      /*perform the check and fill in data when it is triggered */
 	      if(tv<(round_dp((extract_float(data, cpos(i1,j1,k,data))-zero)/bin,1))*bin) {
-		w_data[x*y*k + x*j + i]=tv;
+		w_data[((size_t)x)*((size_t)y)*k + ((size_t)x)*j + i]=tv;
 		fill=1;
 	      }
 	    }

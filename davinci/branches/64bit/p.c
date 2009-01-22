@@ -12,6 +12,8 @@
 #define MODULE_HELP (const char*)"help"
 
 char *unescape(char *), *unquote(char *);
+char * cleanup_input(char *s);
+Var *pp_new_parallel(Var *axis, Var *arg);
 
 /**
  ** p_mknod() - Make a node of the specified type

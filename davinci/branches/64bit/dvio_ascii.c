@@ -6,7 +6,7 @@
 int
 WriteAscii(Var *s, char *filename, int force)
 {
-    int dsize;
+    size_t dsize;
     int format;
     int ival;
     double dval;

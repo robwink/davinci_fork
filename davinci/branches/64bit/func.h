@@ -111,22 +111,22 @@ Var * put_global_sym(Var *);
 
 
 /* rpos.c */
-int __BSQ2BSQ (Var * s1, Var * s2, int i);
-int __BSQ2BIL (Var * s1, Var * s2, int i);
-int __BSQ2BIP (Var * s1, Var * s2, int i);
-int __BIL2BSQ (Var * s1, Var * s2, int i);
-int __BIL2BIL (Var * s1, Var * s2, int i);
-int __BIL2BIP (Var * s1, Var * s2, int i);
-int __BIP2BSQ (Var * s1, Var * s2, int i);
-int __BIP2BIL (Var * s1, Var * s2, int i);
-int __BIP2BIP (Var * s1, Var * s2, int i);
-int cpos(int x, int y, int z, Var *v);
-void xpos(int i, Var *v, int *x, int *y, int *z);
+size_t __BSQ2BSQ (Var * s1, Var * s2, size_t i);
+size_t __BSQ2BIL (Var * s1, Var * s2, size_t i);
+size_t __BSQ2BIP (Var * s1, Var * s2, size_t i);
+size_t __BIL2BSQ (Var * s1, Var * s2, size_t i);
+size_t __BIL2BIL (Var * s1, Var * s2, size_t i);
+size_t __BIL2BIP (Var * s1, Var * s2, size_t i);
+size_t __BIP2BSQ (Var * s1, Var * s2, size_t i);
+size_t __BIP2BIL (Var * s1, Var * s2, size_t i);
+size_t __BIP2BIP (Var * s1, Var * s2, size_t i);
+size_t cpos(int x, int y, int z, Var *v);
+void xpos(size_t i, Var *v, int *x, int *y, int *z);
 
 /* pp_math.h */
-int extract_int (const Var * v, const int i);
-float extract_float (Var * v, int i);
-double extract_double (Var * v, int i);
+int extract_int (const Var * v, const size_t i);
+float extract_float (Var * v, size_t i);
+double extract_double (Var * v, size_t i);
 Var *pp_add_strings(Var *a, Var *b);
 Var *pp_math_strings(Var *a, int op, Var *b);
 
@@ -210,7 +210,7 @@ Var * p_llist(int , Var *, Var *);
 
 
 void push_input_stream(FILE *, char *filename);
-int rpos(int, Var *, Var *);
+size_t rpos(size_t, Var *, Var *);
 Var * pp_print(Var *);
 
 Var *V_func (char *name, Var *);

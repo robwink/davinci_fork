@@ -102,7 +102,7 @@ struct _range {
 
 struct _symbol {
     int format;			/* format of data */
-    int dsize;			/* total size of data */
+    size_t dsize;			/* total size of data */
     int size[3];        /* size of each axis */
     int order;			/* axis application order */
     void *data;
@@ -167,6 +167,7 @@ struct _var {
 
 #define V_DATA(v)	V_SYM(v)->data		/* pointer to data */
 #define V_INT(v)	(*((int *)V_DATA(v)))	/* derefernce as a single int */
+/* #define V_INT64(v)	(*((int64 *)V_DATA(v)))	/ * derefernce as a single int64 */
 #define V_FLOAT(v)	(*((float *)V_DATA(v)))	/* derefernce as a single float */
 #define V_DOUBLE(v)	(*((double *)V_DATA(v)))	/* derefernce as a single dbl */
 #define V_FORMAT(v)	V_SYM(v)->format
@@ -288,9 +289,10 @@ enum {
 #define FLOAT		4
 #define VAX_FLOAT	5
 #define VAX_INTEGER 6
+#define INT64       7
 #define DOUBLE		8
 
-#define NBYTES(a)	((a) == INT ? 4 : ((a) == VAX_FLOAT ? 4 : ((a) == VAX_INTEGER ? 2 : (a))))
+#define NBYTES(a)	((a) == INT ? 4 : ((a) == INT64 ? 8 : ((a) == VAX_FLOAT ? 4 : ((a) == VAX_INTEGER ? 2 : (a)))))
 
 /**
  ** Data axis order

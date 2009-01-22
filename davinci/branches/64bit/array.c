@@ -76,8 +76,8 @@ extract_array(Var *v, Range *r)
     int f_lo[3];
     int f_hi[3];
     int f_step[3];
-    int i,j,k,count,size=1;
-    int f1,f2,f3;
+    size_t i,j,k,count,size=1;
+    size_t f1,f2,f3;
     void *data;
     int bytes, opt_bytes, opt_step;
 

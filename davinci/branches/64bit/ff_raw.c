@@ -2,6 +2,8 @@
 #include "iomedley.h"
 
 
+extern Var * iom_iheader2var(struct iom_iheader *h);
+
 Var *
 ff_raw(vfuncptr func, Var * arg)
 {
