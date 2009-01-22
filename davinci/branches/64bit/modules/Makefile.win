@@ -1,0 +1,38 @@
+CC     = cl
+DEFS   = -D_WIN32 -D_MSDOS_ -DMSDOS -D_MSDOS -DHAVE_STRTOUL -D_CONSOLE
+LINK   = link
+
+MODSUPPLIB=modsupp.lib
+
+CFLAGS=-I..  -nologo
+LDFLAGS=-libpath:..
+#  -libpath:"d:/PROGRA~1/MICROS~1/VC98/Lib"
+LDLIBS=$(MODSUPPLIB)
+
+.SUFFIXES:	.dvm .obj .lib
+
+MODULES=mod1.dvm mod2.dvm pnm_mod.dvm
+
+all:	$(MODULES)
+
+.obj.dvm:
+	$(CC) $< $(CFLAGS) $(MODSUPPLIB) $(LDLIBS) -LDd -link -out:$@ $(LDFLAGS)
+
+	
+.c.obj:
+	$(CC) -c $(CFLAGS) $(DEFS)  $< -Fo$@
+
+clean:
+	-rm -f *.obj *.dvm *.exp *.lib
+
+######################################################
+# Dependencies
+#
+
+mod1.dvm:	mod1.obj ../$(MODSUPPLIB) Makefile
+mod2.dvm:	mod2.obj ../$(MODSUPPLIB) Makefile
+pnm_mod.dvm:	pnm_mod.obj ../$(MODSUPPLIB) Makefile
+mod1.obj:	mod1.c ../parser.h
+mod2.obj:	mod2.c ../parser.h
+pnm_mod.obj:	pnm_mod.c ../parser.h
+
