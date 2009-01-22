@@ -474,9 +474,9 @@ array_replace(Var *dst, Var *src, Range *r)
         }
     }
 
-    for (i = 0 ; i < size[0] ; i++) {
+	for (k = 0 ; k < size[2] ; k++) {
         for (j = 0 ; j < size[1] ; j++) {
-            for (k = 0 ; k < size[2] ; k++) {
+			for (i = 0 ; i < size[0] ; i++) {
 
                 d = cpos(i*r->step[0] + r->lo[0],
                          j*r->step[1] + r->lo[1],
