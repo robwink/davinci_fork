@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "darray.h"
 
 /*
    
@@ -299,7 +300,7 @@ clean_stack(Scope *scope)
 void
 clean_tmp(Scope *scope)
 {
-    if (scope->tmp) Darray_free(scope->tmp, free_var);
+    if (scope->tmp) Darray_free(scope->tmp, (Darray_FuncPtr)free_var);
     scope->tmp = NULL;
 }
     
@@ -405,7 +406,7 @@ mem_malloc(void)
 */
     if ((count = Darray_count(scope->tmp)) > 0) {
 		if (Darray_get(scope->tmp, count-1, (void **)&top) == 1 && top == NULL) {
-			Darray_replace(scope->tmp, count-1, v, junk);
+			Darray_replace(scope->tmp, count-1, v, &junk);
 			return(v);
 		}
 	} 
@@ -465,7 +466,7 @@ mem_claim(Var *ptr)
 void
 mem_free(Scope *scope)
 {
-    if (scope->tmp) Darray_free(scope->tmp, free_var);
+    if (scope->tmp) Darray_free(scope->tmp, (Darray_FuncPtr)free_var);
 }
 
 

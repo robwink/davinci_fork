@@ -42,7 +42,7 @@ Var *
 ff_self_convolve(vfuncptr func, Var * arg)
 {
 	Var *v1 = NULL, *v2 = NULL;
-	int m, n, i, j, d1, d2;
+	size_t m, n, d1, d2;
 	float *out;
 
 	int ac;
@@ -88,10 +88,10 @@ static Var *do_my_convolve(Var *obj, Var *kernel, int norm, float ignore, int ke
   int ky_center, krn_y;                    /* y radius and total y dimension of kernel */
   int kz_center, krn_z;                    /* z radius and total z dimension of kernel */
   int x, y, z;                             /* x, y, z position of object convolved element */
-  int i, j, k;                             /* memory locations */
+  size_t i, j, k;                          /* memory locations */
   float kval, oval;                        /* value of kernel and object element */
   float *wt;                               /* array of number of elements in sum */
-  int objsize;                             /* total 1-d size of object */
+  size_t objsize;                          /* total 1-d size of object */
   int a_opp, b_opp, c_opp;                 /* x, y, z position of anti-symmetric kernel element */
   int x_opp, y_opp, z_opp;                 /* x, y, z position of anti-symmetric kernel element */
 

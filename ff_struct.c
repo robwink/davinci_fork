@@ -452,7 +452,7 @@ find_struct(Var *a, char *b, Var **data)
 void
 free_struct(Var *v)
 {
-    Narray_free(V_STRUCT(v), free_var);
+    Narray_free(V_STRUCT(v), (Narray_FuncPtr)free_var);
 }
 
 
@@ -548,7 +548,7 @@ concatenate_struct(Var *a, Var *b)
     Var *aa, *bb;
 
     /* verify that both args are usable */
-    if (V_TYPE(a) == NULL || V_TYPE(b) == NULL) return(NULL);
+    if (V_TYPE(a) == 0 || V_TYPE(b) == 0) return(NULL);
 
     /* verify that there's no name conflicts */
     for (i = 0 ; i < get_struct_count(b) ; i++) {
@@ -636,5 +636,5 @@ remove_struct(Var *s, int pos)
 		return(NULL);
 	}
 
-	return(Narray_remove(V_STRUCT(s), pos));
+	return((Var *)Narray_remove(V_STRUCT(s), pos));
 }

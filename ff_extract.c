@@ -60,13 +60,13 @@ Var *
 ff_extract (vfuncptr func, Var * arg)
 {
 	Var *val = NULL, *mask = NULL, *axisvar = NULL, *result = NULL;
-	int vx, vy, vz, mx, my, mz, rx, ry, rz;
+	size_t vx, vy, vz, mx, my, mz, rx, ry, rz;
 	int axis = AXIS_NONE;
-	int i,j,k, count, dims, length, size;
-	int in, out, outstep;
+	size_t i,j,k, count, dims, length, size;
+	size_t in, out, outstep;
 	void *data;
 	unsigned char *inbase, *outbase;
-	int maskIdx, p,q,r, a,b,c;
+	size_t maskIdx, p,q,r, a,b,c;
 	int minx, maxx, miny, maxy, minz, maxz;
 
 	Alist alist[4];

@@ -72,7 +72,7 @@ ff_deghost(vfuncptr func, Var * arg)
 	}
 
 
-	out = newVal(BSQ, x, y, z, V_FORMAT(obj), calloc(x*y*z,nbytes));
+	out = newVal(BSQ, x, y, z, V_FORMAT(obj), calloc(((size_t)x)*((size_t)y)*((size_t)z),nbytes));
 
 	for (i = 0 ; i < z ; i++) {
 		v = make_band(obj, i);
@@ -110,7 +110,7 @@ make_band(Var *in, int band)
 	int i, j ,k;
 	int nbytes;
 	Var *out;
-	int p1, p2;
+	size_t p1, p2;
 
 	x = GetX(in);
 	y = GetY(in);

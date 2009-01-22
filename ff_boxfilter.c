@@ -11,7 +11,7 @@ init_sums(Var *data, int w, int h, int d, Var **rn, Var **rs, Var **rcount, Var 
 {
 	int x, y, z, u, v;
 	int i, j, k;
-	int p1, p2, p3, p4, p5, p6, p7, p8;
+	size_t p1, p2, p3, p4, p5, p6, p7, p8;
 	int east, south, north, west, front, back;
 
 	double *s, *s2;

@@ -31,7 +31,8 @@ ff_cluster(vfuncptr func, Var * arg)
     int radius=1;
     int threshold = 1;
     Var *obj = NULL;
-    int i, j, a, b, x, y, z;
+    int i, j, a, b, x, y;
+	size_t z;
     u_char *data;
 
 	Alist alist[4];
@@ -79,7 +80,8 @@ Var *
 ff_ccount(vfuncptr func, Var * arg)
 {
     Var *v, *obj = NULL;
-    int threshold = 2, ignore = 1, i, dsize;
+    int threshold = 2, ignore = 1;
+	size_t i, dsize;
     int top = 0, bottom = 0, value = 0;
 
 	Alist alist[4];

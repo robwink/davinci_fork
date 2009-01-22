@@ -5,7 +5,8 @@
  ** macro definitions.
  **/
 
-int rpos(int, Var *, Var *);
+size_t rpos(size_t, Var *, Var *);
+extern Var * concatenate_struct(Var *a, Var *b);
 
 /**
  ** This is some gross abuse of the preprocessor.
@@ -111,15 +112,15 @@ pp_math(Var * a, int op, Var * b)
 {
     int in_format, out_format;
     int size[3];
-    int dsize = 0;
-    int i;
+    size_t dsize = 0;
+    size_t i;
     int order;
     Var *val, *t;
     void *data;
     int count;
     int va, vb;
     int ca = 1, cb = 1;
-    int dzero=0;
+    size_t dzero=0;
 
     if (a == NULL) a = VZERO;	/* define this somewhere */
     if (b == NULL) return(NULL);	/* called with error */
@@ -192,6 +193,10 @@ pp_math(Var * a, int op, Var * b)
     **/
 
     data = calloc(dsize, NBYTES(out_format));
+	if (data == NULL){
+		parse_error("Unable to alloc %ld bytes.\n", dsize*NBYTES(out_format));
+		return NULL;
+	}
 
     val = newVar();
     V_TYPE(val) = ID_VAL;
@@ -279,8 +284,8 @@ pp_compare(Var * a, Var * b)
 {
     int in_format, out_format;
     int size[3];
-    int dsize = 0;
-    int i;
+    size_t dsize = 0;
+    size_t i;
     int order;
     Var *val, *t, v;
     void *data;
@@ -382,7 +387,7 @@ pp_compare(Var * a, Var * b)
 }
 
 
-typedef int (*ifptr) (Var *, Var *, int);
+typedef size_t (*ifptr) (Var *, Var *, size_t);
 ifptr cvtf[3][3] =
 {
     {__BSQ2BSQ, __BSQ2BIL, __BSQ2BIP},
@@ -398,8 +403,8 @@ ifptr cvtf[3][3] =
       ** if 'from' and 'to' are the same, just return i.
       **/
 
-int
-rpos(int i, Var * from, Var * to)
+size_t
+rpos(size_t i, Var * from, Var * to)
 {
     if (V_DSIZE(to) == 1) {
         return (0);
@@ -417,13 +422,13 @@ rpos(int i, Var * from, Var * to)
 /**
  ** return index of x,y,z in v
  **/
-int 
+size_t 
 cpos(int x, int y, int z, Var *v)
 {
     switch(V_ORG(v)) {
-    case BSQ: return(x + V_SIZE(v)[0] * (y + z * V_SIZE(v)[1]));
-    case BIP: return(z + V_SIZE(v)[0] * (x + y * V_SIZE(v)[1]));
-    case BIL: return(x + V_SIZE(v)[0] * (z + y * V_SIZE(v)[1]));
+    case BSQ: return((size_t)x + V_SIZE(v)[0] * ((size_t)y + (size_t)z * V_SIZE(v)[1]));
+    case BIP: return((size_t)z + V_SIZE(v)[0] * ((size_t)x + (size_t)y * V_SIZE(v)[1]));
+    case BIL: return((size_t)x + V_SIZE(v)[0] * ((size_t)z + (size_t)y * V_SIZE(v)[1]));
     default:
         printf("cpos: whats this?\n");
     }
@@ -435,7 +440,7 @@ cpos(int x, int y, int z, Var *v)
 }
 
 void
-xpos(int i, Var *v, int *x, int *y, int *z)
+xpos(size_t i, Var *v, int *x, int *y, int *z)
 {
     /**
     ** Given i, where does it fall in V
@@ -453,7 +458,7 @@ xpos(int i, Var *v, int *x, int *y, int *z)
 
 
 int 
-extract_int(const Var * v, const int i)
+extract_int(const Var * v, const size_t i)
 {
     switch (V_FORMAT(v)) {
     case BYTE:
@@ -470,7 +475,7 @@ extract_int(const Var * v, const int i)
     return (0);
 }
 float 
-extract_float(Var * v, int i)
+extract_float(Var * v, size_t i)
 {
     switch (V_FORMAT(v)) {
     case BYTE:
@@ -487,7 +492,7 @@ extract_float(Var * v, int i)
     return (0);
 }
 double 
-extract_double(Var * v, int i)
+extract_double(Var * v, size_t i)
 {
     switch (V_FORMAT(v)) {
     case BYTE:
