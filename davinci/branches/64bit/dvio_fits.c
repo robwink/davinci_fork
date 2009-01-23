@@ -22,7 +22,7 @@ Write_FITS_Image(fitsfile *fptr, Var *obj)
   int  	       *size;
   int		i;
   int		status=0;
-  int		fpixel[3]={1,1,1};
+  long		fpixel[3]={1,1,1};
   
   VarType2FitsType(obj,&bitpix,&datatype);
   
@@ -37,13 +37,13 @@ Write_FITS_Image(fitsfile *fptr, Var *obj)
       naxes[i] = 0;
   }
   fits_create_img(fptr,bitpix,naxis,naxes,&status);
-  QUERY_FITS_ERROR(status);
+  QUERY_FITS_ERROR(status,0);
   
   for(i=0;i<3;i++) 
     if(!(naxes[i])) size[i]=1; //I don't think this is needed, but just in case V_SIZE() returns a 0 in one of the size slots
   
-  fits_write_pix(fptr,datatype,(long *)fpixel,size[0]*size[1]*size[2],(void *)V_DATA(obj),&status);
-  QUERY_FITS_ERROR(status);
+  fits_write_pix(fptr,datatype,fpixel,((size_t)size[0])*((size_t)size[1])*((size_t)size[2]),(void *)V_DATA(obj),&status);
+  QUERY_FITS_ERROR(status,0);
   
   return(1);
 }
@@ -57,13 +57,13 @@ Read_FITS_Image(fitsfile *fptr)
   int fits_type;
   int i;
   int dim;
-  int size[3]={0,0,0};
-  int fpixel[3]={1,1,1};
+  long size[3]={0,0,0};
+  long fpixel[3]={1,1,1};
   int datatype;
   int status=0;
   
   fits_get_img_dim(fptr,&dim,&status);
-  QUERY_FITS_ERROR(status);
+  QUERY_FITS_ERROR(status,NULL);
   
   if (dim > 3) {
     parse_error("Data objects of greater than 3 dimensions are not handled.");
@@ -71,10 +71,10 @@ Read_FITS_Image(fitsfile *fptr)
   }
   
   fits_get_img_type(fptr,&fits_type,&status);
-  QUERY_FITS_ERROR(status);
+  QUERY_FITS_ERROR(status,NULL);
   
-  fits_get_img_size(fptr,dim,(long *)size,&status);
-  QUERY_FITS_ERROR(status);
+  fits_get_img_size(fptr,dim,size,&status);
+  QUERY_FITS_ERROR(status,NULL);
   
   for(i=0;i<3;i++) 
     if(!size[i]) {
@@ -112,10 +112,10 @@ Read_FITS_Image(fitsfile *fptr)
     
   }
 
-  data = (char *)calloc(size[0]*size[1]*size[2],NBYTES(format));
+  data = (char *)calloc(((size_t)size[0])*((size_t)size[1])*((size_t)size[2]),NBYTES(format));
   
-  fits_read_pix(fptr,datatype,(long *)fpixel,(size[0]*size[1]*size[2]),NULL,(void *)data,NULL,&status);
-  QUERY_FITS_ERROR(status);
+  fits_read_pix(fptr,datatype,fpixel,(((size_t)size[0])*((size_t)size[1])*((size_t)size[2])),NULL,(void *)data,NULL,&status);
+  QUERY_FITS_ERROR(status,NULL);
   
   return(newVal(BSQ,size[0],size[1],size[2],format,data));
 }
@@ -265,7 +265,7 @@ FITS_Read_Entry(char *fits_filename)
          fits_parse_value(header_entry,fits_value,fits_comment,&status);
          fits_get_keytype(fits_value,&key_type,&status);
 
-         QUERY_FITS_ERROR(status);
+         QUERY_FITS_ERROR(status,NULL);
 
          //Add to sub
          add_struct(sub,name,makeVarFromFITSLabel(fits_value,key_type));
@@ -274,7 +274,7 @@ FITS_Read_Entry(char *fits_filename)
       // Read data : we'll need a data type switch
       fits_get_hdu_type(fptr,&object_type,&status);
 
-      QUERY_FITS_ERROR(status);
+      QUERY_FITS_ERROR(status,NULL);
 
       if (object_type == IMAGE_HDU)
          davinci_data=Read_FITS_Image(fptr);
@@ -404,7 +404,7 @@ int  Write_FITS_Record(fitsfile *fptr,Var *obj, char *obj_name)
 		sprintf(card,"%s= %s",key,val);
 
 		fits_write_record(fptr,card,&status);
-		QUERY_FITS_ERROR(status);
+		QUERY_FITS_ERROR(status,0);
 
 		return(1);
 
@@ -417,7 +417,7 @@ int  Write_FITS_Record(fitsfile *fptr,Var *obj, char *obj_name)
 			VarType2FitsType(obj,&bitpix,&datatype);
 
 		fits_write_key(fptr,datatype,obj_name,V_DATA(obj),NULL,&status);
-		QUERY_FITS_ERROR(status);
+		QUERY_FITS_ERROR(status,0);
 
 		return(1);
 	}
@@ -512,7 +512,7 @@ FITS_Write_Structure(char *fits_filename, Var *obj, int force)
 		name = strdup(fits_filename);
 	
 	fits_create_file(&fptr,name,&status);
-	QUERY_FITS_ERROR(status);
+	QUERY_FITS_ERROR(status,NULL);
 
 	count = get_struct_count(obj);
 
@@ -534,7 +534,7 @@ FITS_Write_Structure(char *fits_filename, Var *obj, int force)
 	
 	fits_close_file(fptr,&status);
 
-	QUERY_FITS_ERROR(status);
+	QUERY_FITS_ERROR(status,NULL);
 
 	return(NULL);
 
@@ -585,7 +585,7 @@ FITS_Write_Var(char *fits_filename, Var *obj, int force)
 		name = strdup(fits_filename);
 
 	fits_create_file(&fptr,name,&status);
-	QUERY_FITS_ERROR(status);
+	QUERY_FITS_ERROR(status,NULL);
 
 /*
 ** Here we would descide if the Var was a table 
@@ -601,7 +601,7 @@ FITS_Write_Var(char *fits_filename, Var *obj, int force)
 
 	fits_close_file(fptr,&status);
 
-	QUERY_FITS_ERROR(status);
+	QUERY_FITS_ERROR(status,NULL);
 
 	return(NULL);
 
