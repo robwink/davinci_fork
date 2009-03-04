@@ -1,8 +1,11 @@
-char *version = "@(#) daVinci Version #1.73";
+char *version = "@(#) daVinci Version #2.00";
 
 #include "build.h"
 
 /*
+Version 2.00
+    * 64-bit enabled.
+
 Version 1.73
     * updated ff_vplot
     * Fixed an issue with dv_locate_file, iom_expand_filename 
@@ -13,6 +16,7 @@ Version 1.73
     * plot now points to ff_vplot instead of ff_plot (which is backcompatible also)
     * Fixed minor of other bugs
     * Fixed issues with Solaris
+
 
 Version 1.72a
     * Minor Clean ups

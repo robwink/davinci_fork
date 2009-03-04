@@ -202,7 +202,7 @@ int Darray_count(const Darray *d)
     return(-1);
 }
 
-void Darray_release(Darray *d, void (*fptr)(void *)) 
+void Darray_release(Darray *d, Darray_FuncPtr fptr) 
 {
     int i;
 
@@ -214,7 +214,7 @@ void Darray_release(Darray *d, void (*fptr)(void *))
     d->count =0;
 }
 
-void Darray_free(Darray *d, void (*fptr)(void *)) 
+void Darray_free(Darray *d, Darray_FuncPtr fptr) 
 {
     Darray_release(d, fptr);
     free(d->data);
@@ -253,7 +253,7 @@ Nnode_create(char *key, void *value)
 }
 
 void
-Nnode_free(Nnode *a, void (*fptr)(void *))
+Nnode_free(Nnode *a, Narray_FuncPtr fptr)
 {
     if (a->key) free(a->key);
     if (fptr && a->value) fptr(a->value);
@@ -508,7 +508,7 @@ Narray_count(const Narray *a)
 }
 
 void
-Narray_free(Narray *a, void (*fptr)(void *))
+Narray_free(Narray *a, Narray_FuncPtr fptr)
 {
     int i;
     int count = Darray_count(a->data);

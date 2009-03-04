@@ -67,7 +67,7 @@ WriteHDF5(hid_t parent, char *name, Var *v)
         ** member is a value.  Create a dataset
         */
         for (i = 0 ; i < 3 ; i++) {
-	  size[i] = V_SIZE(v)[i];
+            size[i] = V_SIZE(v)[i];
         }
         org = V_ORG(v);
         dataspace = H5Screate_simple(3, size, NULL);
@@ -79,39 +79,39 @@ WriteHDF5(hid_t parent, char *name, Var *v)
         case DOUBLE: datatype = H5Tcopy(H5T_IEEE_F64BE); break;
         }
 
-	/*
-	** Enable chunking and compression - JAS
-	*/
-	plist = H5Pcreate(H5P_DATASET_CREATE);
-	H5Pset_chunk(plist, 3, size);
-	H5Pset_deflate(plist, HDF5_COMPRESSION_LEVEL);
+    /*
+    ** Enable chunking and compression - JAS
+    */
+    plist = H5Pcreate(H5P_DATASET_CREATE);
+    H5Pset_chunk(plist, 3, size);
+    H5Pset_deflate(plist, HDF5_COMPRESSION_LEVEL);
 
-        dataset = H5Dcreate(parent, name, datatype, dataspace, plist);
+    dataset = H5Dcreate(parent, name, datatype, dataspace, plist);
 #ifdef WORDS_BIGENDIAN
-        H5Dwrite(dataset, datatype, 
-                 H5S_ALL, H5S_ALL, H5P_DEFAULT, V_DATA(v));
+    H5Dwrite(dataset, datatype, 
+             H5S_ALL, H5S_ALL, H5P_DEFAULT, V_DATA(v));
 #else
-	temp_data = var_endian(v);
-	if (temp_data != NULL) {
-	  H5Dwrite(dataset, datatype,
-		   H5S_ALL, H5S_ALL, H5P_DEFAULT, temp_data);
-	  free(temp_data);
-	}
+    temp_data = var_endian(v);
+    if (temp_data != NULL) {
+      H5Dwrite(dataset, datatype,
+           H5S_ALL, H5S_ALL, H5P_DEFAULT, temp_data);
+      free(temp_data);
+    }
 #endif
 
-        aid2 = H5Screate(H5S_SCALAR);
-        attr = H5Acreate(dataset, "org", H5T_STD_I32BE, aid2, H5P_DEFAULT);
+    aid2 = H5Screate(H5S_SCALAR);
+    attr = H5Acreate(dataset, "org", H5T_STD_I32BE, aid2, H5P_DEFAULT);
 #ifndef WORDS_BIGENDIAN
-	intswap(org);
+    intswap(org);
 #endif
-        H5Awrite(attr, H5T_STD_U32BE, &org);
-        H5Sclose(aid2);
-        H5Aclose(attr);
+    H5Awrite(attr, H5T_STD_U32BE, &org);
+    H5Sclose(aid2);
+    H5Aclose(attr);
 
-        H5Tclose(datatype);
-        H5Sclose(dataspace);
-        H5Dclose(dataset);
-	H5Pclose(plist);
+    H5Tclose(datatype);
+    H5Sclose(dataspace);
+    H5Dclose(dataset);
+    H5Pclose(plist);
         break;
 
 
@@ -132,7 +132,7 @@ WriteHDF5(hid_t parent, char *name, Var *v)
         aid2 = H5Screate(H5S_SCALAR);
         attr = H5Acreate(dataset, "lines", H5T_STD_I32BE, aid2, H5P_DEFAULT);
 #ifndef WORDS_BIGENDIAN
-	intswap(lines);
+        intswap(lines);
 #endif
         H5Awrite(attr, H5T_STD_I32BE, &lines);
         H5Sclose(aid2);
@@ -180,7 +180,7 @@ WriteHDF5(hid_t parent, char *name, Var *v)
         aid2 = H5Screate(H5S_SCALAR);
         attr = H5Acreate(dataset, "lines", H5T_STD_I32BE, aid2, H5P_DEFAULT);
 #ifndef WORDS_BIGENDIAN
-	intswap(lines);
+        intswap(lines);
 #endif
         H5Awrite(attr, H5T_STD_I32BE, &lines);
 
@@ -190,9 +190,9 @@ WriteHDF5(hid_t parent, char *name, Var *v)
         H5Sclose(dataspace);
         H5Dclose(dataset);
         free(big);
-	
+    
     }
-	
+    
     break;
 
     }
@@ -204,7 +204,8 @@ WriteHDF5(hid_t parent, char *name, Var *v)
 /*
 ** Make a VAR out of a HDF5 object
 */
-herr_t group_iter(hid_t parent, const char *name, void *data)
+static herr_t
+group_iter(hid_t parent, const char *name, void *data)
 {
     H5G_stat_t buf;
     hid_t child, dataset, dataspace, datatype, attr;
@@ -215,7 +216,7 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
     Var *v = NULL;
     void *databuf, *databuf2;
     int Lines=1;
-	extern int VERBOSE;
+    extern int VERBOSE;
 
     *((Var **)data) = NULL;
 
@@ -240,17 +241,17 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
         classtype=(H5Tget_class(datatype));
 
         if (classtype==H5T_INTEGER){
-            if (H5Tequal(datatype , H5T_STD_U8BE) || H5Tequal(datatype, H5T_NATIVE_UCHAR)) 
+            if (H5Tequal(datatype , H5T_STD_U8BE) || H5Tequal(datatype, H5T_STD_U8LE) || H5Tequal(datatype, H5T_NATIVE_UCHAR)) 
                 type = BYTE;
-            else if (H5Tequal(datatype , H5T_STD_I16BE) || H5Tequal(datatype, H5T_NATIVE_SHORT)) 
+            else if (H5Tequal(datatype , H5T_STD_I16BE) || H5Tequal(datatype , H5T_STD_I16LE) || H5Tequal(datatype, H5T_NATIVE_SHORT)) 
                 type = SHORT;
-            else if (H5Tequal(datatype , H5T_STD_I32BE) || H5Tequal(datatype, H5T_NATIVE_INT))   
+            else if (H5Tequal(datatype , H5T_STD_I32BE) || H5Tequal(datatype , H5T_STD_I32LE) || H5Tequal(datatype, H5T_NATIVE_INT))   
                 type = INT;
         }
         else if (classtype==H5T_FLOAT){
-            if (H5Tequal(datatype , H5T_IEEE_F32BE) || H5Tequal(datatype, H5T_NATIVE_FLOAT)) 
+            if (H5Tequal(datatype , H5T_IEEE_F32BE) || H5Tequal(datatype , H5T_IEEE_F32LE) || H5Tequal(datatype, H5T_NATIVE_FLOAT)) 
                 type = FLOAT;
-            else if (H5Tequal(datatype , H5T_IEEE_F64BE) || H5Tequal(datatype, H5T_NATIVE_DOUBLE)) 
+            else if (H5Tequal(datatype , H5T_IEEE_F64BE) || H5Tequal(datatype , H5T_IEEE_F64LE) || H5Tequal(datatype, H5T_NATIVE_DOUBLE)) 
                 type = DOUBLE;
         }
 
@@ -259,20 +260,30 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
         }
 
         if (type!=ID_STRING){
-            attr = H5Aopen_name(dataset, "org");
-            H5Aread(attr, H5T_STD_I32BE, &org);
+            org = BSQ;
+            if ((attr = H5Aopen_name(dataset, "org")) < 0){
+                parse_error("Unable to get org. Assuming %s.\n", Org2Str(org));
+            }
+            else {
+                H5Aread(attr, H5T_STD_I32BE, &org);
 #ifndef WORDS_BIGENDIAN
-	    intswap(org);
+                intswap(org);
 #endif
-            H5Aclose(attr);
+                H5Aclose(attr);
+            }
         }
         else {
-            attr = H5Aopen_name(dataset, "lines");
-            H5Aread(attr, H5T_STD_I32BE, &Lines);
+            Lines = 0;
+            if ((attr = H5Aopen_name(dataset, "lines")) < 0){
+                parse_error("Unable to get lines. Assuming %d.\n", Lines);
+            }
+            else {
+                H5Aread(attr, H5T_STD_I32BE, &Lines);
 #ifndef WORDS_BIGENDIAN
-	    intswap(Lines);
+                intswap(Lines);
 #endif
-            H5Aclose(attr);
+                H5Aclose(attr);
+            }
         }
 
         if ((type!=ID_STRING)){
@@ -285,15 +296,23 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
             dsize = H5Sget_simple_extent_npoints(dataspace);
             databuf = calloc(dsize, NBYTES(type));
             H5Dread(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, databuf);
-#ifndef WORDS_BIGENDIAN
-	    databuf2 = flip_endian(databuf, dsize, NBYTES(type));
-	    free(databuf);
-	    databuf = databuf2;
+#ifdef WORDS_BIGENDIAN
+            if (H5Tget_order(datatype) == H5T_ORDER_LE){
+                databuf2 = flip_endian(databuf, dsize, NBYTES(type));
+                free(databuf);
+                databuf = databuf2;
+            }
+#else
+            if (H5Tget_order(datatype) == H5T_ORDER_BE){
+                databuf2 = flip_endian(databuf, dsize, NBYTES(type));
+                free(databuf);
+                databuf = databuf2;
+            }
 #endif /* WORDS_BIGENDIAN */
             H5Tclose(datatype);
             H5Sclose(dataspace);
             H5Dclose(dataset);
-	    
+        
             v = newVal(org, size[0], size[1], size[2], type, databuf);
 
             V_NAME(v) = strdup(name);
@@ -341,23 +360,24 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
                         nm++;
                 }
             }
-					
-						
+                    
+                        
             H5Sclose(dataspace);
             H5Dclose(dataset);
             V_NAME(v) = strdup(name);
         }
     }
-	if (VERBOSE > 2) {
-		pp_print_var(v, V_NAME(v), 0, 0);
-	}
+    if (VERBOSE > 2) {
+        pp_print_var(v, V_NAME(v), 0, 0);
+    }
 
     *((Var **)data) = v;
     return 1;
 }
 
 
-herr_t count_group(hid_t group, const char *name, void *data)
+static herr_t
+count_group(hid_t group, const char *name, void *data)
 {
     *((int *)data) += 1;
     return(0);
@@ -406,11 +426,11 @@ load_hdf5(hid_t parent)
     o = new_struct(count);
     
     while ((ret = H5Giterate(parent, ".", &idx, group_iter, &e)) > 0)  {
-		if (e != NULL) {
-			add_struct(o, V_NAME(e), e);
-			V_NAME(e) = NULL;
-		}
-		if (idx == count) break;
+        if (e != NULL) {
+            add_struct(o, V_NAME(e), e);
+            V_NAME(e) = NULL;
+        }
+        if (idx == count) break;
     }
     return(o);
 }

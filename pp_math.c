@@ -17,72 +17,72 @@ extern Var * concatenate_struct(Var *a, Var *b);
  **/
 #define DO_MATH_LOOP(T1,T2,_E_,_S_) \
 {\
-	T1 v1, v2;\
-	T2 *idata = (T2 *)data;\
-	for (i = 0 ; i < dsize ; i++) {\
-		v1 = _E_(a,rpos(i,val,a));\
-		v2 = _E_(b,rpos(i,val,b));\
-		switch(op) {\
-			case ID_ADD:    idata[i] = _S_(v1+v2); break;\
-			case ID_SUB:    idata[i] = _S_(v1-v2); break;\
-			case ID_MULT:   idata[i] = _S_(v1*v2); break;\
-			case ID_DIV: {\
-				if (v2 != 0) {\
-					idata[i] = _S_(v1/v2);\
-				} else {\
-					idata[i] = _S_(0);\
-					dzero++;\
-				}\
-				break;\
-			}\
-			case ID_MOD: idata[i] = (T2)_S_(fmod((double)v1, (double)v2)); break;\
-			case ID_POW: idata[i] = (T2)_S_(pow((double)v1, (double)v2)); break;\
-		}\
-	}\
+    T1 v1, v2;\
+    T2 *idata = (T2 *)data;\
+    for (i = 0 ; i < dsize ; i++) {\
+        v1 = _E_(a,rpos(i,val,a));\
+        v2 = _E_(b,rpos(i,val,b));\
+        switch(op) {\
+            case ID_ADD:    idata[i] = _S_(v1+v2); break;\
+            case ID_SUB:    idata[i] = _S_(v1-v2); break;\
+            case ID_MULT:   idata[i] = _S_(v1*v2); break;\
+            case ID_DIV: {\
+                if (v2 != 0) {\
+                    idata[i] = _S_(v1/v2);\
+                } else {\
+                    idata[i] = _S_(0);\
+                    dzero++;\
+                }\
+                break;\
+            }\
+            case ID_MOD: idata[i] = (T2)_S_(fmod((double)v1, (double)v2)); break;\
+            case ID_POW: idata[i] = (T2)_S_(pow((double)v1, (double)v2)); break;\
+        }\
+    }\
 }
 
 #define DO_SHIFT_LOOP(T1,T2,_E_,_S_) \
 {\
-	T1 v1, v2;\
-	T2 *idata = (T2 *)data;\
-	for (i = 0 ; i < dsize ; i++) {\
-		v1 = _E_(a,rpos(i,val,a));\
-		v2 = _E_(b,rpos(i,val,b));\
-		switch(op) {\
-			case ID_LSHIFT:    idata[i] = _S_(v1 << v2); break;\
-			case ID_RSHIFT:    idata[i] = _S_(v1 >> v2); break;\
-		}\
-	}\
+    T1 v1, v2;\
+    T2 *idata = (T2 *)data;\
+    for (i = 0 ; i < dsize ; i++) {\
+        v1 = _E_(a,rpos(i,val,a));\
+        v2 = _E_(b,rpos(i,val,b));\
+        switch(op) {\
+            case ID_LSHIFT:    idata[i] = _S_(v1 << v2); break;\
+            case ID_RSHIFT:    idata[i] = _S_(v1 >> v2); break;\
+        }\
+    }\
 }
 
 #define DO_RELOP_LOOP(T1,T2,_E_,_S_) \
 {\
-	T1 v1, v2;\
-	T2 *idata = (T2 *)data;\
-	for (i = 0 ; i < dsize ; i++) {\
-		v1 = _E_(a,rpos(i,val,a));\
-		v2 = _E_(b,rpos(i,val,b));\
-		switch(op) {\
-			case ID_EQ:     idata[i] = (v1 == v2);	break;\
-			case ID_NE:     idata[i] = (v1 != v2);	break;\
-			case ID_LT:     idata[i] = (v1 < v2);	break;\
-			case ID_GT:     idata[i] = (v1 > v2);	break;\
-			case ID_LE:     idata[i] = (v1 <= v2);	break;\
-			case ID_GE:     idata[i] = (v1 >= v2);	break;\
-			case ID_OR:     idata[i] = (v1 || v2);	break;\
-			case ID_AND:	idata[i] = (v1 && v2);	break;\
-		}\
-	}\
+    T1 v1, v2;\
+    T2 *idata = (T2 *)data;\
+    for (i = 0 ; i < dsize ; i++) {\
+        v1 = _E_(a,rpos(i,val,a));\
+        v2 = _E_(b,rpos(i,val,b));\
+        switch(op) {\
+            case ID_EQ:     idata[i] = (v1 == v2);	break;\
+            case ID_NE:     idata[i] = (v1 != v2);	break;\
+            case ID_LT:     idata[i] = (v1 < v2);	break;\
+            case ID_GT:     idata[i] = (v1 > v2);	break;\
+            case ID_LE:     idata[i] = (v1 <= v2);	break;\
+            case ID_GE:     idata[i] = (v1 >= v2);	break;\
+            case ID_OR:     idata[i] = (v1 || v2);	break;\
+            case ID_AND:	idata[i] = (v1 && v2);	break;\
+        }\
+    }\
 }
 
 #define DO_CMP_LOOP(T1,_E_) \
 {\
-	T1 v1, v2;\
-	for (i = 0 ; i < dsize ; i++) {\
-		v1 = _E_(a,rpos(i,val,a)); \
-		v2 = _E_(b,rpos(i,val,b));\
-		if (v1 != v2) return(0); \
-	}\
+    T1 v1, v2;\
+    for (i = 0 ; i < dsize ; i++) {\
+        v1 = _E_(a,rpos(i,val,a)); \
+        v2 = _E_(b,rpos(i,val,b));\
+        if (v1 != v2) return(0); \
+    }\
 }
 
 int
@@ -145,25 +145,25 @@ pp_math(Var * a, int op, Var * b)
     **/
 
     if (V_TYPE(a) == ID_STRING || V_TYPE(b) == ID_STRING || 
-		  V_TYPE(a) == ID_TEXT || V_TYPE(b) == ID_TEXT) {
+          V_TYPE(a) == ID_TEXT || V_TYPE(b) == ID_TEXT) {
         return (pp_math_strings(a, op, b));
     }
     if (V_TYPE(a) == ID_STRUCT || V_TYPE(b) == ID_STRUCT) {
-		if (V_TYPE(a) != V_TYPE(b)) {
-			parse_error("Can only add structs to structs");
-			return(NULL);
-		}
-		return(concatenate_struct(a,b));
-	}
+        if (V_TYPE(a) != V_TYPE(b)) {
+            parse_error("Can only add structs to structs");
+            return(NULL);
+        }
+        return(concatenate_struct(a,b));
+    }
     if (V_TYPE(a) != ID_VAL || V_TYPE(b) != ID_VAL) {
         parse_error("math operation illegal on non-values");
         return (NULL);
     }
     count = 0;
-	if (math_operable(a,b) == 0) {
+    if (math_operable(a,b) == 0) {
         parse_error("math operation illegal, sizes differ on more than 1 axis");
         return (NULL);
-	}
+    }
     /**
     ** Figure out return type and size, and allocate space
     **
@@ -193,10 +193,10 @@ pp_math(Var * a, int op, Var * b)
     **/
 
     data = calloc(dsize, NBYTES(out_format));
-	if (data == NULL){
-		parse_error("Unable to alloc %ld bytes.\n", dsize*NBYTES(out_format));
-		return NULL;
-	}
+    if (data == NULL){
+        parse_error("Unable to alloc %ld bytes.\n", dsize*NBYTES(out_format));
+        return NULL;
+    }
 
     val = newVar();
     V_TYPE(val) = ID_VAL;
@@ -226,22 +226,22 @@ pp_math(Var * a, int op, Var * b)
             break;
         }
     } else if (op == ID_LSHIFT || op == ID_RSHIFT) {
-		if (in_format <= INT) {
-			switch (V_FORMAT(a)) {
-			case BYTE:
-				DO_SHIFT_LOOP(int, u_char, extract_int, saturate_byte);
-				break;
-			case SHORT:
-				DO_SHIFT_LOOP(int, short, extract_int, saturate_short);
-				break;
-			case INT:
-				DO_SHIFT_LOOP(int, int, extract_int, (int));
-				break;
-			}
-		} else {
-			parse_error("Can only shift ints\n");
-			return(NULL);
-		}
+        if (in_format <= INT) {
+            switch (V_FORMAT(a)) {
+            case BYTE:
+                DO_SHIFT_LOOP(int, u_char, extract_int, saturate_byte);
+                break;
+            case SHORT:
+                DO_SHIFT_LOOP(int, short, extract_int, saturate_short);
+                break;
+            case INT:
+                DO_SHIFT_LOOP(int, int, extract_int, (int));
+                break;
+            }
+        } else {
+            parse_error("Can only shift ints\n");
+            return(NULL);
+        }
     } else {
         /**
         ** For each output element (0-size), de-compute relative position using
@@ -319,7 +319,7 @@ pp_compare(Var * a, Var * b)
 
 /*
     if (V_TYPE(a) == ID_STRING || V_TYPE(b) == ID_STRING || 
-		  V_TYPE(a) == ID_TEXT || V_TYPE(b) == ID_TEXT) {
+          V_TYPE(a) == ID_TEXT || V_TYPE(b) == ID_TEXT) {
         return (pp_math_strings(a, ID_EQ, b));
     }
 */
@@ -370,20 +370,20 @@ pp_compare(Var * a, Var * b)
     V_SIZE(val)[orders[order][1]] = size[1];
     V_SIZE(val)[orders[order][2]] = size[2];
 
-	switch (in_format) {
-		case BYTE:
-		case SHORT:
-		case INT:
-			DO_CMP_LOOP(int, extract_int);
-			break;
-		case FLOAT:
-			DO_CMP_LOOP(float, extract_float);
-			break;
-		case DOUBLE:
-			DO_CMP_LOOP(double, extract_double);
-			break;
-	}
-	return(1);
+    switch (in_format) {
+        case BYTE:
+        case SHORT:
+        case INT:
+            DO_CMP_LOOP(int, extract_int);
+            break;
+        case FLOAT:
+            DO_CMP_LOOP(float, extract_float);
+            break;
+        case DOUBLE:
+            DO_CMP_LOOP(double, extract_double);
+            break;
+    }
+    return(1);
 }
 
 
@@ -512,15 +512,15 @@ extract_double(Var * v, size_t i)
 int
 math_operable(Var *a, Var *b)
 {
-	int i;
-	int va,vb;
+    int i;
+    int va,vb;
     int ca = 1, cb = 1;
 
     for (i = 0; i < 3; i++) {
         va = V_SIZE(a)[orders[V_ORDER(a)][i]];
         vb = V_SIZE(b)[orders[V_ORDER(b)][i]];
         if (va != 1 && vb != 1 && va != vb) {
-			return(0);
+            return(0);
         }
         if (va != vb) {
             ca *= va;
@@ -528,7 +528,7 @@ math_operable(Var *a, Var *b)
         }
     }
     if (ca != 1 && cb != 1) {
-		return(0);
+        return(0);
     }
-	return(1);
+    return(1);
 }

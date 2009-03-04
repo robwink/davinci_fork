@@ -25,14 +25,14 @@ pp_emit_prompt()
 {
     extern int interactive;
     extern int sourced;
-	int i;
+    int i;
 
     if (sourced <= 1 && interactive) {
-		if (indent)
-			printf("%2d> ",indent);
-		else {
-			printf("dv> ");
-		}
+        if (indent)
+            printf("%2d> ",indent);
+        else {
+            printf("dv> ");
+        }
         fflush(stdout);
     }
 }
@@ -44,7 +44,7 @@ V_DUP(Var *v)
     Var *r;
     size_t dsize;
 
-	if (v == NULL) return(NULL);
+    if (v == NULL) return(NULL);
 
     if (V_TYPE(v) != ID_STRUCT) {
         r = newVar();
@@ -119,7 +119,7 @@ pp_print_struct(Var *v, int indent, int depth)
     int i, count;
     Var *s;
     char *name;
-	
+    
     if (v == NULL) return;
     if (VERBOSE == 0) return;
 
@@ -143,7 +143,7 @@ void
 dump_var(Var *v, int indent, int limit) 
 {
     int i,j,k;
-	size_t c;
+    size_t c;
     int x, y, z;
     int row;
 
@@ -234,12 +234,12 @@ pp_print_var(Var *v, char *name, int indent, int depth)
             printf("struct, %d elements...\n", get_struct_count(v));
         }
         break;
-	
+    
     case ID_TEXT:		/*Added: Thu Mar  2 16:52:39 MST 2000*/
         printf("Text Buffer with %d lines of text\n", V_TEXT(v).Row);
         dump_var(v, indent+4, 10);
         break;
-	
+    
 #ifdef BUILD_MODULE_SUPPORT
     case ID_MODULE:
         pp_print_module_var(v);
@@ -384,12 +384,12 @@ pp_inc_var(Var *id, Var *range, Var *exp)
 
         if (V_TYPE(v)==ID_TEXT) {/*Need to intercept TEXT var's */
             parse_error("Can't inc/decrement TEXT");
-	    return(NULL);
-	}
+        return(NULL);
+    }
         if (V_TYPE(v)==ID_STRING) {/*Ditto for STRING var's!*/
             parse_error("Can't inc/decrement STRING");
-	    return(NULL);
-	}
+        return(NULL);
+    }
 
         if (fixup_ranges(v, r, &rout) == 0) {
             parse_error("Illegal range value.");
@@ -398,7 +398,7 @@ pp_inc_var(Var *id, Var *range, Var *exp)
 
         if (V_TYPE(v) == ID_STRUCT) {
             parse_error("Can't inc/decrement STRUCT");
-	    return(NULL);
+        return(NULL);
         }
 
         array_replace(v, exp, &rout);
@@ -457,13 +457,13 @@ array_replace(Var *dst, Var *src, Range *r)
     int size[3];
     int x, y, z;
     size_t d, s;
-	size_t src_nbytes;
+    size_t src_nbytes;
 
     x = GetX(src);
     y = GetY(src);
     z = GetZ(src);
 
-	src_nbytes = NBYTES(V_FORMAT(src));
+    src_nbytes = NBYTES(V_FORMAT(src));
 
     for (i =0 ; i < 3 ; i++) {
         size[i] = 1 + (r->hi[i] - r->lo[i])/r->step[i];
@@ -474,49 +474,49 @@ array_replace(Var *dst, Var *src, Range *r)
         }
     }
 
-	for (k = 0 ; k < size[2] ; k++) {
+    for (k = 0 ; k < size[2] ; k++) {
         for (j = 0 ; j < size[1] ; j++) {
-			for (i = 0 ; i < size[0] ; i++) {
+            for (i = 0 ; i < size[0] ; i++) {
 
                 d = cpos(i*r->step[0] + r->lo[0],
                          j*r->step[1] + r->lo[1],
                          k*r->step[2] + r->lo[2], dst);
 
-				/*
-				** modification to correctly handle sizes of 1
-				** This is slow, but works 
-				*/
+                /*
+                ** modification to correctly handle sizes of 1
+                ** This is slow, but works 
+                */
                 s = cpos(i % x,j % y,k % z,src);
 
-				if (V_FORMAT(dst) == V_FORMAT(src)){
-					memcpy(((char *)V_DATA(dst))+d*src_nbytes,
-						((char *)V_DATA(src))+s*src_nbytes,
-						src_nbytes);
-				}
-				else {
-					switch(V_FORMAT(dst)) {
-					case BYTE:
-						((u_char *)V_DATA(dst))[d] =
-							saturate_byte(extract_int(src, s));
-						break;
-					case SHORT:
-						((short *)V_DATA(dst))[d] =
-							saturate_short(extract_int(src, s));
-						break;
-					case INT:
-						((int *)V_DATA(dst))[d] =
-							saturate_int(extract_int(src, s));
-						break;
-					case FLOAT:
-						((float *)V_DATA(dst))[d] =
-							extract_float(src, s);
-						break;
-					case DOUBLE:
-						((double *)V_DATA(dst))[d] =
-							extract_double(src, s);
-						break;
-					}
-				}
+                if (V_FORMAT(dst) == V_FORMAT(src)){
+                    memcpy(((char *)V_DATA(dst))+d*src_nbytes,
+                        ((char *)V_DATA(src))+s*src_nbytes,
+                        src_nbytes);
+                }
+                else {
+                    switch(V_FORMAT(dst)) {
+                    case BYTE:
+                        ((u_char *)V_DATA(dst))[d] =
+                            saturate_byte(extract_int(src, s));
+                        break;
+                    case SHORT:
+                        ((short *)V_DATA(dst))[d] =
+                            saturate_short(extract_int(src, s));
+                        break;
+                    case INT:
+                        ((int *)V_DATA(dst))[d] =
+                            saturate_int(extract_int(src, s));
+                        break;
+                    case FLOAT:
+                        ((float *)V_DATA(dst))[d] =
+                            extract_float(src, s);
+                        break;
+                    case DOUBLE:
+                        ((double *)V_DATA(dst))[d] =
+                            extract_double(src, s);
+                        break;
+                    }
+                }
             }
         }
     }
@@ -698,7 +698,7 @@ pp_range(Var *v, Var *r)
     } else if (V_TYPE(v) == ID_STRING) {
         return(string_subset(v,r));
     }
-	
+    
     parse_error( "Illegal type: %s", V_NAME(v));
     return(NULL);
 }
@@ -740,14 +740,14 @@ pp_mk_arglist(Var *arglist, Var *arg)
     */
     Var *p;
     if (arglist == NULL) {
-		if (arg == NULL) return(NULL);
-		arglist = newVar();
-		V_TYPE(arglist) = ID_ARGS;
-		V_ARGS(arglist) = Narray_create(2);
+        if (arg == NULL) return(NULL);
+        arglist = newVar();
+        V_TYPE(arglist) = ID_ARGS;
+        V_ARGS(arglist) = Narray_create(2);
     }
 
     if (arg != NULL) {
-		Narray_add(V_ARGS(arglist), NULL, arg);
+        Narray_add(V_ARGS(arglist), NULL, arg);
     }
 
     return(arglist);
@@ -811,11 +811,11 @@ pp_argv(Var *left, Var *right)
 
     if (V_TYPE(v) == ID_VAL) {
         n = V_INT(v);
-		v = dd_get_argv(scope, n);
-		if (v == NULL)  {
+        v = dd_get_argv(scope, n);
+        if (v == NULL)  {
             parse_error("Argument does not exist: $%d\n", n);
-		}
-		return(v);
+        }
+        return(v);
     } else if (!strcasecmp(V_NAME(v), "argc")) {
         /**
         ** special case, number of dd->args.
@@ -824,13 +824,13 @@ pp_argv(Var *left, Var *right)
     } else {
         strcpy(name, V_NAME(v));
         if (!strcasecmp(name, "argv")) {
-			/* we should dump the entire ARGV array here */
-			return(dd_make_arglist(scope));
+            /* we should dump the entire ARGV array here */
+            return(dd_make_arglist(scope));
         }
 
-		/*
-		** just some random $ENV variable
-		*/
+        /*
+        ** just some random $ENV variable
+        */
         if ((value = get_env_var(name)) == NULL) {
             return(NULL);
         }
@@ -840,10 +840,10 @@ pp_argv(Var *left, Var *right)
 
 Var *pp_new_parallel(Var *axis, Var *arg)
 {
-	Var *n;
+    Var *n;
 
-	n = newVar();
-	return(n);
+    n = newVar();
+    return(n);
 }
 
 
@@ -893,16 +893,16 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
     }
     exp2 = e;
 
-	/*
-	// test/regression_050823 (NsG)
-	*/
+    /*
+    // test/regression_050823 (NsG)
+    */
     if (op == ID_ADD) {
-		if ((V_TYPE(exp1) == ID_STRUCT || V_TYPE(exp2) == ID_STRUCT)) {
-			parse_error("unable to add strings and structs");
-			return(NULL);
-		}
-		return(pp_add_strings(exp1, exp2));
-	}
+        if ((V_TYPE(exp1) == ID_STRUCT || V_TYPE(exp2) == ID_STRUCT)) {
+            parse_error("unable to add strings and structs");
+            return(NULL);
+        }
+        return(pp_add_strings(exp1, exp2));
+    }
 
 
     if (V_TYPE(exp1) == ID_STRING && V_TYPE(exp2) == ID_STRING) {
@@ -1005,33 +1005,33 @@ Var *
 pp_help(Var *s)
 {
     char *p = NULL;
-	Var *p1, *p2;
-	char *module, *function;
+    Var *p1, *p2;
+    char *module, *function;
 
     if (s == NULL) p = NULL;
-	else if (V_TYPE(s) == ID_DEREF) {
+    else if (V_TYPE(s) == ID_DEREF) {
 #ifdef BUILD_MODULE_SUPPORT 
-		/* This is help on a module function */
-		p1 = V_NODE(s)->left;
-		p2 = V_NODE(s)->right;
-		if (V_NAME(p1) == NULL) {
-			parse_error("Error: bad help usage.");
-			return(NULL);
-		}
-		module = V_NAME(p1);
-		if (p2 == NULL || V_NAME(p2) == NULL) {
-			module_help(module, NULL);
-			return(NULL);
-		} else {
-			function = V_NAME(p2);
-			module_help(module, function);
-			return(NULL);
-		}
+        /* This is help on a module function */
+        p1 = V_NODE(s)->left;
+        p2 = V_NODE(s)->right;
+        if (V_NAME(p1) == NULL) {
+            parse_error("Error: bad help usage.");
+            return(NULL);
+        }
+        module = V_NAME(p1);
+        if (p2 == NULL || V_NAME(p2) == NULL) {
+            module_help(module, NULL);
+            return(NULL);
+        } else {
+            function = V_NAME(p2);
+            module_help(module, function);
+            return(NULL);
+        }
 #else 
-		parse_error("Module support not enabled.\n");
-		return(NULL);
+        parse_error("Module support not enabled.\n");
+        return(NULL);
 #endif
-	}
+    }
     else if (V_NAME(s)) p = V_NAME(s);
     else if (V_STRING(s)) p = V_STRING(s);
 
@@ -1043,41 +1043,41 @@ Var *
 pp_exact_help(Var *s)
 {
     char *p = NULL;
-	char *q;
-	Var *p1, *p2;
-	char *module, *function;
+    char *q;
+    Var *p1, *p2;
+    char *module, *function;
 
     if (s == NULL) p = NULL;
-	else if (V_TYPE(s) == ID_DEREF) {
+    else if (V_TYPE(s) == ID_DEREF) {
 #ifdef BUILD_MODULE_SUPPORT 
-		/* This is help on a module function */
-		p1 = V_NODE(s)->left;
-		p2 = V_NODE(s)->right;
-		if (V_NAME(p1) == NULL) {
-			parse_error("Error: bad help usage.");
-			return(NULL);
-		}
-		module = V_NAME(p1);
-		if (p2 == NULL || V_NAME(p2) == NULL) {
-			module_help(module, NULL);
-			return(NULL);
-		} else {
-			function = V_NAME(p2);
-			module_help(module, function);
-			return(NULL);
-		}
+        /* This is help on a module function */
+        p1 = V_NODE(s)->left;
+        p2 = V_NODE(s)->right;
+        if (V_NAME(p1) == NULL) {
+            parse_error("Error: bad help usage.");
+            return(NULL);
+        }
+        module = V_NAME(p1);
+        if (p2 == NULL || V_NAME(p2) == NULL) {
+            module_help(module, NULL);
+            return(NULL);
+        } else {
+            function = V_NAME(p2);
+            module_help(module, function);
+            return(NULL);
+        }
 #else 
-		parse_error("Module support not enabled.\n");
-		return(NULL);
+        parse_error("Module support not enabled.\n");
+        return(NULL);
 #endif
-	} else if (V_NAME(s)) p = V_NAME(s);
+    } else if (V_NAME(s)) p = V_NAME(s);
     else if (V_STRING(s)) p = V_STRING(s);
 
-	q = malloc(strlen(p) + 3);
-	sprintf(q, "%s()",p);
+    q = malloc(strlen(p) + 3);
+    sprintf(q, "%s()",p);
 
     do_help(q, NULL);
-	free(q);
+    free(q);
     return(NULL);
 }
 
@@ -1097,7 +1097,7 @@ Var *
 pp_set_where(Var *id, Var *where, Var *exp) 
 {
     Var *v;
-    int i,j,k, l;
+    size_t i,j,k, l;
     int ival, dsize, format;
     double dval;
 

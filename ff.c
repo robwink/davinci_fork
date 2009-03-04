@@ -95,7 +95,7 @@ ff_dfunc(vfuncptr func, Var * arg)
 
     void *data;
     int format;
-	size_t dsize;
+    size_t dsize;
     size_t i;
 
     Alist alist[2];
@@ -622,7 +622,7 @@ ff_create(vfuncptr func, Var * arg)
     int org = BSQ;
     float start = 0;
     float step = 1.0;
-	int init = 1;
+    int init = 1;
     char *format_str = NULL, *org_str = NULL;
 
     u_char *cdata;
@@ -671,11 +671,10 @@ ff_create(vfuncptr func, Var * arg)
     V_TYPE(s) = ID_VAL;
 
     V_DATA(s) = calloc(dsize,NBYTES(format));
-	if (V_DATA(s) == NULL){
-		parse_error("Unable to allocate %ld bytes: %s\n", dsize*NBYTES(format), strerror(errno));
-		return(NULL);
-	}
-    /*memset(V_DATA(s), -1, dsize*NBYTES(format)); */
+    if (V_DATA(s) == NULL){
+        parse_error("Unable to allocate %ld bytes: %s\n", dsize*NBYTES(format), strerror(errno));
+        return(NULL);
+    }
     V_FORMAT(s) = format;
     V_ORDER(s) = org;
     V_DSIZE(s) = dsize;
@@ -690,54 +689,54 @@ ff_create(vfuncptr func, Var * arg)
     fdata = (float *) V_DATA(s);
     ddata = (double *) V_DATA(s);
 
-	if (init){
-		if (step == 0){
-			if (dsize > 0){
-				unsigned char *data = (char *)V_DATA(s);
-				unsigned int nbytes = NBYTES(format);
-				size_t i;
+    if (init){
+        if (step == 0){
+            if (dsize > 0){
+                unsigned char *data = (char *)V_DATA(s);
+                unsigned int nbytes = NBYTES(format);
+                size_t i;
 
-				v = start;
-				switch (format) {
-				case BYTE: cdata[0] = saturate_byte(v); break;
-				case SHORT: sdata[0] = saturate_short(v); break;
-				case INT: idata[0] = saturate_int(v); break;
-				case FLOAT: fdata[0] = saturate_float(v); break;
-				case DOUBLE: ddata[0] = v; break;
-				}
-				for(i=1; i<dsize; i++){
-					memcpy(data+i*nbytes, data, nbytes);
-				}
-			}
-		}
-		else {
-			for (k = 0 ; k < z ; k++) {
-				for (j = 0 ; j < y ; j++) {
-					for (i = 0 ; i < x ; i++) {
-						v = (count++) * step + start;
-						c = cpos(i,j,k,s);
-						switch (format) {
-						case BYTE:
-							cdata[c] = saturate_byte(v);
-							break;
-						case SHORT:
-							sdata[c] = saturate_short(v);
-							break;
-						case INT:
-							idata[c] = saturate_int(v);
-							break;
-						case FLOAT:
-							fdata[c] = saturate_float(v);
-							break;
-						case DOUBLE:
-							ddata[c] = v;
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
+                v = start;
+                switch (format) {
+                case BYTE: cdata[0] = saturate_byte(v); break;
+                case SHORT: sdata[0] = saturate_short(v); break;
+                case INT: idata[0] = saturate_int(v); break;
+                case FLOAT: fdata[0] = saturate_float(v); break;
+                case DOUBLE: ddata[0] = v; break;
+                }
+                for(i=1; i<dsize; i++){
+                    memcpy(data+i*nbytes, data, nbytes);
+                }
+            }
+        }
+        else {
+            for (k = 0 ; k < z ; k++) {
+                for (j = 0 ; j < y ; j++) {
+                    for (i = 0 ; i < x ; i++) {
+                        v = (count++) * step + start;
+                        c = cpos(i,j,k,s);
+                        switch (format) {
+                        case BYTE:
+                            cdata[c] = saturate_byte(v);
+                            break;
+                        case SHORT:
+                            sdata[c] = saturate_short(v);
+                            break;
+                        case INT:
+                            idata[c] = saturate_int(v);
+                            break;
+                        case FLOAT:
+                            fdata[c] = saturate_float(v);
+                            break;
+                        case DOUBLE:
+                            ddata[c] = v;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
     return (s);
 }
 
@@ -822,7 +821,7 @@ ff_replicate(vfuncptr func, Var * arg)
     size_t size[3];
     int nbytes;
     size_t i, j, k;
-	size_t l;
+    size_t l;
 
     Alist alist[5];
     alist[0] = make_alist( "object", ID_UNK,   NULL, &v);
@@ -1424,9 +1423,9 @@ ff_fsize(vfuncptr func, Var * arg)
         *data = -1;
         if ((stat(filename, &sbuf)) == 0) {
             *data = sbuf.st_size;
-			if ((*data) != sbuf.st_size){
-				parse_error("%s: Integer truncation, size was %ld\n", func->name, sbuf.st_size);
-			}
+            if ((*data) != sbuf.st_size){
+                parse_error("%s: Integer truncation, size was %ld\n", func->name, sbuf.st_size);
+            }
         }
         return(newVal(BSQ, 1, 1, 1, INT, data));
     }
@@ -1810,7 +1809,7 @@ newInt(int i)
 Var *
 newLong(long i)
 {
-    Var *v = newVal(BSQ, 1, 1,1, LONG, calloc(1, sizeof(long)));	
+    Var *v = newVal(BSQ, 1, 1,1, LONG, calloc(1, sizeof(long)));
     V_LONG(v) = i;
     return(v);
 }
@@ -1966,10 +1965,10 @@ ff_deleted(vfuncptr func, Var * arg)
     Var *str_value = NULL, *v;
     char vbuf[16] = { 0 };
     int bytes;
-	int nbytes;
-	size_t dsize;
+    int nbytes;
+    size_t dsize;
     unsigned char *data, *out;
-	size_t i;
+    size_t i;
 
 
     Alist alist[3];
@@ -2081,10 +2080,10 @@ ff_set_deleted(vfuncptr func, Var * arg)
     Var *str_value = NULL, *v;
     char vbuf[16] = { 0 };
     int bytes;
-	int nbytes;
-	size_t dsize;
+    int nbytes;
+    size_t dsize;
     unsigned char *data, *out;
-	size_t i;
+    size_t i;
 
 
     Alist alist[4];
@@ -2143,9 +2142,9 @@ Var *
 ff_contains(vfuncptr func, Var * arg)
 {
     Var *obj = NULL, *value=NULL;
-	size_t dsize;
-	size_t i;
-	int ret = 0;
+    size_t dsize;
+    size_t i;
+    int ret = 0;
     int vi;
     double vd;
 
