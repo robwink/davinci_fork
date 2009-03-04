@@ -307,7 +307,7 @@ enum {
 #define BIP			2
 
 #define Format2Str(i)	FORMAT2STR[(i)]
-#define Org2Str(i)		ORG2STR[(i)]
+#define Org2Str(i)		(((i) >= BSQ && (i)<= BIP)? ORG2STR[(i)]: "undef")
 
 #define GetSamples(s,org)	(s)[((org) == BIP ? 1 : 0)]
 #define GetLines(s,org)		(s)[((org) == BSQ ? 1 : 2)]
