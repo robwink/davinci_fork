@@ -159,12 +159,12 @@ ff_translate(vfuncptr func, Var *arg)
     int from;
     int to;
     int d[3];
-    int count;
+    size_t count, l;
     char *ptr;
     int flip = 0;
     int nbytes;
     int in_size[3], out_size[3];
-    int i,j,k,l,t;
+    int i,j,k,t;
     char *options[] = { "x", "y", "z", NULL };
 	char *axis1_str=NULL, *axis2_str = NULL;
 
@@ -238,7 +238,7 @@ ff_translate(vfuncptr func, Var *arg)
                 d[to] = t;
 
 
-                l = d[0] + (d[1] + d[2]*out_size[1])*out_size[0];
+                l = ((size_t)d[0]) + (((size_t)d[1]) + (size_t)d[2]*(size_t)out_size[1])*(size_t)out_size[0];
                 memcpy(((unsigned char *)V_DATA(s))+l*nbytes, 
                        ((unsigned char *)V_DATA(v))+count*nbytes, 
                        nbytes);

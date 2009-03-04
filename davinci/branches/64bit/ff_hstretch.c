@@ -193,13 +193,13 @@ cdf_smooth(int dnmin, int dnmax)
 {
     float *out;
     int npts, i;
-	float anorm;
+    float anorm;
 
     npts = dnmax - dnmin + 1;
     out = calloc(sizeof(float), npts);
 
     for (i = 0; i < npts; i+=1) {
-		out[i] = (float)i/npts;
+        out[i] = (float)i/npts;
     }
     return(out);
 }
@@ -211,7 +211,7 @@ cdf_ellipse(int dnmin, int dnmax)
     int npts, i;
     float b,p,bsq,sum,bsqxsq;
     float x,y, anorm;
-	int noffset;
+    int noffset;
 
     npts = dnmax - dnmin + 1;
     out = calloc(sizeof(float), npts);
@@ -224,18 +224,18 @@ cdf_ellipse(int dnmin, int dnmax)
    
     for (i = dnmin; i <= dnmax; i+=1) {
     	x = i - noffset;
-		bsqxsq = bsq-x*x;
-		if (bsqxsq < 0) bsqxsq= 0;
-		sum = sum + p*sqrt(bsqxsq);
+        bsqxsq = bsq-x*x;
+        if (bsqxsq < 0) bsqxsq= 0;
+        sum = sum + p*sqrt(bsqxsq);
     }
     anorm = npts / sum;
 
     for (i = dnmin; i <= dnmax; i+=1) {
     	x = i - noffset;
-		bsqxsq = bsq-x*x;
-		if (bsqxsq < 0) bsqxsq = 0;
-		sum += anorm*p*sqrt(bsqxsq);
-		out[i] = rnd(sum);
+        bsqxsq = bsq-x*x;
+        if (bsqxsq < 0) bsqxsq = 0;
+        sum += anorm*p*sqrt(bsqxsq);
+        out[i] = rnd(sum);
     }
     return(out);
 }
@@ -322,11 +322,11 @@ hmod(Var * histogram, dnmin, dnmax, float *cdf, int npts)
 
 int rnd(float f) 
 {
-	if (f > 0) {
-		return(f+0.5);
-	} else {
-		return(f-0.5);
-	}
+    if (f > 0) {
+        return(f+0.5);
+    } else {
+        return(f-0.5);
+    }
 }
 
 
@@ -349,7 +349,7 @@ ff_sstretch2(vfuncptr func, Var * arg)
   double     sumsq = 0;         /* sum of the square of elements in data */
   double     stdv = 0;          /* standard deviation */
   size_t     cnt = 0;           /* total number of non-null points */
-  size_t     i,j,k,idx;
+  size_t     i,j,k;
   float      tv,max=-32768;
   float      v=40; 
   
@@ -383,7 +383,7 @@ ff_sstretch2(vfuncptr func, Var * arg)
 
   if (w_data2 == NULL){
   	parse_error("sstretch: Unable to allocate %ld bytes.\n", sizeof(byte)*x*y*z);
-	return NULL;
+    return NULL;
   }
   
   /* stretch each band separately */
@@ -395,30 +395,30 @@ ff_sstretch2(vfuncptr func, Var * arg)
     tv = 0;
     
     for(j=0; j<y; j++) {
-		for(i=0; i<x; i++) {
-			if ((tv = extract_float(data, cpos(i,j,k, data))) != ignore){
-				sum += tv;
-				sumsq += ((double)tv)*((double)tv);
-				cnt ++;
-			}
-		}
+        for(i=0; i<x; i++) {
+            if ((tv = extract_float(data, cpos(i,j,k, data))) != ignore){
+                sum += tv;
+                sumsq += ((double)tv)*((double)tv);
+                cnt ++;
+            }
+        }
     }
 
-	stdv = sqrt((sumsq - (sum*sum/cnt))/(cnt-1));
-	sum /= cnt;
+    stdv = sqrt((sumsq - (sum*sum/cnt))/(cnt-1));
+    sum /= cnt;
 
-	/*convert to bip */
-	for(j=0; j<y; j++) {
-		for(i=0; i<x; i++) {
-			if ((tv = extract_float(data, cpos(i,j,k, data))) != ignore){
-				tv = (float)((tv - sum)*(v/stdv)+127);
-			}
-			if (tv < 0) tv = 0;
-			if (tv > 255) tv = 255;
+    /*convert to bip */
+    for(j=0; j<y; j++) {
+        for(i=0; i<x; i++) {
+            if ((tv = extract_float(data, cpos(i,j,k, data))) != ignore){
+                tv = (float)((tv - sum)*(v/stdv)+127);
+            }
+            if (tv < 0) tv = 0;
+            if (tv > 255) tv = 255;
 
-			w_data2[j*x*z + i*z + k]=(byte)tv;
-		}
-	}
+            w_data2[j*x*z + i*z + k]=(byte)tv;
+        }
+    }
   }
   
   
@@ -428,46 +428,4 @@ ff_sstretch2(vfuncptr func, Var * arg)
 }
 
 
-static void
-sstretch2_impl(float *w_data, size_t x, size_t y, float v, float ignore)
-{
-	double     sum = 0;           /* sum of elements in data */
-	double     sumsq = 0;         /* sum of the square of elements in data */
-	double     stdv = 0;          /* standard deviation */
-	size_t     cnt = 0;           /* total number of non-null points */
-	size_t     i,j,idx;
-
-    sum = 0;
-    sumsq = 0;
-    stdv = 0;
-    cnt = 0;
-    
-    /* calculate the sum and the sum of squares */
-    for(j=0; j<y; j++) {
-      for(i=0; i<x; i++) {
-			idx = j*x + i;
-			if (w_data[idx] != ignore){
-				sum += (double)w_data[idx];
-				sumsq += (double)(w_data[idx]*w_data[idx]);
-				cnt ++;
-	}
-      }
-    }
-    
-    /* calculate standard deviation */
-    stdv = sqrt((sumsq - (sum*sum/cnt))/(cnt-1));
-    sum /= (double)cnt;
-    
-    /* fill in stretched values */
-    for(j=0; j<y; j++) {
-      for(i=0; i<x; i++) {
-			idx = j*x + i;
-			if(w_data[idx] != ignore){
-				w_data[idx] = (float)((w_data[idx] - sum)*(v/stdv)+127);
-			}
-			if(w_data[idx] < 0) w_data[idx] = 0; 
-			if(w_data[idx] > 255) w_data[idx] = 255; 
-		}
-    }
-}
 

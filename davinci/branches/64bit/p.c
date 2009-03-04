@@ -92,7 +92,7 @@ is_zero(Var * v)
             return (extract_float(v, 0) == 0.0);
         }
     } else {
-        int i;
+        size_t i;
         for (i = 0; i < V_DSIZE(v); i++) {
             switch (V_FORMAT(v)) {
             case BYTE:
@@ -109,7 +109,7 @@ is_zero(Var * v)
     }
     return (0);
 }
-
+
 /**
  ** evaluate() - Evaluate a parse tree
  **/

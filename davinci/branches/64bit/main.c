@@ -91,9 +91,9 @@ jmp_buf env;
 void user_sighandler(int data)
 { 
 #ifndef __MINGW32__
-     	signal(SIGUSR1, user_sighandler);
+    signal(SIGUSR1, user_sighandler);
 #else
-	parse_error("Function not spported under Windows.");
+    parse_error("Function not spported under Windows.");
 #endif
 
 }
@@ -119,7 +119,7 @@ dv_sighandler(int data)
         signal(SIGBUS,SIG_DFL);
         break;
 #else
-	parse_error("Function not spported under Windows.");	
+    parse_error("Function not spported under Windows.");
 #endif /* __CYGWIN__ */
 
     case (SIGINT):
@@ -173,13 +173,13 @@ main(int ac, char **av)
     ** until we get something that doesn't.
     **
     ** The user can force this with --, as well.
-	**
-	** We now pass all "--options" as ARGV parameters.
+    **
+    ** We now pass all "--options" as ARGV parameters.
     **/
     for (i = 1; i < ac; i++) {
         k = 0;
         if (!flag && av[i] && av[i][0] == '-' &&
-				!(strlen(av[i]) > 2 && av[i][1] == '-')) {
+            !(strlen(av[i]) > 2 && av[i][1] == '-')) {
             for (j = 1; j < strlen(av[i]); j++) {
                 switch (av[i][j]) {
                 case '-':   /* last option */
@@ -302,17 +302,17 @@ main(int ac, char **av)
 #ifndef _WIN32
     mkdir(path + 7, 0777);
 #else
-	mkdir(path + 7);
+    mkdir(path + 7);
 #endif    
     putenv(path);
 
     /*
     ** Before we get to events, process any pushed files
     */
-	/* moved the process_streams into the event loop so
-	that it happens after Xt is initialized, but before
-	the endless loop starts
-	*/
+    /* moved the process_streams into the event loop so
+       that it happens after Xt is initialized, but before
+       the endless loop starts
+    */
     event_loop();
     quit();
 
@@ -442,15 +442,15 @@ event_loop(void)
                       get_file_input,
                       NULL);
 
-		process_streams();
+        process_streams();
         rl_callback_handler_install("dv> ", lhandler);
         XtAppMainLoop(applicationContext);
 #endif
     } else {
-		/* not interactive, but still have to process the input streams,
-		   or -e (and scripts) will never work. */
-		process_streams();
-	}
+        /* not interactive, but still have to process the input streams,
+           or -e (and scripts) will never work. */
+        process_streams();
+    }
 }
 void lhandler(char *line)
 {
@@ -473,9 +473,9 @@ void lhandler(char *line)
         
 
         if ((buf = (char *)malloc(strlen(line)+2)) == NULL){
-			parse_error("Unable to alloc %ld bytes.\n", strlen(line)+2);
-			quit();
-		}
+           parse_error("Unable to alloc %ld bytes.\n", strlen(line)+2);
+           quit();
+        }
         strcpy(buf, line);
         strcat(buf, "\n");
 
@@ -551,14 +551,14 @@ parse_buffer(char *buf)
     void *buffer;
     Var *node;
     extern char *pp_str;
-	extern void *get_current_buffer();
-	extern void *yy_scan_string(char *);
+    extern void *get_current_buffer();
+    extern void *yy_scan_string(char *);
 
     parent_buffer = (void *) get_current_buffer();
     buffer = (void *) yy_scan_string(buf);
     pp_str = buf;
 
-	curnode = NULL;
+    curnode = NULL;
 
     while((i = yylex()) != 0) {
         /*
@@ -624,8 +624,8 @@ fake_data()
     for (i = 0; i < 12; i++) {
 #ifdef __MINGW32__
        ((float *) V_DATA(v))[i + 12] = ((double) rand())/((double)(RAND_MAX));
-					//for some reason calling drand48() 
-					//messes up the application
+       //for some reason calling drand48() 
+       //messes up the application
 #else
        ((float *) V_DATA(v))[i + 12] = drand48();
 #endif
@@ -693,8 +693,8 @@ log_time()
          * returns an invalid pointer. */
 
 #ifdef __MINGW32__
-	 time(&t);
-	 strcpy(tbuf,ctime(&t));
+    time(&t);
+    strcpy(tbuf,ctime(&t));
 #elif __sun
         ctime_r(&t, tbuf, sizeof(tbuf));
 #else

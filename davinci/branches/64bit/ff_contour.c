@@ -1,6 +1,7 @@
 #include "parser.h"
 
-static float round_dp(float input, float decimal) {
+static float
+round_dp(float input, float decimal) {
   int      i = 0;
   double   val = 0.0;
   float    output = 0;
@@ -35,7 +36,8 @@ static float round_dp(float input, float decimal) {
 
 
 
-Var* ff_contour(vfuncptr func, Var *arg)
+Var* 
+ff_contour(vfuncptr func, Var *arg)
 {
   
   Var    *data = NULL;                      /* the orignial data */
@@ -77,54 +79,54 @@ Var* ff_contour(vfuncptr func, Var *arg)
   z = GetZ(data);
   
   /* allocate memory for the picture */
-  w_data = (float *)calloc(sizeof(float), ((size_t)x)*((size_t)y)*((size_t)z));
+  w_data = (float *)calloc(V_DSIZE(data), sizeof(float));
+  out=newVal(BSQ,x,y,z,FLOAT,w_data);
   
   /* loop through data and extract points and fill in contours*/
   for(i=0; i<x; i++) {
     for(j=0; j<y; j++) {
       for(k=0; k<z; k++) {
 
-	/* extract temporary binned value */
-	tv=(round_dp((extract_float(data, cpos(i,j,k,data))-zero)/bin,1))*bin;
+        /* extract temporary binned value */
+        tv=(round_dp((extract_float(data, cpos(i,j,k,data))-zero)/bin,1))*bin;
 
-	/* set up small loop start and end points */
-	startx=i-1;
-	endx=i+1;
-	starty=j-1;
-	endy=j+1;
+        /* set up small loop start and end points */
+        startx=i-1;
+        endx=i+1;
+        starty=j-1;
+        endy=j+1;
 
-	/* edge protection */
-	if(startx<0) startx=0;
-	if(endx>=x) endx=x-1;
-	if(starty<0) starty=0;
-	if(endy>=y) endy=y-1;
-	
-	/* small loop indices and fill flag */
-	i1=startx;
-	j1=starty;
-	fill=0;
-	
-	/* dooo the looop */
-	while(fill==0 && i1<=endx) {
-	  while(fill==0 && j1<=endy) {
-	    /* make sure not to check comparison value */
-	    if(i1!=i && j1!=j) {
-	      /*perform the check and fill in data when it is triggered */
-	      if(tv<(round_dp((extract_float(data, cpos(i1,j1,k,data))-zero)/bin,1))*bin) {
-		w_data[((size_t)x)*((size_t)y)*k + ((size_t)x)*j + i]=tv;
-		fill=1;
-	      }
-	    }
-	    j1+=1;
-	  }
-	  j1=starty;
-	  i1+=1;
-	}
+        /* edge protection */
+        if(startx<0) startx=0;
+        if(endx>=x) endx=x-1;
+        if(starty<0) starty=0;
+        if(endy>=y) endy=y-1;
+        
+        /* small loop indices and fill flag */
+        i1=startx;
+        j1=starty;
+        fill=0;
+        
+        /* dooo the looop */
+        while(fill==0 && i1<=endx) {
+          while(fill==0 && j1<=endy) {
+            /* make sure not to check comparison value */
+            if(i1!=i && j1!=j) {
+              /*perform the check and fill in data when it is triggered */
+              if(tv<(round_dp((extract_float(data, cpos(i1,j1,k,data))-zero)/bin,1))*bin) {
+                w_data[cpos(i,j,k,out)]=tv;
+                fill=1;
+              }
+            }
+            j1+=1;
+          }
+          j1=starty;
+          i1+=1;
+        }
       }
     }
   }
   /* return the contoured data */
-  out=newVal(BSQ,x,y,z,FLOAT,w_data);
   return out;
 }
 
