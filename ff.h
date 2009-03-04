@@ -337,7 +337,7 @@ struct _vfuncptr vfunclist[] = {
   { "load_bin5",         ff_load_bin5,      NULL, NULL },
   { "load_tdb",          ff_load_tdb,       NULL, NULL },
   { "cinterp",           ff_cinterp,        NULL, NULL },
-  { "blend",             ff_blend,          NULL, NULL },
+/*  { "blend",             ff_blend,          NULL, NULL }, */
 
   { NULL,                NULL,              NULL, NULL }
 };
