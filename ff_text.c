@@ -544,11 +544,16 @@ Var *ff_grep(vfuncptr func, Var * arg)
     int count = 0;
     int index = 0;
     int i;
+    int ignore_case = 0;
+
+    int cflags = REG_EXTENDED;
+
     regex_t compiled;
-    Alist alist[3];
+    Alist alist[4];
     alist[0] = make_alist("obj", ID_UNK, NULL, &ob1);
     alist[1] = make_alist("pattern", ID_STRING, NULL, &s1);
-    alist[2].name = NULL;
+    alist[2] = make_alist("icase", INT, NULL, &ignore_case);
+    alist[3].name = NULL;
 
     if (parse_args(func, arg, alist) == 0)
         return (NULL);
@@ -561,14 +566,20 @@ Var *ff_grep(vfuncptr func, Var * arg)
         parse_error("Can only grep Text Arrays\n");
         return (NULL);
     }
-    /* Compile expression space */
-    regcomp(&compiled, s1, REG_EXTENDED);
-    for (i = 0; i < V_TEXT(ob1).Row; i++) {
-        newcursor = regexec(&compiled, V_TEXT(ob1).text[i], 0, NULL, 0);
-        if (newcursor == 0)
-            count++;
+		
+    if(ignore_case == 1){
+			cflags |= REG_ICASE;
     }
-
+		
+		
+    /* Compile expression space */
+    regcomp(&compiled, s1, cflags);
+    for (i = 0; i < V_TEXT(ob1).Row; i++) {
+			newcursor = regexec(&compiled, V_TEXT(ob1).text[i], 0, NULL, 0);
+			if (newcursor == 0)
+				count++;
+    }
+		
     if (count == 0) {
         parse_error("No Match");
         return (NULL);
