@@ -31,18 +31,21 @@ size_t	url_callback(char *, size_t , size_t, void *);
  * and loads it if it has been downloaded properly. The filename
  * changes
  */
+
+
 char * try_remote_load(char * filename){
 	char * tmpfilename = NULL;
        char * rtnfilename = NULL; 
 #ifdef HAVE_LIBCURL	
 
 	if(filename != NULL){
-	   //checks if URL
+		//checks if libcurls URL
 		if(	(strncasecmp(filename, FILE_PREFIX, strlen(FILE_PREFIX)) == 0) ||
-			(strncasecmp(filename, HTTP_PREFIX, strlen(HTTP_PREFIX)) == 0) ||
+		  	(strncasecmp(filename, HTTP_PREFIX, strlen(HTTP_PREFIX)) == 0) ||  
 			(strncasecmp(filename, HTTPS_PREFIX, strlen(HTTPS_PREFIX)) == 0) ||
 			(strncasecmp(filename, FTP_PREFIX, strlen(FTP_PREFIX)) == 0) ||
 			(strncasecmp(filename, SFTP_PREFIX, strlen(SFTP_PREFIX)) == 0)){
+			
 				tmpfilename = make_temp_file_path();
  				//Now filename means URL
 				if(tmpfilename != NULL  && url_create_file(tmpfilename, filename) == 0){
@@ -61,11 +64,36 @@ char * try_remote_load(char * filename){
 }
 
 #ifdef HAVE_LIBCURL	
+
+/** Return urlencoded string  (applied only to the characters <=32 and >=123 **/
+char * get_loose_urlencoded(const char *url){
+
+   int i,j = 0;
+   int len = strlen(url);
+   int MAX_ENCODED_LENGTH = 4; //i.e. space = %20 (3 characters)
+
+   //length of 1  character = length of 3 encoded characters
+   char ret[len*MAX_ENCODED_LENGTH];
+      
+   strcpy(ret,""); //Initial 
+   for(i=0; i<len; i++){	      
+      char enc[MAX_ENCODED_LENGTH];
+      if(url[i] > 32 && url[i] < 123){
+		sprintf(enc, "%c",url[i]);
+      }else{
+		sprintf(enc, "%%%x",url[i]);
+      }
+      strcat(ret, enc);
+   }
+   return strdup(ret);
+}
+
 int  url_create_file(const char * filename, const char * url){
 	CURL *curl;
 	CURLcode res;
 	char errorbuff[CURL_ERROR_SIZE];
 	curl = curl_easy_init();
+	char *url_escaped = NULL;
 	      
 	if(curl) {
 		//Open file for writing
@@ -75,10 +103,23 @@ int  url_create_file(const char * filename, const char * url){
 			return 1;
 		}
 
+
+		//Encode the URL (excluding special characters)
+		if((strncasecmp(url, HTTP_PREFIX, strlen(HTTP_PREFIX)) == 0) ||
+		   (strncasecmp(url, HTTPS_PREFIX, strlen(HTTPS_PREFIX)) == 0)){
+			url_escaped = get_loose_urlencoded(url);
+			if(url_escaped == NULL){
+				parse_error("Error: could not escape url.\n");
+				return 1;			
+			}
+			curl_easy_setopt(curl, CURLOPT_URL, url_escaped); 
+		}else{
+			curl_easy_setopt(curl, CURLOPT_URL, url); 
+		}
+
 //		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 		curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
 		curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuff);
-		curl_easy_setopt(curl, CURLOPT_URL, url);
 		curl_easy_setopt(curl, CURLOPT_USERAGENT, "davinci-curl");
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, url_callback);
 
@@ -89,9 +130,12 @@ int  url_create_file(const char * filename, const char * url){
 		/* always cleanup */
 		curl_easy_cleanup(curl);
 		curl_global_cleanup();
-
 		fclose(url_file);
 		url_file = NULL;
+
+		if(url_escaped != NULL){
+			free(url_escaped);
+		}
 
 		if(res != CURLE_OK ){
 		   parse_error("Download error: %s", errorbuff);
