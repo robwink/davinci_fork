@@ -2,10 +2,15 @@
 #include "ff_modules.h"
 #include "dvio.h"
 
+#define XAXIS 1;
+#define YAXIS 2;
+
 /* Enviornment Variable set up for THEMIS Radiance Temperature conversion table */
 static const char *DV_SCRIPT_FILES_ENV="DV_SCRIPT_FILES";
 static const char *RAD_TEMP_DEFAULT_PATH="/themis/calib";
 static const char *RAD_TEMP_LOOKUP_TBL="temp_rad_v4";
+static const char *DV_INST_PARAMS = "instrument_parameters";
+
 
 /* Define emissivity structure type */
 typedef struct {
@@ -24,6 +29,8 @@ static emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, 
 static float *bbrw_k(float *btemp, int *bandlist, int x, int y, int z, float nullval);
 static double *radcorrspace(Var *measured, float *bbody);
 static double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_start, double *rad_end, double *slopes);
+static char *get_temp_rad(char *fname);
+
 
 /* THM Module Functions */
 static Var *thm_corners(vfuncptr, Var *);
@@ -172,16 +179,24 @@ thm_deplaid(vfuncptr func, Var * arg)
   int       b10 = 10;                               /* the band-10 designation */
   float    *b_avg, *b_ct;                           /* band average and band count - used to normalize bands for blackmask */
 
-  Alist alist[9];
+	//handle axis options
+	char     *options[] =  {
+		        "x", "y", "z", "xy", NULL
+           };
+	int       axis = 0;
+	char     *ptr = NULL;
+
+  Alist alist[10];
   alist[0] = make_alist("data", 		ID_VAL,		NULL,	&data);
-  alist[1] = make_alist("ignore",               FLOAT,          NULL,   &nullval);
-  alist[2] = make_alist("tmask_max",            FLOAT,          NULL,   &tmask_max);
-  alist[3] = make_alist("tmask_min",            FLOAT,          NULL,   &tmask_min);
-  alist[4] = make_alist("filt_len",             INT,            NULL,   &filt_len);
-  alist[5] = make_alist("b10",                  INT,            NULL,   &b10);
-  alist[6] = make_alist("dump",                 INT,            NULL,   &dump);
-  alist[7] = make_alist("null",                 FLOAT,          NULL,   &nullval); // can be removed when all legacy programs are dead
-  alist[8].name = NULL;
+  alist[1] = make_alist("ignore",               FLOAT,          NULL,    &nullval);
+  alist[2] = make_alist("tmask_max",            FLOAT,          NULL,    &tmask_max);
+  alist[3] = make_alist("tmask_min",            FLOAT,          NULL,    &tmask_min);
+  alist[4] = make_alist("filt_len",             INT,            NULL,    &filt_len);
+  alist[5] = make_alist("b10",                  INT,            NULL,    &b10);
+  alist[6] = make_alist("dump",                 INT,            NULL,    &dump);
+  alist[7] = make_alist("null",                 FLOAT,          NULL,    &nullval); // can be removed when all legacy programs are dead
+	alist[8] = make_alist("axis",                 ID_ENUM,        options, &ptr);
+  alist[9].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
@@ -199,7 +214,8 @@ thm_deplaid(vfuncptr func, Var * arg)
     parse_error("tmask_max:  max threshold used to create the temperature mask -    default is 1.15");
     parse_error("tmask_min:  min threshold used to create the temperature mask -    default is 0.80");
     parse_error("filt_len:   length of filter used in plaid removal -               default is 150");
-    parse_error("b10:        the band (1 - 10) in the data that is THEMIS band 10 - default is 10\n");
+    parse_error("b10:        the band (1 - 10) in the data that is THEMIS band 10 - default is 10");
+		parse_error("axis:       run the algorithm in one direction (x,y,xy) - default is xy\n");
     parse_error("TROUBLESHOOTING");
     parse_error("You should designate b10 when NOT feeding deplaid 10 band data, b10 = 0 for no band-10 data.");
     parse_error("You can return the blackmask/temperature mask by using \"dump=1\".");
@@ -209,6 +225,13 @@ thm_deplaid(vfuncptr func, Var * arg)
     return NULL;
   }
 
+	if (ptr == NULL) {
+		axis = 3;
+	} else {
+		if (strchr(ptr, 'x') || strchr(ptr, 'X')) axis |= XAXIS;
+		if (strchr(ptr, 'y') || strchr(ptr, 'Y')) axis |= YAXIS;
+	}
+	
   /* x, y and z dimensions of the data */
   x = GetX(data);
   y = GetY(data);
@@ -265,12 +288,12 @@ thm_deplaid(vfuncptr func, Var * arg)
   for(k=0; k<z; k++) {
     for(j=0; j<y; j++) {
       for(i=0; i<x; i++) {
-	tv = extract_float(data, cpos(i,j,k, data));
-
-	if(tv != nullval) {
-	  b_avg[k] += tv;
-	  b_ct[k] += 1;
-	}
+				tv = extract_float(data, cpos(i,j,k, data));
+				
+				if(tv != nullval) {
+					b_avg[k] += tv;
+					b_ct[k] += 1;
+				}
       }
     }
     b_avg[k] /= b_ct[k];
@@ -282,30 +305,30 @@ thm_deplaid(vfuncptr func, Var * arg)
   for(k=0; k<z; k++) {
     for(j=0; j<y; j++) {
       for(i=0; i<x; i++) {
-	tv = extract_float(data, cpos(i,j,k, data));
+				tv = extract_float(data, cpos(i,j,k, data));
+				
+				if(tv != nullval) {
+					blackmask[x*j + i] = 1;
+					tmask[x*j + i] += tv/b_avg[k];                             /* tmask is sum of all bands */
+					row_avg[j] += tv/b_avg[k];                                 /* calculating row totals for tmask */
+					ct_map[x*j + i] += 1;                                      /* incrementing pixel count_map */
+					row_wt[j] += 1;                                            /* calculating row weight for tmask */
+				}
 
-	if(tv != nullval) {
-	  blackmask[x*j + i] = 1;
-	  tmask[x*j + i] += tv/b_avg[k];                             /* tmask is sum of all bands */
-	  row_avg[j] += tv/b_avg[k];                                 /* calculating row totals for tmask */
-	  ct_map[x*j + i] += 1;                                      /* incrementing pixel count_map */
-	  row_wt[j] += 1;                                            /* calculating row weight for tmask */
-	}
-
-	/* setting the col and row count arrays */
-	if(k==z-1) {
-	  if(row_ct[j] < ct_map[j*x + i]) row_ct[j] = ct_map[j*x + i];
-	  if(col_ct[i] < ct_map[j*x + i]) col_ct[i] = ct_map[j*x + i];
-	  if(ct_map[x*j + i] != 0) tmask[x*j + i] /= (float)ct_map[x*j + i];
-	}
+				/* setting the col and row count arrays */
+				if(k==z-1) {
+					if(row_ct[j] < ct_map[j*x + i]) row_ct[j] = ct_map[j*x + i];
+					if(col_ct[i] < ct_map[j*x + i]) col_ct[i] = ct_map[j*x + i];
+					if(ct_map[x*j + i] != 0) tmask[x*j + i] /= (float)ct_map[x*j + i];
+				}
       }
       if(k == z-1 && row_wt[j] != 0) {
-	row_avg[j] /= row_wt[j];                                     /* calculating row avg for tmask */
-	row_wt[j] = 0;
+				row_avg[j] /= row_wt[j];                                     /* calculating row avg for tmask */
+				row_wt[j] = 0;
       }
     }
   }
-
+	
   /* continue to construct the temperature mask */
   /* smooth the row avg of tempmask with a sawtooth filter */
   sawkern = sawtooth(1, 301, 1);
@@ -313,7 +336,7 @@ thm_deplaid(vfuncptr func, Var * arg)
   free(sawkern);
   free(ct_map);
   free(b_avg);
-
+	
   /* loop through setting the tempmask values */
   /* pixels with tmask values greater than 1.15 or less than .8 of the row avg are set to zero */
   for(j=0; j<y; j++) {
@@ -326,7 +349,7 @@ thm_deplaid(vfuncptr func, Var * arg)
   }
   free(tmask);
   free(row_sum);
-
+	
   /* return the temperature mask if dump = 1 */
   if(dump == 1) {
     free(row_avg);
@@ -334,105 +357,105 @@ thm_deplaid(vfuncptr func, Var * arg)
     out = newVal(BSQ, x, y, 1, BYTE, blackmask);
     return out;
   }
-
+	
   /* more initialization */
   col_avg = (float *)calloc(sizeof(float), x*chunks*z);      /* col_avg contains enough space for all 250 line chunks */
   col_avga = (float *)calloc(sizeof(float), x*chunksa*z);
   col_avgb = (float *)calloc(sizeof(float), x*chunksb*z);
   col_wta = (int *)calloc(sizeof(int), x*chunksa*z);
   col_wtb = (int *)calloc(sizeof(int), x*chunksb*z);
-
+	
   if(col_avg == NULL || col_avga == NULL || col_avgb == NULL || col_wta == NULL || col_wtb == NULL) { 
     parse_error("Could not allocate enough memory to continue\n");
     return NULL;
   }
-
+	
   /* remove the horizontal and vertical plaid */
   /* loop through data and extract row_avg, and all necessary column averages */
   for(k=0; k<z; k++) {
     for(j=0; j<y; j++) {
       for(i=0; i<x; i++) {
-	tv = extract_float(data, cpos(i,j,k, data));
-
-	/* if not a null val and tempmask ok */
-	if(tv != nullval && ((blackmask[x*j + i] > 1 && k != b10) || k == b10)) {
-
-	  if(col_ct[i] == z) {
-	    row_avg[y*k + j] += tv;                                  /* calculate tempmasked row total of data */
-	    row_wt[y*k + j] += 1;                                    /* calculate tempmasked row weight of data */
-	  }
-	  
-	  if(row_ct[j] == z) {
-	    col_avga[k*chunksa*x + cka*x + i] += tv;                 /* calculate tempmasked col total of chunka */
-	    col_avgb[k*chunksb*x + ckb*x + i] += tv;                 /* calculate tempmasked col total of chunkb */
-	    col_wta[k*chunksa*x + cka*x + i] += 1;                   /* calculate tempmasked col weight of chunka */
-	    col_wtb[k*chunksb*x + ckb*x + i] += 1;                   /* calculate tempmasked col weight of chunkb */
-	  }
-	}
- 
-	/* if at the end of a chunk and there is less than 100 rows of data left, keep going in present chunk */
-	if(((y-j) <= 100) && (ccb == 499 || cca == 499)) {
-	  cca -= 100; 
-	  ccb -= 100;
-	}
-
-	/* if at the end of chunk then divide column total by column weight and construct chunk of col_avg */
-	if(cca == 499) {
-	  /* divide col_avga by the number of non-zero lines summed to create average */
-	  if(col_wta[k*chunksa*x + cka*x + i] > 0) {
-	    col_avga[k*chunksa*x + cka*x + i] /= (float)col_wta[k*chunksa*x + cka*x + i];
-	  } else { /* if col_wta is 0 don't divide */
-	    col_avga[k*chunksa*x + cka*x + i] = 0;
-	  }
-	  /* avg col_avga and col_avgb for the 250 line chunk */
-	  col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + cka*x + i] + col_avgb[k*chunksb*x + (ckb-1)*x + i]);
-	  if(col_avga[k*chunksa*x + cka*x + i] > 0 && col_avgb[k*chunksb*x + (ckb-1)*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
-	}
-
-	if(ccb == 499) {
-	  /* divide col_avgb by the number of non-zero lines summed to create average */
-	  if(col_wtb[k*chunksb*x + ckb*x + i] > 0) {
-	    col_avgb[k*chunksb*x + ckb*x + i] /= (float)col_wtb[k*chunksb*x + ckb*x + i];
-	  } else { /* if col_wtb is 0 don't divide */
-	    col_avgb[k*chunksb*x + ckb*x + i] = 0;
-	  }
-	  /* avg col_avga and col_avgb for the 250 line chunk */
-	  if(ckb > 0) {
-	    col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + (cka-1)*x + i] + col_avgb[k*chunksb*x + ckb*x + i]);
-	    if(col_avga[k*chunksa*x + (cka-1)*x + i] > 0 && col_avgb[k*chunksb*x + ckb*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
-	  }
-	}
-
-	if(j == y-1) {
-	  if(col_wta[k*chunksa*x + cka*x + i] > 0) {
-	    col_avga[k*chunksa*x + cka*x + i] /= (float)col_wta[k*chunksa*x + cka*x + i];
-	  } else {
-	    col_avga[k*chunksa*x + cka*x + i] = 0;
-	  }
-	  if(col_wtb[k*chunksb*x + ckb*x + i] > 0) {
-	    col_avgb[k*chunksb*x + ckb*x + i] /= (float)col_wtb[k*chunksb*x + ckb*x + i];
-	  } else {
-	    col_avgb[k*chunksb*x + ckb*x + i] = 0;
-	  }
-	  /* avg col_avga and col_avgb for second to last 250 line chunk */
-	  if(cca>ccb && chunksb > 1) {
-	    col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + cka*x + i] + col_avgb[k*chunksb*x + (ckb-1)*x + i]);
-	    if(col_avga[k*chunksa*x + cka*x + i] > 0 && col_avgb[k*chunksb*x + (ckb-1)*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
-	  }
-	  if(ccb>cca && chunksa > 1) {
-	    col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + (cka-1)*x + i] + col_avgb[k*chunksb*x + ckb*x + i]);
-	    if(col_avga[k*chunksa*x + (cka-1)*x + i] > 0 && col_avgb[k*chunksb*x + ckb*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
-	  }
-	  /* avg col_avga and col_avgb for the final 250 line chunk */
-	  if(ck<chunks-1 && chunksb > 1) {
-	    col_avg[k*chunks*x + (ck+1)*x + i] = (col_avga[k*chunksa*x + cka*x + i] + col_avgb[k*chunksb*x + ckb*x + i]);
-	    if(col_avga[k*chunksa*x + cka*x + i] > 0 && col_avgb[k*chunksb*x + ckb*x + i] > 0) col_avg[k*chunks*x + (ck+1)*x + i] /= 2.0;
-	  }
-	  if(chunksa == 1 && chunksb == 1) {
-	    col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + cka*x + i] + col_avgb[k*chunksb*x + ckb*x + i]);
-	    if(col_avga[k*chunksa*x + cka*x + i] > 0 && col_avgb[k*chunksb*x + ckb*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
-	  }
-	}
+				tv = extract_float(data, cpos(i,j,k, data));
+				
+				/* if not a null val and tempmask ok */
+				if(tv != nullval && ((blackmask[x*j + i] > 1 && k != b10) || k == b10)) {
+					
+					if(col_ct[i] == z) {
+						row_avg[y*k + j] += tv;                                  /* calculate tempmasked row total of data */
+						row_wt[y*k + j] += 1;                                    /* calculate tempmasked row weight of data */
+					}
+					
+					if(row_ct[j] == z) {
+						col_avga[k*chunksa*x + cka*x + i] += tv;                 /* calculate tempmasked col total of chunka */
+						col_avgb[k*chunksb*x + ckb*x + i] += tv;                 /* calculate tempmasked col total of chunkb */
+						col_wta[k*chunksa*x + cka*x + i] += 1;                   /* calculate tempmasked col weight of chunka */
+						col_wtb[k*chunksb*x + ckb*x + i] += 1;                   /* calculate tempmasked col weight of chunkb */
+					}
+				}
+				
+				/* if at the end of a chunk and there is less than 100 rows of data left, keep going in present chunk */
+				if(((y-j) <= 100) && (ccb == 499 || cca == 499)) {
+					cca -= 100; 
+					ccb -= 100;
+				}
+				
+				/* if at the end of chunk then divide column total by column weight and construct chunk of col_avg */
+				if(cca == 499) {
+					/* divide col_avga by the number of non-zero lines summed to create average */
+					if(col_wta[k*chunksa*x + cka*x + i] > 0) {
+						col_avga[k*chunksa*x + cka*x + i] /= (float)col_wta[k*chunksa*x + cka*x + i];
+					} else { /* if col_wta is 0 don't divide */
+						col_avga[k*chunksa*x + cka*x + i] = 0;
+					}
+					/* avg col_avga and col_avgb for the 250 line chunk */
+					col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + cka*x + i] + col_avgb[k*chunksb*x + (ckb-1)*x + i]);
+					if(col_avga[k*chunksa*x + cka*x + i] > 0 && col_avgb[k*chunksb*x + (ckb-1)*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
+				}
+				
+				if(ccb == 499) {
+					/* divide col_avgb by the number of non-zero lines summed to create average */
+					if(col_wtb[k*chunksb*x + ckb*x + i] > 0) {
+						col_avgb[k*chunksb*x + ckb*x + i] /= (float)col_wtb[k*chunksb*x + ckb*x + i];
+					} else { /* if col_wtb is 0 don't divide */
+						col_avgb[k*chunksb*x + ckb*x + i] = 0;
+					}
+					/* avg col_avga and col_avgb for the 250 line chunk */
+					if(ckb > 0) {
+						col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + (cka-1)*x + i] + col_avgb[k*chunksb*x + ckb*x + i]);
+						if(col_avga[k*chunksa*x + (cka-1)*x + i] > 0 && col_avgb[k*chunksb*x + ckb*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
+					}
+				}
+				
+				if(j == y-1) {
+					if(col_wta[k*chunksa*x + cka*x + i] > 0) {
+						col_avga[k*chunksa*x + cka*x + i] /= (float)col_wta[k*chunksa*x + cka*x + i];
+					} else {
+						col_avga[k*chunksa*x + cka*x + i] = 0;
+					}
+					if(col_wtb[k*chunksb*x + ckb*x + i] > 0) {
+						col_avgb[k*chunksb*x + ckb*x + i] /= (float)col_wtb[k*chunksb*x + ckb*x + i];
+					} else {
+						col_avgb[k*chunksb*x + ckb*x + i] = 0;
+					}
+					/* avg col_avga and col_avgb for second to last 250 line chunk */
+					if(cca>ccb && chunksb > 1) {
+						col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + cka*x + i] + col_avgb[k*chunksb*x + (ckb-1)*x + i]);
+						if(col_avga[k*chunksa*x + cka*x + i] > 0 && col_avgb[k*chunksb*x + (ckb-1)*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
+					}
+					if(ccb>cca && chunksa > 1) {
+						col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + (cka-1)*x + i] + col_avgb[k*chunksb*x + ckb*x + i]);
+						if(col_avga[k*chunksa*x + (cka-1)*x + i] > 0 && col_avgb[k*chunksb*x + ckb*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
+					}
+					/* avg col_avga and col_avgb for the final 250 line chunk */
+					if(ck<chunks-1 && chunksb > 1) {
+						col_avg[k*chunks*x + (ck+1)*x + i] = (col_avga[k*chunksa*x + cka*x + i] + col_avgb[k*chunksb*x + ckb*x + i]);
+						if(col_avga[k*chunksa*x + cka*x + i] > 0 && col_avgb[k*chunksb*x + ckb*x + i] > 0) col_avg[k*chunks*x + (ck+1)*x + i] /= 2.0;
+					}
+					if(chunksa == 1 && chunksb == 1) {
+						col_avg[k*chunks*x + ck*x + i] = (col_avga[k*chunksa*x + cka*x + i] + col_avgb[k*chunksb*x + ckb*x + i]);
+						if(col_avga[k*chunksa*x + cka*x + i] > 0 && col_avgb[k*chunksb*x + ckb*x + i] > 0) col_avg[k*chunks*x + ck*x + i] /= 2.0;
+					}
+				}
       }
 			
       cca += 1;                                              /* increment the chunka line indice */
@@ -459,7 +482,7 @@ thm_deplaid(vfuncptr func, Var * arg)
     ccb = 250;
     ck = 0;
   }
-
+	
   /* clean up col_avg arrays */
   free(col_avga);
   free(col_avgb);
@@ -468,68 +491,68 @@ thm_deplaid(vfuncptr func, Var * arg)
   free(row_ct);
   free(col_ct);
   free(blackmask);
-
+	
   /* operate on the row_avg and row_avgs arrays */
-
+	
   /* create filt1 & filt2 */
   filt1 = (float *)malloc(sizeof(float)*filt_len);
   for(i=0; i<filt_len; i++) {
     filt1[i] = 1.0;
   }
-
+	
   /* create brightness arrays for luminosity conservation */
   row_bright = (float *)calloc(sizeof(float), y);
   col_bright = (float *)calloc(sizeof(float), chunks*x);
-
+	
   /* smooth row_avg array */
   row_avgs = convolve(row_avg, filt1, 1, y, z, 1, filt_len, 1, 1, 0);
-
+	
   for(k=0; k<z; k++) {
     for(j=0; j<y; j++) {
       row_avg[k*y + j] -= row_avgs[k*y + j];                                /* subtract smoothed from original row_avg */
-
+			
       if(z > 1 && k != b10) {                                               /* if there is more than one band and current band isn't band 10 */
-	row_bright[j] += row_avg[k*y + j];                                  /* add up the brightness information */
-	row_wt[j] += 1;
+				row_bright[j] += row_avg[k*y + j];                                  /* add up the brightness information */
+				row_wt[j] += 1;
       }
       
       if(z > 1 && k == z-1) row_bright[j] /= (float)row_wt[j];              /* make row_bright an avg rather than a sum */
     }
   }
-
+	
   /* remove brightness information from row_avg */
   if(z > 1) {
     for(k=0; k<z; k++) {
       if(k != b10) {
-	for(j=0; j<y; j++) {
-	  row_avg[k*y + j] -= row_bright[j];                         /* brightness difference removed from row_avg */
-	}
+				for(j=0; j<y; j++) {
+					row_avg[k*y + j] -= row_bright[j];                         /* brightness difference removed from row_avg */
+				}
       }
     }
   }
-
+	
   /* clean up row arrays */
   free(row_bright);
   free(row_avgs);
   free(row_wt);
-
+	
   /* operate on the col_avg arrays */
   col_wt = (int *)calloc(sizeof(int), x*chunks);
-
+	
   /* smooth the col_avg array */
   col_avgs = convolve(col_avg, filt1, x, chunks, z, filt_len, 1, 1, 1, 0);
   free(filt1);
-
+	
   for(k=0; k<z; k++) {
     for(j=0; j<chunks; j++) {
       for(i=0; i<x; i++) {
-	col_avg[k*chunks*x + j*x + i] -= col_avgs[k*chunks*x + j*x + i];             /* subtract smoothed from original col_avg */
-
-	if(z>1 && k != b10) {                                                        /* if more than one band and not band 10 */
-	  col_bright[j*x + i] += col_avg[k*chunks*x + j*x + i];                      /* sum column brightness excluding band 10 */
-	  col_wt[j*x + i] += 1;                                                      /* sum column weight array excluding band 10 */
-	}
-	if(z > 1 && k == z-1) col_bright[j*x + i] /= (float)col_wt[j*x + i];         /* make col_bright an avg rather than a sum */
+				col_avg[k*chunks*x + j*x + i] -= col_avgs[k*chunks*x + j*x + i];             /* subtract smoothed from original col_avg */
+				
+				if(z>1 && k != b10) {                                                        /* if more than one band and not band 10 */
+					col_bright[j*x + i] += col_avg[k*chunks*x + j*x + i];                      /* sum column brightness excluding band 10 */
+					col_wt[j*x + i] += 1;                                                      /* sum column weight array excluding band 10 */
+				}
+				if(z > 1 && k == z-1) col_bright[j*x + i] /= (float)col_wt[j*x + i];         /* make col_bright an avg rather than a sum */
       }
     }
   }
@@ -538,40 +561,43 @@ thm_deplaid(vfuncptr func, Var * arg)
   if(z > 1) {
     for(k=0; k<z; k++) {
       if(k != b10) {
-	for(j=0; j<chunks; j++) {
-	  for(i=0; i<x; i++) {
-	    col_avg[k*chunks*x + j*x + i] -= col_bright[j*x + i];                  /* brightness difference removed from col_avg */
-	  }
-	}
+				for(j=0; j<chunks; j++) {
+					for(i=0; i<x; i++) {
+						col_avg[k*chunks*x + j*x + i] -= col_bright[j*x + i];                  /* brightness difference removed from col_avg */
+					}
+				}
       }
     }
   }
-
+	
   /* clean up column arrays*/
   free(col_bright);
   free(col_avgs);
   free(col_wt);
- 
+	
   /* extract data into rdata removing plaid along the way */
   /* create rdata array */
   rdata = (float *)malloc(sizeof(float)*x*y*z);
-
+	
   for(k=0; k<z; k++) {
     cca = 0;
     ck = 0;
     for(j=0; j<y; j++) {
       for(i=0; i<x; i++) {
-	tv = extract_float(data, cpos(i,j,k, data));
-	if(tv != nullval) {
-	  rdata[x*y*k + x*j + i] = tv - row_avg[k*y + j] - col_avg[k*chunks*x + ck*x + i];
-	} else {
-	  rdata[x*y*k + x*j + i] = tv;
-	}
+				tv = extract_float(data, cpos(i,j,k, data));
+				if(tv != nullval) {
+					if(axis==1) tv-=row_avg[k*y +j];
+					if(axis==2) tv-=col_avg[k*chunks*x + ck*x + i];
+					if(axis==3) tv=tv - row_avg[k*y + j] - col_avg[k*chunks*x + ck*x + i];
+					rdata[x*y*k + x*j + i] = tv;
+				} else {
+					rdata[x*y*k + x*j + i] = tv;
+				}
       }
       cca += 1;
       if(cca == 250 && ck<(chunks-1)) {
-	cca = 0;
-	ck+=1;                                                                         /* chunk tracker */
+				cca = 0;
+				ck+=1;                                                                         /* chunk tracker */
       }
     }
   }
@@ -1161,7 +1187,7 @@ thm_rad2tb(vfuncptr func, Var * arg)
   if (rad == NULL) {
     parse_error("rad2tb() - 11/17/07");
     parse_error("THEMIS radiance to THEMIS Brightness Temperature Converter\n");
-    parse_error("Uses temp_rad_v4 in $DV_SCRIPT_FILES or /themis/calib as the default conversion table.");
+    parse_error("Uses temp_rad_v4 in $DV_SCRIPT_FILES/instrument_parameters or /themis/calib as the default conversion table.");
     parse_error("Assumes 10 bands of radiance for right now.\n");
     parse_error("Syntax:  b = thm.rad2tb(rad,bandlist,ignore,temp_rad_path,max_emiss)");
     parse_error("example: b = thm.rad2tb(a)");
@@ -1170,7 +1196,7 @@ thm_rad2tb(vfuncptr func, Var * arg)
     parse_error("rad - any float valued 3-D radiance array.");
     parse_error("bandlist - an ordered list of THEMIS bands in rad. Default is 1:10.");
     parse_error("ignore - non-data pixel value. Default is -32768 AND 0.");
-    parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is $DV_SCRIPT_FILES/temp_rad_v4.\n");
+    parse_error("temp_rad_path - alternate path to temp_rad lookup table.  Default is $DV_SCRIPT_FILES/instrument_parameters/temp_rad_v4.\n");
     parse_error("max_emiss - maximum allowable value for emissivity. Default is 1.0");
     return NULL;
   }
@@ -1221,13 +1247,7 @@ thm_rad2tb(vfuncptr func, Var * arg)
 
   /* load temp_rad_v4 table into memory */
   if (fname == NULL) {
-      const char *dv_sfiles_val = getenv(DV_SCRIPT_FILES_ENV);
-      if (dv_sfiles_val == NULL){
-          dv_sfiles_val = RAD_TEMP_DEFAULT_PATH;
-      }
-
-      fname = calloc(1, strlen(dv_sfiles_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
-      sprintf(fname,"%s/%s",dv_sfiles_val, RAD_TEMP_LOOKUP_TBL);
+		fname=get_temp_rad(fname);
   }
   
   fp = fopen(fname, "rb");
@@ -1509,14 +1529,7 @@ thm_themissivity(vfuncptr func, Var * arg)
   }
 
   /* load temp_rad_v4 table into memory */
-  if (fname == NULL) {
-      const char *dv_sfiles_val = getenv(DV_SCRIPT_FILES_ENV);
-      if (dv_sfiles_val == NULL){
-          dv_sfiles_val = RAD_TEMP_DEFAULT_PATH;
-      }
-      fname = calloc(1, strlen(dv_sfiles_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
-      sprintf(fname,"%s/%s",dv_sfiles_val, RAD_TEMP_LOOKUP_TBL);
-  }
+	fname=get_temp_rad(fname);
   
   e_struct = themissivity(rad, blist, nullval, fname, b1, b2, maxem);
 
@@ -1695,15 +1708,7 @@ thm_emiss2rad(vfuncptr func, Var * arg)
   iom_init_iheader(&h);
 
   /* load temp_rad_v4 table into memory */
-  if (fname == NULL) {
-		const char *dv_sfiles_val = getenv(DV_SCRIPT_FILES_ENV);
-		if (dv_sfiles_val == NULL){
-			dv_sfiles_val = RAD_TEMP_DEFAULT_PATH;
-		}
-		
-		fname = calloc(1, strlen(dv_sfiles_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
-		sprintf(fname,"%s/%s",dv_sfiles_val, RAD_TEMP_LOOKUP_TBL);
-  }
+	fname=get_temp_rad(fname);
   
   fp = fopen(fname, "rb");
   if (fp == NULL) {
@@ -1843,15 +1848,7 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
   iom_init_iheader(&h);
 
   /* load temp_rad_v4 table into memory */
-  if (fname == NULL) {
-		const char *dv_sfiles_val = getenv(DV_SCRIPT_FILES_ENV);
-		if (dv_sfiles_val == NULL){
-			dv_sfiles_val = RAD_TEMP_DEFAULT_PATH;
-		}
-		
-		fname = calloc(1, strlen(dv_sfiles_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
-		sprintf(fname,"%s/%s",dv_sfiles_val, RAD_TEMP_LOOKUP_TBL);
-  }
+	fname=get_temp_rad(fname);
   
   fp = fopen(fname, "rb");
   if (fp == NULL) {
@@ -2558,15 +2555,7 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
   iom_init_iheader(&h);
 
   /* load temp_rad_v4 table into memory */
-  if (fname == NULL) {
-		const char *dv_sfiles_val = getenv(DV_SCRIPT_FILES_ENV);
-		if (dv_sfiles_val == NULL){
-			dv_sfiles_val = RAD_TEMP_DEFAULT_PATH;
-		}
-		
-		fname = calloc(1, strlen(dv_sfiles_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
-		sprintf(fname,"%s/%s",dv_sfiles_val, RAD_TEMP_LOOKUP_TBL);
-  }
+	fname=get_temp_rad(fname);
   
   fp = fopen(fname, "rb");
   if (fp == NULL) {
@@ -3001,32 +2990,32 @@ float *convolve(float *obj, float *kernel, int ox, int oy, int oz, int kx, int k
  
   for (i = 0 ; i < objsize ; i++) {                               /* loop through every element in object */
     if(obj[i] == ignore) { data[i] = ignore; continue; }
-
+		
     z = i/(ox*oy);                                                /* current x position in object */
     y = (i - z*ox*oy)/ox ;                                        /* current y position in object */
     x =  i - z*ox*oy - y*ox;                                      /* current z position in object */
-
+		
     for (a = 0 ; a < kx ; a++) {                                  /* current x position of kernel */
       x_pos = x + a - kx_center;                                  /* where the current operation is being done in x */
       if (x_pos < 0 || x_pos >= ox) continue;
       for (b = 0 ; b < ky ; b++) {                                /* current y position of kernel */    
-	y_pos = y + b - ky_center;                                /* where the current operation is being done in y */
-	if (y_pos < 0 || y_pos >= oy) continue;
-	for (c = 0 ; c < kz ; c++) {                              /* current z position of kernel */
-	  z_pos = z + c - kz_center;                              /* where the current operation is being done in z */
-	  if (z_pos < 0 || z_pos >= oz) continue;
-	  j = z_pos*ox*oy + y_pos*ox + x_pos;                     /* position in 1-D object at (x_pos,y_pos,z_pos) */
-	  k = c*kx*ky + b*kx + a;                                 /* position in 1-D kernel at (a,b,c) */
-	  kval = kernel[k];                                       /* value of kernel at (k) */
-	  oval = obj[j];                                          /* value of object at (j) */
-	  if (oval != ignore && kval != ignore) {
-	    wt[i] += kval;                                        /* sum of values of pixels of the kernel used */
-	    data[i] += (kval * oval);
-	  }
-	} 
+				y_pos = y + b - ky_center;                                /* where the current operation is being done in y */
+				if (y_pos < 0 || y_pos >= oy) continue;
+				for (c = 0 ; c < kz ; c++) {                              /* current z position of kernel */
+					z_pos = z + c - kz_center;                              /* where the current operation is being done in z */
+					if (z_pos < 0 || z_pos >= oz) continue;
+					j = z_pos*ox*oy + y_pos*ox + x_pos;                     /* position in 1-D object at (x_pos,y_pos,z_pos) */
+					k = c*kx*ky + b*kx + a;                                 /* position in 1-D kernel at (a,b,c) */
+					kval = kernel[k];                                       /* value of kernel at (k) */
+					oval = obj[j];                                          /* value of object at (j) */
+					if (oval != ignore && kval != ignore) {
+						wt[i] += kval;                                        /* sum of values of pixels of the kernel used */
+						data[i] += (kval * oval);
+					}
+				} 
       }
     }
-
+		
     if (norm != 0 && wt[i] != 0) {
       data[i] /= (float)wt[i];
     }
@@ -3035,6 +3024,21 @@ float *convolve(float *obj, float *kernel, int ox, int oy, int oz, int kx, int k
   free(wt);
   return(data);
 }
+
+static char *get_temp_rad(char *fname) {
+	/* load temp_rad_v4 table into memory */
+  if (fname == NULL) {
+		const char *dv_sfiles_val = getenv(DV_SCRIPT_FILES_ENV);
+		if (dv_sfiles_val == NULL){
+			dv_sfiles_val = RAD_TEMP_DEFAULT_PATH;
+		}
+		const char *dv_inst_params = DV_INST_PARAMS;
+		fname = calloc(1, strlen(dv_sfiles_val)+1+strlen(dv_inst_params)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
+		sprintf(fname,"%s/%s/%s",dv_sfiles_val, dv_inst_params, RAD_TEMP_LOOKUP_TBL);
+ }
+	return(fname);
+}
+
 
 /* Static Ported Dependencies */
 //static Var *do_my_convolve(Var *obj, Var *kernel, int norm, float ignore, int kernreduce); - ported to ff_convolve.c
