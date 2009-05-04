@@ -17,8 +17,8 @@ ff_raw(vfuncptr func, Var * arg)
 	char *data;
 	Var *v;
 
-	char *orgs[] = { "bil", "bip", "bsq" ,NULL};
-	char *formats[] = { 
+	const char *orgs[] = { "bil", "bip", "bsq" ,NULL};
+	const char *formats[] = { 
 		"byte", "msb_short", "msb_int", "msb_float", "msb_double" ,
 		        "lsb_short", "lsb_int", "lsb_float", "lsb_double" , NULL
 		};

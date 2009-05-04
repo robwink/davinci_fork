@@ -177,7 +177,7 @@ read_bin5_header(const char *fname, B5H **b5h)
 	/* if we reached here we have a text string ending in lbl_end_marker */
 
 	/* get the data block size & type */
-	for(q=buff, i=0; p=strtok(q," "); q=NULL, i++){
+	for((q=buff), (i=0); (p=strtok(q," ")); (q=NULL), i++){
 		if (i == 0){
 			/* we got the number of dimensions = N */
 			N = atoi(p);
@@ -404,4 +404,3 @@ ff_load_bin5(vfuncptr func, Var *arg)
 	free_B5H(&bh);
 	return(v);
 }
-

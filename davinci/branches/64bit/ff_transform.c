@@ -36,10 +36,10 @@ ff_image_resize(vfuncptr func, Var * arg){
 	double ignore_color = MINDOUBLE;
 	int ignore_color_found = 0;
 					
-       char *usage = "usage: %s(data [, factor] [, xfactor] [, yfactor] [,width] [,height] [,lockratio={'0'|'1'}] [,interp={'bilinear'|'bicubic'|'none'}] [,ignore]";
+       const char *usage = "usage: %s(data [, factor] [, xfactor] [, yfactor] [,width] [,height] [,lockratio={'0'|'1'}] [,interp={'bilinear'|'bicubic'|'none'}] [,ignore]";
        char *type = NULL;
 	int itype = 0;
-       char *types[] = {"bilinear", "bicubic", "none", NULL};
+       const char *types[] = {"bilinear", "bicubic", "none", NULL};
 
 
 	Alist alist[10];
@@ -522,4 +522,3 @@ double get_image_box_average(Var *obj, double x0, double y0, double x1, double y
 	}  
 	return sum/area;
 }
-

@@ -31,6 +31,7 @@ void *		Narray_delete(Narray *a, char *key);
 void * Narray_remove(Narray *a, int index);
 int		Narray_find(Narray *a, char *key, void **data);
 int		Narray_replace(Narray *a, int i, void *New, void **old);
+int		Narray_insert(Narray *a, char *key, void *data, int pos);
 int		Narray_get(const Narray *a, const int i,
 			   char **key, void **data);
 int		Narray_count(const Narray *a);

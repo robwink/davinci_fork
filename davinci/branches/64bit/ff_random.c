@@ -53,7 +53,7 @@ ff_random(vfuncptr func, Var * arg)
     int i;
     char *ptr = NULL;
 
-    char *options[] = { "normal", "gaussian", "rand", "random", 
+    const char *options[] = { "normal", "gaussian", "rand", "random", 
                         "mrand48", "drand48", "uniform", "rnoise", NULL};
     Var *seedvar = NULL;
     Alist alist[6];

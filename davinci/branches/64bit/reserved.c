@@ -10,7 +10,7 @@ Var *RV_set_int(Var *,Var *,Var *);
  **/
 
 struct _rlist {
-    char *name;
+    const char *name;
     Var *(*func)(Var *,Var *,Var *);
 } rlist[] = {
     { "scale", RV_set_int },

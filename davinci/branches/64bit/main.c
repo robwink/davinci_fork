@@ -1,6 +1,7 @@
 #include <time.h>
 #include <setjmp.h>
 #include "parser.h"
+#include "system.h"
 
 #include "y_tab.h"
 
@@ -40,9 +41,9 @@ int usage(char *prog);
 /**
  ** This is stuff from the old input.c
  **/
-extern pp_count;
-extern pp_line;
-extern indent;
+extern int pp_count;
+extern int pp_line;
+extern int indent;
 
 /**
  ** Command line args:
@@ -60,7 +61,6 @@ void log_time();
 void lhandler(char *line);
 void quit(void);
 void parse_buffer(char *buf);
-void rmrf(char *path);
 
 
 void init_history(char *fname);
@@ -345,7 +345,7 @@ extern "C" {
 
 /* FIX: move to gui.c */
 
-static String defaultAppResources[] = {
+static const String defaultAppResources[] = {
   "*TopLevelShell.allowShellResize: true",
   "*vicar.xZoomIn: 1",
   "*vicar.xZoomOut: 1",
@@ -415,7 +415,7 @@ event_loop(void)
         if (windows && getenv("DISPLAY") != NULL)  {
       // JAS FIX: what is this argv/argv manglation?
             char *argv[1];
-            char *av0 = "null";
+            const char *av0 = "null";
             int argc = 1;
             argv[0] = av0;
             applicationShell = XtVaAppInitialize(&applicationContext,
@@ -551,8 +551,11 @@ parse_buffer(char *buf)
     void *buffer;
     Var *node;
     extern char *pp_str;
+
     extern void *get_current_buffer();
-    extern void *yy_scan_string(char *);
+    extern void *yy_scan_string();
+    extern void yy_delete_buffer(void *);
+    extern void yy_switch_to_buffer(void *);
 
     parent_buffer = (void *) get_current_buffer();
     buffer = (void *) yy_scan_string(buf);
@@ -770,7 +773,7 @@ char *readline(char *prompt)
 #endif
 
 
-char *usage_str = 
+const char *usage_str = 
 "usage: %s [-Viwq] [-v#] [-l logfile] [-e cmd] [-f script] args\n"
 " Options:\n"
 "    -V            dump version information\n"

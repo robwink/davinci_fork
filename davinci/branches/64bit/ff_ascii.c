@@ -50,7 +50,7 @@ ff_ascii(vfuncptr func, Var *arg)
   float   *fdata = NULL;
   double  *ddata = NULL;
   size_t   count=0;
-  char    *delim = " \t";
+  const char *delim = " \t";
   int      i,j,k;
   size_t   dsize;
   int      x=0;
@@ -59,7 +59,8 @@ ff_ascii(vfuncptr func, Var *arg)
   int      format=0;
   int      column=0;
   int      row=0;
-  char    *formats[] = { "byte", "short", "int", "float", "double", NULL };
+  const char    *formats[] = { "byte", "short", "int",
+                               "float", "double", NULL };
   char    *format_str = NULL;
 
   Alist alist[9];

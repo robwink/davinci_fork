@@ -11,7 +11,7 @@ void MSB(unsigned char * data,
 #ifdef WORDS_BIGENDIAN
 
 #else
-	swap_endian(data, data_elem, word_size);
+	void swap_endian(data, data_elem, word_size);
 #endif
 }
 
@@ -23,7 +23,7 @@ void LSB(unsigned char * data,
 		      unsigned int word_size)
 {
 #ifdef WORDS_BIGENDIAN
-	swap_endian(data, data_elem, word_size);
+	void swap_endian(data, data_elem, word_size);
 #else
 
 #endif
@@ -32,7 +32,7 @@ void LSB(unsigned char * data,
 /*
 ** Do an actual endian conversion, in place
 */
-swap_endian(unsigned char *buf, unsigned int n, unsigned int size)
+void swap_endian(unsigned char *buf, unsigned int n, unsigned int size)
 {
 	int i;
 	int total_bytes = n*size;
@@ -123,4 +123,3 @@ char * var_endian(Var * v) {
   ws = NBYTES(V_FORMAT(v));
   return flip_endian(V_DATA(v), el, ws);
 }
-

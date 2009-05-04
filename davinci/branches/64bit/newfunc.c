@@ -363,28 +363,27 @@ make_args(int *ac, Var ***av, vfuncptr func, Var *args)
 {
     int count = 0, i = 0;
     Var *v, *next;
-	Var *p;
+    Var *p;
 
-	if (args != NULL) {
-		count = Narray_count(V_ARGS(args));
-	}
+    if (args != NULL) {
+        count = Narray_count(V_ARGS(args));
+    }
     *av = (Var **)calloc(count+2, sizeof(Var *));
 
     if (func) (*av)[0] = (Var *)func->name;
-	for (i = 0 ; i < count ; i++) {
-
-        Narray_get(V_ARGS(args), i, NULL, &p);
-		if (V_TYPE(p) == ID_KEYWORD && V_NAME(p) == NULL) {
-			p = V_KEYVAL(p);
-		}
-		(*av)[i+1] = p;
+    for (i = 0 ; i < count ; i++) {
+        Narray_get(V_ARGS(args), i, NULL, (void **)&p);
+        if (V_TYPE(p) == ID_KEYWORD && V_NAME(p) == NULL) {
+            p = V_KEYVAL(p);
+        }
+        (*av)[i+1] = p;
     }
     *ac = count+1;
     return 0;
 }
 
 Alist
-make_alist(char *name, int type, void *limits, void *value)
+make_alist(const char *name, int type, void *limits, void *value)
 {
     Alist a;
     a.name = name;
@@ -431,4 +430,3 @@ create_args(int ac, ...)
 	va_end(ap);
 	return(args);
 }
-

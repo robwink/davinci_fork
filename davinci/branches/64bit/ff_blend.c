@@ -30,7 +30,7 @@ double blend_value(double I, double M);
 Var *color_blend(Var *image, Var *mask, char *mode);
 
 struct _blend_modes {
-  char *name;
+  const char *name;
   double (*fptr)(double, double);
 } modes[] = {
   { "multiply",     blend_multiply },
@@ -104,7 +104,7 @@ ff_blend(vfuncptr func, Var * arg)
 
 Var *
 color_blend(Var *image, Var *mask, char *mode) {
-
+  return NULL;
 }
 
 // Notation for the blend algorithms.

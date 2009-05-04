@@ -5,6 +5,9 @@
 #include <sys/mman.h>
 #endif
 
+int struct_pos(Var *a, Var *v);
+void insert_struct(Var *a, int pos, char *name, Var *data);
+
 /*
 ** new_struct() - Create an empty structure
 */
@@ -149,7 +152,6 @@ add_struct(Var *s, const char *name, Var *exp)
 **    (name=,value=), append value as name
 */
 
-
 Var *
 ff_insert_struct(vfuncptr func, Var * arg)
 {
@@ -276,7 +278,7 @@ struct_pos(Var *a, Var *v)
     return(pos);
 }
 
-insert_struct(Var *a, int pos, char *name, Var *data)
+void insert_struct(Var *a, int pos, char *name, Var *data)
 {
     Narray_insert(V_STRUCT(a), name, data, pos);
 }
@@ -401,7 +403,7 @@ create_struct(Var *v)
 
     for (i = 0 ; i < count ; i++) {
         name = NULL;
-        Narray_get(V_ARGS(v), i, NULL, &p);
+        Narray_get(V_ARGS(v), i, NULL, (void **) &p);
 
         if (V_TYPE(p) == ID_KEYWORD) {
             name = V_NAME(p);
@@ -427,7 +429,7 @@ create_struct(Var *v)
 **            -1 if not found
 */
 int
-find_struct(Var *a, char *b, Var **data)
+find_struct(Var *a, const char *b, Var **data)
 {
     Var *s;
     int i;
@@ -456,7 +458,7 @@ free_struct(Var *v)
 }
 
 
-compare_struct(Var *a, Var *b)
+int compare_struct(Var *a, Var *b)
 {
     int i;
     int count = get_struct_count(a);

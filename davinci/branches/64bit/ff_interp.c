@@ -19,11 +19,11 @@ ff_interp(vfuncptr func, Var *arg)
     float x1,y1,x2,y2,w;
     float *m = NULL, *c = NULL; /* slopes and y-intercepts */
     int fromsz, tosz; /* number of elements in from & to arrays */
-	float ignore = MINFLOAT;
-	char *usage = "usage: %s(y1,x1,x2,[type={'linear'|'cubic'}]";
-	char *type = "";
-	char *types[] = {"linear", "cubic", NULL};
-	Var *out;
+    float ignore = MINFLOAT;
+    const char *usage = "usage: %s(y1,x1,x2,[type={'linear'|'cubic'}]";
+    char *type = "";
+    const char *types[] = {"linear", "cubic", NULL};
+    Var *out;
 
     Alist alist[9];
     alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v[0]);
@@ -35,52 +35,52 @@ ff_interp(vfuncptr func, Var *arg)
     alist[6] = make_alist( "x1",    ID_VAL,    NULL,    &v[1]);
     alist[7] = make_alist( "x2",    ID_VAL,    NULL,    &v[2]);
     alist[8].name = NULL;
-    
+
     if (parse_args(func, arg, alist) == 0) return(NULL);
-    
+
     if (v[0] == NULL) {
-	  parse_error("%s: y1 not specified.", func->name);
-	  parse_error(usage, func->name);
+      parse_error("%s: y1 not specified.", func->name);
+      parse_error(usage, func->name);
       return(NULL);
     }
     if (v[1] == NULL) {
-	  parse_error("%s: x1 not specified.", func->name);
-	  parse_error(usage, func->name);
+      parse_error("%s: x1 not specified.", func->name);
+      parse_error(usage, func->name);
       return(NULL);
     }
     if (v[2] == NULL) {
-	  parse_error("%s: x2 not specified.", func->name);
-	  parse_error(usage, func->name);
-	  return(NULL);
+      parse_error("%s: x2 not specified.", func->name);
+      parse_error(usage, func->name);
+      return(NULL);
     }
 
     if (V_DSIZE(v[0]) != V_DSIZE(v[1])) {
       parse_error("Object and From values must be same size\n");
     }
 
-	if (type == NULL || strlen(type) == 0 || !strcasecmp(type, "linear")) {
-		out = linear_interp(v[0], v[1], v[2], ignore);
-	} else if (!strncasecmp(type, "cubic", 5)) {
-		out = cubic_interp(v[0], v[1], v[2], type, ignore);
-	} else {
-		parse_error("%s: Unrecognized type: %s\n", func->name, type);
-	}
-	return(out);
+    if (type == NULL || strlen(type) == 0 || !strcasecmp(type, "linear")) {
+      out = linear_interp(v[0], v[1], v[2], ignore);
+    } else if (!strncasecmp(type, "cubic", 5)) {
+      out = cubic_interp(v[0], v[1], v[2], type, ignore);
+    } else {
+      parse_error("%s: Unrecognized type: %s\n", func->name, type);
+    }
+    return(out);
 }
-		
-Var *linear_interp(Var *v0, Var *v1, Var *v2, float ignore) 
+
+Var *linear_interp(Var *v0, Var *v1, Var *v2, float ignore)
 {
-    Var *s = NULL, *e = NULL;
-    float *x = NULL,*y = NULL, *fdata = NULL;
-    int i, count = 0;
-    float x1,y1,x2,y2,w;
-    float *m = NULL, *c = NULL; /* slopes and y-intercepts */
-    int fromsz, tosz; /* number of elements in from & to arrays */
-	char *usage = "usage: interp(y1,x1,x2,[type={'linear'|'cubic'}]";
+  Var *s = NULL, *e = NULL;
+  float *x = NULL,*y = NULL, *fdata = NULL;
+  int i, count = 0;
+  float x1,y1,x2,y2,w;
+  float *m = NULL, *c = NULL; /* slopes and y-intercepts */
+  int fromsz, tosz; /* number of elements in from & to arrays */
+  char *usage = "usage: interp(y1,x1,x2,[type={'linear'|'cubic'}]";
 
     fromsz = V_DSIZE(v0);
     tosz = V_DSIZE(v2);
-    
+
     x = (float *)calloc(sizeof(FLOAT), fromsz);
     y = (float *)calloc(sizeof(FLOAT), fromsz);
 
@@ -113,7 +113,7 @@ Var *linear_interp(Var *v0, Var *v1, Var *v2, float ignore)
     for (i = 0 ; i < tosz ; i++) {
         w = extract_float(v2, i); /* output wavelength */
         if (is_deleted(w)) {
-            fdata[i] = -1.23e34; 
+            fdata[i] = -1.23e34;
 		} else if (w == ignore) {
 			fdata[i] = ignore;
         } else {
@@ -123,7 +123,7 @@ Var *linear_interp(Var *v0, Var *v1, Var *v2, float ignore)
             ** Assume that x-values are monotonically increasing.
             */
             int st = 0, ed = fromsz-1, mid;
-            
+
             while((ed-st) > 1){
                 mid = (st+ed)/2;
                 if (w > x[mid])     { st = mid; }
@@ -255,7 +255,7 @@ cubic_interp(Var *v0, Var *v1, Var *v2, char *type, float ignore)
 		x1 = xp[j+1];
 		x = extract_float(v2, i);
 		if (x == ignore) {
-			out[i] == ignore;
+			out[i] = ignore;
 			i++;
 		}
 
@@ -272,11 +272,11 @@ cubic_interp(Var *v0, Var *v1, Var *v2, char *type, float ignore)
 	free(yd);
 	free(xp);
 	free(yp);
-	return(newVal(V_ORG(v2), 
-		V_SIZE(v2)[0], 
-		V_SIZE(v2)[1], 
-		V_SIZE(v2)[2], 
-		FLOAT, 
+	return(newVal(V_ORG(v2),
+		V_SIZE(v2)[0],
+		V_SIZE(v2)[1],
+		V_SIZE(v2)[2],
+		FLOAT,
 		out));
 }
 
@@ -816,9 +816,9 @@ y(x) = yd[i][0]+h*(yd[i][1]+h*(yd[i][2]/2.0+h*yd[i][3]/6.0))
 
 Var* ff_interp2d(vfuncptr func, Var *arg)
 {
-  
+
   Var    *xdata = NULL;                /* the orignial data */
-  Var    *ydata = NULL;                /* the orignial data */ 
+  Var    *ydata = NULL;                /* the orignial data */
   Var    *table = NULL;                /* look up table */
   Var    *out = NULL;                  /* the output struture */
   int     i,j,k;                       /* loop indices */
@@ -829,7 +829,7 @@ Var* ff_interp2d(vfuncptr func, Var *arg)
   float   tvx,tvy;                     /* data values */
   int     xi,yi;                       /* new x and y positions */
   float   tv1,tv2;                     /* temporary values */
-  
+
   Alist alist[8];
   alist[0] = make_alist("table",     ID_VAL,    NULL,  &table);
   alist[1] = make_alist("xdata",     ID_VAL,    NULL,  &xdata);
@@ -839,9 +839,9 @@ Var* ff_interp2d(vfuncptr func, Var *arg)
   alist[5] = make_alist("starty",    FLOAT,     NULL,  &sy);
   alist[6] = make_alist("deltay",    FLOAT,     NULL,  &dy);
   alist[7].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
-  
+
   if (table == NULL) {
     parse_error("\ninterp2d()- Thu Apr 27 16:20:31 MST 2006");
     parse_error("Bilinear interpolation algorithm");
@@ -857,7 +857,7 @@ Var* ff_interp2d(vfuncptr func, Var *arg)
     parse_error("c.edwards");
     return (NULL);
   }
-    
+
   /*size of xdata*/
   xx = GetX(xdata);
   xy = GetY(xdata);
@@ -869,35 +869,35 @@ Var* ff_interp2d(vfuncptr func, Var *arg)
   yz = GetZ(ydata);
 
   /*error handling, they must be the same size and one band*/
-  if(xx!=yx || xy!=yy || xz!=1 || yz != 1) { 
+  if(xx!=yx || xy!=yy || xz!=1 || yz != 1) {
     parse_error("\nThe x and y data must have the same dimensions and only one band\n");
     return NULL;
   }
 
   /*memory allocation*/
   wdata=(float *)calloc(sizeof(float),xx*xy*1);
-  
+
   for(i=0;i<xx;i+=1) {
     for(j=0;j<xy;j+=1) {
-      
+
       /*extract values from original data*/
       tvx=extract_float(xdata,cpos(i,j,0,xdata));
       tvy=extract_float(ydata,cpos(i,j,0,ydata));
-      
+
       /*apply start and delta to the extracted values*/
       tvx=(tvx-sx)/dx;
       tvy=(tvy-sy)/dy;
       if(tvx<0) tvx=0;
       if(tvy<0) tvy=0;
       if(tvx>xx) tvx=xx-1;
-      if(tvy>xy) tvy=xy-1;     
-      
+      if(tvy>xy) tvy=xy-1;
+
       /*calculate percentages */
       p1=(float)(tvx-floor(tvx));
       p2=(float)(tvy-floor(tvy));
       xi=(int)floor(tvx);
       yi=(int)floor(tvy);
-      
+
       /*   apply the bilinear interpolation algorithm                  **
       **   val=(f(1,1)*(1-p1)+f(2,1)*p1)*(1-p2)+(f(1,2)*(1-p1)+f(2,2)*p1)*p2    **
       */
@@ -910,4 +910,3 @@ Var* ff_interp2d(vfuncptr func, Var *arg)
   out=newVal(BSQ, xx, xy, 1, FLOAT, wdata);
   return out;
 }
-

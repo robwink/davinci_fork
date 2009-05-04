@@ -236,7 +236,7 @@ var2iom_iheader(
 */
 
 char *
-dv_locate_file(char *fname)
+dv_locate_file(const char *fname)
 {
 
 	char buf[4096];

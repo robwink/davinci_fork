@@ -35,9 +35,9 @@ ff_hstretch(vfuncptr func, Var * arg)
 {
 
     Var *obj=NULL, *histogram=NULL;
-    char *types[] = { "linear", "gauss","smooth","ellipse" };
+    const char *types[] = { "linear", "gauss","smooth","ellipse" };
     int dnmin=0, dnmax = 255;
-    char *type = "gauss";
+    const char *type = "gauss";
     float gmean=127, gsigma = 3.0;
 
     int npts=0;
@@ -83,7 +83,7 @@ ff_hstretch(vfuncptr func, Var * arg)
     } else if (!strcmp(type, "ellipse")) {
         cdf = cdf_ellipse(dnmin, dnmax);
     } else {
-        printf("%s: unknown stretch type: %s", type);
+        printf("%s: unknown stretch type: %s", func->name, type);
         return(NULL);
     }
 
@@ -426,6 +426,3 @@ ff_sstretch2(vfuncptr func, Var * arg)
   out = newVal(BIP,z, x, y, BYTE, w_data2);	
   return(out);
 }
-
-
-

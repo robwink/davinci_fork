@@ -22,7 +22,7 @@ Var *eval_buffer(char *buf);
 
 
 Var *
-V_func(char *name, Var * arg)
+V_func(const char *name, Var * arg)
 {
     vfuncptr f;
     UFUNC *uf, *locate_ufunc(char *);
@@ -182,7 +182,7 @@ ff_dfunc(vfuncptr func, Var * arg)
  **/
 
 Var *
-ff_binary_op(char *name,                     // Function name, for errors
+ff_binary_op(const char *name,               // Function name, for errors
              Var *a, Var *b,                 // operands
              double (*fptr)(double, double), // function pointer
              int format)                     // output format
@@ -338,7 +338,7 @@ ff_org(vfuncptr func, Var * arg)
   int org = -1, nbytes, format;
   size_t dsize;
   char *org_str = NULL;
-  char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
+  const char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
 
   Alist alist[4];
   alist[0] = make_alist( "object", ID_VAL,   NULL,     &ob);
@@ -534,7 +534,7 @@ ff_format(vfuncptr func, Var * arg)
     char *ptr = NULL;
     char *type = NULL;
     char *format_str = NULL;
-    char *formats[] = { "byte", "short", "int", "float", "double", NULL };
+    const char *formats[] = { "byte", "short", "int", "float", "double", NULL };
 
     Alist alist[4];
     alist[0] = make_alist( "object", ID_UNK,   NULL,        &obj);
@@ -579,11 +579,11 @@ ff_format(vfuncptr func, Var * arg)
         ** v specifies format.
         **/
 
-        if (!strcasecmp(format_str, "byte")) ptr = "byte";
-        else if (!strcasecmp(format_str, "short")) ptr = "short";
-        else if (!strcasecmp(format_str, "int")) ptr = "int";
-        else if (!strcasecmp(format_str, "float")) ptr = "float";
-        else if (!strcasecmp(format_str, "double")) ptr = "double";
+        if (!strcasecmp(format_str, "byte")) ptr = (char *)"byte";
+        else if (!strcasecmp(format_str, "short")) ptr = (char *)"short";
+        else if (!strcasecmp(format_str, "int")) ptr = (char *)"int";
+        else if (!strcasecmp(format_str, "float")) ptr = (char *)"float";
+        else if (!strcasecmp(format_str, "double")) ptr = (char *)"double";
 
         return (V_func(ptr, create_args(1, NULL, obj, NULL, NULL)));
     }
@@ -612,12 +612,12 @@ ff_create(vfuncptr func, Var * arg)
 {
     Var *s;
     size_t dsize, count = 0, c;
-    int i, j, k;
+    size_t i, j, k;
     float v;
-    char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
-    char *formats[] = { "byte", "short", "int", "float", "double", NULL};
+    const char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
+    const char *formats[] = { "byte", "short", "int", "float", "double", NULL};
 
-    int x = 1, y = 1, z = 1;
+    size_t x = 1, y = 1, z = 1;
     int format = INT;
     int org = BSQ;
     float start = 0;
@@ -692,7 +692,7 @@ ff_create(vfuncptr func, Var * arg)
     if (init){
         if (step == 0){
             if (dsize > 0){
-                unsigned char *data = (char *)V_DATA(s);
+                unsigned char *data = V_DATA(s);
                 unsigned int nbytes = NBYTES(format);
                 size_t i;
 
@@ -1537,7 +1537,7 @@ ff_resize(vfuncptr func, Var * arg)
 {
   Var *obj = NULL;
   int x = 1,y = 1,z = 1;
-  char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
+  const char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
   char *org_str = NULL;
   int org = 0;
 
@@ -1909,6 +1909,23 @@ ff_putenv(vfuncptr func, Var * arg)
     return(NULL);
 }
 
+int
+v_length(Var *obj)
+{
+    switch (V_TYPE(obj))  {
+        case ID_STRUCT:
+            return(get_struct_count(obj));
+        case ID_TEXT:
+            return(V_TEXT(obj).Row);
+        case ID_STRING:
+            return(strlen(V_STRING(obj)));
+        case ID_VAL:
+            return(V_DSIZE(obj));
+        default:
+            return(-1);
+    }
+}
+
 Var *
 ff_length(vfuncptr func, Var * arg)
 {
@@ -1933,30 +1950,62 @@ ff_length(vfuncptr func, Var * arg)
     parse_error("%s: unrecognized type", func->name);
     return(NULL);
   }
-}   
+}
+
 
 int
-v_length(Var *obj)
+decode_hexstring(char *str, char *buf)
 {
-    switch (V_TYPE(obj))  {
-        case ID_STRUCT:
-            return(get_struct_count(obj));
-        case ID_TEXT:
-            return(V_TEXT(obj).Row);
-        case ID_STRING:
-            return(strlen(V_STRING(obj)));
-        case ID_VAL:
-            return(V_DSIZE(obj));
-        default:
-            return(-1);
+    char *vbuf = buf;
+    int char_count = 0;
+    int base, shift;
+
+    char *p, *q;
+    /*
+    ** Try to decode value into a hex block
+    */
+    if (str[0] == '#') {
+        p = str;
+        q = strchr(str+1, '#');
+        if (p && q) {
+            base = atoi(p+1);
+            switch(base) {
+                case 16: shift=4; break;
+                default:
+                    return(0);
+            }
+            p = q+1;
+            /*
+            ** this is a hacky hardcode for #16#.
+            */
+            while (*p) {
+                if (*p >= '0' && *p <= '9') {
+                    *vbuf += *p - '0';
+                } else if (*p >= 'a' && *p <= 'f') {
+                    *vbuf += *p - 'a' + 10;
+                } else if (*p >= 'A' && *p <= 'F') {
+                    *vbuf += *p - 'A' + 10;
+                } else {
+                    return(0);
+                }
+                char_count++;
+                p++;
+                if (char_count % 2 == 0) {
+                    vbuf++;
+                } else {
+                    *vbuf = *vbuf << 4;
+                }
+            }
+        }
+        return(char_count/2);
     }
+    return(0);
 }
 
 /*
 ** Return a mask of everywhere that a value occurs, where the
 ** value can be a hex representation (ala ISIS)
 */
-
 
 Var *
 ff_deleted(vfuncptr func, Var * arg)
@@ -2024,54 +2073,6 @@ ff_deleted(vfuncptr func, Var * arg)
     return(v);
 }
 
-int
-decode_hexstring(char *str, char *buf)
-{
-    char *vbuf = buf;
-    int char_count = 0;
-    int base, shift;
-
-    char *p, *q;
-    /*
-    ** Try to decode value into a hex block
-    */
-    if (str[0] == '#') {
-        p = str;
-        q = strchr(str+1, '#');
-        if (p && q) {
-            base = atoi(p+1);
-            switch(base) {
-                case 16: shift=4; break;
-                default:
-                    return(0);
-            }
-            p = q+1;
-            /*
-            ** this is a hacky hardcode for #16#.
-            */
-            while (*p) {
-                if (*p >= '0' && *p <= '9') {
-                    *vbuf += *p - '0';
-                } else if (*p >= 'a' && *p <= 'f') {
-                    *vbuf += *p - 'a' + 10;
-                } else if (*p >= 'A' && *p <= 'F') {
-                    *vbuf += *p - 'A' + 10;
-                } else {
-                    return(0);
-                }
-                char_count++;
-                p++;
-                if (char_count % 2 == 0) {
-                    vbuf++;
-                } else {
-                    *vbuf = *vbuf << 4;
-                }
-            }
-        }
-        return(char_count/2);
-    }
-    return(0);
-}
 
 Var *
 ff_set_deleted(vfuncptr func, Var * arg)

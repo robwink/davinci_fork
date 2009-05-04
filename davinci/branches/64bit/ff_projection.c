@@ -50,7 +50,7 @@ Var *ff_projection(vfuncptr func, Var * arg)
         int i,j,k;
 	int step,jump;/*X and Z indices into data with size_of(format) modifcation*/
 
-	char *options[]={"MARS","EARTH","SPHERE",NULL};
+	const char *options[]={"MARS","EARTH","SPHERE",NULL};
 
 	projUV	pj_data;
 	projPJ	*ref;

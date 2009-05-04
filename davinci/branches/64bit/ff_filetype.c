@@ -2,7 +2,7 @@
 #include "parser.h"
 #include "dvio.h"
 #include "dvio_specpr.h"
-
+#include "iomedley.h"
 
 /**
  ** return string telling file type, suitable for using as type=$N in write()

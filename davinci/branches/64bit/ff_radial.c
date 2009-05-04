@@ -495,14 +495,14 @@ void draw_circle(Var *obj, int x, int y, float ignore, char *out) ;
 Var *
 ff_drawshape(vfuncptr func, Var * arg)
 {
-	Var *obj = NULL, *ovar = NULL;
-	int x,y,z;
-	char *out;
-	float ignore = MAXFLOAT;
-	int i,j,k, x1, x2, y1, y2, v, p1;
+    Var *obj = NULL, *ovar = NULL;
+    int x,y,z;
+    char *out;
+    float ignore = MAXFLOAT;
+    int i,j,k, x1, x2, y1, y2, v, p1;
 
-	char *options[] = { "cross", "box", "circle", NULL };
-	char *shape = options[0];
+    const char *options[] = { "cross", "box", "circle", NULL };
+    char *shape = options[0];
 
     Alist alist[9];
     alist[0] = make_alist( "object",    ID_VAL, NULL,   &obj);
@@ -635,4 +635,3 @@ draw_circle(Var *obj, int x, int y, float ignore, char *out)
 		}
 	}
 }
-

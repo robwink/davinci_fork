@@ -37,7 +37,9 @@
 */
 float median_window(float *s1, int width, int height, float ignore);
 
-static int cmp(float *a, float *b) { return((*a)-(*b)); }
+static int cmp(const void *a, const void *b) {
+  return(*(float *)a - *(float *)b); 
+}
 
 float median_window(float *s1, int width, int height, float ignore)
 {
@@ -304,7 +306,7 @@ ff_window(vfuncptr func, Var * arg)
     /*
     ** algorithms that could fit into this framework.
     */
-    char *types[] = { "min", "max", "median", NULL };
+    const char *types[] = { "min", "max", "median", NULL };
 
 /*
                       "gauss", "guassian", 
@@ -394,5 +396,3 @@ ff_window(vfuncptr func, Var * arg)
     free_window(w);
     return(rval);
 }
-
-

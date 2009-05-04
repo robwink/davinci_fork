@@ -5,7 +5,7 @@ extern int VERBOSE;
 char error_buf[256];
 
 void
-parse_error(char *fmt, ...)
+parse_error(const char *fmt, ...)
 {
 	va_list ap;
 

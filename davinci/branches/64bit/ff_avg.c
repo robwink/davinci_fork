@@ -27,7 +27,7 @@ ff_avg2(vfuncptr func, Var * arg)
 	int in[3], out[3];
 	double *sum, *sum2;
 	size_t *count;
-	char *options[] =  {
+	const char *options[] =  {
 		"x", "y", "z", "xy", "yx", "xz", "zx", "yz", "zy",
 		"xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL
 	};
@@ -180,7 +180,7 @@ ff_avg3(vfuncptr func, Var * arg)
 	int in[3], out[3];
 	double *sum, *sum2;
 	size_t *count;
-	char *options[] =  {
+	const char *options[] =  {
 		"x", "y", "z", "xy", "yx", "xz", "zx", "yz", "zy",
 		"xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL
 	};
@@ -331,7 +331,7 @@ ff_avg(vfuncptr func, Var * arg)
 	size_t dsize, i, j;
 	int in[3], out[3];
 	float *fdata, *vx;
-	char *options[] =  {
+	const char *options[] =  {
 		"x", "y", "z", "xy", "yx", "xz", "zx", "yz", "zy",
 		"xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL
 	};
@@ -439,7 +439,7 @@ ff_min(vfuncptr func, Var * arg)
 	Var *obj=NULL;
 	char *ptr=NULL;
 	int axis = 0;
-	char *options[] =  {
+	const char *options[] =  {
 		"x", "y", "z", "xy", "yx", "xz", "zx", "yz", "zy",
 		"xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL
 	};
