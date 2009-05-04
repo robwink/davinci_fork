@@ -165,22 +165,22 @@ ff_translate(vfuncptr func, Var *arg)
     int nbytes;
     int in_size[3], out_size[3];
     int i,j,k,t;
-    char *options[] = { "x", "y", "z", NULL };
-	char *axis1_str=NULL, *axis2_str = NULL;
+    const char *options[] = { "x", "y", "z", NULL };
+    char *axis1_str=NULL, *axis2_str = NULL;
 
-	Alist alist[5];
-	alist[0] = make_alist( "object",  ID_VAL,    NULL,       &object);
-	alist[1] = make_alist( "from",    ID_ENUM,    options,    &axis1_str);
-	alist[2] = make_alist( "to",      ID_ENUM,    options,    &axis2_str);
-	alist[3] = make_alist( "flip",    INT,       NULL,       &flip);
-	alist[4].name = NULL;
+    Alist alist[5];
+    alist[0] = make_alist( "object",  ID_VAL,    NULL,       &object);
+    alist[1] = make_alist( "from",    ID_ENUM,    options,    &axis1_str);
+    alist[2] = make_alist( "to",      ID_ENUM,    options,    &axis2_str);
+    alist[3] = make_alist( "flip",    INT,       NULL,       &flip);
+    alist[4].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (object == NULL) {
-        parse_error("%s(), No object specified.", func->name);
-        return (NULL);
-	}
+    if (object == NULL) {
+      parse_error("%s(), No object specified.", func->name);
+      return (NULL);
+    }
 
     if (axis1_str == NULL) {
         parse_error("%s(), No from axis specified.", func->name);

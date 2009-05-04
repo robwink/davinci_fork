@@ -349,13 +349,13 @@ ff_pcs(vfuncptr	func, Var *args)
 	Var		*obj = NULL, *axis_arg = NULL;
 	Var		*scale_arg = NULL, *opt_arg = NULL;
 	Var		*v_return;
-	char		*axis_enums[] = { /* values that axis can take */
+	const char	*axis_enums[] = { /* values that axis can take */
 		"x",  "X",
 		"y",  "Y",
 		"z",  "Z",
 		NULL
 	};
-	char		*opt_enums[] = { /* values taken by "opt"; see pca() */
+	const char	*opt_enums[] = { /* values taken by "opt"; see pca() */
 		"v",	"V", /* use covariance matrix -  default */
 		"r",	"R", /* use correlation matrix */
 		"s",	"S", /* use sum of squares matrix */

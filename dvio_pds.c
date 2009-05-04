@@ -91,9 +91,9 @@ rf_HISTORY };
 
 
 /*Step 3: Add the dataKey word to this here (before the NULL!)*/
-static char *keyName[] =
-    { "SPECTRAL_QUBE", "QUBE", "TABLE", "IMAGE", "HISTOGRAM_IMAGE",
-"HISTORY", NULL };
+static const char *keyName[] =
+    { "SPECTRAL_QUBE", "QUBE", "TABLE", "IMAGE",
+      "HISTOGRAM_IMAGE", "HISTORY", NULL };
 static int num_data_Keys;
 
 
@@ -1792,8 +1792,10 @@ Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
 		} 
 	}
 
-    ob = (OBJDESC *) OdlParseLabelFile(fname, err_file,
-                                       ODL_EXPAND_STRUCTURE, VERBOSE == 0);
+    ob = OdlParseLabelFile(fname, 
+                           err_file,
+                           ODL_EXPAND_STRUCTURE, 
+                           VERBOSE == 0);
 	fclose(fp);
 
     if ((key =
@@ -1823,12 +1825,12 @@ int rf_QUBE(char *fn, Var * ob, char *val, int dptr)
     
     fp = fopen(fn, "rb");
     
-    data = (Var *) dv_LoadISISFromPDS(fp, fn, dptr);
+    data = dv_LoadISISFromPDS(fp, fn, dptr);
     if (data == NULL) { fclose(fp); return 1; }
     add_struct(ob, fix_name("DATA"), data);
 
     if (LOAD_SUFFIX_DATA){
-        suffix_data = (Var *) dv_LoadISISSuffixesFromPDS(fp, fn);
+        suffix_data = dv_LoadISISSuffixesFromPDS(fp, fn);
         if (suffix_data == NULL){ fclose(fp); return 1; }
         
         /* create a suffix part only when there are suffixes, i.e.
@@ -2191,7 +2193,7 @@ int rf_IMAGE(char *fn, Var * ob, char *val, int dptr)
     FILE *fp;
     Var *data = NULL;
     fp = fopen(fn, "rb");
-    data = (Var *) dv_LoadISIS(fp, fn, NULL);
+    data = dv_LoadISIS(fp, fn, NULL);
     if (data != NULL) {
         add_struct(ob, fix_name("DATA"), data);
         fclose(fp);

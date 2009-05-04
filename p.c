@@ -613,7 +613,7 @@ evaluate(Var * n)
 
                     if (strlen(input_line)) {
                         subtopics = 0;
-                        sprintf(keyword, "%s %s\0", keyword, input_line);
+                        sprintf(keyword, "%s %s", keyword, input_line);
                         retval = help(keyword, module_help, &subtopics);
                         // if (retval == H_FOUND) return(evaluate(n));
                     }

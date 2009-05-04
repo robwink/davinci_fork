@@ -100,7 +100,7 @@ Var * ff_lsmod(struct _vfuncptr *, Var *);
 Var *V_DUP (Var *);
 Var *set_array (Var *, Var *, Var *);
 Var *extract_array (Var *, Range *);
-int find_struct(Var *a, char *name, Var **c);
+int find_struct(Var *a, const char *name, Var **c);
 
 /* symbol.c */
 Var *get_sym (char *name);	/* retrieve named Sym from table */
@@ -137,9 +137,9 @@ int is_file (char *name);
 
 /* error.c */
 #ifdef __cplusplus
-extern "C" void parse_error(char *, ...);
+extern "C" void parse_error(const char *, ...);
 #else
-void parse_error(char *, ...);
+void parse_error(const char *, ...);
 #endif
 
 /* reserved.c */
@@ -213,9 +213,8 @@ void push_input_stream(FILE *, char *filename);
 size_t rpos(size_t, Var *, Var *);
 Var * pp_print(Var *);
 
-Var *V_func (char *name, Var *);
+Var *V_func (const char *name, Var *);
 void make_sym(Var *, int, char *);
-
 
 char *get_env_var(char *);
 char *expand_filename(char *);
@@ -385,7 +384,7 @@ Var *ff_covar(vfuncptr func, Var *arg);
 Var *ff_loadvan(vfuncptr func, Var *arg);
 Var *ff_loadspecpr(vfuncptr func, Var *arg);
 
-Alist make_alist(char *name, int type, void *limits, void *value);
+Alist make_alist(const char *name, int type, void *limits, void *value);
 
 Var * ReadPDS(vfuncptr func, Var * arg);
 Var * WritePDS(vfuncptr func, Var * arg);
@@ -539,9 +538,20 @@ Var *ff_load_tdb(vfuncptr, Var *);
 Var *ff_cinterp(vfuncptr, Var *);
 Var *ff_blend(vfuncptr, Var *);
 
-char *dv_locate_file(char *);
+char *dv_locate_file(const char *);
 void dump_version();
 double my_round(double);
 
-Var * ff_binary_op(char *name, Var *a, Var *b,
+Var * ff_binary_op(const char *name, Var *a, Var *b,
                    double (*)(double, double), int);
+char * try_remote_load(char * filename);
+int array_replace(Var *dst, Var *src, Range *r);
+
+char *make_temp_file_path_in_dir(char *dir);
+char * make_temp_file_path();
+
+Var *create_args(int, ...);
+Var *append_arg(Var *, char *, Var *);
+int compare_vars(Var *a, Var *b);
+
+extern void pp_print_var(Var *, char *, int, int);

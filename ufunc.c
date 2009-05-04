@@ -14,6 +14,11 @@ extern int pp_line;
 
 void list_funcs();
 
+void *get_current_buffer();
+void *yy_scan_string();
+void yy_delete_buffer(void *);
+void yy_switch_to_buffer(void *);
+
 UFUNC *
 locate_ufunc(char *name) 
 {

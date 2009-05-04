@@ -461,8 +461,8 @@ Var *ff_sort(vfuncptr func, Var * arg)
     
   } else {
     parse_error("Incompatible object type. Must be TEXT or VAL.");
-    return NULL;
   }
+  return NULL;
 }
 
 
@@ -669,6 +669,7 @@ ff_unique(vfuncptr func, Var * arg)
       return(result);
     }
   }
+  return NULL;
 }
 
 
@@ -774,6 +775,3 @@ Var *ff_sort_old(vfuncptr func, Var * arg)
   
   return rVal;
 }
-
-
-

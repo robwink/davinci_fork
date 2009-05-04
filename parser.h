@@ -73,6 +73,7 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <signal.h>
+#include <malloc.h>
 
 
 #include "system.h"
@@ -336,7 +337,7 @@ typedef double (*dfunc)(double);
 typedef double (*ddfunc)(double, double);
 
 struct _vfuncptr {
-    char *name;
+    const char *name;
     vfunc fptr;
     void *fdata;
     void *fdata2;
@@ -398,13 +399,8 @@ extern int debug;
 #define history_get_history_state w_history_get_history_state
 #endif
 
-
 #include "ufunc.h"
 #include "scope.h"
 #include "func.h"
-
-#if 0
-#include "dmalloc.h"
-#endif
 
 #endif /* PARSER_H */

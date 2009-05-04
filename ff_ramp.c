@@ -2,12 +2,13 @@
 
 Var *ff_ramp(vfuncptr func, Var * arg)
 {
-  /* made more efficient and fixed several bugs Oct 14, 2005                         **
-  ** added ability to speed up ramp calculation by setting a maximum # of iterations **
-  ** Fri Oct 14 16:36:44 MST 2005                                                    **
-  ** added completely overlapping picture functionality                              **
-  ** Fri Mar  3 13:31:47 MST 2006                                                                                */
-
+  /* made more efficient and fixed several bugs Oct 14, 2005
+   * added ability to speed up ramp calculation by setting a 
+   * maximum # of iterations 
+   * Fri Oct 14 16:36:44 MST 2005
+   *  added completely overlapping picture functionality
+   * Fri Mar  3 13:31:47 MST 2006 
+   */
   Var    *pic_1 = NULL;		 /* picture one                                   */
   Var    *pic_2 = NULL;		 /* picture two                                   */
   Var    *out = NULL;		 /* the output picture                            */
@@ -28,10 +29,10 @@ Var *ff_ramp(vfuncptr func, Var * arg)
   float   sum=0;  
 
   Alist alist[5];
-  alist[0] = make_alist("pic1",   ID_VAL, NULL, &pic_1);
-  alist[1] = make_alist("pic2",   ID_VAL, NULL, &pic_2);
-  alist[2] = make_alist("stop",   INT,    NULL, &pare);
-  alist[3] = make_alist("ignore", FLOAT,  NULL, &nullv);
+  alist[0] = make_alist((char *)"pic1",   ID_VAL, NULL, &pic_1);
+  alist[1] = make_alist((char *)"pic2",   ID_VAL, NULL, &pic_2);
+  alist[2] = make_alist((char *)"stop",   INT,    NULL, &pare);
+  alist[3] = make_alist((char *)"ignore", FLOAT,  NULL, &nullv);
   alist[4].name = NULL;
 
   if (parse_args(func, arg, alist) == 0)

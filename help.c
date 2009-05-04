@@ -130,7 +130,6 @@ extern int errno;
 
 #define PATHSIZE    BUFSIZ
 
-typedef int boolean;
 #ifndef TRUE
 #define TRUE (1)
 #define FALSE (0)
@@ -821,4 +820,3 @@ squash_spaces(char *s)
   }
   *w = '\0';                /* null terminate string */
 }
-

@@ -201,18 +201,18 @@ paste(Var *src, Var *dst, int x, int y, int z)
 	return(NULL);
 }
 
-color()		/* colorize a grayscale image */
+void color()		/* colorize a grayscale image */
 {
 
 }
 
 
-text()		/* create images of text */
+void text()		/* create images of text */
 {
 
 }
 
-cat()		/* concatenate two images, with pad */
+void cat()		/* concatenate two images, with pad */
 {
 
 }

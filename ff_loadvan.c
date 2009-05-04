@@ -1040,7 +1040,7 @@ vanread(
 
     if ((fname = dv_locate_file(filename)) == (char*)NULL) {
         parse_error("Unable to expand filename %s\n", filename);
-        return (NULL);
+        return EFILE;
     }
 
     if (stat(fname, &sbuf) < 0){
@@ -1267,18 +1267,18 @@ make_coldefs(
         ** get rid of table name from the field, i.e.
         **         obs.sclk_time -> sclk_time
         */
-        if (p = strchr(q, '.')){ strcpy((*coldefs)[i].name, p+1); }
+        if ((p = strchr(q, '.'))){ strcpy((*coldefs)[i].name, p+1); }
 
         /*
         ** get rid of array dimensions from the field name, i.e.
         **         temps[1] -> temps
         */
-        if (p = strchr(q, '[')){ *p = 0; }
+        if ((p = strchr(q, '['))){ *p = 0; }
 
         /*
         ** replace ':' with '_' for bit-fields
         */
-        if (p = strchr(q, ':')){ *p = '_'; }
+        if ((p = strchr(q, ':'))){ *p = '_'; }
 
         if (((*coldefs)[i].text = (char *)malloc(cnamelen)) == NULL){
             free_coldefs(*coldefs, n);

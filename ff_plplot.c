@@ -162,7 +162,7 @@ ff_pplot(vfuncptr func, Var * arg)
 	int obj_index;
 	
 
-	char *options[]={"X","Y","Z","x","y","z",NULL};
+	const char *options[]={"X","Y","Z","x","y","z",NULL};
 
 	
         int ac;

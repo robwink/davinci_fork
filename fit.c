@@ -12,7 +12,7 @@
  **                     gaussc  - Gaussian + constant
  **                     gaussl  - Gaussian + linear
  **                     linear  - linear [default]
- **     start   - Initial values 
+ **     start   - Initial values
  **               If no inital values are given, a best guess is performed.
  **               iterations - Number of iterations to perform [1]
  **
@@ -46,47 +46,48 @@ Var * ff_fit(vfuncptr func, Var *arg)
     Var *s;
     double *op;
     int nparam;
-    char *ftype = "linear";
+    const char *ftype = "linear";
     int iter = 1;
     int plot = 0 ;
-	int verbose =0;
-	Var *ignore_val = NULL;
-	double ignore=MINFLOAT;
-	int ret;
+    int verbose =0;
+    Var *ignore_val = NULL;
+    double ignore=MINFLOAT;
+    int ret;
 
-    char *fits[] = { "gauss", "gaussc", "gaussl", "ngauss", "lorenz",
-                     "2lorenz", "linear", "linear_chi", "quad", "cube", "poly", 
-					 "nexp", "xyquad", "xygauss", "sincos", NULL };
+    const char *fits[] = { "gauss", "gaussc", "gaussl", "ngauss", "lorenz",
+                           "2lorenz", "linear", "linear_chi", "quad",
+                           "cube", "poly", "nexp", "xyquad", "xygauss",
+                           "sincos", NULL };
 
-	Alist alist[9];
-	alist[0] = make_alist( "y",       ID_VAL,    NULL,    &y);
-	alist[1] = make_alist( "type",    ID_ENUM,   fits,    &ftype);
-	alist[2] = make_alist( "start",   ID_VAL,    NULL,    &ip);
-	alist[3] = make_alist( "steps",   INT,       NULL,    &iter);
-	alist[4] = make_alist( "x",       ID_VAL,    NULL,    &x);
-	alist[5] = make_alist( "plot",    INT,       NULL,    &plot);
-	alist[6] = make_alist( "verbose", INT,       NULL,    &verbose);
-	alist[7] = make_alist( "ignore",  DOUBLE,    NULL,    &ignore);
-	alist[8].name = NULL;
+    Alist alist[9];
+    alist[0] = make_alist( "y",       ID_VAL,    NULL,    &y);
+    alist[1] = make_alist( "type",    ID_ENUM,   fits,    &ftype);
+    alist[2] = make_alist( "start",   ID_VAL,    NULL,    &ip);
+    alist[3] = make_alist( "steps",   INT,       NULL,    &iter);
+    alist[4] = make_alist( "x",       ID_VAL,    NULL,    &x);
+    alist[5] = make_alist( "plot",    INT,       NULL,    &plot);
+    alist[6] = make_alist( "verbose", INT,       NULL,    &verbose);
+    alist[7] = make_alist( "ignore",  DOUBLE,    NULL,    &ignore);
+    alist[8].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+    if (parse_args(func, arg, alist) == 0) return(NULL);
 
     if (y == NULL) {
         parse_error("%s: No data specified (y=VAR)", func->name);
         return(NULL);
     }
-	/*
-	** we could provide a default X here if we wanted
-	**
-	** Ok, I did.
+    /*
+    ** we could provide a default X here if we wanted
+    **
+    ** Ok, I did.
     ** if (x == NULL) {
     **     parse_error("%s: No x data specified (x=VAR)", func->name);
     **     return(NULL);
     ** }
-	*/ 
+    */
 
     if (x && (V_DSIZE(x) != V_DSIZE(y))) {
-        sprintf(error_buf, "X axis for data [%d points] not same size as Y axis [%d points]", 
+        sprintf(error_buf, "X axis for data [%d points] not same size as Y axis [%d points]",
                 V_DSIZE(x), V_DSIZE(y));
         parse_error(NULL);
         return(NULL);
@@ -99,29 +100,29 @@ Var * ff_fit(vfuncptr func, Var *arg)
 
     if (!(strcmp(ftype,"linear"))) {
         s=lin_fit(x,y,V_DSIZE(x),plot, ignore);
-		return(s);
-	}
+        return(s);
+    }
 
-	if (!strcmp(ftype, "linear_chi")) {
-		ftype = "linear";
-		ret = dfit(x, y, ip, ftype, iter, &op, &nparam, plot,verbose,ignore);
-	} else {
-		ret = dfit(x, y, ip, ftype, iter, &op, &nparam, plot,verbose,ignore);
-	}
+    if (!strcmp(ftype, "linear_chi")) {
+        ftype = "linear";
+        ret = dfit(x, y, ip, ftype, iter, &op, &nparam, plot,verbose,ignore);
+    } else {
+        ret = dfit(x, y, ip, ftype, iter, &op, &nparam, plot,verbose,ignore);
+    }
 
-	if (ret != 0) {
-		return(NULL);
-	}
+    if (ret != 0) {
+        return(NULL);
+    }
 
-	s = newVar();
-	V_TYPE(s) = ID_VAL;
+    s = newVar();
+    V_TYPE(s) = ID_VAL;
 
-	V_DATA(s) = op;
-	V_DSIZE(s) = nparam+2;
-	V_FORMAT(s) = DOUBLE;
-	V_ORDER(s) = BSQ;
-	V_SIZE(s)[0] = nparam+2;
-	V_SIZE(s)[2] = V_SIZE(s)[1] = 1;
+    V_DATA(s) = op;
+    V_DSIZE(s) = nparam+2;
+    V_FORMAT(s) = DOUBLE;
+    V_ORDER(s) = BSQ;
+    V_SIZE(s)[0] = nparam+2;
+    V_SIZE(s)[2] = V_SIZE(s)[1] = 1;
 
     return(s);
 }
@@ -234,7 +235,7 @@ ifptr           func = NULL;
 
 
 int
-dfit(Var *x, Var *y, Var *ip, char *fname, 
+dfit(Var *x, Var *y, Var *ip, char *fname,
      int iter, double **op, int *nparam, int plot,int verbose, double ignore)
 {
 
@@ -273,7 +274,7 @@ dfit(Var *x, Var *y, Var *ip, char *fname,
 		if (tmp == NULL || (fp = fopen(tmp, "w")) == NULL ) {
 			parse_error("unable to open temp file");
 			if (tmp) free(tmp);
-			return(NULL);
+			return(1);
 		}
         for (i = 0 ; i < ndata ; i++) {
             fprintf(fp, "%g %g\n", data[0][i], data[1][i]);
@@ -289,7 +290,7 @@ dfit(Var *x, Var *y, Var *ip, char *fname,
 	sprintf(buf, "plot \"%s\" using 1:2 with points, %s with lines\n",
 		tmp, p+1);
         free(tmp);
-				 
+				
         send_to_plot(buf);
     }
 
@@ -315,7 +316,7 @@ first_guess(double *a, char *fname,int verbose)
     /**
      ** find minimum and maximum.
      **/
-        
+
     for (i = 0 ; i < ndata ; i++) {
         if (i == 0 || y[maxi] < y[i]) {
             maxi = i;
@@ -407,7 +408,7 @@ gd(Var *x, Var *y, char *fname, double ignore)
 }
 
 int
-fit(int itmax,int verbose) 
+fit(int itmax,int verbose)
 {
     /* nonzero returns 1 if all sigma's are non-zero */
     if (nonzero(data[order.sig], ndata)) {
@@ -442,7 +443,7 @@ fit(int itmax,int verbose)
 /* declarations for data declared externally */
 void            myerror(char *);
 
-int 
+int
 mrqfit(double **data,
        struct data_order order,
        int num_indep,
@@ -528,7 +529,7 @@ mrqfit(double **data,
             printf("\nalamda = %g", alamda);
             printf("\n");
         } else
-			if (verbose) 
+			if (verbose)
 				printf("iteration: %d chisqr: %g\n", i, *chisq);
         i++;
 
@@ -543,7 +544,7 @@ mrqfit(double **data,
 }
 
 
-int 
+int
 alpha_beta_chisq(double **data, struct data_order order,
                  int num_indep, int ndata, double *a, int ma,
                  int mfit, double **alpha, double *beta, double *chisq,
@@ -632,7 +633,7 @@ alpha_beta_chisq(double **data, struct data_order order,
 /* This function is very similar to the one in */
 /* Numerical Recipes of the same name. */
 
-void 
+void
 gaussj(double **a, int n, double **b, int m)
 {
     int            *indxc, *indxr, *ipiv;
@@ -700,7 +701,7 @@ gaussj(double **a, int n, double **b, int m)
 /* alpha is a matrix and da and beta are vectors */
 /* covar is used for temporary space */
 
-void 
+void
 solve_for_da(double **alpha, double **covar, double *beta, double *da, int mfit)
 {
     int             i, j;
@@ -761,7 +762,7 @@ imatrix(int nr, int nc)
     return m;
 }
 
-void 
+void
 free_dmatrix(double **m, int nr, int nc)
 {
     int             i;
@@ -771,7 +772,7 @@ free_dmatrix(double **m, int nr, int nc)
     free((char *) (m));
 }
 
-void 
+void
 free_imatrix(int **m, int nr, int nc)
 {
     int             i;
@@ -781,7 +782,7 @@ free_imatrix(int **m, int nr, int nc)
     free((char *) (m));
 }
 
-void 
+void
 myerror(char s[80])
 {
     printf("%s\n", s);
@@ -800,7 +801,7 @@ ivector(int n)
 }
 
 
-int 
+int
 nonzero(double *array, int ndata)
 {
     int             i;
@@ -908,7 +909,7 @@ getfcnptr(char *name, int *num_indep, int *linflag, int *na, char *comment)
 }
 
 /* listfcns() lists the functions available */
-int 
+int
 listfcns(void)
 {
     int             i = 0;
@@ -943,14 +944,14 @@ listfcns(void)
  * passed to the function and used for optimization
  * purposes only.  These need not be used at all,
  * but may result in a significant performance boost.
- * if calculating the derivative is slow and it is not 
+ * if calculating the derivative is slow and it is not
  * needed by the calling function,
- * dydx[i] should be set equal to the derivative of the fitting 
- * function with respect to x[i].  It is used only if 
- * the fitting algorithm is told to consider errors in the x[i] 
- * ydat is the data value that you are fitting to. 
- * It might be useful in multivalued functions 
- * Using it might destroy the statistical relevance of your fit. 
+ * dydx[i] should be set equal to the derivative of the fitting
+ * function with respect to x[i].  It is used only if
+ * the fitting algorithm is told to consider errors in the x[i]
+ * ydat is the data value that you are fitting to.
+ * It might be useful in multivalued functions
+ * Using it might destroy the statistical relevance of your fit.
  */
 
 /* The linear fitting routine makes different use of user defined */
@@ -962,7 +963,7 @@ listfcns(void)
 
 /* f(u,v) = a4*exp(-((u-a0)/a2)**2 - ((v-a1)/a3)**2 ) + a5 */
 /* a two dimensional gaussian */
-int 
+int
 fxygauss(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, int *fita, int *dydx_flag, double *dydx, double ydat)
 {
     double          fac0, ex0, arg0, fac1, ex1, arg1;
@@ -998,7 +999,7 @@ fxygauss(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, i
 
 
 /* a sum of sines and cosines */
-int 
+int
 fsincos(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, int *fita, int *dydx_flag, double *dydx, double ydat)
 {
 
@@ -1033,7 +1034,7 @@ fsincos(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, in
 
 
 /* a quadradic in x and y */
-int 
+int
 fxyquad(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, int *fita, int *dydx_flag, double *dydx, double ydat)
 {
     double          x0, x1, x02, x12;
@@ -1066,7 +1067,7 @@ fxyquad(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, in
 }
 
 /* a single lorenzian */
-int 
+int
 florenz(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, int *fita, int *dydx_flag, double *dydx, double ydat)
 {
     double          denom, del, del2;
@@ -1089,7 +1090,7 @@ florenz(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, in
 }
 
 /* sum of two lorenzians */
-int 
+int
 florenz2(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, int *fita, int *dydx_flag, double *dydx, double ydat)
 {
     double          denom, del, del2, y1, y2;
@@ -1130,7 +1131,7 @@ florenz2(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, i
 }
 
 /* a gaussian */
-int 
+int
 fgauss(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, int *fita, int *dydx_flag, double *dydx, double ydat)
 {
     double          fac, ex, arg;
@@ -1153,7 +1154,7 @@ fgauss(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, int
 }
 
 /* a gaussian plus a constant */
-int 
+int
 fgaussc(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, int *fita, int *dydx_flag, double *dydx, double ydat)
 {
     double          fac, ex, arg;
@@ -1177,7 +1178,7 @@ fgaussc(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, in
 }
 
 /* a gaussian plus a linear term */
-int 
+int
 fgaussl(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, int *fita, int *dydx_flag, double *dydx, double ydat)
 {
     double          fac, ex, arg;
@@ -1203,7 +1204,7 @@ fgaussl(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, in
 }
 
 /* sum of gaussians plus a constant */
-int 
+int
 fgaussn(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, int *fita, int *dydx_flag, double *dydx, double ydat)
 {
     double          fac, ex, arg;
@@ -1232,7 +1233,7 @@ fgaussn(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, in
 }
 
 
-int 
+int
 fline(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, int *fita, int *dydx_flag, double *dydx, double ydat)
 {
     dyda[0] = 1;
@@ -1243,7 +1244,7 @@ fline(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, int 
 }
 
 
-int 
+int
 fpoly(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, int *fita, int *dydx_flag, double *dydx, double ydat)
 {
     int             i;
@@ -1264,7 +1265,7 @@ fpoly(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, int 
 }
 
 /* sum of exponentials plus a constant */
-int 
+int
 fexpn(double *x, double *a, double *y, double *dyda, int na, int dyda_flag, int *fita, int *dydx_flag, double *dydx, double ydat)
 {
     double          fac, ex, arg;

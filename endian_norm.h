@@ -4,4 +4,5 @@
 char * flip_endian(unsigned char *, unsigned int, unsigned int);
 char * var_endian(Var *);
 
-
+void MSB(unsigned char * data, unsigned int data_elem, unsigned int word_size);
+void LSB(unsigned char * data, unsigned int data_elem, unsigned int word_size);

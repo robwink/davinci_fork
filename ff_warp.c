@@ -26,7 +26,7 @@ interp_bilinear(float x1, float y1, Var *obj, float ignore)
 	int w = GetX(obj);
 	int h = GetY(obj);
 	float ix1, iy1, ix2, iy2, px, py;
-	float xv, xv2;
+	float xv;
 	float a1, a2, a3, a4;
 
 	if (x1 < 0 || x1 >= w || y1 < 0 || y1 >= h) return(ignore);
@@ -89,7 +89,7 @@ interp_bilinear(float x1, float y1, Var *obj, float ignore)
 	return(xv);
 }
 
-kenel_interpolation() {
+void kenel_interpolation() {
 
 	
 }
@@ -171,7 +171,6 @@ ff_warp(vfuncptr func, Var * arg)
 	Var *obj = NULL, *xm = NULL, *oval;
 	float ignore = MINFLOAT;
 	int i, j;
-	float x1, y1, x2, y2, x3, y3, x4, y4;
 	float *out;
 	int x,y,n;
 	int grow=0;
@@ -180,7 +179,7 @@ ff_warp(vfuncptr func, Var * arg)
 	float xmax, xmin, ymax, ymin;
 	float v[3];
 	int dsize;
-	char *options[] = { "nearest", "bilinear", 0 };
+	const char *options[] = { "nearest", "bilinear", 0 };
 	char *interp = NULL;
 
 	float (*interp_f)(float, float, Var *, float);

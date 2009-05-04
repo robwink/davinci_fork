@@ -1,6 +1,7 @@
 /********************************** pp.c *********************************/
 #include "parser.h"
 #include "dvio.h"
+#include "ff_modules.h"
 
 /**
  ** pp_emit_prompt()    - spit out prompt if interactive 
@@ -1213,4 +1214,3 @@ pp_set_where(Var *id, Var *where, Var *exp)
     }
     return(id);
 }
-

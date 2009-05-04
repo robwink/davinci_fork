@@ -41,7 +41,7 @@ ff_dct(vfuncptr func, Var * arg)
 	double *data, *u, *v;
 	int dir = -1;
 	char *axis = NULL;
-	char *options[] =  {
+	const char *options[] =  {
 		"x", "y", "z", "xy", "yx", "xz", "zx", "yz", "zy",
 		"xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL
 	};
