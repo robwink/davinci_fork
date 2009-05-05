@@ -465,7 +465,7 @@ ac_includes_default="\
 ac_subdirs_all="$ac_subdirs_all readline"
 ac_subdirs_all="$ac_subdirs_all iomedley"
 ac_subdirs_all="$ac_subdirs_all libltdl"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS LIB_CURRENT LIB_REVISION LIB_AGE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE MODULE_SUPPORT_TRUE MODULE_SUPPORT_FALSE X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS HAVE_MOTIF_TRUE HAVE_MOTIF_FALSE HAVE_LIBWSOCK32_TRUE HAVE_LIBWSOCK32_FALSE HAVE_LIBREGEX_TRUE HAVE_LIBREGEX_FALSE HAVE_LIBMAGICK_TRUE HAVE_LIBMAGICK_FALSE CXXCPP QT_CXXFLAGS QT_LIBS MOC UIC LIBOBJS subdirs LOCAL_READLINE_TRUE LOCAL_READLINE_FALSE LOCAL_IOMEDLEY_TRUE LOCAL_IOMEDLEY_FALSE SED LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB F77 FFLAGS ac_ct_F77 LIBTOOL LOCAL_VICAR_TRUE LOCAL_VICAR_FALSE DV_VIEWER GPLOT_CMD EDITOR DV_LIBRARY_TRUE DV_LIBRARY_FALSE DV_EXAMPLES_TRUE DV_EXAMPLES_FALSE MY_SUBDIRS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS LIB_CURRENT LIB_REVISION LIB_AGE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE MODULE_SUPPORT_TRUE MODULE_SUPPORT_FALSE X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS HAVE_MOTIF_TRUE HAVE_MOTIF_FALSE HAVE_LIBWSOCK32_TRUE HAVE_LIBWSOCK32_FALSE HAVE_LIBREGEX_TRUE HAVE_LIBREGEX_FALSE HAVE_LIBMAGICK_TRUE HAVE_LIBMAGICK_FALSE CXXCPP LIBOBJS subdirs LOCAL_READLINE_TRUE LOCAL_READLINE_FALSE LOCAL_IOMEDLEY_TRUE LOCAL_IOMEDLEY_FALSE SED LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB F77 FFLAGS ac_ct_F77 LIBTOOL LOCAL_VICAR_TRUE LOCAL_VICAR_FALSE DV_VIEWER GPLOT_CMD EDITOR DV_LIBRARY_TRUE DV_LIBRARY_FALSE DV_EXAMPLES_TRUE DV_EXAMPLES_FALSE MY_SUBDIRS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1057,10 +1057,6 @@ Optional Packages:
   --with-cfitsio=<path>   prefix of cfitsio installation. e.g. /usr/local or /usr
   --with-hdf5=<path>      prefix of hdf5 installation. e.g. /usr/local or /usr
   --with-qmv=<path>       prefix of qmv installation. e.g. /usr/local or /usr
-  --with-isis3=<path>     prefix of isis3 installation. e.g. /mars/common/isis3/PLATFORM/isis, requires Qt 4 and iomedley
-  --with-qt-libdir=PFX    Prefix where Qt library is installed (optional)
-  --with-qt-incdir=PFX    Prefix where Qt includes are installed (optional)
-  --with-qt-bindir=PFX    Prefix where moc and uic are installed (optional)
   --with-readline=<path>  prefix of realine installation. e.g. /usr/local or /usr or /opt/csw
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-pic              try to use only PIC/non-PIC objects [default=use
@@ -9557,449 +9553,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-# Check whether --with-isis3 or --without-isis3 was given.
-if test "${with_isis3+set}" = set; then
-  withval="$with_isis3"
-   ISIS3LDFLAGS="-Xlinker -rpath-link -Xlinker $withval/3rdParty/lib -L$withval/lib -lisis3 -L$withval/3rdParty/lib -lcspice -lgeos -lgslcblas -lgsl -lqwt -lxerces-c" ; ISIS3CFLAGS="-I$withval/inc" ; ISIS3CPPFLAGS="-I$withval/inc" ; ISIS3_SAVE_LDLP=$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$withval/lib:$withval/3rdParty/lib" ; try_isis3="yes" ; ISIS3DIR=$withval
-
-fi;
-have_isis3=no
-if test "$try_isis3" = "yes"; then
-        if test "x$enable_iomedley" = "xno"; then
-            { { echo "$as_me:$LINENO: error: ISIS3 support requires iomedley (enabled by default). Remove --disable-iomedley or --with-isis
-See \`config.log' for more details." >&5
-echo "$as_me: error: ISIS3 support requires iomedley (enabled by default). Remove --disable-iomedley or --with-isis
-See \`config.log' for more details." >&2;}
-   { (exit 1); exit 1; }; }
-        fi
-
-{ echo "$as_me:$LINENO: checking for Qt ......" >&5
-echo "$as_me: checking for Qt ......" >&6;}
-
-
-
-ac_ext=cc
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-
-saved_LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
-saved_LIBRARY_PATH="$LIBRARY_PATH"
-saved_CXXFLAGS="$CXXFLAGS"
-saved_LDFLAGS="$LDFLAGS"
-saved_LIBS="$LIBS"
-
-# the test looks inside the following files to find the qt headers, libs
-# and binaries
-GUESS_QT_INC_DIRS="$QTDIR/include $QTDIR/include/qt /usr/include /usr/include/qt  /usr/include/qt4 /usr/local/include /usr/local/include/qt /usr/local/include/qt4 /usr/X11R6/include/ /usr/X11R6/include/qt /usr/X11R6/include/X11/qt /usr/X11R6/include/qt4 /usr/lib/qt/include /usr/lib/qt4/include /usr/lib/qt-4/include /usr/lib/qt-4.0/include /usr/lib/qt-4.1/include /usr/lib/qt-4.2/include /sw/include/qt"
-
-GUESS_QT_LIB_DIRS="$QTDIR/lib $QTDIR/lib64 /usr/lib /usr/lib64 /usr/local/lib /usr/local/lib64 /usr/X11R6/lib /usr/local/qt/lib /usr/lib/qt/lib /usr/lib/qt4/lib /usr/lib/qt-4/lib /usr/lib/qt-4.0/lib /usr/lib/qt-4.1/lib /usr/lib/qt-4.2/lib /usr/lib/qt-4.3/lib /usr/lib/qt-4.4/lib /sw/lib"
-
-GUESS_QT_BIN_DIRS="$QTDIR/bin /usr/bin /usr/local/bin /usr/local/bin/qt4 /usr/X11R6/bin /usr/lib/qt/bin /usr/lib/qt4/bin /usr/lib/qt-4/bin /usr/lib/qt-340/bin /usr/lib/qt-4.1/bin /usr/lib/qt-4.2/bin /usr/lib/qt-4.3/bin /usr/lib/qt-4.4/bin /sw/bin"
-
-HAVE_QT=no
-min_qt_version=4.0.0
-
-
-# Check whether --with-qt-libdir or --without-qt-libdir was given.
-if test "${with_qt_libdir+set}" = set; then
-  withval="$with_qt_libdir"
-  qt_libdir="$withval"
-else
-  qt_libdir=""
-
-fi;
-
-
-# Check whether --with-qt-incdir or --without-qt-incdir was given.
-if test "${with_qt_incdir+set}" = set; then
-  withval="$with_qt_incdir"
-  qt_incdir="$withval"
-else
-  qt_incdir=""
-
-fi;
-
-
-# Check whether --with-qt-bindir or --without-qt-bindir was given.
-if test "${with_qt_bindir+set}" = set; then
-  withval="$with_qt_bindir"
-  qt_bindir="$withval"
-else
-  qt_bindir=""
-
-fi;
-
-echo "$as_me:$LINENO: checking include path" >&5
-echo $ECHO_N "checking include path... $ECHO_C" >&6
-
-
-if test "x$qt_incdir" != "x"
-then
-  echo "$as_me:$LINENO: result: specified as $qt_incdir" >&5
-echo "${ECHO_T}specified as $qt_incdir" >&6
-else
-
-  for dir in $GUESS_QT_INC_DIRS
-  do
-    if test -e $dir/qobject.h || test -e $dir/Qt/qobject.h
-    then
-      qt_incdir="$dir -I$dir/QtCore"
-      echo "$as_me:$LINENO: result: assuming $dir" >&5
-echo "${ECHO_T}assuming $dir" >&6
-      break
-    fi
-
-    if test -e $dir/../lib/QtCore.framework/Headers/qobject.h
-    then
-      qt_incdir="$dir/../lib/QtCore.framework/Headers -F$dir/../lib"
-      echo "$as_me:$LINENO: result: using frameworks, assuming $dir" >&5
-echo "${ECHO_T}using frameworks, assuming $dir" >&6
-      break
-    fi
-
-  done
-
-  if test "x$qt_incdir" = "x"
-  then
-    echo "$as_me:$LINENO: result: not found" >&5
-echo "${ECHO_T}not found" >&6
-  fi
-
-fi
-
-
-echo "$as_me:$LINENO: checking library path" >&5
-echo $ECHO_N "checking library path... $ECHO_C" >&6
-
-if test "x$qt_libdir" != "x"
-then
-  echo "$as_me:$LINENO: result: specified as $qt_libdir" >&5
-echo "${ECHO_T}specified as $qt_libdir" >&6
-  qt_ld_flag="-lQtCore -lQtGui -lQtSql"
-else
-  for dir in $GUESS_QT_LIB_DIRS
-  do
-    if test -e $dir/libQtCore."so"
-    then
-      qt_libdir=$dir
-      qt_ld_flag="-lQtCore -lQtGui -lQtSql"
-      echo "$as_me:$LINENO: result: assuming $dir" >&5
-echo "${ECHO_T}assuming $dir" >&6
-      break
-    fi
-
-    if test -e $dir/libQtCore4."so"
-    then
-      qt_libdir=$dir
-      qt_ld_flag="-lQtCore4 -lQtGui4 -lQtSql4"
-      echo "$as_me:$LINENO: result: assuming $dir" >&5
-echo "${ECHO_T}assuming $dir" >&6
-      break
-    fi
-
-
-    if test -e $dir/QtCore.framework
-    then
-      qt_libdir=$dir
-      qt_ld_flag="-F$dir -framework QtCore -framework QtGui -framework QtSql"
-      echo "$as_me:$LINENO: result: using frameworks, assuming $dir" >&5
-echo "${ECHO_T}using frameworks, assuming $dir" >&6
-      break
-    fi
-  done
-
-  if test "x$qt_ld_flag" = "x"
-  then
-    echo "$as_me:$LINENO: result: not found" >&5
-echo "${ECHO_T}not found" >&6
-  fi
-
-fi
-
-
-
-echo "$as_me:$LINENO: checking binary directory" >&5
-echo $ECHO_N "checking binary directory... $ECHO_C" >&6
-
-if test "x$qt_bindir" != "x"
-then
-  echo "$as_me:$LINENO: result: specified as $qt_bindir" >&5
-echo "${ECHO_T}specified as $qt_bindir" >&6
-else
-
-  for dir in $GUESS_QT_BIN_DIRS
-  do
-    if test -x $dir/moc -a -x $dir/uic
-    then
-      qt_bindir=$dir
-      echo "$as_me:$LINENO: result: assuming $dir" >&5
-echo "${ECHO_T}assuming $dir" >&6
-      break
-    fi
-  done
-
-  if test "x$qt_bindir" = "x"
-  then
-    echo "$as_me:$LINENO: result: not found" >&5
-echo "${ECHO_T}not found" >&6
-  fi
-fi
-
-
-if test "x$qt_incdir" = "x"
-then
-  echo "$as_me:$LINENO: result: Can't find includes" >&5
-echo "${ECHO_T}Can't find includes" >&6
-elif test "x$qt_ld_flag" = "x"
-then
-  echo "$as_me:$LINENO: result: Can't find library" >&5
-echo "${ECHO_T}Can't find library" >&6
-elif test "x$qt_bindir" = "x"
-then
-  echo "$as_me:$LINENO: result: Can't find moc and/or uic" >&5
-echo "${ECHO_T}Can't find moc and/or uic" >&6
-else
-  HAVE_QT=yes
-fi
-
-LDFLAGS="$LDFLAGS -L$qt_libdir"
-LIBS="$LIBS $qt_ld_flag"
-
-CXXFLAGS="$CXXFLAGS -I$qt_incdir"
-
-LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$qt_libdir"
-
-if test "x$HAVE_QT" = "xyes"
-then
-  echo "$as_me:$LINENO: checking for qt - version >= $min_qt_version required for ISIS3" >&5
-echo $ECHO_N "checking for qt - version >= $min_qt_version required for ISIS3... $ECHO_C" >&6
-	        rm -f conf.qttest
-	if test "$cross_compiling" = yes; then
-  { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
-See \`config.log' for more details." >&5
-echo "$as_me: error: cannot run test program while cross compiling
-See \`config.log' for more details." >&2;}
-   { (exit 1); exit 1; }; }
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include <QtCore/qglobal.h>
-
-int
-main ()
-{
-  int major, minor, micro;
-  char ver[50];
-
-  system ("touch conf.qttest");
-
-  /* HP/UX 9 (%@#!) writes to sscanf strings */
-  strncpy(ver, "$min_qt_version", sizeof(ver) - 1);
-  if (sscanf(ver, "%d.%d.%d", &major, &minor, &micro) != 3)
-  {
-    printf ("%s, bad version string\n", "$min_qt_version");
-    exit (1);
-  }
-
-  if ( QT_VERSION >= major*100 + minor*10 + micro )
-  {
-    printf("%s - ", QT_VERSION_STR);
-    return 0;
-  }
-  else
-  {
-    printf("\n*** Version of QT found is too old: QT_VERSION is %i.\n",
-            QT_VERSION);
-    printf("*** Upgrade QT and remove the file config.cache (if it exists)\n");
-    printf("*** before re-running configure\n");
-    return 1;
-  }
-}
-
-_ACEOF
-rm -f conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-
-	echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-	HAVE_QT=yes
-
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-( exit $ac_status )
-
-	echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-        HAVE_QT=no
-
-fi
-rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-fi
-
-found_qt="no"
-
-if test "x$HAVE_QT" = "xyes"
-then
-  if test -f conf.qttest ; then
-      found_qt="yes"
-  else
-      echo "$as_me:$LINENO: checking Could not run QT test program, checking if a Qt program links..." >&5
-echo $ECHO_N "checking Could not run QT test program, checking if a Qt program links...... $ECHO_C" >&6
-
-      cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-       #include <qstring.h>
-
-int
-main ()
-{
-
-       QString s("Hello, world!");
-       qDebug(s.latin1());
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_cxx_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  found_qt="yes"
-      echo "$as_me:$LINENO: result: ok" >&5
-echo "${ECHO_T}ok" >&6
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-echo "$as_me:$LINENO: result: failed - check config.log for details" >&5
-echo "${ECHO_T}failed - check config.log for details" >&6
-
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-  fi
-
-  if test "x$found_qt" = "xyes"
-  then
-    QT_CXXFLAGS="-I$qt_incdir"
-
-    QT_LIBS="-L$qt_libdir $qt_ld_flag"
-    MOC="$qt_bindir/moc"
-    UIC="$qt_bindir/uic"
-    HAVE_QT=yes
-  else
-    HAVE_QT=no
-  fi
-
-  if test "x$HAVE_QT" = "xyes"
-  then
-    have_qt=yes
-  else
-    have_qt=no
-  fi
-
-fi
-
-
-
-
-
-
-ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-
-LD_LIBRARY_PATH="$saved_LD_LIBRARY_PATH"
-LIBRARY_PATH="$saved_LIBRARY_PATH"
-CXXFLAGS="$saved_CXXFLAGS"
-LDFLAGS="$saved_LDFLAGS"
-LIBS="$saved_LIBS"
-rm -f conf.qttest
-
-        if test "$have_qt" = "yes"; then
-                echo "$as_me:$LINENO: checking for existence of ISIS3 files" >&5
-echo $ECHO_N "checking for existence of ISIS3 files... $ECHO_C" >&6
-                if test -e $ISIS3DIR/lib/libisis3.so; then
-                    if test -e $ISIS3DIR/inc/Cube.h; then
-                        echo "$as_me:$LINENO: result: OK" >&5
-echo "${ECHO_T}OK" >&6
-                        have_isis3=yes
-                    else
-                        echo "$as_me:$LINENO: result: ISIS3 includes are missing" >&5
-echo "${ECHO_T}ISIS3 includes are missing" >&6
-                    fi
-                else
-                    echo "$as_me:$LINENO: result: ISIS3 libraries are missing" >&5
-echo "${ECHO_T}ISIS3 libraries are missing" >&6
-                fi
-                if test "$have_isis3" = "no"; then
-                    { { echo "$as_me:$LINENO: error: Needed ISIS3 files are missing. Either configure without ISIS3 support, or point --with-isis3 to a correct ISIS3 installation.
-See \`config.log' for more details." >&5
-echo "$as_me: error: Needed ISIS3 files are missing. Either configure without ISIS3 support, or point --with-isis3 to a correct ISIS3 installation.
-See \`config.log' for more details." >&2;}
-   { (exit 1); exit 1; }; }
-                fi
-        else
-                { { echo "$as_me:$LINENO: error: --with-isis3 cannot work without a working Qt4 install.
-See \`config.log' for more details." >&5
-echo "$as_me: error: --with-isis3 cannot work without a working Qt4 install.
-See \`config.log' for more details." >&2;}
-   { (exit 1); exit 1; }; }
-        fi
-fi
-
 if test "$have_isis3" = "yes"; then
 
 cat >>confdefs.h <<\_ACEOF
@@ -13286,7 +12839,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 13289 "configure"' > conftest.$ac_ext
+  echo '#line 12842 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -13947,7 +13500,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:13950:" \
+echo "$as_me:13503:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -15010,11 +14563,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15013: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14566: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15017: \$? = $ac_status" >&5
+   echo "$as_me:14570: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -15278,11 +14831,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15281: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14834: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15285: \$? = $ac_status" >&5
+   echo "$as_me:14838: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -15382,11 +14935,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15385: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14938: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15389: \$? = $ac_status" >&5
+   echo "$as_me:14942: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -16851,7 +16404,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 16854 "configure"' > conftest.$ac_ext
+    echo '#line 16407 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -17748,7 +17301,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17751 "configure"
+#line 17304 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17848,7 +17401,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17851 "configure"
+#line 17404 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -20191,11 +19744,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:20194: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:19747: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:20198: \$? = $ac_status" >&5
+   echo "$as_me:19751: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -20295,11 +19848,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:20298: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:19851: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:20302: \$? = $ac_status" >&5
+   echo "$as_me:19855: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -20831,7 +20384,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 20834 "configure"' > conftest.$ac_ext
+    echo '#line 20387 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -21889,11 +21442,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:21892: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:21445: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:21896: \$? = $ac_status" >&5
+   echo "$as_me:21449: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -21993,11 +21546,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:21996: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:21549: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:22000: \$? = $ac_status" >&5
+   echo "$as_me:21553: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -23442,7 +22995,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 23445 "configure"' > conftest.$ac_ext
+    echo '#line 22998 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -24220,11 +23773,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:24223: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:23776: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:24227: \$? = $ac_status" >&5
+   echo "$as_me:23780: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -24488,11 +24041,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:24491: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:24044: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:24495: \$? = $ac_status" >&5
+   echo "$as_me:24048: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -24592,11 +24145,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:24595: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:24148: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:24599: \$? = $ac_status" >&5
+   echo "$as_me:24152: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -26061,7 +25614,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 26064 "configure"' > conftest.$ac_ext
+    echo '#line 25617 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -28529,10 +28082,6 @@ s,@HAVE_LIBREGEX_FALSE@,$HAVE_LIBREGEX_FALSE,;t t
 s,@HAVE_LIBMAGICK_TRUE@,$HAVE_LIBMAGICK_TRUE,;t t
 s,@HAVE_LIBMAGICK_FALSE@,$HAVE_LIBMAGICK_FALSE,;t t
 s,@CXXCPP@,$CXXCPP,;t t
-s,@QT_CXXFLAGS@,$QT_CXXFLAGS,;t t
-s,@QT_LIBS@,$QT_LIBS,;t t
-s,@MOC@,$MOC,;t t
-s,@UIC@,$UIC,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@subdirs@,$subdirs,;t t
 s,@LOCAL_READLINE_TRUE@,$LOCAL_READLINE_TRUE,;t t

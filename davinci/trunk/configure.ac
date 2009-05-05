@@ -230,36 +230,36 @@ dnl ISIS3 and Qt 4.x support.  ISIS3 requires Qt4, so we will include it and che
 dnl for both if ISIS3 support is desired.
 
 
-AC_ARG_WITH(isis3,
-    [  --with-isis3=<path>     prefix of isis3 installation. e.g. /mars/common/isis3/PLATFORM/isis, requires Qt 4 and iomedley ], [ ISIS3LDFLAGS="-Xlinker -rpath-link -Xlinker $withval/3rdParty/lib -L$withval/lib -lisis3 -L$withval/3rdParty/lib -lcspice -lgeos -lgslcblas -lgsl -lqwt -lxerces-c" ; ISIS3CFLAGS="-I$withval/inc" ; ISIS3CPPFLAGS="-I$withval/inc" ; ISIS3_SAVE_LDLP=$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$withval/lib:$withval/3rdParty/lib" ; try_isis3="yes" ; ISIS3DIR=$withval ]
-) 
-have_isis3=no
-if test "$try_isis3" = "yes"; then
-        if test "x$enable_iomedley" = "xno"; then
-            AC_MSG_FAILURE([ISIS3 support requires iomedley (enabled by default). Remove --disable-iomedley or --with-isis])
-        fi
+dnl AC_ARG_WITH(isis3,
+dnl     [  --with-isis3=<path>     prefix of isis3 installation. e.g. /mars/common/isis3/PLATFORM/isis, requires Qt 4 and iomedley ], [ ISIS3LDFLAGS="-Xlinker -rpath-link -Xlinker $withval/3rdParty/lib -L$withval/lib -lisis3 -L$withval/3rdParty/lib -lcspice -lgeos -lgslcblas -lgsl -lqwt -lxerces-c" ; ISIS3CFLAGS="-I$withval/inc" ; ISIS3CPPFLAGS="-I$withval/inc" ; ISIS3_SAVE_LDLP=$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$withval/lib:$withval/3rdParty/lib" ; try_isis3="yes" ; ISIS3DIR=$withval ]
+dnl ) 
+dnl have_isis3=no
+dnl if test "$try_isis3" = "yes"; then
+dnl        if test "x$enable_iomedley" = "xno"; then
+dnl            AC_MSG_FAILURE([ISIS3 support requires iomedley (enabled by default). Remove --disable-iomedley or --with-isis])
+dnl        fi
         dnl Horribly non-portable... need to have something that determines the
         dnl right dynamic lib extension (dll, so, etc.)
-        AM_PATH_QT([4.0.0], "so", have_qt=yes, have_qt=no, ISIS3)
-        if test "$have_qt" = "yes"; then
-                AC_MSG_CHECKING([for existence of ISIS3 files])
-                if test -e $ISIS3DIR/lib/libisis3.so; then
-                    if test -e $ISIS3DIR/inc/Cube.h; then
-                        AC_MSG_RESULT([OK])
-                        have_isis3=yes
-                    else
-                        AC_MSG_RESULT([ISIS3 includes are missing])
-                    fi
-                else
-                    AC_MSG_RESULT([ISIS3 libraries are missing])
-                fi
-                if test "$have_isis3" = "no"; then
-                    AC_MSG_FAILURE([Needed ISIS3 files are missing. Either configure without ISIS3 support, or point --with-isis3 to a correct ISIS3 installation.])
-                fi              
-        else
-                AC_MSG_FAILURE([--with-isis3 cannot work without a working Qt4 install.])
-        fi
-fi
+dnl         AM_PATH_QT([4.0.0], "so", have_qt=yes, have_qt=no, ISIS3)
+dnl         if test "$have_qt" = "yes"; then
+dnl                AC_MSG_CHECKING([for existence of ISIS3 files])
+dnl                if test -e $ISIS3DIR/lib/libisis3.so; then
+dnl                    if test -e $ISIS3DIR/inc/Cube.h; then
+dnl                        AC_MSG_RESULT([OK])
+dnl                        have_isis3=yes
+dnl                    else
+dnl                        AC_MSG_RESULT([ISIS3 includes are missing])
+dnl                    fi
+dnl                else
+dnl                    AC_MSG_RESULT([ISIS3 libraries are missing])
+dnl                fi
+dnl                if test "$have_isis3" = "no"; then
+dnl                    AC_MSG_FAILURE([Needed ISIS3 files are missing. Either configure without ISIS3 support, or point --with-isis3 to a correct ISIS3 installation.])
+dnl                fi              
+dnl        else
+dnl                AC_MSG_FAILURE([--with-isis3 cannot work without a working Qt4 install.])
+dnl        fi
+dnl fi
 
 if test "$have_isis3" = "yes"; then
     AC_DEFINE(HAVE_ISIS3, 1, [ISIS3 Read/Write support])
