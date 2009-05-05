@@ -261,12 +261,12 @@ dnl                AC_MSG_FAILURE([--with-isis3 cannot work without a working Qt
 dnl        fi
 dnl fi
 
-if test "$have_isis3" = "yes"; then
-    AC_DEFINE(HAVE_ISIS3, 1, [ISIS3 Read/Write support])
-    LDFLAGS="$LDFLAGS $ISIS3LDFLAGS $QT_LIBS"
-    CFLAGS="$CFLAGS $ISIS3CFLAGS "
-    CPPFLAGS="$CPPFLAGS $ISIS3CPPFLAGS $QT_CXXFLAGS"
-fi
+dnl if test "$have_isis3" = "yes"; then
+dnl    AC_DEFINE(HAVE_ISIS3, 1, [ISIS3 Read/Write support])
+dnl    LDFLAGS="$LDFLAGS $ISIS3LDFLAGS $QT_LIBS"
+dnl    CFLAGS="$CFLAGS $ISIS3CFLAGS "
+dnl    CPPFLAGS="$CPPFLAGS $ISIS3CPPFLAGS $QT_CXXFLAGS"
+dnl fi
 
 dnl Check for headers.
 AC_HEADER_DIRENT
