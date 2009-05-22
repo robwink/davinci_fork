@@ -1761,7 +1761,7 @@ Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
 
     FILE *fp;
 
-    Var *v = new_struct(0);
+    Var * v;
 
     if (filename == NULL) {
         parse_error("%s: No filename specified\n", func->name);
@@ -1785,13 +1785,25 @@ Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
 **/
     if ((fp = fopen(fname, "rb")) != NULL) {
         if (iom_is_compressed(fp)) {
-             fprintf(stderr, "is compressed\n");    /* FIX: remove */
+             /* fprintf(stderr, "is compressed\n");    FIX: remove */
              fclose(fp);
              fname = iom_uncompress_with_name(fname);
              fp = fopen(fname, "rb");
 		} 
 	}
 
+/* In load_pds case, we will allow IO modules to take a crack at it first,
+   chiefly because our ODL parser is a very spammy parser and doesn't detect
+   that it may be weird until it does a lot of screen output.  If we can
+   sidetrack it with a more elegant, purpose-built IO module, let's do so.
+
+   Of course, there's no guarantee that an I/O module won't be spammy either.
+*/
+
+    if ((v = load_pds_from_io_module(fp, fname)) != NULL) {
+        fclose(fp); 
+        return v;
+    }
     ob = (OBJDESC *) OdlParseLabelFile(fname, err_file,
                                        ODL_EXPAND_STRUCTURE, VERBOSE == 0);
 	fclose(fp);
@@ -1804,7 +1816,7 @@ Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
     } else {
 		record_bytes = atoi(key->value);
 	}
-
+    v = new_struct(0);
     Traverse_Tree(ob, v, record_bytes);
 
     if (data) {
