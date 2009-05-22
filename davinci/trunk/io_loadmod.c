@@ -239,6 +239,7 @@ static IOmodPtr new_io_module() {
   new_mod->implements = 0;
   new_mod->read_func = NULL;
   new_mod->write_func = NULL;
+  new_mod->load_pds_func = NULL;
   new_mod->next_list = NULL;
   new_mod->prev_list = NULL;
   if (IOmodHeap == NULL) {
@@ -357,6 +358,9 @@ static IOmodPtr open_io_module(char * modname, char * modpath) {
   }
   if ((new_module->write_func = portable_dlsym(cand, "dv_modwrite")) != NULL) {
     new_module->implements |= IO_MOD_WRITE;
+  }
+  if ((new_module->load_pds_func = portable_dlsym(cand, "dv_modload_pds")) != NULL) {
+    new_module->implements |= IO_MOD_LOAD_PDS;
   }
   if ((init_func = portable_dlsym(cand, IO_INIT_MOD)) != NULL) {
     /* call the initial function */
@@ -478,7 +482,7 @@ Var * ff_lsmod(struct _vfuncptr *f, Var *args) {
   IOmodPtr curmod;
   TypelistPtr curtype;
   Alist alist[2];
-  char read, write, * mname = NULL;
+  char read, write, loadpds, * mname = NULL;
   if (IOmodList == NULL) {
     parse_error("No IO modules currently resident.");
     return NULL;
@@ -493,13 +497,14 @@ Var * ff_lsmod(struct _vfuncptr *f, Var *args) {
     /* no args, list all modules */
     curmod = IOmodList;
     printf("Currently loaded IO modules:\n");
-    printf("Module name              Read  Write  Path\n");
-    printf("-----------              ----  -----  ----\n");
+    printf("Module name              Read Write LoadPDS Path\n");
+    printf("-----------              ---- ----- ------- ----\n");
     while (curmod != NULL) {
       if (curmod->implements & IO_MOD_READ) read = 'X'; else read = ' ';
       if (curmod->implements & IO_MOD_WRITE) write = 'X'; else write = ' ';
-      printf("%-24.24s  %c      %c    %s\n", curmod->modname, read,
-		  write, curmod->modpath);
+      if (curmod->implements & IO_MOD_LOAD_PDS) loadpds = 'X'; else loadpds = ' ';
+      printf("%-24.24s  %c     %c     %c    %s\n", curmod->modname, read,
+		  write, loadpds, curmod->modpath);
       curmod = curmod->next_list;
     }
   }
@@ -528,6 +533,26 @@ Var * ff_lsmod(struct _vfuncptr *f, Var *args) {
 /* The read and write methods to be called from the read and write commands
    in Davinci */
 
+Var * load_pds_from_io_module(FILE * fh, char * fname) {
+  /* this function puts a hook into the load_pds functions. */
+  IOmodPtr use_module;
+  Var * rtnval = NULL;
+  if (IOmodList == NULL) goto error_exit;
+  use_module = IOmodList;
+  while (use_module != NULL) {
+      if (use_module->implements & IO_MOD_LOAD_PDS)
+          rtnval = use_module->load_pds_func(fh, fname);
+      if (rtnval != NULL) break;
+      fseek(fh, 0, SEEK_SET);
+      use_module=use_module->next_list;
+  }
+  if (rtnval == NULL) {
+      goto error_exit;
+  }
+  error_exit:
+  return rtnval;
+}  
+
 Var * read_from_io_module(FILE * fh, char * fname) {
   /* this function implements the read function for a module.  It determines
      the proper IO module by calling the read method on each module with a 
@@ -535,7 +560,6 @@ Var * read_from_io_module(FILE * fh, char * fname) {
   */
   IOmodPtr use_module;
   Var * rtnval = NULL;
-  fprintf(stderr, "IO module read commencing..\n");
   if (IOmodList == NULL) goto error_exit; /* silently exit if there are no IO modules */
 
   /* Iterate through modules that implement a reader
