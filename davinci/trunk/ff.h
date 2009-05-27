@@ -308,6 +308,7 @@ struct _vfuncptr vfunclist[] = {
   { "unslant",       ff_unslant,            NULL, NULL },
   { "unslant_shear", ff_unslant_shear,      NULL, NULL },
   { "chdir",         ff_chdir,              NULL, NULL },
+  { "copy",         	ff_copy,            	NULL, NULL },
 
   { "fncc_fft2d",         ff_fncc_fft2d,    NULL,NULL },
   { "fncc_ifft2d",        ff_fncc_ifft2d,   NULL,NULL },

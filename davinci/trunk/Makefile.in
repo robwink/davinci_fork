@@ -109,7 +109,7 @@ am_libdavinci_la_OBJECTS = apifunc.lo array.lo avl.lo binDCT.lo \
 	tools.lo ufunc.lo util.lo x.lo xrt_print_3d.lo lexer.lo \
 	parser.lo ff_gconvolve.lo ff_warp.lo ff_median.lo ff_radial.lo \
 	ff_window.lo dvio_fits.lo ff_extract.lo dvio_tdb.lo \
-	url_create_file.lo
+	url_create_file.lo ff_filesystem.lo
 libdavinci_la_OBJECTS = $(am_libdavinci_la_OBJECTS)
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
@@ -232,7 +232,6 @@ MAINT = @MAINT@
 MAINTAINER_MODE_FALSE = @MAINTAINER_MODE_FALSE@
 MAINTAINER_MODE_TRUE = @MAINTAINER_MODE_TRUE@
 MAKEINFO = @MAKEINFO@
-MOC = @MOC@
 MODULE_SUPPORT_FALSE = @MODULE_SUPPORT_FALSE@
 MODULE_SUPPORT_TRUE = @MODULE_SUPPORT_TRUE@
 MY_SUBDIRS = @MY_SUBDIRS@
@@ -244,14 +243,11 @@ PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
-QT_CXXFLAGS = @QT_CXXFLAGS@
-QT_LIBS = @QT_LIBS@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
-UIC = @UIC@
 VERSION = @VERSION@
 X_CFLAGS = @X_CFLAGS@
 X_EXTRA_LIBS = @X_EXTRA_LIBS@
@@ -359,7 +355,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	lexer.c parser.c parser.h y_tab.h \
 	ff_gconvolve.c ff_warp.c ff_median.c ff_radial.c ff_window.c \
 	dvio_fits.c ff_extract.c dvio_tdb.c \
-	url_create_file.c
+	url_create_file.c ff_filesystem.c
 
 library_includedir = $(includedir)/@PACKAGE@
 library_include_HEADERS = $(wildcard *.h)
@@ -548,6 +544,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_extract.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_ffill.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_fft.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_filesystem.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_filetype.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_filter.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_fncc.Plo@am__quote@
