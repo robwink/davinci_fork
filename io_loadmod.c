@@ -519,6 +519,7 @@ Var * ff_lsmod(struct _vfuncptr *f, Var *args) {
     printf("Module path   : %s\n", curmod->modpath);
     printf("Supports read : %s\n", yesno(curmod->implements & IO_MOD_READ));
     printf("Supports write: %s\n", yesno(curmod->implements & IO_MOD_WRITE));
+    printf("Supports pds  : %s\n", yesno(curmod->implements & IO_MOD_LOAD_PDS));
     printf("File Types    : ");
     while (curtype != NULL) {
       if (!strcmp(curtype->handler->modname, curmod->modname))
