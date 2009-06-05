@@ -100,7 +100,7 @@ Var * ff_lsmod(struct _vfuncptr *, Var *);
 Var *V_DUP (Var *);
 Var *set_array (Var *, Var *, Var *);
 Var *extract_array (Var *, Range *);
-int find_struct(Var *a, char *name, Var **c);
+/* int find_struct(Var *a, char *name, Var **c); */
 
 /* symbol.c */
 Var *get_sym (char *name);	/* retrieve named Sym from table */
@@ -441,6 +441,7 @@ extern "C" {
 Var *new_struct(int ac);
 void add_struct(Var *s, const char *name, Var *exp);
 Var *remove_struct(Var *, int);
+int find_struct(Var *, char *, Var **);
 void free_struct(Var *);
 /* internal functions for text arrays */
 Var *newString(char *str);

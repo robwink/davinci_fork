@@ -534,7 +534,7 @@ Var * ff_lsmod(struct _vfuncptr *f, Var *args) {
 /* The read and write methods to be called from the read and write commands
    in Davinci */
 
-Var * load_pds_from_io_module(FILE * fh, char * fname) {
+Var * load_pds_from_io_module(FILE * fh, char * fname, int data, int suffix_data) {
   /* this function puts a hook into the load_pds functions. */
   IOmodPtr use_module;
   Var * rtnval = NULL;
@@ -542,9 +542,8 @@ Var * load_pds_from_io_module(FILE * fh, char * fname) {
   use_module = IOmodList;
   while (use_module != NULL) {
       if (use_module->implements & IO_MOD_LOAD_PDS)
-          rtnval = use_module->load_pds_func(fh, fname);
+          rtnval = use_module->load_pds_func(fh, fname, data, suffix_data);
       if (rtnval != NULL) break;
-      fseek(fh, 0, SEEK_SET);
       use_module=use_module->next_list;
   }
   if (rtnval == NULL) {

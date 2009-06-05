@@ -63,7 +63,7 @@ struct _IOmod {
   MODHANDLE dlhandle;
   unsigned char implements;
   Var * (*read_func)(FILE *, char *); /* read: takes file handle and filename as arg */
-  Var * (*load_pds_func)(FILE *, char *); /* load_pds: hook for load_pds function */
+  Var * (*load_pds_func)(FILE *, char *, int, int); /* load_pds: hook for load_pds function */
   int (*write_func)(Var *, char *, FILE *, char *); /* write: takes Davinci object,type filehandle and filename arg */
   IOmodPtr next_list;
   IOmodPtr prev_list;

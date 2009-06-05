@@ -1800,7 +1800,7 @@ Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
    Of course, there's no guarantee that an I/O module won't be spammy either.
 */
 
-    if ((v = load_pds_from_io_module(fp, fname)) != NULL) {
+    if ((v = load_pds_from_io_module(fp, fname, data, suffix_data)) != NULL) {
         fclose(fp); 
         return v;
     }
