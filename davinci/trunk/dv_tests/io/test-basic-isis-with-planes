@@ -1,0 +1,51 @@
+x=31
+y=21
+z=25
+testimg=create(x,y,z,org=bsq,format=byte)
+for(i=1;i<=z;i++) testimg[,,i]=i-1;
+
+s1=create(1,y,z,org=bsq,format=byte)
+for(i=1;i<=z;i++) s1[,,i]=z-(i-1);
+
+s2=create(1,y,z,org=bsq,format=float)
+s3=create(1,y,z,org=bsq,format=int)
+
+bot1=create(x,1,z,org=bsq,format=byte)
+for(i=1;i<=z;i++) bot1[,,i]=((i-1)*2)%256;
+
+bot2=create(x,1,z,org=bsq,format=float)
+bot3=create(x,1,z,org=bsq,format=int)
+bot4=create(x,1,z,org=bsq,format=short)
+
+bk1=create(x,y,1,org=bsq,format=byte,start=100,step=0);
+bk2=create(x,y,1,org=bsq,format=float);
+bk3=create(x,y,1,org=bsq,format=int);
+
+side_planes={ s1=s1, s2=s2, s3=s3 };
+bot_planes={ bot1=bot1, bot2=bot2, bot3=bot3, bot4=bot4 };
+back_planes={ bk1=bk1, bk2=bk2, bk3=bk3 };
+
+write_isis(core=testimg, side=side_planes, bottom=bot_planes, back=back_planes, filename=$TMPDIR+"/test.isis", force=1)
+
+isis=load_pds($TMPDIR+"/test.isis",suffix_data=1)
+fremove($TMPDIR+"/test.isis")
+
+pass = 1;
+pass = pass && equals(testimg,isis.qube.data);
+pass = pass && length(side_planes) == length(isis.qube.suffix_data.sample);
+pass = pass && length(bot_planes) == length(isis.qube.suffix_data.line);
+pass = pass && length(back_planes) == length(isis.qube.suffix_data.band);
+pass = pass && equals(s1,isis.qube.suffix_data.sample.s1);
+pass = pass && equals(s2,isis.qube.suffix_data.sample.s2);
+pass = pass && equals(s3,isis.qube.suffix_data.sample.s3);
+pass = pass && equals(bot1,isis.qube.suffix_data.line.bot1);
+pass = pass && equals(bot2,isis.qube.suffix_data.line.bot2);
+pass = pass && equals(bot3,isis.qube.suffix_data.line.bot3);
+pass = pass && equals(bot4,isis.qube.suffix_data.line.bot4);
+pass = pass && equals(bk1,isis.qube.suffix_data.band.bk1);
+pass = pass && equals(bk2,isis.qube.suffix_data.band.bk2);
+pass = pass && equals(bk3,isis.qube.suffix_data.band.bk3);
+
+if (pass) exit(0);
+exit(1);
+

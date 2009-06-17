@@ -11,7 +11,8 @@ init_sums(Var *data, int w, int h, int d, Var **rn, Var **rs, Var **rcount, Var 
 {
 	int x, y, z, u, v;
 	int i, j, k;
-	int p1, p2, p3, p4, p5, p6, p7, p8;
+	size_t p1, p2, p3, p4, p5, p6, p7, p8;
+    size_t nelements;
 	int east, south, north, west, front, back;
 
 	double *s, *s2;
@@ -27,13 +28,14 @@ init_sums(Var *data, int w, int h, int d, Var **rn, Var **rs, Var **rcount, Var 
 	x = GetX(data);
 	y = GetY(data);
 	z = GetZ(data);
+    nelements = V_DSIZE(data);
 
-	s = calloc(x*y*z,sizeof(double));		/* running sum */
-	s2 = calloc(x*y*z,sizeof(double));		/* running sum */
-	n = calloc(x*y*z,sizeof(int));			/* running count */
-	mean = calloc(x*y*z,sizeof(float));
-	sigma = calloc(x*y*z,sizeof(float));
-	c = calloc(x*y*z,sizeof(int));
+	s = calloc(nelements,sizeof(double));		/* running sum */
+	s2 = calloc(nelements,sizeof(double));		/* running sum */
+	n = calloc(nelements,sizeof(int));			/* running count */
+	mean = calloc(nelements,sizeof(float));
+	sigma = calloc(nelements,sizeof(float));
+	c = calloc(nelements,sizeof(int));
 
 	/*
 	** compute the running sum and count of V

@@ -177,7 +177,7 @@ read_bin5_header(const char *fname, B5H **b5h)
 	/* if we reached here we have a text string ending in lbl_end_marker */
 
 	/* get the data block size & type */
-	for(q=buff, i=0; p=strtok(q," "); q=NULL, i++){
+	for((q=buff), (i=0); (p=strtok(q," ")); (q=NULL), i++){
 		if (i == 0){
 			/* we got the number of dimensions = N */
 			N = atoi(p);
@@ -243,10 +243,10 @@ read_bin5_header(const char *fname, B5H **b5h)
 	return 1;
 }
 
-static int
+static size_t
 cpos_n(int n, int *dim, int *pos)
 {
-	int cpos = 0;
+	size_t cpos = 0;
 	int i;
 
 	/* dim:[X,Y,Z,W]; pos:[x,y,z,w]; cpos:x+X*(y+Y*(z+Z*(w))) */
@@ -268,12 +268,12 @@ ff_load_bin5(vfuncptr func, Var *arg)
 	Var   **structs = NULL;
 	int    *pos = NULL, *dim = NULL;
 	int     i;
-	int     blk3d_items;
+	size_t  blk3d_items;
 	char   *blk3d;
 	int     n, m, carry;
 	Var    *v = NULL;
 	char   *fname = NULL;
-	int     sidx, tidx;
+	size_t  sidx, tidx;
 	char   *data = NULL; /* mmap'ed data from the input file */
 	int     fd;
 	struct  stat sbuf;
@@ -404,4 +404,3 @@ ff_load_bin5(vfuncptr func, Var *arg)
 	free_B5H(&bh);
 	return(v);
 }
-

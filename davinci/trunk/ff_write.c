@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "dvio.h"
+#include "io_loadmod.h"
 
 #include <errno.h>
 
@@ -96,7 +97,7 @@ ff_write(vfuncptr func, Var *arg)
     else if (!strcasecmp(type, "ers"))    dv_WriteERS(ob, filename, force);
     else if (!strcasecmp(type, "imath"))  dv_WriteIMath(ob, filename, force);
     else if (!strcasecmp(type, "isis"))   dv_WriteISIS(ob, filename, force, title);
-    else if (!strcasecmp(type, "envi"))   dv_WriteENVI(ob, filename, force, title);
+    else if (!strcasecmp(type, "envi"))   dv_WriteENVI(ob, filename, force);
     else if (!strcasecmp(type, "specpr")){
         if (!force && access(filename, F_OK)){
             parse_error("File %s already exists.\n", filename);

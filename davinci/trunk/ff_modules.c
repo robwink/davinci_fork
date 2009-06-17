@@ -504,7 +504,7 @@ del_module(Var *v)
 		rm_symtab(v);
 	}
 
-	if (m->functions){ Narray_free(m->functions, free_module_function); }
+	if (m->functions){ Narray_free(m->functions, (Narray_FuncPtr)free_module_function); }
 	if (m->path){ free(m->path); }
 	if (m->handle){ close_dv_module_file(m->handle); }
 }
@@ -1397,7 +1397,7 @@ void
 module_help(char *module,  char *keyword)
 {
 	char *path = NULL;
-	char *dv_mod_path = NULL;
+	const char *dv_mod_path = NULL;
 
 	/*
 	This is the same logic from dv_mod_path, but I didn't want

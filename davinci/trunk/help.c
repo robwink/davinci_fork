@@ -55,6 +55,7 @@
 #endif
 
 #include "parser.h"
+#include "func.h"
 #include <errno.h>
 extern int errno;
 
@@ -130,7 +131,6 @@ extern int errno;
 
 #define PATHSIZE    BUFSIZ
 
-typedef int boolean;
 #ifndef TRUE
 #define TRUE (1)
 #define FALSE (0)

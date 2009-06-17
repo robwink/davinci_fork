@@ -63,4 +63,6 @@ typedef struct _module dvModule;
 #define DV_MOD_EXPORT
 #endif /* _WIN32 */
 
+void module_help(char *,  char *);
+
 #endif /* _FF_MODULES_H_ */

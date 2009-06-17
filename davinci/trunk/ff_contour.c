@@ -35,7 +35,8 @@ static float round_dp(float input, float decimal) {
 
 
 
-Var* ff_contour(vfuncptr func, Var *arg)
+Var* 
+ff_contour(vfuncptr func, Var *arg)
 {
   
   Var    *data = NULL;                      /* the orignial data */
@@ -77,7 +78,8 @@ Var* ff_contour(vfuncptr func, Var *arg)
   z = GetZ(data);
   
   /* allocate memory for the picture */
-  w_data = (float *)calloc(sizeof(float), x*y*z);
+  w_data = (float *)calloc(V_DSIZE(data), sizeof(float));
+  out=newVal(BSQ,x,y,z,FLOAT,w_data);
   
   /* loop through data and extract points and fill in contours*/
   for(i=0; i<x; i++) {
@@ -111,7 +113,7 @@ Var* ff_contour(vfuncptr func, Var *arg)
 	    if(i1!=i && j1!=j) {
 	      /*perform the check and fill in data when it is triggered */
 	      if(tv<(round_dp((extract_float(data, cpos(i1,j1,k,data))-zero)/bin,1))*bin) {
-		w_data[x*y*k + x*j + i]=tv;
+		w_data[cpos(i,j,k,out)]=tv;
 		fill=1;
 	      }
 	    }
@@ -124,7 +126,6 @@ Var* ff_contour(vfuncptr func, Var *arg)
     }
   }
   /* return the contoured data */
-  out=newVal(BSQ,x,y,z,FLOAT,w_data);
   return out;
 }
 

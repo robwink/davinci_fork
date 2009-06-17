@@ -100,7 +100,6 @@ Var * ff_lsmod(struct _vfuncptr *, Var *);
 Var *V_DUP (Var *);
 Var *set_array (Var *, Var *, Var *);
 Var *extract_array (Var *, Range *);
-/* int find_struct(Var *a, char *name, Var **c); */
 
 /* symbol.c */
 Var *get_sym (char *name);	/* retrieve named Sym from table */
@@ -111,22 +110,22 @@ Var * put_global_sym(Var *);
 
 
 /* rpos.c */
-int __BSQ2BSQ (Var * s1, Var * s2, int i);
-int __BSQ2BIL (Var * s1, Var * s2, int i);
-int __BSQ2BIP (Var * s1, Var * s2, int i);
-int __BIL2BSQ (Var * s1, Var * s2, int i);
-int __BIL2BIL (Var * s1, Var * s2, int i);
-int __BIL2BIP (Var * s1, Var * s2, int i);
-int __BIP2BSQ (Var * s1, Var * s2, int i);
-int __BIP2BIL (Var * s1, Var * s2, int i);
-int __BIP2BIP (Var * s1, Var * s2, int i);
-int cpos(int x, int y, int z, Var *v);
-void xpos(int i, Var *v, int *x, int *y, int *z);
+size_t __BSQ2BSQ (Var * s1, Var * s2, size_t i);
+size_t __BSQ2BIL (Var * s1, Var * s2, size_t i);
+size_t __BSQ2BIP (Var * s1, Var * s2, size_t i);
+size_t __BIL2BSQ (Var * s1, Var * s2, size_t i);
+size_t __BIL2BIL (Var * s1, Var * s2, size_t i);
+size_t __BIL2BIP (Var * s1, Var * s2, size_t i);
+size_t __BIP2BSQ (Var * s1, Var * s2, size_t i);
+size_t __BIP2BIL (Var * s1, Var * s2, size_t i);
+size_t __BIP2BIP (Var * s1, Var * s2, size_t i);
+size_t cpos(int x, int y, int z, Var *v);
+void xpos(size_t i, Var *v, int *x, int *y, int *z);
 
 /* pp_math.h */
-int extract_int (const Var * v, const int i);
-float extract_float (Var * v, int i);
-double extract_double (Var * v, int i);
+int extract_int (const Var * v, const size_t i);
+float extract_float (Var * v, size_t i);
+double extract_double (Var * v, size_t i);
 Var *pp_add_strings(Var *a, Var *b);
 Var *pp_math_strings(Var *a, int op, Var *b);
 
@@ -137,9 +136,9 @@ int is_file (char *name);
 
 /* error.c */
 #ifdef __cplusplus
-extern "C" void parse_error(char *, ...);
+extern "C" void parse_error(const char *, ...);
 #else
-void parse_error(char *, ...);
+void parse_error(const char *, ...);
 #endif
 
 /* reserved.c */
@@ -210,12 +209,11 @@ Var * p_llist(int , Var *, Var *);
 
 
 void push_input_stream(FILE *, char *filename);
-int rpos(int, Var *, Var *);
+size_t rpos(size_t, Var *, Var *);
 Var * pp_print(Var *);
 
-Var *V_func (char *name, Var *);
+Var *V_func (const char *name, Var *);
 void make_sym(Var *, int, char *);
-
 
 char *get_env_var(char *);
 char *expand_filename(char *);
@@ -385,7 +383,7 @@ Var *ff_covar(vfuncptr func, Var *arg);
 Var *ff_loadvan(vfuncptr func, Var *arg);
 Var *ff_loadspecpr(vfuncptr func, Var *arg);
 
-Alist make_alist(char *name, int type, void *limits, void *value);
+Alist make_alist(const char *name, int type, void *limits, void *value);
 
 Var * ReadPDS(vfuncptr func, Var * arg);
 Var * WritePDS(vfuncptr func, Var * arg);
@@ -421,6 +419,8 @@ void vax_ieee_r(float *from, float *to);
 
 #ifndef HAVE_STRNDUP
 char *strndup(char *, int);
+#else
+#include <string.h>
 #endif
 
 Var *varray_subset(Var *v, Range *r);
@@ -441,7 +441,7 @@ extern "C" {
 Var *new_struct(int ac);
 void add_struct(Var *s, const char *name, Var *exp);
 Var *remove_struct(Var *, int);
-int find_struct(Var *, char *, Var **);
+int find_struct(Var *, const char *, Var **);
 void free_struct(Var *);
 /* internal functions for text arrays */
 Var *newString(char *str);
@@ -485,6 +485,7 @@ Var * ff_identity(vfuncptr func, Var *arg);
 Var * per_pixel(vfuncptr func, Var *arg);
 
 Var * ff_exists(vfuncptr func, Var * arg);
+Var * ff_unlink(vfuncptr func, Var * arg);
 Var * ff_putenv(vfuncptr func, Var * arg);
 Var * ff_length(vfuncptr func, Var * arg);
 Var * ff_shade(vfuncptr func, Var * arg);
@@ -541,9 +542,20 @@ Var *ff_load_tdb(vfuncptr, Var *);
 Var *ff_cinterp(vfuncptr, Var *);
 Var *ff_blend(vfuncptr, Var *);
 
-char *dv_locate_file(char *);
+char *dv_locate_file(const char *);
 void dump_version();
 double my_round(double);
 
-Var * ff_binary_op(char *name, Var *a, Var *b,
+Var * ff_binary_op(const char *name, Var *a, Var *b,
                    double (*)(double, double), int);
+char * try_remote_load(const char * filename);
+int array_replace(Var *dst, Var *src, Range *r);
+
+char *make_temp_file_path_in_dir(char *dir);
+char * make_temp_file_path();
+
+Var *create_args(int, ...);
+Var *append_arg(Var *, char *, Var *);
+int compare_vars(Var *a, Var *b);
+
+extern void pp_print_var(Var *, char *, int, int);

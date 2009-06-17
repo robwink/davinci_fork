@@ -34,13 +34,13 @@
  **     Create an associative array with an estimated size.
  **     It is ok to pass 0 for size.
  **
- ** int Narray_add(Narray *a, char *key, void *data)
+ ** int Narray_add(Narray *a, const char *key, void *data)
  **
  **     Append data to the end of the array and add key to the lookup table.
  **     Returns the element's index in the array on success or -1 on error.
  **     Will fail if key already exists.
  **
- ** int Narray_find(Narray *a, char *key, void **data)
+ ** int Narray_find(Narray *a, const char *key, void **data)
  **
  **     Find the element with associated key.  Get its data and
  **     return its index on success.  Ok to pass a NULL for data.
@@ -60,7 +60,7 @@
  **
  **    Replace the data element at index i, returning the old one
  **
- ** void * Narray_delete(Narray *a, char *key)
+ ** void * Narray_delete(Narray *a, const char *key)
  **
  **    Deletes the key from the Narray and returns the data
  **    associated with it.
@@ -202,7 +202,7 @@ int Darray_count(const Darray *d)
     return(-1);
 }
 
-void Darray_release(Darray *d, void (*fptr)(void *)) 
+void Darray_release(Darray *d, Darray_FuncPtr fptr) 
 {
     int i;
 
@@ -214,7 +214,7 @@ void Darray_release(Darray *d, void (*fptr)(void *))
     d->count =0;
 }
 
-void Darray_free(Darray *d, void (*fptr)(void *)) 
+void Darray_free(Darray *d, Darray_FuncPtr fptr) 
 {
     Darray_release(d, fptr);
     free(d->data);
@@ -230,7 +230,7 @@ void Darray_free(Darray *d, void (*fptr)(void *))
 
 typedef struct _anode {
     int index;
-    char *key;
+    const char *key;
     void *value;
 } Nnode;
 
@@ -241,7 +241,7 @@ int Acmp(const void *a, const void *b, void *param)
 }
 
 Nnode *
-Nnode_create(char *key, void *value)
+Nnode_create(const char *key, void *value)
 {
 
   Nnode *a = (Nnode *)calloc(1, sizeof(Nnode));
@@ -253,7 +253,7 @@ Nnode_create(char *key, void *value)
 }
 
 void
-Nnode_free(Nnode *a, void (*fptr)(void *))
+Nnode_free(Nnode *a, Narray_FuncPtr fptr)
 {
     if (a->key) free(a->key);
     if (fptr && a->value) fptr(a->value);
@@ -282,7 +282,7 @@ Narray_create(int size)
 **        -1 on failure
 */
 int
-Narray_add(Narray *a, char *key, void *data)
+Narray_add(Narray *a, const char *key, void *data)
 {
     char *r;
     Nnode *n;
@@ -323,7 +323,7 @@ Narray_add(Narray *a, char *key, void *data)
 **        -1 on failure
 */
 int
-Narray_insert(Narray *a, char *key, void *data, int pos)
+Narray_insert(Narray *a, const char *key, void *data, int pos)
 {
     char *r;
     Nnode *n;
@@ -365,7 +365,7 @@ Narray_insert(Narray *a, char *key, void *data, int pos)
 ** associated with it.
 */
 void *
-Narray_delete(Narray *a, char *key)
+Narray_delete(Narray *a, const char *key)
 {
     int i;
     Nnode n;
@@ -448,7 +448,7 @@ Narray_remove(Narray *a, int index)
 ** otherwise, returns -1.
 */
 int
-Narray_find(Narray *a, char *key, void **data)
+Narray_find(Narray *a, const char *key, void **data)
 {
     Nnode n;
     Nnode *found;
@@ -508,7 +508,7 @@ Narray_count(const Narray *a)
 }
 
 void
-Narray_free(Narray *a, void (*fptr)(void *))
+Narray_free(Narray *a, Narray_FuncPtr fptr)
 {
     int i;
     int count = Darray_count(a->data);

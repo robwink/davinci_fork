@@ -289,6 +289,7 @@ struct _vfuncptr vfunclist[] = {
   { "shade",         ff_shade,              NULL,NULL },
   { "shade2",        ff_shade2,             NULL,NULL },
   { "fexists",       ff_exists,             NULL,NULL },
+  { "fremove",       ff_unlink,             NULL,NULL },
   { "contains",      ff_contains,           NULL,NULL },
 
 
@@ -338,7 +339,7 @@ struct _vfuncptr vfunclist[] = {
   { "load_bin5",         ff_load_bin5,      NULL, NULL },
   { "load_tdb",          ff_load_tdb,       NULL, NULL },
   { "cinterp",           ff_cinterp,        NULL, NULL },
-  { "blend",             ff_blend,          NULL, NULL },
+/*  { "blend",             ff_blend,          NULL, NULL }, */
 
   { NULL,                NULL,              NULL, NULL }
 };

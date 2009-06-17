@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 
 #if defined(HAVE_CONFIG_H)
 #include <config.h>

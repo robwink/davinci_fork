@@ -1,4 +1,6 @@
+#include <string.h>
 #include "parser.h"
+#include "func.h"
 
 /**
  ** Load function from file.
@@ -13,8 +15,13 @@ extern int pp_line;
 
 void list_funcs();
 
+void *get_current_buffer();
+void *yy_scan_string();
+void yy_delete_buffer(void *);
+void yy_switch_to_buffer(void *);
+
 UFUNC *
-locate_ufunc(char *name) 
+locate_ufunc(const char *name) 
 {
     int i;
     for (i = 0 ; i < nufunc ; i++) {
@@ -24,7 +31,7 @@ locate_ufunc(char *name)
 }
 
 int
-destroy_ufunc(char *name)
+destroy_ufunc(const char *name)
 {
     int i;
     for (i = 0 ; i < nufunc ; i++) {

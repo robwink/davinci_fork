@@ -5,7 +5,7 @@ extern int VERBOSE;
 char error_buf[256];
 
 void
-parse_error(char *fmt, ...)
+parse_error(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -23,7 +23,7 @@ parse_error(char *fmt, ...)
 
 //Do a parse error but no new line at the end
 void
-parse_error2(char *fmt, ...)
+parse_error2(const char *fmt, ...)
 {
 	va_list ap;
 

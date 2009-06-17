@@ -2,6 +2,7 @@
 #include "parser.h"
 #include "io_lablib3.h"
 #include "endian_norm.h"
+#include "io_loadmod.h"
 #include <ctype.h>
 #include "dvio.h"
 #include <sys/types.h>
@@ -56,14 +57,14 @@ void ProcessGroupIntoLabel(FILE * fp, int record_bytes, Var * v,
 void ProcessObjectIntoLabel(FILE * fp, int record_bytes, Var * v,
                             char *name, objectInfo * oi);
 Var *ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth,
-                      int *label_ptr, objectInfo * oi);
+                      size_t *label_ptr, objectInfo * oi);
 
 
 static char keyword_prefix[] = "PTR_TO_";
 static int keyword_prefix_length = 8;
 
 typedef struct _dataKeys {
-    char *Name;                 /*Name Entry in Table; Used for searching */
+    const char *Name;           /*Name Entry in Table; Used for searching */
     Var *Obj;                   /*Pointer to Parent Var obj to which the data will be assigned */
     char *KeyValue;             /*PTR_TO_<OBJECT> keyword entry's value */
     char *FileName;             /*Name of the file the PDS object is from, 
@@ -91,9 +92,9 @@ rf_HISTORY };
 
 
 /*Step 3: Add the dataKey word to this here (before the NULL!)*/
-static char *keyName[] =
-    { "SPECTRAL_QUBE", "QUBE", "TABLE", "IMAGE", "HISTOGRAM_IMAGE",
-"HISTORY", NULL };
+static const char *keyName[] =
+    { "SPECTRAL_QUBE", "QUBE", "TABLE", "IMAGE",
+      "HISTOGRAM_IMAGE", "HISTORY", NULL };
 static int num_data_Keys;
 
 
@@ -1278,7 +1279,7 @@ void output_big_var(FILE * out, Var * data, char *inset, char *name)
 }
 
 Var *ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth,
-                      int *label_ptrs, objectInfo * oi)
+                      size_t *label_ptrs, objectInfo * oi)
 {
     int i;
     /* int label_ptrs[3]; 0=FILE_RECORDS; 1=LABEL_RECORDS */
@@ -1471,14 +1472,14 @@ Var *ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth,
 
 
 void
-Fix_Label(FILE * fp, int record_bytes, int *label_ptr, objectInfo * oi)
+Fix_Label(FILE * fp, int record_bytes, size_t *label_ptr, objectInfo * oi)
 {
     int rem;
     char *pad;
-    int size;
-    int size_in_records;
+    size_t size;
+    size_t size_in_records;
     int i;
-    int total;
+    size_t total;
 
     rewind(fp);
 /*
@@ -1493,7 +1494,7 @@ Fix_Label(FILE * fp, int record_bytes, int *label_ptr, objectInfo * oi)
     rem = (size % record_bytes);
     if (rem) {                  /*there is always the possibility that we're on the money! */
         size_in_records++;
-        rem = (size_in_records * record_bytes) - size;
+        rem = ((size_in_records) * record_bytes) - size;
         pad = (char *) malloc(rem);
         memset(pad, 0x20 /*space */ , rem - 1);
         memset(pad + rem - 1, 0x0a /* \n */ , 1);
@@ -1509,7 +1510,7 @@ Fix_Label(FILE * fp, int record_bytes, int *label_ptr, objectInfo * oi)
 
     rewind(fp);
     fseek(fp, label_ptr[1] + 1, SEEK_SET);
-    fprintf(fp, "%d", size_in_records);
+    fprintf(fp, "%ld", size_in_records);
     rewind(fp);
 
     size_in_records++;
@@ -1517,14 +1518,14 @@ Fix_Label(FILE * fp, int record_bytes, int *label_ptr, objectInfo * oi)
     for (i = 0; i < oi->count; i++) {
         rewind(fp);
         fseek(fp, oi->obj_ptr[i] + 1, SEEK_SET);
-        fprintf(fp, "%d", size_in_records);
+        fprintf(fp, "%ld", size_in_records);
         size_in_records += oi->obj_size[i];
         total += oi->obj_size[i];
     }
 
     rewind(fp);
     fseek(fp, label_ptr[0] + 1, SEEK_SET);
-    fprintf(fp, "%d", total);
+    fprintf(fp, "%ld", total);
 
 }
 
@@ -1542,7 +1543,7 @@ Var *WritePDS(vfuncptr func, Var * arg)
     char *filename = NULL, *fname = NULL;
     int record_bytes;           /*            Gotta keep track of this baby! */
     Var *result;
-    int label_ptr[4];
+    size_t label_ptr[4];
     objectInfo oi;
 
     Alist alist[4];
@@ -1613,6 +1614,7 @@ Var *WritePDS(vfuncptr func, Var * arg)
         return (NULL);
     }
 
+	memset(label_ptr, 0, sizeof(label_ptr));
     ProcessIntoLabel(fp, record_bytes, v, -1, label_ptr, &oi);
     fprintf(fp, "END\r\n");
     label_ptr[2] = ftell(fp);
@@ -1835,12 +1837,12 @@ int rf_QUBE(char *fn, Var * ob, char *val, int dptr)
     
     fp = fopen(fn, "rb");
     
-    data = (Var *) dv_LoadISISFromPDS(fp, fn, dptr);
+    data = dv_LoadISISFromPDS(fp, fn, dptr);
     if (data == NULL) { fclose(fp); return 1; }
     add_struct(ob, fix_name("DATA"), data);
 
     if (LOAD_SUFFIX_DATA){
-        suffix_data = (Var *) dv_LoadISISSuffixesFromPDS(fp, fn);
+        suffix_data = dv_LoadISISSuffixesFromPDS(fp, fn);
         if (suffix_data == NULL){ fclose(fp); return 1; }
         
         /* create a suffix part only when there are suffixes, i.e.
@@ -2203,7 +2205,7 @@ int rf_IMAGE(char *fn, Var * ob, char *val, int dptr)
     FILE *fp;
     Var *data = NULL;
     fp = fopen(fn, "rb");
-    data = (Var *) dv_LoadISIS(fp, fn, NULL);
+    data = dv_LoadISIS(fp, fn, NULL);
     if (data != NULL) {
         add_struct(ob, fix_name("DATA"), data);
         fclose(fp);

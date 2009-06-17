@@ -49,11 +49,11 @@ ff_random(vfuncptr func, Var * arg)
 {
     int x = 1, y = 1, z = 1, seed = MAXINT;
     float *fdata;
-    int dsize;
-    int i;
+    size_t dsize;
+    size_t i;
     char *ptr = NULL;
 
-    char *options[] = { "normal", "gaussian", "rand", "random", 
+    const char *options[] = { "normal", "gaussian", "rand", "random", 
                         "mrand48", "drand48", "uniform", "rnoise", NULL};
     Var *seedvar = NULL;
     Alist alist[6];
@@ -85,8 +85,8 @@ ff_random(vfuncptr func, Var * arg)
 
     if (seedvar != NULL) seed = extract_int(seedvar, 0);
 
-    dsize = x * y * z;
-    fdata = (float *) calloc(sizeof(float), dsize);
+    dsize = (size_t)x * (size_t)y * (size_t)z;
+    fdata = (float *) calloc(dsize, sizeof(float));
 
     if (ptr == NULL ||
         !strcasecmp(ptr, "uniform") ||

@@ -33,7 +33,7 @@ size_t	url_callback(char *, size_t , size_t, void *);
  */
 
 
-char * try_remote_load(char * filename){
+char * try_remote_load(const char * filename){
 	char * tmpfilename = NULL;
        char * rtnfilename = NULL; 
 #ifdef HAVE_LIBCURL	

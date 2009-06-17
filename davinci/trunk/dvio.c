@@ -236,23 +236,22 @@ var2iom_iheader(
 */
 
 char *
-dv_locate_file(char *fname)
+dv_locate_file(const char *fname)
 {
 
-	char buf[4096];
-	strcpy(buf, fname);
+	char *buf = NULL;
 
 	//Check if it is a remote file. Download it and make it local
 	//Return a memory(strdup) with the new filename if necessary, otherwise return the same name.
-	fname = try_remote_load(buf);
+	buf = try_remote_load(fname);
 
 	//If download didn't happen (meaning the fname equals fname2)
-	if(fname != NULL && strcmp(fname, buf) == 0){
-		free(fname); //free the try_remote_load malloc
+	if(buf != NULL && strcmp(fname, buf) == 0){
+		free(buf); //free the try_remote_load malloc
 		//return a strdup
-		fname = iom_expand_filename(buf);
+		buf = iom_expand_filename(fname);
 	}
-	return fname;
+	return buf;
 }
 
 

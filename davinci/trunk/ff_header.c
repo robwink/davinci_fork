@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "dvio_specpr.h"
+#include "iomedley.h"
 
 /**
  ** header() - extract information from a files header.

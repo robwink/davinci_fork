@@ -1,0 +1,10 @@
+a = 1//2//3
+b = translate(a,x,y)
+c = translate(a,x,z)
+rc = (dim(a)[1] == 3 && (dim(a)[2] == dim(a)[3] == 1) && \
+         dim(b)[2] == 3 && (dim(b)[1] == dim(b)[3] == 1) && \
+         dim(c)[3] == 3 && (dim(c)[1] == dim(c)[2] == 1))
+
+if (rc == 1) exit(0);
+exit(1);
+
