@@ -35,7 +35,7 @@ static Var *
 foo(vfuncptr f, Var *args)
 {
     fprintf(stderr, "mod2.c::%s::foo() called with %p\n", f->name, args);
-    return NULL;
+    return newInt(1);
 }
 
 static Var *

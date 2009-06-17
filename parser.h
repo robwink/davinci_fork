@@ -73,6 +73,7 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <signal.h>
+#include <malloc.h>
 
 
 #include "system.h"
@@ -102,7 +103,7 @@ struct _range {
 
 struct _symbol {
     int format;			/* format of data */
-    int dsize;			/* total size of data */
+    size_t dsize;			/* total size of data */
     int size[3];        /* size of each axis */
     int order;			/* axis application order */
     void *data;
@@ -167,6 +168,7 @@ struct _var {
 
 #define V_DATA(v)	V_SYM(v)->data		/* pointer to data */
 #define V_INT(v)	(*((int *)V_DATA(v)))	/* derefernce as a single int */
+/* #define V_INT64(v)	(*((int64 *)V_DATA(v)))	/ * derefernce as a single int64 */
 #define V_FLOAT(v)	(*((float *)V_DATA(v)))	/* derefernce as a single float */
 #define V_DOUBLE(v)	(*((double *)V_DATA(v)))	/* derefernce as a single dbl */
 #define V_FORMAT(v)	V_SYM(v)->format
@@ -288,9 +290,10 @@ enum {
 #define FLOAT		4
 #define VAX_FLOAT	5
 #define VAX_INTEGER 6
+#define INT64       7
 #define DOUBLE		8
 
-#define NBYTES(a)	((a) == INT ? 4 : ((a) == VAX_FLOAT ? 4 : ((a) == VAX_INTEGER ? 2 : (a))))
+#define NBYTES(a)	((a) == INT ? 4 : ((a) == INT64 ? 8 : ((a) == VAX_FLOAT ? 4 : ((a) == VAX_INTEGER ? 2 : (a)))))
 
 /**
  ** Data axis order
@@ -305,7 +308,7 @@ enum {
 #define BIP			2
 
 #define Format2Str(i)	FORMAT2STR[(i)]
-#define Org2Str(i)		ORG2STR[(i)]
+#define Org2Str(i)		(((i) >= BSQ && (i)<= BIP)? ORG2STR[(i)]: "undef")
 
 #define GetSamples(s,org)	(s)[((org) == BIP ? 1 : 0)]
 #define GetLines(s,org)		(s)[((org) == BSQ ? 1 : 2)]
@@ -334,7 +337,7 @@ typedef double (*dfunc)(double);
 typedef double (*ddfunc)(double, double);
 
 struct _vfuncptr {
-    char *name;
+    const char *name;
     vfunc fptr;
     void *fdata;
     void *fdata2;
@@ -365,7 +368,7 @@ struct _iheader {
  ** This structure used by parse_args.
  **/
 typedef struct {
-    char *name;
+    const char *name;
     int type;
     void *limits;
     void *value;
@@ -400,9 +403,5 @@ extern int debug;
 #include "ufunc.h"
 #include "scope.h"
 #include "func.h"
-
-#if 0
-#include "dmalloc.h"
-#endif
 
 #endif /* PARSER_H */

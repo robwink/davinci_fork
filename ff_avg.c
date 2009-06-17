@@ -21,16 +21,17 @@ ff_avg2(vfuncptr func, Var * arg)
 {
 	Var *obj=NULL, *v;
 	char *ptr = NULL;
-	int axis = 0, dsize, i, j;
+	int axis = 0;
+	size_t i, j, dsize;
 	double n;
 	int in[3], out[3];
 	double *sum, *sum2;
-	int *count;
-	char *options[] =  {
+	size_t *count;
+	const char *options[] =  {
 		"x", "y", "z", "xy", "yx", "xz", "zx", "yz", "zy",
 		"xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL
 	};
-	int dsize2;
+	size_t dsize2;
 	double x;
 	Var *both = NULL;
 	Var *avg = NULL, *stddev = NULL;
@@ -89,7 +90,7 @@ ff_avg2(vfuncptr func, Var * arg)
 	}
 
 	sum= (double *)calloc(V_DSIZE(v), sizeof(double));
-	count= (int *)calloc(V_DSIZE(v), sizeof(int));
+	count= (size_t *)calloc(V_DSIZE(v), sizeof(size_t));
 	if (f_stddev) sum2= (double *)calloc(V_DSIZE(v), sizeof(double));
 
 	if (ignore) ignore_val = extract_double(ignore, 0);
@@ -173,16 +174,17 @@ ff_avg3(vfuncptr func, Var * arg)
 {
 	Var *obj=NULL, *v;
 	char *ptr = NULL;
-	int axis = 0, dsize, i, j;
+	int axis = 0;
+	size_t dsize, i, j;
 	double n;
 	int in[3], out[3];
 	double *sum, *sum2;
-	int *count;
-	char *options[] =  {
+	size_t *count;
+	const char *options[] =  {
 		"x", "y", "z", "xy", "yx", "xz", "zx", "yz", "zy",
 		"xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL
 	};
-	int dsize2;
+	size_t dsize2;
 	double x;
 	Var *both = NULL;
 	Var *avg = NULL, *stddev = NULL;
@@ -241,7 +243,7 @@ ff_avg3(vfuncptr func, Var * arg)
 	}
 
 	sum= (double *)calloc(V_DSIZE(v), sizeof(double));
-	count= (int *)calloc(V_DSIZE(v), sizeof(int));
+	count= (size_t *)calloc(V_DSIZE(v), sizeof(size_t));
 	if (f_stddev) sum2= (double *)calloc(V_DSIZE(v), sizeof(double));
 
 	if (ignore) ignore_val = extract_double(ignore, 0);
@@ -325,14 +327,15 @@ ff_avg(vfuncptr func, Var * arg)
 {
 	Var *obj=NULL, *v;
 	char *ptr = NULL;
-	int axis = 0, dsize, i, j;
+	int axis = 0;
+	size_t dsize, i, j;
 	int in[3], out[3];
 	float *fdata, *vx;
-	char *options[] =  {
+	const char *options[] =  {
 		"x", "y", "z", "xy", "yx", "xz", "zx", "yz", "zy",
 		"xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL
 	};
-	int dsize2;
+	size_t dsize2;
 	float f;
 	Var *both = NULL;
 
@@ -436,7 +439,7 @@ ff_min(vfuncptr func, Var * arg)
 	Var *obj=NULL;
 	char *ptr=NULL;
 	int axis = 0;
-	char *options[] =  {
+	const char *options[] =  {
 		"x", "y", "z", "xy", "yx", "xz", "zx", "yz", "zy",
 		"xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL
 	};
@@ -480,7 +483,7 @@ fb_min(Var *obj, int axis, int direction, float ignore)
 {
 	Var *v;
 	char *ptr = NULL;
-	int dsize, dsize2, i, j;
+	size_t dsize, dsize2, i, j;
 	float *fdata, x;
 	void *data;
 	int in[3], out[3];
@@ -528,10 +531,10 @@ Var *
 ff_findmin(vfuncptr func, Var * arg)
 {
 	Var *obj=NULL, *v;
-	int dsize, i;
+	size_t dsize, i;
 	float x, val;
 	int do_min = 0, do_max = 0;
-	int pos;
+	size_t pos;
 	float ignore = MINFLOAT;
 
 	int ac;
@@ -560,6 +563,10 @@ ff_findmin(vfuncptr func, Var * arg)
 		if (x == ignore) continue;
 		if (do_min && (x < val || val == ignore)) { val = x ; pos = i; }
 		if (do_max && (x > val || val == ignore)) { val = x ; pos = i; }
+	}
+
+	if (((int)(pos+1)) != (pos+1)){
+		parse_error("%s: Overflow pos=%ld cannot be represented as an int.\n", func->name, (pos+1));
 	}
 
 	return(newInt(pos+1));
@@ -602,7 +609,7 @@ Var *do_convolve(Var *obj, Var *kernel, int norm, float ignore)
 	float *data, v1, v2;
 	int *wt;
 
-	int dsize, i, j, k;
+	size_t dsize, i, j, k;
 	int a, b, c;
 	int x_pos, y_pos, z_pos;
 	int obj_x, obj_y, obj_z;
@@ -680,7 +687,7 @@ ff_convolve3(vfuncptr func, Var * arg)
 	int wt;
 	float temp;
 
-	int dsize, i, j, k;
+	size_t dsize, i, j, k;
 	int q, r, s;
 	int Init_Cache=1;
 
@@ -691,10 +698,8 @@ ff_convolve3(vfuncptr func, Var * arg)
 	int kOrd[3];/*Size of Mask in order of: 0-X 1-Y 2-Z */
 	int T,M[3];/*Temp Variables*/
 
-	int Mem_Index;
-	int Center_Index;
-
-	int I;
+	size_t Mem_Index;
+	size_t I;
 
 	int ac;
 	Var **av;
@@ -976,7 +981,7 @@ void View_Cache(float *cache,int *P,int Major,int Middle,int Minor)
 }	
 
 
-static void position_fill(int *pos, int elem, int iter, Var *obj);
+static void position_fill(int *pos, size_t elem, int iter, Var *obj);
 
 Var*
 ff_maxpos(vfuncptr func, Var *arg)
@@ -992,11 +997,11 @@ ff_maxpos(vfuncptr func, Var *arg)
   float  *vals = NULL;
   float   minval = -3.402822655e+38;        /* the most negative float value   */
   float   ignore = minval;                  /* null value                      */
-  int     i, j, l, ck=0;                    /* loop indices and flags          */
+  size_t  i, j, l, ck=0;                    /* loop indices and flags          */
   float   ni1=0, ni2=0, ni3=0;              /* temp values and positions       */
   int     iter = 1;                         /* number of iterations to include */
-  int     elems = 0;
-  int     curr_elem = 0;
+  size_t  elems = 0;
+  size_t  curr_elem = 0;
   int    *elements = NULL;
   int     showval = 0;                      /* flag to return value with array */
   float   lt = minval;                      /* search for maximum values less than this value */
@@ -1124,11 +1129,11 @@ ff_minpos(vfuncptr func, Var *arg)
   float  *posv = NULL;                      /* the output position plus value  */
   float   maxval = 3.402822655e+38;         /* the most negative float value   */
   float   ignore = maxval;                  /* null value                      */
-  int     i, j, l, ck=0;                    /* loop indices and flags          */
+  size_t  i, j, l, ck=0;                    /* loop indices and flags          */
   float   ni1=0, ni2=0, ni3=0;              /* temp values and positions       */
   int     iter = 1;                         /* number of iterations to include */
-  int     elems = 0;
-  int     curr_elem = 0;
+  size_t  elems = 0;
+  size_t  curr_elem = 0;
   int    *elements = NULL;
   int     showval = 0;                      /* flag to return value with array */
   float   gt = maxval;                      /* search for minimum values more than this value */
@@ -1252,11 +1257,11 @@ ff_valpos(vfuncptr func, Var *arg)
   float  *vals = NULL;
   float   maxval = 3.402822655e+38;         /* the most positive float value   */
   float   ignore = maxval;                  /* null value                      */
-  int     i, j, l, ck=0;                    /* loop indices and flags          */
+  size_t  i, j, l, ck=0;                    /* loop indices and flags          */
   float   ni1=0, ni2=0, ni3=0, ni4=0;       /* temp values and positions       */
   int     iter = 1;                         /* number of iterations to include */
-  int     elems = 0;
-  int     curr_elem = 0;
+  size_t  elems = 0;
+  size_t  curr_elem = 0;
   int    *elements = NULL;
   int     showval = 0;                      /* flag to return value with array */
   float   myval = 0.0;                      /* the damned value you want       */
@@ -1371,7 +1376,7 @@ ff_valpos(vfuncptr func, Var *arg)
 
 
 
-void position_fill(int *pos, int elem, int iter, Var *obj) {
+void position_fill(int *pos, size_t elem, int iter, Var *obj) {
   int x,y,z;
   int org;
   int i,j,k;

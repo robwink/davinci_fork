@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "func.h"
 #include "help.h"
 /**
  ** This file contains routines to interact with the yacc grammar.
@@ -12,6 +13,8 @@
 #define MODULE_HELP (const char*)"help"
 
 char *unescape(char *), *unquote(char *);
+char * cleanup_input(char *s);
+Var *pp_new_parallel(Var *axis, Var *arg);
 
 /**
  ** p_mknod() - Make a node of the specified type
@@ -90,7 +93,7 @@ is_zero(Var * v)
             return (extract_float(v, 0) == 0.0);
         }
     } else {
-        int i;
+        size_t i;
         for (i = 0; i < V_DSIZE(v); i++) {
             switch (V_FORMAT(v)) {
             case BYTE:
@@ -107,7 +110,7 @@ is_zero(Var * v)
     }
     return (0);
 }
-
+
 /**
  ** evaluate() - Evaluate a parse tree
  **/
@@ -611,7 +614,7 @@ evaluate(Var * n)
 
                     if (strlen(input_line)) {
                         subtopics = 0;
-                        sprintf(keyword, "%s %s\0", keyword, input_line);
+                        sprintf(keyword, "%s %s", keyword, input_line);
                         retval = help(keyword, module_help, &subtopics);
                         // if (retval == H_FOUND) return(evaluate(n));
                     }

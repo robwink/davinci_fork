@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "iomedley.h"
+#include "io_loadmod.h"
 #include "dvio.h"
 #include "dvio_specpr.h"
 

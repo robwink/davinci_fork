@@ -1,4 +1,6 @@
 #include "parser.h"
+#include "dvio.h"
+
 #ifdef __CYGWIN__
 #include <process.h>
 #endif /* _CYGWIN__ */

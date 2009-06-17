@@ -1,11 +1,11 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(davinci, 1.72)
+AC_INIT(davinci, 2.00)
 
 
 
 
 ## libdavinci version
-LIB_CURRENT=0
+LIB_CURRENT=2
 LIB_REVISION=0
 LIB_AGE=0
 AC_SUBST(LIB_CURRENT)

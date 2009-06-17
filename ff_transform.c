@@ -19,27 +19,27 @@ ff_image_resize(vfuncptr func, Var * arg){
 	double x_factor = 0,y_factor=0, factor = 0;
 
 	//dimensions of the old image
-	int xx,yy,zz; 
+	size_t xx,yy,zz; 
 	//dimensions of the new image
-	int new_xx = 0, new_yy = 0, new_zz, new_size;
+	size_t new_xx = 0, new_yy = 0, new_zz, new_size;
 	
-	int pos;
+	size_t pos;
 	int lockratio = 0;
 	int suspected_touched_ratio_x = 0;
 	int suspected_touched_ratio_y = 0;
 
 	double x,y,x1,y1,z; //interpolation indeces for the old image
-	int i,j,k; 	//indeces of the new image
+	size_t i,j,k; 	//indeces of the new image
 
 	int i_new_c, i_new_c_temp;
 	double d_new_c, d_new_c_temp;
 	double ignore_color = MINDOUBLE;
 	int ignore_color_found = 0;
 					
-       char *usage = "usage: %s(data [, factor] [, xfactor] [, yfactor] [,width] [,height] [,lockratio={'0'|'1'}] [,interp={'bilinear'|'bicubic'|'none'}] [,ignore]";
+       const char *usage = "usage: %s(data [, factor] [, xfactor] [, yfactor] [,width] [,height] [,lockratio={'0'|'1'}] [,interp={'bilinear'|'bicubic'|'none'}] [,ignore]";
        char *type = NULL;
 	int itype = 0;
-       char *types[] = {"bilinear", "bicubic", "none", NULL};
+       const char *types[] = {"bilinear", "bicubic", "none", NULL};
 
 
 	Alist alist[10];
@@ -121,8 +121,8 @@ ff_image_resize(vfuncptr func, Var * arg){
 	}
 
 	/* x, y and z dimensions of the new data */
-	new_xx = (int) my_round( (xx*x_factor));
-	new_yy = (int) my_round(yy*y_factor);
+	new_xx = (size_t) my_round( (xx*x_factor));
+	new_yy = (size_t) my_round(yy*y_factor);
 	new_zz = zz;
 	new_size = new_xx * new_yy * new_zz;
 
@@ -141,8 +141,8 @@ ff_image_resize(vfuncptr func, Var * arg){
 			y_factor = x_factor;
 		}
 		/* x, y and z dimensions of the new data */
-		new_xx = (int)my_round(xx*x_factor);
-		new_yy = (int)my_round(yy*y_factor);
+		new_xx = (size_t)my_round(xx*x_factor);
+		new_yy = (size_t)my_round(yy*y_factor);
 		new_zz = zz;
 		new_size = new_xx * new_yy * new_zz;
 	}
@@ -259,11 +259,11 @@ ff_image_resize(vfuncptr func, Var * arg){
 double  get_none_interp(Var *obj,  double x, double y, double z){
 	double d_new_c;  
 	int i_new_c;	
-	int xx = GetX(obj);
-	int yy = GetY(obj);
+	size_t xx = GetX(obj);
+	size_t yy = GetY(obj);
 
-	int y_floor = (int)floor(y);
-	int x_floor = (int)floor(x);
+	size_t y_floor = (size_t)floor(y);
+	size_t x_floor = (size_t)floor(x);
 
 
 	if(x_floor >= xx){
@@ -290,14 +290,14 @@ double  get_none_interp(Var *obj,  double x, double y, double z){
 double  get_image_bilinear_interp(Var *obj,  double x, double y, double z){
 
 	double fraction_x, fraction_y;
-	int xx = GetX(obj);
-	int yy = GetY(obj);
+	size_t xx = GetX(obj);
+	size_t yy = GetY(obj);
 
-	int y_floor = (int)floor(y);
-	int y_ceil = y_floor + 1;
+	size_t y_floor = (size_t)floor(y);
+	size_t y_ceil = y_floor + 1;
 	
-	int x_floor = (int)floor(x);
-	int x_ceil = x_floor + 1;
+	size_t x_floor = (size_t)floor(x);
+	size_t x_ceil = x_floor + 1;
 
 	double d_c1,d_c2,d_c3,d_c4, d_new_cc1, d_new_cc2, d_new_c;  
 	int i_c1,i_c2,i_c3,i_c4, i_new_cc1, i_new_cc2, i_new_c;	
@@ -353,14 +353,14 @@ return   (((( -7 * v0 + 21 * v1 - 21 * v2 + 7 * v3 ) * offset +
 }
 
 /* Used by get_image_bicubic_interp */
-double get_my_cubic_row(Var *obj, int x, int y, int z, double offset){
+double get_my_cubic_row(Var *obj, size_t x, size_t y, size_t z, double offset){
 	double c0,c1,c2,c3;
-	int xx = GetX(obj);
-	int yy = GetY(obj);
-	int x0 = x;
-	int x1 = x+1;
-	int x2 = x+2;
-	int x3 = x+3;
+	size_t xx = GetX(obj);
+	size_t yy = GetY(obj);
+	size_t x0 = x;
+	size_t x1 = x+1;
+	size_t x2 = x+2;
+	size_t x3 = x+3;
 
 	if(x0 >= xx){
 	   x0 = xx-1;
@@ -418,9 +418,9 @@ double get_my_cubic_row(Var *obj, int x, int y, int z, double offset){
 double  get_image_bicubic_interp(Var *obj,  double x, double y, double z){
 	double fraction_x, fraction_y;
 
-	int yi = (int)floor(y);
-	int xi = (int)floor(x);
-	int zi = (int)z;
+	size_t yi = (size_t)floor(y);
+	size_t xi = (size_t)floor(x);
+	size_t zi = (size_t)z;
 
 	double c,c0,c1,c2,c3;
 
@@ -449,16 +449,16 @@ double get_image_box_average(Var *obj, double x0, double y0, double x1, double y
 	double area = 0;
 	double sum = 0;
 
-	int x,y,x_, y_,z_;
-	int y0_floor;
-	int y1_ceil;
-	int x0_floor;
-	int x1_ceil;
+	size_t x,y,x_, y_,z_;
+	size_t y0_floor;
+	size_t y1_ceil;
+	size_t x0_floor;
+	size_t x1_ceil;
 	double size;
 	int i_c;
 	double d_c;
-	int xx = GetX(obj);
-	int yy = GetY(obj);
+	size_t xx = GetX(obj);
+	size_t yy = GetY(obj);
 
 	y0_floor = floor(y0);
 	y1_ceil =  ceil(y1);	
@@ -522,4 +522,3 @@ double get_image_box_average(Var *obj, double x0, double y0, double x1, double y
 	}  
 	return sum/area;
 }
-

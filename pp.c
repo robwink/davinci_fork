@@ -1,6 +1,7 @@
 /********************************** pp.c *********************************/
 #include "parser.h"
 #include "dvio.h"
+#include "ff_modules.h"
 
 /**
  ** pp_emit_prompt()    - spit out prompt if interactive 
@@ -14,6 +15,10 @@ extern Var * string_subset(Var *, Var *);
 extern Var * set_text(Var *, Range *,Var *);
 extern Var * set_string(Var *, Range *,Var *);
 extern Var * where_text(Var *,Var *,Var *);
+extern Var * duplicate_struct(Var *v);
+extern Var * dd_get_argc(Scope *s);
+extern Var * dd_make_arglist(Scope *s);
+
 
 /*
 void 
@@ -38,7 +43,7 @@ Var *
 V_DUP(Var *v)
 {
     Var *r;
-    int dsize;
+    size_t dsize;
 
 	if (v == NULL) return(NULL);
 
@@ -138,7 +143,8 @@ pp_print_struct(Var *v, int indent, int depth)
 void
 dump_var(Var *v, int indent, int limit) 
 {
-    int i,j,k,c;
+    int i,j,k;
+    size_t c;
     int x, y, z;
     int row;
 
@@ -189,7 +195,7 @@ dump_var(Var *v, int indent, int limit)
 void
 pp_print_var(Var *v, char *name, int indent, int depth)
 {
-    char bytes[32];
+    char bytes[64];
     int x, y, z;
     int npassed = (name != NULL);
 
@@ -209,7 +215,7 @@ pp_print_var(Var *v, char *name, int indent, int depth)
             x = GetSamples(V_SIZE(v),V_ORG(v));
             y = GetLines(V_SIZE(v),V_ORG(v));
             z = GetBands(V_SIZE(v),V_ORG(v));
-            sprintf(bytes, "%d", NBYTES(V_FORMAT(v))*V_DSIZE(v));
+            sprintf(bytes, "%ld", NBYTES(V_FORMAT(v))*V_DSIZE(v));
             commaize(bytes);
             printf("%dx%dx%d array of %s, %s format [%s bytes]\n",
                    x, y, z,
@@ -448,14 +454,17 @@ pp_inc_var(Var *id, Var *range, Var *exp)
 int
 array_replace(Var *dst, Var *src, Range *r)
 {
-    int i, j, k;
+    size_t i, j, k;
     int size[3];
     int x, y, z;
-    int d, s;
+    size_t d, s;
+    size_t src_nbytes;
 
     x = GetX(src);
     y = GetY(src);
     z = GetZ(src);
+
+    src_nbytes = NBYTES(V_FORMAT(src));
 
     for (i =0 ; i < 3 ; i++) {
         size[i] = 1 + (r->hi[i] - r->lo[i])/r->step[i];
@@ -466,9 +475,9 @@ array_replace(Var *dst, Var *src, Range *r)
         }
     }
 
-    for (i = 0 ; i < size[0] ; i++) {
+    for (k = 0 ; k < size[2] ; k++) {
         for (j = 0 ; j < size[1] ; j++) {
-            for (k = 0 ; k < size[2] ; k++) {
+            for (i = 0 ; i < size[0] ; i++) {
 
                 d = cpos(i*r->step[0] + r->lo[0],
                          j*r->step[1] + r->lo[1],
@@ -480,27 +489,34 @@ array_replace(Var *dst, Var *src, Range *r)
 				*/
                 s = cpos(i % x,j % y,k % z,src);
 
-                switch(V_FORMAT(dst)) {
-                case BYTE:
-                    ((u_char *)V_DATA(dst))[d] =
-                        saturate_byte(extract_int(src, s));
-                    break;
-                case SHORT:
-                    ((short *)V_DATA(dst))[d] =
-                        saturate_short(extract_int(src, s));
-                    break;
-                case INT:
-                    ((int *)V_DATA(dst))[d] =
-                        saturate_int(extract_int(src, s));
-                    break;
-                case FLOAT:
-                    ((float *)V_DATA(dst))[d] =
-                        extract_float(src, s);
-                    break;
-                case DOUBLE:
-                    ((double *)V_DATA(dst))[d] =
-                        extract_double(src, s);
-                    break;
+                if (V_FORMAT(dst) == V_FORMAT(src)){
+                    memcpy(((char *)V_DATA(dst))+d*src_nbytes,
+                        ((char *)V_DATA(src))+s*src_nbytes,
+                        src_nbytes);
+                }
+                else {
+                    switch(V_FORMAT(dst)) {
+                    case BYTE:
+                        ((u_char *)V_DATA(dst))[d] =
+                            saturate_byte(extract_int(src, s));
+                        break;
+                    case SHORT:
+                        ((short *)V_DATA(dst))[d] =
+                            saturate_short(extract_int(src, s));
+                        break;
+                    case INT:
+                        ((int *)V_DATA(dst))[d] =
+                            saturate_int(extract_int(src, s));
+                        break;
+                    case FLOAT:
+                        ((float *)V_DATA(dst))[d] =
+                            extract_float(src, s);
+                        break;
+                    case DOUBLE:
+                        ((double *)V_DATA(dst))[d] =
+                            extract_double(src, s);
+                        break;
+                    }
                 }
             }
         }
@@ -1082,7 +1098,7 @@ Var *
 pp_set_where(Var *id, Var *where, Var *exp) 
 {
     Var *v;
-    int i,j,k, l;
+    size_t i,j,k, l;
     int ival, dsize, format;
     double dval;
 
@@ -1198,4 +1214,3 @@ pp_set_where(Var *id, Var *where, Var *exp)
     }
     return(id);
 }
-

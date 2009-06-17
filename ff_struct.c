@@ -5,6 +5,9 @@
 #include <sys/mman.h>
 #endif
 
+int struct_pos(Var *a, Var *v);
+void insert_struct(Var *a, int pos, char *name, Var *data);
+
 /*
 ** new_struct() - Create an empty structure
 */
@@ -276,7 +279,7 @@ struct_pos(Var *a, Var *v)
     return(pos);
 }
 
-insert_struct(Var *a, int pos, char *name, Var *data)
+void insert_struct(Var *a, int pos, char *name, Var *data)
 {
     Narray_insert(V_STRUCT(a), name, data, pos);
 }
@@ -401,7 +404,7 @@ create_struct(Var *v)
 
     for (i = 0 ; i < count ; i++) {
         name = NULL;
-        Narray_get(V_ARGS(v), i, NULL, &p);
+        Narray_get(V_ARGS(v), i, NULL, (void **) &p);
 
         if (V_TYPE(p) == ID_KEYWORD) {
             name = V_NAME(p);
@@ -427,7 +430,7 @@ create_struct(Var *v)
 **            -1 if not found
 */
 int
-find_struct(Var *a, char *b, Var **data)
+find_struct(Var *a, const char *b, Var **data)
 {
     Var *s;
     int i;
@@ -452,11 +455,11 @@ find_struct(Var *a, char *b, Var **data)
 void
 free_struct(Var *v)
 {
-    Narray_free(V_STRUCT(v), free_var);
+    Narray_free(V_STRUCT(v), (Narray_FuncPtr)free_var);
 }
 
 
-compare_struct(Var *a, Var *b)
+int compare_struct(Var *a, Var *b)
 {
     int i;
     int count = get_struct_count(a);
@@ -548,7 +551,7 @@ concatenate_struct(Var *a, Var *b)
     Var *aa, *bb;
 
     /* verify that both args are usable */
-    if (V_TYPE(a) == NULL || V_TYPE(b) == NULL) return(NULL);
+    if (V_TYPE(a) == 0 || V_TYPE(b) == 0) return(NULL);
 
     /* verify that there's no name conflicts */
     for (i = 0 ; i < get_struct_count(b) ; i++) {
@@ -636,5 +639,5 @@ remove_struct(Var *s, int pos)
 		return(NULL);
 	}
 
-	return(Narray_remove(V_STRUCT(s), pos));
+	return((Var *)Narray_remove(V_STRUCT(s), pos));
 }

@@ -9,7 +9,7 @@
 extern FILE *pfp;
 #endif
 
-static int name_check(char *actual_input, char *name, int limit);
+static int name_check(const char *actual_input, const char *name, int limit);
 int send2plot(char *s);
 static void findAxis(char *R, Var * Obj, int flag);
 static int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuffer, Var *Xaxis, char *Axis, float *globalNums, char *Style, char *dir);
@@ -95,7 +95,7 @@ static void findAxis(char *R, Var *Obj, int flag)
 
 
 
-static int name_check(char *actual_input, char *name, int limit) {
+static int name_check(const char *actual_input, const char *name, int limit) {
 
   int  namelen = 0;
   int  inputlen = 0;

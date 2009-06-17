@@ -28,6 +28,7 @@ void munmap(void *buf,int len)
 #define mkstemp(p) open(_mktemp(p), _O_CREAT | _O_SHORT_LIVED | _O_EXCL)
 
 #else
+#include <unistd.h>
 #include <sys/mman.h>
 #endif /* __CYGWIN__ */
 #include "parser.h"

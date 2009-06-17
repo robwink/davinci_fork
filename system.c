@@ -487,7 +487,7 @@ my_realloc(void *ptr, int len)
 	}
 }
 
-void rmrf(char *path)
+void rmrf(const char *path)
 {
 	DIR *dir;
 	struct dirent *d;

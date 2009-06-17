@@ -5,25 +5,19 @@ int is_deleted(float f)
     return (f < -1.22e34 && f > -1.24e34);
 }
 
-void cakima (int n, float x[], float y[], float **yd);
+void cakima (size_t n, float x[], float y[], float **yd);
 Var *linear_interp(Var *v0, Var *v1, Var *v2, float ignore);
 Var *cubic_interp(Var *v0, Var *v1, Var *v2, char *type, float ignore);
 
 Var *
 ff_interp(vfuncptr func, Var *arg)
 {
-    Var *s = NULL, *e = NULL;
-    float *x = NULL,*y = NULL, *fdata = NULL;
-    int i, count = 0;
     Var *v[3] = {NULL,NULL,NULL};
-    float x1,y1,x2,y2,w;
-    float *m = NULL, *c = NULL; /* slopes and y-intercepts */
-    int fromsz, tosz; /* number of elements in from & to arrays */
-	float ignore = MINFLOAT;
-	char *usage = "usage: %s(y1,x1,x2,[type={'linear'|'cubic'}]";
-	char *type = "";
-	char *types[] = {"linear", "cubic", NULL};
-	Var *out;
+    float ignore = MINFLOAT;
+    const char *usage = "usage: %s(y1,x1,x2,[type={'linear'|'cubic'}]";
+    char *type = "";
+    const char *types[] = {"linear", "cubic", NULL};
+    Var *out;
 
     Alist alist[9];
     alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v[0]);
@@ -72,17 +66,17 @@ Var *linear_interp(Var *v0, Var *v1, Var *v2, float ignore)
 {
     Var *s = NULL, *e = NULL;
     float *x = NULL,*y = NULL, *fdata = NULL;
-    int i, count = 0;
+    size_t i, count = 0;
     float x1,y1,x2,y2,w;
     float *m = NULL, *c = NULL; /* slopes and y-intercepts */
-    int fromsz, tosz; /* number of elements in from & to arrays */
+    size_t fromsz, tosz; /* number of elements in from & to arrays */
 	char *usage = "usage: interp(y1,x1,x2,[type={'linear'|'cubic'}]";
 
     fromsz = V_DSIZE(v0);
     tosz = V_DSIZE(v2);
     
-    x = (float *)calloc(sizeof(FLOAT), fromsz);
-    y = (float *)calloc(sizeof(FLOAT), fromsz);
+    x = (float *)calloc(fromsz, sizeof(float));
+    y = (float *)calloc(fromsz, sizeof(float));
 
     count = 0;
     for (i = 0 ; i < fromsz ; i++) {
@@ -100,9 +94,9 @@ Var *linear_interp(Var *v0, Var *v1, Var *v2, float ignore)
         count++;
     }
 
-    fdata = (float *)calloc(sizeof(FLOAT), tosz);
-    m = (float *)calloc(sizeof(FLOAT), fromsz-1);
-    c = (float *)calloc(sizeof(FLOAT), fromsz-1);
+    fdata = (float *)calloc(tosz, sizeof(float));
+    m = (float *)calloc(fromsz-1, sizeof(float));
+    c = (float *)calloc(fromsz-1, sizeof(float));
 
     /* evaluate & cache slopes & y-intercepts */
     for (i = 1; i < fromsz; i++){
@@ -122,7 +116,7 @@ Var *linear_interp(Var *v0, Var *v1, Var *v2, float ignore)
             ** Locate the segment containing the x-value of "w".
             ** Assume that x-values are monotonically increasing.
             */
-            int st = 0, ed = fromsz-1, mid;
+            size_t st = 0, ed = fromsz-1, mid;
             
             while((ed-st) > 1){
                 mid = (st+ed)/2;
@@ -164,12 +158,6 @@ Var *
 ff_cinterp(vfuncptr func, Var *arg)
 {
     Var *v[3] = {NULL,NULL,NULL};
-
-	float **yd, *out, *xp, *yp;
-	int npts, nout;
-	int i, j;
-	float x0, x1, x, h;
-	int done;
 	float ignore = MINFLOAT;
 	char *type = NULL;
 
@@ -199,11 +187,11 @@ Var *
 cubic_interp(Var *v0, Var *v1, Var *v2, char *type, float ignore)
 {
 	float **yd, *out, *xp, *yp, *arena;
-	int npts, nout;
-	int i, j;
+	size_t npts, nout;
+	size_t i, j;
 	float x0, x1, x, h;
 	int done;
-	int count = 0;
+	size_t count = 0;
 	int error = 0;
 
 	npts = V_DSIZE(v0);
@@ -211,9 +199,9 @@ cubic_interp(Var *v0, Var *v1, Var *v2, char *type, float ignore)
 
 	/* this is the hard way */
 	yd = calloc(npts, sizeof(float *));
-	xp = calloc(sizeof(float), npts);
-	yp = calloc(sizeof(float), npts);
-	arena = calloc(sizeof(float), npts*4);
+	xp = calloc(npts, sizeof(float));
+	yp = calloc(npts, sizeof(float));
+	arena = calloc(npts*4, sizeof(float));
 	out = calloc(nout, sizeof(float));
 
 	for (i = 0 ; i < npts ; i++) {
@@ -225,7 +213,7 @@ cubic_interp(Var *v0, Var *v1, Var *v2, char *type, float ignore)
 			continue;
 		}
 		if (count && xp[count] <= xp[count-1]) {
-			parse_error("Error: data is not monotonically increasing x1[%d] = %f", i, xp[count]);
+			parse_error("Error: data is not monotonically increasing x1[%ld] = %f", i, xp[count]);
 			error= 1;
 			break;
 		}
@@ -255,7 +243,7 @@ cubic_interp(Var *v0, Var *v1, Var *v2, char *type, float ignore)
 		x1 = xp[j+1];
 		x = extract_float(v2, i);
 		if (x == ignore) {
-			out[i] == ignore;
+			out[i] = ignore;
 			i++;
 		}
 
@@ -365,7 +353,7 @@ Author:  Dave Hale, Colorado School of Mines c. 1989, 1990, 1991
 
 // #include <cwp.h>
 
-void cakima (int n, float x[], float y[], float **yd)
+void cakima (size_t n, float x[], float y[], float **yd)
 /*****************************************************************************
 Compute cubic interpolation coefficients via Akima's method
 ******************************************************************************
@@ -402,7 +390,7 @@ Modified:  Dave Hale, Colorado School of Mines, 02/28/91
 	changed to work for n=1.
 *****************************************************************************/
 {
-	int i;
+	size_t i;
 	float sumw,yd1fx,yd1lx,dx,divdf3;
 
 	/* copy ordinates into output array */
@@ -470,7 +458,7 @@ Modified:  Dave Hale, Colorado School of Mines, 02/28/91
 	yd[n-1][3] = yd[n-2][3];
 }
 
-void cmonot (int n, float x[], float y[], float yd[][4])
+void cmonot (size_t n, float x[], float y[], float yd[][4])
 /*****************************************************************************
 compute cubic interpolation coefficients via the Fritsch-Carlson method,
 which preserves monotonicity
@@ -515,7 +503,7 @@ Modified:  Dave Hale, Colorado School of Mines, 08/04/91
 	fixed bug in computation of left end derivative
 *****************************************************************************/
 {
-	int i;
+	size_t i;
 	float h1,h2,del1,del2,dmin,dmax,hsum,hsum3,w1,w2,drat1,drat2,divdf3;
 
 	/* copy ordinates into output array */
@@ -609,7 +597,7 @@ Modified:  Dave Hale, Colorado School of Mines, 08/04/91
 	yd[n-1][3] = yd[n-2][3];
 }
 
-void csplin (int n, float x[], float y[], float yd[][4])
+void csplin (size_t n, float x[], float y[], float yd[][4])
 /*****************************************************************************
 compute cubic spline interpolation coefficients for interpolation with
 continuous second derivatives
@@ -640,7 +628,7 @@ Modified:  Dave Hale, Colorado School of Mines, 08/04/91
 	fixed bug in computation of left end derivative
 *****************************************************************************/
 {
-	int i;
+	size_t i;
 	float h1,h2,del1,del2,dmax,hsum,w1,w2,divdf3,sleft,sright,alpha,t;
 
 	/* if n=1, then use constant interpolation */
@@ -735,7 +723,7 @@ Modified:  Dave Hale, Colorado School of Mines, 08/04/91
 }
 // #include <cwp.h>
 
-void chermite (int n, float x[], float y[], float yd[][4])
+void chermite (size_t n, float x[], float y[], float yd[][4])
 /*****************************************************************************
 Compute cubic interpolation coefficients via Hermite polynomial
 ******************************************************************************
@@ -760,7 +748,7 @@ y(x) = yd[i][0]+h*(yd[i][1]+h*(yd[i][2]/2.0+h*yd[i][3]/6.0))
 
 *****************************************************************************/
 {
-	int i;
+	size_t i;
 	float dx ,f1,f3;
 
 	/* copy ordinates into output array */
@@ -875,7 +863,7 @@ Var* ff_interp2d(vfuncptr func, Var *arg)
   }
 
   /*memory allocation*/
-  wdata=(float *)calloc(sizeof(float),xx*xy*1);
+  wdata=(float *)calloc((size_t)xx*(size_t)xy*1, sizeof(float));
   
   for(i=0;i<xx;i+=1) {
     for(j=0;j<xy;j+=1) {
@@ -904,7 +892,7 @@ Var* ff_interp2d(vfuncptr func, Var *arg)
 
       tv1=(extract_float(table,cpos(xi,yi,0,table))*(1-p1)+extract_float(table,cpos(xi+1,yi,0,table))*(p1))*(1-p2);
       tv2=(extract_float(table,cpos(xi,yi+1,0,table))*(1-p1)+extract_float(table,cpos(xi+1,yi+1,0,table))*(p1))*(p2);
-      wdata[xx*j + i]=(float)(tv1+tv2);
+      wdata[(size_t)xx*(size_t)j + (size_t)i]=(float)(tv1+tv2);
     }
   }
   out=newVal(BSQ, xx, xy, 1, FLOAT, wdata);

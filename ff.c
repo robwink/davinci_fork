@@ -1,5 +1,8 @@
 #include "ff.h"
 #include "apidef.h"
+#include <string.h>
+#include <errno.h>
+#include <math.h>
 
 #ifdef rfunc
 #include "rfunc.h"
@@ -20,10 +23,10 @@ Var *eval_buffer(char *buf);
 
 
 Var *
-V_func(char *name, Var * arg)
+V_func(const char *name, Var * arg)
 {
     vfuncptr f;
-    UFUNC *uf, *locate_ufunc(char *);
+    UFUNC *uf, *locate_ufunc(const char *);
 #ifdef INCLUDE_API
     APIDEFS *api;
 #endif
@@ -92,8 +95,9 @@ ff_dfunc(vfuncptr func, Var * arg)
     double *ddata;
 
     void *data;
-    int format, dsize;
-    int i;
+    int format;
+    size_t dsize;
+    size_t i;
 
     Alist alist[2];
     alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v);
@@ -179,19 +183,19 @@ ff_dfunc(vfuncptr func, Var * arg)
  **/
 
 Var *
-ff_binary_op(char *name,                     // Function name, for errors
+ff_binary_op(const char *name,               // Function name, for errors
              Var *a, Var *b,                 // operands
              double (*fptr)(double, double), // function pointer
              int format)                     // output format
 {
   int size[3];
-  int dsize = 0;
-  int i;
+  size_t dsize = 0;
+  size_t i;
   int order;
   Var *val = NULL, *t = NULL;
   int count;
   int va, vb;
-  int dsizea = 1, dsizeb = 1;
+  size_t dsizea = 1, dsizeb = 1;
   double v1, v2, v3;
 
   u_char *cdata;
@@ -330,11 +334,12 @@ Var *
 ff_org(vfuncptr func, Var * arg)
 {
   Var *s = NULL, *ob = NULL;
-  int i, j;
+  size_t i, j;
   void *from = NULL, *to = NULL;
-  int org = -1, nbytes, format, dsize;
+  int org = -1, nbytes, format;
+  size_t dsize;
   char *org_str = NULL;
-  char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
+  const char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
 
   Alist alist[4];
   alist[0] = make_alist( "object", ID_VAL,   NULL,     &ob);
@@ -401,10 +406,10 @@ Var *
 ff_conv(vfuncptr func, Var * arg)
 {
     int format;
-    int dsize;
+    size_t dsize;
     void *data;
     Var *v = NULL, *s;
-    int i;
+    size_t i;
 
     /**
     ** converting to type stored in vfunc->fdata.
@@ -530,7 +535,7 @@ ff_format(vfuncptr func, Var * arg)
     char *ptr = NULL;
     char *type = NULL;
     char *format_str = NULL;
-    char *formats[] = { "byte", "short", "int", "float", "double", NULL };
+    const char *formats[] = { "byte", "short", "int", "float", "double", NULL };
 
     Alist alist[4];
     alist[0] = make_alist( "object", ID_UNK,   NULL,        &obj);
@@ -575,11 +580,11 @@ ff_format(vfuncptr func, Var * arg)
         ** v specifies format.
         **/
 
-        if (!strcasecmp(format_str, "byte")) ptr = "byte";
-        else if (!strcasecmp(format_str, "short")) ptr = "short";
-        else if (!strcasecmp(format_str, "int")) ptr = "int";
-        else if (!strcasecmp(format_str, "float")) ptr = "float";
-        else if (!strcasecmp(format_str, "double")) ptr = "double";
+        if (!strcasecmp(format_str, "byte")) ptr = (char *)"byte";
+        else if (!strcasecmp(format_str, "short")) ptr = (char *)"short";
+        else if (!strcasecmp(format_str, "int")) ptr = (char *)"int";
+        else if (!strcasecmp(format_str, "float")) ptr = (char *)"float";
+        else if (!strcasecmp(format_str, "double")) ptr = (char *)"double";
 
         return (V_func(ptr, create_args(1, NULL, obj, NULL, NULL)));
     }
@@ -607,17 +612,18 @@ Var *
 ff_create(vfuncptr func, Var * arg)
 {
     Var *s;
-    int dsize;
-    int i, j, k, count = 0, c;
-    float v;
-    char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
-    char *formats[] = { "byte", "short", "int", "float", "double", NULL};
+    size_t dsize, count = 0, c;
+    size_t i, j, k;
+    double v;
+    const char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
+    const char *formats[] = { "byte", "short", "int", "float", "double", NULL};
 
-    int x = 1, y = 1, z = 1;
+    size_t x = 1, y = 1, z = 1;
     int format = INT;
     int org = BSQ;
-    float start = 0;
-    float step = 1.0;
+    double start = 0;
+    double step = 1.0;
+    int init = 1;
     char *format_str = NULL, *org_str = NULL;
 
     u_char *cdata;
@@ -626,19 +632,20 @@ ff_create(vfuncptr func, Var * arg)
     float *fdata;
     double *ddata;
 
-    Alist alist[8];
+    Alist alist[9];
     alist[0] = make_alist( "x",      INT,      NULL,     &x);
     alist[1] = make_alist( "y",      INT,      NULL,     &y);
     alist[2] = make_alist( "z",      INT,      NULL,     &z);
     alist[3] = make_alist( "org",    ID_ENUM,  orgs,     &org_str);
     alist[4] = make_alist( "format", ID_ENUM,  formats,  &format_str);
-    alist[5] = make_alist( "start",  FLOAT,    NULL,     &start);
-    alist[6] = make_alist( "step",   FLOAT,    NULL,     &step);
-    alist[7].name = NULL;
+    alist[5] = make_alist( "start",  DOUBLE,   NULL,     &start);
+    alist[6] = make_alist( "step",   DOUBLE,   NULL,     &step);
+    alist[7] = make_alist( "init",   INT,      NULL,     &init);
+    alist[8].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(NULL);
 
-    dsize = x*y*z;
+    dsize = (size_t)x*(size_t)y*(size_t)z;
 
     if (org_str != NULL) {
         if (!strcasecmp(org_str, "bsq")) org = BSQ;
@@ -665,7 +672,10 @@ ff_create(vfuncptr func, Var * arg)
     V_TYPE(s) = ID_VAL;
 
     V_DATA(s) = calloc(dsize,NBYTES(format));
-    memset(V_DATA(s), -1, dsize*NBYTES(format));
+    if (V_DATA(s) == NULL){
+        parse_error("Unable to allocate %ld bytes: %s\n", dsize*NBYTES(format), strerror(errno));
+        return(NULL);
+    }
     V_FORMAT(s) = format;
     V_ORDER(s) = org;
     V_DSIZE(s) = dsize;
@@ -680,27 +690,50 @@ ff_create(vfuncptr func, Var * arg)
     fdata = (float *) V_DATA(s);
     ddata = (double *) V_DATA(s);
 
-    for (k = 0 ; k < z ; k++) {
-        for (j = 0 ; j < y ; j++) {
-            for (i = 0 ; i < x ; i++) {
-                v = (count++) * step + start;
-                c = cpos(i,j,k,s);
+    if (init){
+        if (step == 0){
+            if (dsize > 0){
+                unsigned char *data = V_DATA(s);
+                unsigned int nbytes = NBYTES(format);
+                size_t i;
+
+                v = start;
                 switch (format) {
-                case BYTE:
-                    cdata[c] = saturate_byte(v);
-                    break;
-                case SHORT:
-                    sdata[c] = saturate_short(v);
-                    break;
-                case INT:
-                    idata[c] = saturate_int(v);
-                    break;
-                case FLOAT:
-                    fdata[c] = saturate_float(v);
-                    break;
-                case DOUBLE:
-                    ddata[c] = v;
-                    break;
+                case BYTE: cdata[0] = saturate_byte(v); break;
+                case SHORT: sdata[0] = saturate_short(v); break;
+                case INT: idata[0] = saturate_int(v); break;
+                case FLOAT: fdata[0] = saturate_float(v); break;
+                case DOUBLE: ddata[0] = v; break;
+                }
+                for(i=1; i<dsize; i++){
+                    memcpy(data+i*nbytes, data, nbytes);
+                }
+            }
+        }
+        else {
+            for (k = 0 ; k < z ; k++) {
+                for (j = 0 ; j < y ; j++) {
+                    for (i = 0 ; i < x ; i++) {
+                        v = (count++) * step + start;
+                        c = cpos(i,j,k,s);
+                        switch (format) {
+                        case BYTE:
+                            cdata[c] = saturate_byte(v);
+                            break;
+                        case SHORT:
+                            sdata[c] = saturate_short(v);
+                            break;
+                        case INT:
+                            idata[c] = saturate_int(v);
+                            break;
+                        case FLOAT:
+                            fdata[c] = saturate_float(v);
+                            break;
+                        case DOUBLE:
+                            ddata[c] = v;
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -783,12 +816,13 @@ ff_replicate(vfuncptr func, Var * arg)
     Var *v = NULL, *s;
 
     void *data1, *data2, *d1, *d2;
-    int d1ptr, d2ptr, dptr;
-    int dsize;
-    int len[3];
-    int size[3];
+    size_t d1ptr, d2ptr, dptr;
+    size_t dsize;
+    size_t len[3];
+    size_t size[3];
     int nbytes;
-    int i, j, k, l;
+    size_t i, j, k;
+    size_t l;
 
     Alist alist[5];
     alist[0] = make_alist( "object", ID_UNK,   NULL, &v);
@@ -1098,7 +1132,7 @@ do_cat(Var * ob1, Var * ob2, int axis)
     int i, j;
     int s1[3], s2[3];
     void *data, *d1, *d2, *out;
-    int dsize;
+    size_t dsize;
     int nbytes;
     int ob1_type,ob2_type;
 
@@ -1341,7 +1375,7 @@ newVal(int org, int x, int y, int z, int format, void *data)
     Var *v = newVar();
     V_TYPE(v) = ID_VAL;
     V_ORG(v) = org;
-    V_DSIZE(v) = x*y*z;
+    V_DSIZE(v) = ((size_t)x)*((size_t)y)*((size_t)z);
     V_SIZE(v)[0] = x;
     V_SIZE(v)[1] = y;
     V_SIZE(v)[2] = z;
@@ -1390,6 +1424,9 @@ ff_fsize(vfuncptr func, Var * arg)
         *data = -1;
         if ((stat(filename, &sbuf)) == 0) {
             *data = sbuf.st_size;
+            if ((*data) != sbuf.st_size){
+                parse_error("%s: Integer truncation, size was %ld\n", func->name, sbuf.st_size);
+            }
         }
         return(newVal(BSQ, 1, 1, 1, INT, data));
     }
@@ -1501,7 +1538,7 @@ ff_resize(vfuncptr func, Var * arg)
 {
   Var *obj = NULL;
   int x = 1,y = 1,z = 1;
-  char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
+  const char *orgs[] = { "bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL };
   char *org_str = NULL;
   int org = 0;
 
@@ -1524,7 +1561,7 @@ ff_resize(vfuncptr func, Var * arg)
     parse_error("Illegal dimensions: %dx%dx%d\n", x, y, z);
     return(NULL);
   }
-  if (x*y*z != V_DSIZE(obj)) {
+  if (((size_t)x)*((size_t)y)*((size_t)z) != V_DSIZE(obj)) {
     parse_error("Illegal dimensions: %dx%dx%d != %d\n",
         x, y, z, V_DSIZE(obj));
     return(NULL);
@@ -1690,7 +1727,7 @@ ff_equals(vfuncptr func, Var * arg)
 int
 compare_vars(Var *a, Var *b)
 {
-    int i;
+    size_t i;
     int x1, y1, z1;
     int x2, y2, z2;
     int rows, format;
@@ -1769,6 +1806,15 @@ newInt(int i)
     V_INT(v) = i;
     return(v);
 }
+/*
+Var *
+newLong(long i)
+{
+    Var *v = newVal(BSQ, 1, 1,1, LONG, calloc(1, sizeof(long)));
+    V_LONG(v) = i;
+    return(v);
+}
+*/
 Var *
 newFloat(float f)
 {
@@ -1830,6 +1876,38 @@ ff_exists(vfuncptr func, Var * arg)
         n = V_TEXT(v).Row;
         for (i = 0 ; i < n ; i++) {
             data[i] = (access(V_TEXT(v).text[i], F_OK) == 0);
+        }
+        return(newVal(BSQ, 1, n, 1, INT, data));
+    } else {
+        parse_error( "%s: Argument is not a filename.", func->name);
+        return(NULL);
+    }
+}
+
+Var *
+ff_unlink(vfuncptr func, Var * arg)
+{
+  Var *v = NULL;
+  char *filename = NULL;
+  int n, i;
+
+    Alist alist[2];
+    alist[0] = make_alist("filename",    ID_UNK,     NULL,     &v);
+    alist[1].name = NULL;
+
+    if (parse_args(func, arg, alist) == 0) return(NULL);
+
+    if (v == NULL) {
+        parse_error( "%s: No filename specified.", func->name);
+        return(NULL);
+    } else if (V_TYPE(v) == ID_STRING) {
+        filename = V_STRING(v);
+		return(newInt(unlink(filename) == 0));
+    } else if (V_TYPE(v) == ID_TEXT) {
+        int *data = calloc(n, sizeof(int));
+        n = V_TEXT(v).Row;
+        for (i = 0 ; i < n ; i++) {
+            data[i] = (unlink(V_TEXT(v).text[i]) == 0);
         }
         return(newVal(BSQ, 1, n, 1, INT, data));
     } else {
@@ -1920,9 +1998,10 @@ ff_deleted(vfuncptr func, Var * arg)
     Var *str_value = NULL, *v;
     char vbuf[16] = { 0 };
     int bytes;
-    int nbytes, dsize;
+    int nbytes;
+    size_t dsize;
     unsigned char *data, *out;
-    int i;
+    size_t i;
 
 
     Alist alist[3];
@@ -2034,9 +2113,10 @@ ff_set_deleted(vfuncptr func, Var * arg)
     Var *str_value = NULL, *v;
     char vbuf[16] = { 0 };
     int bytes;
-    int nbytes, dsize;
+    int nbytes;
+    size_t dsize;
     unsigned char *data, *out;
-    int i;
+    size_t i;
 
 
     Alist alist[4];
@@ -2095,8 +2175,9 @@ Var *
 ff_contains(vfuncptr func, Var * arg)
 {
     Var *obj = NULL, *value=NULL;
-    int dsize;
-    int i, ret = 0;
+    size_t dsize;
+    size_t i;
+    int ret = 0;
     int vi;
     double vd;
 

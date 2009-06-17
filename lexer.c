@@ -138,7 +138,8 @@ extern FILE *yyin, *yyout;
  * (without autoconf's help, which isn't available because we want
  * flex-generated scanners to compile on their own).
  */
-typedef unsigned int yy_size_t;
+/*typedef unsigned int yy_size_t; */
+typedef size_t yy_size_t;
 
 
 struct yy_buffer_state
@@ -515,20 +516,21 @@ get_current_buffer()
 
 extern int indent;
 FILE *save_fp = NULL;
-char save_file[256];
+char save_file[1024];
 
 int caller;			/* used by flex to handle comments in multiple states */
 
 void start_save()
 {
     char *tmp;
+	char *make_temp_file_path();
 
 	local_line = pp_line;
     tmp = make_temp_file_path();
     if (tmp == NULL || (save_fp = fopen(tmp, "w")) == NULL ) {
         parse_error("define: unable to open temp file");
         if (tmp) free(tmp);
-        return(NULL);
+        return;
     }
     strcpy(save_file, tmp);
 }
@@ -1952,7 +1954,8 @@ static void *yy_flex_alloc( size )
 yy_size_t size;
 #endif
 	{
-	return (void *) malloc( size );
+	//return (void *) malloc( size );
+	return (void *) calloc(size, 1);
 	}
 
 #ifdef YY_USE_PROTOS

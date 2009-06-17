@@ -1,0 +1,17 @@
+#
+# test the fexists() function
+#
+results = { };
+for (i = 1 ; i <= length(good) ; i+=1) {
+	if (fexists(good[i]) == 1)  add_struct(results, good[i]);
+}
+for (i = 1 ; i <= length(bad) ; i+=1) {
+	if (fexists(bad[i]) == 0)  add_struct(results, bad[i]);
+}
+
+if (length(results) != length(good) + length(bad)) {
+	exit(1);
+} else {
+	exit(0);
+}
+

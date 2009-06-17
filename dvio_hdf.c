@@ -204,7 +204,8 @@ WriteHDF5(hid_t parent, char *name, Var *v)
 /*
 ** Make a VAR out of a HDF5 object
 */
-herr_t group_iter(hid_t parent, const char *name, void *data)
+static herr_t
+group_iter(hid_t parent, const char *name, void *data)
 {
     H5G_stat_t buf;
     hid_t child, dataset, dataspace, datatype, attr;
@@ -240,17 +241,17 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
         classtype=(H5Tget_class(datatype));
 
         if (classtype==H5T_INTEGER){
-            if (H5Tequal(datatype , H5T_STD_U8BE) || H5Tequal(datatype, H5T_NATIVE_UCHAR)) 
+            if (H5Tequal(datatype , H5T_STD_U8BE) || H5Tequal(datatype, H5T_STD_U8LE) || H5Tequal(datatype, H5T_NATIVE_UCHAR)) 
                 type = BYTE;
-            else if (H5Tequal(datatype , H5T_STD_I16BE) || H5Tequal(datatype, H5T_NATIVE_SHORT)) 
+            else if (H5Tequal(datatype , H5T_STD_I16BE) || H5Tequal(datatype , H5T_STD_I16LE) || H5Tequal(datatype, H5T_NATIVE_SHORT)) 
                 type = SHORT;
-            else if (H5Tequal(datatype , H5T_STD_I32BE) || H5Tequal(datatype, H5T_NATIVE_INT))   
+            else if (H5Tequal(datatype , H5T_STD_I32BE) || H5Tequal(datatype , H5T_STD_I32LE) || H5Tequal(datatype, H5T_NATIVE_INT))   
                 type = INT;
         }
         else if (classtype==H5T_FLOAT){
-            if (H5Tequal(datatype , H5T_IEEE_F32BE) || H5Tequal(datatype, H5T_NATIVE_FLOAT)) 
+            if (H5Tequal(datatype , H5T_IEEE_F32BE) || H5Tequal(datatype , H5T_IEEE_F32LE) || H5Tequal(datatype, H5T_NATIVE_FLOAT)) 
                 type = FLOAT;
-            else if (H5Tequal(datatype , H5T_IEEE_F64BE) || H5Tequal(datatype, H5T_NATIVE_DOUBLE)) 
+            else if (H5Tequal(datatype , H5T_IEEE_F64BE) || H5Tequal(datatype , H5T_IEEE_F64LE) || H5Tequal(datatype, H5T_NATIVE_DOUBLE)) 
                 type = DOUBLE;
         }
 
@@ -259,20 +260,30 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
         }
 
         if (type!=ID_STRING){
-            attr = H5Aopen_name(dataset, "org");
-            H5Aread(attr, H5T_STD_I32BE, &org);
+            org = BSQ;
+            if ((attr = H5Aopen_name(dataset, "org")) < 0){
+                parse_error("Unable to get org. Assuming %s.\n", Org2Str(org));
+            }
+            else {
+                H5Aread(attr, H5T_STD_I32BE, &org);
 #ifndef WORDS_BIGENDIAN
-	    intswap(org);
+                intswap(org);
 #endif
-            H5Aclose(attr);
+                H5Aclose(attr);
+            }
         }
         else {
-            attr = H5Aopen_name(dataset, "lines");
-            H5Aread(attr, H5T_STD_I32BE, &Lines);
+            Lines = 0;
+            if ((attr = H5Aopen_name(dataset, "lines")) < 0){
+                parse_error("Unable to get lines. Assuming %d.\n", Lines);
+            }
+            else {
+                H5Aread(attr, H5T_STD_I32BE, &Lines);
 #ifndef WORDS_BIGENDIAN
-	    intswap(Lines);
+                intswap(Lines);
 #endif
-            H5Aclose(attr);
+                H5Aclose(attr);
+            }
         }
 
         if ((type!=ID_STRING)){
@@ -285,10 +296,18 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
             dsize = H5Sget_simple_extent_npoints(dataspace);
             databuf = calloc(dsize, NBYTES(type));
             H5Dread(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, databuf);
-#ifndef WORDS_BIGENDIAN
-	    databuf2 = flip_endian(databuf, dsize, NBYTES(type));
-	    free(databuf);
-	    databuf = databuf2;
+#ifdef WORDS_BIGENDIAN
+            if (H5Tget_order(datatype) == H5T_ORDER_LE){
+                databuf2 = flip_endian(databuf, dsize, NBYTES(type));
+                free(databuf);
+                databuf = databuf2;
+            }
+#else
+            if (H5Tget_order(datatype) == H5T_ORDER_BE){
+                databuf2 = flip_endian(databuf, dsize, NBYTES(type));
+                free(databuf);
+                databuf = databuf2;
+            }
 #endif /* WORDS_BIGENDIAN */
             H5Tclose(datatype);
             H5Sclose(dataspace);
@@ -357,7 +376,8 @@ herr_t group_iter(hid_t parent, const char *name, void *data)
 }
 
 
-herr_t count_group(hid_t group, const char *name, void *data)
+static herr_t
+count_group(hid_t group, const char *name, void *data)
 {
     *((int *)data) += 1;
     return(0);

@@ -78,7 +78,7 @@ static void	 usage __P((void));
 static int dv_asprintf(char **, char *, ...);
 char *do_sprintf(int ac, Var **av);
 
-char *dv_locate_file(char *fname);
+char *dv_locate_file(const char *fname);
 
 Var *
 ff_fprintf(vfuncptr func, Var *arg)
@@ -322,7 +322,7 @@ do_sprintf(int ac, Var **av)
                 free(out);
                 return (NULL);
             }
-            PF(out, f, p);
+            PF(out, f, (long)p);
             break;
         }
         case 'e': case 'E': case 'f': case 'g': case 'G': {

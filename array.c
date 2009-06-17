@@ -76,8 +76,8 @@ extract_array(Var *v, Range *r)
     int f_lo[3];
     int f_hi[3];
     int f_step[3];
-    int i,j,k,count,size=1;
-    int f1,f2,f3;
+    size_t i,j,k,count,size=1;
+    size_t f1,f2,f3;
     void *data;
     int bytes, opt_bytes, opt_step;
 
@@ -159,13 +159,13 @@ ff_translate(vfuncptr func, Var *arg)
     int from;
     int to;
     int d[3];
-    int count;
+    size_t count, l;
     char *ptr;
     int flip = 0;
     int nbytes;
     int in_size[3], out_size[3];
-    int i,j,k,l,t;
-    char *options[] = { "x", "y", "z", NULL };
+    int i,j,k,t;
+    const char *options[] = { "x", "y", "z", NULL };
 	char *axis1_str=NULL, *axis2_str = NULL;
 
 	Alist alist[5];
@@ -238,7 +238,7 @@ ff_translate(vfuncptr func, Var *arg)
                 d[to] = t;
 
 
-                l = d[0] + (d[1] + d[2]*out_size[1])*out_size[0];
+                l = ((size_t)d[0]) + (((size_t)d[1]) + (size_t)d[2]*(size_t)out_size[1])*(size_t)out_size[0];
                 memcpy(((unsigned char *)V_DATA(s))+l*nbytes, 
                        ((unsigned char *)V_DATA(v))+count*nbytes, 
                        nbytes);

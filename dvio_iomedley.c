@@ -147,7 +147,7 @@ dv_LoadIOM(FILE *fp, char *filename, struct iom_iheader *s)
     v = iom_iheader2var(&h);
     V_DATA(v) = data;
 	// I think data was being double free'd here.
-	h.data = NULL;
+	//h.data = NULL;
   } else {
     v = NULL;
   }

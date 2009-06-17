@@ -51,7 +51,7 @@ make_sym(Var * v, int format, char *str)
     case FLOAT:{
         double d;
         d = strtod(str, NULL);
-        if (d > MAXFLOAT || d < MINFLOAT && d != 0) {
+        if (((d > MAXFLOAT) || (d < MINFLOAT)) && (d != 0)) {
             free(V_DATA(v));
             V_DATA(v) = calloc(1, NBYTES(DOUBLE));
             V_FORMAT(v) = DOUBLE;
@@ -77,6 +77,11 @@ eval_buffer(char *buf)
     void *parent_buffer;
     void *buffer;
     Var *node;
+
+    extern void *get_current_buffer();
+    extern void *yy_scan_string();
+    extern void yy_delete_buffer(void *);
+    extern void yy_switch_to_buffer(void *);
 
     parent_buffer = (void *) get_current_buffer();
     buffer = (void *) yy_scan_string(buf);
@@ -197,4 +202,3 @@ unescape(char *str)
     }
     return (str);
 }
-

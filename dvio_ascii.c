@@ -6,15 +6,15 @@
 int
 WriteAscii(Var *s, char *filename, int force)
 {
-    int dsize;
+    size_t dsize;
     int format;
     int ival;
     double dval;
     int d[3];
     int i, j, k;
-	int x, y, z;
-	int pos;
-	FILE *fp;
+    int x, y, z;
+    size_t pos;
+    FILE *fp;
 
     if (!force && access(filename, F_OK) == 0) {
 		parse_error("File %s already exists.", filename);

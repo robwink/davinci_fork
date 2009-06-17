@@ -12,19 +12,20 @@ ff_coreg(vfuncptr func, Var * arg)
   float    *solution = NULL;                           /* map of solution space */
   int       verbose = 0;                               /* flag to dump solution space at end */
   int       search = 10;                               /* search radius */
-  int       s_dia = 21;                                /* search diameter */
+  size_t    s_dia = 21;                                /* search diameter */
   int       x, y;                                      /* size of images */
   int       a = 0, b = 0;                              /* position of lowval*/
-  int       i, j, m, n;                                /* loop indices */
+  ptrdiff_t i, j, m, n;                                /* loop indices */
   float     lowval = 2e11;                             /* lowest value found by search */
   float     curval = 0;                                /* current value */
-  int       p1, p2, v1, v2;
+  size_t    p1, p2;
+  int       v1, v2;
   int      *pos;                                       /* final position returned */
   int      *wt;
   int random = 1000;
   int ok = 0;
-  int count = 0;
-  int total = 0;
+  size_t    count = 0;
+  size_t total = 0;
   int sum = 0;
 
   Alist alist[8];
@@ -53,14 +54,24 @@ ff_coreg(vfuncptr func, Var * arg)
   
   
   if(search < 0) {
-    parse_error("Invalid value: %s(...search=%d)\n",func->name);
+    parse_error("Invalid value: %s(...search=%d)\n",func->name, search);
 	return(NULL);
   }
  
 	s_dia = search*2 + 1;
 
-	solution = (float *)calloc(sizeof(float),(search*2+1)*(search*2+1));
-	wt = (int *)calloc(sizeof(int),(search*2+1)*(search*2+1));
+	solution = (float *)calloc(sizeof(float),s_dia*s_dia);
+	if (solution == NULL){
+		parse_error("%s: Unable to alloc %ld bytes.\n", func->name, s_dia*s_dia*sizeof(float));
+		return NULL;
+	}
+
+	wt = (int *)calloc(sizeof(int),s_dia*s_dia);
+	if (wt == NULL){
+		free(solution);
+		parse_error("%s: Unable to alloc %ld bytes.\n", func->name, s_dia*s_dia*sizeof(int));
+		return NULL;
+	}
 
 	if (random) {
 		/* 
@@ -155,8 +166,8 @@ ff_coreg(vfuncptr func, Var * arg)
 		add_struct(out, "space", newVal(BSQ, s_dia, s_dia, 1, FLOAT, solution));
 		add_struct(out, "wt", newVal(BSQ, s_dia, s_dia, 1, INT, wt));
 		add_struct(out, "position", newVal(BSQ, 2, 1, 1, INT, pos));
-		add_struct(out, "count", newInt(count));
-		printf("count=%d/%d\n", count, total);
+		add_struct(out, "count", newInt(count)); /* TODO: Should return a long */
+		printf("count=%ld/%ld\n", count, total);
 		return(out);
 	}
 
@@ -185,7 +196,7 @@ Var *ff_coreg2(vfuncptr func, Var * arg)
 	float v1, v2;
     Window *w;
 	Var *sval;
-	int diameter;
+	size_t diameter;
 	int *answer;
 	int maxval;
 
@@ -214,13 +225,17 @@ Var *ff_coreg2(vfuncptr func, Var * arg)
     }
 
     if (size <= 0) {
-        parse_error("Invalid value: %s(...size=%d)\n", func->name);
+        parse_error("Invalid value: %s(...size=%d)\n", func->name, size);
         return (NULL);
     }
 
 	
 	diameter = size*2+1;
-    solution = (int *) calloc(sizeof(int), diameter*diameter);
+    solution = (int *) calloc(diameter*diameter, sizeof(int));
+	if (solution == NULL){
+		parse_error("%s: Unable to alloc %ld bytes.\n", func->name, diameter*diameter*sizeof(int));
+		return NULL;
+	}
 	sval = newVal(BSQ, diameter, diameter, 1, INT, solution);
 
     /*

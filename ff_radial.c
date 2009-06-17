@@ -20,14 +20,14 @@ ff_radial_symmetry(vfuncptr func, Var * arg)
 {
     Var *obj = NULL, *rval = NULL;
     float ignore=MINFLOAT;
-    float *out;
+    float *out = NULL;
     int dim[3];
     int format, nbytes;
     float *s1, *s2;
     int a,b,x,y,z,pos, i,j,k;
     int size = 10;
     int xdelta=0.0, ydelta=0.0;
-    float *line;
+    float *line = NULL;
     int all = 0;
 	int first = 1;
     Window *w;
@@ -60,11 +60,13 @@ ff_radial_symmetry(vfuncptr func, Var * arg)
     w = create_window(size, size, FLOAT);
 
     if (all) {
-        out = calloc(x*y*(size-first+1), sizeof(float));
+		size_t n = (size_t)x*(size_t)y*(size_t)(size-first+1);
+        out = (float *)calloc(n, sizeof(float));
         rval = newVal(BSQ, x, y, (size-first+1), FLOAT, out);
-        line = calloc(size, sizeof(float));
+        line = (float *)calloc(size, sizeof(float));
     } else {
-        out = calloc(x*y, sizeof(float));
+		size_t n = (size_t)x*(size_t)y;
+        out = (float *)calloc(n, sizeof(float));
         rval = newVal(BSQ, x, y, 1, FLOAT, out);
         line = NULL;
     }
@@ -136,7 +138,7 @@ ff_radial_symmetry2(vfuncptr func, Var * arg)
     z = GetZ(obj);
     w = create_window(width, height, FLOAT);
 
-	out = calloc(x*y, sizeof(float));
+	out = calloc((size_t)x*(size_t)y, sizeof(float));
 	rval = newVal(BSQ, x, y, 1, FLOAT, out);
 
     for (i = 0 ; i < x ; i+=1) {
@@ -397,7 +399,7 @@ ff_radial_symmetry3(vfuncptr func, Var * arg)
 		}
 	}
 
-	out = calloc(x*y*((end - start) / step +1), sizeof(float));
+	out = calloc((size_t)x*(size_t)y*(size_t)((end - start) / step +1), sizeof(float));
 	rval = newVal(BSQ, x, y, ((end-start)/step +1), FLOAT, out);
 	accum = calloc(end+1, sizeof(struct dstore));
 
@@ -496,13 +498,12 @@ Var *
 ff_drawshape(vfuncptr func, Var * arg)
 {
 	Var *obj = NULL, *ovar = NULL;
-	int x,y,z;
+	size_t x,y,z;
 	char *out;
 	float ignore = MAXFLOAT;
-	int i,j,k, x1, x2, y1, y2, v, p1;
 
-	char *options[] = { "cross", "box", "circle", NULL };
-	char *shape = options[0];
+	const char *options[] = { "cross", "box", "circle", NULL };
+	const char *shape = options[0];
 
     Alist alist[9];
     alist[0] = make_alist( "object",    ID_VAL, NULL,   &obj);
@@ -635,4 +636,3 @@ draw_circle(Var *obj, int x, int y, float ignore, char *out)
 		}
 	}
 }
-

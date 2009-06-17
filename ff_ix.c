@@ -379,7 +379,7 @@ RGBToHSV(RGB rgb)
             hsv.h = bc - gc;
         else if (rgb.g == mx)
             hsv.h = 2.0 + rc - bc;
-        else if (rgb.b = mx)
+        else if (rgb.b == mx)
             hsv.h = 4.0 + gc - rc;
  
         if (hsv.h < 0.0)
@@ -544,4 +544,3 @@ ff_entropy(vfuncptr func, Var * arg)
 	free(data);
 	return(newVal(BSQ, 1, 1, 1, FLOAT, memdup(&ent, sizeof(FLOAT))));
 }
-

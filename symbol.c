@@ -230,7 +230,7 @@ ff_list(vfuncptr func, Var *arg)
 	if (list_ufuncs == 0 && list_sfuncs == 0) {
 		for (s = scope->symtab ; s != NULL ; s = s->next) {
 			v = s->value;
-			if (V_NAME(v) != NULL) pp_print_var(v, V_NAME(v), 0);
+			if (V_NAME(v) != NULL) pp_print_var(v, V_NAME(v), 0, 0);
 		}
 	} else {
 	  int nfuncs = 0, nsfunc;

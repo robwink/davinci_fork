@@ -28,13 +28,13 @@
 Var * lin_fit(Var *x, Var *y,int Row,int plot, double ignore);
 void    first_guess(double *, char *, int);
 int     fit(int,int);
-ifptr   getfcnptr(char *, int *, int *, int *, char *);
+ifptr   getfcnptr(const char *, int *, int *, int *, char *);
 int     mrqfit(double **, struct data_order, int, int, int, double *,
                int, int, double **, double *, ifptr,int);
 int     alpha_beta_chisq(double **, struct data_order,int , int , double *,
                          int ,int , double **, double *, double *, ifptr);
-void    gd(Var *, Var *, char *, double);
-int     dfit(Var *, Var *, Var *, char *, int, double **, int *, int,int, double );
+void    gd(Var *, Var *, const char *, double);
+int     dfit(Var *, Var *, Var *, const char *, int, double **, int *, int,int, double );
 
 
 Var * ff_fit(vfuncptr func, Var *arg)
@@ -46,7 +46,7 @@ Var * ff_fit(vfuncptr func, Var *arg)
     Var *s;
     double *op;
     int nparam;
-    char *ftype = "linear";
+    const char *ftype = "linear";
     int iter = 1;
     int plot = 0 ;
 	int verbose =0;
@@ -54,9 +54,10 @@ Var * ff_fit(vfuncptr func, Var *arg)
 	double ignore=MINFLOAT;
 	int ret;
 
-    char *fits[] = { "gauss", "gaussc", "gaussl", "ngauss", "lorenz",
-                     "2lorenz", "linear", "linear_chi", "quad", "cube", "poly", 
-					 "nexp", "xyquad", "xygauss", "sincos", NULL };
+    const char *fits[] = { "gauss", "gaussc", "gaussl", "ngauss", "lorenz",
+                           "2lorenz", "linear", "linear_chi", "quad",
+                           "cube", "poly", "nexp", "xyquad", "xygauss",
+                           "sincos", NULL };
 
 	Alist alist[9];
 	alist[0] = make_alist( "y",       ID_VAL,    NULL,    &y);
@@ -86,8 +87,8 @@ Var * ff_fit(vfuncptr func, Var *arg)
 	*/ 
 
     if (x && (V_DSIZE(x) != V_DSIZE(y))) {
-        sprintf(error_buf, "X axis for data [%d points] not same size as Y axis [%d points]", 
-                V_DSIZE(x), V_DSIZE(y));
+        sprintf(error_buf, "%s: X axis for data [%d points] not same size as Y axis [%d points]",
+                func->name, V_DSIZE(x), V_DSIZE(y));
         parse_error(NULL);
         return(NULL);
     }
@@ -234,7 +235,7 @@ ifptr           func = NULL;
 
 
 int
-dfit(Var *x, Var *y, Var *ip, char *fname, 
+dfit(Var *x, Var *y, Var *ip, const char *fname,
      int iter, double **op, int *nparam, int plot,int verbose, double ignore)
 {
 
@@ -273,7 +274,7 @@ dfit(Var *x, Var *y, Var *ip, char *fname,
 		if (tmp == NULL || (fp = fopen(tmp, "w")) == NULL ) {
 			parse_error("unable to open temp file");
 			if (tmp) free(tmp);
-			return(NULL);
+			return(0);
 		}
         for (i = 0 ; i < ndata ; i++) {
             fprintf(fp, "%g %g\n", data[0][i], data[1][i]);
@@ -364,7 +365,7 @@ first_guess(double *a, char *fname,int verbose)
 }
 
 void
-gd(Var *x, Var *y, char *fname, double ignore)
+gd(Var *x, Var *y, const char *fname, double ignore)
 {
     data = dmatrix(datacols, V_DSIZE(y));
     jmax = 2;
@@ -888,7 +889,7 @@ struct routine {
 /* prompt with the fn command */
 
 ifptr
-getfcnptr(char *name, int *num_indep, int *linflag, int *na, char *comment)
+getfcnptr(const char *name, int *num_indep, int *linflag, int *na, char *comment)
 {
     int             i = 0;
     while (fcn[i].na != 0) {

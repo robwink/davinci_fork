@@ -37,7 +37,9 @@
 */
 float median_window(float *s1, int width, int height, float ignore);
 
-static int cmp(float *a, float *b) { return((*a)-(*b)); }
+static int cmp(const void *a, const void *b) {
+  return(*(float *)a - *(float *)b); 
+}
 
 float median_window(float *s1, int width, int height, float ignore)
 {
@@ -304,7 +306,7 @@ ff_window(vfuncptr func, Var * arg)
     /*
     ** algorithms that could fit into this framework.
     */
-    char *types[] = { "min", "max", "median", NULL };
+    const char *types[] = { "min", "max", "median", NULL };
 
 /*
                       "gauss", "guassian", 
@@ -356,7 +358,7 @@ ff_window(vfuncptr func, Var * arg)
         ** Median reorders the data (sorts), so you can't roll the window,
         ** you have to reload it each time.
         */
-        f_out = calloc(x*y, sizeof(float));
+        f_out = calloc((size_t)x*(size_t)y, sizeof(float));
         rval = newVal(BSQ, x, y, 1, FLOAT, f_out);
         for (j = 0 ; j < y ; j+=1) {
             for (i = 0 ; i < x ; i+=1) {
@@ -375,7 +377,7 @@ ff_window(vfuncptr func, Var * arg)
 		} else if (!strcmp(type, "max")) {
 			hf = histogram_max;
 		}
-		s_out = calloc(x*y, sizeof(short));
+		s_out = calloc((size_t)x*(size_t)y, sizeof(short));
 		rval = newVal(BSQ, x, y, 1, SHORT, s_out);
 		for (i = 0 ; i < x ; i+=1) {
 			load_window(w, obj, i, 0, ignore);

@@ -28,6 +28,7 @@ ff_deghost(vfuncptr func, Var * arg)
 	    *out = NULL;
 	char *id;
 	int z, y, x, nbytes, i;
+	size_t xy;
 	void *out_data;
 	char *msg;
 	char prompt[256];
@@ -60,6 +61,7 @@ ff_deghost(vfuncptr func, Var * arg)
 	x = GetX(obj);
 	y = GetY(obj);
 	z = GetZ(obj);
+	xy = (size_t)x*(size_t)y;
 	nbytes = NBYTES(V_FORMAT(obj));
 	
 	if (z != V_DSIZE(down)) {
@@ -72,13 +74,13 @@ ff_deghost(vfuncptr func, Var * arg)
 	}
 
 
-	out = newVal(BSQ, x, y, z, V_FORMAT(obj), calloc(x*y*z,nbytes));
+	out = newVal(BSQ, x, y, z, V_FORMAT(obj), calloc(xy*z,nbytes));
 
 	for (i = 0 ; i < z ; i++) {
 		v = make_band(obj, i);
 		out_data = V_DATA(out)+cpos(0,0,i,out)*nbytes;
 		if (extract_int(down,i) == 0 && (right == NULL || extract_int(right,i) == 0)) {
-			memcpy(out_data, V_DATA(v), x*y*nbytes);
+			memcpy(out_data, V_DATA(v), xy*nbytes);
 		} else  {
 			sprintf(prompt, "Band %d: ", i+1);
 			msg = 
@@ -110,18 +112,20 @@ make_band(Var *in, int band)
 	int i, j ,k;
 	int nbytes;
 	Var *out;
-	int p1, p2;
+	size_t p1, p2;
+	size_t xy;
 
 	x = GetX(in);
 	y = GetY(in);
 	z = GetZ(in);
+	xy = (size_t)x*(size_t)y;
 	nbytes = NBYTES(V_FORMAT(in));
 
-	out = newVal(BSQ, x, y, 1, V_FORMAT(in), calloc(x*y, nbytes));
+	out = newVal(BSQ, x, y, 1, V_FORMAT(in), calloc(xy, nbytes));
 
 	if (V_ORG(in) == BSQ) {
 		p1 = cpos(0,0,band,in);
-		memcpy(V_DATA(out), (char *)V_DATA(in)+p1*nbytes, nbytes*x*y);
+		memcpy(V_DATA(out), (char *)V_DATA(in)+p1*nbytes, nbytes*xy);
 	} else {
 		for (i = 0 ; i< x ; i++) {
 			for (j = 0 ; j< y ; j++) {

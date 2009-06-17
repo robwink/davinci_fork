@@ -21,55 +21,55 @@
 	i = x2 + V_SIZE(s2)[0]*(y2 + V_SIZE(s2)[1]*z2);\
 	return(i);
 
-int
-__BIL2BIP(Var *s1, Var *s2, int i)
+size_t
+__BIL2BIP(Var *s1, Var *s2, size_t i)
 {
-	int x,y,z;
-	int ab;
+	size_t x,y,z;
+	size_t ab;
 
 	RPOS(x,z,y, z,x,y);
 }
 
-int
-__BIL2BSQ(Var *s1, Var *s2, int i)
+size_t
+__BIL2BSQ(Var *s1, Var *s2, size_t i)
 {
-	int x,y,z;
-	int ab;
+	size_t x,y,z;
+	size_t ab;
 
 	RPOS(x,z,y, x,y,z);
 }
 
-int
-__BSQ2BIL(Var *s1, Var *s2, int i)
+size_t
+__BSQ2BIL(Var *s1, Var *s2, size_t i)
 {
-	int x,y,z;
-	int ab;
+	size_t x,y,z;
+	size_t ab;
 
 	RPOS(x,y,z, x,z,y);
 }
 
-int
-__BSQ2BIP(Var *s1, Var *s2, int i)
+size_t
+__BSQ2BIP(Var *s1, Var *s2, size_t i)
 {
-	int x,y,z;
-	int ab;
+	size_t x,y,z;
+	size_t ab;
 
 	RPOS(x,y,z, z,x,y);
 }
-int
-__BIP2BIL(Var *s1, Var *s2, int i)
+size_t
+__BIP2BIL(Var *s1, Var *s2, size_t i)
 {
-	int x,y,z;
-	int ab;
+	size_t x,y,z;
+	size_t ab;
 
 	RPOS(z,x,y, x,z,y);
 }
 
-int
-__BIP2BSQ(Var *s1, Var *s2, int i)
+size_t
+__BIP2BSQ(Var *s1, Var *s2, size_t i)
 {
-	int x,y,z;
-	int ab;
+	size_t x,y,z;
+	size_t ab;
 
 	RPOS(z,x,y, x,y,z);
 }
@@ -78,27 +78,27 @@ __BIP2BSQ(Var *s1, Var *s2, int i)
  ** These do essentially nothing, for conversion from and to the same type
  **/
 
-int
-__BIP2BIP(Var *s1, Var *s2, int i)
+size_t
+__BIP2BIP(Var *s1, Var *s2, size_t i)
 {
-	int x,y,z;
-	int ab;
+	size_t x,y,z;
+	size_t ab;
 
 	RPOS(z,x,y,z,x,y);
 }
-int
-__BSQ2BSQ(Var *s1, Var *s2, int i)
+size_t
+__BSQ2BSQ(Var *s1, Var *s2, size_t i)
 {
-	int x,y,z;
-	int ab;
+	size_t x,y,z;
+	size_t ab;
 
  	RPOS(x,y,z,x,y,z); 
 }
-int
-__BIL2BIL(Var *s1, Var *s2, int i)
+size_t
+__BIL2BIL(Var *s1, Var *s2, size_t i)
 {
-	int x,y,z;
-	int ab;
+	size_t x,y,z;
+	size_t ab;
 
 	RPOS(x,z,y,x,z,y);
 }

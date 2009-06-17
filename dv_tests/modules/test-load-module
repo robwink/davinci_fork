@@ -1,0 +1,8 @@
+load_module("thm")
+loaded = HasValue(thm);
+unload_module("thm")
+unloaded = HasValue(thm)==0;
+
+if (loaded==1 && unloaded==1) exit(0);
+exit(1);
+

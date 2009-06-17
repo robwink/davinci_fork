@@ -29,7 +29,7 @@ ff_shade(vfuncptr func, Var * arg)
 	float *odata;
 	double		gx, gy, gz, sx, sy, sz;
 	int x, y;
-	int pos;
+	size_t pos;
 	double left, up, val;
 	
 	Var *obj, *out;
@@ -77,7 +77,7 @@ ff_shade(vfuncptr func, Var * arg)
 	
 	printf("Sun vector: %.4f %.4f %.4f\n", sx, sy, sz);
 	
-	odata = calloc(x*y, sizeof(float));
+	odata = calloc(x*(size_t)y, sizeof(float));
 	
 	for (j = 1 ; j < y ; j+=1) {
 		for (i = 1 ; i < x ; i+=1) {
@@ -131,7 +131,7 @@ ff_shade2(vfuncptr func, Var * arg)
     double		drop;
     double		shadow_height;
     int x, y;
-	int pos;
+	size_t pos;
 	double v;
 	int no_shade = 0;
 	float theta, ctheta, color;
@@ -177,7 +177,7 @@ ff_shade2(vfuncptr func, Var * arg)
 
     printf("Sun vector is %f\n", atan2(sy, sx) * 180 / M_PI);
 
-    odata = calloc(x*y, 1);
+    odata = calloc(x*(size_t)y, 1);
     out = newVal(BSQ, x, y, 1, BYTE, odata);
 
     gx = dx;
@@ -262,27 +262,28 @@ void sphrec(float lon, float lat, float *x, float *y, float *z)
 
 int GetDX(Var *obj) 
 {
-	switch (V_ORG(obj)) {
-		case BSQ:	return(1);
-		case BIL:	return(1);
-		case BIP:	return(V_SIZE(obj)[0]);
-	}
+  switch (V_ORG(obj)) {
+    case BSQ: return(1);
+    case BIL: return(1);
+    case BIP: return(V_SIZE(obj)[0]);
+  }
+  return 0;
 }
 int GetDY(Var *obj)
 {
-	switch (V_ORG(obj)) {
-		case BSQ:	return(V_SIZE(obj)[0]);
-		case BIL:	return(V_SIZE(obj)[0] * V_SIZE(obj)[1]);
-		case BIP:	return(V_SIZE(obj)[0] * V_SIZE(obj)[1]);
-	}
+  switch (V_ORG(obj)) {
+    case BSQ: return(V_SIZE(obj)[0]);
+    case BIL: return(V_SIZE(obj)[0] * V_SIZE(obj)[1]);
+    case BIP: return(V_SIZE(obj)[0] * V_SIZE(obj)[1]);
+  }
+  return 0;
 }
 int GetDZ(Var *obj)
 {
-	switch (V_ORG(obj)) {
-		case BSQ:	return(V_SIZE(obj)[0] * V_SIZE(obj)[1]);
-		case BIL:	return(V_SIZE(obj)[0]);
-		case BIP:	return(1);
-	}
+  switch (V_ORG(obj)) {
+    case BSQ: return(V_SIZE(obj)[0] * V_SIZE(obj)[1]);
+    case BIL: return(V_SIZE(obj)[0]);
+    case BIP: return(1);
+  }
+  return 0;
 }
-
-

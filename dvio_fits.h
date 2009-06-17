@@ -1,9 +1,9 @@
 char     DVIO_FITS_err_text[64];
 
-#define QUERY_FITS_ERROR(status)    if (status) { \
+#define QUERY_FITS_ERROR(status,null_return)    if (status) { \
       fits_get_errstatus(status,DVIO_FITS_err_text); \
       parse_error("cfitsio ERROR occured:\n\t%s\n",DVIO_FITS_err_text); \
-      return(NULL); }
+      return(null_return); }
 
 int	Write_FITS_Image(fitsfile *fptr, Var *obj);
 Var * Read_FITS_Image(fitsfile *fptr);

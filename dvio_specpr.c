@@ -1,4 +1,6 @@
-#include "parser.h" 
+#include <string.h>
+#include "parser.h"
+#include "func.h"
 #include "dvio_specpr.h"
 
 char *

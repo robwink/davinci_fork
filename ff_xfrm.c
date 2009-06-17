@@ -12,7 +12,7 @@ ff_basis(vfuncptr func, Var * arg)
     double *basis;
     char *ptr = NULL;
 
-    char *options[] = { "hadamard", "haar", NULL };
+    const char *options[] = { "hadamard", "haar", NULL };
     Alist alist[4];
 	alist[0] = make_alist("object",    ID_VAL,    NULL,       &obj);
 	alist[1] = make_alist("type",      ID_ENUM,   options,    &ptr);
@@ -75,7 +75,7 @@ ff_mxm(vfuncptr func, Var * arg)
     Var *v;
 
     Alist	alist[4];
-    char	*formats[] = { "float", "double", NULL };
+    const char	*formats[] = { "float", "double", NULL };
     char	*format = "double"; /* Default format */
 
     double	*double_data;

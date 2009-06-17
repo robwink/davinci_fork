@@ -1,7 +1,7 @@
 #include "parser.h"
 
-void quicksort(void *, size_t, size_t, int (*)(), int *, int, int);
-void *reorgByIndex(Var *, Var *, int *);
+static void quicksort(void *, size_t, size_t, int (*)(), int *, int, int);
+static void *reorgByIndex(Var *, Var *, int *);
 
 
 int cmp_string(const void *a, const void *b)
@@ -67,7 +67,7 @@ int cmp_double(const void *a, const void *b)
  * index - Source for the sorted sortList
  * sortList  - Sorted sortList, describing where blocks of object are placed
  */
-void *reorgByIndex(Var *object, Var *index, int *sortList)
+static void *reorgByIndex(Var *object, Var *index, int *sortList)
 {
   int   t;			// temporary integer
   int   x, y, z;		// x y z for object
@@ -170,13 +170,14 @@ void *reorgByIndex(Var *object, Var *index, int *sortList)
 
 
 
-#define L sizeof(long)
 
 
 //	QuickSort adapted from Kernighan and Ritchie, 'The C Programming Language'
 static inline void qswap(void *base, int i, int j, int width, int *sortList)
 {
   long tmp;
+  unsigned char b;
+  int k;
   
   // Maintain a sorted list of elements
   tmp = sortList[j];
@@ -184,11 +185,10 @@ static inline void qswap(void *base, int i, int j, int width, int *sortList)
   sortList[i] = tmp;
   
   // Swap two elements, given the size of the elements
-  for (; width > 0; i++, j++, width -= L) {
-    tmp = *(long *) ((long) base + i * width);
-    *(long *) ((long) base + i * width) =
-      *(long *) ((long) base + j * width);
-    *(long *) ((long) base + j * width) = tmp;
+  for (k=0; k < width; k++) {
+    b = *(char *) ((long) base + i * width + k);
+    *(char *) ((long) base + i * width + k) = *(char *) ((long) base + j * width + k);
+    *(char *) ((long) base + j * width + k) = b;
   }
 }
 
@@ -197,7 +197,7 @@ static inline void qswap(void *base, int i, int j, int width, int *sortList)
 
 
 //	QuickSort adapted from Kernighan and Ritchie, 'The C Programming Language'
-void quicksort(void *base, size_t num, size_t width, int (*cmp) (),
+static void quicksort(void *base, size_t num, size_t width, int (*cmp) (),
 	       int *sortList, int left, int right)
 {
   int i, last, tmp;
@@ -461,8 +461,8 @@ Var *ff_sort(vfuncptr func, Var * arg)
     
   } else {
     parse_error("Incompatible object type. Must be TEXT or VAL.");
-    return NULL;
   }
+  return NULL;
 }
 
 
@@ -669,6 +669,7 @@ ff_unique(vfuncptr func, Var * arg)
       return(result);
     }
   }
+  return NULL;
 }
 
 

@@ -1,5 +1,7 @@
 #include "parser.h"
 
+void jpeg_fdct_bin_c1(int *);
+
 Var *ff_bindct(vfuncptr func, Var * arg)
 {
     Var *obj = NULL;
@@ -229,7 +231,7 @@ binrdct_c1(int *coef_block, int *output_buf)
 #define DCTSIZE 8
 #define DCTSIZE2 DCTSIZE*DCTSIZE
 
-jpeg_fdct_bin_c1(int *data)
+void jpeg_fdct_bin_c1(int *data)
 {
     int tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
     int tmp10, tmp11, tmp12, tmp13;
