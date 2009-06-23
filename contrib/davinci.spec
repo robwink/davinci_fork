@@ -28,11 +28,11 @@ Name:         davinci
 Summary:      Davinci - A tool to manipulate and view various types of data, developed in Mars Space Flight Facility
 URL:          http://davinci.asu.edu
 Vendor:       Mars Space Flight Facility at Arizona State University
-Packager:     Betim Deva <betim@asu.edu>  
-Distribution: Fedora Core 4 (MSFF)
-Group:        Applications/Science/Davinci
+Packager:     Davinci Devs <davinci-dev@mars.asu.edu>  
+Distribution: CentOS 5 (MSFF)
+Group:        Applications/Science
 License:      GPLv2
-Version:	1.69
+Version:      2.0
 Release:      1
 
 #   list of sources
@@ -61,12 +61,12 @@ Prefix: %_prefix
 %build
 #Iomedley
 cd iomedley
-./configure
+./configure --prefix=%{_prefix} --libdir=%{_libdir}  
 make 
 cd ../
 
 #Davinci
-./configure --prefix=/usr  --disable-libisis   --with-viewer=/usr/bin/display \
+./configure --prefix=%{_prefix} --libdir=%{_libdir} --disable-libisis   --with-viewer=/usr/bin/display \
 --with-modpath=%{_libdir}/%{name} --with-help=%{_datadir}/%{name}/docs/dv.gih
 
 

@@ -46,6 +46,7 @@ AC_C_BIGENDIAN
 
 dnl Enable Position Independent Code (often required by 64-bit systems)
 export CFLAGS="${CFLAGS} -fPIC"
+export CXXFLAGS="${CXXFLAGS} -fPIC"
 
 dnl Handle user-controllable options.
 
