@@ -1,9 +1,0 @@
-A=read_lines("Read_Write_Test_File")
-write(A,"Tmp.dat",ascii,force=1)
-b=syscall("diff Read_Write_Test_File Tmp.dat")
-system("rm -f Tmp.dat")
-if (length(b) == 0) {
-	exit(0);
-}
-exit(1);
-
