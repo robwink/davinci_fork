@@ -1,0 +1,4 @@
+results = syscall("davinci -qe 'echo(3.0/4)'")
+if (length(results) == 1 && atof(results[,1])==0.75) exit(0);
+exit(1);
+

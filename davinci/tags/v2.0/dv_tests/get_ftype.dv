@@ -1,0 +1,24 @@
+define get_ftype(){
+	if (type($1) == "TEXT"){
+		in_list=$1;
+		out_type=in_list;
+		for(i=1;i<=length(in_list);i+=1){
+			cmd="ls -ld "+in_list[,i]+" | cut -c1-1";
+			result=syscall(cmd);
+			if (HasValue(result)){
+				if (result[,1] == "d") out_type[,i]="dir";
+				if (result[,1] == "-") out_type[,i]="file";
+			} else {
+				out_type[,i]="other";
+			}
+		}
+		return out_type;
+	} else {
+		result=syscall("ls -ld "+$1+" | cut -c1-1");
+		if (HasValue(result)){
+			if (result[,1] == "d") return("dir");
+			if (result[,1] == "-") return("file");
+		}
+		return("other");
+	}
+}
