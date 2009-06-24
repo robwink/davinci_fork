@@ -1,0 +1,9 @@
+load_module("thm")
+if (HasValue(thm)){
+	img=thm.sstretch(load("../data/THEMIS.cub"),ignore=-32768);
+	if (HasValue(img)) exit(0);
+} else {
+	exit(99);
+}
+exit(1);
+
