@@ -31,7 +31,6 @@ static double *radcorrspace(Var *measured, float *bbody);
 static double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_start, double *rad_end, double *slopes);
 static char *get_temp_rad(char *fname);
 
-
 /* THM Module Functions */
 static Var *thm_corners(vfuncptr, Var *);
 static Var *thm_column_fill(vfuncptr, Var *);
@@ -3022,14 +3021,19 @@ float *convolve(float *obj, float *kernel, int ox, int oy, int oz, int kx, int k
 
 static char *get_temp_rad(char *fname) {
   /* load temp_rad_v4 table into memory */
+
   if (fname == NULL) {
     const char *dv_sfiles_val = getenv(DV_SCRIPT_FILES_ENV);
+    
     if (dv_sfiles_val == NULL){
       dv_sfiles_val = RAD_TEMP_DEFAULT_PATH;
+      fname = calloc(1, strlen(dv_sfiles_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
+      sprintf(fname,"%s/%s",dv_sfiles_val, RAD_TEMP_LOOKUP_TBL);
+    } else {
+      const char *dv_inst_params = DV_INST_PARAMS;
+      fname = calloc(1, strlen(dv_sfiles_val)+1+strlen(dv_inst_params)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
+      sprintf(fname,"%s/%s/%s",dv_sfiles_val, dv_inst_params, RAD_TEMP_LOOKUP_TBL);
     }
-    const char *dv_inst_params = DV_INST_PARAMS;
-    fname = calloc(1, strlen(dv_sfiles_val)+1+strlen(dv_inst_params)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
-    sprintf(fname,"%s/%s/%s",dv_sfiles_val, dv_inst_params, RAD_TEMP_LOOKUP_TBL);
   }
   return(fname);
 }
