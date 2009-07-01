@@ -1869,8 +1869,8 @@ ff_exists(vfuncptr func, Var * arg)
         parse_error( "%s: No filename specified.", func->name);
         return(NULL);
     } else if (V_TYPE(v) == ID_STRING) {
-        filename = V_STRING(v);
-        return(newInt(access(filename, F_OK) == 0));
+      filename = dv_locate_file(V_STRING(v));
+      return(newInt(access(filename, F_OK) == 0));
     } else if (V_TYPE(v) == ID_TEXT) {
         int *data = calloc(n, sizeof(int));
         n = V_TEXT(v).Row;
