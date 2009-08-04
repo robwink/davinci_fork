@@ -59,7 +59,7 @@ void fake_data();
 void env_vars();
 void log_time();
 void lhandler(char *line);
-void quit(void);
+void quit(int);
 void parse_buffer(char *buf);
 
 
@@ -314,7 +314,7 @@ main(int ac, char **av)
 	the endless loop starts
 	*/
     event_loop();
-    quit();
+    quit(0);
 
     /* event_loop never returns... unless we're not interactive */
 
@@ -468,13 +468,13 @@ void lhandler(char *line)
         ** Readline has a whole line of input, process it.
         **/
         if (line == NULL) {
-            quit();
+            quit(0);
         }
         
 
         if ((buf = (char *)malloc(strlen(line)+2)) == NULL){
            parse_error("Unable to alloc %ld bytes.\n", strlen(line)+2);
-           quit();
+           quit(0);
         }
         strcpy(buf, line);
         strcat(buf, "\n");
@@ -568,7 +568,7 @@ parse_buffer(char *buf)
         ** if this is a function definition, do no further parsing yet.
         */
         j = yyparse(i, (Var *)yytext);
-        if (j == -1) quit();
+        if (j == -1) quit(0);
 
         if (j == 1 && curnode != NULL) {
             node = curnode;

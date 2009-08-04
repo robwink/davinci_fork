@@ -1802,10 +1802,12 @@ Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
    Of course, there's no guarantee that an I/O module won't be spammy either.
 */
 
+#ifdef BUILD_MODULE_SUPPORT
     if ((v = load_pds_from_io_module(fp, fname, data, suffix_data)) != NULL) {
         fclose(fp); 
         return v;
     }
+#endif
     ob = (OBJDESC *) OdlParseLabelFile(fname, err_file,
                                        ODL_EXPAND_STRUCTURE, VERBOSE == 0);
 	fclose(fp);

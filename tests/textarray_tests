@@ -1,3 +1,4 @@
+verbose = 0
 define Passed(name) {
 	printf("%s: PASSED.\n",name)
 
@@ -376,15 +377,11 @@ return(0)
 }
 
 
-define string_test() {
+verbose=1
 
-		
-	if(String_Test1()) {
-		printf("Failed Test 1\n");
-		return(1)
-	} else {
-		printf("Passed Test 1\n\n");
-	}
-
-	return (NULL)
+if(String_Test1()) {
+	printf("Failed Test 1\n");
+	return(1)
+} else {
+	printf("Passed Test 1\n\n");
 }

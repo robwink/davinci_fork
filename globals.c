@@ -33,7 +33,7 @@ int indent = 0;
 
 Var *curnode = NULL;
 
-void quit(void);
+void quit(int);
 
 void 
 make_sym(Var * v, int format, char *str)
@@ -91,7 +91,7 @@ eval_buffer(char *buf)
         ** if this is a function definition, do no further parsing yet.
         */
         j = yyparse(i, (Var *)yytext);
-        if (j == -1) quit();
+        if (j == -1) quit(0);
 
         if (j == 1 && curnode != NULL) {
             node = curnode;
@@ -108,7 +108,7 @@ eval_buffer(char *buf)
 
 
 void
-quit(void)
+quit(int return_code)
 {
     char cmd[256];
     char *path = getenv("TMPDIR");
@@ -121,11 +121,13 @@ quit(void)
 #endif
     }
 
+    clean_scope(scope_tos());
+
     /**
     ** clean up temporary directory
     **/
     rmrf(path);
-    exit(0);
+    exit(return_code);
 }
 
 

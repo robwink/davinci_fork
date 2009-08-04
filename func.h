@@ -6,19 +6,19 @@ extern "C" {
 
 #ifndef HAVE_LIBREADLINE
   /* JAS FIX: these conflict if readline is used.  not sure about add_history().. */
-char *readline(char *);
-void add_history();
+  char *readline(char *);
+  void add_history();
 #endif
 
 #if 0
   /* JAS FIX: these conflict if readline is used, and are not needed otherwise. */
-void rl_callback_handler_install(char *, void (*)(char *));
-struct _hist_state* history_get_history_state(void);
-void rl_callback_read_char ();
-void rl_callback_handler_remove();
+  void rl_callback_handler_install(char *, void (*)(char *));
+  struct _hist_state* history_get_history_state(void);
+  void rl_callback_read_char ();
+  void rl_callback_handler_remove();
 #endif
 
-int yywrap ( void );
+  int yywrap ( void );
 
 #ifdef HAVE_LIBHDF5
 #include <hdf5.h>
@@ -438,14 +438,14 @@ Var * ff_delete(vfuncptr func, Var *arg);
 #ifdef __cplusplus
 extern "C" {
 #endif
-Var *new_struct(int ac);
-void add_struct(Var *s, const char *name, Var *exp);
-Var *remove_struct(Var *, int);
-int find_struct(Var *, const char *, Var **);
-void free_struct(Var *);
-/* internal functions for text arrays */
-Var *newString(char *str);
-Var *newText(int rows, char **text);
+  Var *new_struct(int ac);
+  void add_struct(Var *s, const char *name, Var *exp);
+  Var *remove_struct(Var *, int);
+  int find_struct(Var *, const char *, Var **);
+  void free_struct(Var *);
+  /* internal functions for text arrays */
+  Var *newString(char *str);
+  Var *newText(int rows, char **text);
 #ifdef __cplusplus
 }
 #endif
@@ -458,9 +458,9 @@ Var *ff_equals(vfuncptr func, Var *arg);
 #ifdef __cplusplus
 extern "C" {
 #endif
-Var * newInt(int i);
-Var * newFloat(float f);
-Var * newDouble(double f);
+  Var * newInt(int i);
+  Var * newFloat(float f);
+  Var * newDouble(double f);
 #ifdef __cplusplus
 }
 #endif
@@ -559,3 +559,7 @@ Var *append_arg(Var *, char *, Var *);
 int compare_vars(Var *a, Var *b);
 
 extern void pp_print_var(Var *, char *, int, int);
+Var *ff_grassfire(vfuncptr func, Var * arg);
+int math_operable(Var *a, Var *b);
+int compare_struct(Var *a, Var *b);
+Var *ff_create_text(vfuncptr func, Var * arg);

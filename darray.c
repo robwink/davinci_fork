@@ -507,6 +507,9 @@ Narray_count(const Narray *a)
     return(-1);
 }
 
+// A do-nothing function to pass into avl_destroy
+avl_node_func avl_free_func(void *data, void *params) { }
+
 void
 Narray_free(Narray *a, Narray_FuncPtr fptr)
 {
@@ -514,7 +517,7 @@ Narray_free(Narray *a, Narray_FuncPtr fptr)
     int count = Darray_count(a->data);
     Nnode *n;
 
-    avl_destroy(a->tree, NULL);
+    avl_destroy(a->tree, avl_free_func);
 
     for (i = 0 ; i < count ; i++) {
         Darray_get(a->data, i, (void **)&n);
