@@ -1,0 +1,87 @@
+verbose = 0
+define CHECK() {
+  name = $1
+  val = $2
+  if (val == 1) {
+    printf("%s: passed\n", name)
+  } else {
+    printf("%s: FAILED\n", name)
+  }
+}
+
+define test_clone_string_1line() {
+  teststr = "one"
+  control = teststr
+  test = teststr
+  for (i = 2 ; i < 10 ; i+=1) {
+    test = clone(teststr, i)
+    control = control + teststr
+    if (control == test) {
+      continue;
+    } else {
+      printf("These aren't equal:\n");
+      echo(control)
+      echo(test)
+    }
+  }
+  return(1)
+}
+
+define test_clone_string_Nline() {
+  teststr = "one"
+  control = teststr // teststr // teststr
+  for (i = 2 ; i < 10 ; i+=1) {
+    test = clone(teststr, 3, i)
+    control = cat(control, teststr // teststr // teststr, y)
+    if (control == test) {
+      continue
+    }
+    printf("These aren't equal:\n");
+    echo(control)
+    echo(test)
+    return(0);
+  }
+  return(1)
+}
+
+define test_clone_text() {
+  test_text = cat("one", "two", y)
+  control = test_text // test_text // test_text
+  for (i = 2 ; i < 10 ; i+=1) {
+    test = clone(test_text, 3, i)
+    control = cat(control, test_text // test_text // test_text, y)
+    if (control == test) {
+      continue
+    }
+    printf("These aren't equal:\n");
+    echo(control)
+    echo(test)
+    return(0);
+  }
+  return(1)
+}
+
+define test_create_text() {
+  for (i = 1 ; i < 10 ; i+=1) {
+    test = text(i)
+    if (length(test) == i && strlen(test) == clone(0, 1, i)) {
+      continue;
+    } else {
+      if (length(test) != i) {
+	printf("length(text) = %d, expected %d\n", length(text), i);
+      }
+      if (strlen(test) != clone(0, 1, i)) {
+	printf("strlen(text) is:\n")
+	echo(strlen(test))
+      }
+      return(0)
+    }
+  }
+  return(1)
+}
+
+verbose = 1
+CHECK("test_clone_string_1line", test_clone_string_1line())
+CHECK("test_clone_string_Nline", test_clone_string_Nline())
+CHECK("test_clone_text", test_clone_text())
+CHECK("test_create_text", test_create_text())

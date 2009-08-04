@@ -207,29 +207,30 @@ struct _vfuncptr vfunclist[] = {
   { "ifill",      ff_ifill,    NULL , NULL},    /* interpolated fill */
   { "jfjll",      ff_jfill,    NULL , NULL},    /* jnterpolated fjll */
   { "kfill",      ff_kfill,    NULL , NULL},
-  { "contour",    ff_contour,    NULL , NULL},
-  { "rotate",    ff_rotation,    NULL , NULL},
+  { "contour",    ff_contour,   NULL , NULL},
+  { "rotate",    ff_rotation,   NULL , NULL},
 
 
-  { "basis",      ff_basis,       NULL , NULL},
-  { "mxm",        ff_mxm,         NULL , NULL},
-  { "identity",   ff_identity,    NULL , NULL},
-  { "minvert",    ff_minvert,     NULL , NULL},
-  { "eigen",      ff_eigen,       NULL , NULL},
-  { "covar",      ff_covar,       NULL , NULL},
-  { "corr",       ff_covar,       NULL , NULL},
-  { "scp",        ff_covar,       NULL , NULL},
-  { "pcs",        ff_pcs,         NULL , NULL},
+  { "basis",      ff_basis,     NULL , NULL},
+  { "mxm",        ff_mxm,       NULL , NULL},
+  { "identity",   ff_identity,  NULL , NULL},
+  { "minvert",    ff_minvert,   NULL , NULL},
+  { "eigen",      ff_eigen,     NULL , NULL},
+  { "covar",      ff_covar,     NULL , NULL},
+  { "corr",       ff_covar,     NULL , NULL},
+  { "scp",        ff_covar,     NULL , NULL},
+  { "pcs",        ff_pcs,       NULL , NULL},
 
-  { "histogram",  ff_histogram,       NULL , NULL},
-  { "hstats",     ff_hstats,          NULL , NULL},
-  { "rgb2hsv",    ff_rgb2hsv,         NULL , NULL},
-  { "hsv2rgb",    ff_hsv2rgb,         NULL , NULL},
-  { "rgb",        ff_rgb,             NULL , NULL},
-  { "ramp",       ff_ramp,             NULL , NULL},
-  { "sawtooth",       ff_sawtooth,             NULL , NULL},
+  { "histogram",  ff_histogram, NULL , NULL},
+  { "hstats",     ff_hstats,    NULL , NULL},
+  { "rgb2hsv",    ff_rgb2hsv,   NULL , NULL},
+  { "hsv2rgb",    ff_hsv2rgb,   NULL , NULL},
+  { "rgb",        ff_rgb,       NULL , NULL},
+  { "ramp",       ff_ramp,      NULL , NULL},
+  { "sawtooth",   ff_sawtooth,  NULL , NULL},
+  { "grassfile",  ff_grassfire, NULL, NULL},
 
-  { "entropy",        ff_entropy,     NULL , NULL},
+  { "entropy",    ff_entropy,   NULL, NULL},
 
   { "dct",        ff_dct,     NULL , NULL},
   { "fft",        ff_fft,     (void *)1 , NULL},
@@ -339,9 +340,11 @@ struct _vfuncptr vfunclist[] = {
   { "load_bin5",         ff_load_bin5,      NULL, NULL },
   { "load_tdb",          ff_load_tdb,       NULL, NULL },
   { "cinterp",           ff_cinterp,        NULL, NULL },
-/*  { "blend",             ff_blend,          NULL, NULL }, */
+  /*  { "blend",             ff_blend,          NULL, NULL }, */
+  { "text",           ff_create_text,        NULL, NULL },
 
   { NULL,                NULL,              NULL, NULL }
+
 };
 
 #endif

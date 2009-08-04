@@ -1,6 +1,6 @@
-/* 
- ** These symbols were moved from main.c in order to create
- ** a windows dll easier.
+/*
+** These symbols were moved from main.c in order to create
+** a windows dll easier.
 */
 #include <stdio.h>
 #include <setjmp.h>
@@ -33,34 +33,34 @@ int indent = 0;
 
 Var *curnode = NULL;
 
-void quit(void);
+void quit(int);
 
-void 
+void
 make_sym(Var * v, int format, char *str)
 {
-    V_FORMAT(v) = format;
-    V_DSIZE(v) = 1;
-    V_SIZE(v)[0] = V_SIZE(v)[1] = V_SIZE(v)[2] = 1;
-    V_ORG(v) = BSQ;
-    V_DATA(v) = calloc(1, NBYTES(format));
+  V_FORMAT(v) = format;
+  V_DSIZE(v) = 1;
+  V_SIZE(v)[0] = V_SIZE(v)[1] = V_SIZE(v)[2] = 1;
+  V_ORG(v) = BSQ;
+  V_DATA(v) = calloc(1, NBYTES(format));
 
-    switch (format) {
+  switch (format) {
     case INT:
-        *((int *) (V_DATA(v))) = strtol(str, NULL, 10);
-        break;
+      *((int *) (V_DATA(v))) = strtol(str, NULL, 10);
+      break;
     case FLOAT:{
-        double d;
-        d = strtod(str, NULL);
-        if (((d > MAXFLOAT) || (d < MINFLOAT)) && (d != 0)) {
-            free(V_DATA(v));
-            V_DATA(v) = calloc(1, NBYTES(DOUBLE));
-            V_FORMAT(v) = DOUBLE;
-            *((double *) (V_DATA(v))) = d;
-        } else {
-            *((float *) (V_DATA(v))) = d;
-        }
+      double d;
+      d = strtod(str, NULL);
+      if (((d > MAXFLOAT) || (d < MINFLOAT)) && (d != 0)) {
+        free(V_DATA(v));
+        V_DATA(v) = calloc(1, NBYTES(DOUBLE));
+        V_FORMAT(v) = DOUBLE;
+        *((double *) (V_DATA(v))) = d;
+      } else {
+        *((float *) (V_DATA(v))) = d;
+      }
     }
-    }
+  }
 }
 
 
@@ -71,78 +71,80 @@ make_sym(Var * v, int format, char *str)
 Var *
 eval_buffer(char *buf)
 {
-    int i,j;
-    extern char *yytext;
-    Var *v = NULL;
-    void *parent_buffer;
-    void *buffer;
-    Var *node;
+  int i,j;
+  extern char *yytext;
+  Var *v = NULL;
+  void *parent_buffer;
+  void *buffer;
+  Var *node;
 
-    extern void *get_current_buffer();
-    extern void *yy_scan_string();
-    extern void yy_delete_buffer(void *);
-    extern void yy_switch_to_buffer(void *);
+  extern void *get_current_buffer();
+  extern void *yy_scan_string();
+  extern void yy_delete_buffer(void *);
+  extern void yy_switch_to_buffer(void *);
 
-    parent_buffer = (void *) get_current_buffer();
-    buffer = (void *) yy_scan_string(buf);
+  parent_buffer = (void *) get_current_buffer();
+  buffer = (void *) yy_scan_string(buf);
 
-    while((i = yylex()) != 0) {
-        /*
-        ** if this is a function definition, do no further parsing yet.
-        */
-        j = yyparse(i, (Var *)yytext);
-        if (j == -1) quit();
+  while((i = yylex()) != 0) {
+    /*
+    ** if this is a function definition, do no further parsing yet.
+    */
+    j = yyparse(i, (Var *)yytext);
+    if (j == -1) quit(0);
 
-        if (j == 1 && curnode != NULL) {
-            node = curnode;
-            evaluate(node);
-            /* // v = pop(scope_tos()); */
-            free_tree(node);
-        }
+    if (j == 1 && curnode != NULL) {
+      node = curnode;
+      evaluate(node);
+      /* // v = pop(scope_tos()); */
+      free_tree(node);
     }
+  }
 
-    yy_delete_buffer((struct yy_buffer_state *)buffer);
-    if (parent_buffer) yy_switch_to_buffer(parent_buffer);
-    return(v);
+  yy_delete_buffer((struct yy_buffer_state *)buffer);
+  if (parent_buffer) yy_switch_to_buffer(parent_buffer);
+  return(v);
 }
 
 
 void
-quit(void)
+quit(int return_code)
 {
-    char cmd[256];
-    char *path = getenv("TMPDIR");
+  char cmd[256];
+  char *path = getenv("TMPDIR");
 
-    if (interactive) {
-        printf("\n");
+  if (interactive) {
+    printf("\n");
 #if defined(USE_X11_EVENTS) && defined(HAVE_LIBREADLINE)
     /* JAS FIX */
-        rl_callback_handler_remove();
+    rl_callback_handler_remove();
 #endif
-    }
+  }
 
-    /**
-    ** clean up temporary directory
-    **/
-    rmrf(path);
-    exit(0);
+  clean_scope(scope_tos());
+
+  /**
+   ** clean up temporary directory
+   **/
+  rmrf(path);
+  exit(return_code);
 }
 
 
-void 
+void
 yyerror(char *s)
 {
-    extern int pp_count;
-    extern int pp_line;
+  extern int pp_count;
+  extern int pp_line;
 
-    printf("***%*s^ ", pp_count, " ");
-    printf("%s, line %d\n", s, pp_line);
+  printf("***%*s^ ", pp_count, " ");
+  printf("%s, line %d\n", s, pp_line);
 }
 
-int 
+int
 yywrap()
 {
-    return (1);
+  return (1);
 }
 
 
@@ -150,55 +152,55 @@ yywrap()
 char *
 unquote(char *name)
 {
-    char *p = name;
+  char *p = name;
 
-    if (name == NULL) return(NULL);
-    if (*name == 0) return(name);
-    if (*name == '"') {
-        p++;
-        name++;
-        while (*name) {
-            if (*name == '"' && *(name - 1) != '\\')
-                break;
-            name++;
-        }
-        *name = '\0';
-    } else if (*name == '\'') {
-        p++;
-        name++;
-        while (*name) {
-            if (*name == '\'' && *(name - 1) != '\\')
-                break;
-            name++;
-        }
-        *name = '\0';
+  if (name == NULL) return(NULL);
+  if (*name == 0) return(name);
+  if (*name == '"') {
+    p++;
+    name++;
+    while (*name) {
+      if (*name == '"' && *(name - 1) != '\\')
+        break;
+      name++;
     }
-    return (p);
+    *name = '\0';
+  } else if (*name == '\'') {
+    p++;
+    name++;
+    while (*name) {
+      if (*name == '\'' && *(name - 1) != '\\')
+        break;
+      name++;
+    }
+    *name = '\0';
+  }
+  return (p);
 }
 
 char *
 unescape(char *str)
 {
-    char *p = str;
-    char *q = str;
+  char *p = str;
+  char *q = str;
 
-    if (str && *str) {
-        while (*p) {
-            if (*p == '\\') {
-                if (*(p + 1) == 't')
-                    *q = '\t';
-                else if (*(p + 1) == 'n')
-                    *q = '\n';
-                else
-                    *q = *(p + 1);
-                p++;
-            } else {
-                *q = *p;
-            }
-            p++;
-            q++;
-        }
+  if (str && *str) {
+    while (*p) {
+      if (*p == '\\') {
+        if (*(p + 1) == 't')
+          *q = '\t';
+        else if (*(p + 1) == 'n')
+          *q = '\n';
+        else
+          *q = *(p + 1);
+        p++;
+      } else {
         *q = *p;
+      }
+      p++;
+      q++;
     }
-    return (str);
+    *q = *p;
+  }
+  return (str);
 }
