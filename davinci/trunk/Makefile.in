@@ -50,8 +50,7 @@ DIST_COMMON = README $(am__configure_deps) $(library_include_HEADERS) \
 	config/missing config/mkinstalldirs
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/qt_detect.m4 \
-	$(top_srcdir)/acinclude.m4 $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
@@ -109,7 +108,7 @@ am_libdavinci_la_OBJECTS = apifunc.lo array.lo avl.lo binDCT.lo \
 	tools.lo ufunc.lo util.lo x.lo xrt_print_3d.lo lexer.lo \
 	parser.lo ff_gconvolve.lo ff_warp.lo ff_median.lo ff_radial.lo \
 	ff_window.lo dvio_fits.lo ff_extract.lo dvio_tdb.lo \
-	url_create_file.lo ff_filesystem.lo
+	url_create_file.lo ff_filesystem.lo ff_grassfire.lo
 libdavinci_la_OBJECTS = $(am_libdavinci_la_OBJECTS)
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
@@ -355,7 +354,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	lexer.c parser.c parser.h y_tab.h \
 	ff_gconvolve.c ff_warp.c ff_median.c ff_radial.c ff_window.c \
 	dvio_fits.c ff_extract.c dvio_tdb.c \
-	url_create_file.c ff_filesystem.c
+	url_create_file.c ff_filesystem.c ff_grassfire.c
 
 library_includedir = $(includedir)/@PACKAGE@
 library_include_HEADERS = $(wildcard *.h)
@@ -551,6 +550,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_gconvolve.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_gnoise.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_gplot.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_grassfire.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_header.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_hstretch.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_ifill.Plo@am__quote@
