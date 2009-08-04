@@ -1,0 +1,64 @@
+# File: xplat-s.dv
+# 
+# Target part of cross-platform test for daVinci.
+# Corresponding target part is xplat-t.dv
+#
+# This test verifies that various image formats work 
+# across big-endian <-> little-endian platforms.
+#
+# To run the test, run:
+#
+#     davinci -f xplat-s.dv
+#
+# on a little-endian machine. It will generate a
+# collection of files in a directory named "tmp"
+# under the current directory. Move this directory
+# to a big-endian machine and run:
+#
+#     davinci -f xplat-t.dv
+#
+# if you recieve a message saying "All tests passed"
+# then you're ok. Otherwise, look at diagnostic
+# messages generated during script's execution to
+# check which tests failed and why.
+#
+# Associated files: xplat-t.dv, xplat-sup.dv, xplat-param.dv
+#
+
+# Load some service routines
+source("xplat-sup.dv")
+
+# Load parameters file
+source("xplat-param.dv")
+
+printf("Creating "//tmpdir//" directory.\n")
+system("mkdir "//tmpdir//" 2>/dev/null")
+
+printf("Loading "//src_img//" file.\n")
+rc = syscall("test -f "//src_img//" && echo found || echo notfound")
+if (rc[,1]=="notfound"){
+
+	# If isis file not found, check for a uuencoded version
+	rc = syscall("test -f "//src_img//".uu && echo found || echo notfound")
+	if (rc[,1]=="found"){
+		system("uudecode "//src_img//".uu")
+	} else {
+		printf("Src file %s not found. Aborting...\n", src_img)
+		exit(2)
+	}
+}
+d = load(src_img) * 128
+
+printf("Writing test formats ...\n")
+
+for(i=1; i<=n; i+=1){
+	e = org(format(d[,,1:nplanes[i]],fmts[i]),orgs[i])
+	rc = WriteAndVerify(e, tmppfx//types[i],types[i])
+	if (rc != 0){
+		printf("\"%s\" write failed. See previous messages.\n", types[i]);
+	}
+}
+
+printf("\n\nCopy files in \"%s\" to a system with different byte ordering \n", tmpdir)
+printf("than the current machine and execute xplat-t.dv\n")
+

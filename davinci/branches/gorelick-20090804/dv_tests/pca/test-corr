@@ -1,0 +1,33 @@
+source("covar.dv")
+source("corr.dv")
+
+# test #11 - Correlation Matrix
+define test_corr(m,tol) {
+	a1 = dv_corr(obj=m, axis="x");
+	a2 = dv_corr(obj=m, axis="y");
+	a3 = dv_corr(obj=m, axis="z");
+
+	b1 = corr(obj=m, axis=x);
+	b2 = corr(obj=m, axis=y);
+	b3 = corr(obj=m, axis=z);
+
+	if (HasValue(a1) == 0 || (max(a1) == 0 && min(a1) == 0)) return(0);
+	if (HasValue(a2) == 0 || (max(a2) == 0 && min(a2) == 0)) return(0);
+	if (HasValue(a3) == 0 || (max(a3) == 0 && min(a3) == 0)) return(0);
+	if (HasValue(b1) == 0 || (max(b1) == 0 && min(b1) == 0)) return(0);
+	if (HasValue(b2) == 0 || (max(b2) == 0 && min(b2) == 0)) return(0);
+	if (HasValue(b3) == 0 || (max(b3) == 0 && min(b3) == 0)) return(0);
+
+	return(max(max(abs(a1-b1)) // max(abs(a2-b2)) // max(abs(a3-b3))) <= tol);
+}
+
+# load a data matrix
+data = random(3,4,5);
+
+# define tolerence
+tol = 1E-5;
+
+if (test_corr(m=data,tol=tol)) exit(0);
+exit(1);
+
+
