@@ -1,4 +1,0 @@
-results = syscall("davinci -qe 'echo(\"mary_had_a_little_lamb\")'")
-if (length(results) == 1 && results[,1] == "\"mary_had_a_little_lamb\"") exit(0);
-exit(1);
-

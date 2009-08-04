@@ -1,7 +1,0 @@
-To add a new function:
-
-1)  Write the function.   (see ff_vignette.c for a simple example)
-2)  Edit ff.h: add the function and its name to the bottom of the list.
-3)  Edit func.h: add a declaration for the function to the end of the file.
-4)  Edit Makefile: add the new object file to the OBJ= list (line #44)
-4)  Recompile.   (Editing func.h will force everything to recompile)

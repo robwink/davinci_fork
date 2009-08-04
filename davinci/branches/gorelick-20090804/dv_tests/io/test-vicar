@@ -1,7 +1,0 @@
-testimg=clone(create(255,1,3,format=byte),y=500)
-write(testimg, $TMPDIR+"/test.vic",vicar,force=1)
-vic=read($TMPDIR+"/test.vic")
-fremove($TMPDIR+"/test.vic")
-if(equals(testimg,vic)) exit(0);
-exit(1);
-
