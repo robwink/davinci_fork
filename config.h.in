@@ -82,6 +82,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* ISIS3 Read/Write support */
+#undef HAVE_ISIS3
+
 /* Define to 1 if you have the `cfitsio' library (-lcfitsio). */
 #undef HAVE_LIBCFITSIO
 
