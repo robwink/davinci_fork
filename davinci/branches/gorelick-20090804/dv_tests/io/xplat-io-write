@@ -1,0 +1,81 @@
+dir="xplat-io"
+system("mkdir "+dir)
+
+# 1
+tascii=create(100,100,3,format=float)
+write(tascii,dir+"/test.ascii",ascii,force=1)
+
+# 2
+testimg=create(300,200,256,format=byte,start=0,step=0)
+for(i=1;i<=256;i++) testimg[,,i]=i-1;
+write(testimg, dir+"/test.isis",isis,force=1)
+
+# 3
+x=31; y=21; z=25
+testimg=create(x,y,z,org=bsq,format=byte)
+for(i=1;i<=z;i++) testimg[,,i]=i-1;
+
+s1=create(1,y,z,org=bsq,format=byte)
+for(i=1;i<=z;i++) s1[,,i]=z-(i-1);
+
+s2=create(1,y,z,org=bsq,format=float)
+s3=create(1,y,z,org=bsq,format=int)
+
+bot1=create(x,1,z,org=bsq,format=byte)
+for(i=1;i<=z;i++) bot1[,,i]=((i-1)*2)%256;
+
+bot2=create(x,1,z,org=bsq,format=float)
+bot3=create(x,1,z,org=bsq,format=int)
+bot4=create(x,1,z,org=bsq,format=short)
+
+bk1=create(x,y,1,org=bsq,format=byte,start=100,step=0);
+bk2=create(x,y,1,org=bsq,format=float);
+bk3=create(x,y,1,org=bsq,format=int);
+
+side_planes={ s1=s1, s2=s2, s3=s3 };
+bot_planes={ bot1=bot1, bot2=bot2, bot3=bot3, bot4=bot4 };
+back_planes={ bk1=bk1, bk2=bk2, bk3=bk3 };
+
+write_isis(core=testimg, side=side_planes, bottom=bot_planes, back=back_planes, filename=dir+"/test-planes.isis", force=1)
+
+# 4 
+testimg=clone(create(255,1,3,format=byte),y=500)
+write(testimg, dir+"/test.img",envi,force=1)
+
+# 5
+fits=create(100,100,1)
+write_fits(fits,dir+"/test.fits",fits,force=1);
+
+# 6
+testimg=clone(create(255,1,3,format=byte),y=500)
+write(testimg,dir+"/test.gif",gif,force=1)
+
+# 7
+hdf={}
+hdf.lab=create(1000,1,1,format=float)
+hdf.labx=create(1000,10,1,format=float)
+hdf.i1=1
+hdf.s1="foo"
+hdf.ss={a=create(100,1,1,format=byte)}
+write(hdf,dir+"/test.hdf",hdf,force=1)
+
+# 8
+testimg=clone(create(255,1,3,format=byte),y=500)
+write(testimg,dir+"/test.jpg",jpg,force=1)
+
+# 9
+testimg=clone(create(255,1,3,format=byte),y=500)
+write(testimg,dir+"/test.png",png,force=1)
+
+# 10
+testimg=bip(clone(create(255,1,3,format=byte),y=500))
+write(testimg,dir+"/test.ppm",ppm,force=1)
+
+# 11
+testimg=clone(create(255,1,3,format=byte),y=500)
+write(testimg,dir+"/test.png",png,force=1)
+
+# 12
+testimg=clone(create(255,1,3,format=byte),y=500)
+write(testimg, dir+"/test.vic",vicar,force=1)
+
