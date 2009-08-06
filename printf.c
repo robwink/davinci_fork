@@ -96,48 +96,44 @@ ff_fprintf(vfuncptr func, Var *arg)
   make_args(&ac, &av, func, arg);
   if (ac < 2) {
     parse_error("%s: expected a filename and a format string");
-    free(av);
-    return(NULL);
-  }
-  v = av[1];
-  /* pop off the first argument.
-     In theory, this could search for a "filename" kwyword first
-  */
-  for (i = 2; i < ac ; i++) {
-    av[i-1] = av[i];
-  }
-  ac-=1;
-
-  if ((e = eval(v)) != NULL) {
-    v =e;
-  }
-  if (V_TYPE(v) != ID_STRING) {
-    parse_error("%s: expected a filename and a format string");
-    free(av);
-    return(NULL);
-  }
-
-  /* CHECK THIS??? */
-  filename = V_STRING(v);
-  strcpy(buf, filename);
-  fname = dv_locate_file(filename);
-
-  if (fname == NULL) {
-    parse_error("fprintf: Unable to find file: %s\n", filename);
-    free(av);
-    return(NULL);
-  }
-
-  p = do_sprintf(ac, av);
-
-  fp = fopen(fname, "a");
-  if (fp) {
-    fputs(p, fp);
-    fclose(fp);
   } else {
-    parse_error("fprintf: Unable to open file: %s\n", fname);
-    free(av);
-    return(NULL);
+    v = av[1];
+    /* pop off the first argument.
+       In theory, this could search for a "filename" kwyword first
+    */
+    for (i = 2; i < ac ; i++) {
+      av[i-1] = av[i];
+    }
+    ac-=1;
+
+    if ((e = eval(v)) != NULL) {
+      v =e;
+    }
+    if (V_TYPE(v) != ID_STRING) {
+      parse_error("%s: expected a filename and a format string");
+    } else {
+      /* CHECK THIS??? */
+      filename = V_STRING(v);
+      strcpy(buf, filename);
+
+      fname = dv_locate_file(filename);
+      if (fname == NULL) {
+        parse_error("fprintf: Unable to find file: %s\n", filename);
+      } else {
+        p = do_sprintf(ac, av);
+        if (p != NULL) {
+          fp = fopen(fname, "a");
+          if (!fp) {
+            parse_error("fprintf: Unable to open file: %s\n", fname);
+          } else {
+            fputs(p, fp);
+            fclose(fp);
+          }
+          free(p);
+        }
+        free(fname);
+      }
+    }
   }
 
   free(av);
@@ -154,8 +150,12 @@ ff_printf(vfuncptr func, Var *arg)
   make_args(&ac, &av, func, arg);
 
   p = do_sprintf(ac, av);
-  if (p) fputs(p, stdout);
+  if (p) {
+    fputs(p, stdout);
+    free(p);
+  }
 
+  free(av);
   return(NULL);
 }
 
@@ -174,9 +174,7 @@ ff_sprintf(vfuncptr func, Var *arg)
     s = newString(p);
   }
 
-  // Have to manually free the make_args output.
   free(av);
-
   return(s);
 }
 
