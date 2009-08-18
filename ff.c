@@ -1499,11 +1499,11 @@ print_history(int i)
   int j;
 
   state = history_get_history_state();
-  if (i == -1) i = state->length;
-  if (i > state->length) i = state->length;
+  if (i == -1) i = state->length-1;
+  if (i > state->length) i = state->length-1;
   for (j = state->length-i ; j < state->length ; j++) {
-    h = state->entries[j];
-    printf("%6d   %s\n", j+1, h->line);
+    h = history_get(j-history_base+1);
+	printf("%6d   %s\n", j, (h==NULL? "(null)": h->line));
   }
 #endif
 }
@@ -1544,7 +1544,7 @@ ff_hedit(vfuncptr func, Var * arg)
   }
 
   for (j = count-1 ; j < state->length-2 ; j++) {
-    fprintf(fp, "%s\n", state->entries[j]->line);
+    fprintf(fp, "%s\n", history_get(j-history_base)->line);
   }
   fclose(fp);
 

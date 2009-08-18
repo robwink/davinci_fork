@@ -231,7 +231,7 @@ typedef struct {
 
 #else /* little endian */
 
-char ctmp;
+static char ctmp;
 
 typedef char *cptr;
 #define swp(c1, c2)	(ctmp = (c1) , (c1) = (c2) , (c2) = ctmp)

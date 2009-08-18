@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(davinci, 2.00)
+AC_INIT(davinci, 2.02)
 
 
 
@@ -7,7 +7,7 @@ AC_INIT(davinci, 2.00)
 ## libdavinci version
 LIB_CURRENT=2
 LIB_REVISION=0
-LIB_AGE=0
+LIB_AGE=2
 AC_SUBST(LIB_CURRENT)
 AC_SUBST(LIB_REVISION)
 AC_SUBST(LIB_AGE)
@@ -27,9 +27,6 @@ AM_MAINTAINER_MODE
 AM_CONFIG_HEADER(config.h)
 
 
-#Default prefix
-#AC_PREFIX_DEFAULT(/usr/local)
-
 dnl Check for some required programs.
 AC_PROG_CC
 AC_PROG_CPP
@@ -40,9 +37,14 @@ AC_PROG_INSTALL
 dnl AC_PROG_RANLIB
 AC_PROG_MAKE_SET
 
+#Default prefix
+AC_PREFIX_DEFAULT(/usr/local)
 
 dnl Check endianness.
 AC_C_BIGENDIAN
+
+dnl Check type ptrdiff_t
+AC_CHECK_TYPE(ptrdiff_t, ssize_t)
 
 dnl Enable Position Independent Code (often required by 64-bit systems)
 export CFLAGS="${CFLAGS} -fPIC"
@@ -441,15 +443,15 @@ AC_ARG_WITH(editor,
 	[AC_PATH_PROGS(EDITOR,[vim vi emacs edit])]
 )
 AC_ARG_WITH(help, 
-    [  --with-help=<path>      Path to davinci help file (default: /usr/local/share/davinci/docs/dv.gih)],
+    [  --with-help=<path>      Path to davinci help file (default: DATADIR/davinci/docs/dv.gih)],
     [DVHELP=$withval],
-    [DVHELP="/usr/local/share/davinci/docs/dv.gih"]
+    [DVHELP=${datadir}/davinci/docs/dv.gih]
 )
 
 AC_ARG_WITH(modpath, 
-    [  --with-modpath=<path>   Path to davinci loadable modules (if enabled) (default: /usr/local/lib/davinci)],
+    [  --with-modpath=<path>   Path to davinci loadable modules (if enabled) (default: LIBDIR/davinci)],
     [DV_MOD_PATH=$withval],
-    [DV_MOD_PATH="/usr/local/lib/davinci"]
+    [DV_MOD_PATH=${libdir}/davinci]
 )
 
 AC_ARG_WITH(library, 
@@ -484,16 +486,17 @@ if test "$EDITOR" != "" ; then
 AC_DEFINE_UNQUOTED(EDITOR, "$EDITOR", Path to text file editor for edit() function)
 fi
 
-AC_DEFINE_UNQUOTED(DVHELP, "$DVHELP", Path to davinci help file)
-AC_DEFINE_UNQUOTED(DV_MOD_PATH, "$DV_MOD_PATH", Path to davinci loadable modules (if enabled))
-AC_DEFINE_UNQUOTED(DV_EXAMPLES, "$DV_EXAMPLES", Path to davinci examples)
-AC_DEFINE_UNQUOTED(DV_LIBRARY, "$DV_LIBRARY", Path to davinci library scripts)
+dnl Following lines commented -  Jun 13, 09 - See discussion on Installation-Directory-Variables in Autoconf documentation.
+dnl AC_DEFINE_UNQUOTED(DVHELP, "$DVHELP", Path to davinci help file)
+dnl AC_DEFINE_UNQUOTED(DV_MOD_PATH, "$DV_MOD_PATH", Path to davinci loadable modules (if enabled))
+dnl AC_DEFINE_UNQUOTED(DV_EXAMPLES, "$DV_EXAMPLES", Path to davinci examples)
+dnl AC_DEFINE_UNQUOTED(DV_LIBRARY, "$DV_LIBRARY", Path to davinci library scripts)
 
 
 
 dnl FIX: this stuff can go away if libtool is used.
 
-AC_SUBST(MY_SUBDIRS)
+AC_SUBST(MY_SUBDIRS DVHELP DV_MOD_PATH)
 
 AC_OUTPUT([Makefile modules/Makefile modules/kjn/Makefile modules/cse/Makefile modules/thm/Makefile modules/gui/Makefile vicar/Makefile])
 
@@ -507,12 +510,12 @@ PRINT_YES_NO() {
       fi
   fi
   echo "$1:  ${answer}"
-  echo "printf(\"$1:  ${answer}\n\");" >> build_summary
+  echo "printf(\"$1:  ${answer}\\n\");" >> build_summary
 }
 
 PRINT() {
 	echo "$1"
-	echo "printf(\"$1\n\");" >> build_summary
+	echo "printf(\"$1\\n\");" >> build_summary
 }
 
 rm -f build_summary

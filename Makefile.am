@@ -23,8 +23,15 @@
 EXTRA_DIST =  README.modules README_FF docs gplot.c lexer.l lib moddvmagick parser.y push.skel tests win32
 ## EXTRA_DIST = README.modules README_FF docs push.skel? shared_globals.c? tests win32
 
+DVHELP=@DVHELP@
+DV_MOD_PATH=@DV_MOD_PATH@
+
+AM_CPPFLAGS = -DDVHELP=\"$(DVHELP)\"
+
+
 if MODULE_SUPPORT
   MY_MODULES_LIB = libmodsupp.a
+  AM_CPPFLAGS += -DDV_MOD_PATH=\"$(DV_MOD_PATH)\"
 endif
 
 if LOCAL_READLINE
@@ -108,7 +115,6 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 ## Install header files under /usr/include/davinci
 library_includedir=$(includedir)/@PACKAGE@
 library_include_HEADERS = $(wildcard *.h)
-
 
 davinci_LDADD = -ldavinci $(MY_MODULES_LIB)  $(MY_LIBLTDLC_LDADD)
 davinci_LDFLAGS = -export-dynamic
