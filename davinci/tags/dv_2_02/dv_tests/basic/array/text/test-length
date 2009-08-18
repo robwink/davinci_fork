@@ -1,0 +1,9 @@
+A=cat("abc","def",Y);
+
+for (i=1; i <= 8; i += 1){
+	A=cat(A,"ghi",Y)
+}
+
+if(length(A)==10) exit(0);
+exit(1);
+
