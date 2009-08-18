@@ -1,8 +1,15 @@
-char *version = "@(#) daVinci Version #2.01";
+char *version = "@(#) daVinci Version #2.02";
 
 #include "build.h"
 
 /*
+  Version 2.02: Thu Aug 13 14:45:12 MST 2009
+  * A few build system fixes to remove DVHELP and DV_MOD_PATH out of config.h and into the Makefile.
+  * header.h: ctmp declared static.
+  * dvio_tdb.c: ctmp declared static.
+  * parser.h: removed include of malloc.h.
+  * ff.c: updated calls to readline library.
+
   Version 2.01: Tue Aug  4 03:05:23 PDT 2009
   * Fixed memory leak in Narray (avl_tree not being properly freed)
   * Missing BUILD_MODULE_SUPPORT around load_pds_from_io_module in dvio_pds

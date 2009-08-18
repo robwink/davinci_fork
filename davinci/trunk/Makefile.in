@@ -41,6 +41,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
+@MODULE_SUPPORT_TRUE@am__append_1 = -DDV_MOD_PATH=\"$(DV_MOD_PATH)\"
 bin_PROGRAMS = davinci$(EXEEXT)
 DIST_COMMON = README $(am__configure_deps) $(library_include_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -233,7 +234,6 @@ MAINTAINER_MODE_TRUE = @MAINTAINER_MODE_TRUE@
 MAKEINFO = @MAKEINFO@
 MODULE_SUPPORT_FALSE = @MODULE_SUPPORT_FALSE@
 MODULE_SUPPORT_TRUE = @MODULE_SUPPORT_TRUE@
-MY_SUBDIRS = @MY_SUBDIRS@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -301,6 +301,9 @@ target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
 EXTRA_DIST = README.modules README_FF docs gplot.c lexer.l lib moddvmagick parser.y push.skel tests win32
+DVHELP = @DVHELP@
+DV_MOD_PATH = @DV_MOD_PATH@
+AM_CPPFLAGS = -DDVHELP=\"$(DVHELP)\" $(am__append_1)
 @MODULE_SUPPORT_TRUE@MY_MODULES_LIB = libmodsupp.a
 @LOCAL_READLINE_TRUE@MY_READLINE_LDADD = readline/libreadline.a
 @HAVE_LIBREGEX_TRUE@MINGW32_LIBREGEX_LDADD = -lregex	

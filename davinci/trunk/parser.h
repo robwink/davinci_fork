@@ -73,7 +73,6 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <signal.h>
-#include <malloc.h>
 
 
 #include "system.h"
