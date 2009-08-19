@@ -470,6 +470,21 @@ mem_free(Scope *scope)
 }
 
 
+void
+unload_symtab_modules(Scope *scope){
+#ifdef BUILD_MODULE_SUPPORT
+    Symtable *s = scope->symtab;
+    while(s){
+        Var *v = s->value;
+        s = s->next;
+        if (V_TYPE(v) == ID_MODULE){
+            unload_dv_module(V_NAME(v));
+        }
+    }
+#endif /* BUILD_MODULE_SUPPORT */
+}
+
+
 /**
  ** destroy the scopes dd and args
  **
@@ -502,6 +517,13 @@ clean_scope(Scope *scope)
     clean_stack(scope);
     clean_tmp(scope);
     scope->tmp = NULL;
+
+    /* Clean modules since before cleaning symbol table
+       since they have a builtin mechansim of removing
+       themselves from the symbol table. Not doing so
+       causes a double free on the Symtable corresponding
+       to the module variable in the global symbol table. */
+    unload_symtab_modules(scope);
 
     clean_table(scope->symtab);
     scope->symtab = NULL;
