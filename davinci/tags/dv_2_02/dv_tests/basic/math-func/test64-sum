@@ -1,0 +1,5 @@
+n=1000000000
+a=create(n,1,1,format=double,start=1,step=1);
+if (double(sum(a)) == (double(n)*(1.0+double(n))/2.0)) exit(0);
+exit(1);
+
