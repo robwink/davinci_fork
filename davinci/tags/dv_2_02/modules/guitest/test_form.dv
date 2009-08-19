@@ -1,9 +1,0 @@
-# child buttons are not accessible and no cb's are defined, so dialog is useless
-# seems to position children at same overlapping start position even if allowOverlap=false
-load_module("gui")
-top=gui.create("topLevelShell",name="test_form.dv")
-f=gui.create("form",top)
-a=gui.create("pushbutton",f,{labelString="PB A"})
-b=gui.create("pushbutton",f,{labelString="PB B"})
-gui.realize(top)
-

@@ -1,8 +1,0 @@
-data=create(10,10,start=0,step=1)
-
-data[where(data<50)]=1
-data[where(data>=50)]=2
-
-if (avg(data) == 1.5) exit(0);
-exit(1);
-
