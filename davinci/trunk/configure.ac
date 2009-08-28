@@ -496,7 +496,9 @@ dnl AC_DEFINE_UNQUOTED(DV_LIBRARY, "$DV_LIBRARY", Path to davinci library script
 
 dnl FIX: this stuff can go away if libtool is used.
 
-AC_SUBST(MY_SUBDIRS DVHELP DV_MOD_PATH)
+AC_SUBST(MY_SUBDIRS)
+AC_SUBST(DVHELP)
+AC_SUBST(DV_MOD_PATH)
 
 AC_OUTPUT([Makefile modules/Makefile modules/kjn/Makefile modules/cse/Makefile modules/thm/Makefile modules/gui/Makefile vicar/Makefile])
 
