@@ -510,12 +510,12 @@ PRINT_YES_NO() {
       fi
   fi
   echo "$1:  ${answer}"
-  echo "printf(\"$1:  ${answer}\\n\");" >> build_summary
+  echo "printf(\"$1:  ${answer}\\\n\");" >> build_summary
 }
 
 PRINT() {
 	echo "$1"
-	echo "printf(\"$1\\n\");" >> build_summary
+	echo "printf(\"$1\\\n\");" >> build_summary
 }
 
 rm -f build_summary
