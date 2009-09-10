@@ -69,7 +69,8 @@ libdavinci_la_LIBADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULES_LI
 		$(MINGW32_LIBREGEX_LDADD) $(MINGW32_LIBWSOCK32_LDADD) $(MY_LIBLTDLC_LDADD)
 
 ##See configure.ac for libdavinci version
-libdavinci_la_LDFLAGS =  -version-info @LIB_CURRENT@:@LIB_REVISION@:@LIB_AGE@ -shrext .so
+##libdavinci_la_LDFLAGS =  -version-info @LIB_CURRENT@:@LIB_REVISION@:@LIB_AGE@ -shrext .so
+libdavinci_la_LDFLAGS =  -version-info @LIB_CURRENT@:@LIB_REVISION@:@LIB_AGE@ 
 
 libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	darray.c \
@@ -125,7 +126,7 @@ davinci_SOURCES = main.c
 if DV_LIBRARY
 dvrc = library
 dvrcdir = $(datadir)/@PACKAGE@/$(dvrc)
-dvrc_DATA =  $(wildcard $(dvrc)/*.dvrc)
+dvrc_DATA =  $(wildcard $(dvrc)/*.dvrc) $(wildcard $(dvrc)/script_files/*)
 endif
 
 
@@ -139,6 +140,15 @@ endif
 ## Install basic docs under /usr/share/davinci/docs
 docsdir = $(datadir)/@PACKAGE@/docs
 docs_DATA = docs/dv.gih README README_FF README.modules
+
+@PACKAGE@.sh @PACKAGE@.csh: Makefile
+	echo "export DVHELP=$(DVHELP)" > @PACKAGE@.sh
+	echo "export DV_MOD_PATH=$(DV_MOD_PATH)" > @PACKAGE@.sh
+	echo "export PYLD_LIBRARY_PATH=$(libdir)" > @PACKAGE@.sh
+
+	echo "setenv DVHELP $(DVHELP)" > @PACKAGE@.csh
+	echo "setenv DV_MOD_PATH $(DV_MOD_PATH)" > @PACKAGE@.csh
+	echo "setenv PYLD_LIBRARY_PATH $(libdir)" > @PACKAGE@.csh
 
 build.h: Makefile
 	echo 'char *build = "'`date`'";' > $@
