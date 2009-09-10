@@ -27313,6 +27313,8 @@ fi
 
 
 
+
+
                                                                       ac_config_files="$ac_config_files Makefile modules/Makefile modules/kjn/Makefile modules/cse/Makefile modules/thm/Makefile modules/gui/Makefile vicar/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -29053,12 +29055,12 @@ PRINT_YES_NO() {
       fi
   fi
   echo "$1:  ${answer}"
-  echo "printf(\"$1:  ${answer}\\n\");" >> build_summary
+  echo "printf(\"$1:  ${answer}\\\n\");" >> build_summary
 }
 
 PRINT() {
 	echo "$1"
-	echo "printf(\"$1\\n\");" >> build_summary
+	echo "printf(\"$1\\\n\");" >> build_summary
 }
 
 rm -f build_summary
