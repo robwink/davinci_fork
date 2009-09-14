@@ -1148,12 +1148,12 @@ uninstall-info: uninstall-info-recursive
 
 @PACKAGE@.sh @PACKAGE@.csh: Makefile
 	echo "export DVHELP=$(DVHELP)" > @PACKAGE@.sh
-	echo "export DV_MOD_PATH=$(DV_MOD_PATH)" > @PACKAGE@.sh
-	echo "export PYLD_LIBRARY_PATH=$(libdir)" > @PACKAGE@.sh
+	echo "export DV_MOD_PATH=$(DV_MOD_PATH)" >> @PACKAGE@.sh
+	echo "export PYLD_LIBRARY_PATH=$(libdir)" >> @PACKAGE@.sh
 
 	echo "setenv DVHELP $(DVHELP)" > @PACKAGE@.csh
-	echo "setenv DV_MOD_PATH $(DV_MOD_PATH)" > @PACKAGE@.csh
-	echo "setenv PYLD_LIBRARY_PATH $(libdir)" > @PACKAGE@.csh
+	echo "setenv DV_MOD_PATH $(DV_MOD_PATH)" >> @PACKAGE@.csh
+	echo "setenv PYLD_LIBRARY_PATH $(libdir)" >> @PACKAGE@.csh
 
 build.h: Makefile
 	echo 'char *build = "'`date`'";' > $@
