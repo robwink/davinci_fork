@@ -116,7 +116,7 @@ do_load(char *filename, struct iom_iheader *h)
 
 	if (input == NULL)    input = dv_LoadIOM(fp, fname, h);
 	if (input == NULL)    input = dv_LoadPNM(fp, fname, h);
-	if (input == NULL)    input = dv_LoadSpecpr(fp, fname, h);
+	if (input == NULL)    input = LoadSpecpr(fp, fname, record);
 	if (input == NULL)    input = dv_LoadVicar(fp, fname, h);
 	if (input == NULL)    input = dv_LoadISIS(fp, fname, h);
 	if (input == NULL)    input = dv_LoadGRD(fp, fname, h);
