@@ -255,6 +255,7 @@ specpr_open(char *path)
 {
   int fout;
   char *p;
+  int flags;
 
 #ifdef __CYGWIN__
   flags = O_RDWR|O_BINARY;
