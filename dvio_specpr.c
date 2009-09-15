@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "dvio.h"
 #include "dvio_specpr.h"
 
 char *
@@ -100,7 +101,7 @@ static char bytetemp;
 typedef char *byteptr;
 #define swap1byte(c1, c2) (bytetemp = (c1) , (c1) = (c2) , (c2) = bytetemp)
 #define swap4byte(s)     (swap1byte(((byteptr)(s))[0], ((byteptr)(s))[3]), \
-                          swap1byte(((byteptr)(s))[1], ((byteptr)(s))[2]),(s))
+                          swap1byte(((byteptr)(s))[1], ((byteptr)(s))[2]))
 void
 byteorder(a,iflag)
     int *a,iflag;
@@ -114,8 +115,8 @@ byteorder(a,iflag)
 
   if (check_bit(i,0) == 0 && check_bit(i,1) == 1) {
     /* 1st text data record */
-    (void)swap4byte(&((int *)a)[13]);  /* swap byte order on text pointer */
-    (void)swap4byte(&((int *)a)[14]);  /* swap byte order on text size    */
+    swap4byte(&((int *)a)[13]);  /* swap byte order on text pointer */
+    swap4byte(&((int *)a)[14]);  /* swap byte order on text size    */
 
   } else if (check_bit(i,0) == 1 && check_bit(i,1) == 1) {
     /* Continuation text data record */
@@ -124,15 +125,15 @@ byteorder(a,iflag)
   } else if (check_bit(i,0) == 0 && check_bit(i,1) == 0) {
     /* 1st data record */
     for (i = 13; i <= 28; i++) {
-      (void)swap4byte(&((int *)a)[i]);
+      swap4byte(&((int *)a)[i]);
     }
     for (i = 118; i <= 383; i++) {
-      (void)swap4byte(&((int *)a)[i]);
+      swap4byte(&((int *)a)[i]);
     }
   } else if (check_bit(i,0) == 1 && check_bit(i,1) == 0) {
     /* Continuation data record */
     for (i = 1; i <= 383; i++) {
-      (void)swap4byte(&((int *)a)[i]);
+      swap4byte(&((int *)a)[i]);
     }
   }
 
@@ -300,6 +301,7 @@ write_specpr(int fd, int i, struct _label *label, char *data)
   int size;
   int offset;
   int count;
+  int saveflag;
 
   tlabel = (struct _tlabel *)label;
   /* RED Zero the flag since cannot guarantee its init value */
@@ -332,7 +334,10 @@ write_specpr(int fd, int i, struct _label *label, char *data)
   set_bit(tmpl.icflag,0,1);
   while(size > 0) {
     memcpy(((char *)&tmpl)+4, data+(offset+1532*count), 1532);
+    // RED save and restore flag across write_record calls in case of byte swap
+    saveflag = tmpl.icflag;
     write_record(fd, (i < 0 ? i : i+count+1), (struct _label *)&tmpl);
+    tmpl.icflag=saveflag;
     size -= 1532;
     count++;
   }
@@ -427,6 +432,14 @@ is_specpr(FILE *fp)
 }
 
 #ifndef STANDALONE
+// This is a wrapper for the 'new' style of load function, where record
+// is specified in the iom_header.
+Var *
+dv_LoadSpecpr(FILE *fp, char *filename, struct iom_iheader *h)
+{
+  return(LoadSpecpr(fp, filename, h->s_lo[2]));
+}
+
 /**
  ** LoadSpecpr() - Get record out of a specpr file, and load into a Var struct
  **/
