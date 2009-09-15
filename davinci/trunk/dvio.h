@@ -64,6 +64,7 @@ Var *dv_LoadPNM(FILE *fp, char *filename, struct iom_iheader *s);
 Var *dv_LoadVicar(FILE *fp, char *filename, struct iom_iheader *s);
 Var *dv_LoadGRD(FILE *fp, char *filename, struct iom_iheader *s);
 Var *dv_LoadENVI(FILE *fp, char *filename, struct iom_iheader *s);
+Var *dv_LoadSpecpr(FILE *fp, char *filename, struct iom_iheader *s);
 
 int dv_WriteIOM(Var *, const char *, const char *, int);
 int dv_WriteGRD(Var *s, char *filename, int force, char *title, char *task);
