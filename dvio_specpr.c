@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "dvio.h"
 #include "dvio_specpr.h"
 
 char *
@@ -427,6 +428,14 @@ is_specpr(FILE *fp)
 }
 
 #ifndef STANDALONE
+// This is a wrapper for the 'new' style of load function, where record
+// is specified in the iom_header.
+Var *
+dv_LoadSpecpr(FILE *fp, char *filename, struct iom_iheader *h)
+{
+  return(LoadSpecpr(fp, filename, h->s_lo[2]));
+}
+
 /**
  ** LoadSpecpr() - Get record out of a specpr file, and load into a Var struct
  **/
