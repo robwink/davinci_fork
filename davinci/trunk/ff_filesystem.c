@@ -65,7 +65,6 @@ ff_copy(vfuncptr func, Var * arg)
     FILE *srcFile;
     FILE *destFile;
     int Byte;
-    int i;
 
     srcFile = fopen(srcLocated, "rb");
     destFile = fopen(destLocated, "wb");

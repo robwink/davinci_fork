@@ -14,8 +14,7 @@
 Var *
 ff_display(vfuncptr func, Var *arg)
 {
-    Var *obj=NULL, *e;
-    Var *name=NULL;
+    Var *obj=NULL;
     char *fname;
     char *title=NULL;
     char buf[256];
@@ -61,16 +60,16 @@ ff_display(vfuncptr func, Var *arg)
 #else
     dv_WriteIOM(obj, fname, "jpg", 1);
 #endif
-    
+
     viewer=getenv("DV_VIEWER");
-    if (viewer == NULL){ 
-	viewer=DV_VIEWER; 
+    if (viewer == NULL){
+      viewer = (char *)DV_VIEWER;
     }
 
 
 #if  (defined(__CYGWIN__) || defined(__MINGW32__))
     //copy viewer to buf
-    sprintf(buf, "%s", viewer);	
+    sprintf(buf, "%s", viewer);
     if (_spawnlp(_P_NOWAIT, buf, buf, fname, NULL) == -1){
         parse_error("Error spawning the viewer %s. Reason: %s.",
                     viewer, strerror(errno));

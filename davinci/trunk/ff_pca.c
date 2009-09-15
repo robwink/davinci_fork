@@ -344,8 +344,6 @@ pcs(
 Var *
 ff_pcs(vfuncptr	func, Var *args)
 {
-	int		ac;
-	Var		**av;
 	Var		*obj = NULL, *axis_arg = NULL;
 	Var		*scale_arg = NULL, *opt_arg = NULL;
 	Var		*v_return;
@@ -555,157 +553,155 @@ ff_pcs(vfuncptr	func, Var *args)
 /***************************************************************************/
 Var *
 ff_covar(
-	vfuncptr	func,
-	Var		*args
+    vfuncptr func,
+    Var *args
 )
 {
-	int		ac;
-	Var		**av;
-	Var		*obj = NULL, *axis_arg = NULL;
-	Var		*v_return;
-	char		*axis_enums[] = { /* values that axis can take */
-		"x",  "X",
-		"y",  "Y",
-		"z",  "Z",
-		NULL
-	};
+  Var *obj = NULL, *axis_arg = NULL;
+  Var *v_return;
+  const char *axis_enums[] = { /* values that axis can take */
+    "x",  "X",
+    "y",  "Y",
+    "z",  "Z",
+    NULL
+  };
 
-	float		**data, **symmat;
-	float		*fdata = NULL;
-	int		dim[3], indices[3];
-	int		ref[3] = {0, 1, 2};
-	int		n, m, offset;
-	int		i, j, k, index;
-	Var *ignore = NULL;
+  float **data, **symmat;
+  float *fdata = NULL;
+  int dim[3], indices[3];
+  int ref[3] = {0, 1, 2};
+  int n, m, offset;
+  int i, j, k, index;
+  Var *ignore = NULL;
 
-	Alist		alist[4];
-	alist[0] = make_alist( "obj",    ID_VAL,    NULL,        &obj);
-	alist[1] = make_alist( "axis",   ID_ENUM,   axis_enums,  &axis_arg);
-	alist[2] = make_alist( "ignore",   ID_VAL,  NULL,  &ignore);
-	alist[3].name = NULL;
+  Alist alist[4];
+  alist[0] = make_alist( "obj",    ID_VAL,    NULL,        &obj);
+  alist[1] = make_alist( "axis",   ID_ENUM,   axis_enums,  &axis_arg);
+  alist[2] = make_alist( "ignore",   ID_VAL,  NULL,  &ignore);
+  alist[3].name = NULL;
 
-	if (parse_args(func, args, alist) == 0) return(NULL);
+  if (parse_args(func, args, alist) == 0) return(NULL);
 
-	if (obj == NULL) {
-		parse_error("%s(): Argument \"%s\" not specified\n",
-			func->name, alist[0].name);
-		return(NULL);
-	}
+  if (obj == NULL) {
+    parse_error("%s(): Argument \"%s\" not specified\n",
+                func->name, alist[0].name);
+    return(NULL);
+  }
 
 
-	/*
-	** If axis is not specified, use the default, i.e. Z
-	*/
-	offset = (axis_arg != NULL)? toupper(*(char *)axis_arg)-'X': 'Z'-'X';
+  /*
+   ** If axis is not specified, use the default, i.e. Z
+   */
+  offset = (axis_arg != NULL)? toupper(*(char *)axis_arg)-'X': 'Z'-'X';
 
-	/*
-	** ref[0] contains the index of the "axis" passed in by the user
-	** ref[1-2] contains the indices of the other two axes
-	*/
-	for(i = 0; i < 3; i++){ ref[i] = (i+offset)%3; }
+  /*
+   ** ref[0] contains the index of the "axis" passed in by the user
+   ** ref[1-2] contains the indices of the other two axes
+   */
+  for(i = 0; i < 3; i++){ ref[i] = (i+offset)%3; }
 
-	dim[0] = GetSamples(V_SIZE(obj), V_ORG(obj));	/* x */
-	dim[1] = GetLines(V_SIZE(obj), V_ORG(obj));		/* y */
-	dim[2] = GetBands(V_SIZE(obj), V_ORG(obj));		/* z */
+  dim[0] = GetSamples(V_SIZE(obj), V_ORG(obj));	/* x */
+  dim[1] = GetLines(V_SIZE(obj), V_ORG(obj));		/* y */
+  dim[2] = GetBands(V_SIZE(obj), V_ORG(obj));		/* z */
 
-	/*
-	** number of columns (or variables) is along the "axis"
-	** specified by the user
-	*/
-	m = dim[ref[0]];
+  /*
+   ** number of columns (or variables) is along the "axis"
+   ** specified by the user
+   */
+  m = dim[ref[0]];
 
-	/*
-	** number of rows is the rest of the two (out of three)
-	** dimensions
-	*/
-	n = dim[ref[1]] * dim[ref[2]];
+  /*
+   ** number of rows is the rest of the two (out of three)
+   ** dimensions
+   */
+  n = dim[ref[1]] * dim[ref[2]];
 
-	/* allocate data space for n-rows, and m-columns */
-	data = matrix(n, m);
+  /* allocate data space for n-rows, and m-columns */
+  data = matrix(n, m);
 
-	/* extract data */
-	for(j=0; j<dim[ref[1]]; j++){
-		for(i=0; i<dim[ref[2]]; i++){
+  /* extract data */
+  for(j=0; j<dim[ref[1]]; j++){
+    for(i=0; i<dim[ref[2]]; i++){
 
-			for(k=0; k<dim[ref[0]]; k++){ /* "axis" or "m" dimension */
+      for(k=0; k<dim[ref[0]]; k++){ /* "axis" or "m" dimension */
 
-				indices[ref[1]] = j;
-				indices[ref[2]] = i;
-				indices[ref[0]] = k;
+        indices[ref[1]] = j;
+        indices[ref[2]] = i;
+        indices[ref[0]] = k;
 
-				/*
-				** here indices[0], indices[1], indices[2] are 
-				** x, y, & z indices respectively
-				*/
-				index = cpos(indices[0], indices[1], indices[2], obj);
+        /*
+         ** here indices[0], indices[1], indices[2] are 
+         ** x, y, & z indices respectively
+         */
+        index = cpos(indices[0], indices[1], indices[2], obj);
 
-				/* data[][] has 1-based indices */
-				data[j*dim[ref[2]]+i+1][k+1] = extract_float(obj, index);
-			}
-		}
-	}
+        /* data[][] has 1-based indices */
+        data[j*dim[ref[2]]+i+1][k+1] = extract_float(obj, index);
+      }
+    }
+  }
 
-	/* handle ignore cases */
+  /* handle ignore cases */
 
-	if (ignore) {
-		float ign_val = extract_float(ignore, 0);
-		int i2 = 1;
-		int flag;
+  if (ignore) {
+    float ign_val = extract_float(ignore, 0);
+    int i2 = 1;
+    int flag;
 
-		for (i = 1 ; i <= n ; i++) { 
-			flag = 0;
-			for (j = 1 ; j <= m ; j++) { 
-				if (data[i][j] == ign_val) {
-					flag++;
-					break;
-				}
-				data[i2][j] = data[i][j];
-			}
-			if (!flag) i2++;
-		}
-		n = i2-1;
-	}
+    for (i = 1 ; i <= n ; i++) { 
+      flag = 0;
+      for (j = 1 ; j <= m ; j++) { 
+        if (data[i][j] == ign_val) {
+          flag++;
+          break;
+        }
+        data[i2][j] = data[i][j];
+      }
+      if (!flag) i2++;
+    }
+    n = i2-1;
+  }
 
-	/* allocate space for resultant matrix */
-	symmat = matrix(m, m);
+  /* allocate space for resultant matrix */
+  symmat = matrix(m, m);
 
-	/* apply processing function */
+  /* apply processing function */
 
-	if (strcmp(func->name, "covar") == 0){
-		/* evaluate covariance */
-		covcol(data, n, m, symmat);
-	}
-	else if (strcmp(func->name, "corr") == 0){
-		/* evaluate correlation */
-		corcol(data, n, m, symmat);
-	}
-	else if (strcmp(func->name, "scp") == 0){
-		/* evaluate sum of squares and cross products matrix */
-		scpcol(data, n, m, symmat);
-	}
-	else {
-		/* should be fairly unreachable - an uncommon occurrance */
-		parse_error("%s() <-- NOT IMPLEMENTED.\n", func->name);
-		return NULL;
-	}
+  if (strcmp(func->name, "covar") == 0){
+    /* evaluate covariance */
+    covcol(data, n, m, symmat);
+  }
+  else if (strcmp(func->name, "corr") == 0){
+    /* evaluate correlation */
+    corcol(data, n, m, symmat);
+  }
+  else if (strcmp(func->name, "scp") == 0){
+    /* evaluate sum of squares and cross products matrix */
+    scpcol(data, n, m, symmat);
+  }
+  else {
+    /* should be fairly unreachable - an uncommon occurrance */
+    parse_error("%s() <-- NOT IMPLEMENTED.\n", func->name);
+    return NULL;
+  }
 
-	/* cleanup original data */
-	free_matrix(data, n, m);
+  /* cleanup original data */
+  free_matrix(data, n, m);
 
-	/* collect, package, and return results */
-	fdata = (float *)calloc(m*m, sizeof(float));
+  /* collect, package, and return results */
+  fdata = (float *)calloc(m*m, sizeof(float));
 
-	for(j=0; j<m; j++){
-		for(i=0; i<m; i++){
-			fdata[j*m+i] = symmat[j+1][i+1];
-		}
-	}
+  for(j=0; j<m; j++){
+    for(i=0; i<m; i++){
+      fdata[j*m+i] = symmat[j+1][i+1];
+    }
+  }
 
-	/* cleanup temporary matrix */
-	free_matrix(symmat, m, m);
+  /* cleanup temporary matrix */
+  free_matrix(symmat, m, m);
 
-	v_return = newVal(BSQ, m, m, 1, FLOAT, fdata);
-	return v_return;
+  v_return = newVal(BSQ, m, m, 1, FLOAT, fdata);
+  return v_return;
 }
 
 void
@@ -764,7 +760,7 @@ corcol(data, n, m, symmat)
      int n, m;
 {
 	float eps = 0.005, sqn;
-	float x, *mean, *stddev, *vector();
+	float *mean, *stddev, *vector();
 	int i, j, j1, j2;
 
 /* Allocate storage for mean and std. dev. vectors */
@@ -1105,7 +1101,6 @@ tqli(d, e, n, z, niter)
 {
 	int m, l, iter, i, k;
 	float s, r, p, g, f, dd, c, b;
-	char errmsg[1024];
 
 	for (i = 2; i <= n; i++)
 		e[i - 1] = e[i];
@@ -1173,8 +1168,6 @@ ff_eigen(
 	Var		*args
 )
 {
-	int		ac;
-	Var		**av;
 	Var		*obj = NULL;
 	Var		*v_return;
 	float		*interm, *evals, **symmat;

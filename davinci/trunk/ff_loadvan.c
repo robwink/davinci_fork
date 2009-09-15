@@ -107,42 +107,21 @@ fill_col_min_size(
     int      i;
 
     for(i=0; i<n; i++){
-        switch(cols[i].data_type){
+        switch (cols[i].data_type) {
         case TINT:
             cols[i].size = sizeof(int);
-
-#if 0
-            if((int)cols[i].max_num_val > SHRT_MAX){
-                cols[i].size = sizeof(int);
-            }
-            else if(((int)cols[i].max_num_val > CHAR_MAX) && !cols[i].neg_flag){
-                cols[i].size = sizeof(short);
-            }
-            else {
-                /* davinci char-type values cannot be -ve */
-                cols[i].size = sizeof(char);
-            }
-#endif
             break;
-      
+
         case TREAL:
             cols[i].size = sizeof(double);
-
-#if 0
-            if(cols[i].max_num_val > FLT_MAX){
-                cols[i].size = sizeof(double);
-            }
-            else {
-                cols[i].size = sizeof(float);
-            }
-#endif
             break;
 
-        case TSTR:
+        default:
             /* well in this case, the length is the maximum length */
             cols[i].size = cols[i].max_len;
             break;
         }
+
     }
 }
 
@@ -154,7 +133,7 @@ fill_pseudo_symbols(
     int   psyms[257]
     )
 {
-    unsigned int     i, n;
+    unsigned int     i;
     psym_cat c;
 
     for (i = 0; i < 256; i++){
@@ -194,7 +173,6 @@ new_vlexc(
     )
 {
     vlexc *t;
-    int   i;
 
     if ((t = (vlexc *)calloc(sizeof(vlexc), 1)) == NULL){
         return NULL;
@@ -1025,7 +1003,6 @@ vanread(
     int      fd;
     char     *data = NULL;
     struct   stat sbuf;
-    char     delims[256];
     coldef   *cols = NULL;
     coldef   **fields = NULL;
     int      rc, ncols, nrecs, nfields;
@@ -1175,10 +1152,7 @@ ff_loadvan(
     Var      *args
     )
 {
-    int      ac;
-    Var      **av;
     char     *file_arg = NULL, *delim_arg = NULL;
-    char     *delim = NULL;
     Var      *v_return;
     int      rc;
 
@@ -1187,7 +1161,7 @@ ff_loadvan(
     alist[1] = make_alist( "delim",  ID_STRING,    NULL,        &delim_arg);
     alist[2].name = NULL;
 
-	if (parse_args(func, args, alist) == 0) return(NULL);
+    if (parse_args(func, args, alist) == 0) return(NULL);
 
     if (file_arg == NULL){
         parse_error("%s(): \"%s\" must be specified.\n",
@@ -1196,7 +1170,7 @@ ff_loadvan(
     }
 
     if (delim_arg == NULL){
-        delim_arg = "\t "; /* default delimiter is space or tab */
+        delim_arg = (char *)"\t "; /* default delimiter is space or tab */
     }
 
     rc = vanread(file_arg, delim_arg, "\r\n", &v_return);
@@ -1244,7 +1218,7 @@ make_coldefs(
     int      n
     )
 {
-    int   i, j;
+    int   i;
     char  *p, *q;
     int   cnamelen;
 

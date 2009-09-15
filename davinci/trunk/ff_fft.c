@@ -21,8 +21,6 @@ ff_fft(vfuncptr func, Var * arg)
 	int i, j, n, x, y, z;
 	COMPLEX *in, *out;
 
-	int ac;
-	Var **av;
 	Alist alist[4];
 	alist[0] = make_alist( "real",    ID_VAL,    NULL,     &real);
 	alist[1] = make_alist( "img",    ID_VAL,    NULL,     &img);
@@ -78,13 +76,9 @@ Var *
 ff_realfft(vfuncptr func, Var * arg)
 {
 	Var *obj = NULL;
-	double *data;
-	int i, j, n, x, y, z;
+	int i, n;
 	double *in, *out;
-	int version = 0;
 
-	int ac;
-	Var **av;
 	Alist alist[3];
 	alist[0] = make_alist( "obj",    ID_VAL,    NULL,     &obj);
 	alist[1].name = NULL;
@@ -117,13 +111,9 @@ Var *
 ff_realfft2(vfuncptr func, Var * arg)
 {
 	Var *obj = NULL;
-	double *data;
-	int i, j, n, x, y, z;
-	double *in, *out;
-	int version = 0;
+	int i, j, n, x;
+	double *in;
 
-	int ac;
-	Var **av;
 	Alist alist[3];
 	alist[0] = make_alist( "obj",    ID_VAL,    NULL,     &obj);
 	alist[1].name = NULL;
@@ -182,38 +172,34 @@ ff_realfft2(vfuncptr func, Var * arg)
 Var *
 ff_realfft3(vfuncptr func, Var * arg)
 {
-	Var *obj = NULL;
-	double *data;
-	int i, j, n, x, y, z;
-	double *in, *out;
-	int version = 0;
+  Var *obj = NULL;
+  int i, n;
+  double *in;
 
-	int ac;
-	Var **av;
-	Alist alist[3];
-	alist[0] = make_alist( "obj",    ID_VAL,    NULL,     &obj);
-	alist[1].name = NULL;
+  Alist alist[3];
+  alist[0] = make_alist( "obj",    ID_VAL,    NULL,     &obj);
+  alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+  if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (obj == NULL) {
-		parse_error("%s: No object specified\n", func->name);
-		return(NULL);
-	}
+  if (obj == NULL) {
+    parse_error("%s: No object specified\n", func->name);
+    return(NULL);
+  }
 
-	n = V_DSIZE(obj);
+  n = V_DSIZE(obj);
 
-	in = (double *)calloc(n, sizeof(double));
+  in = (double *)calloc(n, sizeof(double));
 
-	for (i = 0 ; i < n ; i++) {
-		in[i] = extract_double(obj, i);
-	}
+  for (i = 0 ; i < n ; i++) {
+    in[i] = extract_double(obj, i);
+  }
 
-	if (func->fdata == (void *)1) {
-		mayer_realfft(n, in);
-	} else {
-		mayer_realifft(n, in);
-	}
+  if (func->fdata == (void *)1) {
+    mayer_realfft(n, in);
+  } else {
+    mayer_realifft(n, in);
+  }
 
-	return(newVal(BSQ, 1, n, 1, DOUBLE, in));
+  return(newVal(BSQ, 1, n, 1, DOUBLE, in));
 }

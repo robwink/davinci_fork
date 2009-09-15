@@ -1,5 +1,5 @@
 
-char *FORMAT2STR[] = {
+const char *FORMAT2STR[] = {
 	0,
 	"byte",
 	"short",
@@ -11,7 +11,7 @@ char *FORMAT2STR[] = {
 	"double"
 };
 
-char *ORG2STR[] = {
+const char *ORG2STR[] = {
 	"bsq",
 	"bil",
 	"bip"

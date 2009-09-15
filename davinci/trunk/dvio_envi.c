@@ -11,12 +11,10 @@ dv_LoadENVI(
     )
 {
     struct iom_iheader h;
-    int org;
     Var *v;
     void *data;
     char hbuf[HBUFSIZE];
-	int i, j;
-	char *path;
+    char *path;
 
     if (iom_isENVI(fp) == 0){ return NULL; }
     

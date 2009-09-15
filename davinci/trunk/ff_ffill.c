@@ -74,7 +74,7 @@ Var *ff_flood_fill(vfuncptr func, Var * arg)
   Var    *pic = NULL;            /* the orignial dcs pic */
   Var    *out = NULL;            /* the output pic */
   unsigned char *w_pic;                 /* modified image */
-  int     i, j, k;               /* loop indices */
+  int     i, j;               /* loop indices */
   int     x=0, y=0;      			   /* size of the picture */
 	int			sx=0,sy=0;						 /* starting x and y positions*/
 	int     fill=0,val=0;

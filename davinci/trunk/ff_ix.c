@@ -170,14 +170,10 @@ ff_hstats(vfuncptr func, Var * arg)
 {
 	Var *obj = NULL;
 	int x,y,z, i, j;
-	float *data;
 	Var *both, *avg, *stddev;
 	double sum, sum2;
 	double x1, y1;
 	int n;
-
-	float start = MAXFLOAT, size= MAXFLOAT;
-	int steps = MAXINT;
 
 	Alist alist[2];
 	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &obj);
@@ -238,7 +234,6 @@ ff_rgb2hsv(vfuncptr func, Var * arg)
 	RGB a;
 	HSV b;
 
-	Var **av;
 	Alist alist[3];
 	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
 	alist[1] = make_alist( "maxval",  ID_VAL,    NULL,     &maxval);

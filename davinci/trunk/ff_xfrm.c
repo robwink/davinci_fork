@@ -76,7 +76,7 @@ ff_mxm(vfuncptr func, Var * arg)
 
     Alist	alist[4];
     const char	*formats[] = { "float", "double", NULL };
-    char	*format = "double"; /* Default format */
+    char	*format = (char *)"double"; /* Default format */
 
     double	*double_data;
     float	*float_data;

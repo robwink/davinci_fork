@@ -13,7 +13,7 @@
 Var *
 ff_header(vfuncptr func, Var *arg)
 {
-	Var *input = NULL, *v, *e;
+	Var *input = NULL;
 	char *filename= NULL, *fname, *element= NULL;
 	int frec = 0;
 	FILE *fp;

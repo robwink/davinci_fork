@@ -6,7 +6,6 @@ Var *
 dv_LoadAVIRIS(FILE *fp, char *filename, struct iom_iheader *s)
 {
     struct iom_iheader h;
-    int org;
     Var *v;
     void *data;
     char hbuf[HBUFSIZE];
@@ -48,5 +47,3 @@ dv_LoadAVIRIS(FILE *fp, char *filename, struct iom_iheader *s)
 
     return(v);
 }
-
-

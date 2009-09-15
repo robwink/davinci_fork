@@ -19,7 +19,7 @@ static int is_isis(FILE * fh) {
   if (strstr(record_buf, "= SFDU_LABEL\r\n") == NULL) goto err_exit;
   if (strncmp(record_buf, "CCSD3Z", 6)) goto err_exit;
   rtn = 1;
-  
+
  err_exit:
   fseek(fh, save_pos, SEEK_SET);
   return rtn;
@@ -27,9 +27,8 @@ static int is_isis(FILE * fh) {
 
 
 static ISISObjPtr parse_isis_file(FILE * fh) {
-  ISISObjPtr rtn_obj = NULL;
   ISISKwdPtr currentKwd = NULL, prevKwd = NULL, prevNonKwd = NULL;
-  
+
   if (!is_isis(fh)) return NULL;
   while (1) {
     currentKwd = get_keyword_value_pair(fh);
@@ -43,7 +42,7 @@ static ISISObjPtr parse_isis_file(FILE * fh) {
       }
       prevNonKwd = currentKwd;
     }
-    
+
 
     prevKwd = currentKwd;
   }
@@ -94,15 +93,15 @@ static ISISKwdPtr get_keyword_value_pair (FILE * fh) {
   /* found equal sign, which means we need to dig out the keyword/value */
 
   /* set trailing blanks to null char */
-  for(editptr=(tester-1); (*editptr != ' ' && editptr >= record_buf); 
-      editptr--) 
+  for(editptr=(tester-1); (*editptr != ' ' && editptr >= record_buf);
+      editptr--)
     *editptr = 0;
-  
+
   if ((kwd = malloc(strlen(record_buf)+1)) == NULL) {
     fprintf(stderr, "malloc fails in get_keyword_value_pair!\n");
     goto err_exit;
   }
-  
+
   strcpy(kwd, record_buf);
 
   for(editptr=(tester+1); (*editptr != ' ' && *editptr != 0); editptr++);
@@ -126,7 +125,7 @@ static ISISKwdPtr get_keyword_value_pair (FILE * fh) {
   rtn_kwd->keyword = kwd;
   rtn_kwd->misc_seq = -1;
   rtn_kwd->value = NULL;
-  
+
   if ((editptr = strpbrk(value, "\"(")) == NULL) {
     /* the only line.  We're done! */
     rtn_kwd->value = value;
@@ -148,7 +147,7 @@ static ISISKwdPtr get_keyword_value_pair (FILE * fh) {
     rtn_kwd->value = value;
     goto good_exit;
   }
-  /* okay, we need more lines of input from the file to append to the 
+  /* okay, we need more lines of input from the file to append to the
      value. (Drat) */
 
   while (1) {
@@ -156,10 +155,10 @@ static ISISKwdPtr get_keyword_value_pair (FILE * fh) {
     /* advance to first nonblank */
     for(editptr=record_buf; *editptr == ' '; editptr++);
     /* cut the string at the end of whitespace */
-    for(endstr=editptr+strlen(editptr)-1; 
-	(endstr > editptr && (*endstr == ' ' || *endstr == '\r' ||
-			      *endstr == '\n' || *endstr == '\t'));
-	endstr--) *endstr = 0;
+    for(endstr=editptr+strlen(editptr)-1;
+        (endstr > editptr && (*endstr == ' ' || *endstr == '\r' ||
+                              *endstr == '\n' || *endstr == '\t'));
+        endstr--) *endstr = 0;
     if ((value = realloc(value, strlen(value)+strlen(editptr)+1)) == NULL) {
       fprintf(stderr, "realloc failed!\n");
       goto err_exit;
@@ -171,14 +170,14 @@ static ISISKwdPtr get_keyword_value_pair (FILE * fh) {
   rtn_kwd->value = value;
  good_exit:
   return rtn_kwd;
-  
+
  err_exit:
   if (kwd != NULL) free(kwd);
   if (value != NULL) free(value);
   if (rtn_kwd != NULL) free(rtn_kwd);
   return NULL;
-  
-  
+
+
 }
 
 static ISISKwdPtr destroy_keyword_pair(ISISKwdPtr kill_me) {

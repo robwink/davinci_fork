@@ -9,7 +9,7 @@
 void
 init_sums(Var *data, int w, int h, int d, Var **rn, Var **rs, Var **rcount, Var **rmean, Var **rsigma, double ignore) 
 {
-	int x, y, z, u, v;
+	int x, y, z;
 	int i, j, k;
 	size_t p1, p2, p3, p4, p5, p6, p7, p8;
     size_t nelements;

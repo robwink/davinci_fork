@@ -420,7 +420,6 @@ double  get_image_bicubic_interp(Var *obj,  double x, double y, double z){
 
 	size_t yi = (size_t)floor(y);
 	size_t xi = (size_t)floor(x);
-	size_t zi = (size_t)z;
 
 	double c,c0,c1,c2,c3;
 

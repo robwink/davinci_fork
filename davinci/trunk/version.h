@@ -1,8 +1,11 @@
-char *version = "@(#) daVinci Version #2.02";
+char *version = "@(#) daVinci Version #2.03";
 
 #include "build.h"
 
 /*
+  Version 2.03: Tue Sep 15 09:23:23 PDT 2009
+  * Cleanup many warnings.
+
   Version 2.02: Thu Aug 13 14:45:12 MST 2009
   * A few build system fixes to remove DVHELP and DV_MOD_PATH out of config.h and into the Makefile.
   * header.h: ctmp declared static.

@@ -29,7 +29,6 @@ ff_shade(vfuncptr func, Var * arg)
 	float *odata;
 	double		gx, gy, gz, sx, sy, sz;
 	int x, y;
-	size_t pos;
 	double left, up, val;
 	
 	Var *obj, *out;
@@ -117,17 +116,11 @@ ff_shade(vfuncptr func, Var * arg)
 Var *
 ff_shade2(vfuncptr func, Var * arg) 
 {
-    int		i, n;
     int		l, s;
-    unsigned char     *bdata;
-    short	       *sdata;
     unsigned char     *odata;
     double	sun_angle = -45.0;
     double	dx = 1.0;
     double		gx, gy, sx, sy;
-    double		py0, py1;
-    double		y0, y1, y2;
-    double		b[3];
     double		drop;
     double		shadow_height;
     int x, y;

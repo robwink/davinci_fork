@@ -1431,6 +1431,7 @@ ff_exit(vfuncptr func, Var * arg)
   } else {
     quit(extract_int(obj, 0));
   }
+  return(NULL); // never reached
 }
 
 #include <sys/stat.h>

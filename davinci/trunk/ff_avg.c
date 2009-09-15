@@ -23,7 +23,6 @@ ff_avg2(vfuncptr func, Var * arg)
 	char *ptr = NULL;
 	int axis = 0;
 	size_t i, j, dsize;
-	double n;
 	int in[3], out[3];
 	double *sum, *sum2;
 	size_t *count;
@@ -81,12 +80,12 @@ ff_avg2(vfuncptr func, Var * arg)
 
 	if (!strncmp(func->name, "avg", 3) || both)  {
 		f_avg = 1;
-		v = avg = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL); 
-	} 
+		v = avg = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL);
+	}
 
 	if (!strcmp(func->name, "stddev") || both)  {
 		f_stddev = 1;
-		v = stddev = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL); 
+		v = stddev = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL);
 	}
 
 	sum= (double *)calloc(V_DSIZE(v), sizeof(double));
@@ -176,7 +175,6 @@ ff_avg3(vfuncptr func, Var * arg)
 	char *ptr = NULL;
 	int axis = 0;
 	size_t dsize, i, j;
-	double n;
 	int in[3], out[3];
 	double *sum, *sum2;
 	size_t *count;
@@ -234,12 +232,12 @@ ff_avg3(vfuncptr func, Var * arg)
 
 	if (!strncmp(func->name, "avg", 3) || both)  {
 		f_avg = 1;
-		v = avg = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL); 
-	} 
+		v = avg = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL);
+	}
 
 	if (!strcmp(func->name, "stddev") || both)  {
 		f_stddev = 1;
-		v = stddev = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL); 
+		v = stddev = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL);
 	}
 
 	sum= (double *)calloc(V_DSIZE(v), sizeof(double));
@@ -339,8 +337,6 @@ ff_avg(vfuncptr func, Var * arg)
 	float f;
 	Var *both = NULL;
 
-	int ac;
-	Var **av;
 	Alist alist[4];
 	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
 	alist[1] = make_alist("axis",  		ID_ENUM,	options,	&ptr);
@@ -445,8 +441,6 @@ ff_min(vfuncptr func, Var * arg)
 	};
 	float ignore=MINFLOAT;
 
-	int ac;
-	Var **av;
 	Alist alist[4];
 	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
 	alist[1] = make_alist("axis",  		ID_ENUM,	options,	&ptr);
@@ -472,7 +466,7 @@ ff_min(vfuncptr func, Var * arg)
 }
 
 /*
-** Do min/max.  
+** Do min/max.
 **     axis:1, x axis
 **     axis:2, y axis
 **     axis:3, z axis
@@ -482,7 +476,6 @@ Var *
 fb_min(Var *obj, int axis, int direction, float ignore)
 {
 	Var *v;
-	char *ptr = NULL;
 	size_t dsize, dsize2, i, j;
 	float *fdata, x;
 	void *data;
@@ -530,15 +523,13 @@ fb_min(Var *obj, int axis, int direction, float ignore)
 Var *
 ff_findmin(vfuncptr func, Var * arg)
 {
-	Var *obj=NULL, *v;
+	Var *obj=NULL;
 	size_t dsize, i;
 	float x, val;
 	int do_min = 0, do_max = 0;
 	size_t pos;
 	float ignore = MINFLOAT;
 
-	int ac;
-	Var **av;
 	Alist alist[3];
 	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
 	alist[1] = make_alist("ignore",		FLOAT,		NULL,	&ignore);
@@ -580,8 +571,6 @@ ff_convolve(vfuncptr func, Var * arg)
 	int norm=1;
 	float ignore = MINFLOAT;
 
-	int ac;
-	Var **av;
 	Alist alist[5];
 	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
 	alist[1] = make_alist("kernel",  	ID_VAL,		NULL,	&kernel);
@@ -605,7 +594,6 @@ ff_convolve(vfuncptr func, Var * arg)
 
 Var *do_convolve(Var *obj, Var *kernel, int norm, float ignore)
 {
-	Var *v;
 	float *data, v1, v2;
 	int *wt;
 
@@ -668,24 +656,23 @@ Var *do_convolve(Var *obj, Var *kernel, int norm, float ignore)
 		}
 	}
 
-	return(newVal(V_ORG(obj), 
+	return(newVal(V_ORG(obj),
 		V_SIZE(obj)[0],
 		V_SIZE(obj)[1],
 		V_SIZE(obj)[2],
-		FLOAT, 
+		FLOAT,
 		data));
 }
 
 Var *
 ff_convolve3(vfuncptr func, Var * arg)
 {
-	Var *obj=NULL, *kernel=NULL, *v;
+	Var *obj=NULL, *kernel=NULL;
 	int norm=1;
 	float *data, *cache, val;
 	float *Mask,*Weight;
 	int *P;
 	int wt;
-	float temp;
 
 	size_t dsize, i, j, k;
 	int q, r, s;
@@ -701,8 +688,6 @@ ff_convolve3(vfuncptr func, Var * arg)
 	size_t Mem_Index;
 	size_t I;
 
-	int ac;
-	Var **av;
 	Alist alist[4];
 	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
 	alist[1] = make_alist("kernel",  	ID_VAL,		NULL,	&kernel);
@@ -760,7 +745,7 @@ ff_convolve3(vfuncptr func, Var * arg)
 	***	Find Axis lengths from shortest to longest and set up Mode:
 	***	Mode[0]=Shortest
 	***	Mode[1]=Middle
-	***	Mode[2]=Longest.  
+	***	Mode[2]=Longest.
 	***	We move the cache through the data block along the longest axis
 	******/
 
@@ -840,8 +825,8 @@ ff_convolve3(vfuncptr func, Var * arg)
 				       MidC*kOrd[Mode[0]]+
 				       MinC]=0;
 			}
-			else if (q>= mOrd[Mode[0]] || 
-				 r>= mOrd[Mode[1]] || 
+			else if (q>= mOrd[Mode[0]] ||
+				 r>= mOrd[Mode[1]] ||
 				 s>= mOrd[Mode[2]]){
 				cache[MajC*kOrd[Mode[1]]*kOrd[Mode[0]]+
 				      MidC*kOrd[Mode[0]]+
@@ -893,8 +878,8 @@ ff_convolve3(vfuncptr func, Var * arg)
 				cache[P[0]+MidC*kOrd[Mode[0]]+MinC]=0;
 				Weight[P[0]+MidC*kOrd[Mode[0]]+MinC]=0;
 			}
-			else if (q>= mOrd[Mode[0]] || 
-				 r>= mOrd[Mode[1]] || 
+			else if (q>= mOrd[Mode[0]] ||
+				 r>= mOrd[Mode[1]] ||
 				 s>= mOrd[Mode[2]]){
 				cache[P[0]+MidC*kOrd[Mode[0]]+MinC]=0;
 				Weight[P[0]+MidC*kOrd[Mode[0]]+MinC]=0;
@@ -956,11 +941,11 @@ ff_convolve3(vfuncptr func, Var * arg)
         Init_Cache=1;
       }
     }
-    return(newVal(V_ORG(obj), 
+    return(newVal(V_ORG(obj),
 	V_SIZE(obj)[0],
 	V_SIZE(obj)[1],
 	V_SIZE(obj)[2],
-	FLOAT, 
+	FLOAT,
 	(float *)data));
 }
 
@@ -986,7 +971,7 @@ static void position_fill(int *pos, size_t elem, int iter, Var *obj);
 Var*
 ff_maxpos(vfuncptr func, Var *arg)
 {
- 
+
   /* Transferred from thm module to davinci core 11/17/2007      **
   ** Rewritten to offer user option to return pixel value - kjn  */
 
@@ -1015,7 +1000,7 @@ ff_maxpos(vfuncptr func, Var *arg)
   alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
-  
+
   if (data == NULL) {
     parse_error("\nReturns the X, Y and Z positions of maximum element in array");
     parse_error("\nSyntax: maxpos(data=VAL [, iter=INT] [, ignore=VAL] [, lt=VAL] [, showval=INT])");
@@ -1059,21 +1044,21 @@ ff_maxpos(vfuncptr func, Var *arg)
     for(i=0; i<elems; i++) {
       ni1 = extract_float(data, i);
 
-      if(ni1 > ni2 && ni1 != ignore && 
-	 (lt != minval && l == 0 && ni1 <= ni3 || 
-	  l == 0 && lt == minval || 
-	  ni1 <= ni3 && l > 0)) {
+      if(ni1 > ni2 && ni1 != ignore &&
+         (lt != minval && l == 0 && ni1 <= ni3 ||
+          l == 0 && lt == minval ||
+          ni1 <= ni3 && l > 0)) {
 
-	/* check to see if it's the same element as a previous entry */
-	ck = 0;
-	for(j=l-1; j>=0; j--) {
-	  if(i == elements[j]) ck = 1;
-	}
+        /* check to see if it's the same element as a previous entry */
+        ck = 0;
+        for(j=l-1; j>=0; j--) {
+          if(i == elements[j]) ck = 1;
+        }
 
-	if(ck == 0) {
-	  ni2 = ni1;
-	  curr_elem = i;
-	}
+        if(ck == 0) {
+          ni2 = ni1;
+          curr_elem = i;
+        }
       }
     }
 
@@ -1090,11 +1075,11 @@ ff_maxpos(vfuncptr func, Var *arg)
   /* Concatenate position with value if flagged */
   if(showval != 0) {
     for(j=0;j<iter;j+=1) {
-      posv[j*4 + 0] = (float)pos[j*3 + 0]; 
+      posv[j*4 + 0] = (float)pos[j*3 + 0];
       posv[j*4 + 1] = (float)pos[j*3 + 1];
       posv[j*4 + 2] = (float)pos[j*3 + 2];
       posv[j*4 + 3] = vals[j];
-      
+
       free(vals);
       free(pos);
 
@@ -1116,12 +1101,12 @@ ff_maxpos(vfuncptr func, Var *arg)
 
 
 
-Var*
+  Var*
 ff_minpos(vfuncptr func, Var *arg)
 {
   /* Transferred from thm module to davinci core 11/17/2007      **
-  ** Rewritten to offer user option to return pixel value - kjn  */
- 
+   ** Rewritten to offer user option to return pixel value - kjn  */
+
   Var    *data = NULL;                      /* the original data               */
   Var    *out = NULL;                       /* the output structure            */
   int    *pos = NULL;                       /* the output position             */
@@ -1147,7 +1132,7 @@ ff_minpos(vfuncptr func, Var *arg)
   alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
-  
+
   if (data == NULL) {
     parse_error("\nReturns the x, y and z position of minimum element in array");
     parse_error("\nSyntax: minpos(data=VAL [, iter=INT] [, ignore=VAL] [, gt=VAL] [, showval=INT])");
@@ -1191,21 +1176,21 @@ ff_minpos(vfuncptr func, Var *arg)
     for(i=0; i<elems; i++) {
       ni1 = extract_float(data, i);
 
-      if(ni1 < ni2 && ni1 != ignore && 
-	 (gt != maxval && l == 0 && ni1 >= ni3 || 
-	  l == 0 && gt == maxval || 
-	  ni1 >= ni3 && l > 0)) {
+      if(ni1 < ni2 && ni1 != ignore &&
+         (gt != maxval && l == 0 && ni1 >= ni3 ||
+          l == 0 && gt == maxval ||
+          ni1 >= ni3 && l > 0)) {
 
-	/* check to see if it's the same element as a previous entry */
-	ck = 0;
-	for(j=l-1; j>=0; j--) {
-	  if(i == elements[j]) ck = 1;
-	}
+        /* check to see if it's the same element as a previous entry */
+        ck = 0;
+        for(j=l-1; j>=0; j--) {
+          if(i == elements[j]) ck = 1;
+        }
 
-	if(ck == 0) {
-	  ni2 = ni1;
-	  curr_elem = i;
-	}
+        if(ck == 0) {
+          ni2 = ni1;
+          curr_elem = i;
+        }
       }
     }
 
@@ -1222,11 +1207,11 @@ ff_minpos(vfuncptr func, Var *arg)
   /* Concatenate position with value if flagged */
   if(showval != 0) {
     for(j=0;j<iter;j+=1) {
-      posv[j*4 + 0] = (float)pos[j*3 + 0]; 
+      posv[j*4 + 0] = (float)pos[j*3 + 0];
       posv[j*4 + 1] = (float)pos[j*3 + 1];
       posv[j*4 + 2] = (float)pos[j*3 + 2];
       posv[j*4 + 3] = vals[j];
-      
+
       free(vals);
       free(pos);
 
@@ -1246,10 +1231,10 @@ ff_minpos(vfuncptr func, Var *arg)
 
 
 
-Var*
+  Var*
 ff_valpos(vfuncptr func, Var *arg)
 {
- 
+
   Var    *data = NULL;                      /* the original data               */
   Var    *out = NULL;                       /* the output structure            */
   int    *pos = NULL;                       /* the output position             */
@@ -1275,7 +1260,7 @@ ff_valpos(vfuncptr func, Var *arg)
   alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
-  
+
   if (data == NULL) {
     parse_error("\nReturns the X, Y and Z positions of the element in the array");
     parse_error("whose value is closest to the desired value\n");
@@ -1351,7 +1336,7 @@ ff_valpos(vfuncptr func, Var *arg)
   /* Concatenate position with value if flagged */
   if(showval != 0) {
     for(j=0;j<iter;j+=1) {
-      posv[j*4 + 0] = (float)pos[j*3 + 0]; 
+      posv[j*4 + 0] = (float)pos[j*3 + 0];
       posv[j*4 + 1] = (float)pos[j*3 + 1];
       posv[j*4 + 2] = (float)pos[j*3 + 2];
       posv[j*4 + 3] = vals[j];
@@ -1359,7 +1344,7 @@ ff_valpos(vfuncptr func, Var *arg)
 
     free(vals);
     free(pos);
-    
+
     out = newVal(BSQ, 4, iter, 1, FLOAT, posv);
     return(out);
   }

@@ -2,15 +2,15 @@
 #include "darray.h"
 
 /*
-   
+
    Values should only become permanent when going through set.
    The rest of the time they should be temporary, and cleanable
    at the end of a statement evaluation.
-   
+
    This invokes the idea of a local stack, and a symbol table, per scope.
    Additionally, lower scopes need the ability to reference the top
    level scope.
-   
+
 */
 
 static int scope_count = 0;
@@ -22,7 +22,7 @@ scope_push(Scope *s)
 {
     if (scope_count == scope_size) {
         scope_size = max(scope_size*2, 2);
-        scope_stack = (Scope **)my_realloc(scope_stack, 
+        scope_stack = (Scope **)my_realloc(scope_stack,
                                            scope_size * sizeof(Scope *));
     }
     scope_stack[scope_count++] = s;
@@ -189,14 +189,14 @@ dd_make_arglist(Scope *s)
 			p = newVal(BSQ, 1,1,1, BYTE, zero);
 			mem_claim(p);
 		} else {
-			p = V_DUP(dd->value[i]);		
+			p = V_DUP(dd->value[i]);
 		}
 		add_struct(v, dd->name[i], p);
     }
 	return(v);
 }
 
-Dictionary * 
+Dictionary *
 new_dd()
 {
     Dictionary *d;
@@ -209,7 +209,7 @@ new_dd()
      ** Make a var for $argc
      **/
     d->value[0] = (Var *)calloc(1, sizeof(Var));
-    make_sym(d->value[0], INT, "0");
+    make_sym(d->value[0], INT, (char *)"0");
     V_TYPE(d->value[0]) = ID_VAL;
 
     return(d);
@@ -253,7 +253,7 @@ push(Scope *scope, Var *v)
     Stack *stack = scope->stack;
     if (stack->top == stack->size) {
         stack->size = max(stack->size*2, 2);
-        stack->value = (Var **) my_realloc(stack->value, 
+        stack->value = (Var **) my_realloc(stack->value,
                                            stack->size * sizeof(Var *));
     }
     stack->value[stack->top++] = v;
@@ -303,7 +303,7 @@ clean_tmp(Scope *scope)
     if (scope->tmp) Darray_free(scope->tmp, (Darray_FuncPtr)free_var);
     scope->tmp = NULL;
 }
-    
+
 /**
  ** Clean the stack and tmptab of the current scope
  **/
@@ -389,30 +389,28 @@ mem_claim(Var *ptr)
 Var *
 mem_malloc(void)
 {
-    Scope *scope = scope_tos();
-    Var *v = (Var *)calloc(1, sizeof(Var));
-	Var *top = NULL;
-	Var *junk = NULL;
-	int count = 0;
+  Scope *scope = scope_tos();
+  Var *v = (Var *)calloc(1, sizeof(Var));
+  Var *top = NULL;
+  Var *junk = NULL;
+  int count = 0;
 
-	if (scope->tmp == NULL) scope->tmp = Darray_create(0);
+  if (scope->tmp == NULL) scope->tmp = Darray_create(0);
 
-/*
-** FIXED: If the top of the tmp scope is null, insert there, instead
-** of adding a new one.  This will prevent the temp list from
-** gowing indefinitely.
-**
-** Fri Apr 29 21:22:45 MST 2005, NsG
-*/
-    if ((count = Darray_count(scope->tmp)) > 0) {
-		if (Darray_get(scope->tmp, count-1, (void **)&top) == 1 && top == NULL) {
-			Darray_replace(scope->tmp, count-1, v, &junk);
-			return(v);
-		}
-	} 
+  /*
+   * If the top of the tmp scope is null, insert there, instead
+   * of adding a new one.  This will prevent the temp list from
+   * gowing indefinitely.
+   */
+  if ((count = Darray_count(scope->tmp)) > 0) {
+    if (Darray_get(scope->tmp, count-1, (void **)&top) == 1 && top == NULL) {
+      Darray_replace(scope->tmp, count-1, v, &junk);
+      return(v);
+    }
+  }
 
-	Darray_add(scope->tmp, v);
-    return(v);
+  Darray_add(scope->tmp, v);
+  return(v);
 }
 
 Var *
@@ -490,7 +488,7 @@ unload_symtab_modules(Scope *scope){
  **
  ** All the vars in dd belong to parent.  Dont free those.
  ** All the vars in args belong to the parent.  Dont free those.
- ** argv[0] 
+ ** argv[0]
  **/
 
 void

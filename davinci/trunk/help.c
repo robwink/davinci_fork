@@ -45,6 +45,7 @@
  * The list of those interested in beta-test versions is
  *         info-gnuplot-beta@dartmouth.edu
  */
+#include "parser.h"
 
 #ifndef DVHELP
 #ifndef __CYGWIN__
@@ -54,7 +55,6 @@
 #endif
 #endif
 
-#include "parser.h"
 #include "func.h"
 #include <errno.h>
 extern int errno;
@@ -821,4 +821,3 @@ squash_spaces(char *s)
   }
   *w = '\0';                /* null terminate string */
 }
-

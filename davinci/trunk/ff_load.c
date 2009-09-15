@@ -36,12 +36,9 @@ Var *
 ff_load(vfuncptr func, Var * arg)
 {
     int record = -1;
-    FILE *fp = NULL;
-    Var  *input = NULL;
     char *filename = NULL;
-    char *p, *fname;
-	struct iom_iheader h;
-	Var *fvar = NULL;
+    struct iom_iheader h;
+    Var *fvar = NULL;
 
 	/* Set data extraction ranges for iom_read_qube_data(). */
 

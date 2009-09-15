@@ -135,7 +135,7 @@ ff_ifill(vfuncptr func, Var * arg)
   float fill = 0.0;
   float *data1 = NULL, *data2 = NULL, *data3 = NULL;
   int width,height,depth, dsize;
-  char *pass = "1234";
+  char *pass = (char *)"1234";
 
   Alist alist[6];
   alist[0] = make_alist( "object",    ID_VAL, NULL, &obj);

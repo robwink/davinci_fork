@@ -110,7 +110,6 @@ eval_buffer(char *buf)
 void
 quit(int return_code)
 {
-  char cmd[256];
   char *path = getenv("TMPDIR");
 
   if (interactive) {

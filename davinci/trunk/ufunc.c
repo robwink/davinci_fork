@@ -2,6 +2,7 @@
 #include "parser.h"
 #include "func.h"
 
+
 /**
  ** Load function from file.
  ** Find and verify name.
@@ -21,7 +22,7 @@ void yy_delete_buffer(void *);
 void yy_switch_to_buffer(void *);
 
 UFUNC *
-locate_ufunc(const char *name) 
+locate_ufunc(const char *name)
 {
     int i;
     for (i = 0 ; i < nufunc ; i++) {
@@ -46,7 +47,7 @@ destroy_ufunc(const char *name)
 }
 
 void
-store_ufunc(UFUNC *f) 
+store_ufunc(UFUNC *f)
 {
     if (ufunc_list == NULL) {
         ufunc_list = (UFUNC **)calloc(ufsize, sizeof(UFUNC *));
@@ -60,7 +61,7 @@ store_ufunc(UFUNC *f)
 }
 
 void
-free_ufunc(UFUNC *f) 
+free_ufunc(UFUNC *f)
 {
     free(f->text);
     free(f->name);
@@ -83,7 +84,7 @@ save_ufunc(char *filename)
     if (destroy_ufunc(f->name)) {
         if (VERBOSE) fprintf(stderr, "Replacing function %s\n", f->name);
     } else {
-        if (VERBOSE) 
+        if (VERBOSE)
             fprintf(stderr, "Loaded function %s\n", f->name);
     }
     store_ufunc(f);
@@ -116,7 +117,6 @@ load_function(char *filename)
 	// functions come from
 	extern char **fnamestack;
 	extern int ftosIndex;
-	extern int *flinenos;
 
 	char *fname;
 	int fline;
@@ -176,14 +176,14 @@ load_function(char *filename)
 	fname = fnamestack[ftosIndex];
 	fline = local_line+1;
 	if (fname == NULL) {
-		fname = ":no filename:";
+		fname = (char *)":no filename:";
 	}
 
 	f->fname = strdup(fnamestack[ftosIndex]);
 	f->fline = local_line+1;
 
 	/*
-	** Added 09/29/00, 
+	** Added 09/29/00,
 	**
 	** See if the function we are replacing is exactly the same.
 	** If so, do nothing.
@@ -210,7 +210,7 @@ load_function(char *filename)
     if (*str && *str == '(') {
         str++;
         p = str;
-        while(*str && (isalnum(*str) || isspace(*str) || strchr(",_", *str))) 
+        while(*str && (isalnum(*str) || isspace(*str) || strchr(",_", *str)))
             str++;
         if (*str && *str == ')') {
             /**
@@ -293,7 +293,7 @@ load_function(char *filename)
 		printf("%s", line);
 		fflush(stdout);
 	}
-	
+
 	pp_line = local_line;
 	p = str;
 
@@ -366,7 +366,7 @@ dispatch_ufunc(UFUNC *f, Var *arg)
     }
     /**
      ** Parse through args looking for keyword pairs, and storing their
-     ** values.  While we are at it, if we encounter a value without a 
+     ** values.  While we are at it, if we encounter a value without a
      ** keyword, store it in ARGV
      **
      ** Total number of args is stored in $0
@@ -404,7 +404,7 @@ dispatch_ufunc(UFUNC *f, Var *arg)
             argc = dd_put_argv(scope, v);
 
             if (f->max_args >= 0 && argc > f->max_args) {
-                sprintf(error_buf, 
+                sprintf(error_buf,
                         "Too many arguments to ufunc: %s().  Only expecting %d",
                         f->name, f->max_args);
                 parse_error(NULL);
@@ -415,8 +415,8 @@ dispatch_ufunc(UFUNC *f, Var *arg)
         }
     }
     if (f->min_args && (argc = dd_argc(scope)) < f->min_args) {
-        sprintf(error_buf, 
-                "Not enough arguments to ufunc: %s().  Expecting %d.", 
+        sprintf(error_buf,
+                "Not enough arguments to ufunc: %s().  Expecting %d.",
                 f->name, f->min_args);
         parse_error(NULL);
 		dd_unput_argv(scope);
@@ -436,7 +436,7 @@ dispatch_ufunc(UFUNC *f, Var *arg)
      **  symtab, since that memory will go away when the scope is cleaned.
      **/
     dd_unput_argv(scope);
-        
+
     /**
      ** options the user may exercise with the RETURN statement:
      **
@@ -464,7 +464,7 @@ dispatch_ufunc(UFUNC *f, Var *arg)
         }
     }
     clean_scope(scope_pop());
-        
+
     if (insert) {
         Scope *scope = scope_tos();
 
@@ -482,8 +482,8 @@ dispatch_ufunc(UFUNC *f, Var *arg)
 }
 
 /**
- ** find ufunc.  
- ** Spit to file.  
+ ** find ufunc.
+ ** Spit to file.
  ** Call editor.
  ** Check file time, and reload if newer.
  **/
@@ -494,7 +494,7 @@ ufunc_edit(vfuncptr func , Var *arg)
     UFUNC *ufunc;
     char *name;
     struct stat sbuf;
-    time_t time = 0; 
+    time_t time = 0;
     FILE *fp;
     char buf[256];
     char *fname, *filename, *editor;
@@ -543,8 +543,8 @@ ufunc_edit(vfuncptr func , Var *arg)
         time = sbuf.st_mtime;
     }
 
-    if ((editor = getenv("EDITOR")) == NULL) 
-        editor = "/bin/vi";
+    if ((editor = getenv("EDITOR")) == NULL)
+        editor = (char *)"/bin/vi";
 
     sprintf(buf, "%s %s", editor, fname);
     system(buf);
@@ -552,7 +552,7 @@ ufunc_edit(vfuncptr func , Var *arg)
     if (stat(fname, &sbuf) == 0) {
         if (time != sbuf.st_mtime) {
             fp = fopen(fname, "r");
-            push_input_stream(fp, ":ufunc edit:");
+            push_input_stream(fp, (char *)":ufunc edit:");
         } else {
             fprintf(stderr, "File not changed.\n");
         }
@@ -577,43 +577,43 @@ list_funcs()
 Var *
 ff_global(vfuncptr func, Var * arg)
 {
-	Var *e = NULL, *v = NULL;
-	Var *aval = NULL;
-	char *aname = NULL;
-	Alist alist[2];
+  Var *e = NULL, *v = NULL;
+  char *aname = NULL;
+  Alist alist[2];
 
-	alist[0] = make_alist( "object",    ID_ENUM,    NULL,    &aname);
-	alist[1].name = NULL;
+  alist[0] = make_alist( "object",    ID_ENUM,    NULL,    &aname);
+  alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+  if (parse_args(func, arg, alist) == 0) return(NULL);
 
-	if (aname == NULL) {return(NULL);}
+  if (aname == NULL) {return(NULL);}
 
-	if ((e = get_global_sym(aname)) == NULL)  {
-		/* 
-		 * Doesn't exist in the global scope.  
-		 * If it exists in the local scope, get it and give it's memory
-		 * to the global scope.  Otherwise, create a new value.
-		 */
-		if ((e = eval(aname)) == NULL) {
-			char *zero = (char *)calloc(1,1);
-			e = newVal(BSQ, 1,1,1, BYTE, zero);
-			mem_claim(e);
-			V_NAME(e) = strdup(aname);
-		} else {
-			if ((v = rm_symtab(e)) != NULL) {
-				e = v;
-			} else {
-				/* Ok, at this point, this named argument exists in the
-				 * local scope, but it has to be in the dd, not the symtab.
-				 * The means it's owned by a parent's scope.  Lets just quit.
-				 */
-				parse_error("error: symbol is not part of the local scope");
-				return(NULL);
-			}
-		}
-		put_global_sym(e);
-	}
-	dd_put(scope_tos(), V_NAME(e), e);
-	return(NULL);
+  if ((e = get_global_sym(aname)) == NULL)  {
+    /*
+     * Doesn't exist in the global scope.
+     * If it exists in the local scope, get it and give it's memory
+     * to the global scope.  Otherwise, create a new value.
+     */
+    // NOTE(gorelick): passing a string to eval?
+    if ((e = eval(aname)) == NULL) {
+      char *zero = (char *)calloc(1,1);
+      e = newVal(BSQ, 1,1,1, BYTE, zero);
+      mem_claim(e);
+      V_NAME(e) = strdup(aname);
+    } else {
+      if ((v = rm_symtab(e)) != NULL) {
+        e = v;
+      } else {
+        /* Ok, at this point, this named argument exists in the
+         * local scope, but it has to be in the dd, not the symtab.
+         * The means it's owned by a parent's scope.  Lets just quit.
+         */
+        parse_error("error: symbol is not part of the local scope");
+        return(NULL);
+      }
+    }
+    put_global_sym(e);
+  }
+  dd_put(scope_tos(), V_NAME(e), e);
+  return(NULL);
 }

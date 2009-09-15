@@ -35,7 +35,7 @@ ff_hstretch(vfuncptr func, Var * arg)
 {
 
     Var *obj=NULL, *histogram=NULL;
-    const char *types[] = { "linear", "gauss","smooth","ellipse" };
+    // const char *types[] = { "linear", "gauss","smooth","ellipse" };
     int dnmin=0, dnmax = 255;
     const char *type = "gauss";
     float gmean=127, gsigma = 3.0;
@@ -94,7 +94,7 @@ ff_hstretch(vfuncptr func, Var * arg)
                                 "compress", newInt(1),
                                 NULL,NULL);
         if (minval != -MAXFLOAT) {
-            args = append_arg(args, "start", newFloat(minval));
+            args = append_arg(args, (char *)"start", newFloat(minval));
         }
         histogram = V_func("histogram", args);
         lhist = 1;
@@ -193,7 +193,6 @@ cdf_smooth(int dnmin, int dnmax)
 {
     float *out;
     int npts, i;
-	float anorm;
 
     npts = dnmax - dnmin + 1;
     out = calloc(sizeof(float), npts);
@@ -210,7 +209,7 @@ cdf_ellipse(int dnmin, int dnmax)
     float *out;
     int npts, i;
     float b,p,bsq,sum,bsqxsq;
-    float x,y, anorm;
+    float x, anorm;
 	int noffset;
 
     npts = dnmax - dnmin + 1;

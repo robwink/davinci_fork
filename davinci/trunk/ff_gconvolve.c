@@ -46,7 +46,7 @@ Var *ff_gconvolve(vfuncptr func, Var * arg)
 
     /* These variables correspond to the van Vliet algorithm variables. */
 
-    float q, qq, qqq, b0, b1, b2, b3, B, an, wn;
+    float q, qq, qqq, b0, b1, b2, b3, B;
 	float a;
 
     /* Setup input args. */

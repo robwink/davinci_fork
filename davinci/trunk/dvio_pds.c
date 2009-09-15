@@ -129,7 +129,7 @@ void Add_Key_Offset(char *Val, int Index, int record_bytes)
   dK[Index].dptr = record_bytes * (atoi(Val) - 1);
 }
 
-char *fix_name(char *input_name)
+char *fix_name(const char *input_name)
 {
   char *name = strdup(input_name);
   int len = strlen(name);
@@ -263,7 +263,6 @@ int make_int(char *number)
   int r_flag = 0;
   int len;
   int i = 0;
-  int count = 0;
   int offset;
   len = strlen(number);
 
@@ -518,7 +517,6 @@ gen_next_unused_name_instance(
 void Traverse_Tree(OBJDESC * ob, Var * v, int record_bytes)
 {
   KEYWORD *key;
-  int offset = strlen(keyword_prefix);
   OBJDESC *next_ob = NULL;
   unsigned short scope = ODL_CHILDREN_ONLY;
   int count = 0;
@@ -741,11 +739,7 @@ void
 ProcessGroupIntoLabel(FILE * fp, int record_bytes, Var * v, char *name)
 {
   Var *tmpvar;
-  Var *v2;
-  int i;
-  int count;
   char *struct_name;
-  char *tmpname;
   char *tmpname2;
 
   tmpname2 = correct_name(name);
@@ -776,7 +770,6 @@ char *ProcessVarIntoString(Var * element, char *name)
   int count;
   char tmp_string[1024];
   char *string = (char *) malloc(1024 * 32 * sizeof(char));
-  char *tmpname;
 
   if (GetSamples(V_SIZE(element), V_ORG(element)) > 1)
     flag += 1;
@@ -890,7 +883,6 @@ void ProcessHistoryIntoString(Var * v, char **theString, int *ptr)
   char *name;
   char *tmpname;
   char string[1024 * 32];
-  char num[1024];
   static int current_size;
 
   if (!(*ptr)) {              /*first time through, malloc up some memory */
@@ -1005,8 +997,6 @@ ProcessObjectIntoLabel(FILE * fp, int record_bytes, Var * v, char *name,
   int line_idx = (-1);
   int band_idx = (-1);
 
-  char *tmpname;
-  char *tmpname2;
   fprintf(fp, "OBJECT = %s\r\n", name);
 
   if (!(strcasecmp("table", name))) { /*We're processing a table! */
@@ -1289,7 +1279,6 @@ Var *ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth,
   Var *tmp_var = newVar();
   char *name;
   char pad[26] = { 0 };
-  char *pds_filename;
   char inset[1024] = { '\0' };
   char *tmpname;
 
@@ -1534,15 +1523,12 @@ Var *WritePDS(vfuncptr func, Var * arg)
   Var *v = NULL;
   FILE *fp;
   int force = 0;
-  char output[1024];
   char *name;
   Var *data = newVar();
-  int flag;
   int count;
   int i;
   char *filename = NULL, *fname = NULL;
   int record_bytes;           /*            Gotta keep track of this baby! */
-  Var *result;
   size_t label_ptr[4];
   objectInfo oi;
 
@@ -1750,14 +1736,9 @@ Var *ReadPDS(vfuncptr func, Var * arg)
 
 Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
 {
-  int ac;
-  Var **av;
-
   OBJDESC *ob;
   KEYWORD *key;
   char *err_file = NULL;
-  int obn = 1;
-  Var *fn = NULL;
   int record_bytes;
   char *fname;
 
@@ -1864,7 +1845,7 @@ int rf_QUBE(char *fn, Var * ob, char *val, int dptr)
   return (0);
 }
 
-int
+void
 rf_BitField(int *j, char **Bufs, char *tmpbuf, FIELD ** f, int ptr,
             int row, int *size)
 {
@@ -1974,6 +1955,7 @@ int rf_TABLE(char *fn, Var * ob, char *val, int dptr)
   free(Bufs);
   return (0);
 }
+
 double Scale(int size, void *ptr, FIELD * f)
 {
   unsigned char *cp;
@@ -2027,6 +2009,9 @@ double Scale(int size, void *ptr, FIELD * f)
       memcpy(num, cp, f->size);
       num[f->size] = '\0';
       return ((double) (atof(num)) * f->scale + f->offset);
+    default:
+      // This should never happen
+      return 0;
   }
 
   return (0);
@@ -2038,7 +2023,6 @@ char *DoScale(int rows, FIELD * f, char *in)
   double *out;
   void *ptr;
   int count = 0;
-  double Val;
   int i, j;
   int dim = (f->dimension ? f->dimension : 1);
   int size = f->size;
@@ -2244,12 +2228,13 @@ char *history_parse_buffer(FILE * in)
     strcpy((TheString + ptr), buf);
     ptr += strlen(buf);
 
-    if (!(strncasecmp("END", buf, 3)))
-      if (!(strncasecmp("END_", buf, 4)))
+    if (!(strncasecmp("END", buf, 3))) {
+      if (!(strncasecmp("END_", buf, 4))) {
         continue;
-      else
+      } else {
         break;
-
+      }
+    }
   }
 
   TheString = (char *) realloc(TheString, strlen(TheString));
@@ -2285,7 +2270,7 @@ history_remove_isis_indents(const char *history)
   }
 
   lines_list = new_list();
-  for(p = src_hist; line = strtok(p, "\n"); p = NULL){
+  for (p = src_hist; line = strtok(p, "\n"); p = NULL) {
     list_add(lines_list, line);
   }
 
@@ -2319,11 +2304,7 @@ history_remove_isis_indents(const char *history)
 
 int rf_HISTORY(char *fn, Var * ob, char *val, int dptr)
 {
-  int i;
-  int count = get_struct_count(ob);
   Var *tmp;
-  char *name;
-  int size = 0;
   FILE *in;
   Var *data = new_struct(0);
   char *history, *p;

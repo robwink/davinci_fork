@@ -15,7 +15,7 @@ ff_interp(vfuncptr func, Var *arg)
     Var *v[3] = {NULL,NULL,NULL};
     float ignore = MINFLOAT;
     const char *usage = "usage: %s(y1,x1,x2,[type={'linear'|'cubic'}]";
-    char *type = "";
+    char *type = (char *)"";
     const char *types[] = {"linear", "cubic", NULL};
     Var *out;
 
@@ -64,13 +64,12 @@ ff_interp(vfuncptr func, Var *arg)
 		
 Var *linear_interp(Var *v0, Var *v1, Var *v2, float ignore) 
 {
-    Var *s = NULL, *e = NULL;
+    Var *s = NULL;
     float *x = NULL,*y = NULL, *fdata = NULL;
     size_t i, count = 0;
     float x1,y1,x2,y2,w;
     float *m = NULL, *c = NULL; /* slopes and y-intercepts */
     size_t fromsz, tosz; /* number of elements in from & to arrays */
-	char *usage = "usage: interp(y1,x1,x2,[type={'linear'|'cubic'}]";
 
     fromsz = V_DSIZE(v0);
     tosz = V_DSIZE(v2);
@@ -809,7 +808,7 @@ Var* ff_interp2d(vfuncptr func, Var *arg)
   Var    *ydata = NULL;                /* the orignial data */ 
   Var    *table = NULL;                /* look up table */
   Var    *out = NULL;                  /* the output struture */
-  int     i,j,k;                       /* loop indices */
+  int     i,j;                       /* loop indices */
   float   p1, p2;                      /* percentages */
   int     xx,xy,xz,yx,yy,yz;           /* data size */
   float  *wdata = NULL;                /* working data */
@@ -898,4 +897,3 @@ Var* ff_interp2d(vfuncptr func, Var *arg)
   out=newVal(BSQ, xx, xy, 1, FLOAT, wdata);
   return out;
 }
-

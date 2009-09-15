@@ -26,7 +26,6 @@ ff_coreg(vfuncptr func, Var * arg)
   int ok = 0;
   size_t    count = 0;
   size_t total = 0;
-  int sum = 0;
 
   Alist alist[8];
   alist[0] = make_alist("pic1",     ID_VAL,	NULL,	&pic1_in);
@@ -186,7 +185,6 @@ Var *ff_coreg2(vfuncptr func, Var * arg)
 {
     Var *obj1 = NULL;
     Var *obj2 = NULL;
-    Var *out = NULL;
     float ignore = 0;
     int *solution = NULL;
     int verbose = 0;
@@ -194,7 +192,6 @@ Var *ff_coreg2(vfuncptr func, Var * arg)
     int i, j, k, m;
 	int size = 10;
 	float v1, v2;
-    Window *w;
 	Var *sval;
 	size_t diameter;
 	int *answer;

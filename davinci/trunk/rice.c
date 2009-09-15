@@ -20,11 +20,11 @@ int rice_fs(ushort *in, int npts, uchar *out, int start);
 void write_zeros(uchar *buf, int len, int x);
 void write_bit(uchar *buf, int pos, int value);
 int rice_pack(ushort *in, int npts, int bits, uchar *out, int start);
-int delta_transform(short *in, int npts, ushort *out);
+int delta_transform(ushort *in, int npts, ushort *out);
 void delta_transform_inverse(ushort *in, int npts, short *out);
 
 int rice_code(ushort *, int, uchar *, int);
-int rice_split(short *, int, int, uchar *, int);
+int rice_split(ushort *, int, int, uchar *, int);
 int rice_uncode(uchar *, int, ushort *, int);
 int rice_unfs(uchar *, int, ushort *, int);
 int rice_unpack(uchar *, int, int, ushort *, int);
@@ -134,7 +134,6 @@ int rice_unauto(uchar *in, int len, int npts, int bits, short *out)
 	int mode;
 	int len1;
 	int start = 0;
-	char flag;
 	int hdr;
 	int len_size;
 	int mode_size;
@@ -182,7 +181,7 @@ int rice_unauto(uchar *in, int len, int npts, int bits, short *out)
 ** 
 */
 
-int rice_split(short *in, int npts, int entropy, uchar *out, int start)
+int rice_split(ushort *in, int npts, int entropy, uchar *out, int start)
 {
 	int i;
 	ushort top[MAX_BUF_LEN];
@@ -212,7 +211,6 @@ int rice_unsplit(uchar *in, int len, int npts, int entropy, short *out, int star
 	short top[MAX_BUF_LEN];
 	int len1;
 	int n1, n2;
-	int hdr = 2+4+13;
 
 	len1 = npts*entropy;
 
@@ -233,7 +231,7 @@ int rice_unsplit(uchar *in, int len, int npts, int entropy, short *out, int star
 int rice_split_size(uchar *in)
 {
 	int start = 0; 						/* number of bits used */
-	int len, len1, len2;
+	int len1, len2;
 
 	start = 0;
 	len1 = read_bits(in, start+6, 13);
@@ -245,7 +243,7 @@ int rice_split_size(uchar *in)
 /**
 *** Compute delta transform to make everything >= 0
 **/
-int delta_transform(short *in, int npts, ushort *out)
+int delta_transform(ushort *in, int npts, ushort *out)
 {
 	int i, sum = 0;
 	for (i = 0 ; i < npts ; i++) {
@@ -261,7 +259,7 @@ int delta_transform(short *in, int npts, ushort *out)
 **/
 void delta_transform_inverse(ushort *in, int npts, short *out)
 {
-	int i, sum = 0;
+	int i;
 	for (i = 0 ; i < npts ; i++) {
 		if (in[i] & 1) out[i] = -(in[i]+1)/2;
 		else out[i] = in[i]/2;
@@ -368,9 +366,7 @@ int rice_uncode(uchar *in, int len, ushort *out, int start)
 	int i;
 	int pos=0;
 	int b1, b2, b3;
-	int x;
 	uchar out2[MAX_BUF_LEN];
-	int len2;
 
 	i = 0;
 	while (i < len) {
@@ -425,7 +421,6 @@ void test_rice_fs(ushort *in, int npts)
 	/*
 	** Test rice fundamental sequence
 	*/
-	int i;
 	uchar out[MAX_BUF_LEN];
 	ushort out2[MAX_BUF_LEN];
 
@@ -442,7 +437,6 @@ void test_rice_code(ushort *in, int npts)
 	/*
 	** Test rice code
 	*/
-	int i;
 	uchar out[MAX_BUF_LEN];
 	ushort out2[MAX_BUF_LEN];
 
@@ -459,7 +453,6 @@ void test_rice_pack(short *in, int npts, int bits)
 	/*
 	** Test rice pack
 	*/
-	int i;
 	uchar out[MAX_BUF_LEN];
 	short out2[MAX_BUF_LEN];
 
@@ -476,7 +469,6 @@ void test_rice_split(short *in, int npts, int entropy, int bits)
 	/*
 	** Test rice pack
 	*/
-	int i;
 	uchar out[MAX_BUF_LEN];
 	short out2[MAX_BUF_LEN];
 
@@ -493,7 +485,6 @@ void test_rice_auto(short *in, int npts, int bits)
 	/*
 	** Test rice pack
 	*/
-	int i;
 	uchar out[MAX_BUF_LEN];
 	short out2[MAX_BUF_LEN];
 

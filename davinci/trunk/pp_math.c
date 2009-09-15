@@ -118,8 +118,6 @@ pp_math(Var * a, int op, Var * b)
     Var *val, *t;
     void *data;
     int count;
-    int va, vb;
-    int ca = 1, cb = 1;
     size_t dzero=0;
 
     if (a == NULL) a = VZERO;	/* define this somewhere */
@@ -282,13 +280,12 @@ pp_math(Var * a, int op, Var * b)
 int
 pp_compare(Var * a, Var * b)
 {
-    int in_format, out_format;
+    int in_format;
     int size[3];
     size_t dsize = 0;
     size_t i;
     int order;
     Var *val, *t, v;
-    void *data;
     int count;
     int va, vb;
     int ca = 1, cb = 1;
