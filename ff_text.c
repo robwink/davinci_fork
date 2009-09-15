@@ -31,7 +31,6 @@ Var *newText(int rows, char **text)
 Var *ff_read_text(vfuncptr func, Var * arg)
 {
   char *filename = NULL;
-  Var *v, *e, *s;
   char *fname;
   FILE *fp;
   char *ptr;
@@ -40,7 +39,7 @@ Var *ff_read_text(vfuncptr func, Var * arg)
   char *cdata;
   int count = 0;
 
-  int i, j;
+  int j;
 
   int dsize;
   int x = 0;
@@ -242,7 +241,7 @@ Var *ff_delim_textarray(Var * ob, int item, char *delim)
 
 Var *ff_delim(vfuncptr func, Var * arg)
 {
-  Var *ob = NULL, *cval, *s, *v, *e;
+  Var *ob = NULL, *s;
   char *delim = NULL;
   char *cdata;
   char *ptr;
@@ -501,6 +500,8 @@ Var *ff_filename(vfuncptr func, Var * arg)
     return (NULL);
   }
 
+  // NOTE(gorelick): This opaque enum should be replaced with strings
+  // or just compare the function name.
   filefunc = (int) func->fdata;
   if (filefunc == 0) {
     parse_error("Bad function");
@@ -679,7 +680,7 @@ Var *ff_strstr(vfuncptr func, Var * arg)
 {
 
   Var *ob1;
-  char *s1 = NULL, *newcursor = NULL;
+  char *s1 = NULL;
   Alist alist[3];
   alist[0] = make_alist("obj", ID_UNK, NULL, &ob1);
   alist[1] = make_alist("pattern", ID_STRING, NULL, &s1);

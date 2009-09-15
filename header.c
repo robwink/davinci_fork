@@ -67,7 +67,7 @@ LoadLabel(char *fname)
     int i;
     unsigned short scope;
     int reclen, nfields, nrows;
-    char *name, *alias = NULL;
+    char *name;
 
     ob = OdlParseLabelFile(fname, NULL, ODL_EXPAND_STRUCTURE, 1);
     if (ob == NULL) {
@@ -499,7 +499,7 @@ FindFieldInLabel(char *name, LABEL * l)
 FRAGMENT *
 LoadFragment(char *fname, TABLE *table)
 {
-    OBJDESC *ob, *tbl, *col;
+    OBJDESC *ob, *tbl;
     KEYWORD *kw;
     LIST *startlist=NULL, *endlist=NULL;
     FRAGMENT *f;

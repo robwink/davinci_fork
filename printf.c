@@ -67,14 +67,12 @@
     }                                                           \
   }
 
-static int	 asciicode __P((void));
 static void	 escape __P((char *));
 static int	 getchr    __P((Var *,char *));
 static int	 getdouble __P((Var *,double *));
 static int	 getint    __P((Var *,int *));
 static int	 getstr    __P((Var *,char **));
 static char	*mklong __P((char *, int));
-static void	 usage __P((void));
 static int dv_asprintf(char **, char *, ...);
 char *do_sprintf(int ac, Var **av);
 
@@ -205,8 +203,8 @@ do_sprintf(int ac, Var **av)
    * arguments, arguments of zero/null string are provided to use
    * up the format string.
    */
-  skip1 = "#-+ 0";
-  skip2 = "0123456789";
+  skip1 = (char *)"#-+ 0";
+  skip2 = (char *)"0123456789";
 
   if (ac < 2) {
     parse_error("Format string must be first paramter");

@@ -55,9 +55,6 @@ char fht_version[] = "Brcwl-Hrtly-Ron-dbld";
 int
 mayer_fht(REAL *fz, int n)
 {
-	REAL a, b;
-	REAL c1, s1, s2, c2, s3, c3, s4, c4;
-	REAL f0, g0, f1, g1, f2, g2, f3, g3;
 	int i, k, k1, k2, k3, k4, kx;
 	REAL *fi, *fn, *gi;
 	TRIG_VARS;
@@ -223,7 +220,7 @@ mayer_ifft(int n, double *real, double *imag)
 int
 mayer_realfft(int n, double *real)
 {
-	double a, b, c, d;
+	double a, b;
 	int i, j, k;
 	mayer_fht(real, n);
 	for (i = 1, j = n - 1, k = n / 2; i < k; i++, j--) {
@@ -263,7 +260,7 @@ mayer_fft(int n, double *real, double *imag)
 int
 mayer_realifft(int n, double *real)
 {
-	double a, b, c, d;
+	double a, b;
 	int i, j, k;
 	for (i = 1, j = n - 1, k = n / 2; i < k; i++, j--) {
 		a = real[i];

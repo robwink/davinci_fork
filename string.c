@@ -7,7 +7,6 @@
 Var *
 ff_atoi(vfuncptr func, Var *arg)
 {
-    int i;
 	Var *v = NULL;
 
 	Alist alist[2];
@@ -41,7 +40,6 @@ Var *
 ff_atof(vfuncptr func, Var * arg)
 {
 	Var *v = NULL, *s;
-	float f;
 
 	Alist alist[2];
 	alist[0] = make_alist( "object",    ID_UNK,    NULL,    &v);

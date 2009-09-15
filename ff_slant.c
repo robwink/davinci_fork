@@ -98,7 +98,7 @@ ff_unslant(vfuncptr func, Var * arg)
 	Var *out;
 	int i,j,k;
 	int x,y,z;
-	int *leftmost,*rightmost;
+	int *leftmost;
 	int width;
 	Var *data, *leftedge, *w;
 	float ignore;
@@ -272,4 +272,3 @@ Var * ff_unslant_shear(vfuncptr func, Var * arg) {
   }
   return(out);
 }
-	  

@@ -7,7 +7,6 @@ extern Var * iom_iheader2var(struct iom_iheader *h);
 Var *
 ff_raw(vfuncptr func, Var * arg)
 {
-	unsigned char *buf;
 	char *filename=NULL, *fname;
 	FILE *fp;
 	int x = -1,y = -1,z =-1,header=0;

@@ -21,10 +21,7 @@ ff_radial_symmetry(vfuncptr func, Var * arg)
     Var *obj = NULL, *rval = NULL;
     float ignore=MINFLOAT;
     float *out = NULL;
-    int dim[3];
-    int format, nbytes;
-    float *s1, *s2;
-    int a,b,x,y,z,pos, i,j,k;
+    int x,y,z, i,j,k;
     int size = 10;
     int xdelta=0.0, ydelta=0.0;
     float *line = NULL;
@@ -97,15 +94,9 @@ ff_radial_symmetry2(vfuncptr func, Var * arg)
     Var *obj = NULL, *rval = NULL;
     float ignore=MINFLOAT;
     float *out;
-    int dim[3];
-    int format, nbytes;
-    float *s1, *s2;
-    int a,b,x,y,z,pos, i,j,k;
+    int x,y,z, i,j;
     int size = 0;
-    int xdelta=0, ydelta=0;
     int width=0, height=0;
-    float *line;
-    int all = 0;
     Window *w;
 
     Alist alist[9];
@@ -170,7 +161,7 @@ radial_symmetry(void **data_in,
     float **data = (float**)data_in;
     int xc = width/2;
     int yc = height/2;
-    int i,j;
+    int i;
     int odd;
     double x1, y1;
 
@@ -238,10 +229,7 @@ radial_symmetry2(void **data_in,
 {
     float **data = (float**)data_in;
     int i,j;
-    int odd;
     double x1, y1;
-    int xc = width/2;
-    int yc = height/2;
 
     double ret = ignore;
     double ssxx = 0 , ssyy = 0, ssxy = 0;
@@ -325,15 +313,15 @@ ff_radial_symmetry3(vfuncptr func, Var * arg)
     int width=0, height=0;
 	int end=1;
 	Var *rval = NULL;
-	int x,y,z;
+	int x,y;
     float *out;
     Window *w;
 
 	int *distance, d;
 	int dx, dy;
 	double ssxx, ssyy, ssxy;
-	int i, j, k, p, q, r;
-	int p1,q1, h2,w2;
+	int i, j, p, q, r;
+	int h2,w2;
 	float v1, v2;
 	int total;
 	float *r1, *r2;
@@ -537,7 +525,7 @@ ff_drawshape(vfuncptr func, Var * arg)
 void
 draw_cross(Var *obj, int x, int y, float ignore, char *out) 
 {
-	int i,j,p1,x1,x2,y1,y2 ,k;
+	int i,j,k;
 	int v;
 
 	for (j = 0 ; j < y ; j++) {
@@ -560,7 +548,7 @@ draw_cross(Var *obj, int x, int y, float ignore, char *out)
 void
 draw_box(Var *obj, int x, int y, float ignore, char *out) 
 {
-	int i,j,k,p1,x1,x2,y1,y2;
+	int i,j,k;
 	int v;
 
 	for (j = 0 ; j < y ; j++) {
@@ -594,7 +582,7 @@ draw_box(Var *obj, int x, int y, float ignore, char *out)
 void
 draw_circle(Var *obj, int x, int y, float ignore, char *out) 
 {
-	int i,j,k,p1,x1,x2,y1,y2;
+	int i,j;
 	int r;
 	double f, ir;
 	double c, s;

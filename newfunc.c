@@ -30,7 +30,7 @@ Alist alist[] = {
     How do we get av[0] installed?
   **/
 
-int 
+int
 parse_args(vfuncptr name, Var *args, Alist *alist)
 {
     int i,j,k,count;
@@ -86,7 +86,7 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
 			**/
 			v = V_KEYVAL(v);
         } else {
-			/* 
+			/*
 			 * Unnamed arguments.
 			 */
 			/* special case created by create_args
@@ -106,7 +106,7 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
             }
         }
 
-        
+
         /**
         ** putting av[i] into alist[j]
         **/
@@ -125,7 +125,7 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
             v = e;
             if (V_TYPE(v) != ID_STRING) {
                 parse_error(
-                    "Illegal argument to function %s(), expected STRING", 
+                    "Illegal argument to function %s(), expected STRING",
                     fname);
 				free(av);
                 return(0);
@@ -170,7 +170,7 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
             }
             v = e;
             if (V_TYPE(v) != ID_VAL) {
-                parse_error("Illegal argument %s(...%s=...), expected VAL", 
+                parse_error("Illegal argument %s(...%s=...), expected VAL",
                             fname, alist[j].name);
 				free(av);
                 return(0);
@@ -187,7 +187,7 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
             }
             v = e;
             if (V_TYPE(v) != ID_STRUCT) {
-                parse_error("Illegal argument %s(...%s=...), expected STRUCT", 
+                parse_error("Illegal argument %s(...%s=...), expected STRUCT",
                             fname, alist[j].name);
 				free(av);
                 return(0);
@@ -204,7 +204,7 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
             }
             v = e;
             if (V_TYPE(v) != ID_VAL || V_FORMAT(v) > INT) {
-                parse_error("Illegal argument %s(...%s=...), expected INT", 
+                parse_error("Illegal argument %s(...%s=...), expected INT",
                             fname, alist[j].name);
 				free(av);
                 return(0);
@@ -221,7 +221,7 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
             }
             v = e;
             if (V_TYPE(v) != ID_VAL) {
-                parse_error("Illegal argument %s(...%s=...), expected FLOAT", 
+                parse_error("Illegal argument %s(...%s=...), expected FLOAT",
                             fname, alist[j].name);
 				free(av);
                 return(0);
@@ -238,7 +238,7 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
             }
             v = e;
             if (V_TYPE(v) != ID_VAL) {
-                parse_error("Illegal argument %s(...%s=...), expected DOUBLE", 
+                parse_error("Illegal argument %s(...%s=...), expected DOUBLE",
                             fname, alist[j].name);
 				free(av);
                 return(0);
@@ -287,7 +287,7 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
 					}
 				}
 				if (q == NULL) {
-					parse_error("Illegal argument to function %s(...%s...)", 
+					parse_error("Illegal argument to function %s(...%s...)",
 								fname, alist[j].name);
 					free(av);
 					return(0);
@@ -315,11 +315,11 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
             */
 
             char **p, *q = NULL, *ptr;
-            char *values[] = { "x", "y", "z" };
+            const char *values[] = { "x", "y", "z" };
 
-            if (V_TYPE(v) == ID_STRING) 
+            if (V_TYPE(v) == ID_STRING)
                 ptr = V_STRING(v);
-            else 
+            else
                 ptr = V_NAME(v);
 
             for (_t = 0 ; _t < 2 ; _t++) {
@@ -338,10 +338,10 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
             }
 
             if (q == NULL) {
-                parse_error("Illegal argument to function %s(...%s...)", 
-                            fname, alist[j].name);
-				free(av);
-                return(0);
+              parse_error("Illegal argument to function %s(...%s...)",
+                          fname, alist[j].name);
+              free(av);
+              return(0);
             }
 
             p = (char **)(alist[j].value);
@@ -353,7 +353,7 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
             fprintf(stderr, "parse_args: Bad programmer, no biscuit.\n");
         }
     }
-    
+
     free(av);
     return(ac);
 }
@@ -362,7 +362,6 @@ int
 make_args(int *ac, Var ***av, vfuncptr func, Var *args)
 {
     int count = 0, i = 0;
-    Var *v, *next;
     Var *p;
 
     if (args != NULL) {
@@ -411,11 +410,11 @@ append_arg(Var *args, char *key, Var *val)
 Var *
 create_args(int ac, ...)
 {
-	Var *args = NULL, *tail = NULL;
+	Var *args = NULL;
 	va_list ap;
 
 	char *key;
-	Var *val, *v;
+	Var *val;
 
 	va_start(ap, ac);
 	while(1) {

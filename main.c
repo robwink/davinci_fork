@@ -102,7 +102,6 @@ void
 dv_sighandler(int data)
 {
   Scope *scope;
-  char cmd[256];
   char *path = getenv("TMPDIR");
 
 
@@ -271,7 +270,7 @@ main(int ac, char **av)
 
   if (interactive) {
     if (logfile == NULL)
-      logfile = ".dvlog";
+      logfile = (char *)".dvlog";
 
     lfile = fopen(logfile, "a");
     log_time();
@@ -707,10 +706,10 @@ log_time()
 
     /* eandres: This really shouldn't be a problem, but it shouldn't be a crash, either. */
     if ((uname = getenv("USER")) == NULL) {
-      uname = "<UNKNOWN>";
+      uname = (char *)"<UNKNOWN>";
     }
     if ((host = getenv("HOST")) == NULL) {
-      host = "<UNKNOWN>";
+      host = (char *)"<UNKNOWN>";
     }
     if (getcwd(cwd, 1024) == NULL) {
       strcpy(cwd, "<UNKNOWN>");
@@ -728,7 +727,6 @@ init_history(char *fname)
 {
   char buf[256];
   FILE *fp;
-  int count = 0;
 
   /* JAS FIX: what's up with the two empty if/endif below? */
 #ifdef HAVE_LIBREADLINE

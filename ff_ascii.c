@@ -38,7 +38,7 @@ Var *
 ff_ascii(vfuncptr func, Var *arg)
 {
   char    *filename = NULL;
-  Var     *v = NULL, *e = NULL, *s = NULL;
+  Var     *s = NULL;
   char    *fname = NULL;
   FILE    *fp = NULL;
   char    *ptr = NULL;

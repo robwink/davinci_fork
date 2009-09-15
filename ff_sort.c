@@ -69,7 +69,6 @@ int cmp_double(const void *a, const void *b)
  */
 static void *reorgByIndex(Var *object, Var *index, int *sortList)
 {
-  int   t;			// temporary integer
   int   x, y, z;		// x y z for object
   int   i, j, k;		// Loop counters;  i - x, j - y, k - z
   int   doX = 1;		// Determines if
@@ -200,7 +199,7 @@ static inline void qswap(void *base, int i, int j, int width, int *sortList)
 static void quicksort(void *base, size_t num, size_t width, int (*cmp) (),
 	       int *sortList, int left, int right)
 {
-  int i, last, tmp;
+  int i, last;
   
   if (left > right)
     return;
@@ -276,8 +275,8 @@ Var *ff_sort(vfuncptr func, Var * arg)
   char  *oneline = NULL;
   char **tlines = NULL;
   int   *indexList = NULL;
-  int    format, sformat;
-  int    dsize, ssize;
+  int    format;
+  int    dsize;
   int    i, j;
   int    rows = 0;
   float  descend = 0;
@@ -775,6 +774,3 @@ Var *ff_sort_old(vfuncptr func, Var * arg)
   
   return rVal;
 }
-
-
-

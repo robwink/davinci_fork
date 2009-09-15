@@ -72,8 +72,6 @@ ff_get_struct_key(vfuncptr func, Var* arg)
 	int count;
 	int i;
 
-    int ac;
-    Var **av;
     Alist alist[3];
     alist[0] = make_alist( "object",    ID_STRUCT,  NULL,     &s);
     alist[1] = make_alist( "index",     INT,        NULL,     &index); /* 1-based */
@@ -98,7 +96,7 @@ ff_get_struct_key(vfuncptr func, Var* arg)
 		for (i = 0 ; i < count ; i++) {
 			get_struct_element(s, i, &keys[i], &v);
 			if (keys[i] == NULL) { 
-				keys[i] = ""; 
+				keys[i] = (char *)""; 
 			}
 			keys[i] = strdup(keys[i]);
 		}
@@ -106,7 +104,7 @@ ff_get_struct_key(vfuncptr func, Var* arg)
 	} else {
 		get_struct_element(s, index-1, &key, &v);
 		if (key == NULL) { 
-			key = ""; 
+			key = (char *)""; 
 		}
 		return newString(strdup(key));
 	}
@@ -156,13 +154,11 @@ add_struct(Var *s, const char *name, Var *exp)
 Var *
 ff_insert_struct(vfuncptr func, Var * arg)
 {
-    Var *a = NULL, b, *v = NULL, *e;
+    Var *a = NULL, *v = NULL, *e;
     char *name = NULL;
     Var *before = NULL, *after = NULL;
     int pos;
 
-    int ac;
-    Var **av;
     Alist alist[6];
     alist[0] = make_alist( "object",    ID_STRUCT,    NULL,     &a);
     alist[1] = make_alist( "value",     ID_UNK,     NULL,     &v);
@@ -391,7 +387,7 @@ set_varray(Var *v, Range *r, Var *e)
 Var *
 create_struct(Var *v)
 {
-    Var *p, *q, *r, *s, *tmp;
+    Var *p, *r, *s, *tmp;
     char *name;
     int count;
     int i;
@@ -433,7 +429,6 @@ int
 find_struct(Var *a, const char *b, Var **data)
 {
     Var *s;
-    int i;
     if (a == NULL || b == NULL) return(-1);
 
     if ((s = eval(a)) != NULL) {
@@ -547,8 +542,8 @@ concatenate_struct(Var *a, Var *b)
 {
     int i;
     char *name;
-    Var *c, *data;
-    Var *aa, *bb;
+    Var *data;
+    Var *aa;
 
     /* verify that both args are usable */
     if (V_TYPE(a) == 0 || V_TYPE(b) == 0) return(NULL);

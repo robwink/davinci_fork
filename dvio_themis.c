@@ -2,7 +2,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#if defined(___CYGWIN__) || defined(__MINGW32__) 
+#if defined(___CYGWIN__) || defined(__MINGW32__)
 #include "mem.h"
 #include "win32/win_mmap.h"
 
@@ -49,7 +49,7 @@ void munmap(void *buf,int len)
 #define FRAMELET_HEIGHT		192
 #define	INIT_CHUNK			4096
 
-char *vis_bands[]={"Band_860","Band_425","Band_650","Band_750","Band_550"};
+const char *vis_bands[]={"Band_860","Band_425","Band_650","Band_750","Band_550"};
 int Compressed;
 
 typedef unsigned short uint16;
@@ -59,20 +59,20 @@ typedef struct {
     uint16   id;
     uint16   num;
     uint16   off;
-    uint16   line; 
+    uint16   line;
     uint8    time[5];
     uint8    stat;
-    uint8    cmd[17]; 
+    uint8    cmd[17];
     uint8    spare1[5];
     uint16   exposure;
     uint16   bands;
     uint16   down;
-    uint8    edit[2];  
+    uint8    edit[2];
     uint8    comp[8];
     uint16   sens;
     uint8    spare4[4];
-    uint16   len_lo;  
-    uint16   len_hi;  
+    uint16   len_lo;
+    uint16   len_hi;
 
 } msdp_Header;
 
@@ -112,18 +112,18 @@ unsigned char StopStart_Sync[] = {0xAB,0x8C,0xF0,0xCA};
 extern unsigned char *Themis_Entry(unsigned char*, int *);
 #endif
 
-extern unsigned char * read_predictive(FILE *infile, 
-													int *total_size, 
-													int db, 
+extern unsigned char * read_predictive(FILE *infile,
+													int *total_size,
+													int db,
 													int size_guess);
 
-extern unsigned char * read_DCT(FILE *infile, 
-											int *total_size, 
+extern unsigned char * read_DCT(FILE *infile,
+											int *total_size,
 											int guess_size,
 											int verb);
 
 
-int 
+int
 Read_Ahead_For_Best_Collumn_Guess(int *Width,unsigned char *buf,int len)
 {
     int i,j;
@@ -133,14 +133,14 @@ Read_Ahead_For_Best_Collumn_Guess(int *Width,unsigned char *buf,int len)
     int Guesses[NUMBER_OF_GUESSES];
 
     i=0;
-	
+
 
     while (!Done) {
 
         if(Skip_To_Start_Sync(&i,buf,len) < 0){
             return(++Done);
         }
-			
+
         if( (Guesses[LineCount]=Skip_To_Stop_Sync(&i,buf,len)) < 0){
             return(++Done);
         }
@@ -164,14 +164,12 @@ Read_Ahead_For_Best_Collumn_Guess(int *Width,unsigned char *buf,int len)
         }
     }
     return (1);
-}	
-			
+}
+
 
 int Skip_To_Stop_Sync(int *i, unsigned char *buf,int len)
 {
     int count=0;
-    int Tmp=*i;
-    int result;	
 
     while ((*i)<len-1){
         if (memcmp((buf+(*i)), Stop_Sync, 2) == 0) {
@@ -191,7 +189,6 @@ int Skip_To_StopStart_Sync(int *i, unsigned char *buf,int len)
 {
     int count=0;
     int Tmp=*i;
-    int result;	
 
     while ((*i)<len-3){
         if (memcmp((buf+(*i)), StopStart_Sync, 4) == 0) {
@@ -220,9 +217,6 @@ int Skip_To_StopStart_Sync(int *i, unsigned char *buf,int len)
 
 int Skip_To_Start_Sync(int *i, unsigned char *buf,int len)
 {
-    int Tmp=*i;
-    short V;
-
     while ((*i)<len-1){
         if (memcmp((buf+(*i)), Start_Sync, 2) == 0) {
             return(1);
@@ -245,7 +239,7 @@ int Keep(unsigned char B, unsigned short F, CMD Cmd, int Frame, int Band)
         break;
 
     case FRAME:
-        if (Frame==(((int)F) & 0xFFFF) && 
+        if (Frame==(((int)F) & 0xFFFF) &&
             (B!=0x0F && B!=0xE))
             return (1);
         break;
@@ -262,18 +256,12 @@ int Keep(unsigned char B, unsigned short F, CMD Cmd, int Frame, int Band)
 
 int GetGSEHeader (FILE *fp, struct iom_iheader *h)
 {
-    unsigned char	Buf[1000];
-    unsigned int	Num[6];
     struct stat 	filebuf;
 
     int	Col,Row;
     int	Size;
-    int 	Time;
-    float	Exposure;
     int	i=0;
     int	nb=1;
-    char	Nibs[9][24];/*Header has 9 short words in it */
-    int	plane;
 
 unsigned char cookie[]={0x00,0x00,0x06,0x7b,0x00,0x00,0x04,0x00};
 	 int  chunk=8;
@@ -304,60 +292,60 @@ unsigned char cookie[]={0x00,0x00,0x06,0x7b,0x00,0x00,0x04,0x00};
     }
 */
 
-	 if (strcmp(buf,cookie))  /*what are the odds?*/
-		return(0);
+    if (strcmp(buf,cookie))  /*what are the odds?*/
+      return(0);
 
-/*Okay, the file header is a GSE visible image; load the _iheader structure with info */
-	
-	iom_init_iheader(h);
+    /*Okay, the file header is a GSE visible image; load the _iheader structure with info */
+
+    iom_init_iheader(h);
 
     h->org=iom_BSQ;
     h->size[0]=Col;
     h->size[1]=Row;
     h->size[2]=(Size/(Row*Col*nb));
-	if (nb == 1){
-		h->eformat = iom_MSB_INT_1;
-		h->format = iom_BYTE;
-	}
-	else {
-		h->eformat = iom_MSB_INT_2;
-		h->format = iom_SHORT;
-	}
+    if (nb == 1){
+      h->eformat = iom_MSB_INT_1;
+      h->format = iom_BYTE;
+    }
+    else {
+      h->eformat = iom_MSB_INT_2;
+      h->format = iom_SHORT;
+    }
     h->dptr=1024;
     h->gain=0.0;
     h->corner=0;
     for (i=0;i<3;i++){
-        h->suffix[i]=0;
-        h->prefix[i]=0;
-        h->s_lo[i]=0;
-        h->s_hi[i]=h->size[i];
-        h->s_skip[i]=0;
+      h->suffix[i]=0;
+      h->prefix[i]=0;
+      h->s_lo[i]=0;
+      h->s_hi[i]=h->size[i];
+      h->s_skip[i]=0;
     }
     return (1);
 }
 
-int
+  int
 Count_Out_Bands(int b, int *rot)
 {
-	int i;
-	int nob=0;
+  int i;
+  int nob=0;
 
-	int bands;	
+  int bands;
 
-	char plural=' ';
+  char plural=' ';
 
-	bands=((b >> 8) & 0x1f); 	
+  bands=((b >> 8) & 0x1f);
 
-	for (i=0;i<5;i++){
-		if ((bands & (1 << i)))
-			nob++;
-	}
+  for (i=0;i<5;i++){
+    if ((bands & (1 << i)))
+      nob++;
+  }
 
-	if (nob==0){
-		parse_error("This is a snapshot and contains all bands");
-		*rot=0;//If this is a snapshot, we DON'T want to rotate!!
-		return(0);
-	}
+  if (nob==0){
+    parse_error("This is a snapshot and contains all bands");
+    *rot=0;//If this is a snapshot, we DON'T want to rotate!!
+    return(0);
+  }
 
 	if (nob > 1)
 		plural='s';
@@ -379,7 +367,6 @@ Count_Out_Bands(int b, int *rot)
 int
 Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int verb, int *rot,char *filename)
 {
-	int i;
 	msdp_Header	mh;
 	msdp_Header	first_mh;
 	int count;
@@ -388,16 +375,10 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int v
 	int width;
 	int size=0;
 	int frag;
-	int down;
 	int idx=0;
 	int head_count=0;
 	unsigned char dummy;
 	unsigned char *in_chunk=NULL;
-	unsigned char *out_chunk=NULL;
-	int	chunk_len;
-	unsigned int xcomp, pcomp, spacing, levels;
-	int huffman_table;
-	int quiet=0;
 	unsigned char *chunk;
 
 /* Read the 1st header for set-up perposes */
@@ -409,7 +390,7 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int v
 		return(0);
 
 	*nob=Count_Out_Bands((int)first_mh.bands,rot);
-	
+
 	rewind(fp);
 
 /* Now Take a run through the file to collect ALL header info which will tell us the size
@@ -445,7 +426,7 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int v
 		size=((height*width) > size ? (height*width):(size));
 		height=size/width; /*We took the larger of the two
 								sizes, need to correct for height*/
-		
+
 	}
 
 	size+=1024; /*for the header*/
@@ -453,7 +434,7 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int v
 	rewind(fp);
 
 /*  Okay, now we know how big it is, we can also figure out if it's compressed and
-**  if so, by which method.  Having determined this, we call the appropriate 
+**  if so, by which method.  Having determined this, we call the appropriate
 **  data_read routine and return the buffer
 */
 
@@ -479,7 +460,7 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int v
          fp=fopen(tmpname,"r");
          fstat(fileno(fp),&filebuf);
          size = filebuf.st_size;
-         *data=(char *)malloc(size);
+         *data=(unsigned char *)malloc(size);
 //       fseek(fp,1024,SEEK_SET);
          fread(*data,sizeof(char),size,fp);
 
@@ -498,7 +479,7 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int v
 
 #ifdef HAVE_LIBMSSS_VIS
 		 *data=read_DCT(infile,&size,size,verb);
-		 height=size/width; 
+		 height=size/width;
 		 size+=1024;/*Pad size, this routine doesn't add the 1024, so we gotta fake it for below*/
 #else
 		 parse_error("Sorry, you do not have the correct decompression library for this file...aborting");
@@ -531,7 +512,7 @@ Process_SC_Vis(FILE *infile,unsigned char **data,int *vis_width, int *nob, int v
 		      fread(&dummy,1,1,fp);
    		 }
 	}
-		
+
 
 	memmove(*data,(*data+1024),(size-1024));
 	*data=realloc(*data,(size-1024));
@@ -585,7 +566,7 @@ Var *Make_Vis_Cube(int nob, int height, int width, unsigned char *buf)
 		}
 	}
 
-	if ((fl-rd)) { /* After ramp-up and ramp-down, 
+	if ((fl-rd)) { /* After ramp-up and ramp-down,
 							there are still framelets, these are middle section
 							do them next */
 
@@ -664,14 +645,13 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
     FILE	*infile;
     void	*data;
     struct	iom_iheader header;
-    int i,j;
+    int i;
     int dsize;
     int gse=0;
-    int ac;
     int height;
     int width=VIS_WIDTH;
 	 int nob;
-    Var **av, *v;
+    Var *v;
     char	*filename,*fname,fname2[256];
     unsigned char *buf;
 	 int nocube=0;
@@ -716,7 +696,7 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
     	data = iom_read_qube_data(fileno(infile), &header);
 
         fclose(infile);
-    	if (header.format=iom_SHORT){ /*Data is actually 12-bit and needs the upper 4 bits cleaned off*/
+    	if (header.format==iom_SHORT){ /*Data is actually 12-bit and needs the upper 4 bits cleaned off*/
             dsize=header.size[0]*header.size[1]*header.size[2];
             for (i=0;i<dsize;i++){
                 ((short *)(data))[i] &= 0x7ff;
@@ -743,7 +723,7 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
 					return(Make_Vis_Cube(nob,height,width,buf));
 		  }
 
-		  else 
+		  else
 			return(NULL);
     }
 }
@@ -755,39 +735,36 @@ ff_Frame_Grabber_Read(vfuncptr func, Var * arg)
   FILE	   *infile;
   unsigned char  *data_words = NULL;
   unsigned short *sh_data_words = NULL;
-  unsigned char   n;
-  int             i,j,nvals, nframes,nbytes;
+  int             nvals, nframes,nbytes;
   unsigned short  fileType, nrows, npixels;
   unsigned short  GSEarg[6];
   float           ieeeVals[15];
-  char            c, dateTime[32], pad[14];
-  int             ac;
-  Var           **av = NULL, *v = NULL;
+  char            dateTime[32], pad[14];
   char	   *filename = NULL,*fname = NULL,fname2[256];
   int	            X,Y,Z;
   int	            num_bytes;
-  
+
   Alist alist[2];
   alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
   alist[1].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
-  
+
   if (filename == NULL) {
     parse_error("No filename specified.");
     return (NULL);
   }
-  
+
   if ((fname = dv_locate_file(filename)) == NULL ||
       (infile = fopen(fname, "r")) == NULL) {
     fprintf(stderr, "Unable to open file: %s\n", filename);
     return (NULL);
   }
-  
+
   strcpy(fname2, fname);
   free(fname);
   fname = fname2;
-  
+
   fread (&fileType, sizeof(unsigned short), 1, infile);
   fread (&nrows, sizeof(unsigned short), 1, infile);
   fread (&npixels, sizeof(unsigned short), 1, infile);
@@ -796,7 +773,7 @@ ff_Frame_Grabber_Read(vfuncptr func, Var * arg)
   fread (ieeeVals, sizeof(float), 15, infile);
   fread (dateTime, sizeof(char), 32, infile);
   fread (pad, sizeof(char), 14, infile);
-  
+
   switch (fileType)
     {
     case 00 :
@@ -845,7 +822,7 @@ ff_Frame_Grabber_Read(vfuncptr func, Var * arg)
       X=9;
       Y=3;
       Z=nframes;
-      num_bytes=1;	
+      num_bytes=1;
       break;
     case 10 :
     case 14 :
@@ -864,11 +841,11 @@ ff_Frame_Grabber_Read(vfuncptr func, Var * arg)
       parse_error("IEEE data file: (Consists of just header)");
       break;
     } /* switch fileType */
-  
+
   fclose(infile);
-  
+
   return(newVal(BSQ,X,Y,Z,num_bytes,((num_bytes==2) ? ((void *)sh_data_words) : ((void *)data_words))));
-  
+
 }
 
 static int Themis_Sort(const void *vA, const void *vB)
@@ -893,7 +870,7 @@ static int Themis_Sort(const void *vA, const void *vB)
 
         if (A_c_Frame > B_c_Frame)
             return(1);
-        else if (A_c_Frame < B_c_Frame) 
+        else if (A_c_Frame < B_c_Frame)
             return(-1);
         else
             return(0);
@@ -935,7 +912,7 @@ Add_Fake_Frame(void *newbuf,int band, int frame, int num_frames,int width,int ef
 
 
     for (i=0;i<num_frames;i++){
-        new_frame=frame+i;	
+        new_frame=frame+i;
         memcpy((((unsigned char *)newbuf)+i*width),Start_Sync,2);
         memcpy((((unsigned char *)newbuf)+i*width+2),&pseudo_ID,1);
         memcpy((((unsigned char *)newbuf)+i*width+_BANDS),&band,1);
@@ -1061,18 +1038,18 @@ RedunBegone(char **buf, int *Lines, int Col, PACIstatus *Ps,int quiet, int eflag
     int i;
     char *data=*buf;
 
-    char A[320],B[320];	
+    char A[320],B[320];
 
     unsigned short frameA,frameB;
     unsigned char Band;
-		
-	
+
+
     for (i=0;i<(*Lines-1);i++){
 
-     	frameA=(((data[i*Col+_FRAMES] & 0xFF)<< 8) | 
+     	frameA=(((data[i*Col+_FRAMES] & 0xFF)<< 8) |
                 (data[i*Col+_FRAMES+1] & 0xFF));
 
-     	frameB=(((data[(i+1)*Col+_FRAMES] & 0xFF)<< 8) | 
+     	frameB=(((data[(i+1)*Col+_FRAMES] & 0xFF)<< 8) |
                 (data[(i+1)*Col+_FRAMES+1] & 0xFF));
 
         if (frameA==frameB) { /*Uh Oh! Duplicate frame #'s*/
@@ -1104,12 +1081,12 @@ RedunBegone(char **buf, int *Lines, int Col, PACIstatus *Ps,int quiet, int eflag
                 if (eflag)
                     V_INT(err) |= 4; /*Or it with 4*/
             }
-					
+
         }
     }
 }
-			
-	
+
+
 void Summary(PACIstatus *Ps)
 {
     int i;
@@ -1122,14 +1099,14 @@ void Summary(PACIstatus *Ps)
         if (Ps->Mapping[i]){
             parse_error("Mapping Band:%d to Davinci slot:%d",i,Ps->Mapping[i]);
         }
-        else	
+        else
             parse_error("Band %d has no data, throwing it out",i);
     }
 
     for (i=0;i<10;i++){
         if(Ps->Mapping[i]){
             if (Ps->AddedFrames[i] || Ps->RepeatedFrames[i] || Ps->CorruptFrames[i]){
-                if (Ps->AddedFrames[i]) 
+                if (Ps->AddedFrames[i])
                     sprintf(msg1,"Added Frames:%04d\t",Ps->AddedFrames[i]);
                 else
                     sprintf(msg1,"                \t");
@@ -1143,15 +1120,15 @@ void Summary(PACIstatus *Ps)
                     sprintf(msg3,"Corrupted Frames:%04d",Ps->CorruptFrames[i]);
                 else
                     strcpy(msg3," ");
-			
-			
+
+
                 parse_error("Band:%02d (slot %02d)\t%s%s%s",i,
                             Ps->Mapping[i],msg1,msg2,msg3);
             }
         }
     }
 }
-			
+
 /* returns < 0 if it can't find EITHER sync
 ** returns = 0 if it CAN find sc sync
 ** returns > 1 if it CAN find gse sync
@@ -1180,7 +1157,7 @@ Check_Swap(unsigned char *buf, int len)
 			 buf[i+3]==sync_sc[3]   )
 
 			return(0);
-		
+
 		i++;
 	}
 
@@ -1193,13 +1170,13 @@ Check_Swap(unsigned char *buf, int len)
 			 buf[i+3]==sync_gse[3]   )
 
 			return(1);
-		
+
 		i++;
 	}
 
 	return(-1);
-			
-}			
+
+}
 
 Var *
 ff_PACI_Read(vfuncptr func, Var * arg)
@@ -1211,21 +1188,20 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 #endif
     void		*data;
     void		*newbuf;
-    char 		*filename,*fname,fname2[256];
-    unsigned char *decompress=NULL;
+    char 		*filename;
     int 		Frame=-1;
     int 		Band=-1;
     int 		report=0;
     int		len=0;
     int		old_len=0;
-    int 		i, j, a, b;
+    int 		i;
     int 		fd;
     int		swap_flag=1;
     struct 		stat sbuf;
     unsigned 	char *buf=NULL;
     unsigned	char *fbuf;
     unsigned 	char  c_Band;
-    unsigned 	short c_Frame;	
+    unsigned 	short c_Frame;
     int		Spec_Swap=0;
     CMD		Cmd;
     int		Output=0;
@@ -1235,12 +1211,10 @@ ff_PACI_Read(vfuncptr func, Var * arg)
     int		Data_Only=0;
     int		Index=0;
     int		BandCount[16]={0};
-    int		Bad_Flag=0;
     int		Max_Band=-1;
     int		Max_Frame_Count=0;
     int		band_frame_count;
     int		Total_Frame_Count;
-    int		offset;
     PACIstatus Ps;
     int	   quiet=0;
     int 		EndFrame;
@@ -1251,8 +1225,6 @@ ff_PACI_Read(vfuncptr func, Var * arg)
     int		eflag=0;
 	 int		cflag=0;
 
-    Var **av, *v;
-    int ac;
     Alist alist[10];
 
     alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
@@ -1275,7 +1247,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 
     if (err){
         eflag=1;
-        V_INT(err)=0;	
+        V_INT(err)=0;
         /*Error return:
           err=0 No Errors
           err=1 Redundant frames
@@ -1330,7 +1302,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 				parse_error("Reading gse PACI data");
             swab(fbuf, fbuf, len);
     }
-	
+
 	 else
 				parse_error("Reading spacecraft PACI data");
 
@@ -1348,7 +1320,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
             swab(buf, buf, len);
         }
     }
-    else 	
+    else
         buf=fbuf;
 
 */
@@ -1372,10 +1344,10 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 #ifdef HAVE_LIBUSDS
 	Col=320+_SIGINFO;
 #else
-        Col=Output+2;			
+        Col=Output+2;
 #endif
 
-		
+
 /*Find Start of data transmission*/
 
         if (Skip_To_Start_Sync(&i,buf,old_len) == -1) {/*Most likely not a themis file*/
@@ -1394,7 +1366,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
             c_Frame=(((*(buf+i+_FRAMES) & 0xFF)<< 8) | (*(buf+i+_FRAMES+1) & 0xFF));
             if ((Output=Skip_To_StopStart_Sync(&i,buf,old_len)) == -1) {
                 break;
-            } 
+            }
 
             if (Keep(c_Band,c_Frame,Cmd,Frame,Band) && ((Output) <= 328 )){
 
@@ -1421,8 +1393,8 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                         Lines++;
                         BandCount[c_Band]++;
                     }
-                } 
-                else { 
+                }
+                else {
                     if (Output-_SIGINFO < 320){
 
                         if (len <= (Lines*Col+320)) { 	/*We're running out of room!*/
@@ -1465,7 +1437,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                     Index+=(Output-_SIGINFO);
                     Lines++;
                     BandCount[c_Band]++;
-                } else { 
+                } else {
                     memcpy(((char *)data+Index),(buf+i-Output),Output);
                     Index+=Output;
                     Lines++;
@@ -1507,15 +1479,15 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                     BandCount[i]=Bc[i];
                 }
             }
-	
+
             Max_Frame_Count=BandCount[0];
             for (i=0;i<Max_Band;i++){
                 EndFrame=0xFFFF & (((unsigned char *)data)[(BandCount[i]-1)*Col+_FRAMES] << 8 |
                                    ((unsigned char *)data)[(BandCount[i]-1)*Col+_FRAMES+1]);
 
-                if (Max_Frame_Count < EndFrame-PFBStart[i]) 
+                if (Max_Frame_Count < EndFrame-PFBStart[i])
                     Max_Frame_Count=EndFrame-PFBStart[i];
-			   	
+
             }
             for (i=0;i<=Max_Band;i++){ /*Now, gotta count the missing frames!*/
                 extra_frames+=(Max_Frame_Count-BandCount[i]);
@@ -1525,7 +1497,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
             if ((newbuf=malloc(len))==NULL){
                 parse_error("Couldn't allocate transfer buffer...aborting\n");
                 return(NULL);
-            }	
+            }
 
 /*            if (Bad_Flag){ We have uneven Band counts! Gotta do things differently! */
             {
@@ -1539,9 +1511,9 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 
                 for (i=0;i<Lines;i++){
                     c_band=*((char *)data+(i*Col)+_BANDS)&0xf;
-                    c_frame=(((*((char *)data+(i*Col)+_FRAMES) & 0xFF)<< 8) | 
+                    c_frame=(((*((char *)data+(i*Col)+_FRAMES) & 0xFF)<< 8) |
                              (*((char *)data+(i*Col)+_FRAMES+1) & 0xFF));
-							
+
                     if (current_band!=c_band) {
                         if (band_frame_count < Max_Frame_Count) {/*Missing end frames*/
                             if(!(quiet))
@@ -1551,10 +1523,10 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                                 printf("Couldn't extend buffer...you're hosed\n");
                                 return(NULL);
                             }
-                    
+
 
                             Add_Fake_Frame((((unsigned char *)newbuf)+Total_Frame_Count*Col),
-                                           (int)c_band, (FrameBandStart[current_band]+band_frame_count), 
+                                           (int)c_band, (FrameBandStart[current_band]+band_frame_count),
                                            (Max_Frame_Count-band_frame_count), Col,eflag,err);
                             if(!(quiet)){
                                 parse_error("Adding End frames: %d-%d in Band: %d\n",
@@ -1569,7 +1541,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                         band_frame_count=0;
                         current_band=c_band;
                     }
-					
+
                     if (c_frame > (FrameBandStart[current_band]+band_frame_count)){ /*Missing frames*/
                         if(!(quiet)){
                             printf("Extending buffer: %d\n",(c_frame-(FrameBandStart[current_band]+
@@ -1581,12 +1553,12 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                        	    printf("Couldn't extend buffer...you're hosed\n");
                        	    return(NULL);
                         }
-                    		
+
 
                         Add_Fake_Frame((((unsigned char *)newbuf)+Total_Frame_Count*Col),
                                        (int)c_band, (FrameBandStart[current_band]+band_frame_count),
                                        (c_frame-(FrameBandStart[current_band]+band_frame_count)), Col,eflag, err);
-                        if(!(quiet)){	
+                        if(!(quiet)){
                             parse_error("Adding frames: %d-%d in Band: %d\n",
                                         (FrameBandStart[current_band]+band_frame_count),
                                         (c_frame-1),c_band);
@@ -1597,26 +1569,26 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                         band_frame_count+=c_frame-(FrameBandStart[current_band]+band_frame_count);
                     }
 
-                    else if (c_frame < (FrameBandStart[current_band]+band_frame_count)) { 
-									  
+                    else if (c_frame < (FrameBandStart[current_band]+band_frame_count)) {
+
                         parse_error("Corrupted Frame Sequence...Aborting\n");
                         return(NULL);
                     }
 
-				
+
                     memcpy((((unsigned char *)newbuf)+(Total_Frame_Count*Col)),
                            (((unsigned char *)data)+i*Col),
                            Col);
                     band_frame_count++;
                     Total_Frame_Count++;
-						
-			
+
+
                 }
 
                 if (band_frame_count < Max_Frame_Count) {/*Missing end frames*/
 
                     Add_Fake_Frame((((unsigned char *)newbuf)+Total_Frame_Count*Col),
-                                   (int)c_band, (FrameBandStart[current_band]+band_frame_count), 
+                                   (int)c_band, (FrameBandStart[current_band]+band_frame_count),
                                    (Max_Frame_Count-band_frame_count), Col,eflag, err);
                     if(!(quiet)){
                         parse_error("Adding End frames: %d-%d in Band: %d\n",
@@ -1626,13 +1598,13 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 
                     Ps.AddedFrames[c_band]+=(Max_Frame_Count-band_frame_count);
                     Total_Frame_Count+=(Max_Frame_Count-band_frame_count);
-                    band_frame_count+=(Max_Frame_Count-band_frame_count); 
+                    band_frame_count+=(Max_Frame_Count-band_frame_count);
                 }
-					 
 
 
-            } 
-        } 
+
+            }
+        }
 
         else {
             munmap(buf,old_len);
@@ -1659,7 +1631,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
                 parse_error("Not enough memory for temporary buffer support\n");
                 free(newbuf);
                 return(NULL);
-            }	
+            }
             for (i=0;i<Total_Frame_Count;i++){
                 memcpy((((unsigned char *)do_buff)+(i*(Col-_SIGINFO))),
                        (((unsigned char *)newbuf)+(i*Col)+_DATA),
@@ -1668,10 +1640,10 @@ ff_PACI_Read(vfuncptr func, Var * arg)
             free(newbuf);
             return(newVal(BSQ,(Col-_SIGINFO),
                           band_frame_count,
-                          Max_Band+1,BYTE,do_buff)); 
+                          Max_Band+1,BYTE,do_buff));
         }
         return(newVal(BSQ,Col,band_frame_count,Max_Band+1,BYTE,newbuf));
-		
+
     } else {
         int *band = (int *)calloc(32, sizeof(int));
         unsigned int minframe = MAXINT;
@@ -1695,7 +1667,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
             if (c_Frame < minframe) minframe = c_Frame;
             band[c_Band]++;
         }
-        
+
         printf("File: %s\n", filename);
         printf("First frame: %d\n", minframe);
         printf("Last Frame:  %d\n", maxframe);
@@ -1708,7 +1680,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 
 /*    free(newbuf); */
     free(data);
-	
+
     munmap(buf,old_len);
     close(fd);
     return(NULL);
@@ -1718,7 +1690,7 @@ ff_PACI_Read(vfuncptr func, Var * arg)
 Var *ff_GSE_VIS_upshift(vfuncptr func, Var * arg)
 {
    Var *obj=NULL;
-  
+
    short *data;
    unsigned char *orig;
 
@@ -1739,7 +1711,7 @@ Var *ff_GSE_VIS_upshift(vfuncptr func, Var * arg)
       parse_error("Must supply an object ('obj=')");
       return(NULL);
    }
-   
+
    if (V_FORMAT(obj)!=BYTE) {
       parse_error("This function upshifts BYTE values to SHORT values\n"
                   "based on the MSSS Square-Root Encoding Table. Please only\n"
@@ -1751,14 +1723,14 @@ Var *ff_GSE_VIS_upshift(vfuncptr func, Var * arg)
       parse_error("Data MUST be in bsq format");
       return(NULL);
    }
-  
+
    x=GetSamples(V_SIZE(obj), V_ORG(obj));
    y=GetLines(V_SIZE(obj), V_ORG(obj));
    z=GetBands(V_SIZE(obj), V_ORG(obj));
-  
+
    data=(short *)calloc(sizeof(short),(x*y*z));
 	orig=(unsigned char *)V_DATA(obj);
-  
+
    for (i=0;i<z;i++){
       for(j=0;j<y;j++){
          for(k=0;k<x;k++){
@@ -1766,9 +1738,9 @@ Var *ff_GSE_VIS_upshift(vfuncptr func, Var * arg)
          }
       }
    }
-  
+
    return(newVal(BSQ,x,y,z,SHORT,data));
-} 
+}
 
 unsigned char
 find_Value(unsigned short v)
@@ -1816,7 +1788,7 @@ Var *ff_GSE_VIS_downshift(vfuncptr func, Var * arg)
       parse_error("Must supply an object ('obj=')");
       return(NULL);
    }
-   
+
    if (V_FORMAT(obj)!=SHORT) {
       parse_error("This function downshifts SHORT values to BYTE values\n"
                   "based on the MSSS Square-Root Encoding Table. Please only\n"
@@ -1828,7 +1800,7 @@ Var *ff_GSE_VIS_downshift(vfuncptr func, Var * arg)
       parse_error("Data MUST be in bsq format");
       return(NULL);
    }
-  
+
    x=GetSamples(V_SIZE(obj), V_ORG(obj));
    y=GetLines(V_SIZE(obj), V_ORG(obj));
    z=GetBands(V_SIZE(obj), V_ORG(obj));
@@ -1844,7 +1816,4 @@ Var *ff_GSE_VIS_downshift(vfuncptr func, Var * arg)
       }
    }
    return(newVal(BSQ,x,y,z,BYTE,data));
-} 
-
-
-
+}

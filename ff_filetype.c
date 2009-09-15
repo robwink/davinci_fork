@@ -11,12 +11,11 @@
 Var *
 ff_filetype(vfuncptr func, Var * arg)
 {
-    Var *v, *s = NULL, *e;
+    Var *s = NULL;
     char *filename = NULL, *fname;
     FILE *fp;
     char *p;
     char *ostring = NULL;
-	char format[256];
 
     Alist alist[2];
     alist[0] = make_alist( "filename",    ID_STRING,    NULL,    &filename);

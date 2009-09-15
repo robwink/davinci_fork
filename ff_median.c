@@ -11,15 +11,8 @@ ff_local_maximum(vfuncptr func, Var * arg)
     Var *obj = NULL, *rval = NULL;
     float ignore=MINFLOAT;
     float *out;
-    int dim[3];
-    int format, nbytes;
-    float *s1, *s2;
-    int a,b,x,y,z,pos, i,j,k;
+    int x,y,i,j;
     int size = 3;
-    int xdelta=0, ydelta=0;
-    int width=0, height=0;
-    float *line;
-    int all = 0;
 	float threshold = MINFLOAT;
     Window *w;
 
@@ -62,7 +55,6 @@ local_maximum(Window *w, float threshold, float ignore)
 {
 	float v;
 	int i, j;
-	int maxi,maxj;
 	float max;
 
 	v = ((float *)w->row[w->height/2])[w->width/2];

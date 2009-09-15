@@ -11,7 +11,7 @@ cut(Var *img, int x, int y, int z, int w, int h, int d)
 {
     int size[3], start[3];
     int dim[3];
-    char *axis[3] = { "x", "y", "z" };
+    const char *axis[3] = { "x", "y", "z" };
     int i;
     Range r;
     
@@ -81,8 +81,6 @@ ff_cut( vfuncptr func, Var *arg)
 	Var *obj = NULL;
 	int x=0, y=0, z=0, w=0, h=0, d=0;
 	
-	int ac;
-	Var **av;
 	Alist alist[8];
 	alist[0] = make_alist( "object",   ID_VAL, NULL,     &obj);
 	alist[1] = make_alist( "x",        INT,    NULL,     &x);
@@ -153,8 +151,6 @@ ff_crop( vfuncptr func, Var *arg)
 {
 	Var *obj = NULL;
 
-	int ac;
-	Var **av;
 	Alist alist[8];
 	alist[0] = make_alist( "object",   ID_VAL, NULL,     &obj);
 	alist[1].name = NULL;

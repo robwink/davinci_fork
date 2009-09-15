@@ -84,7 +84,7 @@ static const char *png_extensions[]  = { "png", NULL };
 static iom_io_interface	interfaces[] = {
   { "GIF",  gif_extensions,  iom_isGIF,  iom_GetGIFHeader,  iom_WriteGIF,  1 },
   { "JPEG", jpeg_extensions, iom_isJPEG, iom_GetJPEGHeader, iom_WriteJPEG, 1 },
-  { "TIFF", tiff_extensions, iom_isTIFF, iom_GetTIFFHeader, iom_WriteTIFF, 2 },
+  { "TIFF", tiff_extensions, iom_isTIFF, iom_GetTIFFHeader, iom_WriteTIFF, 4 },
   { "BMP",  bmp_extensions,  iom_isBMP,  iom_GetBMPHeader,  iom_WriteBMP,  1 },
 #ifdef HAVE_LIBPNG
   { "PNG",  png_extensions,  iom_isPNG,  iom_GetPNGHeader,  iom_WritePNG,  2 },
@@ -146,20 +146,20 @@ dv_LoadIOM(FILE *fp, char *filename, struct iom_iheader *s)
   if (data) {
     v = iom_iheader2var(&h);
     V_DATA(v) = data;
-	// I think data was being double free'd here.
-	//h.data = NULL;
+    // I think data was being double free'd here.
+    //h.data = NULL;
   } else {
     v = NULL;
   }
 
   if (VERBOSE > 1) {
     sprintf(hbuf, "%s: %s %s image: %dx%dx%d, %d bits",
-	    filename, iom_Org2Str(h.org),
-	    interfaces[interface].type,
-	    iom_GetSamples(h.dim, h.org), 
-	    iom_GetLines(h.dim, h.org), 
-	    iom_GetBands(h.dim, h.org), 
-	    iom_NBYTESI(h.format) * 8);
+            filename, iom_Org2Str(h.org),
+            interfaces[interface].type,
+            iom_GetSamples(h.dim, h.org), 
+            iom_GetLines(h.dim, h.org), 
+            iom_GetBands(h.dim, h.org), 
+            iom_NBYTESI(h.format) * 8);
     parse_error(hbuf);
   }
 
@@ -170,12 +170,12 @@ dv_LoadIOM(FILE *fp, char *filename, struct iom_iheader *s)
 }
 
 int
-dv_WriteIOM(Var *obj, char *filename, char *type, int force)
+dv_WriteIOM(Var *obj, const char *filename, const char *type, int force)
 {
 
-  struct		iom_iheader h;
-  int			status;
-  unsigned short	interface, ext, extmatch;
+  struct iom_iheader h;
+  int status;
+  unsigned short interface, ext, extmatch;
 
   /* Check recognized file types/extensions for each interface. */
 
@@ -184,8 +184,8 @@ dv_WriteIOM(Var *obj, char *filename, char *type, int force)
     ext = 0;
     while (interfaces[interface].extensions[ext] != NULL) {
       if (!strcasecmp(interfaces[interface].extensions[ext], type)) {
-	extmatch = 1;
-	break;
+        extmatch = 1;
+        break;
       }
       ext++;
     }

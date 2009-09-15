@@ -46,8 +46,6 @@ ff_dct(vfuncptr func, Var * arg)
 		"xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL
 	};
 
-	int ac;
-	Var **av;
 	Alist alist[4];
 	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
 	alist[1] = make_alist( "axis",    ID_ENUM,    options,   &axis);

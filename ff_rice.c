@@ -3,7 +3,6 @@
 Var *
 ff_rice(vfuncptr func, Var * arg)
 {
-	char *axis = NULL;
 	Var *obj = NULL;
 	int x, y, z, nbytes, i, j, k, pos, start, len;
 	short *in;
@@ -83,9 +82,8 @@ ff_rice(vfuncptr func, Var * arg)
 Var *
 ff_unrice(vfuncptr func, Var * arg)
 {
-	char *axis = NULL;
 	Var *obj = NULL;
-	int x, y, z, nbytes, i, j, k, pos, start, len;
+	int x, y, z, nbytes, i, start, len;
 	int bits;
 	unsigned char *in;
 	int header = 1;

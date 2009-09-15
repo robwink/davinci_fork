@@ -48,7 +48,7 @@ void save_function(void);
 void eat_em(void);
 int dd_put_argv(Scope *s, Var *v);
 void unput_nextc(char c);
-int send_to_plot(char *);
+int send_to_plot(const char *);
 char *do_help(char *input, char *path);
 
 void parse_stream(FILE *fp);
@@ -562,4 +562,5 @@ extern void pp_print_var(Var *, char *, int, int);
 Var *ff_grassfire(vfuncptr func, Var * arg);
 int math_operable(Var *a, Var *b);
 int compare_struct(Var *a, Var *b);
+int get_struct_names(const Var *v, char ***names, const char *prefix);
 Var *ff_create_text(vfuncptr func, Var * arg);

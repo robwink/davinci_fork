@@ -109,7 +109,7 @@ Var *
 make_band(Var *in, int band)
 {
 	int x, y, z;
-	int i, j ,k;
+	int i, j;
 	int nbytes;
 	Var *out;
 	size_t p1, p2;

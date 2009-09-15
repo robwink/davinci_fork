@@ -10,7 +10,6 @@ WriteAscii(Var *s, char *filename, int force)
     int format;
     int ival;
     double dval;
-    int d[3];
     int i, j, k;
     int x, y, z;
     size_t pos;

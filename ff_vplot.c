@@ -10,23 +10,19 @@ extern FILE *pfp;
 #endif
 
 static int name_check(const char *actual_input, const char *name, int limit);
-int send2plot(char *s);
 static void findAxis(char *R, Var * Obj, int flag);
 static int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuffer, Var *Xaxis, char *Axis, float *globalNums, char *Style, char *dir);
 static int handle_errorbars(Var *errorb, Var *v, int *Mode, char *style, int Onum);
 static int *make_errorbar_indices(Var *v, int *Mode, int *CE, Var *errorb);
 
 
-
-
-
-
 // Opens a single session of gnuplot and sends it a plot command
-int send2plot(char *s)
+// NOTE(gorelick): Why not use send_to_plot?
+int send2plot(const char *s)
 {
 #ifdef GPLOT_CMD
   char *gplot_cmd;
-  
+
   if (pfp == NULL) {
     if (getenv("GPLOT_CMD") != NULL) {
       gplot_cmd = strdup(getenv("GPLOT_CMD"));
@@ -52,10 +48,6 @@ int send2plot(char *s)
 }
 
 
-
-
-
-
 static void findAxis(char *R, Var *Obj, int flag)
 {
   int axis = 0;
@@ -71,10 +63,10 @@ static void findAxis(char *R, Var *Obj, int flag)
     axis |= 2;
   if (z == 1)
     axis |= 4;
-  
+
   if (axis == 7)
     *R = '\0';
-  
+
   if (axis == 6)
     *R = 'X';
   else if (axis == 5)
@@ -99,7 +91,6 @@ static int name_check(const char *actual_input, const char *name, int limit) {
 
   int  namelen = 0;
   int  inputlen = 0;
-  int  i,j;
 
   if(actual_input == NULL)
     return(-3);
@@ -109,14 +100,10 @@ static int name_check(const char *actual_input, const char *name, int limit) {
   if(inputlen < limit) return(-2);
 
   if(inputlen > namelen) return(-1);
-  if(inputlen == namelen) return(strcmp(actual_input,name));
-  if(inputlen < namelen) return(strncmp(actual_input,name,inputlen));
+  else if(inputlen == namelen) return(strcmp(actual_input,name));
+  else return(strncmp(actual_input,name,inputlen));
 }
 
-
-
-
-      
 
 Var *
 ff_vplot(vfuncptr func, Var *arg)
@@ -129,7 +116,7 @@ ff_vplot(vfuncptr func, Var *arg)
   char    *Axis = NULL;
   char    *Style = NULL;
   char    *dir = NULL;
-  int      i,j,k;                       // loop index
+  int      i,j;                       // loop index
   int      start_ct = 0;
   int      end_ct = 0;
   char     CommandBuffer[8192] = { 0 }; //command buffer sent to Gnuplot
@@ -188,8 +175,8 @@ ff_vplot(vfuncptr func, Var *arg)
 
   // Set up globalNums array.  It is a 16 element float array to hold
   // flags and values for numeric global keywords
-  globalNums = calloc(16, sizeof(float));  
-  
+  globalNums = calloc(16, sizeof(float));
+
   /* Loop through the entire argument list extracting Xaxis, Axis, **
   ** dir and gcommand if they exist.                               */
   i=1;
@@ -231,13 +218,13 @@ ff_vplot(vfuncptr func, Var *arg)
 	else
 	  Axis = strdup(V_NAME(v));
 	
-	if(Axis != NULL && 
-	   strcasecmp(Axis,"x") && 
-	   strcasecmp(Axis,"y") && 
+	if(Axis != NULL &&
+	   strcasecmp(Axis,"x") &&
+	   strcasecmp(Axis,"y") &&
 	   strcasecmp(Axis,"z")) {
 	  parse_error("Invalid Axis designation. x y z only.");
 	  return(NULL);
-	} 
+	}
 
       } else if (!name_check(V_NAME(av[i]), "Ignore", 2)) {
 	if (V_KEYVAL(av[i]) != NULL) {
@@ -377,17 +364,17 @@ ff_vplot(vfuncptr func, Var *arg)
       } else if (!name_check(V_NAME(av[i]), "Style", 2)) {
 	if(V_KEYVAL(av[i]) != NULL) {
 	  v = V_KEYVAL(av[i]);
-	  
+	
 	  if(V_TYPE(v) == ID_STRING)
 	    Style = V_STRING(v);
 	  else
 	    Style = strdup(V_NAME(v));
-	  
-	  if(name_check(Style,"lines",1) && 
+	
+	  if(name_check(Style,"lines",1) &&
 	     name_check(Style,"linespoints",6) &&
-	     name_check(Style,"dots",1) && 
+	     name_check(Style,"dots",1) &&
 	     name_check(Style,"points",1) &&
-	     name_check(Style,"boxes",1) && 
+	     name_check(Style,"boxes",1) &&
 	     name_check(Style,"steps",1) &&
 	     name_check(Style,"impulses",1) &&
 	     name_check(Style,"xerrorbars",7) &&
@@ -498,17 +485,17 @@ ff_vplot(vfuncptr func, Var *arg)
 
 int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuffer, Var *Xaxis, char *Axis, float *globalNums, char *Style, char *dir)
 {
-  
+
   /* The code of plot_chopper is the canibalized descendent of xplot()*/
-  
-  Var   *s=NULL, *v=NULL, *w=NULL;    // generic temporary Vars
-  int    count = 0;                   // 
+
+  Var   *s=NULL, *v=NULL;    // generic temporary Vars
+  int    count = 0;                   //
   Var   *xaxis_i = NULL;              // Var holding xaxis for individual object
   char  *axis_i = NULL;               // string holding axis designation
   int    Mode[3];                     // mode of the object (defined in code)
   int    Ord[3];                      // order of the object
   int    XOrd[3];                     // order of the xaxis
-  int    CE[3];                       // 
+  int    CE[3];                       //
   int    xFlag = 0;                   // was there an xaxis designated?
   int    obj_index;                   // object index in the argument string
   float *x = NULL, *y = NULL;         // the x and y data extracted from object
@@ -545,10 +532,9 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
   char  *smooth = NULL;               // smooth the data?  csplines or bezier
   char  *style = NULL;                // style of plot
   char  *label = NULL;                // label of plot
-  Var   *lbl = NULL;                  // in case label is a TEXT buffer  
+  Var   *lbl = NULL;                  // in case label is a TEXT buffer
   int    lblrows = 0;                 // a count of the number of rows in lbl
   int    vnum = 1;                    // current vector number of the object
-  int    leflag = 0;                  // a flag stating whether I'm using lines with errorbars
 
   /***********************************************
    ** Section A: Keyword Extraction             **
@@ -558,7 +544,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
    ***********************************************/
 
   for (i = start_ct; i <= end_ct; i++) {
-    
+
     //this should never happen, but a good catch nonetheless
     if (av[i] == NULL)
       continue;
@@ -604,9 +590,9 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	if(v!=NULL) {
 	  if(V_TYPE(v) == ID_STRING) {
 	    axis_i = V_STRING(v);
-	    
+	
 	    if(axis_i != NULL &&
-	       strcasecmp(axis_i,"x") && 
+	       strcasecmp(axis_i,"x") &&
 	       strcasecmp(axis_i,"y") &&
 	       strcasecmp(axis_i,"z")) {
 	      parse_error("Invalid axis designation. x y z only.");
@@ -667,13 +653,13 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	if(v!=NULL) {
 	  if(V_TYPE(v) == ID_STRING) {
 	    smooth = strdup(V_STRING(v));
-	    
-	    if(name_check(smooth,"bezier",1) && 
+	
+	    if(name_check(smooth,"bezier",1) &&
 	       name_check(smooth,"csplines",1)) {
 	      parse_error("smooth must be bezier, csplines");
 	      parse_error("continuing without smooth");
 	      smooth = NULL;
-	      return(1); 
+	      return(1);
 	    }
 	  } else {
 	    parse_error("Invalid smooth element in structure: Object %d",Onum);
@@ -692,7 +678,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  } else {
 	    parse_error("Invalid width element in structure: Object %d",Onum);
 	    parse_error("width must be an integer. Continuing with default width.\n");
-	  }	  
+	  }	
 	  v = NULL;
 	}
 
@@ -701,14 +687,14 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	if(v!=NULL) {
 	  if(V_TYPE(v) == ID_STRING) {
 	    style = strdup(V_STRING(v));
-	    
-	    if(name_check(style,"lines",1) && 
+	
+	    if(name_check(style,"lines",1) &&
 	       name_check(style,"linespoints",6) &&
-	       name_check(style,"dots",1) && 
+	       name_check(style,"dots",1) &&
 	       name_check(style,"points",1) &&
-	       name_check(style,"boxes",1) && 
+	       name_check(style,"boxes",1) &&
 	       name_check(style,"steps",1) &&
-	       name_check(style,"impulses",1) && 
+	       name_check(style,"impulses",1) &&
 	       name_check(style,"xerrorbars",7) &&
 	       name_check(style,"yerrorbars",7) &&
 	       name_check(style,"xyerrorbars",8) &&
@@ -735,7 +721,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
 	      color = extract_int(v,0);
 	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
-	      color = (int)extract_float(v,0);	  
+	      color = (int)extract_float(v,0);	
 	  } else {
 	    parse_error("Invalid color element in structure: Object %d",Onum);
 	    parse_error("color must be an integer. Continuing with default color.\n");
@@ -874,7 +860,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	}
       }
     }
-    
+
     if (V_TYPE(av[i]) == ID_KEYWORD) {
       if (!(name_check(av[i]->name, "Xaxis", 1))) {
       } else if (!(name_check(av[i]->name, "Axis", 1))) {
@@ -922,7 +908,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	}
 	
 	if(axis_i != NULL &&
-	   strcasecmp(axis_i,"x") && 
+	   strcasecmp(axis_i,"x") &&
 	   strcasecmp(axis_i,"y") &&
 	   strcasecmp(axis_i,"z")) {
 	  parse_error("Invalid axis designation. x y z only.");
@@ -1011,7 +997,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	  v = V_KEYVAL(av[i]);
 	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
-	    ignore_x_below = (float)extract_int(v,0); 
+	    ignore_x_below = (float)extract_int(v,0);
 	    ixbflag = 1;
 	  }
 	  else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
@@ -1069,13 +1055,13 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  return(1);
 	}
 
-	if(name_check(style,"lines",1) && 
+	if(name_check(style,"lines",1) &&
 	   name_check(style,"linespoints",6) &&
-	   name_check(style,"dots",1) && 
+	   name_check(style,"dots",1) &&
 	   name_check(style,"points",1) &&
-	   name_check(style,"boxes",1) && 
+	   name_check(style,"boxes",1) &&
 	   name_check(style,"steps",1) &&
-	   name_check(style,"impulses",1) && 
+	   name_check(style,"impulses",1) &&
 	   name_check(style,"xerrorbars",7) &&
 	   name_check(style,"yerrorbars",7) &&
 	   name_check(style,"xyerrorbars",8) &&
@@ -1097,7 +1083,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	else
 	  smooth = V_NAME(v);
 
-	if(name_check(smooth,"bezier",1) && 
+	if(name_check(smooth,"bezier",1) &&
 	   name_check(smooth,"csplines",1)) {
 	  parse_error("smooth must be bezier, csplines");
 	  parse_error("continuing without smooth");
@@ -1105,7 +1091,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  return(1);
 	}
 	
-      } else if (!(name_check(av[i]->name, "label", 1))) {      
+      } else if (!(name_check(av[i]->name, "label", 1))) {
 
 	v = eval(V_KEYVAL(av[i]));
 	if (v == NULL) {
@@ -1130,7 +1116,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  } else {
 	    parse_error("Illegal label designation. STRINGS or TEXT only.a");
 	    return(1);
-	  }      
+	  }
 
 	} else {
 	  parse_error("Illegal label designation. STRINGS or TEXT only.b");
@@ -1145,7 +1131,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
     }
 
     if(V_TYPE(av[i]) == ID_STRING) {
-      //possibility dos for label designation 
+      //possibility dos for label designation
       label = strdup(V_STRING(av[i]));
     }
   }
@@ -1157,11 +1143,11 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
   /***********************************************
    ** Section C: File and command creation      **
    ***********************************************/
-  
+
   // Find or set xaxis_i
   if (Xaxis != NULL)
     xaxis_i = Xaxis;
-  
+
   if (xaxis_i != NULL) {
     XOrd[0] = GetSamples(V_SIZE(xaxis_i), V_ORG(xaxis_i));
     XOrd[1] = GetLines(V_SIZE(xaxis_i), V_ORG(xaxis_i));
@@ -1198,7 +1184,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
     ignore_x_below = globalNums[9];
   }
 
-  if(globalNums[10]) 
+  if(globalNums[10])
     color = globalNums[11];
 
   if(globalNums[12])
@@ -1250,7 +1236,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	axis_i = strdup(&axs);
       }
     }
-    
+
     switch (*axis_i) {
     case 'X':  case 'x':
       Mode[0] = 0;
@@ -1288,11 +1274,11 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
     }
     if ((v = eval(s)) == NULL)
       v = s;
-    
+
     Ord[0] = GetSamples(V_SIZE(v), V_ORG(v));
     Ord[1] = GetLines(V_SIZE(v), V_ORG(v));
     Ord[2] = GetBands(V_SIZE(v), V_ORG(v));
-    
+
     //An xaxis was designated, one way or another.
     //Check the xaxis against the object.
     if (xFlag) {
@@ -1301,7 +1287,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	free(av);
 	return (1);
 	
-      } else if ((XOrd[1] != 1 && XOrd[2] != 1) && 
+      } else if ((XOrd[1] != 1 && XOrd[2] != 1) &&
 		 (XOrd[1] != Ord[Mode[1]] || XOrd[2] != Ord[Mode[2]])) {
 	parse_error("Given x-axis doesn't agree with Object %d",Onum);
 	parse_error("Dimensions of the xaxis array must be 1");
@@ -1313,7 +1299,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 
     //Perform a check to make sure style asks for errorbars
     if (style) {
-      if(name_check(style,"xerrorbars",7) && 
+      if(name_check(style,"xerrorbars",7) &&
 	 name_check(style,"yerrorbars",7) &&
 	 name_check(style,"xyerrorbars",8) &&
 	 name_check(style,"xerrorlines",7) &&
@@ -1342,7 +1328,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 
     x = calloc(Ord[Mode[0]], sizeof(float));
     y = calloc(Ord[Mode[0]], sizeof(float));
-    
+
     //Loop through the two non-axis dimensions to plot all vectors
     for (i = 0; i < Ord[Mode[2]]; i++) {
       for (j = 0; j < Ord[Mode[1]]; j++) {
@@ -1377,7 +1363,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  case DOUBLE:
 	    y[k] = extract_float(v, obj_index);
 	  }
-	  
+	
 	  if (xFlag) {
 	    switch (V_FORMAT(v)) {
 	    case BYTE:
@@ -1427,7 +1413,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	      }
 	    }
 	  }
-	  
+	
 	  //Here we finally fucking handle the glorious ignore values!
 	  sef = 0; // Sum of the Error Flags
 
@@ -1464,6 +1450,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 
 	      } else if(Err1 && Err2 && Err3 == NULL) {
 
+                // NOTE(gorelick): This is an outright error.
 		e1 = (style && offset && (style == "yerrorbars" || style == "yerrorlines"))?Err1[k]-(float)(vnum-1)*offset:Err1[k];
 		e2 = (style && offset && (style == "yerrorbars" || style == "yerrorlines"))?Err2[k]-(float)(vnum-1)*offset:Err2[k];
 
@@ -1485,11 +1472,11 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  fclose(fp);
 	  if (count++)
 	    strcat(CommandBuffer, ",");
-	  
+	
 	  sprintf(CommandBuffer + strlen(CommandBuffer), "'%s'", fname);
-	  
+	
 	  // Properly title the fucking object and vector
-	  if (label != NULL) 
+	  if (label != NULL)
 	    sprintf(CommandBuffer + strlen(CommandBuffer), " title '%s vector %d'", label,vnum);
 	  else if (lbl != NULL) {
 	    if(vnum <= lblrows) {
@@ -1499,21 +1486,21 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	    }
 	  } else
 	    sprintf(CommandBuffer + strlen(CommandBuffer), " title 'Obj %d vector %d'",Onum,vnum);
-	  
+	
 	  vnum+=1;
 
 	  // smooth?
 	  if(smooth != NULL)
 	    sprintf(CommandBuffer + strlen(CommandBuffer), " smooth %s",smooth);
-	  
+	
 	  // Add width
-	  if(width > 0) 
+	  if(width > 0)
 	    sprintf(CommandBuffer + strlen(CommandBuffer), " lw %d",width);
-	  
+	
 	  // Add style
 	  if(style != NULL)
 	    sprintf(CommandBuffer + strlen(CommandBuffer), " with %s",style);
-	  
+	
 	  free(fname);
 
 	} else {
@@ -1533,16 +1520,16 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
       free(Err3);
       free(Err4);
     }
-    
+
     if (!(sep)) {
       fclose(fp);
       if (count++) {
 	strcat(CommandBuffer, ",");
       }
       sprintf(CommandBuffer + strlen(CommandBuffer), "'%s'", fname);
-      
+
       // Properly title the object
-      if (label != NULL) 
+      if (label != NULL)
 	sprintf(CommandBuffer + strlen(CommandBuffer), " title '%s'", label);
       else if(lbl != NULL) {
 	label = strdup(V_TEXT(lbl).text[0]);
@@ -1550,25 +1537,25 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	label = NULL;
       } else
 	sprintf(CommandBuffer + strlen(CommandBuffer), " title 'Obj %d'",Onum);
-      
+
       // smooth?
       if(smooth != NULL)
 	sprintf(CommandBuffer + strlen(CommandBuffer), " smooth %s",smooth);
-      
+
       // Add color
       if(color > -2)
 	sprintf(CommandBuffer + strlen(CommandBuffer), " lt %d",color);
-      
+
       // Add width
-      if(width > 0) 
+      if(width > 0)
 	sprintf(CommandBuffer + strlen(CommandBuffer), " lw %d",width);
-      
+
       // Add style
       if(style != NULL)
 	sprintf(CommandBuffer + strlen(CommandBuffer), " with %s",style);
-      
+
       free(fname);
-      
+
     }
   }
   return(0);
@@ -1617,7 +1604,7 @@ static int handle_errorbars(Var *errorb, Var *v, int *Mode, char *style, int Onu
     }
     return(EM1);
   }
-  
+
 
   //Errorbars is an array, check it!
   if(e_dim[AX] != v_dim[AX]) {
@@ -1625,16 +1612,16 @@ static int handle_errorbars(Var *errorb, Var *v, int *Mode, char *style, int Onu
     return(0);
   }
 
-  // x = 1, 2 or 4 and y doesn't match or y = 1, 2 or 4 and x doesn't match 
-  if ((EM1 == 1 || EM1 == 2 || EM1 == 4 && EM2 == v_dim[Mode[2]]) || 
-      (EM2 == 1 || EM2 == 2 || EM2 == 4 && EM1 == v_dim[Mode[1]])) {
+  // x = 1, 2 or 4 and y doesn't match or y = 1, 2 or 4 and x doesn't match
+  if (((EM1 == 1 || EM1 == 2 || EM1 == 4) && EM2 == v_dim[Mode[2]]) ||
+      ((EM2 == 1 || EM2 == 2 || EM2 == 4) && EM1 == v_dim[Mode[1]])) {
   } else {
     parse_error("Given errorbars don't agree with Object %d", Onum);
     parse_error("There are the correct number of errorbar inputs,");
     parse_error("but a different number of errorbar vectors than object vectors");
     parse_error("Must have 1,2 or 4 errorbar inputs per vector.");
     return(0);	
-  } 
+  }
 
   //There still exists the problem of 2x4xN or 2x2xN errorbar vectors. So I'm going
   //to have to add this limitation to users:
@@ -1646,7 +1633,7 @@ static int handle_errorbars(Var *errorb, Var *v, int *Mode, char *style, int Onu
     parse_error("yerrorbars has inputs ylow in [,1,] and yhigh in [,2,]");
     return(0);
   }
-  
+
   //Reuse EM1 as the mode of object and errorbars that are relevant
   if(v_dim[Mode[1]] == 1) {
     EM1 = Mode[1]; //order of object where it has dimension of 1
@@ -1654,7 +1641,7 @@ static int handle_errorbars(Var *errorb, Var *v, int *Mode, char *style, int Onu
   else if(v_dim[Mode[2]] == 1) {
     EM1 = Mode[2];
   }
-  
+
   if(e_dim[EM1] == 1){
     if(!name_check(style,"xyerrorbars",2)) {
       parse_error("Invalid style for number of errorbar inputs.\nUsing style=yerrorbars");
@@ -1671,7 +1658,7 @@ static int handle_errorbars(Var *errorb, Var *v, int *Mode, char *style, int Onu
       parse_error("Invalid style for number of errorbar values. Using style=xyerrorbars");
       sprintf(style,"xyerrorbars");
     }
-    
+
     if(!name_check(style,"xerrorlines",7) || !name_check(style,"yerrorlines",7)) {
       parse_error("Invalid style for number of errorbar values. Using style=xyerrorlines");
       sprintf(style,"xyerrorlines");
@@ -1679,7 +1666,7 @@ static int handle_errorbars(Var *errorb, Var *v, int *Mode, char *style, int Onu
   }
 
   AX = e_dim[EM1];
-  return(AX);  
+  return(AX);
 }
 
 
@@ -1752,22 +1739,12 @@ int *make_errorbar_indices(Var *v, int *Mode, int *CE, Var *errorb){
 }
 
 
-
-
-
 Var *
 ff_ploop(vfuncptr func, Var *arg)
 {
 
   int      ac;                          // argument count
   Var    **av;                          // argument Var
-  Var     *v = NULL;
-  Var     *Xaxis = NULL;
-  char    *Axis = NULL;
-  int      i,j,k;                       // loop index
-  int      start_ct = 0;
-  int      end_ct = 0;
-  char     CommandBuffer[8192] = { 0 }; //command buffer sent to Gnuplot
 
   make_args(&ac, &av, func, arg);
 
@@ -1776,8 +1753,6 @@ ff_ploop(vfuncptr func, Var *arg)
     parse_error(" Loop through a VAL, plotting one spectrum (or slice) at a time.");
     parse_error(" Syntax: plotloop(VAL[, axis = x|y|z][, xaxis = VAL][, keep = VAL])");
     parse_error(" Example: plotloop(a, axis=y, keep=b)");
-    return(NULL);
   }
-
-  
+  return(NULL);
 }

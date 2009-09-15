@@ -34,8 +34,6 @@ ff_minvert(vfuncptr func, Var * arg)
 	int x,y,z, i, dsize;
 	double *a, *b;
 
-	int ac;
-	Var **av;
 	Alist alist[2];
 	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
 	alist[1].name = NULL;

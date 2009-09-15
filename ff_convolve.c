@@ -41,12 +41,10 @@ vector convolve_BRUTE(const vector& vec1, const vector& vec2)
 Var *
 ff_self_convolve(vfuncptr func, Var * arg)
 {
-    Var *v1 = NULL, *v2 = NULL;
+    Var *v1 = NULL;
     size_t m, n, d1, d2;
     float *out;
 
-    int ac;
-    Var **av;
     Alist alist[2];
     alist[0] = make_alist( "obj1",    ID_VAL,    NULL,     &v1);
     alist[1].name = NULL;
@@ -233,4 +231,3 @@ Var *ff_convolve2(vfuncptr func, Var * arg)
 
   return(do_my_convolve(obj, kernel, norm, ignore, kernreduce));
 }
-

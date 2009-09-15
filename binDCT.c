@@ -2,97 +2,77 @@
 
 void jpeg_fdct_bin_c1(int *);
 
+void bindct_c1(int *data);
+void binrdct_c1(int *coef_block, int *output_buf);
+void jpeg_fdct_bin_c1(int *data);
+void jpeg_idct_bin_c1(int *coef_block, int *output_buf);
+
 Var *ff_bindct(vfuncptr func, Var * arg)
 {
-    Var *obj = NULL;
-    int x, y, z, i, j, k;
-    int *data;
-    int *odata;
-	Var *out;
+  Var *obj = NULL;
+  int x, y, z, i, j, k;
+  int *data;
+  int *odata;
+  Var *out;
 
-    Alist alist[2];
-    alist[0] = make_alist("object", ID_VAL, NULL, &obj);
-    alist[1].name = NULL;
+  Alist alist[2];
+  alist[0] = make_alist("object", ID_VAL, NULL, &obj);
+  alist[1].name = NULL;
 
-    if (parse_args(func, arg, alist) == 0)
-        return (NULL);
+  if (parse_args(func, arg, alist) == 0)
+    return (NULL);
 
-    if (obj == NULL) {
-        parse_error("%s: No object specified\n", func->name);
-        return (NULL);
-    }
+  if (obj == NULL) {
+    parse_error("%s: No object specified\n", func->name);
+    return (NULL);
+  }
 
-    x = GetSamples(V_SIZE(obj), V_ORG(obj));
-    y = GetLines(V_SIZE(obj), V_ORG(obj));
-    z = GetBands(V_SIZE(obj), V_ORG(obj));
+  x = GetSamples(V_SIZE(obj), V_ORG(obj));
+  y = GetLines(V_SIZE(obj), V_ORG(obj));
+  z = GetBands(V_SIZE(obj), V_ORG(obj));
 
-/*
-	if (!((x == 1 || y == 1) && x*y == 8)) {
-		parse_error("binDCT only works on 8 element arrays");
-		return(NULL);
-	}
+  if (x != 8 || y != 8) {
+    parse_error("binDCT only works on 8x8 element arrays");
+    return(NULL);
+  }
 
-    data = calloc(8, sizeof(int));
+  data = calloc(64, sizeof(int));
+  odata = calloc(x*y*z, sizeof(int));
 
-	for (i = 0 ; i < 8 ; i++) {
-		data[i] = extract_int(obj, i);
+  for (k = 0 ; k < z ; k++) {
+    for (j = 0 ; j < 8 ; j++) {
+      for (i = 0 ; i < 8 ; i++) {
+        data[i+j*8] = extract_int(obj, cpos(i,j,k, obj));
+      }
     }
 
     if (!strcmp(func->name, "bindct")) {
-        bindct_c1(data);
+      jpeg_fdct_bin_c1(data);
     } else {
-        binrdct_c1(data, data);
+      jpeg_idct_bin_c1(data,data);
     }
 
-    out= newVal(BSQ, 8, 1, 1, INT, data);
-	V_ORG(out) = V_ORG(obj);
-	V_SIZE(out)[0] = V_SIZE(obj)[0];
-	V_SIZE(out)[1] = V_SIZE(obj)[1];
-	V_SIZE(out)[2] = V_SIZE(obj)[2];
-*/
 
-	if (x != 8 || y != 8) {
-		parse_error("binDCT only works on 8x8 element arrays");
-		return(NULL);
-	}
+    for (j = 0 ; j < 8 ; j++) {
+      for (i = 0 ; i < 8 ; i++) {
+        odata[cpos(i,j,k,obj)] = data[i+j*8];
+      }
+    }
+  }
 
-    data = calloc(64, sizeof(int));
-	odata = calloc(x*y*z, sizeof(int));
+  out = newVal(V_ORG(obj), V_SIZE(obj)[0], V_SIZE(obj)[1], V_SIZE(obj)[2],
+               INT, odata);
 
-	for (k = 0 ; k < z ; k++) {
-		for (j = 0 ; j < 8 ; j++) {
-			for (i = 0 ; i < 8 ; i++) {
-				data[i+j*8] = extract_int(obj, cpos(i,j,k, obj));
-			}
-		}
-
-		if (!strcmp(func->name, "bindct")) {
-			jpeg_fdct_bin_c1(data);
-		} else {
-			jpeg_idct_bin_c1(data,data);
-		}
-
-
-		for (j = 0 ; j < 8 ; j++) {
-			for (i = 0 ; i < 8 ; i++) {
-				odata[cpos(i,j,k,obj)] = data[i+j*8];
-			}
-		}
-	}
-
-	out = newVal(V_ORG(obj), V_SIZE(obj)[0], V_SIZE(obj)[1], V_SIZE(obj)[2],
-	INT, odata);
-
-	return(out);
+  return(out);
 }
 
 
+void
 bindct_c1(int *data)
 {
     int tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
     int tmp10, tmp11, tmp12, tmp13;
     int *dataptr;
-    int ctr;
 
 /****************************************************************************/
     /* Case 2: lossless binDCT: Use new butterflies. */
@@ -151,14 +131,14 @@ bindct_c1(int *data)
     dataptr[3] = tmp12 - (((dataptr[5] << 4) - dataptr[5]) >> 5);
 }
 
+
+void
 binrdct_c1(int *coef_block, int *output_buf)
 {
     int tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
     int tmp10, tmp11, tmp12, tmp13;
     int *inptr;
     int *wsptr;
-    int *outptr;
-    int ctr;
 
 /****************************************************************************/
 /* Case 2: lossless binDCT: descale by 2 immediately after inverse butterfly. */
@@ -367,6 +347,7 @@ void jpeg_fdct_bin_c1(int *data)
     }
 }
 
+void
 jpeg_idct_bin_c1(int *coef_block, int *output_buf)
 {
     int tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;

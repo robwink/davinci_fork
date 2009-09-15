@@ -43,10 +43,8 @@ static int cmp(const void *a, const void *b) {
 
 float median_window(float *s1, int width, int height, float ignore)
 {
-    int sum = 0;
-    int i, j;
+    int i;
     int c1 = 0, c2 = 0;
-    float r;
 
     qsort(s1, width*height, sizeof(float), cmp);
 
@@ -299,7 +297,7 @@ ff_window(vfuncptr func, Var * arg)
     float ignore=MAXFLOAT;
     float *f_out;
 	short *s_out;
-    int x,y,z,pos, i,j,k;
+    int x,y,z, i,j;
     int size = 0, width = 0, height = 0;
     char *type = NULL;
 	Var *mask;
@@ -396,5 +394,3 @@ ff_window(vfuncptr func, Var * arg)
     free_window(w);
     return(rval);
 }
-
-

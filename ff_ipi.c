@@ -25,7 +25,6 @@ static Var *do_ipi(Var *coords_array, Var *values_array){
 Var *ff_ipi(vfuncptr func, Var * arg){
   Var         *coords_array = NULL;        /* list of coordinates                                  */
   Var         *values_array = NULL;        /* list of values of f(x) where x is supplied by coords */
-  Var         *out = NULL;                 /* return structure to davinci enviornment              */
   
   Alist alist[3];
   alist[0] = make_alist("coordinates",  ID_VAL,   NULL,     &coords_array);

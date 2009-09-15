@@ -9,12 +9,10 @@ dv_LoadIMath(
     struct iom_iheader *s
     )
 {
-    char buf[256];
     double *data;
     struct iom_iheader h;
     int i,j, k;
     Var *v;
-    int transpose;
     int wt, ht;
     int status;
 

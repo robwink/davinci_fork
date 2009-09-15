@@ -63,17 +63,11 @@ ff_blend(vfuncptr func, Var * arg)
 {
   Var *mask = NULL;        // The top layer (or 'mask')
   Var *image = NULL;       // The bottom layer (or 'image')
-  int x,y,z, i, j, dsize;
-  int x2, y2, z2;
+  int i;
 
-  int npixels;
-  double v1, v2, v3;
-  char *data;
   double (*fptr)(double, double) = NULL;
 
-  float start = MAXFLOAT, size= MAXFLOAT;
-  int steps = MAXINT;
-  char *mode_str = "";
+  char *mode_str = (char *)"";
 
   Alist alist[9];
   alist[0] = make_alist( "image", ID_VAL,    NULL,    &image);

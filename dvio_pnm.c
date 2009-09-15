@@ -10,10 +10,7 @@ dv_LoadPNM(
     struct iom_iheader *s
     )
 {
-    int x,y,z;
-    int i;
     u_char *data;
-    int bits;
     struct iom_iheader h;
     int status;
 	char hbuf[HBUFSIZE];

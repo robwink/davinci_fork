@@ -15,7 +15,7 @@ extern FILE *pfp;
 Var *ff_gplot(vfuncptr func, Var * arg)
 {
     char *gplot_cmd;
-    Var *object = NULL, *e = NULL;
+    Var *object = NULL;
     int i;
     FILE *fp = NULL;
     char *fname = NULL;
@@ -263,41 +263,41 @@ Var *ff_splot(vfuncptr func, Var * arg)
 }
 
 
-int send_to_plot(char *s)
+int send_to_plot(const char *s)
 {
 #ifdef GPLOT_CMD
-    char *gplot_cmd;
+  char *gplot_cmd;
 
-    if (pfp == NULL) {
-        if (getenv("GPLOT_CMD") != NULL) {
-            gplot_cmd = strdup(getenv("GPLOT_CMD"));
-        } else {
-            gplot_cmd = GPLOT_CMD;
-        }
-        if ((pfp = popen(gplot_cmd, "w")) == NULL) {
-            fprintf(stderr, "Unable to open gplot.\n");
-            return (0);
-        }
-        send_to_plot("set data style linespoints\n");
-        send_to_plot("set parametric\n");
-        send_to_plot("set mouse\n");
-	
+  if (pfp == NULL) {
+    if (getenv("GPLOT_CMD") != NULL) {
+      gplot_cmd = strdup(getenv("GPLOT_CMD"));
+    } else {
+      gplot_cmd = GPLOT_CMD;
+    }
+    if ((pfp = popen(gplot_cmd, "w")) == NULL) {
+      fprintf(stderr, "Unable to open gplot.\n");
+      return (0);
+    }
+    send_to_plot("set data style linespoints\n");
+    send_to_plot("set parametric\n");
+    send_to_plot("set mouse\n");
+
 #ifdef HAVE_AQUA
-	if(getenv("DV_AQUA")) {
-	  char *have_aqua = strdup(getenv("DV_AQUA"));
-	  if(have_aqua  != NULL &&  strcmp(have_aqua, "1") == 0){
-	    send_to_plot("set term aqua\n");
-	  }
-	}
+    if(getenv("DV_AQUA")) {
+      char *have_aqua = strdup(getenv("DV_AQUA"));
+      if(have_aqua  != NULL &&  strcmp(have_aqua, "1") == 0){
+        send_to_plot("set term aqua\n");
+      }
+    }
 #endif
-    }
-    if (write(fileno(pfp), s, strlen(s)) < 0) {
-        pfp = NULL;
-        send_to_plot(s);
-    }
-    write(fileno(pfp), "\n", 1);
+  }
+  if (write(fileno(pfp), s, strlen(s)) < 0) {
+    pfp = NULL;
+    send_to_plot(s);
+  }
+  write(fileno(pfp), "\n", 1);
 #endif                          /* GPLOT_CMD */
-    return (1);
+  return (1);
 }
 
 void Find_Axis(char *R, Var * Obj)

@@ -11,11 +11,9 @@ dv_LoadVicar(
     )
 {
     struct iom_iheader h;
-    int org;
     Var *v;
     void *data;
     char hbuf[HBUFSIZE];
-	int i, j;
 
     if (iom_isVicar(fp) == 0){ return NULL; }
     

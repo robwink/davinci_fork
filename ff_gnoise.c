@@ -20,7 +20,7 @@
 Var *
 ff_gnoise(vfuncptr func, Var * arg)
 {
-	Var *v, *s;
+	Var *s;
 	int x=512, y=512, z=10;
 	int seed = 0;
 	int i, j, d;

@@ -155,12 +155,11 @@ subset(Var *v,
 Var *
 ff_translate(vfuncptr func, Var *arg)
 {
-    Var *object = NULL, *v,*s,*e;
+    Var *object = NULL, *v,*s;
     int from;
     int to;
     int d[3];
     size_t count, l;
-    char *ptr;
     int flip = 0;
     int nbytes;
     int in_size[3], out_size[3];
