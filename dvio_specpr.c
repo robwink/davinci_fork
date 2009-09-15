@@ -66,9 +66,9 @@ int
 max_rec(int fd)
 {
   /*
-     struct stat buf;
-     stat(path, &buf);
-     */
+    struct stat buf;
+    stat(path, &buf);
+  */
   int i;
   int f;
   f = dup(fd);
@@ -101,9 +101,9 @@ typedef char *byteptr;
 #define swap1byte(c1, c2) (bytetemp = (c1) , (c1) = (c2) , (c2) = bytetemp)
 #define swap4byte(s)     (swap1byte(((byteptr)(s))[0], ((byteptr)(s))[3]), \
                           swap1byte(((byteptr)(s))[1], ((byteptr)(s))[2]),(s))
-  void
+void
 byteorder(a,iflag)
-  int *a,iflag;
+    int *a,iflag;
 {
   int itmp,i;
 
@@ -168,8 +168,8 @@ read_record(int fd, int i, char *label)
  ** read_specpr() - read a specpr record.
  **
  ** returns:  > 0 on success
- ** 			0 on failure (specified record is a continuation record)
- **			   -1 on file failure (EOF, error)
+ **             0 on failure (specified record is a continuation record)
+ **            -1 on file failure (EOF, error)
  **
  ** Pass data=NULL to not malloc and return data
  **/
@@ -257,558 +257,559 @@ specpr_open(char *path)
   char *p;
 
 #ifdef __CYGWIN__
-  if ((fout = open(path, O_RDWR|O_BINARY)) >= 0) {
-#else 
-    if ((fout = open(path, O_RDWR)) >= 0) {
+  flags = O_RDWR|O_BINARY;
+#else
+  flags = O_RDWR;
 #endif /* __CYGWIN__ */
-      return(fout);
-    } else {
-      /* it doesn't exist.  Create it. */
-      /**
-       ** this needs to prepend the SPECPR_MAGIC cookie to record 0
-       **/
+  if ((fout = open(path, path)) >= 0) {
+    return(fout);
+  } else {
+    /* it doesn't exist.  Create it. */
+    /**
+     ** this needs to prepend the SPECPR_MAGIC cookie to record 0
+     **/
 
 #ifdef __CYGWIN__
-      fout = open(path, O_RDWR | O_CREAT | O_BINARY, 0777);
-#else 
-      fout = open(path, O_RDWR | O_CREAT, 0777);
+    fout = open(path, O_RDWR | O_CREAT | O_BINARY, 0777);
+#else
+    fout = open(path, O_RDWR | O_CREAT, 0777);
 #endif /* __CYGWIN__ */
-      if (fout < 0) return(fout);
+    if (fout < 0) return(fout);
 
-      p = (char *)malloc(LABELSIZE);
-      memset(p, '\0', LABELSIZE);
-      memcpy(p, SPECPR_STAMP, strlen(SPECPR_STAMP));
-      write(fout, p, LABELSIZE);
-      lseek(fout, 0, SEEK_SET);
-      free(p);
-      return(fout);
+    p = (char *)malloc(LABELSIZE);
+    memset(p, '\0', LABELSIZE);
+    memcpy(p, SPECPR_STAMP, strlen(SPECPR_STAMP));
+    write(fout, p, LABELSIZE);
+    lseek(fout, 0, SEEK_SET);
+    free(p);
+    return(fout);
+  }
+}
+
+/*
+** This looks like it has a bug in it, re: tmpl
+*/
+
+
+void
+write_specpr(int fd, int i, struct _label *label, char *data)
+{
+  struct _tlabel *tlabel;
+  struct _tlabel tmpl;
+  int size;
+  int offset;
+  int count;
+
+  tlabel = (struct _tlabel *)label;
+  /* RED Zero the flag since cannot guarantee its init value */
+  tmpl.icflag = 0;
+
+  switch(check_bit(label->icflag,1)) {
+    case 0:
+      /* data */
+      size = label->itchan*sizeof(float);
+      offset = 256*sizeof(float);
+      set_bit(tmpl.icflag,1,0);
+      if (data != NULL) {
+        memcpy(label->data, data, offset);
+      }
+      break;
+    case 1:
+      /* text */
+      size = tlabel->itxtch;
+      offset = 1476;
+      set_bit(tmpl.icflag,1,1);
+      if (data != NULL) {
+        memcpy(tlabel->itext, data, offset);
+      }
+      break;
+  }
+  write_record(fd, i, label);
+
+  count = 0;
+  size -= offset;
+  set_bit(tmpl.icflag,0,1);
+  while(size > 0) {
+    memcpy(((char *)&tmpl)+4, data+(offset+1532*count), 1532);
+    write_record(fd, (i < 0 ? i : i+count+1), (struct _label *)&tmpl);
+    size -= 1532;
+    count++;
+  }
+}
+
+void
+julian_date(int *secs, int *date)
+{
+  /* sets date to Julian day * 10 and time to secs since 0:00 hours UT */
+  int jda, jsec, nday, isec;
+
+  jda = 24405875;
+  jsec = time(0);
+
+  nday = jsec/(3600*24);
+  isec = jsec - (nday*3600*24);
+  jda = jda+nday*10;
+
+  *date = jda;
+  *secs = isec;
+}
+
+
+struct _label *
+make_label(int npixels, int waves, char *title, char *ahist, char *mhist)
+{
+  int i;
+  struct _label label, *lbl;
+
+  label.icflag = 0;
+  set_bit(label.icflag, 4, 1);
+  set_bit(label.icflag, 5, 1);
+
+  sprintf(label.usernm,"%s",getenv("USER"));
+  julian_date(&label.iscta,&label.jdatea);
+  label.iscta = label.isctb = label.iscta * 24000;
+  label.jdateb = label.jdatea;
+  label.istb = 0;
+  label.isra = label.isdec = 0;
+  label.itchan = npixels;
+  label.irmas = label.revs = label.iband[0] = label.iband[1] = 1;
+  label.irespt = label.itpntr = 0;
+  label.siangl = label.seangl = label.sphase = 0;
+  label.itimch = 1;
+  label.xnrm = 1;
+  label.scatin = 1;
+  label.timint = 1;
+  label.tempd = 273;
+
+  label.irwav = waves ;/* wavelengths pointer */
+
+  label.irecno = 0; /* record number pointer */
+
+  label.ihist[0] = '\0';
+  label.mhist[0] = '\0';
+  label.ititl[0] = '\0';
+
+  if (title != NULL)
+    for (i = 0 ; i < 40 ; i++)
+      label.ititl[i] = (i >= strlen(title) ? ' ' : title[i]);
+  if (ahist != NULL)
+    for (i = 0 ; i < 60 ; i++)
+      label.ihist[i] = (i >= strlen(ahist) ? ' ' : ahist[i]);
+  if (mhist != NULL)
+    for (i = 0 ; i < 296 ; i++)
+      label.mhist[i] = (i >= strlen(mhist) ? ' ' : mhist[i]);
+
+  label.iwtrns = label.nruns = npixels; /* number of blocks averaged */
+  label.data[0] = 0; /* averaged spectra data */
+
+  lbl = (struct _label *)malloc(sizeof(struct _label));
+  memcpy(lbl, &label, sizeof(struct _label));
+  return(lbl);
+}
+
+
+/**
+ ** is_specpr() - detect the magic cookie for specpr files.
+ ** returns:
+ **		0: on failure
+ **		1: on success
+ **/
+int
+is_specpr(FILE *fp)
+{
+  int len;
+  char buf[16];
+
+  rewind(fp);
+  len = fread(buf, 1, strlen(SPECPR_MAGIC), fp);
+  return (len == strlen(SPECPR_MAGIC) && !strncmp(buf, SPECPR_MAGIC, len));
+}
+
+#ifndef STANDALONE
+/**
+ ** LoadSpecpr() - Get record out of a specpr file, and load into a Var struct
+ **/
+
+Var *
+LoadSpecpr(FILE *fp,char *filename,int rec)
+{
+  struct _label label;
+  float *data;
+  Var *s;
+  Var *v, *q;
+  int err;
+
+  /**
+   ** Verify file type.
+   **/
+  if (!is_specpr(fp)) return(NULL);
+
+  if (rec <= 0) {
+    rec = 1;
+    q = new_struct(0);
+    while ((err = read_specpr(fileno(fp), rec, &label, (char **)&data)) >= 0) {
+      if (err > 0) {
+        s = new_struct(2);
+        v = newVal(BSQ, 1, 1, label.itchan, FLOAT, data);
+        add_struct(s, "data", v);
+        add_struct(s, "title", newString(strndup(label.ititl, 40)));
+        add_struct(q, NULL, s);
+      }
+      rec += err;
+    }
+    return(q);
+  } else {
+    if (read_specpr(fileno(fp), rec, &label, (char **)&data) > 0) {
+      s = newVar();
+      V_TYPE(s) = ID_VAL;
+      V_DATA(s) = data;
+      V_DSIZE(s) = label.itchan;
+      V_SIZE(s)[0] = 1;
+      V_SIZE(s)[1] = 1;
+      V_SIZE(s)[2] = label.itchan;
+      V_FORMAT(s) = FLOAT;
+      V_ORDER(s) = BSQ;
+
+      V_TITLE(s) = (char *)malloc(41);
+      strncpy(V_TITLE(s), label.ititl, 40);
+      V_TITLE(s)[40] = '\0';
+
+      if (VERBOSE > 1)  {
+        fprintf(stderr, "%s#%d: SpecPR record: %ld channels\nTitle: %s\n",
+                filename, rec, V_DSIZE(s), V_TITLE(s));
+      }
+
+      return(s);
+    } else {
+      sprintf(error_buf, "continuation record %s#%d", filename, rec);
+      parse_error(NULL);
+      return(NULL);
+    }
+  }
+}
+
+
+/**
+ ** This will append data to a specpr file or create a new one if it
+ ** doesn't exist.
+ **/
+
+int
+WriteSpecpr(Var *v, char *filename, char *title)
+{
+  Var *e;
+  float *fdata;
+  int i;
+  int fd;
+  struct _label *label;
+  char buf[256];
+  char ahist[256];
+  char mhist[1024];
+
+  e = eval(v);
+
+  if (e == NULL)  {
+    sprintf(error_buf, "Variable not found: %s", V_NAME(v));
+    parse_error(NULL);
+    return(0);
+  }
+  v = e;
+
+  if (V_TYPE(v) != ID_VAL) {
+    sprintf(error_buf, "Invalid type to write: %s", V_NAME(v));
+    parse_error(NULL);
+    return(0);
+  }
+
+  if (((V_SIZE(v)[0] == 1) + (V_SIZE(v)[1]==1) + (V_SIZE(v)[2]==1)) < 2) {
+    sprintf(error_buf, "Variable has too many dimensions: %s", V_NAME(v));
+    parse_error(NULL);
+    return(0);
+  }
+
+  /**
+   ** Open the file
+   **/
+  fd = specpr_open(filename);
+
+  /**
+   ** Verify its a specpr file
+   **/
+  read(fd, buf, sizeof(SPECPR_MAGIC));
+  if (strncmp(buf, SPECPR_MAGIC, strlen(SPECPR_MAGIC))) {
+    sprintf(error_buf, "Not a SPECPR file: %s", filename);
+    parse_error(NULL);
+    close(fd);
+    return(0);
+  }
+
+  if (V_FORMAT(v) == FLOAT) {
+    fdata = (float *)V_DATA(v);
+  } else {
+    fdata = (float *)calloc(V_DSIZE(v), sizeof(float));
+    for (i = 0 ; i < V_DSIZE(v) ; i++) {
+      fdata[i] = extract_float(v, i);
     }
   }
 
-  /*
-   ** This looks like it has a bug in it, re: tmpl
-   */
+  if (VERBOSE > 1) {
+    fprintf(stderr,
+            "Writing %s: SpecPR record: %ld channels\nTitle: %s\n",
+            filename, V_DSIZE(v), title);
+  }
+
+  sprintf(ahist, "%60.60s", "daVinci generated record");
+  ahist[60] = '\0';
+  mhist[0] = '\0';
+
+  label = make_label(V_DSIZE(v), 0, title, ahist, mhist);
+  write_specpr(fd, -1, label, (char *)fdata);
+  free(label);
+
+  if (V_DATA(v) != fdata) free(fdata);
+  close(fd);
+
+  return 1;
+}
 
 
-  void
-      write_specpr(int fd, int i, struct _label *label, char *data)
-      {
-        struct _tlabel *tlabel;
-        struct _tlabel tmpl;
-        int size;
-        int offset;
-        int count;
-
-        tlabel = (struct _tlabel *)label;
-        /* RED Zero the flag since cannot guarantee its init value */
-        tmpl.icflag = 0;
-
-        switch(check_bit(label->icflag,1)) {
-          case 0:
-            /* data */
-            size = label->itchan*sizeof(float);
-            offset = 256*sizeof(float);
-            set_bit(tmpl.icflag,1,0);
-            if (data != NULL) {
-              memcpy(label->data, data, offset);
-            }
-            break;
-          case 1:
-            /* text */
-            size = tlabel->itxtch;
-            offset = 1476;
-            set_bit(tmpl.icflag,1,1);
-            if (data != NULL) {
-              memcpy(tlabel->itext, data, offset);
-            }
-            break;
-        }
-        write_record(fd, i, label);
-
-        count = 0;
-        size -= offset;
-        set_bit(tmpl.icflag,0,1);
-        while(size > 0) {
-          memcpy(((char *)&tmpl)+4, data+(offset+1532*count), 1532);
-          write_record(fd, (i < 0 ? i : i+count+1), (struct _label *)&tmpl);
-          size -= 1532;
-          count++;
-        }
-      }
-
-  void
-      julian_date(int *secs, int *date)
-      {
-        /* sets date to Julian day * 10 and time to secs since 0:00 hours UT */
-        int jda, jsec, nday, isec;
-
-        jda = 24405875;
-        jsec = time(0);
-
-        nday = jsec/(3600*24);
-        isec = jsec - (nday*3600*24);
-        jda = jda+nday*10;
-
-        *date = jda;
-        *secs = isec;
-      }
-
-
-  struct _label *
-      make_label(int npixels, int waves, char *title, char *ahist, char *mhist)
-      {
-        int i;
-        struct _label label, *lbl;
-
-        label.icflag = 0;
-        set_bit(label.icflag, 4, 1);
-        set_bit(label.icflag, 5, 1);
-
-        sprintf(label.usernm,"%s",getenv("USER"));
-        julian_date(&label.iscta,&label.jdatea);
-        label.iscta = label.isctb = label.iscta * 24000;
-        label.jdateb = label.jdatea;
-        label.istb = 0;
-        label.isra = label.isdec = 0;
-        label.itchan = npixels;
-        label.irmas = label.revs = label.iband[0] = label.iband[1] = 1;
-        label.irespt = label.itpntr = 0;
-        label.siangl = label.seangl = label.sphase = 0;
-        label.itimch = 1;
-        label.xnrm = 1;
-        label.scatin = 1;
-        label.timint = 1;
-        label.tempd = 273;
-
-        label.irwav = waves ;/* wavelengths pointer */
-
-        label.irecno = 0; /* record number pointer */
-
-        label.ihist[0] = '\0';
-        label.mhist[0] = '\0';
-        label.ititl[0] = '\0';
-
-        if (title != NULL) 
-          for (i = 0 ; i < 40 ; i++)
-            label.ititl[i] = (i >= strlen(title) ? ' ' : title[i]);
-        if (ahist != NULL) 
-          for (i = 0 ; i < 60 ; i++)
-            label.ihist[i] = (i >= strlen(ahist) ? ' ' : ahist[i]);
-        if (mhist != NULL) 
-          for (i = 0 ; i < 296 ; i++)
-            label.mhist[i] = (i >= strlen(mhist) ? ' ' : mhist[i]);
-
-        label.iwtrns = label.nruns = npixels; /* number of blocks averaged */
-        label.data[0] = 0; /* averaged spectra data */
-
-        lbl = (struct _label *)malloc(sizeof(struct _label));
-        memcpy(lbl, &label, sizeof(struct _label));
-        return(lbl);
-      }
-
+/**
+ ** LoadSpecprHeader() - extract a specific header element from a specpr file
+ **/
+int
+LoadSpecprHeader(FILE *fp, char *filename, int rec, char *element, Var **val)
+{
+  struct _label label;
+  struct _tlabel *tlabel;
+  float *data;
+  Var *v = NULL;
+  int *ival = NULL;
+  float *fval = NULL;
+  char *tval = NULL;
+  int range = 1;
 
   /**
-   ** is_specpr() - detect the magic cookie for specpr files.
-   ** returns:
-   **		0: on failure
-   **		1: on success
+   ** Verify file type.
    **/
-  int
-      is_specpr(FILE *fp)
-      {
-        int len;
-        char buf[16];
+  if (!is_specpr(fp)) return(0);
 
-        rewind(fp);
-        len = fread(buf, 1, strlen(SPECPR_MAGIC), fp);
-        return (len == strlen(SPECPR_MAGIC) && !strncmp(buf, SPECPR_MAGIC, len));
-      }
+  if (rec == 0) {
+    parse_error("header(): Must specify record for SpecPR file.");
+    return(1);
+  }
 
-#ifndef STANDALONE
-  /**
-   ** LoadSpecpr() - Get record out of a specpr file, and load into a Var struct
-   **/
+  if (read_specpr(fileno(fp), rec, &label, (char **)&data) <= 0) {
+    sprintf(error_buf, "header(): record is SpecPR continuation record %s#%d", filename, rec);
+    parse_error(NULL);
+    return(1);
+  }
+  tlabel = (struct _tlabel *)&label;
 
-  Var *
-      LoadSpecpr(FILE *fp,char *filename,int rec)
-      {
-        struct _label label;
-        float *data;
-        Var *s;
-        Var *v, *q;
-        int err;
+  if (!strcasecmp(element, "icflag")) ival = &label.icflag;
+  else if (!strcasecmp(element, "ititl")) {
+    tval = label.ititl;
+    range = 40;
+  }
+  else if (!strcasecmp(element, "usernm")) {
+    tval = label.usernm;
+    range = 8;
+  }
+  else if (!strcasecmp(element, "iscta")) ival = &label.iscta;
+  else if (!strcasecmp(element, "isctb")) ival = &label.isctb;
+  else if (!strcasecmp(element, "jdatea")) ival = &label.jdatea;
+  else if (!strcasecmp(element, "jdateb")) ival = &label.jdateb;
+  else if (!strcasecmp(element, "istb")) ival = &label.istb;
+  else if (!strcasecmp(element, "isra")) ival = &label.isra;
+  else if (!strcasecmp(element, "isdec")) ival = &label.isdec;
+  else if (!strcasecmp(element, "itchan")) ival = &label.itchan;
+  else if (!strcasecmp(element, "irmas")) ival = &label.irmas;
+  else if (!strcasecmp(element, "revs")) ival = &label.revs;
+  else if (!strcasecmp(element, "iband")) {
+    ival = label.iband;
+    range = 2;
+  }
+  else if (!strcasecmp(element, "irwav")) ival = &label.irwav;
+  else if (!strcasecmp(element, "irespt")) ival = &label.irespt;
+  else if (!strcasecmp(element, "irecno")) ival = &label.irecno;
+  else if (!strcasecmp(element, "itpntr")) ival = &label.itpntr;
+  else if (!strcasecmp(element, "ihist")) {
+    tval = label.ihist;
+    range = 60;
+  }
+  else if (!strcasecmp(element, "mhist")) {
+    tval = label.mhist;
+    range = 296;
+  }
+  else if (!strcasecmp(element, "nruns")) ival = &label.nruns;
+  else if (!strcasecmp(element, "siangl")) ival = &label.siangl;
+  else if (!strcasecmp(element, "seangl")) ival = &label.seangl;
+  else if (!strcasecmp(element, "sphase")) ival = &label.sphase;
+  else if (!strcasecmp(element, "iwtrns")) ival = &label.iwtrns;
+  else if (!strcasecmp(element, "itimch")) ival = &label.itimch;
+  else if (!strcasecmp(element, "xnrm")) fval = &label.xnrm;
+  else if (!strcasecmp(element, "scatin")) fval = &label.scatin;
+  else if (!strcasecmp(element, "timint")) fval = &label.timint;
+  else if (!strcasecmp(element, "tempd")) fval = &label.tempd;
 
-        /**
-         ** Verify file type.
-         **/
-        if (!is_specpr(fp)) return(NULL); 
+  else if (!strcasecmp(element, "itxtpt")) ival = &tlabel->itxtpt;
+  else if (!strcasecmp(element, "itxtch")) ival = &tlabel->itxtch;
+  else if (!strcasecmp(element, "itext")) {
+    /**
+     ** special case.  Get complete text from data
+     **/
+  } else {
+    sprintf(error_buf, "header(): Unrecognized SpecPR header element: %s\n", element);
+    parse_error(NULL);
+    return(1);
+  }
 
-        if (rec <= 0) {
-          rec = 1;
-          q = new_struct(0);
-          while ((err = read_specpr(fileno(fp), rec, &label, (char **)&data)) >= 0) {
-            if (err > 0) {
-              s = new_struct(2);
-              v = newVal(BSQ, 1, 1, label.itchan, FLOAT, data);
-              add_struct(s, "data", v);
-              add_struct(s, "title", newString(strndup(label.ititl, 40)));
-              add_struct(q, NULL, s);
-            }
-            rec += err;
-          }
-          return(q);
-        } else {
-          if (read_specpr(fileno(fp), rec, &label, (char **)&data) > 0) {
-            s = newVar();
-            V_TYPE(s) = ID_VAL;
-            V_DATA(s) = data;
-            V_DSIZE(s) = label.itchan;
-            V_SIZE(s)[0] = 1;
-            V_SIZE(s)[1] = 1;
-            V_SIZE(s)[2] = label.itchan;
-            V_FORMAT(s) = FLOAT;
-            V_ORDER(s) = BSQ;
+  if (ival != NULL) {
+    v = newVar();
+    V_TYPE(v) = ID_VAL;
+    V_DSIZE(v) = range;
+    V_SIZE(v)[0] = range;
+    V_SIZE(v)[1] = V_SIZE(v)[2] = 1;
+    V_ORG(v) = BSQ;
+    V_FORMAT(v) = INT;
+    V_DATA(v) = calloc(range, sizeof(int));
+    memcpy(V_DATA(v), ival, sizeof(int)*range);
+  }  else if (fval != NULL) {
+    v = newVar();
+    V_TYPE(v) = ID_VAL;
+    V_DSIZE(v) = V_SIZE(v)[0] = range;
+    V_SIZE(v)[1] = V_SIZE(v)[2] = 1;
+    V_ORG(v) = BSQ;
+    V_FORMAT(v) = FLOAT;
+    V_DATA(v) = calloc(range, sizeof(float));
+    memcpy(V_DATA(v), fval, sizeof(float)*range);
+  } else if (tval != NULL) {
+    v = newVar();
+    V_TYPE(v) = ID_STRING;
+    V_STRING(v) = strndup((char *)tval, range);
+  }
 
-            V_TITLE(s) = (char *)malloc(41);
-            strncpy(V_TITLE(s), label.ititl, 40);
-            V_TITLE(s)[40] = '\0';
+  *val = v;
+  return(1);
+}
 
-            if (VERBOSE > 1)  {
-              fprintf(stderr, "%s#%d: SpecPR record: %ld channels\nTitle: %s\n",
-                      filename, rec, V_DSIZE(s), V_TITLE(s));
-            }
+Var *
+ff_loadspecpr(vfuncptr func, Var *arg)
+{
+  char *filename = NULL;
+  int record = -1;
+  FILE *fp;
+  char *fname;
 
-            return(s);
-          } else {
-            sprintf(error_buf, "continuation record %s#%d", filename, rec);
-            parse_error(NULL);
-            return(NULL);
-          }
-        }
-      }
+  Alist alist[12];
+  alist[0] = make_alist( "filename",  ID_STRING,  NULL,     &filename);
+  alist[1] = make_alist( "record",    INT,        NULL,     &record);
+  alist[2].name = NULL;
 
+  if (parse_args(func, arg, alist) == 0) return(NULL);
 
-  /**
-   ** This will append data to a specpr file or create a new one if it
-   ** doesn't exist.
-   **/
+  if (record < 0) {
+    parse_error("No record specified.");
+    return (NULL);
+  }
+  if (filename == NULL) {
+    parse_error("%s: No filename specified\n", func->name);
+    return(NULL);
+  }
 
-  int
-      WriteSpecpr(Var *v, char *filename, char *title)
-      {
-        Var *e;
-        float *fdata;
-        int i;
-        int fd;
-        struct _label *label;
-        char buf[256];
-        char ahist[256];
-        char mhist[1024];
+  if ((fname = dv_locate_file(filename)) == NULL) {
+    parse_error("%s: Unable to expand filename %s\n", func->name, filename);
+    return(NULL);
+  }
 
-        e = eval(v);
+  if ((fp = fopen(fname, "rb")) == NULL) {
+    parse_error("Unable to open file: %s\n", filename);
+    return(NULL);
+  }
+  return(LoadSpecprHeaderStruct(fp, fname, record));
+}
 
-        if (e == NULL)  {
-          sprintf(error_buf, "Variable not found: %s", V_NAME(v));
-          parse_error(NULL);
-          return(0);
-        }
-        v = e;
-
-        if (V_TYPE(v) != ID_VAL) {
-          sprintf(error_buf, "Invalid type to write: %s", V_NAME(v));
-          parse_error(NULL);
-          return(0);
-        }
-
-        if (((V_SIZE(v)[0] == 1) + (V_SIZE(v)[1]==1) + (V_SIZE(v)[2]==1)) < 2) {
-          sprintf(error_buf, "Variable has too many dimensions: %s", V_NAME(v));
-          parse_error(NULL);
-          return(0);
-        }
-
-        /**
-         ** Open the file
-         **/
-        fd = specpr_open(filename);
-
-        /**
-         ** Verify its a specpr file
-         **/
-        read(fd, buf, sizeof(SPECPR_MAGIC));
-        if (strncmp(buf, SPECPR_MAGIC, strlen(SPECPR_MAGIC))) {
-          sprintf(error_buf, "Not a SPECPR file: %s", filename);
-          parse_error(NULL);
-          close(fd);
-          return(0);
-        }
-
-        if (V_FORMAT(v) == FLOAT) {
-          fdata = (float *)V_DATA(v);
-        } else {
-          fdata = (float *)calloc(V_DSIZE(v), sizeof(float));
-          for (i = 0 ; i < V_DSIZE(v) ; i++) {
-            fdata[i] = extract_float(v, i);
-          }
-        }
-
-        if (VERBOSE > 1) {
-          fprintf(stderr, 
-                  "Writing %s: SpecPR record: %ld channels\nTitle: %s\n",
-                  filename, V_DSIZE(v), title);
-        }
-
-        sprintf(ahist, "%60.60s", "daVinci generated record");
-        ahist[60] = '\0';
-        mhist[0] = '\0';
-
-        label = make_label(V_DSIZE(v), 0, title, ahist, mhist);
-        write_specpr(fd, -1, label, (char *)fdata);
-        free(label);
-
-        if (V_DATA(v) != fdata) free(fdata);
-        close(fd);
-
-        return 1;
-      }
-
+/**
+ ** LoadSpecprHeader() - extract a specific header element from a specpr file
+ **/
+Var *
+LoadSpecprHeaderStruct(FILE *fp, char *filename, int rec)
+{
+  struct _label label;
+  struct _tlabel *tlabel;
+  float *data;
+  Var *v = NULL;
+  int *iptr;
+  char date[9];
 
   /**
-   ** LoadSpecprHeader() - extract a specific header element from a specpr file
+   ** Verify file type.
    **/
-  int
-      LoadSpecprHeader(FILE *fp, char *filename, int rec, char *element, Var **val)
-      {
-        struct _label label;
-        struct _tlabel *tlabel;
-        float *data;
-        Var *v = NULL;
-        int *ival = NULL;
-        float *fval = NULL;
-        char *tval = NULL;
-        int range = 1;
+  if (!is_specpr(fp)) return(0);
 
-        /**
-         ** Verify file type.
-         **/
-        if (!is_specpr(fp)) return(0); 
+  if (rec == 0) {
+    parse_error("header(): Must specify record for SpecPR file.");
+    return(NULL);
+  }
 
-        if (rec == 0) {
-          parse_error("header(): Must specify record for SpecPR file.");
-          return(1);
-        }
+  if (read_specpr(fileno(fp), rec, &label, (char **)&data) <= 0) {
+    sprintf(error_buf, "header(): record is SpecPR continuation record %s#%d", filename, rec);
+    parse_error(error_buf);
+    return(NULL);
+  }
+  tlabel = (struct _tlabel *)&label;
 
-        if (read_specpr(fileno(fp), rec, &label, (char **)&data) <= 0) {
-          sprintf(error_buf, "header(): record is SpecPR continuation record %s#%d", filename, rec);
-          parse_error(NULL);
-          return(1);
-        }
-        tlabel = (struct _tlabel *)&label;
+  if (check_bit(label.icflag,1)) {
+    /* text */
+    v = new_struct(0);
+    add_struct(v, "itext", newString((char *)data));
+    return(v);
+  } else {
+    char **mhist;
 
-        if (!strcasecmp(element, "icflag")) ival = &label.icflag;
-        else if (!strcasecmp(element, "ititl")) {
-          tval = label.ititl;
-          range = 40;
-        }
-        else if (!strcasecmp(element, "usernm")) {
-          tval = label.usernm;
-          range = 8;
-        }
-        else if (!strcasecmp(element, "iscta")) ival = &label.iscta;
-        else if (!strcasecmp(element, "isctb")) ival = &label.isctb;
-        else if (!strcasecmp(element, "jdatea")) ival = &label.jdatea;
-        else if (!strcasecmp(element, "jdateb")) ival = &label.jdateb;
-        else if (!strcasecmp(element, "istb")) ival = &label.istb;
-        else if (!strcasecmp(element, "isra")) ival = &label.isra;
-        else if (!strcasecmp(element, "isdec")) ival = &label.isdec;
-        else if (!strcasecmp(element, "itchan")) ival = &label.itchan;
-        else if (!strcasecmp(element, "irmas")) ival = &label.irmas;
-        else if (!strcasecmp(element, "revs")) ival = &label.revs;
-        else if (!strcasecmp(element, "iband")) {
-          ival = label.iband;
-          range = 2;
-        }
-        else if (!strcasecmp(element, "irwav")) ival = &label.irwav;
-        else if (!strcasecmp(element, "irespt")) ival = &label.irespt;
-        else if (!strcasecmp(element, "irecno")) ival = &label.irecno;
-        else if (!strcasecmp(element, "itpntr")) ival = &label.itpntr;
-        else if (!strcasecmp(element, "ihist")) {
-          tval = label.ihist;
-          range = 60;
-        }
-        else if (!strcasecmp(element, "mhist")) {
-          tval = label.mhist;
-          range = 296;
-        }
-        else if (!strcasecmp(element, "nruns")) ival = &label.nruns;
-        else if (!strcasecmp(element, "siangl")) ival = &label.siangl;
-        else if (!strcasecmp(element, "seangl")) ival = &label.seangl;
-        else if (!strcasecmp(element, "sphase")) ival = &label.sphase;
-        else if (!strcasecmp(element, "iwtrns")) ival = &label.iwtrns;
-        else if (!strcasecmp(element, "itimch")) ival = &label.itimch;
-        else if (!strcasecmp(element, "xnrm")) fval = &label.xnrm;
-        else if (!strcasecmp(element, "scatin")) fval = &label.scatin;
-        else if (!strcasecmp(element, "timint")) fval = &label.timint;
-        else if (!strcasecmp(element, "tempd")) fval = &label.tempd;
-
-        else if (!strcasecmp(element, "itxtpt")) ival = &tlabel->itxtpt;
-        else if (!strcasecmp(element, "itxtch")) ival = &tlabel->itxtch;
-        else if (!strcasecmp(element, "itext")) {
-          /**
-           ** special case.  Get complete text from data
-           **/
-        } else {
-          sprintf(error_buf, "header(): Unrecognized SpecPR header element: %s\n", element);
-          parse_error(NULL);
-          return(1);
-        }
-
-        if (ival != NULL) {
-          v = newVar();
-          V_TYPE(v) = ID_VAL;
-          V_DSIZE(v) = range;
-          V_SIZE(v)[0] = range;
-          V_SIZE(v)[1] = V_SIZE(v)[2] = 1;
-          V_ORG(v) = BSQ;
-          V_FORMAT(v) = INT;
-          V_DATA(v) = calloc(range, sizeof(int));
-          memcpy(V_DATA(v), ival, sizeof(int)*range);
-        }  else if (fval != NULL) {
-          v = newVar();
-          V_TYPE(v) = ID_VAL;
-          V_DSIZE(v) = V_SIZE(v)[0] = range;
-          V_SIZE(v)[1] = V_SIZE(v)[2] = 1;
-          V_ORG(v) = BSQ;
-          V_FORMAT(v) = FLOAT;
-          V_DATA(v) = calloc(range, sizeof(float));
-          memcpy(V_DATA(v), fval, sizeof(float)*range);
-        } else if (tval != NULL) {
-          v = newVar();
-          V_TYPE(v) = ID_STRING;
-          V_STRING(v) = strndup((char *)tval, range);
-        }
-
-        *val = v;
-        return(1);
-      }
-
-  Var *
-      ff_loadspecpr(vfuncptr func, Var *arg)
-      {
-        char *filename = NULL;
-        int record = -1;
-        FILE *fp;
-        char *fname;
-
-        Alist alist[12];
-        alist[0] = make_alist( "filename",  ID_STRING,  NULL,     &filename);
-        alist[1] = make_alist( "record",    INT,        NULL,     &record);
-        alist[2].name = NULL;
-
-        if (parse_args(func, arg, alist) == 0) return(NULL);
-
-        if (record < 0) {
-          parse_error("No record specified.");
-          return (NULL);
-        }
-        if (filename == NULL) {
-          parse_error("%s: No filename specified\n", func->name);
-          return(NULL);
-        }
-
-        if ((fname = dv_locate_file(filename)) == NULL) {
-          parse_error("%s: Unable to expand filename %s\n", func->name, filename);
-          return(NULL);
-        }
-
-        if ((fp = fopen(fname, "rb")) == NULL) {
-          parse_error("Unable to open file: %s\n", filename);
-          return(NULL);
-        }
-        return(LoadSpecprHeaderStruct(fp, fname, record));
-      }
-
-  /**
-   ** LoadSpecprHeader() - extract a specific header element from a specpr file
-   **/
-  Var *
-      LoadSpecprHeaderStruct(FILE *fp, char *filename, int rec)
-      {
-        struct _label label;
-        struct _tlabel *tlabel;
-        float *data;
-        Var *v = NULL;
-        int *iptr;
-        char date[9];
-
-        /**
-         ** Verify file type.
-         **/
-        if (!is_specpr(fp)) return(0); 
-
-        if (rec == 0) {
-          parse_error("header(): Must specify record for SpecPR file.");
-          return(NULL);
-        }
-
-        if (read_specpr(fileno(fp), rec, &label, (char **)&data) <= 0) {
-          sprintf(error_buf, "header(): record is SpecPR continuation record %s#%d", filename, rec);
-          parse_error(error_buf);
-          return(NULL);
-        }
-        tlabel = (struct _tlabel *)&label;
-
-        if (check_bit(label.icflag,1)) {
-          /* text */
-          v = new_struct(0);
-          add_struct(v, "itext", newString((char *)data));
-          return(v);
-        } else {
-          char **mhist;
-
-          v = new_struct(0);
-          add_struct(v, "icflag",     newInt(label.icflag));
-          add_struct(v, "ititl",      newString(strndup(label.ititl, 40)));
-          add_struct(v, "usernm",     newString(strndup(label.usernm, 8)));
-          decode_time(label.iscta, date);
-          add_struct(v, "iscta",      newString(strdup(date)));
-          decode_time(label.isctb, date);
-          add_struct(v, "isctb",      newString(strdup(date)));
-          decode_date(label.jdatea, date);
-          add_struct(v, "jdatea",     newString(strdup(date)));
-          decode_date(label.jdateb, date);
-          add_struct(v, "jdateb",     newString(strdup(date)));
-          add_struct(v, "istb",       newInt(label.istb));
-          add_struct(v, "isra",       newInt(label.isra));
-          add_struct(v, "isdec",      newInt(label.isdec));
-          add_struct(v, "itchan",     newInt(label.itchan));
-          add_struct(v, "irmas",      newInt(label.irmas));
-          add_struct(v, "revs",       newInt(label.revs));
-          iptr = calloc(2, sizeof(int));
-          iptr[0] = label.iband[0];
-          iptr[1] = label.iband[1];
-          add_struct(v, "iband",      newVal(BSQ, 2, 1, 1, INT, iptr));
-          add_struct(v, "irwav",      newInt(label.irwav));
-          add_struct(v, "irespt",     newInt(label.irespt));
-          add_struct(v, "irecno",     newInt(label.irecno));
-          add_struct(v, "itpntr",     newInt(label.itpntr));
-          add_struct(v, "ihist",      newString(strndup(label.ihist, 60)));
-          mhist = calloc(4, sizeof(char *));
-          mhist[0] = strndup(label.mhist, 74);
-          mhist[1] = strndup(label.mhist+74, 74);
-          mhist[2] = strndup(label.mhist+148, 74);
-          mhist[3] = strndup(label.mhist+222, 74);
-          add_struct(v, "mhist",      newText(4, mhist));
-          add_struct(v, "nruns",      newInt(label.nruns));
-          add_struct(v, "siangl",     newInt(label.siangl));
-          add_struct(v, "seangl",     newInt(label.seangl));
-          add_struct(v, "sphase",     newInt(label.sphase));
-          add_struct(v, "iwtrns",     newInt(label.iwtrns));
-          add_struct(v, "itimch",     newInt(label.itimch));
-          add_struct(v, "xnrm",       newFloat(label.xnrm));
-          add_struct(v, "scatin",     newFloat(label.scatin));
-          add_struct(v, "timint",     newFloat(label.timint));
-          add_struct(v, "tempd",      newFloat(label.tempd));
-        }
-        return(v);
-      }
+    v = new_struct(0);
+    add_struct(v, "icflag",     newInt(label.icflag));
+    add_struct(v, "ititl",      newString(strndup(label.ititl, 40)));
+    add_struct(v, "usernm",     newString(strndup(label.usernm, 8)));
+    decode_time(label.iscta, date);
+    add_struct(v, "iscta",      newString(strdup(date)));
+    decode_time(label.isctb, date);
+    add_struct(v, "isctb",      newString(strdup(date)));
+    decode_date(label.jdatea, date);
+    add_struct(v, "jdatea",     newString(strdup(date)));
+    decode_date(label.jdateb, date);
+    add_struct(v, "jdateb",     newString(strdup(date)));
+    add_struct(v, "istb",       newInt(label.istb));
+    add_struct(v, "isra",       newInt(label.isra));
+    add_struct(v, "isdec",      newInt(label.isdec));
+    add_struct(v, "itchan",     newInt(label.itchan));
+    add_struct(v, "irmas",      newInt(label.irmas));
+    add_struct(v, "revs",       newInt(label.revs));
+    iptr = calloc(2, sizeof(int));
+    iptr[0] = label.iband[0];
+    iptr[1] = label.iband[1];
+    add_struct(v, "iband",      newVal(BSQ, 2, 1, 1, INT, iptr));
+    add_struct(v, "irwav",      newInt(label.irwav));
+    add_struct(v, "irespt",     newInt(label.irespt));
+    add_struct(v, "irecno",     newInt(label.irecno));
+    add_struct(v, "itpntr",     newInt(label.itpntr));
+    add_struct(v, "ihist",      newString(strndup(label.ihist, 60)));
+    mhist = calloc(4, sizeof(char *));
+    mhist[0] = strndup(label.mhist, 74);
+    mhist[1] = strndup(label.mhist+74, 74);
+    mhist[2] = strndup(label.mhist+148, 74);
+    mhist[3] = strndup(label.mhist+222, 74);
+    add_struct(v, "mhist",      newText(4, mhist));
+    add_struct(v, "nruns",      newInt(label.nruns));
+    add_struct(v, "siangl",     newInt(label.siangl));
+    add_struct(v, "seangl",     newInt(label.seangl));
+    add_struct(v, "sphase",     newInt(label.sphase));
+    add_struct(v, "iwtrns",     newInt(label.iwtrns));
+    add_struct(v, "itimch",     newInt(label.itimch));
+    add_struct(v, "xnrm",       newFloat(label.xnrm));
+    add_struct(v, "scatin",     newFloat(label.scatin));
+    add_struct(v, "timint",     newFloat(label.timint));
+    add_struct(v, "tempd",      newFloat(label.tempd));
+  }
+  return(v);
+}
 #endif
