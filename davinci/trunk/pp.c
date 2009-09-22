@@ -1005,6 +1005,8 @@ Var *
 pp_help(Var *s)
 {
     char *p = NULL;
+	Var *p1, *p2;
+	char *module, *function;
 
     if (s == NULL) p = NULL;
 	else if (V_TYPE(s) == ID_DEREF) {
@@ -1042,6 +1044,8 @@ pp_exact_help(Var *s)
 {
     char *p = NULL;
 	char *q;
+	Var *p1, *p2;
+	char *module, *function;
 
     if (s == NULL) p = NULL;
 	else if (V_TYPE(s) == ID_DEREF) {
