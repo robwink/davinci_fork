@@ -1066,8 +1066,8 @@ Optional Packages:
                           include additional configurations [automatic]
   --with-viewer=<path>    Path to image display program (default: xv)
   --with-gnuplot=<path>   Path to gnuplot program (default: gnuplot)
-  --with-editor=<path>    Path to text file editor (default: emacs)
-  --with-help=<path>      Path to davinci help file (default: /DAV_Sep22/docs/dv.gih)
+  --with-editor=<path>    Path to text file editor (default: vim)
+  --with-help=<path>      Path to davinci help file (default: DATADIR/davinci/docs/dv.gih)
   --with-modpath=<path>   Path to davinci loadable modules (if enabled) (default: LIBDIR/davinci)
   --without-library       Don't install Davinci library scripts
   --without-examples      Don't install Davinci examples
@@ -27117,7 +27117,7 @@ if test "${with_editor+set}" = set; then
   withval="$with_editor"
   EDITOR=$withval
 else
-  for ac_prog in emacs edit
+  for ac_prog in vim vi emacs edit
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -27177,9 +27177,9 @@ fi;
 # Check whether --with-modpath or --without-modpath was given.
 if test "${with_modpath+set}" = set; then
   withval="$with_modpath"
-  DV_MOD_PATH=/usr/local/lib/davinci
+  DV_MOD_PATH=$withval
 else
-  DV_MOD_PATH=/usr/local/lib/davinci
+  DV_MOD_PATH=${libdir}/davinci
 
 fi;
 
