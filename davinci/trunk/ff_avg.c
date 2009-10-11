@@ -975,21 +975,22 @@ ff_maxpos(vfuncptr func, Var *arg)
   /* Transferred from thm module to davinci core 11/17/2007      **
   ** Rewritten to offer user option to return pixel value - kjn  */
 
-  Var    *data = NULL;                      /* the original data               */
-  Var    *out = NULL;                       /* the output structure            */
-  int    *pos = NULL;                       /* the output position             */
-  float  *posv = NULL;                      /* the output position plus value  */
+  Var    *data = NULL;         /* the original data               */
+  Var    *out = NULL;          /* the output structure            */
+  int    *pos = NULL;          /* the output position             */
+  float  *posv = NULL;         /* the output position plus value  */
   float  *vals = NULL;
-  float   minval = -3.402822655e+38;        /* the most negative float value   */
-  float   ignore = minval;                  /* null value                      */
-  size_t  i, j, l, ck=0;                    /* loop indices and flags          */
-  float   ni1=0, ni2=0, ni3=0;              /* temp values and positions       */
-  int     iter = 1;                         /* number of iterations to include */
+  float   minval = -MAXFLOAT;  /* the most negative float value   */
+  float   ignore = minval;     /* null value                      */
+  size_t  i, j, k;             /* loop indices and flags          */
+  int     ck=0;
+  float   ni1=0, ni2=0, ni3=0; /* temp values and positions       */
+  int     iter = 1;            /* number of iterations to include */
   size_t  elems = 0;
   size_t  curr_elem = 0;
   int    *elements = NULL;
-  int     showval = 0;                      /* flag to return value with array */
-  float   lt = minval;                      /* search for maximum values less than this value */
+  int     showval = 0;         /* flag to return value with array */
+  float   lt = minval;         /* search for max values < this value */
 
   Alist alist[6];
   alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
@@ -1002,18 +1003,7 @@ ff_maxpos(vfuncptr func, Var *arg)
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   if (data == NULL) {
-    parse_error("\nReturns the X, Y and Z positions of maximum element in array");
-    parse_error("\nSyntax: maxpos(data=VAL [, iter=INT] [, ignore=VAL] [, lt=VAL] [, showval=INT])");
-    parse_error("Example: maxpos(a, iter=5, ignore=0)");
-    parse_error("Example: maxpos(a, iter=2, lt=20000)");
-    parse_error("  'data'    - any numeric array of any organization");
-    parse_error("  'iter'    - number of highest values to locate");
-    parse_error("  'ignore'  - an optional value to ignore in the search");
-    parse_error("  'lt'      - an optional 'less than' value to search for the maximum");
-    parse_error("  'showval' - an optional flag to return pixel value with position");
-    parse_error("\nReturns a 3xNx1 INT array, where N=iter");
-    parse_error("\nOr a 4xNx1 FLOAT array containing X, Y, Z and pixel value");
-    parse_error("11/17/2007");
+    parse_error("\nNo data provided\n");
     return NULL;
   }
 
@@ -1040,20 +1030,22 @@ ff_maxpos(vfuncptr func, Var *arg)
   ** ni3 = old max val       */
 
   /* find the maximum point and its position */
-  for(l=0; l<iter; l++) {
+  for(k=0; k<iter; k++) {
     for(i=0; i<elems; i++) {
       ni1 = extract_float(data, i);
 
       if(ni1 > ni2 && ni1 != ignore &&
-         (lt != minval && l == 0 && ni1 <= ni3 ||
-          l == 0 && lt == minval ||
-          ni1 <= ni3 && l > 0)) {
+         (lt != minval && k == 0 && ni1 <= ni3 ||
+          k == 0 && lt == minval ||
+          ni1 <= ni3 && k > 0)) {
 
         /* check to see if it's the same element as a previous entry */
         ck = 0;
-        for(j=l-1; j>=0; j--) {
-          if(i == elements[j]) ck = 1;
-        }
+	if(k>0) {
+	  for(j=k; j>0; j--) {
+	    if(i == elements[j-1]) ck = 1;
+	  }
+	}
 
         if(ck == 0) {
           ni2 = ni1;
@@ -1063,9 +1055,9 @@ ff_maxpos(vfuncptr func, Var *arg)
     }
 
     ni3 = ni2;
-    elements[l] = curr_elem;
-    position_fill(pos, curr_elem, l, data);
-    vals[l] = ni3;
+    elements[k] = curr_elem;
+    position_fill(pos, curr_elem, k, data);
+    vals[k] = ni3;
     ni2 = minval;
     curr_elem = 0;
   }
@@ -1107,21 +1099,22 @@ ff_minpos(vfuncptr func, Var *arg)
   /* Transferred from thm module to davinci core 11/17/2007      **
    ** Rewritten to offer user option to return pixel value - kjn  */
 
-  Var    *data = NULL;                      /* the original data               */
-  Var    *out = NULL;                       /* the output structure            */
-  int    *pos = NULL;                       /* the output position             */
+  Var    *data = NULL;         /* the original data               */
+  Var    *out = NULL;          /* the output structure            */
+  int    *pos = NULL;          /* the output position             */
   float  *vals = NULL;
-  float  *posv = NULL;                      /* the output position plus value  */
-  float   maxval = 3.402822655e+38;         /* the most negative float value   */
-  float   ignore = maxval;                  /* null value                      */
-  size_t  i, j, l, ck=0;                    /* loop indices and flags          */
-  float   ni1=0, ni2=0, ni3=0;              /* temp values and positions       */
-  int     iter = 1;                         /* number of iterations to include */
+  float  *posv = NULL;         /* the output position plus value  */
+  float   maxval = MAXFLOAT;   /* the most negative float value   */
+  float   ignore = maxval;     /* null value                      */
+  size_t  i, j, k;             /* loop indices and flags          */
+  int     ck = 0;
+  float   ni1=0, ni2=0, ni3=0; /* temp values and positions       */
+  int     iter = 1;            /* number of iterations to include */
   size_t  elems = 0;
   size_t  curr_elem = 0;
   int    *elements = NULL;
-  int     showval = 0;                      /* flag to return value with array */
-  float   gt = maxval;                      /* search for minimum values more than this value */
+  int     showval = 0;         /* flag to return value with array */
+  float   gt = maxval;         /* search for min values > this value */
 
   Alist alist[6];
   alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
@@ -1134,18 +1127,7 @@ ff_minpos(vfuncptr func, Var *arg)
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   if (data == NULL) {
-    parse_error("\nReturns the x, y and z position of minimum element in array");
-    parse_error("\nSyntax: minpos(data=VAL [, iter=INT] [, ignore=VAL] [, gt=VAL] [, showval=INT])");
-    parse_error("Example: minpos(a, iter=5, ignore=0)");
-    parse_error("Example: minpos(a, iter=2, gt=-10)");
-    parse_error("  'data'   - any numeric array of any organization");
-    parse_error("  'iter'   - number of lowest values to locate");
-    parse_error("  'ignore' - a value to ignore in the search");
-    parse_error("  'gt'     - an optional 'greater than' value to search for the minimum");
-    parse_error("  'showval' - an optional flag to return pixel value with position");
-    parse_error("\nReturns a 3xNx1 INT array, where N=iter");
-    parse_error("\nOr a 4xNx1 FLOAT array containing X, Y, Z and pixel value");
-    parse_error("11/17/2007");
+    parse_error("\nNo data provided\n");
     return NULL;
   }
 
@@ -1171,21 +1153,23 @@ ff_minpos(vfuncptr func, Var *arg)
   ** ni2 = current min value **
   ** ni3 = old min val       */
 
-  /* find the maximum point and its position */
-  for(l=0; l<iter; l++) {
+  /* find the minimum point and its position */
+  for(k=0; k<iter; k++) {
     for(i=0; i<elems; i++) {
       ni1 = extract_float(data, i);
 
       if(ni1 < ni2 && ni1 != ignore &&
-         (gt != maxval && l == 0 && ni1 >= ni3 ||
-          l == 0 && gt == maxval ||
-          ni1 >= ni3 && l > 0)) {
+         (gt != maxval && k == 0 && ni1 >= ni3 ||
+          k == 0 && gt == maxval ||
+          ni1 >= ni3 && k > 0)) {
 
         /* check to see if it's the same element as a previous entry */
         ck = 0;
-        for(j=l-1; j>=0; j--) {
-          if(i == elements[j]) ck = 1;
-        }
+	if(k>0) {
+	  for(j=k; j>0; j--) {
+	    if(i == elements[j-1]) ck = 1;
+	  }
+	}
 
         if(ck == 0) {
           ni2 = ni1;
@@ -1195,9 +1179,9 @@ ff_minpos(vfuncptr func, Var *arg)
     }
 
     ni3 = ni2;
-    elements[l] = curr_elem;
-    position_fill(pos, curr_elem, l, data);
-    vals[l] = ni3;
+    elements[k] = curr_elem;
+    position_fill(pos, curr_elem, k, data);
+    vals[k] = ni3;
     ni2 = maxval;
     curr_elem = 0;
   }
@@ -1235,21 +1219,23 @@ ff_minpos(vfuncptr func, Var *arg)
 ff_valpos(vfuncptr func, Var *arg)
 {
 
-  Var    *data = NULL;                      /* the original data               */
-  Var    *out = NULL;                       /* the output structure            */
-  int    *pos = NULL;                       /* the output position             */
-  float  *posv = NULL;                      /* the output position plus value  */
+  Var    *data = NULL;       /* the original data               */
+  Var    *out = NULL;        /* the output structure            */
+  int    *pos = NULL;        /* the output position             */
+  float  *posv = NULL;       /* the output position plus value  */
   float  *vals = NULL;
-  float   maxval = 3.402822655e+38;         /* the most positive float value   */
-  float   ignore = maxval;                  /* null value                      */
-  size_t  i, j, l, ck=0;                    /* loop indices and flags          */
-  float   ni1=0, ni2=0, ni3=0, ni4=0;       /* temp values and positions       */
-  int     iter = 1;                         /* number of iterations to include */
+  float   maxval = MAXFLOAT; /* the most positive float value   */
+  float   ignore = maxval;   /* null value                      */
+  size_t  i, j, k;           /* loop indices and flags          */
+  int     ck=0;
+  float   ni1=0, ni2=0;      /* temp values and positions       */
+  float   ni3=0, ni4=0;
+  int     iter = 1;          /* number of iterations to include */
   size_t  elems = 0;
   size_t  curr_elem = 0;
   int    *elements = NULL;
-  int     showval = 0;                      /* flag to return value with array */
-  float   myval = 0.0;                      /* the damned value you want       */
+  int     showval = 0;       /* flag to return value with array */
+  float   myval = 0.0;       /* the damned value you want       */
 
   Alist alist[6];
   alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
@@ -1262,19 +1248,7 @@ ff_valpos(vfuncptr func, Var *arg)
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   if (data == NULL) {
-    parse_error("\nReturns the X, Y and Z positions of the element in the array");
-    parse_error("whose value is closest to the desired value\n");
-    parse_error("\nSyntax: valpos(data=VAL,value=VAL[,iter=INT][,ignore=VAL][,showval=INT])");
-    parse_error("Example: valpos(a, 22.5, iter=5, ignore=0)");
-    parse_error("Example: valpos(a, -1, showval=1)");
-    parse_error("  'data'    - any numeric array of any organization");
-    parse_error("  'value'   - the numeric value you wish to find");
-    parse_error("  'iter'    - number of occurrences to locate");
-    parse_error("  'ignore'  - an optional value to ignore in the search");
-    parse_error("  'showval' - an optional flag to return pixel value with position");
-    parse_error("\nReturns a 3xNx1 INT array, where N=iter");
-    parse_error("\nOr a 4xNx1 FLOAT array containing X, Y, Z and pixel value");
-    parse_error("11/17/2007");
+    parse_error("\nNo data provided\n");
     return NULL;
   }
 
@@ -1300,7 +1274,7 @@ ff_valpos(vfuncptr func, Var *arg)
   ** ni4 = old closest difference                    */
 
   /* find the closest value and its position */
-  for(l=0; l<iter; l++) {
+  for(k=0; k<iter; k++) {
     ni3 = maxval;
     for(i=0; i<elems; i++) {
       ni1 = extract_float(data,i);
@@ -1310,9 +1284,9 @@ ff_valpos(vfuncptr func, Var *arg)
 
 	/* check to see if it's the same element as a previous entry */
 	ck = 0;
-	if(l > 0) {
-	  for(j=l-1; j>=0; j--) {
-	    if(i == elements[j]) ck = 1;
+	if(k > 0) {
+	  for(j=k; j>0; j--) {
+	    if(i == elements[j-1]) ck = 1;
 	  }
 	}
 
@@ -1324,9 +1298,9 @@ ff_valpos(vfuncptr func, Var *arg)
     }
 
     ni4 = fabs((float)ni3 - (float)myval);
-    elements[l] = curr_elem;
-    position_fill(pos, curr_elem, l, data);
-    vals[l] = ni3;
+    elements[k] = curr_elem;
+    position_fill(pos, curr_elem, k, data);
+    vals[k] = ni3;
     ni2 = maxval;
     curr_elem = 0;
   }

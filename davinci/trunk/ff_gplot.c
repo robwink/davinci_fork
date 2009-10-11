@@ -185,81 +185,145 @@ Var *ff_plot(vfuncptr func, Var * arg)
     return (NULL);
 }
 
+
 Var *ff_splot(vfuncptr func, Var * arg)
 {
 #ifdef HAVE_LIBX11
-    Var *s, *v;
-    FILE *fp;
-    char *fname;
-    int i, j;
-    int s0, s1;
-    int type;
-    char buf[512];
-    int count = 0;
+  Var   *s = NULL, *v = NULL;
+  FILE  *fp;
+  char  *fname = NULL;
+  int    i, j;
+  int    s0, s1;
+  int    type;
+  char   buf[512];
+  int    count = 0;
+  int    pm3d = 0;  
+  char  *label=NULL;
+  int    ac;
+  Var  **av;
+  float  xscale = 0;
+  float  yscale = 0;
+  
+  make_args(&ac, &av, func, arg);
+  /* make_args puts func->name into av[0] and ac == 2 */
+  ac --;
 
-    int ac;
-    Var **av;
+  if (ac == 0) {
+    parse_error("\nNo data specified\n");
+    return(NULL);
+  }
+  
+  if (ac == 2 && V_TYPE(av[1]) == ID_STRING) {
+    strcpy(buf, V_STRING(av[1]));
 
-    make_args(&ac, &av, func, arg);
-    /* make_args puts func->name into av[0] and ac == 2 */
-    ac--;
+  } else {
+    strcpy(buf, "splot ");
+    for (j = 1; j <=ac; j++) {
+      s = av[j];
 
-    if (ac == 1 && V_TYPE(av[1]) == ID_STRING) {
-        strcpy(buf, V_STRING(av[1]));
-    } else {
-        strcpy(buf, "splot ");
-        for (j = 1; j < ac; j++) {
-            s = av[j];
-            if (V_TYPE(s) == ID_STRING) {
-                strcat(buf, V_STRING(s));
-            } else {
-                if ((v = eval(s)) == NULL)
-                    v = s;
-                type = V_FORMAT(v);
+      if (V_TYPE(s) == ID_STRING) {
+	label = strdup(V_STRING(s));
 
-                fname = make_temp_file_path();
-                if (fname == NULL || (fp = fopen(fname, "w")) == NULL) {
-                    parse_error("%s: unable to open temp file",
-                                func->name);
-                    if (fname)
-                        free(fname);
-                    return (NULL);
-                }
+      } else if (V_TYPE(s) == ID_KEYWORD) {
 
-                s0 = V_SIZE(v)[0];
-                s1 = V_SIZE(v)[1] * V_SIZE(v)[0];
-                for (i = 0; i < V_DSIZE(v); i++) {
-                    if ((i && (i % s0) == 0) || s0 == 1)
-                        fputc('\n', fp);
-                    switch (type) {
-                    case BYTE:
-                    case SHORT:
-                    case INT:
-                        fprintf(fp, "%d %d %d\n",
-                                (i % s0) + 1,
-                                (i / s0) + 1, extract_int(v, i));
-                        break;
-                    case FLOAT:
-                    case DOUBLE:
-                        fprintf(fp, "%d %d %.12g\n",
-                                (i % s0) + 1,
-                                (i / s0) + 1, extract_double(v, i));
-                        break;
-                    }
-                }
-                fclose(fp);
-                if (count++)
-                    strcat(buf, ",");
-                sprintf(buf + strlen(buf), "\"%s\"", fname);
-                if (V_NAME(v))
-                    sprintf(buf + strlen(buf), "title '%s'", V_NAME(v));
-                free(fname);
-            }
-        }
+	if(!strcasecmp(V_NAME(s),"pm3d"))
+	  pm3d=1;
+
+	if(!strcasecmp(V_NAME(s),"label")) {
+	  if(V_KEYVAL(s) != NULL)
+	    label = strdup(V_NAME(V_KEYVAL(s)));
+	}
+
+	if(!strcasecmp(V_NAME(s),"xscale")) {
+	  if(V_KEYVAL(s) != NULL) {
+	    if(V_TYPE(V_KEYVAL(s)) == ID_VAL) {
+	      v = V_KEYVAL(s);
+	      if(V_FORMAT(v)==BYTE || V_FORMAT(v)==INT || V_FORMAT(v)==SHORT) {
+		xscale = (float)extract_int(v,0);
+	      } else if(V_FORMAT(v)==FLOAT || V_FORMAT(v)==DOUBLE) {
+		xscale = extract_float(v,0);
+	      }
+	    }
+	  }
+	}
+
+	if(!strcasecmp(V_NAME(s),"yscale")) {
+	  if(V_KEYVAL(s) != NULL) {
+	    if(V_TYPE(V_KEYVAL(s)) == ID_VAL) {
+	      v = V_KEYVAL(s);
+	      if(V_FORMAT(v)==BYTE || V_FORMAT(v)==INT || V_FORMAT(v)==SHORT) {
+		yscale = (float)extract_int(v,0);
+	      } else if(V_FORMAT(v)==FLOAT || V_FORMAT(v)==DOUBLE) {
+		yscale = extract_float(v,0);
+	      }
+	    }
+	  }
+	}
+      }
     }
-    send_to_plot(buf);
+
+    for (j=1; j<=ac; j++) {
+      s = av[j];
+      
+      if (V_TYPE(s) == ID_STRING) {
+      } else if (V_TYPE(s) == ID_KEYWORD) {
+      } else {
+	
+	if ((v = eval(s)) == NULL)
+	  v = s;
+	
+	type = V_FORMAT(v);
+	
+	fname = make_temp_file_path();
+	if (fname == NULL || (fp = fopen(fname, "w")) == NULL) {
+	  parse_error("%s: unable to open temp file",
+		      func->name);
+	  if (fname)
+	    free(fname);
+	  return (NULL);
+	}
+	
+	s0 = V_SIZE(v)[0];
+	s1 = V_SIZE(v)[1] * V_SIZE(v)[0];
+	for (i = 0; i < V_DSIZE(v); i++) {
+	  if ((i && (i % s0) == 0) || s0 == 1)
+	    fputc('\n', fp);
+	  switch (type) {
+	  case BYTE:
+	  case SHORT:
+	  case INT:
+	    if(xscale != 0 && yscale != 0) {
+	      fprintf(fp, "%d %d %d\n",((i%s0)+1)*(int)xscale, ((i/s0)+1)*(int)yscale, extract_int(v, i));
+	    } else {
+	      fprintf(fp, "%d %d %d\n",(i%s0)+1, (i/s0)+1, extract_int(v,i));
+	    }
+	    
+	    break;
+	  case FLOAT:
+	  case DOUBLE:
+	    if(xscale != 0 && yscale != 0) {
+	      fprintf(fp, "%g %g %.12g\n",(int)((i%s0)+1)*xscale, (int)((i/s0)+1)*yscale, extract_float(v,i));
+	    } else {
+	      fprintf(fp, "%d %d %.12g\n",(i%s0)+1, (i/s0)+1, extract_float(v,i));
+	    }
+	    break;
+	  }
+	}
+	fclose(fp);
+	if (count++)
+	  strcat(buf, ",");
+	sprintf(buf + strlen(buf), "\"%s\"", fname);
+	if (label != NULL)
+	  sprintf(buf + strlen(buf), "title '%s'", label);
+	if (pm3d != 0)
+	  sprintf(buf + strlen(buf), " with pm3d");
+	free(fname);
+      }
+    }
+  }
+  send_to_plot(buf);
 #endif
-    return (NULL);
+  return (NULL);
 }
 
 
