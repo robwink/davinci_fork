@@ -440,7 +440,7 @@ AC_ARG_WITH(gplot,
 AC_ARG_WITH(editor, 
     [  --with-editor=<path>    Path to text file editor (default: vim)],
     [EDITOR=$withval],
-	[AC_PATH_PROGS(EDITOR,[emacs edit])]
+	[AC_PATH_PROGS(EDITOR,[vim vi emacs edit])]
 )
 AC_ARG_WITH(help, 
     [  --with-help=<path>      Path to davinci help file (default: DATADIR/davinci/docs/dv.gih)],
