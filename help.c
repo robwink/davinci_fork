@@ -49,7 +49,7 @@
 
 #ifndef DVHELP
 #ifndef __CYGWIN__
-#define DVHELP "/usr/local/share/davinci/docs/dv.gih"
+#define DVHELP "/home/kpoo/DAV_Sep22/docs/dv.gih"
 #else
 #define DVHELP "docs\\dv.gih"
 #endif

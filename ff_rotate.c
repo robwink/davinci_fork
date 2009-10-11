@@ -21,22 +21,13 @@ Var *ff_rotation(vfuncptr func, Var * arg)
   if (parse_args(func, arg, alist) == 0) return NULL;
   
   if (obj == NULL) {
-    parse_error("rotate() - Mon Feb 13 14:35:25 MST 2006");
-    parse_error("Rotates an array a specified angle in degrees");
-    parse_error("Uses 3 shear Paeth algorithm.\n");
-    parse_error("Syntax:  b = rotate(obj,angle,ignore)");
-    parse_error("example: b = rotate(a,5.0)");
-    parse_error("example: b = rotate(a,-64.3,ignore=-32768)");
-    parse_error("obj     - any 3-d BSQ array.");
-    parse_error("angle   - desired angle of rotation in degrees.");
-    parse_error("ignore  - the value in non-data pixels. Default is 0.");
+    parse_error("\nNo data specified\n");
     return NULL;
   }
 
   out=rotation(obj, angle, ign);
   return(out);
 }
-
 
 
 union DATA {
@@ -232,11 +223,7 @@ Var *rotation(Var *obj, float angle, float ign)
   //return(s);
 	
 	
-  out = new_struct(0);
-  add_struct(out, "data", s);
-  add_struct(out, "angle", newFloat(angle));
-  add_struct(out, "offset", newVal(BSQ, 2, 1, 1, INT, roffset));
-  return out;
+  return s;
 }
 
 

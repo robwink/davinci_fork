@@ -128,29 +128,7 @@ ff_vplot(vfuncptr func, Var *arg)
   make_args(&ac, &av, func, arg);
 
   if (ac == 1) {
-    parse_error("    plot() - 9/14/2008\n");
-    parse_error(" Syntax: plot(VAL or STRUCT");
-    parse_error("         [, label = STRING]           (default = \'vector #\')");
-    parse_error("         [, xaxis = VAL]              (axis to use on one plot)");
-    parse_error("         [, axis = x|y|z|X|Y|Z]       (xaxis to use on one plot)");
-    parse_error("         [, ignore = VAL]             (value to skip while plotting)");
-    parse_error("         [, iabove = VAL]             (ignore y above)");
-    parse_error("         [, ibelow = VAL]             (ignore y below)");
-    parse_error("         [, ixabove = VAL]            (ignore x above)");
-    parse_error("         [, ixbelow = VAL]            (ignore x below)");
-    parse_error("         [, errorbars = VAL]          (x and/or y errorbars)");
-    parse_error("         [, separate = INT]           (default = 0)");
-    parse_error("         [, width = INT]              (thickness of plot)");
-    parse_error("         [, color = INT]              (color of plot)");
-    parse_error("         [, style = lines|points|dots|linespoints|boxes|");
-    parse_error("                    steps|xerrorbars|yerrorbars|xyerrorbars|");
-    parse_error("                    xerrorlines|yerrorlines|xyerrorlines");
-    parse_error("         [, smooth = csplines|bezier] (Gnuplot smooth routines)");
-    parse_error("         [, offset = VAL]             (y-value to offset successive vectors)");
-    parse_error("         [, dir = STRING]             (path to store files)");
-    parse_error("         [, gcommand = BOOL]          (print Gnuplot command to screen])");
-    parse_error(" or");
-    parse_error("         plot(string) - to send string commands to Gnuplot\n");
+    parse_error("\nType plot(?) for help");
     return(NULL);
   }
 

@@ -292,15 +292,7 @@ Var *ff_sort(vfuncptr func, Var * arg)
   if (parse_args(func, arg, alist) == 0) return (NULL);
   
   if (object == NULL){
-    parse_error("\nsort() - Alpha-numeric sorting");
-    parse_error("\nSyntax: sort(object=VAL[,by=VAL][,descend=INT])");
-    parse_error("Example: sort(a, by=a[2])");
-    parse_error("Example: sort(a, by=b.labels)");
-    parse_error("Example: sort(a, descend=1)");
-    parse_error("  'object'  - a numeric array or text array");
-    parse_error("  'by'      - optional object used to sort the data object");
-    parse_error("  'descend' - option to order by decreasing value. Default = 0 (ascending)");
-    parse_error("01/01/2008");
+    parse_error("\nNo data specified\n");
     return NULL;
   }
 
@@ -493,15 +485,7 @@ ff_unique(vfuncptr func, Var * arg)
   if (parse_args(func, arg, alist) == 0) return(NULL);
   
   if (object == NULL){
-    parse_error("\n unique() - Find all unique elements in a VAL or TEXT array.");
-    parse_error(" Allows finding all rows that are unique in a");
-    parse_error(" single row, column or z-channel.\n");
-    parse_error(" Syntax:  unique(object=VAR [,by=VAR])");
-    parse_error(" example: c = unique(a, by=b)");
-    parse_error(" \'object\' - may be a numeric or TEXT array");
-    parse_error(" \'by\' - an optional variable in which to search for");
-    parse_error("          unique values and use to sort \'object\'");
-    parse_error(" \'by\' must be a 1-D object with compatible dimensions with \'object\'");
+    parse_error("\nNo data specified\n");
     return NULL;
   }
 

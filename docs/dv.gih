@@ -1013,21 +1013,23 @@
 
 ?functions avg()
 ?avg()
- avg() - Compute average along specified axis
+ avg() computes the statistical average along one or more axis. 
+ If no axis is specified, then the average is computed along all three. 
 
- avg(object=VAL, axis=[x][y][z], [both=BOOL], [ignore=VAL])
+ If an ignore value is specified, then any element that is equal 
+ to the ignore value is not included in the computation. If all the 
+ values in the computation are equal to the ignore value, 
+ then the output is set to the ignore value.
 
- The avg() function computes the statistical average along one or
- more axis.  If no axis is specified, then the average is computed
- along all three.  avg() always returns a FLOAT.
+ Syntax: avg(object=VAL [, axis=OPTION] [, both=1] [, ignore=VAL])
 
- If an ignore value is specified, then any element that is equal to
- the ignore value is not included in the computation.  If all the
- values in the computation are equal to the ignore value, then the
- output is set to the ignore value.
-
- If the both flag is set (both=1), then avg returns a structure
- containing the both the avg and stddev.
+ 'object' - may be any numeric array of any data type and format
+ 'axis' - Option to compute average along specified axis. 
+  Options include: x, y, z, xy, xz, yz, xyz.
+ 'both' - Option to return both the average and the standard 
+  deviation in a structure
+ 'ignore' - Optional value to ignore in average and standard 
+  deviation calculation
 
  Example:
 
@@ -1043,11 +1045,9 @@
 ?stddev()
  stddev() - Compute standard deviation along specified axis
 
- stddev(object=VAL, axis=[x][y][z], [both=BOOL], [ignore=VAL])
-
  The stddev() function computes the standard deviation along one or
  more axis.  If no axis is specified, then the standard deviation 
- is computed along all three.  stddev() returns a FLOAT.
+ is computed along all three.  stddev() returns a DOUBLE.
 
  If an ignore value is specified, then any element that is equal to
  the ignore value is not included in the computation.  If all the
@@ -1056,6 +1056,16 @@
 
  If the both flag is set (both=1), then stddev returns a structure
  containing the both the average and stddev.
+
+ Syntax: stddev(object=VAL[, axis=OPTION][, both=BOOL][, ignore=VAL])
+
+ 'object' - may be any numeric array of any data type and format
+ 'axis' - Option to compute average along specified axis. 
+  Options include: x, y, z, xy, xz, yz, xyz.
+ 'both' - Option to return both the average and the standard 
+  deviation in a structure
+ 'ignore' - Optional value to ignore in average and standard 
+  deviation calculation
 
  Example:
 
@@ -1071,11 +1081,14 @@
 ?sum()
  sum() - Compute sum along specified axis
 
- sum(object=VAL, axis=[x][y][z])
+ The sum() function computes the sum of values along one or more axis.  
+ If no axis is specified, then all the summation is performed along
+ all three axis.  Sum always returns a DOUBLE.
 
-     The sum() function computes the sum of values along one or more axis.  
-     If no axis is specified, then all the summation is performed along
-     all three axis.  Sum always returns a FLOAT.
+ Syntax: sum(object=VAL[, axis=OPTION])
+ 'object' - may be any numeric array of any data type and format
+ 'axis'   - option to compute along specified axis.
+            options include: x, y, z, xy, xz, yz and xyz. 
 
  Example:
 
@@ -1088,18 +1101,17 @@
 ?min()
  min() - Compute minimum value along specified axis
 
- min(object=VAL, axis=[x][y][z], ignore=VAL)
+ min(object=VAL[, axis=[x][y][z]][, ignore=VAL])
 
-     The min() function finds the minimum value along one or more axis.  
-     If no axis is specified, then all three axis are used.
+The min() function finds the minimum value along one or more axis.  
+If no axis is specified, then all three axis are used.
 
-	 If an ignore value is specified, then any element that is equal to
-	 the ignore value is not included in the computation.  If all the
-	 values in the computation are equal to the ignore value, then the
-	 output is set to the ignore value.
+ If an ignore value is specified, then any element that is equal to
+ the ignore value is not included in the computation.  If all the
+ values in the computation are equal to the ignore value, then the
+ output is set to the ignore value.
 
-     Min always returns a FLOAT.  This is not really the correct
-     behaviour, but it is the easiest.
+Min always returns a FLOAT.
 
  Example:
 
@@ -1112,18 +1124,17 @@
 ?max()
  max() - Compute maximum value along specified axis
 
- max(object=VAL, axis=[x][y][z])
+ max(object=VAL[, axis=[x][y][z]])
 
-     The max() function finds the maximum value along one or more axis.  
-     If no axis is specified, then all three axis are used.
+The max() function finds the maximum value along one or more axis.  
+If no axis is specified, then all three axis are used.
 
-	 If an ignore value is specified, then any element that is equal to
-	 the ignore value is not included in the computation.  If all the
-	 values in the computation are equal to the ignore value, then the
-	 output is set to the ignore value.
+ If an ignore value is specified, then any element that is equal to
+ the ignore value is not included in the computation.  If all the
+ values in the computation are equal to the ignore value, then the
+ output is set to the ignore value.
 
-     Max always returns a FLOAT.  This is not really the correct
-     behaviour, but it is the easiest.
+Max always returns a FLOAT.
 
  Example:
 
@@ -1132,6 +1143,110 @@
 
     dv> a = max(object=data, axis=xy)
 
+
+?functions minchan()
+?minchan()
+ minchan() - finds the column with the min value in an array
+
+ Syntax: minchan(object = VAL)
+
+ Data organization and format are not taken into account and three 
+ dimensional arrays are considered linear arrays in the calculation.
+
+ minchan always returns an INT. 
+
+?functions maxchan()
+?maxchan()
+ maxchan() - finds the column with the max value in an array
+
+ Syntax: maxchan(object = VAL)
+
+ Data organization and format are not taken into account and three 
+ dimensional arrays are considered linear arrays in the calculation.
+
+ maxchan always returns an INT.
+
+?functions maxpos()
+?maxpos()
+ maxpos() - Returns the location of the element with max value in an array.
+
+ By default maxpos will return the x-y-z position of the single maximum
+ value in an array. Maxpos can also return the positions of N highest
+ values using iter=N. The positions will be returned as a 3xNx1 INT array.
+
+ Maxpos can also return to the user the value(s) of the pixel(s) by using
+ the flag showval=1. In this case data will be returned as a 4xNx1 FLOAT array.
+ The first three elements per line contain the position and the fourth element
+ contains the value of the pixel.
+
+ Maxpos can search for maximum values less than a specified threshhold using
+ the 'lt' option.
+
+ Syntax: maxpos(data=VAL[, iter=INT][, ignore=VAL][, lt=VAL][, showval=INT])
+ 'data'    - Any numeric array
+ 'iter'    - Iterations to look for successively lower values
+ 'ignore'  - The value to ignore while searching for maximum value.
+ 'lt'      - Search for a maximum value below this 'less than' value.
+ 'showval' - Optional flag to return a 4xNx1 FLOAT array containing 
+             the value of the pixel in the 4th position.
+
+ Examples:
+
+ dv> pos = maxpos(a)
+ 3x1x1 array of int, bsq format [12 bytes]
+ 4	3	1
+
+ dv> pos = maxpos(a,iter=2,lt=10)
+ 3x2x1 array of int, bsq format [24 bytes]
+ 3	 3	 1
+ 2	 3	 1
+
+?functions minpos()
+?minpos()
+ maxpos() - Returns the location of the element with min value in an array.
+
+ By default minpos will return the x-y-z position of the single minimum
+ value in an array. Minpos can also return the positions of N lowest
+ values using iter=N. The positions will be returned as a 3xNx1 INT array.
+
+ Minpos can also return to the user the value(s) of the pixel(s) by using
+ the flag showval=1. In this case data will be returned as a 4xNx1 FLOAT array.
+ The first three elements per line contain the position and the fourth element
+ contains the value of the pixel.
+
+ Minpos can search for minimum values greater than a specified threshhold 
+ using the 'gt' option.
+ 
+ Syntax: minpos(data=VAL[, iter=INT][, ignore=VAL][, gt=VAL][, showval=INT])
+ 'data'    - Any numeric array
+ 'iter'    - Iterations to look for successively higher values
+ 'ignore'  - The value to ignore while searching for maximum value.
+ 'gt'      - Search for a minimum value above this 'greater than' value.
+ 'showval' - Optional flag to return a 4xNx1 FLOAT array containing 
+             the value in the 4th position.
+
+?functions valpos()
+?valpos()
+ valpos() - Find the location of elements in an array containing values 
+ closest to a specified value. 
+
+ By default valpos will return the x-y-z position of the single value in 
+ an array that is closest to the specified value. However, valpos can also 
+ return the positions of N closest values using iter=N. The positions will 
+ be returned as a 3xNx1 INT array.
+
+ Valpos can also return to the user the value(s) of the pixel(s) by using
+ the flag showval=1. In this case data will be returned as a 4xNx1 FLOAT array.
+ The first three elements per line contain the position and the fourth element
+ contains the value of the pixel.
+
+ Syntax: valpos(data=VAL, value=VAL[, iter=INT][, ignore=VAL][, showval=INT])
+ 'data'    - Any numeric array
+ 'value'   - The desired numeric value
+ 'iter'    - Number of occurences desired
+ 'ignore'  - Optional value to ignore when searching values.
+ 'showval' - Optional flag to return a 4xNx1 FLOAT array containing
+             the value in the 4th position.
 
 ?functions load_vis()
 ?load_vis()
@@ -1164,23 +1279,25 @@
  load_paci(filename=STRING, [[frame=INT] | [band=int]], [report=1], [nosig=1],
                 [swap=1],[quiet={0,1,2}])
 
-    The load_paci function reads an IR paci file into memory and organizes in various
-    ways depending on user input.  The user can specifiy a band OR frame number and only
-    those data that match are loaded.  If the user sets report=1 then only a summary report
-    is given back (and no data are loaded).  Each frame of data has 6 control values tacked
-    on to the front of the frame and 2 value tacked on the back.  The first 2 values are the
-    starting sync word, the next value is the ID, then band number then two numbers for the
-    frame number.  The last two values are the ending sync value.  If the user does NOT
-    want these values to be returned with the data, then use: nosig=1 (defualt is nosig=0).  
+ The load_paci function reads an IR paci file into memory and organizes in 
+ various ways depending on user input. The user can specifiy a band OR frame 
+ number and only those data that match are loaded. If the user sets report=1
+ then only a summary report is given back (and no data are loaded).  Each 
+ frame of data has 6 control values tacked on to the front of the frame and 2
+ value tacked on the back.  The first 2 values are the starting sync word, 
+ the next value is the ID, then band number then two numbers for the frame 
+ number.  The last two values are the ending sync value.  If the user does NOT
+ want these values to be returned with the data, then use: nosig=1 (defualt 
+ is nosig=0).
 
-    There are two major forms for IR paci data, byte-swapped and NOT byte-swapped.
-    If the data is from the Ratheon GSE (in Santa Barbara) then it is byte-swapped.
-    Other-wise it is not.  If the data is NOT byte-swapped, swap=0 must be issued since
-    swap=1 is the default value.
+ There are two major forms for IR paci data, byte-swapped and NOT byte-swapped.
+ If the data is from the Ratheon GSE (in Santa Barbara) then its byte-swapped.
+ Other-wise it is not.  If the data is NOT byte-swapped, swap=0 must be issued
+ since swap=1 is the default value.
 
-    Finally, various information about the condition of the data, missing information,
-    skipped and/or repeated information is displayed.  To modify this a quiet value can
-    be issued (defualt: quiet=0) with the following results:
+ Finally, various information about the condition of the data, missing
+ information, skipped and/or repeated information is displayed.  To modify this
+ a quiet value can be issued (defualt: quiet=0) with the following results:
 
         quiet=0:        Full reporting
         quiet=1:        Only print end summary
@@ -1213,15 +1330,6 @@
 
     dv> history(10)
 
-?functions sort()
-?sort()
- sort() - Sort an array of numbers
-
- sort(VAL)
-
-     The sort() function sorts an array of numbers in ascending order,
-     producing an array with the same format, organization and size of the
-     orginal array.
 
 ?functions rgb2hsv()
 ?rgb2hsv()
@@ -1403,19 +1511,19 @@
 
  dct(object=VAL, axis=[x][y][z], dir=[1|-1])
 
-     The dct() function computes the forward or inverse discrete cosine transform 
-     of values along one or more axis.  If no axis is specified, then all the 
-     computation is performed along all three axis.  If the direction is not
-     specified, a forward dct is assumed.
+  The dct() function computes the forward or inverse discrete cosine transform 
+  of values along one or more axis.  If no axis is specified, then all the 
+  computation is performed along all three axis.  If the direction is not
+  specified, a forward dct is assumed.
      
-     The dct() function always returns a DOUBLE.
+ The dct() function always returns a DOUBLE.
 
  Example:
 
-    This example computes the dct along the X and Y axis, producing
-    an array with the same Z dimension of the input data.
+ This example computes the dct along the X and Y axis, producing
+ an array with the same Z dimension of the input data.
 
-    dv> a = dct(object=data, axis=xy)
+ dv> a = dct(object=data, axis=xy)
 
 ?functions entropy()
 ?entropy()
@@ -1431,8 +1539,8 @@
      The entropy() function always returns a FLOAT.
 
 ?functions plplot
-    ALL plplot library  commands are availible to the user.  Several davinci commands
-    were created to faciliate ease of use:
+    ALL plplot library commands are availible to the user.  
+    Several davinci commands were created to faciliate ease of use:
         popen() -   Define, initialize and open a window for plotting
         pplot() -   Plot a data cube along specified axis
         pprint()-   Print a current plot
@@ -1745,11 +1853,11 @@ Davinci supports the following matrix functions:
 
 ?functions convolve()
 ?convolve()
- convolve() - Kernel convolution
+?convolve3()
+ convolve() - Computes a sliding window kernel convolution. 
+              (AKA kernel filter, smooth)
 
- convolve(object=VAL, kernel=VAL, norm=BOOL)
-
-    The convolve() function computes a sliding window kernel convolution.
+ Syntax: convolve(object=VAL, kernel=VAL[, norm=BOOL][, ignore=VAL])
 
     For each pixel in object, the weighted sum of the neighboring pixels
     is computed, with the weights being specified by the kernel.
@@ -1771,13 +1879,6 @@ Davinci supports the following matrix functions:
         1       1       1
         dv> convolve(img, b)
 
-?functions convolve3()
-?convolve3()
- convolve3() - Kernel convolution
-
- convolve3(object=VAL, kernel=VAL, norm=BOOL)
-
-    Same as convolve, only a somewhat faster algorthm is used.
     
 ?functions create()
 ?create()
@@ -2409,6 +2510,96 @@ Davinci supports the following matrix functions:
    # plot the selections
    xplot (spectra, axis=z);
 
+?functions plot()
+?plot()
+ plot() - The graphing function of daVinci
+
+ Through the use of this function, data may be altered, formatted
+and exported to the Gnuplot graphing engine.
+
+Syntax: plot(VAL or STRUCT
+ [, label = STRING]           (default = \'vector #\')
+ [, xaxis = VAL|TEXT]         (xaxis to use on one plot)
+ [, axis = x|y|z|X|Y|Z]       (axis to use on one plot)
+ [, ignore = VAL]             (value to skip while plotting)
+ [, iabove = VAL]             (ignore y above)
+ [, ibelow = VAL]             (ignore y below)
+ [, ixabove = VAL]            (ignore x above)
+ [, ixbelow = VAL]            (ignore x below)
+ [, errorbars = VAL]          (x and/or y errorbars)
+ [, separate = INT]           (default = 0)
+ [, width = INT]              (thickness of plot)
+ [, color = INT]              (color of plot)
+ [, style = lines|points|dots|linespoints|boxes|
+            steps|xerrorbars|yerrorbars|xyerrorbars|
+            xerrorlines|yerrorlines|xyerrorlines
+ [, smooth = csplines|bezier] (Gnuplot smooth routines)
+ [, offset = VAL]             (y-value to offset successive vectors)
+ [, dir = STRING]             (path to store files)
+ [, gcommand = BOOL]          (print Gnuplot command to screen]
+ plot(string) - to send string commands to Gnuplot
+
+Example:
+ dv> plot(a,label="budget",xaxis=ax,color=3)
+
+ This short summary of the functionality of plot() is very bare bones.
+ For extensive help including numerous examples, see the wiki 
+   http://davinci.asu.edu/index.php/plot
+
+?functions splot()
+?splot()
+ splot() - surface plotting with Gnuplot
+
+ Syntax: splot(data[, label=STRING][, pm3d=BOOL][, xscale=VAL][, yscale=VAL])
+ 'data'   - any multi-dimensional numeric array
+ 'label'  - string to use as surface description
+ 'pm3d'   - optional flag to solidify and color the surface
+ 'xscale' and 'yscale' tell splot how many units per pixel
+  (e.g. meters/pixel). To be used they must both be specified.
+
+ Example: splot(a,'bob', pm3d=1,xscale=102, yscale=105)
+
+
+?functions rotate()
+?rotate()
+ rotate() - rotates an array a specified angle in degrees with aliasing.
+
+ Syntax: rotate(obj = VAL, angle = VAL [, ignore = VAL])
+
+ 'obj'    - any numeric array
+ 'angle'  - a numeric value in degrees
+ 'ignore' - the numeric value in pixels containing non-data. Default is 0.
+
+ Uses a 3-shear Paeth algorithm to pixel shift rows and columns to rotate 
+ an image.
+
+?functions sort()
+?sort()
+ sort() - Alpha-numeric sorting
+
+ Syntax: sort(object=VAL[, by=VAL][, descend=INT])
+ 'object'  - a numeric array or text array
+ 'by'      - optional object by which to sort the data object
+ 'descend' - option to order by decreasing value. Default = 0 (ascending)
+
+?functions unique()
+?unique()
+ unique() - Return the unique elements in a VAL or TEXT array.
+
+ Syntax: unique(object=VAL or TEXT[, by = VAL or TEXT])
+ 'object'  - a numeric array or text array
+ 'by'      - optional array by which elements of object are selected.
+
+?functions ipi()
+?ipi()
+ ipi() - Inverse Parabolic Interpolation
+
+ Calculates the coordinates of the minimum or maximum of a parabola 
+ given 3 x and y values on the parabola.
+
+ Syntax: ipi(coordinates=VAL, values=VAL)
+ 'coordinates' - The x-positions of the three selected points
+ 'values'      - The values of the function at the specified x-positions. 
 
 ?functions boxfilter()
 ?boxfilter()
@@ -2433,19 +2624,19 @@ Davinci supports the following matrix functions:
 
  drawshape(obj=VAR, shape=["cross"|"box"|"circle"], ignore=VAL)
 
-	For each point in the input image (band 1 only), that is greater
-	than zero and not equal to the ignore value, a shape is draw centered
-	on that point, with a radius/size equal to the value of the point.
+ For each point in the input image (band 1 only), that is greater
+ than zero and not equal to the ignore value, a shape is draw centered
+ on that point, with a radius/size equal to the value of the point.
 
-	This example returns an image contining two circles, one centered at 
-	3,4 of radius 3, and another centered at 6,8 with radius 5.  
+ This example returns an image contining two circles, one centered at 
+ 3,4 of radius 3, and another centered at 6,8 with radius 5.  
 
-	The returned image is a byte image containing only 0s (unset) and 1s (set).
+ The returned image is a byte image containing only 0s (unset) and 1s (set).
 
-	a = clone(0,10,10)
-	a[3,4] = 3
-	a[6,8] = 5
-	drawshape(a, type="circle")
+ dv> a = clone(0,10,10)
+ dv> a[3,4] = 3
+ dv> a[6,8] = 5
+ dv> drawshape(a, type="circle")
 
 ?gui
 
@@ -3328,3 +3519,120 @@ TransientShell
  Any records that are of the same type, but which are not homogenous (ie: 
  Double records both with and without an Xaxis set) are padded out to be 
  homogenous, using empty strings.
+
+?thm
+
+?thm introduction
+ This Davinci module provides THEMIS data processing algorithms.
+
+?thm functions
+
+?thm functions column_fill
+ thm.column_fill() - Sub-function written for autoradcorr.
+
+?thm functions convolve
+ thm.convolve() - Removes plaid from THEMIS spectral cubes.
+
+?thm functions corners
+ thm.deplaid() - Removes plaid from THEMIS spectral cubes.
+
+?thm functions deplaid
+ thm.deplaid() - Removes plaid from THEMIS spectral cubes.
+
+ Syntax: deplaid(data=VAL[,ignore=VAL][,tmask_max=VAL][,tmask_min=VAL]
+                         [,filt_len=INT][,b10=INT][,axis=ENUM])
+
+ 'data'      - geometrically projected and rectified radiance cube of at most 10 bands
+ 'ignore'    - the value of non-data pixels  (default is -32768)
+ 'tmask_max' - max threshold used to create temperature mask (default is 1.15)
+ 'tmask_min' - min threshold used to create temperature mask (default is 0.80)
+ 'filt_len'  - length of filter used in plaid removal (default is 150)
+ 'b10'       - the band (1-10) in the data that is THEMIS band 10 (default is 10)
+ 'axis'      - the direction to deplaid (x,y,xy) (default is xy)
+
+ Troubleshooting:
+ - You should designate b10 when NOT feeding deplaid 10 band data, 
+   b10=0 for no band 10 data
+ - You can return the blackmask/temperature mask by using "dump = 1"
+ - If you get brightness smear, bring the tmask_max and/or min closer to 1.0
+ - If you still see long-wavelength plaid, such as in cold images, increase filt_len
+ - If the image looks washed out, check your null value
+
+ Examples:
+
+ dv> b = thm.deplaid(a)
+ dv> b = thm.deplaid(data=a, ignore=-32768, tmask_max=1.25, b10=3)
+ dv> b = thm.deplaid(a,0,tmask_max=1.21)
+ dv> b = thm.deplaid(a,0,1.10,0.90,180,8)
+
+ See http://davinci.asu.edu/index.php/thm.deplaid for more help.
+
+?thm functions emiss2rad
+ thm.emiss2rad() - emissivity to radiance converter
+
+?thm functions kfill
+ thm.kfill() - dont even ask me
+
+?thm functions ipi
+ thm.ipi() - Inverse Parabolic Interpolation
+
+?thm functions rad2tb
+ thm.rad2tb() - convert radiance to brightness temperature
+
+?thm functions radcorr
+ thm.radcorr() - Produces the 2x1x10 float array containing correction and em offset values for a given array
+
+?thm functions ramp
+ thm.ramp() - oh, rampy stuff.. you know.
+
+?thm functions reconstitute
+ thm.reconstitute() - Unshears and unslants the output structure from thm.rectify()
+
+?thm functions rectify
+ thm.rectify() - Rotates and slants a geometrically projected THEMIS cube to
+   minimize the black space and prepare the data for thm.deplaid. This process
+   is reversed with thm.reconstitute.
+
+ Syntax: rectify(obj=VAL[,ignore=VAL][,trust=FLOAT][,force=1])
+
+ 'obj'    - a geometrically projected THEMIS cube
+ 'ignore' - the valuee in non-data pixels.  (default is -3.402e38)
+ 'trust'  - location in the image from which the angle should be determined.
+            0 = top, 1 = bottom, 0.25 = 25% down the image. (default = 0)
+ 'force'  - forces rectify to use an ignore value even if it complains
+
+ Troubleshooting:
+ - The ignore value will ALWAYS be set to -32768 when rectifying!
+ - Rectify checks for appropriate ignore values before running.
+ - You can override ignore value warnings by setting force = 1.
+
+ Example:
+ dv> a
+ 1356x7100x10 array of float, bsq format [385,104,000 bytes]
+
+ dv> b = thm.rectify(obj=a)
+ struct, 4 elements
+     angle: 3.33555
+     data: 345x7179x10 array of float, bsq format [99,070,200 bytes]
+     leftedge: 1x7179x1 array of int, bsq format [28,716 bytes]
+     width: 1356
+
+ See http://davinci.asu.edu/index.php/thm.rectify for more help.
+
+?thm functions sstretch
+ thm.sstretch() - sstretch used for a bunch of crap
+
+?thm functions supersample
+ thm.supersample() - supersample THEMIS crap
+
+?thm functions themis_emissivity
+ thm.themis_emissivity() - THEMIS radiance to emissivity converter
+
+?thm functions unscale
+ thm.unscale() - Used to unscale a pds from short to float data
+
+?thm functions white_noise_remove1
+ thm.white_noise_remove1() - yuh huh
+
+?thm functions white_noise_remove2
+ thm.white_noise_remove2() - uhhh huh huh

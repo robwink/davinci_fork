@@ -201,26 +201,7 @@ thm_deplaid(vfuncptr func, Var * arg)
 
   /* if no data got passed to the function */
   if (data == NULL) {
-    parse_error("\nDeplaid() - July 13 2005\n");
-    parse_error("Deplaids multiband THEMIS spectral cubes\n");
-    parse_error("Syntax: b = thm.deplaid(data,ignore,tmask_max,tmask_min,filt_len,b10)");
-    parse_error("example b = thm.deplaid(a)");
-    parse_error("example b = thm.deplaid(data=a,ignore=-32768,tmask_max=1.25,tmask_min=.85,filt_len=200,b10=3)");
-    parse_error("example b = thm.deplaid(a,0,tmask_max=1.21)");
-    parse_error("example b = thm.deplaid(a,0,1.10,.90,180,8)\n");
-    parse_error("data:       geometrically projected and rectified radiance cube of at most 10 bands");
-    parse_error("ignore:     the value of non-data pixels -                         default is -32768");
-    parse_error("tmask_max:  max threshold used to create the temperature mask -    default is 1.15");
-    parse_error("tmask_min:  min threshold used to create the temperature mask -    default is 0.80");
-    parse_error("filt_len:   length of filter used in plaid removal -               default is 150");
-    parse_error("b10:        the band (1 - 10) in the data that is THEMIS band 10 - default is 10");
-    parse_error("axis:       run the algorithm in one direction (x,y,xy) - default is xy\n");
-    parse_error("TROUBLESHOOTING");
-    parse_error("You should designate b10 when NOT feeding deplaid 10 band data, b10 = 0 for no band-10 data.");
-    parse_error("You can return the blackmask/temperature mask by using \"dump=1\".");
-    parse_error("If you get brightness smear, then bring the tmask_max and/or min closer to 1.0.");
-    parse_error("If you still see long-wavelength plaid, such as in cold images, increase filt_len.");
-    parse_error("If the image looks washed-out check your null value.\n");
+    parse_error("\nType thm.deplaid(?) for help\n");
     return NULL;
   }
   
@@ -727,21 +708,7 @@ thm_rectify(vfuncptr func, Var * arg)
 
   /* if no picture got passed to the function */
   if (obj == NULL){
-    parse_error("rectify() - 7/27/05");
-    parse_error("Extracts rectangle of data from projected cubes\n");
-    parse_error("Syntax:  b = thm.rectify(obj,ignore,trust,force)");
-    parse_error("example: b = thm.rectify(obj=a)");
-    parse_error("example: b = thm.rectify(a)");
-    parse_error("example: b = thm.rectify(obj=a,ignore=0,trust=2,force=1)\n");
-    parse_error("obj    - any projected cube");
-    parse_error("ignore - the value in non-data pixels of projected cube. Default is -3.402822655e+38.");
-    parse_error("trust  - where in the image the angle should be determined.");
-    parse_error("         0 = top, 1 = bottom, .25 = 25 percent down the image, etc.  Default is 0 (top).");
-    parse_error("force  - forces rectify() to use an ignore value even if it complains. Default is 0.\n");
-    parse_error("TROUBLESHOOTING");
-    parse_error("The ignore value will ALWAYS be set to -32768 when rectifying!");
-    parse_error("Rectify checks for appropriate ignore value before running.");
-    parse_error("You can override ignore value warning by setting force = 1\n");
+    parse_error("\nType thm.rectify(?) for help\n");
     return NULL;
   }
 
