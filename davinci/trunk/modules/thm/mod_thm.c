@@ -144,8 +144,12 @@ thm_corners(vfuncptr func, Var * arg)
 Var *
 thm_deplaid(vfuncptr func, Var * arg)
 {
-  /* last updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
+  /* updated 07/06/2005 to change "null" arguments to accept "ignore". - kjn*/
+
   /* updated after the comparison with neglecting luminosity conservation. 07/13/05 - kjn */
+
+  /* Lord knows why, but I updated the algorithm to create a continuous column average correction **
+  ** instead of having discrete boundaries. Also moved the help text to thm.gih. 10/14/2009 - kjn */
 
   typedef unsigned char byte;
 
@@ -515,7 +519,7 @@ thm_deplaid(vfuncptr func, Var * arg)
   free(row_bright);
   free(row_avgs);
   free(row_wt);
-  
+
   /* operate on the col_avg arrays */
   col_wt = (int *)calloc(sizeof(int), x*chunks);
   
@@ -566,9 +570,13 @@ thm_deplaid(vfuncptr func, Var * arg)
       for(i=0; i<x; i++) {
         tv = extract_float(data, cpos(i,j,k, data));
         if(tv != nullval) {
-          if(axis==1) tv-=row_avg[k*y +j];
+          if(axis==1) tv=tv - row_avg[k*y +j];
           if(axis==2) tv-=col_avg[k*chunks*x + ck*x + i];
-          if(axis==3) tv=tv - row_avg[k*y + j] - col_avg[k*chunks*x + ck*x + i];
+          if(axis==3 && cca < 126) {
+	    tv=tv - row_avg[k*y + j] - ((125.0-cca)/250.0)*col_avg[k*chunks*x + (ck-1)*x + i] - ((125.0+cca)/250.0)*col_avg[k*chunks*x + ck*x + i];
+	  } else if (axis == 3 && cca >= 126) {
+	    tv=tv - row_avg[k*y + j] - (cca/250.0)*col_avg[k*chunks*x + (ck+1)*x + i] - ((250.0-cca)/250.0)*col_avg[k*chunks*x + ck*x + i];
+	  }
           rdata[x*y*k + x*j + i] = tv;
         } else {
           rdata[x*y*k + x*j + i] = tv;
