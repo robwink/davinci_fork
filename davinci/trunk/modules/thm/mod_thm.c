@@ -570,16 +570,27 @@ thm_deplaid(vfuncptr func, Var * arg)
       for(i=0; i<x; i++) {
         tv = extract_float(data, cpos(i,j,k, data));
         if(tv != nullval) {
+
+	  // deplaid only in the x direction
           if(axis==1) tv-=row_avg[k*y +j];
+
+	  // deplaid in the y direction
           if(axis==2) tv-=col_avg[k*chunks*x + ck*x + i];
+
+	  // deplaid in both directions
           if(axis==3) {
+
 	    if(cca <= 125 && ck != 0) {
+	      //for the first 125 lines we proportionally calculate plaid from the current and previous chunk
 	      tv = tv - row_avg[k*y + j] - ((125.0-(float)cca)/250.0)*col_avg[k*chunks*x + (ck-1)*x + i] - 
 		((125.0+(float)cca)/250.0)*col_avg[k*chunks*x + ck*x + i];
 	    } else if (cca >= 126 && ck != chunks-1) {
+	      //for the last 125 lines we proportionally calculate plaid from the current and next chunk
 	      tv = tv - row_avg[k*y + j] - ((float)cca/250.0)*col_avg[k*chunks*x + (ck+1)*x + i] - 
 		((250.0-(float)cca)/250.0)*col_avg[k*chunks*x + ck*x + i];
 	    } else {
+	      //if we're in the first 125 lines of the first chunk or the last 125 in the last chunk
+	      //then we need to simply use the plaid from the current chunk
 	      tv = tv - row_avg[k*y + j] - col_avg[k*chunks*x + ck*x + i];
 	    }
 	  }
