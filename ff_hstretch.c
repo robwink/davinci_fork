@@ -340,10 +340,12 @@ ff_sstretch2(vfuncptr func, Var * arg)
   typedef unsigned char byte;
   
   Var       *data=NULL;         /* input */
+  Var       *sample=NULL;         /* input */
   Var       *out=NULL;          /* output */
   byte      *w_data2=NULL;      /* working data */
   float      ignore=-32768;     /* ignore value*/
   size_t     x,y,z;             /* indices */
+  size_t     samx,samy,samz;    /* indices */
   double     sum = 0;           /* sum of elements in data */
   double     sumsq = 0;         /* sum of the square of elements in data */
   double     stdv = 0;          /* standard deviation */
@@ -352,11 +354,12 @@ ff_sstretch2(vfuncptr func, Var * arg)
   float      tv,max=-32768;
   float      v=40; 
   
-  Alist alist[4];
+  Alist alist[5];
   alist[0] = make_alist("data", 	  ID_VAL,	NULL,	&data);
   alist[1] = make_alist("ignore", 	  FLOAT,	NULL,	&ignore);
   alist[2] = make_alist("variance",       FLOAT,        NULL,   &v);
-  alist[3].name = NULL;
+  alist[3] = make_alist("sample",         ID_VAL, NULL, &sample);
+  alist[4].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);
   
@@ -366,7 +369,8 @@ ff_sstretch2(vfuncptr func, Var * arg)
     parse_error("Similar to the davinci function sstretch()\n");
     parse_error("$1=data to be stretched");
     parse_error("ignore=value to ignore (Default=-32768)");
-    parse_error("variance=variance of the stretch (Default=40)\n");
+    parse_error("variance=variance of the stretch (Default=40)");
+    parse_error("sample=sample data to stretch, must have sampe # of bands\n");
     parse_error("c.edwards\n");
     return NULL;
   }
@@ -375,7 +379,17 @@ ff_sstretch2(vfuncptr func, Var * arg)
   x = GetX(data);
   y = GetY(data);
   z = GetZ(data);
+  if(sample != NULL) {
+    samx = GetX(sample);
+    samy = GetY(sample);
+    samz = GetZ(sample);
+  }
   max = ignore;
+
+  if(z != samz && sample != NULL) {
+    parse_error("\nThe sample data and the data must have the same # of bands\n");
+    return(NULL);
+  }
 
   /* create out array */
   w_data2 = (byte *)calloc(sizeof(byte),x*y*z);
@@ -393,19 +407,30 @@ ff_sstretch2(vfuncptr func, Var * arg)
     cnt = 0;
     tv = 0;
     
-    for(j=0; j<y; j++) {
-        for(i=0; i<x; i++) {
-            if ((tv = extract_float(data, cpos(i,j,k, data))) != ignore){
-                sum += tv;
-                sumsq += ((double)tv)*((double)tv);
-                cnt ++;
-            }
+    if(sample != NULL ) {
+      for(j=0; j<samy; j++) {
+        for(i=0; i<samx; i++) {
+          if ((tv = extract_float(sample, cpos(i,j,k, sample))) != ignore){
+            sum += tv;
+            sumsq += ((double)tv)*((double)tv);
+            cnt ++;
+          }
         }
+      }
+    } else {
+      for(j=0; j<y; j++) {
+        for(i=0; i<x; i++) {
+          if ((tv = extract_float(data, cpos(i,j,k, data))) != ignore){
+            sum += tv;
+            sumsq += ((double)tv)*((double)tv);
+            cnt ++;
+          }
+        }
+      }
     }
 
     stdv = sqrt((sumsq - (sum*sum/cnt))/(cnt-1));
     sum /= cnt;
-
     /*convert to bip */
     for(j=0; j<y; j++) {
         for(i=0; i<x; i++) {
