@@ -129,7 +129,6 @@ static void	gui_setPrivate(Widget, Var *);
 static Var *gui_getResources (int dvWidgetId, Var *dvResourceList, int dvAllResources);
 
 /* These don't have prototypes in any Davinci headers.. */
-// extern int get_struct_names(const Var *, char ***, char *);
 extern Var *eval_buffer(char *);
 extern void parse_buffer(char *);
 
