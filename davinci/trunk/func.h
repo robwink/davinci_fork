@@ -53,6 +53,9 @@ char *do_help(char *input, char *path);
 
 void parse_stream(FILE *fp);
 
+void parse_buffer(char *buf);
+Var *eval_buffer(char *buf);
+
 /* pp.c */
 void emit_prompt (void);                /* spit out prompt if interactive */
 Var *pp_math (Var *, int , Var *);      /* perform math */
