@@ -1,0 +1,15 @@
+x=create(4,4,4,format=int,start=0,step=0);
+x[::2,::2,::2]=1;
+pass1 = sum(x) == 8 && sum(x[,,1])==4 && sum(x[,,2])==0 && sum(x[,,3])==4 && sum(x[,,4])==0;
+
+x=create(5,5,5,format=int,start=0,step=0);
+x[::2,::2,::2]=1;
+pass2 = sum(x) == 27 && sum(x[,,1])==9 && sum(x[,,2])==0 && sum(x[,,3])==9 && sum(x[,,4])==0 && sum(x[,,5])==9;
+
+x=create(5,5,5,format=int,start=0,step=0);
+x[2::2,2::2,2::2]=1;
+pass3 = sum(x) == 8 && sum(x[,,1])==0 && sum(x[,,2])==4 && sum(x[,,3])==0 && sum(x[,,4])==4 && sum(x[,,5])==0;
+
+if (pass1 && pass2 && pass3) exit(0);
+exit(1);
+

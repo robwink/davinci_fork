@@ -1,0 +1,3 @@
+#!/bin/sh
+##To avoid SELINUX  security message (maybe there is a better solution)
+chcon -f -t textrel_shlib_t /usr/lib/libdavinci* > /dev/null 2>&1 || /bin/true

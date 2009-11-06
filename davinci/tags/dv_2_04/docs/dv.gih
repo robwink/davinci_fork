@@ -1,0 +1,3638 @@
+?
+ Intro
+
+?operators
+
+ Davinci provides the following mathematical and relational operators:
+
+   Mathematical        Relational                   Arrays
+   ---------------     ------------------------     --------------------
+    + add              <  less than                 []     range
+    - subtract         >  greater than              //     concatenation
+    * multipy          <= less than or equal        where  partial replacement
+    / divide           >= greater than or equal
+    % modulo           == equal 
+    = equvialence      != not equal
+                       || logical OR
+                       && logical AND
+
+
+ All the mathematical operators except can take any two VAL types, and 
+ will cast up to the larger type.
+
+ All the relational operators return a value of 0 or 1.  If used on arrays,
+ they return an array of 0's and 1's.
+
+ Range, concatentaion and the where operator each have their own 
+ pecularities.  Consult the individual help topics.
+
+?operators //
+?//
+?concatenation
+
+ The // operator concatenates (appends) two values together along their
+ X axis.  It is shorthand for cat(v1, v2, x), and therefore has all
+ the limitations of the cat() function.
+
+ Example:
+    This example creates a 3x1x1 array from the numbers 1, 2 and 3:
+
+        dv> 1 // 2 // 3
+        :       3x1x1 array of int, bsq format [12 bytes]
+        1       2       3
+
+
+?operators []
+?[]
+?range
+ The unary range operator, [], extracts a subset of data from a VAL.
+ The range operator can oply be applied to a named variable.
+ The range operator takes up to three ranges, one for each axis, in the
+ order X, Y, Z, of the form [low:hi:step].
+
+ Any of the range values may be blank, indicating the least restrictive 
+ value.  If the third or second and third values are blank, they may be
+ completely omitted.
+
+ Example:
+     This example extracts a portion of the X axis, all the values along
+     the Y axis, and the even values along the Z axis:
+
+        dv> data[3:8, , 2::2]
+
+?operators where
+?where
+?[where]
+ The unary operator 'where', provides partial array replacement, based on
+ a boolean expresion.  The 'where' operator can only be used during array
+ assignment, and then, only on a named array.
+
+ The syntax is as follows:
+
+    array [ where expr1 ] = expr2
+
+ Expr1 must evaluate to an array with the same organization and dimensions 
+ as array, and where expr1 is true, the corresponding element of array is 
+ replaced with the value of expr2.  Expr2 must be a single value.
+
+ Example:
+     This example replaces all values in data that are less than zero,
+     with the value 0.
+
+        dv> data[ where (data < 0) ] = 0
+
+?functions
+ Functions
+
+?functions org()
+?org()
+ org() - Show or change an objects data organization
+
+ org(object=VAL [,org={BIL,BIP,BSQ}])
+
+    The org() function reports or changes the data organization of an
+    object.  If used with only one argument, the data organization of
+    the object specified is reported as a string.  The return values
+    are one of:
+
+        "bil" - Band interleaved by line (XZY)
+        "bip" - Band interleaved by pixel (ZXY)
+        "bsq" - Band sequential (XYZ)
+
+    If the second, optional, argument is included, the object specified
+    by the first argument is duplicated and converted to the specified
+    organization.
+
+ See Also:
+    bil(), bip(), bsq()
+
+?functions format()
+?format() 
+ format()  - Show or change an objects data format
+
+ format(object=VAL [, format={BYTE,SHORT,INT,FLOAT,DOUBLE}])
+
+    The format() function reports or changes the data format of an
+    object.  If used with only one argument, the data format of the
+    object specified by the argument is reported as a string.  The
+    return values are one of:
+
+        "byte"   - 8 bit unsigned integer
+        "short"  - 16 bit signed integer
+        "int"    - 32 bit signed integer
+        "float"  - 32 bit real
+        "double" - 64 bit real
+
+    If the second, optional, argument is included, the object specified bt
+    the first argument is duplicated and converted to the specified format.
+
+ See Also:
+    byte(), short(), int(), float(), double()
+
+?functions dim()
+?dim()
+ dim() - Show an objects size
+
+ dim(object=VAL)
+
+    The dim() function reports the size of each axis of an object.
+    The values are returned in a 3x1x1 array, as the size of the 
+    X, Y and Z axis, respectivly.
+
+?functions bsq()
+?bsq()
+ bsq() - Convert an object to BSQ organization
+
+ bsq(object=VAL)
+
+    The bsq() function copies and converts an object to BSQ organization.
+    This function is equivalent to org(object=VAL, org=BSQ).
+
+ See Also:
+    bil(), bip(), org()
+
+?functions bip()
+?bip()
+ bip() - Convert an object to BIP organization
+
+ bip(object=VAL)
+
+    The bip() function copies and converts an object to BIP organization.
+    This function is equivalent to org(object=VAL, org=BIP).
+
+ See Also:
+    bil(), bsq(), org()
+
+?functions bil()
+?bil()
+ bil() - Convert an object to BIL organization
+
+ bil(object=VAL)
+
+    The bil() function copies and converts an object to BIL organization.
+    This function is equivalent to org(object=VAL, org=BIL).
+
+ See Also:
+    bsq(), bip(), org()
+
+?functions byte()
+?byte()
+ byte() - Convert an object to BYTE format
+
+ byte(object=VAL)
+
+    The byte() function copies and converts an object to BYTE format.
+    Any values above or below the maximum representable values of
+    0, 255 are set to the nearest representable value.
+    This function is equivalent to format(object=VAL, format=BYTE).
+
+ See Also:
+    short(), int(), float(), double(), format()
+
+?functions short()
+?short()
+ short() - Convert an object to SHORT format
+
+ short(object=VAL)
+
+    The short() function copies and converts an object to SHORT format.
+    Any values above or below the maximum representable values of
+    -32767,32768 are set to the closest representable value.
+    This function is equivalent to format(object=VAL, format=SHORT).
+
+ See Also:
+    byte(), int(), float(), double(), format()
+
+?functions int()
+?int()
+ int() - Convert an object to INT format
+
+ int(object=VAL)
+
+    The int() function copies and converts an object to INT format.
+    Any values above or below the maximum representable values of
+    -2^31,2^31 are set to the closest representable value.
+    This function is equivalent to format(object=VAL, format=INT).
+
+ See Also:
+    byte(), short(), float(), double(), format()
+
+?functions float()
+?float()
+ float() - Convert an object to FLOAT format
+
+ float(object=VAL)
+
+    The float() function copies and converts an object to FLOAT format.
+    The behavior of float() when dealing with values out of the 
+    representable range, 1.4e-45 to 3.4e38, is undefined.
+    This function is equivalent to format(object=VAL, format=FLOAT).
+
+ See Also:
+    byte(), short(), int(), double(), format()
+
+?functions double()
+?double()
+ double() - Convert an object to DOUBLE format
+
+ double(object=VAL)
+
+    The double() function copies and converts an object to DOUBLE format.
+    The behavior of double() when dealing with values out of the 
+    representable range, 1.7e308 to 4.9e-324 is undefined.
+    This function is equivalent to format(object=VAL, format=DOUBLE).
+
+ See Also:
+    byte(), short(), int(), float(), format()
+
+?functions cat()
+?cat()
+ cat() - Concatenate (append) two objects together
+
+ cat(ob1=VAL,ob2=VAL,axis={X,Y,Z})
+
+    The cat() function duplicates ob1 and appends a copy of ob2, along the 
+    specified axis.  The two objects must match in format and organization, 
+    and must have the same dimension along the two unspecified axis.
+
+ See Also:
+    format(), org(), dim(), //
+
+?functions clone()
+?clone()
+ clone() - Duplicate an object many times.
+
+ clone(object=VAL [,x=INT] [,y=INT] [,z=INT])
+
+    The clone() function dupicates the specified object X*Y*Z times, and
+    concatenates these objects together the specified number of time along
+    each axis.  Any of the X, Y or Z values that are not specified defualt
+    to a value of 1.
+
+ See Also:
+    cat()
+
+?functions read()
+?read()
+ read() - Load a data from file
+
+ read(filename="path" [,record=INT],
+      [,xlow=INT] [,xhigh=INT] [,xskip=INT]
+      [,ylow=INT] [,yhigh=INT] [,yskip=INT]
+      [,zlow=INT] [,zhigh=INT] [,zskip=INT])
+
+    The read() function loads the specified data file.   The read() 
+    function can automatically recognize and load the following file 
+    formats:
+        SpecPR_FS2
+        VICAR
+        PDS/ISIS Qube and Image
+        PBMPlus: PBM, PGM and PPM formats
+        USGS GRD
+        Imath
+        GOES weather satellite
+        AVIRIS
+        GIF, JPEG, TIFF, PNG, BMP
+        HDF5
+
+    If the specified path is not absolute (ie: it doesn't start with a '/'),
+    and the specified file cannot be found in the current directory, the
+    DATAPATH variable is used as a list of directories to additionally search.
+    The specified path is appended to each directory listed in the DATAPATH
+    variable.
+
+    If the variable VERBOSE is set to a value greater than zero, details of
+    the file loading process are printed to stderr.  Higher values (up to 3)
+    produce more output.
+
+    The record value is required for SpecPR files.  If it is given with 
+    another file type, it is used as the high and low value for a Z axis 
+    subset, causing a single image to be extracted from cubes.
+
+    The values low, high and skip can be specified for each axis (ie: xlow,
+    zhigh, etc) to specify a precise subset to be read.  All the subsetting
+    arguments are optional.
+
+    Reading a PPM image produces a 3-plane, BIP cube of byte values.
+    Each plane represents the red, green and blue values respectivly.
+
+    The functions load() and import() are aliases for the read() function.
+
+ See Also:
+    write(), filetype(), load_pds(), load_raw(), load_vanilla(), 
+    ascii(), isis(), datapath, verbose
+
+?functions write()
+?write()
+ write() - Save data to file
+
+ write(object=VAL, filename="path", type=TYPE, force=1)
+
+    The write() function copies data to a file.  The value of type specifies 
+    the type of file written, and is one of: 
+
+        specpr  - SpecPR
+        vicar   - Vicar grayscale
+        grd     - USGS Grid
+        pgm     - Pbmplus 8-bit grayscale
+        ppm     - Pbmplus 24-bit true-color
+        isis    - PDS/ISIS
+        ascii   - Columnar ascii matrix
+        imath   - Imath format
+        ers     - ER Mapper Raster
+        gif     - Compuserve GIF format
+        tiff    - Tagged Image File Format
+        jpeg    - Joint Photographic Experts Group
+        png     - Portable Network Graphics
+        bmp     - Microsoft Bitmap
+        raw     - Binary output, no header
+    
+    If the force keyword is included, then any existing file of the same
+    name is overwritten.  Without this keyword, the write is aborted
+    if the filename already exists.
+
+    Notes: 
+        The standard graphics formats (GIF, TIFF, JPEG, PNG, BMP, PPM),
+        all expect either 1 or 3 band, byte images.  A 3-band image is
+        interpreted to be a red band, a green band and a blue band.
+
+        The PGM and GRD formats can not handle multiplane data.
+
+        The ERS format produces two files, one named "path", containing the
+        raw raster data, and another named "path.ers", containing the ERS
+        header.  This is the standard for ERS files.
+
+ See Also:
+    filetype(), read(), rgb(), load_pds(), load_raw(), ascii(),
+    write_isis(), write_isis_cub(), load_bin5()
+
+?functions filetype()
+?filetype()
+ filetype() - Determine the type of a file
+
+ filetype(filename="path")
+
+    The filetype function returns the type of a data file.  The filetype
+    function returns the following strings for each type recognized:
+        "SPECPR" - Specpr_FS2
+        "VICAR"  - VICAR
+        "GRD"    - USGS GRD
+        "ISIS"   - PDS/ISIS
+        "PNM"    - PBMPlus 
+        "AVIRIS" - AVIRIS
+        "IMATH"  - VM IMath format
+        "ENVI"   - ENVI format
+
+    The output from the filetype() function is suitable for input to the
+    type value of the write() function.
+
+    This funCtion is almost always not up to date with the latest stuff.
+
+?functions source()
+?source()
+ source() - Execute a script file
+
+ source(filename="path")
+
+    The source function executes the specified file exactly as if its
+    contents has been typed as input, with the exception that the commands
+    are not stored in the log file, although the source() command is.
+
+    Executing scripts that call source is allowed.  The only limit on the
+    number of files that can be open is imposed by the operating system.
+
+?functions atoi()
+?atoi()
+ atoi() - Convert a string to INT
+
+ atoi(STRING | TEXT)
+
+    The atoi function converts the specified string to an INT value.
+    If the input is a TEXT array, then each line of the TEXT array is 
+    converted and an array of 1xNx1 values is returned.
+
+ See Also:
+    atof()
+
+?functions atof()
+?atof()
+ atof() - Convert a string to FLOAT
+
+ atof(STRING | TEXT)
+
+    The atof function converts the specified string to a FLOAT value.
+    If the input is a TEXT array, then each line of the TEXT array is 
+    converted and an array of 1xNx1 values is returned.
+
+ See Also:
+    atoi(), atod()
+
+?functions atod()
+?atod()
+ atod() - Convert a string to DOUBLE
+
+ atod(STRING | TEXT)
+
+    The atod function converts the specified string to a DOUBLE value.
+    If the input is a TEXT array, then each line of the TEXT array is 
+    converted and an array of 1xNx1 values is returned.
+
+ See also:
+    atof(), atoi()
+
+?functions basename()
+?basename()
+ basename - Return file portion of a path/file string.
+
+ basename(obj=STRING | TEXT, [ext = STRING])
+
+    The basename function searches the specified string for the last
+    occurance of the '/' character, and duplicates and returns
+    everything after it.  If the '/' character does not appear in
+    the string, the entire string is duplicated and returned.
+
+    The basename function is identical to the unix command of the same name.  
+
+    if ext is used, then the ending substring which matches ext is
+    removed.
+
+ See also:
+    dirname()
+
+?functions cluster()
+?cluster()
+ cluster - Windowing cluster detection
+
+ cluster(object=VAL [,radius=INT] [,threshold=INT])
+
+    The cluster() function generates a 'windowed cluster overlay', from a
+    source image.  Each pixel of the overlay represents the number of
+    neighboring pixels in the source image.  A pixel is considered to be a
+    neighbor if it is within radius pixels, and has a value above threshold.
+
+    The source image must be a BYTE, SHORT or INT image, with a depth of 1.
+
+ See Also:
+    ccount()
+
+?functions ccount()
+?ccount()
+ ccount() - Count pixels in a cluster overlay
+
+ ccount(object=VAL [,threshold=INT] [,ignore=INT])
+
+    The ccount() function is used to count the number of pixels in a 
+    cluster overlay that have a value above the specified threshold.  
+
+    Ccount() returns a 3x1x1 array of FLOAT values representing:
+        The ratio of the next two values,
+        The number of pixels in the overlay with a value above threshold,
+        The total number of pixels in the image with a value above ignore.
+
+ See Also:
+    cluster()
+
+?functions rgb()
+?rgb()
+ rgb() - Generate a 3-plane RGB image.
+
+ rgb(red=VAL,green=VAL,blue=VAL)
+
+    The rgb() function duplicates the three specified objects, and
+    concatenates them together into a 3-band BIP cube, suitable for
+    output as a PPM image.
+
+    Each image must be an BYTE image and have the same X and Y dimensions.
+
+ See Also:
+    write()
+
+?functions translate()
+?translate()
+ translate() - translate an object along specified axis
+
+ translate(object=VAL,from={x,y,z},to={x,y,z},flip=1)
+
+    The translate function translates the specified object along the
+    from the 'from' axis to the 'to' axis.  (ie: from X to Y).  If
+    the 'flip' keyword is included (with any value), the specified
+    axes are copied in descending instead of ascending order.
+
+    The following example translates the specified image from the
+    +X to the -Y axis, effectivly rotating the image counter-clockwise
+    in the X-Y plane.
+
+    Example:
+       dv> translate(object=image, from=x, to=y, flip=1)
+
+?functions ascii()
+?ascii()
+ ascii() - Load an ASCII columnar file
+
+ ascii(filename="PATH",x=INT,y=INT,z=INT,format=TYPE,column=INT,row=INT,delim=STRING)
+
+    The ascii() function loads data from an ASCII columnar (matrix) file.  
+    The data is assumed to be in BSQ organization.
+
+    Pixel values on a line must be separated by at least one space or 
+    tab.  Lines must be seperated by exactly 1 newline, and planes
+    must be seperated by one (1) blank line.
+
+    The only required keyword is 'filename'.  If any of the X, Y or Z
+    values are omitted, they are assumed to be 1, unless all are omitted,
+    in which case the file is pre-scanned to attempt to determine its
+    size.
+
+    'Format' determines the output type of the data.  TYPE is one of:
+    'byte', 'short', 'int', 'float', or 'double'.  If format is omitted,
+    the default output type is FLOAT.  Floating point values cannot be
+    read using a type of 'byte', 'short' or 'int'.
+
+    The value 'row' specifies the number of lines to skip before trying
+    to read any data.  The value 'column' specifies the number of values
+    to skip for every line read.
+
+    The 'delim' parameter defines the list of column delimiters to use.
+    If this option is omitted, the both TAB and SPACE are used as delimters.
+    The value for 'delim' should always be enclosed in quotes.
+
+?functions Math
+ Davinci supports the usual complement of floating-point math functions.
+ Each of these functions returns a FLOAT.
+
+?functions Math sin()
+?sin()
+ sin() - Trigonometric sine
+
+ sin(VAL)
+
+    Computes the trigonometric sine of the input value.
+
+?functions Math cos()
+?cos()
+ cos() - Trigonometric cosine
+
+ cos(VAL)
+
+    Computes the trigonometric cosine of the input value.
+
+?functions Math tan()
+?tan()
+ tan() - Trigonometric tangent
+
+ tan(VAL)
+
+    Computes the trigonometric tangent of the input value.
+
+?functions Math asin()
+?asin()
+ asin() - Trigonometric arc-sine
+
+ asin(VAL)
+
+    Computes the trigonometric arc-sine of the input value.
+
+?functions Math acos()
+?acos()
+ acos() - Trigonometric arc-cosine
+
+ acos(VAL)
+
+    Computes the trigonometric arc-cosine of the input value.
+
+?functions Math atan()
+?atan()
+ atan() - Trigonometric arc-tangent
+
+ atan(VAL)
+
+    Computes the trigonometric arc-tangent of the input value.
+
+?functions Math floor()
+?floor()
+ floor() - Round down
+
+ floor(VAL)
+
+    Rounds down to the nearest integer value.  Produces FLOAT value.
+
+?functions Math ceil()
+?ceil()
+ ceil() - Round up
+
+ ceil(VAL)
+
+    Rounds up to the nearest integer value.  Produces FLOAT value.
+
+?functions Math abs()
+?abs()
+ abs() - Absolute value
+
+ ceil(VAL)
+
+    Returns absolute value of input value.
+
+?functions Math exp()
+?exp()
+ exp() - Exponential function
+
+ exp(VAL)
+
+    Returns exponential function, e^x
+
+?functions Math log()
+?log()
+ log() - Base e logarithm
+
+ log(VAL)
+
+    Returns natural logarithm of input value.  Input value must be positive
+
+?functions Math log10()
+?log10()
+ log10() - Base 10 logarithm
+
+ log10(VAL)
+
+    Returns base 10 logarithm of input value.  Input value must be positive
+
+?functions Math pow()
+?pow()
+ pow() - Compute x raised to the power y
+
+ pow(x,y) 
+
+ Computes x raised to the power y.
+
+?functions help()
+?help()
+ help - Online help function
+
+ help topic
+ ? topic
+
+    This is the online help system.
+
+?functions moment()
+?moment()
+ moment() - Compute standard statistics (min,max,mean,adev,sdev,var,skew,kurt)
+
+ moment(VAL)
+
+    Computes the following statistics for the input value, and returns
+    them (in the specified order) in a 8x1x1 FLOAT array:
+
+         minimum value,
+         maximum value,
+         mean,
+         average deviation,
+         standard deviation,
+         variance,
+         skewness,
+         kurtosis.
+
+
+?functions display()
+?display()
+ display() - Display a grayscale image
+
+ display(VAL)
+
+
+    The display function passes the specified argument to an external
+    viewer, as a grayscale image.
+
+?functions xplot()
+?xplot()
+ xplot - Plot one or more objects, and supply an optional X-Axis
+
+ xplot([axis={X,Y,Z}],[Xaxis=VAL],VAL1,[VAL2...])
+
+    The xplot function will take a data block (or several data blocks)
+    and plot them using axis as a kind of delimiter.  Example:
+        a=create(1,7,20)
+        xplot(a, axis=Y)
+
+    will create a set of 20 data plots (all the same color) of 7 data 
+    points each.  Alternatively:
+        xplot(a,axis=Z) 
+
+    will reate a set of 7 data plots (all the same color) of 20 data points
+    each.  To seperate data sets (in terms of color/symbol) then specify
+    them as different objects:
+        xplot(a1,a2,axis=Y)
+
+    will produce (on the same graph) two plots of 20 data sets of 7 data
+    points each (assumeing a1 and a2 have the same configuration as our
+    original a).
+
+    An X-Axis can also be specified to provide a horizontal scale of
+    a particular nature:
+    
+        MyAxis=create(1,7,1,format=float)
+        MyAxis=MyAxis/max(MyAxis) /*My Axis is now 0->1 in 7 steps */
+        xplot(axis=Y,a,a1,a2,Xaxis=Myaxis)
+
+    Now we will get three color plots of 20 data sets (each) of 7
+    data points each and the X-axis will go from 0 to 1 in seven steps.
+
+    Alternatively, we could have specified MyAxis as follows:
+
+        MyAxis=create(1,7,20,format=float)
+
+    Now there is an X-axis per data set (NOTE: this can be abused so use
+    with caution).
+
+?functions gplot()
+?gplot()
+ gplot() - Plot an object
+
+ gplot(VAL)
+
+
+    The gplot function passes the specified argument to an external
+    plotting program (gnuplot).  The data is passed as it is stored
+    in memory.
+
+?functions interp()
+?interp()
+ interp() - Point interpolation
+
+ interp(object=VAL,from=VAL,to=VAL)
+
+
+    The interp() function performs a point interpolation.  OBJECT is 
+    interpolated from the FROM object to the TO object, taking OBJECT
+    as the Y data values, and FROM as the corresponding X values.
+
+    OBJECT and FROM must contain the same number of elements.  The low
+    and high values of TO must reside entirely within the low and high
+    values of FROM.
+
+    Note:  A lot of people get confused by this description.  Lets try again:
+
+    OBJECT is a set of Y values.
+    FROM is a corresponding set of X values.
+    TO is one or more new X values to look up from the FROM/OBJECT pairs.
+
+?functions fit()
+?fit()
+ fit() - Least squares curve fitting
+
+ fit(y=VAL, x=VAL, steps=INT, type=STRING, plot=BOOL, start=VAL, ignore=VAL)
+
+    The fit() function performs a non-linear least-squares fit to a data
+    set, using the user specified function type.  Currently, only
+    the following four functions are implemented:
+
+        gauss       f(x) = a2 * exp(-((a0-x)/a1)**2)
+        gaussc      f(x) = a2 * exp(-((a0-x)/a1)**2) + a3
+        gaussl      f(x) = a2 * exp(-((a0-x)/a1)**2) + a3 + a4*x
+        linear      f(x) = a0 + a1*x
+        quad        f(x) = a0 + a1*x + a2*x*x
+        cube        f(x) = a0 + a1*x + a2*x*x + a3*x*x*x
+
+    The fit() function uses an iterative method to find the best fit,
+    however by default, only one iteration is performed.  The user can
+    specify a larger number of iterations with the 'steps' parameter, or
+    the fit() function can be called repeatedly, using the return values
+    from the previous call as the start parameter for the next call.
+
+    If no start parameter is specified, or any of the start parameters are
+    zero, fit() makes a guess based on the function selected and the 
+    actual data values.  (The marquant-levy fitting method can not handle
+    zero coefficients.)
+
+    If the X data values are not specified, channels are used instead, 
+    starting at 0.
+
+    The fit() function returns an array of DOUBLEs containing the
+    function coefficients, the the chi-squared 'goodness-of-fit'
+    value, and the alamda necessary for the next iteration.  The
+    order of these values is defined by the function type selected.
+
+    The returned coefficients array is suitable for use as the start values
+    for another iteration of the fit() function.
+
+    If the plot keyword is given and is non-null, then the data, and the 
+    fitted function are plotted.
+
+?functions vignette()
+?vignette()
+ vignette() - Generate vignetting correction image
+
+ vignette(width=INT, height=INT, radius=FLOAT, offset=FLOAT, intensity=FLOAT)
+
+    The vignette() function generates a vignetting correction image.
+ 
+    The width and height parameters specify the size of the image.
+    Radius, offset and intensity specify the values of the variables
+    in the vignetting function:
+ 
+         cx = width/2;
+         cy = height/2;
+         r =  sqrt((i-cx)*(i-cx) + (j-cy)*(j-cy))
+         a[i,j] = intensity * cos((r/radius) * (pi/2))) + offset
+    
+    The returned image is of type FLOAT
+
+?functions bop
+?bop
+ bop - binary operator functions
+
+ Binary operator functions take exactly 2 inputs, operate on them in the 
+ same way math operators work, and return a double.
+
+ The functions covered by bop are:
+
+ bbr()   - Generate black-body curves 
+ btemp() - Compute brightness temperature
+
+?functions bbr()
+?bbr()
+ bbr() - Generate black-body curves
+
+ bbr(wavelength, temp)
+
+    The bbr() function is a binary operator function (see bop).
+
+    The bbr() function computes the black-body curve corresponding
+    to the specified temperature, for the given wavelength(s).
+
+    Wavelengths are assumed to be in units of wavenumber (1/cm).
+
+    The bbr() function returns a DOUBLE.
+
+ See also:
+    btemp(), bop()
+
+?functions btemp()
+?btemp()
+ btemp() - Compute brightness temperature
+
+ btemp(wavelength, radiance)
+
+    The bbr() function is a binary operator function (see bop).
+
+    The btemp() function computes the brightness temperature of
+    the given radiance(s) at the specified wevelength(s).
+
+    Wavelengths are assumed to be in units of wavenumber (1/cm).
+
+    The btemp() function returns a DOUBLE.
+
+ See also:
+    bbr(), bop()
+
+?functions ifill()
+?ifill()
+ ifill() - Interpolated image fill
+
+ ifill(object=VAL, radius=INT, fill=VAL)
+
+    The ifill() function 'fills in gaps' in an image.
+    
+    The input image is searched a strip at a time in a particular
+    scan direction, searching for values equal to the fill value.
+    If a run of 1 or more pixels of the fill value are found, and
+    the run does not extend more than <radius> pixels, the fill
+    values are replaced with values interpolated from the non-fill
+    values bordering the gap.
+
+    This process is repeated 4 times, corresponding to scan directions
+    running north/south, east/west, ne/sw, and nw/se.  The 4 images
+    are averaged together, ignoring any remaining fill values, and
+    the non-fill values from the original image are copied in place.
+
+    The <radius> value defaults to 3.
+    The <fill> value defaults to 0.
+
+?functions jfjll()
+?jfjll()
+ jfjll() - Phil's filling routine
+
+ ifill(object=VAL, radius=INT, fill=VAL, wrap=BOOL, neighbors=INT)
+
+    The jfjll() function 'fills in gaps' in an image.
+    
+    The input image is searched for holes (values equal to the fill value).
+    For each hole, the input image is scanned in 8 directions for non-fill
+    values.  If <neighbors> non-fill values are found within <radius> pixels,
+    a weighted average of these values is used to fill in the hole.
+
+    The weighting used is r*r.
+
+    The value <radius> defaults to 3.
+    The value <fill> defaults to 0.
+    The value <neighbors> defaults to 5.
+
+?functions pause()
+?pause()
+ pause() - Get a line of input from the user
+ 
+ pause(string)
+
+ The pause() function prints its argument (without a newline), and
+ waits for a line of input from the user, which is returned by the
+ function as a string.
+
+ Example:
+
+    while (1) {
+        s = pause("Enter a number, or press return to exit:\n")
+        if (strlen(s) <= 1) break
+    }
+
+?functions printf()
+?printf()
+ printf() - print formatted output
+
+ printf(fmt [, argument...] )
+
+ The printf() function is a direct interface to the C library function
+ of the same name.  
+ 
+ Printf returns no value.
+
+?functions sprintf()
+?sprintf()
+ sprintf() - print formatted output to a string
+
+ sprintf(fmt, ... )
+
+ The sprintf() function is a direct interface to the the C library
+ function of the same name, except that the the output string is 
+ returned, not passed.
+
+ Example:
+
+    s = sprintf("The value of 3+4 is %d\n", 3+4)
+
+?functions fprintf()
+?fprintf()
+ fprintf() - print formatted output to a file
+
+ fprintf(filename, fmt, ... )
+
+ The fprintf() function works exactly like the sprintf function,
+ but appends its output to specified filename.
+
+ Notes: This is such a hack.
+
+?functions system()
+?system()
+ system() - issue a shell command.
+
+ system(cmd)
+
+ The system() function executes the specified command string using the
+ C library system() call, and returns when the command exits.
+
+ The system() function returns the value of the underlying C system
+ call and its interpretation is OS dependant.
+
+ Example:
+
+    system("ls -l");
+
+
+?functions fsize()
+?fsize()
+ fsize() - return file size
+
+ fsize(filename)
+
+ The fsize() function determines the size of the specified file, and
+ returns that number as an integer.  If the file does not exist, fsize()
+ returns a -1.
+
+ Example:
+
+    fsize("/etc/passwd")
+
+
+?functions avg()
+?avg()
+ avg() computes the statistical average along one or more axis. 
+ If no axis is specified, then the average is computed along all three. 
+
+ If an ignore value is specified, then any element that is equal 
+ to the ignore value is not included in the computation. If all the 
+ values in the computation are equal to the ignore value, 
+ then the output is set to the ignore value.
+
+ Syntax: avg(object=VAL [, axis=OPTION] [, both=1] [, ignore=VAL])
+
+ 'object' - may be any numeric array of any data type and format
+ 'axis' - Option to compute average along specified axis. 
+  Options include: x, y, z, xy, xz, yz, xyz.
+ 'both' - Option to return both the average and the standard 
+  deviation in a structure
+ 'ignore' - Optional value to ignore in average and standard 
+  deviation calculation
+
+ Example:
+
+    This example computes the average along the X and Y axis, producing
+    an array with the same Z dimension of the input data.
+
+    dv> a = avg(object=data, axis=xy)
+
+ Note: The avg function uses a one-pass accumulator that can experience
+       round off error with lots of numbers.
+
+?functions stddev()
+?stddev()
+ stddev() - Compute standard deviation along specified axis
+
+ The stddev() function computes the standard deviation along one or
+ more axis.  If no axis is specified, then the standard deviation 
+ is computed along all three.  stddev() returns a DOUBLE.
+
+ If an ignore value is specified, then any element that is equal to
+ the ignore value is not included in the computation.  If all the
+ values in the computation are equal to the ignore value, then the
+ output is set to the ignore value.
+
+ If the both flag is set (both=1), then stddev returns a structure
+ containing the both the average and stddev.
+
+ Syntax: stddev(object=VAL[, axis=OPTION][, both=BOOL][, ignore=VAL])
+
+ 'object' - may be any numeric array of any data type and format
+ 'axis' - Option to compute average along specified axis. 
+  Options include: x, y, z, xy, xz, yz, xyz.
+ 'both' - Option to return both the average and the standard 
+  deviation in a structure
+ 'ignore' - Optional value to ignore in average and standard 
+  deviation calculation
+
+ Example:
+
+    This example computes the standard deviation the X and Y axis, producing
+    an array with the same Z dimension of the input data.
+
+    dv> sigma = stddev(object=data, axis=xy)
+
+ Note: The stddev function uses a one-pass accumulator that can experience
+       round off error with lots of numbers.
+
+?functions sum()
+?sum()
+ sum() - Compute sum along specified axis
+
+ The sum() function computes the sum of values along one or more axis.  
+ If no axis is specified, then all the summation is performed along
+ all three axis.  Sum always returns a DOUBLE.
+
+ Syntax: sum(object=VAL[, axis=OPTION])
+ 'object' - may be any numeric array of any data type and format
+ 'axis'   - option to compute along specified axis.
+            options include: x, y, z, xy, xz, yz and xyz. 
+
+ Example:
+
+    This example computes the sum along the X and Y axis, producing
+    an array with the same Z dimension of the input data.
+
+    dv> a = sum(object=data, axis=xy)
+
+?functions min()
+?min()
+ min() - Compute minimum value along specified axis
+
+ min(object=VAL[, axis=[x][y][z]][, ignore=VAL])
+
+The min() function finds the minimum value along one or more axis.  
+If no axis is specified, then all three axis are used.
+
+ If an ignore value is specified, then any element that is equal to
+ the ignore value is not included in the computation.  If all the
+ values in the computation are equal to the ignore value, then the
+ output is set to the ignore value.
+
+Min always returns a FLOAT.
+
+ Example:
+
+    This example finds the minimum along the X and Y axis, producing
+    an array with the same Z dimension of the input data.
+
+    dv> a = min(object=data, axis=xy)
+
+?functions max()
+?max()
+ max() - Compute maximum value along specified axis
+
+ max(object=VAL[, axis=[x][y][z]])
+
+The max() function finds the maximum value along one or more axis.  
+If no axis is specified, then all three axis are used.
+
+ If an ignore value is specified, then any element that is equal to
+ the ignore value is not included in the computation.  If all the
+ values in the computation are equal to the ignore value, then the
+ output is set to the ignore value.
+
+Max always returns a FLOAT.
+
+ Example:
+
+    This example finds the maximum along the X and Y axis, producing
+    an array with the same Z dimension of the input data.
+
+    dv> a = max(object=data, axis=xy)
+
+
+?functions minchan()
+?minchan()
+ minchan() - finds the column with the min value in an array
+
+ Syntax: minchan(object = VAL)
+
+ Data organization and format are not taken into account and three 
+ dimensional arrays are considered linear arrays in the calculation.
+
+ minchan always returns an INT. 
+
+?functions maxchan()
+?maxchan()
+ maxchan() - finds the column with the max value in an array
+
+ Syntax: maxchan(object = VAL)
+
+ Data organization and format are not taken into account and three 
+ dimensional arrays are considered linear arrays in the calculation.
+
+ maxchan always returns an INT.
+
+?functions maxpos()
+?maxpos()
+ maxpos() - Returns the location of the element with max value in an array.
+
+ By default maxpos will return the x-y-z position of the single maximum
+ value in an array. Maxpos can also return the positions of N highest
+ values using iter=N. The positions will be returned as a 3xNx1 INT array.
+
+ Maxpos can also return to the user the value(s) of the pixel(s) by using
+ the flag showval=1. In this case data will be returned as a 4xNx1 FLOAT array.
+ The first three elements per line contain the position and the fourth element
+ contains the value of the pixel.
+
+ Maxpos can search for maximum values less than a specified threshhold using
+ the 'lt' option.
+
+ Syntax: maxpos(data=VAL[, iter=INT][, ignore=VAL][, lt=VAL][, showval=INT])
+ 'data'    - Any numeric array
+ 'iter'    - Iterations to look for successively lower values
+ 'ignore'  - The value to ignore while searching for maximum value.
+ 'lt'      - Search for a maximum value below this 'less than' value.
+ 'showval' - Optional flag to return a 4xNx1 FLOAT array containing 
+             the value of the pixel in the 4th position.
+
+ Examples:
+
+ dv> pos = maxpos(a)
+ 3x1x1 array of int, bsq format [12 bytes]
+ 4	3	1
+
+ dv> pos = maxpos(a,iter=2,lt=10)
+ 3x2x1 array of int, bsq format [24 bytes]
+ 3	 3	 1
+ 2	 3	 1
+
+?functions minpos()
+?minpos()
+ maxpos() - Returns the location of the element with min value in an array.
+
+ By default minpos will return the x-y-z position of the single minimum
+ value in an array. Minpos can also return the positions of N lowest
+ values using iter=N. The positions will be returned as a 3xNx1 INT array.
+
+ Minpos can also return to the user the value(s) of the pixel(s) by using
+ the flag showval=1. In this case data will be returned as a 4xNx1 FLOAT array.
+ The first three elements per line contain the position and the fourth element
+ contains the value of the pixel.
+
+ Minpos can search for minimum values greater than a specified threshhold 
+ using the 'gt' option.
+ 
+ Syntax: minpos(data=VAL[, iter=INT][, ignore=VAL][, gt=VAL][, showval=INT])
+ 'data'    - Any numeric array
+ 'iter'    - Iterations to look for successively higher values
+ 'ignore'  - The value to ignore while searching for maximum value.
+ 'gt'      - Search for a minimum value above this 'greater than' value.
+ 'showval' - Optional flag to return a 4xNx1 FLOAT array containing 
+             the value in the 4th position.
+
+?functions valpos()
+?valpos()
+ valpos() - Find the location of elements in an array containing values 
+ closest to a specified value. 
+
+ By default valpos will return the x-y-z position of the single value in 
+ an array that is closest to the specified value. However, valpos can also 
+ return the positions of N closest values using iter=N. The positions will 
+ be returned as a 3xNx1 INT array.
+
+ Valpos can also return to the user the value(s) of the pixel(s) by using
+ the flag showval=1. In this case data will be returned as a 4xNx1 FLOAT array.
+ The first three elements per line contain the position and the fourth element
+ contains the value of the pixel.
+
+ Syntax: valpos(data=VAL, value=VAL[, iter=INT][, ignore=VAL][, showval=INT])
+ 'data'    - Any numeric array
+ 'value'   - The desired numeric value
+ 'iter'    - Number of occurences desired
+ 'ignore'  - Optional value to ignore when searching values.
+ 'showval' - Optional flag to return a 4xNx1 FLOAT array containing
+             the value in the 4th position.
+
+?functions load_vis()
+?load_vis()
+ load_vis() - Load a VISIBLE Paci file
+
+    load_vis(filename=STRING, [gse=1], [nocube=1], [verbose=0], [rotate=1])
+
+    The load_vis function will read the four types of visible paci data that
+    currently exitis: (gse, raw, predictive, DCT).  
+
+    If the data contain multiple bands, then the routine will return a data
+    cube with each band on a different Z-plane.  If the user wants a single
+    band file then use: nocube=1 (defualt: nocube=0).  This will prevent the 
+    reader from stacking the bands.
+
+    There is a verbose mode which may be used.  This will increase the amount
+    of information which davinci returns reguarding what is going on during
+    the read.
+
+    The final flag is the rotate flag.  Right now, it WILL rotate by default
+    and the user must give a rotate=0 to prevent rotation (currently, only
+    spacecraft data is rotated, gse is NOT).  Rotation involves horizontal and
+    vertical flipping of EACH framelet (not the entire image). 
+
+
+?functions load_paci()
+?load_paci()
+ load_paci() - Load an IR Paci file 
+
+ load_paci(filename=STRING, [[frame=INT] | [band=int]], [report=1], [nosig=1],
+                [swap=1],[quiet={0,1,2}])
+
+ The load_paci function reads an IR paci file into memory and organizes in 
+ various ways depending on user input. The user can specifiy a band OR frame 
+ number and only those data that match are loaded. If the user sets report=1
+ then only a summary report is given back (and no data are loaded).  Each 
+ frame of data has 6 control values tacked on to the front of the frame and 2
+ value tacked on the back.  The first 2 values are the starting sync word, 
+ the next value is the ID, then band number then two numbers for the frame 
+ number.  The last two values are the ending sync value.  If the user does NOT
+ want these values to be returned with the data, then use: nosig=1 (defualt 
+ is nosig=0).
+
+ There are two major forms for IR paci data, byte-swapped and NOT byte-swapped.
+ If the data is from the Ratheon GSE (in Santa Barbara) then its byte-swapped.
+ Other-wise it is not.  If the data is NOT byte-swapped, swap=0 must be issued
+ since swap=1 is the default value.
+
+ Finally, various information about the condition of the data, missing
+ information, skipped and/or repeated information is displayed.  To modify this
+ a quiet value can be issued (defualt: quiet=0) with the following results:
+
+        quiet=0:        Full reporting
+        quiet=1:        Only print end summary
+        quiet=2:        Print nothing except fatal errors
+
+?history
+     Davinci maintains a command line history.  As each line is typed, it
+     is logged to a file in the current working directory, ".dvlog".  When
+     davinci is started in an interactive session, this log file is preloaded
+     into the command history.
+
+     The history() command shows the contents of the history.
+
+     You can copy lines from the history into a temporary file, which can
+     then be edited, using the edit() function.
+
+?history history()
+?history()
+ history() - Display command line history
+
+ history(INT)
+
+     The history() function displays the last N commands from the command
+     line history.  If no argument is given, then the entire history is 
+     printed to the screen.
+
+ Example:
+
+ This example displays the last 10 commands:
+
+    dv> history(10)
+
+
+?functions rgb2hsv()
+?rgb2hsv()
+ rgb2hsv() - Convert a 3-plane RGB image into HSV
+
+ rgb2hsv(object=VAL, maxval=VAL)
+
+     The rgb2hsv() function converts a 3-band RGB image into a 3-band
+     HSV image.  If maxval is specified, it is taken to be the maximum
+     intensity value.  If no value is specified for maxval, its value is
+     determined from the input type.
+
+     HSV values range from 0.0 to 1.0, so the return value has a type of
+     FLOAT.
+
+
+?functions hsv2rgb()
+?hsv2rgb()
+ hsv2rgb() - Convert a 3-plane HSV image into RGB
+
+ hsv2rgb(object=VAL, maxval=VAL)
+
+     The hsv2rgb() function converts a 3-band HSV image into a 3-band
+     RGB image.  If maxval is specified, it is taken to be the maximum
+     intensity value, and the RGB values are scaled to lie between 0 
+     and maxval.  If no value is specified for maxval, it defaults to 1.
+
+    The return value of hsv2rgb() has a type of FLOAT.
+
+?functions histogram()
+?histogram()
+
+ histogram() - Generate a histogram
+
+ histogram(object=VAL, 
+           [start=FLOAT], [size=FLOAT], [steps=INT],
+           [compress=BOOL], [normalize=BOOL], [cumulative=BOOL]);
+
+ The histogram function sorts its input data into some number of bins, and
+ produces a 2xN array of FLOATs as output.  The first column of the output
+ contains the start value of each bin, and the second column contains the
+ number of input values that fell in that bin.
+
+ If the input object is in BYTE or SHORT format, the histogram will be
+ auto-scaled to the 2^8 or 2^16 bins and each bin will have a width of 1.
+ Otherwise, the user MUST provide at least the number of bins (steps)
+ to be included in the histogram.
+
+ If the start and size values aren't given, they are computed from the
+ the minimum and maximum values of the input data.
+
+ The compress options removes all bins with a value of 0.
+ The normalize option divides each bin by the total number of elements.
+ The cumulative option produces a cumulative histogram.
+
+?functions hstats()
+?hstats()
+
+ hstats() - Generate statistics for a histogram
+
+ hstats(object=VAL)
+
+ The hstats() function generates statistics for 2 column input, like that
+ produced by the histogram function.  A structure is returned containing
+ the average and standard deviation for the input data.
+
+?functions gnoise()
+?gnoise()
+ gnoise() - Generate a cube of mutually exclusive planes of noise.
+
+ gnoise([x=INT],[y=INT],[z=INT],[seed=INT])
+
+    The gnoise() function generates Z mutually exclusive planes of
+    uniformly distributed noise.  For each X,Y location, exactly 1 pixel
+    along the Z axis is set to a value of 1, producing images of 
+    random noise with a frequency of 1/Z.  The value seed can be specified
+    to seed the random number generator, to produce reproducable random
+    numbers.  Any dimension not specified defaults to a value of 1.
+
+ See Also:
+    random(), rnoise()
+
+?functions rnoise()
+?rnoise()
+ rnoise() - Generate a cube of pseudo-random, normally distributed, noise.
+
+ rnoise([x=INT],[y=INT],[z=INT],[seed=INT])
+
+    The rnoise() function generates a cube of the specified dimensions,
+    of normally distributed random values.  The normal distribution has
+    a standard deviation of 1.0.  A seed value can be specified to seed
+    the random number generator, to produce reproducable random numbers.
+    Any dimension not specified defaults to a value of 1.
+
+ See Also:
+    random(), gnoise()
+
+?functions random()
+?random()
+ random() - Generate pseudo-random numbers
+
+ random([x=INT],[y=INT],[z=INT],[seed=INT],[type=STRING)
+
+    The random() function generates random numbers, with a distribution
+    specified by the type parameter.
+
+    The possible values for type, and the types of numbers generates are:
+
+    type        distribution    type    interval
+    -------     ------------    ----    ------------
+    uniform     uniform         float   [0.0, 1.0)          # default value
+    drand48     uniform         float   [0.0, 1.0)
+    mrand48     uniform         int     [-2^31, 2^31)
+    normal      gaussian        float   *
+    gauss       gaussian        float   *
+    rand        simple          int     [0, (2^15)-1]
+    random      simple          int     [0, (2**31)-1]
+
+    The gaussian distribution has a mean of 0.0, and a standard deviation
+    of 1.0.
+
+    The value seed can be specified to seed any of the random number 
+    generators, to produce reproducable random numbers.  Any dimension 
+    not specified defaults to a value of 1.
+
+    Some of these types may not be available on all systems.
+
+ See Also:
+    rnoise(), gnoise()
+
+?functions minvert()
+?minvert()
+ minvert() - Invert a square matrix
+ 
+ minvert(VAR)
+ 
+    The minvert() function inverts a square matrix using LU decomposition.
+    The matrix must be square in the X and Y dimensions and the size of the
+    Z dimension must be 1.
+
+    The results from minvert() are always of type DOUBLE
+
+ See Also:
+    identity(), mxm()
+
+?functions mxm()
+?mxm()
+ mxm() - matrix multiplication
+
+ mxm(ob1, ob2) 
+
+    Multiples ob1 by ob2 using matrix multiplcation.
+
+ See Also:
+    identity(), minvert()
+
+?functions identity()
+?identity()
+ identity() - generate identity matrix
+
+ identity(INT)
+
+     Generate an identity matrix of the given size.
+
+ See Also:
+    mxm(), minvert()
+
+?functions basis()
+?basis()
+ basis() - generate square transform basis function
+
+ basis(object=VAL, type=STRING, size=INT)
+
+    type: hadamard
+          haar
+?functions dct()
+?dct()
+ dct() - Compute dct along specified axis
+
+ dct(object=VAL, axis=[x][y][z], dir=[1|-1])
+
+  The dct() function computes the forward or inverse discrete cosine transform 
+  of values along one or more axis.  If no axis is specified, then all the 
+  computation is performed along all three axis.  If the direction is not
+  specified, a forward dct is assumed.
+     
+ The dct() function always returns a DOUBLE.
+
+ Example:
+
+ This example computes the dct along the X and Y axis, producing
+ an array with the same Z dimension of the input data.
+
+ dv> a = dct(object=data, axis=xy)
+
+?functions entropy()
+?entropy()
+ entropy() - Compute entrpy of object
+
+ entropy(object=VAL)
+
+     The entropy() function computes the entropy in an object,
+     as sum(p * log2(p)), where p is the probability of each symbol
+     occuring.  This is determined by sorting the values in the object
+     and then counting them.
+
+     The entropy() function always returns a FLOAT.
+
+?functions plplot
+    ALL plplot library commands are availible to the user.  
+    Several davinci commands were created to faciliate ease of use:
+        popen() -   Define, initialize and open a window for plotting
+        pplot() -   Plot a data cube along specified axis
+        pprint()-   Print a current plot
+        ptext() -   Flexible labeling tool
+        pbox()  -   Set up limits and plot box with tick marks
+        pline() -   Draw a set of connected line segments
+        pzoom() -   Zoom in on a graph
+
+?functions popen()
+?popen()
+ popen() - Define, initialize and open a window for plotting
+
+ popen(xpos=INT, ypos=INT, xpixels=INT, ypixels=INT,title=STRING,portrait=int)
+
+    This funtions opens up an X-Windows for plotting data using the
+    plplot library.
+
+    xpos is the initial x-position (relative to the desktop) of the new windows
+    ypos is the initial y-position
+    xpixels is the number of pixels columns
+    ypixels is the number of pixels rows
+    title is a string which can go in the window title bar
+    portrait is a flag which define the graph as landscape 
+    (portrait=0, default) or as portrait (portrait=1)
+
+?functions pplot()
+?pplot()
+ pplot() - Plot a data cube along specified axis
+
+ pplot(obj=VAL, axis={X,Y,Z}, 
+       [append=INT, window=INT, Xaxis=VAL, color=int, 
+        xhigh=FLOAT, xlow=FLOAT, yhigh=FLOAT, ylow=FLOAT])
+
+ Pplot takes a dataset (obj) and plots it as a set of vector data
+ along a specified axis.  Options include:
+
+      append:  Draw over previous graph without erasing
+    
+      window:  ID of window to draw in.  Popen returns a integer ID value for 
+               the window it creates.  Save this value if you open more 
+               than one window.
+
+      Xaxis:   Dataset object containing x-axis values.  Must be either 
+                the same size as obj, or of size (X,1,1) where X is the 
+                same value as the x-dimension of obj.
+
+      color:   Ineger value between 0 and 15.  0 is the background color
+
+      xhigh,xlow,yhigh and ylow can either be set by the user or 
+                                automatically calculated if no value is given.
+           
+?functions pprint()
+?pprint()
+ pprint() - Print a current plot
+
+ pprint(id=INT, title=STRING, type={ps,psc,pbm})
+
+ pprint will create a printer file (or graphic file) of an already
+ existing plot.  id specifies the window ID (as returned by popen) of
+ the window to plot.  title is a string containing the filename for the
+ printer file.  The type parameter sets what kind of file is produced:
+
+        ps - b&w postscript file
+        psc - color postscript file
+        pbm - 640x480 graphics file (size is fixed)
+
+?functions ptext()
+?ptext()
+ ptext() - Flexible labeling tool
+
+ ptext(c=INT, e=FLOAT, x=FLOAT, y=FLOAT, angle=INT, 
+       text=STRING, kolor=INT, world=INT)
+
+  ptext prints labels and text on a plot allowing the user to specify
+  a number of formating options.  Many of these options are here for
+  MONGO graphing compatibility
+
+    c:  (MONGO) text alignment relative to (x,y) position
+    e:  (MONGO) text font expansion
+    x & y: x and y position are specified in terms of normalized 
+           coordinates (0,1)
+    angle: (MONGO) integer value (in degrees) which specifies the 
+           desired rotation of of the text
+    text:   quoted string containing the text to put on the plot
+    kolor:  integer value from 0 to 15 (0 is background color), set color 
+            of ploted text
+    world:  flag, if set to 1, x & y need to be in world coord. else 
+            normalized (default)
+
+?functions pbox()
+?pbox()
+ pbox() - Set up plot box with tick marks
+
+ pbox(e=FLOAT, lt=INT, x=INT, y=INT, X=INT, Y=INT, m=INT, color=INT)
+    pbox draws a box with tick marks and X & Y axis values.
+
+    e:   text font expansion
+    lt:  line thickness (defualt=1)
+    x:   if non-zero, draw x-axis values (defualt)
+    y:   if non-zero, draw y-axis values (defualt)
+    X:   if non-zero, uses logrthymic values for x-axis
+    Y:   if non-zero, uses logrthymic values for y-axis
+    m:   if non-zero uses micron labeling for x-axis
+        color : integer value between 0 and 15 (0 is background color)
+
+?functions pline()
+?pline()
+ pline() - Draw a set of connected line segments
+
+ pline(ls=INT,lt=INT, x=VAL, y=VAL, color=INT)
+
+ pline plots set a of n points as n-1 conneted line segments, where xy 
+ point n-1 is connected to xy point n, which is then connected to xy point n+1.
+
+    ls: line style (0=solid (defualt), 1=dashed, >1 more dashed styles)
+    lt: line thickness (defult =1)
+    x:  dataset of x values (expected cube: (N,1,1)) N-number of points
+    y:  dataset of y values (expected cube: (N,1,1)) N-number of points
+
+        x & y must have the SAME number of points!
+
+    color: integer between 0 and 15 (0 is the background color).
+
+?functions pzoom()
+?pzoom()
+ pzoom() - Zoom in on a graph
+
+ pzoom(x_lo=INT,x_hi=INT,y_lo=INT,y_hi=INT,Xv=VAL,Yv=VAL,reset=1)
+
+    x_lo: new lower boundry for X-axis
+    x_hi: new upper boundry for X-axis
+    y_lo: new lower boundry for Y-axis
+    y_hi: new upper boundry for Y-axis
+
+                or
+   Xv:Cube of dim(2,1,1); Xv[1,1,1]=x_lo; Xv[2,1,1]=x_hi
+   Yv:Cube of dim(2,1,1); Yv[1,1,1]=y_lo; Yv[2,1,1]=y_hi
+
+    reset=1 puts graph back original settings
+
+?functions read_lines()
+?read_lines()
+ read_lines() - Read text file into text array object
+
+ read_lines(filename=STRING)
+
+  The read_lines() reads a text file and returns it as a TEXT array.
+
+?functions dirname()
+?dirname()
+ dirname() - return the directory portion of a pathname
+
+ dirname(object = STRING | TEXT)
+
+  The dirname() function returns the directory portion of a path.
+  When passed a TEXT array, it operates on each line of the TEXT array.
+
+ See Also:
+    basename()
+
+?functions issubstring()
+?issubstring()
+ issubstring() - tests whether one string is a substring of another
+
+ issubstring(targert = STRING, source = STRING)
+
+  issubstring will return 1 if target contains source and 0 otherwise.
+
+?functions delim()
+?delim()
+ delim() - return choosen collumn from delimted text
+
+ delim(object = TEXT, delim = STRING, count = INT)
+
+  delim returns collumn count as defined by delimiter delim from
+  object.  The collumn is returned as a TEXT object with the
+  same number of rows as object.
+
+?functions grep()
+?grep()
+ grep() - search for the first occurrence of a pattern
+
+ grep(object = TEXT, pattern = STRING)
+
+  The grep() function copys each row of the passed TEXT object that 
+  contains the specified pattern.  grep() supports regex patterns.
+
+?functions strsub()
+?strsub()
+ strsub() - substring substitution using regular expressions
+ 
+ strsub(object= STRING | TEXT, match = STRING, subst = STRING)
+
+  strsub traverses a string looking for match and replaces it
+  with subst.  For a TEXT object, this operation is done on
+  everyrow using the same match and subst.  
+
+  Note: match and subst can contain SED like regular expressions
+
+  ex:
+  strsub("xxxxxzzzxxxxxzzzxxxxxzzzxxxx","z\(z\)z","QQ\1QQ")
+  will replace zzz with QQzQQ
+
+  double back-slashes (\\) must be used within davinci
+
+?functions strstr()
+?strstr()
+ strstr() - locate and return index of first occurence of substring
+
+ strstr(obj= STRING | TEXT, pattern= STRING)
+
+  strstr returns the index value where pattern begins in obj or 0
+  if pattern is not in obj.  For a TEXT object a VAL is returned
+  whoes size is [1,Row,1] where Row is the number of rows in
+  the given text object.  
+
+?functions syscall()
+?syscall()
+ syscall() - system's call
+ 
+ syscall(STRING)
+
+ syscall executes STRING in a command shell and returns any output
+ in a TEXT object.
+
+?functions xrt3d()
+?xrt3d()
+ xrt3d() - Display data using an XRT3D widget
+
+ xrt3d(object=VAL, new=BOOL)
+
+     The xrt3d() function displays data in an XRT3d window, creating the
+     window if necessary.  If the keyword "new" is provided, a new window
+     is always created, abandoning any previously created window.
+
+     The XRT3d tool provides the following actions:
+
+        Rotation:   
+            Drag with Button2 and move clockwise or counter-clockwise.
+                or
+            Hold down Button2 and press x, y, or z to select an axis.  Then
+            move the mouse perpendicular to that axis.
+        
+        Translation:
+            Press Shift and drag with Button2 to shift the graph
+
+        Scaling:
+            Press Ctrl and drag with Button2. Move mouse down to zoom in, 
+            and up to zoom out.
+        
+        Return to default:
+            Press r to reset ann scaling, translations and zooming.
+
+        Zoom:
+            Press Ctrl and drag with Button1 to select the zoom area
+
+        Pick:
+            Click with Button1 to find nearest data point.
+        
+        Map:
+            Click with Button3 to find the nearest point on the surface.
+
+?functions projection()
+?projection()
+ projection() - Compute a stereographic projection for each band of an object
+
+ projection(obj=VAL, [lat=FLOAT], [lon=FLOAT], [rad=FLOAT], 
+            [ppd=INT], type=STRING)
+
+ The projection() function will process each band of an object, projecting
+ into a BIL organized dataset.  Format of the object does not matter.
+
+ lat and lon specify the center point of the projection,
+ rad specifys the radius extent of the projection in degrees.
+
+ The ppd paramter specified pixels per degree, and when combined with
+ the radius value, defines the size of the output image.  Therefore,
+ if a radius of 20 is specified with ppd=5 the resulting band will be
+ 200 pixels (2x20x5) on each side.  
+ 
+ The type parameter sets the parameters of distortion, that is if one 
+ is projecting on the planet Mars as opposed to a sphere, there will 
+ be a slightly different result.  The projection types are as follows:
+
+    type: MARS
+          EARTH
+          SPHERE
+
+ The four optional paramters default to the following values:
+        
+        lat=90.0
+        lon=0.0
+        rad=30.0
+        ppd=1
+
+ Example:
+
+    dv> projection(obj=a,lat=0.0,rad=90,ppd=10,type=MARS)
+
+    This will produce an equatorial projection (with lon defaulting to 0)
+    with the poles at the top and botton of the image.  Each band will
+    have the XY dimention of 1800 (2x90x10).
+
+?functions Matrix
+Davinci supports the following matrix functions:
+
+    mxm()     - matrix multiply
+    minvert() - matrix inversion
+    convolve() - sliding window kernel convolution
+
+?functions convolve()
+?convolve()
+?convolve3()
+ convolve() - Computes a sliding window kernel convolution. 
+              (AKA kernel filter, smooth)
+
+ Syntax: convolve(object=VAL, kernel=VAL[, norm=BOOL][, ignore=VAL])
+
+    For each pixel in object, the weighted sum of the neighboring pixels
+    is computed, with the weights being specified by the kernel.
+
+    The norm parameter specifies whether or not each pixel is to
+    be divided by the number of pixels used in the calculation.
+    The neighborhood of edge pixels is smaller than center pixels.
+    If norm=0, the edge pixels will be much smaller than the center
+    pixels.  The default is norm=1.
+
+    Example:
+
+    The following kernel computes the average of a 3x3 neighborhood for 
+    each pixel, smoothing the image.
+
+        dv> b = clone(1, 3, 3, 1)
+        1       1       1
+        1       1       1
+        1       1       1
+        dv> convolve(img, b)
+
+    
+?functions create()
+?create()
+ create() - Create an array of values
+
+ create(x=INT, y=INT, z=INT, [org=ORG, format=FORMAT, start=VAL, step=VAL])
+
+     The create() function creates an array of data of the specified
+     size, format and organization.
+
+     The 'x', 'y' and 'z' parameters specify the size of each axis.
+     If a value is not given, it is assumed to be 1.
+
+     The 'org' and 'format' parameters specify the organization (one of
+     bil, bip, bsq, xyz, xzy, zxy) and format (one of byte, short, int,
+     float or double).  The default organization is bsq.  The default
+     format is int.
+
+     The array is filled with a ramp.  The first element is numbered from
+     the 'start' parameter (default of 1) and each successive element is 
+     incremented by the step size (default of 1).
+     
+
+ Example:
+
+    This example creates a 3x3x1 image.  The elements are automatically 
+    numbered from 1 to 9.
+
+    dv> a = create(3,3,1)
+
+?functions pcs()
+?pcs()
+ pcs() - Performs Principal Component Stretch of the given data
+
+ pcs(obj=VAL [, opt={r|v|s}] [, axis={x|y|z}] [, scale=VAL] [, niter=INT])
+
+        The pcs() function performs a Principal Component Stretch on the
+        input data.
+         
+        The 'opt' parameter selects the statistical method to be used on
+        the input data for the whole analysis. Various values taken by
+        this parameter have the following meaning:
+
+            'v' (default) - chooses Principal Component Analysis based on
+                the covariance matrix
+            
+            'r' - chooses Principal Component Analysis based on the
+                correlation matrix
+
+            's' - chooses Principal Component Analysis based on the
+                the "sum of cross products" matrix
+
+        The 'axis' parameter specifies the dimension along with the
+        vectors are laid out. Say, the input 'obj' is an [m x n x w]
+        matrix and the 'axis' has been specified as 'z' then:
+
+            'w' is the dimension of the a single input vector, and
+            there are 'm x n' of them in the image cube.
+
+            The default value for this parameter is 'z'.
+
+        The 'scale' parameter specifies the scaling factor, if any, to be
+        applied to the stretched vectors during the stretch phase. If 
+        'scale' is not specified, it is assumed to be 1, i.e. no scaling.
+
+        The 'niter' parameter specifies the maximum number of iterations
+        allowed during Tridiagonal QL algorithm. If pcs() fails due to
+        'no convergence' error, try increasing this number.
+
+
+ Example:
+    Assume that m1 is an image cube of dimensions [3x4x5], then the
+    following line will do the principal component stretch of the
+    input data based on the covariance matrix of 4x5=20 input vectors
+    of dimension=3.
+
+    dv> m2 = pcs(m1, v, x)
+
+?functions covar()
+?covar()
+ covar() - Computes the Covariance matrix of the input data
+
+ covar(obj=VAL [, axis={x|y|z}])
+
+        The covar() function computes the covariance matrix for
+        the vectors specified in the 'obj' cube.
+
+        The 'axis' parameter specifies the dimension along with the
+        vectors are laid out. Say, the input 'obj' is an [m x n x w]
+        matrix and the 'axis' has been specified as 'z' then:
+
+            'w' is the dimension of the a single input vector, and
+            there are 'm x n' of them in the image cube.
+
+            The default value for this parameter is 'z'.
+
+ Example:
+    Assume that 'm' is a data cube of dimensions [3x4x5], then the
+    following line will compute the covariance matrix 'c' for the
+    3x5=15 input vectors of dimension=4 each.
+
+    dv> c = covar(m, y)
+
+?functions corr()
+?corr()
+ corr() - Computes the Correlation matrix of the input data
+
+ corr(obj=VAL [, axis={x|y|z}])
+
+        The corr() function computes the correlation matrix for
+        the vectors specified in the 'obj' cube.
+
+        The 'axis' parameter specifies the dimension along with the
+        vectors are laid out. Say, the input 'obj' is an [m x n x w]
+        matrix and the 'axis' has been specified as 'z' then:
+
+            'w' is the dimension of the a single input vector, and
+            there are 'm x n' of them in the image cube.
+
+            The default value for this parameter is 'z'.
+
+ Example:
+    Assume that 'm' is a data cube of dimensions [3x4x5], then the
+    following line will compute the correlation matrix 'c' for the
+    3x5=15 input vectors of dimension=4 each.
+
+    dv> c = corr(m, y)
+
+?functions scp()
+?scp()
+ scp() - Computes the sums of cross products matrix for the input data
+
+ scp(obj=VAL [, axis={x|y|z}])
+
+        The scp() function computes the sums of cross products matrix for
+        the vectors specified in the 'obj' cube.
+
+        The 'axis' parameter specifies the dimension along with the
+        vectors are laid out. Say, the input 'obj' is an [m x n x w]
+        matrix and the 'axis' has been specified as 'z' then:
+
+            'w' is the dimension of the a single input vector, and
+            there are 'm x n' of them in the image cube.
+
+            The default value for this parameter is 'z'.
+
+ Example:
+    Assume that 'm' is a data cube of dimensions [3x4x5], then the
+    following line will compute the sums of cross products matrix 'c'
+    for the 3x5=15 input vectors of dimension=4 each.
+
+    dv> c = scp(m, y)
+
+
+?functions eigen()
+?eigen()
+ eigen() - Computes the Eigen Values and Eigen Vectors of a 
+           Real Symmetric input matrix
+
+ eigen(obj=VAL [, niter=INT])
+
+        The eigen() function computes the Eigen Values and Vectors for
+        a real symmetric [m x m x 1] matrix passed in as the 'obj'
+        parameter.
+
+        The 'niter' parameter specifies the maximum number of iterations
+        allowed during Tridiagonal QL algorithm. If pcs() fails due to
+        'no convergence' error, try increasing this number.
+
+
+ Example:
+    Assume that 'a' is a [3x3x1] matrix, then the following line
+    will compute the Eigen Values and Eigen vectors of matrix 'a'.
+
+    The return value 'e' is a [4x3x1] matrix, with the first column
+    containing the Eigen Values and the next three columns containing
+    the Eigen Vectors.
+
+    dv> e = eigen(a)
+
+?functions isis()
+?isis()
+ isis() - Enumerate or extract suffix planes of an ISIS cube
+
+ isis(filename=STRING, [plane=STRING])
+ isis(filename=STRING, [plane=INT, type={band,line,sample}]
+
+ The isis() function decodes ISIS suffix planes.
+
+ When called with just a filename, the isis() function will print
+ details about the specified file, including the name and location
+ of any suffix planes.
+
+ Individual suffix planes can be extracted by name or by location,
+ by speficying either a the plane's name or the plane's number.
+ The plane's name can be abbreviated to the shortest unique prefix.
+
+ The TYPE parameter is necessary when extracting planes by number.  
+ It specifies which suffix to extract from.  Planes are numbered 
+ starting from zero.
+ 
+ Example:
+
+ The following example extracts the plane named 'background' from the 
+ file "my_file":
+
+    dv> a = isis( filename="my_file", plane="background")
+ 
+ This example extracts the band suffix plane #3: 
+
+    dv> a = isis( filename="my_file", plane=3, type=band)
+
+
+?functions load_vanilla()
+?load_vanilla()
+ load_vanilla() - Loads vanilla text output from a file
+
+ load_vanilla(file=STRING [, delim=STRING])
+
+  The load_vanilla() function loads a text output file generated
+  by a run of vanilla. Fields with same names are combined into
+  arrays and the data types are guessed from the data itself.
+
+  The output is stored in a structure of parallel arrays of fields
+  detected in the file. Field names are picked from the first line
+  of the input file.
+
+  Optional 'delim' character-string parameter may be specified 
+  to enumerate field/column delimiters in the input file. Default
+  delimiters are spaces and tabs.
+
+  NOTE: load_vanilla() will work on text files with fixed number
+  of columns per line. Thus, while selecting variable data fields,
+  qualify them with indices, e.g. instead of saying "cal_rad[]"
+  use some range of values, like, "cal_rad[3-144]".
+
+ Example:
+
+    The following command will load the vanilla output generated from an
+    earlier vanilla run into a variable named 'a'. The data (stored in
+    variable a) will be a structure of two fields, named, "sclk_time" and
+    "temps". Each of these fields will be an array of 'n'-records. Where,
+    'n' is the number of lines minus 1 (#lines - 1) in the input file.
+    (#lines - 1: because the first line contains the header info)
+
+    dv> system("vanilla ./data -fields 'sclk_time ick temps[1-4]' > /tmp/foo")
+
+                    (some time later)
+    
+    dv> a = load_vanilla("/tmp/foo")
+    struct, 3 elements
+        sclk_time: 1x2x1 array of int, bsq format [8 bytes]
+        ick: 1x2x1 array of int, bsq format [8 bytes]
+        temps: 4x2x1 array of int, bsq format [32 bytes]
+
+ Additional Notes:
+
+  The vanilla output is TSV (tab separated values).  There's a one
+  line TSV header containing the names of the columns.  Vanilla is
+  capable of outputting variable length arrays, but the load_vanilla()
+  function (and davinci in general) can't handle that output.  Instead,
+  make sure to specify a range on arrays, such as 'array[1-143]'.
+
+?functions fexists()
+?fexists()
+ fexists() - Determine if a file exists
+
+ fexists(filename=STRING | TEXT)
+
+ The fexists() function determines if a file exists or not.  
+
+ If passed a single value, it will return 1 if the file exists and
+ 0 if it does not exist.
+
+ When passed a TEXT array, it will return an array of values, one for
+ each row of the input.
+
+?functions length()
+?length()
+ length() - Determine the size of an object
+
+ length(object)
+
+ The length function returns the cardinallity of an object.
+
+ For regular arrays, it returns the total number of values in the array.
+ For strings, it returns the number of characters in the string.
+ For structures, it returns the number of elements in the structure
+ For text arrays, it returns the number of lines in the array.
+
+ Example:
+
+    dv> length(create(5,5,1))
+    25
+    dv> length("some string")
+    11
+
+?functions add_struct()
+?add_struct()
+ add_struct() - Add an element to a structure
+
+ add_struct(object=STRUCT, name=STRING, value=VAL)
+
+ The add_struct() function adds an element to a structure.  This 
+ function is shorthand for "object.name = value", but in this case, 
+ name can be a string variable.
+
+ The add_struct() function returns the value argument.
+
+?functions get_struct()
+?get_struct()
+ get_struct() - Get an element from a structure
+
+ get_struct(object=STRUCT, name=STRING)
+
+ The get_struct() returns an element from a structure.  This function is 
+ shorthand for "object.name", but in this case, name can be a string 
+ variable.
+
+?functions get_struct_key()
+?get_struct_key()
+ get_struct_key() - Returns the name of structure element at the given index.
+
+ get_struct_key(object=STRUCT, index=INT)
+
+ get_struct_key() returns the name of the structure element at the
+ specified (1-based) index. If the element does not have a name attached
+ to it, an empty string is returned.
+
+?functions remove_struct()
+?remove_struct()
+ remove_struct() - Remove an element from a structure
+
+ remove_struct(object=STRUCT, name=STRING)
+
+ The remove_struct() function deletes an element from a structure.  The
+ deleted element is returned.
+
+?functions insert_struct()
+?insert_struct()
+ insert_struct() - Insert an element in a structure at a given point
+
+ insert_struct(object=STRUCT, name=STRING, value=VAL, [before=STRING|INT])
+ insert_struct(object=STRUCT, name=STRING, value=VAL, [after=STRING|INT])
+
+ The insert_struct() function adds an element to a structure at a specfied
+ location.  The location can be specified as being either before or after
+ another named element, or an index position.
+
+ The name and value fields are optional.  Values inserted with no name
+ simply have no name (they can only be accessed by position), and 
+ names inserted with no value are given a value of zero.
+ 
+?functions load_raw()
+?load_raw()
+ load_raw() - Load a binary data file
+
+ load_raw(filename=STRING, x=INT, y=INT, z=INT, org=ORG, 
+           format=FORMAT, header=INT)
+
+ The load_raw() function allows a user to load uncompressed binary data
+ by specifying relevent information about the file.  
+
+ The x, y and z parameters specify the number of pixels in each axis.
+
+ ORG must be one of "bil", "bip", "bsq".
+ FORMAT must be one of: "byte", 
+            "msb_short", "msb_int", "msb_float", "msb_double" , 
+            "lsb_short", "lsb_int", "lsb_float", "lsb_double".
+
+ The header value specifies the size, in bytes, of any header to be skipped.
+
+?structures
+
+  You can create anonymous structure (with no name) using the { } operators.
+  Like this:
+  	dv> x = { name=value, a=1, b="three" }.
+
+  You can combine structures via addition: { one=1 } + { two=2 }
+
+  You can read and write structures to disk with the optional HDF support
+  library.
+
+ See also:
+    add_struct(), get_struct(), remove_struct(), insert_struct(), length(),
+	get_struct_key()
+
+?functions equals()
+?equals()
+ equals() - Determine if two things are the same
+
+ equals(obj1, obj2)
+
+ The equals() function checks every piece of obj1 and obj2 to see if the
+ two objects are identical.  This works for VALs, STRINGs, TEXTs and 
+ Structures.
+
+ Equals() returns 1 if the two objects are identical, and 0 if not.
+
+?functions contains()
+?contains()
+ contains() - Determing if an array contains a specific value
+
+ contains(obj=VAL, value=VAL)
+
+ The contains() function determine if an array contains a specific value.
+ The value is converted to the same type as the array, so comparison of
+ an integer array and a floating point number might produce unexpected 
+ results.
+
+ Contains() returns 1 if the specific value is found in the array, and 0
+ if it isn't.
+
+ Example:
+
+    These examples return 1:
+
+        contains(1//2//3, 3) 
+        contains(1//2//3, 3.00001)   # note, the float is converted to an int
+
+    These examples return 0:
+
+        contains(1//2//3, 4) 
+        contains(1.1//2.2//3.3, 3)
+
+?functions dump()
+?dump()
+ dump() - Output an entire object
+
+ dump(obj)
+
+ The dump() function outputs every element of a VAL or TEXT, ignoring
+ the usual 100 value, 10 line limits imposed by echo().
+
+?functions dump()
+?dump()
+ dump() - Output an entire object
+
+ dump(obj)
+
+ The dump() function outputs every element of a VAL or TEXT, ignoring
+ the usual 100 value, 10 line limits imposed by echo().
+
+?functions global()
+?globval()
+ global() - Include a global variable in the current scope
+
+ global(var)
+
+ The global() function makes a named variable from the global scope available
+ within the local scope (ie: inside a function).  Any changes made to the
+ variable in the local scope affect the global variable directly.
+
+ You cannot create a global variable in this manner.
+
+ Note: global is all around not really safe to use.
+
+?functions load_pds()
+?io load_pds()
+?load_pds()
+ load_pds() - Read a PDS file into a structure
+
+ load_pds(filename=PATH [, data=BOOLEAN] [, suffix_data=BOOLEAN])
+
+ PDS files contain of NAME=VALUE pairs, and some rudimentary hierarchal
+ structure via OBJECT and GROUP constructs.
+
+ The load_pds() function understands a few common PDS data structures:
+ 	QUBE, SPECTRAL_QUBE, TABLE, IMAGE, HISTOGRAM_IMAGE and HISTORY.
+
+ The DATA argument specifies whether or not to load the data from
+ any objects encountered in the file.  (0=don't load, default is 1)
+
+ The SUFFIX_DATA argument specifies whether or not to load the suffix
+ data planes from QUBE and SPECTRAL_QUBE objects.
+ (0=don't load, default is 0)
+
+?functions coreg()
+?coreg()
+ coreg() - image coregistration
+
+ coreg(i1, i2 [,search=INT][,random=INT][,ignore=INT])
+
+    i1 and i2 must be 1-band images
+    search - radius of the search window.  (default: 10)
+    random - number of random samples to use (default: 1000)
+    ignore - ignore value (background pixel color)
+
+ The coreg() function performs a windowed search computing the square
+ of the difference between a random pixel and it's NxN neighbors.
+
+ If the "random" value is set to zero, an exhaustive search of every 
+ pixel is performed.
+
+ The function returns the X and Y offset of image1 into image 2.
+
+
+?functions write_isis_cub()
+?io write_isis_cub()
+?write_isis_cub()
+ write_isis_cub() - Writes an ISIS ".cub" file
+
+ write_isis_cub(obj=STRUCT, filename=STRING [, force=1])
+ 
+ write_isis_cub() works in conjunction with load_pds() to facilitate
+ editing of ISIS ".cub" files.
+
+ Example:
+    a=load_pds("foo.cub", suffix_data=1)
+	a.qube.data = a.qube.data - 100
+	a.history.data.cubit.node_name="\"generic_node\""
+	a.history.data.cubit.user_name="\"generic_user\""
+    write_isis_cub(a, "bar.cub")
+
+
+?functions load_bin5()
+?io load_bin5()
+?load_bin5()
+ load_bin5() - Loads data from a BIN5 file
+
+ load_bin5(filename=PATH)
+
+ BIN5 files are generated as an output from krc, the thermal
+ intertia modeler. These files can have more than three
+ dimensions.
+ 
+ Let's assume that the number of dimensions in a given bin5
+ file is represented by N. If N<=3 the data is returned as a
+ 3D-cube. If N>3 then cubes are formed out of the last three
+ dimensions and concatenated in a hierarchy of structures as
+ unnamed elements. For example, for a file with dimensions
+ [W,X,Y,Z], the result will be a structure with W (unnamed)
+ elements each of size [XxYxZ]. Similarly, for a file with
+ dimensions [V,W,X,Y,Z], the result will be a structure with
+ V (unnamed) sub-structures. Each sub-structure of V will be
+ a structure with W (unnamed) elements each of size [XxYxZ].
+
+ If the data were loaded into a variable called named "a",
+ then a data element can be accessed in "a" as "a[w][x,y,z]"
+ for the 4D case above and as "a[v][w][x,y,z]" for the 5D
+ case above.
+
+ Notes:
+    A bin5 file has a text label (multiple of 512 bytes)
+	which looks like:
+
+    N d1 d2 .. dN Y E [L] <<... TIME>>TEXT ... ARCH C_END
+
+	where,
+	  N      is the number of dimensions,
+	  d1..dN are the sizes of each dimension with the
+	         most rapidly varying index first
+	  Y      is the data type of individual data elements
+	         1=byte, 2=short, 3=long, 4=float, 5=double,
+			 12=ushort, 13=ulong (ref: IDL data types)
+	  E      is the number of elements = d1*d2*..*dN
+	  L      is the size of label (multiple of 512)
+	  TIME   is the creation time of the file
+	  TEXT   is the description associated with the file
+	  ARC    is a 5-char value representing the machine on
+	         which the data was written to this file,
+			 supported values are "i386  " and "sun  "
+	  C_END  is the sentinal which marks the end of label
+
+
+?functions extract()
+?extract()
+ extract() - Extract portions of a VAL orthogonal to a given mask
+
+ extract (object=VAR, mask=VAR, [axis=STRING])
+   object: data to extract from
+   mask  : non-zero location specifies data to extract
+   axis  : indicates how to arrange extracted pieces
+
+ This routine will extract portions of the object orthogonal to the mask
+ and coresponding to the points where the mask is set.  This function is
+ intended to speed the extraction of higher dimensional data from lower
+ dimensional masks.  For example, the commands
+
+   obj = create (10,10,10);
+   mask = create(10,10,1, format=BYTE, start=0, step=0);
+   mask[1,1] = mask[2,2] = mask[3,3] = 1;
+   data = extract (obj, mask, axis="x");
+
+ would extract and return 'data' as a 3x1x10 VAR.  The extract()
+ function locates each non-zero bit in 'mask', and grabs the portion of
+ 'obj' that is specified by that mask bit.  Visualize the 10x10x1 'mask' as
+ a 2D plane and the 10x10x10 'obj' as a 3D cube.  Any point in the 2D 'mask'
+ plane then uniquely specifies a 1x1x10 line in the 'obj' cube.
+
+ The extract() function extracts each of these 1x1x10 objects and stacks
+ them together.  The pieces can be stacked together along either the x or
+ y axes.  Since the function has no assumptions about what the user wants,
+ the user must specify the axis that pieces should be added along.  To get
+ a 1x3x10 VAR in 'data', the user could have specified axis="y" instead.
+
+ When the mask can be described as a 1D line and the object as a 3D cube,
+ each mask bit specifies a 2D plane.  The planes can be stacked together in
+ only one way, so the user does not have to specify an axis in that case.
+
+ The VAL/mask combinations are listed below, with example sizes in the last
+ three columns.  The N used in the outputs is the number of mask bits set.
+
+   VAL  Mask  Pieces  VAL    Mask   Output
+   1D   1D    points  5x1x1  5x1x1  Nx1x1 (axis="x")
+   2D   2D    points  5x5x1  5x5x1  Nx1x1 (axis="x")
+   3D   3D    points  5x5x5  5x5x5  Nx1x1 (axis="x")
+   2D   1D    lines   5x5x1  1x5x1  5xNx1 (axis="y")
+   3D   2D    lines   5x5x5  5x5x1  Nx1x5 (axis="x")
+   3D   1D    planes  5x5x5  1x1x5  5x5xN (axis may be omitted)
+   1D   2D    n/a     n/a    n/a    n/a
+   1D   3D    n/a     n/a    n/a    n/a
+   2D   3D    n/a     n/a    n/a    n/a
+
+ Spectra Selection Example:
+
+   # load PDS qube to select spectra from
+   qube = load_pds(filename).qube.data;
+
+   # user wants to view the spectra under every 20th pixel in the x/y plane
+   mask = create(dim(qube)[1],dim(qube)[2],1, format=BYTE);
+   mask[] = 0;
+   mask[1::20,1::20] = 1;
+
+   # extract the selections and shape them into Nx1xZ VAR, where N is the
+   # num. of mask bits set and Z is the num. of bands in the qube.
+   spectra = extract (qube,mask,axis="x");
+
+   # plot the selections
+   xplot (spectra, axis=z);
+
+?functions plot()
+?plot()
+ plot() - The graphing function of daVinci
+
+ Through the use of this function, data may be altered, formatted
+and exported to the Gnuplot graphing engine.
+
+Syntax: plot(VAL or STRUCT
+ [, label = STRING]           (default = \'vector #\')
+ [, xaxis = VAL|TEXT]         (xaxis to use on one plot)
+ [, axis = x|y|z|X|Y|Z]       (axis to use on one plot)
+ [, ignore = VAL]             (value to skip while plotting)
+ [, iabove = VAL]             (ignore y above)
+ [, ibelow = VAL]             (ignore y below)
+ [, ixabove = VAL]            (ignore x above)
+ [, ixbelow = VAL]            (ignore x below)
+ [, errorbars = VAL]          (x and/or y errorbars)
+ [, separate = INT]           (default = 0)
+ [, width = INT]              (thickness of plot)
+ [, color = INT]              (color of plot)
+ [, style = lines|points|dots|linespoints|boxes|
+            steps|xerrorbars|yerrorbars|xyerrorbars|
+            xerrorlines|yerrorlines|xyerrorlines
+ [, smooth = csplines|bezier] (Gnuplot smooth routines)
+ [, offset = VAL]             (y-value to offset successive vectors)
+ [, dir = STRING]             (path to store files)
+ [, gcommand = BOOL]          (print Gnuplot command to screen]
+ plot(string) - to send string commands to Gnuplot
+
+Example:
+ dv> plot(a,label="budget",xaxis=ax,color=3)
+
+ This short summary of the functionality of plot() is very bare bones.
+ For extensive help including numerous examples, see the wiki 
+   http://davinci.asu.edu/index.php/plot
+
+?functions splot()
+?splot()
+ splot() - surface plotting with Gnuplot
+
+ Syntax: splot(data[, label=STRING][, pm3d=BOOL][, xscale=VAL][, yscale=VAL])
+ 'data'   - any multi-dimensional numeric array
+ 'label'  - string to use as surface description
+ 'pm3d'   - optional flag to solidify and color the surface
+ 'xscale' and 'yscale' tell splot how many units per pixel
+  (e.g. meters/pixel). To be used they must both be specified.
+
+ Example: splot(a,'bob', pm3d=1,xscale=102, yscale=105)
+
+
+?functions rotate()
+?rotate()
+ rotate() - rotates an array a specified angle in degrees with aliasing.
+
+ Syntax: rotate(obj = VAL, angle = VAL [, ignore = VAL])
+
+ 'obj'    - any numeric array
+ 'angle'  - a numeric value in degrees
+ 'ignore' - the numeric value in pixels containing non-data. Default is 0.
+
+ Uses a 3-shear Paeth algorithm to pixel shift rows and columns to rotate 
+ an image.
+
+?functions sort()
+?sort()
+ sort() - Alpha-numeric sorting
+
+ Syntax: sort(object=VAL[, by=VAL][, descend=INT])
+ 'object'  - a numeric array or text array
+ 'by'      - optional object by which to sort the data object
+ 'descend' - option to order by decreasing value. Default = 0 (ascending)
+
+?functions unique()
+?unique()
+ unique() - Return the unique elements in a VAL or TEXT array.
+
+ Syntax: unique(object=VAL or TEXT[, by = VAL or TEXT])
+ 'object'  - a numeric array or text array
+ 'by'      - optional array by which elements of object are selected.
+
+?functions ipi()
+?ipi()
+ ipi() - Inverse Parabolic Interpolation
+
+ Calculates the coordinates of the minimum or maximum of a parabola 
+ given 3 x and y values on the parabola.
+
+ Syntax: ipi(coordinates=VAL, values=VAL)
+ 'coordinates' - The x-positions of the three selected points
+ 'values'      - The values of the function at the specified x-positions. 
+
+?functions boxfilter()
+?boxfilter()
+ boxfilter() - fast convolve (average) for uniform, rectangular masks
+
+ boxfilter(obj=VAR, [x=INT, y=INT] | [size=INT], ignore=VAL, verbose=BOOL)
+
+    Peforms a boxcar filter.  Computes the average within the rectangular
+    window specified for each pixel in the input.
+    You can specify either an x and y for rectangular windows, or just size 
+    for a square window.  Returns windowed average for all non-ignore
+    pixels.  
+    If you specify verbose, it will return a structure containing the 
+    windowed mean, pixel count and standard deviation under the window 
+    (plus some other stuff for working with running sums).  
+
+    Note: boxfilter() can use 24 bytes of memory per input pixel.
+
+?functions drawshape()
+?drawshape()
+ drawshape() - draw a shape at each "on" point in an image
+
+ drawshape(obj=VAR, shape=["cross"|"box"|"circle"], ignore=VAL)
+
+ For each point in the input image (band 1 only), that is greater
+ than zero and not equal to the ignore value, a shape is draw centered
+ on that point, with a radius/size equal to the value of the point.
+
+ This example returns an image contining two circles, one centered at 
+ 3,4 of radius 3, and another centered at 6,8 with radius 5.  
+
+ The returned image is a byte image containing only 0s (unset) and 1s (set).
+
+ dv> a = clone(0,10,10)
+ dv> a[3,4] = 3
+ dv> a[6,8] = 5
+ dv> drawshape(a, type="circle")
+
+?gui
+
+?gui Introduction
+ This Davinci module provides a basic graphical user interface.
+ Davinci commands can create, destroy, and handle user interaction
+ with Motif-style X applications.
+
+ The Davinci GUI module presents the developer with a limited set of
+ Xt and Motif widget bindings, facilitating the construction of
+ basic GUI-driven Davinci applications.
+
+ Since the module widgets are based on Xt and Motif, most of the
+ properties and behavior of the widgets are defined by the
+ underlying Xt widget API. Actions are handled via callbacks, and
+ attributes via key-value pairs (implemented using Davinci structs).
+ All widgets are contained inside other widgets in a hierarchal
+ fashion.
+
+ This document assumes a basic familiarity with GUI concepts,
+ specifically the X Window System and Xt/Motif widgets. You will need
+ a Motif reference in order to familiarize yourself with individual
+ widgets and their attributes and callbacks. The module author used
+ O'Reilly & Associates' X Window System series as the implementation
+ reference.
+
+ To quickly learn some basic usage, see the examples in the widget
+ section.
+
+ Davinci must be built with module support at compile time, and the
+ GUI module must be loaded before the bindings are available.
+
+ Davinci will look for modules in its default installation directory
+ (/usr/local/lib/davinci, if not changed at build time), or if the
+ environment variable DV_MOD_PATH is set, in that directory.
+
+ To load and initialize the GUI module, enter:
+
+     load_module("gui")
+
+ To create a window and add controls to it, Davinci commands are
+ executed to create a container shell of some type, and then children
+ are created inside of it.  Here is a simple Hello World example:
+
+     load_module("gui")
+     top = gui.create("topLevelShell", name = "Hello!")
+     label = gui.create("label", top, { labelString = "Hello, world!" })
+     gui.realize(top)
+
+ This example may be entered interactively, placed into an executable
+ Davinci script, or placed in a file and executed via source().
+
+ Note that the interactive Davinci command prompt is still available
+ while the GUI window is displayed. Take care not to alter the widget
+ handle variables while the widgets are in use.
+
+ To destroy the window (and both widgets created), either destroy it
+ in your window manager (usually by clicking X on the title bar), or
+ enter:
+
+     gui.destroy(top)
+
+ Either method will destroy the widgets completely. While the
+ variables top and label will still contain values, they will no
+ longer be recognized as widget handles and should not be used.
+
+?gui resources
+ All resources manipulation is performed via Davinci struct variables.
+ The simplest resources are key/value pairs with scalar values,
+ however arbitrarily complex objects can be used for compound
+ resource values, such as lists of strings or multi-value feedback
+ structures.
+
+ CSG deals with when resources can be modified.
+
+ Structure considers the alternatives available for conveniently
+ getting and setting resources.
+
+ Visibility describes how and why certain resources are hidden.
+
+ Objects describes using the gui module in an object-oriented
+ fashion.
+
+ Getting and settings resources are considered in detail in the
+ function descriptions.
+
+?gui resources CSG
+?gui resources csg
+ CSG: Create, Set, Get
+
+ While most resources can be manipulated at will, some can only be set
+ at widget creation time, and become read-only thereafter, and some
+ are always read-only and can never be changed by the developer. In Xt
+ reference guides, these resources are usually labeled in a CSG
+ column, where C, S, and G are treated as flags.
+
+ If you try to set a read-only resource, or set a create-only resource
+ after creation time, the value will be ignored. Refer to a Motif
+ reference manual for details.
+
+?gui resources Structure
+ Resource Structure
+
+ Building on the "Hello, world!" example, the labelString resource
+ could have been set by explicitly creating a struct, as below:
+
+     labelResources = struct()
+     labelResources.labelString = "Hello, world!"
+     label = gui.create("label", top, labelResources)
+
+ Either method is acceptable, but explicitly creating the struct will
+ make your code cleaner when dealing with a large number of resources.
+
+?gui resources Visibility
+ Resource Visibility
+
+ Calling gui.get(widgetid) will return only the default resources.
+ These resources are the ones most commonly associated with using the
+ particular widget. The default resource list is meant to be small and
+ manageable, and can help developers learn what features a widget
+ supports.
+
+ Additional resources are available on every widget, and are normally
+ hidden to reduce spam. If you'd like to see all the widgets
+ available, use gui.get(widgetid, all = 1).
+
+ This will display all supported widget resources, including those
+ inherited from parent widgets. See the section on inheritance for
+ further details.
+
+?gui resources Inheritance
+ Resource Inheritance
+
+ All widgets except the high level shell are placed inside of a
+ parent widget.  The parent may need to keep some state on each child
+ inside of it.  This state is kept in the child's list of resources.
+ These are called inherited resources.
+
+ Most widgets are placed inside of some kind of container widget.
+ The container widget manages the position and size of the child.
+ It is common for the child's inherited resources to specify how the
+ child is managed. For example, on a form widget, the leftAttachment
+ resource is inherited by any widget placed inside a form widget, and
+ specifies how the left edge of the child is positioned.
+
+ Container and layout widgets all impart some resources on their
+ children. Most of these will never be used by the developer, hence
+ the idea of "default" and hidden resources.
+
+?gui resources Objects
+ Pseudo-Object-Oriented Access
+
+ A natural side-effect of Davinci structure access allows you to
+ access resources in a manner familiar to object-oriented developers:
+
+     lstring = gui.get(label).labelString
+
+ If you use this method, it's still a good idea to explicitly request
+ the resource you need, for efficiency:
+
+     lstring = gui.get(label, "labelString").labelString
+
+?gui resources Special
+ Special resources
+
+ davinciPrivate
+
+ The gui module adds a special resource named "davinciPrivate" to each
+ widget.  When developing applications using the GUI module, data must
+ often be shared between widgets.  Rather than use global variables,
+ the developer of the script can use davinciPrivate to hold the data
+ for as long as the widget is alive.  When the widget is destroyed,
+ the contents of the structure are removed.
+
+ xhandle
+
+ The gui module adds a special resource named "xhandle" to each
+ widget.  This resource is set to the X Windows handle.  This allows
+ certain other applications to draw into the Davinci GUI module
+ widget space.  Certain versions of GNUPlot have this capability,
+ for example.
+
+?gui widgets
+ The gui module supports a variety of widgets from the X Motif widget
+ library.  There are several custom widgets as well which are not
+ included in the standard Motif library.
+
+ Each of the examples included in the individual widget descriptions
+ assumes that the GUI module has already been loaded by the command:
+
+     load_module('gui')
+
+?gui widgets arrowButton
+ Motif Class Name: XmArrowButton
+ 
+ This creates an arrow-shaped push button. Resources can specify arrow
+ direction.
+
+ Example:
+     top=gui.create('topLevelShell')
+     arrow=gui.create('arrowbutton',top,{arrowDirection="ARROW_RIGHT"})
+     gui.realize(top);
+
+?gui widgets comboBox
+ Motif Class Name: XmComboBox
+
+ This creates a combobox. Resources can specify whether the box is a
+ drop-down type combobox, or a list with a text widget to display the
+ current selection.
+
+ Example:
+     top=gui.create("topLevelShell",name="combobox")
+     data=cat("a","b","c","d",axis=y)
+     r=gui.create("rowcolumn",top)
+     
+     gui.create("label",r,{labelString="combo box list"})
+     a=gui.create("combobox",r,resources={comboBoxType="COMBO_LIST"})
+     gui.set(a,{itemCount=length(data),items=data})
+     gui.addcallback(a,"selectionCallback","echo('selected')")
+     
+     gui.realize(top)
+     gui.get(a,all=1)
+
+?gui widgets command
+ Motif Class Name: XmCommand
+
+ This creates a command entry dialog that automatically displays a
+ scrolling history of commands entered.
+
+ Example:
+     define cb_changed (set)
+     {
+         printf ("changed\n")
+         cmd = gui.get(set.cmd,"command").command
+         if (HasValue(cmd)) echo(cmd)
+     }
+ 
+     define cb_entered (set)
+     {
+         printf ("entered\n")
+         h = gui.get(set.cmd).historyItems
+         cmd = h[,length(h)]
+         if (HasValue(cmd)) system(cmd)
+     }
+ 
+     set = struct()
+     set.top = gui.create ("topLevelShell", name="command")
+     set.cmd = gui.create ("command", set.top)
+     gui.set (set.cmd, {promptString="> "})
+     gui.addcallback (set.cmd, "commandEntered", "cb_entered(set=set)")
+     gui.addcallback (set.cmd, "commandChanged", "cb_changed(set=set)") 
+     gui.realize(set.top)
+
+?gui widgets fileSelectionBox
+ Motif Class Name: XmFileSelectionBox
+
+ Standard Motif file/directory selection dialog.  This presents a
+ standard interface for locating and selecting file system objects.
+
+ Example:
+    define cb_load(set)
+    {
+        fs  = $1
+        top = $2
+        sel = gui.get(fs,"dirSpec").dirSpec
+        if (type(sel)=="STRING") if (length(sel) > 0) if (fexists(sel)) {
+			printf ("Valid file has been selected\n");
+        } else {
+			printf ("Unable to locate that file\n");
+		}
+    }
+    
+    top = gui.create ("topLevelShell",name="Load...")
+    fs = gui.create ("fileSelectionBox", top)
+    gui.addcallback (fs, "ok", sprintf("cb_load(%d,%d,set=set)",fs,top))
+    gui.addcallback (fs, "cancel", sprintf("gui.destroy(%d)",top))
+    gui.realize(top)
+
+?gui widgets form
+ Motif Class Name: XmForm
+
+ Free form layout manager.  It provides exceptional docking control
+ over children placed inside, at the expense of being rather complex.
+ The full description of form's subtleties is left to the Motif
+ documentation.
+ 
+ Example:
+     top=gui.create('topLevelShell',name="Form")
+     form=gui.create('form',top)
+     pb1=gui.create('pushbutton',form)
+     pb2=gui.create('pushbutton',form)
+
+     gui.set(pb1,{topAttachment="ATTACH_FORM"})
+     gui.set(pb1,{leftAttachment="ATTACH_FORM"})
+     gui.set(pb1,{bottomAttachment="ATTACH_FORM"})
+     gui.set(pb1,{rightAttachment="ATTACH_POSITION"})
+     gui.set(pb1,{rightPosition=50})
+
+     gui.set(pb2,{topAttachment="ATTACH_FORM"})
+     gui.set(pb2,{bottomAttachment="ATTACH_FORM"})
+     gui.set(pb2,{rightAttachment="ATTACH_FORM"})
+     gui.set(pb2,{leftAttachment="ATTACH_POSITION"})
+     gui.set(pb2,{leftPosition=50})
+
+     gui.set(top,{width=400,height=400})
+     gui.realize(top)
+
+ This example first creates a top shell, the form, and two buttons
+ inside it.  The first button is then attached to the form on the
+ left and position 50 out of 100 on the right.  The other button
+ is attached in the opposite way so they share the form's space
+ along a vertical line between them.  The shell is then sized so
+ the user can see it and the application is realized.
+
+ This small example does not illustrate all of form's features.
+ There are other more complex attachment methods, such as
+ ATTACH_WIDGET.  See the Motif Programmer's Reference for further
+ information.
+
+?gui widgets frame
+ Motif Class Name: XmFrame
+
+ Provides a window frame/border.  This widget does very minimal
+ management, simply providing a visual border around its children.
+
+ Example:
+     top=gui.create("topLevelShell",name="frame")
+     f=gui.create("frame",top)
+     gui.realize(top)
+
+?gui widgets label
+ Motif Class Name: XmLabel
+
+ Basic text label.  Provides a variety of callbacks.  Text entry is
+ limited to a single line.
+
+ Example:
+    top=gui.create("topLevelShell",name="label")
+	gui.set(top,resources={width=500,height=500})
+	label=gui.create("label",top,{labelString="Hello World"})
+    gui.realize(top)
+
+?gui widgets lineBox
+ LineBox
+
+ This is a custom widget developed here at the ASU Mars Spaceflight
+ Center.  It allows the user a more interactive experience when
+ creating and changing a stretch function to apply to image data.
+
+ This widget was developed for a particular purpose, so no example
+ has been provided.
+ 
+?gui widgets list
+ Motif Class Name: XmList
+
+ Basic ordered list of items.  A Davinci text object can be set into
+ this widget.  Each line in the text object becomes a line in the list
+ and the user can select among them.
+
+ Example:
+     define cb_browseSelection () { echo ('browse') }
+     define cb_defaultAction () { echo ('dflt action') }
+     define cb_extendedAction () { echo ('ext. action') }
+     define cb_multSelection () { echo ('mult.select.') }
+     define cb_singleSelect () { echo ('sing.select.') }
+    
+     top=gui.create("topLevelShell",name="list")
+	 gui.set(top,resources={width=500,height=500})
+     list = cat("a","b","c","d",axis=y)
+     wid=gui.create("list",top)
+     gui.set(wid,{itemList=list})
+     gui.addcallback (wid,"browseSelection","cb_browseSelection()")
+     gui.addcallback (wid,"defaultAction","cb_defaultAction()")
+     gui.addcallback (wid,"extendedSelection","cb_extendedAction()")
+     gui.addcallback (wid,"multipleSelection","cb_multSelection()")
+     gui.addcallback (wid,"singleSelection","cb_singleSelect()")
+     gui.realize(top)
+     gui.get(wid,all=1)
+
+gui widgets panedWindow
+ Motif Class Name: XmPanedWindow
+ 
+ Layout manager attaches children together in vertical or horizontal
+ 'panes'.  A separator allows the user to resize each space allocated
+ for a child.
+
+ Example:
+     top=gui.create("topLevelShell",name="panedwindow");
+     gui.set(top,resources={width=500,height=500});
+     r=gui.create("rowcolumn",top)
+     wid=gui.create("panedWindow",r)
+     p1 = gui.create("pushbutton",wid,{labelString="PB 1"})
+     p2 = gui.create("pushbutton",wid,{labelString="PB 2"})
+     p3 = gui.create("pushbutton",wid,{labelString="PB 3"})
+     gui.realize(top)
+     gui.set(wid,{height=400})
+
+?gui widgets pushButton
+ Motif Class Name: XmPushButton
+
+ Generic push button can display a text label and handle user events.
+
+ Example:
+     top=gui.create('topLevelShell',name="pushbutton")
+     pb=gui.create('pushbutton',top,{labelString="Hello"})
+     gui.addcallback(pb,'activate','printf("hello world\\n")')
+     gui.realize(top)
+
+?gui widgets radioBox
+ Motif Class Name: XmRadioBox
+
+ Layout manager for radio buttons.  
+
+ Example:
+     top=gui.create("topLevelShell",name="radiobox")
+	 gui.set(top,resources={width=500,height=500})
+     wid=gui.create("radiobox",top)
+     p1=gui.create("togglebutton",wid,{labelString="choice 1"})
+     p2=gui.create("togglebutton",wid,{labelString="choice 2"})
+     p3=gui.create("togglebutton",wid,{labelString="choice 3"})
+     gui.addcallback (wid,"entry","echo('entry')")
+	 gui.addcallback (p1,"valueChanged","echo('choice 1 changed')")
+	 gui.addcallback (p2,"valueChanged","echo('choice 2 changed')")
+	 gui.addcallback (p3,"valueChanged","echo('choice 3 changed')")
+     gui.realize(top)
+
+?gui widgets rowColumn
+ Motif Class Name: XmRowColumn
+
+ Layout manager provides a simple grid, if all children are the same
+ size, or a row of width equal to the children and height equal to
+ the heighest child, or a column with width equal to the widest child
+ and height equal to the height of all children.
+
+ Example:
+     top=gui.create('topLevelShell',name="rowcolumn")
+     row=gui.create('rowcolumn',top,{orientation="HORIZONTAL"})
+     pb1=gui.create('pushbutton',row,{labelString="Pushbutton 1"})
+     pb2=gui.create('pushbutton',row,{labelString="Pushbutton 2"})
+     gui.realize(top)
+
+?gui widgets scale
+ Motif Class Name: XmScale
+
+ Sliding ranged value selector.  This slider bar lets a user quickly
+ pick a value within a fixed range.
+
+ Example:
+     top=gui.create('topLevelShell',name='scale')
+     scale=gui.create('scale',top)
+     gui.set(scale,{width=400,height=50,orientation="HORIZONTAL"})
+     gui.set(scale,{minimum=0,maximum=2000,value=800})
+     gui.addcallback(scale,'valueChanged','printf("valueChanged\\n")')
+     gui.addcallback(scale,'drag','printf("drag\\n")')
+     gui.realize(top)
+
+?gui widgets scrolledList
+ Motif Class Name: XmScrolledList
+
+ As the list widget, but with scrollbars when the contents cannot fit
+ in the space allowed.
+
+?gui widgets scrolledWindow
+ Motif Class Name: XmScrolledWindow
+
+ Layout manager provides a scrollable area for other widgets that are
+ too large to display in the scrolledwindow's parent all at once.  It
+ essentially uses the scrollbars to determine how to map a (smaller)
+ screen space into a (larger) virtual space.
+
+ Example:
+     top=gui.create("topLevelShell",name="scrolledwindow")
+	 gui.set(top,resources={width=500,height=500})
+     wid=gui.create("scrolledwindow",top)
+	 string="
+     string = "Hello World, Hello World, Hello World, Hello World, " \
+            + "Hello World, Hello World, Hello World, Hello World, " \
+            + "Hello World, Hello World, Hello World, Hello World, " \
+            + "Hello World, Hello World, Hello World, Hello World, " \
+            + "Hello World, Hello World, Hello World, Hello World, " \
+            + "Hello World, Hello World, Hello World, Hello World, " \
+            + "Hello World, Hello World, Hello World, Hello World, "
+     text=gui.create("text",wid,{value=string});
+     gui.set(text,{cursorPosition=length(gui.get(text,"value").value)})
+     gui.realize(top)
+
+?gui widgets selectionBox
+ Motif Class Name: XmSelectionBox
+
+ List with item selection.
+
+ Example:
+     top=gui.create("topLevelShell",name="selectionbox")
+	 gui.set(top,resources={width=500,height=500})
+     list = cat("a","b","c","d",axis=y)
+     wid=gui.create("selectionbox",top,{mustMatch="true"})
+     gui.set(wid,{listItems=list})
+     gui.addcallback(wid,"ok","echo('ok')")
+     gui.addcallback(wid,"cancel","echo('cancel')")
+     gui.addcallback(wid,"help","echo('help')")
+     gui.addcallback(wid,"noMatch","echo('noMatch')")
+     gui.realize(top)
+
+?gui widgets separator
+ Motif Class Name: XmSeparator
+
+ Dividing line between widgets.
+
+ Example:
+     top=gui.create("topLevelShell",name="separator");
+     gui.set(top,resources={width=500,height=500});
+     r = gui.create("rowcolumn", top)
+     p1 = gui.create("pushbutton",r,{labelString="pb1"})
+     w1=gui.create("separator",r, {separatorType="SINGLE_LINE"})
+     p2 = gui.create("pushbutton",r,{labelString="pb2"})
+     w1=gui.create("separator",r, {separatorType="DOUBLE_LINE"})
+     p3 = gui.create("pushbutton",r,{labelString="pb3"})
+     w1=gui.create("separator",r, {separatorType="SINGLE_DASHED_LINE"})
+     p4 = gui.create("pushbutton",r,{labelString="pb4"})
+     w1=gui.create("separator",r, {separatorType="DOUBLE_DASHED_LINE"})
+     p5 = gui.create("pushbutton",r,{labelString="pb5"})
+     w1=gui.create("separator",r, {separatorType="SHADOW_ETCHED_IN"})
+     p6 = gui.create("pushbutton",r,{labelString="pb6"})
+     w1=gui.create("separator",r, {separatorType="SHADOW_ETCHED_OUT"})
+     p7 = gui.create("pushbutton",r,{labelString="pb7"})
+     gui.realize(top)
+
+?gui widgets textfield
+ Motif Class Name: XmTextField
+
+ Single-line text entry field.
+
+ Example:
+     top=gui.create("topLevelShell",name="textfield")
+	 gui.set(top,resources={width=500,height=500})
+     r=gui.create("rowcolumn",top)
+
+     w1=gui.create("textfield",r)
+     gui.addcallback(w1,"activate","echo('activated 1')")
+     gui.addcallback(w1,"focus","echo('got focus 1')")
+     gui.addcallback(w1,"losingFocus","echo('lost focus 1')")
+     gui.addcallback(w1,"modifyVerify","echo('verify 1')")
+     gui.addcallback(w1,"valueChanged","echo('changed 1')")
+
+     w2=gui.create("textfield",r)
+     gui.addcallback(w2,"activate","echo('activated 2')")
+     gui.addcallback(w2,"focus","echo('got focus 2')")
+     gui.addcallback(w2,"losingFocus","echo('lost focus 2')")
+     gui.addcallback(w2,"modifyVerify","echo('verify 2')")
+     gui.addcallback(w2,"valueChanged","echo('changed 2')")
+
+     gui.realize(top)
+
+?gui widgets text
+ Motif Class Name: XmText
+
+ Multi-line text entry window.
+
+ Example:
+     top=gui.create("topLevelShell",name="text")
+	 gui.set(top,resources={width=500,height=500})
+     r=gui.create("rowcolumn",top)
+
+     w1=gui.create("text",r)
+     gui.addcallback(w1,"activate","echo('activated 1')")
+     gui.addcallback(w1,"focus","echo('got focus 1')")
+     gui.addcallback(w1,"losingFocus","echo('lost focus 1')")
+     gui.addcallback(w1,"modifyVerify","echo('verify 1')")
+     gui.addcallback(w1,"valueChanged","echo('changed 1')")
+
+     w2=gui.create("text",r)
+     gui.addcallback(w2,"activate","echo('activated 2')")
+     gui.addcallback(w2,"focus","echo('got focus 2')")
+     gui.addcallback(w2,"losingFocus","echo('lost focus 2')")
+     gui.addcallback(w2,"modifyVerify","echo('verify 2')")
+     gui.addcallback(w2,"valueChanged","echo('changed 2')")
+
+     gui.realize(top)
+
+?gui widgets toggleButton
+ Motif Class Name: XmToggleButton
+
+ Boolean state button used inside RadioBox or menus.  See MenuBar and
+ RadioBox for further details.
+
+ Example:
+     define cb_changed (set)
+     {
+         sum = 0
+         if (gui.get(set.w1,"set").set == "TOGGLE_SET") sum += 1;
+         if (gui.get(set.w2,"set").set == "TOGGLE_SET") sum += 1;
+         if (gui.get(set.w3,"set").set == "TOGGLE_SET") sum += 1;
+         if (gui.get(set.w4,"set").set == "TOGGLE_SET") sum += 1;
+         if (sum == 4) echo ('Need a forklift for that?');
+     }
+ 
+     top=gui.create("topLevelShell",name="togglebutton")
+	 gui.set(top,resources={width=300,height=300})
+     r=gui.create("rowcolumn",top)
+     l=gui.create("label",r,{labelString="Choose Extras:"})
+
+     set = struct()
+     set.w1=gui.create("togglebutton",r,{labelString="Lettuce"})
+     set.w2=gui.create("togglebutton",r,{labelString="Tomato"})
+     set.w3=gui.create("togglebutton",r,{labelString="Pickle"})
+     set.w4=gui.create("togglebutton",r,{labelString="Onions"})
+     gui.addcallback (set.w1,"valueChanged","cb_changed(set=set)")
+     gui.addcallback (set.w2,"valueChanged","cb_changed(set=set)")
+     gui.addcallback (set.w3,"valueChanged","cb_changed(set=set)")
+     gui.addcallback (set.w4,"valueChanged","cb_changed(set=set)")
+
+     gui.realize(top)
+
+?gui widgets topLevelShell
+ TopLevelShell
+
+ Framed & titled window.  This is the top-level shell used by nearly
+ all GUI module window applications.  The widget provides the standard
+ X/Motif buttons in the upper corners, and defaults to the size of its
+ children.
+
+ See other examples for the extent of general usage.
+
+?gui widgets vicar
+ xvicBasicImageWidget
+
+ This is a third-party Motif widget developed by JPL.  See the Davinci
+ ./docs/html directory for the Programmer's Vicar Reference.
+
+ The Vicar widget is a powerful image display & manipulation widget.
+ This widget tiles an input image to allow rapid scrolling within
+ regions much larger than the Vicar screen area.  It allows mouse-
+ or scrollbar-based scrolling of the image area.
+ 
+ Vicar supports nearly all X Windows configurations and color schemes.
+ It provides several color lookup table and dithering options based on
+ the available X Server support.
+ 
+ For a comprehensive list of functionality, see the Vicar Reference.
+
+ The image resource must be set at creation time.
+
+ Example:
+     top=gui.create('topLevelShell',name='vicar')
+     img=load(filename)
+     vic=gui.create('vicar',top,{image=img})
+     gui.realize(top)
+
+ Given a string, filename, this example constructs a Vicar widget to
+ display that file.
+
+?gui widgets cascadeButton
+ Motif Class Name: XmCascadeButton
+
+ Pending - menu implementation not yet complete.
+
+?gui widgets drawnButton
+ Motif Class Name: XmDrawnButton
+
+ Graphical push button useful to display icons or graphics on a button
+ instead of text.  Not yet fully implemented.  Currently, pixmaps are
+ not supported.
+
+ This button's drawing area is not managed by any widget.  By
+ accessing the xhandle resource, this widget can serve as a drawing
+ target for other applications outside of Davinci.
+
+?gui widgets errorDialog
+ Motif Class Name: XmErrorDialog
+
+ Error message modal dialog, not currently functional.  Modal dialogs
+ are not yet supported.
+
+?gui widgets menuBar
+ Motif Class Name: XmMenuBar
+
+ Menu support widget.  Provides the basic container widget for normal
+ menu contents.  This widget is not yet functional.
+ 
+?gui widgets transientShell
+TransientShell
+
+ Modal dialog shell, not yet implemented.
+
+?gui widgets scrollBar
+ Motif Class Name: XmScrollBar
+
+ Scrollbar implementation not fully implemented.
+ Use ScrolledList/ScrolledWindow instead
+
+?gui functions
+ The gui module presents several basic functions to the user.  The
+ normal module syntax is used, for example:
+
+     top = gui.create('topLevelShell')
+
+ These functions take or return a widget ID.  This is a handle into
+ the GUI module, so it can keep track of widgets in the X/Motif
+ environment using a simple number in the Davinci environment.
+
+?gui functions create
+ gui.create(widgetclass, parent, resources, name)
+     widgetclass: Xt/Motif WidgetClass or Davinci alias.
+     parent     : The widgetid of the parent widget. Default is the
+	              application shell.
+     resources  : A struct of resource key/values.
+     name       : Arbitrary name for the widget. Most widgets ignore
+	              this value.
+
+ Create a new widget and return its handle.
+
+?gui functions destroy
+ gui.destroy(widgetid)
+     widgetid   : The handle of the widget to act on.
+
+ Destroy widgetid. This will recursively destroy all of the widget's
+ children as well. Any widgets which are realized (visible) when
+ destroyed will be unrealized first.
+
+ Note that once a widget is destroyed, even if it's a child widget
+ destroyed as a side-effect, its Davinci handle will no longer be
+ valid and should not be used in any GUI module functions.
+
+?gui functions get
+ gui.get(widgetid, resources, all)
+     widgetid : The handle of the widget to act on.
+     resources: A list of resource names to retrieve.
+	            Accepts struct, text, or string.
+     all      : If 1, return all resources, including hidden
+	            resources.  Otherwise return public resources only.
+     showEnums: If 1, prints a list of possible values for enumerated
+	            resources. Useful to learn an enumerated resource's
+				supported states.
+
+ Retrieve the default list of resources, the resources specified in
+ resources, or all widget resources if all = 1 is specified.
+ Resources are returned in a Davinci struct.
+
+ The list of public resources is defined initially for each widget
+ type.  When the user sets a resource, this list is updated.  See
+ the section in visibility for more details.
+
+ The widget need not be realized to query its resources.  Some values
+ may change as a side-effect of "invisible" user actions, such as
+ resizing windows.
+
+ Because some resource query operations may be costly (especially when
+ images are involved), you can explicitly query specific resources. To
+ query a single resource:
+
+     gui.get(label, "labelString")
+
+ Which yields:
+
+     struct, 1 elements
+     labelString: "Hello, world!"
+
+ To query multiple resources, build a resource list in either a struct:
+
+     structlist = { "labelString", "alignment" }
+     gui.get(label, structlist)
+
+ ...or a text object:
+
+     textlist = cat("labelString", "alignment", axis = y)
+     gui.get(label, textlist)
+
+ Both produce the same output:
+
+     struct, 2 elements
+     labelString: "Hello, world!"
+     alignment: "ALIGNMENT_END"
+
+?gui functions set
+ gui.set(widgetid, resources)
+     widgetid : The handle of the widget to act on.
+     resources: A list of resource names to retrieve.
+	            Accepts struct, text, or string.
+
+ Set one or more resources on the specified widget.
+
+ The resource names and values must be in a Davinci struct. The struct
+ from a gui.get() call may be modified and used in a gui.set() call.
+ You may also use anonymous structs.
+
+ Setting Multiple Resources
+
+ To set multiple resources on a widget at once, add more elements to
+ the structure:
+
+     labelResources = struct()
+     labelResources.labelString = "Hello, world!"
+     labelResources.alignment = "ALIGNMENT_END"
+     label = gui.create("label", top, labelResources)
+
+ If you modify the example and add the alignment resource, you will
+ see that the label now "sticks" to the side of the side of the window
+ when you expand it, instead of staying centered.
+
+?gui functions realize
+ gui.realize(widgetid)
+     widgetid : The handle of the widget to act on.
+
+ Make the specified widget visible. This recursively applies to all of
+ the widget's children as well.
+
+ It is best to create and configure the widget and all its children
+ before realizing the outermost widget, to avoid display problems.
+
+?gui functions addcallback
+ gui.addcallback(widgetid, callback, eval)
+     widgetid : The handle of the widget to act on.
+     callback : The Xt callback name or Davinci alias string.
+     eval     : A string of Davinci code to evaluate when the callback
+	            occurs.
+
+ Add the named callback to widgetid. The code in eval must be a string
+ of Davinci code, which will be evaluated each time the callback event
+ occurs. If you use a function name, arbitrarily complex Davinci
+ functions can be executed.
+
+ Callbacks are what make Davinci GUIs interactive. By registering a
+ callback on widgets such as PushButton and FileSelectionBox, your
+ Davinci application can react to user events. The callback mechanism
+ allows Davinci code to be run when a GUI event occurs.
+
+ By default, most events are ignored unless the developer explicitly
+ registers a callback. Some widgets have a default callback which is
+ used when the developer has not overridden it. See the Xt/Motif
+ references for details.
+
+ To register a callback, you need to know the internal name of the
+ callback, as defined by Xt, and you need to define a Davinci function
+ to respond to the callback.
+
+ Example:
+     define buttonCallback() {
+         printf("You pressed the button!\n");
+     }
+
+     top = gui.create("topLevelShell", name = "Hello!")
+     pb = gui.create("pushButton", top, { labelString = "Press Me!" })
+     gui.addcallback(pb, "activate", "buttonCallback()")
+     gui.realize(top)
+
+?gui functions removecallback
+ gui.removecallback(widgetid, callback)
+     widgetid : The handle of the widget to act on.
+     callback : The Xt callback name or Davinci alias.
+
+ Remove the specified callback from widgetid. The widget will no
+ longer call any Davinci code when the callback occurs, however any
+ internal callback handling will still occur (such as changing
+ RadioButton states).
+
+?gui functions listcallbacks
+ gui.listcallbacks(widgetid)
+     widgetid : The handle of the widget to act on.
+
+ Returns the supported callbacks for widgetid in a Davinci struct.
+ Each struct name/value are the callback string and eval string for
+ that callback.  Useful both to learn what callbacks a widget supports
+ and as a reminder of the current setting.
+
+?functions load_tdb()
+?load_tdb()
+ load_tdb() - Load a TDB file
+
+ load_tdb(filename [,distribute=1] [,compress=1])
+
+ The load_tdb() function loads a TDB (TES Data Base) file.  It returns
+ a structure containing one structure for each record in the file.
+ 
+ By default however, Xaxis and Double records are not merged.  If the 
+ distrbute flag is set, the appropriate Xaxis records are copied into 
+ any Double records that have an xdata value set (and the xdata value is
+ removed).
+
+ If the compress flag is set, records of the same type are collated together.
+ Any records that are of the same type, but which are not homogenous (ie: 
+ Double records both with and without an Xaxis set) are padded out to be 
+ homogenous, using empty strings.
+
+?thm
+
+?thm introduction
+ This Davinci module provides THEMIS data processing algorithms.
+
+?thm functions
+
+?thm functions column_fill
+ thm.column_fill() - Sub-function written for autoradcorr.
+
+?thm functions convolve
+ thm.convolve() - Removes plaid from THEMIS spectral cubes.
+
+?thm functions corners
+ thm.deplaid() - Removes plaid from THEMIS spectral cubes.
+
+?thm functions deplaid
+ thm.deplaid() - Removes plaid from THEMIS spectral cubes.
+
+ Syntax: deplaid(data=VAL[,ignore=VAL][,tmask_max=VAL][,tmask_min=VAL]
+                         [,filt_len=INT][,b10=INT][,axis=ENUM])
+
+ 'data'      - geometrically projected and rectified radiance cube of at most 10 bands
+ 'ignore'    - the value of non-data pixels  (default is -32768)
+ 'tmask_max' - max threshold used to create temperature mask (default is 1.15)
+ 'tmask_min' - min threshold used to create temperature mask (default is 0.80)
+ 'filt_len'  - length of filter used in plaid removal (default is 150)
+ 'b10'       - the band (1-10) in the data that is THEMIS band 10 (default is 10)
+ 'axis'      - the direction to deplaid (x,y,xy) (default is xy)
+
+ Troubleshooting:
+ - You should designate b10 when NOT feeding deplaid 10 band data, 
+   b10=0 for no band 10 data
+ - You can return the blackmask/temperature mask by using "dump = 1"
+ - If you get brightness smear, bring the tmask_max and/or min closer to 1.0
+ - If you still see long-wavelength plaid, such as in cold images, increase filt_len
+ - If the image looks washed out, check your null value
+
+ Examples:
+
+ dv> b = thm.deplaid(a)
+ dv> b = thm.deplaid(data=a, ignore=-32768, tmask_max=1.25, b10=3)
+ dv> b = thm.deplaid(a,0,tmask_max=1.21)
+ dv> b = thm.deplaid(a,0,1.10,0.90,180,8)
+
+ See http://davinci.asu.edu/index.php/thm.deplaid for more help.
+
+?thm functions emiss2rad
+ thm.emiss2rad() - emissivity to radiance converter
+
+?thm functions kfill
+ thm.kfill() - dont even ask me
+
+?thm functions ipi
+ thm.ipi() - Inverse Parabolic Interpolation
+
+?thm functions rad2tb
+ thm.rad2tb() - convert radiance to brightness temperature
+
+?thm functions radcorr
+ thm.radcorr() - Produces the 2x1x10 float array containing correction and em offset values for a given array
+
+?thm functions ramp
+ thm.ramp() - oh, rampy stuff.. you know.
+
+?thm functions reconstitute
+ thm.reconstitute() - Unshears and unslants the output structure from thm.rectify()
+
+?thm functions rectify
+ thm.rectify() - Rotates and slants a geometrically projected THEMIS cube to
+   minimize the black space and prepare the data for thm.deplaid. This process
+   is reversed with thm.reconstitute.
+
+ Syntax: rectify(obj=VAL[,ignore=VAL][,trust=FLOAT][,force=1])
+
+ 'obj'    - a geometrically projected THEMIS cube
+ 'ignore' - the valuee in non-data pixels.  (default is -3.402e38)
+ 'trust'  - location in the image from which the angle should be determined.
+            0 = top, 1 = bottom, 0.25 = 25% down the image. (default = 0)
+ 'force'  - forces rectify to use an ignore value even if it complains
+
+ Troubleshooting:
+ - The ignore value will ALWAYS be set to -32768 when rectifying!
+ - Rectify checks for appropriate ignore values before running.
+ - You can override ignore value warnings by setting force = 1.
+
+ Example:
+ dv> a
+ 1356x7100x10 array of float, bsq format [385,104,000 bytes]
+
+ dv> b = thm.rectify(obj=a)
+ struct, 4 elements
+     angle: 3.33555
+     data: 345x7179x10 array of float, bsq format [99,070,200 bytes]
+     leftedge: 1x7179x1 array of int, bsq format [28,716 bytes]
+     width: 1356
+
+ See http://davinci.asu.edu/index.php/thm.rectify for more help.
+
+?thm functions sstretch
+ thm.sstretch() - sstretch used for a bunch of crap
+
+?thm functions supersample
+ thm.supersample() - supersample THEMIS crap
+
+?thm functions themis_emissivity
+ thm.themis_emissivity() - THEMIS radiance to emissivity converter
+
+?thm functions unscale
+ thm.unscale() - Used to unscale a pds from short to float data
+
+?thm functions white_noise_remove1
+ thm.white_noise_remove1() - yuh huh
+
+?thm functions white_noise_remove2
+ thm.white_noise_remove2() - uhhh huh huh
