@@ -25,7 +25,7 @@ static Var *cse_reconst(vfuncptr func, Var *arg);
 static Var *cse_sstretch2(vfuncptr func, Var *arg);
 static Var *cse_unscale(vfuncptr func, Var *arg);
 static Var *cse_ramp(vfuncptr func, Var * arg);
-static Var *cse_interp2d(vfuncptr func, Var * arg);
+//static Var *cse_interp2d(vfuncptr func, Var * arg);
 static Var *cse_columnator(vfuncptr func, Var * arg);
 static Var *cse_cubicspline(vfuncptr func, Var * arg);
 static Var *cse_resample(vfuncptr func, Var * arg);
@@ -49,7 +49,7 @@ static dvModuleFuncDesc exported_list[] = {
   { "sstretch", (void *) cse_sstretch2},
   { "unscale", (void *) cse_unscale},
   { "ramp", (void *) cse_ramp},
-  { "interp2d", (void *) cse_interp2d},
+  { "interp2d", (void *) ff_interp2d},
   { "columnator", (void *) cse_columnator},
   { "cubicspline",(void *) cse_cubicspline},
   { "resample",(void *) cse_resample},
@@ -1686,39 +1686,39 @@ cse_sstretch2(vfuncptr func, Var * arg)
     /*calculate the sum and sum squares if non sampled */
     if(sam_data == NULL) {
       for(j=0; j<y; j++) {
-	for(i=0; i<x; i++) {
-	  tv=extract_float(data, cpos(i,j,k, data));
-	  w_data[k*y*x + j*x + i]=tv;
-	  if( tv != ignore){
-	    sum += (double)tv;
-	    sumsq += (double)(tv*tv);
-	    cnt += 1;
-	  }
-	}
+        for(i=0; i<x; i++) {
+          tv=extract_float(data, cpos(i,j,k, data));
+          w_data[k*y*x + j*x + i]=tv;
+          if( tv != ignore){
+            sum += (double)tv;
+            sumsq += (double)(tv*tv);
+            cnt += 1;
+          }
+        }
       }
     }
     
     /* calculate the sum and sum of squares if sampled image */
     if(sam_data != NULL) {
       for(j=0; j<samy; j++) {
-	for(i=0; i<samx; i++) {
-	  tv=extract_float(sam_data, cpos(i,j,k, sam_data));
-	  if( tv != ignore){
-	    sum += (double)tv;
-	    sumsq += (double)(tv*tv);
-	    cnt += 1;
-	  }
-	}
+        for(i=0; i<samx; i++) {
+          tv=extract_float(sam_data, cpos(i,j,k, sam_data));
+          if( tv != ignore){
+            sum += (double)tv;
+            sumsq += (double)(tv*tv);
+            cnt += 1;
+          }
+        }
       }
-
+      
       /* extract data values if want sampled image */
       for(j=0; j<y; j++) {
-	for(i=0; i<x; i++) {
-	  w_data[k*y*x + j*x + i]=extract_float(data, cpos(i,j,k, data));
-	}
+        for(i=0; i<x; i++) {
+          w_data[k*y*x + j*x + i]=extract_float(data, cpos(i,j,k, data));
+        }
       }
     }
-
+    
     /* calculate standard deviation */
     stdv = sqrt((sumsq - (sum*sum/cnt))/(cnt-1));
     sum /= (double)cnt;
@@ -1726,9 +1726,9 @@ cse_sstretch2(vfuncptr func, Var * arg)
     /* fill in stretched values */
     for(j=0; j<y; j++) {
       for(i=0; i<x; i++) {
-	if(w_data[k*y*x + j*x + i] != ignore) w_data[k*y*x + j*x + i] = (float)((w_data[k*y*x + j*x + i] - sum)*(v/stdv)+127);
-	if(w_data[k*y*x + j*x + i] < 0) w_data[k*y*x + j*x + i] = 0; 
-	if(w_data[k*y*x + j*x + i] > 255) w_data[k*y*x + j*x + i] = 255; 
+        if(w_data[k*y*x + j*x + i] != ignore) w_data[k*y*x + j*x + i] = (float)((w_data[k*y*x + j*x + i] - sum)*(v/stdv)+127);
+        if(w_data[k*y*x + j*x + i] < 0) w_data[k*y*x + j*x + i] = 0; 
+        if(w_data[k*y*x + j*x + i] > 255) w_data[k*y*x + j*x + i] = 255; 
       }
     }
   }
@@ -1737,7 +1737,7 @@ cse_sstretch2(vfuncptr func, Var * arg)
   for(j=0; j<y; j++) {
     for(i=0; i<x; i++) {
       for(k=0; k<z; k++) {
-	w_data2[j*x*z + i*z + k]=(byte)w_data[k*y*x + j*x + i];
+        w_data2[j*x*z + i*z + k]=(byte)w_data[k*y*x + j*x + i];
       }
     }
   }
@@ -2027,106 +2027,6 @@ cse_ramp(vfuncptr func, Var * arg)
   free(ol2);
   
   out = newVal(BSQ, x, y, 1, FLOAT, ramp);
-  return out;
-}
-
-
-
-Var*
-cse_interp2d(vfuncptr func, Var *arg)
-{
-  
-  Var    *xdata = NULL;                /* the orignial data */
-  Var    *ydata = NULL;                /* the orignial data */ 
-  Var    *table = NULL;                /* look up table */
-  Var    *out = NULL;                  /* the output struture */
-  int     i,j,k;                       /* loop indices */
-  float   p1, p2;                      /* percentages */
-  int     xx,xy,xz,yx,yy,yz;           /* data size */
-  float  *wdata = NULL;                /* working data */
-  float   sx=1,dx=1,sy=1,dy=1;         /* start and delta values */
-  float   tvx,tvy;                     /* data values */
-  int     xi,yi;                       /* new x and y positions */
-  float   tv1,tv2;                     /* temporary values */
-  
-  Alist alist[8];
-  alist[0] = make_alist("table",     ID_VAL,    NULL,  &table);
-  alist[1] = make_alist("xdata",     ID_VAL,    NULL,  &xdata);
-  alist[2] = make_alist("ydata",     ID_VAL,    NULL,  &ydata);
-  alist[3] = make_alist("startx",    FLOAT,     NULL,  &sx);
-  alist[4] = make_alist("deltax",    FLOAT,     NULL,  &dx);
-  alist[5] = make_alist("starty",    FLOAT,     NULL,  &sy);
-  alist[6] = make_alist("deltay",    FLOAT,     NULL,  &dy);
-  alist[7].name = NULL;
-  
-  if (parse_args(func, arg, alist) == 0) return(NULL);
-  
-  if (table == NULL) {
-    parse_error("\ninterp2d()- Thu Apr 27 16:20:31 MST 2006");
-    parse_error("Bilinear interpolation algorithm");
-    parse_error("\nInputs and Outputs:");
-    parse_error("table - table of values of a standard delta value for each axis");
-    parse_error("xdata - the x data to interpolate");
-    parse_error("ydata - the y data to interpolate");
-    parse_error("startx - starting x value for the table");
-    parse_error("deltax - delta  x value for the table");
-    parse_error("starty - starting y value for the table");
-    parse_error("deltay - delta y value for the table");
-    parse_error("Returns a 1 d, array the size of x and y data\n");
-    parse_error("c.edwards");
-    return (NULL);
-  }
-    
-  /*size of xdata*/
-  xx = GetX(xdata);
-  xy = GetY(xdata);
-  xz = GetZ(xdata);
-
-  /*size of ydata*/
-  yx = GetX(ydata);
-  yy = GetY(ydata);
-  yz = GetZ(ydata);
-
-  /*error handling, they must be the same size and one band*/
-  if(xx!=yx || xy!=yy || xz!=1 || yz != 1) { 
-    parse_error("\nThe x and y data must have the same dimensions and only one band\n");
-    return NULL;
-  }
-
-  /*memory allocation*/
-  wdata=(float *)calloc(sizeof(float),xx*xy*1);
-  
-  for(i=0;i<xx;i+=1) {
-    for(j=0;j<xy;j+=1) {
-      
-      /*extract values from original data*/
-      tvx=extract_float(xdata,cpos(i,j,0,xdata));
-      tvy=extract_float(ydata,cpos(i,j,0,ydata));
-      
-      /*apply start and delta to the extracted values*/
-      tvx=(tvx-sx)/dx;
-      tvy=(tvy-sy)/dy;
-      if(tvx<0) tvx=0;
-      if(tvy<0) tvy=0;
-      if(tvx>xx) tvx=xx-1;
-      if(tvy>xy) tvy=xy-1;     
-      
-      /*calculate percentages */
-      p1=(float)(tvx-floor(tvx));
-      p2=(float)(tvy-floor(tvy));
-      xi=(int)floor(tvx);
-      yi=(int)floor(tvy);
-      
-      /*   apply the bilinear interpolation algorithm                  **
-      **   val=(f(1,1)*(1-p1)+f(2,1)*p1)*(1-p2)+(f(1,2)*(1-p1)+f(2,2)*p1)*p2    **
-      */
-
-      tv1=(extract_float(table,cpos(xi,yi,0,table))*(1-p1)+extract_float(table,cpos(xi+1,yi,0,table))*(p1))*(1-p2);
-      tv2=(extract_float(table,cpos(xi,yi+1,0,table))*(1-p1)+extract_float(table,cpos(xi+1,yi+1,0,table))*(p1))*(p2);
-      wdata[xx*j + i]=(float)(tv1+tv2);
-    }
-  }
-  out=newVal(BSQ, xx, xy, 1, FLOAT, wdata);
   return out;
 }
 
