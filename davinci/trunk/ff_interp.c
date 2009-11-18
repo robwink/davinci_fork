@@ -863,7 +863,7 @@ Var* ff_interp2d(vfuncptr func, Var *arg)
 
   /*memory allocation*/
   wdata=(float *)calloc((size_t)xx*(size_t)xy*1, sizeof(float));
-  
+
   for(i=0;i<xx;i+=1) {
     for(j=0;j<xy;j+=1) {
       
@@ -874,21 +874,22 @@ Var* ff_interp2d(vfuncptr func, Var *arg)
       /*apply start and delta to the extracted values*/
       tvx=(tvx-sx)/dx;
       tvy=(tvy-sy)/dy;
-      if(tvx<0) tvx=0;
-      if(tvy<0) tvy=0;
-      if(tvx>xx) tvx=xx-1;
-      if(tvy>xy) tvy=xy-1;     
-      
+
       /*calculate percentages */
       p1=(float)(tvx-floor(tvx));
       p2=(float)(tvy-floor(tvy));
       xi=(int)floor(tvx);
       yi=(int)floor(tvy);
       
+      if(xi>GetX(table)|| yi>GetY(table) || xi<0 || yi<0){
+        parse_error("Your interpolation values fall outside the range of the table\n");
+        return(NULL);
+      }
+      
       /*   apply the bilinear interpolation algorithm                  **
       **   val=(f(1,1)*(1-p1)+f(2,1)*p1)*(1-p2)+(f(1,2)*(1-p1)+f(2,2)*p1)*p2    **
       */
-
+      
       tv1=(extract_float(table,cpos(xi,yi,0,table))*(1-p1)+extract_float(table,cpos(xi+1,yi,0,table))*(p1))*(1-p2);
       tv2=(extract_float(table,cpos(xi,yi+1,0,table))*(1-p1)+extract_float(table,cpos(xi+1,yi+1,0,table))*(p1))*(p2);
       wdata[(size_t)xx*(size_t)j + (size_t)i]=(float)(tv1+tv2);
