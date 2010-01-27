@@ -45,6 +45,7 @@
 
 
 
+#define REAL double
 #define GOOD_TRIG
 #include "trigtbl.h"
 char fht_version[] = "Brcwl-Hrtly-Ron-dbld";
