@@ -1,17 +1,18 @@
 #include "parser.h"
 
 #include "fft.h"
+#include <math.h>
 
 /**
  **/
 void cdft(int n, double wr, double wi, double *a);
 void rdft(int n, double wr, double wi, double *a);
 
-void mayer_fht(double *fz, int n);
-void mayer_ifft(int n, double *real, double *imag);
-void mayer_realfft(int n, double *real);
-void mayer_fft(int n, double *real, double *imag);
-void mayer_realifft(int n, double *real);
+int mayer_fht(double *fz, int n);
+int mayer_ifft(int n, double *real, double *imag);
+int mayer_realfft(int n, double *real);
+int mayer_fft(int n, double *real, double *imag);
+int mayer_realifft(int n, double *real);
 
 Var *
 ff_fft(vfuncptr func, Var * arg)
@@ -173,7 +174,7 @@ Var *
 ff_realfft3(vfuncptr func, Var * arg)
 {
   Var *obj = NULL;
-  int i, n;
+  size_t i, n;
   double *in;
 
   Alist alist[3];
@@ -188,8 +189,16 @@ ff_realfft3(vfuncptr func, Var * arg)
   }
 
   n = V_DSIZE(obj);
+  if (n > INT_MAX){
+  	parse_error("%s: fft function does not handle objects greater than %ld bytes.\n", func->name, INT_MAX);
+  	return NULL;
+  }
 
   in = (double *)calloc(n, sizeof(double));
+  if (in == NULL){
+  	parse_error("%s: Unable to alloc %ld bytes.\n", func->name, n*sizeof(double));
+  	return NULL;
+  }
 
   for (i = 0 ; i < n ; i++) {
     in[i] = extract_double(obj, i);
