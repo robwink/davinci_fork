@@ -1846,8 +1846,7 @@ int rf_QUBE(char *fn, Var * ob, char *val, int dptr)
 }
 
 void
-rf_BitField(int *j, char **Bufs, char *tmpbuf, FIELD ** f, int ptr,
-            int row, int *size)
+rf_BitField(int *j, char **Bufs, char *tmpbuf, FIELD ** f, int ptr, int row, int *size)
 {
   int i = (*j);
   /*
@@ -1871,11 +1870,10 @@ int rf_TABLE(char *fn, Var * ob, char *val, int dptr)
   Var *Data;
   char **Bufs;
   char *tmpbuf;
-  int i, j;
+  int i, j, k;
   int fp;
   int Offset;
   FIELD **f;
-  int step;
   int *size;
   int err;
   int num_items = 0;
@@ -1927,17 +1925,13 @@ int rf_TABLE(char *fn, Var * ob, char *val, int dptr)
       return (1);
     }
 
-    step = 0;
-
     for (j = 0; j < num_items; j++) {
       /*Place in the approiate buffer */
 
-      memcpy((Bufs[j] + i * size[j]), (tmpbuf + step), size[j]);
-      step += size[j];
+      memcpy((Bufs[j] + i * size[j]), (tmpbuf + f[j]->start), size[j]);
 
       if (f[j]->eformat == MSB_BIT_FIELD)
-        rf_BitField(&j, Bufs, tmpbuf, f, (step - size[j]), i,
-                    size);
+        rf_BitField(&j, Bufs, tmpbuf, f, f[j]->start, i, size);
     }
   }
   close(fp);
@@ -1958,15 +1952,21 @@ int rf_TABLE(char *fn, Var * ob, char *val, int dptr)
 
 double Scale(int size, void *ptr, FIELD * f)
 {
-  unsigned char *cp;
-  unsigned int *ip;
-  unsigned short *sp;
+  unsigned char *ucp;
+  unsigned int *uip;
+  unsigned short *usp;
+  char *cp;
+  int *ip;
+  short *sp;
   float *fp;
   double *dp;
   char num[256];              /* this was WAY too small at [9] */
 
   /*Set up pointer casts for our data type*/
 
+  ucp = ptr;
+  uip = ptr;
+  usp = ptr;
   cp = ptr;
   ip = ptr;
   sp = ptr;
@@ -1974,17 +1974,27 @@ double Scale(int size, void *ptr, FIELD * f)
   dp = ptr;
 
   switch (f->eformat) {
-    case MSB_INTEGER:
-    case MSB_UNSIGNED_INTEGER:
-    case LSB_INTEGER:
     case LSB_UNSIGNED_INTEGER:
+    case MSB_UNSIGNED_INTEGER:
       switch (f->size) {
         case 4:
-          return ((double) ip[0] * f->scale + f->offset);
+          return (((double) uip[0]) * f->scale + f->offset);
         case 2:
-          return ((double) sp[0] * f->scale + f->offset);
+          return (((double) usp[0]) * f->scale + f->offset);
         case 1:
-          return ((double) cp[0] * f->scale + f->offset);
+          return (((double) ucp[0]) * f->scale + f->offset);
+      }
+	break;
+
+    case MSB_INTEGER:
+    case LSB_INTEGER:
+      switch (f->size) {
+        case 4:
+          return (((double) ip[0]) * f->scale + f->offset);
+        case 2:
+          return (((double) sp[0]) * f->scale + f->offset);
+        case 1:
+          return (((double) cp[0]) * f->scale + f->offset);
       }
 
       break;
@@ -2043,7 +2053,7 @@ char *DoScale(int rows, FIELD * f, char *in)
 void
 Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
 {
-  int j, i;
+  int j, i, k;
   void *data;
   char **text;
   Var *v;
@@ -2052,17 +2062,19 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
   double fnum;
   int step;
   int dim;
-  int num_items;
+  int num_fields;
+  int nitems;
 
-  num_items = label->fields->number;
+  num_fields = label->fields->number;
 
   /**
   *** Note: the calloc in all these routines is stupid, as it
   ***       allocates (nbytes*nitems, 1)
   **/
 
-  for (j = 0; j < num_items; j++) {
+  for (j = 0; j < num_fields; j++) {
     dim = (f[j]->dimension ? f[j]->dimension : 1);
+	nitems = label->nrows * dim;
     step = 0;
 
     /* Do appropriate endian conversion */
@@ -2091,8 +2103,8 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
       ** regardless of input size
       */
       Bufs[j] = DoScale(label->nrows, f[j], Bufs[j]);
-      data = calloc(dim * 8 * label->nrows, sizeof(char));
-      memcpy(data, Bufs[j], dim * 8 * label->nrows);
+      data = calloc(dim * sizeof(double) * label->nrows, sizeof(char));
+      memcpy(data, Bufs[j], dim * sizeof(double) * label->nrows);
       v = newVal(BSQ, dim, label->nrows, 1, DOUBLE, data);
     } else {
       switch (f[j]->eformat) {
@@ -2107,9 +2119,7 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
           break;
 
         case MSB_INTEGER:
-        case MSB_UNSIGNED_INTEGER:
         case LSB_INTEGER:
-        case LSB_UNSIGNED_INTEGER:
           data = calloc(size[j] * label->nrows, sizeof(char));
           memcpy(data, Bufs[j], size[j] * label->nrows);
 
@@ -2125,6 +2135,30 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
           }
           break;
 
+        case MSB_UNSIGNED_INTEGER:
+        case LSB_UNSIGNED_INTEGER:
+          data = calloc(size[j] * 2 * label->nrows, sizeof(char)); // upscale the data type
+
+          switch (f[j]->size) {
+            case 4:
+			  for(k=0; k<nitems; k++){
+			    *(double *)(data + k*sizeof(double)) = (double)*(unsigned int * )(Bufs[j] + k * sizeof(int));
+			  }
+              v = newVal(BSQ, dim, label->nrows, 1, DOUBLE, data);
+              break;
+            case 2:
+			  for(k=0; k<nitems; k++){
+			    *(int *)(data + k*sizeof(int)) = (int)*(unsigned short *)(Bufs[j] + k * sizeof(short));
+			  }
+              v = newVal(BSQ, dim, label->nrows, 1, INT, data);
+              break;
+            case 1:
+			  for(k=0; k<nitems; k++){
+			    *(short *)(data + k*sizeof(short)) = (short)*(unsigned char *)(Bufs[j] + k * sizeof(char));
+			  }
+              v = newVal(BSQ, dim, label->nrows, 1, SHORT, data);
+          }
+          break;
 
         case IEEE_REAL:
         case PC_REAL:
