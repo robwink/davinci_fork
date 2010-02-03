@@ -439,7 +439,7 @@ dv_LoadISISSuffixesFromPDS(FILE *fp, char *fname)
     if (VERBOSE){
         msg_file = NULL;
     } else {
-#ifdef ___CYGWIN__
+#if defined(__CYGWIN__) || defined(__MINGW32__)
         msg_file = (char *)"nul:";
 #else
         msg_file = (char *)"/dev/null";
@@ -607,7 +607,7 @@ dv_LoadISIS(FILE *fp, char *filename, struct iom_iheader *s)
         msg_file = NULL;
     }
     else {
-#ifdef __CYGWIN__
+#if defined(__CYGWIN__) || defined(__MINGW32__)
         msg_file = (char *)"nul:";
 #else
         msg_file = (char *)"/dev/null";
@@ -637,7 +637,7 @@ dv_LoadISIS(FILE *fp, char *filename, struct iom_iheader *s)
     datafile = h.ddfname; /* get the detached data file name */
 
     if (datafile != NULL) {
-#ifdef __CYGWIN__
+#if defined(__CYGWIN__) || defined(__MINGW32__)
         if ((fd = open(datafile, O_RDONLY|O_BINARY)) < 0) {
 #else
         if ((fd = open(datafile, O_RDONLY)) < 0) {
@@ -719,7 +719,7 @@ dv_LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var)
     rewind(fp);
 
     if (VERBOSE > 0) err_file = NULL;
-#ifdef __CYGWIN__
+#if defined(__CYGWIN__) || defined(__MINGW32__)
     else err_file = (char *)"nul:";
 #else
     else err_file = (char *)"/dev/null";
@@ -1188,7 +1188,7 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
         msg_file = NULL;
     }
     else {
-#ifdef ___CYGWIN__
+#if defined(__CYGWIN__) || defined(__MINGW32__)
         msg_file = (char *)"nul:";
 #else
         msg_file = (char *)"/dev/null";

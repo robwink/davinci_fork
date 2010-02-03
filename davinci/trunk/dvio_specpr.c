@@ -258,7 +258,7 @@ specpr_open(char *path)
   char *p;
   int flags;
 
-#ifdef __CYGWIN__
+#if defined(__CYGWIN__) || defined(__MINGW32__)
   flags = O_RDWR|O_BINARY;
 #else
   flags = O_RDWR;
@@ -271,7 +271,7 @@ specpr_open(char *path)
      ** this needs to prepend the SPECPR_MAGIC cookie to record 0
      **/
 
-#ifdef __CYGWIN__
+#if defined(__CYGWIN__) || defined(__MINGW32__)
     fout = open(path, O_RDWR | O_CREAT | O_BINARY, 0777);
 #else
     fout = open(path, O_RDWR | O_CREAT, 0777);

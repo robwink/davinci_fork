@@ -48,7 +48,7 @@
 #include "parser.h"
 
 #ifndef DVHELP
-#ifndef __CYGWIN__
+#if !(defined(__CYGWIN__) || defined(__MINGW32__))
 #define DVHELP "/usr/local/share/davinci/docs/dv.gih"
 #else
 #define DVHELP "docs\\dv.gih"

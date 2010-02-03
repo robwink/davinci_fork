@@ -8,7 +8,7 @@
 #include "rfunc.h"
 #endif
 
-#ifdef __CYGWIN__
+#if defined(__CYGWIN__) || defined(__MINGW32__)
 // #include <dos.h>
 #endif
 
