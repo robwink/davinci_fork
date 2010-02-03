@@ -516,6 +516,8 @@ char *
 make_temp_file_path()
 {
 	int fd;
+	int uretval;
+	char dirbuf[256];
 	char pathbuf[256];
 	char *tmpdir = getenv("TMPDIR");
 
@@ -549,6 +551,8 @@ char *
 make_temp_file_path_in_dir(char *dir)
 {
   int fd;
+  int uretval;
+  char dirbuf[256];
   char pathbuf[256];
   char *tmpdir = getenv("TMPDIR");
   
