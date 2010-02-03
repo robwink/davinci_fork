@@ -4,7 +4,7 @@
 
 #include <errno.h>
 
-#ifdef __CYGWIN__
+#if defined(__CYGWIN__) || defined(__MINGW32__)
 #include <io.h>
 extern Swap_Big_and_Little(Var *);
 #endif

@@ -3,7 +3,7 @@
 
 #ifdef __CYGWIN__
 #include <process.h>
-#endif /* _CYGWIN__ */
+#endif /* __CYGWIN__ */
 #include <errno.h>
 
 // This is probably overriden in config.h

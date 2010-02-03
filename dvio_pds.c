@@ -1909,7 +1909,7 @@ int rf_TABLE(char *fn, Var * ob, char *val, int dptr)
 
   Offset = dptr;
 
-#ifdef __CYGWIN__
+#if defined(__CYGWIN__) || defined(__MINGW32__)
   fp = open(fn, O_RDONLY | O_BINARY, 0);
 #else
   fp = open(fn, O_RDONLY, 0);
