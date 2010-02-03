@@ -151,7 +151,11 @@ double blend_dissolve(double I, double M) {
   // Dissolve  mode dissolves the upper layer into the layer beneath it by
   // drawing a random pattern of pixels in areas of partial transparency. It is
   // useful as a layer mode, but it is also often useful as a painting mode.
+  #if defined(__MINGW32__)
+  if (rand() % 2) return(M);
+  #else
   if (random() % 2) return(M);
+  #endif
   return(I);
 };
 
