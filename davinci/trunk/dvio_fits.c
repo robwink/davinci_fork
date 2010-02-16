@@ -262,8 +262,16 @@ FITS_Read_Entry(char *fits_filename)
          if (name == NULL) // no ='s found ... toss it for now
             continue;
 
+         strcpy(fits_value,"");
+         strcpy(fits_comment,"");
          fits_parse_value(header_entry,fits_value,fits_comment,&status);
-         fits_get_keytype(fits_value,&key_type,&status);
+         if (strcmp("HISTORY", name) == 0 || strcmp("COMMENT", name) == 0){
+             key_type = 'C';
+             strcpy(fits_value, fits_comment); // comments have no value
+         }
+         else {
+             fits_get_keytype(fits_value,&key_type,&status);
+         }
 
          QUERY_FITS_ERROR(status,NULL);
 
