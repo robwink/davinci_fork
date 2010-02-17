@@ -2120,43 +2120,49 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
 
         case MSB_INTEGER:
         case LSB_INTEGER:
-          data = calloc(size[j] * label->nrows, sizeof(char));
-          memcpy(data, Bufs[j], size[j] * label->nrows);
-
           switch (f[j]->size) {
             case 4:
+              data = calloc(size[j] * label->nrows, sizeof(char));
+              memcpy(data, Bufs[j], size[j] * label->nrows);
               v = newVal(BSQ, dim, label->nrows, 1, INT, data);
               break;
             case 2:
+              data = calloc(size[j] * label->nrows, sizeof(char));
+              memcpy(data, Bufs[j], size[j] * label->nrows);
               v = newVal(BSQ, dim, label->nrows, 1, SHORT, data);
               break;
             case 1:
-              v = newVal(BSQ, dim, label->nrows, 1, BYTE, data);
+              // davinci BYTE type is unsigned char
+              data = calloc(size[j] * 2 * label->nrows, sizeof(char)); // upscale the data type
+              for(k=0; k<nitems; k++){
+                *(short *)(data + k*sizeof(short)) = (short)*(unsigned char *)(Bufs[j] + k * sizeof(char));
+              }
+              v = newVal(BSQ, dim, label->nrows, 1, SHORT, data);
           }
           break;
 
         case MSB_UNSIGNED_INTEGER:
         case LSB_UNSIGNED_INTEGER:
-          data = calloc(size[j] * 2 * label->nrows, sizeof(char)); // upscale the data type
-
           switch (f[j]->size) {
             case 4:
-			  for(k=0; k<nitems; k++){
-			    *(double *)(data + k*sizeof(double)) = (double)*(unsigned int * )(Bufs[j] + k * sizeof(int));
-			  }
+              data = calloc(size[j] * 2 * label->nrows, sizeof(char)); // upscale the data type
+              for(k=0; k<nitems; k++){
+                *(double *)(data + k*sizeof(double)) = (double)*(unsigned int * )(Bufs[j] + k * sizeof(int));
+              }
               v = newVal(BSQ, dim, label->nrows, 1, DOUBLE, data);
               break;
             case 2:
-			  for(k=0; k<nitems; k++){
-			    *(int *)(data + k*sizeof(int)) = (int)*(unsigned short *)(Bufs[j] + k * sizeof(short));
-			  }
+              data = calloc(size[j] * 2 * label->nrows, sizeof(char)); // upscale the data type
+              for(k=0; k<nitems; k++){
+                *(int *)(data + k*sizeof(int)) = (int)*(unsigned short *)(Bufs[j] + k * sizeof(short));
+              }
               v = newVal(BSQ, dim, label->nrows, 1, INT, data);
               break;
             case 1:
-			  for(k=0; k<nitems; k++){
-			    *(short *)(data + k*sizeof(short)) = (short)*(unsigned char *)(Bufs[j] + k * sizeof(char));
-			  }
-              v = newVal(BSQ, dim, label->nrows, 1, SHORT, data);
+              // davinci BYTE type is unsigned char
+              data = calloc(size[j] * label->nrows, sizeof(char));
+              memcpy(data, Bufs[j], size[j] * label->nrows);
+              v = newVal(BSQ, dim, label->nrows, 1, BYTE, data);
           }
           break;
 
