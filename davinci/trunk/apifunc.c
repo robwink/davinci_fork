@@ -181,6 +181,7 @@ dispatch_api(APIDEFS *api,Var *garg){
     int lup,givenac,abin,aargc,dtype;
     Var *ait,*vv;
     APIARGS *aargv;
+    int i;
 
     aargc = api->argc - 1;	/* because [0] contains return type */
     aargv = &(api->apiargs[1]);
@@ -188,15 +189,18 @@ dispatch_api(APIDEFS *api,Var *garg){
     for(lup = 0; lup < aargc; lup++)
 	aargv[lup].argusp = NULL;
     
-    for(givenac=0,ait=garg; ait!=NULL; ait=V_NEXT(ait),givenac++)
-	;
+    givenac=0;
+    if (garg != NULL) {
+        givenac = Narray_count(V_ARGS(garg));
+    }
     
     if(givenac != aargc){
 	printf("%s() requires %d arguments\n",api->apiname,aargc);
 	return(NULL);
     }
 
-    for(ait = garg; ait != NULL; ait = V_NEXT(ait)){
+    for(i=0; i<givenac; i++){
+        Narray_get(V_ARGS(garg), i, NULL, (void **)&ait);
 	if(V_TYPE(ait) == ID_KEYWORD){
 	    if((abin=find_argbin(aargc,aargv,V_NAME(ait))) < 0){
 		printf("Unknown keyword to %s(... %s= ...)\n",api->apiname,
@@ -210,7 +214,8 @@ dispatch_api(APIDEFS *api,Var *garg){
 	}
     }
 
-    for(ait = garg; ait != NULL; ait = V_NEXT(ait)){
+    for(i=0; i<givenac; i++){
+        Narray_get(V_ARGS(garg), i, NULL, (void **)&ait);
 	if(V_TYPE(ait) != ID_KEYWORD){
 	    abin = find_free_argbin(aargc,aargv);	/* abin can't be -1 */
 	    if(link_argvalue(ait,&aargv[abin]) < 0)

@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#ifdef HAVE_PLPLOT
 /* Prototypes; sorted in ascending order */
 void pl_pladv(int page);
 void pl_plaxes(float x0,float y0,char *xopt,float xtick,int nxsub,char *yopt,float ytick,int nysub);
@@ -1654,8 +1655,11 @@ plsxwin_wrapper(int ac,APIARGS *av){
 
 }
 
+#endif /* HAVE_PLPLOT */
+
 /* APIDEFS */
 const APIDEFS apidefs[] = {
+	#ifdef HAVE_PLPLOT
 	{ "pl_pladv",pl_pladv_args,2,pl_pladv_wrapper },
 	{ "pl_plaxes",pl_plaxes_args,9,pl_plaxes_wrapper },
 	{ "pl_plbin",pl_plbin_args,5,pl_plbin_wrapper },
@@ -1778,6 +1782,7 @@ const APIDEFS apidefs[] = {
 	{ "plgesc",plgesc_args,2,plgesc_wrapper },
 	{ "plsError",plsError_args,3,plsError_wrapper },
 	{ "plsxwin",plsxwin_args,2,plsxwin_wrapper }
+	#endif /* HAVE_PLPLOT */
 };
 
 #ifdef __cplusplus
