@@ -697,18 +697,20 @@ ReadFITS(vfuncptr func, Var * arg)
      return(NULL);
    }
 
+   fe = dv_locate_file(filename);
    if (extension) {
-      fe = (char *)calloc(strlen(extension)+strlen(filename)+1,1);
-      fe = strcat(filename,extension);
+      char *fetmp = (char *)calloc(strlen(fe)+strlen(extension)+1,1);
+	  strcpy(fetmp,fe);
+      strcat(fetmp,extension);
+      free(fe);
+      fe = fetmp;
    }
-   else
-      fe = strdup (filename);
 
    data = FITS_Read_Entry(fe);
    free (fe);
 
    if (!data) {
-      parse_error("%s failed to load\n",filename);
+      parse_error("%s: Failed to load %s%s\n",func->name, filename, (extension? extension: ""));
       return(NULL);
    }
 
