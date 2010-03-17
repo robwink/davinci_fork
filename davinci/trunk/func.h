@@ -126,9 +126,16 @@ size_t cpos(int x, int y, int z, Var *v);
 void xpos(size_t i, Var *v, int *x, int *y, int *z);
 
 /* pp_math.h */
+#ifdef __cplusplus
+extern "C" {
+#endif
 int extract_int (const Var * v, const size_t i);
 float extract_float (Var * v, size_t i);
 double extract_double (Var * v, size_t i);
+#ifdef __cplusplus
+}
+#endif
+
 Var *pp_add_strings(Var *a, Var *b);
 Var *pp_math_strings(Var *a, int op, Var *b);
 
@@ -359,8 +366,6 @@ Var *ff_eval(vfuncptr func, Var *arg);
 
 Var *ff_add_struct(vfuncptr func, Var *arg);
 Var *ff_get_struct(vfuncptr func, Var *arg);
-void get_struct_element(const Var *v, const int i, char **name, Var **data);
-int get_struct_count(const Var *v);
 
 
 #ifdef INCLUDE_API
@@ -449,6 +454,8 @@ extern "C" {
   /* internal functions for text arrays */
   Var *newString(char *str);
   Var *newText(int rows, char **text);
+  void get_struct_element(const Var *v, const int i, char **name, Var **data);
+  int get_struct_count(const Var *v);
 #ifdef __cplusplus
 }
 #endif
