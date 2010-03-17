@@ -113,7 +113,10 @@ do_load(char *filename, struct iom_iheader *h)
 			 fname = iom_uncompress_with_name(fname);
 			 fp = fopen(fname, "rb");
 	}
-
+/* IO module support will now take priority over built-ins */
+#ifdef BUILD_MODULE_SUPPORT
+	if (input == NULL)    input = read_from_io_module(fp, fname);
+#endif
 	if (input == NULL)    input = dv_LoadIOM(fp, fname, h);
 	if (input == NULL)    input = dv_LoadPNM(fp, fname, h);
 	if (input == NULL)    input = dv_LoadSpecpr(fp, fname, h);
@@ -127,9 +130,6 @@ do_load(char *filename, struct iom_iheader *h)
 
 #ifdef HAVE_LIBHDF5
         if (input == NULL)    input = LoadHDF5(fname);
-#endif
-#ifdef BUILD_MODULE_SUPPORT
-	if (input == NULL)    input = read_from_io_module(fp, fname);
 #endif
 		/* Libmagic should always be the last chance */
 #if 0
