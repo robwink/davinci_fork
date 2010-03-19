@@ -38,6 +38,10 @@ if LOCAL_READLINE
   MY_READLINE_LDADD = readline/libreadline.a
 endif
 
+if HAVE_LIBIBERTY
+  MINGW32_LIBIBERTY_LDADD = -liberty	
+endif
+
 if HAVE_LIBREGEX
   MINGW32_LIBREGEX_LDADD = -lregex	
 endif
@@ -66,7 +70,7 @@ libmodsupp_a_SOURCES = ff_modules.c module_io.c io_loadmod.c
 ## Install libdavinci  under /usr/lib
 lib_LTLIBRARIES = libdavinci.la
 libdavinci_la_LIBADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULES_LIB)  \
-		$(MINGW32_LIBREGEX_LDADD) $(MINGW32_LIBWSOCK32_LDADD) $(MY_LIBLTDLC_LDADD)
+		$(MINGW32_LIBREGEX_LDADD) $(MINGW32_LIBWSOCK32_LDADD) $(MINGW32_LIBIBERTY_LDADD) $(MY_LIBLTDLC_LDADD)
 
 ##See configure.ac for libdavinci version
 ##libdavinci_la_LDFLAGS =  -version-info @LIB_CURRENT@:@LIB_REVISION@:@LIB_AGE@ -shrext .so

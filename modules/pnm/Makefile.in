@@ -37,7 +37,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-subdir = modules/thm
+subdir = modules/pnm
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -55,9 +55,9 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(pkglibdir)"
 pkglibLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
-thm_la_LIBADD =
-am_thm_la_OBJECTS = mod_thm.lo
-thm_la_OBJECTS = $(am_thm_la_OBJECTS)
+pnm_la_LIBADD =
+am_pnm_la_OBJECTS = pnm_mod.lo
+pnm_la_OBJECTS = $(am_pnm_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__depfiles_maybe = depfiles
@@ -69,8 +69,8 @@ LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(thm_la_SOURCES)
-DIST_SOURCES = $(thm_la_SOURCES)
+SOURCES = $(pnm_la_SOURCES)
+DIST_SOURCES = $(pnm_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -214,9 +214,9 @@ target_alias = @target_alias@
 target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
-pkglib_LTLIBRARIES = thm.la
-thm_la_SOURCES = mod_thm.c
-thm_la_LDFLAGS = -module
+pnm_la_SOURCES = pnm_mod.c
+pnm_la_LDFLAGS = -module
+pkglib_LTLIBRARIES = pnm.la
 all: all-am
 
 .SUFFIXES:
@@ -230,9 +230,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  modules/thm/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  modules/pnm/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  modules/thm/Makefile
+	  $(AUTOMAKE) --gnu  modules/pnm/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -277,8 +277,8 @@ clean-pkglibLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-thm.la: $(thm_la_OBJECTS) $(thm_la_DEPENDENCIES) 
-	$(LINK) -rpath $(pkglibdir) $(thm_la_LDFLAGS) $(thm_la_OBJECTS) $(thm_la_LIBADD) $(LIBS)
+pnm.la: $(pnm_la_OBJECTS) $(pnm_la_DEPENDENCIES) 
+	$(LINK) -rpath $(pkglibdir) $(pnm_la_LDFLAGS) $(pnm_la_OBJECTS) $(pnm_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -286,7 +286,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_thm.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pnm_mod.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

@@ -138,6 +138,10 @@ AC_CHECK_LIB(ltdl, lt_dlopen)
 have_libltdlc=yes
 
 # Used for MINGW
+AC_CHECK_LIB(iberty, random, [have_libiberty=yes], [have_libiberty=no])
+AM_CONDITIONAL(HAVE_LIBIBERTY, [test "x$have_libiberty" = "xyes"])
+
+# Used for MINGW
 AC_CHECK_LIB(wsock32, main, [have_libwsock32=yes], [have_libwsock32=no])
 AM_CONDITIONAL(HAVE_LIBWSOCK32, [test "x$have_libwsock32" = "xyes"])
 
@@ -500,7 +504,7 @@ AC_SUBST(MY_SUBDIRS)
 AC_SUBST(DVHELP)
 AC_SUBST(DV_MOD_PATH)
 
-AC_OUTPUT([Makefile modules/Makefile modules/kjn/Makefile modules/cse/Makefile modules/thm/Makefile modules/gui/Makefile vicar/Makefile])
+AC_OUTPUT([Makefile modules/Makefile modules/kjn/Makefile modules/cse/Makefile modules/thm/Makefile modules/gui/Makefile vicar/Makefile modules/pnm/Makefile modules/foo/Makefile])
 
 PRINT_YES_NO() {
   answer="Yes"

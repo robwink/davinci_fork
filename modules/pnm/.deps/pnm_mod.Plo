@@ -1,5 +1,5 @@
-mod_foo.lo mod_foo.o: mod_foo.c ../../parser.h /usr/include/stdio.h \
-  /usr/include/features.h /usr/include/sys/cdefs.h \
+pnm_mod.lo pnm_mod.o: pnm_mod.c ../../help.h ../../parser.h \
+  /usr/include/stdio.h /usr/include/features.h /usr/include/sys/cdefs.h \
   /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
   /usr/include/gnu/stubs-64.h \
   /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h \
@@ -54,8 +54,9 @@ mod_foo.lo mod_foo.o: mod_foo.c ../../parser.h /usr/include/stdio.h \
   /usr/include/H5FDfamily.h /usr/include/H5FDlog.h /usr/include/H5FDmpi.h \
   /usr/include/H5FDmpio.h /usr/include/H5FDmpiposix.h \
   /usr/include/H5FDmulti.h /usr/include/H5FDsec2.h \
-  /usr/include/H5FDstdio.h ../../ff_modules.h ../../api.h ../../parser.h \
-  ../../apidef.h
+  /usr/include/H5FDstdio.h ../../ff_modules.h
+
+../../help.h:
 
 ../../parser.h:
 
@@ -298,9 +299,3 @@ mod_foo.lo mod_foo.o: mod_foo.c ../../parser.h /usr/include/stdio.h \
 /usr/include/H5FDstdio.h:
 
 ../../ff_modules.h:
-
-../../api.h:
-
-../../parser.h:
-
-../../apidef.h:
