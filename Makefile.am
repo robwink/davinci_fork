@@ -126,7 +126,11 @@ davinci_SOURCES = main.c
 if DV_LIBRARY
 dvrc = library
 dvrcdir = $(datadir)/@PACKAGE@/$(dvrc)
-dvrc_DATA =  $(wildcard $(dvrc)/*.dvrc) $(wildcard $(dvrc)/script_files/*)
+##dvrc_DATA =  $(wildcard $(dvrc)/*.dvrc) $(wildcard $(dvrc)/script_files/*)
+
+install-data-hook:
+	tar --exclude '.svn' --exclude 'CVS' -hcf - $(dvrc) | tar -C $(DESTDIR)$(datadir)/@PACKAGE@/. -xf -
+
 endif
 
 
