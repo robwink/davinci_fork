@@ -198,7 +198,7 @@ fi
 
 
 
-AC_CHECK_LIB([curl],[curl_global_init])
+AC_CHECK_LIB([curl],[curl_easy_init])
 
 dnl Check for ImageMagic.
 AC_CHECK_LIB(Magick, GetImageInfo, [have_libmagick=yes],[have_libmagick=no])
