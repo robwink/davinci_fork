@@ -77,5 +77,5 @@ is_64_bit = (length(syscall("uname -a | grep x86_64")) > 0)
 final_results = traverse(process_dir,"test-");
 if (is_64_bit) final_results += traverse(process_dir,"test64-");
 
-printf("Results: %s: passed=%d failed=%d skipped=%d total=%d\n", process_dir, final_results[1], final_results[2], results[3], sum(final_results));
+printf("Results: %s: passed=%d failed=%d skipped=%d total=%d\n", process_dir, final_results[1], final_results[2], final_results[3], sum(final_results));
 
