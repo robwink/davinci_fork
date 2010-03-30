@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(davinci, 2.02)
+AC_INIT(davinci, m4_esyscmd([grep 'daVinci Version #' version.h | sed -e 's/\(.*\)#\(.*\)";/\2/' | tr -d '\n']), [davinci-dev@mars.asu.edu])
 
 
 
