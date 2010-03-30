@@ -1,0 +1,306 @@
+mod_foo.lo mod_foo.o: mod_foo.c ../../parser.h /usr/include/stdio.h \
+  /usr/include/features.h /usr/include/sys/cdefs.h \
+  /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
+  /usr/include/gnu/stubs-64.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h \
+  /usr/include/bits/types.h /usr/include/bits/typesizes.h \
+  /usr/include/libio.h /usr/include/_G_config.h /usr/include/wchar.h \
+  /usr/include/bits/wchar.h /usr/include/gconv.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stdarg.h \
+  /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
+  /usr/include/bits/stdio.h /usr/include/string.h \
+  /usr/include/bits/string.h /usr/include/bits/string2.h \
+  /usr/include/endian.h /usr/include/bits/endian.h /usr/include/stdlib.h \
+  /usr/include/sys/types.h /usr/include/time.h /usr/include/sys/select.h \
+  /usr/include/bits/select.h /usr/include/bits/sigset.h \
+  /usr/include/bits/time.h /usr/include/sys/sysmacros.h \
+  /usr/include/bits/pthreadtypes.h /usr/include/alloca.h \
+  /usr/include/math.h /usr/include/bits/huge_val.h \
+  /usr/include/bits/mathdef.h /usr/include/bits/mathcalls.h \
+  /usr/include/bits/mathinline.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/limits.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/syslimits.h \
+  /usr/include/limits.h /usr/include/bits/posix1_lim.h \
+  /usr/include/bits/local_lim.h /usr/include/linux/limits.h \
+  /usr/include/bits/posix2_lim.h ../../config.h /usr/include/unistd.h \
+  /usr/include/bits/posix_opt.h /usr/include/bits/confname.h \
+  /usr/include/getopt.h /usr/include/sys/socket.h /usr/include/sys/uio.h \
+  /usr/include/bits/uio.h /usr/include/bits/socket.h \
+  /usr/include/bits/sockaddr.h /usr/include/asm/socket.h \
+  /usr/include/asm-x86_64/socket.h /usr/include/asm/sockios.h \
+  /usr/include/asm-x86_64/sockios.h /usr/include/sys/un.h \
+  /usr/include/sys/time.h /usr/include/values.h \
+  /usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/float.h \
+  /usr/include/sys/stat.h /usr/include/bits/stat.h /usr/include/fcntl.h \
+  /usr/include/bits/fcntl.h /usr/include/ctype.h /usr/include/signal.h \
+  /usr/include/bits/signum.h /usr/include/bits/siginfo.h \
+  /usr/include/bits/sigaction.h /usr/include/bits/sigcontext.h \
+  /usr/include/bits/sigstack.h /usr/include/bits/sigthread.h \
+  ../../system.h /usr/include/netinet/in.h /usr/include/stdint.h \
+  /usr/include/bits/in.h /usr/include/bits/byteswap.h ../../darray.h \
+  ../../avl.h ../../ff_modules.h ../../module_io.h ../../ufunc.h \
+  ../../scope.h ../../func.h /usr/include/hdf5.h /usr/include/H5public.h \
+  /usr/include/H5pubconf.h /usr/include/inttypes.h \
+  /usr/include/H5api_adpt.h /usr/include/H5Apublic.h \
+  /usr/include/H5Ipublic.h /usr/include/H5ACpublic.h \
+  /usr/include/H5Bpublic.h /usr/include/H5Dpublic.h \
+  /usr/include/H5Epublic.h /usr/include/H5Fpublic.h \
+  /usr/include/H5FDpublic.h /usr/include/H5Gpublic.h \
+  /usr/include/H5Opublic.h /usr/include/H5HGpublic.h \
+  /usr/include/H5HLpublic.h /usr/include/H5MMpublic.h \
+  /usr/include/H5Ppublic.h /usr/include/H5Zpublic.h \
+  /usr/include/H5Rpublic.h /usr/include/H5Spublic.h \
+  /usr/include/H5Tpublic.h /usr/include/H5FDcore.h \
+  /usr/include/H5FDfamily.h /usr/include/H5FDlog.h /usr/include/H5FDmpi.h \
+  /usr/include/H5FDmpio.h /usr/include/H5FDmpiposix.h \
+  /usr/include/H5FDmulti.h /usr/include/H5FDsec2.h \
+  /usr/include/H5FDstdio.h ../../ff_modules.h ../../api.h ../../parser.h \
+  ../../apidef.h
+
+../../parser.h:
+
+/usr/include/stdio.h:
+
+/usr/include/features.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/bits/wordsize.h:
+
+/usr/include/gnu/stubs.h:
+
+/usr/include/gnu/stubs-64.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stddef.h:
+
+/usr/include/bits/types.h:
+
+/usr/include/bits/typesizes.h:
+
+/usr/include/libio.h:
+
+/usr/include/_G_config.h:
+
+/usr/include/wchar.h:
+
+/usr/include/bits/wchar.h:
+
+/usr/include/gconv.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/stdarg.h:
+
+/usr/include/bits/stdio_lim.h:
+
+/usr/include/bits/sys_errlist.h:
+
+/usr/include/bits/stdio.h:
+
+/usr/include/string.h:
+
+/usr/include/bits/string.h:
+
+/usr/include/bits/string2.h:
+
+/usr/include/endian.h:
+
+/usr/include/bits/endian.h:
+
+/usr/include/stdlib.h:
+
+/usr/include/sys/types.h:
+
+/usr/include/time.h:
+
+/usr/include/sys/select.h:
+
+/usr/include/bits/select.h:
+
+/usr/include/bits/sigset.h:
+
+/usr/include/bits/time.h:
+
+/usr/include/sys/sysmacros.h:
+
+/usr/include/bits/pthreadtypes.h:
+
+/usr/include/alloca.h:
+
+/usr/include/math.h:
+
+/usr/include/bits/huge_val.h:
+
+/usr/include/bits/mathdef.h:
+
+/usr/include/bits/mathcalls.h:
+
+/usr/include/bits/mathinline.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/limits.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/syslimits.h:
+
+/usr/include/limits.h:
+
+/usr/include/bits/posix1_lim.h:
+
+/usr/include/bits/local_lim.h:
+
+/usr/include/linux/limits.h:
+
+/usr/include/bits/posix2_lim.h:
+
+../../config.h:
+
+/usr/include/unistd.h:
+
+/usr/include/bits/posix_opt.h:
+
+/usr/include/bits/confname.h:
+
+/usr/include/getopt.h:
+
+/usr/include/sys/socket.h:
+
+/usr/include/sys/uio.h:
+
+/usr/include/bits/uio.h:
+
+/usr/include/bits/socket.h:
+
+/usr/include/bits/sockaddr.h:
+
+/usr/include/asm/socket.h:
+
+/usr/include/asm-x86_64/socket.h:
+
+/usr/include/asm/sockios.h:
+
+/usr/include/asm-x86_64/sockios.h:
+
+/usr/include/sys/un.h:
+
+/usr/include/sys/time.h:
+
+/usr/include/values.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.1.2/include/float.h:
+
+/usr/include/sys/stat.h:
+
+/usr/include/bits/stat.h:
+
+/usr/include/fcntl.h:
+
+/usr/include/bits/fcntl.h:
+
+/usr/include/ctype.h:
+
+/usr/include/signal.h:
+
+/usr/include/bits/signum.h:
+
+/usr/include/bits/siginfo.h:
+
+/usr/include/bits/sigaction.h:
+
+/usr/include/bits/sigcontext.h:
+
+/usr/include/bits/sigstack.h:
+
+/usr/include/bits/sigthread.h:
+
+../../system.h:
+
+/usr/include/netinet/in.h:
+
+/usr/include/stdint.h:
+
+/usr/include/bits/in.h:
+
+/usr/include/bits/byteswap.h:
+
+../../darray.h:
+
+../../avl.h:
+
+../../ff_modules.h:
+
+../../module_io.h:
+
+../../ufunc.h:
+
+../../scope.h:
+
+../../func.h:
+
+/usr/include/hdf5.h:
+
+/usr/include/H5public.h:
+
+/usr/include/H5pubconf.h:
+
+/usr/include/inttypes.h:
+
+/usr/include/H5api_adpt.h:
+
+/usr/include/H5Apublic.h:
+
+/usr/include/H5Ipublic.h:
+
+/usr/include/H5ACpublic.h:
+
+/usr/include/H5Bpublic.h:
+
+/usr/include/H5Dpublic.h:
+
+/usr/include/H5Epublic.h:
+
+/usr/include/H5Fpublic.h:
+
+/usr/include/H5FDpublic.h:
+
+/usr/include/H5Gpublic.h:
+
+/usr/include/H5Opublic.h:
+
+/usr/include/H5HGpublic.h:
+
+/usr/include/H5HLpublic.h:
+
+/usr/include/H5MMpublic.h:
+
+/usr/include/H5Ppublic.h:
+
+/usr/include/H5Zpublic.h:
+
+/usr/include/H5Rpublic.h:
+
+/usr/include/H5Spublic.h:
+
+/usr/include/H5Tpublic.h:
+
+/usr/include/H5FDcore.h:
+
+/usr/include/H5FDfamily.h:
+
+/usr/include/H5FDlog.h:
+
+/usr/include/H5FDmpi.h:
+
+/usr/include/H5FDmpio.h:
+
+/usr/include/H5FDmpiposix.h:
+
+/usr/include/H5FDmulti.h:
+
+/usr/include/H5FDsec2.h:
+
+/usr/include/H5FDstdio.h:
+
+../../ff_modules.h:
+
+../../api.h:
+
+../../parser.h:
+
+../../apidef.h:

@@ -1,0 +1,81 @@
+
+define get_ftype(){
+	if (type($1) == "TEXT"){
+		in_list=$1;
+		out_type=in_list;
+		for(i=1;i<=length(in_list);i+=1){
+			result=syscall("ls -ld "+in_list[,i]+" | cut -c1-1");
+			if (HasValue(result)){
+				if (result[,1] == "d") out_type[,i]="dir";
+				if (result[,1] == "-") out_type[,i]="file";
+			} else {
+				out_type[,i]="other";
+			}
+		}
+		return out_type;
+	} else {
+		result=syscall("ls -ld "+$1+" | cut -c1-1");
+		if (HasValue(result)){
+			if (result[,1] == "d") return("dir");
+			if (result[,1] == "-") return("file");
+		}
+		return("other");
+	}
+}
+
+define is_dir(){
+	return(get_ftype($1) == "dir");
+}
+
+
+define traverse(){
+	start_dir=$1;
+	test_pfx=$2;
+	printf("\nTraversing: %s\n",start_dir);
+
+	# results[1]:passed results[2]:failed results[3]:skipped
+	results = create(3,1,1,format=int,org=bsq,start=0,step=0);
+
+	file_list=syscall("ls -1");
+	#file_type=get_ftype(file_list);
+	#file_list = sort(file_list,file_type,descend=1);
+	
+	n=length(file_list);
+	for(i=1;i<=n;i+=1){
+		qual_path = sprintf("%s/%s",start_dir,file_list[,i]);
+		if (is_dir(file_list[,i])){
+			chdir(file_list[,i]);
+			results += traverse(qual_path,test_pfx);
+			chdir("..");
+		} else if (file_list[1:length(test_pfx),i] == test_pfx) {
+			printf("%s ",qual_path);
+			rc=system("davinci -fqv0 "+file_list[,i]);
+			if (rc == 0){
+				results[1]++;
+				printf("%s\n", "passed");
+			} else {
+				rc=rc/256; # system() returns the error code in high-byte
+				if (rc == 99) {
+					results[3]++;
+					printf("%s\n", "SKIPPED/unimplemented");
+				} else {
+					results[2]++;
+					printf("%s\n", "FAILED"); 
+				}
+			}
+		}
+	}
+
+	printf("Results: %s: passed=%d failed=%d skipped=%d total=%d\n", start_dir, results[1], results[2], results[3], sum(results));
+	return results;
+}
+
+
+process_dir=".";
+is_64_bit = (length(syscall("uname -a | grep x86_64")) > 0)
+
+final_results = traverse(process_dir,"test-");
+if (is_64_bit) final_results += traverse(process_dir,"test64-");
+
+printf("Results: %s: passed=%d failed=%d skipped=%d total=%d\n", process_dir, final_results[1], final_results[2], final_results[3], sum(final_results));
+
