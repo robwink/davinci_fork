@@ -3505,7 +3505,7 @@ TransientShell
 ?load_tdb()
  load_tdb() - Load a TDB file
 
- load_tdb(filename [,distribute=1] [,compress=1])
+ load_tdb(filename [,distribute=1] [,reform=1])
 
  The load_tdb() function loads a TDB (TES Data Base) file.  It returns
  a structure containing one structure for each record in the file.
@@ -3515,7 +3515,7 @@ TransientShell
  any Double records that have an xdata value set (and the xdata value is
  removed).
 
- If the compress flag is set, records of the same type are collated together.
+ If the reform flag is set, records of the same type are collated together.
  Any records that are of the same type, but which are not homogenous (ie: 
  Double records both with and without an Xaxis set) are padded out to be 
  homogenous, using empty strings.
