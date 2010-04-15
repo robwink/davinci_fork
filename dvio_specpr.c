@@ -263,7 +263,7 @@ specpr_open(char *path)
 #else
   flags = O_RDWR;
 #endif /* __CYGWIN__ */
-  if ((fout = open(path, path)) >= 0) {
+  if ((fout = open(path, flags)) >= 0) {
     return(fout);
   } else {
     /* it doesn't exist.  Create it. */
