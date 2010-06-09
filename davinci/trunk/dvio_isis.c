@@ -2155,10 +2155,10 @@ free_CoreDataSpecs(CoreDataSpecs **a)
 {
   int i, k;
 
-  free((*a)->axis_name);
   free((*a)->core_item_type_str);
 
   for(k = 0; k < 3; k++){
+    free((*a)->axis_name[k]);
     for(i = 0; i < (*a)->suffix_items[k]; i++){
       free_SfxDataSpecs(&(*a)->suffix_attr[k][i]);
       free((*a)->suffix_plane_order[k][i]);
