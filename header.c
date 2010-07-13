@@ -59,16 +59,7 @@ ConvertASCIItoData(char *ascii, int i)
 LABEL *
 LoadLabel(char *fname)
 {
-    OBJDESC *ob, *tbl, *col;
-    KEYWORD *kw;
-    FIELD *f;
-    LIST *list;
-    LABEL *l;
-    int i;
-    unsigned short scope;
-    int reclen, nfields, nrows;
-    char *name;
-
+	OBJDESC *ob, *tbl;
     ob = OdlParseLabelFile(fname, NULL, ODL_EXPAND_STRUCTURE, 1);
     if (ob == NULL) {
         parse_error("Unable to read file: %s", fname);
@@ -80,6 +71,21 @@ LoadLabel(char *fname)
         parse_error("Is this a vanilla file?");
         return (NULL);
     }
+	return LoadLabelFromObjDesc(tbl, fname);
+}
+
+LABEL *
+LoadLabelFromObjDesc(OBJDESC *tbl, const char *fname){
+    OBJDESC *col;
+    KEYWORD *kw;
+    FIELD *f;
+    LIST *list;
+    LABEL *l;
+    int i;
+    unsigned short scope;
+    int reclen, nfields, nrows;
+    char *name = NULL;
+
     if ((kw = OdlFindKwd(tbl, "ROW_BYTES", NULL,0, ODL_THIS_OBJECT)) != NULL) {
         reclen = atoi(OdlGetKwdValue(kw));
     } else {
@@ -113,7 +119,7 @@ LoadLabel(char *fname)
     l->reclen = reclen;
     l->nfields = nfields;
     l->name = name;
-	 l->nrows = nrows;
+	l->nrows = nrows;
 
     /**
      ** get all the column descriptions
@@ -139,8 +145,8 @@ LoadLabel(char *fname)
 
     if (i != nfields) {
         fprintf(stderr,
-                "Wrong number of column definitions.  Expected %d, got %d.\n",
-                i, nfields);
+                "Wrong number of column definitions in table %s of  %s.  Expected %d, got %d.\n",
+                OdlGetObjDescClassName(tbl), fname, nfields, i);
     }
 
     l->fields = list;
@@ -216,6 +222,10 @@ MakeField(OBJDESC *col, LABEL *l)
 		}
 
 		f->iformat = eformat_to_iformat(f->eformat);
+		if (f->iformat == INVALID_IFORMAT){
+            parse_error("Unable to convert eformat %d to iformat", f->eformat);
+			break;
+		}
 
         if ((kw = GetKey(col, "SCALING_FACTOR")) != NULL) {
             f->scale = atof(OdlGetKwdValue(kw));
@@ -243,17 +253,21 @@ MakeField(OBJDESC *col, LABEL *l)
                 } else {
 					parse_error("VAR_DATA_TYPE not specified for field: %s", 
 								f->name);
-					exit(1);
+					break;
 				}
                 if ((vardata->eformat = ConvertType(ptr)) == INVALID_EFORMAT) {
                     parse_error("Unrecognized vartype: %s, %s %d bytes",
                             f->name, ptr, vardata->size);
                 }
 				vardata->iformat = eformat_to_iformat(vardata->eformat);
+				if (vardata->iformat == INVALID_IFORMAT){
+					parse_error("Unable to convert eformat %d to iformat", vardata->eformat);
+					break;
+				}
             } else {
 				parse_error("VAR_ITEM_BYTES not specified for field: %s", 
 							f->name);
-				exit(1);
+				break;
 			}
         }
 
@@ -323,8 +337,15 @@ MakeBitField(OBJDESC *col, FIELD *f)
             break;
         }
 		ptr = OdlGetKwdValue(kw);
-		b->type = ConvertType(ptr); /* b->type contains the EFORMAT */
+		if ((b->type = ConvertType(ptr)) == INVALID_EFORMAT){ /* b->type contains the EFORMAT */
+            parse_error("Unrecognized external format %s for %s", ptr, f2->name);
+			break;
+		}
 		f2->iformat = eformat_to_iformat(b->type); /* Saadat - I think! */
+		if (f2->iformat == INVALID_IFORMAT){
+            parse_error("Cannot convert external format %d to an internal type", b->type);
+			break;
+		}
 
 		if ((kw = GetKey(col, "START_BIT")) == NULL) {
             parse_error("Bitfield %s has no start bit.", f2->name);
@@ -383,7 +404,7 @@ eformat_to_iformat(EFORMAT e)
 EFORMAT
 ConvertType(char *type) 
 {
-    if (!strcasecmp(type, "MSB_INTEGER") ||
+    if (!strcasecmp(type, "MSB_INTEGER") || !strcasecmp(type, "MSB_SIGNED_INTEGER") ||
 		!strcasecmp(type, "SUN_INTEGER") ||
 		!strcasecmp(type, "MAC_INTEGER") ||
 		!strcasecmp(type, "INTEGER")) {
@@ -391,7 +412,8 @@ ConvertType(char *type)
     } else if (!strcasecmp(type, "MSB_UNSIGNED_INTEGER") ||
                !strcasecmp(type, "SUN_UNSIGNED_INTEGER") || 
                !strcasecmp(type, "MAC_UNSIGNED_INTEGER") || 
-               !strcasecmp(type, "UNSIGNED_INTEGER")) {
+               !strcasecmp(type, "UNSIGNED_INTEGER") ||
+			   !strcasecmp(type, "BOOLEAN")) {
 			return(MSB_UNSIGNED_INTEGER);
     } else if (!strcasecmp(type, "IEEE_REAL") ||
                !strcasecmp(type, "SUN_REAL") ||
@@ -412,7 +434,7 @@ ConvertType(char *type)
 		return(MSB_BIT_FIELD);
     } else if (!strcasecmp(type, "LSB_BIT_STRING")) {
 		return(LSB_BIT_FIELD);
-    } else if (!strcasecmp(type, "LSB_INTEGER") ||
+    } else if (!strcasecmp(type, "LSB_INTEGER") || !strcasecmp(type, "LSB_SIGNED_INTEGER") ||
                !strcasecmp(type, "PC_INTEGER") || 
                !strcasecmp(type, "VAX_INTEGER")) {
 			return(LSB_INTEGER);
@@ -423,7 +445,7 @@ ConvertType(char *type)
 	}
 	return(INVALID_EFORMAT);
 }
- 
+
 /**
  ** Given a field name, locate it in the list of labels.
  **/

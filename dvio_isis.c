@@ -247,6 +247,201 @@ write_PDS_Qube(Var *core, Var *side, Var *bottom, Var *back, FILE *fp)
 
 int * fix_unsigned(struct iom_iheader *h, unsigned short *s);
 
+Var *
+dvLoadQube(FILE *fp, char *fn, int dptr, int org, int items[], int itemBytes, char *itemType, double coreBase, double coreMult, int suffixItems[], int suffixBytes)
+{
+  /* Want to read label and pull out only the minimal key words
+     needed to define the header strucure for iom_read_qube_data.
+     The offset will be suplied and only a few things about
+     the label will be used (classic qube label reading can get confused)
+     */
+
+	struct iom_iheader *h;
+	Var    *v=NULL;
+	void   *data=NULL;
+	int   format;
+	int    i;
+	int   _unsigned = 0;
+
+	h = (struct iom_iheader *)malloc( sizeof(struct iom_iheader));
+	if (!h) {
+		parse_error("Unable to allocate memory.");
+		return(NULL);
+	}
+	iom_init_iheader(h);
+
+	if (strstr(itemType,"UNSIGNED"))
+	_unsigned = 1;
+
+
+	format = iomConvertISISType(itemType, itemBytes);
+	if (format == iom_EDF_INVALID){
+		if (iom_is_ok2print_unsupp_errors()){
+			fprintf(stderr, "%s has unsupported/illegal SIZE+TYPE combination (%d,%s).\n",
+				fn, itemBytes, itemType);
+		}
+		return 0;
+	}
+
+	h->org = org;
+	h->size[0] = items[0];
+	h->size[1] = items[1];
+	h->size[2] = items[2];
+	h->eformat = (iom_edf)format;
+	h->offset = coreBase;
+	h->gain = coreMult;
+	h->prefix[0] = h->prefix[1] = h->prefix[2] = 0;
+	h->suffix[0] = suffixItems == NULL? 0: suffixItems[0] * suffixBytes;
+	h->suffix[1] = suffixItems == NULL? 0: suffixItems[1] * suffixBytes;
+	h->suffix[2] = suffixItems == NULL? 0: suffixItems[2] * suffixBytes;
+	h->corner = suffixItems == NULL? 0: suffixItems[0]*suffixItems[1]*suffixBytes;
+
+	h->dptr = dptr;
+
+	data = iom_read_qube_data(fileno(fp), h);
+
+	/*
+	** We need do promote unsigned short to signed int here
+	*/
+
+	if (itemBytes == 2 && _unsigned)
+	data = fix_unsigned(h, data);
+
+	v = iom_iheader2var(h);
+	V_DATA(v) = data;
+
+	iom_cleanup_iheader(h);
+	return(v);
+}
+
+/**
+ ** dvLoadSuffixes()
+ **
+ ** Loads ISIS suffixes and returns them in a davinci structure
+ ** made up of at the most three sub-structures by the name of
+ ** sample, line and band.
+ **
+ ** Returns NULL on error.
+ **/
+Var *
+dvLoadSuffixes(FILE *fp, char *fname, int dptr, int org, int items[], int itemBytes, char *itemType, double coreBase, double coreMult, int suffixItems[], int suffixBytes, OBJDESC *qube)
+{
+    OBJDESC *object = NULL;
+    KEYWORD *key = NULL;
+    int      scope = ODL_THIS_OBJECT;
+    struct   iom_iheader h;
+    void    *data = NULL;
+    char     str[256];
+    char     str2[256];
+    char    **name_list = NULL, **size_list = NULL, **type_list = NULL;
+    Var     *suffix_data[3] = {NULL, NULL, NULL};
+    iom_edf  eformat;
+    int      iformat;
+    int      i, j, k, n;
+    size_t   size;
+    Var     *v;
+    const char    *suffix_names[3] = {"sample", "line", "band"};
+
+    /* process sample-, then line-, and then band- suffix-planes */
+    for (i = 0; i < 3; i++) {
+      switch (i) {
+        case 0: strcpy(str, "SAMPLE_SUFFIX"); break;
+        case 1: strcpy(str, "LINE_SUFFIX"); break;
+        case 2: strcpy(str, "BAND_SUFFIX"); break;
+      }
+
+      if (suffixItems[iom_orders[h.org][i]]) {
+        /* if this suffix plane has suffix data, then */
+
+        /* find all the suffixes on this axis */
+        sprintf(str2, "%s_NAME", str);
+        if ((key = OdlFindKwd(qube, str2, NULL, 0, scope)) == NULL) {
+          parse_error("Unable to find suffix names\n");
+          continue;
+        }
+
+        n = OdlGetAllKwdValuesArray(key, &name_list);
+        if (n != suffixItems[iom_orders[h.org][i]]) {
+          parse_error("suffix name list is incomplete\n");
+          continue;
+        }
+
+        /* lower-case names for consistency */
+        for(k = 0; k < n; k++){ lcase(name_list[k]); }
+
+        sprintf(str2, "%s_ITEM_BYTES", str);
+        if ((key = OdlFindKwd(qube, str2, NULL, 0, scope)) == NULL) {
+          parse_error("Unable to find suffix sizes\n");
+          continue;
+        }
+
+        n = OdlGetAllKwdValuesArray(key, &size_list);
+        if (n != suffixItems[iom_orders[h.org][i]]) {
+          parse_error("suffix size list is incomplete\n");
+          continue;
+        }
+
+        sprintf(str2, "%s_ITEM_TYPE", str);
+        if ((key = OdlFindKwd(qube, str2, NULL, 0, scope)) == NULL) {
+          parse_error("Unable to find suffix types\n");
+          continue;
+        }
+
+        n = OdlGetAllKwdValuesArray(key, &type_list);
+        if (n != suffixItems[iom_orders[h.org][i]]) {
+          parse_error("suffix type list is incomplete\n");
+          continue;
+        }
+
+        suffix_data[i] = new_struct(0);
+
+        for (j = 0; j < suffixItems[iom_orders[h.org][i]]; j++) {
+
+          /* set the iom_iheader appropriately for the read */
+          for(k=0; k<3; k++){ h.s_lo[k] = 0; h.s_hi[k] = h.size[k]+1; }
+          h.s_lo[iom_orders[h.org][i]] = h.size[iom_orders[h.org][i]]+1;
+          h.s_hi[iom_orders[h.org][i]] = h.s_lo[iom_orders[h.org][i]]+1;
+
+          /* read the data */
+          eformat = iom_ConvertISISType(type_list[j], NULL, size_list[j]);
+          data = dv_read_qube_suffix(fileno(fp), &h, suffixBytes, j,
+                                     eformat, &iformat, iom_orders[h.org][i],
+                                     &size);
+
+          /* Fix the size of data plane read to just one-deep. This is a
+             bad way of fudging it s.t. we can pass it directly to newVal() */
+          h.s_hi[iom_orders[h.org][i]] = 1;
+
+          /* Use newVal() to package the data into a davinci variable */
+          v = newVal(h.org, h.s_hi[0], h.s_hi[1], h.s_hi[2], ihfmt2vfmt(iformat), data);
+
+          /* Add this variable with the plane's name to appropriate
+             suffix_data sturcture */
+          add_struct(suffix_data[i], name_list[j], v);
+        }
+      }
+    }
+
+    /* assemble output struct with at the most three sub structures of data,
+       one for each of the sample, line and band suffixes */
+    v = new_struct(0);
+    for(i = 0; i < 3; i++){
+        if (suffix_data[i]){
+            if (get_struct_count(suffix_data[i]) > 0){
+                add_struct(v, suffix_names[i], suffix_data[i]);
+            }
+            else {
+                mem_claim(suffix_data[i]);
+                free_struct(suffix_data[i]);
+                /* NOTE: if one does not do mem_claim and free_struct
+                   the garbage collector will take care of it */
+            }
+        }
+    }
+
+    return(v);
+}
+
 Var *dv_LoadISISFromPDS(FILE *fp, char *fn, int dptr)
 {
   /* Want to read label and pull out only the minimal key words
@@ -403,6 +598,512 @@ Var *dv_LoadISISFromPDS(FILE *fp, char *fn, int dptr)
 
   iom_cleanup_iheader(h);
   return(v);
+}
+
+  /* Want to read label and pull out only the minimal key words
+     needed to define the header strucure for iom_read_qube_data.
+     The offset will be suplied and only a few things about
+     the label will be used (classic qube label reading can get confused)
+     */
+static int
+initHeaderFromQubeLabel(OBJDESC *qube, char *fn, struct iom_iheader *h){
+  KEYWORD *key,*key1,*key2;
+  int size[3]={0};
+  int suffix[3]={0};
+  int suffix_size[3]={0};
+  int org;
+  char *ptr, p1[16], p2[16],p3[16];
+  float gain;
+  float offset;
+  int suffix_bytes = 0;
+  int   scope=ODL_THIS_OBJECT;
+  int   format;
+  int    i;
+  int   _unsigned = 0;
+  int   item_bytes=0;
+
+  iom_init_iheader(h);
+
+  org = -1;
+  if ((key = OdlFindKwd(qube, "AXES_NAME", NULL, 0, scope))
+      || (key = OdlFindKwd(qube, "AXIS_NAME", NULL, 0, scope))) {
+    ptr = key->value;
+    sscanf(ptr, " ( %[^,] , %[^,] , %[^)] ) ", p1, p2, p3);
+    if (!strcmp(p1,"SAMPLE") && !strcmp(p2,"LINE") && !strcmp(p3,"BAND"))
+      org = iom_BSQ;
+    else if (!strcmp(p1,"SAMPLE") && !strcmp(p2,"BAND") && !strcmp(p3,"LINE"))
+      org = iom_BIL;
+    else if (!strcmp(p1,"BAND") && !strcmp(p2,"SAMPLE") && !strcmp(p3,"LINE"))
+      org = iom_BIP;
+    else {
+      if (iom_is_ok2print_unsupp_errors()){
+        fprintf(stderr, "Unrecognized data organization: %s = %s",
+                "AXIS_NAME", key->value);
+      }
+    }
+  }
+
+  /**
+   ** Size of data
+   **/
+
+  if ((key = OdlFindKwd(qube, "CORE_ITEMS", NULL, 0, scope))) {
+    sscanf(key->value, "(%d,%d,%d)", &size[0], &size[1], &size[2]);
+  }
+
+  /**
+   ** Format
+   **/
+
+  if ((key2 = OdlFindKwd(qube, "CORE_ITEM_BYTES", NULL, 0, scope)))
+    item_bytes = atoi(key2->value);
+
+  /**
+   ** This tells us if we happen to be using float vs int
+   **/
+
+  if ((key1 = OdlFindKwd(qube, "CORE_ITEM_TYPE", NULL, 0, scope)))
+    if (strstr(key1->value,"UNSIGNED"))
+      _unsigned = 1;
+
+
+  format = iom_ConvertISISType(key1 ? key1->value : NULL,
+                               NULL, key2 ? key2->value : NULL);
+
+  if (format == iom_EDF_INVALID){
+    if (iom_is_ok2print_unsupp_errors()){
+      fprintf(stderr, "%s has unsupported/illegal SIZE+TYPE combination.\n",
+              fn);
+    }
+    return 0;
+  }
+
+  if ((key = OdlFindKwd(qube, "CORE_BASE", NULL, 0, scope))) {
+    offset = atof(key->value);
+  }
+
+  if ((key = OdlFindKwd(qube, "CORE_MULTIPLIER", NULL, 0, scope))) {
+    gain = atof(key->value);
+  }
+
+
+  if ((key = OdlFindKwd(qube, "SUFFIX_ITEMS", NULL, 0, scope))) {
+    sscanf(key->value, "(%d,%d,%d)", &suffix[0], &suffix[1], &suffix[2]);
+  }
+
+  if ((key = OdlFindKwd(qube, "SUFFIX_BYTES", NULL, 0, scope))) {
+    suffix_bytes = atoi(key->value);
+  }
+
+  for (i = 0 ; i < 3 ; i++) {
+    if (suffix[i]) {
+      suffix_size[i] = suffix[i] * suffix_bytes;
+    }
+  }
+
+  h->org = org;           /* data organization */
+  h->size[0] = size[0];
+  h->size[1] = size[1];
+  h->size[2] = size[2];
+  h->eformat = (iom_edf)format;
+  h->offset = offset;
+  h->gain = gain;
+  h->prefix[0] = h->prefix[1] = h->prefix[2] = 0;
+  h->suffix[0] = suffix_size[0];
+  h->suffix[1] = suffix_size[1];
+  h->suffix[2] = suffix_size[2];
+  h->corner = suffix[0]*suffix[1]*suffix_bytes;
+
+  return 1;
+}
+
+static int
+initHeaderFromHistogramLabel(OBJDESC *hist, char *fn, struct iom_iheader *h){
+	KEYWORD *key = NULL,*key1 = NULL,*key2 = NULL,*key3 = NULL;
+	int size[3]={1,1,1};
+	int prefix[3]={0,0,0};
+	int prefix_size[3]={0,0,0};
+	int suffix[3]={0,0,0};
+	int suffix_size[3]={0,0,0};
+	int org = iom_BSQ;
+	double gain = 1;
+	double offset = 0;
+	int suffix_bytes = 1;
+	int scope=ODL_THIS_OBJECT;
+	int format = iom_EDF_INVALID;
+	int item_bytes=0;
+	char *orgStr = NULL;
+	int i;
+
+	iom_init_iheader(h);
+
+	if (key = OdlFindKwd(hist, "ITEMS", NULL, 0, scope))
+		size[0] = atof(OdlGetKwdValue(key));
+	if (key = OdlFindKwd(hist, "ITEM_BYTES", NULL, 0, scope))
+		item_bytes = atoi(OdlGetKwdValue(key));
+	else if (key = OdlFindKwd(hist, "ITEM_BITS", NULL, 0, scope))
+		item_bytes = atoi(OdlGetKwdValue(key))/8;
+	if (key = OdlFindKwd(hist, "SCALING_FACTOR", NULL, 0, scope))
+		gain = atof(OdlGetKwdValue(key));
+	if (key = OdlFindKwd(hist, "OFFSET", NULL, 0, scope))
+		offset = atof(OdlGetKwdValue(key));
+
+	if (((key1 = OdlFindKwd(hist, "DATA_TYPE", NULL, 0, scope)) ||
+		 (key1 = OdlFindKwd(hist, "ITEM_TYPE", NULL, 0, scope))) && 
+	    ((key2 = OdlFindKwd(hist, "ITEM_BITS", NULL, 0, scope)) ||
+	     (key3 = OdlFindKwd(hist, "ITEM_BYTES", NULL, 0, scope)))){
+		format = iom_ConvertISISType(OdlGetKwdValue(key1),
+			key2 == NULL? NULL: OdlGetKwdValue(key2),
+			key3 == NULL? NULL: OdlGetKwdValue(key3));
+	}
+
+	if (format == iom_EDF_INVALID && iom_is_ok2print_unsupp_errors()){
+		fprintf(stderr, "%s has unsupported/illegal SIZE+TYPE combination.\n", fn);
+		return 0;
+	}
+
+	h->org = org;
+	for(i=0; i<3; i++)
+		h->size[i] = size[i];
+	h->eformat = (iom_edf)format;
+	h->offset = offset;
+	h->gain = gain;
+	for(i=0; i<3; i++)
+		h->prefix[i] = prefix_size[i];
+	for(i=0; i<3; i++)
+		h->suffix[i] = suffix_size[i];
+	h->corner = suffix[0]*suffix[1]*suffix_bytes;
+
+	return 1;
+}
+
+static int
+initHeaderFromImageLabel(OBJDESC *image, char *fn, struct iom_iheader *h){
+	KEYWORD *key,*key1,*key2;
+	int size[3]={1,1,1};
+	int prefix[3]={0,0,0};
+	int prefix_size[3]={0,0,0};
+	int suffix[3]={0,0,0};
+	int suffix_size[3]={0,0,0};
+	int org = iom_BSQ;
+	double gain = 1;
+	double offset = 0;
+	int suffix_bytes = 1;
+	int scope=ODL_THIS_OBJECT;
+	int format = iom_EDF_INVALID;
+	int item_bytes=0;
+	char *orgStr = NULL;
+	int i;
+
+	iom_init_iheader(h);
+
+	if (key = OdlFindKwd(image, "BAND_STORAGE_TYPE", NULL, 0, scope)){
+		orgStr = OdlGetKwdValue(key);
+		if (strcasecmp(orgStr, "LINE_INTERLEAVED") == 0)
+			org = iom_BIL;
+		else if (strcasecmp(orgStr, "SAMPLE_INTERLEAVED") == 0)
+			org = iom_BIP;
+		else if (strcasecmp(orgStr, "BAND_SEQUENTIAL") == 0)
+			org = iom_BSQ;
+		else
+			org = -1;
+	}
+	if (org < 0 && iom_is_ok2print_unsupp_errors()){
+		fprintf(stderr, "%s: Unrecognized data storage organization.", fn, "BAND_STORAGE_TYPE");
+		return 0;
+	}
+
+	if (key = OdlFindKwd(image, "LINE_SAMPLES", NULL, 0, scope))
+		size[iom_orders[org][0]] = atof(OdlGetKwdValue(key));
+	if (key = OdlFindKwd(image, "LINES", NULL, 0, scope))
+		size[iom_orders[org][1]] = atof(OdlGetKwdValue(key));
+	if (key = OdlFindKwd(image, "BANDS", NULL, 0, scope))
+		size[iom_orders[org][2]] = atof(OdlGetKwdValue(key));
+
+	if (key = OdlFindKwd(image, "SAMPLE_BITS", NULL, 0, scope))
+		item_bytes = atoi(OdlGetKwdValue(key))/8;
+
+	if ((key1 = OdlFindKwd(image, "SAMPLE_TYPE", NULL, 0, scope)) && 
+	    (key2 = OdlFindKwd(image, "SAMPLE_BITS", NULL, 0, scope))){
+		format = iom_ConvertISISType(OdlGetKwdValue(key1), OdlGetKwdValue(key2), NULL);
+	}
+
+	if (format == iom_EDF_INVALID && iom_is_ok2print_unsupp_errors()){
+		fprintf(stderr, "%s has unsupported/illegal SIZE+TYPE combination.\n", fn);
+		return 0;
+	}
+
+	if ((key = OdlFindKwd(image, "OFFSET", NULL, 0, scope)))
+		offset = atof(key->value);
+	if ((key = OdlFindKwd(image, "SCALING_FACTOR", NULL, 0, scope)))
+		gain = atof(key->value);
+	if ((key = OdlFindKwd(image, "LINE_PREFIX_BYTES", NULL, 0, scope)))
+		prefix[iom_orders[org][1]] = atoi(key->value);
+	if ((key = OdlFindKwd(image, "LINE_SUFFIX_BYTES", NULL, 0, scope)))
+		suffix[iom_orders[org][1]] = atoi(key->value);
+
+
+	for (i = 0 ; i < 3 ; i++) {
+		suffix_size[i] = suffix[i] * suffix_bytes;
+		prefix_size[i] = prefix[i] * suffix_bytes;
+	}
+
+	h->org = org;
+	h->size[0] = size[0];
+	h->size[1] = size[1];
+	h->size[2] = size[2];
+	h->eformat = (iom_edf)format;
+	h->offset = offset;
+	h->gain = gain;
+	for(i=0; i<3; i++)
+		h->prefix[i] = prefix_size[i];
+	for(i=0; i<3; i++)
+		h->suffix[i] = suffix_size[i];
+	h->corner = suffix[0]*suffix[1]*suffix_bytes;
+
+	return 1;
+}
+
+Var *
+dv_LoadHistogram_New(FILE *fp, char *fn, int dptr, OBJDESC *hist){
+	struct iom_iheader h;
+	KEYWORD *key1 = NULL,*key2 = NULL;
+	int   scope=ODL_THIS_OBJECT;
+	int   _unsigned = 0;
+	int   item_bytes=0;
+	void   *data=NULL;
+	Var *v;
+
+	initHeaderFromHistogramLabel(hist, fn, &h);
+	h.dptr = dptr;
+
+	if ((key2 = OdlFindKwd(hist, "ITEM_BYTES", NULL, 0, scope)))
+		item_bytes = atoi(OdlGetKwdValue(key2));
+	else if ((key2 = OdlFindKwd(hist, "ITEM_BITS", NULL, 0, scope)))
+		item_bytes = atoi(OdlGetKwdValue(key2))/8;
+
+	if ((key1 = OdlFindKwd(hist, "DATA_TYPE", NULL, 0, scope)) ||
+		(key1 = OdlFindKwd(hist, "ITEM_TYPE", NULL, 0, scope)))
+		if (strstr(OdlGetKwdValue(key1),"UNSIGNED"))
+			_unsigned = 1;
+
+	data = iom_read_qube_data(fileno(fp), &h);
+
+	/*
+	** We need do promote unsigned short to signed int here
+	*/
+
+	if (item_bytes == 2 && _unsigned)
+		data = fix_unsigned(&h, data);
+
+	v = iom_iheader2var(&h);
+	V_DATA(v) = data;
+
+	iom_cleanup_iheader(&h);
+	return(v);
+}
+
+
+Var *
+dv_LoadImage_New(FILE *fp, char *fn, int dptr, OBJDESC *image){
+	struct iom_iheader h;
+	KEYWORD *key1,*key2;
+	int   scope=ODL_THIS_OBJECT;
+	int   _unsigned = 0;
+	int   item_bytes=0;
+	void   *data=NULL;
+	Var *v;
+
+	initHeaderFromImageLabel(image, fn, &h);
+	h.dptr = dptr;
+
+	if ((key2 = OdlFindKwd(image, "SAMPLE_BITS", NULL, 0, scope)))
+		item_bytes = atoi(OdlGetKwdValue(key2))/8;
+
+	if ((key1 = OdlFindKwd(image, "SAMPLE_TYPE", NULL, 0, scope)))
+		if (strstr(OdlGetKwdValue(key1),"UNSIGNED"))
+			_unsigned = 1;
+
+	data = iom_read_qube_data(fileno(fp), &h);
+
+	/*
+	** We need do promote unsigned short to signed int here
+	*/
+
+	if (item_bytes == 2 && _unsigned)
+		data = fix_unsigned(&h, data);
+
+	v = iom_iheader2var(&h);
+	V_DATA(v) = data;
+
+	iom_cleanup_iheader(&h);
+	return(v);
+}
+
+Var *
+dv_LoadISISFromPDS_New(FILE *fp, char *fn, int dptr, OBJDESC *qube){
+	struct iom_iheader h;
+	KEYWORD *key1,*key2;
+	int   scope=ODL_THIS_OBJECT;
+	int   _unsigned = 0;
+	int   item_bytes=0;
+	void   *data=NULL;
+	Var *v;
+
+	initHeaderFromQubeLabel(qube, fn, &h);
+	h.dptr = dptr;
+
+	if ((key2 = OdlFindKwd(qube, "CORE_ITEM_BYTES", NULL, 0, scope)))
+	item_bytes = atoi(key2->value);
+
+	if ((key1 = OdlFindKwd(qube, "CORE_ITEM_TYPE", NULL, 0, scope)))
+		if (strstr(key1->value,"UNSIGNED"))
+			_unsigned = 1;
+
+
+	data = iom_read_qube_data(fileno(fp), &h);
+
+	/*
+	** We need do promote unsigned short to signed int here
+	*/
+
+	if (item_bytes == 2 && _unsigned)
+		data = fix_unsigned(&h, data);
+
+	v = iom_iheader2var(&h);
+	V_DATA(v) = data;
+
+	iom_cleanup_iheader(&h);
+	return(v);
+}
+
+Var *
+dv_LoadISISSuffixesFromPDS_New(FILE *fp, char *fname, size_t dptr, OBJDESC *qube)
+{
+    KEYWORD *key = NULL;
+    int      scope = ODL_THIS_OBJECT;
+    struct   iom_iheader h;
+    void    *data = NULL;
+    char     str[256];
+    char     str2[256];
+    char    **name_list = NULL, **size_list = NULL, **type_list = NULL;
+    Var     *suffix_data[3] = {NULL, NULL, NULL};
+    iom_edf  eformat;
+    int      iformat;
+    int      i, j, k, n;
+    size_t   size;
+    Var     *v;
+    char    *msg_file = NULL;
+    const char    *suffix_names[3] = {"sample", "line", "band"};
+    int      suffix[3] = {0, 0, 0}; /* suffix dimensions */
+    int      suffix_bytes = 0;
+
+	initHeaderFromQubeLabel(qube, fname, &h);
+	h.dptr = dptr;
+
+    if ((key = OdlFindKwd(qube, "SUFFIX_ITEMS", NULL, 0, scope))) {
+      sscanf(key->value, "(%d,%d,%d)", &suffix[0], &suffix[1], &suffix[2]);
+    }
+
+    /* process sample-, then line-, and then band- suffix-planes */
+    for (i = 0; i < 3; i++) {
+      switch (i) {
+        case 0: strcpy(str, "SAMPLE_SUFFIX"); break;
+        case 1: strcpy(str, "LINE_SUFFIX"); break;
+        case 2: strcpy(str, "BAND_SUFFIX"); break;
+      }
+
+      if (suffix[iom_orders[h.org][i]]) {
+        /* if this suffix plane has suffix data, then */
+
+        /* find all the suffixes on this axis */
+        sprintf(str2, "%s_NAME", str);
+        if ((key = OdlFindKwd(qube, str2, NULL, 0, scope)) == NULL) {
+          parse_error("Unable to find suffix names\n");
+          continue;
+        }
+
+        n = OdlGetAllKwdValuesArray(key, &name_list);
+        if (n != suffix[iom_orders[h.org][i]]) {
+          parse_error("suffix name list is incomplete\n");
+          continue;
+        }
+
+        /* lower-case names for consistency */
+        for(k = 0; k < n; k++){ lcase(name_list[k]); }
+
+        sprintf(str2, "%s_ITEM_BYTES", str);
+        if ((key = OdlFindKwd(qube, str2, NULL, 0, scope)) == NULL) {
+          parse_error("Unable to find suffix sizes\n");
+          continue;
+        }
+
+        n = OdlGetAllKwdValuesArray(key, &size_list);
+        if (n != suffix[iom_orders[h.org][i]]) {
+          parse_error("suffix size list is incomplete\n");
+          continue;
+        }
+
+        sprintf(str2, "%s_ITEM_TYPE", str);
+        if ((key = OdlFindKwd(qube, str2, NULL, 0, scope)) == NULL) {
+          parse_error("Unable to find suffix types\n");
+          continue;
+        }
+
+        n = OdlGetAllKwdValuesArray(key, &type_list);
+        if (n != suffix[iom_orders[h.org][i]]) {
+          parse_error("suffix type list is incomplete\n");
+          continue;
+        }
+
+        suffix_data[i] = new_struct(0);
+
+        suffix_bytes=h.suffix[iom_orders[h.org][i]]/suffix[iom_orders[h.org][i]];
+        for (j = 0; j < suffix[iom_orders[h.org][i]]; j++) {
+
+          /* set the iom_iheader appropriately for the read */
+          for(k=0; k<3; k++){ h.s_lo[k] = 0; h.s_hi[k] = h.size[k]+1; }
+          h.s_lo[iom_orders[h.org][i]] = h.size[iom_orders[h.org][i]]+1;
+          h.s_hi[iom_orders[h.org][i]] = h.s_lo[iom_orders[h.org][i]]+1;
+
+          /* read the data */
+          eformat = iom_ConvertISISType(type_list[j], NULL, size_list[j]);
+          data = dv_read_qube_suffix(fileno(fp), &h, suffix_bytes, j,
+                                     eformat, &iformat, iom_orders[h.org][i],
+                                     &size);
+
+          /* Fix the size of data plane read to just one-deep. This is a
+             bad way of fudging it s.t. we can pass it directly to newVal() */
+          h.s_hi[iom_orders[h.org][i]] = 1;
+
+          /* Use newVal() to package the data into a davinci variable */
+          v = newVal(h.org, h.s_hi[0], h.s_hi[1], h.s_hi[2], ihfmt2vfmt(iformat), data);
+
+          /* Add this variable with the plane's name to appropriate
+             suffix_data sturcture */
+          add_struct(suffix_data[i], name_list[j], v);
+        }
+      }
+    }
+
+    /* assemble output struct with at the most three sub structures of data,
+       one for each of the sample, line and band suffixes */
+    v = new_struct(0);
+    for(i = 0; i < 3; i++){
+        if (suffix_data[i]){
+            if (get_struct_count(suffix_data[i]) > 0){
+                add_struct(v, suffix_names[i], suffix_data[i]);
+            }
+            else {
+                mem_claim(suffix_data[i]);
+                free_struct(suffix_data[i]);
+                /* NOTE: if one does not do mem_claim and free_struct
+                   the garbage collector will take care of it */
+            }
+        }
+    }
+
+    return(v);
 }
 
 /**
