@@ -2,8 +2,10 @@
 #define _PROTO_H
 
 #include "header.h"
+#include "io_lablib3.h"
 
 LABEL *LoadLabel(char *);
+LABEL *LoadLabelFromObjDesc(OBJDESC *tbl, const char *);
 DATASET * LoadDataset(DATASET *dataset, char *fname);
 FIELD *FindField(char *name, LIST * labels);
 FIELD *FindFieldInLabel(char *name, LABEL * l);

@@ -7,16 +7,25 @@
 #include "dvio.h"
 #include <sys/types.h>
 #include <regex.h>
+#include <string.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <libgen.h>
+
+
 
 #define MAXOBJ 10
 
-#ifdef LITTLE_ENDIAN
-extern char *var_endian(Var * v);
-#endif
+#define lookupAndWarn(funcName, struc, key, result) \
+	if (find_struct((struc), (key), (result)) < 0){ \
+		fprintf(stderr, "%s: Required keyword \"%s\" was not found.\n", (funcName), (key)); \
+		return 0; \
+	}
 
 
-Var *write_PDS_Qube(Var * core, Var * side, Var * bottom, Var * back,
-                    FILE * fp);
+static char keyword_prefix[] = "PTR_TO_";
+static int keyword_prefix_length = 8;
+
 
 /*
 ** If the object is a QUBE AND has suffix planes, we need to run special software to process,
@@ -24,9 +33,7 @@ Var *write_PDS_Qube(Var * core, Var * side, Var * bottom, Var * back,
 ** information
 */
 
-enum _PDS_Object { PDS_QUBE, SUFFIX, PDS_IMAGE, PDS_HISTORY, PDS_TABLE,
-                   PDS_HISTOGRAM_IMAGE };
-typedef enum _PDS_Object PDS_Object;
+typedef enum { PDS_QUBE, SUFFIX, PDS_IMAGE, PDS_HISTORY, PDS_TABLE, PDS_HISTOGRAM_IMAGE } PDS_Object;
 
 typedef struct _objectInfo {
   int count;
@@ -51,18 +58,6 @@ typedef struct _objectInfo {
 } objectInfo;
 
 
-void Set_Col_Var(Var **, FIELD **, LABEL *, int *size, char **);
-void ProcessGroupIntoLabel(FILE * fp, int record_bytes, Var * v,
-                           char *name);
-void ProcessObjectIntoLabel(FILE * fp, int record_bytes, Var * v,
-                            char *name, objectInfo * oi);
-Var *ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth,
-                      size_t *label_ptr, objectInfo * oi);
-
-
-static char keyword_prefix[] = "PTR_TO_";
-static int keyword_prefix_length = 8;
-
 typedef struct _dataKeys {
   const char *Name;           /*Name Entry in Table; Used for searching */
   Var *Obj;                   /*Pointer to Parent Var obj to which the data will be assigned */
@@ -70,193 +65,92 @@ typedef struct _dataKeys {
   char *FileName;             /*Name of the file the PDS object is from,
                                 could be different than the one originally given */
   int dptr;                   /*offset into file where data begins */
+  size_t size;                /* size in bytes */
+  OBJDESC *objDesc;
 
 } dataKey;
 
-/*To add dataKey words for more readable types do the following 3 steps:*/
 
-/*Step 1: Add READ function/wrapper declaration here*/
-int rf_QUBE(char *, Var *, char *, int);
-int rf_TABLE(char *, Var *, char *, int);
-int rf_IMAGE(char *, Var *, char *, int);
-int rf_HISTOGRAM_IMAGE(char *, Var *, char *, int);
-int rf_HISTORY(char *, Var *, char *, int);
+#ifdef LITTLE_ENDIAN
+extern char *var_endian(Var * v);
+#endif
 
-static dataKey *dK = NULL;
-typedef int (*PFI) (char *, Var *, char *, int);
+Var * dv_LoadISISFromPDS_New(FILE *fp, char *fn, int dptr, OBJDESC *qube);
+Var * dv_LoadISISSuffixesFromPDS_New(FILE *fp, char *fname, size_t dptr, OBJDESC *qube);
+Var * dv_LoadImage_New(FILE *fp, char *fn, int dptr, OBJDESC *image);
+Var * dv_LoadHistogram_New(FILE *fp, char *fn, int dptr, OBJDESC *hist);
 
-/*Step2: Add the name of the READ function/wrapper here*/
-PFI VrF[] =
-{ rf_QUBE, rf_QUBE, rf_TABLE, rf_IMAGE, rf_HISTOGRAM_IMAGE,
-  rf_HISTORY };
+static char *history_parse_buffer(FILE * in);
+static char * history_remove_isis_indents(const char *history);
 
-
-/*Step 3: Add the dataKey word to this here (before the NULL!)*/
-static const char *keyName[] =
-{ "SPECTRAL_QUBE", "QUBE", "TABLE", "IMAGE",
-  "HISTOGRAM_IMAGE", "HISTORY", NULL };
-static int num_data_Keys;
+static void Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs);
+static void ProcessGroupIntoLabel(FILE * fp, int record_bytes, Var * v, char *name);
+static void ProcessObjectIntoLabel(FILE * fp, int record_bytes, Var * v, char *name, objectInfo * oi);
+static Var *ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth, size_t *label_ptr, objectInfo * oi);
+static Var *write_PDS_Qube(Var * core, Var * side, Var * bottom, Var * back, FILE * fp);
 
 
-/*
-** We want to note the Record_Bytes.
-** If we have multiple objects in this file
-** this is value which everything is aligned to.
-** Therefore, if we have a qube and a table, while the table
-** maybe have rows of size N, the record bytes might be of
-** size M.  Therefore, any pointers in the file will
-** be in units of M (ie ^TABLE = Q ==> the table is at
-** address Q*M.  However, after reaching the table, we'll
-** be reading it in chunks of N.  So....
-*/
-void Add_Key_Offset(char *Val, int Index, int record_bytes)
-{
-  if (Index < 1) {
-    printf("Error: Table Underflow\n");
-    exit(0);
-  }
+static Var *do_key(KEYWORD * key);
+static int readDataForObjects(Var *st, dataKey objSize[], int nObj, int load_suffix_data, int continueOnError);
+static Var *traverseObj(OBJDESC *top, Var *v, dataKey objSizeMap[], int *nObj);
+static const char *getGeneralObjClass(const char *objClassName);
+static int rfQube(const dataKey *objSize, Var *vQube, int load_suffix_data);
+static void rfBitField(int *j, char **Bufs, char *tmpbuf, FIELD ** f, int ptr, int row, int *size);
+static int rfTable(dataKey *objSize, Var * ob);
+static int rfImage(dataKey *objSize, Var * ob);
+static int rfHistory(dataKey *objSize, Var *ob);
+static int rfHistogram(dataKey *objSize, Var *ob);
+static Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data);
 
-  if (Index > num_data_Keys) {
-    printf("Error: Table Overflow\n");
-    exit(0);
-  }
 
-  /*Need to subtract 1 (we added one when we sent it the first time) */
+static const char *handledObjTypes[] = { 
+	"HISTOGRAM",
+	"HISTORY",
+	"IMAGE",
+	"QUBE",
+	"TABLE"
+};
+const int nHandledObjTypes = sizeof(handledObjTypes)/sizeof(char *);
 
-  Index--;
+static int
+genObjClassCmpr(const void *v1, const void *v2){
+	const char *s1 = *(const char **)v1;
+	const char *s2 = *(const char **)v2;
 
-  //I don't understand, but when record_bytes was N and the object Point M dptr was always N*(M-1)...oh well
-  dK[Index].dptr = record_bytes * (atoi(Val) - 1);
+	if (s1 == NULL && s2 == NULL)
+		return 0;
+	if (s1 == NULL && s2 != NULL)
+		return -1;
+	if (s1 != NULL && s2 == NULL)
+		return 1;
+	return strcasecmp(s1,s2);
 }
 
-char *fix_name(const char *input_name)
+static char *
+fix_name(const char *input_name)
 {
+  const char invalid_pfx[] = "__invalid";
+  static int invalid_id = 0;
   char *name = strdup(input_name);
   int len = strlen(name);
   int i;
   int val;
 
-  if (len < 1)
-    return ("Foo!");
+  if (len < 1){
+    name = (char *)calloc(strlen(invalid_pfx)+12, sizeof(char));
+    return (sprintf(name, "%s_%d", invalid_pfx, ++invalid_id));
+  }
 
-  i = 0;
-  while (i < len) {
-    val = (int) (name[i]) & 0xff;
-    if (isupper(val)) {
-      val = tolower(val) & 0xff;
-      name[i] = (char) val;
-    }
-    i++;
+  for(i=0; i<len; i++){
+	name[i] = isalnum(name[i])? tolower(name[i]): '_';
   }
 
   return (name);
 }
 
 
-void Init_Obj_Table(void)
-{
-  int i = 0;
-  while (keyName[i] != NULL)
-    i++;
-
-  num_data_Keys = i;
-
-  if (dK != NULL) {
-    free(dK);
-  }
-
-  dK = (dataKey *) calloc(num_data_Keys, sizeof(dataKey));
-
-  for (i = 0; i < num_data_Keys; i++) {
-    dK[i].Name = keyName[i];
-    dK[i].Obj = NULL;
-    dK[i].KeyValue = NULL;
-    dK[i].dptr = 0;
-  }
-}
-
-int Match_Key_Obj(char *obj)
-{
-  /*Want to know if this Object is in our table */
-
-  int i;
-
-  for (i = 0; i < num_data_Keys; i++) {
-    if (!(strcmp(dK[i].Name, obj)))
-
-      /*If it is, then return it's index(+1)
-        By adding one, we can use 0 to indicate no match.
-        Just need to remember and subtract 1 on it's return
-        below...this should be transperent to the caller. */
-
-      return (i + 1);
-  }
-
-  return (0);
-}
-
-void Add_Key_Word_Value(char *Val, int Index)
-{
-  if (Index < 1) {
-    printf("Error: Table Underflow\n");
-    exit(0);
-  }
-
-  if (Index > num_data_Keys) {
-    printf("Error: Table Overflow\n");
-    exit(0);
-  }
-
-  /*Need to subtract 1 (we added one when we sent it the first time) */
-
-  Index--;
-
-  if (dK[Index].KeyValue != NULL) {
-    printf("Error: Redudant Value Entry at Index:%d\n", Index);
-    exit(0);
-  }
-
-  dK[Index].KeyValue = strdup(Val);
-}
-
-void Add_Key_Obj(Var * Ob, char *fn, int Index)
-{
-  if (Index < 1) {
-    printf("Error: Table Underflow\n");
-    exit(0);
-  }
-
-  if (Index > num_data_Keys) {
-    printf("Error: Table Overflow\n");
-    exit(0);
-  }
-
-  /*Need to subtract 1 (we added one when we sent it the first time) */
-  Index--;
-
-  if (dK[Index].Obj != NULL) {
-    printf("Error: Redudant Obj Entry at Index:%d\n", Index);
-    exit(0);
-  }
-
-  dK[Index].Obj = Ob;
-  dK[Index].FileName = strdup(fn);
-}
-
-
-void Read_Object(Var * v)
-{
-  int i;
-  for (i = 0; i < num_data_Keys; i++) {
-    if (dK[i].Obj != NULL && dK[i].Name != NULL
-        && dK[i].KeyValue != NULL)
-      /*                      printf("%p %s %s %s\n",dK[i].Obj,dK[i].FileName,dK[i].Name,dK[i].KeyValue);*/
-      (VrF[i]) (dK[i].FileName, dK[i].Obj, dK[i].KeyValue,
-                dK[i].dptr);
-  }
-}
-
-int make_int(char *number)
+static int
+make_int(char *number)
 {
   char *base;
   char *radix;
@@ -298,30 +192,9 @@ int make_int(char *number)
   return (0);                 /*No 2nd #? Then it's junk */
 }
 
-/*
-  void
-  do_obj(OBJDESC *ob,Var *v)
-  {
-  char *name;
-  KEYWORD *kwd;
-  Var *o=new_struct(0);
 
-  if (ob->obj_class != NULL)
-  name=strdup(ob->obj_class);
-
-  else if((kwd = OdlFindKwd(ob, "NAME", NULL,1, ODL_THIS_OBJECT))!=NULL)
-  name=strdup(kwd->name);
-
-  else{
-  parse_error("Object with no name is unusable");
-  return(NULL);
-  }
-  add_struct(v,name,o);
-  }
-*/
-
-
-Var *do_key(OBJDESC * ob, KEYWORD * key)
+static Var *
+do_key(KEYWORD * key)
 {
 
   unsigned short kwv;
@@ -438,7 +311,8 @@ Var *do_key(OBJDESC * ob, KEYWORD * key)
   return (o);
 }
 
-char *mod_name_if_necessary(char *name)
+static char *
+mod_name_if_necessary(char *name)
 {
   char *new_name;
   if (name[0] != '^')
@@ -450,39 +324,6 @@ char *mod_name_if_necessary(char *name)
   strcpy(new_name, keyword_prefix);
   strcat(new_name, &name[1]);
   return (new_name);
-}
-
-void ProcessGroup(Var * v, KEYWORD ** key, OBJDESC * ob)
-{
-  Var *next_var;
-  Var *tmp_var;
-  char *keyname;
-
-  *key = OdlGetNextKwd(*key);
-
-  while (*key != NULL) {
-
-    if (!(strcmp("GROUP", (*key)->name))) {
-      next_var = new_struct(0);
-      add_struct(v, fix_name((*key)->value), next_var);
-      tmp_var = newVar();
-      V_TYPE(tmp_var) = ID_STRING;
-      V_STRING(tmp_var) = strdup("GROUP");
-      add_struct(next_var, "Object", tmp_var);
-      ProcessGroup(next_var, key, ob);
-      (*key) = OdlGetNextKwd(*key);
-      continue;
-    }
-
-    else if (!(strcmp("END_GROUP", (*key)->name)))
-      return;
-
-    else {
-      keyname = mod_name_if_necessary((*key)->name);
-      add_struct(v, fix_name(keyname), do_key(ob, *key));
-      *key = OdlGetNextKwd(*key);
-    }
-  }
 }
 
 static char *
@@ -514,216 +355,312 @@ gen_next_unused_name_instance(
   return NULL; /* no such instance found */
 }
 
-void Traverse_Tree(OBJDESC * ob, Var * v, int record_bytes)
-{
-  KEYWORD *key;
-  OBJDESC *next_ob = NULL;
-  unsigned short scope = ODL_CHILDREN_ONLY;
-  int count = 0;
-  Var *next_var;
-  Var *tmp_var;
-  char *name;
-  char *keyname;
-  KEYWORD *tmp_key;
-  int idx;
+static Var *
+decodePtr(KEYWORD *kw){
+	char *fname;
+	long  start_loc;
+	short loc_type;
+	Var *v = new_struct(0);
 
-
-  /*count the number of child OBJECTS of ob */
-  next_ob = OdlNextObjDesc(ob, 0, &scope);
-  if (next_ob != NULL)
-    count = 1;
-  while (next_ob != NULL) {
-    next_ob = OdlNextObjDesc(next_ob, 0, &scope);
-    if (next_ob != NULL)
-      count++;
-  }
-
-  /*Reset next_ob back to the first child (if there is one) */
-  scope = ODL_CHILDREN_ONLY;
-  next_ob = OdlNextObjDesc(ob, 0, &scope);
-
-
-  /*Iterate through keywords and objects until we run out of one or the other */
-
-  key = OdlGetFirstKwd(ob);
-
-  while (key != NULL && count) {
-
-    /*If Key and Next_ob are from different files, keyword takes precedent */
-    if ((strcmp(key->file_name, next_ob->file_name))) {
-      keyname = mod_name_if_necessary(key->name);
-
-      /*Check to see if this is a pointer */
-      if (key->is_a_pointer) {    /* then check to see if it's an object we want */
-        if ((idx = Match_Key_Obj(&key->name[1]))) {     /* It is */
-          Add_Key_Word_Value(key->value, idx);
-          Add_Key_Offset(key->value, idx, record_bytes);
-        }
-      }
-
-      /*Now add the name to the structure */
-      add_struct(v, fix_name(keyname), do_key(ob, key));
-      key = OdlGetNextKwd(key);
-    }
-
-    /*Same filename, so check line numbers */
-    /*Keyword before object */
-    else if (key->line_number < next_ob->line_number) {
-      keyname = mod_name_if_necessary(key->name);
-
-      /*
-      ** Okay, here we break from the previous smooth transitioning
-      */
-      if (!(strcmp("GROUP", key->name))) {        /* we have the begining of a group! */
-        next_var = new_struct(0);
-        keyname = fix_name(key->value);
-
-        if (find_struct(v, keyname, &tmp_var) >= 0){
-          /* the group already exists within history, generate a
-             serializaed group name from the given name */
-          keyname = gen_next_unused_name_instance(keyname, v);
-        }
-
-        add_struct(v, keyname, next_var);
-        tmp_var = newVar();
-        V_TYPE(tmp_var) = ID_STRING;
-        V_STRING(tmp_var) = strdup("GROUP");
-        add_struct(next_var, "Object", tmp_var);
-        ProcessGroup(next_var, &key, ob);
-        key = OdlGetNextKwd(key);
-        continue;
-      }
-
-
-      /*Check to see if this is a pointer */
-      if (key->is_a_pointer) {    /* then check to see if it's an object we want */
-        if ((idx = Match_Key_Obj(&key->name[1]))) {     /* It is */
-          Add_Key_Word_Value(key->value, idx);
-          Add_Key_Offset(key->value, idx, record_bytes);
-        }
-      }
-
-      add_struct(v, fix_name(keyname), do_key(ob, key));
-      key = OdlGetNextKwd(key);
-    }
-
-
-    /*object before keyword */
-    else {
-      name = NULL;
-      tmp_key =
-          (OdlFindKwd(next_ob, "NAME", NULL, 1, ODL_THIS_OBJECT));
-      if (tmp_key != NULL)
-        if (tmp_key->value != NULL)
-          name = tmp_key->value;
-
-      if (name == NULL)   /*Still no name */
-        name = next_ob->obj_class;
-
-      next_var = new_struct(0);
-      add_struct(v, fix_name(name), next_var);
-      /*NEW: Add variable Object with value "class" right under our structure */
-      tmp_var = newVar();
-      V_TYPE(tmp_var) = ID_STRING;
-      V_STRING(tmp_var) = strdup(next_ob->obj_class);
-      add_struct(next_var, "Object", tmp_var);
-
-      /*Check to see if this is an object we want */
-      if ((idx = Match_Key_Obj(next_ob->obj_class))) {        /* It is */
-        Add_Key_Obj(next_var, next_ob->file_name, idx);
-
-      }
-
-      Traverse_Tree(next_ob, next_var, record_bytes);
-
-      next_ob = OdlNextObjDesc(next_ob, 0, &scope);
-
-      count--;
-    }
-  }
-
-  /*Okay, somebody is depleted; keyword or children of ob */
-
-  if (key == NULL) {          /*Only children of ob left on this level */
-    while (count) {
-      name = NULL;
-      tmp_key =
-          (OdlFindKwd(next_ob, "NAME", NULL, 1, ODL_THIS_OBJECT));
-      if (tmp_key != NULL)
-        if (tmp_key->value != NULL)
-          name = tmp_key->value;
-
-      if (name == NULL)
-        name = next_ob->obj_class;
-
-      next_var = new_struct(0);
-      add_struct(v, fix_name(name), next_var);
-      /*NEW: Add variable Object with value "class" right under our structure */
-      tmp_var = newVar();
-      V_TYPE(tmp_var) = ID_STRING;
-      V_STRING(tmp_var) = strdup(next_ob->obj_class);
-      add_struct(next_var, "Object", tmp_var);
-
-      /*Check to see if this is an object we want */
-      if ((idx = Match_Key_Obj(next_ob->obj_class))) {        /* It is */
-        Add_Key_Obj(next_var, next_ob->file_name, idx);
-
-      }
-
-      Traverse_Tree(next_ob, next_var, record_bytes);
-      next_ob = OdlNextObjDesc(next_ob, 0, &scope);
-      count--;
-    }
-  }
-
-  else {                      /*Only keywords left */
-    while (key != NULL) {
-      keyname = mod_name_if_necessary(key->name);
-      /*
-      ** Okay, here we break from the previous smooth transitioning
-      */
-      if (!(strcmp("GROUP", key->name))) {        /* we have the begining of a group! */
-        next_var = new_struct(0);
-        keyname = fix_name(key->value);
-
-        if (find_struct(v, keyname, &tmp_var) >= 0){
-          /* the group already exists within history, generate a
-             serializaed group name from the given name */
-          keyname = gen_next_unused_name_instance(keyname, v);
-        }
-
-        add_struct(v, keyname, next_var);
-        tmp_var = newVar();
-        V_TYPE(tmp_var) = ID_STRING;
-        V_STRING(tmp_var) = strdup("GROUP");
-        add_struct(next_var, "Object", tmp_var);
-        ProcessGroup(next_var, &key, ob);
-        key = OdlGetNextKwd(key);
-        continue;
-      }
-
-
-      /*Check to see if this is a pointer */
-      if (key->is_a_pointer) {    /* then check to see if it's an object we want */
-        if ((idx = Match_Key_Obj(&key->name[1]))) {     /* It is */
-          Add_Key_Word_Value(key->value, idx);
-          Add_Key_Offset(key->value, idx, record_bytes);
-        }
-      }
-
-      add_struct(v, fix_name(keyname), do_key(ob, key));
-      key = OdlGetNextKwd(key);
-    }
-  }
-  /*everything finished for this ob so return*/
+	fname = OdlGetFileName(kw, &start_loc, &loc_type);
+	add_struct(v, "Object", newString(strdup("ptr")));
+	add_struct(v, "file_name", newString(fname));
+	add_struct(v, "start_loc", newInt(start_loc));
+	add_struct(v, "loc_type", newString(strdup(loc_type == ODL_RECORD_LOCATION? "record": "byte")));
+	return v;
 }
 
-char *remangle_name(char *filename)
-{
-  return filename;
+static KEYWORD *
+traverseGroup(KEYWORD *kw, Var *v){
+	char *kwName = NULL, *kwVal = NULL;
+	Var *tmpVar = NULL;
+
+	add_struct(v, "Object", newString(strdup("group")));
+
+	for(kw = OdlGetNextKwd(kw); kw != NULL; kw = OdlGetNextKwd(kw)){
+		kwName = OdlGetKwdName(kw);
+
+		if (strcasecmp(kwName, "END_GROUP") == 0){
+			break;
+		}
+		else if (strcasecmp(kwName, "GROUP") == 0){
+			char *groupName = fix_name(OdlGetKwdValue(kw));
+
+			Var *sub = new_struct(0);
+			kw = traverseGroup(kw, sub);
+
+			if (find_struct(v, groupName, &tmpVar) >= 0){
+				char *oldGroupName = groupName;
+				groupName = gen_next_unused_name_instance(oldGroupName, v);
+				free(oldGroupName);
+			}
+			add_struct(v, groupName, sub);
+		}
+		else {
+			add_struct(v, fix_name(kwName), do_key(kw));
+		}
+	}
+    return kw;
 }
 
-char *correct_name(char *name)
+static const char *
+getGeneralObjClass(const char *objClassName){
+	char *p = strrchr(objClassName, '_');
+	if (p != NULL)
+		return p+1;
+	return objClassName;
+}
+
+static size_t
+getObjSizeQube(Var *obj){
+	Var *vCoreItems = NULL;
+	Var *vCoreItemBytes = NULL;
+	Var *vSuffixItems = NULL;
+	Var *vSuffixItemBytes = NULL;
+	size_t dsize = 0;
+	int size[3]={1,1,1};
+	int i, n;
+
+	lookupAndWarn("getObjSizeQube", obj, "core_items", &vCoreItems);
+	lookupAndWarn("getObjSizeQube", obj, "core_item_bytes", &vCoreItemBytes);
+	if (vCoreItems != NULL && vCoreItemBytes != NULL){
+		n = V_SIZE(vCoreItems)[0];
+		for(i=0; i<n; i++)
+			size[i] = extract_int(vCoreItems, i);
+		dsize = size[0] * size[1] * size[2] * extract_int(vCoreItemBytes,0);
+
+		find_struct(obj, "suffix_items", &vSuffixItems);
+		find_struct(obj, "suffix_bytes", &vSuffixItemBytes);
+		if (vSuffixItems != NULL && vSuffixItemBytes != NULL){
+			int *suffixItems = (int *)V_DATA(vSuffixItems);
+			int suffixItemBytes = V_INT(vSuffixItemBytes);
+
+			dsize += suffixItems[0] * size[1] * size[2] * suffixItemBytes;
+			dsize += suffixItems[1] * size[2] * size[0] * suffixItemBytes;
+			dsize += suffixItems[2] * size[0] * size[1] * suffixItemBytes;
+			dsize += suffixItems[0] * suffixItems[1] * size[2] * suffixItemBytes;
+			dsize += suffixItems[1] * suffixItems[2] * size[0] * suffixItemBytes;
+			dsize += suffixItems[2] * suffixItems[0] * size[1] * suffixItemBytes;
+			dsize += size[0] * size[1] * size[2] * suffixItemBytes;
+		}
+	}
+
+	return dsize;
+}
+
+static size_t
+getObjSizeTable(Var *obj){
+	Var *vRows = NULL;
+	Var *vRowBytes = NULL;
+	size_t dsize = 0;
+
+	lookupAndWarn("getObjSizeTable", obj, "rows", &vRows);
+	lookupAndWarn("getObjSizeTable", obj, "row_bytes", &vRowBytes);
+	if (vRows != NULL && vRowBytes != NULL){
+		dsize = V_INT(vRows) * V_INT(vRowBytes);
+	}
+
+	return dsize;
+}
+
+static size_t
+getObjSizeHistogram(Var *obj){
+	Var *vItems = NULL;
+	Var *vItemBytes = NULL;
+	Var *vItemBits = NULL;
+	size_t dsize = 0;
+
+	lookupAndWarn("getObjSizeHistogram", obj, "items", &vItems);
+	if (find_struct(obj, "item_bytes", &vItemBytes) >= 0 ||
+		find_struct(obj, "item_bits", &vItemBits) >= 0){
+		dsize = V_INT(vItems) * (vItemBytes != NULL? V_INT(vItemBytes): V_INT(vItemBits)/8);
+	}
+	else {
+		fprintf(stderr, "%s: Required keyword \"%s\" or \"%s\" was not found.\n",
+			"getObjSizeHistogram", "item_bytes", "item_bits"); \
+		return 0;
+	}
+
+	return dsize;
+}
+
+static size_t
+getObjSizeImage(Var *obj){
+	Var *vLines = NULL;
+	Var *vSamples = NULL;
+	Var *vSampleBits = NULL;
+	size_t dsize = 0;
+
+	lookupAndWarn("getObjSizeImage", obj, "lines", &vLines);
+	lookupAndWarn("getObjSizeImage", obj, "line_samples", &vSamples);
+	lookupAndWarn("getObjSizeImage", obj, "sample_bits", &vSampleBits);
+
+	if (vLines != NULL && vSamples != NULL && vSampleBits != NULL){
+		dsize = V_INT(vLines) * V_INT(vSamples) * V_INT(vSampleBits)/8;
+	}
+
+	return dsize;
+}
+
+static size_t
+getObjSizeHistory(Var *obj){
+	Var *vBytes = NULL;
+	size_t dsize = 0;
+
+	lookupAndWarn("getObjSizeHistory", obj, "bytes", &vBytes);
+	if (vBytes != NULL){
+		dsize = V_INT(vBytes);
+	}
+
+	return dsize;
+}
+
+static size_t
+getObjSize(Var *obj){
+	Var *vObjType = NULL;
+	size_t dsize = 0;
+
+	find_struct(obj, "Object", &vObjType);
+
+	if (vObjType != NULL){
+		char *objType = V_STRING(vObjType);
+
+		if (strcasecmp(objType, "QUBE") == 0){
+			dsize = getObjSizeQube(obj);
+		}
+		else if (strcasecmp(objType, "IMAGE") == 0){
+			dsize = getObjSizeImage(obj);
+		}
+		else if (strcasecmp(objType, "TABLE") == 0){
+			dsize = getObjSizeTable(obj);
+		}
+		else if (strcasecmp(objType, "HISTOGRAM") == 0){
+			dsize = getObjSizeHistogram(obj);
+		}
+		else if (strcasecmp(objType, "HISTORY") == 0){
+			dsize = getObjSizeHistory(obj);
+		}
+	}
+
+	return dsize;
+}
+
+
+static Var *
+traverseObj(OBJDESC *top, Var *v, dataKey objSizeMap[], int *nObj){
+	OBJDESC *op = NULL;
+	KEYWORD *kw = NULL;
+	char *kwName, *genObjClass;
+	unsigned short scope = ODL_CHILDREN_ONLY;
+	Var *tmpVar = NULL;
+
+	for(kw = OdlGetFirstKwd(top); kw != NULL; kw = OdlGetNextKwd(kw)){
+		kwName = OdlGetKwdName(kw);
+
+		if (kw->is_a_pointer){
+			kwName = fix_name(mod_name_if_necessary(kwName));
+			add_struct(v, kwName, decodePtr(kw));
+		}
+		else if (strcasecmp(kwName, "GROUP") == 0){
+			char *groupName = fix_name(OdlGetKwdValue(kw));
+
+			Var *sub = new_struct(0);
+			kw = traverseGroup(kw, sub);
+			if (find_struct(v, groupName, &tmpVar) >= 0){
+				char *oldGroupName = groupName;
+				groupName = gen_next_unused_name_instance(oldGroupName, v);
+				free(oldGroupName);
+			}
+			add_struct(v, groupName, sub);
+		}
+		else {
+			add_struct(v, fix_name(kwName), do_key(kw));
+		}
+	}
+
+	for(op = OdlNextObjDesc(top, 0, &scope); op != NULL; op = OdlNextObjDesc(op, 0, &scope)){
+		kwName = OdlGetObjDescClassName(op);
+		kwName = fix_name(kwName);
+		genObjClass = getGeneralObjClass(kwName);
+
+		Var *sub = new_struct(0);
+		add_struct(sub, "Object", newString(strdup(genObjClass)));
+		traverseObj(op, sub, objSizeMap, nObj);
+		if (find_struct(v, kwName, &tmpVar) >= 0){
+			char *oldObjName = kwName;
+			kwName = gen_next_unused_name_instance(oldObjName, v);
+			free(oldObjName);
+		}
+		add_struct(v, kwName, sub);
+
+		if (bsearch(&genObjClass, handledObjTypes, nHandledObjTypes, sizeof(char *), genObjClassCmpr)){
+			objSizeMap[*nObj].Name = strdup(kwName);
+			objSizeMap[*nObj].size = getObjSize(sub);
+			objSizeMap[*nObj].objDesc = op;
+			objSizeMap[*nObj].Obj = v;
+			(*nObj)++;
+		}
+	}
+
+	return v;
+}
+
+static int
+resolvePointers(char *fname, OBJDESC *top, Var *topVar, dataKey objSizeMap[], int n){
+	char str[1024];
+	int i;
+	size_t lastOff, lblRecs = 0;
+	int recLen;
+	Var *v = NULL;
+
+	if (find_struct(topVar, "record_bytes", &v) >= 0)
+		recLen = V_INT(v);
+	else
+		recLen = 0;
+
+	if (find_struct(topVar, "label_records", &v) >= 0){
+		lblRecs = V_INT(v);
+	}
+
+	lastOff = lblRecs*recLen;
+
+	for(i=0; i<n; i++){
+		if (topVar != objSizeMap[i].Obj)
+			continue;
+
+		sprintf(str, "ptr_to_%s", objSizeMap[i].Name);
+
+		if (find_struct(topVar, str, &v) >= 0){
+			Var *vFName = NULL, *vStartLoc = NULL, *vLocType = NULL;
+			char *path;
+
+			find_struct(v, "file_name", &vFName);
+			find_struct(v, "start_loc", &vStartLoc);
+			find_struct(v, "loc_type", &vLocType);
+
+			// Extract a dir prefixed filename
+			path = (char *)alloca(strlen(V_STRING(vFName))+strlen(fname)+1);
+			strcpy(path, fname);
+			strcpy(path, dirname(fname));
+			strcat(path, "/");
+			strcat(path, V_STRING(vFName));
+
+			objSizeMap[i].FileName = strdup(path);
+			objSizeMap[i].dptr = V_INT(vStartLoc)-1;
+			if (strcmp(V_STRING(vLocType), "record") == 0){
+				objSizeMap[i].dptr *= recLen;
+			}
+		}
+		else {
+			objSizeMap[i].FileName = strdup(fname);
+			objSizeMap[i].dptr = lastOff;
+			lastOff += objSizeMap[i].size;
+		}
+	}
+}
+
+static char *
+correct_name(char *name)
 {
   char *newname = strdup(name);
   int i = strlen(newname) - 1;
@@ -735,7 +672,7 @@ char *correct_name(char *name)
   return (newname);
 }
 
-void
+static void
 ProcessGroupIntoLabel(FILE * fp, int record_bytes, Var * v, char *name)
 {
   Var *tmpvar;
@@ -763,7 +700,8 @@ ProcessGroupIntoLabel(FILE * fp, int record_bytes, Var * v, char *name)
 
 }
 
-char *ProcessVarIntoString(Var * element, char *name)
+static char *
+ProcessVarIntoString(Var * element, char *name)
 {
   int flag = 0;
   int idx;
@@ -874,7 +812,8 @@ char *ProcessVarIntoString(Var * element, char *name)
 }
 
 
-void ProcessHistoryIntoString(Var * v, char **theString, int *ptr)
+static void
+ProcessHistoryIntoString(Var * v, char **theString, int *ptr)
 {
 
   int i;
@@ -978,7 +917,7 @@ int set_suffix(Var * suffix, Var ** final)
 }
 
 
-void
+static void
 ProcessObjectIntoLabel(FILE * fp, int record_bytes, Var * v, char *name,
                        objectInfo * oi)
 {
@@ -1684,9 +1623,7 @@ ff_write_isis_cub(vfuncptr func, Var *args)
  ** For now, I am controlling loading of suffix data using the
  ** following global variable.
  **/
-Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data);
 
-static int LOAD_SUFFIX_DATA = 0;
 Var *ReadPDS(vfuncptr func, Var * arg)
 {
   Var *fn = NULL;
@@ -1703,9 +1640,6 @@ Var *ReadPDS(vfuncptr func, Var * arg)
 
   if (parse_args(func, arg, alist) == 0)
     return (NULL);
-
-  /* see the comment above LOAD_SUFFIX_DATA's declaration */
-  LOAD_SUFFIX_DATA = suffix_data;
 
   /* Handle loading many filenames */
   if (V_TYPE(fn) == ID_TEXT) {
@@ -1733,18 +1667,19 @@ Var *ReadPDS(vfuncptr func, Var * arg)
   }
 }
 
-
-Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
+static Var *
+do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
 {
-  OBJDESC *ob;
+  OBJDESC *ob, *obFile;
   KEYWORD *key;
   char *err_file = NULL;
-  int record_bytes;
   char *fname;
-
+  dataKey objSize[100];
+  int nObj = 0;
   FILE *fp;
-
-  Var * v;
+  Var *v, *vFile;
+  char fileObjName[128];
+  int i;
 
   if (filename == NULL) {
     parse_error("%s: No filename specified\n", func->name);
@@ -1760,8 +1695,6 @@ Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
     parse_error("%s: Unable to find file %s.", func->name, filename);
     return (NULL);
   }
-
-  Init_Obj_Table();
 
   /**
   *** What about compression?
@@ -1789,64 +1722,127 @@ Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
     return v;
   }
 #endif
-  ob = (OBJDESC *) OdlParseLabelFile(fname, err_file,
-                                     ODL_EXPAND_STRUCTURE, VERBOSE == 0);
+  ob = (OBJDESC *) OdlParseLabelFile(fname, err_file, ODL_EXPAND_STRUCTURE, VERBOSE == 0);
   fclose(fp);
 
-  if ((key =
-       OdlFindKwd(ob, "RECORD_BYTES", NULL, 0,
-                  ODL_THIS_OBJECT)) == NULL) {
-    parse_error("Hey! This doesn't look like a PDS file");
-    record_bytes = 0;
-  } else {
-    record_bytes = atoi(key->value);
+  if (ob == NULL){
+    parse_error("%s: Unable to parse file %s\n", func->name, fname);
+	return NULL;
   }
+
   v = new_struct(0);
-  Traverse_Tree(ob, v, record_bytes);
+  traverseObj(ob, v, objSize, &nObj);
+
+  // Resolve ^XXXX pointers at the top level (implicit) FILE object
+  //resolvePointers(fname, ob, v, objSize, nObj);
+  // Traverse the ^XXXX pointers in the explicit FILE objects
+  vFile = v;
+  obFile = ob;
+  i = 0;
+  do {
+      if (vFile != NULL){
+	  	resolvePointers(fname, obFile, vFile, objSize, nObj);
+	  }
+	  vFile = NULL;
+	  if (i == 0)
+		  strcpy(fileObjName, "file");
+      else
+		  sprintf(fileObjName, "file_%d", i);
+	  find_struct(v, fileObjName, &vFile);
+	  obFile = OdlFindObjDesc(ob, "FILE", NULL, NULL, ++i, ODL_CHILDREN_ONLY);
+  } while(obFile != NULL);
 
   if (data) {
-    Read_Object(v);
+     // TODO Read data within explicit FILE objects
+	 readDataForObjects(v, objSize, nObj, suffix_data, 1);
   }
+
+  // TODO Free space consumed by FileNames allocated within objSize array
+  OdlFreeTree(ob);
 
   return (v);
 }
 
+static int
+readDataForObjects(Var *st, dataKey objSize[], int nObj, int load_suffix_data, int continueOnError){
+	int i;
+	int rc = 1;
+	Var *sub = NULL, *vObjClass = NULL;
 
-int rf_QUBE(char *fn, Var * ob, char *val, int dptr)
-{
-  FILE *fp;
-  Var *data = NULL, *suffix_data = NULL;
+	for(i=0; i<nObj && (rc || continueOnError); i++){
+		if (find_struct(objSize[i].Obj, objSize[i].Name, &sub) >= 0){
+		//if (find_struct(st, objSize[i].Name, &sub) >= 0){
+			if (find_struct(sub, "Object", &vObjClass) >= 0){
+				char *objClass = V_STRING(vObjClass);
+				if (strcasecmp(objClass, "QUBE") == 0){
+					rc &= rfQube(&objSize[i], sub, load_suffix_data);
+				}
+				else if (strcasecmp(objClass, "IMAGE") == 0){
+					rc &= rfImage(&objSize[i], sub);
+				}
+				else if (strcasecmp(objClass, "HISTORY") == 0){
+					rc &= rfHistory(&objSize[i], sub);
+				}
+				else if (strcasecmp(objClass, "TABLE") == 0){
+					rc &= rfTable(&objSize[i], sub);
+				}
+				else if (strcasecmp(objClass, "HISTOGRAM") == 0){
+					rc &= rfHistogram(&objSize[i], sub);
+				}
+			}
+		}
+	}
 
-
-  fp = fopen(fn, "rb");
-
-  data = dv_LoadISISFromPDS(fp, fn, dptr);
-  if (data == NULL) { fclose(fp); return 1; }
-  add_struct(ob, fix_name("DATA"), data);
-
-  if (LOAD_SUFFIX_DATA){
-    suffix_data = dv_LoadISISSuffixesFromPDS(fp, fn);
-    if (suffix_data == NULL){ fclose(fp); return 1; }
-
-    /* create a suffix part only when there are suffixes, i.e.
-       avoid blank suffix structure */
-    if (get_struct_count(suffix_data) > 0){
-      add_struct(ob, fix_name("SUFFIX_DATA"), suffix_data);
-    }
-    else {
-      mem_claim(suffix_data);
-      free_struct(suffix_data);
-      /* NOTE: if one does not do mem_claim and free_struct
-         the garbage collector will take care of it */
-    }
-  }
-
-  fclose(fp);
-  return (0);
+	return rc;
 }
 
-void
-rf_BitField(int *j, char **Bufs, char *tmpbuf, FIELD ** f, int ptr, int row, int *size)
+
+static int
+rfQube(const dataKey *objSize, Var *vQube, int load_suffix_data){
+	FILE *fp;
+	Var *data = NULL, *suffix_data = NULL;
+	char *fileName = (char *)alloca(strlen(objSize->FileName)+1);
+
+	lowercase(strcpy(fileName, objSize->FileName));
+	if ((fp = fopen(fileName, "rb")) == NULL){
+		fprintf(stderr, "Unable to open %s\n", objSize->FileName);
+		return 0;
+	}
+
+	data = dv_LoadISISFromPDS_New(fp, fileName, objSize->dptr, objSize->objDesc);
+	if (data == NULL) {
+		fclose(fp); 
+		return 0;
+	}
+
+	add_struct(vQube, fix_name("DATA"), data);
+
+	if (load_suffix_data){
+		suffix_data = dv_LoadISISSuffixesFromPDS_New(fp, fileName, objSize->dptr, objSize->objDesc);
+		if (suffix_data == NULL){
+			fclose(fp);
+			return 0;
+		}
+
+		/* create a suffix part only when there are suffixes, i.e.
+		   avoid blank suffix structure */
+		if (get_struct_count(suffix_data) > 0){
+			add_struct(vQube, fix_name("SUFFIX_DATA"), suffix_data);
+		}
+		else {
+			mem_claim(suffix_data);
+			free_struct(suffix_data);
+			/* NOTE: if one does not do mem_claim and free_struct
+			   the garbage collector will take care of it */
+		}
+	}
+
+	fclose(fp);
+	return 1;
+}
+
+static void
+rfBitField(int *j, char **Bufs, char *tmpbuf, FIELD ** f, int ptr, int row, int *size)
 {
   int i = (*j);
   /*
@@ -1863,94 +1859,99 @@ rf_BitField(int *j, char **Bufs, char *tmpbuf, FIELD ** f, int ptr, int row, int
 }
 
 
+static int
+rfTable(dataKey *objSize, Var * ob){
+	LABEL *label;
+	Var *data;
+	char **bufs;
+	char *tmpbuf;
+	int i, j, k;
+	int fd;
+	int Offset;
+	FIELD **f;
+	int *size;
+	int err;
+	int num_items = 0;
+	int rc;
+	char *fileName = (char *)alloca(strlen(objSize->FileName)+1);
 
-int rf_TABLE(char *fn, Var * ob, char *val, int dptr)
-{
-  LABEL *label;
-  Var *Data;
-  char **Bufs;
-  char *tmpbuf;
-  int i, j, k;
-  int fp;
-  int Offset;
-  FIELD **f;
-  int *size;
-  int err;
-  int num_items = 0;
+	lowercase(strcpy(fileName, objSize->FileName));
+	label = LoadLabelFromObjDesc(objSize->objDesc, fileName);
+	if (label == NULL) {
+		fprintf(stderr, "Unable to load label from \"%s\".\n", fileName);
+		return 0;
+	}
 
-  label = LoadLabel(fn);
-  if (label == NULL) {
-    fprintf(stderr, "Unable to load label from \"%s\".\n",
-            ((fn == NULL) ? "(null)" : fn));
-    return 1;
-  }
+	f = (FIELD **) label->fields->ptr;
+	num_items = label->fields->number;  /*This is a count of BOTH columns AND bit-columns */
 
-  f = (FIELD **) label->fields->ptr;
+	/*Add new structure to parent ob*/
+	data = new_struct(0);
 
-  num_items = label->fields->number;  /*This is a count of BOTH columns AND bit-columns */
+	/*Initialize a set of buffers to read in the data */
+	bufs = (char **) calloc(num_items, sizeof(char *));
+	tmpbuf = (char *) calloc(label->reclen, sizeof(char));
+	size = (int *) calloc(num_items, sizeof(int));
+	for (j = 0; j < num_items; j++) {
+		size[j] = f[j]->dimension? f[j]->size * f[j]->dimension: f[j]->size;
+		bufs[j] = (char *) calloc((label->nrows * size[j]), sizeof(char));
+	}
 
-  /*Add new structure to parent ob*/
-  Data = new_struct(0);
+	Offset = objSize->dptr;
 
-  /*Initialize a set of buffers to read in the data */
+	#if defined(__CYGWIN__) || defined(__MINGW32__)
+	fd = open(fileName, O_RDONLY | O_BINARY, 0);
+	#else
+	fd = open(fileName, O_RDONLY, 0);
+	#endif                          /* __CYGWIN__ */
 
-  Bufs = (char **) calloc(num_items, sizeof(char *));
-  tmpbuf = (char *) calloc(label->reclen, sizeof(char));
-  size = (int *) calloc(num_items, sizeof(int));
-  for (j = 0; j < num_items; j++) {
+	rc = 1;
+	if (fd < 0){
+		fprintf(stderr, "Unable to open file for reading \"%s\". Reason: %s.\n",
+			fileName, strerror(errno));
+		rc = 0;
+	}
+	else {
+		lseek(fd, Offset, SEEK_SET);
 
-    if (f[j]->dimension)
-      size[j] = f[j]->size * f[j]->dimension;
-    else
-      size[j] = f[j]->size;
+		for (i = 0; i < label->nrows && rc; i++) {
+			/*Read each row as a block */
+			if ((err = read(fd, tmpbuf, label->reclen)) != label->reclen) {
+				fprintf(stderr, "Short file: %s. Read %d bytes, should be %d\n",
+					fileName, err, label->reclen);
+				rc=0;
+			}
+			else {
+				for (j = 0; j < num_items; j++) {
+					/*Place in the approiate buffer */
+					memcpy((bufs[j] + i * size[j]), (tmpbuf + f[j]->start), size[j]);
+					if (f[j]->eformat == MSB_BIT_FIELD)
+						rfBitField(&j, bufs, tmpbuf, f, f[j]->start, i, size);
+				}
+			}
+		}
 
-    Bufs[j] = (char *) calloc((label->nrows * size[j]), sizeof(char));
-  }
+		close(fd);
+	}
 
-  Offset = dptr;
+	if (rc){
+		/*Set each field Var's data and parameter information */
+		Set_Col_Var(&data, f, label, size, bufs);
+		add_struct(ob, fix_name("DATA"), data);
+	}
 
-#if defined(__CYGWIN__) || defined(__MINGW32__)
-  fp = open(fn, O_RDONLY | O_BINARY, 0);
-#else
-  fp = open(fn, O_RDONLY, 0);
-#endif                          /* __CYGWIN__ */
-  lseek(fp, Offset, SEEK_SET);
-  for (i = 0; i < label->nrows; i++) {
+	free(tmpbuf);
+	free(size);
+	for (j = 0; j < num_items; j++)
+		free(bufs[j]);
+	free(bufs);
 
-    /*Read each row as a block */
-    if ((err = read(fp, tmpbuf, label->reclen)) != label->reclen) {
-      fprintf(stderr,
-              "Bad data in file:%s\n Read %d byte(s), should be %d\n",
-              fn, err, label->reclen);
-      return (1);
-    }
-
-    for (j = 0; j < num_items; j++) {
-      /*Place in the approiate buffer */
-
-      memcpy((Bufs[j] + i * size[j]), (tmpbuf + f[j]->start), size[j]);
-
-      if (f[j]->eformat == MSB_BIT_FIELD)
-        rf_BitField(&j, Bufs, tmpbuf, f, f[j]->start, i, size);
-    }
-  }
-  close(fp);
-
-  /*Set each field Var's data and parameter information */
-  Set_Col_Var(&Data, f, label, size, Bufs);
-
-  add_struct(ob, fix_name("DATA"), Data);
-
-  free(tmpbuf);
-  free(size);
-  for (j = 0; j < num_items; j++) {
-    free(Bufs[j]);
-  }
-  free(Bufs);
-  return (0);
+	return rc;
 }
 
-double Scale(int size, void *ptr, FIELD * f)
+
+static double
+Scale(int size, void *ptr, FIELD * f)
 {
   unsigned char *ucp;
   unsigned int *uip;
@@ -2028,7 +2029,8 @@ double Scale(int size, void *ptr, FIELD * f)
 }
 
 
-char *DoScale(int rows, FIELD * f, char *in)
+static char *
+DoScale(int rows, FIELD * f, char *in)
 {
   double *out;
   void *ptr;
@@ -2050,14 +2052,14 @@ char *DoScale(int rows, FIELD * f, char *in)
   return ((char *) out);
 }
 
-void
+static void
 Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
 {
   int j, i, k;
   void *data;
   char **text;
   Var *v;
-  char num[9];
+  char num[128];
   int inum;
   double fnum;
   int step;
@@ -2073,6 +2075,7 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
   **/
 
   for (j = 0; j < num_fields; j++) {
+  	v = NULL;
     dim = (f[j]->dimension ? f[j]->dimension : 1);
 	nitems = label->nrows * dim;
     step = 0;
@@ -2222,32 +2225,62 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
 
       }
     }
-    add_struct(*Data, fix_name(f[j]->name), v);
+	if (v == NULL){
+		parse_error("Column data conversion failed for %s.", f[j]->name);
+	}
+	else {
+		add_struct(*Data, fix_name(f[j]->name), v);
+	}
   }
 }
 
-int rf_IMAGE(char *fn, Var * ob, char *val, int dptr)
-{
-  FILE *fp;
-  Var *data = NULL;
-  fp = fopen(fn, "rb");
-  data = dv_LoadISIS(fp, fn, NULL);
-  if (data != NULL) {
-    add_struct(ob, fix_name("DATA"), data);
-    fclose(fp);
-    return (0);
-  }
+static int
+rfImage(dataKey *objSize, Var * ob){
+	FILE *fp;
+	Var *data = NULL;
+	int rc = 0;
+	char *fileName = (char *)alloca(strlen(objSize->FileName)+1);
 
-  fclose(fp);
-  return (1);
+	lowercase(strcpy(fileName, objSize->FileName));
+	if ((fp = fopen(fileName, "rb")) == NULL){
+		return 0;
+	}
+
+	data = dv_LoadImage_New(fp, fileName, objSize->dptr, objSize->objDesc);
+	if (data != NULL) {
+		add_struct(ob, fix_name("DATA"), data);
+		rc=1;
+	}
+
+	fclose(fp);
+	return rc;
 }
 
-int rf_HISTOGRAM_IMAGE(char *fn, Var * ob, char *val, int dptr)
-{
-  return (0);
+
+static int
+rfHistogram(dataKey *objSize, Var * ob){
+	FILE *fp;
+	Var *data = NULL;
+	int rc = 0;
+	char *fileName = (char *)alloca(strlen(objSize->FileName)+1);
+
+	lowercase(strcpy(fileName, objSize->FileName));
+	if ((fp = fopen(fileName, "rb")) == NULL){
+		return 0;
+	}
+
+	data = dv_LoadHistogram_New(fp, fileName, objSize->dptr, objSize->objDesc);
+	if (data != NULL) {
+		add_struct(ob, fix_name("DATA"), data);
+		rc=1;
+	}
+
+	fclose(fp);
+	return rc;
 }
 
-char *history_parse_buffer(FILE * in)
+static char *
+history_parse_buffer(FILE * in)
 {
   char buf[1024];
   int max = 2048;
@@ -2329,7 +2362,7 @@ history_remove_isis_indents(const char *history)
 
   regfree(&indent_regex);
 
-  tgt_hist = (char *)calloc(sizeof(char), src_hist_len+10);
+  tgt_hist = (char *)calloc(sizeof(char), src_hist_len+n+10);
   strcpy(tgt_hist, "");
   for(i = 0; i < n; i++){
     if (i > 0){ strcat(tgt_hist, "\n"); }
@@ -2342,43 +2375,40 @@ history_remove_isis_indents(const char *history)
   return tgt_hist;
 }
 
-int rf_HISTORY(char *fn, Var * ob, char *val, int dptr)
-{
-  Var *tmp;
-  FILE *in;
-  Var *data = new_struct(0);
-  char *history, *p;
-  OBJDESC *top;
+static int
+rfHistory(dataKey *objSize, Var *ob) {
+	FILE *fp;
+	Var *data = new_struct(0);
+	OBJDESC *top;
+	char *history, *p;
+	int rc = 0;
+	char *fileName = (char *)alloca(strlen(objSize->FileName)+1);
 
+	lowercase(strcpy(fileName, objSize->FileName));
+	if ((fp = fopen(fileName, "rb")) == NULL){
+		return 0;
+	}
 
-  in = fopen(fn, "rb");
-  fseek(in, dptr, SEEK_SET);
-  tmp = newVar();
-  V_TYPE(tmp) = ID_STRING;
-  V_STRING(tmp) = strdup("HISTORY");
-  add_struct(data, "Object", tmp);
+	/*Read in the history object as a giant string*/
+	fseek(fp, objSize->dptr, SEEK_SET);
+	history = history_parse_buffer(fp);
+	fclose(fp);
 
+	/* Assuming ISIS history object: remove any indent marks */
+	p = history_remove_isis_indents(history);
+	if (p != NULL){
+		/* replace history text with history-text-without-indent-marks */
+		free(history);
+		history = p;
+	}
 
-  /*Read in the history object as a giant string*/
-  history = history_parse_buffer(in);
-  fclose(in);
+	/*Call the OdlParseLabelString fucntion and make it an ODL object*/
+	top = OdlParseLabelString(history, NULL, ODL_EXPAND_STRUCTURE, VERBOSE == 0);
+	traverseObj(top, data, NULL, 0);
 
-  /* Assuming ISIS history object: remove any indent marks */
-  p = history_remove_isis_indents(history);
-  if (p != NULL){
-    /* replace history text with history-text-without-indent-marks */
-    free(history);
-    history = p;
-  }
+	if (get_struct_count(data))
+		add_struct(ob, fix_name("DATA"), data);
 
-  /*Call the OdlParseLabelString fucntion and make it an ODL object*/
-  top =
-      OdlParseLabelString(history, NULL, ODL_EXPAND_STRUCTURE,
-                          VERBOSE == 0);
-  Traverse_Tree(top, data, 0);
-
-  if (get_struct_count(data))
-    add_struct(ob, fix_name("DATA"), data);
-
-  return (0);
+	return 1;
 }
+
