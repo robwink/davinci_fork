@@ -88,7 +88,7 @@ static void Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char 
 static void ProcessGroupIntoLabel(FILE * fp, int record_bytes, Var * v, char *name);
 static void ProcessObjectIntoLabel(FILE * fp, int record_bytes, Var * v, char *name, objectInfo * oi);
 static Var *ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth, size_t *label_ptr, objectInfo * oi);
-static Var *write_PDS_Qube(Var * core, Var * side, Var * bottom, Var * back, FILE * fp);
+Var *write_PDS_Qube(Var * core, Var * side, Var * bottom, Var * back, FILE * fp);
 
 
 static Var *do_key(KEYWORD * key);
@@ -670,8 +670,8 @@ resolvePointers(char *fname, OBJDESC *top, Var *topVar, dataKey objSizeMap[], in
 
 			// Extract a dir prefixed filename
 			path = (char *)alloca(strlen(V_STRING(vFName))+strlen(fname)+1);
-			//strcpy(path, fname);
-			strcpy(path, dirname(fname));
+			strcpy(path, fname);
+			strcpy(path, dirname(path));
 			strcat(path, "/");
 			//strcat(path, V_STRING(vFName));
 			strcat(path, basename(V_STRING(vFName)));
@@ -1835,11 +1835,13 @@ pickFilename(char *outFname, const char *inFname){
 	if (stat(outFname, &sbuf) == 0)
 		return;
 
-	lowercase(strcpy(outFname, inFname));
+	strcpy(outFname, inFname);
+	lowercase(basename(outFname));
 	if (stat(outFname, &sbuf) == 0)
 		return;
 
-	uppercase(strcpy(outFname, inFname));
+	strcpy(outFname, inFname);
+	uppercase(basename(outFname));
 	if (stat(outFname, &sbuf) == 0)
 		return;
 
