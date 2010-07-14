@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <libgen.h>
+#include <sys/stat.h>
 
 
 
@@ -95,7 +96,7 @@ static int readDataForObjects(Var *st, dataKey objSize[], int nObj, int load_suf
 static Var *traverseObj(OBJDESC *top, Var *v, dataKey objSizeMap[], int *nObj);
 static const char *getGeneralObjClass(const char *objClassName);
 static int rfQube(const dataKey *objSize, Var *vQube, int load_suffix_data);
-static void rfBitField(int *j, char **Bufs, char *tmpbuf, FIELD ** f, int ptr, int row, int *size);
+static void rfBitField(int *j, char **Bufs, char *tmpbuf, FIELD ** f, int ptr, int row, int *size, int num_items);
 static int rfTable(dataKey *objSize, Var * ob);
 static int rfImage(dataKey *objSize, Var * ob);
 static int rfHistory(dataKey *objSize, Var *ob);
@@ -127,15 +128,44 @@ genObjClassCmpr(const void *v1, const void *v2){
 }
 
 static char *
+ltrim(char *s, char *trim_chars)
+{
+	int st = 0;
+	while(s[st] && strchr(trim_chars, s[st]))
+		st++;
+	
+	if (st > 0)
+		strcpy(s, &s[st]);
+
+	return s;
+}
+
+static char *
+rtrim(char *s, char *trim_chars)
+{
+	int len = strlen(s);
+
+	while(len > 0 && strchr(trim_chars, s[len-1]))
+		s[--len] = '\0';
+	
+	return s;
+}
+
+static char *
 fix_name(const char *input_name)
 {
   const char invalid_pfx[] = "__invalid";
   static int invalid_id = 0;
   char *name = strdup(input_name);
-  int len = strlen(name);
+  int len;
   int i;
   int val;
+  const char *trim_chars = "\"\t ";
 
+  ltrim(name, trim_chars);
+  rtrim(name, trim_chars);
+
+  len =  strlen(name);
   if (len < 1){
     name = (char *)calloc(strlen(invalid_pfx)+12, sizeof(char));
     return (sprintf(name, "%s_%d", invalid_pfx, ++invalid_id));
@@ -640,10 +670,11 @@ resolvePointers(char *fname, OBJDESC *top, Var *topVar, dataKey objSizeMap[], in
 
 			// Extract a dir prefixed filename
 			path = (char *)alloca(strlen(V_STRING(vFName))+strlen(fname)+1);
-			strcpy(path, fname);
+			//strcpy(path, fname);
 			strcpy(path, dirname(fname));
 			strcat(path, "/");
-			strcat(path, V_STRING(vFName));
+			//strcat(path, V_STRING(vFName));
+			strcat(path, basename(V_STRING(vFName)));
 
 			objSizeMap[i].FileName = strdup(path);
 			objSizeMap[i].dptr = V_INT(vStartLoc)-1;
@@ -1796,6 +1827,25 @@ readDataForObjects(Var *st, dataKey objSize[], int nObj, int load_suffix_data, i
 	return rc;
 }
 
+static void
+pickFilename(char *outFname, const char *inFname){
+	struct stat sbuf;
+
+	strcpy(outFname, inFname);
+	if (stat(outFname, &sbuf) == 0)
+		return;
+
+	lowercase(strcpy(outFname, inFname));
+	if (stat(outFname, &sbuf) == 0)
+		return;
+
+	uppercase(strcpy(outFname, inFname));
+	if (stat(outFname, &sbuf) == 0)
+		return;
+
+	strcpy(outFname, inFname);
+}
+
 
 static int
 rfQube(const dataKey *objSize, Var *vQube, int load_suffix_data){
@@ -1803,9 +1853,9 @@ rfQube(const dataKey *objSize, Var *vQube, int load_suffix_data){
 	Var *data = NULL, *suffix_data = NULL;
 	char *fileName = (char *)alloca(strlen(objSize->FileName)+1);
 
-	lowercase(strcpy(fileName, objSize->FileName));
+	pickFilename(fileName, objSize->FileName);
 	if ((fp = fopen(fileName, "rb")) == NULL){
-		fprintf(stderr, "Unable to open %s\n", objSize->FileName);
+		fprintf(stderr, "Unable to open file for reading: \"%s\". Reason: %s\n", fileName, strerror(errno));
 		return 0;
 	}
 
@@ -1842,7 +1892,7 @@ rfQube(const dataKey *objSize, Var *vQube, int load_suffix_data){
 }
 
 static void
-rfBitField(int *j, char **Bufs, char *tmpbuf, FIELD ** f, int ptr, int row, int *size)
+rfBitField(int *j, char **Bufs, char *tmpbuf, FIELD ** f, int ptr, int row, int *size, int num_items)
 {
   int i = (*j);
   /*
@@ -1851,7 +1901,7 @@ rfBitField(int *j, char **Bufs, char *tmpbuf, FIELD ** f, int ptr, int row, int 
   ** so that we are now on the first bit collumn
   */
   i++;
-  while (f[i]->bitfield != NULL) {
+  while (i < num_items && f[i]->bitfield != NULL) {
     memcpy(Bufs[i] + row * size[i], (tmpbuf + ptr), size[i]);       /*Copy the whole thing in we'll fix it later */
     i++;
   }
@@ -1875,7 +1925,7 @@ rfTable(dataKey *objSize, Var * ob){
 	int rc;
 	char *fileName = (char *)alloca(strlen(objSize->FileName)+1);
 
-	lowercase(strcpy(fileName, objSize->FileName));
+	pickFilename(fileName, objSize->FileName);
 	label = LoadLabelFromObjDesc(objSize->objDesc, fileName);
 	if (label == NULL) {
 		fprintf(stderr, "Unable to load label from \"%s\".\n", fileName);
@@ -1926,7 +1976,7 @@ rfTable(dataKey *objSize, Var * ob){
 					/*Place in the approiate buffer */
 					memcpy((bufs[j] + i * size[j]), (tmpbuf + f[j]->start), size[j]);
 					if (f[j]->eformat == MSB_BIT_FIELD)
-						rfBitField(&j, bufs, tmpbuf, f, f[j]->start, i, size);
+						rfBitField(&j, bufs, tmpbuf, f, f[j]->start, i, size, num_items);
 				}
 			}
 		}
@@ -2241,8 +2291,9 @@ rfImage(dataKey *objSize, Var * ob){
 	int rc = 0;
 	char *fileName = (char *)alloca(strlen(objSize->FileName)+1);
 
-	lowercase(strcpy(fileName, objSize->FileName));
+	pickFilename(fileName, objSize->FileName);
 	if ((fp = fopen(fileName, "rb")) == NULL){
+		fprintf(stderr, "Unable to open file for reading: \"%s\". Reason: %s\n", fileName, strerror(errno));
 		return 0;
 	}
 
@@ -2264,8 +2315,9 @@ rfHistogram(dataKey *objSize, Var * ob){
 	int rc = 0;
 	char *fileName = (char *)alloca(strlen(objSize->FileName)+1);
 
-	lowercase(strcpy(fileName, objSize->FileName));
+	pickFilename(fileName, objSize->FileName);
 	if ((fp = fopen(fileName, "rb")) == NULL){
+		fprintf(stderr, "Unable to open file for reading: \"%s\". Reason: %s\n", fileName, strerror(errno));
 		return 0;
 	}
 
@@ -2384,8 +2436,9 @@ rfHistory(dataKey *objSize, Var *ob) {
 	int rc = 0;
 	char *fileName = (char *)alloca(strlen(objSize->FileName)+1);
 
-	lowercase(strcpy(fileName, objSize->FileName));
+	pickFilename(fileName, objSize->FileName);
 	if ((fp = fopen(fileName, "rb")) == NULL){
+		fprintf(stderr, "Unable to open file for reading: \"%s\". Reason: %s\n", fileName, strerror(errno));
 		return 0;
 	}
 
