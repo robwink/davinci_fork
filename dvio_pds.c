@@ -1708,7 +1708,7 @@ do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
   dataKey objSize[100];
   int nObj = 0;
   FILE *fp;
-  Var *v, *vFile;
+  Var *v = NULL, *vFile;
   char fileObjName[128];
   int i;
 
@@ -1790,6 +1790,12 @@ do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
 
   // TODO Free space consumed by FileNames allocated within objSize array
   OdlFreeTree(ob);
+
+  if (get_struct_count(v) == 0){
+  	mem_claim(v);
+  	free_struct(v);
+  	return NULL;
+  }
 
   return (v);
 }
