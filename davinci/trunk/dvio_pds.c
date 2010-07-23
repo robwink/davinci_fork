@@ -17,6 +17,21 @@
 
 #define MAXOBJ 10
 
+#define FIELD_GEN_OBJ_CLASS "GenObjClass"
+#define FIELD_OBJ_CLASS     "Object"
+
+#define GEN_OBJ_CLASS_HISTOGRAM "histogram"
+#define GEN_OBJ_CLASS_HISTORY   "history"
+#define GEN_OBJ_CLASS_IMAGE     "image"
+#define GEN_OBJ_CLASS_QUBE      "qube"
+#define GEN_OBJ_CLASS_TABLE     "table"
+#define GEN_OBJ_CLASS_GROUP     "group"
+#define GEN_OBJ_CLASS_PTR       "ptr"
+
+#define KW_GROUP "GROUP"
+#define KW_END_GROUP "END_GROUP"
+
+
 #define lookupAndWarn(funcName, struc, key, result) \
 	if (find_struct((struc), (key), (result)) < 0){ \
 		fprintf(stderr, "%s: Required keyword \"%s\" was not found.\n", (funcName), (key)); \
@@ -60,6 +75,7 @@ typedef struct _objectInfo {
 
 
 typedef struct _dataKeys {
+  const char *ObjClass;       /*ObjClass Entry in Table; Also Used for searching */
   const char *Name;           /*Name Entry in Table; Used for searching */
   Var *Obj;                   /*Pointer to Parent Var obj to which the data will be assigned */
   char *KeyValue;             /*PTR_TO_<OBJECT> keyword entry's value */
@@ -94,7 +110,7 @@ Var *write_PDS_Qube(Var * core, Var * side, Var * bottom, Var * back, FILE * fp)
 static Var *do_key(KEYWORD * key);
 static int readDataForObjects(Var *st, dataKey objSize[], int nObj, int load_suffix_data, int continueOnError);
 static Var *traverseObj(OBJDESC *top, Var *v, dataKey objSizeMap[], int *nObj);
-static const char *getGeneralObjClass(const char *objClassName);
+static char *getGeneralObjClass(const char *objClassName);
 static int rfQube(const dataKey *objSize, Var *vQube, int load_suffix_data);
 static void rfBitField(int *j, char **Bufs, char *tmpbuf, FIELD ** f, int ptr, int row, int *size, int num_items);
 static int rfTable(dataKey *objSize, Var * ob);
@@ -104,14 +120,24 @@ static int rfHistogram(dataKey *objSize, Var *ob);
 static Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data);
 
 
+/* NOTE: Only add bonafide PDS objects */
 static const char *handledObjTypes[] = { 
-	"HISTOGRAM",
-	"HISTORY",
-	"IMAGE",
-	"QUBE",
-	"TABLE"
+	GEN_OBJ_CLASS_HISTOGRAM,
+	GEN_OBJ_CLASS_HISTORY,
+	GEN_OBJ_CLASS_IMAGE,
+	GEN_OBJ_CLASS_QUBE,
+	GEN_OBJ_CLASS_TABLE
+	/* NOTE: Neither groups nor ptrs are not PDS objects, that's why they are not listed here */
 };
 const int nHandledObjTypes = sizeof(handledObjTypes)/sizeof(char *);
+
+/* GenObjClasses for which name-resloving should not be done */
+static const char *dontResolveTypes[] = {
+	GEN_OBJ_CLASS_HISTOGRAM,
+	GEN_OBJ_CLASS_IMAGE,
+	GEN_OBJ_CLASS_QUBE
+};
+const int nDontResolveTypes = sizeof(dontResolveTypes)/sizeof(char *);
 
 static int
 genObjClassCmpr(const void *v1, const void *v2){
@@ -125,57 +151,6 @@ genObjClassCmpr(const void *v1, const void *v2){
 	if (s1 != NULL && s2 == NULL)
 		return 1;
 	return strcasecmp(s1,s2);
-}
-
-static char *
-ltrim(char *s, char *trim_chars)
-{
-	int st = 0;
-	while(s[st] && strchr(trim_chars, s[st]))
-		st++;
-	
-	if (st > 0)
-		strcpy(s, &s[st]);
-
-	return s;
-}
-
-static char *
-rtrim(char *s, char *trim_chars)
-{
-	int len = strlen(s);
-
-	while(len > 0 && strchr(trim_chars, s[len-1]))
-		s[--len] = '\0';
-	
-	return s;
-}
-
-static char *
-fix_name(const char *input_name)
-{
-  const char invalid_pfx[] = "__invalid";
-  static int invalid_id = 0;
-  char *name = strdup(input_name);
-  int len;
-  int i;
-  int val;
-  const char *trim_chars = "\"\t ";
-
-  ltrim(name, trim_chars);
-  rtrim(name, trim_chars);
-
-  len =  strlen(name);
-  if (len < 1){
-    name = (char *)calloc(strlen(invalid_pfx)+12, sizeof(char));
-    return (sprintf(name, "%s_%d", invalid_pfx, ++invalid_id));
-  }
-
-  for(i=0; i<len; i++){
-	name[i] = isalnum(name[i])? tolower(name[i]): '_';
-  }
-
-  return (name);
 }
 
 
@@ -393,7 +368,7 @@ decodePtr(KEYWORD *kw){
 	Var *v = new_struct(0);
 
 	fname = OdlGetFileName(kw, &start_loc, &loc_type);
-	add_struct(v, "Object", newString(strdup("ptr")));
+	add_struct(v, FIELD_GEN_OBJ_CLASS, newString(strdup(GEN_OBJ_CLASS_PTR)));
 	add_struct(v, "file_name", newString(fname));
 	add_struct(v, "start_loc", newInt(start_loc));
 	add_struct(v, "loc_type", newString(strdup(loc_type == ODL_RECORD_LOCATION? "record": "byte")));
@@ -405,15 +380,15 @@ traverseGroup(KEYWORD *kw, Var *v){
 	char *kwName = NULL, *kwVal = NULL;
 	Var *tmpVar = NULL;
 
-	add_struct(v, "Object", newString(strdup("group")));
+	add_struct(v, FIELD_GEN_OBJ_CLASS, newString(strdup(GEN_OBJ_CLASS_GROUP)));
 
 	for(kw = OdlGetNextKwd(kw); kw != NULL; kw = OdlGetNextKwd(kw)){
 		kwName = OdlGetKwdName(kw);
 
-		if (strcasecmp(kwName, "END_GROUP") == 0){
+		if (strcasecmp(kwName, KW_END_GROUP) == 0){
 			break;
 		}
-		else if (strcasecmp(kwName, "GROUP") == 0){
+		else if (strcasecmp(kwName, KW_GROUP) == 0){
 			char *groupName = fix_name(OdlGetKwdValue(kw));
 
 			Var *sub = new_struct(0);
@@ -433,12 +408,11 @@ traverseGroup(KEYWORD *kw, Var *v){
     return kw;
 }
 
-static const char *
+static char *
 getGeneralObjClass(const char *objClassName){
 	char *p = strrchr(objClassName, '_');
-	if (p != NULL)
-		return p+1;
-	return objClassName;
+	p = (p != NULL)? p+1: objClassName;
+	return lowercase(strdup(p));
 }
 
 static size_t
@@ -550,24 +524,24 @@ getObjSize(Var *obj){
 	Var *vObjType = NULL;
 	size_t dsize = 0;
 
-	find_struct(obj, "Object", &vObjType);
+	find_struct(obj, FIELD_GEN_OBJ_CLASS, &vObjType);
 
 	if (vObjType != NULL){
 		char *objType = V_STRING(vObjType);
 
-		if (strcasecmp(objType, "QUBE") == 0){
+		if (strcasecmp(objType, GEN_OBJ_CLASS_QUBE) == 0){
 			dsize = getObjSizeQube(obj);
 		}
-		else if (strcasecmp(objType, "IMAGE") == 0){
+		else if (strcasecmp(objType, GEN_OBJ_CLASS_IMAGE) == 0){
 			dsize = getObjSizeImage(obj);
 		}
-		else if (strcasecmp(objType, "TABLE") == 0){
+		else if (strcasecmp(objType, GEN_OBJ_CLASS_TABLE) == 0){
 			dsize = getObjSizeTable(obj);
 		}
-		else if (strcasecmp(objType, "HISTOGRAM") == 0){
+		else if (strcasecmp(objType, GEN_OBJ_CLASS_HISTOGRAM) == 0){
 			dsize = getObjSizeHistogram(obj);
 		}
-		else if (strcasecmp(objType, "HISTORY") == 0){
+		else if (strcasecmp(objType, GEN_OBJ_CLASS_HISTORY) == 0){
 			dsize = getObjSizeHistory(obj);
 		}
 	}
@@ -575,12 +549,30 @@ getObjSize(Var *obj){
 	return dsize;
 }
 
+static char *
+find_obj_name(Var *s){
+	char *nameKw[] = {
+		"core_name",
+		"name"
+	};
+	int nNameKw = sizeof(nameKw)/sizeof(char *);
+
+	int i;
+	Var *v;
+
+	for(i=0; i<nNameKw; i++){
+		if (find_struct(s, nameKw[i], &v) >= 0){
+			return V_STRING(v);
+		}
+	}
+	return NULL;
+}
 
 static Var *
 traverseObj(OBJDESC *top, Var *v, dataKey objSizeMap[], int *nObj){
 	OBJDESC *op = NULL;
 	KEYWORD *kw = NULL;
-	char *kwName, *genObjClass;
+	char *kwName, *objName, *groupName, *objClass, *genObjClass;
 	unsigned short scope = ODL_CHILDREN_ONLY;
 	Var *tmpVar = NULL;
 
@@ -591,8 +583,8 @@ traverseObj(OBJDESC *top, Var *v, dataKey objSizeMap[], int *nObj){
 			kwName = fix_name(mod_name_if_necessary(kwName));
 			add_struct(v, kwName, decodePtr(kw));
 		}
-		else if (strcasecmp(kwName, "GROUP") == 0){
-			char *groupName = fix_name(OdlGetKwdValue(kw));
+		else if (strcasecmp(kwName, KW_GROUP) == 0){
+			groupName = fix_name(OdlGetKwdValue(kw));
 
 			Var *sub = new_struct(0);
 			kw = traverseGroup(kw, sub);
@@ -609,22 +601,34 @@ traverseObj(OBJDESC *top, Var *v, dataKey objSizeMap[], int *nObj){
 	}
 
 	for(op = OdlNextObjDesc(top, 0, &scope); op != NULL; op = OdlNextObjDesc(op, 0, &scope)){
-		kwName = OdlGetObjDescClassName(op);
-		kwName = fix_name(kwName);
-		genObjClass = getGeneralObjClass(kwName);
-
 		Var *sub = new_struct(0);
-		add_struct(sub, "Object", newString(strdup(genObjClass)));
+
+		objClass = OdlGetObjDescClassName(op); /* returns "SPECTRAL_QUBE" from "OBJECT = SPECTRAL_QUBE" */
+		add_struct(sub, FIELD_OBJ_CLASS, newString(strdup(objClass)));
+
+		genObjClass = getGeneralObjClass(objClass); /* returns "qube" from "SPECTRAL_QUBE" */
+		add_struct(sub, FIELD_GEN_OBJ_CLASS, newString(genObjClass));
+
 		traverseObj(op, sub, objSizeMap, nObj);
-		if (find_struct(v, kwName, &tmpVar) >= 0){
-			char *oldObjName = kwName;
-			kwName = gen_next_unused_name_instance(oldObjName, v);
+
+		/* If OBJECT = TABLE has a NAME = FOO then use the name FOO, unless specifically prohibited */
+		if (bsearch(&genObjClass, dontResolveTypes, nDontResolveTypes, sizeof(char *), genObjClassCmpr) ||
+			(objName = find_obj_name(sub)) == NULL){
+			objName = objClass;
+		}
+		objName = fix_name(objName);
+
+		if (find_struct(v, objName, &tmpVar) >= 0){
+			char *oldObjName = objName;
+			objName = gen_next_unused_name_instance(oldObjName, v);
 			free(oldObjName);
 		}
-		add_struct(v, kwName, sub);
+		add_struct(v, objName, sub);
 
 		if (bsearch(&genObjClass, handledObjTypes, nHandledObjTypes, sizeof(char *), genObjClassCmpr)){
-			objSizeMap[*nObj].Name = strdup(kwName);
+			/* obj-class is one that we handle reading data for - add it to the list for data read */
+			objSizeMap[*nObj].Name = strdup(fix_name(objName)); /* holds objName - for readData  */
+			objSizeMap[*nObj].ObjClass = strdup(fix_name(objClass)); /* hods objClass - for resolvePointers */
 			objSizeMap[*nObj].size = getObjSize(sub);
 			objSizeMap[*nObj].objDesc = op;
 			objSizeMap[*nObj].Obj = v;
@@ -658,7 +662,7 @@ resolvePointers(char *fname, OBJDESC *top, Var *topVar, dataKey objSizeMap[], in
 		if (topVar != objSizeMap[i].Obj)
 			continue;
 
-		sprintf(str, "ptr_to_%s", objSizeMap[i].Name);
+		sprintf(str, "ptr_to_%s", objSizeMap[i].ObjClass);
 
 		if (find_struct(topVar, str, &v) >= 0){
 			Var *vFName = NULL, *vStartLoc = NULL, *vLocType = NULL;
@@ -711,7 +715,7 @@ ProcessGroupIntoLabel(FILE * fp, int record_bytes, Var * v, char *name)
   char *tmpname2;
 
   tmpname2 = correct_name(name);
-  fprintf(fp, "GROUP = %s\r\n", tmpname2);
+  fprintf(fp, "%s = %s\r\n", KW_GROUP, tmpname2);
 
   get_struct_element(v, 0, &struct_name, &tmpvar);    /*Get the OBJECT Tag and temporarily NULLify it */
   /*      tmpname=strdup(struct_name); */
@@ -726,7 +730,7 @@ ProcessGroupIntoLabel(FILE * fp, int record_bytes, Var * v, char *name)
 
   struct_name[0] = 'O';       /* Replace the O in Object */
 
-  fprintf(fp, "END_GROUP = %s\r\n", tmpname2);
+  fprintf(fp, "%s = %s\r\n", KW_END_GROUP, tmpname2);
   free(tmpname2);
 
 }
@@ -872,13 +876,13 @@ ProcessHistoryIntoString(Var * v, char **theString, int *ptr)
     get_struct_element(v, i, &name, &element);
     if (V_TYPE(element) == ID_STRUCT) {
       tmpname = correct_name(name);
-      sprintf(string, "GROUP = %s\r\n", tmpname);
+      sprintf(string, "%s = %s\r\n", KW_GROUP, tmpname);
       memcpy((*theString + (*ptr)), string, strlen(string));
       *ptr += strlen(string);
 
       ProcessHistoryIntoString(element, theString, ptr);
 
-      sprintf(string, "END_GROUP = %s\r\n", tmpname);
+      sprintf(string, "%s = %s\r\n", KW_END_GROUP, tmpname);
       memcpy((*theString + (*ptr)), string, strlen(string));
       *ptr += strlen(string);
 
@@ -886,7 +890,7 @@ ProcessHistoryIntoString(Var * v, char **theString, int *ptr)
 
     }
 
-    else if (!(strcasecmp(name, "Object")))
+    else if (strcasecmp(name, "Object") == 0 || strcasecmp(name, "GenObjClass") == 0)
       continue;
 
     /*Check for non-string values and convert */
@@ -1277,6 +1281,10 @@ Var *ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth,
       count--;
       continue;
     }
+    if (!(strcmp((name), FIELD_GEN_OBJ_CLASS))) {
+      	count--;
+		continue;
+	}
 
     /* There are a set of FIXED label items we look for */
 
@@ -1317,13 +1325,15 @@ Var *ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth,
       char *newname;
       get_struct_element(data, 0, &newname, &tmp_var);
 
-      if ((!(strcasecmp("sample_suffix", name))) ||
-          (!(strcasecmp("line_suffix", name))) ||
-          (!(strcasecmp("band_suffix", name)))) {
+      if (!strcasecmp("suffix_data", name)){
         count--;
         continue;
       }
 
+
+      else if (!(strcmp(newname, FIELD_GEN_OBJ_CLASS))) {
+		  get_struct_element(data, 1, &newname, &tmp_var);
+	  }
 
       else if (strcmp("Object", (newname))) {
         parse_error("Parsing unknown structure");
@@ -1333,7 +1343,7 @@ Var *ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth,
 
       else {
 
-        if (!(strcmp("GROUP", (V_STRING(tmp_var)))))
+        if (!(strcmp(KW_GROUP, (V_STRING(tmp_var)))))
           ProcessGroupIntoLabel(fp, record_bytes, data, name);
 
         else
@@ -1809,21 +1819,21 @@ readDataForObjects(Var *st, dataKey objSize[], int nObj, int load_suffix_data, i
 	for(i=0; i<nObj && (rc || continueOnError); i++){
 		if (find_struct(objSize[i].Obj, objSize[i].Name, &sub) >= 0){
 		//if (find_struct(st, objSize[i].Name, &sub) >= 0){
-			if (find_struct(sub, "Object", &vObjClass) >= 0){
+			if (find_struct(sub, FIELD_GEN_OBJ_CLASS, &vObjClass) >= 0){
 				char *objClass = V_STRING(vObjClass);
-				if (strcasecmp(objClass, "QUBE") == 0){
+				if (strcasecmp(objClass, GEN_OBJ_CLASS_QUBE) == 0){
 					rc &= rfQube(&objSize[i], sub, load_suffix_data);
 				}
-				else if (strcasecmp(objClass, "IMAGE") == 0){
+				else if (strcasecmp(objClass, GEN_OBJ_CLASS_IMAGE) == 0){
 					rc &= rfImage(&objSize[i], sub);
 				}
-				else if (strcasecmp(objClass, "HISTORY") == 0){
+				else if (strcasecmp(objClass, GEN_OBJ_CLASS_HISTORY) == 0){
 					rc &= rfHistory(&objSize[i], sub);
 				}
-				else if (strcasecmp(objClass, "TABLE") == 0){
+				else if (strcasecmp(objClass, GEN_OBJ_CLASS_TABLE) == 0){
 					rc &= rfTable(&objSize[i], sub);
 				}
-				else if (strcasecmp(objClass, "HISTOGRAM") == 0){
+				else if (strcasecmp(objClass, GEN_OBJ_CLASS_HISTOGRAM) == 0){
 					rc &= rfHistogram(&objSize[i], sub);
 				}
 			}
