@@ -22,7 +22,7 @@ ff_load_many(Var * list, struct iom_iheader *h )
 	for (i = 0 ; i < V_TEXT(list).Row ; i++) {
 		filename = strdup(V_TEXT(list).text[i]);
 		t = do_load(filename, h);
-		if (t) add_struct(s, filename, t);
+		if (t) add_struct(s, fix_name(filename), t);
 	}
 	if (get_struct_count(s)) {
 		return(s);
