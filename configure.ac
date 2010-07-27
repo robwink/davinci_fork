@@ -347,6 +347,7 @@ AC_ARG_WITH(readline,
     [LDFLAGS="$LDFLAGS -L$withval/lib" ; CFLAGS="$CFLAGS -I$withval/include"]
 )
 
+AC_CHECK_LIB(ncurses, tputs)
 AC_CHECK_LIB(readline, rl_callback_handler_install)
 AC_CHECK_LIB(readline, rl_callback_handler_install, [have_readline=yes],[have_readline=no])
 dnl AC_CHECK_LIB(readline, rl_callback_handler_install)
