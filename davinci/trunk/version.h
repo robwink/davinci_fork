@@ -1,8 +1,11 @@
-char *version = "@(#) daVinci Version #2.05";
+char *version = "@(#) daVinci Version #2.06";
 
 #include "build.h"
 
 /*
+  Version 2.06: Tue Jul 27 09:59:56 MST 2010
+  * Internal build addressing some PNG and PDS reader issues.
+
   Version 2.05: Tue Mar 30 13:58:15 MST 2010
   * External distribution.
 

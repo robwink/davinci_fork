@@ -100,6 +100,9 @@
 /* Define to 1 if you have the `msss_vis' library (-lmsss_vis). */
 #undef HAVE_LIBMSSS_VIS
 
+/* Define to 1 if you have the `ncurses' library (-lncurses). */
+#undef HAVE_LIBNCURSES
+
 /* if you have libpng */
 #undef HAVE_LIBPNG
 
