@@ -1011,6 +1011,8 @@ vanread(
     void     **data_ptrs = NULL;
     Var *d;
     char * fname = NULL;
+    FILE *fp;
+    int iscompressed=0;
     *v_return = NULL;
 
 
@@ -1020,12 +1022,31 @@ vanread(
         return EFILE;
     }
 
+    /*uncompress the file if necessary */
+    if (fname && (fp = fopen(fname, "rb")) != NULL) {
+      if (iom_is_compressed(fp)) {
+        fprintf(stderr, "is compressed\n");	/* FIX: remove */
+        fclose(fp);
+        fname = iom_uncompress_with_name(fname);
+        iscompressed=1;
+      }
+    }
+
     if (stat(fname, &sbuf) < 0){
-        return EFILE;
+      if(iscompressed) {
+        unlink(fname);
+      }
+      free(fname);
+      return EFILE;
     }
 
     if((fd = open(fname, O_RDONLY)) < 0){
-        return EFILE;
+      if(iscompressed) {
+        unlink(fname);
+      }
+      
+      free(fname);
+      return EFILE;
     }
 
     data = (char *)mmap(NULL, sbuf.st_size,
@@ -1033,12 +1054,16 @@ vanread(
                         MAP_PRIVATE, fd, 0);
 
     if (data == NULL){
-        close(fd);
-        return EMEM;
+      close(fd);
+      if(iscompressed) {
+        unlink(fname);
+      }
+      free(fname);
+      return EMEM;
     }
 
     close(fd);
-
+    
     /*
     ** Create a new lexer context. Ask the lexer to zero out fdelims
     ** and rdelims.
@@ -1057,7 +1082,11 @@ vanread(
     if (rc < 0){
         munmap(data, sbuf.st_size);
         if(cols) free_coldefs(cols, ncols);
-		cols = NULL;
+        cols = NULL;
+        if(iscompressed) {
+          unlink(fname);
+        }
+        free(fname);
         return EINPUT;
     }
 
@@ -1068,8 +1097,12 @@ vanread(
     rc = nfields = guess_struct(cols, ncols, &fields);
     if (rc < 0){
         free_coldefs(cols, ncols);
-		cols = NULL;
+        cols = NULL;
         munmap(data, sbuf.st_size);
+        if(iscompressed) {
+          unlink(fname);
+        }
+        free(fname);
         return rc;
     }
 
@@ -1083,6 +1116,10 @@ vanread(
 		cols = NULL;
         free(fields);
         munmap(data, sbuf.st_size);
+        if(iscompressed) {
+          unlink(fname);
+        }
+        free(fname);
         return EMEM;
     }
 
@@ -1097,6 +1134,10 @@ vanread(
         free(fields);
         free(data_ptrs);
         munmap(data, sbuf.st_size);
+        if(iscompressed) {
+          unlink(fname);
+        }
+        free(fname);
         return EMEM;
     }
 
@@ -1139,6 +1180,12 @@ vanread(
     if (fields) free(fields);
     free_coldefs(cols, ncols);
     munmap(data, sbuf.st_size);
+
+    /* Remove the the uncompressed temporary file*/
+    if(iscompressed) {
+      unlink(fname);
+    }
+    free(fname);
 
     return 1;
 }
