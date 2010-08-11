@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "func.h"
 #include <sys/stat.h>
+#include "iomedley.h"
 
 
 #if 0
@@ -349,7 +350,7 @@ LoadTDB(char *filename)
       add_struct(member, "scope", 
                  newString(strdup(scopes[c->whichscope])));
       for (i = 0 ; i < c->n_df_syms ; i++) {
-        d = (data+c->df_sym_loc+(i * sizeof(DF_SYM)));
+        d = (DF_SYM *) (data+c->df_sym_loc+(i * sizeof(DF_SYM)));
         (void) MSB4(&d->type);
         (void) MSB4(&d->dim);
         for (j = 0 ; j < d->dim ; j++) {
@@ -361,8 +362,7 @@ LoadTDB(char *filename)
         v1 = NULL;
         switch(d->type) {
           case T_STRING: {
-                           int *len = data+(d->loc+hdr_size);
-                           char *str = len+1;
+                           char *str = data+(d->loc+hdr_size)+1;
                            v1 = newString(strdup(str));
                            break;
                          }
@@ -410,10 +410,11 @@ static Var * distribute_xaxis(Var *data);
   Var *
 ff_load_tdb(vfuncptr func, Var *arg)
 {
-  char *fname, *filename;
-  int reform = 0;
+  char *fname=NULL, *filename=NULL;
+  int reform = 0, iscompressed=0;
   int distribute = 0;
   Var *out;
+  FILE *fp;
 
   Alist   alist[4];
   /* make arguments list */
@@ -433,7 +434,21 @@ ff_load_tdb(vfuncptr func, Var *arg)
   if ((filename = dv_locate_file(fname)) == NULL) {
     filename = fname;
   }
+
+  if (filename && (fp = fopen(filename, "rb")) != NULL) {
+    if (iom_is_compressed(fp)) {
+      fprintf(stderr, "is compressed\n");	/* FIX: remove */
+      fclose(fp);
+      filename = iom_uncompress_with_name(filename);
+      iscompressed=1;
+    }
+  }
+
   out = LoadTDB(filename);
+  if(iscompressed){
+    unlink(filename);
+  }
+  free(filename);
 
   if (out && distribute) {
     distribute_xaxis(out);
