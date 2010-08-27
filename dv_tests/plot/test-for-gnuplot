@@ -1,6 +1,7 @@
 a=create(100,1,1);
+plot("set terminal postscript color; set output 'foo.ps';");
 xplot(a);
-plot("set terminal postscript color; set output 'foo.ps'; replot");
+plot("set terminal postscript color; set output 'foo.ps'; replot;");
 plot("quit");
 
 if (fexists("foo.ps")){
