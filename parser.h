@@ -198,7 +198,7 @@ enum {
 	ID_NONE = 0,       /* a non value */
 	ID_ERROR = 99,  
 	ID_BASE = 100,     /* in case of conflicts */
-	ID_UNK,            /* Unknown type */
+	ID_UNK,            /* Unknown type - also used as a generic type */
 	ID_STRING,         /* NULL terminated character string */
 	ID_KEYWORD,        /* keyword argument */
 	ID_VAL,            /* everything with dim != 0 */

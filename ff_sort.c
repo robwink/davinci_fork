@@ -1,7 +1,7 @@
 #include "parser.h"
 
-static void quicksort(void *, size_t, size_t, int (*)(), int *, int, int);
-static void *reorgByIndex(Var *, Var *, int *);
+static void quicksort(void *, size_t, size_t, int (*)(), size_t *, int, int);
+static void *reorgByIndex(Var *, Var *, size_t *);
 
 
 int cmp_string(const void *a, const void *b)
@@ -67,7 +67,7 @@ int cmp_double(const void *a, const void *b)
  * index - Source for the sorted sortList
  * sortList  - Sorted sortList, describing where blocks of object are placed
  */
-static void *reorgByIndex(Var *object, Var *index, int *sortList)
+static void *reorgByIndex(Var *object, Var *index, size_t *sortList)
 {
   int   x, y, z;		// x y z for object
   int   i, j, k;		// Loop counters;  i - x, j - y, k - z
@@ -76,8 +76,8 @@ static void *reorgByIndex(Var *object, Var *index, int *sortList)
   int   doZ = 1;		// axis points remain contiguous
   int   from, to;		// from / to, memory offsets for cpos
   int   format = 0;	        // object's format
-  int   dsize = 0;	        // object's size
-  int   sortListNum = 0;	// index and sortList's size
+  size_t dsize = 0;	        // object's size
+  size_t sortListNum = 0;	// index and sortList's size
   int   cntr = 0;		// sortList counter
   void *data;			// Returned data block
 
@@ -172,7 +172,7 @@ static void *reorgByIndex(Var *object, Var *index, int *sortList)
 
 
 //	QuickSort adapted from Kernighan and Ritchie, 'The C Programming Language'
-static inline void qswap(void *base, int i, int j, int width, int *sortList)
+static inline void qswap(void *base, int i, int j, int width, size_t *sortList)
 {
   long tmp;
   unsigned char b;
@@ -197,7 +197,7 @@ static inline void qswap(void *base, int i, int j, int width, int *sortList)
 
 //	QuickSort adapted from Kernighan and Ritchie, 'The C Programming Language'
 static void quicksort(void *base, size_t num, size_t width, int (*cmp) (),
-	       int *sortList, int left, int right)
+	       size_t *sortList, int left, int right)
 {
   int i, last;
   
@@ -274,10 +274,10 @@ Var *ff_sort(vfuncptr func, Var * arg)
   Var   *result = NULL;
   char  *oneline = NULL;
   char **tlines = NULL;
-  int   *indexList = NULL;
+  size_t *indexList = NULL;
   int    format;
-  int    dsize;
-  int    i, j;
+  size_t dsize;
+  size_t i, j;
   int    rows = 0;
   float  descend = 0;
   void  *data, *sortSet;
@@ -331,12 +331,13 @@ Var *ff_sort(vfuncptr func, Var * arg)
     memcpy(sortSet, V_DATA(sortVar), dsize * NBYTES(format));
 
     /* sortList will record the index of items that are moved */
-    indexList = calloc(dsize, sizeof(int));
+    indexList = calloc(dsize, sizeof(size_t));
     for (i = 0; i < dsize; i++)
       indexList[i] = i;
 
     /* Sort and create indexList */
-    quicksort(sortSet, dsize, NBYTES(format), cmp, indexList, 0, dsize - 1);
+	if (dsize > 0)
+		quicksort(sortSet, dsize, NBYTES(format), cmp, indexList, 0, dsize - 1);
     
     /* flip the bitches? */
     if(descend > 0) {
@@ -348,10 +349,13 @@ Var *ff_sort(vfuncptr func, Var * arg)
     }
 
     if(byObj == NULL) {
+	  free(sortSet);
+
       //parse_error("Object = ID_VAL, byObj = NULL");
       //parse_error("works");
+      data = reorgByIndex(object, object, indexList);
       result = newVal(V_ORG(object), V_SIZE(object)[0], V_SIZE(object)[1], 
-											V_SIZE(object)[2], format, sortSet);
+											V_SIZE(object)[2], format, data);
       
       free(indexList);
       return(result);
@@ -397,7 +401,7 @@ Var *ff_sort(vfuncptr func, Var * arg)
 				tlines[i] = strdup("");
     }
 		
-    indexList = calloc(rows, sizeof(int));
+    indexList = calloc(rows, sizeof(size_t));
 		
     for (i = 0; i < rows; i++)
       indexList[i] = i;
@@ -664,9 +668,10 @@ Var *ff_sort_old(vfuncptr func, Var * arg)
   Var   *rVal = NULL;	     // Returned value/structure
   Var   *index = NULL;	     // Sorting index from user
   Var   *args = NULL;
-  int   *sortList = NULL;    // Sorted list (from index)
-  int    format, dsize;
-  int    sformat, ssize, i;
+  size_t *sortList = NULL;    // Sorted list (from index)
+  int    format;
+  size_t dsize, ssize;
+  int    sformat, i;
   void  *data, *sortSet;
   int  (*cmp) (const void *, const void *);
   
@@ -739,7 +744,7 @@ Var *ff_sort_old(vfuncptr func, Var * arg)
   memcpy(sortSet, V_DATA(index), V_DSIZE(index) * NBYTES(sformat));
   
   // sortList will record the index of items that are moved
-  sortList = calloc(ssize, sizeof(int));
+  sortList = calloc(ssize, sizeof(size_t));
   for (i = 0; i < ssize; i++)
     sortList[i] = i;
   
