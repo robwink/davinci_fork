@@ -222,7 +222,10 @@ void push_input_stream(FILE *, char *filename);
 size_t rpos(size_t, Var *, Var *);
 Var * pp_print(Var *);
 
-Var *V_func (const char *name, Var *);
+/* Calls a davinci function programatically.
+   See create_args() for creating and sending args. */
+Var *V_func (const char *name, Var *args);
+
 void make_sym(Var *, int, char *);
 
 char *get_env_var(char *);
