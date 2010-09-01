@@ -292,7 +292,7 @@ Var *ff_sort(vfuncptr func, Var * arg)
   if (parse_args(func, arg, alist) == 0) return (NULL);
   
   if (object == NULL){
-    parse_error("\nNo data specified\n");
+    parse_error("\nNo object specified\n");
     return NULL;
   }
 
@@ -370,7 +370,7 @@ Var *ff_sort(vfuncptr func, Var * arg)
         data = reorgByIndex(object, byObj, indexList);
 				
 				result = newVal(V_ORG(object), V_SIZE(object)[0], V_SIZE(object)[1], 
-												V_SIZE(object)[2], format, data);
+												V_SIZE(object)[2], V_FORMAT(object), data);
 				free(indexList);
 				return(result);
 				
