@@ -343,6 +343,8 @@ struct _vfuncptr vfunclist[] = {
   /*  { "blend",             ff_blend,          NULL, NULL }, */
   { "text",           ff_create_text,        NULL, NULL },
 
+  { "pdshead",           ff_pdshead,        NULL, NULL },
+
   { NULL,                NULL,              NULL, NULL }
 
 };

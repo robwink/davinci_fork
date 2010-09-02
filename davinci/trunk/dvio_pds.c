@@ -2483,3 +2483,128 @@ rfHistory(dataKey *objSize, Var *ob) {
 	return 1;
 }
 
+
+static int
+GetInt(OBJDESC *ob, char *key, int *val)
+{
+	KEYWORD *kw;
+
+    if ((kw = OdlFindKwd(ob, key, NULL,0, ODL_THIS_OBJECT)) != NULL) {
+		*val = atoi(OdlGetKwdValue(kw));
+		return(1);
+	}
+	return(0);
+}
+
+/*
+remove the pds header from a file 
+*/
+Var *
+ff_pdshead(vfuncptr func, Var *arg)
+{
+	OBJDESC *ob;
+	int size, reclen, lrec, i, err;
+	char buf[8192];
+	char *fname = NULL, *outfname = NULL;
+	int fd = -1, ofd = -1;
+	int convert_short=0;
+	int data = 0;
+	int fdata = 0;
+	char t;
+
+	Alist alist[6];
+	alist[0] = make_alist("fname", ID_STRING, NULL, &fname);
+	alist[1] = make_alist("outfname", ID_STRING, NULL, &outfname);
+	alist[2] = make_alist("convert_short", INT, NULL, &convert_short);
+	alist[3] = make_alist("data", INT, NULL, &data);
+	alist[4] = make_alist("fdata", INT, NULL, &fdata);
+	alist[5].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0)
+		return (NULL);
+
+	if (fname == NULL){
+		parse_error("%s(... fname= ...) missing\n", func->name);
+		return NULL;
+	}
+
+	if (outfname == NULL){
+		parse_error("%s(... outfname= ...) missing\n", func->name);
+		return NULL;
+	}
+
+	if (fdata == 1)
+		data = 1;
+
+	ob = OdlParseLabelFile(fname, NULL, ODL_EXPAND_STRUCTURE, 1);
+
+    if (ob == NULL) {
+		parse_error("%s: Unable to read file: %s\n", func->name, fname);
+		return NULL;
+	}
+
+	if (!GetInt(ob, "RECORD_BYTES", &reclen)) {
+		parse_error("%s: Unable to find keyword: RECORD_BYTES\n", func->name);
+		return NULL;
+	}
+	if (!GetInt(ob, "^SPECTRAL_QUBE", &lrec)) {
+		if (!GetInt(ob, "^QUBE", &lrec)) {
+			if(!GetInt(ob, "^IMAGE", &lrec)) {
+				parse_error("%s: Unable to find keywords: QUBE or IMAGE\n", func->name);
+				return NULL;
+			}
+		}
+	}
+
+	size = reclen*(lrec-1);
+
+#ifdef _WIN32
+	fd = open(fname, O_RDONLY|O_BINARY);
+#else
+	fd = open(fname, O_RDONLY);
+#endif
+	if (fd < 0){
+		parse_error("%s: Unable to open file %s for reading: %s\n", func->name, fname, strerror(errno));
+		return NULL;
+	}
+
+#ifdef _WIN32
+	ofd = open(outfname, O_WRONLY|O_TRUNC|O_CREAT|O_BINARY, 00666);
+#else
+	ofd = open(outfname, O_WRONLY|O_TRUNC|O_CREAT, 00666);
+#endif
+	if (ofd < 0){
+		parse_error("%s: Unable to open file %s for writing: %s\n", func->name, outfname, strerror(errno));
+		close(fd);
+		return NULL;
+	}
+
+	if (data == 0) {
+		for (i = 0 ; i < size ; i+= 8192) {
+			err = read(fd, buf, min(8192, size-i));
+			write(ofd, buf, err);
+		}
+	} else {
+		lseek(fd, size, 0);
+		while ((err = read(fd, buf, 8192)) > 0) {
+			if (fdata == 1) {
+				for (i = 0 ; i < err ; i+=4) {
+					t = buf[i];
+					buf[i] = buf[i+3];
+					buf[i+3] = t;
+					t = buf[i+1];
+					buf[i+1] = buf[i+2];
+					buf[i+2] = t;
+				}
+			}
+			write(ofd, buf, err);
+		}
+	}
+
+	close(fd);
+	if (ofd >= 0)
+		close(ofd);
+
+	return newInt(1);
+}
+
