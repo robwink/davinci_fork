@@ -404,6 +404,7 @@ Alist make_alist(const char *name, int type, void *limits, void *value);
 
 Var * ReadPDS(vfuncptr func, Var * arg);
 Var * WritePDS(vfuncptr func, Var * arg);
+Var * ff_pdshead(vfuncptr func, Var * arg);
 
 Var * ReadFITS(vfuncptr func, Var * arg);
 Var * WriteFITS(vfuncptr func, Var * arg);
