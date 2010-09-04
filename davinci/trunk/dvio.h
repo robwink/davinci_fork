@@ -77,6 +77,7 @@ int dv_WriteVicar(Var *obj, char *filename, int force);
 int dv_WriteIMath(Var *obj, char *filename, int force);
 int dv_WriteENVI(Var *obj, char *filename, int force);
 int dv_WriteGFX_Image(Var *ob, char *filename, int force, char *GFX_type);
+int dv_WriteCSV(Var* the_data, char* filename, char* separator, int header, int force);
 /*
 ** NOTE:
 **   WriteGFX_Image can be broken down into individual type, e.g.
