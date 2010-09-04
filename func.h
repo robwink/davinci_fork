@@ -260,6 +260,7 @@ int dv_getline(char **ptr, FILE *fp);
  ** All the internal functions are declared here.
  **/
 
+Var *ff_unpack (vfuncptr, Var *);
 Var *ff_dfunc (vfuncptr, Var *);
 Var *ff_pow (vfuncptr, Var *);
 Var *ff_conv (vfuncptr, Var *);
@@ -464,7 +465,7 @@ extern "C" {
   /* internal functions for text arrays */
   Var *newString(char *str);
   Var *newText(int rows, char **text);
-  void get_struct_element(const Var *v, const int i, char **name, Var **data);
+  int get_struct_element(const Var *v, const int i, char **name, Var **data);
   int get_struct_count(const Var *v);
 #ifdef __cplusplus
 }

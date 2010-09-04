@@ -475,10 +475,10 @@ int compare_struct(Var *a, Var *b)
     return(1);
 }
 
-void
+int
 get_struct_element(const Var *v, const int i, char **name, Var **data)
 {
-    Narray_get(V_STRUCT(v), i, name, (void **)data);
+    return Narray_get(V_STRUCT(v), i, name, (void **)data);
 }
 int
 get_struct_count(const Var *v) 
