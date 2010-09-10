@@ -1,7 +1,9 @@
 #include "parser.h"
 #include "dvio.h"
 #include "io_loadmod.h"
-
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <errno.h>
 
 #if defined(__CYGWIN__) || defined(__MINGW32__)
@@ -111,7 +113,8 @@ ff_write(vfuncptr func, Var *arg)
 */
 #ifdef HAVE_LIBHDF5
     else if (!strcasecmp(type, "hdf")){
-        if (!force && access(filename, F_OK)){
+		struct stat statbuf;
+        if (!force && !stat(filename, &statbuf)) {
             parse_error("File %s already exists.\n", filename);
             return NULL;
         }
