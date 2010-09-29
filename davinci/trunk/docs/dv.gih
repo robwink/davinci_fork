@@ -1566,32 +1566,6 @@ Max always returns a FLOAT.
     portrait is a flag which define the graph as landscape 
     (portrait=0, default) or as portrait (portrait=1)
 
-?functions pplot()
-?pplot()
- pplot() - Plot a data cube along specified axis
-
- pplot(obj=VAL, axis={X,Y,Z}, 
-       [append=INT, window=INT, Xaxis=VAL, color=int, 
-        xhigh=FLOAT, xlow=FLOAT, yhigh=FLOAT, ylow=FLOAT])
-
- Pplot takes a dataset (obj) and plots it as a set of vector data
- along a specified axis.  Options include:
-
-      append:  Draw over previous graph without erasing
-    
-      window:  ID of window to draw in.  Popen returns a integer ID value for 
-               the window it creates.  Save this value if you open more 
-               than one window.
-
-      Xaxis:   Dataset object containing x-axis values.  Must be either 
-                the same size as obj, or of size (X,1,1) where X is the 
-                same value as the x-dimension of obj.
-
-      color:   Ineger value between 0 and 15.  0 is the background color
-
-      xhigh,xlow,yhigh and ylow can either be set by the user or 
-                                automatically calculated if no value is given.
-           
 ?functions pprint()
 ?pprint()
  pprint() - Print a current plot
