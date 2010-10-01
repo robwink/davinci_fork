@@ -272,6 +272,49 @@
  See Also:
     cat()
 
+?functions unpack()
+?unpack()
+ unpack() - Unpacks binary data from a file, given a template
+
+ unpack(template=STRING, filename=STRING, [start_pos=INT])
+
+    The unpack function reads binary data from the input file,
+    interprets it according to the specified record template,
+    and returns it in a davinci structure. The optional start_pos
+    parameter specifies the bytes into the file to skip before
+    decoding the file. The template is made up of column 
+    specifications of the form "A[n][*m]", where, "A" can be
+    one of the following letters:
+        Letter     Meaning              Allowable byte-sizes ("n")
+        'a'        string               1+
+        'I'        signed msb int       1-4
+        'U'        unsigned msb int     1-4
+        'i'        signed lsb int       1-4
+        'u'        unsigned lsb int     1-4
+        'r'        real                 4, 8
+        'x'        skip                 1+
+
+
+    "n" is the size (in bytes), and "m" is the multiplicity,
+    of repeat of "A[n]". If either "m" or "n" is not specified, 
+    it is assumed to be one. "*" is part of the syntax.
+    For example, "i4*3" specifies an array of 3- 4-byte 
+    little-endian integers. Multiple column specifications are
+    concatenated to form a template of a record. For example,
+    "i4*3r8a5" specifies a 3-column record, with a 3-element
+    array of 4-byte little-endian integers, followed by a
+    little-endian double-float, followed by a character string
+    of five characters. Gaps in the template can be specified
+    using "x", e.g., "i4*3x10r8x5a5" specifies the same
+    record structure as the previous example, except that the
+    fields are non-contiguous.
+
+    Every field in the record is placed in its own column 
+    within a davinci structure with generic names assigned in
+    the form "col_n" or "col_n[m]". Multiplicity in strings 
+    gets split into multiple fields, since davinci text arrays
+    cannot be 3-dimensional.
+
 ?functions read()
 ?read()
  read() - Load a data from file
@@ -326,7 +369,7 @@
 ?write()
  write() - Save data to file
 
- write(object=VAL, filename="path", type=TYPE, force=1)
+ write(object=VAL, filename="path", type=TYPE, force=1, [separator=STRING], [header=0])
 
     The write() function copies data to a file.  The value of type specifies 
     the type of file written, and is one of: 
@@ -346,6 +389,7 @@
         png     - Portable Network Graphics
         bmp     - Microsoft Bitmap
         raw     - Binary output, no header
+        csv     - Comma Separated Value
     
     If the force keyword is included, then any existing file of the same
     name is overwritten.  Without this keyword, the write is aborted
@@ -361,6 +405,13 @@
         The ERS format produces two files, one named "path", containing the
         raw raster data, and another named "path.ers", containing the ERS
         header.  This is the standard for ERS files.
+
+        The CSV format defaults to tab, "\t", as the separator if none
+        is specified.  If optional parameter header is 1, a header row
+        will be printed as the first row, using davinci structure field names,
+        if available.  Otherwise davinci generates generic column names 
+        following the pattern "col_n".  This format only supports single
+        plane data in BSQ organization.
 
  See Also:
     filetype(), read(), rgb(), load_pds(), load_raw(), ascii(),
