@@ -276,13 +276,15 @@
 ?unpack()
  unpack() - Unpacks binary data from a file, given a template
 
- unpack(template=STRING, filename=STRING, [start_pos=INT])
+ unpack(template=STRING, filename=STRING [,start_pos=INT] [,count=INT])
 
     The unpack function reads binary data from the input file,
     interprets it according to the specified record template,
     and returns it in a davinci structure. The optional start_pos
     parameter specifies the bytes into the file to skip before
-    decoding the file. The template is made up of column 
+    decoding the file. The optional count parameter specifies
+    the number of records to be unpacked (a negative value 
+    mean all records). The template is made up of column 
     specifications of the form "A[n][*m]", where, "A" can be
     one of the following letters:
         Letter     Meaning              Allowable byte-sizes ("n")
