@@ -15,6 +15,7 @@
 #define ARG_TEMPLATE	"template"
 #define ARG_FILENAME	"filename"
 #define ARG_START_POS	"start_pos"
+#define ARG_COUNT		"count"
 
 #define STRING				'a'
 #define SIGNED_MSB_INT		'I'
@@ -117,14 +118,16 @@ ff_unpack(vfuncptr func, Var* arg)
 	char* filename = NULL;
 	int hdr_length = 0;
 	Var* result = NULL;
+	int rows = -1;
 
 	int i = 0;
 
-	Alist alist[4];
+	Alist alist[5];
 	alist[0] = make_alist(	ARG_TEMPLATE,	ID_STRING,	NULL,	&template);
 	alist[1] = make_alist(	ARG_FILENAME,	ID_STRING,	NULL,	&filename);
 	alist[2] = make_alist(	ARG_START_POS,	INT,	NULL,	&hdr_length);
-	alist[3].name = NULL;
+	alist[3] = make_alist(	ARG_COUNT,		INT,	NULL,	&rows);
+	alist[4].name = NULL;
 
 	if( parse_args(func, arg, alist) == 0) return NULL;
 
@@ -143,7 +146,6 @@ ff_unpack(vfuncptr func, Var* arg)
 		return NULL;
 	}
 
-	int rows = 0;
 	int num_items = 0;
 	data* reg_data = unpack(template, filename, hdr_length, &num_items, &rows);
 
@@ -291,6 +293,18 @@ static data* unpack(char* template, char* filename, int hdr_length, int* numitem
 	if( !calc_rows(filename, hdr_length, input, rec_length) ) {
 		clean_up(1, input, NULL, NULL, file);
 		return NULL;
+	}
+
+	if (*ret_rows >= 0){ /* user passed in the number of rows to convert */
+		if (*ret_rows > input->rows){
+			parse_error("error processing file %s: requested rows (%d) > computed file rows (%d)\n", 
+				filename, *ret_rows, input->rows);
+			clean_up(1, input, NULL, NULL, file);
+		}
+		else {
+			/* set the number of rows to process to the value passed in */
+			input->rows = *ret_rows;
+		}
 	}
 
 	buffer = (byte*)calloc(rec_length+2, sizeof(byte));		//not sure if extra 2 are needed but jic
