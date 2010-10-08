@@ -276,15 +276,15 @@
 ?unpack()
  unpack() - Unpacks binary data from a file, given a template
 
- unpack(template=STRING, filename=STRING [,start_pos=INT] [,count=INT])
+ unpack(template=STRING, filename=STRING [,skip=INT] [,count=INT])
 
     The unpack function reads binary data from the input file,
     interprets it according to the specified record template,
-    and returns it in a davinci structure. The optional start_pos
+    and returns it in a davinci structure. The optional skip
     parameter specifies the bytes into the file to skip before
     decoding the file. The optional count parameter specifies
     the number of records to be unpacked (a negative value 
-    mean all records). The template is made up of column 
+    means all records). The template is made up of column 
     specifications of the form "A[n][*m]", where, "A" can be
     one of the following letters:
         Letter     Meaning              Allowable byte-sizes ("n")
@@ -294,6 +294,7 @@
         'i'        signed lsb int       1-4
         'u'        unsigned lsb int     1-4
         'r'        real                 4, 8
+        'R'        msb real             4, 8
         'x'        skip                 1+
 
 
@@ -313,7 +314,7 @@
 
     Every field in the record is placed in its own column 
     within a davinci structure with generic names assigned in
-    the form "col_n" or "col_n[m]". Multiplicity in strings 
+    the form "cn" or "cn_m". Multiplicity in strings 
     gets split into multiple fields, since davinci text arrays
     cannot be 3-dimensional.
 

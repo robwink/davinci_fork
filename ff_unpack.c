@@ -14,7 +14,7 @@
 
 #define ARG_TEMPLATE	"template"
 #define ARG_FILENAME	"filename"
-#define ARG_START_POS	"start_pos"
+#define ARG_SKIP		"skip"
 #define ARG_COUNT		"count"
 
 #define STRING				'a'
@@ -22,17 +22,19 @@
 #define UNSIGNED_MSB_INT	'U'
 #define SIGNED_LSB_INT		'i'
 #define UNSIGNED_LSB_INT	'u'
+
+#define LSB_REAL			'r'
+#define MSB_REAL			'R'
+
 #define LSB_FLOAT			'f'
 #define MSB_FLOAT			'F'
 #define LSB_DOUBLE			'd'
 #define MSB_DOUBLE			'D'
+
 #define IGNORE				'x'
 
 
 #define MAX_ATTRIBUTES 500
-
-
-//#define MEM_ERR_STR(x)	snprintf(err_str, sizeof(err_str)-1, "Error allocating memory, %d: ", (x))
 
 
 
@@ -74,6 +76,7 @@ static int convert_types(data* thedata, int num_items, int rows);
 
 static data* unpack(char*, char *,int, int*, int*);
 static unpack_digest* parse_template(char* template, column_attributes* input, int*);
+static int validate_template(unpack_digest* input);
 static int read_data(byte*, data*, unpack_digest*, FILE*, int); 
 static int calc_rows(char*, int, unpack_digest*, int);
 static data* allocate_arrays(unpack_digest*);
@@ -98,16 +101,16 @@ static void memory_error(int error_num, int mem_size)
 	parse_error("%s: %s", err_str, strerror(error_num));
 
 	return;
-}	
+}
 
 /*	premade calls for testing:
 
-	unpack("U4U2U2*38U2U2F4I2*9F4F4F4x6a4", "atm05555.dat", 390)
-	unpack("U4U2U2*38U2U2x4I2*9x18a4", "atm05555.dat", 390)	//without floats
-	unpack("U4U2U2U4UU2UaaaaaaaUUx8U2*4U", "obs05555.dat",420)
-	unpack("Iu2i3u4f4d8x4I2I3U4F4D8a5", "mytestfile.dat", 0)
-	unpack("Iu2i3u4f4d8x4U2U3U4F4D8a5", "secondtest.dat", 0)
-	unpack("Iu2i3u4f4d8x4U2U3U4F4D8a6*3", "strmulttest.dat", 0)
+//	unpack("U4U2U2*38U2U2R4I2*9R4R4R4x6a4", "atm05555.dat", 390)
+//	unpack("U4U2U2*38U2U2x4I2*9x18a4", "atm05555.dat", 390)	//without floats
+//	unpack("U4U2U2U4UU2UaaaaaaaUUx8U2*4U", "obs05555.dat",420)
+//	unpack("Iu2i3u4r4r8x4I2I3U4R4R8a5", "mytestfile.dat", 0)
+//	unpack("Iu2i3u4r4r8x4U2U3U4R4R8a5", "secondtest.dat", 0)
+//	unpack("Iu2i3u4r4r8x4U2U3U4R4R8a6*3", "strmulttest.dat", 0)
 
 */
 
@@ -125,7 +128,7 @@ ff_unpack(vfuncptr func, Var* arg)
 	Alist alist[5];
 	alist[0] = make_alist(	ARG_TEMPLATE,	ID_STRING,	NULL,	&template);
 	alist[1] = make_alist(	ARG_FILENAME,	ID_STRING,	NULL,	&filename);
-	alist[2] = make_alist(	ARG_START_POS,	INT,	NULL,	&hdr_length);
+	alist[2] = make_alist(	ARG_SKIP,	INT,	NULL,	&hdr_length);
 	alist[3] = make_alist(	ARG_COUNT,		INT,	NULL,	&rows);
 	alist[4].name = NULL;
 
@@ -142,7 +145,7 @@ ff_unpack(vfuncptr func, Var* arg)
 	}
 
 	if( hdr_length < 0 ) {
-		parse_error("%s < 0: %s()", ARG_START_POS, func->name);
+		parse_error("%s < 0: %s()", ARG_SKIP, func->name);
 		return NULL;
 	}
 
@@ -252,6 +255,12 @@ static data* unpack(char* template, char* filename, int hdr_length, int* numitem
 	data*				thedata		= NULL;
 	void*				temp_ptr	= NULL;
 
+	if( strlen(template) == 0 ) {
+		parse_error("Error: Template cannot be the empty string!");
+		return NULL;
+	}
+
+
 	initial = (column_attributes*)calloc(MAX_ATTRIBUTES, sizeof(column_attributes));
 	if( initial == NULL ) {
 		memory_error(errno, sizeof(column_attributes)*MAX_ATTRIBUTES );
@@ -264,10 +273,17 @@ static data* unpack(char* template, char* filename, int hdr_length, int* numitem
 		return NULL;
 	}
 
+    if( !validate_template(input) ) {
+        clean_up(0, input, NULL, NULL, NULL);
+        return NULL;
+	}
+
+
+
 	initial = realloc(initial, sizeof(column_attributes)*input->num_items);
 	if( initial == NULL ) {
 		memory_error(errno, sizeof(column_attributes)*input->num_items );
-		clean_up(1, input, NULL, NULL, NULL);
+		clean_up(0, input, NULL, NULL, NULL);
 		return NULL;
 	} else {
 		input->attr = initial;
@@ -276,13 +292,13 @@ static data* unpack(char* template, char* filename, int hdr_length, int* numitem
 	file = fopen(filename,"rb");
 	if( file == NULL ) {
 		parse_error("%s: %s", "Error opening file", strerror(errno));
-		clean_up(1, input, NULL, NULL, NULL);
+		clean_up(0, input, NULL, NULL, NULL);
 		return NULL;
 	}
 
 	if( fseek(file,hdr_length,SEEK_SET) ) {
 		parse_error("fseek error: %s", strerror(errno));
-		clean_up(1, input, NULL, NULL, file);
+		clean_up(0, input, NULL, NULL, file);
 		return NULL;
 	}
 #ifdef FF_UNPACK_DEBUG
@@ -291,7 +307,7 @@ static data* unpack(char* template, char* filename, int hdr_length, int* numitem
 
 	//calculate number of rows
 	if( !calc_rows(filename, hdr_length, input, rec_length) ) {
-		clean_up(1, input, NULL, NULL, file);
+		clean_up(0, input, NULL, NULL, file);
 		return NULL;
 	}
 
@@ -310,7 +326,7 @@ static data* unpack(char* template, char* filename, int hdr_length, int* numitem
 	buffer = (byte*)calloc(rec_length+2, sizeof(byte));		//not sure if extra 2 are needed but jic
 	if( buffer == NULL ) {
 		memory_error(errno, rec_length*sizeof(byte) );
-		clean_up(1, input, NULL, NULL, file);
+		clean_up(0, input, NULL, NULL, file);
 		return NULL;
 	}
 
@@ -318,7 +334,7 @@ static data* unpack(char* template, char* filename, int hdr_length, int* numitem
 
 	thedata = allocate_arrays(input);
 	if( thedata == NULL ) {
-		clean_up(2, input, buffer, NULL, file);
+		clean_up(1, input, buffer, NULL, file);
 		return NULL;
 	}
 
@@ -333,12 +349,12 @@ static data* unpack(char* template, char* filename, int hdr_length, int* numitem
 	{
 		if( fread(buffer, 1, rec_length, file) != rec_length ) {
 			parse_error("Error reading data: %s", strerror(errno) );
-			clean_up(3, input, buffer, thedata, file);
+			clean_up(2, input, buffer, thedata, file);
 			return NULL;
 		}
 
 		if( !read_data(buffer, thedata, input, file, k) ) {
-			clean_up(3, input, buffer, thedata, file);
+			clean_up(2, input, buffer, thedata, file);
 			return NULL;
 		}
 	}
@@ -346,7 +362,7 @@ static data* unpack(char* template, char* filename, int hdr_length, int* numitem
 
 // upgrade types if necessary (ie unsigned shorts and ints to ints and doubles)
 	if( !upgrade_types(thedata, input) ) {
-		clean_up(3, input, buffer, thedata, file);
+		clean_up(2, input, buffer, thedata, file);
 		return NULL;
 	}
 
@@ -400,10 +416,62 @@ static void clean_up(int level, unpack_digest* input, byte* buffer, data* the_da
 }
 
 
+static int validate_template(unpack_digest* input)
+{
+	int i;
+
+	for(i=0; i<input->num_items; i++) {
+		switch(input->attr[i].type)
+		{
+
+			case STRING:
+				break;
+	
+			case SIGNED_MSB_INT:
+			case UNSIGNED_MSB_INT:
+			case SIGNED_LSB_INT:
+			case UNSIGNED_LSB_INT:
+				if( input->attr[i].bytesize < 1 || input->attr[i].bytesize > 4 ) {
+					parse_error("Invalid bytesize (%d) for column %d of type %c\nValid values are 1-4", 
+								input->attr[i].bytesize, i+1, input->attr[i].type);
+					return 0;
+				}
+				break;
+	
+			case LSB_REAL:
+				if( input->attr[i].bytesize == 4 ) input->attr[i].type = LSB_FLOAT;
+				else if (input->attr[i].bytesize == 8 ) input->attr[i].type = LSB_DOUBLE;
+				else {
+					parse_error("Invalid bytesize (%d) for column %d of type %c\nValid values are 4 and 8", 
+								input->attr[i].bytesize, i+1, input->attr[i].type);
+					return 0;
+				}
+				break;
+	
+			case MSB_REAL:
+				if( input->attr[i].bytesize == 4 ) input->attr[i].type = MSB_FLOAT;
+				else if (input->attr[i].bytesize == 8 ) input->attr[i].type = MSB_DOUBLE;
+				else {
+					parse_error("Invalid bytesize (%d) for column %d of type %c\nValid values are 4 and 8", 
+								input->attr[i].bytesize, i+1, input->attr[i].type);
+					return 0;
+				}
+				break;
+	
+			default:
+				parse_error("Invalid type %c in column %d", input->attr[i].type, i+1);
+				return 0;
+				break;
+		}
+
+	}
+	return 1;
+}
+
 /* Parse template string */
 static unpack_digest* parse_template(char* template, column_attributes* input, int* record_length)
 {
-	int i, j = 0, temp = 0, offset = 0, name_length = 30;
+	int i, j = 0, temp = 0, offset = 0, name_length = 30, error = 0;
 
 	char* end = NULL;
 	char* beginning = template;
@@ -422,8 +490,10 @@ static unpack_digest* parse_template(char* template, column_attributes* input, i
 		} else {
 			template = &template[1];
 			temp = strtol(template, &end, 10);
-			if( temp == 0 )
+			if( temp == 0 || template == end) {
+                error = 1;
 				break;
+            }
 
 			input[j].bytesize = temp;
 			template = end;
@@ -435,8 +505,10 @@ static unpack_digest* parse_template(char* template, column_attributes* input, i
 			template = &template[1];
 			temp = 0;
 			temp = strtol(template, &end, 10);
-			if( temp == 0 )
+			if( temp == 0 || template == end) {
+                error = 1;
 				break;
+            }
 
 			input[j].columns = temp;
 
@@ -457,8 +529,8 @@ static unpack_digest* parse_template(char* template, column_attributes* input, i
 						return 0;
 					}
 
-					if( snprintf(input[j+i].col_name, name_length, "col_%d[%d]", j, i) >= name_length ) {
-						parse_error("%s, col_%d[%d]: %s", "Column name too long", j, i, strerror(errno) );
+					if( snprintf(input[j+i].col_name, name_length, "c%d_%d", j+1, i) >= name_length ) {
+						parse_error("%s, c%d_%d: %s", "Column name too long", j+1, i, strerror(errno) );
 						return 0;
 					}
 				}
@@ -486,8 +558,8 @@ static unpack_digest* parse_template(char* template, column_attributes* input, i
 					return 0;
 				}
 
-				if( snprintf(input[j].col_name, name_length, "col_%d", j) >= name_length ) {
-					parse_error("%s, col_%d: %s", "Column name too long", j, strerror(errno) );
+				if( snprintf(input[j].col_name, name_length, "c%d", j+1) >= name_length ) {
+					parse_error("%s, c%d: %s", "Column name too long", j+1, strerror(errno) );
 					return 0;
 				}
 			}
@@ -506,8 +578,8 @@ static unpack_digest* parse_template(char* template, column_attributes* input, i
 	}	//end parsing while loop
 
 
-	if( template[0] != '\0' ) {
-		parse_error("Unexpected or missing character:\n%s\n%*c\n", beginning, beginning-template, '^');
+	if( error ) {
+		parse_error("Unexpected or missing character:\n%s\n%*c\n", beginning, template-beginning, '^');
 		return NULL;
 	}
 
