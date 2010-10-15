@@ -312,11 +312,17 @@
     record structure as the previous example, except that the
     fields are non-contiguous.
 
-    Every field in the record is placed in its own column 
-    within a davinci structure with generic names assigned in
-    the form "cn" or "cn_m". Multiplicity in strings 
-    gets split into multiple fields, since davinci text arrays
-    cannot be 3-dimensional.
+    Every field in the record is placed in its own column within
+    a davinci structure with generic names assigned in the form
+    "cn" or "cn_m" unless the user specifies their own column names
+    in the optional argument col_names. The argument col_names can
+    be either a string (if the user is only reading 1 column) or a
+    davinci text buffer (string array). Providing insufficient names
+    will throw and error. Providing extra names is fine. Multiplicity
+    in strings gets split into multiple fields, since davinci text
+    arrays cannot be 3-dimensional. A string column with multiplicity
+    will use only one of the user-provided names and add on "_m" to
+    indicate the multiplicity. 
 
 ?functions read()
 ?read()
