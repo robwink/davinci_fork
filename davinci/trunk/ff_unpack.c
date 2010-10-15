@@ -16,6 +16,7 @@
 #define ARG_FILENAME	"filename"
 #define ARG_SKIP		"skip"
 #define ARG_COUNT		"count"
+#define ARG_COL_NAMES	"col_names"
 
 #define STRING				'a'
 #define SIGNED_MSB_INT		'I'
@@ -74,8 +75,8 @@ typedef struct
 
 static int convert_types(data* thedata, int num_items, int rows);
 
-static data* unpack(char*, char *,int, int*, int*);
-static unpack_digest* parse_template(char* template, column_attributes* input, int*);
+static data* unpack(char*, char *, Var*, int, int*, int*);
+static unpack_digest* parse_template(char* template, column_attributes* input, Var* column_names, int*);
 static int validate_template(unpack_digest* input);
 static int read_data(byte*, data*, unpack_digest*, FILE*, int); 
 static int calc_rows(char*, int, unpack_digest*, int);
@@ -122,15 +123,18 @@ ff_unpack(vfuncptr func, Var* arg)
 	int hdr_length = 0;
 	Var* result = NULL;
 	int rows = -1;
+	Var* column_names = NULL;
+
 
 	int i = 0;
 
-	Alist alist[5];
+	Alist alist[6];
 	alist[0] = make_alist(	ARG_TEMPLATE,	ID_STRING,	NULL,	&template);
 	alist[1] = make_alist(	ARG_FILENAME,	ID_STRING,	NULL,	&filename);
-	alist[2] = make_alist(	ARG_SKIP,	INT,	NULL,	&hdr_length);
-	alist[3] = make_alist(	ARG_COUNT,		INT,	NULL,	&rows);
-	alist[4].name = NULL;
+	alist[2] = make_alist(	ARG_SKIP,		INT,		NULL,	&hdr_length);
+	alist[3] = make_alist(	ARG_COUNT,		INT,		NULL,	&rows);
+	alist[4] = make_alist(	ARG_COL_NAMES,	ID_UNK,		NULL,	&column_names);
+	alist[5].name = NULL;
 
 	if( parse_args(func, arg, alist) == 0) return NULL;
 
@@ -150,7 +154,7 @@ ff_unpack(vfuncptr func, Var* arg)
 	}
 
 	int num_items = 0;
-	data* reg_data = unpack(template, filename, hdr_length, &num_items, &rows);
+	data* reg_data = unpack(template, filename, column_names, hdr_length, &num_items, &rows);
 
 
 	if( reg_data == NULL || rows <= 0 || num_items <= 0)
@@ -242,7 +246,7 @@ static int convert_types(data* thedata, int num_items, int rows)
 
 
 /**** unpack implementation function ****/
-static data* unpack(char* template, char* filename, int hdr_length, int* numitems, int *ret_rows)
+static data* unpack(char* template, char* filename, Var* column_names, int hdr_length, int* numitems, int *ret_rows)
 {
 
 	int i,k,x;
@@ -267,7 +271,7 @@ static data* unpack(char* template, char* filename, int hdr_length, int* numitem
 		return NULL;
 	}
 
-	input = parse_template(template, initial, &rec_length);
+	input = parse_template(template, initial, column_names, &rec_length);
 	if( input == NULL ) {
 		free(initial);
 		return NULL;
@@ -469,13 +473,39 @@ static int validate_template(unpack_digest* input)
 }
 
 /* Parse template string */
-static unpack_digest* parse_template(char* template, column_attributes* input, int* record_length)
+static unpack_digest* parse_template(char* template, column_attributes* input, Var* column_names, int* record_length)
 {
-	int i, j = 0, temp = 0, offset = 0, name_length = 30, error = 0;
+	int i, j = 0, j_no_mult = 0, temp = 0, offset = 0, name_length = 30, error = 0;
 
 	char* end = NULL;
 	char* beginning = template;
 	unpack_digest* more = NULL;
+
+	int name_count = 0;
+	char** names = NULL;
+
+
+	if( column_names != NULL ) {
+		if( V_TYPE(column_names) == ID_TEXT ) {
+			name_count = V_TEXT(column_names).Row;
+			names = V_TEXT(column_names).text;
+		}
+		else if( V_TYPE(column_names) == ID_STRING ) {
+			name_count = 1;
+			names = (char**)calloc(1, sizeof(char*) );
+			if( names == NULL ) {
+				memory_error(errno, sizeof(char*) );
+				return NULL;
+			}
+			names[0] = V_STRING(column_names);
+		}
+		else {
+			parse_error("Unrecognized type passed in for argument col_names");
+			return NULL;
+		}
+	}
+
+
 
 
 	while( template[0] != '\0' )						//loop through parsing template
@@ -515,23 +545,31 @@ static unpack_digest* parse_template(char* template, column_attributes* input, i
 			//special case (it splits up string with multiplicity >1 into separate columns)
 			if( temp > 1 && input[j].type == STRING ) {
 				for(i=0; i<temp; i++) {
-					input[j+i].col_name = (char*)calloc(name_length, sizeof(char));
 					input[j+i].bytesize = input[j].bytesize;
 					input[j+i].type = STRING;
 					input[j+i].columns = 1;
 					input[j+i].start_byte = offset;
 					offset += input[j].bytesize;
 
+
+					input[j+i].col_name = (char*)calloc(name_length, sizeof(char));
 					if ( input[j+i].col_name == NULL ) {
 						memory_error(errno, sizeof(char)*name_length );
 						for(--i; i>=0; i--) free(input[j+i].col_name);
 						for(--j; j>=0; j--) free(input[j].col_name);
-						return 0;
-					}
+						return NULL;
+					}	
 
-					if( snprintf(input[j+i].col_name, name_length, "c%d_%d", j+1, i) >= name_length ) {
-						parse_error("%s, c%d_%d: %s", "Column name too long", j+1, i, strerror(errno) );
-						return 0;
+					if( name_count == 0 ) {
+						if( snprintf(input[j+i].col_name, name_length, "c%d_%d", j+1, i) >= name_length ) {
+							parse_error("%s, c%d_%d: %s", "Column name too long", j+1, i, strerror(errno) );
+							return NULL;
+						}
+					} else {
+						if( snprintf(input[j+i].col_name, name_length, "%s_%d", names[j_no_mult], i) >= name_length ) {
+							parse_error("%s, c%d_%d: %s", "Column name too long", j+1, i, strerror(errno) );
+							return NULL;
+						}
 					}
 				}
 
@@ -551,30 +589,45 @@ static unpack_digest* parse_template(char* template, column_attributes* input, i
 
 		if( input[j].type != IGNORE ) {
 			if( input[j].col_name == NULL ) {
-				input[j].col_name = (char*)calloc(name_length, sizeof(char));
-				if( input[j].col_name == NULL ) {
-					memory_error(errno, sizeof(char)*name_length );
-					for(--j; j>=0; j--) free(input[j].col_name);
-					return 0;
-				}
-
-				if( snprintf(input[j].col_name, name_length, "c%d", j+1) >= name_length ) {
-					parse_error("%s, c%d: %s", "Column name too long", j+1, strerror(errno) );
-					return 0;
+				if( name_count == 0 ) {
+					input[j].col_name = (char*)calloc(name_length, sizeof(char));
+					if( input[j].col_name == NULL ) {
+						memory_error(errno, sizeof(char)*name_length );
+						for(--j; j>=0; j--) free(input[j].col_name);
+						return NULL;
+					}
+	
+					if( snprintf(input[j].col_name, name_length, "c%d", j+1) >= name_length ) {
+						parse_error("%s, c%d: %s", "Column name too long", j+1, strerror(errno) );
+						return NULL;
+					}
+				} else {
+					input[j].col_name = strdup(names[j_no_mult]);
+					if( input[j].col_name == NULL ) {
+						memory_error(errno, sizeof(char)*name_length );
+						for(--j; j>=0; j--) free(input[j].col_name);
+						return NULL;
+					}
 				}
 			}
 		}
-		
-		offset += input[j].bytesize;
-		if( input[j].type != IGNORE )
-			j++;						//increment j for next letter(overwrite IGNOREs)
 
+		offset += input[j].bytesize;
+		if( input[j].type != IGNORE ) {
+			j++;						//increment j for next letter(overwrite IGNOREs)
+			j_no_mult++;				//increment j not counting multiplicity of strings (for if they provide
+		}								//column names
 
 		if( j >= MAX_ATTRIBUTES ) {
 			parse_error("Too many attributes, %d is max allowed\n", MAX_ATTRIBUTES);
-			return 0;
+			return NULL;
 		}
 
+		if( name_count != 0 && (j_no_mult >= name_count && template[0] != '\0') ) {
+			parse_error("Too few column names provided, you provided %d\n", name_count);
+			for(--j; j>=0; j--) free(input[j].col_name);
+			return NULL;
+		}
 	}	//end parsing while loop
 
 
@@ -591,7 +644,7 @@ static unpack_digest* parse_template(char* template, column_attributes* input, i
 	more = (unpack_digest*)calloc(1, sizeof(unpack_digest));
 	if( more == NULL ) {
 		memory_error(errno, sizeof(unpack_digest));
-		return 0;
+		return NULL;
 	}
 
 	more->attr = input;
