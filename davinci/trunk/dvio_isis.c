@@ -105,13 +105,15 @@ write_PDS_Qube(Var *core, Var *side, Var *bottom, Var *back, FILE *fp)
   size[1] = GetY(core);
   size[2] = GetZ(core);
   nbytes = GetNbytes(core); /* number of bytes per data item */
-  nitems = size[0]*size[1]*size[2];
+  nitems = V_DSIZE(core);
 
 
   if (suffix[0] == NULL &&
       suffix[1] == NULL &&
       suffix[2] == NULL) { /* We're only writing the core, just dump it! */
 
+	// TODO Byte-swap based on label
+	// TODO Downgrade size based on label
     if (fwrite(V_DATA(core),nbytes,nitems,fp) != nitems){
       parse_error("%s: Write failed for %ld bytes\n", func_name, nitems*nbytes);
       return(NULL);
@@ -637,9 +639,18 @@ initHeaderFromQubeLabel(OBJDESC *qube, char *fn, struct iom_iheader *h){
       org = iom_BIP;
     else {
       if (iom_is_ok2print_unsupp_errors()){
-        fprintf(stderr, "Unrecognized data organization: %s = %s",
-                "AXIS_NAME", key->value);
+        fprintf(stderr, "%s contains unrecognized data organization: %s = %s\n",
+                fn, "AXIS_NAME", key->value);
+        return 0;
       }
+    }
+  }
+
+  if (org == -1){
+    org = iom_BSQ;
+    if (iom_is_ok2print_warning()){
+       fprintf(stderr, "%s is missing data organization specification, assuming %s\n",
+               fn, iom_ORG2STR[org]);
     }
   }
 
@@ -650,21 +661,30 @@ initHeaderFromQubeLabel(OBJDESC *qube, char *fn, struct iom_iheader *h){
   if ((key = OdlFindKwd(qube, "CORE_ITEMS", NULL, 0, scope))) {
     sscanf(key->value, "(%d,%d,%d)", &size[0], &size[1], &size[2]);
   }
+  else {
+   if (iom_is_ok2print_unsupp_errors()){
+      printf(stderr, "%s does not have %s specified.\n",
+             fn, "CORE_ITEMS");
+   }
+   return 0;
+  }
 
   /**
    ** Format
    **/
 
-  if ((key2 = OdlFindKwd(qube, "CORE_ITEM_BYTES", NULL, 0, scope)))
+  if ((key2 = OdlFindKwd(qube, "CORE_ITEM_BYTES", NULL, 0, scope))){
     item_bytes = atoi(key2->value);
+  }
 
   /**
    ** This tells us if we happen to be using float vs int
    **/
 
-  if ((key1 = OdlFindKwd(qube, "CORE_ITEM_TYPE", NULL, 0, scope)))
+  if ((key1 = OdlFindKwd(qube, "CORE_ITEM_TYPE", NULL, 0, scope))){
     if (strstr(key1->value,"UNSIGNED"))
       _unsigned = 1;
+  }
 
 
   format = iom_ConvertISISType(key1 ? key1->value : NULL,
@@ -693,6 +713,13 @@ initHeaderFromQubeLabel(OBJDESC *qube, char *fn, struct iom_iheader *h){
 
   if ((key = OdlFindKwd(qube, "SUFFIX_BYTES", NULL, 0, scope))) {
     suffix_bytes = atoi(key->value);
+  }
+  else {
+    if (iom_is_ok2print_warnings()){
+      suffix_bytes = 4;
+      fprintf(stderr, "%s is missing %s, assuming %d.\n",
+              fn, "SUFFIX_BYTES", suffix_bytes);
+    }
   }
 
   for (i = 0 ; i < 3 ; i++) {
@@ -874,7 +901,9 @@ dv_LoadHistogram_New(FILE *fp, char *fn, int dptr, OBJDESC *hist){
 	void   *data=NULL;
 	Var *v;
 
-	initHeaderFromHistogramLabel(hist, fn, &h);
+	if (initHeaderFromHistogramLabel(hist, fn, &h) <= 0){
+		return NULL;
+	}
 	h.dptr = dptr;
 
 	if ((key2 = OdlFindKwd(hist, "ITEM_BYTES", NULL, 0, scope)))
@@ -914,7 +943,9 @@ dv_LoadImage_New(FILE *fp, char *fn, int dptr, OBJDESC *image){
 	void   *data=NULL;
 	Var *v;
 
-	initHeaderFromImageLabel(image, fn, &h);
+	if (initHeaderFromImageLabel(image, fn, &h) <= 0){
+		return NULL;
+	}
 	h.dptr = dptr;
 
 	if ((key2 = OdlFindKwd(image, "SAMPLE_BITS", NULL, 0, scope)))
@@ -950,7 +981,10 @@ dv_LoadISISFromPDS_New(FILE *fp, char *fn, int dptr, OBJDESC *qube){
 	void   *data=NULL;
 	Var *v;
 
-	initHeaderFromQubeLabel(qube, fn, &h);
+	if (initHeaderFromQubeLabel(qube, fn, &h) <= 0){
+		return NULL;
+	}
+
 	h.dptr = dptr;
 
 	if ((key2 = OdlFindKwd(qube, "CORE_ITEM_BYTES", NULL, 0, scope)))
@@ -998,8 +1032,10 @@ dv_LoadISISSuffixesFromPDS_New(FILE *fp, char *fname, size_t dptr, OBJDESC *qube
     int      suffix[3] = {0, 0, 0}; /* suffix dimensions */
     int      suffix_bytes = 0;
 
-	initHeaderFromQubeLabel(qube, fname, &h);
-	h.dptr = dptr;
+    if (initHeaderFromQubeLabel(qube, fname, &h) <= 0){
+      return NULL;
+    }
+    h.dptr = dptr;
 
     if ((key = OdlFindKwd(qube, "SUFFIX_ITEMS", NULL, 0, scope))) {
       sscanf(key->value, "(%d,%d,%d)", &suffix[0], &suffix[1], &suffix[2]);
