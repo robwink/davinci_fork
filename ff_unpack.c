@@ -472,6 +472,20 @@ static int validate_template(unpack_digest* input)
 	return 1;
 }
 
+
+
+static int valid_letter(char letter)
+{
+	if( letter != STRING && letter != SIGNED_MSB_INT && letter != UNSIGNED_MSB_INT &&
+		letter != SIGNED_LSB_INT && letter != UNSIGNED_LSB_INT && letter != LSB_REAL &&
+		letter != MSB_REAL && letter != IGNORE )
+		return 0;
+	else
+		return 1;
+}
+
+
+
 /* Parse template string */
 static unpack_digest* parse_template(char* template, column_attributes* input, Var* column_names, int* record_length)
 {
@@ -505,11 +519,18 @@ static unpack_digest* parse_template(char* template, column_attributes* input, V
 		}
 	}
 
+	for(i=0; i<name_count; i++)
+		names[i] = fix_name(names[i]);
 
 
 
 	while( template[0] != '\0' )						//loop through parsing template
 	{
+		if( !valid_letter(template[0]) ) {
+			error = 1;
+			break;
+		}
+
 		input[j].type = template[0];
 		input[j].start_byte = offset;
 		input[j].col_name = NULL;
@@ -536,7 +557,7 @@ static unpack_digest* parse_template(char* template, column_attributes* input, V
 			temp = 0;
 			temp = strtol(template, &end, 10);
 			if( temp == 0 || template == end) {
-                error = 1;
+                error = 2;
 				break;
             }
 
@@ -623,7 +644,7 @@ static unpack_digest* parse_template(char* template, column_attributes* input, V
 			return NULL;
 		}
 
-		if( name_count != 0 && (j_no_mult >= name_count && template[0] != '\0') ) {
+		if( name_count != 0 && (j_no_mult >= name_count && template[0] != '\0' && template[0] != IGNORE ) ) {
 			parse_error("Too few column names provided, you provided %d\n", name_count);
 			for(--j; j>=0; j--) free(input[j].col_name);
 			return NULL;
@@ -632,7 +653,24 @@ static unpack_digest* parse_template(char* template, column_attributes* input, V
 
 
 	if( error ) {
-		parse_error("Unexpected or missing character:\n%s\n%*c\n", beginning, template-beginning, '^');
+
+		fprintf(stderr, "Unexpected or missing character:  ");
+		for(i=0; i<strlen(beginning); i++) {
+			if( i == template-beginning ) {
+				if( error == 1 )
+					fprintf(stderr, ">>>%c<<<", beginning[i]);
+				else
+					fprintf(stderr, ">>><<<%c", beginning[i]);
+
+				error = 0;
+			} else
+				fprintf(stderr, "%c", beginning[i]);
+		}
+		if( error ) fprintf(stderr, ">>><<<");
+
+		fprintf(stderr, "\n");
+
+//		parse_error("Unexpected or missing character:\n%s\n%*c\n", beginning, template-beginning, '^');
 		return NULL;
 	}
 
