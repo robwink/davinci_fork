@@ -1918,7 +1918,7 @@ Davinci supports the following matrix functions:
 ?create()
  create() - Create an array of values
 
- create(x=INT, y=INT, z=INT, [org=ORG, format=FORMAT, start=VAL, step=VAL])
+ create(x=INT, y=INT, z=INT, [org=ORG, format=FORMAT, start=VAL, step=VAL, init=BOOL])
 
      The create() function creates an array of data of the specified
      size, format and organization.
@@ -1935,6 +1935,12 @@ Davinci supports the following matrix functions:
      the 'start' parameter (default of 1) and each successive element is 
      incremented by the step size (default of 1).
      
+     If init=0, the start and step values are ignored and the array is 
+     defaulted to the random contents of the memory block that was 
+     allocated. 
+     NOTE: on Linux, this may not actually allocate all the memory upfront
+     and a delayed failure may occur if the memory is not available at 
+     the time of use.  
 
  Example:
 
