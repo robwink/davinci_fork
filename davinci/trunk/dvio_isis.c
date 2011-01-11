@@ -648,7 +648,7 @@ initHeaderFromQubeLabel(OBJDESC *qube, char *fn, struct iom_iheader *h){
 
   if (org == -1){
     org = iom_BSQ;
-    if (iom_is_ok2print_warning()){
+    if (iom_is_ok2print_warnings()){
        fprintf(stderr, "%s is missing data organization specification, assuming %s\n",
                fn, iom_ORG2STR[org]);
     }
