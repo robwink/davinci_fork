@@ -85,8 +85,10 @@ typedef struct _dataKeys {
   size_t size;                /* size in bytes */
   OBJDESC *objDesc;
 
-} dataKey;
+  OBJDESC *pFileDesc;         /* parent FILE object of this object */
+  Var *pFileVar;              /* parent FILE object's corresponding davinci Var struct */
 
+} dataKey;
 
 #ifdef LITTLE_ENDIAN
 extern char *var_endian(Var * v);
@@ -109,7 +111,7 @@ Var *write_PDS_Qube(Var * core, Var * side, Var * bottom, Var * back, FILE * fp)
 
 static Var *do_key(KEYWORD * key);
 static int readDataForObjects(Var *st, dataKey objSize[], int nObj, int load_suffix_data, int continueOnError);
-static Var *traverseObj(OBJDESC *top, Var *v, dataKey objSizeMap[], int *nObj);
+static Var *traverseObj(OBJDESC *top, Var *v, dataKey objSizeMap[], int *nObj, OBJDESC *pFileObj, Var *pFileVar);
 static char *getGeneralObjClass(const char *objClassName);
 static int rfQube(const dataKey *objSize, Var *vQube, int load_suffix_data);
 static void rfBitField(int *j, char **Bufs, char *tmpbuf, FIELD ** f, int ptr, int row, int *size, int num_items);
@@ -569,7 +571,7 @@ find_obj_name(Var *s){
 }
 
 static Var *
-traverseObj(OBJDESC *top, Var *v, dataKey objSizeMap[], int *nObj){
+traverseObj(OBJDESC *top, Var *v, dataKey objSizeMap[], int *nObj, OBJDESC *pFileDesc, Var *pFileVar){
 	OBJDESC *op = NULL;
 	KEYWORD *kw = NULL;
 	char *kwName, *objName, *groupName, *objClass, *genObjClass;
@@ -609,7 +611,10 @@ traverseObj(OBJDESC *top, Var *v, dataKey objSizeMap[], int *nObj){
 		genObjClass = getGeneralObjClass(objClass); /* returns "qube" from "SPECTRAL_QUBE" */
 		add_struct(sub, FIELD_GEN_OBJ_CLASS, newString(genObjClass));
 
-		traverseObj(op, sub, objSizeMap, nObj);
+		if (strcmp(genObjClass, "file") == 0)
+			traverseObj(op, sub, objSizeMap, nObj, op, sub);
+		else 
+			traverseObj(op, sub, objSizeMap, nObj, pFileDesc, pFileVar);
 
 		/* If OBJECT = TABLE has a NAME = FOO then use the name FOO, unless specifically prohibited */
 		if (bsearch(&genObjClass, dontResolveTypes, nDontResolveTypes, sizeof(char *), genObjClassCmpr) ||
@@ -628,10 +633,13 @@ traverseObj(OBJDESC *top, Var *v, dataKey objSizeMap[], int *nObj){
 		if (bsearch(&genObjClass, handledObjTypes, nHandledObjTypes, sizeof(char *), genObjClassCmpr)){
 			/* obj-class is one that we handle reading data for - add it to the list for data read */
 			objSizeMap[*nObj].Name = strdup(fix_name(objName)); /* holds objName - for readData  */
-			objSizeMap[*nObj].ObjClass = strdup(fix_name(objClass)); /* hods objClass - for resolvePointers */
+			objSizeMap[*nObj].ObjClass = strdup(fix_name(objClass)); /* holds objClass - for resolvePointers */
 			objSizeMap[*nObj].size = getObjSize(sub);
 			objSizeMap[*nObj].objDesc = op;
 			objSizeMap[*nObj].Obj = v;
+			objSizeMap[*nObj].pFileDesc = pFileDesc;
+			objSizeMap[*nObj].pFileVar = pFileVar;
+			objSizeMap[*nObj].FileName = NULL;
 			(*nObj)++;
 		}
 	}
@@ -659,37 +667,39 @@ resolvePointers(char *fname, OBJDESC *top, Var *topVar, dataKey objSizeMap[], in
 	lastOff = lblRecs*recLen;
 
 	for(i=0; i<n; i++){
-		if (topVar != objSizeMap[i].Obj)
-			continue;
+		// If either the object was already processed, or we don't have a
+		// matching FILE object for it, skip it
+		if (objSizeMap[i].FileName == NULL && topVar == objSizeMap[i].pFileVar){
 
-		sprintf(str, "ptr_to_%s", objSizeMap[i].ObjClass);
+			sprintf(str, "ptr_to_%s", objSizeMap[i].ObjClass);
 
-		if (find_struct(topVar, str, &v) >= 0){
-			Var *vFName = NULL, *vStartLoc = NULL, *vLocType = NULL;
-			char *path;
+			if (find_struct(topVar, str, &v) >= 0){
+				Var *vFName = NULL, *vStartLoc = NULL, *vLocType = NULL;
+				char *path;
 
-			find_struct(v, "file_name", &vFName);
-			find_struct(v, "start_loc", &vStartLoc);
-			find_struct(v, "loc_type", &vLocType);
+				find_struct(v, "file_name", &vFName);
+				find_struct(v, "start_loc", &vStartLoc);
+				find_struct(v, "loc_type", &vLocType);
 
-			// Extract a dir prefixed filename
-			path = (char *)alloca(strlen(V_STRING(vFName))+strlen(fname)+1);
-			strcpy(path, fname);
-			strcpy(path, dirname(path));
-			strcat(path, "/");
-			//strcat(path, V_STRING(vFName));
-			strcat(path, basename(V_STRING(vFName)));
+				// Extract a dir prefixed filename
+				path = (char *)alloca(strlen(V_STRING(vFName))+strlen(fname)+1);
+				strcpy(path, fname);
+				strcpy(path, dirname(path));
+				strcat(path, "/");
+				//strcat(path, V_STRING(vFName));
+				strcat(path, basename(V_STRING(vFName)));
 
-			objSizeMap[i].FileName = strdup(path);
-			objSizeMap[i].dptr = V_INT(vStartLoc)-1;
-			if (strcmp(V_STRING(vLocType), "record") == 0){
-				objSizeMap[i].dptr *= recLen;
+				objSizeMap[i].FileName = strdup(path);
+				objSizeMap[i].dptr = V_INT(vStartLoc)-1;
+				if (strcmp(V_STRING(vLocType), "record") == 0){
+					objSizeMap[i].dptr *= recLen;
+				}
 			}
-		}
-		else {
-			objSizeMap[i].FileName = strdup(fname);
-			objSizeMap[i].dptr = lastOff;
-			lastOff += objSizeMap[i].size;
+			else {
+				objSizeMap[i].FileName = strdup(fname);
+				objSizeMap[i].dptr = lastOff;
+				lastOff += objSizeMap[i].size;
+			}
 		}
 	}
 }
@@ -1722,6 +1732,7 @@ do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
   char fileObjName[128];
   int i;
 
+
   if (filename == NULL) {
     parse_error("%s: No filename specified\n", func->name);
     return (NULL);
@@ -1772,26 +1783,16 @@ do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
   }
 
   v = new_struct(0);
-  traverseObj(ob, v, objSize, &nObj);
+  traverseObj(ob, v, objSize, &nObj, ob, v);
 
   // Resolve ^XXXX pointers at the top level (implicit) FILE object
   //resolvePointers(fname, ob, v, objSize, nObj);
   // Traverse the ^XXXX pointers in the explicit FILE objects
   vFile = v;
   obFile = ob;
-  i = 0;
-  do {
-      if (vFile != NULL){
-	  	resolvePointers(fname, obFile, vFile, objSize, nObj);
-	  }
-	  vFile = NULL;
-	  if (i == 0)
-		  strcpy(fileObjName, "file");
-      else
-		  sprintf(fileObjName, "file_%d", i);
-	  find_struct(v, fileObjName, &vFile);
-	  obFile = OdlFindObjDesc(ob, "FILE", NULL, NULL, ++i, ODL_CHILDREN_ONLY);
-  } while(obFile != NULL);
+  for (i = 0; i<nObj; i++){
+	resolvePointers(fname, objSize[i].pFileDesc, objSize[i].pFileVar, objSize, nObj);
+  }
 
   if (data) {
      // TODO Read data within explicit FILE objects
@@ -1869,9 +1870,16 @@ static int
 rfQube(const dataKey *objSize, Var *vQube, int load_suffix_data){
 	FILE *fp;
 	Var *data = NULL, *suffix_data = NULL;
-	char *fileName = (char *)alloca(strlen(objSize->FileName)+1);
+	char *fileName;
 
+	if (objSize->FileName == NULL){
+		fprintf(stderr, "Null filename while reading QUBE\n");
+		return 0;
+	}
+	
+	fileName = (char *)alloca(strlen(objSize->FileName)+1);
 	pickFilename(fileName, objSize->FileName);
+	fprintf(stderr, "Reading %s from %s...\n", objSize->Name, fileName);
 	if ((fp = fopen(fileName, "rb")) == NULL){
 		fprintf(stderr, "Unable to open file for reading: \"%s\". Reason: %s\n", fileName, strerror(errno));
 		return 0;
@@ -1941,9 +1949,16 @@ rfTable(dataKey *objSize, Var * ob){
 	int err;
 	int num_items = 0;
 	int rc;
-	char *fileName = (char *)alloca(strlen(objSize->FileName)+1);
+	char *fileName;
+	
+	if (objSize->FileName == NULL){
+		fprintf(stderr, "Null filename while reading TABLE\n");
+		return 0;
+	}
 
+	fileName = (char *)alloca(strlen(objSize->FileName)+1);
 	pickFilename(fileName, objSize->FileName);
+	fprintf(stderr, "Reading %s from %s...\n", objSize->Name, fileName);
 	label = LoadLabelFromObjDesc(objSize->objDesc, fileName);
 	if (label == NULL) {
 		fprintf(stderr, "Unable to load label from \"%s\".\n", fileName);
@@ -2307,9 +2322,16 @@ rfImage(dataKey *objSize, Var * ob){
 	FILE *fp;
 	Var *data = NULL;
 	int rc = 0;
-	char *fileName = (char *)alloca(strlen(objSize->FileName)+1);
+	char *fileName;
+	
+	if (objSize->FileName == NULL){
+		fprintf(stderr, "Null filename while reading IMAGE\n");
+		return 0;
+	}
 
+	fileName = (char *)alloca(strlen(objSize->FileName)+1);
 	pickFilename(fileName, objSize->FileName);
+	fprintf(stderr, "Reading %s from %s...\n", objSize->Name, fileName);
 	if ((fp = fopen(fileName, "rb")) == NULL){
 		fprintf(stderr, "Unable to open file for reading: \"%s\". Reason: %s\n", fileName, strerror(errno));
 		return 0;
@@ -2331,9 +2353,16 @@ rfHistogram(dataKey *objSize, Var * ob){
 	FILE *fp;
 	Var *data = NULL;
 	int rc = 0;
-	char *fileName = (char *)alloca(strlen(objSize->FileName)+1);
+	char *fileName;
+	
+	if (objSize->FileName == NULL){
+		fprintf(stderr, "NULL filename while reading HISTOGRAM\n");
+		return 0;
+	}
 
+	fileName = (char *)alloca(strlen(objSize->FileName)+1);
 	pickFilename(fileName, objSize->FileName);
+	fprintf(stderr, "Reading %s from %s...\n", objSize->Name, fileName);
 	if ((fp = fopen(fileName, "rb")) == NULL){
 		fprintf(stderr, "Unable to open file for reading: \"%s\". Reason: %s\n", fileName, strerror(errno));
 		return 0;
@@ -2452,9 +2481,16 @@ rfHistory(dataKey *objSize, Var *ob) {
 	OBJDESC *top;
 	char *history, *p;
 	int rc = 0;
-	char *fileName = (char *)alloca(strlen(objSize->FileName)+1);
+	char *fileName;
 
+	if (objSize->FileName == NULL){
+		fprintf(stderr, "Null filename while reading HISTORY\n");
+		return 0;
+	}
+	
+	fileName = (char *)alloca(strlen(objSize->FileName)+1);
 	pickFilename(fileName, objSize->FileName);
+	fprintf(stderr, "Reading %s from %s...\n", objSize->Name, fileName);
 	if ((fp = fopen(fileName, "rb")) == NULL){
 		fprintf(stderr, "Unable to open file for reading: \"%s\". Reason: %s\n", fileName, strerror(errno));
 		return 0;
@@ -2475,7 +2511,7 @@ rfHistory(dataKey *objSize, Var *ob) {
 
 	/*Call the OdlParseLabelString fucntion and make it an ODL object*/
 	top = OdlParseLabelString(history, NULL, ODL_EXPAND_STRUCTURE, VERBOSE == 0);
-	traverseObj(top, data, NULL, 0);
+	traverseObj(top, data, NULL, 0, top, data);
 
 	if (get_struct_count(data))
 		add_struct(ob, fix_name("DATA"), data);

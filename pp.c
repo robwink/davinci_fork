@@ -1097,8 +1097,8 @@ Var *
 pp_set_where(Var *id, Var *where, Var *exp) 
 {
     Var *v;
-    size_t i,j,k, l;
-    int ival, dsize, format;
+    size_t i,j,k, l, dsize;
+    int ival, format;
     double dval;
 
     /**
