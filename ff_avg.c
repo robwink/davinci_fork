@@ -674,7 +674,8 @@ ff_convolve3(vfuncptr func, Var * arg)
 	int *P;
 	int wt;
 
-	size_t dsize, i, j, k;
+	size_t dsize;
+	int i, j, k;
 	int q, r, s;
 	int Init_Cache=1;
 
