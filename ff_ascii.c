@@ -4,11 +4,12 @@ int
 dv_getline(char **ptr, FILE *fp)
 {
   static char *line=NULL;
-  static int len=0;
+  static size_t len=0;
   
   if (fp == NULL && line != NULL) {
     free(line);
     line = NULL;
+    *ptr = NULL;
     return 0;
   }
   
@@ -27,7 +28,8 @@ dv_getline(char **ptr, FILE *fp)
     len = len*2-1;
     if (len > 1000000) {
       fprintf(stderr, "Line is at 1000000\n");
-      exit(1);
+	  *ptr = NULL;
+      return -1;
     }
   }
   *ptr = line;
