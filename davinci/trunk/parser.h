@@ -380,7 +380,7 @@ typedef struct {
 #define YYDEBUG 1
 extern YYSTYPE yylval;
 
-extern char error_buf[256];
+extern char error_buf[16384];
 extern char pp_input_buf[8192];
 extern int orders[3][3];
 extern Var *VZERO;

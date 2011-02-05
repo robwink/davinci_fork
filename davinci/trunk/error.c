@@ -2,7 +2,7 @@
 #include <stdarg.h>
 
 extern int VERBOSE;
-char error_buf[256];
+char error_buf[16384];
 
 void
 parse_error(const char *fmt, ...)
