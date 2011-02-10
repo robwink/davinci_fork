@@ -1,0 +1,15 @@
+A=read_lines("Read_Write_Test_File")
+F=delim(A,"\t",2)
+if(HasValue(A)==0 || HasValue(F)==0){
+	exit(1);
+}
+if(length(F)!=52){
+	exit(1);
+}
+for (i=0;i<52;i+=1){
+	if (F[,(i+1)]!=(sprintf("%f",float(i)))){
+		exit(1);
+	}
+}
+exit(0);
+

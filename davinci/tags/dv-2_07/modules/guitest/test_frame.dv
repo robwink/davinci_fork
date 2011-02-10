@@ -1,0 +1,6 @@
+# gui.set(wid,{borderWidth=val}) doesn't take; the value is not changed
+load_module("gui")
+top=gui.create("topLevelShell",name="test_frame.dv")
+f=gui.create("frame",top)
+gui.realize(top)
+
