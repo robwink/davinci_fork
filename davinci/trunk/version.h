@@ -1,8 +1,37 @@
-char *version = "@(#) daVinci Version #2.06";
+char *version = "@(#) daVinci Version #2.07";
 
 #include "build.h"
 
 /*
+  Version 2.07: Tue Feb  8 09:01:45 MST 2011
+  * External distribution.
+  * Fixed improper 64-bit type promotion in convolve3, which caused convolve3 do skip the
+    convolution almost entirely.
+  * Fixed a 64-bit addressing issue in "where"-conditional expression that caused it to
+    SEGV on large objects.
+  * Changed the way pointer value is returned from load_pds(). It is now composed of not
+    only the value, but also the unit, i.e. "record" or "byte".
+  * Changed the way data is returned from load_pds(). Data returned from load_pds() may 
+    not match the data type specified in the PDS header in cases where that data type
+	is not a native davinci type. In such a case the data type is promoted to the next
+	higher data type.
+  + Added support for FILE objects, multiple objects per file and overlapping fields
+    to load_pds().
+  + Added unpack() function to davinci core which allows reading of formatted binary data.
+  + Added support for CSV output to write().
+  + Added pdshead() function that returns the label of an ISIS2/PDS file.
+  * Fixed ff_sort() such that the returned data matches the input "object" and not the "by".
+  * Fixed descending sort in ff_sort().
+  * Modified tdb reader to uncompress files and cleanup after itself.
+  * Modified vanilla reader to uncompress files and cleanup after itself.
+  + Added checking of carriage returns to ascii() for MacOS.
+  + Added support for SAMPLEFORMAT tag to the TIFF reader/writer, which allows a 
+    wider array of TIFF files to be read/written with their appropriate data types.
+	Also enabled 64-bit data in TIFFs.
+  * Code cleanup, refactoring and robustness fixes.
+  * Refactored some of the test scripts.
+  * Updated davinci library.
+
   Version 2.06: Tue Jul 27 09:59:56 MST 2010
   * Internal build addressing some PNG and PDS reader issues.
 
