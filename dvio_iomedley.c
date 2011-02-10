@@ -84,7 +84,7 @@ static const char *png_extensions[]  = { "png", NULL };
 static iom_io_interface	interfaces[] = {
   { "GIF",  gif_extensions,  iom_isGIF,  iom_GetGIFHeader,  iom_WriteGIF,  1 },
   { "JPEG", jpeg_extensions, iom_isJPEG, iom_GetJPEGHeader, iom_WriteJPEG, 1 },
-  { "TIFF", tiff_extensions, iom_isTIFF, iom_GetTIFFHeader, iom_WriteTIFF, 4 },
+  { "TIFF", tiff_extensions, iom_isTIFF, iom_GetTIFFHeader, iom_WriteTIFF, 8 },
   { "BMP",  bmp_extensions,  iom_isBMP,  iom_GetBMPHeader,  iom_WriteBMP,  1 },
 #ifdef HAVE_LIBPNG
   { "PNG",  png_extensions,  iom_isPNG,  iom_GetPNGHeader,  iom_WritePNG,  2 },
