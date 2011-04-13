@@ -382,6 +382,7 @@ traverseGroup(KEYWORD *kw, Var *v){
 	char *kwName = NULL, *kwVal = NULL;
 	Var *tmpVar = NULL;
 
+	add_struct(v, "Object", newString(strdup("GROUP")));
 	add_struct(v, FIELD_GEN_OBJ_CLASS, newString(strdup(GEN_OBJ_CLASS_GROUP)));
 
 	for(kw = OdlGetNextKwd(kw); kw != NULL; kw = OdlGetNextKwd(kw)){
@@ -1335,31 +1336,36 @@ Var *ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth,
       char *newname;
       get_struct_element(data, 0, &newname, &tmp_var);
 
-      if (!strcasecmp("suffix_data", name)){
+      if ((!(strcasecmp("sample_suffix", name))) ||
+          (!(strcasecmp("line_suffix", name))) ||
+          (!(strcasecmp("band_suffix", name))) ||
+          (!(strcasecmp("suffix_data", name)))) {
         count--;
         continue;
       }
-
-
-      else if (!(strcmp(newname, FIELD_GEN_OBJ_CLASS))) {
-		  get_struct_element(data, 1, &newname, &tmp_var);
-	  }
-
-      else if (strcmp("Object", (newname))) {
-        parse_error("Parsing unknown structure");
-        ProcessIntoLabel(fp, record_bytes, data, depth, label_ptrs,
-                         oi);
-      }
-
       else {
+    	  if (!(strcmp(newname, FIELD_GEN_OBJ_CLASS))) {
+    		  get_struct_element(data, 1, &newname, &tmp_var);
+    	  }
 
-        if (!(strcmp(KW_GROUP, (V_STRING(tmp_var)))))
-          ProcessGroupIntoLabel(fp, record_bytes, data, name);
+    	  if (strcmp("Object", (newname))) {
+    		  parse_error("Parsing unknown structure");
+    		  ProcessIntoLabel(fp, record_bytes, data, depth, label_ptrs,
+    				  oi);
+    	  }
 
-        else
-          ProcessObjectIntoLabel(fp, record_bytes, data,
-                                 V_STRING(tmp_var), oi);
+    	  else {
+    		  //strcmp or strcase? I think strcase will help in some rare situations
+    		  if (!(strcasecmp(KW_GROUP, (V_STRING(tmp_var)))))
+    			  ProcessGroupIntoLabel(fp, record_bytes, data, name);
+
+    		  else
+    			  ProcessObjectIntoLabel(fp, record_bytes, data,
+    					  V_STRING(tmp_var), oi);
+    	  }
       }
+
+
     }
 
     else if (V_TYPE(data) == ID_TEXT) {
