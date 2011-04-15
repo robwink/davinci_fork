@@ -362,7 +362,9 @@ LoadTDB(char *filename)
         v1 = NULL;
         switch(d->type) {
           case T_STRING: {
-                           char *str = data+(d->loc+hdr_size)+1;
+                           /* tricky, tricky. The string is FOUR bytes after
+                              the header. Pointer math is a real pain, yes? */
+                           char *str = data+(d->loc+hdr_size)+4;
                            v1 = newString(strdup(str));
                            break;
                          }
