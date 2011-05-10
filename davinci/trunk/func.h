@@ -410,6 +410,7 @@ Var * ff_pdshead(vfuncptr func, Var * arg);
 Var * ReadFITS(vfuncptr func, Var * arg);
 Var * WriteFITS(vfuncptr func, Var * arg);
 
+Var *ff_loadcsv(vfuncptr, Var *);
 
 #ifdef HAVE_LIBISIS
 Var * ff_write_isis_cub(vfuncptr func, Var *args);

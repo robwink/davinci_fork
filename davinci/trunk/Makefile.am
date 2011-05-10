@@ -81,7 +81,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	dct.c deghost.C dvio.c dvio_ascii.c \
 	dvio_aviris.c dvio_envi.c dvio_ers.c dvio_goes.c dvio_grd.c \
 	dvio_hdf.c dvio_imath.c dvio_iomedley.c dvio_isis.c dvio_magic.c \
-	dvio_pds.c dvio_pnm.c dvio_raw.c dvio_specpr.c \
+	dvio_pds.c dvio_pnm.c dvio_raw.c dvio_specpr.c dvio_csv.c \
 	dvio_themis.c dvio_vicar.c endian_norm.c ff_ffill.c\
 	error.c ff.c ff_ascii.c ff_avg.c ff_ipi.c ff_contour.c ff_rotate.c\
 	ff_bbr.c ff_cluster.c ff_convolve.c ff_deghost.c ff_display.c \
@@ -93,7 +93,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ff_shade.c ff_slant.c ff_sort.c ff_source.c ff_struct.c \
 	ff_text.c ff_version.c ff_vignette.c ff_write.c ff_xfrm.c \
 	fft.c fft2f.c fft_mayer.c fit.c ff_coreg.c ff_boxfilter.c \
-	ff_bin5.c  ff_transform.c ff_blend.c ff_unpack.c dvio_csv.c\
+	ff_bin5.c  ff_transform.c ff_blend.c ff_unpack.c \
 	header.c ff_resample.c \
 	help.c init.c \
 	isis_obj.c globals.c matrix.c \
@@ -114,7 +114,8 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	lexer.c parser.c parser.h y_tab.h \
 	ff_gconvolve.c ff_warp.c ff_median.c ff_radial.c ff_window.c \
 	dvio_fits.c ff_extract.c dvio_tdb.c \
-	url_create_file.c ff_filesystem.c ff_grassfire.c
+	url_create_file.c ff_filesystem.c ff_grassfire.c \
+	libcsv.c csv.h
 
 
 ## Install header files under /usr/include/davinci
