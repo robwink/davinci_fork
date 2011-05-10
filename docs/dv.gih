@@ -426,6 +426,19 @@
     filetype(), read(), rgb(), load_pds(), load_raw(), ascii(),
     write_isis(), write_isis_cub(), load_bin5()
 
+?functions load_csv()
+?io load_csv()
+?load_csv()
+ load_csv() - Loads data from a CSV/TSV file
+
+ load_csv(filename=PATH, [separator="\t"], [header=1], [collapse=0])
+
+ Loads comma-separated / tab-separated file. The field separator defaults
+ to the tab-character. If the file does not have a header, set header=0.
+ If collapse=1 is specified, consecutive field separators are considered
+ as a single separator.
+
+
 ?functions filetype()
 ?filetype()
  filetype() - Determine the type of a file
