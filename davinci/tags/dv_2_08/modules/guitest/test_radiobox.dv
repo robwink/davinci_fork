@@ -1,0 +1,11 @@
+define cb_entry () { echo ('entry') }
+
+load_module("gui")
+top=gui.create("topLevelShell",name="test_radiobox.dv",resources={width=500,height=500})
+wid=gui.create("radiobox",top)
+gui.addcallback (wid,"entry","cb_entry()")
+p1=gui.create("togglebutton",wid,{labelString="choice 1"})
+p2=gui.create("togglebutton",wid,{labelString="choice 2"})
+p3=gui.create("togglebutton",wid,{labelString="choice 3"})
+gui.realize(top)
+
