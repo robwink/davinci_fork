@@ -135,6 +135,10 @@ ff_dfunc(vfuncptr func, Var * arg)
     }
   */
   data = calloc(dsize, NBYTES(format));
+  if (data == NULL){
+    parse_error("Unable to alloc %ld bytes.\n", dsize*NBYTES(format));
+    return NULL;
+  }
 
   switch (format) {
     case FLOAT:
@@ -259,6 +263,11 @@ ff_binary_op(const char *name,               // Function name, for errors
   V_SIZE(val)[orders[order][2]] = size[2];
 
   V_DATA(val) = (double *)calloc(dsize, NBYTES(format));
+  if (V_DATA(val) == NULL){
+    parse_error("Unable to alloc %ld bytes.\n", dsize*NBYTES(format));
+    return NULL;
+  }
+
   cdata = (u_char *) V_DATA(val);
   sdata = (short *) V_DATA(val);
   idata = (int *) V_DATA(val);
@@ -383,6 +392,10 @@ ff_org(vfuncptr func, Var * arg)
   V_TYPE(s) = ID_VAL;
   memcpy(V_SYM(s), V_SYM(ob), sizeof(Sym));
   V_DATA(s) = calloc(dsize, NBYTES(format));
+  if (V_DATA(s) == NULL){
+    parse_error("Unable to allocate %ld bytes: %s\n", dsize*NBYTES(format), strerror(errno));
+    return(NULL);
+  }
   V_ORG(s) = org;
 
   for (i = 0; i < 3; i++) {
@@ -427,6 +440,10 @@ ff_conv(vfuncptr func, Var * arg)
   format = (int) func->fdata;
   dsize = V_DSIZE(v);
   data = calloc(dsize, NBYTES(format));
+  if (data == NULL){
+    parse_error("Unable to allocate %ld bytes: %s\n", dsize*NBYTES(format), strerror(errno));
+    return(NULL);
+  }
 
   switch (format) {
     case BYTE:
