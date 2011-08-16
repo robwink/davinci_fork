@@ -1,0 +1,356 @@
+################################################################################
+# Load button
+################################################################################
+
+define cb_load(set)
+{
+	top = gui.create ("topLevelShell",name="Load...")
+	fs = gui.create ("fileSelectionBox", top)
+	gui.addcallback (fs, "ok", sprintf("cb_loadok(%d,%d,set=set)",fs,top))
+	gui.addcallback (fs, "cancel", sprintf("gui.destroy(%d)",top))
+	gui.realize(top)
+}
+
+define cb_loadok(set)
+{
+	fs  = $1
+	top = $2
+	sel = gui.get(fs,"dirSpec").dirSpec
+	if (type(sel)=="STRING") if (length(sel) > 0) if (fexists(sel)) {
+		file = load(sel);
+		if (HasValue(file)) {
+			gui.set (set.vic, {image=file})
+			gui.destroy(top)
+		} else {
+			printf ("Unable to open file\n");
+		}
+	}
+}
+
+################################################################################
+# Save button
+################################################################################
+
+define cb_save(set)
+{
+	set.sset = struct()
+	set.sset.top = gui.create ("topLevelShell",name="Save PNG...")
+	set.sset.fs = gui.create ("fileSelectionBox", set.sset.top)
+	gui.addcallback (set.sset.fs, "ok", "cb_saveok(set=set)")
+	gui.addcallback (set.sset.fs, "cancel", sprintf("gui.destroy(%d)",set.sset.top))
+	gui.realize(set.sset.top)
+}
+
+define cb_saveok(set)
+{
+	set.sset.sel = gui.get(set.sset.fs,"dirspec").dirSpec
+	gui.destroy (set.sset.top)
+	if (fexists(set.sset.sel)) {
+		set.sset.top = gui.create ("topLevelShell",name="Exists, Confirm Overwrite?")
+		gui.set(set.sset.top, {width=300})
+		rc = gui.create ("rowcolumn", set.sset.top, {orientation="VERTICAL"})
+		ok = gui.create ("pushbutton", rc, {labelString="Overwrite"})
+		cancel = gui.create ("pushbutton", rc, {labelString="Cancel"})
+		echo ("a")
+		gui.addcallback (ok, "activate", "cb_saveok_conf (set=set)")
+		echo ("a")
+		gui.addcallback (cancel, "activate", "cb_saveok_nope (set=set)")
+		echo ("a")
+		gui.realize(set.sset.top);
+	} else {
+		cb_saveok_conf (set=set)
+	}
+}
+
+define cb_saveok_conf (set)
+{
+	obj = gui.get(set.vic,"image").image
+	write(force=1, object=obj, filename=set.sset.sel, type=PNG)
+	gui.destroy (set.sset.top);
+}
+
+define cb_saveok_nope (set)
+{
+	gui.destroy (set.sset.top);
+	cb_save (set=set)
+}
+
+################################################################################
+# Hist. button
+################################################################################
+
+define cb_hist(set)
+{
+	img = gui.get(set.vic,"image").image;
+	hist = histogram (img);
+	hist = hist[,2::]
+	gplot(hist);
+}
+
+################################################################################
+# View control buttons
+################################################################################
+
+define cb_in(set)
+{
+	zoom = gui.get(set.vic,"zoom").zoom
+	gui.set (set.vic, {zoom = zoom + 1})
+	printf ("%d\n", gui.get(set.vic,"zoom").zoom)
+}
+
+define cb_out(set)
+{
+	zoom = gui.get(set.vic,"zoom").zoom
+	if (zoom == 1) zoom = -1;
+	gui.set (set.vic, {zoom = zoom - 1})
+	printf ("%d\n", gui.get(set.vic,"zoom").zoom)
+}
+
+define cb_left (set)
+{
+	x = gui.get(set.vic,"xPan").xPan
+	x = x - 100;
+	gui.set(set.vic,{xPan=x})
+}
+
+define cb_right (set)
+{
+	x = gui.get(set.vic,"xPan").xPan
+	x = x + 100;
+	gui.set(set.vic,{xPan=x})
+}
+
+define cb_up (set)
+{
+	y = gui.get(set.vic,"yPan").yPan
+	y = y - 100;
+	gui.set(set.vic,{yPan=y})
+}
+
+define cb_down (set)
+{
+	y = gui.get(set.vic,"yPan").yPan
+	y = y + 100;
+	gui.set(set.vic,{yPan=y})
+}
+
+define cb_selected (set)
+{
+	sel = gui.get(set.vic, "selection").selection
+	printf ("selected %d:%d,%d:%d\n",sel.x,sel.x+sel.width,sel.y,sel.y+sel.height);
+}
+
+define get_sel (set)
+{
+	sel = gui.get(set.vic,"selection").selection
+	d = dim(gui.get(set.vic,"image").image)
+	if (sel.width > 0 && sel.height > 0) {
+		if (sel.x > d[1]) sel.x = d[1]
+		if (sel.x < 1) sel.x = 1
+		if (sel.x + sel.width > d[1]) sel.width = d[1] - sel.x
+		if (sel.y > d[2]) sel.y = d[2]
+		if (sel.y < 1) sel.y = 1
+		if (sel.y + sel.height > d[2]) sel.height = d[2] - sel.y
+	}
+	return sel
+}
+
+define clear_sel (set)
+{
+	sel = get_sel(set=set)
+	sel.width = 0
+	sel.height = 0
+	gui.set(set.vic,{selection=sel})
+}
+
+define cb_selectin (set)
+{
+	sel = get_sel(set=set)
+	if (HasValue(sel) && sel.width > 0 && sel.height > 0) {
+		set.stack += {gui.get(set.vic,"image").image}
+		x1 = int(sel.x)
+		x2 = int(sel.x + sel.width)
+		y1 = int(sel.y)
+		y2 = int(sel.y + sel.height)
+		subimg=set.stack[length(set.stack)][x1:x2,y1:y2]
+		gui.set(set.vic,{image=subimg})
+		clear_sel(set=set)
+	}
+}
+
+define cb_selectout (set)
+{
+	if (length(set.stack) > 0) {
+		gui.set(set.vic,{image=set.stack[length(set.stack)]})
+		if (length(set.stack) > 1) {
+			set.stack = set.stack[1:length(set.stack)-1]
+		} else {
+			set.stack = struct()
+		}
+		clear_sel(set=set)
+	}
+}
+
+################################################################################
+# Color picker
+################################################################################
+
+define cb_picker (set)
+{
+	x = int(gui.get(set.vic,"point").point.x);
+	y = int(gui.get(set.vic,"point").point.y);
+	val = gui.get(set.vic,"point").image[x,y];
+	if (dim(val)[3] > 1) {
+		r = val[,,1];
+		g = val[,,2];
+		b = val[,,3];
+		printf ("picked %d,%d,%d\n", r,g,b);
+		gui.set (set.sc1, {value=r*100/256})
+		gui.set (set.sc2, {value=g*100/256})
+		gui.set (set.sc3, {value=b*100/256})
+		gui.set (set.lr, {labelString=sprintf("r: %d",r)})
+		gui.set (set.lg, {labelString=sprintf("g: %d",g)})
+		gui.set (set.lb, {labelString=sprintf("b: %d",b)})
+	} else {
+		r = val[,,1];
+		printf ("picked %d\n", r);
+		gui.set (set.sc1, {value=r*100/256})
+		gui.set (set.lr, {labelString=sprintf("r: %d",r)})
+	}
+}
+
+################################################################################
+# Convolution button
+################################################################################
+
+define cb_convolver (set)
+{
+	cset = struct();
+	cset.top = gui.create("topLevelShell", name="Convolver")
+	cset.r = gui.create ("rowcolumn", cset.top, {orientation="VERTICAL"})
+	cset.title = gui.create ("label", cset.r, {labelString = "Convolution Window Size:"})
+	cset.rlow = gui.create ("rowcolumn", cset.r, {orientation="HORIZONTAL"})
+	cset.rleft = gui.create ("rowcolumn", cset.rlow, {orientation="VERTICAL"})
+	cset.rlx = gui.create("rowcolumn", cset.rleft, {orientation="HORIZONTAL"})
+	cset.xlbl = gui.create ("label", cset.rlx, {labelString="rows: "})
+	cset.xtext = gui.create ("textfield", cset.rlx, {value="3"})
+	cset.rly = gui.create("rowcolumn", cset.rleft, {orientation="HORIZONTAL"})
+	cset.ylbl = gui.create ("label", cset.rly, {labelString="cols: "})
+	cset.ytext = gui.create ("textfield", cset.rly, {value="3"})
+	cset.rright = gui.create ("rowcolumn", cset.rlow, {orientation="VERTICAL"})
+	cset.ok = gui.create ("pushbutton", cset.rright, {labelString="Ok"})
+	cset.cancel = gui.create ("pushbutton", cset.rright, {labelString="Cancel"})
+	set.cset = cset;
+	gui.addcallback (cset.ok, "activate", "cb_conv_ok(set=set)")
+	gui.addcallback (cset.cancel, "activate", sprintf("gui.destroy(%d)",cset.top))
+	gui.realize (cset.top);
+}
+
+define cb_conv_ok (set)
+{
+	x = atoi (gui.get(set.cset.xtext,"value").value);
+	y = atoi (gui.get(set.cset.ytext,"value").value);
+	set.cset.x = x
+	set.cset.y = y
+	gui.destroy (set.cset.top);
+	if (x > 0 && x < 10 && y > 0 && y < 10) {
+		set.cset.top = gui.create ("topLevelShell", name="Enter convolution matrix")
+		set.cset.mat = create(x,y,format=INT,start=0,step=0)
+		colset = gui.create ("rowcolumn", set.cset.top, {orientation="HORIZONTAL"})
+		for (i=1; i<=x; i+=1) {
+			col = gui.create ("rowcolumn", colset, {orientation="VERTICAL"})
+			for (j=1; j<=y; j+=1) {
+				set.cset.mat[i,j] = gui.create ("textfield", col, {value="0.0"});
+			}
+		}
+		buttons = gui.create ("rowcolumn", colset, {orientation="VERTICAL"})
+		set.cset.ok = gui.create ("pushbutton", buttons, {labelString="Go"})
+		set.cset.cancel = gui.create ("pushbutton", buttons, {labelString="Cancel"})
+		gui.addcallback (set.cset.ok, "activate", "cb_go_conv (set=set)")
+		gui.addcallback (set.cset.cancel, "activate", sprintf("gui.destroy(%d)",set.cset.top))
+		gui.realize (set.cset.top);
+	}
+}
+
+define cb_go_conv (set)
+{
+	x = set.cset.x
+	y = set.cset.y
+	mat = create(x,y, format=FLOAT);
+	for (i=1; i<=x; i+=1) {
+		for (j=1; j<=y; j+=1) {
+			mat[i,j] = atof (gui.get(set.cset.mat[i,j],"value").value)
+		}
+	}
+	img = gui.get(set.vic,"image").image
+	newimg = byte(sstretch(convolve3 (img, mat)))
+	gui.set(set.vic,{image=newimg})
+	gui.destroy (set.cset.top);
+}
+
+define cb_stretcher (set)
+{
+	val = float(gui.get(set.stretch,"value").value);
+	min = float(gui.get(set.stretch,"minimum").minimum);
+	max = float(gui.get(set.stretch,"maximum").maximum);
+	val = (val - min) / (max - min);
+	newLUT = int(float(set.LUT) * val);
+	gui.set(set.vic,{LUT=newLUT});
+}
+
+################################################################################
+# Main window
+################################################################################
+
+load_module("gui")
+set = struct()
+set.stack = struct()
+file = load ("/u/eengle/sift/V10161011.qub.png")
+set.top = gui.create ("topLevelShell", name="Convolver")
+set.r1  = gui.create ("rowcolumn", set.top, {orientation="VERTICAL"})
+set.vic = gui.create ("vicar", set.r1, {image=file,inputMode="MODE_SELECT"})
+set.r2 = gui.create ("rowcolumn", set.r1, {orientation="HORIZONTAL"})
+set.r21 = gui.create ("rowcolumn", set.r2, {orientation="VERTICAL"})
+set.pbload = gui.create ("pushbutton", set.r21, {labelString="Load"})
+set.pbsave = gui.create ("pushbutton", set.r21, {labelString="Save"})
+set.pbhist = gui.create ("pushbutton", set.r21, {labelString="Hist."})
+set.pbconv = gui.create ("pushbutton", set.r21, {labelString="Convolve"})
+set.pbquit = gui.create ("pushbutton", set.r21, {labelString="Quit"})
+set.r22 = gui.create ("rowcolumn", set.r2, {orientation="HORIZONTAL"})
+set.pbleft = gui.create ("arrowbutton", set.r22, {arrowDirection="ARROW_LEFT"})
+set.r222 = gui.create ("rowcolumn", set.r22, {orientation="VERTICAL"})
+set.pbup = gui.create ("arrowbutton", set.r222, {arrowDirection="ARROW_UP"})
+set.r2221 = gui.create ("rowcolumn", set.r222, {orientation="HORIZONTAL"})
+set.pb_in = gui.create ("pushbutton", set.r2221, {labelString = "+"})
+set.pb_out = gui.create ("pushbutton", set.r2221, {labelString = "-"})
+set.pbdown = gui.create ("arrowbutton", set.r222, {arrowDirection="ARROW_DOWN"})
+set.pbright = gui.create ("arrowbutton", set.r22, {arrowDirection="ARROW_RIGHT"})
+set.rcolor = gui.create ("rowcolumn", set.r22, {orientation="VERTICAL"})
+set.lr = gui.create("label", set.rcolor, {labelString="r: 0"})
+set.lg = gui.create("label", set.rcolor, {labelString="g: 0"})
+set.lb = gui.create("label", set.rcolor, {labelString="b: 0"})
+set.sc1 = gui.create("scrollbar", set.r22, {processingDirection="MAX_ON_TOP"});
+set.sc2 = gui.create("scrollbar", set.r22, {processingDirection="MAX_ON_TOP"});
+set.sc3 = gui.create("scrollbar", set.r22, {processingDirection="MAX_ON_TOP"});
+set.stretch = gui.create("scrollbar", set.r22, {processingDirection="MAX_ON_TOP"});
+set.LUT = gui.get(set.vic,"LUT").LUT;
+set.selpbrow = gui.create("rowcolumn", set.r22, {orientation="VERTICAL"})
+set.pb_selin = gui.create("pushbutton", set.selpbrow, {labelString="Select IN"})
+set.pb_selout = gui.create("pushbutton", set.selpbrow, {labelString="Select OUT"})
+gui.addcallback (set.pbload, "activate", "cb_load(set=set)")
+gui.addcallback (set.pbsave, "activate", "cb_save(set=set)")
+gui.addcallback (set.pbconv, "activate", "cb_convolver(set=set)")
+gui.addcallback (set.pbhist, "activate", "cb_hist(set=set)")
+gui.addcallback (set.pbquit, "activate", sprintf("gui.destroy(%d)",set.top))
+gui.addcallback (set.pb_in, "activate", "cb_in(set=set)")
+gui.addcallback (set.pb_out, "activate", "cb_out(set=set)")
+gui.addcallback (set.pbleft, "activate", "cb_left(set=set)")
+gui.addcallback (set.pbright, "activate", "cb_right(set=set)")
+gui.addcallback (set.pbup, "activate", "cb_up(set=set)")
+gui.addcallback (set.pbdown, "activate", "cb_down(set=set)")
+gui.addcallback (set.pb_selin, "activate", "cb_selectin(set=set)")
+gui.addcallback (set.pb_selout, "activate", "cb_selectout(set=set)")
+gui.addcallback (set.vic, "select", "cb_selected(set=set)");
+gui.addcallback (set.vic, "point", "cb_picker(set=set)");
+gui.addcallback (set.stretch, "valueChanged", "cb_stretcher(set=set)");
+gui.realize(set.top)
