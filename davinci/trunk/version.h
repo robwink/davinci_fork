@@ -1,8 +1,14 @@
-char *version = "@(#) daVinci Version #2.08";
+char *version = "@(#) daVinci Version #2.09";
 
 #include "build.h"
 
 /*
+  Version 2.09: Mon Aug 15 17:28:23 MST 2011
+  * Internal distribution.
+  * Fixed a SAMPLEFORMAT error. The TIFF reader was calling libtiff with a 32
+    bit unsigned integer instead of an unsigned 16 bit integer. This caused 
+    unpredictable SAMPLEFORMAT values.
+
   Version 2.08: Thu Jul  7 14:05:54 MST 2011
   * Internal distribution.
   + Enabled reading of tiled-TIFF files.
