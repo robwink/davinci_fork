@@ -13,6 +13,8 @@
 #include <sys/mman.h>
 #endif /* _WIN32 */
 
+#include <errno.h>
+
 #ifdef HAVE_LIBGEN_H
 #include <libgen.h>
 #endif
@@ -1053,7 +1055,9 @@ vanread(
                         PROT_READ | PROT_WRITE,
                         MAP_PRIVATE, fd, 0);
 
-    if (data == NULL){
+    if (data == NULL || data == ((void *)-1)){
+	  fprintf(stderr, "Unable to mmap file %s of size %ld due to %s.\n",
+	        fname, sbuf.st_size, strerror(errno));
       close(fd);
       if(iscompressed) {
         unlink(fname);
