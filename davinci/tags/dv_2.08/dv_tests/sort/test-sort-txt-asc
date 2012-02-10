@@ -1,0 +1,10 @@
+a=cat("1","2","7","4","11","7",axis=y);
+b=sort(a)
+if (length(b) != length(a)) exit(1);
+for(i=2;i<=length(b);i++){
+	if (b[i]<b[i-1]) exit(1);
+}
+
+exit(0);
+
+

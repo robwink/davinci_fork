@@ -1,0 +1,78 @@
+source("covar.dv")
+source("corr.dv")
+
+# test 13 - Principal Component Stretch
+define test_pcs(tol) {
+	maxdiff = 0.0;
+
+	#if (HasValue(m)) delete(m);
+	m = load("pcs-input.v");
+	if (HasValue(m) == 0) return(0);
+
+	#if (HasValue(d1)) delete(d1);
+	#if (HasValue(d2)) delete(d2);
+	d1 = pcs(m,v,x);
+	d2 = load("pcs-vx.v");
+	if ((HasValue(d1) == 0) || (HasValue(d2) == 0)) return(0);
+	maxdiff = max(maxdiff // max(abs(d1 - d2)));
+	dump(maxdiff);
+
+	#if (HasValue(d1)) delete(d1);
+	#if (HasValue(d2)) delete(d2);
+	d1 = pcs(m,v,y);
+	d2 = load("pcs-vy.v");
+	if ((HasValue(d1) == 0) || (HasValue(d2) == 0)) return(0);
+	maxdiff = max(maxdiff // max(abs(d1 - d2)));
+	dump(maxdiff);
+
+	#if (HasValue(d1)) delete(d1);
+	#if (HasValue(d2)) delete(d2);
+	d1 = pcs(m,v,z);
+	d2 = load("pcs-vz.v");
+	if ((HasValue(d1) == 0) || (HasValue(d2) == 0)) return(0);
+	maxdiff = max(maxdiff // max(abs(d1 - d2)));
+	dump(maxdiff);
+
+	#if (HasValue(d1)) delete(d1);
+	#if (HasValue(d2)) delete(d2);
+	d1 = pcs(m, r, x);
+	d2 = load("pcs-rx.v");
+	if ((HasValue(d1) == 0) || (HasValue(d2) == 0)) return(0);
+	maxdiff = max(maxdiff // max(abs(d1 - d2)));
+	dump(maxdiff);
+
+	#if (HasValue(d1)) delete(d1);
+	#if (HasValue(d2)) delete(d2);
+	d1 = pcs(m, r, y);
+	d2 = load("pcs-ry.v");
+	if ((HasValue(d1) == 0) || (HasValue(d2) == 0)) return(0);
+	maxdiff = max(maxdiff // max(abs(d1 - d2)));
+	dump(maxdiff);
+
+	#if (HasValue(d1)) delete(d1);
+	#if (HasValue(d2)) delete(d2);
+	d1 = pcs(m, r, z);
+	d2 = load("pcs-rz.v");
+	if ((HasValue(d1) == 0) || (HasValue(d2) == 0)) return(0);
+	maxdiff = max(maxdiff // max(abs(d1 - d2)));
+	dump(maxdiff);
+
+	# Test default opt="v"
+	#if (HasValue(d1)) delete(d1);
+	#if (HasValue(d2)) delete(d2);
+	d1 = pcs(m, v, x);
+	d2 = pcs(m, axis=x);
+	if ((HasValue(d1) == 0) || (HasValue(d2) == 0)) return(0);
+	maxdiff = max(maxdiff // max(abs(d1 - d2)));
+	dump(maxdiff);
+
+	return(maxdiff <= tol);
+}
+
+# define tolerence
+tol = 1E-5;
+
+if(test_pcs(tol=tol)) exit(0);
+exit(1);
+
+
