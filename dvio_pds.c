@@ -1885,7 +1885,7 @@ rfQube(const dataKey *objSize, Var *vQube, int load_suffix_data){
 	
 	fileName = (char *)alloca(strlen(objSize->FileName)+1);
 	pickFilename(fileName, objSize->FileName);
-	fprintf(stderr, "Reading %s from %s...\n", objSize->Name, fileName);
+	parse_error("Reading %s from %s...\n", objSize->Name, fileName);
 	if ((fp = fopen(fileName, "rb")) == NULL){
 		fprintf(stderr, "Unable to open file for reading: \"%s\". Reason: %s\n", fileName, strerror(errno));
 		return 0;
@@ -1964,7 +1964,7 @@ rfTable(dataKey *objSize, Var * ob){
 
 	fileName = (char *)alloca(strlen(objSize->FileName)+1);
 	pickFilename(fileName, objSize->FileName);
-	fprintf(stderr, "Reading %s from %s...\n", objSize->Name, fileName);
+	parse_error("Reading %s from %s...\n", objSize->Name, fileName);
 	label = LoadLabelFromObjDesc(objSize->objDesc, fileName);
 	if (label == NULL) {
 		fprintf(stderr, "Unable to load label from \"%s\".\n", fileName);
@@ -2337,7 +2337,7 @@ rfImage(dataKey *objSize, Var * ob){
 
 	fileName = (char *)alloca(strlen(objSize->FileName)+1);
 	pickFilename(fileName, objSize->FileName);
-	fprintf(stderr, "Reading %s from %s...\n", objSize->Name, fileName);
+	parse_error("Reading %s from %s...\n", objSize->Name, fileName);
 	if ((fp = fopen(fileName, "rb")) == NULL){
 		fprintf(stderr, "Unable to open file for reading: \"%s\". Reason: %s\n", fileName, strerror(errno));
 		return 0;
@@ -2368,7 +2368,7 @@ rfHistogram(dataKey *objSize, Var * ob){
 
 	fileName = (char *)alloca(strlen(objSize->FileName)+1);
 	pickFilename(fileName, objSize->FileName);
-	fprintf(stderr, "Reading %s from %s...\n", objSize->Name, fileName);
+  parse_error("Reading %s from %s...\n", objSize->Name, fileName);
 	if ((fp = fopen(fileName, "rb")) == NULL){
 		fprintf(stderr, "Unable to open file for reading: \"%s\". Reason: %s\n", fileName, strerror(errno));
 		return 0;
@@ -2496,7 +2496,7 @@ rfHistory(dataKey *objSize, Var *ob) {
 	
 	fileName = (char *)alloca(strlen(objSize->FileName)+1);
 	pickFilename(fileName, objSize->FileName);
-	fprintf(stderr, "Reading %s from %s...\n", objSize->Name, fileName);
+	parse_error("Reading %s from %s...\n", objSize->Name, fileName);
 	if ((fp = fopen(fileName, "rb")) == NULL){
 		fprintf(stderr, "Unable to open file for reading: \"%s\". Reason: %s\n", fileName, strerror(errno));
 		return 0;
