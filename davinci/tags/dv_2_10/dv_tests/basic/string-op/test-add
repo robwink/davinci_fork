@@ -1,0 +1,8 @@
+s="Mary "
+s2="had a little"
+s3=cat(s+s2,s+s2,s+s2,s+s2,axis=y)
+s4=s3+" lamb"
+
+if(sum(s4=="Mary had a little lamb")==4) exit(0);
+exit(1);
+
