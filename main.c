@@ -539,6 +539,135 @@ char *resolve(char *str)
 	return filename;
 }
 
+// A helper function to stripTerminatingWhiteSpaces(str)
+char * truncateTerminatingSpaces(char *line)
+{
+	if(line==NULL)
+		return NULL;
+
+	int length = strlen(line);
+
+	char terminatingCharacter=*(line+length-1);
+
+	// Point to the end of the line...
+	char *line_ptr = line+length;
+
+	// Set the pointer one character from the end...
+	--line_ptr;
+
+	--line_ptr;
+
+	// Locate the first non-space character from the end of the line...
+	while(*line_ptr==' ')
+	{
+		// If the *line_ptr meets *line, it means that the string was only spaces...
+		if(line_ptr==line)
+			return NULL;
+
+		--line_ptr;
+	}
+
+	// If the execution reaches this point, it means that the string is not empty and may (or may not) have terminating white spaces...
+	// Now, just set the character to the right as null;
+
+	++line_ptr;
+	*line_ptr=terminatingCharacter;
+
+	// Add terminating character...
+	++line_ptr;
+	*line_ptr='\0';
+
+	// Finally return the pointer line...
+	return line;
+}
+
+// The following function removes extra terinating white spaces...
+char * stripTerminatingWhiteSpaces(char *str)
+{
+	// Extract the string literal from the command line...
+	char *buf;
+	char *original;
+	int i,truncated=0;
+	char *p=str;
+	char *quotedStr;
+	char *quotedSpaceStr;
+	char *truncatedStr;
+	char *finalStr;
+	int len=0;
+	int size=strlen(str)+10;
+
+	buf = (char *)malloc(size);
+	original = (char *)malloc(size);
+	quotedStr = (char *)malloc(size);
+	quotedSpaceStr = (char *)malloc(size);
+	truncatedStr = (char *)malloc(size);
+	finalStr = (char *)malloc(size);
+
+	strcpy(original, str);
+
+	while(strstr(p,"\""))
+	{
+		quotedStr[0]='\"';
+		quotedStr[1]='\0';
+
+		p=strstr(p, "\"");
+
+		p++;
+
+		i=0;
+		while(*p!='\"'&&*p!='\0')
+		{
+			buf[i++] = *p;
+			p++;
+		}
+
+		// Advance pointer p...
+		p++;
+
+		// Terminate the string...
+		buf[i]='"';
+		buf[i+1]='\0';
+
+		len=strlen(buf);
+
+		for(i=0;i<len;i++)
+			quotedStr[i+1] = buf[i];
+
+		quotedStr[i+1]='\0';
+
+		strcpy(quotedSpaceStr,quotedStr);
+
+		if(quotedSpaceStr[strlen(quotedSpaceStr)-2]!=' ')
+		{
+			// Means the string does not have white spaces at the end...
+			continue;
+		}
+
+		// Set the truncated flag...
+		truncated=1;
+
+		strcpy(truncatedStr, truncateTerminatingSpaces(quotedStr));
+
+		strcpy(finalStr, replace(original, quotedSpaceStr, truncatedStr));
+	}
+
+	free(buf);
+	free(quotedStr);
+	free(quotedSpaceStr);
+	free(truncatedStr);
+
+	if(truncated)
+	{
+		free(original);
+		return finalStr;
+	}
+	else
+	{
+		free(finalStr);
+		return original;
+	}
+}
+
 void lhandler(char *line)
 {
   char *buf;
@@ -551,6 +680,10 @@ void lhandler(char *line)
   /* JAS FIX */
   while (1) {
 #endif
+
+    // Strip the line of any terminating white spaces...
+    if(strstr(line,"\""))
+	line=stripTerminatingWhiteSpaces(line);
 
     // Resolve the ~ operator...
     if(line!=NULL && (tilde_ptr=strstr(line,"~"))!=NULL)
