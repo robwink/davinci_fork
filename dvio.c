@@ -227,6 +227,20 @@ var2iom_iheader(
 }
 
 
+/* Checks if the file exists...*/
+
+int file_exists(const char * filename)
+{
+	FILE *file;
+
+    if (file = fopen(filename, "r"))
+    {
+        fclose(file);
+        return 1;
+    }
+    return 0;
+}
+
 /*
 ** locate_file() - do filename expansion
 **
@@ -251,9 +265,8 @@ dv_locate_file(const char *fname)
 		//return a strdup
 		buf = iom_expand_filename(fname);
 	}
-	return buf;
+	return file_exists(buf)?buf:NULL;
 }
-
 
 void
 dv_set_iom_verbosity()
