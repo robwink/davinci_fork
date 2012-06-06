@@ -451,17 +451,110 @@ event_loop(void)
     process_streams();
   }
 }
+
+// Replaces the string "old" in string "s" with "new"...
+char *replace(const char *s, const char *old, const char *new)
+{
+	char *ret;
+	int i, count = 0;
+	size_t newlen = strlen(new);
+	size_t oldlen = strlen(old);
+
+	for (i = 0; s[i] != '\0'; i++)
+	{
+		if (strstr(&s[i], old) == &s[i])
+		{
+			count++;
+			i += oldlen - 1;
+		}
+	}
+
+	ret = malloc(i + count * (newlen - oldlen));
+
+	if (ret == NULL)
+		exit(EXIT_FAILURE);
+
+	i = 0;
+	while (*s)
+	{
+		if (strstr(s, old) == s)
+		{
+			strcpy(&ret[i], new);
+			i += newlen;
+			s += oldlen;
+		}
+		else
+			ret[i++] = *s++;
+	}
+
+	ret[i] = '\0';
+
+	return ret;
+}
+
+// The following function resolves the ~ operator...
+char *resolve(char *str)
+{
+	char *filename;
+	char *original;
+	char *p,*q;
+	char *temp;
+	int i=0;
+	int size=strlen(str)+strlen(iom_expand_filename(str));
+
+	temp = (char *)malloc(size);
+	filename = (char *)malloc(size);
+	original = (char *)malloc(size);
+	strcpy(original, str);
+
+	p = strstr(str, "~");
+
+	while(*p!='\"'&&*p!='\0')
+	{
+		temp[i++]=*p;
+		p++;
+	}
+
+	temp[i]='\0';
+
+	q=dv_locate_file(temp);
+
+	// If q is NULL, return
+	if(!q)
+	{
+	
+		free(temp);
+		free(filename);
+		free(original);
+		return str;
+	}
+
+	strcpy(filename, q);
+
+	strcpy(filename ,replace(original, temp, filename));
+
+	free(temp);
+	free(original);
+
+	return filename;
+}
+
 void lhandler(char *line)
 {
   char *buf;
   char prompt[256];
   extern int pp_line;
   extern int pp_count;
+  char *tilde_ptr;
 
 #if !defined(USE_X11_EVENTS) || !defined(HAVE_LIBREADLINE)
   /* JAS FIX */
   while (1) {
 #endif
+
+    // Resolve the ~ operator...
+    if(line!=NULL && (tilde_ptr=strstr(line,"~"))!=NULL)
+	line = resolve(line);
 
     /**
      ** Readline has a whole line of input, process it.
@@ -515,6 +608,8 @@ void lhandler(char *line)
     line=(char *)readline(prompt);
   }
 #endif
+
+  free(buf);
 
 }
 
@@ -790,6 +885,6 @@ const char *usage_str =
 
 int
 usage(char *prog) {
-  fprintf(stderr, usage_str, prog);
+  parse_error(usage_str, prog);
   return(1);
 }
