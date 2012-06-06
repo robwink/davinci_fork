@@ -535,6 +535,41 @@ Var *ff_filename(vfuncptr func, Var * arg)
   }
 }
 
+int list_contains(char *str, Var *S)
+{
+	int i;
+
+	for(i=0;i<V_TEXT(S).Row;i++)
+		if(strcmp(str, V_TEXT(S).text[i])==0)
+			return 1;
+
+	return 0;
+}
+
+Var *minus(Var *ob1, Var *S)
+{
+	Var *ob1_minus_S;
+	int i,j,count;
+	i=j=count=0;
+
+	// Obtain the number of elements...
+	for(i=0;i<V_TEXT(ob1).Row;i++)
+			if(list_contains(V_TEXT(ob1).text[i], S)==0)
+				count++;
+
+	ob1_minus_S = newVar();
+	V_TYPE(ob1_minus_S) = ID_TEXT;
+	V_TEXT(ob1_minus_S).Row = count;
+	V_TEXT(ob1_minus_S).text = (char **) calloc(count, sizeof(char *));
+
+	count=0;
+
+	for(i=0;i<V_TEXT(ob1).Row;i++)
+		if(list_contains(V_TEXT(ob1).text[i], S)==0)
+			V_TEXT(ob1_minus_S).text[count++] = strdup(V_TEXT(ob1).text[i]);
+
+	return ob1_minus_S;
+}
 
 Var *ff_grep(vfuncptr func, Var * arg)
 {
@@ -546,15 +581,17 @@ Var *ff_grep(vfuncptr func, Var * arg)
   int index = 0;
   int i;
   int ignore_case = 0;
+  int invert = 0;
 
   int cflags = REG_EXTENDED;
 
   regex_t compiled;
-  Alist alist[4];
+  Alist alist[5];
   alist[0] = make_alist("obj", ID_UNK, NULL, &ob1);
   alist[1] = make_alist("pattern", ID_STRING, NULL, &s1);
   alist[2] = make_alist("icase", INT, NULL, &ignore_case);
-  alist[3].name = NULL;
+  alist[3] = make_alist("invert", INT, NULL, &invert);
+  alist[4].name = NULL;
 
   if (parse_args(func, arg, alist) == 0)
     return (NULL);
@@ -575,6 +612,7 @@ Var *ff_grep(vfuncptr func, Var * arg)
 		
   /* Compile expression space */
   regcomp(&compiled, s1, cflags);
+
   for (i = 0; i < V_TEXT(ob1).Row; i++) {
     newcursor = regexec(&compiled, V_TEXT(ob1).text[i], 0, NULL, 0);
     if (newcursor == 0)
@@ -597,7 +635,12 @@ Var *ff_grep(vfuncptr func, Var * arg)
     }
   }
   regfree(&compiled);
-  return (S);
+
+  if(invert==0)
+	  return (S);
+
+  else
+	  return (minus(ob1,S));
 }
 
 
