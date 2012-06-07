@@ -989,6 +989,9 @@ load_csv(
     int nfields = 0;
     int i;
     Var *d = NULL;
+    float gb;
+    int mb;
+    int bytesInMb = pow(2, 20);
 
     char * fname = NULL;
     FILE *fp;
@@ -1044,11 +1047,29 @@ load_csv(
       return 0;
     }
 
-    data = (char *)mmap(NULL, sbuf.st_size,
-                        PROT_READ | PROT_WRITE,
-                        MAP_PRIVATE, fd, 0);
+    data = (char *)mmap(NULL, sbuf.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
 
-    if (data == NULL){
+    if (data == NULL || data == ((void *)-1)){
+    	fprintf(stderr, "\nDavinci cannot allocate sufficient memory to load the file\n\"%s\".\n\n", fname);
+
+    	// Calculate the number of mega bytes...
+    	mb = sbuf.st_size / bytesInMb;
+
+    	// Calculate the number of giga bytes...
+    	gb = mb>=1024?((float)mb/1024.0):0;
+
+    	if((int)gb>0)
+    	{
+    		// If file was found to be greater than 1 GB.
+
+    		fprintf(stderr, "Reason: The size of the file you tried to load is %.1f GB which is greater than the virtual memory of your system.\n\n", gb);
+    		fprintf(stderr, "Hint: Use a system with a virtual memory (RAM + SWAP) configuration greater than\n%.1f GB.\n\n", gb);
+    	}
+    	else
+    	{
+    		fprintf(stderr, "Reason: The size of the file you tried to load is %d MB which is greater than the virtual memory of your system.\n\n", mb);
+    		fprintf(stderr, "Hint: Use a system with a virtual memory (RAM + SWAP) configuration greater than\n%d MB.\n\n", mb);
+    	}
       close(fd);
       if(iscompressed) {
         unlink(fname);
