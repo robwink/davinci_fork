@@ -266,7 +266,7 @@ vlex_next_tok(
             ** lexeme.
             */
             if      (lc & FS){          state = 10;  p = q+1; if (zflag) *q = 0; }
-            else if (lc & RS){          state = 130;          if (zflag) *q = 0; }
+            else if (lc & RS){          state = 130; 		  if (zflag) *q = 0; }
             else if (lc & SEOF)         state = 960, q--;
             else if (lc & SIGN)         state = 20;
             else if (lc & DIGIT)        state = 30;
@@ -1003,7 +1003,8 @@ vanread(
     )
 {
     int      fd;
-    char     *data = NULL;
+    int 	 len;
+    char     *data = NULL,*p, *q, ch, *temp=NULL;
     struct   stat sbuf;
     coldef   *cols = NULL;
     coldef   **fields = NULL;
@@ -1016,7 +1017,9 @@ vanread(
     FILE *fp;
     int iscompressed=0;
     *v_return = NULL;
-
+    float gb;
+    int mb;
+    int bytesInMb = pow(2, 20);
 
 
     if ((fname = dv_locate_file(filename)) == (char*)NULL) {
@@ -1051,13 +1054,29 @@ vanread(
       return EFILE;
     }
 
-    data = (char *)mmap(NULL, sbuf.st_size,
-                        PROT_READ | PROT_WRITE,
-                        MAP_PRIVATE, fd, 0);
+    data = (char *)mmap(NULL, sbuf.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
 
     if (data == NULL || data == ((void *)-1)){
-	  fprintf(stderr, "Unable to mmap file %s of size %ld due to %s.\n",
-	        fname, sbuf.st_size, strerror(errno));
+    	fprintf(stderr, "\nDavinci cannot allocate sufficient memory to load the file\n\"%s\".\n\n", fname);
+
+    	// Calculate the number of mega bytes...
+    	mb = sbuf.st_size / bytesInMb;
+
+    	// Calculate the number of giga bytes...
+    	gb = mb>=1024?((float)mb/1024.0):0;
+
+    	if((int)gb>0)
+    	{
+    		// If file was found to be greater than 1 GB.
+
+    		fprintf(stderr, "Reason: The size of the file you tried to load is %.1f GB which is greater than the virtual memory of your system.\n\n", gb);
+    		fprintf(stderr, "Hint: Use a system with a virtual memory (RAM + SWAP) configuration greater than\n%.1f GB.\n\n", gb);
+    	}
+    	else
+    	{
+    		fprintf(stderr, "Reason: The size of the file you tried to load is %d MB which is greater than the virtual memory of your system.\n\n", mb);
+    		fprintf(stderr, "Hint: Use a system with a virtual memory (RAM + SWAP) configuration greater than\n%d MB.\n\n", mb);
+    	}
       close(fd);
       if(iscompressed) {
         unlink(fname);
@@ -1227,9 +1246,6 @@ ff_loadvan(
     rc = vanread(file_arg, delim_arg, "\r\n", &v_return);
 
     if (rc < 0){
-        if (rc == EMEM){ fprintf(stderr, "Fatal! Memory allocation failure."); }
-        parse_error("%s(): Failed! with rc=%d. See previous messages.",
-                    func->name, rc);
         return NULL;
     }
 
