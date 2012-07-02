@@ -1547,7 +1547,9 @@ Var *WritePDS(vfuncptr func, Var * arg)
     return (NULL);
   }
 
-  if ((fname = dv_locate_file(filename)) == (char*)NULL) {
+  fname = dv_locate_file(filename);
+
+  if (!file_exists(fname)) {
     parse_error("%s: Unable to expand filename %s\n", func->name,
                 filename);
     return (NULL);

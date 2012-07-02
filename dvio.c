@@ -10,6 +10,7 @@
 
 #include "parser.h"
 #include "iomedley.h"
+#include <stdlib.h>
 
 #if 0
 int
@@ -231,14 +232,8 @@ var2iom_iheader(
 
 int file_exists(const char * filename)
 {
-	FILE *file;
-
-    if (file = fopen(filename, "r"))
-    {
-        fclose(file);
-        return 1;
-    }
-    return 0;
+	struct stat buf;
+	return (stat(filename,&buf)==0?1:0);
 }
 
 /*
@@ -265,7 +260,7 @@ dv_locate_file(const char *fname)
 		//return a strdup
 		buf = iom_expand_filename(fname);
 	}
-	return file_exists(buf)?buf:NULL;
+	return buf;
 }
 
 void

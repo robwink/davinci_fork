@@ -93,13 +93,14 @@ do_load(char *filename, struct iom_iheader *h)
     /** 
      ** if open file fails, check for record suffix
      **/
-    if ((fname = dv_locate_file(filename)) == NULL) {
+    fname = dv_locate_file(filename);
+    if (!file_exists(fname)) {
         if ((p = strchr(filename, SPECPR_SUFFIX)) != NULL) {
             *p = '\0';
             record = atoi(p + 1);
             fname = dv_locate_file(filename);
         }
-        if (fname == NULL) {
+        if (!file_exists(fname)) {
             sprintf(error_buf, "Cannot find file: %s", filename);
             parse_error(NULL);
             return (NULL);
