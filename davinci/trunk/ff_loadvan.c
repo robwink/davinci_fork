@@ -266,7 +266,7 @@ vlex_next_tok(
             ** lexeme.
             */
             if      (lc & FS){          state = 10;  p = q+1; if (zflag) *q = 0; }
-            else if (lc & RS){          state = 130; 		  if (zflag) *q = 0; }
+            else if (lc & RS){          state = 130; if (zflag) *q = 0; }
             else if (lc & SEOF)         state = 960, q--;
             else if (lc & SIGN)         state = 20;
             else if (lc & DIGIT)        state = 30;
@@ -1021,8 +1021,8 @@ vanread(
     int mb;
     int bytesInMb = pow(2, 20);
 
-
-    if ((fname = dv_locate_file(filename)) == (char*)NULL) {
+    fname = dv_locate_file(filename);
+    if (!file_exists(fname)) {
         parse_error("Unable to expand filename %s\n", filename);
         return EFILE;
     }

@@ -999,13 +999,10 @@ load_csv(
 
     *v_return = NULL;
 
-//     if((file = fopen(filename, "rb"))==NULL) {
-//         parse_error("Error opening file: %s", strerror(errno));
-//         return 0;
-//     }
-
     //check for empty file, return empty struct here
-   if ((fname = dv_locate_file(filename)) == (char*)NULL) {
+
+   fname = dv_locate_file(filename);
+   if (!file_exists(fname)) {
         parse_error("Unable to expand filename %s\n", filename);
         return 0;
     }
