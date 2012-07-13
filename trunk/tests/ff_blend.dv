@@ -1,0 +1,173 @@
+#!/home/gorelick/bin/davinci -fqv0
+
+# Unit tests for ff_blend.dv
+
+modes = { \
+  "multiply", \
+  "divide", \
+  "overlay", \
+  "screen", \
+  "dodge", \
+  "burn", \
+  "hardlight", \
+  "softlight", \
+  "grainextract", \
+  "grainmerge", \
+  "difference", \
+  "addition", \
+  "subtract", \
+  "darkenonly", \
+  "lightenonly" \
+}
+
+tests = { \
+  clone(byte(0),  1,1,3), \
+  clone(byte(128),1,1,3), \
+  clone(byte(255),1,1,3), \
+  byte(random(3,3,3)*256) \
+}
+
+define test_blend() {
+  modes = $1
+  tests = $2
+  badcount = 0
+  goodcount = 0
+  for (i = 1 ; i <= length(modes) ; i+=1)  {
+    test_name = sprintf("blend_%s", modes[i])
+    for (j = 1 ; j <= length(tests) ; j+=1)  {
+      for (k = 1 ; k <= length(tests) ; k+=1)  {
+        input1 = double(tests[j])
+        input2 = double(tests[k])
+        v1 = blend(input1, input2, modes[i])
+        v2 = eval(sprintf("byte(%s(input1, input2))", test_name))
+        if (v1 != v2) {
+          printf("Difference in test: %s\n", test_name);
+          echo(v1)
+          echo(v2)
+          badcount += 1
+        } else {
+          goodcount += 1
+        }
+      }
+    }
+  }
+
+  # manual test for dissolve
+  a = blend(clone(3, 3, 3, 3), clone(4, 3, 3, 3), "dissolve")
+  # verfiy that we got some of both.
+  if (sum(a == 3) && sum(a == 4) && (sum(a == 3) + sum(a == 4) == 27)) {
+    goodcount += 1
+  } else {
+    badcount += 1
+  }
+
+  if (badcount > 0)  {
+    printf("Failed %d tests.\n", badcount);
+  } else {
+    printf("Passed %d tests.\n", goodcount);
+  }
+}
+
+
+define blend_multiply() {
+  I = $1
+  M = $2
+
+  return((M * I) / 255.0);
+}
+
+define blend_divide() {
+  I = $1
+  M = $2
+
+  return(I * 256.0 / (M+1));
+}
+
+define blend_screen() {
+  I = $1
+  M = $2
+
+  return(255.0 - ((255-M) * (255-I)) / 255.0);
+}
+
+define blend_overlay() {
+  I = $1
+  M = $2
+
+  return((I / 255.0) *  (I + (2*M/255.0) * (255.0 - I)));
+}
+
+define blend_dodge() {
+  I = $1
+  M = $2
+
+  return(I*256.0 / ((255.0 - M) + 1));
+}
+define blend_burn() {
+  I = $1
+  M = $2
+
+  return(255.0 - (((255.0 - I) * 256.0) / (M+1)));
+}
+
+define blend_hardlight() {
+  I = $1
+  M = $2
+
+  if (M > 128) {
+      return(255.0 - ((255.0-I) * ( 255.0-(2.0*(M-128.0)))) / 256.0);
+  } else {
+      return(I*M / 128.0);
+  }
+}
+define blend_softlight() {
+  I = $1
+  M = $2
+
+  Rs = blend_screen(M, I);
+  return(((255.0 - I) * M * I) + (I * Rs) / 255.0);
+}
+define blend_grainextract() {
+  I = $1
+  M = $2
+
+  return(I - M + 128.0);
+}
+define blend_grainmerge() {
+  I = $1
+  M = $2
+
+  return(I + M + 128.0);
+}
+define blend_difference() {
+  I = $1
+  M = $2
+
+  return(abs(I-M));
+}
+define blend_addition() {
+  I = $1
+  M = $2
+
+  return(M + I);
+}
+define blend_subtract() {
+  I = $1
+  M = $2
+
+  return(I - M);
+}
+define blend_darkenonly() {
+  I = $1
+  M = $2
+
+  return(min(min(M) // min(I)));
+}
+define blend_lightenonly() {
+  I = $1
+  M = $2
+
+  return(max(max(M) // max(I)));
+}
+
+test_blend(modes, tests)

@@ -1,0 +1,7 @@
+s4=cat("abc","def","ghi","jkl",axis=y);
+write(s4,$TMPDIR+"/test.read",ascii,force=1)
+readlines=read_lines($TMPDIR+"/test.read")
+if(fexists($TMPDIR+"/test.read")) fremove($TMPDIR+"/test.read");
+if(sum(s4==readlines)==4) exit(0);
+exit(1);
+
