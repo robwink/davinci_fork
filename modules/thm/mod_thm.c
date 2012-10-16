@@ -32,6 +32,7 @@ static double *minimize_1d(Var *measured, float *bbody, double em_start, double 
 static char *get_temp_rad(char *fname);
 
 /* THM Module Functions */
+static Var *thm_y_shear(vfuncptr, Var *);
 static Var *thm_corners(vfuncptr, Var *);
 static Var *thm_column_fill(vfuncptr, Var *);
 static Var *thm_deplaid(vfuncptr, Var *);
@@ -48,6 +49,7 @@ static Var *thm_white_noise_remove2(vfuncptr, Var *);
 
 
 static dvModuleFuncDesc exported_list[] = {
+  { "y_shear", (void *) thm_y_shear },
   { "column_fill", (void *) thm_column_fill},
   { "convolve", (void *) ff_convolve2 },
   { "corners", (void *) thm_corners },
@@ -91,7 +93,6 @@ dv_module_fini(const char *name)
 {
   parse_error("Unloaded module thm.");
 }
-
 
 /**
 *** This returns x-y pairs stretched out into a 1x8 array (x1,y1,x2,y2...)
