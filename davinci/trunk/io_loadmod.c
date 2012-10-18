@@ -513,7 +513,7 @@ Var * ff_lsmod(struct _vfuncptr *f, Var *args) {
     curtype = AvailableTypes;
     if ((curmod = module_for_name(mname)) == NULL) {
       parse_error("No module '%s' is currently loaded.", mname);
-      return NULL;
+      return newInt(0);
     }
     printf("Module name   : %s\n", curmod->modname);
     printf("Module path   : %s\n", curmod->modpath);
@@ -523,10 +523,11 @@ Var * ff_lsmod(struct _vfuncptr *f, Var *args) {
     printf("File Types    : ");
     while (curtype != NULL) {
       if (!strcmp(curtype->handler->modname, curmod->modname))
-	printf("%s ", curtype->filetype);
+        printf("%s ", curtype->filetype);
       curtype = curtype->next;
     }
     printf("\n");
+    return newInt(1);
   }
   return NULL;  
 }
