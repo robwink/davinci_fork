@@ -708,12 +708,13 @@ thm_rectify(vfuncptr func, Var * arg)
   float    nullo = -3.402822655e+38;   /* the null value in the projected cube */
   float    nullv = -32768;             /* the null value to put in all blank space */
   float    yiz = 0;                    /* temporary float value */
-  int	   trim = 0;		       /* whether to trim the data or not */
+  int	     trim = 0;		       /* whether to trim the data or not */
   int      lshift;                     /* the largest shift (int) */
-  int      u, x, y, z;                 /* dimensions of the picture */
+  size_t   u;
+  int      x, y, z;                 /* dimensions of the picture */
   int      i, j, k;                    /* loop indices */
-  int      ni;                         /* memory locations */
-  int      nx, nu, nz;
+  size_t   ni;                         /* memory locations */
+  size_t   nx, nu, nz;
   int     *leftmost, *rightmost;       /* leftmost and rightmost pixel arrays */
   int      w = 0,width = 0;            /* width values */
   int     *cns = NULL;                 /* the corners array */
