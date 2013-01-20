@@ -1,8 +1,27 @@
-char *version = "@(#) daVinci Version #2.09";
+char *version = "@(#) daVinci Version #2.10";
 
 #include "build.h"
 
 /*
+  Version 2.10: Wed Dec 12 21:42:13 MST 2012
+  * Fixed a number of pointer / memory corruption issues:
+  func.h: 
+    Added inclusion of readline & history headers when libreadline
+    is found. Not including them was causing call issues related to
+    pointer shopping on the 64-bit plaform.
+  system.c:
+    Variables dirbuf & pathbuf expanded to 2048 bytes (from 256 bytes).
+    They were causing davinci crash due to memory corrpution. This is a
+    temporary fix and should be replaced by dynamic memory sizing.
+  main.c:
+    History buffer "buf" changed from 256 bytes to 2048 bytes in both 
+    init_history() & add_history(). The limited buffer size was causing
+    history lines to be chopped. This is also a temporary fix and should
+    be replaced with something longer lasting.
+  url_create_file.c:
+    Not having definitions of some functions was causing pointer 
+    chopping during function calls on 64-bit platforms.
+
   Version 2.09: Mon Aug 15 17:28:23 MST 2011
   * Internal distribution.
   * Fixed a SAMPLEFORMAT error. The TIFF reader was calling libtiff with a 32

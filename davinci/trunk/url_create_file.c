@@ -2,6 +2,8 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#include "parser.h"
+
 #include <stdio.h>
 
 #ifdef HAVE_LIBCURL
