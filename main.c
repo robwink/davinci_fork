@@ -953,7 +953,7 @@ log_time()
 void
 init_history(char *fname)
 {
-  char buf[256];
+  char buf[2048];
   FILE *fp;
 
   /* JAS FIX: what's up with the two empty if/endif below? */
@@ -964,7 +964,7 @@ init_history(char *fname)
     return;
   printf("loading history\n");
 
-  while (fgets(buf, 256, fp)) {
+  while (fgets(buf, sizeof(buf)-1, fp)) {
     if (buf[0] == '#')
       continue;
     buf[strlen(buf) - 1] = '\0';
@@ -987,10 +987,10 @@ dv_complete_func(char *text, int start, int end)
 void add_history () { }
 char *readline(char *prompt)
 {
-  char buf[256];
+  char buf[2048];
   fputs(prompt, stdout);
   fflush(stdout);
-  if (fgets(buf, 256, stdin) != NULL) {
+  if (fgets(buf, sizeof(buf)-1, stdin) != NULL) {
     return(strdup(buf));
   } else {
     return(NULL);

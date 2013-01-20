@@ -8,6 +8,9 @@ extern "C" {
   /* JAS FIX: these conflict if readline is used.  not sure about add_history().. */
   char *readline(char *);
   void add_history();
+#else
+  #include <readline/readline.h>
+  #include <readline/history.h>
 #endif
 
 #if 0
