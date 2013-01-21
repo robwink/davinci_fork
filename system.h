@@ -41,9 +41,13 @@ typedef unsigned char uchar;
 char *strdup(const char *);
 #endif
 
+#ifndef HAVE_STRNDUP
+char *strndup(char *s1, int len);
+#endif
+
 #ifndef HAVE_BASENAME
 char *basename(const char *);
 #endif
 
 void *my_realloc(void *, int);
-void *rmrf(const char *path);
+void rmrf(const char *path);
