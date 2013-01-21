@@ -4,6 +4,7 @@
 #include <dirent.h>
 
 #include "config.h"
+#include "system.h"
 
 #ifdef __MINGW32__
 #include <windows.h>

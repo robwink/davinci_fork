@@ -11,6 +11,7 @@
 #endif
 
 #include <string.h>
+#include "system.h"
 
 //These are also located in dvio_pds.c
 #define HTTP_PREFIX  "http://"
@@ -21,6 +22,7 @@
 
 
 
+extern char *make_temp_file_path();
 
 FILE *url_file; /* declare a FILE pointer */
 int unsigned long  url_data_counter = 0;
@@ -102,7 +104,7 @@ int  url_create_file(const char * filename, const char * url){
 		//Open file for writing
 		url_file = fopen(filename, "wb"); 
 		if(url_file==NULL) {
-			parse_error("Error: can't open file for writing.\n");
+			parse_error("Error: can't open file (%s) for writing.\n", filename);
 			return 1;
 		}
 
