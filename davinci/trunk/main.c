@@ -451,243 +451,17 @@ event_loop(void)
     process_streams();
   }
 }
-
-// Replaces the string "old" in string "s" with "new"...
-char *replace(const char *s, const char *old, const char *new)
-{
-	char *ret;
-	int i, count = 0;
-	size_t newlen = strlen(new);
-	size_t oldlen = strlen(old);
-
-	for (i = 0; s[i] != '\0'; i++)
-	{
-		if (strstr(&s[i], old) == &s[i])
-		{
-			count++;
-			i += oldlen - 1;
-		}
-	}
-
-	ret = malloc(i + count * (newlen - oldlen));
-
-	if (ret == NULL)
-		exit(EXIT_FAILURE);
-
-	i = 0;
-	while (*s)
-	{
-		if (strstr(s, old) == s)
-		{
-			strcpy(&ret[i], new);
-			i += newlen;
-			s += oldlen;
-		}
-		else
-			ret[i++] = *s++;
-	}
-
-	ret[i] = '\0';
-
-	return ret;
-}
-
-// The following function resolves the ~ operator...
-char *resolve(char *str)
-{
-	char *filename;
-	char *original;
-	char *p,*q;
-	char *temp;
-	int i=0;
-	int size=strlen(str)+strlen(iom_expand_filename(str));
-
-	temp = (char *)malloc(size);
-	filename = (char *)malloc(size);
-	original = (char *)malloc(size);
-	strcpy(original, str);
-
-	p = strstr(str, "~");
-
-	while(*p!='\"'&&*p!='\0')
-	{
-		temp[i++]=*p;
-		p++;
-	}
-
-	temp[i]='\0';
-
-	q=dv_locate_file(temp);
-
-	// If q is NULL, return
-	if(!q)
-	{
-	
-		free(temp);
-		free(filename);
-		free(original);
-		return str;
-	}
-
-	strcpy(filename, q);
-
-	strcpy(filename ,replace(original, temp, filename));
-
-	free(temp);
-	free(original);
-
-	return filename;
-}
-
-// A helper function to stripTerminatingWhiteSpaces(str)
-char * truncateTerminatingSpaces(char *line)
-{
-	if(line==NULL)
-		return NULL;
-
-	int length = strlen(line);
-
-	char terminatingCharacter=*(line+length-1);
-
-	// Point to the end of the line...
-	char *line_ptr = line+length;
-
-	// Set the pointer one character from the end...
-	--line_ptr;
-
-	--line_ptr;
-
-	// Locate the first non-space character from the end of the line...
-	while(*line_ptr==' ')
-	{
-		// If the *line_ptr meets *line, it means that the string was only spaces...
-		if(line_ptr==line)
-			return NULL;
-
-		--line_ptr;
-	}
-
-	// If the execution reaches this point, it means that the string is not empty and may (or may not) have terminating white spaces...
-	// Now, just set the character to the right as null;
-
-	++line_ptr;
-	*line_ptr=terminatingCharacter;
-
-	// Add terminating character...
-	++line_ptr;
-	*line_ptr='\0';
-
-	// Finally return the pointer line...
-	return line;
-}
-
-// The following function removes extra terinating white spaces...
-char * stripTerminatingWhiteSpaces(char *str)
-{
-	// Extract the string literal from the command line...
-	char *buf;
-	char *original;
-	int i,truncated=0;
-	char *p=str;
-	char *quotedStr;
-	char *quotedSpaceStr;
-	char *truncatedStr;
-	char *finalStr;
-	int len=0;
-	int size=strlen(str)+10;
-
-	buf = (char *)malloc(size);
-	original = (char *)malloc(size);
-	quotedStr = (char *)malloc(size);
-	quotedSpaceStr = (char *)malloc(size);
-	truncatedStr = (char *)malloc(size);
-	finalStr = (char *)malloc(size);
-
-	strcpy(original, str);
-
-	while(strstr(p,"\""))
-	{
-		quotedStr[0]='\"';
-		quotedStr[1]='\0';
-
-		p=strstr(p, "\"");
-
-		p++;
-
-		i=0;
-		while(*p!='\"'&&*p!='\0')
-		{
-			buf[i++] = *p;
-			p++;
-		}
-
-		// Advance pointer p...
-		p++;
-
-		// Terminate the string...
-		buf[i]='"';
-		buf[i+1]='\0';
-
-		len=strlen(buf);
-
-		for(i=0;i<len;i++)
-			quotedStr[i+1] = buf[i];
-
-		quotedStr[i+1]='\0';
-
-		strcpy(quotedSpaceStr,quotedStr);
-
-		if(quotedSpaceStr[strlen(quotedSpaceStr)-2]!=' ')
-		{
-			// Means the string does not have white spaces at the end...
-			continue;
-		}
-
-		// Set the truncated flag...
-		truncated=1;
-
-		strcpy(truncatedStr, truncateTerminatingSpaces(quotedStr));
-
-		strcpy(finalStr, replace(original, quotedSpaceStr, truncatedStr));
-	}
-
-	free(buf);
-	free(quotedStr);
-	free(quotedSpaceStr);
-	free(truncatedStr);
-
-	if(truncated)
-	{
-		free(original);
-		return finalStr;
-	}
-	else
-	{
-		free(finalStr);
-		return original;
-	}
-}
-
 void lhandler(char *line)
 {
   char *buf;
   char prompt[256];
   extern int pp_line;
   extern int pp_count;
-  char *tilde_ptr;
 
 #if !defined(USE_X11_EVENTS) || !defined(HAVE_LIBREADLINE)
   /* JAS FIX */
   while (1) {
 #endif
-
-    // Strip the line of any terminating white spaces...
-    if(strstr(line,"\""))
-	line=stripTerminatingWhiteSpaces(line);
-
-    // Resolve the ~ operator...
-    if(line!=NULL && (tilde_ptr=strstr(line,"~"))!=NULL)
-	line = resolve(line);
 
     /**
      ** Readline has a whole line of input, process it.
@@ -741,8 +515,6 @@ void lhandler(char *line)
     line=(char *)readline(prompt);
   }
 #endif
-
-  free(buf);
 
 }
 
@@ -1018,6 +790,6 @@ const char *usage_str =
 
 int
 usage(char *prog) {
-  parse_error(usage_str, prog);
+  fprintf(stderr, usage_str, prog);
   return(1);
 }
