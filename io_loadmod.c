@@ -574,7 +574,7 @@ Var * read_from_io_module(FILE * fh, char * fname) {
     use_module=use_module->next_list;
   }
   if (rtnval == NULL) {
-    parse_error("Could not find appropriate module to read file.\n");
+    //parse_error("Could not find appropriate module to read file.\n");
     goto error_exit;
   }
   /* TODO: check to see if rtnval is a string object, and print the string
