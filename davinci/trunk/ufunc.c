@@ -358,7 +358,7 @@ dispatch_ufunc(UFUNC *f, Var *arg)
 	int ac = 0;
 
     /**
-     ** Create identifiers for all the named arguments.  These dont
+     ** Create identifiers for all the named arguments.  These don't
      ** yet have pointers to data, indicating they're NOT_PRESENT.
      **/
     for (i = 0 ; i < f->nargs ; i++) {
@@ -395,7 +395,16 @@ dispatch_ufunc(UFUNC *f, Var *arg)
                 return(NULL);
             } else {
                 v = V_KEYVAL(p);
-                if ((e = eval(v)) != NULL) v = e;
+                if ((e = eval(v)) != NULL){
+                    /* Duplicate the value of the actual parameter "a" 
+                     * in calls foo(... x=a ...). Not doing so causes 
+                     * evaluation of formal parameter "x" (i.e. eval(x)) 
+                     * to return "a". Which is subsequently dereferenced
+                     * in the wrong scope, leading to "error: Variable 
+                     * not found: a".
+                     */
+                    v = V_DUP(e);
+                }
                 dd_put(scope, V_NAME(p), v);
             }
         } else {
