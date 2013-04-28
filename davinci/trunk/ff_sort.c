@@ -573,7 +573,7 @@ ff_unique(vfuncptr func, Var * arg)
     for(i=0;i<sy;i+=1)
       uniqElems=uniqElems+indexList[i];
 		
-    uniqText = (char **) calloc(k, sizeof(char *));
+    uniqText = (char **) calloc(uniqElems, sizeof(char *));
     
     j=0;
     for(i=0; i<sy; i++) {
