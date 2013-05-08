@@ -1,8 +1,45 @@
-char *version = "@(#) daVinci Version #2.10";
+char *version = "@(#) daVinci Version #2.11";
 
 #include "build.h"
 
 /*
+  Version 2.11: Tues May 7 23:10:14 MST 2013
+  system.c:
+    * Added header files.
+  system.h:
+    * Added declaration for strdup() when it was not found during configure.
+    * Updated declaration of rmrf().
+  url_create_file.c:
+    * Extra information added to messages.
+    * Included header files and function headers.
+
+  Removed changes from changeset 19047-19048. These included tilde expansion fix and extra white space addition fix, 
+    both of which had a buggy implementation.
+  Removed erroneous parse_error stating the iomodule coulnd't find the file, even when another reader might succeed
+  Modifications to DEBIAN control for compilation with ubuntu 12.10
+  Added control_12.04 for package building with ubuntu 12.04
+
+  Addressed the following bugs related to user defined functions:
+  1. It is possible to overwrite actual parameters passed to user
+   defined functions within the body of the user defined function.
+   (Bug 1919).
+  2. Actual parameters passed as values of named formal parameters
+   were being resolved in the user function scope in certain cases.
+   (Bug 1951). For example, "foo(x=d)" call would try to resolve "d"
+   within foo's body.
+
+  The bug was fixed by duplicating the actual parameter "a" passed
+  to the user defined function during dispatch (see ufunc.c) insted
+  of just copying the reference. The duplication removed the possibility
+  of corrupting the (actual) input variable.
+
+  In addition, calling "foo(x=a)", which translated to eval("x")
+  C-function, which cascaded to eval("a"), but in the wrong scope
+  (i.e. function's scope). That resulted in the error message: "error:
+  Variable not found: a" during function execution.
+
+  Bug 1950 fix: segv was being caused due to the use of the incorrect variable use while creating the return array.
+
   Version 2.10: Wed Dec 12 21:42:13 MST 2012
   * Fixed a number of pointer / memory corruption issues:
   func.h: 
