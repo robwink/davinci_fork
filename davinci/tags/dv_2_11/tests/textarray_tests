@@ -1,0 +1,387 @@
+verbose = 0
+define Passed(name) {
+	printf("%s: PASSED.\n",name)
+
+	return(NULL)
+}
+
+define Fail(name,got,shouldbe) {
+	printf("%s: FAILED...\nResult:%s\nAcutal:%s\n\n\n",name,got,shouldbe)
+
+	return(NULL)
+}
+
+
+
+define Test1() {
+
+/*Test Cat in Y, conditional relations and Strlen */
+
+
+
+	NAME="Cat in Y"
+
+	A=cat("abc","def",Y);
+	if (A[,1,]=="abc" && A[,2,]=="def") {
+		Passed(name=NAME);
+	} else {
+		Fail(name=NAME,got="Junk",shouldbe="2 Strings: abc & def");
+		return(1)
+	}
+
+	NAME="Conditional Relations:Less Than"
+
+	B=cat("def","abc",Y)
+	B=cat(B,"ghi",Y)
+	A=cat(A,"ghi",Y)
+
+	Q=(A<B);
+	if (Q[,1] != 1) {
+		Fail(name=NAME,got=sprintf("%d",Q[,1]),shouldbe="1")
+		return(1)
+	}
+	if (Q[,2] != 0) {
+		Fail(name=NAME,got=sprintf("%d",Q[,2]),shouldbe="0")
+		return(1)
+	}
+	Passed(name=NAME)
+
+	NAME="Conditional Relations:Greater Than"
+	Q=(A>B)
+	if (Q[,1] != 0) {
+		Fail(name=NAME,got=sprintf("%d",Q[,1]),shouldbe="0")
+		return(1)
+	}
+	if (Q[,2] != 1) {
+		Fail(name=NAME,got=sprintf("%d",Q[,2]),shouldbe="1")
+		return(1)
+	}
+	Passed(name=NAME)
+
+	NAME="Conditional Relations:Equal"
+	Q=(A==B);
+	if (Q[,1] != 0) {
+		Fail(name=NAME,got=sprintf("%d",Q[,1]),shouldbe="0")
+		return(1)
+	}
+	if (Q[,2] != 0) {
+		Fail(name=NAME,got=sprintf("%d",Q[,2]),shouldbe="0")
+		return(1)
+	}
+	if (Q[,3] != 1) {
+		Fail(name=NAME,got=sprintf("%d",Q[,3]),shouldbe="1")
+		return(1)
+	}
+	Passed(name=NAME)
+
+
+	NAME="Conditional Relations:Not Equal"
+	Q=(A!=B)
+	if (Q[,1] != 1) {
+		Fail(name=NAME,got=sprintf("%d",Q[,1]),shouldbe="1")
+		return(1)
+	}
+	if (Q[,2] != 1) {
+		Fail(name=NAME,got=sprintf("%d",Q[,2]),shouldbe="1")
+		return(1)
+	}
+	if (Q[,3] != 0) {
+		Fail(name=NAME,got=sprintf("%d",Q[,3]),shouldbe="0")
+		return(1)
+	}
+	Passed(name=NAME)
+
+	NAME="Conditional Relations:Less Than or Equal To"
+	Q=(A<=B);
+	if (Q[,1] != 1) {
+		Fail(name=NAME,got=sprintf("%d",Q[,1]),shouldbe="1")
+		return(1)
+	}
+	if (Q[,2] != 0) {
+		Fail(name=NAME,got=sprintf("%d",Q[,2]),shouldbe="0")
+		return(1)
+	}
+	Passed(name=NAME)
+
+	NAME="Conditional Relations:Greater Than or Equal To"
+	Q=(A>=B);
+	if (Q[,1] != 0) {
+		Fail(name=NAME,got=sprintf("%d",Q[,1]),shouldbe="0")
+		return(1)
+	}
+	if (Q[,2] != 1) {
+		Fail(name=NAME,got=sprintf("%d",Q[,2]),shouldbe="1")
+		return(1)
+	}
+	Passed(name=NAME)
+
+	NAME="Strlen"
+
+	for (i=1; i < 8; i += 1){
+		A=cat(A,"ghi",Y)
+	}
+	if (strlen(A)==10) {
+		Passed(name=NAME);
+	} else {
+		Fail(name=NAME,got=printf("%d",strlen(A)),shouldbe="10");
+		return(1);
+	}
+
+	return(0)
+}
+
+define Test2() {
+
+/*Test Read/Write*/
+
+	NAME="Read/Write"
+
+	A=read_lines("tests/Read_Write_Test_File")
+	write(A,"Tmp.dat",ascii,force=1)
+	b=syscall("diff Read_Write_Test_File Tmp.dat")
+	if (strlen(b)) {
+		Fail(name=NAME,got="Differences between Testfiles",shouldbe="No differences")
+		return(1)
+	} else {
+		Passed(name=NAME)
+	}
+
+
+/*Test functions: Grep, strstr, strsub atoi, delim, atof and subsetting */ 
+
+
+	NAME="Grep"
+
+	B=grep(A,"ZZZZZZZZZZ")
+	if (strlen(B)!=1){
+		Fail(name=NAME,got=sprintf("%d lines",strlen(B)),shouldbe="1 line")
+		return(1)
+	}
+	Q=grep(A,"ZZZZZZZZZZZ")
+	if (HasValue(Q)!=0){
+		Fail(name=NAME,got="TextArray",shouldbe="NULL")
+		return(1)
+	}
+	Passed(name=NAME);
+
+	NAME="Strstr"
+	B=strstr(A,"B")
+	len=strlen(A)
+
+	for (i=1;i<=len;i+=1) {
+		if (i==2){
+			if (B[,i]!=14){
+				Fail(name=Name,got=sprintf("%d",B[,i]),shouldbe="14")
+				return(1)
+			}
+		} else {
+			if (B[,i]!=0) {
+				Fail(name=NAME,got=sprintf("%d",B[,i]),shouldbe="0")
+				return(1)
+			}
+		}
+	}
+	Passed(name=NAME)
+
+	NAME="Sub-String Substitution"
+	B=strsub(A,"(qqqqq)","x\\1x")
+	if (B[,43]!="42\t\t42.000000\t\txqqqqqxxqqqqqx") {
+		Fail(name=NAME,got=B[,43],shouldbe="42\t\t42.000000\t\txqqqqqxxqqqqqx")
+	} else {
+		Passed(name=NAME)
+	}
+
+	NAME="Delim"
+	F=delim(A,"\t",2)
+	if(strlen(F)!=52){
+		Fail(name=NAME,got=sprintf("%d Lines",strlen(F)),shouldbe="52 Lines")
+		return(1)
+	}
+	for (i=0;i<52;i+=1){
+		if (F[,(i+1)]!=(sprintf("%f",float(i)))){
+			Fail(name=NAME,got=F[,(i+1)],shouldbe=sprintf("%f",float(i)))
+			return(1)
+		}
+	}
+	Passed(name=NAME)
+		
+
+	NAME="atoi"
+	B=atoi(A)
+	for (i=0;i<52;i+=1) {
+		if (B[,(i+1)]!=i) {
+			Fail(name=NAME,got=sprintf("%d",B[,(i+1)]),shouldbe=sprintf("%d",i))
+			return(1)
+		}
+	}
+	Passed(name=NAME)
+
+	Name="atof"
+	B=atof(F)
+	for(i=0;i<52;i+=1) {
+		if (B[,(i+1)]!=float(i)) {
+			Fail(name=NAME,got=sprintf("%d",B[,(i+1)]),shouldbe=sprintf("%f",float(i)))
+			return(1)
+		}
+	}
+	Passed(name=NAME)
+
+   return(0)	
+		
+}
+
+define Test3() {
+/* Test Subsetting */
+
+	NAME="SubSetting"
+	A=cat("AAAA","AAAA",Y)	
+	for(i=1;i<9;i+=1){
+		A=cat(A,"AAAA",Y)
+	}
+	A=A//A//A//A
+	B=A
+
+	A[4:12,2:9]="Q"
+	for (i=1;i<11;i+=1){
+		if (i==1 || i==10){
+			if (A[,i]!="AAAAAAAAAAAAAAAA"){
+				Fail(name=NAME,got=A[,i],shouldbe="AAAAAAAAAAAAAAAA")
+				return(1)
+			}
+		} else {
+			if (A[,i]!="AAAQAAAA") {
+				Fail(name=NAME,got=A[,i],shouldbe="AAAQAAAA")
+				return(1)
+			}
+		}
+	}
+
+	A[4,2:9]=B[4:12,2:9]
+	Q=(A==B)
+	for (i=1;i<11;i+=1){
+		if (Q[,i]!=1) {
+			Fail(name=NAME,got=A[,i],shouldbe=B[,i])
+		}
+	}
+	Passed(name=NAME)
+}
+
+
+
+
+define Test() {
+
+	if(Test1()) {
+		printf("Failed Test 1\n");
+		return(1)
+	} else {
+		printf("Passed Test 1\n\n");
+	}
+
+	if(Test2()) {
+		printf("Failed Test 2\n");
+		return(1)
+	} else {
+		printf("Passed Test 2\n\n");
+	}
+
+	if(Test3()) {
+		printf("Failed Test 3\n");
+		return(1)
+	} else {
+		printf("Passed Test 3\n\n");
+	}
+
+	return(NULL)
+}
+
+
+define String_Test1() {
+
+		  /*Test string subsetting*/
+
+		  NAME="String Subsetting"
+		  A="ABCDEFGabcdefg"
+
+		  B=A[1:7]
+		  if (B!="ABCDEFG") {
+			  Fail(name=NAME,got=B,shouldbe="ABCDEFG")
+			  return(1)
+		  }
+
+		  B=A[:7]
+		  if (B!="ABCDEFG") {
+			  Fail(name=NAME,got=B,shouldbe="ABCDEFG")
+			  return(1)
+		  }  
+
+		  B=A[8:14]
+		  if (B!="abcdefg") {
+			  Fail(name=NAME,got=B,shouldbe="abcdefg")
+			  return(1)
+		  }  
+
+		  B=A[8:]
+		  if (B!="abcdefg") {
+			  Fail(name=NAME,got=B,shouldbe="abcdefg")
+			  return(1)
+		  }
+ 
+		  Passed(name=NAME)
+
+		  NAME="Strlen"
+		  A="ABCDEFG"
+		  if(strlen(A)!=7){
+			  Fail(name=NAME,got=sprintf("%d",strlen(A)),shouldbe="7")
+			  return(1)
+		  }
+		  Passed(name=NAME)
+
+		  NAME="Substring Substitution"
+		  A="ABCDEFGhijklmnop"
+		  b=strsub(A,"(ijk)","\\1Q\\1")
+		  if (b!="ABCDEFGhijkQijklmnop"){
+			  Fail(name=NAME,got=b,shouldbe="ABCDEFGhijkQijklmnop")
+			  return(1)
+		  }
+		  Passed(name=NAME)
+
+		  NAME="Strstr"
+		  A="ABCDEFGhijklmnop"
+		  b=strstr(A,"Ghi")
+		  if (b!=7){
+			  Fail(name=NAME,got=sprintf("%d",b),shouldbe="7")
+			  return(1)
+		  }
+		  Passed(name=NAME)
+
+		  NAME="aoti"
+		  A="25"
+		  b=atoi(A)
+		  if(b!=25) {
+			  Fail(name=NAME,got=sprintf("%d",b),shouldbe="25")
+			  return(1)
+		  }
+		  Passed(name=NAME)
+
+		  NAME="atof"
+		  A="25.5"
+		  b=atof(A)
+		  if(b!=25.5){
+			  Fail(name=NAME,got=sprintf("%f",b),shouldbe="25.5")
+			  return(1)
+		  }
+		  Passed(name=NAME)
+
+return(0)
+}
+
+
+verbose=1
+
+if(String_Test1()) {
+	printf("Failed Test 1\n");
+	return(1)
+} else {
+	printf("Passed Test 1\n\n");
+}

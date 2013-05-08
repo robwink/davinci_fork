@@ -1,0 +1,7 @@
+testimg=create(200000,10000,3,format=byte)
+write(testimg,$TMPDIR+"/test.png",png,force=1)
+png=read($TMPDIR+"/test.png")
+if(fexists($TMPDIR+"/test.png")) fremove($TMPDIR+"/test.png");
+if(equals(dim(testimg),dim(png))) exit(0);
+exit(1);
+

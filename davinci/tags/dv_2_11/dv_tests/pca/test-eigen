@@ -1,0 +1,69 @@
+source("covar.dv")
+source("corr.dv")
+
+# test #12 - Eigen Values & Vectors via the characteristic function
+#
+#                             Ax = lx
+#
+# where A is the input matrix, x is an Eigen Vector of A and
+# l is an Eigen Value of A
+define test_eigen(m, evals, evecs,tol) {
+	# something is suspicious if either all Eigen Values or 
+	# all Eigen Vectors are found to be zero
+	if (max(max(evals) // max(evecs)) == 0){
+		printf("Caution! zero eigen values or vectors.\n");
+		return(0);
+	}
+
+	dm = dim(m);
+	if (dm[3] != 1){
+		echo("test12: invalid dimensions of input matrix");
+		return(0);
+	}
+
+	devals = dim(evals);
+	if (devals[2] != dm[1] || devals[1] != 1 || devals[3] != 1){
+		echo("test12: invalid number of Eigen Values");
+		dump(devals);
+		return(0);
+	}
+
+	devecs = dim(evecs);
+	if (devecs[1] != dm[1] || devecs[2] != dm[1] || devecs[3] != 1){
+		echo("test12: invalid dimensions of Eigen Vectors");
+		return(0);
+	}
+
+	maxdiff = 0.0; # maximum difference between the two results
+
+	n = (dim(evals))[2];
+
+	for(i=1; i<=n; i+=1){
+		#if (HasValue(lhs)) delete(lhs);
+		lhs = mxm(m, evecs[i]);
+		#if (HasValue(lhs) == 0) return(0);
+
+		for(j=1; j<=n; j+=1){
+			#if (HasValue(rhs)) delete(rhs);
+			rhs = evals[,j] * evecs[i];
+			#if (HasValue(rhs) == 0) return(0);
+			maxdiff = max(abs(lhs-rhs));
+		}
+	}
+
+	return(maxdiff <= tol);
+}
+
+
+# load a data matrix
+data = random(3,4,5);
+
+# define tolerence
+tol = 1E-5;
+
+symmat = covar(data);
+eig = eigen(symmat);
+
+if(test_eigen(m=symmat, evals=(eig[1]), evecs=(eig[2:]), tol=tol)) exit(0);
+exit(1);
+
