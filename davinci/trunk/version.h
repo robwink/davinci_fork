@@ -3,44 +3,52 @@ char *version = "@(#) daVinci Version #2.11";
 #include "build.h"
 
 /*
-  Version 2.11: Tues May 7 23:10:14 MST 2013
-  system.c:
-    * Added header files.
-  system.h:
-    * Added declaration for strdup() when it was not found during configure.
-    * Updated declaration of rmrf().
-  url_create_file.c:
-    * Extra information added to messages.
-    * Included header files and function headers.
-
-  Removed changes from changeset 19047-19048. These included tilde expansion fix and extra white space addition fix, 
-    both of which had a buggy implementation.
-  Removed erroneous parse_error stating the iomodule coulnd't find the file, even when another reader might succeed
-  Modifications to DEBIAN control for compilation with ubuntu 12.10
-  Added control_12.04 for package building with ubuntu 12.04
-
-  Addressed the following bugs related to user defined functions:
-  1. It is possible to overwrite actual parameters passed to user
-   defined functions within the body of the user defined function.
-   (Bug 1919).
-  2. Actual parameters passed as values of named formal parameters
-   were being resolved in the user function scope in certain cases.
-   (Bug 1951). For example, "foo(x=d)" call would try to resolve "d"
-   within foo's body.
-
-  The bug was fixed by duplicating the actual parameter "a" passed
-  to the user defined function during dispatch (see ufunc.c) insted
-  of just copying the reference. The duplication removed the possibility
-  of corrupting the (actual) input variable.
-
-  In addition, calling "foo(x=a)", which translated to eval("x")
-  C-function, which cascaded to eval("a"), but in the wrong scope
-  (i.e. function's scope). That resulted in the error message: "error:
-  Variable not found: a" during function execution.
-
-  Bug 1950 fix: segv was being caused due to the use of the incorrect variable use while creating the return array.
+  Version 2.11: Wed May  8 11:12:44 MST 2013
+  * External distribution.
+  * Fixed header inclusions, added function prototype definitions
+    to fix issues related to automatic typing on 64-bit platforms.
+  * Miscellaneous changes to include pertinent information in error
+    messages.
+  * Updated davinci build script for Mac OS 10.8.
+    - Split davinci startup script into two components to export
+      davinci startup environment to the Terminal session where davinci
+      starts.
+    - davinci package layout changed, gnuplot is now installed in
+      its own subdirectory to eliminate version mismatch issues between
+      libraries used by gnuplot vs. davinci / iomedley.
+    - Added inputrc and xdefaults file
+    - davinci version number is now correctly reported in the "Get
+      Info" feature of Mac OS.
+    - added readline 5.2 as a dependency to overcome tab-completion
+      issue on Mac OS 10.7+.
+  * Undid buggy fixes for tilde expansion and extra white-space
+    during file name completion (on Mac OS 10.7+). The extra space
+    issue was fixed by building and shipping libreadline as part of
+    Mac OS package instead of using Mac OS libedit substitute. 
+    Bug 1907.
+  * Removed a warning message that announced exhaustion of IO modules
+    while reading files, which could be interpreted as failure to 
+    read files.
+  * Updated davinci build script for debian build
+    - Support for bigTiff disabled as it is currently not a part
+      of iomedley and leads to compilation failure
+    - Updated existing debian control file for Ubuntu 12.10
+    - Added debian control file for Ubuntu 12.04
+  * Fixed a user defined function dispatch issues where in certain
+    cases the user defined functions would either try to dereference
+    actual parameters in the wrong scope or could be overwritten
+    in the function body. Bugs: 1919, 1952.
+  * Fixed a segv in uniq function when applied to text-arrays. 
+    Bug 19142.
+  * Updated thm.rectify() to use 64-bit indices.
+  * lsmod() function now returns 1 if any modules are loaded or 
+    0 otherwise.
+  * Added thm.y_shear() function.
+  * Added additional forward / backward search key bindings to inputrc
+    shipped with davinci builds.
 
   Version 2.10: Wed Dec 12 21:42:13 MST 2012
+  * Some external Beta builds.
   * Fixed a number of pointer / memory corruption issues:
   func.h: 
     Added inclusion of readline & history headers when libreadline
@@ -58,6 +66,13 @@ char *version = "@(#) daVinci Version #2.11";
   url_create_file.c:
     Not having definitions of some functions was causing pointer 
     chopping during function calls on 64-bit platforms.
+  * Added VICAR license files.
+  * Added handling of mmap failure in load_vanilla(), which was
+    reporting the mmap failure incorrectly. Bug 1819.
+  * Added invert option to the grep() function. Bug 617.
+  * Fixed extra white-space issue during tab-completion on Mac OS X
+    10.7+. Bug 1907.
+  * Fixed tilde expansion issue in file I/O routines.
 
   Version 2.09: Mon Aug 15 17:28:23 MST 2011
   * Internal distribution.
