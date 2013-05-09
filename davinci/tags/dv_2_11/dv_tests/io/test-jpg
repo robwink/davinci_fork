@@ -1,7 +1,0 @@
-testimg=clone(create(255,1,3,format=byte),y=500)
-write(testimg,$TMPDIR+"/test.jpg",jpg,force=1)
-jpg=read($TMPDIR+"/test.jpg")
-if(fexists($TMPDIR+"/test.jpg")) fremove($TMPDIR+"/test.jpg");
-if(equals(dim(testimg),dim(jpg))) exit(0);
-exit(1);
-

@@ -1,6 +1,0 @@
-A=cat("abc","def",Y);
-if (A[,1,]=="abc" && A[,2,]=="def") {
-	exit(0);
-}
-exit(1);
-
