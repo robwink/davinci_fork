@@ -1,0 +1,7 @@
+tascii=create(100,100,3,format=float)
+write(tascii,$TMPDIR+"/test.ascii",ascii,force=1)
+ascii=ascii($TMPDIR+"/test.ascii",format=float)
+if (fexists($TMPDIR+"/test.ascii")) fremove($TMPDIR+"/test.ascii");
+if (equals(tascii,ascii)) exit(0);
+exit(1);
+
