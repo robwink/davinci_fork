@@ -431,7 +431,7 @@
 ?load_csv()
  load_csv() - Loads data from a CSV/TSV file
 
- load_csv(filename=PATH, [separator="\t"], [header=1], [collapse=0])
+ load_csv(filename=PATH, [separator="\t"], [delimeter="\t"], [header=1], [collapse=0])
 
  Loads comma-separated / tab-separated file. The field separator defaults
  to the tab-character. If the file does not have a header, set header=0.
@@ -459,7 +459,7 @@
     The output from the filetype() function is suitable for input to the
     type value of the write() function.
 
-    This funCtion is almost always not up to date with the latest stuff.
+    This function is almost always not up to date with the latest stuff.
 
 ?functions source()
 ?source()

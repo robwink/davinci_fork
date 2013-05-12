@@ -1210,12 +1210,13 @@ ff_loadcsv(
     int      rc, header = 1, collapse_fdelim = 0; 
     char     *field_delim = "\t";
 
-    Alist    alist[5];
+    Alist    alist[6];
     alist[0] = make_alist( "filename",      ID_STRING,    NULL,        &filename);
     alist[1] = make_alist( "separator",     ID_STRING,    NULL,        &field_delim);
-    alist[2] = make_alist( "header",        INT,          NULL,        &header);
-    alist[3] = make_alist( "collapse",      INT,          NULL,        &collapse_fdelim);
-    alist[4].name = NULL;
+    alist[2] = make_alist( "delimiter",     ID_STRING,    NULL,        &field_delim);
+    alist[3] = make_alist( "header",        INT,          NULL,        &header);
+    alist[4] = make_alist( "collapse",      INT,          NULL,        &collapse_fdelim);
+    alist[5].name = NULL;
 
     if (parse_args(func, args, alist) == 0) return(NULL);
 
