@@ -198,7 +198,16 @@ Var *
 eval(Var *v)
 {
   if (v == NULL) return(NULL);
-  if (V_NAME(v)) v = get_sym(V_NAME(v));
+  switch(V_TYPE(v)){
+  case ID_STRING:
+  case ID_VAL:
+  case ID_STRUCT:
+  case ID_TEXT:
+      break;
+  default:
+      if (V_NAME(v)) v = get_sym(V_NAME(v));
+      break;
+  }
   return(v);
 }
 
