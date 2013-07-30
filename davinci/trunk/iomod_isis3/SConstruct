@@ -1,0 +1,7 @@
+ISIS3DIR='/mars/common/isis3/x86_64_Linux/isis'
+QTDIR='/usr'
+
+incs = ['..', '../libltdl', ISIS3DIR+'/inc', QTDIR+'/include/QtCore']
+confenv = Environment(CCFLAGS = '-DHAVE_CONFIG_H -Wall')
+
+confenv.SharedObject('isis3_scons.o', 'iomod_isis3.C', CPPPATH=incs)
