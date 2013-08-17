@@ -27,7 +27,7 @@
 
 #define DV_NAMEBUF_MAX 1025
 #define DV_ISIS_STRUCT_TYPE "isis_struct_type"
-#define DI3_VERSION "0.9.4 (ISIS 3.4.x)"
+#define DI3_VERSION "0.9.5 (ISIS 3.4.x)"
 static Typelist t[] = {
     {(char*)"isis3", NULL, NULL, NULL},
     {NULL, NULL, NULL, NULL}
@@ -1152,10 +1152,27 @@ static void set_i3_base_multi(Var * dv_obj, Isis::Cube * cube) {
     // keywords, and if present, sets the Isis cube passed in with the values present
     // there.
 
-    Var * core_pixels;
-    Var * current_value;
+    Var * base_v = NULL;
+    Var * multi_v = NULL;
+    Var * current_value = NULL;
+    float base = 0.0, multi = 1.0;
 
-    
+    find_struct(dv_obj, "IsisCube", &current_value); // find the IsisCube member
+    if (V_TYPE(current_value) == ID_STRUCT) {
+        find_struct(current_value, "Core", &current_value); // find the Core member
+        if (V_TYPE(current_value) == ID_STRUCT) {
+            find_struct(current_value, "Pixels", &current_value); // find the Pixels member
+            if (V_TYPE(current_value) == ID_STRUCT) {
+                find_struct(current_value, "Base", &base_v);
+                find_struct(current_value, "Multiplier", &multi_v);
+                if (base_v != NULL) base = V_DOUBLE(base_v);
+                if (V_FORMAT(base_v) != DOUBLE) parse_error("Warning: Base is not a double value, which is probably not what you want.");
+                if (multi_v != NULL) multi = V_DOUBLE(multi_v);
+                if (V_FORMAT(multi_v) != DOUBLE) parse_error("Warning: Multiplier is not a double value, which is probably not what you want.");
+                cube->setBaseMultiplier(base, multi);
+            }
+        }
+    }
 
 }
 
@@ -1177,7 +1194,6 @@ static void add_isis3_headers(Var * dv_obj, Isis::Cube * cube) {
         }
         add_struct_member_to_cube(sdata, sname, cube); 
     }
-    set_i3_base_multi(dv_obj, cube);
 }
 
 static size_t full_write(int fd, const void * buf, size_t count) {
@@ -1250,6 +1266,8 @@ static int convert_dv_to_isis3(Var * dv_obj, char * fn) {
             cube->setLabelsAttached(1);
             cube->setFormat(Isis::Cube::Bsq);
             cube->setDimensions(x,y,z);
+            if (descend) set_i3_base_multi(dv_obj, cube);
+
             
             switch (V_FORMAT(cube_data)) {
               case BYTE:
