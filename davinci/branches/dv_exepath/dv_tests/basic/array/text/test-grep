@@ -1,0 +1,11 @@
+A=read_lines("Read_Write_Test_File")
+B=grep(A,"ZZZZZZZZZZ")
+if (length(B)!=1){
+	exit(1);
+}
+Q=grep(A,"ZZZZZZZZZZZ")
+if (HasValue(Q)!=0){
+	exit(1);
+}
+exit(0);
+

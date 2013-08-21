@@ -1,0 +1,7 @@
+load_module('gui')
+top=gui.create("topLevelShell")
+a=gui.create("menubar",top)
+x1=gui.create("cascadebutton",a,{labelString="File"})
+x2=gui.create("cascadebutton",a,{labelString="Help"})
+gui.realize(top)
+

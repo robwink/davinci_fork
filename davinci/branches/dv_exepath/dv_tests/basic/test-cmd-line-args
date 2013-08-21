@@ -1,0 +1,5 @@
+cmd="davinci -qe0 'printf(\"%d\\n%d\\n%s\\n%s\\n%s\\n\",$ARGC,$ARGV[0], $ARGV[1],$ARGV[2],$ARGV[3]);' abc def ghi";
+result = syscall(cmd);
+if (result[,1]=="3" && result[,2]=="3" && result[,3]=="abc" && result[,4]=="def" && result[,5]=="ghi") exit(0);
+exit(1);
+
