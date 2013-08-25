@@ -163,6 +163,25 @@ main(int ac, char **av)
   int iflag = 0;
   char *p;
   int history = 1;
+#if defined(__APPLE__)
+	int ret;
+	char pathbuf[PROC_PIDPATHINFO_MAXSIZE];
+	//add 12 for length of ENV Variable Name 
+	char exe_path_out[PROC_PIDPATHINFO_MAXSIZE+12];
+	pid_t pid;
+#elif defined(_WIN32)	
+	char pathbuf[MAX_PATH];
+	//add 12 for length of ENV Variable Name 
+	char exe_path_out[MAX_PATH+12];
+	HMODULE hModule;
+#elif defined(__linux__)
+  char pidpath[PATH_MAX];
+  char pathbuf[PATH_MAX];
+	//add 12 for length of ENV Variable Name 
+  char exe_path_out[PATH_MAX+12];
+  struct stat info;
+	pid_t pid;
+#endif
 
 	s = new_scope();
 
@@ -183,19 +202,12 @@ main(int ac, char **av)
 
 //get the full path in different ways depending on the OS
 #if defined (__APPLE__)
-	int ret;
-	char pathbuf[PROC_PIDPATHINFO_MAXSIZE];
-	char exe_path_out[PROC_PIDPATHINFO_MAXSIZE+12];
-	
 	//use the pid to get the path
-	pid_t pid = getpid();
+	pid = getpid();
 	ret = proc_pidpath (pid, pathbuf, sizeof(pathbuf));
 
 	//if we succeed pathbuf will have the path and ret==1
-	if ( ret <= 0 ) {
-		fprintf(stderr, "Unable to resolve PID/DV_EXEPATH\n");
-	} else {
-
+	if ( ret > 0 ) {
     //set DV_EXEPATH environent variable
 		sprintf(exe_path_out, "DV_EXEPATH=%s", pathbuf);
 		putenv(exe_path_out);
@@ -205,17 +217,9 @@ main(int ac, char **av)
   putenv("DV_OS=mac");
   
 #elif defined(_WIN32)
-	
-	char pathbuf[MAX_PATH];
-	char exe_path_out[MAX_PATH+12];
-	
 	// Will contain exe path
-	HMODULE hModule = GetModuleHandle(NULL);
-	if (hModule == NULL) {
-		fprintf(stderr, "Unable to resolve DV_EXEPATH\n");
-		
-		// When passing NULL to GetModuleHandle, it returns handle of exe itself
-	} else {
+	hModule = GetModuleHandle(NULL);
+	if (hModule != NULL) {
 		GetModuleFileName(hModule, pathbuf, (sizeof(pathbuf)));
 		
 		//set the DV_EXEPATH environment variable
@@ -226,31 +230,18 @@ main(int ac, char **av)
 	putenv("DV_OS=win");
 
 #elif defined(__linux__)
-  char pidpath[PATH_MAX];
-  char pathbuf[PATH_MAX];
-  char exe_path_out[PATH_MAX+12];
-  struct stat info;
-
 	//use the pid to get the relative link
-  pid_t pid = getpid();
+  pid = getpid();
   sprintf(pidpath, "/proc/%d/exe", pid);
 
 	//resolve the link with readlink
-  if (readlink(pidpath, pathbuf, PATH_MAX) == -1) {
-    fprintf(stderr, "Unable to resolve PID/DV_EXEPATH\n");
-  } else {
+  if (readlink(pidpath, pathbuf, PATH_MAX) != -1) {
     sprintf(exe_path_out, "DV_EXEPATH=%s", pathbuf);
     putenv(exe_path_out);
   }
 
   //also set the DV_OS environment variable
   putenv("DV_OS=linux");
-
-#else
-
-  //set some default values
-  putenv("DV_OS=unknown");
-  putenv("DV_EXEPATH=/usr/bin/davinci");
 #endif
 
   /**
