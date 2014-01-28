@@ -2,8 +2,22 @@
 #include <setjmp.h>
 #include "parser.h"
 #include "system.h"
+#include <stdio.h>
+#include <string.h>
+#include <limits.h>
+#include <unistd.h>
 
 #include "y_tab.h"
+
+//include specific libraries for finding the DV_EXEPATH
+#if defined(__APPLE__)
+#include <libproc.h>
+#elif defined(_WIN32)
+#include <windows.h>
+#elif defined(__linux__)
+#include <sys/types.h>
+#include <sys/stat.h>
+#endif
 
 #ifdef HAVE_XT
 #define USE_X11_EVENTS 1
@@ -149,8 +163,27 @@ main(int ac, char **av)
   int iflag = 0;
   char *p;
   int history = 1;
+#if defined(__APPLE__)
+	int ret;
+	char pathbuf[PROC_PIDPATHINFO_MAXSIZE];
+	//add 12 for length of ENV Variable Name 
+	char exe_path_out[PROC_PIDPATHINFO_MAXSIZE+12];
+	pid_t pid;
+#elif defined(_WIN32)	
+	char pathbuf[MAX_PATH];
+	//add 12 for length of ENV Variable Name 
+	char exe_path_out[MAX_PATH+12];
+	HMODULE hModule;
+#elif defined(__linux__)
+  char pidpath[PATH_MAX];
+  char pathbuf[PATH_MAX];
+	//add 12 for length of ENV Variable Name 
+  char exe_path_out[PATH_MAX+12];
+  struct stat info;
+	pid_t pid;
+#endif
 
-  s = new_scope();
+	s = new_scope();
 
   signal(SIGINT, dv_sighandler);
   signal(SIGSEGV, dv_sighandler);
@@ -166,6 +199,50 @@ main(int ac, char **av)
   v = p_mkval(ID_STRING, *av);
   V_NAME(v) = strdup("$0");
   put_sym(v);
+
+//get the full path in different ways depending on the OS
+#if defined (__APPLE__)
+	//use the pid to get the path
+	pid = getpid();
+	ret = proc_pidpath (pid, pathbuf, sizeof(pathbuf));
+
+	//if we succeed pathbuf will have the path and ret==1
+	if ( ret > 0 ) {
+    //set DV_EXEPATH environent variable
+		sprintf(exe_path_out, "DV_EXEPATH=%s", pathbuf);
+		putenv(exe_path_out);
+	}
+
+  //also set the DV_OS enviornment variable
+  putenv("DV_OS=mac");
+  
+#elif defined(_WIN32)
+	// Will contain exe path
+	hModule = GetModuleHandle(NULL);
+	if (hModule != NULL) {
+		GetModuleFileName(hModule, pathbuf, (sizeof(pathbuf)));
+		
+		//set the DV_EXEPATH environment variable
+		sprintf(exe_path_out, "DV_EXEPATH=%s", pathbuf);
+		putenv(exe_path_out);
+	}
+	//also set the DV_OS environment variable
+	putenv("DV_OS=win");
+
+#elif defined(__linux__)
+	//use the pid to get the relative link
+  pid = getpid();
+  sprintf(pidpath, "/proc/%d/exe", pid);
+
+	//resolve the link with readlink
+  if (readlink(pidpath, pathbuf, PATH_MAX) != -1) {
+    sprintf(exe_path_out, "DV_EXEPATH=%s", pathbuf);
+    putenv(exe_path_out);
+  }
+
+  //also set the DV_OS environment variable
+  putenv("DV_OS=linux");
+#endif
 
   /**
    ** Everything that starts with a - is assumed to be an option,
