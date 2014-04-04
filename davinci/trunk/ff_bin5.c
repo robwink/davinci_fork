@@ -330,6 +330,7 @@ ff_load_bin5(vfuncptr func, Var *arg)
     return NULL;
   }
 
+	close(fd);
 
   /**
    ** Make the data dimension at least three. The code
