@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "func.h"
 
 #if defined(HAVE_LIBCFITSIO) && ( defined(HAVE_CFITSIO_FITSIO_H) || defined(HAVE_FITSIO_H))
 
@@ -10,7 +11,7 @@
 #endif
 
 
-#include <dvio_fits.h>
+#include "dvio_fits.h"
 
 int
 Write_FITS_Image(fitsfile *fptr, Var *obj)
@@ -37,13 +38,13 @@ Write_FITS_Image(fitsfile *fptr, Var *obj)
       naxes[i] = 0;
   }
   fits_create_img(fptr,bitpix,naxis,naxes,&status);
-  QUERY_FITS_ERROR(status,0);
+  QUERY_FITS_ERROR(status," creating image",0);
   
   for(i=0;i<3;i++) 
     if(!(naxes[i])) size[i]=1; //I don't think this is needed, but just in case V_SIZE() returns a 0 in one of the size slots
   
   fits_write_pix(fptr,datatype,fpixel,((size_t)size[0])*((size_t)size[1])*((size_t)size[2]),(void *)V_DATA(obj),&status);
-  QUERY_FITS_ERROR(status,0);
+  QUERY_FITS_ERROR(status," writing pixel data",0);
   
   return(1);
 }
@@ -53,17 +54,18 @@ Var *
 Read_FITS_Image(fitsfile *fptr)
 {
   char *data;
-  int format;
+  int format=0;
   int fits_type;
   int i;
   int dim;
   long size[3]={0,0,0};
   long fpixel[3]={1,1,1};
-  int datatype;
+  int datatype=0;
   int status=0;
+  long n;
   
   fits_get_img_dim(fptr,&dim,&status);
-  QUERY_FITS_ERROR(status,NULL);
+  QUERY_FITS_ERROR(status," getting image dimension",NULL);
   
   if (dim > 3) {
     parse_error("Data objects of greater than 3 dimensions are not handled.");
@@ -71,10 +73,10 @@ Read_FITS_Image(fitsfile *fptr)
   }
   
   fits_get_img_type(fptr,&fits_type,&status);
-  QUERY_FITS_ERROR(status,NULL);
+  QUERY_FITS_ERROR(status," getting image type",NULL);
   
   fits_get_img_size(fptr,dim,size,&status);
-  QUERY_FITS_ERROR(status,NULL);
+  QUERY_FITS_ERROR(status," getting image size",NULL);
   
   for(i=0;i<3;i++) 
     if(!size[i]) {
@@ -112,19 +114,161 @@ Read_FITS_Image(fitsfile *fptr)
     
   }
 
-  data = (char *)calloc(((size_t)size[0])*((size_t)size[1])*((size_t)size[2]),NBYTES(format));
+  n = (long)((size_t)size[0])*((size_t)size[1])*((size_t)size[2]);
+  data = (char *)calloc(n,NBYTES(format));
   
-  fits_read_pix(fptr,datatype,fpixel,(((size_t)size[0])*((size_t)size[1])*((size_t)size[2])),NULL,(void *)data,NULL,&status);
-  QUERY_FITS_ERROR(status,NULL);
+  fits_read_pix(fptr,datatype,fpixel,n,NULL,(void *)data,NULL,&status);
+  QUERY_FITS_ERROR(status," reading image pixels",NULL);
   
   return(newVal(BSQ,size[0],size[1],size[2],format,data));
+}
+
+static const char *
+get_col_type_name(int coltype){
+    switch(coltype){
+    case TSTRING: return "TSTRING";
+    case TBYTE: return "TBYTE";
+    case TSHORT: return "TSHORT";
+    case TINT: return "TINT";
+    case TLONG: return "TLONG";
+    case TFLOAT: return "TFLOAT";
+    case TDOUBLE: return "TDOUBLE";
+    case TUINT: return "TUINT";
+    case TUSHORT: return "TUSHORT";
+    case TULONG: return "TULONG";
+    case TLOGICAL: return "TLOGICAL";
+    case TCOMPLEX: return "TCOMPLEX";
+    case TDBLCOMPLEX: return "TDBLCOMPLEX";
+    }
+    return "(unknown)";
 }
 
 
 Var *
 Read_FITS_Table(fitsfile *fptr)
 {
-   return(NULL);
+    long nrows = 0, repeat, width;
+    int ncols = 0, status = 0, col_status = 0;
+    char colname[1024];
+    int colnum = 0, fmt;
+    char *ptr, **pptr, **qqptr;
+    Var *data = NULL, *element;
+    int coltype, datatype;
+    int x, y, z, i, j, k;
+    char msg[1024];
+
+    fits_get_num_rows(fptr, &nrows, &status);
+    QUERY_FITS_ERROR(status," getting table rows",NULL);
+    fits_get_num_cols(fptr, &ncols, &status);
+    QUERY_FITS_ERROR(status," getting table columns",NULL);
+
+    fits_get_colname(fptr, CASEINSEN, "*", colname, &colnum, &col_status);
+    while(col_status != COL_NOT_FOUND){
+        if (data == NULL){
+            data = new_struct(0);
+        }
+
+        x=0;y=0;z=0;
+        pptr = NULL;
+        ptr = NULL;
+
+        //fits_get_coltype(fptr, colnum, &coltype, &repeat, &width, &status);
+        fits_get_eqcoltype(fptr, colnum, &coltype, &repeat, &width, &status);
+        sprintf(msg," getting column %d type", colnum); QUERY_FITS_ERROR(status,msg,NULL);
+        switch(coltype){
+        // ASCII tables limited to TSTRING, TSHORT, TLONG, TFLOAT
+        case TSTRING:
+            datatype = TSTRING; fmt = ID_STRING;
+            x = repeat == 1? 1: repeat/width; y = nrows; z = 1;
+            pptr = (char **)calloc(nrows, sizeof(char *));
+            for(i=0; i<nrows; i++){
+                pptr[i] = calloc(x*width+1, sizeof(char));
+            }
+            ptr = (char *)pptr;
+
+            // alloc pointers in the above pptr arrays to
+            // offsets where individual columns would live
+            qqptr = (char **)calloc(nrows*x, sizeof(char *));
+            for(i=0; i<(nrows*x); i++){
+                qqptr[i] = pptr[i/x] + width*(i%x);
+            }
+            break;
+
+        case TSHORT:
+            datatype = TSHORT; fmt = SHORT;
+            x = repeat; y = nrows; z = 1;
+            ptr = calloc(x*y*z, NBYTES(fmt));
+            break;
+
+        case TFLOAT:
+            datatype = TFLOAT; fmt = FLOAT;
+            x = repeat; y = nrows; z = 1;
+            ptr = calloc(x*y*z, NBYTES(fmt));
+            break;
+
+        case TDOUBLE:
+            datatype = TDOUBLE; fmt = DOUBLE;
+            x = repeat; y = nrows; z = 1;
+            ptr = calloc(x*y*z, NBYTES(fmt));
+            break;
+
+        case TLOGICAL:
+        case TBYTE:
+            datatype = TBYTE; fmt = BYTE;
+            x = repeat; y = nrows; z = 1;
+            ptr = calloc(x*y*z, NBYTES(fmt));
+            break;
+
+        case TLONG:
+        case TINT:
+            datatype = TINT; fmt = INT;
+            x = repeat; y = nrows; z = 1;
+            ptr = calloc(x*y*z, NBYTES(fmt));
+            break;
+
+        case TCOMPLEX:
+            datatype = TFLOAT; fmt = FLOAT;
+            x = repeat; y = nrows; z = 2;
+            ptr = calloc(x*y*z, NBYTES(fmt));
+            break;
+
+        case TDBLCOMPLEX:
+            datatype = TDOUBLE; fmt = DOUBLE;
+            x = repeat; y = nrows; z = 2;
+            ptr = calloc(x*y*z, NBYTES(fmt));
+            break;
+
+        case TBIT:
+        default:
+            parse_error("Ignoring column \"%s\" of unhandled type %d\n", colname, coltype);
+            datatype = 0;
+            fmt = 0;
+            break;
+        }
+
+        if (ptr != NULL){
+            //parse_error("Reading col %d (\"%s\") of coltype \"%s\" (datatype \"%s\") of dim %dx%dx%d\n", 
+            //    colnum, colname, get_col_type_name(coltype), get_col_type_name(datatype), x, y, z);
+
+            if (datatype == TSTRING){
+                fits_read_col(fptr, datatype, colnum, 1, 1, x*y, NULL, qqptr, NULL, &status);
+                sprintf(msg," reading column %d data", colnum); QUERY_FITS_ERROR(status,msg,NULL);
+                element = newText(nrows,pptr);
+                free(qqptr);
+            }
+            else {
+                fits_read_col(fptr, datatype, colnum, 1, 1, x*y*z, NULL, ptr, NULL, &status);
+                sprintf(msg," reading column %d data", colnum); QUERY_FITS_ERROR(status,msg,NULL);
+                element = newVal(BSQ,x,y,z,fmt,ptr);
+            }
+            add_struct(data, colname, element);
+        }
+
+        // get next column - status must be set to COL_NOT_UNIQUE to get next column
+        fits_get_colname(fptr, CASEINSEN, "*", colname, &colnum, &col_status);
+    }
+
+   return(data);
 }
 
 Var *
@@ -202,7 +346,7 @@ Parse_Name(char *card, char **name)
   
   p--; // _=_ should put us at first _ location
   
-  while (*p == ' ' && p!=(*name))
+  while (*p == ' ' && p!=in)
     p--;
   p++;
   *p='\0';
@@ -272,17 +416,23 @@ FITS_Read_Entry(char *fits_filename)
          else {
              fits_get_keytype(fits_value,&key_type,&status);
          }
-
-         QUERY_FITS_ERROR(status,NULL);
+         QUERY_FITS_ERROR(status,NULL,NULL);
 
          //Add to sub
          add_struct(sub,name,makeVarFromFITSLabel(fits_value,key_type));
    
+         //Get extension name
+         if (strcmp("EXTNAME", name) == 0){
+            ltrim(fits_value, "'");
+            rtrim(fits_value, "'");
+            strcpy(obj_name, fits_value);
+         }
+
       }
       // Read data : we'll need a data type switch
       fits_get_hdu_type(fptr,&object_type,&status);
 
-      QUERY_FITS_ERROR(status,NULL);
+      QUERY_FITS_ERROR(status," getting HDU type",NULL);
 
       if (object_type == IMAGE_HDU)
          davinci_data=Read_FITS_Image(fptr);
@@ -412,7 +562,7 @@ int  Write_FITS_Record(fitsfile *fptr,Var *obj, char *obj_name)
 		sprintf(card,"%s= %s",key,val);
 
 		fits_write_record(fptr,card,&status);
-		QUERY_FITS_ERROR(status,0);
+		QUERY_FITS_ERROR(status,NULL,0);
 
 		return(1);
 
@@ -425,7 +575,7 @@ int  Write_FITS_Record(fitsfile *fptr,Var *obj, char *obj_name)
 			VarType2FitsType(obj,&bitpix,&datatype);
 
 		fits_write_key(fptr,datatype,obj_name,V_DATA(obj),NULL,&status);
-		QUERY_FITS_ERROR(status,0);
+		QUERY_FITS_ERROR(status,NULL,0);
 
 		return(1);
 	}
@@ -499,6 +649,8 @@ FITS_Write_Structure(char *fits_filename, Var *obj, int force)
 	char *obj_name;
 	fitsfile *fptr;
 	int status=0;
+    char msg[1024];
+
 /* 
 ** All incoming FITS object are themselves placed into a structure, thus
 ** obj should be strcuture of structures (at least one, anyway).  The first
@@ -520,7 +672,7 @@ FITS_Write_Structure(char *fits_filename, Var *obj, int force)
 		name = strdup(fits_filename);
 	
 	fits_create_file(&fptr,name,&status);
-	QUERY_FITS_ERROR(status,NULL);
+	sprintf(msg," creating file %s", name); QUERY_FITS_ERROR(status,msg,NULL);
 
 	count = get_struct_count(obj);
 
@@ -542,7 +694,7 @@ FITS_Write_Structure(char *fits_filename, Var *obj, int force)
 	
 	fits_close_file(fptr,&status);
 
-	QUERY_FITS_ERROR(status,NULL);
+	sprintf(msg," closing file %s", name); QUERY_FITS_ERROR(status,msg,NULL);
 
 	return(NULL);
 
@@ -577,6 +729,7 @@ FITS_Write_Var(char *fits_filename, Var *obj, int force)
 	int		*size;
 	int		i;
 	int		fpixel[3]={1,1,1};
+    char    msg[1024];
 
 	if (V_ORG(obj) != BSQ) {
 		parse_error("Only BSQ ordered objects can be written out");
@@ -593,7 +746,7 @@ FITS_Write_Var(char *fits_filename, Var *obj, int force)
 		name = strdup(fits_filename);
 
 	fits_create_file(&fptr,name,&status);
-	QUERY_FITS_ERROR(status,NULL);
+	sprintf(msg," creating file %s",name); QUERY_FITS_ERROR(status,msg,NULL);
 
 /*
 ** Here we would descide if the Var was a table 
@@ -609,7 +762,7 @@ FITS_Write_Var(char *fits_filename, Var *obj, int force)
 
 	fits_close_file(fptr,&status);
 
-	QUERY_FITS_ERROR(status,NULL);
+	sprintf(msg," closing file %s",name); QUERY_FITS_ERROR(status,msg,NULL);
 
 	return(NULL);
 

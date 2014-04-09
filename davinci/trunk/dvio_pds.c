@@ -1324,7 +1324,7 @@ Var *ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth,
     }
 
     else if (!(strncasecmp(name, "END", 3))) {
-      return;             /*This function is used recusively from the group/object functions */
+      return NULL;             /*This function is used recusively from the group/object functions */
     }
 
     else if (!(strcasecmp(name, "DATA"))) {
