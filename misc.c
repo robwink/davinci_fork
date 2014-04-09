@@ -54,7 +54,7 @@ ltrim(char *s, char *trim_chars)
 		st++;
 	
 	if (st > 0)
-		strcpy(s, &s[st]);
+		memmove(s, &s[st], strlen(&s[st])+1);
 
 	return s;
 }
