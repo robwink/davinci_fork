@@ -89,7 +89,7 @@ am_libdavinci_la_OBJECTS = apifunc.lo array.lo avl.lo binDCT.lo \
 	dvio_aviris.lo dvio_envi.lo dvio_ers.lo dvio_goes.lo \
 	dvio_grd.lo dvio_hdf.lo dvio_imath.lo dvio_iomedley.lo \
 	dvio_isis.lo dvio_magic.lo dvio_pds.lo dvio_pnm.lo dvio_raw.lo \
-	dvio_specpr.lo dvio_csv.lo dvio_themis.lo dvio_vicar.lo \
+	dvio_specpr.lo dvio_csv.lo dvio_themis.lo dvio_vicar.lo dvio_xml.lo\
 	endian_norm.lo ff_ffill.lo error.lo ff.lo ff_ascii.lo \
 	ff_avg.lo ff_ipi.lo ff_contour.lo ff_rotate.lo ff_bbr.lo \
 	ff_cluster.lo ff_convolve.lo ff_deghost.lo ff_display.lo \

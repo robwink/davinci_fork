@@ -129,9 +129,14 @@ do_load(char *filename, struct iom_iheader *h)
 	if (input == NULL)    input = dv_LoadENVI(fp, fname, h);
 	if (input == NULL)    input = dv_LoadAVIRIS(fp, fname, h);
 
+#ifdef HAVE_LIBXML2
+        if (input == NULL)    input = dv_LoadXML(fname, 1);
+#endif
+
 #ifdef HAVE_LIBHDF5
         if (input == NULL)    input = LoadHDF5(fname);
 #endif
+
 		/* Libmagic should always be the last chance */
 #if 0
 #ifdef HAVE_LIBMAGICK

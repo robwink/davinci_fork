@@ -405,7 +405,9 @@ Var *ff_loadvan(vfuncptr func, Var *arg);
 Var *ff_loadspecpr(vfuncptr func, Var *arg);
 
 Alist make_alist(const char *name, int type, void *limits, void *value);
-
+#ifdef HAVE_LIBXML2
+Var * ReadPDS4(vfuncptr func, Var * arg);
+#endif
 Var * ReadPDS(vfuncptr func, Var * arg);
 Var * WritePDS(vfuncptr func, Var * arg);
 Var * ff_pdshead(vfuncptr func, Var * arg);
