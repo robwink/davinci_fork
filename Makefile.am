@@ -82,7 +82,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	dvio_aviris.c dvio_envi.c dvio_ers.c dvio_goes.c dvio_grd.c \
 	dvio_hdf.c dvio_imath.c dvio_iomedley.c dvio_isis.c dvio_magic.c \
 	dvio_pds.c dvio_pnm.c dvio_raw.c dvio_specpr.c dvio_csv.c \
-	dvio_themis.c dvio_vicar.c endian_norm.c ff_ffill.c\
+	dvio_themis.c dvio_vicar.c dvio_xml.c endian_norm.c ff_ffill.c\
 	error.c ff.c ff_ascii.c ff_avg.c ff_ipi.c ff_contour.c ff_rotate.c\
 	ff_bbr.c ff_cluster.c ff_convolve.c ff_deghost.c ff_display.c \
 	ff_fft.c ff_filetype.c ff_fncc.c ff_gnoise.c ff_gplot.c ff_vplot.c\
@@ -106,7 +106,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ufunc.c util.c \
 	x.c xrt_print_3d.c \
 	XformTable.h darray.h fit.h trigtbl.h api.h dos.h func.h \
-	products.h ufunc.h api_extern_defs.h dvio.h header.h \
+	products.h ufunc.h api_extern_defs.h dvio.h dvio_pds4.h header.h \
 	proto.h version.h apidef.h dvio_specpr.h help.h rfunc.h \
 	xrt_print_3d.h avl.h endian_norm.h io_loadmod.h scope.h \
 	ff.h isis_obj.h system.h ff_modules.h module_io.h \

@@ -1,10 +1,5 @@
-#include "header.h"
-#include "parser.h"
-#include "io_lablib3.h"
-#include "endian_norm.h"
-#include "io_loadmod.h"
+#include <stdio.h>
 #include <ctype.h>
-#include "dvio.h"
 #include <sys/types.h>
 #include <regex.h>
 #include <string.h>
@@ -12,6 +7,13 @@
 #include <errno.h>
 #include <libgen.h>
 #include <sys/stat.h>
+#include "header.h"
+#include "parser.h"
+#include "io_lablib3.h"
+#include "endian_norm.h"
+#include "io_loadmod.h"
+#include "dvio.h"
+#include "dvio_pds4.h"
 
 
 
@@ -27,6 +29,7 @@
 #define GEN_OBJ_CLASS_TABLE     "table"
 #define GEN_OBJ_CLASS_GROUP     "group"
 #define GEN_OBJ_CLASS_PTR       "ptr"
+#define GEN_OBJ_CLASS_FIELD     "field"
 
 #define KW_GROUP "GROUP"
 #define KW_END_GROUP "END_GROUP"
@@ -41,6 +44,13 @@
 
 static char keyword_prefix[] = "PTR_TO_";
 static int keyword_prefix_length = 8;
+
+const char pathSeparator =
+#ifdef _WIN32
+							'\\';
+#else
+							'/';
+#endif
 
 
 /*
@@ -94,10 +104,10 @@ typedef struct _dataKeys {
 extern char *var_endian(Var * v);
 #endif
 
-Var * dv_LoadISISFromPDS_New(FILE *fp, char *fn, int dptr, OBJDESC *qube);
-Var * dv_LoadISISSuffixesFromPDS_New(FILE *fp, char *fname, size_t dptr, OBJDESC *qube);
-Var * dv_LoadImage_New(FILE *fp, char *fn, int dptr, OBJDESC *image);
-Var * dv_LoadHistogram_New(FILE *fp, char *fn, int dptr, OBJDESC *hist);
+//Var * dv_LoadISISFromPDS_New(FILE *fp, char *fn, int dptr, OBJDESC *qube);
+//Var * dv_LoadISISSuffixesFromPDS_New(FILE *fp, char *fname, size_t dptr, OBJDESC *qube);
+//Var * dv_LoadImage_New(FILE *fp, char *fn, int dptr, OBJDESC *image);
+//Var * dv_LoadHistogram_New(FILE *fp, char *fn, int dptr, OBJDESC *hist);
 
 static char *history_parse_buffer(FILE * in);
 static char * history_remove_isis_indents(const char *history);
@@ -113,13 +123,15 @@ static Var *do_key(KEYWORD * key);
 static int readDataForObjects(Var *st, dataKey objSize[], int nObj, int load_suffix_data, int continueOnError);
 static Var *traverseObj(OBJDESC *top, Var *v, dataKey objSizeMap[], int *nObj, OBJDESC *pFileObj, Var *pFileVar);
 static char *getGeneralObjClass(const char *objClassName);
+static void pickFilename(char *outFname, const char *inFname);
 static int rfQube(const dataKey *objSize, Var *vQube, int load_suffix_data);
 static void rfBitField(int *j, char **Bufs, char *tmpbuf, FIELD ** f, int ptr, int row, int *size, int num_items);
-static int rfTable(dataKey *objSize, Var * ob);
+static int rfTable(dataKey *objSize, Var * ob, LABEL *label);
 static int rfImage(dataKey *objSize, Var * ob);
 static int rfHistory(dataKey *objSize, Var *ob);
 static int rfHistogram(dataKey *objSize, Var *ob);
 static Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data);
+static Var *do_loadPDS4(vfuncptr func, char *filename, int data, int suffix_data);
 
 
 /* NOTE: Only add bonafide PDS objects */
@@ -1253,7 +1265,8 @@ void output_big_var(FILE * out, Var * data, char *inset, char *name)
   }
 }
 
-Var *ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth,
+Var *
+ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth,
                       size_t *label_ptrs, objectInfo * oi)
 {
   int i;
@@ -1823,7 +1836,9 @@ static int
 readDataForObjects(Var *st, dataKey objSize[], int nObj, int load_suffix_data, int continueOnError){
 	int i;
 	int rc = 1;
+	char *fileName;
 	Var *sub = NULL, *vObjClass = NULL;
+	LABEL *label = NULL;
 
 	for(i=0; i<nObj && (rc || continueOnError); i++){
 		if (find_struct(objSize[i].Obj, objSize[i].Name, &sub) >= 0){
@@ -1840,7 +1855,21 @@ readDataForObjects(Var *st, dataKey objSize[], int nObj, int load_suffix_data, i
 					rc &= rfHistory(&objSize[i], sub);
 				}
 				else if (strcasecmp(objClass, GEN_OBJ_CLASS_TABLE) == 0){
-					rc &= rfTable(&objSize[i], sub);
+					if (objSize[i].FileName == NULL){
+						fprintf(stderr, "Null filename while reading TABLE\n");
+						return 0;
+					}
+
+					fileName = (char *)alloca(strlen(objSize[i].FileName)+1);
+					pickFilename(fileName, objSize[i].FileName);
+
+					label = LoadLabelFromObjDesc(objSize[i].objDesc, fileName);
+					if (label == NULL) {
+						fprintf(stderr, "Unable to load label from \"%s\".\n", fileName);
+						return 0;
+					}
+
+					rc &= rfTable(&objSize[i], sub, label);
 				}
 				else if (strcasecmp(objClass, GEN_OBJ_CLASS_HISTOGRAM) == 0){
 					rc &= rfHistogram(&objSize[i], sub);
@@ -1944,8 +1973,7 @@ rfBitField(int *j, char **Bufs, char *tmpbuf, FIELD ** f, int ptr, int row, int 
 
 
 static int
-rfTable(dataKey *objSize, Var * ob){
-	LABEL *label;
+rfTable(dataKey *objSize, Var * ob, LABEL *label){
 	Var *data;
 	char **bufs;
 	char *tmpbuf;
@@ -1967,11 +1995,6 @@ rfTable(dataKey *objSize, Var * ob){
 	fileName = (char *)alloca(strlen(objSize->FileName)+1);
 	pickFilename(fileName, objSize->FileName);
 	parse_error("Reading %s from %s...\n", objSize->Name, fileName);
-	label = LoadLabelFromObjDesc(objSize->objDesc, fileName);
-	if (label == NULL) {
-		fprintf(stderr, "Unable to load label from \"%s\".\n", fileName);
-		return 0;
-	}
 
 	f = (FIELD **) label->fields->ptr;
 	num_items = label->fields->number;  /*This is a count of BOTH columns AND bit-columns */
@@ -2191,7 +2214,7 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
         break;
     }
 
-    if (f[j]->scale) {
+    if (f[j]->scale != 1.0) {
       /*
       ** special case: result is always a double
       ** regardless of input size
@@ -2386,8 +2409,7 @@ rfHistogram(dataKey *objSize, Var * ob){
 	return rc;
 }
 
-static char *
-history_parse_buffer(FILE * in)
+static char *history_parse_buffer(FILE * in)
 {
   char buf[1024];
   int max = 2048;
@@ -2652,3 +2674,1143 @@ ff_pdshead(vfuncptr func, Var *arg)
 	return newInt(1);
 }
 
+/**
+ * This function reads a PDS4 file into davinci memory
+ *
+ * libxml2 linked in at compile time and available on the system
+ * at run time.
+ *
+ * Should be thread safe IF the libxml2 conditions at:
+ * http://xmlsoft.org/threads.html
+ * are met.
+ */
+Var *ReadPDS4(vfuncptr func, Var * arg)
+{
+    Var *fn = NULL;
+    char *filename = NULL;
+    int get_data = 1;
+    int use_names = 1;
+    int i;
+
+    Alist alist[4];
+    alist[0] = make_alist("filename", ID_UNK, NULL, &fn);
+    alist[1] = make_alist("use_names", INT, NULL, &use_names);
+    alist[2] = make_alist("data", INT, NULL, &get_data);
+    alist[3].name = NULL;
+
+    if (parse_args(func, arg, alist) == 0)
+        return (NULL);
+
+    /* Handle loading many filenames */
+    if (V_TYPE(fn) == ID_TEXT)
+    {
+        Var *s = new_struct(V_TEXT(fn).Row);
+        for (i = 0; i < V_TEXT(fn).Row; i++)
+        {
+            filename = strdup(V_TEXT(fn).text[i]);
+            Var *t = do_loadPDS4(func, filename, use_names, get_data);
+            if (t)
+            {
+                add_struct(s, filename, t);
+            }
+        }
+        if (get_struct_count(s))
+        {
+            return (s);
+        }
+        else
+        {
+            free_struct(s);
+            return (NULL);
+        }
+    }
+    else if (V_TYPE(fn) == ID_STRING)
+    {
+        filename = V_STRING(fn);
+        return (do_loadPDS4(func, filename, use_names, get_data));
+    }
+    else
+    {
+        parse_error("Illegal argument to function %s(%s), expected STRING",
+                func->name, "filename");
+        return (NULL);
+    }
+}
+
+static void print_pds4_structs(LABEL *label, dataKey *data_key)
+{
+    int i, field_count;
+    FIELD **fields = NULL;
+    FIELD *f = NULL;
+
+    if (label != NULL)
+    {
+        printf("label->reclen: %d\n", label->reclen);
+        printf("label->name: %s\n", label->name);
+        printf("label->nfields: %d\n", label->nfields);
+        printf("label->nrows: %d\n", label->nrows);
+        if (label->fields != NULL)
+        {
+            field_count = list_count(label->fields);
+            printf("label->fields->count: %d\n", field_count);
+            fields = (FIELD**) list_data(label->fields);
+
+            for (i = 0; i < field_count; i++)
+            {
+                f = fields[i];
+                printf("\nfield->name: %s\n", f->name);
+                printf("field->eformat: %d\n", f->eformat);
+                printf("field->iformat: %d\n", f->iformat);
+                printf("field->size: %d\n", f->size);
+                printf("field->start: %d\n", f->start);
+                printf("field->scale: %f\n", f->scale);
+                printf("field->offset: %f\n", f->offset);
+                printf("field->dimension: %d\n", f->dimension);
+
+            }
+        }
+    }
+    else
+    {
+        printf("label is NULL\n");
+    }
+
+    if (data_key != NULL)
+    {
+        printf("data_key->Name: %s\n", data_key->Name);
+        printf("data_key->FileName: %s\n", data_key->FileName);
+        printf("data_key->dptr: %d\n", data_key->dptr);
+        printf("data_key->size: %d\n", data_key->size);
+
+    }
+    else
+    {
+        printf("data_key is NULL\n");
+    }
+}
+
+static int loadFieldBinary(Var *v, LABEL *label, dataKey *data_key,
+        int use_names, int grp_count, int grp_start, char *parent_name)
+{
+    int i, j;
+    int err = 0, warn = 0;
+    int count = 0;
+    int elem_cnt = 0;
+    int num_groups = 0;
+    int num_fields = 0;
+    int grp_loc = 0;
+    int grp_len = 0;
+    char *elem_type = NULL;
+    char *name = NULL;
+    char *elem_name = NULL;
+    char *data_type = NULL;
+    FIELD *field = NULL;
+    Var *s = NULL;
+    Var *t = NULL;
+
+    count = get_struct_count(v);
+
+    if (count > 0 && label->fields == NULL)
+    {
+        label->fields = new_list();
+        if (label->fields == NULL)
+        {
+            parse_error("Error allocating memory for a FIELD list\n");
+            return 0;
+        }
+    }
+
+    field = (FIELD *) calloc(1, sizeof(FIELD));
+    if (field == NULL)
+    {
+        parse_error("Error allocating memory for a FIELD_BINARY\n");
+        return 0;
+    }
+
+    field->label = label;
+    field->alias = NULL;
+    field->name = NULL;
+    field->start = 0;
+    field->scale = 1.0;
+    field->offset = 0.0;
+    field->dimension = grp_count;
+    field->size = 0;
+
+    for (i = 0; i < count; i++)
+    {
+        get_struct_element(v, i, &name, &s);
+        if (name == NULL || s == NULL)
+        {
+            parse_error(
+                    "Encountered a NULL davinci child node while loading a field binary record\n");
+            err = 1;
+            goto FINISH;
+        }
+        if (!strcmp(name, FIELD_LOCATION))
+        {
+            // if grp_start is already initialized we want to use it
+            if (grp_start > -1)
+            {
+                field->start = grp_start;
+            }
+            else
+            {
+                elem_cnt = get_struct_count(s);
+                for (j = 0; j < elem_cnt; j++)
+                {
+                    get_struct_element(s, j, &elem_name, &t);
+                    if (elem_name == NULL || t == NULL)
+                    {
+                        parse_error(
+                                "Encountered a NULL davinci child node while loading a field binary location record\n");
+                        err = 1;
+                        goto FINISH;
+                    }
+                    else if (!strcmp(elem_name, VALUE))
+                    {
+                        errno = 0;
+                        field->start = V_INT(t) - 1; // need to convert from 1 index to zero index
+                        if (errno == ERANGE)
+                        {
+                            parse_error(
+                                    "Math error processing the field location value\n");
+                            err = 1;
+                            goto FINISH;
+                        }
+                        if (field->start < 0)
+                        {
+                            parse_error(
+                                    "Warning!: The starting value of a field binary cannot be < 0\n");
+                            warn = 1;
+                            goto FINISH;
+                        }
+                    }
+                }
+            }
+            if (field->start > label->reclen)
+            {
+                parse_error(
+                        "Warning!: a Field cannot be located beyond the length of the record\n");
+                warn = 1;
+                goto FINISH;
+            }
+        }
+        else if (!strcmp(name, DATA_TYPE))
+        {
+            data_type = V_STRING(s);
+            if (data_type == NULL || !strlen(data_type))
+            {
+                parse_error("Warning! Missing Field Binary data type\n");
+                warn = 1;
+                goto FINISH;
+            }
+            if (!strcmp(data_type, UNSIGNED_BYTE) || !strcmp(data_type,
+                    UNSIGNED_MSB2) || !strcmp(data_type, UNSIGNED_MSB4))
+            {
+                field->eformat = MSB_UNSIGNED_INTEGER;
+                field->iformat = eformat_to_iformat(MSB_UNSIGNED_INTEGER);
+            }
+            else if (!strcmp(data_type, UNSIGNED_LSB2) || !strcmp(data_type,
+                    UNSIGNED_LSB4))
+            {
+                field->eformat = LSB_UNSIGNED_INTEGER;
+                field->iformat = eformat_to_iformat(LSB_UNSIGNED_INTEGER);
+            }
+            else if (!strcmp(data_type, SIGNED_LSB2) || !strcmp(data_type,
+                    SIGNED_LSB4))
+            {
+                field->eformat = LSB_INTEGER;
+                field->iformat = eformat_to_iformat(LSB_INTEGER);
+            }
+            else if (!strcmp(data_type, SIGNED_MSB2) || !strcmp(data_type,
+                    SIGNED_MSB4))
+            {
+                field->eformat = MSB_INTEGER;
+                field->iformat = eformat_to_iformat(MSB_INTEGER);
+            }
+            else if (!strcmp(data_type, IEEE_LSB_DOUBLE) || !strcmp(data_type,
+                    IEEE_LSB_SINGLE))
+            {
+                field->eformat = PC_REAL;
+                field->iformat = eformat_to_iformat(PC_REAL);
+            }
+            else if (!strcmp(data_type, IEEE_MSB_SINGLE) || !strcmp(data_type,
+                    IEEE_MSB_DOUBLE))
+            {
+                field->eformat = IEEE_REAL;
+                field->iformat = eformat_to_iformat(IEEE_REAL);
+            }
+        }
+        else if (!strcmp(name, FIELD_LENGTH))
+        {
+            elem_cnt = get_struct_count(s);
+            for (j = 0; j < elem_cnt; j++)
+            {
+                get_struct_element(s, j, &elem_name, &t);
+                if (elem_name == NULL || t == NULL)
+                {
+                    parse_error(
+                            "Encountered a NULL davinci child node while loading a field binary length record\n");
+                    err = 1;
+                    goto FINISH;
+                }
+                else if (!strcmp(elem_name, VALUE))
+                {
+                    errno = 0;
+                    if (V_FORMAT(t) != INT)
+                    {
+                        parse_error(
+                                "Warning!: Field length should be an Integer value\n");
+                        warn = 1;
+                        goto FINISH;
+                    }
+
+                    field->size = V_INT(t);
+                    if (errno == ERANGE)
+                    {
+                        parse_error(
+                                "Math error processing the field length value\n");
+                        err = 1;
+                        goto FINISH;
+                    }
+                    if (field->start + field->size > label->reclen)
+                    {
+                        parse_error(
+                                "Warning!: a Field cannot extend beyond the length of the record\n");
+                        warn = 1;
+                        goto FINISH;
+                    }
+                }
+            }
+        }
+        else if (!strcmp(name, SCALING_FACTOR))
+        {
+            if (V_FORMAT(s) == INT)
+            {
+                field->scale = V_INT(s);
+            }
+            else if (V_FORMAT(s) == FLOAT)
+            {
+                field->scale = V_FLOAT(s);
+            }
+            else
+            {
+                parse_error(
+                        "Warning: scaling factor should be a integer or a float value\n");
+                warn = 1;
+                goto FINISH;
+            }
+        }
+        else if (!strcmp(name, VALUE_OFFSET))
+        {
+            if (V_FORMAT(s) == INT)
+            {
+                field->offset = V_INT(s);
+            }
+            else if (V_FORMAT(s) == FLOAT)
+            {
+                field->offset = V_FLOAT(s);
+            }
+            else
+            {
+                parse_error(
+                        "Warning: offset should be a integer or a float value\n");
+                warn = 1;
+                goto FINISH;
+            }
+        }
+        else if (field->name == NULL && !use_names && !strcmp(name,
+                NAME_ATTRIBUTE))
+        {
+            field->name = strdup(V_STRING(s));
+        }
+        else if (field->name == NULL && use_names && parent_name != NULL)
+        {
+            // need the name of the parent node
+            field->name = strdup(parent_name);
+        }
+    }
+
+    FINISH: if (warn || err)
+    {
+        if (field != NULL)
+        {
+            if (field->name != NULL)
+            {
+                parse_error("Field %s was not read from the table\n",
+                        field->name);
+                free(field->name);
+            }
+            free(field);
+        }
+        if (warn)
+        {
+            return -1;
+        }
+        else if (err)
+        {
+            return 0;
+        }
+    }
+    if (field != NULL)
+    {
+        list_add(label->fields, field);
+        label->nfields += 1;
+    }
+    return 1;
+}
+
+static int loadGroupFieldBinary(Var *v, LABEL *label, dataKey *data_key,
+        int use_names)
+{
+    int i, j, warn = 0, err = 0;
+    int count = 0;
+    int elem_cnt = 0;
+    int num_groups = 0;
+    int num_fields = 0;
+    int grp_field_cnt = 0;
+    int field_found = 0;
+    int grp_loc = -1;
+    int grp_len = 0;
+    int grp_rep = 0;
+    char *elem_type = NULL;
+    char *name = NULL;
+    char *elem_name = NULL;
+    Var *s = NULL;
+    Var *t = NULL;
+    Var *u = NULL;
+
+    count = get_struct_count(v);
+
+    for (i = 0; i < count; i++)
+    {
+        get_struct_element(v, i, &name, &s);
+        if (name == NULL || s == NULL)
+        {
+            parse_error(
+                    "Encountered a NULL davinci child node while loading a group field binary record\n");
+            err = 1;
+            goto FINISH;
+        }
+        if (!strcmp(name, GROUP_FIELD_BINARY))
+        {
+            parse_error(
+                    "Warning!: Davinci does not allow a group field binary element to contain another group field binary element!\n");
+            warn = 1;
+            goto FINISH;
+        }
+        else if (!strcmp(name, FIELDS))
+        {
+            errno = 0;
+            grp_field_cnt = V_INT(s);
+            if (errno == ERANGE)
+            {
+                parse_error("Math error processing the FIELDS value\n");
+                err = 1;
+                goto FINISH;
+            }
+            if (grp_field_cnt != 1)
+            {
+                parse_error(
+                        "Warning!: Davinci only allows one field per each group field binary element!\n");
+                warn = 1;
+                goto FINISH;
+            }
+            // we would normally increment label->nfields here but do it in repetitions instead
+        }
+        else if (!strcmp(name, REPETITIONS))
+        {
+            errno = 0;
+            num_fields = V_INT(s);
+            if (errno == ERANGE)
+            {
+                parse_error("Math error processing the REPETITIONS value\n");
+                err = 1;
+                goto FINISH;
+            }
+            label->nfields += num_fields;
+        }
+        else if (!strcmp(name, GROUPS))
+        {
+            errno = 0;
+            num_groups += V_INT(s);
+            if (errno == ERANGE)
+            {
+                parse_error("Math error processing the GROUPS value\n");
+                err = 1;
+                goto FINISH;
+            }
+
+            if (num_groups != 0)
+            {
+                parse_error(
+                        "ERROR: davinci does not currently allow groups within groups in a PDS4 label\n");
+                err = 1;
+                goto FINISH;
+            }
+        }
+        else if (!strcmp(name, GROUP_LOCATION))
+        {
+            elem_cnt = get_struct_count(s);
+
+            for (j = 0; j < elem_cnt; j++)
+            {
+                get_struct_element(s, j, &elem_name, &t);
+                if (elem_name == NULL || t == NULL)
+                {
+                    parse_error(
+                            "Encountered a NULL davinci child node while loading a group field binary location\n");
+                    err = 1;
+                    goto FINISH;
+                }
+                if (!strcmp(elem_name, VALUE))
+                {
+                    errno = 0;
+                    grp_loc = V_INT(t) - 1; // need to convert from 1 index to zero index
+                    if (errno == ERANGE)
+                    {
+                        parse_error(
+                                "Math error processing the GROUPS location value\n");
+                        err = 1;
+                        goto FINISH;
+                    }
+                    if (label != NULL && grp_loc > label->reclen)
+                    {
+                        parse_error(
+                                "Warning!: a Group cannot be located beyond the length of the table\n");
+                        warn = 1;
+                        goto FINISH;
+                    }
+                }
+            }
+        }
+        else if (!strcmp(name, GROUP_LENGTH))
+        {
+            elem_cnt = get_struct_count(s);
+
+            for (j = 0; j < elem_cnt; j++)
+            {
+                get_struct_element(s, j, &elem_name, &t);
+                if (elem_name == NULL || t == NULL)
+                {
+                    parse_error(
+                            "Encountered a NULL davinci child node while loading a group length record\n");
+                    err = 1;
+                    goto FINISH;
+                }
+                if (!strcmp(elem_name, VALUE))
+                {
+                    errno = 0;
+                    grp_len = V_INT(t);
+                    if (errno == ERANGE)
+                    {
+                        parse_error(
+                                "Math error processing the GROUPS length value\n");
+                        err = 1;
+                        goto FINISH;
+                    }
+                    if (label != NULL && (grp_len + grp_loc > label->reclen))
+                    {
+                        parse_error(
+                                "Warning!: a Group cannot extend beyond the length of the record\n");
+                        warn = 1;
+                        goto FINISH;
+                    }
+                }
+            }
+        }
+        else if (strstr(name, FIELD_BINARY) != NULL && label != NULL
+                && data_key != NULL)
+        {
+            if (field_found)
+            {
+                parse_error(
+                        "Warning!: Davinci only allows one field per each group field binary element!\n");
+                warn = 1;
+                goto FINISH;
+            }
+            if (!loadFieldBinary(s, label, data_key, use_names, num_fields,
+                    grp_loc, (char *) NULL))
+            {
+                return 0;
+            }
+            field_found++;
+        }
+        else if (find_struct(s, ELEMENT_TYPE, &u) >= 0)
+        {
+            elem_type = strdup(V_STRING(u));
+            if (elem_type != NULL && !strcmp(elem_type, FIELD_BINARY))
+            {
+                if (field_found)
+                {
+                    parse_error(
+                            "Warning!: Davinci only allows one field per each group field binary element!\n");
+                    warn = 1;
+                    goto FINISH;
+                }
+                if (!loadFieldBinary(s, label, data_key, use_names, num_fields,
+                        grp_loc, name))
+                {
+                    return 0;
+                }
+                field_found++;
+            }
+            if (elem_type != NULL)
+            {
+                free(elem_type);
+            }
+        }
+    }
+    FINISH: if (warn)
+    {
+        parse_error("A Group Field was not read from the table\n");
+        return -1;
+    }
+    else if (err)
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+static int loadRecordBinary(Var *v, LABEL *label, dataKey *data_key,
+        int use_names)
+{
+    int i, j;
+    int count = 0;
+    int elem_cnt = 0;
+    int num_fields = 0;
+    char *elem_type = NULL;
+    char *name = NULL;
+    Var *s = NULL;
+    Var *t = NULL;
+    Var *u = NULL;
+
+    count = get_struct_count(v);
+
+    for (i = 0; i < count; i++)
+    {
+        get_struct_element(v, i, &name, &s);
+        if (name == NULL || s == NULL)
+        {
+            // error msg
+            parse_error(
+                    "Encountered a NULL davinci child node while loading a binary record\n");
+            return 0;
+        }
+        if (!strcmp(name, FIELDS))
+        {
+            errno = 0;
+            num_fields += V_INT(s);
+            if (errno == ERANGE)
+            {
+                // error msg couldn't read the file name
+                parse_error("Math error processing the FIELDS value\n");
+                return 0;
+            }
+        }
+        else if (!strcmp(name, GROUPS))
+        {
+            errno = 0;
+            num_fields += V_INT(s);
+            if (errno == ERANGE)
+            {
+                parse_error("Math error processing the GROUPS value\n");
+                return 0;
+            }
+        }
+        else if (!strcmp(name, RECORD_LENGTH))
+        {
+            elem_cnt = get_struct_count(s);
+            for (j = 0; j < elem_cnt; j++)
+            {
+                get_struct_element(s, j, &name, &t);
+                if (name == NULL || t == NULL)
+                {
+                    // error msg
+                    parse_error(
+                            "Encountered a NULL davinci child node while loading a binary record length\n");
+                    return 0;
+                }
+
+                if (!strcmp(name, VALUE))
+                {
+                    errno = 0;
+                    label->reclen = V_INT(t);
+                    if (errno == ERANGE)
+                    {
+                        // error msg couldn't read the file name
+                        parse_error(
+                                "Math error processing the record length value\n");
+                        return 0;
+                    }
+                }
+            }
+        }
+        else if (strstr(name, GROUP_FIELD_BINARY) != NULL && label != NULL
+                && data_key != NULL)
+        {
+            if (!loadGroupFieldBinary(s, label, data_key, use_names))
+            {
+                return 0;
+            }
+        }
+        else if (strstr(name, FIELD_BINARY) != NULL && label != NULL
+                && data_key != NULL)
+        {
+            if (!loadFieldBinary(s, label, data_key, use_names, 1, -1,
+                    (char *) NULL))
+            {
+                return 0;
+            }
+        }
+        else if (find_struct(s, ELEMENT_TYPE, &u) >= 0)
+        {
+            elem_type = strdup(V_STRING(u));
+            if (elem_type != NULL && !strcmp(elem_type, FIELD_BINARY))
+            {
+                if (!loadFieldBinary(s, label, data_key, use_names, 1, -1, name))
+                {
+                    return 0;
+                }
+            }
+            if (elem_type != NULL)
+            {
+                free(elem_type);
+            }
+        }
+    }
+    label->nfields = num_fields;
+
+    return 1;
+
+}
+
+static int loadBinaryTable(Var *v, LABEL *label, dataKey *data_key,
+        int use_names, int get_data)
+{
+    int i, j;
+    int count = 0;
+    int elem_cnt = 0;
+    int ret_val = 0;
+    char *name = NULL;
+    Var *s = NULL;
+    Var *t = NULL;
+
+    count = get_struct_count(v);
+
+    for (i = 0; i < count; i++)
+    {
+        get_struct_element(v, i, &name, &s);
+        if (name == NULL || s == NULL)
+        {
+            // error msg
+            parse_error(
+                    "Encountered a NULL davinci child node while loading a binary table\n");
+            return 0;
+        }
+        if (!strcmp(name, OFFSET))
+        {
+            elem_cnt = get_struct_count(s);
+            for (j = 0; j < elem_cnt; j++)
+            {
+                get_struct_element(s, j, &name, &t);
+                if (name == NULL || t == NULL)
+                {
+                    // error msg
+                    parse_error(
+                            "Encountered a NULL davinci child node while fetching table offset\n");
+                    return 0;
+                }
+
+                if (!strcmp(name, VALUE))
+                {
+                    errno = 0;
+                    data_key->dptr = V_INT(t);
+                    if (errno == ERANGE)
+                    {
+                        // error msg couldn't read the file name
+                        parse_error(
+                                "Error encountered while accessing table offset value\n");
+                        return 0;
+                    }
+                }
+            }
+
+        }
+        else if (!strcmp(name, RECORDS))
+        {
+            label->nrows = V_INT(s);
+        }
+        else if (!strcmp(name, DESCRIPTION))
+        {
+            if ((label->name = strdup(V_STRING(s))) == NULL)
+            {
+                parse_error(
+                        "Error encountered while accessing table description\n");
+                return 0;
+            }
+        }
+        else if (!strcmp(name, RECORD_BINARY))
+        {
+            if (!loadRecordBinary(s, label, data_key, use_names))
+            {
+                return 0;
+            }
+        }
+    }
+
+    //	print_pds4_structs(label, data_key);
+
+    // call rfTable() to read in the table
+    if (get_data)
+    {
+        ret_val = rfTable(data_key, v, label);
+        if (!ret_val)
+        {
+            // fail slow so the user can at least have the label
+            parse_error("Unable to read all or part of the binary table\n");
+            ret_val = -1;
+        }
+    }
+    return ret_val;
+}
+
+static int loadFileInfo(Var *v, LABEL *label, dataKey *data_key)
+{
+    int i, j;
+    int count = 0;
+    int fCount = 0;
+    int m_count = 0;
+    char *name = NULL;
+    char *finfo = NULL;
+    char *fname = NULL;
+    char *tmp = NULL;
+    Var *s = NULL;
+    Var *t = NULL;
+
+    count = get_struct_count(v);
+    for (i = 0; i < count; i++)
+    {
+        get_struct_element(v, i, &name, &s);
+        if (name == NULL || s == NULL)
+        {
+            parse_error(
+                    "Encountered a NULL davinci child node while searching for a PDS4 table file name\n");
+            return 0;
+        }
+        if (!strcmp(name, FILE_NAME))
+        {
+            if ((fname = strdup(V_STRING(s))) == NULL)
+            {
+                // error msg couldn't read the file name
+                parse_error("Error extracting table file name\n");
+                return 0;
+            }
+
+            if (data_key->FileName != NULL)
+            {
+                if ((tmp = (char *) malloc(strlen(fname) + strlen(
+                        data_key->FileName) + sizeof(char))) == NULL)
+                {
+                    parse_error(
+                            "Unable to allocate memory for table file name expansion\n");
+                    if (fname != NULL)
+                    {
+                        free(fname);
+                    }
+                    return 0;
+                }
+                else
+                {
+                    tmp = strcpy(tmp, data_key->FileName);
+                    tmp = strcat(tmp, fname);
+                    if (data_key->FileName != NULL)
+                    {
+                        free(data_key->FileName);
+                    }
+                    data_key->FileName = tmp;
+                    free(fname);
+                }
+            }
+            else
+            {
+                data_key->FileName = fname;
+            }
+
+        }
+        else if (!strcmp(name, FILE_SIZE))
+        {
+            fCount = get_struct_count(s);
+            for (j = 0; j < fCount; j++)
+            {
+                get_struct_element(s, j, &finfo, &t);
+                if (finfo == NULL || t == NULL || !strcmp(finfo, VALUE))
+                {
+                    data_key->size = V_INT(t);
+                    if (errno == ERANGE)
+                    {
+                        parse_error("Could not read the PDS4 table file size\n");
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+
+    return 1;
+}
+
+static Var * xmlParseLabelFiles(Var * v, LABEL *label, dataKey *data_key,
+        int use_names, int get_data, char *file_path)
+{
+    char *elem_type = NULL;
+    char *node_name = NULL;
+    char *name = NULL;
+    char *table_name = NULL;
+    int count = 0, err = 0, i;
+    Var *s = NULL;
+    Var *t = NULL;
+    Var *u = NULL;
+
+    count = get_struct_count(v);
+    for (i = 0; i < count; i++)
+    {
+        get_struct_element(v, i, &name, &s);
+        if (name != NULL)
+        {
+            node_name = strdup(name);
+            if (node_name == NULL)
+            {
+                /* do something sensible here */
+                parse_error(
+                        "Failure trying to parse the PDS4 xml label files\n");
+                err = 1;
+                break;
+            }
+            // if this node is a file
+            if (strstr(node_name, EXTERNAL_FILE) != NULL && strstr(node_name,
+                    FILE_AREA_OBSERVATIONAL) == NULL)
+            {
+                if (data_key == NULL)
+                {
+                    // create a new LABEL and pass it in
+                    label = malloc(sizeof(LABEL));
+                    if (label == NULL)
+                    {
+                        parse_error(
+                                "Memory allocation error while trying to parse the PDS4 xml label files\n");
+                        err = 1;
+                        break;
+                    }
+                }
+                label->reclen = 0;
+                label->name = strdup(node_name);
+                label->nfields = 0;
+                label->nrows = 0;
+                label->fields = NULL;
+                label->keys = NULL;
+                label->table = NULL;
+
+                // create a new dataKey and pass it in as well
+                data_key = malloc(sizeof(dataKey));
+                if (data_key == NULL)
+                {
+                    parse_error(
+                            "Memory allocation error while trying to parse the PDS4 xml label files\n");
+                    err = 1;
+                    break;
+                }
+                data_key->ObjClass = NULL;
+                data_key->Obj = NULL;
+                data_key->KeyValue = NULL;
+                if (file_path != NULL)
+                {
+                    data_key->FileName = strdup(file_path);
+                    free(file_path);
+                }
+                else
+                {
+                    data_key->FileName = NULL;
+                }
+                data_key->dptr = 0;
+                data_key->size = 0;
+                data_key->objDesc = NULL;
+                data_key->pFileDesc = NULL;
+                data_key->pFileVar = NULL;
+
+                if (!loadFileInfo(s, label, data_key))
+                {
+                    err = 1;
+                    break;
+                }
+            }
+            else if (strstr(node_name, TABLE_BINARY) != NULL && label != NULL
+                    && data_key != NULL)
+            {
+                if (find_struct(s, NAME_ATTRIBUTE, &t) >= 0)
+                {
+                    table_name = strdup(V_STRING(t));
+                    if (table_name != NULL)
+                    {
+                        data_key->Name = table_name;
+                    }
+                }
+
+                if (!loadBinaryTable(s, label, data_key, use_names, get_data))
+                {
+                    err = 1;
+                    break;
+                }
+
+            }
+            else if (strstr(node_name, ELEMENT_TYPE) != NULL && label != NULL
+                    && data_key != NULL)
+            {
+                elem_type = strdup(V_STRING(s));
+                if (elem_type != NULL && strstr(elem_type, TABLE_BINARY)
+                        != NULL)
+                {
+                    free(elem_type);
+                    if (!loadBinaryTable(v, label, data_key, use_names,
+                            get_data))
+                    {
+                        err = 1;
+                        break;
+                    }
+                }
+            }
+            else if (use_names) // looking for the name of the potential binary table
+            {
+                if (V_TYPE(s) == ID_STRUCT)
+                {
+                    if (find_struct(s, ELEMENT_TYPE, &u) >= 0)
+                    {
+                        elem_type = strdup(V_STRING(u));
+                        if (elem_type != NULL && !strcmp(elem_type,
+                                TABLE_BINARY))
+                        {
+                            if (data_key == NULL)
+                            {
+                                // create a new LABEL and pass it in
+                                label = malloc(sizeof(LABEL));
+                                if (label == NULL)
+                                {
+                                    parse_error(
+                                            "Memory allocation error while trying to parse the PDS4 xml label files\n");
+                                    err = 1;
+                                    break;
+                                }
+                            }
+                            data_key->Name = strdup(node_name);
+                        }
+                    }
+                }
+            }
+        }
+        if (s != NULL)
+        {
+            if (V_TYPE(s) == ID_STRUCT)
+            {
+                if (!xmlParseLabelFiles(s, label, data_key, use_names,
+                        get_data, file_path))
+                {
+                    // error message;
+                    err = 1;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            parse_error(
+                    "Encountered a NULL davinci child node while parsing an PDS4 XML label\n");
+        }
+    }
+    if (err)
+    {
+        if (node_name != NULL)
+        {
+            free(node_name);
+        }
+        return NULL;
+    }
+    return v;
+}
+
+/**
+ * This function loads a PDS4 label file and any associated tables into
+ * davinci struct(s) if successful.
+ *
+ * Dependent on davinci being built with libxml2 and the libxml2
+ * libraries being available on the system.
+ *
+ * Should be thread safe IF the libxml2 conditions at:
+ * http://xmlsoft.org/threads.html
+ * are met.
+ */
+static Var *
+do_loadPDS4(vfuncptr func, char *filename, int use_names, int get_data)
+{
+    char *fname;
+    char *file_path = NULL, *path_end = NULL;
+    FILE *fp;
+    Var *labelFile = NULL;
+    int path_size = 0;
+
+    if (filename == NULL)
+    {
+        parse_error("%s: No filename specified\n", func->name);
+        return (NULL);
+    }
+    if ((fname = dv_locate_file(filename)) == (char*) NULL)
+    {
+        parse_error("%s: Unable to expand filename %s\n", func->name, filename);
+        return (NULL);
+    }
+
+    if (access(fname, R_OK) != 0)
+    {
+        parse_error("%s: Unable to find file %s.", func->name, filename);
+        return (NULL);
+    }
+
+    /**
+     *** TODO What about compression? We'll deal with this at a later date
+     *
+     if ((fp = fopen(fname, "rb")) != NULL) {
+     if (iom_is_compressed(fp)) {
+     // fprintf(stderr, "is compressed\n");    FIX: remove
+     fclose(fp);
+     fname = iom_uncompress_with_name(fname);
+     fp = fopen(fname, "rb");
+     }
+     }
+     */
+
+    labelFile = dv_LoadXML(fname, use_names);
+
+    if (labelFile != NULL)
+    {
+        // parse the directory from the file name and pass it in
+
+        path_end = strrchr(fname, pathSeparator);
+
+        if (path_end) // the file isn't in the current directory
+        {
+            path_size = path_end - fname + 2;
+            file_path = (char*) malloc(path_size);
+            if (file_path)
+            {
+                file_path = strncpy(file_path, fname, path_size);
+                file_path[path_size - 1] = '\0';
+            }
+        }
+
+        labelFile = xmlParseLabelFiles(labelFile, (LABEL *) NULL,
+                (dataKey *) NULL, use_names, get_data, file_path);
+    }
+
+    return labelFile;
+}

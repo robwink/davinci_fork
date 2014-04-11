@@ -169,6 +169,8 @@ MakeField(OBJDESC *col, LABEL *l)
 	
     do {
         f = (FIELD *) calloc(1, sizeof(FIELD));
+        // fixed so scale is always 1.0 by default
+        f->scale = 1.0;
         f->label = l;
 
         if ((kw = GetKey(col, "NAME")) == NULL) {

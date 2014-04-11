@@ -158,6 +158,62 @@ if test "x$have_libpng2" = "xyes"; then
 	AC_DEFINE(HAVE_LIBPNG, 1, [ if you have libpng] )
 fi
 
+#check for libxml2
+dnl If the user specified a path to enable_libxml2, use that
+
+dnl # Setup temp LDFLAGS and look for libxml2 library/header
+LDFLAGS_SAVE=${LDFLAGS};
+CFLAGS_SAVE=${CFLAGS};
+LIBS_SAVE=${LIBS};
+
+
+AC_ARG_WITH(libxml2,
+    [  --with-libxml2=<path>      prefix of libxml2 libraries. e.g. /usr/lib or /usr/lib64],
+    [LDFLAGS="$LDFLAGS -L$withval" ; enable_libxml2=$withval]
+)
+
+AC_ARG_WITH(libxml2_hdr,
+    [  --with-libxml2_hdr=<path>      prefix of libxml2 headers. e.g. /usr/include/libxml2],
+    [CFLAGS="$CFLAGS -I$withval" ; enable_xml2_headers=$withval]
+)
+
+if test "x$enable_libxml2" != "xno" -a "x$enable_libxml2" != "xyes" -a "x$enable_libxml2" != "x"; then
+	xml2_lib=$enable_libxml2
+fi
+
+if test "x$enable_xml2_headers" != "xno" -a "x$enable_xml2_headers" != "xyes" -a "x$enable_xml2_headers" != "x"; then
+	xml2_headers=$enable_xml2_headers
+fi
+
+dnl If libxml2 is supposed to be used, then check for its existance
+
+if test "x$enable_libxml2" != "xno" -a "x$enable_libxml2" != "xyes" -a "x$enable_libxml2" != "x" -a "x$enable_xml2_headers" != "xno" -a "x$enable_xml2_headers" != "xyes" -a "x$enable_xml2_headers" != "x"; then
+
+	dnl Check for existance of libxml2
+	have_libxml2=yes
+	have_xml2_headers=no
+		
+	AC_CHECK_HEADER([libxml/parser.h], [have_xml2_headers=yes], [have_xml2_headers=no])
+	
+	AC_CHECK_LIB(xml2, xmlFileRead,
+				 [LIBS="$LIBS -lxml2 "],
+				 [have_libxml2=no],
+				 [])
+
+	if test "x$have_libxml2" = "xyes" -a "x$have_xml2_headers" = "xyes"; then
+AC_MSG_WARN(HAVE_LIBXML2)
+	
+		AC_DEFINE(HAVE_LIBXML2, 1, [ headers and libraries for libxml2 ])
+	else
+		LDFLAGS=$LDFLAGS_SAVE;
+		CFLAGS=$CFLAGS_SAVE;
+		LIBS=$LIBS_SAVE;
+	fi
+fi
+
+#AC_CHECK_LIB(xml2, xmlFileRead)
+#AC_CHECK_HEADER([libxml/parser.h], , AC_MSG_ERROR([Couldn't find parser.h]))
+
 #check for cfitsio
 AC_ARG_WITH(cfitsio,
     [  --with-cfitsio=<path>   prefix of cfitsio installation. e.g. /usr/local or /usr],
@@ -540,6 +596,8 @@ PRINT_YES_NO "            FITS" "$have_cfitsio"
 PRINT_YES_NO "             QMV" "$have_qmv"
 PRINT_YES_NO "        libisis3" "$have_isis3"
 PRINT_YES_NO "             Qt4" "$have_qt"
+PRINT_YES_NO "         libxml2" "$have_libxml2"
+PRINT_YES_NO " libxml2 headers" "$have_xml2_headers"
 
 PRINT ""
 
