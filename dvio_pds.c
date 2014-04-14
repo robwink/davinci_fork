@@ -2674,6 +2674,8 @@ ff_pdshead(vfuncptr func, Var *arg)
 	return newInt(1);
 }
 
+#ifdef HAVE_LIBXML2
+
 /**
  * This function reads a PDS4 file into davinci memory
  *
@@ -3814,3 +3816,4 @@ do_loadPDS4(vfuncptr func, char *filename, int use_names, int get_data)
 
     return labelFile;
 }
+#endif
