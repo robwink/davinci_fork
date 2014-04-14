@@ -109,6 +109,7 @@ struct _vfuncptr vfunclist[] = {
   { "read_text",  ff_read_text,   NULL , NULL},
   { "read_lines", ff_read_lines,  NULL, NULL},
   { "unpack",     ff_unpack,      NULL, NULL},
+  { "pack",       ff_pack,        NULL, NULL},
 
   { "save",       ff_write,       NULL , NULL},
   { "write",      ff_write,       NULL , NULL},        /* an alias */
