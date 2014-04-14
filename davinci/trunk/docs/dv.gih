@@ -276,7 +276,7 @@
 ?unpack()
  unpack() - Unpacks binary data from a file, given a template
 
- unpack(template=STRING, filename=STRING [,skip=INT] [,count=INT])
+ unpack(template=STRING, filename=STRING [,skip=INT] [,count=INT] [,col_names=TEXT])
 
     The unpack function reads binary data from the input file,
     interprets it according to the specified record template,
@@ -323,6 +323,34 @@
     arrays cannot be 3-dimensional. A string column with multiplicity
     will use only one of the user-provided names and add on "_m" to
     indicate the multiplicity. 
+
+?functions pack()
+?pack()
+ pack() - Packs binary data from a Davinci struct to a file, given a template
+
+ pack(struct=STRUCT, template=STRING, filename=STRING [,skip=INT] [,count=INT] ,col_names=TEXT)
+
+    The pack function reads binary data from the davinci struct,
+    interprets it according to the specified record template,
+    and writes it to the file named by filename.  The optional skip
+    parameter specifies the bytes into the file to skip before
+    encoding to the file. The optional count parameter specifies
+    the number of records to be packed (a negative value 
+    means all records). The template string has the same structure 
+    as used in the "unpack" function.
+    
+    NOTE: existing data in the file is overwritten.
+
+    The user must specify the order in which columns within a
+    davinci structure is encoded with the argument
+    col_names. The argument col_names can be either a string
+    (if the user is only writing 1 column) or a davinci text
+    buffer (string array). Providing extra names or names
+    not in the davinci structure is an error. Providing
+    fewer names is fine. 
+
+ See Also:
+    unpack(), load_raw()
 
 ?functions read()
 ?read()

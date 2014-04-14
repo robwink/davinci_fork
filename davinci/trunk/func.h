@@ -264,6 +264,7 @@ int dv_getline(char **ptr, FILE *fp);
  **/
 
 Var *ff_unpack (vfuncptr, Var *);
+Var *ff_pack (vfuncptr, Var *);
 Var *ff_dfunc (vfuncptr, Var *);
 Var *ff_pow (vfuncptr, Var *);
 Var *ff_conv (vfuncptr, Var *);
