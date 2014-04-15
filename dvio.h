@@ -67,6 +67,7 @@ Var *dv_LoadENVI(FILE *fp, char *filename, struct iom_iheader *s);
 Var *dv_LoadSpecpr(FILE *fp, char *filename, struct iom_iheader *s);
 #ifdef HAVE_LIBXML2
 Var *dv_LoadXML(char *filename, int use_names);
+Var *dv_loadPDS4(char *filename);
 #endif
 int dv_WriteIOM(Var *, const char *, const char *, int);
 int dv_WriteGRD(Var *s, char *filename, int force, char *title, char *task);

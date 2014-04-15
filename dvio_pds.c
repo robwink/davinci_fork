@@ -132,6 +132,7 @@ static int rfHistory(dataKey *objSize, Var *ob);
 static int rfHistogram(dataKey *objSize, Var *ob);
 static Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data);
 static Var *do_loadPDS4(vfuncptr func, char *filename, int data, int suffix_data);
+Var *dv_loadPDS4(char *filename);
 
 
 /* NOTE: Only add bonafide PDS objects */
@@ -3752,7 +3753,7 @@ static Var * xmlParseLabelFiles(Var * v, LABEL *label, dataKey *data_key,
  * http://xmlsoft.org/threads.html
  * are met.
  */
-static Var *
+Var *
 do_loadPDS4(vfuncptr func, char *filename, int use_names, int get_data)
 {
     char *fname;
@@ -3763,18 +3764,33 @@ do_loadPDS4(vfuncptr func, char *filename, int use_names, int get_data)
 
     if (filename == NULL)
     {
-        parse_error("%s: No filename specified\n", func->name);
+        if (func == NULL)
+        {
+            parse_error("No filename specified\n");
+        }
+        else
+            parse_error("%s: No filename specified\n", func->name);
         return (NULL);
     }
     if ((fname = dv_locate_file(filename)) == (char*) NULL)
     {
-        parse_error("%s: Unable to expand filename %s\n", func->name, filename);
+        if (func == NULL)
+        {
+            parse_error("Unable to expand filename %s\n", filename);
+        }
+        else
+            parse_error("%s: Unable to expand filename %s\n", func->name, filename);
         return (NULL);
     }
 
     if (access(fname, R_OK) != 0)
     {
-        parse_error("%s: Unable to find file %s.", func->name, filename);
+        if (func == NULL)
+        {
+            parse_error("Unable to find file %s.", filename);
+        }
+        else
+            parse_error("%s: Unable to find file %s.", func->name, filename);
         return (NULL);
     }
 
@@ -3816,4 +3832,14 @@ do_loadPDS4(vfuncptr func, char *filename, int use_names, int get_data)
 
     return labelFile;
 }
+
+/**
+ * The same functionality and dependencies as do_loadPDS4() elsewhere in this file.
+ *
+ */
+Var *dv_loadPDS4(char *filename)
+{
+    return do_loadPDS4((vfuncptr) NULL, filename, 1, 1);
+}
+
 #endif
