@@ -158,10 +158,10 @@ if test "x$have_libpng2" = "xyes"; then
 	AC_DEFINE(HAVE_LIBPNG, 1, [ if you have libpng] )
 fi
 
-#check for libxml2
+dnl check for libxml2
 dnl If the user specified a path to enable_libxml2, use that
 
-dnl # Setup temp LDFLAGS and look for libxml2 library/header
+dnl Setup temp LDFLAGS and look for libxml2 library/header
 LDFLAGS_SAVE=${LDFLAGS};
 CFLAGS_SAVE=${CFLAGS};
 LIBS_SAVE=${LIBS};
@@ -211,8 +211,8 @@ AC_MSG_WARN(HAVE_LIBXML2)
 	fi
 fi
 
-#AC_CHECK_LIB(xml2, xmlFileRead)
-#AC_CHECK_HEADER([libxml/parser.h], , AC_MSG_ERROR([Couldn't find parser.h]))
+dnl AC_CHECK_LIB(xml2, xmlFileRead)
+dnl AC_CHECK_HEADER([libxml/parser.h], , AC_MSG_ERROR([Couldn't find parser.h]))
 
 #check for cfitsio
 AC_ARG_WITH(cfitsio,
