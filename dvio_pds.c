@@ -2704,6 +2704,12 @@ Var *ReadPDS4(vfuncptr func, Var * arg)
     if (parse_args(func, arg, alist) == 0)
         return (NULL);
 
+    if (fn == NULL)
+    {
+        parse_error("No filename specified to load_pds4()");
+        return (Var *) NULL;
+    }
+
     /* Handle loading many filenames */
     if (V_TYPE(fn) == ID_TEXT)
     {

@@ -2445,7 +2445,7 @@ Davinci supports the following matrix functions:
  load_pds4(filename=PATH [, use_names=BOOLEAN] [, data=BOOLEAN])
 
  PDS4 "label" files contain XML which refer to PDS4 data element
- definitions and attributes, and any realted rudimentary hierarchal 
+ definitions and attributes, and any related fundamental hierarchal 
  data structures contained in separate files.
 
  The load_pds4() function currently only reads PDS4 TABLE data 
