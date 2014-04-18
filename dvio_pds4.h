@@ -6,6 +6,7 @@ extern "C" {
 
 #ifdef HAVE_LIBXML2
 
+#define ASCII_STRING "ASCII_String"
 #define COMMENT "comment"
 #define DATA_TYPE "data_type"
 #define DESCRIPTION "description"

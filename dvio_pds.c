@@ -2736,7 +2736,7 @@ Var *ReadPDS4(vfuncptr func, Var * arg)
     else if (V_TYPE(fn) == ID_STRING)
     {
         filename = V_STRING(fn);
-        return (do_loadPDS4(func, filename, use_names, get_data));
+         return (do_loadPDS4(func, filename, use_names, get_data));
     }
     else
     {
@@ -2948,6 +2948,11 @@ static int loadFieldBinary(Var *v, LABEL *label, dataKey *data_key,
             {
                 field->eformat = IEEE_REAL;
                 field->iformat = eformat_to_iformat(IEEE_REAL);
+            }
+            else if (!strcmp(data_type, ASCII_STRING))
+            {
+                field->eformat = CHARACTER;
+                field->iformat = eformat_to_iformat(CHARACTER);
             }
         }
         else if (!strcmp(name, FIELD_LENGTH))
@@ -3517,7 +3522,6 @@ static int loadFileInfo(Var *v, LABEL *label, dataKey *data_key)
                 parse_error("Error extracting table file name\n");
                 return 0;
             }
-
             if (data_key->FileName != NULL)
             {
                 if ((tmp = (char *) malloc(strlen(fname) + strlen(
@@ -3637,7 +3641,7 @@ static Var * xmlParseLabelFiles(Var * v, LABEL *label, dataKey *data_key,
                 if (file_path != NULL)
                 {
                     data_key->FileName = strdup(file_path);
-                    free(file_path);
+ //                   free(file_path);
                 }
                 else
                 {
@@ -3735,6 +3739,7 @@ static Var * xmlParseLabelFiles(Var * v, LABEL *label, dataKey *data_key,
         {
             parse_error(
                     "Encountered a NULL davinci child node while parsing an PDS4 XML label\n");
+            err = 1;
         }
     }
     if (err)
