@@ -1,0 +1,9 @@
+define test_user_def_func(){
+	return("tested");
+}
+
+a=test_user_def_func();
+
+if (a == "tested") exit(0);
+exit(1);
+
