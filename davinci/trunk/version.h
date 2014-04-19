@@ -1,8 +1,25 @@
-char *version = "@(#) daVinci Version #2.11";
+char *version = "@(#) daVinci Version #2.12";
 
 #include "build.h"
 
 /*
+  Version 2.12: Fri Apr 18 19:43:26 MST 2014
+  * Beta release.
+  * Adds load_pds4() function for loading PDS4 (1.0.0.0) compliant
+    files containing table data only.
+  * Adds pack() function, (which does the reverse of the existing 
+    unpack() function). It allows binary output in different formats.
+  * Fixed leaking file-handles in load_bin5()
+  * ISIS3 I/O module core-base and multipler writing fixes.
+  * Backed-off a fix related to user defined function dispatch where
+    the called function tried to dereference actual parameters in
+	the wrong scope. The updated fix causes eval() to stop recursion
+	when it encounters a Var containing a basic data type.
+	This restored the call-by-reference semantics of user defined
+	functions and the ability to have a user defined function change 
+	the value of a passed parameter.
+  * Added "delimiter" option to load_csv().
+
   Version 2.11: Wed May  8 11:12:44 MST 2013
   * External distribution.
   * Fixed header inclusions, added function prototype definitions
