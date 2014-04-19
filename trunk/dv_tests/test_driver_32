@@ -1,0 +1,13 @@
+source("driver_helpers.dv")
+
+process_dir=".";
+
+final_results = traverse(process_dir,"test-");
+
+printf("Results: %s: passed=%d failed=%d skipped=%d total=%d\n", process_dir, final_results[1], final_results[2], final_results[3], sum(final_results));
+
+if (HasValue(final_results) && final_results[2] == 0){
+	exit(0)
+}
+exit(1)
+

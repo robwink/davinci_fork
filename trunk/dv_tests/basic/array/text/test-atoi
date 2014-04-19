@@ -1,0 +1,10 @@
+A=read_lines("Read_Write_Test_File")
+B=atoi(A)
+for (i=0;i<52;i+=1) {
+	if (B[,(i+1)]!=i) {
+		break;
+	}
+}
+if (i==52) exit(0);
+exit(1);
+
