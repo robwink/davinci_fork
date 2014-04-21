@@ -9,9 +9,9 @@
 #include "dvio.h"
 #include "dvio_pds4.h"
 
-Var *dv_LoadXML(char *filename, int use_names);
-
 #ifdef HAVE_LIBXML2
+
+Var *dv_LoadXML(char *filename, int use_names);
 
 /**
  * This function is based on a similar function elsewhere in davinci.

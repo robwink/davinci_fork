@@ -16,7 +16,6 @@
 #include "dvio_pds4.h"
 
 
-
 #define MAXOBJ 10
 
 #define FIELD_GEN_OBJ_CLASS "GenObjClass"
@@ -131,9 +130,10 @@ static int rfImage(dataKey *objSize, Var * ob);
 static int rfHistory(dataKey *objSize, Var *ob);
 static int rfHistogram(dataKey *objSize, Var *ob);
 static Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data);
-static Var *do_loadPDS4(vfuncptr func, char *filename, int data, int suffix_data);
-Var *dv_loadPDS4(char *filename);
-
+#ifdef HAVE_LIBXML2
+    static Var *do_loadPDS4(vfuncptr func, char *filename, int data, int suffix_data);
+    Var *dv_loadPDS4(char *filename);
+#endif
 
 /* NOTE: Only add bonafide PDS objects */
 static const char *handledObjTypes[] = { 
@@ -3475,7 +3475,7 @@ static int loadBinaryTable(Var *v, LABEL *label, dataKey *data_key,
         }
     }
 
-    //	print_pds4_structs(label, data_key);
+//    print_pds4_structs(label, data_key);
 
     // call rfTable() to read in the table
     if (get_data)
