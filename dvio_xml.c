@@ -1,15 +1,15 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include "parser.h"
+#include "dvio.h"
+
+#ifdef HAVE_LIBXML2
 #include <libxml/xmlreader.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <libxml/xmlmemory.h>
-#include "parser.h"
-#include "dvio.h"
 #include "dvio_pds4.h"
-
-#ifdef HAVE_LIBXML2
 
 Var *dv_LoadXML(char *filename, int use_names);
 
