@@ -1,8 +1,14 @@
-char *version = "@(#) daVinci Version #2.12";
+char *version = "@(#) daVinci Version #2.13";
 
 #include "build.h"
 
 /*
+  Version 2.13: Thu Apr 24 14:37:19 MST 2014
+  * Beta release.
+  * Fixed header inclusions to allow omission of libxml2 dependent 
+  * code (PDS 4 reader as of this release) if libxml2 is not installed 
+  * on the build platform OS. 
+
   Version 2.12: Fri Apr 18 19:43:26 MST 2014
   * Beta release.
   * Adds load_pds4() function for loading PDS4 (1.0.0.0) compliant
