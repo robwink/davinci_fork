@@ -1,0 +1,11 @@
+A=cat("abc","def",Y);
+B=cat("def","abc",Y)
+B=cat(B,"ghi",Y)
+A=cat(A,"ghi",Y)
+
+Q=(A!=B);
+if (Q[,1] == 1 && Q[,2] == 1 && Q[,3] == 0) {
+	exit(0);
+}
+exit(1);
+

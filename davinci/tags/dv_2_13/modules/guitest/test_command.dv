@@ -1,0 +1,25 @@
+load_module('gui')
+
+define cb_changed (set)
+{
+	printf ("changed\n")
+	cmd = gui.get(set.cmd,"command").command
+	if (HasValue(cmd)) echo(cmd)
+}
+
+define cb_entered (set)
+{
+	printf ("entered\n")
+	h = gui.get(set.cmd).historyItems
+	cmd = h[,length(h)]
+	if (HasValue(cmd)) system(cmd)
+}
+
+set = struct()
+set.top = gui.create ("topLevelShell", name="test_command.dv")
+set.cmd = gui.create ("command", set.top)
+gui.set (set.cmd, {promptString="> "})
+gui.addcallback (set.cmd, "commandEntered", "cb_entered(set=set)")
+gui.addcallback (set.cmd, "commandChanged", "cb_changed(set=set)")
+gui.realize(set.top)
+

@@ -1,0 +1,9 @@
+hdf={}
+hdf.lab=random(1000,1,1)
+hdf.labx=random(1000,10,1)
+write(hdf,$TMPDIR+"/test.hdf",hdf,force=1)
+hdf2=read($TMPDIR+"/test.hdf")
+if(fexists($TMPDIR+"/test.hdf")) fremove($TMPDIR+"/test.hdf");
+if((equals(hdf2.lab,hdf.lab)+equals(hdf2.labx,hdf.labx))==2) exit(0);
+exit(1);
+
