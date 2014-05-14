@@ -2437,12 +2437,26 @@ Davinci supports the following matrix functions:
  data planes from QUBE and SPECTRAL_QUBE objects.
  (0=don't load, default is 0)
 
+?functions load_isis3()
+?io load_isis3()
+?load_isis3()
+ load_isis3() - Read an ISIS3 file into a structure
+
+ load_isis3(filename=PATH [, data=BOOLEAN] [, transpose_info=BOOLEAN])
+
+ The DATA argument specifies whether or not to load the cube data from
+ the file.  (0=don't load, default is 1)
+
+ The TRANSPOSE_INFO argument specifies whether or not to swap Object and Name
+ data for Tables.  This is more informative than the default names 
+ of Table, Table_2, etc.  (0=don't transpose, default is 1)
+
 ?functions load_pds4()
 ?io load_pds()
 ?load_pds4()
  load_pds4() - Read a PDS4 file into a structure
 
- load_pds4(filename=PATH [, use_names=BOOLEAN] [, data=BOOLEAN])
+ load_pds4(filename=PATH [, data=BOOLEAN] [, data=BOOLEAN])
 
  PDS4 "label" files contain XML which refer to PDS4 data element
  definitions and attributes, and any related fundamental hierarchal 
