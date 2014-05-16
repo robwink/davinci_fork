@@ -451,7 +451,7 @@ Done parsing file
  // cubeVar = newVal(BSQ, 4, 4, 4, FLOAT, fop);
  // pp_print(cubeVar);
   if( (cubeVar != NULL) && (data != 0)) {
-	  add_struct(v, "Cube", cubeVar);
+	  add_struct(v, "cube", cubeVar);
   }
   add_struct(v, "IsisCube", IsisCube);
   return (v);
@@ -861,9 +861,9 @@ Var *readCube(FILE *fp) {
 Var *dv_struct = new_struct(0);
 unsigned char *cubeData;
 unsigned char inBuffer[4];
-unsigned char swabBuffer[4];
+unsigned char swapBuffer[4];
 int cubeElement = 0;
-int x,y,z, element, offset, linearOffset;
+int x, y, z, element, offset, linearOffset;
 
 if(Format == I3Tile) {
 	tileSize = TileSamples * TileLines * sampleSize;
@@ -873,9 +873,14 @@ if(Format == I3Tile) {
 	totalRows = Lines/TileLines;
 	subTileLines = Lines%TileLines; // What is left going down
 
-	if( (subTileSamples !=0) || (subTileLines !=0) ) {
-		parse_error("Irregular Tile sizes--can't read this cube into RAM\n");
-		return NULL;
+//	if( (subTileSamples !=0) || (subTileLines !=0) ) {
+//		parse_error("Irregular Tile sizes--can't read this cube into RAM\n");
+//		return NULL;
+	if(subTileSamples != 0) {
+		tilesPerRow+=1;
+	}
+	if(subTileLines != 0) {
+		totalRows+=1;
 	}
 }
 
@@ -889,17 +894,30 @@ if(cubeData == NULL) {
 if(Format == BandSequential) {
 
 	fseek(fp, StartByte-1, SEEK_SET);  // Need only the one fseek() to set up all
-
+    offset = 0;  // This is the offset in to the storage structure
 	for(z = 0; z < totalBands; z++) {
 		for(y = 0; y < Lines; y++) {
 			for (x = 0; x < Samples; x++) {
-				x*=sampleSize;
 				if (1 == fread(inBuffer, sampleSize, 1, fp) ) {
-					offset = z*(Samples*Lines) +y*Lines +x;
+				    
 					if(ByteOrder == Msb) {
-						swab(inBuffer, swabBuffer, sampleSize);
+							switch(sampleSize){
+							case 2:
+								swapBuffer[1] = inBuffer[0];
+								swapBuffer[0] = inBuffer[1];
+								break;
+							case 4:
+								swapBuffer[3] = inBuffer[0];
+								swapBuffer[2] = inBuffer[1];
+								swapBuffer[1] = inBuffer[2];
+								swapBuffer[0] = inBuffer[3];
+								break;
+							default:
+								;
+							}
+
 						for (element = 0; element < sampleSize; element++) {
-							cubeData[offset + element] = swabBuffer[element];
+							cubeData[offset + element] = swapBuffer[element];
 						}
 					}
 					else {
@@ -907,6 +925,9 @@ if(Format == BandSequential) {
 							cubeData[offset + element] = inBuffer[element];
 						}
 					}
+
+                    offset+=sampleSize; // offset increases by sample size
+
 				} // end of good read
 				else {
 					parse_error("Bad Read for Band Sequential Cube\n");
@@ -934,18 +955,47 @@ if(Format == I3Tile) {
     				for (x = 0; x < TileSamples; x++) { // Reading across a tile
     					if (1 == fread (inBuffer, sampleSize, 1, fp)) {
 
-    						if(ByteOrder == Msb) {
-    							swab(inBuffer, swabBuffer, sampleSize);
-    							for (element = 0; element < sampleSize; element++) {
-    								cubeData[linearOffset + element] = swabBuffer[element];
+    						if((subTileSamples != 0) && (tiles == (tilesPerRow-1)) ) {
+    							if(x >= subTileSamples) {
+    								continue;  // We read it, we just don't put it in the structure
     							}
     						}
-    						else {
-    							for (element = 0; element < sampleSize; element++) {
-    								cubeData[linearOffset + element] = inBuffer[element];
+
+    						if((subTileLines != 0) && (Row == (totalRows-1)) ) {
+    							if(row >= subTileLines) {
+    								continue; // We read it, we just don't put it in the structure
     							}
     						}
-    						linearOffset+=sampleSize; // linearOffset into the RAM data just keeps incrementing
+
+
+   							if(ByteOrder == Msb) {
+   								switch(sampleSize){
+   								case 2:
+   									swapBuffer[1] = inBuffer[0];
+   									swapBuffer[0] = inBuffer[1];
+   									break;
+   								case 4:
+   									swapBuffer[3] = inBuffer[0];
+   									swapBuffer[2] = inBuffer[1];
+   									swapBuffer[1] = inBuffer[2];
+   									swapBuffer[0] = inBuffer[3];
+   									break;
+   								default:
+   									;
+   								}
+
+   								for (element = 0; element < sampleSize; element++) {
+   									cubeData[linearOffset + element] = swapBuffer[element];
+   								}
+   							}
+   							else {
+   								for (element = 0; element < sampleSize; element++) {
+   									cubeData[linearOffset + element] = inBuffer[element];
+   								}
+   							}
+   							linearOffset+=sampleSize; // linearOffset into the RAM data just keeps incrementing
+
+
     					} // end of good read
 
     					else {

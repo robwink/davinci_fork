@@ -1,8 +1,16 @@
-char *version = "@(#) daVinci Version #2.13";
+char *version = "@(#) daVinci Version #2.14";
 
 #include "build.h"
 
 /*
+  Version 2.14: Fri May 16 10:30:10 MST 2014
+  * Beta release.
+  * Natively reads ISIS3 Cubes including cubes with tile sizes that are
+  * not integral divisors of Samples and Lines
+  * Reads History as a block of text
+  * Swaps Object and Name data for Tables for a more informative name
+  * Reads Table descriptions, but does not read the actual Tables 
+
   Version 2.13: Thu Apr 24 14:37:19 MST 2014
   * Beta release.
   * Fixed header inclusions to allow omission of libxml2 dependent 
