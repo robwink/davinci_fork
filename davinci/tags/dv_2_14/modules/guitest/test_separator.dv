@@ -1,0 +1,20 @@
+load_module("gui")
+#top=gui.create("topLevelShell",name="test_separator.dv",resources={width=500,height=500})
+top=gui.create("topLevelShell",name="test_separator.dv");
+gui.set(top,resources={width=500,height=500});
+r = gui.create("rowcolumn", top)
+p1 = gui.create("pushbutton",r,{labelString="pb1"})
+w1=gui.create("separator",r, {separatorType="SINGLE_LINE"})
+p2 = gui.create("pushbutton",r,{labelString="pb2"})
+w1=gui.create("separator",r, {separatorType="DOUBLE_LINE"})
+p3 = gui.create("pushbutton",r,{labelString="pb3"})
+w1=gui.create("separator",r, {separatorType="SINGLE_DASHED_LINE"})
+p4 = gui.create("pushbutton",r,{labelString="pb4"})
+w1=gui.create("separator",r, {separatorType="DOUBLE_DASHED_LINE"})
+p5 = gui.create("pushbutton",r,{labelString="pb5"})
+w1=gui.create("separator",r, {separatorType="SHADOW_ETCHED_IN"})
+p6 = gui.create("pushbutton",r,{labelString="pb6"})
+w1=gui.create("separator",r, {separatorType="SHADOW_ETCHED_OUT"})
+p7 = gui.create("pushbutton",r,{labelString="pb7"})
+gui.realize(top)
+
