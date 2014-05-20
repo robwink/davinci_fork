@@ -99,29 +99,30 @@ am_libdavinci_la_OBJECTS = apifunc.lo array.lo avl.lo binDCT.lo \
 	darray.lo dct.lo deghost.lo dvio.lo dvio_ascii.lo \
 	dvio_aviris.lo dvio_envi.lo dvio_ers.lo dvio_goes.lo \
 	dvio_grd.lo dvio_hdf.lo dvio_imath.lo dvio_iomedley.lo \
-	dvio_isis.lo dvio_magic.lo dvio_pds.lo dvio_pnm.lo dvio_raw.lo \
-	dvio_specpr.lo dvio_csv.lo dvio_themis.lo dvio_vicar.lo \
-	dvio_xml.lo endian_norm.lo ff_ffill.lo error.lo ff.lo \
-	ff_ascii.lo ff_avg.lo ff_ipi.lo ff_contour.lo ff_rotate.lo \
-	ff_bbr.lo ff_cluster.lo ff_convolve.lo ff_deghost.lo \
-	ff_display.lo ff_fft.lo ff_filetype.lo ff_fncc.lo ff_gnoise.lo \
-	ff_gplot.lo ff_vplot.lo ff_header.lo ff_hstretch.lo \
-	ff_ifill.lo ff_interp.lo ff_ix.lo ff_load.lo ff_loadvan.lo \
-	ff_meta.lo ff_ramp.lo ff_filter.lo ff_moment.lo ff_pause.lo \
-	ff_pbm.lo ff_pca.lo ff_plplot.lo ff_projection.lo ff_random.lo \
-	ff_raw.lo ff_rgb.lo ff_rice.lo ff_shade.lo ff_slant.lo \
-	ff_sort.lo ff_source.lo ff_struct.lo ff_text.lo ff_version.lo \
-	ff_vignette.lo ff_write.lo ff_xfrm.lo fft.lo fft2f.lo \
-	fft_mayer.lo fit.lo ff_coreg.lo ff_boxfilter.lo ff_bin5.lo \
-	ff_transform.lo ff_blend.lo ff_unpack.lo header.lo \
-	ff_resample.lo help.lo init.lo isis_obj.lo globals.lo \
-	matrix.lo misc.lo motif_tools.lo newfunc.lo p.lo pp.lo \
-	pp_math.lo printf.lo reserved.lo rfunc.lo rice.lo rpos.lo \
-	scope.lo spread.lo string.lo symbol.lo system.lo tools.lo \
-	ufunc.lo util.lo x.lo xrt_print_3d.lo lexer.lo parser.lo \
-	ff_gconvolve.lo ff_warp.lo ff_median.lo ff_radial.lo \
-	ff_window.lo dvio_fits.lo ff_extract.lo dvio_tdb.lo \
-	url_create_file.lo ff_filesystem.lo ff_grassfire.lo libcsv.lo
+	dvio_isis.lo dvio_magic.lo dvio_pds.lo dvio_isis3.lo \
+	dvio_pnm.lo dvio_raw.lo dvio_specpr.lo dvio_csv.lo \
+	dvio_themis.lo dvio_vicar.lo dvio_xml.lo endian_norm.lo \
+	ff_ffill.lo error.lo ff.lo ff_ascii.lo ff_avg.lo ff_ipi.lo \
+	ff_contour.lo ff_rotate.lo ff_bbr.lo ff_cluster.lo \
+	ff_convolve.lo ff_deghost.lo ff_display.lo ff_fft.lo \
+	ff_filetype.lo ff_fncc.lo ff_gnoise.lo ff_gplot.lo ff_vplot.lo \
+	ff_header.lo ff_hstretch.lo ff_ifill.lo ff_interp.lo ff_ix.lo \
+	ff_load.lo ff_loadvan.lo ff_meta.lo ff_ramp.lo ff_filter.lo \
+	ff_moment.lo ff_pause.lo ff_pbm.lo ff_pca.lo ff_plplot.lo \
+	ff_projection.lo ff_random.lo ff_raw.lo ff_rgb.lo ff_rice.lo \
+	ff_shade.lo ff_slant.lo ff_sort.lo ff_source.lo ff_struct.lo \
+	ff_text.lo ff_version.lo ff_vignette.lo ff_write.lo ff_xfrm.lo \
+	fft.lo fft2f.lo fft_mayer.lo fit.lo ff_coreg.lo \
+	ff_boxfilter.lo ff_bin5.lo ff_transform.lo ff_blend.lo \
+	ff_unpack.lo header.lo ff_resample.lo help.lo init.lo \
+	isis_obj.lo globals.lo matrix.lo misc.lo motif_tools.lo \
+	newfunc.lo p.lo pp.lo pp_math.lo printf.lo reserved.lo \
+	rfunc.lo rice.lo rpos.lo scope.lo spread.lo string.lo \
+	symbol.lo system.lo tools.lo ufunc.lo util.lo x.lo \
+	xrt_print_3d.lo lexer.lo parser.lo ff_gconvolve.lo ff_warp.lo \
+	ff_median.lo ff_radial.lo ff_window.lo dvio_fits.lo \
+	ff_extract.lo dvio_tdb.lo url_create_file.lo ff_filesystem.lo \
+	ff_grassfire.lo libcsv.lo
 libdavinci_la_OBJECTS = $(am_libdavinci_la_OBJECTS)
 libdavinci_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
@@ -374,7 +375,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	dct.c deghost.C dvio.c dvio_ascii.c \
 	dvio_aviris.c dvio_envi.c dvio_ers.c dvio_goes.c dvio_grd.c \
 	dvio_hdf.c dvio_imath.c dvio_iomedley.c dvio_isis.c dvio_magic.c \
-	dvio_pds.c dvio_pnm.c dvio_raw.c dvio_specpr.c dvio_csv.c \
+	dvio_pds.c dvio_isis3.c dvio_pnm.c dvio_raw.c dvio_specpr.c dvio_csv.c \
 	dvio_themis.c dvio_vicar.c dvio_xml.c endian_norm.c ff_ffill.c\
 	error.c ff.c ff_ascii.c ff_avg.c ff_ipi.c ff_contour.c ff_rotate.c\
 	ff_bbr.c ff_cluster.c ff_convolve.c ff_deghost.c ff_display.c \
@@ -591,6 +592,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_imath.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_iomedley.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_isis.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_isis3.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_magic.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_pds.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dvio_pnm.Plo@am__quote@
@@ -1071,7 +1073,7 @@ distcheck: dist
 	*.zip*) \
 	  unzip $(distdir).zip ;;\
 	esac
-	chmod -R a-w $(distdir); chmod a+w $(distdir)
+	chmod -R a-w $(distdir); chmod u+w $(distdir)
 	mkdir $(distdir)/_build
 	mkdir $(distdir)/_inst
 	chmod a-w $(distdir)
