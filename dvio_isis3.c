@@ -9,7 +9,7 @@
 
 #include <sys/stat.h>
 
-static Var *do_loadISIS3(vfuncptr func, char *filename, int data, int transpose_info); // drd static so only visible in this file
+static Var *do_loadISIS3(vfuncptr func, char *filename, int data, int use_names); // drd static so only visible in this file
 
 static int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *nambuf);
 static int dQuoteManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf);
@@ -57,7 +57,7 @@ Var *ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
     Var *fn = NULL;
     char *filename = NULL;
     int data = 1;  // parse the cube
-    int transpose_info = 1; // reverse name and info
+    int use_names = 1; // reverse name and info
     int i;
 
     /*
@@ -73,7 +73,7 @@ Var *ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
     Alist alist[4];
     alist[0] = make_alist("filename", ID_UNK, NULL, &fn);
     alist[1] = make_alist("data", INT, NULL, &data);
-    alist[2] = make_alist("transpose_info", INT, NULL, &transpose_info);
+    alist[2] = make_alist("use_names", INT, NULL, &use_names);
     alist[3].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) {
@@ -85,7 +85,7 @@ Var *ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
         Var *s = new_struct(V_TEXT(fn).Row);
         for (i = 0; i < V_TEXT(fn).Row; i++) {
         filename = strdup(V_TEXT(fn).text[i]);
-        Var *t = do_loadISIS3(func, filename, data, transpose_info);
+        Var *t = do_loadISIS3(func, filename, data, use_names);
         if (t) {
             add_struct(s, filename, t);
     	}
@@ -98,7 +98,7 @@ Var *ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
         }
     } else if (V_TYPE(fn) == ID_STRING) {
         filename = V_STRING(fn);
-        return(do_loadISIS3(func, filename, data, transpose_info));
+        return(do_loadISIS3(func, filename, data, use_names));
     } else {
         parse_error("Illegal argument to function %s(%s), expected STRING", func->name, "filename");
         return (NULL);
@@ -106,7 +106,7 @@ Var *ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
     }
 
 static Var *
-do_loadISIS3(vfuncptr func, char *filename, int data, int transpose_info)
+do_loadISIS3(vfuncptr func, char *filename, int data, int use_names)
 {
 
     // char *err_file = NULL;
@@ -115,6 +115,7 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int transpose_info)
     Var *v = new_struct(0);
     Var *cubeVar = new_struct(0);
     Var *IsisCube = new_struct(0);
+    Var *naifKeywordsObj = NULL;  // NULL for logic tests, address of a Var * is copied to it if used
     Var *Object[5]; // Can nest up to 5 deep
     	Var *Group = new_struct(0);
 			Var *stub = new_struct(0);
@@ -136,6 +137,7 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int transpose_info)
     int retVal = 0;
     int weNeedToRead = 1;
     int doneFlag = 0;
+    int inNaifKeywords = 0;
 
     /*
      * If the filename is NULL, davinci crashes before this code is reached.
@@ -171,12 +173,12 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int transpose_info)
     
 
 
-    parse_error("/**************************************************/\n");
+    //parse_error("/**************************************************/\n");
 	if(data == 1) { // we parse cube info
-		parse_error("Parsing Cube Parameters...\n");
+		// parse_error("Parsing Cube Parameters...\n");
 		data = getCubeParams(fp);
 		if(data == 1) {
-			parse_error("Reading the Cube...\n");
+			// parse_error("Reading the Cube...\n");
 			cubeVar = readCube(fp);
             // pp_print(cubeVar);
 		}
@@ -184,7 +186,7 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int transpose_info)
 		fseek(fp, 0, SEEK_SET);
 
 	}
-	parse_error("Parsing Label...\n");
+	// parse_error("Parsing Label...\n");
     for (k = 0; k < 2048; k++) { // 2048 seems a reasonable limit
 
     	if(weNeedToRead == 1) {
@@ -229,7 +231,7 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int transpose_info)
             if(strcmp("Object", string1) == 0) {
                 if(strcmp("Table", string3) == 0 ) {
                     int locali = 0;
-                    if(transpose_info == 1) {
+                    if(use_names == 1) {
                     	locali = readNextLine(fp); // conditional!
                     }
                     if(locali == 1) {
@@ -255,11 +257,14 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int transpose_info)
                     }
 
             		Object[objectNest] = new_struct(0);
+                    if(strcmp("NaifKeywords", workingObject) == 0) {
+                        inNaifKeywords = 1;
+                    }
             		if(strcmp("History", workingObject) == 0) {
             			/*
             			 * The time has come to parse History!
             			 */
-            			parse_error("Reading History and storing as text...\n");
+            			// parse_error("Reading History and storing as text...\n");
             			fgets(inputString, 2046, fp); // Name = IsisCube
                         fgets(inputString, 2046, fp); // StartByte = 92032424
                         count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
@@ -283,7 +288,7 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int transpose_info)
                         historyStrings[historySize] = '\0'; // Force '\0' at the end
                         stub = newString(historyStrings); // All the History in a text blob with a '\0' at the end
                         add_struct(Object[objectNest], "History", stub);
-                        parse_error("Completed Reading History...\n");
+                        // parse_error("Completed Reading History...\n");
                         fseek(fp, savedFileLocation, SEEK_SET);
                         // The next read is "End_Object"
                         // and this will be handled by the existing machinery
@@ -304,7 +309,7 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int transpose_info)
             else if (strcmp("Group", string1) == 0) {
                 if(strcmp("Field", string3) == 0) {
                     int locali = 0;
-                    if(transpose_info == 1) {
+                    if(use_names == 1) {
                     	locali = readNextLine(fp); // conditional!
                     }
                     if(locali == 1) {
@@ -331,10 +336,16 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int transpose_info)
             }
 			/* Let's see if we are at an End_Object */
             else if (strcmp("End_Object", string1) == 0) {
-                stub = newString(strdup("Object"));
+                stub = newString(strdup("object"));
                	if(objectNest >= 0 ) {
  					add_struct(Object[objectNest], "isis_struct_type", stub);
-               		add_struct(IsisCube, workingObject, Object[objectNest--]);
+                    if(inNaifKeywords == 1) {
+                        naifKeywordsObj = Object[objectNest--];
+                        inNaifKeywords = 0;
+                    }
+                    else {
+                   		add_struct(IsisCube, workingObject, Object[objectNest--]);
+                    }
                	}
                	else {
                		add_struct(IsisCube, "isis_struct_type", stub);
@@ -342,7 +353,7 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int transpose_info)
             }
 			/* Let's see if we are at an End_Group */
             else if (strcmp("End_Group", string1) == 0) {
-           		stub = newString(strdup("Group"));
+           		stub = newString(strdup("group"));
         		add_struct(Group, "isis_struct_type", stub);
         		if(objectNest >= 0) {
             		add_struct(Object[objectNest], workingGroup, Group);
@@ -434,8 +445,8 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int transpose_info)
         } // end of length > 1
     } // end of not done yet
   	else {
-  		parse_error("Found End of label...\n");
-  		parse_error("/**************************************************/\n");
+  		// parse_error("Found End of label...\n");
+  		// parse_error("/**************************************************/\n");
   		break;
   		}
   	} // End of header info for loop
@@ -454,6 +465,9 @@ Done parsing file
 	  add_struct(v, "cube", cubeVar);
   }
   add_struct(v, "IsisCube", IsisCube);
+  if( naifKeywordsObj != NULL) {
+      add_struct(v, "NaifKeywords", naifKeywordsObj);
+  }
   return (v);
 }
 
@@ -528,6 +542,8 @@ char get_keyword_datatype(char * value, char * name) {
     if (is_int && is_double) {
         if (intval == floatval) {
             is_double = 0;
+             // drd added one more test -- if there is a decimal point, leave it a double
+            if(strstr(value, ".") != NULL) is_double = 1;
         }
         else {
             is_int = 0;
@@ -544,7 +560,8 @@ void add_converted_to_struct(Var * dv_struct, char * name, char * value) {
     /* Attempts to convert keyword values to integers and floats to determine if
     the value supplied is a numeric value. The rules are:
     Try to make it an int and a float.
-    If they are both, compare the values and if they are equal, make it an int.
+    If they are both, compare the values and if they are equal, make it an int
+        unless they are equal and the string has a "." in it // drd added this line
     If they are not, make it a float.
     If only one conversion worked, use that conversion.
     If neither conversion worked, then make it a string.
@@ -589,8 +606,10 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf) 
     int i = 0;
     int k = 0;
     int conversionCount = 0;
-    double *numberArray = NULL;
+    double *numberArrayDouble = NULL;
+    int *numberArrayInt = NULL;
     double checkDouble = 99.9; // Any value would do
+    int checkInt = 99; // Any value will do
    // char **stringArray = NULL;
     Var *localStub = new_struct(0);
     Var *subItem = new_struct(0);
@@ -665,22 +684,43 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf) 
 
     conversionCount = sscanf(&token[i], "%lf", &checkDouble);
 
-    if(conversionCount == 1) { // We have a list of numbers--we will just use doubles
-	    numberArray = malloc(commaCount * sizeof(double));
-	    if(numberArray == NULL) {
-		    retVal = -1;
-		    return retVal;
-	    }
-	    numberArray[0] = checkDouble;
-	    for(i = 1; i < commaCount; i++) {
-		    token = strtok(NULL, ",");
-		    sscanf(token, "%lf", &numberArray[i]);
-	    }
+    if(conversionCount == 1) { // We have a list of numbers
+        sscanf(&token[i], "%d", &checkInt);
+        if( (checkInt == checkDouble) && (strstr(&token[i], ".") == NULL) ) {  // if the values are the same and no ".", assume ints
+    	    numberArrayInt = malloc(commaCount * sizeof(int));
+	        if(numberArrayInt == NULL) {
+	    	    retVal = -1;
+	    	    return retVal;
+	        }
+	        numberArrayInt[0] = checkInt;
+	        for(i = 1; i < commaCount; i++) {
+	    	    token = strtok(NULL, ",");
+	    	    sscanf(token, "%d", &numberArrayInt[i]);
+	        }
 
+        }
+
+        else { // if values are not the same, we have doubles
+    	    numberArrayDouble = malloc(commaCount * sizeof(double));
+	        if(numberArrayDouble == NULL) {
+	    	    retVal = -1;
+	    	    return retVal;
+	        }
+	        numberArrayDouble[0] = checkDouble;
+	        for(i = 1; i < commaCount; i++) {
+	    	    token = strtok(NULL, ",");
+	    	    sscanf(token, "%lf", &numberArrayDouble[i]);
+	        }
+        }
 
     	free(workingString);
 
-    	localStub = newVal(BSQ, commaCount, 1,1, DOUBLE, numberArray);
+        if(numberArrayDouble != NULL) {
+        	localStub = newVal(BSQ, commaCount, 1, 1, DOUBLE, numberArrayDouble);
+        }
+        else {
+            localStub = newVal(BSQ, commaCount, 1, 1, INT, numberArrayInt);
+        }
 	    add_struct(GroupOrObject, namebuf, localStub);
 
     }
@@ -1028,7 +1068,7 @@ default:
 dv_struct = newVal(BSQ, Samples, Lines, totalBands, cubeElement, cubeData);
 // pp_print(dv_struct);
 
-parse_error("Finished reading the Cube into RAM...\n");
+// parse_error("Finished reading the Cube into RAM...\n");
 return dv_struct;
 }
 
@@ -1122,7 +1162,7 @@ int getCubeParams(FILE *fp) {
 		}
 	} // end of the while loop
 
-	parse_error("Completed parsing cube parameters...\n");
+	// parse_error("Completed parsing cube parameters...\n");
 
 	return retVal;
 
