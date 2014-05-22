@@ -1,9 +1,0 @@
-data=create(100000,10000,start=0,step=1)
-
-data[where(data<500000000)]=1
-data[where(data>=500000000)]=2
-printf("%g\n",avg(data));
-
-if (avg(data) == 1.5) exit(0);
-exit(1);
-
