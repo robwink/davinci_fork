@@ -2442,34 +2442,36 @@ Davinci supports the following matrix functions:
 ?load_isis3()
  load_isis3() - Read an ISIS3 file into a structure
 
- load_isis3(filename=PATH [, data=BOOLEAN] [, transpose_info=BOOLEAN])
+ load_isis3(filename=PATH [, data=BOOLEAN] [, use_names=BOOLEAN])
 
  The DATA argument specifies whether or not to load the cube data from
  the file.  (0=don't load, default is 1)
 
- The TRANSPOSE_INFO argument specifies whether or not to swap Object and Name
- data for Tables.  This is more informative than the default names 
- of Table, Table_2, etc.  (0=don't transpose, default is 1)
+ The USE_NAMES argument specifies whether or not to use enclosed name
+ values for repeating elements in the ISIS3 Table items.
+ This avoids names with numbered suffixes such as Field_2 or Field_3
+ (0=don't use names, default is 1)
+
 
 ?functions load_pds4()
 ?io load_pds()
 ?load_pds4()
  load_pds4() - Read a PDS4 file into a structure
 
- load_pds4(filename=PATH [, data=BOOLEAN] [, data=BOOLEAN])
+ load_pds4(filename=PATH [, use_names=BOOLEAN] [, data=BOOLEAN])
 
  PDS4 "label" files contain XML which refer to PDS4 data element
- definitions and attributes, and any related fundamental hierarchal 
+ definitions and attributes, and any related fundamental hierarchal
  data structures contained in separate files.
 
- The load_pds4() function currently only reads PDS4 TABLE data 
- structures. Additional PDS4 data structures will be supported in 
+ The load_pds4() function currently only reads PDS4 TABLE data
+ structures. Additional PDS4 data structures will be supported in
  the future.
 
  The USE_NAMES argument specifies whether or not to use enclosed name
  values for repeating elements in the PDS4 label file (XML).
- Examples would be Table_Binary and Field_Binary elements. If such 
- elements do not contain name elements the elements will be named with 
+ Examples would be Table_Binary and Field_Binary elements. If such
+ elements do not contain name elements the elements will be named with
  numbered suffixes, i.e. Table_Binary_1 or perhaps Field_Binary_42 etc.
  (0=don't use names, default is 1)
 
