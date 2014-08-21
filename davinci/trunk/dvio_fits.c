@@ -10,8 +10,161 @@
 #include <cfitsio/fitsio.h>
 #endif
 
-
+#include <sys/types.h>
+#include <regex.h>
 #include "dvio_fits.h"
+
+
+#define GET_KEY_VAL_INT(s,key,var,dflt) \
+	find_struct(s,key,&var) >= 0? V_INT(var): dflt
+#define GET_KEY_VAL_STRING(s,key,var,dflt) \
+	find_struct(s,key,&var) >= 0? V_STRING(var): dflt
+
+
+#define KW_EXT           "XTENSION"
+#define KW_EXT_NAME      "EXTNAME"
+#define KW_BITPIX        "BITPIX"
+#define KW_SIMPLE        "SIMPLE"
+#define KW_EXTEND        "EXTEND"
+#define KW_TFIELDS       "TFIELDS"
+#define KW_NAXIS         "NAXIS"
+#define KW_NAXIS1        "NAXIS1"
+#define KW_NAXIS2        "NAXIS2"
+#define KW_TTYPE         "TTYPE"
+#define KW_TBCOL         "TBCOL"
+#define KW_TFORM         "TFORM"
+#define KW_TUNIT         "TUNIT"
+#define KW_GROUPS        "GROUPS"
+#define KW_PCOUNT        "PCOUNT"
+#define KW_GCOUNT        "GCOUNT"
+#define VAL_EXT_TABLE    "TABLE"
+#define VAL_EXT_BINTABLE "BINTABLE"
+
+#define SUBEL_DATA       "data"
+
+
+/* from cfitsio's putkey.c:
+primary header keywords (empty file):
+	KW_SIMPLE,  // file conforms / does not conform to FITS standard 
+	KW_BITPIX,  // bits/pixel
+	KW_NAXIS,   // number of axes; also AXISnn
+	KW_EXTEND,  // file may contain extensions
+	KW_GROUPS,  // whether random group records are present
+	KW_PCOUNT,  // number of random group parameters
+	KW_GCOUNT,  // number of group parameters
+
+image extension keywords:
+	KW_EXT,     // IMAGE
+	KW_BITPIX,  // bits/pixel
+	KW_NAXIS,   // number of axes; also AXISnn
+	KW_PCOUNT,  // 0
+	KW_GCOUNT,  // 1
+
+ascii table keywords:
+	KW_EXT,     // TABLE
+	KW_BITPIX,  // 8
+	KW_NAXIS,   // 2
+	KW_NAXIS1,  // width of table in characters
+	KW_NAXIS2,  // number of rows in table 
+	KW_PCOUNT,  // 0 - no group parameters
+	KW_GCOUNT,  // 1 - one data group
+	KW_TFIELDS, // number of fields in each row
+	KW_TTYPE,   // TTYPEnn field name
+	KW_TBCOL,   // TBCOLnn begining column of the field
+	KW_TFORM,   // TFORMnn F77 format of field
+	KW_TUNIT,   // UNITnn physical unit of field
+	KW_EXT_NAME // optional name of table
+
+binary table keywords:
+	KW_EXT,     // BINTABLE
+	KW_BITPIX,  // 8
+	KW_NAXIS,   // 2
+	KW_NAXIS1,  // width of table in bytes
+	KW_NAXIS2,  // number of rows in table
+	KW_PCOUNT,  // initially 0 - size of variable length array heap
+	KW_GCOUNT,  // 1 - one data group
+	KW_TFIELDS, // number of fields in each row
+	KW_TTYPE,   // TTYPEnn field name
+	KW_TBCOL,   // TBCOLnn begining column of the field
+	KW_TFORM,   // TFORMnn F77 format of field
+	KW_TUNIT,   // UNITnn physical unit of field
+	KW_EXT_NAME // optional name of table
+
+*/
+
+/* should the given keyword be filtered? */
+int
+filter_kw(const char *kw)
+{
+	const char *fixed_kw[] = {
+		KW_SIMPLE,
+		KW_BITPIX,
+		KW_NAXIS,
+		KW_EXTEND,
+		KW_GROUPS,
+		KW_PCOUNT,
+		KW_GCOUNT,
+		KW_TFIELDS,
+		KW_EXT,
+		KW_EXT_NAME
+	};
+
+	const char *num_sfx_kw[]  = {
+		KW_NAXIS,
+		KW_TTYPE,
+		KW_TBCOL,
+		KW_TFORM,
+		KW_TUNIT
+	};
+
+	int nfixed_kw = sizeof(fixed_kw)/sizeof(char *);
+	int nsfx_kw = sizeof(fixed_kw)/sizeof(char *);
+	int i, n, errcode;
+	char errbuf[1024];
+	regmatch_t pmatch[1];
+	static char *regex = NULL;
+	static regex_t preg;
+
+	if (regex == NULL){
+		n = nfixed_kw*10+nsfx_kw*15;
+		if ((regex = (char *)calloc(sizeof(char), n)) == NULL){
+			parse_error("%s: Unable to allocate %d bytes for regex\n", 
+				"filter_kw", n);
+			return 0;
+		}
+		memset(regex,'\0',n);
+
+		for(i=0; i<(sizeof(fixed_kw)/sizeof(char *)); i++){
+			if (i > 0)
+				strcat(regex, "|");
+			strcat(regex, fixed_kw[i]);
+		}
+		if (strlen(regex) > 0)
+			strcat(regex, "|");
+		for(i=0; i<(sizeof(num_sfx_kw)/sizeof(char *)); i++){
+			if (i > 0)
+				strcat(regex, "|");
+			strcat(regex, fixed_kw[i]);
+			strcat(regex, "[0-9][0-9]*");
+		}
+
+		if ((errcode = regcomp(&preg, regex, REG_EXTENDED)) != 0){
+			regerror(errcode, &preg, errbuf, sizeof(errbuf)-1);
+			parse_error("%s: Error compiling regex: \"%s\". Reason: %s\n",
+				"filter_kw", "filter_kw", regex, errbuf);
+
+			free(regex);
+			regex = NULL;
+		}
+	}
+
+	if (regexec(&preg, kw, sizeof(pmatch)/sizeof(regmatch_t), pmatch, 0) == 0){
+		return 1;
+	}
+
+	return 0;
+}
+
 
 int
 Write_FITS_Image(fitsfile *fptr, Var *obj)
@@ -141,6 +294,239 @@ get_col_type_name(int coltype){
     case TDBLCOMPLEX: return "TDBLCOMPLEX";
     }
     return "(unknown)";
+}
+
+
+static char*
+null_safe_strdup(char *s)
+{
+	if (s == NULL)
+		return s;
+	
+	return strdup(s);
+}
+
+static char*
+unquote_remove_spaces(char *s)
+{
+	if (s == NULL)
+		return NULL;
+	
+	ltrim(s,"\' ");
+	rtrim(s,"\' ");
+
+	return s;
+}
+
+struct tbl_specs {
+	char *tblname;
+	int   tbltype;
+	int   nfields;
+	int   nrows;
+	char **fnames;
+	char **fforms;
+	char **funits;
+};
+
+static int
+empty_or_null_string(const char *s)
+{
+	return (s == NULL || strlen(s) == 0);
+}
+
+static int
+all_null_1d(char **array, int n)
+{
+	int i;
+
+	for(i=0; i<n; i++){
+		if (array[i] != NULL)
+			return 0;
+	}
+
+	return 1;
+}
+
+static int
+init_table_specs(struct tbl_specs *t)
+{
+	memset(t, sizeof(struct tbl_specs), 0);
+}
+
+static int
+free_table_specs(struct tbl_specs *t)
+{
+	int i;
+
+	free(t->tblname);
+	for(i=0; i<t->nfields; i++){
+		free(t->fnames[i]);
+		free(t->fforms[i]);
+		free(t->funits[i]);
+	}
+	free(t->fnames);
+	free(t->fforms);
+	free(t->funits);
+}
+
+#define CHECK_MISSING_FIELD_SPEC(t,str,key,colnum,tbl,rtn) \
+	if (empty_or_null_string(str)){\
+		parse_error("Missing \"%s\" value for column %d in table \"%s\"\n", \
+			key, colnum, tbl);\
+		free_table_specs(t);\
+		return rtn;\
+	}
+
+static int
+collect_table_specs(Var *s, struct tbl_specs *t)
+{
+	char key[512];
+	Var *d;
+	int i;
+	char ext_type[512];
+
+	init_table_specs(t);
+
+	strcpy(ext_type, GET_KEY_VAL_STRING(s,KW_EXT,d,""));
+	unquote_remove_spaces(ext_type);
+	t->tbltype = ext_type == NULL || strcasecmp(ext_type, VAL_EXT_TABLE) == 0? 
+		ASCII_TBL: BINARY_TBL;
+
+	t->tblname = null_safe_strdup(GET_KEY_VAL_STRING(s,KW_EXT_NAME,d,NULL));
+	if (t->tblname != NULL)
+		unquote_remove_spaces(t->tblname);
+
+	t->nfields = GET_KEY_VAL_INT(s,KW_TFIELDS,d,0);
+	t->nrows = GET_KEY_VAL_INT(s,KW_NAXIS2,d,0);
+
+	t->fnames = (char **)calloc(sizeof(char *), t->nfields);
+	t->fforms = (char **)calloc(sizeof(char *), t->nfields);
+	t->funits = (char **)calloc(sizeof(char *), t->nfields);
+
+	if (t->fnames == NULL || t->fforms == NULL || t->funits == NULL){
+		free_table_specs(t);
+		parse_error("Unable to alloc memory for collecting table specs.\n");
+		return 0;
+	}
+
+	for(i=0; i<t->nfields; i++){
+		sprintf(key, "%s%d", KW_TTYPE, i+1);
+		t->fnames[i] = null_safe_strdup(GET_KEY_VAL_STRING(s,key,d,NULL));
+		unquote_remove_spaces(t->fnames[i]);
+		CHECK_MISSING_FIELD_SPEC(t,t->fnames[i],key,i+1,t->tblname,0);
+
+		sprintf(key, "%s%d", KW_TFORM, i+1);
+		t->fforms[i] = null_safe_strdup(GET_KEY_VAL_STRING(s,key,d,NULL));
+		unquote_remove_spaces(t->fforms[i]);
+		CHECK_MISSING_FIELD_SPEC(t,t->fforms[i],key,i+1,t->tblname,0);
+
+		sprintf(key, "%s%d", KW_TUNIT, i+1);
+		t->funits[i] = null_safe_strdup(GET_KEY_VAL_STRING(s,key,d,NULL));
+		unquote_remove_spaces(t->funits[i]);
+
+	}
+
+	if (all_null_1d(t->fnames, t->nfields)){
+		free(t->fnames);
+		t->fnames = NULL;
+	}
+	if (all_null_1d(t->fforms, t->nfields)){
+		free(t->fforms);
+		t->fforms = NULL;
+	}
+	if (all_null_1d(t->fforms, t->nfields)){
+		free(t->fforms);
+		t->fforms = NULL;
+	}
+
+	return 1;
+}
+
+int
+fits_tbl_type_for_column_var(Var *coldata)
+{
+	switch(V_TYPE(coldata)){
+	case ID_STRING: return TSTRING;
+	case ID_TEXT: return TSTRING;
+	case ID_VAL: 
+		switch(V_FORMAT(coldata)){
+		case BYTE:   return TBYTE;
+		case SHORT:  return TSHORT;
+		case INT:    return TINT;
+		case FLOAT:  return GetX(coldata) > 1? TCOMPLEX: TFLOAT;
+		case DOUBLE: return GetX(coldata) > 1? TDBLCOMPLEX: TDOUBLE;
+		}
+	}
+	return -1;
+}
+
+
+int 
+get_rows(Var *v)
+{
+	switch(V_TYPE(v)){
+	case ID_STRING:  return 1;
+	case ID_TEXT: return V_TEXT(v).Row;
+	case ID_VAL: return GetY(v);
+	}
+
+	return -1;
+}
+
+int
+Write_FITS_Table(fitsfile *fptr, struct tbl_specs *t, Var *tbldata)
+{
+	int status = 0;
+	char ctx[1024];
+	char *colname = NULL;
+	Var *coldata = NULL;
+	int  colnum, i, j, k, x, ctype, nelements, elem_size;
+
+	fits_create_tbl(fptr, t->tbltype, t->nrows, t->nfields, t->fnames, t->fforms, t->funits, t->tblname, &status);
+	sprintf(ctx, " creating table \"%s\"", t->tblname);
+	QUERY_FITS_ERROR(status, ctx, 0);
+
+	for(i=0; i<t->nfields && tbldata != NULL; i++){
+		colnum = i+1;
+		find_struct(tbldata, t->fnames[i], &coldata);
+		if ((ctype = fits_tbl_type_for_column_var(coldata)) < 0){
+			parse_error("WARNING! Skipping unhandled data type \"%s\" of column \"%s\" in table \"%s\"\n", 
+				Format2Str(V_FORMAT(coldata)), t->fnames[i], t->tblname);
+			continue;
+		}
+		nelements = get_rows(coldata);
+
+		if (V_TYPE(coldata) == ID_STRING){
+			fits_write_col(fptr, ctype, colnum, 1, 1, 1, V_STRING(coldata), &status);
+		}
+		else if (V_TYPE(coldata) == ID_TEXT){
+			fits_write_col(fptr, ctype, colnum, 1, 1, nelements, (void *)V_TEXT(coldata).text, &status);
+		}
+		else if (V_TYPE(coldata) == ID_VAL){
+			if (V_ORG(coldata) == BSQ){
+				// fast write, all elements in bulk
+				fits_write_col(fptr, ctype, colnum, 1, 1, nelements, V_DATA(coldata), &status);
+			}
+			else {
+				// slow write, one element at a time
+				x = GetX(coldata);
+				elem_size = NBYTES(V_FORMAT(coldata));
+				for(j=0; j<nelements; j++){
+					for(k=0; k<x; k++){
+						fits_write_col(fptr, ctype, colnum, j+1, k+1, 1, V_DATA(coldata) + cpos(k,j,0,coldata)*elem_size, &status);
+					}
+				}
+			}
+		}
+		else {
+			parse_error("WARNING! Skipping unhandled type of structure element \"%s\" in table \"%s\"\n",
+				t->fnames[i], t->tblname);
+		}
+		sprintf(ctx, " writing column %d (\"%s\")", colnum, t->fnames[i]);
+		QUERY_FITS_ERROR(status, ctx, 0);
+	}
+
+	return 1;
 }
 
 
@@ -422,7 +808,7 @@ FITS_Read_Entry(char *fits_filename)
          add_struct(sub,name,makeVarFromFITSLabel(fits_value,key_type));
    
          //Get extension name
-         if (strcmp("EXTNAME", name) == 0){
+         if (strcmp(KW_EXT_NAME, name) == 0){
             ltrim(fits_value, "'");
             rtrim(fits_value, "'");
             strcpy(obj_name, fits_value);
@@ -447,7 +833,7 @@ FITS_Read_Entry(char *fits_filename)
 
       // Add to sub
       if (davinci_data)
-         add_struct(sub,"data",davinci_data);
+         add_struct(sub,SUBEL_DATA,davinci_data);
 
 
       // Add sub to head
@@ -598,28 +984,52 @@ int  Write_FITS_Record(fitsfile *fptr,Var *obj, char *obj_name)
 */
 int WriteSingleStructure(fitsfile *fptr,Var *obj,int index)
 {
-	Var *element;
+	Var *element = NULL, *d;
 	int i;
 	int count;
 	char	*obj_name;
+	int  has_data_subel = 0;
+	int  has_tbl_ext = 0;
+	char ext_type[512];
+	struct tbl_specs t;
+	static int xx = 0;
 
 	if (!ValidObject(obj,index))
 		return(1);
 
-	count=get_struct_count(obj);
+	// determine if the structure contains image / table data
+	has_data_subel = (find_struct(obj,SUBEL_DATA,&element) >= 0);
 
-	for(i=0;i<count;i++){
-		get_struct_element(obj,i,&obj_name,&element);
-		if(!(strcasecmp(obj_name,"data"))){
+	strcpy(ext_type, GET_KEY_VAL_STRING(obj, KW_EXT, d, ""));
+	unquote_remove_spaces(ext_type);
+	has_tbl_ext = (strcasecmp(ext_type, VAL_EXT_TABLE) == 0 || 
+			strcasecmp(ext_type, VAL_EXT_BINTABLE) == 0);
 
+	// write the data object first
+	if (has_data_subel || has_tbl_ext){
+		if (has_tbl_ext){
+			if (!collect_table_specs(obj, &t))
+				return(1);
+			if (!Write_FITS_Table(fptr,&t,element)){
+				free_table_specs(&t);
+				return(1);
+			}
+			free_table_specs(&t);
+		} else {
 			if (!(int )Write_FITS_Image(fptr,element))
 				return(1);
-
 		}
+	}
 
-		else {
-			if (!(int )Write_FITS_Record(fptr,element,obj_name))
-				return(1);
+	// then write additional header elements
+	count=get_struct_count(obj);
+	for(i=0;i<count;i++){
+		get_struct_element(obj,i,&obj_name,&element);
+		if(strcasecmp(obj_name,SUBEL_DATA) != 0){
+			if (!filter_kw(obj_name)){
+				if (!(int )Write_FITS_Record(fptr,element,obj_name))
+					return(1);
+			}
 		}
 	}
 
@@ -650,6 +1060,7 @@ FITS_Write_Structure(char *fits_filename, Var *obj, int force)
 	fitsfile *fptr;
 	int status=0;
     char msg[1024];
+	int hdutype;
 
 /* 
 ** All incoming FITS object are themselves placed into a structure, thus
@@ -684,6 +1095,9 @@ FITS_Write_Structure(char *fits_filename, Var *obj, int force)
 			ScratchFITS(fptr,name);
 			return(NULL);
 		}
+
+		//fits_movabs_hdu(fptr, i+1, &hdutype, &status);
+		//sprintf(msg," moving to HDU index %d", i+1); QUERY_FITS_ERROR(status,msg,NULL);
 
 		if (WriteSingleStructure(fptr,Tmp,i)){
 			parse_error("Invalid items in structure labeled: %s\nCannot write this object as a FITS file\n",obj_name);
