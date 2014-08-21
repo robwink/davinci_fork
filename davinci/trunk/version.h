@@ -1,8 +1,12 @@
-char *version = "@(#) daVinci Version #2.14";
+char *version = "@(#) daVinci Version #2.15";
 
 #include "build.h"
 
 /*
+  Version 2.15: Thu Aug 21 16:04:26 MST 2014
+  * Beta release.
+  * Enabled FITS writer to write structures loaded with FITS table data.
+
   Version 2.14: Fri May 16 10:30:10 MST 2014
   * Beta release.
   * Natively reads ISIS3 Cubes including cubes with tile sizes that are
