@@ -1343,6 +1343,11 @@ ff_pack(vfuncptr func, Var* arg)
 		return NULL;
 	}
 
+	// if force == 1 remove old file
+	if (force){
+		unlink(filename);
+	}
+
 	// parse Davinci struct into data*, also compute num_items (x-axis) and rows (y-axis)
 	data* reg_data = parse_struct(toPack, column_names, &num_items, &rows);
 	if (reg_data == NULL) {
@@ -1671,7 +1676,7 @@ convert_to_ext_fmt(char *from, int ffmt, char *to, int tfmt, int tolen){
     switch(ffmt){
     case BYTE:      ui = *(unsigned char *)from; si = (int         )ui; d  = (double)ui; break;
     case SHORT:     si = *(short         *)from; ui = (unsigned int)si; d  = (double)si; break;
-    case INT:       si = *(int           *)from; ui = (unsigned int)d;  d  = (double)si; break;
+    case INT:       si = *(int           *)from; ui = (unsigned int)si; d  = (double)si; break;
     case FLOAT:     d  = *(float         *)from; ui = (unsigned int)d;  si = (int   )d;  break;
     case DOUBLE:    d  = *(double        *)from; ui = (unsigned int)d;  si = (int   )d;  break;
     case ID_STRING: d  = atof(from); ui = strtoul(from,NULL,10); si = atoi(from);  break;
@@ -1680,9 +1685,9 @@ convert_to_ext_fmt(char *from, int ffmt, char *to, int tfmt, int tolen){
 
     // add conversions for other numeric types
     us = (unsigned short)ui;
-    ss = (unsigned short)si;
-    uc = (unsigned short)ui;
-    sc = (unsigned short)si;
+    ss = (short         )si;
+    uc = (unsigned char )ui;
+    sc = (char          )si;
     f  = (float         )d;
 
     if (tfmt == STRING){
