@@ -1277,6 +1277,7 @@ uninstall-am: uninstall-binPROGRAMS uninstall-docsDATA \
 
 @DV_LIBRARY_TRUE@install-data-hook:
 @DV_LIBRARY_TRUE@	tar --exclude '.svn' --exclude 'CVS' -hcf - $(dvrc) | tar -C $(DESTDIR)$(datadir)/@PACKAGE@/. -xf -
+@DV_LIBRARY_TRUE@	sed 's:^putenv("DV_HOME",\([^)]*\)):putenv("DV_HOME","$(datadir)/@PACKAGE@"):' $(dvrc)/library_linux.dvrc > $(DESTDIR)$(datadir)/@PACKAGE@/$(dvrc)/library_linux.dvrc
 
 @PACKAGE@.sh @PACKAGE@.csh: Makefile
 	echo "export DVHELP=$(DVHELP)" > @PACKAGE@.sh

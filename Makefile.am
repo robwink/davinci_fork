@@ -135,6 +135,8 @@ dvrcdir = $(datadir)/@PACKAGE@/$(dvrc)
 
 install-data-hook:
 	tar --exclude '.svn' --exclude 'CVS' -hcf - $(dvrc) | tar -C $(DESTDIR)$(datadir)/@PACKAGE@/. -xf -
+	sed 's:^putenv("DV_HOME",\([^)]*\)):putenv("DV_HOME","$(datadir)/@PACKAGE@"):' $(dvrc)/library_linux.dvrc > $(DESTDIR)$(datadir)/@PACKAGE@/$(dvrc)/library_linux.dvrc
+
 
 endif
 
