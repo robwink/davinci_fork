@@ -1,8 +1,17 @@
-char *version = "@(#) daVinci Version #2.15";
+char *version = "@(#) daVinci Version #2.16";
 
 #include "build.h"
 
 /*
+  Version 2.16: Tue Sep 23 14:04:06 MST 2014
+  * Beta release.
+  * make install now edits the DV_HOME in library/library_linux.dvrc
+    using --prefix configure option.
+  * pack() fixes:
+    1. force option did not truncate file before writing, now it does.
+    2. packing of U2 had a bug in it where it wasn't copying source data
+       from right variable.
+
   Version 2.15: Thu Aug 21 16:04:26 MST 2014
   * Beta release.
   * Enabled FITS writer to write structures loaded with FITS table data.
