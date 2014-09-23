@@ -1,0 +1,9 @@
+fits=create(100,100,1)
+write_fits(fits,$TMPDIR+"/test.fits",fits,force=1);
+if(fexists($TMPDIR+"/test.fits")) {
+	fits2=load_fits($TMPDIR+"/test.fits")
+	fremove($TMPDIR+"/test.fits")
+	if(equals(fits,fits2.object_1.data)) exit(0);
+}
+exit(1);
+
