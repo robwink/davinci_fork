@@ -1,3 +1,27 @@
+/*
+ * a = load_isis3("/u/ddoerres/work/Project/themis_dbtools/themis_dbtools/trunk/makerdr/I01001001.cub")
+ * b = load_isis3("/local/cube/SE_500K_0_0_SIMP.cub")
+ * c = load_isis3("/local/cube/ESP_038117_1385_RED.cub")             <-- This is the really big cube
+ * d = load_isis3("/u/cedwards/davinci_test/I01001001.lev1.cub")
+ *
+ *
+ */
+
+/*
+ * drd
+ * look for "drd history"
+ * Total seven places
+ * to bring history back in line
+ * in line rather than separate
+ */
+
+// #define or #undef
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+#undef PRINTINPUT
+////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+
 #include "isis3Include.h"
 
 #include "dvio.h"
@@ -9,48 +33,61 @@
 
 #include <sys/stat.h>
 
-static Var *do_loadISIS3(vfuncptr func, char *filename, int data, int use_names); // drd static so only visible in this file
+#define _FILE_OFFSET_BITS 64
+
+
+static Var *do_loadISIS3(vfuncptr func, char *filename, int data, int use_names, int use_units); // drd static so only visible in this file
 
 static int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *nambuf);
 static int dQuoteManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf);
 static void make_unique_name(char *buffer, Var *dv_struct);
 static char get_keyword_datatype(char *value, char *name);
 static void add_converted_to_struct(Var *dv_struct, char * name, char * value);
-static int stringFinder(void);
+static int stringFinder(FILE *fp);
 static int cNameMaker(char *inputString);
 static int readNextLine(FILE *fp);
 static int getCubeParams(FILE *fp);
 static Var *readCube(FILE *fp);
 static char inputString[2048];
+static char continuationString[2048];
 static char string1[200],  string2[200],  string3[200],  string4[200];
 static char string1_2[80], string2_2[80], string3_2[80], string4_2[80];
 static char interString[80];
 
 static int StartByte = 1;
 static int Format = 1;
-static int Samples = 1;
-static int Lines = 1;
-static int totalBands = 1;
-static int sampleSize = 1;   // "Type"
+static long long Samples = 1;
+static long long Lines = 1;
+static long long totalBands = 1;
+static long long sampleSize = 1;   // "Type"
 static int ByteOrder = 1;
 static double Base = 0.0;
 static double Multiplier = 1.0;
 
 
-static int tileSize = 1;
-static int TileSamples = 1;
-static int TileLines = 1;
+static long long tileSize = 1;
+static long long TileSamples = 1;
+static long long TileLines = 1;
 
 
-static int subTileSize = 1;
-static int tiles = 1;
-static int row = 1;
-static int Row = 1;
-static int Bands = 1;
-static int tilesPerRow = 1;
-static int subTileSamples = 1;
-static int totalRows = 1;
-static int subTileLines = 1;
+static long long subTileSize = 1;
+static long long tiles = 1;
+static long long row = 1;
+static long long Row = 1;
+static long long Bands = 1;
+static long long tilesPerRow = 1;
+static long long subTileSamples = 1;
+static long long totalRows = 1;
+static long long subTileLines = 1;
+
+#ifdef PRINTINPUT
+static int countFix = 32;
+#endif
+
+/*
+ * a = load_isis3("/u/ddoerres/work/Project/themis_dbtools/themis_dbtools/trunk/makerdr/I01001001.cub")
+ *
+ */
 
 Var *ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 {
@@ -58,6 +95,7 @@ Var *ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
     char *filename = NULL;
     int data = 1;  // parse the cube
     int use_names = 1; // reverse name and info
+    int use_units = 0; // use the units field
     int i;
 
     /*
@@ -66,15 +104,16 @@ Var *ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
      */
 
     if(arg == NULL) {
-    	 parse_error("No parameter list supplied--must at least supply an input file name.\n");
-    	 return(NULL);
+         parse_error("No parameter list supplied--must at least supply an input file name.\n");
+         return(NULL);
     }
 
-    Alist alist[4];
+    Alist alist[5];
     alist[0] = make_alist("filename", ID_UNK, NULL, &fn);
     alist[1] = make_alist("data", INT, NULL, &data);
     alist[2] = make_alist("use_names", INT, NULL, &use_names);
-    alist[3].name = NULL;
+    alist[3] = make_alist("use_units", INT, NULL, &use_units);
+    alist[4].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) {
         return (NULL);
@@ -85,10 +124,10 @@ Var *ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
         Var *s = new_struct(V_TEXT(fn).Row);
         for (i = 0; i < V_TEXT(fn).Row; i++) {
         filename = strdup(V_TEXT(fn).text[i]);
-        Var *t = do_loadISIS3(func, filename, data, use_names);
+        Var *t = do_loadISIS3(func, filename, data, use_names, use_units);
         if (t) {
-            add_struct(s, filename, t);
-    	}
+            (s, filename, t);
+        }
     }
     if (get_struct_count(s)) {
         return (s);
@@ -98,15 +137,16 @@ Var *ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
         }
     } else if (V_TYPE(fn) == ID_STRING) {
         filename = V_STRING(fn);
-        return(do_loadISIS3(func, filename, data, use_names));
+        return(do_loadISIS3(func, filename, data, use_names, use_units));
     } else {
         parse_error("Illegal argument to function %s(%s), expected STRING", func->name, "filename");
         return (NULL);
         }
     }
 
+
 static Var *
-do_loadISIS3(vfuncptr func, char *filename, int data, int use_names)
+do_loadISIS3(vfuncptr func, char *filename, int data, int use_names, int use_units)
 {
 
     // char *err_file = NULL;
@@ -116,32 +156,81 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names)
     Var *cubeVar = new_struct(0);
     Var *IsisCube = new_struct(0);
     Var *naifKeywordsObj = NULL;  // NULL for logic tests, address of a Var * is copied to it if used
+    Var *historyObj = NULL; // NULL for logic tests, address of a Var * is copied to it if used
+    Var *originalLabelObj = NULL;  // NULL for logic tests, address of a Var * is copied to it if used
     Var *Object[5]; // Can nest up to 5 deep
-    	Var *Group = new_struct(0);
-			Var *stub = new_struct(0);
+        Var *Group = new_struct(0);
+            Var *stub = new_struct(0);
+            Var *numArray = new_struct(0);
+            Var *charBlob = new_struct(0);
+    int originalLabelRows = 0;
+    char **olRows = NULL;
+    void *localData = NULL;
+    char *originalLabelData = NULL;
+    char *ObjectName[5];
+    int i,k, step, count;
+    int lineInCount = 0;
 
-    int i,k,count;
+    volatile int stopCount = 32;  // find stop
+    /*
+    FILE *xp;
+    unsigned char snog[4000];
+    */
+    double *testD;
+    unsigned char *testC;
+    unsigned char inFix[8];
     int objectNest = -1;
     char *workingObject = NULL;
     char *workingGroup = NULL;
+    char *fileIndicator = NULL;
     char namebuf[DV_NAMEBUF_MAX];
     static char noGroup[] = "NONE";
     int inGroup = 0;
     int position = 0;
     long whereInFile;  // Next read starts here
-    long savedFileLocation; // Save location
+    long savedFileLocation=0; // Save location
+    long startOfHistoryRead=0;
     char *historyStrings = NULL;
     long historyOffset;
     long historySize;
+    long currentLocation;
     int inHistory = 0;
+    int inOriginalLabel = 0;
+    int doneReadingHistory = 1;
+    int historyObjectLevel = -2;
     int retVal = 0;
     int weNeedToRead = 1;
     int doneFlag = 0;
     int inNaifKeywords = 0;
+    int naifObjectLevel = -2;
+    int localInTable = 0;  // 0 until we enter a table, 0 when we end a table
+    unsigned int localStartByte = 0;
+    unsigned int localBytes = 0;
+    unsigned int localRecords = 0;
+    unsigned int olLocalBytes = 0; // for OriginalLabel
+    unsigned int olLocalStartByte = 0; // for OriginalLabel
+    int localByteOrder = 2; // 0 will be Lsb, 1 will be Msb, 2 is initial condition
+    int localFieldCount = 0;
+    char localTableName[256];
+    char localLine[256];
+    int localSize = 0;  // This will size of the item
+    /* from parser.h, and right now ignoring others:
+			#define INT			3
+			#define FLOAT		4
+			#define DOUBLE		8
+     We are assuming ONE type per table.  If more than one, will flag it and not process it
+     */
+     int localProcess = 1; // Set to zero to NOT process
+     char *nptr; // for strtoxx conversions
+
+    for(i = 0; i < 5; i++) {
+    	Object[i] = NULL;
+    }
+
 
     /*
      * If the filename is NULL, davinci crashes before this code is reached.
-     * So it is handled in the calling function    
+     * So it is handled in the calling function
      */
 
     //if (filename == NULL) {
@@ -170,53 +259,127 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names)
         fp = fopen(fname, "rb");
         }
     }
-    
+
 
 
     //parse_error("/**************************************************/\n");
-	if(data == 1) { // we parse cube info
-		// parse_error("Parsing Cube Parameters...\n");
-		data = getCubeParams(fp);
-		if(data == 1) {
-			// parse_error("Reading the Cube...\n");
-			cubeVar = readCube(fp);
-            // pp_print(cubeVar);
-		}
+    if(data == 1) { // we parse cube info
+        // parse_error("Parsing Cube Parameters...\n");
+        int check;
+    	check = getCubeParams(fp);
+        if(check != -1) {
+            cubeVar = readCube(fp);
+        }
+        else {
+        	 fclose(fp);
+             return NULL;
+        }
+        fseeko(fp, 0, SEEK_SET);
 
-		fseek(fp, 0, SEEK_SET);
+    }
+/*
+if(1) {
+    FILE *xp;
+    unsigned char snog[4000];
+    xp = fopen("originalLabel.txt", "w");
+    fseek(fp, 92020737-1, SEEK_SET);
+    fread(snog, 3210, 1, fp);
+    fwrite(snog,3210,1,xp);
+    fflush(xp);
+    fclose(xp);
+    exit(0);
+}
+*/
 
-	}
-	// parse_error("Parsing Label...\n");
-    for (k = 0; k < 2048; k++) { // 2048 seems a reasonable limit
+    // parse_error("Parsing Label...\n");
+     for (k = 0; k < 2048; k++) { // 2048 seems a reasonable limit
 
-    	if(weNeedToRead == 1) {
-    		fgets(inputString, 2046, fp);
-    	    whereInFile = ftell(fp);
-    	    i = strlen(inputString);
-    	}
+        if(weNeedToRead == 1) {
+
+        	// This is the main line input
+        	if( (inHistory == 1) && (doneReadingHistory == 1) ) {
+        		fileIndicator = NULL;
+        	}
+        	else {
+            fileIndicator = fgets(inputString, 2046, fp);
+
+#ifdef PRINTINPUT
+            lineInCount++;
+            if(lineInCount == stopCount) {
+            	printf("Eureka!\n");
+            }
+#endif
+            if(inHistory == 1) {
+            	currentLocation = ftello(fp);
+            	if( (currentLocation - startOfHistoryRead) == historySize) {
+            		doneReadingHistory = 1;
+            	}
+
+#ifdef PRINTINPUT
+            	printf("The difference is %ld, max difference is %ld\n", currentLocation-startOfHistoryRead, historySize);
+#endif
+                }
+
+        	}
+
+#ifdef PRINTINPUT
+            if(fileIndicator != NULL) {
+            	printf("%3d : %3d : %s", lineInCount, strlen(inputString), inputString);
+            	if (lineInCount == countFix) {
+            		printf("lineInCount = %d caught\n", countFix);
+            	}
+            }
+            else {
+            	printf("\n\nReached End of History\n\n");
+            }
+#endif
+
+            if(fileIndicator == NULL) {
+                fseeko(fp, savedFileLocation, SEEK_SET);
+                inHistory = -1; // drd history
+                historyObjectLevel = -2;
+                continue;
+            }
+
+            whereInFile = ftello(fp);
+            i = strlen(inputString);
+        }
 
         if(doneFlag == 0) { // Only do this if we are not done
             if(i > 1) { // There may be "blank" lines with only a \n
             if(weNeedToRead) {
-            	// Note that there is a '\n' at the end of the input string
-            	i-=1;
-            	inputString[i] = '\0';
+                // Note that there is a '\n' at the end of the input string
+                i-=1;
+                if(inputString[i] == '\n') {
+                	inputString[i] = '\0';
+                }
 
-           	/*
-          	 * For the most part:
-          	 * string1 is item
-          	 * string2 is '='
-          	 * string3 is value
-          	 * string4 is optional and should be units in <> brackets
-           	 */
-
-            	count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
+            /*
+             * For the most part:
+             * string1 is item
+             * string2 is '='
+             * string3 is value
+             * string4 is optional and should be units in <> brackets
+             *
+             * There are instances of lines with no '='s in them
+             * UNLESS the line is an End_ of something
+             * In this annoying case, we will reorganize:
+             */
+                if ( (strstr(inputString, "=") == NULL)  &&  (strstr(inputString, "End_")== NULL) ) {
+                    if(strcmp(inputString, "End") != 0) {
+                    	// printf("Here is %s\n", inputString);
+                	    strcpy(string1, "comment = ");
+            			strcat(string1, inputString);
+            			strcpy(inputString, string1);
+                    }
+               }
+                count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
             }
             else {
-            	weNeedToRead = 1;
+                weNeedToRead = 1;
             }
             if(count >=2) {
-            	position = stringFinder(); // Position of start of string3
+                position = stringFinder(fp); // Position of start of string3
             }
 
             // The last thing in the header is "End"
@@ -224,94 +387,160 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names)
             //
             if( (strcmp("End", string1) == 0) && (count == 1)) {
                 doneFlag = 1;
+#ifdef  PRINTINPUT
+                printf("\nFound the end of the header\n");
+#endif
                 continue;
             }
 
             /* Let's see if we are starting an Object */
             if(strcmp("Object", string1) == 0) {
+
+            	if(strcmp("OriginalLabel", string3) == 0 ) {
+            		inOriginalLabel = 1; // the example I'm working with is a PDS header
+            	}
+
                 if(strcmp("Table", string3) == 0 ) {
                     int locali = 0;
+
                     if(use_names == 1) {
-                    	locali = readNextLine(fp); // conditional!
+                        locali = readNextLine(fp); // conditional!
                     }
                     if(locali == 1) {
                         weNeedToRead = 0;
                     }
-                }
+
+                    if (localInTable == 0) { // drd table processing
+                    	localInTable = 1;
+                    	localStartByte = 0;
+                    	localBytes = 0;
+                    	localRecords = 0;
+                    	localByteOrder = 2; // 0 is Lsb, 1 is Msb, this 2 is an initial condition
+                    	localSize = 0;
+                    	localProcess = 1;
+                    	localFieldCount = 0;
+                    	if(use_names == 1) {
+                    		/*
+                    		 * We have read another input line;
+                    		 * string3 right now contains the name we want
+                    		 * to use for the table values
+                    		 */
+                    		strcpy(localTableName, "Table");
+                    		// strcpy(localTableName, "Table_"); // Option is to put this back in and
+                    		// strcat(localTableName, string3); // have a longish table name
+                    	}
+                    	else {
+                    		strcpy(localTableName, "NOTHING");
+                    	}
+                    } // end localInTable == 0
+                }  // end strcmp("Table", string3)
+
                 strcpy(namebuf, string3);
-    			if(objectNest >= 0) {
-    				make_unique_name(namebuf, Object[objectNest]);
-			   	}
-				else {
-					make_unique_name(namebuf, IsisCube);
-				}
-				workingObject = strdup(namebuf);
-            	if(strcmp("IsisCube", string3) == 0) {
-            	    workingGroup = noGroup;
-            		inGroup = 0;
-            	}
-            	else {
-            		objectNest++;  // this was because IsisCube was at -1 level
-            		if(objectNest >=5) {
-            			return NULL;
+                if(objectNest >= 0) {
+                    make_unique_name(namebuf, Object[objectNest]);
+                }
+                else {
+                    make_unique_name(namebuf, IsisCube);
+                }
+                workingObject = strdup(namebuf);
+                if(strcmp("IsisCube", string3) == 0) {
+                    workingGroup = noGroup;
+                    inGroup = 0;
+                }
+                else {
+                    objectNest++;  // this was because IsisCube was at -1 level
+                    if(objectNest >=5) {
+                        return NULL;
                     }
 
-            		Object[objectNest] = new_struct(0);
-                    if(strcmp("NaifKeywords", workingObject) == 0) {
+                    Object[objectNest] = new_struct(0);
+                    ObjectName[objectNest] = workingObject;
+
+                    if(strcmp("NaifKeywords", ObjectName[objectNest]) == 0) {
                         inNaifKeywords = 1;
+                        naifObjectLevel = objectNest;
                     }
-            		if(strcmp("History", workingObject) == 0) {
-            			/*
-            			 * The time has come to parse History!
-            			 */
-            			// parse_error("Reading History and storing as text...\n");
+
+// This is the original OriginalLabel Processing Code
+                    /*
+                    if( strcmp("OriginalLabel", ObjectName[objectNest]) == 0) {
+                    	inOriginalLabel = 1;
             			fgets(inputString, 2046, fp); // Name = IsisCube
-                        fgets(inputString, 2046, fp); // StartByte = 92032424
+                        fgets(inputString, 2046, fp); // StartByte = 92020737
                         count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
                         sscanf(string3, "%ld", &historyOffset);
-                        fgets(inputString, 2046, fp); // Bytes = 8292
+                        fgets(inputString, 2046, fp); // Bytes = 3210
                         savedFileLocation = ftell(fp); // This is where we return to parsing later
                         count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
                         sscanf(string3, "%ld", &historySize);
                         fseek(fp, historyOffset-1, SEEK_SET);
-                        inHistory = 1;
                         historyStrings = (char *)malloc(historySize + 1);  // The +1 is in case we need room for a \0
                         if(historyStrings == NULL) {
-                            parse_error("Could not malloc space for History\n");
+                            parse_error("Could not malloc space for OriginalLabel\n");
                             return NULL;
                         }
-                        /*
-                         * Here we read bytes instead of one big chunk to allow for
-                         * any kind of historySize error--hopefully something is better than nothing
-                         */
+
+                         //Here we read bytes instead of one big chunk to allow for
+                         //any kind of historySize error--hopefully something is better than nothing
+
                         fread(historyStrings, 1, historySize, fp);
                         historyStrings[historySize] = '\0'; // Force '\0' at the end
                         stub = newString(historyStrings); // All the History in a text blob with a '\0' at the end
-                        add_struct(Object[objectNest], "History", stub);
-                        // parse_error("Completed Reading History...\n");
+                        add_struct(Object[objectNest], "OriginalLabel", stub);
                         fseek(fp, savedFileLocation, SEEK_SET);
                         // The next read is "End_Object"
                         // and this will be handled by the existing machinery
+                    }
+*/
+                    if(strcmp("History", ObjectName[objectNest]) == 0) {
+                        /*
+                         * The time has come to parse History!
+                         */
+                        // parse_error("Reading History and storing as text...\n");
+                        fgets(inputString, 2046, fp); // Name = IsisCube
+                        fgets(inputString, 2046, fp); // StartByte = 92032424
+                        count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
+                        sscanf(string3, "%ld", &historyOffset);
+                        fgets(inputString, 2046, fp); // Bytes = 8292
+                        savedFileLocation = ftello(fp); // This is where we return to parsing later
+                        count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
+                        sscanf(string3, "%ld", &historySize);
+                        fseeko(fp, historyOffset-1, SEEK_SET);
+                        startOfHistoryRead=ftello(fp);
+                        inHistory = 1;
+                        doneReadingHistory = 0;
+                        historyObjectLevel = objectNest;
+                        // drd history putting history back in line
+                        // historyObj = Object[objectNest];
+#ifdef PRINTINPUT
+                        printf("\n\nNow jumping to History\n");
+#endif
 
-            		}
-            	}
+                    }
+                }
             if(weNeedToRead == 0) {
                 strcpy(string1, string1_2);
                 strcpy(string3, string3_2);
                 strcpy(inputString,"=");
                 strcat(inputString, string3);
-            
+
             }
 
 
-            }
-			/* Let's see if we are starting a Group */
+            } /* End Let's see if we are starting an Object */
+
+            /* Let's see if we are starting a Group */
             else if (strcmp("Group", string1) == 0) {
                 if(strcmp("Field", string3) == 0) {
                     int locali = 0;
+                	if(localInTable == 1) {
+                		localFieldCount+=1;
+                	}
+
                     if(use_names == 1) {
-                    	locali = readNextLine(fp); // conditional!
+                        locali = readNextLine(fp); // conditional!
                     }
+
                     if(locali == 1) {
                         weNeedToRead = 0;
                     }
@@ -324,8 +553,8 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names)
                     make_unique_name(namebuf, IsisCube);
                 }
                 workingGroup = strdup(namebuf);
-            	inGroup = 1;
-            	Group = new_struct(0);
+                inGroup = 1;
+                Group = new_struct(0);
                 if(weNeedToRead == 0) {
                     strcpy(string1, string1_2);
                     strcpy(string3, string3_2);
@@ -334,122 +563,336 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names)
 
                 }
             }
-			/* Let's see if we are at an End_Object */
+            /* Let's see if we are at an End_Object */
             else if (strcmp("End_Object", string1) == 0) {
-                stub = newString(strdup("object"));
-               	if(objectNest >= 0 ) {
- 					add_struct(Object[objectNest], "isis_struct_type", stub);
-                    if(inNaifKeywords == 1) {
-                        naifKeywordsObj = Object[objectNest--];
-                        inNaifKeywords = 0;
-                    }
-                    else {
-                   		add_struct(IsisCube, workingObject, Object[objectNest--]);
-                    }
-               	}
-               	else {
-               		add_struct(IsisCube, "isis_struct_type", stub);
-               	}
-            }
-			/* Let's see if we are at an End_Group */
-            else if (strcmp("End_Group", string1) == 0) {
-           		stub = newString(strdup("group"));
-        		add_struct(Group, "isis_struct_type", stub);
-        		if(objectNest >= 0) {
-            		add_struct(Object[objectNest], workingGroup, Group);
-        		}
-        		else {
-            		add_struct(IsisCube, workingGroup, Group);
-        	    }
-        		// We are done with this Group
-        		workingGroup = noGroup; // May not get another Group for a while, point to noGroup
-        		inGroup = 0;
-            }
 
-			/* 
-				We are not at the Beginning or End of something, so add the item to 
-				what we have.
-			*/
-            else {
-           		/* Make a unique name; either for the Group or Object we are in or the base IsisCube */
-               	cNameMaker(string1); // Fix some problems observed in the input name
-            	strcpy(namebuf, string1);
-               
-                if(inGroup == 1) {
-            	    make_unique_name(namebuf, Group);
-                }
-                else if(objectNest >= 0) {
-            	    make_unique_name(namebuf, Object[objectNest]);
+            	// drd history "object"
+                if(inHistory == -1) {
+                	inHistory = 0; // drd history
+                	stub = newString(strdup("history"));
                 }
                 else {
-               		make_unique_name(namebuf, IsisCube);
+            	stub = newString(strdup("object")); // drd history this is all there was before putting history back inline
                 }
 
-               	// do a little research on continuation lines
-				// First is string lists enclosed by '(' and ')'
-               	// These may be either text string lists or text strings representing number lists
-               	// We don't consider mixed lists
+                if(objectNest >= 0 ) {
+                	if(localInTable == 1) {
+                		localInTable = 0;
 
-               	if(strstr(inputString, "(") != NULL) {
-               	    if(inGroup == 1) {
-               	    	retVal = parenManager(inputString, fp, Group, namebuf);
-               		}
-               		else {
-               			retVal = parenManager(inputString, fp, Object[objectNest], namebuf);
-               		}
-                    if(inHistory == 1) {
-                        historySize -= retVal;
-               	    }
-                }                
+#ifdef PRINTINPUT
+                    	printf("\nlocalInTable set to 0\n");
+                    	printf("localStartByte = %d\n", localStartByte);
+                    	printf("localBytes = %d\n", localBytes);
+                    	printf("localRecords = %d\n", localRecords);
+                    	printf("localByteOrder = %d\n", localByteOrder); // 0 is Lsb, 1 is Msb, this 2 is an initial condition
+                        printf("localSize = %d\n", localSize);
+                        printf("localProcess = %d\n", localProcess);
+                        printf("localFieldCount = %d\n", localFieldCount);
+                        printf("localTableName = %s\n", localTableName);
+#endif
+                        localData = malloc(localBytes);
+                        savedFileLocation = ftello(fp);
+                        fseeko(fp, localStartByte-1, SEEK_SET); // REMEMBER the 1 offset for the addresses!!!!!
+                        fread(localData, localBytes, 1, fp);
+                        fseeko(fp, savedFileLocation, SEEK_SET);
+
+                        if(localByteOrder == 1) { // 0 is Lsb, 1 is Msb, this 2 is an initial condition
+
+                        	testC = (unsigned char *)localData;
+
+                        	for(i = 0; i < localBytes; i+=localSize) {
+                        		for(k = 0; k < localSize; k++) {
+                        			inFix[k] = testC[i + k];
+                        			// printf("inFix[%d] = testC[%d + %d]\n", k, i, k);
+                        		}
+
+                        		for(k = 0; k < localSize; k++) {
+                        			testC[i + k] = inFix[localSize-1-k];
+                        			// printf("testC[%d + %d] = inFix[%d]\n", i, k, localSize-1-k);
+                                }
+                        	}
+                        }
+
+                        numArray = newVal(BSQ, localFieldCount, localRecords, 1, localSize, localData);
+                        add_struct(Object[objectNest], localTableName, numArray);
+                	}  // end localInTable == 1
+
+                	else if(inOriginalLabel == 1) {
+                		inOriginalLabel = 0;
+                   	    parse_error("\n\"OriginalLabel\" is not processed by davinci, it is stored as a Text Buffer\n"); // was "as a string blob\n");
+                		originalLabelData = (char *)malloc(olLocalBytes+3); // we will force a \n','\0' at the end
+                        if(originalLabelData == NULL) {
+                            parse_error("Could not malloc space for OriginalLabel\n");
+                            return NULL;
+                        }
+
+                        savedFileLocation = ftello(fp);
+                        fseeko(fp, olLocalStartByte-1, SEEK_SET); // REMEMBER the 1 offset for the addresses!!!!!
+                        //Here we read bytes instead of one big chunk to allow for
+                        //any kind of historySize error--hopefully something is better than nothing
+                        fread(originalLabelData, 1, olLocalBytes, fp);
+                        fseeko(fp, savedFileLocation, SEEK_SET);
+                        originalLabelData[olLocalBytes+2] = '\0'; // Force '\0' at the very end
+                        originalLabelData[olLocalBytes+1] = '\n'; // Force a '\n' at the end of text
+                        // Var *newText(int rows, char **text)
+                        originalLabelRows = 0;
+                        for(k = 0; k < olLocalBytes+2; k++) {
+                        	if(originalLabelData[k] == '\n') {
+                        		originalLabelRows++;
+                        	}
+                        }
+                        olRows = malloc(originalLabelRows * sizeof(char**));
+                        // drd compile in the next line to test failed malloc()
+                        // olRows = NULL;
+                        if(olRows != NULL) {
+                        	k = 0;
+                        	for(i = 0; i < originalLabelRows; i++) {
+                        		step = 0;
+                        		while( (k < olLocalBytes) && (originalLabelData[k] != '\n') ) {
+                        			localLine[step++] = originalLabelData[k++];
+                        		}
+
+                        		localLine[step] = '\0';  // Want a '\0' on the end and not a '\n'
+                        		olRows[i] = strdup(localLine);
+                        		k++;
+                        		// printf("line %d: %s\n", i+1, olRows[i]);  // drd to print out the strings as they are added to the list
+
+                        	}
+                            //  charBlob = newString(originalLabelData); // All the originalLabel in a text blob with a '\0' at the end
+                        	//             if you use the big blob, you don't need the list of strings in olRows[]
+                        	//             so choose either newString() or newText()
+                        	//             I have done this both ways--right now, Chris Edwards prefers the list of strings
+                            charBlob = newText(originalLabelRows, olRows); // All the originalLabel as a list of strings
+                            add_struct(Object[objectNest], "TextBuffer", charBlob);
+                        } // end malloc not NULL
+                        else { // We could not malloc space for the array of pointers to pointers
+                        	stub = newString(strdup("Could not malloc space to store OriginalLabel as list of strings"));
+                        	add_struct(Object[objectNest], "OriginalLabel", stub);
+                        }
+                        free(originalLabelData); // Don't need this anymore
+                	} // end of inOriginalLabel == 1
+
+                    if( (inNaifKeywords == 1) ) {
+                        naifKeywordsObj = Object[objectNest--];
+                        inNaifKeywords = 0;
+                        naifObjectLevel = -2;
+                    }
+
+                    else if( inHistory == 1) {
+                        if(objectNest < 1) {
+                            printf("\n\n\nThis is not supposed to happen!!!!!!!\n");
+                            printf("System is unstable!");
+                        }
+                        add_struct(Object[objectNest-1], ObjectName[objectNest], Object[objectNest] );
+                        objectNest--;
+                    }
+                    else {  //drd history putting History back in line
+                        // if(strcmp("History", ObjectName[objectNest]) != 0)  // drd was
+                    		{ // History points to historyObj, historyObj is attached later
+                    			add_struct(IsisCube, ObjectName[objectNest], Object[objectNest]);
+                    		}
+
+
+
+                        objectNest--;
+                    }
+                }  // end objectNest >= 0
+                else {
+                    add_struct(IsisCube, "isis_struct_type", stub);
+                }
+            }  // end string1 == "End_Object"
+            /* Let's see if we are at an End_Group */
+            else if (strcmp("End_Group", string1) == 0) {
+                stub = newString(strdup("group"));
+                add_struct(Group, "isis_struct_type", stub);
+                if(objectNest >= 0) {
+                    add_struct(Object[objectNest], workingGroup, Group);
+                }
+                else {
+                    add_struct(IsisCube, workingGroup, Group);
+                }
+                // We are done with this Group
+                workingGroup = noGroup; // May not get another Group for a while, point to noGroup
+                inGroup = 0;
+            }
+
+            /*
+                We are not at the Beginning or End of something, so add the item to
+                what we have.
+            */
+            else {
+            	/*
+            	 * We may have Table info handling
+            	 */
+                if ( (localInTable == 1) && (localProcess == 1) ) {
+                	if( (strcmp("NOTHING", localTableName) == 0) && (strcmp("Name", string1) == 0 ) ) {
+                       strcpy(localTableName, "Table_");
+                       strcat(localTableName, string3 );
+                	}
+                	if( strcmp("StartByte", string1) == 0 ) {
+                		localStartByte = strtoul(string3, &nptr, 10);
+                	}
+                	if( strcmp("Bytes", string1) == 0 ) {
+                		localBytes = strtoul(string3, &nptr, 10);
+                	}
+                	if( strcmp("Records", string1) == 0 ) {
+                        localRecords = strtoul(string3, &nptr, 10);
+                	}
+                	if( strcmp("ByteOrder", string1) == 0 ) {
+                        if(strcmp("Lsb", string3) == 0) {
+                        	localByteOrder = 0;
+                        } // end Lsb
+                        if(strcmp("Msb", string3) == 0 ) {
+                       		localByteOrder = 1;
+                        } // end Msb
+                	} // end ByteOrder
+                	if ( (localSize == 0) && strcmp("Type", string1) == 0) { // drd setting only once per table
+                		for(i = 0; i < strlen(string3); i++) {
+                			string3[i] = toupper(string3[i]);
+                		}
+                        if(strcmp("DOUBLE", string3) == 0) {
+                          localSize = 8;
+                        }
+                        else if (strcmp("FLOAT", string3) == 0) {
+                          localSize = 4;
+                        }
+                        else if (strcmp("INT", string3) == 0) {
+                          localSize = 4;
+                        }
+                	}
+                } // end of table info handling
+                /*
+                 * We may have OriginalLabel processing
+                 */
+                if ( inOriginalLabel == 1 ) {
+                	if( strcmp("StartByte", string1) == 0 ) {
+                		olLocalStartByte = strtoul(string3, &nptr, 10);
+                	}
+                	if( strcmp("Bytes", string1) == 0 ) {
+                		olLocalBytes = strtoul(string3, &nptr, 10);
+                	}
+                }
+                /* Make a unique name; either for the Group or Object we are in or the base IsisCube */
+                cNameMaker(string1); // Fix some problems observed in the input name
+                strcpy(namebuf, string1);
+
+                if(inGroup == 1) {
+                    make_unique_name(namebuf, Group);
+                }
+                else if(objectNest >= 0) {
+                    make_unique_name(namebuf, Object[objectNest]);
+                }
+                else {
+                    make_unique_name(namebuf, IsisCube);
+                }
+
+                // do a little research on continuation lines
+                // First is string lists enclosed by '(' and ')'
+                // These may be either text string lists or text strings representing number lists
+                // We don't consider mixed lists
+                //
+
+                if(( string2[0] == '=') && (string3[0] == '(') ) {
+                    if(inGroup == 1) {
+                        retVal = parenManager(inputString, fp, Group, namebuf);
+                    }
+                    else {
+                        retVal = parenManager(inputString, fp, Object[objectNest], namebuf);
+                    }
+
+                }
                 // The next is a series of strings starting with the character pair '"
-                // This is just a long string
-               	else if(strstr(inputString, "'\"") != NULL) {
-                	    if(inGroup == 1) {
-               	    	retVal = dQuoteManager(inputString, fp, Group, namebuf);
-               		}
-               		else {
-               			retVal = dQuoteManager(inputString, fp, Object[objectNest], namebuf);
-               		}         
-               	    if(inHistory == 1) {
-                        historySize -= retVal;
-                    }	
-               	}
-               	else {
-               		if(inGroup == 1) {
-               			/* There may be <units> in string4. Units are strings enclosed by a '<' and a '>',
-               			 * or string4 may be a part of a string3 that has spaces in it.
-               			 *
-               			 */
-               			if ( (count == 4) && (string4[0] == '<') && (string4[-1 + strlen(string4)] == '>') ) {
-               				add_converted_to_struct(Group, namebuf, string3);
-               				strcat(namebuf, "Units");
-               				add_struct(Group, namebuf, newString(strdup(string4)));
-               			}
-               			else {// &inputString[position] is the input string past the '=' with leading and trailing double quotes removed
-               				add_converted_to_struct(Group, namebuf, &inputString[position]);
-               			}
-               		}
-					else { 
-              			/* There may be <units> in string4. Units are strings enclosed by a '<' and a '>' */
-               			if ( (count == 4) && (string4[0] == '<') && (string4[-1 + strlen(string4)] == '>') ) {
-               				add_converted_to_struct(Object[objectNest], namebuf, string3);
-               				strcat(namebuf, "Units");
-               				add_struct(Object[objectNest], namebuf, newString(strdup(string4)));
-               			}
-               			else {// &inputString[position] is the input string past the '=' with leading and trailing double quotes removed
-               				add_converted_to_struct(Object[objectNest], namebuf, &inputString[position]);
-               			}
-   					}
-               	}
+                // This is just a long string                0x27 is a '
+                else if( (string2[0] == '=') && (string3[0] == '\'') && (string3[1] == '"')) {
+                        if(inGroup == 1) {
+                        retVal = dQuoteManager(inputString, fp, Group, namebuf);
+                    }
+                    else {
+                        retVal = dQuoteManager(inputString, fp, Object[objectNest], namebuf);
+                    }
+
+                }
+
+
+                else {
+
+                    // Next is the possibility of a long string with no delimiters that may extend to yet another line
+                	// If there is another part to read in, we will concatenate it to string3
+                    if (  (string2[0] == '=') && (string3[strlen(string3) - 1] == '-') &&  (strlen(string3) > 58) ) {  // The '-' is a hyphen for continuation
+
+                    	string3[strlen(string3) - 1] = '\0';  // get rid of the '-'
+
+                    	fgets(continuationString, 2046, fp); // read in some more
+
+                    	// More than likely a newline on the end
+                        i = strlen(continuationString);
+                        if(continuationString[i-1] == '\n') {
+                        	continuationString[i-1] = '\0';
+                        }
+
+                        // remove leading spaces
+                    	i = 0;
+                    	while (continuationString[i] == ' ') {
+                    		i++;
+                    	}
+                    	// concat if not too big-
+                       	if(strlen(&continuationString[i]) < (-1 + sizeof(string3) - strlen(string3))) {
+                    		strcat(string3, &continuationString[i]);
+                    	}
+                    	else {
+                    		 ; // nothing...right now, if it is too big, just drop it
+                    	}
+                        strcpy(&inputString[position], string3);
+                    }
+                	// Whether or not we read in an extra snippet, just continue
+
+                    if(inGroup == 1) {
+                        /* There may be <units> in string4. Units are strings enclosed by a '<' and a '>',
+                         * or string4 may simply be a part of a string3 that has spaces in it.
+                         * Also, by default, we are now not showing units
+                         */
+                        if ( (use_units == 1) && (count == 4) && (string4[0] == '<') && (string4[-1 + strlen(string4)] == '>') ) {
+                            add_converted_to_struct(Group, namebuf, string3);
+                            strcat(namebuf, "Units");
+                            add_struct(Group, namebuf, newString(strdup(string4)));
+                        }
+                        else if ( (use_units == 0) && (count == 4) && (string4[0] == '<') && (string4[-1 + strlen(string4)] == '>')) {
+                        	add_converted_to_struct(Group, namebuf, string3);
+                        }
+                        else {// &inputString[position] is the input string past the '=' with leading and trailing double quotes removed
+                            add_converted_to_struct(Group, namebuf, &inputString[position]);
+                        }
+                    }
+                    else {
+                        /* There may be <units> in string4. Units are strings enclosed by a '<' and a '>',
+                         * or string4 may simply be a part of a string3 that has spaces in it.
+                         * Also, by default, we are now not showing units
+                         */
+                        if ( (use_units == 1) && (count == 4) && (string4[0] == '<') && (string4[-1 + strlen(string4)] == '>') ) {
+                            add_converted_to_struct(Object[objectNest], namebuf, string3);
+                            strcat(namebuf, "Units");
+                            add_struct(Object[objectNest], namebuf, newString(strdup(string4)));
+                        }
+                        else if ( (use_units == 0) && (count == 4) && (string4[0] == '<') && (string4[-1 + strlen(string4)] == '>')) {
+                            add_converted_to_struct(Object[objectNest], namebuf, string3);
+                        }
+                        else {// &inputString[position] is the input string past the '=' with leading and trailing double quotes removed
+                            if(inOriginalLabel == 1) { // todo -- is this only here, or is it needed in the "Group" one above, too?
+                            	//add_struct(Object[objectNest], "Note", newString(strdup("This item is not processed by davinci")));
+                            }
+                        	add_converted_to_struct(Object[objectNest], namebuf, &inputString[position]);
+                        }
+                    }
+                }
             } // end of not at beginning or end
         } // end of length > 1
     } // end of not done yet
-  	else {
-  		// parse_error("Found End of label...\n");
-  		// parse_error("/**************************************************/\n");
-  		break;
-  		}
-  	} // End of header info for loop
+    else {
+        // parse_error("Found End of label...\n");
+        // parse_error("/**************************************************/\n");
+        break;
+        }
+    } // End of header info for loop
 
   fclose(fp);
 
@@ -458,16 +901,28 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names)
 Done parsing file
 
 ************************************************************************/
- // fop = malloc(4*4*4*4);
- // cubeVar = newVal(BSQ, 4, 4, 4, FLOAT, fop);
- // pp_print(cubeVar);
+  // fop = malloc(4*4*4*4);
+  // cubeVar = newVal(BSQ, 4, 4, 4, FLOAT, fop);
+  // pp_print(cubeVar);
+
   if( (cubeVar != NULL) && (data != 0)) {
-	  add_struct(v, "cube", cubeVar);
+      add_struct(v, "cube", cubeVar);
   }
   add_struct(v, "IsisCube", IsisCube);
   if( naifKeywordsObj != NULL) {
       add_struct(v, "NaifKeywords", naifKeywordsObj);
   }
+
+  if( historyObj != NULL) {
+      add_struct(v, "History", historyObj); // Naming the history object
+  }
+
+  if( originalLabelObj != NULL) {
+	  add_struct(v, "OriginalLabel", originalLabelObj);
+  }
+// drd print experiment
+  // pp_print_var(Var *v, char *name, int indent, int depth)
+  pp_print_var(v, "HelloDot", 0, 1111);
   return (v);
 }
 
@@ -531,22 +986,40 @@ char get_keyword_datatype(char * value, char * name) {
     /*  If the name of the field contains the string 'Version', don't translate it
         to a number, but keep it as a string.
     */
+
     if (name != NULL && strstr(name, "Version") != NULL) {
         is_int = 0;
         is_double = 0;
     }
+    /* drd
+     * If the name contains the string 'SpacecraftClockCount', keep this as a string
+     */
+
     if (name != NULL && strstr(name, "SpacecraftClockCount") != NULL) {
         is_int = 0;
         is_double = 0;
     }
-    if (is_int && is_double) {
-        if (intval == floatval) {
-            is_double = 0;
-             // drd added one more test -- if there is a decimal point, leave it a double
-            if(strstr(value, ".") != NULL) is_double = 1;
-        }
-        else {
-            is_int = 0;
+
+    /* drd
+     * If the value is an empty string of "", keep it a string
+     */
+
+    if ( (name != NULL) && (value[0] == '\"') && (value[1] == '\"')  ) {
+        is_int = 0;
+        is_double = 0;
+        value[0] = '\0'; // The output routine will give us the desired "" for "Nothing"
+    }
+
+    if (name != NULL ) {
+        if (is_int && is_double) {
+            if (intval == floatval) {
+                is_double = 0;
+                // drd added one more test -- if there is a decimal point, leave it a double
+                if(strstr(value, ".") != NULL) is_double = 1;
+            }
+            else {
+                is_int = 0;
+            }
         }
     }
 
@@ -605,6 +1078,8 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf) 
     int retVal = 0;
     int i = 0;
     int k = 0;
+    int endHyphen = 0;  // 0 means there is no hyphen at the end of the string
+    int endSpace = 1;   // 1 means we add one space to the end of the string before strcat()'ing on next string
     int conversionCount = 0;
     double *numberArrayDouble = NULL;
     int *numberArrayInt = NULL;
@@ -615,65 +1090,98 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf) 
     Var *subItem = new_struct(0);
 
     while (stringItem[i]  != '(') {
-    	i++;
+        i++;
     }
     i++; // Now we are past the leading '('
 
     length  = strlen(&stringItem[i]);
 
-    while( (stringItem[i] == 0x20) && (i < length)) { // 0x20 is a space, may be a leading space
+    while( (stringItem[i] == 0x20) && (i < length)) { // 0x20 is a space, may be leading spaces
         i++;
     }
 
     workingString = strdup(&stringItem[i]);
-    length = 1 + strlen(workingString); // '1 + ' is accounting for '\0' at the end of the string
+    length = 2 + strlen(workingString); // '2 + ' is accounting for a space to be added and '\0' at the end of the string
 
     while (strstr(workingString, ")") == NULL) {
-    	fgets(localBuff, 400, fp);
+        fgets(localBuff, 400, fp);
         retVal += strlen(localBuff);
-    	addedLength = strlen(localBuff) - 1;
-    	localBuff[addedLength] = '\0'; // delete the '\n'
+        addedLength = strlen(localBuff) - 1;
+        localBuff[addedLength] = '\0'; // delete the '\n'
 
-    	i = 0;
-    	while( (localBuff[i] == 0x20) && (i < addedLength)) { // removing leading spaces
-    		i++;
-    	}
-    	length = length + strlen(&localBuff[i]);
-    	localString =	realloc(workingString, length);
-    	if (localString != NULL) {
-    		workingString = localString;
-    		strcat(workingString, &localBuff[i]);
-    		// printf("Realloc worked %d,%d,%s\n", length, strlen(workingString),workingString);
-    		}
-    	else {
-    		retVal = -1;
-    		return retVal;
-    		}
-    	}
+        i = 0;
+        while( (localBuff[i] == 0x20) && (i < addedLength)) { // removing leading spaces
+            i++;
+        }
 
-    /*  
+        /*
+         * We have run across lines ending in hyphens.
+         * This indicates continuation. If there is continuation,
+         * we are not adding a space next time through the loop
+         */
+
+        if(localBuff[i - 1 + strlen(&localBuff[i])] == '-') {
+        	localBuff[i -1 + strlen(&localBuff[i])] = '\0';
+        	endHyphen = 1;
+        }
+
+//        for(k = i; k < i + strlen(&localBuff[i]); k++) {
+//        	printf("%d : %d : %c\n", strlen(&localBuff[i]), k, localBuff[k]);
+//        }
+
+        length = length + strlen(&localBuff[i]);
+        if( endSpace == 1) {
+        	 localString = realloc(workingString, length + 1); // + 1 because we are adding a space
+        }
+        else {
+        	 localString = realloc(workingString, length);
+        }
+
+
+        if (localString != NULL) {
+            workingString = localString;
+            if (endSpace == 1) {
+            	strcat(workingString, " "); // a space at the end
+            }
+        if (endSpace == 0) {
+        	endSpace = 1;
+        }
+            strcat(workingString, &localBuff[i]);
+            if(endHyphen == 1) {
+            	endSpace = 0;
+            	endHyphen = 0;
+            }
+            // printf("Realloc worked %d,%d,%s\n", length, strlen(workingString),workingString);
+            }
+        else {
+            retVal = -1;
+            return retVal;
+            }
+        }
+
+    /*
      * We now have a CSV list of items in one string.
      * Most leading spaces have been deleted.
      * Replace the closing ')' with a ','
      */
 
     for(i = 0; i< strlen(workingString); i++) {
-	    if(workingString[i] == ',') {
-    		commaCount++;
-	    }
+        if(workingString[i] == ',') {
+            commaCount++;
+        }
 
-	    if(workingString[i] == ')') {
+        if(workingString[i] == ')') {
             workingString[i] = ',';
             commaCount++;// There was one more element than there were ','s until we just added this ','
-	    }
+        }
     }
 
 
     token = strtok(workingString, ",");
     i = 0;
     length = strlen(token);
-    while ( (token[i] == 0x20) && (i < length) ) {
-	    i++;
+    while ( (token[i] == 0x20) && (i < length) ) { // remove leading spaces
+        i++;
     }
 
 
@@ -687,69 +1195,65 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf) 
     if(conversionCount == 1) { // We have a list of numbers
         sscanf(&token[i], "%d", &checkInt);
         if( (checkInt == checkDouble) && (strstr(&token[i], ".") == NULL) ) {  // if the values are the same and no ".", assume ints
-    	    numberArrayInt = malloc(commaCount * sizeof(int));
-	        if(numberArrayInt == NULL) {
-	    	    retVal = -1;
-	    	    return retVal;
-	        }
-	        numberArrayInt[0] = checkInt;
-	        for(i = 1; i < commaCount; i++) {
-	    	    token = strtok(NULL, ",");
-	    	    sscanf(token, "%d", &numberArrayInt[i]);
-	        }
+            numberArrayInt = malloc(commaCount * sizeof(int));
+            if(numberArrayInt == NULL) {
+                retVal = -1;
+                return retVal;
+            }
+            numberArrayInt[0] = checkInt;
+            for(i = 1; i < commaCount; i++) {
+                token = strtok(NULL, ",");
+                sscanf(token, "%d", &numberArrayInt[i]);
+            }
 
         }
 
         else { // if values are not the same, we have doubles
-    	    numberArrayDouble = malloc(commaCount * sizeof(double));
-	        if(numberArrayDouble == NULL) {
-	    	    retVal = -1;
-	    	    return retVal;
-	        }
-	        numberArrayDouble[0] = checkDouble;
-	        for(i = 1; i < commaCount; i++) {
-	    	    token = strtok(NULL, ",");
-	    	    sscanf(token, "%lf", &numberArrayDouble[i]);
-	        }
+            numberArrayDouble = malloc(commaCount * sizeof(double));
+            if(numberArrayDouble == NULL) {
+                retVal = -1;
+                return retVal;
+            }
+            numberArrayDouble[0] = checkDouble;
+            for(i = 1; i < commaCount; i++) {
+                token = strtok(NULL, ",");
+                sscanf(token, "%lf", &numberArrayDouble[i]);
+            }
         }
 
-    	free(workingString);
-
         if(numberArrayDouble != NULL) {
-        	localStub = newVal(BSQ, commaCount, 1, 1, DOUBLE, numberArrayDouble);
+            localStub = newVal(BSQ, commaCount, 1, 1, DOUBLE, numberArrayDouble);
         }
         else {
             localStub = newVal(BSQ, commaCount, 1, 1, INT, numberArrayInt);
         }
-	    add_struct(GroupOrObject, namebuf, localStub);
+        add_struct(GroupOrObject, namebuf, localStub);
 
     }
 
     else { // We have a list of strings
 
-    	//stringArray = malloc(commaCount * sizeof(char*));
-	    //if(stringArray == NULL) {
-		//    retVal = -1;
-		//    return retVal;
-	    //}
+        //stringArray = malloc(commaCount * sizeof(char*));
+        //if(stringArray == NULL) {
+        //    retVal = -1;
+        //    return retVal;
+        //}
 
         localStub = newString(strdup(&token[i]));
         add_struct(subItem, NULL, localStub);
         for(i = 1; i < commaCount; i++) {
-  	        token = strtok(NULL, ",");
-  	        addedLength = strlen(token);
-  	        k = 0;
-  	        while( (token[k] == 0x20) && (k < addedLength)) {
-  	        	k++;
-  	        }
-  	        localStub = newString(strdup(&token[k]));
-  	        add_struct(subItem, NULL, localStub);
+            token = strtok(NULL, ",");
+            addedLength = strlen(token);
+            k = 0;
+            while( (token[k] == 0x20) && (k < addedLength)) { // remove leading spaces
+                k++;
+            }
+            localStub = newString(strdup(&token[k]));
+            add_struct(subItem, NULL, localStub);
         }
-
-     	free(workingString);
-
         add_struct(GroupOrObject, namebuf, subItem);
     }
+    free(workingString);
     return retVal;
 }
 
@@ -758,45 +1262,58 @@ int dQuoteManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
     char *localString = NULL;
     char localBuff[400];
     int length = 0;
-    int addedLength = 0;
+    int lengthInBuf = 0;
     int retVal = 0;
     int i = 0;
     Var *localStub = new_struct(0);
 
-    while (stringItem[i]  != '\'') {
-    	i++;
-    }
+    /* drd
+    *  This next looks like it might fail, but we got here because there was the character pair > '" <
+    *  in the string that brought us here.  We will find a \' !
+    */
 
-    workingString = strdup(&stringItem[i]);
-    length = 1 + strlen(workingString); // '1 +' to allow space for a '\0'
+    while (stringItem[i]  != '\'') {
+        i++;
+    }
+    strcpy(localBuff, &stringItem[i]);
+    strcat(localBuff, "\n");
+    workingString = strdup(localBuff);
+    length = 1 + strlen(workingString); // '1 +' to allow for terminating '\0'
 
     while (strstr(workingString, "\"'") == NULL) { // begins with '" and ends with "'
-    	fgets(localBuff, 400, fp);
+        fgets(localBuff, 400, fp);
         retVal += strlen(localBuff);
-    	addedLength = strlen(localBuff) - 1;
+        lengthInBuf = strlen(localBuff);
 
-    	localBuff[addedLength] = '\0';
-    	i = 0;
-    	while( (localBuff[i] == 0x20) && (i < addedLength)) { // removing leading spaces
-    		i++;
-    	}
-    	length = length + strlen(&localBuff[i]);
-    	localString = realloc(workingString, length);
-    	if (localString != NULL) {
-    		workingString = localString;
-    		strcat(workingString, &localBuff[i]);
-    		}
-    	else {
-    		retVal = -1;
-    		return retVal;
-    		}
-    	}
+        i = 0;
 
-    /*  
+        while( (localBuff[i] == 0x20) && (i < lengthInBuf)) { // removing leading spaces
+            i++;
+        }
+
+        length = length + strlen(&localBuff[i]);
+
+        localString = realloc(workingString, length);
+
+        if (localString != NULL) {
+            workingString = localString;
+            strcat(workingString, &localBuff[i]);
+        }
+        else {
+            retVal = -1;
+            return retVal;
+            }
+        }
+
+    /*
      * We now have a longish string.
      */
-    
-    localStub = newString(workingString);
+    workingString[strlen(workingString)-3] = '\0'; // discard final > " ' newline <
+
+    localStub = newString(strdup(&workingString[2]));  // discard starting > ' " <
+
+    free(workingString);
+
     add_struct(GroupOrObject, namebuf, localStub);
     return retVal;
 }
@@ -812,19 +1329,38 @@ int dQuoteManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
  * then string4 is just the next text word of what should be part of string3, and string3 is truncated.
  * So we have this function which returns an offset to the first letter in the first word past the string2 '=' sign
  */
-int stringFinder(void) {
+int stringFinder(FILE* fp) {
 int i = 0;
+int sub_i = 0;
 int innerString;
 int length;
+char inBuffer[100];
+char moreBuffer[4096];
+
+// So what if there is no '=' in here?
+// This was fixed before sscanf() is called
+
+// if (strstr(inputString, "=" ) == NULL) {
+//	return 0;
+// }
 
 while (inputString[i] != '=') {
-		i++;
-	}
+        i++;
+    }
 i++; // Now we are past the '='
 // There might be 'spaces'
-while(inputString[i] == 0x20) { // 0x20 is a space
-		i++;
-	}
+while(inputString[i] == 0x20) { // 0x20 is a space, remove leading spaces
+        i++;
+    }
+
+/* drd
+ * What we have found is strings of the form "", just an empty string
+ * This we will just return
+ */
+
+if ( (inputString[i] == '\"') && (inputString[i+1] == '\"') ) {
+    return i;
+}
 
 // There might be strings with embedded spaces
 // These strings might be enclosed in double quotes
@@ -833,14 +1369,40 @@ while(inputString[i] == 0x20) { // 0x20 is a space
 // ""This is a string with embedded spaces""
 // What I want is
 // "This is a string with embedded spaces"
+// drd added:
+// Also, I have found cases where the string is continued on the next line(s)
+// This means I need to read more to get the rest of the string
 if (inputString[i] == 0x22) { // 0x22 is a "
-	i++;
-	length = strlen(inputString);
-	for(innerString = i; innerString < length; innerString++) {
-		if(inputString[innerString] == 0x22) {
-			inputString[innerString] = '\0';
-		}
-	}
+    inputString[i] = 0x20; // now the 0x22 is a space
+    i++; // now past where the " was
+
+    // there must be another 0x22, or we need to read more
+
+    if(strstr(inputString, "\"") == NULL) {
+        strcpy(moreBuffer, &inputString[i]);
+        strcat(moreBuffer, "\n"); // This was removed before we got here
+        i = 0; // Now we go to the beginning
+
+        do {  // you just don't see do-while loops very often
+        sub_i = 0;
+        fgets(inBuffer, 99, fp);
+
+        while(inBuffer[sub_i] == 0x20) { // 0x20 is a space, remove leading space
+                sub_i++;
+            }
+
+        strcat(moreBuffer, &inBuffer[sub_i]);
+        } while (strstr(&inBuffer[sub_i], "\"") == NULL);
+
+        strcpy(inputString, moreBuffer);
+    }
+
+    length = strlen(inputString);
+    for(innerString = i; innerString < length; innerString++) {
+        if(inputString[innerString] == 0x22) {
+            inputString[innerString] = '\0';
+        }
+    }
 }
 
 return i;
@@ -856,18 +1418,18 @@ int result = 0;
 int i;
 
 for(i = 0; i < strlen(inputString); i++) {
-	switch(inputString[i]) {
-	case '-':	// a minus sign
-	case '.':	// a dot
-	case ':':	// a colon
-	case '+':	// a plus sign
-	case ';':	// a semicolon
-	case ' ':   // a space, not very possible
-		inputString[i] = '_'; // each individually replace by and underbar
-	break;
-	default:
-		;// nothing, just leave it alone
-	}
+    switch(inputString[i]) {
+    case '-':   // a minus sign
+    case '.':   // a dot
+    case ':':   // a colon
+    case '+':   // a plus sign
+    case ';':   // a semicolon
+    case ' ':   // a space, not very possible
+        inputString[i] = '_'; // each individually replace by and underbar
+    break;
+    default:
+        ;// nothing, just leave it alone
+    }
 
 }
 
@@ -899,272 +1461,293 @@ int readNextLine(FILE *fp) {
 
 Var *readCube(FILE *fp) {
 Var *dv_struct = new_struct(0);
-unsigned char *cubeData;
+unsigned char *cubeData = NULL;
 unsigned char inBuffer[4];
 unsigned char swapBuffer[4];
 int cubeElement = 0;
-int x, y, z, element, offset, linearOffset;
+int x, y, z;
+int bigFlag = 0;
+long long element;
+long long linearOffset;
+long long offset;
+long long int allSized;
 
 if(Format == I3Tile) {
-	tileSize = TileSamples * TileLines * sampleSize;
-	tilesPerRow = Samples/TileSamples;
-	subTileSamples = Samples%TileSamples;  // What is left over going across
-	subTileSize = subTileSamples * TileLines * sampleSize;
-	totalRows = Lines/TileLines;
-	subTileLines = Lines%TileLines; // What is left going down
+    tileSize = TileSamples * TileLines * sampleSize;
+    tilesPerRow = Samples/TileSamples;
+    subTileSamples = Samples%TileSamples;  // What is left over going across
+    subTileSize = subTileSamples * TileLines * sampleSize;
+    totalRows = Lines/TileLines;
+    subTileLines = Lines%TileLines; // What is left going down
 
-//	if( (subTileSamples !=0) || (subTileLines !=0) ) {
-//		parse_error("Irregular Tile sizes--can't read this cube into RAM\n");
-//		return NULL;
-	if(subTileSamples != 0) {
-		tilesPerRow+=1;
-	}
-	if(subTileLines != 0) {
-		totalRows+=1;
-	}
+//  if( (subTileSamples !=0) || (subTileLines !=0) ) {
+//      parse_error("Irregular Tile sizes--can't read this cube into RAM\n");
+//      return NULL;
+    if(subTileSamples != 0) {
+        tilesPerRow+=1;
+    }
+    if(subTileLines != 0) {
+        totalRows+=1;
+    }
 }
+allSized = (long long)Samples*(long long)Lines*(long long)totalBands*(long long)sampleSize;
 
-cubeData = malloc(Samples*Lines*totalBands*sampleSize);
+if(allSized >= 2147483647ll) {
+parse_error("Size is %lld, which is larger than the 32bit integer max of 2,147,483,647--64 bit integers not available at this time\n", allSized);
+// for now, we are done
+return NULL;
+//bigFlag = 1;
+}
+//cubeData = malloc(Samples*Lines*totalBands*sampleSize);
+cubeData = malloc(allSized);
 
 if(cubeData == NULL) {
-	parse_error("Cannot malloc() enough space to hold Cube\n");
-	return NULL;
+    parse_error("Cannot malloc() enough space to hold Cube\n");
+    return NULL;
 }
 
 if(Format == BandSequential) {
 
-	fseek(fp, StartByte-1, SEEK_SET);  // Need only the one fseek() to set up all
+    fseeko(fp, StartByte-1, SEEK_SET);  // Need only the one fseeko() to set up all
     offset = 0;  // This is the offset in to the storage structure
-	for(z = 0; z < totalBands; z++) {
-		for(y = 0; y < Lines; y++) {
-			for (x = 0; x < Samples; x++) {
-				if (1 == fread(inBuffer, sampleSize, 1, fp) ) {
-				    
-					if(ByteOrder == Msb) {
-							switch(sampleSize){
-							case 2:
-								swapBuffer[1] = inBuffer[0];
-								swapBuffer[0] = inBuffer[1];
-								break;
-							case 4:
-								swapBuffer[3] = inBuffer[0];
-								swapBuffer[2] = inBuffer[1];
-								swapBuffer[1] = inBuffer[2];
-								swapBuffer[0] = inBuffer[3];
-								break;
-							default:
-								;
-							}
+    for(z = 0; z < totalBands; z++) {
+        for(y = 0; y < Lines; y++) {
+        	if (bigFlag == 1) {
+        		parse_error("Now at line %d\n", Lines);
+        	}
+            for (x = 0; x < Samples; x++) {
+                if (1 == fread(inBuffer, sampleSize, 1, fp) ) {
 
-						for (element = 0; element < sampleSize; element++) {
-							cubeData[offset + element] = swapBuffer[element];
-						}
-					}
-					else {
-						for (element = 0; element < sampleSize; element++) {
-							cubeData[offset + element] = inBuffer[element];
-						}
-					}
+                    if(ByteOrder == Msb) {
+                            switch(sampleSize){
+                            case 2:
+                                swapBuffer[1] = inBuffer[0];
+                                swapBuffer[0] = inBuffer[1];
+                                break;
+                            case 4:
+                                swapBuffer[3] = inBuffer[0];
+                                swapBuffer[2] = inBuffer[1];
+                                swapBuffer[1] = inBuffer[2];
+                                swapBuffer[0] = inBuffer[3];
+                                break;
+                            default:
+                                ;
+                            }
+
+                        for (element = 0; element < sampleSize; element++) {
+                            cubeData[offset + element] = swapBuffer[element];
+                        }
+                    }
+                    else {
+                        for (element = 0; element < sampleSize; element++) {
+                            cubeData[offset + element] = inBuffer[element];
+                        }
+                    }
 
                     offset+=sampleSize; // offset increases by sample size
 
-				} // end of good read
-				else {
-					parse_error("Bad Read for Band Sequential Cube\n");
-					return NULL;
-				}
-			} // end x
-		} // end y
-	} // end z
+                } // end of good read
+                else {
+                    parse_error("Bad Read for Band Sequential Cube");
+                    return NULL;
+                }
+            } // end x
+        } // end y
+    } // end z
 } // end BandSequential
 
 if(Format == I3Tile) {
-	linearOffset = 0;  // Where the write starts to the storage area
+    linearOffset = 0;  // Where the write starts to the storage area
+    // printf("totalRows = %lld\n", totalRows);
     for(Bands = 0; Bands < totalBands; Bands++) {
-    	for (Row = 0; Row < totalRows; Row++) {
-    		for(row = 0; row < TileLines; row++) {
-    			for( tiles = 0; tiles < tilesPerRow; tiles++) {
-    				offset = StartByte - 1;
-    				offset += Bands * (Samples * Lines * sampleSize);   // How many whole "sheets" we have read
-    				offset += ( Row * tilesPerRow * tileSize);  // This is the number of full Rows of full tiles
-      				offset += (tiles*tileSize); // This is the offset of the number of full tiles already read in the Row
-    				offset += (row * TileSamples * sampleSize); // How many full rows we have read so far in this tile
+        for (Row = 0; Row < totalRows; Row++) {
+        	if (bigFlag == 1) {
+           	parse_error("Now at Row %d", Row);
+        	}
+            for(row = 0; row < TileLines; row++) {
+                for( tiles = 0; tiles < tilesPerRow; tiles++) {
+                    offset = StartByte - 1;
+                    offset += Bands * (Samples * Lines * sampleSize);   // How many whole "sheets" we have read
+                    offset += ( Row * tilesPerRow * tileSize);  // This is the number of full Rows of full tiles
+                    offset += (tiles*tileSize); // This is the offset of the number of full tiles already read in the Row
+                    offset += (row * TileSamples * sampleSize); // How many full rows we have read so far in this tile
 
-    				fseek(fp, offset, SEEK_SET); // for Tiled, fseek() each TileSample start
+                    fseeko(fp, offset, SEEK_SET); // for Tiled, fseeko() each TileSample start
 
-    				for (x = 0; x < TileSamples; x++) { // Reading across a tile
-    					if (1 == fread (inBuffer, sampleSize, 1, fp)) {
+                    for (x = 0; x < TileSamples; x++) { // Reading across a tile
+                        if (1 == fread (inBuffer, sampleSize, 1, fp)) {
 
-    						if((subTileSamples != 0) && (tiles == (tilesPerRow-1)) ) {
-    							if(x >= subTileSamples) {
-    								continue;  // We read it, we just don't put it in the structure
-    							}
-    						}
+                            if((subTileSamples != 0) && (tiles == (tilesPerRow-1)) ) {
+                                if(x >= subTileSamples) {
+                                    continue;  // We read it, we just don't put it in the structure
+                                }
+                            }
 
-    						if((subTileLines != 0) && (Row == (totalRows-1)) ) {
-    							if(row >= subTileLines) {
-    								continue; // We read it, we just don't put it in the structure
-    							}
-    						}
-
-
-   							if(ByteOrder == Msb) {
-   								switch(sampleSize){
-   								case 2:
-   									swapBuffer[1] = inBuffer[0];
-   									swapBuffer[0] = inBuffer[1];
-   									break;
-   								case 4:
-   									swapBuffer[3] = inBuffer[0];
-   									swapBuffer[2] = inBuffer[1];
-   									swapBuffer[1] = inBuffer[2];
-   									swapBuffer[0] = inBuffer[3];
-   									break;
-   								default:
-   									;
-   								}
-
-   								for (element = 0; element < sampleSize; element++) {
-   									cubeData[linearOffset + element] = swapBuffer[element];
-   								}
-   							}
-   							else {
-   								for (element = 0; element < sampleSize; element++) {
-   									cubeData[linearOffset + element] = inBuffer[element];
-   								}
-   							}
-   							linearOffset+=sampleSize; // linearOffset into the RAM data just keeps incrementing
+                            if((subTileLines != 0) && (Row == (totalRows-1)) ) {
+                                if(row >= subTileLines) {
+                                    continue; // We read it, we just don't put it in the structure
+                                }
+                            }
 
 
-    					} // end of good read
+                            if(ByteOrder == Msb) {
+                                switch(sampleSize){
+                                case 2:
+                                    swapBuffer[1] = inBuffer[0];
+                                    swapBuffer[0] = inBuffer[1];
+                                    break;
+                                case 4:
+                                    swapBuffer[3] = inBuffer[0];
+                                    swapBuffer[2] = inBuffer[1];
+                                    swapBuffer[1] = inBuffer[2];
+                                    swapBuffer[0] = inBuffer[3];
+                                    break;
+                                default:
+                                    ;
+                                }
 
-    					else {
-    						parse_error("Bad Read for Tile Cube\n");
-    						return NULL;
-    					}
-    				} // end TileSamples
-    			} // end tilesPerRow
-    		} // end rows
-    	} // end Rows
+                                for (element = 0; element < sampleSize; element++) {
+                                    cubeData[linearOffset + element] = swapBuffer[element];
+                                }
+                            }
+                            else {
+                                for (element = 0; element < sampleSize; element++) {
+                                    cubeData[linearOffset + element] = inBuffer[element];
+                                }
+                            }
+                            linearOffset+=sampleSize; // linearOffset into the RAM data just keeps incrementing
+
+
+                        } // end of good read
+
+                        else {
+                            parse_error("Bad Read for Tile Cube\n");
+                            return NULL;
+                        }
+                    } // end TileSamples
+                } // end tilesPerRow
+            } // end rows
+        } // end Rows
     }  // end Bands
 } // end I3Tile
 
 
 switch (sampleSize) {
 case 1:
-	cubeElement = BYTE;
-	break;
+    cubeElement = BYTE;
+    break;
 case 2:
-	cubeElement = SHORT;
-	break;
+    cubeElement = SHORT;
+    break;
 case 4:
-	cubeElement = FLOAT;
-	break;
+    cubeElement = FLOAT;
+    break;
 default:
-	cubeElement = BYTE;
+    cubeElement = BYTE;
 }
 
 
 dv_struct = newVal(BSQ, Samples, Lines, totalBands, cubeElement, cubeData);
+cubeData = NULL;
+
 // pp_print(dv_struct);
 
 // parse_error("Finished reading the Cube into RAM...\n");
+bigFlag = 0;
 return dv_struct;
 }
 
 
 
 int getCubeParams(FILE *fp) {
-	int retVal = 1;
-	int count;
-	fgets(inputString, 2046, fp);
-	sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
-	if(strcmp("IsisCube", string3) !=0) {
-		parse_error("This is not an Isis3 Cube\n");
-		return 0;
-	}
+    int retVal = 1;
+    int count;
+    fgets(inputString, 2046, fp);
+    sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
+    if(strcmp("IsisCube", string3) !=0) {
+        parse_error("This is not an Isis3 Cube\n");
+        return -1;
+    }
 
-	while(strcmp("End_Object", string1) != 0) {
-		fgets(inputString, 2046, fp);
-		count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
-		if(strlen(inputString) < 3) {  // Some blank lines
-			continue;
-		}
+    while(strcmp("End_Object", string1) != 0) {
+        fgets(inputString, 2046, fp);
+        count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
+        if(strlen(inputString) < 3) {  // Some blank lines
+            continue;
+        }
 
-		if(count != 3) { // There something to parse out only if there are three strings
-			continue;
-		}
+        if(count != 3) { // There something to parse out only if there are three strings
+            continue;
+        }
 
-		if(strcmp("StartByte", string1) == 0 ) {
-			sscanf(string3, "%d", &StartByte);
-		}
+        if(strcmp("StartByte", string1) == 0 ) {
+            sscanf(string3, "%d", &StartByte);
+        }
 
-		else if(strcmp("Format", string1) == 0 ) {
-			if(strcmp("Tile", string3) == 0 ) {
-				Format = I3Tile;
-			}
-			else {
-				Format = BandSequential;
-			}
-		}
+        else if(strcmp("Format", string1) == 0 ) {
+            if(strcmp("Tile", string3) == 0 ) {
+                Format = I3Tile;
+            }
+            else {
+                Format = BandSequential;
+            }
+        }
 
-		else if(strcmp("TileSamples", string1) == 0 ) {
-			sscanf(string3, "%d", &TileSamples);
-		}
+        else if(strcmp("TileSamples", string1) == 0 ) {
+            sscanf(string3, "%d", &TileSamples);
+        }
 
-		else if(strcmp("TileLines", string1) == 0 ) {
-			sscanf(string3, "%d", &TileLines);
-		}
+        else if(strcmp("TileLines", string1) == 0 ) {
+            sscanf(string3, "%d", &TileLines);
+        }
 
-		else if(strcmp("Samples", string1) == 0 ) {
-			sscanf(string3, "%d", &Samples);
-		}
+        else if(strcmp("Samples", string1) == 0 ) {
+            sscanf(string3, "%d", &Samples);
+        }
 
-		else if(strcmp("Lines", string1) == 0 ) {
-			sscanf(string3, "%d", &Lines);
-		}
+        else if(strcmp("Lines", string1) == 0 ) {
+            sscanf(string3, "%d", &Lines);
+        }
 
-		else if(strcmp("Bands", string1) == 0 ) {
-			sscanf(string3, "%d", &totalBands);
-		}
+        else if(strcmp("Bands", string1) == 0 ) {
+            sscanf(string3, "%d", &totalBands);
+        }
 
-		else if(strcmp("Type", string1) == 0 ) {
-			if(strcmp("UnsignedByte", string3) == 0) {
-				sampleSize = 1;
-			}
-			else if(strcmp("SignedWord", string3) == 0) {
-				sampleSize = 2;
-			}
-			else {
-				sampleSize = 4; // only other choice is Real which is really float of size 4
-			}
-		}
+        else if(strcmp("Type", string1) == 0 ) {
+            if(strcmp("UnsignedByte", string3) == 0) {
+                sampleSize = 1;
+            }
+            else if(strcmp("SignedWord", string3) == 0) {
+                sampleSize = 2;
+            }
+            else {
+                sampleSize = 4; // only other choice is Real which is really float of size 4
+            }
+        }
 
-		else if(strcmp("ByteOrder", string1) == 0 ) {
-			if(strcmp("Lsb", string3) == 0) {
-				ByteOrder = Lsb;
-			}
-			else {
-				ByteOrder = Msb;
-			}
-		}
+        else if(strcmp("ByteOrder", string1) == 0 ) {
+            if(strcmp("Lsb", string3) == 0) {
+                ByteOrder = Lsb;
+            }
+            else {
+                ByteOrder = Msb;
+            }
+        }
 
-		else if(strcmp("Base", string1) == 0 ) {
-			sscanf(string3, "%lf", &Base);
-		}
+        else if(strcmp("Base", string1) == 0 ) {
+            sscanf(string3, "%lf", &Base);
+        }
 
-		else if(strcmp("Multiplier", string1) == 0 ) {
-			sscanf(string3, "%lf", &Multiplier);
-		}
+        else if(strcmp("Multiplier", string1) == 0 ) {
+            sscanf(string3, "%lf", &Multiplier);
+        }
 
-		else {
-			; // nothing for now
-		}
-	} // end of the while loop
+        else {
+            ; // nothing for now
+        }
+    } // end of the while loop
 
-	// parse_error("Completed parsing cube parameters...\n");
+    // parse_error("Completed parsing cube parameters...\n");
 
-	return retVal;
-
-
+    return retVal;
 }
