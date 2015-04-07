@@ -1,0 +1,205 @@
+# --------------------------------------------------------------------------
+# --- GLOBALS --------------------------------------------------------------
+# --------------------------------------------------------------------------
+
+verbose=0
+
+# load a data matrix
+data = random(3,4,5);
+
+# define tolerence
+tol = 1E-5;
+
+# --------------------------------------------------------------------------
+# --- TEST ROUTINES --------------------------------------------------------
+# --------------------------------------------------------------------------
+
+source("covar.dv");
+source("corr.dv");
+
+# test #10 - Covariance Matrix
+define test10(m,tol) {
+	a1 = dv_covar(obj=m, axis="x");
+	a2 = dv_covar(obj=m, axis="y");
+	a3 = dv_covar(obj=m, axis="z");
+
+	b1 = covar(obj=m, axis=x);
+	b2 = covar(obj=m, axis=y);
+	b3 = covar(obj=m, axis=z);
+
+	if (HasValue(a1) == 0 || (max(a1) == 0 && min(a1) == 0)) return(0);
+	if (HasValue(a2) == 0 || (max(a2) == 0 && min(a2) == 0)) return(0);
+	if (HasValue(a3) == 0 || (max(a3) == 0 && min(a3) == 0)) return(0);
+	if (HasValue(b1) == 0 || (max(b1) == 0 && min(b1) == 0)) return(0);
+	if (HasValue(b2) == 0 || (max(b1) == 0 && min(b1) == 0)) return(0);
+	if (HasValue(b3) == 0 || (max(b1) == 0 && min(b1) == 0)) return(0);
+
+	return(max(max(abs(a1-b1)) // max(abs(a2-b2)) // max(abs(a3-b3))) <= tol);
+}
+
+# test #11 - Correlation Matrix
+define test11(m,tol) {
+	a1 = dv_corr(obj=m, axis="x");
+	a2 = dv_corr(obj=m, axis="y");
+	a3 = dv_corr(obj=m, axis="z");
+
+	b1 = corr(obj=m, axis=x);
+	b2 = corr(obj=m, axis=y);
+	b3 = corr(obj=m, axis=z);
+
+	if (HasValue(a1) == 0 || (max(a1) == 0 && min(a1) == 0)) return(0);
+	if (HasValue(a2) == 0 || (max(a2) == 0 && min(a2) == 0)) return(0);
+	if (HasValue(a3) == 0 || (max(a3) == 0 && min(a3) == 0)) return(0);
+	if (HasValue(b1) == 0 || (max(b1) == 0 && min(b1) == 0)) return(0);
+	if (HasValue(b2) == 0 || (max(b1) == 0 && min(b1) == 0)) return(0);
+	if (HasValue(b3) == 0 || (max(b1) == 0 && min(b1) == 0)) return(0);
+
+	return(max(max(abs(a1-b1)) // max(abs(a2-b2)) // max(abs(a3-b3))) <= tol);
+}
+
+# test #12 - Eigen Values & Vectors via the characteristic function
+#
+#                             Ax = lx
+#
+# where A is the input matrix, x is an Eigen Vector of A and
+# l is an Eigen Value of A
+define test12(m, evals, evecs,tol) {
+	# something is suspicious if either all Eigen Values or 
+	# all Eigen Vectors are found to be zero
+	if (max(max(evals) // max(evecs)) == 0){
+		printf("Caution! zero eigen values or vectors.\n");
+		return(0);
+	}
+
+	dm = dim(m);
+	if (dm[3] != 1){
+		echo("test12: invalid dimensions of input matrix");
+		return(0);
+	}
+
+	devals = dim(evals);
+	if (devals[2] != dm[1] || devals[1] != 1 || devals[3] != 1){
+		echo("test12: invalid number of Eigen Values");
+		dump(devals);
+		return(0);
+	}
+
+	devecs = dim(evecs);
+	if (devecs[1] != dm[1] || devecs[2] != dm[1] || devecs[3] != 1){
+		echo("test12: invalid dimensions of Eigen Vectors");
+		return(0);
+	}
+
+	maxdiff = 0.0; # maximum difference between the two results
+
+	n = (dim(evals))[2];
+
+	for(i=1; i<=n; i+=1){
+		delete(lhs);
+		lhs = mxm(m, evecs[i]);
+		if (HasValue(lhs) == 0) return(0);
+
+		for(j=1; j<=n; j+=1){
+			delete(rhs);
+			rhs = evals[,j] * evecs[i];
+			if (HasValue(rhs) == 0) return(0);
+			maxdiff = max(abs(lhs-rhs));
+		}
+	}
+
+	return(maxdiff <= tol);
+}
+
+# test 13 - Principal Component Stretch
+define test13(tol) {
+	maxdiff = 0.0;
+
+	delete(m);
+	m = load("pcs-input.v");
+	if (HasValue(m) == 0) return(0);
+
+	delete(d1); delete(d2);
+	d1 = pcs(m,v,x);
+	d2 = load("pcs-vx.v");
+	if ((HasValue(d1) == 0) || (HasValue(d2) == 0)) return(0);
+	maxdiff = max(maxdiff // max(abs(d1 - d2)));
+
+	delete(d1); delete(d2);
+	d1 = pcs(m,v,y);
+	d2 = load("pcs-vy.v");
+	if ((HasValue(d1) == 0) || (HasValue(d2) == 0)) return(0);
+	maxdiff = max(maxdiff // max(abs(d1 - d2)));
+
+	delete(d1); delete(d2);
+	d1 = pcs(m,v,z);
+	d2 = load("pcs-vz.v");
+	if ((HasValue(d1) == 0) || (HasValue(d2) == 0)) return(0);
+	maxdiff = max(maxdiff // max(abs(d1 - d2)));
+
+	delete(d1); delete(d2);
+	d1 = pcs(m, r, x);
+	d2 = load("pcs-rx.v");
+	if ((HasValue(d1) == 0) || (HasValue(d2) == 0)) return(0);
+	maxdiff = max(maxdiff // max(abs(d1 - d2)));
+
+	delete(d1); delete(d2);
+	d1 = pcs(m, r, y);
+	d2 = load("pcs-ry.v");
+	if ((HasValue(d1) == 0) || (HasValue(d2) == 0)) return(0);
+	maxdiff = max(maxdiff // max(abs(d1 - d2)));
+
+	delete(d1); delete(d2);
+	d1 = pcs(m, r, z);
+	d2 = load("pcs-rz.v");
+	if ((HasValue(d1) == 0) || (HasValue(d2) == 0)) return(0);
+	maxdiff = max(maxdiff // max(abs(d1 - d2)));
+
+	# Test default opt="v"
+	delete(d1); delete(d2);
+	d1 = pcs(m, v, x);
+	d2 = pcs(m, axis=x);
+	if ((HasValue(d1) == 0) || (HasValue(d2) == 0)) return(0);
+	maxdiff = max(maxdiff // max(abs(d1 - d2)));
+
+	return(maxdiff <= tol);
+}
+
+# --------------------------------------------------------------------------
+# --- MAIN TEST EXECUTION ROUTINE ------------------------------------------
+# --------------------------------------------------------------------------
+
+printf("executing test10 - covariance matrix ... ");
+rc = test10(m=data,tol=tol);
+if (rc == 0) {
+	printf("failed\n");
+} else {
+	printf("passed\n");
+}
+
+printf("executing test11 - correlation matrix ... ");
+rc = test11(m=data,tol=tol);
+if (rc == 0) {
+	printf("failed\n");
+} else {
+	printf("passed\n");
+}
+
+printf("executing test12 - eigen values and vectors ... ");
+symmat = covar(data);
+eig = eigen(symmat);
+rc = test12(m=symmat, evals=(eig[1]), evecs=(eig[2:]), tol=tol);
+if (rc == 0) {
+	printf("failed\n");
+} else {
+	printf("passed\n");
+}
+
+/*
+*/
+printf("executing test13 - principal component stretch ... ");
+rc = test13(tol=tol);
+if (rc == 0) {
+	printf("failed\n");
+} else {
+	printf("passed\n");
+}
