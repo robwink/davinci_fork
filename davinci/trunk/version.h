@@ -1,8 +1,15 @@
-char *version = "@(#) daVinci Version #2.16";
+char *version = "@(#) daVinci Version #2.17";
 
 #include "build.h"
 
 /*
+  Version 2.17: Tue Apr  7  9:22:05 MST 2015
+  * External distribution.
+  * Completed reading/parsing of ISIS3 files.
+    1. Checks size of ISIS3 files, does not proceed if
+       to large for 32 bit unsigned integers
+    2. Parses everything
+
   Version 2.16: Tue Sep 23 14:04:06 MST 2014
   * Beta release.
   * make install now edits the DV_HOME in library/library_linux.dvrc
