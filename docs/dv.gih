@@ -464,7 +464,8 @@
  Loads comma-separated / tab-separated file. The field separator defaults
  to the tab-character. If the file does not have a header, set header=0.
  If collapse=1 is specified, consecutive field separators are considered
- as a single separator.
+ as a single separator. The delimeter and separator variables accomplish 
+ the same thing. 
 
 
 ?functions filetype()
