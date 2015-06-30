@@ -1275,10 +1275,12 @@ dv_WriteCSV(Var* the_data, char* filename, char* field_delim, int header, int fo
 	struct stat filestats;
     char record_delim[] = "\n";
 
-	if( field_delim == NULL )
+	if( field_delim == NULL ) {
 		field_delim = "\t";
+	}
 
 	i = stat(filename, &filestats);
+
 	if ( i == -1 && errno != ENOENT) {
 		parse_error("stat error: %s", strerror(errno) );
 		return 0;
@@ -1291,7 +1293,6 @@ dv_WriteCSV(Var* the_data, char* filename, char* field_delim, int header, int fo
 
 	if( V_TYPE(the_data) == ID_STRUCT ) {		//data is a structure so get sub structs
 		count = get_struct_count(the_data);
-
 		data = (Var**)calloc(count, sizeof(Var*));
 		keys = (char**)calloc(count, sizeof(char*));
 		if( data == NULL || keys == NULL) {
@@ -1353,7 +1354,6 @@ dv_WriteCSV(Var* the_data, char* filename, char* field_delim, int header, int fo
 		return 0;
 	}
 
-
 /* print out column headers if requested */
 	if(header) 
 		print_headers(data, keys, count, file, field_delim);
@@ -1386,7 +1386,6 @@ dv_WriteCSV(Var* the_data, char* filename, char* field_delim, int header, int fo
 				continue;
 			}
 
-
 			if( V_TYPE(data[i]) == ID_VAL ) {
 				columns = V_SIZE(data[i])[0];
 				for(j=0; j<columns; j++) {
@@ -1408,7 +1407,25 @@ dv_WriteCSV(Var* the_data, char* filename, char* field_delim, int header, int fo
 					}
 					if( j+1 < V_SIZE(data[i])[0] ) fprintf(file, "%s", field_delim);
 				}
-			} else if( V_TYPE(data[i]) == ID_TEXT ) {
+			}
+
+			/*
+			 * drd
+			 * Added 'else if' for ID_STRING, a NULL terminated character string.
+			 * This handler was simply missing.
+			 * Already had ID_TEXT, a 1-D Array of Strings
+			 *
+			 * See enum definitions in parser.h
+			 *
+			 * todo: is ID_TEXT ever used by a call to dv_WriteCSV()?
+			 *
+			 */
+			else if(V_TYPE(data[i]) == ID_STRING ) {
+				fprintf(file, "%s", V_STRING(data[i]));
+				}
+
+
+			else if( V_TYPE(data[i]) == ID_TEXT ) {
 
 				if( V_TEXT(data[i]).text[row] != NULL )
 					csv_fwrite(file, V_TEXT(data[i]).text[row], strlen( V_TEXT(data[i]).text[row] ) );

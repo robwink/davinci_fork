@@ -9,6 +9,8 @@
 
 /*
  * drd
+ *
+ * 13 April--replace long long by size_t
  * look for "drd history"
  * Total seven places
  * to bring history back in line
@@ -56,29 +58,29 @@ static char interString[80];
 
 static int StartByte = 1;
 static int Format = 1;
-static long long Samples = 1;
-static long long Lines = 1;
-static long long totalBands = 1;
-static long long sampleSize = 1;   // "Type"
+static size_t Samples = 1;
+static size_t Lines = 1;
+static size_t totalBands = 1;
+static size_t sampleSize = 1;   // "Type"
 static int ByteOrder = 1;
 static double Base = 0.0;
 static double Multiplier = 1.0;
 
 
-static long long tileSize = 1;
-static long long TileSamples = 1;
-static long long TileLines = 1;
+static size_t tileSize = 1;
+static size_t TileSamples = 1;
+static size_t TileLines = 1;
 
 
-static long long subTileSize = 1;
-static long long tiles = 1;
-static long long row = 1;
-static long long Row = 1;
-static long long Bands = 1;
-static long long tilesPerRow = 1;
-static long long subTileSamples = 1;
-static long long totalRows = 1;
-static long long subTileLines = 1;
+static size_t subTileSize = 1;
+static size_t tiles = 1;
+static size_t row = 1;
+static size_t Row = 1;
+static size_t Bands = 1;
+static size_t tilesPerRow = 1;
+static size_t subTileSamples = 1;
+static size_t totalRows = 1;
+static size_t subTileLines = 1;
 
 #ifdef PRINTINPUT
 static int countFix = 32;
@@ -1467,10 +1469,10 @@ unsigned char swapBuffer[4];
 int cubeElement = 0;
 int x, y, z;
 int bigFlag = 0;
-long long element;
-long long linearOffset;
-long long offset;
-long long int allSized;
+size_t element = 0;
+size_t linearOffset = 0;
+size_t offset = 0;
+size_t allSized = 0;
 
 if(Format == I3Tile) {
     tileSize = TileSamples * TileLines * sampleSize;
@@ -1490,7 +1492,7 @@ if(Format == I3Tile) {
         totalRows+=1;
     }
 }
-allSized = (long long)Samples*(long long)Lines*(long long)totalBands*(long long)sampleSize;
+allSized = (size_t)Samples*(size_t)Lines*(size_t)totalBands*(size_t)sampleSize;
 
 if(allSized >= 2147483647ll) {
 parse_error("Size is %lld, which is larger than the 32bit integer max of 2,147,483,647--64 bit integers not available at this time\n", allSized);
