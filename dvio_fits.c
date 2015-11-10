@@ -169,6 +169,8 @@ filter_kw(const char *kw)
 int
 Write_FITS_Image(fitsfile *fptr, Var *obj)
 {
+  char		*swapData;
+  char		*data;
   int		naxis;
   long		naxes[3];
   int		bitpix;
@@ -176,7 +178,10 @@ Write_FITS_Image(fitsfile *fptr, Var *obj)
   int  	       *size;
   int		i;
   int		status=0;
+  int       fits_type;
   long		fpixel[3]={1,1,1};
+  long sz;
+  long x, y, z, n;
   
   VarType2FitsType(obj,&bitpix,&datatype);
   
@@ -196,9 +201,32 @@ Write_FITS_Image(fitsfile *fptr, Var *obj)
   for(i=0;i<3;i++) 
     if(!(naxes[i])) size[i]=1; //I don't think this is needed, but just in case V_SIZE() returns a 0 in one of the size slots
   
+  /*
+   * bitpix could be negative in theory, so abs()
+   * There are 8 bits per byte, so the 8 is hard coded here
+   */
+  sz = abs(bitpix)/8;
+
+  n = (long)((size_t)size[0])*((size_t)size[1])*((size_t)size[2]);
+  swapData = (char *)calloc(n,sz);
+  data = V_DATA(obj);
+	for(z = 0; z < size[2]; z++) {
+		for(y = 0; y < size[1]; y++) {
+
+		     /*
+		      * There is an inclination to get memcpy() backwards
+		      * void *memcpy(void *dest, const void *src, size_t n);
+		      */
+			 memcpy( swapData + ((size[0]*y*sz) + (z*size[1]*size[0]*sz)), data+((z*size[1]*size[0]*sz)+size[0]*sz*(size[1]-1-y)),  size[0]*sz );
+	       //memcpy( swap +          ((X* y*sz) + (z*     Y*      X* sz)), base+((z*     Y*      X *sz)+     X* sz*(     Y -1-y)),       X* sz );
+		}
+	}
+
+  V_DATA(obj) = swapData;
   fits_write_pix(fptr,datatype,fpixel,((size_t)size[0])*((size_t)size[1])*((size_t)size[2]),(void *)V_DATA(obj),&status);
   QUERY_FITS_ERROR(status," writing pixel data",0);
-  
+  V_DATA(obj) = data;
+  free(swapData);
   return(1);
 }
 
@@ -207,11 +235,14 @@ Var *
 Read_FITS_Image(fitsfile *fptr)
 {
   char *data;
+  char *swapData;
   int format=0;
   int fits_type;
   int i;
   int dim;
+  int sz;
   long size[3]={0,0,0};
+  long x, y, z;
   long fpixel[3]={1,1,1};
   int datatype=0;
   int status=0;
@@ -269,11 +300,26 @@ Read_FITS_Image(fitsfile *fptr)
 
   n = (long)((size_t)size[0])*((size_t)size[1])*((size_t)size[2]);
   data = (char *)calloc(n,NBYTES(format));
+  swapData = (char *)calloc(n,NBYTES(format));
+  sz = NBYTES(format);
   
   fits_read_pix(fptr,datatype,fpixel,n,NULL,(void *)data,NULL,&status);
   QUERY_FITS_ERROR(status," reading image pixels",NULL);
   
-  return(newVal(BSQ,size[0],size[1],size[2],format,data));
+	for(z = 0; z < size[2]; z++) {
+		for(y = 0; y < size[1]; y++) {
+
+		     /*
+		      * There is an inclination to get memcpy() backwards
+		      * void *memcpy(void *dest, const void *src, size_t n);
+		      */
+
+			 memcpy( swapData + ((size[0]*y*sz) + (z*size[1]*size[0]*sz)), data+((z*size[1]*size[0]*sz)+size[0]*sz*(size[1]-1-y)),  size[0]*sz );
+		   //memcpy( swap +          ((X* y*sz) + (z*     Y*      X* sz)), base+((z*     Y*      X *sz)+     X* sz*(     Y -1-y)),       X* sz );
+		}
+	}
+  free(data);
+  return(newVal(BSQ,size[0],size[1],size[2],format,swapData));
 }
 
 static const char *
