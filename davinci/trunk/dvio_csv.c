@@ -549,7 +549,7 @@ pass1_cb_fs(void *s, size_t len, void *call_data)
         }
     }
 
-    /* update max_len of field (used if field turns out ot be string type) */
+    /* update max_len of field (used if field turns out to be string type) */
     data->coldefs[data->cur_field].max_len = MAX(data->coldefs[data->cur_field].max_len, len);
 
 
@@ -570,19 +570,62 @@ pass1_cb_fs(void *s, size_t len, void *call_data)
         
         type_found = 1;
     }
-    
+
+
+/*
+ * drd
+ * [Bug 2169] load_csv() does not promote floating point data to doubles
+ *
+ * Saadat suggests the use of floats where possible.
+ * If the float can represent the number to within a tolerance, then
+ * use float, if not, use a double.
+ * Where we often see large numbers is with sclk times.
+ * These we like to keep within 1 second.  Thus I am picking 0.5
+ * as the tolerance.  If the float and double differ more than this,
+ * I make the value a double. If the float and the double are within 0.5,
+ * I make the value a float.
+ *
+ *
+ */
+
+#undef DOUBLEFLOATDEBUG
+
     if( !type_found ) {
+#ifdef DOUBLEFLOATDEBUG
+    	static int countf = 0;
+    	static int countd = 0;
+#endif
         ftemp = strtof(s, &end);
         if( ftemp!=HUGE_VAL && ftemp!=-HUGE_VAL && end>=schar+len) {
-            type_found = 1;
-            
-            data->coldefs[data->cur_field].data_type = MAX(data->coldefs[data->cur_field].data_type, TFLOAT);
+        	type_found = 1;
+#ifdef DOUBLEFLOATDEBUG
+        	countf++;
+#endif
+        	data->coldefs[data->cur_field].data_type = MAX(data->coldefs[data->cur_field].data_type, TFLOAT);
+        	dtemp = strtod(s, &end);
+        	if( !is_overflow_double(dtemp) && end>=schar+len) {
+     			 if(fabs( dtemp - ftemp) > 0.5) {  // drd here is the 0.5--note that fabs() promotes to and then compares as double
+     				                               // Again, 0.5 picked to keep sclk vals within 1, or +0.5/-0.5
+     				 data->coldefs[data->cur_field].data_type = MAX(data->coldefs[data->cur_field].data_type, TDOUBLE);
+#ifdef DOUBLEFLOATDEBUG
+     				 countd++;
+        			 printf("The diff is %f\n", fabs(dtemp-ftemp));
+        			 printf("countf = %d, countd = %d\n", countf, countd);
+#endif
+        		 }
+        	}
         }
     }
-        
+
+/*
+ * There is a small chance that the number is too large for a float just above here.
+ * Then the double would never be made.  So we (possibly) test one more time here
+ * for double, and if this fails, we promote to TSTR, string
+ */
+
     if( !type_found ) {
         dtemp = strtod(s, &end);
-        
+
         if( !is_overflow_double(dtemp) && end>=schar+len) {
             data->coldefs[data->cur_field].data_type = MAX(data->coldefs[data->cur_field].data_type, TDOUBLE);
             type_found = 1;
@@ -591,6 +634,7 @@ pass1_cb_fs(void *s, size_t len, void *call_data)
         }
     }
     
+
     schar[len] = temp_char;
     /* update calldata */
     data->cur_field++;
