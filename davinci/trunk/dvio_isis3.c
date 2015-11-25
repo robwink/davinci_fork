@@ -10,11 +10,11 @@
 /*
  * drd
  *
- * 13 April--replace long long by size_t
+ * 13 April--replaced long long by size_t
  * look for "drd history"
  * Total seven places
  * to bring history back in line
- * in line rather than separate
+ * rather than separate
  */
 
 // #define or #undef
@@ -38,7 +38,9 @@
 #define _FILE_OFFSET_BITS 64
 
 
-static Var *do_loadISIS3(vfuncptr func, char *filename, int data, int use_names, int use_units); // drd static so only visible in this file
+static Var  *do_loadISIS3(vfuncptr func, char *filename, int data, int use_names, int use_units); // drd static so only visible in this file
+static Var *do_writeISIS3(Var *obj, char *ISIS3_filename, int force); // drd static so only visible in this file
+static void dd_dump_var(Var *v, int indent, int limit); // drd static so only visible in this file
 
 static int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *nambuf);
 static int dQuoteManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf);
@@ -82,22 +84,220 @@ static size_t subTileSamples = 1;
 static size_t totalRows = 1;
 static size_t subTileLines = 1;
 
+
+static char cubeStub[][160] =
+{
+{"Object = IsisCube"},                // 00
+{"  Object = Core"},                  // 01
+{"    StartByte   = 65537"},          // 02 65537
+{"    Format      = BandSequential"}, // 03 Tile					Format = BandSequential at first
+{"    TileSamples = "},               // 04 128                     N/A, skip at first
+{"    TileLines   = "},               // 05 383                     N/A, skip at first
+{""},                                 // 06
+{"    Group = Dimensions"},           // 07
+{"      Samples = "},                 // 08 24561
+{"      Lines   = "},                 // 09 52471
+{"      Bands   = "},                 // 10 1
+{"    End_Group"},                    // 11
+{""},                                 // 12
+{"    Group = Pixels"},               // 13
+{"      Type       = "},              // 14 Real
+{"      ByteOrder  = Lsb"},           // 15
+{"      Base       = 0.0"},           // 16
+{"      Multiplier = 1.0"},           // 17
+{"    End_Group"},                    // 18
+{"  End_Object"},                     // 19
+{"End_Object"},                       // 20
+{""},                                 // 21
+{"Object = Label"},                   // 22
+{"  Bytes = 65536"},                  // 23
+{"End_Object"},                       // 24
+};
+/*
+
+Group = BandBin
+  Name = Gray
+End_Group
+End
+};
+*/
+
+
 #ifdef PRINTINPUT
 static int countFix = 32;
 #endif
 
 /*
  * a = load_isis3("/u/ddoerres/work/Project/themis_dbtools/themis_dbtools/trunk/makerdr/I01001001.cub")
- *
+ * write_isis3(a, "Cow", force = 1)
  */
+
+Var *WriteISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
+{
+	Var *obj=NULL;
+	Var *obj1IsisCube = NULL;
+	Var *obj2Core = NULL;
+	Var *obj3 = NULL;
+	Var *obj4Label = NULL;
+	Var *obj5 = NULL;
+	Var *obj6 = NULL;
+	char *filename=NULL;
+	int force=0;
+	char **name_list;
+	int count;
+	int i;
+
+	char *name;
+	char *xname;
+	char nameBuilder[1000];
+
+    if(arg == NULL) {
+         parse_error("No parameter list supplied--must supply at least an ISIS3 object and file name.\n");
+         return(NULL);
+    }
+
+   Alist alist[4];
+   alist[0] = make_alist("obj", ID_UNK, NULL, &obj);
+   alist[1] = make_alist("filename", ID_STRING, NULL, &filename);
+   alist[2] = make_alist("force",    INT,       NULL, &force);
+   alist[3].name = NULL;
+
+
+   if (parse_args(func, arg, alist) == 0) {
+	   parse_error("No useful command line, should have: ISIS3object, \"filename\", force");
+	   return NULL;
+   }
+
+   if (obj == NULL) {
+  		parse_error("No ISIS3 object specified.");
+  		return NULL;
+  	}
+
+  	if (filename == NULL) {
+  		parse_error("No filename specified.");
+  		return NULL;
+  	}
+
+   count = get_struct_count(obj);
+   fprintf(stdout, "Count is %d\n", count);
+   get_struct_names(obj, &name_list, NULL);
+   for(i = 0; i < count; i++) {
+	   fprintf(stdout, "%s\n", name_list[i]);
+   }
+
+
+   i = find_struct(obj, "IsisCube", &obj1IsisCube);
+   if(i >= 0) {
+	   i = find_struct(obj1IsisCube, "Core", &obj2Core);
+   }
+
+   if(i >= 0) {
+	   i = find_struct(obj2Core, "StartByte", &obj3);
+	   if (i >=0) {
+		   printf("StartByte is %d\n",((int *)V_DATA(obj3))[0]);
+	   }
+   }
+
+   if(i >= 0) {
+	   i = find_struct(obj2Core, "Format", &obj3);
+	   if (i >=0) {
+		   dd_dump_var(obj3, 0, 5);
+	   }
+   }
+
+   if(i >= 0) {
+	   i = find_struct(obj2Core, "Dimensions", &obj3);
+	   if (i >=0) {
+		   dd_dump_var(obj3, 0, 5);
+	   }
+   }
+
+   if(i >= 0) {
+	   i = find_struct(obj2Core, "Pixels", &obj3);
+	   if (i >=0) {
+		   dd_dump_var(obj3, 0, 5);
+	   }
+   }
+
+   if(i >= 0) {
+	   i = find_struct(obj1IsisCube, "Label", &obj4Label);
+	   if (i >=0) {
+		   dd_dump_var(obj4Label, 0, 5);
+	   }
+   }
+
+   for(i = 0; i < 30; i++) {
+	   printf("%s\n", &cubeStub[i][0]);
+   }
+
+   fprintf(stdout, "V_TYPE(obj)=");
+   switch(V_TYPE(obj)) {
+   case (102):
+		   fprintf(stdout, "ID_STRING\n");
+   break;
+   case (103):
+		fprintf(stdout, "ID_KEYWORD\n");
+   break;
+   case (104):
+		fprintf(stdout, "ID_VAL, a VAL\n");
+        fprintf(stdout, "%value is %d\n", V_INT(obj));
+   break;
+   case (105):
+		fprintf(stdout, "ID_STRUCT, a STRUCT\n");
+   break;
+   default:
+	   fprintf(stdout, "%d\n", V_TYPE(obj));
+   break;
+   }
+
+  	return NULL;
+
+  	if ( (V_TYPE(obj) == ID_STRUCT) || (V_TYPE(obj) == ID_VAL) || (V_TYPE(obj) == ID_KEYWORD) || (V_TYPE(obj) == ID_STRING) || (V_TYPE(obj) == ID_TEXT)) {
+  		return(do_writeISIS3(obj, filename, force));
+  	}
+  	else {
+  		printf("V_Type(obj)=%d\n", V_TYPE(obj));
+  		parse_error("You have submitted an invalid object to be written out as an ISIS3 file");
+  	}
+
+  	return NULL;
+}
+
+Var *do_writeISIS3(Var *obj, char *ISIS3_filename, int force) {
+	Var *Tmp;
+	int count;
+	int i;
+	char *obj_name;
+
+	if((V_TYPE(obj) == ID_VAL) || (V_TYPE(obj) == ID_KEYWORD) || (V_TYPE(obj) == ID_STRING) || (V_TYPE(obj) == ID_TEXT)) {
+		dd_dump_var(obj,0, 1);
+	}
+	else if (V_TYPE(obj) == ID_STRUCT) {
+	count = get_struct_count(obj);
+
+    fprintf(stdout, "Count is %d\n", count);
+
+    	for (i = 0 ; i < count ; i++) {
+    		get_struct_element(obj, i, &obj_name, &Tmp);
+    		//pp_print_var(Tmp, obj_name, 0, 1);
+    		// dump_var(Var *v, int indent, int limit)
+    		fprintf(stdout, "V_TYPE is %d\n", V_TYPE(Tmp));
+    		dd_dump_var(Tmp,0, 10);
+    	}
+	}
+	else {
+		fprintf(stdout, "UNKNOWN type, don't know how to parse\n");
+	}
+	return NULL;
+}
 
 Var *ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 {
     Var *fn = NULL;
     char *filename = NULL;
     int data = 1;  // parse the cube
-    int use_names = 1; // reverse name and info
-    int use_units = 0; // use the units field
+    int use_names = 1; // reverse name and info if 1
+    int use_units = 0; // use the units field if 1
     int i;
 
     /*
@@ -151,7 +351,6 @@ static Var *
 do_loadISIS3(vfuncptr func, char *filename, int data, int use_names, int use_units)
 {
 
-    // char *err_file = NULL;
     char *fname;
     FILE *fp;
     Var *v = new_struct(0);
@@ -174,10 +373,6 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names, int use_uni
     int lineInCount = 0;
 
     volatile int stopCount = 32;  // find stop
-    /*
-    FILE *xp;
-    unsigned char snog[4000];
-    */
     double *testD;
     unsigned char *testC;
     unsigned char inFix[8];
@@ -215,7 +410,7 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names, int use_uni
     int localFieldCount = 0;
     char localTableName[256];
     char localLine[256];
-    int localSize = 0;  // This will size of the item
+    int localSize = 0;  // This will be size of the item
     /* from parser.h, and right now ignoring others:
 			#define INT			3
 			#define FLOAT		4
@@ -279,21 +474,7 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names, int use_uni
         fseeko(fp, 0, SEEK_SET);
 
     }
-/*
-if(1) {
-    FILE *xp;
-    unsigned char snog[4000];
-    xp = fopen("originalLabel.txt", "w");
-    fseek(fp, 92020737-1, SEEK_SET);
-    fread(snog, 3210, 1, fp);
-    fwrite(snog,3210,1,xp);
-    fflush(xp);
-    fclose(xp);
-    exit(0);
-}
-*/
 
-    // parse_error("Parsing Label...\n");
      for (k = 0; k < 2048; k++) { // 2048 seems a reasonable limit
 
         if(weNeedToRead == 1) {
@@ -804,7 +985,7 @@ if(1) {
 
                 }
                 // The next is a series of strings starting with the character pair '"
-                // This is just a long string                0x27 is a '
+                // This is just a long string                             0x27 is a '
                 else if( (string2[0] == '=') && (string3[0] == '\'') && (string3[1] == '"')) {
                         if(inGroup == 1) {
                         retVal = dQuoteManager(inputString, fp, Group, namebuf);
@@ -922,9 +1103,6 @@ Done parsing file
   if( originalLabelObj != NULL) {
 	  add_struct(v, "OriginalLabel", originalLabelObj);
   }
-// drd print experiment
-  // pp_print_var(Var *v, char *name, int indent, int depth)
-  pp_print_var(v, "HelloDot", 0, 1111);
   return (v);
 }
 
@@ -1035,8 +1213,8 @@ void add_converted_to_struct(Var * dv_struct, char * name, char * value) {
     /* Attempts to convert keyword values to integers and floats to determine if
     the value supplied is a numeric value. The rules are:
     Try to make it an int and a float.
-    If they are both, compare the values and if they are equal, make it an int
-        unless they are equal and the string has a "." in it // drd added this line
+    Compare the values and if they are equal, make it an int
+             UNLESS they are equal and the string has a "." in it // drd added this line
     If they are not, make it a float.
     If only one conversion worked, use that conversion.
     If neither conversion worked, then make it a string.
@@ -1058,6 +1236,7 @@ void add_converted_to_struct(Var * dv_struct, char * name, char * value) {
 }
 
 /*
+ * drd
  * Some comments on CSV strings I have seen:  There are lots of CSV strings in the cubes.  The longs ones are wrapped with leading spaces.
  * The tools parenManager() and dQuoteManager remove leading spaces from the wrapped lines and concatenate the strings.  This may mean that there will be
  * no white space in a few instances:
@@ -1087,7 +1266,6 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf) 
     int *numberArrayInt = NULL;
     double checkDouble = 99.9; // Any value would do
     int checkInt = 99; // Any value will do
-   // char **stringArray = NULL;
     Var *localStub = new_struct(0);
     Var *subItem = new_struct(0);
 
@@ -1127,10 +1305,6 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf) 
         	endHyphen = 1;
         }
 
-//        for(k = i; k < i + strlen(&localBuff[i]); k++) {
-//        	printf("%d : %d : %c\n", strlen(&localBuff[i]), k, localBuff[k]);
-//        }
-
         length = length + strlen(&localBuff[i]);
         if( endSpace == 1) {
         	 localString = realloc(workingString, length + 1); // + 1 because we are adding a space
@@ -1138,7 +1312,6 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf) 
         else {
         	 localString = realloc(workingString, length);
         }
-
 
         if (localString != NULL) {
             workingString = localString;
@@ -1234,12 +1407,6 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf) 
     }
 
     else { // We have a list of strings
-
-        //stringArray = malloc(commaCount * sizeof(char*));
-        //if(stringArray == NULL) {
-        //    retVal = -1;
-        //    return retVal;
-        //}
 
         localStub = newString(strdup(&token[i]));
         add_struct(subItem, NULL, localStub);
@@ -1339,12 +1506,8 @@ int length;
 char inBuffer[100];
 char moreBuffer[4096];
 
-// So what if there is no '=' in here?
+// So what about the case where there is no '=' in here?
 // This was fixed before sscanf() is called
-
-// if (strstr(inputString, "=" ) == NULL) {
-//	return 0;
-// }
 
 while (inputString[i] != '=') {
         i++;
@@ -1368,9 +1531,9 @@ if ( (inputString[i] == '\"') && (inputString[i+1] == '\"') ) {
 // These strings might be enclosed in double quotes
 // I don't want the double quotes
 // If these do remain, then strings with embedded spaces will print like
-// ""This is a string with embedded spaces""
+//                  ""This is a string with embedded spaces""
 // What I want is
-// "This is a string with embedded spaces"
+//                   "This is a string with embedded spaces"
 // drd added:
 // Also, I have found cases where the string is continued on the next line(s)
 // This means I need to read more to get the rest of the string
@@ -1427,7 +1590,7 @@ for(i = 0; i < strlen(inputString); i++) {
     case '+':   // a plus sign
     case ';':   // a semicolon
     case ' ':   // a space, not very possible
-        inputString[i] = '_'; // each individually replace by and underbar
+        inputString[i] = '_'; // each individually replace by an underbar
     break;
     default:
         ;// nothing, just leave it alone
@@ -1482,9 +1645,6 @@ if(Format == I3Tile) {
     totalRows = Lines/TileLines;
     subTileLines = Lines%TileLines; // What is left going down
 
-//  if( (subTileSamples !=0) || (subTileLines !=0) ) {
-//      parse_error("Irregular Tile sizes--can't read this cube into RAM\n");
-//      return NULL;
     if(subTileSamples != 0) {
         tilesPerRow+=1;
     }
@@ -1495,12 +1655,11 @@ if(Format == I3Tile) {
 allSized = (size_t)Samples*(size_t)Lines*(size_t)totalBands*(size_t)sampleSize;
 
 if(allSized >= 2147483647ll) {
-parse_error("Size is %lld, which is larger than the 32bit integer max of 2,147,483,647--64 bit integers not available at this time\n", allSized);
+parse_error("Warning:  size is %lld bytes, which is larger than the 32bit integer max of 2,147,483,647--limited 64 bit support is available at this time\n", allSized);
 // for now, we are done
-return NULL;
+//  return NULL;
 //bigFlag = 1;
 }
-//cubeData = malloc(Samples*Lines*totalBands*sampleSize);
 cubeData = malloc(allSized);
 
 if(cubeData == NULL) {
@@ -1619,7 +1778,6 @@ if(Format == I3Tile) {
                             }
                             linearOffset+=sampleSize; // linearOffset into the RAM data just keeps incrementing
 
-
                         } // end of good read
 
                         else {
@@ -1654,11 +1812,9 @@ cubeData = NULL;
 
 // pp_print(dv_struct);
 
-// parse_error("Finished reading the Cube into RAM...\n");
 bigFlag = 0;
 return dv_struct;
 }
-
 
 
 int getCubeParams(FILE *fp) {
@@ -1753,3 +1909,63 @@ int getCubeParams(FILE *fp) {
 
     return retVal;
 }
+
+
+void
+dd_dump_var(Var *v, int indent, int limit)
+{
+    int i,j,k;
+    size_t c;
+    int x, y, z;
+    int row;
+
+    switch (V_TYPE(v)) {
+    case ID_VAL:
+        x = GetSamples(V_SIZE(v),V_ORG(v));
+        y = GetLines(V_SIZE(v),V_ORG(v));
+        z = GetBands(V_SIZE(v),V_ORG(v));
+        if (limit == 0 || (limit && V_DSIZE(v) <= limit)) {
+            for (k = 0 ; k < z ; k++) {
+                for (j = 0 ; j < y ; j++) {
+                    for (i = 0 ; i < x ; i++) {
+                        c = cpos(i,j,k,v);
+                        switch (V_FORMAT(v)) {
+                        case BYTE: printf("%d\t", ((u_char *)V_DATA(v))[c]); break;
+                        case SHORT: printf("%d\t", ((short *)V_DATA(v))[c]); break;
+                        case INT:  printf("%d\t", ((int *)V_DATA(v))[c]); break;
+                        case FLOAT: printf("%#.*g\t", SCALE, ((float *)V_DATA(v))[c]); break;
+                        case DOUBLE: printf("%#.*g\t", SCALE, ((double *)V_DATA(v))[c]); break;
+                        }
+                    }
+                    printf("\n");
+                }
+                if (z > 1) printf("\n");
+            }
+        }
+        break;
+
+    case ID_STRUCT:
+        if (limit > 0)  {
+            printf("struct, %d elements\n", get_struct_count(v));
+            pp_print_struct(v, indent, limit-1);
+        } else {
+            printf("struct, %d elements...\n", get_struct_count(v));
+        }
+        break;
+    case ID_TEXT:
+        row = V_TEXT(v).Row;
+        if (limit) row = min(limit, row);
+        for (i=0 ; i < row ; i++){
+        	 printf("%*s%d: %s\n", indent, "", (i+1), V_TEXT(v).text[i]);
+        }
+        break;
+    case ID_STRING:
+    	     printf("%s\n",V_STRING(v));
+        break;
+    case ID_KEYWORD:
+    	     printf("%s\n",V_KEYVAL(v));
+        break;
+
+    }
+}
+
