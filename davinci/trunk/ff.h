@@ -96,6 +96,8 @@ struct _vfuncptr vfunclist[] = {
   { "load_pds",       ReadPDS,                NULL, NULL},
   { "load_isis3",     ReadISIS3,              NULL, NULL},
   { "load_ISIS3",     ReadISIS3,              NULL, NULL},
+  { "write_isis3",    WriteISIS3,             NULL, NULL},
+  { "write_ISIS3",    WriteISIS3,             NULL, NULL},
 #ifdef HAVE_LIBXML2
   { "load_PDS4",       ReadPDS4,                NULL, NULL},
   { "load_pds4",       ReadPDS4,                NULL, NULL},
