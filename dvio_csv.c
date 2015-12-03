@@ -1429,6 +1429,19 @@ dv_WriteCSV(Var* the_data, char* filename, char* field_delim, int header, int fo
 				}
 				continue;
 			}
+			/*
+			 * drd
+			 * [Bug 2169] load_csv() does not promote floating point data to doubles
+			 *
+			 * Saadat reports that the output was now coming out as E format with
+			 * little resolution.
+			 * The changes here are to make the output match the inputs
+			 * The FLOAT inputs hand 4 decimal places, the DOUBLE inputs 1 decimal place
+			 *
+			 * The change is to %.4f from %G for FLOAT,
+			 *                  %.1f from %G for DOUBLE
+			 *
+			 */
 
 			if( V_TYPE(data[i]) == ID_VAL ) {
 				columns = V_SIZE(data[i])[0];
@@ -1438,9 +1451,10 @@ dv_WriteCSV(Var* the_data, char* filename, char* field_delim, int header, int fo
 						case BYTE:		fprintf(file, "%u", ((unsigned char*)V_DATA(data[i]))[row*columns+j] );	break;
 						case SHORT:		fprintf(file, "%d", ((short*)V_DATA(data[i]))[row*columns+j] );			break;
 						case INT:		fprintf(file, "%d", ((int*)V_DATA(data[i]))[row*columns+j] );			break;
-						case FLOAT:		fprintf(file, "%G", ((float*)V_DATA(data[i]))[row*columns+j] );			break;
-						case DOUBLE:	fprintf(file, "%G", ((double*)V_DATA(data[i]))[row*columns+j] );		break;
-
+						case FLOAT:		fprintf(file, "%.4f", ((float*)V_DATA(data[i]))[row*columns+j] );		break;
+					  //case FLOAT:		fprintf(file, "%G", ((float*)V_DATA(data[i]))[row*columns+j] );			break;
+						case DOUBLE:	fprintf(file, "%.1f", ((double*)V_DATA(data[i]))[row*columns+j] );		break;
+					 // case DOUBLE:	fprintf(file, "%G", ((double*)V_DATA(data[i]))[row*columns+j] );		break;
 						default:
 							parse_error("unknown format for ID_VAL: %d\n", V_FORMAT(data[i]));
 							free(keys);
