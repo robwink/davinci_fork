@@ -412,6 +412,7 @@ Var * ReadPDS4(vfuncptr func, Var * arg);
 Var * ReadPDS(vfuncptr func, Var * arg);
 Var * WritePDS(vfuncptr func, Var * arg);
 Var * ReadISIS3(vfuncptr func, Var * arg);
+Var * WriteISIS3(vfuncptr func, Var * arg);
 Var * ff_pdshead(vfuncptr func, Var * arg);
 
 Var * ReadFITS(vfuncptr func, Var * arg);
