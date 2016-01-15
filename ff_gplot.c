@@ -624,6 +624,8 @@ Var *ff_xplot(vfuncptr func, Var * arg)
                             case SHORT:
                             case INT:
                                 y[k] = (float) extract_int(v, obj_index);
+                                break; // drd added -- break was missing
+
                             case FLOAT:
                             case DOUBLE:
                                 y[k] = extract_float(v, obj_index);
@@ -639,6 +641,7 @@ Var *ff_xplot(vfuncptr func, Var * arg)
                                                             rpos(obj_index,
                                                                  v,
                                                                  Xaxis));
+                                    break; // drd added -- break was missing
                                 case FLOAT:
                                 case DOUBLE:
                                     x[k] =
@@ -651,7 +654,28 @@ Var *ff_xplot(vfuncptr func, Var * arg)
                             }
                             if (iflag == 0
                                 || (x[k] != ignore && y[k] != ignore)) {
-                                fprintf(fp, "%g\t %g\n", x[k], y[k]);
+
+                            	/*
+                            	 * Bug 2185 xplot() not what is expected for large and small numbers
+                            	 * 1. Everything was FLOAT because of a missing break;
+                            	 * 2. Plotting everything as FLOAT %g is fairly limiting.
+                            	 *    Checking for the various int's and float's and
+                            	 *    printing accordingly gives more visually appealing results.
+                            	 *
+                            	 */
+                                // fprintf(fp, "%g\t %g\n", x[k], y[k]);  // <-- drd originally, no checking
+
+                            	switch (V_FORMAT(v)) {
+                                case BYTE:
+                                case SHORT:
+                                case INT:
+                                	fprintf(fp, "%d\t %d\n", (int)x[k], (int)y[k]);
+                                    break;
+                                case FLOAT:
+                                case DOUBLE:
+                                	fprintf(fp, "%f\t %f\n", x[k], y[k]);
+                                }
+
                             }
                         }
 
@@ -925,6 +949,7 @@ Var *ff_xplot2(vfuncptr func, Var * arg)
                             case SHORT:
                             case INT:
                                 y[k] = (float) extract_int(v, obj_index);
+                                break; // drd added -- break was missing
                             case FLOAT:
                             case DOUBLE:
                                 y[k] = extract_float(v, obj_index);
@@ -940,6 +965,7 @@ Var *ff_xplot2(vfuncptr func, Var * arg)
                                                             rpos(obj_index,
                                                                  v,
                                                                  Xaxis));
+                                    break; // drd added
                                 case FLOAT:
                                 case DOUBLE:
                                     x[k] =
