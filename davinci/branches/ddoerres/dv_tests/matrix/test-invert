@@ -1,0 +1,5 @@
+mx=create(2,2,format=double)
+invert=minvert(minvert(mx))
+if (equals(mx,invert)) exit(0);
+exit(1);
+

@@ -1,0 +1,310 @@
+                 General Usage of libXfred.a tools and routines
+
+Buttons:
+
+Type "Button" is defined as a pointer to the Button structure defined in the
+Button.h file.
+
+Creating a Button:
+Button XfCreateButton(Display* display, Window parent, int x, int y, int width,
+                      int height, int border_width, unsigned long border_color,
+                      char* name, int num_states)
+
+Parameters:
+display         - The display on which the button is to be created.
+parent          - The parent window in which the button will appear.
+x, y            - The coordinates of the button's upper-left corner, with
+                        respect to the parent's coordinate system.
+width, height   - The dimensions of the button in the X and Y axis.
+border_width    - The width of the button's border in pixels.
+border_color    - The color in which to make the border.
+name            - A character string (max length 255) uniquely identifying
+                        the button.
+num_states      - The number of states the button may pass through.
+
+Returns:
+A pointer to the button created, or NULL upon failure.
+
+
+Destroying a Button:
+int XfDestroyButton(Button B)
+
+Parameters:
+B               - The button to be destroyed.
+
+Returns:
+True if successfull, False otherwise.
+
+
+Activating a button:
+int XfActivateButton(Button B, unsigned long mask)
+int XfActivateButtonState(Button B, int state, unsigned long mask)
+
+Parameters:
+B               - The button to be made active.
+state           - The state to start the button in. Defaults to 0 if called
+                        as XfActivateButton().
+mask            - The mask of X events to be recognized and handled by button.
+                        Must include at least ExposureMask and ButtonPressMask.
+
+Returns:
+True if pased button is valid (non-NULL), False otherwise.
+
+Deactivation of a button:
+int XfDeactivateButton(Button B)
+
+Parameters:
+B               - The button to be deactivated.
+
+Returns:
+True if B non-NULL, False otherwise.
+
+
+Adding visual information to a button state:
+int XfAddButtonVisual(Button B, int state, struct VisualInfo* vis)
+
+Parameters:
+B               - The button to add information to.
+state           - The state in B to be modified.
+vis             - The new information to be added to B at state.
+
+Returns:
+False if B is NULL, vis is NULL, state is not legal, or any malloc calls fail.
+Returns True otherwise.
+
+
+Adding a callback to a button state:
+int XfAddButtonCallback(Button B, int state, CallBack new, CallBack old)
+
+Parameters:
+B               - The button to get the new callback.
+state           - The state within B to have the new callback.
+new             - A pointer to a function, to be added to the callback list.
+old             - The existing routine in the callback list, to add new
+                        immediately before. If this value is NULL, then
+                        new is added at the end of the list.
+
+Returns:
+False if B is NULL, new is NULL, or state is not valid. Returns True if
+new succesfully added to the list.
+
+
+Removing a callback from a button state:
+int XfDelButtonCallback(Button B, int state, CallBack cb)
+
+Parameters:
+B               - Button to be affected.
+state           - State within B whose callback list is searched.
+cb              - Callback to be deleted.
+
+Returns:
+False if B is NULL, cb is NULL, state is invalid, or cb is not in the list.
+Returns True otherwise.
+
+Moving a button to the front of the buttons list:
+int XfMoveButton(Button B)
+
+Parameters:
+B               - The button to be moved to the front of the list.
+
+Returns:
+False if B is NULL, or if the list is empty. Returns True otherwise.
+
+
+Getting a button by it's name:
+Button XfGetButton(char* name)
+
+Parameters:
+name            - The name of the desired button.
+
+Returns:
+Pointer to desired button if found, NULL if not found.
+
+
+Getting the current state of a button:
+int XfButtonState(Button B)
+
+Parameters:
+B               - The targeted button.
+
+Returns:
+The current state of button B.
+
+
+Determining which button (if any) an event occured in:
+Button XfEventButton(XEvent E)
+
+Parameters:
+E               - The event.
+
+Returns:
+A pointer to the button that the event occured in, or NULL if it occured in
+no active buttons.
+
+
+Responding to events:
+int XfButtonPush(Button B, XEvent E)
+
+Parameters:
+B               - The button receiving the event.
+E               - The event.
+
+Returns:
+False if B is NULL, True otherwise.
+
+Sliders:
+
+Type "Slider" is defined as a pointer to the Slider structure defined in
+the Slider.h file.
+
+Creating a Slider:
+Slider XfCreateSlider(Display* display, Window parent, int x, int y, int width,
+                      int height, int border_width, unsigned long border_color,
+                      char* name, int orientation, float min, float max,
+                      float delta, int thumb_width, int thumb_height)
+
+Paramemters:
+display         - The display on which to create the slider.
+parent          - The parent window in which the slider should appear.
+x, y            - The position of the uuper-left corner of the slider, with
+                        respect to the parent's coordinate system.
+width, height   - The width and height of the slider.
+border_width    - The width of the border around the slider, in pixels.
+border_color    - Color to make the border.
+name            - String (max length 255) that uniquely identifies slider.
+orientation     - One of XfSliderUpDown or XfSliderLeftRight, determining
+                        which axis the thumb moves along.
+float min, max  - The minimum and maximum values of the slider, used by 
+                        XfSliderValue() in scaling the internal value.
+float delta     - The amount by which the slider steps between min and max.
+thumb_width     - The width of the thumb.
+thumb_height    - The height of the thumb.
+
+Returns:
+NULL if creation failed for any reason, otherwise returns a pointer to the new
+slider.
+
+
+Destroying a slider:
+int XfDestroySlider(Slider S)
+
+Parameters:
+S               - The slider to destroy.
+
+Returns:
+False if S is NULL. True otherwise.
+
+
+Activation of a slider:
+int XfActivateSlider(Slider S, unsigned long mask)
+int XfActivateSliderValue(Slider S, float value, unsigned long mask)
+
+Parameters:
+S               - The slider to be activated.
+value           - The value (between 0 and 1) to start the slider at. Defaults
+                        to 0 if called as XfActivateSlider().
+mask            - The mask choosing events for the slider to receive. Must
+                        include at least ExposureMask, ButtonPressMask, and
+                        ButtonMotionMask.
+
+Returns:
+False if S not a valid slider, True otherwise.
+
+Deactivation of a slider:
+int XfDeactivateSlider(Slider S)
+
+Parameters:
+S               - Slider to be deactivated
+
+Returns:
+False if S is NULL. True otherwise.
+
+
+Adding visual information to the "bar" or "thumb" part of a slider:
+int XfAddSliderThumbVisual(Slider S, struct VisualInfo* vis)
+int XfAddSliderBarVisual(Slider S, struct VisualInfo* vis)
+
+Parameters:
+S               - Slider to be modified.
+vis             - Data to add to S.
+
+Returns:
+False if S or vis are NULL, or if any malloc's fail. True otherwise.
+
+
+Adding a callback to a slider:
+int XfAddSliderCallback(Slider S, CallBack new, CallBack old)
+
+Parameters:
+S               - The slider to be affected.
+new             - The callback to be added.
+old             - The callback that new should be inserted immediately before.
+                        If old is NULL, add new at the end of the list.
+
+Returns:
+False if S or new are NULL, or if old is not found. Returns True otherwise.
+
+
+Deleting a callback:
+int XfDelSliderCallback(Slider S, CallBack cb)
+
+Parameters:
+S               - The slider to lose a callback.
+cb              - The callback to be deleted.
+
+Returns:
+False if S or cb are NULL, or if cb is not found. Returns True otherwise.
+
+
+Moving a slider to the head of the list of sliders:
+int XfMoveSlider(Slider S)
+
+Parameters:
+S               - Slider to be shuffled.
+
+Returns:
+False if S is NULL or list is empty. Returns True otherwise.
+
+Setting the slider value:
+int XfSetSliderValue(Slider S, float value)
+
+Parameters:
+S               - Slider to be altered.
+value           - New value in the range [0,1].
+
+Returns:
+False if S is NULL, True otherwise.
+
+
+Getting a slider by it's name:
+Slider XfGetSlider(char* name)
+
+Parameters:
+name            - The name of the desired slider.
+
+Returns:
+NULL if no slider by that name is found, otherwise a pointer to the matching
+slider.
+
+
+Determining which slider (if any) an event occured in:
+Slider XfEventSlider(XEvent E)
+
+Parameters:
+E               - The event from X.
+
+Returns:
+NULL if the event occured in no active sliders. Otherwise returns a pointer
+to the slider in which E occured.
+
+
+Handling events:
+int XfSliderResponse(Slider S, XEvent E)
+
+Parameters:
+S               - Slider in which E occured.
+E               - Event that S is responding to.
+
+Returns:
+False if S is NULL, True otherwise.
+

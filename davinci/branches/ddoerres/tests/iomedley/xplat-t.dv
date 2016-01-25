@@ -1,0 +1,84 @@
+# File: xplat-t.dv
+# 
+# Target part of cross-platform test for daVinci.
+# Corresponding source part is xplat-s.dv
+#
+# This test verifies that various image formats work 
+# across big-endian <-> little-endian platforms.
+#
+# To run the test, run:
+#
+#     davinci -f xplat-s.dv
+#
+# on a little-endian machine. It will generate a
+# collection of files in a directory named "tmp"
+# under the current directory. Move this directory
+# to a big-endian machine and run:
+#
+#     davinci -f xplat-t.dv
+#
+# if you recieve a message saying "All tests passed"
+# then you're ok. Otherwise, look at diagnostic
+# messages generated during script's execution to
+# check which tests failed and why.
+#
+# Associated files: xplat-s.dv, xplat-sup.dv, xplat-param.dv
+#
+
+# Load parameters file
+source("xplat-param.dv")
+
+rc = syscall("test -d "//tmpdir//" && echo found || echo notfound")
+if (rc[,1]=="notfound"){
+	printf("Directory "//tmpdir//" not found. Please read instructions in xplat-s.dv\n")
+	exit(1)
+}
+
+printf("Loading "//src_img//" file.\n")
+rc = syscall("test -f "//src_img//" && echo found || echo notfound")
+if (rc[,1]=="notfound"){
+
+	# If isis file not found, check for a uuencoded version
+	rc = syscall("test -f "//src_img//".uu && echo found || echo notfound")
+	if (rc[,1]=="found"){
+		system("uudecode "//src_img//".uu")
+	} else {
+		printf("Src file %s not found. Aborting...\n", src_img)
+		exit(2)
+	}
+}
+d = load(src_img) * 128
+
+
+printf("Reading/comparing test formats ...\n")
+
+nfailed = 0
+
+for(i=1; i<=n; i+=1){
+	e = org(format(d[,,1:nplanes[i]],fmts[i]),orgs[i])
+
+	f = 0
+	f = load(tmppfx//types[i])
+
+	df = dim(f)
+	de = dim(e)
+
+	if (df[1]==de[1] && df[2]==de[2] && df[3]==de[3]){
+		if (max(abs(e-f)) != 0){
+			printf("%s FAILED: Expected and read data do not match.\n", types[i])
+			nfailed += 1
+		}
+	} else {
+		printf("%s FAILED: Expected [%dx%dx%d] <> Read [%dx%dx%d].\n", \
+			types[i],de[1],de[2],de[3],df[1],df[2],df[3])
+		nfailed += 1
+	}
+}
+
+if (nfailed == 0){
+	printf("\n\nAll tests passed.\n")
+	exit(0)
+} else {
+	printf("\n\n%d tests failed. See previous messages.\n", nfailed);
+	exit(1)
+}
