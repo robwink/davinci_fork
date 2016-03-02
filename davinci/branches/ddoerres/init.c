@@ -8,7 +8,8 @@ const char *FORMAT2STR[] = {
 	"vax float",
 	"",
 	"",
-	"double"
+	"double",
+	"unsigned short" // drd Bug 2208 Loading a particular hdf5 file kills davinci
 };
 
 const char *ORG2STR[] = {
