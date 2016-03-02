@@ -5,6 +5,8 @@
 
 #ifdef HAVE_LIBHDF5
 
+
+
 #define HDF5_COMPRESSION_LEVEL 6
 
 #include <hdf5.h>
@@ -74,6 +76,7 @@ WriteHDF5(hid_t parent, char *name, Var *v)
         switch(V_FORMAT(v)) {
         case BYTE:  datatype = H5Tcopy(H5T_STD_U8BE); break;
         case SHORT: datatype = H5Tcopy(H5T_STD_I16BE); break;
+        case USHORT: datatype = H5Tcopy(H5T_STD_U16BE); break; // drd Bug 2208 Loading a particular hdf5 file kills davinci
         case INT:   datatype = H5Tcopy(H5T_STD_I32BE); break;
         case FLOAT: datatype = H5Tcopy(H5T_IEEE_F32BE); break;
         case DOUBLE: datatype = H5Tcopy(H5T_IEEE_F64BE); break;
@@ -243,8 +246,10 @@ group_iter(hid_t parent, const char *name, void *data)
         if (classtype==H5T_INTEGER){
             if (H5Tequal(datatype , H5T_STD_U8BE) || H5Tequal(datatype, H5T_STD_U8LE) || H5Tequal(datatype, H5T_NATIVE_UCHAR)) 
                 type = BYTE;
-            else if (H5Tequal(datatype , H5T_STD_I16BE) || H5Tequal(datatype , H5T_STD_I16LE) || H5Tequal(datatype, H5T_NATIVE_SHORT)) 
+            else if (H5Tequal(datatype , H5T_STD_I16BE) || H5Tequal(datatype , H5T_STD_I16LE) || H5Tequal(datatype, H5T_NATIVE_SHORT))
                 type = SHORT;
+            else if (H5Tequal(datatype , H5T_STD_U16BE) || H5Tequal(datatype , H5T_STD_U16LE)) // drd Bug 2208 Loading a particular hdf5 file kills davinci
+                type = USHORT;
             else if (H5Tequal(datatype , H5T_STD_I32BE) || H5Tequal(datatype , H5T_STD_I32LE) || H5Tequal(datatype, H5T_NATIVE_INT))   
                 type = INT;
         }
@@ -255,7 +260,7 @@ group_iter(hid_t parent, const char *name, void *data)
                 type = DOUBLE;
         }
 
-        else if (classtype=H5T_STRING){
+        else if (classtype==H5T_STRING){
             type=ID_STRING;
         }
 
@@ -356,6 +361,22 @@ group_iter(hid_t parent, const char *name, void *data)
                         nm++;/*Next line or end*/
                         lm=nm;
                     }
+                    else if (nm == (len-1)) {
+                        /*
+                         * drd Bug 2208 Loading a particular hdf5 file kills davinci
+                         * This is the case where we are at the end of a 'string' data set,
+                         * but the end is not a newline
+                         *
+                         */
+                    	V_TEXT(v).text[index]=malloc(nm-lm+2);
+                    	memcpy(
+                            V_TEXT(v).text[index],
+                            (char *)databuf+lm,
+                            (nm-lm+2));
+                        V_TEXT(v).text[index][nm-lm+1]='\0';
+                        nm++; // This increment will break out of while() loop
+                    }
+
                     else 	
                         nm++;
                 }
