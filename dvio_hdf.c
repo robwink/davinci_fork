@@ -318,6 +318,25 @@ group_iter(hid_t parent, const char *name, void *data)
             H5Sclose(dataspace);
             H5Dclose(dataset);
 	    
+            /*
+             * // drd Bug 2208 Loading a particular hdf5 file kills davinci
+             * For the time being, there is no USHORT type
+             * functionally available in davinci.
+             * We can promote any USHORT value to INT
+             * and not change sign
+             */
+            if(type == USHORT) { // promote to INT
+            	int i;
+            	databuf2 = calloc(dsize, NBYTES(INT));
+            	for(i = 0; i < dsize; i++) {
+            		((int*)databuf2)[i] = (int)((unsigned short *)databuf)[i];
+            	}
+            	type = INT;
+            	free(databuf);
+            	databuf=databuf2;
+
+            }
+
             v = newVal(org, size[0], size[1], size[2], type, databuf);
 
             V_NAME(v) = strdup(name);
