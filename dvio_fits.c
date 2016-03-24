@@ -119,7 +119,8 @@ filter_kw(const char *kw)
 	};
 
 	int nfixed_kw = sizeof(fixed_kw)/sizeof(char *);
-	int nsfx_kw = sizeof(fixed_kw)/sizeof(char *);
+	// int nsfx_kw = sizeof(fixed_kw)/sizeof(char *); // drd this is what it was
+	int nsfx_kw = sizeof(num_sfx_kw)/sizeof(char *);
 	int i, n, errcode;
 	char errbuf[1024];
 	regmatch_t pmatch[1];
@@ -145,9 +146,15 @@ filter_kw(const char *kw)
 		for(i=0; i<(sizeof(num_sfx_kw)/sizeof(char *)); i++){
 			if (i > 0)
 				strcat(regex, "|");
-			strcat(regex, fixed_kw[i]);
+			// strcat(regex, fixed_kw[i]); // drd this is what it was
+			strcat(regex, num_sfx_kw[i]);
 			strcat(regex, "[0-9][0-9]*");
 		}
+        /*
+         * drd note
+         * Printing regex out showed me the errors
+         */
+		// printf("%s\n", regex);
 
 		if ((errcode = regcomp(&preg, regex, REG_EXTENDED)) != 0){
 			regerror(errcode, &preg, errbuf, sizeof(errbuf)-1);
@@ -494,6 +501,62 @@ collect_table_specs(Var *s, struct tbl_specs *t)
 	return 1;
 }
 
+static int
+adjust_table_specs(Var *tbldata, struct tbl_specs *t, struct tbl_specs *tFixed)
+{
+Var *coldata = NULL;
+int i, colCount, j, findStructStatus;
+int *colExists;
+
+colExists = (int*)calloc(t->nfields, sizeof(int));
+
+init_table_specs(tFixed);
+
+colCount = 0;
+
+for(i=0; i<t->nfields && tbldata != NULL; i++){
+	colExists[i] = 1; // we start out with optimism
+	findStructStatus = find_struct(tbldata, t->fnames[i], &coldata);
+	if (findStructStatus == -1) {
+		parse_error(
+				"WARNING! Column %s was not found--it may have been removed\n", t->fnames[i]);
+		colExists[i] = 0;
+	}
+	else {
+		colCount++; // This is how many columns are going to be made
+	}
+
+}
+
+tFixed->tbltype = t->tbltype;
+tFixed->tblname = null_safe_strdup(t->tblname);
+tFixed->nfields = colCount;
+tFixed->nrows = t->nrows;
+
+tFixed->fnames = (char **)calloc(sizeof(char *), tFixed->nfields);
+tFixed->fforms = (char **)calloc(sizeof(char *), tFixed->nfields);
+tFixed->funits = (char **)calloc(sizeof(char *), tFixed->nfields);
+
+if (tFixed->fnames == NULL || tFixed->fforms == NULL || tFixed->funits == NULL){
+	free_table_specs(tFixed);
+	free_table_specs(t);
+	parse_error("Unable to alloc memory for fixed table specs.\n");
+	return 0;
+}
+
+j = 0;
+for(i=0; i<t->nfields; i++){
+	if(colExists[i] == 1) {
+		tFixed->fnames[j] = null_safe_strdup(t->fnames[i]);
+		tFixed->fforms[j] = null_safe_strdup(t->fforms[i]);
+		tFixed->funits[j] = null_safe_strdup(t->funits[i]);
+		j++;
+	}
+}
+
+
+return 1;
+}
 int
 fits_tbl_type_for_column_var(Var *coldata)
 {
@@ -540,14 +603,13 @@ Write_FITS_Table(fitsfile *fptr, struct tbl_specs *t, Var *tbldata)
 	fits_create_tbl(fptr, t->tbltype, t->nrows, t->nfields, t->fnames, t->fforms, t->funits, t->tblname, &status);
 	sprintf(ctx, " creating table \"%s\"", t->tblname);
 	QUERY_FITS_ERROR(status, ctx, 0);
-
 	for(i=0; i<t->nfields && tbldata != NULL; i++){
 		colExists[i] = 1; // we start out with optimism
 		colnum = i+1;
 		findStructStatus = find_struct(tbldata, t->fnames[i], &coldata);
 		if (findStructStatus == -1) {
 			parse_error(
-					"WARNING! Column %s was not found--it may have been removed\n", t->fnames[i]);
+					"WARNING! Column %s was not found, this is unexpected!\n", t->fnames[i]);
 			colExists[i] = 0;
 			continue;
 		}
@@ -1070,6 +1132,7 @@ int WriteSingleStructure(fitsfile *fptr,Var *obj,int index)
 	int  has_tbl_ext = 0;
 	char ext_type[512];
 	struct tbl_specs t;
+	struct tbl_specs tFixed;
 	static int xx = 0;
 
 	if (!ValidObject(obj,index))
@@ -1088,11 +1151,18 @@ int WriteSingleStructure(fitsfile *fptr,Var *obj,int index)
 		if (has_tbl_ext){
 			if (!collect_table_specs(obj, &t))
 				return(1);
-			if (!Write_FITS_Table(fptr,&t,element)){
+
+			if (!adjust_table_specs(element, &t, &tFixed))
+				return(1);
+
+			if (!Write_FITS_Table(fptr,&tFixed,element)){
 				free_table_specs(&t);
+				free_table_specs(&tFixed);
 				return(1);
 			}
+
 			free_table_specs(&t);
+			free_table_specs(&tFixed);
 		} else {
 			if (!(int )Write_FITS_Image(fptr,element))
 				return(1);
