@@ -8,6 +8,7 @@
 #include <fitsio.h>
 #else
 #include <cfitsio/fitsio.h>
+// #include "/mars/u/ddoerres/work/cfitsio/fitsio.h"
 #endif
 
 #include <sys/types.h>
@@ -256,6 +257,11 @@ Read_FITS_Image(fitsfile *fptr)
     return(NULL);
   }
   
+	if (dim == 0) {
+		parse_error("Warning: image has dimension 0");
+		return (NULL);
+	}
+
   fits_get_img_type(fptr,&fits_type,&status);
   QUERY_FITS_ERROR(status," getting image type",NULL);
   
@@ -523,21 +529,33 @@ int
 Write_FITS_Table(fitsfile *fptr, struct tbl_specs *t, Var *tbldata)
 {
 	int status = 0;
+	int findStructStatus = 0;
 	char ctx[1024];
 	char *colname = NULL;
 	Var *coldata = NULL;
 	int  colnum, i, j, k, x, ctype, nelements, elem_size;
+    int *colExists;
+	colExists = (int*)calloc(t->nfields, sizeof(int));
 
 	fits_create_tbl(fptr, t->tbltype, t->nrows, t->nfields, t->fnames, t->fforms, t->funits, t->tblname, &status);
 	sprintf(ctx, " creating table \"%s\"", t->tblname);
 	QUERY_FITS_ERROR(status, ctx, 0);
 
 	for(i=0; i<t->nfields && tbldata != NULL; i++){
+		colExists[i] = 1; // we start out with optimism
 		colnum = i+1;
-		find_struct(tbldata, t->fnames[i], &coldata);
+		findStructStatus = find_struct(tbldata, t->fnames[i], &coldata);
+		if (findStructStatus == -1) {
+			parse_error(
+					"WARNING! Column %s was not found--it may have been removed\n", t->fnames[i]);
+			colExists[i] = 0;
+			continue;
+		}
+
 		if ((ctype = fits_tbl_type_for_column_var(coldata)) < 0){
 			parse_error("WARNING! Skipping unhandled data type \"%s\" of column \"%s\" in table \"%s\"\n", 
 				Format2Str(V_FORMAT(coldata)), t->fnames[i], t->tblname);
+			colExists[i] = 0;
 			continue;
 		}
 		nelements = get_rows(coldata);
@@ -567,9 +585,23 @@ Write_FITS_Table(fitsfile *fptr, struct tbl_specs *t, Var *tbldata)
 		else {
 			parse_error("WARNING! Skipping unhandled type of structure element \"%s\" in table \"%s\"\n",
 				t->fnames[i], t->tblname);
+			colExists[i] = 0;
 		}
 		sprintf(ctx, " writing column %d (\"%s\")", colnum, t->fnames[i]);
 		QUERY_FITS_ERROR(status, ctx, 0);
+	}
+	/*
+	 * We may be deleting columns.  If we do delete a column,
+	 * the number of columns decreases by 1. So we start at the end
+	 * and work toward the beginning.
+	 */
+	for(i = (t->nfields)-1; i>=0; i--) {
+		if(colExists[i] == 0) {
+			colnum = i+1;
+			fits_delete_col(fptr, colnum, &status);
+			sprintf(ctx, " deleting column %d (\"%s\")", colnum, t->fnames[i]);
+			QUERY_FITS_ERROR(status, ctx, 0);
+		}
 	}
 
 	return 1;
