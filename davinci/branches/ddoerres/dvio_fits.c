@@ -1146,7 +1146,7 @@ int Write_FITS_Record(fitsfile *fptr, Var *obj, char *obj_name) {
 }
 
 /*
- ** WriteSingleStrucutre:
+ ** WriteSingleStructure:
  ** This function takes a Var structure, and parses it
  ** using it's members names for the FITS label keys
  ** and member values for the key's values.  If the item
@@ -1157,11 +1157,24 @@ int Write_FITS_Record(fitsfile *fptr, Var *obj, char *obj_name) {
  ** If validation fails, a non-zero value is returned, other-wise
  ** the structure is written out and a zero value is returned.
  */
+
+/*
+ * Bug 2218 - Davinci does not quite correctly add items to a FITS file
+ *
+ * Code did not account for the differences between the first (primary) header
+ * and added secondary items.  This has been remedied.  Text Tables, Binary Tables,
+ * even image files can now be added to davinci FITS structures,
+ * and these can be written out. Note that Davinci strips comments and history.
+ * Key/Value pairs are retained.
+ * Calls to the cfitsio library does add "automatic" comment and history information
+ *
+ */
 int WriteSingleStructure(fitsfile *fptr, Var *obj, int index) {
 	Var *element = NULL, *d;
 	static Var *lastVar = NULL;
 	int i;
-	int wroteDataItem = 0;
+	static wroteDataItem = 0;
+	static headerOnly = 0;
 	int count;
 	char *obj_name;
 	int has_data_subel = 0;
@@ -1214,9 +1227,11 @@ int WriteSingleStructure(fitsfile *fptr, Var *obj, int index) {
 			}
 		}
 	}
+	else {
+		headerOnly = 1;
+	}
 
-	// then write additional header elements
-	if (wroteDataItem == 1) {
+	if ( wroteDataItem == 1) { // Get the rest of the header items that are not automatically put in
 		count = get_struct_count(obj);
 		for (i = 0; i < count; i++) {
 			get_struct_element(obj, i, &obj_name, &element);
@@ -1232,7 +1247,8 @@ int WriteSingleStructure(fitsfile *fptr, Var *obj, int index) {
 		sprintf(msg," number of  HDU's %d", numObjects);
 		QUERY_FITS_ERROR(hduStatus,msg,NULL);
 
-		if ((numObjects > 1) && (lastVar != NULL)) { // We may need to fix up the previous HDU, must be at least 2 in there
+		if ((numObjects > 1) && (lastVar != NULL) && (headerOnly == 1) && (wroteDataItem == 1) ) { // Fix up the primary header, get stuff not automatically put in
+			headerOnly = 0;
 			fits_movabs_hdu(fptr, numObjects-1, &hduType, &hduStatus);
 			sprintf(msg," moving to HDU index %d", index);
 			QUERY_FITS_ERROR(hduStatus,msg,NULL);
@@ -1250,7 +1266,7 @@ int WriteSingleStructure(fitsfile *fptr, Var *obj, int index) {
 
 		}
 	}
-
+	wroteDataItem = 0;
     lastVar = obj;
 	return (0);
 }
