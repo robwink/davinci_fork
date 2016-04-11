@@ -1,0 +1,220 @@
+#Set up environment variable for file locations
+putenv("FITS_TEST_FILES","/mars/u/ddoerres/work/davinci_2016_01/build/davinci64/dv_tests/io/fits/fits")
+
+all = 0;
+success = 0;
+
+# Load a file and write it out
+# This file has a single, Binary table with 6 cols
+##################################################
+a=load_fits($FITS_TEST_FILES+"/crash.fit")
+write_fits(a, $TMPDIR+"/crashOut.fit", force=1)
+
+if(fexists($TMPDIR+"/crashOut.fit")) {
+success++;
+}
+all++
+
+# Load the written file, compare its data elements to the original
+#####################################################################
+b=load_fits($TMPDIR+"/crashOut.fit")
+
+check = equals(a.DATATABL.data.Facet_Number, b.DATATABL.data.Facet_Number)
+if (check == 1) {
+success++
+}
+all++
+
+
+check = equals(a.DATATABL.data.Latitude, b.DATATABL.data.Latitude)
+if (check == 1) {
+success++
+}
+all++
+
+check = equals(a.DATATABL.data.Longitude, b.DATATABL.data.Longitude)
+if (check == 1) {
+success++
+}
+all++
+
+check = equals(a.DATATABL.data.Radius, b.DATATABL.data.Radius)
+if (check == 1) {
+success++
+}
+all++
+
+check = equals(a.DATATABL.data.Hematite, b.DATATABL.data.Hematite)
+if (check == 1) {
+success++
+}
+all++
+
+check = equals(a.DATATABL.data.Sigma, b.DATATABL.data.Sigma)
+if (check == 1) {
+success++
+}
+all++
+
+# Now load another FITs file
+# This one has a single ASCII Table
+# Make a copy of it so we don't have to load it again
+#######################################################
+
+b=load_fits($FITS_TEST_FILES+"/ge.fit")
+c=b
+
+# Add the Table from a to c
+#########################################################
+c.ADD_0001=a.DATATABL
+c.ADD_0001.EXTNAME="'ADD_0001'"
+
+# Add the Table from b to c
+# Yes, c now has two of them...
+#########################################################
+c.ADD_0002=b.object_2
+c.ADD_0002.EXTNAME="'ADD_0002'"
+
+
+# Now compare things
+##########################################################
+
+check = equals(c.ADD_0002, c.object_2)
+
+# c.ADD_0002 has an element EXTNAME which c.object_2 does not have
+###################################################################
+if (check == 0) {
+success++
+}
+all++
+
+# The data must be the same, though
+#########################################
+check = equals(c.ADD_0002.data, c.object_2.data)
+if (check == 1) {
+success++
+}
+all++
+
+# c.ADD_0001 and a.DATATABL differ by EXTNAME
+###############################################
+check = equals(c.ADD_0001, a.DATATABL)
+if (check == 0) {
+success++
+}
+all++
+
+# The data must be the same, though
+################################################
+check = equals(c.ADD_0001.data, a.DATATABL.data)
+if (check == 1) {
+success++
+}
+all++
+
+# Load up a FITs with an image
+################################################
+image1 = load_fits($FITS_TEST_FILES+"/xngc.fit")
+
+
+# Add the image to c
+############################
+c.ADD_0003=image1.object_1
+c.ADD_0003.EXTNAME="ADD_0003"
+
+# Compare the two images as stored in davinci
+##################################
+
+check = equals(c.ADD_0003.data, image1.object_1.data)
+if (check == 1) {
+success++
+}
+all++
+
+# Load up another FITs with an image
+#############################################
+image2 = load_fits($FITS_TEST_FILES+"/rosat.fit")
+
+
+# Add the image to c
+############################
+c.ADD_0004=image2.object_1
+c.ADD_0004.EXTNAME="ADD_0004"
+
+# Compare the two images as stored in davinci
+##################################
+
+check = equals(c.ADD_0004.data, image2.object_1.data)
+if (check == 1) {
+success++
+}
+all++
+
+
+# Load up another FITs with an image
+#############################################
+image3 = load_fits($FITS_TEST_FILES+"/HR.fit")
+
+
+# Add the image to c
+############################
+c.ADD_0005=image3.object_1
+c.ADD_0005.EXTNAME="ADD_0005"
+
+# Compare the two images as stored in davinci
+##################################
+
+check = equals(c.ADD_0005.data, image3.object_1.data)
+if (check == 1) {
+success++
+}
+all++
+
+# Write out the composite item
+#################################
+write_fits(c, $TMPDIR+"/compositeOut.fit", force=1)
+
+# Read it back
+#################################
+composite=load_fits($TMPDIR+"/compositeOut.fit")
+
+# Check the data between 'c' and 'composite'
+# There are some slight differences on how the body of the structure is built up between
+# The composite structure we built up and the way the it will be written out and reloaded
+# Key thing is, the tables external to the images and the image data are the  same
+######################################################################################
+
+check = equals(c.object_2.data, composite.TABLEITEM.data)
+if (check == 1) {
+success++
+}
+all++
+check = equals(c.ADD_0001.data, composite.ADD_0001.data)
+if (check == 1) {
+success++
+}
+all++
+check = equals(c.ADD_0002.data, composite.ADD_0002.data)
+if (check == 1) {
+success++
+}
+all++
+check = equals(c.ADD_0003.data, composite.object_5.data)
+if (check == 1) {
+success++
+}
+all++
+check = equals(c.ADD_0004.data, composite.object_6.data)
+if (check == 1) {
+success++
+}
+all++
+check = equals(c.ADD_0005.data, composite.object_7.data)
+if (check == 1) {
+success++
+}
+all++
+printf("There were %d tests with %d successes\n", all, success)
+
+
+
