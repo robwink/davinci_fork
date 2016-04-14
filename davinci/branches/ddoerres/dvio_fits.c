@@ -932,7 +932,7 @@ FITS_Read_Entry(char *fits_filename) {
 	fitsfile *fptr;
 	char header_entry[FLEN_CARD];
 	int status = 0;
-	int i, j;
+	int i, j, qq;
 	int num_objects;
 	int cur_object;
 	int num_header_entries;
@@ -974,8 +974,9 @@ FITS_Read_Entry(char *fits_filename) {
 				strcpy(fits_value, fits_comment); // comments have no value
 			} else {
 				fits_get_keytype(fits_value, &key_type, &status); // drd input is the fits_value, returns the type
-																  // 'C', 'L', 'I', 'F' or 'X', for character string,
-				                                                  // logical, integer, floating point, or complex, respectively.
+																  // 'C', 'L', 'I', 'F' or 'X',
+				                                                  // for character string, logical,
+				                                                  // integer, floating point, or complex, respectively.
 			}
 			QUERY_FITS_ERROR(status, NULL, NULL);
 
@@ -984,6 +985,7 @@ FITS_Read_Entry(char *fits_filename) {
 
 			//Get extension name
 			if (strcmp(KW_EXT_NAME, name) == 0) {
+
 				ltrim(fits_value, "'");
 				rtrim(fits_value, "'");
 				strcpy(obj_name, fits_value);
@@ -1023,6 +1025,34 @@ FITS_Read_Entry(char *fits_filename) {
 		//if (strcmp(obj_name, "object_2") == 0) {
 		//	strcpy(obj_name, "DATATABL");
 		//}
+
+
+		/*
+		 *  Bug 2224 - Problems in adding sub to head in dvio_fits.c
+		 *  The next two drd Note entries
+		 */
+
+		/*
+		 *
+		 * drd Note
+		 * An earlier developer found only examples where they were
+		 * removing "'" marks here.
+		 * I found some where the obj_names were shorter than 8 chars and
+		 * had trailing spaces
+		 *
+		 */
+		unquote_remove_spaces(obj_name);
+		/*
+		 * drd Note
+		 * Then I found cases where obj_name had '.'s
+		 * Davinci uses the '.'s as structure element delimiters
+		 */
+		for(qq = 0; qq < strlen(obj_name); qq++) {
+			if(obj_name[qq] == '.') {
+				obj_name[qq] = '_';
+			}
+		}
+
 		add_struct(head, obj_name, sub);
 	}
 
