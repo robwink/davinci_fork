@@ -34,6 +34,31 @@ typedef enum _ISIS3ENUM {
 
 } ISIS3ENUM;
 
+typedef struct minISISINFO {
+
+	/* Core */
+	int StartByte;
+	char *Format;
+	int TileSamples;
+	int TileLines;
+
+	/* Dimensions */
+	int Samples;
+	int Lines;
+	int Bands;
+
+	/* Pixels */
+	char *Type;
+	char *ByteOrder;
+	double Base;
+	double Multiplier;
+
+	/* Label */
+	int Bytes;
+
+} minIsisInfo;
+
+
 typedef struct _IsisCube {
 	// Object == Core
 	char Core[128];		// filename if data in separate file

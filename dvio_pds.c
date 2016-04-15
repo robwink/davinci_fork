@@ -593,7 +593,7 @@ traverseObj(OBJDESC *top, Var *v, dataKey objSizeMap[], int *nObj, OBJDESC *pFil
 	Var *tmpVar = NULL;
 
 	for(kw = OdlGetFirstKwd(top); kw != NULL; kw = OdlGetNextKwd(kw)){
-		kwName = OdlGetKwdName(kw);
+		kwName = OdlGetKwdName(kw); printf("Name is %s\n", kwName); //drd added just printf()
 
 		if (kw->is_a_pointer){
 			kwName = fix_name(mod_name_if_necessary(kwName));
@@ -1829,7 +1829,7 @@ do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
   	free_struct(v);
   	return NULL;
   }
-
+  printf("Returned v is %p\n",v); // drd
   return (v);
 }
 
@@ -2363,6 +2363,7 @@ rfImage(dataKey *objSize, Var * ob){
 
 	fileName = (char *)alloca(strlen(objSize->FileName)+1);
 	pickFilename(fileName, objSize->FileName);
+	printf("This is where the Reading image comes from\n"); // drd
 	parse_error("Reading %s from %s...\n", objSize->Name, fileName);
 	if ((fp = fopen(fileName, "rb")) == NULL){
 		fprintf(stderr, "Unable to open file for reading: \"%s\". Reason: %s\n", fileName, strerror(errno));
@@ -2371,7 +2372,17 @@ rfImage(dataKey *objSize, Var * ob){
 
 	data = dv_LoadImage_New(fp, fileName, objSize->dptr, objSize->objDesc);
 	if (data != NULL) {
-		add_struct(ob, fix_name("DATA"), data);
+		unsigned char *flex; // drd
+		int i; // drd
+		char lclName[]="drddata";
+		//add_struct(ob, fix_name("DATA"), data); // drd this is what was here
+		add_struct(ob, lclName, data);
+		printf("Added the data v at %p to the object\n", data); // drd
+		flex = (unsigned char *) V_DATA(data); // drd
+		printf("Printing out 8 bytes from the data area of 'Var *data' %p at %p:\n", data, flex); // drd
+		for(i = 0; i < 8; i++){ // drd
+			printf("0x%02X\n", flex[i]); // drd
+		} // drd
 		rc=1;
 	}
 
