@@ -11,10 +11,17 @@ extern FILE *pfp;
 
 static int name_check(const char *actual_input, const char *name, int limit);
 static void findAxis(char *R, Var * Obj, int flag);
-static int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuffer, Var *Xaxis, char *Axis, float *globalNums, char *Style, char *dir);
+static int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuffer, Var *Xaxis, char *Axis, double *globalNums, char *Style, char *dir);
 static int handle_errorbars(Var *errorb, Var *v, int *Mode, char *style, int Onum);
 static int *make_errorbar_indices(Var *v, int *Mode, int *CE, Var *errorb);
 
+/*
+ * Bug 2200 gplot() does not properly plot a list of numbers
+ * This is for very large and very small floats.
+ * 1. Several 'break;' statements were missing from switch/cases
+ * 2. fprintf() formatting changed from %g to %f
+ *
+ */
 
 // Opens a single session of gnuplot and sends it a plot command
 // NOTE(gorelick): Why not use send_to_plot?
@@ -123,7 +130,7 @@ ff_vplot(vfuncptr func, Var *arg)
   int      plotchoppererror = 0;
   int      Onum = 0;
   int      gcommand = 0;
-  float   *globalNums = NULL;
+  double   *globalNums = NULL;
 
   make_args(&ac, &av, func, arg);
 
@@ -151,9 +158,9 @@ ff_vplot(vfuncptr func, Var *arg)
     return(NULL);
   }
 
-  // Set up globalNums array.  It is a 16 element float array to hold
+  // Set up globalNums array.  It is a 16 element double array to hold
   // flags and values for numeric global keywords
-  globalNums = calloc(16, sizeof(float));
+  globalNums = calloc(16, sizeof(double));
 
   /* Loop through the entire argument list extracting Xaxis, Axis, **
   ** dir and gcommand if they exist.                               */
@@ -210,10 +217,10 @@ ff_vplot(vfuncptr func, Var *arg)
 	    v = V_KEYVAL(av[i]);
 	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
 	      globalNums[0] = 1;
-	      globalNums[1] = (float)extract_int(v,0);
+	      globalNums[1] = (double)extract_int(v,0);
 	    } else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
 	      globalNums[0] = 1;
-	      globalNums[1] = extract_float(v,0);
+	      globalNums[1] = extract_double(v,0);
 	    }
 	  } else {
 	    parse_error("Invalid designation for Ignore");
@@ -231,10 +238,10 @@ ff_vplot(vfuncptr func, Var *arg)
 	    v = V_KEYVAL(av[i]);
 	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
 	      globalNums[2] = 1;
-	      globalNums[3] = (float)extract_int(v,0);
+	      globalNums[3] = (double)extract_int(v,0);
 	    } else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
 	      globalNums[2] = 1;
-	      globalNums[3] = extract_float(v,0);
+	      globalNums[3] = extract_double(v,0);
 	    }
 	  } else {
 	    parse_error("Invalid designation for Iabove");
@@ -252,10 +259,10 @@ ff_vplot(vfuncptr func, Var *arg)
 	    v = V_KEYVAL(av[i]);
 	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
 	      globalNums[4] = 1;
-	      globalNums[5] = (float)extract_int(v,0);
+	      globalNums[5] = (double)extract_int(v,0);
 	    } else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
 	      globalNums[4] = 1;
-	      globalNums[5] = extract_float(v,0);
+	      globalNums[5] = extract_double(v,0);
 	    }
 	  } else {
 	    parse_error("Invalid designation for Ibelow");
@@ -273,10 +280,10 @@ ff_vplot(vfuncptr func, Var *arg)
 	    v = V_KEYVAL(av[i]);
 	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
 	      globalNums[6] = 1;
-	      globalNums[7] = (float)extract_int(v,0);
+	      globalNums[7] = (double)extract_int(v,0);
 	    } else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
 	      globalNums[6] = 1;
-	      globalNums[7] = extract_float(v,0);
+	      globalNums[7] = extract_double(v,0);
 	    }
 	  } else {
 	    parse_error("Invalid designation for Ixabove");
@@ -294,10 +301,10 @@ ff_vplot(vfuncptr func, Var *arg)
 	    v = V_KEYVAL(av[i]);
 	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
 	      globalNums[8] = 1;
-	      globalNums[9] = (float)extract_int(v,0);
+	      globalNums[9] = (double)extract_int(v,0);
 	    } else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
 	      globalNums[8] = 1;
-	      globalNums[9] = extract_float(v,0);
+	      globalNums[9] = extract_double(v,0);
 	    }
 	  } else {
 	    parse_error("Invalid designation for Ixbelow");
@@ -314,7 +321,7 @@ ff_vplot(vfuncptr func, Var *arg)
 	  v = V_KEYVAL(av[i]);
 	  if(V_TYPE(v) == ID_VAL) {
 	    globalNums[10] = 1;
-	    globalNums[11] = (int)extract_float(v,0);
+	    globalNums[11] = (int)extract_double(v,0);
 	  } else {
 	    parse_error("Invalid designation for Color");
 	    return(NULL);
@@ -329,7 +336,7 @@ ff_vplot(vfuncptr func, Var *arg)
 	  v =V_KEYVAL(av[i]);
 	  if(V_TYPE(v) == ID_VAL) {
 	    globalNums[12] = 1;
-	    globalNums[13] = (int)extract_float(v,0);
+	    globalNums[13] = (int)extract_double(v,0);
 	  } else {
 	    parse_error("Invalid designation for line Width");
 	    return(NULL);
@@ -381,9 +388,9 @@ ff_vplot(vfuncptr func, Var *arg)
 	  if(V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	    v = V_KEYVAL(av[i]);
 	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
-	      globalNums[15] = (float)extract_int(v,0);
+	      globalNums[15] = (double)extract_int(v,0);
 	    } else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
-	      globalNums[15] = extract_float(v,0);
+	      globalNums[15] = extract_double(v,0);
 	    }
 	  } else {
 	    parse_error("Invalid designation for Offset");
@@ -461,7 +468,7 @@ ff_vplot(vfuncptr func, Var *arg)
 
 
 
-int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuffer, Var *Xaxis, char *Axis, float *globalNums, char *Style, char *dir)
+int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuffer, Var *Xaxis, char *Axis, double *globalNums, char *Style, char *dir)
 {
 
   /* The code of plot_chopper is the canibalized descendent of xplot()*/
@@ -476,11 +483,11 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
   int    CE[3];                       //
   int    xFlag = 0;                   // was there an xaxis designated?
   int    obj_index;                   // object index in the argument string
-  float *x = NULL, *y = NULL;         // the x and y data extracted from object
+  double *x = NULL, *y = NULL;         // the x and y data extracted from object
 
   Var   *errorb = NULL;               // Var holding errorbars
-  float *Err1 = NULL, *Err2 = NULL;   // Vars to be used if errorbars are used
-  float *Err3 = NULL, *Err4 = NULL;   // Vars to be used if errorbars are used
+  double *Err1 = NULL, *Err2 = NULL;   // Vars to be used if errorbars are used
+  double *Err3 = NULL, *Err4 = NULL;   // Vars to be used if errorbars are used
   int   *EI = NULL;
   int    sef = 0;                     // sum of error flags
   int    sef2 = 0;
@@ -490,15 +497,15 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
   FILE  *fp = NULL;                   // filepointer to Gnuplot
   char  *fname = NULL;                // filename
 
-  float  offset = 0;                  // value to offset successive vectors
-  float  yval = 0;                    // offset y-value
-  float  e1=0, e2=0;                  // offset error values
+  double  offset = 0;                  // value to offset successive vectors
+  double  yval = 0;                    // offset y-value
+  double  e1=0, e2=0;                  // offset error values
 
-  float  ignore;                      // ignore value for data
-  float  ignore_above;                // 'ignore above' value for data
-  float  ignore_below;                // 'ignore below' value for data
-  float  ignore_x_above;              // 'ignore above' x value for data
-  float  ignore_x_below;              // 'ignore above' y value for data
+  double  ignore;                      // ignore value for data
+  double  ignore_above;                // 'ignore above' value for data
+  double  ignore_below;                // 'ignore below' value for data
+  double  ignore_x_above;              // 'ignore above' x value for data
+  double  ignore_x_below;              // 'ignore above' y value for data
   int    iflag = 0;                   // was there an ignore value?
   int    iaflag = 0;                  // was there an iabove value?
   int    ibflag = 0;                  // was there an ibelow value?
@@ -652,7 +659,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
 	      width = extract_int(v,0);
 	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
-	      width = (int)extract_float(v,0);
+	      width = (int)extract_double(v,0);
 	  } else {
 	    parse_error("Invalid width element in structure: Object %d",Onum);
 	    parse_error("width must be an integer. Continuing with default width.\n");
@@ -699,7 +706,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
 	      color = extract_int(v,0);
 	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
-	      color = (int)extract_float(v,0);	
+	      color = (int)extract_double(v,0);
 	  } else {
 	    parse_error("Invalid color element in structure: Object %d",Onum);
 	    parse_error("color must be an integer. Continuing with default color.\n");
@@ -717,11 +724,11 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	if(v!=NULL) {
 	  if(V_TYPE(v) == ID_VAL) {
 	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
-	      ignore = (float)extract_int(v,0);
+	      ignore = (double)extract_int(v,0);
 	      iflag = 1;
 	    }
 	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
-	      ignore = extract_float(v,0);
+	      ignore = extract_double(v,0);
 	      iflag = 1;
 	    }
 	    else {
@@ -738,11 +745,11 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	if(v!=NULL) {
 	  if(V_TYPE(v) == ID_VAL) {
 	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
-	      ignore_above = (float)extract_int(v,0);
+	      ignore_above = (double)extract_int(v,0);
 	      iaflag = 1;
 	    }
 	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
-	      ignore_above = extract_float(v,0);
+	      ignore_above = extract_double(v,0);
 	      iaflag = 1;
 	    }
 	    else {
@@ -759,11 +766,11 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	if(v!=NULL) {
 	  if(V_TYPE(v) == ID_VAL) {
 	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
-	      ignore_below = (float)extract_int(v,0);
+	      ignore_below = (double)extract_int(v,0);
 	      ibflag = 1;
 	    }
 	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
-	      ignore_below = extract_float(v,0);
+	      ignore_below = extract_double(v,0);
 	      ibflag = 1;
 	    }
 	    else {
@@ -780,11 +787,11 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	if(v!=NULL) {
 	  if(V_TYPE(v) == ID_VAL) {
 	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
-	      ignore_x_above = (float)extract_int(v,0);
+	      ignore_x_above = (double)extract_int(v,0);
 	      ixaflag = 1;
 	    }
 	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
-	      ignore_x_above = extract_float(v,0);
+	      ignore_x_above = extract_double(v,0);
 	      ixaflag = 1;
 	    }
 	    else {
@@ -801,11 +808,11 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	if(v!=NULL) {
 	  if(V_TYPE(v) == ID_VAL) {
 	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
-	      ignore_x_below = (float)extract_int(v,0);
+	      ignore_x_below = (double)extract_int(v,0);
 	      ixbflag = 1;
 	    }
 	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
-	      ignore_x_below = extract_float(v,0);
+	      ignore_x_below = extract_double(v,0);
 	      ixbflag = 1;
 	    }
 	    else {
@@ -822,10 +829,10 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	if(v!=NULL) {
 	  if(V_TYPE(v) == ID_VAL) {
 	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
-	      offset = (float)extract_int(v,0);
+	      offset = (double)extract_int(v,0);
 
 	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
-	      offset = extract_float(v,0);
+	      offset = extract_double(v,0);
 
 	    else
 	      parse_error("Invalid format for offset in Object %d",Onum);
@@ -917,9 +924,9 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  v = V_KEYVAL(av[i]);
 	  if(V_TYPE(v) == ID_VAL) {
 	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
-	      ignore = (float)extract_int(v,0);
+	      ignore = (double)extract_int(v,0);
 	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
-	      ignore = extract_float(v,0);
+	      ignore = extract_double(v,0);
 	    iflag = 1;
 	  } else {
 	    parse_error("Invalid ignore value for Object %d",Onum);
@@ -933,9 +940,9 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	  v = V_KEYVAL(av[i]);
 	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
-	    ignore_above = (float)extract_int(v,0);
+	    ignore_above = (double)extract_int(v,0);
 	  else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
-	    ignore_above = extract_float(v,0);
+	    ignore_above = extract_double(v,0);
 	  iaflag = 1;
 	} else {
 	  parse_error("Invalid designation for iabove");
@@ -946,9 +953,9 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	  v = V_KEYVAL(av[i]);
 	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
-	    ignore_below = (float)extract_int(v,0);
+	    ignore_below = (double)extract_int(v,0);
 	  else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
-	    ignore_below = extract_float(v,0);
+	    ignore_below = extract_double(v,0);
 	  ibflag = 1;
 	} else {
 	  parse_error("Invalid designation for ibelow");
@@ -959,11 +966,11 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	  v = V_KEYVAL(av[i]);
 	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
-	    ignore_x_above = (float)extract_int(v,0);
+	    ignore_x_above = (double)extract_int(v,0);
 	    ixaflag = 1;
 	  }
 	  else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
-	    ignore_x_above = extract_float(v,0);
+	    ignore_x_above = extract_double(v,0);
 	    ixaflag = 1;
 	  }
 	} else {
@@ -975,11 +982,11 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	  v = V_KEYVAL(av[i]);
 	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
-	    ignore_x_below = (float)extract_int(v,0);
+	    ignore_x_below = (double)extract_int(v,0);
 	    ixbflag = 1;
 	  }
 	  else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
-	    ignore_x_below = extract_float(v,0);
+	    ignore_x_below = extract_double(v,0);
 	    ixbflag = 1;
 	  }
 	} else {
@@ -991,9 +998,9 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	  v = V_KEYVAL(av[i]);
 	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
-	    offset = (float)extract_int(v,0);
+	    offset = (double)extract_int(v,0);
 	  else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
-	    offset = extract_float(v,0);
+	    offset = extract_double(v,0);
 	} else {
 	  parse_error("Invalid designation for offset");
 	  parse_error("Continuing plot without value");
@@ -1002,7 +1009,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
       } else if (!(name_check(av[i]->name, "color", 1))) {
 	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	  if(V_FORMAT(av[i]) == FLOAT || V_FORMAT(av[i]) == DOUBLE)
-	    color = (int)extract_float(V_KEYVAL(av[i]),0);
+	    color = (int)extract_double(V_KEYVAL(av[i]),0);
 	  else
 	    color = extract_int(V_KEYVAL(av[i]),0);
 	} else {
@@ -1016,7 +1023,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	
       } else if (!(name_check(av[i]->name, "width", 1))) {
 	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
-	  width = (int)extract_float(V_KEYVAL(av[i]),0);
+	  width = (int)extract_double(V_KEYVAL(av[i]),0);
 	} else {
 	  parse_error("Invalid designation for line width");
 	  parse_error("Continuing plot with default width");
@@ -1295,17 +1302,17 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	return(1);
       }
 
-      Err1 = calloc(Ord[Mode[0]], sizeof(float));
+      Err1 = calloc(Ord[Mode[0]], sizeof(double));
       if(i >= 2)
-	Err2 = calloc(Ord[Mode[0]], sizeof(float));
+	Err2 = calloc(Ord[Mode[0]], sizeof(double));
       if(i >= 3) {
-	Err3 = calloc(Ord[Mode[0]], sizeof(float));
-        Err4 = calloc(Ord[Mode[0]], sizeof(float));
+	Err3 = calloc(Ord[Mode[0]], sizeof(double));
+        Err4 = calloc(Ord[Mode[0]], sizeof(double));
       }
     }
 
-    x = calloc(Ord[Mode[0]], sizeof(float));
-    y = calloc(Ord[Mode[0]], sizeof(float));
+    x = calloc(Ord[Mode[0]], sizeof(double));
+    y = calloc(Ord[Mode[0]], sizeof(double));
 
     //Loop through the two non-axis dimensions to plot all vectors
     for (i = 0; i < Ord[Mode[2]]; i++) {
@@ -1336,10 +1343,11 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  case BYTE:
 	  case SHORT:
 	  case INT:
-	    y[k] = (float) extract_int(v, obj_index);
+	    y[k] = (double) extract_int(v, obj_index);
+	  break;
 	  case FLOAT:
 	  case DOUBLE:
-	    y[k] = extract_float(v, obj_index);
+	    y[k] = extract_double(v, obj_index);
 	  }
 	
 	  if (xFlag) {
@@ -1347,13 +1355,14 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	    case BYTE:
 	    case SHORT:
 	    case INT:
-	      x[k] = (float)extract_int(xaxis_i, rpos(obj_index, v, xaxis_i));
+	      x[k] = (double)extract_int(xaxis_i, rpos(obj_index, v, xaxis_i));
+	    break;
 	    case FLOAT:
 	    case DOUBLE:
-	      x[k] = extract_float(xaxis_i, rpos(obj_index, v, xaxis_i));
+	      x[k] = extract_double(xaxis_i, rpos(obj_index, v, xaxis_i));
 	    }
 	  } else {
-	    x[k] = (float) k;
+	    x[k] = (double) k;
 	  }
 
 	  if (errorb) {
@@ -1365,34 +1374,35 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	    case SHORT:
 	    case INT:
 	      if(V_DSIZE(errorb) == 1)
-		Err1[k] = (float)extract_int(errorb,0);
+		Err1[k] = (double)extract_int(errorb,0);
 	      else {
-		Err1[k] = (float)extract_int(errorb, cpos(EI[0], EI[1], EI[2], errorb));
+		Err1[k] = (double)extract_int(errorb, cpos(EI[0], EI[1], EI[2], errorb));
 		if(Err2 != NULL)
-		  Err2[k] = (float)extract_int(errorb, cpos(EI[3], EI[4], EI[5], errorb));
+		  Err2[k] = (double)extract_int(errorb, cpos(EI[3], EI[4], EI[5], errorb));
 		if(Err3 != NULL){
-		  Err3[k] = (float)extract_int(errorb, cpos(EI[6], EI[7], EI[8], errorb));
-		  Err4[k] = (float)extract_int(errorb, cpos(EI[9], EI[10], EI[11], errorb));
+		  Err3[k] = (double)extract_int(errorb, cpos(EI[6], EI[7], EI[8], errorb));
+		  Err4[k] = (double)extract_int(errorb, cpos(EI[9], EI[10], EI[11], errorb));
 		}
 	      }
+	    break;
 	    case FLOAT:
 	    case DOUBLE:
 	      if(V_DSIZE(errorb) == 1)
-		Err1[k] = extract_float(errorb,0);
+		Err1[k] = extract_double(errorb,0);
 	      else {
-		Err1[k] = extract_float(errorb, cpos(EI[0], EI[1], EI[2], errorb));
+		Err1[k] = extract_double(errorb, cpos(EI[0], EI[1], EI[2], errorb));
 		if(Err2 != NULL){
-		  Err2[k] = extract_float(errorb, cpos(EI[3], EI[4], EI[5], errorb));
+		  Err2[k] = extract_double(errorb, cpos(EI[3], EI[4], EI[5], errorb));
 		}
 		if(Err3 != NULL){
-		  Err3[k] = extract_float(errorb, cpos(EI[6], EI[7], EI[8], errorb));
-		  Err4[k] = extract_float(errorb, cpos(EI[9], EI[10], EI[11], errorb));
+		  Err3[k] = extract_double(errorb, cpos(EI[6], EI[7], EI[8], errorb));
+		  Err4[k] = extract_double(errorb, cpos(EI[9], EI[10], EI[11], errorb));
 		}
 	      }
 	    }
 	  }
 	
-	  //Here we finally fucking handle the glorious ignore values!
+	  //Here we finally handle the glorious ignore values!
 	  sef = 0; // Sum of the Error Flags
 
 	  sef = (iflag != 0 && y[k] == ignore)?sef+1:sef;
@@ -1416,30 +1426,71 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 
 	  } else {
 
-	    yval = y[k]-(float)(vnum-1)*offset;
+	    yval = y[k]-(double)(vnum-1)*offset;
 
 	    if(errorb == NULL) {
-	      fprintf(fp, "%g\t %g\n", x[k], yval);
+	      // fprintf(fp, "%f\t %f\n", x[k], yval);  // originally
+	      switch (V_FORMAT(v)) {
+          	  case BYTE:
+          	  case SHORT:
+          	  case INT:
+          		  fprintf(fp, "%d\t %d\n", (int)x[k], (int)yval);
+              break;
+          	  case FLOAT:
+          	  case DOUBLE:
+          		  fprintf(fp, "%f\t %f\n", x[k], yval);
+          }
 
 	    } else {
 
 	      if(Err1 && Err2 == NULL) {
-		fprintf(fp, "%g\t %g\t %g\n", x[k], yval, Err1[k]);
+	    	// fprintf(fp, "%f\t %f\t %f\n", x[k], yval, Err1[k]); // originally
+	      switch (V_FORMAT(v)) {
+        	  case BYTE:
+        	  case SHORT:
+        	  case INT:
+        		  fprintf(fp, "%d\t %d\t %d\n", (int)x[k], (int)yval, (int)Err1[k]);
+              break;
+        	  case FLOAT:
+        	  case DOUBLE:
+        		  fprintf(fp, "%f\t %f\t %f\n", x[k], yval, Err1[k]);
+        }
+
 
 	      } else if(Err1 && Err2 && Err3 == NULL) {
 
                 // NOTE(gorelick): This is an outright error.
-		e1 = (style && offset && (style == "yerrorbars" || style == "yerrorlines"))?Err1[k]-(float)(vnum-1)*offset:Err1[k];
-		e2 = (style && offset && (style == "yerrorbars" || style == "yerrorlines"))?Err2[k]-(float)(vnum-1)*offset:Err2[k];
+		e1 = (style && offset && (style == "yerrorbars" || style == "yerrorlines"))?Err1[k]-(double)(vnum-1)*offset:Err1[k];
+		e2 = (style && offset && (style == "yerrorbars" || style == "yerrorlines"))?Err2[k]-(double)(vnum-1)*offset:Err2[k];
 
-		fprintf(fp, "%g\t %g\t %g\t %g\n", x[k], yval, e1, e2);
+		// fprintf(fp, "%f\t %f\t %f\t %f\n", x[k], yval, e1, e2); // originally
+	      switch (V_FORMAT(v)) {
+      	  case BYTE:
+      	  case SHORT:
+      	  case INT:
+      		fprintf(fp, "%d\t %d\t %d\t %d\n", (int)x[k], (int)yval, (int)e1, (int)e2);
+          break;
+      	  case FLOAT:
+      	  case DOUBLE:
+      		fprintf(fp, "%f\t %f\t %f\t %f\n", x[k], yval, e1, e2);
+      }
 
 	      } else {
 
-		e1 = Err3[k]-(float)(vnum-1)*offset;
-		e2 = Err4[k]-(float)(vnum-1)*offset;
+		e1 = Err3[k]-(double)(vnum-1)*offset;
+		e2 = Err4[k]-(double)(vnum-1)*offset;
 
-		fprintf(fp, "%g\t %g\t %g\t %g\t %g\t %g\n", x[k], yval, Err1[k], Err2[k], e1, e2);
+		// fprintf(fp, "%f\t %f\t %f\t %f\t %f\t %f\n", x[k], yval, Err1[k], Err2[k], e1, e2); // originally
+		switch (V_FORMAT(v)) {
+		      	  case BYTE:
+		      	  case SHORT:
+		      	  case INT:
+		      		fprintf(fp, "%d\t %d\t %d\t %d\t %d\t %d\n", (int)x[k], (int)yval, (int)Err1[k], (int)Err2[k], (int)e1, (int)e2);
+		      	  break;
+		      	  case FLOAT:
+		      	  case DOUBLE:
+		      		fprintf(fp, "%f\t %f\t %f\t %f\t %f\t %f\n", x[k], yval, Err1[k], Err2[k], e1, e2);
+		      }
 	      }
 	    }
 	  }
@@ -1453,7 +1504,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	
 	  sprintf(CommandBuffer + strlen(CommandBuffer), "'%s'", fname);
 	
-	  // Properly title the fucking object and vector
+	  // Properly title the object and vector
 	  if (label != NULL)
 	    sprintf(CommandBuffer + strlen(CommandBuffer), " title '%s vector %d'", label,vnum);
 	  else if (lbl != NULL) {
