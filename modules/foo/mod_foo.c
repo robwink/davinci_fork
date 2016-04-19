@@ -10,7 +10,7 @@ static dvModuleFuncDesc exported_list[] = {
   { "sqrt", (void *) foo_dispatch },
   { "ceil", (void *) foo_dispatch },
   { "floor", (void *) foo_dispatch },
-}; 
+};
 
 static dvModuleInitStuff is = {
   exported_list, sizeof(exported_list)/sizeof(dvModuleFuncDesc),
@@ -91,7 +91,7 @@ foo_dispatch(vfuncptr func, Var *args)
 	for(i=0; i<3; i++){
 		if (strcmp(foo_apidefs[i].apiname, func->name) == 0){
 			parse_error("Calling function %s\n", func->name);
-			result = dispatch_api(&foo_apidefs[i], args);
+			result = dispatch_api((APIDEFS*)&foo_apidefs[i], args);
 			parse_error("Function %s returned\n", func->name);
 			return result;
 		}

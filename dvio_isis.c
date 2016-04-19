@@ -663,7 +663,7 @@ initHeaderFromQubeLabel(OBJDESC *qube, char *fn, struct iom_iheader *h){
   }
   else {
    if (iom_is_ok2print_unsupp_errors()){
-      printf(stderr, "%s does not have %s specified.\n",
+      fprintf(stderr, "%s does not have %s specified.\n",
              fn, "CORE_ITEMS");
    }
    return 0;
@@ -1935,7 +1935,6 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
     if (iom_GetISISHeader(fp, fname, &s, msg_file, &object) == 0) {
         parse_error("%s: not an ISIS file", fname);
         fclose(fp);
-        free(fname);
         return (NULL);
     }
 

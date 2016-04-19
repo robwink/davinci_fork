@@ -253,8 +253,8 @@ int fixup_ranges(Var *v, Range *in, Range *out);
 void split_string(char *buf, int *argc, char ***argv, char *s);
 char *uppercase(char *s);
 char *lowercase(char *s);
-char *ltrim(char *s, char *trim_chars);
-char *rtrim(char *s, char *trim_chars);
+char *ltrim(char *s, const char *trim_chars);
+char *rtrim(char *s, const char *trim_chars);
 char *fix_name(const char *input_name);
 
 int dv_getline(char **ptr, FILE *fp);

@@ -200,19 +200,19 @@ davinci_type(
 
    Example:
      If the input columns were:
-    
+
                "sclk_time temps[1] temps[2] det temps[3]"
-    
+
      then the LIST *l should be arranged as follows:
-    
+
      l[0] = coldef<"sclk_time">
-    
-     l[1] = coldef<"temps"> 
+
+     l[1] = coldef<"temps">
             + l[1]->next points to chain of coldef<"temps">
             each of l[1]->next's is an element of the array "temps"
-    
+
      l[2] = coldef<"det">
-    
+
 
 
     @param cols [in|out] array of all columns
@@ -315,7 +315,7 @@ guess_struct(
     @param nfields [in] number of fields (columns).
     @param nrecs [in] number of rows.
     @return pointer to data structure or NULL on error.
-*/ 
+*/
 static Var*
 alloc_davinci_data_space(
     coldef   **fields,      /* list of "root"-"coldef"s */
@@ -385,7 +385,7 @@ alloc_davinci_data_space(
 
             }
             break;
-      
+
         default:
             fprintf(stderr,
                     "Unhandled type %d encontered encountered. Fix %s:%d.\n",
@@ -397,7 +397,7 @@ alloc_davinci_data_space(
 
     return v_return;
 }
-    
+
 
 
 /** Returns the number of base-10 digits in a positive integer. */
@@ -433,7 +433,7 @@ is_overflow_double(double d){
 */
 static void
 pass1_cb_fs(void *s, size_t len, void *call_data)
-{  
+{
     int i;
     long itemp = 0;
     double dtemp = 0;
@@ -465,7 +465,7 @@ pass1_cb_fs(void *s, size_t len, void *call_data)
     //if this is one more column than we've seen before
     if( data->cur_field == data->ncols ) {
         data->ncols++;
-        
+
         //handles case of more columns than headers seen or created
         if( data->nrecs != 0 ) {
             mem_size = (num_digits(data->ncols)+2)*sizeof(char);
@@ -474,7 +474,7 @@ pass1_cb_fs(void *s, size_t len, void *call_data)
                 data->error = 1;
                 return;
             }
-            
+
             snprintf(ctemp, num_digits(data->ncols)+2, "c%d", data->ncols);
             data->coldefs[data->cur_field].name = ctemp;
             #ifdef FF_LOADCSV_DEBUG
@@ -498,7 +498,7 @@ pass1_cb_fs(void *s, size_t len, void *call_data)
                 data->error = 1;
                 return;
             }
-    
+
             init_coldefs(&data->coldefs[data->colsize/2], data->colsize/2);
 
             i=0;
@@ -509,9 +509,9 @@ pass1_cb_fs(void *s, size_t len, void *call_data)
         }
     }
 
-    //if len=0 the type and length don't change . . . 
+    //if len=0 the type and length don't change . . .
     //but what if there's a blank field in the header row? not sure.
-    //Maybe I'll just always collapse blanks in header row (if header=1 of course)   
+    //Maybe I'll just always collapse blanks in header row (if header=1 of course)
     if( len==0 && data->nrecs!=0 ) {
         data->cur_field++;
         return;
@@ -525,7 +525,7 @@ pass1_cb_fs(void *s, size_t len, void *call_data)
                 data->error = 1;
                 return;
             }
-    
+
             memcpy(ctemp, s, len);
             data->coldefs[data->cur_field].name = ctemp;
             #ifdef FF_LOADCSV_DEBUG
@@ -540,7 +540,7 @@ pass1_cb_fs(void *s, size_t len, void *call_data)
                 data->error = 1;
                 return;
             }
-            
+
             snprintf(ctemp, num_digits(data->ncols)+2, "c%d", data->ncols);
             data->coldefs[data->cur_field].name = ctemp;
             #ifdef FF_LOADCSV_DEBUG
@@ -558,7 +558,7 @@ pass1_cb_fs(void *s, size_t len, void *call_data)
     temp_char = schar[len];
     schar[len] = '\0';
     itemp = strtol(s, &end, 10);
-    
+
     if(itemp<=INT_MAX && itemp >= INT_MIN && end>=schar+len) {
         if( itemp>=0 && itemp<=UCHAR_MAX ) {
             ;
@@ -567,7 +567,7 @@ pass1_cb_fs(void *s, size_t len, void *call_data)
         } else {
             data->coldefs[data->cur_field].data_type = MAX(data->coldefs[data->cur_field].data_type, TINT);
         }
-        
+
         type_found = 1;
     }
 
@@ -633,7 +633,7 @@ pass1_cb_fs(void *s, size_t len, void *call_data)
             data->coldefs[data->cur_field].data_type = TSTR;
         }
     }
-    
+
 
     schar[len] = temp_char;
     /* update calldata */
@@ -671,7 +671,6 @@ init_coldefs(coldef* cols, int num)
     int i;
 
     for(i=0; i<num; i++) {
-        
         cols[i].name = NULL;
         cols[i].data_type = TBYTE; /* start as "BYTE", promote if necessary */
         cols[i].max_len = 0;
@@ -760,7 +759,7 @@ pass1_types(
     #endif
 
     return (header) ? (pdata.nrecs-1) : pdata.nrecs;
-} 
+}
 
 
 
@@ -781,7 +780,7 @@ pass2_cb_fs(void *s, size_t len, void *call_data)
 {
     calldata* data = (calldata*)call_data;
 
-    
+
     if( (data->nrecs==0 && data->header) || (data->collapse && len==0) )
         return;
 
@@ -926,12 +925,12 @@ static int
 pass2(
     char*   file,
     size_t  file_size,
-    struct csv_parser *p,
+    struct  csv_parser *p,
     coldef  **columns,
     coldef  *coldefs,
     void    **data_ptrs,
-    int	    numcols,
-    int	    numfields,
+    int     numcols,
+    int     numfields,
     int     header,
     int     collapse
 )
@@ -1024,7 +1023,7 @@ load_csv(
 
     struct csv_parser p;
     void** data_ptrs = NULL;
-    void** data = NULL;     //psuedo davinci Var* struct for stand alone testing
+    void** data = NULL;     //pseudo davinci Var* struct for stand alone testing
 
     coldef *columns = NULL;
     coldef **fields = NULL;
@@ -1070,7 +1069,7 @@ load_csv(
     }
 
     /* if the file is empty just return a new empty struct */
-    if( sbuf.st_size == 0 ) {       
+    if( sbuf.st_size == 0 ) {
         *v_return = new_struct(0);
         if(iscompressed) {
             unlink(fname);
@@ -1083,23 +1082,23 @@ load_csv(
       if(iscompressed) {
         unlink(fname);
       }
-      
+
       free(fname);
       return 0;
     }
 
-    data = (char *)mmap(NULL, sbuf.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
+    data = mmap(NULL, sbuf.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
 
-    if (data == NULL || data == ((void *)-1)){
+    if (data == NULL || data == MAP_FAILED){
     	fprintf(stderr, "\nDavinci cannot allocate sufficient memory to load the file\n\"%s\".\n\n", fname);
 
     	// Calculate the number of mega bytes...
     	mb = sbuf.st_size / bytesInMb;
 
     	// Calculate the number of giga bytes...
-    	gb = mb>=1024?((float)mb/1024.0):0;
+    	gb = mb >= 1024 ? ((float)mb/1024.0) : 0;
 
-    	if((int)gb>0)
+    	if((int)gb > 0)
     	{
     		// If file was found to be greater than 1 GB.
 
@@ -1140,7 +1139,7 @@ load_csv(
 
     /* cut off at [ so linking works. */
     for(i=0; i<numcols; i++)
-        if ((temp_str = strchr(columns[i].name, '['))) { *temp_str = 0; }      
+        if ((temp_str = strchr(columns[i].name, '['))) { *temp_str = 0; }
 
     fill_col_min_size(columns, numcols);
 
@@ -1200,7 +1199,7 @@ load_csv(
         case TSTR:
             data_ptrs[i] = (void *)V_TEXT(d).text;
             break;
-      
+
         default:
             data_ptrs[i] = (void *)V_DATA(d);
             break;
@@ -1220,7 +1219,7 @@ load_csv(
         free(fname);
         csv_free(&p);
         return 0;
-    }     
+    }
 
 
     free_coldefs(columns, numcols);
@@ -1251,7 +1250,7 @@ ff_loadcsv(
 {
     char     *filename = NULL;
     Var      *v_return;
-    int      rc, header = 1, collapse_fdelim = 0; 
+    int      rc, header = 1, collapse_fdelim = 0;
     char     *field_delim = "\t";
 
     Alist    alist[6];
@@ -1353,7 +1352,7 @@ dv_WriteCSV(Var* the_data, char* filename, char* field_delim, int header, int fo
 				}
 
 				if( data[i] != NULL && V_SIZE(data[i])[2] > 1 ) {
-					parse_error("Multiple bands (z>1) not supported.\nColumn %d has z dimension %d\n", 
+					parse_error("Multiple bands (z>1) not supported.\nColumn %d has z dimension %d\n",
 							i, V_SIZE(data[i])[2] );
 					error = 1;
 					break;
@@ -1399,7 +1398,7 @@ dv_WriteCSV(Var* the_data, char* filename, char* field_delim, int header, int fo
 	}
 
 /* print out column headers if requested */
-	if(header) 
+	if(header)
 		print_headers(data, keys, count, file, field_delim);
 
 
@@ -1420,8 +1419,8 @@ dv_WriteCSV(Var* the_data, char* filename, char* field_delim, int header, int fo
 			}
 
 			//if a column has fewer rows than others
-			if( (V_TYPE(data[i]) == ID_VAL && row >= V_SIZE(data[i])[1]) || 
-				( V_TYPE(data[i]) == ID_TEXT && V_TEXT(data[i]).Row <= row) ) {		
+			if( (V_TYPE(data[i]) == ID_VAL && row >= V_SIZE(data[i])[1]) ||
+				( V_TYPE(data[i]) == ID_TEXT && V_TEXT(data[i]).Row <= row) ) {
 
 				if( i < count-1 ) {
 					for(j=0; j<V_SIZE(data[i])[0]; j++)

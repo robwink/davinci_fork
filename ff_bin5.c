@@ -10,7 +10,7 @@
 
 #include "parser.h"
 
-typedef enum { 
+typedef enum {
   B5WT_BYTE           = 1,
   B5WT_INTEGER        = 2,
   B5WT_LONG           = 3,
@@ -47,7 +47,7 @@ static int typeSizes[B5WT_ULONGLONG+1] = {
   8
 };
 
-static int internalTypes[B5WT_LONGLONG+1] = {
+static int internalTypes[B5WT_ULONGLONG+1] = {
   0,
   BYTE,
   SHORT,
@@ -330,7 +330,7 @@ ff_load_bin5(vfuncptr func, Var *arg)
     return NULL;
   }
 
-	close(fd);
+  close(fd);
 
   /**
    ** Make the data dimension at least three. The code

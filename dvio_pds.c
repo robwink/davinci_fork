@@ -426,8 +426,8 @@ traverseGroup(KEYWORD *kw, Var *v){
 
 static char *
 getGeneralObjClass(const char *objClassName){
-	char *p = strrchr(objClassName, '_');
-	p = (p != NULL)? p+1: objClassName;
+	const char *p = strrchr(objClassName, '_');
+	p = (p != NULL) ? p+1 : objClassName;
 	return lowercase(strdup(p));
 }
 

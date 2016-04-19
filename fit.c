@@ -252,7 +252,7 @@ dfit(Var *x, Var *y, Var *ip, const char *fname,
         if (ip && i < V_DSIZE(ip)) a[i] = extract_double(ip, i);
         else a[i] = 0.0;
     }
-    first_guess(a, fname,verbose);
+    first_guess(a, (char*)fname, verbose);
 
     if (ip && V_DSIZE(ip) == ma+2) alamda = extract_double(ip, ma+1);
     else

@@ -45,7 +45,7 @@ gui_initMenuBar (const char *dvName, WidgetClass class, Widget parent,
 	Var *dvResources, void **instanceData,
 	Narray *publicResources, Widget *outerWidget)
 {
-	return XmCreateMenuBar(parent, dvName, NULL, 0);
+	return XmCreateMenuBar(parent, (char*)dvName, NULL, 0);
 }
 
 WidgetClass

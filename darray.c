@@ -255,7 +255,7 @@ Nnode_create(const char *key, void *value)
 void
 Nnode_free(Nnode *a, Narray_FuncPtr fptr)
 {
-  if (a->key) free(a->key);
+  if (a->key) free((void*)a->key);
   if (fptr && a->value) fptr(a->value);
   free(a);
 }
@@ -492,7 +492,7 @@ Narray_get(const Narray *a, const int i, char **key, void **data)
 {
   Nnode *n;
   if (Darray_get(a->data, i, (void **)&n) == 1) {
-    if (key) *key = n->key;
+    if (key) *key = (char*)n->key;
     if (data) *data = n->value;
     return(1);
   }
@@ -510,7 +510,7 @@ Narray_count(const Narray *a)
 // avl_destory behaves badly if you don't pass in some kind of destructor
 // function.  This do-nothing function is sufficient to cause avl to
 // cleanup it's own memory.
-avl_node_func avl_free_func(void *data, void *params) { }
+void avl_free_func(void *data, void *params) { }
 
 void
 Narray_free(Narray *a, Narray_FuncPtr fptr)

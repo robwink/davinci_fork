@@ -363,7 +363,7 @@ ff_org(vfuncptr func, Var * arg)
   }
 
   if (func->fdata != NULL) {
-    org = (int) (func->fdata) - 10;
+    org = (long) (func->fdata) - 10;
   } else {
     if (org_str == NULL) {
       /**
@@ -437,7 +437,7 @@ ff_conv(vfuncptr func, Var * arg)
     return(NULL);
   }
 
-  format = (int) func->fdata;
+  format = (long) func->fdata;
   dsize = V_DSIZE(v);
   data = calloc(dsize, NBYTES(format));
   if (data == NULL){
@@ -1521,7 +1521,7 @@ print_history(int i)
   if (i > state->length) i = state->length-1;
   for (j = state->length-i ; j < state->length ; j++) {
     h = history_get(j-history_base+1);
-	printf("%6d   %s\n", j, (h==NULL? "(null)": h->line));
+    printf("%6d   %s\n", j, (h==NULL? "(null)": h->line));
   }
 #endif
 }

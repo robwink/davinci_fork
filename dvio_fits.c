@@ -122,7 +122,7 @@ int filter_kw(const char *kw) {
 		n = nfixed_kw * 10 + nsfx_kw * 15;
 		if ((regex = (char *) calloc(sizeof(char), n)) == NULL) {
 			parse_error("%s: Unable to allocate %d bytes for regex\n",
-					"filter_kw", n);
+			            "filter_kw", n);
 			return 0;
 		}
 		memset(regex, '\0', n);
@@ -144,7 +144,7 @@ int filter_kw(const char *kw) {
 		if ((errcode = regcomp(&preg, regex, REG_EXTENDED)) != 0) {
 			regerror(errcode, &preg, errbuf, sizeof(errbuf) - 1);
 			parse_error("%s: Error compiling regex: \"%s\". Reason: %s\n",
-					"filter_kw", "filter_kw", regex, errbuf);
+			            "filter_kw", "filter_kw", regex, errbuf);
 
 			free(regex);
 			regex = NULL;
@@ -250,13 +250,13 @@ Read_FITS_Image(fitsfile *fptr) {
 
 	if (dim > 3) {
 		parse_error(
-				"Data objects of greater than 3 dimensions are not handled.");
+		        "Data objects of greater than 3 dimensions are not handled.");
 		return (NULL);
 	}
 
 	if (dim == 0) {
 		parse_error(
-				"Warning: image has dimension 0, there is no image to read");
+		        "Warning: image has dimension 0, there is no image to read");
 		return (NULL);
 	}
 
@@ -433,7 +433,7 @@ static int free_table_specs(struct tbl_specs *t) {
 #define CHECK_MISSING_FIELD_SPEC(t,str,key,colnum,tbl,rtn) \
 	if (empty_or_null_string(str)){\
 		parse_error("Missing \"%s\" value for column %d in table \"%s\"\n", \
-			key, colnum, tbl);\
+		    key, colnum, tbl);\
 		free_table_specs(t);\
 		return rtn;\
 	}
@@ -540,8 +540,8 @@ static int adjust_table_specs(Var *tbldata, struct tbl_specs *t,
 	tFixed->fforms = (char **) calloc(sizeof(char *), tFixed->nfields);
 	tFixed->funits = (char **) calloc(sizeof(char *), tFixed->nfields);
 
-	if (tFixed->fnames == NULL || tFixed->fforms == NULL
-			|| tFixed->funits == NULL) {
+	if (tFixed->fnames == NULL || tFixed->fforms == NULL ||
+	    tFixed->funits == NULL) {
 		free_table_specs(tFixed);
 		free_table_specs(t);
 		parse_error("Unable to alloc memory for fixed table specs.\n");
@@ -803,7 +803,7 @@ Read_FITS_Table(fitsfile *fptr) {
 		case TBIT:
 		default:
 			parse_error("Ignoring column \"%s\" of unhandled type %d\n",
-					colname, coltype);
+			            colname, coltype);
 			datatype = 0;
 			fmt = 0;
 			break;
@@ -1006,8 +1006,8 @@ FITS_Read_Entry(char *fits_filename) {
 
 		else {
 			parse_error(
-					"Unknown data object in fits file at HDU location: %d\nSkipping data portion",
-					i);
+			        "Unknown data object in fits file at HDU location: %d\nSkipping data portion",
+			        i);
 			davinci_data = NULL;
 		}
 
@@ -1274,14 +1274,14 @@ int WriteSingleStructure(fitsfile *fptr, Var *obj, int index) {
 			}
 		}
 		fits_get_num_hdus(fptr, &numObjects, &hduStatus); // drd how many in there?
-		sprintf(msg," number of  HDU's %d", numObjects);
-		QUERY_FITS_ERROR(hduStatus,msg,NULL);
+		sprintf(msg," number of HDU's %d", numObjects);
+		QUERY_FITS_ERROR(hduStatus ,msg, 0);
 
 		if ((numObjects > 1) && (lastVar != NULL) && (headerOnly == 1) && (wroteDataItem == 1) ) { // Fix up the primary header, get stuff not automatically put in
 			headerOnly = 0;
 			fits_movabs_hdu(fptr, numObjects-1, &hduType, &hduStatus);
 			sprintf(msg," moving to HDU index %d", index);
-			QUERY_FITS_ERROR(hduStatus,msg,NULL);
+			QUERY_FITS_ERROR(hduStatus, msg, 0);
 			count = get_struct_count(lastVar);
 			for (i = 0; i < count; i++) {
 				get_struct_element(lastVar, i, &obj_name, &element);
@@ -1297,7 +1297,7 @@ int WriteSingleStructure(fitsfile *fptr, Var *obj, int index) {
 		}
 	}
 	wroteDataItem = 0;
-    lastVar = obj;
+	lastVar = obj;
 	return (0);
 }
 
@@ -1356,8 +1356,8 @@ FITS_Write_Structure(char *fits_filename, Var *obj, int force) {
 
 		if (V_TYPE(Tmp) != ID_STRUCT) {
 			parse_error(
-					"Encountered a non-FITS item in the list of items: %s\n",
-					obj_name);
+			        "Encountered a non-FITS item in the list of items: %s\n",
+			        obj_name);
 			ScratchFITS(fptr, name);
 			return (NULL);
 		}
@@ -1367,8 +1367,8 @@ FITS_Write_Structure(char *fits_filename, Var *obj, int force) {
 
 		if (WriteSingleStructure(fptr, Tmp, i)) {
 			parse_error(
-					"Invalid items in structure labeled: %s\nCannot write this object as a FITS file\n",
-					obj_name);
+			        "Invalid items in structure labeled: %s\nCannot write this object as a FITS file\n",
+			        obj_name);
 			ScratchFITS(fptr, name);
 			return (NULL);
 		}
@@ -1437,7 +1437,7 @@ FITS_Write_Var(char *fits_filename, Var *obj, int force) {
 
 	if (!(int) Write_FITS_Image(fptr, obj)) {
 		parse_error(
-				"An error was generated trying to write your data as a FITS image\n");
+		        "An error was generated trying to write your data as a FITS image\n");
 		ScratchFITS(fptr, name);
 		return (NULL);
 	}
@@ -1495,7 +1495,7 @@ WriteFITS(vfuncptr func, Var * arg) {
 
 	else
 		parse_error(
-				"You have submitted an invalid object to be written out as a FITS file");
+		        "You have submitted an invalid object to be written out as a FITS file");
 
 	return (NULL);
 
@@ -1545,7 +1545,7 @@ ReadFITS(vfuncptr func, Var * arg) {
 
 	if (!data) {
 		parse_error("%s: Failed to load %s%s\n", func->name, filename,
-				(extension ? extension : ""));
+		            (extension ? extension : ""));
 		return (NULL);
 	}
 

@@ -196,7 +196,7 @@ struct _var {
 
 enum {
 	ID_NONE = 0,       /* a non value */
-	ID_ERROR = 99,  
+	ID_ERROR = 99,
 	ID_BASE = 100,     /* in case of conflicts */
 	ID_UNK,            /* Unknown type - also used as a generic type */
 	ID_STRING,         /* NULL terminated character string */

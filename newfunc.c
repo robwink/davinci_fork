@@ -324,7 +324,7 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
 
             for (_t = 0 ; _t < 2 ; _t++) {
                 if (ptr) {
-                    for (p = values; p && *p; p++) {
+                    for (p = (char**)values; p && *p; p++) {
                         if (ptr && !strcasecmp(ptr, *p)) {
                             q = *p;
                             break;
