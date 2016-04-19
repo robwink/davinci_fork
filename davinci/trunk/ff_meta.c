@@ -30,7 +30,7 @@ ff_audit(vfuncptr func, Var *arg)
   s_data = calloc(4, sizeof(int));
   s = newVal(BSQ, 4, 1, 1, INT, s_data);
 
-  s_data[0] = (int)ptr;
+  s_data[0] = (long)ptr;
   s_data[1] = faketime.tms_utime;
   s_data[2] = faketime.tms_stime;
   s_data[3] = realtime;

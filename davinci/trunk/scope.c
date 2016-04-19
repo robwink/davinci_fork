@@ -404,7 +404,7 @@ mem_malloc(void)
    */
   if ((count = Darray_count(scope->tmp)) > 0) {
     if (Darray_get(scope->tmp, count-1, (void **)&top) == 1 && top == NULL) {
-      Darray_replace(scope->tmp, count-1, v, &junk);
+      Darray_replace(scope->tmp, count-1, v, (void**)&junk);
       return(v);
     }
   }

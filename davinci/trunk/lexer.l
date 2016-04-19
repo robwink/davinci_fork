@@ -2,8 +2,8 @@
 
 %{
 
-#include "parser.h"
 #include "y_tab.h"
+#include "parser.h"
 
 #define MYECHO		if (save_fp) (void)fwrite( yytext, yyleng, 1, save_fp );
 

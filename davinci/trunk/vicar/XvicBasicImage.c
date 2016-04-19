@@ -2,8 +2,9 @@
 #include <X11/StringDefs.h>
 #include "XvicBasicImageP.h"
 #include "XvicRegion.h"
-#include <limits.h>		/* only for SetDataRangeDefaults() */
-#include <math.h>	/* only for floor()... is it really needed??!!!!*/
+#include <limits.h>   /* only for SetDataRangeDefaults() */
+#include <math.h>     /* only for floor()... is it really needed??!!!!*/
+#include <stdlib.h>   /* for free() and exit() */
 
 /* #define DPR(x) printf x */
 #define DPR(x)

@@ -502,7 +502,7 @@ Var *ff_filename(vfuncptr func, Var * arg)
 
   // NOTE(gorelick): This opaque enum should be replaced with strings
   // or just compare the function name.
-  filefunc = (int) func->fdata;
+  filefunc = (long) func->fdata;
   if (filefunc == 0) {
     parse_error("Bad function");
     return (NULL);

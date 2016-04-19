@@ -142,7 +142,7 @@ pp_math(Var * a, int op, Var * b)
     **
     **/
 
-    if (V_TYPE(a) == ID_STRING || V_TYPE(b) == ID_STRING || 
+    if (V_TYPE(a) == ID_STRING || V_TYPE(b) == ID_STRING ||
 		  V_TYPE(a) == ID_TEXT || V_TYPE(b) == ID_TEXT) {
         return (pp_math_strings(a, op, b));
     }
@@ -315,7 +315,7 @@ pp_compare(Var * a, Var * b)
     **/
 
 /*
-    if (V_TYPE(a) == ID_STRING || V_TYPE(b) == ID_STRING || 
+    if (V_TYPE(a) == ID_STRING || V_TYPE(b) == ID_STRING ||
 		  V_TYPE(a) == ID_TEXT || V_TYPE(b) == ID_TEXT) {
         return (pp_math_strings(a, ID_EQ, b));
     }
@@ -419,7 +419,7 @@ rpos(size_t i, Var * from, Var * to)
 /**
  ** return index of x,y,z in v
  **/
-size_t 
+size_t
 cpos(int x, int y, int z, Var *v)
 {
     switch(V_ORG(v)) {
@@ -454,7 +454,7 @@ xpos(size_t i, Var *v, int *x, int *y, int *z)
 }
 
 
-int 
+int
 extract_int(const Var * v, const size_t i)
 {
     switch (V_FORMAT(v)) {
@@ -471,7 +471,7 @@ extract_int(const Var * v, const size_t i)
     }
     return (0);
 }
-float 
+float
 extract_float(Var * v, size_t i)
 {
     switch (V_FORMAT(v)) {
@@ -488,7 +488,7 @@ extract_float(Var * v, size_t i)
     }
     return (0);
 }
-double 
+double
 extract_double(Var * v, size_t i)
 {
     switch (V_FORMAT(v)) {

@@ -21,6 +21,7 @@
 *******************************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <float.h>
 #include <X11/Intrinsic.h>
@@ -699,9 +700,9 @@ mouseUp (Widget w, XEvent *event, char *args, int n_args)
 *******************************************************************************/
 
 static int
-compPoint (void *a, void *b)
+compPoint (const void *a, const void *b)
 {
-	LBoxPoint_t *p = a, *q = b;
+	LBoxPoint_t *p = (LBoxPoint_t*)a, *q = (LBoxPoint_t*)b;
 	if (p->x < q->x)
 		return -1;
 	else if (p->x > q->x)
@@ -718,7 +719,7 @@ addPoint (LineBoxWidget wid, float x, float y)
 	wid->lineBox.pPoints[wid->lineBox.nPoints].x = x;
 	wid->lineBox.pPoints[wid->lineBox.nPoints].y = y;
 	wid->lineBox.nPoints ++;
-	qsort (wid->lineBox.pPoints, wid->lineBox.nPoints,
+	qsort(wid->lineBox.pPoints, wid->lineBox.nPoints,
 		sizeof(wid->lineBox.pPoints[0]), compPoint);
 }
 

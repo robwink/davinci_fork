@@ -3,13 +3,13 @@
 
 #include "parser.h"
 
-#define VOID		9    
+#define VOID          9
 
-#define CONSTBIT        64
-#define VOLBIT          128
-#define PTRBIT          256
+#define CONSTBIT     64
+#define VOLBIT      128
+#define PTRBIT      256
 
-#define DTMASK		0x3F
+#define DTMASK      0x3F
 
 typedef struct {
     char *argname;

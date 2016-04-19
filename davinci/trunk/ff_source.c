@@ -62,7 +62,7 @@ push_input_file(char *name)
         }
     }
 
-    // TODO: name is probably not so good here.     
+    // TODO: name is probably not so good here.
     // We'd likely rather have fname
     push_input_stream(fptr, name);
 }
@@ -90,7 +90,7 @@ pop_input_file()
     sourced--;
     if (sourced < 0) sourced = 0;
 
-    if (nfstack == 0) 
+    if (nfstack == 0)
         return;
 
     ftos = fstack[nfstack-1];
@@ -98,7 +98,7 @@ pop_input_file()
 }
 
 int
-is_file(char *name) 
+is_file(char *name)
 {
     struct stat sbuf;
 

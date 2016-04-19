@@ -4212,7 +4212,7 @@ gui_setFloat (const Widget widget,
 	FreeStackList freeStack)
 {
 	float floatValue;
-	floatValue = extract_float(value, 0);
+	floatValue = extract_float((Var*)value, 0);
 	/* Note!  This is an ugly, but simple hack to get around XLib not knowing
 	   float is cast to double in vararg lists */
 	return (XtArgVal) *(int*)&floatValue;
@@ -4236,7 +4236,7 @@ gui_setDouble (const Widget widget,
 	FreeStackList freeStack)
 {
 	double doubleValue;
-	doubleValue = extract_double(value, 0);
+	doubleValue = extract_double((Var*)value, 0);
 	return (XtArgVal) doubleValue;
 }
 

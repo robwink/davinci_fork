@@ -41,8 +41,8 @@ struct _vfuncptr vfunclist[] = {
   { "floor",      ff_dfunc,   (void *)floor,  NULL},
   { "ceil",       ff_dfunc,   (void *)ceil,   NULL},
   { "abs",        ff_dfunc,   (void *)fabs,   NULL},
-  { "round",        ff_dfunc,   (void *)my_round,   NULL},
-  { "my_round",        ff_dfunc,   (void *)my_round,   NULL},
+  { "round",      ff_dfunc,   (void *)my_round,   NULL},
+  { "my_round",   ff_dfunc,   (void *)my_round,   NULL},
 
   { "pow",        ff_pow,     (void *)NULL,   NULL},
 
@@ -99,12 +99,12 @@ struct _vfuncptr vfunclist[] = {
   { "write_isis3",    WriteISIS3,             NULL, NULL},
   { "write_ISIS3",    WriteISIS3,             NULL, NULL},
 #ifdef HAVE_LIBXML2
-  { "load_PDS4",       ReadPDS4,                NULL, NULL},
-  { "load_pds4",       ReadPDS4,                NULL, NULL},
+  { "load_PDS4",       ReadPDS4,              NULL, NULL},
+  { "load_pds4",       ReadPDS4,              NULL, NULL},
 #endif
 #ifdef HAVE_LIBCFITSIO
   { "load_fits",      ReadFITS,               NULL, NULL},
-  { "write_fits",      WriteFITS,               NULL, NULL},
+  { "write_fits",     WriteFITS,              NULL, NULL},
 #endif
   { "isis",           ff_read_suffix_plane,   NULL, NULL},
   { "load_raw",   ff_raw,         NULL, NULL},
@@ -321,7 +321,7 @@ struct _vfuncptr vfunclist[] = {
   { "unslant",       ff_unslant,            NULL, NULL },
   { "unslant_shear", ff_unslant_shear,      NULL, NULL },
   { "chdir",         ff_chdir,              NULL, NULL },
-  { "copy",         	ff_copy,            	NULL, NULL },
+  { "copy",          ff_copy,               NULL, NULL },
 
   { "fncc_fft2d",         ff_fncc_fft2d,    NULL,NULL },
   { "fncc_ifft2d",        ff_fncc_ifft2d,   NULL,NULL },

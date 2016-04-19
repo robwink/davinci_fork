@@ -7,8 +7,6 @@
 #include <limits.h>
 #include <unistd.h>
 
-#include "y_tab.h"
-
 //include specific libraries for finding the DV_EXEPATH
 #if defined(__APPLE__)
 #include <libproc.h>
@@ -85,7 +83,7 @@ void event_loop(void);
 #include <readline/readline.h>
 #endif
 
-char ** dv_complete_func(char *text, int start, int end);
+char ** dv_complete_func(const char *text, int start, int end);
 
 #if 0
 /* JAS FIX: these are all declared in readline.h and as far as I can tell
@@ -493,11 +491,11 @@ event_loop(void)
       char *argv[1];
       const char *av0 = "null";
       int argc = 1;
-      argv[0] = av0;
+      argv[0] = (char*)av0;
       applicationShell = XtVaAppInitialize(&applicationContext,
                                            "Davinci", NULL, 0,
                                            &argc, argv,
-                                           defaultAppResources, NULL);
+                                           (char**)defaultAppResources, NULL);
 
 //#ifdef INCLUDE_API
 //      /* FIX: what's this for? -JAS */
@@ -825,7 +823,7 @@ init_history(char *fname)
 
 
 char **
-dv_complete_func(char *text, int start, int end)
+dv_complete_func(const char *text, int start, int end)
 {
   return(NULL);
 }

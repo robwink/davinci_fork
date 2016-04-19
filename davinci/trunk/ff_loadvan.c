@@ -1003,7 +1003,7 @@ vanread(
     )
 {
     int      fd;
-    int 	 len;
+    int      len;
     char     *data = NULL,*p, *q, ch, *temp=NULL;
     struct   stat sbuf;
     coldef   *cols = NULL;
@@ -1030,7 +1030,7 @@ vanread(
     /*uncompress the file if necessary */
     if (fname && (fp = fopen(fname, "rb")) != NULL) {
       if (iom_is_compressed(fp)) {
-        fprintf(stderr, "is compressed\n");	/* FIX: remove */
+        fprintf(stderr, "is compressed\n"); /* FIX: remove */
         fclose(fp);
         fname = iom_uncompress_with_name(fname);
         iscompressed=1;
@@ -1049,7 +1049,7 @@ vanread(
       if(iscompressed) {
         unlink(fname);
       }
-      
+
       free(fname);
       return EFILE;
     }
