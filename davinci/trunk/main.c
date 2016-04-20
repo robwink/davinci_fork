@@ -478,6 +478,8 @@ static const String defaultAppResources[] = {
 void
 event_loop(void)
 {
+  init_input_stack();
+
   if (interactive) {
 #if !defined(USE_X11_EVENTS) || !defined(HAVE_LIBREADLINE)
     /* JAS FIX */
