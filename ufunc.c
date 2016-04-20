@@ -179,7 +179,7 @@ load_function(char *filename)
 		fname = (char *)":no filename:";
 	}
 
-	f->fname = strdup(fnamestack[ftosIndex]);
+	f->fname = strdup(fname);
 	f->fline = local_line+1;
 
 	/*

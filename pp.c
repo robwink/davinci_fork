@@ -20,25 +20,6 @@ extern Var * dd_get_argc(Scope *s);
 extern Var * dd_make_arglist(Scope *s);
 
 
-/*
-void 
-pp_emit_prompt()
-{
-    extern int interactive;
-    extern int sourced;
-	int i;
-
-    if (sourced <= 1 && interactive) {
-		if (indent)
-			printf("%2d> ",indent);
-		else {
-			printf("dv> ");
-		}
-        fflush(stdout);
-    }
-}
-*/
-
 Var *
 V_DUP(Var *v)
 {

@@ -108,7 +108,7 @@ Var *set_array (Var *, Var *, Var *);
 Var *extract_array (Var *, Range *);
 
 /* symbol.c */
-Var *get_sym (char *name);	/* retrieve named Sym from table */
+Var *get_sym (char *name); /* retrieve named Sym from table */
 Var *put_sym (Var *);
 Var *eval (Var *);
 Var * get_global_sym(char *);
@@ -142,10 +142,12 @@ double extract_double (Var * v, size_t i);
 Var *pp_add_strings(Var *a, Var *b);
 Var *pp_math_strings(Var *a, int op, Var *b);
 
-/* file.h */
-void push_input_file (char *name);
-void pop_input_file (void);
-int is_file (char *name);
+/* ff_source.c */
+void push_input_file(char *name);
+void push_input_stream(FILE *, char *filename);
+void pop_input_file(void);
+void init_input_stack();
+int is_file(char *name);
 
 /* error.c */
 #ifdef __cplusplus
@@ -221,7 +223,6 @@ Var * p_rlist(int , Var *, Var *);
 Var * p_llist(int , Var *, Var *);
 
 
-void push_input_stream(FILE *, char *filename);
 size_t rpos(size_t, Var *, Var *);
 Var * pp_print(Var *);
 
