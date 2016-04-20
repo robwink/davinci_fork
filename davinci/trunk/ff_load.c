@@ -35,10 +35,10 @@ ff_load_many(Var * list, struct iom_iheader *h )
 Var *
 ff_load(vfuncptr func, Var * arg)
 {
-    int record = -1;
-    char *filename = NULL;
-    struct iom_iheader h;
-    Var *fvar = NULL;
+	int record = -1;
+	char *filename = NULL;
+	struct iom_iheader h;
+	Var *fvar = NULL;
 
 	/* Set data extraction ranges for iom_read_qube_data(). */
 
@@ -63,7 +63,7 @@ ff_load(vfuncptr func, Var * arg)
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (fvar == NULL) {
-        parse_error("No filename specified to load()");
+        parse_error("No filename specified to %s()", func->name);
         return (NULL);
 	}
 

@@ -1714,6 +1714,11 @@ Var *ReadPDS(vfuncptr func, Var * arg)
   if (parse_args(func, arg, alist) == 0)
     return (NULL);
 
+  if (!fn) {
+    parse_error("No filename specificed to %s()", func->name);
+    return NULL;
+  }
+
   /* Handle loading many filenames */
   if (V_TYPE(fn) == ID_TEXT) {
     Var *s = new_struct(V_TEXT(fn).Row);
