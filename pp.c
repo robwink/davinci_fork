@@ -3,9 +3,6 @@
 #include "dvio.h"
 #include "ff_modules.h"
 
-/**
- ** pp_emit_prompt()    - spit out prompt if interactive 
- **/
 
 void commaize(char *);
 void pp_print_var(Var *v, char *name, int indent, int depth) ;
@@ -26,7 +23,7 @@ V_DUP(Var *v)
     Var *r;
     size_t dsize;
 
-	if (v == NULL) return(NULL);
+    if (v == NULL) return(NULL);
 
     if (V_TYPE(v) != ID_STRUCT) {
         r = newVar();
@@ -51,7 +48,7 @@ V_DUP(Var *v)
         r = (Var *)duplicate_struct(v);
         break;
 
-    case ID_TEXT:		/*Added: Thu Mar  2 16:49:11 MST 2000*/
+    case ID_TEXT:    /*Added: Thu Mar  2 16:49:11 MST 2000*/
     {
         int i;
         V_TEXT(r).Row=V_TEXT(v).Row;
@@ -122,7 +119,7 @@ pp_print_struct(Var *v, int indent, int depth)
 }
 
 void
-dump_var(Var *v, int indent, int limit) 
+dump_var(Var *v, int indent, int limit)
 {
     int i,j,k;
     size_t c;
@@ -249,7 +246,7 @@ print_text(Var *v, int indent)
  **/
 
 Var *
-pp_set_var(Var *id, Var *range, Var *exp) 
+pp_set_var(Var *id, Var *range, Var *exp)
 {
     Var *v, *e;
     Range *r, rout;
@@ -268,10 +265,10 @@ pp_set_var(Var *id, Var *range, Var *exp)
         if ((e = eval(exp)) != NULL) exp = e;
 
         /**
-         ** Verify that the src and destination pieces 
+         ** Verify that the src and destination pieces
          ** are legal values, and the same size
          **/
-        
+
         r = V_RANGE(range);
 
         if (V_TYPE(v)==ID_TEXT) /*Need to intercept TEXT var's before fixup*/
@@ -341,7 +338,7 @@ pp_set_var(Var *id, Var *range, Var *exp)
  **/
 
 Var *
-pp_inc_var(Var *id, Var *range, Var *exp) 
+pp_inc_var(Var *id, Var *range, Var *exp)
 {
     Var *v, *e;
     Range *r, rout;
@@ -358,10 +355,10 @@ pp_inc_var(Var *id, Var *range, Var *exp)
         if ((e = eval(exp)) != NULL) exp = e;
 
         /**
-         ** Verify that the src and destination pieces 
+         ** Verify that the src and destination pieces
          ** are legal values, and the same size
          **/
-        
+
         r = V_RANGE(range);
 
         if (V_TYPE(v)==ID_TEXT) {/*Need to intercept TEXT var's */
@@ -466,7 +463,7 @@ array_replace(Var *dst, Var *src, Range *r)
 
 				/*
 				** modification to correctly handle sizes of 1
-				** This is slow, but works 
+				** This is slow, but works
 				*/
                 s = cpos(i % x,j % y,k % z,src);
 
@@ -551,7 +548,7 @@ pp_set_struct(Var *a, Var *b, Var *exp)
  ** pp_mk_range() - make a range value, with specified from exression
  **/
 Var *
-pp_mk_range(Var *r1, Var *r2) 
+pp_mk_range(Var *r1, Var *r2)
 {
     int v1=0, v2=0;
     int format;
@@ -593,7 +590,7 @@ pp_mk_range(Var *r1, Var *r2)
  ** pp_mk_rstep() - make a range value, including step value.
  **/
 Var *
-pp_mk_rstep(Var *r1, Var *r2) 
+pp_mk_rstep(Var *r1, Var *r2)
 {
     int v1=0;
     int format;
@@ -625,7 +622,7 @@ pp_mk_rstep(Var *r1, Var *r2)
 
 
 Var *
-pp_add_range(Var *r, Var *v) 
+pp_add_range(Var *r, Var *v)
 {
     int dim;
 
@@ -680,7 +677,7 @@ pp_range(Var *v, Var *r)
     } else if (V_TYPE(v) == ID_STRING) {
         return(string_subset(v,r));
     }
-	
+
     parse_error( "Illegal type: %s", V_NAME(v));
     return(NULL);
 }
@@ -716,7 +713,7 @@ pp_func(Var *function, Var *arglist)
  **     arg == NULL, entire arglist is NULL
  **/
 Var *
-pp_mk_arglist(Var *arglist, Var *arg) 
+pp_mk_arglist(Var *arglist, Var *arg)
 {
     /*
     */
@@ -739,7 +736,7 @@ pp_mk_arglist(Var *arglist, Var *arg)
  * the keyword into the V_ARG Narray as a named element
  */
 Var *
-pp_keyword_to_arg(Var *keyword, Var *ex) 
+pp_keyword_to_arg(Var *keyword, Var *ex)
 {
     V_TYPE(keyword) = ID_KEYWORD;
     V_KEYVAL(keyword) = ex;
@@ -828,7 +825,7 @@ Var *pp_new_parallel(Var *axis, Var *arg)
 }
 
 
-int 
+int
 compare_strings(char *s1, int op, char *s2)
 {
     int i, k = 0;
@@ -905,8 +902,8 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
         rows = V_TEXT(exp1).Row;
         data=(int *)calloc(rows,sizeof(int));
         for (i = 0 ; i < rows ; i++) {
-            data[i] = compare_strings(V_TEXT(exp1).text[i], 
-                                      op, 
+            data[i] = compare_strings(V_TEXT(exp1).text[i],
+                                      op,
                                       V_TEXT(exp2).text[i]);
         }
         return(newVal(BSQ,1,rows,1,INT,data));
@@ -976,7 +973,7 @@ commaize(char *s)
 
 /*
 ** Ok, this is a big, temporary hack to handle module dereferences
-** to the module help function.  There shouldn't be ANY node 
+** to the module help function.  There shouldn't be ANY node
 ** manipulations outside of p.c, so I've clearly done this wrong.
 **
 ** But it works for the case of module.function(?)
@@ -991,7 +988,7 @@ pp_help(Var *s)
 
     if (s == NULL) p = NULL;
 	else if (V_TYPE(s) == ID_DEREF) {
-#ifdef BUILD_MODULE_SUPPORT 
+#ifdef BUILD_MODULE_SUPPORT
 		/* This is help on a module function */
 		p1 = V_NODE(s)->left;
 		p2 = V_NODE(s)->right;
@@ -1008,7 +1005,7 @@ pp_help(Var *s)
 			module_help(module, function);
 			return(NULL);
 		}
-#else 
+#else
 		parse_error("Module support not enabled.\n");
 		return(NULL);
 #endif
@@ -1030,7 +1027,7 @@ pp_exact_help(Var *s)
 
     if (s == NULL) p = NULL;
 	else if (V_TYPE(s) == ID_DEREF) {
-#ifdef BUILD_MODULE_SUPPORT 
+#ifdef BUILD_MODULE_SUPPORT
 		/* This is help on a module function */
 		p1 = V_NODE(s)->left;
 		p2 = V_NODE(s)->right;
@@ -1047,7 +1044,7 @@ pp_exact_help(Var *s)
 			module_help(module, function);
 			return(NULL);
 		}
-#else 
+#else
 		parse_error("Module support not enabled.\n");
 		return(NULL);
 #endif
@@ -1075,7 +1072,7 @@ pp_shell(char *cmd)
  **/
 
 Var *
-pp_set_where(Var *id, Var *where, Var *exp) 
+pp_set_where(Var *id, Var *where, Var *exp)
 {
     Var *v;
     size_t i,j,k, l, dsize;
@@ -1113,7 +1110,7 @@ pp_set_where(Var *id, Var *where, Var *exp)
     }
     where = v;
 
-    if (V_TYPE(id)==ID_TEXT && 
+    if (V_TYPE(id)==ID_TEXT &&
         (V_TYPE(exp)==ID_STRING || V_TYPE(exp)==ID_TEXT) &&
         V_TYPE(where)==ID_VAL)
         return(where_text(id,where,exp));
@@ -1173,19 +1170,19 @@ pp_set_where(Var *id, Var *where, Var *exp)
                 k = rpos(i, id, exp);
                 switch (format) {
                 case BYTE:		
-                    ((u_char *)V_DATA(id))[i] = extract_int(exp, k); 
+                    ((u_char *)V_DATA(id))[i] = extract_int(exp, k);
                     break;
                 case SHORT:		
-                    ((short *)V_DATA(id))[i] = extract_int(exp, k); 
+                    ((short *)V_DATA(id))[i] = extract_int(exp, k);
                     break;
                 case INT:		
-                    ((int *)V_DATA(id))[i] = extract_int(exp, k); 
+                    ((int *)V_DATA(id))[i] = extract_int(exp, k);
                     break;
                 case FLOAT:		
-                    ((float *)V_DATA(id))[i] = extract_double(exp, k); 
+                    ((float *)V_DATA(id))[i] = extract_double(exp, k);
                     break;
                 case DOUBLE:	
-                    ((double *)V_DATA(id))[i] = extract_double(exp, k); 
+                    ((double *)V_DATA(id))[i] = extract_double(exp, k);
                     break;
                 }
             }

@@ -305,7 +305,6 @@ free_var(Var *v)
     case ID_ARGS:
       if (V_ARGS(v)) {
         Narray_free(V_ARGS(v), NULL);
-        free(V_ARGS(v));
       }
       break;
 

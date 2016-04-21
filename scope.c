@@ -265,7 +265,7 @@ pop(Scope *scope)
     Stack *stack = scope->stack;
 
     if (stack->top == 0) return(NULL);
-    return(stack->value[--stack->top]);
+    return stack->value[--stack->top];
 }
 
 void
@@ -440,7 +440,7 @@ mem_claim(Var *ptr)
     Scope *scope = scope_tos();
     Var *v;
     int count;
-	int i;
+    int i;
 
     if (scope->tmp == NULL) return(NULL);
     if ((count = Darray_count(scope->tmp)) == 0) return(NULL);

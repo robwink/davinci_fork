@@ -473,7 +473,7 @@ new_module(char *module_name)
 ** CAUTION!
 ** Verify module dependencies before calling this function.
 **
-** Delete the "dvModule" portion of a Var* 
+** Delete the "dvModule" portion of a Var*
 ** It gets called from free_var() -- which is called at various
 ** points in this file.
 */
@@ -552,7 +552,7 @@ print_dependents(char *module_name)
 /*
 ** Implementation of ff_unload_dv_module() above.
 */
-int 
+int
 unload_dv_module(
 	char *module_name
 )
@@ -594,7 +594,7 @@ unload_dv_module(
 ** Search for a function within a module.
 */
 
-vfuncptr 
+vfuncptr
 find_module_func(dvModule *m, char *name)
 {
 	int idx;
@@ -653,7 +653,7 @@ free_module_function(vfuncptr fptr)
 ** array.
 */
 
-static vfuncptr 
+static vfuncptr
 add_func_to_module(dvModule *m, vfuncptr func)
 {
 	vfuncptr old;
@@ -679,7 +679,7 @@ add_func_to_module(dvModule *m, vfuncptr func)
 
 static char *
 extract_dv_mod_ver_from_fname(
-	const char *mod_name, 
+	const char *mod_name,
 	char *mod_file_name
 )
 {
@@ -1031,13 +1031,13 @@ load_dv_module(
 
 		return 0;
 	}
-    
+
 	/*
 	** Extract module version from module's name
 	** mymodule.dvm.1.0 -> 1.0
 	** hismodule.dvm -> (null)
 	**
-	** We could make the following line conditional on 
+	** We could make the following line conditional on
 	** mod_ver != NULL.
 	*/
 
@@ -1054,7 +1054,7 @@ load_dv_module(
 		return 0;
 	}
 
-    
+
 	/*
 	** Initialize the module by calling its initialization function.
     ** and loading the functions exported by the module. At the
@@ -1062,7 +1062,7 @@ load_dv_module(
     ** "init_stuff" filled in and the functions exported by the
     ** module loaded in "mod.functions".
     */
-    
+
 	if (!init_dv_module(mod)){
 
 		parse_error("Module initialization failed for %s. See previous messages. ",
@@ -1362,7 +1362,7 @@ load_dv_module_functions(
 		** functions Narray.
 		**
 		** During execution the module will only look at
-		** the functions Narray to find a particular 
+		** the functions Narray to find a particular
 		** function belonging to the module.
 		*/
 

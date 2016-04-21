@@ -530,7 +530,7 @@ event_loop(void)
 }
 void lhandler(char *line)
 {
-  char *buf;
+  char *buf = NULL;
   char prompt[256];
   extern int pp_line;
   extern int pp_count;
@@ -588,8 +588,10 @@ void lhandler(char *line)
 #if defined(USE_X11_EVENTS) && defined(HAVE_LIBREADLINE)
     /* JAS FIX */
     rl_callback_handler_install(prompt, lhandler);
+    free(buf);
 #else
     line=(char *)readline(prompt);
+    free(buf);
   }
 #endif
 

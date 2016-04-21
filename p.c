@@ -165,8 +165,8 @@ evaluate(Var * n)
     {
         if (debug && right) {
             printf("--> %s", V_STRING(right));
-                        fflush(stdout);
-                }
+            fflush(stdout);
+        }
         return (evaluate(left));
         break;
     }
@@ -601,7 +601,7 @@ evaluate(Var * n)
 
 /*
 ** This will never work.
-*/ 
+*/
                 if (NULL == module_help)        // use default
                 {
                     sprintf(module_help, "/usr/lib/davinci/modules");
@@ -659,6 +659,7 @@ evaluate(Var * n)
             p1 = NULL;
         }
         push(scope, create_struct(p1));
+
         break;
 
         /* 
