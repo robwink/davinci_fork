@@ -385,10 +385,10 @@ Var *textarray_subset(Var * v, Var * range)
   }
 
 
-  if (counter == 1) {         /*What were really have is a string */
-
+  if (counter == 1) {         /*What we really have is a string */
     V_TYPE(o) = ID_STRING;
-    V_STRING(o) = (V_TEXT(o).text[0]);
+    V_STRING(o) = V_TEXT(o).text[0];
+    free(V_TEXT(o).text);
   }
 
   return (o);

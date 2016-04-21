@@ -526,6 +526,7 @@ Narray_free(Narray *a, Narray_FuncPtr fptr)
     Nnode_free(n, fptr);
   }
   Darray_free(a->data, NULL);
+  free(a);
 }
 
 #ifdef TEST

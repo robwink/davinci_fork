@@ -34,17 +34,17 @@ struct tag_Stack {
 typedef struct tag_Scope Scope;
 
 struct tag_Scope {
-	Dictionary *dd;		/* named variable data dictionary */
-	Dictionary *args;	/* number arguments data dictionary */
-	Symtable *symtab;		/* local symbol table. */
-	Darray *tmp;		/* tmp memory list */
-	Stack *stack;		/* local stack */
-	UFUNC *ufunc;		/* function pointer */
+	Dictionary *dd;     /* named variable data dictionary */
+	Dictionary *args;   /* number arguments data dictionary */
+	Symtable *symtab;   /* local symbol table. */
+	Darray *tmp;        /* tmp memory list */
+	Stack *stack;       /* local stack */
+	UFUNC *ufunc;       /* function pointer */
 
-	Var *rval;			/* value returned */
-	int broken;			/* loop counter flag */
-	int loop;			/* loop counter flag */
-	int returned;		/* loop counter flag */
+	Var *rval;          /* value returned */
+	int broken;         /* loop counter flag */
+	int loop;           /* loop counter flag */
+	int returned;       /* loop counter flag */
 };
 
 /**
