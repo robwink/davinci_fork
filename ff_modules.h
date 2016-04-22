@@ -19,7 +19,7 @@ typedef struct {
 
 typedef struct {
 	dvModuleFuncDesc *fdesc; /* function descriptors */
-	int  nfdesc;            /* count of function descriptors */ 
+	int  nfdesc;            /* count of function descriptors */
 	dvDepAttr *dep;     /* module dependencies */
 	int ndep;               /* count of module dependencies */
 } dvModuleInitStuff; /* stuff returned by daVinci module init function */
@@ -57,7 +57,7 @@ enum MOD_LOAD_STAGE {
 typedef struct _module dvModule;
 
 #ifdef _WIN32
-#define DV_MOD_EXPORT __declspec(dllexport) 
+#define DV_MOD_EXPORT __declspec(dllexport)
 #define DV_MOD_IMPORT __declspec(dllimport)
 #else
 #define DV_MOD_EXPORT

@@ -100,6 +100,11 @@ int dvio_ValidGfx(char *type,char *GFX_type);
 */
 char *dv_locate_file(const char *fname);
 
+
+int file_exists(const char * filename);
+
+
+
 /*
 ** Set the verbosity of iomedley.
 */

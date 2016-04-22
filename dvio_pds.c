@@ -103,10 +103,10 @@ typedef struct _dataKeys {
 extern char *var_endian(Var * v);
 #endif
 
-//Var * dv_LoadISISFromPDS_New(FILE *fp, char *fn, int dptr, OBJDESC *qube);
-//Var * dv_LoadISISSuffixesFromPDS_New(FILE *fp, char *fname, size_t dptr, OBJDESC *qube);
-//Var * dv_LoadImage_New(FILE *fp, char *fn, int dptr, OBJDESC *image);
-//Var * dv_LoadHistogram_New(FILE *fp, char *fn, int dptr, OBJDESC *hist);
+Var * dv_LoadISISFromPDS_New(FILE *fp, char *fn, int dptr, OBJDESC *qube);
+Var * dv_LoadISISSuffixesFromPDS_New(FILE *fp, char *fname, size_t dptr, OBJDESC *qube);
+Var * dv_LoadImage_New(FILE *fp, char *fn, int dptr, OBJDESC *image);
+Var * dv_LoadHistogram_New(FILE *fp, char *fn, int dptr, OBJDESC *hist);
 
 static char *history_parse_buffer(FILE * in);
 static char * history_remove_isis_indents(const char *history);
@@ -136,7 +136,7 @@ static Var *do_loadPDS(vfuncptr func, char *filename, int data, int suffix_data)
 #endif
 
 /* NOTE: Only add bonafide PDS objects */
-static const char *handledObjTypes[] = { 
+static const char *handledObjTypes[] = {
 	GEN_OBJ_CLASS_HISTOGRAM,
 	GEN_OBJ_CLASS_HISTORY,
 	GEN_OBJ_CLASS_IMAGE,
@@ -627,7 +627,7 @@ traverseObj(OBJDESC *top, Var *v, dataKey objSizeMap[], int *nObj, OBJDESC *pFil
 
 		if (strcmp(genObjClass, "file") == 0)
 			traverseObj(op, sub, objSizeMap, nObj, op, sub);
-		else 
+		else
 			traverseObj(op, sub, objSizeMap, nObj, pFileDesc, pFileVar);
 
 		/* If OBJECT = TABLE has a NAME = FOO then use the name FOO, unless specifically prohibited */
@@ -1930,7 +1930,7 @@ rfQube(const dataKey *objSize, Var *vQube, int load_suffix_data){
 
 	data = dv_LoadISISFromPDS_New(fp, fileName, objSize->dptr, objSize->objDesc);
 	if (data == NULL) {
-		fclose(fp); 
+		fclose(fp);
 		return 0;
 	}
 
@@ -2580,7 +2580,7 @@ GetInt(OBJDESC *ob, char *key, int *val)
 }
 
 /*
-remove the pds header from a file 
+remove the pds header from a file
 */
 Var *
 ff_pdshead(vfuncptr func, Var *arg)

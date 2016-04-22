@@ -61,8 +61,7 @@ static const char DV_MOD_PATH_DEF[] = DV_MOD_PATH;
 static char DV_MODULE_INIT_FUNC_NAME[] = "dv_module_init";
 static char DV_MODULE_FINI_FUNC_NAME[] = "dv_module_fini";
 
-typedef int (* dvModuleInitFunc)(const char *called_as,
-				 dvModuleInitStuff *init_stuff);
+typedef int (* dvModuleInitFunc)(const char *called_as, dvModuleInitStuff *init_stuff);
 typedef int (* dvModuleFiniFunc)(const char *called_as);
 
 

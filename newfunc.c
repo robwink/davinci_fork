@@ -55,9 +55,9 @@ parse_args(vfuncptr name, Var *args, Alist *alist)
 			 ** set up error_buf, in case more than one keyword matches
 			 **/
 			sprintf(error_buf,
-					"Non-unique keyword match: %s(...%s=...)\n"
-					"Possible matches:\n",
-					fname, ptr);
+			        "Non-unique keyword match: %s(...%s=...)\n"
+			        "Possible matches:\n",
+			        fname, ptr);
 
 			for (count = k = 0 ; alist[k].name != NULL ; k++) {
 				if (!strncasecmp(alist[k].name, ptr, len)) {

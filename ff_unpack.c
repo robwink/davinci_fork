@@ -12,30 +12,30 @@
 
 //#define FF_UNPACK_DEBUG 1
 
-#define ARG_TEMPLATE	"template"
-#define ARG_FILENAME	"filename"
-#define ARG_SKIP		"skip"
-#define ARG_COUNT		"count"
-#define ARG_COL_NAMES	"col_names"
+#define ARG_TEMPLATE    "template"
+#define ARG_FILENAME    "filename"
+#define ARG_SKIP        "skip"
+#define ARG_COUNT       "count"
+#define ARG_COL_NAMES   "col_names"
 
-#define ARG_STRUCT		"struct"
-#define ARG_FORCE		"force"
+#define ARG_STRUCT      "struct"
+#define ARG_FORCE       "force"
 
-#define STRING				'a'
-#define SIGNED_MSB_INT		'I'
-#define UNSIGNED_MSB_INT	'U'
-#define SIGNED_LSB_INT		'i'
-#define UNSIGNED_LSB_INT	'u'
+#define STRING              'a'
+#define SIGNED_MSB_INT      'I'
+#define UNSIGNED_MSB_INT    'U'
+#define SIGNED_LSB_INT      'i'
+#define UNSIGNED_LSB_INT    'u'
 
-#define LSB_REAL			'r'
-#define MSB_REAL			'R'
+#define LSB_REAL            'r'
+#define MSB_REAL            'R'
 
-#define LSB_FLOAT			'f'
-#define MSB_FLOAT			'F'
-#define LSB_DOUBLE			'd'
-#define MSB_DOUBLE			'D'
+#define LSB_FLOAT           'f'
+#define MSB_FLOAT           'F'
+#define LSB_DOUBLE          'd'
+#define MSB_DOUBLE          'D'
 
-#define IGNORE				'x'
+#define IGNORE              'x'
 
 
 #define MAX_ATTRIBUTES 500
@@ -47,32 +47,32 @@ typedef unsigned char byte;
 //filled in parse_template()
 typedef struct
 {
-	char type;					//type constant from above defines
-	short bytesize;				//bytesize in file (from template)
-	short adj_bytesize;			//bytesize allocated (e.g. +1 for strings for null character
-	short columns;				//multiplicity
-	unsigned short start_byte;	//record offset
-	char* col_name;				//generated name used for creating davinci structs
+	char type;                  //type constant from above defines
+	short bytesize;             //bytesize in file (from template)
+	short adj_bytesize;         //bytesize allocated (e.g. +1 for strings for null character
+	short columns;              //multiplicity
+	unsigned short start_byte;  //record offset
+	char* col_name;             //generated name used for creating davinci structs
 } column_attributes;
 
 
 //this is passed around to functions for convenience
 typedef struct
 {
-	column_attributes* attr;			//array of above
-	int num_items;						//number of items (i.e. size of attr array)
-	int rows;							//calculated number of rows in file based on record size
+	column_attributes* attr;     //array of above
+	int num_items;               //number of items (i.e. size of attr array)
+	int rows;                    //calculated number of rows in file based on record size
 } unpack_digest;
 
 
 //array of this is returned from unpack function to ff_unpack
 typedef struct
 {
-	column_attributes *input;		//address of appropriate element in attr array above
-	byte *array;			//array to actually store the column data, NULL if type is string
-	char** strarray;		//array to store column data if type is string, NULL otherwise
-	short numbytes;			//set equal to adj_bytesize
-	char type;				//set equal to final type (after conversions in upgrade_types() )
+	column_attributes *input;    //address of appropriate element in attr array above
+	byte *array;                 //array to actually store the column data, NULL if type is string
+	char** strarray;             //array to store column data if type is string, NULL otherwise
+	short numbytes;              //set equal to adj_bytesize
+	char type;                   //set equal to final type (after conversions in upgrade_types() )
 } data;
 
 
@@ -81,7 +81,7 @@ static int convert_types(data* thedata, int num_items, int rows);
 static data* unpack(char*, char *, Var*, int, int*, int*);
 static unpack_digest* parse_template(char* template, column_attributes* input, Var* column_names, int*);
 static int validate_template(unpack_digest* input);
-static int read_data(byte*, data*, unpack_digest*, FILE*, int); 
+static int read_data(byte*, data*, unpack_digest*, FILE*, int);
 static int calc_rows(char*, int, unpack_digest*, int);
 static data* allocate_arrays(unpack_digest*);
 static void compute_adj_bytes(unpack_digest*);
@@ -107,21 +107,21 @@ static int pack_row(data* the_data, unpack_digest* digest, int row, byte* buffer
 static void memory_error(int error_num, int mem_size)
 {
 	char err_str[100];
-	
+
 	snprintf(err_str, sizeof(err_str)-1, "Error allocating memory, %d: ", mem_size);
 	parse_error("%s: %s", err_str, strerror(error_num));
 
 	return;
 }
 
-/*	premade calls for testing:
+/*premade calls for testing:
 
-//	unpack("U4U2U2*38U2U2R4I2*9R4R4R4x6a4", "atm05555.dat", 390)
-//	unpack("U4U2U2*38U2U2x4I2*9x18a4", "atm05555.dat", 390)	//without floats
-//	unpack("U4U2U2U4UU2UaaaaaaaUUx8U2*4U", "obs05555.dat",420)
-//	unpack("Iu2i3u4r4r8x4I2I3U4R4R8a5", "mytestfile.dat", 0)
-//	unpack("Iu2i3u4r4r8x4U2U3U4R4R8a5", "secondtest.dat", 0)
-//	unpack("Iu2i3u4r4r8x4U2U3U4R4R8a6*3", "strmulttest.dat", 0)
+//unpack("U4U2U2*38U2U2R4I2*9R4R4R4x6a4", "atm05555.dat", 390)
+//unpack("U4U2U2*38U2U2x4I2*9x18a4", "atm05555.dat", 390)	//without floats
+//unpack("U4U2U2U4UU2UaaaaaaaUUx8U2*4U", "obs05555.dat",420)
+//unpack("Iu2i3u4r4r8x4I2I3U4R4R8a5", "mytestfile.dat", 0)
+//unpack("Iu2i3u4r4r8x4U2U3U4R4R8a5", "secondtest.dat", 0)
+//unpack("Iu2i3u4r4r8x4U2U3U4R4R8a6*3", "strmulttest.dat", 0)
 
 */
 
@@ -139,22 +139,22 @@ ff_unpack(vfuncptr func, Var* arg)
 	int i = 0;
 
 	Alist alist[6];
-	alist[0] = make_alist(	ARG_TEMPLATE,	ID_STRING,	NULL,	&template);
-	alist[1] = make_alist(	ARG_FILENAME,	ID_STRING,	NULL,	&filename);
-	alist[2] = make_alist(	ARG_SKIP,		INT,		NULL,	&hdr_length);
-	alist[3] = make_alist(	ARG_COUNT,		INT,		NULL,	&rows);
-	alist[4] = make_alist(	ARG_COL_NAMES,	ID_UNK,		NULL,	&column_names);
+	alist[0] = make_alist(ARG_TEMPLATE,   ID_STRING,  NULL,  &template);
+	alist[1] = make_alist(ARG_FILENAME,   ID_STRING,  NULL,  &filename);
+	alist[2] = make_alist(ARG_SKIP,       INT,        NULL,  &hdr_length);
+	alist[3] = make_alist(ARG_COUNT,      INT,        NULL,  &rows);
+	alist[4] = make_alist(ARG_COL_NAMES,  ID_UNK,     NULL,  &column_names);
 	alist[5].name = NULL;
 
 	if( parse_args(func, arg, alist) == 0) return NULL;
 
 	if( template == NULL ) {
-    	parse_error("%s not specified: %s()", ARG_TEMPLATE, func->name);
+		parse_error("%s not specified: %s()", ARG_TEMPLATE, func->name);
 		return NULL;
 	}
 
 	if( filename == NULL ) {
-    	parse_error("%s not specified: %s()", ARG_FILENAME, func->name);
+		parse_error("%s not specified: %s()", ARG_FILENAME, func->name);
 		return NULL;
 	}
 
@@ -188,7 +188,7 @@ ff_unpack(vfuncptr func, Var* arg)
 		if( reg_data[i].type != STRING )
 			add_struct(result, reg_data[i].input->col_name,
 				 newVal(BSQ, columns, rows, 1, reg_data[i].type, reg_data[i].array));
-		else 
+		else
 			add_struct(result, reg_data[i].input->col_name,
 				 newText(rows, reg_data[i].strarray));
 	}
@@ -204,7 +204,7 @@ ff_unpack(vfuncptr func, Var* arg)
 }
 
 
-/* Convert my type constants to appropriate davinci type constants 
+/* Convert my type constants to appropriate davinci type constants
  * e.g. SIGNED_LSB_INT && numbytes == 2-> SHORT
  */
 static int convert_types(data* thedata, int num_items, int rows)
@@ -258,16 +258,15 @@ static int convert_types(data* thedata, int num_items, int rows)
 /**** unpack implementation function ****/
 static data* unpack(char* template, char* filename, Var* column_names, int hdr_length, int* numitems, int *ret_rows)
 {
-
 	int i,k,x;
 	int rec_length, max_buf;
 
-	column_attributes*	initial		= NULL;
-	unpack_digest* 		input		= NULL;
-	FILE*				file		= NULL;
-	byte*				buffer		= NULL;
-	data*				thedata		= NULL;
-	void*				temp_ptr	= NULL;
+	column_attributes*  initial     = NULL;
+	unpack_digest*      input       = NULL;
+	FILE*               file        = NULL;
+	byte*               buffer      = NULL;
+	data*               thedata     = NULL;
+	void*               temp_ptr    = NULL;
 
 	if( strlen(template) == 0 ) {
 		parse_error("Error: Template cannot be the empty string!");
@@ -287,9 +286,9 @@ static data* unpack(char* template, char* filename, Var* column_names, int hdr_l
 		return NULL;
 	}
 
-    if( !validate_template(input) ) {
-        clean_up(0, input, NULL, NULL, NULL);
-        return NULL;
+	if( !validate_template(input) ) {
+		clean_up(0, input, NULL, NULL, NULL);
+		return NULL;
 	}
 
 
@@ -337,7 +336,7 @@ static data* unpack(char* template, char* filename, Var* column_names, int hdr_l
 
 	if (*ret_rows >= 0){ /* user passed in the number of rows to convert */
 		if (*ret_rows > input->rows){
-			parse_error("error processing file %s: requested rows (%d) > computed file rows (%d)\n", 
+			parse_error("error processing file %s: requested rows (%d) > computed file rows (%d)\n",
 				filename, *ret_rows, input->rows);
 			clean_up(1, input, NULL, NULL, file);
 			return NULL;
@@ -394,7 +393,7 @@ static data* unpack(char* template, char* filename, Var* column_names, int hdr_l
 #ifdef FF_UNPACK_DEBUG
 	print_data(thedata, input);
 #endif
-	
+
 	//set these parameters so calling function has them to loop through data
 	*numitems = input->num_items;
 	*ret_rows = input->rows;
@@ -423,12 +422,12 @@ static void clean_up(int level, unpack_digest* input, byte* buffer, data* the_da
 		free(buffer);
 
 	if( level > 2 ) {
-		for(i=0; i<num_items; i++) { 
+		for(i=0; i<num_items; i++) {
 
 			if( the_data->input->type == STRING ) {
 				for(j=0; j<rows; j++)
 					free(the_data[i].strarray[j]);
-					
+
 				free(the_data[i].strarray);
 
 			} else
@@ -451,38 +450,38 @@ static int validate_template(unpack_digest* input)
 
 			case STRING:
 				break;
-	
+
 			case SIGNED_MSB_INT:
 			case UNSIGNED_MSB_INT:
 			case SIGNED_LSB_INT:
 			case UNSIGNED_LSB_INT:
 				if( input->attr[i].bytesize < 1 || input->attr[i].bytesize > 4 ) {
-					parse_error("Invalid bytesize (%d) for column %d of type %c\nValid values are 1-4", 
+					parse_error("Invalid bytesize (%d) for column %d of type %c\nValid values are 1-4",
 								input->attr[i].bytesize, i+1, input->attr[i].type);
 					return 0;
 				}
 				break;
-	
+
 			case LSB_REAL:
 				if( input->attr[i].bytesize == 4 ) input->attr[i].type = LSB_FLOAT;
 				else if (input->attr[i].bytesize == 8 ) input->attr[i].type = LSB_DOUBLE;
 				else {
-					parse_error("Invalid bytesize (%d) for column %d of type %c\nValid values are 4 and 8", 
+					parse_error("Invalid bytesize (%d) for column %d of type %c\nValid values are 4 and 8",
 								input->attr[i].bytesize, i+1, input->attr[i].type);
 					return 0;
 				}
 				break;
-	
+
 			case MSB_REAL:
 				if( input->attr[i].bytesize == 4 ) input->attr[i].type = MSB_FLOAT;
 				else if (input->attr[i].bytesize == 8 ) input->attr[i].type = MSB_DOUBLE;
 				else {
-					parse_error("Invalid bytesize (%d) for column %d of type %c\nValid values are 4 and 8", 
+					parse_error("Invalid bytesize (%d) for column %d of type %c\nValid values are 4 and 8",
 								input->attr[i].bytesize, i+1, input->attr[i].type);
 					return 0;
 				}
 				break;
-	
+
 			default:
 				parse_error("Invalid type %c in column %d", input->attr[i].type, i+1);
 				return 0;
@@ -543,9 +542,7 @@ static unpack_digest* parse_template(char* template, column_attributes* input, V
 	for(i=0; i<name_count; i++)
 		names[i] = fix_name(names[i]);
 
-
-
-	while( template[0] != '\0' )						//loop through parsing template
+	while( template[0] != '\0' )  //loop through parsing template
 	{
 		if( !valid_letter(template[0]) ) {
 			error = 1;
@@ -563,9 +560,9 @@ static unpack_digest* parse_template(char* template, column_attributes* input, V
 			template = &template[1];
 			temp = strtol(template, &end, 10);
 			if( temp == 0 || template == end) {
-                error = 1;
+				error = 1;
 				break;
-            }
+			}
 
 			input[j].bytesize = temp;
 			template = end;
@@ -578,9 +575,9 @@ static unpack_digest* parse_template(char* template, column_attributes* input, V
 			temp = 0;
 			temp = strtol(template, &end, 10);
 			if( temp == 0 || template == end) {
-                error = 2;
+				error = 2;
 				break;
-            }
+			}
 
 			input[j].columns = temp;
 
@@ -600,7 +597,7 @@ static unpack_digest* parse_template(char* template, column_attributes* input, V
 						for(--i; i>=0; i--) free(input[j+i].col_name);
 						for(--j; j>=0; j--) free(input[j].col_name);
 						return NULL;
-					}	
+					}
 
 					if( name_count == 0 ) {
 						if( snprintf(input[j+i].col_name, name_length, "c%d_%d", j+1, i) >= name_length ) {
@@ -617,7 +614,7 @@ static unpack_digest* parse_template(char* template, column_attributes* input, V
 
 				j += (i - 1);
 				offset -= input[j].bytesize; //subtract one so the normal addition at the end of the
-												//while loop doesn't mess it up
+				                             //while loop doesn't mess it up
 			} else {
 				offset += ( (temp-1)*input[j].bytesize );
 			}
@@ -638,7 +635,7 @@ static unpack_digest* parse_template(char* template, column_attributes* input, V
 						for(--j; j>=0; j--) free(input[j].col_name);
 						return NULL;
 					}
-	
+
 					if( snprintf(input[j].col_name, name_length, "c%d", j+1) >= name_length ) {
 						parse_error("%s, c%d: %s", "Column name too long", j+1, strerror(errno) );
 						return NULL;
@@ -736,7 +733,7 @@ static void compute_adj_bytes(unpack_digest* input)
 				attr_array[i].adj_bytesize = 4;
 			else
 				attr_array[i].adj_bytesize = attr_array[i].bytesize;
-		} 
+		}
 		else if(a == STRING)
 			attr_array[i].adj_bytesize = attr_array[i].bytesize + 1;
 		else
@@ -748,23 +745,19 @@ static void compute_adj_bytes(unpack_digest* input)
 /* Pretty self explanatory */
 static int calc_rows(char* filename, int hdr_length, unpack_digest* input, int rec_length)
 {
-	
 	//use filesize,header size, and template to determine number of rows
 
-	struct stat filestats;												//struct to get file size with fstat
+	struct stat filestats;   //struct to get file size with fstat
 	int filesize, i;
 	int rows = 0, width = 0;
 
-	if(stat(filename, &filestats) < 0)		//get filesize
+	if(stat(filename, &filestats) < 0)    //get filesize
 	{
 		parse_error("stat failed in calc_rows(): %s", strerror(errno) );
 		return 0;
-	}	
+	}
 	filesize = filestats.st_size;
-	
-	
 	rows = (filesize - hdr_length)/(rec_length);
-
 	input->rows = rows;
 
 	return 1;
@@ -847,7 +840,7 @@ static data* allocate_arrays(unpack_digest* digest)
 
 	return all_data;
 }
-		
+
 
 /* print function for debugging */
 static int print_data(data* the_data, unpack_digest* input)
@@ -867,7 +860,7 @@ static int print_data(data* the_data, unpack_digest* input)
 
 	int num_items = input->num_items;
 	int rows = input->rows;
-	
+
 	for(i=0;i<num_items;i++)
 		printf("%c%d\t",the_data[i].type, the_data[i].numbytes);
 
@@ -887,12 +880,12 @@ static int print_data(data* the_data, unpack_digest* input)
 			{
 				switch(the_data[j].type)
 				{
-					case STRING:							//ASCII string space padded
+					case STRING:                    //ASCII string space padded
 						printf("%s\t",the_data[j].strarray[i]);//&the_data[j].array[(i*columns+k)*bytesize]);
 						break;
-					
+
 					case MSB_DOUBLE:
-					case LSB_DOUBLE:					
+					case LSB_DOUBLE:
 						memcpy(&tempdouble, &the_data[j].array[(i*columns+k)*8], 8);
 						printf("%G\t",tempdouble);
 						break;
@@ -945,14 +938,14 @@ static int print_data(data* the_data, unpack_digest* input)
 		//getchar();
 	}
 	return 1;
-}	
+}
 
 
-/* 
+/*
 	reads data into buf, performs necessary manipulations (like byteswapping)
 	then stores into correct location (loc) in the_data->array
 */
-static int read_data(byte* buffer, data *the_data, unpack_digest* input, FILE* file, int row) 
+static int read_data(byte* buffer, data *the_data, unpack_digest* input, FILE* file, int row)
 {
 	int tempint = 0;
 	unsigned int utempint = 0;
@@ -983,12 +976,12 @@ static int read_data(byte* buffer, data *the_data, unpack_digest* input, FILE* f
 
 			switch(letter)
 			{
-				case STRING:							//ASCII string space padded
+				case STRING:                //ASCII string space padded
 					memcpy(the_data[j].strarray[row], buf, numbytes);
 					the_data[j].strarray[row][numbytes] = '\0';
-					
+
 					break;
-				
+
 				case LSB_DOUBLE:							//double precision float (LSB)
 				case LSB_FLOAT:								//single precision float (LSB)
 					LSB(buf, 1, numbytes);
@@ -1008,17 +1001,17 @@ static int read_data(byte* buffer, data *the_data, unpack_digest* input, FILE* f
 					tempint = 0;
 					mybyte = (byte*)&tempint;
 
-				#ifdef WORDS_BIGENDIAN	
+				#ifdef WORDS_BIGENDIAN
 					if(letter == SIGNED_LSB_INT) {
 						for(i=0;i<numbytes;i++)
 							mybyte[3-(4-numbytes)-i] = buf[i];
 						tempint = tempint >> ((4-numbytes)*8);
 					} else {
 						for(i=0;i<numbytes;i++)
-							mybyte[i] = buf[i];	
+							mybyte[i] = buf[i];
 						tempint = tempint >> ((4-numbytes)*8);
 					}
-					
+
 					memcpy(loc, &mybyte[4-al_bytes], al_bytes);
 
 				#else
@@ -1028,7 +1021,7 @@ static int read_data(byte* buffer, data *the_data, unpack_digest* input, FILE* f
 						tempint = tempint >> ((4-numbytes)*8);
 					} else {
 						for(i=0;i<numbytes;i++)
-							mybyte[3-(numbytes-1)+i] = buf[i];	
+							mybyte[3-(numbytes-1)+i] = buf[i];
 						tempint = tempint >> ((4-numbytes)*8);
 					}
 					memcpy(loc, mybyte, al_bytes);
@@ -1114,7 +1107,7 @@ static int upgrade_types(data* the_data, unpack_digest* input)
 		columns = the_data[i].input->columns;
 
 		switch(type)
-		{	
+		{
 			case SIGNED_MSB_INT:
 			case SIGNED_LSB_INT:
 				if( bytesize==1 ) {
@@ -1134,7 +1127,7 @@ static int upgrade_types(data* the_data, unpack_digest* input)
 			case UNSIGNED_LSB_INT:
 				if( bytesize==4 ) {
 					j = test_int_max(&the_data[i], rows, columns);
-					
+
 					if( j < rows*columns ) {
 						if( !resize_array(&the_data[i], rows, columns, 2) )
 							return 0;
@@ -1143,7 +1136,7 @@ static int upgrade_types(data* the_data, unpack_digest* input)
 
 					} else {
 						the_data[i].type = SIGNED_LSB_INT;
-					}					
+					}
 				}
 
 				if( bytesize == 3 )
@@ -1151,14 +1144,14 @@ static int upgrade_types(data* the_data, unpack_digest* input)
 
 				if( bytesize==2 ) {
 					j = test_signed_short(&the_data[i], rows, columns);
-					
+
 					if( j<rows*columns ) {
 						if( !resize_array(&the_data[i], rows, columns, 1) )
 							return 0;
 					}
 
 					the_data[i].type = SIGNED_LSB_INT;
-				}	
+				}
 				break;
 
 
@@ -1203,7 +1196,7 @@ static int resize_array(data* the_data, int rows, int columns, int type)
 		return 0;
 	}
 
-	switch(type) 
+	switch(type)
 	{
 		case 0:
 			tmpshrtarray = (short*)the_data->array;
@@ -1271,8 +1264,8 @@ static int test_signed_short(data* the_data, int rows, int columns)
 
 // JNN:
 // ff_pack(), inverse of ff_unpack().
-// @param vfuncptr func		// function
-// @param Var* arg			// argument list
+// @param vfuncptr func     // function
+// @param Var* arg          // argument list
 // @return NULL
 Var *
 ff_pack(vfuncptr func, Var* arg)
@@ -1287,13 +1280,13 @@ ff_pack(vfuncptr func, Var* arg)
 	int num_items, rows;
 
 	Alist alist[8];
-	alist[0] = make_alist(	ARG_STRUCT,		ID_STRUCT,	NULL,	&toPack);
-	alist[1] = make_alist(	ARG_TEMPLATE,	ID_STRING,	NULL,	&template);
-	alist[2] = make_alist(	ARG_FILENAME,	ID_STRING,	NULL,	&filename);
-	alist[3] = make_alist(	ARG_SKIP,		INT,		NULL,	&skip);
-	alist[4] = make_alist(	ARG_COUNT,		INT,		NULL,	&count);
-	alist[5] = make_alist(	ARG_COL_NAMES,	ID_UNK,		NULL,	&column_names);
-	alist[6] = make_alist(	ARG_FORCE,		INT,		NULL,	&force);
+	alist[0] = make_alist(ARG_STRUCT,     ID_STRUCT,  NULL,  &toPack);
+	alist[1] = make_alist(ARG_TEMPLATE,   ID_STRING,  NULL,  &template);
+	alist[2] = make_alist(ARG_FILENAME,   ID_STRING,  NULL,  &filename);
+	alist[3] = make_alist(ARG_SKIP,       INT,        NULL,  &skip);
+	alist[4] = make_alist(ARG_COUNT,      INT,        NULL,  &count);
+	alist[5] = make_alist(ARG_COL_NAMES,  ID_UNK,     NULL,  &column_names);
+	alist[6] = make_alist(ARG_FORCE,      INT,        NULL,  &force);
 	alist[7].name = NULL;
 
 	// TODO add truncate parameter to truncate at the end of current write
@@ -1358,7 +1351,7 @@ ff_pack(vfuncptr func, Var* arg)
 	// count negative, pack computed rows.
 	// count zero, return error (see above).
 	// count positive, pack that amount (write null chars for rows which do not exist).
-    rows = count > 0? count: rows;
+	rows = count > 0? count: rows;
 	if (pack(reg_data, template, filename, num_items, rows, skip)) {
 		parse_error("Packed %d records to to %s.", rows, filename);
 	}
@@ -1368,7 +1361,7 @@ ff_pack(vfuncptr func, Var* arg)
 }
 
 // used in parse_struct to clean up reg_data in case of error
-static void 
+static void
 cleanup_data(data* reg_data, int i)
 {
 	while (--i >= 0)
@@ -1401,13 +1394,14 @@ cleanup_data(data* reg_data, int i)
 // parse_struct(), function to parse Davinci structure into data* based on col_names.
 // called by ff_pack()
 // Note: part of code taken from parse_template()
-// @param Var* toPack			// the Davinci structure to get information from
-// @param Var* column_names		// the user specified order in which Davinci fields should be packed
-// @param int* numData			// out address to store size of data* array (x-dimension)
-// @param int* greatestNumRows	// out address to store the greatest row size of any data column (y-dimension)
-// @return data*				// NULL if failed to parse struct
-static data* 
-parse_struct(Var* toPack, Var* column_names, int* numData, int* greatestNumRows) {
+// @param Var* toPack           // the Davinci structure to get information from
+// @param Var* column_names     // the user specified order in which Davinci fields should be packed
+// @param int* numData          // out address to store size of data* array (x-dimension)
+// @param int* greatestNumRows  // out address to store the greatest row size of any data column (y-dimension)
+// @return data*                // NULL if failed to parse struct
+static data*
+parse_struct(Var* toPack, Var* column_names, int* numData, int* greatestNumRows)
+{
 	int name_count = 0;
 	int i;
 	char** names = NULL;
@@ -1465,7 +1459,7 @@ parse_struct(Var* toPack, Var* column_names, int* numData, int* greatestNumRows)
 	}
 
 	// use toPack to find rows and fill in data
-    rows = 0;
+	rows = 0;
 	*greatestNumRows = 0;
 	for(i = 0; i < *numData; i++) {
 		if (name_count > 0) {
@@ -1508,7 +1502,7 @@ parse_struct(Var* toPack, Var* column_names, int* numData, int* greatestNumRows)
 				return NULL;
 			}
 			rows = V_SIZE(element)[1]; // y value = rows
-            // TODO -- how is .input used?
+			// TODO -- how is .input used?
 			reg_data[i].input = (column_attributes*)calloc(1, sizeof(column_attributes));
 			reg_data[i].input->columns = V_SIZE(element)[0]; // x value = columns
 			reg_data[i].array = V_DATA(element);
@@ -1539,7 +1533,7 @@ parse_struct(Var* toPack, Var* column_names, int* numData, int* greatestNumRows)
 // @param int rows;					// the number of rows of data to be packed
 // @param int offset;				// number of bytes to skip in file before writing
 // @return int indicating success:	// 1 = success, 0 = fail
-static int 
+static int
 pack(data* thedata, char* template, char* filename, int numData, int rows, int offset)
 {
 	// declare local variables used in the function
@@ -1599,15 +1593,15 @@ pack(data* thedata, char* template, char* filename, int numData, int rows, int o
 	//*/
 
 
-    file = fopen(filename,"rb+"); // open file if exists already
-    if (file == NULL){
-        file = fopen(filename,"wb+"); // creates a new file to write
-        if(file == NULL) {
-            parse_error("%s: %s", "Error opening file", strerror(errno));
-            clean_up(0, digest, NULL, NULL, NULL);
-            return 0; // NULL;
-        }
-    }
+	file = fopen(filename,"rb+"); // open file if exists already
+	if (file == NULL){
+		file = fopen(filename,"wb+"); // creates a new file to write
+		if(file == NULL) {
+			parse_error("%s: %s", "Error opening file", strerror(errno));
+			clean_up(0, digest, NULL, NULL, NULL);
+			return 0; // NULL;
+		}
+	}
 
 	if(fseek(file, offset, SEEK_SET)) { // skip to start
 		parse_error("file %s seek error: %s", filename, strerror(errno));
@@ -1651,120 +1645,123 @@ pack(data* thedata, char* template, char* filename, int numData, int rows, int o
 }
 
 static void
-copy(const void *from, void *to, int len, int swap){
-    int i;
+copy(const void *from, void *to, int len, int swap)
+{
+	int i;
 
-    for(i=0; i<len; i++){
-        ((char *)to)[i] = swap? ((const char *)from)[len-i-1]: ((const char *)from)[i];
-    }
+	for(i=0; i<len; i++){
+		((char *)to)[i] = swap? ((const char *)from)[len-i-1]: ((const char *)from)[i];
+	}
 }
 
 static int
-convert_to_ext_fmt(char *from, int ffmt, char *to, int tfmt, int tolen){
-    int si;
-    unsigned int ui;
-    short ss;
-    unsigned short us;
-    char sc;
-    unsigned char uc;
-    float f;
-    double d;
-    int big = 0;
-    char *str = alloca(tolen > 1024? tolen+1: 1024);
+convert_to_ext_fmt(char *from, int ffmt, char *to, int tfmt, int tolen)
+{
+	int si;
+	unsigned int ui;
+	short ss;
+	unsigned short us;
+	char sc;
+	unsigned char uc;
+	float f;
+	double d;
+	int big = 0;
+	char *str = alloca(tolen > 1024? tolen+1: 1024);
 
-    // convert from type to large internal numeric types
-    switch(ffmt){
-    case BYTE:      ui = *(unsigned char *)from; si = (int         )ui; d  = (double)ui; break;
-    case SHORT:     si = *(short         *)from; ui = (unsigned int)si; d  = (double)si; break;
-    case INT:       si = *(int           *)from; ui = (unsigned int)si; d  = (double)si; break;
-    case FLOAT:     d  = *(float         *)from; ui = (unsigned int)d;  si = (int   )d;  break;
-    case DOUBLE:    d  = *(double        *)from; ui = (unsigned int)d;  si = (int   )d;  break;
-    case ID_STRING: d  = atof(from); ui = strtoul(from,NULL,10); si = atoi(from);  break;
-    default: return 0;
-    }
+	// convert from type to large internal numeric types
+	switch(ffmt){
+	case BYTE:      ui = *(unsigned char *)from; si = (int         )ui; d  = (double)ui; break;
+	case SHORT:     si = *(short         *)from; ui = (unsigned int)si; d  = (double)si; break;
+	case INT:       si = *(int           *)from; ui = (unsigned int)si; d  = (double)si; break;
+	case FLOAT:     d  = *(float         *)from; ui = (unsigned int)d;  si = (int   )d;  break;
+	case DOUBLE:    d  = *(double        *)from; ui = (unsigned int)d;  si = (int   )d;  break;
+	case ID_STRING: d  = atof(from); ui = strtoul(from,NULL,10); si = atoi(from);  break;
+	default: return 0;
+	}
 
-    // add conversions for other numeric types
-    us = (unsigned short)ui;
-    ss = (short         )si;
-    uc = (unsigned char )ui;
-    sc = (char          )si;
-    f  = (float         )d;
+	// add conversions for other numeric types
+	us = (unsigned short)ui;
+	ss = (short         )si;
+	uc = (unsigned char )ui;
+	sc = (char          )si;
+	f  = (float         )d;
 
-    if (tfmt == STRING){
-        switch(ffmt){
-        case BYTE:      sprintf(str,"%u",ui); break;
-        case SHORT:
-        case INT:       sprintf(str,"%d",si); break;
-        case FLOAT:
-        case DOUBLE:    sprintf(str,"%g",d); break;
-        case ID_STRING: sprintf(str,"%s",from); break;
-        default:        return 0;
-        }
-    }
+	if (tfmt == STRING){
+		switch(ffmt){
+		case BYTE:      sprintf(str,"%u",ui); break;
+		case SHORT:
+		case INT:       sprintf(str,"%d",si); break;
+		case FLOAT:
+		case DOUBLE:    sprintf(str,"%g",d); break;
+		case ID_STRING: sprintf(str,"%s",from); break;
+		default:        return 0;
+		}
+	}
 
-    // do we need to swap data
-    #ifdef WORDS_BIGENDIAN
-    big = 1;
-    #else
-    big = 0;
-    #endif
+	// do we need to swap data
+	#ifdef WORDS_BIGENDIAN
+	big = 1;
+	#else
+	big = 0;
+	#endif
 
-    // write data out, byte-swapping as needed
-    switch(tfmt){
-    case LSB_DOUBLE: copy(&d,  to, sizeof(d),  big^0); break;
-    case MSB_DOUBLE: copy(&d,  to, sizeof(d),  big^1); break;
-    case LSB_FLOAT:  copy(&f,  to, sizeof(f),  big^0); break;
-    case MSB_FLOAT:  copy(&f,  to, sizeof(f),  big^1); break;
-    case SIGNED_LSB_INT:
-        switch(tolen){
-        case 1:      copy(&sc, to, sizeof(sc), big^0); break;
-        case 2:      copy(&ss, to, sizeof(ss), big^0); break;
-        case 4:      copy(&si, to, sizeof(si), big^0); break;
-        default:     return 0;
-        }
-        break;
-    case SIGNED_MSB_INT:
-        switch(tolen){
-        case 1:      copy(&sc, to, sizeof(sc), big^1); break;
-        case 2:      copy(&ss, to, sizeof(ss), big^1); break;
-        case 4:      copy(&si, to, sizeof(si), big^1); break;
-        default:     return 0;
-        }
-        break;
-    case UNSIGNED_LSB_INT:
-        switch(tolen){
-        case 1:      copy(&uc, to, sizeof(uc), big^0); break;
-        case 2:      copy(&us, to, sizeof(us), big^0); break;
-        case 4:      copy(&ui, to, sizeof(ui), big^0); break;
-        default:     return 0;
-        }
-        break;
-    case UNSIGNED_MSB_INT:
-        switch(tolen){
-        case 1:      copy(&uc, to, sizeof(uc), big^1); break;
-        case 2:      copy(&us, to, sizeof(us), big^1); break;
-        case 4:      copy(&ui, to, sizeof(ui), big^1); break;
-        default:     return 0;
-        }
-        break;
-    case STRING: strncpy(to, str, tolen); break;
-    default:
-        return 0;
-    }
+	// write data out, byte-swapping as needed
+	switch(tfmt){
+	case LSB_DOUBLE: copy(&d,  to, sizeof(d),  big^0); break;
+	case MSB_DOUBLE: copy(&d,  to, sizeof(d),  big^1); break;
+	case LSB_FLOAT:  copy(&f,  to, sizeof(f),  big^0); break;
+	case MSB_FLOAT:  copy(&f,  to, sizeof(f),  big^1); break;
+	case SIGNED_LSB_INT:
+		switch(tolen){
+		case 1:      copy(&sc, to, sizeof(sc), big^0); break;
+		case 2:      copy(&ss, to, sizeof(ss), big^0); break;
+		case 4:      copy(&si, to, sizeof(si), big^0); break;
+		default:     return 0;
+		}
+		break;
+	case SIGNED_MSB_INT:
+		switch(tolen){
+		case 1:      copy(&sc, to, sizeof(sc), big^1); break;
+		case 2:      copy(&ss, to, sizeof(ss), big^1); break;
+		case 4:      copy(&si, to, sizeof(si), big^1); break;
+		default:     return 0;
+		}
+		break;
+	case UNSIGNED_LSB_INT:
+		switch(tolen){
+		case 1:      copy(&uc, to, sizeof(uc), big^0); break;
+		case 2:      copy(&us, to, sizeof(us), big^0); break;
+		case 4:      copy(&ui, to, sizeof(ui), big^0); break;
+		default:     return 0;
+		}
+		break;
+	case UNSIGNED_MSB_INT:
+		switch(tolen){
+		case 1:      copy(&uc, to, sizeof(uc), big^1); break;
+		case 2:      copy(&us, to, sizeof(us), big^1); break;
+		case 4:      copy(&ui, to, sizeof(ui), big^1); break;
+		default:     return 0;
+		}
+		break;
+	case STRING: strncpy(to, str, tolen); break;
+	default:
+		return 0;
+	}
 
-    return 1;
+	return 1;
 }
 
 
 // write_data(), inverse of read_data(). writes the data into a byte buffer
 // called by pack()
-// @param byte* buffer				// buffer to write data into
-// @param data* the_data			// data to write into buffer
-// @param unpack_digest* input		// input digest indicating how data should be written
-// @param int row					// the current row in data to write
-// @return int indicating success:	// 1 = success, 0 = fail
-static int 
-pack_row(data* the_data, unpack_digest* digest, int row, byte* buffer) {
+// @param byte* buffer              // buffer to write data into
+// @param data* the_data            // data to write into buffer
+// @param unpack_digest* input      // input digest indicating how data should be written
+// @param int row                   // the current row in data to write
+// @return int indicating success:  // 1 = success, 0 = fail
+static int
+pack_row(data* the_data, unpack_digest* digest, int row, byte* buffer)
+{
 	int i, j, k, numbytes, al_bytes, columns, start_byte;
 	char letter;
 	char *src_buf;

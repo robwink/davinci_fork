@@ -81,7 +81,7 @@
 
 #include "ff_modules.h"
 
-#define memdup(p, l)	memcpy(malloc(l), (p), l)
+#define memdup(p, l)    memcpy(malloc(l), (p), l)
 
 typedef struct _var Var;
 typedef Var * Vptr;

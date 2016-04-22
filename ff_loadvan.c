@@ -21,7 +21,9 @@
 
 #include <fcntl.h>
 #include <ctype.h>
-#include "parser.h"
+
+//dvio.h pulls in parser.h and iomedley.h
+#include "dvio.h"
 #include "system.h"
 
 typedef unsigned char uchar;

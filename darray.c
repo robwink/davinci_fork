@@ -1,4 +1,9 @@
 /**
+ *
+ * TODO rswinkle
+ * These comments are out of date, update or delete them
+ * and rely on the comments above each function
+ *
  ** Dynamic Array - self-resizing array
  **
  ** Darray * Darray_create( int size )
@@ -96,18 +101,6 @@ Darray_create(int size)
 }
 
 /*
-** Add an element to a Darray
-**
-** Returns the element's index on success,
-** -1 on error
-*/
-int
-Darray_add(Darray *d, void *New)
-{
-  return(Darray_insert(d, New, -1));
-}
-
-/*
 ** Insert an element in a Darray
 **
 ** Returns the element's index on success,
@@ -132,6 +125,18 @@ Darray_insert(Darray *d, void *New, int pos)
   d->count++;
 
   return(pos);
+}
+
+/*
+** Add an element to a Darray
+**
+** Returns the element's index on success,
+** -1 on error
+*/
+int
+Darray_add(Darray *d, void *New)
+{
+  return(Darray_insert(d, New, -1));
 }
 
 /*

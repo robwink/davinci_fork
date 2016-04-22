@@ -1,7 +1,5 @@
-#include "parser.h"
-#include "iomedley.h"
-#include "io_loadmod.h"
 #include "dvio.h"
+#include "io_loadmod.h"
 #include "dvio_specpr.h"
 
 Var *do_load(char *filename, struct iom_iheader *h);
@@ -14,8 +12,8 @@ ff_load_many(Var * list, struct iom_iheader *h )
 	Var *s, *t;
 
 	if (list == NULL || V_TYPE(list) != ID_TEXT) {
-        parse_error("No filenames specified.");
-        return (NULL);
+		parse_error("No filenames specified.");
+		return (NULL);
 	}
 
 	s = new_struct(V_TEXT(list).Row);
@@ -63,8 +61,8 @@ ff_load(vfuncptr func, Var * arg)
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	if (fvar == NULL) {
-        parse_error("No filename specified to %s()", func->name);
-        return (NULL);
+		parse_error("No filename specified to %s()", func->name);
+		return (NULL);
 	}
 
 	/* this is a hack only used by specpr files */
@@ -75,40 +73,40 @@ ff_load(vfuncptr func, Var * arg)
 	} else if (V_TYPE(fvar) == ID_STRING) {
 		filename = V_STRING(fvar);
 	} else {
-        parse_error("Illegal argument to function %s(%s), expected STRING", 
+		parse_error("Illegal argument to function %s(%s), expected STRING",
 			func->name, "filename");
-        return (NULL);
+		return (NULL);
 	}
 	return(do_load(filename, &h));
 }
 
 Var *
-do_load(char *filename, struct iom_iheader *h) 
+do_load(char *filename, struct iom_iheader *h)
 {
-    int record = -1;
-    FILE *fp = NULL;
-    Var  *input = NULL;
-    char *p, *fname;
+	int record = -1;
+	FILE *fp = NULL;
+	Var  *input = NULL;
+	char *p, *fname;
 
-    /** 
-     ** if open file fails, check for record suffix
-     **/
-    fname = dv_locate_file(filename);
-    if (!file_exists(fname)) {
-        if ((p = strchr(filename, SPECPR_SUFFIX)) != NULL) {
-            *p = '\0';
-            record = atoi(p + 1);
-            fname = dv_locate_file(filename);
-        }
-        if (!file_exists(fname)) {
-            sprintf(error_buf, "Cannot find file: %s", filename);
-            parse_error(NULL);
-            return (NULL);
-        }
-    }
+	/**
+	 ** if open file fails, check for record suffix
+	 **/
+	fname = dv_locate_file(filename);
+	if (!file_exists(fname)) {
+		if ((p = strchr(filename, SPECPR_SUFFIX)) != NULL) {
+			*p = '\0';
+			record = atoi(p + 1);
+			fname = dv_locate_file(filename);
+		}
+		if (!file_exists(fname)) {
+			sprintf(error_buf, "Cannot find file: %s", filename);
+			parse_error(NULL);
+			return (NULL);
+		}
+	}
 
-    if (fname && (fp = fopen(fname, "rb")) != NULL) {
-        if (iom_is_compressed(fp)) {
+	if (fname && (fp = fopen(fname, "rb")) != NULL) {
+		if (iom_is_compressed(fp)) {
 	         fprintf(stderr, "is compressed\n");	/* FIX: remove */
 			 fclose(fp);
 			 fname = iom_uncompress_with_name(fname);
@@ -130,30 +128,30 @@ do_load(char *filename, struct iom_iheader *h)
 	if (input == NULL)    input = dv_LoadAVIRIS(fp, fname, h);
 
 #ifdef HAVE_LIBHDF5
-        if (input == NULL)    input = LoadHDF5(fname);
+		if (input == NULL)    input = LoadHDF5(fname);
 #endif
 
 #ifdef HAVE_LIBXML2
-        if (input == NULL)    input = dv_loadPDS4(fname);
+		if (input == NULL)    input = dv_loadPDS4(fname);
 #endif
 
 		/* Libmagic should always be the last chance */
 #if 0
 #ifdef HAVE_LIBMAGICK
-        if (input == NULL)
+		if (input == NULL)
 	         input = dvReadImage(func, arg); // last gasp attempt.
 #endif /* HAVE_LIBMAGICK */
 #endif
 
-        fclose(fp);
+		fclose(fp);
 
-        if (input == NULL) {
-            sprintf(error_buf, "Unable to determine file type: %s", filename);
-            parse_error(NULL);
-        }
-    }
-    if (fname)
-        free(fname);
-    
-    return (input);
+		if (input == NULL) {
+			sprintf(error_buf, "Unable to determine file type: %s", filename);
+			parse_error(NULL);
+		}
+	}
+	if (fname)
+		free(fname);
+
+	return (input);
 }

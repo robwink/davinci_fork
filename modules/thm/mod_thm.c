@@ -22,7 +22,7 @@ typedef struct {
 static float *column_fill(float *column, int y, int z, int csize, float ignore);
 static float *convolve(float *obj, float *kernel, int ox, int oy, int oz, int kx, int ky, int kz, int norm, float ignore);
 static int *do_corners(Var *pic_a, float nullval);
-static float *sawtooth(int x, int y, int z); 
+static float *sawtooth(int x, int y, int z);
 static float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval, float maxem);
 static float *tb2rad(float *btemp, Var *temp_rad, int *bandlist, int bx, float nullval, int x, int y);
 static emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1, int b2, float maxem);
@@ -68,20 +68,17 @@ static dvModuleFuncDesc exported_list[] = {
   { "unscale", (void *) thm_unscale },
   { "white_noise_remove1", (void *) thm_white_noise_remove1 },
   { "white_noise_remove2", (void *) thm_white_noise_remove2 }
-}; 
+};
 
 static dvModuleInitStuff is = {
   exported_list, sizeof(exported_list)/sizeof(dvModuleFuncDesc),
   NULL, 0
 };
 
-dv_module_init(
-    const char *name,
-    dvModuleInitStuff *init_stuff
-    )
+int dv_module_init(const char *name, dvModuleInitStuff *init_stuff)
 {
     *init_stuff = is;
-    
+
     parse_error("Loaded module thm.");
 
     return 1; /* return initialization success */
@@ -108,12 +105,12 @@ thm_corners(vfuncptr func, Var * arg)
   Var     *pic_a = NULL;                               /* the input pic */
   float    nullval = 0;                                /* null value */
   int     *cns = NULL;                                 /* corners output array */
-  
+
   Alist alist[3];
-  alist[0] = make_alist("picture",		ID_VAL,		NULL,	&pic_a);
-  alist[1] = make_alist("ignore",               FLOAT,          NULL,   &nullval);
+  alist[0] = make_alist("picture", ID_VAL, NULL, &pic_a);
+  alist[1] = make_alist("ignore",  FLOAT,  NULL, &nullval);
   alist[2].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   /* if no picture got passed to the function */
@@ -137,7 +134,7 @@ thm_corners(vfuncptr func, Var * arg)
 
 /**
 *** Steps:
-***    Compute a blackmask that excludes any pixels that have a difference more than 1.15x 
+***    Compute a blackmask that excludes any pixels that have a difference more than 1.15x
 ***    or 0.80x from the smoothed row average.
 ***
 **/
@@ -182,14 +179,14 @@ thm_deplaid(vfuncptr func, Var * arg)
   int       dump = 0;                               /* flag to return the temperature mask */
   int       b10 = 10;                               /* the band-10 designation */
   float    *b_avg, *b_ct;                           /* band average and band count - used to normalize bands for blackmask */
-  
+
   //handle axis options
   char     *options[] =  {
     "x", "y", "z", "xy", NULL
   };
   int       axis = 0;
   char     *ptr = NULL;
-  
+
   Alist alist[10];
   alist[0] = make_alist("data", 		ID_VAL,		NULL,	&data);
   alist[1] = make_alist("ignore",               FLOAT,          NULL,    &nullval);
@@ -201,7 +198,7 @@ thm_deplaid(vfuncptr func, Var * arg)
   alist[7] = make_alist("null",                 FLOAT,          NULL,    &nullval); // can be removed when all legacy programs are dead
   alist[8] = make_alist("axis",                 ID_ENUM,        options, &ptr);
   alist[9].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   /* if no data got passed to the function */
@@ -209,14 +206,14 @@ thm_deplaid(vfuncptr func, Var * arg)
     parse_error("\nType thm.deplaid(?) for help\n");
     return NULL;
   }
-  
+
   if (ptr == NULL) {
     axis = 3;
   } else {
     if (strchr(ptr, 'x') || strchr(ptr, 'X')) axis |= XAXIS;
     if (strchr(ptr, 'y') || strchr(ptr, 'Y')) axis |= YAXIS;
   }
-  
+
   /* x, y and z dimensions of the data */
   x = GetX(data);
   y = GetY(data);
@@ -299,7 +296,7 @@ thm_deplaid(vfuncptr func, Var * arg)
           ct_map[x*j + i] += 1;                                      /* incrementing pixel count_map */
           row_wt[j] += 1;                                            /* calculating row weight for tmask */
         }
-        
+
         /* setting the col and row count arrays */
         if(k==z-1) {
           if(row_ct[j] < ct_map[j*x + i]) row_ct[j] = ct_map[j*x + i];
@@ -350,7 +347,7 @@ thm_deplaid(vfuncptr func, Var * arg)
   col_wta = (int *)calloc(sizeof(int), x*chunksa*z);
   col_wtb = (int *)calloc(sizeof(int), x*chunksb*z);
 	
-  if(col_avg == NULL || col_avga == NULL || col_avgb == NULL || col_wta == NULL || col_wtb == NULL) { 
+  if(col_avg == NULL || col_avga == NULL || col_avgb == NULL || col_wta == NULL || col_wtb == NULL) {
     parse_error("Could not allocate enough memory to continue\n");
     return NULL;
   }
@@ -364,12 +361,12 @@ thm_deplaid(vfuncptr func, Var * arg)
 	
         /* if not a null val and tempmask ok */
         if(tv != nullval && ((blackmask[x*j + i] > 1 && k != b10) || k == b10)) {
-          
+
           if(col_ct[i] == z) {
             row_avg[y*k + j] += tv;                                  /* calculate tempmasked row total of data */
             row_wt[y*k + j] += 1;                                    /* calculate tempmasked row weight of data */
           }
-          
+
           if(row_ct[j] == z) {
             col_avga[k*chunksa*x + cka*x + i] += tv;                 /* calculate tempmasked col total of chunka */
             col_avgb[k*chunksb*x + ckb*x + i] += tv;                 /* calculate tempmasked col total of chunkb */
@@ -380,7 +377,7 @@ thm_deplaid(vfuncptr func, Var * arg)
 	
         /* if at the end of a chunk and there is less than 100 rows of data left, keep going in present chunk */
         if(((y-j) <= 100) && (ccb == 499 || cca == 499)) {
-          cca -= 100; 
+          cca -= 100;
           ccb -= 100;
         }
 	
@@ -442,7 +439,7 @@ thm_deplaid(vfuncptr func, Var * arg)
           }
         }
       }
-      
+
       cca += 1;                                              /* increment the chunka line indice */
       ccb += 1;                                              /* increment the chunkb line indice */
       if(cca == 500) {                                       /* if at end of chunk, start new chunk */
@@ -455,7 +452,7 @@ thm_deplaid(vfuncptr func, Var * arg)
         if(ckb > 0) ck += 1;                                 /* don't increment the ck until cka and ckb have at least one finished chunk */
         ckb += 1;
       }
-      
+
       if(row_avg[y*k + j] != 0 && row_wt[y*k + j] != 0) {
         row_avg[y*k + j] /= (float)row_wt[y*k + j];          /* perform division for row_avg values*/
         row_wt[y*k + j] = 0;
@@ -491,20 +488,20 @@ thm_deplaid(vfuncptr func, Var * arg)
 	
   /* smooth row_avg array */
   row_avgs = convolve(row_avg, filt1, 1, y, z, 1, filt_len, 1, 1, 0);
-  
+
   for(k=0; k<z; k++) {
     for(j=0; j<y; j++) {
       row_avg[k*y + j] -= row_avgs[k*y + j];                                /* subtract smoothed from original row_avg */
-      
+
       if(z > 1 && k != b10) {                                               /* if there is more than one band and current band isn't band 10 */
         row_bright[j] += row_avg[k*y + j];                                  /* add up the brightness information */
         row_wt[j] += 1;
       }
-      
+
       if(z > 1 && k == z-1) row_bright[j] /= (float)row_wt[j];              /* make row_bright an avg rather than a sum */
     }
   }
-  
+
   /* remove brightness information from row_avg */
   if(z > 1) {
     for(k=0; k<z; k++) {
@@ -523,11 +520,11 @@ thm_deplaid(vfuncptr func, Var * arg)
 
   /* operate on the col_avg arrays */
   col_wt = (int *)calloc(sizeof(int), x*chunks);
-  
+
   /* smooth the col_avg array */
   col_avgs = convolve(col_avg, filt1, x, chunks, z, filt_len, 1, 1, 1, 0);
   free(filt1);
-  
+
   for(k=0; k<z; k++) {
     for(j=0; j<chunks; j++) {
       for(i=0; i<x; i++) {
@@ -541,7 +538,7 @@ thm_deplaid(vfuncptr func, Var * arg)
       }
     }
   }
-  
+
   /* remove brightness information */
   if(z > 1) {
     for(k=0; k<z; k++) {
@@ -583,11 +580,11 @@ thm_deplaid(vfuncptr func, Var * arg)
 
 	    if(cca <= 125 && ck != 0) {
 	      //for the first 125 lines we proportionally calculate plaid from the current and previous chunk
-	      tv = tv - row_avg[k*y + j] - ((125.0-(float)cca)/250.0)*col_avg[k*chunks*x + (ck-1)*x + i] - 
+	      tv = tv - row_avg[k*y + j] - ((125.0-(float)cca)/250.0)*col_avg[k*chunks*x + (ck-1)*x + i] -
 		((125.0+(float)cca)/250.0)*col_avg[k*chunks*x + ck*x + i];
 	    } else if (cca >= 126 && ck != chunks-1) {
 	      //for the last 125 lines we proportionally calculate plaid from the current and next chunk
-	      tv = tv - row_avg[k*y + j] - ((float)cca/250.0)*col_avg[k*chunks*x + (ck+1)*x + i] - 
+	      tv = tv - row_avg[k*y + j] - ((float)cca/250.0)*col_avg[k*chunks*x + (ck+1)*x + i] -
 		((250.0-(float)cca)/250.0)*col_avg[k*chunks*x + ck*x + i];
 	    } else {
 	      //if we're in the first 125 lines of the first chunk or the last 125 in the last chunk
@@ -632,7 +629,7 @@ thm_sawtooth(vfuncptr func, Var * arg)
   alist[1] = make_alist("y",       INT,         NULL,	&y);
   alist[2] = make_alist("z",       INT,         NULL,   &z);
   alist[3].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   if (x == 0 || y == 0 || z == 0) {
@@ -742,7 +739,7 @@ thm_rectify(vfuncptr func, Var * arg)
   /* x, y, and z dimensions of the original picture */
   x = GetX(obj);
   y = GetY(obj);
-  z = GetZ(obj);    
+  z = GetZ(obj);
 
   /* Perform check to make sure ignore value is appropriate for the cube */
   /* do_corners will crash davinci if ignore value is wrong.             */
@@ -809,7 +806,7 @@ thm_rectify(vfuncptr func, Var * arg)
   /* assign memory to leftmost and rightmost arrays */
   leftmost = calloc(sizeof(int), u);
   rightmost = calloc(sizeof(int), u);
-  
+
   /* set leftmost array values to maximum x */
   for (j = 0; j < u; j++) {
     leftmost[j] = x-1;
@@ -942,8 +939,8 @@ thm_rectify(vfuncptr func, Var * arg)
 
 	/* if not above the data nor looking off the original array */
 	/* I removed this condition (leftmost[j] != x-1 && i + leftmost[j] < x) from the following if statement */
-	/* bug here: nu and nx were allowed to go upto and equal to the bounds.  */ 
-	if (nu >= 0 && nu < y && nx >= 0 && nx < x && (yiz = extract_float(obj, cpos(nx,nu,k,obj))) != nullo){ 
+	/* bug here: nu and nx were allowed to go upto and equal to the bounds.  */
+	if (nu >= 0 && nu < y && nx >= 0 && nx < x && (yiz = extract_float(obj, cpos(nx,nu,k,obj))) != nullo){
 	  pic[k*u*width + j*width + i] = yiz;
 	}
       }
@@ -973,7 +970,7 @@ thm_reconstitute(vfuncptr func, Var * arg)
   Var    *out = NULL;               /* output data               */
   Var    *vdata = NULL;             /* data var                  */
   Var    *vleftedge = NULL;         /* leftedge var              */
-  Var    *w = NULL,*a = NULL;       /* width and angle var       */ 
+  Var    *w = NULL,*a = NULL;       /* width and angle var       */
   float  *new_data = NULL;          /* reconstituted float data  */
   float   angle = 0;                /* angle value               */
   float   ign = -32768;             /* null data value           */
@@ -985,12 +982,12 @@ thm_reconstitute(vfuncptr func, Var * arg)
   float   shift;                    /* tan of the shift          */
   int     leftedge = 0;             /* temporary leftedge value  */
 
-  Alist alist[2]; 
+  Alist alist[2];
   alist[0] = make_alist("structure", ID_STRUCT, NULL, &obj);
   alist[1].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
-  
+
   if(obj==NULL ) {
     parse_error("reconstitute() - 7/27/05");
     parse_error("Unslants and unshears an output structure from rectify()");
@@ -1001,7 +998,7 @@ thm_reconstitute(vfuncptr func, Var * arg)
     parse_error("The output will have null data values set to -32768\n");
     return NULL;
   }
-  
+
   /* get stuff from structure */
   find_struct(obj,"data",&vdata);
   find_struct(obj,"leftedge",&vleftedge);
@@ -1045,14 +1042,14 @@ thm_reconstitute(vfuncptr func, Var * arg)
 
       for(k=0; k<z; k++){
 	/* if not outside of the reconstituted cube */
-	if (nj >= 0 && nj < ny && ni >= 0 && ni < nx){ 
+	if (nj >= 0 && nj < ny && ni >= 0 && ni < nx){
 	  new_data[k*ny*nx + nj*nx + ni] = extract_float(vdata,cpos(i,j,k,vdata));
 	}
       }
     }
   }
 
-  /* return the data */  
+  /* return the data */
   out = newVal(BSQ, nx, ny, z, FLOAT, new_data);
   return(out);
 }
@@ -1075,7 +1072,7 @@ thm_supersample(vfuncptr func, Var * arg)
   alist[1] = make_alist("type",                 INT,            NULL,   &type);
   alist[2] = make_alist("factor",               INT,            NULL, &factor);
   alist[3].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   /* if no data got passed to the function */
@@ -1166,7 +1163,7 @@ thm_rad2tb(vfuncptr func, Var * arg)
   int          x, y, z;                        /* dimensions of the data */
   int          bx = 0;                         /* x-dimension of the bandlist */
   int          i;                              /* loop index */
-  
+
   Alist alist[6];
   alist[0] = make_alist("rad",              ID_VAL,          NULL,   &rad);
   alist[1] = make_alist("bandlist",         ID_VAL,          NULL,   &bandlist);
@@ -1217,7 +1214,7 @@ thm_rad2tb(vfuncptr func, Var * arg)
       blist[0] = 4;
       blist[1] = 9;
       blist[2] = 10;
-      bx = 3;      
+      bx = 3;
     } else if(bx == 1) {
       parse_error("Warning! Assuming that rad is a 1 band night time radiance image");
       parse_error("Assuming band 9.  If this is incorrect, please specify the bandlist");
@@ -1228,7 +1225,7 @@ thm_rad2tb(vfuncptr func, Var * arg)
       parse_error("Warning! rad contains a non-standard number of bands");
       parse_error("Please specify the bandlist");
       return(NULL);
-    }      
+    }
   }
 
   x = GetX(rad);
@@ -1242,7 +1239,7 @@ thm_rad2tb(vfuncptr func, Var * arg)
   if (fname == NULL) {
     fname=get_temp_rad(fname);
   }
-  
+
   fp = fopen(fname, "rb");
   if (fp == NULL) {
     printf("Can't open look up table: %s\n",fname);
@@ -1260,7 +1257,7 @@ thm_rad2tb(vfuncptr func, Var * arg)
   free(blist);
   out = newVal(BSQ, x, y, z, FLOAT, b_temps);
   return(out);
- 
+
 }
 
 
@@ -1295,7 +1292,7 @@ float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval
   btemps = (float *)calloc(sizeof(FLOAT), x*y*bx);
   temps = (float *)malloc(sizeof(FLOAT)*w);
   rads = (float *)malloc(sizeof(FLOAT)*w);
-  
+
   /* slopes and intercepts arrays */
   m = (float *)calloc(sizeof(FLOAT), w-1);
   b = (float *)calloc(sizeof(FLOAT), w-1);
@@ -1325,10 +1322,10 @@ float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval
     for(j=0;j<y;j++) {
       for(i=0;i<x;i++) {
 	cur_val = extract_float(radiance,cpos(i,j,k,radiance));
-        
+
 	/* correct for maximum emissivity designation */
 	cur_val *= 1.0/maxem;
-        
+
 	if(cur_val == -32768 || cur_val == 0 || cur_val == nullval) {
           btemps[k*y*x + j*x + i] = 0;
 	} else {
@@ -1336,14 +1333,14 @@ float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval
 	  pt1 = 0;
 	  pt2 = w;
 	  mid = 0;
-          
+
 	  while((pt2-pt1) > 1) {
 	    mid = (pt1+pt2)/2;
 	    if(cur_val > rads[mid]) pt1 = mid;
 	    if(cur_val < rads[mid]) pt2 = mid;
 	    if(cur_val == rads[mid]) pt1 = pt2 = mid;
 	  }
-          
+
 	  if(temps[pt2] == temps[pt1]) btemps[k*y*x + j*x + i] = temps[pt1];
 	  else btemps[k*y*x + j*x + i] = m[pt1]*cur_val + b[pt1];
 	}
@@ -1387,7 +1384,7 @@ float *tb2rad(float *btemp, Var *temp_rad, int *bandlist, int bx, float nullval,
   irads = (float *)calloc(sizeof(FLOAT), x*y*bx);
   temps = (float *)malloc(sizeof(FLOAT)*w);
   rads = (float *)malloc(sizeof(FLOAT)*w);
-  
+
   /* slopes and intercepts arrays */
   m = (float *)calloc(sizeof(FLOAT), w-1);
   b = (float *)calloc(sizeof(FLOAT), w-1);
@@ -1420,19 +1417,19 @@ float *tb2rad(float *btemp, Var *temp_rad, int *bandlist, int bx, float nullval,
         if(cur_val == 0) irads[k*y*x + j*x + i] = nullval;
 				
         if(cur_val > 0) {
-          
+
           /* locate the two bounding points in the temps array containing the temperature value */
           pt1 = 0;
           pt2 = w;
           mid = 0;
-          
+
           while((pt2-pt1) > 1) {
             mid = (pt1+pt2)/2;
             if(cur_val > temps[mid]) pt1 = mid;
             if(cur_val < temps[mid]) pt2 = mid;
             if(cur_val == temps[mid]) pt1 = pt2 = mid;
           }
-          
+
           if(rads[pt2] == rads[pt1]) irads[k*y*x + j*x + i] = rads[pt1];
           else irads[k*y*x + j*x + i] = m[pt1]*cur_val + b[pt1];
         }
@@ -1466,7 +1463,7 @@ thm_themissivity(vfuncptr func, Var * arg)
   int          i;                              /* loop index */
   int          bx, x, y, z;                    /* size of the original array */
   emissobj    *e_struct;                       /* emissivity structure output from themissivity */
-  
+
   Alist alist[8];
   alist[0] = make_alist("rad", 		 ID_VAL,         NULL,   &rad);
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
@@ -1523,7 +1520,7 @@ thm_themissivity(vfuncptr func, Var * arg)
 
   /* load temp_rad_v4 table into memory */
   fname=get_temp_rad(fname);
-  
+
   e_struct = themissivity(rad, blist, nullval, fname, b1, b2, maxem);
 
   if(e_struct) {
@@ -1583,7 +1580,7 @@ emissobj *themissivity(Var *rad, int *blist, float nullval, char *fname, int b1,
   temp_rad = dv_LoadVicar(fp, fname, &h);
   fclose(fp);
   free(fname);
-  
+
   /* convert to brightness temperature and return */
   b_temps = rad2tb(rad, temp_rad, blist, z, nullval, maxem);
 
@@ -1647,7 +1644,7 @@ thm_emiss2rad(vfuncptr func, Var * arg)
   int          x, y, z;                        /* dimensions of the data                                       */
   int          bx = 0;                         /* x-dimension of the bandlist                                  */
   int          i, j, k;                        /* loop indices                                                 */
-  
+
   Alist alist[5];
   alist[0] = make_alist("estruct",       ID_STRUCT,      NULL,   &estruct);
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
@@ -1701,14 +1698,14 @@ thm_emiss2rad(vfuncptr func, Var * arg)
 
   /* load temp_rad_v4 table into memory */
   fname=get_temp_rad(fname);
-  
+
   fp = fopen(fname, "rb");
   if (fp == NULL) {
     printf("Can't open look up table: %s\n",fname);
     free(fname);
     return(NULL);
   }
-  
+
   temp_rad = dv_LoadVicar(fp, fname, &h);
   fclose(fp);
   free(fname);
@@ -1748,7 +1745,7 @@ thm_emiss2rad(vfuncptr func, Var * arg)
 
   out = newVal(BSQ, x, y, z, FLOAT, rad);
   return(out);
- 
+
 }
 
 
@@ -1779,7 +1776,7 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
   float        temp_val;                       /* guess */
   int          b1 = 3, b2 = 9;                 /* the boundary bands used to determine highest brightness temperature */
   int          k_size = 7;                     /* size of the smoothing kernel */
-  
+
   Alist alist[8];
   alist[0] = make_alist("rad", 		 ID_VAL,         NULL,   &rad);
   alist[1] = make_alist("k_size",        INT,            NULL,   &k_size);
@@ -1838,10 +1835,10 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
 
   /* initialize temp_rad header */
   iom_init_iheader(&h);
-  
+
   /* load temp_rad_v4 table into memory */
   fname=get_temp_rad(fname);
-  
+
   fp = fopen(fname, "rb");
   if (fp == NULL) {
     printf("Can't open look up table: %s\n",fname);
@@ -1909,7 +1906,7 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
       }
     }
   }
-  
+
   /* reset the null values for chirs to stop bitching */
   for(k=0;k<z;k++) {
     for(j=0;j<y;j++) {
@@ -1931,7 +1928,7 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
 Var *
 thm_unscale(vfuncptr func, Var * arg)
 {
-  
+
   Var      *pds = NULL;                  /* the original pds structure */
   Var      *out = NULL;                  /* the output scaled data */
   Var      *w_pds=NULL;                  /* data from struct */
@@ -1946,8 +1943,8 @@ thm_unscale(vfuncptr func, Var * arg)
   int       x=0, y=0, z=0, x1=0;         /* size of the picture */
   float     tv1=0;
   float     tv2=0;                       /* temp pixel value */
-  
- 
+
+
   Alist alist[2];
   alist[0] = make_alist("obj",        ID_STRUCT,     NULL,   &pds);
   alist[1].name = NULL;
@@ -1971,14 +1968,14 @@ thm_unscale(vfuncptr func, Var * arg)
   find_struct(struc,"band_bin",&bin);
   find_struct(bin,"band_bin_multiplier",&multt);
   find_struct(bin,"band_bin_base",&baset);
-  
-  
+
+
   /* set up base and multiplier arrays */
   x1 = GetX(multt);
-  
+
   base = (double *)calloc(sizeof(double), x1);
   mult = (double *)calloc(sizeof(double), x1);
- 
+
   for(i=0; i<x1; i++) {
     mult[i]=extract_double(multt,cpos(i,0,0,multt));
     base[i]=extract_double(baset,cpos(i,0,0,multt));
@@ -1990,8 +1987,8 @@ thm_unscale(vfuncptr func, Var * arg)
   z = GetZ(w_pds);
 
   /* allocate memory for the picture */
-  w_pic = (float *)calloc(sizeof(float), x*y*z);  
-  
+  w_pic = (float *)calloc(sizeof(float), x*y*z);
+
   /* loop through and unscale data */
   for(k=0; k<z; k++) {
     for(j=0; j<y; j++) {
@@ -2005,13 +2002,13 @@ thm_unscale(vfuncptr func, Var * arg)
       }
     }
   }
-  
+
   printf("core_null values set to -32768.0\n");
-  
+
   /* clean up and return data */
   free(base);
   free(mult);
-  
+
   out=newVal(BSQ,x,y,z,FLOAT,w_pic);
   return out;
 }
@@ -2026,7 +2023,7 @@ thm_cleandcs(vfuncptr func, Var * arg)
 {
 
   typedef unsigned char byte;
-  
+
   Var    *pic = NULL;            /* the orignial dcs pic */
   Var    *out = NULL;            /* the output pic */
   byte   *w_pic;                 /* modified image */
@@ -2034,12 +2031,12 @@ thm_cleandcs(vfuncptr func, Var * arg)
   int     x=0, y=0, z=0;         /* size of the picture */
   byte    tv=0;                  /* temp pixel value */
   int     opt=2;                 /* option for possible clean */
-  
+
   Alist alist[3];
   alist[0] = make_alist("pic",      ID_VAL,     NULL,  &pic);
   alist[1] = make_alist("opt",      INT,        NULL,  &opt);
   alist[2].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
   if ( opt < 1 || opt > 2) opt=2;
 
@@ -2056,10 +2053,10 @@ thm_cleandcs(vfuncptr func, Var * arg)
   x = GetX(pic);
   y = GetY(pic);
   z = GetZ(pic);
-  
+
   /* allocate memory for the picture */
   w_pic = (byte *)calloc(sizeof(byte), x*y*z);
-  
+
   if(w_pic == NULL) return NULL;
 
   /* loop through data and extract new points with null value of 0 ignored */
@@ -2073,12 +2070,12 @@ thm_cleandcs(vfuncptr func, Var * arg)
 	    w_pic[j*x*z + i*z + k]=0;
 	    w_pic[j*x*z + i*z + (k-1)]=0;
 	    w_pic[j*x*z + i*z + (k-2)]=0;
-	  } 
+	  }
 	}
       }
     }
   }
-  
+
   /* return the modified data */
   out = newVal(BIP, z, x, y, BYTE, w_pic);
   return out;
@@ -2094,10 +2091,10 @@ thm_white_noise_remove2(vfuncptr func, Var *arg)
 
   typedef unsigned char byte;
 
-  byte   *bc = NULL;                /* band count for orignal stuff */        
+  byte   *bc = NULL;                /* band count for orignal stuff */
   Var    *data = NULL;              /* the original data */
   Var    *out = NULL;               /* the output structure */
-  float   nullval=-32768;           /* null value */  
+  float   nullval=-32768;           /* null value */
   float  *w_pic, *w_pic2;           /* working data */
   float   tv=0;                     /* temporary value */
   float   *total;                   /* the sum of the data (luminosity) */
@@ -2107,9 +2104,9 @@ thm_white_noise_remove2(vfuncptr func, Var *arg)
   int     b10=10;                   /* band option */
   float  *band_10;                  /* band 10 to smooth */
   int     filt=7;                   /* the filter size */
-  int     kernsize;                 /* number of kern elements */ 
+  int     kernsize;                 /* number of kern elements */
 
-  Alist alist[5]; 
+  Alist alist[5];
   alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
   alist[1] = make_alist("filt",      INT,       NULL,  &filt);
   alist[2] = make_alist("b10",       INT,       NULL,  &b10);
@@ -2117,7 +2114,7 @@ thm_white_noise_remove2(vfuncptr func, Var *arg)
   alist[4].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
- 
+
   if (data == NULL) {
     parse_error("white_noise_remove2() - 7/10/04");
     parse_error("White noise removal algorithm for THEMIS radiance cubes");
@@ -2152,7 +2149,7 @@ thm_white_noise_remove2(vfuncptr func, Var *arg)
   y = GetY(data);
   z = GetZ(data);
   kernsize=filt*filt;
-  
+
   /* more error handling */
   if(z < 2) {
     printf("\nSorry you need more bands to remove noise\n\n");
@@ -2165,7 +2162,7 @@ thm_white_noise_remove2(vfuncptr func, Var *arg)
   w_pic2 = (float *)calloc(sizeof(float), x*y*z);
   total = (float *)calloc(sizeof(float), x*y);
   kern = (float *)calloc(sizeof(float), kernsize);
-  band_10 = (float *)calloc(sizeof(float),x*y);  
+  band_10 = (float *)calloc(sizeof(float),x*y);
 
   if(w_pic == NULL) return NULL;
 
@@ -2185,25 +2182,25 @@ thm_white_noise_remove2(vfuncptr func, Var *arg)
 	}
       }
     }
-    
+
     /* divide by the luminosity map and check for null values */
     for(k=0; k<z; k++) {
       if(k!=b10) {
 	for(j=0; j<y; j++) {
 	  for(i=0; i<x; i++) {
-	    if(bc[x*j + i] == b10) w_pic2[x*y*k + x*j + i]=w_pic[x*y*k + x*j + i]/total[x*j + i];  
+	    if(bc[x*j + i] == b10) w_pic2[x*y*k + x*j + i]=w_pic[x*y*k + x*j + i]/total[x*j + i];
 	  }
 	}
       }
     }
-    
+
     /* convolve over the image */
     for(i=0;i<kernsize;i++) {
       kern[i]=1.0;
     }
     w_pic2=convolve(w_pic2,kern,x,y,z,filt,filt,1,1,0);
     band_10=convolve(band_10,kern,x,y,1,filt,filt,1,1,0);
-    
+
   /* convert back to normal space and fill other pixels */
     for(k=0; k<z; k++) {
       for(j=0; j<y; j++) {
@@ -2217,7 +2214,7 @@ thm_white_noise_remove2(vfuncptr func, Var *arg)
       }
     }
   }
-  
+
   /*if there is not a band 10 */
   if(b10 == 0 ) {
     /* extract values and make luminosity map */
@@ -2233,17 +2230,17 @@ thm_white_noise_remove2(vfuncptr func, Var *arg)
     for(k=0; k<z; k++) {
       for(j=0; j<y; j++) {
 	for(i=0; i<x; i++) {
-	  w_pic2[x*y*k + x*j + i]=w_pic[x*y*k + x*j + i]/total[x*j + i];  
+	  w_pic2[x*y*k + x*j + i]=w_pic[x*y*k + x*j + i]/total[x*j + i];
 	}
       }
     }
-  
+
     /* convolve over the image */
     for(i=0;i<kernsize;i++) {
       kern[i]=1.0;
     }
     w_pic2=convolve(w_pic2,kern,x,y,z,filt,filt,1,1,0);
-    
+
     /* convert back to normal space and fill other pixels */
     for(k=0; k<z; k++) {
       for(j=0; j<y; j++) {
@@ -2276,7 +2273,7 @@ double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_st
   int          w;
   double      *em = NULL;
   double       para_rad_min = 0, para_em_min = 0;
-  double       rs = 0.000005;                                
+  double       rs = 0.000005;
   double      *min_coords=NULL;
   double      *rad = NULL;
   double      *val = NULL;
@@ -2310,8 +2307,8 @@ double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_st
 
     /* initializing rad and em for 1-D search */
     if(slopes[k] == 0){
-      for(w=0; w<3; w++){ 
-	rad[w] = 0 + rs*w; 
+      for(w=0; w<3; w++){
+	rad[w] = 0 + rs*w;
 	em[w]  = em_start;
       }
     }
@@ -2321,7 +2318,7 @@ double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_st
       rad[0] = rad_start[k*2];
       rad[2] = rad_end[k*2];
       rad[1] = (0.2 + (slopes[k]*rad[0]))/slopes[k];
-     
+
       em[0] = 0.8;
       em[1] = 1.0;
       em[2] = 1.2;
@@ -2338,11 +2335,11 @@ double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_st
 
     /* locate coordinates of minimal point in rad/val parabola */
     if(slopes[k] == 0){
-      para_rad_min = rad[1]-.5*(pow(rad[1]-rad[0],2)*(val[1]-val[2]) - pow(rad[1]-rad[2],2)*(val[1]-val[0]))/((rad[1]-rad[0])*(val[1]-val[2]) - (rad[1]-rad[2])*(val[1]-val[0])); 
+      para_rad_min = rad[1]-.5*(pow(rad[1]-rad[0],2)*(val[1]-val[2]) - pow(rad[1]-rad[2],2)*(val[1]-val[0]))/((rad[1]-rad[0])*(val[1]-val[2]) - (rad[1]-rad[2])*(val[1]-val[0]));
       para_em_min = em_start;
     }
     else{
-      para_em_min = em[1]-.5*(pow(em[1]-em[0],2)*(val[1]-val[2]) - pow(em[1]-em[2],2)*(val[1]-val[0]))/((em[1]-em[0])*(val[1]-val[2]) - (em[1]-em[2])*(val[1]-val[0])); 
+      para_em_min = em[1]-.5*(pow(em[1]-em[0],2)*(val[1]-val[2]) - pow(em[1]-em[2],2)*(val[1]-val[0]))/((em[1]-em[0])*(val[1]-val[2]) - (em[1]-em[2])*(val[1]-val[0]));
       para_rad_min = (para_em_min - (em[0] - slopes[k]*rad[0]))/slopes[k];
     }
 
@@ -2363,7 +2360,7 @@ double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_st
   free(em);
   free(rad);
   free(val);
-  
+
   return(min_coords);
 }
 
@@ -2419,7 +2416,7 @@ float *bbrw_k(float *btemp, int *bandlist, int x, int y, int z, float nullval)
   int         i, j, k;
   float      *irads = NULL;
   float      *wavelengths = NULL;
-  float       c1 = 11911.0;                          // a constant in units of W cm-2 micron^4 str-1 
+  float       c1 = 11911.0;                          // a constant in units of W cm-2 micron^4 str-1
   float       c2 = 14387.9;                          // c constant in units of micron K
   int         wl = 0;                                // current themis band in bandlist
   float       numerator = 0.0;
@@ -2467,7 +2464,7 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
   char       *fname = NULL;                  // the pointer to the filename
   double     *min_try1 = NULL;               // holds minimal coordinates for em 0.8
   double     *min_try2 = NULL;               // holds minimal coordinates for em 1.2
-  double     *min_try3 = NULL;               // holds minimal coordinates for trough 
+  double     *min_try3 = NULL;               // holds minimal coordinates for trough
   double     *slopes = NULL;                 // defined as em/rads
   FILE       *fp = NULL;
   float      *btemps = NULL;
@@ -2476,7 +2473,7 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
   float      *irad = NULL;
   int         b1=3, b2=9;                    // band limits for maxbtemp search
   int        *blist = NULL;                  // the integer list of bands extracted from bandlist or created
-  int         a, b, bx; 
+  int         a, b, bx;
   int         i, j, k;
   int         x, y, z;
   int         space = 0;                     // set to anything other than 0 to return rad corr space
@@ -2545,30 +2542,30 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
 
   /* initialize temp_rad header */
   iom_init_iheader(&h);
-  
+
   /* load temp_rad_v4 table into memory */
   fname=get_temp_rad(fname);
-  
+
   fp = fopen(fname, "rb");
   if (fp == NULL) {
     printf("Can't open look up table: %s\n",fname);
     free(fname);
     return(NULL);
   }
-  
+
   temp_rad = dv_LoadVicar(fp, fname, &h);
   fclose(fp);
   free(fname);
-  
+
   maxbtemp = (float *)calloc(sizeof(float), x*y);
   slopes = (double *)calloc(sizeof(double),z);
-  
+
   /* initialize slopes' array to 0, for minimize_1d to be able to use slope array */
   for(k=0; k<z; k++){ slopes[k] = 0.0; }
-  
+
   /* convert to brightness temperature */
   btemps = rad2tb(rad, temp_rad, blist, bx, nullval, 1.0);
-  
+
   /* loop through btemps eliminating all pixels not containing a full set of bands*/
   for(j=0; j<y; j++) {
     for(i=0; i<x; i++) {
@@ -2581,7 +2578,7 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
       }
     }
   }
-  
+
   /* find max_b_temp */
   for(k=b1-1;k<b2;k++) {
     for(j=0;j<y;j++) {
@@ -2590,38 +2587,38 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
       }
     }
   }
-  
+
   free(btemps);
-  
+
   /* Calculate radiance from maxbtemp same as bbrw written by Phil */
   irad = bbrw_k(maxbtemp, blist, x, y, z, 0);
-  
+
   free(maxbtemp);
   free(blist);
-  
+
   /* return radcorrspace to user */
   if(space != 0) {
     min_try1 = radcorrspace(rad, irad);
-    
+
     free(slopes);
     free(irad);
-    
+
     out = newVal(BSQ, 400, 400, z, DOUBLE, min_try1);
     return(out);
   }
-  
+
   /* find minimal points in solution space along em = .8 and em = 1.2 */
   min_try1 = minimize_1d(rad, irad, 0.8, NULL, NULL, slopes);
   min_try2 = minimize_1d(rad, irad, 1.2, NULL, NULL, slopes);
 
   /* determine slope of the trough */
   for(k=0; k<z; k++){
-    slopes[k] = (min_try2[k*2 + 1] - min_try1[k*2 + 1])/(min_try2[k*2] - min_try1[k*2]); 
+    slopes[k] = (min_try2[k*2 + 1] - min_try1[k*2 + 1])/(min_try2[k*2] - min_try1[k*2]);
   }
 
   /* find minimum along the trough */
   min_try3 = minimize_1d(rad, irad, 0.0, min_try1, min_try2, slopes);
-  
+
   out = newVal(BSQ, 2, 1, z, DOUBLE, min_try3);
 
   free(irad);
@@ -2652,9 +2649,9 @@ thm_column_fill(vfuncptr func, Var * arg)
   alist[1] = make_alist("chunk_size",           INT,            NULL,   &csize);
   alist[2] = make_alist("ignore",               FLOAT,          NULL,   &ignore);
   alist[3].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
-  
+
   if (col_in == NULL){
     parse_error("column_fill() - 7/13/05");
     parse_error("Takes a partially filled column, calculates averages over number of lines specified in \'chunk_size\'");
@@ -2680,7 +2677,7 @@ thm_column_fill(vfuncptr func, Var * arg)
 
   /* extract col_in into column */
   column = (float *)calloc(sizeof(float),y*z);
- 
+
   for(k=0;k<z;k++) {
     for(j=0;j<y;j++) {
       column[k*y + j] = extract_float(col_in, cpos(0,j,k,col_in));
@@ -2743,22 +2740,22 @@ float *column_fill(float *column, int y, int z, int csize, float ignore)
 	  while(flag_before == 0 || flag_after == 0) {
 	    if(position_before<0) flag_before=1;
 	    if(position_after>=y) flag_after=1;
-	    
+	
 	    if(flag_before==0 && cols[k*y + position_before] != ignore) {
 	      val_before = cols[k*y + position_before];
 	      flag_before = 1;
 	    }
-	    
+	
 	    if(flag_after==0 && cols[k*y + position_after] != ignore) {
 	      val_after = cols[k*y + position_after];
 	      flag_after = 1;
 	    }
-	    
+	
 	    if(flag_before==0) position_before -= 1;
 	    if(flag_after==0) position_after += 1;
 	  }
 	  /* now we should have the position and values of the nearest filled points */
-	  
+	
 	  /* take care of the first pixel in the array */
 	  if(j==0) cols[k*y + j] = val_after;
 	
@@ -2821,7 +2818,7 @@ int *do_corners(Var *pic_a, float nullval)
   for(i=0;i<=7;i++) {
     corners[i] = -1;
   }
-  
+
   if (row_avg == NULL) {
     parse_error("\nError! Unable to allocate %d bytes for row_avg\n", sizeof(int)*y);
     return NULL;
@@ -2830,15 +2827,15 @@ int *do_corners(Var *pic_a, float nullval)
     parse_error("\nError! Unable to allocate %d bytes for col_avg\n", sizeof(int)*x);
     return NULL;
   }
-  
+
   /* allocate memory for the pic */
   pic = (byte *)calloc(sizeof(byte),y*x);
-  
+
   if (pic == NULL) {
     parse_error("\nERROR! AHHHHH...I can't remember the picture!\n");
     return NULL;
   }
-  
+
   /* extract the picture, row_avg and col_avg */
   for(j=0; j<y; j++) {
     for(i=0; i<x; i++) {
@@ -2913,9 +2910,9 @@ int *do_corners(Var *pic_a, float nullval)
         corners[7] = rmyv + 1;
       }
       i+=1;
-    } 
+    }
   }
-  
+
   /* case where top of image leans to the right of the bottom of the image */
   /* approach top most x value from the left */
   if(lmyv>=rmyv) {
@@ -2942,7 +2939,7 @@ int *do_corners(Var *pic_a, float nullval)
   free(col_avg);
   free(row_avg);
 
-  /* return array */  
+  /* return array */
   return(corners);
 }
 
@@ -2965,7 +2962,7 @@ float *convolve(float *obj, float *kernel, int ox, int oy, int oz, int kx, int k
   kx_center = kx/2;
   ky_center = ky/2;
   kz_center = kz/2;
-  
+
   objsize = ox * oy * oz;
 
   data = (float *)calloc(sizeof(float), objsize);
@@ -2975,7 +2972,7 @@ float *convolve(float *obj, float *kernel, int ox, int oy, int oz, int kx, int k
     parse_error("Unable to allocate memory");
     return NULL ;
   }
- 
+
   for (i = 0 ; i < objsize ; i++) {                               /* loop through every element in object */
     if(obj[i] == ignore) { data[i] = ignore; continue; }
 		
@@ -2986,7 +2983,7 @@ float *convolve(float *obj, float *kernel, int ox, int oy, int oz, int kx, int k
     for (a = 0 ; a < kx ; a++) {                                  /* current x position of kernel */
       x_pos = x + a - kx_center;                                  /* where the current operation is being done in x */
       if (x_pos < 0 || x_pos >= ox) continue;
-      for (b = 0 ; b < ky ; b++) {                                /* current y position of kernel */    
+      for (b = 0 ; b < ky ; b++) {                                /* current y position of kernel */
         y_pos = y + b - ky_center;                                /* where the current operation is being done in y */
         if (y_pos < 0 || y_pos >= oy) continue;
         for (c = 0 ; c < kz ; c++) {                              /* current z position of kernel */
@@ -3000,15 +2997,15 @@ float *convolve(float *obj, float *kernel, int ox, int oy, int oz, int kx, int k
             wt[i] += kval;                                        /* sum of values of pixels of the kernel used */
             data[i] += (kval * oval);
           }
-        } 
+        }
       }
     }
-    
+
     if (norm != 0 && wt[i] != 0) {
       data[i] /= (float)wt[i];
     }
-  } 
-  
+  }
+
   free(wt);
   return(data);
 }
@@ -3018,7 +3015,7 @@ static char *get_temp_rad(char *fname) {
 
   if (fname == NULL) {
     const char *dv_sfiles_val = getenv(DV_SCRIPT_FILES_ENV);
-    
+
     if (dv_sfiles_val == NULL){
       dv_sfiles_val = RAD_TEMP_DEFAULT_PATH;
       fname = calloc(1, strlen(dv_sfiles_val)+1+strlen(RAD_TEMP_LOOKUP_TBL)+1); /* 1+1 = "/"+"\0" */
@@ -3035,12 +3032,12 @@ static char *get_temp_rad(char *fname) {
 
 /* Static Ported Dependencies */
 //static Var *do_my_convolve(Var *obj, Var *kernel, int norm, float ignore, int kernreduce); - ported to ff_convolve.c
-//static Var *do_ipi(Var *coords_array, Var *values_array); - ported to ff_ipi.c 
-//static float round_dp(float input, float decimal);  - ported to ff_contour.c 
+//static Var *do_ipi(Var *coords_array, Var *values_array); - ported to ff_ipi.c
+//static float round_dp(float input, float decimal);  - ported to ff_contour.c
 //static Var *rotation(Var *obj, float angle, float ign); ported to ff_rotate.c
 
 /* Ported Davinci Functions */
-//static Var *thm_kfill(vfuncptr, Var *); - ported to ff_ifill.c 
+//static Var *thm_kfill(vfuncptr, Var *); - ported to ff_ifill.c
 //static Var *thm_convolve(vfuncptr, Var *); - ported to ff_convolve.c
 //static Var *thm_ramp(vfuncptr, Var *); -ported to ff_ramp.c
 //static Var *thm_sawtooth(vfuncptr, Var *); - ported to ff_filter.c
@@ -3050,9 +3047,9 @@ static char *get_temp_rad(char *fname) {
 //static Var *thm_sstretch2(vfuncptr, Var *); - ported to ff_hstretch.c
 //static Var *thm_ipi(vfuncptr, Var *); - ported to ff_ipi.c
 //static Var *thm_interp2d(vfuncptr, Var *); - ported to ff_interp.c
-//static Var *thm_contour(vfuncptr, Var *); - ported to ff_contour.c 
+//static Var *thm_contour(vfuncptr, Var *); - ported to ff_contour.c
 //static Var *thm_rotation(vfuncptr, Var *); - ported to ff_rotate.c
-//static Var *thm_resample(vfuncptr, Var *); - ported to ff_resample.c 
+//static Var *thm_resample(vfuncptr, Var *); - ported to ff_resample.c
 
 
 /* Old functions */
@@ -3100,7 +3097,7 @@ void position_fill(int *pos, int elem, int iter, Var *obj) {
 Var*
 thm_maxpos_v1(vfuncptr func, Var *arg)
 {
- 
+
   Var    *data = NULL;                      /* the orignial data */
   Var    *out = NULL;                       /* the output structure */
   int    *pos = NULL;                       /* the output position */
@@ -3111,16 +3108,16 @@ thm_maxpos_v1(vfuncptr func, Var *arg)
   float   ni1=0, ni2=-32798, ni3=-852;      /* temp values and positions */
   int     opt=0;                            /* return array option */
   int     iter=1;                           /* number of iterations to include */
-   
+
   Alist alist[5];
   alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
   alist[1] = make_alist("ret",       INT,       NULL,  &opt);
   alist[2] = make_alist("iter",      INT,       NULL,  &iter);
   alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
   alist[4].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
-  
+
   if (data == NULL) {
     parse_error("\nUsed to find the position of the max point in an array\n");
     parse_error("$1 = the data");
@@ -3140,18 +3137,18 @@ thm_maxpos_v1(vfuncptr func, Var *arg)
   /* create array for postion */
   pos = (int *)calloc(sizeof(int), 3*iter);
   val = (float *)calloc(sizeof(float), iter);
-  
+
   /* x, y and z dimensions of the data */
   x = GetX(data);
   y = GetY(data);
   z = GetZ(data);
 
-  /* find the maximum point and its position */  
+  /* find the maximum point and its position */
   for(l=0; l<iter; l++) {
     for(k=0; k<z; k++) {
       for(j=0; j<y; j++) {
         for(i=0; i<x; i++) {
-          
+
           /* ni1 = current value */
           /* ni2 = curent max value */
           /* ni3 = old max val */
@@ -3174,7 +3171,7 @@ thm_maxpos_v1(vfuncptr func, Var *arg)
     /* return the findings */
     printf("\nLocation: %i,%i,%i\n",pos[0],pos[1],pos[2]);
     printf("%.13f\n\n",ni3);
-    
+
     if(opt==0) return NULL;
   }
 
@@ -3209,9 +3206,9 @@ thm_minpos_v1(vfuncptr func, Var *arg)
   alist[2] = make_alist("iter",      INT,       NULL,  &iter);
   alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
   alist[4].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
- 
+
   if (data == NULL) {
     parse_error("\nUsed to find the position of the min point in an array\n");
     parse_error("$1 = the data");
@@ -3227,22 +3224,22 @@ thm_minpos_v1(vfuncptr func, Var *arg)
   if (iter > 1 ) {
     opt=1;
   }
-  
+
   /* create array for position and value*/
   pos = (int *)calloc(sizeof(int), 3*iter);
   val = (float *)calloc(sizeof(float), iter);
-  
+
   /* x, y and z dimensions of the data */
   x = GetX(data);
   y = GetY(data);
   z = GetZ(data);
 
-  /* find the minimum point and its position */  
+  /* find the minimum point and its position */
   for(l=0; l<iter; l++) {
     for(k=0; k<z; k++) {
       for(j=0; j<y; j++) {
 	for(i=0; i<x; i++) {
-	  
+	
 	  /* ni1 = current value */
 	  /* ni2 = curent max value */
 	  /* ni3 = old max val */
@@ -3262,7 +3259,7 @@ thm_minpos_v1(vfuncptr func, Var *arg)
   }
 
   /* return the findings */
-  if(iter==1) {    
+  if(iter==1) {
     printf("\nLocation: %i,%i,%i\n",pos[0],pos[1],pos[2]);
     if(ni2<-32768) {
       printf("%.9e\n\n",ni3);
@@ -3284,7 +3281,7 @@ thm_minpos_v1(vfuncptr func, Var *arg)
 
 
 Var *thm_destripe(vfuncptr func, Var *arg){
- 
+
   int         filt_size = 9;                               /* convolution kernel size */
   int         ignore = -32768;                             /* non-data pixel value */
   Var        *data = NULL;                                 /* the unscaled, calibrated EDR */
@@ -3335,40 +3332,40 @@ Var *thm_destripe(vfuncptr func, Var *arg){
   int        spike_width = 7;                  /* the range of a spike */
   int        x, y, z;                          /* the dimensions of the image */
   int        i, j, k;
-  
+
   out = new_struct(3);
-  
+
   /* retrieve the dimensions of the image that will be destriped */
   x = GetX(data);
   y = GetY(data);
-  z = GetZ(data);  
-  
+  z = GetZ(data);
+
   /* allocate memory for the array */
   data_array = (float *)malloc(sizeof(float)*x*y*z);
-  
+
   /* extract davinci array into a float array for use */
   for(k=0; k<z; k++){
     for(j=0; j<y; j++){
-      for(i=0; i<x; i++){ 
-	data_array[k*x*y + j*x+ i] = extract_float(data,cpos(i,j,k,data)); 
+      for(i=0; i<x; i++){
+	data_array[k*x*y + j*x+ i] = extract_float(data,cpos(i,j,k,data));
       }
     }
   }
-  
+
   /*   the axis loop is to go through data_array[] twice, once for the          **
   **   y-axis destripe (which finds a X*1*Z row correction) and then again for  **
   **   x-axis destripe (a 1*Y*Z column correction) on the y-destriped image     */
-  
+
   for(axis=0; axis<=1; axis++){
-    
+
     /* transpose the image by transposing the definition of the boundary */
     if(axis == 1){ x = GetY(data);   y = GetX(data); }
-    
+
     /* average along the y-direction yields an array of [x,1,z] */
     avg = (float *)malloc(sizeof(float)*x*z);
-    
+
     for(k=0; k<z; k++){
-      
+
       /* cycling through columns (axis = 0) or rows (axis = 1) */
       for(i=0; i<x; i++){
 	
@@ -3378,12 +3375,12 @@ Var *thm_destripe(vfuncptr func, Var *arg){
 	
 	for(j=0; j<y; j++){
 	  /* sum the non-ignore values in the column/row */
-	  if(axis == 0 && data_array[k*x*y + j*x + i] != ignore){ 
+	  if(axis == 0 && data_array[k*x*y + j*x + i] != ignore){
 	    avg[k*x + i] += data_array[k*x*y + j*x + i];
 	    count++;
 	  }
-	  if(axis == 1 && data_array[k*y*x + i*y + j] != ignore){ 
-	    avg[k*x + i] += data_array[k*y*x + i*y + j]; 
+	  if(axis == 1 && data_array[k*y*x + i*y + j] != ignore){
+	    avg[k*x + i] += data_array[k*y*x + i*y + j];
 	    count++;
 	  }
 	}
@@ -3398,17 +3395,17 @@ Var *thm_destripe(vfuncptr func, Var *arg){
     /* create the boxcar convolve kernel */
     bxcr_filt = (float *)malloc(sizeof(float)*filt_size);
     for(i=0; i<filt_size; i++){ bxcr_filt[i] = 1.0; };
-    
+
     /* although a misnomer here, high_pass is the low_pass filter of the average */
-    high_pass = convolve(avg, bxcr_filt, x, 1, z, filt_size, 1, 1, 1, ignore);   
-    
+    high_pass = convolve(avg, bxcr_filt, x, 1, z, filt_size, 1, 1, 1, ignore);
+
     /* now high_pass is a high-pass filter of average */
-    for(k=0; k<z; k++){ 
-      for(i=0; i<x; i++){ 
-	high_pass[k*x + i] = avg[k*x + i] - high_pass[k*x + i]; 
+    for(k=0; k<z; k++){
+      for(i=0; i<x; i++){
+	high_pass[k*x + i] = avg[k*x + i] - high_pass[k*x + i];
       }
     }
-    
+
     // **************************************************************************************************** //
     // * note: in the previous version, there was a sub-diff array to hold the array diff[3:], but this   * //
     // *       is circumvented this time by going ahead and accessing the diff array for purpose of cal-  * //
@@ -3416,21 +3413,21 @@ Var *thm_destripe(vfuncptr func, Var *arg){
     // *       included because they are well outside the boundary of the rest of the data set            * //
     // *                                                                                                  * //
     // **************************************************************************************************** //
-    
+
     if(t_level == NULL){
       /* allocate space for the mean of high_pass[1:x-1] */
       mean = (float *)malloc(sizeof(float)*z);
-      
+
       for(k=0; k<z; k++){
 	/* reset the mean of each band */
 	mean[k] = 0;
 	for(i=2; i<x; i++){ mean[k] += high_pass[k*x + i]; }
 	mean[k] /= (float)(x-2);
       }
-      
+
       /* allocate space of the same dimensions as mean */
       std = (float *)malloc(sizeof(float)*z);
-      
+
       /* standard deviation */
       for(k=0; k<z; k++){
 	std[k] = 0;
@@ -3444,85 +3441,85 @@ Var *thm_destripe(vfuncptr func, Var *arg){
     }
 
     free(mean);
-    
+
     /* extract values if user provides a custom threshold level */
-    if(t_level != NULL){ 
-      for(k=0; k<z; k++){ 
-	std[k] = extract_float(t_level,cpos(0,0,k,t_level)); 
+    if(t_level != NULL){
+      for(k=0; k<z; k++){
+	std[k] = extract_float(t_level,cpos(0,0,k,t_level));
       }
     }
-    
+
     /* everywhere in the difference array that has values below the stddev*2 value, set it to zero */
     for(k=0; k<z; k++){
-      for(i=0; i<x; i++){ 
-	if(fabs(high_pass[k*x + i]) < std[k]) high_pass[k*x + i] = 0; 
-      } 
+      for(i=0; i<x; i++){
+	if(fabs(high_pass[k*x + i]) < std[k]) high_pass[k*x + i] = 0;
+      }
     }
 
     free(std);
 
     /* allocate memory for average array without stripes */
     new_avg = (float *)malloc(sizeof(float)*x*z);
-    for(k=0; k<z; k++){ 
-      for(i=0; i<x; i++){ 
-	new_avg[k*x+i] = avg[k*x + i]; 
+    for(k=0; k<z; k++){
+      for(i=0; i<x; i++){
+	new_avg[k*x+i] = avg[k*x + i];
       }
     }
-    
-    /* dealing with spike values, look to the left and right up to 7 values away 
+
+    /* dealing with spike values, look to the left and right up to 7 values away
        to find values to be averaged then to replace the spike's value.           */
     for(j=0; j<z; j++){
       for(i=1; i<=x-2; i++){
 	
 	/* check for spikes */
 	if(high_pass[j*x+i] != 0){
-	  
+	
 	  /******* Searching to the left of the spike  *******/
 	  /* set 'aleft' to default value in the event the following cases are not matched */
 	  aleft = new_avg[j*x+i];
-	  
+	
 	  /* verify that to the left of the spike, neighboring values aren't also spikes up to distance of 7 */
 	  for(idel=1; idel<=spike_width; idel++){
 	    /* location of a neighboring value */
 	    i_neighbor = i - idel;
-	    
+	
 	    /* if we run off the edge of the array, use spike value */
-	    if(i_neighbor < 0){ 
+	    if(i_neighbor < 0){
 	      aleft = new_avg[j*x + i];
 	      break;
 	    }
-	    
+	
 	    /* Phil's assumption is that if a high_pass pixel is 0 then there isn't a spike there.  **
 	    ** Unfortunately, zero values also occur in dropouts. So I've added the extra condition **
 	    ** of new_avg not being the ignore value.                                               */
-	    if(high_pass[j*x + i_neighbor] == 0 && new_avg[j*x + i_neighbor] != ignore){ 
+	    if(high_pass[j*x + i_neighbor] == 0 && new_avg[j*x + i_neighbor] != ignore){
 	      aleft = new_avg[j*x + i_neighbor];
 	      break;
 	    }
 	  }
-	  
+	
 	  /******* Searching to the right of the spike  *******/
 	  /* set 'aright' to default value in the even the following cases are not matched */
 	  aright = new_avg[j*x+i];
-	  
+	
 	  /* verify that to the right of the spike, neighboring values aren't also spikes up to distance of 7 */
 	  for(idel=1; idel<=spike_width; idel++){
 	    /* location of neighboring value */
 	    i_neighbor = i + idel;
-	    
+	
 	    /* if we run off the edge of the array, use immediate right */
 	    if(i_neighbor > x-1){
 	      aright = new_avg[j*x + i];
 	      break;
 	    }
-	    
+	
 	    /* Again, I need to add the condition of non-dropout points as above */
 	    if(high_pass[j*x + i_neighbor] == 0 && new_avg[j*x + i_neighbor] != ignore){
 	      aright = new_avg[j*x + i_neighbor];
 	      break;
 	    }
 	  }
-	  
+	
 	  /* replace spike with the average of the left and right bounding values     **
 	  ** Here, once again, I have to add the condition that neither of the points **
 	  ** to the left or the right are dropouts.  If they are then the new_avg     **
@@ -3533,54 +3530,54 @@ Var *thm_destripe(vfuncptr func, Var *arg){
 	}
       }
     }
-    
+
     /* destroy high_pass to be recreated by convolve */
     free(high_pass);
-    
+
     /* peform a high-pass filter over the average of the image */
     high_pass = convolve(new_avg, bxcr_filt, x, 1, z, filt_size, 1, 1, 1, ignore);
-    
-    for(k=0; k<z; k++){ 
-      for(i=0; i<x; i++){ 
-	high_pass[k*x + i] = avg[k*x + i] - high_pass[k*x + i]; 
-      } 
+
+    for(k=0; k<z; k++){
+      for(i=0; i<x; i++){
+	high_pass[k*x + i] = avg[k*x + i] - high_pass[k*x + i];
+      }
     }
 
     free(bxcr_filt);
     free(new_avg);
     free(avg);
-    
+
     /* subtract the high_pass from every pixel in the array */
     for(k=0; k<z; k++){
-      if(axis == 0){ 
-	for(j=0; j<y; j++){ 
-	  for(i=0; i<x; i++){ 
-	    data_array[k*x*y + j*x + i] -= high_pass[k*x + i]; 
-	  } 
-	} 
+      if(axis == 0){
+	for(j=0; j<y; j++){
+	  for(i=0; i<x; i++){
+	    data_array[k*x*y + j*x + i] -= high_pass[k*x + i];
+	  }
+	}
       }
-      if(axis == 1){ 
-	for(i=0; i<y; i++){ 
-	  for(j=0; j<x; j++){ 
-	    data_array[k*x*y + j*y + i] -= high_pass[k*x + j]; 
-	  } 
-	} 
-      }  	  
+      if(axis == 1){
+	for(i=0; i<y; i++){
+	  for(j=0; j<x; j++){
+	    data_array[k*x*y + j*y + i] -= high_pass[k*x + j];
+	  }
+	}
+      }  	
     }
-    
+
     /* reset the axes */
     if(axis == 1){
-      x = GetX(data);   
-      y = GetY(data); 
+      x = GetX(data);
+      y = GetY(data);
     }
-    
+
     /* output the difference array */
     if(axis == 0){ add_struct(out, "diffrow", newVal(BSQ,x,1,z,FLOAT,high_pass)); }
     if(axis == 1){ add_struct(out, "diffcol", newVal(BSQ,1,y,z,FLOAT,high_pass)); }
   }
-  
+
   add_struct(out, "data", newVal(BSQ,x,y,z,FLOAT,data_array));
-  
+
   return(out);
 }
 
@@ -3595,13 +3592,13 @@ Var *thm_marsbin(vfuncptr func, Var *arg){
   int          ignore_flag = 0;                                       // trigger flag //
   int          lat_range, lon_range;                                  // the size of the data_plane //
   int          xdim, ydim;                                            // the size of the incoming txt file //
-  int          i,j;  
+  int          i,j;
   int         *lat = NULL;                                            // modified latitude values based on user defined boundaries //
   int         *lon = NULL;                                            // modified longitude values based on user defined boundaries //
   int         *inv_plane = NULL;                                      // holds the obs_plane only mirrored resversed across both axises //
   int         *obs_plane = NULL;                                      // keeps track of how many samples are at a given lat/lon point //
   Var         *data = NULL;                                           // the incoming data file //
-  Var         *out = NULL;                                            // the outgoing 
+  Var         *out = NULL;                                            // the outgoing
 
   double *hi = NULL;
 
@@ -3637,63 +3634,63 @@ Var *thm_marsbin(vfuncptr func, Var *arg){
   else{
     xdim = GetX(data);                                                // retrieve how many sample data column there is //
     ydim = GetY(data);                                                // retrieve how many sample there is //
-    
+
     // allocate memory for ydim size array to hold latitude and longitude values individually //
     lat = (int *)malloc(sizeof(int)*ydim);
     lon = (int *)malloc(sizeof(int)*ydim);
-    
+
     // translate float latitudes and longitudes into integer format //
     for(i=0; i<ydim; i++){
       lat[i] = (int)((extract_float(data,cpos(1,i,0,data)) - lower_lat)*resolution)+1;
       lon[i] = (int)((extract_float(data,cpos(0,i,0,data)) - lower_lon)*resolution)+1;
-      
+
       if(lat[i] == 0.0){ lat[i] = -1; }
       if(lon[i] == 0.0){ lon[i] = -1; }
     }
-    
+
     // calculate the dimension of the output image //
     lat_range = (int)((upper_lat-lower_lat)*resolution);
     lon_range = (int)((upper_lon-lower_lon)*resolution);
-    
+
     // allocate memory for the data plane and the observation plane //
     calc_plane = (double *)malloc(sizeof(double)*lat_range*lon_range*(xdim-2));
     data_plane = (double *)malloc(sizeof(double)*lat_range*lon_range*(xdim-2));
     inv_plane  = (int *)malloc(sizeof(int)*lat_range*lon_range);
     obs_plane  = (int *)malloc(sizeof(int)*lat_range*lon_range);
-    
+
     // clear both arrays of any memory junk values //
     for(i=0; i<lat_range*lon_range*(xdim-2); i++){ data_plane[i] = 0.0; }
     for(i=0; i<lat_range*lon_range; i++){ obs_plane[i] = 0; }
-    
+
     // begin inputting data into the data_plane and updating the obs_plane //
     for(i=0; i<ydim; i++){
-      
+
       // check to see if the lat & lon is within range, can't use lat[] and lon[] for they have been reformated //
       longitude = extract_float(data, cpos(0,i,0,data));
       latitude =  extract_float(data, cpos(1,i,0,data));
-      
+
       // check to see if any of the data in a lat/lon pixel has an ignore value //
       for(j=0; j<xdim-2; j++){ if(fabs(extract_float(data, cpos((j+2),i,0,data)) - (float)(ignore)) < .005){ ignore_flag = 1; } }
-      
+
       // check to see if the sample data is within the user defined boundary //
-      if((latitude <= upper_lat)&&(latitude >= lower_lat)&&(longitude <= upper_lon)&&(longitude >= lower_lon)&&(ignore_flag != 1)){ 
+      if((latitude <= upper_lat)&&(latitude >= lower_lat)&&(longitude <= upper_lon)&&(longitude >= lower_lon)&&(ignore_flag != 1)){
 	
 	// update observation plane //
-	obs_plane[(lat[i]-1)*lon_range + lon[i]] += 1; 
+	obs_plane[(lat[i]-1)*lon_range + lon[i]] += 1;
 	
 	// put data from file to specific location denoted by <array_x, array_y> in each plane //
 	for(j=0; j<xdim-2; j++){ data_plane[(j*lat_range*lon_range)+((lat[i]-1)*lon_range)+(lon[i])] += extract_double(data,cpos((j+2),i,0,data)); }
       }
       else{ ignore_flag = 0; }                                        //this might potentially be a fatal mistake, but at this point i will leave it //
     }
-    
+
     // divide each data plane with observation plane //
     for(i=0; i<(lat_range*lon_range); i++){
       if(obs_plane[i] != 0){
 	for(j=0; j<xdim-2; j++){ data_plane[(j*lat_range*lon_range)+i] /= obs_plane[i]; }
       }
     }	
-    
+
     // flip the data_plane and the obs_plane across both the x and y axis //
     j = lat_range*lon_range*(xdim-2);
     for(i=0; i<lat_range*lon_range*(xdim-2); i++){
@@ -3705,17 +3702,17 @@ Var *thm_marsbin(vfuncptr func, Var *arg){
       inv_plane[j]  = obs_plane[i];
       j--;
     }
-    
+
     // clean up the unused arrays //
     free(data_plane);
     free(lat);
     free(lon);
     free(obs_plane);
-    
+
     out = new_struct(2);
     add_struct(out, "nobs", newVal(BSQ,lon_range,lat_range,1,INT,inv_plane));
     add_struct(out, "cube", newVal(BSQ,lon_range,lat_range,xdim-2,DOUBLE,calc_plane));
-    
+
     return(out);
   }
 }
@@ -3755,7 +3752,7 @@ thm_rampold(vfuncptr func, Var * arg)
 
   if (parse_args(func, arg, alist) == 0)
     return (NULL);
-  
+
   /* if no pictures got passed to the function */
   if (pic_1 == NULL || pic_2 == NULL) {
     parse_error("ramp() - Fri Oct 14 14:45:09 MST 2005");
@@ -3774,39 +3771,39 @@ thm_rampold(vfuncptr func, Var * arg)
     parse_error("You can speed up ramp calculation by setting \'stop\'. 100 works well.");
     return NULL;
   }
-  
+
   /* x and y dimensions of the original pictures */
   x = GetX(pic_1);
   y = GetY(pic_1);
-  
+
   if (x != GetX(pic_2) || y != GetY(pic_2)) {
     parse_error("The two pictures need to be of the exact same dimensions.\n");
     return NULL;
   }
-  
+
   /* create the two overlap arrays */
   ol1 = (int *) malloc(sizeof(int)*x*y);
   ol2 = (int *) malloc(sizeof(int)*x*y);
-  
+
   /* lines and columns bounding data */
   r1 = y-1;
   r2 = 0;
   c1 = x-1;
   c2 = 0;
-  
+
   /* extract profiles of images */
   for (j = 0; j < y ; j++) {
     for (i = 0; i < x ; i++) {
       t1 = j * x + i;
       ol1[t1] = -1;
       ol2[t1] = -1;
-      
+
       tmpval = extract_float(pic_1, cpos(i, j, 0, pic_1));
       if(tmpval != nullv) ol1[t1] = 0;
-      
+
       tmpval = extract_float(pic_2, cpos(i, j, 0, pic_2));
       if(tmpval != nullv) ol2[t1] = 0;
-      
+
       /* find left and right limits of overlapping area */
       if (ol1[t1] != -1 && ol2[t1] != -1) {
 	if (j < r1) { r1 = j; }
@@ -3816,7 +3813,7 @@ thm_rampold(vfuncptr func, Var * arg)
       }
     }
   }
- 
+
   /* loop through the overlap arrays filling in the appropriate value.   **
   ** On the first iteration we search for any pixels with a neighbor of  **
   ** -1 and we set that pixel to 1.  On all other iterations we look for **
@@ -3825,7 +3822,7 @@ thm_rampold(vfuncptr func, Var * arg)
   k=1;
   while (ct > 0) {
     ct = 0;
-    
+
     for (j = r1; j <= r2; j++) {
       for (i = c1; i <= c2; i++) {
 	t1 = j * x + i;
@@ -3859,7 +3856,7 @@ thm_rampold(vfuncptr func, Var * arg)
     num += 1;
     n = num-1;
     k+=1;
-    
+
     /* we've searched enough. Set all remaining values to 'pare' */
     if(k==pare) {
       for (j = r1; j <= r2; j++) {
@@ -3875,7 +3872,7 @@ thm_rampold(vfuncptr func, Var * arg)
 
   /* loop through last time and create ramp */
   ramp = (float *) calloc(sizeof(float), x*y);
-  
+
   for (j = 0; j < y; j++) {
     for (i = 0; i < x; i++) {
       t1 = j*x + i;
@@ -3884,10 +3881,10 @@ thm_rampold(vfuncptr func, Var * arg)
       }
     }
   }
-  
+
   free(ol1);
   free(ol2);
-  
+
   out = newVal(BSQ, x, y, 1, FLOAT, ramp);
   return out;
 }
@@ -3991,18 +3988,18 @@ thm_y_shear(vfuncptr func, Var * arg)
     for(k=0; k<z; k++) {
       for(j=0; j<y; j++) {
         for(i=0; i<x; i++) {
-          
+
           /* the shifted y pixel */
           /* if the angle is greater than 0 */
           if(lshift>0) {
             ni = k*(y+abs(lshift))*x + ((int)(j+abs(lshift)-(int)(shift*i+0.5)))*x + i;
           }
-          
+
           /* if the angle is less than 0 */
           if(lshift<0) {
             ni = k*(y+abs(lshift))*x + (j+(int)(fabs(shift)*i+0.5))*x + i;
           }
-          
+
           pic[ni] = extract_float(pic_v, cpos(i, j, k, pic_v));
         }
       }
@@ -4043,27 +4040,27 @@ thm_y_shear(vfuncptr func, Var * arg)
     for(k=0; k<z; k++) {
       for(j=0; j<y-abs(lshift); j++) {
         for(i=0; i<x; i++) {
-          
+
           /* the index of the new array */
           nx = k*(y-abs(lshift))*x + j*x + i;
-          
+
           /* the shifted y pixel */
           /* if the angle is greater than 0 */
           if(lshift>0) {
             nj = j + (int)(fabs(shift)*i+0.5);
           }
-          
+
           /* if the angle is less than 0 */
           if(lshift<0) {
             nj = j + abs(lshift) - (int)(fabs(shift)*i+0.5);
           }
-          
+
           pic[nx] = extract_float(pic_v, cpos(i, nj, k, pic_v));
         }
       }
     }
     /* final output */
     out = newVal(BSQ, x, y-abs(lshift), z, FLOAT, pic);
-  } 
+  }
   return out;
 }

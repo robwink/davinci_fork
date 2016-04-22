@@ -52,13 +52,11 @@
 #define _FILE_OFFSET_BITS 64
 
 static Var *do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
-		int use_units); // drd static so only visible in this file
+        int use_units); // drd static so only visible in this file
 static Var *do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int valTl); // drd static so only visible in this file
 
-static int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject,
-		char *nambuf);
-static int dQuoteManager(char *stringItem, FILE *fp, Var *GroupOrObject,
-		char *namebuf);
+static int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *nambuf);
+static int dQuoteManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf);
 static void make_unique_name(char *buffer, Var *dv_struct);
 static char get_keyword_datatype(char *value, char *name);
 static void add_converted_to_struct(Var *dv_struct, char * name, char * value);
@@ -172,8 +170,7 @@ Var *WriteISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 	bsqTile = &nothing[0];
 
 	if (arg == NULL) {
-		parse_error(
-				"No parameter list supplied--must supply at least an ISIS3 object and file name.\n");
+		parse_error("No parameter list supplied--must supply at least an ISIS3 object and file name.\n");
 		return (NULL);
 	}
 
@@ -187,8 +184,7 @@ Var *WriteISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 	alist[6].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) {
-		parse_error(
-				"No useful command line, should have: ISIS3object, \"filename\", [force=0,1], [[\"BSQ\",\"Tile\"], [valTs=value], [valTl=value]]");
+		parse_error("No useful command line, should have: ISIS3object, \"filename\", [force=0,1], [[\"BSQ\",\"Tile\"], [valTs=value], [valTl=value]]");
 		return NULL;
 	}
 
@@ -240,8 +236,7 @@ Var *WriteISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 		return (do_writeISIS3(obj, filename, bsqTile, ts, tl));
 	} else {
 		printf("V_Type(obj)=%d\n", V_TYPE(obj));
-		parse_error(
-				"You have submitted an invalid object to be written out as an ISIS3 file");
+		parse_error("You have submitted an invalid object to be written out as an ISIS3 file");
 		return NULL;
 	}
 }
@@ -253,7 +248,7 @@ Var* do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int
 	int i, j;
 	char *name;
 	char buffer[160];
-	unsigned char *ISIS3label = NULL;
+	char *ISIS3label = NULL;
 	unsigned char *isis3Data = NULL;
 
 	size_t allData = 0;
@@ -267,7 +262,7 @@ Var* do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int
 
 	FILE *fp;
 
-    minIsisInfo isisinfo; // in isis3Include.h
+	minIsisInfo isisinfo; // in isis3Include.h
 
 	if ((fp = fopen(ISIS3_filename, "wb")) == NULL) {
 		fprintf(stderr, "Unable to open file: %s\n", ISIS3_filename);
@@ -284,14 +279,14 @@ Var* do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int
 	}
 
 
-    if (i >= 0) {
+	if (i >= 0) {
 
-    	// in case these are not there, default
-    	isisinfo.TileSamples = valTs;
-    	isisinfo.TileLines = valTl;
+		// in case these are not there, default
+		isisinfo.TileSamples = valTs;
+		isisinfo.TileLines = valTl;
 
-    	count = get_struct_count(objCore);
-    	for (j = 0; j < count; j++) {
+		count = get_struct_count(objCore);
+		for (j = 0; j < count; j++) {
 			get_struct_element(objCore, j, &name, &objTemp);
 
 			if (strcmp("StartByte", name) == 0) {
@@ -300,14 +295,14 @@ Var* do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int
 			}
 
 			else if (strcmp("Format", name) == 0) {
-           	    if(strcmp(bsqTile, "NOTHING") == 0) {
-           	    	isisinfo.Format = V_STRING(objTemp);
-           	    }
-           	    else {
-           	    	isisinfo.Format = bsqTile;
-           	    }
-           		//printf("Format is %s\n", isisinfo.Format);
-           	}
+		   	    if(strcmp(bsqTile, "NOTHING") == 0) {
+		   	    	isisinfo.Format = V_STRING(objTemp);
+		   	    }
+		   	    else {
+		   	    	isisinfo.Format = bsqTile;
+		   	    }
+				//printf("Format is %s\n", isisinfo.Format);
+		   	}
 
 			else if (strcmp("TileSamples", name) == 0) {
 				if( (isisinfo.TileSamples < 0) &&
@@ -327,7 +322,7 @@ Var* do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int
 				}
 			}
 		}
-    }
+	}
 
 	if (i >= 0) {
 		i = find_struct(objCore, "Dimensions", &objDimensions);
@@ -397,13 +392,13 @@ Var* do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int
 
 
 	if (i >= 0) {
-		ISIS3label = (unsigned char *)calloc(0x10000, sizeof(unsigned char));
+		ISIS3label = calloc(0x10000, sizeof(unsigned char));
 		if(ISIS3label == NULL) {
 			fprintf(stderr, "Could not allocate space for building label");
 			return NULL;
 		}
 
-        strcpy(ISIS3label, &cubeStub[0][0]);                            //  { "Object = IsisCube" },                // 00
+		strcpy(ISIS3label, &cubeStub[0][0]);                            //  { "Object = IsisCube" },                // 00
 		strcat(ISIS3label, "\n");
 
 		strcat(ISIS3label, &cubeStub[1][0]);                            //  { "  Object = Core" },                  // 01
@@ -417,10 +412,10 @@ Var* do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int
 		sprintf(buffer, "%s\n", isisinfo.Format);
 		strcat(ISIS3label, buffer);
 
-         /*
-          * We must be Tile Format or
-          * these don't occur
-          */
+		 /*
+		  * We must be Tile Format or
+		  * these don't occur
+		  */
 
 		if(strcmp(isisinfo.Format, "Tile") == 0) {
 
@@ -508,15 +503,15 @@ Var* do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int
 		// fprintf(stdout, "\n\n%s", ISIS3label);
 		// fflush(stdout);
 
-        free(ISIS3label);
+		free(ISIS3label);
 
-        get_struct_element(obj, 0, &name, &objTemp);
+		get_struct_element(obj, 0, &name, &objTemp);
 
-        isis3Data = (unsigned char *) V_DATA(objTemp);
+		isis3Data = (unsigned char *) V_DATA(objTemp);
 
-        writeResult = writeCube(fp, &isisinfo, isis3Data);
+		writeResult = writeCube(fp, &isisinfo, isis3Data);
 
-        fclose(fp);
+		fclose(fp);
 
 	}
 	else {
@@ -1905,12 +1900,11 @@ Var *readCube(FILE *fp) {
 			totalRows += 1;
 		}
 	}
-	allSized = (size_t) Samples * (size_t) Lines * (size_t) totalBands
-			* (size_t) sampleSize;
+	allSized = (size_t)Samples * (size_t)Lines * (size_t)totalBands * (size_t)sampleSize;
 
 	if (allSized >= 2147483647ll) {
 		char biggie[64];
-		sprintf(biggie,"%lld", allSized);
+		sprintf(biggie,"%lu", allSized);
 		commaize(biggie);
 		parse_error(
 				"Warning:  Size is %s bytes.\nThis is larger than the 32bit integer max of 2,147,483,647.\nProceeding...\n",
@@ -2109,23 +2103,23 @@ int getCubeParams(FILE *fp) {
 		}
 
 		else if (strcmp("TileSamples", string1) == 0) {
-			sscanf(string3, "%d", &TileSamples);
+			sscanf(string3, "%zd", &TileSamples);
 		}
 
 		else if (strcmp("TileLines", string1) == 0) {
-			sscanf(string3, "%d", &TileLines);
+			sscanf(string3, "%zd", &TileLines);
 		}
 
 		else if (strcmp("Samples", string1) == 0) {
-			sscanf(string3, "%d", &Samples);
+			sscanf(string3, "%zd", &Samples);
 		}
 
 		else if (strcmp("Lines", string1) == 0) {
-			sscanf(string3, "%d", &Lines);
+			sscanf(string3, "%zd", &Lines);
 		}
 
 		else if (strcmp("Bands", string1) == 0) {
-			sscanf(string3, "%d", &totalBands);
+			sscanf(string3, "%zd", &totalBands);
 		}
 
 		else if (strcmp("Type", string1) == 0) {
@@ -2164,35 +2158,36 @@ int getCubeParams(FILE *fp) {
 	return retVal;
 }
 
-int writeCube(FILE *fp, minIsisInfo *isisinfo, unsigned char *data) {
-    unsigned char *cubeData = NULL;
-    unsigned char outBuffer[4];
-    unsigned char swapBuffer[4];
-    unsigned char fakeBuffer[] = {0,0,0,0};
-    int cubeElement = 0;
-    int x, y, z;
-    int writeCount = 0;
-    int wrtSampleSize = 0;
-    size_t wrtTileSize = 0;
-    size_t wrtTileSamples = 0;
+int writeCube(FILE *fp, minIsisInfo *isisinfo, unsigned char *data)
+{
+	unsigned char *cubeData = NULL;
+	unsigned char outBuffer[4];
+	unsigned char swapBuffer[4];
+	unsigned char fakeBuffer[] = {0,0,0,0};
+	int cubeElement = 0;
+	int x, y, z;
+	int writeCount = 0;
+	int wrtSampleSize = 0;
+	size_t wrtTileSize = 0;
+	size_t wrtTileSamples = 0;
 
-    size_t wrtSubTileSize = 0;
-    size_t wrtTiles = 0;
-    size_t wrt_row = 0;
-    size_t wrtRow = 0;
-    size_t wrtBands = 0;
-    size_t wrtTilesPerRow = 0;
-    size_t wrtSubTileSamples = 0;
-    size_t wrtTotalRows = 0;
-    size_t wrtSubTileLines = 0;
+	size_t wrtSubTileSize = 0;
+	size_t wrtTiles = 0;
+	size_t wrt_row = 0;
+	size_t wrtRow = 0;
+	size_t wrtBands = 0;
+	size_t wrtTilesPerRow = 0;
+	size_t wrtSubTileSamples = 0;
+	size_t wrtTotalRows = 0;
+	size_t wrtSubTileLines = 0;
 
-    size_t wrtElement = 0;
-    size_t wrtOffset = 0;
-    size_t wrtAllSized = 0;
+	size_t wrtElement = 0;
+	size_t wrtOffset = 0;
+	size_t wrtAllSized = 0;
 #undef OUTDEBUG
 #ifdef OUTDEBUG
-    FILE *snog;
-    snog = fopen("data.txt","wt");
+	FILE *snog;
+	snog = fopen("data.txt","wt");
 #endif
 	if (strcmp("UnsignedByte", isisinfo->Type) == 0) {
 		wrtSampleSize = 1;
@@ -2202,150 +2197,149 @@ int writeCube(FILE *fp, minIsisInfo *isisinfo, unsigned char *data) {
 		wrtSampleSize = 4; // only other choice is Real which is really float of size 4
 	}
 
-    wrtAllSized = (size_t) isisinfo->Samples * (size_t) isisinfo->Lines * (size_t) isisinfo->Bands * (size_t) wrtSampleSize;
+	wrtAllSized = (size_t) isisinfo->Samples * (size_t) isisinfo->Lines * (size_t) isisinfo->Bands * (size_t) wrtSampleSize;
 
-    if (wrtAllSized >= 2147483647ll) {
-        char biggie[64];
-        sprintf(biggie,"%lld", wrtAllSized);
-        commaize(biggie);
-        parse_error(
-                "Warning:  Size is %s bytes.\n", biggie);
-    }
+	if (wrtAllSized >= 2147483647ll) {
+		char biggie[64];
+		sprintf(biggie, "%zu", wrtAllSized);
+		commaize(biggie);
+		parse_error("Warning:  Size is %s bytes.\n", biggie);
+	}
 
-    cubeData = data;
+	cubeData = data;
 
-    if ( strcmp (isisinfo->Format, "BandSequential") == 0) {
+	if (strcmp (isisinfo->Format, "BandSequential") == 0) {
 
-        wrtOffset = 0;  // This is the offset in to the storage structure
-        for (z = 0; z < isisinfo->Bands; z++) {
-            for (y = 0; y < isisinfo->Lines; y++) {
-                for (x = 0; x < isisinfo->Samples; x++) {
-                    for (wrtElement = 0; wrtElement < wrtSampleSize; wrtElement++) {
-                         outBuffer[wrtElement] = cubeData[wrtOffset + wrtElement];
-                    }
-                    if ( strcmp(isisinfo->ByteOrder, "Lsb")== 0) {
-                        writeCount = fwrite(outBuffer, wrtSampleSize, 1, fp);
-                    }
-                    else {
-                        switch (wrtSampleSize) {
-                            case 2:
-                                swapBuffer[1] = outBuffer[0];
-                                swapBuffer[0] = outBuffer[1];
-                                break;
-                            case 4:
-                                swapBuffer[3] = outBuffer[0];
-                                swapBuffer[2] = outBuffer[1];
-                                swapBuffer[1] = outBuffer[2];
-                                swapBuffer[0] = outBuffer[3];
-                                break;
-                            default:
-                                ;
-                        }
-                        writeCount = fwrite(swapBuffer, wrtSampleSize, 1, fp);
-                    }
-                    if (writeCount != 1) {
-                        parse_error("Bad Write for Band Sequential Cube");
-                        return 0;
-                    }
+		wrtOffset = 0;  // This is the offset in to the storage structure
+		for (z = 0; z < isisinfo->Bands; z++) {
+			for (y = 0; y < isisinfo->Lines; y++) {
+				for (x = 0; x < isisinfo->Samples; x++) {
+					for (wrtElement = 0; wrtElement < wrtSampleSize; wrtElement++) {
+						 outBuffer[wrtElement] = cubeData[wrtOffset + wrtElement];
+					}
+					if ( strcmp(isisinfo->ByteOrder, "Lsb")== 0) {
+						writeCount = fwrite(outBuffer, wrtSampleSize, 1, fp);
+					}
+					else {
+						switch (wrtSampleSize) {
+							case 2:
+								swapBuffer[1] = outBuffer[0];
+								swapBuffer[0] = outBuffer[1];
+								break;
+							case 4:
+								swapBuffer[3] = outBuffer[0];
+								swapBuffer[2] = outBuffer[1];
+								swapBuffer[1] = outBuffer[2];
+								swapBuffer[0] = outBuffer[3];
+								break;
+							default:
+								;
+						}
+						writeCount = fwrite(swapBuffer, wrtSampleSize, 1, fp);
+					}
+					if (writeCount != 1) {
+						parse_error("Bad Write for Band Sequential Cube");
+						return 0;
+					}
 
-                    wrtOffset += wrtSampleSize;
+					wrtOffset += wrtSampleSize;
 
-                } // end x
-            } // end y
-        } // end z
-    } // end BandSequential
+				} // end x
+			} // end y
+		} // end z
+	} // end BandSequential
 
-    else { // Tiled
+	else { // Tiled
 
-        wrtTileSize = isisinfo->TileSamples * isisinfo->TileLines * wrtSampleSize;
-        wrtTilesPerRow = isisinfo->Samples / isisinfo->TileSamples;
-        wrtSubTileSamples = isisinfo->Samples % isisinfo->TileSamples; // What is left over going across
-        wrtSubTileSize = wrtSubTileSamples * isisinfo->TileLines * wrtSampleSize;
-        wrtTotalRows = isisinfo->Lines / isisinfo->TileLines;
-        wrtSubTileLines = isisinfo->Lines % isisinfo->TileLines; // What is left going down
+		wrtTileSize = isisinfo->TileSamples * isisinfo->TileLines * wrtSampleSize;
+		wrtTilesPerRow = isisinfo->Samples / isisinfo->TileSamples;
+		wrtSubTileSamples = isisinfo->Samples % isisinfo->TileSamples; // What is left over going across
+		wrtSubTileSize = wrtSubTileSamples * isisinfo->TileLines * wrtSampleSize;
+		wrtTotalRows = isisinfo->Lines / isisinfo->TileLines;
+		wrtSubTileLines = isisinfo->Lines % isisinfo->TileLines; // What is left going down
 
-        if (wrtSubTileSamples != 0) {
-            wrtTilesPerRow += 1;
-        }
-        if (wrtSubTileLines != 0) {
-            wrtTotalRows += 1;
-        }
+		if (wrtSubTileSamples != 0) {
+			wrtTilesPerRow += 1;
+		}
+		if (wrtSubTileLines != 0) {
+			wrtTotalRows += 1;
+		}
 
-        for (wrtBands = 0; wrtBands < isisinfo->Bands; wrtBands++) {
-            for (wrtRow = 0; wrtRow < wrtTotalRows; wrtRow++) {
-           		for (wrtTiles = 0; wrtTiles < wrtTilesPerRow; wrtTiles++) {
-                   	for (wrt_row = 0; wrt_row < isisinfo->TileLines; wrt_row++) {
-                        wrtOffset = 0;
-                        wrtOffset += wrtBands * (isisinfo->Samples * isisinfo->Lines * wrtSampleSize); // How many whole "sheets" we have read
-                        wrtOffset += (wrtRow * wrtTilesPerRow * wrtTileSize); // This is the number of full Rows of full tiles
-                        wrtOffset += (wrtTiles * isisinfo->TileSamples * wrtSampleSize); // This is the X offset from the left, tile widths
-                        wrtOffset += (wrt_row * isisinfo->TileSamples * (wrtTilesPerRow) * wrtSampleSize); // This is the Y offset
+		for (wrtBands = 0; wrtBands < isisinfo->Bands; wrtBands++) {
+			for (wrtRow = 0; wrtRow < wrtTotalRows; wrtRow++) {
+				for (wrtTiles = 0; wrtTiles < wrtTilesPerRow; wrtTiles++) {
+					for (wrt_row = 0; wrt_row < isisinfo->TileLines; wrt_row++) {
+						wrtOffset = 0;
+						wrtOffset += wrtBands * (isisinfo->Samples * isisinfo->Lines * wrtSampleSize); // How many whole "sheets" we have read
+						wrtOffset += (wrtRow * wrtTilesPerRow * wrtTileSize); // This is the number of full Rows of full tiles
+						wrtOffset += (wrtTiles * isisinfo->TileSamples * wrtSampleSize); // This is the X offset from the left, tile widths
+						wrtOffset += (wrt_row * isisinfo->TileSamples * (wrtTilesPerRow) * wrtSampleSize); // This is the Y offset
 
 #ifdef OUTDEBUG
  fprintf(snog,"Bands=%d, Rows=%d, row=%3d, Tiles=%d, wrtOffset=%8d\n", wrtBands, wrtRow, wrt_row, wrtTiles,wrtOffset);
 #endif
-                        writeCount = 1;
+						writeCount = 1;
 
-                        for (x = 0; x < isisinfo->TileSamples; x++) { // Reading across a tile
+						for (x = 0; x < isisinfo->TileSamples; x++) { // Reading across a tile
 
-                            if (writeCount != 1) {
-                                parse_error("Bad Write for Tiled Data");
-                                return 0;
-                            }
+							if (writeCount != 1) {
+								parse_error("Bad Write for Tiled Data");
+								return 0;
+							}
 
-                            if ( (wrtTiles == (wrtTilesPerRow - 1)) &&
-                                 (wrtSubTileSamples != 0) ) {
+							if ( (wrtTiles == (wrtTilesPerRow - 1)) &&
+								 (wrtSubTileSamples != 0) ) {
 
-                            	if (x >= wrtSubTileSamples) {
-                                    writeCount = fwrite(fakeBuffer, wrtSampleSize, 1, fp);
-                                    continue;
-                                }
-                            }
+								if (x >= wrtSubTileSamples) {
+									writeCount = fwrite(fakeBuffer, wrtSampleSize, 1, fp);
+									continue;
+								}
+							}
 
-                            if ( (wrtRow == (wrtTotalRows - 1)) &&
-                            	 (wrtSubTileLines != 0) ) {
+							if ( (wrtRow == (wrtTotalRows - 1)) &&
+								 (wrtSubTileLines != 0) ) {
 
-                                if (wrtRow >= wrtSubTileLines) {
-                                    writeCount = fwrite(fakeBuffer, wrtSampleSize, 1, fp);
-                                    continue;
-                                }
-                            }
+								if (wrtRow >= wrtSubTileLines) {
+									writeCount = fwrite(fakeBuffer, wrtSampleSize, 1, fp);
+									continue;
+								}
+							}
 
-                            for (wrtElement = 0; wrtElement < wrtSampleSize; wrtElement++) {
-                                outBuffer[wrtElement] = cubeData[wrtOffset + wrtElement];
-                            }
-                            if ( strcmp(isisinfo->ByteOrder, "Lsb") == 0) {
-                                writeCount = fwrite(outBuffer, wrtSampleSize, 1, fp);
-                            }
-                            else {
-                                switch (wrtSampleSize) {
-                                    case 2:
-                                        swapBuffer[1] = outBuffer[0];
-                                        swapBuffer[0] = outBuffer[1];
-                                        break;
-                                    case 4:
-                                        swapBuffer[3] = outBuffer[0];
-                                        swapBuffer[2] = outBuffer[1];
-                                        swapBuffer[1] = outBuffer[2];
-                                        swapBuffer[0] = outBuffer[3];
-                                        break;
-                                    default:
-                                        ;
-                                }
-                                writeCount = fwrite(swapBuffer, wrtSampleSize, 1, fp);
-                            }
+							for (wrtElement = 0; wrtElement < wrtSampleSize; wrtElement++) {
+								outBuffer[wrtElement] = cubeData[wrtOffset + wrtElement];
+							}
+							if ( strcmp(isisinfo->ByteOrder, "Lsb") == 0) {
+								writeCount = fwrite(outBuffer, wrtSampleSize, 1, fp);
+							}
+							else {
+								switch (wrtSampleSize) {
+									case 2:
+										swapBuffer[1] = outBuffer[0];
+										swapBuffer[0] = outBuffer[1];
+										break;
+									case 4:
+										swapBuffer[3] = outBuffer[0];
+										swapBuffer[2] = outBuffer[1];
+										swapBuffer[1] = outBuffer[2];
+										swapBuffer[0] = outBuffer[3];
+										break;
+									default:
+										;
+								}
+								writeCount = fwrite(swapBuffer, wrtSampleSize, 1, fp);
+							}
 
-                            wrtOffset += wrtSampleSize;
+							wrtOffset += wrtSampleSize;
 
-                        } // end TileSamples
-                    } // end tilesPerRow
-                } // end rows
-            } // end Rows
-        }  // end Bands
-    } // end tiled
+						} // end TileSamples
+					} // end tilesPerRow
+				} // end rows
+			} // end Rows
+		}  // end Bands
+	} // end tiled
 #ifdef OUTDEBUG
-    fclose(snog);
+	fclose(snog);
 #endif
-    cubeData = NULL;
-    return 1;
+	cubeData = NULL;
+	return 1;
 }

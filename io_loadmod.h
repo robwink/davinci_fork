@@ -83,6 +83,8 @@ Var * read_from_io_module(FILE *, char *);
 Var * write_to_io_module(Var *, char *, char *, int);
 int iomod_handler_for_type(char *);
 
+Var * load_pds_from_io_module(FILE * fh, char * fname, int data, int suffix_data);
+
 #endif
 
 /* API for the IO module:
