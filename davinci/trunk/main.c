@@ -1,3 +1,5 @@
+#include "dvio.h"
+
 #include <time.h>
 #include <setjmp.h>
 #include "parser.h"

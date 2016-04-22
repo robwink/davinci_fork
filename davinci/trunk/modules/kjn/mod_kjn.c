@@ -77,13 +77,10 @@ static dvModuleInitStuff is = {
   NULL, 0
 };
 
-dv_module_init(
-    const char *name,
-    dvModuleInitStuff *init_stuff
-    )
+int dv_module_init(const char *name, dvModuleInitStuff *init_stuff)
 {
     *init_stuff = is;
-    
+
     parse_error("Loaded module kjn.");
 
     return 1; /* return initialization success */
@@ -107,18 +104,18 @@ kjn_y_shear(vfuncptr func, Var * arg)
   float    angle = 0;               /* the shear angle */
   float    shift;                   /* the shift/pixel */
   float    nullv = 0;               /* the null value to put in all blank space */
-  int	   trim = 0;		    /* whether to trim the data or not */
+  int	   trim = 0;                /* whether to trim the data or not */
   int      lshift;                  /* the largest shift (int) */
   int      x, y, z;                 /* dimensions of the original picture */
   int      i, j, k;                 /* loop indices */
   int      nx, ni, nj;              /* memory locations */
 
   Alist alist[6];
-  alist[0] = make_alist("picture",		ID_VAL,		NULL,	&pic_v);
-  alist[1] = make_alist("angle",		FLOAT,		NULL,	&angle);
-  alist[2] = make_alist("ignore",               FLOAT,          NULL,   &nullv);
-  alist[3] = make_alist("trim",		        INT,		NULL,    &trim);
-  alist[4] = make_alist("null",                 FLOAT,          NULL,   &nullv); // can be removed once all legacy programs are dead
+  alist[0] = make_alist("picture",  ID_VAL,  NULL,   &pic_v);
+  alist[1] = make_alist("angle",    FLOAT,   NULL,   &angle);
+  alist[2] = make_alist("ignore",   FLOAT,   NULL,   &nullv);
+  alist[3] = make_alist("trim",     INT,     NULL,   &trim);
+  alist[4] = make_alist("null",     FLOAT,   NULL,   &nullv); // can be removed once all legacy programs are dead
   alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -257,7 +254,7 @@ kjn_y_shear(vfuncptr func, Var * arg)
     }
     /* final output */
     out = newVal(BSQ, x, y-abs(lshift), z, FLOAT, pic);
-  } 
+  }
   return out;
 }
 
@@ -270,9 +267,9 @@ Var *
 kjn_kfill(vfuncptr func, Var * arg)
 {
   Var *pic_v = NULL;                                    /* the picture */
-  Var *wgt_v = NULL;	                                /* the weighting array */
-  Var *itr_v = NULL;	                                /* the number of iterations */
-  Var *out;		                                /* the output picture */
+  Var *wgt_v = NULL;                                    /* the weighting array */
+  Var *itr_v = NULL;                                    /* the number of iterations */
+  Var *out;                                             /* the output picture */
   int    w;                                             /* width of the weight matrix (= height) */
   int    x,y,z;
   float *wgt = NULL;                                    /* storage location of the weight array */
@@ -291,15 +288,15 @@ kjn_kfill(vfuncptr func, Var * arg)
   int    niter = 0;
   int    nzeroes = 0;
 
-  
+
   Alist alist[4];
-  alist[0] = make_alist("picture",		ID_VAL,		NULL,	&pic_v);
-  alist[1] = make_alist("weight",		ID_VAL,		NULL,	&wgt_v);
-  alist[2] = make_alist("iterations", 		ID_VAL,		NULL,	&itr_v);
+  alist[0] = make_alist("picture",     ID_VAL,  NULL, &pic_v);
+  alist[1] = make_alist("weight",      ID_VAL,  NULL, &wgt_v);
+  alist[2] = make_alist("iterations",  ID_VAL,  NULL, &itr_v);
   alist[3].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
-  
+
   if (pic_v == NULL && wgt_v == NULL){
     parse_error("kfill() - 4/25/04");
     parse_error("Fills in null points of a 2 dimensional float array by linear interpolation of nearest neighbors.");
@@ -313,12 +310,12 @@ kjn_kfill(vfuncptr func, Var * arg)
   if (pic_v == NULL) {
     parse_error("ERROR! picture not specified.\n"); return NULL;
   }
-  
+
   if (wgt_v == NULL){
     parse_error("ERROR! weight matrix not specified.\n"); return NULL;
   }
-  
-  x = GetX(pic_v);		  /* get the x dimension of the image */
+
+  x = GetX(pic_v);  /* get the x dimension of the image */
   y = GetY(pic_v);		  /* get the y dimension of the image */
   z = GetZ(pic_v);                /* get the z dimension of the image */
   if (z > 1){
@@ -353,9 +350,9 @@ kjn_kfill(vfuncptr func, Var * arg)
       wgt[c++] = extract_float(wgt_v, cpos(i, j, 0, wgt_v));
     }
   }
-  
+
   wth = (w-1)/2;		  /* the "radius" of the weighting array */
-  
+
   /* extract picture data */
   pic_x = x+2*wth; pic_y = y+2*wth;
   pic = (float *)calloc(sizeof(float), pic_x*pic_y);
@@ -399,7 +396,7 @@ kjn_kfill(vfuncptr func, Var * arg)
     nzeroes = 0;
 
     for(j = 0; j < y; j++){
-      for(i = 0; i < x; i++){  
+      for(i = 0; i < x; i++){
 	
 	py = j+wth; px = i+wth;
 	pi = py * pic_x + px;
@@ -440,7 +437,7 @@ kjn_kfill(vfuncptr func, Var * arg)
 	    nzeroes++;
 	    pixel = 0.0;
 	    sum_non_zero_mask = 0.0;
-	  
+	
 	    for(mj = wth - pu; mj <= wth + pd; mj++){
 	      for(mi = wth - pl; mi <= wth + pr; mi++){
 		pixel += pic[(j+mj)*pic_x+(i+mi)] * wgt[mj*w+mi];
@@ -517,9 +514,9 @@ kjn_smoothy(vfuncptr func, Var * arg)
   alist[3] = make_alist("ignore",       FLOAT,          NULL,      &ignore);
   alist[4] = make_alist("kernreduce",   INT,            NULL,  &kernreduce);
   alist[5].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
-  
+
   if (obj == NULL && kernel == NULL) {
     parse_error("Smoothy() - 4/25/04");
     parse_error("Convolve function that will NOT fill in nullvalues of smoothed array with interpolated points.");
@@ -573,7 +570,7 @@ Var *do_smoothy(Var *obj, Var *kernel, int norm, float ignore, int kernreduce)
   kx_center = krn_x/2;
   ky_center = krn_y/2;
   kz_center = krn_z/2;
-  
+
   objsize = obj_x * obj_y * obj_z;
 
   data = (float *)calloc(sizeof(float), objsize);
@@ -585,14 +582,14 @@ Var *do_smoothy(Var *obj, Var *kernel, int norm, float ignore, int kernreduce)
   }
 
   if(kernreduce==0) {
- 
+
     for (i = 0 ; i < objsize ; i++) {                           /* loop through every element in object */
       if(extract_float(obj, i) == ignore) { data[i] = ignore; continue; }
       xpos(i, obj, &x, &y, &z);                                 /* compute current x,y,z position in object */
       for (a = 0 ; a < krn_x ; a++) {                           /* current x position of kernel */
 	x_pos = x + a - kx_center;                              /* where the current operation is being done in x */
 	if (x_pos < 0 || x_pos >= obj_x) continue;
-	for (b = 0 ; b < krn_y ; b++) {                         /* current y position of kernel */    
+	for (b = 0 ; b < krn_y ; b++) {                         /* current y position of kernel */
 	  y_pos = y + b - ky_center;                            /* where the current operation is being done in y */
 	  if (y_pos < 0 || y_pos >= obj_y) continue;
 	  for (c = 0 ; c < krn_z ; c++) {                       /* current z position of kernel */
@@ -606,14 +603,14 @@ Var *do_smoothy(Var *obj, Var *kernel, int norm, float ignore, int kernreduce)
 	      wt[i] += kval;                                    /* sum of values in used pixels of kernel*/
 	      data[i] += kval * oval;
 	    }
-	  } 
+	  }
 	}
       }
 
       if (norm != 0 && wt[i] != 0) {
 	data[i] /= wt[i];
       }
-    } 
+    }
   }
 
   if(kernreduce==1) {
@@ -626,7 +623,7 @@ Var *do_smoothy(Var *obj, Var *kernel, int norm, float ignore, int kernreduce)
 	x_pos = x + a - kx_center;                              /* where the current operation is being done in x */
 	x_opp = x + a_opp - kx_center;                          /* anti-symmetric x position of object */
 	if (x_pos < 0 || x_pos >= obj_x || x_opp < 0 || x_opp >= obj_x) continue;
-	for (b = 0 ; b < krn_y ; b++) {                         /* current y position of kernel */    
+	for (b = 0 ; b < krn_y ; b++) {                         /* current y position of kernel */
 	  b_opp = krn_y - b - 1;                                /* anti-symmetric y position of kernel */
 	  y_pos = y + b - ky_center;                            /* where the current operation is being done in y */
 	  y_opp = y + b_opp - ky_center;                        /* anti-symmetric y position in object */
@@ -644,14 +641,14 @@ Var *do_smoothy(Var *obj, Var *kernel, int norm, float ignore, int kernreduce)
 	      wt[i] += kval;                                    /* sum of used pixels in kernel */
 	      data[i] += kval * oval;
 	    }
-	  } 
+	  }
 	}
       }
 
       if (norm != 0 && wt[i] != 0) {
 	data[i] /= wt[i];
       }
-    } 
+    }
   }
 
   free(wt);
@@ -681,7 +678,7 @@ float *smoothy(float *obj, float *kernel, int ox, int oy, int oz, int kx, int ky
   kx_center = kx/2;
   ky_center = ky/2;
   kz_center = kz/2;
-  
+
   objsize = ox * oy * oz;
 
   data = (float *)calloc(sizeof(float), objsize);
@@ -691,7 +688,7 @@ float *smoothy(float *obj, float *kernel, int ox, int oy, int oz, int kx, int ky
     parse_error("Unable to allocate memory");
     return NULL ;
   }
- 
+
   for (i = 0 ; i < objsize ; i++) {                               /* loop through every element in object */
     if(obj[i] == ignore) { data[i] = ignore; continue; }
 
@@ -702,7 +699,7 @@ float *smoothy(float *obj, float *kernel, int ox, int oy, int oz, int kx, int ky
     for (a = 0 ; a < kx ; a++) {                                  /* current x position of kernel */
       x_pos = x + a - kx_center;                                  /* where the current operation is being done in x */
       if (x_pos < 0 || x_pos >= ox) continue;
-      for (b = 0 ; b < ky ; b++) {                                /* current y position of kernel */    
+      for (b = 0 ; b < ky ; b++) {                                /* current y position of kernel */
 	y_pos = y + b - ky_center;                                /* where the current operation is being done in y */
 	if (y_pos < 0 || y_pos >= oy) continue;
 	for (c = 0 ; c < kz ; c++) {                              /* current z position of kernel */
@@ -716,14 +713,14 @@ float *smoothy(float *obj, float *kernel, int ox, int oy, int oz, int kx, int ky
 	    wt[i] += kval;                                        /* sum of values of pixels of the kernel used */
 	    data[i] += (kval * oval);
 	  }
-	} 
+	}
       }
     }
 
     if (norm != 0 && wt[i] != 0) {
       data[i] /= (float)wt[i];
     }
-  } 
+  }
 
   free(wt);
   return(data);
@@ -791,7 +788,7 @@ kjn_ramp(vfuncptr func, Var * arg)
     y = GetY(pic_1);
     w = GetX(pic_2);
     z = GetY(pic_2);
-    
+
     if (x != w || y != z) {
       parse_error("The two pictures need to be of the exact same dimensions.\n");
       return NULL;
@@ -854,7 +851,7 @@ kjn_ramp(vfuncptr func, Var * arg)
 	}
       }
     }
-    
+
     /* loop through the overlap arrays filling in the appropriate value */
     while (ct > 0) {
       ct = 0;
@@ -902,7 +899,7 @@ kjn_ramp(vfuncptr func, Var * arg)
 	}
       }
     }
-    
+
     free(ol1);
     free(ol2);
 
@@ -923,12 +920,12 @@ kjn_corners(vfuncptr func, Var * arg)
   Var     *pic_a = NULL;                               /* the input pic */
   float    nullval = 0;                                /* null value */
   int     *cns = NULL;                                 /* corners output array */
-  
+
   Alist alist[3];
   alist[0] = make_alist("picture",		ID_VAL,		NULL,	&pic_a);
   alist[1] = make_alist("ignore",               FLOAT,          NULL,   &nullval);
   alist[2].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   /* if no picture got passed to the function */
@@ -979,7 +976,7 @@ int *do_corners(Var *pic_a, float nullval)
   for(i=0;i<=7;i++) {
     corners[i] = -1;
   }
-  
+
   if (row_avg == NULL) {
     parse_error("\nError! Unable to allocate %d bytes for row_avg\n", sizeof(int)*y);
     return NULL;
@@ -988,15 +985,15 @@ int *do_corners(Var *pic_a, float nullval)
     parse_error("\nError! Unable to allocate %d bytes for col_avg\n", sizeof(int)*x);
     return NULL;
   }
-  
+
   /* allocate memory for the pic */
   pic = (byte *)calloc(sizeof(byte),y*x);
-  
+
   if (pic == NULL) {
     parse_error("\nERROR! AHHHHH...I can't remember the picture!\n");
     return NULL;
   }
-  
+
   /* extract the picture, row_avg and col_avg */
   for(j=0; j<y; j++) {
     for(i=0; i<x; i++) {
@@ -1071,9 +1068,9 @@ int *do_corners(Var *pic_a, float nullval)
         corners[7] = rmyv + 1;
       }
       i+=1;
-    } 
+    }
   }
-  
+
   /* case where top of image leans to the right of the bottom of the image */
   /* approach top most x value from the left */
   if(lmyv>=rmyv) {
@@ -1100,7 +1097,7 @@ int *do_corners(Var *pic_a, float nullval)
   free(col_avg);
   free(row_avg);
 
-  /* return array */  
+  /* return array */
   return(corners);
 }
 
@@ -1122,7 +1119,7 @@ kjn_sawtooth(vfuncptr func, Var * arg)
   alist[1] = make_alist("y",       INT,         NULL,	&y);
   alist[2] = make_alist("z",       INT,         NULL,   &z);
   alist[3].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   if (x == 0 || y == 0 || z == 0) {
@@ -1232,7 +1229,7 @@ kjn_deplaid(vfuncptr func, Var * arg)
   alist[6] = make_alist("dump",                 INT,            NULL,   &dump);
   alist[7] = make_alist("null",                 FLOAT,          NULL,   &nullval);
   alist[8].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   /* if no data got passed to the function */
@@ -1393,7 +1390,7 @@ kjn_deplaid(vfuncptr func, Var * arg)
   col_wta = (int *)calloc(sizeof(int), x*chunksa*z);
   col_wtb = (int *)calloc(sizeof(int), x*chunksb*z);
 
-  if(col_avg == NULL || col_avga == NULL || col_avgb == NULL || col_wta == NULL || col_wtb == NULL) { 
+  if(col_avg == NULL || col_avga == NULL || col_avgb == NULL || col_wta == NULL || col_wtb == NULL) {
     parse_error("Could not allocate enough memory to continue\n");
     return NULL;
   }
@@ -1412,7 +1409,7 @@ kjn_deplaid(vfuncptr func, Var * arg)
 	    row_avg[y*k + j] += tv;                                  /* calculate tempmasked row total of data */
 	    row_wt[y*k + j] += 1;                                    /* calculate tempmasked row weight of data */
 	  }
-	  
+	
 	  if(row_ct[j] == z) {
 	    col_avga[k*chunksa*x + cka*x + i] += tv;                 /* calculate tempmasked col total of chunka */
 	    col_avgb[k*chunksb*x + ckb*x + i] += tv;                 /* calculate tempmasked col total of chunkb */
@@ -1420,10 +1417,10 @@ kjn_deplaid(vfuncptr func, Var * arg)
 	    col_wtb[k*chunksb*x + ckb*x + i] += 1;                   /* calculate tempmasked col weight of chunkb */
 	  }
 	}
- 
+
 	/* if at the end of a chunk and there is less than 100 rows of data left, keep going in present chunk */
 	if(((y-j) <= 100) && (ccb == 499 || cca == 499)) {
-	  cca -= 100; 
+	  cca -= 100;
 	  ccb -= 100;
 	}
 
@@ -1544,7 +1541,7 @@ kjn_deplaid(vfuncptr func, Var * arg)
 	row_bright[j] += row_avg[k*y + j];                                  /* add up the brightness information */
 	row_wt[j] += 1;
       }
-      
+
       if(z > 1 && k == z-1) row_bright[j] /= (float)row_wt[j];              /* make row_bright an avg rather than a sum */
     }
   }
@@ -1592,7 +1589,7 @@ kjn_deplaid(vfuncptr func, Var * arg)
 
   /* smooth the column brightness array to deplaid the luminosity */
   //  col_brights = smoothy(col_bright, filt1, x, chunks, 1, filt_len, 1, 1, 1, 0);
-  
+
   /* remove brightness information */
   if(z > 1) {
     for(k=0; k<z; k++) {
@@ -1611,7 +1608,7 @@ kjn_deplaid(vfuncptr func, Var * arg)
   //  free(col_brights);
   free(col_bright);
   free(col_wt);
- 
+
   /* extract data into rdata removing plaid along the way */
   /* create rdata array */
   rdata = (float *)malloc(sizeof(float)*x*y*z);
@@ -1706,7 +1703,7 @@ kjn_rectify(vfuncptr func, Var * arg)
   /* x, y, and z dimensions of the original picture */
   x = GetX(obj);
   y = GetY(obj);
-  z = GetZ(obj);    
+  z = GetZ(obj);
 
   /* calling corners to find the angle */
   cns = do_corners(obj,nullo);
@@ -1716,7 +1713,7 @@ kjn_rectify(vfuncptr func, Var * arg)
     angle1 = (360.0/(2.0*3.14159265))*(atan2((cns[3]-cns[1]),(cns[2]-cns[0])));
     angle2 = (360.0/(2.0*3.14159265))*(atan2((cns[7]-cns[5]),(cns[6]-cns[4])));
     angle = ((1-trust)*angle1)+(trust*angle2);
-  }    
+  }
 
   /* calculating the number of rows to add to the picture to accomodate the shear */
   shift = tan((M_PI / 180.0) * angle);
@@ -1728,7 +1725,7 @@ kjn_rectify(vfuncptr func, Var * arg)
   /* assign memory to leftmost and rightmost arrays */
   leftmost = malloc(sizeof(int)*u);
   rightmost = calloc(sizeof(int), u);
-  
+
   /* set leftmost array values to maximum x */
   for (j = 0; j < u; j++) {
     leftmost[j] = x-1;
@@ -1842,9 +1839,9 @@ kjn_coreg(vfuncptr func, Var * arg)
   alist[3] = make_alist("ignore",   INT,        NULL,   &nullval);
   alist[4] = make_alist("space",    INT,        NULL,   &space);
   alist[5].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
-  
+
   /* if two pics did not get passed to the function */
   if (pic1_in == NULL || pic2_in == NULL) {
     parse_error("coreg() - 5/04/04");
@@ -1859,19 +1856,19 @@ kjn_coreg(vfuncptr func, Var * arg)
     parse_error("space: option to return the solution space. Default is 0 (no).");
     return NULL;
   }
-  
+
   x = GetX(pic1_in);
   y = GetY(pic1_in);
-  
+
   solution = (float *)malloc(sizeof(float)*(search*2+1)*(search*2+1));
   if(solution == NULL) printf("shit!\n");
-  
+
   if(search < 0) {
     parse_error("please don't be dumb, use only positive search radii");
     parse_error("radius being reset to 10");
     search = 10;
   }
- 
+
   s_dia = search*2 + 1;
 
   /* shift picture 2 on picture 1 by + and - search value */
@@ -1969,7 +1966,7 @@ static int *sstretch(float *data, float ignore, int x, int y, int z)
     /* calculate standard deviation */
     stdv = sqrt((sumsq - (sum*sum/cnt))/(cnt-1));
     sum /= (double)cnt;
-    
+
     /* fill in stretched values */
     for(j=0; j<y; j++) {
       for(i=0; i<x; i++) {
@@ -2013,7 +2010,7 @@ static int *rdr_coreg(int *pic, int x, int y, int z, int b10)
       a=0;
       b=0;
       lowval = 2e11;
-      
+
       for(m=-search+starty; m<search+1+starty; m++) {
 	for(n=-search+startx; n<search+1+startx; n++) {
 	  wt = 0;
@@ -2172,7 +2169,7 @@ static float *deplaid(float *data, int x, int y, int z, float nullval, int b10)
 	  if(ct_map[x*j + i] != 0) tmask[x*j + i] /= (float)ct_map[x*j + i];
 	}
       }
- 
+
       if(k == z-1 && row_wt[j] != 0) {
 	row_avg[j] /= row_wt[j];                                     /* calculating row avg for tmask */
 	row_wt[j] = 0;
@@ -2210,7 +2207,7 @@ static float *deplaid(float *data, int x, int y, int z, float nullval, int b10)
   col_wta = (int *)calloc(sizeof(int), x*chunksa*z);
   col_wtb = (int *)calloc(sizeof(int), x*chunksb*z);
 
-  if(col_avg == NULL || col_avga == NULL || col_avgb == NULL || col_wta == NULL || col_wtb == NULL) { 
+  if(col_avg == NULL || col_avga == NULL || col_avgb == NULL || col_wta == NULL || col_wtb == NULL) {
     parse_error("Could not allocate enough memory to continue\n");
     return NULL;
   }
@@ -2228,7 +2225,7 @@ static float *deplaid(float *data, int x, int y, int z, float nullval, int b10)
 	    row_avg[y*k + j] += tv;                                  /* calculate tempmasked row total of data */
 	    row_wt[y*k + j] += 1;                                    /* calculate tempmasked row weight of data */
 	  }
-	  
+	
 	  if(row_ct[j] == z) {
 	    col_avga[k*chunksa*x + cka*x + i] += tv;                 /* calculate tempmasked col total of chunka */
 	    col_avgb[k*chunksb*x + ckb*x + i] += tv;                 /* calculate tempmasked col total of chunkb */
@@ -2236,10 +2233,10 @@ static float *deplaid(float *data, int x, int y, int z, float nullval, int b10)
 	    col_wtb[k*chunksb*x + ckb*x + i] += 1;                   /* calculate tempmasked col weight of chunkb */
 	  }
 	}
- 
+
 	/* if at the end of a chunk and there is less than 100 rows of data left, keep going in present chunk */
 	if(((y-j) <= 100) && (ccb == 499 || cca == 499)) {
-	  cca -= 100; 
+	  cca -= 100;
 	  ccb -= 100;
 	}
 
@@ -2407,7 +2404,7 @@ static float *deplaid(float *data, int x, int y, int z, float nullval, int b10)
 
   /* smooth the column brightness array to deplaid the luminosity */
   //  col_brights = smoothy(col_bright, filt1, x, chunks, 1, filt_len, 1, 1, 1, 0);
-  
+
   /* remove brightness information */
   if(z > 1) {
     for(k=0; k<z; k++) {
@@ -2426,7 +2423,7 @@ static float *deplaid(float *data, int x, int y, int z, float nullval, int b10)
   //  free(col_brights);
   free(col_bright);
   free(col_wt);
- 
+
   /* extract data into rdata removing plaid along the way */
   /* create rdata array */
   rdata = (float *)malloc(sizeof(float)*x*y*z);
@@ -2484,7 +2481,7 @@ kjn_supersample(vfuncptr func, Var * arg)
   alist[1] = make_alist("type",                 INT,            NULL,   &type);
   alist[2] = make_alist("factor",               INT,            NULL, &factor);
   alist[3].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   /* if no data got passed to the function */
@@ -2580,7 +2577,7 @@ kjn_ss_coreg(vfuncptr func, Var * arg)
   alist[1] = make_alist("search",               INT,            NULL,   &search);
   alist[2] = make_alist("b10",                  INT,            NULL,   &b10);
   alist[3].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   /* if no data got passed to the function */
@@ -2615,7 +2612,7 @@ kjn_ss_coreg(vfuncptr func, Var * arg)
       a=0;
       b=0;
       lowval = 2e11;
-      
+
       for(m=-search+starty; m<search+1+starty; m++) {
 	for(n=-search+startx; n<search+1+startx; n++) {
 	  wt = 0;
@@ -2681,7 +2678,7 @@ kjn_ss_pic(vfuncptr func, Var * arg)
   Alist alist[2];
   alist[0] = make_alist("data", 		ID_VAL,		NULL,	&data_in);
   alist[1].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   /* if no data got passed to the function */
@@ -2731,7 +2728,7 @@ kjn_ss_pic(vfuncptr func, Var * arg)
     /* calculate standard deviation */
     stdv = sqrt((sumsq - (sum*sum/cnt))/(cnt-1));
     sum /= (double)cnt;
-    
+
     /* fill in stretched values */
     for(j=0; j<y; j++) {
       for(i=0; i<x; i++) {
@@ -2768,7 +2765,7 @@ kjn_coreg_fill(vfuncptr func, Var * arg)
   alist[0] = make_alist("data", 		ID_VAL,		NULL,	&data);
   alist[1] = make_alist("creg",                 ID_VAL,         NULL,   &creg);
   alist[2].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   /* if no data got passed to the function */
@@ -2836,7 +2833,7 @@ kjn_rad2tb(vfuncptr func, Var * arg)
   int          x, y, z;                        /* dimensions of the data */
   int          bx = 0;                         /* x-dimension of the bandlist */
   int          i;                              /* loop index */
-  
+
   Alist alist[6];
   alist[0] = make_alist("rad", 		 ID_VAL,         NULL,   &rad);
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
@@ -2905,7 +2902,7 @@ kjn_rad2tb(vfuncptr func, Var * arg)
   free(blist);
   out = newVal(BSQ, x, y, z, FLOAT, b_temps);
   return(out);
- 
+
 }
 
 
@@ -2939,7 +2936,7 @@ float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval
   btemps = (float *)calloc(sizeof(FLOAT), x*y*bx);
   temps = (float *)malloc(sizeof(FLOAT)*w);
   rads = (float *)malloc(sizeof(FLOAT)*w);
-  
+
   /* slopes and intercepts arrays */
   m = (float *)calloc(sizeof(FLOAT), w-1);
   b = (float *)calloc(sizeof(FLOAT), w-1);
@@ -3024,7 +3021,7 @@ kjn_tb2rad(vfuncptr func, Var * arg)
   int          x, y, z;                        /* dimensions of the data */
   int          bx = 0;                         /* x-dimension of the bandlist */
   int          i, j, k;                        /* loop indices */
-  
+
   Alist alist[6];
   alist[0] = make_alist("btemps",        ID_VAL,         NULL,   &btemps);
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
@@ -3106,7 +3103,7 @@ kjn_tb2rad(vfuncptr func, Var * arg)
   free(btemp);
   out = newVal(BSQ, x, y, bx, FLOAT, bbrads);
   return(out);
- 
+
 }
 
 
@@ -3137,7 +3134,7 @@ float *tb2rad(float *btemp, Var *temp_rad, int *bandlist, int bx, float nullval,
   irads = (float *)calloc(sizeof(FLOAT), x*y*bx);
   temps = (float *)malloc(sizeof(FLOAT)*w);
   rads = (float *)malloc(sizeof(FLOAT)*w);
-  
+
   /* slopes and intercepts arrays */
   m = (float *)calloc(sizeof(FLOAT), w-1);
   b = (float *)calloc(sizeof(FLOAT), w-1);
@@ -3219,7 +3216,7 @@ kjn_themissivity(vfuncptr func, Var * arg)
   int          i;                              /* loop index */
   int          bx, x, y, z;                    /* size of the original array */
   emissobj    *e_struct;                       /* emissivity structure output from themissivity */
-  
+
   Alist alist[8];
   alist[0] = make_alist("rad", 		 ID_VAL,         NULL,   &rad);
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
@@ -3290,7 +3287,7 @@ kjn_themissivity(vfuncptr func, Var * arg)
     return(NULL);
   }
 }
- 
+
 
 
 
@@ -3400,7 +3397,7 @@ kjn_emiss2rad(vfuncptr func, Var * arg)
   int          x, y, z;                        /* dimensions of the data                                       */
   int          bx = 0;                         /* x-dimension of the bandlist                                  */
   int          i, j, k;                        /* loop indices                                                 */
-  
+
   Alist alist[5];
   alist[0] = make_alist("estruct",       ID_STRUCT,      NULL,   &estruct);
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
@@ -3494,7 +3491,7 @@ kjn_emiss2rad(vfuncptr func, Var * arg)
 
   out = newVal(BSQ, x, y, z, FLOAT, rad);
   return(out);
- 
+
 }
 
 
@@ -3526,7 +3523,7 @@ kjn_whitey(vfuncptr func, Var * arg)
   float        temp_val;                       /* guess */
   int          b1 = 3, b2 = 9;                 /* the boundary bands used to determine highest brightness temperature */
   int          k_size = 5;                     /* size of the smoothing kernel */
-  
+
   Alist alist[7];
   alist[0] = make_alist("rad", 		 ID_VAL,         NULL,   &rad);
   alist[1] = make_alist("k_size",        INT,            NULL,   &k_size);
@@ -3672,7 +3669,7 @@ double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_st
   int          w;
   double      *em = NULL;
   double       para_rad_min = 0, para_em_min = 0;
-  double       rs = 0.000005;                                
+  double       rs = 0.000005;
   double      *min_coords=NULL;
   double      *rad = NULL;
   double      *val = NULL;
@@ -3706,8 +3703,8 @@ double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_st
 
     /* initializing rad and em for 1-D search */
     if(slopes[k] == 0){
-      for(w=0; w<3; w++){ 
-	rad[w] = 0 + rs*w; 
+      for(w=0; w<3; w++){
+	rad[w] = 0 + rs*w;
 	em[w]  = em_start;
       }
     }
@@ -3717,7 +3714,7 @@ double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_st
       rad[0] = rad_start[k*2];
       rad[2] = rad_end[k*2];
       rad[1] = (0.2 + (slopes[k]*rad[0]))/slopes[k];
-     
+
       em[0] = 0.8;
       em[1] = 1.0;
       em[2] = 1.2;
@@ -3734,11 +3731,11 @@ double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_st
 
     /* locate coordinates of minimal point in rad/val parabola */
     if(slopes[k] == 0){
-      para_rad_min = rad[1]-.5*(pow(rad[1]-rad[0],2)*(val[1]-val[2]) - pow(rad[1]-rad[2],2)*(val[1]-val[0]))/((rad[1]-rad[0])*(val[1]-val[2]) - (rad[1]-rad[2])*(val[1]-val[0])); 
+      para_rad_min = rad[1]-.5*(pow(rad[1]-rad[0],2)*(val[1]-val[2]) - pow(rad[1]-rad[2],2)*(val[1]-val[0]))/((rad[1]-rad[0])*(val[1]-val[2]) - (rad[1]-rad[2])*(val[1]-val[0]));
       para_em_min = em_start;
     }
     else{
-      para_em_min = em[1]-.5*(pow(em[1]-em[0],2)*(val[1]-val[2]) - pow(em[1]-em[2],2)*(val[1]-val[0]))/((em[1]-em[0])*(val[1]-val[2]) - (em[1]-em[2])*(val[1]-val[0])); 
+      para_em_min = em[1]-.5*(pow(em[1]-em[0],2)*(val[1]-val[2]) - pow(em[1]-em[2],2)*(val[1]-val[0]))/((em[1]-em[0])*(val[1]-val[2]) - (em[1]-em[2])*(val[1]-val[0]));
       para_rad_min = (para_em_min - (em[0] - slopes[k]*rad[0]))/slopes[k];
     }
 
@@ -3759,7 +3756,7 @@ double *minimize_1d(Var *measured, float *bbody, double em_start, double *rad_st
   free(em);
   free(rad);
   free(val);
-  
+
   return(min_coords);
 }
 
@@ -3817,7 +3814,7 @@ float *bbrw_k(float *btemp, int *bandlist, int x, int y, int z, float nullval)
   int         i, j, k;
   float      *irads = NULL;
   float      *wavelengths = NULL;
-  float       c1 = 11911.0;                          // a constant in units of W cm-2 micron^4 str-1 
+  float       c1 = 11911.0;                          // a constant in units of W cm-2 micron^4 str-1
   float       c2 = 14387.9;                          // c constant in units of micron K
   int         wl = 0;                                // current themis band in bandlist
   float       numerator = 0.0;
@@ -3867,7 +3864,7 @@ Var *kjn_radcorr(vfuncptr func, Var * arg)
   char       *fname = NULL;                  // the pointer to the filename
   double     *min_try1 = NULL;               // holds minimal coordinates for em 0.8
   double     *min_try2 = NULL;               // holds minimal coordinates for em 1.2
-  double     *min_try3 = NULL;               // holds minimal coordinates for trough 
+  double     *min_try3 = NULL;               // holds minimal coordinates for trough
   double     *slopes = NULL;                 // defined as em/rads
   FILE       *fp = NULL;
   float      *btemps = NULL;
@@ -3876,7 +3873,7 @@ Var *kjn_radcorr(vfuncptr func, Var * arg)
   float      *irad = NULL;
   int         b1=3, b2=9;                    // band limits for maxbtemp search
   int        *blist = NULL;                  // the integer list of bands extracted from bandlist or created
-  int         a, b, bx; 
+  int         a, b, bx;
   int         i, j, k;
   int         x, y, z;
   int         space = 0;                     // set to anything other than 0 to return rad corr space
@@ -4002,10 +3999,10 @@ Var *kjn_radcorr(vfuncptr func, Var * arg)
   /* return radcorrspace to user */
   if(space != 0) {
     min_try1 = radcorrspace(rad, irad);
-    
+
     free(slopes);
     free(irad);
-    
+
     out = newVal(BSQ, 400, 400, z, DOUBLE, min_try1);
     return(out);
   }
@@ -4016,12 +4013,12 @@ Var *kjn_radcorr(vfuncptr func, Var * arg)
 
   /* determine slope of the trough */
   for(k=0; k<z; k++){
-    slopes[k] = (min_try2[k*2 + 1] - min_try1[k*2 + 1])/(min_try2[k*2] - min_try1[k*2]); 
+    slopes[k] = (min_try2[k*2 + 1] - min_try1[k*2 + 1])/(min_try2[k*2] - min_try1[k*2]);
   }
 
   // find minimal point along the trough //
   min_try3 = minimize_1d(rad, irad, 0.0, min_try1, min_try2, slopes);
-  
+
   out = newVal(BSQ, 2, 1, z, DOUBLE, min_try3);
 
   // free up heap objects //
@@ -4046,15 +4043,15 @@ Var *do_ipi(Var *coords_array, Var *values_array){
     coords[i] = extract_float(coords_array,cpos(i,0,0,coords_array));
     values[i] = extract_float(values_array,cpos(i,0,0,values_array));
   }
-  
+
   // this is absolutely stupid but newVal demands a pointer for conversion //
   result = (float *)malloc(sizeof(float));
-  
+
   // perform ipi which is just one equation //
-  result[0] = coords[1] - .5*(pow(coords[1]-coords[0],2)*(values[1]-values[2]) - 
+  result[0] = coords[1] - .5*(pow(coords[1]-coords[0],2)*(values[1]-values[2]) -
 			      pow(coords[1]-coords[2],2)*(values[1]-values[0])) /
     ((coords[1]-coords[0])*(values[1]-values[2]) - (coords[1]-coords[2])*(values[1]-values[0]));
-  
+
   return(newVal(BSQ, 1 ,1, 1, FLOAT, result));
 }
 
@@ -4063,16 +4060,16 @@ Var *kjn_ipi(vfuncptr func, Var * arg){
   Var         *coords_array = NULL;                                   // list of coordinates //
   Var         *values_array = NULL;                                   // list of values of f(x) where x is supplied by coords //
   Var         *out = NULL;                                            // return structure to davinci enviornment //
-  
-  
+
+
   Alist alist[3];
   alist[0] = make_alist("coordinates",  ID_VAL,   NULL,     &coords_array);
   alist[1] = make_alist("values",       ID_VAL,   NULL,     &values_array);
   alist[2].name = NULL;
-  
+
   // immediately exit function if the argument list is empty //
   if(parse_args(func, arg, alist) == 0) return(NULL);
-  
+
   // if no coordinates and/or values passed into the argument list //
   if((coords_array == NULL)||(values_array == NULL)){
     parse_error("kjn.ipi() - 07/04/2005");
@@ -4084,7 +4081,7 @@ Var *kjn_ipi(vfuncptr func, Var * arg){
     parse_error("  where for example:coordinates =  -10//-4//5 and values = 81//9//36");
     return(NULL);
   }
-  
+
   return(do_ipi(coords_array,values_array));
 }
 
@@ -4109,9 +4106,9 @@ kjn_src_col_fill(vfuncptr func, Var * arg)
   alist[1] = make_alist("chunk_size",           INT,            NULL,   &csize);
   alist[2] = make_alist("ignore",               FLOAT,          NULL,   &ignore);
   alist[3].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
-  
+
   if (col_in == NULL){
     parse_error("src_col_fill() - 7/03/05");
     parse_error("Takes a partially filled column, calculates averages over number of lines specified in \'chunk_size\'");
@@ -4137,7 +4134,7 @@ kjn_src_col_fill(vfuncptr func, Var * arg)
 
   /* extract col_in into column */
   column = (float *)calloc(sizeof(float),y*z);
- 
+
   for(k=0;k<z;k++) {
     for(j=0;j<y;j++) {
       column[k*y + j] = extract_float(col_in, cpos(0,j,k,col_in));
@@ -4204,22 +4201,22 @@ float *column_fill(float *column, int y, int z, int csize, float ignore)
 	  while(flag_before == 0 || flag_after == 0) {
 	    if(position_before<0) flag_before=1;
 	    if(position_after>=y) flag_after=1;
-	    
+	
 	    if(flag_before==0 && cols[k*y + position_before] != ignore) {
 	      val_before = cols[k*y + position_before];
 	      flag_before = 1;
 	    }
-	    
+	
 	    if(flag_after==0 && cols[k*y + position_after] != ignore) {
 	      val_after = cols[k*y + position_after];
 	      flag_after = 1;
 	    }
-	    
+	
 	    if(flag_before==0) position_before -= 1;
 	    if(flag_after==0) position_after += 1;
 	  }
 	  /* now we should have the position and values of the nearest filled points */
-	  
+	
 	  /* take care of the first pixel in the array */
 	  if(j==0) cols[k*y + j] = val_after;
 	
@@ -4295,7 +4292,7 @@ kjn_deplaid2(vfuncptr func, Var * arg)
   alist[6] = make_alist("dump",                 INT,            NULL,   &dump);
   alist[7] = make_alist("null",                 FLOAT,          NULL,   &nullval);
   alist[8].name = NULL;
-  
+
   if (parse_args(func, arg, alist) == 0) return(NULL);
 
   /* if no data got passed to the function */
@@ -4456,7 +4453,7 @@ kjn_deplaid2(vfuncptr func, Var * arg)
   col_wta = (int *)calloc(sizeof(int), x*chunksa*z);
   col_wtb = (int *)calloc(sizeof(int), x*chunksb*z);
 
-  if(col_avg == NULL || col_avga == NULL || col_avgb == NULL || col_wta == NULL || col_wtb == NULL) { 
+  if(col_avg == NULL || col_avga == NULL || col_avgb == NULL || col_wta == NULL || col_wtb == NULL) {
     parse_error("Could not allocate enough memory to continue\n");
     return NULL;
   }
@@ -4475,7 +4472,7 @@ kjn_deplaid2(vfuncptr func, Var * arg)
 	    row_avg[y*k + j] += tv;                                  /* calculate tempmasked row total of data */
 	    row_wt[y*k + j] += 1;                                    /* calculate tempmasked row weight of data */
 	  }
-	  
+	
 	  if(row_ct[j] == z) {
 	    col_avga[k*chunksa*x + cka*x + i] += tv;                 /* calculate tempmasked col total of chunka */
 	    col_avgb[k*chunksb*x + ckb*x + i] += tv;                 /* calculate tempmasked col total of chunkb */
@@ -4483,10 +4480,10 @@ kjn_deplaid2(vfuncptr func, Var * arg)
 	    col_wtb[k*chunksb*x + ckb*x + i] += 1;                   /* calculate tempmasked col weight of chunkb */
 	  }
 	}
- 
+
 	/* if at the end of a chunk and there is less than 100 rows of data left, keep going in present chunk */
 	if(((y-j) <= 100) && (ccb == 499 || cca == 499)) {
-	  cca -= 100; 
+	  cca -= 100;
 	  ccb -= 100;
 	}
 
@@ -4658,7 +4655,7 @@ kjn_deplaid2(vfuncptr func, Var * arg)
 
   /* smooth the column brightness array to deplaid the luminosity */
   //  col_brights = smoothy(col_bright, filt1, x, chunks, 1, filt_len, 1, 1, 1, 0);
-  
+
   /* remove brightness information */
   //if(z > 1) {
   //for(k=0; k<z; k++) {
@@ -4677,7 +4674,7 @@ kjn_deplaid2(vfuncptr func, Var * arg)
   //  free(col_brights);
   //free(col_bright);
   free(col_wt);
- 
+
   /* extract data into rdata removing plaid along the way */
   /* create rdata array */
   rdata = (float *)malloc(sizeof(float)*x*y*z);

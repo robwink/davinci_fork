@@ -1,5 +1,8 @@
 #include "parser.h"
 
+int rice_auto(short *in, int npts, int bits, unsigned char *out, int start);
+int rice_unauto(unsigned char *in, int len, int npts, int bits, short *out);
+
 Var *
 ff_rice(vfuncptr func, Var * arg)
 {
@@ -10,7 +13,7 @@ ff_rice(vfuncptr func, Var * arg)
 	int header = 1;
 	int bits = -1;
 
-    Alist alist[4];
+	Alist alist[4];
 	alist[0] = make_alist("object",    ID_VAL,     NULL,    &obj);
 	alist[1] = make_alist("header",    INT,        NULL,    &header);
 	alist[2] = make_alist("bits",      INT,        NULL,    &bits);
@@ -18,10 +21,10 @@ ff_rice(vfuncptr func, Var * arg)
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
-    if (obj == NULL) {
-        parse_error("%s: No object or size specified", func->name);
-        return(NULL);
-    }
+	if (obj == NULL) {
+		parse_error("%s: No object or size specified", func->name);
+		return(NULL);
+	}
 
 	x = GetX(obj);
 	y = GetY(obj);
@@ -97,17 +100,17 @@ ff_unrice(vfuncptr func, Var * arg)
 	unsigned char *cout, *out;
 	short *sout, *tmp;
 
-    Alist alist[4];
+	Alist alist[4];
 	alist[0] = make_alist("object",    ID_VAL,     NULL,    &obj);
 	alist[1] = make_alist("header",    ID_VAL,     NULL,    &header);
 	alist[2].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 
-    if (obj == NULL) {
-        parse_error("%s: No object or size specified", func->name);
-        return(NULL);
-    }
+	if (obj == NULL) {
+		parse_error("%s: No object or size specified", func->name);
+		return(NULL);
+	}
 
 	len = V_DSIZE(obj);
 	in = V_DATA(obj);

@@ -94,10 +94,10 @@ static void findAxis(char *R, Var *Obj, int flag)
 
 
 
-static int name_check(const char *actual_input, const char *name, int limit) {
-
-  int  namelen = 0;
-  int  inputlen = 0;
+static int name_check(const char *actual_input, const char *name, int limit)
+{
+  int namelen = 0;
+  int inputlen = 0;
 
   if(actual_input == NULL)
     return(-3);

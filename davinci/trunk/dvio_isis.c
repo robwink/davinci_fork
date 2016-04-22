@@ -836,7 +836,7 @@ initHeaderFromImageLabel(OBJDESC *image, char *fn, struct iom_iheader *h){
 			org = -1;
 	}
 	if (org < 0 && iom_is_ok2print_unsupp_errors()){
-		fprintf(stderr, "%s: Unrecognized data storage organization.", fn, "BAND_STORAGE_TYPE");
+		fprintf(stderr, "%s: Unrecognized data storage organization.", fn);
 		return 0;
 	}
 
@@ -2102,7 +2102,7 @@ ff_read_suffix_plane(vfuncptr func, Var * arg)
         n = OdlGetAllKwdValuesArray(key, &name_list);
         if (n == suffix[iom_orders[s.org][type]]) {
             fprintf(stderr, "Extracting %.*s '%s'\n",
-                    strlen(suffix_item_name)-5,
+                    (int)strlen(suffix_item_name)-5,
                     suffix_item_name,
                     name_list[plane]);
         } else {

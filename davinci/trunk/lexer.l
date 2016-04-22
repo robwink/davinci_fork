@@ -5,7 +5,7 @@
 #include "y_tab.h"
 #include "parser.h"
 
-#define MYECHO		if (save_fp) (void)fwrite( yytext, yyleng, 1, save_fp );
+#define MYECHO if (save_fp) (void)fwrite( yytext, yyleng, 1, save_fp );
 
 int local_line;
 extern int pp_line;
@@ -26,20 +26,20 @@ extern int indent;
 FILE *save_fp = NULL;
 char save_file[256];
 
-int caller;			/* used by flex to handle comments in multiple states */
+int caller;    /* used by flex to handle comments in multiple states */
 
 void start_save()
 {
-    char *tmp;
+	char *tmp;
 
 	local_line = pp_line;
-    tmp = make_temp_file_path();
-    if (tmp == NULL || (save_fp = fopen(tmp, "w")) == NULL ) {
-        parse_error("define: unable to open temp file");
-        if (tmp) free(tmp);
-        return(NULL);
-    }
-    strcpy(save_file, tmp);
+	tmp = make_temp_file_path();
+	if (tmp == NULL || (save_fp = fopen(tmp, "w")) == NULL) {
+		parse_error("define: unable to open temp file");
+		if (tmp) free(tmp);
+		return(NULL);
+	}
+	strcpy(save_file, tmp);
 }
 
 void end_save()
@@ -67,8 +67,8 @@ comment #.*
 %x comment ufunc
 %%
 
-"define"	{ start_save(); MYECHO; BEGIN(ufunc); }
-"for"		{ return(FOR); }
+"define"    { start_save(); MYECHO; BEGIN(ufunc); }
+"for"       { return(FOR); }
 "while"     { return(WHILE); }
 "where"     { return(WHERE); }
 "break"     { return(BREAK); }
@@ -77,11 +77,11 @@ comment #.*
 "else"      { return(ELSE); }
 "return"    { return(RETURN); }
 "quit"      { return(QUIT); }
-"help"		{ return(HELP); }
+"help"      { return(HELP); }
 ^"!".*"\n"  { return(SHELL); }
 
-"<<"         { return(LSHIFT_OP); }
-">>"         { return(RSHIFT_OP); }
+"<<"        { return(LSHIFT_OP); }
+">>"        { return(RSHIFT_OP); }
 
 "=="        { return(EQ_OP); }
 "!="        { return(NE_OP); }
@@ -90,12 +90,12 @@ comment #.*
 ">"         { return(GT_OP); }
 "<"         { return(LT_OP); }
 
-"-="		{ return(DECSET_OP); }
-"+="		{ return(INCSET_OP); }
-"++"		{ return(INC_OP); }
-"--"		{ return(DEC_OP); }
-"*="		{ return(MULSET_OP); }
-"/="		{ return(DIVSET_OP); }
+"-="        { return(DECSET_OP); }
+"+="        { return(INCSET_OP); }
+"++"        { return(INC_OP); }
+"--"        { return(DEC_OP); }
+"*="        { return(MULSET_OP); }
+"/="        { return(DIVSET_OP); }
 
 "||"        { return(OR_OP); }
 "&&"        { return(AND_OP); }
@@ -105,7 +105,7 @@ comment #.*
 "{"         { indent++; return('{'); }
 "}"         { indent--; return('}'); }
 
-"/*"		{ caller = INITIAL; BEGIN(comment); in_comment = 1; }
+"/*"        { caller = INITIAL; BEGIN(comment); in_comment = 1; }
 
 {ival}              { yytext = strdup(yytext); return(IVAL); }
 {rval}              { yytext = strdup(yytext); return(RVAL); }
@@ -127,18 +127,18 @@ comment #.*
 <ufunc>\"(\\.|[^\\"\r\n])*\" { MYECHO; }
 <ufunc>\'(\\.|[^\\'\r\n])*\' { MYECHO; }
 
-<ufunc>"/*"		   { MYECHO; caller = ufunc; BEGIN(comment); in_comment = 1; }
+<ufunc>"/*"        { MYECHO; caller = ufunc; BEGIN(comment); in_comment = 1; }
 
-<ufunc>"{"         { MYECHO; indent++; } 
-<ufunc>"}"         { 
-					 	MYECHO; 
-						indent--; 
-						if (indent == 0) { 
-							BEGIN(INITIAL); 
-							end_save();
-							return('\n');
-						} 
-				   }
+<ufunc>"{"         { MYECHO; indent++; }
+<ufunc>"}"         {
+                        MYECHO;
+                        indent--;
+                        if (indent == 0) {
+                            BEGIN(INITIAL);
+                            end_save();
+                            return('\n');
+                        }
+                   }
 <ufunc>"\\\r\n"    { MYECHO; continuation=1; }
 <ufunc>"\\\n"      { MYECHO; continuation=1; }
 <ufunc>"\r\n"      { MYECHO; };

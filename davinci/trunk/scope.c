@@ -387,7 +387,7 @@ mem_claim(Var *ptr)
 #endif
 
 Var *
-mem_malloc(void)
+mem_malloc()
 {
   Scope *scope = scope_tos();
   Var *v = (Var *)calloc(1, sizeof(Var));

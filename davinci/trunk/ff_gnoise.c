@@ -25,14 +25,14 @@ ff_gnoise(vfuncptr func, Var * arg)
 	int seed = 0;
 	int i, j, d;
 
-    Alist alist[2];
-    alist[0] = make_alist( "x",    INT,    NULL,    &x);
-    alist[1] = make_alist( "y",    INT,    NULL,    &y);
-    alist[2] = make_alist( "z",    INT,    NULL,    &z);
-    alist[3] = make_alist( "seed", INT,    NULL,    &seed);
-    alist[1].name = NULL;
+	Alist alist[5];
+	alist[0] = make_alist( "x",    INT,    NULL,    &x);
+	alist[1] = make_alist( "y",    INT,    NULL,    &y);
+	alist[2] = make_alist( "z",    INT,    NULL,    &z);
+	alist[3] = make_alist( "seed", INT,    NULL,    &seed);
+	alist[4].name = NULL;
 
-    if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return(NULL);
 
 	s = newVar();
 	V_TYPE(s) = ID_VAL;

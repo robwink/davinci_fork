@@ -17,10 +17,7 @@ static dvModuleInitStuff is = {
   NULL, 0
 };
 
-dv_module_init(
-    const char *name,
-    dvModuleInitStuff *init_stuff
-    )
+int dv_module_init(const char *name, dvModuleInitStuff *init_stuff)
 {
     *init_stuff = is;
     

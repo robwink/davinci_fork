@@ -21,7 +21,10 @@ extern "C" {
   void rl_callback_handler_remove();
 #endif
 
-  int yywrap ( void );
+  //globals.c
+  int yywrap();
+  void yyerror(char *s);
+  void quit(int return_code);
 
 #ifdef HAVE_LIBHDF5
 #include <hdf5.h>
@@ -40,15 +43,15 @@ void yy_switch_to_buffer ( YY_BUFFER_STATE new_buffer);
 
 
 
-int yyparse(int,YYSTYPE);
-void yyerror(char *s);
+int yyparse(int, YYSTYPE);
+
 void log_line(char *);
-int yylex(void);
+int yylex();
 
 void squash_spaces(char *s);
 int instring(char *str, char c);
 void save_function(void);
-void eat_em(void);
+void eat_em();
 int dd_put_argv(Scope *s, Var *v);
 void unput_nextc(char c);
 int send_to_plot(const char *);
@@ -79,15 +82,17 @@ Var *pp_set_where(Var *, Var *, Var *);
 Var * pp_set_struct(Var *a, Var *b, Var *exp);
 Var *pp_shellArgs(Var *);               /* find shell command line args */
 Var *pp_argv(Var *, Var *);
-Var *pp_mk_rstep(Var *r1, Var *r2);		/* add a step value to ranges */
+Var *pp_mk_rstep(Var *r1, Var *r2);     /* add a step value to ranges */
 Var *pp_help(Var *);
 Var *pp_exact_help(Var *);
 Var *pp_usage(Var *);
-void pp_set_cvar (Var *, Var *);	/* set control variable */
-Var *pp_get_cvar (char *);		/* get control variable */
+void pp_set_cvar (Var *, Var *);        /* set control variable */
+Var *pp_get_cvar (char *);              /* get control variable */
 Var * pp_shell(char *cmd);
 void pp_print_struct(Var *v, int indent, int depth);
 int pp_compare(Var *a, Var *b);
+void dump_var(Var *v, int indent, int limit);
+
 
 #ifdef BUILD_MODULE_SUPPORT
 /* Modules related functions */
@@ -101,6 +106,14 @@ Var *ff_list_dv_modules(vfuncptr func, Var *arg);
 Var * ff_insmod(struct _vfuncptr *, Var *);
 Var * ff_rmmod(struct _vfuncptr *, Var *);
 Var * ff_lsmod(struct _vfuncptr *, Var *);
+
+//TODO rswinkle
+//seems like these should be static/internal but
+//they're used in free_var which is called from many
+//ff_module functions
+void del_module(Var *mv);
+int unload_dv_module(char *module_name);
+
 #endif /* BUILD_MODULE_SUPPORT */
 
 Var *V_DUP (Var *);
@@ -145,15 +158,18 @@ Var *pp_math_strings(Var *a, int op, Var *b);
 /* ff_source.c */
 void push_input_file(char *name);
 void push_input_stream(FILE *, char *filename);
-void pop_input_file(void);
+void pop_input_file();
 void init_input_stack();
 int is_file(char *name);
 
 /* error.c */
 #ifdef __cplusplus
-extern "C" void parse_error(const char *, ...);
-#else
+extern "C" {
+#endif
 void parse_error(const char *, ...);
+void parse_error2(const char *, ...);
+#ifdef __cplusplus
+}
 #endif
 
 /* reserved.c */
@@ -235,8 +251,17 @@ void make_sym(Var *, int, char *);
 char *get_env_var(char *);
 char *expand_filename(char *);
 char *enumerated_arg(Var *, char **);
+
+//TODO rswinkle
+//This file is the dumping ground for all prototypes?
+//This should be for ff_* functions only and any C file
+//that has other functions that get used elsewhere should
+//have an h file to go with it.  Probably means extracting
+//helper functinos from some ff*.c files into logical groups
 Var *mem_claim(Var *);
-Var *mem_malloc(void);
+Var *mem_malloc();
+void mem_free(Scope *scope);
+
 void free_var(Var *);
 void commaize(char *);
 void free_tree(Var *);
@@ -443,7 +468,7 @@ int parse_args(vfuncptr func, Var *args, Alist *alist);
 int make_args(int *ac, Var ***av, vfuncptr func, Var *args);
 void print_history(int i);
 
-/* void save_ufunc(char *filename); */
+void save_ufunc(char *filename);
 void vax_ieee_r(float *from, float *to);
 
 #ifndef HAVE_STRNDUP
