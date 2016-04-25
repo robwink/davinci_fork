@@ -106,7 +106,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ufunc.c util.c \
 	x.c xrt_print_3d.c \
 	XformTable.h darray.h fit.h trigtbl.h api.h dos.h func.h \
-	products.h ufunc.h api_extern_defs.h dvio.h dvio_pds4.h header.h \
+	ufunc.h api_extern_defs.h dvio.h dvio_pds4.h header.h \
 	proto.h version.h apidef.h dvio_specpr.h help.h rfunc.h \
 	xrt_print_3d.h avl.h endian_norm.h io_loadmod.h scope.h \
 	ff.h isis_obj.h system.h ff_modules.h module_io.h \
