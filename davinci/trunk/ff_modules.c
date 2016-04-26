@@ -190,7 +190,7 @@ ff_list_dv_modules(
 	dvModule *m;
 	Var *v = NULL;
 	char *module_name = NULL;
-	
+
 	Alist  alist[2]; /* arguments list */
 
 	alist[0] = make_alist("module", ID_STRING, NULL, &module_name);
@@ -391,7 +391,7 @@ remove_from_list_of_loaded_modules(Var *v)
 	}
 
 	if((i = Narray_find(loaded_modules, v->name, NULL)) != -1){
-		
+
 		/*
 		** Specified module exists in the list of loaded modules.
 		** Remove it!
@@ -451,7 +451,7 @@ new_module(char *module_name)
 	}
 
 	V_MODULE(v).functions = Narray_create(10);
-    V_MODULE(v).name = V_NAME(v);
+	V_MODULE(v).name = V_NAME(v);
 
 	/* keep track of available modules */
 	if (!add_to_list_of_loaded_modules(v)){
@@ -623,12 +623,11 @@ uninit_dv_module(
 {
 	dvModuleFiniFunc fini_func;
 
-	fini_func = (dvModuleFiniFunc)locate_dv_module_func_in_slib(m->handle,
-                                           DV_MODULE_FINI_FUNC_NAME);
+	fini_func = (dvModuleFiniFunc)locate_dv_module_func_in_slib(m->handle, DV_MODULE_FINI_FUNC_NAME);
 	if (fini_func == NULL){
 		if (debug > DEBUG_THRESHOLD){
 			parse_error("Cannot find module uninit function %s for %s. Reason: %s.",
-				DV_MODULE_FINI_FUNC_NAME, m->name, strerror(errno));
+			            DV_MODULE_FINI_FUNC_NAME, m->name, strerror(errno));
 		}
 	}
 	else {
@@ -705,8 +704,8 @@ find_next_file_with_prefix(DIR *d, const char *pfx)
 	int pfx_len = strlen(pfx);
 
 	errno = 0; /* reset error number */
-	while(de = readdir(d)){
-		if (strncmp(de->d_name, pfx, pfx_len) == 0){
+	while ((de = readdir(d))) {
+		if (strncmp(de->d_name, pfx, pfx_len) == 0) {
 			return de;
 		}
 	}
@@ -739,7 +738,7 @@ static int
 get_module_versions(
 	const char *mod_name, /* Name of the module to be found */
 	char *path,           /* A ":" separated list of dirs to find the name in  */
-	char ***retlist			/* array of strings to be returned */
+	char ***retlist       /* array of strings to be returned */
 )
 {
 	char *q;
@@ -762,7 +761,7 @@ get_module_versions(
 	** to find the module with the latest version.
 	*/
 	sprintf(name, "%s.%s", mod_name, DVM_EXT);
-	for(q = path; dir_name = strtok(q, PATH_SEPARATOR); q = NULL){
+	for (q = path; (dir_name = strtok(q, PATH_SEPARATOR)); q = NULL) {
 		d = opendir(dir_name);
 		if (d == NULL){
 			/*
@@ -778,7 +777,7 @@ get_module_versions(
 
 		errno = 0;  /* clear error indicator */
 
-		while(de = find_next_file_with_prefix(d, name)){
+		while ((de = find_next_file_with_prefix(d, name))) {
 			fname = de->d_name;
 			if (nlist >= retsize) {
 				if (retsize == 0) {
@@ -1197,7 +1196,7 @@ autoload_dep(
 	for (i = 0; i < ndep; i++){
 		if (!(m = search_in_list_of_loaded_modules(dep[i].name))){
 			if (!autoload_dv_module(dep[i].name, dep[i].ver)){
-				
+
 				parse_error("Unable to load %s ver:%s.", dep[i].name,
 							printable_ver_str(dep[i].ver));
 
@@ -1213,7 +1212,7 @@ autoload_dep(
 
 				parse_error("Unload %s ver:%s first.",
 					m->name, printable_ver_str(V_MODULE(m).ver));
-				
+
 				return 0;
 			}
 			else {
@@ -1255,7 +1254,7 @@ init_dv_module(
 		parse_error("Module initialization failed for %s.", m->name);
 		return 0; /* error */
 	}
-	
+
 	return 1; /* success */
 }
 
@@ -1274,12 +1273,12 @@ make_vfuncptr(
 	)
 {
 	vfuncptr fptr;
-	
+
 	fptr = (vfuncptr)calloc(1, sizeof(struct _vfuncptr));
 	if (fptr == NULL){
 		return NULL;
 	}
-	
+
 	fptr->name = func_name;
 	fptr->fptr = func_ptr;
 	fptr->fdata = func_data;
@@ -1386,7 +1385,7 @@ load_dv_module_functions(
 			}
 		}
 	}
-	
+
 	return ct;
 }
 

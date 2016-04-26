@@ -764,24 +764,24 @@ initHeaderFromHistogramLabel(OBJDESC *hist, char *fn, struct iom_iheader *h){
 
 	iom_init_iheader(h);
 
-	if (key = OdlFindKwd(hist, "ITEMS", NULL, 0, scope))
+	if ((key = OdlFindKwd(hist, "ITEMS", NULL, 0, scope)))
 		size[0] = atof(OdlGetKwdValue(key));
-	if (key = OdlFindKwd(hist, "ITEM_BYTES", NULL, 0, scope))
+	if ((key = OdlFindKwd(hist, "ITEM_BYTES", NULL, 0, scope)))
 		item_bytes = atoi(OdlGetKwdValue(key));
-	else if (key = OdlFindKwd(hist, "ITEM_BITS", NULL, 0, scope))
+	else if ((key = OdlFindKwd(hist, "ITEM_BITS", NULL, 0, scope)))
 		item_bytes = atoi(OdlGetKwdValue(key))/8;
-	if (key = OdlFindKwd(hist, "SCALING_FACTOR", NULL, 0, scope))
+	if ((key = OdlFindKwd(hist, "SCALING_FACTOR", NULL, 0, scope)))
 		gain = atof(OdlGetKwdValue(key));
-	if (key = OdlFindKwd(hist, "OFFSET", NULL, 0, scope))
+	if ((key = OdlFindKwd(hist, "OFFSET", NULL, 0, scope)))
 		offset = atof(OdlGetKwdValue(key));
 
 	if (((key1 = OdlFindKwd(hist, "DATA_TYPE", NULL, 0, scope)) ||
-		 (key1 = OdlFindKwd(hist, "ITEM_TYPE", NULL, 0, scope))) && 
+	    (key1 = OdlFindKwd(hist, "ITEM_TYPE", NULL, 0, scope))) &&
 	    ((key2 = OdlFindKwd(hist, "ITEM_BITS", NULL, 0, scope)) ||
-	     (key3 = OdlFindKwd(hist, "ITEM_BYTES", NULL, 0, scope)))){
+	     (key3 = OdlFindKwd(hist, "ITEM_BYTES", NULL, 0, scope)))) {
 		format = iom_ConvertISISType(OdlGetKwdValue(key1),
-			key2 == NULL? NULL: OdlGetKwdValue(key2),
-			key3 == NULL? NULL: OdlGetKwdValue(key3));
+		                             key2 == NULL? NULL: OdlGetKwdValue(key2),
+		                             key3 == NULL? NULL: OdlGetKwdValue(key3));
 	}
 
 	if (format == iom_EDF_INVALID && iom_is_ok2print_unsupp_errors()){
@@ -850,7 +850,7 @@ initHeaderFromImageLabel(OBJDESC *image, char *fn, struct iom_iheader *h){
 	if (key = OdlFindKwd(image, "SAMPLE_BITS", NULL, 0, scope))
 		item_bytes = atoi(OdlGetKwdValue(key))/8;
 
-	if ((key1 = OdlFindKwd(image, "SAMPLE_TYPE", NULL, 0, scope)) && 
+	if ((key1 = OdlFindKwd(image, "SAMPLE_TYPE", NULL, 0, scope)) &&
 	    (key2 = OdlFindKwd(image, "SAMPLE_BITS", NULL, 0, scope))){
 		format = iom_ConvertISISType(OdlGetKwdValue(key1), OdlGetKwdValue(key2), NULL);
 	}
