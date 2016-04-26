@@ -85,109 +85,103 @@
 
 typedef struct _var Var;
 typedef Var * Vptr;
-typedef struct _symbol Sym;
-typedef struct _range Range;
-typedef struct _tagnode Node;
-typedef struct _tagVstruct Vstruct;
-typedef struct _text TextArray;
 /* dvModule is defined in ff_modules.h */
 typedef struct _vfuncptr *vfuncptr;
 typedef Var * (*vfunc)(struct _vfuncptr *,Var *);	/* function caller */
 
-struct _range {
-    int dim;			/* dimension of data */
-    int lo[3];
-    int hi[3];
-    int step[3];
-};
+typedef struct Range {
+	int dim;        /* dimension of data */
+	int lo[3];
+	int hi[3];
+	int step[3];
+} Range;
 
-struct _symbol {
-    int format;			/* format of data */
-    size_t dsize;			/* total size of data */
-    int size[3];        /* size of each axis */
-    int order;			/* axis application order */
-    void *data;
+typedef struct Sym {
+	int format;        /* format of data */
+	size_t dsize;      /* total size of data */
+	int size[3];       /* size of each axis */
+	int order;         /* axis application order */
+	void *data;
 
-    void *null;			/* null value */
+	void *null;        /* null value */
 
-    char *title;
-};
+	char *title;
+} Sym;
 
 
-struct _tagnode {
-    Var *left;
-    Var *right;
-    Var *parent;
+typedef struct Node {
+	Var *left;
+	Var *right;
+	Var *parent;
 
-    int type;			/* An identifier of what type of value this is:
-                                   Possibilities: Constant
-                                   Temporary
-                                   */
-    int token_number;	/* Where in the value table is this puppy located? */
-};
+	/* An identifier of what type of value this is:
+	 * Possibilities: Constant, Temporary
+	 */
+	int type;
 
-struct _tagVstruct {
-    int x_count;
-    char **x_names;
-    Var **x_data;
-};
+	int token_number; /* Where in the value table is this puppy located? */
+} Node;
 
-struct _text {
-    int Row;
-    char **text;
-};
+typedef struct Vstruct {
+	int x_count;
+	char **x_names;
+	Var **x_data;
+} Vstruct;
+
+typedef struct TextArray {
+	int Row;
+	char **text;
+} TextArray;
 
 
 struct _var {
-    int type;
-    char *name;
-    union {
-        Node node;
-        Sym sym;
-        Range range;
-        char *string;
-        Var *keyval;		/* used by $Keyword */
-        Narray *vstruct;
-        Narray *args;		/* an array of function arguments (same as struct) */
-        TextArray textarray;
-		dvModule mod;         /* a dynamically loaded module */
+	int type;
+	char *name;
+	union {
+		Node node;
+		Sym sym;
+		Range range;
+		char *string;
+		Var *keyval;         /* used by $Keyword */
+		Narray *vstruct;
+		Narray *args;        /* an array of function arguments (same as struct) */
+		TextArray textarray;
+		dvModule mod;        /* a dynamically loaded module */
 		vfuncptr function;   /* most likely a module function dereference */
-    } value; 
-    // Var *next;
+	} value;
 };
 
-#define V_NEXT(v)	(v)->next		/* pointer to next value in table */
-#define V_NAME(v)	(v)->name		/* NAME of SYMbol in union */
-#define V_TYPE(v)	(v)->type		/* type of var */
+#define V_NAME(v)   (v)->name             /* NAME of SYMbol in union */
+#define V_TYPE(v)   (v)->type             /* type of var */
 
-#define V_KEYVAL(v)	(v)->value.keyval	/* keyword value */
-#define V_STRING(v)	(v)->value.string
-#define V_RANGE(v)	(&((v)->value.range))	/* range value */
-#define V_NODE(v)	(&((v)->value.node))
-#define	V_SYM(v)	(&((v)->value.sym))	/* SYMbol value in union */
+#define V_KEYVAL(v) (v)->value.keyval     /* keyword value */
+#define V_STRING(v) (v)->value.string
+#define V_RANGE(v)  (&((v)->value.range)) /* range value */
+#define V_NODE(v)   (&((v)->value.node))
+#define V_SYM(v)    (&((v)->value.sym))   /* SYMbol value in union */
 
-#define V_DATA(v)	V_SYM(v)->data		/* pointer to data */
-#define V_INT(v)	(*((int *)V_DATA(v)))	/* derefernce as a single int */
-/* #define V_INT64(v)	(*((int64 *)V_DATA(v)))	/ * derefernce as a single int64 */
-#define V_FLOAT(v)	(*((float *)V_DATA(v)))	/* derefernce as a single float */
-#define V_DOUBLE(v)	(*((double *)V_DATA(v)))	/* derefernce as a single dbl */
-#define V_FORMAT(v)	V_SYM(v)->format
-#define V_DSIZE(v)	V_SYM(v)->dsize
-#define V_SIZE(v)	V_SYM(v)->size
-#define V_ORDER(v)	V_SYM(v)->order
-#define V_ORG(v)	V_SYM(v)->order
+#define V_DATA(v)   V_SYM(v)->data        /* pointer to data */
+#define V_INT(v)    (*((int *)V_DATA(v))) /* derefernce as a single int */
+/* #define V_INT64(v)  (*((int64 *)V_DATA(v))) / * derefernce as a single int64 */
+#define V_FLOAT(v)  (*((float *)V_DATA(v)))     /* derefernce as a single float */
+#define V_DOUBLE(v) (*((double *)V_DATA(v)))    /* derefernce as a single dbl */
+#define V_FORMAT(v) V_SYM(v)->format
+#define V_DSIZE(v)  V_SYM(v)->dsize
+#define V_SIZE(v)   V_SYM(v)->size
+#define V_ORDER(v)  V_SYM(v)->order
+#define V_ORG(v)    V_SYM(v)->order
 
 #define V_HISTORY(v) V_SYM(v)->history
 #define V_TITLE(v)   V_SYM(v)->title
 
-#define V_TEXT(v)		(v)->value.textarray
+#define V_TEXT(v)    (v)->value.textarray
 
 #define V_STRUCT(v)  (v)->value.vstruct
 #define V_ARGS(v)    (v)->value.args
 #define V_MODULE(v)  (v)->value.mod
 #define V_FUNC(v)    (v)->value.function
 
-#define newVar	(Var *)mem_malloc
+#define newVar       (Var *)mem_malloc
 
 
 /**
@@ -284,18 +278,18 @@ enum {
  ** Var->value.Sym->format
  **/
 
-#define BYTE		1
-#define SHORT		2
-#define INT			3
-#define FLOAT		4
-#define VAX_FLOAT	5
+#define BYTE        1
+#define SHORT       2
+#define INT         3
+#define FLOAT       4
+#define VAX_FLOAT   5
 #define VAX_INTEGER 6
 #define INT64       7
-#define DOUBLE		8
+#define DOUBLE      8
 #define USHORT      9 // drd Bug 2208 Loading a particular hdf5 file kills davinci
 
 // drd Bug 2208 Loading a particular hdf5 file kills davinci
-#define NBYTES(a)	((a) == INT ? 4 : ((a) == USHORT ? 2 : ((a) == INT64 ? 8 : ((a) == VAX_FLOAT ? 4 : ((a) == VAX_INTEGER ? 2 : (a))))))
+#define NBYTES(a)   ((a) == INT ? 4 : ((a) == USHORT ? 2 : ((a) == INT64 ? 8 : ((a) == VAX_FLOAT ? 4 : ((a) == VAX_INTEGER ? 2 : (a))))))
 
 /**
  ** Data axis order
@@ -305,76 +299,77 @@ enum {
  **              indices below.
  **/
 
-#define BSQ			0
-#define BIL			1
-#define BIP			2
+#define BSQ    0
+#define BIL    1
+#define BIP    2
 
-#define Format2Str(i)	FORMAT2STR[(i)]
-#define Org2Str(i)		(((i) >= BSQ && (i)<= BIP)? ORG2STR[(i)]: "undef")
+#define Format2Str(i)   FORMAT2STR[(i)]
+#define Org2Str(i)      (((i) >= BSQ && (i)<= BIP)? ORG2STR[(i)]: "undef")
 
-#define GetSamples(s,org)	(s)[((org) == BIP ? 1 : 0)]
-#define GetLines(s,org)		(s)[((org) == BSQ ? 1 : 2)]
-#define GetBands(s,org)		(s)[((org) == BIP ? 0 : ((org) == BIL ? 1 : 2))]
-#define GetX(s)	        GetSamples(V_SIZE(s), V_ORG(s))
-#define GetY(s)		GetLines(V_SIZE(s), V_ORG(s))
-#define GetZ(s)		GetBands(V_SIZE(s), V_ORG(s))
-#define GetNbytes(s)   NBYTES(V_FORMAT(s))
+#define GetSamples(s,org)   (s)[((org) == BIP ? 1 : 0)]
+#define GetLines(s,org)     (s)[((org) == BSQ ? 1 : 2)]
+#define GetBands(s,org)     (s)[((org) == BIP ? 0 : ((org) == BIL ? 1 : 2))]
 
-#define saturate(v,lo,hi)	((v) > (lo) ? ((v) < (hi) ? (v) : (hi)) : (lo))
-#define saturate_byte(v)	saturate(v,0,255)
-#define saturate_short(v)	saturate(v,(MINSHORT),(MAXSHORT))
-#define saturate_int(v)		saturate(v,(MININT), (MAXINT))
-#define saturate_float(v)	v
-#define saturate_double(v)	v
+#define GetX(s)             GetSamples(V_SIZE(s), V_ORG(s))
+#define GetY(s)             GetLines(V_SIZE(s), V_ORG(s))
+#define GetZ(s)             GetBands(V_SIZE(s), V_ORG(s))
+#define GetNbytes(s)        NBYTES(V_FORMAT(s))
+
+#define saturate(v,lo,hi)   ((v) > (lo) ? ((v) < (hi) ? (v) : (hi)) : (lo))
+#define saturate_byte(v)    saturate(v,0,255)
+#define saturate_short(v)   saturate(v,(MINSHORT),(MAXSHORT))
+#define saturate_int(v)     saturate(v,(MININT), (MAXINT))
+#define saturate_float(v)   v
+#define saturate_double(v)  v
 
 #define HBUFSIZE 8192
 #define PATH_SEP ' '
 
 struct keywords {
-    char *name;
-    Var *value;
+	char *name;
+	Var *value;
 };
 
 typedef double (*dfunc)(double);
 typedef double (*ddfunc)(double, double);
 
 struct _vfuncptr {
-    const char *name;
-    vfunc fptr;
-    void *fdata;
-    void *fdata2;
+	const char *name;
+	vfunc fptr;
+	void *fdata;
+	void *fdata2;
 };
 
 #if 0
 /* See iomdeley iom_iheader instead. */
 struct _iheader {
-    int dptr;			/* offset in bytes to first data value    */
-    int prefix[3];		/* size of prefix data (bytes)            */
-    int suffix[3];		/* size of suffix data (bytes)            */
-    int size[3];		/* size of data (pixels)                  */
-    int s_lo[3];        /* subset lower range (pixels)            */
-    int s_hi[3];		/* subset upper range (pixels)            */
-    int s_skip[3];		/* subset skip interval (pixels)          */
-    int dim[3];			/* final dimension size */
-    int corner;          /* size of 1 whole plane */
+	int dptr;           /* offset in bytes to first data value    */
+	int prefix[3];      /* size of prefix data (bytes)            */
+	int suffix[3];      /* size of suffix data (bytes)            */
+	int size[3];        /* size of data (pixels)                  */
+	int s_lo[3];        /* subset lower range (pixels)            */
+	int s_hi[3];        /* subset upper range (pixels)            */
+	int s_skip[3];      /* subset skip interval (pixels)          */
+	int dim[3];         /* final dimension size */
+	int corner;         /* size of 1 whole plane */
 
-    int byte_order;		/* byteorder of data                      */
-    int format;			/* data format (INT, FLOAT, etc)          */
-    int org;			/* data organization                      */
+	int byte_order;     /* byteorder of data                      */
+	int format;         /* data format (INT, FLOAT, etc)          */
+	int org;            /* data organization                      */
 
-    float gain, offset;	/* data multiplier and additive offset    */
+	float gain, offset; /* data multiplier and additive offset    */
 };
 #endif /* 0 */
 
 /**
  ** This structure used by parse_args.
  **/
-typedef struct {
-    const char *name;
-    int type;
-    void *limits;
-    void *value;
-    int filled;
+typedef struct Alist {
+	const char *name;
+	int type;
+	void *limits;
+	void *value;
+	int filled;
 } Alist;
 
 
@@ -395,7 +390,7 @@ extern int DEPTH;
 extern int SCALE;
 extern int debug;
 
-#if defined(_WIN32) && !defined(__MINGW32__) 
+#if defined(_WIN32) && !defined(__MINGW32__)
 #define readline w_readline
 #define add_history w_add_history
 #define history_get_history_state w_history_get_history_state

@@ -153,7 +153,7 @@ static int countFix = 32;
  *
  */
 
-Var *WriteISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
+Var* WriteISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 {
 	Var *obj = NULL;
 	char *filename = NULL;
@@ -203,7 +203,7 @@ Var *WriteISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 		return (NULL);
 	}
 
-	if ((V_TYPE(obj) == ID_STRUCT)) {
+	if (V_TYPE(obj) == ID_STRUCT) {
 		int i;
 		strcpy(bsqTileBuffer, bsqTile);
 		for(i = 0; i < strlen(bsqTile) ; i ++) {
@@ -242,7 +242,8 @@ Var *WriteISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 }
 
 
-Var* do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int valTl) {
+Var* do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int valTl)
+{
 	int count;
 	int writeResult = 1;
 	int i, j;
@@ -522,7 +523,7 @@ Var* do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int
 
 }
 
-Var *ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
+Var* ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 {
 	Var *fn = NULL;
 	char *filename = NULL;
@@ -560,7 +561,7 @@ Var *ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 			filename = strdup(V_TEXT(fn).text[i]);
 			Var *t = do_loadISIS3(func, filename, data, use_names, use_units);
 			if (t) {
-				(s, filename, t);
+				add_struct(s, filename, t);
 			}
 		}
 		if (get_struct_count(s)) {
@@ -579,9 +580,8 @@ Var *ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 	}
 }
 
-static Var *
-do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
-		int use_units) {
+static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names, int use_units)
+{
 
 	char *fname;
 	FILE *fp;
@@ -907,13 +907,11 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 							// parse_error("Reading History and storing as text...\n");
 							fgets(inputString, 2046, fp); // Name = IsisCube
 							fgets(inputString, 2046, fp); // StartByte = 92032424
-							count = sscanf(inputString, "%s%s%s%s", string1,
-									string2, string3, string4);
+							count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
 							sscanf(string3, "%ld", &historyOffset);
 							fgets(inputString, 2046, fp); // Bytes = 8292
 							savedFileLocation = ftello(fp); // This is where we return to parsing later
-							count = sscanf(inputString, "%s%s%s%s", string1,
-									string2, string3, string4);
+							count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
 							sscanf(string3, "%ld", &historySize);
 							fseeko(fp, historyOffset - 1, SEEK_SET);
 							startOfHistoryRead = ftello(fp);
@@ -1020,21 +1018,16 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 								}
 							}
 
-							numArray = newVal(BSQ, localFieldCount,
-									localRecords, 1, localSize, localData);
-							add_struct(Object[objectNest], localTableName,
-									numArray);
+							numArray = newVal(BSQ, localFieldCount, localRecords, 1, localSize, localData);
+							add_struct(Object[objectNest], localTableName, numArray);
 						}  // end localInTable == 1
 
 						else if (inOriginalLabel == 1) {
 							inOriginalLabel = 0;
-							parse_error(
-									"\n\"OriginalLabel\" is not processed by davinci, it is stored as a Text Buffer\n"); // was "as a string blob\n");
-							originalLabelData = (char *) malloc(
-									olLocalBytes + 3); // we will force a \n','\0' at the end
+							parse_error("\n\"OriginalLabel\" is not processed by davinci, it is stored as a Text Buffer\n"); // was "as a string blob\n");
+							originalLabelData = (char *) malloc(olLocalBytes + 3); // we will force a \n','\0' at the end
 							if (originalLabelData == NULL) {
-								parse_error(
-										"Could not malloc space for OriginalLabel\n");
+								parse_error("Could not malloc space for OriginalLabel\n");
 								return NULL;
 							}
 
@@ -1060,10 +1053,8 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 								k = 0;
 								for (i = 0; i < originalLabelRows; i++) {
 									step = 0;
-									while ((k < olLocalBytes)
-											&& (originalLabelData[k] != '\n')) {
-										localLine[step++] =
-												originalLabelData[k++];
+									while ((k < olLocalBytes) && (originalLabelData[k] != '\n')) {
+										localLine[step++] = originalLabelData[k++];
 									}
 
 									localLine[step] = '\0'; // Want a '\0' on the end and not a '\n'
@@ -1077,21 +1068,17 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 								//             so choose either newString() or newText()
 								//             I have done this both ways--right now, Chris Edwards prefers the list of strings
 								charBlob = newText(originalLabelRows, olRows); // All the originalLabel as a list of strings
-								add_struct(Object[objectNest], "TextBuffer",
-										charBlob);
+								add_struct(Object[objectNest], "TextBuffer", charBlob);
 							} // end malloc not NULL
 							else { // We could not malloc space for the array of pointers to pointers
-								stub =
-										newString(
-												strdup(
-														"Could not malloc space to store OriginalLabel as list of strings"));
-								add_struct(Object[objectNest], "OriginalLabel",
-										stub);
+								stub = newString(strdup(
+								    "Could not malloc space to store OriginalLabel as list of strings"));
+								add_struct(Object[objectNest], "OriginalLabel", stub);
 							}
 							free(originalLabelData); // Don't need this anymore
 						} // end of inOriginalLabel == 1
 
-						if ((inNaifKeywords == 1)) {
+						if (inNaifKeywords == 1) {
 							naifKeywordsObj = Object[objectNest--];
 							inNaifKeywords = 0;
 							naifObjectLevel = -2;
@@ -1099,18 +1086,15 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 
 						else if (inHistory == 1) {
 							if (objectNest < 1) {
-								printf(
-										"\n\n\nThis is not supposed to happen!!!!!!!\n");
+								printf("\n\n\nThis is not supposed to happen!!!!!!!\n");
 								printf("System is unstable!");
 							}
-							add_struct(Object[objectNest - 1],
-									ObjectName[objectNest], Object[objectNest]);
+							add_struct(Object[objectNest - 1], ObjectName[objectNest], Object[objectNest]);
 							objectNest--;
 						} else {  //drd history putting History back in line
 							// if(strcmp("History", ObjectName[objectNest]) != 0)  // drd was
 							{ // History points to historyObj, historyObj is attached later
-								add_struct(IsisCube, ObjectName[objectNest],
-										Object[objectNest]);
+								add_struct(IsisCube, ObjectName[objectNest], Object[objectNest]);
 							}
 
 							objectNest--;
@@ -1143,8 +1127,7 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 					 * We may have Table info handling
 					 */
 					if ((localInTable == 1) && (localProcess == 1)) {
-						if ((strcmp("NOTHING", localTableName) == 0)
-								&& (strcmp("Name", string1) == 0)) {
+						if ((strcmp("NOTHING", localTableName) == 0) && (strcmp("Name", string1) == 0)) {
 							strcpy(localTableName, "Table_");
 							strcat(localTableName, string3);
 						}
@@ -1209,35 +1192,28 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 
 					if ((string2[0] == '=') && (string3[0] == '(')) {
 						if (inGroup == 1) {
-							retVal = parenManager(inputString, fp, Group,
-									namebuf);
+							retVal = parenManager(inputString, fp, Group, namebuf);
 						} else {
-							retVal = parenManager(inputString, fp,
-									Object[objectNest], namebuf);
+							retVal = parenManager(inputString, fp, Object[objectNest], namebuf);
 						}
 
 					}
 					// The next is a series of strings starting with the character pair '"
 					// This is just a long string                             0x27 is a '
-					else if ((string2[0] == '=') && (string3[0] == '\'')
-							&& (string3[1] == '"')) {
+					else if ((string2[0] == '=') && (string3[0] == '\'') && (string3[1] == '"')) {
 						if (inGroup == 1) {
-							retVal = dQuoteManager(inputString, fp, Group,
-									namebuf);
+							retVal = dQuoteManager(inputString, fp, Group, namebuf);
 						} else {
-							retVal = dQuoteManager(inputString, fp,
-									Object[objectNest], namebuf);
+							retVal = dQuoteManager(inputString, fp, Object[objectNest], namebuf);
 						}
-
 					}
 
 					else {
 
 						// Next is the possibility of a long string with no delimiters that may extend to yet another line
 						// If there is another part to read in, we will concatenate it to string3
-						if ((string2[0] == '=')
-								&& (string3[strlen(string3) - 1] == '-')
-								&& (strlen(string3) > 58)) { // The '-' is a hyphen for continuation
+						if ((string2[0] == '=') && (string3[strlen(string3) - 1] == '-') &&
+						    (strlen(string3) > 58)) { // The '-' is a hyphen for continuation
 
 							string3[strlen(string3) - 1] = '\0'; // get rid of the '-'
 
@@ -1255,8 +1231,7 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 								i++;
 							}
 							// concat if not too big-
-							if (strlen(&continuationString[i])
-									< (-1 + sizeof(string3) - strlen(string3))) {
+							if (strlen(&continuationString[i]) < (-1 + sizeof(string3) - strlen(string3))) {
 								strcat(string3, &continuationString[i]);
 							} else {
 								; // nothing...right now, if it is too big, just drop it
@@ -1270,47 +1245,36 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 							 * or string4 may simply be a part of a string3 that has spaces in it.
 							 * Also, by default, we are now not showing units
 							 */
-							if ((use_units == 1) && (count == 4)
-									&& (string4[0] == '<')
-									&& (string4[-1 + strlen(string4)] == '>')) {
-								add_converted_to_struct(Group, namebuf,
-										string3);
+							if ((use_units == 1) && (count == 4) && (string4[0] == '<') &&
+							    (string4[-1 + strlen(string4)] == '>')) {
+
+								add_converted_to_struct(Group, namebuf,string3);
 								strcat(namebuf, "Units");
-								add_struct(Group, namebuf,
-										newString(strdup(string4)));
-							} else if ((use_units == 0) && (count == 4)
-									&& (string4[0] == '<')
-									&& (string4[-1 + strlen(string4)] == '>')) {
-								add_converted_to_struct(Group, namebuf,
-										string3);
+								add_struct(Group, namebuf, newString(strdup(string4)));
+							} else if ((use_units == 0) && (count == 4) && (string4[0] == '<') &&
+							           (string4[-1 + strlen(string4)] == '>')) {
+								add_converted_to_struct(Group, namebuf, string3);
 							} else { // &inputString[position] is the input string past the '=' with leading and trailing double quotes removed
-								add_converted_to_struct(Group, namebuf,
-										&inputString[position]);
+								add_converted_to_struct(Group, namebuf, &inputString[position]);
 							}
 						} else {
 							/* There may be <units> in string4. Units are strings enclosed by a '<' and a '>',
 							 * or string4 may simply be a part of a string3 that has spaces in it.
 							 * Also, by default, we are now not showing units
 							 */
-							if ((use_units == 1) && (count == 4)
-									&& (string4[0] == '<')
-									&& (string4[-1 + strlen(string4)] == '>')) {
-								add_converted_to_struct(Object[objectNest],
-										namebuf, string3);
+							if ((use_units == 1) && (count == 4) && (string4[0] == '<') &&
+							    (string4[-1 + strlen(string4)] == '>')) {
+								add_converted_to_struct(Object[objectNest], namebuf, string3);
 								strcat(namebuf, "Units");
-								add_struct(Object[objectNest], namebuf,
-										newString(strdup(string4)));
-							} else if ((use_units == 0) && (count == 4)
-									&& (string4[0] == '<')
-									&& (string4[-1 + strlen(string4)] == '>')) {
-								add_converted_to_struct(Object[objectNest],
-										namebuf, string3);
+								add_struct(Object[objectNest], namebuf, newString(strdup(string4)));
+							} else if ((use_units == 0) && (count == 4) && (string4[0] == '<') &&
+							           (string4[-1 + strlen(string4)] == '>')) {
+								add_converted_to_struct(Object[objectNest], namebuf, string3);
 							} else { // &inputString[position] is the input string past the '=' with leading and trailing double quotes removed
 								if (inOriginalLabel == 1) { // todo -- is this only here, or is it needed in the "Group" one above, too?
 									//add_struct(Object[objectNest], "Note", newString(strdup("This item is not processed by davinci")));
 								}
-								add_converted_to_struct(Object[objectNest],
-										namebuf, &inputString[position]);
+								add_converted_to_struct(Object[objectNest], namebuf, &inputString[position]);
 							}
 						}
 					}
@@ -1353,7 +1317,8 @@ do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 }
 
 /**************************************************************************/
-void make_unique_name(char * buffer, Var * dv_struct) {
+void make_unique_name(char * buffer, Var * dv_struct)
+{
 	/*
 
 	 Make unique names to be inserted in the davinci structure dv_struct by
@@ -1370,17 +1335,17 @@ void make_unique_name(char * buffer, Var * dv_struct) {
 	Var * dummy_sptr;
 	strncpy(work_buf, buffer, DV_NAMEBUF_MAX - 1);
 	while (find_struct(dv_struct, work_buf, &dummy_sptr) != -1) {
-		if (snprintf(work_buf, DV_NAMEBUF_MAX - 1, "%s_%i", buffer,
-				start_count++) >= DV_NAMEBUF_MAX - 1) {
-			parse_error(
-					"Warning: attempt to find unique name for '%s' results in truncated strings.\nCannot rename. Please use shorter names in your ISIS files!");
+		if (snprintf(work_buf, DV_NAMEBUF_MAX - 1, "%s_%i", buffer, start_count++) >= DV_NAMEBUF_MAX - 1) {
+			parse_error("Warning: attempt to find unique name for '%s' results in truncated strings.\n"
+			            "Cannot rename. Please use shorter names in your ISIS files!");
 			return;
 		}
 	}
 	strncpy(buffer, work_buf, DV_NAMEBUF_MAX - 1);
 }
 
-char get_keyword_datatype(char * value, char * name) {
+char get_keyword_datatype(char * value, char * name)
+{
 	/* Determines the davinci datatype to apply to a value string, given its value
 	 and its name for hints. */
 	char * endptr;
@@ -1463,7 +1428,8 @@ char get_keyword_datatype(char * value, char * name) {
 
 }
 
-void add_converted_to_struct(Var * dv_struct, char * name, char * value) {
+void add_converted_to_struct(Var * dv_struct, char * name, char * value)
+{
 	/* Attempts to convert keyword values to integers and floats to determine if
 	 the value supplied is a numeric value. The rules are:
 	 Try to make it an int and a float.
@@ -1499,7 +1465,8 @@ void add_converted_to_struct(Var * dv_struct, char * name, char * value) {
  * Note that all Tokens are based on ','s and not white spaces.
  */
 
-int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf) {
+int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
+{
 	char *workingString = NULL;
 	char *localString = NULL;
 	char *token = NULL;
@@ -1673,7 +1640,8 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf) 
 	return retVal;
 }
 
-int dQuoteManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf) {
+int dQuoteManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
+{
 	char *workingString = NULL;
 	char *localString = NULL;
 	char localBuff[400];
@@ -1743,7 +1711,8 @@ int dQuoteManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
  * then string4 is just the next text word of what should be part of string3, and string3 is truncated.
  * So we have this function which returns an offset to the first letter in the first word past the string2 '=' sign
  */
-int stringFinder(FILE* fp) {
+int stringFinder(FILE* fp)
+{
 	int i = 0;
 	int sub_i = 0;
 	int innerString;
@@ -1823,7 +1792,8 @@ int stringFinder(FILE* fp) {
  * I have not seen all these other symbols, but they could cause a problem
  * Replace as shown, and the string becomes a C name that davinci can parse
  */
-int cNameMaker(char *inputString) {
+int cNameMaker(char *inputString)
+{
 	int result = 0;
 	int i;
 
@@ -1846,7 +1816,8 @@ int cNameMaker(char *inputString) {
 	return result; // I don't see a failure possible here, so for now, always good
 }
 
-int readNextLine(FILE *fp) {
+int readNextLine(FILE *fp)
+{
 	int locali;
 
 	fgets(inputString, 2046, fp);
@@ -1865,7 +1836,8 @@ int readNextLine(FILE *fp) {
 
 }
 
-Var *readCube(FILE *fp) {
+Var *readCube(FILE *fp)
+{
 
 	#define CUBEDEBUG
 	#ifdef CUBEDEBUG
@@ -1945,8 +1917,7 @@ Var *readCube(FILE *fp) {
 							}
 
 							for (element = 0; element < sampleSize; element++) {
-								cubeData[offset + element] =
-										swapBuffer[element];
+								cubeData[offset + element] = swapBuffer[element];
 							}
 						} else {
 							for (element = 0; element < sampleSize; element++) {
@@ -2014,16 +1985,13 @@ Var *readCube(FILE *fp) {
 										;
 									}
 
-									for (element = 0; element < sampleSize;
-											element++) {
+									for (element = 0; element < sampleSize; element++) {
 										cubeData[linearOffset + element] =
 												swapBuffer[element];
 									}
 								} else {
-									for (element = 0; element < sampleSize;
-											element++) {
-										cubeData[linearOffset + element] =
-												inBuffer[element];
+									for (element = 0; element < sampleSize; element++) {
+										cubeData[linearOffset + element] = inBuffer[element];
 									}
 								}
 								linearOffset += sampleSize; // linearOffset into the RAM data just keeps incrementing
@@ -2068,7 +2036,8 @@ Var *readCube(FILE *fp) {
 	return dv_struct;
 }
 
-int getCubeParams(FILE *fp) {
+int getCubeParams(FILE *fp)
+{
 	int retVal = 1;
 	int count;
 	fgets(inputString, 2046, fp);
@@ -2080,8 +2049,7 @@ int getCubeParams(FILE *fp) {
 
 	while (strcmp("End_Object", string1) != 0) {
 		fgets(inputString, 2046, fp);
-		count = sscanf(inputString, "%s%s%s%s", string1, string2, string3,
-				string4);
+		count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
 		if (strlen(inputString) < 3) {  // Some blank lines
 			continue;
 		}

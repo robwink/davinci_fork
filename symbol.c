@@ -5,19 +5,13 @@
  **
  ** Symbol table management routines.
  **
- **		get_sym(name)	- search symbol table for named symbol
- **		put_sym(name)	- Insert (replace) named symbol in table
+ **    get_sym(name)   - search symbol table for named symbol
+ **    put_sym(name)   - Insert (replace) named symbol in table
  **
- ** The symbol table is linked together using V_NEXT(v).
- **/
-
-/**
- ** get_sym()	 - search symbol table for named symbol
  **/
 
 
-Var *
-HasValue(vfuncptr func, Var *arg)
+Var *HasValue(vfuncptr func, Var *arg)
 {
   int ac;
   Var **av, *v;
@@ -35,8 +29,7 @@ HasValue(vfuncptr func, Var *arg)
  ** this destroys the symtab and hands back the value.
  **/
 
-Var *
-rm_symtab(Var *v)
+Var *rm_symtab(Var *v)
 {
   Scope *scope = scope_tos();
   Symtable *s, *t;
@@ -61,8 +54,7 @@ rm_symtab(Var *v)
   return(NULL);
 }
 
-Var *
-ff_delete(vfuncptr func, Var *arg)
+Var *ff_delete(vfuncptr func, Var *arg)
 {
   Var *obj;
   Alist alist[2];
@@ -71,14 +63,13 @@ ff_delete(vfuncptr func, Var *arg)
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
   if (obj == NULL) return(NULL);
-	
+
   free_var(obj);
 
   return(NULL);
 }
 
-Var *
-search_symtab(Scope *scope, char *name)
+Var *search_symtab(Scope *scope, char *name)
 {
   Symtable *s;
   for (s = scope->symtab ; s != NULL ; s = s->next) {
@@ -112,8 +103,7 @@ Var *get_global_sym(char *name)
  ** delete symbol from symbol table
  **/
 
-void
-rm_sym(char *name)
+void rm_sym(char *name)
 {
   Scope *scope = scope_tos();
   Symtable *s, *last = NULL;
@@ -137,11 +127,10 @@ rm_sym(char *name)
 }
 
 /**
- ** put_sym()	 - store symbol in symbol table
+ ** put_sym()    - store symbol in symbol table
  **/
 
-Var *
-sym_put(Scope *scope, Var *s)
+Var *sym_put(Scope *scope, Var *s)
 {
   Symtable *symtab;
   Var *v, tmp;
@@ -178,13 +167,12 @@ sym_put(Scope *scope, Var *s)
 }
 
 
-Var *
-put_sym(Var *s)
+Var *put_sym(Var *s)
 {
   return(sym_put(scope_tos(), s));
 }
-Var *
-put_global_sym(Var *s)
+
+Var *put_global_sym(Var *s)
 {
   return(sym_put(global_scope(), s));
 }
@@ -194,8 +182,7 @@ put_global_sym(Var *s)
  ** Force symtab evaluation
  **/
 
-Var *
-eval(Var *v)
+Var *eval(Var *v)
 {
   if (v == NULL) return(NULL);
   switch(V_TYPE(v)){
@@ -220,8 +207,7 @@ extern int nufunc;
 extern struct _vfuncptr vfunclist[];
 extern int nsfunc;
 
-Var *
-ff_list(vfuncptr func, Var *arg)
+Var *ff_list(vfuncptr func, Var *arg)
 {
   Scope *scope = scope_tos();
   Symtable *s= scope->symtab;
@@ -276,8 +262,7 @@ ff_list(vfuncptr func, Var *arg)
 }
 
 
-void
-free_var(Var *v)
+void free_var(Var *v)
 {
   int type;
   int i;

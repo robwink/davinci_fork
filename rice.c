@@ -20,7 +20,7 @@ int rice_fs(ushort *in, int npts, uchar *out, int start);
 void write_zeros(uchar *buf, int len, int x);
 void write_bit(uchar *buf, int pos, int value);
 int rice_pack(ushort *in, int npts, int bits, uchar *out, int start);
-int delta_transform(ushort *in, int npts, ushort *out);
+int delta_transform(short *in, int npts, ushort *out);
 void delta_transform_inverse(ushort *in, int npts, short *out);
 
 int rice_code(ushort *, int, uchar *, int);
@@ -93,22 +93,22 @@ int rice_auto(short *in, int npts, int bits, uchar *out, int start)
 		mode_size = 4;
 	}
 
-		 if (F0 <= 3*J/2)             mode = 0; 	// PSI0()
-	else if (F0 <= 5*J/2)             mode = 1; 	// PSI1(0,)
-	else if (F0 <= 9*J/2)             mode = 3; 	// PSI1(1,)
-	else if (F0 <= 17*J/2)            mode = 4;		// PSI1(2,)
-	else if (F0 <= 33*J/2)            mode = 5; 	// PSI1(3,)
-	else if (F0 <= 65*J/2)            mode = 6; 	// PSI1(4,)
-	else if (F0 <= 129*J/2)           mode = 7; 	// PSI1(5,)
-	else if (bits <= 8) 			  mode = 2;		// 8-bit PSI3
-	else if (F0 <= 257*J/2)           mode = 8; 	// PSI1(6,)
-	else if (F0 <= 513*J/2)           mode = 9; 	// PSI1(7,)
-	else if (F0 <= 1025*J/2)          mode = 10; 	// PSI1(8,)
-	else if (F0 <= 2049*J/2)          mode = 11;	// PSI1(9,)
-	else if (F0 <= 4097*J/2)          mode = 12;	// PSI1(10,)
-	else if (F0 <= 8193*J/2)          mode = 13;	// PSI1(11,)
-	else if (F0 <= 16385*J/2)         mode = 14;	// PSI1(12,)
-	else if (F0 <= 32769*J/2)         mode = 15;	// PSI1(13,)
+	     if (F0 <= 3*J/2)             mode = 0;     // PSI0()
+	else if (F0 <= 5*J/2)             mode = 1;     // PSI1(0,)
+	else if (F0 <= 9*J/2)             mode = 3;     // PSI1(1,)
+	else if (F0 <= 17*J/2)            mode = 4;     // PSI1(2,)
+	else if (F0 <= 33*J/2)            mode = 5;     // PSI1(3,)
+	else if (F0 <= 65*J/2)            mode = 6;     // PSI1(4,)
+	else if (F0 <= 129*J/2)           mode = 7;     // PSI1(5,)
+	else if (bits <= 8)               mode = 2;     // 8-bit PSI3
+	else if (F0 <= 257*J/2)           mode = 8;     // PSI1(6,)
+	else if (F0 <= 513*J/2)           mode = 9;     // PSI1(7,)
+	else if (F0 <= 1025*J/2)          mode = 10;    // PSI1(8,)
+	else if (F0 <= 2049*J/2)          mode = 11;    // PSI1(9,)
+	else if (F0 <= 4097*J/2)          mode = 12;    // PSI1(10,)
+	else if (F0 <= 8193*J/2)          mode = 13;    // PSI1(11,)
+	else if (F0 <= 16385*J/2)         mode = 14;    // PSI1(12,)
+	else if (F0 <= 32769*J/2)         mode = 15;    // PSI1(13,)
 	else                              mode =  2;    // 16-bit PSI3()
 
 	switch (mode) {
@@ -127,7 +127,7 @@ int rice_auto(short *in, int npts, int bits, uchar *out, int start)
 }
 
 /*
-** returns number of bytes consumed 
+** returns number of bytes consumed
 */
 int rice_unauto(uchar *in, int len, int npts, int bits, short *out)
 {
@@ -173,12 +173,14 @@ int rice_unauto(uchar *in, int len, int npts, int bits, short *out)
 			break;
 		}
 	}
-	delta_transform_inverse(out, npts, out);
+
+	//rswinkle?
+	delta_transform_inverse((unsigned short*)out, npts, out);
 	return((len1+hdr+7)/8);
 }
 
-/* 
-** 
+/*
+**
 */
 
 int rice_split(ushort *in, int npts, int entropy, uchar *out, int start)
@@ -205,7 +207,7 @@ int rice_split(ushort *in, int npts, int entropy, uchar *out, int start)
 	return(len1+len2);
 }
 
-int rice_unsplit(uchar *in, int len, int npts, int entropy, short *out, int start) 
+int rice_unsplit(uchar *in, int len, int npts, int entropy, short *out, int start)
 {
 	int i;
 	short top[MAX_BUF_LEN];
@@ -230,7 +232,7 @@ int rice_unsplit(uchar *in, int len, int npts, int entropy, short *out, int star
 
 int rice_split_size(uchar *in)
 {
-	int start = 0; 						/* number of bits used */
+	int start = 0;      /* number of bits used */
 	int len1, len2;
 
 	start = 0;
@@ -242,8 +244,9 @@ int rice_split_size(uchar *in)
 
 /**
 *** Compute delta transform to make everything >= 0
+* TODO(rswinkle) I think these could overflow
 **/
-int delta_transform(ushort *in, int npts, ushort *out)
+int delta_transform(short *in, int npts, ushort *out)
 {
 	int i, sum = 0;
 	for (i = 0 ; i < npts ; i++) {
@@ -347,18 +350,18 @@ int rice_code(ushort *in, int npts, uchar *out, int start)
 
 	len = rice_fs(in, npts, out2, 0);
 
-    for (i = 0 ; i < len ; i++) {
+	for (i = 0 ; i < len ; i++) {
 		/*
 		** extract 3 bits and invert them.
 		*/
-        x = (1-test_bit(out2[i/8],i%8)) << 2; i++;
-        x |= (i < len ? (1-test_bit(out2[i/8],i%8)) : 1) << 1; i++;
-        x |= (i < len ? (1-test_bit(out2[i/8],i%8)) : 1);
+		x = (1-test_bit(out2[i/8],i%8)) << 2; i++;
+		x |= (i < len ? (1-test_bit(out2[i/8],i%8)) : 1) << 1; i++;
+		x |= (i < len ? (1-test_bit(out2[i/8],i%8)) : 1);
 
-        write_bits(out, start+len2, rice_codes[x], rice_lens[x]);
-        len2 += rice_lens[x];
-    }
-    return(len2);
+		write_bits(out, start+len2, rice_codes[x], rice_lens[x]);
+		len2 += rice_lens[x];
+	}
+	return(len2);
 }
 
 int rice_uncode(uchar *in, int len, ushort *out, int start)
@@ -401,15 +404,13 @@ int same(ushort *a, ushort *b, int na, int nb, char *msg)
 	int bad = 0;
 
 	if (na != nb) {
-		fprintf(stderr, "%s: number of points doesn't match: %d != %d\n", 
-			msg, na, nb);
+		fprintf(stderr, "%s: number of points doesn't match: %d != %d\n", msg, na, nb);
 		return(0);
 	}
 
 	for (i = 1 ; i < na ; i++) {
 		if (a[i] != b[i]) {
-			fprintf(stderr, "%s: sample %d doesn't match: %d != %d\n", 
-				msg, i, a[i], b[i]);
+			fprintf(stderr, "%s: sample %d doesn't match: %d != %d\n", msg, i, a[i], b[i]);
 			bad++;
 		}
 	}
