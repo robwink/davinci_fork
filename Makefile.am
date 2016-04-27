@@ -95,7 +95,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	fft.c fft2f.c fft_mayer.c fit.c ff_coreg.c ff_boxfilter.c \
 	ff_bin5.c  ff_transform.c ff_blend.c ff_unpack.c \
 	header.c ff_resample.c \
-	help.c init.c \
+	help.c init.c cvector.c \
 	isis_obj.c globals.c matrix.c \
 	misc.c motif_tools.c \
 	newfunc.c p.c pp.c \

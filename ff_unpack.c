@@ -1526,13 +1526,13 @@ parse_struct(Var* toPack, Var* column_names, int* numData, int* greatestNumRows)
 
 // pack() implementation function, inverse of unpack()
 // called by ff_pack()
-// @param data* thedata;			// the actual information to be packed
-// @param char* template;			// string indicating how the data should be stored
-// @param char* filename;			// the name of file to pack information in
-// @param int numData;				// the amount of data in thedata array
-// @param int rows;					// the number of rows of data to be packed
-// @param int offset;				// number of bytes to skip in file before writing
-// @return int indicating success:	// 1 = success, 0 = fail
+// @param data* thedata;            // the actual information to be packed
+// @param char* template;           // string indicating how the data should be stored
+// @param char* filename;           // the name of file to pack information in
+// @param int numData;              // the amount of data in thedata array
+// @param int rows;                 // the number of rows of data to be packed
+// @param int offset;               // number of bytes to skip in file before writing
+// @return int indicating success:  // 1 = success, 0 = fail
 static int
 pack(data* thedata, char* template, char* filename, int numData, int rows, int offset)
 {

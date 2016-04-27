@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "func.h"
+#include "cvector.h"
 #include <sys/stat.h>
 
 #ifdef HAVE_LIBHDF5
@@ -7,7 +8,16 @@
 #define HDF5_COMPRESSION_LEVEL 6
 
 #include <hdf5.h>
-Var *load_hdf5(hid_t parent);
+
+
+typedef struct callback_data
+{
+	Var* parent_var;
+	vector_void addresses;
+} callback_data;
+
+Var *load_hdf5(hid_t parent, callback_data* cb_data);
+
 
 void
 WriteHDF5(hid_t parent, char *name, Var *v)
@@ -30,7 +40,6 @@ WriteHDF5(hid_t parent, char *name, Var *v)
 		parse_error("Can't find variable");
 		return;
 	}
-
 
 	if (parent < 0) {
 		top = 1;
@@ -219,11 +228,11 @@ WriteHDF5(hid_t parent, char *name, Var *v)
 /*
 ** Make a VAR out of a HDF5 object
 */
-static herr_t
-group_iter(hid_t parent, const char *name, void *data)
+static herr_t group_iter(hid_t parent, const char *name, const H5L_info_t *info, void *operator_data)
 {
 	H5G_stat_t buf;
-	hid_t child, dataset, dataspace, datatype, attr;
+
+	hid_t child, dataset, dataspace, mem_dataspace, datatype, attr;
 	int org, type, native_type_attr, native_type_data, size[3], dsize, i;
 	int var_type;
 	hsize_t datasize[3], maxsize[3];
@@ -233,23 +242,40 @@ group_iter(hid_t parent, const char *name, void *data)
 	int Lines=1;
 	extern int VERBOSE;
 
-	*((Var **)data) = NULL;
+	callback_data* cb_data = (callback_data*)operator_data;
+	Var* parent_var = cb_data->parent_var;
 
-	if (H5Gget_objinfo(parent, name, 1, &buf) < 0) return -1;
-	type = buf.type;
+	H5O_info_t obj_info;
 
-	printf("parsing %s\n", name);
+	if (H5Oget_info_by_name(parent, name, &obj_info, H5P_DEFAULT) < 0) {
+		//output our own error?
+		return -1;
+	}
 
+	type = obj_info.type;
 
 	switch (type)  {
-	case H5G_GROUP:
-		child = H5Gopen(parent, name);
-		v = load_hdf5(child);
-		V_NAME(v) = (name ? strdup(name) : 0);
-		H5Gclose(child);
+	case H5O_TYPE_GROUP:
+		for (i=0; i<cb_data->addresses.size; ++i) {
+			if (obj_info.addr == *GET_VOID(&cb_data->addresses, haddr_t, i)) {
+				break;
+			}
+		}
+		if (i != cb_data->addresses.size) {
+			printf("Warning: loop detected, skipping %s\n", name);
+		} else {
+			//add addr to list
+			push_void(&cb_data->addresses, &obj_info.addr);
+
+			child = H5Gopen(parent, name);
+			v = load_hdf5(child, cb_data);
+			if (v)
+				V_NAME(v) = (name ? strdup(name) : 0);
+			H5Gclose(child);
+		}
 		break;
 
-	case H5G_DATASET:
+	case H5O_TYPE_DATASET:
 		if ((dataset = H5Dopen(parent, name)) < 0) {
 			return -1;
 		}
@@ -276,7 +302,7 @@ group_iter(hid_t parent, const char *name, void *data)
 				type = DOUBLE;
 		}
 
-		if (type!=ID_STRING) {
+		if (type != ID_STRING) {
 			org = BSQ;
 			if ((attr = H5Aopen_name(dataset, "org")) < 0) {
 				parse_error("Unable to get org. Assuming %s.\n", Org2Str(org));
@@ -287,24 +313,47 @@ group_iter(hid_t parent, const char *name, void *data)
 				H5Tclose(native_type_attr);
 			}
 
-			//HDF data sets can have arbitrary numbers of dimensions
-			//so initialize dims to 1
+			//HDF data sets can have arbitrary rank and we don't
+			//want garbage if rank is < 3 so initialize dims to 1
 			datasize[0] = datasize[1] = datasize[2] = 1;
 
 			dataspace = H5Dget_space(dataset);
 			H5Sget_simple_extent_dims(dataspace, datasize, maxsize);
+
 			for (i = 0 ; i < 3 ; i++) {
 				size[i] = datasize[i];
 			}
+			//mem_dataspace = H5Screate_simple(3, datasize, NULL);
+
 			dsize = H5Sget_simple_extent_npoints(dataspace);
 			databuf = calloc(dsize, NBYTES(type));
 
+			//H5Dread(dataset, native_type_data, H5S_ALL, mem_dataspace, H5P_DEFAULT, databuf);
 			H5Dread(dataset, native_type_data, H5S_ALL, H5S_ALL, H5P_DEFAULT, databuf);
 
 			H5Tclose(datatype);
 			H5Sclose(dataspace);
+			//H5Sclose(mem_dataspace);
 			H5Dclose(dataset);
 			H5Tclose(native_type_data);
+
+			/*
+			 * // drd Bug 2208 Loading a particular hdf5 file kills davinci
+			 * For the time being, there is no USHORT type
+			 * functionally available in davinci.
+			 * We can promote any USHORT value to INT
+			 * and not change sign
+			 */
+			if (type == USHORT) { // promote to INT
+				databuf2 = calloc(dsize, NBYTES(INT));
+				for(i = 0; i < dsize; i++) {
+					((int*)databuf2)[i] = (int)((unsigned short *)databuf)[i];
+				}
+				type = INT;
+				free(databuf);
+				databuf = databuf2;
+
+			}
 
 			v = newVal(org, size[0], size[1], size[2], type, databuf);
 			V_NAME(v) = strdup(name);
@@ -339,24 +388,36 @@ group_iter(hid_t parent, const char *name, void *data)
 			dsize = H5Tget_size(datatype);
 			databuf = (unsigned char *)calloc(dsize, sizeof(char));
 			H5Dread(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, databuf);
-			if (Lines==1) {
+			if (Lines <= 1) {
 				V_STRING(v)=databuf;
 			} else { /*Now we have to dissable to the large block of text*/
-				int lm=0,nm=0;
-				int len=strlen(databuf);
-				int index=0;
+				int lm = 0,nm = 0;
+				int len = strlen(databuf);
+				int index = 0;
 				/*send nm through databuf looking for \n.*/
 				while (nm < len) {
-					if (((char *)databuf)[nm]=='\n'){
+					if (((char *)databuf)[nm] == '\n'){
 						V_TEXT(v).text[index]=malloc(nm-lm+1);
 						memcpy(
 							V_TEXT(v).text[index],
 							(char *)databuf+lm,
 							(nm-lm+1));
-						V_TEXT(v).text[index][nm-lm]='\0';
+						V_TEXT(v).text[index][nm-lm] = '\0';
 						index++;
 						nm++;/*Next line or end*/
 						lm=nm;
+					}
+					else if (nm == (len-1)) {
+						/*
+						 * drd Bug 2208 Loading a particular hdf5 file kills davinci
+						 * This is the case where we are at the end of a 'string' data set,
+						 * but the end is not a newline
+						 *
+						 */
+						V_TEXT(v).text[index]=malloc(nm-lm+2);
+						memcpy(V_TEXT(v).text[index], (char *)databuf+lm, (nm-lm+2));
+						V_TEXT(v).text[index][nm-lm+1]='\0';
+						nm++; // This increment will break out of while() loop
 					} else {
 						nm++;
 					}
@@ -368,25 +429,36 @@ group_iter(hid_t parent, const char *name, void *data)
 			H5Dclose(dataset);
 			V_NAME(v) = strdup(name);
 		}
+		break;
+
+	//Our HD5 lib is out of date or else this'd be defined
+	//case H50_TYPE_NAMED_DATATYPE:
+	//	break;
+	default:
+		parse_error("Unknown object type");
 	}
 
-	if (VERBOSE > 0) {
+	if (VERBOSE > 2) {
 		if (v)
 			pp_print_var(v, V_NAME(v), 0, 0);
 		else
-			printf("v = NULL\n");
+			printf("Var v = NULL\n");
 	}
 
-	*((Var **)data) = v;
-	return 1;
+	//restore in case we recursed for subgroup
+	cb_data->parent_var = parent_var;
+
+	if (v) {
+		add_struct(cb_data->parent_var, V_NAME(v), v);
+	}
+	return 0;
 }
 
 
-static herr_t
-count_group(hid_t group, const char *name, void *data)
+static herr_t count_group(hid_t group, const char *name, const H5L_info_t *info, void *data)
 {
 	*((int *)data) += 1;
-	return(0);
+	return 0;
 }
 
 Var *
@@ -397,48 +469,48 @@ LoadHDF5(char *filename)
 	hid_t file;
 
 	if (H5Fis_hdf5(filename) == 0) {
-		return(NULL);
+		return NULL;
 	}
 
 	file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
 
-	if (file < 0) return(NULL);
+	if (file < 0) return NULL;
 
-	group = H5Gopen(file, "/");
+	callback_data data;
+	data.parent_var = NULL;
+	vec_void(&data.addresses, 0, 20, sizeof(haddr_t), NULL, NULL);
 
-	v = load_hdf5(group);
+	v = load_hdf5(file, &data);
 
-	H5Gclose(group);
+	free_vec_void(&data.addresses);
+
 	H5Fclose(file);
-	return(v);
+	return v;
 }
 
 
 Var *
-load_hdf5(hid_t parent)
+load_hdf5(hid_t parent, callback_data* cb_data)
 {
-	Var *o, *e;
 	int count = 0;
-	int idx = 0;
+	hsize_t idx = 0;
 	herr_t ret;
 
-	H5Giterate(parent, ".", NULL, count_group, &count);
+	//I think this is overkill.  Picking a reasonable start size (4-8) is fine
+	H5Literate(parent, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, count_group, &count);
 
-	if (count <= 0) {
+	if (count < 0) {
 		parse_error("Group count < 0");
-		return(NULL);
+		return NULL;
 	}
 
-	o = new_struct(count);
+	cb_data->parent_var = new_struct(count);
 
-	while ((ret = H5Giterate(parent, ".", &idx, group_iter, &e)) > 0)  {
-		if (e != NULL) {
-			add_struct(o, V_NAME(e), e);
-			V_NAME(e) = NULL;
-		}
-		if (idx == count) break;
+	if ((ret = H5Literate(parent, H5_INDEX_NAME, H5_ITER_NATIVE, &idx, group_iter, cb_data)) < 0) {
+		parse_error("Error reading HDF5 file\n");
 	}
-	return(o);
+
+	return cb_data->parent_var;
 }
 
 #endif
