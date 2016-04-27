@@ -19,6 +19,7 @@ typedef void (*Narray_FuncPtr)(void *);
 
 Darray * Darray_create(int size);
 int      Darray_add(Darray *d, void *New);
+int      Darray_insert(Darray *d, void *New, int pos);
 int      Darray_get(const Darray *d, const int i, void **ret);
 int      Darray_replace(Darray *d, int i, void *in, void **out);
 int      Darray_count(const Darray *d);

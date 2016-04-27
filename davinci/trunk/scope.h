@@ -8,8 +8,8 @@
 
 typedef struct tag_Symtable Symtable;
 struct tag_Symtable {
-	Var *value;			/* variable holder */
-	Symtable *next;		/* dont use var->next.  Bad mojo */
+	Var *value;         /* variable holder */
+	Symtable *next;     /* dont use var->next.  Bad mojo */
 };
 
 /**
@@ -18,7 +18,7 @@ struct tag_Symtable {
 typedef struct {
 	int count;
 	int size;
-	char **name;		/* variable name */
+	char **name;      /* variable name */
 	Var **value;
 } Dictionary;
 

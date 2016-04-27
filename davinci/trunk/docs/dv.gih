@@ -11,19 +11,19 @@
     - subtract         >  greater than              //     concatenation
     * multipy          <= less than or equal        where  partial replacement
     / divide           >= greater than or equal
-    % modulo           == equal 
+    % modulo           == equal
     = equvialence      != not equal
                        || logical OR
                        && logical AND
 
 
- All the mathematical operators except can take any two VAL types, and 
+ All the mathematical operators except can take any two VAL types, and
  will cast up to the larger type.
 
  All the relational operators return a value of 0 or 1.  If used on arrays,
  they return an array of 0's and 1's.
 
- Range, concatentaion and the where operator each have their own 
+ Range, concatentaion and the where operator each have their own
  pecularities.  Consult the individual help topics.
 
 ?operators //
@@ -50,7 +50,7 @@
  The range operator takes up to three ranges, one for each axis, in the
  order X, Y, Z, of the form [low:hi:step].
 
- Any of the range values may be blank, indicating the least restrictive 
+ Any of the range values may be blank, indicating the least restrictive
  value.  If the third or second and third values are blank, they may be
  completely omitted.
 
@@ -71,8 +71,8 @@
 
     array [ where expr1 ] = expr2
 
- Expr1 must evaluate to an array with the same organization and dimensions 
- as array, and where expr1 is true, the corresponding element of array is 
+ Expr1 must evaluate to an array with the same organization and dimensions
+ as array, and where expr1 is true, the corresponding element of array is
  replaced with the value of expr2.  Expr2 must be a single value.
 
  Example:
@@ -107,7 +107,7 @@
     bil(), bip(), bsq()
 
 ?functions format()
-?format() 
+?format()
  format()  - Show or change an objects data format
 
  format(object=VAL [, format={BYTE,SHORT,INT,FLOAT,DOUBLE}])
@@ -136,7 +136,7 @@
  dim(object=VAL)
 
     The dim() function reports the size of each axis of an object.
-    The values are returned in a 3x1x1 array, as the size of the 
+    The values are returned in a 3x1x1 array, as the size of the
     X, Y and Z axis, respectivly.
 
 ?functions bsq()
@@ -224,7 +224,7 @@
  float(object=VAL)
 
     The float() function copies and converts an object to FLOAT format.
-    The behavior of float() when dealing with values out of the 
+    The behavior of float() when dealing with values out of the
     representable range, 1.4e-45 to 3.4e38, is undefined.
     This function is equivalent to format(object=VAL, format=FLOAT).
 
@@ -238,7 +238,7 @@
  double(object=VAL)
 
     The double() function copies and converts an object to DOUBLE format.
-    The behavior of double() when dealing with values out of the 
+    The behavior of double() when dealing with values out of the
     representable range, 1.7e308 to 4.9e-324 is undefined.
     This function is equivalent to format(object=VAL, format=DOUBLE).
 
@@ -251,8 +251,8 @@
 
  cat(ob1=VAL,ob2=VAL,axis={X,Y,Z})
 
-    The cat() function duplicates ob1 and appends a copy of ob2, along the 
-    specified axis.  The two objects must match in format and organization, 
+    The cat() function duplicates ob1 and appends a copy of ob2, along the
+    specified axis.  The two objects must match in format and organization,
     and must have the same dimension along the two unspecified axis.
 
  See Also:
@@ -283,8 +283,8 @@
     and returns it in a davinci structure. The optional skip
     parameter specifies the bytes into the file to skip before
     decoding the file. The optional count parameter specifies
-    the number of records to be unpacked (a negative value 
-    means all records). The template is made up of column 
+    the number of records to be unpacked (a negative value
+    means all records). The template is made up of column
     specifications of the form "A[n][*m]", where, "A" can be
     one of the following letters:
         Letter     Meaning              Allowable byte-sizes ("n")
@@ -299,9 +299,9 @@
 
 
     "n" is the size (in bytes), and "m" is the multiplicity,
-    of repeat of "A[n]". If either "m" or "n" is not specified, 
+    of repeat of "A[n]". If either "m" or "n" is not specified,
     it is assumed to be one. "*" is part of the syntax.
-    For example, "i4*3" specifies an array of 3- 4-byte 
+    For example, "i4*3" specifies an array of 3- 4-byte
     little-endian integers. Multiple column specifications are
     concatenated to form a template of a record. For example,
     "i4*3r8a5" specifies a 3-column record, with a 3-element
@@ -322,7 +322,7 @@
     in strings gets split into multiple fields, since davinci text
     arrays cannot be 3-dimensional. A string column with multiplicity
     will use only one of the user-provided names and add on "_m" to
-    indicate the multiplicity. 
+    indicate the multiplicity.
 
 ?functions pack()
 ?pack()
@@ -335,10 +335,10 @@
     and writes it to the file named by filename.  The optional skip
     parameter specifies the bytes into the file to skip before
     encoding to the file. The optional count parameter specifies
-    the number of records to be packed (a negative value 
-    means all records). The template string has the same structure 
+    the number of records to be packed (a negative value
+    means all records). The template string has the same structure
     as used in the "unpack" function.
-    
+
     NOTE: existing data in the file is overwritten.
 
     The user must specify the order in which columns within a
@@ -347,22 +347,22 @@
     (if the user is only writing 1 column) or a davinci text
     buffer (string array). Providing extra names or names
     not in the davinci structure is an error. Providing
-    fewer names is fine. 
+    fewer names is fine.
 
  See Also:
     unpack(), load_raw()
 
 ?functions read()
 ?read()
- read() - Load a data from file
+ read() - Load data from file
 
  read(filename="path" [,record=INT],
       [,xlow=INT] [,xhigh=INT] [,xskip=INT]
       [,ylow=INT] [,yhigh=INT] [,yskip=INT]
       [,zlow=INT] [,zhigh=INT] [,zskip=INT])
 
-    The read() function loads the specified data file.   The read() 
-    function can automatically recognize and load the following file 
+    The read() function loads the specified data file.   The read()
+    function can automatically recognize and load the following file
     formats:
         SpecPR_FS2
         VICAR
@@ -385,8 +385,8 @@
     the file loading process are printed to stderr.  Higher values (up to 3)
     produce more output.
 
-    The record value is required for SpecPR files.  If it is given with 
-    another file type, it is used as the high and low value for a Z axis 
+    The record value is required for SpecPR files.  If it is given with
+    another file type, it is used as the high and low value for a Z axis
     subset, causing a single image to be extracted from cubes.
 
     The values low, high and skip can be specified for each axis (ie: xlow,
@@ -396,10 +396,10 @@
     Reading a PPM image produces a 3-plane, BIP cube of byte values.
     Each plane represents the red, green and blue values respectivly.
 
-    The functions load() and import() are aliases for the read() function.
+    read() is an alias for the load() function.
 
  See Also:
-    write(), filetype(), load_pds(), load_raw(), load_vanilla(), 
+    write(), filetype(), load_pds(), load_raw(), load_vanilla(),
     ascii(), isis(), datapath, verbose
 
 ?functions write()
@@ -408,8 +408,8 @@
 
  write(object=VAL, filename="path", type=TYPE, force=1, [separator=STRING], [header=0])
 
-    The write() function copies data to a file.  The value of type specifies 
-    the type of file written, and is one of: 
+    The write() function copies data to a file.  The value of type specifies
+    the type of file written, and is one of:
 
         specpr  - SpecPR
         vicar   - Vicar grayscale
@@ -427,12 +427,12 @@
         bmp     - Microsoft Bitmap
         raw     - Binary output, no header
         csv     - Comma Separated Value
-    
+
     If the force keyword is included, then any existing file of the same
     name is overwritten.  Without this keyword, the write is aborted
     if the filename already exists.
 
-    Notes: 
+    Notes:
         The standard graphics formats (GIF, TIFF, JPEG, PNG, BMP, PPM),
         all expect either 1 or 3 band, byte images.  A 3-band image is
         interpreted to be a red band, a green band and a blue band.
@@ -446,7 +446,7 @@
         The CSV format defaults to tab, "\t", as the separator if none
         is specified.  If optional parameter header is 1, a header row
         will be printed as the first row, using davinci structure field names,
-        if available.  Otherwise davinci generates generic column names 
+        if available.  Otherwise davinci generates generic column names
         following the pattern "col_n".  This format only supports single
         plane data in BSQ organization.
 
@@ -464,8 +464,8 @@
  Loads comma-separated / tab-separated file. The field separator defaults
  to the tab-character. If the file does not have a header, set header=0.
  If collapse=1 is specified, consecutive field separators are considered
- as a single separator. The delimeter and separator variables accomplish 
- the same thing. 
+ as a single separator. The delimeter and separator variables accomplish
+ the same thing.
 
 
 ?functions filetype()
@@ -480,7 +480,7 @@
         "VICAR"  - VICAR
         "GRD"    - USGS GRD
         "ISIS"   - PDS/ISIS
-        "PNM"    - PBMPlus 
+        "PNM"    - PBMPlus
         "AVIRIS" - AVIRIS
         "IMATH"  - VM IMath format
         "ENVI"   - ENVI format
@@ -510,7 +510,7 @@
  atoi(STRING | TEXT)
 
     The atoi function converts the specified string to an INT value.
-    If the input is a TEXT array, then each line of the TEXT array is 
+    If the input is a TEXT array, then each line of the TEXT array is
     converted and an array of 1xNx1 values is returned.
 
  See Also:
@@ -523,7 +523,7 @@
  atof(STRING | TEXT)
 
     The atof function converts the specified string to a FLOAT value.
-    If the input is a TEXT array, then each line of the TEXT array is 
+    If the input is a TEXT array, then each line of the TEXT array is
     converted and an array of 1xNx1 values is returned.
 
  See Also:
@@ -536,7 +536,7 @@
  atod(STRING | TEXT)
 
     The atod function converts the specified string to a DOUBLE value.
-    If the input is a TEXT array, then each line of the TEXT array is 
+    If the input is a TEXT array, then each line of the TEXT array is
     converted and an array of 1xNx1 values is returned.
 
  See also:
@@ -553,7 +553,7 @@
     everything after it.  If the '/' character does not appear in
     the string, the entire string is duplicated and returned.
 
-    The basename function is identical to the unix command of the same name.  
+    The basename function is identical to the unix command of the same name.
 
     if ext is used, then the ending substring which matches ext is
     removed.
@@ -583,8 +583,8 @@
 
  ccount(object=VAL [,threshold=INT] [,ignore=INT])
 
-    The ccount() function is used to count the number of pixels in a 
-    cluster overlay that have a value above the specified threshold.  
+    The ccount() function is used to count the number of pixels in a
+    cluster overlay that have a value above the specified threshold.
 
     Ccount() returns a 3x1x1 array of FLOAT values representing:
         The ratio of the next two values,
@@ -633,10 +633,10 @@
 
  ascii(filename="PATH",x=INT,y=INT,z=INT,format=TYPE,column=INT,row=INT,delim=STRING)
 
-    The ascii() function loads data from an ASCII columnar (matrix) file.  
+    The ascii() function loads data from an ASCII columnar (matrix) file.
     The data is assumed to be in BSQ organization.
 
-    Pixel values on a line must be separated by at least one space or 
+    Pixel values on a line must be separated by at least one space or
     tab.  Lines must be seperated by exactly 1 newline, and planes
     must be seperated by one (1) blank line.
 
@@ -762,7 +762,7 @@
 ?pow()
  pow() - Compute x raised to the power y
 
- pow(x,y) 
+ pow(x,y)
 
  Computes x raised to the power y.
 
@@ -815,9 +815,9 @@
         a=create(1,7,20)
         xplot(a, axis=Y)
 
-    will create a set of 20 data plots (all the same color) of 7 data 
+    will create a set of 20 data plots (all the same color) of 7 data
     points each.  Alternatively:
-        xplot(a,axis=Z) 
+        xplot(a,axis=Z)
 
     will reate a set of 7 data plots (all the same color) of 20 data points
     each.  To seperate data sets (in terms of color/symbol) then specify
@@ -830,7 +830,7 @@
 
     An X-Axis can also be specified to provide a horizontal scale of
     a particular nature:
-    
+
         MyAxis=create(1,7,1,format=float)
         MyAxis=MyAxis/max(MyAxis) /*My Axis is now 0->1 in 7 steps */
         xplot(axis=Y,a,a1,a2,Xaxis=Myaxis)
@@ -863,7 +863,7 @@
  interp(object=VAL,from=VAL,to=VAL)
 
 
-    The interp() function performs a point interpolation.  OBJECT is 
+    The interp() function performs a point interpolation.  OBJECT is
     interpolated from the FROM object to the TO object, taking OBJECT
     as the Y data values, and FROM as the corresponding X values.
 
@@ -901,11 +901,11 @@
     from the previous call as the start parameter for the next call.
 
     If no start parameter is specified, or any of the start parameters are
-    zero, fit() makes a guess based on the function selected and the 
+    zero, fit() makes a guess based on the function selected and the
     actual data values.  (The marquant-levy fitting method can not handle
     zero coefficients.)
 
-    If the X data values are not specified, channels are used instead, 
+    If the X data values are not specified, channels are used instead,
     starting at 0.
 
     The fit() function returns an array of DOUBLEs containing the
@@ -916,7 +916,7 @@
     The returned coefficients array is suitable for use as the start values
     for another iteration of the fit() function.
 
-    If the plot keyword is given and is non-null, then the data, and the 
+    If the plot keyword is given and is non-null, then the data, and the
     fitted function are plotted.
 
 ?functions vignette()
@@ -926,28 +926,28 @@
  vignette(width=INT, height=INT, radius=FLOAT, offset=FLOAT, intensity=FLOAT)
 
     The vignette() function generates a vignetting correction image.
- 
+
     The width and height parameters specify the size of the image.
     Radius, offset and intensity specify the values of the variables
     in the vignetting function:
- 
+
          cx = width/2;
          cy = height/2;
          r =  sqrt((i-cx)*(i-cx) + (j-cy)*(j-cy))
          a[i,j] = intensity * cos((r/radius) * (pi/2))) + offset
-    
+
     The returned image is of type FLOAT
 
 ?functions bop
 ?bop
  bop - binary operator functions
 
- Binary operator functions take exactly 2 inputs, operate on them in the 
+ Binary operator functions take exactly 2 inputs, operate on them in the
  same way math operators work, and return a double.
 
  The functions covered by bop are:
 
- bbr()   - Generate black-body curves 
+ bbr()   - Generate black-body curves
  btemp() - Compute brightness temperature
 
 ?functions bbr()
@@ -993,7 +993,7 @@
  ifill(object=VAL, radius=INT, fill=VAL)
 
     The ifill() function 'fills in gaps' in an image.
-    
+
     The input image is searched a strip at a time in a particular
     scan direction, searching for values equal to the fill value.
     If a run of 1 or more pixels of the fill value are found, and
@@ -1016,7 +1016,7 @@
  ifill(object=VAL, radius=INT, fill=VAL, wrap=BOOL, neighbors=INT)
 
     The jfjll() function 'fills in gaps' in an image.
-    
+
     The input image is searched for holes (values equal to the fill value).
     For each hole, the input image is scanned in 8 directions for non-fill
     values.  If <neighbors> non-fill values are found within <radius> pixels,
@@ -1031,7 +1031,7 @@
 ?functions pause()
 ?pause()
  pause() - Get a line of input from the user
- 
+
  pause(string)
 
  The pause() function prints its argument (without a newline), and
@@ -1052,8 +1052,8 @@
  printf(fmt [, argument...] )
 
  The printf() function is a direct interface to the C library function
- of the same name.  
- 
+ of the same name.
+
  Printf returns no value.
 
 ?functions sprintf()
@@ -1063,7 +1063,7 @@
  sprintf(fmt, ... )
 
  The sprintf() function is a direct interface to the the C library
- function of the same name, except that the the output string is 
+ function of the same name, except that the the output string is
  returned, not passed.
 
  Example:
@@ -1115,22 +1115,22 @@
 
 ?functions avg()
 ?avg()
- avg() computes the statistical average along one or more axis. 
- If no axis is specified, then the average is computed along all three. 
+ avg() computes the statistical average along one or more axis.
+ If no axis is specified, then the average is computed along all three.
 
- If an ignore value is specified, then any element that is equal 
- to the ignore value is not included in the computation. If all the 
- values in the computation are equal to the ignore value, 
+ If an ignore value is specified, then any element that is equal
+ to the ignore value is not included in the computation. If all the
+ values in the computation are equal to the ignore value,
  then the output is set to the ignore value.
 
  Syntax: avg(object=VAL [, axis=OPTION] [, both=1] [, ignore=VAL])
 
  'object' - may be any numeric array of any data type and format
- 'axis' - Option to compute average along specified axis. 
+ 'axis' - Option to compute average along specified axis.
   Options include: x, y, z, xy, xz, yz, xyz.
- 'both' - Option to return both the average and the standard 
+ 'both' - Option to return both the average and the standard
   deviation in a structure
- 'ignore' - Optional value to ignore in average and standard 
+ 'ignore' - Optional value to ignore in average and standard
   deviation calculation
 
  Example:
@@ -1148,7 +1148,7 @@
  stddev() - Compute standard deviation along specified axis
 
  The stddev() function computes the standard deviation along one or
- more axis.  If no axis is specified, then the standard deviation 
+ more axis.  If no axis is specified, then the standard deviation
  is computed along all three.  stddev() returns a DOUBLE.
 
  If an ignore value is specified, then any element that is equal to
@@ -1162,11 +1162,11 @@
  Syntax: stddev(object=VAL[, axis=OPTION][, both=BOOL][, ignore=VAL])
 
  'object' - may be any numeric array of any data type and format
- 'axis' - Option to compute average along specified axis. 
+ 'axis' - Option to compute average along specified axis.
   Options include: x, y, z, xy, xz, yz, xyz.
- 'both' - Option to return both the average and the standard 
+ 'both' - Option to return both the average and the standard
   deviation in a structure
- 'ignore' - Optional value to ignore in average and standard 
+ 'ignore' - Optional value to ignore in average and standard
   deviation calculation
 
  Example:
@@ -1183,14 +1183,14 @@
 ?sum()
  sum() - Compute sum along specified axis
 
- The sum() function computes the sum of values along one or more axis.  
+ The sum() function computes the sum of values along one or more axis.
  If no axis is specified, then all the summation is performed along
  all three axis.  Sum always returns a DOUBLE.
 
  Syntax: sum(object=VAL[, axis=OPTION])
  'object' - may be any numeric array of any data type and format
  'axis'   - option to compute along specified axis.
-            options include: x, y, z, xy, xz, yz and xyz. 
+            options include: x, y, z, xy, xz, yz and xyz.
 
  Example:
 
@@ -1205,7 +1205,7 @@
 
  min(object=VAL[, axis=[x][y][z]][, ignore=VAL])
 
-The min() function finds the minimum value along one or more axis.  
+The min() function finds the minimum value along one or more axis.
 If no axis is specified, then all three axis are used.
 
  If an ignore value is specified, then any element that is equal to
@@ -1228,7 +1228,7 @@ Min always returns a FLOAT.
 
  max(object=VAL[, axis=[x][y][z]])
 
-The max() function finds the maximum value along one or more axis.  
+The max() function finds the maximum value along one or more axis.
 If no axis is specified, then all three axis are used.
 
  If an ignore value is specified, then any element that is equal to
@@ -1252,10 +1252,10 @@ Max always returns a FLOAT.
 
  Syntax: minchan(object = VAL)
 
- Data organization and format are not taken into account and three 
+ Data organization and format are not taken into account and three
  dimensional arrays are considered linear arrays in the calculation.
 
- minchan always returns an INT. 
+ minchan always returns an INT.
 
 ?functions maxchan()
 ?maxchan()
@@ -1263,7 +1263,7 @@ Max always returns a FLOAT.
 
  Syntax: maxchan(object = VAL)
 
- Data organization and format are not taken into account and three 
+ Data organization and format are not taken into account and three
  dimensional arrays are considered linear arrays in the calculation.
 
  maxchan always returns an INT.
@@ -1289,7 +1289,7 @@ Max always returns a FLOAT.
  'iter'    - Iterations to look for successively lower values
  'ignore'  - The value to ignore while searching for maximum value.
  'lt'      - Search for a maximum value below this 'less than' value.
- 'showval' - Optional flag to return a 4xNx1 FLOAT array containing 
+ 'showval' - Optional flag to return a 4xNx1 FLOAT array containing
              the value of the pixel in the 4th position.
 
  Examples:
@@ -1316,25 +1316,25 @@ Max always returns a FLOAT.
  The first three elements per line contain the position and the fourth element
  contains the value of the pixel.
 
- Minpos can search for minimum values greater than a specified threshhold 
+ Minpos can search for minimum values greater than a specified threshhold
  using the 'gt' option.
- 
+
  Syntax: minpos(data=VAL[, iter=INT][, ignore=VAL][, gt=VAL][, showval=INT])
  'data'    - Any numeric array
  'iter'    - Iterations to look for successively higher values
  'ignore'  - The value to ignore while searching for maximum value.
  'gt'      - Search for a minimum value above this 'greater than' value.
- 'showval' - Optional flag to return a 4xNx1 FLOAT array containing 
+ 'showval' - Optional flag to return a 4xNx1 FLOAT array containing
              the value in the 4th position.
 
 ?functions valpos()
 ?valpos()
- valpos() - Find the location of elements in an array containing values 
- closest to a specified value. 
+ valpos() - Find the location of elements in an array containing values
+ closest to a specified value.
 
- By default valpos will return the x-y-z position of the single value in 
- an array that is closest to the specified value. However, valpos can also 
- return the positions of N closest values using iter=N. The positions will 
+ By default valpos will return the x-y-z position of the single value in
+ an array that is closest to the specified value. However, valpos can also
+ return the positions of N closest values using iter=N. The positions will
  be returned as a 3xNx1 INT array.
 
  Valpos can also return to the user the value(s) of the pixel(s) by using
@@ -1357,11 +1357,11 @@ Max always returns a FLOAT.
     load_vis(filename=STRING, [gse=1], [nocube=1], [verbose=0], [rotate=1])
 
     The load_vis function will read the four types of visible paci data that
-    currently exitis: (gse, raw, predictive, DCT).  
+    currently exitis: (gse, raw, predictive, DCT).
 
     If the data contain multiple bands, then the routine will return a data
     cube with each band on a different Z-plane.  If the user wants a single
-    band file then use: nocube=1 (defualt: nocube=0).  This will prevent the 
+    band file then use: nocube=1 (defualt: nocube=0).  This will prevent the
     reader from stacking the bands.
 
     There is a verbose mode which may be used.  This will increase the amount
@@ -1371,25 +1371,25 @@ Max always returns a FLOAT.
     The final flag is the rotate flag.  Right now, it WILL rotate by default
     and the user must give a rotate=0 to prevent rotation (currently, only
     spacecraft data is rotated, gse is NOT).  Rotation involves horizontal and
-    vertical flipping of EACH framelet (not the entire image). 
+    vertical flipping of EACH framelet (not the entire image).
 
 
 ?functions load_paci()
 ?load_paci()
- load_paci() - Load an IR Paci file 
+ load_paci() - Load an IR Paci file
 
  load_paci(filename=STRING, [[frame=INT] | [band=int]], [report=1], [nosig=1],
                 [swap=1],[quiet={0,1,2}])
 
- The load_paci function reads an IR paci file into memory and organizes in 
- various ways depending on user input. The user can specifiy a band OR frame 
+ The load_paci function reads an IR paci file into memory and organizes in
+ various ways depending on user input. The user can specifiy a band OR frame
  number and only those data that match are loaded. If the user sets report=1
- then only a summary report is given back (and no data are loaded).  Each 
+ then only a summary report is given back (and no data are loaded).  Each
  frame of data has 6 control values tacked on to the front of the frame and 2
- value tacked on the back.  The first 2 values are the starting sync word, 
- the next value is the ID, then band number then two numbers for the frame 
+ value tacked on the back.  The first 2 values are the starting sync word,
+ the next value is the ID, then band number then two numbers for the frame
  number.  The last two values are the ending sync value.  If the user does NOT
- want these values to be returned with the data, then use: nosig=1 (defualt 
+ want these values to be returned with the data, then use: nosig=1 (defualt
  is nosig=0).
 
  There are two major forms for IR paci data, byte-swapped and NOT byte-swapped.
@@ -1423,7 +1423,7 @@ Max always returns a FLOAT.
  history(INT)
 
      The history() function displays the last N commands from the command
-     line history.  If no argument is given, then the entire history is 
+     line history.  If no argument is given, then the entire history is
      printed to the screen.
 
  Example:
@@ -1456,7 +1456,7 @@ Max always returns a FLOAT.
 
      The hsv2rgb() function converts a 3-band HSV image into a 3-band
      RGB image.  If maxval is specified, it is taken to be the maximum
-     intensity value, and the RGB values are scaled to lie between 0 
+     intensity value, and the RGB values are scaled to lie between 0
      and maxval.  If no value is specified for maxval, it defaults to 1.
 
     The return value of hsv2rgb() has a type of FLOAT.
@@ -1466,7 +1466,7 @@ Max always returns a FLOAT.
 
  histogram() - Generate a histogram
 
- histogram(object=VAL, 
+ histogram(object=VAL,
            [start=FLOAT], [size=FLOAT], [steps=INT],
            [compress=BOOL], [normalize=BOOL], [cumulative=BOOL]);
 
@@ -1506,7 +1506,7 @@ Max always returns a FLOAT.
 
     The gnoise() function generates Z mutually exclusive planes of
     uniformly distributed noise.  For each X,Y location, exactly 1 pixel
-    along the Z axis is set to a value of 1, producing images of 
+    along the Z axis is set to a value of 1, producing images of
     random noise with a frequency of 1/Z.  The value seed can be specified
     to seed the random number generator, to produce reproducable random
     numbers.  Any dimension not specified defaults to a value of 1.
@@ -1553,8 +1553,8 @@ Max always returns a FLOAT.
     The gaussian distribution has a mean of 0.0, and a standard deviation
     of 1.0.
 
-    The value seed can be specified to seed any of the random number 
-    generators, to produce reproducable random numbers.  Any dimension 
+    The value seed can be specified to seed any of the random number
+    generators, to produce reproducable random numbers.  Any dimension
     not specified defaults to a value of 1.
 
     Some of these types may not be available on all systems.
@@ -1565,9 +1565,9 @@ Max always returns a FLOAT.
 ?functions minvert()
 ?minvert()
  minvert() - Invert a square matrix
- 
+
  minvert(VAR)
- 
+
     The minvert() function inverts a square matrix using LU decomposition.
     The matrix must be square in the X and Y dimensions and the size of the
     Z dimension must be 1.
@@ -1581,7 +1581,7 @@ Max always returns a FLOAT.
 ?mxm()
  mxm() - matrix multiplication
 
- mxm(ob1, ob2) 
+ mxm(ob1, ob2)
 
     Multiples ob1 by ob2 using matrix multiplcation.
 
@@ -1613,11 +1613,11 @@ Max always returns a FLOAT.
 
  dct(object=VAL, axis=[x][y][z], dir=[1|-1])
 
-  The dct() function computes the forward or inverse discrete cosine transform 
-  of values along one or more axis.  If no axis is specified, then all the 
+  The dct() function computes the forward or inverse discrete cosine transform
+  of values along one or more axis.  If no axis is specified, then all the
   computation is performed along all three axis.  If the direction is not
   specified, a forward dct is assumed.
-     
+ 
  The dct() function always returns a DOUBLE.
 
  Example:
@@ -1641,7 +1641,7 @@ Max always returns a FLOAT.
      The entropy() function always returns a FLOAT.
 
 ?functions plplot
-    ALL plplot library commands are availible to the user.  
+    ALL plplot library commands are availible to the user.
     Several davinci commands were created to faciliate ease of use:
         popen() -   Define, initialize and open a window for plotting
         pplot() -   Plot a data cube along specified axis
@@ -1665,7 +1665,7 @@ Max always returns a FLOAT.
     xpixels is the number of pixels columns
     ypixels is the number of pixels rows
     title is a string which can go in the window title bar
-    portrait is a flag which define the graph as landscape 
+    portrait is a flag which define the graph as landscape
     (portrait=0, default) or as portrait (portrait=1)
 
 ?functions pprint()
@@ -1687,7 +1687,7 @@ Max always returns a FLOAT.
 ?ptext()
  ptext() - Flexible labeling tool
 
- ptext(c=INT, e=FLOAT, x=FLOAT, y=FLOAT, angle=INT, 
+ ptext(c=INT, e=FLOAT, x=FLOAT, y=FLOAT, angle=INT,
        text=STRING, kolor=INT, world=INT)
 
   ptext prints labels and text on a plot allowing the user to specify
@@ -1696,14 +1696,14 @@ Max always returns a FLOAT.
 
     c:  (MONGO) text alignment relative to (x,y) position
     e:  (MONGO) text font expansion
-    x & y: x and y position are specified in terms of normalized 
+    x & y: x and y position are specified in terms of normalized
            coordinates (0,1)
-    angle: (MONGO) integer value (in degrees) which specifies the 
+    angle: (MONGO) integer value (in degrees) which specifies the
            desired rotation of of the text
     text:   quoted string containing the text to put on the plot
-    kolor:  integer value from 0 to 15 (0 is background color), set color 
+    kolor:  integer value from 0 to 15 (0 is background color), set color
             of ploted text
-    world:  flag, if set to 1, x & y need to be in world coord. else 
+    world:  flag, if set to 1, x & y need to be in world coord. else
             normalized (default)
 
 ?functions pbox()
@@ -1728,7 +1728,7 @@ Max always returns a FLOAT.
 
  pline(ls=INT,lt=INT, x=VAL, y=VAL, color=INT)
 
- pline plots set a of n points as n-1 conneted line segments, where xy 
+ pline plots set a of n points as n-1 conneted line segments, where xy
  point n-1 is connected to xy point n, which is then connected to xy point n+1.
 
     ls: line style (0=solid (defualt), 1=dashed, >1 more dashed styles)
@@ -1801,18 +1801,18 @@ Max always returns a FLOAT.
 
  grep(object = TEXT, pattern = STRING)
 
-  The grep() function copys each row of the passed TEXT object that 
+  The grep() function copys each row of the passed TEXT object that
   contains the specified pattern.  grep() supports regex patterns.
 
 ?functions strsub()
 ?strsub()
  strsub() - substring substitution using regular expressions
- 
+
  strsub(object= STRING | TEXT, match = STRING, subst = STRING)
 
   strsub traverses a string looking for match and replaces it
   with subst.  For a TEXT object, this operation is done on
-  everyrow using the same match and subst.  
+  everyrow using the same match and subst.
 
   Note: match and subst can contain SED like regular expressions
 
@@ -1831,12 +1831,12 @@ Max always returns a FLOAT.
   strstr returns the index value where pattern begins in obj or 0
   if pattern is not in obj.  For a TEXT object a VAL is returned
   whoes size is [1,Row,1] where Row is the number of rows in
-  the given text object.  
+  the given text object.
 
 ?functions syscall()
 ?syscall()
  syscall() - system's call
- 
+
  syscall(STRING)
 
  syscall executes STRING in a command shell and returns any output
@@ -1854,19 +1854,19 @@ Max always returns a FLOAT.
 
      The XRT3d tool provides the following actions:
 
-        Rotation:   
+        Rotation: 
             Drag with Button2 and move clockwise or counter-clockwise.
                 or
             Hold down Button2 and press x, y, or z to select an axis.  Then
             move the mouse perpendicular to that axis.
-        
+
         Translation:
             Press Shift and drag with Button2 to shift the graph
 
         Scaling:
-            Press Ctrl and drag with Button2. Move mouse down to zoom in, 
+            Press Ctrl and drag with Button2. Move mouse down to zoom in,
             and up to zoom out.
-        
+
         Return to default:
             Press r to reset ann scaling, translations and zooming.
 
@@ -1875,7 +1875,7 @@ Max always returns a FLOAT.
 
         Pick:
             Click with Button1 to find nearest data point.
-        
+
         Map:
             Click with Button3 to find the nearest point on the surface.
 
@@ -1883,7 +1883,7 @@ Max always returns a FLOAT.
 ?projection()
  projection() - Compute a stereographic projection for each band of an object
 
- projection(obj=VAL, [lat=FLOAT], [lon=FLOAT], [rad=FLOAT], 
+ projection(obj=VAL, [lat=FLOAT], [lon=FLOAT], [rad=FLOAT],
             [ppd=INT], type=STRING)
 
  The projection() function will process each band of an object, projecting
@@ -1895,10 +1895,10 @@ Max always returns a FLOAT.
  The ppd paramter specified pixels per degree, and when combined with
  the radius value, defines the size of the output image.  Therefore,
  if a radius of 20 is specified with ppd=5 the resulting band will be
- 200 pixels (2x20x5) on each side.  
- 
- The type parameter sets the parameters of distortion, that is if one 
- is projecting on the planet Mars as opposed to a sphere, there will 
+ 200 pixels (2x20x5) on each side.
+
+ The type parameter sets the parameters of distortion, that is if one
+ is projecting on the planet Mars as opposed to a sphere, there will
  be a slightly different result.  The projection types are as follows:
 
     type: MARS
@@ -1906,7 +1906,7 @@ Max always returns a FLOAT.
           SPHERE
 
  The four optional paramters default to the following values:
-        
+
         lat=90.0
         lon=0.0
         rad=30.0
@@ -1930,7 +1930,7 @@ Davinci supports the following matrix functions:
 ?functions convolve()
 ?convolve()
 ?convolve3()
- convolve() - Computes a sliding window kernel convolution. 
+ convolve() - Computes a sliding window kernel convolution.
               (AKA kernel filter, smooth)
 
  Syntax: convolve(object=VAL, kernel=VAL[, norm=BOOL][, ignore=VAL])
@@ -1946,7 +1946,7 @@ Davinci supports the following matrix functions:
 
     Example:
 
-    The following kernel computes the average of a 3x3 neighborhood for 
+    The following kernel computes the average of a 3x3 neighborhood for
     each pixel, smoothing the image.
 
         dv> b = clone(1, 3, 3, 1)
@@ -1955,7 +1955,7 @@ Davinci supports the following matrix functions:
         1       1       1
         dv> convolve(img, b)
 
-    
+
 ?functions create()
 ?create()
  create() - Create an array of values
@@ -1974,19 +1974,19 @@ Davinci supports the following matrix functions:
      format is int.
 
      The array is filled with a ramp.  The first element is numbered from
-     the 'start' parameter (default of 1) and each successive element is 
+     the 'start' parameter (default of 1) and each successive element is
      incremented by the step size (default of 1).
-     
-     If init=0, the start and step values are ignored and the array is 
-     defaulted to the random contents of the memory block that was 
-     allocated. 
+ 
+     If init=0, the start and step values are ignored and the array is
+     defaulted to the random contents of the memory block that was
+     allocated.
      NOTE: on Linux, this may not actually allocate all the memory upfront
-     and a delayed failure may occur if the memory is not available at 
-     the time of use.  
+     and a delayed failure may occur if the memory is not available at
+     the time of use.
 
  Example:
 
-    This example creates a 3x3x1 image.  The elements are automatically 
+    This example creates a 3x3x1 image.  The elements are automatically
     numbered from 1 to 9.
 
     dv> a = create(3,3,1)
@@ -1999,14 +1999,14 @@ Davinci supports the following matrix functions:
 
         The pcs() function performs a Principal Component Stretch on the
         input data.
-         
+
         The 'opt' parameter selects the statistical method to be used on
         the input data for the whole analysis. Various values taken by
         this parameter have the following meaning:
 
             'v' (default) - chooses Principal Component Analysis based on
                 the covariance matrix
-            
+
             'r' - chooses Principal Component Analysis based on the
                 correlation matrix
 
@@ -2023,7 +2023,7 @@ Davinci supports the following matrix functions:
             The default value for this parameter is 'z'.
 
         The 'scale' parameter specifies the scaling factor, if any, to be
-        applied to the stretched vectors during the stretch phase. If 
+        applied to the stretched vectors during the stretch phase. If
         'scale' is not specified, it is assumed to be 1, i.e. no scaling.
 
         The 'niter' parameter specifies the maximum number of iterations
@@ -2117,7 +2117,7 @@ Davinci supports the following matrix functions:
 
 ?functions eigen()
 ?eigen()
- eigen() - Computes the Eigen Values and Eigen Vectors of a 
+ eigen() - Computes the Eigen Values and Eigen Vectors of a
            Real Symmetric input matrix
 
  eigen(obj=VAL [, niter=INT])
@@ -2158,18 +2158,18 @@ Davinci supports the following matrix functions:
  by speficying either a the plane's name or the plane's number.
  The plane's name can be abbreviated to the shortest unique prefix.
 
- The TYPE parameter is necessary when extracting planes by number.  
- It specifies which suffix to extract from.  Planes are numbered 
+ The TYPE parameter is necessary when extracting planes by number.
+ It specifies which suffix to extract from.  Planes are numbered
  starting from zero.
- 
+
  Example:
 
- The following example extracts the plane named 'background' from the 
+ The following example extracts the plane named 'background' from the
  file "my_file":
 
     dv> a = isis( filename="my_file", plane="background")
- 
- This example extracts the band suffix plane #3: 
+
+ This example extracts the band suffix plane #3:
 
     dv> a = isis( filename="my_file", plane=3, type=band)
 
@@ -2188,7 +2188,7 @@ Davinci supports the following matrix functions:
   detected in the file. Field names are picked from the first line
   of the input file.
 
-  Optional 'delim' character-string parameter may be specified 
+  Optional 'delim' character-string parameter may be specified
   to enumerate field/column delimiters in the input file. Default
   delimiters are spaces and tabs.
 
@@ -2209,7 +2209,7 @@ Davinci supports the following matrix functions:
     dv> system("vanilla ./data -fields 'sclk_time ick temps[1-4]' > /tmp/foo")
 
                     (some time later)
-    
+
     dv> a = load_vanilla("/tmp/foo")
     struct, 3 elements
         sclk_time: 1x2x1 array of int, bsq format [8 bytes]
@@ -2230,7 +2230,7 @@ Davinci supports the following matrix functions:
 
  fexists(filename=STRING | TEXT)
 
- The fexists() function determines if a file exists or not.  
+ The fexists() function determines if a file exists or not.
 
  If passed a single value, it will return 1 if the file exists and
  0 if it does not exist.
@@ -2264,8 +2264,8 @@ Davinci supports the following matrix functions:
 
  add_struct(object=STRUCT, name=STRING, value=VAL)
 
- The add_struct() function adds an element to a structure.  This 
- function is shorthand for "object.name = value", but in this case, 
+ The add_struct() function adds an element to a structure.  This
+ function is shorthand for "object.name = value", but in this case,
  name can be a string variable.
 
  The add_struct() function returns the value argument.
@@ -2276,8 +2276,8 @@ Davinci supports the following matrix functions:
 
  get_struct(object=STRUCT, name=STRING)
 
- The get_struct() returns an element from a structure.  This function is 
- shorthand for "object.name", but in this case, name can be a string 
+ The get_struct() returns an element from a structure.  This function is
+ shorthand for "object.name", but in this case, name can be a string
  variable.
 
 ?functions get_struct_key()
@@ -2311,24 +2311,24 @@ Davinci supports the following matrix functions:
  another named element, or an index position.
 
  The name and value fields are optional.  Values inserted with no name
- simply have no name (they can only be accessed by position), and 
+ simply have no name (they can only be accessed by position), and
  names inserted with no value are given a value of zero.
- 
+
 ?functions load_raw()
 ?load_raw()
  load_raw() - Load a binary data file
 
- load_raw(filename=STRING, x=INT, y=INT, z=INT, org=ORG, 
+ load_raw(filename=STRING, x=INT, y=INT, z=INT, org=ORG,
            format=FORMAT, header=INT)
 
  The load_raw() function allows a user to load uncompressed binary data
- by specifying relevent information about the file.  
+ by specifying relevent information about the file.
 
  The x, y and z parameters specify the number of pixels in each axis.
 
  ORG must be one of "bil", "bip", "bsq".
- FORMAT must be one of: "byte", 
-            "msb_short", "msb_int", "msb_float", "msb_double" , 
+ FORMAT must be one of: "byte",
+            "msb_short", "msb_int", "msb_float", "msb_double" ,
             "lsb_short", "lsb_int", "lsb_float", "lsb_double".
 
  The header value specifies the size, in bytes, of any header to be skipped.
@@ -2337,7 +2337,7 @@ Davinci supports the following matrix functions:
 
   You can create anonymous structure (with no name) using the { } operators.
   Like this:
-  	dv> x = { name=value, a=1, b="three" }.
+    dv> x = { name=value, a=1, b="three" }.
 
   You can combine structures via addition: { one=1 } + { two=2 }
 
@@ -2346,7 +2346,7 @@ Davinci supports the following matrix functions:
 
  See also:
     add_struct(), get_struct(), remove_struct(), insert_struct(), length(),
-	get_struct_key()
+    get_struct_key()
 
 ?functions equals()
 ?equals()
@@ -2355,7 +2355,7 @@ Davinci supports the following matrix functions:
  equals(obj1, obj2)
 
  The equals() function checks every piece of obj1 and obj2 to see if the
- two objects are identical.  This works for VALs, STRINGs, TEXTs and 
+ two objects are identical.  This works for VALs, STRINGs, TEXTs and
  Structures.
 
  Equals() returns 1 if the two objects are identical, and 0 if not.
@@ -2368,7 +2368,7 @@ Davinci supports the following matrix functions:
 
  The contains() function determine if an array contains a specific value.
  The value is converted to the same type as the array, so comparison of
- an integer array and a floating point number might produce unexpected 
+ an integer array and a floating point number might produce unexpected
  results.
 
  Contains() returns 1 if the specific value is found in the array, and 0
@@ -2378,12 +2378,12 @@ Davinci supports the following matrix functions:
 
     These examples return 1:
 
-        contains(1//2//3, 3) 
+        contains(1//2//3, 3)
         contains(1//2//3, 3.00001)   # note, the float is converted to an int
 
     These examples return 0:
 
-        contains(1//2//3, 4) 
+        contains(1//2//3, 4)
         contains(1.1//2.2//3.3, 3)
 
 ?functions dump()
@@ -2429,7 +2429,7 @@ Davinci supports the following matrix functions:
  structure via OBJECT and GROUP constructs.
 
  The load_pds() function understands a few common PDS data structures:
- 	QUBE, SPECTRAL_QUBE, TABLE, IMAGE, HISTOGRAM_IMAGE and HISTORY.
+   QUBE, SPECTRAL_QUBE, TABLE, IMAGE, HISTOGRAM_IMAGE and HISTORY.
 
  The DATA argument specifies whether or not to load the data from
  any objects encountered in the file.  (0=don't load, default is 1)
@@ -2493,7 +2493,7 @@ Davinci supports the following matrix functions:
  The coreg() function performs a windowed search computing the square
  of the difference between a random pixel and it's NxN neighbors.
 
- If the "random" value is set to zero, an exhaustive search of every 
+ If the "random" value is set to zero, an exhaustive search of every
  pixel is performed.
 
  The function returns the X and Y offset of image1 into image 2.
@@ -2505,15 +2505,15 @@ Davinci supports the following matrix functions:
  write_isis_cub() - Writes an ISIS ".cub" file
 
  write_isis_cub(obj=STRUCT, filename=STRING [, force=1])
- 
+
  write_isis_cub() works in conjunction with load_pds() to facilitate
  editing of ISIS ".cub" files.
 
  Example:
     a=load_pds("foo.cub", suffix_data=1)
-	a.qube.data = a.qube.data - 100
-	a.history.data.cubit.node_name="\"generic_node\""
-	a.history.data.cubit.user_name="\"generic_user\""
+    a.qube.data = a.qube.data - 100
+    a.history.data.cubit.node_name="\"generic_node\""
+    a.history.data.cubit.user_name="\"generic_user\""
     write_isis_cub(a, "bar.cub")
 
 
@@ -2527,7 +2527,7 @@ Davinci supports the following matrix functions:
  BIN5 files are generated as an output from krc, the thermal
  intertia modeler. These files can have more than three
  dimensions.
- 
+
  Let's assume that the number of dimensions in a given bin5
  file is represented by N. If N<=3 the data is returned as a
  3D-cube. If N>3 then cubes are formed out of the last three
@@ -2546,25 +2546,25 @@ Davinci supports the following matrix functions:
 
  Notes:
     A bin5 file has a text label (multiple of 512 bytes)
-	which looks like:
+    which looks like:
 
     N d1 d2 .. dN Y E [L] <<... TIME>>TEXT ... ARCH C_END
 
-	where,
-	  N      is the number of dimensions,
-	  d1..dN are the sizes of each dimension with the
-	         most rapidly varying index first
-	  Y      is the data type of individual data elements
-	         1=byte, 2=short, 3=long, 4=float, 5=double,
-			 12=ushort, 13=ulong (ref: IDL data types)
-	  E      is the number of elements = d1*d2*..*dN
-	  L      is the size of label (multiple of 512)
-	  TIME   is the creation time of the file
-	  TEXT   is the description associated with the file
-	  ARC    is a 5-char value representing the machine on
-	         which the data was written to this file,
-			 supported values are "i386  " and "sun  "
-	  C_END  is the sentinal which marks the end of label
+    where,
+      N      is the number of dimensions,
+      d1..dN are the sizes of each dimension with the
+             most rapidly varying index first
+      Y      is the data type of individual data elements
+             1=byte, 2=short, 3=long, 4=float, 5=double,
+             12=ushort, 13=ulong (ref: IDL data types)
+      E      is the number of elements = d1*d2*..*dN
+      L      is the size of label (multiple of 512)
+      TIME   is the creation time of the file
+      TEXT   is the description associated with the file
+      ARC    is a 5-char value representing the machine on
+             which the data was written to this file,
+             supported values are "i386  " and "sun  "
+      C_END  is the sentinal which marks the end of label
 
 
 ?functions extract()
@@ -2666,7 +2666,7 @@ Example:
  dv> plot(a,label="budget",xaxis=ax,color=3)
 
  This short summary of the functionality of plot() is very bare bones.
- For extensive help including numerous examples, see the wiki 
+ For extensive help including numerous examples, see the wiki
    http://davinci.asu.edu/index.php/plot
 
 ?functions splot()
@@ -2693,7 +2693,7 @@ Example:
  'angle'  - a numeric value in degrees
  'ignore' - the numeric value in pixels containing non-data. Default is 0.
 
- Uses a 3-shear Paeth algorithm to pixel shift rows and columns to rotate 
+ Uses a 3-shear Paeth algorithm to pixel shift rows and columns to rotate
  an image.
 
 ?functions sort()
@@ -2717,12 +2717,12 @@ Example:
 ?ipi()
  ipi() - Inverse Parabolic Interpolation
 
- Calculates the coordinates of the minimum or maximum of a parabola 
+ Calculates the coordinates of the minimum or maximum of a parabola
  given 3 x and y values on the parabola.
 
  Syntax: ipi(coordinates=VAL, values=VAL)
  'coordinates' - The x-positions of the three selected points
- 'values'      - The values of the function at the specified x-positions. 
+ 'values'      - The values of the function at the specified x-positions.
 
 ?functions boxfilter()
 ?boxfilter()
@@ -2732,12 +2732,12 @@ Example:
 
     Peforms a boxcar filter.  Computes the average within the rectangular
     window specified for each pixel in the input.
-    You can specify either an x and y for rectangular windows, or just size 
+    You can specify either an x and y for rectangular windows, or just size
     for a square window.  Returns windowed average for all non-ignore
-    pixels.  
-    If you specify verbose, it will return a structure containing the 
-    windowed mean, pixel count and standard deviation under the window 
-    (plus some other stuff for working with running sums).  
+    pixels.
+    If you specify verbose, it will return a structure containing the
+    windowed mean, pixel count and standard deviation under the window
+    (plus some other stuff for working with running sums).
 
     Note: boxfilter() can use 24 bytes of memory per input pixel.
 
@@ -2751,8 +2751,8 @@ Example:
  than zero and not equal to the ignore value, a shape is draw centered
  on that point, with a radius/size equal to the value of the point.
 
- This example returns an image contining two circles, one centered at 
- 3,4 of radius 3, and another centered at 6,8 with radius 5.  
+ This example returns an image contining two circles, one centered at
+ 3,4 of radius 3, and another centered at 6,8 with radius 5.
 
  The returned image is a byte image containing only 0s (unset) and 1s (set).
 
@@ -2954,7 +2954,7 @@ Example:
 
 ?gui widgets arrowButton
  Motif Class Name: XmArrowButton
- 
+
  This creates an arrow-shaped push button. Resources can specify arrow
  direction.
 
@@ -2974,12 +2974,12 @@ Example:
      top=gui.create("topLevelShell",name="combobox")
      data=cat("a","b","c","d",axis=y)
      r=gui.create("rowcolumn",top)
-     
+ 
      gui.create("label",r,{labelString="combo box list"})
      a=gui.create("combobox",r,resources={comboBoxType="COMBO_LIST"})
      gui.set(a,{itemCount=length(data),items=data})
      gui.addcallback(a,"selectionCallback","echo('selected')")
-     
+ 
      gui.realize(top)
      gui.get(a,all=1)
 
@@ -2996,7 +2996,7 @@ Example:
          cmd = gui.get(set.cmd,"command").command
          if (HasValue(cmd)) echo(cmd)
      }
- 
+
      define cb_entered (set)
      {
          printf ("entered\n")
@@ -3004,13 +3004,13 @@ Example:
          cmd = h[,length(h)]
          if (HasValue(cmd)) system(cmd)
      }
- 
+
      set = struct()
      set.top = gui.create ("topLevelShell", name="command")
      set.cmd = gui.create ("command", set.top)
      gui.set (set.cmd, {promptString="> "})
      gui.addcallback (set.cmd, "commandEntered", "cb_entered(set=set)")
-     gui.addcallback (set.cmd, "commandChanged", "cb_changed(set=set)") 
+     gui.addcallback (set.cmd, "commandChanged", "cb_changed(set=set)")
      gui.realize(set.top)
 
 ?gui widgets fileSelectionBox
@@ -3026,12 +3026,12 @@ Example:
         top = $2
         sel = gui.get(fs,"dirSpec").dirSpec
         if (type(sel)=="STRING") if (length(sel) > 0) if (fexists(sel)) {
-			printf ("Valid file has been selected\n");
+            printf ("Valid file has been selected\n");
         } else {
-			printf ("Unable to locate that file\n");
-		}
+            printf ("Unable to locate that file\n");
+        }
     }
-    
+
     top = gui.create ("topLevelShell",name="Load...")
     fs = gui.create ("fileSelectionBox", top)
     gui.addcallback (fs, "ok", sprintf("cb_load(%d,%d,set=set)",fs,top))
@@ -3045,7 +3045,7 @@ Example:
  over children placed inside, at the expense of being rather complex.
  The full description of form's subtleties is left to the Motif
  documentation.
- 
+
  Example:
      top=gui.create('topLevelShell',name="Form")
      form=gui.create('form',top)
@@ -3098,8 +3098,8 @@ Example:
 
  Example:
     top=gui.create("topLevelShell",name="label")
-	gui.set(top,resources={width=500,height=500})
-	label=gui.create("label",top,{labelString="Hello World"})
+    gui.set(top,resources={width=500,height=500})
+    label=gui.create("label",top,{labelString="Hello World"})
     gui.realize(top)
 
 ?gui widgets lineBox
@@ -3111,7 +3111,7 @@ Example:
 
  This widget was developed for a particular purpose, so no example
  has been provided.
- 
+
 ?gui widgets list
  Motif Class Name: XmList
 
@@ -3125,9 +3125,9 @@ Example:
      define cb_extendedAction () { echo ('ext. action') }
      define cb_multSelection () { echo ('mult.select.') }
      define cb_singleSelect () { echo ('sing.select.') }
-    
+
      top=gui.create("topLevelShell",name="list")
-	 gui.set(top,resources={width=500,height=500})
+     gui.set(top,resources={width=500,height=500})
      list = cat("a","b","c","d",axis=y)
      wid=gui.create("list",top)
      gui.set(wid,{itemList=list})
@@ -3141,7 +3141,7 @@ Example:
 
 gui widgets panedWindow
  Motif Class Name: XmPanedWindow
- 
+
  Layout manager attaches children together in vertical or horizontal
  'panes'.  A separator allows the user to resize each space allocated
  for a child.
@@ -3171,19 +3171,19 @@ gui widgets panedWindow
 ?gui widgets radioBox
  Motif Class Name: XmRadioBox
 
- Layout manager for radio buttons.  
+ Layout manager for radio buttons.
 
  Example:
      top=gui.create("topLevelShell",name="radiobox")
-	 gui.set(top,resources={width=500,height=500})
+     gui.set(top,resources={width=500,height=500})
      wid=gui.create("radiobox",top)
      p1=gui.create("togglebutton",wid,{labelString="choice 1"})
      p2=gui.create("togglebutton",wid,{labelString="choice 2"})
      p3=gui.create("togglebutton",wid,{labelString="choice 3"})
      gui.addcallback (wid,"entry","echo('entry')")
-	 gui.addcallback (p1,"valueChanged","echo('choice 1 changed')")
-	 gui.addcallback (p2,"valueChanged","echo('choice 2 changed')")
-	 gui.addcallback (p3,"valueChanged","echo('choice 3 changed')")
+     gui.addcallback (p1,"valueChanged","echo('choice 1 changed')")
+     gui.addcallback (p2,"valueChanged","echo('choice 2 changed')")
+     gui.addcallback (p3,"valueChanged","echo('choice 3 changed')")
      gui.realize(top)
 
 ?gui widgets rowColumn
@@ -3232,9 +3232,9 @@ gui widgets panedWindow
 
  Example:
      top=gui.create("topLevelShell",name="scrolledwindow")
-	 gui.set(top,resources={width=500,height=500})
+     gui.set(top,resources={width=500,height=500})
      wid=gui.create("scrolledwindow",top)
-	 string="
+     string="
      string = "Hello World, Hello World, Hello World, Hello World, " \
             + "Hello World, Hello World, Hello World, Hello World, " \
             + "Hello World, Hello World, Hello World, Hello World, " \
@@ -3253,7 +3253,7 @@ gui widgets panedWindow
 
  Example:
      top=gui.create("topLevelShell",name="selectionbox")
-	 gui.set(top,resources={width=500,height=500})
+     gui.set(top,resources={width=500,height=500})
      list = cat("a","b","c","d",axis=y)
      wid=gui.create("selectionbox",top,{mustMatch="true"})
      gui.set(wid,{listItems=list})
@@ -3294,7 +3294,7 @@ gui widgets panedWindow
 
  Example:
      top=gui.create("topLevelShell",name="textfield")
-	 gui.set(top,resources={width=500,height=500})
+     gui.set(top,resources={width=500,height=500})
      r=gui.create("rowcolumn",top)
 
      w1=gui.create("textfield",r)
@@ -3320,7 +3320,7 @@ gui widgets panedWindow
 
  Example:
      top=gui.create("topLevelShell",name="text")
-	 gui.set(top,resources={width=500,height=500})
+     gui.set(top,resources={width=500,height=500})
      r=gui.create("rowcolumn",top)
 
      w1=gui.create("text",r)
@@ -3355,9 +3355,9 @@ gui widgets panedWindow
          if (gui.get(set.w4,"set").set == "TOGGLE_SET") sum += 1;
          if (sum == 4) echo ('Need a forklift for that?');
      }
- 
+
      top=gui.create("topLevelShell",name="togglebutton")
-	 gui.set(top,resources={width=300,height=300})
+     gui.set(top,resources={width=300,height=300})
      r=gui.create("rowcolumn",top)
      l=gui.create("label",r,{labelString="Choose Extras:"})
 
@@ -3393,11 +3393,11 @@ gui widgets panedWindow
  This widget tiles an input image to allow rapid scrolling within
  regions much larger than the Vicar screen area.  It allows mouse-
  or scrollbar-based scrolling of the image area.
- 
+
  Vicar supports nearly all X Windows configurations and color schemes.
  It provides several color lookup table and dithering options based on
  the available X Server support.
- 
+
  For a comprehensive list of functionality, see the Vicar Reference.
 
  The image resource must be set at creation time.
@@ -3438,7 +3438,7 @@ gui widgets panedWindow
 
  Menu support widget.  Provides the basic container widget for normal
  menu contents.  This widget is not yet functional.
- 
+
 ?gui widgets transientShell
 TransientShell
 
@@ -3464,10 +3464,10 @@ TransientShell
  gui.create(widgetclass, parent, resources, name)
      widgetclass: Xt/Motif WidgetClass or Davinci alias.
      parent     : The widgetid of the parent widget. Default is the
-	              application shell.
+                  application shell.
      resources  : A struct of resource key/values.
      name       : Arbitrary name for the widget. Most widgets ignore
-	              this value.
+                  this value.
 
  Create a new widget and return its handle.
 
@@ -3487,12 +3487,12 @@ TransientShell
  gui.get(widgetid, resources, all)
      widgetid : The handle of the widget to act on.
      resources: A list of resource names to retrieve.
-	            Accepts struct, text, or string.
+                Accepts struct, text, or string.
      all      : If 1, return all resources, including hidden
-	            resources.  Otherwise return public resources only.
+                resources.  Otherwise return public resources only.
      showEnums: If 1, prints a list of possible values for enumerated
-	            resources. Useful to learn an enumerated resource's
-				supported states.
+                resources. Useful to learn an enumerated resource's
+                supported states.
 
  Retrieve the default list of resources, the resources specified in
  resources, or all widget resources if all = 1 is specified.
@@ -3537,7 +3537,7 @@ TransientShell
  gui.set(widgetid, resources)
      widgetid : The handle of the widget to act on.
      resources: A list of resource names to retrieve.
-	            Accepts struct, text, or string.
+                Accepts struct, text, or string.
 
  Set one or more resources on the specified widget.
 
@@ -3574,7 +3574,7 @@ TransientShell
      widgetid : The handle of the widget to act on.
      callback : The Xt callback name or Davinci alias string.
      eval     : A string of Davinci code to evaluate when the callback
-	            occurs.
+                occurs.
 
  Add the named callback to widgetid. The code in eval must be a string
  of Davinci code, which will be evaluated each time the callback event
@@ -3632,15 +3632,15 @@ TransientShell
 
  The load_tdb() function loads a TDB (TES Data Base) file.  It returns
  a structure containing one structure for each record in the file.
- 
- By default however, Xaxis and Double records are not merged.  If the 
- distrbute flag is set, the appropriate Xaxis records are copied into 
+
+ By default however, Xaxis and Double records are not merged.  If the
+ distrbute flag is set, the appropriate Xaxis records are copied into
  any Double records that have an xdata value set (and the xdata value is
  removed).
 
  If the reform flag is set, records of the same type are collated together.
- Any records that are of the same type, but which are not homogenous (ie: 
- Double records both with and without an Xaxis set) are padded out to be 
+ Any records that are of the same type, but which are not homogenous (ie:
+ Double records both with and without an Xaxis set) are padded out to be
  homogenous, using empty strings.
 
 ?thm
@@ -3674,7 +3674,7 @@ TransientShell
  'axis'      - the direction to deplaid (x,y,xy) (default is xy)
 
  Troubleshooting:
- - You should designate b10 when NOT feeding deplaid 10 band data, 
+ - You should designate b10 when NOT feeding deplaid 10 band data,
    b10=0 for no band 10 data
  - You can return the blackmask/temperature mask by using "dump = 1"
  - If you get brightness smear, bring the tmask_max and/or min closer to 1.0
