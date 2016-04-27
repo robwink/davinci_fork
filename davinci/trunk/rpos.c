@@ -1,12 +1,12 @@
 #include "parser.h"
 /**
- ** Position conversion routines.  Convert offset i, from s1 to s2, 
+ ** Position conversion routines.  Convert offset i, from s1 to s2,
  ** using the specified ordering.
  **
  **
- **	BIL:	XZY
- **	BSQ:	XYZ
- **	BIP:	ZXY
+ **    BIL:  XZY
+ **    BSQ:  XYZ
+ **    BIP:  ZXY
  **/
 
 
@@ -92,7 +92,7 @@ __BSQ2BSQ(Var *s1, Var *s2, size_t i)
 	size_t x,y,z;
 	size_t ab;
 
- 	RPOS(x,y,z,x,y,z); 
+	RPOS(x,y,z,x,y,z);
 }
 size_t
 __BIL2BIL(Var *s1, Var *s2, size_t i)

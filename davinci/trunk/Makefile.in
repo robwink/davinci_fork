@@ -115,10 +115,10 @@ am_libdavinci_la_OBJECTS = apifunc.lo array.lo avl.lo binDCT.lo \
 	fft.lo fft2f.lo fft_mayer.lo fit.lo ff_coreg.lo \
 	ff_boxfilter.lo ff_bin5.lo ff_transform.lo ff_blend.lo \
 	ff_unpack.lo header.lo ff_resample.lo help.lo init.lo \
-	isis_obj.lo globals.lo matrix.lo misc.lo motif_tools.lo \
-	newfunc.lo p.lo pp.lo pp_math.lo printf.lo reserved.lo \
-	rfunc.lo rice.lo rpos.lo scope.lo spread.lo string.lo \
-	symbol.lo system.lo tools.lo ufunc.lo util.lo x.lo \
+	cvector.lo isis_obj.lo globals.lo matrix.lo misc.lo \
+	motif_tools.lo newfunc.lo p.lo pp.lo pp_math.lo printf.lo \
+	reserved.lo rfunc.lo rice.lo rpos.lo scope.lo spread.lo \
+	string.lo symbol.lo system.lo tools.lo ufunc.lo util.lo x.lo \
 	xrt_print_3d.lo lexer.lo parser.lo ff_gconvolve.lo ff_warp.lo \
 	ff_median.lo ff_radial.lo ff_window.lo dvio_fits.lo \
 	ff_extract.lo dvio_tdb.lo url_create_file.lo ff_filesystem.lo \
@@ -390,7 +390,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	fft.c fft2f.c fft_mayer.c fit.c ff_coreg.c ff_boxfilter.c \
 	ff_bin5.c  ff_transform.c ff_blend.c ff_unpack.c \
 	header.c ff_resample.c \
-	help.c init.c \
+	help.c init.c cvector.c \
 	isis_obj.c globals.c matrix.c \
 	misc.c motif_tools.c \
 	newfunc.c p.c pp.c \
@@ -577,6 +577,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/array.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/avl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/binDCT.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cvector.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/darray.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dct.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/deghost.Plo@am__quote@
