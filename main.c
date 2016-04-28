@@ -150,19 +150,18 @@ dv_sighandler(int data)
 
 /* char *__progname = "davinci"; */
 
-int
-main(int ac, char **av)
+int main(int ac, char **av)
 {
-  Scope *s;
-  Var *v;
-  FILE *fp;
-  char path[256];
-  int quick = 0;
-  int i, j, k, flag = 0;
-  char *logfile = NULL;
-  int iflag = 0;
-  char *p;
-  int history = 1;
+	Scope *s;
+	Var *v;
+	FILE *fp;
+	char path[256];
+	int quick = 0;
+	int i, j, k, flag = 0;
+	char *logfile = NULL;
+	int iflag = 0;
+	char *p;
+	int history = 1;
 #if defined(__APPLE__)
 	int ret;
 	char pathbuf[PROC_PIDPATHINFO_MAXSIZE];
@@ -175,30 +174,32 @@ main(int ac, char **av)
 	char exe_path_out[MAX_PATH+12];
 	HMODULE hModule;
 #elif defined(__linux__)
-  char pidpath[PATH_MAX];
-  char pathbuf[PATH_MAX];
+	char pidpath[PATH_MAX];
+	char pathbuf[PATH_MAX];
 	//add 12 for length of ENV Variable Name 
-  char exe_path_out[PATH_MAX+12];
-  struct stat info;
+	char exe_path_out[PATH_MAX+12];
+	struct stat info;
 	pid_t pid;
 #endif
 
 	s = new_scope();
+	init_input_stack();
 
-  signal(SIGINT, dv_sighandler);
-  signal(SIGSEGV, dv_sighandler);
+
+	signal(SIGINT, dv_sighandler);
+	signal(SIGSEGV, dv_sighandler);
 #ifndef __MINGW32__
-  signal(SIGPIPE, SIG_IGN);
-  signal(SIGBUS, dv_sighandler);
-  signal(SIGUSR1, user_sighandler);
+	signal(SIGPIPE, SIG_IGN);
+	signal(SIGBUS, dv_sighandler);
+	signal(SIGUSR1, user_sighandler);
 #endif
-  scope_push(s);
-  /**
-   ** handle $0 specially.
-   **/
-  v = p_mkval(ID_STRING, *av);
-  V_NAME(v) = strdup("$0");
-  put_sym(v);
+	scope_push(s);
+	/**
+	 ** handle $0 specially.
+	 **/
+	v = p_mkval(ID_STRING, *av);
+	V_NAME(v) = strdup("$0");
+	put_sym(v);
 
 //get the full path in different ways depending on the OS
 #if defined (__APPLE__)
@@ -208,14 +209,14 @@ main(int ac, char **av)
 
 	//if we succeed pathbuf will have the path and ret==1
 	if ( ret > 0 ) {
-    //set DV_EXEPATH environent variable
+		//set DV_EXEPATH environent variable
 		sprintf(exe_path_out, "DV_EXEPATH=%s", pathbuf);
 		putenv(exe_path_out);
 	}
 
-  //also set the DV_OS enviornment variable
-  putenv("DV_OS=mac");
-  
+	//also set the DV_OS enviornment variable
+	putenv("DV_OS=mac");
+
 #elif defined(_WIN32)
 	// Will contain exe path
 	hModule = GetModuleHandle(NULL);
@@ -231,170 +232,170 @@ main(int ac, char **av)
 
 #elif defined(__linux__)
 	//use the pid to get the relative link
-  pid = getpid();
-  sprintf(pidpath, "/proc/%d/exe", pid);
+	pid = getpid();
+	sprintf(pidpath, "/proc/%d/exe", pid);
 
 	//resolve the link with readlink
-  if (readlink(pidpath, pathbuf, PATH_MAX) != -1) {
-    sprintf(exe_path_out, "DV_EXEPATH=%s", pathbuf);
-    putenv(exe_path_out);
-  }
+	if (readlink(pidpath, pathbuf, PATH_MAX) != -1) {
+		sprintf(exe_path_out, "DV_EXEPATH=%s", pathbuf);
+		putenv(exe_path_out);
+	}
 
-  //also set the DV_OS environment variable
-  putenv("DV_OS=linux");
+	//also set the DV_OS environment variable
+	putenv("DV_OS=linux");
 #endif
 
-  /**
-   ** Everything that starts with a - is assumed to be an option,
-   ** until we get something that doesn't.
-   **
-   ** The user can force this with --, as well.
-   **
-   ** We now pass all "--options" as ARGV parameters.
-   **/
-  for (i = 1; i < ac; i++) {
-    k = 0;
-    if (!flag && av[i] && av[i][0] == '-' &&
-        !(strlen(av[i]) > 2 && av[i][1] == '-')) {
-      for (j = 1; j < strlen(av[i]); j++) {
-        switch (av[i][j]) {
-          case '-':   /* last option */
-            flag = 1;
-            break;
-          case 'w':   /* no windows */
-            windows = 0;
-            break;
-          case 'f':{  /* redirected input file */
-            k++;
-            push_input_file(av[i + k]);
-            av[i + k] = NULL;
-            interactive = 0;
-            break;
-          }
-          case 'l':{  /* redirected log file */
-            k++;
-            logfile = av[i + k];
-            av[i + k] = NULL;
-            break;
-          }
-          case 'e':{  /* execute given command string */
-            FILE *fp;
-            k++;
-            if ((fp = tmpfile()) != NULL) {
-              fputs(av[i + k], fp);
-              fputc('\n', fp);
-              rewind(fp);
-              push_input_stream(fp, ":command line:");
-              interactive = 0;
-            }
-            av[i + k] = NULL;
-            break;
-          }
-          case 'v':{
-            if (isdigit(av[i][j + 1])) {
-              VERBOSE = av[i][j + 1] - '0';
-            } else {
-              k++;
-              if (i+k >= ac) {
-                exit(usage(av[0]));
-              } else {
-                VERBOSE = atoi(av[i + k]);
-                av[i + k] = NULL;
-              }
-            }
-            break;
-          }
-          case 'i':{
-            /**
-             **/
-            iflag = 1;
-            break;
-          }
-          case 'q':{
-            quick = 1;
-            break;
-          }
-          case 'H':{
-            /* force loading of the history, even in quick mode */
-            history = 1;
-            break;
-          }
-          case 'V':{
-            dump_version();
-            exit(1);
-          }
-          case 'h':{
-            usage(av[0]);
-            exit(1);
-          }
-        }
-      }
-      i += k;
-    } else {
-      char buf[256];
-      flag = 1;
-      dd_put_argv(s, p_mkval(ID_STRING, av[i]));
-      v = p_mkval(ID_STRING, av[i]);
-      sprintf(buf, "$%d", i);
-      V_NAME(v) = strdup(buf);
-      put_sym(v);
-    }
-  }
-  dv_set_iom_verbosity();
+	/**
+	 ** Everything that starts with a - is assumed to be an option,
+	 ** until we get something that doesn't.
+	 **
+	 ** The user can force this with --, as well.
+	 **
+	 ** We now pass all "--options" as ARGV parameters.
+	 **/
+	for (i = 1; i < ac; i++) {
+		k = 0;
+		if (!flag && av[i] && av[i][0] == '-' &&
+		    !(strlen(av[i]) > 2 && av[i][1] == '-')) {
+			for (j = 1; j < strlen(av[i]); j++) {
+				switch (av[i][j]) {
+					case '-':   /* last option */
+						flag = 1;
+						break;
+					case 'w':   /* no windows */
+						windows = 0;
+						break;
+					case 'f':{  /* redirected input file */
+						k++;
+						push_input_file(av[i + k]);
+						av[i + k] = NULL;
+						interactive = 0;
+						break;
+					}
+					case 'l':{  /* redirected log file */
+						k++;
+						logfile = av[i + k];
+						av[i + k] = NULL;
+						break;
+					}
+					case 'e':{  /* execute given command string */
+						FILE *fp;
+						k++;
+						if ((fp = tmpfile()) != NULL) {
+							fputs(av[i + k], fp);
+							fputc('\n', fp);
+							rewind(fp);
+							push_input_stream(fp, ":command line:");
+							interactive = 0;
+						}
+						av[i + k] = NULL;
+						break;
+					}
+					case 'v':{
+						if (isdigit(av[i][j + 1])) {
+							VERBOSE = av[i][j + 1] - '0';
+						} else {
+							k++;
+							if (i+k >= ac) {
+								exit(usage(av[0]));
+							} else {
+								VERBOSE = atoi(av[i + k]);
+								av[i + k] = NULL;
+							}
+						}
+						break;
+					}
+					case 'i':{
+						/**
+						 **/
+						iflag = 1;
+						break;
+					}
+					case 'q':{
+						quick = 1;
+						break;
+					}
+					case 'H':{
+						/* force loading of the history, even in quick mode */
+						history = 1;
+						break;
+					}
+					case 'V':{
+						dump_version();
+						exit(1);
+					}
+					case 'h':{
+						usage(av[0]);
+						exit(1);
+					}
+				}
+			}
+			i += k;
+		} else {
+			char buf[256];
+			flag = 1;
+			dd_put_argv(s, p_mkval(ID_STRING, av[i]));
+			v = p_mkval(ID_STRING, av[i]);
+			sprintf(buf, "$%d", i);
+			V_NAME(v) = strdup(buf);
+			put_sym(v);
+		}
+	}
+	dv_set_iom_verbosity();
 
-  env_vars();
-  fake_data();
+	env_vars();
+	fake_data();
 
-  if (interactive) {
-    if (logfile == NULL)
-      logfile = (char *)".dvlog";
+	if (interactive) {
+		if (logfile == NULL)
+			logfile = (char *)".dvlog";
 
-    lfile = fopen(logfile, "a");
-    log_time();
-    if (quick == 0 || history == 1)
-      init_history(logfile);
+		lfile = fopen(logfile, "a");
+		log_time();
+		if (quick == 0 || history == 1)
+			init_history(logfile);
 #ifdef HAVE_LIBREADLINE
-    /* JAS FIX */
-    rl_attempted_completion_function = dv_complete_func;
+		/* JAS FIX */
+		rl_attempted_completion_function = dv_complete_func;
 #endif
-  }
-  if (quick == 0) {
-    sprintf(path, "%s/.dvrc", getenv("HOME"));
-    if ((fp = fopen(path, "r")) != NULL) {
-      printf("reading file: %s\n", path);
-      push_input_stream(fp, path);
-    }
-  }
+	}
+	if (quick == 0) {
+		sprintf(path, "%s/.dvrc", getenv("HOME"));
+		if ((fp = fopen(path, "r")) != NULL) {
+			printf("reading file: %s\n", path);
+			push_input_stream(fp, path);
+		}
+	}
 
-  /**
-   ** set up temporary directory
-   **/
-  if ((p = getenv("TMPDIR")) == NULL) {
-    sprintf(path, "TMPDIR=%s/dv_%d", P_tmpdir, getpid());
-  } else {
-    sprintf(path, "TMPDIR=%s/dv_%d", getenv("TMPDIR"), getpid());
-  }
+	/**
+	 ** set up temporary directory
+	 **/
+	if ((p = getenv("TMPDIR")) == NULL) {
+		sprintf(path, "TMPDIR=%s/dv_%d", P_tmpdir, getpid());
+	} else {
+		sprintf(path, "TMPDIR=%s/dv_%d", getenv("TMPDIR"), getpid());
+	}
 
 #ifndef _WIN32
-  mkdir(path + 7, 0777);
+	mkdir(path + 7, 0777);
 #else
-  mkdir(path + 7);
+	mkdir(path + 7);
 #endif
-  putenv(path);
+	putenv(path);
 
-  /*
-  ** Before we get to events, process any pushed files
-  */
-  /* moved the process_streams into the event loop so
-     that it happens after Xt is initialized, but before
-     the endless loop starts
-  */
-  event_loop();
-  quit(0);
+	/*
+	** Before we get to events, process any pushed files
+	*/
+	/* moved the process_streams into the event loop so
+		 that it happens after Xt is initialized, but before
+		 the endless loop starts
+	*/
+	event_loop();
+	quit(0);
 
-  /* event_loop never returns... unless we're not interactive */
+	/* event_loop never returns... unless we're not interactive */
 
-  return(0);
+	return 0;
 }
 
 #if defined(USE_X11_EVENTS) && defined(HAVE_LIBREADLINE)
@@ -480,8 +481,6 @@ static const String defaultAppResources[] = {
 void
 event_loop(void)
 {
-  init_input_stack();
-
   if (interactive) {
 #if !defined(USE_X11_EVENTS) || !defined(HAVE_LIBREADLINE)
     /* JAS FIX */
