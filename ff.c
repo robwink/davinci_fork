@@ -1417,7 +1417,9 @@ ff_system(vfuncptr func, Var * arg)
 Var *
 newVal(int org, int x, int y, int z, int format, void *data)
 {
-  Var *v = newVar();
+  Var *v = NULL;
+  if (!(v = newVar()))
+    return NULL;
   V_TYPE(v) = ID_VAL;
   V_ORG(v) = org;
   V_DSIZE(v) = ((size_t)x)*((size_t)y)*((size_t)z);

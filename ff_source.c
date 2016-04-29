@@ -5,6 +5,9 @@
  ** This file contains routines to handle pushing and popping of input files.
  **/
 
+//TODO(rswinkle) replace these 3 manual stacks with
+//vec_void, vec_str, and vec_i
+//
 FILE *ftos = NULL;
 int ftosIndex = 0;
 static FILE **fstack=NULL;
@@ -86,7 +89,7 @@ pop_input_file()
 	fp = fstack[--nfstack];
 	pp_line = flinenos[nfstack];
 	fname = fnamestack[nfstack];
-	if (fname) free(fname);
+	free(fname);
 
 	if (fileno(fp) != 0) {
 		fclose(fp);

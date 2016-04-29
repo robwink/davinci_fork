@@ -6,16 +6,16 @@
  ** in this scope.  Child scopes will point to these vars
  **/
 
-typedef struct tag_Symtable Symtable;
-struct tag_Symtable {
+typedef struct Symtable Symtable;
+struct Symtable {
 	Var *value;         /* variable holder */
-	Symtable *next;     /* dont use var->next.  Bad mojo */
+	Symtable *next;
 };
 
 /**
  ** A data dictionary.  value[0] holds the var representation of argc
  **/
-typedef struct {
+typedef struct Dictionary {
 	int count;
 	int size;
 	char **name;      /* variable name */
@@ -23,17 +23,14 @@ typedef struct {
 } Dictionary;
 
 
-typedef struct tag_Stack Stack;
-struct tag_Stack {
+typedef struct Stack {
 	int size;
 	int top;
 	Var **value;
-};
+} Stack;
 
 
-typedef struct tag_Scope Scope;
-
-struct tag_Scope {
+typedef struct Scope {
 	Dictionary *dd;     /* named variable data dictionary */
 	Dictionary *args;   /* number arguments data dictionary */
 	Symtable *symtab;   /* local symbol table. */
@@ -45,7 +42,7 @@ struct tag_Scope {
 	int broken;         /* loop counter flag */
 	int loop;           /* loop counter flag */
 	int returned;       /* loop counter flag */
-};
+} Scope;
 
 /**
  ** When the scope is destroyed, everything in symtab (and of course stack)
