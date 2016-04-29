@@ -1,0 +1,34 @@
+define test_ufunc_call_by_ref(x,y,z,w){
+	result = {}
+	result.xa = x
+	result.ya = y
+	result.za = z
+	result.wa = w
+
+	x = 10*x
+	y = " "+y
+	z.foo = 1
+	w = 0
+
+	result.xf = x
+	result.yf = y
+	result.zf = z
+	result.wf = w
+
+	return(result);
+}
+
+xa=create(2,3,4)
+ya="foo"
+za={a=1,b="foo"}
+za.c={d=create(2,3),e=10}
+wa=za
+
+a=test_ufunc_call_by_ref(x=xa,y=ya,z=za,w=wa.c);
+
+if (xa==create(2,3,4) && ya==" foo" && za.foo==1 && wa.c==0) {
+	exit(0)
+}
+
+exit(1)
+

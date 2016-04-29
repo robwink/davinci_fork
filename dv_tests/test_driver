@@ -4,7 +4,7 @@ process_dir=".";
 
 is_64_bit = (length(syscall("uname -a | grep x86_64")) > 0)
 
-final_results = traverse(process_dir,"test-");
+final_results = traverse_suffix(process_dir,".dvtest");
 if (is_64_bit){
 	final_results += traverse(process_dir,"test64-");
 }

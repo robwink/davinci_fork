@@ -1,7 +1,0 @@
-lines = read_lines("ftp://ftp.mars.asu.edu/pub/software/davinci/version.txt")
-if (HasValue(lines)){
-	if(lines[1:7,1]=="daVinci") exit(0);
-}
-
-exit(1);
-

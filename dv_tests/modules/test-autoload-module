@@ -1,4 +1,0 @@
-load_module("mod2")
-if (HasValue("mod2") && HasValue("mod1")) exit(0);
-exit(1);
-
