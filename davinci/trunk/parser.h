@@ -30,7 +30,7 @@
 #include <limits.h>
 #endif
 
-
+// TODO(rswinkle) why not just use the standard macros directly?
 #ifndef MINSHORT
 #define MINSHORT        SHRT_MIN
 #endif
@@ -87,7 +87,7 @@ typedef struct _var Var;
 typedef Var * Vptr;
 /* dvModule is defined in ff_modules.h */
 typedef struct _vfuncptr *vfuncptr;
-typedef Var * (*vfunc)(struct _vfuncptr *,Var *);	/* function caller */
+typedef Var * (*vfunc)(struct _vfuncptr *,Var *);    /* function caller */
 
 typedef struct Range {
 	int dim;        /* dimension of data */

@@ -252,7 +252,7 @@ char *get_env_var(char *);
 char *expand_filename(char *);
 char *enumerated_arg(Var *, char **);
 
-//TODO rswinkle
+//TODO(rswinkle)
 //This file is the dumping ground for all prototypes?
 //This should be for ff_* functions only and any C file
 //that has other functions that get used elsewhere should

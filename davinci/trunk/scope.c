@@ -13,6 +13,7 @@
 
 */
 
+//TODO(rswinkle) replace with vec_void
 static int scope_count = 0;
 static int scope_size = 0;
 static Scope **scope_stack = NULL;
@@ -297,13 +298,6 @@ clean_stack(Scope *scope)
 }
 
 
-void
-clean_tmp(Scope *scope)
-{
-    if (scope->tmp) Darray_free(scope->tmp, (Darray_FuncPtr)free_var);
-    scope->tmp = NULL;
-}
-
 /**
  ** Clean the stack and tmptab of the current scope
  **/
@@ -312,8 +306,7 @@ void
 cleanup(Scope *scope)
 {
     clean_stack(scope);
-    clean_tmp(scope);
-    /* clean_table(scope->tmp); */
+    if (scope->tmp) Darray_free(scope->tmp, (Darray_FuncPtr)free_var);
     scope->tmp = NULL;
 }
 
@@ -322,70 +315,6 @@ cleanup(Scope *scope)
 /**
  ** allocate memory in the scope tmp list
  **/
-
-#if 0
-Var *
-mem_malloc(void)
-{
-    Scope *scope = scope_tos();
-    Symtable *sym;
-
-    sym = (Symtable *)calloc(1, sizeof(Symtable));
-    sym->value = (Var *)calloc(1, sizeof(Var));
-    sym->next = scope->tmp;
-    scope->tmp = sym;
-
-    return(sym->value);
-}
-
-Var *
-mem_claim_struct(Var *v)
-{
-    int i;
-    int count;
-    Var *data;
-
-    if (V_TYPE(v) == ID_STRUCT) {
-        count = get_struct_count(v);
-        for (i = 0 ; i < count ; i++) {
-            get_struct_element(v, i, NULL, &data);
-            mem_claim(data);
-        }
-    }
-    return(v);
-}
-
-/**
- ** claim memory in the scope tmp list, so it doesn't get free'd
- ** return NULL if it isn't here.
- **/
-Var *
-mem_claim(Var *ptr)
-{
-    Scope *scope = scope_tos();
-    Symtable *sym, *tmp;
-
-    if ((sym = scope->tmp) == NULL) return(NULL);
-
-    if (sym->value == ptr) {
-        scope->tmp = scope->tmp->next;
-        free(sym);
-        return(mem_claim_struct(ptr));
-    } else {
-        while(sym->next != NULL) {
-            if (sym->next->value == ptr) {
-                tmp = sym->next;
-                sym->next = sym->next->next;
-                free(tmp);
-                return(mem_claim_struct(ptr));
-            }
-            sym = sym->next;
-        }
-    }
-    return(NULL);
-}
-#endif
-
 Var *
 mem_malloc()
 {
@@ -503,17 +432,17 @@ clean_scope(Scope *scope)
            free(scope->dd->name[i]);
            }
         */
-        if (scope->dd->name) free(scope->dd->name);
+        free(scope->dd->name);
         free(scope->dd);
     }
     if (scope->args) {
         free_var(scope->args->value[0]);
         free(scope->args->value);
-        if (scope->args->name) free(scope->args->name);
+        free(scope->args->name);
         free(scope->args);
     }
     clean_stack(scope);
-    clean_tmp(scope);
+    if (scope->tmp) Darray_free(scope->tmp, (Darray_FuncPtr)free_var);
     scope->tmp = NULL;
 
     /* Clean modules since before cleaning symbol table

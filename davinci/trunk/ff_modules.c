@@ -738,7 +738,7 @@ static int
 get_module_versions(
 	const char *mod_name, /* Name of the module to be found */
 	char *path,           /* A ":" separated list of dirs to find the name in  */
-	char ***retlist       /* array of strings to be returned */
+	char ***retlist       /* array of strings to be returned TODO(rswinkle) vec_str */
 )
 {
 	char *q;
@@ -811,7 +811,7 @@ locate_latest_dv_module_in_path(
 	char *fname;
 
 	int i;
-	char **modules = NULL;
+	char **modules = NULL; //TODO(rswinkle) vec_str
 	int nmodules = get_module_versions(mod_name, path, &modules);
 
 	for (i = 0 ; i < nmodules ; i++) {

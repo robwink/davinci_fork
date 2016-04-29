@@ -268,7 +268,7 @@ Var *saito_grassfire(Var *input, int ignore) {
   phaseSaitoZ(sdt_xy, sdt_x); //We reuse sdt_x to store the final result!!
 
   mem_claim(sdt_xy);
-  mem_free(sdt_xy);
+  free_var(sdt_xy);
   return (sdt_x);
 }
 
