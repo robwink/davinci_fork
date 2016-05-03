@@ -2,6 +2,9 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+#if defined(HAVE_CONFIG_H)
+#include <config.h>
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -10,9 +13,6 @@
 #include <limits.h>
 #include <stddef.h>
 
-#if   defined(HAVE_CONFIG_H)
-#include <config.h>
-#endif
 
 #include <unistd.h>
 #ifndef _WIN32

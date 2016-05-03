@@ -1,3 +1,7 @@
+#include "parser.h"
+#include "dvio.h"
+#include "XformTable.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -34,9 +38,6 @@ void munmap(void *buf,int len)
 #endif /* __CYGWIN__ */
 
 
-#include "parser.h"
-#include "dvio.h"
-#include "XformTable.h"
 
 #define  _IMAGEID              2
 #define  _BANDS                3
