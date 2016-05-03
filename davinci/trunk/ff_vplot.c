@@ -1649,7 +1649,7 @@ static int handle_errorbars(Var *errorb, Var *v, int *Mode, char *style, int Onu
     parse_error("There are the correct number of errorbar inputs,");
     parse_error("but a different number of errorbar vectors than object vectors");
     parse_error("Must have 1,2 or 4 errorbar inputs per vector.");
-    return(0);	
+    return(0);
   }
 
   //There still exists the problem of 2x4xN or 2x2xN errorbar vectors. So I'm going

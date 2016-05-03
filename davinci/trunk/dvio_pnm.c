@@ -4,19 +4,13 @@
 #include "dvio.h"
 
 Var *
-dv_LoadPNM(
-	FILE *fp,
-	char *filename,
-	struct iom_iheader *s
-	)
+dv_LoadPNM(FILE *fp, char *filename, struct iom_iheader *s)
 {
 	u_char *data;
 	struct iom_iheader h;
 	int status;
 	char hbuf[HBUFSIZE];
-
 	Var *v;
-
 
 	if (iom_isPNM(fp) == 0){ return NULL; }
 
@@ -32,11 +26,10 @@ dv_LoadPNM(
 	}
 
 	data = iom_read_qube_data(fileno(fp), &h);
-	if (data){
+	if (data) {
 		v = iom_iheader2var(&h);
 		V_DATA(v) = data;
-	}
-	else {
+	} else {
 		v = NULL;
 	}
 
@@ -51,52 +44,7 @@ dv_LoadPNM(
 	}
 	
 	iom_cleanup_iheader(&h);
-
-
-#if 0
-	x = h.size[0];
-	y = h.size[1];
-	z = h.size[2];
-
-	data = iom_detach_iheader_data(&h);
-	
-	if (data == NULL){
-		iom_cleanup_iheader(&h);
-		return(NULL);
-	}
-
-	v = newVar();
-	V_TYPE(v) = ID_VAL;
-	V_DATA(v) = data;
-	if (z == 1) {
-		V_SIZE(v)[0] = x;
-		V_SIZE(v)[1] = y;
-		V_SIZE(v)[2] = z;
-		V_ORG(v) = BSQ;
-	} else {
-		V_SIZE(v)[0] = z;
-		V_SIZE(v)[1] = x;
-		V_SIZE(v)[2] = y;
-		V_ORG(v) = BIP;
-	}
-	V_DSIZE(v) = x*y*z;
-	if (bits <= 8) {
-		V_FORMAT(v) = BYTE;
-	} else if (bits == 16) {
-		int *data = (int *)calloc(4, x*y*z);
-		unsigned short *sdata = (unsigned short *)V_DATA(v);
-
-		for (i = 0 ; i < V_DSIZE(v) ; i++) {
-			data[i] = sdata[i];
-		}
-		free(sdata);
-		V_DATA(v) = data;
-		V_FORMAT(v) = INT;
-		parse_error("Warning: 16 bit PGM file being promoted to 32-bit int.");
-	}
-#endif
-
-	return(v);
+	return v;
 }
 
 int
@@ -163,8 +111,7 @@ dv_WritePPM(Var *obj, char *filename, int force)
 	var2iom_iheader(obj, &h);
 
 	if (VERBOSE > 1)  {
-		fprintf(stderr, "Writing %s: %dx%dx%d PPM file.\n",
-				filename,
+		fprintf(stderr, "Writing %s: %dx%dx%d PPM file.\n", filename,
 		        iom_GetSamples(h.size,h.org),
 		        iom_GetLines(h.size,h.org),
 		        iom_GetBands(h.size,h.org));
