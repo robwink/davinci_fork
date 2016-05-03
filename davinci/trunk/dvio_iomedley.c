@@ -55,7 +55,6 @@ static iom_io_interface interfaces[] = {
   { "TIFF", tiff_extensions, iom_isTIFF, iom_GetTIFFHeader, iom_WriteTIFF, 8 },
   { "BMP",  bmp_extensions,  iom_isBMP,  iom_GetBMPHeader,  iom_WriteBMP,  1 },
 #ifdef HAVE_LIBPNG
-//#error "HAVE_LIBPNG IS TRUE"
   { "PNG",  png_extensions,  iom_isPNG,  iom_GetPNGHeader,  iom_WritePNG,  2 },
 #endif
   { NULL,   NULL,            NULL,       NULL,              NULL,          0 }
