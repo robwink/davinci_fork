@@ -107,7 +107,7 @@ Var * ff_insmod(struct _vfuncptr *, Var *);
 Var * ff_rmmod(struct _vfuncptr *, Var *);
 Var * ff_lsmod(struct _vfuncptr *, Var *);
 
-//TODO rswinkle
+//TODO(rswinkle)
 //seems like these should be static/internal but
 //they're used in free_var which is called from many
 //ff_module functions
