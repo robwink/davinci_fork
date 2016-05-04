@@ -454,6 +454,7 @@ xpos(size_t i, Var *v, int *x, int *y, int *z)
 }
 
 
+//TODO(rswinkle) combine/simplify these.  Macro?
 int
 extract_int(const Var * v, const size_t i)
 {
