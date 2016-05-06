@@ -56,7 +56,7 @@ WriteHDF5(hid_t parent, char *name, Var *v)
 		** with this name.
 		*/
 		if (top == 0) {
-			child = H5Gcreate(parent, name, 0);
+			child = H5Gcreate(parent, name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		} else {
 			child = parent;
 		}
@@ -117,14 +117,14 @@ WriteHDF5(hid_t parent, char *name, Var *v)
 		H5Pset_chunk(plist, 3, size);
 		H5Pset_deflate(plist, HDF5_COMPRESSION_LEVEL);
 
-		dataset = H5Dcreate(parent, name, datatype, dataspace, plist);
+		dataset = H5Dcreate(parent, name, datatype, dataspace, H5P_DEFAULT, plist, H5P_DEFAULT);
 		H5Dwrite(dataset, native_datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, V_DATA(v));
 		H5Tclose(native_datatype);
 
 		aid2 = H5Screate(H5S_SCALAR);
 
 		//again why BE?
-		attr = H5Acreate(dataset, "org", H5T_STD_I32BE, aid2, H5P_DEFAULT);
+		attr = H5Acreate(dataset, "org", H5T_STD_I32BE, aid2, H5P_DEFAULT, H5P_DEFAULT);
 
 		native_datatype = H5Tget_native_type(H5T_STD_I32BE, H5T_DIR_ASCEND);
 		H5Awrite(attr, native_datatype, &org);
@@ -151,11 +151,11 @@ WriteHDF5(hid_t parent, char *name, Var *v)
 		length=strlen(V_STRING(v))+1;/*String+NULL*/
 		datatype = H5Tcopy(H5T_C_S1);
 		H5Tset_size(datatype,length);
-		dataset = H5Dcreate(parent,name, datatype, dataspace, H5P_DEFAULT);
+		dataset = H5Dcreate(parent,name, datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		H5Dwrite(dataset, datatype,H5S_ALL, H5S_ALL, H5P_DEFAULT, V_STRING(v));
 
 		aid2 = H5Screate(H5S_SCALAR);
-		attr = H5Acreate(dataset, "lines", H5T_STD_I32BE, aid2, H5P_DEFAULT);
+		attr = H5Acreate(dataset, "lines", H5T_STD_I32BE, aid2, H5P_DEFAULT, H5P_DEFAULT);
 		native_datatype = H5Tget_native_type(H5T_STD_I32BE, H5T_DIR_ASCEND);
 
 		H5Awrite(attr, native_datatype, &lines);
@@ -198,11 +198,11 @@ WriteHDF5(hid_t parent, char *name, Var *v)
 		dataspace = H5Screate_simple(1,&length,NULL);
 		datatype = H5Tcopy(H5T_C_S1);
 		H5Tset_size(datatype,big_size);
-		dataset = H5Dcreate(parent,name, datatype, dataspace, H5P_DEFAULT);
+		dataset = H5Dcreate(parent,name, datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		H5Dwrite(dataset, datatype,H5S_ALL, H5S_ALL, H5P_DEFAULT, big);
 		lines=V_TEXT(v).Row;
 		aid2 = H5Screate(H5S_SCALAR);
-		attr = H5Acreate(dataset, "lines", H5T_STD_I32BE, aid2, H5P_DEFAULT);
+		attr = H5Acreate(dataset, "lines", H5T_STD_I32BE, aid2, H5P_DEFAULT, H5P_DEFAULT);
 		native_datatype = H5Tget_native_type(H5T_STD_I32BE, H5T_DIR_ASCEND);
 
 		H5Awrite(attr, native_datatype, &lines);
@@ -267,7 +267,7 @@ static herr_t group_iter(hid_t parent, const char *name, const H5L_info_t *info,
 			//add addr to list
 			push_void(&cb_data->addresses, &obj_info.addr);
 
-			child = H5Gopen(parent, name);
+			child = H5Gopen(parent, name, H5P_DEFAULT);
 			v = load_hdf5(child, cb_data);
 			if (v)
 				V_NAME(v) = (name ? strdup(name) : 0);
@@ -276,7 +276,7 @@ static herr_t group_iter(hid_t parent, const char *name, const H5L_info_t *info,
 		break;
 
 	case H5O_TYPE_DATASET:
-		if ((dataset = H5Dopen(parent, name)) < 0) {
+		if ((dataset = H5Dopen(parent, name, H5P_DEFAULT)) < 0) {
 			return -1;
 		}
 

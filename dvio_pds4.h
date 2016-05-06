@@ -1,8 +1,5 @@
 #include <config.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #ifdef HAVE_LIBXML2
 
