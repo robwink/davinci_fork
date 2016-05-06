@@ -238,6 +238,17 @@ AC_ARG_WITH(hdf5,
     [  --with-hdf5=<path>      prefix of hdf5 installation. e.g. /usr/local or /usr],
     [LDFLAGS="$LDFLAGS -L$withval/lib -lz" ; CFLAGS="$CFLAGS -I$withval/include"]
 )
+
+# Try using pkg-config to find hdf5 (could duplicate if they
+# use --with-hdf5 but most people try plain ./configure first
+# and duplicates don't matter iirc
+if [[ "`pkg-config --libs hdf5`" != "" ]]; then
+	LDFLAGS="$LDFLAGS `pkg-config --libs hdf5`"
+	CFLAGS="$CFLAGS `pkg-config --cflags hdf5`"
+fi
+
+
+
 dnl with the path the specified, see if we can find libhdf.
 ## For MINGW since wsock32 is needed for hdf5
 if test "x$have_libwsock32" = "xyes"; then
