@@ -15,9 +15,6 @@
 /* Path to gnuplot program for plot() function */
 #undef GPLOT_CMD
 
-/* use HDF5 1.6 API */
-#undef H5_USE_16_API
-
 /* Use aqua instead of X11 */
 #undef HAVE_AQUA
 
@@ -103,9 +100,6 @@
 /* Define to 1 if you have the `msss_vis' library (-lmsss_vis). */
 #undef HAVE_LIBMSSS_VIS
 
-/* Define to 1 if you have the `ncurses' library (-lncurses). */
-#undef HAVE_LIBNCURSES
-
 /* if you have libpng */
 #undef HAVE_LIBPNG
 
@@ -133,7 +127,7 @@
 /* Define to 1 if you have the `Xm' library (-lXm). */
 #undef HAVE_LIBXM
 
-/* headers and libraries for libxml2 */
+/* Define to 1 if you have the `xml2' library (-lxml2). */
 #undef HAVE_LIBXML2
 
 /* Define to 1 if you have the `Xmu' library (-lXmu). */
