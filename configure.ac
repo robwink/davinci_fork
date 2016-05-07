@@ -158,61 +158,12 @@ if test "x$have_libpng2" = "xyes"; then
 	AC_DEFINE(HAVE_LIBPNG, 1, [ if you have libpng] )
 fi
 
-dnl check for libxml2
-dnl If the user specified a path to enable_libxml2, use that
-
-dnl Setup temp LDFLAGS and look for libxml2 library/header
-LDFLAGS_SAVE=${LDFLAGS};
-CFLAGS_SAVE=${CFLAGS};
-LIBS_SAVE=${LIBS};
 
 
-dnl AC_ARG_WITH(libxml2,
-dnl     [  --with-libxml2=<path>      prefix of libxml2 libraries. e.g. /usr/lib or /usr/lib64],
-dnl     [LDFLAGS="$LDFLAGS -L$withval" ; enable_libxml2=$withval]
-dnl )
-dnl 
-dnl AC_ARG_WITH(libxml2_hdr,
-dnl     [  --with-libxml2_hdr=<path>      prefix of libxml2 headers. e.g. /usr/include/libxml2],
-dnl     [CFLAGS="$CFLAGS -I$withval" ; enable_xml2_headers=$withval]
-dnl )
-dnl 
-dnl if test "x$enable_libxml2" != "xno" -a "x$enable_libxml2" != "xyes" -a "x$enable_libxml2" != "x"; then
-dnl 	xml2_lib=$enable_libxml2
-dnl fi
-dnl 
-dnl if test "x$enable_xml2_headers" != "xno" -a "x$enable_xml2_headers" != "xyes" -a "x$enable_xml2_headers" != "x"; then
-dnl 	xml2_headers=$enable_xml2_headers
-dnl fi
-dnl 
-dnl dnl If libxml2 is supposed to be used, then check for its existance
-dnl 
-dnl if test "x$enable_libxml2" != "xno" -a "x$enable_libxml2" != "xyes" -a "x$enable_libxml2" != "x" -a "x$enable_xml2_headers" != "xno" -a "x$enable_xml2_headers" != "xyes" -a "x$enable_xml2_headers" != "x"; then
-dnl 
-dnl 	dnl Check for existance of libxml2
-dnl 	have_libxml2=yes
-dnl 	have_xml2_headers=no
-dnl 		
-dnl 	AC_CHECK_HEADER([libxml/parser.h], [have_xml2_headers=yes], [have_xml2_headers=no])
-dnl 	
-dnl 	AC_CHECK_LIB(xml2, xmlFileRead,
-dnl 				 [LIBS="$LIBS -lxml2 "],
-dnl 				 [have_libxml2=no],
-dnl 				 [])
-dnl 
-dnl 	if test "x$have_libxml2" = "xyes" -a "x$have_xml2_headers" = "xyes"; then
-dnl AC_MSG_WARN(HAVE_LIBXML2)
-dnl 	
-dnl 		AC_DEFINE(HAVE_LIBXML2, 1, [ headers and libraries for libxml2 ])
-dnl 	else
-dnl 		LDFLAGS=$LDFLAGS_SAVE;
-dnl 		CFLAGS=$CFLAGS_SAVE;
-dnl 		LIBS=$LIBS_SAVE;
-dnl 	fi
-dnl fi
-
-AC_CHECK_LIB(xml2, xmlFileRead)
-dnl AC_CHECK_HEADER([libxml/parser.h], , AC_MSG_ERROR([Couldn't find parser.h]))
+AC_CHECK_LIB(xml2, xmlFileRead, [have_libxml2=yes CFLAGS="$CFLAGS `xml2-config --cflags`"], [have_libxml2=no])
+if [ have_libxml2 == "yes" ]; then
+	AC_CHECK_HEADER([libxml/parser.h], [have_xml2_headers=yes], AC_MSG_ERROR([Could not find parser.h]))
+fi
 
 #check for cfitsio
 AC_ARG_WITH(cfitsio,
@@ -602,7 +553,6 @@ PRINT_YES_NO "             QMV" "$have_qmv"
 dnl PRINT_YES_NO "        libisis3" "$have_isis3"
 PRINT_YES_NO "             Qt4" "$have_qt"
 PRINT_YES_NO "         libxml2" "$have_libxml2"
-PRINT_YES_NO " libxml2 headers" "$have_xml2_headers"
 
 PRINT ""
 
