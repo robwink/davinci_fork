@@ -64,8 +64,11 @@ def main():
 
 	if args.davinci != "davinci":
 		args.davinci = os.path.abspath(args.davinci)
-	ld_lib_paths = [os.path.abspath(p) for p in os.environ['LD_LIBRARY_PATH'].split(':')]
-	os.environ['LD_LIBRARY_PATH'] = ':'.join(ld_lib_paths)
+	try:
+		ld_lib_paths = [os.path.abspath(p) for p in os.environ['LD_LIBRARY_PATH'].split(':')]
+		os.environ['LD_LIBRARY_PATH'] = ':'.join(ld_lib_paths)
+	except:
+		pass
 
 
 	tests = []
