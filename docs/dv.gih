@@ -1617,7 +1617,7 @@ Max always returns a FLOAT.
   of values along one or more axis.  If no axis is specified, then all the
   computation is performed along all three axis.  If the direction is not
   specified, a forward dct is assumed.
- 
+
  The dct() function always returns a DOUBLE.
 
  Example:
@@ -1854,7 +1854,7 @@ Max always returns a FLOAT.
 
      The XRT3d tool provides the following actions:
 
-        Rotation: 
+        Rotation:
             Drag with Button2 and move clockwise or counter-clockwise.
                 or
             Hold down Button2 and press x, y, or z to select an axis.  Then
@@ -1976,7 +1976,7 @@ Davinci supports the following matrix functions:
      The array is filled with a ramp.  The first element is numbered from
      the 'start' parameter (default of 1) and each successive element is
      incremented by the step size (default of 1).
- 
+
      If init=0, the start and step values are ignored and the array is
      defaulted to the random contents of the memory block that was
      allocated.
@@ -2453,6 +2453,17 @@ Davinci supports the following matrix functions:
  This avoids names with numbered suffixes such as Field_2 or Field_3
  (0=don't use names, default is 1)
 
+?functions write_isis3()
+?io write_isis3()
+?write_isis3()
+ write_isis3() - Write out an ISIS3 file from an in memory structure
+
+ write_isis3(obj=STRUCT, filename=STRING [[, force=1], bsqOrTile="bsq" or "tile", valueTileSamples=INT, valueTileLines=INT)]
+
+ The in-memory isis3 struct and an output file name MUST be specified
+ force=1 will force overwriting an existing file
+ "bsq" or "tile" tells how to write out the file
+ valueTileSamples and valueTileLines should be sized to result in an integral number of tiles
 
 ?functions load_pds4()
 ?io load_pds()
@@ -2974,12 +2985,12 @@ Example:
      top=gui.create("topLevelShell",name="combobox")
      data=cat("a","b","c","d",axis=y)
      r=gui.create("rowcolumn",top)
- 
+
      gui.create("label",r,{labelString="combo box list"})
      a=gui.create("combobox",r,resources={comboBoxType="COMBO_LIST"})
      gui.set(a,{itemCount=length(data),items=data})
      gui.addcallback(a,"selectionCallback","echo('selected')")
- 
+
      gui.realize(top)
      gui.get(a,all=1)
 
