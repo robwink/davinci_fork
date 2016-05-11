@@ -15,7 +15,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
-#else 
+#else
 #include <sys/stat.h>
 #include <sys/timeb.h>
 #include <direct.h>
@@ -81,7 +81,7 @@ char *getwd(char *path)
 	if (path != NULL) strcpy(path, buf);
 	return(path);
 }
-#endif 
+#endif
 
 /*
  *  NAME:
@@ -90,12 +90,12 @@ char *getwd(char *path)
  *                    call to delay for the desired number of
  *                    micro-seconds. This call returns ZERO
  *                    (which is usually ignored) on successful
- *                    completion, -1 otherwise. 
+ *                    completion, -1 otherwise.
  *
  *  ALGORITHM:
  *      1) We range check the passed in microseconds and log a
  *         warning message if appropriate. We then return without
- *         delay, flagging an error. 
+ *         delay, flagging an error.
  *      2) Load the Seconds and micro-seconds portion of the
  *         interval timer structure.
  *      3) Call select(2) with no file descriptors set, just the
@@ -118,33 +118,32 @@ char *getwd(char *path)
 int     usleep(microSeconds )
 unsigned long int microSeconds;
 {
-        unsigned int            Seconds, uSec;
-        int                     nfds;
-        struct  timeval         Timer;
+		unsigned int            Seconds, uSec;
+		int                     nfds;
+		struct  timeval         Timer;
 
 		nfds = 0;
 
-        if( (microSeconds == (unsigned long) 0) 
-                || microSeconds > (unsigned long) 4000000 )
-        {
-                errno = ERANGE;         /* value out of range */
-                perror( "usleep time out of range ( 0 -> 4000000 ) " );
-                return -1;
-        }
+		if( (microSeconds == (unsigned long) 0) || microSeconds > (unsigned long) 4000000 )
+		{
+				errno = ERANGE;         /* value out of range */
+				perror( "usleep time out of range ( 0 -> 4000000 ) " );
+				return -1;
+		}
 
-        Seconds = microSeconds / (unsigned long) 1000000;
-        uSec    = microSeconds % (unsigned long) 1000000;
+		Seconds = microSeconds / (unsigned long) 1000000;
+		uSec    = microSeconds % (unsigned long) 1000000;
 
-        Timer.tv_sec            = Seconds;
-        Timer.tv_usec           = uSec;
+		Timer.tv_sec            = Seconds;
+		Timer.tv_usec           = uSec;
 
-        if( select( nfds, NULL, NULL, NULL, &Timer ) < 0 )
-        {
-                perror( "usleep (select) failed" );
-                return -1;
-        }
+		if( select( nfds, NULL, NULL, NULL, &Timer ) < 0 )
+		{
+				perror( "usleep (select) failed" );
+				return -1;
+		}
 
-        return 0;
+		return 0;
 }
 #endif
 #endif /* _WIN32 */
@@ -281,14 +280,14 @@ BUGS
 char *
 basename (const char *name)
 {
-  const char *base = name;
+	const char *base = name;
 
-  while (*name) {
-      if (*name++ == '/') {
-		  base = name;
-	  }
-  }
-  return (char *) base;
+	while (*name) {
+		if (*name++ == '/') {
+			base = name;
+		}
+	}
+	return (char *) base;
 }
 
 #endif
@@ -297,31 +296,31 @@ basename (const char *name)
 char *
 dirname (char *path)
 {
-  char *newpath;
-  char *slash;
-  int length;                   /* Length of result, not including NUL.  */
- 
-  slash = strrchr (path, '/');
-  if (slash == 0)
-    {
-      /* File is in the current directory.  */
-      path = ".";
-      length = 1;
-    }
-  else
-    {
-      /* Remove any trailing slashes from the result.  */
-      while (slash > path && *slash == '/')
-        --slash;
- 
-      length = slash - path + 1;
-    }
-  newpath = (char *) malloc (length + 1);
-  if (newpath == 0)
-    return 0;
-  strncpy (newpath, path, length);
-  newpath[length] = 0;
-  return newpath;
+	char *newpath;
+	char *slash;
+	int length;                   /* Length of result, not including NUL.  */
+
+	slash = strrchr (path, '/');
+	if (slash == 0)
+		{
+			/* File is in the current directory.  */
+			path = ".";
+			length = 1;
+		}
+	else
+		{
+			/* Remove any trailing slashes from the result.  */
+			while (slash > path && *slash == '/')
+				--slash;
+
+			length = slash - path + 1;
+		}
+	newpath = (char *) malloc (length + 1);
+	if (newpath == 0)
+		return 0;
+	strncpy (newpath, path, length);
+	newpath[length] = 0;
+	return newpath;
 }
 #endif
 
@@ -351,16 +350,16 @@ bcopy (src, dest, len)
   register char *src, *dest;
   int len;
 {
-  if (dest < src)
-    while (len--)
-      *dest++ = *src++;
-  else
-    {
-      char *lasts = src + (len-1);
-      char *lastd = dest + (len-1);
-      while (len--)
-        *(char *)lastd-- = *(char *)lasts--;
-    }
+	if (dest < src)
+		while (len--)
+			*dest++ = *src++;
+	else
+		{
+			char *lasts = src + (len-1);
+			char *lastd = dest + (len-1);
+			while (len--)
+				*(char *)lastd-- = *(char *)lasts--;
+		}
 }
 #endif
 
@@ -402,17 +401,17 @@ bcmp (from, to, count)
   char *from, *to;
   int count;
 {
-  int rtnval = 0;
+	int rtnval = 0;
 
-  while (count-- > 0)
-    {
-      if (*from++ != *to++)
+	while (count-- > 0)
 	{
-	  rtnval = 1;
-	  break;
+		if (*from++ != *to++)
+		{
+			rtnval = 1;
+			break;
+		}
 	}
-    }
-  return (rtnval);
+	return (rtnval);
 }
 #endif
 
@@ -444,39 +443,39 @@ bzero (to, count)
   char *to;
   int count;
 {
-  while (count-- > 0)
-    {
-      *to++ = 0;
-    }
+	while (count-- > 0)
+		{
+			*to++ = 0;
+		}
 }
 
 #endif
 
-#ifndef HAVE_STRDUP 
+#ifndef HAVE_STRDUP
 char *strdup(const char *s1)
 {
-        char *s2;
-        if (s1 == NULL) s1 = "";
+	char *s2;
+	if (s1 == NULL) s1 = "";
 
-        s2 = (char *)malloc(strlen(s1)+1);
-        memcpy(s2,s1,strlen(s1)+1);
-        return(s2);
+	s2 = (char *)malloc(strlen(s1)+1);
+	memcpy(s2,s1,strlen(s1)+1);
+	return(s2);
 }
 
-#endif 
+#endif
 
-#ifndef HAVE_STRNDUP 
+#ifndef HAVE_STRNDUP
 char *strndup(char *s1, int len)
 {
-        char *s2;
-        if (s1 == NULL) s1 = "";
+	char *s2;
+	if (s1 == NULL) s1 = "";
 
-        s2 = (char *)malloc(len+1);
-        memcpy(s2,s1,len);
-		s2[len] = '\0';
-        return(s2);
+	s2 = (char *)malloc(len+1);
+	memcpy(s2,s1,len);
+	s2[len] = '\0';
+	return(s2);
 }
-#endif 
+#endif
 
 void *
 my_realloc(void *ptr, int len)
@@ -495,21 +494,21 @@ void rmrf(const char *path)
 	char target[1024];
 
 	dir = opendir(path);
-   /* eandres: Only delete it if it exists. */
-   if (dir != NULL) {
-	   while((d = readdir(dir)) != NULL) {
-	   	if (strcmp(d->d_name, ".") && strcmp(d->d_name,"..")) {
-	   		sprintf(target, "%s/%s", path, d->d_name);
-	   		unlink(target);
-	   	}
-	   }
-	   closedir(dir);
-	   rmdir(path);
-   }
+	/* eandres: Only delete it if it exists. */
+	if (dir != NULL) {
+		while((d = readdir(dir)) != NULL) {
+			if (strcmp(d->d_name, ".") && strcmp(d->d_name,"..")) {
+				sprintf(target, "%s/%s", path, d->d_name);
+				unlink(target);
+			}
+		}
+		closedir(dir);
+		rmdir(path);
+	}
 }
 
 /*
-** Create a temporary file, using the nameing convention dujour 
+** Create a temporary file, using the nameing convention dujour
 ** Returns NULL if it can't figure one out.
 */
 
@@ -528,60 +527,60 @@ make_temp_file_path()
 
 /** To handle racing issues, since mkstemp does not exist in MINGW **/
 #ifdef __MINGW32__
-	sprintf(dirbuf, "%s", tmpdir);	
+	sprintf(dirbuf, "%s", tmpdir);
 	uretval = GetTempFileName(dirbuf, // directory for tmp files
-				  "dv",        // temp file name prefix 
-				  0,            // create unique name 
-				  pathbuf);  // buffer for name 
+	                          "dv",        // temp file name prefix
+	                          0,            // create unique name
+	                          pathbuf);  // buffer for name
 	if (uretval == 0){
-	    return(NULL);
+		return(NULL);
 	}
 #else
 	sprintf(pathbuf, "%s/XXXXXX", tmpdir);
 	fd = mkstemp(pathbuf);
-        if (fd == -1) {
-	       return(NULL);
-        }
-        close(fd);
+	if (fd == -1) {
+		return(NULL);
+	}
+	close(fd);
 #endif
-        return(strdup(pathbuf));
+	return(strdup(pathbuf));
 }
 
 
-char * 
+char *
 make_temp_file_path_in_dir(char *dir)
 {
-  int fd;
-  int uretval;
-  char dirbuf[2048];
-  char pathbuf[2048];
-  char *tmpdir = getenv("TMPDIR");
-  
-  if (tmpdir == NULL) tmpdir = (char *)"/tmp";
-  if (dir != NULL) tmpdir = dir;
-  
+	int fd;
+	int uretval;
+	char dirbuf[2048];
+	char pathbuf[2048];
+	char *tmpdir = getenv("TMPDIR");
 
-  
-  /** To handle racing issues, since mkstemp does not exist in MINGW **/
+	if (tmpdir == NULL) tmpdir = (char *)"/tmp";
+	if (dir != NULL) tmpdir = dir;
+
+
+
+	/** To handle racing issues, since mkstemp does not exist in MINGW **/
 #ifdef __MINGW32__
-  sprintf(dirbuf, "%s", tmpdir);	
-  uretval = GetTempFileName(dirbuf, // directory for tmp files
-			    "dv",        // temp file name prefix 
-			    0,            // create unique name 
-			    pathbuf);  // buffer for name 
-  if (uretval == 0){
-    return(NULL);
-  }
+	sprintf(dirbuf, "%s", tmpdir);
+	uretval = GetTempFileName(dirbuf, // directory for tmp files
+	                          "dv",        // temp file name prefix
+	                          0,            // create unique name
+	                          pathbuf);  // buffer for name
+	if (uretval == 0){
+		return(NULL);
+	}
 #else
-  sprintf(pathbuf, "%s/XXXXXX", tmpdir);
-  fd = mkstemp(pathbuf);
-  if (fd == -1) {
-    
-    return(NULL);
-  }
-  close(fd);
-#endif
-  
+	sprintf(pathbuf, "%s/XXXXXX", tmpdir);
+	fd = mkstemp(pathbuf);
+	if (fd == -1) {
 
-  return(strdup(pathbuf));
+		return(NULL);
+	}
+	close(fd);
+#endif
+
+
+	return(strdup(pathbuf));
 }

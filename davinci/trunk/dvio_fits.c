@@ -136,7 +136,7 @@ int filter_kw(const char *kw) {
 			strcat(regex, "|");
 		for (i = 0; i < (sizeof(num_sfx_kw) / sizeof(char *)); i++) {
 			if (i > 0)
-			strcat(regex, "|");
+				strcat(regex, "|");
 			strcat(regex, num_sfx_kw[i]);
 			strcat(regex, "[0-9][0-9]*");
 		}
@@ -151,8 +151,7 @@ int filter_kw(const char *kw) {
 		}
 	}
 
-	if (regexec(&preg, kw, sizeof(pmatch) / sizeof(regmatch_t), pmatch, 0)
-			== 0) {
+	if (regexec(&preg, kw, sizeof(pmatch) / sizeof(regmatch_t), pmatch, 0) == 0) {
 		return 1;
 	}
 
@@ -448,9 +447,7 @@ static int collect_table_specs(Var *s, struct tbl_specs *t) {
 
 	strcpy(ext_type, GET_KEY_VAL_STRING(s, KW_EXT, d, ""));
 	unquote_remove_spaces(ext_type);
-	t->tbltype =
-			ext_type == NULL || strcasecmp(ext_type, VAL_EXT_TABLE) == 0 ?
-					ASCII_TBL : BINARY_TBL;
+	t->tbltype = (!ext_type[0] || !strcasecmp(ext_type, VAL_EXT_TABLE)) ? ASCII_TBL : BINARY_TBL;
 
 	t->tblname = null_safe_strdup(GET_KEY_VAL_STRING(s, KW_EXT_NAME, d, NULL));
 	if (t->tblname != NULL) {
@@ -1203,8 +1200,8 @@ int WriteSingleStructure(fitsfile *fptr, Var *obj, int index) {
 	Var *element = NULL, *d;
 	static Var *lastVar = NULL;
 	int i;
-	static wroteDataItem = 0;
-	static headerOnly = 0;
+	static int wroteDataItem = 0;
+	static int headerOnly = 0;
 	int count;
 	char *obj_name;
 	int has_data_subel = 0;

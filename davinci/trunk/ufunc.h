@@ -4,14 +4,14 @@
 typedef struct {
 	char *text;
 	char *name;
-	char *body;		/* body is part of f->text.  Dont free it */
-	char *argbuf;	/* holder for memory used in f->args */
+	char *body;     /* body is part of f->text.  Dont free it */
+	char *argbuf;   /* holder for memory used in f->args */
 	char **args;
 	int nargs;
 	int min_args;
 	int max_args;
 	int ready;
-	Var *tree;		/* code tree */
+	Var *tree;      /* code tree */
 	char *fname;
 	int fline;
 } UFUNC;

@@ -18,9 +18,9 @@ Var *HasValue(vfuncptr func, Var *arg)
 
   make_args(&ac, &av, func, arg);
   if (ac == 2 && (v = eval(av[1])) != NULL) {
-    return(newInt(1));
+    return newInt(1);
   }
-  return(newInt(0));
+  return newInt(0);
 }
 
 
@@ -34,12 +34,12 @@ Var *rm_symtab(Var *v)
   Scope *scope = scope_tos();
   Symtable *s, *t;
 
-  if (scope->symtab == NULL) return(NULL);
+  if (scope->symtab == NULL) return NULL;
   if (scope->symtab->value == v) {
     s = scope->symtab;
     scope->symtab = s->next;
     free(s);
-    return(v);
+    return v;
   } else {
     for (s = scope->symtab ; s->next != NULL ; s = s->next) {
       if (s->next->value == v) {
@@ -47,11 +47,11 @@ Var *rm_symtab(Var *v)
         s->next = t->next;
         t->next = NULL;
         free(t);
-        return(v);
+        return v;
       }
     }
   }
-  return(NULL);
+  return NULL;
 }
 
 Var *ff_delete(vfuncptr func, Var *arg)
@@ -184,8 +184,8 @@ Var *put_global_sym(Var *s)
 
 Var *eval(Var *v)
 {
-  if (v == NULL) return(NULL);
-  switch(V_TYPE(v)){
+  if (v == NULL) return NULL;
+  switch (V_TYPE(v)) {
   case ID_STRING:
   case ID_VAL:
   case ID_STRUCT:

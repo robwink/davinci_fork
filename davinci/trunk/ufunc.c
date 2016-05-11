@@ -9,6 +9,8 @@
  ** Find split and verify args.
  **/
 
+//TODO(rswinkle) use vector_void for this
+//too many custom one off vectors/stacks in davinci
 UFUNC **ufunc_list = NULL;
 int nufunc = 0;
 int ufsize = 16;
@@ -26,9 +28,9 @@ locate_ufunc(const char *name)
 {
 	int i;
 	for (i = 0 ; i < nufunc ; i++) {
-		if (!strcmp(ufunc_list[i]->name, name)) return(ufunc_list[i]);
+		if (!strcmp(ufunc_list[i]->name, name)) return ufunc_list[i];
 	}
-	return(NULL);
+	return NULL;
 }
 
 int
@@ -40,10 +42,10 @@ destroy_ufunc(const char *name)
 			free_ufunc(ufunc_list[i]);
 			ufunc_list[i] = ufunc_list[nufunc-1];
 			nufunc--;
-			return(1);
+			return 1;
 		}
 	}
-	return(0);
+	return 0;
 }
 
 void
@@ -127,7 +129,7 @@ load_function(char *filename)
 	 **/
 	if (stat(filename, &sbuf) != 0) {
 		fprintf(stderr, "Internal error: load_function, no file\n");
-		return(NULL);
+		return NULL;
 	}
 	buf = (char *)calloc(1, sbuf.st_size+1);
 	fp = fopen(filename, "rb");
@@ -144,7 +146,7 @@ load_function(char *filename)
 	if (strncasecmp(str, "define", 6)) {
 		free(buf);
 		fprintf(stderr, "Internal error: load_function, no 'define' in file\n");
-		return(NULL);
+		return NULL;
 	}
 	str += 6;
 	while(*str && isspace(*str)) str++;
@@ -158,14 +160,13 @@ load_function(char *filename)
 
 		list_funcs();
 
-		return(NULL);
+		return NULL;
 	}
 	name[nlen] = '\0';
 	if (!(isalpha(*name) || *name == '_')) {
-		sprintf(error_buf,"Function name must begin with a letter: %s", name);
-		parse_error(NULL);
+		parse_error("error: Function name must begin with a letter: %s\n", name);
 		free(buf);
-		return(NULL);
+		return NULL;
 	}
 
 	f = (UFUNC *)calloc(1, sizeof(UFUNC));
@@ -197,7 +198,7 @@ load_function(char *filename)
 			free(f->name);
 			free(f->text);
 			free(f);
-			return(NULL);
+			return NULL;
 		}
 	}
 
@@ -238,7 +239,7 @@ load_function(char *filename)
 				}
 				if (f->max_args != -1 && f->min_args > f->max_args) {
 					parse_error("min_args > max_args.\n");
-					return(f);
+					return f;
 				}
 			}
 			/**
@@ -246,15 +247,13 @@ load_function(char *filename)
 			 **/
 			for (i = 0 ; i < f->nargs ; i++) {
 				if (!(isalpha(f->args[i][0]))) {
-					sprintf(error_buf, "Illegal argument name: %s", f->args[i]);
-					parse_error(NULL);
-					return(f);
+					parse_error("error: Illegal argument name: %s\n", f->args[i]);
+					return f;
 				}
 				for (j = 0 ; j < strlen(f->args[i]) ; j++) {
 					if (!(isalnum(f->args[i][j]) || f->args[i][j] == '_')) {
-						sprintf(error_buf, "Illegal argument name: %s", f->args[i]);
-						parse_error(NULL);
-						return(f);
+						parse_error("error: Illegal argument name: %s\n", f->args[i]);
+						return f;
 					}
 				}
 			}
@@ -262,18 +261,16 @@ load_function(char *filename)
 			/**
 			 ** Next character is not ')'.  Panic.
 			 **/
-			sprintf(error_buf, "function %s, bad args.", f->name);
-			parse_error(NULL);
-			return(f);
+			parse_error("error: function %s, bad args.\n", f->name);
+			return f;
 		}
 	} else {
 		/**
 		 ** If we wanted to be nice to the user, we could spit out the
 		 ** contents of the function named in f->name here.
 		 **/
-		sprintf(error_buf, "loading function %s, no args.", f->name);
-		parse_error(NULL);
-		return(f);
+		parse_error("error: loading function %s, no args.\n", f->name);
+		return f;
 	}
 	str++;
 
@@ -331,7 +328,7 @@ load_function(char *filename)
 	*/
 	pp_line--;
 
-	return(f);
+	return f;
 }
 
 
@@ -388,11 +385,9 @@ dispatch_ufunc(UFUNC *f, Var *arg)
 				}
 			}
 			if (i == f->nargs) {
-				sprintf(error_buf, "Unknown keyword to ufunc: %s(... %s= ...)",
-						f->name, V_NAME(p));
-				parse_error(NULL);
+				parse_error("error: Unknown keyword to ufunc: %s(... %s= ...)\n", f->name, V_NAME(p));
 				free_scope(scope);
-				return(NULL);
+				return NULL;
 			} else {
 				v = V_KEYVAL(p);
 				if ((e = eval(v)) != NULL) v = e;
@@ -404,24 +399,18 @@ dispatch_ufunc(UFUNC *f, Var *arg)
 			argc = dd_put_argv(scope, v);
 
 			if (f->max_args >= 0 && argc > f->max_args) {
-				sprintf(error_buf,
-						"Too many arguments to ufunc: %s().  Only expecting %d",
-						f->name, f->max_args);
-				parse_error(NULL);
+				parse_error("error: Too many arguments to ufunc: %s().  Only expecting %d\n", f->name, f->max_args);
 				dd_unput_argv(scope);
 				free_scope(scope);
-				return(NULL);
+				return NULL;
 			}
 		}
 	}
 	if (f->min_args && (argc = dd_argc(scope)) < f->min_args) {
-		sprintf(error_buf,
-				"Not enough arguments to ufunc: %s().  Expecting %d.",
-				f->name, f->min_args);
-		parse_error(NULL);
+		parse_error("error: Not enough arguments to ufunc: %s().  Expecting %d.\n", f->name, f->min_args);
 		dd_unput_argv(scope);
 		free_scope(scope);
-		return(NULL);
+		return NULL;
 	}
 	/**
 	 ** Okay, now we have dealt with all the args.
@@ -478,12 +467,12 @@ dispatch_ufunc(UFUNC *f, Var *arg)
 		}
 		Darray_add(scope->tmp, v);
 	}
-	return(v);
+	return v;
 }
 
 /**
  ** find ufunc.
- ** Spit to file.
+ ** Split to file.
  ** Call editor.
  ** Check file time, and reload if newer.
  **/
@@ -507,7 +496,7 @@ ufunc_edit(vfuncptr func , Var *arg)
 	** (ie: a function name, unquoted)
 	*/
 
-	if (arg == NULL) return(NULL);
+	if (arg == NULL) return NULL;
 	Narray_get(V_ARGS(arg), 0, NULL, (void **)&function);
 
 	if (V_TYPE(function) == ID_STRING) {
@@ -519,19 +508,19 @@ ufunc_edit(vfuncptr func , Var *arg)
 		/**
 		 ** Numeric arg, call hedit to do history editing()
 		 **/
-		 return(ff_hedit(func,arg));
+		 return ff_hedit(func,arg);
 	} else {
 		if ((name  = V_NAME(function)) == NULL) {
-			return(NULL);
+			return NULL;
 		}
 
-		if ((ufunc = locate_ufunc(name)) == NULL) return(NULL);
+		if ((ufunc = locate_ufunc(name)) == NULL) return NULL;
 
 		fname = make_temp_file_path();
-		if (fname == NULL || (fp = fopen(fname, "w")) == NULL ) {
+		if (fname == NULL || (fp = fopen(fname, "w")) == NULL) {
 			parse_error("%s: unable to open temp file", func->name);
 			if (fname) free(fname);
-			return(NULL);
+			return NULL;
 		}
 		fprintf(fp, "# Original location: %s:%d\n", ufunc->fname, ufunc->fline);
 		fputs(ufunc->text, fp);
@@ -562,7 +551,7 @@ ufunc_edit(vfuncptr func , Var *arg)
 		free(fname);
 	} else if (filename && fname != filename) free(fname);
 
-	return(NULL);
+	return NULL;
 }
 
 void
@@ -584,9 +573,9 @@ ff_global(vfuncptr func, Var * arg)
 	alist[0] = make_alist( "object",    ID_ENUM,    NULL,    &aname);
 	alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return NULL;
 
-	if (aname == NULL) {return(NULL);}
+	if (aname == NULL) {return NULL;}
 
 	if ((e = get_global_sym(aname)) == NULL)  {
 		/*
@@ -594,26 +583,25 @@ ff_global(vfuncptr func, Var * arg)
 		 * If it exists in the local scope, get it and give it's memory
 		 * to the global scope.  Otherwise, create a new value.
 		 */
-		// NOTE(gorelick): passing a string to eval?
-		if ((e = eval(aname)) == NULL) {
+		if ((e = get_sym(aname)) == NULL) {
 			char *zero = (char *)calloc(1,1);
 			e = newVal(BSQ, 1,1,1, BYTE, zero);
 			mem_claim(e);
 			V_NAME(e) = strdup(aname);
+			printf("path 1\n");
+		} else if ((v = rm_symtab(e)) != NULL) {
+			e = v;
+			fprintf(stderr, "path 2\n");
 		} else {
-			if ((v = rm_symtab(e)) != NULL) {
-				e = v;
-			} else {
-				/* Ok, at this point, this named argument exists in the
-				 * local scope, but it has to be in the dd, not the symtab.
-				 * The means it's owned by a parent's scope.  Lets just quit.
-				 */
-				parse_error("error: symbol is not part of the local scope");
-				return(NULL);
-			}
+			/* Ok, at this point, this named argument exists in the
+			 * local scope, but it has to be in the dd, not the symtab.
+			 * The means it's owned by a parent's scope.  Lets just quit.
+			 */
+			parse_error("error: symbol is not part of the local scope");
+			return NULL;
 		}
 		put_global_sym(e);
 	}
 	dd_put(scope_tos(), V_NAME(e), e);
-	return(NULL);
+	return NULL;
 }
