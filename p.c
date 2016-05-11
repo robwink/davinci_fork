@@ -594,16 +594,14 @@ evaluate(Var * n)
             char *input_line = NULL;
             char module_help[256] = { 0 };
             char keyword[256] = { 0 };
+            char* tmp = NULL;
 
             // Support for help
             if (strcmp((V_NAME(p2)), MODULE_HELP) == 0) {
-                sprintf(module_help, getenv("DV_MOD_PATH"));
+                if ((tmp = getenv("DV_MOD_PATH")))
+                    sprintf(module_help, tmp);
 
-/*
-** This will never work.
-*/
-                if (NULL == module_help)        // use default
-                {
+                if (!module_help[0]) {       // use default
                     sprintf(module_help, "/usr/lib/davinci/modules");
                 }
                 sprintf(module_help, "%s/%s.gih", module_help, V_NAME(p3));
@@ -619,8 +617,7 @@ evaluate(Var * n)
                         // if (retval == H_FOUND) return(evaluate(n));
                     }
                 }
-            } else if ((t = find_module_func(&V_MODULE(p3), V_NAME(p2))) !=
-                       NULL) {
+            } else if ((t = find_module_func(&V_MODULE(p3), V_NAME(p2))) != NULL) {
                 p1 = newVar();
                 p1->value.function = t;
                 p1->type = ID_FUNCTION;

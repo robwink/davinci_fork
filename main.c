@@ -407,16 +407,6 @@ void get_file_input(XtPointer client_data, int *fid, XtInputId *id)
 #endif
 
 
-#ifdef INCLUDE_API
-#ifdef __cplusplus
-extern "C" {
-//  extern SetTopLevel(Widget *);
-}
-#else
-//extern SetTopLevel(Widget *);
-#endif
-#endif
-
 
 #ifdef HAVE_XT
 
@@ -500,10 +490,6 @@ event_loop(void)
                                            &argc, argv,
                                            (char**)defaultAppResources, NULL);
 
-//#ifdef INCLUDE_API
-//      /* FIX: what's this for? -JAS */
-//      SetTopLevel(&applicationShell);
-//#endif
     } else {
       /**
        ** This is a hack to let us use the Xt event model, without

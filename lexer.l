@@ -40,6 +40,7 @@ void start_save()
 		return(NULL);
 	}
 	strcpy(save_file, tmp);
+	free(tmp);
 }
 
 void end_save()

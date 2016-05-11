@@ -61,40 +61,40 @@ typedef struct minISISINFO {
 
 typedef struct _IsisCube {
 	// Object == Core
-	char Core[128];		// filename if data in separate file
-	int StartByte;		// offset of the start of data (1 based)
-	int Format;			// Tile or BandSequential, use enum for string value
-	int TileSamples;	// must be non zero if Format == Tile
-	int TileLines;		// must be non zero if Format == Tile
+	char Core[128];     // filename if data in separate file
+	int StartByte;      // offset of the start of data (1 based)
+	int Format;         // Tile or BandSequential, use enum for string value
+	int TileSamples;    // must be non zero if Format == Tile
+	int TileLines;      // must be non zero if Format == Tile
 
 	// Group == Dimensions
-	int Samples;		// These three keywords define
-	int Lines;			// the size of the cube
+	int Samples;        // These three keywords define
+	int Lines;          // the size of the cube
 	int Bands;
 
 	// Group == Pixels
-	int Type;			// UnsignedByte, SignedWord,    Real  <-- These are the three possible descriptive enum's
-						// 0 - 255     , signed 16-bit, 32 bit IEEE float
-						// use enum for string
+	int Type;           // UnsignedByte, SignedWord,    Real  <-- These are the three possible descriptive enum's
+	                    // 0 - 255     , signed 16-bit, 32 bit IEEE float
+	                    // use enum for string
 
-	int ByteOrder;		// Lsb or Msb, use enum for string
-	double Base;		// realDn = diskDN * Multiplier + Base
+	int ByteOrder;      // Lsb or Msb, use enum for string
+	double Base;        // realDn = diskDN * Multiplier + Base
 	double Multiplier;  // These are always 0.0 and 1.0 for Type == Real
 
 	// Group == Instrument
 
-    char SpacecraftName[128];       // the name of the space craft
-    char InstrumentId[128];         // the name of the instrument
-    char TargetName[128];           // the name of the target
-    char MissionPhaseName[128];     // the name of the mission phase
-    char StartTime[128];            // start time as string
-    char StopTime[128];             // stop time as string
-    char SpacecraftClockCount[128]; // Example I had was 699921894.230, I'm gonna try a string
-    int GainNumber;                 // Gain as int
-    int OffsetNumber;               // Offset as int
-    int MissingScanLines;           // missing as int
-    char TimeDelayIntegration[64];  // Delay integration as string
-    double SpacecraftClockOffset;   // I'm going to try a double here
+	char SpacecraftName[128];       // the name of the space craft
+	char InstrumentId[128];         // the name of the instrument
+	char TargetName[128];           // the name of the target
+	char MissionPhaseName[128];     // the name of the mission phase
+	char StartTime[128];            // start time as string
+	char StopTime[128];             // stop time as string
+	char SpacecraftClockCount[128]; // Example I had was 699921894.230, I'm gonna try a string
+	int GainNumber;                 // Gain as int
+	int OffsetNumber;               // Offset as int
+	int MissingScanLines;           // missing as int
+	char TimeDelayIntegration[64];  // Delay integration as string
+	double SpacecraftClockOffset;   // I'm going to try a double here
 
 
 	// Group == AlphaCube
@@ -102,7 +102,7 @@ typedef struct _IsisCube {
 	int AlphaLines;
 
 	// Group == Archive
-	char ImageNumber[128];			// Optional keywords that identify archival information
+	char ImageNumber[128];          // Optional keywords that identify archival information
 	char ProductId[128];
 	char DataSetId[128];
 	char ProducerId[128];
@@ -125,36 +125,35 @@ typedef struct _IsisCube {
 	char BandBinFilterNumber[256];
 
 	// Group == Mapping
-	char	Mapping_ProjectionName[128];
-	char	Mapping_TargetName[128];
-	double	Mapping_EquatorialRadius;
-	char	Mapping_EquatorialRadiusUnits[128];
-	double	Mapping_PolarRadius;
-	char	Mapping_PolarRadiusUnits[128];
-	char	Mapping_LatitudeType[128];
-	char	Mapping_LongitudeDirection[128];
-	double	Mapping_LongitudeDomain;
-	double	Mapping_MinimumLatitude;
-	double	Mapping_MaximumLatitude;
-	double	Mapping_MinimumLongitude;
-	double	Mapping_MaximumLongitude;
-	double	Mapping_PixelResolution;
-	char	Mapping_PixelResolutionUnits[128];
-	double	Mapping_Scale;
-	char	Mapping_ScaleUnits[128];
-	double	Mapping_TrueScaleLatitude;
-	double	Mapping_CenterLongitude;
-	double	Mapping_LineProjectionOffset;
-	double	Mapping_SampleProjectionOffset;
-	double	Mapping_UpperLeftCornerX;
-	char	Mapping_UpperLeftCornerXUnits[128];
-	double	Mapping_UpperLeftCornerY;
-	char	Mapping_UpperLeftCornerYUnits[128];
+	char    Mapping_ProjectionName[128];
+	char    Mapping_TargetName[128];
+	double  Mapping_EquatorialRadius;
+	char    Mapping_EquatorialRadiusUnits[128];
+	double  Mapping_PolarRadius;
+	char    Mapping_PolarRadiusUnits[128];
+	char    Mapping_LatitudeType[128];
+	char    Mapping_LongitudeDirection[128];
+	double  Mapping_LongitudeDomain;
+	double  Mapping_MinimumLatitude;
+	double  Mapping_MaximumLatitude;
+	double  Mapping_MinimumLongitude;
+	double  Mapping_MaximumLongitude;
+	double  Mapping_PixelResolution;
+	char    Mapping_PixelResolutionUnits[128];
+	double  Mapping_Scale;
+	char    Mapping_ScaleUnits[128];
+	double  Mapping_TrueScaleLatitude;
+	double  Mapping_CenterLongitude;
+	double  Mapping_LineProjectionOffset;
+	double  Mapping_SampleProjectionOffset;
+	double  Mapping_UpperLeftCornerX;
+	char    Mapping_UpperLeftCornerXUnits[128];
+	double  Mapping_UpperLeftCornerY;
+	char    Mapping_UpperLeftCornerYUnits[128];
 
 } Isis3Cube;
 
 typedef struct _HistoryObject { // "History", "OriginalLabel"
-
 	char Name[128]; // "IsisCube" most likely
 	int StartByte;
 	int Bytes;
@@ -170,8 +169,8 @@ typedef struct _LabelObject {
 
 struct stringStack /* Structure definition for a string stack */
 {
-char *stk[5]; // stack is 5 deep
-int top;
+	char *stk[5]; // stack is 5 deep
+	int top;
 };
 
 typedef struct stringStack STRINGSTACK;
