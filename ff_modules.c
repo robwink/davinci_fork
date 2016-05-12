@@ -919,20 +919,6 @@ locate_dv_module(
 
 	dv_mod_path_save = dv_mod_path = getenv(DV_MOD_PATH_ENV);
 
-	/*
-	** Always make a copy of the original string. We are going
-	** to do some destructive stuff on it.
-	** Q: since when does making a copy of a pointer to a string make
-	**    a copy of the string itself?  If we're doing strtok games on
-	**    dv_mod_path or its aliases down the call chain, we are playing
-	**    a dangerous game indeed since getenv() returns a pointer to the
-	**    actual environment!  I don't have time to fully audit this code
-	**    but it looks EXTREMELY dangerous to me, offhand. -rsk 9 May 2002
-    **
-	** Well, those stdups below here look an awful lot like they're
-	** making copies to me.  -nsg June 10, 2004.
-	*/
-
 	if (dv_mod_path == NULL){
 		if (debug > DEBUG_THRESHOLD){
 			parse_error("%s env is not set using default path %s.",
@@ -1246,7 +1232,7 @@ init_dv_module(
                                            DV_MODULE_INIT_FUNC_NAME);
 	if (init_func == NULL){
 		parse_error("Cannot find module init function %s for %s. Reason: %s.",
-			DV_MODULE_INIT_FUNC_NAME, m->name, strerror(errno));
+		            DV_MODULE_INIT_FUNC_NAME, m->name, strerror(errno));
 		return 0; /* error */
 	}
 
@@ -1341,8 +1327,7 @@ load_dv_module_functions(
 		*/
 		fptr = make_vfuncptr(func_name, (vfunc)func_ptr, NULL);
 		if (fptr == NULL){
-			parse_error("Mem allocation error, while loading %s.",
-						mod_name);
+			parse_error("Mem allocation error, while loading %s.", mod_name);
 
 			/*
 			** This will lead to a partial module function

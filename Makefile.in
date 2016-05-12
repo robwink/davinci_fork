@@ -108,21 +108,20 @@ am_libdavinci_la_OBJECTS = apifunc.lo array.lo avl.lo binDCT.lo \
 	ff_filetype.lo ff_fncc.lo ff_gnoise.lo ff_gplot.lo ff_vplot.lo \
 	ff_header.lo ff_hstretch.lo ff_ifill.lo ff_interp.lo ff_ix.lo \
 	ff_load.lo ff_loadvan.lo ff_meta.lo ff_ramp.lo ff_filter.lo \
-	ff_moment.lo ff_pause.lo ff_pbm.lo ff_pca.lo ff_plplot.lo \
-	ff_projection.lo ff_random.lo ff_raw.lo ff_rgb.lo ff_rice.lo \
-	ff_shade.lo ff_slant.lo ff_sort.lo ff_source.lo ff_struct.lo \
-	ff_text.lo ff_version.lo ff_vignette.lo ff_write.lo ff_xfrm.lo \
-	fft.lo fft2f.lo fft_mayer.lo fit.lo ff_coreg.lo \
-	ff_boxfilter.lo ff_bin5.lo ff_transform.lo ff_blend.lo \
-	ff_unpack.lo header.lo ff_resample.lo help.lo init.lo \
-	cvector.lo isis_obj.lo globals.lo matrix.lo misc.lo \
-	motif_tools.lo newfunc.lo p.lo pp.lo pp_math.lo printf.lo \
-	reserved.lo rfunc.lo rice.lo rpos.lo scope.lo spread.lo \
-	string.lo symbol.lo system.lo tools.lo ufunc.lo util.lo x.lo \
-	xrt_print_3d.lo lexer.lo parser.lo ff_gconvolve.lo ff_warp.lo \
-	ff_median.lo ff_radial.lo ff_window.lo dvio_fits.lo \
-	ff_extract.lo dvio_tdb.lo url_create_file.lo ff_filesystem.lo \
-	ff_grassfire.lo libcsv.lo
+	ff_moment.lo ff_pause.lo ff_pbm.lo ff_pca.lo ff_projection.lo \
+	ff_random.lo ff_raw.lo ff_rgb.lo ff_rice.lo ff_shade.lo \
+	ff_slant.lo ff_sort.lo ff_source.lo ff_struct.lo ff_text.lo \
+	ff_version.lo ff_vignette.lo ff_write.lo ff_xfrm.lo fft.lo \
+	fft2f.lo fft_mayer.lo fit.lo ff_coreg.lo ff_boxfilter.lo \
+	ff_bin5.lo ff_transform.lo ff_blend.lo ff_unpack.lo header.lo \
+	ff_resample.lo help.lo init.lo cvector.lo isis_obj.lo \
+	globals.lo matrix.lo misc.lo motif_tools.lo newfunc.lo p.lo \
+	pp.lo pp_math.lo printf.lo reserved.lo rfunc.lo rice.lo \
+	rpos.lo scope.lo spread.lo string.lo symbol.lo system.lo \
+	tools.lo ufunc.lo util.lo x.lo xrt_print_3d.lo lexer.lo \
+	parser.lo ff_gconvolve.lo ff_warp.lo ff_median.lo ff_radial.lo \
+	ff_window.lo dvio_fits.lo ff_extract.lo dvio_tdb.lo \
+	url_create_file.lo ff_filesystem.lo ff_grassfire.lo libcsv.lo
 libdavinci_la_OBJECTS = $(am_libdavinci_la_OBJECTS)
 libdavinci_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
@@ -357,8 +356,8 @@ EXTRA_DIST = README.modules README_FF docs gplot.c lexer.l lib moddvmagick parse
 AM_CPPFLAGS = -DDVHELP=\"$(DVHELP)\" $(am__append_1)
 @MODULE_SUPPORT_TRUE@MY_MODULES_LIB = libmodsupp.a
 @LOCAL_READLINE_TRUE@MY_READLINE_LDADD = readline/libreadline.a
-@HAVE_LIBIBERTY_TRUE@MINGW32_LIBIBERTY_LDADD = -liberty	
-@HAVE_LIBREGEX_TRUE@MINGW32_LIBREGEX_LDADD = -lregex	
+@HAVE_LIBIBERTY_TRUE@MINGW32_LIBIBERTY_LDADD = -liberty
+@HAVE_LIBREGEX_TRUE@MINGW32_LIBREGEX_LDADD = -lregex
 @HAVE_LIBWSOCK32_TRUE@MINGW32_LIBWSOCK32_LDADD = -lwsock32
 MY_LIBLTDLC_LDADD = -Llibltdl -lltdlc
 MY_IOMEDLEY_LDADD = -Liomedley -liomedley
@@ -370,7 +369,7 @@ lib_LTLIBRARIES = libdavinci.la
 libdavinci_la_LIBADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULES_LIB)  \
 		$(MINGW32_LIBREGEX_LDADD) $(MINGW32_LIBWSOCK32_LDADD) $(MINGW32_LIBIBERTY_LDADD) $(MY_LIBLTDLC_LDADD)
 
-libdavinci_la_LDFLAGS = -version-info @LIB_CURRENT@:@LIB_REVISION@:@LIB_AGE@ 
+libdavinci_la_LDFLAGS = -version-info @LIB_CURRENT@:@LIB_REVISION@:@LIB_AGE@
 libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	darray.c \
 	dct.c deghost.C dvio.c dvio_ascii.c \
@@ -383,7 +382,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ff_fft.c ff_filetype.c ff_fncc.c ff_gnoise.c ff_gplot.c ff_vplot.c\
 	ff_header.c ff_hstretch.c ff_ifill.c ff_interp.c ff_ix.c \
 	ff_load.c ff_loadvan.c ff_meta.c ff_ramp.c ff_filter.c\
-	ff_moment.c ff_pause.c ff_pbm.c ff_pca.c ff_plplot.c \
+	ff_moment.c ff_pause.c ff_pbm.c ff_pca.c \
 	ff_projection.c ff_random.c ff_raw.c ff_rgb.c ff_rice.c \
 	ff_shade.c ff_slant.c ff_sort.c ff_source.c ff_struct.c \
 	ff_text.c ff_version.c ff_vignette.c ff_write.c ff_xfrm.c \
@@ -401,7 +400,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ufunc.c util.c \
 	x.c xrt_print_3d.c \
 	XformTable.h darray.h fit.h trigtbl.h api.h dos.h func.h \
-	ufunc.h api_extern_defs.h dvio.h dvio_pds4.h header.h \
+	ufunc.h dvio.h dvio_pds4.h header.h \
 	proto.h version.h apidef.h dvio_specpr.h help.h rfunc.h \
 	xrt_print_3d.h avl.h endian_norm.h io_loadmod.h scope.h \
 	ff.h isis_obj.h system.h ff_modules.h module_io.h \
@@ -645,7 +644,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_pause.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_pbm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_pca.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_plplot.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_projection.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_radial.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_ramp.Plo@am__quote@

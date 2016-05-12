@@ -39,11 +39,11 @@ if LOCAL_READLINE
 endif
 
 if HAVE_LIBIBERTY
-  MINGW32_LIBIBERTY_LDADD = -liberty	
+  MINGW32_LIBIBERTY_LDADD = -liberty
 endif
 
 if HAVE_LIBREGEX
-  MINGW32_LIBREGEX_LDADD = -lregex	
+  MINGW32_LIBREGEX_LDADD = -lregex
 endif
 
 if HAVE_LIBWSOCK32
@@ -74,7 +74,7 @@ libdavinci_la_LIBADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULES_LI
 
 ##See configure.ac for libdavinci version
 ##libdavinci_la_LDFLAGS =  -version-info @LIB_CURRENT@:@LIB_REVISION@:@LIB_AGE@ -shrext .so
-libdavinci_la_LDFLAGS =  -version-info @LIB_CURRENT@:@LIB_REVISION@:@LIB_AGE@ 
+libdavinci_la_LDFLAGS =  -version-info @LIB_CURRENT@:@LIB_REVISION@:@LIB_AGE@
 
 libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	darray.c \
@@ -88,7 +88,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ff_fft.c ff_filetype.c ff_fncc.c ff_gnoise.c ff_gplot.c ff_vplot.c\
 	ff_header.c ff_hstretch.c ff_ifill.c ff_interp.c ff_ix.c \
 	ff_load.c ff_loadvan.c ff_meta.c ff_ramp.c ff_filter.c\
-	ff_moment.c ff_pause.c ff_pbm.c ff_pca.c ff_plplot.c \
+	ff_moment.c ff_pause.c ff_pbm.c ff_pca.c \
 	ff_projection.c ff_random.c ff_raw.c ff_rgb.c ff_rice.c \
 	ff_shade.c ff_slant.c ff_sort.c ff_source.c ff_struct.c \
 	ff_text.c ff_version.c ff_vignette.c ff_write.c ff_xfrm.c \
@@ -106,7 +106,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ufunc.c util.c \
 	x.c xrt_print_3d.c \
 	XformTable.h darray.h fit.h trigtbl.h api.h dos.h func.h \
-	ufunc.h api_extern_defs.h dvio.h dvio_pds4.h header.h \
+	ufunc.h dvio.h dvio_pds4.h header.h \
 	proto.h version.h apidef.h dvio_specpr.h help.h rfunc.h \
 	xrt_print_3d.h avl.h endian_norm.h io_loadmod.h scope.h \
 	ff.h isis_obj.h system.h ff_modules.h module_io.h \

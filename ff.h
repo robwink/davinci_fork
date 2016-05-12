@@ -262,16 +262,6 @@ struct _vfuncptr vfunclist[] = {
   { "pnmcut",         ff_cut,                 NULL, NULL},
   { "pnmcrop",        ff_crop,                NULL, NULL},
 
-#ifdef INCLUDE_API
-  { "popen",   ff_popen,   NULL, NULL},
-  { "pprint",  ff_pprint,  NULL, NULL},
-  { "pplot",   ff_pplot,   NULL, NULL},
-  { "ptext",   ff_ptext,   NULL, NULL},
-  { "pline",   ff_pline,   NULL, NULL},
-  { "pbox",    ff_pbox,    NULL, NULL},
-  { "pzoom",   ff_pzoom,   NULL, NULL},
-#endif
-
 #if 0
   { "projection", ff_projection,   NULL , NULL},
 #endif

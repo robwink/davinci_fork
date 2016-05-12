@@ -82,7 +82,7 @@ esac
 
 case $host in
 	*-*-darwin*)
-		if test "x$enable_aqua" != "xno" ; then 
+		if test "x$enable_aqua" != "xno" ; then
 			echo "Configuring with aqua"
 			AC_DEFINE(HAVE_AQUA, 1, [ Use aqua instead of X11 ])
 		else
@@ -160,9 +160,16 @@ fi
 
 
 
-AC_CHECK_LIB(xml2, xmlFileRead, [have_libxml2=yes CFLAGS="$CFLAGS `xml2-config --cflags`"], [have_libxml2=no])
-if [ have_libxml2 == "yes" ]; then
+AC_CHECK_LIB(xml2, xmlFileRead, [have_libxml2=yes], [have_libxml2=no])
+if [[ "$have_libxml2" == "yes" ]]; then
+
+	#NOTE(rswinkle) this needs to be before CHECK_HEADER or it won't find it parser.h
+	CFLAGS="$CFLAGS `xml2-config --cflags`"
+
 	AC_CHECK_HEADER([libxml/parser.h], [have_xml2_headers=yes], AC_MSG_ERROR([Could not find parser.h]))
+	AC_DEFINE(HAVE_LIBXML2, 1, [ if you have libxml2 ])
+
+	LIBS="$LIBS `xml2-config --libs`"
 fi
 
 #check for cfitsio
@@ -171,14 +178,14 @@ AC_ARG_WITH(cfitsio,
     [LDFLAGS="$LDFLAGS -L$withval/lib" ; CFLAGS="$CFLAGS -I$withval/include"]
 )
 #For some nonstandard installations (make it more flexible)
-AC_CHECK_HEADERS([fitsio.h]) 
+AC_CHECK_HEADERS([fitsio.h])
 
 #The standard location
 AC_CHECK_HEADERS([cfitsio/fitsio.h])
 
 AC_CHECK_LIB(cfitsio, ffopen)
 if test "x$ac_cv_lib_cfitsio_ffopen" = "xyes"; then
-	 if test "x$ac_cv_header_fitsio_h" = "xyes" -o  "x$ac_cv_header_cfitsio_fitsio_h" = "xyes"; then 
+	 if test "x$ac_cv_header_fitsio_h" = "xyes" -o  "x$ac_cv_header_cfitsio_fitsio_h" = "xyes"; then
 				have_cfitsio="yes"
 	 fi
 fi
@@ -194,7 +201,7 @@ AC_ARG_WITH(hdf5,
 # use --with-hdf5 but most people try plain ./configure first
 # and duplicates don't matter iirc
 if [[ "`pkg-config --libs hdf5`" != "" ]]; then
-	LDFLAGS="$LDFLAGS `pkg-config --libs hdf5`"
+	LIBS="$LIBS `pkg-config --libs hdf5`"
 	CFLAGS="$CFLAGS `pkg-config --cflags hdf5`"
 fi
 
@@ -252,7 +259,7 @@ dnl for both if ISIS3 support is desired.
 
 dnl AC_ARG_WITH(isis3,
 dnl     [  --with-isis3=<path>     prefix of isis3 installation. e.g. /mars/common/isis3/PLATFORM/isis, requires Qt 4 and iomedley ], [ ISIS3LDFLAGS="-Xlinker -rpath-link -Xlinker $withval/3rdParty/lib -L$withval/lib -lisis3 -L$withval/3rdParty/lib -lcspice -lgeos -lgslcblas -lgsl -lqwt -lxerces-c" ; ISIS3CFLAGS="-I$withval/inc" ; ISIS3CPPFLAGS="-I$withval/inc" ; ISIS3_SAVE_LDLP=$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$withval/lib:$withval/3rdParty/lib" ; try_isis3="yes" ; ISIS3DIR=$withval ]
-dnl ) 
+dnl )
 dnl have_isis3=no
 dnl if test "$try_isis3" = "yes"; then
 dnl        if test "x$enable_iomedley" = "xno"; then
@@ -275,7 +282,7 @@ dnl                    AC_MSG_RESULT([ISIS3 libraries are missing])
 dnl                fi
 dnl                if test "$have_isis3" = "no"; then
 dnl                    AC_MSG_FAILURE([Needed ISIS3 files are missing. Either configure without ISIS3 support, or point --with-isis3 to a correct ISIS3 installation.])
-dnl                fi              
+dnl                fi
 dnl        else
 dnl                AC_MSG_FAILURE([--with-isis3 cannot work without a working Qt4 install.])
 dnl        fi
@@ -340,19 +347,6 @@ if test "x$enable_libisis" != "xno"; then
 	fi
 fi
 
-dnl Check for plplot library.
-dnl FIX: why two distinct defines here?
-dnl FIX: does the plplot lib have to be pre-pended to $LIBS?
-dnl FIX: disabling all of this for now.
-
-dnl PL_LIB=""
-dnl AC_CHECK_LIB(plplotFX, c_plinit, LIBS="$LIBS -lplplotFX")
-dnl if test "$PL_LIB" != ""
-dnl then
-dnl 	AC_DEFINE(INCLUDE_API, 1, [plplot library is present])
-dnl 	AC_DEFINE(HAVE_PLPLOT, 1, [plplot library is present])
-dnl fi
-
 dnl Check for and configure local readline if not found yet.
 
 AC_ARG_WITH(readline,
@@ -378,7 +372,7 @@ if test "x$have_readline" = "xno" -o "x$need_libhistory" = "xyes"; then
 		dnl this looks a little fishy, but seems to work.
 		dnl this is causing modules to compile against ./readline, which
 		dnl doesn't exist.  At a minimum, this needs something like a ${local}
-		dnl prefix, but modules don't need this at all, so can we remove 
+		dnl prefix, but modules don't need this at all, so can we remove
 		dnl it instead?
 		if test "x$need_libhistory" = "xyes"; then
 			LIBS="$LIBS -L\$(top_srcdir)/readline -lhistory"
@@ -444,48 +438,53 @@ dnl AC_ARG_VAR(GPLOT_CMD, [default gnuplot program])
 dnl AC_ARG_VAR(DVHELP,    [default path for helpfile])
 dnl AC_ARG_VAR(EDITOR,    [default text editor])
 
-AC_ARG_WITH(viewer, 
+AC_ARG_WITH(viewer,
     [  --with-viewer=<path>    Path to image display program (default: xv)],
     [DV_VIEWER=$withval],
     [AC_PATH_PROG(DV_VIEWER, [xv])]
 )
-AC_ARG_WITH(gplot, 
+AC_ARG_WITH(gplot,
     [  --with-gnuplot=<path>   Path to gnuplot program (default: gnuplot) ],
     [GPLOT_CMD=$withval],
 	[AC_PATH_PROG(GPLOT_CMD, [gnuplot])]
 )
-AC_ARG_WITH(editor, 
+AC_ARG_WITH(editor,
     [  --with-editor=<path>    Path to text file editor (default: vim)],
     [EDITOR=$withval],
 	[AC_PATH_PROGS(EDITOR,[vim vi emacs edit])]
 )
-AC_ARG_WITH(help, 
+AC_ARG_WITH(help,
     [  --with-help=<path>      Path to davinci help file (default: DATADIR/davinci/docs/dv.gih)],
     [DVHELP=$withval],
     [DVHELP=${datadir}/davinci/docs/dv.gih]
 )
 
-AC_ARG_WITH(modpath, 
+AC_ARG_WITH(modpath,
     [  --with-modpath=<path>   Path to davinci loadable modules (if enabled) (default: LIBDIR/davinci)],
     [DV_MOD_PATH=$withval],
     [DV_MOD_PATH=${libdir}/davinci]
 )
 
-AC_ARG_WITH(library, 
+AC_ARG_WITH(library,
 	[  --without-library       Don't install Davinci library scripts],
 	[DV_LIBRARY="no"],
 	[AC_CHECK_FILES(library/utils.dvrc, [DV_LIBRARY="yes"],[DV_LIBRARY="no"])]
 )
 AM_CONDITIONAL(DV_LIBRARY, [test "x$DV_LIBRARY" != "xno"])
 
-AC_ARG_WITH(examples, 
+AC_ARG_WITH(examples,
 	[  --without-examples      Don't install Davinci examples],
 	[DV_EXAMPLES="no"],
 	[AC_CHECK_FILES(examples/day_maps_final.vicar,[DV_EXAMPLES="yes"],[DV_EXAMPLES="no"])]
 )
 AM_CONDITIONAL(DV_EXAMPLES, [test "x$DV_EXAMPLES" != "xno"])
 
-
+dnl We should just delete this whole system.  only mod_foo, an examlpe module uses
+dnl it now.  Everything else uses modules_io
+AC_ARG_ENABLE(api, AC_HELP_STRING([--enable-api], [enable api support.]))
+if [[ "$enable_api" == "yes" ]]; then
+	AC_DEFINE(INCLUDE_API, 1, [ include api support])
+fi
 
 
 
