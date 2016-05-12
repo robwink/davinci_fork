@@ -127,7 +127,7 @@
 /* Define to 1 if you have the `Xm' library (-lXm). */
 #undef HAVE_LIBXM
 
-/* Define to 1 if you have the `xml2' library (-lxml2). */
+/* if you have libxml2 */
 #undef HAVE_LIBXML2
 
 /* Define to 1 if you have the `Xmu' library (-lXmu). */
@@ -248,6 +248,9 @@
 
 /* headers and libraries for X11 and Xt */
 #undef HAVE_XT
+
+/* include api support */
+#undef INCLUDE_API
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */

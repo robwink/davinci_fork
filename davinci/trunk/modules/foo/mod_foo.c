@@ -20,10 +20,10 @@ static dvModuleInitStuff is = {
 int dv_module_init(const char *name, dvModuleInitStuff *init_stuff)
 {
     *init_stuff = is;
-    
+
     parse_error("Loaded module foo.");
-	parse_error("This module uses the function wrapper api to show how external ");
-	parse_error("libraries can be wrapped to make a davinci module.");
+    parse_error("This module uses the function wrapper api to show how external ");
+    parse_error("libraries can be wrapped to make a davinci module.");
 
     return 1; /* return initialization success */
 
@@ -74,7 +74,7 @@ static const APIDEFS foo_apidefs[] = {
 void
 dv_module_fini(const char *name)
 {
-  parse_error("Unloaded module foo.");
+	parse_error("Unloaded module foo.");
 }
 
 

@@ -87,19 +87,6 @@ void event_loop(void);
 
 char ** dv_complete_func(const char *text, int start, int end);
 
-#if 0
-/* JAS FIX: these are all declared in readline.h and as far as I can tell
-   they are not used unless readline is present. */
-
-CPPFunction * rl_attempted_completion_function;
-
-#ifdef USE_X11_EVENTS
-void rl_callback_read_char();
-void rl_callback_handler_install(char *, void (*)(char *));
-#endif
-
-#endif
-
 jmp_buf env;
 
 void user_sighandler(int data)
@@ -794,10 +781,6 @@ init_history(char *fname)
   char buf[2048];
   FILE *fp;
 
-  /* JAS FIX: what's up with the two empty if/endif below? */
-#ifdef HAVE_LIBREADLINE
-#endif
-
   if ((fp = fopen(fname, "r")) == NULL)
     return;
   printf("loading history\n");
@@ -808,8 +791,6 @@ init_history(char *fname)
     buf[strlen(buf) - 1] = '\0';
     add_history((char *)buf);
   }
-#if 0
-#endif
 }
 
 

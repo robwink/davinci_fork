@@ -408,16 +408,6 @@ Var *ff_add_struct(vfuncptr func, Var *arg);
 Var *ff_get_struct(vfuncptr func, Var *arg);
 
 
-#ifdef INCLUDE_API
-Var *ff_popen(vfuncptr func, Var * arg);
-Var *ff_pprint(vfuncptr func, Var * arg);
-Var *ff_pplot(vfuncptr func, Var * arg);
-Var *ff_ptext(vfuncptr func, Var * arg);
-Var *ff_pline(vfuncptr func, Var * arg);
-Var *ff_pbox(vfuncptr func, Var * arg);
-Var *ff_pzoom(vfuncptr func, Var * arg);
-#endif
-
 Var *ff_struct(vfuncptr func, Var *arg);
 Var *ff_get_struct_key(vfuncptr func, Var* arg);
 
