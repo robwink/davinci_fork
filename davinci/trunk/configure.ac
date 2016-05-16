@@ -158,7 +158,49 @@ if test "x$have_libpng2" = "xyes"; then
 	AC_DEFINE(HAVE_LIBPNG, 1, [ if you have libpng] )
 fi
 
-
+dnl AC_ARG_WITH(libxml2,
+dnl     [  --with-libxml2=<path>      prefix of libxml2 libraries. e.g. /usr/lib or /usr/lib64],
+dnl     [LDFLAGS="$LDFLAGS -L$withval" ; enable_libxml2=$withval]
+dnl )
+dnl 
+dnl AC_ARG_WITH(libxml2_hdr,
+dnl     [  --with-libxml2_hdr=<path>      prefix of libxml2 headers. e.g. /usr/include/libxml2],
+dnl     [CFLAGS="$CFLAGS -I$withval" ; enable_xml2_headers=$withval]
+dnl )
+dnl 
+dnl if test "x$enable_libxml2" != "xno" -a "x$enable_libxml2" != "xyes" -a "x$enable_libxml2" != "x"; then
+dnl 	xml2_lib=$enable_libxml2
+dnl fi
+dnl 
+dnl if test "x$enable_xml2_headers" != "xno" -a "x$enable_xml2_headers" != "xyes" -a "x$enable_xml2_headers" != "x"; then
+dnl 	xml2_headers=$enable_xml2_headers
+dnl fi
+dnl 
+dnl dnl If libxml2 is supposed to be used, then check for its existance
+dnl 
+dnl if test "x$enable_libxml2" != "xno" -a "x$enable_libxml2" != "xyes" -a "x$enable_libxml2" != "x" -a "x$enable_xml2_headers" != "xno" -a "x$enable_xml2_headers" != "xyes" -a "x$enable_xml2_headers" != "x"; then
+dnl 
+dnl 	dnl Check for existance of libxml2
+dnl 	have_libxml2=yes
+dnl 	have_xml2_headers=no
+dnl 		
+dnl 	AC_CHECK_HEADER([libxml/parser.h], [have_xml2_headers=yes], [have_xml2_headers=no])
+dnl 	
+dnl 	AC_CHECK_LIB(xml2, xmlFileRead,
+dnl 				 [LIBS="$LIBS -lxml2 "],
+dnl 				 [have_libxml2=no],
+dnl 				 [])
+dnl 
+dnl 	if test "x$have_libxml2" = "xyes" -a "x$have_xml2_headers" = "xyes"; then
+dnl AC_MSG_WARN(HAVE_LIBXML2)
+dnl 	
+dnl 		AC_DEFINE(HAVE_LIBXML2, 1, [ headers and libraries for libxml2 ])
+dnl 	else
+dnl 		LDFLAGS=$LDFLAGS_SAVE;
+dnl 		CFLAGS=$CFLAGS_SAVE;
+dnl 		LIBS=$LIBS_SAVE;
+dnl 	fi
+dnl fi
 
 AC_CHECK_LIB(xml2, xmlFileRead, [have_libxml2=yes], [have_libxml2=no])
 if [[ "$have_libxml2" == "yes" ]]; then
@@ -527,13 +569,13 @@ PRINT_YES_NO() {
         answer="No"
       fi
   fi
-  echo "$1:  ${answer}"
-  echo "printf(\"$1:  ${answer}\\n\");" >> build_summary
+  printf "%s\n" "$1:  ${answer}"
+  printf "%s\n" "printf(\"$1:  ${answer}\n\");" >> build_summary
 }
 
 PRINT() {
-	echo "$1"
-	echo "printf(\"$1\\n\");" >> build_summary
+	printf "%s\n" "$1"
+	printf "%s\n" "printf(\"$1\n\");" >> build_summary
 }
 
 rm -f build_summary
