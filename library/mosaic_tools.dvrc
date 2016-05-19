@@ -1,0 +1,862 @@
+mosaic_tools_version=1.04
+
+# modified to take geo options c. edwards
+# Tue Jul 30 12:07:34 PDT 2013
+#
+# modified to take isisversion arguments
+# Mon Jul 13 14:34:51 MST 2009
+#
+# This file contains the most up-to-date davinci functions to process and create mosaics.
+# This file is meant to be a repository.  Please update this comment section when adding or fixing functions.
+# Thu Jan 26 15:56:53 MST 2006 - cse/kjn
+#
+# Fixed level_adjust and uses different syntax.  Already updated in mosaic.dv. 
+# Thu Jul 20 13:50:16 MST 2006 - kjn
+#
+# FUNCTION LIST:
+#	load_coreg  	- loads the coreg file containing coregistration values. - n.gorelick
+#	bounding_box  	- calculates bounding box of all cubes in file_list. - n.gorelick
+# bounding_box2   - calculates bounding box of all cubes in file_list in a defined directory - c.edwards
+# mos_bounds   	- returns the extent of all the cubes in file_list in a defined directory - c.edwards
+#	do_coreg  	- calculates coregistration for input. - n.gorelick
+#	do_coreg2  	- calculates coregistration for input. - c.edwards/k.nowicki
+#	blend   	- another blend function using different ramp algorithm. - k.nowicki
+#	blendx  	- blends two images together and inserts into mosaic. - n.gorelick
+#	level_adjust  	- performs linear fit to match levels of two v_objects. - k.nowicki
+#	line_match  	- matches two images line by line. - k.nowicki
+#	line_match2  	- more advanced line-match algorithm. - n.gorelick
+#	fix_missing  	- fills in dropouts of cubes for line-matching. - n.gorelick
+#	find_band  	- finds corresponding THEMIS band to band number. - n.gorelick
+#	hpf  		- performs high pass filter of size N. - n.gorelick
+#	lpf  		- performs low pass filter of size N. - c. edwards
+#	rsstretch_bf  	- running sigma-stretch using boxfilter  . - n.gorelick
+#	leftline  	- finds the left side of image. - n.gorelick
+#	rightline  	- finds the right side of image. - n.gorelick
+#	xramp   		- fast, x-direction ramp algorithm. - n.gorelick
+# v_border        - make a border around a v_make object with short values. - c.edwrads
+# v_add           - adds the pixel values of an image into a v-object. - c.edwards
+# Remember to load_module("thm") to allow blend   to work
+
+# v_mosaic.dv contains all mosaic architecture scripts
+
+define load_coreg() {
+	coreg_file = $1
+	coreg = {}
+	if (fexists(coreg_file)) {
+		in = load_vanilla(coreg_file)
+		for (i = 1; i <= length(in.file) ; i+=1) {
+			pos = { x=in.x[,i], y=in.y[,i]}
+			add_struct(coreg, name=in.file[,i], value=pos)
+		}
+	} else {
+		printf("coreg file not found\n");
+		fprintf(coreg_file, "file\tx\ty\n");
+	}
+    return(coreg)
+}
+
+
+define bounding_box() {
+
+
+	a = $1
+	suffix = $2
+        band = $3
+
+	error=0
+	for (i = 1 ; i <= length(a) ; i+=1) {
+		if (fexists(a[,i]+suffix) == 0) {
+			printf("No such file: %s\n", a[,i]+suffix);
+			error = error+1
+		} else {
+			c = load_pds(a[,i]+suffix,data=0)
+		  if(HasValue(c.IsisCube)) {
+ 			  isis=3
+  		} else {
+    		isis=2
+  		}
+
+			if(band==0) {
+				if(isis==2) {
+		      if (band && contains(c.qube.band_bin.band_bin_original_band, band) == 0) {
+		 	  	  printf("File %s doesn't contain band %d\n", dir+a[,i]+suffix, band);
+ 	 	    		error = error+1  
+ 	   			}
+				} else if (isis==3) {
+					if (band && (contains(c.IsisCube.BandBin.OriginalBand, band) == 0 && contains(c.IsisCube.BandBin.OriginalBand,band) == 0 )) {
+	 	  	  	printf("File %s doesn't contain band %d\n", dir+a[,i]+suffix, band);
+  	    		error = error+1  
+    			}
+				}
+			}
+			d = v_make(c)
+			if (i == 1) out = d;
+			out = v_union(out,d)
+		}
+	}
+	if (error) exit(1);
+    return(out)
+}
+
+
+
+define bounding_box2(geo) {
+  verbose=0
+
+  a = $1
+  suffix = $2
+  band = $3
+  dir = $4
+
+  if(HasValue(geo)==0) geo=0
+
+  error=0
+  for (i = 1 ; i <= length(a) ; i+=1) {
+    if (fexists(dir+a[,i]+suffix) == 0) {
+      printf("No such file: %s\n", a[,i]+suffix);
+      error = error+1
+    } else {
+
+      if(geo==0) {
+        c = load_pds(dir+a[,i]+suffix,data=0)
+  		  if(HasValue(c.IsisCube)) {
+  		    isis=3
+    		} else {
+       		isis=2
+   			}
+      } else { 
+        c=read_geometa(dir+a[,i]+suffix)
+        isis=0
+      }
+
+			if(band !=0) {
+				if(isis==2) {
+		      if (band && contains(c.qube.band_bin.band_bin_original_band, band) == 0) {
+		 	  	  printf("File %s doesn't contain band %d\n", dir+a[,i]+suffix, band);
+ 	 	  	  	error = error+1  
+ 	  	 		}
+				} else if (isis==3) {
+					if (band && (contains(c.IsisCube.BandBin.FilterNumber, band) == 0 && contains(c.IsisCube.BandBin.OriginalBand,band) == 0 )) {
+		 	  	  printf("File %s doesn't contain band %d\n", dir+a[,i]+suffix, band);
+ 		 	    	error = error+1  
+ 		   		}
+				} else if (geo==1) {
+          if(band && c.anc.bandcount < band) {
+  	 	  	  printf("File %s doesn't contain band %d\n", dir+a[,i]+suffix, band);
+            error = error+1
+          }
+        }	
+		  }
+
+      verbose=0
+		  d = v_make(c,geo=geo)
+ 		  if (i == 1) out = d;
+ 	   	out = v_union(out,d)
+    }
+  }
+  if (error) exit(1); 
+  return(out)
+}
+
+
+define mos_bounds(geo) {
+
+	if($ARGC<2) {
+		printf("Syntax: mos_bounds(filelist, suffix [,dir])")
+		printf("$1 file_list text array\n")
+		printf("$2 suffix (e.g. \".cub\")\n")
+		printf("$3 directory to search in\n\n")
+    printf("geo use the gdal geo tools (Default=0)\n\n")
+		printf("c.edwards 5/09\n")
+		return(null)
+	}
+
+  verbose=0
+  list = $1
+  suffix = $2
+	if($ARGC==2) {
+		dir=""
+	} else {
+	  dir = $3
+	}
+
+  if(HasValue(geo)==0) geo=0
+
+  #assume we are working with a geo struct compatible file
+  if(geo==1) {
+    isis=0
+  } else {
+    if(HasValue(load_pds(dir+list[,1]+suffix,data=0))) {
+      isis=3
+  	} else {
+	  isis=2
+  	}
+  }
+
+  points=clone(0.,4,length(list),1)
+  lpospo=clone(0.,4,length(list),1)
+  error=0
+  for (i = 1 ; i <= length(list) ; i+=1) {
+    if (fexists(dir+list[,i]+suffix) == 0) {
+      printf("No such file: %s\n", list[,i]+suffix);
+      error = error+1
+    } else {
+      if(isis==2) {
+        hdr = load_pds(dir+list[,i]+suffix,data=0)
+   	   	points[1,i]=hdr.qube.image_map_projection.minimum_latitude
+  	    points[2,i]=hdr.qube.image_map_projection.maximum_latitude
+  	   	points[3,i]=hdr.qube.image_map_projection.westernmost_longitude
+       	points[4,i]=hdr.qube.image_map_projection.easternmost_longitude
+      } else if (isis==3) {
+        hdr=load_pds(dir+list[,i]+suffix,data=0)
+   	   	points[1,i]=hdr.IsisCube.Mapping.MinimumLatitude
+  	    points[2,i]=hdr.IsisCube.Mapping.MaximumLatitude
+  	   	points[3,i]=hdr.IsisCube.Mapping.MinimumLongitude
+       	points[4,i]=hdr.IsisCube.Mapping.MaximumLongitude
+      } else if (geo==1) {
+        hdr=read_geometa(dir+list[,i]+suffix)
+   	   	points[1,i]=min(hdr.anc.lat)
+  	    points[2,i]=max(hdr.anc.lat)
+  	   	points[3,i]=min(hdr.anc.lon)
+       	points[4,i]=max(hdr.anc.lon)
+        lpospo[1,i]=min(hdr.anc.lpo)
+        lpospo[2,i]=max(hdr.anc.lpo)
+        lpospo[3,i]=min(hdr.anc.spo)
+        lpospo[4,i]=max(hdr.anc.spo)
+      }
+		}
+  }
+	out={}
+	out.latrange=sprintf("%f:%f",min(points[1]),max(points[2]))
+	out.lonrange=sprintf("%f:%f",min(points[3]),max(points[4]))
+  if(geo==1) {
+   	out.lporange=sprintf("%f:%f",min(lpospo[1]),max(lpospo[2]))
+  	out.sporange=sprintf("%f:%f",min(lpospo[3]),max(lpospo[4]))
+  }
+  if (error) exit(1); 
+  verbose=1
+  return(out)
+}
+
+
+
+define do_coreg(src,dst,ignore,search,seed) {
+	if (HasValue(ignore)==0) {
+		ignore=-32768
+	}
+	if (HasValue(search)==0) {
+		search=10
+	}
+	if (HasValue(src) == 0) src = $1
+	if (HasValue(dst) == 0) dst = $2
+	if (HasValue(seed)) random(seed=seed, type="drand48")
+	random = 2000
+
+	q = v_intersect(img1=src,img2=dst)
+	d1 = e1 = q;
+	v_cut(src=dst,box=e1)
+	v_cut(src=src,box=d1)
+	d1.data[where e1.data == ignore] = ignore
+
+	if (sum(d1.data != ignore) == 0) {
+		printf("No overlap\n");
+		return(0//0);
+	}
+
+	search_incr = search/2
+	count = 1
+	while(count <= 5) {
+		o = coreg(d1.data[,,1], e1.data[,,1], search=search, ignore=ignore, random=random)
+		if (abs(o[1]) == search || abs(o[2]) == search) {
+			# didn't find any good match.  Just punt
+			printf("No coreg found in search=%d\n", search);
+			search += search_incr
+			random += random
+			count+=1;
+			o=0//0
+			continue;
+		}
+		break;
+	}
+
+	src.x += o[1]
+	src.y += o[2]
+
+	return(o)
+}
+
+
+define do_coreg2(src,dst,ignore,search,factor) {
+	if (HasValue(ignore)==0) {
+		ignore=-32768
+	}
+	if (HasValue(search)==0) {
+		search=10
+	}
+        if (HasValue(factor)==0) {
+                factor=0
+        }
+
+	if (HasValue(src) == 0) src = $1
+	if (HasValue(dst) == 0) dst = $2
+	
+	q = v_intersect(img1=src,img2=dst)
+	d1 = e1 = q;
+	v_cut(src=dst,box=e1)
+	v_cut(src=src,box=d1)
+	d1.data[where e1.data == ignore ] = ignore
+
+	if (sum(d1.data != ignore) == 0) {
+		printf("No overlap\n");
+		return(0//0);
+	}
+
+	o = kjn.coreg2(byte(d1.data[,,1]), byte(e1.data[,,1]), search=search, ignore=0, factor=factor)
+
+	src.x -= o[1]
+	src.y -= o[2]
+
+	return(o)
+}
+
+
+
+define blend(src,dst,stp,ignore,avg) {
+
+###############################################################################
+# updated Thu May  4 16:49:45 MST 2006 with smarter blend boundaries          #
+# updated Sat Oct 15 12:16:56 MST 2005 with fixed ramp  function             #
+# The 'stp' input stops the ramp calculation at specified # of iterations.    #
+# It significantly speeds calculation time with reasonable quality trade-off  #
+###############################################################################
+
+#  if ($ARGC == 0) {
+#    printf("blend - Thu May  4 16:49:45 MST 2006\n\n")
+#    printf("Calculates a ramp between two overlapping images\n")
+#    printf("and returns a blended destination image.\n")
+#    printf("Uses thm.ramp.\n\n")
+#    printf("Only to be used with mosaic tools.\n")
+#    return(0)
+#  }
+
+  if (HasValue(ignore) == 0) ignore=-32768
+  if (HasValue(stp) == 0) stp = 100000
+  if (HasValue(src) == 0) src = $1
+  if (HasValue(dst) == 0) dst = $2
+	if (HasValue(avg)==0) avg=1
+
+# calculate the intersection and then buffer it with 1 pixel on every side
+  i = v_intersect(img1=src, img2=dst)
+  i.x-=1
+  i.y-=1
+  i.h+=2
+  i.w+=2
+  i.data=clone(format(ignore,format(src.data)),i.w,i.h,dim(src.data)[3])
+  i1 = v_insert(src, i);
+  i2 = v_insert(dst, i);
+  i.data=0
+  r = thm.ramp(i1.data, i2.data, stp, ignore)
+
+  if (sum(r) == 0) {
+    v_insert(src=src, dst=dst, ignore=ignore)
+  } else if(avg==1) {
+    i1.data[where r > 0] = i2.data*(r) + i1.data*(1-r)
+    i1.data[where i1.data == ignore && r==0] = i2.data
+    v_insert(src=i1, dst=dst, ignore=ignore)
+  } else if(avg==0) {
+		r=r*2
+		r[where r<=1]=0
+		r[where r!=0]=r-1
+
+		i1.data[where r > 0] = i2.data*(r) + i1.data*(1-r)
+		i2.data[where i1.data == ignore && r==0] = i2.data
+		v_insert(src=i1, dst=dst, ignore=ignore)
+	}
+}
+
+
+
+
+define blendx(src,dst,ignore,reverse) {
+	if (HasValue(ignore)==0) {
+		ignore=-32768
+	}
+	if (HasValue(src) == 0) {
+		src = $1
+	}
+	if (HasValue(dst) == 0) {
+		dst = $2
+	}
+
+	i = v_intersect(img1=src, img2=dst)
+	/* get the intersection and cut it out from each piece.  Don't change i */
+	i1 = v_cut(src=src, i);
+	i2 = v_cut(src=dst, i);
+	r = xramp(i2.data,i1.data,ignore=ignore)
+
+	if (sum(r) == 0) {
+		v_insert(src=src, dst=dst, ignore=ignore)
+	} else {
+		z = i1.data
+		z[where i2.data != ignore] = i2.data
+		if (HasValue(reverse)) {
+			z[where r > 0 && i1.data != ignore && i2.data != ignore] = i1.data*(1-r) + i2.data *(r)
+		} else {
+			z[where r > 0 && i1.data != ignore && i2.data != ignore] = i2.data*(1-r) + i1.data *(r)
+		}
+
+		i.data = z
+		v_insert(src=i, dst=dst,ignore=ignore)
+	}
+}
+
+
+
+
+# I commented this out because it hasn't worked for a while.  It has been replaced by the 
+# script below. Thu Jul 20 16:29:49 MST 2006
+
+#define level_adjust_old(src,dst,ignore) {
+
+#  if ($ARGC == 0) return(NULL)  
+#  if (HasValue(ignore)==0) ignore=-32768
+#  if (HasValue(src) == 0) src = $1
+#  if (HasValue(dst) == 0) dst = $2
+
+# this is somehow different that just src
+#  i = v_intersect(img1=src, img2=dst)
+#  i2 = v_cut(src=dst, i);
+#  i1 = v_cut(src=src, i);
+#  d = fit(y=i2.data,x=i1.data,ignore=-32768,type="linear",steps=30)
+#  if (d[1] != d[1]) {
+#    d[1] = 0;
+#    d[2] = 1.0
+#  } else {
+#    d = float(d)
+#    printf("%f %f\n", d[1], d[2]);
+#    if (d[2] > 1.1 || d[2] < 0.9) {
+#      diff = 1.0 - d[2]
+#      d[1] = d[1]*d[2]/(1.0-diff/2)
+#      d[2] = 1.0-diff/2
+#    }
+#    src.data[where src.data != -32768] = src.data*d[2]+d[1]
+#  }
+
+#  return(d)
+#}
+
+
+
+
+define level_adjust(obj,to,ignore,opt) {
+
+# adjusts the "obj" to the "to" object
+# so if you want pic2 to be fit to match pic1
+# level_adjust(obj=pic2,to=pic1)
+
+  if ($ARGC == 0 && hasvalue(obj) == 0) {
+    printf("level_adjust - Thu Jul 20 12:54:28 MST 2006\n\n")
+    printf("Performs a linear fit to adjust one v_object to another.\n")
+    printf("Syntax: level_adjust(obj=STRUCT,to=STRUCT,ignore=VAL,opt=1 or 2)\n")
+    printf("Example: level_adjust(obj=a1,to=a2)\n")
+    printf("opt = 1 linearly fits, opt = 2 simply offsets\n")
+    printf("the \"obj\" is the thing you want adjusted.\n")
+    printf("the \"to\" is the thing you want \"obj\" adjusted to\n")
+    return(NULL)  
+  }
+
+  if (HasValue(ignore)==0) ignore=-32768
+  if (HasValue(obj) == 0) obj = $1
+  if (HasValue(to) == 0) to = $2
+  if (HasValue(opt) == 0) opt = 1
+
+# cut out the intersecting region of both parts
+  i = v_intersect(img1=obj, img2=to)
+  i1 = v_cut(src=obj, i)
+  i2 = v_cut(src=to, i)
+
+  if(opt == 1) {
+  # calculate the coefficients to linearly fit 'obj' to 'to'
+    coeffs = float(fit(y=i2.data,x=i1.data,ignore=-32768,type="linear",steps=30))
+		
+		printf("Applying offset and scaling: data*%f + %f\n",coeffs[2],coeffs[1])
+
+  # scale and offset the 'obj' data to match 'to'
+    obj.data[where obj.data != ignore] = obj.data*coeffs[2] + coeffs[1]
+  }
+
+  if(opt == 2) {
+  # simply add the value of the difference of the averages of the overlapping pixels
+    i1.data[where i2.data == ignore] = ignore
+    i2.data[where i1.data == ignore] = ignore
+    diff = avg(i2.data,ignore=ignore)-avg(i1.data,ignore=ignore)
+		printf("Applying offset shift: %f\n",diff)
+    obj.data[where obj.data != ignore] = obj.data+diff
+  }
+}
+
+
+
+
+
+
+define line_match(src,dst,ignore) {
+  # Wed Oct 19 16:15:21 MST 2005
+  # Keith's line-matching algorithm
+  # note: this won't work well on images that aren't primarily vertical
+
+  if (HasValue(ignore)==0) ignore=-32768
+  if (HasValue(src) == 0) src = $1
+  if (HasValue(dst) == 0) dst = $2
+
+  src1=v_clip(src,ignore=ignore)
+  dst1=v_clip(dst,ignore=ignore)
+  src1.data=0
+  dst1.data=0
+  k=v_intersect(src1,dst1)
+
+  printf("dimensions of src.data %d, %d\n",dim(src.data)[1],dim(src.data)[2])
+  printf("dimensions of dst.data %d, %d\n",dim(dst.data)[1],dim(dst.data)[2])
+
+# cut out the slices of the data (all y, only appropriate x)
+  i1 = src.data[k.x-src1.x+1:k.x-src1.x+k.w]
+  i2 = dst.data[k.x-dst1.x+1:k.x-dst1.x+k.w]
+  printf("dimensions of i1 %d, %d\n",dim(i1)[1],dim(i1)[2])
+  printf("dimensions of i2 %d, %d\n",dim(i2)[1],dim(i2)[2])
+
+# wipe out that which isn't in both 
+  i1[where i2 == ignore] = ignore
+  i2[where i1 == ignore] = ignore
+
+  if (sum(i2 != ignore) == 0) {
+    printf("line_match: No overlap\n");
+  } else {
+    a2 = avg(i2, axis=x, ignore=ignore)
+    a2[where a2 == 0] = ignore
+    a4 = thm.column_fill(a2,301,ignore)
+
+    a1 = avg(i1, axis=x, ignore=ignore)
+    a1[where a1 == 0] = ignore
+    a3 = thm.column_fill(a1,301,ignore)
+
+    diff = (a4-a3)
+    diff=thm.convolve(diff, clone(1, 1, 601, 1), ignore=ignore)
+
+    src.data[where src.data != ignore]  = src.data + diff
+  }
+  #return(src)
+}
+
+
+
+
+
+
+
+
+define line_match2(src,dst,ignore) {
+	# keith's line-matching algorithm modified to do contrast too.
+
+	if (HasValue(ignore)==0) {
+		ignore=-32768
+	}
+	if (HasValue(src) == 0) {
+		src = $1
+	}
+	if (HasValue(dst) == 0) {
+		dst = $2
+	}
+
+	i1 = src.data
+	b = v_create(src, ignore=ignore)
+	v_insert(src=dst, dst=b)
+	i2 = b.data
+	i2[where i1 == ignore] = ignore     # wipe out that which isn't in both 
+
+	if (sum(i2 != ignore) == 0) {
+		printf("line_match: No overlap\n");
+	} else {
+		# a2 = avg(i2, axis=x, ignore=ignore)
+		b2 = avg(i2, axis=x, ignore=ignore, both=1)
+		a2 = b2.avg
+		s2 = b2.stddev
+		a2[where a2 == 0] = ignore
+		s2[where s2 == 0] = ignore
+		a2 = convolve(a2, clone(1, 1, 300, 1), ignore=ignore)
+		s2 = convolve(s2, clone(1, 1, 300, 1), ignore=ignore)
+		a2[where a2 == 0] = ignore
+		s2[where s2 == 0] = ignore
+		a2 = fix_missing(a2, ignore=ignore)
+		s2 = fix_missing(s2, ignore=ignore)
+
+		i1[where i2 == ignore] = ignore
+		# a1 = avg(i1, axis=x, ignore=ignore)
+		b1 = avg(i1, axis=x, ignore=ignore, both=1)
+		a1 = b1.avg
+		s1 = b1.stddev
+		a1[where a1 == 0] = ignore
+		s1[where s1 == 0] = ignore
+		a1 = convolve(a1, clone(1, 1, 300, 1), ignore=ignore)
+		s1 = convolve(s1, clone(1, 1, 300, 1), ignore=ignore)
+		a1[where a1 == 0] = ignore
+		s1[where a1 == 0] = ignore
+		a1 = fix_missing(a1, ignore=ignore)
+		s1 = fix_missing(s1, ignore=ignore)
+
+		# diff = (a2-a1)
+		# convolve(diff, clone(1, 1, 600, 1), ignore=ignore)
+		# diff[where a2 == ignore || a1 == ignore] = ignore
+		# fix_missing(diff, ignore=ignore)
+
+		src.data[where src.data != ignore]  = (src.data - a1)*(s2/s1)+a2
+	}
+
+	return(src)
+}
+
+
+define fix_missing(src, ignore) {
+  if (HasValue(src) == 0) {
+    src = $1
+  }
+  d = dim(src)
+  x = create(1, d[2], 1)
+  if (HasValue(ignore) == 0) {
+    ignore=-32768
+  }
+  last = ignore;
+
+  for (i = 1 ; i <= d[2] ; i+=1) {
+    if (last == ignore && src[,i] != ignore) {
+      last = i;
+      src[,1:last] = src[,last]
+    } else if (src[,i] != ignore && last != i-1) {
+    # fillin a hole
+      src[,last:i] = interp(object=src[,last] // src[,i], from=x[,last] // x[,i], to=x[,last:i])
+    } 
+    if (src[,i] != ignore) {
+      last = i;
+    }
+  }
+  if (last != d[2]) {
+    src[,last:] = src[,last]
+  }
+  return(src)
+}
+
+
+define find_band(obj) {
+	if (HasValue(obj) == 0) {
+		printf("usage: find_band(obj=load_pds structure, instrument band number)\n");
+	}
+	
+ if(HasValue(obj.IsisCube)) {
+    isis=3
+  } else {
+    isis=2
+  }
+
+	if(isis==2) {
+    bands = obj.qube.band_bin.band_bin_original_band
+	} 
+	if(isis==3) {
+		if (HasValue(obj.IsisCube.BandBin.FilterNumber)) {
+			bands = obj.IsisCube.BandBin.FilterNumber
+		} else {
+			bands = obj.IsisCube.BandBin.OriginalBand
+		}
+	}
+
+  for (i = 1 ; i <= length(bands) ; i+=1) {
+    if (bands[i] == $1) return(i);
+  }
+  return(1)
+}
+
+
+define hpf(size,ignore) {
+	if (HasValue(size) == 0) size=1000
+  if (HasValue(ignore) == 0 ) ignore=-32768
+	a = boxfilter($1, size=size, ignore=ignore)
+	b = $1 - a
+	b[where $1 == ignore] = ignore
+	return(b)
+}
+
+
+define lpf(size,ignore) {
+	if (HasValue(size) == 0) size=1000
+  if (HasValue(ignore) == 0 ) ignore=-32768
+	a = boxfilter($1, size=size, ignore=ignore)
+	a[where $1 == ignore] = ignore
+	return(a)
+}
+
+define rsstretch_bf(data,ignore,variance,size) {
+    if (HasValue(ignore) == 0) ignore=-32768
+    if (HasValue(variance) == 0) variance = 40
+    if (HasValue(size) == 0) size=1000
+	if (HasValue(data) == 1) {
+		b = boxfilter(data,ignore=ignore,size=size,verbose=1)
+		c = (data - float(b.mean))*(variance/float(b.sigma))+127
+		c[where data == ignore] = ignore;
+	} else {
+		b = boxfilter($1,ignore=ignore,size=size,verbose=1)
+		c = ($1 - float(b.mean))*(variance/float(b.sigma))+127
+		c[where $1 == ignore] = ignore;
+	}
+	return(byte(c));
+}
+
+
+
+define leftline(ignore) {
+   a = $1
+   d = dim(a)
+   c = clone(0,1,d[2],1)
+
+   if (HasValue(ignore) == 0) {
+      ignore = short(-32768)
+   }
+
+   for (i = 1 ; i <= d[1] ; i+=1) {
+      if (sum(a[i] != ignore) != 0) {
+         b = (a[i] != ignore)
+         c[where c == 0 && b == 1] = i
+      }
+   }
+   return(c)
+}
+
+define rightline(ignore) {
+   a = $1
+   d = dim(a)
+   c = clone(0,1,d[2],1)
+
+   if (HasValue(ignore) == 0) {
+      ignore = short(-32768)
+   }
+
+   for (i = d[1] ; i > 0 ; i-=1) {
+      if (sum(a[i] != ignore) != 0) {
+         b = (a[i] != ignore)
+         c[where c == 0 && b == 1] = i
+      }
+   }
+   return(c)
+}
+
+
+
+define xramp(ignore) {
+	if (HasValue(ignore) == 0) {
+		ignore = -32768;
+	}
+	a = $1
+	b = $2
+	d = dim(a)
+	r1 = rightline(a,ignore=ignore)
+	r2 = rightline(b,ignore=ignore)
+	l1 = leftline(a,ignore=ignore)
+	l2 = leftline(b,ignore=ignore)
+
+	r = int(min(r1//r2,x,ignore=ignore))
+	l = int(max(l1//l2,x,ignore=ignore))
+
+	ramp = clone(float(ignore), d[1], d[2], 1);
+	for (i = 1 ; i <= d[2] ; i+=1) {
+		if (l[,i] > 0 && r[,i] > 0) {
+			diff = r[,i] - l[,i];
+			if (diff > 0 && diff < d[1]) {
+				ramp[l[,i]:r[,i],i] = create(diff+1,1,1,start=1)/float(diff+1)
+			}
+		}
+	}
+	return(ramp)
+}
+
+
+
+
+define v_border(src,size,ignore,offset) {
+  
+  siz=3
+  ign=-32768
+  off=255
+  if(HasValue(ignore)) ign=ignore
+  if(HasValue(size)) siz=size 
+  if(HasValue(off)) off=offset
+
+  #make the first mask
+  mask=boxfilter(src.data,size=siz)
+  border=short(src.data*0+ign)
+  border[where src.data==ign && mask!=ign]=off
+  mask=0
+  
+  #make the mask to cover data
+  mask=boxfilter(border,size=siz)
+  border=short(src.data*0+ign)
+  border[where src.data!=ign && mask!=ign]=off
+
+  dst=src
+  dst.data=border
+  border=0
+  return(dst)
+}
+
+
+
+define v_add(ignore,src,dst) {
+
+	if (HasValue(src) == 0) src=$1
+	return_dst=0;
+	if (HasValue(dst)==0){
+		dst = $2
+		return_dst=1
+	}
+
+
+	px = src.x - dst.x		# where to place src in dst
+	py = src.y - dst.y		# where to place src in dst
+
+	cx = cy = 0				# how many to cut off lhs of src
+
+	if (px < 0) {
+		cx = -px
+		px = 0
+	}
+	if (py < 0) {
+		cy = -py
+		py = 0
+	}
+
+	pw = src.w - cx		# how much of src to use
+	ph = src.h - cy		# how much of src to use
+
+
+	if (px+pw > dst.w) {
+		pw = dst.w - px
+	}
+	if (py+ph > dst.h) {
+		ph = dst.h - py
+	}
+
+	if (pw <= 0 || ph <= 0) {	 # no overlap
+		return(dst)
+	}
+
+	a = src.data[(1+cx):(cx+pw), (1+cy):(cy+ph)]
+
+	if (HasValue(ignore)) {
+		b = dst.data[px+1:px+pw, py+1:py+ph]
+		b[where a != ignore] = (a + b)
+		dst.data[px+1:px+pw, py+1:py+ph] = b
+	} else {
+		dst.data[px+1:px+pw, py+1:py+ph] = a
+	}
+
+	if (return_dst==1) {
+		return(dst)
+	}
+
+}

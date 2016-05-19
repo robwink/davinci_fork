@@ -1,0 +1,3850 @@
+dshadow_version=1.00
+
+define dcss(ignore,sample,variance) {
+  if ($ARGC != 1) {
+    printf("\ndcs()\n")
+    printf("performs a decorrelation stretch of data.\n")
+    printf("data will be centered around 0 with a sigma of +- 50.\n")
+    printf("requires either 1 or 3 bands of data to be stretched.\n\n")
+    printf("Syntax:    dcs(input, [ignore], [sample], [variance])\n")
+    printf("example:   pic=dcs(a, ignore=-32768, sample=b)\n")
+    printf("example:   pic=dcs(cat(a[,,8],a[,,7],a[,,5],axis=z),ignore=0)\n")
+    printf("  'input'    can be any 1 or 3 band float/short/int array.\n")
+    printf("  'ignore'   is the null data value.  Default = -32768.\n")
+    printf("  'sample'   is an array of identical size to the input\n")
+    printf("             used to set the limits of the stretch.\n")
+    printf("  'variance' is a number or set of 3 numbers defining\n")
+    printf("             the stretch per axis. (sigma) default = 12850 \n\n")
+    printf("last updated Sun Jan 31 17:48:00 PST 2010\n")
+    printf("based on dcs() by Noel Gorelick - modified for 16-bit use by Ben Lincoln.\n")
+    return(null)
+  }
+  
+#
+# this does a decorrelation stretch using 16-bit data
+# Data will be centered around 0, with a sigma of +/- 12850.
+#
+  
+# compute the symmetric covariance matrix and eigenvectors of it.
+  a = $1;
+  
+  if (HasValue(sample)) {
+    if (HasValue(ignore)) {
+      c = covar(sample, axis=z, ignore=ignore);
+    } else {
+      c = covar(sample, axis=z, ignore=-32768);
+    }
+  } else {
+    if (HasValue(ignore)) {
+      c = covar(a, axis=z, ignore=ignore);
+    } else {
+      c = covar(a, axis=z, ignore=-32768);
+    }
+  } 
+  e = eigen(c);
+  
+# generate the scaling matrix with the scaling factors on the diagonal
+# and compute the rotation matrix
+  if (HasValue(variance)) {
+    v = float(variance);
+  } else {
+    v = 12850.0;
+  }
+
+  s = identity(dim(a)[3]) * v/sqrt(e[1]);
+  m = mxm(mxm(e[2:], s), translate(e[2:], x, y));
+
+# We have to reshape the data to push it through mxm() because mxm is dumb.
+# Force the input to be bip so we can use the forbidden resize() function.
+  d = dim(a);
+  a = bip(a);
+  resize(a, dim(a)[3], dim(a)[1]*dim(a)[2]);
+
+# subtract the mean of each band and rotate
+  if (HasValue(ignore)) {
+    avg = avg(a,y,ignore=ignore);
+  } else {
+    avg = avg(a,y,ignore=-32768);
+  }
+  a = a - avg;
+  a = mxm(a, m);
+  a = short(bip(a));
+
+# reshape the data back to its original size
+    resize(a, d[1], d[2], d[3]);
+    return(a);
+}
+
+
+
+define rdcss(data,sample,ignore,variance,ysizepercent,xsizepercent,verbose) {
+
+  if($ARGC==0 && HasValue(data)==0) {
+    printf("\nCompute a Running DCS Stretch\n")
+    printf("Calls dcs16() as stretching function\n\n")
+    printf("$1=data (3-band or 1-band)\n")
+    printf("data=data option for more efficient memory usage\n")
+    printf("ignore=value to ignore (Default=-32768)\n")
+    printf("ysizepercent=size of the chunks to stretch in y (Default=1/4 of the X dimension of the data)\n")
+    printf("xsizepercent=size of the chunks to stretch in x (Default=1/4 of the Y dimension of the data)\n")
+    printf("NOTE: both xsize and ysize must be even integers\n")
+    printf("variance=variance of the stretch (Default=12850)\n")
+    printf("sample=sample image\n\n")
+    printf("NOTE: can also be used to change variance of each band\n")
+    printf("variance=cat(50,20,40,axis=y)\n\n")
+    printf("verbose = turn on print statements\n\n")
+    printf("last updated Sun Jan 31 17:55:00 PST 2010\n")
+    printf("based on rdcs() by c.edwards 3/7/06 - modified for 16-bit use by Ben Lincoln.\n\n")
+    return(null)
+  }
+
+  #initialize input 
+  if(HasValue(data)==0) data=$1
+  ign=-32768
+  var=12850.0
+  verb=0
+  ydiff=xdiff=0
+  dim=dim(data)
+
+  xs=int(dim[1,0,0] * 0.25)
+  ys=int(dim[2,0,0] * 0.25)
+
+  if(HasValue(verbose)) verb=1
+  if(HasValue(ysizepercent)) ys=int(dim[1,0,0] * ysizepercent)
+  if(HasValue(xsizepercent)) xs=int(dim[2,0,0] * xsizepercent) 
+  if(HasValue(ignore)) ign=ignore
+  if(HasValue(variance)) var=variance
+
+  if(ys%2 == 1) ys-=1
+  if(xs%2 == 1) xs-=1
+
+  #create output pic, ramps and indices
+  pic=short(data*0)
+  yrange=xrange=clone(0,2,1,1)
+  yramp=create(1,int(ys/2),1,start=0,step=(1/(ys/2.)),format=float)          
+  xramp=create(int(xs/2),1,1,start=0,step=(1/(xs/2.)),format=float)
+ 
+  #set maximum loop values
+  maxx=dim[1]-int(xs/2)
+  maxy=dim[2]-int(ys/2)   
+  if(dim[1]<xs) maxx=dim[1]
+  if(dim[2]<ys) maxy=dim[2] 
+
+  #loop through x to get x-direction
+  for(i=1;i<=maxx;i+=int(xs/2)) {
+
+    xrange[1]=i;xrange[2]=i+xs-1
+    if(xrange[2]>=dim[1]) {
+      xdiff=xrange[2]-dim[1]
+      xrange[2]=dim[1]
+    }
+
+    tmppic=short(clone(0,xrange[2]-i+1,dim[2],dim[3]))
+
+    #loop through y to get y-direction
+    for(j=1;j<=maxy;j+=int(ys/2)) {	 
+
+      yrange[1]=j;yrange[2]=j+ys-1
+      if(yrange[2]>=dim[2]) {
+        ydiff=yrange[2]-dim[2] 
+        yrange[2]=dim[2]
+      }
+
+      if(verb==1) printf("x=%i:%i y=%i:%i\n",xrange[1],xrange[2],yrange[1],yrange[2])
+    
+      #stretch the data
+      if(HasValue(sample)) {
+	tmp=dcss(data[xrange[1]:xrange[2],yrange[1]:yrange[2],],ignore=ign,variance=var,sample=sample[xrange[1]:xrange[2],yrange[1]:yrange[2],])
+      }else{
+        tmp=dcss(data[xrange[1]:xrange[2],yrange[1]:yrange[2],],ignore=ign,variance=var)    
+      }
+      #if its the first y-chunk then insert else ramp it into the y-column
+      if(j==1) tmppic[,yrange[1]:yrange[2],]=tmp
+      if((j!=1 && ydiff>int(ys/2))) break;
+      if(j!=1) {
+        tmppic[,yrange[1]:yrange[2]-int(ys/2)+ydiff]=tmppic[,yrange[1]:yrange[2]-int(ys/2)+ydiff]*(1-yramp)
+        tmp[,:int(ys/2),]=tmp[,:int(ys/2),]*yramp
+        tmppic[,yrange[1]:yrange[2],]=tmppic[,yrange[1]:yrange[2],]+tmp
+      }
+      ydiff=0
+    }
+    
+    #if its the first x-chunk then insert else ramp it into the full picutre
+    if(i==1) pic[xrange[1]:xrange[2],]=tmppic    
+    if((i!=1 && xdiff>int(xs/2))) return(bip(short(pic)))    
+    if(i!=1) {
+      pic[xrange[1]:xrange[2]-int(xs/2)+xdiff,]=pic[xrange[1]:xrange[2]-int(xs/2)+xdiff,]*(1-xramp)
+      tmppic[:int(xs/2),]=tmppic[:int(xs/2),]*xramp
+      pic[xrange[1]:xrange[2],]=pic[xrange[1]:xrange[2],]+tmppic
+    }
+  }
+  return(bip(short(pic)))
+}
+
+
+define echoarraystats(arrayName){
+	if(($ARGC != 1) && ($ARGC != 2)) {
+		printf("\nError: no array was passed.\n")
+		return(null)
+	}
+
+	arrName = ""
+
+	if (HasValue(arrayName)==1) {
+		arrName = arrayName
+	}
+
+	arrmax = max($1, axis=z)
+	arrmax = max(arrmax, axis=y)
+	arrmax = max(arrmax, axis=x)
+
+	arrmin = min($1, axis=z)
+	arrmin = min(arrmin, axis=y)
+	arrmin = min(arrmin, axis=x)
+
+	arravg = min($1, axis=z)
+	arravg = min(arravg, axis=y)
+	arravg = min(arravg, axis=x)
+
+	if (HasValue(arrName)==1) {
+		printf("Array: %s - ", arrName)
+	}
+	
+	printf("min: %f ", arrmin)
+	printf("max: %f", arrmax)
+	printf("avg: %f\n", arravg)
+}
+
+
+define dcsf(ignore,sample,variance) {
+  if ($ARGC != 1) {
+    printf("\ndcsf()\n")
+    printf("performs a decorrelation stretch of data using floating point values.\n")
+    printf("data will be centered around 0.5 with a sigma of +- (50.0 / 255.0).\n")
+    printf("requires either 1 or 3 bands of data to be stretched.\n\n")
+    printf("Syntax:    dcs(input, [ignore], [sample], [variance])\n")
+    printf("example:   pic=dcs(a, ignore=0, sample=b)\n")
+    printf("example:   pic=dcs(cat(a[,,8],a[,,7],a[,,5],axis=z),ignore=0)\n")
+    printf("  'input'    can be any 1 or 3 band float/short/int array.\n")
+    printf("  'ignore'   is the null data value.  Default = 0.\n")
+    printf("  'sample'   is an array of identical size to the input\n")
+    printf("             used to set the limits of the stretch.\n")
+    printf("  'variance' is a number or set of 3 numbers defining\n")
+    printf("             the stretch per axis. (sigma) default = (50.0 / 255.0) \n\n")
+    printf("Last updated 2010--06-25.\n")
+    printf("Based on dcs by Noel Gorelick, modified by Ben Lincoln.\n")
+    printf("Magic numbers in this function all the floating-point equivalents of the byte values in Noel's function.\n")
+    return(null)
+  }
+  
+#
+# this does a decorrelation stretch 
+# Data will be centered around 0.5, with a sigma of +/- (50.0 / 255.0).
+#
+  
+# compute the symmetric covariance matrix and eigenvectors of it.
+  a = $1;
+  
+  if (HasValue(sample)) {
+    if (HasValue(ignore)) {
+      c = covar(sample, axis=z, ignore=ignore);
+    } else {
+      c = covar(sample, axis=z);
+    }
+  } else {
+    if (HasValue(ignore)) {
+      c = covar(a, axis=z, ignore=ignore);
+    } else {
+      c = covar(a, axis=z);
+    }
+  }
+  e = eigen(c);
+  c = 0;
+  
+# generate the scaling matrix with the scaling factors on the diagonal
+# and compute the rotation matrix
+  if (HasValue(variance)) {
+    v = float(variance);
+  } else {
+    v = (50.0 / 255.0);
+  }
+
+  # wrapped the reference to e[1] in abs() to avoid values involving imaginary
+  # numbers - their presence would cause the resulting image to be a black rectangle
+  # I believe their presence is related to a bug in DaVinci regarding very small negative 
+  # floating-point values.
+  #s = identity(dim(a)[3]) * v/sqrt(e[1]);
+
+  # following line split up to optimize memory use
+  #s = identity(dim(a)[3]) * v/sqrt(abs(e[1]));
+  v1 = abs(e[1]);
+  v1 = sqrt(v1);
+  v1 = v / v1;
+  s = dim(a)[3];
+  s = identity(s);
+  s = s * v1;
+  v1 = 0;
+
+  # following line split up to optimize memory use
+  #m = mxm(mxm(e[2:], s), translate(e[2:], x, y));
+  m = mxm(e[2:], s);
+  m2 = translate(e[2:], x, y);
+  m = mxm(m, m2);
+  m2 = 0;
+  s = 0;
+  e = 0;
+
+# We have to reshape the data to push it through mxm() because mxm is dumb.
+# Force the input to be bip so we can use the forbidden resize() function.
+  d = dim(a);
+  a = bip(a);
+  resize(a, dim(a)[3], dim(a)[1]*dim(a)[2]);
+
+# subtract the mean of each band, rotate and add back 0.5
+  if (HasValue(ignore)) {
+    avg = avg(a,y,ignore=ignore);
+  } else {
+    avg = avg(a,y,ignore=0);
+  }
+  y = 0;
+  a = a - avg;
+  avg = 0;
+
+  a
+  m
+
+  # uncomment the following line and then comment out the one after that to perform the matrix multiplication using
+  # double-precision floating-point values - this will use a lot of memory.
+  #a = mxm(a, m);
+  a = mxm(a, m, format=float);
+
+  m = 0;
+  a = a + 0.5;
+  a = bip(a);
+
+# reshape the data back to its original size
+    resize(a, d[1], d[2], d[3]);
+    return(a);
+}
+
+
+
+define rdcsf(data,sample,ignore,variance,ysizepercent,xsizepercent,ysize,xsize,verbose) {
+
+  if($ARGC==0 && HasValue(data)==0) {
+    printf("\nCompute a Running DCS Stretch using single-precision floating point values.\n")
+    printf("Calls dcsf() as stretching function\n\n")
+    printf("$1=data (3-band or 1-band)\n")
+    printf("data=data option for more efficient memory usage\n")
+    printf("ignore=value to ignore (Default=0)\n")
+    printf("ysizepercent=relative size of the chunks to stretch in y (Default=1/4 of the X dimension of the data)\n")
+    printf("xsizepercent=relative size of the chunks to stretch in x (Default=1/4 of the Y dimension of the data)\n")
+    printf("ysize=absolute size of the chunks to stretch in y (Default=none)\n")
+    printf("xsize=absolute size of the chunks to stretch in x (Default=none)\n")
+    printf("\nIMPORTANT: The xsize and ysize parameters are included to provide drop-in replacement compatibility ")
+    printf("with the original rdcs() function. If they are specified, then the values of the xsizepercent and ")
+    printf("ysizepercent parameters are ignored.\n")
+    printf("variance=variance of the stretch (Default=(50.0 / 255.0))\n")
+    printf("sample=sample image\n\n")
+    printf("NOTE: can also be used to change variance of each band\n")
+    printf("variance=cat(50,20,40,axis=y)\n\n")
+    printf("verbose = turn on print statements\n\n")
+    printf("Last updated 2010-03-21.\n")
+    printf("Based on rdcs by c.edwards, modified by Ben Lincoln.\n")
+    printf("Magic numbers in this function are the floating-point equivalents of the byte values in the original function.\n")
+    return(null)
+  }
+
+  #initialize input 
+  if(HasValue(data)==0) data=$1
+  ign=0
+  var=(50.0 / 255.0)
+  verb=0
+  ydiff=xdiff=0
+  dim=dim(data)
+  xs=int(dim[1,0,0] * 0.25)
+  ys=int(dim[2,0,0] * 0.25)
+
+  if(HasValue(verbose)) verb=1
+
+  if(HasValue(ysizepercent)) ys=int(float(dim[1,0,0]) * ysizepercent)
+  if(HasValue(xsizepercent)) xs=int(float(dim[2,0,0]) * xsizepercent) 
+
+  # if absolute tile sizes are specified, then ignore the relative sizes
+  if(HasValue(ysize)) ys=int(ysize)
+  if(HasValue(xsize)) xs=int(xsize) 
+
+  if(HasValue(ignore)) ign=ignore
+  if(HasValue(variance)) var=variance
+
+  if(ys%2 == 1) ys-=1
+  if(xs%2 == 1) xs-=1
+
+  #create output pic, ramps and indices
+  pic=bip(tofloat(data*0))
+  yrange=xrange=clone(0,2,1,1)
+  yramp=create(1,int(ys/2),1,start=0,step=(1/(ys/2.)),format=float)          
+  xramp=create(int(xs/2),1,1,start=0,step=(1/(xs/2.)),format=float)
+ 
+  #set maximum loop values
+  maxx=dim[1]-int(xs/2)
+  maxy=dim[2]-int(ys/2)   
+  if(dim[1]<xs) maxx=dim[1]
+  if(dim[2]<ys) maxy=dim[2] 
+
+  #loop through x to get x-direction
+  for(i=1;i<=maxx;i+=int(xs/2)) {
+
+    xrange[1]=i;xrange[2]=i+xs-1
+    if(xrange[2]>=dim[1]) {
+      xdiff=xrange[2]-dim[1]
+      xrange[2]=dim[1]
+    }
+
+    tmppic=float(clone(0,xrange[2]-i+1,dim[2],dim[3]))
+    #tmppic=bip(float(clone(0,xrange[2]-i+1,dim[2],dim[3])))
+
+    #loop through y to get y-direction
+    for(j=1;j<=maxy;j+=int(ys/2)) {	 
+
+      yrange[1]=j;yrange[2]=j+ys-1
+      if(yrange[2]>=dim[2]) {
+        ydiff=yrange[2]-dim[2] 
+        yrange[2]=dim[2]
+      }
+
+      #next line commented out for efficiency
+      #if(verb==1) printf("x=%i:%i y=%i:%i\n",xrange[1],xrange[2],yrange[1],yrange[2])
+    
+      #stretch the data
+      if(HasValue(sample)) {
+	tmp=dcsf(data[xrange[1]:xrange[2],yrange[1]:yrange[2],],ignore=ign,variance=var,sample=sample[xrange[1]:xrange[2],yrange[1]:yrange[2],])
+      }else{
+        tmp=dcsf(data[xrange[1]:xrange[2],yrange[1]:yrange[2],],ignore=ign,variance=var)
+      }
+      #if its the first y-chunk then insert else ramp it into the y-column
+      if(j==1) tmppic[,yrange[1]:yrange[2],]=tmp
+      if((j!=1 && ydiff>int(ys/2))) break;
+      if(j!=1) {
+        tmppic[,yrange[1]:yrange[2]-int(ys/2)+ydiff]=tmppic[,yrange[1]:yrange[2]-int(ys/2)+ydiff]*(1-yramp)
+        tmp[,:int(ys/2),]=tmp[,:int(ys/2),]*yramp
+        tmppic[,yrange[1]:yrange[2],]=tmppic[,yrange[1]:yrange[2],]+tmp
+      }
+      ydiff=0
+    }
+    
+    #if its the first x-chunk then insert else ramp it into the full picture
+    if(i==1) pic[xrange[1]:xrange[2],]=tmppic    
+    if((i!=1 && xdiff>int(xs/2))) return(bip(pic))    
+    if(i!=1) {
+      pic[xrange[1]:xrange[2]-int(xs/2)+xdiff,]=pic[xrange[1]:xrange[2]-int(xs/2)+xdiff,]*(1-xramp)
+      tmppic[:int(xs/2),]=tmppic[:int(xs/2),]*xramp
+      pic[xrange[1]:xrange[2],]=pic[xrange[1]:xrange[2],]+tmppic
+    }
+  }
+  return(bip(pic))
+}
+
+
+
+
+
+define dvrgb2yuv(r, g, b, minval, maxval, noscale, weightred, weightblue, nouvscale) {
+	if($ARGC == 1) {
+		rgb = float($1)
+	} else {
+		if ((HasValue(rgb) == 0) && (HasValue(r) == 0 || HasValue(g) == 0 || HasValue(b) == 0)) {
+			printf("\nConverts RGB colour data to YUV (Luminance/Chrominance).\n")	
+			printf("\nAccepts either a single RGB object or three individual channels.\n")
+			printf("\nReturns values in a range of 0.0 - 1.0 unless the noscale=1 parameter is specified.\n")
+			printf("\nThe optional minval and maxval arguments allows scaling the input values.\n")
+			printf("\nFor example, to convert a 16-bit (short) RGB image to YUV:\n")
+			printf("\nyuv = rgb2yuv(rgb, minval=-32768, maxval=32768)\n")
+			printf("\nNote: Always returns an object of type Float.\n")
+			return(null)
+		} else {
+			rgb = cat(float(r), float(g), axis=z)
+			rgb = cat(rgb, float(b), axis=z)
+		}
+	}
+	if (HasValue(minval) == 0) {
+		minval = 0.0
+	}
+	if (HasValue(maxval) == 0) {
+		maxval = 1.0
+	}
+	if (HasValue(noscale) == 0) {
+		noscale = 0
+	}
+	if (HasValue(nouvscale) == 0) {
+		nouvscale = 0
+	}
+	if (HasValue(weightred) == 0) {
+		weightred = 0.299
+	}
+	if (HasValue(weightblue) == 0) {
+		weightblue = 0.114
+	}
+	weightgreen = 1.0 - weightred - weightblue
+	
+	# not sure if these are calculated or magic
+	umax = 0.436
+	vmax = 0.615
+
+	if (noscale == 0) {
+		range = maxval - minval
+		if (minval != 0.0) {
+			rgb = rgb - minval
+		}
+		if (range != 1.0) {
+			rgb = rgb / range
+		}
+	}
+	
+	r=rgb[0,0,1]
+	g=rgb[0,0,2]
+	b=rgb[0,0,3]
+
+	y = (r * weightred) + (g * weightgreen) + (b * weightblue)
+	u = umax * ((b - y) / (1 - weightblue))
+	v = vmax * ((r - y) / (1 - weightred))
+
+	if (nouvscale == 0) {
+		u = u + umax
+		u = u / (umax * 2)
+		v = v + vmax
+		v = v / (vmax * 2)
+	}
+
+	yuv = cat(y, u, axis=z)
+	yuv = cat(yuv, v, axis=z)
+	return(yuv)
+}
+
+define dvyuv2rgb(y, u, v, minval, maxval, noscale, weightred, weightblue, nouvscale) {
+	if($ARGC == 1) {
+		yuv = float($1)
+	} else {
+		if ((HasValue(yuv) == 0) && (HasValue(y) == 0 || HasValue(u) == 0 || HasValue(v) == 0)) {
+			printf("\nConverts YUV colour data to RGB.\n")
+			printf("\nAccepts either a single YUV object or three individual channels.\n")
+			printf("\nReturns values in a range of 0.0 - 1.0 unless the noscale=1 parameter is specified.\n")
+			printf("\nThe optional minval and maxval arguments allows scaling the output values.\n")
+			printf("\nFor example, to convert YUV values to a 16-bit (short) RGB image:\n")
+			printf("\nrgb = short(yuv2rgb(yuv, minval=-32768, maxval=32768))\n")
+			printf("\nNote: Always returns an object of type Float.\n")
+			return(null)
+		} else {
+			yuv = cat(float(y), float(u), axis=z)
+			yuv = cat(yuv, float(v), axis=z)
+		}
+	}
+	if (HasValue(minval) == 0) {
+		minval = 0.0
+	}
+	if (HasValue(maxval) == 0) {
+		maxval = 1.0
+	}
+	if (HasValue(noscale) == 0) {
+		noscale = 0
+	}
+	if (HasValue(nouvscale) == 0) {
+		nouvscale = 0
+	}
+	if (HasValue(weightred) == 0) {
+		weightred = 0.299
+	}
+	if (HasValue(weightblue) == 0) {
+		weightblue = 0.114
+	}
+	weightgreen = 1.0 - weightred - weightblue
+	
+	# not sure if these are calculated or magic
+	umax = 0.436
+	vmax = 0.615
+
+	y = yuv[0,0,1]
+	u = yuv[0,0,2]
+	v = yuv[0,0,3]
+
+	if (nouvscale == 0) {
+		u = u * (umax * 2)
+		u = u - umax
+		v = v * (vmax * 2)
+		v = v - vmax
+	}
+
+	r = y + (v * ((1 - weightred) / vmax))
+	g = y - (u * ((weightblue * (1 - weightblue)) / (umax * weightgreen))) - (v * ((weightred * (1 - weightred)) / (vmax * weightgreen)))
+	b = y + (u * ((1 - weightblue) / umax))
+
+	rgb = cat(r, g, axis=z)
+	rgb = cat(rgb, b, axis=z)
+
+	if (noscale == 0) {
+		range = maxval - minval
+		if (range != 1.0) {
+			rgb = rgb * range
+		}
+		if (minval != 0.0) {
+			rgb = rgb + minval
+		}
+	}
+
+	return(rgb)
+}
+
+define blendcolourrgb() {
+	if($ARGC != 2) {
+		printf("\nPerforms an operation very similar to the 'Colour' blend mode in Photoshop.\n")
+		printf("\n(This is a wrapper for the blendcolourhsy() function).\n")
+		printf("\nRequires two NxNx3 objects representing images in an RGB colourspace,\n")
+		printf("or one NxNx1 object representing a greyscale luminance image and one NxNx3 \n")
+		printf("object representing an image in the RGB colourspace.\n")
+		printf("\nThe colour of object 2 is applied to the luminance of object 1.\n")
+		printf("\nExample: blended = colourblendrgb(baseimage, colourimage).\n\n")
+		return(null)
+	}
+
+	# comment out this next line to use the old version of this function
+	return(blendcolourpdfspec($1, $2))
+
+	base = $1
+	colour = $2
+
+	if((dim(base)[3,1,1] != 1) && (dim(base)[3,1,1] != 3)) {
+		printf("\nError: the luminance object must have either one or three data planes.\n")
+		return(null)
+	}
+
+	if((dim(colour)[3,1,1] != 3)) {
+		printf("\nError: the colour object must have three data planes.\n")
+		return(null)
+	}
+
+	if(dim(base)[3,1,1] == 1) {
+		base = threeclone(base)		
+	}
+	return hsy2rgb(blendcolourhsy(rgb2hsy(tofloat(base)),rgb2hsy(tofloat(colour))))
+}
+
+
+# Applies a transformation very similar to the "colour" blend mode in Photoshop
+define blendcolourhsy() {
+	if($ARGC != 2) {
+		printf("\nPerforms an operation very similar to the 'Colour' blend mode in Photoshop.\n")
+		printf("\nRequires two NxNx3 objects representing images in an HSY colourspace.\n")
+		printf("\nThe colour of object 2 is applied to the luminance of object 1.\n")
+		printf("\nMore specifically, the resulting object consists of:\n")
+		printf("\n- The luminance of object 1\n")
+		printf("\n- The hue of object 2\n")
+		printf("\n- A saturation which is the inverse of the absolute value of object 1's\n")
+		printf("  luminosity channel's distance from object 2's luminosity channel, capped at the value of\n")
+		printf("  object 2's saturation.\n")
+		printf("\nExample: blended = colourblendhsy(baseimage, colourimage).\n\n")
+		return(null)
+	}
+
+	# comment out this next line to use the old version of this function
+	return(rgb2hsy(blendcolourpdfspec(hsy2rgb($1), hsy2rgb($2))))
+
+	base = $1
+	colour = $2
+
+	if((dim(base)[3,1,1] != 3) || (dim(colour)[3,1,1] != 3)) {
+		printf("\nError: both input objects must have three data planes (Hue, Saturation, and Luminosity).\n")
+		return(null)
+	}
+	if((dim(base)[1,1,1] != dim(colour)[1,1,1]) || (dim(base)[2,1,1] != dim(colour)[2,1,1])) {
+		printf("\nError: the input objects must be of equal dimensions.\n")
+		return(null)
+	}
+
+	y = base[0,0,3]
+	h = colour[0,0,1]
+	s = base[0,0,3]
+	cy = colour[0,0,3]
+	#s = abs(s - 0.5)
+	#s = s * 2.0
+
+	# note: uncomment the following line (remove the pound sign at the beginning) to use a simple HSY colour blend
+	# return(cat(cat(colour[0,0,1], colour[0,0,2], axis=z), base[0,0,3], axis=z))
+
+	# note 2: this will improve processing times, but will cause significantly different results in most cases	
+
+	# delta from colour luminance
+	s = s - cy
+	spos = s
+	spos[0,0,1] = 0.0
+	spos = cat(spos, s, axis=z)
+	spos = max(spos, axis=z)
+	
+	sneg = s
+	sneg[0,0,1] = 0.0
+	sneg = cat(sneg, s, axis=z)
+	sneg = abs(min(sneg, axis=z))
+
+	# rescale the delta values 
+	sposceil = cy
+	sposceil[0,0,1] = 1.0
+	sposceil = sposceil - cy
+	spos = spos / sposceil
+
+	sneg = sneg / cy
+
+	cy = 0
+
+	s = cat(spos, sneg, axis=z)
+
+	spos = 0
+	sneg = 0
+
+	s = max(s, axis=z)
+
+	# clip saturation to a range of 0 - 1
+	s2 = s
+	s2[0,0,1] = 1.0
+	s = cat(s, s2, axis=z)
+	s = min(s, axis=z)
+	s2[0,0,1] = 0.0
+	s = cat(s, s2, axis=z)
+	s = max(s, axis=z)
+	# end clip
+	# invert the calculated saturation value
+	s2 = s
+	s2[0,0,1] = 1.0
+	s = s2 - s
+	s2 = 0
+	# end inversion
+	# cap the saturation at the value from the colour image
+	s = cat(s, colour[0,0,2], axis=z)
+	s = min(s, axis=z)
+	# end cap
+
+
+
+	hsy = cat(h, s, axis=z)
+	hsy = cat(hsy, y, axis=z)
+	return(hsy)
+}
+
+
+
+define blendcolourpdfspec() {
+	if($ARGC != 2) {
+		printf("\nPerforms an operation based on the 'Colour' blend mode as described in Adobe's PDF specification.\n")
+		printf("\nRequires two NxNx3 objects representing images in an RGB colourspace,\n")
+		printf("or one NxNx1 object representing a greyscale luminance image and one NxNx3 \n")
+		printf("object representing an image in the RGB colourspace.\n")
+		printf("\nThe colour of object 2 is applied to the luminance of object 1.\n")
+		printf("\nExample: blended = blendcolourpdfspec(baseimage, colourimage).\n\n")
+		return(null)
+	}
+
+	base = $1
+	#colour = $2
+
+	if((dim(base)[3,1,1] != 1) && (dim(base)[3,1,1] != 3)) {
+		printf("\nError: the luminance object must have either one or three data planes.\n")
+		return(null)
+	}
+
+	if((dim($2)[3,1,1] != 3)) {
+		printf("\nError: the colour object must have three data planes.\n")
+		return(null)
+	}
+
+	if(dim(base)[3,1,1] == 1) {
+		base = threeclone(base)		
+	}
+
+	basey = rgb2hsy(tofloat(base))[0,0,3]
+	coloury = rgb2hsy(tofloat($2))[0,0,3]
+
+	base = 0
+
+	# following line expanded to reduce memory usage:
+	#result = $2 + (basey - coloury)
+	result = $2
+	result = result + basey
+	result = result - coloury
+
+	#colour = 0
+	coloury = 0
+
+	# uncomment the next two lines to perform a simple HSY luminance-channel swap
+	#result = clipdata(result, min = 0.0, max = 1.0)
+	#return(result)
+
+	colourmin = min(result, axis = z)
+	colourmax = max(result, axis = z)
+
+	resultmin = threeclone(basey)
+	resultmax = resultmin
+
+	# following line expanded to reduce memory usage:
+	#resultmin = resultmin + (((result - basey) * basey) / (basey - colourmin))
+	r1 = result - basey
+	r1 = r1 * basey
+	#r2 = basey - colourmin
+	#r1 = r1 / r2
+	#r2 = 0
+	r1 = r1 / (basey - colourmin)
+	resultmin = resultmin + r1
+	r1 = 0
+
+	one = basey
+	one[0,0,0] = 1.0
+
+	# following line expanded to reduce memory usage:
+	#resultmax = resultmax + (((result - basey) * (one - basey)) / (colourmax - basey))
+	r1 = result - basey
+	r2 = one - basey
+	r1 = r1 * r2
+	#r2 = colourmax - basey
+	#r1 = r1 / r2
+	#r2 = 0
+	r1 = r1 / (colourmax - basey)
+	resultmax = resultmax + r1
+	r1 = 0
+
+	basey = 0
+
+	# following line expanded to reduce memory usage:
+	#minmask = ceil(abs(clipdata(colourmin, min=-1.0, max=0.0, quiet=1)))
+	minmask = clipdata(colourmin, min=-1.0, max=0.0, quiet=1)
+	minmask = abs(minmask)
+	minmask = ceil(minmask)
+
+	colourmin = 0
+
+	# following line expanded to reduce memory usage:
+	#maxmask = ceil(clipdata((colourmax - 1.0), min=0.0, max=1.0, quiet=1))
+	maxmask = colourmax - 1.0
+	maxmask = clipdata(maxmask, min=0.0, max=1.0, quiet=1)
+	maxmask = ceil(maxmask)
+
+	colourmax = 0
+
+	#one = maxmask
+	#one[0,0,0] = 1.0
+
+
+	# following line expanded to reduce memory usage:
+	#noclipmask = (one - maxmask) - minmask
+	noclipmask = one - maxmask
+	noclipmask = noclipmask - minmask
+
+	one = 0
+	result = result * noclipmask
+	noclipmask = 0
+
+	# in the PDF specification, the max case takes precedence over the min case
+	# following line expanded to reduce memory usage:
+	#minmask = clipdata(minmask - maxmask, min=0.0, max=1.0, quiet=1)
+	minmask = minmask - maxmask
+	minmask = clipdata(minmask, min=0.0, max=1.0, quiet=1)
+
+	# following line expanded to reduce memory usage:
+	#result = (result * noclipmask) + (resultmin * minmask) + (resultmax * maxmask)
+	# following line moved up so noclipmask can be discarded earlier
+	#result = result * noclipmask
+	#noclipmask = 0
+	r1 = resultmin * minmask
+	resultmin = 0
+	minmask = 0
+	result = result + r1
+	r1 = resultmax * maxmask
+	resultmax = 0
+	maxmask = 0
+	result = result + r1
+	r1 = 0
+
+	return(result)
+}
+
+
+
+# Converts numeric values to double-precision floating-point in the range of 0.0 - 1.0
+define todouble(minval, maxval) {
+	if($ARGC != 1) {
+		printf("\nConverts numeric values to double-precision floating-point in the range of 0.0 - 1.0 (or the range specified by the optional minval and maxval parameters).\n")
+		printf("\nWill automatically convert byte, short, and integer types.\n")
+		printf("\nFloat and double types require that the maximum and minimum values be specified, or no scaling will take place.\n\n")
+		return(null)
+	}
+
+	inval = $1
+
+	foundtype = 0
+
+	intype = type(inval)
+
+	if (intype == "byte") {
+		foundtype = 1
+		if (HasValue(minval) == 0) {
+			minval = 0.0
+		}
+		if (HasValue(maxval) == 0) {
+			maxval = 255.0
+		}
+	}
+
+	if (intype == "short") {
+		foundtype = 1
+		if (HasValue(minval) == 0) {
+			#minval = -32767.0
+			minval = -32768.0
+		}
+		if (HasValue(maxval) == 0) {
+			maxval = 32767.0
+		}
+	}
+
+	if (intype == "int") {
+		foundtype = 1
+		if (HasValue(minval) == 0) {
+			#minval = -2147483647.0
+			minval = -2147483648.0
+		}
+		if (HasValue(maxval) == 0) {
+			maxval = 2147483647.0
+		}
+	}
+
+	if (foundtype == 0) {
+		if (HasValue(minval) == 0) {
+			minval = 0.0
+		}
+		if (HasValue(maxval) == 0) {
+			maxval = 1.0
+		}
+		if ((intype == "float") || (intype == "double")) {
+			foundtype = 1
+		}
+	}
+
+	if (foundtype == 0) {
+		printf("\nThe object type %s cannot be converted by this function. No conversion will take place.\n", intype)
+		return(inval)
+	}
+
+	if ((intype == "double") && (minval == 0.0) && (maxval == 1.0)) {
+		printf("\nThe output type is identical to the input type. No conversion will take place.\n")
+		return(inval)
+	}
+
+	if (intype == "double") {
+		doubled = inval
+	} else {
+		doubled = double(inval)
+	}
+
+	range = maxval - minval
+	if (minval != 0.0) {
+		doubled = doubled - minval
+	}
+	if (range != 1.0) {
+		doubled = doubled / range
+	}
+
+	return(doubled)
+}
+
+
+
+# a wrapper for todouble for use when only single-precision is required
+# note: for improved processing speed, a modified copy of the todouble() function is used in the production version.
+define tofloatdev(minval, maxval) {
+	if($ARGC != 1) {
+		printf("\nConverts numeric values to single-precision floating-point in the range of 0.0 - 1.0.\n")
+		printf("\nWill automatically convert byte, short, and integer types.\n")
+		printf("\nFloat and double types require that the maximum and minimum values be specified, or no scaling will take place.\n\n")
+		return(null)
+	}
+
+	inval = $1
+
+	intype = type(inval)
+
+	if (intype == "float") {
+		printf("\nThe output type is identical to the input type. No conversion will take place.\n")
+		return(inval)
+	}
+
+	if ((HasValue(minval) == 1) && (HasValue(maxval) == 1)) {
+		minv = minval
+		maxv = maxval
+		return(float(todouble($1, minval = minv, maxval = maxvl)))
+	}
+	if (HasValue(maxval) == 1) {
+		maxv = maxval
+		return(float(todouble($1, maxval = maxval)))
+	}
+	if (HasValue(minval) == 1) {
+		minv = minval
+		return(float(todouble($1, minval = minval)))
+	}
+	return(float(todouble($1)))
+}
+
+
+
+# Converts numeric values to double-precision floating-point in the range of 0.0 - 1.0
+define tofloat(minval, maxval) {
+	if($ARGC != 1) {
+		printf("\nConverts numeric values to single-precision floating-point in the range of 0.0 - 1.0.\n")
+		printf("\nWill automatically convert byte, short, and integer types.\n")
+		printf("\nThe optional minval and maxval parameters specify the minimum and maximum values to use for the input data. ")
+		printf("For integer input, if they are not specified, they default to the minimum and maximum that can be represented by that integer type. ")
+		printf("E.g, 0 to 255 for bytes, -32768 to 32767 for shorts.\n")
+		printf("\nFloat and double types require that the maximum and minimum values be specified, or no scaling will take place.\n\n")
+		return(null)
+	}
+
+	inval = $1
+
+	foundtype = 0
+
+	intype = type(inval)
+
+	if (intype == "byte") {
+		foundtype = 1
+		if (HasValue(minval) == 0) {
+			minval = 0.0
+		}
+		if (HasValue(maxval) == 0) {
+			maxval = 255.0
+		}
+	}
+
+	if (intype == "short") {
+		foundtype = 1
+		if (HasValue(minval) == 0) {
+			#minval = -32767.0
+			minval = -32768.0
+		}
+		if (HasValue(maxval) == 0) {
+			maxval = 32767.0
+		}
+	}
+
+	if (intype == "int") {
+		foundtype = 1
+		if (HasValue(minval) == 0) {
+			#minval = -2147483647.0
+			minval = -2147483648.0
+		}
+		if (HasValue(maxval) == 0) {
+			maxval = 2147483647.0
+		}
+	}
+
+	if (foundtype == 0) {
+		if (HasValue(minval) == 0) {
+			minval = 0.0
+		}
+		if (HasValue(maxval) == 0) {
+			maxval = 1.0
+		}
+		if ((intype == "float") || (intype == "double")) {
+			foundtype = 1
+		}
+	}
+
+	if (foundtype == 0) {
+		printf("\nThe object type %s cannot be converted by this function. No conversion will take place.\n", intype)
+		return(inval)
+	}
+
+	if ((intype == "float") && (minval == 0.0) && (maxval == 1.0)) {
+		printf("\nThe output type is identical to the input type. No conversion will take place.\n")
+		return(inval)
+	}
+
+	if (intype == "float") {
+		floated = inval
+	} else {
+		floated = float(inval)
+	}
+
+	range = maxval - minval
+
+	if (minval != 0.0) {
+		floated = floated - minval
+	}
+	if (range != 1.0) {
+		floated = floated / range
+	}
+
+	return(floated)
+}
+
+
+
+# Converts floating-point values to integers
+define tointeger(integertype, minval, maxval) {
+	if($ARGC != 1) {
+		printf("\nConverts floating-point values to integers (or integers to other types of integers). The range defaults to the maximum range for the specified integer type (0 - 255 for bytes, +/-32767 for shorts, etc.)\n")
+		printf("\nThis range can be overridden using the option minval and maxval parameters.\n\n")
+		return(null)
+	}
+
+	inval = $1
+	intype = type(inval)
+
+	if (HasValue(integertype) == 0) {
+		printf("\nThe type of integer ('byte', 'short', or 'int') must be specified using the integertype parameter. No conversion will take place.\n")
+		return(inval)
+	}
+
+	if (intype == integertype) {
+		printf("\nThe output type is identical to the input type. No conversion will take place.\n")
+		return(inval)
+	}
+
+	if ((intype != "float") && (intype != "double")) {
+		#outval = todouble(inval)
+		outval = tofloat(inval)
+	} else {
+		# do nothing - probably no need to convert doubles to floats or vice-versa
+		#outval = double(inval)
+		#outval = float(inval)
+		outval = inval
+	}
+
+	foundtype = 0
+
+	if (integertype == "byte") {
+		foundtype = 1
+		if (HasValue(minval) == 0) {
+			minval = 0.0
+		}
+		if (HasValue(maxval) == 0) {
+			maxval = 255.0
+		}
+		if (minval < 0.0) {
+			printf("\nWarning: the minimum value specified (%d) is less than the value that can be represented by the 'byte' object type. Values lower than 0 will be truncated to 0.\n", minval)
+		}
+		if (maxval > 255.0) {
+			printf("\nWarning: the maximum value specified (%d) is greater than the value that can be represented by the 'byte' object type. Values greater than 255 will be truncated to 255.\n", maxval)
+		}
+	}
+
+	if (integertype == "short") {
+		foundtype = 1
+		if (HasValue(minval) == 0) {
+			#minval = -32767.0
+			minval = -32768.0
+		}
+		if (HasValue(maxval) == 0) {
+			maxval = 32767.0
+		}
+		# if minval < -32767.0
+		if (minval < (-32768.0)) {
+			printf("\nWarning: the minimum value specified (%d) is less than the value that can be represented by the 'short' object type. Values lower than -32767 will be truncated to -32767.\n", minval)
+		}
+		if (maxval > 32767.0) {
+			printf("\nWarning: the maximum value specified (%d) is greater than the value that can be represented by the 'short' object type. Values greater than 32767 will be truncated to 32767.\n", maxval)
+		}
+	}
+
+	if (integertype == "int") {
+		foundtype = 1
+		if (HasValue(minval) == 0) {
+			#minval = -2147483647.0
+			minval = -2147483648.0
+		}
+		if (HasValue(maxval) == 0) {
+			maxval = 2147483647.0
+		}
+		# if minval < 0.0
+		if (minval < (-2147483648.0)) {
+			printf("\nWarning: the minimum value specified (%d) is less than the value that can be represented by the 'int' object type. Values lower than -2147483647 will be truncated to 2147483647.\n", minval)
+		}
+		if (maxval > 2147483647.0) {
+			printf("\nWarning: the maximum value specified (%d) is greater than the value that can be represented by the 'int' object type. Values greater than 2147483647 will be truncated to 2147483647.\n", maxval)
+		}
+	}
+
+	if (foundtype == 0) {
+		printf("\nThis function cannot convert to the object type %s. No conversion will take place.\n", intype)
+		return(inval)
+	}
+
+	range = maxval - minval
+
+	if (range != 1.0) {
+		outval = outval * range
+	}
+	if (minval != 0.0) {
+		outval = outval + minval
+	}
+
+	if (integertype == "byte") {
+		outval = byte(outval)
+	}
+
+	if (integertype == "short") {
+		outval = short(outval)
+	}
+
+	if (integertype == "int") {
+		# Hack/workaround to avoid wraparound due to relatively low accuracy of single-precision floating-point numbers
+		# Build a mask of values in which the temporary (still floating-point) value is greater than where the output value
+		# (which has been converted to an integer) is converted back to a float, then substitute the maximum int value 
+		# wherever that mask is true
+		outvaltemp = outval
+		outval = int(outval)
+		imask = int(normalize(outvaltemp - float(outval)))
+		imaskinv = int(abs(imask - 1))
+		outval = outval * imaskinv
+		imask = imask * 2147483647
+		outval = outval + imask
+	}
+
+	return(outval)
+}
+
+
+
+# a wrapper for tointeger that converts to 32-bit int
+define toint(minval, maxval) {
+	if ((HasValue(minval) == 1) && (HasValue(maxval) == 1)) {
+		minv = minval
+		maxv = maxval
+		return(tointeger($1, integertype = "int", minval = minv, maxval = maxvl))
+	}
+	if (HasValue(maxval) == 1) {
+		maxv = maxval
+		return(tointeger($1, integertype = "int", maxval = maxvl))
+	}
+	if (HasValue(minval) == 1) {
+		minv = minval
+		return(tointeger($1, integertype = "int", minval = minv))
+	}
+	return(tointeger($1, integertype = "int"))
+	
+}
+
+# a wrapper for tointeger that converts to 16-bit short
+define toshort(minval, maxval) {
+	if ((HasValue(minval) == 1) && (HasValue(maxval) == 1)) {
+		minv = minval
+		maxv = maxval
+		return(tointeger($1, integertype = "short", minval = minv, maxval = maxvl))
+	}
+	if (HasValue(maxval) == 1) {
+		maxv = maxval
+		return(tointeger($1, integertype = "short", maxval = maxvl))
+	}
+	if (HasValue(minval) == 1) {
+		minv = minval
+		return(tointeger($1, integertype = "short", minval = minv))
+	}
+	return(tointeger($1, integertype = "short"))
+}
+
+
+
+# a wrapper for tointeger that converts to 8-bit byte
+define tobyte(minval, maxval) {
+	if ((HasValue(minval) == 1) && (HasValue(maxval) == 1)) {
+		minv = minval
+		maxv = maxval
+		return(tointeger($1, integertype = "byte", minval = minv, maxval = maxvl))
+	}
+	if (HasValue(maxval) == 1) {
+		maxv = maxval
+		return(tointeger($1, integertype = "byte", maxval = maxvl))
+	}
+	if (HasValue(minval) == 1) {
+		minv = minval
+		return(tointeger($1, integertype = "byte", minval = minv))
+	}
+	return(tointeger($1, integertype = "byte"))
+}
+
+
+
+# concatenates three planes of the same dimensions and type into a single cube
+# does not alter the object type
+define threeplane() {
+	if($ARGC != 3) {
+		printf("\nConcatenates three planes of the same x/y dimensions into a single cube, but does not alter the data type.\n")
+		return(null)
+	}
+
+	p1 = $1
+	p2 = $2
+	p3 = $3
+
+	p1type = type(p1)
+	p2type = type(p2)
+	p3type = type(p3)
+
+	p1org = org(p1)
+	p2org = org(p2)
+	p3org = org(p3)
+
+	p1dim = dim(p1)
+	p2dim = dim(p2)
+	p3dim = dim(p3)
+
+	# make sure each object has only a single plane
+	if (p1dim[3,1,1] != 1) {
+		printf("\nError: The first specified object has a z-dimension of %d. Only single planes are allowed.\n", p1dim[3,1,1])
+		return(null)
+	}
+	if (p2dim[3,1,1] != 1) {
+		printf("\nError: The second specified object has a z-dimension of %d. Only single planes are allowed.\n", p2dim[3,1,1])
+		return(null)
+	}
+	if (p3dim[3,1,1] != 1) {
+		printf("\nError: The third specified object has a z-dimension of %d. Only single planes are allowed.\n", p3dim[3,1,1])
+		return(null)
+	}
+
+	# verify that the dimensions match
+	if ((p1dim != p2dim) || (p1dim != p3dim) || (p2dim != p3dim)) {
+		printf("\nError: The specified objects do not have the same dimensions.\n")
+		printf("\tObject 1: x = %d, y = %d", p1dim[1,1,1], p1dim[2,1,1])
+		printf("\tObject 2: x = %d, y = %d", p2dim[1,1,1], p2dim[2,1,1])
+		printf("\tObject 3: x = %d, y = %d\n", p3dim[1,1,1], p3dim[2,1,1])
+		return(null)
+	}
+
+	# verify that the types match
+	if ((p1type != p2type) || (p1type != p3type) || (p2type != p3type)) {
+		printf("\nError: The specified objects are not of the same type.\n")
+		printf("\tObject 1: %s", p1type)
+		printf("\tObject 2: %s", p2type)
+		printf("\tObject 3: %s\n", p3type)
+		return(null)
+	}
+
+	# verify that the organizations match
+	if ((p1org != p2org) || (p1org != p3org) || (p2org != p3org)) {
+		printf("\nError: The specified objects are not of the same data organization.\n")
+		printf("\tObject 1: %s", p1org)
+		printf("\tObject 2: %s", p2org)
+		printf("\tObject 3: %s\n", p3org)
+		return(null)
+	}
+
+	outval = cat(p1, p2, axis = z)
+	outval = cat(outval, p3, axis = z)
+
+	return(outval)
+}
+
+
+
+# this is a workaround for an apparent bug in the DaVinci scripting syntax
+# if the same object is passed multiple times as an argument to a function, only the first occurence is visible to the script code
+define threeclone() {
+	if($ARGC != 1) {
+		printf("\nCreates a three-plane clone of a single plane.\n")
+		return(null)
+	}
+
+	plane1 = $1
+	plane2 = $1
+	plane3 = $1
+
+	return (threeplane(plane1, plane2, plane3))
+}
+
+
+
+define momentcubesimple(){
+	if ($ARGC != 1) {
+		printf("\nCreates a higher-order image cube whose contents are the result of passing the input image cube through the standard statistical equations, ")
+		printf("as well as the median and range values.\n")
+		printf("\n")
+		printf("$1 = the input image cube\n")
+		printf("\n")
+		printf("Plane  1 = Minimum\n")
+		printf("Plane  2 = Maximum\n")
+		printf("Plane  3 = Average (Mean)\n")
+		printf("Plane  4 = Average Deviation\n")
+		printf("Plane  5 = Standard Deviation\n")
+		printf("Plane  6 = Variance\n")
+		printf("Plane  7 = Skewness\n")
+		printf("Plane  8 = Kurtosis\n")
+		printf("Plane  9 = Median\n")
+		printf("Plane 10 = Range\n")
+		printf("\n")
+		return(null)
+	}
+
+	sourcecube = $1
+
+	xsize = dim(sourcecube)[1,1,1]
+	ysize = dim(sourcecube)[2,1,1]
+	zsize = dim(sourcecube)[3,1,1]
+
+	resultcube = clone(sourcecube[1,1,1], xsize, ysize, 10)
+
+	ycurrent = 1
+
+	# standard moments
+	while (ycurrent <= ysize) {
+		xcurrent = 1
+		while (xcurrent <= xsize) {
+			resultcube[xcurrent, ycurrent, 1:10] = resize(momentext(sourcecube[xcurrent, ycurrent, 0]), 1, 1, 10)
+			xcurrent++
+		}
+		ycurrent++
+	}
+
+	return(resultcube)
+}
+
+
+define momentcube(windowSize){
+	if ($ARGC != 1) {
+		printf("\nCreates a higher-order image cube whose contents are the result of passing the input image cube through the standard statistical equations.\n")
+		printf("as well as several semi- and non-standard equations.\n")
+		printf("\n")
+		printf("$1         = the input image cube\n")
+		printf("windowSize = x/y dimension of the window to use for calculating stats (default = 1)\n")
+		printf("\n")
+		printf("Plane  1 = Minimum\n")
+		printf("Plane  2 = Maximum\n")
+		printf("Plane  3 = Average (Mean)\n")
+		printf("Plane  4 = Average Deviation\n")
+		printf("Plane  5 = Standard Deviation\n")
+		printf("Plane  6 = Variance\n")
+		printf("Plane  7 = Skewness\n")
+		printf("Plane  8 = Kurtosis\n")
+		printf("Plane  9 = Median\n")
+		printf("Plane 10 = Range\n")
+		printf("\n")
+		return(null)
+	}
+
+	xsize = dim($1)[1,1,1]
+	ysize = dim($1)[2,1,1]
+	zsize = dim($1)[3,1,1]
+
+	winSize = 1
+
+	if(HasValue(windowSize) == 1) {
+		winSize = windowSize
+	}
+
+	if (winSize == 1) {
+		return(momentcubesimple($1))
+	}
+
+	if (winSize % 2 == 0) {
+		winSize = winSize + 1
+	}
+
+	resultcube = clone(($1)[1,1,1], xsize, ysize, 10)
+
+	resultcube[0, 0, 0] = 0.0
+
+	# extended standard moments
+	printf("\nDebug: getting extended standard moments.\n")
+
+	yRange=xRange=clone(0,2,1,1)
+	xStart = 0
+	xEnd = 0
+	yStart = 0
+	yEnd = 0
+	xcurrent = 1
+	ycurrent = 1
+	wDiff = (winSize - 1) / 2
+	if (winSize == 1) {
+		while (ycurrent <= ysize) {
+			xcurrent = 1
+			while (xcurrent <= xsize) {
+				# the following line was expanded to reduce memory use:
+				#resultcube[xcurrent, ycurrent, 1:10] = resize(momentext(sourcecube[xcurrent, ycurrent, 0]), 1, 1, 10)
+				r1 = momentext(($1)[xcurrent, ycurrent, 0])
+				resultcube[xcurrent, ycurrent, 1:10] = resize(r1, 1, 1, 10)
+				r1 = 0
+				xcurrent++
+			}
+			ycurrent++
+		}
+	} else {
+		while (ycurrent <= ysize) {
+			#yRange[1] = max(cat(1, ycurrent - wDiff, axis = x), axis = x)
+			#yRange[2] = min(cat(ysize, ycurrent + wDiff, axis = x), axis = x)
+			yRange[1] = ycurrent - wDiff
+			if (yRange[1] < 1) {
+				yRange[1] = 1
+			}
+			yRange[2] = ycurrent + wDiff
+			if (yRange[2] > ysize) {
+				yRange[2] = ysize
+			}
+
+			xcurrent = 1
+
+			while (xcurrent <= xsize) {
+
+				#xRange[1] = max(cat(1, xcurrent - wDiff, axis = x), axis = x)
+				#xRange[2] = min(cat(xsize, xcurrent + wDiff, axis = x), axis = x)
+				xRange[1] = xcurrent - wDiff
+				if (xRange[1] < 1) {
+					xRange[1] = 1
+				}
+				xRange[2] = xcurrent + wDiff
+				if (xRange[2] > xsize) {
+					xRange[2] = xsize
+				}
+
+				#yRange[1] = max(cat(1, ycurrent - wDiff, axis = x), axis = x)
+				#yRange[2] = min(cat(ysize, ycurrent + wDiff, axis = x), axis = x)
+
+				# the following line was expanded to reduce memory use:
+				#resultcube[xcurrent, ycurrent, 1:10] = resize(momentext(sourcecube[xRange[1]:xRange[2], yRange[1]:yRange[2], 0]), 1, 1, 10)
+				r1 = momentext(($1)[xRange[1]:xRange[2], yRange[1]:yRange[2], 0])
+				resultcube[xcurrent, ycurrent, 1:10] = resize(r1, 1, 1, 10)
+				r1 = 0 
+
+				xcurrent++
+			}
+			ycurrent++
+		}
+	}
+
+	sourcecube = 0
+	xRange = 0
+	yRange = 0
+
+	return(resultcube)
+}
+
+define dras(lbound, ubound) {
+	printf("\nData Reposition And Scale")
+	if ($ARGC != 1) {
+		printf("\n\nA utility function for repositioning the minimum value in a set of input data and then (optionally) rescaling the data ")
+		printf("so that the maximum value is equal to the specified new upper bound.\n")
+		printf("\n")
+		printf("$1	= the input array\n")
+		printf("lbound	= the new lower bound for the data (default = 0.0)\n")
+		printf("ubound	= the new upper bound for the data (default = 1.0)\n")
+		return(null)
+	}
+
+	newLBound = 0.0
+	newUBound = 1.0
+
+	if(HasValue(lbound) == 1) {
+		newLBound = lbound
+	}
+
+	if(HasValue(ubound) == 1) {
+		newUBound = ubound
+	}
+
+	inVal = float($1)
+
+	currentMin = min(inVal)
+	currentMax = max(inVal)
+
+	reposition = 1
+	rescale = 1
+
+	if (currentMin == newLBound) {
+		reposition = 0
+	}
+
+	if ((currentMax + currentMin) == newUBound) {
+		rescale = 0
+	}
+
+	if ((reposition == 0) && (rescale == 0)) {
+		printf(" - the input data already occupies the specified range. No change is necessary.")
+		return(inVal)
+	}
+
+	if ((reposition == 0) && (rescale == 1)) {
+		printf(" - scaling data to the new upper bound.")
+		return(inVal)
+	}
+
+	if ((reposition == 1) && (rescale == 0)) {
+		printf(" - repositioning data to the new lower bound.")
+		return(inVal)
+	}
+
+	if ((reposition == 1) && (rescale == 1)) {
+		printf(" - repositioning and scaling data to match the new upper and lower bounds.")
+		return(inVal)
+	}
+
+	outVal = (inVal)
+
+	norm = 1
+
+	if ((currentMin == 0.0) && (currentMax == 1.0)) {
+		norm = 0
+	}
+
+	if (norm == 1) {
+		outVal = normalize(outVal)
+	}
+
+	if (rescale == 1) {
+		dataRange = currentMax - currentMin
+		outputRange = newUBound - newLBound
+		scalingFactor = outputRange / dataRange
+		outVal = outVal * scalingFactor
+	}
+
+	if (reposition == 1) {
+		outVal = outVal + newLBound
+	}
+
+	return(outVal)
+}
+
+
+define anormalize(steps, backlash, threshold, threshrepeat, searchwidth){
+	if ($ARGC != 1) {
+		printf("\nAggressively normalizes the specified array.\n")
+		printf("\n")
+		printf("$1           = the input array\n")
+		printf("steps 	     = the number of steps between 0 and 1 to use when generating the histogram (default = 100)\n")
+		printf("backlash     = the number of steps to \"back off\" the new min and max values when rescaling (default = 1)\n")
+		printf("threshold    = the relative count that must be exceeded by a step in the histogram to trigger a response (default = 0.05)\n")
+		printf("threshrepeat = the number of steps that must exceed the threshold in order to trigger a response (default = 3)\n")
+		printf("searchwidth  = the number of steps after the first which exceeds the threshold that will be searched to find a repetition (default = 5)\n")
+		return(null)
+	}
+
+	stepCount = 100
+	bl = 1
+	thresh = 0.05
+	trepeat = 3
+	swidth = 5
+
+	if(HasValue(steps) == 1) {
+		stepCount = steps
+	}
+
+	if(HasValue(backlash) == 1) {
+		bl = backlash
+	}
+
+	if(HasValue(threshold) == 1) {
+		thresh = threshold
+	}
+
+	if(HasValue(threshrepeat) == 1) {
+		trepeat = threshrepeat
+	}
+
+	if(HasValue(searchwidth) == 1) {
+		swidth = searchwidth
+	}
+
+	printf("Performing an aggressive normalization.\n")
+
+	# first, perform a standard normalization to make the rest of the calculations easier
+	inVal = float($1)
+
+	inMin = min(inVal)
+	inMax = max(inVal)
+
+	if ((inMin != 0.0) || (inMax != 1.0)) {
+		inVal = inVal - inMin
+		inVal = inVal / max(inVal)
+	}
+
+	# get the new values to use
+	newVals = findAggMinMax(inVal, steps = stepCount, backlash = bl, threshold = thresh, threshrepeat = trepeat, searchwidth = swidth)
+	newMin = newVals[1,1,1]
+	newMax = newVals[2,1,1]
+
+	#printf("Debug: new minimum: %f.\n", newMin)
+	#printf("Debug: new maximum: %f.\n", newMax)
+
+	dNewMin = dim(newMin)
+	dNewMinX = dNewMin[1,1,1]
+	dNewMinY = dNewMin[2,1,1]
+	dNewMinZ = dNewMin[3,1,1]
+
+	#printf("Debug: newMin dimensions\n")
+	#printf("\t%f\n", dNewMinX)
+	#printf("\t%f\n", dNewMinY)
+	#printf("\t%f\n", dNewMinZ)
+
+
+	dNewMax = dim(newMax)
+	dNewMaxX = dNewMax[1,1,1]
+	dNewMaxY = dNewMax[2,1,1]
+	dNewMaxZ = dNewMax[3,1,1]
+
+	#printf("Debug: newMax dimensions\n")
+	#printf("\t%f\n", dNewMaxX)
+	#printf("\t%f\n", dNewMaxY)
+	#printf("\t%f\n", dNewMaxZ)
+
+	#printf("Debug: outVal = inVal - newMin\n")
+	if (newMin > 0.0) {
+		#printf("Debug: subtracting %f from the input data.\n", newMin)
+		outVal = inVal - newMin
+	} else {
+		if (newMin == 0.0) {
+			#printf("Debug: %f is equal to zero, so it will not be subtracted from the input data.\n", newMin)
+		} else {
+			#printf("Debug: %f is less than zero, so it will not be subtracted from the input data - this indicates a calculation error.\n", newMin)
+		}
+		outVal = inVal
+	}
+
+	#printf("Debug: newMax = newMax - newMin\n")
+	newMax = newMax - newMin
+
+	#printf("Debug: outVal = outVal / newMax\n")
+	if (newMax < 1.0) {
+		#printf("Debug: dividing the input data by %f.\n", newMax)
+		outVal = outVal / newMax
+	} else {
+		#printf("Debug: %f is greater than or equal to 1.0, so the input data will not be divided by it.\n", newMin)
+		outVal = inVal
+	}
+
+	# crop values outside 0.0 - 1.0
+
+	#printf("Debug: xMax = dim(outVal)[1,1,1]\n")
+	xMax = dim(outVal)[1,1,1]
+
+	#printf("Debug: yMax = dim(outVal)[2,1,1]\n")
+	yMax = dim(outVal)[2,1,1]
+
+	#printf("Debug: zMax = dim(outVal)[3,1,1]\n")
+	zMax = dim(outVal)[3,1,1]
+
+	xCurrent = 1
+	yCurrent = 1
+	zCurrent = 1
+
+	#printf("Debug: Final pass to clip values to 0.0 - 1.0.\n")
+
+	outVal = clipdata(outVal, min = 0.0, max = 1.0)
+
+	
+	return(outVal)
+
+}
+
+
+define clipdata(min, max, quiet){
+	if ($ARGC != 1) {
+		printf("\nClips the input data to the specified range.\n")
+		printf("\n")
+		printf("$1	= the input data (required)\n")
+		printf("min	= clip to a minimum of this value (default = min($1))\n")
+		printf("max	= clip to a maximum of this value (default = max($1))\n")
+		printf("quiet	= do not display informational messages (default = 0)\n")
+		return(null)
+	}
+
+	willChange = 0
+	noChangeMin = 0
+	noChangeMax = 0
+	q = 0
+	if(HasValue(quiet) == 1) {
+		if (quiet == 1) {
+			q = 1
+		}
+	}
+
+	inVal = float($1)
+
+	cMax = max(inVal)
+	cMin = min(inVal)
+
+	if(q == 0) {
+		printf("Current minimum value: %f.\n", cMin)
+		printf("Current maximum value: %f.\n", cMax)
+	}
+
+	if(HasValue(min) == 1) {
+		if (min > cMin) {
+			cMin = min
+			willChange = 1
+		} else {
+			if(q == 0) {
+				printf("The input data already has a minimum value of %f, so its lower bound will not be clipped.\n", cMin)
+			}
+			noChangeMin = 1
+		}
+	}
+
+	if(HasValue(max) == 1) {
+		if (max < cMax) {
+			cMax = max
+			willChange = 1
+		} else {
+			if(q == 0) {
+				printf("The input data already has a maximum value of %f, so its upper bound will not be clipped.\n", cMax)
+			}
+			noChangeMax = 1
+		}
+	}
+
+	if (willChange == 0) {
+		if(q == 0) {
+			printf("Clipping values were not provided. No change will be made to the data.\n")
+		}
+		return(inVal)
+	}
+
+	if ((noChangeMin == 1) && (noChangeMax == 1)) {
+		if(q == 0) {
+			printf("The input data is already within the specified bounds. No change will be made to the data.\n")
+		}
+		return(inVal)
+	}
+
+	if(q == 0) {
+		printf("Clipping input values to a range of (%f) to (%f).\n", cMin, cMax)
+	}
+
+	outVal = inVal
+
+	zMax = dim(outVal)[3,1,1]
+
+	zCurrent = 1
+
+	zTemp = inVal[0,0,zCurrent]
+
+	while (zCurrent <= zMax) {
+		zTemp = inVal[0,0,zCurrent]
+		zTemp = cat(zTemp, zTemp, axis = z)
+		zTemp[0,0,2] = cMin
+		zTemp = max(zTemp, axis = z)
+	
+		zTemp = cat(zTemp, zTemp, axis = z)
+		zTemp[0,0,2] = cMax
+		zTemp = min(zTemp, axis = z)
+		outVal[0,0,zCurrent] = zTemp
+
+		zCurrent++
+	}
+
+	zTemp = 0
+		
+	return(outVal)
+}
+
+define ndi(){
+	if ($ARGC != 2) {
+		printf("\nGenerates a Normalized Difference Index map based on the input data.\n")
+		printf("This function can be used to generate any normalized difference index that uses the form ")
+		printf("x = (a - b) / (a + b).\n")
+		printf("\n")
+		printf("$1	= the value to use for the 'a' variable (required)\n")
+		printf("$2      = the value to use for the 'b' variable (required)\n")
+		printf("\n")
+		printf("Note: values are in the range of -1.0 to 1.0.\n")
+
+		printf("\n")
+		printf("Examples:\n")
+		printf("\tNormalized Difference Vegetation Index (a = NIR, b = red)\n")
+		printf("\tGreen Normalized Difference Vegetation Index (a = NIR, b = green)\n")
+		printf("\tNormalized Burn Ratio (a = NIR, b = 2220nm)\n")
+		printf("\tND53 (a = 1625nm, b = red)\n")
+		printf("\tND54 (a = 1625nm, b = NIR)\n")
+		printf("\tND57 (a = 1625nm, b = 2220nm)\n")
+		printf("\tND32 (a = red, b = green)\n")
+		printf("\n")
+		printf("When calculating the NDVI, values less than 0 indicate no vegetation.\n")
+		printf("Values greater than 0 indicate the health/stress level of vegetation, with 1.0 representing dense, healthy vegetation.\n")
+		printf("\n")
+		printf("Some sources describe the NDVI calculation using the generic term 'visible light' as the 'b' variable. ")
+		printf("This can be accomplished by collapsing the red, green, and blue data to a single greyscale band ")
+		printf("(e.g. using the max(), min(), avg(), calculating the luminance, or other statistical methods).\n")
+		printf("\n")
+		return(null)
+	}
+
+	nir = $1
+	vis = $2
+
+	nirPlanes = dim(nir)[3,1,1]
+	visPlanes = dim(vis)[3,1,1]
+
+	printf("Generating a Normalized Difference Index image.\n")
+
+	if (nirPlanes != 1) {
+		printf("Error: the first dataset must have exactly one plane. The input value has %i planes.\n", nirPlanes)
+		return(null)
+	}
+
+	if (visPlanes != 1) {
+		printf("Error: the second dataset must have exactly one plane. The input value has %i planes.\n", visPlanes)
+		return(null)
+	}
+
+	outVal = (nir - vis) / (nir + vis)
+
+	return(outVal)
+}
+
+
+define evi(l, c1, c2, gain, clipMin, clipMax, wrapMax, wrapTh, smartWrap){
+	if ($ARGC != 3) {
+		printf("\nGenerates an Enhanced Vegetation Index map based on the input data.\n")
+		printf("\nNote: requires near-infrared, red, and blue spectral band data.\n")
+		printf("\n")
+		printf("$1		= the near-infrared band of the input image (required)\n")
+		printf("$2      	= the red band of the input image (required)\n")
+		printf("$3      	= the blue band of the input image (required)\n")
+		printf("l 		= canopy background adjustment (default = 1.0)\n")
+		printf("c1 		= canopy background adjustment (default = 6.0)\n")
+		printf("c2 		= canopy background adjustment (default = 7.5)\n")
+		printf("gain 		= canopy background adjustment (default = 1.0)\n")
+		printf("clipMin		= clip formula result to a minimum of this value (default = do not clip)\n")
+		printf("clipMax		= clip formula result to a maximum of this value (default = do not clip)\n")
+		printf("wrapMax		= wrap data with the maximum value back to the minimum value for a more natural appearance (default = 0)\n")
+		printf("wrapTh		= range from the actual maximum that will be included when using the wrapMax option (default = 0.0)\n")
+		printf("smartWrap	= attempts to automatically determine the best point at which to wrap values back to the minimum (default = 0)\n")
+		printf("\n")
+		printf("The basic formula and defaults used are as indicated by Professor Paul R. Baumann in \"Tropical Wet Realms Of Central Africa, Part II\".\n")
+		# note: (http://employees.oneonta.edu/baumanpr/geosat2/Central%20Africa%20II/Central%20Africa%20Part%20II.htm)
+		printf("\n")
+		printf("Note: the original formula used for MODIS non-normalized 12-bit integer data specifies a gain of 2.5.\n")
+		return(null)
+	}
+
+	nir = $1
+	red = $2
+	blue = $3
+
+	printf("Generating an Enhanced Vegetation Index image.\n")
+
+	numPlanes = dim(nir)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the near-infrared dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	numPlanes = dim(red)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the red dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	numPlanes = dim(blue)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the blue dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	lval = 1.0
+	c1val = 6.0
+	c2val = 7.5
+	g = 1.0
+	wMax = 0
+	wrapThreshold = 0.0
+	sWrap = 0
+
+	if(HasValue(l) == 1) {
+		lval = l
+	}
+
+	if(HasValue(c1) == 1) {
+		c1val = c1
+	}
+
+	if(HasValue(c2) == 1) {
+		c2val = c2
+	}
+
+	if(HasValue(gain) == 1) {
+		g = gain
+	}
+
+	if(HasValue(wrapMax) == 1) {
+		wMax = wrapMax
+	}
+
+	if(HasValue(wrapTh) == 1) {
+		wrapThreshold = wrapTh
+	}
+
+	if(HasValue(smartWrap) == 1) {
+		sWrap = smartWrap
+	}
+
+	# if the smart wrap option is enabled, force the wrapMax option to enabled as well
+	if(sWrap == 1) {
+		wMax = 1
+	}
+
+	# this is the actual formula
+	outVal = ((nir - red) / (nir + c1val * red - c2val * blue + lval))
+	if (g != 1.0) {
+		outVal = g * outVal
+	}
+
+
+	if((HasValue(clipMin) == 1) || (HasValue(clipMax) == 1)) {
+		cMin = -1.0
+		if (HasValue(clipMin) == 1) {
+			cMin = clipMin
+		} else {
+			cMin = min(outVal)
+		}
+
+		cMax = 1.0
+		if (HasValue(clipMax) == 1) {
+			cMax = clipMax
+		} else {
+			cMax = max(outVal)
+		}
+
+		
+		outVal = clipdata(outVal, min = clipMin, max = clipMax)
+	}
+
+	if (wMax == 1) {
+		xMax = dim(outVal)[1,1,1]
+		yMax = dim(outVal)[2,1,1]
+		maxVal = max(outVal) - wrapThreshold
+		minVal = min(outVal)
+
+		if (sWrap == 1) {
+			maxVal = findAggMinMax(outVal, backlash = 5, threshold = 0.001)[2,1,1]
+			# that function returns values in a range of 0 - 1, so convert back to whatever range is being used here
+			cRange = maxVal - minVal
+			maxVal = (maxVal * cRange) - (cRange / 2)
+		}
+
+		xCurrent = 1
+		yCurrent = 1
+
+		while (yCurrent <= yMax) {
+			xCurrent = 1
+			while (xCurrent <= xMax) {
+				#printf("Debug: current position: x = %i, y = %i.\n", xCurrent, yCurrent)
+				if (outVal[xCurrent, yCurrent, 1] >= maxVal) {
+					outVal[xCurrent, yCurrent, 1] = minVal
+				}
+				xCurrent++
+			}
+			yCurrent++
+		}
+	}
+
+	return(outVal)
+
+}
+
+
+define arvi(){
+	if ($ARGC != 3) {
+		printf("\nGenerates an Atmospherically-Resistant Vegetation Index map based on the input data.\n")
+		printf("\nNote: requires near-infrared, red, and blue spectral band data.\n")
+		printf("\n")
+		printf("$1		= the near-infrared band of the input image (required)\n")
+		printf("$2      	= the red band of the input image (required)\n")
+		printf("$3      	= the blue band of the input image (required)\n")
+		printf("\n")
+		printf("Uses the formula as published in \"Above-Ground Biomass Estimation of Successional and Mature Forests Using TM Images in the Amazon Basin\", ")
+		printf("by Dengsheng Lu, Paul Mausel, Eduardo Brondizio, and Emilio Moran.\n")
+		# note: http://www.isprs.org/proceedings/XXXIV/part4/pdfpapers/059.pdf
+		return(null)
+	}
+
+	nir = $1
+	red = $2
+	blue = $3
+
+	numPlanes = dim(nir)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the near-infrared dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	numPlanes = dim(red)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the red dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	numPlanes = dim(blue)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the blue dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	printf("Generating an Atmospherically-Resistant Vegetation Index image.\n")
+
+	outVal = (nir - (red * 2.0) + blue) / (nir + (red * 2.0) + blue)
+
+	return(outVal)
+}
+
+
+define asvi(){
+	if ($ARGC != 3) {
+		printf("\nGenerates an Atmospheric and Soil Vegetation Index map based on the input data.\n")
+		printf("\nNote: requires near-infrared, red, and blue spectral band data.\n")
+		printf("\n")
+		printf("$1		= the near-infrared band of the input image (required)\n")
+		printf("$2      	= the red band of the input image (required)\n")
+		printf("$3      	= the blue band of the input image (required)\n")
+		printf("\n")
+		printf("Uses the formula as published in \"Above-Ground Biomass Estimation of Successional and Mature Forests Using TM Images in the Amazon Basin\", ")
+		printf("by Dengsheng Lu, Paul Mausel, Eduardo Brondizio, and Emilio Moran.\n")
+		# note: http://www.isprs.org/proceedings/XXXIV/part4/pdfpapers/059.pdf
+		return(null)
+	}
+
+	nir = $1
+	red = $2
+	blue = $3
+
+	printf("Generating an Atmospheric and Soil Vegetation Index image.\n")
+
+	numPlanes = dim(nir)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the near-infrared dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	numPlanes = dim(red)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the red dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	numPlanes = dim(blue)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the blue dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	outVal = nir + 0.5 - (0.5 * ( sqrt(pow((nir * 2.0 + 1), 2) - 8 * (nir - (red * 2.0) + blue))))
+
+	return(outVal)
+}
+
+
+define gemi(){
+	if ($ARGC != 2) {
+		printf("\nGenerates a Global Environmental Monitoring Index map based on the input data.\n")
+		printf("\nNote: requires near-infrared and red spectral band data.\n")
+		printf("\n")
+		printf("$1		= the near-infrared band of the input image (required)\n")
+		printf("$2      	= the red band of the input image (required)\n")
+		printf("\n")
+		printf("Uses the formula as published in \"Above-Ground Biomass Estimation of Successional and Mature Forests Using TM Images in the Amazon Basin\", ")
+		printf("by Dengsheng Lu, Paul Mausel, Eduardo Brondizio, and Emilio Moran.\n")
+		# note: http://www.isprs.org/proceedings/XXXIV/part4/pdfpapers/059.pdf
+		return(null)
+	}
+
+	nir = $1
+	red = $2
+
+	printf("Generating a Global Environmental Monitoring Index image.\n")
+
+	numPlanes = dim(nir)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the near-infrared dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	numPlanes = dim(red)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the red dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	# the formula as printed in the paper uses an unusual glyph to represent a sub-component of the equation which is used twice
+	# it turns out the glyph is the Greek letter "Xi"
+	squigglyLine = ( (pow(nir, 2) - pow(red, 2)) * 2.0 + (nir * 1.5) + (red * 0.5) ) / (nir + red + 0.5)
+
+	invert = nir
+	invert[0,0,0] = 1.0
+
+	outVal = squigglyLine * (invert - (squigglyLine * 0.25)) - ( (red - 0.125)  / (invert - red) )
+
+	return(outVal)
+}
+
+
+# note: according to the "Vegetation Detection for Mobile Robot Navigation" paper referenced below, the original
+# (IE "non-modified") SAVI formula only differs from MSAVI in that it has a manually-specified variable called "L"
+# which "is selected based on where isovegetation lines intersect the soil line", and that MSAVI and MSAVI2 
+# automatically calculate this value.
+# Therefore, I have not included the original SAVI formula as a function.
+
+define msavi(){
+	if ($ARGC != 2) {
+		printf("\nGenerates a Modified Soil-Adjusted Vegetation Index map based on the input data.\n")
+		printf("\nNote: requires near-infrared and red spectral band data.\n")
+		printf("\n")
+		printf("$1		= the near-infrared band of the input image (required)\n")
+		printf("$2      	= the red band of the input image (required)\n")
+		printf("\n")
+		printf("Uses the formula as published in \"Above-Ground Biomass Estimation of Successional and Mature Forests Using TM Images in the Amazon Basin\", ")
+		printf("by Dengsheng Lu, Paul Mausel, Eduardo Brondizio, and Emilio Moran.\n")
+		# note: http://www.isprs.org/proceedings/XXXIV/part4/pdfpapers/059.pdf
+		return(null)
+	}
+
+	nir = $1
+	red = $2
+
+	printf("Generating a Modified Soil-Adjusted Vegetation Index image.\n")
+
+	numPlanes = dim(nir)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the near-infrared dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	numPlanes = dim(red)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the red dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	outVal = nir + 0.5 - ((sqrt( pow((nir * 2.0 + 1), 2) - ((nir - (red * 2.0)) * 8.0) )) * 0.5)
+
+	return(outVal)
+}
+
+
+define msavi2(){
+	if ($ARGC != 2) {
+		printf("\nGenerates a Modified Soil-Adjusted Vegetation Index 2 map based on the input data.\n")
+		printf("\nNote: requires near-infrared and red spectral band data.\n")
+		printf("\n")
+		printf("$1	= the near-infrared band of the input image (required)\n")
+		printf("$2	= the red band of the input image (required)\n")
+		printf("\n")
+		printf("Uses the formula as published in \"Vegetation Detection for Mobile Robot Navigation\", ")
+		printf("by David M. Bradley, Scott M. Thayer, Anthony Stentz, and Peter Rander.\n")
+		# note: http://www.ri.cmu.edu/pub_files/pub4/bradley_david_2004_2/bradley_david_2004_2.pdf
+		printf("\n")
+		printf("\nNote: Useful output is in the range of 0.0 - 1.0.\n")
+		return(null)
+	}
+
+	nir = $1
+	red = $2
+
+	printf("Generating a Modified Soil-Adjusted Vegetation Index 2 image.\n")
+
+	numPlanes = dim(nir)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the near-infrared dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	numPlanes = dim(red)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the red dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	outVal = (((nir + 1.0) * 2.0) - sqrt( pow(((nir * 2.0) + 1.0), 2) - ((nir - red) * 8.0))) / 2
+
+	return(outVal)
+}
+
+
+
+define avi(mwnir, mwred, mwgreen){
+	if ($ARGC != 3) {
+		printf("\nGenerates an Angular Vegetation Index map based on the input data.\n")
+		printf("\nNote: requires near-infrared, red, and green spectral band data.\n")
+		printf("\n")
+		printf("$1	= the near-infrared band of the input image (required)\n")
+		printf("$2	= the red band of the input image (required)\n")
+		printf("$3	= the green band of the input image (required)\n")
+		printf("mwnir	= the middle wavelength of the near-infrared band (default = 825)\n")
+		printf("mwred	= the middle wavelength of the red band (default = 660\n")
+		printf("mwgreen	= the middle wavelength of the green band (default = 565)\n")
+		printf("\n")
+		printf("Uses the formula as published in \"Bilko Mini-Lesson 8: Vegetation Indices\"\n")
+		# note: http://www.noc.soton.ac.uk/bilko/miniless/l8_100.php
+		printf("\n")
+		printf("Note: the units used for the optional middle wavelength values are unimportant as long as the same unit is used for all three values.\n")
+		return(null)
+	}
+
+	nir = $1
+	red = $2
+	green = $3
+
+	printf("Generating an Angular Vegetation Index image.\n")
+
+	numPlanes = dim(nir)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the near-infrared dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	numPlanes = dim(red)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the red dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	numPlanes = dim(green)[3,1,1]
+	if (numPlanes != 1) {
+		printf("Error: the green dataset must have exactly one plane. The input value has %i planes.\n", numPlanes)
+		return(null)
+	}
+
+	mnir = 825.0
+	mred = 660.0
+	mgreen = 565.0
+
+	if(HasValue(mwnir) == 1) {
+		mnir = mwnir
+	}
+
+	if(HasValue(mwred) == 1) {
+		mred = mwred
+	}
+
+	if(HasValue(mwgreen) == 1) {
+		mgreen = mwgreen
+	}
+
+	recip = nir
+	recip[0,0,0] = 1.0
+
+	outVal = atan( ((mnir - mred)/mred) * (recip / (nir - red)) ) + atan( ((mred - mgreen)/mred) * (recip / (green - red)))
+	return(outVal)
+}
+
+# note: the calculations for the KT1 - KT6 images are all very simple. I have created functions for them in order
+# to avoid having to memorize a bunch of coefficients or treat them as magic numbers elsewhere.
+
+define kthelp(){
+		printf("\nNote: requires six spectral bands, which correspond to channels 1-5 and 7 of Landsat satellite data.\n")
+		printf("\n")
+		printf("$1	= blue band data (TM1 / 450nm - 515nm) (required)\n")
+		printf("$2      = green band data (TM2 / 525nm - 605nm) (required)\n")
+		printf("$3      = red band data (TM3/ 630nm - 690nm) (required)\n")
+		printf("$4      = near-infrared band data (TM4 / 750nm	- 900nm) (required)\n")
+		printf("$5      = mid-infrared band 1 data (TM5 / 1500nm - 1750nm) (required)\n")
+		printf("$6      = mid-infrared band 2 data (TM7 / 2090nm - 2350nm (required)\n")
+		printf("mode	= processing mode (default = 0)\n")
+		printf("	  0 = LandSat 4 reflectance values\n")
+		#printf("	  1 = LandSat 5 reflectance values\n")
+		printf("	  2 = LandSat 7 reflectance values\n")
+		printf("	  3 = LandSat 4 DN values\n")
+		printf("	  4 = LandSat 5 DN values\n")
+		#printf("	  5 = LandSat 7 DN values\n")
+		printf("\n")
+		printf("Note: TM6 (thermal/long-wave IR) data is not used in this calculation.\n")
+		printf("\n")
+		printf("Uses the formula as published in \"Above-Ground Biomass Estimation of Successional and Mature Forests Using TM Images in the Amazon Basin\", ")
+		printf("(Dengsheng Lu, Paul Mausel, Eduardo Brondizio, and Emilio Moran, 2002),\n")
+		# note: http://www.isprs.org/proceedings/XXXIV/part4/pdfpapers/059.pdf
+		printf("\"Tasseled Cap Transformation: Mississippi Coastal Corridor July 24, 2000\",")
+		printf("(Dr. Roger King, Dr. Charles O'Hara, 2001),\n")
+		# note: http://www.ncrste.msstate.edu/archive/publications/posters/ncrste_tg002-9.pdf
+		printf("and \"The Tasseled Cap Transformation in Remote Sensing\",")
+		printf("(Thayer Watkins, date unknown).\n")
+		# note: http://www.sjsu.edu/faculty/watkins/tassel.htm
+}
+
+define kt1(mode){
+	if ($ARGC != 6) {
+		printf("\nGenerates a KT1 (Tasseled Cap - Brightness) image map based on the input data.\n")
+		kthelp()
+		return(null)
+	}
+
+	tm1 = $1
+	tm2 = $2
+	tm3 = $3
+	tm4 = $4
+	tm5 = $5
+	tm7 = $6
+
+	calcMode = 0
+
+	if(HasValue(mode) == 1) {
+		calcMode = mode
+	}
+
+	printf("Generating a KT1 (Tasseled Cap - Brightness) image.\n")
+
+	#outVal = (tm1 * 0.304) + (tm2 * 0.279) + (tm3 * 0.474) + (tm4 * 0.559) + (tm5 * 0.508) + (tm7 * 0.186)
+	#return(outVal)
+
+	# LandSat 4 reflectance values
+	if(calcMode == 0) {
+		outVal = (tm1 * 0.2043) + (tm2 * 0.4158) + (tm3 * 0.5524) + (tm4 * 0.5741) + (tm5 * 0.3124) + (tm7 * 0.2303)
+		return(outVal)
+	}
+
+	# LandSat 7 reflectance values
+	if(calcMode == 2) {
+		outVal = (tm1 * 0.3561) + (tm2 * 0.3972) + (tm3 * 0.3904) + (tm4 * 0.6966) + (tm5 * 0.2286) + (tm7 * 0.1596)
+		return(outVal)
+	}
+
+	# LandSat 4 DN values
+	if(calcMode == 3) {
+		outVal = (tm1 * 0.3037) + (tm2 * 0.2793) + (tm3 * 0.4743) + (tm4 * 0.5585) + (tm5 * 0.5082) + (tm7 * 0.1863)
+		return(outVal)
+	}
+
+	# LandSat 5 DN values
+	if(calcMode == 4) {
+		outVal = (tm1 * 0.2909) + (tm2 * 0.2493) + (tm3 * 0.4806) + (tm4 * 0.5568) + (tm5 * 0.4438) + (tm7 * 0.1706)
+		return(outVal)
+	}
+
+	printf("Error: invalid KT mode specified.\n")
+	return(null)
+}
+
+
+define kt2(mode){
+	if ($ARGC != 6) {
+		printf("\nGenerates a KT2 (Tasseled Cap - Greenness) image map based on the input data.\n")
+		kthelp()
+		return(null)
+	}
+
+	tm1 = $1
+	tm2 = $2
+	tm3 = $3
+	tm4 = $4
+	tm5 = $5
+	tm7 = $6
+
+	calcMode = 0
+
+	if(HasValue(mode) == 1) {
+		calcMode = mode
+	}
+
+	printf("Generating a KT2 (Tasseled Cap - Greenness) image.\n")
+
+	#outVal = (tm1 * (-0.285)) - (tm2 * 0.244) - (tm3 * 0.544) + (tm4 * 0.704) + (tm5 * 0.084) - (tm7 * 0.18)
+	#return(outVal)
+
+	# LandSat 4 reflectance values
+	if(calcMode == 0) {
+		outVal = (tm1 * -0.1063) + (tm2 * -0.2819) + (tm3 * -0.4934) + (tm4 * 0.794) + (tm5 * -0.0002) + (tm7 * -0.1446)
+		return(outVal)
+	}
+
+	# LandSat 7 reflectance values
+	if(calcMode == 2) {
+		outVal = (tm1 * -0.3344) + (tm2 * -0.3544) + (tm3 * -0.4556) + (tm4 * 0.6966) + (tm5 * -0.0242) + (tm7 * -0.263)
+		return(outVal)
+	}
+
+	# LandSat 4 DN values
+	if(calcMode == 3) {
+		outVal = (tm1 * -0.2848) + (tm2 * -0.2435) + (tm3 * -0.5436) + (tm4 * 0.7243) + (tm5 * 0.084) + (tm7 * -0.18)
+		return(outVal)
+	}
+
+	# LandSat 5 DN values
+	if(calcMode == 4) {
+		outVal = (tm1 * -0.2728) + (tm2 * -0.2174) + (tm3 * -0.5508) + (tm4 * 0.722) + (tm5 * 0.0733) + (tm7 * -0.1648)
+		return(outVal)
+	}
+
+	printf("Error: invalid KT mode specified.\n")
+	return(null)
+}
+
+
+define kt3(mode){
+	if ($ARGC != 6) {
+		printf("\nGenerates a KT3 (Tasseled Cap - Wetness) image map based on the input data.\n")
+		kthelp()
+		return(null)
+	}
+
+	tm1 = $1
+	tm2 = $2
+	tm3 = $3
+	tm4 = $4
+	tm5 = $5
+	tm7 = $6
+
+	calcMode = 0
+
+	if(HasValue(mode) == 1) {
+		calcMode = mode
+	}
+
+	printf("Generating a KT3 (Tasseled Cap - Wetness) image.\n")
+
+	#outVal = (tm1 * 0.151) + (tm2 * 0.197) + (tm3 * 0.328) + (tm4 * 0.341) - (tm5 * 0.711) - (tm7 * 0.457)
+	#return(outVal)
+
+	# LandSat 4 reflectance values
+	if(calcMode == 0) {
+		outVal = (tm1 * 0.0315) + (tm2 * 0.2021) + (tm3 * 0.3102) + (tm4 * 0.1594) + (tm5 * -0.6806) + (tm7 * -0.6109)
+		return(outVal)
+	}
+
+	# LandSat 7 reflectance values
+	if(calcMode == 2) {
+		outVal = (tm1 * 0.2626) + (tm2 * 0.2141) + (tm3 * 0.0926) + (tm4 * 0.0656) + (tm5 * -0.7629) + (tm7 * -0.5388)
+		return(outVal)
+	}
+
+	# LandSat 4 DN values
+	if(calcMode == 3) {
+		outVal = (tm1 * 0.1509) + (tm2 * 0.1973) + (tm3 * 0.3279) + (tm4 * 0.3406) + (tm5 * -0.7112) + (tm7 * -0.4572)
+		return(outVal)
+	}
+
+	# LandSat 5 DN values
+	if(calcMode == 4) {
+		outVal = (tm1 * 0.1446) + (tm2 * 0.1761) + (tm3 * 0.3322) + (tm4 * 0.3396) + (tm5 * -0.621) + (tm7 * -0.4186)
+		return(outVal)
+	}
+
+	printf("Error: invalid KT mode specified.\n")
+	return(null)
+}
+
+
+define kt4(mode){
+	if ($ARGC != 6) {
+		printf("\nGenerates a KT4 (Tasseled Cap - Fourth Component) image map based on the input data.\n")
+		kthelp()
+		return(null)
+	}
+
+	tm1 = $1
+	tm2 = $2
+	tm3 = $3
+	tm4 = $4
+	tm5 = $5
+	tm7 = $6
+
+	calcMode = 0
+
+	if(HasValue(mode) == 1) {
+		calcMode = mode
+	}
+
+	printf("Generating a KT4 (Tasseled Cap - Fourth Component) image.\n")
+
+	#outVal = (tm1 * 0.151) + (tm2 * 0.197) + (tm3 * 0.328) + (tm4 * 0.341) - (tm5 * 0.711) - (tm7 * 0.457)
+	#return(outVal)
+
+	# LandSat 4 reflectance values
+	if(calcMode == 0) {
+		outVal = (tm1 * -0.2117) + (tm2 * -0.0284) + (tm3 * 0.1302) + (tm4 * -0.1007) + (tm5 * 0.6529) + (tm7 * -0.7078)
+		return(outVal)
+	}
+
+	# LandSat 7 reflectance values
+	if(calcMode == 2) {
+		outVal = (tm1 * 0.0805) + (tm2 * -0.0498) + (tm3 * 0.195) + (tm4 * -0.1327) + (tm5 * 0.5752) + (tm7 * -0.7775)
+		return(outVal)
+	}
+
+	# LandSat 4 DN values
+	if(calcMode == 3) {
+		outVal = (tm1 * 0.8832) + (tm2 * -0.0819) + (tm3 * -0.458) + (tm4 * -0.0032) + (tm5 * -0.0563) + (tm7 * 0.013)
+		return(outVal)
+	}
+
+	# LandSat 5 DN values
+	if(calcMode == 4) {
+		outVal = (tm1 * 0.8461) + (tm2 * -0.0731) + (tm3 * -0.464) + (tm4 * -0.0032) + (tm5 * -0.0492) + (tm7 * 0.0119)
+		return(outVal)
+	}
+
+	printf("Error: invalid KT mode specified.\n")
+	return(null)
+}
+
+
+define kt5(mode){
+	if ($ARGC != 6) {
+		printf("\nGenerates a KT5 (Tasseled Cap - Fifth Component) image map based on the input data.\n")
+		kthelp()
+		return(null)
+	}
+
+	tm1 = $1
+	tm2 = $2
+	tm3 = $3
+	tm4 = $4
+	tm5 = $5
+	tm7 = $6
+
+	calcMode = 0
+
+	if(HasValue(mode) == 1) {
+		calcMode = mode
+	}
+
+	printf("Generating a KT5 (Tasseled Cap - Fifth Component) image.\n")
+
+	#outVal = (tm1 * 0.151) + (tm2 * 0.197) + (tm3 * 0.328) + (tm4 * 0.341) - (tm5 * 0.711) - (tm7 * 0.457)
+	#return(outVal)
+
+	# LandSat 4 reflectance values
+	if(calcMode == 0) {
+		outVal = (tm1 * -0.8669) + (tm2 * -0.1835) + (tm3 * 0.3856) + (tm4 * 0.0408) + (tm5 * -0.1132) + (tm7 * 0.2272)
+		return(outVal)
+	}
+
+	# LandSat 7 reflectance values
+	if(calcMode == 2) {
+		outVal = (tm1 * -0.7252) + (tm2 * -0.0202) + (tm3 * 0.6683) + (tm4 * 0.0631) + (tm5 * -0.1494) + (tm7 * -0.0274)
+		return(outVal)
+	}
+
+	# LandSat 4 DN values
+	if(calcMode == 3) {
+		outVal = (tm1 * 0.0573) + (tm2 * -0.026) + (tm3 * 0.0335) + (tm4 * -0.1943) + (tm5 * 0.4766) + (tm7 * -0.8545)
+		return(outVal)
+	}
+
+	# LandSat 5 DN values
+	if(calcMode == 4) {
+		outVal = (tm1 * 0.0549) + (tm2 * -0.0232) + (tm3 * 0.0339) + (tm4 * -0.1937) + (tm5 * 0.4162) + (tm7 * -0.7823)
+		return(outVal)
+	}
+
+	printf("Error: invalid KT mode specified.\n")
+	return(null)
+}
+
+
+define kt6(mode){
+	if ($ARGC != 6) {
+		printf("\nGenerates a KT6 (Sixth Component) image map based on the input data.\n")
+		kthelp()
+		return(null)
+	}
+
+	tm1 = $1
+	tm2 = $2
+	tm3 = $3
+	tm4 = $4
+	tm5 = $5
+	tm7 = $6
+
+	calcMode = 0
+
+	if(HasValue(mode) == 1) {
+		calcMode = mode
+	}
+
+	printf("Generating a KT6 (Sixth Component) image.\n")
+
+	#outVal = (tm1 * 0.151) + (tm2 * 0.197) + (tm3 * 0.328) + (tm4 * 0.341) - (tm5 * 0.711) - (tm7 * 0.457)
+	#return(outVal)
+
+	# LandSat 4 reflectance values
+	if(calcMode == 0) {
+		outVal = (tm1 * 0.3677) + (tm2 * 0.82) + (tm3 * 0.4354) + (tm4 * 0.0518) + (tm5 * -0.0066) + (tm7 * -0.0104)
+		return(outVal)
+	}
+
+	# LandSat 7 reflectance values
+	if(calcMode == 2) {
+		outVal = (tm1 * 0.4) + (tm2 * -0.8172) + (tm3 * 0.3832) + (tm4 * 0.0602) + (tm5 * -0.1095) + (tm7 * 0.0985)
+		return(outVal)
+	}
+
+	# LandSat 4 DN values
+	if(calcMode == 3) {
+		outVal = (tm1 * 0.1238) + (tm2 * -0.9038) + (tm3 * 0.4041) + (tm4 * 0.0573) + (tm5 * -0.0261) + (tm7 * 0.024)
+		return(outVal)
+	}
+
+	# LandSat 5 DN values
+	if(calcMode == 4) {
+		outVal = (tm1 * 0.1186) + (tm2 * -0.8069) + (tm3 * 0.4094) + (tm4 * 0.0571) + (tm5 * -0.0228) + (tm7 * 0.22)
+		return(outVal)
+	}
+
+	printf("Error: invalid KT mode specified.\n")
+	return(null)
+}
+
+
+
+define slavi(){
+	if ($ARGC != 3) {
+		printf("\nGenerates a Specific Leaf Area Vegetation Index image map based on the input data.\n")
+		printf("\nNote: requires red, near-infrared, and mid-infrared spectral band data.\n")
+		printf("\n")
+		printf("$1      = mid-infrared data (TM5 / 1500nm - 1750nm or TM7 / 2090nm - 2350nm) (required)\n")
+		printf("$2      = near-infrared band data (TM4 / 750nm	- 900nm) (required)\n")
+		printf("$3	= red band data (required)\n")
+		printf("\n")
+		printf("Note: the traditional version of this calculation uses landsat band 7 (2090nm - 2350nm) for the mid-infrared data.\n")
+		printf("\n")
+		printf("Uses the formula as published in \"Landsat Image Processing: ES 351, ES 771, ES 775\", ")
+		printf("by James S. Aber.\n")
+		# note: http://academic.emporia.edu/aberjame/remote/landsat/landsat_proc.htm
+		return(null)
+	}
+
+	mir = $1
+	nir = $2
+	red = $3
+
+	printf("Generating a Specific Leaf Area Vegetation Index image.\n")
+
+	outVal = nir / (red + mir)
+
+	return(outVal)
+}
+
+
+
+
+define findAggMinMax(steps, backlash, threshold, threshrepeat, searchwidth){
+	if ($ARGC != 1) {
+		printf("\nFinds new minimum and maximum values for an input set - for use in aggressive normalization.\n")
+		printf("\nReturns an array of size [2,1,1] containing the calculated minimum and maximum.\n")
+		printf("\n")
+		printf("$1           = the input array\n")
+		printf("steps 	     = the number of steps between 0 and 1 to use when generating the histogram (default = 100)\n")
+		printf("backlash     = the number of steps to \"back off\" the new min and max values when rescaling (default = 1)\n")
+		printf("threshold    = the relative count that must be exceeded by a step in the histogram to trigger a response (default = 0.05)\n")
+		printf("threshrepeat = the number of steps that must exceed the threshold in order to trigger a response (default = 3)\n")
+		printf("searchwidth  = the number of steps after the first which exceeds the threshold that will be searched to find a repetition (default = 5)\n")
+		return(null)
+	}
+
+	stepCount = 100
+	bl = 1
+	thresh = 0.05
+	trepeat = 3
+	swidth = 5
+
+	if(HasValue(steps) == 1) {
+		stepCount = steps
+	}
+
+	if(HasValue(backlash) == 1) {
+		bl = backlash
+	}
+
+	if(HasValue(threshold) == 1) {
+		thresh = threshold
+	}
+
+	if(HasValue(threshrepeat) == 1) {
+		trepeat = threshrepeat
+	}
+
+	if(HasValue(searchwidth) == 1) {
+		swidth = searchwidth
+	}
+
+	printf("Attempting to find aggressive normalization parameters.\n")
+
+	# first, perform a standard normalization to make the rest of the calculations easier
+	inVal = float($1)
+
+	inMin = min(inVal)
+	inMax = max(inVal)
+
+	if ((inMin != 0.0) || (inMax != 1.0)) {
+		inVal = inVal - inMin
+		inVal = inVal / max(inVal)
+	}
+
+	stepSize = (1.0 / stepCount)
+
+	hist = histogram(inVal, start = 0.0, size = stepSize, steps = stepCount)
+
+	newMin = 0.0
+	newMax = 1.0
+
+	maxCount = max(hist[2,0,0])
+
+	tAbs = maxCount * thresh
+
+	currentStep = 1
+
+	foundInitial = 0
+	foundMatch = 0
+	tNewVal = newMin
+	windowIteration = 0
+	hitCount = 0
+
+	#printf("Debug: tAbs = %i\n", tAbs)
+
+	#printf("Debug: finding new minimum.\n")
+
+	while (currentStep <= stepCount) {
+		#printf("Debug: currentStep = %i\n", currentStep)
+		if (hist[2,currentStep,1] >= tAbs) {
+			if (foundInitial == 0) {
+				#printf("Debug: found initial hit at step %i\n", currentStep)
+				tNewVal = hist[1,currentStep,1]
+				foundInitial = 1
+				windowIteration = 0
+				hitCount = 1
+			} else {
+				#printf("Debug: found secondary hit at step %i\n", currentStep)
+				hitCount++
+				if (hitCount >= trepeat) {
+					foundMatch = 1
+					newMin = tNewVal
+					break
+				}
+			}
+		} else {
+			if (foundInitial == 1) {
+				windowIteration++
+				if (windowIteration > swidth) {
+					#printf("Debug: gave up on current hit at %i\n", currentStep)
+					foundInitial = 0
+				}
+			}
+		}
+		currentStep++
+	}
+
+	#printf("Debug: new minimum: %f.\n", newMin)
+	#printf("Debug: finding new maximum.\n")
+	currentStep = stepCount
+	foundInitial = 0
+	hitCount = 0
+	while (currentStep >= 1) {
+		#printf("Debug: currentStep = %i\n", currentStep)
+		if (hist[2,currentStep,1] >= tAbs) {
+			if (foundInitial == 0) {
+				#printf("Debug: found initial hit at step %i - value = %f\n", currentStep, hist[2,currentStep,1])
+				tNewVal = hist[1,currentStep,1]
+				foundInitial = 1
+				windowIteration = 0
+				hitCount = 1
+			} else {
+				#printf("Debug: found secondary hit at step %i - value = %f\n", currentStep, hist[2,currentStep,1])
+				hitCount++
+				if (hitCount >= trepeat) {
+					foundMatch = 1
+					newMax = tNewVal
+					break
+				}
+			}
+		} else {
+			if (foundInitial == 1) {
+				windowIteration++
+				if (windowIteration > swidth) {
+					#printf("Debug: gave up on current hit at %i\n", currentStep)
+					foundInitial = 0
+				}
+			}
+		}
+		currentStep--
+	}
+
+	#printf("Debug: new maximum: %f.\n", newMax)
+
+	if ((newMax <= newMin) || (newMax == 0.0) || (newMin == 1.0)) {
+		printf("\nError: Unable to obtain new minimum and maximum values using the specified search parameters. The result will only have standard normalization applied.\n")
+		return(inVal) 
+	}
+
+	if (newMin > 0) {
+		if (newMin > (stepSize * bl)) {
+			newMin = newMin - (stepSize * bl)
+		} else {
+			newMin = 0.0
+		}
+	}
+	#if (newMin < 0.0) {
+	#	newMin = 0.0
+	#}
+	#apparently DaVinci is not always so great at determining if a value is less than zero
+	#if (newMin != abs(newMin)) {
+	#	newMin = 0.0
+	#}
+
+	if (newMax < 1.0) {
+		if ((newMax + (stepSize * bl)) < 1.0) {
+			newMax = newMax + (stepSize * bl)
+		} else {
+			newMax = 1.0
+		}
+	}
+	#newMax = newMax + (stepSize * bl)
+	#if (newMax > 1.0) {
+	#	newMax = 1.0
+	#}
+
+	printf("New minimum: %f.\n", newMin)
+	printf("New maximum: %f.\n", newMax)
+
+	outVal = clone(float(0.0),2,1,1)
+	outVal[1,1,1] = newMin
+	outVal[2,1,1] = newMax
+
+	return(outVal)
+}
+
+
+# because clock() errors out for me and I didn't need anything that complicated
+# most of this code is copy/pasted from clock()
+define getdatetime(){
+	istr = "Error obtaining date/time"
+	ios = getos()
+	if (equals(ios, "win") == 1) { # Windows
+		istr = syscall("echo %date% %time%")
+	} else if (equals(ios, "mac") == 1) { # Mac
+    		istr = syscall("date \"+%Y-%m-%d %H:%M:%S\"")
+	} else { # Does this work for everything that isn't Windows or Mac? Or just Linux?
+		istr = syscall("date \"+%F %T.%N %z\"")
+	}
+	return(istr)
+}
+
+define echodatetime(){
+	dt = getdatetime()
+	printf("Local date/time: %s\n", dt[1:])
+}
+
+define buildgradient(width, smoothwindow){
+	goodsyntax = 1
+	# minimum of four arguments (position 1, colour 1, position 2, colour 2)
+	if ($ARGC < 4) {
+		goodsyntax = 0
+	}
+	# number of arguments must be even
+	if (($ARGC % 2) == 1) {
+		goodsyntax = 0
+	}
+	if (goodsyntax == 0) {
+		printf("\nBuilds a 1-dimensional colour gradient\n")
+		printf("\n")
+		printf("width		= the horizontal size of the gradient (default = 65536)\n")
+		printf("smoothwindow	= width in pixels to smooth gradient transitions (default = 1)\n")
+		printf("$1		= the first colour position (integer, 1 <= n <= width)\n")
+		printf("$2		= the first colour\n")
+		printf("$3		= the second colour position (integer, 1 <= n <= width)\n")
+		printf("$4		= the second colour\n")
+		printf("\n")
+		printf("Additional colours may be specified by adding more arguments. The number of arguments ")
+		printf("(not including the optional width and smoothwind parameters) must be even (because each colour requires a position).\n")
+		printf("\n")
+		printf("Note: the number of channels (greyscale, RGB, ARGB) is determined by the Z-dimension of the first colour.\n")
+		printf("\n")
+		return(null)
+	}
+
+	gWidth = 65536
+	if(HasValue(width) == 1) {
+		gWidth = width
+	}
+
+	smoothWin = 1
+	if(HasValue(smoothwindow) == 1) {
+		smoothWin = smoothwindow
+	}
+
+	colourCount = $ARGC / 2
+	channelCount = dim($2)[3,1,1]
+
+	printf("Generating a gradient using %i colours and %i channels.\n", colourCount, channelCount)
+
+	#printf("Debug: colour count = %i.\n", colourCount)
+	#printf("Debug: channel count = %i.\n", channelCount)
+
+	# build an empty (black) gradient
+	gradient = clone($2, gWidth, 1, 1)
+	gradient[0,0,0] = 0
+
+	currentColourNum = 1
+
+	while (currentColourNum < colourCount) {
+		#printf("Debug: current colour number = %i.\n", currentColourNum)
+
+		ccIndex = (currentColourNum * 2) - 1
+		#printf("Debug: $ARGV array index = %i.\n", ccIndex)
+
+		#printf("Debug: getting beginning position.\n")
+		beginPosition = $ARGV[ccIndex]
+
+		#printf("Debug: getting ending position.\n")
+		endPosition = $ARGV[ccIndex + 2]
+
+		#printf("Debug: getting beginning colour.\n")
+		beginColour = $ARGV[ccIndex + 1]
+
+		#printf("Debug: getting ending colour.\n")		
+		endColour = $ARGV[ccIndex + 3]
+
+		#printf("Debug: done accessing $ARGV.\n")
+
+		stepCount = (endPosition - beginPosition) + 1
+		#printf("Debug: step count = %i.\n", stepCount)
+
+		if (stepCount <= 0) {
+			printf("Error: colour number %i of the gradient has a position that is less than or equal to the next colour.\n", currentColourNum)
+			return(null)
+		}
+
+		#printf("Debug: start position for this range = %i.\n", beginPosition)
+		#printf("Debug: end position for this range = %i.\n", endPosition)
+		#printf("Debug: step count for this range = %i.\n", stepCount)
+
+		inc = (float(endColour - beginColour)) / float(stepCount)
+
+		#printf("Debug: beginning colour:\n")
+		#echoarraycontents(beginColour)
+		#printf("Debug: ending colour:\n")
+		#echoarraycontents(endColour)
+		#printf("Debug: colour increment per step:\n")
+		#echoarraycontents(inc)
+
+		stepNum = 1
+		basePosition = beginPosition - 1
+		while (stepNum <= stepCount) {
+			#channelNum = 1
+			#while (channelNum <= channelCount) {
+			#	channelVal = beginColour[1, 1, channelNum]
+			#	channelVal += (inc[1, 1, channelNum] * stepNum)
+			#	gradient[basePosition + stepNum, 1, channelNum] = channelVal
+			#	channelNum++
+			#}
+			
+			channelVal = beginColour[1, 1, 0]
+			channelVal += (inc[1, 1, 0] * stepNum)			
+			gradient[basePosition + stepNum, 1, 0] = channelVal
+
+			stepNum++
+		}
+
+		if (smoothWin > 1) {
+			# perform a sliding smooth operation on the gradient section that was just generated
+			#printf("Debug: smoothing transition %i.\n", currentColourNum)
+
+			#smoothSteps = ceil((endPosition - beginPosition) / smoothWin)
+			#printf("Debug: smoothing steps needed: %i.\n", smoothSteps)
+
+			sGradient = gradient
+
+			stepNum = 1
+			basePosition = beginPosition - 1
+			while (stepNum <= stepCount) {
+				currentPosition = basePosition + stepNum
+
+				#sectionWidth = float(endPosition - beginPosition)
+				#perc = 1.0 - abs(((float(currentPosition) - float(beginPosition)) / sectionWidth) - 0.5)
+				#perc = abs(((float(currentPosition) - float(beginPosition)) / sectionWidth) - 0.5)
+				#acWinSize = ceil(float(smoothWin) * 0.5) * pow(perc, 2)
+
+				#perc = (abs((float(stepNum) / float(stepCount)) - 0.5)) * 2.0
+				perc = 1.0 - ((abs((float(stepNum) / float(stepCount)) - 0.5)) * 2.0)
+
+				#printf("Debug: perc: %f.\n", perc)
+
+				acWinSize = ceil((float(smoothWin) * 0.5) * pow(perc, 3)) - 1
+
+				if (acWinSize < 0) {
+					acWinSize = 0
+				}
+
+				winBegin = int(currentPosition - acWinSize)
+				if (winBegin < beginPosition) {
+					winBegin = beginPosition
+				}
+
+				winEnd = int(winBegin + acWinSize)
+				if (winBegin > endPosition) {
+					winEnd = endPosition
+				}
+
+				#printf("Debug: winBegin: %i.\n", winBegin)
+				#printf("Debug: winEnd: %i.\n", winEnd)
+
+				performSmooth = 1
+
+				# do not attempt a smoothing operation of this section if...
+				# ...there is nothing to smooth between
+				if (winBegin == winEnd) {
+					performSmooth = 0
+				}
+
+				# ...there was a calculation error
+				if (winBegin > winEnd) {
+					performSmooth = 0
+					#printf("Debug: error: winBegin > winEnd.\n")
+				}
+
+				if (performSmooth == 1)
+				{
+					channelNum = 1
+					while (channelNum <= channelCount) {
+						channelVal = avg(gradient[winBegin:winEnd, 1, channelNum])
+						sGradient[basePosition + stepNum, 1, channelNum] = channelVal
+						channelNum++
+					}
+				}
+
+				stepNum++
+			}
+
+			gradient = sGradient
+		}
+
+		currentColourNum++
+	}
+	
+	return(gradient)
+}
+
+
+define build2dgradient(width, height){
+	goodsyntax = 1
+	# minimum of three arguments (colour 1 (upper left), colour 2 (upper right), colour 3 (lower left))
+	if ($ARGC < 3) {
+		goodsyntax = 0
+	}
+
+	if (goodsyntax == 0) {
+		printf("\nBuilds a simple 2-dimensional colour gradient\n")
+		printf("\n")
+		printf("width		= the horizontal size of the gradient (default = 512)\n")
+		printf("height		= the vertical size of the gradient (default = 512)\n")
+		printf("$1		= the first colour (will appear in the upper-left corner of the image)\n")
+		printf("$2		= the second colour (will appear in the upper-right corner of the image)\n")
+		printf("$3		= the third colour (will appear in the lower-left corner of the image)\n")
+		printf("\n")
+		printf("Note: the number of channels (greyscale, RGB, ARGB) is determined by the Z-dimension of the first colour.\n")
+		printf("\n")
+		return(null)
+	}
+
+	hWidth = 512
+	if(HasValue(width) == 1) {
+		hWidth = width
+	}
+
+	hHeight = 512
+	if(HasValue(height) == 1) {
+		hHeight = height
+	}
+
+	colour1 = $1
+	colour2 = $2
+	colour3 = $3
+
+	printf("Generating a 2d gradient.\n")
+
+	# build an empty (black) gradient
+	gradient = clone(colour1, hWidth, hHeight, 1)
+	gradient[0,0,0] = 0
+
+	# build the y-axis gradient first
+	yaGradient = buildgradient(1, colour1, hHeight, colour3, width=int(hHeight))
+
+	yPosition = 1
+	while (yPosition <= hHeight) {
+		lineGradient = buildgradient(1, yaGradient[yPosition, 1, 0], hWidth, colour2, width=int(hWidth))
+		gradient[0, yPosition, 0] = lineGradient
+		yPosition++
+	}
+
+	return(gradient)
+}
+
+
+define echoarraycontents(){
+	arrayDim = dim($1)
+
+	xDim = arrayDim[1,1,1]
+	yDim = arrayDim[2,1,1]
+	zDim = arrayDim[3,1,1]
+
+	printf("Array size: X = %i, Y = %i, Z = %i.\n", xDim, yDim, zDim)
+
+	zCurrent = 1
+	while (zCurrent <= zDim) {
+		yCurrent = 1
+		while (yCurrent <= yDim) {
+			xCurrent = 1
+			while (xCurrent <= xDim) {
+				currentVal = $1
+				currentVal = currentVal[xCurrent, yCurrent, zCurrent]
+				printf("%i, %i, %i = %f\n", xCurrent, yCurrent, zCurrent, currentVal)
+				xCurrent++
+			}
+			yCurrent++
+		}
+		zCurrent++
+	}
+}
+
+
+define applypalette(min, max){
+	if ($ARGC != 2) {
+		printf("\nApplies a palette (such as a gradient) to a greyscale image.\n")
+		printf("\n")
+		printf("$1	= the greyscale image (required)\n")
+		printf("$2	= the 1-dimensional palette image to apply (required)\n")
+		printf("min	= the value in the image to map to the leftmost colour of the palette (default = 0.0).\n")
+		printf("max	= the value in the image to map to the rightmost colour of the palette (default = 1.0).\n")
+		printf("\n")
+		return(null)
+	}
+
+	printf("Applying the specified palette to the specified image.\n")
+
+	gsImage = $1
+	palette = $2
+
+	minVal = float(0.0)
+	maxVal = float(1.0)
+
+	if(HasValue(min) == 1) {
+		minVal = float(min)
+	}
+	if(HasValue(max) == 1) {
+		maxVal = float(max)
+	}
+
+	range = maxVal - minVal
+
+	pDim = dim(palette)
+	pMax = pDim[1,1,1]
+	#paletteMax = float(pMax) - 1.0
+	paletteMax = float(pMax)
+	#paletteStep = float(1.0) / float(paletteMax)
+
+
+	iDim = dim(gsImage)
+	xSize = iDim[1,1,1]
+	ySize = iDim[2,1,1]
+	zSize = pDim[3,1,1]
+
+	outImage = clone(0.0, xSize, ySize, zSize)
+
+	clippedCountMax = 0
+	clippedCountMin = 0
+
+	#printf("Debug: range = %f\n", range)
+	#printf("Debug: paletteMax = %f\n", paletteMax)
+	#printf("Debug: paletteStep = %f\n", paletteStep)
+
+	yCurrent = 1
+	while (yCurrent <= ySize) {
+		xCurrent = 1
+		while (xCurrent <= xSize) {
+			currentVal = float(gsImage[xCurrent, yCurrent, 1])
+
+			mappedPosition = int(((currentVal - minVal) / range) * paletteMax)
+
+			if (mappedPosition > paletteMax) {
+				clippedCountMax++
+				mappedPosition = int(paletteMax)
+			}
+
+			mappedPosition = int(mappedPosition) + 1
+
+			if (mappedPosition > paletteMax) {
+				mappedPosition = int(paletteMax)
+			}
+
+			if (mappedPosition < 1) {
+				clippedCountMin++
+				mappedPosition = 1
+			}
+
+			outImage[xCurrent, yCurrent, 0] = palette[mappedPosition, 1, 0]
+
+			xCurrent++
+		}
+		yCurrent++
+	}
+
+	if (clippedCountMax > 0) {
+		printf("Warning: %i values exceeded the maximum allowed value and were clipped to the maximum value as a result.\n", clippedCountMax)
+	}
+	if (clippedCountMin > 0) {
+		printf("Warning: %i values were lower than the minimum allowed value and were clipped to the minimum value as a result.\n", clippedCountMin)
+	}
+
+	return(outImage)
+}
+
+
+define iiaz(){
+	if ($ARGC != 1) {
+		printf("\nInvert Independently About Zero\n")
+		printf("\nInverts positive and negative values independently based on the current minimum and maximum values.\n")
+		printf("For example, if the input values consist of -1.0, -0.3, 0.25, 0.9, and 1.0, the output values will consist of 0.0, -0.7, 0.75, 0.1, and 0.0.\n")
+		printf("\n")
+		printf("$1	= the input value (required)\n")
+		return(null)
+	}
+
+	inVal = $1
+	
+	# handle positive values
+	posVals = clipdata(inVal, min = 0.0)
+	mask = posVals
+	metaMaskPos = ceil(posVals)
+	mask[0, 0, 0] = max(posVals)
+	posVals = mask - posVals
+
+
+	# handle negative values
+	negVals = clipdata(inVal, max = 0.0)
+	mask = negVals
+	metaMaskNeg = ceil(abs(negVals))
+	mask[0, 0, 0] = min(negVals)
+	negVals = mask - negVals
+	
+	outVal = inVal
+
+	zMax = dim(outVal)[3, 1, 1]
+	zCurrent = 1
+
+	while (zCurrent <= zMax) {
+		maskTemp = metaMaskPos[0, 0, zCurrent]
+		maskTemp = cat(maskTemp, maskTemp, axis = z)
+		maskTemp[0, 0, 2] = 1.0
+		maskTemp = min(maskTemp, axis = z)
+
+		outVal[0, 0, zCurrent] = posVals[0, 0, zCurrent] * maskTemp
+
+
+		maskTemp = metaMaskNeg[0, 0, zCurrent]
+		maskTemp = cat(maskTemp, maskTemp, axis = z)
+		maskTemp[0, 0, 2] = 1.0
+		maskTemp = min(maskTemp, axis = z)
+
+		outVal[0, 0, zCurrent] = outVal[0, 0, zCurrent] + (negVals[0, 0, zCurrent] * maskTemp)
+
+		zCurrent++
+	}
+
+	return(outVal)
+}
+
+
+define naav(center, ubound, lbound, independent, anormalize, steps, backlash, threshold, threshrepeat, searchwidth){
+	if ($ARGC != 1) {
+		printf("\nNormalize About Arbitrary Value.\n")
+		printf("\nNormalizes positive values up and negative values down in relation to an arbitrary center-point.\n")
+		printf("\n")
+		printf("$1		= the input value (required)\n")
+		printf("center		= the value which determines the cutoff between positive and negative (default = 0.0).\n")
+		printf("ubound		= the upper boundary for positive values (default = 1.0).\n")
+		printf("lbound		= the lower boundary for negative values (default = -1.0).\n")
+		printf("independent	= normalizes positive and negative values using separate scales (default = 0).\n")
+		printf("anormalize	= perform an aggressive normalization on the data (default = 0).\n")
+		printf("\n")
+		printf("Important: enabling aggressive normalization implicitly enables independent normalization.\n")
+		printf("\n")
+		printf("Additional options available when anormalize is set to 1:\n")
+		printf("steps 	     	= the number of steps between 0 and 1 to use when generating the histogram (default = 100)\n")
+		printf("backlash     	= the number of steps to \"back off\" the new min and max values when rescaling (default = 1)\n")
+		printf("threshold    	= the relative count that must be exceeded by a step in the histogram to trigger a response (default = 0.05)\n")
+		printf("threshrepeat 	= the number of steps that must exceed the threshold in order to trigger a response (default = 3)\n")
+		printf("searchwidth  	= the number of steps after the first which exceeds the threshold that will be searched to find a repetition (default = 5)\n")
+		printf("\n")
+		printf("Note: if independent is set to 0 (the default), then the lesser of the absolute values of ")
+		printf("ubound and lbound will generally take precedence (assuming they are equal distances from the center value).\n")
+		printf("\n")
+		return(null)
+	}
+
+	cen = 0.0
+	ub = 1.0
+	lb = -1.0
+	ind = 0
+	anorm = 0
+
+	if(HasValue(center) == 1) {
+		cen = center
+	}
+
+	if(HasValue(ubound) == 1) {
+		ub = ubound
+	}
+
+	if(HasValue(lbound) == 1) {
+		lb = lbound
+	}
+
+	if(HasValue(independent) == 1) {
+		ind = independent
+	}
+
+	if(HasValue(anormalize) == 1) {
+		anorm = anormalize
+	}
+
+	if (anorm == 1) {
+		ind = 1
+	}
+
+	stepCount = 100
+	bl = 1
+	thresh = 0.05
+	trepeat = 3
+	swidth = 5
+
+	if(HasValue(steps) == 1) {
+		stepCount = steps
+	}
+
+	if(HasValue(backlash) == 1) {
+		bl = backlash
+	}
+
+	if(HasValue(threshold) == 1) {
+		thresh = threshold
+	}
+
+	if(HasValue(threshrepeat) == 1) {
+		trepeat = threshrepeat
+	}
+
+	if(HasValue(searchwidth) == 1) {
+		swidth = searchwidth
+	}
+
+	printf("Normalizing the input value about %f, with an upper bound of %f and a lower bound of %f.\n", cen, ub, lb)
+
+	if (ind == 1) {
+		printf("Positive and negative values will be normalized independently.\n")
+	} else {
+		printf("Positive and negative values will be normalized using the same scaling factor.\n")
+	}
+
+	inVal = $1 - cen
+	
+	posVals = clipdata(inVal, min = 0.0, max = max(inVal))
+	negVals = abs(clipdata(inVal, min = min(inVal), max = 0.0))
+
+	if (anorm == 1) {
+		printf("Aggressive normalization is enabled.\n")
+		posVals = anormalize(posVals, steps = stepCount, backlash = bl, threshold = thresh, threshrepeat = trepeat, searchwidth = swidth)
+		negVals = anormalize(negVals, steps = stepCount, backlash = bl, threshold = thresh, threshrepeat = trepeat, searchwidth = swidth)
+	}
+
+	maxPos = max(posVals)
+	maxNeg = max(negVals)
+
+	lb = abs(lb)
+
+	posSF = ub / maxPos
+	negSF = lb / maxNeg
+
+	if (independent == 0) {
+		sf = posSF
+		if (posSF > negSF) {
+			sf = negSF
+		}
+		posSF = sf
+		negSF = sf
+	}
+
+	posVals = (posVals * posSF)
+	negVals = (negVals * negSF)
+	
+	outVal = posVals + (negVals * (-1.0))
+	outVal = outVal + cen
+	return(outVal)
+}
+
+# this is really slow and should only be used for debugging
+define replacebadvalues(replaceValue){
+	goodsyntax = 1
+	# minimum of four arguments (position 1, colour 1, position 2, colour 2)
+	if ($ARGC < 1) {
+		goodsyntax = 0
+	}
+	# number of arguments must be even
+	if (($ARGC > 2) == 1) {
+		goodsyntax = 0
+	}
+	if (goodsyntax == 0) {
+		printf("\nReplaces imaginary, infinite, undefined, and other problematic values in an array.\n")
+		printf("\n")
+		printf("r		= the value to replace with (default = 0)\n")
+		printf("$1		= the input data\n")
+		printf("\n")
+		return(null)
+	}
+
+	input = $1
+
+	r = 0
+
+	if(HasValue(replaceValue) == 1) {
+		r = replaceValue
+	}
+
+	result = input
+
+	arrayDim = dim(input)
+
+	xDim = arrayDim[1,1,1]
+	yDim = arrayDim[2,1,1]
+	zDim = arrayDim[3,1,1]
+
+	replacedCount = 0
+
+	zCurrent = 1
+	while (zCurrent <= zDim) {
+		yCurrent = 1
+		while (yCurrent <= yDim) {
+			xCurrent = 1
+			while (xCurrent <= xDim) {
+				currentVal = input[xCurrent, yCurrent, zCurrent]
+				if (currentVal != currentVal) {
+					replacedCount++
+					currentVal = 0
+				}
+				result[xCurrent, yCurrent, zCurrent] = currentVal
+				xCurrent++
+			}
+			yCurrent++
+		}
+		zCurrent++
+	}
+
+	if (replacedCount > 0) {
+		printf("Replaced %i values.\n", replacedCount)
+	}
+
+	return(result)
+}
+
+
+# for use in emulating applications and equations that don't take negative numbers into account properly
+# the "sc" is for "special case"
+define powsc(){
+	if ($ARGC != 2) {
+		printf("\nRaises values to the specified exponent, but scales the input values to the range 0.0 - 1.0 during the conversion.\n")
+		printf("(Values are expanded to their previous range after being raised to the specified exponent).\n")
+		printf("\nUsage is the same as the standard pow() function.\n")
+	}
+
+	input = $1
+	exp = $2
+
+	inmax = max(input)
+	inmin = min(input)
+
+	if ((inmax == 1.0) && (inmin == 0.0)) {
+		return(pow(input, exp))
+	}
+
+	orng = inmax - inmin
+	
+	result = normalize(input)
+	result = pow(result, exp)
+	result = (result * orng) + inmin
+	
+	return(result)
+}
+
+
+define findRedundantImageData(){
+	img1 = $1
+	img2 = $2
+
+	startMultiplier = 0.01
+	endMultiplier = 0.90
+	step = 0.01
+
+	m = startMultiplier
+
+	while (m <= endMultiplier) {
+		img1sep = clipdata((img1 - (img2 * m)), min = 0, max = 1, quiet=1) / (1.0 - m)
+		img2sep = clipdata((img2 - (img1 * m)), min = 0, max = 1, quiet=1) / (1.0 - m)
+
+		#img1overlap = (img1 - img1sep) / m
+		#img2overlap = (img2 - img2sep) / m
+
+		#img1overlap = normalize(clipdata((img1 - img2sep), min = 0, max = 1, quiet=1) / m)
+		#img2overlap = normalize(clipdata((img2 - img1sep), min = 0, max = 1, quiet=1) / m)
+
+		#img1overlap = clipdata((img1 - img2sep), min = 0, max = 1, quiet=1) / m
+		#img2overlap = clipdata((img2 - img1sep), min = 0, max = 1, quiet=1) / m
+		
+		img1overlap = clipdata((img1 - img2sep), min = 0, max = 1, quiet=1) / m
+		img2overlap = clipdata((img2 - img1sep), min = 0, max = 1, quiet=1) / m
+
+		diff = img1overlap - img2overlap
+		absdiff = abs(diff)
+
+		diffAvg = avg(diff)
+		diffMed = med(diff)
+		absdiffAvg = avg(absdiff)
+		absdiffMed = med(absdiff)
+
+		printf("%f\t%f\t%f\t%f\t%f\n", m, diffAvg, diffMed, absdiffAvg, absdiffMed)
+		#printf("%f\t%f\t%f\n", m, diffAvg, absdiffAvg)
+
+		m += step
+	}
+	
+}
+
+define divideNZ(default){
+	if ($ARGC != 2) {
+		printf("\nPerforms a division, but returns zero (or another value) where a divide-by-zero error would occur.\n")
+		printf("$1\t=\tnumerator\n")
+		printf("$2\t=\tdenominator\n")
+		printf("default\t=\tdefault value\n")
+		printf("\ne.g. result = divideNZ(a, b).\n")
+	}
+
+	n = $1
+	d = $2
+
+	df = 0.0
+
+	if(HasValue(default) == 1) {
+		df = default
+	}
+
+	dmask = clipdata(abs(ceil(d)), min=0.0, max=1.0, quiet=1)
+	one = dmask
+	one[0, 0, 0] = 1.0
+	dmaskneg = (one - dmask)
+
+	n1 = n * dmask
+	d1 = d * dmask
+
+	result = (n1 / (d1 + dmaskneg)) + (dmaskneg * df)
+	return(result)
+}
+
+define getMaxValForPS(inC1v, inC2v, inC3v){
+        result = inC1v
+
+	c2mask = clipdata(abs(ceil(inC2v)), min=0.0, max=1.0, quiet=1)
+	c2 = inC2v * c2mask
+
+	c3mask = clipdata(abs(ceil(inC3v)), min=0.0, max=1.0, quiet=1)
+	c3 = inC3v * c3mask
+
+        ratioC1ToC2 = divideNZ(inC1v, c2, default=1.0)
+        ratioC1ToC3 = divideNZ(inC1v, c3, default=1.0)
+
+	c2c3mask = clipdata(abs(ceil(inC2v - inC3v)), min=0.0, max=1.0, quiet=1)
+	one = c2c3mask
+	one[0, 0, 0] = 1.0
+
+	c3c2mask = one - c2c3mask
+
+	ratioC1ToC2 = ratioC1ToC2 * c2c3mask
+	ratioC1ToC3 = ratioC1ToC3 * c3c2mask
+
+	r = cat(ratioC1ToC2, ratioC1ToC3, axis = z)
+	r = max(r, axis = z)
+
+	rpos = ceil(clipdata((r - 0.5), min = 0.0, quiet=1))
+
+	result = clipdata(inC1v + rpos, max = 1.0, quiet=1)
+        
+        return(result)
+}
+
+
+define colourIsolationInternal(omode, inC1, inC2, inC3, c1c2Isolation, c1c3Isolation){
+	o1 = inC1
+        o2 = inC1
+        maxval = inC1
+	maxval[0,0,0] = 1.0
+	one = maxval
+        
+	if (c1c2Isolation != 0.0){
+		if (omode == "ps"){
+			maxval = getMaxValForPS(inC1v=inC1, inC2v=inC2, inC3v=inC3)
+		}
+
+		if ((omode == "p") || (omode == "s")){
+			maxval = max(cat(inC1, inC2, axis = z), axis = z)
+		}
+		o1 = (inC1 - (inC2 * c1c2Isolation)) / (one - c1c2Isolation)
+		o1 = min(cat(o1, maxval, axis = z), axis = z)
+        }
+        if (c1c3Isolation != 0.0){
+		if (omode == "ps"){
+			maxval = getMaxValForPS(inC1v=inC1, inC3v=inC3, inC2v=inC2)
+		}
+
+		if ((omode == "p") || (omode == "s")){
+			maxval = max(cat(inC1, inC3, axis = z), axis = z)
+		}
+		o2 = (inC1 - (inC3 * c1c3Isolation)) / (one - c1c3Isolation)
+		o2 = min(cat(o2, maxval, axis = z), axis = z)
+        }
+
+	o1mask = clipdata(ceil(o1 - o2), min=0.0, max=1.0, quiet=1)
+	#o2mask = clipdata(ceil(o2 - o1), min=0.0, max=1.0, quiet=1)
+
+	o2mask = one - o1mask
+
+	if (omode == "ps"){
+		maxval = getMaxValForPS(inC1v=inC1, inC3v=inC3, inC2v=inC2)
+	}
+	if ((omode == "p") || (omode == "s")){
+		maxval = max(cat(inC1, inC3, axis = z), axis = z)
+	}
+	result1 = (o1 - (inC3 * c1c3Isolation)) / (one - c1c3Isolation)
+	result1 = min(cat(result1, maxval, axis = z), axis = z)
+
+	if (omode == "ps"){
+		maxval = getMaxValForPS(inC1v=inC1, inC2v=inC2, inC3v=inC3)
+	}
+	if ((omode == "p") || (omode == "s")){
+		maxval = max(cat(inC1, inC2, axis = z), axis = z)
+	}
+	result2 = (o2 - (inC2 * c1c2Isolation)) / (one - c1c2Isolation)
+	result2 = min(cat(result2, maxval, axis = z), axis = z)
+
+	result1 = result1 * o1mask
+	result2 = result2 * o2mask
+
+	result = result1 + result2
+        
+        return(result)
+}
+
+
+define colourIsolation(mode, master, rg, gb, rb){
+	goodsyntax = 1
+
+	if ($ARGC != 1) {
+		goodsyntax = 0
+	}
+
+	om = "u"
+
+	if(HasValue(mode) == 1) {
+		om = mode
+	}
+
+	if ((om != "p") && (om != "s") && (om != "ps") && (om != "u")) {
+		goodsyntax = 0
+	}
+
+	if (goodsyntax == 0) {
+		printf("\nMagnifies the difference between colours.\n\n")
+		printf("$1\t= the input image\n")
+		printf("mode\t= operational mode, which is one of:\n")
+		printf("\t  \"p\" - isolate primary colours\n")
+		printf("\t  \"s\" - isolate secondary colours\n")
+		printf("\t  \"ps\" - isolate primary and secondary colours\n")
+		printf("\t  \"u\" - unrestricted\n")
+		printf("\t  (default: \"u\"\n")
+		printf("master\t= overall effect multiplier (> 0.0, < 1.0, default = 0.3)\n")
+		printf("rg\t= red/green isolation (0.0 - 1.0, default = 1.0)\n")
+		printf("gb\t= green/blue isolation (0.0 - 1.0, default = 0.7)\n")
+		printf("\n")
+		return(null)
+	}
+
+	inimg = $1
+
+	mi = 0.3
+	rgi = 1.0
+	gbi = 0.7
+	rbi = 0.1
+
+	if(HasValue(master) == 1) {
+		mi = master
+	}
+
+	if(HasValue(rg) == 1) {
+		rgi = rg
+	}
+
+	if(HasValue(gb) == 1) {
+		gbi = gb
+	}
+
+	if(HasValue(rb) == 1) {
+		rbi = rb
+	}
+
+	rgi = rgi * mi
+	gbi = gbi * mi
+	rbi = rbi * mi
+
+	printf("Operating Mode: ")
+	if (om == "p") {
+		printf("Isolate Primary Colours\n")
+	}
+	if (om == "s") {
+		printf("Isolate Secondary Colours\n")
+	}
+	if (om == "ps") {
+		printf("Isolate Primary And Secondary Colours\n")
+	}
+	if (om == "u") {
+		printf("Unrestricted\n")
+	}
+
+	printf("Red/Green Isolation: %f\n", rgi)
+	printf("Green/Blue Isolation: %f\n", gbi)
+	printf("Red/Blue Isolation: %f\n", rbi)
+
+	inR = inimg[0, 0, 1]
+	inG = inimg[0, 0, 2]
+	inB = inimg[0, 0, 3]
+
+	outR = inR
+	outG = inG
+	outB = inB
+
+	if (om == "s") {
+		one = inR
+		one[0, 0, 0] = 1.0
+		inC = one - inR
+		inM = one - inG
+		inY = one - inB
+
+		outC = colourIsolationInternal(omode="s", inC1=inC, inC2=inM, inC3=inY, c1c2Isolation=rgi, c1c3Isolation=rbi)
+		outM = colourIsolationInternal(omode="s", inC1=inM, inC2=inC, inC3=inY, c1c2Isolation=rgi, c1c3Isolation=gbi)
+		outY = colourIsolationInternal(omode="s", inC1=inY, inC2=inM, inC3=inC, c1c2Isolation=gbi, c1c3Isolation=rbi)
+
+		outR = one - outC
+		outG = one - outM
+		outB = one - outY
+	# This next set of else ifs is a workaround for DaVinci's apparent inability to pass string variables to other functions
+	} else if (om == "p") {
+		outR = colourIsolationInternal(omode="p", inC1=inR, inC2=inG, inC3=inB, c1c2Isolation=rgi, c1c3Isolation=rbi)
+		outG = colourIsolationInternal(omode="p", inC1=inG, inC2=inR, inC3=inB, c1c2Isolation=rgi, c1c3Isolation=gbi)
+		outB = colourIsolationInternal(omode="p", inC1=inB, inC2=inG, inC3=inR, c1c2Isolation=gbi, c1c3Isolation=rbi)
+	} else if (om == "ps") {
+		outR = colourIsolationInternal(omode="ps", inC1=inR, inC2=inG, inC3=inB, c1c2Isolation=rgi, c1c3Isolation=rbi)
+		outG = colourIsolationInternal(omode="ps", inC1=inG, inC2=inR, inC3=inB, c1c2Isolation=rgi, c1c3Isolation=gbi)
+		outB = colourIsolationInternal(omode="ps", inC1=inB, inC2=inG, inC3=inR, c1c2Isolation=gbi, c1c3Isolation=rbi)
+	} else {
+		outR = colourIsolationInternal(omode="u", inC1=inR, inC2=inG, inC3=inB, c1c2Isolation=rgi, c1c3Isolation=rbi)
+		outG = colourIsolationInternal(omode="u", inC1=inG, inC2=inR, inC3=inB, c1c2Isolation=rgi, c1c3Isolation=gbi)
+		outB = colourIsolationInternal(omode="u", inC1=inB, inC2=inG, inC3=inR, c1c2Isolation=gbi, c1c3Isolation=rbi)
+	}
+
+	result = cat(cat(outR, outG, axis = z), outB, axis = z)
+
+	return(result)
+
+}
+

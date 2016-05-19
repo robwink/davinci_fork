@@ -1,0 +1,71 @@
+#!/mars/common/bin/davinci -fq -v0
+source("/themis/lib/dav_lib/library/library_mars.dvrc")
+
+
+##
+##
+######################## thm_tb.dv #######################
+#
+# This script will surface brightness tempeature from 
+# an ISIS3 THEMIS cube
+#
+# usage: thm_emiss.dv input_file output_file [geotiff]
+#
+# Modification History
+# --------------------
+#
+# 2015-03-04 - C. Edwards made portable for distribution
+#
+##########################################################################
+##
+##
+
+opt={\
+from="",\
+to="",\
+geotiff=0\
+};
+opt=getopt($ARGV,opt)
+
+if(opt.from=="" || opt.to=="") {
+  printf("\nPerform a brighness temperature conversion on a THEMIS ISIS3 cube\n\n")
+	printf("Arguments:\n")
+  printf("\tfrom = input THEMIS ISIS3 filename\n")
+  printf("\tto = output THEMIS ISIS3\n")
+	printf("\tgeotiff = output a geotiff (0=no, default; 1=yes)\n\n")
+	printf("Major Sub-Functions:\n")
+  printf("\trad2tb2()\n\n")
+  printf("Script Contributors:\n")
+  printf("C. Edwards, P.Christensen, 3/4/15\n\n")
+  exit(0)
+}
+
+ignore=-32768
+printf("\nSelected options:\n")
+opt_usage(opt)
+printf("\n")
+
+insmod("isis3")
+if(lsmod("isis3")==0) {
+  printf("This script requires the davinci ISIS3 I/O module\n")
+  exit(0)
+}
+
+verbose=0
+
+#load the data and extract the bands
+data = load_pds(opt.from)
+
+#compute the emissivity
+printf("\nConverting Radiance to Brighness Temperature\n")
+tb = rad2tb2(data.cube,inst='themis',data.IsisCube.BandBin.FilterNumber)
+data.cube=tb
+
+#write the isis3 cube
+printf("Writing ISIS3 output: %s\n",opt.to)
+write(data,opt.to,isis3,force=1)
+
+#write out a geotiff
+if(opt.geotiff==1) write_geotiff(read_geo(opt.to),dirname(opt.to)+"/"+basename(opt.to,".cub")+".tiff",force=1)
+
+exit(0);

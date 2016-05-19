@@ -1,0 +1,824 @@
+class_examples_version=1.0
+
+#This dvrc file will contain common remote sensing exmples that can be 
+#used as teaching aids.
+
+# dispersion_examples()
+# dispersion_quartz_examples()
+# target_transform_examples()
+# factors_examples()
+# aster_example()
+
+
+define dispersion_examples(print, plot) {
+# Example for Adv. Remote Sensing class Spring, 2011
+if ($ARGC == 0) {
+	printf("               \n")
+	printf("Routine to compute spectrum from n and k using dispersion theory with two oscillators\n")
+   printf("Usage: dispersion(freq1, freq2, 4pirho1, 4pirho2, gamma1,gamma2)\n")
+	printf(" Example1: dispersion(1072, 1163, .6, .01, .0071, .006)\n")
+	printf(" Example2: dispersion(1072, 1300, .6, .01, .007, .006)\n")
+	printf(" p.christensen 3/2011\n")
+	return(0)
+}
+
+datex = syscall("date")
+date = datex[5:10] // "," // datex[27:28] // " " // datex[12:16]
+
+struc = struct()
+pi = 3.1415926
+
+freq_o = create(7,1,1,format=float)
+freq_e = create(7,1,1,format=float)
+four_pr_o = create(7,1,1,format=float)
+four_pr_e = create(7,1,1,format=float)
+gamma_o = create(7,1,1,format=float)
+gamma_e = create(7,1,1,format=float)
+
+freq_o[1] = 1227;
+freq_o[2] = 1163;
+
+four_pr_o[1] = .009;
+four_pr_o[2] = .010;
+
+gamma_o[1] = .11;
+gamma_o[2] = .006;
+  
+# input values
+freq_o[1] = $1
+freq_o[2] = $2
+
+four_pr_o[1] = $3
+four_pr_o[2] = $4
+
+gamma_o[1] = $5
+gamma_o[2] = $6
+  
+e0 = 2.356;
+
+# create xaxis 
+nwaves = 1000
+dwave = 2.
+waven = create(1,1,nwaves)
+for(i=1; i<=nwaves; i+=1) {
+	waven[,,i] = float(i*dwave)
+}
+
+struc.waven = waven
+
+plim(0,2000, 0, 0) 
+plot_title = "Test"
+
+freq_o = clone(freq_o, z=nwaves)
+
+# compute ordinary ray 
+a_o = (freq_o^2) - (waven^2);
+denom_o = a_o^2 + (gamma_o^2 * freq_o^2 * waven^2);
+alpha_o = (four_pr_o * freq_o^2 * (a_o)) / denom_o;
+beta_o = ((four_pr_o/2) * freq_o^2 * gamma_o * freq_o * waven) / denom_o;
+theta_o = e0 + sum(alpha_o, axis=x)
+phi_o = sum(beta_o, axis=x)
+a2 = sqrt(theta_o^2 + 4. * (phi_o^2)); 
+
+# compute n
+n_o = sqrt((theta_o + a2) / 2.);
+if(HasValue(plot)) {
+	pplot(n_o, xaxis=waven, xlabel='Wavenumber', ylabel='n')
+	pause("pausing")
+}
+	
+
+# compute k 
+k_o = phi_o / n_o;
+if(HasValue(plot)) {
+	pplot(k_o, xaxis=waven, xlabel='Wavenumber', ylabel='k')
+	pause("pausing")
+}
+	
+# compute absorption coeff ( in microns)
+ab_coeff_o = (4*pi*k_o)/(10000./waven)
+if(HasValue(plot)) {
+	pplot(ab_coeff_o, xaxis=waven, xlabel='Wavenumber', ylabel='Absorption Coefficient')
+	pause("pausing")
+}
+
+# Reflectivity
+R_o = ((n_o - 1)^2 + k_o^2) / ((n_o + 1)^2 + k_o^2);
+if(HasValue(plot)) {
+	pplot(R_o, xaxis=waven, xlabel='Wavenumber', ylabel='Reflectivity')
+	pause("pausing")
+}
+
+# Emissivity
+E_o = 1. - R_o;
+pplot(E_o, xaxis=waven, xlabel='Wavenumber', ylabel='Emissivity')
+
+struc.waven = waven
+struc.freq_o = freq_o
+struc.four_pr_o = four_pr_o
+struc.gamma_o = gamma_o
+struc.n_o = n_o
+struc.k_o = k_o
+struc.ab_coeff_o = ab_coeff_o
+struc.R_o = R_o
+struc.E_o = E_o
+
+return(struc)
+
+}
+
+
+define dispersion_quartz_examples() {
+# compute quartz spectrum from n and k using dispersion theory
+# usage: dispersion()
+
+datex = syscall("date")
+date = datex[5:10] // "," // datex[27:28] // " " // datex[12:16]
+
+struc = struct()
+pi = 3.1415926
+
+asu=read($DV_HOME + "/examples/ASU_minlib.hdf")
+quartz_spectrum = (asu.data[55]*1.75)-.75
+xlab1 = make_band(inst='lab1')
+
+nexamples = 6
+for(n=1; n<=nexamples; n+=1) {
+	if(n==1) {
+		# do Wenrich (Lane) and Christensen
+		freq_o = 1215.//1161.//1067.//795.//694.//449.//393.
+		four_pr_o = .03//.007//.67//.11//.01//.815//.4
+		gamma_o = .4//.007//.008//.0115//.01//.012//.012
+  
+		freq_e = 1222.//1074.//776.//509.//494.//364.
+		four_pr_e = .011//.67//.10//.015//.7//.68
+		gamma_e = .15//.008//.011//.016//.014//.019
+	} else if(n==2) {
+		freq_o = 1215.//1300.//1067.//795.//694.//449.//393.
+		four_pr_o = .03//.007//.67//.11//.01//.815//.4
+		gamma_o = .4//.007//.008//.0115//.01//.012//.012
+  
+		freq_e = 1222.//1074.//776.//509.//494.//364.
+		four_pr_e = .011//.67//.10//.015//.7//.68
+		gamma_e = .15//.008//.011//.016//.014//.019
+	} else if(n==3) {
+		freq_o = 1215.//1161.//1067.//795.//600.//449.//393.
+		four_pr_o = .03//.007//.67//.11//.1//.815//.4
+		gamma_o = .4//.007//.008//.0115//.1//.012//.012
+  
+		freq_e = 1222.//1074.//776.//509.//494.//364.
+		four_pr_e = .011//.67//.10//.015//.7//.68
+		gamma_e = .15//.008//.011//.016//.014//.019
+
+	} else if(n==4) {
+		freq_o = 1215.//1161.//1067.//795.//694.//449.//393.
+		four_pr_o = .03//.007//.67//.3//.01//.815//.4
+		gamma_o = .4//.007//.008//.0115//.01//.012//.012
+  
+		freq_e = 1222.//1074.//776.//509.//494.//364.
+		four_pr_e = .011//.67//.10//.015//.7//.68
+		gamma_e = .15//.008//.011//.016//.014//.019
+
+	} else if(n==5) {
+		freq_o = 1215.//1161.//1067.//795.//694.//449.//393.
+		four_pr_o = .03//.007//.67//.3//.01//.815//.4
+		gamma_o = .4//.007//.008//.1//.01//.012//.012
+  
+		freq_e = 1222.//1074.//776.//509.//494.//364.
+		four_pr_e = .011//.67//.10//.015//.7//.68
+		gamma_e = .15//.008//.011//.016//.014//.019
+
+	} else if(n==6) {
+		freq_o = 1215.//1161.//1067.//900.//694.//449.//393.
+		four_pr_o = .03//.007//.67//.6//.01//.815//.4
+		gamma_o = .4//.007//.008//.0115//.01//.012//.012
+  
+		freq_e = 1222.//1074.//776.//509.//494.//364.
+		four_pr_e = .011//.67//.10//.015//.7//.68
+		gamma_e = .15//.008//.011//.016//.014//.019
+
+	}
+	e0 = 2.356;
+
+	# create xaxis 
+	nwaves = 1000
+	dwave = 2.
+	waven = create(1,1,nwaves)
+	for(i=1; i<=nwaves; i+=1) {
+		waven[,,i] = float(i*dwave)
+	}
+
+	struc.waven = waven
+
+	freq_o = clone(freq_o, z=nwaves)
+	freq_e = clone(freq_e,z=nwaves)
+
+	# compute ordinary ray 
+	a_o = (freq_o^2) - (waven^2);
+	denom_o = a_o^2 + (gamma_o^2 * freq_o^2 * waven^2);
+	alpha_o = (four_pr_o * freq_o^2 * (a_o)) / denom_o;
+	beta_o = ((four_pr_o/2) * freq_o^2 * gamma_o * freq_o * waven) / denom_o;
+	theta_o = e0 + sum(alpha_o, axis=x)
+	phi_o = sum(beta_o, axis=x)
+	a2 = sqrt(theta_o^2 + 4. * (phi_o^2)); 
+
+	# compute n
+	n_o = sqrt((theta_o + a2) / 2.);
+	
+	# compute k 
+	k_o = phi_o / n_o;
+	
+	# compute absorption coeff ( in microns)
+	ab_coeff_o = (4.*pi*k_o)/(10000./waven)
+
+	# Reflectivity
+	R_o = ((n_o - 1.)^2 + k_o^2) / ((n_o + 1.)^2 + k_o^2);
+	# Emissivity
+	E_o = 1. - R_o;
+
+	# compute extrodinary ray
+	a_e = (freq_e^2) - (waven^2);
+	denom_e = a_e^2 + (gamma_e^2 * freq_e^2 * waven^2);
+	alpha_e = (four_pr_e * freq_e^2 * (a_e)) / denom_e;
+	beta_e = ((four_pr_e/2) * freq_e^2 * gamma_e * freq_e * waven) / denom_e;
+	theta_e = e0 + sum(alpha_e, axis=x)
+	phi_e = sum(beta_e, axis=x)
+	a2 = sqrt(theta_e^2 + 4. * (phi_e^2)); 
+
+	# compute n 
+	n_e = sqrt((theta_e + a2) / 2.);
+
+	# compute k 
+	k_e = phi_e / n_e;
+
+	# compute absorption coeff ( in microns)
+	ab_coeff_e = (4.*pi*k_e)/(10000./waven);
+
+	# Reflectivity
+	R_e = ((n_e - 1)^2 + k_e^2) / ((n_e + 1)^2 + k_e^2);
+	# Emissivity
+	E_e = 1. - R_e;
+
+	# compute "average" emissivity
+	ave_E = .66666*E_o + .33333*E_e
+	if(n==1) {
+		ave_E_wc = ave_E
+	}
+
+	# compare to ASU quartz spectrum
+	pplot({ave_E_wc, ave_E}, {'Wenrich and Christensen', 'New version'}, xaxis={waven,  waven}, ylabel= "Dispersion Theory Examples", x1=1800, x2=200, key='bottom left')
+	printf("n = %d\n", n)
+	pause("pausing after comparison plot")
+}
+}
+
+
+define target_transform_examples() {
+struc = struct()
+asu = read($DV_EX + "/ASU_minlib.hdf")
+alb = asu.data[5]
+cal = asu.data[116]
+diop = asu.data[54]
+struc.alb = alb
+struc.cal = cal
+struc.diop = diop
+nz = dim(alb)[3]
+pplot({alb, cal, diop}, {'albite', 'calcite', 'diopside'}, xaxis=asu.xaxis)
+pause("pausing after endmember spectra")
+
+# create quasi-random abundances of three components (use seed to get repeatable results
+ns = 20
+# 'random' returns ns random values from 0. to 1.
+ran = random(x=ns, seed=1)
+fa = ran*.45
+ran = random(x=ns, seed=2)
+fc = ran*.45
+fd = 1. - (fa + fc)
+struc.fa = fa
+struc.fc = fc
+struc.fd = fd
+
+spec = create(ns, 1, nz, format=float)
+for(i=1; i<=ns; i+=1) {
+	spec[i] = fa[i]*alb + fc[i]*cal + fd[i]*diop
+}
+pplot(spec[1:ns:3], xaxis=asu.xaxis, plot_title="Examples of mixture spectra")
+pause("pausing after examples of mixture spectra")
+
+# remove mean
+save = avg(spec, x)
+sm = spec - save
+smt = translate(sm, y,z)
+smtt = translate(smt,x,y)
+struc.spec = spec
+struc.save = save
+struc.sm = sm
+struc.smt = smt
+struc.smtt = smtt
+#Z = mxm(smtt, smt)
+Z = mxm(smt, smtt)
+struc.Z = Z
+
+printf("Starting eigen\n")
+e = eigen(Z, niter=100)
+struc.e = e
+# move spectral dimension into the z-axis
+et=translate(e,y,z)
+wte=translate(et[1],x,z)*et[2:]
+struc.et = et
+struc.wte = wte
+
+ne = dim(wte)[1]
+neigen = 30
+pplot({save-.95, wte[ne-10+1:]}, xaxis=asu.xaxis)
+#pplot(translate(e[neigen-10+1:neigen],y,z), xaxis=asu.xaxis)
+pause("pausing after plot eigen vectors")
+
+printf("Starting target transform \n")
+# make a library using the first n eigen vectors, including the average
+lib = struct()
+lib.data = cat(float(save), et[923], et[924], x)
+lib.xaxis = make_band(inst='lab1')
+lib.short_label = cat("Mean", "EV1", "EV2", y)
+lib.label = cat("Mean", "EV1", "EV2", y)
+lib.group = cat("EV", "EV", "EV", y)
+target = asu.data
+#target = asu.data[154]
+struc.lib = lib
+struc.target = target
+
+# this is a wierd, but known, bug
+# the following call doesn't work
+#test = sma(target, lib, lib, sort=1, group=1)
+
+# but this one does
+test = sma(target, struc.lib, struc.lib, sort=1, group=1)
+
+# and using wave ranges also produces poor results...
+#test = sma(target, struc.lib, struc.lib, wave1=1, wave2=3000, sort=1, group=1)
+
+nlib = dim(test.measured)[1]
+# compare to diopside
+for(i=1; i<nlib; i+=1) {
+	pplot({diop, test.measured[i]+.25, test.modeled[i]}, {'Diopside', 'Libarary Target', 'Best fit'}, xaxis=test.xaxis, key='bottom right')
+	printf("i = %d\n", i)
+	p=pause("pausing - b for back; return for next; any key to exit")
+	if(p[1] == 'b') {
+		i = i-2
+		if(ii<1) {
+			printf("hey dummy you can't go back any further\n")
+			ii = 1
+		}
+	} else if(length(p)>1) {
+		break
+	}
+}
+
+# compare to albite
+for(i=1; i<nlib; i+=1) {
+	pplot({alb, test.measured[i]+.3, test.modeled[i]}, {'Albite', 'Libarary Target', 'Best fit'}, xaxis=test.xaxis, key='bottom right')
+	printf("i = %d\n", i)
+	p=pause("pausing - b for back; return for next; any key to exit")
+	if(p[1] == 'b') {
+		i = i-2
+		if(ii<1) {
+			printf("hey dummy you can't go back any further\n")
+			ii = 1
+		}
+	} else if(length(p)>1) {
+		break
+	}
+}
+struc.test = test
+return(struc)
+}
+
+
+
+# Examples of factor analysis for Adv. Remote Sensing Spring 2011
+# p. christensen  2/2011
+define factors_examples(mal, example, D, mean, random, plot, debug) {
+if (HasValue(mal)==0 && HasValue(example)==0 && HasValue(D)==0) {
+	printf("examples for factor analysis\n")
+	printf(" \n")
+	printf("usage: f = factors_examples([mal=1][example=1,2,3,4,5,6][mean=1][random=1][plot=1])\n")
+	printf("ex:  f = factors_examples(mal=1)\n")
+	printf("     f = factors_examples(example=2, mean=1, random=.2)\n")
+	printf("\n")
+	printf("p.christensen  2/11\n")
+return(0)
+}
+
+struc=struct()
+
+# set goodness test value for eigenvector iteration
+epsilon1 = .000001
+csum = 10000.
+# set goodness test value for residual test (D-Dmodel)
+epsilon2 = .00005
+residsum = 100000.
+
+if(HasValue(mal)) {
+	# set up for Malinkowsky Ch. 5 example
+	epsilon2 = .001
+	# X = 10 pixels with 2 (unknown) component abundances
+	# X = 10x2 (10 rows, 2 columns); [2,10,1] in davinci
+	X = cat(0//4, 1//-1, 2//0, 3//0, 4//3, 5//-4, 6//5, 7//8, 8//-2, 9//-5, y)
+
+	# Y = 2 component endmember spectra in 3 spectral bands
+	# Y = 2x3 (2 rows x 3 columns); [3,2,1] in davinci
+	Y = cat(2//5//2, 1//10//-5, y)
+	nbands=3
+
+} else if(HasValue(example)){
+	x1 = -1.
+	x2 = 1.
+	y1 = -1.
+	y2 = 1.
+	nbands=2
+	spec=1
+
+	if(example==1) {
+		# do a spectral test
+		# 2 band
+		em1 = cat(.1, .3, x)
+		em2 = cat(.3, .2, x)
+
+	} else if(example==2) {
+		em1 = cat(.61, .82, x)
+		em2 = cat(.72, .31, x)
+
+	} else if(example==3){
+		em1 = cat(.7, .6, x)
+		em2 = cat(.2, .8, x)
+
+	} else if(example==4){
+		em1 = cat(.9, .1, x)
+		em2 = cat(.11, .9, x)
+
+	} else if(example==5) {
+		# 5 band
+		em1 = cat(1.0, .81, .90, .96, .97, x)
+		em2 = cat(1.0, .98, .93, .76, .85, x)
+		nbands=5
+
+	} else if(example==6) {
+		# 5 band
+		em1 = cat(1.0, .22, .71, .81, .97, x)
+		em2 = cat(1.0, .98, .74, .28, .75, x)
+		nbands=5
+
+	} else if(example==7){
+		em1 = cat(.1, .1, x)
+		em2 = cat(.15, .5, x)
+
+	} else if(example==8){
+		em1 = cat(.7, .7, x)
+		em2 = cat(.7, .8, x)
+	}
+
+	struc.em1=em1
+	struc.em2=em2
+
+	# test (unknown) abundances in 22 pixels
+	#npixels = 22
+	#abund1 = cat(.90, .85, .54, .42, .22, .89, .44, .33, .77, .64, .22, .34, .45, .64, .19, .83, .21, .42, .63, .74, .71, .39, y)
+
+	# test (unknown) abundances in 26 evenly-spaced pixels
+	npixels = 26
+	abund1 = create(1,npixels,1, start=1., step=-.02, format=float)
+
+	struc.abund1 = abund1
+	abund2 = 1.-abund1
+	# X = 22 pixels with 2 (unknown) component abundances
+	# X = 22x2 (10 rows, 2 columns; [2,22,1] in davinci)
+	X = cat(abund1, abund2, x)
+	# Y = 2 component endmember spectra in 2 spectral bands
+	# Y = 2x2 (2 rows x 2 columns); [2,2,1] in davinci
+	Y = cat(em1, em2, y)
+
+	# X = 22 pixels with 2 (unknown) component abundances
+	# X = 22x2 (10 rows, 2 columns; [2,22,1] in davinci)
+	X = cat(abund1, abund2, x)
+
+	# Y = 2 component endmember spectra in 2 spectral bands
+	# Y = 2x2 (2 rows x 2 columns); [2,2,1] in davinci
+	Y = cat(em1, em2, y)
+}
+
+if(HasValue(D) ==0) {
+	# create data matrix (D)
+	struc.X = X
+	struc.Y = Y
+	D = mxm(X,Y)
+} else {
+   nbands = 923
+}
+
+if(HasValue(random)) {
+	# add +/-'random'/2. to values
+	nrows = dim(D)[2]
+	D[1] = D[1] + ((random(y=nrows)*random)) - random/2.
+	D[2] = D[2] + ((random(y=nrows)*random)) - random/2.
+}
+
+if(HasValue(mean)) {
+	# recenter D to mean
+	D[1] = D[1]-avg(D[1])
+	D[2] = D[2]-avg(D[2])
+}
+
+Dt = translate(D, x,y)
+
+# Because of how davinci does x-y, not row-column, in order to keep matrix
+# orientation the same as Malinowsky, DxDt must be done as DtxD
+Z = mxm(Dt, D)
+
+# save X, Y, D, Dt, and Z to structure
+struc.D = D
+struc.Dt = Dt
+struc.Z = Z
+# normalize Z
+Zn = Z/sqrt(sum(Z^2, y))
+struc.Zn = Zn
+
+nx = dim(Z)[1]
+ny = dim(Z)[2]
+
+if(nbands==2) {
+	# plot the original data
+	pplot(translate(D,y,z)[2], "Data", xaxis=translate(D[1],y,z), points=1, x1=x1, x2=x2, y1=y1, y2=y2,plot_title="Original data (D)", key='bottom right', xlabel="Band 1", ylabel="Band 2")
+	pause("pausing after original data plot - hit return to continue")
+}
+
+# create eigenvector and eigenvalue arrays
+eigenvalues = create(ny, 1,1, format=float) * 0.
+eigenvectors = create(ny, nx,1, format=float) * 0.
+
+# first guess = unit vector
+clen = sqrt(1./ny)
+
+# initialize residual matrix to Z
+resid = Z
+if(HasValue(mal)) {
+	printf("\nInitial Z is:\n\n")
+	for(k=1; k<=nbands; k+=1) {
+		printf(" %7.2f   %7.2f   %7.2f\n", resid[k,1], resid[k,2], resid[k,3])
+   }
+	printf("\nFirst guess at eigenvector 1 is %.3f %.3f %.3f\n", clen, clen, clen)
+
+} else {
+  if(nbands==2) {
+		printf("\nFirst guess at eigenvector 1 is %.3f %.3f\n\n", clen, clen)
+		printf("Initial Z is:\n\n")
+		for(k=1; k<=nbands; k+=1) {
+			printf(" %7.2f   %7.2f\n", resid[k,1], resid[k,2])
+		}
+
+	} else if(nbands==5) {
+		printf("\nFirst guess at eigenvector 1 is %.3f %.3f %.3f %.3f %.3f\n\n", clen, clen, clen, clen, clen)
+		printf("Initial Z is:\n\n")
+		for(k=1; k<=nbands; k+=1) {
+			printf(" %7.2f   %7.2f   %7.2f   %7.2f   %7.2f\n", resid[k,1], resid[k,2], resid[k,3], resid[k,4], resid[k,5])
+		}
+	}
+}
+printf("\n")
+pause("Pausing - hit retun to continue")
+
+i=1
+while(residsum > epsilon2) {
+	printf("\nFinding eigenvector %d\n", i)
+	c = clone(clen, 1, ny, 1)
+	csum=10000.
+	counter=1
+	while(csum > epsilon1) {
+		RHS = mxm(resid, c)
+		# normalize RHS
+		eigenval = sqrt(sum(RHS^2))
+		cnew = RHS/eigenval
+		csum = sum(c-cnew)
+		printf(" Iteration %d - sum of csum = %.3f  eigenvalue=%.2f\n", counter, csum, eigenval)
+		c = cnew
+		counter = counter + 1
+	}
+
+	eigenvalues[i] = eigenval
+	ct = translate(c, x,y)
+	# add column eigenvector (c) to array of eigenvectors
+	eigenvectors[,i] = translate(c, x,y)
+	lcct = eigenvalues[i]*mxm(c, ct)
+	# R = Z - eigenvalues[i]*c*ct
+	resid = resid - lcct
+	if(HasValue(mal)) {
+		printf("\neigenvalue %d is %.2f\n",i, eigenvalues[i])
+		printf("eigenvector %d is %.6f  %.6f  %.6f\n\n", i, eigenvectors[1,i], eigenvectors[2,i], eigenvectors[3,i])
+		printf("Residual after eigenvector %d is:\n\n", i)
+		for(k=1; k<=3; k+=1) {
+			printf(" %7.2f   %7.2f   %7.2f\n", resid[k,1], resid[k,2], resid[k,3])
+		}
+
+	} else if(HasValue(spec)) {
+		printf("\neigenvalue %d is %.2f\n",i, eigenvalues[i])
+		if(nbands==5) {
+			 printf("eigenvector %d is %.6f  %.6f  %.6f  %.6f  %.6f\n\n", i, eigenvectors[1,i], eigenvectors[2,i], eigenvectors[3,i], eigenvectors[4,i], eigenvectors[5,i])
+		}
+		printf("Residual after eigenvector %d is:\n\n", i)
+		for(k=1; k<=nbands; k+=1) {
+			if(nbands==2) {
+				printf(" %7.2f   %7.2f\n", resid[k,1], resid[k,2])
+			} else if(nbands==5) {
+				printf(" %7.2f   %7.2f   %7.2f   %7.2f   %7.2f\n", resid[k,1], resid[k,2], resid[k,3], resid[k,4], resid[k,5])
+			}
+		}
+	}
+
+	# compute data model after each eigenvector
+	C = eigenvectors[,1:i]
+	Ct = translate(C, x,y)
+	R = mxm(D,Ct)
+	if(i==1) {
+		R = mxm(D,Ct)
+		lcct = eigenvalues[i]*mxm(c, ct)
+		# R = Z - eigenvalues[i]*c*ct
+		resid1 = Z - lcct
+		Dmodel1 = mxm(R, C)
+		Dremaind1 = D-Dmodel1
+		struc.Dmodel1 = Dmodel1
+		struc.Dremaind1 = Dremaind1
+		struc.resid1 = resid
+	}
+
+	printf("\n")
+	pause("Pausing - hit return to continue")
+	residsum = sum(resid)
+	i = i+1
+}
+
+# finish
+nfactors = i-1
+Dmodel = mxm(R, C)
+
+# make data model
+C = eigenvectors[,1:nfactors]
+Ct = translate(C, x,y)
+R = mxm(D,Ct)
+printf("i=%d\n", i)
+
+# print the results
+if(HasValue(mal)) {
+	printf("\nR matrix =\n")
+	for(k=1; k<=10; k+=1) {
+		printf(" %6.2f   %6.2f\n", R[1,k], R[2,k])
+	}
+	printf("\nC matrix =\n")
+	for(k=1; k<=2; k+=1) {
+		printf(" %.2f   %.2f  %.2f\n", C[1,k], C[2,k], C[3,])
+	}
+
+} else if(HasValue(example)) {
+	printf("\nR matrix =\n")
+	for(k=1; k<=npixels; k+=1) {
+		printf(" %6.4f   %6.4f\n", R[1,k], R[2,k])
+	}
+
+	printf("\nC matrix =\n")
+	for(k=1; k<=2; k+=1) {
+		if(nbands==5) {
+			printf("%6.2f  %6.2f  %6.2f  %6.2f  %6.2f\n", C[1,k], C[2,k], C[3,k], C[4,k], C[5,k])
+		} else if(nbands==2) {
+			printf("%6.2f  %6.2f\n", C[1,k], C[2,k])
+	  }
+	}
+}
+# test orthogonality of eigenvectors
+o = mxm(eigenvectors[,1], translate(eigenvectors[,2], x,y))
+printf("\neigenvector 1 and 2 cross-product = %.2e\n", o)
+printf("(Should be zero for truly perpendicular eigenvectors)\n\n")
+
+# plot the results
+if(nbands==2) {
+	pplot({translate(D,y,z)[2],eigenvectors[2]}, {"Data", "Eigenvectors"}, xaxis={translate(D[1],y,z),eigenvectors[1]}, points=1, x1=x1, x2=x2, y1=y1, y2=y2, plot_title="Original data (D) and eigenvectors", key='bottom right', xlabel="Band 1", ylabel="Band 2")
+	pause("pausing after D and eigenvectors - hit return to continue")
+
+	pplot({translate(D,y,z)[2], eigenvectors[2], translate(Dmodel1,y,z)[2]}, {"Data", "Eigenvectors", "Dmodel using EV1 only"}, xaxis={translate(D[1],y,z), eigenvectors[1],translate(Dmodel1[1],y,z)}, points=1, x1=x1, x2=x2, y1=y1, y2=y2, plot_title="Dmodel derived from first eigenvector only", key='bottom right', xlabel="Band 1", ylabel="Band 2")
+	printf("Eigenvector 1 - eigenvalue 1 = %.3f\n", eigenvalues[1])
+	pause("pausing after Data and Dmodel derived from first eigenvector only - hit return to continue")
+
+	if(HasValue(mean)) {
+		pplot({translate(D,y,z)[2], eigenvectors[2], Dremaind1[2]}, {"Data", "Eigenvectors", "Residual: D - EV1"}, xaxis={translate(D[1],y,z), eigenvectors[1], Dremaind1[1]}, points=1, x1=x1, x2=x2, y1=y1, y2=y2, plot_title="Remainder of D after Dmodel from eigenvector 1 removed", key='bottom right')
+	} else {
+		pplot({eigenvectors[2], Dremaind1[2]}, {"Eigenvectors", "Residual: D - EV1"}, xaxis={eigenvectors[1], Dremaind1[1]}, points=1, x1=x1, x2=x2, y1=y1, y2=y2, plot_title="Remainder of D after Dmodel from eigenvector 1 removed", key='bottom right')
+	}
+	printf("Eigenvector 2 - eigenvalue 2 = %.3f\n", eigenvalues[2])
+	pause("pausing after remainder of D after Dmodel from first eigenvector removed - hit return to continue")
+
+}
+# load structure
+struc.Z = Z
+struc.eigenvalues = eigenvalues[1:nfactors]
+struc.eigenvectors = eigenvectors[,1:nfactors]
+struc.resid = resid
+struc.nfactors = nfactors
+struc.R = R
+struc.C = C
+struc.Dmodel = Dmodel
+
+if(HasValue(debug)) {
+	struc.RHS = RHS
+	struc.c = c
+	struc.ct = ct
+	struc.lcct = lcct
+}
+
+if(HasValue(spec)) {
+	vectors=cat(translate(em1,x,z), translate(em2,x,z),y)
+	vectors=cat(vectors, translate(eigenvectors[,1:nfactors],x,z), y)
+	struc.vectors = vectors
+	if(nbands==5) {
+		xaxis = cat(1,2,3,4,5, z)
+	} else if(nbands==2) {
+		xaxis = cat(1,2, z)
+	}
+
+	if(HasValue(plot)) {
+		pplot(vectors, {"Endmember 1", "Endmember 2", "Eigenvector 1", "Eigenvector 2"}, key='bottom right', xaxis=xaxis, xlabel="Band", ylabel="Emissivity")
+	} else if(nfactors==3) {
+		pplot(vectors, {"Endmember 1", "Endmember 2", "Eigenvector 1", "Eigenvector 2", "Eigenvector 3"}, key='bottom right', xaxis=xaxis, xlabel="Band", ylabel="Emissivity")
+	}
+}
+return(struc)
+}
+
+
+
+define aster_example() {
+	# example of aster image deconvolution
+	# p. christensen 4/25/11
+
+	struc = struct()
+	#	make the aster xaxis (wavelengths of bands)
+	xaster = make_band(inst='aster')
+	# read the asu wards rock library
+	wards=load($DV_EX + "/wards_rock_library.hdf")
+
+	# read an aster emissivity image
+	a=read($DV_EX+"/granitewash_AST_11_16_01_emissivity.vic")
+
+
+	# convolve the wards library to aster resolution for all rocks
+	libaster_all=i2i(wards, to='aster')
+	# covert the wards library to wavelength
+	liblab_all = i2i(wards, to='lab1',  wave=1)
+
+	# convolve the wards library to aster resolution for 4 selected rocks
+	libaster=i2i(wards, to='aster', list='30//46//60//77')
+	# covert the wards library to wavelength
+	liblab=i2i(wards, to='lab1', list='30//46//60//77', wave=1)
+	pplot({liblab.data, libaster.data}, xaxis={liblab.xaxis, libaster.xaxis}, x1=6, x2=14, y1=.5, y2=1.02)
+	pause("pausing after library plot")
+
+	n = dim(libaster.data)[1]
+	for(i=1; i<=n; i+=1) {
+		pplot({liblab.data[i], libaster.data[i]}, xaxis={liblab.xaxis, libaster.xaxis}, x1=6, x2=14, y1=.55, y2=1.02)
+		pause("pausing")
+	}
+
+	# get some representative spectra from granite wast
+	carb = a[178, 332]
+	coc = a[189, 337]
+	vol = a[197, 334]
+	gwe = cat(carb, coc, vol, x)
+	pplot(gwe, xaxis=xaster)
+	pause("pausing after original aster data plot")
+
+	# force aster emissivity spectra of carbonate to be flat with e=.98
+	cor = .97-carb
+	gwe_cor = gwe + cor
+	pplot(gwe_cor, xaxis=xaster)
+	pause("pausing after 'corrected' aster data plot")
+	
+	# do deconvolution
+	gsma = sma(gwe, libaster, band=1, wave1=1, wave2=5, bb=0)
+	gcor_sma = sma(gwe_cor, libaster, band=1, wave1=1, wave2=5, bb=0)
+
+	# plot the sma results
+	plot_sma(gsma, concen=1)
+	pause("pausing after plot_sma of original data")
+
+	plot_sma(gcor_sma, concen=1)
+
+	# load the structure
+	struc.libaster = libaster
+	struc.liblab = liblab
+	struc.aster = a
+	struc.carb = carb	
+	struc.coc = coc
+	struc.vol = vol
+	struc.gwe = gwe
+	struc.gwe_cor = gwe_cor
+	struc.gsma = gsma
+	struc.gcor_sma = gcor_sma
+
+	return(struc)
+}

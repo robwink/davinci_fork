@@ -1,0 +1,478 @@
+msff_version=1.08
+
+#1.07 9-7-10 changes to load_aster to work with 09T data
+#1.08 moved load_aster to aster_science.dvrc and delete_object_vars to themis_science.dvrc
+
+# isis3setup - setup isis3 for the moeur building enviornment - cedwards 7-1-10
+# scale_bar	- taken from /u/phil/prc_dvrc
+# scale_bar_text	- taken from /u/phil/prc_dvrc
+# mola_overlay	- taken from /u/phil/prc_dvrc
+# moved mola_overlay to msff from misc.dvrc
+# moved get_map and availabel map to misc.dvrc - 9/3/09
+
+
+define isis3setup() {
+
+       #modified so that only insmod("isis3") is called 
+       #we should phase this silly function out
+       insmod("isis3")
+}
+
+define scale_bar(invert, font_factor) {
+	#Added $DV_HOME support
+	#added color_tables to $DV_SCRIPT_FILES 1-30-09
+
+if ($ARGC == 0) {
+	printf (" \n")
+	printf (" Add a scale bar to the bottom of an image \n")
+	printf (" Computes appropriate size of scalebar and text to match image\n")
+	printf (" usage:  scale_bar('filename', z_min, z_max, 'units' (e.g. 'K'), colorize_flag, invert=[0 or 1])  \n")
+	printf (" \n")
+	printf (" where: \n")
+	printf ("       filename =    - name of image on disk\n")
+	printf ("       z_text   =    - numeric label for minimum value on scalebar\n")
+	printf ("       z_text   =    - numeric label for maximum value on scalebar\n")
+	printf ("       units    =    - text label for units (e.g. 'K' or 'Centigrade'\n")
+	printf ("       colorize = 0  - no colorize \n")
+	printf ("                = 1  - use purple to red scale \n")
+	printf ("                = 2  - use purple to white scale \n")
+	printf ("                = 3  - color laserjet purple to red scale \n")
+	printf ("       [invert] = 0  - background color is black, text is white (default)\n")
+	printf ("                = 1  - background is white\n")
+	printf (" \n")
+	printf (" example:  scale_bar('temperature.ppm', 170, 190, 'K', 1)  \n")
+	return(0)
+}
+
+# changed from helv_ to helmet to run on linux ~2004
+    basename = $1
+    zmin = $2
+    zmax = $3
+    units = $4
+    colorize = $5
+
+		iflag = 0
+		bg_color = "black"
+		fg_color = "white"	
+
+	  if (HasValue(invert)) {
+ 		  if (invert ==1) {
+				iflag = 1
+				bg_color = "white"
+				fg_color = "black"
+ 	  	}
+ 	 	}
+    
+    printf(" %s\n",basename)
+    a=read(basename)
+
+    # scale to width of original image
+    width = dim(a)[1]
+    height = dim(a)[2]
+    ave_dim = int((width + height) /2.)
+
+    # calculate font size for scale bar text
+    font_size = int(ave_dim/40. / 2) * 2
+    if (HasValue(font_factor)) {
+        font_size = int(font_size*font_factor)
+    }
+
+		#font_size = int(ave_dim/40. / 6) * 6
+        printf("font size = %d\n", font_size)
+    if (font_size <= 12) {
+        font_size = 12
+    }
+    printf (" font = %d\n", font_size)
+
+    # calculate size of scale bar
+    scale_len = int(ave_dim / (720./300) / 40) * 40
+
+		#scale_len = int(width / (720./300) / 50) * 50
+    scale_height = int(scale_len / 12.) 
+
+    # calculate pad between bottom of image and scale bar
+    pad = int(height / 60.)
+
+    # compute size of white line around scale bar
+    border = int(scale_height / 24.) 
+    printf(" width = %d  height = %d ave_dimension = %d pad = %d  border = %d\n",width, height, ave_dim, pad, border)
+
+    # make scale bar text
+    izmin = int(zmin)
+    izmax = int(zmax)
+    if (zmin - izmin) {
+       fstring = sprintf("%.2f",zmin)
+    } else {
+       fstring = sprintf("%d",izmin)
+    }
+    if (zmax - izmax) {
+       fstring2 = sprintf("%.2f",zmax)
+    } else {
+       fstring2 = sprintf("%d",izmax)
+    }
+
+#   system (sprintf('/themis/lib/dav_lib/fonts/make_font %d', font_size))
+
+		write(byte(clone(0,scale_len,2*scale_height,1)),$TMPDIR+"/text.png",png,force=1)
+		azmin = sprintf("convert -gravity center -font helvetica-bold -fill white -pointsize %d -draw 'text 0,0 \"%s %s\"' "+$TMPDIR+"/text.png "+$TMPDIR+"/label1.png",font_size,fstring,units)
+		azmax = sprintf("convert -gravity center -font helvetica-bold -fill white -pointsize %d -draw 'text 0,0 \"%s %s\"' "+$TMPDIR+"/text.png "+$TMPDIR+"/label2.png",font_size,fstring2,units)
+		
+    #azmin = sprintf("echo '%s %s' | pbmtext -font "+$DV_HOME+"/fonts/helmet_%d | pnminvert | pbmtopgm 1 1 | pnmdepth 255 > "+$TMPDIR+"/label1", fstring, units, font_size)
+    #azmax = sprintf("echo '%s %s' | pbmtext -font "+$DV_HOME+"/fonts/helmet_%d | pnminvert | pbmtopgm 1 1 | pnmdepth 255 > "+$TMPDIR+"/label2", fstring2, units, font_size)
+		echo(azmin)
+		echo(azmax)
+    system(azmin)
+    system(azmax)
+    f1 = clip(read($TMPDIR+"/label1.png")[,,1]*byte(255),0)
+    f2 = clip(read($TMPDIR+"/label2.png")[,,1]*byte(255),0)
+    # compute size of blank space between scale bar text
+    df1 = dim(f1)[1]
+    df2 = dim(f2)[1]
+    ave_df = avg(df1+df2)
+    blanks = int(scale_len - ave_df/2.0)
+
+		if (blanks <= 0) {
+			blanks = 1
+		}
+
+ 	  hf1 = dim(f1)[2]
+ 	  # concatinate text and blanks to make scale bar label
+ 	  text = f1//bip(byte(create(blanks,hf1) * 0))//f2
+		tbpad=bip(clone(byte(0),dim(text)[1],int(dim(text)[2]*.5),1))
+		text=cat(tbpad,text,tbpad,axis=y)
+ 	  write(byte(text), $TMPDIR+"/scale.text", pgm, force=1)
+    if (iflag == 1) {
+  	  system("pnminvert "+$TMPDIR+"/scale.text > "+$TMPDIR+"/scale.text.tmp ; mv "+$TMPDIR+"/scale.text.tmp "+$TMPDIR+"/scale.text");
+    }
+
+    if(colorize == 1) {
+        # colorize scale bar using purple to red scale
+        cmd = sprintf("pgmramp -lr %d %d | pgmtoppm -map "+$DV_SCRIPT_FILES+"/color_tables/colormap_daily.ppm > "+$TMPDIR+"/scalebar", scale_len, scale_height)
+    } else if(colorize == 2) {
+        # colorize scale bar using purple to white scale
+        cmd = sprintf("pgmramp -lr %d %d | pgmtoppm -map "+$DV_SCRIPT_FILES+"/color_tables/colormap.ppm  > "+$TMPDIR+"/scalebar", scale_len, scale_height)
+    } else if(colorize == 3) {
+        # colorize scale bar using purple to red scale
+        cmd = sprintf("pgmramp -lr %d %d | pgmtoppm -map "+$DV_SCRIPT_FILES+"/color_tables/colorjet.ppm  > "+$TMPDIR+"/scalebar", scale_len, scale_height)
+    } else if (colorize == 0) {
+        # don't colorize scale bar
+        cmd = sprintf("pgmramp -lr %d %d > "+$TMPDIR+"/scalebar", scale_len, scale_height)
+    } else {
+        printf (" bad colorize choice\n")
+        return (0)
+    }
+
+
+    system(cmd)
+    cmd = sprintf("pnmpad -%s -t%d -b%d -l%d -r%d "+$TMPDIR+"/scalebar | pnmpad -%s -t%d > "+$TMPDIR+"/scalebar2", fg_color, border, border, border, border, bg_color, pad)
+    system(cmd);
+    
+    # concatinate scale and text
+    cmd = sprintf("pnmcat -tb -%s "+$TMPDIR+"/scalebar2 "+$TMPDIR+"/scale.text > "+$TMPDIR+"/textbar", bg_color)
+    system(cmd)
+
+    # concatinate scale onto final image
+    cmd = sprintf("pnmcat -tb -%s %s "+$TMPDIR+"/textbar > %s.scalebar", bg_color, basename,basename)
+    system(cmd)
+
+    # clean up
+    system("rm "+$TMPDIR+"/label1.png "+$TMPDIR+"/label2.png")
+    system("rm "+$TMPDIR+"/textbar")
+   system("rm "+$TMPDIR+"/scale.text")
+   system("rm "+$TMPDIR+"/scalebar "+$TMPDIR+"/scalebar2")
+
+}
+
+define scale_bar_text(invert, font_factor) {
+#Added $DV_SCRIPT_FILES support - 5-13-08
+#added color_tables to $DV_SCRIPT_FILES
+
+if ($ARGC == 0) {
+  printf (" \n")
+  printf (" Add a scale bar to the bottom of an image \n")
+	printf (" Computes appropriate size of scalebar and text to match image\n")
+  printf (" usage:  scale_bar('filename', 'z_min_text', 'z_max_text', 'units' (e.g. 'K'), colorize_flag, invert=[0 or 1])  \n")
+  printf (" \n")
+  printf ("where: \n")
+	printf ("       filename =    - name of image on disk\n")
+	printf ("       z_min_text =  - text label for minimum value on scalebar\n")
+	printf ("       z_max_text =  - text label for maximum value on scalebar\n")
+	printf ("       units    =    - text label for units (e.g. 'K' or 'Centigrade'\n")
+  printf ("       colorize = 0  - no colorize \n")
+  printf ("                = 1  - use purple to red scale \n")
+  printf ("                = 2  - use purple to white scale \n")
+  printf ("                = 3  - color laserjet purple to red scale \n")
+  printf ("       [invert] = 0  - background color is black, text is white (default)\n")
+	printf ("                = 1  - background is white\n")
+  printf (" \n")
+  printf ("       writes final image to filename.scalebar \n")
+  printf (" \n")
+  printf (" example:  scale_bar_text('albg_alb6.ppm', 'Clear', 'Dusty', ' ', 1)  \n")
+ 	return(0)
+}
+
+    basename = $1
+    zmin = $2
+    zmax = $3
+    units = $4
+    colorize = $5
+
+	iflag = 0
+	bg_color = "black"
+	fg_color = "white"
+
+        if (HasValue(invert)) {
+	    if (invert ==1) {
+		iflag = 1
+		bg_color = "white"
+		fg_color = "black"
+	    }
+        }
+    
+    printf(" %s\n",basename)
+    a=read(basename)
+    # scale to width of original image
+    width = dim(a)[1]
+    height = dim(a)[2]
+    ave_dim = int((width + height) /2.)
+    # calculate font size for scale bar text
+    font_size = int(ave_dim/40. / 2) * 2
+    if (HasValue(font_factor)) {
+        font_size = int(font_size*font_factor)
+    }
+#    font_size = int(ave_dim/40. / 6) * 6
+        printf("font size = %d\n", font_size)
+    if (font_size <= 12) {
+        font_size = 12
+    }
+    printf (" font = %d\n", font_size)
+    # calculate size of scale bar
+    scale_len = int(ave_dim / (720./300) / 40) * 40
+#    scale_len = int(width / (720./300) / 50) * 50
+    scale_height = int(scale_len / 12.) 
+    # calculate pad between bottom of image and scale bar
+    pad = int(height / 60.)
+#    pad = scale_height / 4
+    # compute size of white line around scale bar
+    border = int(scale_height / 24.) 
+    printf(" width = %d  height = %d ave_dimension = %d pad = %d  border = %d\n",width, height, ave_dim, pad, border)
+    # make scale bar text
+
+
+		write(byte(clone(0,scale_len,2*scale_height,1)),$TMPDIR+"/text.png",png,force=1)
+		azmin = sprintf("convert -gravity center -font helvetica-bold -fill white -pointsize %d -draw 'text 0,0 \"%s %s\"' "+$TMPDIR+"/text.png "+$TMPDIR+"/label1.png",font_size,zmin,units)
+		azmax = sprintf("convert -gravity center -font helvetica-bold -fill white -pointsize %d -draw 'text 0,0 \"%s %s\"' "+$TMPDIR+"/text.png "+$TMPDIR+"/label2.png",font_size,zmax,units)
+	
+#    system (sprintf('/u/phil/scripts/make_font %d', font_size))
+#    azmin = sprintf("echo '%s %s' | pbmtext -font "+$DV_HOME+"/fonts/helmet_%d | pnminvert | pbmtopgm 1 1 | pnmdepth 255 > "+$TMPDIR+"/label1", zmin, units, font_size)
+#    azmax = sprintf("echo '%s %s' | pbmtext -font "+$DV_HOME+"/fonts/helmet_%d | pnminvert | pbmtopgm 1 1 | pnmdepth 255 > "+$TMPDIR+"/label2", zmax, units, font_size)
+	
+		echo(azmin)
+		echo(azmax)
+    system(azmin)
+    system(azmax)
+    f1 = clip(read($TMPDIR+"/label1.png")[,,1]*byte(255),0)
+    f2 = clip(read($TMPDIR+"/label2.png")[,,1]*byte(255),0)
+    # compute size of blank space between scale bar text
+    df1 = dim(f1)[1]
+    df2 = dim(f2)[1]
+		dh1 = dim(f1)[2]
+		dh2 = dim(f2)[2]
+    ave_df = avg(df1+df2)
+		    blanks = int(scale_len - ave_df/2.0)
+		if (blanks <= 0) {
+ 			blanks = 1
+		}
+    hf1 = int(max(dh1//dh2))
+		if(dh1<hf1) {
+			f11=bip(clone(byte(0),df1,hf1,1))
+			f11[1:df1,1:dh1]=f1
+			f1=f11
+		}
+		if(dh2<hf1) {
+			f21=bip(clone(byte(0),df2,hf2,1))
+			f21[1:df2,1:dh2]=f2
+			f2=f21
+		}
+
+    # concatinate text and blanks to make scale bar label
+    text = f1//bip((byte(create(blanks,hf1) * 0)))//f2
+		tbpad=bip(clone(byte(0),dim(text)[1],int(dim(text)[2]*.5),1))
+		text=cat(tbpad,text,tbpad,axis=y)
+    write(byte(text), $TMPDIR+"/scale.text", pgm, force=1)
+        if (iflag == 1) {
+            system("pnminvert "+$TMPDIR+"/scale.text > "+$TMPDIR+"/scale.text.tmp ; mv "+$TMPDIR+"/scale.text.tmp "+$TMPDIR+"/scale.text");
+        }
+    if(colorize == 1) {
+        # colorize scale bar using purple to red scale
+        cmd = sprintf("pgmramp -lr %d %d | pgmtoppm -map "+$DV_SCRIPT_FILES+"/color_tables/colormap_daily.ppm > "+$TMPDIR+"/scalebar", scale_len, scale_height)
+    } else if(colorize == 2) {
+        # colorize scale bar using purple to white scale
+        cmd = sprintf("pgmramp -lr %d %d | pgmtoppm -map "+$DV_SCRIPT_FILES+"/color_tables/colormap.ppm  > "+$TMPDIR+"/scalebar", scale_len, scale_height)
+    } else if(colorize == 3) {
+        # colorize scale bar using purple to red scale
+        cmd = sprintf("pgmramp -lr %d %d | pgmtoppm -map "+$DV_SCRIPT_FILES+"/color_tables/colorjet.ppm  > "+$TMPDIR+"/scalebar", scale_len, scale_height)
+    } else if (colorize == 0) {
+        # don't colorize scale bar
+        cmd = sprintf("pgmramp -lr %d %d > "+$TMPDIR+"/scalebar", scale_len, scale_height)
+    } else {
+        printf (" bad colorize choice\n")
+        return (0)
+    }
+
+    system(cmd)
+    cmd = sprintf("pnmpad -%s -t%d -b%d -l%d -r%d "+$TMPDIR+"/scalebar | pnmpad -%s -t%d > "+$TMPDIR+"/scalebar2", fg_color, border, border, border, border, bg_color, pad)
+    system(cmd);
+    
+    # concatinate scale and text
+    cmd = sprintf("pnmcat -tb -%s "+$TMPDIR+"/scalebar2 "+$TMPDIR+"/scale.text > "+$TMPDIR+"/textbar", bg_color)
+    system(cmd)
+  
+    # concatinate scale onto final image
+    cmd = sprintf("pnmcat -tb -%s %s "+$TMPDIR+"/textbar > %s.scalebar", bg_color, basename, basename)
+    system(cmd)
+
+    # clean up
+ #   system("rm "+$TMPDIR+"/label1.png "+$TMPDIR+"/label2.png")
+ #   system("rm "+$TMPDIR+"/textbar")
+ #   system("rm "+$TMPDIR+"/scale.text")
+ #   system("rm "+$TMPDIR+"/scalebar "+$TMPDIR+"/scalebar2")
+
+}
+
+
+define mola_overlay() {
+        if ($ARGC == 0) {
+                printf (" \n")
+                printf (" Drape color image over mola user-specified mola shaded relief topography using HSI stretch\n")
+                printf (" usage:  b = mola_overlay(region_array, array_pixels_per_degree, mola_pixels_per_degree, start_lon, end_lon, start_lat, end_lat\n")
+                printf (" example:  b = mola_overlay(a, 32, 75, 45, 35, 15)\n")
+
+        	return(0)
+        }
+
+	array = $1
+        ppd = $2
+        mola_ppd = $3
+        slon = $4
+        elon = $5
+        slat = $6
+        elat = $7
+
+        # read the mola map
+        if (mola_ppd == 4) {
+        	mola = read("/mgs/mola/gridded/mola_4.pgm")
+        } else if (mola_ppd == 8) {
+        	mola = read("/mgs/mola/gridded/mola_8.pgm")
+        } else if (mola_ppd == 16) {
+        	mola = read("/mgs/mola/gridded/mola_16.pgm")
+        } else if (mola_ppd == 32) {
+        	mola = read("/mgs/mola/gridded/mola_32.pgm")
+        } else if (mola_ppd == 64) {
+        	mola = read("/mgs/mola/gridded/mola_64.pgm")
+        } else {
+                # incorrect mola pixel per degree
+                return(0)
+        }
+
+
+        #check to see if need to expand either map
+        if (ppd != mola_ppd) {
+                # do expanding
+                scale = float(mola_ppd)/ppd
+
+                if (scale > 1.) {
+                        # expand tes data to scale of mola map
+                        printf("expanding TES data by %.1f\n", scale)
+                        write(bip(array), "junk_mola_overlay",ppm, force=1)
+                        system(sprintf("pnmscale %f junk_mola_overlay > junk1_mola_overlay", scale))
+                        array = read("junk1_mola_overlay")
+                        system("rm junk_mola_overlay junk1_mola_overlay")
+                        ppd = int(ppd * scale)
+
+                } else if (scale < 1.) {
+                        # expand mola map to scale of region 
+                        scale = 1./scale
+                        printf("expanding mola data by %.1f\n", scale)
+                        write(mola, "junk_mola_overlay",pgm, force=1)
+                        system(sprintf("pnmscale %f junk_mola_overlay  > junk1_mola_overlay", scale))
+                        mola = read("junk1_mola_overlay")
+                        system("rm junk_mola_overlay junk1_mola_overlay")
+
+                        mola_ppd = int(mola_ppd * scale)
+
+                        # a better way would be to get the correct mola map - not implemented yet
+
+                }
+
+        }
+
+        nx_mola = dim(mola)[1]
+        ny_mola = dim(mola)[2]
+
+        # check to see if doing 180 to 180 global map
+        if (slon == 180 && elon == 180) {
+                # do full 180 to 180 map
+                printf(" doing 180 to 180 map\n")
+              	hsv = rgb2hsv(array)
+        	hsv[,,3] = (mola + 96) / 256.0
+                out = byte(hsv2rgb(hsv, maxval=256))
+                return(out)
+        }                
+
+        # put mola in 360-0 space
+        half_x = int(nx_mola/2)
+        m1 = mola[1:half_x]
+        m2 = mola[half_x+1:nx_mola]
+
+        mola_swapped = cat(m2,m1,axis=x)
+
+        # check to see if doing full 360 to 0 map
+                if (slon == 360 && elon == 0) {
+                # do full 360 to 0 map
+                printf(" doing 360 to 0 map\n")
+
+              	hsv = rgb2hsv(array)
+
+        	hsv[,,3] = (mola_swapped + 96) / 256.0
+                out = byte(hsv2rgb(hsv, maxval=256))
+                return(out)
+        }                
+
+        # cut out region in mola array
+        if (slon> 360) {
+                # do 0 crossing case
+                printf("doing 0 crossing\n")
+                sx = int(nx_mola - (slon - 360) * mola_ppd +1)
+                ex = nx_mola
+                sy = int( (90 - slat) * mola_ppd +1)
+                ey = int( sy + (slat - elat) * mola_ppd) - 1
+                c1 = mola_swapped[sx:ex, sy:ey]
+
+                sx = 1
+                ex = int( (360- elon) * mola_ppd)
+                sy = int( (90 - slat) * mola_ppd +1)
+                ey = int( sy + (slat - elat) * mola_ppd) - 1
+                c2 = mola_swapped[sx:ex, sy:ey]
+                c = cat(c1,c2,axis=x)
+        
+        } else {
+                printf("doing regular map\n")
+                sx = int( (360 - slon) * mola_ppd +1)
+                ex = int( (360 - elon) * mola_ppd) 
+                sy = int( (90 - slat) * mola_ppd +1)
+                ey = int( (90 - elat) * mola_ppd)
+                c = mola_swapped[sx:ex, sy:ey] 
+        }
+
+        printf("sx = %d ex = %d sy = %d ey = %d\n", sx,ex,sy,ey)
+
+	hsv = rgb2hsv(array)
+#	hsv[,,3] = (mola + 64) / 256.0
+	hsv[,,3] = (c + 96) / 256.0
+
+
+        out = byte(hsv2rgb(hsv, maxval=256))
+        return(out)
+
+}

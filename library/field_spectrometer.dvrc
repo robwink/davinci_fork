@@ -1,0 +1,668 @@
+field_spectrometer_version=1.00
+
+# All functions in this file were written by Amy Trueba Knudson
+#       fs_software
+#       fs_help
+#       make_xaxis_fs
+#       extract_text_fs
+#       batch_extract_fs
+#       calc_rad_raw_fs
+#       calc_rad_fs
+#       emiss_fs
+#       bbr_fs
+#       bb_vm
+#       btemp_vm
+#       btemp_fs
+#       respf_fs
+#       convertfs2dav
+#       batch_plot_fs
+#
+#
+# Davinci scripts created based on IDL and VM predecessors 
+# X-Axis and calibrated radiance algorithms to adapted from Keith Horton's IDL
+#     scripts for the micro-FTIR D&P field spectrometer
+# Emissivity calculations adapted from Steve Ruff's emcal VM scripts
+#
+# 26 March 2002  --ATK
+#        calc_rad uses Ben Steinberg's fs2ascii script to extract binary data from the raw
+#        D&P spectrometer files. Currently must be used on linux, not unix.
+#
+# July 2002  --ATK
+#        Ben updated fs2ascii to be able to tell what platform you're using.
+#
+# 23 June 2006 --ATK
+#        New laser diode in instrument as of 10/2005 necessitates the use
+#        of a switch for creation of the X-Axis. Added function make_xaxis_old.
+#        Edited extract_text, batch_extract, calc_rad, and calc_rad_raw
+#        to use the make_xaxis or make_xaxis_old functions.# 23 June 2006 --ATK
+#
+# 25 Feb 2010 --CSE
+#        Modified scripts to keep them from using the fs2ascii script which 
+#        called lin_readout etc.  This can easily be replaced with 
+#        load_raw and the right header skip amount
+#			   This will be for the initial ingestion into the davinci library.
+#				 Additionally, functions have been renamed from their original names inorder to  
+#				 provide some unique names for users        
+#
+# ----------------------------------------------------
+
+
+
+define fs_software() {
+printf ("     \n")
+printf ("extract data from binary files     \n")
+printf ("     extract_text_fs() 	extracts ascii text from a binary file\n")
+printf ("     batch_extract_fs() 	extract ascii text from a directory of binary files\n")
+printf ("     \n")
+printf ("calibrate radiance and perform tes     \n")
+printf ("     calc_rad_fs()  	calibrate radiance from extracted text files\n")
+printf ("     calc_rad_raw_fs()	calibrate radiance with binary file inputs\n")
+printf ("     emiss_fs()  	performs tes using blackbody curve best-fit\n")
+printf ("     \n")
+printf ("plotting functions     \n")
+printf ("     batch_plot_fs()	plot all files in a directory with same extension\n")
+printf ("     \n")
+printf ("miscellaneous utilities     \n")
+printf ("     convertfs2dav()	converts .abs files in a  dir to davinci library format\n")
+printf ("     make_xaxis_fs()	creates the x-axis for the consortium D&P\n")
+printf ("     respf_fs()		calculates instrument response function\n")
+printf ("     bb_vm()		returns blackbody curve given temperature, wavenumbers\n")
+printf ("     bbr_fs()		returns blackbody curve given temperature, in um\n")
+printf ("     btemp_vm()  	returns brightness temperature, in wavenumbers\n")
+printf ("     btemp_fs()  	returns brightness temperature, in um\n")
+printf ("     \n")
+printf ("instructions     \n")
+printf ("     fs_help()   	help for D&P data processing\n")
+printf ("     \n")
+}
+
+
+
+define fs_help () {
+printf (" \n")
+printf ("Directions for processing D & P Micro FTIR Field Spectrometer Data \n")
+printf ("     \n")
+printf ("To extract text files for use with another program, run: \n ")
+printf (" 	batch_extract_fs('directory')   --> in davinci \n")
+printf (" \n")
+printf ("To use davinci to calculate calibrated radiance from text files run:\n")
+printf (" 	calc_rad_fs('sample', 'wbb', 'cbb', Th, Tc) \n")
+printf (" \n")
+printf ("To process calibrated radiance into emissivity run: \n")
+printf ("	emiss_fs('sample_rad', 'gold_rad', sample T, gold T) \n")
+printf (" \n")
+printf ("To convert files into a format that you can use sma_dav deconvolution on, run: \n")
+printf (" 	convertfs2dav('directory', 'output_filename') \n")
+printf (" \n")
+printf ("To deconvolve data with a given library (make your own endmember lib) run: \n")
+printf (" 	sma_dav(dataset, endmember_library, start_band, stop_band) \n")
+printf (" \n")
+printf ("See help files for each function for more specific information\n")
+}
+
+
+
+define make_xaxis_fs(write,old) { 
+#if ($ARGC == 0) {
+#	printf ("  Creates an xaxis for the USGS/ASU/UNR/Brown Field Spec \n")
+#	printf ("  Depends on Ben Steinberg's fs2ascii script. \n")
+#	printf ("  \n")
+#	printf ("  Usage:		 \n" )
+#	printf ("  	make_xaxis(a, [write],[old])  \n")
+#       printf ("  Where:                \n" )
+#	printf (" 	write = set to any value to write the file\n")
+#	printf ("  	old   = set if data was collected before October 2005 \n")
+#	return(0)
+#}
+
+xaxis = create(1,1,2048, format=double)
+factor = create(1,1,2048)
+
+if (HasValue(old)) {
+	# Use old laser diode setting
+	interval = 6388.0/2048.0
+} else {
+	# Use new laser diode setting (after repair on 10/2005)
+	interval = 5833.0/2048.0
+}
+
+# Create the x-axis
+offset =  10 ^ ((0.0001394 * (factor[1,,] * interval)) + 1.1616)
+xaxis[1,1,i] =  (factor[1,,] * interval) + offset
+
+if (HasValue(write)) {
+# Write x-axis text file to disk
+	write(object=xaxis, filename="xaxis.txt", type=ascii, force=1)
+}
+
+return(xaxis)
+}
+
+
+
+define extract_text_fs(old) {
+if ($ARGC == 0) {
+	printf ("  Convert binary D&P Field Spectrometer data to raw ASCII data files. \n")
+	printf ("  NO LONGER!! Depends on Ben Steinberg's fs2ascii script. \n")
+	printf ("  \n")
+	printf ("  Usage:		 \n" )
+	printf ("  	extract_text_fs(filename, [old]) \n")
+        printf ("  Where:                \n" )
+        printf ("       old   = set if data was collected before October 2005 \n")
+	return(0)
+}
+
+# make the array
+text = create(2,1,2048, format=double)
+
+if (HasValue(old)) {
+# Use the old laser diode xaxis
+	text[1,,]=make_xaxis_fs(old=1)
+} else {
+	text[1,,]=make_xaxis_fs()
+}
+
+#we can actually use load_raw to get the binary file into davinci
+data=load_raw($1,1,2048,1,bsq,format=lsb_float,512)
+write(data,$1+".asc",ascii,force=1)
+text[2]=translate(data,y,z)
+
+# use fs2asii program to extract ascii from binary spectrometer files
+#system("fs2ascii " + $1 + " > " + $1 + ".asc")
+#text[2,,] = translate(ascii(filename=$1 + ".asc", format=double),y,z)
+
+write(object=text, filename=$1 + ".txt", type=ascii, force=1)
+
+return(0)
+}
+
+
+
+define batch_extract_fs(old) {
+if ($ARGC == 0) {
+	printf ("  Convert a directory of binary D&P Field Spectrometer \n") 
+	printf ("  data to raw ASCII data files. \n")
+	printf ("  NO LONGER!! Depends on Ben Steinberg's fs2ascii script. \n")
+	printf ("  \n")
+	printf ("  Usage:    \n" )
+	printf ("	batch_extract_fs(directory_path, [old]) \n")
+  printf ("  \n")
+  printf ("  Where:    \n" )
+  printf ("       old   = set if data was collected before October 2005 \n")
+  printf ("  \n")
+  printf ("  Examples: \n" )
+  printf ("       batch_extract('/u/knudson/field_spec/moeur_test/',old=1) \n")
+  printf ("       batch_extract('./') \n")
+	return(0)
+}
+
+# make the array
+text = create(2,1,2048, format=double)
+
+if (HasValue(old)) {
+# Use the old laser diode xaxis
+        text[1,,]=make_xaxis_fs(old=1)
+} else {
+        text[1,,]=make_xaxis_fs()
+}
+
+# Loop through the file list, extract text from binary files
+# combine it with the xaxis data in array and write as ascii files 
+dir = $1
+a = syscall("ls " + dir) 
+
+for (i=1; i<(length(a)+1); i+=1) {
+
+	#we can actually use load_raw to get the binary file into davinci
+	data=load_raw(dir+a[,i],1,2048,1,bsq,format=lsb_float,512)
+	write(data,dir+a[,i]+".asc",ascii,force=1)
+	text[2]=translate(data,y,z)
+	write(object=text, filename=dir + a[,i] + ".txt", type=ascii, force=1)
+
+	# use fs2asii program to extract ascii from binary spectrometer files
+	#system("fs2ascii " + dir + a[,i] + " > " + dir + a[,i] + ".asc")
+	#text[2,1,]=translate(ascii(filename=dir + a[,i] + ".asc", format=double),y,z)
+	}
+
+if (length(a) == 1) {
+	data=load_raw(dir+a[,i],1,2048,1,bsq,format=lsb_float,512)
+	write(data,dir+a[,i]+".asc",ascii,force=1)
+	text[2]=translate(data,y,z)
+	write(object=text, filename=dir + a[,i] + ".txt", type=ascii, force=1)
+
+	#system("fs2ascii " + dir + a[,i] + " > " + dir + a[,i] + ".asc")
+	#text[2,,1]=translate(ascii(filename=dir + a[,i] + ".asc", format=double),y,z)
+	#write(object=text, filename=dir + a[,i] + ".txt", type=ascii, force=1)
+	}
+
+return(0)
+}
+
+
+
+define calc_rad_raw_fs(old) { 
+
+if ($ARGC == 0) {
+	printf ("  Remove header info and calibrate radiance for D&P Field Spectrometer\n")
+	printf ("  raw data files. \n")
+	printf ("  \n")
+	printf ("  Usage:	calc_rad_raw_fs(sample, wbb, cbb, Th, Tc, [old]) \n")
+        printf ("  \n")
+	printf ("  Where:	sample ----->	sample file name \n") 
+	printf ("		wbb    ----->	warm blackbody filename \n")
+	printf ("		cbb    ----->	cold blackbody filename \n")
+	printf ("		Th --------->	warm blackbody temperature (C) \n")
+	printf ("		Tc --------->	cold blackbody temperature (C) \n")
+	printf ("		old -------->   opt. set old = 1 for data before Oct. 2005  \n")
+	printf ("  \n")
+	printf ("  Output:	spec ------->	output array with dimensions [2,1,2048] \n")
+	printf ("                   of wavenumber and calibrated radiance in W/cm^2/str \n")
+	return(0)
+}
+
+# Extract text from binary files
+#	system("fs2ascii " + $1 + " > " + $1 + ".asc")
+#	system("fs2ascii " + $2 + " > " + $2 + ".asc")
+#	system("fs2ascii " + $3 + " > " + $3 + ".asc")
+
+#the new style
+write(load_raw($1,1,2048,1,bsq,format=lsb_float,512),$1+".asc",ascii,force=1)
+write(load_raw($2,1,2048,1,bsq,format=lsb_float,512),$2+".asc",ascii,force=1)
+write(load_raw($3,1,2048,1,bsq,format=lsb_float,512),$3+".asc",ascii,force=1)
+
+# Create the structure
+	a = struct()
+
+if (HasValue(old)) {
+	# Use the old laser diode wavelength
+        a.xaxis=make_xaxis_fs(old=1)
+} else {
+        # Use the new laser diode wavelength
+	a.xaxis=make_xaxis_fs()
+}
+
+# Create the sample text file
+	a.sample_DN = translate(ascii(filename=$1 + ".asc", format=double),y,z)
+	write(cat(a.xaxis,a.sample_DN,axis=x), filename=$1 + ".txt", type=ascii, force=1)
+
+# Create the hot blackbody text file
+	a.h_DN = translate(ascii(filename=$2 + ".asc", format=double),y,z)
+	write(cat(a.xaxis,a.h_DN,axis=x), filename=$2 + ".txt", type=ascii, force=1)
+
+# Create the cold blackbody text file
+	a.c_DN = translate(ascii(filename=$3 + ".asc", format=double),y,z)
+	write(cat(a.xaxis,a.c_DN,axis=x), filename=$3 + ".txt", type=ascii, force=1)
+
+# CALCULATE BLACKBODY PLANCK FUNCTIONS 
+	a.Th = ctok($4)
+	a.Tc = ctok($5)
+
+	a.bbh = bb_vm(a.xaxis,a.Th)
+	a.bbc = bb_vm(a.xaxis,a.Tc)
+
+# CALCULATE INSTRUMENT RESPONSE & ENERGY/OFFSET 
+	a.response = (a.h_DN - a.c_DN)/(a.bbh - a.bbc)
+	a.offset = a.h_DN - (a.response * a.bbh) 
+ 
+# CALCULATE AT SENSOR RADIANCE (W/cm^2/str) 
+	a.rad = (a.sample_DN - a.offset)/a.response 
+
+# Plot spectrum for examination	
+	mytitle="title '" + $1 + " radiance" + "'"
+	xplot(a.rad,"title \"radiance\" ", axis=z, Xaxis=a.xaxis)
+	plot("set style data lines; replot")
+	plot("set xrange[0:3000]; set yrange[0:2e-5]; replot")
+
+# WRITE OUT CALIBRATED FILE AS ASCII FILE 
+	write(cat(a.xaxis,a.rad,axis=x), filename=$1 + ".rad", type=ascii, force=1)
+
+return (a)
+}
+
+
+
+define calc_rad_fs(old) { 
+
+if ($ARGC == 0) {
+	printf ("  Calibrate radiance for D&P Field Spectrometer \n")
+	printf ("  text files. \n")
+	printf ("  \n")
+	printf ("  Usage:	calc_rad_fs(sample, wbb, cbb, Th, Tc) \n")
+        printf ("  \n")
+	printf ("  Where:	sample ----->	sample file name \n") 
+	printf ("		wbb    ----->	warm blackbody filename \n")
+	printf ("		cbb    ----->	cold blackbody filename \n")
+	printf ("		Th --------->	warm blackbody temperature (C) \n")
+	printf ("		Tc --------->	cold blackbody temperature (C) \n")
+	printf ("  \n")
+	printf ("  Output:	spec ------->	output array with dimensions [2,1,2048] \n")
+	printf ("                   of wavenumber and calibrated radiance in W/cm^2/str \n")
+	return(0)
+}
+
+# Setup variables and read in the data
+	a = struct()
+
+	a.sample_DN = ascii(filename=$1, format=double)
+	a.xaxis=a.sample_DN[1,,]
+        a.sample_DN=a.sample_DN[2,,]	
+
+	a.h_DN = ascii(filename=$2, format=double)
+        a.h_DN = a.h_DN[2,,]
+
+	a.c_DN = ascii(filename=$3, format=double)
+	a.c_DN = a.c_DN[2,,]
+
+# CALCULATE BLACKBODY PLANCK FUNCTIONS 
+	a.Th = ctok($4)
+	a.Tc = ctok($5)
+
+	a.bbh = bb_vm(a.xaxis,a.Th)
+	a.bbc = bb_vm(a.xaxis,a.Tc)
+
+# CALCULATE INSTRUMENT RESPONSE & ENERGY/OFFSET 
+	a.response = (a.h_DN - a.c_DN)/(a.bbh - a.bbc)
+	a.offset = a.h_DN - (a.response * a.bbh) 
+ 
+# CALCULATE AT SENSOR RADIANCE (W/cm^2/str) 
+	a.rad = (a.sample_DN - a.offset)/a.response 
+
+# Plot spectrum for examination	
+	mytitle="title '" + $1 + " radiance" + "'"
+	xplot(a.rad, mytitle , axis=z, Xaxis=a.xaxis)
+	plot("set style data lines; replot")
+	plot("set xrange[0:3000]; set yrange[0:2e-5]; replot")
+
+# WRITE OUT CALIBRATED FILE AS ASCII FILE 
+	write(cat(a.xaxis,a.rad,axis=x), filename=$1 + ".rad", type=ascii, force=1)
+
+return (a)
+}
+
+
+
+define emiss_fs () {
+
+if ($ARGC == 0) {
+	printf ("  Calculate emissivity for D&P Field Spectrometer\n")
+	printf ("  calibrated radiance files. \n")
+	printf ("  \n")
+	printf ("  Usage: emiss_fs(sample_rad, gold_rad, sample T, gold T) \n")
+	printf ("  \n")
+	printf ("  Where:  \n")
+	printf ("	sample_rad  -----> sample radiance file name \n") 
+	printf ("  	gold_rad  -------> gold plate radiance filename \n")
+	printf ("	sample_T  -------> sample temperature (C) \n")
+	printf ("	gold_T 	---------> gold plate temperature (C) \n")
+	printf ("  \n")
+	printf ("  Output: filename.abs-> output file with columns of \n")
+	printf ("                  wavenumber and absolute emissivity \n")
+	return(0)
+}
+
+# Read in the files and temperatures
+	a=struct()
+
+	temp = ascii(filename=$1, format=double)
+	a.xaxis = temp[1]
+	a.samprad = temp[2]
+	
+	temp = ascii(filename=$2, format=double)
+	a.goldrad = temp[2]
+
+	a.Ts = ctok($3)
+ 	a.Tg = ctok($4)
+
+# CALCULATE PLANCK FUNCTIONS for sample and gold radiance for measured T
+	a.bbs = bb_vm(a.xaxis,a.Ts)
+	a.bbg = bb_vm(a.xaxis,a.Tg)
+
+# Gold plate / downwelling radiance correction
+	a.factor = 0.04		# As per Korb et. al.
+	a.Ldwr = (a.goldrad - a.factor * a.bbg) / ( 1.0 - a.factor)
+
+# Filter spectrum to remove spikes
+	a.filter = clone(1,1,20,1)
+	a.Ts_filtered = convolve(a.samprad, a.filter)
+
+# Calculate brightness temperature for sample radiance
+	a.temp = btemp_vm(a.xaxis[,,250:500], a.Ts_filtered[,,250:500])
+	a.max_T = ctok(max(a.temp))
+
+# Calculate Planck Function for sample @ calculated T
+	a.bbs = bb_vm(a.xaxis,a.max_T)
+
+# Simplified emissivity calculation
+	a.emissivity = (a.samprad - a.Ldwr)/(a.bbs - a.Ldwr)
+
+# Plot the emissivity spectrum
+	mytitle="title '" + $1 + " emissivity" + "'"	
+	xplot(a.emissivity, mytitle, axis=z, Xaxis=a.xaxis)
+	plot("set style data lines; set noparametric; replot")
+	plot("set xrange [1600:600]; set yrange [0.5:1.1]; replot")
+
+# Write out the file as ascii
+	write(cat(a.xaxis,a.emissivity,axis=x), filename=$1 + ".abs", type=ascii, force=1)
+
+	return(a)
+}
+
+
+
+define bbr_fs()	{
+
+	if($ARGC==0) {
+		printf("Compute black body function in W/m2/str/um (field spectrometer)\n")
+		printf("Input:bbr_fs(wavelength, temp)\n")
+		printf("\twavelengths units are in wavenumbers (inverse cm)\n")
+		printf("\ttemperature in degrees kelvin\n")
+		printf("\tanswer in Watts/m^2/str/microns\n")
+		return(null)
+	}
+
+	c = 2.997925e8		# Speed of light
+	h = 6.626196e-34	# Planck's constant
+	k = 1.380622e-23	# Boltzmann's constant
+	c1 = 2e-6 * (h * c^2)	# First constant
+	c2 = (h * c) / k	# Second constant
+	wn = $1
+	wl = 10000/wn
+	m = wl * 1e-6		# conversion to meters
+	T = $2		
+	
+	temp = ((c1/(m^5))/((exp(c2/(m*T)))-1))
+	return (temp);
+}
+
+
+
+define bb_vm() {
+	if($ARGC==0) {
+		printf("Compute black body function in W/m2/str/um (vm)\n")
+		printf("Input:bbr_fs(wavelength, temp)\n")
+		printf("\twavelengths units are in wavenumbers (inverse cm)\n")
+		printf("\ttemperature in degrees kelvin\n")
+		printf("\tanswer in Watts/m^2/str/microns\n")
+		return(null)
+	}
+
+	wn = $1			# xaxis in wavenumber (cm^-1)
+	T = $2			# temperature of blackbody (K)
+
+	c = 2.997925e10		# speed of light (cm/s)
+	h = 6.626196e-34	# Planck's constant (J*s)
+	k = 1.380622e-23	# Boltzmann's constant (J/K)
+#	v = wn * c		# frequency = wavenumbers * c
+
+	L = ((2*h*c^2*wn^3)/(exp((h*c*wn)/(k*T)) - 1))
+
+	return(L)
+}
+
+
+
+define btemp_vm() {    
+	if($ARGC==0) {
+		printf("Compute the brigntness temperature (vm)\n")
+		printf("Input:btemp_vm(wavelength, radiance)\n")
+		printf("\twavelengths units are in wavenumbers (inverse cm)\n")
+		printf("\ttemperature in Watts/m^2/str/microns\n")
+		printf("\tanswer in degrees celcius\n")
+		return(null)
+	}
+
+	c = 2.997925e10		# speed of light (cm/s)
+	h = 6.626196e-34	# Planck's constant (J*s)
+	k = 1.380622e-23	# Boltzmann's constant (J/K)
+	
+	wn = $1
+	radiance = $2
+
+  T = ((wn*h*c/k)/ ln(1.0 + ((2*h*c^2*wn^3)/radiance)))
+	return(ktoc(T))
+}
+
+
+
+define btemp_fs() {
+	if($ARGC==0) {
+		printf("Compute the brigntness temperature (vm)\n")
+		printf("Input:btemp_vm(wavelength, radiance)\n")
+		printf("\twavelengths units are in wavenumbers (inverse cm)\n")
+		printf("\ttemperature in Watts/m^2/str/microns\n")
+		printf("\tanswer in degrees celcius\n")
+		return(null)
+	}
+
+	wn = 10000/$1
+	radiance = $2
+	c1 = 1.191066e8
+	c2 = 1.438833e4
+
+#        if (radiance <= 0){
+#                return (0.0)
+#	}
+
+        x = log(1.0 + (c1 / wn^5 * radiance))
+#        if (x <= 0)
+#                return (0.0)
+
+        temp = (wn /c2 *  x)
+	return(temp)
+}
+
+
+
+define respf_fs() {
+
+if ($ARGC == 0) {
+	printf ("	Calculate instrument response function from warm and coold blackbodies\n")
+	printf ("	\n")
+	printf ("	Usage:		 \n" )
+	printf ("	resp_f(coldfile, warmfile, T(coldbody), T(warmbody) ) \n")
+	return(0)
+}
+
+
+# Read in the files and temperatures
+	a=struct()
+	a.hot = ascii(filename=$1, format=double)
+	a.cold = ascii(filename=$2, format=double)
+	a.Th = ctok($3)
+ 	a.Tc = ctok($4)
+	a.xaxis = a.hot[1]
+
+# CALCULATE BLACKBODY PLANCK FUNCTIONS 
+	a.bbh = bb_vm(a.xaxis[1,],a.Th)
+	a.bbc = bb_vm(a.xaxis[1,],a.Tc)
+
+# CALCULATE INSTRUMENT RESPONSE & ENERGY/OFFSET 
+	a.response = (a.hot[2] - a.cold[2])/(a.bbh - a.bbc)
+	a.offset = a.hot[2] - (a.response * a.bbh) 
+
+# Plot spectrum for examination - to be developed later	
+	xplot(a.response, axis=z, Xaxis=a.xaxis)
+	plot("set style data lines; set noparametric; replot")
+	plot("set xrange[0:3000]; set yrange[*:*]; replot")
+
+	return(a)
+}
+
+
+
+# ----------------------------------------------------------------
+# Converts a directory of emissivity data to a single, davinci style
+# library file and writes it out in vm format
+
+define convertfs2dav() {
+if ($ARGC == 0) {
+	printf ("  Reads in all .abs files (emissivity from dnp processing) in a given directory \n")
+	printf ("  and converts them into one davinci library style variable \n. ")
+	printf ("  Then writes out the structure in vm ascii format.	\n")
+	printf ("	\n")
+	printf ("	Usage:		 \n" )
+	printf ("	convert2dav(directory, output_filename) \n")
+	return(0)
+}
+
+out=struct()
+
+# Loop through the file list, rotate data set and add to structure
+
+dir = $1
+a = syscall("ls " + dir + "*.abs") 
+
+for (i=1; i<(length(a)+1); i+=1) {
+	filename = a[,i]
+	t = ascii(filename, format=double)
+
+	if (i==1) {
+		out.xaxis = t[1]
+		out.label = a[,i]
+		out.data = t[2]
+	} else {
+		out.label = cat(a[,i], out.label,axis=y)
+		out.data = cat(t[2], out.data, axis=x)
+		}
+	}
+
+if (length(a) == 1) {
+	filename =  a[,i]
+	t = ascii(filename, format=double)
+	out.xaxis = t[1]
+	out.label = a[,i]
+	out.data = t[2]
+	}
+
+writevm2(out, dir + $2)
+
+return(out)
+
+}
+
+
+
+define batch_plot_fs() {
+
+if ($ARGC == 0) {
+	printf ("	Plots all data of a particluar extension in a given directory\n")
+	printf ("	\n")
+	printf ("	Usage:		 \n" )
+	printf ("	batch_plot(ext) \n")
+	return(0)
+}
+
+ext = $1
+a = syscall("ls " + "*." + ext) 
+
+for (i=1; i<(length(a)+1); i+=1) {
+	file = ascii(filename=a[,i], format=double)
+	
+	# Plot spectrum for examination
+	mytitle="title '" + a[,i] + "'"	
+	xplot(file[2], mytitle, axis=z, Xaxis=file[1], separate=1)
+	plot("set style data lines; set noparametric; set yrange[*:*]; set xrange[1600:600]; replot")
+	
+	pause("press enter to continue")
+	}
+}

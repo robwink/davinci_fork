@@ -1,0 +1,449 @@
+constants_version=1.06
+
+# Convert values to single precision when not known to 7 significant figures?
+# Add sources to help function outputs?
+
+pi = 3.14159265358979; # Only single precision - double in con structure
+ignore = -32768;
+
+# NOTE: To bypass the intermediate float bug and ensure double precision for the constants, the values are entered through the function atod
+
+# Constants (mathematical and physical)
+# Physical constants use CODATA 2006 values, from http://physics.nist.gov/cuu/Constants/
+# SI/mks units for all physical constants
+# Last modified 11-30-2010 by S.Marshall
+
+# e = e (base of natural logarithm), phi = golden ratio (positive number such that phi/1 = 1/(phi - 1)),
+#  AU = astronomical unit (m), b = Wien wavelength displacement law constant (m K), c = speed of light (m/s;
+#  exact by definition), eps0 = electric constant (permittivity of free space; F/m), eV = electron volt (J),
+#  F = Faraday constant (C/mol), G = Newtonian gravitation constant (m^3/kg/s^2), g = standard
+#  acceleration due to gravity (m/s^2; exact), h = Planck constant (J*s), hbar = h-bar (J*s),
+#  k = Boltzmann constant (J/K), kG = Gaussian gravitational constant (AU^1.5/day; defined exactly),
+#  me = electron mass (kg), mn = neutron mass (kg), mp = proton mass (kg), mu = atomic mass constant (kg),
+#  mu0 = magnetic constant (permeability of free space; N/A^2; exact), NA = Avogadro constant (mol^-1),
+#  qe = elementary charge (C), R = ideal/molar gas constant (J/mol/K), sigma = Stefan-Boltzmann constant (W/m^2/K^4)
+
+define conhelp(0) {
+  con = { e = atod("2.71828182845904524"), phi = atod("1.61803398874989485"), pi = atod("3.14159265358979324"), AU = atod("1.49597870691e11"), b = atod("2.8977685e-3"), c = atod("299792458."), eps0 = atod("8.854187817e-12"), eV = atod("1.602176487e-19"), F = atod("96485.3399"), G = atod("6.67428e-11"), g = atod("9.80665"), h = atod("6.62606896e-34"), hbar = atod("1.054571628e-34"), k = atod("1.3806504e-23"), kG = atod("0.01720209895"), me = atod("9.10938215e-31"), mn = atod("1.674927211e-27"), mp = atod("1.672621637e-27"), mu = atod("1.660538782e-27"), mu0 = atod("12.566370614e-7"), NA = atod("6.02214179e23"), qe = atod("1.602176487e-19"), R = atod("8.314472"), sigma = atod("5.670400e-8") }
+
+    if ($ARGC == 0) {
+      printf("\nconhelp() displays descriptions of all physical constants in structure con\n")
+      printf("S.Marshall 09-25-2009\n\n")
+      printf("    e     =  %.15f         Base of natural logarithm\n", con.e)
+      printf("    phi   =  %.15f         Golden ratio\n", con.phi)
+      printf("    pi    =  %.15f         Pi\n\n", con.pi)
+      printf("    AU    =  %.11e m       Astronomical unit\n\n", con.AU)
+
+      printf("    The following physical constants use the CODATA 2006 values,\n")
+      printf("     from http://physics.nist.gov/cuu/Constants\n")
+      printf("     and the JPL SSD values, from http://ssd.jpl.nasa.gov/?constants\n\n")
+      printf("    b     =  %.7e m*K         Wien wavelength displacement law constant\n", con.b)
+      printf("    c     =  %d m/s             Speed of light in a vacuum (exact)\n", con.c)
+      printf("    eps0  =  %.9e F/m       Electric constant (permittivity)\n", con.eps0)
+      printf("    eV    =  %.9e J         Electron volt\n", con.eV)
+      printf("    F     =  %.4f C/mol          Faraday constant\n", con.F)
+      printf("    G     =  %.5e m^3/kg/s^2    Newtonian gravitation constant\n", con.G)
+      printf("    g     =  %.5f m/s^2             Standard acceleration due to gravity (exact)\n", con.g)
+      printf("    h     =  %.8e J*s        Planck constant\n", con.h)
+      printf("    hbar  =  %.9e J*s       Reduced Planck constant (Dirac constant)\n", con.hbar)
+      printf("    k     =  %.7e J/K         Boltzmann constant\n", con.k)
+      printf("    kG    =  %.11f AU^1.5/day  Gaussian gravitational constant (NOT SI!)\n", con.kG)
+      printf("    me    =  %.8e kg         Electron mass\n", con.me)
+      printf("    mn    =  %.9e kg        Neutron mass\n", con.mn)
+      printf("    mp    =  %.9e kg        Proton mass\n", con.mp)
+      printf("    mu    =  %.9e kg        Atomic mass constant\n", con.mu)
+      printf("    mu0   =  %.10e N/A^2    Magnetic constant (permeability)\n", con.mu0)
+      printf("    NA    =  %.8e mol^-1     Avogadro's number\n", con.NA)
+      printf("    qe    =  %.9e C         Elementary charge\n", con.qe)
+      printf("    R     =  %.6f J/mol/K          Ideal/molar gas constant\n", con.R)
+      printf("    sigma =  %.6e W/m^2/K^4    Stefan-Boltzmann constant\n\n", con.sigma)
+    }
+
+    return(null)
+}
+
+
+# Astronomical constants:
+# Most values from JPL SSD, http://ssd.jpl.nasa.gov/?phys_data
+#  or from NASA planetary fact sheets, http://nssdc.gsfc.nasa.gov/planetary/planetfact.html
+# Current length of Earth's day from http://tycho.usno.navy.mil/leapsec.html
+# Length of Earth's days, and Mars' days and years, from http://www.giss.nasa.gov/tools/mars24/help/notes.html
+# Length of Earth's sidereal year from http://www.nasa.gov/worldbook/earth_worldbook.html
+# Length of Earth's tropical year from http://scienceworld.wolfram.com/astronomy/TropicalYear.html (now 365.242189 days)
+# Uncompressed densities here are a weighted average (to three significant figures) of values from three sources:
+#  http://geophysics.ou.edu/solid_earth/notes/planets.html,
+#  http://zebu.uoregon.edu/~imamura/121/lecture-4/density.html, and Phil's lectures
+# GM values from http://ssd.jpl.nasa.gov/?phys_data, except Earth's from
+#  http://cddis.nasa.gov/926/egm96/doc/S11.HTML and Mars' from http://grctechlib.grc.nasa.gov/public/Digital/sg/MarsScout/Langley_trajectory_MRO.pdf
+
+# SI/mks units unless noted otherwise
+# Sun: GM = gravitational parameter (m^3/s^2); M = mass (kg), R = volumetric mean radius (m),
+#  rho = mean density (kg/m^3), kI = moment of inertia coefficient (I/MR^2, unitless),
+#  MV = absolute visual magnitude, L = luminosity (W), srp = sidereal rotation period at 16 deg latitude (s),
+#  T = effective surface temperature (K)
+
+# Planets/moons: GM = gravitational parameter (m^3/s^2); M = mass (kg); R = volumetric mean radius (m); Re = equatorial radius (m);
+#  Rp = polar radius (m); rho = mean density (kg/m^3); rhou = mean uncompressed density (kg/m^3); g = surface gravity (m/s^2);
+#  aB = Bond albedo (unitless); aV = visual geometric albedo (unitless); H = absolute visual magnitude; tr = topographic range (m);
+#  kI = moment of inertia coefficient (I/MR^2, unitless); a = semimajor axis (m); sdyr = sidereal year (orbital period, s);
+#  yr = tropical year (time for repetition of seasons, s); e = orbital eccentricity (unitless); srp = sidereal rotation period (s);
+#  day = length of day (s); eps = axial tilt (degrees - NOT SI!); P = surface air pressure (Pa); rhoa = surface air density (kg/m^3);
+#  T = average surface temperature (K); mua = mean molecular weight of atmospheric air (g/mol - NOT SI!)
+#  Atmospheric data omitted for moons with no substantial atmosphere
+
+
+
+
+define solsys(0,1) {
+
+    if ($ARGC == 0) {
+      printf("\n")
+      printf("solsys returns descriptions of solar system planet structures\n")
+      printf("solsys(\"fieldname\") returns description of the input field\n")
+      printf(" e.g. solsys(\"M\") returns \"Mass (in kilograms)\"\n")
+      printf("solsys(\"structname\") prints a full description of the specified structure\n")
+      printf(" e.g. solsys(\"Mars\") explains every field in the Mars structure\n")
+      printf("Input must be a string\n")
+      printf("Values in SI/mks units, mostly from the JPL SSD values at\n")
+      printf(" at http://ssd.jpl.nasa.gov/?constants and NASA planetary fact sheets\n")
+      printf(" at http://nssdc.gsfc.nasa.gov/planetary/planetfact.html\n\n")
+      printf("S.Marshall 10-03-2009\n\n")
+
+      return(null)
+    }
+
+# Inputs asking about parameters:
+
+    if ($1 == "a") {
+      return("Semimajor axis of orbit (in meters)")
+    }
+
+    if ($1 == "aB") {
+      return("Bond albedo (unitless)")
+    }
+
+    if ($1 == "aV") {
+      return("Visual geometric albedo (unitless)")
+    }
+
+    if ($1 == "day") {
+      return("Mean length of day (in seconds)")
+    }
+
+    if ($1 == "e") {
+      return("Eccentricity of orbit (unitless)")
+    }
+
+    if ($1 == "eps") {
+      return("Rotation axial tilt (in degrees - NOT SI)")
+    }
+
+    if ($1 == "g") {
+      return("Acceleration due to gravity at surface (in m/s^2)")
+    }
+
+    if ($1 == "GM") {
+      return("Gravitational parameter, G*M (in m^3/s^2)")
+    }
+
+    if ($1 == "H") {
+      return("Absolute visual magnitude (of a planet, moon, asteroid, or comet)")
+    }
+
+    if ($1 == "kI") {
+      return("Moment of inertia coefficient (I/(M*R^2))")
+    }
+
+    if ($1 == "L") {
+      return("Luminosity (of a star, in Watts)")
+    }
+
+    if ($1 == "M") {
+      return("Mass (in kilograms)")
+    }
+
+    if ($1 == "mua") {
+      return("Mean molecular weight/mass of atmospheric air (in grams per mole - NOT SI)")
+    }
+
+    if ($1 == "MV") {
+      return("Absolute visual magnitude (of a star)")
+    }
+
+    if ($1 == "P") {
+      return("Atmospheric pressure at surface (in Pascals)")
+    }
+
+    if ($1 == "R") {
+      return("Volumetric mean radius (in meters)")
+    }
+
+    if ($1 == "Re") {
+      return("Equatorial radius (for near-spherical objects), in meters)")
+    }
+
+    if ($1 == "Rp") {
+      return("Polar radius (for near-spherical objects), in meters)")
+    }
+
+    if ($1 == "rho") {
+      return("Mean mass density (in kilograms per cubic meter)")
+    }
+
+    if ($1 == "rhoa") {
+      return("Mass density of air at surface (in kilograms per cubic meter)")
+    }
+
+    if ($1 == "rhou") {
+      return("Uncompressed mass density (in kilograms per cubic meter)")
+    }
+
+    if ($1 == "sdyr") {
+      return("Sidereal year / orbital period (in seconds)")
+    }
+
+    if ($1 == "sol") {
+      return("Sol / mean length of Martian day (in seconds)")
+    }
+
+    if ($1 == "srp") {
+      return("Sidereal day / rotation period (in seconds;\n for the Sun, this is the rotation period at 16 degrees latitude)")
+    }
+
+    if ($1 == "T") {
+      return("Average/effective surface temperature (in Kelvin)")
+    }
+
+    if ($1 == "tr") {
+      return("Topographic range (in meters)")
+    }
+
+    if ($1 == "yr") {
+      return("Tropical year (time for repetition of seasons, in seconds)")
+    }
+
+
+# Inputs asking about the structures:
+
+    if ($1 == "Sun") {
+      Sun = { GM = atod("1.32712440018e20"), M = atod("1.98842e30"), R = atod("696000000."), rho = atod("1408."), kI = atod("0.059"), MV = atod("4.83"), L = atod("3.846e26"), srp = atod("2.19283e6"), T = atod("5778.") }
+
+
+      printf("\n    Sun\n\n")
+      printf("    GM  =  %.11e m^3/s^2 Gravitational parameter\n", Sun.GM)
+      printf("    M   =  %.4e kg  Mass\n", Sun.M)
+      printf("    R   =  %.2e m     Volumetric mean radius\n", Sun.R)
+      printf("    rho =  %d kg/m^3    Mean mass density\n", Sun.rho)
+      printf("    kI  =  %.3f          Moment of inertia coefficient (I/MR^2)\n", Sun.kI)
+      printf("    MV  =  %.2f           Absolute visual magnitude\n", Sun.MV)
+      printf("    L   =  %.3e W    Luminosity\n", Sun.L)
+      printf("    srp =  %.4e s   Sidereal rotation period (at 16 degrees latitude)\n", Sun.srp)
+      printf("    T   =  %d K         Effective surface temperature\n\n", Sun.T)
+    }
+
+    if ($1 == "Earth") {
+      Earth = { GM = atod("3.986004418e14"), M = atod("5.97219e24"), R = atod("6.37100e6"), Re = atod("6378137.0"), Rp = atod(" 6356752.314"), rho = atod("5513.4"), rhou = atod("4020."), g = atod("9.80"), aB = atod("0.306"), aV = atod("0.367"), H = atod("-3.86"), tr = atod("2.0e4"), kI = atod("0.3308"), a = atod("1.4960e11"), sdyr = atod("31558149.54"), e = atod("0.0167"), srp = atod("86164.0905"), yr = atod("31556925.1"), day = atod("86400.002"), eps = atod("23.45"), P = atod("1.014e5"), rhoa = atod("1.217"), T = atod("288."), mua = atod("28.97") }
+
+      printf("\n    Earth\n\n")
+      printf("    GM   =  %.9e m^3/s^2 Gravitational parameter\n", Earth.GM)
+      printf("    M    =  %.4e kg  Mass\n", Earth.M)
+      printf("    R    =  %.5e m  Volumetric mean radius\n", Earth.R)
+      printf("    Re   =  %.5e m  Equatorial radius\n", Earth.Re)
+      printf("    Rp   =  %.4e m   Polar radius\n", Earth.Rp)
+      printf("    rho  =  %.1f kg/m^3  Mean mass density\n", Earth.rho)
+      printf("    rhou =  %d kg/m^3    Uncompressed mass density\n", Earth.rhou)
+      printf("    g    =  %.2f m/s^2     Surface gravity\n", Earth.g)
+      printf("    aB   =  %.3f          Bond albedo\n", Earth.aB)
+      printf("    aV   =  %.3f          Visual geometric albedo\n", Earth.aV)
+      printf("    H    = %.2f           Absolute visual magnitude\n", Earth.H)
+      printf("    tr   =  %d m        Topographic range\n", Earth.tr)
+      printf("    kI   =  %.4f         Moment of inertia coefficient (I/MR^2)\n", Earth.kI)
+      printf("    a    =  %.4e m   Semimajor axis of orbit\n", Earth.a)
+      printf("    sdyr =  %.2f s  Sidereal year (orbital period)\n", Earth.sdyr)
+      printf("    e    =  %.4f         Orbital eccentricity\n", Earth.e)
+      printf("    srp  =  %.4f s   Sidereal rotation period\n", Earth.srp)
+      printf("    yr   =  %.1f s   Tropical year (season repetition period)\n", Earth.yr)
+      printf("    day  =  %.3f s    Length of day\n", Earth.day)
+      printf("    eps  =  %.2f degrees  Rotation axial tilt\n", Earth.eps)
+      printf("    P    =  %d Pa      Atmospheric pressure at surface\n", Earth.P)
+      printf("    rhoa =  %.3f kg/m^3   Density of air at surface\n", Earth.rhoa)
+      printf("    T    =  %d K          Average surface temperature\n", Earth.T)
+      printf("    mua  =  %.2f g/mol    Mean molecular weight of atmospheric air\n\n", Earth.mua)
+    }
+
+    if ($1 == "Moon") {
+      Moon = { GM = atod("4.902801e12"), M = atod("7.34581e22"), R = atod("1.7375e6"), Re = atod("1.7381e6"), Rp = atod("1.7360e6"), rho = atod("3344."), rhou = atod("3340."), g = atod("1.62"), aB = atod("0.11"), aV = atod("0.12"), H = atod("0.21"), tr = atod("1.6e4"), kI = atod("0.394"), a = atod("3.844e8"), sdyr = atod("2.36060e6"), e = atod("0.0549"), srp = atod("2.36062e6"), day = atod("2.551e6"), eps = atod("6.68") }
+
+      printf("\n    Earth's Moon\n\n")
+      printf("    GM   =  %.6e m^3/s^2 Gravitational parameter\n", Moon.GM)
+      printf("    M    =  %.4e kg  Mass\n", Moon.M)
+      printf("    R    =  %.4e m   Volumetric mean radius\n", Moon.R)
+      printf("    Re   =  %.4e m   Equatorial radius\n", Moon.Re)
+      printf("    Rp   =  %.4e m   Polar radius\n", Moon.Rp)
+      printf("    rho  =  %d kg/m^3    Mean mass density\n", Moon.rho)
+      printf("    rhou =  %d kg/m^3    Uncompressed mass density\n", Moon.rhou)
+      printf("    g    =  %.2f m/s^2     Surface gravity\n", Moon.g)
+      printf("    aB   =  %.2f           Bond albedo\n", Moon.aB)
+      printf("    aV   =  %.2f           Visual geometric albedo\n", Moon.aV)
+      printf("    H    =  %.2f           Absolute visual magnitude\n", Moon.H)
+      printf("    tr   =  %d m        Topographic range\n", Moon.tr)
+      printf("    kI   =  %.3f          Moment of inertia coefficient (I/MR^2)\n", Moon.kI)
+      printf("    a    =  %.3e m    Semimajor axis of orbit\n", Moon.a)
+      printf("    sdyr =  %.5e s  Sidereal orbital period\n", Moon.sdyr)
+      printf("    e    =  %.4f         Orbital eccentricity\n", Moon.e)
+      printf("    srp  =  %.5e s  Sidereal rotation period\n", Moon.srp)
+      printf("    day  =  %.3e s    Synodic period\n", Moon.day)
+      printf("    eps  =  %.2f degrees   Rotation axial tilt\n\n", Moon.eps)
+    }
+
+    if ($1 == "Mars") {
+      Mars = { GM = atod("4.28283762120e13"), M = atod("6.41693e23"), R = atod("3.3895e6"), Re = atod("3.3962e6"), Rp = atod("3.3762e6"), rho = atod("3934.0"), rhou = atod("3710."), g = atod("3.70"), aB = atod("0.250"), aV = atod("0.150"), H = atod("-1.52"), tr = atod("3.0e4"), kI = atod("0.366"), a = atod("2.2792e11"), sdyr = atod("5.935505e7"), e = atod("0.0935"), srp = atod("88642.663"), yr = atod("59354430."), day = atod("88775.244"), sol = atod("88775.244"), eps = atod("25.19"), P = atod("636."), rhoa = atod("0.020"), T = atod("210."), mua = atod("43.34") }
+
+      printf("\n    Mars\n\n")
+      printf("    GM   =  %.9e m^3/s^2 Gravitational parameter\n", Mars.GM)
+      # Displaying nine digits after decimal, since I doubt GM is better known for Mars than for Earth
+      printf("    M    =  %.4e kg   Mass\n", Mars.M)
+      printf("    R    =  %.4e m    Volumetric mean radius\n", Mars.R)
+      printf("    Re   =  %.4e m    Equatorial radius\n", Mars.Re)
+      printf("    Rp   =  %.4e m    Polar radius\n", Mars.Rp)
+      printf("    rho  =  %d kg/m^3     Mean mass density\n", Mars.rho)
+      printf("    rhou =  %d kg/m^3     Uncompressed mass density\n", Mars.rhou)
+      printf("    g    =  %.2f m/s^2      Surface gravity\n", Mars.g)
+      printf("    aB   =  %.3f           Bond albedo\n", Mars.aB)
+      printf("    aV   =  %.3f           Visual geometric albedo\n", Mars.aV)
+      printf("    H    = %.2f            Absolute visual magnitude\n", Mars.H)
+      printf("    tr   =  %d m         Topographic range\n", Mars.tr)
+      printf("    kI   =  %.3f           Moment of inertia coefficient (I/MR^2)\n", Mars.kI)
+      printf("    a    =  %.4e m    Semimajor axis of orbit\n", Mars.a)
+      printf("    sdyr =  %.6e s  Sidereal year (orbital period)\n", Mars.sdyr)
+      printf("    e    =  %.4f          Orbital eccentricity\n", Mars.e)
+      printf("    srp  =  %.3f s     Sidereal rotation period\n", Mars.srp)
+      printf("    yr   =  %.6e s  Tropical year (orbital period)\n", Mars.yr)
+      printf("    day  =  %.3f s     Length of day (sol)\n", Mars.day)
+      printf("    sol  =  %.3f s     Length of day (sol)\n", Mars.sol)
+      printf("    eps  =  %.2f degrees   Rotation axial tilt\n", Mars.eps)
+      printf("    P    =  %d Pa          Atmospheric pressure at surface\n", Mars.P)
+      printf("    rhoa =  %.3f kg/m^3    Density of air at surface\n", Mars.rhoa)
+      printf("    T    =  %d K           Average surface temperature\n", Mars.T)
+      printf("    mua  =  %.2f g/mol     Mean molecular weight of atmospheric air\n\n", Mars.mua)
+    }
+
+    if ($1 == "Phobos") {
+      Phobos = { GM = atod("711200."), M = atod("1.0656e16"), R = atod("1.11e4"), rho = atod("1872."), aV = atod("0.071"), H = atod("11.8"), a = atod("9.378e6"), sdyr = atod("27553.8"), e = atod("0.0151"), srp = atod("27553.8") }
+
+      printf("\n    Phobos\n\n")
+      printf("    GM   =  %d m^3/s^2  Gravitational parameter\n", Phobos.GM)
+      printf("    M    =  %.3e kg    Mass\n", Phobos.M)
+      printf("    R    =  %d m         Volumetric mean radius\n", Phobos.R)
+      printf("    rho  =  %d kg/m^3     Mean mass density\n", Phobos.rho)
+      printf("    aV   =  %.2f            Visual geometric albedo\n", Phobos.aV)
+      printf("    H    =  %.1f            Absolute visual magnitude\n", Phobos.H)
+      printf("    a    =  %.3e m     Semimajor axis of orbit\n", Phobos.a)
+      printf("    sdyr =  %.d s         Sidereal orbital period\n", round(Phobos.sdyr))
+      printf("    e    =  %.4f          Orbital eccentricity\n", Phobos.e)
+      printf("    srp  =  %.d s         Sidereal rotation period\n\n", round(Phobos.srp))
+    }
+
+    if ($1 == "Deimos") {
+      Deimos = { GM = atod("98500."), M = atod("1.476e15"), R = atod("6.2e3"), rho = atod("1471."), aV = atod("0.068"), H = atod("12.89"), a = atod("2.3459e7"), sdyr = atod("109075."), e = atod("0.0005"), srp = atod("109075.") }
+
+      printf("\n    Deimos\n\n")
+      printf("    GM   =  %d m^3/s^2  Gravitational parameter\n", Deimos.GM)
+      printf("    M    =  %.2e kg    Mass\n", Deimos.M)
+      printf("    R    =  %d m         Volumetric mean radius\n", Deimos.R)
+      printf("    rho  =  %d kg/m^3    Mean mass density\n", Deimos.rho)
+      printf("    aV   =  %.3f          Visual geometric albedo\n", Deimos.aV)
+      printf("    H    =  %.2f          Absolute visual magnitude\n", Deimos.H)
+      printf("    a    =  %.4e m   Semimajor axis of orbit\n", Deimos.a)
+      printf("    sdyr =  %d s       Sidereal orbital period\n", round(Deimos.sdyr))
+      printf("    e    =  %.4f         Orbital eccentricity\n", Deimos.e)
+      printf("    srp  =  %d s       Sidereal rotation period\n\n", round(Deimos.srp))
+    }
+
+    return(null)
+}
+
+# Unit conversion structure
+# The values here are the ratio of the non-SI unit to the corresponding SI unit.
+# For instance, un.ft = 0.3048 = (one foot)/(one meter), so (one foot) = un.ft*(one meter) = 0.3048 m
+# Field names, units, and corresponding SI units: in = inch (m), ft = foot (m), mi = mile (m),
+#  ly = light-year (m), pc = parsec (m), oz = ounce mass (kg), lb = pound mass (kg),
+#  day = 24-hour (exactly) day (s), Jyr = Julian year, floz = fluid ounce (m^3), L = liter (m^3),
+#  gal = US gallon (m^3), mph = mile per hour (m/s), ozf = ounce force (N), lbf = pound force (N),
+#  cal = thermochemical calorie (J), tTNT = TNT equivalent tonne (J), hp = electric horsepower (W),
+#  mbar = millibar (Pa), torr = torr (Pa), psi = pound per square inch (Pa), bar = bar (Pa),
+#  atm = standard atmosphere (Pa), deg = degree (rad), arcmin = arcminute (rad), arcsec = arcsecond (rad)
+
+# Values for the following were derived from other units' values:
+#  mi (5280 ft)
+#  pc (AU/arcsec, which uses the small-angle approximation)
+#  oz (1/16 lb)
+#  floz (1/128 gal)
+#  gal (231 in^3)
+#  mph (1 mile)/(3600 s)
+#  ozf (1/16 lbf)
+#  lbf (pound-mass times g)
+#  torr (1/760 of a standard atmosphere; equivalent to a millimeter of mercury)
+#  psi (1 lbf divided by 1 in^2)
+# Varying definitions for: mile, pound, ounce, gallon, calorie, horsepower
+# Units to consider for potential use: Nm (nautical mile), acre, Btu, Gauss
+# Most values from http://www.nist.gov/pml/wmd/metric/upload/SP1038.pdf (via http://www.nist.gov/pml/wmd/metric/metric-pubs.cfm)
+# Additional sources:
+#  http://ssd.jpl.nasa.gov/?constants (for AU)
+#  http://www.iau.org/public/measuring/ (for Julian year and light-year)
+
+define unithelp(0) {
+
+  un = { in = atod("0.0254"), ft = atod("0.3048"), mi = atod("1609.344"), AU = atod("149597870691."), ly = atod("9460730472580800."), pc = atod("30856775813057292."), oz = atod("0.028349523125"), lb = atod("0.45359237"), day = double(86400), Jyr = atod("3.15576e7"), floz = atod("2.95735295625e-5"), L = atod("0.001"), gal = atod("0.003785411784"), mph = atod("0.44704"), ozf = atod("4.4482216152605")/16, lbf = atod("4.4482216152605"), cal = atod("4.184"), tTNT = atod("4.184e9"), hp = double(746), mbar = double(100), torr = double(101325)/760, psi = atod("6894.75729316836"), bar = double(100000), atm = double(101325), deg = 3.14159265358979/180, arcmin = 3.14159265358979/10800, arcsec = 3.14159265358979/648000 }
+
+    if ($ARGC == 0) {
+      printf("\nunithelp() describes all unit conversion factors in structure un\n")
+      printf("S.Marshall 11-30-2010\n\n")
+
+      printf("    Most of these values are from\n")
+      printf("     http://www.nist.gov/pml/wmd/metric/upload/SP1038.pdf\n")
+      printf("     via http://www.nist.gov/pml/wmd/metric/metric-pubs.cfm\n")
+      printf("    Additional sources: http://ssd.jpl.nasa.gov/?constants\n")
+      printf("     and http://www.iau.org/public/measuring/\n\n")
+
+      printf("    Note that definitions vary for mile, pound, ounce, gallon,\n")
+      printf("     calorie, and horsepower. Those used here are the most common.\n\n")
+
+      printf("    The values here are the ratio of the non-SI unit to the\n")
+      printf("     corresponding SI unit. For instance,\n")
+      printf("     un.ft = 0.3048 = (one foot)/(one meter), so\n")
+      printf("     (one foot) = (value of un.ft)*(one meter) = 0.3048 m\n\n")
+
+      printf("    in   =     %.4f m             Inch\n", un.in)
+      printf("    ft   =     %.4f m             Foot (12 inches)\n", un.ft)
+      printf("    mi   =  %.3f m              Mile (5280 feet)\n", un.mi)
+      printf("    AU   =  %.11e m     Astronomical unit\n", un.AU)
+      printf("    ly   =  %.13e m   Light-year (c*Jyr)\n", un.ly)
+      printf("    pc   =  %.10e m      Parsec\n\n", un.pc)
+      printf("    oz   =  %.12f kg       Ounce mass (avoirdupois, 1/16 lb)\n", un.oz)
+      printf("    lb   =  %.8f kg           Pound mass (avoirdupois)\n\n", un.lb)
+      printf("    day  =  %d s                 Day (24 hours)\n", un.day)
+      printf("    Jyr  =  %.5e s           Julian year (365.25 days)\n\n", un.Jyr)
+      printf("    floz =  %.11e m^3   Fluid ounce (1/128 gal)\n", un.floz)
+      printf("    L    =  %.3f m^3               Liter\n", un.L)
+      printf("    gal  =  %.12f m^3      US gallon (231 cubic inches)\n\n", un.gal)
+      printf("    mph  =  %.5f m/s             Mile per hour\n\n", un.mph)
+      printf("    ozf  =  %.15f N     Ounce force\n", un.ozf)
+      printf("    lbf  =  %.13f N       Pound force\n\n", un.lbf)
+      printf("    cal  =  %.3f J                 Calorie (thermochemical)\n", un.cal)
+      printf("    tTNT =  %.3e J             TNT equivalent tonne\n\n", un.tTNT)
+      printf("    hp   =  %d W                   Horsepower (electric)\n\n", un.hp)
+      printf("    mbar =     %d Pa               Millibar\n", un.mbar)
+      printf("    torr =     %.12f Pa  Torr (1/760 atm)\n", un.torr)
+      printf("    psi  =    %.11f Pa   Pound per square inch\n", un.psi)
+      printf("    bar  =  %d Pa               Bar\n", un.bar)
+      printf("    atm  =  %d Pa               Standard atmosphere\n\n", un.atm)
+      printf("    deg    =  %.16f rad     Degree (pi/180 radians)\n", un.deg)
+      printf("    arcmin =  %.15e rad  Arcminute (1/60 degree)\n", un.arcmin)
+      printf("    arcsec =  %.15e rad  Arcsecond (1/60 arcminute)\n\n", un.arcsec)
+
+      printf("    All except AU and pc are exact (to double precision)\n\n")
+    }
+
+    return(null)
+}

@@ -1,0 +1,1040 @@
+tes_science_version=1.01
+
+# split_ock - split up jmars.asu.edu output by ock d.rogers/modified by cedwards 8/5/2010
+# atrem
+# co2_new
+# pt
+# radcalc
+# surfcalc
+# xt2
+# xt2d
+
+
+define split_ock(consolidate) {
+
+	if($ARGC==0) {
+		printf("\n")
+		printf("Takes txt files from JMARS, splits by ock \n\n")
+		printf("Requires format ock, ick, det, ...N..., emissivity/radiance\n\n") 
+		printf("Assumes that the array starts at the 6th column if not a text file\n")
+		printf("otherwise we find where the array begins.\n\n")
+		printf("NOTE: Only one array supported!!\n\n")
+		printf("$1 = 'path to file, unmodified' or ascii loaded table, with no header/color info \n")
+		printf("consolidate = return data in a bulk format format\n")
+		printf("\n")
+		return(0)
+	}
+
+	if(HasValue(consolidate)==0) consolidate=0
+
+	#we load the data
+	if(type($1)=="STRING") {
+		hdr=read_lines($1)[,1]
+		arry=ascii($1,format=float)
+
+		if(hdr[1]=="C"){
+			arry=arry[2:,2:]
+			hdr=hdr[strstr(hdr,"\t")+1:]
+		} else {
+			arry=arry[,2:]
+		}
+
+		hdr=strsplit(strsub(hdr,"\t",","),",")
+		if(hdr[,1]!="ock") {
+			printf("ock is not the first column.  Check your data\n")
+			return(null)
+		}
+		if(hdr[,2]!="ick") {
+			printf("ick is not the second column.  Check your data\n")
+			return(null)
+		}
+		if(hdr[,3]!="det") {
+			printf("det is not the thrid column.  Check your data\n")
+			return(null)
+		}
+		
+		i=3
+		start=0
+		while(i<=length(hdr)){
+			i+=1
+			if(hdr[1:7,i]=="emissiv" || hdr[1:7,i]=="atm_adj" || hdr[1:7,i]=="cal_rad" || hdr[1:7,i]=="raw_rad") {
+				start=i 
+				i+=length(hdr)+10
+			}
+		}
+
+		i=length(hdr)+1
+		end=0
+		while(i>0){
+			i-=1
+			if(hdr[1:7,i]=="emissiv" || hdr[1:7,i]=="atm_adj" || hdr[1:7,i]=="cal_rad" || hdr[1:7,i]=="raw_rad") {
+				end=i 
+				i=0
+			}
+		}
+	} else {
+		arry=$1
+		start=6
+		end=dim(array)[1]	
+	}
+
+	struc=struct()
+	arryemiss=translate(arry[start:end],x,z)
+	arryemiss=translate(arryemiss,x,y)
+	dimemiss=dim(arryemiss)
+	insert_struct(struc,name="tesx",value=make_band(inst="tes"))
+	insert_struct(struc,name="tes73x",value=make_band(inst="tes73"))
+
+	if(consolidate==1) {
+		insert_struct(struc,name="emiss",value=arryemiss[2:])
+		insert_struct(struc,name="emiss73",value=cat(arryemiss[2:,,9:35],arryemiss[2:,,65:110],z))
+	
+		for(i=1;i<start;i+=1) {
+			insert_struct(struc,name=hdr[,i],value=translate(arry[i],x,y))
+		}
+		
+		struc.label=text()
+		for(i=1;i<=dimemiss[1];i+=1) {
+			struc.label=cat(struc.label,sprintf("ock%i_ick%i_det%i",int(struc.ock[i]),int(struc.ick[i]),int(struc.det[i])),axis=y)
+		}
+
+	} else {
+		dimarry=dim(arry)
+		ockvals=create(1,1,1,format=format(arry),start=0,step=0)
+		
+		va=0
+		numocks=0
+		ocksort=sort(arry[1])
+		cnt=1
+		while(cnt<=dimarry[2]) {
+		
+			if((ocksort[,cnt]!=va)&&(ocksort[,cnt]!=0)){
+			   numocks=numocks+1
+			   va=ocksort[,cnt]
+		     ockvals=cat(ockvals,va,y)
+		 	}
+			cnt=cnt+1
+		}
+		ockvals=ockvals[,2:]
+				
+		for(i=1;i<=numocks;i+=1) {
+			tmparry=create(dimarry[1],1,dimarry[3],format=format(arry),start=0,step=0)
+			tmpemiss=create(1,1,dimemiss[3],format=format(arryemiss),start=0,step=0)
+			for(j=1;j<=dimarry[2];j+=1){
+				if(arry[1,j]==ockvals[,i]){
+					tmparry=cat(tmparry,arry[,j],y)
+					tmpemiss=cat(tmpemiss,arryemiss[j],x)
+					}
+			}
+		
+			insert_struct(struc,name=sprintf("ock%ilabel",ockvals[,i]),value=tmparry[1:,2:])
+			insert_struct(struc,name=sprintf("ock%i",ockvals[,i]),value=tmpemiss[2:])
+			insert_struct(struc,name=sprintf("ock%iavg",ockvals[,i]),value=avg(tmpemiss[2:],axis=xy))
+			insert_struct(struc,name=sprintf("ock%iavgcat",ockvals[,i]),value=avg(cat(tmpemiss[2:,,9:35],tmpemiss[2:,,65:110],z),axis=xy))	
+		}
+		struc.all=arryemiss
+		struc.alllabel=arry
+	}
+
+	return(struc)
+	}
+
+	
+
+define atrem(str) {
+
+if ($ARGC == 0) {
+
+	printf ("Removes atmospheric CO2 and H2O vapor from TES spectra.\n")
+	printf ("$1 = vanilla select fields\n")
+	printf ("$2 = vanilla data directory\n")
+        printf ("str = 1 return structure with radiance, pt, psurf... (default = 0)\n")
+	return(0)
+}
+
+verbose=3
+
+if (HasValue(str)==0) {
+
+        str=0
+}
+
+
+system("vanilla -select '" + $1 + "' -fields 'cal_rad[] emission nadir_pt[1-21] srf_pressure target_temp' " + $2 + " | tail -n +2 > atremtemp1.txt")
+
+rad=ascii("atremtemp1.txt",format=double)
+
+
+if (dim(rad)[1,1,1] != 167) {
+
+printf("Wrong number of radiance bands.\n")
+system("rm atremtemp1.txt")
+return(0)
+
+
+}
+
+psurf=rad[166,,]
+Tsurf=rad[167,,]
+
+Tatm=rad[145:165,,]
+Tatm=translate(Tatm,from=x,to=y)
+
+system("rm atremtemp1.txt")
+
+measured=translate(rad[1:143,,],from=x,to=y)
+eangle=rad[144,,]
+
+count=1
+
+while (count <= (dim(rad)[2,,])) {
+
+co2_bands=co2_new(psurf[,count,],Tsurf[,count,],Tatm[count,,])
+
+# Scale hot bands to emission angle.  Sharp absorptions scale at (1/cos(em angle))^0.5
+
+	co2_bands=co2_bands*((1/cos((eangle[,count,]/180.0)*3.1415927))^0.5)
+
+# Account for subsequent atmospheric absorption of CO2 bands
+
+	measurede=measured[count,,]/bbr(xt2(),Tsurf[,count,])
+	co2_bands=co2_bands*double(measurede)
+
+# Finally do the correction
+
+	measured[count,,]=measured[count,,]+co2_bands
+
+# Compute water vapor index and remove water vapor contribution
+
+	measurede=measured[count,,]/bbr(xt2(),Tsurf[,count,])
+	h2o=ascii("/u/bandfield/davsc/sas/h2o.epf_sas", format=double)
+
+	h2orat=avg(cat(cat(cat(cat(h2o[,9],h2o[,12],y),h2o[,15],y),h2o[,17],y),h2o[,19],y),y)-avg(cat(cat(cat(cat(h2o[,11],h2o[,13],y),h2o[,16],y),h2o[,18],y),h2o[,20],y),y)
+
+
+	measurederat=avg(cat(cat(cat(cat(measurede[,9],measurede[,12],y),measurede[,15],y),measurede[,17],y),measurede[,19],y),y)-avg(cat(cat(cat(cat(measurede[,11],measurede[,13],y),measurede[,16],y),measurede[,18],y),measurede[,20],y),y)
+
+	h2orat=measurederat/h2orat
+	h2orat=clone(h2orat,y=143)
+
+	measurede=measurede+h2orat*(1-h2o)
+
+	measured[count,,]=measurede*bbr(xt2(),Tsurf[,count,])
+	count=count+1
+}
+
+if (str==1) {
+        rad=measured
+        measured=struct(rad,pt,psurf,Tsurf,emission)
+        measured.rad=rad
+        measured.pt=Tatm
+        measured.Tsurf=Tsurf
+        measured.emission=eangle
+        measured.psurf=psurf
+}
+
+return(measured)
+}
+
+define co2_new() {
+
+if ($ARGC == 0) {
+	printf (" \n")
+	printf (" Calculate hot band and isotope band radiance contribution. \n")
+	printf (" $1 = surface pressure \n")
+	printf (" $2 = surface temperature \n")
+	printf (" $3 = temperature profile (decr. pressure) 1 x 21 array \n")
+	return(0)
+}
+
+verbose=3
+Psurf=$1
+Tsurf=$2
+tatm=$3
+
+Psurf=format(Psurf, double)
+Tsurf=format(Tsurf, double)
+tatm=format(translate(tatm,from=x,to=y), double)
+
+filler=create(1,dim(Psurf)[2,,],1,start=1,step=1,format=double)
+
+out=filler//Psurf//Tsurf[1]//tatm
+
+curdir=syscall("pwd")
+
+
+system(sprintf("mkdir %s/corrk", $TMPDIR))
+chdir($TMPDIR+"/corrk")
+system(sprintf("cp %s/corrk %s/corrk/", $DV_CK, $TMPDIR))
+system(sprintf("cp %s/makeck.co2 %s/corrk/", $DV_CK, $TMPDIR))
+write(out,$TMPDIR+"/corrk/CorrkTrans.inp",ascii,force=1)
+system(sprintf("%s/corrk/corrk", $TMPDIR))
+
+rad=create(1,143,1,start=0,step=0,format=double)
+
+bands=ascii($TMPDIR+"/corrk/CorrkTrans.dat",format=double)
+system(sprintf("rm -rf %s/corrk", $TMPDIR))
+chdir(curdir[,1])
+
+rad[,29:122,]=translate(bands[2:,,],from=x,to=y)
+return(rad)
+
+}
+
+define pt(0) {
+
+# Creates TES nadir PT array
+
+pressures=create(1,21,1, format=double)
+
+pressures[1,1,1]=16.5815200
+pressures[1,2,1]=12.9137000
+pressures[1,3,1]=10.0572000
+pressures[1,4,1]=7.8325550
+pressures[1,5,1]=6.1000000
+pressures[1,6,1]=4.7506850
+pressures[1,7,1]=3.6998370
+pressures[1,8,1]=2.8814360
+pressures[1,9,1]=2.2440650
+pressures[1,10,1]=1.7476790
+pressures[1,11,1]=1.3610940
+pressures[1,12,1]=1.0600210
+pressures[1,13,1]=0.8255452
+pressures[1,14,1]=0.6429352
+pressures[1,15,1]=0.5007185
+pressures[1,16,1]=0.3899599
+pressures[1,17,1]=0.3037011
+pressures[1,18,1]=0.2365227
+pressures[1,19,1]=0.1842040
+pressures[1,20,1]=0.1434582
+pressures[1,21,1]=0.1117254
+
+return(pressures)
+
+}
+
+
+define radcalc(struct) {
+
+if ($ARGC == 0) {
+	printf (" \n")
+	printf (" Calculate a radiance spectrum given: \n")
+	printf (" $1 = surface emissivity spectrum \n")
+	printf (" $2 = opacity spectrum \n")
+	printf (" $3 = pressure-temperature profile \n")
+	printf (" $4 = surface pressure \n")
+	printf (" $5 = surface temperature \n")
+	printf (" $6 = emission angle \n")
+	printf (" $7 = wavenumber of single point calculation (optional) \n")
+	printf (" struct = 1 - return radiance components (default is 0)\n")
+	printf (" \n")
+	printf (" All input spectra should be TES single or double scan \n")
+	return(0)
+
+}
+
+if (HasValue(struct)==0) {
+        struct=0
+}
+
+
+# read in the data
+
+#esurf=ascii(filename=$1, format=double)
+
+esurf=$1
+
+# esurf is a 1 x n array
+
+#oatm=ascii(filename=$2, format=double)
+
+oatm=$2
+
+# oatm is a 1 x n array
+
+#Tatm=ascii(filename=$3, format=double)
+
+Tatm=$3
+
+# pt is a 1 x 21 array
+
+psurf=$4
+
+Tsurf=$5
+
+# Convert emission angle from degrees to cosine of radians
+
+mu=1/(cos(($6/180.0)*3.1415927))
+
+# create pt axis
+
+pressure=pt()
+
+# create xt2
+
+if (dim(esurf)[2,1,1] == 143) {
+
+	xaxis=clone(xt2(),x=dim(Tsurf)[1])
+}
+
+if (dim(esurf)[2,1,1] == 286) {
+
+	xaxis=clone(xt2d(),x=dim(Tsurf)[1])
+}
+
+if (dim(esurf)[2,1,1] == 1) {
+
+	xaxis=$7
+}
+
+
+if (dim(esurf)[2,1,1] != 143 && dim(esurf)[2,1,1] != 286 && dim(esurf)[2,1,1] != 1) {
+
+	printf (" \n")
+	printf ("Wrong number of points in the input file \n")
+	return(0)
+}
+
+
+# Compute first (easy) part of simplified radiative transfer equation
+
+rad_1=esurf*bbr(xaxis,Tsurf)*exp(-oatm*mu)
+
+# Compute second (hard) part of radiative transfer equation
+
+# 	Start with pt[21] (lowest pressure) to infinity
+# 	as first in the numerical integration
+#	This first layer assumes constant T vs. P
+
+
+rad_2=bbr(xaxis,Tatm[1,21,1])*(1-exp(-((pressure[1,21,1])*(oatm/psurf)*mu)))
+
+# 	Loop through successive layers until we hit the surface
+#	These layers assume T is linear with respect to ln(P)
+
+count=21
+
+while (pressure[1,(count-1),1] <= psurf) {
+
+	layer_top=count
+	layer_bottom=count-1
+	Pres=exp((ln(pressure[1,layer_top,1])+ln(pressure[1,layer_bottom,1]))/2)
+	Dpres=pressure[1,layer_bottom,1]-pressure[1,layer_top,1]
+	Temp=((Tatm[1,layer_bottom,1]-Tatm[1,layer_top,1])*(pressure[1,layer_bottom,1]-Pres)*Dpres)+Tatm[1,layer_bottom,1]
+
+rad_2=rad_2 + bbr(xaxis,Temp)*(exp(-(pressure[1,layer_top,1]*(oatm/psurf)*mu))-exp(-(pressure[1,layer_bottom,1]*(oatm/psurf)*mu)))
+
+	count=count-1
+
+}
+
+
+#	Add final layer by extrapolating temperaure to surface pressure
+#	This assumes T is linear with respect to ln(P)
+
+#	First calculate layer average temperature and pressures
+
+Pres=exp((ln(psurf)+ln(pressure[1,count,1]))/2)
+Dpres=psurf-pressure[1,count,1]
+
+slope=(Tatm[1,count,1]-Tatm[1,(count+1),1])/(ln(pressure[1,count,1])-ln(pressure[1,(count+1),1]))
+
+Temp=slope*((ln(psurf)-ln(pressure[1,count,1]))/2)+Tatm[1,count,1]
+
+rad_2=rad_2 + (bbr(xaxis,Temp)*(exp(-(pressure[1,count,1]*(oatm/psurf)*mu))-exp(-(psurf*(oatm/psurf)*mu))))
+
+if (struct==1) {
+        rad=struct(rad,trans,em)
+        rad.rad=rad_1+rad_2
+        rad.trans=rad_1
+        rad.em=rad_2
+} else {
+        rad=rad_1+rad_2
+}
+
+return(rad)
+
+}
+
+
+define surfcalc() {
+
+if ($ARGC == 0) {
+	printf (" \n")
+	printf (" Calculate surface radiance spectrum given: \n")
+	printf (" $1 = surface emissivity spectrum \n")
+	printf (" $2 = opacity spectrum \n")
+	printf (" $3 = pressure-temperature profile \n")
+	printf (" $4 = surface pressure \n")
+	printf (" $5 = total measured radiance \n")
+	printf (" $6 = emission angle \n")
+	printf (" $7 = wavenumber of single point calculation (optional) \n")
+	printf (" \n")
+	printf (" All input spectra should be TES single or double scan \n")
+	return(0)
+
+}
+
+
+# read in the data
+
+#esurf=ascii(filename=$1, format=double)
+
+esurf=$1
+
+# esurf is a 1 x n array
+
+#oatm=ascii(filename=$2, format=double)
+
+oatm=$2
+
+# oatm is a 1 x n array
+
+#Tatm=ascii(filename=$3, format=double)
+
+Tatm=$3
+
+# pt is a 1 x 21 array
+
+psurf=$4
+
+Imeasured=$5
+
+# Convert emission angle from degrees to cosine of radians
+
+mu=1/(cos(($6/180.0)*3.1415927))
+
+# create pt axis
+
+pressure=pt()
+
+# create xt2
+
+if (dim(esurf)[2,1,1] == 143) {
+
+	xaxis=xt2()
+}
+
+if (dim(esurf)[2,1,1] == 286) {
+
+	xaxis=xt2d()
+}
+
+if (dim(esurf)[2,1,1] == 1) {
+
+	xaxis=$7
+}
+
+
+if (dim(esurf)[2,1,1] != 143 && dim(esurf)[2,1,1] != 286 && dim(esurf)[2,1,1] != 1) {
+
+	printf (" \n")
+	printf ("Wrong number of points in the input file \n")
+	return(0)
+}
+
+
+# Compute first (easy) part of simplified radiative transfer equation
+
+rad_1=Imeasured
+
+# Compute second (hard) part of radiative transfer equation
+
+# 	Start with pt[21] (lowest pressure) to infinity
+# 	as first in the numerical integration
+#	This first layer assumes constant T vs. P
+
+
+rad_2=bbr(xaxis,Tatm[1,21,1])*(1-exp(-((pressure[1,21,1])*(oatm/psurf)*mu)))
+
+# 	Loop through successive layers until we hit the surface
+#	These layers assume T is linear with respect to ln(P)
+
+count=21
+
+while (pressure[1,(count-1),1] <= psurf) {
+
+	layer_top=count
+	layer_bottom=count-1
+	Pres=exp((ln(pressure[1,layer_top,1])+ln(pressure[1,layer_bottom,1]))/2)
+	Dpres=pressure[1,layer_bottom,1]-pressure[1,layer_top,1]
+	Temp=((Tatm[1,layer_bottom,1]-Tatm[1,layer_top,1])*(pressure[1,layer_bottom,1]-Pres)*Dpres)+Tatm[1,layer_bottom,1]
+
+rad_2=rad_2 + bbr(xaxis,Temp)*(exp(-(pressure[1,layer_top,1]*(oatm/psurf)*mu))-exp(-(pressure[1,layer_bottom,1]*(oatm/psurf)*mu)))
+
+	count=count-1
+
+}
+
+
+#	Add final layer by extrapolating temperaure to surface pressure
+#	This assumes T is linear with respect to ln(P)
+
+#	First calculate layer average temperature and pressures
+
+Pres=exp((ln(psurf)+ln(pressure[1,count,1]))/2)
+Dpres=psurf-pressure[1,count,1]
+
+slope=(Tatm[1,count,1]-Tatm[1,(count+1),1])/(ln(pressure[1,count,1])-ln(pressure[1,(count+1),1]))
+
+Temp=slope*((ln(psurf)-ln(pressure[1,count,1]))/2)+Tatm[1,count,1]
+
+rad_2=rad_2 + (bbr(xaxis,Temp)*(exp(-(pressure[1,count,1]*(oatm/psurf)*mu))-exp(-(psurf*(oatm/psurf)*mu))))
+
+Tsurf=(rad_1-rad_2)/(esurf*exp(-oatm*mu))
+
+Tsurf=btemp(xaxis,Tsurf)
+
+return(Tsurf)
+
+}
+
+
+define xt2(0) {
+
+# Make 143 point TES xaxis
+
+xt2=create(1,143,1, format=double)
+
+xt2[1,1,1]=1.48132e+02
+xt2[1,2,1]=1.58713e+02
+xt2[1,3,1]= 1.69294e+02
+xt2[1,4,1]= 1.79875e+02
+xt2[1,5,1]= 1.90456e+02
+xt2[1,6,1]= 2.01037e+02
+xt2[1,7,1]= 2.11618e+02
+xt2[1,8,1]= 2.22198e+02
+xt2[1,9,1]= 2.32779e+02
+xt2[1,10,1]= 2.43360e+02
+xt2[1,11,1]= 2.53941e+02
+xt2[1,12,1]= 2.64522e+02
+xt2[1,13,1]= 2.75103e+02
+xt2[1,14,1]= 2.85684e+02
+xt2[1,15,1]= 2.96265e+02
+xt2[1,16,1]= 3.06846e+02
+xt2[1,17,1]= 3.17426e+02
+xt2[1,18,1]= 3.28007e+02
+xt2[1,19,1]= 3.38588e+02
+xt2[1,20,1]= 3.49169e+02
+xt2[1,21,1]= 3.59750e+02
+xt2[1,22,1]= 3.70331e+02
+xt2[1,23,1]= 3.80912e+02
+xt2[1,24,1]= 3.91493e+02
+xt2[1,25,1]= 4.02074e+02
+xt2[1,26,1]= 4.12654e+02
+xt2[1,27,1]= 4.23235e+02
+xt2[1,28,1]= 4.33816e+02
+xt2[1,29,1]= 4.44397e+02
+xt2[1,30,1]= 4.54978e+02
+xt2[1,31,1]= 4.65559e+02
+xt2[1,32,1]= 4.76140e+02
+xt2[1,33,1]= 4.86721e+02
+xt2[1,34,1]= 4.97301e+02
+xt2[1,35,1]= 5.07882e+02
+xt2[1,36,1]= 5.18463e+02
+xt2[1,37,1]= 5.29044e+02
+xt2[1,38,1]= 5.39625e+02
+xt2[1,39,1]= 5.50206e+02
+xt2[1,40,1]= 5.60787e+02
+xt2[1,41,1]= 5.71368e+02
+xt2[1,42,1]= 5.81948e+02
+xt2[1,43,1]= 5.92529e+02
+xt2[1,44,1]= 6.03110e+02
+xt2[1,45,1]= 6.13691e+02
+xt2[1,46,1]= 6.24272e+02
+xt2[1,47,1]= 6.34853e+02
+xt2[1,48,1]= 6.45434e+02
+xt2[1,49,1]= 6.56015e+02
+xt2[1,50,1]= 6.66596e+02
+xt2[1,51,1]= 6.77176e+02
+xt2[1,52,1]= 6.87757e+02
+xt2[1,53,1]= 6.98338e+02
+xt2[1,54,1]= 7.08919e+02
+xt2[1,55,1]= 7.19500e+02
+xt2[1,56,1]= 7.30081e+02
+xt2[1,57,1]= 7.40662e+02
+xt2[1,58,1]= 7.51243e+02
+xt2[1,59,1]= 7.61823e+02
+xt2[1,60,1]= 7.72404e+02
+xt2[1,61,1]= 7.82985e+02
+xt2[1,62,1]= 7.93566e+02
+xt2[1,63,1]= 8.04147e+02
+xt2[1,64,1]= 8.14728e+02
+xt2[1,65,1]= 8.25309e+02
+xt2[1,66,1]= 8.35890e+02
+xt2[1,67,1]= 8.46471e+02
+xt2[1,68,1]= 8.57051e+02
+xt2[1,69,1]= 8.67632e+02
+xt2[1,70,1]= 8.78213e+02
+xt2[1,71,1]= 8.88794e+02
+xt2[1,72,1]= 8.99375e+02
+xt2[1,73,1]= 9.09956e+02
+xt2[1,74,1]= 9.20537e+02
+xt2[1,75,1]= 9.31118e+02
+xt2[1,76,1]= 9.41698e+02
+xt2[1,77,1]= 9.52279e+02
+xt2[1,78,1]= 9.62860e+02
+xt2[1,79,1]= 9.73441e+02
+xt2[1,80,1]= 9.84022e+02
+xt2[1,81,1]= 9.94603e+02
+xt2[1,82,1]= 1.00518e+03
+xt2[1,83,1]= 1.01576e+03
+xt2[1,84,1]= 1.02635e+03
+xt2[1,85,1]= 1.03693e+03
+xt2[1,86,1]= 1.04751e+03
+xt2[1,87,1]= 1.05809e+03
+xt2[1,88,1]= 1.06867e+03
+xt2[1,89,1]= 1.07925e+03
+xt2[1,90,1]= 1.08983e+03
+xt2[1,91,1]= 1.10041e+03
+xt2[1,92,1]= 1.11099e+03
+xt2[1,93,1]= 1.12157e+03
+xt2[1,94,1]= 1.13215e+03
+xt2[1,95,1]= 1.14274e+03
+xt2[1,96,1]= 1.15332e+03
+xt2[1,97,1]= 1.16390e+03
+xt2[1,98,1]= 1.17448e+03
+xt2[1,99,1]= 1.18506e+03
+xt2[1,100,1]= 1.19564e+03
+xt2[1,101,1]= 1.20622e+03
+xt2[1,102,1]= 1.21680e+03
+xt2[1,103,1]= 1.22738e+03
+xt2[1,104,1]= 1.23796e+03
+xt2[1,105,1]= 1.24854e+03
+xt2[1,106,1]= 1.25912e+03
+xt2[1,107,1]= 1.26971e+03
+xt2[1,108,1]= 1.28029e+03
+xt2[1,109,1]= 1.29087e+03
+xt2[1,110,1]= 1.30145e+03
+xt2[1,111,1]= 1.31203e+03
+xt2[1,112,1]= 1.32261e+03
+xt2[1,113,1]= 1.33319e+03
+xt2[1,114,1]= 1.34377e+03
+xt2[1,115,1]= 1.35435e+03
+xt2[1,116,1]= 1.36493e+03
+xt2[1,117,1]= 1.37551e+03
+xt2[1,118,1]= 1.38610e+03
+xt2[1,119,1]= 1.39668e+03
+xt2[1,120,1]= 1.40726e+03
+xt2[1,121,1]= 1.41784e+03
+xt2[1,122,1]= 1.42842e+03
+xt2[1,123,1]= 1.43900e+03
+xt2[1,124,1]= 1.44958e+03
+xt2[1,125,1]= 1.46016e+03
+xt2[1,126,1]= 1.47074e+03
+xt2[1,127,1]= 1.48132e+03
+xt2[1,128,1]= 1.49190e+03
+xt2[1,129,1]= 1.50249e+03
+xt2[1,130,1]= 1.51307e+03
+xt2[1,131,1]= 1.52365e+03
+xt2[1,132,1]= 1.53423e+03
+xt2[1,133,1]= 1.54481e+03
+xt2[1,134,1]= 1.55539e+03
+xt2[1,135,1]= 1.56597e+03
+xt2[1,136,1]= 1.57655e+03
+xt2[1,137,1]= 1.58713e+03
+xt2[1,138,1]= 1.59771e+03
+xt2[1,139,1]= 1.60829e+03
+xt2[1,140,1]= 1.61887e+03
+xt2[1,141,1]= 1.62946e+03
+xt2[1,142,1]= 1.64004e+03
+xt2[1,143,1]= 1.65062e+03
+
+return(xt2)
+}
+
+define xt2d(0) {
+
+# Make 286 point TES xaxis
+
+xt2d=create(1,286,1, format=double)
+
+xt2d[1,1,1]= 1.48132e+02 
+xt2d[1,2,1]= 1.53423e+02 
+xt2d[1,3,1]= 1.58713e+02 
+xt2d[1,4,1]= 1.64004e+02 
+xt2d[1,5,1]= 1.69294e+02 
+xt2d[1,6,1]= 1.74584e+02 
+xt2d[1,7,1]= 1.79875e+02 
+xt2d[1,8,1]= 1.85165e+02 
+xt2d[1,9,1]= 1.90456e+02 
+xt2d[1,10,1]= 1.95746e+02 
+xt2d[1,11,1]= 2.01037e+02 
+xt2d[1,12,1]= 2.06327e+02 
+xt2d[1,13,1]= 2.11618e+02 
+xt2d[1,14,1]= 2.16908e+02 
+xt2d[1,15,1]= 2.22198e+02 
+xt2d[1,16,1]= 2.27489e+02 
+xt2d[1,17,1]= 2.32779e+02 
+xt2d[1,18,1]= 2.38070e+02 
+xt2d[1,19,1]= 2.43360e+02 
+xt2d[1,20,1]= 2.48651e+02 
+xt2d[1,21,1]= 2.53941e+02 
+xt2d[1,22,1]= 2.59232e+02 
+xt2d[1,23,1]= 2.64522e+02 
+xt2d[1,24,1]= 2.69812e+02 
+xt2d[1,25,1]= 2.75103e+02 
+xt2d[1,26,1]= 2.80393e+02 
+xt2d[1,27,1]= 2.85684e+02 
+xt2d[1,28,1]= 2.90974e+02 
+xt2d[1,29,1]= 2.96265e+02 
+xt2d[1,30,1]= 3.01555e+02 
+xt2d[1,31,1]= 3.06846e+02 
+xt2d[1,32,1]= 3.12136e+02 
+xt2d[1,33,1]= 3.17426e+02 
+xt2d[1,34,1]= 3.22717e+02 
+xt2d[1,35,1]= 3.28007e+02 
+xt2d[1,36,1]= 3.33298e+02 
+xt2d[1,37,1]= 3.38588e+02 
+xt2d[1,38,1]= 3.43879e+02 
+xt2d[1,39,1]= 3.49169e+02 
+xt2d[1,40,1]= 3.54459e+02 
+xt2d[1,41,1]= 3.59750e+02 
+xt2d[1,42,1]= 3.65040e+02 
+xt2d[1,43,1]= 3.70331e+02 
+xt2d[1,44,1]= 3.75621e+02 
+xt2d[1,45,1]= 3.80912e+02 
+xt2d[1,46,1]= 3.86202e+02 
+xt2d[1,47,1]= 3.91493e+02 
+xt2d[1,48,1]= 3.96783e+02 
+xt2d[1,49,1]= 4.02074e+02 
+xt2d[1,50,1]= 4.07364e+02 
+xt2d[1,51,1]= 4.12654e+02 
+xt2d[1,52,1]= 4.17945e+02 
+xt2d[1,53,1]= 4.23235e+02 
+xt2d[1,54,1]= 4.28526e+02 
+xt2d[1,55,1]= 4.33816e+02 
+xt2d[1,56,1]= 4.39107e+02 
+xt2d[1,57,1]= 4.44397e+02 
+xt2d[1,58,1]= 4.49687e+02 
+xt2d[1,59,1]= 4.54978e+02 
+xt2d[1,60,1]= 4.60268e+02 
+xt2d[1,61,1]= 4.65559e+02 
+xt2d[1,62,1]= 4.70849e+02 
+xt2d[1,63,1]= 4.76140e+02 
+xt2d[1,64,1]= 4.81430e+02 
+xt2d[1,65,1]= 4.86721e+02 
+xt2d[1,66,1]= 4.92011e+02 
+xt2d[1,67,1]= 4.97301e+02 
+xt2d[1,68,1]= 5.02592e+02 
+xt2d[1,69,1]= 5.07882e+02 
+xt2d[1,70,1]= 5.13173e+02 
+xt2d[1,71,1]= 5.18463e+02 
+xt2d[1,72,1]= 5.23754e+02 
+xt2d[1,73,1]= 5.29044e+02 
+xt2d[1,74,1]= 5.34335e+02 
+xt2d[1,75,1]= 5.39625e+02 
+xt2d[1,76,1]= 5.44915e+02 
+xt2d[1,77,1]= 5.50206e+02 
+xt2d[1,78,1]= 5.55496e+02 
+xt2d[1,79,1]= 5.60787e+02 
+xt2d[1,80,1]= 5.66077e+02 
+xt2d[1,81,1]= 5.71368e+02 
+xt2d[1,82,1]= 5.76658e+02 
+xt2d[1,83,1]= 5.81948e+02 
+xt2d[1,84,1]= 5.87239e+02 
+xt2d[1,85,1]= 5.92529e+02 
+xt2d[1,86,1]= 5.97820e+02 
+xt2d[1,87,1]= 6.03110e+02 
+xt2d[1,88,1]= 6.08401e+02 
+xt2d[1,89,1]= 6.13691e+02 
+xt2d[1,90,1]= 6.18981e+02 
+xt2d[1,91,1]= 6.24272e+02 
+xt2d[1,92,1]= 6.29562e+02 
+xt2d[1,93,1]= 6.34853e+02 
+xt2d[1,94,1]= 6.40143e+02 
+xt2d[1,95,1]= 6.45434e+02 
+xt2d[1,96,1]= 6.50724e+02 
+xt2d[1,97,1]= 6.56015e+02 
+xt2d[1,98,1]= 6.61305e+02 
+xt2d[1,99,1]= 6.66596e+02 
+xt2d[1,100,1]= 6.71886e+02 
+xt2d[1,101,1]= 6.77176e+02 
+xt2d[1,102,1]= 6.82467e+02 
+xt2d[1,103,1]= 6.87757e+02 
+xt2d[1,104,1]= 6.93048e+02 
+xt2d[1,105,1]= 6.98338e+02 
+xt2d[1,106,1]= 7.03629e+02 
+xt2d[1,107,1]= 7.08919e+02 
+xt2d[1,108,1]= 7.14210e+02 
+xt2d[1,109,1]= 7.19500e+02 
+xt2d[1,110,1]= 7.24790e+02 
+xt2d[1,111,1]= 7.30081e+02 
+xt2d[1,112,1]= 7.35371e+02 
+xt2d[1,113,1]= 7.40662e+02 
+xt2d[1,114,1]= 7.45952e+02 
+xt2d[1,115,1]= 7.51243e+02 
+xt2d[1,116,1]= 7.56533e+02 
+xt2d[1,117,1]= 7.61823e+02 
+xt2d[1,118,1]= 7.67114e+02 
+xt2d[1,119,1]= 7.72404e+02 
+xt2d[1,120,1]= 7.77695e+02 
+xt2d[1,121,1]= 7.82985e+02 
+xt2d[1,122,1]= 7.88276e+02 
+xt2d[1,123,1]= 7.93566e+02 
+xt2d[1,124,1]= 7.98856e+02 
+xt2d[1,125,1]= 8.04147e+02 
+xt2d[1,126,1]= 8.09437e+02 
+xt2d[1,127,1]= 8.14728e+02 
+xt2d[1,128,1]= 8.20018e+02 
+xt2d[1,129,1]= 8.25309e+02 
+xt2d[1,130,1]= 8.30599e+02 
+xt2d[1,131,1]= 8.35890e+02 
+xt2d[1,132,1]= 8.41180e+02 
+xt2d[1,133,1]= 8.46471e+02 
+xt2d[1,134,1]= 8.51761e+02 
+xt2d[1,135,1]= 8.57051e+02 
+xt2d[1,136,1]= 8.62342e+02 
+xt2d[1,137,1]= 8.67632e+02 
+xt2d[1,138,1]= 8.72923e+02 
+xt2d[1,139,1]= 8.78213e+02 
+xt2d[1,140,1]= 8.83504e+02 
+xt2d[1,141,1]= 8.88794e+02 
+xt2d[1,142,1]= 8.94085e+02 
+xt2d[1,143,1]= 8.99375e+02 
+xt2d[1,144,1]= 9.04665e+02 
+xt2d[1,145,1]= 9.09956e+02 
+xt2d[1,146,1]= 9.15246e+02 
+xt2d[1,147,1]= 9.20537e+02 
+xt2d[1,148,1]= 9.25827e+02 
+xt2d[1,149,1]= 9.31118e+02 
+xt2d[1,150,1]= 9.36408e+02 
+xt2d[1,151,1]= 9.41698e+02 
+xt2d[1,152,1]= 9.46989e+02 
+xt2d[1,153,1]= 9.52279e+02 
+xt2d[1,154,1]= 9.57570e+02 
+xt2d[1,155,1]= 9.62860e+02 
+xt2d[1,156,1]= 9.68151e+02 
+xt2d[1,157,1]= 9.73441e+02 
+xt2d[1,158,1]= 9.78731e+02 
+xt2d[1,159,1]= 9.84022e+02 
+xt2d[1,160,1]= 9.89312e+02 
+xt2d[1,161,1]= 9.94603e+02 
+xt2d[1,162,1]= 9.99893e+02 
+xt2d[1,163,1]= 1.00518e+03 
+xt2d[1,164,1]= 1.01047e+03 
+xt2d[1,165,1]= 1.01576e+03 
+xt2d[1,166,1]= 1.02106e+03 
+xt2d[1,167,1]= 1.02635e+03 
+xt2d[1,168,1]= 1.03164e+03 
+xt2d[1,169,1]= 1.03693e+03 
+xt2d[1,170,1]= 1.04222e+03 
+xt2d[1,171,1]= 1.04751e+03 
+xt2d[1,172,1]= 1.05280e+03 
+xt2d[1,173,1]= 1.05809e+03 
+xt2d[1,174,1]= 1.06338e+03 
+xt2d[1,175,1]= 1.06867e+03 
+xt2d[1,176,1]= 1.07396e+03 
+xt2d[1,177,1]= 1.07925e+03 
+xt2d[1,178,1]= 1.08454e+03 
+xt2d[1,179,1]= 1.08983e+03 
+xt2d[1,180,1]= 1.09512e+03 
+xt2d[1,181,1]= 1.10041e+03 
+xt2d[1,182,1]= 1.10570e+03 
+xt2d[1,183,1]= 1.11099e+03 
+xt2d[1,184,1]= 1.11628e+03 
+xt2d[1,185,1]= 1.12157e+03 
+xt2d[1,186,1]= 1.12686e+03 
+xt2d[1,187,1]= 1.13215e+03 
+xt2d[1,188,1]= 1.13744e+03 
+xt2d[1,189,1]= 1.14274e+03 
+xt2d[1,190,1]= 1.14803e+03 
+xt2d[1,191,1]= 1.15332e+03 
+xt2d[1,192,1]= 1.15861e+03 
+xt2d[1,193,1]= 1.16390e+03 
+xt2d[1,194,1]= 1.16919e+03 
+xt2d[1,195,1]= 1.17448e+03 
+xt2d[1,196,1]= 1.17977e+03 
+xt2d[1,197,1]= 1.18506e+03 
+xt2d[1,198,1]= 1.19035e+03 
+xt2d[1,199,1]= 1.19564e+03 
+xt2d[1,200,1]= 1.20093e+03 
+xt2d[1,201,1]= 1.20622e+03 
+xt2d[1,202,1]= 1.21151e+03 
+xt2d[1,203,1]= 1.21680e+03 
+xt2d[1,204,1]= 1.22209e+03 
+xt2d[1,205,1]= 1.22738e+03 
+xt2d[1,206,1]= 1.23267e+03 
+xt2d[1,207,1]= 1.23796e+03 
+xt2d[1,208,1]= 1.24325e+03 
+xt2d[1,209,1]= 1.24854e+03 
+xt2d[1,210,1]= 1.25383e+03 
+xt2d[1,211,1]= 1.25912e+03 
+xt2d[1,212,1]= 1.26442e+03 
+xt2d[1,213,1]= 1.26971e+03 
+xt2d[1,214,1]= 1.27500e+03 
+xt2d[1,215,1]= 1.28029e+03 
+xt2d[1,216,1]= 1.28558e+03 
+xt2d[1,217,1]= 1.29087e+03 
+xt2d[1,218,1]= 1.29616e+03 
+xt2d[1,219,1]= 1.30145e+03 
+xt2d[1,220,1]= 1.30674e+03 
+xt2d[1,221,1]= 1.31203e+03 
+xt2d[1,222,1]= 1.31732e+03 
+xt2d[1,223,1]= 1.32261e+03 
+xt2d[1,224,1]= 1.32790e+03 
+xt2d[1,225,1]= 1.33319e+03 
+xt2d[1,226,1]= 1.33848e+03 
+xt2d[1,227,1]= 1.34377e+03 
+xt2d[1,228,1]= 1.34906e+03 
+xt2d[1,229,1]= 1.35435e+03 
+xt2d[1,230,1]= 1.35964e+03 
+xt2d[1,231,1]= 1.36493e+03 
+xt2d[1,232,1]= 1.37022e+03 
+xt2d[1,233,1]= 1.37551e+03 
+xt2d[1,234,1]= 1.38081e+03 
+xt2d[1,235,1]= 1.38610e+03 
+xt2d[1,236,1]= 1.39139e+03 
+xt2d[1,237,1]= 1.39668e+03 
+xt2d[1,238,1]= 1.40197e+03 
+xt2d[1,239,1]= 1.40726e+03 
+xt2d[1,240,1]= 1.41255e+03 
+xt2d[1,241,1]= 1.41784e+03 
+xt2d[1,242,1]= 1.42313e+03 
+xt2d[1,243,1]= 1.42842e+03 
+xt2d[1,244,1]= 1.43371e+03 
+xt2d[1,245,1]= 1.43900e+03 
+xt2d[1,246,1]= 1.44429e+03 
+xt2d[1,247,1]= 1.44958e+03 
+xt2d[1,248,1]= 1.45487e+03 
+xt2d[1,249,1]= 1.46016e+03 
+xt2d[1,250,1]= 1.46545e+03 
+xt2d[1,251,1]= 1.47074e+03 
+xt2d[1,252,1]= 1.47603e+03 
+xt2d[1,253,1]= 1.48132e+03 
+xt2d[1,254,1]= 1.48661e+03 
+xt2d[1,255,1]= 1.49190e+03 
+xt2d[1,256,1]= 1.49719e+03 
+xt2d[1,257,1]= 1.50249e+03 
+xt2d[1,258,1]= 1.50778e+03 
+xt2d[1,259,1]= 1.51307e+03 
+xt2d[1,260,1]= 1.51836e+03 
+xt2d[1,261,1]= 1.52365e+03 
+xt2d[1,262,1]= 1.52894e+03 
+xt2d[1,263,1]= 1.53423e+03 
+xt2d[1,264,1]= 1.53952e+03 
+xt2d[1,265,1]= 1.54481e+03 
+xt2d[1,266,1]= 1.55010e+03 
+xt2d[1,267,1]= 1.55539e+03 
+xt2d[1,268,1]= 1.56068e+03 
+xt2d[1,269,1]= 1.56597e+03 
+xt2d[1,270,1]= 1.57126e+03 
+xt2d[1,271,1]= 1.57655e+03 
+xt2d[1,272,1]= 1.58184e+03 
+xt2d[1,273,1]= 1.58713e+03 
+xt2d[1,274,1]= 1.59242e+03 
+xt2d[1,275,1]= 1.59771e+03 
+xt2d[1,276,1]= 1.60300e+03 
+xt2d[1,277,1]= 1.60829e+03 
+xt2d[1,278,1]= 1.61358e+03 
+xt2d[1,279,1]= 1.61887e+03 
+xt2d[1,280,1]= 1.62417e+03 
+xt2d[1,281,1]= 1.62946e+03 
+xt2d[1,282,1]= 1.63475e+03 
+xt2d[1,283,1]= 1.64004e+03 
+xt2d[1,284,1]= 1.64533e+03 
+xt2d[1,285,1]= 1.65062e+03 
+xt2d[1,286,1]=1.65591e+03
+
+return(xt2d)
+}

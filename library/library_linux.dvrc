@@ -1,0 +1,114 @@
+#Set up enviornment variables
+if(HasValue($DV_VIEWER)==0) { 
+    putenv("DV_VIEWER","/usr/bin/display")
+}
+if(HasValue($EDITOR)==0) {
+    putenv("EDITOR","/usr/bin/vi")
+}
+
+#this should be set at configure time
+#putenv("DV_MOD_PATH","/usr/lib/davinci")
+if(HasValue($DV_UPDATE_ALLOW)==0) putenv("DV_UPDATE_ALLOW","1")
+
+#DV_HOME location
+if(HasValue($DV_HOME)==0) {
+    putenv("DV_HOME","/usr/share/davinci")
+}
+if(HasValue($DV_HELP)==0) {
+    putenv("DV_HELP",$DV_HOME+"/docs/dv.gih")
+}
+if(HasValue($DV_LIB)==0) {
+    putenv("DV_LIB",$DV_HOME+"/library")
+}
+if(HasValue($DV_EX)==0) {
+    putenv("DV_EX","http://davinci.asu.edu/examples")
+}
+if(HasValue($CAT_LOCATION)==0) {
+	putenv("CAT_LOCATION",$DV_EX)
+}
+if(HasValue($DV_CK)==0) {
+    putenv("DV_CK",$DV_HOME+"/correlated_k")
+}
+if(HasValue($DV_KRC)==0) {
+    putenv("DV_KRC",$DV_HOME+"/krc")
+}
+
+#Database logins
+if(HasValue($DV_THM_DB_USER)==0) {
+    putenv("DV_THM_DB_USER","davinci")
+}
+if(HasValue($DV_THM_DB_PASS)==0) {
+    putenv("DV_THM_DB_PASS","davinci")
+}
+if(HasValue($DV_THM_DB_SPACE)==0) {
+		putenv("DV_THM_DB_SPACE","^")
+}
+
+#crism cache directory
+if(HasValue($DV_CRISM_CACHE)==0) {
+    putenv("DV_CRISM_CACHE","~/CRISM_CACHE")
+}
+
+#gdal location
+if(HasValue($DV_GDAL_PATH)==0) {
+    putenv("DV_GDAL_PATH","/usr/bin")
+}
+
+#gnuplot terminal default
+if(HasValue($GPLOT_TERM)==0) {
+    putenv("GPLOT_TERM","wxt")
+}
+
+#User defined location for TEST_DATA
+if(HasValue($DV_TEST_DATA)==0) {
+    putenv("DV_TEST_DATA","")
+}
+
+#Figure out the OS and how to call the web browser
+source($DV_LIB+"/utils.dvrc")
+os = getos();
+browser = getbrowser(os);
+
+if(HasValue($DV_OS)==0) {
+    putenv("DV_OS",os)
+}
+if(HasValue($DV_BROWSER)==0) {
+    putenv("DV_BROWSER",browser)
+}
+if(HasValue($DV_SCRIPT_FILES)==0) {
+    putenv("DV_SCRIPT_FILES",$DV_LIB+"/script_files")
+}
+
+#some class examples in	their own dvrc
+source($DV_LIB+"/class_examples.dvrc")
+
+#3rd party contributions
+source($DV_LIB+"/dshadow.dvrc")
+
+#set up default variables/constants
+source($DV_LIB+"/constants.dvrc")
+source($DV_LIB+"/time.dvrc")
+
+#load the library functions
+source($DV_LIB+"/image_stretch.dvrc")
+source($DV_LIB+"/map_projection.dvrc")
+source($DV_LIB+"/plot_tools.dvrc")
+source($DV_LIB+"/data_manipulation.dvrc")
+source($DV_LIB+"/themis_science.dvrc")
+source($DV_LIB+"/themis_isis3.dvrc")
+source($DV_LIB+"/tes_science.dvrc")
+source($DV_LIB+"/crism_science.dvrc")
+source($DV_LIB+"/aster_science.dvrc")
+source($DV_LIB+"/master_science.dvrc")
+source($DV_LIB+"/aviris_science.dvrc")
+source($DV_LIB+"/thermal_model.dvrc")
+source($DV_LIB+"/misc.dvrc")
+source($DV_LIB+"/general_science.dvrc")
+source($DV_LIB+"/mosaic_tools.dvrc")
+source($DV_LIB+"/spectral_tools.dvrc")
+source($DV_LIB+"/field_spectrometer.dvrc")
+source($DV_LIB+"/v_mosaic.dvrc")
+source($DV_LIB+"/math.dvrc")
+
+#load the thm module
+load_module("thm")

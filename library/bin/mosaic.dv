@@ -1,0 +1,840 @@
+#!/mars/common/bin/davinci -fq -v0
+source("/themis/lib/dav_lib/library/library_mars.dvrc")
+
+##########################################################################
+# When using this script please reference:
+#
+# Edwards, C. S., K. J. Nowicki, P. R. Christensen, J. Hill, N. Gorelick, 
+# and K. Murray (2011), Mosaicking of global planetary image datasets: 1. 
+# Techniques and data processing for Thermal Emission Imaging System (THEMIS) 
+# multi-spectral data, J. Geophys. Res., 116, E10008, doi:10.1029/2010JE003755.
+#
+# PDF: http://dx.doi.org/10.1029/2010JE003755
+#
+# Contact info: Christopher Edwards <cedwards@caltech.edu>
+#
+##########################################################################
+#Change Log
+##########################################################################
+#
+# 10/14-added help and documentation
+# 8/13- added default options for various standard image types
+# 8/13- removed isis2 support/added geo_struct support to all sub functions
+#       this should enable mosaicking of anything gdal reads
+# 1/13- added rtilt option, c.edwards
+# 6/09- Added coreg option to exclude coregistration, c.edwards
+# 5/09- Initiation of the change log, c.edwards
+# 5/09- Added options to clean up temporary files 
+#       and created mos.cub bounding file, c.edwards
+# 5/09- Added handling for only header bounding files, c.edwards
+#
+##########################################################################
+#
+#Beginning of Script:
+##########################################################################
+# Some things you might want to set; all are accessible by the command line
+##########################################################################
+verbose=0
+
+#Determine if the user set a default image type
+default={type=""};
+default=getopt($ARGV,default)
+
+#Default options, they will be overridden by type if selected
+opt={\
+band = 9,\
+interm = 1,\
+downsample = 1,\
+blend = 1,\
+blendsize = 255,\
+level_fit = 0,\
+line_match = 0,\
+hpf = 1000,\
+lpf = 0,\
+stretch = 1,\
+sstretch = 1,\
+rsstretch = 0,\
+lstretch = "0//0",\
+rtilt = 0,\
+setignore = 1,\
+mindata = -1,\
+ignore = -32768,\
+float = 0,\
+rereg = 0,\
+coreg = 1,\
+coregsearch = 10,\
+geo = 0,\
+pad = 0,\
+border = 0,\
+outname = "full",\
+file_list = "file_list",\
+suffix=".cub",\
+cubdir="./",\
+coregfile = "coreg",\
+mosfile = "mos.cub",\
+optfile = "opts.txt",\
+start = 1,\
+boffset = 1000,\
+makebounds = 0,\
+latrange = "0:0",\
+lonrange = "0:0",\
+verbose = 0,\
+debug = 0,\
+clean = 0,\
+outputgeo = 1,\
+outputhdf = 1,\
+outputhist = 0,\
+outputraw = 0,\
+usage = 0\
+};
+
+##########################################################################
+#
+# Miscellaneous Setup
+#
+##########################################################################
+
+####
+#Setup the input structure, other options can be added here
+####
+
+newopt={}
+newopt.themisir={"band=9","hpf=1000","stretch=1","sstretch=1","setignore=1","mindata=-1","ignore=-32768","outname=ir"};
+newopt.themisti={"band=0","setignore=1","mindata=0","ignore=-32768","outname=ti"};
+newopt.themisvis={"band=3","stretch=1","sstretch=1","ignore=-32768","outname=vis"};
+newopt.themisdcs={"band=0","hpf=0","stretch=0","sstretch=0","setignore=0","ignore=0","outname=dcs"};
+newopt.ctx={"band=0","hpf=5000","downsample=10","rtilt=5000","stretch=1","sstretch=1","setignore=1","mindata=0","ignore=-32768","outname=ctx","blendsize=750"};
+
+####
+#Get the available default types
+####
+
+type_keys=get_struct_key(newopt)
+types=""
+for(i=1;i<=length(type_keys);i+=1) {
+	types=sprintf("%s\n\ttype=\"%s\"",types,type_keys[,i])
+}
+
+####
+#Option preparation and assignment from defaults
+#Note these will overwrite changes to the struct above
+#We only do this if a type was supplied and its in our supported list
+####
+if(default.type!="" && sum(type_keys==default.type)!=0) {
+	newopt=remove_struct(newopt,default.type)
+	printopt={}
+	opt=getopt(newopt,opt)
+	printopt=getopt(newopt,printopt)
+} else if (default.type!="" && sum(type_keys==default.type)==0) {
+	printf("\nAn invalid default type was selected: type=\"%s\"\n",default.type)
+	printf("\nAllowed default types are: %s\n\n",types[3:])
+	exit(0)
+}
+
+####
+#Check to see if opts.txt exists and set the values before
+#the command line option setting
+####
+
+if(fexists(opt.optfile)) {
+	printf("\nReading parameters from: %s\n",opt.optfile)
+	optfileopts=read_lines(opt.optfile)
+	for(i=1;i<=length(optfileopts);i+=1) {
+		eval("opt."+optfileopts[,i])
+	}
+}
+
+####
+#Command line option preparation and assignment
+#Print the default moaicking options
+####
+
+opt=getopt($ARGV,opt)
+
+if(fexists(opt.file_list)==0 || opt.usage==1) {
+	printf("\nThis script will mosaic a suite of images defined by a list\n\n")
+	printf("By default this script expects to be run from a directory with:\n")
+	printf("\t1) A set of images listed from left-to-right in a file called \"file_list\"\n")
+	printf("\t2) Unstretched images of the same type and same bands with a \".cub\" suffix\n")
+	printf("\t3) Images are of type ISIS3\n\n")
+	printf("Arguments:\n")
+	printf("\tusage =\t\tPrint this usage (Default=0, 1=normal, 2=long)\n")
+	printf("\ttype =\t\tSets a series of default options for various standard cases (Default=\"\")\n")
+	printf("\t\t\t\tUse usage=2 to see supported types\n")
+	printf("\t\t\t\tOR enter a type and usage=2 for specific type options\n")
+	printf("\toptfile =\tFilename for a text file of key=value pairs to set options (Default=\"opts.txt\")\n")
+	printf("\tband =\t\tBand to use (Default=9, 0=use all bands)\n")
+	printf("\tinterm =\tInterval for intermediate image output (Default=1) \n")
+	printf("\tdownsample =\tDownsample intermediate images by N for faster processing (Default=1)\n")
+	printf("\tblend =\t\tBlend images together (0=no blending, 1=blend with avg overlap, 2=blend with top image replace)\n")
+	printf("\tblendsize =\tNumber of overlapping pixels to blend (lower=faster, higher=better)\n")
+	printf("\tlevel_fit =\tFit for brightness/contrast (no=0 (default), 1=linear fit, 2=add offset only)\n")	
+	printf("\tline_match =\tForce brightness/contrast to match line-by-line (no=0 (default), yes=1)\n")
+	printf("\thpf =\t\tPerform a high pass filter of size N (Default=1000, no=0)\n")
+	printf("\tlpf =\t\tPerform a low pass filter of size N (Default=0, no=0)\n")
+	printf("\tstretch =\tStretch the data using one of the following options (Default=1, 0=do not stretch)\n")
+	printf("\tsstretch =\tPerform a sstretch of the data (Default=1)\n")
+	printf("\trsstretch =\tPreform a running sstretch on the image of size N (Default=0)\n")
+	printf("\tlstretch =\tPerform a lstretch on the image by in_low=[1] and in_high=[2] (Default=\"0//0\")\n")
+	printf("\trtilt =\t\tRectify, run the rtilt algorithm on the image of size N and then reconstitute (Default=0)\n")
+	printf("\tsetignore =\tIgnore everything below \"mindata\" to \"ignore\" (Default=1)\n")
+	printf("\tmindata =\tMin data value for \"setignore\" (Default=-1)\n")
+	printf("\tignore =\tIgnore value (Default=-32768)\n")
+	printf("\tfloat =\t\tStretch the data prior to mosaicking (Default=1)\n")
+	printf("\tcoreg =\t\tPerform coregistarton (Default=1)\n")
+	printf("\tcoregfile =\tCoregistration file name (Default=\"coreg\")\n")
+	printf("\trereg =\t\tRe-perform coregistration on subsequent runs (Default=0)\n")
+	printf("\tgeo =\t\tUse gdal reader/writer for mosaicking as geotiffs (Default=0)\n")
+	printf("\toutname =\tOutput base name (Default=\"full\")\n")
+	printf("\tfile_list =\tPath to list of files to mosaic (Default=\"file_list\")\n")
+	printf("\tsuffix =\tInput file suffixes for \"file_list\" (Default=\".cub\")\n")
+	printf("\tcubdir =\tDirectory where cubes are located (Default = \".\")\n")
+	printf("\tmosfile =\tFilename for the mosaic boundry (Default=\"mos.cub\")\n")
+	printf("\tmakebounds =\tMakes the boundary file \"mosfile\" that will contain the mosaic (Default=0)\n")
+	printf("\t\t\t\t0=don't create bounds\n")
+	printf("\t\t\t\t1=make the bounds with specified lat/lon range from \"lonrange\"\n")
+	printf("\t\t\t\t3=automatically create bounds from range of input files\n")
+	printf("\tlatrange =\tLatitude range for makebounds option 1 (Default=\"0:0\")\n")
+	printf("\tlonrange =\tLongitude range for make bounds option 1 (Default=\"0:0\")\n")
+	if(opt.usage==2) {
+		printf("\nLess Used Arguments\n")
+		printf("\tstart =\t\tFile number to start on in \"file_list\" (Default=1) \n")
+		printf("\tpad =\t\tPadding around the mosaic area by pixel numbers (Default=0)\n")
+		printf("\tborder =\tAdd a border of defined size around new images (Default=0)\n")
+		printf("\tboffset =\tBorder offest amount (e.g. add this number to the image)\n")
+		printf("\toutputgeo =\tOutput an isis3 (geo=0) or geotiff (geo=1) for use in other programs (Default=1)\n")
+		printf("\toutputhdf =\tOutput a hdf file of real data (Default=1)\n")
+		printf("\toutputhist =\tOutput isis3 history for all files in the mosaic (Default=0)\n")
+		printf("\toutputraw =\tOutput a raw file and header (Default=0)\n")
+		printf("\tverbose =\tSet the verbosity level (default=0)\n")
+		printf("\tdebug =\t\tPut the script in debug mode (default=0)\n")
+		printf("\tclean =\t\tClean up the current directory \n")
+		printf("\t\t\t\t1=rm outname interm files\n")
+		printf("\t\t\t\t2=rm all unnecessary files\n")
+
+		if(default.type=="") {
+			printf("\nDefault Image Types Available:\n")
+			printf("\t%s\n",types[3:])
+		}
+
+		if(default.type!="" && sum(type_keys==default.type)!=0) {
+			printf("\nDefault Type Options: \"%s\"\n",default.type)
+			opt_usage(printopt)
+		}
+		printf("\nDefault Options:\n")
+		opt_usage(opt)
+	}
+	printf("\nReferences:\n")
+	printf("Edwards, C. S., K. J. Nowicki, P. R. Christensen, J. Hill, N. Gorelick,\n\t\tand K. Murray (2011), Mosaicking of global planetary image datasets: \n\t\t1. Techniques and data processing for Thermal Emission Imaging System\n\t\t(THEMIS) multi-spectral data, J. Geophys. Res., 116(E10), E10008,\n\t\tdoi:10.1029/2010JE003755.\n\n")
+	printf("Script Contributors:\n")
+	printf("C. Edwards, N. Gorelick, K. Nowicki, J. Hill, 10/7/14\n\n")
+	exit(1)
+}
+
+####
+#Print the selected options
+####
+
+if(default.type!="" && sum(type_keys==default.type)!=0) {
+	printf("\nDefault Type Options: \"%s\"\n",default.type)
+	opt_usage(printopt)
+}
+printf("\nSelected options:\n")
+opt_usage(opt)
+
+####
+#Reset the verbosity if the user changed it
+####
+
+printf("\n")
+debug=opt.debug
+verbose=opt.verbose
+
+####
+#if geo is not set (default, then use the isis3 module)
+####
+
+if(opt.geo==0) insmod("isis3")
+
+####
+#Handle the lstretch option as it is an array
+####
+
+opt.lstretch=translate(atof(subset(strsplit(opt.lstretch,delim="/"),y="1//3")),y,x)
+
+####
+#CubDir Setup (add the trailing "/" because people forget)
+####
+
+if(opt.cubdir[length(opt.cubdir)]!="/") opt.cubdir=opt.cubdir+"/"
+
+####
+#Check for File_List
+####
+
+if(fexists(opt.file_list)) {
+	list = read_lines(opt.file_list)
+} else {
+	printf("File '%s' does not exist\n\n",opt.file_list)
+	exit()
+}
+ 
+####
+#Delete file_list comments, Used for temporary steps
+####
+
+tmplist = grep(list, "^[^#]+")
+
+####
+#Cleanup Unwanted Files, If Selected
+####
+
+if(opt.clean==1) {
+	printf("Cleaning intermediate files\n\n")
+	len1=syscall(sprintf("ls %s[0-9][0-9][0-9]*.png",opt.outname))
+	if(length(len1)>0) system(sprintf("rm %s[0-9][0-9][0-9]*.png",opt.outname))
+	exit()
+} else if (opt.clean==2) {
+	printf("Cleaning all temporary files\n\n")
+	len1=syscall(sprintf("ls *[0-9][0-9][0-9]*.png"))
+	if(length(len1)>0) system(sprintf("rm *[0-9][0-9][0-9].png"))
+	len2=syscall(sprintf("ls I????????.o[0-9][0-9][0-9]*"))
+	if(length(len2)>0) system(sprintf("rm I????????.o[0-9][0-9][0-9]*"))
+	if(fexists("print.prt")) system(sprintf("rm print.prt"))
+	len3=syscall(sprintf("ls *.err"))
+	if(length(len3)>0) system(sprintf("rm *.err"))
+	exit()
+}
+
+###############################################################################
+#
+# MakeBounds
+#
+###############################################################################
+
+####
+#Determine if the MakeBounds Options are Checked and Create the Boundary
+####
+
+if((opt.makebounds==1 || opt.makebounds==2) && (opt.latrange=="0:0" || opt.lonrange=="0:0")) {
+	printf("ERROR:\tUnable to use sepecified latrange/lonrange\n")
+	printf("\tUse makebounds=3 for auto selection or change the input ranges\n\n")
+	exit()
+}
+if(opt.makebounds==1 && fexists(opt.mosfile)) {
+	printf("ERROR:\tUnable to create mosfile because \"%s\" exists\n",opt.mosfile)
+	printf("\tEither force creation (makebounds=2) with set bounds or use makebounds=0\n\n")
+	exit()
+}
+if(opt.makebounds==3 && fexists(opt.mosfile)) {
+	printf("ERROR:\tUnable to create mosfile because \"%s\" exists\n",opt.mosfile)
+	printf("\tEither force creation (makebounds=4) with auto bounds or use makebounds=0\n\n")
+	exit()
+}
+
+####
+#Use Autoboundaries, If Desired
+####
+
+if(opt.makebounds==3 || opt.makebounds==4) {
+	printf("Making mosaic range automatically from input files\n\n")
+	range=mos_bounds(tmplist,opt.suffix,opt.cubdir,geo=opt.geo)
+	verbose=opt.verbose
+	opt.lonrange=range.lonrange
+ 	opt.latrange=range.latrange
+}
+
+####
+# Create the Empty Mosaic Cube/GeoTiff
+####
+
+if(opt.makebounds==1 || opt.makebounds==2 || opt.makebounds==3 || opt.makebounds==4) {
+
+	#determine a good file to use for the ISIS mosaic step
+	for(i=1;i<=length(tmplist);i+=1) {
+			if(fexists(opt.cubdir+tmplist[,i]+opt.suffix)) break;
+	}
+	if(opt.makebounds==2 || opt.makebounds==4) {
+		if(fexists(opt.mosfile)) syscall("rm "+opt.mosfile)
+	}	
+
+	#get the min/max lat/lon after its been autmatically set or set by the user
+	pos=strstr(opt.latrange,":")
+	minlat=opt.latrange[:pos-1]
+	maxlat=opt.latrange[pos+1:]
+	pos=strstr(opt.lonrange,":")
+	minlon=opt.lonrange[:pos-1]
+	maxlon=opt.lonrange[pos+1:] 
+
+	#create the bounding cube and strip the data for size saving features
+	if(opt.geo==0) {
+		#Make an ISIS3 boundig file
+		printf("Creating '%s' ISIS3 bounding file\n",opt.mosfile)
+		printf("with Latitude Range=\"%s\"\n",opt.latrange)
+		printf("and Longitude Range=\"%s\"\n",opt.lonrange)
+		write(tmplist+opt.suffix,opt.cubdir+"/automos.lis",ascii,force=1)
+		syscall(sprintf("automos from=%s mosaic=%s grange=user minlat=%s maxlat=%s minlon=%s maxlon=%s",opt.cubdir+"/automos.lis",opt.mosfile,minlat,maxlat,minlon,maxlon))
+		if(opt.mosfile==basename(opt.mosfile,".cub")) {
+			syscall(sprintf("mv %s.cub %s",opt.mosfile,opt.mosfile))
+		}
+	} else {
+		#Make a geotiff bounding file
+		printf("Creating '%s' GeoTiff bounding file\n",opt.mosfile)
+		printf("with Latitude Range=\"%s\"\n",opt.latrange)
+		printf("and Longitude Range=\"%s\"\n",opt.lonrange)
+		tmpfile=read_geo(tmplist[,1]+opt.suffix)
+		tmpfile.data=byte(tmpfile.data[,,1])*byte(0)
+		
+		if(opt.makebounds==1 || opt.makebounds==2) {
+
+			#if option 1/2 are selected we use the extent calculated from the lat/lon range
+			extent=proj_geocoord(cat(double(1.//0.),atod(minlon)//atod(minlat),atod(maxlon)//atod(maxlat),axis=y),s_srs="+proj=latlong +unit=deg",t_srs=tmpfile.anc.wkt,inverse=0,v=-1)		
+			if(extent[1,2]<0) extent[1,2]=extent[1,2]+extent[1,1]*360.
+			if(extent[1,3]<0) extent[1,3]=extent[1,3]+extent[1,1]*360.
+			extent=extent[,2:]
+			tmpmos=proj_geo(tmpfile,tmpfile.anc.wkt,te=min(extent[1])//min(extent[2])//max(extent[1])//max(extent[2]),ignore=0,resolution=tmpfile.resolution,v=-1)
+		} else {
+			
+			#otherwise take the lpo/spo range from the extent of the input files
+			sporange=atod(strsplit(range.sporange,delim=":"))
+			lporange=atod(strsplit(range.lporange,delim=":"))
+			extent=cat(sporange[,1]//lporange[,1],sporange[,2]//lporange[,2],axis=y)
+			tmpmos=proj_geo(tmpfile,tmpfile.anc.wkt,te=min(extent[1])//min(extent[2])//max(extent[1])//max(extent[2]),ignore=0,v=-1)
+		}	
+
+		#write the mosfile to disk
+		write_geotiff(tmpmos,opt.mosfile,force=1,v=-1)
+		verbose=opt.verbose
+		tmpmos=0
+	}
+}
+
+###############################################################################
+#
+# Mosaicking Setup
+#
+###############################################################################
+
+verbose=opt.verbose
+printf("Beginning mosaicking process\n\n")
+
+####
+#Setup the Default Values and Assign Floats, If Specified
+####
+
+boffset = opt.boffset
+random(seed=4, type="drand48");
+ignore=short(opt.ignore)
+if (opt.float) ignore=float(ignore)	
+
+####
+#Load Coreg Values
+####
+
+coreg = load_coreg(opt.coregfile)
+
+####
+#Make a Sufficient Output Image, Use Pre-existing Bounds if Available
+#And Verify Images Are Inside the Mosaic Bounds
+####
+
+verbose=opt.verbose
+if (fexists(opt.mosfile)) {
+	printf("Using bounds from pre-existing '%s'\n",opt.mosfile)
+	if(opt.geo==0) {
+		out = v_make(load_pds(opt.mosfile, data=0))
+	} else {
+		out = v_make(read_geometa(opt.mosfile),geo=opt.geo)
+		verbose=opt.verbose
+	}
+} else {
+	out = bounding_box2(tmplist, opt.suffix, opt.band,opt.cubdir,geo=opt.geo)
+}
+verbose=opt.verbose
+
+####
+#Pad the Image, If Selected
+####
+
+if(opt.pad != 0) {
+	opt.pad=int(opt.pad)
+	out2=out
+	out.y-=opt.pad
+	out.x-=opt.pad
+	out.h+=2*opt.pad
+	out.w+=2*opt.pad
+}
+
+####
+#Determine Number of Bands in Output
+####
+
+if(opt.band==0) {
+	if(opt.geo==1) {
+		zdim=read_geometa(opt.cubdir+list[,1]+opt.suffix).anc.bandcount
+	} else {
+	 	zdim=dim(v_make(load_pds(opt.cubdir+list[,1]+opt.suffix)).data)[3]
+	}
+} else {
+	zdim=1
+}
+
+####
+#Create the Output Structure and Print the Size
+####
+
+outbox = out
+out.data = clone(ignore,out.w, out.h, zdim)
+
+if(opt.pad > 0) {
+	printf("Working image size: %dx%d\n", out.w, out.h)
+	printf("Output image size:  %dx%d\n\n", out.w-2*opt.pad, out.h-2*opt.pad)
+} else { 
+	printf("Output image size: %dx%d\n\n", out.w, out.h)
+}
+
+####
+#Create Mosaic History Structure
+####
+
+if(opt.geo==0) mosaic_history={}
+
+###############################################################################
+#
+# Mosaicking Loop
+#
+###############################################################################
+
+pos = { x=0,y=0 }
+for (i = opt.start ; i <= length(list) ; i+=1) {
+	file = list[,i]
+	if(file[1]!="#") { 
+
+		verbose = opt.verbose
+
+		####
+		#Check if the File is in the Mosaic Region
+		####
+
+ 		if (v_contains(opt.cubdir+file+opt.suffix,dst=out,geo=opt.geo)) {
+ 			printf("Processing image[%d/%d] (%s%s)\n", i, length(list), file,opt.suffix)
+			verbose = opt.verbose
+
+			####
+			#Load and parse the right bands of the data
+			####
+
+			if(opt.geo==1) {
+				#Load the geostruct into a v_make structure directly
+				d=v_make(read_geo(opt.cubdir+file+opt.suffix,band=opt.band),geo=1)
+
+			} else {
+				#Load the ISIS header data but not the image for v_make (used to select the band)
+			 	c = load_pds(opt.cubdir+file+opt.suffix, data=0)
+
+				#Create the Image's v_object
+			 	d = v_make(c)
+
+				#Create the Image's Mosaic History Entry
+				add_struct(mosaic_history,c.IsisCube.History,i+"_"+file)
+	 
+			 	#Fill the v_object with the Image Data
+				if(opt.band==0) {
+					d.data = read(opt.cubdir+file+opt.suffix)
+				} else {
+					d.data = read(opt.cubdir+file+opt.suffix, record=find_band(obj=c,opt.band))
+				}
+			}
+
+			#Set the ignore value of the input image if specified
+			if (opt.setignore) d.data[where d.data <= opt.mindata] = ignore;
+
+			#Remove tilt in the individual images (requires good image corners)
+			if (opt.rtilt) {
+				e=thm.rectify(d.data,ignore=ignore)
+				e.data=rtilt(e.data,ignore=ignore,ysize=opt.rtilt)
+				d.data=thm.reconstitute(e)
+			}
+
+			# Cut the Image Data to the Mosaic Size 
+			d = v_cut(src=d, outbox)
+
+			####
+			#Perform Various User-Specified Data Manipulations
+			####
+
+			if (opt.hpf) d.data = hpf(d.data, size=opt.hpf,ignore=ignore);
+			if (opt.lpf) d.data = lpf(d.data, size=opt.lpf,ignore=ignore);
+			if (opt.border) bimg=v_border(src=d,ignore=ignore,size=opt.border,offset=boffset);
+	
+			####
+			#Stretch The Image Data
+			####
+
+			if (opt.float == 0) { 
+				if(opt.stretch == 1 ) {
+					# Use sstretch on the Data First, If Specified
+					if (opt.sstretch != 0 ) d.data[where d.data != ignore] = sstretch(d.data,ignore=ignore);
+
+			 		#Use rsstretch Only in the Y-Direction to Prevent Bad Stretches
+			 		if (opt.rsstretch != 0 ) d.data[where d.data != ignore] = rsstretch(d.data,ysize=int(opt.rsstretch),ignore=ignore);
+
+					#Use lstretch for a linear scale
+					if (sum(opt.lstretch) != 0 ) {
+						tmp=short(lstretch(d.data,in_low=opt.lstretch[1],in_high=opt.lstretch[2],ignore=ignore))
+						tmp[where d.data==ignore]=ignore
+						d.data=tmp
+					}
+				} 
+			}
+			verbose = opt.verbose
+
+			####
+			#Coregistration (coreg)
+			####
+
+			if(opt.coreg==1) {
+ 		 	if (i == 1 || (HasValue(get_struct(coreg, file)) && opt.rereg==0)) {
+	
+	 			#Retrieve Existing Coreg Offsets from the opt.coreg File, If They Exist 
+		 		pos = get_struct(coreg, file)
+				d.x += pos.x
+				d.y += pos.y
+			} else {
+
+				#Compute the Coreg Offsets for Images, If They Don't Already Exist
+				printf("computing coreg for image[%d] (%s)\n", i, file)
+				orig = { x=d.x, y=d.y }
+
+				#Get the Old Offset Values before Re-Running Coreg, If the User Wants to Re-Register
+				if (opt.rereg == 1) {
+					pos = get_struct(coreg, file)
+				}
+
+				d.x += pos.x
+				d.y += pos.y
+
+
+				#Handling for Multiband Images 1 (Pull Out a Single Band for Coreg)
+				if (zdim != 1) {
+					z=d.data
+					d.data=d.data[,,1]	   
+				}
+				
+				#Run Coreg Twice to Make Sure the Results are Correct
+				search=opt.coregsearch
+				c1 = do_coreg(src=d, dst=out,search=search,ignore=ignore)
+			 	search=opt.coregsearch
+				c2 = do_coreg(src=d, dst=out,search=search,ignore=ignore)
+				printf("coreg %d,%d\n", d.x-orig.x-pos.x, d.y-orig.y-pos.y);
+	
+				#Apply the Coreg Offsets to the Image
+				pos = { x=d.x-orig.x, y=d.y-orig.y } 
+
+				#Save the Coreg Offsets to the Coreg File
+				#This is sort of a ghetto way to do it but it works for now
+				if (fexists(opt.coregfile) == 0) fprintf(opt.coregfile, "filename\tx\ty\n");
+				system(sprintf("grep -v %s %s > %s.tmp", file, opt.coregfile, opt.coregfile));
+				system(sprintf("mv %s.tmp %s", opt.coregfile, opt.coregfile));
+				fprintf(opt.coregfile, "%s\t%d\t%d\n", file, pos.x, pos.y);
+
+				#Handling for Multiband Images 2 (Replace the 1-band data with the original 3-band data)
+				if (zdim != 1) {
+					d.data=z
+				}				
+				
+			}
+		}
+
+		####
+		#Insert the Image into the Mosaic v_object
+		####
+		if (i == 1) {
+
+		 	#If This is the First Image, Simply Insert It into the v_object
+		 	v_insert(src=d, dst=out, ignore=ignore)
+		} else {
+
+			#If Specified, Perform level_fit & line_match (line match doesn't seem to work properly)
+			if (opt.level_fit) level_adjust(obj=d, to=out, ignore=ignore, opt=opt.level_fit)
+			if (opt.line_match) line_match(src=d, dst=out, ignore=ignore)
+
+			#If Specified, Perform blend; Then Insert into the v_object
+			if (opt.blend==1) {
+				blend(src=d, dst=out, stp=opt.blendsize, ignore=ignore, avg=1)
+			} else if (opt.blend==2) {
+				blend(src=d, dst=out, stp=opt.blendsize, ignore=ignore, avg=0)
+			} else {
+				#otherwise simply insert the image into the out structure
+				v_insert(src=d, dst=out, ignore=ignore)
+			}
+	 	}
+	 
+	 	####
+	 	#Intermediate Output Files
+		####
+	 	if (i % opt.interm == 0) {
+
+			#If we want a border then add it in
+		 	if(opt.border) v_add(src=bimg,dst=out,ignore=ignore);
+
+		 	#If we have floats stretch them first
+		 	if (opt.float) {
+				if(opt.rsstretch==0) write(sstretch(out.data[::opt.downsample,::opt.downsample],ignore=ignore), sprintf("%s%2.3d.png",opt.outname, i), png, force=1)
+
+				#If the user chose to rsstretch then stretch in both x and y sizes for best results
+				if(opt.rsstretch!=0) write(rsstretch(out.data[::opt.downsample,::opt.downsample],ignore=ignore,ysize=int(opt.rsstretch),xsize=int(opt.rsstretch)), sprintf("%s%2.3d.png",opt.outname, i), png, force=1)
+
+				#If the user chose to lstretch
+				if(sum(opt.lstretch)!=0) write(lstretch(out.data[::opt.downsample,::opt.downsample],in_low=opt.lstretch[1],in_high=opt.lstretch[2],ignore=ignore), sprintf("%s%2.3d.png",opt.outname, i), png, force=1)
+			} else {
+				#Otherwise simpy byte the image and write it
+				write(byte(out.data[::opt.downsample,::opt.downsample]), sprintf("%s%2.3d.png",opt.outname, i), png, force=1)
+			}
+	 
+			#if we specified a border now subtract it off to prepare for the next image
+			if(opt.border) {
+			 	bimg.data[where bimg.data==boffset]=bimg.data-boffset*2
+				v_add(src=bimg,dst=out,ignore=ignore)	
+			}
+		}
+
+	####
+	#Various messages for skipped and extraneous images
+	####
+
+	} else {
+		printf("Skipping image %s: it is not located in the area.\n",file[,i])
+	 }
+	} else {
+		printf("Skipping image %s: it is commented out in %s.\n",file[2:,i],opt.file_list)
+	}
+}
+
+####
+#Return Data to Its Normal Output Size, If It was Padded
+####
+
+verbose = opt.verbose
+if(opt.pad > 0) {
+	printf("\nResizing data to normal size: %dx%d\n", out.w-2*opt.pad, out.h-2*opt.pad)
+	out.data=out.data[opt.pad+1:dim(out.data)[1]-opt.pad,opt.pad+1:dim(out.data)[2]-opt.pad]
+	out.y=out2.y
+	out.x=out2.x
+	out.h=out2.h
+	out.w=out2.w
+}
+
+###############################################################################
+##
+## Output Files
+##
+###############################################################################
+
+####
+#HDF Output 
+####
+
+if (opt.outputhdf == 1) {
+	printf("Creating HDF data file: %s\n",opt.outname+".hdf")
+	write(out, opt.outname+".hdf", hdf, force=1)
+}
+
+####
+#HDR and RAW Output 
+####
+
+if (opt.outputraw == 1) {
+	printf("Creating raw data file: %s\n",opt.outname+".raw")
+	fprintf(opt.outname+".hdr","w=%i,h=%i,z=%i,format=%s,org=%s",out.w,out.h,dim(out.data)[3],format(out.data),org(out.data))
+	write(out.data, opt.outname+".raw", raw, force=1)
+}
+
+#Reset ignore values to 0 and 0 values in the image to 1
+if(opt.float==0) {
+	out.data[where out.data==0 && out.data!=opt.ignore]=1
+	out.data[where out.data==opt.ignore]=0 
+}
+
+####
+#PNG Output
+####
+
+if (opt.float) {
+
+	#Stretch the output data for a viewable PNG
+	#If the User Chose to rsstretch, Then Stretch in Both X and Y Directions for Best Results
+	printf("Creating PNG image file: %s\n",opt.outname+".png")
+	if(opt.sstretch!=0) write(sstretch(out.data,ignore=ignore), opt.outname+".png", png, force=1)
+	if(opt.rsstretch!=0) write(rsstretch(out.data,ignore=ignore,ysize=int(opt.rsstretch),xsize=int(opt.rsstretch)), opt.outname+".png", png, force=1)
+	if(sum(opt.lstretch)!=0) write(lstretch(out.data,in_low=opt.lstretch[1],in_high=opt.lstretch[2],ignore=ignore), opt.outname+".png", png, force=1)
+} else {
+
+	#Otherwise, Simply byte() the Image Data and Write It
+	write(byte(out.data), opt.outname+".png", png, force=1)
+}
+
+#Attach the file_list to the PNG if commenter.pl is available
+if(fexists("/themis/bin/commenter.pl")) {
+	printf("Attaching "+opt.file_list+" to "+opt.outname+".png with commenter.pl\n")
+	syscall("/themis/bin/commenter.pl "+opt.outname+".png "+opt.file_list)
+}
+
+####
+#Geolocated data output, Write a valid ISIS3/GeoTiff
+####
+
+verbose=opt.verbose
+printf("\n")
+if(fexists(opt.mosfile) && opt.outputgeo==1) {
+	if(opt.geo==0) {
+		
+		####
+		#ISIS3 Output
+		####		
+
+		#Read inthe blank data
+		#Fill in the new data and write it to disk
+		printf("Creating ISIS3 formated file\n")
+		outcube=load_pds(opt.mosfile,data=0)
+
+		if(opt.float==1) {
+			outcube.IsisCube.Core.Pixels.Type="SignedWord"
+			outcube.cube=format(out.data,float)
+		} else {
+			outcube.IsisCube.Core.Pixels.Type="UnsignedByte"
+			outcube.cube=format(out.data,byte)
+		}
+		
+		write(outcube, opt.outname+".cub", isis3, force=1)
+ } else {
+	 
+		####
+		#GeoTIFF output
+		####
+
+		#Read in the blank data
+		#Fill in the new data and write it to disk
+	 	printf("Creating GeoTiff formated file\n")
+		outcube=read_geometa(opt.mosfile)
+
+		if(opt.float==1) {
+			outcube.data=format(out.data,float)
+		} else {
+			outcube.data=format(out.data,byte)
+		}
+		
+		write_geotiff(outcube, opt.outname+".tif", force=1)
+	} 
+}
+
+####
+#HDF History Output 
+####
+
+if (opt.outputhist == 1 && opt.geo==0) {
+	printf("Creating HDF with history information: %s\n",opt.outname+".history.hdf")
+	write(mosaic_history,opt.outname+".history.hdf",hdf,force=1)
+}
+
+printf("\n");

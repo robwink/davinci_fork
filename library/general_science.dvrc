@@ -1,0 +1,622 @@
+general_science_version=1.02
+
+# ctok       - taken from /themis/lib/themis_dvrca
+# ktoc       - taken from /themis/lib/themis_dvrca
+# ftoc       - taken from /themis/lib/themis_dvrca
+# ctof       - taken from /themis/lib/themis_dvrca
+# ftok       - taken from /themis/lib/themis_dvrca
+# ktof       - taken from /themis/lib/themis_dvrca
+# eigen2     - taken from /u/bandfield/josh.dvrc
+# pca_byte        - taken from /u/gorelick/pca.dv
+# pca        - c.edwards 2-9-2011
+# pca2       - taken from /u/bandfield/josh.dvrc, formerly called jpca()
+# pca2_recon - taken from /u/cedwards/christopher.dvrc
+# round      - taken from /u/knowicki/dvrc/tools.dvrc
+# scalebar   - taken from /u/cedwards/christopher.dvrc
+# add_grid 	 - created 1-32-2008 - replaces old add_grid
+
+
+#moved pca to pca_byte and created a new pca that works for N band data 
+#pca should retain a similar usage to the old pca (but not output byte data) - c.edwards 2-09-11
+
+define ctok(0,1) {
+  if ($ARGC == 0) return(0)
+  a = $1 + 273.15
+  return(a)
+}
+
+define ktoc(0,1) {
+  if ($ARGC == 0) return(0)
+  a = $1 - 273.15
+  return(a)
+}
+
+define ftoc(0,1) {
+  if ($ARGC == 0) return(0)
+  a = ($1 - 32) * 5./9.
+  return(a)
+}
+
+define ctof(0,1) {
+  if ($ARGC == 0) return(0)
+  a = $1 * 9./5. + 32
+  return(a)
+}
+
+define ftok(0,1) {
+  if ($ARGC == 0) return(0)
+	a = ctok(ftoc($1))
+	return(a)
+}
+
+define ktof(0,1) {
+  if ($ARGC == 0) return(0)
+	a = ctof(ktoc($1))
+	return(a)
+}
+
+
+
+
+
+
+
+define eigen2() {
+
+
+if ($ARGC == 0) {
+printf("The pure, undiluted joy of factor analysis.\n")
+printf("Compute eigenvalues and vectors from a set of spectra\n")
+printf(" \n")
+printf("$1 = Input array or vectors\n")
+printf("$2 = Number of components\n")
+printf("$3 = Optional: Number of iterations. \n")
+printf(" \n")
+
+return(0)
+}
+# Transform input array into m x n x 1 array. n is number of spectra.
+
+data=$1
+neigen=$2
+iterate=200
+
+if ($ARGC ==3) {
+
+iterate=$3
+
+}
+
+if (dim(data)[3,,] !=1) {
+
+# Take strips off the cube and reassemble into a 2 dimensional matrix
+
+Dat=translate(data[,1,],from=x, to=y)
+Dat=translate(Dat, from=z, to=x)
+
+for (i=2; i<=(dim(data)[2,,]); i+=1) {
+
+	Dat_temp=translate(data[,i,],from=x, to=y)
+	Dat_temp=translate(Dat_temp,from=z, to=x)
+	Dat=cat(Dat,Dat_temp,y)
+}
+}
+
+if (dim(data)[3,,] ==1) {	
+
+Dat=data
+}
+# Double C[$2]
+# Double Dat[nvecs($1)]
+# Double eigenvalues[$2]
+# Double evecs[($2+1)]
+
+average=avg(Dat,axis=y,ignore=0)
+
+Dat=Dat-average
+Dt=translate(Dat,from=x,to=y)
+Z=mxm(Dat,Dt)
+
+# Double Ctp[npts(Dt[1])]
+
+printf("\n")
+printf("EV#  Iterat.  Eigenvalue\n")
+printf("---+--------+-----------\n")
+
+C=create(x=dim(Z)[1,,],y=neigen,z=1,start=0,step=0,format=float)
+eigenvalues=create(x=neigen,y=1,z=1,start=0,step=0,format=float)
+
+for (i=1; i<=neigen; i+=1) {
+
+	Ctp=clone(0.57735,y=dim(Dt)[1,,])
+
+	eigen_cnt=1
+	check=1
+
+	while ((eigen_cnt < iterate) && (check > 0.000000001)) {
+
+		Cnew=mxm(Z,Ctp)
+		Eval=sum(Cnew^2)^0.5
+		Cnew=Cnew/Eval
+		Ctp=Cnew
+
+		# Check Zc=yc
+
+		Zc=mxm(Z,Cnew)
+		yc=translate(Eval*Cnew,from=x,to=y)
+		check=sum((translate(yc,from=x,to=y)-Zc)^2)^.5
+
+		if (check > 0) {
+			check=check/(1/(sum(Zc^2)^.5))
+		}
+		eigen_cnt=eigen_cnt+1
+	}
+
+	C[,i]=translate(Cnew,from=x,to=y)
+	eigenvalues[i]=Eval
+
+
+	# Calculate residual Matrix
+
+	Z=Z-(mxm((Eval*Cnew),translate(Cnew,from=x,to=y)))
+
+
+	printf("%.0f      ",(i))
+	printf("%.0f      ",(eigen_cnt))
+	printf("%.6f\n",Eval)
+
+	}
+
+	printf("\n")
+
+	# Calculate R matrix eigenvectors
+
+	evecs=translate(mxm(Dt,translate(C,from=x,to=y)),from=x,to=y)
+
+	out=struct(evecs,evals,avg,C)
+
+	out.evecs=evecs
+	out.evals=eigenvalues
+	out.avg=average
+	out.C=C
+	return(out)
+}
+
+
+
+define pca(ignore,struct) {
+    if ($ARGC != 1) {
+				printf("Do a Princple Component Analysis of an N band real data image\n\n")
+        printf("usage: pca(input_image [,ignore=FLOAT][, struct=BOOL])\n")
+				printf("ignore = black space value (no default)\n")
+				printf("struct = return the structure with evecs/evals/covar (default is 0)\n\n") 
+				printf("For the three band stretched version use the pca_byte function\n\n")
+				printf("NOTE: for the old 3 band pca version see the pca_byte function.\n")
+				printf("This version replaced the old byte version on 2-9-2011\n\n")
+				printf("c.edwards 2-9-2011\n")
+        return(0);
+    }
+
+    # compute the symmetric covariance matrix and eigenvectors of it.
+    data = $1
+
+    if (HasValue(ignore)) {
+        c = covar(data, axis=z, ignore=ignore)
+    } else {
+        c = covar(data, axis=z)
+    }
+
+    e = eigen(c)
+		evals = e[1]
+    evecs = e[2:]
+
+    dim = dim(data);
+    data = bip(data)
+    resize(data, dim[3], dim[1]*dim[2]);
+
+    if (HasValue(ignore)) {
+        avg = avg(data,y,ignore=ignore)
+    } else {
+        avg = avg(data,y)
+    }
+
+    pc = mxm(data-avg, evecs);
+    pc = bip(pc)
+
+    # reshape the data back to it's original size
+    resize(pc, dim[1], dim[2], dim[3]);
+    resize(data, dim[1], dim[2], dim[3]);
+
+    if (HasValue(ignore)) {
+        pc[where data == ignore] = ignore
+    }
+
+		if(HasValue(struct)==1) {
+	    return({evecs=translate(evecs,y,y,flip=1),evals=translate(evals,y,y,flip=1),covar=translate(c,y,y,flip=1),data=translate(pc,z,z,flip=1)})
+		} else {
+			return(translate(pc,z,z,flip=1))
+		}
+}
+
+
+
+#
+# principle component analysis, optmized for 3-band BYTE images
+# Data will be centered around 127, with a sigma of +/- 50.
+#
+
+
+define pca_byte() {
+    if ($ARGC != 1) {
+				printf("Do a Princple Component Analysis of a 3 band byte image\n\n")
+        printf("usage: pca(input_image)\n")
+        return(0);
+    }
+
+    # compute the symmetric covariance matrix and eigenvectors of it.
+    a = $1
+    c = covar(a, axis=z)
+    e = eigen(c)
+
+    # generate the scaling matrix with the scaling factors on the diagonal
+    # and compute the rotation matrix
+    s = identity(3) * 50.0/sqrt(e[1])
+    m = mxm(mxm(e[2:], s), translate(e[2:], x, y))
+
+    # We have to reshape the data to push it through mxm() because mxm is dumb.
+    # Force the input to be bip so we can use the forbidden resize() function.
+    d = dim(a);
+    a = bip(a)
+    resize(a, 3, dim(a)[1]*dim(a)[2]);
+
+    # subtract the mean of each band, rotate and add back 127
+    a = a - avg(a,y);
+    a = mxm(a, m);
+    a = a + 127;
+    a = byte(bip(a));
+
+    # reshape the data back to it's original size
+    resize(a, d[1], d[2], d[3]);
+    return(a)
+}
+
+
+
+
+define pca2() {
+
+if ($ARGC == 0) {
+	printf("Get concentration images for each eigenvector.\n")
+	printf(" \n")
+	printf("$1 = radiance image (same bands as eigen2 output)\n")
+	printf("$2 = output structure from eigen2\n")	
+	printf(" \n")
+	printf(" \n")
+	return(0)
+}
+
+eigen=$2
+image=$1
+
+# Invert the Matrix.
+
+evecs=translate(eigen.evecs,from=x,to=y)
+evecsT=eigen.evecs
+
+sq=mxm(evecsT,evecs)
+sq=minvert(sq)
+sq_end=mxm(evecs,sq)
+
+# Subtract the mean from eigen2 from the image.
+
+image=image-translate(eigen.avg,from=x,to=z)
+
+# Disassemble the image to shove it through mxm
+
+dimage = dim(image)
+image = bip(image)
+resize(image, dimage[3], dimage[1]*dimage[2])
+
+# Get concentrations
+
+conc=mxm(image,sq_end)
+
+# Get the image format back
+
+conc=bip(conc)
+resize(conc,dimage[1],dimage[2],dim(conc)[1])
+
+return(conc)
+}
+
+
+
+
+define pca2_recon() {
+  
+  if($ARGC<3) {
+    printf("\nRecombine a THEMIS IR image after jpca()\n\n")
+    printf("$1=The principal components array, output of jpca()\n")
+    printf("$2=The eigen2() structure, output of eigen2()\n")
+    printf("$3=The number of eigen vectors to use\n")
+    printf("\nc.edwards 4/2/04\n\n")
+    return(null)
+  }
+
+  pca=$1
+  eigen=$2
+  iter=$3
+  xdim=dim(pca)[1]
+  ydim=dim(pca)[2]
+  zdim=dim(pca)[3]
+
+# error handeling
+  if(zdim<iter) {
+    printf("\nYou only have %i principal components\n",zdim)
+    printf("You can't reconstruct %i components...DUH\n\n",iter)
+    return(null)
+  }
+
+# set up image for reconstruction
+  image=clone(0.0,xdim,ydim,1)
+  
+  printf("\n  -------------\n")
+  printf("  | Component |\n")
+  printf("  |-----------|\n")
+
+# loop through and reconstruct data using eigen vectors
+  for(i=1;i<=iter;i+=1) {
+    printf("  |     %i     |\n",i)
+    image=image+pca[,,i]*clone(translate(eigen.evecs[,i],from=x,to=z),x=xdim,y=ydim)
+  }
+  
+# add the average of the data
+  printf("  |  Add Avg. |\n")
+  image=image+translate(eigen.avg,from=x,to=z)
+  printf("  -------------\n\n") 
+
+  return(float(image))
+}
+
+
+
+
+
+
+define round() {
+  # rounds the input to the nearest whole number
+
+  floatnums = $1
+
+  wholenums = float(int(floatnums))
+
+  remainder = floatnums-wholenums
+  remainder[where remainder >= 0.50] = 1.0
+  remainder[where remainder < 0.50 && remainder > -0.5] = 0.0
+  remainder[where remainder <= -0.5] = -1.0
+
+  wholenums = wholenums+remainder
+  return(int(wholenums))
+}
+
+
+
+define scalebar(xpos,ypos,xsize,ysize,font,ignore,sample,mintext,minscale,maxtext,maxscale,scaleonly,direction,justify) {
+
+  if($ARGC==0) {
+    printf("Add a scale bar to a numerical array\n\n")
+    printf("Syntax: scalebar(data [,xpos=INT] [,ypos=INT] [,xsize=VAL] [,ysize=VAL] [,font=STRING]\n")
+    printf("                 [,ignore=VAL] [,sample=VAL] [,mintext=STRING] [,maxtext=STRING]\n")
+    printf("                 [,scaleonly=STRING] [,direction=STRING] [,justify=STRING])\n")
+    printf("data = numerical array of any size, with or without ignore values\n")
+    printf("direction = direction of the scale bar (Default = \"vertical\")\n")
+    printf("ignore = ignore value of the data (Default = -32768)\n")
+    printf("scaleonly = Return only the scale bar with the endpoint values shown (Default = \"no\")\n")
+    printf("justfiy = justification of the scale bar (Default = \"top,right\")\n")
+    printf("justifications include: \"top\", \"middle\", \"bottom\", \"left\", \"center\", \"right\"\n")
+    printf("xsize = the size of the scale bar in the x direction as a fraction \n        of the numerical array dimension (Default = 30 (=1/30))\n")
+    printf("ysize = the size of the scale bar in the y direction as a fraction \n        of the numerical array dimension (Default = 10 (=1/10))\n")
+    printf("mintext = User defined text for minimum value (max 15 characters)\n") 
+    printf("minscale = User defined minimum value\n") 
+    printf("maxtext = User defined text for minimum value (max 15 characters)\n") 
+    printf("maxscale = User defined maximum value\n") 
+    printf("sample = use a sample array to add the scale bar to $1\n")
+    printf("font = the font used to display min and max values on scale bar (Default = \"helvetica\")\n")
+    printf("xpos = x positon of the top right of the scale bar (Default = 10) \n")
+    printf("ypos = y position of the top right corner of the scale bar (Default = 10) \n\n")
+    printf("NOTE:  This script requires that convert (ImageMagick) is installed and is defined in your path\n")
+    printf("\nc.edwards 8/12/06\n\n")
+    return(null)
+  }
+
+  verbose=0
+
+  f="helvetica"
+  x=10
+  y=10
+  xf=30
+  yf=10
+  ign=short(-32768)
+  dir="vertical"
+
+  if(HasValue(font)) f=font
+  if(HasValue(xpos)) x=xpos
+  if(HasValue(ypos)) y=ypos
+  if(HasValue(xsize)) xf=xsize
+  if(HasValue(ysize)) yf=ysize
+  if(HasValue(ignore)) ign=ignore
+  if(HasValue(sample)) data=sample
+  if(HasValue(direction)) dir=direction
+  if(HasValue(sample)==0) data=$1
+  if(dir=="vertical") {
+    if(HasValue(xsize)) yf=xsize
+    if(HasValue(ysize)) xf=ysize
+  } 
+  if(HasValue(justfiy)) just=justify
+  if(HasValue(justify) && (HasValue(ypos) || HasValue(xpos))) {
+    printf("Please choose either a justitfication or an x,y pair\n")
+    return(null)
+  } 
+  
+  # set up variable and get the min, max and dimensions
+  dimdata=dim(data)
+  min=min(data,ignore=ign)
+  max=maxval=max(data,ignore=ign)
+
+	if(HasValue(maxscale)) max=maxval=maxscale
+	if(HasValue(minscale)) min=minscale
+
+  #create the scale
+  scale=clone(create(1,int(dimdata[1]/xf),1,start=min,step=(float(max-min))/(dimdata[1]/xf),format=format(data)),x=int(dimdata[2]/yf))
+
+  #get the dimensions of the scale and buffer the edge by 1 ignore pixel
+  scaledim=dim(scale)
+  scale[1]=ign
+  scale[scaledim[1]]=ign
+  scale[,1]=ign
+  scale[,scaledim[2]]=ign
+ 
+  #flip if horizontal
+  if(dir=="horizontal") scale=translate(scale,x,y)
+
+  #check for user defined text
+  if(HasValue(mintext)) min=mintext
+  if(HasValue(maxtext)) max=maxtext
+
+  #make the temporary picture for the text
+  write(byte(clone(0,1000,100,1)),$TMPDIR+"/text.png",png,force=1)
+  syscall("convert -font "+f+" -fill white -pointsize 120 -draw 'text 0,90 \""+min+"\"' "+$TMPDIR+"/text.png "+$TMPDIR+"/mintext.png")
+  syscall("convert -font "+f+" -fill white -pointsize 120 -draw 'text 0,90 \""+max+"\"' "+$TMPDIR+"/text.png "+$TMPDIR+"/maxtext.png")
+ 
+  # read in tmp files and calculate the maximum x dimension
+  mintext=read($TMPDIR+"/mintext.png",record=1)
+  maxtext=read($TMPDIR+"/maxtext.png",record=1)
+  pos=int(max(cat(int(max(rightline(mintext,ignore=0))),int(max(rightline(maxtext,ignore=0))),x)))+5
+ 
+  #write another round of temporary files to resize the two images
+  write(mintext[:pos],$TMPDIR+"/mintext2.png",png,force=1)
+  write(maxtext[:pos],$TMPDIR+"/maxtext2.png",png,force=1)
+
+  #resize the files to the size of the scale bar
+  if(dir=="horizontal") {
+    syscall("convert -geometry x"+scaledim[1]/2+" "+$TMPDIR+"/mintext2.png "+$TMPDIR+"/mintext3.png")
+    syscall("convert -geometry x"+scaledim[1]/2+" "+$TMPDIR+"/maxtext2.png "+$TMPDIR+"/maxtext3.png")
+
+    #read the files back in 
+    tmp1=format(read($TMPDIR+"/mintext3.png",record=1),format=format(data))
+    tmp2=format(read($TMPDIR+"/maxtext3.png",record=1),format=format(data))
+
+    #shrink the text by 1/2 so it doesn't look ridiculous
+    mintext=maxtext=clone(format(0,format=format(data)),dim(tmp1)[1],scaledim[1],1)
+    j=2
+    if(scaledim[1]*3/4-1-scaledim[1]/4 != dim(tmp1)[2]) j=1
+    mintext[,scaledim[1]/4:scaledim[1]*3/4-j]=tmp1
+    maxtext[,scaledim[1]/4:scaledim[1]*3/4-j]=tmp2
+    tmp1=tmp2=0
+  }
+  
+  if(dir=="vertical") {
+    #read files back in
+    syscall("convert -geometry "+scaledim[1]+"x "+$TMPDIR+"/mintext2.png "+$TMPDIR+"/mintext3.png")
+    syscall("convert -geometry "+scaledim[1]+"x "+$TMPDIR+"/maxtext2.png "+$TMPDIR+"/maxtext3.png")
+   
+    #read the files back in 
+    mintext=format(read($TMPDIR+"/mintext3.png",record=1),format=format(data))
+    maxtext=format(read($TMPDIR+"/maxtext3.png",record=1),format=format(data))
+  }   
+
+  #change text values to match the data
+  mintext[where mintext==0]=ign
+  maxtext[where maxtext==0]=ign  
+  mintext[where mintext!=ign]=maxval
+  maxtext[where maxtext!=ign]=maxval
+
+  #return scale if only scale is wanted and cat together the bar and text
+  verbose=1
+  if(dir=="horizontal") {
+     scale=cat(bsq(mintext),scale,bsq(maxtext),axis=x)
+     if(HasValue(scaleonly)) return(scale)
+  }
+  if(dir=="vertical") {
+    scale=cat(bsq(mintext),scale,bsq(maxtext),axis=y)
+    if(HasValue(scaleonly)) return(scale)
+  }
+
+  #fill in point specified by user
+  if(HasValue(sample)) data=$1
+  scaledim=dim(scale)
+  datadim=dim(data)
+  #check for justification and parse the options
+  if(HasValue(justify)) {
+    commapos=strstr(justify,",")
+    vert=justify[:commapos-1]
+    if(vert!="top" && vert!="bottom" && vert!="middle") { 
+      printf("You can only choose top, middle or bottom for vertical justification\n")
+      return(null)
+    }
+    if(vert=="top") y=10
+    if(vert=="bottom") y=datadim[2]-10-scaledim[2]
+    if(vert=="middle") y=datadim[2]/2-scaledim[2]/2
+    horiz=justify[commapos+1:]
+    if(horiz!="right" && horiz!="left" && horiz!="center") { 
+      printf("You can only choose right, left or center for horizontal justification\n")
+      return(null)
+    }
+    if(horiz=="left") x=10
+    if(horiz=="right") x=datadim[1]-10-scaledim[1]
+    if(horiz=="center") x=datadim[1]/2-scaledim[1]/2
+  }
+
+  #fill in and return data
+  data[x:scaledim[1]+x-1,y:scaledim[2]+y-1]=scale
+  return(data)
+}
+
+
+
+
+define add_grid(xo,yo,thick) {
+  if ($ARGC <4) {
+    printf ("\n add grid to image \n")
+    printf (" usage: add_grid(input, dx, dy, line_color [,xoffset] [,yoffset] [,thickness])\n")
+    printf (" example:  b = add_grid(a, 48, 48, 'halfwhite', xo=8, yo=4,thick=2)  \n\n")
+
+   	return(null)
+  }
+
+	data=$1
+	dx=$2
+	dy=$3
+	
+	if(HasValue(thick)==0) thick=0
+	if(HasValue(xo)==0)xo=dx
+	if(HasValue(yo)==0)yo=dy
+
+	mask=byte(data*0)[,,1]
+
+	for(i=xo;i<=dim(data)[1];i+=dx){
+		if(i-thick>=1 && i+thick<=dim(data)[1]-thick)	mask[i-thick:i]=255
+		if(i+thick<=dim(data)[1]-thick)	mask[i:i+thick]=255
+	}
+	for(i=yo;i<=dim(data)[2];i+=dy) {
+		if(i-thick>=1 && i+thick<=dim(data)[2]-thick)	mask[,i-thick:i]=255
+		if(i+thick<=dim(data)[2]-thick)	mask[,i:i+thick]=255
+	}
+
+	if ($4 == "white") {
+	    data = data+mask
+	} else if ($4 == "black") {
+ 	   data = data-mask
+	} else if ($4 == "quarterwhite") {
+ 	   data = data+byte(0.25*mask)
+	} else if ($4 == "quarterblack") {
+ 	   data = data-byte(0.25*mask)
+	} else if ($4 == "halfwhite") {
+	   data = data+byte(0.50*mask)
+	} else if ($4 == "halfblack") {
+	   data = data-byte(0.50*mask)
+	}
+
+	return(data)
+
+}

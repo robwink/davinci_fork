@@ -1,0 +1,94 @@
+#!/mars/common/bin/davinci -fq -v0
+source("/themis/lib/dav_lib/library/library_mars.dvrc")
+
+##
+##
+############################# bandselect.isis3.dv ############################
+#
+# This script will crop out the selected THEMIS bands from a projected cube.
+#
+# Usage: thm.bandselect.isis3.dv input_cube output_cube band
+#
+#
+# Modification History
+# --------------------
+# 2010-07-01 - C. Edwards: Original Script
+#
+# 2010-11-29 - J. Hill: Modified to output the ISIS3 cube as bsq, instead
+#                       the default tiled format. 
+# 
+# 2014-08-08 - C. Edwards made portable for distribution
+#
+##########################################################################
+##
+##
+
+opt={\
+from="",\
+to="",\
+band=""\
+};
+opt=getopt($ARGV,opt)
+
+if(opt.from=="" || opt.to=="" || opt.band=="") {
+	printf("\nThis script will crop out the selected THEMIS bands from a projected cube.\n\n")
+	printf("Arguments:\n")
+  printf("\tfrom = input ISIS3 THEMIS filename\n")
+  printf("\tto = output ISIS3 THEMIS filename\n")
+	printf("\tband = band number e.g. 9\n\n")
+  printf("Script Contributors:\n")
+  printf("C. Edwards, J. Hill, 8/11/14\n\n")
+	exit(0)
+}
+
+printf("\nSelected options:\n")
+opt_usage(opt)
+printf("\n")
+
+insmod("isis3")
+if(lsmod("isis3")==0) {
+  printf("This script requires the davinci ISIS3 I/O module\n")
+  exit(0)
+}
+
+
+##
+## Load the Input ISIS3 Cube
+##
+
+a=load_pds(opt.from)
+
+##
+## Crop Selected Bands
+##
+
+themis_band=atoi(opt.band)
+
+if (HasValue(a.IsisCube.BandBin.FilterNumber)) {
+	bands = a.IsisCube.BandBin.FilterNumber
+} else {
+	bands = a.IsisCube.BandBin.OriginalBand
+}
+
+band=0
+for(i=1;i<=length(bands);i+=1) {
+  if (bands[i] == themis_band) {
+    band=i
+  } else {
+    #band=i
+    #i=length(bands)+1
+  }
+}
+
+if(band!=0) {
+  a.cube=a.cube[,,band]
+	if(HasValue(a.IsisCube.BandBin.FilterNumber)) {
+	  a.IsisCube.BandBin.FilterNumber[band]
+	} else {
+	  a.IsisCube.BandBin.OrignalBand[band]
+	}
+}
+
+printf("Writing data: %s\n\n",opt.to)
+write(a,opt.to,isis3,force=1);
+

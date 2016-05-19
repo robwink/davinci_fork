@@ -1,0 +1,90 @@
+#!/mars/common/bin/davinci -fq -v0
+source("/themis/lib/dav_lib/library/library_mars.dvrc")
+
+opt={\
+from="",\
+to="",\
+minlat = 0.0,\
+maxlat = 0.0\
+};
+opt=getopt($ARGV,opt)
+
+printf("opt.from=%s, opt.to=%s\n",opt.from,opt.to)
+if(opt.from=="" || opt.to=="") {
+	printf("\nThis script will crop an unprojected ISIS3 THEMIS\n")
+	printf("cube based on latitude and return an ISIS3 cube with correct\n")
+	printf("label data, including a history object entry\n\n")
+	printf("Arguments\n")
+	printf("\tfrom = path to input ISIS3 file\n")
+	printf("\tto = path to output ISIS3 file\n")
+	printf("\tminlat = min latitute for cropping\n")
+	printf("\tmaxlat = max latitute for cropping\n\n")
+  printf("Script Contributors:\n")
+  printf("C. Edwards, J. Hill 8/11/14\n\n")
+	exit(0)
+}
+
+printf("\nSelected options:\n")
+opt_usage(opt)
+printf("\n")
+printf("Cropping THEMIS cube from %f:%f\n",opt.minlat,opt.maxlat)
+
+insmod("isis3")
+if(lsmod("isis3")==0) { 
+	printf("This script requires the davinci ISIS3 I/O module\n")
+	exit(0)
+}
+
+#read in the header
+a=load_pds(opt.from,data=0)
+
+totallines=a.IsisCube.Core.Dimensions.Lines
+midline=totallines/2
+
+#get the midle longitude
+midlon=atof(strsplit(grep(syscall(sprintf("campt from=%s type=image line=%d",opt.from,midline)),"PositiveEast360Longitude"),delim="=")[1][,2])
+
+#get the start/end lat
+startlat=atof(strsplit(grep(syscall(sprintf("campt from=%s type=image line=1",opt.from)),"PlanetocentricLatitude"),delim="=")[1][,2])
+endlat=atoi(strsplit(grep(syscall(sprintf("campt from=%s type=image line=%d",opt.from,totallines)),"PlanetocentricLatitude"),delim="=")[1][,2])
+
+if(startlat>endlat){
+	#day case
+	maxlat=startlat
+	minlat=endlat
+} else {
+	#night case
+	maxlat=endlat
+	minlat=startlat
+}
+
+#check for out of bounds lats
+if(opt.minlat<minlat) {
+	opt.minlat=minlat
+}
+if(opt.maxlat>maxlat) {
+	opt.maxlat=maxlat
+}
+
+#find the starting line
+if(opt.maxlat<=maxlat) {
+	line1=atof(strsplit(grep(syscall(sprintf("campt from=%s type=ground latitude=%f longitude=%f",opt.from,opt.maxlat,midlon)),"Line"),delim="=")[1][,2])
+} else {
+	line1=1
+}
+
+#find the end line
+if(opt.minlat>=minlat) {
+	line2=atof(strsplit(grep(syscall(sprintf("campt from=%s type=ground latitude=%f longitude=%f",opt.from,opt.minlat,midlon)),"Line"),delim="=")[1][,2])
+} else {
+	line2=totallines
+}
+
+minlinediff=line2-line1
+#make sure we have a positive result
+if(minlinediff>0) {
+	system(sprintf("crop from=%s to=%s line=%d nline=%d",opt.from,opt.to,line1,minlinediff))
+} else {
+	system(sprintf("crop from=%s to=%s line=%d nline=%d",opt.from,opt.to,line2,abs(minlinediff)))
+}
+

@@ -1,0 +1,44 @@
+#!/mars/common/bin/davinci -fq -v0
+source("/themis/lib/dav_lib/library/library_mars.dvrc")
+
+if($ARGC<2) {
+	printf("\nRun rtilt() on an unprojected ISIS3 cube\n")
+	printf("$1 - path to input ISIS3 cube\n")
+	printf("$2 - path to output ISIS3 cube\n\n")
+	printf("Options:\n")
+	printf("size - size of rtilt (Default is 4000)\n")
+	printf("ignore - ignore value for the image (Default is -3.402822655e+38)\n")
+	printf("rectify - rectify the data if you have a projected image (Default is 0)\n\n")
+	printf("c.edwards 10/17/13\n\n")
+	exit(0)
+}
+
+input=$1
+output=$2
+
+opt={\
+size = 4000,\
+ignore = -3.402822655e+38,\
+rectify = 0\
+};
+
+opt=getopt($ARGV,opt)
+printf("Running rtilt on:\n")
+printf("    input=%s\n",input)
+printf("    output=%s\n",output)
+printf("\nSelected options:\n")
+opt_usage(opt)
+insmod("isis3")
+
+work=load_pds($1)
+
+if(opt.rectify!=0) {
+	work.cube=thm.rectify(work.cube,ignore=opt.ignore)
+	work.cube.data=rtilt(data=work.cube.data,ignore=-32768,ysize=opt.size,verbose=1)
+	work.cube=thm.reconstitute(work.cube)
+	work.cube[where work.cube==-32768]=opt.ignore
+} else {
+	work.cube=rtilt(data=work.cube,ignore=opt.ignore,ysize=opt.size,verbose=1)
+}
+
+write(work,output,isis3,force=1);

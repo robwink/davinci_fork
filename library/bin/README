@@ -1,0 +1,13 @@
+To have command line scripts be platform independant:
+
+1) The first 2 lines must be:
+#!/mars/common/bin/davinci -fq -v0
+source("/themis/lib/dav_lib/library/library.dvrc")
+
+These lines will be removed and updated on the user
+calling davinci's library_update(update=1,beta=1)
+
+2) The files must have the extension ".dv"
+
+3) Must not rely on any (or any significant) external scripts/commands
+	NOTE: these can be included in the $SCRIPT_FILES directory

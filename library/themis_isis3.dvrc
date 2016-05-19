@@ -1,0 +1,359 @@
+themis_isis3_version=1.00
+# delete_object_vars	- used to remove the "object" struct in an isis/pds structure
+# longlinefix           - UNformats history lines (usually description lines) - k.murray 8/2012
+# isis3short(null,verb) - converts float data to short; returns structure data + new keyword values - k.murray 2/2014
+# isis3byte(null,verb)  - converts float data to byte; returns structure data + new keyword values - k.murray 2/2014
+# themis_to_isis3	- converts a THEMIS EDR/RDR to ISIS3 format, preserving pre-ISIS processing history 
+#                         (moved from msff.dvrc - used for outside of the building)
+# isis3_history(param)  - build a basic history structure - k.murray 8/2012
+# save_davisis3()       - rename exisiting davisis3 entries so they dont get overwritten - k.murray 8/2012
+# filt2band()           - correction for bad VIS BandBinBandNumber translation - k.murray 4/2013
+# find_band_I3CUB(obj,N) - find location of given band in ISIS3 cube - kmurray 8/2012
+
+#Useful constant: NULL=-3.40282e+38
+#I3null=-340282265508890445205022487695511781376.00000
+
+define delete_object_vars(sin) {
+ #used to delete the "object" elements of an isis3 structure recursively
+    #sin=$1
+    if (type(sin) == "STRUCT") {
+        remove_struct(sin, "Object")
+        for (i=1; i<=length(sin); i++) {
+            delete_object_vars(sin=sin[i])
+        }
+    }
+}
+
+
+define longlinefix(char) {
+  ##Reduce multi-line and space-padded history elements to a single line
+  ##write(type=isis3) will reformat as necessary
+  ## input lines longer than char=[value] will be reformatted (default=80)
+
+   llhist=$1
+   if ( HasValue(char) == 0 ) {
+        char=80
+   }
+
+   for (i=1;i<=length(llhist);i+=1) {
+   for (j=1;j<=length(llhist[i]);j+=1) {
+       if ( length(llhist[i][j]) > char ) {
+          printf ("  Reformatting History.[%d][%d]: %s.%s (orig-length=%d) ...\n",i,j,get_struct_key(llhist,i),get_struct_key(llhist[i],j),length(llhist[i][j]))
+          textL=syscall(sprintf("echo %s",llhist[i][j]))
+
+          #Remove the mulitple linefeeds & preserve the quotes
+           text=sprintf("\"%s",textL[,1])
+           for (k = 2 ; k <= length(textL) ; k+=1) {
+               text=sprintf("%s %s",text,textL[,k])
+           }
+           text=sprintf("%s\"",text)
+
+          #Remove the mulitple spaces & replace into the OUT.History
+           llhist[i][j]=strsub(text,"  *"," ")
+       }
+   } }
+   return(llhist)
+}
+
+
+define isis3short(verb,hist) {
+ #Usage: isis3short(data[, verb=0|1] [hist=1])
+ # Note: min(FLT.cube) prob!= min(expanded-SRT); min==core_null must be reset
+ #8/2012: loosely based on themis_dvrc_cal/mband_rdr (IR-RDR float-to-short scaling function)
+ #4/2013: ISIS3 short valid cnull=-32768, data_range=(-32768:32767); return history if hist=1 
+ #6/2013: Fixed min(null) typo
+
+ #Inputs
+  FLT=struct()
+  FLT.cube=$1
+  d=dim(FLT.cube)
+  FLT.cnull=min(FLT.cube)
+  FLT.valmin=min(FLT.cube,ignore=FLT.cnull)
+
+  if (HasValue(verb) == 0) {
+     verb=1
+  }
+  if (HasValue(hist) == 0) {
+     hist=0
+  }
+
+ #Structures for output
+  SRT=struct()
+  SRT.cnull=-32768
+  SRT.valid_max=32767
+  SRT.valid_min=-32767
+  SRT.base=0.0
+  SRT.mult=0.0
+
+ #Calculate the data range & Translate
+  maxs=max(FLT.cube)
+  mins=min(FLT.cube, ignore=FLT.cnull)
+
+  slope=(maxs-mins)/(SRT.valid_max-SRT.valid_min)
+  offset=mins-slope*SRT.valid_min
+
+  SRT.mult=double(slope)
+  SRT.base=double(offset)
+
+  SRT.cube=short((FLT.cube-offset)/slope)
+  SRT.cube[where(FLT.cube)==FLT.cnull]=SRT.cnull
+
+  if ( verb == 1 ) {
+     printf("To return short to float:\t FLOAT=[mult]*[cube]+[base]\n")
+     printf("\t... where FLOAT=%f *[cube] +%f\n",SRT.mult, SRT.base)
+     printf("\t... then reset min(FLOAT) to desired core_null value\n\n")
+  }
+
+  if ( hist == 1 ) {
+     SRT.History=struct()
+     SRT.History=isis3_history(param=1)
+     #SRT.History.title="float2short"
+     SRT.History.software_desc=sprintf("Data in this image was translated from float to short format; these base and multiplier values can be used to reverse the process.  Eventually, these values will be stored in the cube-label and this object will be deleted.")
+     SRT.History.version_id="2013.04"
+     SRT.History.parameters.null=sprintf("%f",SRT.cnull)
+     SRT.History.parameters.base=sprintf("%f",SRT.base)
+     SRT.History.parameters.multiplier=SRT.mult
+  }
+
+  return(SRT)
+}
+
+
+define isis3byte(verb,hist) {
+ #Usage: isis3short(data, [null=#],[verb=0|1])
+ #4/2013: ISIS3 byte valid cnull=0, data_range=(0:255); return history if hist=1
+
+ #Inputs
+  FLT=struct()
+  FLT.cube=$1
+  d=dim(FLT.cube)
+  FLT.cnull=min(FLT.cube)
+  FLT.valmin=min(FLT.cube,ignore=FLT.cnull)
+
+  if (HasValue(hist) == 0) {
+     hist=0
+  }
+  if (HasValue(verb) == 0) {
+     verb=0
+  }
+
+ #Structures for output
+  BYT=struct()
+  BYT.cnull=0
+  BYT.valid_max=255
+  BYT.valid_min=1
+  BYT.base=0.0
+  BYT.mult=0.0
+
+ #Calculate the data range & scale
+  maxs=max(FLT.cube)
+  mins=min(FLT.cube,ignore=FLT.cnull)
+
+  slope=(maxs-mins)/(BYT.valid_max-BYT.valid_min)
+  offset=mins-slope*BYT.valid_min
+
+  BYT.mult=double(slope)
+  BYT.base=double(offset)
+
+  BYT.cube=byte((FLT.cube-offset)/slope)
+  BYT.cube[where(FLT.cube)==FLT.cnull]=BYT.cnull
+  if ( verb == 1 ) {
+     printf("To return byte to float:\t FLOAT=[mult]*[cube]+[base]\n")
+     printf("\t... where FLOAT=%f *[cube] +%f\n",BYT.mult, BYT.base)
+     printf("\t... then reset min(FLOAT) to desired core_null value\n\n")
+  }
+
+  if ( hist == 1 ) {
+     BYT.History=struct()
+     BYT.History=isis3_history(param=1)
+     #BYT.History.title="float2byte"
+     BYT.History.software_desc=sprintf("Data in this image was translated from float to byte format; these base and multiplier values can be used to reverse the process.  Eventually, these values will be stored in the cube-label and this object will be deleted.")
+     BYT.History.version_id="2013.04"
+     BYT.History.parameters.null=sprintf("%f",BYT.cnull)
+     BYT.History.parameters.base=sprintf("%f",BYT.base)
+     BYT.History.parameters.multiplier=BYT.mult
+  }
+
+  return(BYT)
+}
+
+
+
+define themis_to_isis3(out,vis,suff) {
+  #Based on msff.dvrc original by r.kaelber / j.hill
+  #8/2012 Significant modifications (k.murray)
+  #4/3/13: Fix ISIS3-VIS naming convention error (k.murray)
+  #5/8/13: Add suffix_data option 
+  #6/2015: Save thm2isis history (avail in ISIS3.4.9)
+
+  if ($ARGC == 0) {
+      printf("Convert an EDR/RDR to ISIS3 format, preserving pre-ISIS processing history.\n\n")
+      printf("    Usage: themis_to_isis3(input_filename [, out=output_filename] [,vis=1|2])\n")
+      printf("    Option out = writes tranlated file to given filename; (default return file as structure)\n")
+      printf("    Option vis = returns odd [=1] or even [=2] file\n")
+      printf("    Option suff = 1 loads with suffix_data=1 \n")
+      printf("    side effect: isis3 IO module is loaded if not already present.\n")
+      printf("                 use rmmod('isis3') to remove it if desired.\n\n")
+      return(0)
+  }
+
+#debug=1
+
+ #Parse arguments
+  in = $1
+
+  if ( HasValue(out) == 0 ) {
+     out="null"
+  }
+  if ( HasValue(vis) == 0 ) {
+     vis=0
+  }
+  if ( HasValue(suff) == 0 ) {
+     suff=0
+  }
+
+  a = load_pds(in)
+  atype=a.detector_id
+  pid=a.product_id[2:length(a.product_id)-1]
+  hist = a.history.data
+
+ #ISIS3 translation
+  insmod("isis3")
+
+  if ( atype[2:3] == "IR" ) {
+     I3=sprintf("%s.I3.cub",pid)
+     printf("\nthm2isis from=%s to=%s/%s\n",in,$TMPDIR,I3)
+     rtn=system(sprintf("thm2isis from=%s to=%s/%s",in,$TMPDIR,I3))
+
+  } else if ( atype[2:3] == "VI" ) {
+    #thm2isis[3] splits VIS into even/odd framelet files
+    #Note: both files are always generated; this function only loads one for simplicity
+     if ( vis == 1 ) { 
+        I3=sprintf("%s.odd.cub",pid)
+     } else if ( vis == 2 ) {
+        I3=sprintf("%s.even.cub",pid)
+     }
+     printf("\nthm2isis from=%s to=%s/%s\n",in,$TMPDIR,pid)
+     rtn=system(sprintf("thm2isis from=%s to=%s/%s",in,$TMPDIR,pid))
+   }
+
+  if (rtn != 0) {
+      printf("ERROR: thm2isis failed for file %s\n",in)
+      return(rtn)
+  }
+
+  ##protect seg fault in case this load fails
+   b=0 
+  if ( fexists(sprintf("%s/%s",$TMPDIR,I3)) == 1 ) {
+      printf("Loading ISIS3: %s/%s\n",$TMPDIR,I3)
+      b=load_pds(sprintf("%s/%s",$TMPDIR,I3),suffix_data=1)
+  } else {
+      printf("ERROR: file not available %s/%s\n",$TMPDIR,I3)
+      return(0)
+  }
+
+ #Reset the BandBinBandNumber (thm2ISIS3 messes these up; waiting for ISIS3 official fix)
+  b.IsisCube.BandBin.OriginalBand=a.spectral_qube.band_bin.band_bin_band_number
+
+ #Reformat History
+ ##Error messages probably okay
+  delete_object_vars(sin=hist)
+
+ ##Undo PDS-Parse formatting
+  hist=longlinefix(hist)
+  
+ ##Add new I3 expected keywords and merge history
+  hist.thm2isis={}
+  hist.thm2isis=b.IsisCube.History.thm2isis
+  hist.isis_struct_type = "history"
+  b.IsisCube.History = hist
+
+  if ( out == "null" ) {
+     return(b)
+  } else { 
+     write(b, out, type=isis3, force=1)
+  }
+}
+
+define isis3_history(param) {
+   ##Build a basic history structure
+   ##Use param=1 to add parameters structure
+     new=struct()
+     new.date_time=syscall("date +'%Y-%m-%dT%H:%M:%S'")[,]
+     new.software_desc="TBD"
+     new.version_id="TBD"
+     new.davinci_version=sprintf("%s",version()[18:])
+     new.user_name=syscall('echo `whoami`"@"`hostname`')[,]
+     new.user_note=""
+     if ( HasValue(param) == 1 ) {
+        new.parameters={}
+        new.parameters.isis_struct_type="object"
+     }
+     return(new)
+}
+
+
+
+define save_davisis3() {
+   ##Rework existing DAVISIS3 history object so they dont get overwritten by next write(type=isis3)
+   in=$1
+   if ( HasValue(in.IsisCube.History.davisis3) == 1) {
+      LN=0
+      for ( i=1; i<=length(in.IsisCube.History) ; i+=1 ) {
+          if ( get_struct_key(in.IsisCube.History)[,i] == "davisis3" ) {
+             LN=i
+             in.IsisCube.History[i].Description=sprintf("ISIS3 cube written from davinci after %s processing.",get_struct_key(in.IsisCube.History)[,i-1])
+	     i=length(in.IsisCube.History)
+	  }
+      }
+      printf("Save_davisis3: davisis3 entry is assoc with %s ...\n",get_struct_key(in.IsisCube.History)[,LN-1])
+      insert_struct(in.IsisCube.History, name="davinci_to_isis3", before=LN )
+      in.IsisCube.History[LN]=in.IsisCube.History[LN+1]
+      remove_struct(in.IsisCube.History,"davisis3")
+   } else {
+     printf("Save_davisis3: nothing to be done ...\n")
+   }
+   return(in)
+}
+
+define filt2band () {
+##3/2013: ISIS3.thm2isis translates BandBinFilterNumber correctly, but turns OriginalBand into a z-counter 
+##  (!=BandBinBandNumber); translation required until this gets corrected to THEMIS user expectations
+##6/2015: ISIS-V3.4.8+ adds new keyword BandNumber==RDR.BandBinBandNumber, OriginalBand still a z-counter
+##  THEMIS standard processing will continue to reformat OriginalBand as many pipeline tools expect this
+
+  #Usage filt2band(IsisCube.BandBin.FilterNumber)
+  #Returns an array to replace IsisCube.BandBin.OriginalBand entry
+
+  FILT=$1
+  D1=dim(FILT)[1]
+  BAND=create(D1,1,1,start=0,step=0,format=int)
+  for (b=1; b<=D1; b+=1) {
+       if ( FILT[b] == 2 ) {
+          BAND[b]=1
+       } else if ( FILT[b] == 5 ) {
+          BAND[b]=2
+       } else if ( FILT[b] == 3 ) {
+          BAND[b]=3
+       } else if ( FILT[b] == 4 ) {
+          BAND[b]=4
+       } else if ( FILT[b] == 1 ) {
+          BAND[b]=5
+       }
+  }
+  return(BAND)
+}
+
+define find_band_I3CUB(obj,N) {
+       #Careful: ISIS3 usually rewrites BandBin.OriginalBand (make corrections before using this function)
+        if (HasValue(obj) == 0) {
+                printf("usage: find_band_CUB(obj=value, N)\n");
+                return(0);
+        }
+        bands = obj.IsisCube.BandBin.OriginalBand
+        for (i = 1 ; i <= length(bands) ; i+=1) {
+             if (bands[i] == $1) return(i);
+        }
+        return(0)
+}
+

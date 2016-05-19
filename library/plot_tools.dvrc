@@ -1,0 +1,3840 @@
+plot_tools_version=1.13
+if(HasValue($GPLOT_TERM)==0) {
+  putenv("GPLOT_TERM","x11")
+}
+
+#improved plot_sma titles and labels pchristensen 11/28/2010
+#upgraded pngplot to deal with new gnuplot syntax
+#upgraded all functions to use X11 for mac rather than AQUA - cedwards 5/6/2010
+#updgraded pplot/pplot_tutorial to use vplot - cedwards/pchristensen 7/29/2010
+#added pplot_examples - cedwards/pchristensen 7/29/2010
+#minor updates to pplot and pplot_tutorial - cedwards/pchristensen 8/11/2010
+#added plot_sma - cedwards/pchristensen 8/19/2010
+#minor fixes to plot_sma to better deal with labels cedwards 2-3-2011
+#added V.Hamilton functions 2/12/2011
+#improved pdf writing capablities for mac/linux (pdfplot,pplot) cedwards 3-9-2012
+#1.12 added enviornment variable support and updates to gnuplot command styles 
+#1.13 pplot enhancemsnets,  added nir keyword and set default to 0
+#  if nir, set plot range for ASD
+#	 added 40 micron tic in label
+#	 changed xaxis default to start at 4 microns
+#  changed ylabel and xlabel positions to move closer to axes.
+#	 shortened length of line and reduced font size in key
+
+# density_plot 	 - taken from /u/cedwards/dvrc/density_plot.dvrc
+# pplot					 - taken from /u/phil/pplot_dvrc
+# pplot_tutorial - taken from /u/phil/pplot.dvrc
+# pplot_examples - taken from /u/phil/scripts/davinci/pplot.dv
+# plot_functions - all taken from /u/bandfield/josh.dvrc
+# plot_sma 			 - taken from /u/phil/scripts/davinci/plot_sma.dv 
+# plot_sma_tutorial - taken from /u/phil/scripts/davinci/test_plot_sma.dv
+# replot
+# showlabel
+# multiplot
+# nomultiplot
+# rmlabel
+# plim
+# nullim
+# lines
+# points
+# linespoints
+# dots
+# label
+# prplot
+# gvplot
+# pdfplot
+# psplot
+# pngplot
+# labelxy
+# nokey
+# key
+# vert_line
+# rm_arrow
+# show_arrow
+# commonx       - taken from /u/cedwards/christopher.dvrc
+# plot_loop     - Added by J. Bandfield 1/2008
+# triplot 			-Added by C.Edwards 2/2009
+# refit_sma	- added by P. Christensen 9/2010
+# stack_plot - added by P. Christensen 9/2010
+# remove_quote - added by P. Christensen 11/2010
+# keypos - added by V. Hamilton 4-12-2011
+# revkey - added by V. Hamilton 4-12-2011
+# unrevkey - added by V. Hamilton 4-12-2011
+# invkey - added by V. Hamilton 4-12-2011
+# uninvkey - added by V. Hamilton 4-12-2011
+
+
+
+define plot_functions() {
+
+	printf("\n")
+	printf("pplot()\n")
+	printf("pplot_tutorial()\n")
+	printf("pplot_examples()\n")
+	printf("plot_functions()\n")
+	printf("plot_sma()\n")
+	printf("replot() - refresh plot\n")
+	printf("showlabel() - list all labels\n")
+	printf("multiplot() - plot multiple plots on the same window\n")
+	printf("nomultiplot() - remove multiplot option\n")
+	printf("rmlabel(*) - remove labels\n")
+	printf("plim(*) - set plot limits\n")
+	printf("nullim() - set null plot limits\n")
+	printf("lines() - set plot to lines\n")
+	printf("points() - set plot to points\n")
+	printf("linespoints() - set plot to lines and points\n")
+	printf("dots() - set plot to dots\n")
+	printf("label(*) - add label to plot\n")
+	printf("prplot() - print plot\n")
+	printf("gvplot() - view postscript plot\n")
+	printf("pdfplot\n")
+	printf("psplot(*) - write postscript plot\n")
+	printf("pngplot\n")
+	printf("labelxy(*) - add axes labels and title to plot\n")
+	printf("nokey() - remove plot key\n")
+	printf("key() - display plot key\n")
+	printf("vert_line\n")
+	printf("rm_arrow\n")
+	printf("show_arrow\n")
+	printf("commonx\n")
+	printf("plot_loop(*) - loop through array\n")
+	printf("themis_plot(*) - plot themis database parameters\n")
+	printf("refit_sma(*) - refit a spectrum using the top n endmembers - (plot_sma)\n")
+	printf("stack_plot(*) - plot the cummulative spectral contribution of endmembers from sma (plot_sma\n")
+	printf("keypos() - change the key position\n")
+	printf("revkey() - change the text/symbol order\n")
+	printf("unrevkey() - revert the text/symbol order\n")
+	printf("invkey() - invert the key\n")
+	printf("uninvkey() - uninvert the key\n")
+	
+}
+
+define replot() {
+  plot("replot")
+}
+
+define showlabel() {
+  plot("show label")
+}
+
+define multiplot(rows,columns,columnsfirst) {
+	if(HasValue(rows)==0) rows=1
+	if(HasValue(columns)==0) columns=1
+	if(HasValue(columnsfirst)==0) columnsfirst=0
+
+	if(rows!=1 || columns!=1) {
+		layout="layout "+rows+","+columns
+		if(columnsfirst==0) {
+			cfs="rowsfirst"
+		} else {
+			cfs="columnsfirst"
+		}
+	} else {
+		layout=""
+		cfs=""
+	}
+	
+  plot("set multiplot "+layout+" "+cfs+"")
+}
+
+define nomultiplot() {
+  plot("set nomultiplot")
+}
+
+define rmlabel() {
+  if ($ARGC == 0) {
+    printf (" \n")
+    printf (" Remove Labels \n")
+    printf (" $1 = label number (0 for all) \n")
+    printf("\n")
+    return(0)
+  }
+
+  num=$1
+
+  if (num == 0) {
+    plot("set nolabel")
+  }
+
+  if (num != 0) {
+    plot("set nolabel "+num+" ")
+  }
+
+  plot("replot")
+}
+
+
+define plim() {
+
+  if ($ARGC == 0) {
+    printf (" \n")
+    printf (" Set plot limits. \n")
+    printf (" $1 = xlow \n")
+    printf (" $2 = xhigh \n")
+    printf (" $3 = ylow \n")
+    printf (" $4 = yhigh \n")
+    printf (" \n")
+    return(0)
+  }
+
+  if ($1 != $2) {
+    if ($1 < $2) {
+      plot("set xrange ["+$1+":"+$2+"] noreverse")
+    } else {
+      plot("set xrange ["+$1+":"+$2+"]")
+    }
+  }
+
+  if ($1 == $2) {
+    plot("set xrange [*:*] noreverse")
+  }
+
+  if ($3 != $4) {
+    if ($3 < $4) {
+      plot("set yrange ["+$3+":"+$4+"] noreverse")
+    } else {
+      plot("set yrange ["+$3+":"+$4+"]")
+    }
+  }
+
+  if ($3 == $4) {
+    plot("set yrange [*:*] noreverse")
+  }
+
+  plot("replot")
+}
+
+
+
+define nullim() {
+  plot("set xrange [*:*] noreverse")
+  plot("set yrange [*:*] noreverse")
+  plot("replot")
+}
+
+
+
+define lines() {
+  plot("set style data lines")
+  plot("replot")
+}
+
+
+
+define points() {
+  plot("set style data points")
+  plot("replot")
+}
+
+
+
+define linespoints() {
+  plot("set style data linespoints")
+  plot("replot")
+}
+
+
+
+define dots() {
+  plot("set style data dots")
+  plot("replot")
+}
+
+
+
+define label() {
+
+  if ($ARGC == 0) {
+    printf (" \n")
+    printf (" Put a label on the plot. \n")
+    printf (" $1 = xposition \n")
+    printf (" $2 = yposition \n")
+    printf (" $3 = label text \n")
+    printf (" $4 = justification 'left','right', or 'center' (optional) \n")
+    printf (" Left justified is default. \n")
+    printf (" \n")
+    return(0)
+  }
+
+  if ($ARGC == 3) {
+    plot("set label '"+$3+"' at "+$1+","+$2+" left")
+  }
+
+  if ($ARGC == 4) {
+    plot("set label '"+$3+"' at "+$1+","+$2+" "+$4+" ")
+  }
+
+  plot("replot")
+}
+
+
+define prplot() {
+	#added $DV_OS support
+  plot("set terminal postscript color solid 'Helvetica' 14")
+  plot("set output '"+$TMPDIR+"/dv_prplot_temp.ps'")
+  replot()
+  pause("Hit a key...any key...especially the return key")
+
+  syscall("lpr "+$TMPDIR+"/dv_prplot_temp.ps")
+  syscall("rm "+$TMPDIR+"/dv_prplot_temp.ps")
+  if ($DV_OS=="win") {
+    plot("set terminal windows noenhanced")
+  } else {
+    plot("set terminal "+$GPLOT_TERM)
+  }
+}
+
+
+
+define gvplot() {
+#added $DV_OS support
+  plot("set terminal postscript color solid 'Helvetica' 14")
+  plot("set output '"+$TMPDIR+"/dv_prplot_temp.ps'")
+  replot()
+  pause("Hit a key...any key...especially the return key")
+
+  syscall("ghostview "+$TMPDIR+"/dv_prplot_temp.ps")
+  syscall("rm "+$TMPDIR+"/dv_prplot_temp.ps")
+  if ($DV_OS=="win") {
+    plot("set terminal windows noenhanced")
+  } else {
+    plot("set terminal "+$GPLOT_TERM)
+  }
+}
+
+
+define figplot(w,h) {
+
+ if ($ARGC == 0) {
+   printf (" \n")
+   printf (" Output a plot to a pdf file of specified size (inches). \n")
+   printf (" Syntax: figplot(filename, w=width, h=height) \n")
+   printf (" default = 6.4 by 4.3 inches\n")
+   return(0)
+ }
+
+# catch errors and assure suffix is correct
+ filename = $1
+ if(type(filename)!="STRING"){
+   printf("please use a string for a filename\n")
+   return(NULL)
+ }
+ pd = strstr(filename, ".pdf")
+ if(pd == 0) {
+   filename = filename+".pdf"
+ }
+ if(hasvalue(w)==0) {
+   w = "6.4"
+ }
+ if(hasvalue(h)==0) {
+   h = "4.3"
+ }
+
+
+ tmpfile=$TMPDIR+"/tmp"+random(1,1,1,type=rand)
+ plot("set terminal postscript portrait color solid 'Helvetica' 14 size "+w+", "+h+"")
+
+ plot("set output '"+tmpfile+"'")
+ replot()
+ pause("Hit a key...any key...especially the return key\n")
+
+ if($DV_OS=="mac") {
+   syscall("pstopdf "+tmpfile+" -o "+filename+" ")
+ } else {
+   syscall("ps2pdf "+tmpfile+" "+filename+" ")
+ }
+ syscall("rm "+tmpfile)
+ if ($DV_OS=="win") {
+   plot("set terminal windows noenhanced")
+ } else {
+   plot("set terminal "+$GPLOT_TERM)
+ }
+}
+
+
+
+define pdfplot() {
+#added $DV_OS support
+
+  if ($ARGC == 0) {
+    printf (" \n")
+    printf (" Output a plot to a PDF file. \n")
+    printf (" $1 = filename \n")
+    printf (" \n")
+    return(0)
+  }
+
+# catch errors and assure suffix is correct
+  filename = $1
+  if(type(filename)!="STRING"){
+    printf("please use a string for a filename\n")
+    return(NULL)
+  }
+  pd = strstr(filename, ".pdf")
+  if(pd == 0) {
+    filename = filename+".pdf"
+  }
+
+  plot("set terminal postscript color solid 'Helvetica' 14")
+  plot("set output '"+$TMPDIR+"/dv_prplot_temp.ps'")
+  replot()
+  pause("Hit a key...any key...especially the return key")
+
+  if($DV_OS=="mac") {
+    syscall("pstopdf "+$TMPDIR+"/dv_prplot_temp.ps -o "+filename+" ")
+  } else { 
+    syscall("ps2pdf "+$TMPDIR+"/dv_prplot_temp.ps "+filename+" ")
+  }    
+
+  syscall("rm "+$TMPDIR+"/dv_prplot_temp.ps")
+
+  if ($DV_OS=="win") {
+    plot("set terminal windows noenhanced")
+  } else {
+    plot("set terminal "+$GPLOT_TERM)
+  }
+}
+
+
+
+define psplot(orient) {
+
+# rewritten by Austin Godber Tue Jul 25 11:02:36 MST 2006
+# allows for portrait or landscape saving
+
+  if ($ARGC == 0) {
+    printf (" \n")
+    printf (" Output a plot to a postscript file. \n")
+    printf (" Syntax: psplot(filename, orient = \"p\" or \"l\" \n")
+    printf (" \'p\' = portrait, \'l\' = landscape, default = \'l\'\n")
+    return(0)
+  }
+
+# catch errors and assure suffix is correct
+  filename = $1
+  if(type(filename)!="STRING"){
+    printf("please use a string for a filename\n")
+    return(NULL)
+  }
+  pd = strstr(filename, ".ps")
+  if(pd == 0) {
+    filename = filename+".ps"
+  }
+  orientation = "l"         # "l" or "p"
+  if(hasvalue(orient)) {
+    orientation = orient
+  }
+
+  tmpfile=$TMPDIR+"/tmp"+random(1,1,1,type=rand)
+  if(orientation == "l") {
+    plot("set terminal postscript color solid 'Helvetica' 14")
+  }
+  if(orientation == "p") {
+    plot("set terminal postscript portrait color solid 'Helvetica' 14")
+  }
+  plot("set output '"+tmpfile+"'")
+  replot()
+  if ($DV_OS=="win") {
+    plot("set terminal windows noenhanced")
+  } else {
+    plot("set terminal "+$GPLOT_TERM)
+  }
+  pause("Hit a key...any key...especially the return key\n")
+  system("cp "+tmpfile+" "+filename+"")
+  system("rm "+tmpfile+"")
+}
+
+
+
+define pngplot(xsize,ysize,fontsize) {
+#added $DV_OS support
+
+  if ($ARGC == 0) {
+    printf (" \n")
+    printf (" Output a plot to a png file. \n")
+    printf (" Syntax: pnplot(filename,xsize,ysize)\n")
+    printf (" filename = output filename\n")
+    printf (" xsize = size of x (in pixels) for output png (Default 1280)\n")
+    printf (" ysize = size of y (in pixels) for output png (Default 960)\n")
+    printf (" fontsize = size of font (\"small\",\"medium\",\"large\"\n\n")
+    printf (" c.edwards 4-25-07\n\n")
+    return(0)
+  }
+
+  # catch errors and assure suffix is correct
+  filename = $1
+  if(type(filename)!="STRING"){
+    printf("please use a string for a filename\n")
+    return(NULL)
+  }
+  pd = strstr(filename, ".png")
+  if(pd == 0) {
+    filename = filename+".png"
+  }
+
+  if(HasValue(fontsize)==0) fontsize="medium"
+  if(HasValue(xsize)==0) xsize=1280
+  if(HasValue(ysize)==0) ysize=960
+
+  tmpfile=$TMPDIR+"/tmp"+random(1,1,1,type=rand)
+  plot("set terminal png "+fontsize+" color picsize "+xsize+" "+ysize+"")
+  plot("set output '"+tmpfile+"'")
+  replot()
+  if ($DV_OS=="win") {
+    plot("set terminal windows noenhanced")
+  } else {
+    plot("set terminal "+$GPLOT_TERM)
+  }
+  
+  pause("Hit a key...any key...especially the return key\n")
+  syscall("cp "+tmpfile+" "+filename+"")
+  syscall("rm "+tmpfile+"")
+}
+
+
+
+define labelxy() {
+
+  if ($ARGC == 0) {
+    printf (" \n")
+    printf (" Put a label on the plot. \n")
+    printf (" $1 = xlabel \n")
+    printf (" $2 = ylabel \n")
+    printf (" $3 = plot title (optional) \n")
+    printf (" \n")
+    return(0)
+  }
+
+  plot("set xlabel '"+$1+"'")
+  plot("set ylabel '"+$2+"'")
+
+  if ($ARGC == 3) {
+    plot("set title '"+$3+"'")
+  }
+  plot("replot")
+}
+
+
+
+define nokey() {
+  plot("set nokey")
+  plot("replot")
+}
+
+
+
+define key() {
+  plot("set key")
+  plot("replot")
+}
+
+
+
+define vert_line(color,width) {
+
+  if($ARGC == 0) {
+    printf("\n  vert_line() - Places a vertical arrow with no head (aka a \'line\') in a Gnuplot graph.\n")
+    printf("  Fri Aug  4 13:11:53 MST 2006\n\n")
+    printf("  Syntax:  vert_line(x_pos [,color = INT] [,width = INT])\n")
+    printf("  Example: vert_line(1.5, color=3, width=2)\n\n")
+    printf("  Lines can be removed by using rm_arrow()\n\n")
+    printf("  Colors: -1  black\n           1  red\n           2  green\n           3  blue\n           4  purple\n")
+    printf("           5  aqua\n           6  brown\n           7  orange\n           8  light brown\n")
+    return(NULL)
+  }
+
+  at_x = $1
+
+  clr = 1
+  if(hasvalue(color)) clr = color
+  wth = 1
+  if(hasvalue(width)) wth = width
+
+
+  plot("set arrow from "+at_x+",graph 0 to "+at_x+", graph 1 nohead lt "+clr+" lw "+wth)
+  replot()
+}
+
+
+
+define rm_arrow() {
+
+  if($ARGC == 0) {
+    printf("\n  rm_arrow() - Removes an arrow from a Gnuplot graph.\n")
+    printf("  Fri Aug  4 13:11:53 MST 2006\n\n")
+    printf("  Syntax:  rm_arrow(arrow_number)\n")
+    printf("  Example: rm_arrow(1)\n")
+    printf("  The arrow number is found by using show_arrow()\n")
+    return(NULL)
+  }
+
+  arrow_num = $1
+  plot("unset arrow "+arrow_num)
+  replot()
+}
+
+
+
+define show_arrow() {
+# asks gnuplot to show all current arrows on the graph
+  plot("show arrow")
+}
+
+
+define pplot(mtes, tes, themis, lab1, wave, cm, nir, emiss, xaxis, ignore, plot_title,date,key, stack, noplim, xlabel, ylabel, font_size, lw, x1, x2, y1, y2, portrait, mono, lines, points, linespoints, pdf, print, debug, tut) { 
+	if ($ARGC == 0 && HasValue(tut)==0) {
+		printf ("   gnuplot driver\n" )
+		printf ("   \n" )
+		printf ("   Usage:  pplot({data1, data2, ...}, [{color1, color2, ...}], [{label1, label2, ...}] [tes=1][mtes=1][themis=1][lab1=1][xaxis=xaxis][wave=1][cm=1][emiss=1][ignore=val][plot_title='string'][key='string'][x1=val][x2=val][y1=val][y2=val][xlabel='string'][ylabel='string'][lw=val][font_size=val][date][noplim=1][pdf='filename'][print=1][mono=1])\n")
+		printf ("   \n" )
+		printf ("   where: \n")
+		printf ("	Every parameter except 'data' is optional\n" )
+		printf ("	{data1, data2, ...} = structure of data elements to plot\n" )
+		printf ("	   Each data element can be a vector or array\n")
+		printf ("	   Data element can be a single standard ASU structure with data, label, and xais\n")
+		printf ("	    that are used appropriately\n")
+		printf ("	   {} braces can be omitted if only ploting 1 variable (see examples)\n")
+		printf ("	{color1, color2, ..} = index of colors in your .Xdefaults\n" )
+		printf ("	   If you don't supply a color, colorswill cycle through different color for each vector\n" )
+		printf ("	{'label1', 'label2', ...} = labels for key\n" )
+		printf ("	Order of titles and colors doesn't matter\n" )
+		printf ("	pplot assumes data to be plotted are in z-axis (same as xplot 'axis=z')\n" )
+		printf ("	[stack = f] offsets every plot from its predicesor by f (use carefully)\n" )
+		printf ("	\n" )
+		printf ("	tes = 1 to make standard TES (143 pt) plot\n")	
+		printf ("	mtes = 1 to make standard Mini-TES plot\n")	
+		printf ("	themis = 1 to make standard THEMIS plot\n")	
+		printf ("	lab1 = 1 to make standard ASU lab1 plot\n")	
+		printf ("	xaxis = user-supplied xaxis vector (or structure of xaxes {x1, x2, ...})\n" )
+		printf ("	If no x-axis option is specified - default is index (i.e. 1 to n)\n" )
+		printf ("\n" )
+		printf ("	Structure of data elements {data1, data2, ...}\n")
+		printf ("	   can have different x-axes if also send in a structure of x-axes\n")
+		printf ("	   pplot automatically resamples your spectra and plots with a common x-axis\n" )
+		printf ("\n" )
+		printf ("	Examples: \n")
+		printf ("	   pplot(array)\n" )
+		printf ("	     - plots an array, cycling through colors - just like xplot\n" )
+		printf ("\n" )
+		printf ("	   pplot(spectrum, 2, 'Hematite', tes=1)\n" )
+		printf ("	     - plots a tes spectrum, in color 2, with key\n" )
+		printf ("\n" )
+		printf ("	   pplot(array, mtes=1)\n" )
+		printf ("	     - plots array of mini-tes spectra, auto cycling through colors with no key\n" )
+		printf ("\n" )
+		printf ("	   pplot({array1, vec1}, {1,2}, {'Humphries', 'Olivine'}, mtes=1)\n" )
+		printf ("	     - plots array and a vector of mini-tes spectra with colors 1 and 2 and a key\n" )
+		printf ("\n" )
+		printf ("	   pplot(array, 'Sulfates', xaxis=x_axis)\n" )
+		printf ("	     - plots array, cycling through colors with user-supplied x axis and a key\n" )
+		printf ("\n" )
+		printf ("	   pplot({labdata, etes, ethemis},{1,2,3}, {'Lab','TES','THEMIS'}, xaxis={xlab1,xtes,xthemis})\n")
+		printf ("	     - plots arrays of lab, tes, and themis spectra with auto-resampling\n" )
+		printf ("\n" )
+		printf ("	   pplot(spec_struct)\n")
+		printf ("	     - plots all .data elements of spec_struc, using .label and .xaxis\n")
+		printf ("\n" )
+		printf ("	Run 'pplot_tutorial()' for lots of real examples\n")
+		printf ("\n" )
+		pause("hit return for more options and examples\n")
+		printf ("   	(REALLY OPTIONAL)\n" )
+		printf ("	wave = 1 to make standard Wavelength/Wavenumber X-axis\n")	
+		printf ("	cm = 1 to make standard Wavenumber/Wavelength X-axis\n")	
+		printf ("	emiss = 1 to make standard Emissivity Y-axis\n")	
+		printf ("	ignore = user-supplied y value that will not be plotted\n" )
+		printf ("	   Useful if some values in spectrum are 0 and you don't want a lot of vertical lines\n")
+		printf ("	plot_title = 'string'  plot title\n" )
+		printf ("	key = 'top bottom left right outside below' (can use several as appropriate)\n" )
+		printf ("	   or: key = 'x, y' in plot x, y units. (e.g. key='1300, .92')\n" )
+		printf ("	x1 = min x for plot range\n" )
+		printf ("	x2 = max x for plot range\n" )
+		printf ("	y1 = min y for plot range\n")
+		printf ("	y2 = max y for plot range\n" )
+		printf ("	xlabel = x axis label\n" )
+		printf ("	ylabel = y axis label\n" )
+		printf ("	nir = 1 to use default xaxis tics\n" )
+		printf ("	lw = line weight (default=3)\n" )
+		printf ("	font_size = point size for axes and key labels (default=22)\n" )
+		printf ("	date = 1  to include date and time in plot title\n" )
+		printf ("	noplim = 1   don't change plot limits inside pplot\n" )
+		printf ("	portrait = 1   make a protrait plot (default is landsscape\n")
+		printf ("	pdf = 'filename'    basename for output of .ps file\n" )
+		printf ("	print = 1   print directly to default your printer\n" )
+		printf ("	mono = 1    black and white plot (.ps only)\n" )
+		printf ("	lines = 1   plot lines (default)\n" )
+		printf ("	points = 1  plot points only\n" )
+		printf ("	linespoints = 1  plot lines and points\n" )
+		printf ("\n" )
+		printf ("   \n" )
+		printf ("More examples:\n")
+		printf ("   pplot(spectra1, mtes=1, emiss=1)\n")
+		printf ("   pplot({tes_spec1, tes_spec2}, {1,2}, {'Soil', 'Basalt'}, tes=1, emiss=1)\n")
+		printf ("   pplot({spectra_cube[1:10, 2:4], spectra2}, {2,3}, {'Pyroxenes', 'Quartz'}, lab1=1, emiss=1, key='bottom left')\n")
+		printf ("   pplot({spectra_cube[1:10], spectra2}, {2,3}, {'Pyroxenes', 'Quartz'}, lab1=1, emiss=1, y1=.6, y2=1.02, key='1150, .98', lw=5)\n")
+		printf ("   pplot({s1, s2}, {'Lunar Dust', 'Zagami'}, {1,3}, xaxis=xxx,  x1=400, x2=1100, font_size=32, pdf='/u/phil/test.pdf')\n")
+		printf ("   pplot({a, b}, {'Conductivity', 'Density'}, {1,3}, xaxis=xxx, x1=150, x2=300, xlabel='Temperature', print=1)\n")
+		printf ("\n" )
+		printf ("p. christensen 5/07\n" )
+		return(0)
+	}
+	
+# minor changes from pplot library version 12/13 - 6/14 prc
+#   added nir keyword and set default to 0
+#     if nir, set plot range for ASD
+#	 added 40 micron tic in lable
+#	 changed to start at 4 microns
+#   changed ylabel and xlabel positions to move closer to axes.  12/30/13.  For IRES proposal. prc
+#	 shortened length of line and reduced font size in key
+
+	# added 'stack' option to offset vectors in y direction on plot by user-specified amount
+	# minor bug fix to override defaults in standard spectral structure case and fix lines, points, linespoints prc 9/16/2010
+	# modified to do a multi-element label, where some elements are single labels, and others
+	#   are arrays  prc 8/18/10
+	# fixed another bug related to icolor in lab structure prc 8/17/10 
+	# fixed bug in single-element lab structure  prc 8/12/2010
+	# added standard data structures, fixed bugs in different cases prc 8/1/2010
+	# restructured and improved p. christensen 7/1/10
+	# changed to use vplot p. christensen 6/23/10
+	# p.christensen 6/14/07
+	# p.christensen 6/5/07
+	# p. christensen 3-5/07
+	# major revison starting with plot_template in 5/07 to make much more robust and general
+	
+	struc = struct()
+	# xaxis = user-supplied; x_axis = script-generated; x_axis_struc = structure of xaxes built
+	# assume user wants separate color for each line unless otherwise specified
+	reverse = 0
+	nvec_gnu = 120
+	
+	in = $1;
+	if ($ARGC == 1) {
+		# options - a standard structure, a data structure, or just a data element
+		if (type(in) == "STRUCT") {
+			# test to see if user sent in a single standard spectral structure
+#			verbose = 0
+			if(HasValue(get_struct(in, "data")) && HasValue(get_struct(in, "xaxis"))) {
+				# standard ASU lab data structure
+				# Move data, label, and xaxis to the right places
+				# make data into a structure of n elements
+				data = in.data
+				size = dim(data)
+				tmpd = struct()
+				# Check for special case of a single-element structure - too complicated to deal
+				#  with - redo it like the user could have
+				if(size[1] == 1) {
+					xaxis = in.xaxis
+				}
+					
+				# assume data is in z with an array of x and/or y spectra
+				for(i=1; i<=size[1]; i+=1) {
+					for(j=1; j<=size[2]; j+=1) {
+						# add_struct(tmpd, in.data[i])
+						add_struct(tmpd, in.data[i,j])
+						# add_struct(tmpd, in.data[index])
+					}
+				}
+				data = tmpd
+				ndata = int(size[1] * size[2])
+				# make labels into a structure of text
+				if(HasValue(get_struct(in,"label"))) {
+					if(type(in.label)=="STRING") {
+						# only a single label if it is a string
+						nlab = 1
+						# try this - make it a TEXT structure, but keep nlab = 1
+						tmp = struct()
+						add_struct(tmp, in.label)
+
+					} else if(type(in.label) == "TEXT") {
+						# this is an array of labels - use length to determin how many
+						nlab = length(in.label)
+						tmp = struct()
+						for(i=1; i<= nlab; i+=1) {
+								add_struct(tmp, in.label[,i])
+						}
+
+					} else {
+						# incorrect label type
+						printf("Incorrect label type\n")
+						return(0)
+					}
+
+					if(ndata !=nlab) {
+						printf("number of data elements not the same as number of labels\n")
+						return(0)
+					}
+					titles = tmp
+					ntitles = nlab
+				} else if(HasValue(get_struct(in, "sample_name"))) {
+					if(type(in.sample_name)=="STRING") {
+						# only a single label if it is a string
+						nlab = 1
+					} else if(type(in.sample_name) == "TEXT") {
+						# this is an array of labels - use length to determin how many
+						nlab = length(in.sample_name)
+					} else {
+						# incorrect label type
+						printf("Incorrect label type\n")
+						return(0)
+					}
+					tmp = struct()
+					for(i=1; i<= nlab; i+=1) {
+						add_struct(tmp, in.sample_name[,i])
+					}
+					titles = tmp
+					ntitles = nlab
+				}
+
+				#colors={}
+				for(i=1;i<=ndata;i+=1) {
+					# this isn't needed here, and ny doesn't exist yet - remove prc 8/19/10
+					# printf("i=%d ndata=%d\n", i,ndata)
+					# icolor = int((j-1)*ny + k)
+					# add_struct(colors, icolor)
+				}
+
+				ncolors = ndata
+				# move x axis and data to correct places and make the structures
+				xaxis = in.xaxis 
+				# make wavenumber the default unless user specifed otherwise
+				if(HasValue(xlabel) == 0) {
+					xlabel = "Wavenumber"
+				}
+				# set default wavenumber and emissivity ranges, put cm on the bottom x axis
+				if(HasValue(x1)==0) {
+					x1=200
+				}
+				if(HasValue(x2)==0) {
+					x2=2000
+				}
+				if(HasValue(y1)==0) {
+					y1=.7
+				}
+				if(HasValue(y2)==0) {
+					y2=1.02
+				}
+				cm=1
+				if(HasValue(xlabel)==0) {
+					ylabel = "Wavenumber"
+				}
+				if(HasValue(ylabel)==0) {
+					ylabel = "Emissivity"
+				}
+				if(HasValue(key)==0) {
+					key = "bottom right"
+				}
+	
+			} else {
+				# User sent a structure - but not a standard struct.  Assume it is a structure of data
+				data = in
+				ndata = length(data)
+				# ndata = 1
+			}
+		} else {
+			# just a data element - make it a structure
+			data = {$1}
+			ndata = length(data)
+		}
+	verbose = 1
+	
+	# skip all the remaining tests if only sent in 1 argument
+	# check to see if user sent in colors and/or titles 
+	} else if ($ARGC >= 2) {
+		# set up data
+		if (type(in) == "STRUCT") {
+			data = in
+		} else {
+			# not a structure - make it one
+			data = {in}
+		}
+		ndata = length(data)
+	
+		arg2 = $2
+		if (type(arg2) != "STRUCT" && type(arg2) != "TEXT") {
+			# if user sent in 1 element that is not in a structure,
+			#   no problem - just make it one
+			#printf("making arg2 into a structure\n")
+			arg2 = {arg2}
+		}
+	
+		# now test to see if 'colors' or 'titles'
+		if(type(arg2[1]) == "STRING") {
+			titles = arg2
+	
+		} else if (type(arg2[1]) == "int") {
+			colors = arg2
+	
+		} else if (type(arg2) == "TEXT") {
+			if(HasValue(debug)) {
+				printf("User sent in a structure of labels - expand them to array\n")
+			}
+			n = length(arg2)
+			tmp = struct()
+			for(i=1; i<= n; i+=1) {
+				add_struct(tmp, arg2[,i])
+			}
+			titles = tmp
+				
+		} else { 
+			printf("argument 2 is not a string or int\n")
+			return(type(arg2))
+			return(0)
+		}
+	 
+	if ($ARGC == 3) {
+		arg3 = $3
+		if (type(arg3) != "STRUCT" && type(arg3) != "TEXT") {
+			# if user sent in 1 element but in a structure,
+			#   no problem - just make it one
+			# Check to make sure it isn't a structure of labels (i.e. "TEXT")
+			arg3 = {arg3}
+			#printf("making arg3 into a structure\n")
+		}
+		# check if arg2 and arg3 are the same
+		if(type(arg3[1]) == type(arg2[1])) {
+			printf("arguments 2 and 3 are the same type\n")
+			return(0)
+		}
+		# now test to see if 'colors' or 'titles
+		if(type(arg3[1]) == "STRING") {
+			titles = arg3
+	
+		}else if (type(arg3[1]) == "int") {
+			colors = arg3
+	
+		} else if (type(arg3) == "TEXT") {
+			if(HasValue(debug)) {
+				printf("User sent in a structure of labels - expand them to array\n")
+			}
+			n = length(arg3)
+			tmp = struct()
+			for(i=1; i<= n; i+=1) {
+				add_struct(tmp, arg3[,i])
+			}
+			titles = tmp
+				
+		} else {
+			printf("argument 3 is not a string or int\n")
+			return(0)
+		}
+	}
+	
+	} else if($ARGC >3) {
+		printf("Too many arguments\n")
+		return(0)
+	}
+
+	# stop skipping
+	if (HasValue(colors)) {
+		ncolors = length(colors)
+		struc.colors = colors
+
+	} else {
+		colors={}
+		for(i=1;i<=ndata;i+=1) {
+			add_struct(colors, -1)
+		}
+		ncolors = ndata
+	}
+	
+	if (HasValue(titles)) {
+		ntitles = length(titles)
+		struc.titles = titles
+	} else {
+		ntitles = 0
+	}
+	
+	if(HasValue(debug)) {
+		printf("ndata = %d ncolors = %d ntitles = %d\n", ndata, ncolors, ntitles)
+	}
+	
+	# at this point data, colors, titles (if present) are all in structures
+	
+	# Step 2: Determine if data are in x, y, or z (correct) axes
+	for(i=1; i<=ndata; i+=1) {
+		nx = dim(data[i])[1]
+		ny = dim(data[i])[2]
+		nz = dim(data[i])[3]
+		if(nx == 1 && ny == 1 && nz > 1) {
+			# ok - 1 vector, data are in z - do nothing
+	
+		} else if (nx > 1 && ny == 1 && nz == 1) {
+			# data are in x - translate to z
+			#printf("Data vector %d is in x axis - translated to z axis where it is expected\n", i)
+			data[i] = translate(data[i], x, z)
+	
+		} else if (nx == 1 && ny > 1 && nz == 1) {
+			# data are in y - translate to z
+			#printf("Data vector %d is in y axis - translated to z axis where it is expected\n", i)
+			data[i] = translate(data[i], y, z)
+	
+		} else if ( (nx > 1 || ny > 1) && nz > 1) {
+			# 2-D array with data in z - do nothing, plot versus z
+	
+		} else {
+			# something is wrong
+			printf("Problem with data\n")
+			return(0)
+		}
+	}
+	
+	# Step 3: Check for special case of 1 data element and more than 1 colors or titles
+	# User sent in single array of data, and a corresponding structure of colors and/or titles
+	if(ndata == 1) {
+		xok = 0
+		yok = 0
+		if(ncolors > 1) {
+			# check to see if correct number of colors
+			nx = dim(data[1])[1]
+			ny = dim(data[1])[2]
+			if(ncolors == nx && ny == 1) {
+				# correct # of x elements
+				#printf("doing the special 1 data, correct # of lines thing in x\n")
+				# make a structure of data
+				tmp_data = struct()
+				for(ii = 1; ii<= nx; ii+=1) {
+					add_struct(tmp_data, data[1][ii])
+				}
+				xok = 1
+	
+			} else if(ncolors == ny && nx == 1) {
+				# correct # of y elements
+				#printf("doing the special 1 data, correct # of lines thing in y\n")
+				# make a structure of data
+				tmp_data = struct()
+				for(ii = 1; ii<= ny; ii+=1) {
+					add_struct(tmp_data, data[1][,ii])
+				}
+				yok = 1
+			} else {
+				printf("number of elements in data structure ([%d,%d]) not same as number of colors (%d)\n", nx, ny, ncolors)
+				return(0)
+			}
+		}
+	
+		if(ntitles > 1) {
+			# check to see if correct number of titles
+			nx = dim(data[1])[1]
+			ny = dim(data[1])[2]
+			if(ntitles == nx && ny == 1) {
+				# correct # of x elements
+				#printf("doing the special 1 data, correct # of titles thing in x\n")
+				# make a structure of data
+				tmp_data = struct()
+				for(ii = 1; ii<= nx; ii+=1) {
+					add_struct(tmp_data, data[1][ii])
+				}
+				xok = 1
+			} else if(ntitles == ny && nx == 1) {
+				# correct # of y elements
+				#printf("doing the special 1 data, correct # of titles thing in y\n")
+				# make a structure of data
+				tmp_data = struct()
+				for(ii = 1; ii<= ny; ii+=1) {
+					add_struct(tmp_data, data[1][,ii])
+				}
+				yok = 1
+			} else {
+				printf("number of elements in data structure ([%d,%d]) not same as number of titles (%d)\n", nx, ny, ntitles)
+				return(0)
+			}
+		}
+	
+		if(xok == 1) {
+			data = tmp_data
+			ndata = nx
+		} else if(yok == 1) {
+			data = tmp_data
+			ndata = ny
+		}
+	}
+	
+	# Step 4: now have correct data, colors, titles - do final checks
+	if(ncolors > 0 && ndata != 1 && ncolors != ndata) {
+		# fix the special case where user sent in a single data element and no colors
+		# - already passed the ncolors = ndata test
+		#  passed initially, but when expanded the data into a structure of ndata elements,
+		#   this test no longer passes
+		if(ncolors == 1) {
+			# can't add 'i' in add_struct, so have to have up an array of integers
+			# and add one using an index
+			ival = create(1000,1,1,format=int)
+			for(j=1; j <= ndata; j+=1) {
+				# offset by 2 since colors already has 1 entry with the value of 1
+				add_struct(colors, ival[j+2])
+			}
+			ncolors = ndata
+		} else {
+			printf("number of colors (%d) not same as number of data elements (%d)\n", ncolors, ndata)
+			return(0)
+		}
+	}
+	
+	if(ntitles > 0 && ndata != 1 && ntitles != ndata) {
+		printf("Number of titles (%d) not same as number of data elements (%d)\n", ntitles, ndata)
+		return(0)
+	}
+	if(ncolors > 0 && ntitles > 0 && ncolors != ntitles) {
+		printf("Number of titles (%d) not same as number of colors (%d)\n", ncolors, ntitles)
+		return(0)
+	}
+	
+	if(ncolors == 0) {
+		# User didn't specify colors - would normally cycle through colors.
+		# However, if try to construct a gnuplot command with more than 120 individual vectors 
+		#  with individual colors gnuplot will blow up.
+		# check to see if too many total vectors 
+		nvec = 0
+		for(ii = 1; ii <= ndata; ii+=1) {
+			nx = dim(data[ii])[1]
+			ny = dim(data[ii])[2]
+			nvec = nvec + (nx * ny)
+		}
+		if(nvec >= nvec_gnu) {
+			# make structure with appropriate number of colors and inform user
+			ival = create(1000,1,1,format=int)
+			ss = struct()
+			for(j=1; j <= ndata; j+=1) {
+				add_struct(ss, ival[j+1])
+			}
+			colors = ss
+			ncolors = ndata
+			printf("You tried to use auto color cycling, but you have more vectors (%d) than gnuplot can handle (%d)\n", nvec, nvec_gnu)
+			printf("Colors have been set to a single color for each data element\n")
+		}
+	}
+	
+	if(ndata > 1 && ncolors == 0) {
+		# check to see if data elements are single vectors
+		# won't take effect.  Because user didn't specify colors, so must construct them
+		single = 0
+		for(ii = 1; ii <= ndata; ii+=1) {
+			nx = dim(data[ii])[1]
+			ny = dim(data[ii])[2]
+			if(nx == 1 && ny ==1) {
+				single = 1
+			}
+		}
+		if(single == 0) {
+			# data are an array - do nothing 
+		} else {
+			# data are single vectors - make a color structure
+			ival = create(1000,1,1,format=int)
+			ss = struct()
+			for(j=1; j <= ndata; j+=1) {
+				add_struct(ss, ival[j+1])
+			}
+			colors = ss
+			ncolors = ndata
+		}
+	}
+	
+	# set up xaxis stuff
+	
+	# set defaults for custom wavelength or wavenumber plots
+	if(HasValue(wave)==0) {
+		wave = 0
+	}
+	if(HasValue(cm)==0) {
+		cm = 0
+	}
+	if(HasValue(nir)==0) {
+		nir = 0
+	}
+	if(wave != 0 && cm != 0) {
+		printf("Can't specify both 'wavelength' and and 'wavnumber' plots\n")
+		return(0)
+	}
+	
+	# user supplied xaxis
+	if(HasValue(xaxis)) {
+		if (type(xaxis) != "STRUCT") {
+			# if user sent in 1 element but not in a structure,
+			#   no problem - just make it one later
+			x_axis = xaxis
+			nxaxis = 1
+		} else {
+			x_axis_struc = xaxis
+			nxaxis = length(x_axis_struc)
+		}
+	
+	# if specified and instrument, make the x-axis and clone to correct number of data entries
+	} else if(HasValue(tes)) {
+		x_axis = make_tesx()
+		nxaxis = 1
+	} else if(HasValue(mtes)) {
+		x_axis = make_mtesx()
+		nxaxis = 1
+	} else if(HasValue(themis)) {
+		x_axis = make_themisx()
+		nxaxis = 1
+	} else if(HasValue(lab1)) {
+		x_axis = make_lab1x()
+		nxaxis = 1
+	
+	} else {
+		# no user supplied an x axis or correct instrument
+		# first check to make sure user isn't trying to use "cm" or "wave"
+		if(wave==1 || cm==1 ) {
+			printf("Must specify an x-axis if using 'cm' or 'wave' options\n")
+			return(0)
+		}
+		nv = dim(data[1])[3]
+		#printf("Didn't supply an xaxis - will plot using index\n")
+		x_axis = create(1,1,nv, format=int)
+		nxaxis = 1
+	}
+	
+	# now - clone the x_axis to the corrent number of elements
+	if(nxaxis == 1) {
+		x_axis_struc={}
+		for(i=1;i<=ndata;i+=1) {
+			add_struct(obj=x_axis_struc, name = ""+i, value=x_axis)
+		}
+		nxaxis = ndata
+	}
+	
+	# test to make sure all x-axes are in z
+	for(i = 1; i <= nxaxis; i+=1) {
+		nx = dim(x_axis_struc[i])[1]
+		ny = dim(x_axis_struc[i])[2]
+		nz = dim(x_axis_struc[i])[3]
+		if(HasValue(debug)) {
+			printf("X-axis %d: nx = %d ny = %d nz = %d\n", i, nx, ny, nz)
+		}
+		if(nx == 1 && ny == 1 && nz > 1) {
+			# ok - x-axis in z - do nothing
+	
+		} else if (nx > 1 && ny == 1 && nz == 1) {
+			# x-axis in x - translate to z
+			#printf("x axis %d is in x - translating to z where it is expected\n", i)
+			x_axis_struc[i] = translate(x_axis_struc[i], x, z)
+	
+		} else if (nx == 1 && ny > 1 && nz == 1) {
+			# x-axis in y - translate to z
+			#printf("x axis %d is in y - translating to z where it is expected\n", i)
+			x_axis_struc[i] = translate(x_axis_struc[i], y, z)
+	
+		} else {
+			# problem with x-axis
+			printf("Problem with x-axis data\n")
+			return(0)
+		}
+	}
+	
+	if(HasValue(debug)) {
+		printf("ndata = %d ncolors = %d ntitles = %d nxaxis = %d\n", ndata, ncolors, ntitles, nxaxis)
+	}
+	
+	if(nxaxis == 1) {
+		# only 1 x-axis - make sure it is same length as all the data
+		nz_xaxis = dim(x_axis_struc[1])[3]
+		struc.nz_xaxis = nz_xaxis
+		# test to make sure all data vectors are all the correct z-axis length
+		for(i=1; i<= ndata; i+=1) {
+			if(dim(data[i])[3] != nz_xaxis) {
+				printf("Data vectors not the same length as the x-axis (and only 1 X-axis)\n")
+				printf("nz_data = %d nz_x = %d\n", dim(data[i])[3], nz_xaxis)
+				printf("Note: when plotting, make the z-dimension the 'x-axis'\n")
+				printf("  e.g. data=[1,1,20]; xaxis=[1,1,20]\n")
+				return(0)
+			}
+		}
+	
+	} else {
+		# now comes the fun part - more than 1 xaxis - will need to resample
+		if(nxaxis != ndata) {
+			printf("Number of data vectors (%d) not the same as number of X-axes (%d)\n", ndata, nxaxis)
+			return(0)
+		}
+	
+		# test that z-dimension of data and x-axes are the same length
+		for(i=1; i<=ndata; i+=1) {
+			if(dim(data[i])[3] != dim(x_axis_struc[i])[3]) {
+				printf("Data vector %d not the same length as X-axis %d\n", i, i)
+				return(0)
+			}
+		}
+	}
+	
+	
+	struc.data = data
+	struc.ndata = ndata
+	struc.nxaxis = nxaxis
+	struc.x_axis_struc = x_axis_struc
+	
+	# set x, y defaults for standard instrument cases
+	if(HasValue(mtes)) {
+		# do default mini-tes plotting (developed during MER)
+		if(HasValue(x1) == 0) {
+			x1 = 400
+		}
+		if(HasValue(x2) == 0) {
+			x2 = 1800
+		}
+		# default x-axis in 'Wavelength' on bottom unless otherwise requested
+		if(cm == 0) {
+			wave = 1
+		}
+		if(HasValue(emiss)) {
+			ylab = "Emissivity"
+			# standard emissivity setup
+			if(HasValue(y1) == 0) {
+				y1 = .84
+			}
+			if(HasValue(y2) == 0) {
+				y2 = 1.01
+			}
+		} else {
+			if(HasValue(y1) == 0 && HasValue(y2) == 0){
+				y1=0.
+				y2=0.
+			} else if(HasValue(y1) != HasValue(y2)){
+				printf("If not using defaults, must set both y1 and y2\n")
+				return(0)
+			}
+		}
+	
+	} else if (HasValue(tes)) {
+		if(HasValue(x1) == 0) {
+			x1 = 200
+		}
+		if(HasValue(x2) == 0) {
+			x2 = 1700
+		}
+		# default x-axis in 'Wavelength' on bottom unless otherwise requested
+		if(cm == 0) {
+			wave = 1
+		}
+	
+		if(HasValue(emiss)) {
+			ylab = "Emissivity"
+			# standard emissivity setup
+			if(HasValue(y1) == 0) {
+				y1 = .84
+			}
+			if(HasValue(y2) == 0) {
+				y2 = 1.01
+			}
+		} else {
+			if(HasValue(y1) == 0 && HasValue(y2) == 0){
+				y1=0.
+				y2=0.
+			} else if(HasValue(y1) != HasValue(y2)){
+				printf("If not using defaults, must set both y1 and y2\n")
+				return(0)
+			}
+		}
+	
+	} else if (HasValue(themis)) {
+		if(HasValue(x1) == 0) {
+			x1 = 600
+		}
+		if(HasValue(x2) == 0) {
+			x2 = 1500
+		}
+		# default x-axis in 'Wavelength' on bottom unless otherwise requested
+		if(cm == 0) {
+			wave = 1
+		}
+	
+		if(HasValue(emiss)) {
+			ylab = "Emissivity"
+			# standard emissivity setup
+			if(HasValue(y1) == 0) {
+				y1 = .84
+			}
+			if(HasValue(y2) == 0) {
+				y2 = 1.01
+			}
+		} else {
+			if(HasValue(y1) == 0 && HasValue(y2) == 0){
+				y1=0.
+				y2=0.
+			} else if(HasValue(y1) != HasValue(y2)){
+				printf("If not using defaults, must set both y1 and y2\n")
+				return(0)
+			}
+		}
+	
+	} else if(HasValue(lab1)) {
+		if(HasValue(x1) == 0) {
+			x1 = 200
+		}
+		if(HasValue(x2) == 0) {
+			x2 = 2000
+		}
+		# default x-axis in 'Wavelength' on bottom unless otherwise requested
+		if(cm == 0) {
+			wave = 1
+		}
+	
+		if(HasValue(emiss)) {
+			ylab = "Emissivity"
+			# standard emissivity setup
+			if(HasValue(y1) == 0) {
+				y1 = .4
+			}
+			if(HasValue(y2) == 0) {
+				y2 = 1.01
+			}
+		} else {
+			if(HasValue(y1) == 0 && HasValue(y2) == 0){
+				y1=0.
+				y2=0.
+			} else if(HasValue(y1) != HasValue(y2)){
+				printf("If not using defaults, must set both y1 and y2\n")
+				return(0)
+			}
+		}
+	
+	} else {
+		# not standard instrument case
+		if(HasValue(emiss)) {
+			ylab = "Emissivity"
+			# standard emissivity setup
+			if(HasValue(y1) == 0) {
+				y1 = .8
+			}
+			if(HasValue(y2) == 0) {
+				y2 = 1.01
+			}
+		}
+	}
+	
+	# setup gnuplot - reset to default settings
+	plot("unset label; unset logscale; unset xtics; unset ytics")
+	plot("set key default")
+	plot("unset xtics")
+	plot("unset ytics")
+	plot("unset x2tics")
+	plot("unset y2tics")
+	plot("set xtics auto")
+	plot("set ytics auto")
+	plot("unset xrange")
+	plot("unset yrange")
+	plot("set autoscale")
+	xlab = " "
+	ylab = " "
+	
+	# set up upper and lower x-axes for wavelength on bottom axis
+	if(wave == 1) {
+		xlab = 'Wavelength (um)'
+		plot("set xtics nomirror ('4' 2500, '6' 1660, '8' 1250, '10' 1000, '' 833, '14' 714, '' 625, '' 555, '' 500, '' 454, '24' 416, '' 384, '' 357, '' 333, '' 250, '50' 200)")
+		#plot("set xtics nomirror ('6' 1660, '8' 1250, '10' 1000, '' 833, '14' 714, '' 625, '' 555, '' 500, '' 454, '24' 416, '' 384, '' 357, '' 333, '' 250, '50' 200)")
+		plot('set x2tics 0,500,2000')
+		plot('set mx2tics 5')
+		reverse=1
+		struc.wave = wave
+	} 
+	
+	# set up upper and lower x-axes for wavenumber on bottom axis
+	if(cm == 1) {
+		xlab = 'Wavenumber (cm-1)'
+		plot("set x2tics nomirror ('4' 2500, '6' 1660, '8' 1250, '10' 1000, '' 833, '15' 667, '' 625, '' 555, '' 500, '' 454, '25' 400, '' 384, '' 357, '' 333, '' 250, '50' 200)")
+		#plot("set x2tics nomirror ('6' 1660, '8' 1250, '10' 1000, '' 833, '14' 714, '' 625, '' 555, '' 500, '' 454, '24' 416, '' 384, '' 357, '' 333, '40' 250, '50' 200)")
+		plot('set xtics 0,500,2000')
+		plot('set mxtics 5')
+		struc.cm = cm
+	}
+	
+	if(nir == 1) {
+		xlab = 'Wavenumber (cm-1)'
+		# special version for ASD plots
+		plot("set x2tics nomirror ('1' 10000, '1.2' 8333, '1.5' 6667,'2' 5000, '2.4' 4167, '3' 3333, '4' 2500, '5' 2000, '6' 1660, '8' 1250, '10' 1000, '' 833, '14' 714, '' 625, '' 555, '' 500, '' 454, '24' 416, '' 384, '' 357, '' 333, '' 250, '50' 200)")
+		# changed - prc early dec. 2013
+		# plot("set x2tics nomirror ('1' 10000, '1.2' 8333, '1.5' 6667,'2' 5000, '2.5' 4000, '3' 3333, '4' 2500, '5' 2000, '6' 1660, '8' 1250, '10' 1000, '' 833, '14' 714, '' 625, '' 555, '' 500, '' 454, '24' 416, '' 384, '' 357, '' 333, '' 250, '50' 200)")
+		plot('set xtics 0,1000,10000')
+		plot('set mxtics 1')
+		struc.cm = cm
+	}
+	
+	# set default x and y axis 
+	if(HasValue(x1) == 0) {
+		x1 = 0
+	} 
+	if(HasValue(x2) == 0) {
+		x2 = 0
+	}
+	if(HasValue(y1) == 0) {
+		y1 = 0
+	}	
+	if(HasValue(y2) == 0) {
+		y2 = 0
+	}	
+	
+	if (HasValue(plot_title) == 0) {
+		plot_title = "";
+	}
+	
+	if (HasValue(date) != 0) {
+		datex = syscall("date")
+		date = datex[5:10] // "," // datex[25:28] // " " // datex[12:16]
+		plot_title = date + "    " + plot_title
+	}
+	
+	if (HasValue(font_size) == 0) {
+		font_size = 22;
+	}
+	
+	if (HasValue(lw) == 0) {
+		lw = 3;
+	}
+	
+	if (HasValue(key) == 0) {
+		key = ""
+	}
+	
+	if(HasValue(debug)) {
+		printf("ndata = %d ncolors = %d ntitles = %d, \n", ndata, ncolors, ntitles)
+	}
+	
+	if(HasValue(portrait)) {
+		printf("set size to portrait\n")
+		plot("set size ratio 1.38")
+		font_size = int(font_size/1.38)
+		lw = int(lw/1.38)+1
+	
+	} else {
+	#	printf("set size to landscape\n")
+		plot("set size noratio")
+	}
+	
+	# set plim unless specified not to
+	if(reverse==1) {
+		plim(x2, x1, y1, y2)
+	} else {
+		plim(x1, x2, y1, y2)
+	}
+	
+	if(HasValue(xlabel) != 0) {
+		xlab = xlabel
+	}
+	
+	if(HasValue(ylabel) != 0) {
+		ylab = ylabel
+	}
+	
+	
+	# make the plot command
+	
+	# added offset 12/30/13  prc
+	plot("set xlabel '"+xlab+"' offset 0, .25")
+	# added offset 12/30/13  prc
+	plot("set title '"+plot_title+"'; set ylabel '"+ylab+"' offset 1.9; set nokey; set noparametric")
+	plot(sprintf("set key spacing 1.2 Left reverse samplen 1.8 %s", key));
+	
+	###### loop through data sets and build plot command
+	
+	cmd = "plot(";
+	color_count = 1
+	yoffset = 0.
+	for (i = 1 ; i <= ndata ; i+=1) {
+		nx = dim(data[i])[1]
+		ny = dim(data[i])[2]
+		if (i > 1) {
+			cmd = cmd + ",";
+		}
+	
+
+		# expand each data element
+		nelements = nx*ny
+		# test max vector limit
+		if(nelements > nvec_gnu ) {
+			printf("Sorry - pplot can't plot more than 120 vectors\n")
+			printf("Your plot might look ok (but it probably has a lot of unwanted labels) - but it isn't\n")
+			return(0)
+		}
+		icount = 1
+		for(j = 1; j<= nx; j+=1) {
+			for(k = 1; k<= ny; k+=1) {
+				# make a stack plot
+				if(HasValue(stack)) {
+					data[i][j,k] = data[i][j,k] + yoffset
+					yoffset = yoffset + stack
+				}
+
+				cmd = cmd + sprintf("data[%d][%d, %d], ", i, j, k)
+
+				if(colors[i] == -1) {
+					# changed prc 9/9/2010 so 2 data elements without input colors will cycle colors
+					icolor = color_count
+					color_count += 1
+					# icolor = int((j-1)*ny + k)
+					#printf("j = %d k = %d icolor = %d  color_count = %d\n", j, k, icolor, color_count)
+				} else {
+					icolor = colors[i]
+				}
+				if(HasValue(titles)) {
+					#printf("nx = %d ny = %d ntitles = %d ncolors = %d ndata = %d i= %d j=%d k=%d \n", nx, ny, ntitles, ncolors, ndata, i, j, k)
+
+					# construct title with indices
+					if(nx==1 && ny==1) {
+						cmd = cmd + sprintf("label=\"%s\", " , titles[i]);
+					} else {
+						# changed prc 8/17/10 to 'fix' case of 1 label and 1 array of labels
+						if(type(titles[i]) == "STRING") {
+							# add array indices if user just sent in a single generic label for this array
+			            cmd = cmd + sprintf("label=\"%s[%d,%d]\", " , titles[i][,j], j, k);
+
+						} else {
+							# don't add array indices if user sent in an array of labels
+			            cmd = cmd + sprintf("label=\"%s\", " , titles[i][,j]);
+							#cmd = cmd + sprintf("label=\"%s[%d,%d]\", " , titles[i], j, k);
+						}
+					}
+				}
+				cmd = cmd + sprintf("xaxis=x_axis_struc[%d], axis=z, ",i);
+				cmd = cmd + sprintf("color=%d, width=%d ", icolor, lw)
+				if(icount < nelements) {
+					# put in comma separator, except for last
+					cmd = cmd + sprintf(",")
+				}
+				icount += 1
+			}
+		}
+	}
+	
+	# do the special plot commands
+	if(HasValue(ignore)) {
+		cmd = cmd +", Ignore=ignore"
+	}
+	if(HasValue(points)) {
+		cmd = cmd +", Style=points"
+	} else if(HasValue(linespoints)) {
+		cmd = cmd +", Style=linespoints"
+	} else {
+		cmd = cmd +", Style=lines"
+	}
+	cmd=cmd+")"
+	
+	if(HasValue(titles) == 0) {
+		plot("set nokey")
+	}
+	
+	if(HasValue(debug)) {
+		echo(cmd)
+	}
+	eval(cmd);
+	
+	if(HasValue(print)) {
+		# plot to printer 
+		print_param=sprintf('set terminal postscript enhanced color solid "Helvetica" %d', font_size);
+		plot(print_param+"; set output '| lpr'; replot")
+	  if ($DV_OS=="win") {
+	    plot("set terminal windows noenhanced; replot")
+	  } else {
+	    plot (" set term "+$GPLOT_TERM+"; set output '/dev/null'; replot")
+	  }
+	}
+	
+	if(HasValue(pdf)) {
+	  # plot to postscript file
+		outfile = pdf
+	
+		printf("Outputting pdf to file: %s\n", outfile);
+	
+		if(wave==1) {
+			printf("Wavelength on the bottom\n") 
+			xlab = 'Wavelength ({/Symbol m}m)'
+			plot("set xlabel '"+xlab+"'")
+			plot('set format x2 "%g cm^{-1}"');
+	
+		} else if(cm==1) {
+			printf("Wavelength on the top\n") 
+			xlab = 'Wavenumber (cm^{-1})'
+			plot("set xlabel '"+xlab+"'")
+			plot('set format x2 "%g mm"');
+    }
+	
+		if(HasValue(mono)) {
+			print_param=sprintf('set terminal postscript enhanced mono dashed "Helvetica" %d', font_size);
+			# shorten length of lines and reduce font in key ~12/13 prc
+			if(ntitles>0) {
+				plot("set key spacing 1. samplen 1 font \"helvetica,18\"")
+			}
+		} else {
+			print_param=sprintf('set terminal postscript enhanced color solid "Helvetica" %d', font_size);
+			# shorten length of lines and reduce font in key ~12/13 prc
+			if(ntitles>0) {
+				plot("set key spacing 1. samplen 1 font \"helvetica,18\"")
+			}
+		}
+
+  	plot(print_param+"; set output '"+outfile+".ps'; replot")
+  	outpdf = dirname(outfile)+"/"+basename(outfile,".pdf")+".pdf"
+    syscall("sleep 0.5")
+
+    if($DV_OS=="mac") {
+   		command=sprintf("pstopdf %s -o %s", outfile+".ps", outpdf) 
+    } else {
+   		command=sprintf("ps2pdf -r300 %s %s", outfile+".ps", outpdf) 
+    }
+    system(command)	
+    system("rm "+outfile+".ps")
+ 	  if ($DV_OS=="win") {
+	    plot("set terminal windows noenhanced; replot")
+	  } else {
+	    plot ("set term "+$GPLOT_TERM+"; set output '/dev/null'; replot")
+	  }
+  }
+}
+
+
+
+define pplot_tutorial() {
+
+	# removed unnecessary reads and data generation
+	# p.christensen 7/27/10 - minor changes
+	# p.christensen 6/5/07
+	# p.christensen 5/19/07 
+	
+	xlab1 = make_band(lab1=1)
+	xtes = make_band(tes=1)
+	xmtes = make_band(mtes=1)
+	xthemis = make_band(themis=1)
+	xthemiscm = make_band(themis=1, cm=1)
+	xastercm = make_band(aster=1, cm=1)
+	xtimscm = make_band(tims=1, cm=1)
+	
+	# mini-TES data
+	minites_emiss = read($DV_EX+"/minites_cube.vicar")
+	array=minites_emiss[8:11, 5:6]
+	xx=array[1:4,1]
+	yy=array[1,1:2]
+	a=array[1,1]
+	b=array[2,2]
+	c=array[2,1]
+	
+	# tes data
+	tes_emiss = read($DV_EX+"/TES_emissivity_example.vic")
+	
+	# lab data
+	asu = read($DV_EX+"/ASU_minlib.hdf")
+	spectrum = asu.data[1]
+	lab_array = asu.data[1:5]
+	spec_struc = read($DV_EX+"/lab_structure.hdf")
+	
+	# make simulated aster data from lab - wavenumber x-axis
+	asterdata = i2i(asu.data, from='lab1', to='aster', cm=1)
+	# make simulated tims data from lab - wavenumber x-axis
+	timsdata = i2i(asu.data, from='lab1', to='tims', cm=1)
+	# make simulated aster data from lab - wavelength x-axis
+	asterdata = i2i(asu.data, from='lab1', to='aster')
+	
+	# make some simulated themis data - wavelength x-axis
+	emthemis_cube = i2i(asu.data[1:3], from = 'lab1', to='themis')
+	
+	# convert lab1 data to aster, tims, and themis with wavenumber x-axis
+	a1 = i2i(asu.data[1], from='lab1', to='aster', cm=1)
+	t1 = i2i(asu.data[1], from='lab1', to='tims', cm=1)
+	th1 = i2i(asu.data[1], from='lab1', to='themis', cm=1)
+
+
+	printf("\n1. Simplest possible case: 1 vector, no colors, no labels - like xplot\n")
+	cmd = "pplot(spectrum)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	printf("\n2. Simple case: 1 vector with user-input x-axis, no colors, no labels\n")
+	cmd = "pplot(spectrum, xaxis=xlab1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	printf("\n3. Next simplest case: 1 array, user-input x-axis, no colors, no labels\n")
+	printf("   - will cycle colors automatically\n")
+	cmd = "pplot(lab_array, xaxis=xlab1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	printf("\n4. Array of spectra, 1 color (for all), 1 label, x and y axis labels, key in specfic location\n")
+	printf("   Note: Order doesn't matter for colors and labels)\n")
+	cmd = "pplot(lab_array, 'Lab Spectra', 5, xaxis=xlab1, xlabel = 'Wavenumber', ylabel = 'Emissivity', key= '1400, .91')"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	printf("\n5. Array of spectra, 1 color (for all), 1 label, standardized lab plot\n")
+	cmd = "pplot(lab_array, 5, 'Lab Spectra', lab1=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	printf("\n6. 1 array, 1 label, no colors specified - will auto cycle through colors and add index to label. \n")
+	printf("  Key in bottom right.  Standard Mini-TES plot\n")
+	cmd = "pplot(array, 'Mini-TES Array', key = 'bottom right', mtes=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	printf("\n7. 2 different data elements with different x axes.\n")
+	printf("  x, y limits,  manually make lower x-axis wavelength but linear in cm-1\n")
+	printf("  The x-axis is in wavenumber, but want a plot that is in wavelength on the lower axis\n")
+	printf("  line weight 5, font_size 26, x-axis, y-axis, and plot labels\n\n")
+	cmd = "pplot({asu.data[1:2], asterdata[1:2]}, xaxis={xlab1, xastercm}, {'Lab', 'ASTER'}, key = 'outside', wave=1, x1=500, x2=1500, y1=.7, y2=1.05, lw = 5, font_size=26, xlabel='Wavenumber', ylabel='Emissivity', plot_title = 'Lab and ASTER Example')"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	printf("\n8. 2 data elements (1 array & 1 vector), 2 colors, 2 labels - single color and single label for each data element\n")
+	cmd = "pplot({array, avg(array, xy)}, {1,2}, {'Spectra', 'Ave. Spectrum'}, xaxis=xmtes, x1=500, x2=1800, y1=.7, y2=1.02, cm=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	printf("\n9. ASU spectral structure example\n")
+	cmd = "pplot(spec_struc)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	printf("\n10. Resample example - lab, mtes, tes, and themis spectra\n")
+	cmd = "pplot({asu.data[1], a1, t1, th1},{1,2,3,4}, {'Lab','ASTER', 'TIMS', 'THEMIS'}, key='1450,.96', xaxis={xlab1, xastercm, xtimscm, xthemiscm}, x1=500, x2=1800, y1=.88, y2=1.01)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	printf("\n11. write to ps and pdf files. TES default plot, wavenumber on bottom x axis, ps, pdf\n")
+	cmd = "pplot({tes_emiss[1:3,1]}, {'TES Array'}, key = '900, .9', tes=1, emiss=1, cm=1, ps=$TMPDIR+'/junk.ps', pdf=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	printf("\n12. Case of 2-elements, 1 with a single label and 1 with an array of labels\n")
+	cmd = " pplot({asu.data[1], asu.data[2:6]}, {5,3}, {'One Spectrum', asu.label[,2:6]}, xaxis=asu.xaxis, key='bottom right')"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	printf("\n**** Now I'll demonstrate the more esoteric functions and features ***********\n")
+	
+	printf("\n3 vectors, 3 labels, no colors - will auto cycle through colors\n")
+	cmd = "pplot({a,b,c}, {'V1', 'V2', 'V3'}, mtes=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	printf("\n2 data elements, 2 colors, 2 labels in structures - single color and single label for each data element\n")
+	cmd = "pplot({array, xx}, {1,2}, {'a', 'b'}, mtes=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	printf("\nJust 1 data element with 4 vectors in x, 4 labels, 4 colors \n")
+	cmd = "pplot(array[1:4, 1], {1,3,5,6}, {'a', 'b', 'b', 'd'}, mtes=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	# special label cases
+	#printf("\n1 data element, 1 label, no color specified, auto loop through colors and index label 'a'\n")
+	#cmd = "pplot({array}, {'a'}, mtes=1)"
+	#echo(cmd)
+	#eval(cmd)
+	#pause("pausing")
+	
+	printf("\n3 data elements, colors WERE specified, one color for each and 1 label for 'a', 'xx', 'yy'\n")
+	cmd = "pplot({array,xx, yy}, {1,3,7}, {'a','xx', 'yy'}, mtes=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	#printf("\ndata in x and y case\n")
+	#a=random(20)
+	#printf("\Case of 3 data elements in x and 3 in y\n")
+	#ay = translate(a, x, y)
+	#cmd = "pplot({a, a+1, a+2, ay+3, ay+4, ay+5})"
+	#echo(cmd)
+	#eval(cmd)
+	#pause("pausing")
+	
+	printf("\nTHEMIS default plot, wavelength on bottom x axis\n")
+	cmd = "pplot(emthemis_cube, 'THEMIS', key = '1100, .96', themis=1, emiss=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	# redundant cases 
+	return(0)
+	printf("\n3 data elements, no color specified, auto loop through colors and index labels 'a', 'xx', and 'yy'\n")
+	cmd = "pplot({array,xx, yy}, {'a','xx', 'yy'}, mtes=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	printf("\nPlot title, key in specific location, mini-TES and emissivity default\n")
+	cmd = "pplot({array, xx}, {1,4}, {'Mini-TES 1','Mini-TES 2'}, plot_title='My Plot', key = 'right bottom', mtes=1, emiss=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+	
+	printf("\nSpecific key location, Wavenumber on bottom x axis, date\n")
+	cmd = "pplot({array, xx}, {1,4}, {'Mini-TES 1','Mini-TES 2'}, plot_title='My Plot', key = '900, .9', mtes=1, emiss=1, cm=1, date=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing")
+
+}
+
+
+
+define pplot_examples(error, test1, build) {
+	# test/examples routine for pplot
+	# p.christensen 7/10
+	# p.christensen 4/07
+	
+	xlab1 = make_band(lab1=1)
+	xtes = make_band(tes=1)
+	xmtes = make_band(mtes=2)
+	xthemis = make_band(themis=1)
+	xthemiscm = make_band(themis=1, cm=1)
+	xtimscm = make_band(tims=1, cm=1)
+	xastercm = make_band(aster=1, cm=1)
+	
+	#mini-TES data
+	if(HasValue(build)) {
+		mtes_seq=$ASOL + "/003/2T126641319EDR0200P3004N0A1.QUB_derived.hdf"
+		mspec = read(mtes_seq)
+		emtes=mspec.emissivity[8:14, 5:]
+		emtes2=mspec.emissivity[6:8, 5:6]
+		write(mspec.emissivity, $DV_EX+"/minites_cube.vicar", vicar, force=1)
+		write(mspec.emissivity[1,1], $DVEX+"/minites_spectrum.vicar", vicar, force=1)
+	}
+	
+	minites_emiss = read($DV_EX+"/minites_cube.vicar")
+	emtes=minites_emiss[8:14, 5:]
+	emtes2=minites_emiss[6:8, 5:6]
+	emtes3=minites_emiss[1:2, 1:4]
+	
+	ave_mtes=float(avg(minites_emiss[8:14,5:], xy))
+	ave_mtes2=float(avg(minites_emiss[6:8,5:6], xy))
+	eminites = ave_mtes
+	spectra1 = read($DV_EX+"/minites_spectrum.vicar")
+	
+	# tes data
+	tmp = resample(ave_mtes, xmtes, xtes)
+	ave_tes = tmp.data
+	ave_tes[where(ave_tes <.8)]=0.
+	tmp = resample(emtes, xmtes, xtes)
+	etes = tmp.data
+	
+	# lab data
+	if(HasValue(build)) {
+		asu = read($DV_EX+"/ASU_minlib.hdf")
+		write(asu.data, $DV_EX+"/asudata.vicar", vicar, force=1)
+		write(asu.data[156:165], $DV_EX+"/spectra_cube.vicar", vicar, force=1)
+		write(asu.data[55], $DV_EX+"/quartz.vicar", vicar, force=1)
+	
+	}
+	
+	asudata=read($DV_EX+"/asudata.vicar")
+	labdata1 = asudata[1]
+	labdata2 = asudata[2]
+	spectra_cube = read($DV_EX+"/spectra_cube.vicar")
+	
+	asu = read($DV_EX+"/ASU_minlib.hdf")
+	# themis data
+	emthemis = i2i(asu.data[1], from = 'lab1', to='themis', cm=1)
+	#emthemis = cat(.94,.91,.895, .88, .86, .875, .89, .92, 1., 1., axis=z)
+	emthemis_cube = cat(emthemis, emthemis*.99, emthemis*.98, axis=x) 
+	
+	# simulate a lab structure
+	test12 = struct()
+	test12.data = asu.data[1:12]
+	test12.label = asu.label[,1:12]
+	test12.xaxis = asu.xaxis
+	
+	# read a RATW structure
+	ratw = read($DV_EX+"/RATW_01_27_10a.hdf")
+	
+	# resample data
+	asu=read($DV_EX+"/ASU_minlib.hdf")
+	labd1 = asu.data[1]
+	labd1 = asu.data[2]
+	mtesdata1 = i2i(labd1, from = 'lab1', to = 'mtes', cm=1)
+	tesdata1 = i2i(labd1, from = 'lab1', to = 'tes', cm=1)
+	themisdata1 = i2i(labd1, from = 'lab1', to = 'themis', cm=1)
+	timsdata1 = i2i(labd1, from = 'lab1', to = 'tims', cm=1)
+	asterdata = i2i(asu.data, from = 'lab1', to = 'aster', cm=1)
+	asterdata1 = i2i(labd1, from = 'lab1', to = 'aster', cm=1)
+	
+	# x, y data
+	xvalbad=create(10,1,1,format=float)
+	yvalbad=2*xvalbad^2+4.
+	xval=create(1,1,10,format=float)
+	yval=2*xval^2+4.
+	
+	# initial debug test cases (test1)
+	if(HasValue(test1)) {
+		# 1 vector
+		pplot(ave_mtes, 1, 'M1', mtes=1, emiss=1, debug=1)
+		# structure with 1 vector
+		pplot({ave_mtes}, {1}, {'M1'}, mtes=1, emiss=1, debug=1)
+		# structure with 2 vectors
+		pplot({ave_tes, ave_mtes2}, {1,2}, {'M1', 'M2'}, mtes=1, emiss=1, debug=1)
+		# 1 array
+		pplot(emtes, 1, 'M1', mtes=1, emiss=1, debug=1)
+		# structure with 1 array
+		pplot({emtes}, {1}, {'M1'}, mtes=1, emiss=1, debug=1)
+		# structure with 2 arrays
+		pplot({emtes, emtes2}, {1,2}, {'M1', 'M2'}, mtes=1, emiss=1, debug=1)
+		return(0)
+	}
+	
+	# plotting
+	# make a simple structure
+	t1 = asu.data[1:4]
+	cmd="pplot(t1, {'T1', 'T2', 'T3', 'T4'})"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after simple structure with four elements and four separate labels")
+	
+	cmd="pplot(test12)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after lab structure")
+	
+	cmd="pplot(ratw)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after RATW structure")
+	
+	# mini-tes plots
+	# 1 spectrum
+	cmd="pplot(ave_mtes)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after Mini-TES 1a - 1 spectrum - nothing else")
+	
+	# mini-tes plots
+	# 1 spectrum, line, and title
+	cmd="pplot(ave_mtes, 1, 'Gusev Soil 1', plot_title='Mini-TES Plot', key='1300, .90', mtes=1, emiss=1)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after Mini-TES 1b - 1 spectrum, line, and title")
+	
+	# 1 spectrum, line, and title, but in a structure
+	cmd="pplot({ave_mtes}, {2}, {'Gusev Soil 1'}, plot_title='Mini-TES Plot', key='1100, .91', mtes=1, emiss=1)"
+	printf("\nCommand is:")
+	echo(cmd)
+	eval(cmd)
+	pause("\npausing after Mini-TES 2 - 1 spectrum, line, and title but in a structure")
+	
+	# 2 spectra in a structure
+	cmd = "pplot({ave_mtes, ave_mtes*.99}, {1,2}, {'Gusev Soil 1', 'Gusev Soil 2'}, plot_title='Another Mini-TES Plot', key='1300, .90', mtes=1, emiss=1)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("\npausing after Mini-TES 3 - 2 spectra in a structure")
+	
+	# two arrays in a structure
+	cmd = "pplot({emtes, emtes*.99}, {3,4}, {'Gusev Soil 1', 'Gusev Soil 2'}, plot_title='Mini-TES Structure', key='1100, .90', mtes=1, emiss=1)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after Mini-TES 4 - 2 arrays in a structure")
+	
+	# two sub-arrays in a structure - cycle colors in 2nd array
+	cmd = "pplot({emtes[1:2, 1:3], emtes[2:3, 4:5]*.95}, {3,-1}, {'Gusev Soil 1', 'Gusev Soil 2'}, plot_title='Mini-TES Structure', key='1100, .90', mtes=1, emiss=1)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after Mini-TES 4a - 2 sub-arrays in a structure, cycle colors in 2nd")
+	
+	# one array in a structure, one singe element
+	cmd = "pplot({emtes[1:2, 1:3], emtes[5,5]}, {'Em Array', 'Em spectrum'}, {-1, 5}, plot_title='Mini-TES', key='1100, .90', mtes=1, emiss=1)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after Mini-TES 4b - 1 array in a structure, 1 single element - cycle colors automatically")
+	
+	# one array in a structure - simple case of cycle colors
+	cmd = "pplot({emtes[1:2, 1:3]}, plot_title='Mini-TES', key='1100, .90', mtes=1, emiss=1)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after Mini-TES 5 - 1 array in a structure - cycle colors automatically, no title")
+	
+	# one array in a structure - cycle colors
+	cmd = "pplot({emtes[1:2, 1:3]},  'Gusev Soil', plot_title='Mini-TES', key='1150, .92', mtes=1, emiss=1)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after Mini-TES 6 - 1 array in a structure - cycle colors and index label")
+	
+	# one array in a structure 
+	cmd = "pplot({emtes[1:2, 1:3]}, 'Gusev Soil', plot_title='Mini-TES', key='800, .92', mtes=1, emiss=1, cm=1)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after Mini-TES 7 - wavenumber on the lower x-axis")
+	
+	# one array in a structure - 4 labels
+	cmd = "pplot(emtes[1:4,1], {'Soil1','Soil2','Soil3','Soil4'}, plot_title='Mini-TES', key='1150, .92', mtes=1, emiss=1)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after Mini-TES 8 - 1 structure, 4 labels")
+	# two arrays in a structure with different xaxes
+	cmd =  "pplot({asu.data[1:2], asterdata[1:2]}, xaxis={xlab1, xastercm}, x1=800, x2=1300, xlabel='Wavenumber', ylabel='Emissivity')"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after 2 arrays in a structure with different x axes")
+	
+	# tes plots
+	# 2 TES spectra
+	cmd = "pplot({ave_tes, ave_tes*1.01},{0,1},{'TES Spectrum','TES Spectrum 2'},plot_title='TES',key='1100,.9',tes=1,emiss=1)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after TES -apparently color = 0 = dashed")
+	
+	# lab plots
+	cmd = "pplot({labdata1, labdata2},{1,2}, {'Lab Spectrum 1', 'Lab Spectrum 2'}, key='1800, .85', lab1=1)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after lab 1 - 2 spectra")
+	
+	cmd = "pplot({asudata[1:6], asudata[10:15]+.3},{1,5}, {'Lab Set 1', 'Lab Set 2'}, key='1500, .85', lab1=1, y1=.6, y2=1.4, x2=1600)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after lab 2 - 2 arrays")
+	
+	cmd = "pplot({asudata[1:3], asudata[10:15]+.3},{1,5}, {'Lab Set 1', 'Lab Set 2'}, key='outside', xaxis={xlab1, xlab1}, y1=.6, y2=1.4, x2=1600)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after lab 2 - 2 arrays with xaxis manually specified")
+	
+	# x-y plots
+	cmd = "pplot(yvalbad,1,'Plot 1',key='2, 140',xaxis=xvalbad,xlabel='Velocity',ylabel='Cost')"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after x-y 1")
+	
+	cmd = "pplot({yval,yval+9},{1,2},{'Plot 3','Plot 4'},key='2, 140',xaxis=xval,xlabel='Velocity',ylabel='Cost')"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after x-y 3")
+	
+	cmd = "pplot({yval,yval+9},{3,4},{'Plot 5','Plot 6'},key='1, 90',xaxis=xval,xlabel='Velocity', x1=0, x2=10, ylabel='Cost')"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after x-y 4a")
+	
+	cmd = "pplot({yval,yval+9},{3,4},{'Plot 7','Plot 8'},key='3, 150',xaxis=xval,xlabel='Velocity',ylabel='Cost', mono=1, ps=$TMPDIR+'/junk.ps', pdf=1, ignore=0)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after x-y 5")
+	 
+	# resample 1a
+	cmd = "pplot({labdata1, ave_mtes, ave_tes, emthemis},{1,2,3,4}, {'Lab','Mini-TES','TES','THEMIS'}, key='900,.8', xaxis={xlab1, xmtes, xtes, xthemiscm}, emiss=1, y1=.65)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after resample 1a - 4 spectra - no wave or cm")
+	
+	# resample 1b
+	cmd = "pplot({labdata1, ave_mtes, ave_tes, emthemis},{1,2,3,4}, {'Lab','Mini-TES','TES','THEMIS'}, key='900,.8', xaxis={xlab1, xmtes, xtes, xthemiscm}, emiss=1, y1=.65, wave=1)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after resample 1b - 4 spectra - wave mode")
+	
+	# resample 1c
+	cmd = "pplot({labdata1, ave_mtes, ave_tes, emthemis},{1,2,3,4}, {'Lab','Mini-TES','TES','THEMIS'}, key='900,.8', xaxis={xlab1, xmtes, xtes, xthemiscm}, emiss=1, y1=.65, cm=1)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after resample 1c - 4 spectra - cm mode")
+	
+	# resample 2
+	cmd = "pplot({spectra_cube, emtes, ave_tes, emthemis_cube},{1,2,3,4}, {'Lab Array','Mini-TES Cube','TES Spectrum','THEMIS Array'}, key='900,.7', xaxis={xlab1, xmtes, xtes, xthemiscm}, emiss=1, y1=.6)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after resample 2 - 4 arrays - no wave or cm")
+	
+	# resample 3
+	cmd = "pplot({labd1, mtesdata1, tesdata1, themisdata1, timsdata1},{1,2,3,4,5}, {'Lab Spectrum','Mini-TES','TES','THEMIS', 'TIMS'}, key='900,.7', xaxis={xlab1, xmtes, xtes, xthemiscm, xtimscm}, emiss=1, y1=.6)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after resample 3 - same lab data in different instruments")
+	
+	# resample 4
+	cmd = "pplot({labd1, mtesdata1, tesdata1, themisdata1, timsdata1, asterdata1},{1,2,3,4,5,6}, {'Lab Spectrum','Mini-TES','TES','THEMIS', 'TIMS', 'ASTER'}, lw=5, key='1450,.9', xaxis={xlab1, xmtes, xtes, xthemiscm, xtimscm, xastercm}, emiss=1, x1=200, x2=2000, y1=.7, ps=$TMPDIR+'/junk1.ps', pdf=1)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after resample 3 - same lab data in different instruments")
+	
+	# separate colors
+	cmd = "pplot({emtes}, {'A'}, mtes=1)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after 'separate' 1 - 1 array")
+	
+	cmd = "pplot({emtes, emtes2+.05, emtes3+.1}, {'A','B','C'}, mtes=1)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after 'separate' 2 - 3 arrays different size mtes mode")
+	
+	# single vector
+	vec = emtes[1,1]
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	cmd = "pplot(vec, 3, 'Vector 1', key='800, .9', xaxis=xmtes, x1=300, x2=1650, y1=.88, y2=1.02)"
+	pause("pausing after vector 1 - manual axis - no wave or cm")
+	
+	# 2 arrays, different sizes
+	cmd = "pplot({emtes, emtes2}, {1,2}, {'A1', 'A2'}, mtes=1, key='bottom right', y1=.85, y2=1.05)"
+	printf("\nCommand is:\n")
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after array of vectors 2 - 2 arrays, different sizes - user-supplied colors")
+	
+	
+	if(HasValue(error)) {
+		# test possible errors
+		printf("\n\n\nDoing the error tests\n")
+		# mini-TES data, request TES
+		printf(" Test: mini-TES data, request TES\n")
+		pplot({emtes, emtes, emtes},{1,2,3}, {'S1', 'S2', 'S3'}, key='900, .8', tes=1, emiss=1)
+	
+		# spectra not all the same, but only 1 xaxis
+		printf(" Test: spectra not all the same, but only 1 xaxis\n")
+		pplot({emtes, ave_tes, ave_tes},{1,2,3}, {'S1', 'S2', 'S3'}, key='900, .8', tes=1, emiss=1, y1=.4)
+	
+		# spectra don't match x-axes
+		printf(" Test: spectra don't match x-axes\n")
+		pplot({labdata1, emtes, ave_tes},{1,2,3}, {'Lab', 'Mini-TES', 'TES'}, key='900, .8', xaxis={xlab1, xmtes, xmtes}, emiss=1)
+	
+		# different number of data and lines
+		printf(" Test: different number of data and lines\n")
+		pplot({labdata1, emtes},{1,2,3}, {'Lab', 'Mini-TES'}, key='900, .8', xaxis={xlab1, xmtes}, emiss=1)
+	
+		# different number of data and titles
+		printf(" Test: different number of data and titles\n")
+		pplot({labdata1, emtes},{1,2}, {'Lab', 'Mini-TES', 'TES'}, key='900, .8', xaxis={xlab1, xmtes}, emiss=1)
+	
+		# different number of spectra and x-axes
+		printf(" Test: different number of spectra and x-axes\n")
+		pplot({labdata1, emtes},{1,2}, {'Lab', 'Mini-TES'}, key='900, .8', xaxis={xlab1, xmtes, xtes}, emiss=1)
+	}	
+	
+}
+
+
+
+define plot_sma(group, nplot, other, refit, round, stack, offset, error, diff, concen, ps, pdf,  min_conc, long, x1, x2, y1, y2, i, j, lw, font_size, cm, non_zero, notitle) {
+
+	if ($ARGC == 0) {
+		printf("\nusage: plot_sma(sma_struc [group][nplot][other][refit][round][stack][concen][ps][pdf][min_conc][long][i][j][x1][x2][y1][y2][long][lw][font_size][cm][non_zero]) \n")
+		printf(" \n")
+		printf("where:\n")
+		printf("	sma_struc = structure returned from 'sma'\n")
+		printf(" \n")
+		printf("Default only plots endmembers will abundances greater than .005 (0.5 percent)\n")
+		printf("   Modify using 'min_conc'\n")
+		printf(" 	\n")
+		printf("Options:\n")
+		printf("		group = 1  used the 'grouped' abundances and spectra - default is the individual endmembers\n")
+		printf("		min_conc = minimum fraction to plot - Default is 0.005 (0.5 percent)\n")
+		printf("		nplot = m  only plot the first m of the n endmembers found\n")
+		printf("			(alternative approach to min_conc\n")
+		printf("		other = 1  plot the sum of the rest of the endmembers found (< min_conc or > m)as 'other'\n")
+		printf("		round = 1	round values to nearest 5 percent.  (not as sophisticated as plot_sma_groups)\n")
+		printf("		stack = 1   make a 'stack' plot of the endmembers\n")
+		printf("		refit = n   rerun sma using only the first 'n' most abundance endmembers\n")
+		printf("		error = 1   include error values in labels\n")
+		printf("		diff = 1    plot the difference between the best-fit and measured spectra\n")
+		printf("		concen = 1	use un- normalized percentages in plot key (default is normalized to \n")
+		printf("			account for blackbody\n")
+		printf("		pdf = 'basename' 	write to .pdf file.  filename is basename+i_j.pdf\n")
+		printf(" \n")
+		printf("		notitle = 1  do not add plot title using spectrum label\n")
+		printf("		long = 1	use long labels in key\n")
+		printf("		i = n		only plot the ith column\n")
+		printf("		j = n		only plot the jth row\n")
+		printf("		x1 = wavenumber minimum\n")
+		printf("		x2 = wavenumber maximum\n")
+		printf("		y1 = emissivity minimum\n")
+		printf("		y2 = emissivity maximum\n")
+		printf("		lw = n		change line weight (default = 3)\n")
+		printf("		cm = 1  	Plot with x-axis as Wavenumber\n")
+		printf("		font_size = n	change font_size (default = 22)\n")
+		printf(" \n")
+		printf(" typical use:\n")
+		printf("	plot_sma(dqube, minc_conc=.05, other=1, stack=1, round=1)   stack plot with rounded abundances.  Endmembers with abundance <5%% plotted as 'other'\n")
+		printf("\n other examples: plot_sma(dqube)  plot all endmembers\n")
+		printf("	plot_sma(dqube, refit=6, i=17)     refits and plots 1st 6 endmembers for colunm 17 of qube\n")
+		printf("	plot_sma(dqube, error=1, ps='/myhome/figures/crater_traverse', pdf=1)  plot errors and output ps and pdf files\n")
+		printf(" \n")
+		printf(" p.christensen  3/04 - 11/10\n")
+		return(0)
+	}
+		
+	# modified to deal with the problem of not having .shortlabel c.edwards 2-3-2011
+	# added plot title, improved <min_conc plots as 'other', and fixed '<0' and '=0' issues in label prc 11/2010
+	# Added grouped and diff features - prc 9/2010
+	# major cleanup, fixed 'refit', 3-D arrays, added stack plots, errors - prc 8/22-28/2010
+	# minor changes to compute number of endmembers found to work with refit prc 8/21/10
+	# major changes to use sma and fix bugs - prc 8/2010
+	# changed to loop over vectors in structure  prc 3/23/04
+	# p. christensen 2/04
+		
+	struc = $1
+	# determine size of input array
+	size = dim(struc.modeled)
+	nx = size[1]
+	ny = size[2]
+	nz = size[3]
+	
+	# determine if spectra are in wavnumber or wavelength
+	if(min(struc.endlib.xaxis) < 51.) {
+		# (assume) this is a wavelength spectrum
+		xtype = "wavelength"
+	} else {
+		xtype = "wavenumber"
+	}		
+
+	# determine number of endmembers in libraray
+	n_endlib = dim(struc.endlib.data)[1]
+	
+	# set up endmember library
+	if(HasValue(group)) {
+		# set library spectra to grouped library
+	#	endlib = struc.grouped.grouped_data
+	} else {
+		# set library spectra to endmember library (default)
+		endlib = struc.endlib.data
+	}
+	# values used by user in sma for wavenumber range of fit
+	wave1 = struc.wave1
+	wave2 = struc.wave2
+	# set xaxis
+	xaxis = struc.endlib.xaxis
+	
+	# set up default or user-supplied values
+	# set minimum concentration of endmembers to plot
+	if(HasValue(min_conc) == 0) {
+		# default - set to 0.5%
+		min_conc = .005
+	}
+	
+	# set minimum concentrations of endmembers to consider real
+	if(HasValue(non_zero)==0) {
+		# set to default value of 0.1%
+		non_zero = .001
+	}
+		
+	# set default plot parameters
+	if(HasValue(y1) != 0) {
+		y1all = y1
+	}
+	if(HasValue(lw) == 0) {
+		lw = 3
+	}
+	if(HasValue(font_size) == 0) {
+		font_size = 22
+	}
+		
+	if(HasValue(i)) {
+		# just do single colunm in array if specified by user
+		startx =i
+		nx = i
+	} else {
+	# default is to do all x
+		startx = 1
+	}
+		
+	if(HasValue(j)) {
+		# just do single row in array if specified by user
+		starty =j
+		ny = j
+	} else {
+	# default is to do all y
+		starty = 1
+	}	
+	
+	# loop over x, y elements of spectral cube
+	for(ii=startx; ii<=nx; ii+=1) {
+		for(jj=starty; jj<=ny; jj+=1) {
+	
+			# select individual or grouped concentrations to plot
+			if(HasValue(group)) {
+				# do grouped case - loop through the groups
+				# determine number of groups
+				n_groups = dim(struc.grouped.grouped_sort_full)[3]
+				# build structure of endmembers - in this case they are the weighted group spectra
+				endlib = struct()
+				for(ig=1; ig<=n_groups; ig +=1) {
+					# make the grouped spectra and the concentrations and errors for labels 
+					#  using the grouped concentrations for this spectrum
+					g = struc.grouped.grouped_labels[,ig]
+					# initialize data and sums
+					data = struc.endlib.data[1] * 0.
+					sum = 0.
+					sum_norm = 0.
+					# compute the concentrations and weighted spectra for each group
+					for(ie=1; ie<=n_endlib; ie+=1) {
+						# loop through all the endmembers to test if they are in this group
+						if(struc.endlib.group[,ie] == g) {
+							# endmember belongs to this group - add to the weighted group spectrum
+							data = data + struc.endlib.data[ie] * struc.conc[ii,jj,ie]
+							# increment the sum of the concentrations
+							sum = sum + struc.conc[ii,jj,ie]
+							# divide normconc by 100 to remove idiosyncracy from sma
+							sum_norm = sum_norm + struc.normconc[ii,jj,ie] / 100.
+							#printf("ii = %d jj = %d ig = %d ie = %d conc = %.4f\n", ii, jj, ig, ie, struc.conc[ii,jj,ie])
+						}
+					}
+					# add weighted group spectrum to structure of 'endmembers'
+					# test to avoid 'division by zero' error messages
+					if(sum > 0.) {
+						endlib = endlib + {data/sum}
+					} else {
+						endlib = endlib + {data}
+					}
+	
+					# add group concentrations to arrays
+					if(ig == 1) {
+						# first element
+						# use conc for weighting endmember spectra
+						conc_plot = sum
+						# choose which concentration to use for labels
+						if(HasValue(concen) == 0) {
+							conc_label = sum_norm 
+						} else {
+							conc_label = sum
+						} 
+					} else {
+						# concatinate subsequent elements
+						conc_plot = cat(conc_plot, sum, z)
+						# choose which concentration to use for labels
+						if(HasValue(concen) == 0) {
+							conc_label = cat( conc_label, sum_norm, z)
+						} else {
+							conc_label = cat(conc_label, sum, z)
+						}
+					}
+				}
+	
+				# set elements to be used in plots to the group values
+				sort_full = struc.grouped.grouped_sort_full
+				labels = struc.grouped.grouped_labels
+				shortlabels = struc.grouped.grouped_labels
+				errors = struc.grouped.grouped_error
+				bb_conc = struc.grouped.grouped_bb
+				n_spec = n_groups
+	
+			} else {
+				# do individual endmember case
+				endlib = struc.endlib.data
+				# use individual endmember concentrations
+				conc_plot = struc.conc[ii, jj]
+				# default is to use normconc for labels
+				if(HasValue(concen) == 0) {
+					conc_label = struc.normconc[ii,jj] / 100.
+				} else {
+					conc_label = struc.conc[ii,jj]
+				}
+				sort_full = struc.sort_full
+
+				if(HasValue(get_struct(struc.endlib,"label"))) {
+					labels = struc.endlib.label
+				} else if (HasValue(get_struct(struc.endlib,"sample_name"))) {
+					labels = struc.endlib.sample_name
+				}
+
+				if(HasValue(get_struct(struc.endlib,"shortlabel"))==0) {
+					# intended to remove sample numbers from the end of label
+					# e.g. Spodumene HS-210.4B 2 becomes Spodumene
+					str=strsplit(labels,delim=" ")
+					shortlabels = labels[:15]
+					for(i=1;i<=length(labels);i+=1) {
+						shortlabels[,i]=str[i][,1]
+					}					
+				} else {
+					shortlabels = struc.endlib.shortlabel
+				}
+				
+				errors = struc.error
+				bb_conc = struc.bb
+				n_spec = n_endlib
+			}
+	
+			# sort the endmembers (data, conc, label, shortlabel, error) by abundance
+			# number of endmembers returned by sma
+			n_sma = 1
+			# number of non-zero (i.e. > 0.1%) test
+			n_non_zero = 1
+			# number of endmembers that pass 'abundance to plot' test
+			n_good = 1
+	
+			# loop down top n endmembers requested by user that passed non-zero test
+			# n_good is number of endmembers hat passed the final abundance test
+			for(i=1; i<=n_spec; i+=1) {
+				# compute index of spectrum (j) from sorted array
+				j = sort_full[ii,jj,i]
+				if (i == 1) {
+					# first time - set arrays to values
+					# make the assumption that the first endmember has abundance > min_conc_plotc
+					lib = endlib[j]
+					conc_p = conc_plot[1,1,j]
+					conc_l = conc_label[1,1,j]
+					long_label = labels[,j]
+					short_label = shortlabels[,j]
+					error_val = errors[ii, jj, j]
+
+				} else {
+					# subsequent elements - concat to structure
+					# test to see if sma returned a value for this endmember
+					if(conc_label[1,1,j] > 0.) {
+						lib = cat(lib, endlib[j], x)
+						conc_p = cat(conc_p, conc_plot[1,1,j], z)
+						conc_l = cat(conc_l, conc_label[1,1,j], z)
+						long_label = cat(long_label, labels[,j],y)
+						short_label = cat(short_label, shortlabels[,j] ,y)
+						error_val = cat(error_val, errors[ii, jj, j], z)
+						n_sma +=1
+					}
+					# test to see if abundance is greater than 'zero'
+					if(conc_label[1,1,j] >= non_zero) {
+						n_non_zero += 1
+					}
+					# test to see if abundance is greater than user-specified minimum
+					if(conc_label[1,1,j] >= min_conc) {
+						# increment number of good endmembers that passed all tests
+						n_good +=1;
+					}
+				}
+			}
+	
+			if(n_sma == 0) {
+				printf(" no fit for this element i = %d  j = %d\n", ii, jj)
+				break
+			}
+	
+			# save orginal modeled spectrum
+			orig_measured = struc.measured[ii, jj]
+			orig_model = struc.modeled[ii, jj]
+	
+			# compute ratio of normconc to conc to adjust the the errors in the (default)
+			#  normconc case since these are not returned by sma
+			# if doing 'concen=1' case this ratio will be 1.0 since the labels use the conc values
+			error_val = error_val * conc_l[1,1,1]/conc_p[1,1,1]
+	
+			# refit if desired
+			if(HasValue(refit) ) {
+				if(HasValue(group) != 0) {
+					printf("Can't refit if doing 'groups'\n")
+					break
+				}
+				if(refit > n_sma) {
+					printf("number of endmembers in your refit (%d) is greater than in the original fit (%d)\n", refit, n_sma)
+					printf("# refit set to # original\n")
+					n_refit = n_sma
+				} else {
+					n_refit = refit
+				}
+				# rerun sma only using first n endmembers
+				#  - don't need to exclude because previously excluded spectra wouldn't
+				#  have appeared as solutions in structure returned from sma
+				dnew = refit_sma(struc, n_refit, ii = ii, jj = jj)
+	
+				# reset conc and normconc values to new values from sma
+				# refit returns the sorted label, conc, and normconc so we don't have to do
+				#  that again here
+				conc_p = dnew.sorted_conc
+				if(HasValue(concen) == 0) {
+					conc_l = dnew.sorted_normconc / 100.
+				} else {
+					conc_l = dnew.sorted_conc
+				}
+				lib = dnew.sorted_data[1]
+				for(ri = 2; ri <= n_refit; ri+=1) {
+					lib = cat(lib, dnew.sorted_data[ri], x)
+				}
+				long_label = dnew.sorted_label
+				short_label = dnew.sorted_shortlabel
+				# adjust error values if labels are conc, not normconc
+				error_val = dnew.sorted_error * (conc_l[1,1,1]/conc_p[1,1,1])
+				n_sma = dim(dnew.sorted_conc)[3]
+				n_non_zero = n_sma
+				n_good = n_sma
+	
+			}
+	
+			# number of endmembers to plot
+			if(HasValue(nplot)) {
+				# user specified
+				if(nplot > n_good) {
+					printf("\n************  Warning ******************************** \n")
+					printf("More endmembers specified (%d) than were found (%d) - resetting to n found\n\n", nplot, n_good)
+					n = n_good
+				} else {
+					n = nplot
+				}
+	
+			} else {
+				# set number of endmembers to plot to number of non-zero endmembers
+				n = n_good
+			}
+		
+			# debug only
+			if(HasValue(nplot)) {
+				#printf("# endlib = %d  # spec used = %d # from sma = %d  # non_zero = %d  # plot %d # > min conc = %d  # that will be used = %d\n", n_endlib, n_spec, n_sma, n_non_zero, nplot, n_good, n)
+			} else {
+				#printf("# endlib = %d  # spec used = %d # from sma = %d   # non_zero = %d  # > min conc = %d  # that will be used = %d\n", n_endlib, n_spec, n_sma, n_non_zero, n_good, n)
+			}
+			# create plot and label arrays for each case - make big enough to accomodate entire
+			#  endlib if necessary + data and models
+			label = create(n_endlib+3, 1, 1, format=float)
+		
+			# Find good min and max for y scale
+			if(HasValue(x1) == 0) {
+				# set default
+				# test for mini-TES
+				xmtes = make_band(inst='mtes')
+				if(round(min(xaxis)) == round(min(xmtes)) && round(max(xaxis)) == round(max(xmtes))) {
+					# hey - this is mini-tes spectrum - do what we did during MER
+					x1 = 350
+
+				} else {
+					x1 = 200
+				}
+
+				# check to make sure xaxis contains this value
+				if(min(xaxis) > x1) {
+					x1 = min(xaxis)
+				}
+
+				if(max(xaxis) < x1) {
+					# this is a wavelength xaxis - let gnuplot do the work
+					x1 = 0
+				}
+			}
+
+			if(HasValue(x2) == 0) {
+				# set default
+				if(round(min(xaxis)) == round(min(xmtes)) && round(max(xaxis)) == round(max(xmtes))) {
+					# hey - this is a mini-TES spectrum
+					x2 = 1400
+
+				} else {
+					x2 = 2000
+				}
+
+				# check to make sure xaxis contains this value
+				if(max(xaxis) < x2) {
+					x2 = max(xaxis)
+				}
+				if(x1 == 0) {
+					# this is a wavelength xaxis - let gnuplot do the work
+					x2 = 0
+				}
+			}
+	
+			# determine y plot limits
+			# channels corresponding to min and max wavenumber
+			if(x1 == 0) {
+				chx1 = 1
+			} else {
+				chx1 = maxchan(int(xaxis - x1) >=0)
+			}
+			if(x2 == 0) {
+				chx2 = dim(xaxis)[3]
+			} else {
+				chx2 = maxchan(int(xaxis - x2) >=0)
+			}
+
+			dely = .005
+		
+			if(nz < 20) {
+				xoff = 0
+			} else {
+				xoff = 2
+			}
+			if(HasValue(y1all) == 0) {
+				# set miny to be min emissivity value - exclude extreme wavenumber ends
+				minyr = min(orig_measured[1,1, chx1+xoff:chx2-xoff])
+				y1 = (int(minyr/dely) - 1) * dely
+			} else {
+				y1=y1all
+			}
+	
+			if(HasValue(y2) == 0) {
+				y2 = 1.005
+			}
+			#printf("x1 = %d  x2 = %d chx1 = %d  chx2 = %d xoff = %d, minyr = %.3f, dely = %.3f, y1 = %.3f y2 = %.3f\n", x1, x2, chx1, chx2, xoff, minyr, dely, y1, y2)
+		
+			# y offset for plotting endmembers
+			em_offset = (1.-y1)/4.
+	
+			# create a bb emissivity spectrum
+			bbspec = create(1,1,size[3], format=float) * 0. + 1.
+		
+			# create structure of normalized, offset vectors for ploting for first n endmembers
+			minsc ={}
+			for(k=1; k<=n; k+=1) {
+				minsc = minsc + {lib[k] * conc_p[1,1,k] + (1-conc_p[1,1,k]) + em_offset}
+			}
+	
+			if(HasValue(other)) {
+				if(n < n_sma) {
+					# plot first n endmembers plus computed "other"
+					# make "other" spectra of remaining endmembers
+					other = lib[1]* 0.
+					other_conc = 0.
+					for(nn = n+1; nn <= n_sma; nn+=1) {
+						# use conc_p to make spectrum
+						other = other + (lib[nn] * conc_p[1,1,nn] + (1-conc_p[1,1,nn]))
+						# use norm_l for label
+						other_conc = other_conc + conc_l[1,1,nn]
+					}			
+					other = (other - (n_sma-n-1)) + em_offset
+		
+					# increment n to include 'other'
+					n = n + 1
+					minsc = minsc + {other}
+					short_label[,n] = "Other"
+					long_label[,n] = "Other"
+					conc_l[,,n] = other_conc
+				}
+			}
+	
+			# do offset plots for endmembers
+			if(HasValue(offset)) {
+				a = offset_plot(minsc, chx1, chx2)
+				minsc = a.data
+				em_offset = em_offset + a.max_offset
+			}
+	
+			# do stack plots for endmembers
+			if(HasValue(stack)) {
+				# make a stacked plot of the endmembers if requested
+				# increase the plot offset if doing stack plots
+				offset_factor = 2.
+				minsc = stack_plot(minsc, em_offset, new_offset = em_offset * offset_factor)
+				em_offset = em_offset * offset_factor
+			}
+	
+			# round percentages if requested
+			if(HasValue(round)) {
+				for(i=1; i<=n; i+=1) {
+					conc_l[1,1,i] = int((conc_l[1,1,i]+.025)/.05)*.05
+				}
+			}
+	
+			# create labels, colors and voffset
+			if(HasValue(refit)) {
+				label = {"Data", "Original Model", "Refit Model"}
+				colors = {1,2,3}
+				voffset = 3
+			} else {
+				label = {"Data", "Modeled"}
+				colors = {1,2}
+				voffset = 2
+			}
+		
+			# create structure of labels and colors
+			# avoid have '=0' or <0' in plot label
+			if(HasValue(round)) {
+				minp = .05
+			} else {
+				minp = .01
+			}
+			for(i=1; i<=n; i+=1) {
+				if(HasValue(long)) {
+					# use long labels
+					if(HasValue(error)) {
+						# include error values
+						if(conc_l[,,i] < minp) {	
+							# set label to '<minp%' if value < minp
+							label = label+{sprintf("%s %.0f%%  +/-%.0f%%", long_label[,i], minp, round(error_val[,,i]*100.))}
+						} else {
+							label = label+{sprintf("%s %.0f%%  +/-%.0f%%", long_label[,i], conc_l[,,i]*100., round(error_val[,,i]*100.))}
+						}
+
+					} else {
+						# don't use error values
+						if(conc_l[,,i] < minp) {	
+							# set label to '<minp%' if value < minp
+							label = label+{sprintf("%s <%.0f%%", long_label[,i], minp)}
+						} else {
+							label = label+{sprintf("%s %.0f%%", long_label[,i], conc_l[,,i]*100.)}
+						}
+					}
+		
+				} else {
+					# use short labels
+					if(HasValue(error)) {
+						# include error values
+						if(conc_l[,,i] < minp) {	
+							# set label to '<minp%' if value < minp
+							label = label+{sprintf("%s <%.0f%%  +/-%.0f%%", short_label[,i], minp*100., round(error_val[,,i]*100.))}
+						} else {
+							label = label+{sprintf("%s %.0f%%  +/-%.0f%%", short_label[,i], conc_l[,,i]*100., round(error_val[,,i]*100.))}
+						}
+
+					} else {
+						# don't include error values
+						if(conc_l[,,i] < minp) {	
+							# set label to '<minp%' if value < minp
+printf("minp = %.5f, %.0f\n", minp, minp*100.)
+							label = label+{sprintf("%s <%.0f%%", short_label[,i], minp*100.)}
+						} else {
+							label = label+{sprintf("%s %.0f%%", short_label[,i], conc_l[,,i]*100.)}
+						}
+					}
+				}
+				#printf("n_sma = %d n_good = %d i= %d conc_l = %.3f conc_p = %.3f\n", n_sma, n_good, i, conc_l[,,i], conc_p[,,i])
+
+				if(HasValue(refit)) {
+					colors = colors + {i+3}
+				} else {
+					colors = colors + {i+2}
+				}
+			}
+		
+			if(HasValue(refit)) {
+				minsc = {orig_measured, orig_model, dnew.modeled[1,1]} + minsc
+	
+			} else {
+				minsc = {orig_measured, struc.modeled[ii,jj]} + minsc
+			}
+	
+			# set the color of final stack plot to color of model
+			if(HasValue(stack)) {
+				if(HasValue(refit)) {
+					colors[length(colors)] = colors[3] 
+				} else {
+					colors[length(colors)] = colors[2] 
+				}
+			}
+	
+			# compute difference between model and data
+			if(HasValue(diff)) {
+				if(HasValue(refit)) {
+					diff_spec = orig_measured - dnew.modeled[1,1]
+				} else {
+					diff_spec = orig_measured - orig_model
+				}
+				diff_offset  = .01
+				minsc = minsc + {diff_spec + y1 - diff_offset}
+				minsc = minsc + {(diff_spec * 0.) + y1 - diff_offset}
+				colors = colors + {1}
+				colors = colors + {0}
+				label = label +{'Data-Model'}
+				label = label +{'Zero Reference'}
+				voffset += 2
+				# determine the minimum of the difference spectrum of the range plotted
+				mindiff = min(diff_spec[1,1, chx1+2:chx2-2])
+				# set the lower plot limit to be slight lower than the diff_offset minus the minimum
+				#  of the differnece spectrum
+				y1 = y1 - diff_offset + (1.2*mindiff)
+			} else {
+				diff_offset = 0.
+			}
+	
+			# set the upper plot limit to account for all the offsets
+			y2o = y2 + em_offset
+			printf("plotting spectrum i=%d, j=%d \n", ii, jj)
+		
+			# create plot title (unless not wanted)
+			if(HasValue(notitle)) {
+				ptitle = " "
+			} else if(HasValue(get_struct(struc,"label"))) {
+				ptitle_index=int(max(cat(ii,jj,axis=x)))
+				ptitle = struc.label[,ptitle_index] 
+			} else if(HasValue(get_struct(struc,"sample_name"))) {
+				ptitle_index=int(max(cat(ii,jj,axis=x)))
+				ptitle = struc.sample_name[,ptitle_index] 
+			} else {
+				ptitle = " "
+			}
+
+			if(HasValue(pdf)) {
+				# make the ps, and possibly pdf versions
+				index = (ii-1) * nx + jj
+				out=sprintf("%s_%2.2d_%2.2d.pdf", pdf, ii,jj)
+				printf("output pdf file = %s\n", out)
+	
+				if(HasValue(cm)) {
+					# plot with wavenumber x-label - min to max
+					pplot(minsc, label[1:n + voffset], colors, key="outside top Left reverse samplen 1.8", x1=x1, x2=x2, y1=y1, y2=y2o, font_size=font_size, lw=lw, pdf=out, xaxis=xaxis, xlabel='Wavenumber', ylabel='Emissivity', plot_title=ptitle[])
+				} else {
+					# default mode - wavelength x-label min to max
+					pplot(minsc, label[1:n + voffset], colors, key="outside top Left reverse samplen 1.8", x1=x1, x2=x2, y1=y1, y2=y2o, font_size=font_size, lw=lw, pdf=out, xaxis=xaxis, wave=1, plot_title=ptitle[])
+				}
+
+		
+#				if(HasValue(pdf)) {
+#					outpdf = sprintf("%s_%2.2d_%2.2d.pdf", ps, ii,jj)
+#					printf("converting to pdf file %s\n", outpdf)
+#					command=sprintf("ps2pdf -r300 %s %s", out, outpdf) 
+#					system(command) 
+#				}
+	
+			} else {
+				# make the screen-only version
+				if(HasValue(cm)) {
+					# plot with wavenumber x-label - min to max
+					pplot(minsc, label[1:n + voffset], colors, key="outside top Left reverse samplen 1.8", x1=x1, x2=x2, y1=y1, y2=y2o, font_size=font_size, lw=lw, xaxis=xaxis, xlabel='Wavenumber', ylabel = 'Emissivity', plot_title=ptitle[])
+
+				} else {
+					# default mode - wavelength x-label min to max
+					if(xtype == "wavenumber") {
+						pplot(minsc, label[1:n + voffset], colors, key="outside top Left reverse samplen 1.8", x1=x1, x2=x2, y1=y1, y2=y2o, font_size=font_size, lw=lw, xaxis=xaxis, wave=1, ylabel = 'Emissivity', plot_title=ptitle[])
+					} else {
+						pplot(minsc, label[1:n + voffset], colors, key="outside top Left reverse samplen 1.8", x1=x1, x2=x2, y1=y1, y2=y2o, font_size=font_size, lw=lw, xaxis=xaxis, ylabel = 'Emissivity', xlabel = "Wavelength", plot_title=ptitle[])
+					}
+				}				
+			}	
+		
+			if(ii<nx || jj< ny) {
+				p=pause("pausing - b for back; return for next; any key to exit")
+				if(p[1] == 'b') {
+					jj = jj -2
+					if(jj<0) {
+						jj = ny-1
+						ii = ii-1
+						if(ii<1) {
+							printf("hey dummy you can't go back any further\n")
+							return(0)
+						}
+					}
+	
+				} else if(length(p)>1) {
+					return(0)
+				}
+			}
+		}
+	}
+}
+
+
+
+define plot_sma_tutorial() {
+
+	# p. christensen 8/25/2010
+	# scale factor to reduce depth of synthetic spectrum - used to test
+	#  conc and normconc
+	
+	b3008=read($DV_EX+"/brlib_3008.hdf")
+	
+	# do real data tests
+	
+	# create a blackbody
+	bb = create(1,1,dim(b3008.data[1])[3], format = float)
+	bb = bb*0. +1.
+
+	#a1 = read($DV_EX+ "/mini_tes_spectrum.vic")
+	a1 = read($DV_EX+"/a1_mini_tes_spectrum.vic")
+	s1 = sma(a1, b3008, sort=1, group=1, exclude=37//38//40, notchco2=1, wave1=380, wave2=1280)
+	
+	# make a 3x2 test cube
+	r1 = read($DV_EX + "/sol8_mini_tes_cube.hdf")
+	a3x=cat(avg(r1.emissivity[1,1:10], y), avg(r1.emissivity[1, 11:20], y), avg(r1.emissivity[1,21:30], y), x)
+	a3y=cat(avg(r1.emissivity[1,31:40], y), avg(r1.emissivity[1, 41:50], y), avg(r1.emissivity[1,51:60], y), x)
+	a32=cat(a3x, a3y, y)
+	#	write(a32, $DV_EX + "/mini_tes_emissivity_cube.vic", vicar, force=1)
+	s32 = sma(a32, b3008, sort=1, group=1, exclude=37//38//40, notchco2=1, wave1=380, wave2=1280)
+
+	printf("command is: \n")
+	cmd = "plot_sma(s1)"
+	echo(cmd)
+	eval(cmd)
+	p=pause("pausing after default case")
+	if(length(p) > 1) {
+		return(0)
+	}
+
+	printf("command is: \n")
+	cmd = "plot_sma(s1, nplot=7)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after nplot example - only plot top 7 endmembers")
+
+	printf("command is: \n")
+	cmd = "plot_sma(s1, min_conc=.07)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after min_conc example - only plot endmembers with abundance > 7%")
+
+	printf("command is: \n")
+	cmd = "plot_sma(s1, min_conc=.08, nplot=10)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after min_conc and nplot example - the most stringent constraint is used")
+
+	printf("command is: \n")
+	cmd = "plot_sma(s1, nplot=6, other=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after nplot with 'other' example - *** common use case ***")
+
+	printf("command is: \n")
+	cmd = "plot_sma(s1, nplot=6, other=1, round=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after round example - *** common use case ***")
+
+	printf("command is: \n")
+	cmd = "plot_sma(s1, nplot=7, other=1, round=1, stack=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after stack example - *** common use case ***")
+
+	printf("command is: \n")
+	cmd = "plot_sma(s1, round=1, stack=1, diff=1, refit=7)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after diff example - *** common use case ***")
+
+	printf("command is: \n")
+	cmd = "plot_sma(s1, group=1, round=1, stack=1, error=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after grouped example - *** common use case ***")
+
+	printf("command is: \n")
+	cmd = "plot_sma(s1, nplot=7, other=1, round=1, stack=1, error=1)"
+	echo(cmd)
+	eval(cmd)
+	p=pause("pausing after errors example")
+	if(length(p)>1) {
+		return(0)
+	}
+
+	printf("command is: \n")
+	cmd = "plot_sma(s1, refit=6, stack=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after refit, stack")
+
+	printf("command is: \n")
+	cmd = "plot_sma(s1, nplot=7, round=1, offset=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after offset plot example")
+
+	printf("command is: \n")
+	cmd = "plot_sma(s1, refit=6, nplot=4, stack=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after refit with only top 4 refit endmembers plotted case (stacked)")
+
+	printf("command is: \n")
+	cmd = "plot_sma(s1, refit=6, nplot=4, other=1, stack=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after refit with only top 4 refit endmembers + other plotted case (stacked)")
+
+	printf("command is: \n")
+	cmd = "plot_sma(s1, refit=6, nplot=7, stack=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after refit, stack, nplot test")
+
+	printf("\n *** PRC debug cases *** \n")
+
+	printf("command is: \n")
+	cmd = "plot_sma(s32, nplot=8, other=1, stack=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after 3-D cube, nplot case")
+
+	printf("command is: \n")
+	cmd = "plot_sma(s1, nplot=8, other=1, offset=1, diff=1)"
+	echo(cmd)
+	eval(cmd)
+	p=pause("pausing after offset plot case - compare with following refit case")
+	if(length(p)>1) {
+		return(0)
+	}
+
+	printf("command is: \n")
+	cmd = "plot_sma(s1, nplot=8, other=1, offset=1, refit=5, diff=1)"
+	echo(cmd)
+	eval(cmd)
+	p=pause("pausing after refit, offset plot case")
+	if(length(p)>1) {
+		return(0)
+	}
+
+	printf("command is: \n")
+	cmd = "plot_sma(s32, refit=8, nplot=6, other=1, stack=1, error=1)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after 3-D cube, refit case")
+
+	printf("command is: \n")
+	cmd = "plot_sma(s32, refit=12, stack=1, i=3, j=2)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after 3-D cube, single element, refit case")
+
+	printf("command is: \n")
+	cmd = "plot_sma(s32, nplot=5, other=1, stack=1, group=1, round=1, error=1, i=2, j=2)"
+	echo(cmd)
+	eval(cmd)
+	pause("pausing after 3-D cube, other, stack, grouped, round, error i, j, case")
+}
+
+
+
+define commonx() {
+
+  if($ARGC==0) { 
+    printf("\nResamples all of the given spectra to a common xaxis (linearly)\n")
+    printf("a structure is returned that contains the input spectra resampled\n")
+    printf("to the common xaxis, which is also included\n")
+    printf("Spectra should be in the z-direction and can be more than one dimension in x and y\n\n")
+    printf("$1=data structure\n")
+    printf("$2=xaxis structure\n\n")
+		printf("NOTE: This function is outdated and all functionality is replaced by \"plot()\"\n\n")
+    printf("c.edwards 03-22-07\n")
+    return(null)
+  }
+
+  data=$1
+  xaxis=$2
+
+  if(length(data)!=length(xaxis)) {
+    printf("\nThe number of xaxis arrays does not agree with the number of input data arrays\n\n")
+    return(null) 
+  }
+  count=0
+  for(i=1;i<=length(data);i+=1){
+    if(dim(data[i])[3]!=dim(xaxis[i])[3]) count+=1
+  }  
+  if(count>0) {
+    printf("\n%i of the z-dimensinons of your data does not equal the z-dimension of the xaxis\n\n",count) 
+    return(null)
+  }
+
+  newx=xaxis[1]
+  for(i=2;i<=length(xaxis);i+=1) {
+    newx=cat(float(newx),float(xaxis[i]),z)
+  }
+ 
+  newx=uniq(newx)
+
+  newdata={}
+  for(k=1;k<=length(xaxis);k+=1) {
+    dim=dim(data[k])
+    tmp=clone(0.,dim[1],dim[2],dim(newx)[3])
+
+    for(i=1;i<=dim(data[k])[1];i+=1 ) {
+      for(j=1;j<=dim(data[k])[2];j+=1) {    
+        res=interp(data[k][i,j],xaxis[k],newx)
+	mask=(data[k][i,j]==0)
+	resmask=interp(mask,xaxis[k],newx)
+	resmask[where resmask!=0]=1
+        res[where resmask==1]=0
+        tmp[i,j]=res
+      }
+    }
+   
+    max=max(xaxis[k])
+    min=min(xaxis[k])
+    tmp[where newx>=max || newx<=min]=0
+
+    if(get_struct_key(data,k) != "" ) {
+      add_struct(newdata,tmp,name=get_struct_key(data,k))
+    } else {
+      newdata+={tmp}
+    }
+  }
+  
+  out={}
+  out.data=newdata
+  out.xaxis=newx
+  return(out)
+}
+
+
+define plot_loop(axis,inc,xaxis) {
+
+if ($ARGC == 0) {
+	printf (" \n")
+	printf (" Plot individual vectors in an array or arrays. \n")
+	printf (" $1 = object 1 \n")
+	printf (" $2 = object 2 (optional)\n")
+	printf (" $3 = object 3 (optional)\n")
+	printf (" $4 = object 4 (optional)\n")
+	printf (" axis = ('x','y', or 'z')\n")
+	printf (" inc = ('x', 'y', or 'z')\n")
+	printf (" xaxis = xscale (optional)\n")
+	printf (" \n")
+	return(0)
+
+}
+
+punt="0"
+
+	
+x=dim($1)[1,,]
+y=dim($1)[2,,]
+z=dim($1)[3,,]
+obj1=$1
+
+
+if ($ARGC >= 2) {
+
+	x=int(min(dim($2)[1,,]//x))
+	y=int(min(dim($2)[2,,]//y))
+	z=int(min(dim($2)[3,,]//z))
+	obj2=$2
+}
+
+if ($ARGC >= 3) {
+
+	x=int(min(dim($3)[1,,]//x))
+	y=int(min(dim($3)[2,,]//y))
+	z=int(min(dim($3)[3,,]//z))
+	obj3=$3
+}
+
+if ($ARGC >= 4) {
+
+	x=int(min(dim($4)[1,,]//x))
+	y=int(min(dim($4)[2,,]//y))
+	z=int(min(dim($4)[3,,]//z))
+	obj4=$4
+}
+
+if (axis=="x") {
+
+	axisn=x
+
+	if (HasValue(xaxis)==0) {
+
+		xaxis=create(x=x,y=1,z=1,format=int,start=1,step=1)
+	}
+}
+
+if (axis=="y") {
+
+	axisn=y
+
+	if (HasValue(xaxis)==0) {
+
+		xaxis=create(x=1,y=y,z=1,format=int,start=1,step=1)
+	}
+}
+
+if (axis=="z") {
+
+	axisn=z
+
+	if (HasValue(xaxis)==0) {
+
+		xaxis=create(x=1,y=1,z=z,format=int,start=1,step=1)
+	}
+}
+
+if (inc=="x") {
+
+	incn=x
+	for (i=1; i<=incn && punt != "q\n"; i+=1) {
+
+		if ($ARGC ==1) {
+
+			xplot(obj1[i,1:y,1:z],sprintf("title '%i of %i'",i,incn),Xaxis=xaxis,separate=1)
+		}
+
+		if ($ARGC ==2) {
+
+			xplot(obj1[i,1:y,1:z],sprintf("title '%i of %i'",i,incn),obj2[i,1:y,1:z],sprintf("title ' '"),Xaxis=xaxis,separate=1)
+		}
+
+		if ($ARGC ==3) {
+
+			xplot(obj1[i,1:y,1:z],sprintf("title '%i of %i'",i,incn),obj2[i,1:y,1:z],sprintf("title ' '"),obj3[i,1:y,1:z],sprintf("title ' '"),Xaxis=xaxis,separate=1)
+		}
+
+		if ($ARGC ==4) {
+
+			xplot(obj1[i,1:y,1:z],sprintf("title '%i of %i'",i,incn),obj2[i,1:y,1:z],sprintf("title ' '"),obj3[i,1:y,1:z],sprintf("title ' '"),obj4[i,1:y,1:z],sprintf("title ' '"),Xaxis=xaxis,separate=1)
+		}
+
+		punt=pause("Return for next vector (q to exit, b to go back)")
+
+		if (punt == "b\n") {
+
+			i=i-2
+		}
+	}
+}
+
+if (inc=="y") {
+
+	incn=y
+
+	for (i=1; i<=incn && punt != "q\n"; i+=1) {
+
+		if ($ARGC ==1) {
+
+			xplot(obj1[1:x,i,1:z],sprintf("title '%i of %i'",i,incn),Xaxis=xaxis,separate=1)
+		}
+
+		if ($ARGC ==2) {
+
+			xplot(obj1[1:x,i,1:z],sprintf("title '%i of %i'",i,incn),obj2[1:x,i,1:z],sprintf("title ' '"),Xaxis=xaxis,separate=1)
+		}
+
+		if ($ARGC ==3) {
+
+			xplot(obj1[1:x,i,1:z],sprintf("title '%i of %i'",i,incn),obj2[1:x,i,1:z],sprintf("title ' '"),obj3[1:x,i,1:z],sprintf("title ' '"),Xaxis=xaxis,separate=1)
+		}
+
+		if ($ARGC ==4) {
+
+			xplot(obj1[1:x,i,1:z],sprintf("title '%i of %i'",i,incn),obj2[1:x,i,1:z],sprintf("title ' '"),obj3[1:x,i,1:z],sprintf("title ' '"),obj4[1:x,i,1:z],sprintf("title ' '"),Xaxis=xaxis,separate=1)
+		}
+
+		punt=pause("Return for next vector (q to exit, b togo back)")
+
+		if (punt == "b\n") {
+
+			i=i-2
+		}
+
+
+	}
+}
+
+if (inc=="z") {
+
+	incn=z
+
+	for (i=1; i<=incn && punt != "q\n"; i+=1) {
+
+		if ($ARGC ==1) {
+
+			xplot(obj1[1:x,1:y,i],sprintf("title '%i of %i'",i,incn),Xaxis=xaxis,separate=1)
+		}
+
+		if ($ARGC ==2) {
+
+			xplot(obj1[1:x,1:y,i],sprintf("title '%i of %i'",i,incn),obj2[1:x,1:y,i],sprintf("title ' '"),Xaxis=xaxis,separate=1)
+		}
+
+		if ($ARGC ==3) {
+
+			xplot(obj1[1:x,1:y,i],sprintf("title '%i of %i'",i,incn),obj2[1:x,1:y,i],sprintf("title ' '"),obj3[1:x,1:y,i],sprintf("title ' '"),Xaxis=xaxis,separate=1)
+		}
+
+		if ($ARGC ==4) {
+
+			xplot(obj1[1:x,1:y,i],sprintf("title '%i of %i'",i,incn),obj2[1:x,1:y,i],sprintf("title ' '"),obj3[1:x,1:y,i],sprintf("title ' '"),obj4[1:x,1:y,i],sprintf("title ' '"),Xaxis=xaxis,separate=1)
+		}
+
+		punt=pause("Return for next vector (q to exit, b to go back)")
+
+
+		if (punt == "b\n") {
+
+			i=i-2
+		}
+	}
+}
+}
+
+
+
+define density_plot(ignorex,ignorey,xsize,ysize,minx,maxx,miny,maxy) {
+
+	if($ARGC<2) {
+		printf("\nDensity Plotting Scheme\n")
+		printf("Plots a two diemsntional histogram\n\n")
+		printf("$1 = data for the x axis\n")
+		printf("$2 = data for the y axis\n")
+		printf("Note: $1 and $2 must have the same dimensions\n\n")
+		printf("Options:\n")
+		printf("xsize = output image x dimension (Default = 1500)\n") 
+		printf("ysize = output image y dimension (Default = 1500)\n") 
+		printf("ignorex = ignore value for the x data (Default = 0)\n") 
+		printf("ignorey = ignore value for the y data (Default = 0)\n") 
+		printf("minx = minimum x data value to be plotted (Default is minx-0.1*minx)\n")
+		printf("maxx = maximum x data value to be plotted (Default is maxx+0.1*maxx)\n")
+		printf("miny = minimum y data value to be plotted (Default is miny-0.1*miny)\n")
+		printf("maxy = maximum y data value to be plotted (Default is maxy+0.1*maxy)\n\n")
+		printf("c.edwards 2/2011\n\n")
+		return(null)
+	}
+	
+	
+	if(HasValue(ignorex)==0) {
+		ignorex=0
+	}
+	if(HasValue(ignorey)==0)	{
+		ignorey=0
+	}
+	
+	if(HasValue(xsize)==0) {
+		xsize=1500
+	}
+	if(HasValue(ysize)==0) {
+		ysize=1500
+	}
+
+	x=$1
+	y=$2
+
+	if(sum(dim(x)==dim(y))!=3) {
+		printf("x and y arrays must be the same size\n")
+		return(null)
+	}
+	
+	dim=dim(x)
+	x=resize(x,dim[1]*dim[2]*dim[3],1,1)
+	y=resize(y,dim[1]*dim[2]*dim[3],1,1)
+	iter=dim(x)[1]
+
+	if(HasValue(minx)==0) {
+		minx=min(x,ignore=ignorex)
+		minx-=minx*.1
+	}
+	if(HasValue(maxx)==0) {
+		maxx=max(x,ignore=ignorex)
+		maxx+=maxx*.1
+	}
+	if(HasValue(miny)==0) {
+		miny=min(y,ignore=ignorey)
+		miny-=miny*.1
+	}
+	if(HasValue(maxy)==0) {
+		maxy=max(y,ignore=ignorey)
+		maxy+=maxy*.1
+	}
+
+	plot=clone(int(0),xsize,ysize,1)
+
+	xrange=float(maxx-minx)
+	yrange=float(maxy-miny)
+	scalex=xrange/float(xsize)
+	scaley=yrange/float(ysize)
+
+	x[where x!=ignorex]=x-minx
+	y[where y!=ignorey]=y-miny
+	
+	x=int(round(x/scalex))
+	y=int(round(y/scaley))
+	
+	for(i=1;i<=iter;i+=1) {
+#		printf("%i,%i:%i\n",x[i],y[i],i)
+		if(x[i]!=ignorex && y[i]!=ignorey) {
+			if( (x[i]>0 && x[i]<xsize) && (y[i]>0 && y[i]<ysize) ) {
+				plot[x[i],y[i]]+=1
+			}
+		}
+	}	
+	return(translate(plot,y,y,flip=1))
+}
+
+
+
+define triplot(tlabel,llabel,rlabel,label,title,ptype,psize,norm) {
+
+	if($ARGC<3) {
+		printf("\nTernary Plotting Scheme\n")
+		printf("Plots a triplet of numbers 3 1xNx1 in size on a ternary plot\n\n")
+		printf("$1 = Top Location (0-100)\n")
+		printf("$2 = Left Location (0-100)\n")
+		printf("$3 = Right Location (0-100)\n")
+		printf("Note the individual values in any given row must add up to 100\n\n")
+		printf("Options:\n")
+		printf("tlabel = top label value (Default = X)\n") 
+		printf("llabel = left label value (Default = Y)\n") 
+		printf("rlabel = right label value (Default = Z)\n") 
+		printf("label = data key label (Default = data)\n")
+		printf("title = Plot title value (Default = \"\")\n")
+		printf("ptype = point types 0-? (Default = 3)\n")
+		printf("norm = normalize all values to 100 (Default = 0)\n")
+		printf("psize = point size 0-? (Default = 1)\n\n")
+		printf("c.edwards 5/2009\n\n")
+		return(null)
+	}
+
+	#set up inital values
+	if(HasValue(psize)==0) psize=1
+	if(HasValue(ptype)==0) ptype=3
+  if(HasValue(llabel)==0) llabel="Y"
+  if(HasValue(tlabel)==0) tlabel="X"
+  if(HasValue(rlabel)==0) rlabel="Z"
+	if(HasValue(label)==0) label="data"
+	if(HasValue(title)==0) title=""
+	if(HasValue(norm)==0) norm=0
+		
+	#get the format of the data and up-convert if necessary
+	id=format($1)
+	if(id=="int" || id=="byte" || id=="short" || id=="float") {
+		id="float"
+	} else {
+		id="double"
+	}
+
+	#load the data	
+  X=format($1,format=id)
+  Y=format($2,format=id)
+  Z=format($3,format=id)
+	
+	#error checking for valid data
+	if(dim(X)[1]>1 || dim(Y)[1]>1 || dim(Z)[1]>1 ) {
+		printf("One or more input has an invalid X size \n")
+		return(null)
+	}
+	if(dim(X)[3]>1 || dim(Y)[3]>1 || dim(Z)[3]>1 ) {
+		printf("One or more input has an invalid Z size \n")
+		return(null)
+	}
+	
+	if(dim(X)[2] != dim(Y)[2] || dim(X)[2] != dim(Z)[2]){
+	  printf("One or more input has a differing Y size \n")
+		return(null)
+  }
+	
+	if(sum(X+Y+Z!=100)!=0 && norm==0) {
+		printf("One or more triplet does not sum to 100\n")
+		printf("Re-run with norm=1 to auto normalize\n")
+		return(null)
+	}
+
+	#normalize if we need to
+	if(norm==1) {
+	  sum=X+Y+Z
+		X=X/sum
+		Y=Y/sum
+		Z=Z/sum
+	}			
+
+	#set up the blank triangle background
+	plot("reset")
+	plot("set bmargin 3")
+	plot("set lmargin 15")
+	plot("set rmargin 3")
+	plot("set tmargin 3")
+	plot("set size ratio 0.866")
+	plot("set yrange [0:0.866]")
+	plot("set xrange [0:1]")
+	plot("unset border")
+	plot("unset xtics")
+	plot("unset ytics")
+	plot(sprintf("set label '%s' at 0, -0.03 center",llabel))
+	plot(sprintf("set label '%s' at 1, -0.03 center",rlabel))
+	plot(sprintf("set label '%s' at 0.5, 0.886 center",tlabel))
+
+	#set the widths of the boundary lines
+	plot("set style line 1 lt -1 lw 3 pt -1 ps 1")
+	plot("set style line 2 lt 0 lw 1 pt -1 ps 1")
+	plot("set title '"+title+"'")
+
+  # set up the top axis
+	plot("set arrow 1 from 0,0 to 1, 0.0 nohead linestyle 1")
+	plot("set arrow 2 from 0.1,0 to 0.55, 0.779 nohead linestyle 2")
+	plot("set arrow 3 from 0.2,0 to 0.60, 0.693 nohead linestyle 2")
+	plot("set arrow 4 from 0.3,0 to 0.65, 0.606 nohead linestyle 2")
+	plot("set arrow 5 from 0.4,0 to 0.70, 0.520 nohead linestyle 2")
+	plot("set arrow 6 from 0.5,0 to 0.75, 0.433 nohead linestyle 2")
+	plot("set arrow 7 from 0.6,0 to 0.80, 0.346 nohead linestyle 2")
+	plot("set arrow 8 from 0.7,0 to 0.85, 0.260 nohead linestyle 2")
+	plot("set arrow 9 from 0.8,0 to 0.90, 0.173 nohead linestyle 2")
+	plot("set arrow 10 from 0.9,0 to 0.95, 0.0866 nohead linestyle 2")
+
+  # set up the right axis
+	plot("set arrow 11 from 1, 0 to 0.50, 0.866 nohead linestyle 1")
+	plot("set arrow 12 from 0.95, 0.0866 to 0.05, 0.0866 nohead linestyle 2")
+	plot("set arrow 13 from 0.90, 0.173 to 0.10, 0.173 nohead linestyle 2")
+	plot("set arrow 14 from 0.85, 0.260 to 0.15, 0.260 nohead linestyle 2")
+	plot("set arrow 15 from 0.80, 0.346 to 0.20, 0.346 nohead linestyle 2")
+	plot("set arrow 16 from 0.75, 0.433 to 0.25, 0.433 nohead linestyle 2")
+	plot("set arrow 17 from 0.70, 0.520 to 0.30, 0.520 nohead linestyle 2")
+	plot("set arrow 18 from 0.65, 0.606 to 0.35, 0.606 nohead linestyle 2")
+	plot("set arrow 19 from 0.60, 0.693 to 0.40, 0.693 nohead linestyle 2")
+	plot("set arrow 20 from 0.55, 0.779 to 0.45, 0.779 nohead linestyle 2")
+
+  # set up the left axis
+	plot("set arrow 21 from 0.50, 0.866 to 0,0 nohead linestyle 1")
+	plot("set arrow 22 from 0.05, 0.0866 to 0.1,0 nohead linestyle 2")
+	plot("set arrow 23 from 0.10, 0.173 to 0.2,0 nohead linestyle 2")
+	plot("set arrow 24 from 0.15, 0.260 to 0.3,0 nohead linestyle 2")
+	plot("set arrow 25 from 0.20, 0.346 to 0.4,0 nohead linestyle 2")
+	plot("set arrow 26 from 0.25, 0.433 to 0.5,0 nohead linestyle 2")
+	plot("set arrow 27 from 0.30, 0.520 to 0.6,0 nohead linestyle 2")
+	plot("set arrow 28 from 0.35, 0.606 to 0.7,0 nohead linestyle 2")
+	plot("set arrow 29 from 0.40, 0.693 to 0.8,0 nohead linestyle 2")
+	plot("set arrow 30 from 0.45, 0.779 to 0.9,0 nohead linestyle 2")
+
+	#convert to triangle cooridantes
+	xdata=(X+2.0*Z)/(2.0*(X+Y+Z))
+	ydata=(sqrt(3.0)/2.0)*(X/(X+Y+Z))
+	plot("set pointsize "+psize)
+	label=sprintf(" title '%s' with points pt %i",label,ptype)
+
+	#plot the stuff (NOTE plot/vplot must do a scaling 
+	#or something becuase it doesn't work with those plotters)
+	xplot(ydata[],label, Xaxis=xdata)
+}
+
+define refit_sma(ii, jj) {
+# run sma using only the 'n' highest percentages of endmembers found
+# p. christensen  8/2010
+
+struc = $1
+n = $2
+
+# assume user is only sending in 1 spectrum at a time
+
+# use same wavelength range as originally
+wave1 = struc.wave1
+wave2 = struc.wave2
+if(HasValue(ii) == 0) {
+	ii=1
+}
+if(HasValue(jj) == 0) {
+	jj=1
+}
+
+n_sma = 0;
+n_good = 0;
+
+# determine number of endmember in user's library
+n_endlib = dim(struc.endlib.data)[1]
+
+for(i=1; i<=n_endlib; i+=1) {
+	# compute index of spectrum (j) from sorted array
+	j = struc.sort_full[ii,jj,i]
+	if (i == 1) {
+		# first time - set arrays to values
+		# make the assumption that the first endmember has abundance > min_conc
+		data = struc.endlib.data[j]
+		label = struc.endlib.label[,j]
+		shortlabel = struc.endlib.shortlabel[,j]
+		group = struc.endlib.group[,j]
+		n_sma +=1;
+		n_good +=1;
+
+	} else {
+		# sort the non-zero endmembers
+		if(struc.conc[ii,jj,j] > 0.) {
+			# concatinate to existing arrays
+			data = cat(data, struc.endlib.data[j], x)
+			label = cat(label, struc.endlib.label[,j],y)
+			shortlabel = cat(shortlabel, struc.endlib.shortlabel[,j] ,y)
+			group = cat(group, struc.endlib.group[,j], y)
+			n_sma +=1;
+			#printf("conc = %.3f\n", struc.conc[,,j])
+			#printf("refit: first pass: i = %d, n_sma = %d index = %d for #%d most abundant endmember\n", i, n_sma, j, i)
+		}		
+	}
+}
+#printf("refit: ii =%d jj = %d\n", ii, jj)
+
+# set up for sma - don't need to exclude because previously excluded spectra wouldn't
+#  have appeared as solutions in structure returned from sma
+new_endlib = struct()
+new_endlib.data = data[1:n]
+new_endlib.group = group[,1:n]
+new_endlib.label = label[,1:n]
+new_endlib.shortlabel = shortlabel[,1:n]
+new_endlib.xaxis = struc.endlib.xaxis
+
+# rerun sma - note: never notch CO2 - if the user didn't originally, don't do it now,
+#  and if they did, then the spectrum and the endlib are already notched
+sma_new = sma(struc.measured[ii,jj], new_endlib, wave1=wave1, wave2=wave2, sort=1, group=1)
+
+# now do the sort thing again to return to the user a set of arrays already sorted by concentration
+n_endmembers = 0
+for(k = 1; k <= n; k+=1) {
+	if(sma_new.sort_full[1,1, k] > 0) {
+		n_endmembers += 1
+	}
+}
+
+n_end_good = 1;
+
+for(i=1; i <= n_endmembers; i+=1) {
+	# compute index of spectrum (j) from sorted array
+	j = sma_new.sort_full[1,1,i]
+	#printf("refit: second (post sma) pass: index in endmenber array = %d for #%d most abundant endmember\n", j, i)
+	if (i == 1) {
+		# first time - set arrays to values
+		# make the assumption that the first endmember has abundance > min_conc
+		data = sma_new.endlib.data[j]
+		label = sma_new.endlib.label[,j]
+		shortlabel = sma_new.endlib.shortlabel[,j]
+		group = sma_new.endlib.group[,j]
+		conc = sma_new.conc[1,1,j]
+		normconc = sma_new.normconc[1,1,j]
+		error = sma_new.error[1,1,j]
+		n_end_good+=1;
+
+	} else {
+		# the following test only works because normconc is % not fraction
+		if(sma_new.conc[,,j] > 0) {
+			# concatinate to existing arrays
+			data = cat(data, sma_new.endlib.data[j], x)
+			label = cat(label, sma_new.endlib.label[,j],y)
+			shortlabel = cat(shortlabel, sma_new.endlib.shortlabel[,j] ,y)
+			group = cat(group, sma_new.endlib.group[,j], y)
+			conc = cat(conc, sma_new.conc[1,1,j], z)
+			normconc = cat(normconc, sma_new.normconc[1,1,j], z)
+			error = cat(error, sma_new.error[1,1,j], z)
+			n_end_good+=1;
+		}
+	}
+}
+n_end_good = n_end_good - 1
+
+sma_new.sorted_data = data
+sma_new.sorted_label = label
+sma_new.sorted_shortlabel = shortlabel
+sma_new.sorted_group = group
+sma_new.sorted_conc = conc
+sma_new.sorted_normconc = normconc
+sma_new.sorted_error = error
+sma_new.n_end_good = n_end_good
+
+return(sma_new)
+
+}
+
+define stack_plot(new_offset) {
+# a very specialized version of a 'stack' plot made for plot_sma
+# it would be good to generalize this - 'offset' is very klugy
+# p. christensen 8/29/10
+
+minsc = $1
+offset = $2
+
+n_spec = length(minsc)
+# remove the offset
+for(i=1; i<=n_spec; i+=1) {
+	minsc[i] = minsc[i] - offset
+}
+
+v = minsc
+
+minsc[1] = minsc[1] - offset
+for(i=2; i<=n_spec; i+=1) {
+	v[i] = v[i-1]- (1. - minsc[i])
+}
+
+# add the offset back - changing if requested
+for(i=1; i<=n_spec; i+=1) {
+	if(HasValue(new_offset)) {
+		v[i] = v[i] + new_offset
+	} else {
+		v[i] = v[i] + offset
+	}
+}
+return(v)
+}
+
+define offset_plot(scale) {
+# data is a structure of spectra to be offset by their maximum spectral depth (adjusted by scale)
+data = $1
+chx1 = $2
+chx2 = $3
+n_data = length(data)
+if(HasValue(scale) == 0) {
+	scale = 1.2
+}
+new_data = {}
+offset = create(n_data,1,1, format=float) * 0.
+# calculate cummulative offset for each plot, starting with the least abundant
+offset[n_data] = 0.
+for(i=1; i<=n_data-1; i+=1) {
+	index = n_data - i
+	miny = min(data[index][1,1, chx1+2:chx2-2])
+	maxy = max(data[index][1,1, chx1+2:chx2-2])
+	offset[index] = offset[index+1] + ((maxy - miny) * scale)
+}
+#return(offset)
+for(i=1; i<=n_data; i+=1) {
+	new_data= new_data + {data[i] + offset[i]}
+}
+struc = struct()
+struc.data = new_data
+struc.max_offset = offset[1]
+return(struc)
+}
+
+
+
+define keypos() {
+
+  if ($ARGC == 0) {
+    printf (" \n")
+    printf (" Specify the key location using justification or XY coordinates\n")
+    printf (" $1 = x justification 'left','right', or 'center' or X location \n")
+    printf (" $2 = y justification 'top','bottom', or 'center' or Y location \n")
+    printf (" Top right is default. \n")
+    printf (" \n")
+    printf (" example: keypos('left','bottom')\n")
+    printf (" \n")
+    return(0)
+  }
+
+  if ($ARGC == 2) {
+		if(isnum($1) && isnum($2)) {
+	    plot("set key at "+$1+","+$2+" ")
+ 	 } else {
+ 	   plot("set key "+$1+" "+$2+"")
+		}	
+	}
+  plot("replot")
+}
+
+
+
+define revkey() {
+
+    plot("set key reverse Left")
+    plot("replot")
+}
+
+
+
+define unrevkey() {
+
+    plot("set key noreverse Right")
+    plot("replot")
+}
+
+
+
+define invkey() {
+
+    plot("set key invert")
+    plot("replot")
+}
+
+
+
+define uninvkey() {
+
+    plot("set key noinvert")
+    plot("replot")
+}

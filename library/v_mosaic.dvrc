@@ -1,0 +1,473 @@
+v_mosaic_version=1.02
+
+##################
+# VMOSAIC ROUTINES 
+#
+# Last modified  Mon Jul 13 14:34:51 MST 2009 - cse to take isis3 files
+# Last modified: Thu Jan 26 15:56:53 MST 2006 - cse/kjn
+# Last modified: Wed Aug 13 18:20:35 MST 2003
+# Last modified: Thu Aug 28 14:04:55 MST 2003
+##################
+#
+# The v_mosaic functions are designed to create and manipulate a simple
+# data structure that holds the important parts of a projected image:
+#
+# dv> v_make(load_pds("I00816001.irmc.cub"))
+# struct, 7 elements
+#    x: -1482
+# 	y: -2964
+# 	w: 2965
+# 	h: 2965
+# 	lines: 7184
+# 	samples: 320
+# 	data: 2965x2965x3 array of float, bsq format [105,494,700 bytes]
+# 
+#
+# v_make(isis_img) - extract the relevent portions of an isis image into a 
+#                    small, usable struct.  This routine might eventually 
+#                    want to do the regular [where<0] stuff
+#
+# v_intersect(v_img1, v_img2) - return the coordinates of the intersection of 
+#                               two v_images (inside box)
+#
+# v_union(v_img1, v_img2) - return coordinates of the union of two 
+#                        v_images (outside box)
+#
+# v_create(v_img)  - Create an empty image of the size specified by v_img
+#                    The v_img parameter is usually the result produced 
+#                    by v_intersect or v_union.
+#
+# v_insert(v_src,v_dst) - place src in dst at the appropriate location.
+#                         Note: this does not expand dst, but clips src
+#                         to the bounds of dst.
+#                         Specify an ignore value to not overwrite dst
+#                         with NULL pixels where they occur in src
+#
+# v_paste(v_src,v_dst) -  place src in dst at the appropriate location.
+#                         Note: This expands dst if necessary to include
+#                         all of src.
+#                         Specify an ignore value to not overwrite dst
+#                         with NULL pixels where they occur in src
+#
+# v_cut(src,box) - extract the area as described by box (which is a v_make
+#                  object) from src and return and assign it to the data
+#                  portion of box.  Appropriate clipping (and height and
+#                  and width modifications) will be done.
+#
+# v_clip(src) - Find the minimum rectange that has no deleted points, and
+#                cut it out.
+#
+#
+#######
+
+
+
+
+
+###
+# v_cut(src,box) - extract the area as described by box (which is a v_make
+#                  object) from src and return and assign it to the data
+#                  portion of box.  Appropriate clipping (and height and
+#                  and width modifications) will be done.
+###
+
+define v_cut(src,box)
+{
+	return_box = 0;
+
+	if (HasValue(src)==0 && HasValue(box)==0){
+		src=$1
+		box=$2
+		return_box = 1;
+	} else if (HasValue(src)==0){
+		src=$1
+	} else if (HasValue(box)==0){
+		box=$1
+		return_box = 1;
+	}
+
+	px = box.x - src.x
+	py = box.y - src.y
+
+	cx = cy = 0		
+
+	if (px < 0) {
+		cx = -px
+		px = 0
+	}
+	if (py < 0) {
+		cy = -py
+		py = 0
+	}
+
+	pw = box.w - cx		# how much of box got used
+	ph = box.h - cy		# how much of box got used
+
+	if (px+pw > src.w) {
+		pw = src.w - px
+	}
+	if (py+ph > src.h) {
+		ph = src.h - py
+	}
+
+#	printf("px=%d\tpy=%d\tpw=%d\tph=%d\tcx=%d\tcy=%d\n",px,py,pw,ph,cx,cy)
+
+	if (pw <= 0 || ph <= 0) {	 # no overlap
+		printf("no overlap\n");
+		return ({x=0,y=0,w=0,h=0})
+	}
+
+	box.data = src.data[(1+px):(px+pw), (1+py):(py+ph)]
+	box.x=box.x+cx
+	box.y=box.y+cy
+	box.w=pw
+	box.h=ph
+
+	if (return_box==1) {
+		return(box)
+	} else {
+		return (NULL)
+	}
+}
+
+###
+# v_make(isis_img) - extract the relevent portions of an isis image into a 
+#                    small, usable struct.  This routine might eventually 
+#                    want to do the regular [where<0] stuff
+###
+define v_make(src,geo) {
+
+  if (HasValue(src) == 0) src = $1
+
+	if(HasValue(get_struct(src,"IsisCube"))) {
+		isis=3
+	} else {
+		isis=2
+	}
+
+  #check for a geo_struct
+  if(HasValue(geo)==0) geo=0
+
+  if(geo==1) {
+    isis=0
+  }
+
+	if(isis==2) {
+		x = int(src.qube.image_map_projection.sample_projection_offset)
+		y = int(src.qube.image_map_projection.line_projection_offset)
+		w = src.qube.core_items[1]
+		h = src.qube.core_items[2]
+		lines = samples = 0;
+		a = get_struct(src.qube, "isis_instrument")
+		if (HasValue(a)) {
+			lines = src.qube.isis_instrument.lines
+			samples = src.qube.isis_instrument.samples
+		}
+		out = { x=x, y=y, w=w, h=h, lines=lines, samples=samples }
+		if (HasValue(get_struct(src.qube, "data")) == 1) {
+			add_struct(out, name="data", value=src.qube.data)
+		}
+	} else if (isis==3) {
+		pixres=src.IsisCube.Mapping.PixelResolution
+		w = src.IsisCube.Core.Dimensions.Samples
+		h = src.IsisCube.Core.Dimensions.Lines
+		x = int(src.IsisCube.Mapping.UpperLeftCornerX/pixres)
+		y = -int(src.IsisCube.Mapping.UpperLeftCornerY/pixres)
+
+		lines = samples = 0;
+		a = get_struct(src.IsisCube.Core, "Dimensions")
+		if (HasValue(a)) {
+			samples = src.IsisCube.Core.Dimensions.Samples
+			lines = src.IsisCube.Core.Dimensions.Lines
+		}
+		out = { x=x, y=y, w=w, h=h, lines=lines, samples=samples }
+		if (HasValue(get_struct(src, "cube")) == 1) {
+			add_struct(out, name="data", value=src.cube)
+		}
+
+  #check for a geo_struct
+	} else if (geo==1) {    
+    if(HasValue(get_struct(src,"data"))==1) {
+      w=dim(src.data)[1]
+      h=dim(src.data)[2]
+    } else {
+  		pixres=src.resolution
+  		w = int((max(src.anc.spo)-min(src.anc.spo))/pixres)
+	  	h = int((max(src.anc.lpo)-min(src.anc.lpo))/pixres)
+    }
+		x = int(src.x)
+		y = int(src.y)
+
+		lines = samples = 0;
+		out = { x=x, y=y, w=w, h=h, lines=lines, samples=samples }
+		if (HasValue(get_struct(src, "data")) == 1) {
+			add_struct(out, name="data", value=src.data)
+			remove_struct(src,"data")
+		}
+		
+		out.geo_struct=src
+  } else {
+		printf("ISIS Version/Geo format invalid\n")
+		return(null)
+	}
+	return(out)
+}
+
+###
+# v_create(box)  - Create an empty image of the specified dimensions
+#                  The box parameter is a v structure, like that produced
+#                  by v_intersect or v_union.
+####
+define v_create(ignore,data) {
+	box = $1
+	if (HasValue(ignore) == 0) {
+		ignore = short(-32768)
+	}
+
+	if (HasValue(data)==0){
+		box.data = clone(ignore, box.w, box.h)
+	} else {
+		box.data=data
+	}
+	return(box)
+}
+
+####
+# v_intersect(img1, img2) - return intersection coordinates of 
+#                           two images (inside box)
+####
+define v_intersect(img1,img2) {
+	if (HasValue(img1) == 0) {
+		img1 = $1
+	}
+	if (HasValue(img2) == 0) {
+		img2 = $2
+	}
+
+	ulx1 = img1.x
+	uly1 = img1.y
+	lrx1 = ulx1+img1.w-1
+	lry1 = uly1+img1.h-1
+
+	ulx2 = img2.x
+	uly2 = img2.y
+	lrx2 = ulx2+img2.w-1
+	lry2 = uly2+img2.h-1
+
+	x1 = _max(ulx1,ulx2);
+	y1 = _max(uly1,uly2);
+	x2 = _min(lrx1, lrx2);
+	y2 = _min(lry1, lry2);
+
+	w = int(x2 - x1 + 1);
+	h = int(y2 - y1 + 1);
+	
+	d = { x=x1, y=y1, w=w, h=h } 
+
+	return(d)
+}
+
+####
+# v_union(img1, img2) - return union coordinates of two images (outside box)
+####
+define v_union(img1, img2) {
+	if (HasValue(img1) == 0) img1=$1
+	if (HasValue(img2) == 0) img2=$2
+
+	ulx1 = img1.x
+	uly1 = img1.y
+	lrx1 = ulx1+img1.w-1
+	lry1 = uly1+img1.h-1
+
+	ulx2 = img2.x
+	uly2 = img2.y
+	lrx2 = ulx2+img2.w-1
+	lry2 = uly2+img2.h-1
+
+	x1 = _min(ulx1,ulx2);
+	y1 = _min(uly1,uly2);
+	x2 = _max(lrx1, lrx2);
+	y2 = _max(lry1, lry2);
+
+	w = int(x2 - x1 + 1);
+	h = int(y2 - y1 + 1);
+	
+	d = { x=x1, y=y1, w=w, h=h } 
+
+	return(d)
+}
+
+####
+# v_insert(src,dst) - place src in dst at the appropriate location
+#                     Note: this does not expand dst, but clips src
+#                     to the bounds of dst.
+#
+#                     Specify an ignore value to not overwrite dst
+#                     with NULL pixels where they occur in src
+####
+define v_insert(ignore,src,dst) {
+
+	if (HasValue(src) == 0) src=$1
+	return_dst=0;
+	if (HasValue(dst)==0){
+		dst = $2
+		return_dst=1
+	}
+
+
+	px = src.x - dst.x		# where to place src in dst
+	py = src.y - dst.y		# where to place src in dst
+
+	cx = cy = 0				# how many to cut off lhs of src
+
+	if (px < 0) {
+		cx = -px
+		px = 0
+	}
+	if (py < 0) {
+		cy = -py
+		py = 0
+	}
+
+	pw = src.w - cx		# how much of src to use
+	ph = src.h - cy		# how much of src to use
+
+
+	if (px+pw > dst.w) {
+		pw = dst.w - px
+	}
+	if (py+ph > dst.h) {
+		ph = dst.h - py
+	}
+
+	if (pw <= 0 || ph <= 0) {	 # no overlap
+		return(dst)
+	}
+
+	a = src.data[(1+cx):(cx+pw), (1+cy):(cy+ph)]
+
+	if (HasValue(ignore)) {
+		b = dst.data[px+1:px+pw, py+1:py+ph]
+		b[where a != ignore] = a
+		dst.data[px+1:px+pw, py+1:py+ph] = b
+	} else {
+		dst.data[px+1:px+pw, py+1:py+ph] = a
+	}
+
+	if (return_dst==1) {
+		return(dst)
+	}
+
+}
+
+####
+# v_paste(src,dst) -  place src in dst at the appropriate location
+#                     Note: This expands dst if necessary to include
+#                     all of src.
+#
+#                     Specify an ignore value to not overwrite dst
+#                     with NULL pixels where they occur in src
+#
+#							 Fri Aug 15 15:33:48 MST 2003:
+#								-Fixed some lame bugs 
+####
+define v_paste(src, dst, ignore) {
+	if (HasValue(src) == 0) src=$1
+	if (HasValue(dst) == 0) dst=$2
+
+	if (HasValue(ignore) == 0) {
+		ignore = short(-32768)
+	}
+
+	out = v_union(img1=src,img2=dst)
+	if (out.x != dst.x || out.y != dst.y || out.w != dst.w || out.h != dst.h) {
+		out = v_insert(dst, v_create(out,ignore=ignore),ignore=ignore)
+	} else {
+		out.data = dst.data
+	}
+	v_insert(src=src,dst=out,ignore=ignore)
+	return(out)
+}
+
+define _min() {
+	if ($1 < $2) return($1)
+	else return($2)
+}
+define _max() {
+	if ($1 > $2) return($1)
+	else return($2)
+}
+
+
+
+define outline(ignore) {
+	a = $1
+	d = dim(a)
+	c = clone(ignore, d[1], d[2], 1)
+	l = leftline(a)
+	r = rightline(a)
+	for (i = 1 ; i <= d[2] ; i+=1) {
+		if (l[,i]) c[l[,i], i] = 1;
+		if (r[,i]) c[r[,i], i] = 1;
+	}
+	return(c);
+}
+#
+# WARNING, this routine has been seen to be buggy.
+#          Now that it uses v_cut, maybe it'll behave a little more.
+#
+define v_clip(src,ignore) {
+	if (HasValue(src)==0){
+		src=$1
+	}
+	if (HasValue(ignore)==0) {
+		ignore=-32768
+	}
+
+	left_a = leftline(src.data,ignore=ignore);
+    right_a=rightline(src.data,ignore=ignore);
+
+	#
+	# this seems like a stupid way to do this
+	#
+    start=leftline(translate(left_a,from=y,to=x),ignore=0)
+    end=rightline(translate(right_a,from=y,to=x),ignore=0)
+
+	l=int(min(left_a[,start:end]))
+	r=int(max(right_a[,start:end]))
+
+	vcore = struct()
+	vcore.x = src.x + l - 1
+	vcore.y = src.y + start - 1
+	vcore.h = end - start + 1
+	vcore.w = r - l + 1
+
+	return(v_cut(src, vcore))
+}
+
+define v_contains(img,dst,geo) {
+	if(HasValue(img) == 0) img = $1;
+	if(HasValue(dst) == 0) dst = $2;
+	if(HasValue(geo)==0) geo=0
+
+	if(fexists(img) == 0 && type(img)!="STRUCT") {
+    printf("No such file: %s\n", img)
+    return(0);
+  } else {
+    if(type(img)!="STRUCT") { 
+      if(geo==1) {
+	    	c = v_make(read_geometa(img),geo=1)
+      } else {
+	    	c = v_make(load_pds(img,data=0))
+      }
+	    out = v_intersect(img1=dst,img2=c)
+		} else {
+	    out = v_intersect(img1=dst,img2=img)
+		}				
+    if (out.w <= 0 || out.h <= 0) {
+      return(0)
+    }
+  }
+  return(1);
+}
+

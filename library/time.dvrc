@@ -1,0 +1,2761 @@
+# Functions to convert Earth time to Mars time, and more
+# Formulae mostly from NASA GISS Mars24 Algorithm and Worked Examples,
+#  http://www.giss.nasa.gov/tools/mars24/help/algorithm.html
+# S.Marshall 11-12-2010
+time_version = 1.18
+
+# To do:
+# Get clock to work in Mac! Check it!
+# Try to pull UTC date for clock in Windows and use that for automatic timezone
+#  I can't find any way to get the time zone in DOS
+# Move pc2pg and pg2pc to another file?
+# Refine Odyssey orbit - ET conversions?
+#  For orbit-ET conversions, using a series of sine waves incorporating FFT on orbit durations would be more accurate
+#  Note that marstime has a section with dependence on ET2ORB
+# Use short-format for clock arrays? Probably not worthwhile; integer is more common, and I wouldn't be saving much
+# Add local time support for JD2date, etc.? - can sort of do this by including hour offset in input
+
+# These functions are roughly grouped by category
+# time - returns the time in seconds.nanoseconds since 1970-01-01 00:00:00 UTC
+# clock - Get current date and time from system clock - only tested on Windows and Linux
+# checkdate - Checks whether input date is valid (in Julian calendar)
+# checktime - Checks whether input time is valid
+# date2str - Converts input date to string of form "Month DD, YYYY"
+# time2str - Converts input time to string of form "hh:mm:ss.ff"
+# str2date - Converts input time string (with format of date/time from THEMIS database) to date/time array
+# JD - Converts input date (and time) to UTC Julian Date (perhaps it should be
+#  called date2JD, but I use it a lot, so I wanted something short)
+# MJD - Converts input date (and time) to Modified Julian Date (more accurate than JD for modern times needed to great precision)
+# JD2MJD - Converts input Julian Date to Modified Julian Date (simple subtraction)
+# MJD2JD - Converts input Modified Julian Date to Julian Date (simple addition)
+# JDlist - Creates array of Julian Day Numbers one month apart; useful for plotting
+# MJDlist - Creates array of Modified Julian Day Numbers one month apart; useful for plotting
+# JD2date - Converts input Julian Date to UTC date and time
+# MJD2date - Converts input Modified Julian Date to UTC date and time
+# DeltaT - Calculates Delta-T (TT-UTC offset), given UTC Julian Date
+# JD2TT - Converts UTC Julian Date to TT Julian Date
+# MJD2TT - Converts UTC Modified Julian Date to TT Modified Julian Date
+# JD2Dt - Converts UTC Julian Date to J2000 (TT) offset
+# MJD2Dt - Converts UTC Modified Julian Date to J2000 (TT) offset
+# TB_TT - Calculates TB-TT offset, given TT Julian Date
+# ET_UTC - Calculates ET-UTC offset, given UTC Julian Date
+# JD2ET - Converts UTC Julian Date to Ephemeris Time
+# MJD2ET - Converts UTC Modified Julian Date to Ephemeris Time
+# ET2JD - Converts Ephemeris Time to UTC Julian Date
+# ET2MJD - Converts Ephemeris Time to UTC Modified Julian Date
+# unix2MJD - Converts Unix time (in seconds) to UTC Modified Julian Date
+# MJD2unix - Converts UTC Modified Julian Date to Unix time (in seconds)
+# ORB2ET - Converts Odyssey orbit number to *approximate* Ephemeris Time
+# ET2ORB - Converts Ephemeris Time to *approximate* Odyssey orbit number
+# pc2pg - Converts planetocentric latitude to planetographic latitude
+# pg2pc - Converts planetographic latitude to planetocentric latitude
+# marstimeglobal
+# marstimelocal
+# lon2tzo - Returns universal time offset string (for uniform time zones), given longitude
+# tzo2str - Converts input number to universal time offset string
+# earthtime - Prompts user for date and time, then displays the time in several formats (UTC, TAI, TT, etc.)
+# marstime - Prompts user for date and time, then displays various information about Mars at that time (LS, distance, etc.)
+# sunclock - Displays sunclock, given global image and coordinates of subsolar point
+
+# Old single-purpose functions (later combined into marstimeglobal and marstimelocal, to avoid repetitive calculations)
+# marsMA - Calculates Mars' mean anomaly, given J2000 (TT) offset
+# marsFMS - Calculates right ascension of Mars' Fiction Mean Sun, given J2000 (TT) offset
+# marsPBS - Calculates Mars' angular perturbers, given J2000 (TT) offset
+# marsEOC - Calculates Mars' equation of center, given J2000 (TT) offset
+# marsLS - Calculates areocentric solar longitude, given J2000 (TT) offset
+# marsEOT - Calculates Mars' equation of time, given J2000 (TT) offset
+# marsMTC - Calculates Coordinated Mars Time, given J2000 (TT) offset
+# marsMSD - Calculates Mars Sol Date (MSD), given J2000 (TT) offset
+# marsLMZT - Calculates Local Mean Zonal Time on Mars, given J2000 (TT) offset and longitude
+# marsLMST - Calculates Local Mean Solar Time on Mars, given J2000 (TT) offset and longitude
+# marsLTST - Calculates Local True Solar Time on Mars, given J2000 (TT) offset and longitude
+# marssubsol - Calculates coordinates of Martian subsolar point, given J2000 (TT) offset
+# marshd - Calculates heliocentric distance of Mars, given J2000 (TT) offset
+# marshc - Calculates heliocentric coordinates of Mars, given J2000 (TT) offset
+# marslsol - Calculates local solar elevation and azimuth on Mars, given J2000 (TT) offset
+
+# Most Earth date/time functions take the UTC Julian Date as input
+# All Mars time functions take the J2000 TT offset (from JD2Dt) as input
+# When in doubt, check function help by entering it with no inputs, e.g. JD()
+
+# I realize that seemingly unpredictable combinations of capital and lowercase
+#  letters in the function names can be annoying, but I'm not expecting most of
+#  these functions to be used very much individually (just earthtime and
+#  marstime). If this becomes an issue, I can take care of it.
+
+# For explanation of inaccuracies, see
+#  http://www.giss.nasa.gov/tools/mars24/help/notes.html and
+#  http://www.sciencedirect.com/science?_ob=ArticleURL&_udi=B6V6T-3YMW3H5-B&_user=10&_rdoc=1&_fmt=&_orig=search&_sort=d&view=c&_acct=C000050221&_version=1&_urlVersion=0&_userid=10&md5=8c45406b4691f4fbf5090d3b8babc0d5
+#  AM2000: http://pubs.giss.nasa.gov/cgi-bin/abstract.cgi?doi=10.1016/S0032-0633(99)00092-6
+
+# I tried to find the level of accuracy for every Mars function. Some standard
+#  uncertainties were given in Mars24 and AM 2000. In other cases, I used error
+#  propagation from the functions with known uncertainties, including error from
+#  given constants; e.g. 1.234 was interpreted as 1.234 +/- 0.001
+
+# Now find a way to convert times to/from ET, ODY sclk, ODY orbit, etc.
+# showtime_themis - uses spice kernel
+
+
+# Previously needed to modify USNO table; can now read original USNO table and then convert
+#TAI_UTC = read_ascii($DV_LIB+"/time/TAI_UTC.txt",row=3,format=double) # Recent TAI-UTC, to get Delta-T
+# This is a copy of the leap second table at http://maia.usno.navy.mil/ser7/tai-utc.dat
+# Assuming the format is the same in the future, you can just keep replacing this file with the new one (no modifications needed)
+# To use: find correct row; then TAI-UTC = DT*s + (MJD - N)*r*s
+# First column is JD, second column is DT, third column is N, fourth column is r
+# Upcoming seconds (or the lack thereof) are announced in IERS Bulletin C, available at http://hpiers.obspm.fr/eoppc/bul/bulc/bulletinc.dat
+# Part of function DeltaT MUST be adjusted MANUALLY with each release of Bulletin C; the TAI-UTC table does not have the necessary datum. (See that function for details.)
+
+
+define JD2Marslsubs(J2000) {
+
+  if($ARGC==0) {
+    printf("\nConvert a Julain data directly to Ls\n")
+    printf("$1=Julian date\n\n")
+		printf("J2000 = is date in J2000? (Default = 0)\n")
+    printf("This function was modified from: giss.nasa.gov/tools/mars24\n")
+    printf("NOTE: This only works reliably for dates beyond J2000\n")
+    printf("c.edwards\n\n")
+    return(null)
+  }
+
+  JD=double($1)
+  #determine time offset from J2000 epoch
+	if(HasValue(J2000)==1) {
+		JD2000=JD
+	} else {
+  	JD2000=JD-double(2451545.0)
+	} 
+
+  #Mars Mean anomoly
+  M=double(19.3870+0.52402075*JD2000)%360.
+  
+  #fiction mean sun
+  alphaFMS=double(270.3863+0.52403840*JD2000)%360.
+
+  #perturbers
+  A=double(0.0071//0.0057//0.0039//0.0037//0.0021//0.0020//0.0018)
+  T=double(2.2353//2.7543//1.1177//15.7866//2.1354//2.4694//32.8493)
+  phi=double(49.409//168.173//191.837//21.736//15.704//95.528//49.095)
+
+  #caluculate the perturbers
+  PBS=double(0)
+  for(i=1;i<=dim(A)[1];i+=1) {
+    PBS+=A[i]*cosd((0.985628*JD2000/T[i])+phi[i])
+  }
+
+  #equation of center
+  vM=(10.691+3.0e-7*JD2000)*sind(M)+0.623*sind(2*M)+0.05*sind(3*M)+0.005*sind(4*M)+0.0005*sind(5*M) + PBS
+ 
+  #calculate areocentric solar longitude
+  Ls=(alphaFMS+vM)
+
+  #return the modulus of the Ls (because it will be > 360)
+  return(Ls%360.0)
+}
+
+
+
+define time(s) {
+
+  if ($ARGC==0) {
+    printf("\nDisplays the time in seconds.nanoseconds since 1970-01-01 00:00:00 UTC\n")
+    printf("Taking the difference of two times works like a stopwatch\n")
+    printf("e.g try typing the following\n\n")
+    printf("t1=time(1)\n\n")
+    printf("t2=time(2)\n\n")
+    printf("dt=t2-t1\n\n")
+    printf("Written by: Mike Veto 8/28/2012\n\n")
+  }
+
+  if ($ARGC==1) {
+    if ($1 == 1) {
+      printf("\n\nSTART\n\n")
+    }
+
+    if ($1 == 2) {
+      printf("\n\nSTOP\n\n")
+    }      
+   
+    t = atod(syscall("date +%s.%N")[,1])
+    printf("\n")
+    return(t)
+  }
+}
+
+
+define clock(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nReturns array of current system clock information\n")
+    printf("clock(mode) returns [year, month, day, hour, minute, second, timezone]\n")
+    printf(" timezone is time zone offset (local - UTC), in hours\n")
+    printf(" mode = 0 to return integer array\n")
+    printf(" mode = anything else to return float (in Windows) or double (in\n")
+    printf("  Unix) array\n")
+    printf(" In Mac, only integers are returned, unless you're in a non-integer time\n")
+    printf("  zone, since the Mac terminal doesn't return fraction of seconds.\n")
+    printf("S.Marshall 11-20-2009\n\n")
+
+    return(byte(0))
+  }
+
+  # This function accounts for fractional time zones, which don't occur in the United States
+  # But I figured I should include the fixes for completeness
+
+  ios = getos()
+  if (equals(ios, "win") == 1) { # Windows
+    istr = syscall("echo %date% %time%")
+    # String of date and time - assumes format "www MM/DD/YYYY hh:mm:ss.ss", the default
+    intM = eval(istr[5:6]) # Or could use atoi
+    intD = eval(istr[8:9])
+    intY = eval(istr[11:14])
+    inth = eval(istr[16:17])
+    intm = eval(istr[19:20])
+    ints = eval(istr[22:])
+
+    if(HasValue($DV_TIMEZONE)==0) {
+      timezone = -25 # Reset time zone offset
+    } else {
+      timezone=$DV_TIMEZONE
+    }
+    # By setting a global variable, the user only needs to enter timezone once (if necessary)
+    # Although there would be problems if it is accidentally changed
+    # This can be dealt with by setting timezone, or reloading this DVRC
+    # These functions assume that the time zone doesn't change while the program is open, which seems reasonable
+    if (HasValue(timezone) == 1 && timezone > -13) { # Limits for standard timezone (I think)
+      intZ = timezone
+    } else {
+      intZ = pause("  Enter time zone offset, in hours (e.g. -7 for MST): ")
+      intZ = atof(intZ)
+      # Stuck with this unless there is a way to get time zone through DOS (I couldn't find one)
+      if (isscalar(intZ) == 1 && 4*intZ == floor(4*intZ) && intZ >= -12 && intZ <= 14) { # Limits for standard time zones (I think)
+        # All standard time zones are some multiple of 15 minutes different from
+        #  UTC (and most differ by an integer number of hours)
+        timezone = intZ
+      } else {
+        printf("\nError! Invalid time zone!\n\n")
+        return(byte(0))
+      }
+    }
+  } else if (equals(ios, "mac") == 1) { # Mac
+    istr = syscall("date \"+%Y-%m-%d %H:%M:%S\"") # Local date and time
+    # Format of these strings (or text arrays) should be: "YYYY-MM-DD hh:mm:ss", e.g. "2009-11-13 16:07:59"
+    istru = syscall("date -u \"+%Y-%m-%d %H:%M:%S\"") # UTC date and time - will use this to determine local time zone
+    # Mac terminal can return time zone as a string
+    # But I don't want to compare it to the strings for each possible time zone to find the right one
+    # Easier to do it numerically...
+    intY = eval(istr[1:4])
+    intM = eval(istr[6:7])
+    intD = eval(istr[9:10])
+    inth = eval(istr[12:13])
+    intm = eval(istr[15:16])
+    ints = eval(istr[18:]) # Would theoretically keep fraction of seconds, although this command only returns an integer
+    # Is there a way to return fraction of seconds in Mac terminal?
+    if (HasValue(timezone) == 1 && timezone > -13) { # Limits for standard timezone (I think)
+      intZ = timezone
+    } else {
+      # Now find time zone if needed... must be able to deal with cases where UTC is a day ahead of or behind local date
+      if (equals(istr[1:10], istru[1:10]) == 0) {
+      # Difficult case - local date different from UTC date
+      # But I only need to figure out which one is ahead, since they can only differ by one day either way
+      iL = intY + (intM - 1)/12. + (intD - 1)/372. # Rough local year fraction, for comparison
+      iU = eval(istru[1:4]) + (eval(istru[6:7]) - 1)/12. + (eval(istru[9:10]) - 1)/372. # Rough UTC year fraction
+        if (iU > iL) { # If UTC is ahead (western hemisphere)
+          intZ = (inth + intm/60.) - (eval(istru[12:13]) + eval(istru[15:16])/60.) - 24
+          # I could ignore the dates, do the subtraction, and just use mod to restrict the time zone to the range [-12, 12)
+          # But that would be ambiguous (and potentially incorrect) for time zones right around the International Date Line
+        } else if (iL > iU) { # If local is ahead (eastern hemisphere)
+          intZ = (inth + intm/60.) - (eval(istru[12:13]) + eval(istru[15:16])/60.) + 24
+        } else { # Should never reach this
+          printf("\nError finding local time zone in function clock!\n\n")
+          return(byte(0))
+        }
+      } else {
+        # Easy case - local date same as UTC date
+        # Only need to worry about hours and possibly minutes
+        intZ = (inth + intm/60.) - (eval(istru[12:13]) + eval(istru[15:16])/60.)
+      }
+      intZ = 0.25*round(4*intZ)
+      # This will eliminate any potential difference due to the unlikely prospect of
+      #  different minutes between the two system calls
+      # Time zones occur in integer multiples of 15 minutes, and usually in integer multiples of hours
+      timezone = intZ
+    }
+  } else { # Does this work for everything that isn't Windows or Mac? Or just Linux?
+    istr = syscall("date \"+%F %T.%N %z\"")
+    # String of date and time - format should be "YYYY-MM-DD hh:mm:ss.nnnnnnnnn -zzzz"
+    #  e.g. "2008-08-07 15:21:40.073822000 -0700"
+    intY = eval(istr[1:4])
+    intM = eval(istr[6:7])
+    intD = eval(istr[9:10])
+    inth = eval(istr[12:13])
+    intm = eval(istr[15:16])
+    intZ = float(eval(istr[31:35])) # No float roundoff error for integer plus half/quarter
+    intZ = sign(intZ)*(floor(abs(intZ/100)) + (abs(intZ) % 100)/60)
+    ints = atod(istr[18:29])
+    if(HasValue($DV_TIMEZONE)==0) {
+      timezone = -25 # Reset time zone offset
+    } else {
+      timezone=$DV_TIMEZONE
+    }
+    timezone = intZ
+  }
+
+  if (($1 == 0 || (equals(ios, "mac") == 1)) && isint(intZ)) { # Might as well just return integers for Mac, until I find a way to return the seconds fraction
+    return(intY//intM//intD//inth//intm//int(ints)//int(intZ))
+  } else { # If time zone offset not an integer, returns float format regardless of input mode
+    if (equals(ios, "win") == 1 || equals(ios, "mac") == 1) {
+      return(float(intY//intM//intD//inth//intm)//ints//float(intZ))
+    } else {
+      return(double(intY//intM//intD//inth//intm)//double(ints)//double(intZ))
+    }
+  }
+}
+
+define checkdate(0,3) {
+
+  if ($ARGC < 3) {
+    printf("\nCheck for valid date (in Julian calendar - does not account\n")
+    printf(" for Gregorian calendar's leap year expections)\n")
+    printf("Works for array inputs\n")
+    printf("checkdate(year, month, day) returns 1 if input date is valid,\n")
+    printf(" 0 otherwise\n")
+    printf("S.Marshall 08-11-2008\n\n")
+
+    return(byte(0))
+  }
+
+#  intdm = 31//29//31//30//31//30//31//31//30//31//30//31
+  intMD = 100*$2 + $3 # Will be used in error checking
+  # Check for valid inputs...
+  if (isint($1) == 0 || isint($2) == 0 || isint($3) == 0) {
+    printf("\nError! Date must be composed of integers!\n\n")
+    return(byte(0))
+  } else if (min($2) < 1 || max($2) > 12) {
+    printf("\nError! Month outside valid range!\n\n")
+    return(byte(0))
+  } else if (max($3) > 31 || min($3) < 0) {
+    # Allowing "0th" day of month for use in computations
+    printf("\nError! Day of month outside valid range!\n\n")
+    return(byte(0))
+  } else if (min(abs(intMD - 230)) == 0 || min(abs(intMD - 231)) == 0 || min(abs(intMD - 431)) == 0 || min(abs(intMD - 631)) == 0 || min(abs(intMD - 931)) == 0 || min(abs(intMD - 1131)) == 0) {
+    intk = dim($3)
+    printf("\nError! Day of month outside valid range!\n\n")
+    return(byte(0))
+  } else if (min(abs(intMD - 229)) == 0) {
+    intlt = (intMD == 229) # lt == 1 where MD == 229, 0 elsewhere
+    intlt = int(abs($1))*intlt
+    # lt should now contain positive multiples of 4, if all occurances of 2/29
+    #  are in years that are multiples of 4
+    if (isint(intlt/double(4)) == 0) {
+      printf("\nError! Invalid leap day!\n\n")
+      return(byte(0))
+    }
+    return(byte(1))
+  } else {
+    return(byte(1))
+  }
+
+}
+
+define checktime(0,3) {
+
+  if ($ARGC < 3) {
+    printf("\nCheck for valid time (but does not allow for leap seconds)\n")
+    printf("Works for array inputs\n")
+    printf("checktime(hour, minute, second) returns 1 if input time is valid,\n")
+    printf(" 0 otherwise\n")
+    printf("S.Marshall 08-12-2008\n\n")
+
+    return(byte(0))
+  }
+
+  if (isint($1) == 0 || isint($2) == 0) {
+    printf("\nError! Hour and minute must be integers!\n\n")
+    return(byte(0))
+  } else if (min($1) < 0 || max($1) >= 24) {
+    printf("\nError! Hour outside valid range!\n\n")
+    return(byte(0))
+  } else if (min($2) < 0 || max($2) >= 60) {
+    printf("\nError! Minute outside valid range!\n\n")
+    return(byte(0))
+  } else if (min($3) < 0 || max($3) >= 60) {
+    printf("\nError! Second outside valid range!\n\n")
+    return(byte(0))
+  } else { # OK otherwise
+    return(byte(1))
+  }
+}
+
+define date2str(0,3) {
+
+  if ($ARGC < 3) {
+    printf("\nReturns string of date, given year, month, and day\n")
+    printf("Scalar inputs only - no arrays!\n")
+    printf("date2str(2008,1,1) returns \"January 1, 2008\"\n")
+    printf("S.Marshall 08-11-2008\n\n")
+
+    return(byte(0))
+  }
+
+  if (isscalar($1) == 0 || isscalar($2) == 0 || isscalar($3) == 0) {
+    printf("\nError! Inputs must be scalar!\n\n")
+    return(byte(0))
+  }
+
+  if (checkdate($1,$2,$3) == 0) { # Check for valid date
+    return(byte(0))
+  }
+
+  months = read_lines($DV_SCRIPT_FILES+"/time/months.txt") # Names of months
+
+  if ($1 < 1) { # Convert to BCE when date is negative
+    intY = sprintf("%d", 1 - $1) + " BCE"
+  } else if ($1 < 1000) { # Display CE tag before 1000
+    intY = sprintf("%d", $1) + " CE"
+  } else {
+    intY = sprintf("%d", $1)
+  }
+
+  return(sprintf(months[,$2] + " %d, " + intY, $3))
+  # Doesn't include day of week, since that depends on which calendar system is being used
+}
+
+define time2str(0,4) {
+
+  if ($ARGC == 0) {
+    printf("\nConverts input time to formatted time string\n")
+    printf("Scalar inputs only - no arrays!\n")
+    printf("Watch out for unexpected negative inputs!\n")
+    printf("Time can be input as time2str(hh, mm, ss) or time2str(hh.ff)\n")
+    printf("Optional final input controls how many digits of seconds\n")
+    printf(" fraction will be displayed; 0 if omitted\n")
+    printf("e.g. time2str(23.994311865) returns \"23:59:39\", and\n")
+    printf(" time2str(23.994311865, 2) returns \"23:59:39.52\"\n")
+    printf("S.Marshall 08-13-2008\n\n")
+
+    return(byte(0))
+  }
+
+  if (isscalar($1) == 0) {
+    printf("\nError! Inputs must be scalar!\n\n")
+    return(byte(0))
+  }
+  if ($ARGC >= 2) {
+    if (isscalar($2) == 0) {
+      printf("\nError! Inputs must be scalar!\n\n")
+      return(byte(0))
+    }
+  }
+  if ($ARGC >= 3) {
+    if (isscalar($3) == 0) {
+      printf("\nError! Inputs must be scalar!\n\n")
+      return(byte(0))
+    }
+  }
+  if ($ARGC == 4) {
+    if (isscalar($4) == 0) {
+      printf("\nError! Inputs must be scalar!\n\n")
+      return(byte(0))
+    }
+  }
+
+  if ($1 <= -24) {
+    printf("\nError! First input too negative!\n\n")
+    return(byte(0))
+  }
+
+  if ($ARGC == 1) { # time2str(hh.ff)
+    intd = 0
+    ints = abs(3600*(double($1) % 24))
+
+  } else if ($ARGC == 2) { # time2str(hh.ff, digits)
+    intd = $2
+    ints = abs(3600*(double($1) % 24))
+
+  } else if ($ARGC >= 3) { # time2str(hh, mm, ss)
+    if (checktime($1,$2,$3) == 0) { # Check for valid input
+      return(byte(0))
+    }
+
+    ints = abs(3600*double($1)) + 60*double($2) + double($3)
+
+    if ($ARGC == 4) {
+      intd = $4
+    } else {
+      intd = 0
+    }
+  } else { # Shouldn't be necessary
+    printf("\nError!\n\n")
+    return(byte(0))
+  }
+
+  if (isscalar(intd) == 0 || isint(intd) == 0) {
+    printf("\nError! Digits input must be a scalar (1x1x1) integer!\n\n")
+    return(byte(0))
+  }
+
+  if (intd > 6) { # This avoids truncation errors
+    printf("\nWarning! Can only display 6 digits of seconds fraction.\n\n")
+    intd = 6 # Limiting intd to 6 to avoid roundoff error in next step
+  }
+
+  # Integer division
+  intf = round(ints*double(10)^intd) # Milliseconds (or whatever division) since 0:00:00
+#  return(intf) # From debugging
+  inth = int(intf/(3600*double(10)^intd))
+  intf = intf % (3600*double(10)^intd)
+  intm = int(intf/(60*double(10)^intd))
+  intf = intf % (60*double(10)^intd)
+  ints = int(intf/(double(10)^intd))
+  intf = int(round(intf % (double(10)^intd)))
+#  return(inth//intm//ints//intf) # From debugging
+
+  if (intd == 0) {
+    intf = "" # No fraction of second for display
+  } else {
+    intf = sprintf(".%0" + sprintf("%d", intd) + "d", intf) # Ensure leading zeroes
+  }
+
+  if ($1 >= 0) {
+    return(sprintf("%02d:%02d:%02d" + intf, inth, intm, ints))
+  } else {
+    return(sprintf("-%02d:%02d:%02d" + intf, inth, intm, ints))
+  }
+}
+
+define str2date(0,2) {
+
+  if ($ARGC == 0) {
+    printf("\nConverts input string to date/time array\n")
+    printf("Input string should have format used by THEMIS database,\n")
+    printf(" which is \"YYYY-MM-DDThh:mm:ss.fff\"\n")
+    printf("Optional second input to specify time zone of input time;\n")
+    printf(" if no second input given, function assumes UTC\n")
+    printf("S.Marshall 10-12-2008\n\n")
+
+    return(byte(0))
+  }
+
+  if (format($1)!="STRING") {
+    printf("\nError! Input must be a string!\n\n")
+    return(byte(0))
+  }
+
+  if (length($1) != 23) {
+    printf("\nError! String should be 23 characters!\n\n")
+    return(byte(0))
+  }
+
+  inp = $1
+  if ($ARGC == 2) {
+    if (isint(4*$2) == 1 && $2 >= -12 && $2 <= 14) {
+      intZ = float($2)
+    } else {
+      printf("\nError! Invalid time zone!\n\n")
+      return(byte(0))
+    }
+  } else {
+    intZ = 0.
+  }
+
+  outp = eval(inp[1:4])
+  outp = outp//eval(inp[6:7])
+  outp = outp//eval(inp[9:10])
+  outp = outp//eval(inp[12:13])
+  outp = outp//eval(inp[15:16])
+  outp = float(outp)//eval(inp[18:23])//intZ
+
+  return(outp)
+}
+
+define JD(cal) {
+  # Julian calendar here does not handle early Roman leap year mistakes (the details of which are disputed by authorities)
+
+  if ($ARGC == 0 || $ARGC > 7) {
+    printf("\nConvert input date and time to UTC Julian Date\n")
+    printf("JD(year, month, day, hour, minute, second, time zone offset, cal=n)\n")
+    printf(" or JD(clock(1), cal=n) returns the Julian Date (number of days\n")
+    printf(" since noon UTC on January 1, 4713 BC in the Julian calendar).\n")
+    printf("The dates/times must be entered in the given order.\n")
+    printf("For BCE, use astronomical year numbering, e.g. 4713 BCE = -4712\n")
+    printf("Works for array inputs\n")
+    printf("cal (sets calendar mode) must be passed by reference\n")
+    printf(" cal=0 for Julian calendar; cal=1 for Gregorian (modern) calendar\n")
+    printf(" If cal is omitted, the function will guess, based on the date.\n")
+    printf("  (Latest) dates before October 15, 1582 use Julian calendar\n")
+    printf("  (Latest) dates after that use Gregorian calendar\n")
+    printf("  This reflects the first changeover date. However, different\n")
+    printf("   countries changed at different times. See\n")
+    printf("   http://www.tondering.dk/claus/cal/node3.html\n")
+    printf(" The function cannot switch modes midway - it will compute using\n")
+    printf("  one calendar system OR the other for ALL members of an input\n")
+    printf("  array. If you want to find some JD's for some dates in the Julian\n")
+    printf("  calendar and some in the Gregorian calendar, you must enter them\n")
+    printf("  separately (e.g. first enter the dates from Julian calendar, then\n")
+    printf("  enter the dates from the Gregorian calendar, specifying modes).\n")
+    printf("Returns double-precision Julian Date if given date and time,\n")
+    printf(" integer Julian Day Number if only given date\n")
+    printf("Formulae from http://en.wikipedia.org/wiki/Julian_day\n")
+    printf("Checked extensively against USNO calculator at\n")
+    printf(" http://aa.usno.navy.mil/data/docs/JulianDate.php\n")
+    printf("S.Marshall 04-10-2009\n\n")
+
+    return(byte(0))
+  }
+
+  # Set date and time
+  if (equals(dim($1), (7//1//1))) { # If first input is from clock()
+    # Assuming input from clock, and not checking for errors
+    intT = $1
+    intY = double(intT[1])
+    intM = double(intT[2])
+    intD = double(intT[3])
+    inth = double(intT[4])
+    intm = double(intT[5])
+    ints = double(intT[6])
+    intT = double(intT[7])
+    intT = inth - intT + intm/60 + ints/3600
+  } else if ($ARGC == 1) { # Noon UTC on January 1
+    intY = double($1)
+    intM = double(1)
+    intD = double(1)
+    intT = double(12)
+  } else if ($ARGC == 2) { # Noon UTC on 1st of month
+    intY = double($1)
+    intM = double($2)
+    intD = double(1)
+    intT = double(12)
+  } else if ($ARGC == 3) { # Noon UT
+    intY = double($1)
+    intM = double($2)
+    intD = double($3)
+    intT = double(12)
+  } else if ($ARGC == 4) { # Beginning of hour
+    intY = double($1)
+    intM = double($2)
+    intD = double($3)
+    if (checktime($4,0,0) == 0) {
+      return(byte(0))
+    }
+    intT = double($4)
+  } else if ($ARGC == 5) { # Beginning of minute
+    intY = double($1)
+    intM = double($2)
+    intD = double($3)
+    if (checktime($4,$5,0) == 0) {
+      return(byte(0))
+    }
+    intT = double($4) + double($5)/60
+  } else if ($ARGC == 6) {
+    intY = double($1)
+    intM = double($2)
+    intD = double($3)
+    if (checktime($4,$5,$6) == 0) {
+      return(byte(0))
+    }
+    intT = double($4) + double($5)/60 + double($6)/3600
+  } else if ($ARGC == 7) {
+    intY = double($1)
+    intM = double($2)
+    intD = double($3)
+    if (checktime($4,$5,$6) == 0) {
+      return(byte(0))
+    }
+    intT = double($4 - $7) + double($5)/60 + double($6)/3600
+  }
+
+  # Set calendar mode (0 for Julian, 1 for Gregorian)
+  if (HasValue(cal) == 1) {
+    if (cal == 0 || cal == 1) {
+      intcm = cal
+    } else {
+      printf("\nError! Calendar mode (cal) must be 0 or 1!\n\n")
+      return(byte(0))
+    }
+  } else {
+    intYd = intY + (intM - 1)/12 + (intD - 1)/372
+    # Approximate year decimal, for comparisons
+    # Use October 15, 1582 as the first date for the Gregorian calendar,
+    #  that being the first date used for the new calendar (in some countries)
+    if (max(intYd) < 1582.7863) { # Before October 14.5, 1582
+      intcm = 0 # Choose Julian w/o warning if before beginning of Gregorian calendar
+    } else if (max(intYd) >= 1582.7863 && max(intYd) < 1920.) { # Between October 14.5, 1582, and 1920
+      intcm = 1 # Use Gregorian but print warning
+      printf("Assuming Gregorian calendar\n")
+    } else { # Don't print warning for dates after 1920
+      intcm = 1
+    }
+  }
+
+  if (checkdate(intY,intM,intD) == 0) { # Check for valid date
+    return(byte(0))
+  }
+
+  if (intcm == 1) { # Check for invalid Gregorian leap days
+    intMD = 100*intM + intD
+    if (min(abs(intMD - 229)) == 0) {
+      intlt = (intMD == 229) # lt == 1 where MD == 229, 0 elsewhere
+      intlt = intlt*abs(intY)*((intY%100) == 0) # Keep only years divisible by 100
+      intlt = (floor(intlt%400) - floor(intlt%100))
+      if (max(intlt) > 0) {
+        printf("\nError! Invalid Gregorian leap day!\n\n")
+        return(byte(0))
+      }
+    }
+  }
+
+# Shouldn't need this
+#  if (min(intYd) < -4799.834) { # End of February 4800 BC
+#    printf("\nError! Date must be March 1, 4801 BC (-4800) or later\n")
+#  }
+
+#  if (intcm == 1 && min(intY) < 1) {
+#    printf("\nError! Year must be AD when using Gregorian calendar!\n")
+#    return(byte(0))
+#  } else if (intcm == 0 && min(intY) < -4712) {
+#    printf("\nError! Year must be 4713 BC or later when using Julian calendar!\n")
+#    return(byte(0))
+#  }
+
+  # Formulae from http://en.wikipedia.org/wiki/Julian_day; thoroughly checked
+  #  against USNO calculator at http://aa.usno.navy.mil/data/docs/JulianDate.php
+  inta = floor((14 - intM)/12)
+  inty = intY + 4800 - inta
+  intm = intM + 12*inta - 3
+  if (intcm == 1) { # Gregorian calendar
+    intJ = intD + floor((153*intm + 2)/5) + 365*inty + floor(inty/4) - floor(inty/100) + floor(inty/400) - 32045 + (intT - 12)/24
+  } else { # Julian calendar
+    intJ = intD + floor((153*intm + 2)/5) + 365*inty + floor(inty/4) - 32083 + (intT - 12)/24
+  }
+
+  if ($ARGC <= 3 && equals(dim($1), (7//1//1)) == 0) { # Input date only (not time)
+    return(int(floor(intJ + 0.5)))
+  } else {
+    return(intJ)
+  }
+# Wolfram formulae - Gregorian works; Julian is inconsistent, especially near JD 0:
+#  if (intcm == 1) { # Gregorian calendar
+#    return(367*intY - floor(7*(intY + floor((intM + 9)/12))/4) - floor(3*(floor((intY + (intM - 9)/7)/100) + 1)/4) + floor(275*intM/9) + intD + 1721028.5 + intT/24)
+#    # Works for all *AD* in Gregorian calendar
+#  } else { # Julian calendar
+#    return(367*intY - floor(7*(intY + 5001 + floor((intM - 9)/7))/4) + floor(275*intM/9) + intD + 1729776.5 + intT/24)
+#  }
+}
+
+define MJD(cal) {
+  # Julian calendar here does not handle early Roman leap year mistakes (the details of which are disputed by authorities)
+
+  if ($ARGC == 0 || $ARGC > 7) {
+    printf("\nConvert input date and time to UTC Modified Julian Date\n")
+    printf("MJD(year, month, day, hour, minute, second, time zone offset, cal=n)\n")
+    printf(" or MJD(clock(1), cal=n) returns the Modified Julian Date (number of\n")
+    printf(" days since midnight UTC at the beginning of November 17, 1858).\n")
+    printf("The dates/times must be entered in the given order.\n")
+    printf("For BCE, use astronomical year numbering, e.g. 4713 BCE = -4712\n")
+    printf("Works for array inputs\n")
+    printf("cal (sets calendar mode) must be passed by reference\n")
+    printf(" cal=0 for Julian calendar; cal=1 for Gregorian (modern) calendar\n")
+    printf(" If cal is omitted, the function will guess, based on the date.\n")
+    printf("  (Latest) dates before October 15, 1582 use Julian calendar\n")
+    printf("  (Latest) dates after that use Gregorian calendar\n")
+    printf("  This reflects the first changeover date. However, different\n")
+    printf("   countries changed at different times. See\n")
+    printf("   http://www.tondering.dk/claus/cal/node3.html\n")
+    printf(" The function cannot switch modes midway - it will compute using\n")
+    printf("  one calendar system OR the other for ALL members of an input\n")
+    printf("  array. If you want to find some MJD's for some dates in the Julian\n")
+    printf("  calendar and some in the Gregorian calendar, you must enter them\n")
+    printf("  separately (e.g. first enter the dates from Julian calendar, then\n")
+    printf("  enter the dates from the Gregorian calendar, specifying modes).\n")
+    printf("Returns double-precision Modified Julian Date if given date and time,\n")
+    printf(" integer Modified Julian Day Number if only given date\n")
+    printf("Uses function JD for integer JDN calculation, then subtracts\n")
+    printf("This function therefore returns more precise values than JD for modern\n")
+    printf(" dates, although the difference is unimportant for most applications.\n")
+    printf("S.Marshall 04-10-2009\n\n")
+
+    return(byte(0))
+  }
+
+  # Set date and time
+  if (equals(dim($1), (7//1//1))) { # If first input is from clock()
+    # Assuming input from clock, and not checking for errors
+    intT = $1
+    intY = double(intT[1])
+    intM = double(intT[2])
+    intD = double(intT[3])
+    inth = double(intT[4])
+    intm = double(intT[5])
+    ints = double(intT[6])
+    intT = double(intT[7])
+    intT = inth - intT + intm/60 + ints/3600
+  } else if ($ARGC == 1) { # Midnight UTC on January 1
+    intY = double($1)
+    intM = double(1)
+    intD = double(1)
+    intT = double(0)
+  } else if ($ARGC == 2) { # Midnight UTC on 1st of month
+    intY = double($1)
+    intM = double($2)
+    intD = double(1)
+    intT = double(0)
+  } else if ($ARGC == 3) { # Midnight UT
+    intY = double($1)
+    intM = double($2)
+    intD = double($3)
+    intT = double(0)
+  } else if ($ARGC == 4) { # Beginning of hour
+    intY = double($1)
+    intM = double($2)
+    intD = double($3)
+    if (checktime($4,0,0) == 0) {
+      return(byte(0))
+    }
+    intT = double($4)
+  } else if ($ARGC == 5) { # Beginning of minute
+    intY = double($1)
+    intM = double($2)
+    intD = double($3)
+    if (checktime($4,$5,0) == 0) {
+      return(byte(0))
+    }
+    intT = double($4) + double($5)/60
+  } else if ($ARGC == 6) {
+    intY = double($1)
+    intM = double($2)
+    intD = double($3)
+    if (checktime($4,$5,$6) == 0) {
+      return(byte(0))
+    }
+    intT = double($4) + double($5)/60 + double($6)/3600
+  } else if ($ARGC == 7) {
+    intY = double($1)
+    intM = double($2)
+    intD = double($3)
+    if (checktime($4,$5,$6) == 0) {
+      return(byte(0))
+    }
+    intT = double($4 - $7) + double($5)/60 + double($6)/3600
+  }
+
+  # Set calendar mode (0 for Julian, 1 for Gregorian)
+  if (HasValue(cal) == 1) {
+    if (cal == 0 || cal == 1) {
+      intcm = cal
+    } else {
+      printf("\nError! Calendar mode (cal) must be 0 or 1!\n\n")
+      return(byte(0))
+    }
+  } else {
+    intYd = intY + (intM - 1)/12 + (intD - 1)/372
+    # Approximate year decimal, for comparisons
+    # Use October 15, 1582 as the first date for the Gregorian calendar,
+    #  that being the first date used for the new calendar (in some countries)
+    if (max(intYd) < 1582.7863) { # Before October 14.5, 1582
+      intcm = 0 # Choose Julian w/o warning if before beginning of Gregorian calendar
+    } else if (max(intYd) >= 1582.7863 && max(intYd) < 1920.) { # Between October 14.5, 1582, and 1920
+      intcm = 1 # Use Gregorian but print warning
+      printf("Assuming Gregorian calendar\n")
+    } else { # Don't print warning for dates after 1920
+      intcm = 1
+    }
+  }
+
+  intJ = JD(intY, intM, intD, cal=intcm) # Get JDN (integer - perfectly accurate)
+  intJ = intJ - 2400001 # Convert to MJDN (integer)
+
+  if ($ARGC <= 3 && equals(dim($1), (7//1//1)) == 0) { # Input date only (not time)
+    return(intJ) # Return integer MJD
+  } else { # Input date and time
+    return(intJ + intT/24) # Return MJD with appropriate decimal time
+  }
+}
+
+define JD2MJD(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nConvert Julian Date to Modified Julian Date\n")
+    printf("Works for array inputs\n")
+    printf("JD2MJD(JD) returns the Modified Julian Date.\n")
+    printf("Returns double-precision Modified Julian Date\n")
+    printf("S.Marshall 06-28-2008\n\n")
+
+    return(byte(0))
+  }
+
+  return($1 - 2400000.5) # atod unnecessary for half-integers
+}
+
+define MJD2JD(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nConvert Modified Julian Date to Julian Date\n")
+    printf("Works for array inputs\n")
+    printf("MJD2JD(MJD) returns the Julian Date.\n")
+    printf("Returns double-precision Julian Date\n")
+    printf("S.Marshall 04-11-2009\n\n")
+
+    return(byte(0))
+  }
+
+  return($1 + 2400000.5) # atod unnecessary for half-integers
+}
+
+define JDlist(0,3) {
+
+  if ($ARGC == 0) {
+    printf("\nReturns the Julian Day Numbers corresponding to the first\n")
+    printf(" day of each month of the input interval\n")
+    printf("JDlist(year,month,n) returns 2-by-n-by-1 array of JDN of first\n")
+    printf(" day of month for n months, starting with input year/month\n")
+    printf("First column of output is rough \"year fraction\", Y + (M-1)/12\n")
+    printf("Second column of output is corresponding Julian Day Numbers\n")
+    printf("Useful for plotting\n")
+    printf("S.Marshall 08-25-2008\n\n")
+
+    return(byte(0))
+  }
+
+  if (isscalar($1) == 0 || isscalar($2) == 0 || isscalar($3) == 0) {
+    printf("\nError! All inputs must be scalar!\n\n")
+    return(byte(0))
+  }
+
+  if (isint($1) == 0 || isint($2) == 0 || isint($3) == 0) {
+    printf("\nError! All inputs must be integers!\n\n")
+    return(byte(0))
+  }
+
+  if (checkdate($1,$2,1) == 0) {
+    return(byte(0))
+  }
+
+  intm = create(1,$3,start=$1*12 + $2 - 1) # Will be integer format no matter what format the inputs are
+  intj=JD(intm/12,intm%12+1,1)
+  return(cat(intm/float(12),float(intj),x))
+}
+
+define MJDlist(0,3) {
+
+  if ($ARGC == 0) {
+    printf("\nReturns the Modified Julian Day Numbers corresponding to the\n")
+    printf(" first day of each month of the input interval\n")
+    printf("MJDlist(year,month,n) returns 2-by-n-by-1 array of MJDN of first\n")
+    printf(" day of month for n months, starting with input year/month\n")
+    printf("First column of output is rough \"year fraction\", Y + (M-1)/12\n")
+    printf("Second column of output is corresponding MJD Numbers\n")
+    printf("Useful for plotting\n")
+    printf("S.Marshall 04-10-2009\n\n")
+
+    return(byte(0))
+  }
+
+  if (isscalar($1) == 0 || isscalar($2) == 0 || isscalar($3) == 0) {
+    printf("\nError! All inputs must be scalar!\n\n")
+    return(byte(0))
+  }
+
+  if (isint($1) == 0 || isint($2) == 0 || isint($3) == 0) {
+    printf("\nError! All inputs must be integers!\n\n")
+    return(byte(0))
+  }
+
+  if (checkdate($1,$2,1) == 0) {
+    return(byte(0))
+  }
+
+  intm = create(1,$3,start=$1*12 + $2 - 1)
+  intj=MJD(intm/12,intm%12+1,1)
+  return(cat(intm/float(12),float(intj),x))
+}
+
+define JD2date(cal,print) {
+
+  if ($ARGC == 0 || $ARGC > 2) {
+    printf("\nConvert Julian Date to date and time\n")
+    printf("Scalar inputs only - no arrays!\n")
+    printf("JD2date(JD,digits,cal=n,print=m) returns an array specifying the date\n")
+    printf(" and time, and can also print a string giving the date and time.\n")
+    printf(" There may be a slight discrepancy between the two, due to rounding.\n")
+    printf(" Optional second input controls how many digits of second fraction\n")
+    printf("  of time will be displayed; 0 if omitted\n")
+    printf(" cal (sets calendar mode) must be passed by reference\n")
+    printf("  cal=0 for Julian calendar; cal=1 for Gregorian (modern) calendar\n")
+    printf("  If cal is omitted, the function will guess, based on the date.\n")
+    printf("   Dates before October 15, 1582 (JD 2299160.5) use Julian calendar\n")
+    printf("   Dates after that use Gregorian calendar\n")
+    printf("   This reflects the first changeover date. However, different\n")
+    printf("    countries changed at different times. See\n")
+    printf("    http://www.tondering.dk/claus/cal/node3.html\n")
+    printf(" print also must be passed by reference. It sets whether to print\n")
+    printf("  the date as a string, in addition to returning it. Prints string if\n")
+    printf("  nonzero or omitted; does not print string only if print=0\n")
+    printf(" Return format: [year, month, day, hour, minute, second, 0]\n")
+    printf("  The final zero is the time zone offset (0, since this uses UTC).\n")
+    printf("  This is the same format used by the function clock.\n")
+    printf("  The returned clock system is the same as the input clock system.\n")
+    printf("   So if the input Julian dates were UTC, the returned dates/times\n")
+    printf("   will be UTC as well, and so on for TT, TAI, etc.\n")
+    printf("Gregorian formulae from http://en.wikipedia.org/wiki/Julian_day\n")
+    printf("Julian formulae derived based on Gregorian formulae\n")
+    printf("Both were checked extensively against the USNO calculator at\n")
+    printf(" http://aa.usno.navy.mil/data/docs/JulianDate.php\n")
+    printf("It is advisable to enter inputs in double format to ensure accuracy.\n")
+    printf(" See the DavinciWiki article on the intermediate float bug.\n")
+    printf("S.Marshall 01-22-2010\n\n")
+
+    return(byte(0))
+  }
+
+  if (isscalar($1) == 0) {
+    printf("\nError! First input must be scalar!\n\n")
+    return(byte(0))
+  }
+
+  if ($1 < 0) {
+    printf("\nError! JD must be positive for this function!\n\n")
+    return(byte(0))
+  }
+
+  if ($ARGC == 1) {
+    intf = 0
+  } else if (isscalar($2) == 0) {
+    printf("\nError! Second input must be scalar!\n\n")
+    return(byte(0))
+  } else if ($2 > 3) {
+    printf("\nWarning! JD only good to milliseconds; displaying as such.\n\n")
+    intf = 3
+  } else {
+    intf = $2 # Display time string with set fraction of seconds
+  }
+
+  if (HasValue(cal) == 1) {
+    if (cal == 0 || cal == 1) {
+      intcm = cal
+    } else {
+      printf("\nError! Calendar mode (cal) must be 0 or 1!\n\n")
+      return(byte(0))
+    }
+  } else {
+    if ($1 < 2299160.5) { # Before October 15, 1582 (Gregorian)
+      intcm = 0 # Use Julian calendar
+    } else {
+      intcm = 1 # Use Gregorian calendar
+    }
+  }
+
+  if (HasValue(print) == 1) {
+    if (print == 0) {
+      intpm = 0
+    } else {
+      intpm = 1
+    }
+  } else {
+    intpm = 1
+  }
+
+  if (intpm == 1) {
+    weekdays = read_lines($DV_SCRIPT_FILES+"/time/weekdays.txt") # Names of days of week
+  }
+
+  intJ = int(floor($1 + 0.5)) # JDN
+  # This block requires that JDN remain in integer format - Euclidean division!
+  if (intcm == 0) { # Julian calendar
+    # Derived by using Wikipedia explanation of Gregorian calculation and converting
+    intj = intJ + 32082 # Days since epoch March 1, -4800
+    #q = j/1461 # Quadrennials since epoch
+    intdq = intj % 1461 # Days since beginning of last quadrennial (March 1)
+    #u = dq/365 # Annual cycles since quadrennial (March 1)
+    intdu = intdq % 365 # Days since last March 1
+    #y = 4*q + u # Years since epoch
+    intm = (5*intdu + 308)/153 - 2
+    intd = intdu - floor(153*(intm + 4)/5) + 122
+    intY = int(floor((intJ - 1721058.)/365.25))
+    intM = (intm + 2)%12 + 1
+    intD = int(intd + 1.5)
+    if (format($1) != "int") { # If input not integer, get time as well
+      intT = 24*($1 + 0.5 - intJ)
+      inth = int(floor(intT)) # Hour
+      intm = int(floor(60*(intT - inth))) # intm used before, but no matter here
+      ints = int(floor(3600*(intT - inth - intm/double(60)) + 3e-5)) # Add 3e-5 to eliminate roundoff errors
+      if (intpm == 1) {
+        printf("\n" + weekdays[,(intJ%7) + 1] + ", " + date2str(intY,intM,intD) + ", " + time2str(intT, intf) + " UTC\n")
+        printf("\n (Julian calendar)\n\n")
+      }
+      return(intY//intM//intD//inth//intm//ints//0)
+    } else {
+      if (intpm == 1) {
+        printf("\n" + weekdays[,(intJ%7) + 1] + ", " + date2str(intY,intM,intD) + "\n")
+        printf("\n (Julian calendar)\n\n")
+      }
+      return(intY//intM//intD//12//0//0//0)
+    }
+  } else { # Gregorian calendar
+    intj = intJ + 32044
+    intg = intj/146097
+    intdg = intj % 146097
+    intc = (intdg/36524 + 1)*3/4
+    intdc = intdg - intc*36524
+    intb = intdc/1461
+    intdb = intdc % 1461
+    inta = (intdb/365 + 1)*3/4
+    intda = intdb - inta*365
+    inty = intg*400 + intc*100 + intb*4 + inta
+    intm = (intda*5 + 308)/153 - 2
+    intd = intda - (intm + 4)*153/5 + 122
+    intY = inty - 4800 + (intm + 2)/12
+    intM = (intm + 2) % 12 + 1
+    intD = int(intd + 1.5)
+    if (format($1) != "int") { # If input not integer, get time as well
+      intT = 24*($1 + 0.5 - intJ) # Had previously added 1e-6 here
+#      return(intT) # From debugging
+      inth = int(floor(intT)) # Hour
+      intm = int(floor(60*(intT - inth))) # intm used before, but no matter here
+      ints = int(floor(3600*(intT - inth - intm/double(60)) + 3e-5)) # Add 3e-5 to eliminate roundoff errors
+      if (intpm == 1) {
+        printf("\n" + weekdays[,(intJ%7) + 1] + ", " + date2str(intY,intM,intD) + ", " + time2str(intT, intf) + " UTC\n")
+        printf("\n (Gregorian calendar)\n\n")
+      }
+      return(intY//intM//intD//inth//intm//ints//0)
+    } else {
+      if (intpm == 1) {
+        printf("\n" + weekdays[,(intJ%7) + 1] + ", " + date2str(intY,intM,intD) + "\n")
+        printf("\n (Gregorian calendar)\n\n")
+      }
+      return(intY//intM//intD//12//0//0//0)
+    }
+  }
+}
+
+define MJD2date(cal,print) {
+
+  if ($ARGC == 0 || $ARGC > 2) {
+    printf("\nConvert Modified Julian Date to date and time\n")
+    printf("Scalar inputs only - no arrays!\n")
+    printf("MJD2date(MJD,digits,cal=n,print=m) returns an array specifying the date\n")
+    printf(" and time, and can also print a string giving the date and time.\n")
+    printf(" There may be a slight discrepancy between the two, due to rounding.\n")
+    printf(" Optional second input controls how many digits of second fraction\n")
+    printf("  of time will be displayed; 0 if omitted\n")
+    printf(" cal (sets calendar mode) must be passed by reference\n")
+    printf("  cal=0 for Julian calendar; cal=1 for Gregorian (modern) calendar\n")
+    printf("  If cal is omitted, the function will guess, based on the date.\n")
+    printf("   Dates before October 15, 1582 (MJD -100840) use Julian calendar\n")
+    printf("   Dates after that use Gregorian calendar\n")
+    printf("   This reflects the first changeover date. However, different\n")
+    printf("    countries changed at different times. See\n")
+    printf("    http://www.tondering.dk/claus/cal/node3.html\n")
+    printf(" print also must be passed by reference. It sets whether to print\n")
+    printf("  the date as a string, in addition to returning it. Prints string if\n")
+    printf("  nonzero or omitted; does not print string only if print=0\n")
+    printf(" Return format: [year, month, day, hour, minute, second, 0]\n")
+    printf("  The final zero is the time zone offset (0, since this uses UTC).\n")
+    printf("  This is the same format used by the function clock.\n")
+    printf("  The returned clock system is the same as the input clock system.\n")
+    printf("   So if the input Modified Julian dates were UTC, the returned\n")
+    printf("   dates/times will be UTC as well, and so on for TT, TAI, etc.\n")
+    printf("This function calculates time on its own but converts the date to JDN\n")
+    printf(" and passes the JDN to the function JD2date\n")
+    printf("It is advisable to enter inputs in double format to ensure accuracy.\n")
+    printf(" See the DavinciWiki article on the intermediate float bug.\n")
+    printf("S.Marshall 01-22-2010\n\n")
+
+    return(byte(0))
+  }
+
+  if (isscalar($1) == 0) {
+    printf("\nError! First input must be scalar!\n\n")
+    return(byte(0))
+  }
+
+  if ($1 < -2400001) {
+    printf("\nError! JD must be positive for this function!\n\n")
+    return(byte(0))
+  }
+
+  if ($ARGC == 1) {
+    intf = 0
+  } else if (isscalar($2) == 0) {
+    printf("\nError! Second input must be scalar!\n\n")
+    return(byte(0))
+  } else if ($2 > 6) {
+    printf("\nWarning! MJD only good to microseconds; displaying as such.\n\n") # Accurate to microseconds for near-current dates
+    intf = 6
+  } else {
+    intf = $2 # Display time string with set fraction of seconds
+  }
+
+  if (HasValue(cal) == 1) {
+    if (cal == 0 || cal == 1) {
+      intcm = cal
+    } else {
+      printf("\nError! Calendar mode (cal) must be 0 or 1!\n\n")
+      return(byte(0))
+    }
+  } else {
+    if ($1 < -100840) { # Before October 15, 1582 (Gregorian)
+      intcm = 0 # Use Julian calendar
+    } else {
+      intcm = 1 # Use Gregorian calendar
+    }
+  }
+
+  if (HasValue(print) == 1) {
+    if (print == 0) {
+      intpm = 0
+    } else {
+      intpm = 1
+    }
+  } else {
+    intpm = 1
+  }
+
+  if (intpm == 1) {
+    weekdays = read_lines($DV_SCRIPT_FILES+"/time/weekdays.txt") # Names of days of week
+  }
+
+  intJ = $1
+  intJ = int(floor(intJ)) # MJDN
+  intJ = intJ + 2400001 # JDN
+
+  intD = JD2date(intJ,cal=intcm,print=0)
+  intY = intD[1]
+  intM = intD[2]
+  intD = intD[3]
+
+  if (intpm == 1) {
+    if (intcm == 0) {
+      intc = "Julian" # Set strings for printed string (if printed)
+    } else {
+      intc = "Gregorian"
+    }
+  }
+
+  if (format($1) != "int") { # If input not integer, get time as well
+    intT = $1 - floor($1) # Fraction of day
+#    printf("intT = %f\n", intT) # Debugging
+    intT = 24*intT
+    inth = int(floor(intT)) # Hour
+    intm = int(floor(60*(intT - inth))) # intm used before, but no matter here
+    ints = int(floor(3600*(intT - inth - intm/double(60)) + 3e-5)) # Add 3e-5 to eliminate roundoff errors
+    if (intpm == 1) {
+      printf("\n" + weekdays[,(intJ%7) + 1] + ", " + date2str(intY,intM,intD) + ", " + time2str(intT, intf) + " UTC\n")
+      printf("\n (" + intc + " calendar)\n\n")
+    }
+    return(intY//intM//intD//inth//intm//ints//0)
+  } else {
+    if (intpm == 1) {
+      printf("\n" + weekdays[,(intJ%7) + 1] + ", " + date2str(intY,intM,intD) + "\n")
+      printf("\n (" + intc + " calendar)\n\n")
+    }
+    return(intY//intM//intD//0//0//0//0)
+  }
+}
+
+# Basis for old historical Delta-T calculation (before I found M&S 2004):
+# Change in the length of a day (assume constant deceleration):
+#  a = d(length(day))/dt
+#    = (0.0014*s/day)/century = (1.4*ms/day)/(100*Jyr) = 4.43633229396405e-13/day
+# length(day) = (86400*s)*(1 + a*day*(JD(date) - JD(1820,7,1)))
+# How to get from day length to TT-UTC offset (assuming constant acceleration)?
+# Error from one day: error(day)
+#  = length(day) - 86400*s = (86400*s)^2*(a*(JD(date) - JD(1820,7,1))) (per day)
+# Error, then, is daily error divided by a day:
+#  instantaneous error = (86400*s)*a*(JD(date) - JD(1820,7,1))
+# Integrate instantaneous error over time (JD):
+#  int(a*day*(JD(date) - JD(1820,7,1)),t)
+#  = a*int(JD(date)*day - JD(1820,7,1)*day,t)
+#  = a*int(JD(date)*day,t) - a*JD(1820,7,1)*day
+# d(JD)/dt = (1 day)/day = 1 (constant); int(JD,t) must then be quadratic
+#  = 1/2*a*(JD(date)*day)^2 - a*JD(1820,7,1)*JD(date)*day^2
+#  = a*day^2*JD(date)*(1/2*JD(date) - JD(1820,7,1))
+# Cumulative error: [a*day^2*JD(date)*(JD(date)/2 - JD(1820,7,1))](date1, date2)
+# Here, this formula is being used for dates before 1/1/1961, which is date2
+
+define DeltaT(0,2) {
+
+  if ($ARGC == 0) {
+    printf("\nFind TT-UTC offset (Delta-T), given UTC Julian Date\n")
+    printf("Works for array inputs\n")
+    printf("DeltaT(JD) returns double-precision TT-UTC offset, in seconds\n")
+    printf("If also given a nonzero second input (and the first input has a\n")
+    printf(" z-dimension of 1), e.g. DeltaT(2086308,1), the function will\n")
+    printf(" also return the estimated uncertainty in Delta-T.\n")
+    printf("For 1961 and after, uses table to account for leap seconds and\n")
+    printf(" other adjustments. Before 1961, estimates correction based on\n")
+    printf(" historical eclipse records (from Morrison and Stephenson 2004).\n")
+    printf(" Therefore the returned values are perfectly accurate for 1961 to\n")
+    printf("  the near future, but there is some uncertainty in Delta-T before\n")
+    printf("  1961 and more than a few months in the future (since leap seconds\n")
+    printf("  cannot be predicted very far in advance).\n")
+    printf("See http://www.giss.nasa.gov/tools/mars24/help/algorithm.html,\n")
+    printf(" http://tycho.usno.navy.mil/leapsec.html,\n")
+    printf(" ftp://maia.usno.navy.mil/ser7/tai-utc.dat,\n")
+    printf(" http://heasarc.gsfc.nasa.gov/docs/xte/abc/time_tutorial.html,\n")
+    printf(" http://adsabs.harvard.edu/abs/2004JHA....35..327M (M&S 2004),\n")
+    printf(" and http://adsabs.harvard.edu/abs/2005JHA....36..339M (addendum).\n")
+    printf("S.Marshall 11-12-2010\n\n")
+
+    return(byte(0))
+  }
+  # See also http://adsabs.harvard.edu/cgi-bin/nph-data_query?bibcode=1984RSPTA.313...47S&db_key=AST&link_type=ABSTRACT&high=48927fcdac28332
+  #  and http://adsabs.harvard.edu/cgi-bin/nph-data_query?bibcode=1995RSPTA.351..165S&db_key=AST&link_type=ABSTRACT&high=48927fcdac28332
+
+  intJ = double($1)
+  intd = dim($1)
+  into = clone(double(0), intd[1],intd[2],intd[3]) # Intermediate variable for output
+
+  if (min(intJ) < 1355808) {
+    printf("\nWarning! Questionable accuracy before 1000 BCE!\n\n")
+  } # Paper only gives table to 1000 BCE, although the formulae work for any year
+
+  Jmax = 2455743.5 # On or after July 1, 2011
+  # This MUST be adjusted MANUALLY - it doesn't change with the TAI-UTC table (since that does not include the date of the last update)
+  # This value is just barely representable (exactly) in single precision
+  # Earliest possible date for the next leap second (they only come one second before January 1 or July 1)
+  # Dependent on most recent IERS Bulletin C (last checked November 12, 2010; no leap second at the end of December 31, 2010)
+  # See http://hpiers.obspm.fr/eoppc/bul/bulc/bulletinc.dat
+  iJmp = maxpos(intJ) # Doing this to avoid roundoff error for dates just before Jmax, since max returns a (single-precision) float
+  if (intJ[iJmp[1],iJmp[2],iJmp[3]] >= Jmax) { # After Jmax - dependent on most recent table!
+    printf("\nWarning! May not be properly accounting for future leap seconds!\n\n")
+  }
+
+  if ($ARGC == 1 || intd[3,1,1] > 1) { # Set mode - must be planar to give uncertainty
+    intm = 0
+  } else if ($2 == 0) {
+    intm = 0
+  } else {
+    intm = 1 # Will give uncertainties
+    intdo = into # Filled with zeroes
+  }
+
+#  inta = 3.833e-8 # Change in length of day; really only good for 2 sig figs
+  DeltaT = read_ascii($DV_SCRIPT_FILES+"/time/DeltaT.txt",row=3,format=float) # Historic Delta-T
+
+  intdDT = dim(DeltaT)
+  TAI_UTC = read_lines($DV_SCRIPT_FILES+"/time/tai-utc.dat")
+  TAI_UTC = atod(TAI_UTC[18:26,])//atod(TAI_UTC[39:48,])//atod(TAI_UTC[61:66,])//atod(TAI_UTC[71:79,]) # Convert to double-format
+  intdTU = dim(TAI_UTC)
+  intJ1820 = 2385801 # January 1, 1820 (Gregorian) - reference date where a day averaged exactly 86400 s (Sources just say 1820)
+#  intJ1961 = JD(1961,1,1,0,cal=1) # Switch date
+#  inttu1961 = atod("1.4228180") # TAI-UTC on 1/1/1961 0 UTC
+  intu = atod("32.184") # This is TT-TAI; table gives TAI-UTC; add this to get TT-UTC
+  inti = 1
+  intj = 1
+  intk = 1
+  for (intk = 1; intk <= intd[3]; intk++) {
+    for (intj = 1; intj <= intd[2]; intj++) {
+      for (inti = 1; inti <= intd[1]; inti++) {
+        intx = intJ[inti,intj,intk]
+        if (intx < 2437300.5) { # Before 1961, interpolate table from Morrison and Stephenson 2004
+#          intT = (double(intx) - 2437300.5)/36525 # Julian centuries since noon UT on Jan. 1, 1961
+#          into[inti,intj,intk] = atod("33.60681800") + atod("51.13395")*intT # Estimated TT - UTC, seconds
+#          into[inti,intj,intk] = intu + inttu1961 + (inta*intx*(intx/2 - intJ1820)) - (inta*intJ1961*(intJ1961/2 - intJ1820)) # Estimated TT - UTC, seconds
+          if (intx < 1465383) { # Before -700
+            into[inti,intj,intk] = -20 + 32*((intx - intJ1820)/36525)^2
+            if (intm == 1) {
+              intdo[inti,intj,intk] = double(0.8)*((intx - intJ1820)/36525)^2
+            }
+          } else {
+            intT = (intx - 1721058)/365.25 # Julian years since 0 - OK for these approximations
+            intc = 1 # Counter
+            while (intc < intdDT[2]) { # Dependent on size of DeltaT
+              if (intx <= DeltaT[2,intc+1]) {
+                # Interpolate from table
+                into[inti,intj,intk] = DeltaT[3,intc] + (intx - DeltaT[2,intc])*(DeltaT[3,intc+1] - DeltaT[3,intc])/(DeltaT[2,intc+1] - DeltaT[2,intc])
+                if (intm == 1) {
+                  intdo[inti,intj,intk] = DeltaT[4,intc] + (intx - DeltaT[2,intc])*(DeltaT[4,intc+1] - DeltaT[4,intc])/(DeltaT[2,intc+1] - DeltaT[2,intc])
+                }
+                intc = intdDT[2] + 1 # Break
+              } else {
+                intc++
+              }
+            }
+          }
+        } else { # 1961 and after, use leap second table
+          if (intx >= TAI_UTC[1,intdTU[2]]) { # After date of last leap second in table
+            into[inti,intj,intk] = intu + TAI_UTC[2,intdTU[2]]
+            if (intx >= Jmax && intm == 1) { # Possibly after next leap second
+              intdo[inti,intj,intk] = 0.0017*(intx - (Jmax - 91.3))
+              # Based on average rate of leap seconds (since 1972)
+              # Works out to an average increase in Delta-T of about 0.0017 seconds per day
+            }
+          } else { # Within table
+            intc = 1 # Counter
+            while (intc < intdTU[2]) { # Dependent on size of TAI_UTC
+              if (intx <= TAI_UTC[1,intc+1]) {
+                into[inti,intj,intk] = intu + TAI_UTC[2,intc] + (intx - 2400000.5 - TAI_UTC[3,intc])*TAI_UTC[4,intc]
+                if (intm == 1) {
+                  intdo[inti,intj,intk] = 0 # Exact
+                }
+                intc = intdTU[2] + 1 # Break
+              } else {
+                intc++
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (intm == 0) {
+    return(into)
+  } else {
+    into = cat(into,intdo,axis=z)
+    if (intd[1,1,1] == 1) { # Format output for simpler display, if possible
+      return(translate(into,z,x))
+    } else if (intd[2,1,1] == 1) {
+      return(translate(into,z,y))
+    } else {
+      return(into)
+    }
+  }
+}
+
+define JD2TT(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nConvert input UTC Julian Date (in days) to TT Julian Date\n")
+    printf(" by adding TT-UTC offset (accounts for leap seconds)\n")
+    printf("Works for array inputs\n")
+    printf("Returns double-precision Julian Date in Terrestrial Time\n")
+    printf(" The returned values are as accurate as the input, although that\n")
+    printf(" accuracy may be further limited by uncertainty in Delta-T. See\n")
+    printf(" the function DeltaT for details.\n")
+    printf("See http://www.giss.nasa.gov/tools/mars24/help/algorithm.html\n")
+    printf("S.Marshall 08-14-2008\n\n")
+
+    return(byte(0))
+  }
+
+  return($1 + DeltaT($1)/86400.)
+}
+
+define MJD2TT(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nConvert input UTC Modified Julian Date (in days) to TT MJD\n")
+    printf(" by adding TT-UTC offset (accounts for leap seconds)\n")
+    printf("Works for array inputs\n")
+    printf("Returns double-precision Modified Julian Date in Terrestrial Time\n")
+    printf(" The returned values are as accurate as the input, although that\n")
+    printf(" accuracy may be further limited by uncertainty in Delta-T. See\n")
+    printf(" the function DeltaT for details.\n")
+    printf("See http://www.giss.nasa.gov/tools/mars24/help/algorithm.html\n")
+    printf("S.Marshall 04-13-2009\n\n")
+
+    return(byte(0))
+  }
+
+  return($1 + DeltaT($1 + 2400000.5)/86400.)
+}
+
+define JD2Dt(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nConvert UTC Julian date to J2000.0 TT offset\n")
+    printf("JD2Dt(JD) returns number of days since noon TT on January 1, 2000\n")
+    printf("Accounts for leap seconds\n")
+    printf("Works for array inputs\n")
+    printf("Returns double-precision offset, in days\n")
+    printf(" The returned values are as accurate as the input, although that\n")
+    printf(" accuracy may be further limited by uncertainty in Delta-T. See\n")
+    printf(" the function DeltaT for details.\n")
+    printf("See http://www.giss.nasa.gov/tools/mars24/help/algorithm.html\n")
+    printf("S.Marshall 06-29-2008\n\n")
+
+    return(byte(0))
+  }
+
+  return(JD2TT($1) - 2451545.)
+}
+
+define MJD2Dt(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nConvert UTC Modified Julian date to J2000.0 TT offset\n")
+    printf("MJD2Dt(MJD) returns number of days since noon TT on January 1, 2000\n")
+    printf("Accounts for leap seconds\n")
+    printf("Works for array inputs\n")
+    printf("Returns double-precision offset, in days\n")
+    printf(" The returned values are as accurate as the input, although that\n")
+    printf(" accuracy may be further limited by uncertainty in Delta-T. See\n")
+    printf(" the function DeltaT for details.\n")
+    printf("See http://www.giss.nasa.gov/tools/mars24/help/algorithm.html\n")
+    printf("S.Marshall 04-13-2009\n\n")
+
+    return(byte(0))
+  }
+
+  return(MJD2TT($1) - 51544.5)
+}
+
+define TB_TT(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nFind TB-TT offset, given TT Julian Date\n")
+    # I'm assuming the transformation wants JD TT; it doesn't say, and it shouldn't matter much in any case
+    printf("Works for array inputs\n")
+    printf("Returns single-precision TB-TT offset (in seconds)\n")
+    printf("TB is Barycentric Time (a.k.a. Barycentric Dynamical Time, or\n")
+    printf(" TDB), which is with respect to the solar system barycenter.\n")
+    printf("TT is Terrestrial Time (a.k.a. Terrestrial Dynamical Time, or\n")
+    printf(" TDT), which is with respect to the Earth.\n")
+    printf("See http://heasarc.gsfc.nasa.gov/docs/xte/abc/time_tutorial.html\n")
+    # Level of accuracy not specified; probably ~1e-6 s
+    printf("S.Marshall 08-11-2008\n\n")
+
+    return(byte(0))
+  }
+
+  intg = atod("357.53") + atod("0.9856003")*($1 - 2451545.0) # Degrees
+  intt = atod("0.001658")*sind(intg) + atod("0.000014")*sind(2*intg) # Seconds
+  # Calculations done in double precision to avoid roundoff error
+  return(float(intt)) # Probably only good to single precision
+}
+
+define ET_UTC(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nFind ET-UTC offset, given UTC Julian Date\n")
+    printf("Works for array inputs\n")
+    printf("Returns double-precision ET-UTC offset, in seconds\n")
+    printf("Ephemeris Time (ET) is the number of seconds since noon (ET)\n")
+    printf(" on January 1, 2000. ET is referenced to the solar system's\n")
+    printf(" barycenter (center of mass). It runs at the same rate as\n")
+    printf(" Barycentric Time (TB, a.k.a. TDB).\n")
+    printf("This function finds the difference between ET and UTC for the\n")
+    printf(" user-specified dates/times. Note that what it really returns\n")
+    printf(" is equivalent to the difference (ET-UTC, in seconds) between\n")
+    printf(" the input UTC Julian Date (converted from days to seconds)\n")
+    printf(" and the corresponding Ephemeris Time (in seconds):\n")
+    printf("  JD2ET(input JD) - 86400*((input JD) - JD(2000,1,1,12,0,0,0))\n")
+    printf(" Since the JD and ET have different starting points, taking\n")
+    printf("  their difference without first subtracting the ET's starting\n")
+    printf("  point from the JD would be rather pointless (and susceptible\n")
+    printf("  to roundoff error).\n")
+#    printf("For 1961 and after, uses table to account for leap seconds and\n")
+#    printf(" other adjustments. Before 1961, estimates correction based on\n")
+#    printf(" the average deceleration of Earth's rotation\n")
+# This was what the old DeltaT function did; the new one uses a more sophisticated approximation.
+    printf("Accurate within about 0.000030 seconds after 1972 (if the input\n")
+    printf(" is that accurate). Before 1972, the accuracy may be further\n")
+    printf(" limited by uncertainty in Delta-T. See the function DeltaT for\n")
+    printf(" details.\n")
+    printf("See ftp://naif.jpl.nasa.gov/pub/naif/pds/data/ody-m-spice-6-v1.0/\n")
+    printf(" odsp_1000/data/lsk/naif0008.tls, the function DeltaT, and\n")
+    printf(" http://heasarc.gsfc.nasa.gov/docs/xte/abc/time_tutorial.html\n")
+#    printf("This appears to be the same algorithm used by showtime_themis\n")
+    printf("S.Marshall 01-23-2010\n\n")
+
+    return(byte(0))
+  }
+
+  intta = atod("32.184") # TT - TAI
+  intat = DeltaT($1) - intta # (TT - UTC) - (TT - TAI) = TAI - UTC
+  intK = atod("1.657e-3") # From the JPL FTP file
+  intEB = atod("1.671e-2")
+  intM0 = atod("6.239996")
+  intM1 = atod("1.99096871e-7")
+  intt = JD2Dt($1)*86400. # Seconds since J2000.0 (TT, I think)
+  intM = intM0 + intM1*intt
+  intet = intta + intK*sin(intM + intEB*sin(intM)) # ET - TAI
+  return(intet + intat) # ET - UTC = (ET - TAI) + (TAI - UTC)
+  # Seems near the limit of single precision
+  # Returning double to avoid roundoff errors in dependent functions
+}
+
+define ET_UTCM(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nFind ET-UTC offset, given UTC Modified Julian Date\n")
+    printf("Works for array inputs\n")
+    printf("Returns double-precision ET-UTC offset, in seconds\n")
+    printf("Ephemeris Time (ET) is the number of seconds since noon (ET)\n")
+    printf(" on January 1, 2000. ET is referenced to the solar system's\n")
+    printf(" barycenter (center of mass). It runs at the same rate as\n")
+    printf(" Barycentric Time (TB, a.k.a. TDB).\n")
+    printf("This function finds the difference between ET and UTC for the\n")
+    printf(" user-specified dates/times. Note that what it really returns\n")
+    printf(" is equivalent to the difference (ET-UTC, in seconds) between\n")
+    printf(" the input UTC Modified Julian Date (converted from days to\n")
+    printf(" seconds) and the corresponding Ephemeris Time (in seconds):\n")
+    printf("  MJD2ET(input MJD) - 86400*((input MJD) - MJD(2000,1,1,12,0,0))\n")
+    printf(" Since the MJD and ET have different starting points, taking\n")
+    printf("  their difference without first subtracting the ET's starting\n")
+    printf("  point from the MJD would be rather pointless (and susceptible\n")
+    printf("  to roundoff error).\n")
+#    printf("Returns double-precision ET-UTC offset, in seconds\n")
+#    printf("ET is the number of seconds since noon (ET) on January 1, 2000.\n")
+#    printf("ET is similar to TT but has a different frame of reference.\n")
+#    printf("For 1961 and after, uses table to account for leap seconds and\n")
+#    printf(" other adjustments. Before 1961, estimates correction based on\n")
+#    printf(" the average deceleration of Earth's rotation\n")
+# This was what the old DeltaT function did; the new one uses a more sophisticated approximation.
+    printf("Accurate within about 0.000030 seconds after 1972 (if the input\n")
+    printf(" is that accurate). Before 1972, the accuracy may be further\n")
+    printf(" limited by uncertainty in Delta-T. See the function DeltaT for\n")
+    printf(" details.\n")
+    printf("See ftp://naif.jpl.nasa.gov/pub/naif/pds/data/ody-m-spice-6-v1.0/\n")
+    printf(" odsp_1000/data/lsk/naif0008.tls, the function DeltaT, and\n")
+    printf(" http://heasarc.gsfc.nasa.gov/docs/xte/abc/time_tutorial.html\n")
+#    printf("This appears to be the same algorithm used by showtime_themis\n")
+    printf("S.Marshall 01-23-2010\n\n")
+
+    return(byte(0))
+  }
+
+  intta = atod("32.184") # TT - TAI
+  intat = DeltaT($1 + 2400000.5) - intta # (TT - UTC) - (TT - TAI) = TAI - UTC
+  intK = atod("1.657e-3") # From the JPL FTP file
+  intEB = atod("1.671e-2")
+  intM0 = atod("6.239996")
+  intM1 = atod("1.99096871e-7")
+  intt = MJD2Dt($1)*86400. # Seconds since J2000.0 (TT, I think)
+  intM = intM0 + intM1*intt
+  intet = intta + intK*sin(intM + intEB*sin(intM)) # ET - TAI
+  return(intet + intat) # ET - UTC = (ET - TAI) + (TAI - UTC)
+  # Seems near the limit of single precision
+  # Returning double to avoid roundoff errors in dependent functions
+}
+
+define JD2ET(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nFind ET, given UTC Julian Date\n")
+    printf("Works for array inputs\n")
+    printf("Returns double-precision ET, in seconds\n")
+    printf("Ephemeris Time (ET) is the number of seconds since noon (ET)\n")
+    printf(" on January 1, 2000. ET is referenced to the solar system's\n")
+    printf(" barycenter (center of mass). It runs at the same rate as\n")
+    printf(" Barycentric Time (TB, a.k.a. TDB).\n")
+#    printf("ET is the number of seconds since noon (ET) on January 1, 2000.\n")
+#    printf("ET is similar to TT but has a different frame of reference.\n")
+    printf("Accurate to about 1 millisecond (if the input is that accurate)\n")
+    printf(" The returned values are as accurate as the input, although that\n")
+    printf(" accuracy may be further limited by uncertainty in Delta-T. See\n")
+    printf(" the function DeltaT for details.\n")
+    printf("See ftp://naif.jpl.nasa.gov/pub/naif/pds/data/ody-m-spice-6-v1.0/\n")
+    printf(" odsp_1000/data/lsk/naif0008.tls\n")
+#    printf("This appears to be the same algorithm used by showtime_themis\n")
+    printf("S.Marshall 01-23-2010\n\n")
+
+    return(byte(0))
+  }
+
+  # This function agrees with the THEMIS database (until 2006) within ~50 ms
+  return(86400.*($1 - 2451545.) + ET_UTC($1))
+  # Note that my functions account for leap seconds since 2005, and some images
+  #  in the THEMIS database apparently do not. Therefore there may be a discrepancy.
+  # Apparently the THEMIS database doesn't account for the leap second until February
+  #  17, 2008. Therefore images taken between January 1, 2006 and February 17, 2008
+  #  have UTC fast by one second (with respect to ET).
+}
+
+define MJD2ET(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nFind ET, given UTC Modified Julian Date\n")
+    printf("Works for array inputs\n")
+    printf("Ephemeris Time (ET) is the number of seconds since noon (ET)\n")
+    printf(" on January 1, 2000. ET is referenced to the solar system's\n")
+    printf(" barycenter (center of mass). It runs at the same rate as\n")
+    printf(" Barycentric Time (TB, a.k.a. TDB).\n")
+#    printf("Returns double-precision ET, in seconds\n")
+#    printf("ET is the number of seconds since noon (ET) on January 1, 2000.\n")
+    printf("ET is similar to TT but has a different frame of reference.\n")
+    printf("Accurate to about 1 millisecond (if the input is that accurate)\n")
+    printf(" The returned values are as accurate as the input, although that\n")
+    printf(" accuracy may be further limited by uncertainty in Delta-T. See\n")
+    printf(" the function DeltaT for details.\n")
+    printf("See ftp://naif.jpl.nasa.gov/pub/naif/pds/data/ody-m-spice-6-v1.0/\n")
+    printf(" odsp_1000/data/lsk/naif0008.tls\n")
+#    printf("This appears to be the same algorithm used by showtime_themis\n")
+    printf("S.Marshall 01-23-2010\n\n")
+
+    return(byte(0))
+  }
+
+  # This function agrees with the THEMIS database (until 2006) within ~50 ms
+  return(86400.*($1 - 51544.5) + ET_UTCM($1))
+  # Note that my functions account for leap seconds since 2005, and some images
+  #  in the THEMIS database apparently do not. Therefore there may be a discrepancy.
+}
+
+# ET = 86400*(JDU - JD2k) + ET_UTC(JDU)
+# (ET - ET_UTC(JDU))/86400 = JDU - JD2k
+# JDU = JD2k + (ET - ET_UTC(JDU))/86400
+# JDU_0 = JD2k + ET/86400
+# JDU = JD2k + (ET - ET_UTC(JDU_0))/86400 (repeat)
+# Perhaps not an ideal method of conversion, but it works for small ET-UTC
+
+define ET2JD(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nFind UTC Julian Date, given ET\n")
+    printf("Works for array inputs\n")
+    printf("Returns double-precision UTC Julian Date\n")
+    printf("Accurate to about 1 millisecond (if the input is that accurate)\n")
+    printf(" The returned values are as accurate as the input, although that\n")
+    printf(" accuracy may be further limited by uncertainty in Delta-T. See\n")
+    printf(" the function DeltaT for details.\n")
+    printf("See ftp://naif.jpl.nasa.gov/pub/naif/pds/data/ody-m-spice-6-v1.0/\n")
+    printf(" odsp_1000/data/lsk/naif0008.tls\n")
+#    printf("This appears to be the same algorithm used by showtime_themis\n")
+    printf("S.Marshall 08-02-2008\n\n")
+
+    return(byte(0))
+  }
+
+  intJ = 2451545. + double($1)/86400.
+  intJ = 2451545. + ($1 - ET_UTC(intJ))/86400.
+  intJ = 2451545. + ($1 - ET_UTC(intJ))/86400.
+  return(intJ)
+}
+
+define ET2MJD(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nFind UTC Modified Julian Date, given ET\n")
+    printf("Works for array inputs\n")
+    printf("Returns double-precision UTC Modified Julian Date\n")
+    printf("Accurate to about 1 millisecond (if the input is that accurate)\n")
+    printf(" The returned values are as accurate as the input, although that\n")
+    printf(" accuracy may be further limited by uncertainty in Delta-T. See\n")
+    printf(" the function DeltaT for details.\n")
+    printf("See ftp://naif.jpl.nasa.gov/pub/naif/pds/data/ody-m-spice-6-v1.0/\n")
+    printf(" odsp_1000/data/lsk/naif0008.tls\n")
+#    printf("This appears to be the same algorithm used by showtime_themis\n")
+    printf("S.Marshall 04-16-2009\n\n")
+
+    return(byte(0))
+  }
+
+  intJ = 51544.5 + double($1)/86400.
+  intJ = 51544.5 + ($1 - ET_UTCM(intJ))/86400.
+  intJ = 51544.5 + ($1 - ET_UTCM(intJ))/86400.
+  return(intJ)
+}
+
+define MJD2unix(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nConverts input UTC Modified Julian Date to Unix time\n")
+    printf("Modified Julian Date is the number of days since midnight\n")
+    printf(" UTC on November 17, 1858 (in the Gregorian calendar).\n")
+    printf("Unix time is the number of seconds since midnight UTC on\n")
+    printf(" January 1, 1970. Returns seconds, not milliseconds.\n")
+    printf(" Note that Unix time does not account for leap seconds.\n")
+    printf("It is advisable to enter inputs in double format to ensure accuracy.\n")
+    printf(" See the DavinciWiki article on the intermediate float bug.\n")
+    printf("S.Marshall 04-11-2009\n\n")
+
+    return(byte(0))
+  }
+
+  inp = $1
+  return(86400*($1 - 40587))
+  # A simple conversion; MJD for January 1, 1970 is 40587
+}
+
+define unix2MJD(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nConverts input Unix time to UTC Modified Julian Date\n")
+    printf("Unix time is the number of seconds since midnight UTC on\n")
+    printf(" January 1, 1970. Use seconds, not milliseconds!\n")
+    printf(" Note that Unix time does not account for leap seconds.\n")
+    printf("Modified Julian Date is the number of days since midnight\n")
+    printf(" UTC on November 17, 1858 (in the Gregorian calendar).\n")
+    printf("It is advisable to enter inputs in double format to ensure accuracy.\n")
+    printf(" See the DavinciWiki article on the intermediate float bug.\n")
+    printf("S.Marshall 04-11-2009\n\n")
+
+    return(byte(0))
+  }
+
+  inp = $1
+  return(double(inp)/86400 + 40587)
+  # A simple conversion; MJD for January 1, 1970 is 40587
+}
+
+define ORB2ET(0,1) { # Using a series of sine waves incorporating FFT on orbit durations would be more accurate
+
+  if ($ARGC == 0) {
+    printf("\nConvert Odyssey orbit number to approximate Ephemeris Time\n")
+    printf("Works for array inputs\n")
+    printf("Returns single-precision Ephemeris Time\n")
+    printf("Calculation based on quadratic fit to orbits 808-35100;\n")
+    printf(" it may be very inaccurate beyond 35100\n")
+    printf("Accurate only to about one hour (or about half an orbit)\n")
+    # RMS error in ET is 896 seconds; max sample error is 2668 s
+    # Based on the recent (2009-11-12) fits, the current error is negative, and its magnitude in the near future will increase substantially
+    printf("DO NOT USE for sensitive operations; gives approximation only\n")
+    printf("Based on data from showtime_themis\n")
+    printf("S.Marshall 11-12-2009\n\n")
+
+    return(byte(0))
+  }
+
+  if (min($1) < 808 || max($1) > 40000) {
+    printf("\nError! Orbits must be in range 808 to 40000\n\n")
+    return(byte(0))
+  }
+
+  if (max($1) > 35100) {
+    printf("\nWarning! This function may not be accurate to even half\n")
+    printf(" an orbit beyond orbit 35100.\n\n")
+  }
+
+  inta = atod("4.03504395349e-05")
+  intb = atod("7112.15855722")
+  intc = atod("61606512.1185")
+  intT = intc + $1*(intb + inta*$1)
+  return(float(intT)) # Because this definitely isn't good to double precision
+}
+
+define ET2ORB(0,1) { # Not a true inverse of ORB2ET; both use quadratic fits to their respective input (independent) variables
+
+  if ($ARGC == 0) {
+    printf("\nConvert Ephemeris Time to approximate Odyssey orbit number\n")
+    printf("Works for array inputs\n")
+    printf("Returns single-precision orbit number\n")
+    printf("Calculation based on quadratic fit to orbits 808-35100;\n")
+    printf(" it may be very inaccurate beyond that\n")
+    printf("Accurate only to about half an orbit (or about one hour)\n")
+    # RMS error in y is 0.126 orbits; max sample error is 0.375 orbits 
+    # Based on the recent (2009-11-12) fits, the current error is positive, and its magnitude in the near future will increase substantially
+    printf("DO NOT USE for sensitive operations; gives approximation only\n")
+    printf("Based on data from showtime_themis\n")
+    printf("S.Marshall 11-12-2009\n\n")
+
+    return(byte(0))
+  }
+
+  if (min($1) < 6.735e7 || max($1) > 3.462e8) {
+    printf("\nError! ET must be in range 6.735e7 to 3.462e8\n\n")
+    return(byte(0))
+  }
+
+  if (max($1) > 311291588) {
+    printf("\nWarning! This function may not be accurate to even half\n")
+    printf(" an orbit beyond orbit 35100 (ET 311291588).\n\n")
+  }
+
+  inta = atod("-1.12092690798809e-16")
+  intb = atod("0.000140618093413273")
+  intc = atod("-8662.56466827824")
+  intO = intc + $1*(intb + inta*$1)
+  return(float(intO))
+}
+
+# Mars24 uses f = 0.0064763, but using the NSSDC radii values gives f = 0.0058889(415)
+
+# Note from 2009-11-12:
+# JPL SSD (http://ssd.jpl.nasa.gov/?planet_phys_par) radii values are:
+# Volumetric mean R = 3389.50(20) km and Re = 3396.19(10) km
+# V = 4/3*pi*R^3 = 4/3*pi*Re^2*Rp; then Rp = R^3/Re^2
+# Propagating errors gives polar radius 3376.16(63) km
+# Then axial ratio r = Rp/Re = (R^3/Re^2)/Re = R^3/Re^3 = 0.994102(197)
+# Thus f = 0.005898(197)
+
+define pc2pg(0,2) {
+
+  if ($ARGC == 0) {
+    printf("\nConverts planetocentric latitude to planetographic latitude\n")
+    printf("pc2pg(latitude, axial ratio)\n")
+    printf(" Enter ONLY latitudes (not longitudes!), in degrees\n")
+    printf(" Axial ratio, r = (semiminor axis)/(semimajor axis)\n")
+    printf("  = (polar radius)/(equatorial radius), is optional; if omitted,\n")
+    printf("  this function will use 0.994111, the value for Mars from NSSDC.\n")
+    printf("  However, you may want to check whether you are using a system\n")
+    printf("  with a different ellipticity value.\n")
+    printf("  The NSSDC Mars fact sheet has Re = 3396.2 km and Rp = 3376.2 km,\n")
+    printf("   yielding r = Rp/Re = 0.994111\n")
+    printf("  r is related to oblateness/flattening, f, by f = 1 - r\n")
+    printf("  Mars24 uses f = 0.0064763\n")
+    printf("Works for array inputs\n")
+    printf("S.Marshall 04-17-2009\n\n")
+
+    return(byte(0))
+  }
+
+  if ($ARGC == 1) {
+    intr = 0.994111
+    # Single precision OK here; we don't know latitudes (or r) to 7 figures
+  } else {
+    intr = $2
+  }
+
+  return(float(atand(tand($1)*intr^-2)))
+}
+
+define pg2pc(0,2) {
+
+  if ($ARGC == 0) {
+    printf("\nConverts planetographic latitude to planetocentric latitude\n")
+    printf("pc2pg(latitude, axial ratio)\n")
+    printf(" Enter ONLY latitudes (not longitudes!), in degrees\n")
+    printf(" Axial ratio, r = (semiminor axis)/(semimajor axis)\n")
+    printf("  = (polar radius)/(equatorial radius), is optional; if omitted,\n")
+    printf("  this function will use 0.994111, the value for Mars from NSSDC.\n")
+    printf("  However, you may want to check whether you are using a system\n")
+    printf("  with a different ellipticity value.\n")
+    printf("  The NSSDC Mars fact sheet has Re = 3396.2 km and Rp = 3376.2 km,\n")
+    printf("   yielding r = Rp/Re = 0.994111\n")
+    printf("  r is related to oblateness/flattening, f, by f = 1 - r\n")
+    printf("  Mars24 uses f = 0.0064763\n")
+    printf("Works for array inputs\n")
+    printf("S.Marshall 04-17-2009\n\n")
+
+    return(byte(0))
+  }
+
+  if ($ARGC == 1) {
+    intr = 0.994111
+    # Single precision OK here; we don't know latitudes (or r) to 7 figures
+  } else {
+    intr = $2
+  }
+
+  return(float(atand(tand($1)*intr*intr)))
+}
+
+# All Mars functions (the following) take J2000.0 TT offset (from JD2Dt or MJD2Dt) as input
+
+define marstimeglobal(0,1) {
+  if ($ARGC == 0) {
+    printf("\nCalculates global Mars time data, given J2000 TT offset (in days)\n")
+    printf("marstimeglobal(Dt), where Dt is the number of days since J2000 TT\n")
+    printf("Fields in returned structure (all angles in degrees):\n")
+    printf(" Dt: J2000 TT offset, in days (the input); as accurate as the input\n")
+    printf(" M: Mean anomaly; accurate within 0.001 degrees\n")
+    printf(" aFMS: Angle of Fiction Mean Sun; accurate within 0.001 degrees\n")
+    printf(" PBS: Longitude perturbation angle; accurate within ~0.007 degrees\n")
+    printf(" EoC: Equation of center (true anomaly minus mean anomaly);\n")
+    printf("  accurate within ~0.007 degrees\n")
+    printf(" nu: True anomaly; accurate within ~0.008 degrees\n")
+    printf(" R: Distance from the Sun to Mars, in AU; accurate within ~0.0001 AU\n")
+    printf(" hlon: Heliocentric longitude of Mars; accurate within ~0.01 degrees\n")
+    printf(" hlat: Heliocentric latitude of Mars; accurate within ~0.0003 degrees\n")
+    printf(" LS: Areocentric solar longitude; accurate within 0.008 degrees\n")
+    printf(" EoT: Equation of Time, in hours; accurate within 3 s (0.000833 hr)\n")
+    printf(" MSD: Mars Sol Date, in sols; accurate within 0.1 s (1.2e-6 sol)\n")
+    printf(" MTC: Coordinated Mars Time, in hours; accurate to 0.1 s (0.000028 hr)\n")
+    printf(" ssplon: Planetocentric longitude of subsolar point;\n")
+    printf("  accurate within ~0.013 degrees\n")
+    printf(" decl: Declination (planetocentric latitude of subsolar point);\n")
+    printf("  accurate within ~0.0035 degrees\n")
+    printf("All stated accuracies are for dates between 1900 and 2100, provided\n")
+    printf(" the input time is exact. Outside that range, questionable accuracy.\n")
+    printf("See http://www.giss.nasa.gov/tools/mars24/help/algorithm.html\n")
+    printf(" and http://pubs.giss.nasa.gov/cgi-bin/abstract.cgi?doi=10.1016/\n")
+    printf("  S0032-0633(99)00092-6\n")
+#    printf("\n")
+    printf("S. Marshall 11-10-2009\n\n")
+
+    return(byte(0))
+  }
+
+
+  inp = double($1)
+  intd = dim(inp)
+
+
+  # Mean anomaly
+  MA = atod("19.3870") + atod("0.52402075")*inp # AM2000, eqn. 16
+  MA = MA % 360
+  MA[where MA < 0] = MA + 360
+  # Avoids sign confusion before J2000 - answers are consistent but confusing
+  #  (always -360 to 0, increasing correctly with time)
+  # Mean anomaly is accurate within 0.001 degrees for within 100 years of J2000,
+  #  according to AM2000 p. 223. The accuracy is limited by uncertainty in the
+  #  length of the Martian anomalistic year.
+  #  However, that accuracy may be further limited by uncertainty in Delta-T.
+  #  See the function DeltaT for details.
+  #  The Martian anomalistic year is 668.6146 sol, or 686.9957 days
+
+
+  # Right ascension of Fictitious Mean Sun of Mars
+  aFMS = atod("270.3863") + atod("0.52403840")*inp # AM2000, eqn. 17
+  aFMS = aFMS % 360
+  aFMS[where aFMS < 0] = aFMS + 360
+  #  aFMS = (mean anomaly) + (solar longitude at perihelion)
+  #  Accurate within 0.001 degrees for within 100 years of J2000
+  #  From AM2000 p. 217, uncertainty of <0.001 deg FMS = <0.2 s MTC/LMST
+  #  Accuracy limited by constants in calculation
+  #  However, the accuracy may be further limited by uncertainty in Delta-T
+
+
+  # Mars angular perturbers
+  PBS = double(0)*inp # Same dimensions as input
+
+  # Might want to load these arrays separately, outside the function, to reduce
+  #  computation time, then load them in here via global
+  PBS_A = create(7, format=double) # AM2000, Table 5
+    PBS_A[1] = atod("0.0071")
+    PBS_A[2] = atod("0.0057")
+    PBS_A[3] = atod("0.0039")
+    PBS_A[4] = atod("0.0037")
+    PBS_A[5] = atod("0.0021")
+    PBS_A[6] = atod("0.0020")
+    PBS_A[7] = atod("0.0018")
+
+  PBS_t = create(7, format=double)
+    PBS_t[1] = atod("2.2353")
+    PBS_t[2] = atod("2.7543")
+    PBS_t[3] = atod("1.1177")
+    PBS_t[4] = atod("15.7866")
+    PBS_t[5] = atod("2.1354")
+    PBS_t[6] = atod("2.4694")
+    PBS_t[7] = atod("32.8493")
+
+  PBS_p = create(7, format=double)
+    PBS_p[1] = atod("49.409")
+    PBS_p[2] = atod("168.173")
+    PBS_p[3] = atod("191.837")
+    PBS_p[4] = atod("21.736")
+    PBS_p[5] = atod("15.704")
+    PBS_p[6] = atod("95.528")
+    PBS_p[7] = atod("49.095")
+
+  for (intk = 1; intk <= intd[3,1,1]; intk++) {
+    for (intj = 1; intj <= intd[2,1,1]; intj++) {
+      for (inti = 1; inti <= intd[1,1,1]; inti++) {
+        x = inp[inti,intj,intk]
+        PBS[inti,intj,intk] = sum(PBS_A*cosd(atod("0.985626283368")*x/PBS_t + PBS_p))
+        # AM2000, eqn. 18
+        # 0.985626283368 = 360/365.25 (using more digits here than AM2000 or Mars24
+      }
+    }
+  }
+  # Finds single-precision longitude perturbation angle, in degrees
+  #  This accounts for the seven strongest short-term planetary pertubations
+  #  Accurate within ~0.007 degrees for within 125 years of J2000
+  #   I think - this is an educated guess based on other algorithm uncertainties
+  #   The uncertainty in the equation of center contributed by uncertainty in
+  #    the mean anomaly is negligible (~0.0002 deg max); therefore the EC error
+  #    is almost entirely from perturbers.
+  #  However, that accuracy may be further limited by uncertainty in Delta-T
+
+
+  # Equation of center (true anomaly minus mean anomaly)
+  EoC = (atod("10.691") + atod("3.0e-7")*inp)*sind(MA) + atod("0.623")*sind(2*MA) + atod("0.050")*sind(3*MA) + atod("0.005")*sind(4*MA) + atod("0.0005")*sind(5*MA) + PBS
+  # AM2000, eqn. 20 (term in {braces})
+  #  Accurate within ~0.007 degrees for within 125 years of J2000
+  #   I think - this is an educated guess based on other algorithm uncertainties
+  #   L_S = aFMS + EoC, and a_FMS is accurate within 0.001 degrees
+  #  However, that accuracy may be further limited by uncertainty in Delta-T
+
+
+  # True anomaly (degrees)
+  TA = (MA + EoC + 360) % 360
+  # EoC = v - M, so v = M + EoC
+  # Probably accurate within 0.008 degrees, like LS (similar form and inputs)
+
+
+  # Areocentric solar longitude - season string determination should be transferred to marstime
+  LS = aFMS + EoC # AM2000, eqn. 19
+  LS = LS % 360
+  LS[where LS < 0] = LS + 360
+  # Avoids sign confusion before J2000 - answers are consistent but confusing (always -360 to 0, increasing correctly with time)
+  # Accurate within 0.008 degrees for within 125 years of J2000
+  #  Definitely 0.008 degrees - the Mars 24 technical notes say so
+  #  For J2000 +/- 125 yr, 95% within 0.005 deg
+  # However, that accuracy may be further limited by uncertainty in Delta-T
+
+  # Equation of time
+  EoT = atod("2.861")*sind(2*LS) - atod("0.071")*sind(4*LS) + atod("0.002")*sind(6*LS) - EoC # AM2000, eqn. 20
+  EoT = EoT/15 # Convert from degrees to hours
+  # Accurate within 3 s (0.000833 hr, or 0.0125 degrees) for within 100 years of J2000
+  #  According to AM2000 p. 230
+  # However, that accuracy may be further limited by uncertainty in Delta-T
+
+
+  # Mars Sol Date (MSD)
+  MSD = (inp - 4.5)/atod("1.027491252") + 44796. - atod("0.00096")
+  # Equation 32 from AM2000, modified similarly to the Mars24 MTC formula, with one more digit in day-sol conversion
+  # MSD increases by 1 per sol, similarly to Earth's Julian Date.
+  #  See http://pubs.giss.nasa.gov/cgi-bin/abstract.cgi?doi=10.1016/S0032-0633(99)00092-6
+  #  MSD 0.0 is about noon UTC on December 29, 1873 (MJD 5521.5)
+  #  Accurate within 0.1 sec (1.2e-6 sol) for calendar years 1874-2126
+  #   Assuming the same accuracy as the MTC function, which seems reasonable
+  #   This is basically just MTC without mod
+  # That accuracy may be further limited by uncertainty in Delta-T
+
+
+  # Coordinated Mars Time (MTC), in hours
+  MTC = 24*MSD
+  # From AM2000 eqn. 22, modified to accept Dt instead of JD, and with one more digit in day-sol conversion
+  MTC = MTC % 24
+  # Accurate within 0.1 sec (0.000028 hr) for calendar years 1874-2126, according to AM2000 abstract
+  #  However, accuracy is further limited by uncertainty in the exact
+  #   location of the Martian prime meridian (and input uncertainty).
+  #  The accuracy may also be further limited by uncertainty in Delta-T
+
+
+  # Planetocentric coordinates of subsolar point, in degrees - requires SCALAR input?
+  ssplon = 540 - 15*(MTC + EoT)
+  ssplon = ssplon % 360 # East longitude positive
+  epsM = atod("25.1919") + atod("3.44969199179e-7")*inp
+  # Martian obliquity, in degrees, from AM2000, p. 225
+  # 3.44969199179e-7 = 0.0126/36525
+  decl = asind(sind(epsM)*sind(LS))
+  # Latitude of the subsolar point is often called solar declination
+  # declination (planetocentric) = asind(sind(obliquity)*sind(LS)), according to AM2000 p. 217
+  # According to A1997, the final sine term in eqn. 5 is the conversion to planetographic
+  #  (with f = 0.006); simply omitting that gives planetocentric declination
+  # Within 100 years of J2000, longitude accurate within ~0.013 degrees;
+  #  declination accurate within ~0.0035 degrees
+  #  Longitude accuracy same as EOT, since MTC error is much less than EOT error
+  #  Estimated latitude accuracy based on error propagation from LS;
+  #   one-sigma error of 0.001135 degrees, three-sigma error of 0.0034 degrees
+  #  The accuracy may be further limited by uncertainty in Delta-T
+
+
+  # Heliocentric distance of Mars (distance from the Sun to Mars), in AU
+  R = atod("1.523679")*(atod("1.00436") - atod("0.09309")*cosd(MA) - atod("0.004336")*cosd(2*MA) - atod("0.00031")*cosd(3*MA) - atod("0.00003")*cosd(4*MA))
+  # AM2000, eqn. 25, corrected as outlined on Mars24 algorithm page
+  # Accurate within ~0.0001 AU for within 125 years of J2000
+  #  And possibly better - error propagation gives maximum one-sigma error 2.6e-5 AU
+  #  But are perturbations significant? It doesn't appear to account for them.
+  #  The accuracy may be further limited by uncertainty in Delta-T
+
+
+  # Heliocentric coordinates of Mars, in degrees
+  hlon = LS + atod("85.061") - atod("0.015")*sind(71 + 2*LS) - atod("5.5e-6")*inp
+  # AM2000, eqn. 26
+  hlon = hlon % 360
+  if (hlon < 0) {
+    hlon = hlon + 360
+  }
+  hlat = (atod("2.23e-5")*inp - atod("1.8497"))*sind(LS - atod("144.50") + atod("2.57e-6")*inp)
+  # From Mars24 algorithm page
+  # These coordinates are based on the ecliptic
+  # For within 125 years of J2000, longitude accurate within ~0.01 degrees, latitude accurate within ~0.0003 degrees
+  #  Based on error propagation estimates, max one-sigma error of 0.00464 degrees
+  #   and three-sigma error of 0.0089 degrees for longitude, max one-sigma error
+  #   of 0.00019 degrees and three-sigma error of 0.00023 degrees for latitude
+  #  The accuracy may be further limited by uncertainty in Delta-T.
+
+
+  outp = { Dt = inp, M = float(MA), aFMS = float(aFMS), PBS = float(PBS), EoC = float(EoC), nu = float(TA), R = float(R), hlon = float(hlon), hlat = float(hlat), LS = float(LS), EoT = float(EoT), MSD = MSD, MTC = float(MTC), ssplon = float(ssplon), decl = float(decl) } # All only good to less than single precision, except possibly MSD
+  return(outp)
+}
+
+define marstimelocal(0,3) {
+
+  if ($ARGC < 3) {
+    printf("\nReturns local Mars time data, given array of global Mars time data\n")
+    printf(" and planetocentric coordinates (east longitude positive)\n")
+    printf("marstimelocal((global structure), longitude, latitude)\n")
+    printf(" global structure is a structure obtained from marstimeglobal\n")
+#  outp = { Dt = inp.Dt, lon = float(lon), lat = float(lat), lonpg = (360 - lon) % 360, latpg = latpg, timezone = timezone, LMZT = float(LMZT), LMST = float(LMST), LTST = float(LTST), Z = float(Z), A = float(A) }
+    printf("NOTE that due to 0.004 degrees of uncertainty (1 part in 90,000) in\n")
+    printf(" the inertial location of the martian prime meridian, there is an\n")
+    printf(" uncertainty of 1 second in all of these quantities, in addition to\n")
+    printf(" the theoretical limits given below.\n")
+    printf("Fields in returned structure (all angles in degrees):\n")
+    printf(" Dt: J2000 TT offset, in days (first input); as accurate as input\n")
+    printf(" lon: Planetocentric longitude (second input); as accurate as input\n")
+    printf(" lat: Planetocentric latitude (third input); as accurate as input\n")
+    printf(" lonpg: Planetographic longitude; as accurate as input longitude\n")
+    printf(" latpg: Planetographic latitude; accurate within ~0.01 degrees\n") # Based on axial ratio
+    printf(" timezone: String specifying local time zone offset, relative to MTC\n")
+    printf("  Martian time zones are simply defined to be 15 degrees wide,\n")
+    printf("   centered on every multiple of 15 degrees longitude\n")
+    printf(" LMZT: Local Mean Zonal Time (local standard time), in hours;\n")
+    printf("  accurate within 0.1 sec (0.000028 hr)\n")
+    printf(" LMST: Local Mean Solar Time, in hours; accurate within 0.1 sec\n")
+    printf("  (0.000028 hr), provided the input longitude is accurate within\n")
+    printf("  well under 0.00042 degrees\n")
+    # (360 degrees)/((86400 s)/(0.1 s)) = 1/2400 degrees = 0.00042 degrees
+    printf(" LTST: Local True Solar Time, in hours;\n")
+    printf("  accurate within 3 s (0.000833 hr)\n")
+    printf(" Z: Local zenith (solar incidence angle); accurate to 0.15 degrees\n")
+    printf(" A: Local solar azimuth; accurate within ~0.05 degrees\n")
+    printf("All stated accuracies are for dates between 1900 and 2100, provided\n")
+    printf(" the input time is exact. Outside that range, questionable accuracy.\n")
+    printf("See http://www.giss.nasa.gov/tools/mars24/help/algorithm.html\n")
+    printf(" and http://pubs.giss.nasa.gov/cgi-bin/abstract.cgi?doi=10.1016/\n")
+    printf("  S0032-0633(99)00092-6\n")
+#    printf("\n")
+    printf("S. Marshall 11-10-2009\n\n")
+
+    return(byte(0))
+  }
+
+  inp = $1
+  if (hasvalue(inp.aFMS) != 1) { # Not foolproof
+    printf("\nError! First input must be structure from marstimeglobal.\n\n")
+    return(byte(0))
+  }
+
+  if (max($2) >= 360 || min($2) <= -360) {
+    printf("\nError! Invalid longitude input.\n\n")
+    return(byte(0))
+  }
+  lon = double($2)
+
+  if (max($3) > 90 || min($3) < -90) {
+    printf("\nError! Invalid longitude input.\n\n")
+    return(byte(0))
+  }
+  lat = double($3)
+
+  # Local Mean Zonal Time (LMZT), in hours
+  timezone = lon2tzo(lon)
+  LMZT = inp.MTC + atoi(timezone) + 24
+  LMZT = LMZT % 24
+  # Mean Zonal Time divides Mars into time zones 15 degrees wide,
+  #  centered on multiples of 15 degrees longitude, so that each zone
+  #  is an integer number of hours ahead of or behind MTC
+  # Accurate within 0.1 sec (0.000028 hr) for calendar years 1874-2126
+  #  Since this is just MTC plus/minus an exact offset, and MTC is good to 0.1 s
+  #  However, accuracy is further limited by uncertainty in the exact
+  #   location of the Martian prime meridian (and input uncertainty).
+  #  The accuracy may also be further limited by uncertainty in Delta-T
+
+
+  # Local Mean Solar Time (LMST), in hours
+  LMST = inp.MTC + 24 + lon/15
+  LMST = LMST % 24
+  # Accurate within 0.1 sec (0.000028 hr) for calendar years 1874-2126
+  #  Since this is just MTC plus/minus a well-known offset, and MTC is good to 0.1 s
+  #  However, accuracy is further limited by uncertainty in the exact
+  #   location of the Martian prime meridian (and input uncertainty).
+  #  The accuracy may also be further limited by uncertainty in Delta-T
+
+
+  # Local True Solar Time (LTST), in hours
+  LTST = LMST + inp.EoT + 24
+  LTST = LTST % 24
+  # Accurate within 3 sec (0.000833 hr) for within 100 years of J2000
+  #  According to Mars24 Technical Notes
+  #  However, accuracy is further limited by uncertainty in the exact
+  #   location of the Martian prime meridian (and input uncertainty).
+  #  The accuracy may also be further limited by uncertainty in Delta-T
+
+
+  # Local solar elevation and azimuth (in degrees) - requires planetographic latitude!
+  pi = atod("3.14159265358979323846")
+  decpg = pc2pg(inp.decl)
+  # Solar declination (planetographic) - dependent on pc2pg ellipticity value!
+  HA = inp.ssplon - lon # Hour angle (using east longitude)
+  latpg = pc2pg(lat) # Latitude must be *planetographic* in these formulae!
+  # Planetographic latitude is accurate to about 1 part in 10000 (based on axial ratio),
+  #  which I interpret as about 0.01 degrees (90*1e-4)
+  Z = acosd(sind(decpg)*sind(latpg) + cosd(decpg)*cosd(latpg)*cosd(HA)) # Zenith/incidence angle
+  A = atan2(sind(HA), (cosd(lat)*tand(decpg) - sind(lat)*cosd(HA)))*180/pi # Azimuth
+  if (A < 0) {
+    A = A + 360
+  }
+  # Within 100 years of J2000, zenith accurate within 0.15 degrees,
+  #  azimuth accurate to ~0.05 degrees when Sun not nearly overhead
+  #  Error propagation estimates give max one-sigma error of 0.046 degrees and
+  #   three-sigma error of 0.14 degrees for zenith, which is slightly more than
+  #   the 30-second error in sunrise times noted in the Mars24 Technical Notes
+  #  Not sure how I did this; one-sigma and three-sigma aren't just multiples
+  #  Error propagation tests show that azimuth accuracy varies greatly when the
+  #   Sun is nearly overhead (makes sense); max error ~0.05 degrees otherwise
+  #  The accuracy may be further limited by uncertainty in Delta-T
+
+
+  outp = { Dt = inp.Dt, lon = float(lon), lat = float(lat), lonpg = (360 - lon) % 360, latpg = latpg, timezone = timezone, LMZT = float(LMZT), LMST = float(LMST), LTST = float(LTST), Z = float(Z), A = float(A) }
+  return(outp)
+}
+
+define lon2tzo(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nFinds coordinated time offset, given an east longitude\n")
+    printf("Scalar inputs only - no arrays!\n")
+    printf("Returns coordinated time offset as string\n")
+    printf("This function assumes that time zones are each 15 degrees wide,\n")
+    printf(" centered on multiples of 15 degrees longitude, so that each zone\n")
+    printf(" is an integer number of hours ahead or behind coordinated time\n")
+    printf("This function also assumes that the date line is at 180 degrees\n")
+    printf("lon2tzo(east longitude) returns string specifying time zone offset\n")
+    printf("S.Marshall 08-13-2008\n\n")
+
+    return(byte(0))
+  }
+
+  if (isscalar($1) == 0) {
+    printf("\nError! Input must be scalar!\n\n")
+    return(byte(0))
+  }
+
+  if ($1 > 360 || $1 < -360) {
+    printf("\nInvalid longitude input\n")
+    return(byte(0))
+  }
+  intl = $1 + 540 # Make sure longitude is positive
+  intl = (intl % 360) - 180
+  intz = floor((intl + 187.5)/15) # Longitude zone
+  intz = intz - 12
+
+  if (intz < 0) {
+    intzs = sprintf("%d", intz)
+  } else {
+    intzs = "+" + sprintf("%d", intz)
+  }
+  return(intzs)
+}
+
+define tzo2str(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nConverts input coordinated time offset to a string\n")
+    printf("Scalar inputs only - no arrays!\n")
+    printf("For example, tzo2str(5.5) returns \"+5.5\"\n")
+    printf("S.Marshall 08-07-2008\n\n")
+
+    return(byte(0))
+  }
+
+  if (isscalar($1) == 0) {
+    printf("\nError! Input must be scalar!\n\n")
+    return(byte(0))
+  }
+
+  if ($1 >= 0) {
+    return("+" + sprintf("%g", $1))
+  } else {
+    return("-" + sprintf("%g", -$1))
+  }
+}
+
+define earthtime(0) {
+
+  printf("\nTime on Earth\n")
+  printf("See http://heasarc.gsfc.nasa.gov/docs/xte/abc/time_tutorial.html\n")
+  printf("S.Marshall 12-14-2009\n\n")
+  # See also http://www.srrb.noaa.gov/highlights/sunrise/azel.html
+  # or http://rredc.nrel.gov/solar/codesandalgorithms/spa/
+
+  printf("First enter an Earth date and time (or leave blank for system clock)\n")
+  inpY = pause("  Year: ")
+  if (equals(inpY,"\n") == 1) {
+    intT = clock(1)
+    inpY = intT[1,1]
+    inpM = intT[2,1]
+    inpD = intT[3,1]
+    inph = intT[4,1]
+    inpm = intT[5,1]
+    inps = intT[6,1]
+    inpTZO = intT[7,1]
+  } else {
+    inpY = atoi(inpY)
+    inpM = pause("  Month: ")
+    inpM = atoi(inpM)
+    inpD = pause("  Day: ")
+    inpD = atoi(inpD)
+    inph = pause("  Hour: ")
+    inph = atoi(inph)
+    inpm = pause("  Minute: ")
+    inpm = atoi(inpm)
+    inps = pause("  Second: ")
+    inps = atod(inps)
+    inpTZO = pause("  Time zone offset: ")
+    inpTZO = atof(inpTZO)
+  }
+
+  if (checkdate(inpY,inpM,inpD) == 0) {
+    return(byte(0))
+  }
+
+  if (equals($DV_OS, "mac") == 1) { # Dependent on number of digits returned by function clock!
+    intd = 0 # Digits after seconds for display; Mac only gives 2 digits with current version of function clock
+  } else if (equals($DV_OS,"win") == 1) {
+    intd = 2 # Windows only gives 2 digits
+  } else {
+    intd = 6 # Linux gives 9; using 6
+  }
+
+  printf("\nOrdinal date: %d-%d\n\n", inpY, JD(inpY,inpM,inpD) - (JD(inpY)-1)) # Ordinal date
+  intT = double(inph) + double(inpm)/60 + double(inps)/3600
+  printf("Local standard time: " + time2str(intT, intd) + " UTC" + tzo2str(inpTZO) + "\n\n")
+
+  intT = intT - inpTZO # Now UTC time (hours)
+  intJ = MJD(inpY,inpM,inpD,inph,inpm,inps,inpTZO) # UTC Modified Julian Date
+  printf("Coordinated Universal Time: " + time2str(intT + 24, intd) + " UTC\n\n")
+  # Other time scales - conversions from http://heasarc.gsfc.nasa.gov/docs/xte/abc/time_tutorial.html
+
+  # Geocentric times:
+  intDT = DeltaT(intJ + 2400000.5, 1) # TT - UTC, seconds
+  intTAI = intT + (intDT[1] - atod("32.184"))/3600 # TT - TAI = 32.184 s
+  printf("International Atomic Time: " + time2str(intTAI + 24, intd) + " TAI\n\n")
+  printf("TT-UTC offset (Delta-T): %.6f seconds\n", intDT[1])
+  printf("  Uncertainty in Delta-T: %.6f seconds\n\n", intDT[2])
+  intDT = intDT[1]
+  intTT = intT + intDT/3600. # TT time (hours)
+  intJT = intJ + intDT/86400. # TT Modified Julian Date
+  printf("Terrestrial Time: " + time2str(intTT + 24, intd) + " TT (a.k.a. TDT)\n\n")
+  intTCG = intTT + atod("6.969291e-10")*(intJT - 43144)*24. # TCG - TT (hours) = LG*(days since 1977.0)*(86400 s)/(3600 s/hr)
+  # TCG should be accurate within a microsecond for times near present if given multiplicative factor is good to 7 sig figs
+  printf("Geocentric Coordinate Time: " + time2str(intTCG + 24, intd) + " TCG\n\n")
+
+  # Barycentric times:
+  intTB_TT = TB_TT(intJT) # Seconds
+  printf("Barycentric Time offset (TB-TT): %.6f seconds\n\n", intTB_TT)
+  intTB = intTT + intTB_TT/3600. # BT time (hours) # Probably accurate to about 1 microsecond, like TB-TT offset
+  printf("Barycentric Time: " + time2str(intTB + 24, intd) + " TB (a.k.a. TDB)\n\n")
+  intTCB = intTB + atod("1.550505e-8")*(intJT - 43144)*24. # TCB time (hours); accurate to ~10 microseconds near present
+  printf("Barycentric Coordinate Time: " + time2str(intTCB + 24, min(intd//4)) + " TCB\n\n") # Limit to 4 sig figs for Unix
+
+  printf("\nJulian Date (UTC): %.7f (days)\n\n", (intJ + 2400000.5)) # Display decimals to limit of accuracy
+  printf("Modified Julian Date (UTC): %.7f (days)\n\n", intJ)
+  printf("Modified Julian Date (TT): %.7f (days)\n\n", MJD2TT(intJ))
+  printf("Unix time (UTC): %.2f (seconds)\n\n", MJD2unix(intJ))
+  intDt = MJD2Dt(intJ)
+  printf("J2000 (TT) offset: %.7f days\n\n", intDt)
+  printf("Ephemeris Time (ET): %.3f (seconds)\n\n", MJD2ET(intJ))
+
+  printf("Returning J2000 TT offset...\n")
+  return(intDt)
+}
+
+define marstime(0) {
+
+  printf("\nTime on Mars\n")
+  printf("This function's calculations are accurate for the years 1874-2126.\n")
+  printf(" See the invididual functions for details on the levels of accuracy.\n")
+  printf("DO NOT enter mathematical expressions with letters - only numbers!\n")
+  printf(" e.g. do not enter \"pg2pc(19.4724)\" or \"x\" when asked for latitude\n")
+  printf("See http://www.giss.nasa.gov/tools/mars24/help/algorithm.html (Mars24)\n")
+  printf(" and http://pubs.giss.nasa.gov/cgi-bin/abstract.cgi?doi=10.1016/\n")
+  printf("  S0032-0633(99)00092-6 (Allison & McEwen 2000)\n")
+  printf("S.Marshall 10-09-2010\n\n")
+
+  printf("First enter an Earth date and time (or leave blank for system clock)\n")
+  inpY = pause("  Year: ")
+  if (equals(inpY,"\n") == 1) {
+    intT = clock(1)
+    inpY = intT[1,1]
+    inpM = intT[2,1]
+    inpD = intT[3,1]
+    inph = intT[4,1]
+    inpm = intT[5,1]
+    inps = intT[6,1]
+    inpTZO = intT[7,1]
+  } else {
+    inpY = atoi(inpY)
+    inpM = pause("  Month: ")
+    inpM = atoi(inpM)
+    inpD = pause("  Day: ")
+    inpD = atoi(inpD)
+    inph = pause("  Hour: ")
+    inph = atoi(inph)
+    inpm = pause("  Minute: ")
+    inpm = atoi(inpm)
+    inps = pause("  Second: ")
+    inps = atod(inps)
+    inpTZO = pause("  Time zone offset: ")
+    inpTZO = atof(inpTZO)
+  }
+
+  if (checkdate(inpY,inpM,inpD) == 0) {
+    return(byte(0))
+  }
+
+  MJDU = MJD(inpY,inpM,inpD,inph,inpm,inps,inpTZO) # UTC Modified Julian Date
+  printf("\nJulian Date (UTC): %.6f\n\n", MJDU + 2400000.5) # Display decimals to limit of accuracy
+  printf("Modified Julian Date (UTC): %.6f\n\n", MJDU)
+  DT = DeltaT(MJDU + 2400000.5, 1) # TT - UTC, seconds
+  printf("TT-UTC offset (Delta-T): %.6f seconds\n", DT[1])
+  printf("  Uncertainty in Delta-T: %.6f seconds\n\n", DT[2])
+  DT = DT[1]
+  printf("Modified Julian Date (TT): %.6f\n\n", MJD2TT(MJDU))
+  Dt = MJD2Dt(MJDU) # J2000 
+  printf("J2000 (TT) offset: %.6f days\n\n", Dt)
+  ET = MJD2ET(MJDU)
+  printf("Ephemeris Time (ET): %.3f (seconds)\n\n", ET)
+
+  if (ET >= 6.735e7 && ET <= 3.462e8) { # Dependent on ET2ORB settings
+    printf("Approximate Odyssey orbit number: %d\n\n", ET2ORB(ET))
+  }
+
+  mtg = marstimeglobal(Dt) # Get Mars global time data as structure
+
+  printf("\nMean anomaly of Mars: %.3f degrees\n\n", mtg.M)
+  printf("Angle of the Fictitious Mean Sun of Mars: %.3f degrees\n\n", mtg.aFMS)
+  printf("Angular longitude perturbations of Mars: %.3f degrees\n\n", mtg.PBS)
+  printf("Equation of Center of Mars: %.2f degrees\n\n", mtg.EoC)
+  printf("True anomaly of Mars: %.2f degrees\n\n", mtg.nu)
+  printf("Areocentric solar longitude: %.2f degrees\n ", mtg.LS)
+
+  temp = mtg.LS
+  if (isscalar(temp) == 1) {
+    ints = int(floor(temp/90)) # Northern season number (0 for spring, 1 for summer, etc.)
+    intp = int(floor((temp % 90)/30)) # Season phase (0 for early, 1 for mid, 2 for late)
+
+    if (intp == 0) { # Get string for season phase
+      into = "Early "
+    } else if (intp == 1) {
+      into = "Mid "
+    } else if (intp == 2) {
+      into = "Late "
+    } else {
+      printf("\nError finding season phase!\n\n")
+      return(byte(0))
+    }
+
+#    if ($2 >= 0) { # This season string block copied from an older function
+      if (ints == 0) {
+        into = into + "northern spring\n " + into + "southern autumn\n"
+      } else if (ints == 1) {
+        into = into + "northern summer\n " + into + "southern winter\n"
+      } else if (ints == 2) {
+        into = into + "northern autumn\n " + into + "southern spring\n"
+      } else if (ints == 3) {
+        into = into + "northern winter\n " + into + "southern summer\n"
+      } else {
+        printf("\nError finding northern season!\n\n")
+        return(byte(0))
+      }
+#    } else if ($2 < 0) {
+#      if (ints == 0) {
+#        into = into + "southern autumn\n"
+#      } else if (ints == 1) {
+#        into = into + "southern winter\n"
+#      } else if (ints == 2) {
+#        into = into + "southern spring\n"
+#      } else if (ints == 3) {
+#        into = into + "southern summer\n"
+#      } else {
+#        printf("\nError finding southern season!\n\n")
+#        return(byte(0))
+#      }
+#    } else {
+#      printf("\nError finding season!\n\n")
+#      return(byte(0))
+#    }
+#
+      printf(into)
+  }
+
+
+  printf("\n\nHeliocentric distance of Mars: %.4f AU\n\n", mtg.R)
+  printf("Heliocentric longitude of Mars: %.2f degrees\n\n", mtg.hlon)
+  printf("Heliocentric latitude of Mars: %.3f degrees\n\n", mtg.hlat)
+
+  printf("\nPlanetocentric longitude of the subsolar point: %.2f E\n\n", mtg.ssplon)
+  printf("Planetocentric latitude of the subsolar point: %.2f\n\n", mtg.decl)
+
+  printf("\nMars Sol Date (MSD): %.6f\n\n", mtg.MSD)
+  printf("Coordinated Mars Time: " + time2str(mtg.MTC,1) + " MTC\n\n")
+  printf("Equation of Time of Mars: %.2f degrees = " + time2str(mtg.EoT) + "\n\n", 15*mtg.EoT)
+  printf("Now enter planetocentric coordinates of a location on Mars\n")
+  printf(" Or enter \"VIK1\", \"VIK2\", \"MPF\", \"MERA\", \"MERB\", or \"PHX\"\n")
+  printf("  (without quotes) to use that lander's site\n")
+  # Note that you cannot use function names with atod; it isn't like eval
+  # And eval returns float (or int); I want double capability
+  inplon = pause("  Longitude (east is positive, west is negative): ")
+  if (equals(inplon, "VIK1\n") == 1) {
+    # All lander coordinates Mars24 landmark file (marslandmarks.xml)
+    inplon = atod("312.0493")
+    inplat = atod("22.4570") # Converted from planetographic
+  } else if (equals(inplon, "VIK2\n") == 1) {
+    inplon = atod("134.2810")
+    inplat = atod("47.9324") # Converted from planetographic
+  } else if (equals(inplon, "MPF\n") == 1) {
+    inplon = atod("326.7472")
+    inplat = atod("19.2607") # Converted from planetographic
+  } else if (equals(inplon, "MERA\n") == 1) {
+    inplon = atod("175.4785")
+    inplat = atod("-14.7542") # But remember, the rovers have moved
+  } else if (equals(inplon, "MERB\n") == 1) {
+    inplon = atod("354.4742")
+    inplat = atod("-1.9483") # But remember, the rovers have moved
+  } else if (equals(inplon, "PHX\n") == 1) {
+    inplon = atod("234.24845")
+    inplat = atod("68.21878")
+  } else {
+    inplon = atod(inplon)
+    inplat = pause("  Latitude (north is positive, south is negative): ")
+    inplat = atod(inplat)
+  }
+
+  mtl = marstimelocal(mtg, inplon, inplat)
+  printf("\n\nPlanetocentric coordinates: %.3f E, %.3f\n\n", (360. + inplon) % 360, inplat)
+  printf("Planetographic coordinates: %.3f W, %.3f\n\n", (360. - inplon) % 360, pc2pg(inplat))
+
+  printf("\nLocal Martian time zone offset: " + mtl.timezone + "\n\n")
+  printf("Local mean zonal time: " + time2str(mtl.LMZT,1) + " MTC" + mtl.timezone + "\n\n")
+  printf("Local mean solar time: " + time2str(mtl.LMST,1) + " LMST\n\n")
+  printf("Local true solar time: " + time2str(mtl.LTST) + " LTST\n\n")
+  printf("Local solar incidence angle (zenith): %.1f degrees\n\n", mtl.Z)
+  printf("Local solar azimuth: %.1f degrees\n", mtl.A)
+
+  printf("\nDisplaying sunclock...\n")
+
+  MarsVik = load($DV_LIB+"/script_files/time/Mars_Viking.jpg")
+  # Image from http://maps.jpl.nasa.gov/mars.html, originally 4 ppd, resized (resampled) to 2 ppd
+  sunclock(MarsVik, mtg.decl, mtg.ssplon)
+
+  printf("\nReturning data structures...\n")
+  outp = {global = mtg, local = mtl}
+  return(outp)
+}
+
+# Old function
+#define marsLS(0,2) {
+#
+#  if ($ARGC == 0) {
+#    printf("\nCalculates solar longitude of Mars, given J2000 TT offset (Dt)\n")
+#    printf("marsLS(Dt, mode)\n")
+#    printf(" Dt (in days) can be an array\n")
+#    printf(" If given any second input, will also print string specifying season\n")
+#    printf("  Will display northern season if mode >= 0, southern if mode < 0\n")
+#    # Can thus be used with latitude to print season at given location
+#    printf("Returns single-precision areocentric solar longitude, in degrees\n")
+#    printf("Accurate within 0.008 degrees for within 125 years of J2000\n")
+#    # Definitely 0.008 degrees - the Mars 24 technical notes say so
+#    # For J2000 +/- 125 yr, 95% within 0.005 deg
+#    printf(" However, that accuracy may be further limited by uncertainty in\n")
+#    printf(" Delta-T. See the function DeltaT for details.\n")
+#    printf("See http://www.giss.nasa.gov/tools/mars24/help/algorithm.html\n")
+#    printf("S.Marshall 03-22-2009\n\n")
+#
+#    printf("Returning current L_S...\n")
+#
+#    return(marsLS(JD2Dt(JD(clock(1))),1))
+#  }
+#
+#  intL = marsFMS($1) + marsEOC($1) # AM2000, eqn. 19
+#  intL = intL % 360
+#  intL[where intL < 0] = intL + 360
+#  # Avoids sign confusion before J2000 - answers are consistent but confusing (always -360 to 0, increasing correctly with time)
+#  intL = float(intL) # Not accurate to double precision
+#
+#  if ($ARGC > 1) {
+#    ints = int(floor(intL/90)) # Northern season number (0 for spring, 1 for summer, etc.)
+#    intp = int(floor((intL % 90)/30)) # Season phase (0 for early, 1 for mid, 2 for late)
+#
+#    if (intp == 0) { # Get string for season phase
+#      into = "Early "
+#    } else if (intp == 1) {
+#      into = "Mid "
+#    } else if (intp == 2) {
+#      into = "Late "
+#    } else {
+#      printf("\nError finding season phase!\n\n")
+#      return(byte(0))
+#    }
+#
+#    if ($2 >= 0) {
+#      if (ints == 0) {
+#        into = into + "northern spring\n"
+#      } else if (ints == 1) {
+#        into = into + "northern summer\n"
+#      } else if (ints == 2) {
+#        into = into + "northern autumn\n"
+#      } else if (ints == 3) {
+#        into = into + "northern winter\n"
+#      } else {
+#        printf("\nError finding northern season!\n\n")
+#        return(byte(0))
+#      }
+#    } else if ($2 < 0) {
+#      if (ints == 0) {
+#        into = into + "southern autumn\n"
+#      } else if (ints == 1) {
+#        into = into + "southern winter\n"
+#      } else if (ints == 2) {
+#        into = into + "southern spring\n"
+#      } else if (ints == 3) {
+#        into = into + "southern summer\n"
+#      } else {
+#        printf("\nError finding southern season!\n\n")
+#        return(byte(0))
+#      }
+#    } else {
+#      printf("\nError finding season!\n\n")
+#      return(byte(0))
+#    }
+#
+#      printf(into)
+#  }
+#
+#  return(intL)
+#}
+
+define sunclock(0,3) { # Use angsepd?
+
+  if ($ARGC < 3) {
+    printf("\nGiven global image and coordinates of subsolar point, displays sunclock\n")
+    printf("sunclock(image, lat, lon)\n")
+    printf(" image is byte array, assumed to be equirectangular map/view of planet\n")
+    printf("  image is assumed to be centered on 0 E, 0 N\n")
+    printf(" lon is longitude of subsolar point (east positive)\n")
+    printf(" lat is latitude of subsolar point (a.k.a. declination; north positive)\n")
+    printf("This function assumes that the planet is a sphere, which isn't quite right\n")
+    printf(" but is a good approximation (within 1%%) for most planets\n")
+    printf("This function also assumes that the terminator is five degrees wide,\n")
+    printf(" centered along the great circle that is 90 degrees from the sub-solar point.\n")
+    printf("Returns byte array used to generate image\n")
+    printf("S.Marshall 11-13-2009\n\n")
+
+    return(byte(0))
+  }
+
+  if (isscalar($2) == 0 || isscalar($3) == 0) {
+    printf("\nError! Second and third inputs must be scalar!\n\n")
+    return(byte(0))
+  }
+
+  if (abs($2) > 25.2) {
+    # If solar declination exceeds Mars' current obliquity (25.19 degrees, call it 25.2 here),
+    #  print warning but continue
+    printf("\nWarning! Input declination exceeds current Martian obliquity.\n\n")
+  }
+
+  ssp = float($2)//float($3) # Coordinates of sub-solar point
+  # Only known to single precision, and this image is too small for double-precision distinctions anyway
+
+  # Assuming image is global map/view in equirectangular projection, centered at 0 E, 0 N
+  map = $1
+
+  intd = dim(map)
+
+  lon = clone(create(intd[1], start=(-180. + 180./intd[1]), step=(360./intd[1]), format=float), 1,intd[2],1)
+  lat = clone(create(1,intd[2], start=(90. - 90./intd[2]), step=(-180./intd[2]), format=float), intd[1],1,1)
+
+#  printf("\nJust before first sph2cart (for sspc)\n") # From debugging
+  sspc = sph2cart(ssp[1], ssp[2]) # Convert to Cartesian unit vector
+#  printf("Just after first sph2cart\n")
+  sspc = translate(sspc, from=x, to=z) # Reshape, for ease of use
+
+#  printf("Just before second sph2cart (for mc)\n")
+  mc = sph2cart(lat, lon) # Convert lon and lat (for map) to Cartesian unit vectors
+#  printf("Just after second sph2cart\n")
+  mc = cat(mc[1:intd[1],,], mc[(intd[1]+1):(2*intd[1]),,], mc[(2*intd[1]+1):(3*intd[1]),,], axis=z) # Reshape, for ease of use
+
+  dp = sum(sspc*mc, axis=z) # Dot product of unit vectors
+  dth = acosd(dp) # Gives angular separation between mc and sspc
+  # Notes:
+  # This method of calculating angular separation is inaccurate for small separations, but that won't matter here.
+  # This method assumes Mars is a sphere, which isn't quite right. This may be worth looking into and revising.
+
+  s = float(dth) # Shadow factor
+
+  tw = 5. # Terminator width, in degrees - an educated guess
+  # This whole method of plotting the terminator is based on educated guesses. I am assuming the terminator
+  #  is five degrees wide, centered along the great circle that is 90 degrees from the sub-solar point.
+  # It would be worth revising, but I can't find any source that provides a good explanation.
+
+  s[where dth < (90. - 0.5*tw)] = 1.
+  s[where dth > (90. + 0.5*tw)] = 0.
+  s[where s > 1.] = 1 + (90 - (s + 0.5*tw))/tw # 1 - (s - (90. + 0.5*tw))/tw
+
+  nsd = 0.75 # Night-side darkness
+
+  outp = byte(round(map*((1 - nsd) + nsd*s)))
+
+  display(outp)
+  return(outp)
+}

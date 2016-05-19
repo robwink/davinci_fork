@@ -1,0 +1,162 @@
+#!/mars/common/bin/davinci -fq -v0
+source("/themis/lib/dav_lib/library/library_mars.dvrc")
+
+##
+##
+########################## thm.night_deplaid.isis3.dv #########################
+#
+# This script will deplaid an unprojected THEMIS Night IR cube that is
+# still in PDS format.
+#
+# Usage: thm.night_deplaid.isis3.dv input_cube output_cube 
+#
+#
+# Modification History
+# --------------------
+# 2005-01-06 - C. Edwards: Modified to write an RDR PDS header instead of
+#                          an ISIS header.
+#
+# 2005-11-17 - K. Nowikci: Minor bug fixes
+#
+# 2005-12-29 - C. Edwards: Minor bug fixes
+#
+# 2010-11-22 - J. Hill: Modified deplaid_night to be ISIS3 compatible. 
+#
+# 2014-08-08 - C. Edwards made portable for distribution
+# 
+##########################################################################
+##
+##
+
+opt={\
+from="",\
+to=""\
+};
+opt=getopt($ARGV,opt)
+
+if(opt.from=="" || opt.to=="") {
+  printf("\nThis script will deplaid an unprojected THEMIS Night IR cube\n")
+	printf("in PDS/ISIS3 format.\n\n")
+	printf("Arguments:\n")
+  printf("\tfrom = input THEMIS ISIS3 filename\n")
+  printf("\tto = output THEMIS ISIS3 filename\n\n")
+	printf("Major Sub-Functions:\n")
+  printf("\tthm.deplaid()\n\n")
+printf("References:\n")
+  printf("Bandfield, J. L., A. D. Rogers, M. D. Smith, and P.R.Christensen (2004),\n\t\tAtmospheric correction and surface spectral unit mapping using Thermal\n\t\tEmission Imaging System data, J. Geophys. Res., 109, E10008,\n\t\tdoi:10.1029/2004JE002289.\n")
+  printf("Edwards, C. S., K. J. Nowicki, P. R. Christensen, J. Hill, N. Gorelick,\n\t\tand K. Murray (2011), Mosaicking of global planetary image datasets: \n\t\t1. Techniques and data processing for Thermal Emission Imaging System\n\t\t(THEMIS) multi-spectral data, J. Geophys. Res., 116(E10), E10008,\n\t\tdoi:10.1029/2010JE003755.\n")
+  printf("Nowicki, K. J., C. S. Edwards, P. R. Christensen, Post-Projection Removal of Row-\n\t\tand Column-Correlated Noise in Line-Scanning Data: Application to\n\t\tTHEMIS infrared Data (in press, 2013), IEEE-Whispers Transactions.\n\n")
+  printf("Script Contributors:\n")
+  printf("C. Edwards, J. Hill, 8/11/14\n\n")
+  exit(0)
+}
+
+printf("\nSelected options:\n")
+opt_usage(opt)
+printf("\n")
+
+insmod("isis3")
+if(lsmod("isis3")==0) {
+  printf("This script requires the davinci ISIS3 I/O module\n")
+  exit(0)
+}
+
+
+##
+## Load the Input ISIS3 Cube
+##
+
+work=load_pds(opt.from)
+
+
+##
+## Deplaid the Data
+##
+
+################################################################
+# Nighttime images are notoriously cold and sometimes have
+# negative radiance values.  So, we raise them up by twice
+# their minimum and deplaid them, and will then restore values.
+################################################################
+
+printf("\nRunning night deplaid\n\n")
+
+data=work.cube
+
+nullval=min(data)
+if(nullval > -0.01) {
+  nullval = -32768
+}
+
+mindata = min(data,ignore=nullval,axis=xy)
+if(mindata < 0) {
+  data[where data != nullval] = data + 2*abs(mindata)
+}
+
+###############################################################
+# Now, also because of the cold we sometimes get entire
+# plaid lines with signal as great as bright features, so
+# we throw all points in to begin with and then do another
+# deplaid with normal limits to set bright spots good again.
+###############################################################
+
+for(i=1;i<=dim(data)[3];i+=1) {
+  data[,,i]=thm.deplaid(data[,,i],tmask_min=0.05,tmask_max=5.5,b10=0,ignore=nullval)
+  data[,,i]=thm.deplaid(data[,,i],b10=0,ignore=nullval)
+}
+
+
+##
+## Reset the Levels Back to the Calibrated Data
+##
+
+if(mindata < 0) {
+	data[where data != nullval] = data - 2*abs(mindata)
+}
+
+
+##
+## Replace the ISIS3 Cube Data with the Processed Data
+##
+
+work.cube=data
+
+
+##
+## Add the First THM_DEPLAID Entry to the History Object
+##
+
+work.IsisCube.History.thm_deplaid1={}
+work.IsisCube.History.thm_deplaid1.date_time=syscall("date +'%Y-%m-%dT%H:%M:%S'")[,]
+work.IsisCube.History.thm_deplaid1.software_desc="Removes the nighttime-specific THEMIS IR plaid pattern from each band of a THEMIS Night IR image."
+work.IsisCube.History.thm_deplaid1.user_name=syscall('echo `whoami`"@"`hostname`')[,]
+work.IsisCube.History.thm_deplaid1.parameters={}
+work.IsisCube.History.thm_deplaid1.parameters.tmask_min=0.05
+work.IsisCube.History.thm_deplaid1.parameters.tmask_min=5.5
+work.IsisCube.History.thm_deplaid1.parameters.b10=0
+work.IsisCube.History.thm_deplaid1.parameters.ignore="-32768"
+work.IsisCube.History.thm_deplaid1.parameters.isis_struct_type="object"
+work.IsisCube.History.thm_deplaid1.isis_struct_type="object"
+
+
+##
+## Add the Second THM_DEPLAID Entry to the History Object
+##
+
+work.IsisCube.History.thm_deplaid2={}
+work.IsisCube.History.thm_deplaid2.date_time=syscall("date +'%Y-%m-%dT%H:%M:%S'")[,]
+work.IsisCube.History.thm_deplaid2.software_desc="Removes the general THEMIS IR plaid pattern from each band of a THEMIS Night IR image."
+work.IsisCube.History.thm_deplaid2.user_name=syscall('echo `whoami`"@"`hostname`')[,]
+work.IsisCube.History.thm_deplaid2.parameters={}
+work.IsisCube.History.thm_deplaid2.parameters.b10=0
+work.IsisCube.History.thm_deplaid2.parameters.ignore="-32768"
+work.IsisCube.History.thm_deplaid2.parameters.isis_struct_type="object"
+work.IsisCube.History.thm_deplaid2.isis_struct_type="object"
+
+##
+## Write the Modified ISIS3 Cube Structure in ISIS3 Format
+##
+
+printf("\nWriting file: %s\n\n",opt.to)
+write(work,opt.to,type=isis3,force=1)
+exit(0);

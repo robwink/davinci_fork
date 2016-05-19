@@ -1,0 +1,63 @@
+master_science_version=1.00
+#This file contains all functions pertaining to MASTER science
+
+#In order to use load_master() you must also have gdal installed
+
+#load_master - c.edwards 4/25/13
+
+
+define load_master(geo,elev) {
+
+  if($ARGC==0) {
+    printf("Load a calibrated L1B master image as a Geo-Struct\n")
+    printf("This includes adding GCPS to project the data at a later point\n\n")
+    printf("$1=filename\n")
+    printf("geo=project the image to a standard utm projection using GCPS (Default=0)\n")
+    printf("elev=add elevation points to the GCPS (Default=0)\n\n")
+    printf("c.edwards 4/28/13\n")
+    return(null)
+  }
+
+  if(HasValue(elev)==0) elev=0
+  if(HasValue(geo)==0) geo=0
+  ancstruct=read_geo($1,subdata=10//11//12//13)
+
+  out=read_geo($1,subdata=17)
+  out.anc.scale=translate(atof(strsplit(read_geometa(ancstruct.anc.subdata.name[,17]).anc.metadata.scale_factor,",")),y,z)
+
+  #scale the data with the slope and intercept
+  out.data=float(out.data)
+  out.data[where out.data!=0]=out.data*out.anc.scale
+  out.data[where out.data<=0]=-32768
+  out.ignore=-32768
+  
+  #extract eh lat/lon/elevation and zenith angles
+  lat=remove_struct(ancstruct.data,"subdata10")
+  lon=remove_struct(ancstruct.data,"subdata11")
+  zenith=avg(remove_struct(ancstruct.data,"subdata13"),axis=y)
+  if(elev!=0) {
+    elev=remove_struct(ancstruct.data,"subdata12")
+    out=add_gcps_geo(out,lon,lat,elev=elev,xsampling=4,ysampling=10)
+  } else {
+    elev=remove_struct(ancstruct.data,"subdata12")
+    out=add_gcps_geo(out,lon,lat,xsampling=4,ysampling=10)
+  }    
+  
+  clon=avg(lon,ignore=-32768)
+  zone=CentralMeridian_to_UTMzone(clon)
+
+  out.anc.a_srs="+proj=latlong"
+  out.anc.suggested_proj=sprintf("+proj=utm +zone=%i +ellps=WGS84 +datum=WGS84 +units=m +no_defs",zone)
+
+  if(geo==1) {
+    out=proj_geo(out,out.anc.suggested_proj, ignore=-32768,resampling="bilinear")
+  }
+  
+  out.anc.UTMzone=zone
+  out.anc.lat=lat
+  out.anc.lon=lon
+  out.anc.elev=elev
+  out.anc.zenith=zenith
+
+  return(out)
+}

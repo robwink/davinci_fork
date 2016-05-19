@@ -1,0 +1,2099 @@
+misc_version=1.11
+
+# get_image					- Added by C. Edwards 6/2009
+# get_map -- added by C.Edwards 9/3/09
+# available_maps -- added by C.Edwards 9/3/09
+# getopt        - taken from /u/gorelick/getopt.dv
+# opt_usage     - taken from /u/gorelick/getopt.dv
+# strsplit			- split a string into a text array based on a delimiter
+# uniq          - taken from /u/cedwards/christopher.dvrc, formerly called guniq()
+# weight_array	- taken from /u/phil/prc_dvrc
+# k_phil	- taken from /u/knowicki/dvrc/k_phil.dvrc
+# k_fill	- taken from /u/phil/k_fill.dvrc
+# thmproc_find  - taken from /u/knowicki/dvrc/tools.dvrc
+# mars_bin      - taken from /u/bandfield/josh.dvrc
+# map_trans     - taken from /u/bandfiled/josh.dvrc
+# geo_trans     - taken from /themis/lib/themis_dvrcjlb
+# p_surf        - taken from /themis/lib/themis_dvrcjlb
+# read_vm       - taken from /u/bandfield/josh.dvrc, formerly called readvm()
+# write_vm      - taken from /u/bandfield/josh.dvrc, formerly called writevm2()
+# make_mtesx	- taken from /mtes/lib/mt_dvrc_cal
+# make_tesx	- taken from /tes/lib/tes_dvrc_cal
+# make_lab1x	- taken from /u/phil/prc_dvrc
+# make_themisx	- taken from /u/phil/prc_dvrc
+# lsubs         - Added by J. Bandfield 1/2008
+# deconstruct   - Added by J. Bandfield 1/2008
+# rm_quote      - Added by PRC 11/2010
+# bs						- created by C.Edwards 12/10/2010
+# subset				- created by C.Edwards 3/25/2011
+# trim_whitespace - created by C.Edwards 4/13/2012
+# azimuth       -created by j.bandfield
+
+#1.04 added rm_quote 
+#1.06 fixed read_vm to use read_lines and not syscall("less...
+#1.07 fixed a strange case with strsplit() and added subset()
+#1.08 added the src option to get_image
+#1.11 added trim_whitespace() function
+
+define get_image(instrument,type,src) {
+
+#modified 10/7/09 to query for crism data.
+#modified 5/5/10 to take alternate data types
+
+	if($ARGC==0) {
+		printf("\nFind the desired data based on image id/instrument/type\n")
+		printf("Returns an url formatted for the defined query\n\n")
+		printf("$1 = image id\n\n")
+		printf("Optional:\n")
+		printf("instrument = \t\t\"ctx\",\"hirise\",\"hrsc\",\"moc\"\n\t\t\t\"viking\",\"anaglyph\",\"themis\",\"crism\" (Default = \"themis\")\n\n")
+		printf("type (if hirise) = \t\"RGB\",\"RED\" (Default = \"RED\")\n")
+		printf("type (if themis) = \t\"BWS\",\"DCS\",\"D875\",\"D964\",\"D642\"\n\t\t\t\"PBT\",\"BTR\",\"RDR\",\"ABR\" (Default = \"RDR\")\n")
+		printf("type (if crism) = \t\"TRDR-LBL\",\"TRDR-IMG\",\"DDR-LBL\",\"DDR-IMG\",\"MAF\"\n")
+		printf("\t\t\t\"HYD\",\"PHY\",\"ICE\",\"TRU\",\"IRA\",\"FEM\" (Default = \"TRDR-LBL\")\n")
+		printf("\t\tNOTE:\tThe following crism types require a \"_RGB\", \"_HSV\", or\" _BW\" as a suffix\n")
+		printf("\t\t\t\"AL-OH\",\"FE-OH\",\"FERRIC\",\"H2O-1\",\"H2O-2\",\"H2O-3\",\"HCP\"\n")
+		printf("\t\t\t\"HYD-SI\",\"LCP\",\"OLIVINE\",\"PHYLLO\",\"SULFATE\",\"ZEOLITE\"\n\n")
+		printf("type (if hrsc) = \t\"DT4\", \"ND3\", \"ND4\", \"SR3\" (Default = \"ND3\")\n\n")
+		printf("\t\tNOTE:\ttype is only used for THEMIS/CRISM/hrsc/hirise data\n\n")
+    printf("\tsrc=download from the pds source and not ASU. Only for CRISM PDS (Default=0)\n")
+		printf("c.edwards 3/09\n")
+		return(null)
+	}
+	
+	id=$1
+	if(HasValue(instrument)==0) instrument="themis"
+	if(HasValue(src)==0) src=0
+	if(HasValue(type)==0 && instrument=="themis") type="RDR"
+	if(HasValue(type)==0 && instrument=="crism") type="TRDR-LBL"
+	if(HasValue(type) && instrument=="hrsc") {
+		id=id+"_"+type
+		type=""
+	}
+	if(HasValue(type) &&  instrument=="hirise") { 
+		id=id+"_"+type
+		type=""
+	}
+	if(HasValue(type)==0) type=""
+
+  if(HasValue(devserver)==0) { 
+		server="http://app-davinci.mars.asu.edu/StampServer-1.2/"
+	}
+   
+	ver=version()[18:]
+	ver="davinci "+ver
+
+	if(src!=0) {
+		url=sprintf("%sSourceLookup?instrument=%s&id=%s&imageType=%s&version=%s&format=text",server,instrument,id,type,ver)
+		url=read_lines(url)[,1]
+    if(instrument=="crism") {
+      url=strsub(url,"pds-geosciences","geodata.rsl")
+    }
+	} else {
+		url=sprintf("%sImageServer?instrument=%s&id=%s&imageType=%s&version=%s",server,instrument,id,type,ver)
+	}		
+	return(url)
+}
+
+
+define available_maps(format,search) {
+  verbose=0
+  bodies=read_lines($DV_EX+"/available_maps/allbodies.txt")
+  verbose=3   
+
+  if($ARGC==0) {
+    printf("\nSearch the MSFF mapserver for maps available to download\n\n")
+    printf("$1=planetary body from which to query maps\n\n")
+    printf("Optional:\n")
+    printf("\tsearch=the map name you would like to search on\n")
+    printf("\tformat=return the results in an alternate format\n\n")
+    printf("Available Planetary Bodies are:\n")
+    for(i=1;i<=length(bodies);i+=1){
+      printf("\t%s\n",bodies[,i])
+    }
+    return(null)
+  }
+
+  body=$1
+
+	#populate default options
+	if(HasValue(format)==0) format=1
+	if(HasValue(search)==0) search=""
+			
+  if(sum(bodies==$1)==0) {
+    printf("Please enter a valid planetary body\n")
+    return(null)
+  }
+  verbose=0
+  data=load_csv($DV_EX+"/available_maps/"+body+"_maps.txt",header=0)
+  printf("\n")
+  verbose=3  
+
+  datanew={}
+  datanew.titles=sort(data.c2)
+  datanew.names=sort(data.c1,by=data.c2)
+
+  result=""
+  if(search!="") {
+    result=grep(datanew.titles,search)
+   
+    if(result!="") {
+      names=text(0)
+      titles=text(0)
+      for(i=1;i<=length(result);i+=1) {
+        index=int(maxpos(datanew.titles==result[,i])[2])
+        names=cat(names,datanew.names[,index],axis=y)
+        titles=cat(titles,datanew.titles[,index],axis=y)
+      }
+    } else {
+      printf("\nNo match exists.  Please try again\n\n")
+      return(null)
+    }
+  } else {
+    names=datanew.names
+    titles=datanew.titles
+  }
+
+	#First output option - table view
+	if(format==1) {
+		names=cat("Map Layer Name",names,axis=y)
+		titles=cat("Map Title",titles,axis=y)
+
+		titlemaxlen=int(max(strlen(titles)))
+		namemaxlen=int(max(strlen(names)))
+  	for (i = 1 ; i <= length(names) ; i++) {
+			spaces=" "
+			titlecurlen=strlen(titles[,i])
+			namecurlen=strlen(names[,i])
+
+			for(j=titlecurlen;j<=titlemaxlen;j+=1) {
+				titles[,i]=cat(titles[,i]," ",axis=x)
+			}
+			for(j=namecurlen;j<=namemaxlen-1;j+=1) {
+				spaces=cat(spaces," ",axis=x)
+			}
+		
+			if(i==1) {
+				breaks="-"
+				for(j=1;j<=titlemaxlen+namemaxlen+9;j+=1) {
+					breaks=cat(breaks,"-",axis=x)
+				}
+				printf("%s\n",breaks)
+				printf('| %s | %s %s |\n', ""+titles[,i], ""+names[,i],spaces);
+				printf("%s\n",breaks)
+			} else if (i==length(names)) {
+				printf('| %s | "%s"%s|\n', ""+titles[,i], ""+names[,i],spaces);
+				printf("%s\n",breaks)
+			} else {
+				printf('| %s | "%s"%s|\n', ""+titles[,i], ""+names[,i],spaces);
+			}
+		}
+		printf("\nTry format=2 for a different view, or format=3 to return a structure\n")
+		printf("Also search by search=\"THEMIS\"\n")
+	}
+
+	#second output option - list view
+	if(format==2) {
+	  str = "  ";
+ 		for (i = 1 ; i <= length(names) ; i++) {
+			name=names[,i]
+    	s = sprintf('"%s", ', ""+name);
+    	if (length(str+s) > 100) {
+      	printf("%s\n", str)
+      	str = "    " + s
+    	} else {
+      	str = str + "  " + s
+    	}
+  	}
+  	printf("%s\n", str)	
+	}
+	
+	#third output option (return the values as a struct)
+	if(format==3) {
+		out={}
+		out.names=names
+		out.titles=titles
+		return(out)
+	}
+}
+	
+
+
+define get_map(lat,lon,clat,clon,lpo,spo,ppd,proj,map,trim,size,struct,v,verify,geo){
+
+	#help
+	if((HasValue(lat)==0 || HasValue(lon)==0) && $ARGC==0) {
+	  printf("\nGet Map data from ms-*.mars.asu.edu\n")
+ 		printf("Wills download map data and load it as a variable\n\n")
+		printf("Can either take an ISIS cube or supplied lat/lon range\n")
+		printf("\t$1=ISIS structure (read with load_pds) or Geo-Struct (read with read_geo)\n")
+		printf("or\n")
+		printf("\tlat=latitude range (\"min:max\")\n")
+		printf("\tlon=longitude range (\"min:max\")\n")
+		printf("\tppd=pixels per degree (default=8)\n\n")
+		printf("Options:\n")
+		printf("\tmap=ms.mars.asu.edu map name (default=\"MOLA_128ppd_shade_ne\")\n")
+		printf("\tproj=projection type:\n")
+		printf("\t\t\"SIMPLE_CYLINDRICAL\"\n")
+		printf("\tclat=center latitude (Default=average latitude)\n")
+		printf("\tclon=center longitude (Default=average longitude)\n")
+		printf("\tlpo=line projection offset (Default=0)\n")
+		printf("\tspo=sample projection offset (Default=0)\n")
+		printf("\ttrim=trim the output data to the ISIS input\n")
+		printf("\tsize=pixels per tile (default=256)\n")
+    printf("\tverify=verify using available_maps() that the name exits (Default=0)\n")
+		printf("\tv=verbosity (0,1,2)\n")
+		printf("\tstruct=return a structure of parameters (0,1)\n")
+		printf("\nFor Available Maps See:\n")
+		printf("available_maps()\n")
+		printf("\ncedwards 3/2009\n")
+		return(null)
+	}
+
+	#Check to see if we are using an ISIS header
+	#make sure we don't define things many time
+	if($ARGC>=1) {
+		if(type($1)=="STRUCT") {
+			 pds=$1
+		} else {
+			printf("ISIS structure not supplied\n")
+			return(null)
+		}
+	}
+
+	if(HasValue(ppd) && $ARGC>=1) {
+		printf("ppd cannot be specified with an ISIS/GEO structure\n")
+		return(null)
+	}
+	if(HasValue(proj) && $ARGC>=1) {
+		printf("proj cannot be specified with an ISIS/GEO structure\n")
+		return(null)
+	}
+	if(HasValue(clat) && $ARGC>=1) {
+		printf("clat cannot be specified with an ISIS/GEO structure\n")
+		return(null)
+	}
+	if(HasValue(clon) && $ARGC>=1) {
+		printf("clon cannot be specified with an ISIS/GEO structure\n")
+		return(null)
+	}
+	if(HasValue(lpo) && $ARGC>=1) {
+		printf("lpo cannot be specified with an ISIS/GEO structure\n")
+		return(null)
+	}
+	if(HasValue(spo) && $ARGC>=1) {
+		printf("spo cannot be specified with an ISIS/GEO structure\n")
+		return(null)
+	}
+	if(HasValue(lat) && $ARGC>=1) {
+		printf("lat cannot be specified with an ISIS/GEO structure\n")
+		return(null)
+	}
+	if(HasValue(lon) && $ARGC>=1) {
+		printf("clon cannot be specified with an ISIS/GEO structure\n")
+		return(null)
+	}
+	if(HasValue(trim) && $ARGC==0) {
+		printf("trim cannot be specified without an ISIS/GEO structure\n")
+		return(null)
+	}
+
+	#populate default options 
+ 	if(HasValue(map)==0) map="MOLA_128ppd_shade_ne"
+  if(HasValue(ppd)==0) ppd=8
+	if(HasValue(size)==0) size=256
+	if(HasValue(v)==0) v=0
+	if(HasValue(trim)==0) trim=0
+	if(HasValue(proj)==0) proj="SIMPLE_CYLINDRICAL"	
+	if(HasValue(struct)==0) struct=1
+  if(HasValue(verify)==0) verify=0
+  if(HasValue(geo)==0) geo=0
+
+  allbodies=read_lines($DV_EX+"/available_maps/allbodies.txt")
+  for(i=1;i<=length(allbodies);i+=1) {  
+    check=load_csv($DV_EX+"/available_maps/"+allbodies[,i]+"_maps.txt",header=0).c1
+    if(sum(check==map)>=1) {
+      map_host=allbodies[,i]
+    }
+  }
+
+  if(map_host=="mars") {
+    map_host="ms-mars.mars.asu.edu"
+  } else if (map_host=="lunar") {
+    map_host="ms-moon.mars.asu.edu"
+  } else if (map_host=="earth") {
+    map_host="ms-earth.mars.asu.edu"
+  } else {
+    map_host="ms-other.mars.asu.edu"
+  }
+
+	#fill out some default values in param structure
+	param={}
+	param.map=map	
+	param.ppd=float(ppd)
+	param.size=size
+	param.v=v
+	param.trim=trim
+
+	#make sure the map you chose is a possible option
+  if(verify!=0) {
+  	maps=available_maps(format=3).names
+  	if(HasValue(grep(maps,map+"$"))==0) {
+  		printf("Map: %s is not a valid map layer\n",map)
+  		printf("Run available_maps() to see a list of possible maps\n")
+  		printf("Or search for maps using available_maps(search=\"GRS\")\n")
+  		return(null)
+  	}
+  }
+	
+	verbose=0
+	#if we are using a user supplied range
+	if($ARGC==0) {
+		#make sure lat/lon ranges are correct
+		if(strstr(lat,":")==0) {
+ 		 	printf("No latitude range specified (\"min:max\")\n");
+ 		 	return(null);
+		}
+		if(strstr(lon,":")==0) {
+ 		 	printf("No longitude range specified (\"min:max\")\n");
+ 			return(null);
+		}
+
+		#build the latitude range
+		latpos=strstr(lat,":")
+		param.minlat=atof(lat[:latpos-1])
+		param.maxlat=atof(lat[latpos+1:])
+		if(param.minlat>param.maxlat) {
+ 		 	lattmp=param.maxlat
+ 	 		param.maxlat=param.minlat
+ 	 		param.minlat=lattmp
+		}
+
+		#build longitude range
+		lonpos=strstr(lon,":")
+		param.minlon=atof(lon[:lonpos-1])
+		param.maxlon=atof(lon[lonpos+1:])
+		if(param.minlon>param.maxlon) {
+	 	 	lontmp=param.maxlon
+ 		 	param.maxlon=param.minlon
+ 		 	param.minlon=lontmp
+		}
+	
+		#see if the user has defined clat/clon/lpo/spo and fill out defaults if not
+		if(HasValue(clat)==0) clat=(param.minlat+param.maxlat)/2.0
+		if(HasValue(clon)==0) clon=(param.minlon+param.maxlon)/2.0
+
+		#these may not be right....
+		if(HasValue(lpo)==0) lpo=(-1)*param.maxlat*param.ppd
+		if(HasValue(spo)==0) spo=param.minlon*param.ppd
+#		if(HasValue(spo)==0) spo=(param.minlon-clon)*param.ppd*cos(param.maxlat)
+
+	} else {
+
+    if(HasValue(get_struct(pds,"cube"))==1) {
+      #ISIS3 Case
+      structcube=pds.IsisCube.Mapping
+  		param.minlat=structcube.MinimumLatitude
+  		param.maxlat=structcube.MaximumLatitude
+  		param.minlon=structcube.MinimumLongitude
+  		param.maxlon=structcube.MaximumLongitude
+
+  		#extract more projection parameters
+  		param.ppd=float(structcube.Scale)
+  		spo=structcube.UpperLeftCornerX/structcube.PixelResolution
+  		lpo=structcube.UpperLeftCornerY/structcube.PixelResolution
+
+  		#make values if structure does not contain them
+  		if(HasValue(structcube.CenterLatitude)==0) {
+  			clat=(param.maxlat-param.minlat)/2.0
+  		} else {
+  			clat=structcube.CenterLatitude
+  		}
+  		if(HasValue(structcube.CenterLongitude)==0) {
+  			clat=(param.maxlon-param.minlon)/2.0
+  		} else {
+  		clon=structcube.CenterLongitude
+  		}
+
+  		#extract the projection (without the second set of quotes)
+  		proj=structcube.ProjectionName
+
+    } else if (HasValue(get_struct(pds,"anc"))==1) {
+			#geostruct case
+			param.minlat=min(pds.anc.lat)
+			param.maxlat=max(pds.anc.lat)
+			param.minlon=min(pds.anc.lon)
+			param.maxlon=max(pds.anc.lon)
+			clat=pds.anc.center[1]
+			clon=pds.anc.center[2]
+			if(pds.projection=="Equirectangular"){
+				proj="SimpleCylindrical"
+			} else {
+				proj=pds.projection
+			}
+			param.ppd=atof(pds.spheroid.radius)*2*3.141592/pds.resolution/360.
+			lpo=pds.x
+			spo=pds.y	
+			geo=1
+
+		}else {
+  		#ISIS2 case  
+  		#begin extracting values form the image_map_projection keyword
+  		structcube=pds.qube.image_map_projection
+  		param.minlat=structcube.minimum_latitude
+  		param.maxlat=structcube.maximum_latitude
+  		param.minlon=structcube.westernmost_longitude
+  		param.maxlon=structcube.easternmost_longitude
+
+  		#make sure things go from small to large
+  		if(param.maxlon<param.minlon) {
+  			param.minlon=param.maxlon
+  			param.maxlon=structcubecube.westernmost_longitude
+  		}
+	
+  		#extract more projection parameters
+  		param.ppd=float(structcube.map_resolution)
+  		spo=structcube.sample_projection_offset
+  		lpo=structcube.line_projection_offset 
+
+  		#make values if structure does not contain them
+  		if(HasValue(structcube.center_latitude)==0) {
+  			clat=(param.maxlat-param.minlat)/2.0
+  		} else {
+  			clat=structcube.center_latitude
+  		}
+  		if(HasValue(structcube.center_longitude)==0) {
+  			clat=(param.maxlon-param.minlon)/2.0
+  		} else {
+  		clon=structcube.center_longitude
+  		}
+
+  		#extract the projection (without the second set of quotes)
+  		proj=structcube.map_projection_type[2:length(structcube.map_projection_type)[1]-1]
+  	}
+  }
+
+	#change the projection from ISIS notation to JMARS notation
+	param.projection=proj
+
+	if(proj=="SIMPLE_CYLINDRICAL" || proj=="SimpleCylindrical") {
+		param.jproj="JMARS:1"
+#	} else if (proj=="SINUSOIDAL" || proj=="Sinusoidal") {
+#		param.jproj="JMARS:0"
+#	} else if (proj="POLAR_STEREOGRAPHIC" || proj=="PolarStereographic") {
+#		param.jproj="JMARS:2"
+	} else {
+		printf("Error: Incorrect Projection Supplied\n")
+    verbose=3
+		return(null)
+	}
+
+	verbose=0
+
+	#fill out other paramters from ISIS or user defined ranges
+	param.lpo=lpo
+	param.spo=spo
+	param.clat=clat
+	param.clon=clon
+
+	#param.dl_type=available_maps(mapname=map)
+	verbose=0
+	param.dl_type="vicar"
+
+	#calculate the size from lat/lon/ppd and test chunk dim
+	param.x=int(ceil(param.ppd*abs(param.minlon-param.maxlon)))
+	param.y=int(ceil(param.ppd*abs(param.minlat-param.maxlat)))
+	url="http://"+map_host+"/?SERVICE=WMS&REQUEST=GetMap&FORMAT=image/"+param.dl_type+"&WIDTH=128&HEIGHT=128&SRS=JMARS:1&BBOX=0,0,5,5&STYLES=&VERSION=1.1.1&LAYERS="+map
+	chunk=read(url)
+	param.z=dim(chunk)[3]
+	if(param.z==4) param.z=3
+	if(param.z==2) param.z=1
+	if(v==2) printf("Size: %ix%ix%i\n",param.x,param.y,param.z)
+
+
+	#create the output data of type and org with the test chunk	
+	data=org(format(clone(0,param.x,param.y,param.z),format(chunk)),org(chunk))
+	count=0
+
+	#start building up the chunks
+	for(i=1;i<=param.x;i+=param.size) {
+	
+		#define the lon range and the size of the box
+		lon1=(i-1)/param.ppd+param.minlon
+		lon2=(i+param.size)/param.ppd+param.minlon
+		if(lon2>param.maxlon) lon2=param.maxlon
+		xsize=int(param.ppd*(lon2-lon1))
+		lpoi=(i-1)+param.lpo
+
+		for(j=1;j<=param.y;j+=param.size) {
+
+			#define the lat range and the size of the box
+			lat1=param.maxlat-(j-1)/param.ppd
+			lat2=param.maxlat-(j+param.size)/param.ppd
+			if(lat2<param.minlat) lat2=param.minlat
+			ysize=int(param.ppd*(lat1-lat2))
+			spoi=(j-1)+param.spo
+
+			#verbose options
+			if(v>=1) {
+				count+=1
+				printf("%i of %i\n",count,ceil(param.x/float(param.size))*ceil(param.y/float(param.size)))
+			}
+			if(v==2) printf("lon=\"%f:%f\", lat=\"%f:%f\", size=\"%i,%i\", range=\"%i:%i,%i:%i\", offset=\"%i,%i\"\n",lon1,lon2,lat1,lat2,xsize,ysize,i,i+xsize-1,j,j+ysize-1,lpoi,spoi)
+	
+			#build the mapserver url
+			if(param.jproj=="JMARS:1") {
+
+				#SIMPLE_CYLINDRICAL CASE
+				url="http://"+map_host+"/?SERVICE=WMS&REQUEST=GetMap&FORMAT=image/"+param.dl_type+"&WIDTH="+xsize+"&HEIGHT="+ysize+"&SRS="+param.jproj+"&BBOX="+lon1+","+lat2+","+lon2+","+lat1+"&STYLES=&VERSION=1.1.1&LAYERS="+map
+
+#			} else if (param.jproj=="JMARS:0" || param.jproj=="JMARS:2") {
+#				#POLAR_STEROGRAPHIC AND SINUSOIDAL CASES
+#				url="http://"+map_host+"/?SERVICE=WMS&REQUEST=GetMap&FORMAT=image/"+param.dl_type+"&WIDTH="+xsize+"&HEIGHT="+ysize+"&SRS="+param.jproj+","+param.clon+","+param.clat+","+spoi+","+lpoi+","+param.ppd+"&BBOX="+lon1+","+lat2+","+lon2+","+lat1+"&STYLES=&VERSION=1.1.1&LAYERS="+map
+
+			} else {
+				printf("Error: Wrong projection\n")
+				return(null)
+			}
+
+			#get the data and fill in the chunks
+			data[i:i+xsize-1,j:j+ysize-1,:zdim]=read(url)[,,:zdim]
+		}
+	}
+	verbose=3
+
+	if(type(data)=="byte") {			
+		param.ignore=0
+	} else {
+		param.ignore=-32768
+	}
+
+	if(trim==1) {
+    if(HasValue(get_struct(pds,"cube"))==1) {
+  		data[where pds.cube==min(pds.cube)]=param.ignore
+    } else {
+  		data[where pds.qube.data==min(pds.qube.data)]=param.ignore
+    }    
+	}
+
+  if(geo==1) struct=1
+
+	#if we have a structure then fill it and return
+	if(struct==1) {
+		param.ul=param.maxlat//param.minlon
+		param.lr=param.minlat//param.maxlon
+		param.ur=param.maxlat//param.maxlon
+		param.ll=param.minlat//param.minlon
+ 		param.data=data
+    data=param
+  }
+
+  if(geo==1) {
+
+    #setup the GeoStruct
+    out={}
+    out.anc={}
+    out.anc.a_srs="+proj=latlong +a=3396190.0 +b=3396190.0 +units=deg +no_defs"
+
+    out.data=remove_struct(param,"data")
+    tmp=cat(param.ul,param.ll,param.ur,param.lr,(param.ul+param.lr)/2,axis=y)
+    out.anc.lpo=out.anc.lat=tmp[1]
+    out.anc.spo=out.anc.lon=tmp[2]
+    out.ignore=param.ignore
+
+    key=get_struct_key(param)
+    out.anc.metadata={}
+    for(i=1;i<=length(param);i+=1) {
+      add_struct(out.anc.metadata,name=key[,i],value=param[i]+"")
+    }
+		resolution=2.0*3.141592741*3396190.0/360.0/float(ppd)
+		x=dim(out.data)[1]
+		y=dim(out.data)[2]
+    data=proj_geo(out,"+proj=eqc +a=3396190.0 +b=3396190.0 +units=m +no_defs",ignore=out.ignore,resampling="bilinear",v=v)
+  }
+
+  return(data)
+}
+
+
+
+define getopt() {
+
+  if($ARGC==0) { 
+    printf("\nThis function takes a structure containing the available options")
+    printf("in the expected order, and fills in values\n")
+    printf("Will also grab the command line options and fill in values (use two dashes)\n\n")
+    printf("n.gorelick\n")
+    return(null)
+  }
+
+  args = $1
+  args_copy = args;
+  if ($ARGC == 2) {
+    opt = $2
+  } else {
+    opt = {}
+  }
+  out = opt
+  opt_s = {}
+  for (i = length(args) ; i > 0 ; i--) {
+    arg = args[i]
+    if (strstr(arg, "=")) {
+      pos = strstr(arg, "=")
+      name = arg[1:pos-1]
+      value = arg[pos+1:]
+      while(name[1] == '-') name = name[2:]
+      if (HasValue(get_struct(out, name))) {
+        form=format(get_struct(out,name))
+	remove_struct(out,name)
+      }
+      if(HasValue(form)==0) {
+ 	add_struct(out, name=name, value=value);
+      } else {
+        if(form=="STRING") {
+          add_struct(out, name=name, value=value);
+        } else {
+          add_struct(out, name=name, value=format(atof(value),format=form));
+        }
+      }
+      add_struct(opt_s, name=name, value=1);
+      remove_struct(args_copy, pos=i);
+    }
+  }
+  args = args_copy
+  count = 1;
+  for (i = 1 ; i < length(opt) ; i++) {
+    name = get_struct_key(opt, i)
+    if (count <= length(args) && get_struct(opt_s, name) != 1) {
+      remove_struct(out, name);
+      add_struct(out, name=name, value=args[count]);
+      count++;
+    }
+  }
+  return(out)
+}
+
+define opt_usage() {
+
+   if($ARGC==0) { 
+    printf("\nThis function prints the available options to the screen\n")
+    printf("Used in conjunction with getopt()\n")
+    printf("n.gorelick\n")
+    return(null)
+  }
+
+  opt = $1
+  str = "  ";
+  for (i = 0 ; i < length(opt) ; i++) {
+    name = get_struct_key(opt, i+1)
+    value = opt[i+1];
+
+    s = sprintf('%s="%s"', name, "" + value);
+    if (length(str+s) > 72) {
+      printf("%s\n", str)
+      str = "    " + s
+    } else {
+      str = str + "  " + s
+    }
+  }
+  printf("%s\n", str)
+}
+
+define strsplit(delim) {
+	if($ARGC==0) {
+	  printf("\nSplit a string or string array into an array of strings or structure of strings by a delimiter\n\n")
+    printf("$1=string\n")
+		printf("delim=the splitting delimeter (Default is \",\")\n\n")
+    printf("c.edwards 05-06-10\n")
+    return(null)
+	}
+  string=$1
+  if(HasValue(delim)==0) {
+    delim=","
+  }
+
+	if(strstr(string,delim)==0) {
+ 	   printf("No delimiter was found\n")
+ 	   return(null)
+ 	 }
+
+	if(type(string)=="STRING") {
+	  out=text()
+ 	 	while(strstr(string,delim)!=0) {
+ 	   	pos=strstr(string,delim)
+			if(pos-1<=0) {
+	 	   	out=cat(out,"",axis=y)
+			} else {
+	 	   	out=cat(out,string[:pos-1],axis=y)
+			}
+
+			if(pos+1>length(string)) {
+				string=""
+			} else {
+	 	   	string=string[pos+1:]
+			}			
+ 	 	}
+ 	  out=cat(out,string,axis=y)
+	} else if (type(string)=="TEXT"){
+
+		struct={}
+		for(i=1;i<=length(string);i+=1) {
+
+			out=text()
+			str=string[,i]
+
+	 	 	while(strstr(str,delim)!=0) {
+ 		   	pos=strstr(str,delim)
+				if(pos-1<=0) {
+		 	   	out=cat(out,"",axis=y)
+				} else {
+		 	   	out=cat(out,str[:pos-1],axis=y)
+				}
+
+				if(pos+1>length(str)) {
+					str=""
+				} else {
+		 	   	str=str[pos+1:]
+				}			
+ 		 	}
+ 		  out=cat(out,str,axis=y)
+			insert_struct(struct,name=i+"",value=out)
+
+		}
+
+		out=struct
+
+	} else {
+		printf("Invalid data type\n")
+		return(null)
+	}
+  return(out)
+}
+
+
+
+define uniq() {
+
+  if($ARGC==0) { 
+    printf("\nGhetto find the uniq numbers in a one dimensional array\n")
+    printf("A sorted one dimensional array of the same input format and direction will be returned\n\n")
+    printf("$1=data array\n\n")
+    printf("c.edwards 03-22-07\n")
+    return(null)
+  }
+  
+  verbose=0
+  #get the uniq answers from one dimensional data
+  data=$1
+  dim=dim(data)
+  max=max(dim)
+  dim[where dim!=max]=0
+  struct={}  
+   
+  for(dir=1;dir<=3;dir+=1) {
+    if(dim[dir]==max) break;
+  }
+
+  if(dir==1) data=translate(data,x,z)
+  if(dir==2) data=translate(data,y,z)
+  
+  for(i=1;i<=max;i+=1) {
+    add_struct(struct,name=""+data[,,i])
+  }
+  
+  newdata=clone(format(0,format(data)),1,1,length(struct))
+  for(i=1;i<=length(struct);i+=1) {
+    newdata[,,i]=format(atof(get_struct_key(struct,i)),format(data))
+  }
+  
+  if(dir==1) newdata=translate(newdata,z,x)
+  if(dir==2) newdata=translate(newdata,z,y)
+
+  verbose=3
+  return(sort(newdata))
+
+}
+
+
+
+define weight_array() {
+
+if ($ARGC == 0) {
+	printf("make weighting function for use in thm.kfill\n")
+	printf(" \n")
+	printf("usage:	wt = weight_array(radius, power) \n")
+	printf(" radius in pixels\n")
+	printf(" power = 0 - linear weighting with distance\n")
+	printf(" power > 0 - weight = 1/(distance * power)\n")
+	printf(" \n")
+	return(0)
+}
+# p.christensen
+radius = $1
+power = $2
+
+nxy = int((radius * 2) + 1)
+center = radius + 1
+R = sqrt(radius^2. + radius^2.)
+w = create(nxy, nxy, 1, format=float)
+
+for(i=1; i<= nxy; i+=1) {
+	for(j=1; j<= nxy; j+=1) {
+		# compute distance - then weight by user-input power
+		dist = sqrt( (center - i) ^2. + (center - j) ^2. )
+
+		if(power == 0) {
+			# do linear case
+			w[i,j] = (radius - dist + 1.) / radius
+			if(w[i,j] < 0.) {
+				w[i,j] = 0.
+			}
+	
+		} else {
+			w[i,j] = 1./(dist^power )
+		}
+	}
+}
+
+# set center point to 1.
+w[center,center] = 1.
+return(w)
+}
+
+
+
+define k_phil(width,order,iterations) {
+
+  if ($ARGC == 0) {
+    printf("Fills the holes in pictures with iterpolated data\n\n")
+    printf("USE: b = k_phil(a)\n\n")
+    printf("options width, order, and iterations\n")
+    printf("width changes the size of the weighting kernel\n")
+    printf("order changes the dependence on r of the weighting kernel\n")
+    printf("iterations sets the number of iterations the program should run\n\n")
+    printf("example: b = k_phil(a,width=15,order=3,iterations=5)\n")
+    return(null)
+  }
+
+  pic=$1 #the picture ready to be fabricated for monetary gain
+
+  wth=6
+  ord=2
+  its=0
+
+  if(HasValue(width)) {
+    wth=width
+  }
+
+  if(HasValue(order)) {
+    ord=order
+  }
+
+  if(HasValue(iterations)) {
+    its=iterations
+  }
+
+  w=weight_array(wth,ord) # our weighting array
+
+  if(dim(pic)[2]>500) {
+    l=sum(pic,axis=x)
+    p_top=l[,:250]
+    l_dim=dim(l)
+    p_bot=l[,l_dim[2]-250:]
+    p_top=translate(p_top,from=y,to=y,flip=1)
+    p_top=250-minchan(p_top)+1
+    p_bot=l_dim[2]-250+minchan(p_bot)
+
+    top=pic[,:p_top]
+    bot=pic[,p_bot:]
+    pic=pic[,p_top+1:p_bot-1]
+  }
+
+  pic=byte(thm.kfill(pic,w,its))
+
+  if(dim(pic)[2]>500) {
+    pic=cat(top,pic,bot,axis=y)
+  }
+
+  return(pic)
+}
+
+
+
+
+define k_fill(width,order,iterations) {
+
+  verbose=0
+  if ($ARGC == 0) {
+    printf("Fills the holes in pictures with iterpolated data\n\n")
+    printf("USE: b = k_fill(a)\n\n")
+    printf("options width, order, and iterations\n")
+    printf("width changes the size of the weighting kernel\n")
+    printf("order changes the dependence on r of the weighting kernel\n")
+    printf("iterations sets the number of iterations the program should run\n\n")
+    printf("example: b = k_fill(a,width=15,order=3,iterations=5)\n")
+    return(null)
+  }
+
+  pic=$1 #the image
+
+  wth=6
+  ord=2
+  its=0
+
+  if(HasValue(width)) {
+    wth=width
+  }
+
+  if(HasValue(order)) {
+    ord=order
+  }
+
+  if(HasValue(iterations)) {
+    its=iterations
+  }
+
+  w=weight_array(wth,ord) # our weighting array
+
+  pic=byte(thm.kfill(pic,w,its))
+
+  return(pic)
+}
+
+define thmproc_find(id,batch) {
+
+  if ($ARGC == 0 && HasValue(id) == 0 && HasValue(batch) == 0) {
+    printf("thmproc_find() - Fri Jan  6 17:20:17 MST 2006\n\n")
+    printf("returns all internal urls to jobs run in thmproc\n")
+    printf("USE: thmproc_find(id,batch)\n\n")
+    printf("     thmproc_find(id=\"I01002002\")\n")
+    printf("     thmproc_find(batch=\"1314\")\n\n")
+    printf("this is an either/or kind of thing.\n\n")
+    printf("Requires the user to have database access and SELECT access on horus\n")
+    return(null)
+  }
+
+  verbose=0
+  if(HasValue(id)) {
+		args=syscall("themis_db_access --arglist")[,1]
+		list=syscall("mysql "+args+" -D horus -B -s -e 'select internal_url,status from cache_item where product_id = \""+id+"\";'")
+		
+    list=list[8:]
+    l = length(list)
+    for(i=1;i<=l;i+=1) {
+      printf(list[,i]+"\n")
+    }
+
+  } else if(HasValue(batch)) {
+		args=syscall("themis_db_access --arglist")[,1]
+		list=syscall("mysql "+args+" -D horus -B -s -e 'select ci.internal_url,ci.status from cache_item ci, job_component jc, batch_job bj where ci.cache_id = jc.cache_id and jc.job_id = bj.job_id and bj.batch_id = \""+batch+"\";'")
+
+    list=list[8:]
+    l = length(list)
+    for(i=1;i<=l;i+=1) {
+      printf(list[,i]+"\n")
+    }
+
+  }
+  verbose=3
+  return(list)
+}
+
+
+
+define mars_bin(nofile,null,polar,east) {
+
+if ($ARGC == 0) {
+	printf (" \n")
+	printf (" bin tes data \n")
+	printf (" $1 = upper lon \n")
+	printf (" $2 = lower lon \n")
+	printf (" $3 = upper lat \n")
+	printf (" $4 = lower lat \n")
+	printf (" $5 = resolution (pixels per degree) \n")
+	printf (" $6 = vanilla filename or vanilla data directory \n")
+	printf (" $7 = binned fields string if directory is specified (optional) \n")
+	printf (" $8 = select string if directory is specified (optional) \n")
+	printf (" nofile = 1; Use array instead of file for source data.\n")
+	return(0)
+
+}
+if(HasValue(east)==0) east=0
+
+
+if ($ARGC == 8) {
+
+system("vanilla -select '" + $8 + "' -fields 'longitude latitude " + $7 + "' " + $6 + " | tail -n +2 > temp1.txt")
+
+van=ascii(filename="temp1.txt", format=double)
+
+}
+
+if (HasValue(nofile)==0) {
+
+# If user supplies vanilla emissivity file
+
+if ($ARGC == 6) {
+van=ascii(filename=$6, format=float)
+
+}
+}
+
+if (HasValue(nofile)==1 && $ARGC == 6) {
+
+	van=$6
+
+}
+
+if ($ARGC == 3) {
+
+        resolution=$2
+        radius=(90-abs($1))*resolution
+        van=$3
+}
+
+
+# Get dimensions of the vanilla file
+
+vecs=dim(van)
+nlines=vecs[2,,]
+nsamples=vecs[1,,]-2
+
+if (HasValue(polar)==0) {
+
+        polar=0
+}
+
+if (polar == 0) {
+        # Get dimensions of lat and lon box
+
+        ulx=$1
+        lrx=$2
+        uly=$3
+        lry=$4
+        resolution=$5
+
+        # translate lat lon samples to data cube range
+
+        lon=int((van[1,,]-lrx)*resolution)+1
+        lat=int((van[2,,]-lry)*resolution)+1
+
+        # Figure out the size of the box
+
+        lon_range=int((ulx-lrx)*resolution)
+        lat_range=int((uly-lry)*resolution)
+}
+
+if (polar==1) {
+
+        # Get dimensions of the lat and lon box
+
+        lon_range=int(radius*2)
+        lat_range=int(radius*2)
+
+        # translate lat lon samples to data cube range (lat is y lon is x)
+
+        lon=int(radius+(sind(van[1])*(90-van[2])*resolution))+1
+        lat=int(radius-(cosd(van[1])*(90-van[2])*resolution))+1
+}
+
+lon [ where (lon == 0.) ] = -1
+lat [ where (lat == 0.) ] = -1
+
+# create number of obs array and data array
+
+num_obs=create(x=lon_range, y=lat_range, z=1, format=float, start=0, step=0)
+
+data_cube=create(x=lon_range, y=lat_range, z=nsamples, format=double, start=0, step=0)
+
+
+# Start looping through the vanilla data and adding to num_obs and data_cube arrays
+
+
+if (nsamples > 1) {
+
+	for (i=1; i<=nlines; i+=1) {
+
+		num_obs[lon[1,i,1],lat[1,i,1],1] = num_obs[lon[1,i,1],lat[1,i,1],1] + 1
+
+		data_cube[lon[1,i,1],lat[1,i,1],] = data_cube[lon[1,i,1],lat[1,i,1],] + translate(van[3:(nsamples+2),i,1],from=x, to=z)
+
+	}
+}
+
+if (nsamples == 1) {
+
+	for (i=1; i<=nlines; i+=1) {
+
+		num_obs[lon[1,i,1],lat[1,i,1],1] = num_obs[lon[1,i,1],lat[1,i,1],1] + 1
+
+		data_cube[lon[1,i,1],lat[1,i,1],] = data_cube[lon[1,i,1],lat[1,i,1],] + van[3,i,1]
+
+	}
+}
+
+# divide data_cube by number of observations for each sample
+
+data_cube=data_cube/num_obs
+
+if (polar ==0) {
+        # Flip each image to west longitude
+
+        data_cube=translate(data_cube, from=x, to=x, flip=1)
+        num_obs=translate(num_obs, from=x, to=x, flip=1)
+
+        data_cube=translate(data_cube, from=y, to=y, flip=1)
+        num_obs=translate(num_obs, from=y, to=y, flip=1)
+}
+# create data output structure
+
+binout=struct(cube,nobs)
+
+binout.cube=data_cube
+binout.nobs=num_obs
+
+if(east!=0) {
+
+  binout.cube=translate(binout.cube[int(resolution*180+1):]//binout.cube[:int(resolution*180)],x,x,flip=1)
+  binout.nobs=translate(binout.nobs[int(resolution*180+1):]//binout.nobs[:int(resolution*180)],x,x,flip=1)
+}
+
+return(binout)
+
+
+
+# clean up if necessary
+
+if ($ARGC == 8) {
+system("rm temp1.txt")
+}
+
+}
+
+
+
+define map_trans() {
+
+if ($ARGC == 0) {
+	printf (" \n")
+	printf (" Translate image coordinates to map coordinates \n")
+	printf (" First pixel is x=0 y=0 \n")
+	printf (" $1 = image x \n")
+	printf (" $2 = image y \n")
+	printf (" $3 = image resolution (ppd) (optional, default=1)\n")
+	printf (" $4 = ulx (optional, default=180) \n")
+	printf (" $5 = uly (optional, default=90) \n")
+	return(0)
+
+}
+
+
+if ($ARGC == 2) {
+
+	ulx=float(180)
+	uly=float(90)
+	image_res=float(1)
+
+}
+
+if ($ARGC == 3) {
+
+	ulx=float(180)
+	uly=float(90)
+	image_res=float($3)
+
+}
+
+
+if ($ARGC == 5) {
+
+	ulx=float($4)
+	uly=float($5)
+	image_res=float($3)
+
+}
+
+image_x=float($1)
+image_y=float($2)
+
+lower_x=ulx-((image_x+1)/image_res)
+upper_x=ulx-((image_x)/image_res)
+
+lower_y=uly-((image_y+1)/image_res)
+upper_y=uly-((image_y)/image_res)
+
+if (upper_x <= 0) {
+
+	upper_x=360+upper_x
+	lower_x=360+lower_x
+
+}
+
+printf ("Latitude is " + lower_y + " to " + upper_y + " \n")
+printf ("Longitude is " + lower_x + " to " + upper_x + " \n")
+return(0)
+
+}
+
+
+
+define geo_trans() {
+
+if ($ARGC == 0) {
+        printf (" \n")
+        printf (" Translate map coordinates to image coordinates \n")
+        printf (" First pixel is x=1 y=1 \n")
+        printf (" $1 = latitude \n")
+        printf (" $2 = longitude \n")
+        printf (" $3 = image resolution (ppd)\n")
+        printf (" $4 = center longitude of image (optional, default is 0)\n")
+        return(0)
+
+}
+
+
+lat=$1
+lon=$2
+image_res=float($3)
+
+if ($ARGC == 3) {
+
+        center=0
+}
+
+if ($ARGC == 4) {
+
+        center=$4
+}
+
+image_y=int((90-lat)*image_res+1)
+image_x=int((center+180-lon)*image_res)+1
+
+if ((center+180-lon) <= 0) {
+
+        image_x=int(360*image_res)+image_x-1
+}
+
+return(image_x//image_y)
+
+}
+
+
+
+
+define p_surf() {
+	
+	if ($ARGC == 0) {
+		printf (" \n")
+	  printf (" Get surface pressure from elevation and sclk time\n")
+	  printf (" $1 = elevation (km) \n")
+	  printf (" $2 = sclk time \n")
+	  return(0)
+	}
+	
+	# This is borrowed by code originally written by Hugh Kieffer in f77, modified by
+	# J. Pearl, and the modified by M. Kaelbarer and adapted to f90.
+	# J. Pearl used a scale factor of 0.8979 for TES surface pressure to stabilize
+	# PT retrievals.  This is not done here.
+	
+	# Get Julian Date
+	date=4239.5 + (double($2)/86400)
+	
+	# Set length of Martian year
+	marsyear=686.98
+	
+	# Set Julian date for start of curve
+	start_julian=3395.49
+	
+	# Find fraction of year
+	frac=((date-start_julian)%marsyear)/marsyear
+	
+	# Set amplitude and phase of harmonic terms for normalized relative pressure from
+	# both Viking landing sites (years 1-2 for VL-1 and year 1 for VL-2).  This uses data
+	# from Tillman et al., JGR 98 p. 10,973
+	amp=create(x=5,y=1,z=1,start=0,step=0,format=float)
+	phase=create(x=5,y=1,z=1,start=0,step=0,format=float)
+	
+	amp[1,,]=0.706
+	amp[2,,]=0.581
+	amp[3,,]=0.108
+	amp[4,,]=0.061
+	amp[5,,]=0.016
+	
+	phase[1,,]=92.27
+	phase[2,,]=-130.80
+	phase[3,,]=-69.76
+	phase[4,,]=-10.00
+	phase[5,,]=49.55
+	
+	# Find pressure difference from mean
+	p_relative= amp * sin(((1//2//3//4//5)*2*3.1415927) * clone(frac,x=5) + phase * 3.1415927/180)
+	p_relative=sum(p_relative,axis=x)
+	
+	
+	# Find absolute pressure using 7.94 mbar as mean surface pressure at VL-1 elevation (-1.5 km).
+	# Use scale height of 10 km
+	scale_height=-($1+1.5)/10.
+	p_surf=(7.94 + p_relative) * exp(scale_height)
+	return(p_surf)
+	
+}
+	
+
+
+define read_vm(axis,style) {
+
+#fixed to get rid of the syscall to less (stupid)! c.edwards 3-24-11
+
+if ($ARGC == 0) {
+	printf (" \n")
+	printf (" Read vm format text file. \n")
+	printf (" $1 = filename \n")
+	printf (" $2 = 0 - No xaxis (optional) \n")	
+	printf (" axis = direction to store spectra (\"y\" or Default=\"x\" \n")
+	printf (" style = Name of sample name in structure (1=\"label\" (Default) or 2=\"sample_name\"\n")
+	printf (" \n")
+	return(0)
+
+}
+
+filename=$1
+direction="x"
+label_style=1
+if(HasValue(axis)) direction=axis
+if(HasValue(style)) label_style=style
+
+nvecs=atoi(read_lines(filename)[7:,1])
+
+out=struct(data,label,xaxis)
+
+if ($ARGC == 1) {
+
+	out.label=read_lines(filename)[,3:(1+nvecs)]
+	out.data=ascii(filename,format=float,row=(nvecs+1))
+	out.xaxis=translate(out.data[1,,],from=y,to=z)
+	out.data=translate(out.data[2:(nvecs),,],from=y,to=z)
+}
+
+
+if ($ARGC == 2) {
+
+	out.label=read_lines(filename)[,2:(1+nvecs)]
+	out.data=ascii(filename,format=float,row=(nvecs+1))
+	out.xaxis=0
+	out.data=translate(out.data[1:(nvecs),,],from=y,to=z)
+}
+
+if(direction=="y"){
+	out.data=translate(out.data,from=x,to=y)
+}
+if(label_style==2) {
+	out.sample_name=remove_struct(out,"label")
+}
+
+
+return(out)
+
+}
+
+
+define write_vm() {
+
+if ($ARGC == 0) {
+	printf (" \n")
+	printf (" Write standard spectral structure to a vm text file. \n")
+	printf (" $1 = structure \n")
+	printf (" $2 = filename \n")
+	printf (" \n")
+	return(0)
+
+}
+
+out=$1
+
+if (dim(out.data)[2,,]>1 && dim(out.xaxis)[3,,]!=1) {
+
+        out.data=translate(out.data,from=x,to=y)
+}
+
+nvecs=dim(out.data)[1,,]
+verbose=0
+if (HasValue(out.sample_name)==1 && HasValue(out.label)==0) {
+
+        out.label=out.sample_name
+}
+verbose=2
+
+if (dim(out.xaxis)[3,,] > 1) {
+
+	nvecs=nvecs+1
+	out.label=cat("xscale",out.label,axis=y)
+}
+
+out.label=cat("label "+nvecs+"",out.label,axis=y)
+
+write(out.label,"temp_label",type=ascii,force=1)
+
+if (dim(out.xaxis)[3,,] > 1) {
+
+	out.data=translate(out.xaxis,from=z,to=y)//translate(out.data,from=z,to=y)
+}
+
+write(out.data,"temp_data",type=ascii,force=1)
+syscall("cat temp_label temp_data > "+$2+"")
+syscall("rm temp_label temp_data")
+return(0)
+
+}
+
+
+
+define make_mtesx() {
+# make correct Mini-TES 
+# usage: mtx = make_mtesx()  [-options]
+
+# p. christensen after TES II make_xt2  6/22/02
+# spectra compared to ASUlib quartz and dolomite on 4/9/03 to verify xaxis position
+#  there had been some confusion and uncertainty about 1st point in spectrum returned
+#  from FFT being DC term, but the algorithm below returns an xaxis that matches the ASU 
+#  library.  PRC
+
+npts = 512
+
+start_pt = 35
+end_pt = 201
+
+# set wavenumber of first point downlinked (14 or 28 in PROM) #
+
+# set prime factor
+nprime = 1024;
+
+laser_wavelength = 0.978
+delta_x = (1./(nprime * laser_wavelength))*10000.
+#printf(" delta_x = %.2f\n", delta_x)
+
+mtx = create(npts, 1, 1, format=float)
+
+for(i=1; i<= npts; i+=1) {
+	# index (i) of 1 = DC term in FFT; index 2 = 9.9853 cm-1; etc
+	# index 1 = channel 0; etc
+	mtx[i] = float(i-1) * delta_x
+}
+
+# truncate after 4 decimal places 
+
+mtx = mtx * 10000.
+mtx = int(mtx)
+mtx = mtx/10000.
+
+mtx = translate(mtx,x,z)[,,start_pt:end_pt]
+return(mtx)
+
+}
+
+define make_tesx(scan_len) {
+# return tes 143-pt wavenumber values (or 286-pt) ("x-axis")
+# p. christensen 4/29/97 
+# double added prc 12/6/07
+
+# copied from make_xt2 without change
+# 4/19/07 p. christensen
+
+if(HasValue(scan_len)==0) {
+	scan_len = 1
+}
+if(scan_len == 2) {
+	# double scan
+	npts=286
+	first_pt=28;
+	# set prime factor to default (1344; Det. 2 & 5) */
+	nprime = 1344;
+	# tes resolution for 1344 pt fft
+	tes_res = 10.5808820/2.
+} else if(scan_len == 1) {
+	# single scan
+	npts=143
+	first_pt=14;
+	# set prime factor to default (1344; Det. 2 & 5) */
+	# nprime = 1344;
+	# tes resolution for 1344 pt fft
+	tes_res = 10.5808820
+} else {
+	# bad value of scan len
+	return("bad value of scan len")
+}
+
+xaxis=create(1,1,npts,start=tes_res*first_pt, step = tes_res, format=float)
+
+/* truncate after 4 decimal places -9/4/97 */
+xaxis=xaxis*10000
+xaxis=int(xaxis)
+xaxis=xaxis/10000.
+
+return(xaxis)
+
+}
+
+define make_lab1x() {
+#added $DV_EX support
+#Added $DV_SCRIPT_FILES support - 5-13-08
+#added instrument_parameters directory to $DV_SCRIPT_FILES 1-30-09
+
+a = read($DV_SCRIPT_FILES+"/instrument_parameters/lab1_xaxis.vicar")
+return(a)
+}
+
+define make_themisx() {
+# Make 10 point THEMIS wavenumber scale
+# modified from themisx; reverse order, put values in z not y
+# themisx in /u/bandfield/josh.dvrc:3634
+# p. christensen 4/19/07
+
+xthemis=create(1,1,10, format=float)
+
+xthemis[1,1,1]=675.3144
+xthemis[1,1,2]=796.4805
+xthemis[1,1,3]=850.8455
+xthemis[1,1,4]=909.8835
+xthemis[1,1,5]=983.6909
+xthemis[1,1,6]=1075.0894
+xthemis[1,1,7]=1174.8452
+xthemis[1,1,8]=1267.6153
+xthemis[1,1,9]=1477.8360
+# band 10 value made slightly different from band 9 for plotting convenience
+xthemis[1,1,10]=1477.85
+#xthemis[1,1,10]=1477.8360
+return(xthemis)
+}
+
+define lsubs() {
+
+if ($ARGC == 0) {
+        printf ("\n")
+        printf ("Give approximation of Lsubs given et\n")
+	return(0)
+}
+
+const=59340000.0
+et=$1
+pi=3.1415927
+scale=et/const*2*pi+2
+
+lsubs=(et+46090000)%const*360.0/const+sin(et*2*pi/const+0.4)*10.75+6*sin(-2*scale-0.3)/9.-pow(sin(scale)+1,4)/9-3*et/2000000000.0-8.75
+
+return(lsubs)
+}
+
+
+define deconstruct() {
+
+if ($ARGC == 0) {
+	printf (" \n")
+	printf (" Reduce an image into a single strip array: \n")
+	printf (" $1 = input image \n")
+	printf (" \n")
+	return(0)
+
+}
+
+
+cube=$1
+
+vecs=dim(cube)
+
+
+em=translate(cube[,1,],from=x, to=y)
+em=translate(em, from=z, to=x)
+
+count=2
+
+while (count <= vecs[2,,]) {
+
+	em_temp=translate(cube[,(count),],from=x, to=y)
+	em_temp=translate(em_temp,from=z, to=x)
+	em=cat(em,em_temp,y)
+	count=count+1
+}
+
+return(em)
+}
+
+
+
+define rm_quote() {
+if ($ARGC == 0) {
+	printf("Remove single or double quotes from an array of labels and replaces it with nothing\n")
+	printf(" usage: a = remove_quote(label_array)\n")
+	printf(" \n")
+	printf(" where:\n")
+	printf(" 	label_array is an array of labels (assumed to be in y-axis)\n")
+	printf("\np. christensen 11/24/2010\n")
+	return(0)
+}
+
+a = $1
+
+b=strsub(a,"\'","")
+b=strsub(b,"\"","")
+
+return(b)
+
+}
+
+
+
+define bs() {
+
+	#returns a backslash string nomatter what the input.
+	return(string(byte(92)))
+}
+
+
+define subset(data,x,y,z,struct) {
+
+	if($ARGC==0 && HasValue(data)==0) {
+		printf("\nReturn a subset of the data array\n\n")
+		printf("This function provides the user the ability to select multiple ranges\n")
+		printf("for each direction of the array.  See below for many examples\n\n")
+		printf("Usage:\n")
+		printf("\t$1 = input data as pass by reference\n")
+		printf("Or\n")
+		printf("\tdata = input data as pass by name\n")
+		printf("\tNote: this will not return data but modify the input variable\n\n")
+		printf("Options:\n")
+		printf("\t$2 = comma separated x,y,z ranges as a string (e.g. \"1//4,2:3,11:17//19\")\n")
+		printf("\nOr they can be specified individually\n")
+		printf("\tx = string of ranges in x as a string (e.g. \"1//2//4:8//11:\", default is none)\n")
+		printf("\ty = string of ranges in y as a string (e.g. \"1//2//4:8//11:\", default is none)\n")
+		printf("\tz = string of ranges in z as a string(e.g. \"1//2//4:8//11:\", default is none)\n")
+		printf("\nOr they can be specified individually as concatenated numbers in the x direction\n")
+		printf("\tx = string of ranges in x (e.g. 1//2//4//8//11, default is none)\n")
+		printf("\ty = string of ranges in y (e.g. 1//2//4//8//11, default is none)\n")
+		printf("\tz = string of ranges in z (e.g. 1//2//4//8//11, default is none)\n\n")
+		printf("\tstruct = return the full structure with how args were parsed\n\n")
+		printf("Examples:\n")
+		printf("\ta=create(100,100,100)\n\n")
+		printf("\t#In the below cases, we return the data as the variable \"out\"\n")
+		printf("\tout=subset(a,x=\"10//54//55\")\n")
+		printf("\tout=subset(a,x=\"10:15//54:64//55:65\")\n")
+		printf("\tout=subset(a,x=\":10//54//57//59//61:68//66//1//99:\",y=\"55:65\")\n")
+		printf("\tout=subset(a,x=\":10//54//57//59//61:68//66//1//99:\",y=\"55:65\",z=\"44\")\n\n")
+		printf("\tUsing the single argument option\n")
+		printf("\tout=subset(a,\":10//54//57//59//61:68//66//1//99:,55:65,44\")\n")
+		printf("\tout=subset(a,\",55:65//77,\")\n\n")
+		printf("\t#Here we use the second colon to specifiy every Nth pixel in an array\n")
+		printf("\tout=subset(a,x=\"10:27:3//57//59//42:52\")\n\n")
+		printf("\t#In this case we alter the input variable \"a\" and return nothing\n")
+		printf("\tsubset(data=a,x=\":10//54//57//59//61:68//66//1//99:\",y=\"55:65\",z=\"44\")\n\n")
+		printf("\t#It also works on text arrays\n")
+		printf("\ttext=text(10)\n")
+		printf("\ttext[,1]=\"Mary had a little lamb\"\n")
+		printf("\ttext[,2::3]=\"Who's fleece was white as snow\"\n")
+		printf("\tout=subset(text,x=\"1:4//12:17\",y=\"1//5:6//8//10\")\n\n")
+		printf("c.edwards 3/25/11\n\n")
+		return(null)
+	}
+
+	out={}
+	pass=1
+	if(HasValue(struct)==0) struct=0
+
+	if($ARGC==2 || ($ARGC==1 && HasValue(data))) {
+
+		if($ARGC==1) out.ranges=$1
+		if($ARGC==2) out.ranges=$2
+		out.ranges=strsub(out.ranges," ","")
+		if(strstr(out.ranges,",")!=0) { 
+			tmp=strsplit(out.ranges,delim=",")
+
+			if(length(tmp)>3) {
+				printf("Error: Too many ranges specified\n")
+				return(null)
+			}
+			tmp[where tmp==""]=","
+			if(length(tmp)>=1) x=tmp[,1]
+			if(length(tmp)>=2) y=tmp[,2]
+			if(length(tmp)>=3) z=tmp[,3]
+		} else {
+			x=out.ranges
+			y=","
+			z=","
+		}
+	} 
+
+	if(HasValue(data)==0) { 
+		pass=0
+		data=$1
+	}
+
+	#here we have to actually chang variable names because of some weird pass by name things....
+	if(HasValue(x)==0) {
+		xnew=","
+	} else {
+		xnew=x
+		if(isnum(xnew)) {
+			if(dim(xnew)[1]>1) {
+				tmp=xnew[1]
+				for(i=2;i<=dim(xnew)[1];i+=1) {
+					tmp=tmp+"//"+xnew[i]
+				}
+				xnew=tmp
+			} else {
+				xnew=""+xnew
+			}
+		}
+	}
+
+	if(HasValue(y)==0) {
+		ynew=","
+	} else {
+		ynew=y
+		if(isnum(ynew)) {
+			if(dim(ynew)[1]>1) {
+				tmp=ynew[1]
+				for(i=2;i<=dim(ynew)[1];i+=1) {
+					tmp=tmp+"//"+ynew[i]
+				}
+				ynew=tmp
+			} else {
+				ynew=""+ynew
+			}
+		}
+	}
+
+	if(HasValue(z)==0) {
+		znew=","
+	} else {
+		znew=z
+		if(isnum(znew)) {
+			if(dim(znew)[1]>1) {
+				tmp=znew[1]
+				for(i=2;i<=dim(znew)[1];i+=1) {
+					tmp=tmp+"//"+znew[i]
+				}
+				znew=tmp
+			} else {
+				znew=""+znew
+			}
+		}
+	}
+
+	xnew=strsub(xnew," ","")
+	ynew=strsub(ynew," ","")
+	znew=strsub(znew," ","")
+
+	#setup the output structure
+	xstruct={}
+	ystruct={}
+	zstruct={}
+
+	if(xnew!=",") { 
+		if(strstr(xnew,"//")!=0) {
+			#this case we have many ranges
+			xsplit=strsub(strsplit(xnew,delim="//"),"/","")
+
+			for(i=1;i<=length(xsplit);i+=1) {
+				if(strstr(xsplit[,i],":")!=0) {
+					#here we deal with ranges
+					add_struct(xstruct,strsplit(xsplit[,i],delim=":"),""+i)
+					if(xstruct[i][,1]=="") xstruct[i][,1]="1"
+					if(type(data)=="TEXT") {
+						if(xstruct[i][,2]=="") xstruct[i][,2]=""+length(data)
+					} else {
+						if(xstruct[i][,2]=="") xstruct[i][,2]=""+dim(data)[1]
+					}
+				} else {
+					#here we deal with indexes
+					text=text(1)
+					text[,1]=xsplit[,i]
+					add_struct(xstruct,text,""+i)
+				}
+			}
+		} else {
+			#this case we have only one range or index to deal with
+			xsplit=xnew
+
+			#check to see if it is a range or a single index
+			if(strstr(xsplit,":")!=0) {
+				#single range
+				add_struct(xstruct,strsplit(xsplit,delim=":"),"1")
+				if(xstruct[i][,1]=="") xstruct[i][,1]="1"
+				if(type(data)=="TEXT") {
+					if(xstruct[i][,2]=="") xstruct[i][,2]=""+length(data)
+				} else {
+					if(xstruct[i][,2]=="") xstruct[i][,2]=""+dim(data)[1]
+				}
+			} else {
+				#single index 
+				text=text(1)
+				text[,1]=xsplit
+				add_struct(xstruct,text,"1")
+			}
+		}
+
+		for(i=1;i<=length(xstruct);i+=1) {
+			if(i==1) {
+				#do the i=1 case
+				#check the buffer length as this defines what type we deal with
+				if(length(xstruct[i])==1) {
+					#this is the index operator
+					sub=eval(sprintf("data[%i,,]",atoi(xstruct[i])))
+				} else if(length(xstruct[i])==2){
+					#this is the range operator
+					sub=eval(sprintf("data[%s:%s,,]",xstruct[i][,1],xstruct[i][,2]))
+				} else if(length(xstruct[i])==3){
+					#this is the skip operator
+					sub=eval(sprintf("data[%s:%s:%s,,]",xstruct[i][,1],xstruct[i][,2],xstruct[i][,3]))
+				}
+			} else {
+				#do all the other cases
+				if(length(xstruct[i])==1) {
+					#this is the index operator
+					sub=cat(sub,eval(sprintf("data[%i,,]",atoi(xstruct[i]))),axis=X)
+				} else if(length(xstruct[i])==2){
+					#this is the range operator
+					sub=cat(sub,eval(sprintf("data[%s:%s,,]",xstruct[i][,1],xstruct[i][,2])),axis=X)
+				} else if(length(xstruct[i])==3){
+					#this is the skip operator
+					sub=cat(sub,eval(sprintf("data[%s:%s:%s,,]",xstruct[i][,1],xstruct[i][,2],xstruct[i][,3])),axis=X)
+				}
+			}
+		}
+		data=sub
+	}
+
+	if(ynew!=",") { 
+		#setup the output structure
+		if(strstr(ynew,"//")!=0) {
+			#this case we have many ranges
+			ysplit=strsub(strsplit(ynew,delim="//"),"/","")
+
+			for(j=1;j<=length(ysplit);j+=1) {
+				if(strstr(ysplit[,j],":")!=0) {
+					#here we deal with ranges
+					add_struct(ystruct,strsplit(ysplit[,j],delim=":"),""+j)
+					if(ystruct[j][,1]=="") ystruct[j][,1]="1"
+					if(type(data)=="TEXT") {
+						if(ystruct[j][,2]=="") ystruct[j][,2]=""+length(data)
+					} else {
+						if(ystruct[j][,2]=="") ystruct[j][,2]=""+dim(data)[2]
+					}
+				} else {
+					#here we deal with indexes
+					text=text(1)
+					text[,1]=ysplit[,j]
+					add_struct(ystruct,text,""+j)
+				}
+			}
+		} else {
+			#this case we have only one range or index to deal with
+			ysplit=ynew
+
+			#check to see if it is a range or a single index
+			if(strstr(ysplit,":")!=0) {
+				#single range
+				add_struct(ystruct,strsplit(ysplit,delim=":"),"1")
+				if(ystruct[j][,1]=="") ystruct[j][,1]="1"
+				if(type(data)=="TEXT") {
+					if(ystruct[j][,2]=="") ystruct[j][,2]=""+length(data)
+				} else {
+					if(ystruct[j][,2]=="") ystruct[j][,2]=""+dim(data)[2]
+				}
+			} else {
+				#single index 
+				text=text(1)
+				text[,1]=ysplit
+				add_struct(ystruct,text,"1")
+			}
+		}
+
+		for(j=1;j<=length(ystruct);j+=1) {
+			if(j==1) {
+				#do the i=1 case
+				#check the buffer length as this defines what type we deal with
+				if(length(ystruct[j])==1) {
+					#this is the index operator
+					sub=eval(sprintf("data[,%i,]",atoi(ystruct[j])))
+				} else if(length(ystruct[j])==2){
+					#this is the range operator
+					sub=eval(sprintf("data[,%s:%s,]",ystruct[j][,1],ystruct[j][,2]))
+				} else if(length(ystruct[j])==3){
+					#this is the skip operator
+					sub=eval(sprintf("data[,%s:%s:%s,]",ystruct[j][,1],ystruct[j][,2],ystruct[j][,3]))
+				}
+			} else {
+				#do all the other cases
+				if(length(ystruct[j])==1) {
+					#this is the index operator
+					sub=cat(sub,eval(sprintf("data[,%i,]",atoi(ystruct[j]))),axis=Y)
+				} else if(length(ystruct[j])==2){
+					#this is the range operator
+					sub=cat(sub,eval(sprintf("data[,%s:%s,]",ystruct[j][,1],ystruct[j][,2])),axis=Y)
+				} else if(length(ystruct[j])==3){
+					#this is the skip operator
+					sub=cat(sub,eval(sprintf("data[,%s:%s:%s,]",ystruct[j][,1],ystruct[j][,2],ystruct[j][,3])),axis=Y)
+				}
+			}
+		}
+		data=sub
+	}
+
+	if(znew!=",") { 
+		#setup the output structure
+		if(strstr(znew,"//")!=0) {
+			#this case we have many ranges
+			zsplit=strsub(strsplit(znew,delim="//"),"/","")
+
+			for(k=1;k<=length(zsplit);k+=1) {
+				if(strstr(zsplit[,k],":")!=0) {
+					#here we deal with ranges
+					add_struct(zstruct,strsplit(zsplit[,k],delim=":"),""+k)
+					if(zstruct[k][,1]=="") zstruct[k][,1]="1"
+
+					if(zstruct[k][,2]=="") zstruct[k][,2]=""+dim(data)[3]
+				} else {
+					#here we deal with indexes
+					text=text(1)
+					text[,1]=zsplit[,k]
+					add_struct(zstruct,text,""+k)
+				}
+			}
+		} else {
+			#this case we have only one range or index to deal with
+			zsplit=znew
+
+			#check to see if it is a range or a single index
+			if(strstr(zsplit,":")!=0) {
+				#single range
+				add_struct(zstruct,strsplit(zsplit,delim=":"),"1")
+				if(zstruct[k][,1]=="") zstruct[k][,1]="1"
+				if(zstruct[k][,2]=="") zstruct[k][,2]=""+dim(data)[3]
+			} else {
+				#single index 
+				text=text(1)
+				text[,1]=zsplit
+				add_struct(zstruct,text,"1")
+			}
+		}
+
+		for(k=1;k<=length(zstruct);k+=1) {
+			if(k==1) {
+				#do the i=1 case
+				#check the buffer length as this defines what type we deal with
+				if(length(zstruct[k])==1) {
+					#this is the index operator
+					sub=eval(sprintf("data[,,%i]",atoi(zstruct[k])))
+				} else if(length(zstruct[k])==2){
+					#this is the range operator
+					sub=eval(sprintf("data[,,%s:%s]",zstruct[k][,1],zstruct[k][,2]))
+				} else if(length(zstruct[k])==3){
+					#this is the skip operator
+					sub=eval(sprintf("data[,,%s:%s:%s]",zstruct[k][,1],zstruct[k][,2],zstruct[k][,3]))
+				}
+			} else {
+				#do all the other cases
+				if(length(zstruct[k])==1) {
+					#this is the index operator
+					sub=cat(sub,eval(sprintf("data[,,%i]",atoi(zstruct[k]))),axis=Z)
+				} else if(length(zstruct[k])==2){
+					#this is the range operator
+					sub=cat(sub,eval(sprintf("data[,,%s:%s]",zstruct[k][,1],zstruct[k][,2])),axis=Z)
+				} else if(length(zstruct[k])==3){
+					#this is the skip operator
+					sub=cat(sub,eval(sprintf("data[,,%s:%s:%s]",zstruct[k][,1],zstruct[k][,2],zstruct[k][,3])),axis=Z)
+				}
+			}
+		}
+		data=sub
+	}
+
+	if(struct==1) {
+		if(pass==0)	out.data=data
+		out.x=xnew
+		out.xstruct=xstruct
+		out.y=ynew
+		out.ystruct=ystruct
+		out.z=znew
+		out.zstruct=zstruct
+		return(out)
+	} else {
+		if(pass==0) return(data)
+	}
+}
+
+
+
+define trim_whitespace(leading,trailing) {
+  
+  if($ARGC==0) {
+    printf("\nTrim the leading/trailing whitespace of a STRING/TEXT\n\n")
+    printf("$1 = data\n")
+    printf("leading = trim leading whitespace (Default=1)\n")
+    printf("trailing = trim trailing whitespace (Default=1)\n\n")
+    printf("c.edwards\n\n")
+    return(null)
+  }
+
+  data=$1
+
+  if(HasValue(leading)==0) leading=1
+  if(HasValue(trailing)==0) trailing=1
+
+  if(type(data)=="STRING") {
+    length=1
+  } else if(type(data)=="TEXT") {
+    length=length(data)
+  } else {
+    printf("Only data of type STRING or STRUCT\n")
+    printf("are supported\n")
+    return(null)
+  }
+
+  for(j=1;j<=length;j+=1) {
+    start=1
+    if(leading==1) {
+      while(data[start,j]==" " && start<=length(data[,j])) {
+        start+=1
+      }
+    }
+
+     end=length(data[,j])
+     if(trailing==1) {
+      while(data[end,j]==" " && end>0) {
+        end-=1
+      }
+    }
+    
+    data[,j]=data[start:end,j]
+  }
+  return(data)
+}
+
+
+define azimuth() {
+
+  if ($ARGC == 0) {
+    printf ("\n")
+    printf ("Give approximation of direction from target to source\n")
+    printf ("$1 = target lon\n")
+    printf ("$2 = target lat\n")
+    printf ("$3 = source lon\n")
+    printf ("$4 = source lat\n")
+    return(0)
+  }
+  
+  pi=3.1415927
+  
+  lon1 = $1*pi/180
+  lat1 = $2*pi/180
+  lon2 = $3*pi/180
+  lat2 = $4*pi/180
+  
+  az1 = sin(lon2-lon1)*cos(lat2)
+  az2 = cos(lat1)*sin(lat2)-sin(lat1)*cos(lat2)*cos(lon2-lon1)
+  
+  azfinal = atan2(az1,az2)*180/pi
+  
+  azfinal [where (azfinal<0)]=azfinal+360
+  
+  return(azfinal)
+}

@@ -1,0 +1,118 @@
+#!/mars/common/bin/davinci -fq -v0
+source("/themis/lib/dav_lib/library/library_mars.dvrc")
+
+##
+##
+######################## thm.makedcs.isis3.dv #######################
+#
+# This script will make a dcs of a THEMIS ISIS3 image suitable for mosaicking
+#
+# usage: thm.makedcs.isis3.dv input_file output_file rdcs band1 band2 band3 [sample]
+#
+# Modification History
+# --------------------
+#
+# 2014-08-08 - C. Edwards made portable for distribution
+#
+##########################################################################
+##
+##
+
+opt={\
+from="",\
+to="",\
+bands="8//7//5",\
+rdcs=500,\
+sample="",\
+geotiff=0\
+};
+opt=getopt($ARGV,opt)
+
+if(opt.from=="" || opt.to=="") {
+  printf("\nPerform a DCS/RDCS stretch on a THEMIS ISIS3 cube with or without a sample\n\n")
+	printf("Arguments:\n")
+  printf("\tfrom = input THEMIS ISIS3 filename\n")
+  printf("\tto = output THEMIS ISIS3/PNG filename\n")
+  printf("\tbands = bands to stretch (8//7//5, default)\n")
+  printf("\trdcs = perform running DCS operation (1=yes, default; 0=no)\n")
+	printf("\tgeotiff = output a geotiff\n")
+  printf("\tsample = filename for sample dataset to stretch (useful for white noise remove data\n\n")
+	printf("Major Sub-Functions:\n")
+  printf("\tdcs(), rdcs()\n\n")
+	printf("References:\n")
+  printf("Edwards, C. S., K. J. Nowicki, P. R. Christensen, J. Hill, N. Gorelick,\n\t\tand K. Murray (2011), Mosaicking of global planetary image datasets: \n\t\t1. Techniques and data processing for Thermal Emission Imaging System\n\t\t(THEMIS) multi-spectral data, J. Geophys. Res., 116(E10), E10008,\n\t\tdoi:10.1029/2010JE003755.\n\n")
+  printf("Script Contributors:\n")
+  printf("C. Edwards, J. Hill, 8/11/14\n\n")
+  exit(0)
+}
+
+ignore=-32768
+printf("\nSelected options:\n")
+opt_usage(opt)
+printf("\n")
+
+insmod("isis3")
+if(lsmod("isis3")==0) {
+  printf("This script requires the davinci ISIS3 I/O module\n")
+  exit(0)
+}
+
+verbose=0
+#input and output
+opt.bands=atoi(strsub(strsplit(opt.bands,delim="//"),"/",""))
+opt.rdcs=atoi(opt.rdcs)
+  
+#get the bands from the input
+b1=opt.bands[,1]
+b2=opt.bands[,2]
+b3=opt.bands[,3]
+
+#load the data and extract the bands
+data = load_pds(opt.from)
+data.cube=cat(data.cube[,,b1],data.cube[,,b2],data.cube[,,b3],axis=z)
+
+#if we have a sample then fill out the values
+if(opt.sample!="") {
+	
+	sample=load_pds(opt.sample)
+	sample.cube=cat(sample.cube[,,b1],sample.cube[,,b2],sample.cube[,,b3],axis=z)
+	
+	if(opt.rdcs!=0) {
+		printf("\nPerforming RDCS with a sample: '%s' using '%s'\n", opt.from, opt.sample)
+		stretch=byte(rdcs(data=data.cube,ignore=ignore,ysize=opt.rdcs,verbose=1,sample=sample.cube))
+	} else {
+		printf("\nPerforming DCS with a sample: '%s' using '%s'\n", opt.from, opt.sample)
+		stretch=byte(dcs(data.cube,ignore=ignore,sample=sample.cube))
+	}
+
+	stretch[where min(sample.cube,axis=z)<-1 || min(data.cube,axis=z)<-1]=0
+	stretch[where stretch==0 && min(data.cube,axis=z)!=ignore]=1
+
+	#set the stretched data to the cube data
+	data.cube=stretch
+} else {
+		
+	if(opt.rdcs!=0) {
+		printf("\nPerforming RDCS: '%s'\n", opt.from)
+		stretch=byte(rdcs(data=data.cube,ignore=ignore,ysize=500,verbose=1))
+	} else {
+		printf("\nPerforming DCS: '%s'\n", opt.from)
+		stretch=byte(dcs(data.cube,ignore=ignore))
+	}
+
+	stretch[where min(data.cube,axis=z)<-1]=0
+	stretch[where stretch==0 && min(data.cube,axis=z)!=ignore]=1
+
+	#set the stretched data to the cube data
+	data.cube=stretch
+}
+
+printf("Writing PNG output: %s\n",dirname(opt.to)+"/"+basename(opt.to,".cub")+".png")
+write(data.cube,dirname(opt.to)+"/"+basename(opt.to,".cub")+".png",png,force=1)
+
+printf("Writing ISIS3 output: %s\n",opt.to)
+write(data,opt.to,isis3,force=1)
+
+if(opt.geotiff==1) write_geotiff(read_geo(opt.to),dirname(opt.to)+"/"+basename(opt.to,".cub")+".tiff",force=1)
+
+exit(0);

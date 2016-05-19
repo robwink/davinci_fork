@@ -1,0 +1,45 @@
+aviris_science_version=1.00
+#This file contains all functions pertaining to AVIRIS science
+
+#In order to use load_aviris() you must also have gdal installed
+
+#load_aviris- c.edwards 4/25/13
+
+
+define load_aviris() {
+
+  if($ARGC==0) {
+    printf("Load a calibrated L1B orthorectified AVIRIS Radiance image as a Geo-Struct\n")
+    printf("This includes wavelength axis and other ancellary products.\n")
+		printf("Note: this function does not currently work properly for AVIRIS reflectance data\n\n")
+    printf("$1=filename\n")
+    printf("c.edwards 10/17/13\n")
+    return(null)
+  }
+
+  out=read_geo($1)
+	out.data[where out.data==-50]=-32768
+	out.ignore=-32768
+
+	dir=dirname($1)
+	base=strsplit($1,delim="_")
+	base=base[,1]//"_"//base[,2]
+	if(fexists(dir+"/"+base+".gain")) {
+		gain=ascii(dir+"/"+base+".gain",format=float)[1]
+		out.data=float(out.data)
+		out.data[where out.data!=out.ignore]=out.data/translate(gain[1],y,z)
+		out.anc.metadata.spectral_units="micro-watts/cm^2/nm/sr"
+	} 
+
+	if(fexists(dir+"/"+base+".spc")) {
+		out.xaxis=translate(ascii(dir+"/"+base+".spc",format=float)[1],y,z)
+		out.anc.metadata.xaxis=""
+
+		for(i=1;i<=dim(out.xaxis)[3];i+=1) {
+			out.anc.metadata.xaxis=cat(out.anc.metadata.xaxis,",",out.xaxis[,,i]+"",axis=x)
+		} 
+		out.anc.metadata.xaxis=out.anc.metadata.xaxis[2:]
+	}
+
+  return(out)
+}

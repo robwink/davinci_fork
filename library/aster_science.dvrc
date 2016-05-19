@@ -1,0 +1,534 @@
+aster_science_version=1.01
+#This file contains all functions pertatining to ASTER science
+#
+#In order to use load_aster() you must also have the aster4davinci.pl file
+#  in the script files folder, perl installed, and gdal with hdf4 support also
+#1.01 - update load_aster() deplaid_aster() to project and deal with projected data
+
+# load_aster - taken from msff.dvrc as it is now somewhat more portable 
+# deplaid_aster - used to clean up aster data 
+
+
+
+#########################################################################
+# Programmer: Dale Noss                            Last Modified: 3/5/09
+#
+# Davinci function template to load ASTER imagery. This function uses 
+# gdalinfo and gdal_translate to parse ASTER HDFs and extract data bands.
+# The bands are written into the $TMPDIR directory as 8-bit or 16-bit
+# unsigned PGM files. In addition, the complete output from gdalinfo is
+# written to a text file in $TMPDIR/hdr.txt. The GDAL utilities are called
+# from a perl script /themis/bin/aster4davinci.pl
+#
+#
+# C. Edwards - 6-24-10 
+# Modified to include the consolidate option to shrink and process the data structure
+# into a more useable format.  
+#
+# C. Edwards 9-7-10
+#	Modified to have default of 1 for convert to floating point and consolidate
+# Fixed the script for 09T TIR files
+# 
+#########################################################################
+
+define load_aster(consolidate,geo) {
+
+	if($ARGC == 0) { 
+		printf(" Load ASTER HDF images: \n");
+		printf(" $1 = HDF filename, Required\n");
+		printf(" $2 = Boolean to convert bands to floating point values, like radiance. Optional\n");
+		printf("      0 -> leave as integer, 1 -> convert to floating point.\n");
+		printf(" $3 = Override default path to gdal utilities. Optional\n");
+		printf(" consolidate = conslidate all available bands of the same sizes into a single data cube (Default = 1)\n")
+		printf(" geo = reproject the data to north up using gdalwarp (Default = 0)\n")
+    
+		return(0);
+	} 
+
+	verbose=0
+	# Working directory in which to store bands and hdr text
+	dest = " -d "+$TMPDIR+"/ ";
+	gdal = " -gdal "+$DV_GDAL_PATH;
+	
+	filename = $1; 
+		
+	if($ARGC > 1) {
+		float = $2; 
+	} else {
+		float = 1;
+	}
+	
+	if($ARGC > 2) { # User has specified an alternative gdal path
+		gdal = " -gdal "+$3;
+	}
+	
+	if(HasValue(consolidate)==0) consolidate=1
+	if(HasValue(geo)==0) geo=0
+	
+	# Call gdal utilities to extract data bands and parse HDF header
+	if(fexists(filename)) {   
+	
+		if(system($DV_SCRIPT_FILES + "/aster4davinci.pl.script -s " +filename+dest+gdal+ " > " + $TMPDIR + "/hdr.txt") != 0) {
+			printf("Failed HDF data extraction. Exiting...\n");
+			return(1);
+		}
+	
+	# Decomment when debugging locally 
+	#	if(system("/themis/bin" + "/aster4davinci.pl.script -s " +filename+dest+gdal+ " > " + $TMPDIR + "/hdr.txt") != 0) {
+	#		printf("Failed HDF data extraction. Exiting...\n");
+	#		return(1);
+	#	}
+	
+	} else {
+	
+	   printf("File '"+filename+"' not found. Exiting...\n");
+	   return(1);
+	}
+	
+	info = load_vanilla($TMPDIR+"/hdr.txt", delim="\t");
+	
+	names  = info[1];
+	values = info[2];
+	
+	lines  = length(names)
+	
+	# Create struct to be returned later.
+	aster = {};
+	
+  bands=text(0)
+	# Transfer all name/value pairs to the structure
+	for(i = 1; i <= lines; i++) {
+	  add_struct(aster, name=names[,i], value=values[,i]);
+    if(cat(names[:4,i],names[length(names[,i])-3:,i],axis=x)=="bandpath") {
+      bands=cat(bands,names[,i],axis=y)
+    }  
+	}
+	
+	# Create data structure
+	data = {};
+  proj = {};
+
+	if(aster.short_name == "AST_07") { # Surface Reflectance
+    for(i=1;i<=length(bands);i+=1) {
+      if(geo==1) {
+        file=eval(sprintf("aster.%s",bands[,i]))
+        resolution=90
+ 				if(atoi(basename(bands[5:,i],"_path"))<10) resolution=30
+ 				if(atoi(basename(bands[5:,i],"_path"))<4) resolution=15
+        geometa=read_geometa(file)
+        sproj=proj_geo(file,geometa.anc.wkt,resolution=resolution,ignore=0)
+        add_struct(data,name=bands[:length(bands[,i])-5,i],value=remove_struct(sproj,"data"))
+        add_struct(proj,name=bands[:length(bands[,i])-5,i],value=sproj)
+      } else {
+       add_struct(data,name=bands[:length(bands[,i])-5,i],value=load(eval(sprintf("aster.%s",bands[,i]))))
+      }
+		}
+	
+		if(float == 1) {
+	
+			if(strstr(aster.param_name, "VNIR") > 0) {
+				data.band1  = eval(aster.scale_factor_1)  * float(data.band1);
+				data.band2  = eval(aster.scale_factor_2)  * float(data.band2);
+				data.band3N = eval(aster.scale_factor_3N) * float(data.band3N);
+	
+			} else if(strstr(aster.param_name, "SWIR") > 0) {
+				data.band4  = eval(aster.scale_factor_4)  * float(data.band4); 
+				data.band5  = eval(aster.scale_factor_5)  * float(data.band5);
+				data.band6  = eval(aster.scale_factor_6)  * float(data.band6);
+				data.band7  = eval(aster.scale_factor_7)  * float(data.band7);
+				data.band8  = eval(aster.scale_factor_8)  * float(data.band8);
+				data.band9  = eval(aster.scale_factor_9)  * float(data.band9);
+			}
+		}
+	} else if (aster.short_name == "AST_05") { # Surface Emissivity
+     for(i=1;i<=length(bands);i+=1) {
+      if(geo==1) {
+        file=eval(sprintf("aster.%s",bands[,i]))
+        resolution=90
+ 				if(atoi(basename(bands[5:,i],"_path"))<10) resolution=30
+ 				if(atoi(basename(bands[5:,i],"_path"))<4) resolution=15
+        geometa=read_geometa(file)
+        sproj=proj_geo(file,geometa.anc.wkt,resolution=resolution,ignore=0)
+        add_struct(data,name=bands[:length(bands[,i])-5,i],value=remove_struct(sproj,"data"))
+        add_struct(proj,name=bands[:length(bands[,i])-5,i],value=sproj)
+      } else {
+       add_struct(data,name=bands[:length(bands[,i])-5,i],value=load(eval(sprintf("aster.%s",bands[,i]))))
+      }
+		}
+
+		if(float == 1) {
+			# ASTER Surface Emissivity AST05 Version 2.9
+			# This is the third release of this product and it should be considered a 
+			# Validated version. The five Emissivity values are dimensionless proportionality 
+			# factors. The scaling factor is 0.001. In converting image Data Numbers (DN) to 
+			# Emissivity there are no offsets, and the scaled values are obtained by multiplying 
+			# the image DN by the appropriate scaling factor (value=DN*scaling factor). 
+			# http://asterweb.jpl.nasa.gov/content/03_data/01_Data_Products/release_surface_emissivity_product.htm	
+	
+			if(HasValue(data.band10)) {
+				data.band10 = float(data.band10) / eval(aster.scale_factor_10);
+				data.band11 = float(data.band11) / eval(aster.scale_factor_11);
+				data.band12 = float(data.band12) / eval(aster.scale_factor_12);
+				data.band13 = float(data.band13) / eval(aster.scale_factor_13);
+				data.band14 = float(data.band14) / eval(aster.scale_factor_14);
+			}
+		}
+	} else if (aster.short_name == "AST_08") { # Surface Kinetic Temperature
+    if(geo==1) {
+      resolution=90
+      geometa=read_geometa(aster.bandSurfTemp_path)
+      proj=proj_geo(aster.bandSurfTemp_path,geometa.anc.wkt,resolution=resolution,ignore=0)
+      add_struct(data,name=surf_temp,value=remove_struct(proj,"data"))
+    } else {
+     	add_struct(data, name="surf_temp", value=load(aster.bandSurfTemp_path));		
+    }
+  	  
+	 	if(float == 1) {
+			# data_plane_description: "The temperature plane, plane 1, contains the Kelvin  
+			# surface kinetic temperatures for each pixel in the ASTER scene, scaled by 10."
+			# From HDF header itself
+			data.surf_temp = float(data.surf_temp) / eval(aster.scale_factor_10);
+		}
+	} else if (aster.short_name == "AST_09" || aster.short_name == "AST_09T" || aster.short_name == "AST_09XT") { # Surface Radiance
+	
+    for(i=1;i<=length(bands);i+=1) {
+      if(geo==1) {
+        file=eval(sprintf("aster.%s",bands[,i]))
+        resolution=90
+        if(atoi(basename(bands[5:,i],"_path"))<10) resolution=30
+        if(atoi(basename(bands[5:,i],"_path"))<4) resolution=15
+        geometa=read_geometa(file)
+        sproj=proj_geo(file,geometa.anc.wkt,resolution=resolution,ignore=0)
+        add_struct(data,name=bands[:length(bands[,i])-5,i],value=remove_struct(sproj,"data"))
+        add_struct(proj,name=bands[:length(bands[,i])-5,i],value=sproj)
+      } else {
+            add_struct(data,name=bands[:length(bands[,i])-5,i],value=load(eval(sprintf("aster.%s",bands[,i]))))
+       }
+	 }
+
+		if(float == 1) {
+	  # To convert from DN to Radiance at the Sensor, the unit conversion coefficients
+	  # (defined as radiance per 1 DN) are used. Spectral Radiance is expressed in unit 
+		# of W/(m2 sr m). The radiance can be obtained from DN values as follows:
+		#           Radiance at the Sensor = ( DN - 1) UCC   where, UCC is the Unit 
+		# Conversion Coefficient for each ASTER Channel in W/(m2 sr m)/DN. For Channel 1 
+		# UCC values are 0.676 for high gain, 1.688 for normal gain and 2.25 for low gain
+		# (Abrams and Hook 2001).
+	
+			if(HasValue(data.band1)) {
+				data.band1  = eval(aster.scale_factor_1)  * float(data.band1 - 1);
+				data.band2  = eval(aster.scale_factor_2)  * float(data.band2 - 1);
+				data.band3N = eval(aster.scale_factor_3N) * float(data.band3N - 1);
+			}
+	
+			if(HasValue(data.band4)) {
+				data.band4  = eval(aster.scale_factor_4)  * float(data.band4 - 1);
+				data.band5  = eval(aster.scale_factor_5)  * float(data.band5 - 1);
+				data.band6  = eval(aster.scale_factor_6)  * float(data.band6 - 1);
+				data.band7  = eval(aster.scale_factor_7)  * float(data.band7 - 1);
+				data.band8  = eval(aster.scale_factor_8)  * float(data.band8 - 1);
+				data.band9  = eval(aster.scale_factor_9)  * float(data.band9 - 1);
+			}
+
+			if(HasValue(data.band10)) {
+				data.band10 = eval(aster.scale_factor_10) * float(data.band10 - 1);
+				data.band11 = eval(aster.scale_factor_11) * float(data.band11 - 1);
+				data.band12 = eval(aster.scale_factor_12) * float(data.band12 - 1);
+				data.band13 = eval(aster.scale_factor_13) * float(data.band13 - 1);
+				data.band14 = eval(aster.scale_factor_14) * float(data.band14 - 1);
+			}
+
+		}
+	} else if (aster.short_name == "ASTL1B") {  # Level 1-B data
+    for(i=1;i<=length(bands);i+=1) {
+
+      if(geo==1) {
+        file=eval(sprintf("aster.%s",bands[,i]))
+        resolution=90
+        if(atoi(basename(bands[5:,i],"_path"))<10) resolution=30
+        if(atoi(basename(bands[5:,i],"_path"))<4) resolution=15
+        geometa=read_geometa(file)
+        sproj=proj_geo(file,geometa.anc.wkt,resolution=resolution,ignore=0)
+        add_struct(data,name=bands[:length(bands[,i])-5,i],value=remove_struct(sproj,"data"))
+        add_struct(proj,name=bands[:length(bands[,i])-5,i],value=sproj)
+      } else {
+       add_struct(data,name=bands[:length(bands[,i])-5,i],value=load(eval(sprintf("aster.%s",bands[,i]))))
+      }
+		}	  
+	  
+	  if(float == 1) { # Convert to radiance units (watts/meter^2/steradian/meter)
+			# radiance = (DN - 1) * Unit Conversion Coefficient. 
+			# From the ASTER User Handbook
+	
+			if(HasValue(data.band1)) {
+				data.band1  = eval(aster.band1_corr_coeff) * float(data.band1 - 1);
+				data.band2  = eval(aster.band2_corr_coeff) * float(data.band2 - 1);
+			}  
+
+			if(HasValue(data.band3N)) {
+				data.band3N = eval(aster.band3n_corr_coeff) * float(data.band3N - 1);
+            }
+
+			if(HasValue(data.band3B)) {
+				data.band3B = eval(aster.band3b_corr_coeff) * float(data.band3B - 1);
+            }
+	
+			if(HasValue(data.band4)) {
+				data.band4  = eval(aster.band4_corr_coeff) * float(data.band4 - 1);
+				data.band5  = eval(aster.band5_corr_coeff) * float(data.band5 - 1);
+				data.band6  = eval(aster.band6_corr_coeff) * float(data.band6 - 1);
+				data.band7  = eval(aster.band7_corr_coeff) * float(data.band7 - 1);
+				data.band8  = eval(aster.band8_corr_coeff) * float(data.band8 - 1);
+				data.band9  = eval(aster.band9_corr_coeff) * float(data.band9 - 1);
+			}
+	
+			if(HasValue(data.band10)) {
+				data.band10 = eval(aster.band10_corr_coeff) * float(data.band10 - 1);
+				data.band11 = eval(aster.band11_corr_coeff) * float(data.band11 - 1);
+				data.band12 = eval(aster.band12_corr_coeff) * float(data.band12 - 1);
+				data.band13 = eval(aster.band13_corr_coeff) * float(data.band13 - 1);
+				data.band14 = eval(aster.band14_corr_coeff) * float(data.band14 - 1);
+			}
+		}
+	}
+	
+	verbose = 1;
+	
+	if(consolidate==0) {  
+		aster.data = data
+    if(geo==1) aster.proj=proj
+	} else {
+	
+		data2={}
+		if(HasValue(get_struct(data,"band1"))) {
+			data2.vnir=cat(data.band1,data.band2,data.band3N,axis=z)
+			data2.vnir3B=data.band3B
+		}
+		if(HasValue(get_struct(data,"band4"))) {
+			data2.swir=cat(data.band4,data.band5,data.band6,data.band7,data.band8,data.band9,axis=z)
+	
+		}
+		if(HasValue(get_struct(data,"band10"))) {
+			data2.ir=cat(data.band10,data.band11,data.band12,data.band13,data.band14,axis=z)
+		}
+		
+		if(HasValue(get_struct(data,"surf_temp"))) {
+			data2.surf_temp=data.surf_temp
+		}
+	
+		if(float==1) {
+			if(HasValue(get_struct(data,"band1"))) {
+				data2.vnir[where data2.vnir <= 0]=-32768
+				data2.vnir3B[where data2.vnir3B <= 0]=-32768
+			}
+			if(HasValue(get_struct(data,"band4"))) {
+				data2.swir[where data2.swir <= 0]=-32768
+			}
+			if(HasValue(get_struct(data,"band10"))) {
+				data2.ir[where data2.ir <= 0]=-32768
+			}
+			if(HasValue(get_struct(data,"surf_temp"))){
+				data2.surf_temp[where data2.surf_temp<=min(data2.surf_temp)]=-32768
+			}
+		}
+	
+		data=data2
+	
+		keys=get_struct_key(aster)
+		path=text(0)
+		corr_coeff=text(0)
+		offset=text(0)
+		scale_factor=text(0)
+		bandlist=text(0)
+		scale_factor_flag=0
+		band_flag=0
+    utm_zone_flag=0
+    proj_param_flat=0
+    utm_zone=text(0)
+    proj_param=text(0)
+			
+		for(i=1;i<=length(keys);i+=1){
+			if(issubstring(keys[,i],"offset")){
+				offset=cat(offset,aster[i],axis=y)
+				band_flag=1
+			}
+			if(issubstring(keys[,i],"coeff")){
+				corr_coeff=cat(corr_coeff,aster[i],axis=y)
+				band_flag=1
+			}
+			if(issubstring(keys[,i],"scale_factor")){
+				scale_factor=cat(scale_factor,aster[i],axis=y)
+				scale_factor_flag=1
+			}
+			if(issubstring(keys[,i],"path")) {
+				bandlist=cat(bandlist,basename(keys[,i],"_path"),axis=y)
+				path=cat(path,aster[i],axis=y)
+				band_flag=1
+			}
+			if(issubstring(keys[,i],"utm_zone")) {
+				utm_zone=cat(utm_zone,aster[i],axis=y)
+			  utm_zone_flag=1
+			}
+			if(issubstring(keys[,i],"proj_param")) {
+				proj_param=cat(proj_param,aster[i],axis=y)
+				proj_param_flag=1
+			}
+			if(issubstring(keys[,i],"angle") || issubstring(keys[,i],"lat") || issubstring(keys[,i],"lon") || issubstring(keys[,i],"solar") || issubstring(keys[,i],"scene_cloud") || issubstring(keys[,i],"line") || issubstring(keys[,i],"pixel") || issubstring(keys[,i],"number")) {
+				aster[i]=atod(aster[i])
+			}
+		}
+		
+		#remove the scale_factor elements from the output structure
+		if(scale_factor_flag==1) {
+			scale_keys=grep(keys,"scale_factor.*")
+			for(i=1;i<=length(scale_keys);i+=1) {
+				remove_struct(aster,scale_keys[,i])
+			}
+		}
+
+		#remove the band elements from the output strucutre
+		if(band_flag==1) { 
+			band_keys=grep(keys,"band.*\_")
+			for(i=1;i<=length(band_keys);i+=1) {
+				remove_struct(aster,band_keys[,i])
+			}
+		}
+
+  	#remove the utm elements from the output strucutre
+		if(utm_zone_flag==1) { 
+			utm_zone_keys=grep(keys,"utm_zone.*\_")
+			for(i=1;i<=length(utm_zone_keys);i+=1) {
+				remove_struct(aster,utm_zone_keys[,i])
+			}
+		}
+
+  	#remove the proj_para elements from the output strucutre
+		if(proj_param_flag==1) { 
+			proj_param_keys=grep(keys,"proj_param.*\_")
+			for(i=1;i<=length(proj_param_keys);i+=1) {
+				remove_struct(aster,proj_param_keys[,i])
+			}
+		}
+	
+		aster2={}
+		aster2.anc={}
+		aster2.anc=aster
+
+		if(length(offset)!=0) {
+			aster2.anc.offset=atod(offset)
+		}
+		if(length(corr_coeff)!=0) {
+			aster2.anc.corr_coeff=atod(corr_coeff)
+		}
+		if(length(scale_factor)!=0) {
+			aster2.anc.scale_factor=atod(scale_factor)
+		}
+		if(length(utm_zone)!=0) {
+			aster2.anc.utm_zone=utm_zone
+		}
+		if(length(proj_param)!=0) {
+			aster2.anc.proj_param=proj_param
+		}
+    
+    #fake the bounds for jmars()
+    if(geo==1) {
+      aster2.proj=proj
+      aster2.ul=proj[1].ul
+      aster2.ur=proj[1].ur
+      aster2.ll=proj[1].ll
+      aster2.lr=proj[1].lr
+
+    } else {
+      Earth = { Re = atod("6378137.0"), Rp = atod(" 6356752.314") }
+
+      Re=Earth.Re/1000 #equatorial radius in km
+      Rp=Earth.Rp/1000 #polar radius in km
+      flattening = 1.0 - (Rp/Re)
+      g2c = (1.0 - flattening) * (1.0 - flattening)
+      esqrd = 2.0 * flattening - flattening * flattening
+    
+  		if(HasValue(get_struct(aster2.anc,"ul_lat")) && HasValue(get_struct(aster2.anc,"ul_lon"))) {
+  			aster2.ul=atand(g2c*tand(aster2.anc.ul_lat))//aster2.anc.ul_lon
+  		}
+  		if(HasValue(get_struct(aster2.anc,"ur_lat")) && HasValue(get_struct(aster2.anc,"ur_lon"))) {
+  			aster2.ur=atand(g2c*tand(aster2.anc.ur_lat))//aster2.anc.ur_lon
+  		}
+  		if(HasValue(get_struct(aster2.anc,"ll_lat")) && HasValue(get_struct(aster2.anc,"ll_lon"))) {
+  			aster2.ll=atand(g2c*tand(aster2.anc.ll_lat))//aster2.anc.ll_lon
+  		}
+  		if(HasValue(get_struct(aster2.anc,"lr_lat")) && HasValue(get_struct(aster2.anc,"lr_lon"))) {
+  			aster2.lr=atand(g2c*tand(aster2.anc.lr_lat))//aster2.anc.lr_lon
+  		}
+    }
+	
+  	aster2.anc.path=path
+		aster2.bandlist=bandlist
+		aster2.data=data
+		aster=aster2
+	}
+  verbose=3
+	return(aster);
+}
+
+
+
+define deplaid_aster(rectify) {
+  if($ARGC==0) {
+    printf("\nShear an ASTER IR image so the plaid is relatively horizontal\n")
+    printf("Then use thm.deplaid to clean up the image\n\n")
+    printf("$1 = ASTER IR image array\n")
+    printf("rectify = do a recify/reconstitute on the image instead of a shear (Defaul=-32768)\n")
+    printf("ignore = ignore value for the blackspace (Default=-32768)\n")
+    printf("NOTE: Many values are hard coded for ASTER images at\n")
+    printf("the native resolution.  Use thm.deplaid() for more generic applications\n")
+    printf("This function requires davinci 2.10\n\n")
+    printf("C.Edwards 10/16/12 - modified from K.Nowicki\n\n")
+    return(null)
+  }
+
+  a=$1
+
+  if(HasValue(ignore)==0) ignore=-32768
+
+  if(HasValue(rectify)==0) {
+    b=float(translate(a,x,y))
+    c=thm.y_shear(b,-3.12,ignore=ignore)
+    b=translate(c,y,x)
+    b1 = b
+  } else {
+    r=thm.rectify(a,ignore=ignore)
+    b=b1=r.data
+  }
+
+  b[where min(b,axis=z) == 255] = ignore
+  b[where max(b,axis=z) == 0] = ignore
+
+  d1=thm.deplaid(b[:434],b10=0,axis=x)
+  d2=thm.deplaid(b[435:],b10=0,axis=x)
+  d3=thm.deplaid(b[200:600],b10=0,axis=x)
+
+  dd=cat(d1,d2,axis=x)
+  ee=b*0
+  ee[200:600] = d3
+
+  for(i=200;i<=400;i+=1) {
+    dd[i] = (1-(abs(200.-i)/200.))*dd[i] + (abs(200.-i)/200.)*ee[i]
+  }
+
+  for(i=401;i<=600;i+=1) {
+    dd[i] = (1-(abs(600.-i)/200.))*dd[i] + (abs(600.-i)/200.)*ee[i]
+  }
+
+  dd[where min(b1,axis=z) == 255] = 255
+  dd[where max(b1,axis=z) == 0] = 0
+
+  if(HasValue(rectify)==0) {
+    b=translate(dd,x,y)
+    c=thm.y_shear(b,3.12,ignore=-32768,trim=1)
+    b=float(translate(c,y,x))
+  } else {
+    r.data=dd
+    b=thm.reconstitute(r)
+  }
+  return(b)
+}

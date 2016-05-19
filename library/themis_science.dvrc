@@ -1,0 +1,3511 @@
+themis_science_version=1.06
+
+# rad_corr2         - taken from /themis/lib/themis_dvrcjlb
+# dewobble3         - taken from /themis/lib/themis_dvrcjlb
+# uddw              - taken from /themis/lib/themis_dvrcjlb
+# autoradcorr       - taken from /u/knowicki/dvrc/autoradcorr.dvrc
+# arc		    - taken from /u/knowicki/dvrc/autoradcorr.dvrc
+# destreak          - taken from /u/knowicki/tools.dvrc
+# tb2rad            - taken from /themis/lib/themis_dvrca
+# temp2dn           - taken from /themis/lib/themis_dvrca
+# bbrw              - taken from /themis/lib/themis_dvrca
+# displayp          - taken from /themis/lib/themis_dvrca
+# dispp             - taken from /themis/lib/themis_dvrca
+# dispa             - taken from /themis/lib/themis_dvrca
+# themisx           - taken from /themis/lib/themis_dvrca
+# night_deplaid     - taken from /u/knowicki/dvrc/night_deplaid.dvrc
+# rilt	            - taken from /u/cedwards/rstretch2.dvrc
+# idinfo            - taken from /u/jki01/dvrc/idinfo.dvrc
+# fake_rdr          - taken from /themis/lib/themis_dvrca
+# do_isis_geometry  - taken from /themis/lib/themis_dvrca
+# do_isis_geometry_nadir -  from /themis/lib/themis_dvrca
+# destripe          - taken from /themis/lib/themis_dvrca
+# mission_time_plot - created Tue Oct 31 16:53:59 MST 2006
+# expand_ir         - taken from /themis/lib/themis_dvrc_cal - used in uddw
+# degrade_ir         - taken from /themis/lib/themis_dvrc_cal
+# rematm2           - Added by J. Bandfield 1/2008
+# convolve_themis   - Added by D. Rogers 1/2008
+# rad3tb						- Added by C. Edwards 9/2008 modified from P. Christensen 
+# themis_plot				- Added by C. Edwards 9/2008 modified from J. Bandfield
+# themis3db  				- Added by C. Edwards 3/2009
+# themis_meridian2					- Added by C. Edwards 11/2013
+
+define rad_corr2(struct,null,v,ignore) {
+
+  if ($ARGC == 0) {
+    printf (" \n")
+    printf (" Do first order dust and calibration correction given: \n")
+    printf (" $1 = THEMIS radiance image \n")
+    printf (" $2 = start x region of image to find radiance constant \n")
+    printf (" $3 = stop x \n")
+    printf (" $4 = start y \n")
+    printf (" $5 = stop y \n")
+    printf (" $2-5 are optional autoradcorr will be run without a defined box\n")
+    printf (" struct = 1 - Return dark and em information in a structure (default=0)\n")
+    printf (" null = value - Set null value (default is -32768)\n")
+    printf (" ignore = value - Set ignore value (same as \"null\", default is -32768)\n")
+    printf (" v = value - Sets verbose to 0 for autoradcorr and back to value after\n")
+    printf (" J. Bandfield version set 9-15-03\n")
+    printf (" Now uses thm.radcorr insead of dark and added struct option \n")
+    printf (" J. Bandfield 7-2005\n")
+    printf (" Autoradcorr option added. J. Bandfield 8-2005\n\n")
+    return(null)
+  }
+
+  if (HasValue(struct)==0) struct=0
+
+  if (HasValue(null)==0) null=-32768
+	if (HasValue(ignore)) null=ignore
+  radiance=$1
+
+# Calculate and remove dark radiance using box or autoradcorr
+
+  if ($ARGC == 5) {
+    dark_rem=thm.radcorr(radiance[$2:$3,$4:$5,])
+    radiance[,,1:9]=radiance[,,1:9]-float(dark_rem[1,,1:9])
+    radiance [where(radiance<=-1)] = null
+
+    if (struct == 1) {
+      rad_corr_out=struct(rad,em,dark)
+      rad_corr_out.em=dark_rem[2,,]
+      rad_corr_out.dark=dark_rem[1,,]
+      rad_corr_out.rad=radiance
+      return(rad_corr_out)
+    }
+  }
+
+  if ($ARGC == 1) {
+    if (HasValue(v)!=0) verbose=0
+
+    dark_rem=arc($1)
+
+    if (HasValue(v)!=0) verbose=v
+
+  # Filter dark radiance across the y direction
+    dark_rem.darkcol=thm.convolve(dark_rem.darkcol,clone(1.0,1,3600,1))
+    radiance[,,1:9]=radiance[,,1:9]-dark_rem.darkcol[,,1:9]
+
+    if (struct == 1) {
+      rad_corr_out=struct(rad,blackmask,dark,darkcol)
+      rad_corr_out.rad=radiance
+      rad_corr_out.blackmask=dark_rem.blackmask
+      rad_corr_out.dark=dark_rem.dark
+      rad_corr_out.darkcol=dark_rem.darkcol
+      return(rad_corr_out)
+    }
+  }
+
+  return(radiance)
+}
+
+
+define dewobble3() {
+#added $DV_EX support 12/28/07 cedwards
+#Added $DV_SCRIPT_FILES support - 5-13-08
+#Added instrument_parameters to $DV_SCRIPT_FILES support - 1-30-09
+
+
+if ($ARGC == 0) {
+	printf (" \n")
+ 	printf (" Calculate DN contribution due to THEMIS drift and wobble.\n")
+	printf (" $1 = 3 or 10 band input image\n")
+	printf (" $2 = band_list (optional for 3 or 10 band images, n x 1 x 1 array)\n")
+	printf ("J. Bandfield new version 9-15-03\n")
+	printf ("Combines undrift and dewobble2 into a single function.\n")
+	printf ("Correction now extended to first line of all bands. 11-28-03\n")
+        printf ("Original band 10 is now returned and is not corrected. 10-19-04\n")
+        printf ("Added universal band list abilities. 8-05\n")
+        printf ("Added auto 8 band support and changed filtering to\n")
+        printf ("use thm.convolve. J. Bandfield - 11-07\n")
+	return(0)
+
+
+}
+
+
+data10c=$1
+dimy=dim(data10c)[2,,]
+nbands=dim(data10c)[3,,]
+
+# Get first line value to remove filter quirk
+
+first_line=avg(data10c[,1:11,nbands],axis=x)
+
+# Get drift and wobble from band 10
+
+kernal=clone(1.0,1,20,1)
+off10=thm.convolve(avg(data10c[,,nbands],axis=x,ignore=0),kernal,ignore=-32768)
+off10=thm.convolve(off10,kernal,ignore=-32768)
+
+
+#off10=filtery(filtery(avg(data10c[,,nbands],axis=x,ignore=0),20),20)
+off10[,1:11,]=first_line
+off10=off10-off10[,dimy,]
+
+# Convert offsets to dn and back to radiance for each band
+# Get slopes necessary for conversion from radiance to DN and back again.
+irf=read($DV_SCRIPT_FILES+"/instrument_parameters/irf_fit_all_v3.0_tv6_1_2_v3.0")
+irf=float(avg(irf[,2],x))
+
+if ($ARGC == 2) {
+
+	band_list=$2
+}
+
+if ($ARGC == 1) {
+
+        if (nbands == 3) {
+
+                band_list=4//9//10
+        }
+
+        if (nbands == 10) {
+
+                band_list=1//2//3//4//5//6//7//8//9//10
+        }
+
+        if (nbands == 8) {
+
+                band_list=3//4//5//6//7//8//9//10
+        }
+
+}
+
+# Escape hatch for single band or images without band 10
+
+if (max(band_list)<10 || dim(band_list)[1]<2) {
+
+        printf("This image is not dewobbleable!\n")
+        return(data10c)
+}
+
+
+# Construct band list irf
+
+irf_tmp=irf[,,1]
+
+for (i=1; i<=dim(band_list)[1]; i+=1) {
+
+        band=band_list[i,,]
+        irf_tmp=cat(irf_tmp,irf[,,band],axis=z)
+}	
+
+irf=irf_tmp
+irf=irf[,,2:]
+
+# Convert to DN
+
+off10=off10*irf[,,nbands]
+
+# Convert to radiance for all bands
+
+off10=clone(off10,z=nbands)/irf
+
+# Apply offsets to the original image
+
+for (i=1; i<=dim(band_list)[1]; i+=1) {
+
+        if (band_list[i] == 1) {
+
+                data10c[,225:,i]=data10c[,225:,i]-off10[,i:(dimy-224),i]
+	        data10c[,1:224,i]=data10c[,1:224,i]-off10[,1,i]
+        }
+
+        if (band_list[i] == 2) {
+
+                data10c[,209:,i]=data10c[,209:,i]-off10[,1:(dimy-208),i]
+        	data10c[,1:208,i]=data10c[,1:208,i]-off10[,1,i]
+        }
+
+        if (band_list[i] == 3) {
+
+	        data10c[,183:,i]=data10c[,183:,i]-off10[,1:(dimy-182),i]
+        	data10c[,1:182,i]=data10c[,1:182,i]-off10[,1,i]
+
+        }
+
+        if (band_list[i] == 4) {
+
+        	data10c[,157:,i]=data10c[,157:,i]-off10[,1:(dimy-156),i]
+	        data10c[,1:156,i]=data10c[,1:156,i]-off10[,1,i]
+
+        }
+
+        if (band_list[i] == 5) {
+
+        	data10c[,131:,i]=data10c[,131:,i]-off10[,1:(dimy-130),i]
+        	data10c[,1:130,i]=data10c[,1:130,i]-off10[,1,i]
+
+        }
+
+        if (band_list[i] == 6) {
+
+        	data10c[,105:,i]=data10c[,105:,i]-off10[,1:(dimy-104),6]
+        	data10c[,1:104,i]=data10c[,1:104,i]-off10[,1,i]
+
+        }
+
+        if (band_list[i] == 7) {
+
+        	data10c[,79:,i]=data10c[,79:,i]-off10[,1:(dimy-78),i]
+        	data10c[,1:78,i]=data10c[,1:78,i]-off10[,1,i]
+
+        }
+
+        if (band_list[i] == 8) {
+
+        	data10c[,53:,i]=data10c[,53:,i]-off10[,1:(dimy-52),i]
+        	data10c[,1:52,i]=data10c[,1:52,i]-off10[,1,i]
+
+        }
+
+        if (band_list[i] == 9) {
+
+        	data10c[,27:,i]=data10c[,27:,i]-off10[,1:(dimy-26),i]
+        	data10c[,1:26,i]=data10c[,1:26,i]-off10[,1,i]
+
+        }
+
+}
+
+return(data10c)
+
+}
+
+
+#The following library files must be called - or new ISIS3 features will fail
+## msff.dvrc (needs isis3setup)
+## themis_isis3.dvrc 
+
+define uddw(geom,scorr,dropouts,unscale,atm,force,expand,struc,thmproc,http,crop,login,res,lon,isis3struct) {
+
+#added $DV_EX variable for dependant files
+#added $DV_EX support  12/28/07 cedwards
+#Added $DV_SCRIPT_FILES support - 5-13-08
+#Added instrument_parameters to $DV_SCRIPT_FILES support - 1-30-09
+#Added thm3db call rather than mysql and use get_image with remote load rather than wget
+#Version 1.83 == Revised to work correctly with MSFF-ISIS3 standards (8/2012-KMM)
+#Added simple history to be returned with option struc=1 (4/2013-KMM)
+#REActivate expand option; ISIS3 will handle summed images (7/2013-KMM)
+
+if ($ARGC == 0) {
+
+  printf (" \n")
+  printf (" Undrift and dewobble THEMIS IR radiance data.\n")
+  printf (" $1 = Image ID or full path and filename\n")
+  printf (" $2 (startx),$3 (stopx),$4 (starty),$5 (stopy) = Band 9 radiance sample\n")
+  printf (" (use with force = 2) \n")
+  printf (" $6 = Band 9 sample brightness temperature (use with force = 2)\n\n")
+  printf (" geom = 1 - do geometry (default is 0)\n")
+  printf (" scorr = dnvalue - shutter DN correction (default is 0)\n")
+  printf (" dropouts = 1 - fill in dropouts (default is 1)\n")
+  printf (" unscale = 1 - unscale short data (default is 1)\n")
+  printf (" atm = 1 - use TES maps to account for atm. temperature changes (default is 1)\n")
+  ##printf (" atm requires 9 char image id (rather than full path) for $1\n")
+  printf (" force = 1 - use TES maps to force THEMIS B10 to TES predicted B10\n")
+  printf (" (default is 0)\n")
+  printf (" force = 2 - force band 9 sample to a given T assuming a DN offset\n")
+  printf (" A force of 1 must be used with atm!\n\n")
+  printf (" expand = 1 - Expand summed images to ~100m/pixel resolution. (default is 0)\n")
+  printf (" http = 1 - read THEMIS RDR from public PDS server (default is 0)\n")
+  printf (" crop = \"minlat:maxlat\" - read THEMIS RDR from public PDS server (default is no cropping)\n") 
+  printf ("res = projection resolution (km) (default is native resolution)\n")
+  printf ("res must be in a string format (e.g. \"0.1\"\n")
+  printf ("lon = center longitude (default = avg. longitude for image)\n")
+  printf ("lon must be in a string format (e.g. \"245\"\n")
+  printf ("isis3struct = use isis3 reader/writer to create an isis3 compatible output struture (Default = 0)\n")
+  printf (" login = \"login name\" - Login name for mysql call (only necessary if atm=1)\n")
+  printf (" Default is atmos, but only works from ASU\n")
+  printf (" Calls undrift and dewobble2.\n\n")
+  printf (" J. Bandfield version set 9-15-03 now calls dewobble3\n")
+  printf (" atm update and band 10 is now returned without modification\n")
+  printf (" J. Bandfield 2-12-05\n")
+  printf (" force options installed J. Bandfield 5-2005\n")
+  printf (" Changed to thm.convolve and modified for new filtering for new cal version 5.0\n")
+  #printf (" UDDW Version 1.8 - J. Bandfield 11-07\n")
+  printf (" UDDW Version 1.84 - KMurray 04-2014\n")
+  return(0)
+}
+
+#debug=1
+
+#Initialize a structure for history parameters
+ UDHIST=struct()
+ UDDWv=1.84
+ UDDWdesc=sprintf("The Undrift-Dewobble filter was applied to this THEMIS IR-RDR QUBE to remove data value fluxuations caused by changes in the temperature of the IR detector array.  Band 10 values remain unchanged.  See Bandfield, et.al, doi:10.1029/2004JE002289")
+
+if (HasValue(geom)==0) {
+        geom=0
+}
+if (HasValue(isis3struct)==0) {
+        isis3struct=0
+}
+if (HasValue(scorr)==0) {
+        scorr=0
+}
+if (HasValue(dropouts)==0) {
+        dropouts=1
+}
+if (HasValue(unscale)==0) {
+
+        unscale=1
+}
+if (HasValue(atm)==0) {
+
+        atm=1
+}
+if (HasValue(force)==0) {
+
+        force=0
+}
+if (HasValue(struc)==0) {
+
+        struc=0
+}
+if (HasValue(thmproc)==0) {
+
+        thmproc=1
+}
+if (HasValue(http)==0) {
+
+        http=0
+}
+if (HasValue(login)==0) {
+
+        login="atmos"
+}
+if (HasValue(lon)==0) {
+
+   lon=""
+}
+if (HasValue(res)==0) {
+
+   res="--"
+}
+if (HasValue(expand)==0) {
+
+   expand=0
+}
+
+id=$1
+id_old=id
+
+if (strlen(id) == 9 && id[1,1] == "I" && http==0) {
+  id="/themis/data/mapping/RDR_calib/I"+id[2:4]+"XXRDR/"+id+"RDR.QUB"
+}
+
+if (strlen(id) == 9 && id[1,1] == "I" && http==1) {
+
+        webaddr=get_image(id,type="RDR",instrument="themis")
+        id=$TMPDIR+"/"+id_old+"RDR.QUB"
+
+        if(fexists(id)==0) {
+#       if (HasValue(syscall("ls "+id))==0) {
+                copy(webaddr,id)
+        }
+}
+
+
+##7/2012: this was probably a fluke, but it could happen again ...
+##we have to do this because ISIS3 by default overrides everything; bad isis3 module
+##this should be a safe assumption because uddw fails if the isis3 module is pre-loaded
+##stupid, stupid code.
+##rmmod("isis3")
+
+data=load_pds(id)
+
+id_original=data.product_id[2:10]
+cal_version=data.history.data.cal_ir_image.parameters.ir_img_cal_qube_ver
+band_list=data.spectral_qube.band_bin.band_bin_band_number
+
+if(expand==1) {
+if (HasValue(data.spectral_qube.spatial_summing)==1 && data.spectral_qube.spatial_summing>1) {
+        data.spectral_qube.data=expand_ir(id,data=data.spectral_qube.data)
+} }
+
+if (unscale==1) {
+        UDHIST.unscale_data=1
+        data=thm.unscale(data)
+}
+
+if (unscale==0) {
+        data=data.spectral_qube.data
+}
+
+
+if(isis3struct!=0) {
+  ##isis3setup("isis3") ... if removed above
+  #themis_to_isis3(id,$TMPDIR+"/"+id_old+".isis3.QUB")
+  #struct=load_pds($TMPDIR+"/"+id_old+".isis3.QUB",data=0)
+  struct=themis_to_isis3(id)
+}
+
+nlines=dim(data)[2,,]
+nbands=dim(data)[3,,]
+
+# save original band 10
+b10_orig=data[,,nbands]
+
+if (dropouts == 1) {
+        UDHIST.dropout_correction=1
+        b10=avg(data[,,nbands],axis=x)
+
+        # First off don't bother if the image doesn't have dropouts
+
+        if (min(b10) <= 0) {
+
+        # Figure out if dropouts are at the start or the end of the image
+        # Set the values to the first or last value before the dropout
+
+        start_line=1
+        end_line=nlines
+        
+        if (b10[,1,]<=-1) {
+                count = 1
+
+                while (b10[,count,] <= -0.001 || (max(b10[,count:(count+5),])-min(b10[,count:(count+5),])) > 0.00001) {
+
+                        count=count+1
+                }
+                
+                b10[,1:count,]=b10[,count,]
+                start_line=count
+        }
+
+
+        if (b10[,nlines,]<=-1) {
+
+                count = nlines
+
+                while (b10[,count,] <= -0.001 || (max(b10[,(count-5):count,])-min(b10[,(count-5):count,])) > 0.00001) {
+
+                        count=count-1
+                }
+                
+                b10[,count:nlines,]=b10[,count,]
+                end_line=count
+        }
+        
+        # Start looping through each line in the image
+        # Set dropout variable to zero
+        # set change variable to zero
+
+        count=start_line
+        dropout_start=0
+
+        while (count<=(end_line-6)) {
+
+                if (b10[,count,] <=-0.001 || (max(b10[,count:(count+5),])-min(b10[,count:(count+5),])) > 0.00001) {
+
+                        if (dropout_start == 0) {
+                                dropout_start=count
+                        }
+
+                
+                        if (b10[,(count+1),] >=-0.001 && (max(b10[,(count+1):(count+6),])-min(b10[,(count+1):(count+6),])) < 0.00001) {
+
+                                # Interpolate between start and end of the dropout
+
+                                dropout_stop=count
+                                printf(" "+dropout_start+" \n")
+                                printf(" "+dropout_stop+" \n")
+                                if (dropout_start==1) {
+                                        dropout_start=2
+                                }
+                                b10[,dropout_start:dropout_stop,]=interp(cat(b10[,(dropout_start-1),],b10[,(dropout_stop+1),],axis=y),from=cat((dropout_start-1),(dropout_stop+1),axis=y),to=create(1,(dropout_stop-dropout_start+1),1,start=dropout_start,step=1))
+                                dropout_start=0
+                        }
+                        
+                }
+                count=count+1
+        }
+        }
+        
+        data[,,nbands]=b10
+        
+}
+
+
+if (atm==1) {
+  # get geometry info using mysql
+	query=sprintf("select lat,lon,solar_longitude,local_solar_time from frmgeom where framelet_id>0 and point_id='CT' and file_id='%s' order by framelet_id;",id_original)
+	url=themis3db(query,psql=1,v=0)
+
+# read in atm temperature maps
+
+day=read($DV_SCRIPT_FILES+"/day_maps_final.vicar")
+night=read($DV_SCRIPT_FILES+"/night_maps_final.vicar")
+
+atm_geo=ascii(url,format=float)
+
+# get number of framelets and create array for atm values
+num_frames=dim(atm_geo)[2,,]
+radiance=create(1,num_frames,1,start=0,step=0,format=float)
+
+for (i=1; i<=num_frames; i+=1) {
+
+        # find the correct image and coordinates day or night, ls, xy pixel
+
+        if (atm_geo[4,i] < 8) {
+
+                image=ceil(atm_geo[3,i]/15)
+                image=night[,,int(image)]
+        }
+
+        if (atm_geo[4,i] >= 8) {
+
+                image=ceil(atm_geo[3,i]/15)
+                image=day[,,int(image)]
+        }
+
+        pixel=geo_trans(atm_geo[1,i],360-atm_geo[2,i],1,180)
+        radiance[,i]=image[pixel[1,],pixel[2,],]
+
+}
+
+#smooth radiance curve
+kernal=clone(1.0,1,5,1)
+
+radiance=thm.convolve(radiance,kernal)
+
+# create radiance line numbers and make line by line radiance curve
+
+rad_axis=create(1,num_frames,1,start=128,step=256,format=int)
+rad_axis2=create(1,nlines,1,start=1,step=1,format=int)
+radiance=interp(object=radiance,from=rad_axis,to=rad_axis2)
+
+atm_rad=radiance-radiance[,nlines]
+
+# subtract off nondrift variation from b10
+
+data[,,nbands]=data[,,nbands]-atm_rad
+
+# force or don't force to TES temperatures depending on your affinity for two different versions of fiction
+# must be used with atm option
+
+
+atm_corr=radiance[,nlines]-avg(data[,nlines,nbands],axis=x)
+
+themisT=thm.rad2tb(avg(data[,nlines,nbands],axis=x),10)
+tesT=thm.rad2tb(radiance[,nlines],10)
+printf("\n\n\nTES B10: %.1f THEMIS B10: %.1f\n\n\n\n",tesT,themisT)
+UDHIST.TES_band10=sprintf("%.1f",tesT)
+UDHIST.THEMIS_band10=sprintf("%.1f",themisT)
+UDHIST.force_fit2TES=force
+
+if (force == 1) {
+        UDHIST.irf_file="irf_fit_all_v3.0_tv6_1_2_v3.0"
+        irf=read($DV_SCRIPT_FILES+"/instrument_parameters/irf_fit_all_v3.0_tv6_1_2_v3.0")
+        irf=float(avg(irf[,2],x))
+
+        if (nbands==3) {
+                irf=cat(irf[,,4],irf[,,9],irf[,,10],axis=z)
+        }
+
+        if (nbands==8) {
+                irf=irf[,,3:]
+        }
+
+        # Convert to DN
+        atm_corr=atm_corr*irf[,,nbands]
+
+        # Convert to radiance for all bands
+        atm_corr=clone(atm_corr,z=nbands)/irf
+
+        # Apply offsets to the original image
+        data=data+atm_corr
+
+}
+}
+
+
+#xplot(b10,axis=y)
+#data=undrift(data)
+data=dewobble3(data,band_list)
+
+# Replace original band 10
+data[,,nbands]=b10_orig
+
+if (dropouts == 1 && cal_version<=4.999) {
+        bn=avg(data[,,],axis=x)
+
+        for (i=1; i<=(nbands); i+=1) {
+
+        # First off don't bother if the image doesn't have dropouts
+
+        if (min(bn[,,i]) <= 0) {
+
+        # Figure out if dropouts are at the start or the end of the image
+        # Set the values to the first or last value before the dropout
+
+        start_line=1
+        end_line=nlines
+        
+        if (bn[,1,i]<=-1) {
+                count = 1
+                while (bn[,count,i] <= -0.001 || (max(bn[,count:(count+5),i])-min(bn[,count:(count+5),i])) > 0.00001) {
+                        count=count+1
+                }
+                
+                data[,1:count,i]=-32768
+                start_line=count
+        }
+
+
+        if (bn[,nlines,i]<=-1) {
+                count = nlines
+                while (bn[,count,i] <= -0.001 || (max(bn[,(count-5):count,i])-min(bn[,(count-5):count,i])) > 0.00001) {
+                        count=count-1
+                }
+                
+                data[,count:nlines,i]=-32768
+                end_line=count
+        }
+        
+        # Start looping through each line in the image
+        # Set dropout variable to zero
+        # set change variable to zero
+
+        count=start_line
+        dropout_start=0
+
+        while (count<=(end_line-6)) {
+                if (bn[,count,i] <=-0.001 || (max(bn[,count:(count+5),i])-min(bn[,count:(count+5),i])) > 0.00001) {
+                        if (dropout_start == 0) {
+                                dropout_start=count
+                        }
+                
+                        if (bn[,(count+1),i] >=0 && (max(bn[,(count+1):(count+6),i])-min(bn[,(count+1):(count+6),i])) < 0.00001) {
+
+                                # Interpolate between start and end of the dropout
+
+                                dropout_stop=count
+                                printf(" "+dropout_start+" \n")
+                                printf(" "+dropout_stop+" \n")
+                                data[,dropout_start:dropout_stop,i]=-32768
+                                dropout_start=0
+                        }
+                        
+                }
+                count=count+1
+        }
+        }
+        
+}}
+
+if (thmproc==1 && geom==0) {
+        #Take care of isis null value issues
+        data [where data<=-1] = -3.402822655e+38
+}
+
+#Crop data if selected
+
+ UDHIST.project_image=sprintf("%d",geom)
+if (geom==1) {
+        UDHIST.crop=crop
+        UDHIST.resolution=res
+        UDHIST.center_lon=lon
+   
+        #Take care of isis null value issues
+        data [where data<=-1] = -3.402822655e+38
+        if (strlen(id_old) == 9) {
+                fake_rdr(float(data),id,$TMPDIR//"/"//id_old//"_dw_ud.QUB")
+                if (HasValue(crop)==1) {
+                   data=do_isis_geometry($TMPDIR//"/"//id_old//"_dw_ud.QUB",crop=crop,res=res,lon=lon)
+                } else {
+                data=do_isis_geometry($TMPDIR//"/"//id_old//"_dw_ud.QUB",res=res,lon=lon)
+                }
+        }
+
+         if (strlen(id_old) != 9) {
+                fake_rdr(float(data),id,$TMPDIR//"/dw_ud.QUB",res=res,lon=lon)
+                if (HasValue(crop)==1) {
+                   data=do_isis_geometry($TMPDIR//"/"//id_old//"_dw_ud.QUB",crop=crop,res=res,lon=lon)
+                } else {
+                data=do_isis_geometry($TMPDIR//"/dw_ud.QUB",res=res,lon=lon)
+                }
+        }
+     
+
+
+        if (format(data)=="UNDEFINED") {
+                printf("\n")
+                printf("Using nadir geometry!\n")
+                printf("\n")
+
+                if (strlen(id_old) == 9) {
+                        data=do_isis_geometry_nadir($TMPDIR//id[41:50]//"_dw_ud.QUB")
+                }
+
+                if (strlen(id_old) != 9) {
+                        data=do_isis_geometry_nadir($TMPDIR//"/dw_ud.QUB")
+                }
+
+                if (format(data)=="UNDEFINED") {
+                        printf("\n")
+                        printf("Nadir geometry failed!\n")
+                        printf("\n")
+                        system("rm *.tmp.cub")          
+                }
+        }
+        data [where data<=-1] = -32768
+        system("rm "+$TMPDIR//"/*dw_ud.QUB")
+}
+
+
+
+if (scorr != 0) {
+        UDHIST.shutter_dn_correction=scorr
+        irf=read($DV_SCRIPT_FILES+"/instrument_parameters/irf_fit_all_v3.0_tv6_1_2_v3.0")
+        irf=float(avg(irf[,2],x))
+        scorr=(scorr/16.)/irf
+
+        if (dim(data)[3,,] == 3) {
+
+                scorr=cat(scorr[,,4],scorr[,,9],scorr[,,10])
+        }
+
+        datac=data-scorr
+        datac [where (data<=0)] = 0
+        out=struct(data,datac)
+        out.data=data
+        out.datac=datac
+        data=out
+}
+
+if (force == 2) {
+        UDHIST.band9_sample=sprintf("(%d:%d,%d:%d)",$2,$3,$4,$5)
+        UDHIST.force_band9=$6
+        sample=avg(data[$2:$3,$4:$5,nbands-1])
+        forceT=$6
+        rad_diff=tb3rad(forceT,9)-sample
+        irf=read($DV_SCRIPT_FILES+"/instrument_parameters/irf_fit_all_v3.0_tv6_1_2_v3.0")
+        irf=float(avg(irf[,2],x))
+        rad_diff=rad_diff*irf[,,9]/irf
+
+        if (dim(data)[3,,] == 3) {
+                rad_diff=cat(rad_diff[,,4],rad_diff[,,9],rad_diff[,,10])
+        }
+
+        data=data+rad_diff
+        data [where (data<=-1)] = -32768
+        
+}
+
+
+if (struc==1 && atm==1) {
+        out=struct(data,atm,tes_b10,themis_b10)
+        out.data=data
+        out.atm=radiance
+        out.tes_b10=tesT
+        out.themis_b10=themisT
+        #return some basic history
+         out.uddw_history={}
+         out.uddw_history.date_time=syscall("date +'%Y-%m-%dT%H:%M:%S'")[,]
+         out.uddw_history.software_desc=UDDWdesc
+         out.uddw_history.version_id=sprintf("%.2f",UDDWv)
+         out.uddw_history.user_name=syscall('echo `whoami`"@"`hostname`')[,]
+         out.uddw_history.parameters=UDHIST
+        data=out
+}
+
+if(isis3struct!=0) {
+  #Replace the data
+   struct.cube=data
+
+  #Add UDDW history
+  ##uddworig=read_lines("/themis/data/mapping/GEO_cub/TEMPLATES/UDDW_180.nofmt")
+   insert_struct(struct.IsisCube.History, name=sprintf("%s","asu_process_uddw"), before="isis_struct_type" )
+   struct.IsisCube.History.asu_process_uddw={}
+   struct.IsisCube.History.asu_process_uddw.date_time=syscall("date +'%Y-%m-%dT%H:%M:%S'")[,]
+   #struct.IsisCube.History.asu_process_uddw.software_desc=sprintf("%s",uddworig[18:length(uddworig[1:,3])-1,3])
+   struct.IsisCube.History.asu_process_uddw.software_desc=UDDWdesc
+   struct.IsisCube.History.asu_process_uddw.version_id=sprintf("%.2f",UDDWv)
+   struct.IsisCube.History.asu_process_uddw.user_name=syscall('echo `whoami`"@"`hostname`')[,]
+   struct.IsisCube.History.asu_process_uddw.parameters={}
+   struct.IsisCube.History.asu_process_uddw.parameters=UDHIST
+   struct.IsisCube.History.asu_process_uddw.parameters.isis_struct_type="object"
+   struct.IsisCube.History.asu_process_uddw.isis_struct_type="object"
+
+  #Roll the variables
+   data=struct
+}
+
+return(data)
+
+}
+
+
+
+define autoradcorr(bandlist,b1,b2,sd,tempmin,pix_fraction,first_image,ignore){
+  #7/2013: Corrections for images with <10 bands; 7/30/13: missed one!
+
+  if ($ARGC == 0 && HasValue(data)==0) {
+    printf ("Automatic Radiation Correction - autoradcorr() 07/08/05\n\n")
+    printf ("Calculates a radiance correction for all 50x50 pixel boxes in the scene\n")
+    printf ("  that meet the following criteria:\n")
+    printf ("  1. greater than 3.0 degree standard deviation in temperature\n")
+    printf ("  2. temperature of pixels must be greater than 225K\n")
+    printf ("  3. box must contain 50 percent usable pixels\n")
+    printf ("  4. box cannot overlap areas containing ghost signal\n")
+    printf ("  5. radiation correction for a box cannot have negative correction values\n")
+    printf ("Boxes that meet all above criteria are given a Quality of 2 in the quality mask\n");
+    printf ("Quality 1 boxes ignore criterium 5 - this allows for water cloud corrections\n\n");
+    printf ("Usage:   rc = autoradcorr(data,bandlist,b1,b2,sd,tempmin,pix_fraction,first_image)\n")
+    printf ("Example: rc = autoradcorr(a,bandlist=1//4//7//10,b1=1,b2=3,sd=3.4,tempmin=210,pix_fraction=.75,first_image=0)\n")
+    printf ("Example: rc = autoradcorr(a)\n")
+    printf ("  \'data\'         is the full projected hdf.  You MUST supply this!\n")
+    printf ("  \'bandlist\'     is the ordered list of THEMIS bands in the cube. Default is 1-10.\n");
+    printf ("  \'b1 and b2\'    are the first and last z values to search for maxbtemp. Default is 3 and 9.\n");
+    printf ("  \'sd\'           is the standard deviation of the temperature.  Default is 3K.\n")
+    printf ("  \'tempmin\'      is the minimum brightness temperature.  Default is 225K.\n")
+    printf ("  \'pix_fraction\' is the fraction of usable pixels in a box.  Default is 50 percent.\n")
+    printf ("  \'first_image\'  = 1 is first 3600-line chunk of single data cube, = 0 is not. Default is 1.\n\n")
+    printf ("  \'ignore\'        is the ignore value of the iamge. Default is -32768.\n\n")
+    printf ("Returns a structure containing:\n")
+    printf ("  .avgdark    1x1x10 average radiance correction for entire image\n")
+    printf ("  .blackmask  XxYx1 mask of used pixels in calculations\n")
+    printf ("  .dark       (X/50)x(Y/50)x10 radiance corrections for every 50x50 box\n")
+    printf ("  .darkcol    1xYx10 correction for entire image\n");
+    printf ("  .data       XxYx10 array of corrected radiance data\n")
+    printf ("NOTE: YOU MUST LOAD THE \'thm\' MODULE!\n")
+    return(null)
+  }
+
+  data = $1
+
+########## DEFAULT SEARCH VALUES ###########
+  if(HasValue(ignore)==0) ignore=-32768
+
+# the size of the boxes being used
+  boxsize = 50
+
+# setup default bandlist and maxbtemp search bands
+  blist = 1//2//3//4//5//6//7//8//9//10
+  if(HasValue(bandlist)) blist = bandlist
+  blistdim = dim(blist)
+  blistdim = blistdim[1]
+
+  band1=3
+  band2=9
+  band10 = 10
+  if(HasValue(bandlist)) {
+    if(bandlist[blistdim] == 10) {
+      band10 = blistdim
+    }
+  }
+  if(HasValue(b1)) band1=b1
+  if(HasValue(b2)) band2=b2
+
+# error handling of input values
+  if(band2>blistdim) {
+    printf("Illegal b2 designation! Must be a number between 1 and %d\n",blistdim[1])
+    return(null)
+  }
+
+  if(blistdim != dim(data)[3]) {
+    printf("band list not the same dimension as input array!\n")
+    printf("band list has z=%d, input array has z=%d\n",blistdim,dim(data)[3])
+    return(null)
+  }
+
+# setup default standard deviation limit
+  sd_limit=3.0
+  if(HasValue(sd)) sd_limit = sd
+
+# You need at least 50% of the pixels in a box to be usable
+  UP = int(.5*boxsize*boxsize)
+  if(HasValue(pix_fraction)) UP = int(pix_fraction*boxsize*boxsize)
+
+# the first 300 lines of a full cube have ghost in them and should be radcorred on their own
+  first_im = 1
+  if(HasValue(first_image)) first_im = first_image
+
+# the minimum temperature for pixels to be used in calculations
+  temp_minimum = 225
+  if(HasValue(tempmin)) temp_minimum = tempmin
+
+
+########## CONSTRUCT OUTPUT ARRAYS ##########
+  x_dim = dim(data)[1]
+  y_dim = dim(data)[2]
+
+# calculate the dimensions of the output struct array with respect to the 50x50 box #
+  xdim = int((x_dim/boxsize) + (ceil(float(x_dim%boxsize)/float(boxsize))))
+  ydim = int((y_dim/boxsize) + (ceil(float(y_dim%boxsize)/float(boxsize))))
+
+# create an em & dark structs to output to screen
+  final = struct()
+  final.avgdark   = float(clone(0,1,1,blistdim))            # holds the average rad of the entire image of each band
+  final.blackmask = 0                                       # will hold the blackmask
+  final.dark      = float(clone(-32768,xdim,ydim,blistdim)) # holds the dark of each 50x50 cube
+  final.darkcol   = float(clone(-32768,1,y_dim,blistdim))   # holds the column of correction for the cube
+  quality         = float(clone(0,xdim,ydim,blistdim))
+
+
+########## BEGIN PROCESSING ##########
+# calculate the max btemperatures
+  verbose=1
+  if ( blistdim == 10 ) {
+     maxbtemp = thm.themis_emissivity(data,ignore=ignore)
+  } else {
+     maxbtemp = thm.themis_emissivity(data,ignore=ignore,bandlist=blist,b1=band1,b2=band2)
+  }
+  maxbtemp = maxbtemp.maxbtemp
+
+# create black mask
+  blackmask = byte(maxbtemp)*0
+  blackmask[where maxbtemp >= temp_minimum] = 1		  # set all pixels with temperature less than 225K to 0
+
+  for(j=1; j<(y_dim+1); j+=boxsize){
+
+  # assign y dimension of box sizes
+    start_y = j
+    end_y = j+boxsize-1                       # boxes in middle of array
+    if(j+boxsize > y_dim) end_y = y_dim       # boxes on bottom of array
+
+  # y values of .dark, .avgdark, and .quality arrays
+    v = start_y/boxsize + 1
+
+  # there are pixels with ghost radiance in the first 300 lines of image
+    top_ghost = 0
+    if(first_im == 1 && v<7) top_ghost = 1
+
+    for(i=1; i<(x_dim+1); i+=boxsize){
+
+    # assign x dimension of box sizes
+      start_x = i
+      end_x = i+boxsize-1                       # boxes in middle of array
+      if(i+boxsize > x_dim) end_x = x_dim       # boxes on right edge of array
+
+    # x values of .dark, .avgdark, and .quality arrays
+      u = start_x/boxsize + 1
+
+    # cut out box of data and apply blackmask
+      revised_data = data[start_x:end_x,start_y:end_y,]                         # define a 50x50 box for radcorr
+      revised_data[where blackmask[start_x:end_x,start_y:end_y] == 0] = 0       # replace all pixel with temp <230 with an ignore value
+      tmp_data = maxbtemp[start_x:end_x,start_y:end_y]                          # define a 50x50 box of temperature data for stddev'ing
+      tmp_data[where blackmask[start_x:end_x,start_y:end_y] == 0] = 0           # black out all pixel's that are invalid
+ 
+    # check to see if there is enough temperature variance and enough usable pixels for radcorr to use
+    # we want to throw out the first 300 rows and first 50 columns due to ghosts
+      if((stddev(tmp_data,ignore=0) > sd_limit)&&(sum(blackmask[start_x:end_x,start_y:end_y]) > UP && start_x!=1 && top_ghost==0)){
+        rc = thm.radcorr(revised_data,blist,b1=band1,b2=band2,ignore=ignore)  
+        final.dark[u,v,] = rc[1,,]
+        bm = blackmask[start_x:end_x,start_y:end_y]
+        bm[where bm != 0] = bm + 1
+        blackmask[start_x:end_x,start_y:end_y] = bm
+        bm = 0
+        quality[u,v] = 1
+
+     # we want the radiance corrections to be positive in bands 4 through 8 and not too negative in 3 and 9
+      ##This syntax chokes images<10-bands
+      ##if(min(rc[1,,4:8],axis=z)>0 && rc[1,,band1]>-2.5e-06 && rc[1,,band2]>-2.5e-06) 
+        goodrc=1
+        for (b=band1; b<=band2; b+=1) {
+           if ( blist[b]==3 && rc[1,,b]<-2.5e-06 ) goodrc=0
+           if ( blist[b]>=4 && blist[b]<=8 && min(rc[1,,b])<0 ) goodrc=0
+           if ( blist[b]==9 && rc[1,,b]<-2.5e-06 ) goodrc=0
+        }
+        if (goodrc==1) {
+          bm = blackmask[start_x:end_x,start_y:end_y]
+          bm[where bm != 0] = bm + 1
+          blackmask[start_x:end_x,start_y:end_y] = bm
+          bm = 0
+          quality[u,v] = 2
+        }
+      }
+
+    # if the standard deviation is too small, the blackmask doesn't contain enough pixels or if its the first 50 columns or first 300 rows, throw it out
+      if((stddev(tmp_data,ignore=0) < sd_limit)||(sum(blackmask[start_x:end_x,start_y:end_y]) < UP || start_x==1 || top_ghost==1)){
+        final.dark[u,v,] = -32768
+        blackmask[start_x:end_x,start_y:end_y] = 0
+      }
+    }
+  }
+
+########## CONSTRUCT OUTPUT ##########
+# store the blackmask for eventual output
+  final.blackmask = byte(blackmask)
+
+# garbage collection
+  final.data=data
+  data = 0
+  blackmask = 0
+  maxbtemp = 0
+  revised_data = 0
+  rc = 0
+  tmp_data = 0
+
+# construct the average of the .dark
+  final.avgdark = final.dark[1,1]*0
+  if(max(quality) == 2) {
+    t=final.dark
+    t[where quality < 2] = -32768
+    final.avgdark[,,k] = avg(t,axis=XY,ignore=-32768)
+    t = 0
+  }
+
+# construct the .darkcol
+  finaldark = final.dark
+  if(max(quality) == 2) finaldark[where quality == 1] = -32768
+  quality = 0
+  rc_line_avg = avg(finaldark,axis=x,ignore=-32768)
+  t = avg(finaldark,axis=x)
+  finaldark = 0
+  rc_line_avg[where t == -32768] = -32768
+  t = 0
+  rc_line_avg = thm.supersample(rc_line_avg,type=2,factor=50)
+  rc_line_avg = rc_line_avg[1,:y_dim]
+  final.darkcol = thm.column_fill(rc_line_avg,chunk_size=3600)
+  rc_line_avg = 0
+
+  if(max(final.blackmask) == 1) final.avgdark[,,k] = avg(final.dark,axis=XY,ignore=-32768)
+
+# if no good boxes were found set all corrections to 0
+  if(max(final.blackmask) == 0) {
+    final.darkcol = final.darkcol*0
+    final.dark = final.dark*0
+    printf("Unable to attempt automatic correction!\n")
+  }
+
+# set band 10 corrections to 0
+  final.darkcol[,,blistdim] = final.darkcol[,,blistdim]*0
+  final.dark[,,blistdim] = final.dark[,,blistdim]*0
+
+  final.data[where final.data != ignore] = final.data - final.darkcol
+  
+  printf("\n")
+  return(final)
+}
+
+
+
+define arc(bandlist,b1,b2,sd,tempmin,pix_fraction,first_image,ignore){
+  #7/2013: Corrections for images with <10 bands; 7/30/13 one more band-config trap
+
+  if ($ARGC == 0 && HasValue(data)==0) {
+    printf ("Automatic Radiation Correction - autoradcorr() 07/08/05\n\n")
+    printf ("Calculates a radiance correction for all 50x50 pixel boxes in the scene\n")
+    printf ("  that meet the following criteria:\n")
+    printf ("  1. greater than 3.0 degree standard deviation in temperature\n")
+    printf ("  2. temperature of pixels must be greater than 225K\n")
+    printf ("  3. box must contain 50 percent usable pixels\n")
+    printf ("  4. box cannot overlap areas containing ghost signal\n")
+    printf ("  5. radiation correction for a box cannot have negative correction values\n")
+    printf ("Boxes that meet all above criteria are given a Quality of 2 in the quality mask\n");
+    printf ("Quality 1 boxes ignore criterium 5 - this allows for water cloud corrections\n\n");
+    printf ("Usage:   rc = autoradcorr(data,bandlist,b1,b2,sd,tempmin,pix_fraction,first_image)\n")
+    printf ("Example: rc = autoradcorr(a,bandlist=1//4//7//10,b1=1,b2=3,sd=3.4,tempmin=210,pix_fraction=.75,first_image=0)\n")
+    printf ("Example: rc = autoradcorr(a)\n")
+    printf ("  \'data\'         is the full projected hdf.  You MUST supply this!\n")
+    printf ("  \'bandlist\'     is the ordered list of THEMIS bands in the cube. Default is 1-10.\n");
+    printf ("  \'b1 and b2\'    are the first and last z values to search for maxbtemp. Default is 3 and 9.\n");
+    printf ("  \'sd\'           is the standard deviation of the temperature.  Default is 3K.\n")
+    printf ("  \'tempmin\'      is the minimum brightness temperature.  Default is 225K.\n")
+    printf ("  \'pix_fraction\' is the fraction of usable pixels in a box.  Default is 50 percent.\n")
+    printf ("  \'first_image\'  = 1 is first 3600-line chunk of single data cube, = 0 is not. Default is 1.\n\n")
+    printf ("  \'ignore\'        is the ignore value of the iamge. Default is -32768.\n\n")
+    printf ("Returns a structure containing:\n")
+    printf ("  .avgdark    1x1x10 average radiance correction for entire image\n")
+    printf ("  .blackmask  XxYx1 mask of used pixels in calculations\n")
+    printf ("  .dark       (X/50)x(Y/50)x10 radiance corrections for every 50x50 box\n")
+    printf ("  .darkcol    1xYx10 correction for entire image\n");
+    printf ("  .data       XxYx10 array of corrected radiance data\n")
+    printf ("NOTE: YOU MUST LOAD THE \'thm\' MODULE!\n")
+    return(null)
+  }
+
+  data = $1
+
+########## DEFAULT SEARCH VALUES ###########
+  if(HasValue(ignore)==0) ignore=-32768
+
+# the size of the boxes being used
+  boxsize = 50
+
+# setup default bandlist and maxbtemp search bands
+  blist = 1//2//3//4//5//6//7//8//9//10
+  if(HasValue(bandlist)) blist = bandlist
+  blistdim = dim(blist)
+  blistdim = blistdim[1]
+
+  band1=3
+  band2=9
+  band10 = 10
+  if(HasValue(bandlist)) {
+    if(bandlist[blistdim] == 10) {
+      band10 = blistdim
+    }
+  }
+  if(HasValue(b1)) band1=b1
+  if(HasValue(b2)) band2=b2
+
+# error handling of input values
+  if(band2>blistdim) {
+    printf("Illegal b2 designation! Must be a number between 1 and %d\n",blistdim[1])
+    return(null)
+  }
+
+  if(blistdim != dim(data)[3]) {
+    printf("band list not the same dimension as input array!\n")
+    printf("band list has z=%d, input array has z=%d\n",blistdim,dim(data)[3])
+    return(null)
+  }
+
+# setup default standard deviation limit
+  sd_limit=3.0
+  if(HasValue(sd)) sd_limit = sd
+
+# You need at least 50% of the pixels in a box to be usable
+  UP = int(.5*boxsize*boxsize)
+  if(HasValue(pix_fraction)) UP = int(pix_fraction*boxsize*boxsize)
+
+# the first 300 lines of a full cube have ghost in them and should be radcorred on their own
+  first_im = 1
+  if(HasValue(first_image)) first_im = first_image
+
+# the minimum temperature for pixels to be used in calculations
+  temp_minimum = 225
+  if(HasValue(tempmin)) temp_minimum = tempmin
+
+
+########## CONSTRUCT OUTPUT ARRAYS ##########
+  x_dim = dim(data)[1]
+  y_dim = dim(data)[2]
+
+# calculate the dimensions of the output struct array with respect to the 50x50 box #
+  xdim = int((x_dim/boxsize) + (ceil(float(x_dim%boxsize)/float(boxsize))))
+  ydim = int((y_dim/boxsize) + (ceil(float(y_dim%boxsize)/float(boxsize))))
+
+# create an em & dark structs to output to screen
+  final = struct()
+  final.avgdark   = float(clone(0,1,1,blistdim))            # holds the average rad of the entire image of each band
+  final.blackmask = 0                                       # will hold the blackmask
+  final.dark      = float(clone(-32768,xdim,ydim,blistdim)) # holds the dark of each 50x50 cube
+  final.darkcol   = float(clone(-32768,1,y_dim,blistdim))   # holds the column of correction for the cube
+  quality         = float(clone(0,xdim,ydim,blistdim))
+
+
+########## BEGIN PROCESSING ##########
+# calculate the max btemperatures
+  verbose=3
+  if ( blistdim == 10 ) {
+     maxbtemp = thm.themis_emissivity(data,ignore=ignore)
+  } else {
+     maxbtemp = thm.themis_emissivity(data,ignore=ignore,bandlist=blist,b1=band1,b2=band2)
+  }
+  maxbtemp = maxbtemp.maxbtemp
+
+# create black mask
+  blackmask = byte(maxbtemp)*0
+  blackmask[where maxbtemp >= temp_minimum] = 1		  # set all pixels with temperature less than 225K to 0
+
+  for(j=1; j<(y_dim+1); j+=boxsize){
+
+  # assign y dimension of box sizes
+    start_y = j
+    end_y = j+boxsize-1                       # boxes in middle of array
+    if(j+boxsize > y_dim) end_y = y_dim       # boxes on bottom of array
+
+  # y values of .dark, .avgdark, and .quality arrays
+    v = start_y/boxsize + 1
+
+  # there are pixels with ghost radiance in the first 300 lines of image
+    top_ghost = 0
+    if(first_im == 1 && v<7) top_ghost = 1
+
+    for(i=1; i<(x_dim+1); i+=boxsize){
+
+    # assign x dimension of box sizes
+      start_x = i
+      end_x = i+boxsize-1                       # boxes in middle of array
+      if(i+boxsize > x_dim) end_x = x_dim       # boxes on right edge of array
+
+    # x values of .dark, .avgdark, and .quality arrays
+      u = start_x/boxsize + 1
+
+    # cut out box of data and apply blackmask
+      revised_data = data[start_x:end_x,start_y:end_y,]                         # define a 50x50 box for radcorr
+      revised_data[where blackmask[start_x:end_x,start_y:end_y] == 0] = 0       # replace all pixel with temp <230 with an ignore value
+      tmp_data = maxbtemp[start_x:end_x,start_y:end_y]                          # define a 50x50 box of temperature data for stddev'ing
+      tmp_data[where blackmask[start_x:end_x,start_y:end_y] == 0] = 0           # black out all pixel's that are invalid
+ 
+    # check to see if there is enough temperature variance and enough usable pixels for radcorr to use
+    # we want to throw out the first 300 rows and first 50 columns due to ghosts
+      if((stddev(tmp_data,ignore=0) > sd_limit)&&(sum(blackmask[start_x:end_x,start_y:end_y]) > UP && start_x!=1 && top_ghost==0)){
+        rc = thm.radcorr(revised_data,blist,b1=band1,b2=band2,ignore=ignore)  
+        final.dark[u,v,] = rc[1,,]
+        bm = blackmask[start_x:end_x,start_y:end_y]
+        bm[where bm != 0] = bm + 1
+        blackmask[start_x:end_x,start_y:end_y] = bm
+        bm = 0
+        quality[u,v] = 1
+
+     # we want the radiance corrections to be positive in bands 4 through 8 and not too negative in 3 and 9
+      ##This syntax chokes images<10-bands
+      ##if(min(rc[1,,4:8],axis=z)>0 && rc[1,,band1]>-2.5e-06 && rc[1,,band2]>-2.5e-06) 
+        goodrc=1
+        for (b=band1; b<=band2; b+=1) {
+           if ( blist[b]==3 && rc[1,,b]<-2.5e-06 ) goodrc=0
+           if ( blist[b]>=4 && blist[b]<=8 && min(rc[1,,b])<0 ) goodrc=0
+           if ( blist[b]==9 && rc[1,,b]<-2.5e-06 ) goodrc=0
+        }
+        if (goodrc==1) {
+          bm = blackmask[start_x:end_x,start_y:end_y]
+          bm[where bm != 0] = bm + 1
+          blackmask[start_x:end_x,start_y:end_y] = bm
+          bm = 0
+          quality[u,v] = 2
+        }
+      }
+
+    # if the standard deviation is too small, the blackmask doesn't contain enough pixels or if its the first 50 columns or first 300 rows, throw it out
+      if((stddev(tmp_data,ignore=0) < sd_limit)||(sum(blackmask[start_x:end_x,start_y:end_y]) < UP || start_x==1 || top_ghost==1)){
+        final.dark[u,v,] = -32768
+        blackmask[start_x:end_x,start_y:end_y] = 0
+      }
+    }
+  }
+
+########## CONSTRUCT OUTPUT ##########
+# store the blackmask for eventual output
+  final.blackmask = byte(blackmask)
+
+# garbage collection
+  final.data=data
+  data = 0
+  blackmask = 0
+  maxbtemp = 0
+  revised_data = 0
+  rc = 0
+  tmp_data = 0
+
+# construct the average of the .dark
+  final.avgdark = final.dark[1,1]*0
+  if(max(quality) == 2) {
+    t=final.dark
+    t[where quality < 2] = -32768
+    final.avgdark[,,k] = avg(t,axis=XY,ignore=-32768)
+    t = 0
+  }
+
+# construct the .darkcol
+  finaldark = final.dark
+  if(max(quality) == 2) finaldark[where quality == 1] = -32768
+  quality = 0
+  rc_line_avg = avg(finaldark,axis=x,ignore=-32768)
+  t = avg(finaldark,axis=x)
+  finaldark = 0
+  rc_line_avg[where t == -32768] = -32768
+  t = 0
+  rc_line_avg = thm.supersample(rc_line_avg,type=2,factor=50)
+  rc_line_avg = rc_line_avg[1,:y_dim]
+  final.darkcol = thm.column_fill(rc_line_avg,chunk_size=3600)
+  rc_line_avg = 0
+
+  if(max(final.blackmask) == 1) final.avgdark[,,k] = avg(final.dark,axis=XY,ignore=-32768)
+
+# if no good boxes were found set all corrections to 0
+  if(max(final.blackmask) == 0) {
+    final.darkcol = final.darkcol*0
+    final.dark = final.dark*0
+    printf("Unable to attempt automatic correction!\n")
+  }
+
+# set band 10 corrections to 0
+  final.darkcol[,,blistdim] = final.darkcol[,,blistdim]*0
+  final.dark[,,blistdim] = final.dark[,,blistdim]*0
+  final.data[where final.data != ignore] = final.data - final.darkcol
+
+  printf("\n")
+  return(final)
+}
+
+
+
+define destreak(bandlist,ignore) {
+
+# this script removes streak artifacts from deplaided data
+# assumes that the data has been radcorred
+# converts to emissivity, deplaids each band independently and recombines
+
+  if ($ARGC == 0) {
+    printf("Destreak() - Mon Sep 26 13:02:06 MST 2005 \n\n")
+    printf("USE: b = destreak(data)\n\n")
+    printf("\'data\' is 10 band float THEMIS radiance data\n")
+		printf("bandlist=list of bands in the x direction (Default is 1//2//3//4//5//6//7//8//9//10)\n")
+		printf("ignore=ignore value (Default=-32768)\n")
+    return(null)
+  }
+	if(HasValue(bandlist)==0) bandlist=1//2//3//4//5//6//7//8//9//10
+	if(HasValue(ignore)==0) ignore=-32768
+
+  data = $1
+
+  data = thm.themis_emissivity(data,bandlist=bandlist,ignore=ignore)
+  recopy = data.emiss
+
+  data.emiss[where min(data.emiss,axis=z) == 0] = 0
+
+  for(i=1;i<dim(data.emiss)[3];i+=1) {
+    data.emiss[,,i] = thm.deplaid(data.emiss[,,i],tmask_min=.85,tmask_max=1.1,ignore=0,b10=0)
+  }
+
+  data.emiss[where max(recopy,axis=z) > 0 && min(recopy,axis=z) == 0] = recopy
+  recopy = 0
+  data = thm.emiss2rad(data,bandlist=bandlist,ignore=ignore)
+
+  return(data)
+}
+
+
+
+
+define tb2rad() {
+if ($ARGC == 0) {
+  printf ("\n");
+  printf ("convert temperature to spectral radiance (W cm-1 str-1 micron-1) \n");
+  printf ("\n");
+  printf ("usage: rad = tbtorad(temp_rad_array, temp_array (K))\n");
+  printf ("\n");
+  printf ("examples: rad = tbtorad(temp_rad, t)	 \n");
+  printf ("     where t is (1, 1, 10) array of temps\n");
+  printf (" \n");
+  printf ("rad = tbtorad(temp_rad, clone(250., 1, 1, 10))	 \n");
+  printf ("\n");
+  printf ("Note: read in: temp_rad = read('/themis/calib/temp_rad_v4')\n");
+  printf ("\n");
+  printf ("Note:  t can be less than 10 bands if temp_rad array has been adjusted to only\n");
+  printf ("       contain the bands used	\n");
+  return(0);
+}
+
+# p. christensen  10/2/01
+
+ temp_rad = $1;
+ temp = $2;
+
+ d1=dim(temp)[1];
+ d2=dim(temp)[2];
+ d3=dim(temp)[3];
+ printf("tbtorad: dims = %d %d %d\n", d1, d2, d3);
+
+ rad = temp * 0.;
+ 
+ for(i=1; i<=d3; i+=1) {
+   index = i+1;
+   rad[,,i] = interp(temp_rad[index], temp_rad[1], temp[,,i]);
+ }
+ 
+# clean up
+ temp = 0.;
+ 
+ return(rad);
+}
+
+
+
+
+
+define temp2dn(flag_dn) {
+# p. christensen  5/21/02
+# p. christensen  3/01
+# p. christensen  10/26/01 - redone to use radtotb and tbtorad
+# added $DV_EX support 12/28/07 cedwards
+#Added $DV_SCRIPT_FILES support - 5-13-08
+#Added instrument_parameters to $DV_SCRIPT_FILES support - 1-30-09
+
+
+if ($ARGC == 0) {
+	printf ("		\n")
+	printf ("	compute dn for an input temperature (K)\n")
+	printf ("		\n")
+	printf ("	usage: dn = temp2dn(scene_temp (K), gain, offset, cal_flag_temp (C), [flag_dn = dn] \n")
+	printf ("				 \n")
+	printf ("		[,flag_dn = dn (default = 128)		 \n")
+	printf ("				 \n")
+	printf ("       example: dn = temp2dn(305., 16, 0, -5, flag_dn = 133.)\n")
+	return(0)
+}
+
+temp = $1
+gain = $2
+offset = $3
+temp_flag = $4
+
+struc=struct()
+
+# get instrument response function [320,2,10] array
+
+#updated 12/28/07 cedwards
+irf_name = $DV_SCRIPT_FILES+"/instrument_parameters/irf_fit_all_v3.0_tv6_1_2_v3.0"
+
+# updated 5/21/02 prc
+#irf_name = "/themis/calib/irf_fit_all_v3.0_tv6_1_2_v3.0"
+# updated 4/14/02 prc
+#irf_name = "/themis/calib/irf_fit_all_v2.0_tv6_1_1_v3.0"
+# version 1/5/02
+#irf_name = "/themis/calib/irf_fit_all_v1.0_tv6_1_1_v2.0"
+
+response_array = read(irf_name)
+printf(" Reading reading response array   %s\n", irf_name)
+
+# renamed with version number 11/11/01
+#response_array = read("/themis/data/archive/irf_fit_all_tv6_1_1_v1.0")
+#response_array = read("/themis/data/archive/irf_fit_all_tv6_1")
+
+# get temp to spectral radiance look-up table
+# updated - prc 4/14/02
+
+#updateed - cedwards 6-30-09
+trfilename = $DV_SCRIPT_FILES+"/instrument_parameters/temp_rad_v4"
+
+# updated - prc 3/14/02
+#trfilename = "/themis/calib/temp_rad_v3"
+#trfilename = "/themis/calib/temp_rad_v2"
+
+printf(" Reading temp_rad file   %s\n", trfilename)
+temp_rad = read(trfilename)
+
+#temp_rad = read("/themis/calib/temp_rad_v1.1")
+#temp_rad = read("/themis/data/archive/temp_rad")
+
+temp_flag_k = clone(ctok(temp_flag), 1, 1, 10)
+
+dn_flag = 128.
+gain_flag = 16.
+offset_flag = 0.
+
+# compute spectral radiance of flag ([1,1,10] array)
+rad_flag = tbtorad(temp_rad, temp_flag_k) 
+
+a = response_array[,1,]
+b = response_array[,2,]
+
+# compute spectral radiance of scene ([1,1,10] array)
+temp_scene = clone(temp, 1, 1, 10)
+rad = tbtorad(temp_rad, temp_scene)
+
+#compute delta spectral radiance
+delta_rad = rad - rad_flag
+
+# convert to spectral radiance and determine delta signal using response function
+delta_signal = (b * delta_rad) + a
+
+# add gain and offset relative to 128 to get dn
+dn = (delta_signal) * gain + (offset * gain) + 128.
+
+if(HasValue(flag_dn)) {
+        dn = dn + (flag_dn-128.)
+}
+
+avgdn = avg(dn,xy)
+printf("\n\nAve. DN for Band 1-10  = %.1f   %.1f  %.1f   %.1f   %.1f   %.1f   %.1f   %.1f   %.1f   %.1f\n",  avgdn[,,1], avgdn[,,2], avgdn[,,3], avgdn[,,4], avgdn[,,5], avgdn[,,6], avgdn[,,7], avgdn[,,8], avgdn[,,9], avgdn[,,10])
+
+return(dn)
+
+}
+
+
+
+
+
+define bbrw() {
+# p. christensen
+
+if ($ARGC == 0) {
+	printf ("		\n")
+	printf ("	compute spectral radiance in units of W cm-2 str-1 micron-1\n")
+	printf ("		\n")
+	printf ("	usage rad = bbrw(wavelength(micron), temp (K)\n")
+	printf ("				 \n")
+	return(0)
+}
+
+wavelength = $1
+temperature = $2	
+
+#### NOTE !!!!!!! ##################
+####### changed back to radiance - prc 7/24/01.  All NER, "radiance", and response functions calculations before this
+#   date really used "irradiance"
+
+
+# returns spectral radiance (see DeWitt and Incropera in Thermal Radiometry)
+# c1 in units of W cm-2 micron^4 str-1  
+c1 = 1.1911e4
+
+# c1 in units of W cm-2 micron^4 - not used after 7/24/01 - prc
+#c1 = 3.7415e4
+
+# c2 in units of micron K
+c2 = 1.43879e4
+
+rad = (c1 / (wavelength^5))  / (exp(c2 / (wavelength * temperature)) - 1.)
+return(rad)
+
+}
+
+
+
+define displayp(write, web, no_odd) {
+
+  if ($ARGC == 0) {
+    printf ("\n")
+    printf ("display a 1 or 3 band temperature image in odd-number of columns to maximize screen usage\n")
+    printf ("\n")
+    printf ("usage: displayp(array, [,no_odd=1]) \n")
+    printf ("\n")
+    printf ("where: array    is byte image (e.g.browse) already read in	\n")
+    printf ("       [no_odd = 1]  doesn't force image to have odd number of columns 	\n")
+    printf ("\n")
+    printf ("\n")
+    printf (" example: a = displayp(array)\n")
+    return(0)
+  }
+
+# scale and display a 1 or 3 band temperature image
+# p. christensen 3/20/02 - after displayt
+
+  image = $1
+  size = dim(image)
+  nbands = size[3]
+
+  length = 1000
+  overlap = 0
+  n_black = 50
+
+
+# compute optimal number of lines and samples to give 4 x 6 aspect ratio
+  npix = size[1] * size[2]
+# compute ideal nlines (.4 aspect ratio) and nsamples (.6 aspect ratio)
+  a = sqrt(npix/1.5)
+  nli = int(a) + 1
+  nsi = int(a * 1.5) + 1
+  if(nli < length) {
+    nli = length
+    nlines = nli
+    nsi = npix / nli
+  } else {
+    nlines = nli
+  }
+
+# make first guess at length of image to display
+  ngroups = int(size[2]/nlines) 
+  remain = size[2] - (ngroups * nlines)
+  if(remain >0) {
+    ngroups += 1
+  }
+
+# test to see if last column is less than 1/3 length - if yes, make one fewer column
+  min_col = nlines/3
+  if(remain < min_col) {
+  # make longer with fewer groups
+    ngroups = ngroups - 1
+  }
+
+  printf("size[1] = %d  size[2] = %d  size[3] = %d npix = %d nsi = %d  nlines = %d ngroups = %d remain = %.2f\n", size[1], size[2], size[3], npix, nsi, nlines, ngroups, remain)
+  if(HasValue(no_odd)) {
+  # do nothing - let ngroups be even
+  } else {
+  # set number of groups to odd number - don't split center point since it is usually the main target - 4/7/02
+    remain_groups = ngroups - int(ngroups/2.) * 2.
+    printf(" remain = %.1f\n", remain_groups)
+    if (remain_groups == 0.) {
+      ngroups = ngroups - 1
+    #ngroups = ngroups + 1
+    }
+  }
+
+  nlines = int(float(size[2])/ngroups)
+  remain = 0
+  printf("final settings: size[1] = %d  size[2] = %d  size[3] = %d npix = %d nsi = %d  nlines = %d ngroups = %d remain = %.2f\n", size[1], size[2], size[3], npix, nsi, nlines, ngroups, remain)
+
+  for(ig = 1; ig<= ngroups; ig+=1) {
+  # start line in input image
+    sl = (ig-1) * nlines + 1
+
+    if(sl <= 0) {
+      sl=1
+    }
+
+  # end line in input image
+    el = sl + nlines - 1
+    if(el > size[2]) {
+      el=size[2]
+    }
+
+  # get piece of input image for this column
+    a = byte(image[,sl:el,])
+
+  # add black to end of last column
+    if (ig == ngroups && remain > 0) {
+      a = cat(a, clone(byte(a[1,1]*0), dim(a)[1], nlines - remain, 1), y)
+    }
+    if (ig == 1) {
+      b = a
+    } else {
+      b = cat(b, clone(byte(a[1,1]*0), n_black, dim(b)[2], 1), x)
+      b = cat(b, a, x)
+    }
+  }
+
+  b=bip(b)
+
+  if(HasValue(write)) {
+    if(nbands == 1) {
+      printf("writing to file\n")
+      write(b, write, gif, force=1)
+    } else {
+      printf("writing to file\n")
+      write(b, write, ppm, force=1)
+    }
+  }
+  display(b)
+  return(b)
+}
+
+
+
+
+define dispp() {
+
+	if ($ARGC == 0) {
+   	printf ("		\n")
+   	printf ("	find an image using find_image and display it using displayp\n")
+   	printf ("	  also prints geometric information to screen	\n")
+   	printf ("		\n")
+   	printf ("	usage: a = dispp('filename') \n")
+   	printf ("		\n")
+  	printf (" example: a = dispp('I01855003')\n")
+   	return(0)
+	}
+	
+	#8/18/05:Kmm- Changed geometry_detail query to themis3.qubgeom
+	#6-30-09:Cedwards - changed to use get_image and themis3db
+	
+	a = $1
+	verbose=0
+	b = read(get_image(a,type="BWS",instrument="themis"))
+	
+	c = displayp(bsq(b))
+	url1=read_lines(themis3db("select file_id, lat, lon, incidence_angle,solar_longitude, local_solar_time from qubgeom where file_id='"+a+"' and point_id='CT' and band_idx <= 1;",psql=1,xformat=1,v=0))
+
+	url2=read_lines(themis3db("select  min(lat), max(lat), min(lon), max(lon), start_time from thm3_header as H, qubgeom as G where H.file_id=G.file_id and G.file_id='"+a+"' group by start_time;", psql=1,xformat=1,v=0))
+
+	for(i=1;i<=length(url1)-1;i++) {
+		printf("\t%s\n",url1[,i])
+	}
+	for(i=1;i<=length(url2)-1;i++) {
+		printf("\t%s\n",url2[,i])
+	}
+	verbose=3
+	return(bsq(c))
+}
+
+
+
+define dispa() {
+
+	if ($ARGC == 0) {
+	  printf ("\n")
+	  printf ("find an image using find_image and display it using display\n")
+	  printf ("also prints geometric information to screen\n\n")
+	  printf ("usage: a = dispa('filename') \n\n")
+	  printf ("example: a = dispa('I01855003')\n")
+	  return(0)
+	}
+	
+	#8/18/05:Kmm- Changed geometry_detail query to themis3.qubgeom
+	#6-30-09:Cedwards - changed to use get_image and themis3db
+	
+	a = $1 
+	
+	verbose=0
+	b = read(get_image(a,type="BWS",instrument="themis"))
+	
+	display(bsq(b))
+	
+	url1=read_lines(themis3db("select file_id, lat, lon, incidence_angle,solar_longitude, local_solar_time from qubgeom where file_id='"+a+"' and point_id='CT' and band_idx <= 1;",psql=1,xformat=1,v=0))
+	url2=read_lines(themis3db("select  min(lat), max(lat), min(lon), max(lon), start_time from thm3_header as H, qubgeom as G where H.file_id=G.file_id and G.file_id='"+a+"' group by start_time;", psql=1,xformat=1,v=0))
+
+	for(i=1;i<=length(url1)-1;i++) {
+		printf("\t%s\n",url1[,i])
+	}
+	for(i=1;i<=length(url2)-1;i++) {
+		printf("\t%s\n",url2[,i])
+	}
+	
+	verbose=3
+	return(bsq(b))
+
+}
+
+
+
+
+define themisx(0) {
+
+# Make 10 point THEMIS wavenumber scale
+
+  xthemis=create(1,10,1, format=double)
+
+  xthemis[1,1,1]=1477.8360
+  xthemis[1,2,1]=1477.8360
+  xthemis[1,3,1]=1267.6153
+  xthemis[1,4,1]=1174.8452
+  xthemis[1,5,1]=1075.0894
+  xthemis[1,6,1]=983.6909
+  xthemis[1,7,1]=909.8835
+  xthemis[1,8,1]=850.8455
+  xthemis[1,9,1]=796.4805
+  xthemis[1,10,1]=675.3144
+
+  return(xthemis)
+}
+
+
+
+
+
+
+define night_deplaid() {
+
+  if($ARGC == 0) {
+    printf("night_deplaid() - removes line and row correlated noise from THEMIS nighttime cubes\n")
+    printf("Syntax:  night_deplaid(data)\n")
+    printf("Example: b = night_deplaid(a.data)\n")
+    printf("  \'data\': any nighttime THEMIS radiance cube\n")
+    printf("Fri Oct 20 16:31:45 MST 2006\n")
+    return(null)
+  }
+
+  data=$1
+
+  ############################################################
+  # Nighttime images are notoriously cold and sometimes have
+  # negative radiance values.  So, we raise them up by twice
+  # their minimum and deplaid them, then restore values.
+  ############################################################
+
+  z=min(data)
+  if(z > -0.01) z = -32768
+
+  mindata = min(data, ignore=z)
+  if(mindata<0) {
+    data[where data != z] = data + 2*abs(mindata)
+  }
+
+  ###########################################################
+  # Now, also because of the cold we sometimes get entire
+  # plaid lines with signal as great as bright features, so
+  # we throw all points in to begin with and then do another
+  # deplaid with normal limits to set bright spots good again.
+  ###########################################################
+
+  for(i=1;i<=dim(data)[3];i+=1) {
+    data[,,i]=thm.deplaid(data[,,i],tmask_min=0.05,tmask_max=5.5,b10=0,ignore=z)
+    data[,,i]=thm.deplaid(data[,,i],b10=0,ignore=z)
+  }
+
+  ###########################################################
+  # Reset the levels back to calibrated data
+  ##########################################################
+  if(mindata<0) {
+    data[where data != z] = data - 2*abs(mindata)
+  }
+
+  return(data)
+}
+
+
+
+define rtilt(data,ignore,ysize,verbose,xisize,yavgonly) {
+
+	if($ARGC==0 && HasValue(data)==0) {
+	  printf("\nrtilt() - Compute a Running tilt removal\n")
+	  printf("Syntax: rtilt(data [,ignore = FLOAT] [,ysize = INT] [,verbose = INT])\n")
+	  printf("Example: b = rtilt(a, ignore=0)\n")
+	  printf(" data:    data option for more efficient memory usage\n")
+	  printf(" ignore:  value to ignore (Default=-32768)\n")
+	  printf(" ysize:   size of the chunks (Default=4000)\n")
+	  printf(" xsize:   size of the filter in x (Default=100)\n")
+	  printf(" yavgonly: subtract the y-average and add back the average (Default=0)\n")
+	  printf(" verbose: turn on print statements\n\n")
+	  printf("c.edwards 3/7/06\n\n")
+	  return(null)
+	}
+		
+	if(HasValue(data)==0) data=$1
+	ychsize=4000
+	ign=-32768
+	verb=0
+	
+	if(HasValue(verbose)) verb=1
+	if(HasValue(ysize)) ychsize=int(ysize)
+	if(HasValue(xsize)==0) xsize=100
+	if(HasValue(ignore)) ign=ignore
+	if(HasValue(yavgonly)==0) yavgonly=0
+
+	if(ychsize%2 == 1) ychsize-=1
+	
+	pic=float(data*0)
+	yrange=clone(0,2,1,1)
+	
+	ramp=create(1,int(ychsize/2),1,start=0,step=1/float(ychsize/2),format=float)          
+	flag=0
+	diff=0
+	bmask=byte(pic*0)
+	bmask[where data!=ign]=1
+	
+	for(j=1;j<=dim(data)[2];j+=int(ychsize/2)) {
+		 
+	  yrange[1]=j;yrange[2]=j+ychsize-1
+	  if(verb==1) printf("%i,%i\n",yrange[1],yrange[2])
+	
+	  if(yrange[2]>dim(data)[2]) {
+	    diff=yrange[2]-dim(data)[2] 
+	    yrange[2]=dim(data)[2]
+	    flag=1
+	  }
+	
+		if(yavgonly==0) {
+		  yavg=avg(data[,yrange[1]:yrange[2],],ignore=ign,axis=y)    
+		  smo=thm.convolve(yavg,clone(1.,xsize,1,1),ignore=0)
+		  tmp=float(data[,yrange[1]:yrange[2],]-smo+avg(smo,ignore=0,axis=xy))
+		} else {
+		  yavg=avg(data[,yrange[1]:yrange[2],],ignore=ign,axis=y)    
+		  tmp=float(data[,yrange[1]:yrange[2],]-yavg+avg(yavg,ignore=0,axis=xy))
+		}
+
+	  if(j==1) pic[,yrange[1]:yrange[2],]=tmp
+	  if(j!=1) {
+	    pic[,(yrange[1]):yrange[2]-int(ychsize/2)+diff]=pic[,(yrange[1]):yrange[2]-int(ychsize/2)+diff]*(1-ramp)
+	    tmp[,:int(ychsize/2),]=tmp[,:int(ychsize/2),]*ramp
+	    pic[,yrange[1]:yrange[2],]=pic[,yrange[1]:yrange[2],]+tmp
+	  }
+	  if(flag==1) {
+	    pic[where bmask==0]=ign
+	    return(pic)
+	  }
+	}
+}
+
+
+
+define idinfo(){
+
+  if($ARGC==0){
+    printf("\nFunction displays the following information of a specified image:\n")
+    printf("\tFilename, Latitude, Longitude, Duration, Description, Local Solar Time\n\tIncidence Angle, Solar Longitude, Band Spectrum Used\n")
+    printf("If file is a visible image, it will not display temperature reading\n")
+    printf("\nSyntax:\t\tidinfo(image_ID number)")
+    printf("\nExample:\tidinfo(\"I03045002\")\n\n")
+    return(null)
+  }
+
+ 	id=$1
+  isIR = 0
+  out = {}
+
+  # checks to see if its a valid format in the form of (I/V)xxxxxxxx #
+  if(length(id)!=9){
+    printf("invalid image_ID, must be 9 characters long\n\n")
+    return(null)
+  }
+		
+  # checks to see if the beginning filename starts appropriately #
+  if((id[1,1]!="I")&&id[1,1]!="V"){
+    printf("invalid image_ID, must begin with either an I or V\n\n")
+    return(null)
+  }
+
+  # set flag to denote image file is an IR image
+  if(id[1,1]=="I"){
+    isIR=1
+  }
+
+  # checks to see if image_id given exists in database #
+	temp_result = read_lines(themis3db("select file_id from thm3_header where file_id='"+id+"';",psql=1,v=0))
+  if(length(temp_result)==0){
+    printf("\nImage ID supplied does not exist in database\n\n")
+    return(null)				
+  }
+
+  # begin making call to each attribute #
+  out.filename = id;
+	if(isIR==0) {
+		#RESUME HERE
+		a=load_csv(themis3db("select spacecraft_clock_start_count, spacecraft_clock_stop_count, band_bin_band_number, description, core_line, incidence_angle, lat, lon, local_solar_time, solar_longitude from thm3_header,qubgeom where thm3_header.file_id=qubgeom.file_id and thm3_header.file_id='"+id+"' and point_id='CT';",psql=1,header=1,v=0))
+	} else {
+		a=load_csv(themis3db("select spacecraft_clock_start_count, spacecraft_clock_stop_count, band_bin_band_number, description, core_line, incidence_angle, lat, lon, local_solar_time, solar_longitude, surf_temp_avg, surf_temp_max, surf_temp_min from thm3_header,qubgeom,irqubsci where irqubsci.file_id=qubgeom.file_id and thm3_header.file_id=qubgeom.file_id and thm3_header.file_id='"+id+"' and point_id='CT';",psql=1,header=1,v=0))
+	}
+
+	#replicate this idiodic function
+	out.start_sclk=a.spacecraft_clock_start_count
+	out.end_sclk=a.spacecraft_clock_stop_count
+	if(isIR) {
+		out.avg_btemp=a.surf_temp_avg
+		out.max_btemp=a.surf_temp_max
+		out.min_btemp=a.surf_temp_min
+	}
+	out.band_config=a.band_bin_band_number
+	out.description=a.description
+	out.duration=a.core_line/30.
+	out.incidence_angle=a.incidence_angle
+	out.latitude=a.lat
+	out.longitude=a.lon
+	out.local_solar_time=a.local_solar_time
+	out.solar_longitude=a.solar_longitude
+
+	verbose=3
+	return(out)
+}
+
+
+
+define fake_rdr() {
+
+# Simple script to make a fake RDR from a block of data.
+# Assumptions: You're on a linux (little-endian) machine
+#              You're using a float RDR and writing a FLOAT block
+#              You're source contains BAND_BIN_BASE/MULTIPLIER
+#4/03 KMurray
+#Copied from ~gorelick/fake_rdr.dv; adapted for multiple scaling factors
+
+	if ($ARGC < 3) {
+		printf("usage: fake_rdr(data, src_file, dst_file\n");
+		printf(" note: dst_file name must contain .QUB\n");
+		return(1);
+	}
+
+	data = $1
+	rdr = $2
+	dest = $3
+
+	if (format(data) != "float") {
+		printf("error: data must be FLOAT.\n");
+		return(0);
+	}
+
+	if (strstr(obj=dest, pattern=".QUB") == 0) {
+		printf("error: dst_file must contain .QUB\n");
+		return(0);
+	}
+
+	#Write out the data+suffix planes
+	write_isis(filename=dest+".dataI", core=data, side={side=data[1]}, bottom={bottom=data[,1]})
+
+
+	#Calculate new file size
+        Xdim = dim(data)[1]
+        Ydim = dim(data)[2]
+        Zdim = dim(data)[3]
+
+        match1 = "RECORD_BYTES"
+	srcrec = atoi(syscall(sprintf("head -15 %s | grep %s | cut -d'=' -f2", rdr, match1)))
+        match2 = "FILE_RECORDS"
+	srcfile = atoi(syscall(sprintf("head -15 %s | grep %s | cut -d'=' -f2", rdr, match2)))
+        match3 = "LABEL_RECORD"
+	srclab = atoi(syscall(sprintf("head -15 %s | grep %s | cut -d'=' -f2", rdr, match3)))
+        match4 = "HISTORY"
+	srchist = atoi(syscall(sprintf("head -15 %s | grep %s | cut -d'=' -f2", rdr, match4)))
+        match5 = "SPECTRAL_QUBE"
+	srcqube = atoi(syscall(sprintf("head -15 %s | grep %s | cut -d'=' -f2", rdr, match5)))
+        histsize = srcqube-srchist
+
+        #destrec calculated as (x_dim*float_bytes)+suffix_bytes
+	destrec = (Xdim*4)+4
+
+        olabelB = (srclab*srcrec)
+        labpad = destrec-((srclab*srcrec)%destrec)
+        destlabel = int(((srclab*srcrec)+labpad)/destrec)
+
+        ohistSB = (srclab*srcrec)+1
+        ohistEB = olabelB+(histsize*srcrec)
+        histpad = destrec-((histsize*srcrec)%destrec)
+        desthist = int(((histsize*srcrec)+histpad)/destrec)
+
+        desthistpnt = destlabel+1
+        destqubepnt = desthistpnt+desthist
+
+        #destfile calculated as ((((x_dim*y_dim*float_bytes)+(y*suffix_bytes)+(x*suffix_bytes)+4)*z_dim)/destrec)+header_lines+history_lines
+        destfile = ((((Xdim*Ydim*4)+(Ydim*4)+(Xdim*4)+4)*Zdim)/destrec)+destlabel+desthist
+
+
+	#Create header for dst_file
+	system(sprintf("pdshead %s > %s.Ohead", rdr, dest));
+
+	#Modify keywords 
+        #short-to-float adds 1-char to rbyte string; make up in space padding on ctype
+	rbyte = sprintf("/RECORD_BYTES/s/%d/%d/", srcrec, destrec)
+	frec = sprintf("/FILE_RECORDS/s/%d/%d/", srcfile, destfile)
+        labpnt = sprintf("/LABEL_RECORD/s/%d/%d/", srclab, destlabel)
+        histpnt = sprintf("/HISTORY =/s/%d/%d/", srchist, desthistpnt)
+        qubepnt =  sprintf("/SPECTRAL_QUBE =/s/%d/%2d/", srcqube, destqubepnt)
+	cbyte = "/CORE_ITEM_BYTES/s/2/4/"
+	ctype = "/CORE_ITEM_TYPE/s/SUN_INTEGER/SUN_REAL  /"   #space padding requried
+	#cvmin = "/CORE_VALID_MINIMUM/s/32752/1.000/"
+	base = "/BAND_BIN_BASE =/,/)/s/./ /g"
+	mult = "/BAND_BIN_MULTIPLIER =/,/)/s/./ /g"
+
+	system(sprintf("sed -e '%s' -e '%s' -e '%s' -e '%s' -e '%s' -e '%s' -e '%s' -e '%s' -e '%s' %s.Ohead > %s", rbyte, frec, labpnt, histpnt, qubepnt, cbyte, ctype, base, mult, dest, dest ));
+
+        #Reassemble header objects and qube
+        a = load_raw(dest,x=ohistEB,y=1,z=1,org=BSQ,format=BYTE)
+        write(a[1:olabelB] // clone(byte(32), labpad), dest + ".head", raw, force=1)
+
+        write(a[ohistSB:ohistEB] // clone(byte(32), histpad), dest + ".hist", raw, force=1)
+
+	system(sprintf("pdshead -fdata %s.dataI > %s.data", dest, dest))
+
+	system(sprintf("cat %s.head %s.hist %s.data > %s", dest, dest, dest, dest))
+
+	system(sprintf("rm %s.Ohead", dest));
+	system(sprintf("rm %s.head", dest));
+	system(sprintf("rm %s.hist", dest));
+	system(sprintf("rm %s.dataI", dest));
+	system(sprintf("rm %s.data", dest));
+}
+
+
+
+define do_isis_geometry(noprocess,simple,crop,lon,res) {
+
+if ($ARGC == 0) {
+	printf ("		\n")
+	printf ("	project THEMIS image using ISIS\n")
+	printf ("	returns projected image	\n")
+	printf ("		\n")
+	printf ("	usage: a = do_isis_geometery('image_id'  [, simple = 1])\n")
+	printf ("	where:	image_id = standard id of THEMIS image (e.g. 'I010760010') assumed to be in standard path\n")
+	printf ("		or:      = 'full_path/filename' (e.g. '/themis/data/mapping/RDR_calib/I038XXRDR/I03814002RDR.QUB')\n")
+	printf ("		[, simple = 1] do simple cylindrical projection (default = sinusoidal equal area\n")
+	printf ("res = projection resolution (km) (default is native resolution)\n")
+	printf ("res must be in a string format (e.g. \"0.1\"\n")
+	printf ("lon = center longitude (default = avg. longitude for image)\n")
+	printf ("		\n")
+	printf ("	examples: a = do_isis_geometry('I01076010')\n")
+	printf ("	          a = do_isis_geometry('I01076010', simple=1)\n")
+	printf ("		  a = do_isis_geometry('/themis/data/mapping/RDR_calib/I038XXRDR/I03814002RDR.QUB')\n")
+	return(0)
+}
+ 
+
+image_name = $1
+
+if (HasValue(lon)==0) {
+
+   lon=""
+}
+if (HasValue(res)==0) {
+   res="--"
+}
+
+if (strstr(image_name, "/") != 0) {
+	# If there's a path included in the name, use it as is.
+	from = image_name
+} else {
+	# No sort of path, prepend the data directory, and check for the
+	# appropriate extensions.
+
+	if (image_name[length(image_name)-4:] != ".QUB") {
+		if (image_name[length(image_name)-4:] != "RDR") {
+			image_name = image_name + "RDR";
+		}
+		image_name = image_name + ".QUB";
+	}
+	from = sprintf("/themis/data/mapping/RDR_calib/%sXXRDR/%s", image_name[1:4], image_name);
+}
+base = basename(image_name, ".QUB");
+
+struc=struct()
+
+
+if(HasValue(noprocess)) {
+	# don't reprocess
+
+} else {
+	# initialize qube
+	file2 = sprintf("cd %s; thm2isis.pl %s %s.lev1.cub", $TMPDIR, from, basename(base));
+	echo(file2)
+	system(file2)
+	if (HasValue(crop)==1) then
+          syscall(sprintf("cd %s; thmcrop.pl -lat %s %s.lev1.cub %s", $TMPDIR, crop, base,"tempcrop"))
+          syscall(sprintf("cd %s; mv %s %s.lev1.cub", $TMPDIR, "tempcrop.cub",basename(base)))
+    	endif
+
+	# do geometric projection - with trim = YES
+	if(HasValue(simple)) {
+		# do simple cylindrical projection
+		file3 = sprintf("cd %s; thmirmc.pl %s.lev1.cub %s.irmc.cub -- -- 'SIMP:' -- -- -- YES", $TMPDIR, base, basename(base));
+	#	file3 = sprintf("cd %s; thmirmc_parallel.pl %s.lev1.cub %s.irmc.cub -- -- 'SIMP:' -- -- -- YES", $TMPDIR, base, basename(base));
+	} else {
+		# do sinusoidal equal area projection (default)
+		file3 = sprintf("cd %s; thmirmc.pl %s.lev1.cub %s.irmc.cub -- -- SINU:%s,OCENTRIC -- -- -- YES %s", $TMPDIR, base, basename(base), lon, res);
+	#	file3 = sprintf("cd %s; thmirmc_parallel.pl %s.lev1.cub %s.irmc.cub -- -- SINU:%s,OCENTRIC -- -- -- YES %s", $TMPDIR, base, basename(base), lon, res);
+	}
+	echo(file3)
+	system(file3)
+	a = read(sprintf($TMPDIR//"/%s.irmc.cub", basename(base)));
+}
+
+return(a)
+
+}
+
+
+define do_isis_geometry_nadir(noprocess,simple,crop) {
+
+if ($ARGC == 0) {
+	printf ("		\n")
+	printf ("	project THEMIS image using ISIS\n")
+	printf ("	returns projected image	\n")
+	printf ("		\n")
+	printf ("	usage: a = do_isis_geometry_nadir('image_id'  [, simple = 1])\n")
+	printf ("	where:	image_id = standard id of THEMIS image (e.g. 'I010760010') assumed to be in standard path\n")
+	printf ("		or:      = 'full_path/filename' (e.g. '/themis/data/mapping/RDR_calib/I038XXRDR/I03814002RDR.QUB')\n")
+	printf ("		[, simple = 1] do simple cylindrical projection (default = sinusoidal equal area\n")
+	printf ("		\n")
+	printf ("	examples: a = do_isis_geometry_nadir('I01076010')\n")
+	printf ("	          a = do_isis_geometry_nadir('I01076010', simple=1)\n")
+	printf ("		  a = do_isis_geometry_nadir('/themis/data/mapping/RDR_calib/I038XXRDR/I03814002RDR.QUB')\n")
+	return(0)
+}
+
+#8/25/03:KMurray- Based on do_isis_geometry; forces ISIS to use nadir pointing kernels
+
+image_name = $1
+if (strstr(image_name, "/") != 0) {
+	# If there's a path included in the name, use it as is.
+	from = image_name
+} else {
+	# No sort of path, prepend the data directory, and check for the
+	# appropriate extensions.
+
+	if (image_name[length(image_name)-4:] != ".QUB") {
+		if (image_name[length(image_name)-4:] != "RDR") {
+			image_name = image_name + "RDR";
+		}
+		image_name = image_name + ".QUB";
+	}
+	from = sprintf("/themis/data/mapping/RDR_calib/%sXXRDR/%s", image_name[1:4], image_name);
+}
+base = basename(image_name, ".QUB");
+
+struc=struct()
+
+
+if(HasValue(noprocess)) {
+	# don't reprocess
+
+} else {
+	# initialize qube
+	file2 = sprintf("thm2isis.pl %s %s.lev1.cub -- -- /usr/local/isis/m01data/thm_nadir", from, basename(base));
+	echo(file2)
+	system(file2)
+
+	if (HasValue(crop)==1) then
+          syscall(sprintf("thmcrop.pl -lat %s %s.lev1.cub %s",crop, base,"tempcrop"))
+          syscall(sprintf("mv %s %s.lev1.cub", "tempcrop.cub",basename(base)))
+    	endif
+
+	# do geometric projection - with trim = YES
+	if(HasValue(simple)) {
+		# do simple cylindrical projection
+		file3 = sprintf("thmirmc.pl %s.lev1.cub %s.irmc.cub -- -- 'SIMP:' -- -- -- YES", base, basename(base));
+	#	file3 = sprintf("thmirmc_parallel.pl %s.lev1.cub %s.irmc.cub -- -- 'SIMP:' -- -- -- YES", base, basename(base));
+	} else {
+		# do sinusoidal equal area projection (default)
+		file3 = sprintf("thmirmc.pl %s.lev1.cub %s.irmc.cub -- -- -- -- -- -- YES", base, basename(base));
+	#	file3 = sprintf("thmirmc_parallel.pl %s.lev1.cub %s.irmc.cub -- -- -- -- -- -- YES", base, basename(base));
+	}
+	echo(file3)
+	system(file3)
+	a = read(sprintf("%s.irmc.cub", basename(base)));
+}
+
+return(a)
+
+}
+
+
+
+
+define destripe(filter, thresh, opt, sxnoise, exnoise, synoise, eynoise, start, end) { 
+
+if ($ARGC == 0) {
+	printf ("\n")
+	printf ("remove vertical or horizontal stripes from an image\n\n")
+	printf ("usage: out = (in, 'dir', option [,filter=n] ],thres=.f] [,sxnoise = n] [, exnoise = n] [,synoise = n] [, eynoise = n])\n\n")
+	printf ("dir = 'x' to remove horizontal stripes	\n")
+	printf ("dir = 'y' to remove vertical stripes	\n\n")
+	printf (" option 1:  Do low-pass, high-pass, difference\n")
+	printf (" option 2:  Do low-pass, high-pass, threshold, difference\n")
+	printf (" option 3:  Do low-pass, high-pass, threshold, redo low-, high-pass, difference\n")
+	printf (" option 4:  Do low-pass, high-pass, threshold, replace spike columns (rows) \n")
+        printf ("               with average of neighbors \n")
+	printf (" option 5:  Do high-pass using image ave., difference, add back low-pass \n\n\n")
+	printf (" direction = 'x' transposes image x to y - does correction - then transposes back\n\n")
+	printf (" [ , sxnoise, exnoise, synoise, and synoise] are optional start and end x,y value to deternmine noise in image\n")
+        printf (" defaults to full image\n\n")
+	printf (" [, start] [, end] are optional start and end values (x or y as appropirate) of region to apply noise removal \n\n")
+	printf ("NOTE: when doing x-direction, sxnoise, exnoise, etc all corrspond to x, y valuse AFTER transpose has been applied\n")
+	printf ("\n")
+	printf ("[,filter = n]      set low-pass filter value (default = 9\n")
+	printf ("[,thresh = .f]     set spike threshold value (default = 2 * sigma\n")
+	printf ("\n")
+	printf (" example: out = destripe(in, 'y', 1) \n")
+	printf ("          out = destripe(in, 'y', 3, synoise = 5000, eynoise = 3600) \n")
+	printf ("		\n")
+	printf ("	   p. christensen 11/01\n")
+
+	return(0)
+}
+
+# p. christensen  11/8/01
+# added different noise and application regions  - prc - 1/8/02
+
+# improved option 3 - prc - 5/25/02 - will become default for standard calibration and browse image generation
+
+array = $1
+direction = $2
+option = $3
+
+# make provisions to not do any destriping
+if (option == 0) {
+	printf("returning from destripe without doing anything\n")
+	return(0)
+}
+
+struc = struct()
+
+# set default low-pass filter size to 9 pixels
+filt_size = 9
+
+if(HasValue(filter)) {
+        filt_size = filter
+}
+
+boxcar = clone(1.0, filt_size, 1, 1)
+
+if (direction=="x") {
+        array = translate(array, x,y)
+        dimen = dim(array)
+        printf("taking average in x direction - apply along y axis; removes row-to-row noise\n")
+        
+}
+
+if (direction=="y") {
+        dimen = dim(array)
+        printf("taking average in y direction - apply along x axis; removes column-to-column noise\n")
+
+}
+
+        # region to compute noise over = defaults to complete image
+        sxn = 1
+        if(HasValue(sxnoise)) {
+                sxn = sxnoise
+        }
+        
+        exn = dimen[1]
+        if(HasValue(exnoise)) {
+                exn = exnoise
+        }
+        
+        syn = 1
+        if(HasValue(synoise)) {
+                syn = synoise
+        }
+        
+        eyn = dimen[2]
+        if(HasValue(eynoise)) {
+                eyn = eynoise
+        }
+
+
+        printf(" computing noise over region %d %d %d %d   filter size = %d\n", sxn, exn, syn, eyn, filt_size)
+
+        # create output array - initially same as input
+        out = array
+        # set region of array to apply noise correction - defaults to full image
+        sy = 1
+        ey = dimen[2]
+        sx  = sxn
+        ex = exn
+
+        if (HasValue(start)) {
+                sy = start
+        }
+
+        if (HasValue(end)) {
+                ey = end
+        }
+
+        # compute correlated noise by averaging entire "length" of image
+        avey = avg(array[sxn:exn, syn:eyn,], y)
+
+        # do "low-pass" filter
+        aveyf = convolve(avey,boxcar,1)
+
+        # make "high-pass" filter (difference)
+        diff = avey - aveyf
+
+        struc.avey = avey
+        struc.aveyf = aveyf
+        struc.diff = diff
+
+        if (option == 1) {
+                printf(" doing option 1\n")
+                out[sx:ex, sy:ey,] = array[sx:ex, sy:ey,] - diff
+                struc.diff_used = diff
+        }
+        
+        if (option == 2 || option == 3 || option ==4) {
+                # only adjust columns where spike is above threshold value
+                # find major spikes using threshold value
+                # take standard deviation to determine threshold - set to 2-sigma
+
+                printf(" setting spikes less than threshold value to 0.\n")
+                std_diff = stddev(diff[3:dim(diff)[1]],axis=x)
+                thresh_size = std_diff * 2.
+        
+                # or use input value
+                if(HasValue(thresh)) {
+                        thresh_size = thresh
+                }
+        
+                # set spikes less than threshold value to 0
+		# difft is array of points that exceed threshhold size
+                difft = diff
+                difft[where(abs(diff) < thresh_size)] = 0.
+                out[sx:ex, sy:ey,] = array[sx:ex, sy:ey,] - difft
+
+                struc.thresh_size = thresh_size
+                struc.difft = difft
+		if(option == 2) {
+			printf("doing option 2\n")
+	                struc.diff_used = difft
+		}
+        
+        }
+        
+        if (option == 3) {
+                # Make second pass - remove spikes first then recompute low-pass filter
+                # set spikes to average of neighbors in original average
+                # this will reduce influence of spikes on filter image and provide a better background level
+		# check to see if neighbors are also spikes - move further away - prc 5/25/02
+                printf(" doing option 3\n")
+
+                aveynew = avey
+		spike_width = 7
+        
+                # loop over bands
+                for(j=1; j<=dimen[3]; j+=1){
+			# loop down line looking for spikes
+                        for(i = sxn+1; i <= exn-1; i+=1){
+                                if(difft[i,,j] != 0.) {
+					# have a spike - set to average of neighbors - but check to make sure neighbors
+					#  aren't spikes.  Go up to 5 neighbors away
+
+					# look to left
+					# set neighbor to current spike in case never find a better value 
+					#  - anything else could make things worse
+					aleft = aveynew[i,,j]
+					neighbor = 0
+		                        for(idel =1; idel <= spike_width; idel+=1) {
+						i_neighbor = i - idel
+						if(i_neighbor < 1) {
+							# reached edge of image without finding a good neighbor
+							# use fartherest value
+							# set neighbor to spike value -anything else could make things worse
+							printf("reached edge of image without finding a good neighbor\n")
+							aleft = aveynew[i,,j]
+							break
+						}
+						if(difft[i_neighbor,,j] == 0.) {
+							aleft = aveynew[i_neighbor,,j]
+							# printf("found a neighbor i= %d j= %d idel= %d\n", i,j, idel)
+							neighbor = 1
+							break
+						}
+					}
+					# printf("idel = %d  aleft = %.3e\n", idel, aleft)
+
+					# look to right
+					# set neighbor to current spike in case never find a better value 
+					#  - anything else could make things worse
+					aright = aveynew[i,,j]
+					neighbor = 0
+		                        for(idel =1; idel <= spike_width; idel+=1) {
+						i_neighbor = i + idel
+						if(i_neighbor > exn) {
+							# reached edge of image without finding a good neighbor
+							# use fartherest value
+							# set "neighbor" to spike value - anything else could make things worse
+							printf("reached edge of image without finding a good neighbor\n")
+							aright = aveynew[i,,j]
+							break
+						}
+
+						if(difft[i_neighbor,,j] == 0.) {
+							aright = aveynew[i_neighbor,,j]
+							# printf("found a neighbor i= %d j= %d idel= %d\n", i,j, idel)
+							neighbor = 1
+							break
+						}
+
+					}
+
+                                    	aave = (aleft + aright)/2.
+
+                                       	aveynew[i,,j] = aave
+                                       	# aveynew[i,,j] = (aveynew[i-1,,j] + aveynew[i+1,,j])/2.
+                                      	#  printf("i= %d  j = %d  neighbor = %d idel = %d  old (spike) value = %.3e  new (ave) value = %.3e\n", i, j, neighbor, idel, avey[i,,j], aave)
+					# pause("pausing")
+                                }
+                        }
+                }
+        
+                # redo low-pass filter with major spikes removed
+                aveynewf = convolve(aveynew,boxcar,1)
+        
+                # redo high-pass filter (difference)
+                diffnew = avey - aveynewf
+        
+                # subtract high-pass filtered line average from image to remove high frequency, correlated noise
+                # apply to selected portion of output image
+                printf(" applying noise correction to region %d %d %d %d\n", sx, ex, sy, ey)
+        
+                out[sx:ex, sy:ey,] = array[sx:ex, sy:ey,] - diffnew
+
+                struc.aveynew = aveynew
+                struc.aveynewf = aveynewf
+                struc.diffnew = diffnew
+                struc.diff_used = diffnew
+
+        }
+
+        if (option == 4) {
+                # just take average of neighbors for "spike" columns
+                printf(" doing option 4\n")
+
+                out = array
+                for(j=1; j<=10; j+=1){
+                        for(k=sy; k<=ey; k+=1) {
+                                for(i=sxn; i<=exn;i+=1){
+#                                printf("%d %d %d \n", i, j, k)
+                                        if(difft[i,,j] != 0.) {
+                                               out[i,k,j] = (out[i-1,k,j] + out[i+1,k,j])/2.
+                                        }
+                                }
+                        }
+                }
+                struc.diff_used = 4
+        }
+        
+        if (option == 5) {
+                printf(" doing option 5\n")
+		# compute whole image average
+		image_ave = avg(array[sx:ex, sy:ey], xy)
+
+		# compute row average
+		row_ave = avg(array[sx:ex, sy:ey], y)
+
+		# compute column-to-column difference from whole-image average
+		diff = row_ave - image_ave
+
+		# compute low-pass filter of image in column direction
+		frow_ave = filterx(row_ave, filt_size)
+
+		# correction (diff_used) is column-to-column difference (diff) plus whole image average 
+		#  minus the smooth trend (frow_ave) to preserve long-range trends
+		diff_used = diff + (image_ave - frow_ave)
+
+		out = array[sx:ex, sy:ey] - diff_used
+                struc.diff_used = diff_used
+        }
+        
+struc.filt_size = filt_size
+struc.boxcar = boxcar
+
+if (direction=="x") {
+        struc.out = translate(out, x,y)
+
+} else {
+struc.out = out
+}
+
+return(struc) 
+
+}
+
+
+
+define mission_time_plot(day,Ls,LST,AvgLST,LMST,AvgLMST) {
+# Usage
+	if (HasValue(day)==0) {
+		printf ("\n\nPlots a variety o mission parameters for the 2001 Mars Odyssey mission\n\n")
+    printf ("Plots: \tSolar Longitude (Ls)\n\tLocal Solar Time (LST)\n\tAverage Local Solar Time (AvgLST)\n\tLocal Mean Solar Time (LMST)\n\tAverage Local Mean Solar Time (AvgLMST)\n\tfor the Mars Odyssey mission.\n")
+    printf ("\nRequired:\n")
+   	printf ("\tday=1 is Daytime (Descending Pass), or\n")
+    printf ("\tday=0 is Nighttime (Ascending Pass)\n")
+   	printf ("\n")
+    printf ("\nOptions:\n")
+		printf ("\tLs=Plot Solar Longitude: 1 = Yes , 0 = No (default=0)\\n")
+		printf ("\tLST=Plot Local Solar Time: 1 = Yes , 0 = No (default=0)\\n")
+		printf ("\tAvgLST=Plot Average Local Solar Time: 1 = Yes , 0 = No (default=0)\\n")
+		printf ("\tLMST=Plot Local Mean Solar Time: 1 = Yes , 0 = No (default=0)\\n")
+		printf ("\tAvgLMST=Plot Average Local Mean Solar Time: 1 = Yes , 0 = No (default=0)\\n")
+   	printf ("\n")
+		printf ("Example: mission_time_plot(day=1,Ls=1,LST=1,AvgLST=1,LMST=1,AvgLMST=1)\n") 
+   	printf ("\n")
+   	printf ("k.nowicki & modified by: j.hill 4/18/12 & modified by j.hill 6/11/15\n")
+   	printf ("\n")
+		return(null)
+	}
+
+# Set Input Defaults
+
+	verbose=0
+
+	if (HasValue(Ls)==0) {
+        	Ls=0
+	}
+
+	if (HasValue(LST)==0) {
+        	LST=0
+	}
+
+	if (HasValue(AvgLST)==0) {
+        	AvgLST=0
+	}
+
+	if (HasValue(LMST)==0) {
+        	LMST=0
+	}
+
+	if (HasValue(AvgLMST)==0) {
+        	AvgLMST=0
+	}
+
+	if (Ls==0 && LST==0 && AvgLST==0 && LMST==0 && AvgLMST==0) {
+   	printf ("You must choose at least one thing to plot: LS, LST, AvgLST, LMST or AvgLMST.\n\n")
+		return(null)
+	}
+
+  # Retrieve THEMIS Image Acquisition Times from the Database
+	printf("\n")
+	printf("Retrieving THEMIS Image Acquisition Times from Database.....")
+	printf("\n")
+
+
+	if (day == 1) {
+		working_comment="\nCreating Daytime "
+                info = read_lines(themis3db("select G.file_id, G.local_solar_time, G.solar_longitude, H.start_time, G.lat, G.lon from qubgeom G, themis_details H where G.file_id=H.file_id and G.point_id = 'CT' and G.file_id like 'I%' and G.local_solar_time > 12 and G.local_solar_time < 19 and G.lat between -60 and 60 order by G.file_id;",psql=1,v=0))
+		
+	} else if (day == 0) {
+		working_comment="\nCreating Nighttime "
+                info = read_lines(themis3db("select G.file_id, G.local_solar_time, G.solar_longitude, H.start_time, G.lat, G.lon from qubgeom G, themis_details H where G.file_id=H.file_id and G.point_id = 'CT' and G.file_id like 'I%' and G.local_solar_time between 0 and 6 and G.lat between -60 and 60 order by G.file_id;",psql=1,v=0))
+	} else {
+		printf ("Non-Valid Day Value: 1 (Day) or 0 (Night)\n")
+		return(null)
+	}
+
+  # Build String for Plot Command
+
+	working_comment_options=""
+	plot_command_options=""
+
+	if (Ls == 1) {
+		working_comment_options=working_comment_options+",Ls"
+		plot_command_options=plot_command_options+", \\'"+$TMPDIR+"/mission_time_plot_datafile.ascii\\' using 1:4 title \\'Solar Longitude\\' axis x1y1 lt 6"
+	}
+
+	if (LST == 1) {
+		working_comment_options=working_comment_options+",LST"
+		plot_command_options=plot_command_options+", \\'"+$TMPDIR+"/mission_time_plot_datafile.ascii\\' using 1:2 title \\'Local Solar Time\\' axis x1y2 lt 5"
+	}
+
+	if (AvgLST == 1) {
+		working_comment_options=working_comment_options+",AvgLST"
+		plot_command_options=plot_command_options+", \\'"+$TMPDIR+"/mission_time_plot_datafile.ascii\\' using 1:3 title \\'Average LST\\' axis x1y2 lt 3"
+	}
+
+	if (LMST == 1) {
+		working_comment_options=working_comment_options+",LMST"
+		plot_command_options=plot_command_options+", \\'"+$TMPDIR+"/mission_time_plot_datafile.ascii\\' using 1:5 title \\'Local Mean Solar Time\\' axis x1y2 lt 2"
+	}
+
+	if (AvgLMST == 1) {
+		working_comment_options=working_comment_options+",AvgLMST"
+		plot_command_options=plot_command_options+", \\'"+$TMPDIR+"/mission_time_plot_datafile.ascii\\' using 1:6 title \\'Average LMST\\' axis x1y2 lt 1"
+	}
+
+	working_comment_options=syscall(sprintf("echo %s | cut -f2- -d ','",working_comment_options))[,1]
+	working_comment=working_comment+working_comment_options+" Plot.....\n"
+	printf("%s",working_comment)
+
+	plot_command_options=syscall(sprintf("echo %s | cut -f2- -d ','",plot_command_options))[,1]
+	plot_command="plot"+plot_command_options
+
+  # Convert Image Acquisition Times to LST and LMST
+	orbit = atof(info[2:6])
+	lst = atof(delim(info,"\t",2))
+	sl = atof(delim(info,"\t",3))
+	alst = thm.convolve(lst,clone(1.0,1,5001,1))
+
+	marsdate = delim(info,"\t",4)
+	marsdate_year= atof(delim(marsdate,"-",1))
+	marsdate_month= atof(delim(marsdate,"-",2))
+	marsdate_day= atof(delim(delim(marsdate,"-",3),"T",1))
+	marsdate_hour= atof(delim(delim(delim(marsdate,"-",3),"T",2),":",1))
+	marsdate_min= atof(delim(delim(delim(marsdate,"-",3),"T",2),":",2))
+	marsdate_sec= atof(delim(delim(delim(marsdate,"-",3),"T",2),":",3))
+	marsdate_MJD=MJD(marsdate_year,marsdate_month,marsdate_day,marsdate_hour,marsdate_min,marsdate_sec)
+	marsdate_Dt=MJD2Dt(marsdate_MJD)
+
+	lmst=clone(float(0),1,dim(marsdate_MJD)[2],1)
+	almst=clone(float(0),1,dim(marsdate_MJD)[2],1)
+
+
+	if (LMST == 1 || AvgLMST == 1) {
+
+		info_lat=atod(delim(info,"\t",5))
+		info_lon=atod(delim(info,"\t",6))
+
+		for (i=1;i<length(info);i+=1) {
+			marsdate_local=marstimelocal(marstimeglobal(marsdate_Dt[,i]),info_lon[,i],info_lat[,i])
+			lmst[,i]=marsdate_local.LMST
+
+		}
+    almst = thm.convolve(lmst,clone(1.0,1,15001,1))
+	}
+
+
+	data = cat(orbit,lst,alst,sl,lmst,almst,axis=x)
+	write(data,$TMPDIR+"/mission_time_plot_datafile.ascii", ascii, force=1)
+
+	max_orbit = max(orbit)
+	max_earth_year = 2001.95+(max_orbit/4434.76)
+
+  #Plot LST and/or LMST
+	if (day==1) {
+		lst_range_min=14
+		lst_range_max=18.5
+	} else {
+		lst_range_min=2.5
+  	lst_range_max=6.5
+	}
+	
+	plot(sprintf("%s",plot_command))
+	points()
+	plot("set ytics nomirror")
+	plot("set ytics 0, 45")
+	plot("set y2tics 0, 0.5")
+	plot("set xlabel 'Orbit number'")
+	plot("set x2label 'Earth Year'")
+	plot("set ylabel 'Solar Longitude'")
+	plot("set y2label 'Local Solar Time'")
+	plot("set x2range [2001.95:"+sprintf("%f",max_earth_year)+"]")
+	plot("set xrange [0:"+sprintf("%f",max_orbit)+"]")
+	plot("set y2range ["+sprintf("%f",lst_range_min)+":"+sprintf("%f",lst_range_max)+"]")
+	plot("set x2tics 0, 1")
+	plot("set xtics nomirror")
+
+	if (day == 1) {
+		plot("set title 'Local Solar Time and Solar Longitude over Mission Life - Daytime Pass'")
+	} else if (day == 0) {
+		plot("set title 'Local Solar Time and Solar Longitude over Mission Life - Nighttime Pass'")
+	}
+
+	lines()
+	verbose=3
+	replot()
+
+	syscall(sprintf("sleep 3"))
+#	syscall(sprintf("rm /tmp/mission_time_plot_datafile.ascii"))
+
+
+}
+
+
+
+
+define expand_ir(data,null,sum) {
+#based on J.Bandfield expand2; assumes EDR_raw standard path unless path given
+##11/2007: reworked loop logic
+
+if ($ARGC ==0) {
+
+        printf ("Expand an IR-EDR summed image by an integer factor\n")
+        printf ("\t taking into account frame_counts in summed images\n\n")
+        printf ("$1 = file_id or full path\n")
+        printf ("data = data to expand (optional, default is file_id.spectral-qube.data)\n")
+        printf ("sum = summing mode (optional)\n")
+        printf ("null = core_null value (optional)\n")
+        return(0)
+}
+
+#Set variables
+ file=$1
+ scalex=1
+ scaley=1
+ line1=ascii("/themis/lib/expand_line.ascii")
+ EDRdir="/themis/data/mapping/EDR_raw/"
+
+if ( length(file) == 9 ) {
+   subd=file[1:4]
+   img = load_pds(sprintf("%s%sXXEDR/%sEDR.QUB",EDRdir,subd,file))
+} else {
+   img = load_pds(file)
+}
+
+#Set optional variables
+if (HasValue(data)) {
+   image=data
+} else {
+   image=img.spectral_qube.data
+}
+if (HasValue(null)) {
+   cnull=null
+} else {
+   cnull=img.spectral_qube.core_null
+}
+if (HasValue(sum)) {
+   scalex = sum
+   scaley = sum
+} else {
+   scalex=img.spectral_qube.spatial_summing
+   scaley=img.spectral_qube.spatial_summing
+}
+
+bbbn=img.spectral_qube.band_bin.band_bin_band_number
+nsamples = dim(image)[1]
+nlines = dim(image)[2]
+nbands = dim(image)[3]
+
+#Expanded data
+nsamples_out = int(nsamples*scalex)
+nlines_out = int(nlines*scaley)
+out = create(nsamples_out, nlines_out, nbands, format=format(image),start=0,step=0)
+
+#Identify the partial frames in Line1
+sumln=0
+for(i=1; i<=dim(line1)[2] ; i+=1 ) {
+   if (scaley == line1[11,i]) sumln=i
+}
+printf("Using frame_count info to EXPAND sum_mode %d:\n",line1[11,sumln])
+dump(line1[1:10,sumln])
+
+#Do the work
+debug=0
+for (k=1; k<=nbands; k+=1) {
+    sumb=bbbn[k,]
+    loffset=line1[sumb,sumln]
+    l1diff=(scaley-loffset)
+    printf("Band %d - ",sumb)
+
+    j=1
+    starty=1
+    if ( loffset == scaley ) {
+     #Line1 represents a complete frame
+        printf("Summed line1 = %d unsummed lines\n",line1[sumb,sumln])
+        for(i=1; i<= nsamples; i+=1) {
+            startx=((i-1)*scalex+1)
+            out[(startx):(i*scalex),(starty):(scaley),k]=image[i,j,k]
+        }
+        starty=starty+scaley
+    } else {
+     #Line1 represents a partial frame
+        printf("Summed line1 = %d unsummed lines (part-frame)\n",line1[sumb,sumln])
+        for(i=1; i<= nsamples; i+=1) {
+            startx=((i-1)*scalex+1)
+            out[(startx):(i*scalex),(starty):(loffset),k]=image[i,j,k]
+        }
+        starty=starty+loffset
+    }
+
+        for(j=2; j<= nlines; j+=1) {
+            for(i=1; i<= nsamples; i+=1) {
+              startx=((i-1)*scalex+1)
+              out[(startx):(i*scalex),(starty):(starty+scaley-1),k]=image[i,j,k]
+            }
+            starty=starty+scaley
+        }
+
+        if ( starty <= nlines_out ) {
+           out[,starty:nlines_out,k]=cnull
+        }
+    }
+
+  return(out)
+
+}
+
+
+define degrade_ir(sum,band,null) {
+ ##Inverse function of expand_ir
+
+ if ($ARGC == 0) {
+
+        printf ("Degrade an expanded IR summed image by an integer factor\n")
+        printf ("\t taking into account frame_counts in summed images\n\n")
+        printf ("USAGE:  degrade_ir(data,sum=,[band=],[null=])  \n")
+        printf ("$1 = data to degrade\n")
+        printf ("sum = summing mode \n")
+        printf ("band = (opt) band_bin_band_number list ([x,1,1] array); default {3,4,5,6,7,8,9,10} \n")
+        printf ("null = (opt) core_null value; default = \n")
+        return(0)
+ }
+
+ #Set variables
+     image=$1
+  if (HasValue(image) == 0 ) {
+     printf ("USAGE:  degrade_ir(data,sum,band,null)  \n")
+     printf ("NEED:     data = data to degrade\n")
+     return(0)
+  }
+     nsamples = dim(image)[1]
+     nlines = dim(image)[2]
+     nbands = dim(image)[3]
+     imgtype=format(image)
+
+  if (HasValue(sum)) {
+     scalex=scaley=sum
+  }
+  if (HasValue(null)) {
+     cnull=null
+  } else {
+     if ( format(image) == "byte" ) {
+        cnull=0
+     } else if ( format(image) == "short" || format(image) == "float" ) {
+        cnull=-32768
+     }
+  }
+  if (HasValue(band)) {
+     bbbn=band
+  } else {
+     bbbn=create(8,1,1,format=int,start=3,step=1)
+  }
+
+ #Set new image size
+  nsamples_out = int(nsamples/scalex)
+  nlines_out = int(nlines/scaley)
+  out = create(nsamples_out, nlines_out, nbands, format=format(image),start=0,step=0)
+  out[,,]=cnull
+
+ #Identify the partial frames in Line1
+  line1=ascii("/themis/lib/expand_line.ascii")
+  sumln=0
+  for(i=1; i<=dim(line1)[2] ; i+=1 ) {
+     if (scaley == line1[11,i]) sumln=i
+  }
+  printf("Using frame_count info to DEGRADE sum_mode %d:\n",line1[11,sumln])
+  dump(line1[1:10,sumln])
+
+ #Do the work
+  for (k=1; k<=nbands; k+=1) {
+      sumb=bbbn[k,]
+      loffset=line1[sumb,sumln]
+      l1diff=(scaley-loffset)
+
+     printf("Band %d - ",sumb)
+      j=1
+      starty=1
+
+      if ( loffset == scaley ) {
+       #Line1 represents a complete frame
+          printf("Summed line1 = %d unsummed lines\n",line1[sumb,sumln])
+          for(i=1; i<= nsamples_out; i+=1) {
+             startx=((i-1)*scalex+1)
+             out[i,j,k]=(moments(image[(startx):(i*scalex),(starty):(scaley),k])[3])
+          }
+          starty=starty+scaley
+      } else {
+       #Line1 represents a partial frame
+          printf("Summed line1 = %d unsummed lines (part-frame)\n",line1[sumb,sumln])
+          for(i=1; i<= nsamples_out ; i+=1) {
+              startx=((i-1)*scalex+1)
+              out[i,j,k]=(moments(image[(startx):(i*scalex),(starty):(loffset),k])[3])
+          }
+          starty=starty+loffset
+      }
+
+      for(j=2; j<= nlines_out; j+=1) {
+          for(i=1; i<= nsamples_out ; i+=1) {
+              startx=((i-1)*scalex+1)
+              out[i,j,k]=(moments(image[(startx):(i*scalex),(starty):(starty+scaley-1),k])[3])
+          }
+          starty=starty+scaley
+      }
+  }
+
+  return(out)
+}
+
+define rematm2(fit) {
+
+if ($ARGC == 0) {
+
+	printf("Remove atmospheric absorptions from a THEMIS rad_corr radiance image.\n")
+	printf("\n")
+	printf("$1 = 9 or 10 band radiance image\n")
+	printf("$2 = 9 or 10 band training spectrum\n")
+	printf("$3 = Training region (9 or 10 band).\n")
+	printf("fit=1 - Use least squares fit of dust and water ice for b1,2,9 atm. shape\n")
+	printf("(Default =1)\n")
+	printf("\n")
+	printf("Returns THEMIS bands 1-9.\n")
+	return(0)
+}
+
+if(HasValue(fit)==0) {
+
+	fit=0
+}
+
+data=$1
+tes_em=float($2)
+
+if (dim(tes_em)[2,,]>1) {
+
+	tes_em=translate(tes_em,from=y,to=z)
+}
+
+tes_em=tes_em[,,1:9]
+
+ave_data=$3
+ave_data=ave_data[,,1:9]
+ave_data=thm.themis_emissivity(ave_data, 1//2//3//4//5//6//7//8//9,b1=3,b2=9)
+ave_data=avg(ave_data.emiss,axis=xy)
+
+
+data=data[,,1:9]
+data=thm.themis_emissivity(data, 1//2//3//4//5//6//7//8//9,b1=3,b2=9)
+data=data.emiss
+data [where (data<0.2)]=0
+data [where (data>1.8)]=0
+
+
+# get multiplication factor for atmosperhic correction
+
+atm_trans=float(ave_data[,,1:9]/tes_em)
+
+# Fit dust and ice to atm_trans
+
+if (fit==1) {
+
+	end=ascii($DV_SCRIPT_FILES+"/instrument_parameters/themis_dust_ice_trans_shapes2.ascii",format=float)
+	end=translate(end,from=y,to=z)
+
+	atm=sma_dav(atm_trans,end,3,8,grp=0,stst=0)
+
+	atm_trans[,,1:2]=atm.model[,,1:2]
+	atm_trans[,,9]=atm.model[,,9]
+}
+
+#apply correction to original image
+out=struct(surf,atm)
+out.surf=data/atm_trans
+out.atm=-ln(atm_trans)
+#xplot(atm_trans,tes_em,ave_data)
+return(out)
+
+}
+
+define convolve_themis() {
+#added $DV_SCRIPT_FILES support - 5/13/08
+#Added instrument_parameters to $DV_SCRIPT_FILES support - 1-30-09
+
+
+if($ARGC==0) {
+       printf("\n")
+       printf("Convolve any spectrum with THEMIS response functions.\n")
+       printf("\n")
+       printf("$1 = input spectrum or spectra \n")
+       printf("$2 = .xaxis of input spectrum \n")
+       printf(" \n")
+       printf(" calls resample() \n")
+       return(0)
+
+}
+
+	spc=$1
+	ax=$2
+	thmfilt=read($DV_SCRIPT_FILES+"/instrument_parameters/themis_filter_functions.hdf")
+
+	#Create output matrix of same dimension as input matrix
+	newspc=create(dim(spc)[1],dim(spc)[2],10,format=float,start=0.,step=0)
+
+	#Resample filter function at xvalues of input spectrum
+	thmfilt=resample(thmfilt,ax)
+
+	#Compute weighted average of spectra
+	for(k=1;k<=dim(spc)[1];k+=1) {
+	  for(j=1;j<=dim(spc)[2];j+=1) {
+  	  for(i=1;i<=10;i+=1) {
+	      junkspc=spc[k,j]*thmfilt.data[i]
+ 	      newspc[k,j,i]=sum(junkspc,z)/sum(thmfilt.data[i],z)
+ 	    }
+ 	  }
+	}
+	return(newspc)
+}
+
+
+define rad3tb() {
+#Added instrument_parameters to $DV_SCRIPT_FILES support - 1-30-09
+
+if ($ARGC == 0) {
+	printf ("		\n")
+	printf ("	Convert THEMIS spectral radiance to brightness temperature\n")
+	printf ("		\n")
+	printf ("	usage: btemp = rad3tb(radiance, band_list)\n")
+	printf ("		\n")
+	printf ("	where:  radiance = spectral radiance array (e.g. .spectral_qube.data in RDR structure)\n")
+	printf ("	        band_list = list of bands (e.g. .band_bin.band_bin_band_number array in RDR structure) \n")
+	printf ("	        band_list is dimensioned (n, 1, 1), where n is the number of bands in the array\n")
+	printf ("	        \n")
+	printf ("		returns btemp array of same dimension as radiance with bands given in band_list\n")
+	printf ("	        \n")
+	printf ("	examples:  btemp = rad3tb(a.spectral_qube.data, a.spectral_qube.band_bin.band_bin_band_number)        \n")
+	printf ("		   (where a is RDR structure loaded using davinci 'load_pds' function)\n")
+	printf ("		\n")
+	printf ("	           btemp = rad3tb(rad, cat(1,2,3,4,5,6,7,8,9,10, axis=x))        \n")
+	printf ("		\n")
+	printf ("	           btemp = rad3tb(rad[,,9], 9)        \n")
+	printf ("	 	   (where rad is a 10-band spectral radiance array and you want to compute band 9)\n")
+	printf ("		   (returns 1 band array) \n")
+	printf ("		\n")
+	printf ("	Reads in temp_rad_vn look-up table and calls radtotb to do the work	\n")
+	printf ("	p. christensen 1/02	\n")
+	return(0)
+}
+
+# p. christensen 4/17/02
+# convert rad (spectral radiance) in .hdf file to brightness temperature
+
+# NsG, Thu Oct 16 15:35:14 MST 2003
+# modified to reuse rad to cut down on memory usage.
+
+rad = $1
+# changed - 8/30/02  prc
+# reorganize band_list from (n,1,1) in RDR to (1,n,1) that is used in radtotb
+band_list = translate($2,x,y)
+
+# get temp to rad conversion table
+temp_rad = read($DV_SCRIPT_FILES+"/instrument_parameters/temp_rad_v4")
+
+size_temp_rad = dim(temp_rad)
+
+# select correct bands for temp_rad conversion
+size = dim(rad)
+temp_rad_new = create(size[3]+1, size_temp_rad[2], size_temp_rad[3], format=float) 
+temp_rad_new[1] = temp_rad[1]
+for(i=1; i<= size[3]; i+=1) {
+        printf(" load temp_rad with band %d\n", band_list[,i])
+        temp_rad_new[i+1,,] = temp_rad[band_list[,i]+1,,]
+}
+
+# convert input spectral radiance to brightness temperature
+# NsG - reuse the rad variable to cut down on memory usage.
+
+temp_rad=temp_rad_new
+d1=dim(rad)[1]
+d2=dim(rad)[2]
+d3=dim(rad)[3]
+printf(" radtotb:  dims = %d %d %d\n", d1, d2, d3)
+for(i=1; i<=d3; i+=1) {
+        index = i+1
+        rad[,,i] = interp(temp_rad[1], temp_rad[index], rad[,,i])
+}
+
+#removed dependence on old radtotb function CSE
+#rad = radtotb(temp_rad_new, rad)
+
+return(rad)
+
+}
+
+define themis_plot(plot,xaxis,mtes,database,double,orderby) {
+
+if ($ARGC == 0) {
+	printf (" \n")
+	printf (" Plot THEMIS database parameters. \n")
+	printf (" $1 = Select string (parameters separated by commas) or entire query ($2 and $3 are optional)\n")
+	printf (" $2 = Table string (parameters separated by commas) \n")
+	printf (" $3 = Where string (parameters separated by \" and \" \n")
+	printf ("\n")
+	printf (" plot = 0 - Do not plot the data \n")
+  printf (" database = \"database name\" (only used with entire query)\n")  
+	printf (" xaxis = 0 - Do not use the first select parameter as the xscale\n")
+	printf (" mtes = 1 - Plot mini-TES data\n")
+	printf (" double = 1 - ghetto plot (reads in as double rather than float)\n")
+	printf (" Note: Tables other than frmgeom, header, irfrmsci, quality, qube, qubegeom, and tlm need to be related!\n")
+	printf (" orderby = string (must be in the select string) of the parameter to sort by\n")
+	printf ("\n\n")
+	printf ("Example:\n")
+	printf ("data=themis_plot(\"orbit_number,tes_alb_avg\",\"irfrmsci,header\",\"orbit_number > 1200 and orbit_number < 1300 and header.file_id like \\\\\"I0123%\\\\\" and header.image_duration < 245\",plot=1)\n")
+	printf ("Updated! Now works with themis3 and bandfield databases. 8-05\n")
+	printf ("Updated to better handle temporary directories 9-08 cse\n")
+	return(0)
+
+}
+
+plot_data=1
+
+if(HasValue(plot)) {
+	plot_data=plot
+}
+
+xaxis_data=1
+
+if(HasValue(xaxis)) {
+	xaxis_data=xaxis
+}
+
+if(HasValue(orderby)==0) {
+	orderby=""
+} else {
+	orderby=" order by "+orderby
+}
+
+mtes_data=0
+
+if(HasValue(mtes)) {
+	mtes_data=mtes
+}
+
+if ($ARGC==3) {
+select=$1
+table=$2
+wh=$3
+
+frame_id="null"
+
+if (strstr(table,"header") == 0 && mtes_data == 0) {
+	table=table//",header"
+}
+
+if (strstr(table,"atm") > 0) {
+	wh=wh//" and bandfield.atm.filename=header.file_id"
+	frame_id="atm.frame_id"
+}
+
+if (strstr(table,"closing_dn") > 0) {
+	wh=wh//" and bandfield.closing_dn.filename=header.file_id"
+}
+
+if (strstr(table,"drift") > 0  && strstr(table,"lateral_drift") == 0) {
+	wh=wh//" and bandfield.drift.filename=header.file_id"
+}
+
+if (strstr(table,"frmgeom") > 0) {
+	wh=wh//" and frmgeom.file_id=header.file_id"
+	if (frame_id=="null") {
+		frame_id="frmgeom.framelet_id"
+	} else {
+		wh=wh//sprintf(" and frmgeom.framelet_id="+frame_id)
+	}
+}
+
+if (strstr(table,"quality") > 0) {
+	wh=wh//" and quality.file_id=header.file_id"
+}
+
+if (strstr(table,"irfrmsci") > 0) {
+
+	wh=wh//" and irfrmsci.file_id=header.file_id"
+	if (frame_id=="null") {
+		frame_id="irfrmsci.framelet_id"
+	} else {
+		wh=wh//sprintf(" and irfrmsci.framelet_id="+frame_id)
+	}
+}
+
+if (strstr(table,"qube") > 0) {
+	wh=wh//" and qube.file_id=header.file_id"
+}
+
+if (strstr(table,"qubgeom") > 0) {
+	wh=wh//" and qubgeom.file_id=header.file_id"
+}
+
+if (strstr(table,"tlm") > 0) {
+	wh=wh//" and tlm.file_id=header.file_id"
+}
+
+if (strstr(table,"edr_dn") > 0) {
+	wh=wh//" and bandfield.edr_dn.filename=header.file_id"
+	if (frame_id=="null") {
+		frame_id="bandfield.edr_dn.frame_id"
+	} else {
+		wh=wh//sprintf(" and bandfield.edr_dn.frame_id="+frame_id)
+	}
+}
+
+#printf(wh+"\n")
+#printf(select+"\n")
+#printf(table+"\n")
+#printf(plot+"\n")
+#printf(plot_data+"\n")
+
+select="select "+select+" from "+table+" where "+wh+orderby+";"
+printf("%s\n",select)
+
+url=themis3db(select,v=0)
+}
+
+if($ARGC==1) {
+	if(HasValue(database)) {
+		datab=database
+	}
+
+	call=$1
+	url=themis3db(call,v=0)
+  printf("%s\n",url)
+}
+
+if (HasValue(double)==0) {
+        data=ascii(url,format=float)
+}
+
+if (HasValue(double)) {
+        data=ascii(url,format=double)
+}
+
+if (plot_data == 1 && xaxis_data == 1) {
+
+	xplot(data[2:,,],axis=y,Xaxis=data[1],separate=1)
+}
+
+if (plot_data == 1 && xaxis_data == 0) {
+
+	xplot(data[1:,,],axis=y,separate=1)
+}
+
+return(data)
+}
+
+
+
+define themis3db(header,psql,v,nullnum,nullchar,xformat,pass) {
+ #4/2014: Change handling of passwords
+ #4/2014: Change default verbosity=1 and apply to all print statements
+ #5/2015: Changed spaces to be ^ instead	
+        if($ARGC==0) {
+                printf("\nAccepts standard database queries on the themis3 database at the MSFF\n")
+                printf("Returns an url formatted for the defined query\n")
+                printf("$1 = query\n")
+                printf("header = return the first row (or column name) of the query (Default = 0)\n")
+                printf("psql = use the PSQL database instead of mysql (Default = 0)\n")
+                printf("xformat = 1 to set the PSQL expanded format option (Default = 0)\n")
+                printf("nullnum = [value] to set the PSQL null option for numeric fields (Default = empty-string)\n")
+                printf("nullchar = [chars] to set the PSQL null option for string fields (Default = empty-string)\n\n")
+                printf("v = 0 turn off URL verbosity (Default = 1)\n\n")
+                printf("Note: set ThemisDBCredentials to control your MSQL database access\n")
+                printf(" OR   set DV_THM_DB_USER to control your PSQL database access\n")
+                printf("Also set DV_THM_DB_SPACE to \"^\" or \" \" to control space substitution\n\n")
+                printf("c.edwards updated 4/2014\n")
+                return(null)
+        }
+
+        if(HasValue(header)==0) header=0
+        if(HasValue($DV_THM_DB_USER)==0) putenv("DV_THM_DB_USER","davinci")
+        if(HasValue(v)==0) v=1
+        if(HasValue(xformat)==0) x=0
+        if(HasValue(nullnum)==0) nn=""
+        if(HasValue(nullchar)==0) nc=""
+        if(HasValue(psql)==0) psql=0
+        if(HasValue(pass)==0) pdir="/themis/lib/dav_lib/dbpass"
+
+
+       ##Establish credentials
+        #user=$DV_THM_DB_USER
+        #pass=$DV_THM_DB_PASS
+        user="davinci"
+
+        if(psql==0) {
+        ##MYSQL password
+          if(fexists("~/.themisdbcred/.u") && fexists("~/.themisdbcred/.a")) {
+             ##Get password for local MYSQL users
+             if(HasValue(read_lines("~/.themisdbcred/.u"))==1 && HasValue(read_lines("~/.themisdbcred/.a"))==1) {
+                pfile="/themis/lib/dav_lib/dbpass/THM_DB_PASS"
+                if(v==1) printf("Using MYSQL password from: %s\n",pfile)
+                putenv("DV_THM_DB_PASS",read_lines(pfile)[,1])
+                putenv("DV_THM_DB_USER","davinci")
+             } 
+          } else {
+          if(HasValue($DV_THM_DB_PASS)==0) putenv("DV_THM_DB_PASS","davinci")
+          if(v==1) printf("Using MYSQL password from DV_THM_DB_PASS\n")
+          }
+          pass=$DV_THM_DB_PASS
+
+        } else {
+        ##PSQL password
+           pfile=sprintf("%s/THM_DB_USER_%s",pdir,$DV_THM_DB_USER)
+           if (HasValue(pass)==1) {
+              #User providing alternate password file
+               pfile=pass
+               if(v==1) printf("Using PSQL password from: %s\n",pfile)
+               pass=read_lines(pfile)[,1]
+           } else if (fexists(pfile)) {
+              #Expecting local password files
+               if(v==1) printf("Using PSQL password from: %s\n",pfile)
+               pass=read_lines(pfile)[,1]
+           } else if (HasValue($DV_THM_DB_PASS)!=0) { 
+              #User saved password as env-variable [this VAR is really reserved for MYSQL usage]
+               if(v==1) printf("Using PSQL password from DV_THM_DB_PASS\n")
+               pass=$DV_THM_DB_PASS
+           }
+	 }
+
+        query=$1
+        if(HasValue(psql)==0) {
+                psql=0
+        }
+
+        #substitute % for %25
+        queryout=""
+        while(strstr(query,'%')!=0) {
+                pos=strstr(query,"%")
+                queryout=queryout//query[:pos-1]+"%25"
+                query=query[pos+1:]
+        }
+        queryout=queryout//query
+        query=queryout
+
+       #replace all spaces with carets for trouble firewalls
+        if(HasValue($DV_THM_DB_SPACE)==0) {
+          subval=" "
+          subflag=0
+        } else {
+          subval=$DV_THM_DB_SPACE
+          if(subval==" ") {
+             subflag=0
+           } else {
+             subflag=1
+           }
+        }
+        query=strsub(query," ",subval)
+
+        if(psql==0) {
+           server="http://app-davinci.mars.asu.edu/Davinci/QueryTool?useCaret="+subflag+"&"
+           url=sprintf("%suser=%s&password=%s&queryString=%s&displayHeader=%i",server,user,pass,query,header)
+
+        } else {
+           server="http://app-davinci.mars.asu.edu/Davinci/PSQLQueryTool?useCaret="+subflag+"&"
+
+           if(HasValue(xformat)!=0) {
+             x=xformat
+           }
+           if(HasValue(nullnum)!=0) { 
+             nn=sprintf("&nullNum=%i",nullnum)
+           }
+           if(HasValue(nullchar)!=0) {
+             nc=sprintf("&nullChar=%s",nullchar)
+           }
+
+           url=sprintf("%suser=%s&password=%s&queryString=%s&displayHeader=%i%s%s&displayLines=%i",server,user,pass,query,header,nn,nc,x)
+        }
+        
+        if(v==1) printf("%s\n",url)
+        return(url)
+}
+
+
+
+define themis_meridian(target) {
+	
+	if($ARGC==0) {
+		printf("\nGet the central meridian value of a themis image\n")
+		printf("$1=THEMIS image ID\n")
+		printf("target=target lat to base the meridian from (Default=0)\n\n")
+		printf("c.edwards, modified from n.gorelick\n\n")
+		return(null)
+	}
+
+	img=$1
+
+	if(HasValue(v)==0) v=0
+  if(HasValue(target)==0) target=0
+	minframe=0
+	mindiff=180
+
+	command=themis3db("select framelet_id,point_id,lon,lat from frmgeom where file_id like '"+img+"' and point_id like '%L' and band_idx=1 and framelet_id!=0 order by framelet_id asc, point_id desc",header=1,psql=1,v=0)
+	data=load_csv(command)
+	
+	for(i=1;i<=dim(data.framelet_id)[2];i+=2) {
+		#get the difference between the target and the data
+		m1=abs(target-data.lat[,i])
+		m2=abs(target-data.lat[,i+1])
+
+		if(v==1) printf("framelet=%i, m1=%f, lat=%f, %s\n",data.framelet_id[,i],m1,data.lat[,i],data.point_id[,i])
+		if(v==1) printf("framelet=%i, m2=%f, lat=%f,  %s\n",data.framelet_id[,i+1],m2,data.lat[,i+1],data.point_id[,i+1])
+
+		#figure out which has the least differnece
+		if (m1 < mindiff) {
+			mindiff = m1
+			minframe = data.framelet_id[,i]
+		}
+		if (m2 < mindiff) {
+			mindiff = m2
+			minframe = data.framelet_id[,i]
+		}
+	}
+
+	#set the framelet ids that have the min differnece
+	ulidx=minframe*2-1
+	llidx=minframe*2
+	if(v==1) printf("Framelet closest to %fN: %d %f,%f\n", target, minframe, data.lat[,ulidx],data.lat[,llidx])
+	
+	#get the lon/lat in degrees
+	ullonlat=(data.lon[,ulidx]//data.lat[,ulidx])
+	lllonlat=(data.lon[,llidx]//data.lat[,llidx])
+	
+	#generate a vector in a unit circle
+	p1=cat(cosd(ullonlat[2])*cosd(ullonlat[1]),cosd(ullonlat[2])*sind(ullonlat[1]),sind(ullonlat[2]),axis=x)
+	p2=cat(cosd(lllonlat[2])*cosd(lllonlat[1]),cosd(lllonlat[2])*sind(lllonlat[1]),sind(lllonlat[2]),axis=x)
+
+	#cross product of 2 points and then with the north pole
+	c1=cross(p1,p2)
+	d1=cross(c1,cat(0.,0.,1.,axis=x))
+
+	#normalize the vectors
+	d1n=d1/sqrt(sum(d1^2))
+	p1n=p1/sqrt(sum(p1^2))
+
+	#cross product of the two points and then the north pole
+	c2=cross(p2,p1)
+	d2=cross(c2,cat(0.,0.,1.,axis=x))
+
+	#normalize the vectors
+	d2n=d2/sqrt(sum(d2^2))
+	p2n=p2/sqrt(sum(p2^2))
+
+	#find the distance between the 2 vectors
+	if(dot(d1n,p1n)>0) {
+		t=d1n-p1n
+		r1=2*asin(0.5*sqrt(sum(t^2)))
+	} else {
+		t=d1n+p1n
+		r1=3.141592-2*asin(0.5*sqrt(sum(t^2)))
+	}
+
+	#find the distance between the 2 vectors
+	if(dot(d2n,p2n)>0) {
+		t=d2n-p2n
+		r2=2*asin(0.5*sqrt(sum(t^2)))
+	} else {
+		t=d2n+p2n
+		r2=3.141592-2*asin(0.5*sqrt(sum(t^2)))
+	}
+
+	#figure out which has the least distance and return the lon value in degrees
+	if(r1<r2) {
+		return((360+atand(d1[2]/d1[1]))%360)
+	} else {
+		return((360+atand(d2[2]/d2[1]))%360)
+	}
+}

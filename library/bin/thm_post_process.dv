@@ -1,0 +1,178 @@
+#!/mars/common/bin/davinci -fq -v0
+source("/themis/lib/dav_lib/library/library_mars.dvrc")
+
+##
+##
+######################## thm.deplaid.isis3.dv #######################
+#
+# This script will deplaid an unprojected THEMIS IR cube.
+#
+# Usage: thm.deplaid.isis3.dv input_cube output_cube deplaid arc destreak wnr
+#
+#
+# Modification History
+# --------------------
+# 2004-08-04 - C. Edwards: Original Script
+#
+# 2010-07-01 - C. Edwards: Modified for ISIS3 compatibility
+#
+# 2010-11-23 - J. Hill: Modified to enable proper label support in ISIS3 
+# 
+# 2014-08-08 - C. Edwards made portable for distribution
+#
+##########################################################################
+##
+##
+
+opt={\
+from="",\
+to="",\
+deplaid=1,\
+autoradcorr=1,\
+destreak=1,\
+wnremove=0,\
+geotiff=0\
+};
+opt=getopt($ARGV,opt)
+
+if(opt.from=="" || opt.to=="") {
+  printf("\n\nThis script will post-projection process a THEMIS ISIS3 cube through various processes\n\n")
+	printf("Arguments:\n")
+  printf("\tfrom = input THEMIS ISIS3 filename\n")
+  printf("\tto = output THEMIS ISIS3 filename\n")
+  printf("\tdeplaid = perform deplaid operation (1=yes, recommended; 0=no)\n")
+	printf("\tautoradcorr = perform autoradcorr operation (1=yes, recommended; 0=no)\n")
+	printf("\tdestreak = perform destreak operation (1=yes, recommended; 0=no)\n")
+  printf("\twnremove = perform white noise removal operation (1=yes; 0=no, recommended);\n\t\tNOTE: don't use for spectral analysis\n")
+	printf("\tgeotiff = output a geotiff (1=yes; 0=no (Default))\n\n")
+  printf("Major Sub-Functions:\n")
+  printf("\tthm.rectify(), thm.deplaid(), arc(), destreak(), rrmnoise_pca(), thm.reconstitute\n\n")
+ printf("References:\n")
+  printf("Bandfield, J. L., A. D. Rogers, M. D. Smith, and P.R.Christensen (2004),\n\t\tAtmospheric correction and surface spectral unit mapping using Thermal\n\t\tEmission Imaging System data, J. Geophys. Res., 109, E10008,\n\t\tdoi:10.1029/2004JE002289.\n")
+  printf("Edwards, C. S., K. J. Nowicki, P. R. Christensen, J. Hill, N. Gorelick,\n\t\tand K. Murray (2011), Mosaicking of global planetary image datasets: \n\t\t1. Techniques and data processing for Thermal Emission Imaging System\n\t\t(THEMIS) multi-spectral data, J. Geophys. Res., 116(E10), E10008,\n\t\tdoi:10.1029/2010JE003755.\n")
+  printf("Nowicki, K. J., C. S. Edwards, P. R. Christensen, Post-Projection Removal of Row-\n\t\tand Column-Correlated Noise in Line-Scanning Data: Application to\n\t\tTHEMIS infrared Data (in press, 2013), IEEE-Whispers Transactions.\n")
+  printf("Nowicki, K. J., C. S. Edwards, P. R. Christensen, Removal of Salt-and-Pepper Noise\n\t\tin THEMIS Infrared Radiance and Emissivity Spectral Data of the\n\t\tMartian Surface (in press, 2013), IEEE-Whispers Transactions.\n\n")
+  printf("Script Contributors:\n")
+  printf("C. Edwards, J. Hill, 8/11/14\n\n")
+  exit(0)
+}
+
+printf("\nSelected options:\n")
+opt_usage(opt)
+printf("\n")
+
+insmod("isis3")
+if(lsmod("isis3")==0) {
+  printf("This script requires the davinci ISIS3 I/O module\n")
+  exit(0)
+}
+
+##
+## Load the Input ISIS3 Cube
+##
+
+data=load_pds(opt.from)
+
+
+##
+## Set Null Values
+##
+
+printf("\nSetting Null values\n")
+data.cube[where data.cube<=-1]=-32768
+
+
+##
+## Rectify, Deplaid, Autorad-Corr, Destreak, White Noise Removal 2 and Reconstitute the Data
+##
+
+printf("\nRectifying: \"%s\"\n",opt.from)
+data.cube=thm.rectify(data.cube,null=-32768)
+
+if(opt.deplaid!=0) {
+	printf("\nRunning deplaid() - line/row spectral noise removal\n")
+	data.cube.data=thm.deplaid(data.cube.data,null=-32768)
+}
+
+if(opt.autoradcorr!=0) {
+	printf("\nRunning arc() - Automatic radiance correction\n")
+	rc = arc(data.cube.data)
+	data.cube.data[where data.cube.data != -32768] = data.cube.data-rc.darkcol
+	verbose=0
+}
+
+if(opt.destreak!=0) {
+	printf("\nRunning destreak() - line/row brightness noise removal\n")
+	if(dim(data.cube.data)[3]==10) {
+		data.cube.data=destreak(data.cube.data)
+	}
+}
+
+if(opt.wnremove!=0) {
+	printf("\nRunning rrmnoise_pca() - white noise removal\n")
+	data.cube.data = rrmnoise_pca(data.cube.data,verbose=1)
+}
+
+printf("\nUn-Rectifying: \"%s\"\n",opt.from)
+data.cube=thm.reconstitute(data.cube)
+
+if(opt.deplaid!=0) {
+	##
+	## Add the THM_DEPLAID Entry to the History Object
+	##
+
+	data.IsisCube.History.thm_deplaid={}
+	data.IsisCube.History.thm_deplaid.date_time=syscall("date +'%Y-%m-%dT%H:%M:%S'")[,]
+	data.IsisCube.History.thm_deplaid.software_desc="Removes the general THEMIS IR plaid pattern from each band of THEMIS IR image."
+	data.IsisCube.History.thm_deplaid.user_name=syscall('echo `whoami`"@"`hostname`')[,]
+	data.IsisCube.History.thm_deplaid.parameters={}
+	data.IsisCube.History.thm_deplaid.parameters.ignore="-32768"
+	data.IsisCube.History.thm_deplaid.parameters.isis_struct_type="object"
+	data.IsisCube.History.thm_deplaid.isis_struct_type="object"
+}
+
+if(opt.autoradcorr!=0) {
+	##
+	## Add the THM_AUTORADCORR Entry to the History Object
+	##
+	
+	data.IsisCube.History.thm_autoradcorr={}
+	data.IsisCube.History.thm_autoradcorr.date_time=syscall("date +'%Y-%m-%dT%H:%M:%S'")[,]
+	data.IsisCube.History.thm_autoradcorr.software_desc="Calculates a radiance correction for all 50x50 pixel boxes in the scene that meet the necessary criteria."
+	data.IsisCube.History.thm_autoradcorr.user_name=syscall('echo `whoami`"@"`hostname`')[,]
+	data.IsisCube.History.thm_autoradcorr.isis_struct_type="object"
+}	
+
+if(opt.destreak!=0) {
+	##
+	## Add the THM_DESTREAK Entry to the History Object
+	##
+
+	data.IsisCube.History.thm_destreak={}
+	data.IsisCube.History.thm_destreak.date_time=syscall("date +'%Y-%m-%dT%H:%M:%S'")[,]
+	data.IsisCube.History.thm_destreak.software_desc="Removes the noise pattern known as streak from THEMIS IR images. Streak only occurs in approx. 1 percent of images and may only be visible in bands 1 and 2 of emissivity images."
+	data.IsisCube.History.thm_destreak.user_name=syscall('echo `whoami`"@"`hostname`')[,]
+	data.IsisCube.History.thm_destreak.isis_struct_type="object"
+}
+
+if(opt.wnremove!=0) {
+	##
+	## Add the THM_WHITENOISEREMOVAL2 Entry to the History Object
+	##
+
+	data.IsisCube.History.thm_whitenoiseremoval2={}
+	data.IsisCube.History.thm_whitenoiseremoval2.date_time=syscall("date +'%Y-%m-%dT%H:%M:%S'")[,]
+	data.IsisCube.History.thm_whitenoiseremoval2.software_desc="Performs a running advanced white noise removal for THEMIS radiance cubes."
+	data.IsisCube.History.thm_whitenoiseremoval2.user_name=syscall('echo `whoami`"@"`hostname`')[,]
+	data.IsisCube.History.thm_whitenoiseremoval2.isis_struct_type="object"
+}
+
+##
+## Write Output File
+##
+
+printf("Writing file: %s\n\n",opt.to)
+write(data,opt.to,type=isis3,force=1)
+
+if(opt.geotiff==1) write_geotiff(read_geo(opt.to),dirname(opt.to)+"/"+basename(opt.to,".cub")+".tiff",force=1)
+exit(0);

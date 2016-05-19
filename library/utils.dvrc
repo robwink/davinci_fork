@@ -1,0 +1,1174 @@
+utils_version=1.12
+# This file contains support functions for Davinci Scripts Library
+#
+# restore_session
+# getbrowser
+# getos
+# wiki - taken from /u/cedwards/christopher.dvrc - updated to include search option
+# library_version    - created  7-16-2007
+# install_check      - created  6- 8-2007
+# library            - created  4-25-2007
+# library_update     - created 12-07-2010 - version 1.09
+# gdal_version - v 1.10
+# isis_version - v 1.11
+
+
+define restore_session(verbose,path) {
+
+	v=0
+	if(hasvalue(verbose)) {
+		v=verbose
+	}
+
+	#we have to try to read in the ~/.dvlog becuase fexists doesn't deal with ~
+	homelog=read_lines("~/.dvlog")
+	if(HasValue(homelog)) {
+		logpath="~/.dvlog"
+	} else if (fexists(".dvlog")) {
+		logpath=".dvlog"
+	} else if (HasValue(path) && fexists(path+"/.dvlog")) {
+		logpath=path+"/.dvlog"
+	} else {
+		printf("No .dvlog found\n")
+		return(null)
+	}
+
+	dvlog = read_lines(logpath)
+	len = length(dvlog)
+
+	i=len
+	start = 0
+	end = 0
+	while(start == 0) {
+		if(dvlog[:5,i] == "#####" && end == 0) {
+			end = i-4
+			i=i-4
+		}
+
+		if(dvlog[:5,i] == "#####" && end != 0) {
+			start = i+1
+		}
+		i=i-1
+	}
+
+	dvlog = dvlog[, start:end]
+	len = length(dvlog)
+
+	dvlog = dvlog[,:len-1]
+
+	write(dvlog,$TMPDIR+"/last_session.dvrc",ascii,force=1)
+	source($TMPDIR+"/last_session.dvrc")
+
+
+	printf("#############################################\n")
+	printf("The entire command set from your last session\n")
+	printf("except for your last command have been restored.\n\n")
+	if(v > 0) {
+		printf("Here are the list of re-evaluated commands:\n")
+
+		for(i=1;i<=len-1;i+=1) {
+			printf(dvlog[,i]+"\n")
+		}
+	}
+}
+
+
+
+define getos(){
+	uname=syscall("uname")[,1]
+	if(uname[:6]=="Darwin") {
+		os="mac"
+		browser="open"
+	} else if(uname[:3]=="Win") {
+		os="win"
+		browser="start"
+	} else if(uname[:5]=="Linux") {
+		os="linux"
+		if(fexists("/usr/bin/htmlview")) {
+			browser="htmlview"
+		}else if(fexists("/usr/bin/firefox")) {
+			browser="/usr/bin/firefox"
+		} else {
+			browser="x-www-browser --new-tab"
+		}
+	} else {
+		os="other"
+		browser="none"
+	}
+
+	return os;
+}
+
+
+define getbrowser(os){
+	if(hasvalue(os) == 0){
+		os = $1
+	}
+	if(os == "mac") {
+		browser="open"
+	} else if(os == "win"){
+		browser="start"
+	} else if(os == "linux"){
+		if(fexists("/usr/bin/htmlview")) {
+			browser="htmlview"
+		}else if(fexists("/usr/bin/firefox")) {
+			browser="/usr/bin/firefox"
+		} else {
+			browser="x-www-browser --new-tab"
+		}
+	} else {
+		browser="none"
+	}
+	return browser;
+}
+
+
+
+define wiki(nobrowser,search) {
+	#added $DV_OS support
+	#added x-www-browser support for those that dont have htmlview
+
+	if($ARGC==0 && HasValue(search)==0) {
+		printf("\nOpen the DavinciWiki to the specifed function\n")
+		printf("The user's default web browser will be opened\n\n")
+		printf("$1 = function name (If it doesn't exist a blank page will be shown)\n")
+		printf("search = term to search on the wiki\n")
+		printf("nobrowser = don't open a browser and display the URL instead\n\n")
+		printf("Works with Linux and Mac\n")
+		printf("c.edwards Sep 29,2006\n\n")
+		return(null)
+	}
+
+	function=$1
+	if(HasValue(search)==0) {
+		urlbase="http://davinci.asu.edu/index.php?title="+function
+	} else {
+		search=strsub(search," ","\%20")
+		urlbase="http://davinci.asu.edu/index.php?title=Special:GoogleCustomWikiSearch\\&term="+search
+	}
+
+	if(HasValue(nobrowser)==0) {
+		if($DV_OS=="win") {
+			system($DV_BROWSER+" "+urlbase+function+"")
+		} else if ($DV_OS=="mac" || $DV_OS=="linux") {
+			system($DV_BROWSER+" "+urlbase+" &")
+		} else {
+			printf("No Web Browser Found\n")
+		}
+		printf("DavinciWiki Site:  "+urlbase+"\n")
+		return(null)
+	}
+	if(HasValue(nobrowser)) {
+		printf("DavinciWiki Site:  "+urlbase+"\n")
+		return(null)
+	}
+}
+
+
+
+define library_version() {
+
+	global(class_examples_version)
+	global(constants_version)
+	global(crism_science_version)
+	global(aster_science_version)
+	global(master_science_version)
+	global(data_manipulation_version)
+	global(field_spectrometer_version)
+	global(general_science_version)
+	global(image_stretch_version)
+	global(map_projection_version)
+	global(math_version)
+	global(misc_version)
+	global(mosaic_tools_version)
+	global(plot_tools_version)
+	global(spectral_tools_version)
+	global(tes_science_version)
+	global(themis_science_version)
+	global(themis_isis3_version)
+	global(thermal_model_version)
+	global(time_version)
+	global(v_mosaic_version)
+	global(utils_version)
+
+	printf("\nDavinci Core Version:\t%.2f\n",atof(version()[18:]))
+	printf("\nDavinci Library Versions:\n")
+	printf("class_examples.dvrc:\t%.2f\n",class_examples_version)
+	printf("constants.dvrc:\t\t%.2f\n",constants_version)
+	printf("crism_science.dvrc:\t%.2f\n",crism_science_version)
+	printf("data_manipulation.dvrc:\t%.2f\n",data_manipulation_version)
+	printf("field_spectrometer.dvrc:%.2f\n",field_spectrometer_version)
+	printf("general_sciecne.dvrc:\t%.2f\n",general_science_version)
+	printf("image_stretch.dvrc:\t%.2f\n",image_stretch_version)
+	printf("map_projection.dvrc:\t%.2f\n",map_projection_version)
+	printf("math.dvrc:\t\t%.2f\n",math_version)
+	printf("misc.dvrc:\t\t%.2f\n",misc_version)
+	printf("mosaic_tools.dvrc:\t%.2f\n",mosaic_tools_version)
+	printf("plot_tools.dvrc:\t%.2f\n",plot_tools_version)
+	printf("spectral_tools.dvrc:\t%.2f\n",spectral_tools_version)
+	printf("tes_science.dvrc:\t%.2f\n",tes_science_version)
+	printf("aster_science.dvrc:\t%.2f\n",aster_science_version)
+	printf("master_science.dvrc:\t%.2f\n",master_science_version)
+	printf("themis_science.dvrc:\t%.2f\n",themis_science_version)
+	printf("themis_isis3.dvrc:\t%.2f\n",themis_isis3_version)
+	printf("thermal_model.dvrc:\t%.2f\n",thermal_model_version)
+	printf("time.dvrc:\t\t%.2f\n",time_version)
+	printf("v_mosaic.dvrc:\t\t%.2f\n",v_mosaic_version)
+	printf("utils.dvrc:\t\t%.2f\n\n",utils_version)
+
+	return(null)
+}
+
+
+
+define install_check() {
+	#added $DV variable support
+
+	verbose=0
+	printf("\nDavinci Core Version:\t%.2f\n",atof(version()[18:]))
+	printf("Operating System:\t%s\n",$DV_OS)
+	printf("Home Location:\t\t%s\n",$DV_HOME)
+	printf("Library Location:\t%s\n",$DV_LIB)
+	if(HasValue($DV_SCRIPT_FILES)) printf("Script Files Location:\t%s\n",$DV_SCRIPT_FILES)
+	printf("Examples Location:\t%s\n\n",$DV_EX)
+	total_count=25
+	total_optional=3
+	count=0
+	optional=0
+
+	printf("Checking for newer version at ASU-MSFF...")
+#	dv_repository_version=read_lines("ftp://ftp.mars.asu.edu/pub/software/davinci/version.txt")[18:]
+	dv_repository_version=read_lines("http://oss.mars.asu.edu/svn/davinci/davinci/trunk/version.h")[40:,1]
+	if(HasValue(dv_repository_version)==0){
+		printf("\t\tUNABLE TO CONNECT\n\n")
+		remote=0
+	} else {
+		remote=1
+		if(atof(dv_repository_version)<atof(version()[18:])){
+			printf("\n\tNew Davinci version available\n")
+			printf("\tDownload at http://davinci.asu.edu\n\n")
+		} else {
+			printf("\t\tUP TO DATE\n")
+		}
+	}
+
+	printf("Checking for URL remote file loading...")
+	if(remote==1) {
+		printf("\t\t\tPASSED\n")
+		optional++
+	} else {
+		printf("\t\t\tFAILED!\n")
+	}
+
+	printf("Testing simple math... ")
+	if((5+2*2)/3==3) {
+		printf("\t\t\t\t\tPASSED\n")
+		count++
+	} else {
+		printf("\t\t\t\t\tFAILED!\n")
+		printf("Testing Terminated\n")
+		verbose=3
+		return(null)
+	}
+
+	printf("Testing array math... ")
+	math=clone(1.,10,10,1)
+	if(sum(math*5+2)==700) {
+		printf("\t\t\t\t\tPASSED\n")
+		count++
+	} else {
+		printf("\t\t\t\t\tFAILED!\n")
+		printf("Testing Terminated\n")
+		verbose=3
+		return(null)
+	}
+
+	printf("Testing matrix multiplication/inversion... ")
+	mx=create(2,2)
+	invert=minvert(minvert(mx))
+	if(equals(float(mx),float(invert))) {
+		printf("\t\tPASSED\n")
+		count++
+	} else {
+		printf("\t\tFAILED!\n")
+	}
+
+
+	printf("Testing davinci generic reader... ")
+	isis=read($DV_EX+"/THEMIS.cub")
+	if(HasValue(isis)) {
+		printf("\t\t\tPASSED\n")
+		count++
+	} else {
+		printf("\t\t\tFAILED!\n")
+	}
+
+	printf("Testing PDS/ISIS header/cube reader... ")
+	pds=load_pds($DV_EX+"/THEMIS.cub")
+	if((pds.qube.isis_instrument.start_time[,1]=="\"2002-05-21T16:16:45.667Z\"" && equals(pds.qube.data,isis)) || (pds.IsisCube.Mapping.TargetName=="Mars" && HasValue(get_struct(pds,"cube")))) {
+		printf("\t\t\tPASSED\n")
+		count++
+	} else {
+		printf("\t\t\tFAILED!\n")
+	}
+
+	printf("Testing for ISIS writer (write_isis_cub)... ")
+	if(fexists($TMPDIR+"/ISIS_TEST.cub")) {
+		syscall("rm "+$TMPDIR+"/ISIS_TEST.cub")
+	}
+	w_isis=write_isis_cub(pds,$TMPDIR+"/ISIS_TEST.cub")
+	if(HasValue(w_isis)==0) {
+		printf("\t\tNOT INCLUDED\n")
+		check_exclude="write_isis_cub"
+	} else {
+		if(w_isis==0 || equals(read($TMPDIR+"/ISIS_TEST.cub"),pds.qube.data)==0) {
+			printf("\t\tNOT INCLUDED\n")
+			check_exclude="write_isis_cub"
+		} else {
+		  printf("\t\tPASSED\n")
+			optional++
+		}
+	}
+
+	printf("Checking for \"geom_ghost()\"...")
+	new_sfuncs=ls(sfunc=1)
+	gg_count=0
+	for(j=1;j<=length(new_sfuncs);j+=1) {
+		if(new_sfuncs[,j]=="geom_ghost") {
+			gg_count++
+		}
+	}
+	if(gg_count>=1) {
+	  printf("\t\t\t\tPASSED\n")
+		optional++
+	} else {
+		printf("\t\t\t\tNOT INCLUDED\n")
+		if(HasValue(check_exclude)) {
+			check_exclude=cat(check_exclude,"geom_ghost",axis=y)
+		} else {
+			check_exclude="geom_ghost"
+		}
+	}
+
+	printf("Testing \"where\" statement... ")
+	if(hasvalue(isis)){
+		isis[where isis < -1 ]=-32768
+		if(HasValue(isis)) {
+			printf("\t\t\t\tPASSED\n")
+			count++
+		} else {
+			printf("\t\t\t\FAILED!\n")
+		}
+	}else{
+		printf("\t\t\t\tSKIPPED!\n")
+	}
+
+	printf("Checking remote function list... ")
+	old_sfuncs=read_lines("ftp://ftp.mars.asu.edu/pub/software/davinci/sfuncs.txt")
+	if(HasValue(old_sfuncs)==0) {
+		count++
+		printf("\t\t\tUNABLE TO CONNECT\n")
+	} else {
+		scount=0
+		if(length(old_sfuncs)>=length(new_sfuncs)) {
+			for(i=1;i<=length(old_sfuncs);i+=1) {
+				for(k=1;k<length(check_exclude);k+=1){
+					if(old_sfuncs[,i]==check_exclude[,k]){
+						i+=1
+					}
+				}
+				for(j=1;j<=length(new_sfuncs);j+=1) {
+					if(old_sfuncs[,i]==new_sfuncs[,j]) {
+						scount+=1
+					}
+				}
+			}
+			old_sfuncs_length=length(old_sfuncs)
+			if(HasValue(check_exclude)) old_sfuncs_length-=length(check_exclude)
+			printf("Found %i/%i",scount,old_sfuncs_length)
+			if(scount>=old_sfuncs_length) {
+				printf("\t\tPASSED\n")
+				count++
+			} else {
+				printf("\t\tFAILED!\n")
+			}
+		} else {
+			printf("Found %i/%i",length(old_sfuncs),length(new_sfuncs))
+			printf("\t\tFAILED!\n")
+		}
+	}
+
+	printf("Checking for modules... ")
+	mods=list_modules()
+	printf("Found ")
+	if(length(mods)==0) printf("no loaded modules")
+	for(i=1;i<=length(mods);i+=1) {
+		if(i==length(mods)) {
+			printf("%s ",mods[:3,i])
+		} else {
+			printf("%s, ",mods[:3,i])
+		}
+		if(mods[:3,i] == "thm") modthm=1
+	}
+	if(modthm==1) {
+		if(length(mods) >1) {
+			printf("\t\tPASSED\n")
+		} else {
+			printf("\t\t\tPASSED\n")
+		}
+		count++
+	} else {
+		printf("\t\t\tFAILED!\n")
+	}
+
+	printf("Testing a module function (thm.sstretch)... ")
+	if(hasvalue(isis)){
+		img=thm.sstretch(isis[,,9],ignore=-32768)
+		if(HasValue(img)) {
+			printf("\t\tPASSED\n")
+			count++
+		} else {
+			printf("\t\tFAILED!\n")
+		}
+	} else {
+		printf("\t\tSKIPPED!\n")
+	}
+
+	printf("Testing for the User Defined Function Library... ")
+	lib=syscall("ls \""+$DV_LIB+"\"")
+	if(HasValue(lib)) {
+		printf("\tPASSED\n")
+		count++
+	} else {
+		printf("\tFAILED!\n")
+	}
+
+	printf("Testing a User Defined Function (dcs)... ")
+	if(hasvalue(isis)){
+		dcs=dcs(cat(isis[,,8],isis[,,7],isis[,,5],axis=z),ignore=-32768)
+		if(HasValue(lib)) {
+			printf("\t\tPASSED\n")
+			count++
+		} else {
+			printf("\t\tFAILED! Cannot Complete Other Tests\n")
+			verbose=3
+			return(null)
+		}
+	} else {
+		printf("\t\tSKIPPED!\n")
+	}
+
+	#create a blank image
+	testimg=clone(create(255,1,3,format=byte),y=500)
+
+	printf("Testing ENVI reader... ")
+	write(testimg, $TMPDIR+"/test.img",envi,force=1)
+	envi=read($TMPDIR+"/test.img")
+	if(fexists($TMPDIR+"/test.img")) syscall("rm "+$TMPDIR+"/test.img")
+	if(equals(testimg,envi)) {
+		printf("\t\t\t\t\tPASSED\n")
+		count++
+	} else {
+		printf("\t\t\t\t\tFAILED!\n")
+		verbose=3
+		return(null)
+	}
+
+	printf("Testing VICAR writer/reader... ")
+	write(testimg,$TMPDIR+"/test.vic",vicar,force=1)
+	vic=read($TMPDIR+"/test.vic")
+	if(fexists($TMPDIR+"/test.vic")) syscall("rm "+$TMPDIR+"/test.vic")
+	if(equals(testimg,vic)) {
+		printf("\t\t\t\tPASSED\n")
+		count++
+	} else {
+		printf("\t\t\t\tFAILED!\n")
+
+	}
+
+	printf("Testing HDF writer/reader... ")
+	hdf={}
+	hdf.lab=random(1000,1,1)
+	hdf.labx=random(1000,10,1)
+	write(hdf,$TMPDIR+"/test.hdf",hdf,force=1)
+	hdf2=read($TMPDIR+"/test.hdf")
+	if(fexists($TMPDIR+"/test.hdf")) syscall("rm "+$TMPDIR+"/test.hdf")
+	if((equals(hdf2.lab,hdf.lab)+equals(hdf2.labx,hdf.labx))==2) {
+		printf("\t\t\t\tPASSED\n")
+		count++
+	} else {
+		printf("\t\t\t\tFAILED!\n")
+	}
+
+	printf("Testing CFITSIO writer/reader... ")
+	fits=create(100,100,1)
+	write_fits(fits,$TMPDIR+"/test.fits")
+	if(fexists($TMPDIR+"/test.fits")) {
+		fits2=load_fits($TMPDIR+"/test.fits")
+		if(equals(fits,fits2.object_1.data)){
+			printf("\t\t\tPASSED\n")
+			count++
+		} else {
+			printf("\t\t\tFAILED!\n")
+		}
+	} else {
+		printf("\t\t\tFAILED!\n")
+	}
+	if(fexists($TMPDIR+"/test.fits")) syscall("rm "+$TMPDIR+"/test.fits")
+
+	printf("Testing jpg writer/reader... ")
+	write(testimg,$TMPDIR+"/test.jpg",jpg,force=1)
+	jpg=read($TMPDIR+"/test.jpg")
+	if(fexists($TMPDIR+"/test.jpg")) syscall("rm "+$TMPDIR+"/test.jpg")
+	if(equals(dim(testimg),dim(jpg))) {
+		printf("\t\t\t\tPASSED\n")
+		count++
+	} else {
+		printf("\t\t\t\tFAILED!\n\n")
+	}
+
+	printf("Testing png writer/reader... ")
+	write(testimg,$TMPDIR+"/test.png",png,force=1)
+	png=read($TMPDIR+"/test.png")
+	if(fexists($TMPDIR+"/test.png")) syscall("rm "+$TMPDIR+"/test.png")
+	if(equals(testimg,png)) {
+		printf("\t\t\t\tPASSED\n")
+		count++
+	} else {
+		printf("\t\t\t\tFAILED!\n\n")
+	}
+
+	printf("Testing tif writer/reader... ")
+	write(testimg,$TMPDIR+"/test.tif",tif,force=1)
+	tif=read($TMPDIR+"/test.tif")
+	if(fexists($TMPDIR+"/test.tif")) syscall("rm "+$TMPDIR+"/test.tif")
+	if(equals(testimg,tif)==1) {
+		printf("\t\t\t\tPASSED\n")
+		count++
+	} else {
+		printf("\t\t\t\tFAILED!\n\n")
+	}
+
+	printf("Testing gif writer/reader... ")
+	write(testimg,$TMPDIR+"/test.gif",gif,force=1)
+	gif=read($TMPDIR+"/test.gif")
+	if(fexists($TMPDIR+"/test.gif")) syscall("rm "+$TMPDIR+"/test.gif")
+	if(equals(dim(testimg),dim(gif))) {
+		printf("\t\t\t\tPASSED\n")
+		count++
+	} else {
+		printf("\t\t\t\tFAILED!\n\n")
+	}
+
+	tascii=create(100,100,3,format=float)
+	printf("Testing ascii writer/reader... ")
+	write(tascii,$TMPDIR+"/test.ascii",ascii,force=1)
+	ascii=ascii($TMPDIR+"/test.ascii",format=float)
+	if(fexists($TMPDIR+"/test.ascii")) syscall("rm "+$TMPDIR+"/test.ascii")
+	if(equals(tascii,ascii)) {
+		printf("\t\t\t\tPASSED\n")
+		count++
+	} else {
+		printf("\t\t\t\tFAILED!\n\n")
+	}
+
+	printf("Testing complex string addition... ")
+	s="Mary "
+	s2="had a little"
+	s3=cat(s+s2,s+s2,s+s2,s+s2,axis=y)
+	s4=s3+" lamb"
+	if(sum(s4=="Mary had a little lamb")==4) {
+		printf("\t\t\tPASSED\n")
+		count++
+	} else {
+		printf("\t\t\tFAILED!\n\n")
+	}
+
+	printf("Testing readline writer/reader... ")
+	write(s4,$TMPDIR+"/test.read",ascii,force=1)
+	readlines=read_lines($TMPDIR+"/test.read")
+	if(fexists($TMPDIR+"/test.read")) syscall("rm "+$TMPDIR+"/test.read")
+	if(sum(s4==readlines)==4) {
+		printf("\t\t\tPASSED\n")
+		count++
+	} else {
+		printf("\t\t\tFAILED!\n\n")
+	}
+
+	if(fexists($TMPDIR+"/test.pdf")) syscall("rm "+$TMPDIR+"/test.pdf")
+	if($DV_OS=="mac") {
+		printf("Testing for pstopdf system function... ")
+		copy($DV_EX+"/plottest.ps",$TMPDIR+"/plottest.ps")
+		syscall("pstopdf "+$TMPDIR+"/plottest.ps -o "+$TMPDIR+"/test.pdf ")
+	} else {
+		printf("Testing for ps2pdf system function... ")
+		copy($DV_EX+"/plottest.ps",$TMPDIR+"/plottest.ps")
+		syscall("ps2pdf \""+$TMPDIR+"/plottest.ps\" "+$TMPDIR+"/test.pdf ")
+	}
+	 if(fexists($TMPDIR+"/test.pdf")) {
+		printf("\t\t\tPASSED\n")
+		count++
+	} else {
+		printf("\t\t\tFAILED!\n")
+	}
+	if(fexists($TMPDIR+"/test.pdf")) syscall("rm "+$TMPDIR+"/test.pdf")
+
+
+	if(HasValue($DV_VIEWER)==0) {
+		viewer="xv"
+	} else if ($DV_OS == "mac")  {
+		viewer="ImageJ"
+	} else {
+		viewer=$DV_VIEWER
+	}
+	printf("Testing %s (viewer) on Grayscale and RGB images...\t",viewer)
+	display(img)
+	display(dcs)
+	syscall("sleep 3")
+	if($DV_OS=="win") {
+		syscall("sleep 3")
+		imageJ=syscall("processlist javaw")
+		if(HasValue(imageJ)==0) {
+			imageJ=syscall("processlist | grep imgv")
+			printf("\nTrying imgv... \n")
+		}
+	} else if ($DV_OS=="mac") {
+		syscall("sleep 3")
+		imageJ=syscall("ps | grep "+viewer+" | grep -v \"grep\"")
+	} else {
+		imageJ=syscall("ps aux | grep "+viewer+" | grep -v \"grep\"")
+		if(HasValue(imageJ)==0) {
+			shortviewer=basename(viewer)
+			imageJ=syscall("ps aux | grep "+shortviewer+" | grep -v \"grep\"")
+		}
+	}
+	if(HasValue(imageJ)) {
+		printf("PASSED\n")
+		count++
+	} else {
+		printf("FAILED!\n")
+	}
+
+	printf("Testing GnuPlot... ")
+	xplot(random(100))
+	syscall("sleep 3")
+	if($DV_OS=="win") {
+		xplotvar=syscall("processlist | grep gnuplot")
+	} else {
+		xplotvar=syscall("ps | grep gnuplot | grep -v \"grep\"")
+	}
+	if(HasValue(xplotvar)) {
+		printf("\t\t\t\t\tPASSED\n")
+		count++
+	} else {
+		printf("\t\t\t\t\tFAILED!\n")
+	}
+
+	if(HasValue($DV_GDAL_PATH)) {
+		if(fexists($DV_GDAL_PATH+"/gdalinfo")) {
+			gdal=gdal_version()
+		}
+	}
+
+	if(HasValue($DV_ISIS3_PATH)) {
+		isis3=isis3_version()
+	}
+
+	printf("\n")
+	verbose=0
+	printf("Testing ISIS3/IO...\n")
+	isis3io=lsmod("isis3")
+	if(isis3io==0 || HasValue(isis3io)==0) {
+	  printf("\tISIS3 Reading/Writing not supported\n")
+	} else {
+	  printf("\n\tISIS3 Reading/Writing fully supported\n")
+	}
+	verbose=3
+
+	printf("\n########################################\n")
+	if(count==total_count) {
+		printf("All %i required tests PASSED sucessfully\n",total_count)
+		printf("%i of %i optional tests PASSED sucessfully\n",optional,total_optional)
+		printf("Davinci should be completely operational\n")
+	} else {
+		printf("%i of %i required tests FAILED\n",total_count-count, total_count)
+		printf("%i of %i optional tests PASSED sucessfully\n",optional,total_optional)
+		printf("Davinci may not function properly\n")
+	}
+#	if(HasValue(gdal)) {
+#		if(gdal==1) printf("\nGDAL is fully supported\nMap projection/geo functions should work\n")
+#		if(gdal==0) printf("\nGDAL is NOT supported\nMap projection/geo functions will not work\n")
+#	}
+
+#	if(HasValue(isis3)) {
+#		if(isis3==1)  printf("\nISIS3 functions were found...\nNote: davinci provides an interface to ISIS3 command line function\nReading/Writing support not guaranteed (or required for these functions)\n")
+#		if(isis3==0)  printf("\nISIS3 functions were NOT found...\nNote: Check your ISIS3 install path\n")
+#	}
+
+#	if(HasValue(isis3io)) {
+#		if(isis3io==1) {
+#			printf("\n\tISIS3 Reading/Writing is supported\n")
+#		}
+#	}
+	printf("########################################\n")
+
+	test=pause("\nDo you want to open the DavinciWiki to a sample function (y/n)?\n")[1,1]
+	if(test == "y" || test == "Y") {
+		 printf("wiki(\"sstretch\")\n")
+		 printf("Opening... \n")
+		 wiki("sstretch")
+	}
+	verbose=3
+	return(null)
+}
+
+
+
+
+define library(funcname,dvrcname,build,nopause) {
+	#added $DV variable support
+	verbose=0
+
+	path=$DV_LIB+"/"
+	if($DV_OS=="win") path="library/"
+
+	if(HasValue(dvrcname)==0) {
+		dvrcname=""
+		dvrcnamepath=""
+	} else {
+		dvrcnamepath="*"+dvrcname
+	}
+
+	if(HasValue(funcname)!=0) {
+		modfuncname=funcname
+		funcname=" | grep "+funcname
+	}
+	if(HasValue(funcname)==0) {
+		funcname=""
+		modfuncname=""
+	}
+	if(HasValue(build)) {
+		builds=""
+		nopause=1
+	}
+
+	list=syscall("ls "+path+dvrcnamepath+"*.dvrc | grep -v \"library.dvrc\" | sort")
+	if(dvrcname=="") {
+		mods=list_modules()
+	} else {
+		mods=grep(list_modules(),dvrcname)
+	}
+	sfuncs=ls(sfunc=1)
+	if(HasValue(sfuncs)) {
+		write(sfuncs,$TMPDIR+"/sfuncs_tmpfile",ascii,force=1)
+		syscall("sort "+$TMPDIR+"/sfuncs_tmpfile > "+$TMPDIR+"/sfuncs_tmpfile2")
+		sfuncs=read_lines($TMPDIR+"/sfuncs_tmpfile2")
+	}
+
+	count=0
+	printf("\nSearching the davinci core, %d modules and %i davinci dvrc library(ies) in: \n   \"%s\"\n",length(mods),length(list),dirname(path))
+	libcount=0
+
+	core=strstr("core",dvrcname)
+	if( (core != 0 && dvrcname!="") || (core == 0 && dvrcname == "" )) {
+		if(modfuncname=="") {
+			func_list=sfuncs
+		} else {
+			func_list=grep(sfuncs,modfuncname)
+		}
+		len=strlen(func_list)
+		if(length(func_list) !=0 ) {
+			printf("\ndavicni core - %i function(s)\n", length(func_list))
+			for(i=1;i<=length(func_list); i+=1) {
+				if(HasValue(build)==0) printf("   %s()\n",func_list[:len[,i],i])
+				if(HasValue(build)) builds=cat(builds,sprintf("%s()",func_list[:len[,i],i]),y)
+				count+=1
+				pause=count
+				if(HasValue(nopause)) pause=1
+				if(pause % 30 == 0 ) pause("\nEnter for more:\n")
+			}
+		}
+	}
+
+	for(i=1;i<=length(list);i+=1) {
+		func_list=""
+		func_list=strsub(syscall("grep \"define \" "+list[,i]+" | sed \"s/define //g\" | grep -v \"printf\" | grep -v \"\#\" | sort "+funcname+"")," ","")
+		len=strlen(func_list)
+		if(len != 0 ) {
+			libcount+=1
+			printf("\n%s - %i function(s)\n",basename(list[,i]),length(func_list))
+			for(j=1;j<=length(func_list);j+=1) {
+				if(HasValue(build)==0) printf("   %s\n",func_list[:len[,j]-1,j])
+				count+=1
+				pause=count
+				if(HasValue(nopause)) pause=1
+				if(HasValue(build)) builds=cat(builds,sprintf("%s()",func_list[:len[,j],j]),y)
+				if(pause % 30 == 0 ) pause("\nEnter for more:\n")
+			}
+		}
+	}
+
+	modcount=0
+	for(i=1;i<=length(mods);i+=1) {
+		func_list=""
+		if(modfuncname=="") {
+			func_list=list_modules(mods[:3,i])
+		} else {
+			func_list=grep(list_modules(mods[:3,i]),modfuncname)
+		}
+		len=strlen(func_list)
+		if(len !=0 ) {
+			modcount+=1
+			printf("\n%s module - %i function(s)\n", mods[,i], length(func_list))
+			for(j=1;j<=length(func_list); j+=1) {
+				if(HasValue(build)==0) printf("   %s.%s()\n",mods[:3,i],func_list[:len[,j],j])
+				count+=1
+				pause=count
+				if(HasValue(nopause)) pause=1
+				if(HasValue(build)) builds=cat(builds,sprintf("%s.%s()\n",mods[,i],func_list[:len[,j],j]),y)
+				if(pause%30 == 0 ) pause("\nEnter for more:\n")
+			}
+		}
+	}
+
+	printf("\n%i total function(s) in the davinci core, %i davinci dvrc file(s) and %i davinci module(s)\n\n",count,libcount,modcount)
+
+	if(funcname=="" && dvrcname=="")  printf("Try using funcname=\"FunctionName\" and dvrcname=\"DvrcName\" to limit your search\n\n")
+	verbose=3
+	if(HasValue(build)) return(builds[,2:])
+}
+
+
+
+define library_update(update,beta,version,noroot,setexepath) {
+#4/15 modified to deal with non-standard library locations
+
+	if(HasValue(update)==0) {
+		printf("\nThis function is designed to update the currently installed davinci\n")
+		printf("User Defined Functions library\n")
+		printf("NOTE: This function will operate only after major version 2.06\n\n")
+		printf("In the unlikely chance that this functino breaks your installation\n")
+		printf("of davinci, please re-install from the davinci binaries\n\n")
+		printf("To use this function to update the functions library,\n")
+		printf("you may need to start davinci in a special way.\n")
+		printf("See below for specific operating system instructions\n\n")
+		printf("\tFor Linux:\t\tStart davinci as root, su, or sudo, Ex: sudo davinci\n")
+		printf("\tFor Mac:\t\tYou will be prompted to type the sudo password\n")
+		printf("\tFor Windows 7:\t\tRight click on the Davinci.exe file in the Start Menu\n")
+		printf("\t\t\t\tAnd click \"Run as Administrator\"\n")
+		printf("\tFor Windows VISTA:\tStart davinci normally\n")
+		printf("\tFor Windows XP:\t\tStart davinci normally\n\n")
+		printf("Usage:\n")
+		printf("library_update(update=1)\n")
+		printf("\tThis will update all the functions to the current public release of davinci, \n\te.g. major version 2.05\n\n")
+		printf("library_update(update=1,version=2.10)\n")
+		printf("\tThis will update all the functions to the specified public release of davinci, \n\te.g. major version 2.10\n\n")
+		printf("library_update(update=1,beta=1)\n")
+		printf("\tThis will update all the functions to the current beta release, \n\te.g. everything after 2.05 but before 2.06\n\n")
+		printf("Arguments:\n")
+		printf("\tupdate=1, update the code to the most recent release\n")
+		printf("\tbeta=1, update the code to the beta release\n")
+		printf("\tversion=2.12, update the code to the specified version (>2.0)\n")
+		printf("\tnoroot, use this carefully if $DV_LIB is in a non-root controlled directory (Default=0)\n")
+		printf("\tsetexepath, use this to set the executeable path for updating the binary scripts\n\n")
+		printf("c.edwards 12-7-10\n\n")
+		return(null)
+	}
+
+	verbose=0
+	if(HasValue(beta)==0) beta=0
+	if(HasValue(noroot)==0) noroot=0
+
+	#use the "beta"
+	if(beta==1) {
+		base_url=$DV_EX+"/library_beta"
+		name="beta"
+
+	#update to a specific version
+	} else if (HasValue(version)) {
+		if(isnum(version)) {
+			version=sprintf("%.2f",version)
+		}
+
+		printf("version=%s\n",version)
+		version=sprintf("dv_%s",strsub(version,"\\.","_"))
+		base_url=$DV_EX+"/library_versions/"+version
+		name="version specific"
+
+	#update to the lastest release
+	} else {
+		base_url=$DV_EX+"/library"
+		name="standard"
+	}
+
+	#get the username to see if we are root
+	username=syscall("whoami")[,1]
+
+	if($DV_UPDATE_ALLOW=="1") {
+		printf("\nUsing the %s repository to update davinci:\n",name)
+		printf("\t%s\n\n",base_url)
+
+		update_list=read_lines(base_url+"/update_library.txt")
+
+		#Here we check the os to figure out what kind of copy we need to do
+		#For linux and mac we use $TMPDIR and then copy the files with sudo or root later
+		#For win we just copy the files directory because windows abbreviates $TMPDIR and confuses copy
+		if($DV_OS=="mac" || $DV_OS=="linux") {
+			tmplib=$TMPDIR+"/library_update/"
+
+			#bypass the "root" requirement
+			if(noroot==0) {
+				#if its linux ensure that we have logged in as root before trying to run the code
+				#this is accomplished by su or sudo davinci
+				if($DV_OS=="linux") {
+					if(username!="root") {
+						printf("You are not root! And cannot update the library\n")
+						printf("Please start davinci as sudo or root\n\n")
+						verbose=3
+						return(null)
+					}
+
+				#if its mac ensure that we are running as sudo so we only type the password early
+				} else if ($DV_OS=="mac") {
+					system("sudo touch "+$TMPDIR+"/junk.txt")
+				}
+			} else {
+				printf("Warning: You are not root and  specified noroot=1\n\n")
+				printf("Attempting to update the library in a non-root controlled directory\n")
+				printf("If your script library permissions are wrong, the update will not work\n\n")
+			}
+
+		#if its windows we don't have to do anything because permissions are scary!!!
+		} else if ($DV_OS=="win") {
+			oldir=syscall("pwd")
+			chdir($DV_LIB)
+			tmplib=""
+		} else {
+			printf("\nA supported operating system was not found\n\n")
+			verbose=3
+			return(null)
+		}
+
+		#copy the files to the proper location
+		#make the directory if we need to
+		for(i=1;i<=length(update_list);i+=1) {
+			dirname=dirname(update_list[,i])
+			if(dirname==".") {
+				dirname=""
+			}
+			item=basename(update_list[,i])
+
+			dirname=tmplib+dirname
+			filename=dirname+"/"+item
+
+			if($DV_OS=="win") {
+				dirname=strsub(dirname,match="/",subst=bs()//bs())
+				if(filename[1]=="/") {
+					filename=filename[2:]
+				}
+				filename=strsub(filename,match="/",subst=bs()//bs())
+			}
+
+			if(fexists(dirname)==0 && dirname!="") {
+				if($DV_OS=="win") {
+					syscall("mkdir "+dirname)
+				} else {
+					syscall("mkdir -p "+dirname)
+				}
+			}
+
+			#copy the files to the temporary spot (or the real spot for windows)
+			printf("Downloading....%s\n",basename(update_list[,i]))
+			copy(base_url+"/"+update_list[,i],filename,force=1)
+		}
+
+		#take care of *.dv in the bin directory
+		if(atof(version()[18:])>=2.12 || HasValue(setexepath)) {
+			if($DV_OS=="mac") library=sprintf("%s/library_mac.dvrc",$DV_LIB)
+			if($DV_OS=="linux") library=sprintf("%s/library_linux.dvrc",$DV_LIB)
+			if($DV_OS=="win") library=sprintf("%s/library_win.dvrc",$DV_LIB)
+			if(HasValue(setexepath)) putenv("DV_EXEPATH",setexepath)
+			if(HasValue($DV_EXEPATH)==0) {
+				printf("Error: $DV_EXEPATH is not set\n")
+				printf("Cannot update command line scripts\n\n")
+			} else {
+				files=syscall("ls "+tmplib+"/bin/*.dv")
+
+				printf("\nUpdating command line scripts with:\n")
+				printf("  Davinci executeable path: %s\n",$DV_EXEPATH)
+				printf("  Davinci script path:      %s\n\n",library)
+
+				for(i=1;i<=length(files);i+=1) {
+					printf("Updating....%s\n", basename(files[,i]))
+					script=read_lines(files[,i])[,3:]
+					script=cat(sprintf("source(\"%s\")",library),script,axis=y)
+					script=cat(sprintf("#!%s -fq -v0",$DV_EXEPATH),script,axis=y)
+					write(script,files[,i],ascii,force=1)
+				}
+
+				printf("\nAdd: \"%s/bin\"\nto your $PATH Environment variable to use davinci command line scripts\n",$DV_LIB)
+			}
+		} else {
+			printf("\nNot updating command line scripts\n")
+			printf("They are not supported on your version of davinci\n")
+		}
+
+		#finalize the copy using root or sudo for linux or mac
+		#unless we specify noroot=1
+		if($DV_OS=="mac" || $DV_OS=="linux") {
+			printf("\nCopying the library to the destination:\n\t%s\n",$DV_LIB)
+			username=syscall("whoami")[,1]
+			if(username!="root" && noroot==0) {
+				syscall("sudo cp -r "+tmplib+"/* "+$DV_LIB)
+				syscall("sudo chmod -R ugo+rwx "+$DV_LIB+"/script_files/")
+				if(fexists($DV_LIB+"/bin")) syscall("sudo chmod -R ugo+rwx "+$DV_LIB+"/bin/")
+			} else {
+				syscall("cp -r "+tmplib+"/* "+$DV_LIB)
+				syscall("chmod -R ugo+rwx "+$DV_LIB+"/script_files/")
+				if(fexists($DV_LIB+"/bin")) syscall("chmod -R ugo+rwx "+$DV_LIB+"/bin/")
+			}
+		}
+
+		#deal with non-standard library_install locations...this should fix most issues.
+		library_dvrc=read_lines(sprintf("%s/library_%s.dvrc",$DV_LIB,$DV_OS))
+		dvhome=grep(library_dvrc,"putenv\\(\"DV_HOME")[,1]
+		library_dvrc[,int(maxpos(library_dvrc==dvhome))[2]]=sprintf("putenv(\"DV_HOME\",\"%s\")",dirname($DV_LIB))
+		printf("\nSetting $DV_HOME to: %s\n in %s/library_%s.dvrc\n\n",dirname($DV_LIB),$DV_LIB,$DV_OS)
+		write(library_dvrc,sprintf("%s/library_%s.dvrc",$DV_LIB,$DV_OS),ascii,force=1)
+
+		verbose=0
+		#source the new library file
+		printf("Sourcing the new library files:\n")
+		if($DV_OS=="mac") {
+			source($DV_LIB+"/library_mac.dvrc")
+		} else if ($DV_OS=="win") {
+			source($DV_LIB+"/library_win.dvrc")
+			chdir(oldir)
+		} else if ($DV_OS=="linux") {
+			source($DV_LIB+"/library_linux.dvrc")
+		} else {
+			printf("\nA supported operating system was not found\n")
+			verbose=3
+			return(null)
+		}
+	} else {
+		printf("\nUpdating the davinci_library is not allowed\n\n")
+		verbose=3
+		return(null)
+	}
+
+	verbose=3
+	return(null)
+}
+
+
+
+define gdal_version() {
+
+	path=$DV_GDAL_PATH
+	if(HasValue($DV_GDAL_PATH)) {
+		if($DV_GDAL_PATH=="") {
+			printf("\nGDAL was not found\n")
+			return(0)
+		}
+	} else {
+		printf("\nGDAL was not found\n")
+		return(0)
+	}
+
+	functions=cat("gdalinfo", "gdal_translate","gdalwarp","gdaltransform","gdal_rasterize","ogr2ogr",axis=y)
+
+	printf("\nChecking for GDAL in $DV_GDAL_PATH=%s\n",path)
+	version=strsplit(syscall($DV_GDAL_PATH+"/"+functions[,1]+" --version")[,1],delim=" ")[,2]
+	version_split=strsplit(version,delim=".")
+	version_new=atof(sprintf("%02.f.%02.f%02.f",atof(version_split[,1]),atof(version_split[,2]),atof(version_split[,3])))
+
+	failed=0
+	for(i=1;i<=length(functions);i+=1) {
+		val=""
+		val=syscall($DV_GDAL_PATH+"/"+functions[,i]+" --version")
+		if(i==1) {
+			printf("Found: %s\n",val[,i])
+
+			if(version_new>=1.08) {
+				printf("All options are fully supported with this version\n\n")
+			} else {
+				printf("\nWARNING: All options may not be fully supported with this GDAL version\n")
+				printf("Please upgrade your version of GDAL to 1.8.0 or higher\n\n")
+				failed+=1
+			}
+		}
+
+		flength=length(functions[,i])
+		if(flength<=8) {
+			flength="\t\t\t\t\t"
+		} else {
+			flength="\t\t\t\t"
+		}
+		if(val!="") {
+
+			printf("Checking %s... %sPASSED\n",functions[,i],flength)
+		} else {
+			failed+=1
+			printf("Checking %s... %sFAILED!\n",functions[,i],flength)
+		}
+	}
+
+	printf("\n")
+	if(failed>0) {
+		printf("\t%i GDAL errors occured\n",failed)
+		printf("\tSome functions may not work propery\n")
+		return(0)
+	} else {
+		printf("\tAll required GDAL functions were found\n\tand should work as expected\n")
+		return(1)
+	}
+}
+
+
+
+
+define isis3_version() {
+
+	path=$DV_ISIS3_PATH
+	if(HasValue($DV_ISIS3_PATH)) {
+		if($DV_ISIS3_PATH=="") {
+			printf("\nISIS3 was not found\n")
+			return(0)
+		}
+	} else {
+		printf("\nISIS3 was not found\n")
+		return(0)
+	}
+
+	functions=syscall("ls "+$DV_ISIS3_PATH)
+
+	printf("\nChecking for ISIS3 in $DV_ISIS3L_PATH=%s\n",path)
+	failed=0
+	if(length(functions)==0) {
+		failed=1
+	}
+
+	version=""
+	if(failed==0) {
+		version=strsplit(grep(syscall(functions[,1]+" -info 2>&1"),"IsisVersion"),delim="\"")[1][,2]
+		if(version!="" && length(functions)>300) {
+			printf("Found ISIS3 version: %s\n",version)
+			printf("Found %i ISIS3 functions\n",length(functions))
+		} else {
+			failed+=1
+			printf("Did not find ISIS3... Failed\n")
+		}
+	}
+
+	printf("\n")
+	if(failed>0) {
+		printf("\t%i ISIS3 errors occured\n",failed)
+		printf("\tSome functions may not work propery\n")
+		return(0)
+	} else {
+		printf("\tAll required ISIS3 functions were found\n\tand should work as expected\n")
+		return(1)
+	}
+}
+

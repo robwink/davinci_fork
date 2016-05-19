@@ -1,0 +1,1968 @@
+map_projection_version=1.06
+
+#1.00 initial version. added jmars function
+#    this allows a user to create a link between jmars and davinci
+#1.01 added read_geometa, read_geo, write_geotiff
+#1.02 updated read_geometa, read_geo, write_geotiff and added proj_geo
+#1.03 updated read_geo, read_geometa, write_geotiff, proj_geo to support
+# assigning a source projection, selecting a subdataset extracting and adding gcps
+# also added function add_gcps_geo
+#1.04 added read_geoshape,write_geoshape,coordproj_geo,proj_geoshape,
+# shape2raster_geo, find_proj, get_proj
+# and fixes to other geo functions
+#1.06 added write_envi function
+
+# jmars            -created by c.edwards 2-7-2011
+# read_geometa     -created by c.edawrds 4-9-2013
+# read_geo         -created by c.edawrds 4-9-2013
+# write_geotiff    -created by c.edawrds 4-9-2013
+# proj_geo         -created by c.edwards 4-10-2013
+# add_gcps_geo     -created by c.edwards 4-24-2013
+# find_proj        -created by c.edwards 5-12-2013
+# get_proj         -created by c.edwards 5-12-2013
+# read_geoshape    -created by c.edwards 5-12-2013
+# write_geoshape   -created by c.edwards 5-12-2013
+# proj_geoshape    -created by c.edwards 5-12-2013
+# proj_geocoord    -created by c.edwards 5-12-2013
+# shape2raster_geo -created by c.edwards 5-12-2013
+# gdal_version     -created by c.edwards 5-12-2013
+# write_envi       -created by c.edawrds 10-9-2014
+
+
+define jmars(id,ul,ur,ll,lr,ignore,name,port,host,v,tmpdir,geo) {
+
+	if($ARGC<1) {
+		printf("Use this function to output a data file to your JMARS Session\n")
+		printf("JMARS will take the input data and project it on to the current map in the Davinci Stamps layer\n\n")
+		printf("Required:\n")
+		printf("\t$1 = stretched byte data or a file path\n")
+		printf("\tul = Latitude//Longitude of the upper left corner of the data\n")
+		printf("\tlr = Latitude//Longitude of the lower right corner of the data\n")
+		printf("\tNote: if only ul and lr are specified ur and ll values will be filled in automatically\n")
+		printf("\tur = Latitude//Longitude of the upper right corner of the data\n")
+		printf("\tll = Latitude//Longitude of the lower left corner of the data\n\n")
+		printf("OR\n")
+		printf("\t$1 = a STRUCT with a stretched byte .data, .ul, .lr, (optional, .ur, .ll) elements in the formats above\n\n")
+		printf("\t$1 = stretched byte data or a file path\n")
+		printf("\t$2 = an ISIS2 or ISIS3 structure (from load_pds) with map projection information\n\n")
+		printf("Optional:\n")
+		printf("\thost = name of the machine the instance of JMARS is running on (Default=\"localhost\")\n")
+		printf("\tport = port number specified in the Davinci Stamps Layer (Default=56277)\n")
+		printf("\tignore = ignore value for image null space (Default = 0)\n")
+		printf("\tname = specifiy a custom dataset name (Default = \"DV Upload \"+ID#\n")
+		printf("\tid = specify an id for JMARS to identify this dataset\n")
+    printf("\t\t this will auto increment by default, but can be forced to overwrite \n")
+		printf("\ttmpdir = specify an alternate temporary directory (must exist)\n")
+    printf("\tgeo = re-project the input GeoStruct to the JMARS projection (Default = 0)\n")
+		printf("c.edwards 9/8/10\n")
+		return(null)
+	}
+
+	if(HasValue(tmpdir)==0) {
+		tmpdir=$TMPDIR
+	}
+
+	if(HasValue(ignore)==0) {
+		ignore="0"
+	} else {
+		igndim=dim(ignore)
+		ignore=resize(ignore,igndim[1]*igndim[2]*igndim[3],1,1)
+		ignstr=sprintf("%d",ignore[1])
+		for(i=2;i<=dim(ignore)[1];i+=1) {
+			ignstr=sprintf("%s,%d",ignstr,ignore[i])
+		}
+		ignore=ignstr
+	}
+
+	if(HasValue(geo)==0) geo=0
+	if(HasValue(v)) printf("Ignore value string is: %s\n",ignore)
+
+
+	if(HasValue(id)==0) {
+		if(fexists(tmpdir+"/000001_dvjmars.png")) {
+			previous=syscall("ls "+tmpdir+"/??????_dvjmars.png")
+			id=atoi(basename(previous)[:6,length(previous)])+1
+		} else {
+			id=1
+		}
+	}
+
+	if(HasValue(v)) printf("id=%i\n",id)
+
+	if(HasValue(name)==0) name=sprintf("DV Upload %.6d",id)
+	if(HasValue(port)==0) port=56277
+	if(HasValue(host)==0) host="localhost"
+
+	if(HasValue(v)) {
+		printf("name=%s\n",name)
+		printf("host=%s\n",host)
+		printf("port=%i\n",port)
+	}
+
+	outfile=sprintf("%s/%.6d_dvjmars.png",tmpdir,id)
+	urlprefix=sprintf("http://%s:%i/jmarsdvlink?",host,port)
+
+	ver=version()[18:]
+	ver="davinci "+ver
+
+	#check for the data with specified ul, lr etc
+	if(type($1)!="STRUCT" && $ARGC==1) {
+		if(HasValue(v)) printf("User defined coords case\n")
+
+		if(HasValue(ul)==0) {
+			printf("Upper Left Lat//Lon are required\n")
+			return(null)
+		}
+		if(HasValue(lr)==0) {
+			printf("Lower Right Lat//Lon are required\n")
+			return(null)
+		}
+		if(HasValue(ll)==0) {
+			printf("Using set Upper Left Longitude and Lower Right Latitude bounds for the Lower Left corner\n")
+			ll=lr[1]//ul[2]
+		}
+		if(HasValue(ur)==0) {
+			printf("Using set Upper Left Latitude and Lower Right Longitude bounds for the Upper Right corner\n")
+			ur=ul[1]//lr[2]
+		}
+
+	}
+
+	if ($ARGC==2) {
+		if(type($2)=="STRUCT" || type($2)=="STRING") {
+
+			if(type($2)=="STRING") {
+				if(HasValue(v)) printf("Trying to load pds file\n")
+				struct=load_pds($2,data=0)
+			} else {
+				if(HasValue(v)) printf("We have a pds struct\n")
+				struct=$2
+			}
+
+			if(HasValue(get_struct(struct,"IsisCube"))) {
+				#we think we have the isis3 case
+				if(HasValue(v)) printf("ISIS 3 case\n")
+
+				if(HasValue(get_struct(struct.IsisCube,"Mapping"))) {
+					minlat=float(struct.IsisCube.Mapping.MinimumLatitude)
+					maxlat=float(struct.IsisCube.Mapping.MaximumLatitude)
+					westlon=float(struct.IsisCube.Mapping.MinimumLongitude)
+					eastlon=float(struct.IsisCube.Mapping.MaximumLongitude)
+				}
+				#just because we don't quite trust the isis label to always be min/max
+				minlon=min(westlon//eastlon)
+				maxlon=max(westlon//eastlon)
+
+				#parse it to the jmars way...
+				ul=maxlat//minlon
+				ur=maxlat//maxlon
+				ll=minlat//minlon
+				lr=minlat//maxlon
+
+			} else if(HasValue(get_struct(struct,"qube"))){
+				#we think we ahve the isis2 case
+				if(HasValue(v)) printf("ISIS 2 case\n")
+
+				if(HasValue(get_struct(struct.qube,"image_map_projection"))) {
+					minlat=float(struct.qube.image_map_projection.minimum_latitude)
+					maxlat=float(struct.qube.image_map_projection.maximum_latitude)
+					westlon=float(struct.qube.image_map_projection.westernmost_longitude)
+					eastlon=float(struct.qube.image_map_projection.easternmost_longitude)
+				}
+
+				#just because we don't quite trust the isis label to always be min/max
+				minlon=min(westlon//eastlon)
+				maxlon=max(westlon//eastlon)
+
+				#parse it to the jmars way...
+				ul=maxlat//minlon
+				ur=maxlat//maxlon
+				ll=minlat//minlon
+				lr=minlat//maxlon
+
+			} else {
+				if(HasValue(get_struct(struct,"ul"))) {
+					ul=struct.ul
+				}
+				if(HasValue(get_struct(struct,"lr"))) {
+					lr=struct.lr
+				}
+				if(HasValue(get_struct(struct,"ll"))) {
+					ll=struct.ll
+				} else {
+					ll=lr[1]//ul[2]
+				}
+				if(HasValue(get_struct(struct,"ur"))) {
+					ur=struct.ur
+				} else {
+					ur=ul[1]//lr[2]
+				}
+			}
+		}
+	}
+
+	#check for the structure case where we may have .data, .lr, .ul
+	if(type($1)=="STRUCT" && $ARGC==1) {
+
+		if(HasValue(v)) printf("User defined struct case\n")
+
+		struct=$1
+
+		#this will blow up if we don't have a geo struct....
+		if(geo==1) {
+			struct=proj_geo(struct,"+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +a=3396190 +b=3396190 +units=m +no_defs")
+		}
+
+		if(HasValue(get_struct(struct,"data")) || HasValue(get_struct(struct,"image"))) {
+			if(HasValue(get_struct(struct,"ul")) && HasValue(get_struct(struct,"lr"))) {
+				ul=get_struct(struct,"ul")
+				lr=get_struct(struct,"lr")
+
+				if(HasValue(get_struct(struct,"ur"))) {
+					ur=get_struct(struct,"ur")
+				} else {
+					ur=ul[1]//lr[2]
+				}
+				if(HasValue(get_struct(struct,"ll"))) {
+					ll=get_struct(struct,"ll")
+				} else {
+					ll=lr[1]//ul[2]
+				}
+			} else {
+				printf("Lat//Lon values are required for each corner\n")
+				return(null)
+			}
+
+			if(HasValue(get_struct(struct,"data"))) {
+				data=get_struct(struct,"data")
+			} else if (HasValue(get_struct(struct,"image"))) {
+				data=get_struct(struct,"image")
+			}
+
+			if(type(data)=="byte") {
+				if(HasValue(v)) printf("Writing out .data from struct to  file\n")
+				if(dim(data)[3]!=1 && dim(data)[3]!=3) {
+					printf("Data must have only 1 or 3 bands\n")
+					return(null)
+				} else {
+					write(data,outfile,png,force=1)
+				}
+			} else {
+				printf("Error only byte data may be used with JMARS at this time\n\n")
+				return(null)
+			}
+		}
+
+	#this is a check to just copy the file to the location (if it is on disk somewhere...)
+	#this is probably dangerous since it is most likely not a png file
+	} else if(type($1)=="STRING") {
+		data=read($1)
+		if(dim(data)[3]!=1 && dim(data)[3]!=3) {
+			printf("Data must have only 1 or 3 bands\n")
+			return(null)
+		} else {
+			write(data,outfile,png,force=1)
+		}
+
+		#this is probably dangerous since it is most likely not a png file
+		#copy($1,outfile)
+
+	#this is the case where we have data as a pds structure or with user defined points
+	} else if(type($1)=="byte") {
+		if(HasValue(v)) printf("Writting out unstretched data to file\n")
+			if(dim($1)[3]!=1 && dim($1)[3]!=3) {
+				printf("Data must have only 1 or 3 bands\n")
+				return(null)
+			} else {
+				write($1,outfile,png,force=1)
+			}
+	#this is the case where we have unstretched data as a pds structure or with user defined points
+	} else if(type($1)=="float" || type($1)=="short" || type($1)=="int" || type($1)=="double") {
+		printf("Error only byte data may be used with JMARS at this time\n\n")
+		return(null)
+	} else {
+		printf("No valid data was found\n")
+		return(null)
+	}
+
+	ulstr=sprintf("&ullat=%f&ullon=%f",ul[1],ul[2])
+	urstr=sprintf("&urlat=%f&urlon=%f",ur[1],ur[2])
+	llstr=sprintf("&lllat=%f&lllon=%f",ll[1],ll[2])
+	lrstr=sprintf("&lrlat=%f&lrlon=%f",lr[1],lr[2])
+
+	url=sprintf("%spath=%s%s%s%s%s&ignore=%s&id=%.6d&name=%s&version=%s",urlprefix,outfile,ulstr,urstr,llstr,lrstr,ignore,id,name,ver)
+
+	verbose=0
+	if(HasValue(v))	{
+		printf("%s\n",url)
+		verbose=3
+	}
+
+	success=read_lines(url)
+	verbose=3
+
+	if(HasValue(success)) {
+		success=atoi(success[,1])
+		if(success==1) {
+			printf("Your data is now available in: \n\tJMARS Session:\t\"%i\"\n\tData ID:\t\"%.6d\"\n\tData Name:\t\"%s\"\n",success,id,name)
+		} else {
+			printf("ERROR:Your data is NOT available in JMARS\n")
+		}
+	} else {
+		printf("ERROR:Your data is NOT available in JMARS\n")
+	}
+	return(success)
+}
+
+
+
+define read_geometa(raw,opts,v) {
+
+	#print the help
+	if($ARGC<1) {
+		printf("\nThis function reads the metadata from a Geo-Aware file\n")
+		printf("The input data must be a format gdal understands\n\n")
+		printf("$1=filename\n\n")
+		printf("Options:\n")
+		printf("\topts=optional gdalinfo arguments (default=\"\")\n\n")
+		printf("\traw=return the raw gdalinfo file (Default=0)\n")
+		printf("Returns a standard davinci Geo-Struct\n")
+		printf("\n")
+		printf("NOTE: This function requires $DV_GDAL_PATH\n")
+		printf("and gdal version >=1.8\n\n")
+		printf("c.edwards 4/9/13\n")
+		return(null)
+	}
+
+	verbose=0
+	#set up the defaults
+	if(HasValue(raw)==0) raw=0
+	if(HasValue(opts)==0) opts=""
+ 	if(HasValue(v)==0) v=0
+	proj=0
+
+	#grab the filename and run gdalinfo
+	filename=$1
+
+	#handle the remote case
+	remote=0
+	prefix=cat("http://","https://","ftp://","sftp://","file:///",axis=y)
+	for(i=1;i<=length(prefix);i+=1) {
+		if(filename[:length(prefix[,i])]==prefix[,i]) {
+			remote=1
+		}
+	}
+
+	if(remote==1) {
+		newfile=$TMPDIR+"/"+basename(filename)+".copy"
+		filename=copy(filename,newfile,force=1)
+	}
+
+	wkt_file=syscall($DV_GDAL_PATH+"/gdalinfo  -proj4 "+opts+" "+filename)
+	if(wkt_file[:15,1]=="Usage: gdalinfo") {
+		wkt_file=syscall($DV_GDAL_PATH+"/gdalinfo -norat "+opts+" "+filename)
+	}
+		
+	#Setup the output structure
+	struct={}
+	struct.anc={}
+	struct.anc.wkt=text(0)
+	if(raw==1) {
+		struct.anc.gdalinfo=wkt_file
+	}
+
+	#rip out and format the wkt.
+	#search for the coordinate system or GCP projection (this is for non projected data that have gcps attached)
+	coordline=maxpos(wkt_file==grep(wkt_file,"Coordinate\ System\ is")[,1])[2]
+	if(wkt_file[:6,coordline+1]!="PROJCS" && wkt_file[:6,coordline+1]!="GEOGCS") {
+		coordline=maxpos(wkt_file==grep(wkt_file,"GCP\ Projection\ =")[,1])[2]
+		for(i=coordline+2;i<=length(wkt_file);i+=1) {
+			if(wkt_file[1,i]!=" ") {
+				ecoordline=i
+				i=length(wkt_file)+1
+			}
+		}
+		proj=0
+	} else {
+		colon=grep(wkt_file,":")
+		mline=maxpos(colon==grep(colon,"Coordinate\ System\ is")[,1])[2]
+		ecoordline=maxpos(wkt_file==grep(wkt_file,colon[,mline+1,1])[,1])[2]
+		proj=1
+	}
+
+
+	for(i=coordline+1;i<ecoordline;i+=1) {
+		if(wkt_file[,i]!="PROJ.4 string is:") {
+			struct.anc.wkt=cat(struct.anc.wkt,wkt_file[,i],axis=y)
+		}
+	}
+
+	#get the NoData Value
+	if(HasValue(grep(wkt_file,"NoData\ Value="))) {
+		struct.ignore=atod(grep(wkt_file,"NoData\ Value")[16:,1])
+	}
+
+	#get the Bands Info
+	if(HasValue(grep(wkt_file,"^Band\ "))) {
+    struct.anc.bandcount=length(grep(wkt_file,"^Band\ "))
+	}
+
+	#handle the subdatasets
+	if(HasValue(grep(wkt_file,"Subdatasets:")[,1])) {
+		sdsline=maxpos(wkt_file==grep(wkt_file,"Subdatasets:")[,1])[2]+1
+		struct.anc.subdata={}
+		struct.anc.subdata.name=text(0)
+		struct.anc.subdata.description=text(0)
+
+		for(i=sdsline;i<=length(wkt_file);i+=2) {
+			if(strstr(wkt_file[,i],"SUBDATASET")>0) {
+				struct.anc.subdata.name=cat(struct.anc.subdata.name,strsplit(wkt_file[,i],delim="=")[,2],axis=y)
+			}
+			if(strstr(wkt_file[,i],"SUBDATASET")>0) {
+				struct.anc.subdata.description=cat(struct.anc.subdata.description,strsplit(wkt_file[,i+1],delim="=")[,2],axis=y)
+			}
+		}
+	}
+
+	#handle the metadata
+	if(HasValue(grep(wkt_file,"Metadata:")[,1])) {
+		metaline=maxpos(wkt_file==grep(wkt_file,"Metadata:")[,1])[2]+1
+		struct.anc.metadata={}
+
+		for(i=metaline;i<=length(wkt_file);i+=1) {
+			if(wkt_file[:2,i]=="  ") {
+				tmp=strsplit(wkt_file[,i],delim="=")
+				add_struct(struct.anc.metadata,name=trim_whitespace(tmp[,1]),value=tmp[,2])
+			} else {
+				i=length(wkt_file)+1
+			}
+		}
+
+		#grab an xaxis if it exists
+		if(HasValue(get_struct(struct.anc.metadata,"xaxis"))) {
+			struct.xaxis=translate(atof(strsplit(struct.anc.metadata.xaxis)),y,z)
+		}
+	}
+
+
+	#handle the gcps
+	if(HasValue(grep(wkt_file,"GCP\\[")[,1])) {
+		gcpline=maxpos(wkt_file==grep(wkt_file,"GCP\\[")[,1])[2]
+		numgcps=length(grep(wkt_file,"GCP\\["))
+	
+		struct.anc.gcps=text(0)
+		for(i=gcpline;i<=gcpline+numgcps*2-1;i+=1) {
+			if(wkt_file[:4,i]=="GCP[") {
+				tmp=strsub(strsub(trim_whitespace(wkt_file[,i+1]),"\\)",""),"\\(","")
+				tmp=strsub(strsplit(tmp,delim=" "),","," ")
+				struct.anc.gcps=cat(struct.anc.gcps,tmp[,1]//" "//tmp[,3],axis=y)
+			}
+		}
+	}
+
+	if(proj==1) {
+		#get the proj4 string
+		if(HasValue(grep(wkt_file,"PROJ.4\ string\ is:"))) {
+			pos=maxpos(wkt_file==grep(wkt_file,"PROJ.4\ string\ is:")[,1])[2]
+			struct.anc.proj4=wkt_file[,pos+1]
+		}
+
+		#get the projection
+		if(HasValue(grep(wkt_file,"PROJECTION"))) {
+			tmp=grep(wkt_file,"PROJECTION")
+			tmppos=strstr(tmp,"\"")
+			tmp=tmp[tmppos+1:,1]
+			tmppos=strstr(tmp,"\"")
+			tmp=tmp[:tmppos-1,1]
+			struct.projection=tmp
+		}
+
+		#get the spheroid for easy viewing if an ellipsoid was used
+		if(HasValue(grep(wkt_file,"SPHEROID"))) {
+			struct.spheroid={}
+			tmp=grep(wkt_file,"SPHEROID")
+			tmppos=strstr(tmp,"\"")
+			tmp=tmp[tmppos+1:,1]
+			tmppos=strstr(tmp,"]]")
+			tmp=tmp[:tmppos-1,1]
+			tmppos=strstr(tmp,"\",")
+			name=tmp[:tmppos-1]
+			tmp=tmp[tmppos+2:]
+			tmppos=strstr(tmp,",")
+			radius=tmp[:tmppos-1]
+			flattening=tmp[tmppos+1:]
+			struct.spheroid.name=name
+			struct.spheroid.radius=radius
+			struct.spheroid.iflattening=atod(flattening)+""
+		}
+
+		#get the origin
+		if(HasValue(grep(wkt_file,"Origin\ =\ "))) {
+			struct.anc.origin=atod(strsplit(grep(wkt_file,"Origin\ =\ ")[11:],","))
+		}
+
+		#get the Pixel size
+		if(HasValue(grep(wkt_file,"Pixel\ Size\ =\ "))) {
+			struct.anc.pixel_size=atod(strsplit(grep(wkt_file,"Pixel\ Size\ =\ ")[15:],","))
+			#this seems to cause some weirdness...x vs y resolution vary
+			#struct.resolution=avg(abs(struct.anc.pixel_size),ignore=0)
+			struct.resolution=struct.anc.pixel_size[,1]
+		}
+
+		#calculate the spo/lpo
+		if(HasValue(get_struct(struct.anc,"origin")) && HasValue(get_struct(struct.anc,"pixel_size"))) {
+			struct.x=struct.anc.origin[,1]/struct.anc.pixel_size[,1]
+			struct.y=struct.anc.origin[,2]/struct.anc.pixel_size[,2]
+		}
+
+		#get the lat/lon
+		if(HasValue(grep(wkt_file,"Corner\ Coordinates:"))) {
+			cline=maxpos(wkt_file==grep(wkt_file,"Corner\ Coordinates:")[,1])[2]+1
+			struct.anc.spo=struct.anc.lpo=struct.anc.lon=struct.anc.lat=create(1,5,1,start=0,step=0,format=float)
+
+      lonlattest=0
+      for(j=0;j<=4;j+=1) {
+        tmp=strsplit(wkt_file[,cline+j],delim="(")
+        xy=atod(strsplit(tmp[,2]))
+        struct.anc.spo[,j+1]=xy[,1]
+        struct.anc.lpo[,j+1]=xy[,2]
+
+        if(length(tmp)==3) {
+          lonlat=strsplit(tmp[,3])
+          struct.anc.lon[,j+1]=latlonDMS2dec(strsub(strsub(lonlat[,1],")",""),"\\(",""))
+          struct.anc.lat[,j+1]=latlonDMS2dec(strsub(strsub(lonlat[,2],")",""),"\\(",""))
+          lonlattest=1
+        }
+			}
+	
+      if(lonlattest==1) {
+    		#set the min/max/center lon/lat
+  			minlat=min(struct.anc.lat)
+  			minlon=min(struct.anc.lon)
+  			maxlat=max(struct.anc.lat)
+  			maxlon=max(struct.anc.lon)
+  			struct.ul=struct.anc.lat[,1]//struct.anc.lon[,1]
+  			struct.ll=struct.anc.lat[,2]//struct.anc.lon[,2]
+  			struct.ur=struct.anc.lat[,3]//struct.anc.lon[,3]
+  			struct.lr=struct.anc.lat[,4]//struct.anc.lon[,4]
+  			struct.anc.center=struct.anc.lat[,5]//struct.anc.lon[,5]
+      }
+		}
+	}
+
+	if(length(struct.anc.wkt)==0) remove_struct(struct.anc,"wkt")
+
+	#return the data
+	if(v!=-1) verbose=3
+	return(struct)
+}
+
+
+
+define read_geo(struct,data,raw,subdata,band,v) {
+
+	if($ARGC<1) {
+		printf("\nThis function reads a Geo-Aware file (e.g. GeoTIFF, ISIS2/3, Envi, etc.)\n")
+		printf("The input data must be a format davinci and gdal understand\n\n")
+		printf("$1=filename\n\n")
+		printf("Options:\n")
+		printf("\tdata=return the data (Default=1)\n")
+		printf("\tstruct=return the struct (Default=1)\n")
+		printf("\traw=return the raw gdalinfo (Default=0)\n")
+		printf("\tband=read only the specified band 0=All (Default=0)\n\n")
+		printf("\tsubdata=specify the number of the subdataset to read (Default = -32768)\n")
+		printf("\tif none is specified it will be treated as if there are no subdatasets\n")
+		printf("\tif subdatasets exist and a subdata #is not specified the list of subdatasets is returned\n\n")
+		printf("Returns a standard davinci Geo-Struct\n\n")
+		printf("NOTE: This function requires $DV_GDAL_PATH\n")
+		printf("and gdal version >=1.8\n\n")
+		printf("c.edwards 4/9/13\n")
+		return(null)
+	}
+
+	#input handling
+	filename=$1
+	if(HasValue(data)==0) data=1
+	if(HasValue(struct)==0) struct=1
+	if(HasValue(raw)==0) raw=0
+	if(HasValue(band)==0) band=0
+	if(HasValue(subdata)==0) subdata=-32768
+	if(HasValue(v)==0) v=0
+	if(data==0 && struct==0) {
+		printf("\nData and struct cannot both be 0\n")
+		printf("Please select one option\n\n")
+		return(null)
+	}
+
+
+	#deal with remote files
+	remote=0
+	prefix=cat("http://","https://","ftp://","sftp://","file:///",axis=y)
+	for(i=1;i<=length(prefix);i+=1) {
+		if(filename[:length(prefix[,i])]==prefix[,i]) {
+			remote=1
+		}
+	}
+
+	if(remote==1) {
+		newfile=$TMPDIR+"/"+basename(filename)+".copy"
+		filename=copy(filename,newfile,force=1)
+	}
+
+	#get the metadata and prepare the input
+	basename=basename(filename)
+	out=read_geometa(filename,raw=raw,v=v)
+	workingname=$TMPDIR+"/gdal_io.tiff"
+
+	#pretty print all the subdatasets
+	if(HasValue(get_struct(out.anc,"subdata")) && subdata==-32768) {
+		printf("\nERROR: You must select a subdata # to read\n\n")
+		printf("The avilable Subdatasets are:\n")
+
+		for(i=1;i<=length(out.anc.subdata.description);i+=1) {
+			tmp=strsplit(strsub(out.anc.subdata.description[2:,i],"\\]",","),delim=",")
+			tmp2=strsplit(strsub(tmp[,2],"\\)",""),delim="(")
+			printf("\t%.2d) %s: %s array of %s\n",i,trim_whitespace(tmp2[,1]),tmp[,1],tmp2[,2])
+		}
+		printf("\n")
+		return(null)
+	}
+
+	if(subdata==0) {
+		subdata=create(length(out.anc.subdata.name),1,1,start=1,step=1)
+	}
+
+	bandstr=""
+	if(band!=0) {
+		bandstr="-b "+band
+	}
+
+	#handle all the subdatasets (if we have them, otherwise just read the data)
+	if(subdata!=-32768) {
+		tmp={}
+		for(i=1;i<=dim(subdata)[1];i+=1) {
+
+			#for each subdataset read in the data
+			filename=out.anc.subdata.name[,subdata[i]]
+			syscall(sprintf($DV_GDAL_PATH+"/gdal_translate -co \"BIGTIFF=NO\" %s -of GTiff %s %s",bandstr,filename,workingname))
+			verbose=0
+			if(dim(subdata)[1]>1) {
+				add_struct(tmp,name=sprintf("subdata%.2d",subdata[i]),value=read(workingname))
+			} else {
+				tmp=read(workingname)
+				out.w=dim(tmp)[1]
+				out.h=dim(tmp)[2]
+			}
+			if(v!=-1) verbose=3
+		}
+	} else {
+	    verbose=0
+
+		#translate and read in the data
+		syscall(sprintf($DV_GDAL_PATH+"/gdal_translate -co \"BIGTIFF=NO\" %s -of GTiff %s %s",bandstr,filename,workingname))
+		filename=$TMPDIR+"/"+basename+".tiff"
+		tmp=read(workingname)
+		out.w=dim(tmp)[1]
+		out.h=dim(tmp)[2]
+		if(v!=-1) verbose=3
+	}
+
+	#clean up the subdataset names
+	if(struct==1 && subdata!=-32768) {
+		subdatatmp=text(0)
+
+		for(i=1;i<=dim(subdata)[1];i+=1) {
+			subdatatmp=cat(subdatatmp,strsplit(out.anc.subdata.description[,subdata[i]],delim=" ")[,2],axis=y)
+		}
+		out.dataname=subdatatmp
+	}
+
+	#if we want a structure (if not this uses all of gdals reading capabilites for davinci to act like read())
+	if(struct==1) {
+		#the attach the data
+		if(data==1) {
+			out.data=tmp
+		}
+	} else {
+		out=tmp
+	}
+
+	#cleanup and return the data
+	syscall("rm "+workingname)
+	return(out)
+}
+
+
+
+define write_geotiff(force,v,subdata,a_srs,addo,addotype,addoscales,envi) {
+
+	if($ARGC<2) {
+		printf("\nThis function writes a GeoTIFF file\n")
+		printf("The input data must be a structure from read_geo()\n\n")
+		printf("$1=the davinci Geo-Struct\n")
+		printf("$2=the output filename\n\n")
+		printf("Options:\n")
+		printf("\tforce=force the overwrite of exiting data\n")
+		printf("\tsubdata=specify the subdataset to write (only one is supported at this time)\n")
+		printf("\ta_srs=force assign a projection (Default=\"\")\n")
+		printf("\taddo=add pyramid overviews (Default=\"\")\n")
+		printf("\taddoscales=scales of the overviews to add (Default=2//4//8//16//32//64//128)\n")
+		printf("\taddotype=sub-sampling type for addo option (Default=\"average\")\n")
+		printf("\t\tsupported types are are: \"nearest\",\"average\",\"gauss\",\"cubic\"\n")
+		printf("\t\t                         \"average_mp\",\"average_magphase\",\"mode\"\n\n")
+		printf("NOTE: This function requires $DV_GDAL_PATH\n")
+		printf("and gdal version >=1.8\n\n")
+		printf("WARNING: This function will output bad geo-referenced data\n")
+		printf("if you change the data array size\n\n")
+		printf("c.edwards 4/9/13\n")
+		return(null)
+	}
+
+	#handle the input
+	outdata=$1
+	outname=$2
+	outbase=basename(outname,".tiff")
+	if(HasValue(get_struct(outdata,"data"))==0) {
+		printf("\nERROR: No .data element found in the Geo-Struct\n\n")
+		return(null)
+	}
+
+	if(HasValue(force)==0) force=0
+	if(HasValue(v)==0) v=0
+	if(HasValue(envi)==0) envi=0
+
+	addotypestr=""
+	if(HasValue(addotype)==0) {
+		addotypestr="-r average"
+	} else {
+		addotypestr="-r "+addotype
+	}
+
+	addoscalesstr=""
+	if(HasValue(addoscales)) {
+		for(i=1;i<=dim(addoscales)[1];i+=1)	{
+			addoscalesstr=addoscalesstr+sprintf("%i ",addoscales[i])
+		}
+	} else {
+		addoscalesstr="2 4 8 16 32 64 128"
+	}
+
+	if(HasValue(subdata)==0) subdata=-32768
+	if(type(outdata.data)=="STRUCT" && subdata==-32768) {
+		printf("\nERROR: Please select a subdataset for writing by subdata=#\n")
+		printf("Currently only one subdataset can be written at a time\n\n")
+		return(null)
+	}
+
+	#first we write out a tiff
+	if(v==-1) verbose=0
+	if(fexists(outname)==0 || force==1) {
+		if(subdata!=-32768) {
+			outdata.data=eval(sprintf("outdata.data.subdata%.2d",subdata))
+		}
+		write(outdata.data,$TMPDIR+"/"+outbase+".tmp.tiff",tiff,force=1)
+	} else {
+		printf("\nFile Exists: %s\n",outname)
+		printf("Use force=1 to overwrite\n\n")
+		return(null)
+	}
+
+	#get the data dimension
+	dim=dim(outdata.data)
+
+	#assemble all the gdal options (we have to assign an srs)
+	srsstr=""
+	if(HasValue(get_struct(outdata.anc,"wkt"))) {
+	 #build the nice looking wkt
+	 for(i=1;i<=length(outdata.anc.wkt);i+=1) {
+			srsstr+=trim_whitespace(outdata.anc.wkt[,i])
+		}
+		if(length(outdata.anc.wkt)>0) srsstr=sprintf(" -a_srs '%s'",srsstr)
+	} else if (HasValue(get_struct(outdata.anc,"a_srs"))) {
+		srsstr=sprintf(" -a_srs '%s'",outdata.anc.a_srs)	
+	} else if(HasValue(a_srs)){
+		srsstr=sprintf(" -a_srs '%s'",a_srs)
+	} else {
+		printf("Writing data without a spatial reference system\n")
+	}
+
+	#make a blank metadata structure if we don't have one and we do have an xaxis
+	if(HasValue(get_struct(outdata.anc,"metadata"))==0 && HasValue(get_struct(outdata,"xaxis"))){
+		outdata.anc.metadata={}
+	}
+
+	metastr=""
+	if(HasValue(get_struct(outdata.anc,"metadata"))) {
+
+		#format the xaxis element to be written as a metadata element
+		if(HasValue(get_struct(outdata,"xaxis"))) {
+			outdata.anc.metadata.xaxis=""
+			for(i=1;i<=dim(outdata.xaxis)[3];i+=1) {
+				outdata.anc.metadata.xaxis=cat(outdata.anc.metadata.xaxis,",",outdata.xaxis[,,i]+"",axis=x)
+			}
+			outdata.anc.metadata.xaxis=outdata.anc.metadata.xaxis[2:]
+		}
+
+		keys=get_struct_key(outdata.anc.metadata)
+
+		for(i=1;i<=length(keys);i+=1) {
+			val=eval("outdata.anc.metadata."+keys[,i])
+			metastr+=sprintf(" -mo '%s=%s'",keys[,i],val)
+		}
+	}
+
+	#deal with the ground control points
+	gcpstr=""
+	if(HasValue(get_struct(outdata.anc,"gcps"))) {
+		gcpfile=$TMPDIR+"/"+outbase+".gcps"
+		gcpstr=" --optfile "+gcpfile
+		tmp=text()
+		for(i=1;i<=length(outdata.anc.gcps);i+=1) {
+			tmp=cat(tmp,"-gcp "+outdata.anc.gcps[,i],axis=y)
+		}
+		write(tmp,gcpfile,ascii,force=1)
+	}
+
+	#if lpo/spo exist we use them so gdal can calculate the pixel size
+	ullrstr=""
+	if(HasValue(get_struct(outdata.anc,"lpo")) && HasValue(get_struct(outdata.anc,"spo"))) {
+		ullrstr=sprintf(" -a_ullr %f %f %f %f",outdata.anc.spo[,1],outdata.anc.lpo[,1],outdata.anc.spo[,4],outdata.anc.lpo[,4])
+	}
+
+	#get the ignore value from the struct
+	nodatastr=""
+	if(HasValue(get_struct(outdata,"ignore"))) {
+		nodatastr=sprintf(" -a_nodata '%.20g' ",outdata.ignore)
+	}
+
+	#assemble the command
+	if(envi==1) {
+		command=sprintf($DV_GDAL_PATH+"/gdal_translate %s%s%s%s%s -of ENVI %s %s",metastr,gcpstr,srsstr,ullrstr,nodatastr,$TMPDIR+"/"+outbase+".tmp.tiff",outname)
+		outtype="ENVI"
+	} else {
+		command=sprintf($DV_GDAL_PATH+"/gdal_translate -co \"BIGTIFF=NO\" %s%s%s%s%s -of GTiff %s %s",metastr,gcpstr,srsstr,ullrstr,nodatastr,$TMPDIR+"/"+outbase+".tmp.tiff",outname)
+		outtype="GeoTIFF"
+	}
+
+	#attach the ancellary data using gdal_translate
+	if(v!=-1) printf("Attaching Ancellary Data to %s: %ix%ix%i %s File....",outname,dim[1],dim[2],dim[3],outtype)
+	if(v==1) {
+		printf("%s\n",command)
+		system(command)
+	} else {
+		syscall(command)
+	}
+  if(v!=-1)	printf("Done.\n")
+
+	if(HasValue(addo)) {
+		command=sprintf($DV_GDAL_PATH+"/gdaladdo %s %s %s",addotypestr,outname,addoscalesstr)
+		if(v!=-1) printf("Attaching Overviews to %s: %s....",outname,addoscalesstr)
+		if(v==1) {
+			printf("%s\n",command)
+			system(command)
+		} else {
+			syscall(command)
+		}
+	  if(v!=-1)	printf("Done.\n")
+	}
+}
+
+
+define add_gcps_geo(elev,sampling,xsampling,ysampling) {
+
+	if($ARGC<3) {
+		printf("\nAdd GCPS to a davinci Geo-Struct\n")
+		printf("This will sample a lat/lon/(optional elevation) backplane to generate\n")
+		printf("the appropriate structure mapping for GDAL\n\n")
+		printf("$1 = the davinci Geo-Struct\n")
+		printf("$2 = a longitude backplane the same size as the .data of $1\n")
+		printf("$3 = a latitude backplane the same size as the .data of $1\n\n")
+		printf("Options:\n")
+		printf("\telev = an elevation backplane the same size as the .data of $1 (optional)\n")
+		printf("\tsampling = x/y pixel sampling (# of x/y gcps) (Default = 10)\n")
+		printf("\txsampling = x pixel sampling (# of x gcps) (Default = sampling)\n")
+		printf("\tysampling = y pixel sampling (# of y gcps) (Default = sampling)\n\n")
+		printf("c.edwards 4/9/13\n")
+		return(null)
+	}
+
+	#input handling
+	struct=$1
+	lon=$2
+	lat=$3
+
+	#error handling
+	if(HasValue(struct.data)==0){
+		printf("$1 does not appear to be a valid davinci Geo-Struct\n")
+		return(null)
+	}
+
+	if(HasValue(lon)==0 || dim(lon)!=dim(struct.data)) {
+		printf("$2 does not appear to be a longitude backplane\n")
+		return(null)
+	}
+
+	if(HasValue(lat)==0 || dim(lat)!=dim(struct.data)) {
+		printf("$3 does not appear to be a latitude backplane\n")
+		return(null)
+	}
+
+
+	#deal with the option of having elevation
+	if(HasValue(elev)==0) {
+		elev=lat*0.
+	}
+
+	if(dim(elev)!=dim(struct.data)) {
+		printf("$4 does not appear to be an elevation backplane\n")
+		return(null)
+	}
+
+	#more input handling
+	if(HasValue(sampling)==0) sampling=10
+	if(HasValue(ysampling)==0) ysampling=sampling
+	if(HasValue(xsampling)==0) xsampling=sampling
+
+	#setup the output gcp string
+	gcpstr=text(0)
+
+	#claculate the required step to have evenly spaced gcps
+	xstep=dim(struct.data)[1]/float(xsampling-1)
+	ystep=dim(struct.data)[2]/float(ysampling-1)
+
+	#calculate the position of the gcps
+	for(i=0;i<xsampling;i+=1) {
+		for(j=0;j<ysampling;j+=1) {
+
+			x=int(ceil(i*xstep))
+			y=int(ceil(j*ystep))
+
+			#make sure we don't overstep the image bounds
+			if(x>=dim(struct.data)[1]) x=dim(struct.data)[1]
+			if(x<=0) x=1
+			if(y>=dim(struct.data)[2]) y=dim(struct.data)[2]
+			if(y<=0) y=1
+
+			#turn them into nice looking gcps
+			tmp=sprintf("%i %i %f %f %f",x,y,lon[x,y],lat[x,y],elev[x,y])
+			#printf("%i %i %f %f %f\n",x,y,lon[x,y],lat[x,y],elev[x,y])
+
+			#cat all the gcps together
+			gcpstr=cat(gcpstr,tmp,axis=y)
+		}
+	}
+
+	#return the output
+	struct.anc.gcps=gcpstr
+	return(struct)
+}
+
+
+
+define proj_geo(resolution,resampling,ignore,opts,v,a_srs,subdata,raw,te,match) {
+
+	if($ARGC==0 || ($ARGC==1 && HasValue(match)==0)) {
+		printf("\nThis function reprojects Geo-Struct or Geo-Aware file\n\n")
+		printf("$1=the davinci Geo-Struct or a path to a Geo-Aware File\n")
+		printf("$2=target projection argument (either a proj string or wkt)\n\n")
+		printf("Options:\n")
+		printf("\tresolution=resolution of output in georeferenced units (Default=native)\n")
+		printf("\tresampling=resampling type (near,bilinear,cubic,cubicspline,lanczos, Default=\"near\")\n")
+		printf("\tignore=ignore value for the data (Default=\"\")\n")
+		printf("\topts=additional gdalwarp options (Default=\"\")\n")
+		printf("\ta_srs=projection of the source (either a proj string or wkt), assigned by default values in Geo-Struct\n")
+		printf("\tte=extent xmin//ymin//xmax//ymax (Default=from input)\n")
+		printf("\tmatch=match the projection/extent/resolution of the supplied geostruct, with overrides from other parameters\n")
+		printf("\traw=read the raw gdalinfo data into the structure\n")
+		printf("\tsubdata=project out only the subdataset specified. Currently it only supports the projecting of 1 subdataset\n\n")
+		printf("NOTE: This function requires $DV_GDAL_PATH\n")
+		printf("and gdal version >=1.8\n\n")
+		printf("c.edwards 4/9/13\n")
+		return(null)
+	}
+
+	#setup the input/srs
+	#eventually we should have a nice suite of t_srs from another function
+	input=$1
+	if($ARGC==2) t_srs=$2
+	if(HasValue(v)==0) v=0
+	if(HasValue(raw)==0) raw=0
+
+  #match another geostruct
+  if(HasValue(match)!=0) {
+    if(HasValue(te)==0) te=min(match.anc.spo)//min(match.anc.lpo)//max(match.anc.spo)//max(match.anc.lpo)
+    if(HasValue(t_srs)==0) t_srs=match.anc.wkt
+    if(HasValue(resolution)==0) resolution=match.resolution
+  }
+
+	#allow for any additional options (but they will be in gdal format)
+	optstr="-multi "
+	if(HasValue(opts)!=0) {
+		optstr=opts+" -multi "
+	}
+
+	#set the resolution
+	resstr=""
+	if(HasValue(resolution)!=0) {
+		resstr="-tap -tr "+resolution+" "+resolution+" "
+	} else {
+		if(HasValue(get_struct(input,"resolution"))) {
+			resstr="-tap -tr "+input.resolution+" "+input.resolution+" "
+		}
+	}
+
+	#set the extent
+	testr=""
+	if(HasValue(te)!=0) {
+		testr=sprintf("-te %f %f %f %f ",te[1],te[2],te[3],te[4])
+	}
+
+	#set the default interpolation to bilinear
+	resampstr="-r near "
+	if(HasValue(resampling)!=0) {
+		resampstr="-r "+resampling+" "
+	}
+
+	#set the ignore values (src and target are going to be the same)
+	ignorestr=""
+	if(HasValue(ignore)!=0) {
+		ignorestr=sprintf("-srcnodata %f -dstnodata %f ",ignore,ignore)
+	}
+	opts=resstr+resampstr+ignorestr+testr+optstr
+
+	#set the default subdata
+	if(HasValue(subdata)==0) subdata=-32768
+
+	#parse the t_srs
+	if(type(t_srs)=="STRING") {
+		length=1
+	} else if(type(t_srs)=="TEXT") {
+		length=length(t_srs)
+	}
+
+	srsstr=""
+	#cleanup the whitespace
+	for(i=1;i<=length;i+=1) {
+		srsstr+=trim_whitespace(t_srs[,i])
+	}
+	t_srs=srsstr
+
+	#we reproject the data on disk (maybe its gcps or something)
+	if(type(input)=="STRING") {
+		file=input
+
+		#deal with remote data
+		remote=0
+		prefix=cat("http://","https://","ftp://","sftp://","file:///",axis=y)
+		for(i=1;i<=length(prefix);i+=1) {
+			if(file[:length(prefix[,i])]==prefix[,i]) {
+				remote=1
+			}
+		}
+
+		if(remote==1) {
+			newfile=$TMPDIR+"/"+basename(file)+".copy"
+			file=copy(file,newfile,force=1)
+		}
+	} else if (type(input)=="STRUCT") {
+
+		#write the data to disk
+		file=$TMPDIR+"/proj_geo_orig.tiff"
+		if(HasValue(a_srs)) {
+			write_geotiff(input,file,force=1,a_srs=a_srs,v=v,subdata=subdata)
+		} else {
+			write_geotiff(input,file,force=1,v=v,subdata=subdata)
+		}
+	} else {
+		printf("Sorry must either project a davinci Geo-Struct\n")
+		printf("or a file on disk\n")
+		return(null)
+	}
+
+	#generate the warp command
+	command=$DV_GDAL_PATH+"/gdalwarp -co \"BIGTIFF=NO\" -overwrite "+opts+" -t_srs '"+t_srs+"' "+file+" "+$TMPDIR+"/proj_geo_proj.tiff"
+
+	#this is simply to make it a bit more verbose (display the gdal progress bar)
+	if(v==1) {
+		printf("%s\n",command)
+		system(command)
+	} else {
+		syscall(command)
+	}
+
+	#read in the new projected data
+	out=read_geo($TMPDIR+"/proj_geo_proj.tiff",raw=raw)
+
+	#cleanup and output the data
+	syscall("rm "+$TMPDIR+"/proj_geo_proj.tiff "+$TMPDIR+"/proj_geo_orig.tiff")
+	return(out)
+}
+
+
+define UTMzone_to_CentralMeridian(){
+	if($ARGC==0) {
+		printf("\nDetermines the central meridian for the given UTM (on Earth) zone\n\n")
+		printf("$1 - An integer value designating the UTM zone, range [1:60]\n")
+		printf("Returns - the central meridian (-180 to 180) for the given UTM zone, in degrees\n\n")
+		printf("c.edwards 8-28-2011\n")
+		return(null)
+	}
+
+	#handle the input
+	zone=$1
+
+	#reset the zone limits
+	if(zone<=0) zone=1
+	if(zone>60) zone=60
+
+	#calculate the central meridian
+	cmeridian = (-183.0 + (zone * 6.0));
+
+	#return the output
+	return(cmeridian);
+}
+
+
+
+define CentralMeridian_to_UTMzone(){
+	if($ARGC==0) {
+		printf("\nDetermines the UTM zone for a given central meridian (-180 to 180)\n\n")
+		printf("$1 - the central meridian for the desired UTM zone\n")
+		printf("Returns - the given UTM zone\n\n")
+		printf("c.edwards 8-28-2011\n")
+		return(null)
+	}
+
+	#handle the input
+	cmeridian=$1
+
+	#calculate the zone
+	zone=int(ceil((cmeridian + 180.0)/6.))
+
+	#reset the zone limits
+	if(zone>60) zone=60
+	if(zone<=0) zone=1
+
+	#output the output
+	return(zone);
+}
+
+
+
+define get_proj(source) {
+
+	if($ARGC==0) {
+		printf("\nGet a Spatial Reference System\n")
+		printf("Queries spatialreference.org\n\n")
+		printf("$1=SRS number\n\n")
+		printf("Options:\n")
+		printf("\tsource=SRS source \"iau2000\", \"epsg\", or \"esri\", (Default=\"iau2000\")\n\n")
+		printf("c.edwards 5/10/13\n")
+		return(null)
+	}
+
+	#input handling
+	srsnumber=$1
+	if(HasValue(source)==0) source="iau2000"
+	if(source!="epsg" && source!="iau2000" && source!="esri") {
+		printf("Error: source must be either epsg, esri, or iau2000\n")
+		return(null)
+	}
+
+	#setup the output
+	struct={}
+	struct.anc={}
+
+	#get the projections from the webpage
+	wkt=read_lines("http://spatialreference.org/ref/"+source+"/"+srsnumber+"/prettywkt/")
+	proj=read_lines("http://spatialreference.org/ref/"+source+"/"+srsnumber+"/proj4/")
+
+	#sometimes we don't get a proj string
+	if(length(proj)!=0) struct.anc.proj4=proj
+
+	#parse the spheroid from the wkt
+	if(HasValue(grep(wkt,"SPHEROID"))) {
+		struct.spheroid={}
+		tmp=grep(wkt,"SPHEROID")
+		tmppos=strstr(tmp,"\"")
+		tmp=tmp[tmppos+1:,1]
+		tmppos=strstr(tmp,"]]")
+		tmp=tmp[:tmppos-1,1]
+		tmppos=strstr(tmp,"\",")
+		name=tmp[:tmppos-1]
+		tmp=tmp[tmppos+2:]
+		tmppos=strstr(tmp,",")
+		radius=tmp[:tmppos-1]
+		flattening=tmp[tmppos+1:]
+		struct.spheroid.name=name
+		struct.spheroid.radius=radius
+		struct.spheroid.iflattening=atod(flattening)+""
+	}
+
+	#parse the projection from the wkt
+	if(HasValue(grep(wkt,"PROJECTION"))) {
+		tmp=grep(wkt,"PROJECTION")
+		tmppos=strstr(tmp,"\"")
+		tmp=tmp[tmppos+1:,1]
+		tmppos=strstr(tmp,"\"")
+		tmp=tmp[:tmppos-1,1]
+		struct.projection=tmp
+	}
+
+	#return the output
+	struct.anc.wkt=wkt
+	return(struct)
+}
+
+
+
+define find_proj(print) {
+
+	if($ARGC==0) {
+		printf("\nSearch for a Spatial Reference System\n")
+		printf("Queries spatialreference.org\n\n")
+		printf("$1=search term\n\n")
+		printf("Options:\n")
+		printf("\tprint=print the results (Default=1)\n\n")
+		printf("c.edwards 5/10/13\n")
+		return(null)
+	}
+
+	#setup input
+	if(HasValue(print)==0) print=1
+
+	#get only the lines that match the search parameter
+	search=$1
+	tmp=grep(read_lines("http://spatialreference.org/ref/?search="+search+""),"<li><a href=\"/ref/")
+
+	#if we find no lines
+	if(length(tmp)==0) {
+		printf("No projections found\n")
+		return(null)
+	}
+
+	#split based on > to separate the html code
+	tmp2=strsplit(tmp,delim=">")
+
+	#setup the output structure
+	vals={}
+	vals.srsnumber=text(0)
+	vals.source=text(0)
+	vals.description=text(0)
+
+	#pretty print output
+	if(print!=0) {
+		printf("\n\tSRS\t\tDescription\n")
+		printf("\t--------------------------------\n")
+	}
+
+	#fill out the source,srs and description structure for output
+	count=0
+	for(i=1;i<=length(tmp2);i+=1) {
+
+		#split on the other > to further parse the result from spatialreference.org
+		split=strsplit(strsub(tmp2[i][,3],"<",":"),delim=":")
+		if(trim_whitespace(split[,1])!="SR-ORG") {
+			count+=1
+			vals.source=cat(vals.source,trim_whitespace(split[,1]),axis=y)
+			vals.srsnumber=cat(vals.srsnumber,trim_whitespace(split[,2]),axis=y)
+			vals.description=cat(vals.description,trim_whitespace(strsplit(strsub(tmp2[i][,4],"<",":"),delim=":")[,2]),axis=y)
+
+			#pretty print the output
+			if(print!=0) printf("\t%s:%s -\t%s\n",vals.source[,count],vals.srsnumber[,count],vals.description[,count])
+		}
+	}
+	if(print!=0) printf("\n")
+	return(vals)
+}
+
+
+
+define read_geoshape(v,opts) {
+
+	if($ARGC==0) {
+		printf("\nLoad any shapefile type supported by GDAL\n")
+		printf("by translating to a CSV shapefile into a GeoShape-Struct\n")
+		printf("Input is not translated if it is already a CSV shapefile\n\n")
+		printf("$1=filename and path\n\n")
+		printf("Options:\n")
+		printf("\topts=additional ogr2ogr options (Default=\"\")\n\n")
+		printf("NOTE: This function requires $DV_GDAL_PATH\n")
+		printf("and gdal version >=1.8\n\n")
+		printf("c.edwards 5/12/13\n")
+		return(null)
+	}
+
+	#input handing
+	filename=$1
+	if(HasValue(v)==0) v=0
+
+	#allow for any additional options (but they will be in gdal format)
+	optstr=""
+	if(HasValue(opts)!=0) {
+		optstr=opts+" "
+	}
+
+	#deal with remote files
+	remote=0
+	prefix=cat("http://","https://","ftp://","sftp://","file:///",axis=y)
+	for(i=1;i<=length(prefix);i+=1) {
+		if(filename[:length(prefix[,i])]==prefix[,i]) {
+			remote=1
+		}
+	}
+
+	if(remote==1) {
+		newfile=$TMPDIR+"/"+basename(filename)+".copy"
+		filename=copy(filename,newfile,force=1)
+	}
+
+	if(fexists(filename)==0) {
+		printf("Couldn't find file: %s\n",filename)
+		return(null)
+	}
+
+	#set the working file names
+	basename=basename(filename)
+
+	#build the command
+	#if we already have csv...just read it...we don't need gdal to confuse things!
+	if(strstr(basename,".csv")==0) {
+		workingname=$TMPDIR+"/reading/gdal_shape.reading.csv"
+		syscall("mkdir -p "+dirname(workingname))
+		if(fexists(workingname)) syscall("rm "+workingname)
+		command=$DV_GDAL_PATH+"/ogr2ogr -lco GEOMETRY=AS_WKT "+optstr+" -f CSV "+workingname+" "+filename
+		#run the command
+		if(v==1) {
+			printf("%s\n",command)
+			system(command)
+		} else {
+			syscall(command)
+		}
+	} else {
+		if(v==1) printf("skipping gdal\n")
+		workingname=filename
+	}
+
+	#read the translated data
+	out=load_csv(workingname,sep=",")
+
+	#check to see if wkt and geometry exist
+	#set wkt to geometry if wkt exitst and geometry doesn't
+	if(HasValue(get_struct(out,"geometry"))==1) {
+		out.wkt=remove_struct(out,"geometry")
+	}
+
+	#cleanup and output
+	return(out)
+}
+
+
+
+define write_geoshape(v,force,a_srs,t_srs,s_srs,opts,type) {
+
+	if($ARGC<2) {
+		printf("\nWrite a Shapefile to disk from a GeoShape-Struct (wkt=geometry field)\n\n")
+		printf("$1=GeoShape-Struct\n")
+		printf("$2=filename and path\n\n")
+		printf("Options:\n")
+		printf("\tforce=overwrite any existing files (Default=0)\n")
+		printf("\tt_srs=projction of the target (reprojection will occur, Default=\"\")\n")
+		printf("\ts_srs=projection of the source (Default=\"\")\n")
+		printf("\ta_srs=projection of the output (reprojection will not occur, Default=\"\")\n")
+		printf("\topts=additional ogr2ogr options (Default=\"\")\n")
+		printf("\ttype=set the ouptut type from ogr2ogr (Default=\"CSV\")\n\n")
+		printf("\tCommon output types:\n")
+		printf("\t\t\"CSV\", \"ESRI Shapefile\", \"KML\", \"MySQL\",\"PostgrSQL\"\n\n")
+		printf("c.edwards 5/12/13\n")
+		return(null)
+	}
+
+	#input handling
+	struct=$1
+	outname=$2
+	if(HasValue(v)==0) v=0
+	if(HasValue(force)==0) force=0
+	if(HasValue(type)==0) type="CSV"
+
+	#handle other gdal options
+	optstr=""
+	if(HasValue(opts)!=0) {
+		optstr=opts+" "
+	}
+
+	#assign a target srs if set
+	t_srsstr=""
+	if(HasValue(t_srs)) {
+		#parse the t_srs
+		if(type(t_srs)=="STRING") {
+			length=1
+		} else if(type(t_srs)=="TEXT") {
+			length=length(t_srs)
+		}
+
+		srsstr=""
+		#cleanup the whitespace
+		for(i=1;i<=length;i+=1) {
+			srsstr+=trim_whitespace(t_srs[,i])
+		}
+		t_srsstr="-t_srs '"+srsstr+"' "
+	}
+
+	#assign an output srs if set
+	a_srsstr=""
+	if(HasValue(a_srs)) {
+		#parse the a_srs
+		if(type(a_srs)=="STRING") {
+			length=1
+		} else if(type(a_srs)=="TEXT") {
+			length=length(a_srs)
+		}
+
+		srsstr=""
+		#cleanup the whitespace
+		for(i=1;i<=length;i+=1) {
+			srsstr+=trim_whitespace(a_srs[,i])
+		}
+		a_srsstr="-a_srs '"+srsstr+"' "
+	}
+
+	#assign a source srs if set
+	s_srsstr=""
+	if(HasValue(s_srs)) {
+		#parse the s_srs
+		if(type(s_srs)=="STRING") {
+			length=1
+		} else if(type(s_srs)=="TEXT") {
+			length=length(s_srs)
+		}
+
+		srsstr=""
+		#cleanup the whitespace
+		for(i=1;i<=length;i+=1) {
+			srsstr+=trim_whitespace(s_srs[,i])
+		}
+		s_srsstr="-s_srs '"+srsstr+"' "
+	}
+
+	#check for file existance and the force option
+	if(fexists(outname)==1 && force==0) {
+		printf("\nFile Exists: %s\n",outname)
+		printf("Use force=1 to overwrite\n\n")
+		return(null)
+	} else {
+		if(fexists(outname)) syscall("rm "+outname)
+	}
+
+
+	#if we find and underscore and one of the types above
+	#replace the _type with a :type (for JMARS)
+	keys=get_struct_key(struct)
+
+	#generate the apprpriate header
+	out=text(0)
+	tmp=""
+	for(i=1;i<=length(keys);i+=1) {
+		tmp=cat(tmp,",",""+keys[,i]+"",axis=x)
+	}
+	out=cat(out,tmp,axis=y)
+
+	#fill out the text array because write_csv changes : to _
+	for(i=1;i<=length(struct[1]);i+=1) {
+		tmp=""
+		for(j=1;j<=length(struct);j+=1) {
+			tmp=cat(tmp,",","\""+struct[j][,i]+"\"",axis=x)
+		}
+		out=cat(out,tmp,axis=y)
+	}
+
+	#strip off the first 2 values because they are a comma and a space
+	out=out[2:]
+	tmpname=$TMPDIR+"/writing/gdal_shape.writing.csv"
+	syscall("mkdir -p "+dirname(tmpname))
+	write(out,tmpname,ascii,force=1)
+
+	#we exclude "wkt" from the fields to write because it breaks so many things...
+	#davinci will seg fault if more than one key is there, and ogr2ogr complains like crazy
+	fields=""
+	for(i=1;i<=length(keys);i+=1) {
+		if(keys[,i]!="wkt") {
+			fields+=","+keys[,i]
+		}
+	}
+	fields=fields[2:]
+
+	#build the command to translate to any output type
+	if(fexists(outname)) syscall("rm "+outname)
+	command=$DV_GDAL_PATH+"/ogr2ogr "+optstr+s_srsstr+t_srsstr+a_srsstr+" -select '"+fields+"' -lco GEOMETRY=AS_WKT -f '"+type+"' "+outname+" "+tmpname
+
+	#run the command
+	if(v==1) {
+		printf("%s\n",command)
+		system(command)
+	} else {
+		syscall(command)
+	}
+}
+
+
+define proj_geoshape(v,s_srs) {
+
+	if($ARGC<2) {
+		printf("\nThis function reprojects GeoShape-Struct\n\n")
+		printf("$1=the davinci GeoShape-Struct\n")
+		printf("$2=target projection argument (either a proj string or wkt, usually from a Geo-Struct)\n\n")
+		printf("Options:\n")
+		printf("\ts_srs=projection of the source (either a proj string or wkt, Default='+proj=latlong units=deg')\n\n")
+		printf("NOTE: This function requires $DV_GDAL_PATH\n")
+		printf("and gdal version >=1.8\n\n")
+		printf("c.edwards 4/9/13\n")
+		return(null)
+	}
+
+	#setup the inputs
+	shape=$1
+	t_srs=$2
+	if(HasValue(v)==0) v=0
+	if(HasValue(s_srs)==0) s_srs="+proj=latlong units=deg"
+
+	#set the working file name
+	workingname=$TMPDIR+"/proj/gdal_shape.proj.csv"
+	syscall("mkdir -p "+dirname(workingname))
+
+	#write the shapefile to disk and project simulatneously
+	#ogr2ogr combines gdal_translate/gdalwarp like options and we need it to
+	#both translate the files and project the data
+
+	write_geoshape(shape,workingname,s_srs=s_srs,t_srs=t_srs,type="CSV",force=1,v=v)
+
+	#read the the data back in
+	#note: we don't use gdal to translate csv if the source is already csv (messy result)
+	out=read_geoshape(workingname,v=v)
+	if(fexists(workingname)) syscall("rm "+workingname)
+
+	return(out)
+}
+
+
+define proj_geocoord(inverse,t_srs,s_srs,v,opts) {
+
+	if($ARGC<1) {
+		printf("\nTransform one set of coordinates to another projection\n")
+		printf("The default behavior is to transform lat/lon to image coordinates in x/y pixels\n\n")
+		printf("$1=array of points in the target projection (2xNx1)\n")
+		printf("$2=Geo-Struct for which the mapping is desired\n\n")
+		printf("Options:\n")
+		printf("\tinverse=input units in the target, output units in the source (Default=1)\n")
+		printf("\tt_srs=projection of the target (Default='+proj=latlong +units=deg')\n")
+		printf("\ts_srs=projection of the source (Default=Geo-Struct projection)\n\n")
+		printf("\topts=additional ogr2ogr options (Default=\"\")\n")
+		printf("\tNOTE: $2 and s_srs may not both be provided\n\n")
+		printf("Examples:\n")
+		printf("#lat/lon input to map to pixel location in the GeoStruct\n")
+		printf("\tout=proj_geocoord(15//15,GeoStruct)\n\n")
+		printf("#lat/lon input to map to global meters in the eqc projection\n")
+		printf("\tout=proj_geocoord(15//15,s_srs='+proj=latlong +units=deg',t_srs='+proj=eqc +units=m',inverse=0)\n\n")
+		printf("NOTE: This function requires $DV_GDAL_PATH\n")
+		printf("and gdal version >=1.8\n\n")
+		printf("c.edwards 5/12/13\n\n")
+		return(null)
+	}
+
+	#input handling
+	latlon=$1
+	if(HasValue(v)==0) v=0
+
+	#handle other gdal options
+	optstr=""
+	if(HasValue(opts)!=0) {
+		optstr=opts+" "
+	}
+
+	#error checking to make sure we don't break gdaltransform
+	if($ARGC<2 && HasValue(s_srs)==0) {
+		printf("Either a geostruct or a source s_srs must be supplied\n")
+		return(null)
+	}
+
+	#if we have 2 arguments, the second has to be a geostruct
+	#we then map the input units into xy in the image by default (most common usage
+	if($ARGC==2) {
+		geostruct=$2
+		if(type(geostruct)!="STRUCT") {
+			printf("$2 is not a valid GeoStruct\n")
+			return(null)
+		} else if (HasValue(get_struct(geostruct.anc,"wkt"))==0) {
+			printf("$2 does not have a spatial reference system\n")
+			return(null)
+		}
+	}
+
+	#set the image mapping (-i =image coordinates, gdal default is projection coordinates)
+	if(HasValue(inverse)==0) inverse=1
+	invstr=""
+	if(inverse==1) {
+		invstr="-i "
+	} else {
+		invstr=""
+	}
+
+	#write the source geostruct or assign a s_srs
+	s_srsstr=""
+	if(HasValue(s_srs)==0) {
+		#write the geostruct to disk...we really should have a way to do this better
+		datafile=$TMPDIR+"/coordproj_data.tif"
+		write_geotiff(geostruct,datafile,force=1,v=v)
+		s_srsstr=datafile+" "
+	} else {
+		#parse the s_srs
+		if(type(s_srs)=="STRING") {
+			length=1
+	 } else if(type(s_srs)=="TEXT") {
+		 length=length(s_srs)
+	 }
+
+		srsstr=""
+		#cleanup the whitespace
+		for(i=1;i<=length;i+=1) {
+			srsstr+=trim_whitespace(s_srs[,i])
+		}
+		s_srsstr="-s_srs '"+srsstr+"' "
+	}
+
+	#write the latlon file to disk
+	latlonfile=$TMPDIR+"/coordproj_input.ascii"
+	latlonoutfile=$TMPDIR+"/coordproj_output.ascii"
+	write(latlon,latlonfile,csv,separator=" ",force=1)
+
+	#set the default t_srs
+	t_srsstr=""
+	if(HasValue(t_srs)==0) {
+		t_srsstr="-t_srs '+proj=latlong +units=deg' "
+	} else {
+
+		#parse the t_srs
+		if(type(t_srs)=="STRING") {
+			length=1
+		} else if(type(t_srs)=="TEXT") {
+			length=length(t_srs)
+		}
+
+		srsstr=""
+		#cleanup the whitespace
+		for(i=1;i<=length;i+=1) {
+			srsstr+=trim_whitespace(t_srs[,i])
+		}
+		t_srsstr="-t_srs '"+srsstr+"' "
+	}
+
+	#generate the gdaltransform command
+	command=$DV_GDAL_PATH+"/gdaltransform "+optstr+invstr+t_srsstr+s_srsstr+"< "+latlonfile+" > "+latlonoutfile
+
+	#run the command and read the transformed data.
+	if(v==1) {
+		printf("%s\n",command)
+		system(command)
+	} else {
+		syscall(command)
+	}
+
+	verbose=0
+	out=ascii(latlonoutfile,delim=" ",format=double)[:2]
+	if(v!=-1) verbose=3
+
+	#return the output
+	return(out)
+}
+
+
+
+define shape2georaster(a_srs_shape,a_srs_image,inverse,value,v,ignore,color,hsv,gradient,in_low,in_high) {
+
+	if($ARGC<2) {
+		printf("\nOverlay a GeoShape-Struct on a Geo-Struct\n")
+		printf("The GeoShape-Struct will be transformed into the Geo-Struct projection\n\n")
+		printf("$1=GeoShape-Struct (in assumed latlong coordinates)\n")
+		printf("$2=Geo-Struct (in any projection) \n\n")
+		printf("Options:\n")
+		printf("\ta_srs_shape=projection of the shapefile (Default='+proj=latlong units=deg')\n")
+		printf("\ta_srs_image=projection of the image (Default=Geo-Struct projection)\n")
+		printf("\tinverse=leave everything but the shape (Useful for masking, Default=0)\n")
+		printf("\tvalue=GeoShape-Struct element to map to each shape (Default=\"\")\n")
+		printf("\tignore=override Geo-Struct .ignore value, if outside the data type then min(data) will be used\n\n")
+		printf("Post Processing Options:\n")
+		printf("\tcolor=translate the shape overlay into a color (Default=255/255/255)\n")
+		printf("\tgradient=turn the value data into a gradient, maps to colors option in colorize() (Default=0)\n")
+		printf("\tin_low=low data input value for gradient mapping (Default=min value w/ignore)\n")
+		printf("\tin_high=high data input value for gradient mapping (Default=max value)\n")
+		printf("\thsv=HSV composite overlay the output shape on the input (byte, single band) data (Default=0)\n\n")
+		printf("NOTE: This function requires $DV_GDAL_PATH\n")
+		printf("and gdal version >=1.8\n\n")
+		printf("c.edwards 5/12/13\n\n")
+		return(null)
+	}
+
+
+	shapestruct=$1
+	geostruct=$2
+
+	if(HasValue(v)==0) v=0
+	if(HasValue(a_srs_shape)==0) a_srs_shape="+proj=latlong units=deg"
+  if(HasValue(hsv)==0) hsv=0
+
+	key=get_struct_key(shapestruct)
+	key=strsub(key,"wkt","")
+
+	otype="-ot Byte "
+	attribstr=""
+
+	if(HasValue(value)!=0) {
+		test=grep(key,value)
+
+		if(HasValue(test)=0) {
+			printf("No match was found\n")
+			printf("Please try another field name\n")
+			return(null)
+		}
+
+		if(length(test)>1) {
+			printf("More 1 match was found\n")
+			printf("Enter a more specific field name\n")
+			return(null)
+		}
+
+		element=key[,maxpos(key==grep(key,value)[,1])[2]]
+		format=format(get_struct(obj=shapestruct,name=element))
+
+		if(format=="byte") {
+			otype="-ot Byte "
+		} else if(format=="short") {
+			otype="-ot Int16 "
+		} else if(format=="int") {
+			otype="-ot Int32 "
+		} else if(format=="float") {
+			otype="-ot Float32 "
+		} else if(format=="double") {
+			otype="-ot Float64 "
+		}
+
+		if(format!="byte" && format!="short" && format!="int" && format!="float" && format!="double") {
+			printf("Supported datatype was not found\n")
+			printf("Reverting to mapping option\n")
+			attribstr="-burn 255 "
+		} else {
+			attribstr="-a '"+element+"' "
+		}
+	} else {
+		attribstr="-burn 255 "
+	}
+
+	invstr=""
+	if(HasValue(inverse)) invstr="-i "
+
+	#handle other gdal options
+	optstr=""
+	if(HasValue(opts)!=0) {
+		optstr=opts+" "
+	}
+
+	nodatastr=""
+	if(HasValue(get_struct(geostruct,"ignore"))) {
+		ign=geostruct.ignore
+	}
+	if(HasValue(ignore)!=0) {
+		ign=ignore
+	}
+	nodatastr=sprintf("-a_nodata '%.20g' ",ign)
+
+	dim=dim(geostruct.data)
+	sizestr=sprintf("-ts %i %i ",dim[1],dim[2])
+	if(HasValue(get_struct(geostruct.anc,"lpo")) && HasValue(get_struct(geostruct.anc,"spo"))) {
+		sizestr+=sprintf("-te %f %f %f %f ",min(geostruct.anc.spo),min(geostruct.anc.lpo),max(geostruct.anc.spo),max(geostruct.anc.lpo))
+	}
+
+	#assign a target srs if set
+	if(HasValue(a_srs_image)==0) a_srs_image=geostruct.anc.wkt
+	a_srs_imagestr=""
+	if(HasValue(a_srs_image)) {
+		#parse the a_srs_image
+		if(type(a_srs_image)=="STRING") {
+			length=1
+		} else if(type(a_srs_image)=="TEXT") {
+			length=length(a_srs_image)
+		}
+
+		srsstr=""
+		#cleanup the whitespace
+		for(i=1;i<=length;i+=1) {
+			srsstr+=trim_whitespace(a_srs_image[,i])
+		}
+		a_srs_imagestr="-a_srs '"+srsstr+"' "
+	}
+
+	#set the working file name
+	layername="gdal_raster.proj"
+	workingshape=$TMPDIR+"/raster/gdal_raster.proj.csv"
+	workingimage=$TMPDIR+"/raster/gdal_raster.proj.tif"
+	syscall("mkdir -p "+dirname(workingimage))
+
+	#write the shapefile to disk and project simulatneously
+	#ogr2ogr combines gdal_translate/gdalwarp like options and we need it to
+	#both translate the files and project the data
+	write_geoshape(shapestruct,workingshape,s_srs=a_srs_shape,t_srs=a_srs_image,type="CSV",force=1,v=v)
+	write_geotiff(geostruct,workingimage,force=1,v=v)
+
+	#generate the gdaltransform command
+
+	command=$DV_GDAL_PATH+"/gdal_rasterize -co \"BIGTIFF=NO\" "+sizestr+attribstr+invstr+otype+nodatastr+a_srs_imagestr+" -l "+layername+" -of GTiff "+workingshape+" "+workingimage
+
+	#run the command and read the transformed data.
+	if(v==1) {
+		printf("%s\n",command)
+		system(command)
+	} else {
+		syscall(command)
+	}
+
+	#read the data back in
+	out=read_geo(workingimage)
+
+	#set the data to a specified color
+	if(HasValue(color)) {
+		out.data=clone(out.data,z=3)
+		out.data[where out.data!=ign]=translate(byte(color),x,z)
+	}
+
+	#set the data to a gradient
+	if(HasValue(gradient)) {
+		if(HasValue(in_low)==0) in_low=min(out.data,ignore=ign)
+		if(HasValue(in_high)==0) in_high=max(out.data,ignore=ign)
+
+		out.data=colorize(lstretch(out.data,in_low=in_low,in_high=in_high,ignore=ign),colors=gradient,ignore=0)
+	}
+
+	#overlay the new color data on the original map data
+  if(hsv==1) {
+  	if(HasValue(color) || HasValue(gradient)) {
+  		if(type(geostruct.data)=="byte" && dim(geostruct.data)[3]==1) {
+  			hsv=rgb2hsv(out.data)
+  			hsv[,,3]=geostruct.data/255.
+  			out.data=byte(hsv2rgb(hsv,maxval=255))
+  		} else {
+  			printf("The input data must be both byte and a single band\n")
+  			printf("returning original data\n\n")
+  		}
+  	} else {
+  		printf("If hsv option is selected, gradient or color must also be speicified\n")
+  		printf("returning original data\n\n")
+	  }
+  }
+  #return the data
+  return(out)
+}
+
+
+define latlonDMS2dec(){
+
+  if($ARGC==0) {
+    printf("Take a formatted lat or lon string\n")
+    printf("and translate it to decimal degrees\n\n")
+    printf("$1=a lat/lon string formattted like \"###d##'##.####\"DIR\"\n\n")
+    printf("c.edwards\n")
+    return(null)
+  }
+
+  DMS_str=$1
+
+  #get the degrees
+  tmp=strsplit(DMS_str,delim="d")
+  deg=atod(tmp[,1])
+  DMS_str=tmp[,2]
+
+  #get the minutes
+  tmp=strsplit(DMS_str,delim="'")
+  min=atod(tmp[,1])
+  DMS_str=tmp[,2]
+
+  #get the seconds
+  tmp=strsplit(DMS_str,delim="\"")
+  sec=atod(tmp[,1])
+  dir=tmp[,2]
+
+  if(dir=="W") {
+    out=360-(deg+min/60.+sec/3600.)
+  } else if(dir=="S") {
+    out=-1*(deg+min/60.+sec/3600.)
+  } else {
+    out=deg+min/60.+sec/3600.
+  }
+
+  return(out)
+}
+
+
+
+define write_envi(force,v) {
+
+	if($ARGC<2) {
+		printf("\nThis function writes a basic or Geo-ENVI file and header\n")
+		printf("The input data may be either a Geo-Struct or a data array\n\n")
+		printf("$1=the davinci Geo-Struct or data array\n")
+		printf("$2=the output filename\n\n")
+		printf("Options:\n")
+		printf("\tforce=force the overwrite of exiting data\n")
+		printf("NOTE: This function requires $DV_GDAL_PATH\n")
+		printf("and gdal version >=1.8\n\n")
+		printf("WARNING: This function will output bad geo-referenced data\n")
+		printf("if you change the data array size\n\n")
+		printf("c.edwards 10/9/14\n")
+		return(null)
+	}
+
+	input=$1
+	outname=$2
+
+	if(HasValue(force)==0) force=0
+	if(HasValue(v)==0) v=1
+
+	if(type(input)=="STRUCT") {
+		write_geotiff(input,outname,force=force,envi=1)
+	} else if (isnum(input)==1) {
+		#translate DV datatype to ENVI hdr type
+		dv_datatype=format(input)
+		if(dv_datatype=="byte") {
+			datatype=1
+		} else if(dv_datatype=="short") {
+			datatype=2
+ 		} else if(dv_datatype=="int") {
+			datatype=3
+ 		} else if(dv_datatype=="float") {
+			datatype=4
+ 		} else if(dv_datatype=="double") {
+			datatype=5
+		}
+
+		#write the raw data data
+		if(v!=-1) printf("Writing %s: %ix%ix%i ENVI File\n",outname,dim(input)[1],dim(input)[2],dim(input)[3])
+		write(input,outname,raw,force=force)
+
+		#make and write the header
+		envi_hdr=text(10)
+		envi_hdr[,1]="ENVI"
+		envi_hdr[,2]="description = { davinci write_envi() product }"
+		envi_hdr[,3]="file type = ENVI standard"
+		envi_hdr[,4]="header offset = 0"
+		envi_hdr[,5]=sprintf("samples = %i",dim(input)[1])
+		envi_hdr[,6]=sprintf("lines = %i",dim(input)[2])
+		envi_hdr[,7]=sprintf("bands = %i",dim(input)[3])
+		envi_hdr[,8]=sprintf("data type = %i",datatype)
+		envi_hdr[,9]="byte order = 0"
+		envi_hdr[,10]=sprintf("interleave = %s",org(input))
+		if(v!=-1) printf("Writing %s.hdr: ENVI HDR File\n",outname)
+		write(envi_hdr,outname+".hdr",ascii,force=force)
+
+	} else {
+		printf("Unsupported input data type\n")
+		return(null)
+	}
+}

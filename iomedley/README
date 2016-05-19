@@ -1,0 +1,2 @@
+You must manually ./configure in the giflib directory before building iomedley.
+the libgif directory has been deprecated and will go away soon.

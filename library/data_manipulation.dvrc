@@ -1,0 +1,808 @@
+data_manipulation_version=1.03
+
+# gaussian - taken from /u/eengle/gaussian.dv
+# filterx	- taken from /u/bandfield/josh.dvrc
+# filtery	- taken from /u/bandfield/josh.dvrc
+# filterz	- taken from /u/bandfield/josh.dvrc
+# shift       	- taken from /themis/lib/themis_dvrca
+# ln_fit        - taken from /u/bandfield/josh.dvrc
+# degrade       - taken from /u/bandfield/josh.dvrc
+# expand        - taken from /u/bandfield/josh.dvrc, formerly called expand2()
+# resampleudf      - taken from /u/bandfield/josh.dvrc
+# rboxfilter	- taken from /u/cedwards/rstretch2.dvrc
+# clip          - taken from /u/knowicki/dvrc/rotate.dvrc
+# overlay	- taken from /u/cedawrds/christopher.dvrc
+# cat2          - taken from /u/mveto/programs/cat2.dvrc
+# create2       - taken from /u/mveto/programs/create2.dvrc
+# despeckle			- created by j. bandfield
+
+define gaussian(amplitude,sigma) {
+
+	if($ARGC<2) {
+		printf("\nCreate a 2-D gaussian kernel for use with convolve functions\n")
+		printf("$1 = desired kernel width\n")
+		printf("$2 = desired kernel height\n\n")
+		printf("Optional:\n")
+		printf("sigma = kernel standard deviation (Default is 1)\n")
+		printf("amplitude = height of the normal kernal value (Default is 1)\n\n")
+		printf("e.engle 9/22/10\n\n")
+		return(null)
+	}
+
+	width = int($1);
+	height = int($2);
+	if(HasValue(sigma)==0) {
+		sigma=1.
+	} 
+	if(HasValue(amplitude)==0) {
+		amplitude=1.
+	}
+	out = create(width, height, 1, format=float);
+	for (i = 1; i <= width; i += 1) {
+		for (j = 1; j <= height; j += 1) {
+			xpart = (i - 0.5 - width/2.0)^2/(2*sigma^2);
+			ypart = (j - 0.5 - height/2.0)^2/(2*sigma^2);
+			out[i,j] = amplitude*exp(-xpart - ypart);
+		}
+	}
+	return(out);
+}
+
+
+
+define filterx() {
+
+  if ($ARGC == 0) {
+    printf (" Boxcar type filter along x axis\n")
+    printf (" $1 = object \n")
+    printf (" $2 = filter width \n")
+    printf (" last updated Thu Jan 26 12:14:14 MST 2006\n")
+    printf (" written by Josh Bandfield\n")
+    return(0)
+  }
+
+# object = $1
+  width=$2
+
+  kernel=create(x=width,y=1,z=1,start=1,step=0)
+  filt_obj=convolve3($1,kernel,1)
+  return(filt_obj)
+}
+
+define filtery() {
+
+  if ($ARGC == 0) {
+    printf (" Boxcar type filter along y axis\n")
+    printf (" $1 = object \n")
+    printf (" $2 = filter width \n")
+    printf (" last updated Thu Jan 26 12:14:14 MST 2006\n")
+    printf (" written by Josh Bandfield\n")
+    return(0)
+  }
+
+# object = $1
+  width=$2
+
+  kernel=create(x=1,y=width,z=1,start=1,step=0)
+  filt_obj=convolve3($1,kernel,1)
+
+  return(filt_obj)
+}
+
+define filterz() {
+
+  if ($ARGC == 0) {
+    printf (" Boxcar type filter along z axis\n")
+    printf (" $1 = object \n")
+    printf (" $2 = filter width \n")
+    printf ("last updated Thu Jan 26 12:14:14 MST 2006\n")
+    printf ("written by Josh Bandfield\n")
+    return(0)
+  }
+
+# object = $1
+  width=$2
+
+  kernel=create(x=1,y=1,z=width,start=1,step=0)
+  filt_obj=convolve3($1,kernel,1)
+
+  return(filt_obj)
+}
+
+
+
+define shift() {
+
+if ($ARGC == 0) {
+  printf ("\n")
+  printf ("Shift image in x and y\n\n")
+  printf ("usage: out = shift(image, delta_x, delta_y)\n\n")
+  printf ("  delta x and y are relative to first band\n")
+  printf ("  x:  negative values shift each band successively more to LEFT relative to first band\n")
+  printf ("      positive values shift each band successively more to RIGHT relative to first band\n\n")
+  printf ("      del_x is typically negative for daytime (descending node) image\n\n")
+  printf ("  y:  negative values shift each band successively more UP relative to first band\n")
+  printf ("      positive values shift each band successively more DOWN  relative to first band\n\n")
+  printf ("      del_y should be 0 in the ideal case of perfect TDI and S/C velocity\n\n")
+  printf ("  typical values are -2, -2 to -2,0 for equatorial images; del_x should be smaller at high latitudes\n\n")
+  printf ("  makes output array larger than input array so no data are lost\n\n");
+  printf ("last updated Thu Jan 26 12:14:14 MST 2006\n")
+  printf ("written by Phil Christensen\n")
+  return(0)
+}
+
+# p. christensen 3/6/02
+
+# image = $1
+ del_x = $2
+ del_y = $3
+
+# del_x = delta in longitude direction
+# del_y = delta in latitude direction
+
+ d = dim($1)
+ nxin = d[1]
+ nyin = d[2]
+ nzin = d[3]
+
+
+ max_offsetx = abs(del_x) * (d[3] - 1)
+ max_offsety = abs(del_y) * (d[3] - 1)
+
+ nxout = int(d[1] + max_offsetx)
+ nyout = int(d[2] + max_offsety)
+ nzout = int(d[3])
+
+ image_out = create(nxout, nyout, nzout, format=format($1), org=bip)
+
+ image_out = format( (image_out * 0.) , format=format($1))
+ 
+ for(i=1; i<=nzout; i+=1){
+# loop on bands in image
+   if(del_x > 0) {
+     sx = int(del_x * (i-1) +1)
+     ex = int(sx + nxin -1)
+     
+   } else {
+     sx = int(abs(del_x) * (nzout - i) +1)
+     ex = int(sx + nxin -1)
+   }
+   
+   if(del_y > 0) {
+     sy = int(del_y * (i-1) +1)
+     ey = int(sy + nyin -1)
+   } else {
+     sy = int(abs(del_y) * (nzout - i) +1)
+     ey = int(sy + nyin -1)
+   }
+   printf("band = %d:    output image:  start x = %d end x = %d   start y = %d end y = %d\n", i, sx, ex, sy, ey)
+   image_out[sx:ex, sy:ey, i]= ($1)[,, i]
+   
+ }
+ 
+ return(image_out)
+}
+
+
+
+
+define ln_fit() {
+
+
+  if ($ARGC == 0) {
+    printf (" \n")
+    printf (" Perform a natural log regression.\n")
+    printf (" $1 = x data \n")
+    printf (" $2 = y data \n")
+    printf (" x and y data should be of the same dimensions\n")
+    printf (" Input should be a n x samples x 1 array. \n")
+    printf (" Output is a n x 2 x 1 array. \n")
+    printf (" y = a + b * ln(x)\n")
+    printf (" last updated Thu Jan 26 12:14:14 MST 2006\n")
+    printf (" written by Josh Bandfield\n")
+    return(0)
+  }
+
+# x=$1
+# y=$2
+
+  n=dim($1)[2]
+
+  top=n*sum(y*ln($1),axis=y)-sum($2,axis=y)*sum(ln($1),axis=y)
+  bottom=n*sum((ln($1)^2),axis=y)-(sum(ln($1),axis=y))^2
+  b=top/bottom
+  a=(sum($2,axis=y)-b*sum(ln($1),axis=y))/n
+
+  out=cat(a,b,axis=y)
+  return(out)
+}
+
+
+
+
+
+
+define degrade(ignore) {
+
+
+  if ($ARGC == 0) {
+    printf (" \n")
+    printf (" Degrade image resolution\n")
+    printf (" $1 = image \n")
+    printf (" $2 = factor of reduction (must be integer)\n")
+    printf (" ignore = null value (default = -32768)\n")
+    printf ("last updated Thu Jan 26 12:14:14 MST 2006\n")
+    printf ("written by Josh Bandfield\n")
+    return(0)
+  }
+
+  if (HasValue(ignore)==0) ignore=-32768
+
+
+image=format($1,float)
+factor=$2
+dim_imagex=int(dim(image)[1,,]/factor)
+dim_imagey=int(dim(image)[2,,]/factor)
+dim_imagez=dim(image)[3,,]
+red_image=create(x=dim_imagex,y=dim(image)[2,,],z=dim_imagez,format=float,start=0, step=0)
+
+
+mask_image=int(image*0)
+mask_image [where (image==ignore)] = 1
+image [where (image==ignore)] = 0
+mask_image=1-mask_image
+red_mask=create(x=dim_imagex,y=dim(image)[2,,],z=dim_imagez,format=int,start=0, step=0)
+
+count=1
+
+while (count <=factor) {
+
+	red_image=red_image+image[count:dim_imagex*factor:factor,,]
+        red_mask=red_mask+mask_image[count:dim_imagex*factor:factor,,]
+	count=count+1
+}
+
+red_image2=create(x=dim_imagex,y=dim_imagey,z=dim_imagez,format=float,start=0, step=0)
+red_mask2=create(x=dim_imagex,y=dim_imagey,z=dim_imagez,format=int,start=0, step=0)
+
+count=1
+
+while (count <=factor) {
+
+	red_image2=red_image2+red_image[,count:dim_imagey*factor:factor,]
+        red_mask2=red_mask2+red_mask[,count:dim_imagey*factor:factor,]
+	count=count+1
+}
+
+red_image2=red_image2/red_mask2
+red_image2 [where (red_mask2==0)]=ignore
+
+# Account for rounding up or down for int and byte images
+
+if (format($1) == "int" || format($1) == "byte") {
+
+        red_image2 [where (red_image2-int(red_image2)>=0.5)] =red_image2+1
+}
+
+red_image2=format(red_image2,format($1))
+
+return(red_image2)
+}
+
+
+
+
+
+
+
+define expand() {
+
+if ($ARGC ==0) {
+
+        printf ("Expand an image by an integer factor\n")
+        printf ("\n")
+        printf ("$1 = input array\n")
+        printf ("$2 = xy scale factor or x scale_factor\n")
+        printf ("$3 = y scale factor (optional)\n")
+        printf ("last updated Thu Jan 26 12:14:14 MST 2006\n")
+        printf ("written by Josh Bandfield\n")
+        return(0)
+}
+
+image = $1
+
+if ($ARGC ==2) {
+
+scalex = $2
+scaley = $2
+
+} else {
+scalex = $2
+scaley = $3
+}
+
+
+nsamples = dim(image)[1]
+nlines = dim(image)[2]
+nbands = dim(image)[3]
+
+nsamples_out = int(nsamples*scalex)
+nlines_out = int(nlines*scaley)
+
+out = create(nsamples_out, nlines_out, nbands, format=format(image),start=0,step=0)
+
+for(i=1; i<= nsamples; i+=1) {
+	for(j=1; j<= nlines; j+=1) {
+                out[((i-1)*scalex+1):(i*scalex),((j-1)*scaley+1):(j*scaley),]=image[i,j,]
+        }
+}
+
+return(out)
+}
+
+
+
+define resampleudf(null) {
+
+if ($ARGC == 0) {
+	printf (" \n")
+	printf (" Resample a spectrum to a given scale \n")
+	printf (" $1 = spectra to be resampled \n")
+	printf (" $2 = old scale \n")
+	printf (" $3 = new scale \n")
+        printf (" null = null value to ignore, default=-32768\n")
+	printf (" \n")
+	printf (" OR\n")
+	printf (" $1 = spectra in standard structure \n")
+	printf (" $2 = new scale \n")
+	printf (" \n")
+	return(0)
+
+}
+
+if (HasValue(null)==0) {
+
+        null=-32768
+}
+
+if ($ARGC == 3) {
+
+	y=$1
+	xold=$2
+	xnew=$3
+	label="(null)"
+}
+
+if ($ARGC == 2) {
+
+	y=$1
+	xold=y.xaxis
+	xnew=$2
+	label=y.label
+	y=y.data
+}
+
+if (dim(xold)[1,,] > 1) {
+
+	xold=translate(xold,from=x,to=z)
+	xnew=translate(xnew,from=x,to=z)
+	y=translate(y,from=x,to=z)
+}
+
+if (dim(xold)[2,,] > 1) {
+
+	xold=translate(xold,from=y,to=z)
+	xnew=translate(xnew,from=y,to=z)
+	y=translate(y,from=y,to=z)
+}
+
+
+# Set boundary spline conditions. Second derivative is 0.
+
+npts=dim(xold)[3,,]
+
+y2d=y-y
+u=y2d[,,1:(npts-1)]
+
+# Set start and end points in case many values are zeroed.
+
+start_count=1
+
+while (y[,,start_count] == null && start_count <= npts) {
+
+	start_count=start_count+1
+}
+
+stop_count=npts
+
+while (y[,,stop_count] == null && stop_count >=1) {
+
+	stop_count=stop_count-1
+}
+
+
+# Do the decomposition loop of the tridiagonal algorithm
+
+for (i=(start_count+1); i<=(stop_count-1); i+=1) {
+
+	sig=(xold[,,i]-xold[,,(i-1)])/(xold[,,(i+1)]-xold[,,(i-1)])
+	p=sig*y2d[,,(i-1)]+2.
+	y2d[,,i]=(sig-1.)/p
+	u[,,i]=(y[,,(i+1)]-y[,,i])/(xold[,,(i+1)]-xold[,,i]) - (y[,,i]-y[,,(i-1)])/(xold[,,i]-xold[,,(i-1)])
+	u[,,i]=(6.*u[,,i]/(xold[,,(i+1)]-xold[,,(i-1)]) - sig*u[,,(i-1)])/p
+}
+
+# Do the backsubstitution art of the tridiagonal algorithm
+
+for (i=(stop_count-1); i>=start_count; i-=1) {
+
+	y2d[,,i]=y2d[,,i]*y2d[,,(i+1)] + u[,,i]
+}
+
+# Now that we have the second derivative,
+# we can evaluate our y with respect to the new xaxis
+
+new_npts=dim(xnew)[3,,]
+
+ynew=create(x=dim(y)[1,,],y=dim(y)[2,,],z=new_npts,format=float,start=0,step=0)
+
+for (i=1; i<=new_npts; i+=1) {
+
+	samp_hi=npts
+	samp_lo=1
+
+# Find the correct axis point through bisection
+
+	while (samp_hi-samp_lo > 1) {
+
+		samp_new=(samp_hi+samp_lo)/2
+		if (xold[,,samp_new] > xnew[,,i]) {
+			samp_hi=samp_new
+		}
+		if (xold[,,samp_new] <= xnew[,,i]) {
+			samp_lo=samp_new
+		}
+	}
+	h=xold[,,samp_hi]-xold[,,samp_lo]
+	a=(xold[,,samp_hi]-xnew[,,i])/h
+	b=(xnew[,,i]-xold[,,samp_lo])/h
+	ynew[,,i]=a*y[,,samp_lo]+b*y[,,samp_hi]+((a^3-a)*y2d[,,samp_lo]+(b^3-b)*y2d[,,samp_hi])*(h^2)/6.
+}
+
+# Set data outside of old scale to 0.  Extrapolation is bad.
+
+ynew [where xnew < min(xold)] = 0
+ynew [where xnew > max(xold)] = 0
+
+
+out=struct(data,label,xaxis)
+out.data=ynew
+out.xaxis=xnew
+out.label=label
+
+return(out)
+
+}
+
+
+
+define rboxfilter(data,ignore,ksize,ysize,xsize,verbose) {
+
+  if($ARGC==0 && HasValue(data)==0) {
+    printf("\nrboxfilter() - Compute a Running Boxfilter\n")
+    printf("Calls boxfilter() as convolve function\n\n")
+    printf("Syntax: rboxfilter(data [,ignore] [,ysize] [,xsize] [,ksize] [,verbose])\n")
+    printf("data=data option for more efficient memory usage\n")
+    printf("ignore=value to ignore (Default=-32768)\n")
+    printf("ysize=size of the chunks to convolve in y (Default=6000)\n")
+    printf("xsize=size of the chunks to convolve in x (Default=6000)\n")
+    printf("ksize=size of the filter to apply (Default=25)\n\n")
+    printf("verbose = turn on print statements\n\n")
+    printf("c.edwards 3/7/06\n\n")
+    return(null)
+  }
+
+  #initialize input 
+  if(HasValue(data)==0) data=$1
+  xs=6000
+  ys=6000
+  ign=-32768
+  ks=25
+  verb=0
+  ydiff=xdiff=0
+  dim=dim(data)
+ 
+  if(HasValue(verbose)) verb=1
+  if(HasValue(ysize)) ys=int(ysize)
+  if(HasValue(xsize)) xs=int(xsize) 
+  if(HasValue(ignore)) ign=ignore
+  if(HasValue(variance)) var=variance
+
+  if(ys%2 == 1) ys-=1
+  if(xs%2 == 1) xs-=1
+
+  #create output pic, ramps and indices
+  pic=float(data*0)
+  yrange=xrange=clone(0,2,1,1)
+  yramp=create(1,int(ys/2),1,start=0,step=1/float(ys/2),format=float)          
+  xramp=create(int(xs/2),1,1,start=0,step=1/float(xs/2),format=float)
+
+  #set maximum loop values
+  maxx=dim[1]-int(xs/2)
+  maxy=dim[2]-int(ys/2)   
+  if(dim[1]<xs) maxx=dim[1]
+  if(dim[2]<ys) maxy=dim[2] 
+  
+  #loop through x to get x-direction
+  for(i=1;i<=maxx;i+=int(xs/2)) {
+
+    xrange[1]=i;xrange[2]=i+xs-1
+    if(xrange[2]>=dim[1]) {
+      xdiff=xrange[2]-dim[1]
+      xrange[2]=dim[1]
+    }
+
+    tmppic=float(clone(0,xrange[2]-i+1,dim[2],dim[3]))
+
+    #loop through y to get y-direction
+    for(j=1;j<=maxy;j+=int(ys/2)) {	 
+
+      yrange[1]=j;yrange[2]=j+ys-1
+      if(yrange[2]>=dim[2]) {
+        ydiff=yrange[2]-dim[2] 
+        yrange[2]=dim[2]
+      }
+
+      if(verb==1) printf("x=%i:%i y=%i:%i\n",xrange[1],xrange[2],yrange[1],yrange[2])
+    
+      #stretch the data
+      tmp=float(boxfilter(data[xrange[1]:xrange[2],yrange[1]:yrange[2],],ignore=ign,size=ks))
+
+      #if its the first y-chunk then insert else ramp it into the y-column
+      if(j==1) tmppic[,yrange[1]:yrange[2],]=tmp
+      if((j!=1 && ydiff>int(ys/2))) break;
+      if(j!=1) {
+        tmppic[,yrange[1]:yrange[2]-int(ys/2)+ydiff]=tmppic[,yrange[1]:yrange[2]-int(ys/2)+ydiff]*(1-yramp)
+        tmp[,:int(ys/2),]=tmp[,:int(ys/2),]*yramp
+        tmppic[,yrange[1]:yrange[2],]=tmppic[,yrange[1]:yrange[2],]+tmp
+      }
+      ydiff=0
+    }
+    
+    #if its the first x-chunk then insert else ramp it into the full picutre
+    if(i==1) pic[xrange[1]:xrange[2],]=tmppic
+    if((i!=1 && xdiff>int(xs/2))) return(bip(byte(pic)))    
+    if(i!=1) {
+      pic[xrange[1]:xrange[2]-int(xs/2)+xdiff,]=pic[xrange[1]:xrange[2]-int(xs/2)+xdiff,]*(1-xramp)
+      tmppic[:int(xs/2),]=tmppic[:int(xs/2),]*xramp
+      pic[xrange[1]:xrange[2],]=pic[xrange[1]:xrange[2],]+tmppic
+    }
+  }
+  return(float(pic))
+}
+
+
+
+
+define clip(anc) {
+
+  if($ARGC==0) {
+    printf("clip - clip off the black space around a picture\n")
+    printf("Syntax: clip(data, ignore)\n")
+    printf("Example: c_pic = clip(picture, 0)\n")
+    printf("  data:  any numeric array\n")
+    printf("  ignore: non-data values\n")
+	printf("	anc: output ancilarry data\n")
+    return(null)
+  }
+
+	if(HasValue(anc)==0) anc=0
+  ign = $2
+
+  avg_x = avg(($1),axis=x,ignore=ign)
+  avg_y = avg(($1),axis=y,ignore=ign)
+
+  dim=dim($1)
+  xdim=dim[1]
+  ydim=dim[2]
+
+  top = ydim
+  bot = 0
+  lef = xdim
+  rig = 0
+
+  i=0
+  flg = 0
+  while(i<ydim && flg==0) {
+    if(avg_x[,i] != 0) {
+      top = i
+      flg = 1
+    }
+    i+=1
+  }
+
+  i=ydim
+  flg=0
+  while(i>0 && flg==0) {
+    if(avg_x[,i] != 0) {
+      bot = i
+      flg = 1
+    }
+    i-=1
+  }
+
+  i=0
+  flg = 0
+  while(i<xdim && flg==0) {
+    if(avg_y[i] != 0) {
+      lef = i
+      flg = 1
+    }
+    i+=1
+  }
+
+  i=xdim
+  flg=0
+  while(i>0 && flg==0) {
+    if(avg_y[i] != 0) {
+      rig = i
+      flg = 1
+    }
+    i-=1
+ }
+
+	if(anc==1) {
+	  out={}
+		out.data=($1)[lef:rig,top:bot]
+		out.left=lef
+		out.right=rig
+		out.top=top
+		out.bottom=bot
+		return(out)
+	} else {
+	  return(($1)[lef:rig,top:bot])
+	}
+}
+
+
+
+define overlay(ignore,blend) {
+
+  if($ARGC==0) {
+    printf("overlay() - Thu May  4 16:49:45 MST 2006\n\n")
+    printf("Overlay image 2 on image 1 (must be the same size)\n")
+    printf("or blend the two images together\n")
+    printf("Returns a blended destination image.\n")
+    printf("Uses thm.ramp for blending\n\n")
+    printf("$1 = img1\n")
+    printf("$2 = img1\n")
+    printf("ignore = ignore value of the images (Default=-32768)\n")
+    printf("blend = blend two images together (Default=1)\n\n")
+    printf("c.edwards 4-20-2007\n\n")
+    return(null)
+  }
+
+  img1=$1
+  img2=$2
+  format=format(img1)  
+
+  if(HasValue(ignore)==0) ignore=-32768
+  if(HasValue(blend)==0) blend=1
+
+
+  if(blend==0) img1[where img2!=ignore]=img2
+  if(blend==1) {
+    r=thm.ramp(img1,img2,ignore=ignore)
+    img1[where r > 0] = img2*(r) + img1*(1-r)
+    img1[where img1 == ignore && r==0] = img2
+  }
+
+  img1=format(img1,format=format)
+  return(img1) 
+}
+
+
+
+# Creates Matricies without having to specify the axis
+define cat2 () {
+  if ($ARGC == 0) {
+    printf("\n")
+    printf("A simplification of the cat function\n\n")
+    printf("Quickly creates a 2D array without having to specifiy axis\n\n")
+    printf("Example:\n\n")
+    printf("dv> cat2(1//2//3,1//2//34)\n\n")
+    printf("3x2x1 array of int, bsq format [24 bytes]\n")
+    printf("1       2       3\n")
+    printf("1       2       34\n\n")
+    printf("Created by: Mike Veto\n\n")
+    return(0)
+  }
+
+  n = $ARGC
+  i=1
+  a = $ARGV[1]
+
+  while (i<n) {
+    b = $ARGV[i+1]
+    a = cat(a,b,axis = y)
+    i = i + 1
+  }
+
+  return(a)
+}
+
+
+
+define create2 () {
+
+  if ($ARGC == 0) {
+    printf("\n")
+    printf("A simplification of the create function\n\n")
+    printf("Quickly creates an array with a desired start point, step size, and end point\n\n")
+    printf("	Usage:  create2([starting value], [step size], [ending value])\n\n")
+    printf("Example:\n\n")
+    printf("dv> create2(2,3,10)\n")
+    printf("1x3x1 array of int, bsq format [12 bytes]\n")
+    printf("2\n")
+    printf("5\n")
+    printf("8\n\n")
+    printf("Created by: Mike Veto\n\n")
+    return(0)
+  }
+  nstep = (double($3)-double($1)+double($2)/1e6)/double($2)
+  nstep = int(ceil(nstep))
+  
+  a = create(1,nstep,start = $1, step = $2, format=format($2))
+  return(a)
+}
+
+
+define despeckle(ignore) {
+
+	if($ARGC<2) {
+		printf("Run a median/despeckle filter on data with a specified radius on a per band basis\n\n")
+		printf("$1=data array\n")
+		printf("$2=median filter radius\n")
+		printf("ignore=null value for the data (Default=0\n\n")		
+		printf("J. Bandfield 3/2016\n")
+		return(null)
+	}
+
+	data=$1
+	radius=$2
+
+	if(HasValue(ignore)==0) ignore=0
+
+	dimx=dim(data)[1]
+	dimy=dim(data)[2]
+	dimz=dim(data)[3]
+
+	for(k=1;k<=dimz;k+=1) {
+		printf("Band %i\n",k)
+		for (i=1+radius; i<=dimx-radius; i+=1) {
+			for (j=1+radius; j<=dimy-radius; j+=1) {
+
+				startx=i-radius
+				stopx=i+radius
+				starty=j-radius
+				stopy=j+radius
+	
+				if (startx<1) {
+			    startx=1
+				}
+				if (stopx>dimx) {
+			    stopx=dimx
+				}
+				if (starty<1) {
+		    	starty=1
+				}
+				if (stopy>dimy) {
+			    stopy=dimy
+				}
+	
+				data[i,j,k]=med(data[startx:stopx,starty:stopy,k],ignore=ignore)
+			}
+		}
+	}
+	return(data)
+}

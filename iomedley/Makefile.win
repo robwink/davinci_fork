@@ -1,0 +1,51 @@
+CC=cl
+DEFS=-DHAVE_CONFIG_H
+CPPFLAGS=-I. 
+CFLAGS=-Yd -nologo -ZI -GZ
+LDLIBS=
+
+OBJS= \
+	io_aviris.obj \
+	io_goes.obj \
+	io_grd.obj \
+	io_imath.obj \
+	io_isis.obj \
+	io_lablib3.obj \
+	io_magic.obj \
+	io_pnm.obj \
+	io_vicar.obj \
+	io_ers.obj \
+	io_raw.obj \
+	io_envi.obj \
+	iomedley.obj \
+	tools.obj
+
+.SUFFIXES: .obj .lib
+
+.c.obj:
+	$(CC) -c $(DEFS) $(CPPFLAGS) $(CFLAGS) $< -Fo$@
+
+
+iomedley.lib:	$(OBJS)
+	lib -nologo -out:$@ $(OBJS)
+
+iom_config.h:	configwin.h
+	copy configwin.h $@
+
+clean:
+	del *.obj iomedley.lib 
+
+io_aviris.obj: io_aviris.c iomedley.h io_lablib3.h toolbox.h iom_config.h
+io_envi.obj: io_envi.c io_envi.h iomedley.h io_lablib3.h toolbox.h iom_config.h
+io_ers.obj: io_ers.c iomedley.h io_lablib3.h toolbox.h iom_config.h
+io_goes.obj: io_goes.c iomedley.h io_lablib3.h toolbox.h iom_config.h
+io_grd.obj: io_grd.c iomedley.h io_lablib3.h toolbox.h iom_config.h
+io_imath.obj: io_imath.c iomedley.h io_lablib3.h toolbox.h iom_config.h
+io_isis.obj: io_isis.c iomedley.h io_lablib3.h toolbox.h iom_config.h
+io_lablib3.obj: io_lablib3.c header.h tools.h io_lablib3.h toolbox.h iom_config.h
+io_magic.obj: io_magic.c iom_config.h
+io_pnm.obj: io_pnm.c iomedley.h io_lablib3.h toolbox.h iom_config.h
+io_raw.obj: io_raw.c iomedley.h io_lablib3.h toolbox.h iom_config.h
+io_vicar.obj: io_vicar.c iomedley.h io_lablib3.h toolbox.h iom_config.h
+iomedley.obj: iomedley.c iomedley.h io_lablib3.h toolbox.h iom_config.h
+tools.obj: tools.c tools.h iom_config.h

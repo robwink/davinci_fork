@@ -1,0 +1,2258 @@
+crism_science_version=1.16
+
+#process_crism	 		- modified by c.edwards, adapted from l.mayorga 3/09**
+#get_crism 					- modified by c.edwards, adapted from j.bandfield 3/09 taken from crism.dav*
+#crism_atm 					- modified by c.edwards, adapted from j.bandfield 3/09 taken from crism.dav*
+#crism_resample 		- modified by c.edwards, adapted from j.bandfield 3/09 taken from crism.dav
+#crism_destripe 		- created by c.edwards, modified by j.bandfield 3/09 taken from crism.dav
+#project_crism 			- created by c.edwards, modified by j.bandfield 3/09 taken from crism.dav
+#project_crism_index- modified by c.edwards, created by l.mayorga 3/09 taken from crism.dav**
+#get_crism_r				- created by j.bandfield 1/15
+#create_indices			- created by j.bandfield 1/15
+#crism_speclib 			- modified by c.edwards, created by j.bandfield 3/09 taken from crism.dav
+#get_crism_list 		- modified by c.edwards, created by j.bandfield 3/09 taken from crism.dav
+#get_proj_info			- created by j.bandfield 2/10
+
+#* modified by l.mayorga 7/16/09
+#** modified by l.mayorga 7/23/09
+# modified to use the appserver to get crism data.
+# "fixed" destripe/atm correction 10/7/09 - j.bandfield/c.edwards
+#
+# added option to process_crism() to allow the user to not roate the data to ~N-up
+# this allows for comparisons to other crism publications - c.edwards 11-13-10
+# 
+# modified get_crism() to use the pds source file by default...this is a new option in get_image (misc.dvrc)
+# c.edwards 8-25-2011
+#
+# modified get_crism() to use the new pds url
+# c.edwards 9-14-2011
+#
+# modified project_crism() to project to a set resolution for mosaicking added moon option
+# modified get_proj_info() to better parse gdalinfo output
+# modified get_crism() and process_crism() to find specific atm files for atm. correction
+# now handles trr3 images other minor fixes
+# e. amador, c. edwards, j. bandfield 9-7-11
+#
+# updated with new CRISM atm correction routine j. bandfield Jan. 2015
+# process_crism modified to get new atm files
+# crism_atm modified to do new atm_correction
+#
+# updated to separate long and short processing - c. edwards Jan 2016
+
+
+define process_crism(raw, resample, atm, sl, s,l, index, destripe,wget,rotate,src,photom) {
+#tested cse 3/30/09
+
+	if($ARGC!=1) {
+	  printf("Download and process any CRISM images, short and long, radiance or I/F\n\n")
+	  printf("$1=product id (truncated from full ID)\n\n")
+	  printf("Optional:\n")
+    printf("\tsrc=download location, ASU is faster, PDS is official repository (ASU=0, default; PDS=1)\n")
+	  printf("\tsl=process both the short and long data product (Default=0, long only)\n")
+	  printf("\traw=return just the output structure (other options will not work with this, Default=0)\n")
+	  printf("\tresample=resample the image to a common scale, uses crism_resample() (the detector is not wavelength uniform, Default=0)\n")
+	  printf("\tatm=do the atmospheric correction for the long products, uses crism_atm() (Default=1)\n")
+		printf("\tphotm=do the photometric correction (Default=1, Default=0 for TRR3)\n")
+ 	  printf("\tdestripe=destripe and destripe the data, uses crism_destripe() (Default=0)\n")
+	  printf("\tindex=generate standard indices + a key as a structure element (Default=1)\n")
+	  printf("\trotate=rotate the image to ~North up (Default=1)\n")
+	  printf("modified by c.edwards, adapted from l.mayorga, 3/9\n")
+	  return(null)
+	}
+
+ 	product=$1
+
+	if(HasValue(sl)==0) sl=0
+	if(sl==1) {
+		l=1
+		s=1
+	} 
+	if(HasValue(l)==0) l=1
+	if(HasValue(s)==0) s=0
+	
+	if(HasValue(raw)==0) raw=0
+	if(HasValue(resample)==0) resample=0
+	if(HasValue(atm)==0) atm=1
+	if(HasValue(index)==0) index=1
+	if(HasValue(destripe)==0) destripe=2
+  if(HasValue(rotate)==0) rotate=1
+	if(HasValue(url)==0) url=0
+  if(HasValue(src)==0) src=0
+	if(HasValue(photm)==0) photom=1
+
+	if(HasValue(wget)==0) wget=0
+ 	if(atof(version()[18:])>=2.0) {
+		copy=0
+	} else {
+		copy=1
+	}
+	if (wget==1) {
+		copy=1
+	}
+
+	#get the data
+	data=get_crism(product,raw=raw,s=s,l=l,wget=copy,src=src)
+
+	if(raw==1) {
+	   return(data)
+	}	
+
+	# Check to see if this is a TRR2 or TRR3 image, if TRR3 destripe=0
+	tmpdir=sprintf("%s/%s",$DV_CRISM_CACHE,product)
+	if (HasValue(syscall("ls "+tmpdir+"/*_TRR3.IMG")) ==1) {
+		destripe=0
+	}
+
+	#rotate
+	if(rotate==1) {	
+		#flip the data to orient it with ~N up
+
+		if(l==1) {
+			data.long.data=translate(translate(data.long.data,from=x,to=x,flip=1),y,y,flip=1)
+			data.long.anc.ddr=translate(translate(data.long.anc.ddr,from=x,to=x,flip=1),y,y,flip=1)
+			data.long.wl_array=translate(translate(data.long.wl_array,from=x,to=x,flip=1),y,y,flip=1)
+			data.long.at_array=translate(translate(data.long.at_array,from=x,to=x,flip=1),y,y,flip=1)
+		}
+		if(s==1) {
+			data.short.data=translate(translate(data.short.data,from=x,to=x,flip=1),y,y,flip=1)
+			data.short.anc.ddr=translate(translate(data.short.anc.ddr,from=x,to=x,flip=1),y,y,flip=1)
+			data.short.wl_array=translate(translate(data.short.wl_array,from=x,to=x,flip=1),y,y,flip=1)
+		}
+	}
+
+	#set the null value
+	if(l==1) data.long.data[where data.long.data==65535]=0
+  if(s==1) data.short.data [where data.short.data==65535]=0
+
+	#do the photometric correction
+	if(photom==1) {
+		if(l==1) data.long.data[where data.long.data!=0]=data.long.data/cosd(data.long.anc.ddr[,,1])
+	 	if(s==1) data.short.data[where data.short.data==65535]=data.short.data/cosd(data.short.anc.ddr[,,1])
+	}
+
+	#atmospheric correction on long
+  verbose=0
+	if(atm==1 && l==1) {
+
+		data=crism_atm(data=data)
+    if(dim(data.long.at_array)[2]>1) {
+      data=patch_vs_artifact(data=data)
+      data=crism_atm(data=data)
+    }
+  }
+
+	#resample on both
+	if(resample==1) data=crism_resample(data=data)
+
+	#destripe option 1
+	if(destripe==1) {
+		if(l==1) data.long.data=crism_destripe(data=data.long.data,v=1)
+		if(s==1) data.short.data=crism_destripe(data=data.short.data,v=1)
+	}
+
+	#destripe option 2
+	if(destripe==2) {
+		if(l==1) data.long.data=crism_destripe_old(data=data.long.data)
+		if(s==1) data.short.data=crism_destripe_old(data=data.short.data)
+	}
+
+	#build the indicies
+	if(index==1) {
+		if(l==1) {
+		  data.long.index=create_indices(data=data.long.data,wl_array=data.long.wl_array)
+		  data.long.index.index[where (data.long.data[,,50]==0)]=0
+		}
+	  if(s==1) {
+			data.short.index=create_indices(data=data.short.data,wl_array=data.short.wl_array)
+ 			data.short.index.index[where (data.short.data[,,10]==0)]=0
+	  }
+	}
+
+  verbose=3
+	return(data)
+}
+
+
+define get_crism(ra,raw,sl,l,s,force,verb,ignore,set_ignore,wget,src,oldatm,v) {
+	#tested-cse 3/30/09
+
+	if($ARGC!=1) {
+		printf("Download any CRISM image, short and long, radiance or I/F\n\n")
+		printf("$1=product id (truncated from full ID)\n\n")
+		printf("Optional:\n")
+    printf("\tsrc=download location, ASU is faster, PDS is official repository (ASU=0, default; PDS=1)\n")
+		printf("\tsl=process both the short and long data product (Default=0, long only)\n")
+		printf("\tl=process the long data (Default=1\n")
+		printf("\ts=process the short data (Default=0)\n")
+		printf("\traw=return just the output structure (other options will not work with this, Default=0)\n")
+		printf("\tforce=force the redownload of products (Default=0), uses $DV_CRISM_CACHE\n")
+		printf("\tverb=set the verbosity (Default=0)\n")
+		printf("\tignore=the ignore value (Default=0)\n\n")
+		printf("\tset_ignore=set the value of value of the image (Default=1)\n")
+		printf("\tsrc=download the data from the PDS rather than ASU (default=1)\n")
+		printf("\twget = force the use of wget (Default=0)\n\n")
+		printf("modified by c.edwards, adapted from j.bandfield 3/09\n")
+		return(null)
+	}
+
+	product=$1
+	global(verbose)
+	verbold=verbose
+	if(HasValue(sl)==0) sl=0
+	if(sl==1) {
+		l=1
+		s=1
+	} 
+	if(HasValue(l)==0) l=1
+	if(HasValue(s)==0) s=0
+	if(HasValue(src)==0) src=0
+	if(HasValue(wget)==0) wget=0
+  if(HasValue(oldatm)==0) oldatm=0
+ 	if(atof(version()[18:])>=2.0) {
+		copy=1
+	} else {
+		copy=0
+	}
+	if (wget==1) {
+		copy=0
+	}
+	printf("Copy %i\n",copy)
+	
+	printf("Running get CRISM...")
+	if(HasValue(raw)==0) raw=0
+	if(HasValue(verb)==0) verbose=0
+	if(HasValue(force)==0) force=0
+	if(HasValue(ignore)==0) ignore=0
+	if(HasValue(set_ignore)==0) set_ignore=0
+
+	tmpdir=sprintf("%s/%s",$DV_CRISM_CACHE,product)
+	printf("%s\n",tmpdir)
+	system(sprintf("mkdir -p %s",tmpdir))
+	system(sprintf("chmod 777 %s",tmpdir))
+
+  exists=syscall("ls "+tmpdir)
+	
+  if(HasValue(exists)) {
+    Strue=length(grep(exists,"S_TRR"))==2
+    Ltrue=length(grep(exists,"L_TRR"))==2
+    SDtrue=length(grep(exists,"S_DDR"))==2
+    LDtrue=length(grep(exists,"L_DDR"))==2
+  } else {
+    Strue=0
+    Ltrue=0
+    SDtrue=0
+    LDtrue=0
+  }
+
+	data={}
+	if(s==1) {
+		if(Strue==1) {
+			url_trrs_lbl=syscall("ls "+tmpdir+"/*S_TRR?.LBL")[,1]
+			url_trrs_img=syscall("ls "+tmpdir+"/*S_TRR?.IMG")[,1]
+		} else {
+			url_trrs_lbl=get_image(product+"_S",instrument="crism",type="TRDR-LBL",src=src)
+			url_trrs_img=get_image(product+"_S",instrument="crism",type="TRDR-IMG",src=src)
+		}
+		if(v==1) printf("%s, %s\n", url_trrs_lbl[,1], url_trrs_img[,1])
+
+		if(copy==1) {
+			trrs_filename=basename(load_pds(url_trrs_lbl,data=0).product_id[2:],"\"")
+		} else {
+			system(sprintf("%s '%s' -O %s","wget -nd",url_trrs_lbl,$TMPDIR+"/trrs.lbl"))
+			trrs_filename=basename(load_pds($TMPDIR+"/trrs.lbl",data=0).product_id[2:],"\"")
+		}
+    if(trrs_filename=="\"") {
+      printf("Could not download the TRR %s_S\n",product)
+      return(null)
+    } 
+		trrs_filename=tmpdir+"/"+trrs_filename
+
+		if(fexists(trrs_filename+".LBL")==0 || force) {
+			printf("Downloading: %s\n",trrs_filename)
+			if(copy==1) {
+				copy(url_trrs_lbl,trrs_filename+".LBL",force=force)
+				copy(url_trrs_img,trrs_filename+".IMG",force=force)
+			} else {
+				system(sprintf("%s '%s' -O %s","wget -nd",url_trrs_lbl,trrs_filename+".LBL"))
+				system(sprintf("%s '%s' -O %s","wget -nd",url_trrs_img,trrs_filename+".IMG"))
+			}
+		} else {
+			printf("File Exists: %s\n",trrs_filename)
+		}
+
+		if (SDtrue==1) {
+		  url_ddrs_lbl=syscall("ls "+tmpdir+"/*S_DDR?.LBL")[,1]
+		  url_ddrs_img=syscall("ls "+tmpdir+"/*S_DDR?.IMG")[,1]
+		} else {
+		  url_ddrs_lbl=get_image(product+"_S",instrument="crism",type="DDR-LBL",src=src)
+		  url_ddrs_img=get_image(product+"_S",instrument="crism",type="DDR-IMG",src=src)
+ 		}
+
+		if(copy==1) {
+			ddrs_filename=basename(load_pds(url_ddrs_lbl,data=0).product_id[2:],"\"")
+		} else {
+			system(sprintf("%s '%s' -O %s","wget -nd",url_ddrs_lbl,$TMPDIR+"/ddrs.lbl"))
+			ddrs_filename=basename(load_pds($TMPDIR+"/ddrs.lbl",data=0).product_id[2:],"\"")
+		}
+    if(ddrs_filename=="\"") {
+      printf("Could not download the DDR %s_S\n",product)
+      return(null)
+    } 
+
+		ddrs_filename=tmpdir+"/"+ddrs_filename
+
+		if(fexists(ddrs_filename+".LBL")==0 || force) {
+			printf("Downloading: %s\n",ddrs_filename)
+			if(copy==1) {
+				copy(url_ddrs_lbl,ddrs_filename+".LBL",force=force)
+				copy(url_ddrs_img,ddrs_filename+".IMG",force=force)
+			} else {
+				system(sprintf("%s '%s' -O %s","wget -nd",url_ddrs_lbl,ddrs_filename+".LBL"))
+				system(sprintf("%s '%s' -O %s","wget -nd",url_ddrs_img,ddrs_filename+".IMG"))
+			}
+		} else {
+			printf("File Exists: %s\n",ddrs_filename)
+		}
+  	add_struct(data,name="short")
+  	add_struct(data,name="ddrs")
+  	data.ddrs=load_pds(ddrs_filename+".LBL")
+		data.short=load_pds(trrs_filename+".LBL",data=0)
+		data.short.file.image=read(trrs_filename+".LBL")
+	}
+
+	if(l==1) {
+		if(Ltrue==1) {
+			url_trrl_lbl=syscall("ls "+tmpdir+"/*L_TRR?.LBL")[,1]
+			url_trrl_img=syscall("ls "+tmpdir+"/*L_TRR?.IMG")[,1]
+	  } else {
+			url_trrl_lbl=get_image(product+"_L",instrument="crism",type="TRDR-LBL",src=src)
+			url_trrl_img=get_image(product+"_L",instrument="crism",type="TRDR-IMG",src=src)
+		}
+		if(v==1) printf("%s, %s\n", url_trrl_lbl[,1], url_trrl_img[,1])
+
+		if(copy==1) {
+			trrl_filename=basename(load_pds(url_trrl_lbl,data=0).product_id[2:],"\"")
+		} else {
+			system(sprintf("%s '%s' -O %s","wget -nd",url_trrl_lbl,$TMPDIR+"/trrl.lbl"))
+			trrl_filename=basename(load_pds($TMPDIR+"/trrl.lbl",data=0).product_id[2:],"\"")
+		}
+	
+	  if(trrl_filename=="\"") {
+	    printf("Could not download the TRR %s_L\n",product)
+	    return(null)
+	  } 
+	
+		trrl_filename=tmpdir+"/"+trrl_filename
+	
+		if(fexists(trrl_filename+".LBL")==0 || force) {
+			printf("Downloading: %s\n",trrl_filename)
+			if(copy==1) {
+				copy(url_trrl_lbl,trrl_filename+".LBL",force=force)
+				copy(url_trrl_img,trrl_filename+".IMG",force=force)
+			} else {
+				system(sprintf("%s '%s' -O %s","wget -nd",url_trrl_lbl,trrl_filename+".LBL"))
+				system(sprintf("%s '%s' -O %s","wget -nd",url_trrl_img,trrl_filename+".IMG"))
+			}
+		} else {
+			printf("File Exists: %s\n",trrl_filename)
+		}
+	
+	 	if (LDtrue==1) {
+			url_ddrl_lbl=syscall("ls "+tmpdir+"/*L_DDR?.LBL")[,1]
+			url_ddrl_img=syscall("ls "+tmpdir+"/*L_DDR?.IMG")[,1]
+		} else {
+		  url_ddrl_lbl=get_image(product+"_L",instrument="crism",type="DDR-LBL",src=src)
+	 		url_ddrl_img=get_image(product+"_L",instrument="crism",type="DDR-IMG",src=src)
+	  }
+		
+		if(copy==1) {
+			ddrl_filename=basename(load_pds(url_ddrl_lbl,data=0).product_id[2:],"\"")
+		} else {
+			system(sprintf("%s '%s' -O %s","wget -nd",url_ddrl_lbl,$TMPDIR+"/ddrl.lbl"))
+			ddrl_filename=basename(load_pds($TMPDIR+"/ddrl.lbl",data=0).product_id[2:],"\"")
+		}
+		
+	  if(ddrl_filename=="\"") {
+	    printf("Could not download the DDR %s_L\n",product)
+	    return(null)
+	  } 
+	
+		ddrl_filename=tmpdir+"/"+ddrl_filename
+	
+		if(fexists(ddrl_filename+".LBL")==0 || force) {
+			printf("Downloading: %s\n",ddrl_filename)
+			if(copy==1) {
+				copy(url_ddrl_lbl,ddrl_filename+".LBL",force=0)
+				copy(url_ddrl_img,ddrl_filename+".IMG",force=0)
+			} else {
+				system(sprintf("%s '%s' -O %s","wget -nd",url_ddrl_lbl,ddrl_filename+".LBL"))
+				system(sprintf("%s '%s' -O %s","wget -nd",url_ddrl_img,ddrl_filename+".IMG"))
+			}
+		} else {
+			printf("File Exists: %s\n",ddrl_filename)
+		}
+			
+		data.ddrl=load_pds(ddrl_filename+".LBL")
+		data.long=load_pds(trrl_filename+".LBL",data=0)
+		data.long.file.image=read(trrl_filename+".LBL")
+	}
+		
+# Get wavelength arrays
+	if(l==1) {
+	  if(HasValue(get_struct(data.long,"mro\:wavelength_file_name"))) {
+	  	wll_filename=basename(get_struct(data.long,"mro\:wavelength_file_name")[2:],".IMG\"")
+	  } else {
+	    wll_filename=basename(get_struct(data.long,"mro_wavelength_file_name")[2:],".IMG\"")
+	  }
+
+	# surprise they changed the path again
+	  wll_lbl="http://geodata.rsl.wustl.edu/mro/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wll_filename//".LBL"
+	  wll_img="http://geodata.rsl.wustl.edu/mro/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wll_filename//".IMG"
+	#	wll_lbl="http://pds-geosciences.wustl.edu/mro-crism/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wll_filename//".LBL"
+	#	wll_img="http://pds-geosciences.wustl.edu/mro-crism/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wll_filename//".IMG"
+	
+		if(fexists(tmpdir+"/"+wll_filename+".LBL")==0 || force) {
+			printf("Downloading: %s\n",tmpdir+"/"+wll_filename)
+			if(copy==1) {
+				copy(wll_lbl,tmpdir+"/"+wll_filename+".LBL",force=force)
+				copy(wll_img,tmpdir+"/"+wll_filename+".IMG",force=force)
+			} else {
+				system(sprintf("%s %s -O %s","wget -nd", wll_lbl,tmpdir+"/"+wll_filename+".LBL"))
+				system(sprintf("%s %s -O %s","wget -nd", wll_img,tmpdir+"/"+wll_filename+".IMG"))
+			}
+		} else {
+			printf("File Exists: %s\n",tmpdir+"/"+wll_filename)
+		}
+	
+		data.long.wl_array=load_pds(tmpdir+"/"+wll_filename+".LBL")
+ 	}
+
+	if (s==1) {
+    if(HasValue(get_struct(data.short,"mro\:wavelength_file_name"))) {
+    	wls_filename=basename(get_struct(data.short,"mro\:wavelength_file_name")[2:],".IMG\"")
+    } else {
+      wls_filename=basename(get_struct(data.short,"mro_wavelength_file_name")[2:],".IMG\"")
+    }
+
+#   surprise they changed the path again
+    wls_lbl="http://geodata.rsl.wustl.edu/mro/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wls_filename//".LBL"
+    wls_img="http://geodata.rsl.wustl.edu/mro/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wls_filename//".IMG"
+
+#		wls_lbl="http://pds-geosciences.wustl.edu/mro-crism/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wls_filename//".LBL"
+#		wls_img="http://pds-geosciences.wustl.edu/mro-crism/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wls_filename//".IMG"
+		
+		if(fexists(tmpdir+"/"+wls_filename+".LBL")==0 || force) {
+			printf("Downloading: %s\n",tmpdir+"/"+wls_filename)
+			if(copy==1) {
+				copy(wls_lbl,tmpdir+"/"+wls_filename+".LBL",force=force)
+				copy(wls_img,tmpdir+"/"+wls_filename+".IMG",force=force)
+			} else {
+				system(sprintf("%s %s -O %s","wget -nd",wls_lbl,tmpdir+"/"+wls_filename+".LBL"))
+				system(sprintf("%s %s -O %s","wget -nd",wls_img,tmpdir+"/"+wls_filename+".IMG"))
+			}
+		} else {
+			printf("File Exists: %s\n",tmpdir+"/"+wls_filename)
+		}
+		data.short.wl_array=load_pds(tmpdir+"/"+wls_filename+".LBL")
+	}
+
+# Get atmospheric transmission arrays
+# Use these for the atmospheric correction (long wave only)
+# First we'll try to get the new ADR atmosphere files - this requires CAT_ENVI files to be on the local machine
+# They are not available online - yet
+
+	if(l==1) {
+		if(oldatm==0) {
+	
+	    # First, establish whether there is any atm file associated with product ID
+	
+			vs_id=grep(read_lines($DV_SCRIPT_FILES+"/instrument_parameters/crism_obs_info.txt"),product[1:8])[65:69]
+	
+			if(HasValue(vs_id)==0) {
+				printf("No VS file found - reverting to old AT files\n")
+				oldatm=1
+	    }
+				
+	    if(vs_id=="00000") {
+	      printf("No VS file found - reverting to old AT files\n")
+	      oldatm=1
+	    }
+		}
+		
+		if (oldatm==0) {
+	    # Now find the proper VS file - there's little rhyme or reason for the spatial/spectral sampling
+	    # file names, so we'll do it the tedious way.
+	
+	    samples=dim(data.long.file.image)[1]
+	    bands=dim(data.long.file.image)[3]
+	
+	    if(samples == 640) sample_name=0
+	    if(samples == 320) sample_name=1
+	    if (samples == 128) sample_name=2
+	    if (samples == 64) sample_name=3
+	    if (bands == 438) band_name=0
+	    if (bands == 55) band_name=1
+	    if (bands == 70) band_name=2
+	    if (bands == 62) band_name=3
+	
+	    if ((HasValue(band_name)==0) || (HasValue(sample_name)==0)) {
+	      printf("No VS file found for sample/band combination - reverting to old AT files\n")
+	      oldatm=1
+	    }
+		}
+	
+		if(oldatm==0) {
+	
+	   # Now we'll get the VS file
+	  	vs_lbl=$CAT_LOCATION+"/CAT_ENVI/aux_files/ADR/VS/ADR10000000000_"+vs_id+"_VS"+sample_name+band_name+"L_8.LBL"
+		  vs_img=$CAT_LOCATION+"/CAT_ENVI/aux_files/ADR/VS/ADR10000000000_"+vs_id+"_VS"+sample_name+band_name+"L_8.IMG"
+		  vs_filename="ADR10000000000_"+vs_id+"_VS"+sample_name+band_name+"L_8"
+	
+			if(fexists(tmpdir+"/"+vs_filename+".LBL")==0 || force) {
+	     	printf("Downloading: %s\n",tmpdir+"/"+vs_filename)
+	     	if(copy==1) {
+	       	copy(vs_lbl,tmpdir+"/"+vs_filename+".LBL",force=force)
+	       	copy(vs_img,tmpdir+"/"+vs_filename+".IMG",force=force)
+	     	} else {
+	       	system(sprintf("%s %s -O %s","wget -nd",vs_lbl,tmpdir+"/"+vs_filename+".LBL"))
+	      		system(sprintf("%s %s -O %s","wget -nd",vs_img,tmpdir+"/"+vs_filename+".IMG"))
+	     	}
+	   	} else {
+	     	printf("File Exists: %s\n",tmpdir+"/"+vs_filename)
+	 		}
+	
+		  data.long.at_array=load_pds(tmpdir+"/"+vs_filename+".LBL")
+	
+	    # Flip it top to bottom to make the transmission spectrum the first line
+	    data.long.at_array.file.image.data=translate(data.long.at_array.file.image.data,y,y,flip=1)
+		}
+	
+		if(oldatm!=0) {
+			# find the text string that contains the spacecraft clock start count and converts it from text to double format, sets to the varibale sc_time
+			sc_time=atod(data.long.spacecraft_clock_start_count[4:13])
+		
+			#Get second part of AT filename from the Wavelength Filename in the TRR2 file.
+		  if(HasValue(get_struct(data.long,"mro\:wavelength_file_name"))) {
+		  	wl_filename3=get_struct(data.long,"mro\:wavelength_file_name")
+		  } else {
+		    wl_filename3=get_struct(data.long,"mro_wavelength_file_name")
+		  }
+		
+			#the varibale at_end is a text string of the last 7 digits to be used in the AT_Filename ex) CDR420843667218_AT"-->0000000L<--"_7.LBL
+			at_end=wl_filename3[20:26]
+		
+			#Getting CDR Index Tab from the PDS website
+			#download the CDR Index Tab from the PDS website and set to variable cdrindex
+		
+		  cdrurl="http://geodata.rsl.wustl.edu/mro/mro-m-crism-2-edr-v1/mrocr_0001/index/cdrstatic_index.tab"
+		  if(copy==1) {
+		    copy(cdrurl,$TMPDIR+"/cdrstatic_index.tab",force=1)
+		  } else {
+			  cdrindex="wget -nd "+cdrurl
+		    # create the string "cd $TMPDIR; cdrindex
+		    command=sprintf("cd %s; %s",$TMPDIR,cdrindex)
+		    #open the directory $TMPDIR and run the run the variable cdrindex which wget to download the CDR Indext temporarily into the $TMPDIR
+		    system(command)
+		  }
+		
+			#look through the cdrstatic_index.tab located in $TMPDIR and grap all lines that contain "CDR/AT/" store as a text files into the variable atfiles
+		  atfiles=syscall("cat "+$TMPDIR+"/cdrstatic_index.tab | grep \"CDR/AT/\"")
+		
+			#Converts text to double in atfiles, characters 22 through 31, this is the start sclk time for the CDR files, new file called atfiles2
+		  atfiles2=atod(atfiles[22:31])
+		
+			# Loop through all the sclk times and create a file with each sclk time removing duplicates and saving to file outatfiles2, outatfiles saves the same lines to be used later when putting t	gether full filename
+			outatfiles2=atfiles2[,1]
+			outatfiles=atfiles[,1]
+	
+			for(i=1; i<=(dim(atfiles2)[2])-1; i+=1) {
+				if (atfiles2[,i] != atfiles2[,(i+1)]) {
+					outatfiles2=cat(outatfiles2,atfiles2[,(i+1)],axis=y)
+					outatfiles=cat(outatfiles,atfiles[,(i+1)],axis=y)
+			  }
+		  }
+		
+		# Comparing sc_time to the list of available CDR files  
+			if(outatfiles2[,1]>sc_time) {
+		  	outsclk=outatfiles2[,1]
+				line=outatfiles[,1]
+			}
+		
+			numtimes=dim(outatfiles2)[2]
+		
+			if(outatfiles2[,numtimes]<sc_time) {
+				outsclk=outatfiles2[,numtimes]
+				line=outatfiles[,numtimes]
+			}
+		
+			for(i=1; i<=numtimes-1; i+=1) { 
+				if(outatfiles2[,i]<=sc_time && outatfiles2[,i+1]>sc_time) {
+		  		outsclk=outatfiles2[,i]
+					line=outatfiles[,i]
+		  	}
+		  }
+		
+			at_filename1=line[17:34]
+			version_number=line[44]
+		
+			#Atmsospheric transmission array filename
+			atl_filename=sprintf("%s%s%s%s",at_filename1,at_end,"L_",version_number)
+		
+			#atl_filename=basename(get_struct(data.long,"mro\:wavelength_file_name")[2:],".IMG\"")
+			#atl_filename=atl_filename[1:5]//"0000000000_AT"//wll_filename[19:]
+		
+			# moved file location...surprise!!!
+		  atl_lbl="http://geodata.rsl.wustl.edu/mro/mro-m-crism-2-edr-v1/mrocr_0001/cdr/at/"//atl_filename//".LBL"
+		  atl_img="http://geodata.rsl.wustl.edu/mro/mro-m-crism-2-edr-v1/mrocr_0001/cdr/at/"//atl_filename//".IMG"
+		
+		  #	atl_lbl="http://pds-geosciences.wustl.edu/mro-crism/mro-m-crism-2-edr-v1/mrocr_0001/cdr/at/"//atl_filename//".LBL"
+		  #	atl_img="http://pds-geosciences.wustl.edu/mro-crism/mro-m-crism-2-edr-v1/mrocr_0001/cdr/at/"//atl_filename//".IMG"
+			
+			if(fexists(tmpdir+"/"+atl_filename+".LBL")==0 || force) {
+				printf("Downloading: %s\n",tmpdir+"/"+atl_filename)
+				if(copy==1) {
+					copy(atl_lbl,tmpdir+"/"+atl_filename+".LBL",force=force)
+					copy(atl_img,tmpdir+"/"+atl_filename+".IMG",force=force)
+				} else {
+					system(sprintf("%s %s -O %s","wget -nd",atl_lbl,tmpdir+"/"+atl_filename+".LBL"))
+					system(sprintf("%s %s -O %s","wget -nd",atl_img,tmpdir+"/"+atl_filename+".IMG"))
+				}
+			} else {
+				printf("File Exists: %s\n",tmpdir+"/"+atl_filename)
+			}
+		  
+			data.long.at_array=load_pds(tmpdir+"/"+atl_filename+".LBL")
+		} # End of old atm array section
+	}
+	
+	verbose=verbold
+	
+	if (raw==1) {
+  	return(data)
+	}
+
+	if(raw!=1) {
+		out={}
+		if(l==1) {
+			out.long={}
+			out.long.anc=struct(ls,solar_dist,ddr,ddrkey)
+			out.long.anc.summing=data.long.pixel_averaging_width
+			out.long.data=remove_struct(data.long.file,"image")
+			if(set_ignore==1) {
+				out.long.data[where out.long.data==65535]=ignore
+			}
+		  out.long.id=data.long.product_id[,1]
+	   	out.long.wl_array=remove_struct(data.long.wl_array.file.image,"data")
+		  out.long.at_array=remove_struct(data.long.at_array.file.image,"data")
+	    out.long.anc.ls=data.ddrl.solar_longitude
+			out.long.anc.solar_dist=data.ddrl.solar_distance
+			out.long.anc.ddrkey=data.ddrl.file.image.band_name
+			out.long.anc.ddr=remove_struct(data.ddrl.file.image,"data")
+	  }
+		if(s==1) {
+			out.short={}
+		 	out.short.anc=struct(ls,solar_dist,ddr,ddrkey)
+			out.short.anc.summing=data.short.pixel_averaging_width
+			out.short.data=remove_struct(data.short.file,"image")
+			if(set_ignore==1) {
+				out.short.data[where out.short.data==65535]=ignore
+		  }
+
+			out.short.id=data.short.product_id[,1]
+		  out.short.wl_array=remove_struct(data.short.wl_array.file.image,"data")
+	    out.short.anc.ls=data.ddrs.solar_longitude
+      out.short.anc.solar_dist=data.ddrs.solar_distance
+      out.short.anc.ddrkey=data.ddrs.file.image.band_name
+      out.short.anc.ddr=remove_struct(data.ddrs.file.image,"data")
+		}
+	}
+	printf("Done.\n")
+	return(out)
+}
+
+
+
+define crism_atm(data) {
+	#tested-cse 3/30/09
+
+	if(HasValue(data)==0 && $ARGC==1) {
+	   data=$1
+	} else if (HasValue(data)==0 && $ARGC==0) {
+	   printf("Perform the atmospheric correction for long products\n")
+	   printf("$1=standard CRISM structure (long or long/short) produced by get_crism()\n")
+	   printf("Or\n")
+	   printf("data=standard CRISM structure (long or long/short) produced by get_crism()\n")
+	   printf("modified by c.edwards, created by j.bandfield, 3/9\n")
+	   return(null)
+	}
+	printf("Running CRISM atmospheric correction...")
+
+
+	data.long.at_array=convolve2(data.long.at_array,clone(1.,50,1,1),ignore=65535.0)
+
+	#Modifed by l.mayorga 7/16/09
+	summing = data.long.anc.summing
+ 	if(dim(data.long.data)[3]==438){
+		R1980 = avg(data.long.data[,,288:291],axis=z)
+	  R2007 = avg(data.long.data[,,284:287],axis=z)
+
+#	  R1980 = data.long.data[,,290]
+#	  R2007 = data.long.data[,,286]
+
+
+
+    A1980 = avg(data.long.at_array[,1,288:291],axis=z)
+    A2007 = avg(data.long.at_array[,1,284:287],axis=z)
+#   A1980 = data.long.at_array[,1,290]
+#   A2007 = data.long.at_array[,1,286]
+    duplicate = 437
+  }else{
+    R1980 = avg(data.long.data[,,30],axis=z)
+    R2007 = avg(data.long.data[,,29],axis=z)
+
+    A1980 = avg(data.long.at_array[,1,30],axis=z)
+    A2007 = avg(data.long.at_array[,1,29],axis=z)
+    duplicate = 54
+  }
+  expon = ln(R1980/R2007)/ln(A1980/A2007)
+	
+	if(summing==1) {
+	  for(i=8; i<=611; i+=1) {
+      data.long.data[i,,2:] =  data.long.data[i,,2:] / data.long.at_array[i,1,2:]^clone(expon[i],z=duplicate)
+	  }
+  } else if(summing==2) {
+    for(i=5; i<=305; i+=1) {
+	    data.long.data[i,,2:] =  data.long.data[i,,2:] / data.long.at_array[i,1,2:]^clone(expon[i],z=duplicate)
+	  }
+  } else if (summing==5 || summing==10) {
+    for (i=(10/summing+1); i<=(640/summing)-(30/summing); i+=1) {
+	    data.long.data[i,,2:] =  data.long.data[i,,2:] / data.long.at_array[i,1,2:]^clone(expon[i],z=duplicate)
+	  }
+  }
+	printf("Done.\n")
+
+  if($ARGC==1) {
+		return(data)
+  }
+}
+
+define crism_resample(data) {
+#tested cse 3/30/09 --needs more
+
+	if(HasValue(data)==0 && $ARGC==1) {
+	  data=$1
+	} else if (HasValue(data)==0 && $ARGC==0) {
+	  printf("Resample the image to be uniform across the entire detector\n")
+ 	  printf("$1=standard CRISM structure (long or long/short) produced by get_crism()\n")
+ 	  printf("Or\n")
+ 	  printf("data=standard CRISM structure (long or long/short) produced by get_crism()\n\n")
+ 	  printf("modified by c.edwards, created by j.bandfield, 3/9\n")
+	  return(null)
+	}
+
+	printf("Running CRISM resample...")
+
+  if (HasValue(data.long)!=0) {
+	 	ave_wll=avg(data.long.wl_array[int(260/data.long.anc.summing):int(359/data.long.anc.summing)],axis=x)
+
+  	for(i=(30/data.long.anc.summing); i<=(634/data.long.anc.summing-1); i+=1) {
+			data.long.data[i,,2:]=translate(resample(translate(data.long.data[i,,2:],z,z,flip=1),translate(data.long.wl_array[i,,2:],z,z,flip=1),translate(ave_wll[,,2:],z,z,flip=1)).data,z,z,flip=1)
+  	}
+  	data.long.wl_array=ave_wll
+	}
+
+  if (HasValue(data.short)!=0) {
+    ave_wls=avg(data.short.wl_array[int(270/data.short.anc.summing):int(369/data.short.anc.summing)],axis=x)
+    for (i=(26/data.short.anc.summing); i<=(626/data.short.anc.summing-1); i+=1) {
+      data.short.data[i]=translate(resample(translate(data.short.data[i],z,z,flip=1),translate(data.short.wl_array[i],z,z,flip=1),translate(ave_wls,z,z,flip=1)).data,z,z,flip=1)
+    }
+  	data.short.wl_array=ave_wls
+  }
+	verbose=1
+	printf("Done.\n")
+
+	return(data)
+}
+
+
+
+define crism_destripe(r_size,f_size,ignore,sigmamult,data,v) {
+#tested cse 3/30/09
+	
+	if(HasValue(r_size)==0) r_size=21
+	if(HasValue(z_size)==0) z_size=9
+	if(HasValue(f_size)==0) f_size=3
+	if(HasValue(ignore)==0) ignore=0
+	if(HasValue(sigmamult)==0) sigmamult=1.0
+	if(HasValue(v)==0) v=0
+
+	if(HasValue(data)==0 && $ARGC==1) {
+	   data=$1
+   	} else if (HasValue(data)==0 && $ARGC==0) {
+	   printf("Perform the despike/destripe for either long or short  products\n")
+	   printf("$1=data element from the standard crism structure (long or short) produced by get_crism()\n")
+	   printf("Or\n")
+	   printf("data=data element from the standard crism structure (long or short) produced by get_crism()\n\n")
+	   printf("Options:\n")
+	   printf("\tr_size=residual column  noise filter size (Default=21)\n")
+	   printf("\tf_size=spike detection filter size (Default=3)\n")
+		 printf("\tz_size=spectral filter size for replacement values (Default=9)\n")
+	   printf("\tsigmamult=number of standard deviations from the mean for spike detection (Default=1.0)\n")	
+	   printf("\tignore=null value for the image (Default=0)\n\n")	
+	   printf("modified by j.bandfield/c.edwards, 10/09\n")
+	   return(null)
+	}
+
+	printf("Running CRISM destripe...")
+
+	#construct the mask
+	mask=byte(data[,,1]*0)
+	mask[where (data[,,5]!=ignore)]=1
+
+  for(j=1;j<=dim(data)[2];j+=1) {
+	
+		if(v>0) printf("Line: %i\n",j)
+    #extract the line and replacement array
+		line=data[,j,5:]
+
+    #create the smoothed array and calculate the average+stddev
+		con=convolve2(line,clone(1.,f_size,1,1),ignore=ignore)
+		avg=avg(line-con,both=1,ignore=ignore,axis=x)
+
+    #deal with the low> spike and deal with the high spikes
+		line[where ((-(avg.stddev)*sigmamult)>(line-con))]=ignore
+		line[where (((avg.stddev)*sigmamult)<(line-con))]=ignore
+	
+		sigma=translate(boxfilter(translate(line,z,y),x=1,y=z_size,ignore=ignore,verbose=1).sigma,y,z)
+
+		#filter the data in spectral direction
+		line2=translate(boxfilter(translate(line,z,y),x=1,y=z_size,ignore=ignore),y,z)
+		
+		#replace the original data where spikes were detected
+		line[where line==ignore]=line2
+		
+		#replace the original data where no good replacement data could be created
+		line[where line==ignore]=data[,j,5:]
+		line[where sigma==0]=data[,j,5:]
+
+		#back in to the original array for memory's sake
+		data[,j,5:]=float(line)
+	}
+
+	#reset the ignore values
+	data[where mask==0]=ignore
+	
+	#run deplaid last (seems to make the noise a bit clearer)
+	#this option usees a directional deplaid for older versions of davinci
+	if(dim(data)[3]==438 && atof(version()[18:])>=2.0) {
+    for (i=5; i<=168; i+=20) {
+      if (i<149) {
+   	    data[,,i:(i+20)]=thm.deplaid(data[,,i:(i+20)],ignore=ignore,b10=0,axis=y)
+      } else {
+			  data[,,i:168]=thm.deplaid(data[,,i:168],ignore=ignore,b10=0,axis=y)	
+      }
+	  }
+	  for (i=187; i<=438; i+=20) {
+      if (i<419) {
+	      data[,,i:(i+20)]=thm.deplaid(data[,,i:(i+20)],ignore=ignore,b10=0,axis=y)
+      } else {
+	      data[,,i:438]=thm.deplaid(data[,,i:438],ignore=ignore,b10=0,axis=y)	
+      }
+    }
+  }
+	
+	#this option uses the standard deplaid if the directional version is not available
+	if(dim(data)[3]==438 && atof(version()[18:])<2.0) {
+    for (i=5; i<=168; i+=20) {
+	    if (i<149) {
+			  data[,,i:(i+20)]=thm.deplaid(data[,,i:(i+20)],ignore=ignore,b10=0)
+    	} else {
+		    data[,,i:168]=thm.deplaid(data[,,i:168],ignore=ignore,b10=0)	
+    	}
+	  }
+    for (i=187; i<=438; i+=20) {
+      if (i<419) {
+        data[,,i:(i+20)]=thm.deplaid(data[,,i:(i+20)],ignore=ignore,b10=0)
+			} else {
+	      data[,,i:438]=thm.deplaid(data[,,i:438],ignore=ignore,b10=0)	
+      }
+    }
+  }
+
+	#remove residual line noise	
+	avg=avg(data,ignore=ignore,axis=y)
+	con=convolve2(avg,clone(1.,r_size,1,1),ignore=ignore)
+	data=data-float((avg-con))
+	printf("done.\n")
+
+	return(data)
+}
+
+
+
+define crism_destripe_old(r_size,f_size,ignore,sigmamult,data,v) {
+#tested cse 3/30/09
+
+	if(HasValue(r_size)==0) r_size=7
+	if(HasValue(z_size)==0) z_size=9
+	if(HasValue(f_size)==0) f_size=3
+	if(HasValue(ignore)==0) ignore=0
+	if(HasValue(sigmamult)==0) sigmamult=1.25
+	if(HasValue(v)==0) v=0
+
+	if(HasValue(data)==0 && $ARGC==1) {
+	   data=$1
+   	} else if (HasValue(data)==0 && $ARGC==0) {
+	   printf("Perform the despike/destripe for either long or short  products\n")
+	   printf("$1=data element from the standard crism structure (long or short) produced by get_crism()\n")
+	   printf("Or\n")
+	   printf("data=data element from the standard crism structure (long or short) produced by get_crism()\n\n")
+	   printf("Options:\n")
+	   printf("\tr_size=replacement image filter size (Default=5)\n")
+	   printf("\tf_size=spike detection filter size (Default=3)\n")
+	   printf("\tsigmamult=number of standard deviations from the mean for spike detection (Default=1.25)\n\n")	
+	   printf("\tignore=null value for the image (Default=0)\n\n")	
+	   printf("modified by c.edwards, created by j.bandfield, 3/9\n")
+	   return(null)
+	}
+
+	#construct the mask
+	mask=byte(data[,,1]*0)
+	mask[where (data[,,5]!=ignore)]=1
+
+#	plim(0,700,0.02,.25)
+
+	for(k=1;k<=dim(data)[3];k+=1) {
+	   
+           printf("%i\n",k)
+	   #extract a single band to work with (deplaid takes care of band correlated noise)
+	   #addend/beginning fixes
+
+	   start=k-(int(z_size/2))
+	   end=k+(int(z_size/2))
+	   if(start<1) start=1 
+	   if(end>dim(data)[3]) end=dim(data)[3]
+
+	   replace=data[,,start:end]
+
+	   #get a windowed average and stddev
+	   pxavg=boxfilter(replace,x=r_size,ignore=ignore,verbose=1)
+
+	   replace[where mask==0]=ignore		
+	   #construct the replace array from the windowed average/stddev arrays
+	   replace[where replace<pxavg.mean-pxavg.sigma || replace> pxavg.mean+pxavg.sigma]=ignore
+
+	   middle=k-start+1
+	   replace[,,middle]=ignore
+	   replace=float(avg(replace,axis=z,ignore=ignore))
+
+	   #convlove the array to make a uniform scene 
+	   replace2=boxfilter(replace,size=3,ignore=ignore)	
+	   replace[where replace==ignore]=replace2
+   	   replace[where mask==0]=ignore		
+
+	   #clean up the replace array
+	   avg=avg(replace,axis=y,ignore=ignore)
+	   con=convolve2(avg,clone(1.,51,1,1),ignore=ignore)
+	   replace=replace-float(avg-con)
+
+	   for(j=1;j<=dim(data)[2];j+=1) {
+	
+	      #extract the line and replacement array
+	      line_old=data[,j,k]
+	      line=line_old
+	      replace_line=replace[,j]
+
+	      #create the smoothed array and calculate the average+stddev
+	      #con_bf=boxfilter(line,size=f_size,ignore=ignore)
+	      con=convolve2(line,clone(1.,f_size,f_size,1),ignore=ignore)
+      	      avg=avg(line-con,both=1,ignore=ignore)
+
+	      #deal with the low> spike
+	      line[where ((-(avg.stddev)*sigmamult)>(line-con))]=replace_line
+
+	      #deal with the high spikes
+      	      line[where (((avg.stddev)*sigmamult)<(line-con))]=replace_line
+	
+	      data[,j,k]=float(line)
+	      #xplot(line_old,line,ignore=0)
+	   }
+	}
+
+	#reset the ignore values	
+	data[where mask==0]=ignore
+	
+	#run deplaid first (seems to make the noise a bit clearer)
+#	data=thm.deplaid(data,ignore=ignore,b10=0)
+
+
+	if(dim(data)[3]==438 && atof(version()[18:])>=2.0) {
+    for (i=4; i<=168; i+=20) {
+	    if (i<149) {
+	 	    data[,,i:(i+20)]=thm.deplaid(data[,,i:(i+20)],ignore=ignore,b10=0,axis=y)
+      } else {
+		    data[,,i:168]=thm.deplaid(data[,,i:168],ignore=ignore,b10=0,axis=y)	
+      }
+	  }
+    for (i=187; i<=438; i+=20) {
+      if (i<419) {
+        data[,,i:(i+20)]=thm.deplaid(data[,,i:(i+20)],ignore=ignore,b10=0,axis=y)
+      } else {
+        data[,,i:438]=thm.deplaid(data[,,i:438],ignore=ignore,b10=0,axis=y)	
+      }
+    }
+  }
+	if(dim(data)[3]==438 && atof(version()[18:])<2.0) {
+    for (i=4; i<=168; i+=20) {
+      if (i<149) {
+   	    data[,,i:(i+20)]=thm.deplaid(data[,,i:(i+20)],ignore=ignore,b10=0)
+      } else {
+			  data[,,i:168]=thm.deplaid(data[,,i:168],ignore=ignore,b10=0)	
+    	}
+	  }
+    for (i=187; i<=438; i+=20) {
+      if (i<419) {
+	      data[,,i:(i+20)]=thm.deplaid(data[,,i:(i+20)],ignore=ignore,b10=0)
+      } else {
+	      data[,,i:438]=thm.deplaid(data[,,i:438],ignore=ignore,b10=0)	
+      }
+    }
+  }
+
+	#remove residual line noise	
+	avg=avg(data,ignore=ignore,axis=y)
+	con=convolve2(avg,clone(1.,r_size,1,1),ignore=ignore)
+	data=data-float((avg-con))
+
+	return(data)
+}
+
+
+
+define project_crism(proj,planet,ddr,clat,clon,outstruct,sampling,ignore,manual) {
+#tested cse 03/30/09
+#updated jlb 09/07/11
+
+	if($ARGC!=2) {
+	  printf("\nProject a crism product using gdal from control points in the DDR image\n")
+	  printf("$1 = the CRISM DDR data array, 2 band lat/lon array\n")
+	  printf("$2 = fully proccessed CRISM image (one or three band byte)\n")
+	  printf("Options:\n")
+	  printf("\tproj=projection type (\"sinu\",\"simp\", Default=\"simp\"\n")
+	  printf("\tplanet=1-use the Mars ellipsoid reference 2-Earth epsg:4326 3-Moon (Default=1)\n")
+	  printf("\tddr=use the full ddr array (will choose the right bands, Default=1)\n")
+	  printf("\tsampling=pixel sampling in meters (default is native sampling)\n")
+	  printf("\tclon=use a user specified center longitude for \"sinu\" projection, Default is center of image\n")
+	  printf("\tclat=use a user specified center latitude for \"simp\" projection, Default is 0\n")
+	  printf("\toutstruct=run gdalinfo and return geometry info, Default is 1\n")
+	  printf("\tmanual=provide list of control points instead fo lat/lon backplanes\n")
+	  printf("\t(as $1 with 4 columns x,y,lon,lat), Default is 0\n")
+	  printf("\tignore=data values treated as null by GDAL, default is 0\n")
+
+	  printf("NOTE: requires gdalwarp and gdal_translate >1.5.1, specified by $DV_GDAL_PATH\n\n")
+	  printf("modified by j.bandfield,c.edwards, written by c.edwards 3/09\n\n")
+	  return(null)
+	}
+			 
+	if(HasValue(proj)==0) proj="sinu"
+	if(HasValue(planet)==0)	planet=1
+	if(HasValue(ddr)==0) ddr=1
+	if(HasValue(outstruct)==0) outstruct=1
+	if(HasValue(sampling)==0) sampling=0
+	if(HasValue(ignore)==0) ignore=0
+	if(HasValue(manual)==0) manual=0
+
+	latlon=$1
+	img=$2
+
+	printf(""+ddr+"")
+	printf(""+planet+"")
+
+	if (sampling==0) {
+		sampopt=" "
+	} else {
+		sampopt="-tr "+sampling+" "+sampling
+	}
+
+	if(ddr==1 && manual==0) {
+		if(dim(latlon)[3]!=2) {
+		   latlon=latlon[,,4:5]
+		}
+	}
+
+	dlatlon=dim(latlon)
+	nbands=dim(img)[3]
+
+#	for (bnum=1; bnum<=nbands; bnum+=1) {
+
+	write(img[,,],$TMPDIR+"/project_crism_temp_image.tif",type=tif,force=1)
+
+	if(fexists($TMPDIR+"/ctrl_pts.txt")) syscall("rm "+$TMPDIR+"/ctrl_pts.txt")
+	if(fexists($TMPDIR+"/project_crism_image.tif1")) syscall("rm "+$TMPDIR+"/project_crism_image.tif1")
+	if(fexists($TMPDIR+"/project_crism_image.tif2")) syscall("rm "+$TMPDIR+"/project_crism_image.tif2")
+
+	if (manual==0) {
+
+		for(i=5;i<=dlatlon[1]+1;i+=dlatlon[1]/10) {
+			for(j=5;j<=dlatlon[2]+1;j+=dlatlon[2]/10){
+				if(i>dlatlon[1]) { 
+					i=dlatlon[1]
+				}
+				if(j>dlatlon[2]) {
+					j=dlatlon[2]
+				}
+				fprintf($TMPDIR+"/ctrl_pts.txt","-gcp %i %i %f %f\n",i,j,latlon[i,j,2],latlon[i,j,1])
+			}
+		}
+	 } else {
+     for (i=1; i<=dlatlon[2]; i+=1) {
+			if (latlon[1,i]!=0){
+				fprintf($TMPDIR+"/ctrl_pts.txt","-gcp %i %i %f %f\n",latlon[1,i],latlon[2,i],latlon[3,i],latlon[4,i])
+			}
+		}
+	}
+	if(HasValue(clat)) { 
+		centerlat=clat
+	} else {
+		centerlat=0
+	} 
+	if(HasValue(clon)) {
+		centerlon=clon
+	} else {
+		if (manual==0) {
+			centerlon=latlon[dlatlon[1]/2,dlatlon[2]/2,2]
+		} else {
+			centerlon=avg(latlon[3])
+		}
+	}
+
+	if(planet==1) {
+
+		#set the projection
+		system($DV_GDAL_PATH+"/gdal_translate -a_srs GEOGCS[\"Mars 2000\",DATUM[\"D_Mars_2000\",SPHEROID[\"Mars_2000_IAU_IAG\",3396190.0,169.89444722361179]],PRIMEM[\"Greenwich\",0]] `cat "+$TMPDIR+"/ctrl_pts.txt` "+$TMPDIR+"/project_crism_temp_image.tif "+$TMPDIR+"/project_crism_image.tif1")
+
+		#project the image using specified projection parameters
+		#simp
+		if(proj=="simp") {
+			syscall($DV_GDAL_PATH+"/gdalwarp -r bilinear "+sampopt+" -srcnodata "+ignore+" -t_srs \"+proj=eqc +lat_ts="+centerlat+" +lat_0="+centerlat+" +x_0=0 +y_0=0 +a=3396190 +b=3376200 +units=m +no_defs\" -tps "+$TMPDIR+"/project_crism_image.tif1 "+$TMPDIR+"/project_crism_image.tif2")
+		}
+		#sinu
+		if(proj=="sinu") {
+			syscall($DV_GDAL_PATH+"/gdalwarp -q -rb "+sampopt+" -srcnodata "+ignore+" -t_srs \"+proj=sinu +lon_0="+centerlon+" +x_0=0 +y_0=0 +a=3396190 +b=3376200 +units=m +no_defs\" -tps "+$TMPDIR+"/project_crism_image.tif1 "+$TMPDIR+"/project_crism_image.tif2")
+		}
+	}
+
+	if(planet==2) {
+		syscall($DV_GDAL_PATH+"/gdal_translate -strict -a_srs epsg:4326 `cat "+$TMPDIR+"/ctrl_pts.txt` "+$TMPDIR+"/project_crism_temp_image.tif "+$TMPDIR+"/project_crism_image.tif1")	
+	  
+		#simp
+		if(proj=="simp") {
+			syscall($DV_GDAL_PATH+"/gdalwarp -r bilinear -tps "+sampopt+" -srcnodata "+ignore+" -t_srs \"+proj=eqc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0="+centerlon+" +units=m +x_0=0 +y_0=0\" -tps "+$TMPDIR+"/project_crism_image.tif1 "+$TMPDIR+"/project_crism_image.tif2")
+		} 
+	  
+		#sinu
+	  if(proj=="sinu") {
+			syscall($DV_GDAL_PATH+"/gdalwarp -r bilinear "+sampopt+" -srcnodata "+ignore+" -t_srs \"+proj=sinu +lon_0="+centerlon+" +units=m +x_0=0 +y_0=0\" -tps "+$TMPDIR+"/project_crism_image.tif1 "+$TMPDIR+"/project_crism_image.tif2")
+  	}
+	}
+
+	if(planet==3) {
+	
+		#set the projection
+	  #project the image using specified projection parameters
+		system($DV_GDAL_PATH+"/gdal_translate -a_srs GEOGCS[\"Moon 2000\",DATUM[\"D_Moon_2000\",SPHEROID[\"Moon_2000_IAU_IAG\",1737400.0,0.0]],PRIMEM[\"Greenwich\",0],UNIT[\"Decimal_Degree\",0.0174532925199433]] `cat "+$TMPDIR+"/ctrl_pts.txt` "+$TMPDIR+"/project_crism_temp_image.tif "+$TMPDIR+"/project_crism_image.tif1")
+
+		#project the image using specified projection parameters
+	  #simp
+		if(proj=="simp") {
+			syscall($DV_GDAL_PATH+"/gdalwarp -r bilinear "+sampopt+" -srcnodata "+ignore+" -t_srs \"+proj=eqc +lat_ts="+centerlat+" +lat_0="+centerlat+" +x_0=0 +y_0=0 +a=1737400 +b=1737400 +units=m +no_defs\" -tps "+$TMPDIR+"/project_crism_image.tif1 "+$TMPDIR+"/project_crism_image.tif2")
+		} 
+
+		#sinu
+		if(proj=="sinu") {
+			syscall($DV_GDAL_PATH+"/gdalwarp -q -rb "+sampopt+" -srcnodata "+ignore+" -t_srs \"+proj=sinu +lon_0="+centerlon+" +x_0=0 +y_0=0 +a=1737400 +b=1737400 +units=m +no_defs\" -tps "+$TMPDIR+"/project_crism_image.tif1 "+$TMPDIR+"/project_crism_image.tif2")
+		}
+	}
+
+	out=read_geo($TMPDIR+"/project_crism_image.tif2")
+	return(out)
+}
+
+
+
+define project_crism_index(proj,planet,index,colors,ignore,struct,outstruct,rsstretch) {
+#tested cse 3/30/09
+
+  	if($ARGC!=3 && HasValue(struct)==0) {
+    	   printf("\n")
+	   printf("Projects and colorizes CRISM index images\n")
+  	   printf("$1 = index image\n")
+  	   printf("$2 = data from which the index was created\n")
+  	   printf("$3 = ddr for project_crism()\n")
+	   printf("Or\n")
+	   printf("struct = standard CRISM structure with all indices present (from process_crism())\n\n")
+	   printf("Options:\n")
+	   printf("\tproj=projection type (\"sinu\",\"simp\", Default=\"sim\"\n")
+	   printf("\tplanet=use the Mars ellipsoid reference (Default=1)\n")
+	   printf("\tindex=use if more than one index is supplied (Default=1)\n")
+	   printf("\t\te.g. index=5 is the 5th index in the index array in the z direction\n")
+	   printf("\tcolors=color options from colorize() (Default=5)\n")
+	   printf("\tignore=ignore value of the image (Default=0)\n")
+       printf("\toutstruct=run gdalinfo and return geometry info, Default is 1\n")
+	   printf("\trsstretch=run rsstretch rather than sstretch, Default is 0\n")
+	   printf("NOTE: requires gdalwarp and gdal_translate >1.5.1, specified by $DV_GDAL_PATH\n\n")
+  	   printf("modified by c.edwards, created by l.mayorga 3/09\n\n")
+  	   return (null)
+	}
+
+	if(HasValue(proj)==0) proj="sinu"
+	if(HasValue(planet)==0)	planet=1
+	if(HasValue(index)==0) index=1
+	if(HasValue(colors)==0) colors=5
+	if(HasValue(ignore)==0) ignore=0
+	if(HasValue(outstruct)==0) outstruct=1
+	if(HasValue(rsstretch)==0) rsstretch=0
+
+	#parse the inputs
+	if((HasValue(struct)==1) && type(struct)=="STRUCT") {
+	   indeximg=struct.long.index.index[,,index]
+	   data=struct.long.data
+	   ddr=struct.long.anc.ddr[,,4:5]	
+	} else if ($ARGC==3) { 
+	   indeximg=$1
+	   indeximg=indeximg[,,index]
+	   data=$2
+	   ddr=$3
+  	} else {
+	   printf("No valid data was supplied\n")
+	   return(null)
+	}
+
+	#stretch the specified index 
+	if (rsstretch==1) {	
+	tmp=rsstretch(indeximg,ignore=ignore)
+	tmp [where (tmp==0 && data[,,50]!=ignore)]=1
+	} else {
+        tmp=sstretch(indeximg,ignore=ignore)
+	tmp [where (tmp==0 && data[,,50]!=ignore)]=1
+	}
+
+	#colorize the index
+	tmpc=colorize(tmp,ignore=ignore,colors=colors)
+
+	#set up the background image
+	if (dim(data)[3]==438){
+	   bg=avg(data[,,350:420],axis=z)
+	} else if (dim(data)[3]==55){
+	   bg=avg(data[,,35:45],axis=z)
+	} else {
+	   return(null)
+	}
+
+	#process and stretch the background image
+	
+	if (rsstretch==1) {
+	bg=hpf(bg,size=200,ignore=ignore)
+	bg=rsstretch(bg,ignore=ignore)
+	} else {
+	
+	bg=hpf(bg,size=200,ignore=ignore)
+	bg=sstretch(bg,ignore=ignore)
+	}
+
+	#convert to hsv and do the overlay
+	tmpch=rgb2hsv(tmpc)
+	tmpch[,,3]=(bg+40)/255.
+	rgb=byte(hsv2rgb(tmpch,maxval=255))
+	rgb[where (data[,,50]==ignore)]=0
+	
+	#project the index
+	prgb=project_crism(ddr,rgb,planet=planet,proj=proj,outstruct=outstruct)
+
+	return(prgb)
+}
+
+
+
+define get_crism_r(data,rc) {
+	if ($ARGC<3) {
+	  printf("Produce CRISM I/F image for a particular wavelength.\n")
+    printf("$1=center wavelength (in nm)\n")
+    printf("$2=CRISM wavelength scale (1 x 1 x n)\n")
+	  printf("data=standard CRISM data array (e.g., out.long.data)\n\n")
+	  printf("Created by j.bandfield, 1/15\n")
+	  return(null)
+	}
+
+
+	if (HasValue(rc)==0) {
+    rc=0
+	}
+
+	wavelength=$1
+	wl_array=$2
+	width=$3
+	width=(width-1)/2
+
+	band_center=minpos(abs(wl_array-wavelength))[3]
+
+	start=band_center-width
+	stop=band_center+width
+
+	if (max(rc)==0) {
+    out=float(avg(data[,,start:stop],axis=z))
+	} else {
+    rc1=rc[1]
+    rc2=rc[2]
+
+    if (dim(rc)>2) {
+        rcw=(5-1)/2
+    } else {
+        rcw=(rc[3]-1)/2
+    }
+
+    rcbc1=minpos(abs(wl_array-rc1))[3]
+    rcbc1start=rcbc1-rcw
+    rcbc1stop=rcbc1+rcw
+    rcbc2=minpos(abs(wl_array-rc2))[3]
+    rcbc2start=rcbc2-rcw
+    rcbc2stop=rcbc2+rcw
+    
+    rw1=avg(wl_array[,,rcbc1start:rcbc1stop])
+    rw2=avg(wl_array[,,rcbc2start:rcbc2stop])
+
+    rc1=avg(data[,,rcbc1start:rcbc1stop],axis=z)
+    rc2=avg(data[,,rcbc2start:rcbc2stop],axis=z)
+
+    slope=(rc2-rc1)/(rc[2]-rc[1])
+
+    out=float(rc1+((wavelength-rw1)*slope))
+	}
+	return(out)
+}
+
+
+define create_indices(data,wl_array) {
+
+	if(HasValue(data)==0 && $ARGC==2) {
+    data=$1
+    wl_array=$2
+	} else if ((HasValue(data)==0 || HasValue(wl_array)==0) && $ARGC<2) {
+  	printf("Create the updated indexes for long CRISM FRT/HRL/MSP products\n")
+    printf("$1=standard CRISM data array (e.g. out.long.data)\n")
+    printf("$2=corresponding CRISM wavelength array\n")
+    printf("Or\n")
+	  printf("data=standard CRISM data array (e.g. out.long.data)\n\n")
+    printf("wl_array=corresponding CRISM wavelength array\n")
+	  printf("Created by j.bandfield, 1/15\n")
+    printf("Works with short/long wavelength full resolution and multispectral data\n")
+    printf("Updated based in Viviano-Beck et al., JGR (2014)\n")
+	  return(null)
+	}
+
+	out=struct()
+	wl_scale=avg(wl_array,x,ignore=65535)
+
+	if(dim(data)[3]==438) {
+		# FRT, HRL, HRS data
+  	r1080=get_crism_r(1080,wl_scale,5,data=data)
+  	r1152=get_crism_r(1152,wl_scale,7,data=data)
+  	r1210=get_crism_r(1210,wl_scale,7,data=data)
+    r1250=get_crism_r(1250,wl_scale,7,data=data)
+    r1263=get_crism_r(1263,wl_scale,7,data=data)
+    r1276=get_crism_r(1276,wl_scale,7,data=data)
+    r1320=get_crism_r(1320,wl_scale,15,data=data)
+    r1330=get_crism_r(1330,wl_scale,5,data=data)
+    r1368=get_crism_r(1368,wl_scale,7,data=data)
+    r1395=get_crism_r(1395,wl_scale,3,data=data)
+    r1427=get_crism_r(1427,wl_scale,7,data=data)
+    r1467=get_crism_r(1467,wl_scale,5,data=data)
+    r1470=get_crism_r(1470,wl_scale,5,data=data)
+    r1560=get_crism_r(1560,wl_scale,7,data=data)
+    r1690=get_crism_r(1690,wl_scale,5,data=data)
+    r1750=get_crism_r(1750,wl_scale,3,data=data)
+    r1810=get_crism_r(1810,wl_scale,7,data=data)
+    r1815=get_crism_r(1815,wl_scale,5,data=data)
+    r1850=get_crism_r(1850,wl_scale,5,data=data)
+    r1870=get_crism_r(1870,wl_scale,7,data=data)
+    r1930=get_crism_r(1930,wl_scale,3,data=data)
+    r1985=get_crism_r(1985,wl_scale,5,data=data)
+    r2067=get_crism_r(2067,wl_scale,5,data=data)
+    r2120=get_crism_r(2120,wl_scale,5,data=data)
+    r2132=get_crism_r(2132,wl_scale,5,data=data)
+    r2140=get_crism_r(2140,wl_scale,7,data=data)
+    r2165=get_crism_r(2165,wl_scale,3,data=data)
+    r2170=get_crism_r(2170,wl_scale,5,data=data)
+    r2185=get_crism_r(2185,wl_scale,3,data=data)
+    r2210=get_crism_r(2210,wl_scale,3,data=data)
+    r2230=get_crism_r(2230,wl_scale,3,data=data)
+    r2235=get_crism_r(2235,wl_scale,3,data=data)
+    r2245=get_crism_r(2245,wl_scale,7,data=data)
+    r2250=get_crism_r(2250,wl_scale,3,data=data)
+    r2252=get_crism_r(2252,wl_scale,3,data=data)
+    r2265=get_crism_r(2265,wl_scale,3,data=data)
+    r2290=get_crism_r(2290,wl_scale,5,data=data)
+    r2295=get_crism_r(2295,wl_scale,5,data=data)
+    r2300=get_crism_r(2300,wl_scale,5,data=data)
+    r2320=get_crism_r(2320,wl_scale,3,data=data)
+    r2330=get_crism_r(2330,wl_scale,3,data=data)
+    r2340=get_crism_r(2340,wl_scale,3,data=data)
+    r2345=get_crism_r(2345,wl_scale,5,data=data)
+    r2350=get_crism_r(2350,wl_scale,5,data=data)
+    r2355=get_crism_r(2355,wl_scale,5,data=data)
+    r2364=get_crism_r(2364,wl_scale,5,data=data)
+    r2400=get_crism_r(2400,wl_scale,3,data=data)
+    r2430=get_crism_r(2430,wl_scale,5,data=data)
+    r2450=get_crism_r(2450,wl_scale,5,data=data)
+    r2460=get_crism_r(2460,wl_scale,7,data=data)
+    r2480=get_crism_r(2480,wl_scale,5,data=data)
+    r2530=get_crism_r(2530,wl_scale,5,data=data)
+    r2537=get_crism_r(2537,wl_scale,5,data=data)
+    r2570=get_crism_r(2570,wl_scale,5,data=data)
+    r2602=get_crism_r(2602,wl_scale,5,data=data)
+    r3250=get_crism_r(3250,wl_scale,11,data=data)
+    r3420=get_crism_r(3420,wl_scale,15,data=data)
+    r3450=get_crism_r(3450,wl_scale,9,data=data)
+    r3610=get_crism_r(3610,wl_scale,11,data=data)
+    r3630=get_crism_r(3630,wl_scale,11,data=data)
+    r3875=get_crism_r(3875,wl_scale,7,data=data)
+
+	} else if(dim(data)[3]==55) {
+
+		# MSP data
+    r1080=get_crism_r(1080,wl_scale,1,data=data)
+    r1152=get_crism_r(1152,wl_scale,1,data=data)
+    r1210=get_crism_r(1210,wl_scale,1,data=data)
+    r1250=get_crism_r(1250,wl_scale,1,data=data)
+    r1263=get_crism_r(1263,wl_scale,1,data=data)
+    r1276=get_crism_r(1276,wl_scale,1,data=data)
+    r1320=get_crism_r(1320,wl_scale,1,data=data)
+    r1330=get_crism_r(1330,wl_scale,1,data=data)
+    r1368=get_crism_r(1368,wl_scale,1,data=data)
+    r1395=get_crism_r(1395,wl_scale,1,data=data)
+    r1427=get_crism_r(1427,wl_scale,1,data=data)
+    r1467=get_crism_r(1467,wl_scale,1,data=data)
+    r1470=get_crism_r(1470,wl_scale,1,data=data)
+    r1560=get_crism_r(1560,wl_scale,1,data=data)
+    r1690=get_crism_r(1690,wl_scale,1,data=data)
+    r1750=get_crism_r(1750,wl_scale,1,data=data)
+    r1810=get_crism_r(1810,wl_scale,1,data=data)
+    r1815=get_crism_r(1815,wl_scale,1,data=data)
+    r1850=get_crism_r(1850,wl_scale,1,data=data)
+    r1870=get_crism_r(1870,wl_scale,1,data=data)
+    r1930=get_crism_r(1930,wl_scale,1,data=data)
+    r1985=get_crism_r(1985,wl_scale,1,data=data)
+    r2067=get_crism_r(2067,wl_scale,1,data=data)
+    r2120=get_crism_r(2120,wl_scale,1,data=data)
+    r2132=get_crism_r(2132,wl_scale,1,data=data)
+    r2140=get_crism_r(2140,wl_scale,1,data=data)
+    r2165=get_crism_r(2165,wl_scale,1,data=data)
+    r2170=get_crism_r(2170,wl_scale,1,data=data)
+    r2185=get_crism_r(2185,wl_scale,1,data=data)
+    r2210=get_crism_r(2210,wl_scale,1,data=data)
+    r2230=get_crism_r(2230,wl_scale,1,data=data)
+    r2235=get_crism_r(2235,wl_scale,1,data=data)
+    r2245=get_crism_r(2245,wl_scale,1,data=data)
+    r2250=get_crism_r(2250,wl_scale,1,data=data)
+    r2252=get_crism_r(2252,wl_scale,1,data=data)
+    r2265=get_crism_r(2265,wl_scale,1,data=data)
+    r2290=get_crism_r(2290,wl_scale,1,data=data)
+    r2295=get_crism_r(2295,wl_scale,1,data=data)
+    r2300=get_crism_r(2300,wl_scale,1,data=data)
+    r2320=get_crism_r(2320,wl_scale,1,data=data)
+    r2330=get_crism_r(2330,wl_scale,1,data=data)
+    r2340=get_crism_r(2340,wl_scale,1,data=data)
+    r2345=get_crism_r(2345,wl_scale,1,data=data)
+    r2350=get_crism_r(2350,wl_scale,1,data=data)
+    r2355=get_crism_r(2355,wl_scale,1,data=data)
+    r2364=get_crism_r(2364,wl_scale,1,data=data)
+    r2400=get_crism_r(2400,wl_scale,1,data=data)
+    r2430=get_crism_r(2430,wl_scale,1,data=data)
+    r2450=get_crism_r(2450,wl_scale,1,data=data)
+    r2460=get_crism_r(2460,wl_scale,1,data=data)
+    r2480=get_crism_r(2480,wl_scale,1,data=data)
+    r2530=get_crism_r(2530,wl_scale,1,data=data)
+    r2537=get_crism_r(2537,wl_scale,1,data=data)
+    r2570=get_crism_r(2570,wl_scale,1,data=data)
+    r2602=get_crism_r(2602,wl_scale,1,data=data)
+    r3250=get_crism_r(3250,wl_scale,1,data=data)
+    r3420=get_crism_r(3420,wl_scale,1,data=data)
+    r3450=get_crism_r(3450,wl_scale,1,data=data)
+    r3610=get_crism_r(3610,wl_scale,1,data=data)
+    r3630=get_crism_r(3630,wl_scale,1,data=data)
+    r3875=get_crism_r(3875,wl_scale,1,data=data)
+	}
+
+
+	if (dim(data)[3]==55 || dim(data)[3]==438) {
+
+		# Build long wavelength indices
+		# BD1300
+		b1=(1320.-1080.)/(1750.-1080.)
+		a1=1-b1
+		out.index = 1 - (r1320/(a1*r1080+b1*r1750))
+	
+		# OLINDEX3
+		rc1080=get_crism_r(1080,wl_scale,5,data=data,rc=1750//2400//5)
+		rc1152=get_crism_r(1152,wl_scale,7,data=data,rc=1750//2400//5)
+		rc1210=get_crism_r(1210,wl_scale,7,data=data,rc=1750//2400//5)
+		rc1250=get_crism_r(1250,wl_scale,7,data=data,rc=1750//2400//5)
+		rc1263=get_crism_r(1263,wl_scale,7,data=data,rc=1750//2400//5)
+		rc1276=get_crism_r(1276,wl_scale,7,data=data,rc=1750//2400//5)
+		rc1330=get_crism_r(1330,wl_scale,5,data=data,rc=1750//2400//5)
+		rc1368=get_crism_r(1368,wl_scale,7,data=data,rc=1750//2400//5)
+		rc1395=get_crism_r(1395,wl_scale,3,data=data,rc=1750//2400//5)
+		rc1427=get_crism_r(1427,wl_scale,7,data=data,rc=1750//2400//5)
+		rc1470=get_crism_r(1470,wl_scale,5,data=data,rc=1750//2400//5)
+		
+		out.index = cat(out.index,((rc1080-r1080)/rc1080)*0.03 + ((rc1152-r1152)/rc1152)*0.03 + ((rc1210-r1210)/rc1210)*0.03 + ((rc1250-r1250)/rc1250)*0.03 + ((rc1263-r1263)/rc1263)*0.07 + ((rc1276-r1276)/rc1276)*0.07 + ((rc1330-r1330)/rc1330)*0.12 + ((rc1368-r1368)/rc1368)*0.12 + ((rc1395-r1395)/rc1395)*0.14 + ((rc1427-r1427)/rc1427)*0.18 + ((rc1470-r1470)/rc1470)*0.18,axis=z)
+
+		# LCPINDEX2
+		rc1690=get_crism_r(1690,wl_scale,5,data=data,rc=1560//2450//7)
+		rc1750=get_crism_r(1750,wl_scale,3,data=data,rc=1560//2450//7)
+		rc1810=get_crism_r(1810,wl_scale,7,data=data,rc=1560//2450//7)
+		rc1870=get_crism_r(1870,wl_scale,7,data=data,rc=1560//2450//7)
+	
+		out.index=cat(out.index,((rc1690-r1690)/rc1690)*0.20 + ((rc1750-r1750)/rc1750)*0.30 + ((rc1810-r1810)/rc1810)*0.30 + ((rc1870-r1870)/rc1870)*0.30,axis=z)
+	
+		# HCPINDEX2
+		rc2120=get_crism_r(2120,wl_scale,5,data=data,rc=1690//2530//5)
+		rc2140=get_crism_r(2140,wl_scale,7,data=data,rc=1690//2530//5)
+		rc2230=get_crism_r(2230,wl_scale,3,data=data,rc=1690//2530//5)
+		rc2250=get_crism_r(2250,wl_scale,3,data=data,rc=1690//2530//5)
+		rc2430=get_crism_r(2430,wl_scale,5,data=data,rc=1690//2530//5)
+		rc2460=get_crism_r(2460,wl_scale,7,data=data,rc=1690//2530//5)
+		
+		out.index=cat(out.index,((rc2120-r2120)/rc2120)*0.10 + ((rc2140-r2140)/rc2140)*0.10 + ((rc2230-r2230)/rc2230)*0.15 + ((rc2250-r2250)/rc2250)*0.30 + ((rc2430-r2430)/rc2430)*0.20 + ((rc2460-r2460)/rc2460)*0.15,axis=z)
+
+		# ISLOPE
+		out.index=cat(out.index,((r1815-r2530)/(2530.-1815)),axis=z)
+	
+		# BD1400
+		b1=(1395.-1330.)/(1467.-1330.)
+		a1=1-b1
+		out.index = cat(out.index,1-(r1395/(a1*r1330+b1*r1467)),axis=z)
+	
+		# BD1750_2
+		b1=(1750.-1690.)/(1825.-1690.)
+		a1=1-b1
+		out.index = cat(out.index,1-(r1750/(a1*r1690+b1*r1815)),axis=z)
+	
+		# BD1900_2
+		b1=(1930.-1850.)/(2067.-1850.)
+		a1=1-b1
+		b2=(1985.-1850.)/(2067.-1850.)
+		a2=1-b1
+	
+		out.index = cat(out.index, ((1-(r1930/(a1*r1850+b1*r2067))) + (1-(r1985/(a2*r1850+b2*r2067))))*0.5,axis=z)
+	
+		# BD2100_2
+		b1=(2132.-1930.)/(2250.-1930.)
+		a1=1-b1
+		out.index = cat(out.index,1-(r2132/(a1*r1930+b1*r2250)),axis=z)
+	
+		# BD2165
+		b1=(2165.-2120.)/(2230.-2120.)
+		a1=1-b1
+		out.index = cat(out.index,1-(r2165/(a1*r2120+b1*r2230)),axis=z)
+	
+		# BD2190
+		b1=(2185.-2120.)/(2250.-2120.)
+		a1=1-b1
+		out.index = cat(out.index,1-(r2185/(a1*r2120+b1*r2250)),axis=z)
+		
+		# MIN2200
+		b1=(2165.-2120.)/(2350.-2120.)
+		a1=1-b1
+		itemp = 1-(r2165/(a1*r2120+b1*r2350))
+		b2=(2210.-2120.)/(2350.-2120.)
+		a2=1-b1
+		itemp = cat(itemp,1-(r2210/(a1*r2120+b1*r2350)),axis=z)
+		out.index=cat(out.index,min(itemp,axis=z),axis=z)
+	
+		# BD2210_2
+		b1=(2210.-2165.)/(2250.-2165.)
+		a1=1-b1
+		out.index = cat(out.index,1-(r2210/(a1*r2165+b1*r2250)),axis=z)
+	
+		# D2200
+		rc2165=get_crism_r(2165,wl_scale,3,data=data,rc=1815//2430//5)
+		rc2210=get_crism_r(2210,wl_scale,3,data=data,rc=1815//2430//5)
+		rc2230=get_crism_r(2230,wl_scale,3,data=data,rc=1815//2430//5)
+		
+		out.index = cat(out.index,1-(((r2210/rc2210)+(r2230/rc2230))/(2*(r2165/rc2165))),axis=z)
+		
+		# BD2230
+		b1=(2235.-2210.)/(2252.-2210.)
+		a1=1-b1
+		out.index = cat(out.index,1-(r2235/(a1*r2210+b1*r2252)),axis=z)
+		
+		# BD2250
+		b1=(2245.-2120.)/(2340.-2120.)
+		a1=1-b1
+		out.index = cat(out.index,1-(r2245/(a1*r2120+b1*r2340)),axis=z)
+		
+		# MIN2250
+		b1=(2210.-2165.)/(2350.-2165.)
+		a1=1-b1
+		itemp = 1-(r2210/(a1*r2165+b1*r2350))
+		b2=(2265.-2165.)/(2350.-2165.)
+		a2=1-b1
+		itemp = cat(itemp,1-(r2265/(a1*r2165+b1*r2350)),axis=z)
+		out.index=cat(out.index,min(itemp,axis=z),axis=z)
+		
+		# BD2265
+		b1=(2265.-2210.)/(2340.-2210.)
+		a1=1-b1
+		out.index = cat(out.index,1-(r2265/(a1*r2210+b1*r2340)),axis=z)
+		
+		# BD2290
+		b1=(2290.-2250.)/(2350.-2250.)
+		a1=1-b1
+		out.index = cat(out.index,1-(r2290/(a1*r2250+b1*r2350)),axis=z)
+		
+		# D2300
+		rc2290=get_crism_r(2290,wl_scale,5,data=data,rc=1815//2530//5)
+		rc2320=get_crism_r(2320,wl_scale,3,data=data,rc=1815//2530//5)
+		rc2330=get_crism_r(2330,wl_scale,3,data=data,rc=1815//2530//5)
+		rc2120=get_crism_r(2120,wl_scale,5,data=data,rc=1815//2530//5)
+		rc2170=get_crism_r(2170,wl_scale,5,data=data,rc=1815//2530//5)
+		rc2210=get_crism_r(2210,wl_scale,3,data=data,rc=1815//2530//5)
+		
+		out.index = cat(out.index,1-(((r2290/rc2290)+(r2320/rc2320)+(r2330/rc2330))/((r2120/rc2120)+(r2170/rc2170)+(r2210/rc2210))),axis=z)
+		
+		# BD2355
+		b1=(2355.-2300.)/(2450.-2300.)
+		a1=1-b1
+		out.index = cat(out.index,1-(r2355/(a1*r2300+b1*r2450)),axis=z)
+		
+		# SINDEX2
+		b1=(2290.-2120.)/(2400.-2120.)
+		a1=1-b1
+		out.index = cat(out.index,1-((a1*r2120+b1*r2400)/r2290),axis=z)
+		
+		# MIN2295_2480
+		b1=(2295.-2165.)/(2364.-2165.)
+		a1=1-b1
+		itemp = 1-(r2295/(a1*r2165+b1*r2364))
+		b2=(2480.-2364.)/(2570.-2364.)
+		a2=1-b1
+		itemp = cat(itemp,1-(r2480/(a1*r2364+b1*r2570)),axis=z)
+		out.index=cat(out.index,min(itemp,axis=z),axis=z)
+		
+		# MIN2345_2537
+		b1=(2345.-2250.)/(2430.-2250.)
+		a1=1-b1
+		itemp = 1-(r2345/(a1*r2250+b1*r2430))
+		b2=(2537.-2430.)/(2602.-2430.)
+		a2=1-b1
+		itemp = cat(itemp,1-(r2537/(a1*r2430+b1*r2602)),axis=z)
+		out.index=cat(out.index,min(itemp,axis=z),axis=z)
+		
+		# BD2500_2
+		b1=(2480.-2364.)/(2570.-2364.)
+		a1=1-b1
+		out.index = cat(out.index,1-(r2480/(a1*r2364+b1*r2570)),axis=z)
+		
+		# BD3400_2
+		b1=(3420.-3250.)/(3650.-3230.)
+		a1=1-b1
+		itemp=1-(r3420/(a1*r3250+b1*r3630))
+		
+		itemp [where abs(itemp)>100]=0
+		out.index = cat(out.index,itemp,axis=z)
+		
+		
+		# CINDEX2
+		b1=(3610.-3450.)/(3875.-3450.)
+		a1=1-b1
+		out.index = cat(out.index,1-((a1*r3450+b1*r3875)/r3610),axis=z)
+		
+		out.index_name=cat("BD1300","OLINDEX3","LCPINDEX2","HCPINDEX2","ISLOPE","BD1400","BD1750_2","BD1900_2", "BD2100_2","BD2165","BD2190","MIN2200","BD2210_2","D2200","BD2230","BD2250","MIN2250", "BD2265","BD2290","D2300","BD2355","SINDEX2","MIN2295_2480","MIN2345_2537","BD2500_2","BD3400_2","CINDEX2",y)
+
+		out.index_interpretation=cat("Plagioclase with Fe2+ substitution","Olivine","Favors LCP","Favors HCP", "Ferric coatings","Hydrated or hydroxylated minerals","Gypsum or alunite","Bound H2O except monohydrated sulfates", "Monohydrated sulfates","Pyrophillite and Kaolinite group","Beidillite, allophane, and imogolite", "Kaolinite group","Al-OH minerals","Al-OH minerals","Hydroxylated ferric sulfate","Opal and other hydrated silica phases","Opal and other hydrated silica phases","Jarosite, gibbsite, acid-leached nontronite","Mg,Fe-OH minerals","Hydroxylated Mg,Fe-silicates","Chlorite, prehnite, pumpellyte","Mono- and poly-hydrated sulfates","Mg carbonates","Ca/Fe carbonates","Mg carbonates","Carbonates","Carbonates",y)
+
+		out.index_caveat=cat("Sensitive to Fe-olivine","HCP and Fe-phyllosilicates will also be positive","-","-","Shaded slopes may also be positive","-","-","-","Sensitive to alunite and serpentine","Sensitive to beidillite, allophane, and imogolite","Sensitive to kaolinite group","-","Sensitive to gypsum and alunite","Sensitive to chlorite and prehnite","Sensitive to Al-,OH minerals","-","-","-","Sensitive to Mg-carbonate","Sensitive to Mg-carbonate","Sensitive to carbonate and serpentine","Sensitive to ices","Sensitive to hydroxylated silicate and zeolite mixtures","Sensitive to prehnite, serpentine, and hydroxylated silicate and zeolite mixtures","Sensitive to zeolites","-","-",y)
+	}
+
+	# If the short wavelength array is present, then create the short indices
+	if (dim(data)[3]==107) {
+    r440=get_crism_r(440,wl_scale,5,data=data)
+    r530=get_crism_r(530,wl_scale,5,data=data)
+    r533=get_crism_r(533,wl_scale,5,data=data)
+    r600=get_crism_r(600,wl_scale,5,data=data)
+    r614=get_crism_r(614,wl_scale,5,data=data)
+    r624=get_crism_r(624,wl_scale,3,data=data)
+    r716=get_crism_r(716,wl_scale,3,data=data)
+    r755=get_crism_r(755,wl_scale,5,data=data)
+    r760=get_crism_r(760,wl_scale,5,data=data)
+    r770=get_crism_r(770,wl_scale,5,data=data)
+    r775=get_crism_r(775,wl_scale,5,data=data)
+    r807=get_crism_r(807,wl_scale,5,data=data)
+    r860=get_crism_r(860,wl_scale,5,data=data)
+    r920=get_crism_r(920,wl_scale,5,data=data)
+    r977=get_crism_r(977,wl_scale,5,data=data)
+    r984=get_crism_r(984,wl_scale,5,data=data)
+	} else if (dim(data)[3]==19) {
+    r440=get_crism_r(440,wl_scale,1,data=data)
+    r530=get_crism_r(530,wl_scale,1,data=data)
+    r533=get_crism_r(533,wl_scale,1,data=data)
+    r600=get_crism_r(600,wl_scale,1,data=data)
+    r614=get_crism_r(614,wl_scale,1,data=data)
+    r624=get_crism_r(624,wl_scale,1,data=data)
+    r716=get_crism_r(716,wl_scale,1,data=data)
+    r755=get_crism_r(755,wl_scale,1,data=data)
+    r760=get_crism_r(760,wl_scale,1,data=data)
+    r770=get_crism_r(770,wl_scale,1,data=data)
+    r775=get_crism_r(775,wl_scale,1,data=data)
+    r807=get_crism_r(807,wl_scale,1,data=data)
+    r860=get_crism_r(860,wl_scale,1,data=data)
+    r920=get_crism_r(920,wl_scale,1,data=data)
+    r977=get_crism_r(977,wl_scale,1,data=data)
+    r984=get_crism_r(984,wl_scale,1,data=data)
+	}
+
+	if (dim(data)[3]==107 || dim(data)[3]==19) {
+	
+		# R600
+		out.index=r600
+		
+		# R530
+		out.index=cat(out.index,r530,z)
+		
+		# R440
+		out.index=cat(out.index,r440,z)
+		
+		# R770
+		out.index=cat(out.index,r770,z)
+		
+		# RBR
+		out.index=cat(out.index,r770/r440,z)
+		
+		# BD530_2
+		b1=(530.-440.)/(614.-440.)
+		a1=1-b1
+		out.index = cat(out.index,1 - (r530/(a1*r440+b1*r614)),z)
+		
+		# SH600_2
+		b1=(600.-533.)/(716.-600.)
+		a1=1-b1
+		out.index = cat(out.index,1 - ((a1*r533+b1*r716)/r600),z)
+		
+		# SH770
+		b1=(775.-716.)/(860.-716.)
+		a1=1-b1
+		out.index = cat(out.index,1 - ((a1*r716+b1*r860)/r775),z)
+		
+		# BD640_2
+		b1=(624.-600.)/(760.-600.)
+		a1=1-b1
+		out.index = cat(out.index,1 - (r624/(a1*r600+b1*r760)),z)
+		
+		# BD860_2
+		b1=(860.-755.)/(977.-755.)
+		a1=1-b1
+		out.index = cat(out.index,1 - (r860/(a1*r755+b1*r977)),z)
+		
+		# BD920_2
+		b1=(920.-807.)/(984.-807.)
+		a1=1-b1
+		out.index = cat(out.index,1 - (r920/(a1*r807+b1*r984)),z)
+		
+		out.index_name=cat("Red","Green","Blue","R770","RBR","BD530","SH600_2","SH770","BD640_2","BD860_2","BD920_2",y)
+
+		out.index_interpretation=cat("Red","Green","Blue","Atm Dust/Ice","npFeOx","Fine-grained crystalline hematite","Select ferric minerals (esp. hematite and goethite)","Select ferric minerals (reduced sensitivity to LCP)","Select ferric minerals (esp. maghemite)","Select crystalline ferric minerals (esp. hematite)","Crystalline ferric minerals and LCP",y)
+
+		out.index_caveat=cat("-","-","-","-","Sensitive to atm dust","-","Sensitive to atm aerosols","Sensitive to atm aerosols","Obscured by VNIR detector artifact","-","-",y)
+	}
+
+	mask=out.index[,,2]
+	out.index [where mask==0]=0
+	
+	return(out)
+}
+
+
+
+define crism_speclib(spec_lib,srch) {
+	#tested-cse 3/30/09
+
+	if($ARGC!=1){
+	   printf("\nSearch through the standard  VNIR spectral library\n")
+ 	   printf("$1 = whatever you are searching for, usually in all caps, STRING\n") 
+ 	   printf("srch = location to search in (default=lib.class)\n")
+ 	   printf("spec_lib = variable the spectral library is stored (default will be read from $DV_SCRIPT_FILES/crism_speclib.hdf\n")
+
+ 	   printf("Ex:\n")
+ 	   printf("a=crism_speclib(\"OLIVINE\")\n")
+	   printf("a=crism_speclib(\"OLIVINE\",srch=\"lib.name\")\n")
+	   printf("modified by c.edwards, created by l.mayorga 3/09")
+ 	   printf("\n\n")
+ 	   return(null)
+  	}
+
+ 	in=$1
+	if(HasValue(spec_lib)==0) {
+	   verbose=0
+  	   spec_lib=$DV_SCRIPT_FILES+"/crism_speclib.hdf"
+  	   lib=read(spec_lib)
+	   verbose=1
+	}
+
+ 	if(HasValue(srch)==0)	srch="lib.class"
+ 	printf("searching in %s\n\n",srch)
+	srch=eval(srch)
+
+ 	out=struct(index,name,data)
+ 	out.index=int(0)
+  out.name="\"\""
+	out.data=struct()
+	out.id="\"\""
+	out.type="\"\""
+	out.version_id="\"\""
+	out.specimen_name="\"\""
+	out.specimen_description="\"\""
+	out.min_particle_size=float(0)
+	out.max_particle_size=float(0)
+	out.collection_location="\"\""
+	out.current_location="\"\""
+	out.reference="\"\""
+
+	counter=1
+
+	inlen=strlen(in)
+	nlines=dim(strlen(srch))[2]
+	nchars=strlen(srch)
+
+	for (i=1; i<=nlines; i+=1) {
+	   for (j=1; j<=int((nchars[,i]-inlen)); j+=1) {
+	      if (srch[j:(j+(inlen-1)),i]==in) {
+				 out.index=out.index//int(i)
+				 out.name=cat(out.name,lib.class[,i],y)
+				 out.id=cat(out.id,lib.id[,i],y)
+				 out.type=cat(out.type,lib.type[,i],y)
+				 out.version_id=cat(out.version_id,lib.version_id[,i],y)
+				 out.specimen_name=cat(out.specimen_name,lib.specimen_name[,i],y)
+				 out.specimen_description=cat(out.specimen_description,lib.specimen_description[,i],y)
+				 out.min_particle_size=cat(out.min_particle_size,lib.min_particle_size[,i],y)
+				 out.max_particle_size=cat(out.max_particle_size,lib.max_particle_size[,i],y)
+				 out.collection_location=cat(out.collection_location,lib.collection_location[,i],y)
+				 out.current_location=cat(out.current_location,lib.current_location[,i],y)
+				 out.reference=cat(out.reference,lib.reference[,i],y)
+				 add_struct(object=out.data, name=sprintf("id%.4d_%d",i,counter),value=lib.data[i])
+				 j=nchars[,i]
+				 counter=counter+1
+	      }
+	   }
+	}
+
+	if (dim(out.index)[1]==1) {
+	   return(0)
+  	} else {
+	   out.index=out.index[2:]
+	   out.name=out.name[,2:]
+	   out.id=out.id[,2:]
+	   out.type=out.type[,2:]
+	   out.version_id=out.version_id[,2:]
+	   out.specimen_name=out.specimen_name[,2:]
+	   out.specimen_description=out.specimen_description[,2:]
+	   out.min_particle_size=out.min_particle_size[,2:]
+	   out.max_particle_size=out.max_particle_size[,2:]
+	   out.collection_location=out.collection_location[,2:]
+	   out.current_location=out.current_location[,2:]
+	   out.reference=out.reference[,2:]
+	   return(out)
+	}
+}
+
+
+
+define get_crism_list(maxlat,minlat,maxlon,minlon,targeted)  {
+#tested-cse 3/30/09
+
+	if(HasValue(maxlat)==0 || HasValue(minlat)==0 || HasValue(maxlon)==0 || HasValue(minlon)==0) {
+	   printf("Returns full resolution targets for a defined lat/lon region\n")
+	   printf("Required:\n")
+	   printf("\tmaxlat=maximum latitude\n")
+	   printf("\tminlat=minimum latitude\n")
+	   printf("\tmaxlon=maximum longitude\n")
+	   printf("\tminlon=minimum longitude\n")
+	   printf("Optional:\n")
+	   printf("\ttargeted=selected targeted images (Default=1)\n\n")
+	   printf("j.bandfield 10/08\n") 
+	   return(null)
+	}
+
+
+	mysql_login="mysql -s -D crism -h octuco.ess.washington.edu -P "+$DV_CRISM_DB_PORT+" -u "+$DV_CRISM_DB_USER+" -p"+$DV_CRISM_DB_PASS+" -e"
+
+  	if (maxlon >180) {
+    	   maxlon=maxlon-360
+    	   minlon=minlon-360
+  	}
+
+  	if (HasValue(targeted)==0) targeted=1
+
+	# Only full res targets for now
+	# Get filename list
+	if (targeted==0) {
+    	   list=syscall(mysql_login+" 'select ddr.id,averaging_width,columns,rows,ullat,urlat,lllat,lrlat,ullon,urlon,lllon,lrlon from trdr,ddr where trdr.id=ddr.id and trdr.sensor_id=ddr.sensor_id and trdr.path like \"\%IF\%\" and (trdr.path like \"\%MSS\%\" or trdr.path like \"\%MSP\%\" or trdr.path like \"\%MSW\%\") and lllat<"+maxlat+" and ullat>"+minlat+" and urlon<"+maxlon+" and ullon>"+minlon+" and trdr.sensor_id like \"L\";'")
+	}
+
+	if (targeted!=0) {
+	   list=syscall(mysql_login+" 'select ddr.id,averaging_width,columns,rows,ullat,urlat,lllat,lrlat,ullon,urlon,lllon,lrlon from trdr,ddr where trdr.id=ddr.id and trdr.sensor_id=ddr.sensor_id and trdr.path like \"\%IF\%\" and (trdr.path like \"\%FRT\%\" or trdr.path like \"\%HRL\%\" or trdr.path like \"\%HRS\%\") and lllat<"+maxlat+" and ullat>"+minlat+" and urlon<"+maxlon+" and ullon>"+minlon+" and trdr.sensor_id like \"L\" and averaging_width<=2;'")
+	}
+	return(list)
+}
+
+
+
+define get_crism_old(ra,raw,sl,force,verb,ignore,set_ignore) {
+	#tested-cse 3/30/09
+
+	if($ARGC!=1) {
+	   printf("Download any CRISM image, short and long, radiance or I/F\n\n")
+	   printf("$1=product id (truncated from full ID)\n\n")
+	   printf("Optional:\n")
+	   printf("\tsl=process both the short and long data product (Default=0, long only)\n")
+	   printf("\tra=download the radiance product instead of I/F (Default=0)\n")
+	   printf("\traw=return just the output structure (other options will not work with this, Default=0)\n")
+	   printf("\tforce=force the redownload of products (Default=0), uses $DV_CRISM_CACHE\n")
+	   printf("\tverb=set the verbosity (Default=0)\n")
+	   printf("\tignore=the ignore value (Default=0)\n\n")
+	   printf("\tset_ignore=set the value of value of the image (Default=1)\n\n")
+	   printf("NOTE: Also uses $DV_CRISM_DB_PORT, $DV_CRISM_DB_USER, and optionally $DV_CRISM_DB_PASS\n\n")
+	   printf("modified by c.edwards, adapted from j.bandfield 3/09\n")
+	   return(null)
+	}
+
+  product=$1
+	global(verbose)
+	verbold=verbose
+
+	printf("Running get CRISM...")
+	if (HasValue(ra)==0) ra=0
+	if (HasValue(raw)==0) raw=0
+	if (HasValue(sl)==0)  sl=0
+	if (HasValue(verb)==0) verbose=0
+	if (HasValue(force)==0) force=1
+	if (HasValue(ignore)==0) ignore=0
+	if (HasValue(set_ignore)==0) set_ignore=0
+
+	mysql_login="mysql -s -D crism -h octuco.ess.washington.edu -P "+$DV_CRISM_DB_PORT+" -u "+$DV_CRISM_DB_USER+" -p"+$DV_CRISM_DB_PASS+" -e"
+
+	if (ra==0) {
+ 	   files=syscall(mysql_login+" 'select ddr.volume_id,ddr.path,trdr.volume_id, trdr.path from trdr,ddr where ddr.id=\""+product+"\" and trdr.id=ddr.id and trdr.sensor_id=ddr.sensor_id and trdr.path like \"\%IF\%\" group by trdr.path;'")
+	} else {
+	   files=syscall(login+" 'select ddr.volume_id,ddr.path,trdr.volume_id,trdr.path from trdr,ddr where ddr.id=\""+product+"\" and trdr.id=ddr.id and trdr.sensor_id=ddr.sensor_id and trdr.path like \"\%RA\%\" group by trdr.path;'")
+	}
+
+	if(HasValue(files)==0) {
+	   printf("\nWrong password or incorrect image ID\n")
+	   printf("Please try again\n\n")
+	   verbose=verb_old
+	   return(null)
+	}
+	
+	ddrvolnum=files[9:10,1]
+	volnum=files[81:82,1]
+
+	tmpdir=sprintf("%s/%s",$DV_CRISM_CACHE,product)
+	printf("%s\n",tmpdir)
+	system(sprintf("mkdir -p %s",tmpdir))
+	system(sprintf("chmod 777 %s",tmpdir))
+
+	#system("cd "+tmpdir+"; wget -nd -nc http://pds-geosciences.wustl.edu/crism-ddr01/mro-m-crism-6-ddr-v1/mrocr_1001/ddr"//"/"//files[16:71,1]+"  "+tmpdir)
+	#system("cd "+tmpdir+"; wget -nd -nc http://pds-geosciences.wustl.edu/crism-ddr01/mro-m-crism-6-ddr-v1/mrocr_1001/ddr"//"/"//files[16:68,1]//"IMG "+tmpdir)
+	#get_file("http://pds-geosciences.wustl.edu/crism-ddr01/mro-m-crism-6-ddr-v1/mrocr_1001/ddr"//"/"//files[16:71,1],tmpdir,force=force)
+	#get_file("http://pds-geosciences.wustl.edu/crism-ddr01/mro-m-crism-6-ddr-v1/mrocr_1001/ddr"//"/"//files[16:68,1]//"IMG",tmpdir,force=force)
+
+	#system("cd "+tmpdir+"; wget -nd -nc http://pds-geosciences.wustl.edu/crism-trdr"//volnum//"/mro-m-crism-3-rdr-targeted-v1/mrocr_20"//volnum//"/trdr"//"/"//files[89:144,1]+" "+tmpdir)
+	#system("cd "+tmpdir+"; wget -nd -nc http://pds-geosciences.wustl.edu/crism-trdr"//volnum//"/mro-m-crism-3-rdr-targeted-v1/mrocr_20"//volnum//"/trdr"//"/"//files[89:141,1]//"IMG "+tmpdir)
+	#get_file("http://pds-geosciences.wustl.edu/crism-trdr"//volnum//"/mro-m-crism-3-rdr-targeted-v1/mrocr_20"//volnum//"/trdr"//"/"//files[89:144,1],tmpdir,force=force)
+	#get_file("http://pds-geosciences.wustl.edu/crism-trdr"//volnum//"/mro-m-crism-3-rdr-targeted-v1/mrocr_20"//volnum//"/trdr"//"/"//files[89:141,1]//"IMG",tmpdir,force=force)
+
+
+
+
+
+	ddrpath1="wget -nc -nd http://pds-geosciences.wustl.edu/mro-crism/mro-m-crism-6-ddr-v1/mrocr_10"//ddrvolnum//"/ddr"//"/"//files[16:71,1]
+	ddrpath3="wget -nc -nd http://pds-geosciences.wustl.edu/mro-crism/mro-m-crism-6-ddr-v1/mrocr_10"//ddrvolnum//"/ddr"//"/"//files[16:68,1]//"IMG"
+
+	system(sprintf("cd %s; %s",tmpdir,ddrpath1))
+	system(sprintf("cd %s; %s",tmpdir,ddrpath3))
+
+	trrpath1="wget -nc -nd http://pds-geosciences.wustl.edu/mro-crism-trdr-1/mro-m-crism-3-rdr-targeted-v1/mrocr_20"//volnum//"/trdr"//"/"//files[89:144,1]
+	trrpath3="wget -nc -nd http://pds-geosciences.wustl.edu/mro-crism-trdr-1/mro-m-crism-3-rdr-targeted-v1/mrocr_20"//volnum//"/trdr"//"/"//files[89:141,1]//"IMG"
+
+	system(sprintf("cd %s; %s",tmpdir,trrpath1))
+	system(sprintf("cd %s; %s",tmpdir,trrpath3))
+
+
+
+	if (sl!=0) {
+	   system("cd "+tmpdir+"; wget -nc -nd http://pds-geosciences.wustl.edu/crism-ddr01/mro-m-crism-6-ddr-v1/mrocr_1001/ddr"//"/"//files[16:71,2]+" "+tmpdir)
+	   system("cd "+tmpdir+"; wget -nc -nd http://pds-geosciences.wustl.edu/crism-ddr01/mro-m-crism-6-ddr-v1/mrocr_1001/ddr"//"/"//files[16:68,2]//"IMG "+tmpdir)
+	   #get_file("http://pds-geosciences.wustl.edu/crism-ddr01/mro-m-crism-6-ddr-v1/mrocr_1001/ddr"//"/"//files[16:71,2],tmpdir,force=force)
+	   #get_file("http://pds-geosciences.wustl.edu/crism-ddr01/mro-m-crism-6-ddr-v1/mrocr_1001/ddr"//"/"//files[16:68,2]//"IMG",tmpdir,force=force)
+
+	   system("cd "+tmpdir+"; wget -nc -nd http://pds-geosciences.wustl.edu/crism-trdr"//volnum//"/mro-m-crism-3-rdr-targeted-v1/mrocr_20"//volnum//"/trdr"//"/"//files[89:144,2]+" "+tmpdir)
+	   system("cd "+tmpdir+"; wget -nc -nd http://pds-geosciences.wustl.edu/crism-trdr"//volnum//"/mro-m-crism-3-rdr-targeted-v1/mrocr_20"//volnum//"/trdr"//"/"//files[89:141,2]//"IMG "+tmpdir)
+	   #get_file("http://pds-geosciences.wustl.edu/crism-trdr"//volnum//"/mro-m-crism-3-rdr-targeted-v1/mrocr_20"//volnum//"/trdr"//"/"//files[89:144,2],tmpdir,force=force)
+	   #get_file("http://pds-geosciences.wustl.edu/crism-trdr"//volnum//"/mro-m-crism-3-rdr-targeted-v1/mrocr_20"//volnum//"/trdr"//"/"//files[89:141,2]//"IMG",tmpdir,force=force)
+	}
+
+	if (sl!=0) {
+	   data=struct(short,long,ddrs,ddrl)
+	} else {
+	   data=struct(long,ddrl)
+	}
+
+	list=syscall(sprintf("ls %s/*%s*.LBL",tmpdir,product))
+
+	if (sl!=0) {
+   	   shortl=syscall("nl "+list[,4]+" | grep HKP | awk '{print $1-3}'")
+	   if(HasValue(shortl)==1) {
+	      system("head -n "+shortl[,1]+" "+list[,4]+" > "+tmpdir+"/temp")
+	      system("cat "+tmpdir+"/temp "+tmpdir+"/temp2> "+list[,4])
+    	   }
+	   data.ddrs=load_pds(list[,2])
+	   data.short=load_pds(list[,4])
+	   ll=syscall("nl "+list[,3]+" | grep HKP | awk '{print $1-3}'")
+
+	   if(HasValue(ll)==1) {
+	      system("head -n "+ll[,1]+" "+list[,3]+" > "+tmpdir+"/temp")
+	      system("echo END > "+tmpdir+"/temp2")
+	      system("cat "+tmpdir+"/temp "+tmpdir+"/temp2> "+list[,3])
+    	   }
+
+	   data.ddrl=load_pds(list[,1])
+	   data.long=load_pds(list[,3])
+  	}
+
+	if (sl==0) {
+	   list=grep(list,"L_")
+
+	   ll=syscall("nl "+list[,2]+" | grep HKP | grep L_ | awk '{print $1-3}'")
+	   
+	    if(HasValue(ll)==1) {
+	       system("head -n "+ll[,1]+" "+list[,2]+" > "+tmpdir+"/temp")
+	       system("echo END > "+tmpdir+"/temp2")
+	       system("cat "+tmpdir+"/temp "+tmpdir+"/temp2> "+list[,2])
+	    }
+
+	    data.ddrl=load_pds(list[,1])
+	    data.long=load_pds(list[,2])
+	}
+
+#the way it should be done
+#	if (sl!=0) {
+#    data.ddrl=load_pds(list[,1])
+#    data.long=load_pds(list[,3])
+#	} else {
+#    data.ddrl=load_pds(list[,1])
+#    data.long=load_pds(list[,2],data=0)
+#    data.long.file.image=read(list[,2])
+#	}
+
+# Get wavelength arrays
+
+	wl_filename1=get_struct(data.long,"mro\:wavelength_file_name")
+	wl_len1=strlen(wl_filename1)
+	wl_filename1=wl_filename1[2:(wl_len1-4)]
+	#system("cd "+tmpdir+"; wget -nc -nd http://pds-geosciences.wustl.edu/crism-edr01/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wl_filename1//"LBL "+tmpdir)
+	#system("cd "+tmpdir+"; wget -nc -nd http://pds-geosciences.wustl.edu/crism-edr01/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wl_filename1//"IMG "+tmpdir)
+#	get_file("http://pds-geosciences.wustl.edu/crism-edr01/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wl_filename1//"LBL",tmpdir,force=force)
+#	get_file("http://pds-geosciences.wustl.edu/crism-edr01/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wl_filename1//"IMG",tmpdir,force=force)
+
+
+
+	wl1="wget -nc -nd http://pds-geosciences.wustl.edu/mro-crism/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wl_filename1//"LBL"
+	wl3="wget -nc -nd http://pds-geosciences.wustl.edu/mro-crism/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wl_filename1//"IMG"
+	system(sprintf("cd %s; %s",tmpdir,wl1))
+	system(sprintf("cd %s; %s",tmpdir,wl3))
+
+
+	list=syscall(sprintf("ls %s/CDR*WA*L_*.LBL",tmpdir))
+	data.long.wl_array=load_pds(list[,1])
+
+
+	if (sl!=0) {
+	   wl_filename2=get_struct(data.short,"mro\:wavelength_file_name")
+	   wl_len2=strlen(wl_filename2)
+	   wl_filename2=wl_filename2[2:(wl_len2-4)]
+	   system("cd "+tmpdir+"; wget -nc -nd http://pds-geosciences.wustl.edu/crism-edr01/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wl_filename2//"LBL",tmpdir)
+	   system("cd "+tmpdir+"; wget -nc -nd http://pds-geosciences.wustl.edu/crism-edr01/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wl_filename2//"IMG",tmpdir)
+	   #get_file("http://pds-geosciences.wustl.edu/crism-edr01/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wl_filename2//"LBL",tmpdir,force=force)
+	   #get_file("http://pds-geosciences.wustl.edu/crism-edr01/mro-m-crism-2-edr-v1/mrocr_0001/cdr/wa/"//wl_filename2//"IMG",tmpdir,force=force)
+	   list=syscall(sprintf("ls %s/CDR*WA*S_*.LBL",tmpdir))
+	   data.short.wl_array=load_pds(list[,1])
+	}
+
+	# Get atmospheric transmission arrays
+	# Use these for the atmospheric correction (long wave only)
+
+	at_filename1=get_struct(data.long,"mro\:wavelength_file_name")
+
+	at_len1=strlen(at_filename1)
+
+	at_filename1=at_filename1[2:(at_len1-4)]
+
+	at_filename1=at_filename1[1:5]//"0000000000_AT"//wl_filename1[19:]
+
+	#system("cd "+tmpdir+"; wget -nc -nd http://pds-geosciences.wustl.edu/crism-edr01/mro-m-crism-2-edr-v1/mrocr_0001/cdr/at/"//at_filename1//"LBL "+tmpdir)
+	#system("cd "+tmpdir+"; wget -nc -nd http://pds-geosciences.wustl.edu/crism-edr01/mro-m-crism-2-edr-v1/mrocr_0001/cdr/at/"//at_filename1//"IMG "+tmpdir)
+	#get_file("http://pds-geosciences.wustl.edu/crism-edr01/mro-m-crism-2-edr-v1/mrocr_0001/cdr/at/"//at_filename1//"LBL",tmpdir,force=force)
+	#get_file("http://pds-geosciences.wustl.edu/crism-edr01/mro-m-crism-2-edr-v1/mrocr_0001/cdr/at/"//at_filename1//"IMG",tmpdir,force=force)
+
+
+
+	at1="wget -nc -nd http://pds-geosciences.wustl.edu/mro-crism/mro-m-crism-2-edr-v1/mrocr_0001/cdr/at/"//at_filename1//"LBL"
+	at3="wget -nc -nd http://pds-geosciences.wustl.edu/mro-crism/mro-m-crism-2-edr-v1/mrocr_0001/cdr/at/"//at_filename1//"IMG"
+
+
+	system(sprintf("cd %s; %s",tmpdir,at1))
+	system(sprintf("cd %s; %s",tmpdir,at3))
+
+
+
+
+	list=syscall(sprintf("ls %s/CDR*AT*L_*.LBL",tmpdir))
+	data.long.at_array=load_pds(list[,1])
+	verbose=verbold
+
+	if (raw==1) {
+   	   return(data)
+	}
+
+	if (raw!=1) {
+ 	   out=struct(long)
+	   out.long=struct(anc,wl_array,at_array,id,data)
+	   out.long.anc=struct(ls,solar_dist,ddr,ddrkey)
+	   out.long.anc.summing=data.long.pixel_averaging_width
+	   out.long.data=remove_struct(data.long.file.image,"data")
+	   if(set_ignore==1) {
+	      out.long.data[where out.long.data>100 || out.long.data<-100]=ignore
+	   }
+   	   out.long.id=data.long.file.ptr_to_rownum_table[,1]
+   	   out.long.wl_array=remove_struct(data.long.wl_array.file.image,"data")
+	   out.long.at_array=remove_struct(data.long.at_array.file.image,"data")
+   	   out.long.anc.ls=data.ddrl.solar_longitude
+   	   out.long.anc.solar_dist=data.ddrl.solar_distance
+   	   out.long.anc.ddrkey=data.ddrl.file.image.band_name
+   	   out.long.anc.ddr=remove_struct(data.ddrl.file.image,"data")
+
+	   if (sl!=0) {
+      	      out.short=struct(anc,wl_array,id,data)
+      	      out.short.anc=struct(ls,solar_dist,ddr,ddrkey)
+      	      out.short.data=remove_struct(data.short.file.image,"data")
+		 if(set_ignore==1) {
+		    out.short.data[where out.short.data>100 || out.short.data<-100]=ignore
+		 }
+
+	      out.short.id=data.short.file.ptr_to_rownum_table[,1]
+	      out.short.wl_array=remove_struct(data.short.wl_array.file.image,"data")
+      	      out.short.anc.ls=data.ddrs.solar_longitude
+      	      out.short.anc.solar_dist=data.ddrs.solar_distance
+      	      out.short.anc.ddrkey=data.ddrs.file.image.band_name
+      	      out.short.anc.ddr=remove_struct(data.ddrs.file.image,"data")
+   	   }
+	}
+	printf("Done.\n")
+	return(out)
+}
+
+
+define patch_vs_artifact(data) {
+
+
+# merit function parameters:
+merit_filter = 3       # smooth window
+max_iterations = 3
+
+s=dim(data.long.data)
+
+ns=s[1]
+nb=s[3]
+
+zero_deriv_count = 0
+iterations = 0
+
+#	Interpolation bands are 250-322
+#   Average continuum left and right of the artifact
+#       For hyperspectral data, meidian over +/-2 contiguous bands
+#       to estimate continuum level at the two ends.
+if (nb==438) {
+
+    b1=250
+    b2=322
+
+    avc=avg(data.long.data[,,248:252],axis=z)
+    avc=cat(avc,avg(data.long.data[,,320:324],axis=z),z)
+} else {
+#		For multispectral, use bands 23-34
+    b1=23
+    b2=34
+    avc=data.long.data[23]
+    avc=cat(avc,data.long.data[34],z)
+}
+
+	avg_cont = avg(avc,axis=z)
+    nb=b2-b1+1
+
+#   Adjust scale:
+    merit = 1.0e23
+    dscl = 1.0e23
+    scl_fac = 1.0
+    iterations = 1
+    art=data.long.at_array[,2,b1:b2]
+	while (iterations<=max_iterations) {
+#       Use a Newton's method-like approach. Evaluate derivative:
+        patch1 = data.long.data[,,b1:b2]+(clone(avg_cont,z=nb)*scl_fac*art)
+	
+#		Evaluate derivative
+        merit = evaluate_catvs_patch(patch1, art, merit_filter)
+        delta = (abs(scl_fac)*1.0e-3)
+
+        delta [where (delta< 0.0003)]=0.0003
+
+        scl_fac2=scl_fac+delta
+        delta=scl_fac2-scl_fac
+        patch2 = data.long.data[,,b1:b2]+(clone(avg_cont,z=nb)*scl_fac2*art)
+        merit2 = evaluate_catvs_patch(patch2, art, merit_filter)
+        dmds = (merit2-merit) / delta
+
+        dscl = -merit/dmds
+        scl_fac = scl_fac+dscl
+        iterations=iterations+1
+    }
+
+#   Patched spectrum:
+	data.long.data[,,b1:b2]=data.long.data[,,b1:b2]+(clone(avg_cont,z=nb)*scl_fac*art)
+
+# Replace any altered bad pixel values:
+#data.long.data [where (data.long.data >65534.0)]=65535
+
+}
+
+
+define evaluate_catvs_patch() {
+
+patch=$1
+art=$2
+smw=$3
+
+# Filter patch and artifact:
+# Merit is correlation between bands 3 inside art_ntrp
+art = art - filterz(art, smw)
+patch = patch - filterz(patch,smw)
+nb = dim(art)[3]
+
+corr = sum(patch[,,3:nb-4]*art[,,3:nb-4],axis=z)
+
+return(corr)
+
+}
+
+
+

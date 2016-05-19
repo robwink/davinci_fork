@@ -1,0 +1,2963 @@
+math_version=1.29
+# Last modified by S.Marshall 12-07-2010
+
+# degtorad
+# radtodeg
+# angsepd
+# binbyte
+# binomcdf
+# binompmf
+# cart2sph
+# cbrt
+# coef
+# cosh
+# cot
+# cross
+# csc
+# dd2dms
+# diag
+# dot
+# erf
+# fact
+# factor
+# fib
+# fix
+# gamma
+# hyp
+# intprod
+# inverf
+# invnorm
+# isint
+# isnum
+# isscalar
+# leg
+# linfit
+# log2
+# logb
+# lsq
+# lsqnn
+# lsqsn
+# mag
+# med
+# nCk
+# nPk
+# normalize
+# normcdf
+# normpdf
+# numint
+# product
+# s2dhms
+# sec
+# sign
+# sinc
+# sinh
+# sph2cart
+# tanh
+# hex2dec
+
+# Useful numbers:
+intmax = 2147483647 # Maximum integer value (-1 + 2^31)
+eps = float(2)^-23 # Floating point (single) precision
+eps2 = double(2)^-52 # Double precision
+
+# Intermediate float bug is a problem, but I can avoid it by using atod
+# Is there a better algorithm for inverf or invnorm?
+# Add Bessel functions or other "special" (higher transcendental) functions?
+# Take another look at isint - as currently written, it returns 0 (false) for double-precision values which store integers larger than intmax. Perhaps this should be reconsidered.
+
+
+
+define degtorad () {
+  if($ARGC==0) {
+    printf("Converts degrees to radians\n")
+    printf("c.edwards 8-28-2011\n\n")
+    return(null)
+  }
+  return ($1 / 180.0 * 3.14159265358979)
+}
+
+
+
+define radtodeg (){
+  if($ARGC==0) {
+    printf("Converts radians to degrees\n")
+    printf("c.edwards 8-28-2011\n\n")
+    return(null)
+  }
+
+  return ($1 / 3.14159265358979 * 180.0)
+}
+
+
+
+define angsepd(0,4) {
+
+  if ($ARGC < 4) {
+    printf("\nGiven two pairs of coordinates, returns angular separation\n")
+    printf("angsepd(lat1, lon1, lat2, lon2)\n")
+    printf("All inputs should be in degrees. Output is in degrees.\n")
+    printf("This is the great circle distance (for a sphere).\n")
+    printf("See http://mathworld.wolfram.com/GreatCircle.html\n")
+    printf("S.Marshall 10-27-2009\n\n")
+
+    return(byte(0))
+  }
+
+  lat1 = $1
+  lon1 = $2
+  lat2 = $3
+  lon2 = $4
+
+  outp = acosd(cosd(lat1)*cosd(lat2)*cosd(lon1 - lon2) + sind(lat1)*sind(lat2))
+  return(outp)
+}
+
+define binbyte(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nConverts input integers to binary (array) representation\n")
+#    printf("First element in returned array gives magnitude\n")
+#    printf(" Magnitude is highest power of two less than input, floor(log2(x))\n")
+#    printf("Matches input precision\n")
+#    printf("\n")
+    printf("S.Marshall 12-04-2010\n\n")
+
+    return(null)
+  }
+
+  if (isint($1) == 0) {
+    printf("\nError! Input must be integer!\n\n")
+    return(byte(0))
+  }
+
+  ex = $1
+
+  if (min(ex) < 0) {
+    printf("\nError! All elements of input must be nonnegative!\n\n")
+    return(byte(0))
+  }
+
+  exd = dim(ex)
+  if ((exd[1] != 1) || (exd[3] != 1)) {
+    printf("\nError! Input must be 1-by-n-by-1!\n\n")
+    return(byte(0))
+  }
+
+  exm = max(ex)
+  if (exm == 0.) {
+    imp = 0 # Will be incremented later
+  } else {
+    imp = int(floor(log2(exm))) # Will use same magnitude for all
+  }
+
+  #printf("imp = %d\n", imp) # From debugging
+
+  outp = clone(byte(255), imp+1, exd[2], 1)
+
+  ici = 1 # Counters
+  icj = 1
+  imp++ # Simplifies loop
+  d2 = double(2) # For convenience
+  for (icj = 1; icj <= exd[2]; icj++) {
+    ix = ex[1,icj,1]
+    if (ix == 0) {
+      outp[,icj,1] = byte(0)
+    } else {
+      for (ici = 1; ici <= imp; ici++) {
+        outp[ici,icj,1] = byte(floor(ix*d2^(ici - imp)))
+        ix = ix - outp[ici,icj,1]*d2^(imp - ici)
+      }
+    }
+  }
+
+#  outp = { base = 2, magnitude = intp, value = outp }
+  return(outp)
+}
+
+define binomcdf(n,k1,k2,p)
+{
+  if ((HasValue(n) == 0) || (HasValue(k1) == 0) || (HasValue(k2) == 0)) {
+    printf("\nBinomial distribution cumulative distribution function\n")
+    printf("binomcdf(n=n, k1=k1, k2=k2, p=p)\n")
+    printf("You MUST pass all arguments by reference (not by value)\n")
+    printf("n is the number of trials\n")
+    printf("k1 and k2 are the number of successes\n")
+    printf("p is the probability of success in each trial\n")
+    printf("n and k must be positive integers\n")
+    printf("p must be a real number 0 <= p <= 1\n")
+    printf("If p is omitted, this function will use p = 0.5\n")
+    printf("n and p must be scalar\n")
+    printf("Either k1 or k2 (but not both) can be an array\n")
+    printf("Returns the probability of k1 to k2 (inclusive) successes in n trials\n")
+    printf("binomcdf(n, k1, k2, p) = sum(binompmf(n, k1:k2, p))\n")
+    printf("S.Marshall 02-11-2008\n\n")
+
+    return(byte(0))
+  }
+
+  # Check for valid input and set default values for omitted inputs
+
+  if (HasValue(p) == 0) p = 0.5
+
+  if (isscalar(n) == 0 || isscalar(p) == 0) {
+    printf("\nn and p must be scalar (1x1x1)\n\n")
+
+    return(byte(0))
+  }
+
+  if (isscalar(k1) == 0 && isscalar(k2) == 0) {
+    printf("\nk1 and k2 cannot both be arrays\n\n")
+
+    return(byte(0))
+  }
+
+  if (isint(n) == 0 || isint(k1) == 0 || isint(k2) == 0) {
+    printf("\nn and k must be integers\n\n")
+
+    return(byte(0))
+  }
+
+  if (p < 0 || p > 1) {
+    printf("\np must be between 0 and 1\n\n")
+    
+    return(byte(0))
+  }
+
+  if (n <= 0 || min(k1) < 0 || min(k2) < 0) {
+    printf("\nn and k must be nonnegative integers\n\n")
+
+    return(byte(0))
+  }
+  
+  if (max(k1) > min(k2)) {
+    printf("\nk1 must be less than or equal to k2\n\n")
+
+    return(byte(0))
+  }
+  
+  if (isscalar(k1) == 0) {
+    # If k1 is an array
+    outp = 1.*k1
+    intd = dim(outp)
+
+  # Element-by-element evaluation; this will be used many times for the math functions
+    for (intk = 1; intk <= intd[3,1,1]; intk++) {
+      for (intj = 1; intj <= intd[2,1,1]; intj++) {
+        for (inti = 1; inti <= intd[1,1,1]; inti++) {
+          outp[inti, intj, intk] = (sum(binompmf(n=n,k=create((k2 - k1[inti, intj, intk] + 1),start=k1[inti, intj, intk]),p=p)))
+          # binompmf does most of the work
+        }
+      }
+    }
+  } else if (isscalar(k2) == 0) {
+    # If k2 is an array
+    outp = 0.*k2*(0*p) # Make sure k is float or double, input precision or better
+    intd = dim(outp)
+
+    for (intk = 1; intk <= intd[3,1,1]; intk++) {
+      for (intj = 1; intj <= intd[2,1,1]; intj++) {
+        for (inti = 1; inti <= intd[1,1,1]; inti++) {
+          outp[inti, intj, intk] = (sum(binompmf(n=n,k=create((k2[inti, intj, intk] - k1 + 1),start=k1),p=p)))
+        }
+      }
+    }
+  } else {
+    # If k1 and k2 are both scalar
+    outp = sum(binompmf(n=n,k=create((k2 - k1 + 1),start=k1),p=p))
+  }
+
+  return(outp)
+}
+
+define binompmf(n,k,p)
+{
+  if (HasValue(n) == 0) {
+    printf("\nBinomial distribution probability mass function\n")
+    printf("binompmf(p=p, n=n, k=k)\n")
+    printf("You MUST pass all arguments by reference (not by value)\n")
+    printf("n is the number of trials\n")
+    printf("k is the number of successes\n")
+    printf("p is the probability of success in each trial\n")
+    printf("n and k must be positive integers\n")
+    printf("p must be a real number 0 <= p <= 1\n")
+    printf("n and p must be scalar (1x1x1); only k can be an array\n")
+    printf("If p is omitted, this function will use p = 0.5\n")
+    printf("If k is omitted, the function will use k = [0, 1, 2, ... , n]\n")
+    printf("Returns the probability of exactly k successes in n trials\n")
+    printf("binompmf(n, k, p) = nCk*p^k*(1 - p)^(n - k)\n")
+    printf("S.Marshall 02-17-2008\n\n")
+
+    return(byte(0))
+  }
+
+  # Check for valid input and set default values for omitted inputs
+
+  if (HasValue(p) == 0) {
+    p = 0.5
+  } else {
+    p = 1.*p
+  }
+
+  if (isscalar(n) == 0 || isscalar(p) == 0) {
+    printf("\n and p must be scalar (1x1x1)\n\n")
+
+    return(byte(0))
+  }
+
+  if (HasValue(k) == 0) k = create(n + 1)
+
+  if (isint(n) == 0 || isint(k) == 0) {
+    printf("\nn and k must be integers\n\n")
+
+    return(byte(0))
+  }
+
+  if (p < 0 || p > 1) {
+    printf("\np must be between 0 and 1\n\n")
+    
+    return(byte(0))
+  }
+
+  if (n <= 0 || k < 0) {
+    printf("\nn and k must be nonnegative integers\n\n")
+
+    return(byte(0))
+  }
+
+  outp = 1.*k*(0*p + 1) # Make sure k is float or double, input precision or better
+  intd = dim(outp) # Same as dimensions of k
+  inty = -1 # Starting value for binomial coefficient; if it remains negative, there's been a problem
+
+  # Element-by-element
+  for (intk = 1; intk <= intd[3,1,1]; intk++) {
+    for (intj = 1; intj <= intd[2,1,1]; intj++) {
+      for (inti = 1; inti <= intd[1,1,1]; inti++) {
+        inty = nCk(n, outp[inti, intj, intk])
+        outp[inti, intj, intk] = inty*(p^outp[inti, intj, intk])*((1 - p)^(n - outp[inti, intj, intk]))
+        # Just using the formula
+      }
+    }
+  }
+
+  return(outp)
+}
+
+define cart2sph(0,3) {
+
+  if ($ARGC < 3) {
+    printf("\nConvert Cartesian (rectangular) coordinates to spherical\n")
+    printf("cart2sph(x, y, z) returns (r, latitude, longitude) where r is the\n")
+    printf(" radial coordinate, and latitude and longitude are in degrees.\n")
+    printf(" Returned angles are in degrees. Longitude is east-positive.\n")
+    printf(" Zero longitude corresponds to the x-axis; 90 E is y-axis.\n")
+    printf(" x, y, and z must be entered as separate arguments\n")
+    printf(" To make the output easier to read, inputs should only have one row.\n")
+    printf("S.Marshall 10-30-2009\n\n")
+
+    return(byte(0))
+  }
+
+  inpx = $1
+  inpy = $2
+  inpz = $3
+
+  if (equals(format(inpx[1,1,1]*inpy[1,1,1]*inpz[1,1,1]), "double")) { # Match input precision
+    intd = byte(1) # Flag for double-format input
+    pi = atod("3.14159265358979323846")
+    inpx = double(inpx) # Must match formats, or output array won't work
+    inpy = double(inpy)
+    inpz = double(inpz)
+  } else {
+    intd = byte(0)
+    pi = 3.141592654
+    inpx = float(inpx) # Must match formats, or output array won't work
+    inpy = float(inpy)
+    inpz = float(inpz)
+  }
+
+  ir = sqrt(inpx*inpx + inpy*inpy + inpz*inpz) # Radial coordinate
+
+  ilon = atan2(inpy, inpx)*180/pi # Longitude - azimuthal coordinate
+
+  if (intd == 0) {
+    ilon = float(ilon) # Convert to float if inputs weren't double
+  }
+  ilon[where ilon < 0] = ilon + 360
+
+  ilat = asind(inpz/ir)
+
+  return(ir//ilat//ilon)
+}
+
+define cbrt(0,1) {
+
+    if ($ARGC == 0) {
+      printf("\nCube root\n")
+      printf("cbrt(x) returns x^(1/3.)\n")
+      printf("Works for arrays\n")
+      printf("S.Marshall 02-11-2008\n\n")
+
+      return(byte(0))
+    }
+
+    if (isnum($1) == 0) {
+      printf("\nInput must be numeric\n\n")
+
+      return(byte(0))
+    }
+
+    if (format($1) == "double") {
+      intp = 1/double(3)
+    } else {
+      intp = 1./3.
+    } # Output precision matches input precision
+
+    return(sign($1)*abs($1)^intp)
+}
+
+define coef(0,1) {
+
+    if ($ARGC == 0) {
+      printf("\nCoefficient (value without power of 10) of input\n")
+      printf("coef(x) = x/10.^mag(x)\n")
+      printf("coef(2009) returns 2.009\n")
+      printf("Works for arrays\n")
+      printf("S.Marshall 10-02-2009\n\n")
+
+      return(byte(0))
+    }
+
+    if (isnum($1) == 0) {
+      printf("\nInput must be numeric\n\n")
+
+      return(byte(0))
+    }
+
+    if (format($1) == "double") {
+      return($1*double(10)^-mag($1))
+    } else {
+      return($1*float(10)^-mag($1))
+    }
+}
+
+define cosh(0,1) {
+  if ($ARGC == 0) {
+    printf("\nHyperbolic cosine\n")
+    printf("cosh(x) = (exp(x) + exp(-x))/2\n")
+    printf("Works for arrays\n")
+    printf("S.Marshall 10-02-2009\n\n")
+
+    return(byte(0))
+  }
+
+  return(0.5*(exp($1) + exp(-$1)))
+}
+
+define cot(0,1) {
+  if ($ARGC == 0) {
+    printf("\nCotangent\n")
+    printf("Adjacent leg length over opposite leg length (in a right triangle)\n")
+    printf("cot(x) = 1/tan(x) = cos(x)/sin(x)\n")
+    printf("Works for arrays\n")
+    printf("S.Marshall 01-25-2008\n\n")
+
+    return(byte(0))
+  }
+
+  return(1/tan($1))
+}
+
+define cross(0,2)
+{
+  if ($ARGC == 0) {
+    printf("\nCross product (a.k.a outer product, vector product)\n")
+    printf("cross(a, b)\n")
+    printf("a and b should be 3x1x1 numeric arrays\n")
+    # The more correct form would be 1x3x1 (standard vector form), but in Davinci it is easier to catenate arrays horizontally
+    printf("However, you can omit the final elements if their values are zero,\n")
+    printf(" e.g. [1, 1] is interpreted as [1, 1, 0]\n")
+    printf("S.Marshall 11-18-2009\n\n")
+
+    return(byte(0))
+  }
+
+  inta = $1
+  intb = $2
+  intda = dim(inta)
+  intdb = dim(intb)
+
+  if (isnum(inta) == 0 || isnum(intb) == 0) {
+    printf("\nInputs must be numeric\n\n")
+
+    return(byte(0))
+  }
+
+  if (intda[2,1]*intdb[2,1]*intda[3,1]*intdb[3,1] != 1) {
+    printf("\nBoth inputs should be 3x1x1\n\n")
+
+    return(byte(0))
+  }
+
+  if (intda[1,1] == 1) {
+    inta = cat(inta, 0*inta[1,1], x)
+  }
+
+  if (intdb[1,1] == 1) {
+    intb = cat(intb, 0*intb[1,1], x)
+  }
+
+  intda = dim(inta)
+  intdb = dim(intb)
+
+  if (intda[1,1] == 2) {
+    inta = cat(inta, 0*inta[1,1], x)
+  }
+
+  if (intdb[1,1] == 2) {
+    intb = cat(intb, 0*intb[1,1], x)
+  }
+
+  intda = dim(inta)
+  intdb = dim(intb)
+
+  if (intda[1,1] != 3 || intdb[1,1] != 3) {
+    printf("\nBoth inputs should be 3x1x1\n\n")
+
+    return(byte(0))
+  }
+
+  inty = (inta[2,1,1]*intb[3,1,1] - inta[3,1,1]*intb[2,1,1])//(inta[3,1,1]*intb[1,1,1] - inta[1,1,1]*intb[3,1,1])//(inta[1,1,1]*intb[2,1,1] - inta[2,1,1]*intb[1,1,1])
+
+  return(inty)
+}
+
+define csc(0,1) {
+  if ($ARGC == 0) {
+    printf("\nCosecant\n")
+    printf("Hypotenuse length over opposite leg length (in a right triangle)\n")
+    printf("csc(x) = 1/sin(x)\n")
+    printf("Works for arrays\n")
+    printf("S.Marshall 01-25-2008\n\n")
+
+    return(byte(0))
+  }
+
+  return(1/sin($1))
+}
+
+define dd2dms(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nConverts scalar decimal degrees to DMS array\n")
+    printf("dd2dms(DD) returns [D, M, S]\n")
+    printf("Input must be scalar\n")
+    printf("S.Marshall 10-02-2009\n\n")
+
+    return(byte(0))
+  }
+
+  if (isscalar($1) == 0) {
+    printf("\nInput must be scalar\n\n")
+
+    return(byte(0))
+  }
+
+  inp = abs($1)
+
+  if (format($1) == "double") {
+    outp = clone(double(0), 3, 1, 1)
+  } else {
+    outp = clone(0., 3, 1, 1)
+  }
+
+  outp[1,1,1] = sign($1)*floor(inp)
+  inp = 60*(inp - abs(outp[1,1,1]))
+  outp[2,1,1] = floor(inp)
+  inp = 60*(inp - outp[2,1,1])
+  outp[3,1,1] = inp
+  return(outp)
+
+}
+
+define det(0,1) {
+
+  if ($ARGC != 1) {
+    printf("\nReturns determinant of a square matrix\n")
+    printf("Returned value is double precision\n")
+    #printf("\n")
+    printf("S.Marshall 11-11-2010\n\n")
+
+    return(null)
+  }
+
+  ed = dim($1)
+  if ((ed[1] != ed[2]) || (ed[3] != 1)) {
+    printf("\nError! Input matrix must be square, with one plane!\n\n")
+    return(null)
+  }
+
+  ilu = ludcomp($1, 1) # Will return structure with LU, d, and indx
+  outp = double(ilu.d) # Will hold value of determinant
+
+  ici = 1 # Counter
+  for (ici = 1; ici <= ed[1]; ici++) {
+    outp = outp*ilu.lu[ici,ici]
+  } # Could call functions product and diag to do the math, but I'd rather do it all in one function
+
+  return(outp)
+}
+
+define diag(0,1) {
+
+  if ($ARGC != 1) {
+    printf("\nReturns elements along diagonal of a square matrix\n")
+    printf("Returned array is a row of the same format as the input\n")
+    #printf("\n")
+    printf("S.Marshall 11-10-2010\n\n")
+
+    return(null)
+  }
+
+  ed = dim($1)
+  if ((ed[1] != ed[2]) || (ed[3] != 1)) {
+    printf("\nError! Input matrix must be square, with one plane!\n\n")
+    return(null)
+  }
+
+  inp = $1
+  outp = inp[,1] # Easy way of matching input format (though elements are not all zero)
+  ici = 1 # Counter
+  for (ici = 1; ici <= ed[1]; ici++) {
+    outp[ici] = inp[ici,ici]
+  }
+
+  return(outp)
+}
+
+define dot(0,2)
+{
+
+  # Could use mxm for simplest case (though that always returns double)
+
+  if ($ARGC == 0) {
+    printf("\nDot product\n")
+    printf("dot(a, b) = a1*b1 + a2*b2 + ...\n")
+    printf("This function groups arrays by row, so for two-dimensional inputs, it\n")
+    printf(" will return a column vector with the dot products of the respective rows.\n")
+    printf("S.Marshall 11-18-2009\n\n")
+
+    return(byte(0))
+  }
+
+  inta = $1
+  intda = dim(inta)
+  intb = $2 # Somehow using isnum on $2 doesn't work correctly, but using it on intb does
+  intdb = dim(intb)
+
+  if (isnum(inta) == 0) {
+    printf("\nError! First input must be numeric\n\n")
+
+    return(byte(0))
+  }
+
+  if (isnum(intb) == 0) {
+    printf("\nError! Second input must be numeric\n\n")
+
+    return(byte(0))
+  }
+
+#  if (isnum($1) == 0 || isnum($2) == 0) {
+#    printf("\nInputs must be numeric\n\n")
+#
+#    return(byte(0))
+#  }
+
+
+  if (intda[1,1] != intdb[1,1] || intda[2,1] != intdb[2,1] || intda[3,1] != intdb[3,1]) {
+    printf("\nInputs must be same dimensions\n\n")
+
+    return(byte(0))
+  }
+
+  if (format($1) == "double" || format($2) == "double") {
+    outp = double(0)*create(1, intda[2,1], intda[3,1])
+  } else {
+    outp = 0.*create(1, intda[2,1], intda[3,1])
+  }
+
+  for (intj = 1; intj <= intda[2,1]; intj++) {
+    for (intk = 1; intk <= intda[3,1]; intk++) {
+
+      inty = 0*outp[1,1,1]*inta[1,1,1] # Match formats
+
+      for (inti = 1; inti <= intda[1,1]; inti++) {
+        inty = inty + inta[inti,intj,intk]*intb[inti,intj,intk]
+      }
+
+      outp[1,intj,intk] = inty
+    }
+  }
+
+  return(outp)
+}
+
+define erf(0,1)
+{
+  if ($ARGC == 0) {
+    printf("\nError function\n")
+    printf("erf(x) = integral from 0 to x of exp(-t^2)*2/sqrt(pi)\n")
+    printf("Works for arrays\n")
+    printf("Accurate within precision of input\n")
+    printf("Uses algorithm from W. J. Cody and Peter J. Acklam\n")
+    printf("See http://www.jstor.org/view/00255718/di970531/97p03754/0,\n")
+    printf(" http://search.cpan.org/src/REID/Games-Go-GoPair-1.001/Erf.pm,\n")
+    printf(" and http://www.netlib.org/specfun/erf\n")
+    printf("S.Marshall 02-17-2008\n\n")
+
+    return(byte(0))
+  }
+
+  if (isnum($1) == 0) {
+    printf("\nInput must be numeric\n\n")
+
+    return(byte(0))
+  }
+
+  if (format($1) == "double") { # Match input precision
+
+    outp = double($1)
+
+    pi = atod("3.14159265358979323846") # Avoids intermediate float bug
+    # Coefficients - using atod to bypass intermediate float
+    ca = create(5, format=double)
+      ca[1] = atod("3.16112374387056560")
+      ca[2] = atod("1.13864154151050156e02")
+      ca[3] = atod("3.77485237685302021e02")
+      ca[4] = atod("3.20937758913846947e03")
+      ca[5] = atod("1.85777706184603153e-1")
+    cb = create(4, format=double)
+      cb[1] = atod("2.36012909523441209e01")
+      cb[2] = atod("2.44024637934444173e02")
+      cb[3] = atod("1.28261652607737228e03")
+      cb[4] = atod("2.84423683343917062e03")
+    cc = create(9, format=double)
+      cc[1] = atod("5.64188496988670089e-1")
+      cc[2] = atod("8.88314979438837594")
+      cc[3] = atod("6.61191906371416295e01")
+      cc[4] = atod("2.98635138197400131e02")
+      cc[5] = atod("8.81952221241769090e02")
+      cc[6] = atod("1.71204761263407058e03")
+      cc[7] = atod("2.05107837782607147e03")
+      cc[8] = atod("1.23033935479799725e03")
+      cc[9] = atod("2.15311535474403846e-8")
+    cd = create(8, format=double)
+      cd[1] = atod("1.57449261107098347e01")
+      cd[2] = atod("1.17693950891312499e02")
+      cd[3] = atod("5.37181101862009858e02")
+      cd[4] = atod("1.62138957456669019e03")
+      cd[5] = atod("3.29079923573345963e03")
+      cd[6] = atod("4.36261909014324716e03")
+      cd[7] = atod("3.43936767414372164e03")
+      cd[8] = atod("1.23033935480374942e03")
+    cp = create(6, format=double)
+      cp[1] = atod("3.05326634961232344e-1")
+      cp[2] = atod("3.60344899949804439e-1")
+      cp[3] = atod("1.25781726111229246e-1")
+      cp[4] = atod("1.60837851487422766e-2")
+      cp[5] = atod("6.58749161529837803e-4")
+      cp[6] = atod("1.63153871373020978e-2")
+    cq = create(5, format=double)
+      cq[1] = atod("2.56852019228982242")
+      cq[2] = atod("1.87295284992346047")
+      cq[3] = atod("5.27905102951428412e-1")
+      cq[4] = atod("6.05183413124413191e-2")
+      cq[5] = atod("2.33520497626869185e-3")
+
+  } else {
+
+    outp = float($1)
+
+    pi = 3.141592654 # Single precision
+    # Coefficients
+    ca = create(5, format=float)
+      ca[1] = 3.16112374387056560
+      ca[2] = 1.13864154151050156e02
+      ca[3] = 3.77485237685302021e02
+      ca[4] = 3.20937758913846947e03
+      ca[5] = 1.85777706184603153e-1
+    cb = create(4, format=float)
+      cb[1] = 2.36012909523441209e01
+      cb[2] = 2.44024637934444173e02
+      cb[3] = 1.28261652607737228e03
+      cb[4] = 2.84423683343917062e03
+    cc = create(9, format=float)
+      cc[1] = 5.64188496988670089e-1
+      cc[2] = 8.88314979438837594e0
+      cc[3] = 6.61191906371416295e01
+      cc[4] = 2.98635138197400131e02
+      cc[5] = 8.81952221241769090e02
+      cc[6] = 1.71204761263407058e03
+      cc[7] = 2.05107837782607147e03
+      cc[8] = 1.23033935479799725e03
+      cc[9] = 2.15311535474403846e-8
+    cd = create(8, format=float)
+      cd[1] = 1.57449261107098347e01
+      cd[2] = 1.17693950891312499e02
+      cd[3] = 5.37181101862009858e02
+      cd[4] = 1.62138957456669019e03
+      cd[5] = 3.29079923573345963e03
+      cd[6] = 4.36261909014324716e03
+      cd[7] = 3.43936767414372164e03
+      cd[8] = 1.23033935480374942e03
+    cp = create(6, format=float)
+      cp[1] = 3.05326634961232344e-1
+      cp[2] = 3.60344899949804439e-1
+      cp[3] = 1.25781726111229246e-1
+      cp[4] = 1.60837851487422766e-2
+      cp[5] = 6.58749161529837803e-4
+      cp[6] = 1.63153871373020978e-2
+    cq = create(5, format=float)
+      cq[1] = 2.56852019228982242e00
+      cq[2] = 1.87295284992346047e00
+      cq[3] = 5.27905102951428412e-1
+      cq[4] = 6.05183413124413191e-2
+      cq[5] = 2.33520497626869185e-3
+  }
+
+  intd = dim(outp)
+
+  # Element-by-element
+  for (intk = 1; intk <= intd[3,1,1]; intk++) {
+    for (intj = 1; intj <= intd[2,1,1]; intj++) {
+      for (inti = 1; inti <= intd[1,1,1]; inti++) {
+
+        count = 1
+        intx = outp[inti, intj, intk]
+        inty = abs(intx)
+        inty2 = 0.
+        intz = 0.
+        del = 0.
+
+        # Algorithm from specfun
+        # This algorithm was designed to be used with erfc as well to minimize error,
+        #  but it should work just as well here on its own
+        if (intx == 0) {
+          outp[inti, intj, intk] = 0.
+          # erf(0) = 0
+        } else if (inty <= 0.46875) {
+          if (inty > 1.11e-16) {
+            # 1.11e-16 < |x| <= 0.46875
+            inty2 = inty^2
+          }
+          # 0 < |x| <= 0.46875
+          xn = ca[5]*inty2
+          xd = inty2
+          for (count = 1; count <= 3; count++) {
+            xn = (xn + ca[count])*inty2
+            xd = (xd + cb[count])*inty2
+          }
+          outp[inti, intj, intk] = intx*(xn + ca[4])/(xd + cb[4])
+        } else if (inty <= 4.0) {
+          # 0.46875 < |x| <= 4.0
+          xn = cc[9]*inty
+          xd = inty
+          for (count = 1; count <= 7; count++) {
+            xn = (xn + cc[count])*inty
+            xd = (xd + cd[count])*inty
+          }
+          intz = (xn + cc[8])/(xd + cd[8])
+          inty2 = fix(16.*inty)/16.
+          del = (inty - inty2)*(inty + inty2)
+          outp[inti, intj, intk] = sign(intx)*(1. - (exp(-inty2*inty2)*exp(-del)*intz))
+        } else if (inty >= 2.53e307) {
+          # For |x| >= 2.53e307, 1 or -1 is accurate within double precision
+          outp[inti, intj, intk] = sign(intx)
+        } else if (inty >= 6.71e7) {
+          # Approximation for |x| >= 6.71e7
+          outp[inti, intj, intk] = sign(intx)*(1. - sqrt(pi)/inty)
+        } else {
+          # 4 < |x| < 6.71e7
+          inty2 = 1./(inty*inty)
+          xn = cp[6]*inty2
+          xd = inty2
+          for (count = 1; count <= 4; count++) {
+            xn = (xn + cp[count])*inty2
+            xd = (xd + cq[count])*inty2
+          }
+          intz = inty2*(xn + cp[5])/(xd + cq[5])
+          intz = (sqrt(pi) - intz)/inty
+          inty2 = fix(16.*inty)/16.
+          del = (inty - inty2)*(inty + inty2)
+          outp[inti, intj, intk] = sign(intx)*(1 - exp(-inty2*inty2)*exp(-del)*intz)
+        }
+      }
+    }
+  }
+
+  return(outp)
+}
+
+define fact(0,1) {
+
+    if ($ARGC == 0) {
+      printf("\nFactorial\n")
+      printf("fact(n), integers or half-integers -0.5 <= n <= 34\n")
+      printf("Works for arrays\n")
+      printf("S.Marshall 02-17-2008\n\n")
+
+      return(byte(0))
+    }
+
+    if (isnum($1) == 0) {
+      printf("\nInput must be numeric\n\n")
+
+      return(byte(0))
+    }
+
+    if (type($1) == "double") {
+      outp = double($1)
+      pi = atod("3.14159265358979323846") # This gets around the intermediate float bug
+    } else {
+      outp = float($1) # Must be float or double for values to be computed accurately
+      pi = 3.141592653589793
+    }
+
+    intd = dim(outp)
+    
+    if (min($1) < -0.6 || isint(2*$1) == 0 || max($1) > 34.1) {
+      printf("\nInput must be integers or half-integers -0.5 <= n <= 34\n\n")
+      # 34 is the upper limit; infinity overload for higher values
+
+      return(byte(0))
+    }
+
+    # Element-by-element
+    for (intk = 1; intk <= intd[3,1,1]; intk++) {
+      for (intj = 1; intj <= intd[2,1,1]; intj++) {
+        for (inti = 1; inti <= intd[1,1,1]; inti++) {
+
+          intx = float(1)*outp[inti, intj, intk]
+          ifx = 0
+
+          if (intx == 0 || intx == 1) {
+            ifx = 1
+          }
+
+          if (intx == -0.5) {
+            ifx = sqrt(pi)
+          }
+
+          if (intx > 1.1 && isint(intx) == 1 && intx < 12.9) {
+            # Integer from 2 to 12
+            ifx = 1 # Intermediate variable
+            count = 2
+
+            while ( count <= intx ) {
+              ifx = ifx*count
+              count++
+            }
+          }
+
+          if (isint(intx) == 1 && intx > 12.9) {
+            # Integer between 12 and 34
+            ifx = float(1) # Intermediate variable
+            count = 2
+
+            while ( count <= intx ) {
+              ifx = ifx*count
+              count++
+            }
+          }
+
+          if (intx > 0 && ifx == 0 && isint(2*intx) == 1) {
+            ifx = sqrt(pi) # Intermediate variable
+            count = 0.5
+
+            while ( count <= intx ) {
+              ifx = ifx*count
+              count++
+            }
+          }
+
+        outp[inti, intj, intk] = ifx
+
+        }
+      }
+    }
+    
+    if ((max($1) < 12.9) && (isint($1) == 1)) {
+      return(int(outp))
+    } else {
+      return(outp)
+    }
+}
+
+define factor(0,1) {
+# Not the most efficient algorithm, but usable
+# As this takes less than a second for any integer between 2 and intmax, there is little reason to find a better algorithm
+# Could extend the allowed values to 1/eps2 (for double-precision integers)
+
+  if ($ARGC == 0) {
+    printf("\nReturns prime factorization of input integer\n")
+    printf("Input must be a scalar postive integer >= 2\n")
+    printf("This function does not use a very efficient algorithm, but on a decent\n")
+    printf(" computer it takes less than a second for any positive integer.\n")
+    printf("Only for integers, so inputs greater than intmax (2147483647) are refused.\n")
+    printf("S.Marshall 11-18-2009\n\n")
+
+    return(byte(0))
+  }
+
+  if (isscalar($1) == 0 || isint($1) == 0 || $1 < 2) {
+    printf("\nError! Input must be a scalar positive integer!\n\n")
+    return(byte(0))
+  }
+
+  if ($1 > 2147483647) {
+    printf("\nError! Input must be less than intmax!\n\n")
+    return(byte(0))
+  }
+
+  intx = int($1)
+  intf = 1 # Will hold prime factors
+  intm = int(intx/2) # Max factor to test (for small inputs)
+
+  if ($1 > 46341) { # Special case for large numbers (x > sqrt(intmax))
+    intm = int(floor(sqrt(intx))) # Max factor to test (if input not prime, lowest prime factor must be less than or equal to sqrt(input))
+#    printf("\nLarge input; first testing up to %d\n", intm) # Debugging
+  }
+
+  while (intx % 2 == 0) { # First test 2
+    intf = cat(intf,2,axis=x)
+    intx = intx/2
+  }
+
+  intn = 3 # Then all odd numbers
+  while (intn <= intm) {
+    if (intx % intn == 0) {
+      intf = cat(intf,intn,axis=x)
+      intx = intx/intn
+    } else {
+      intn = intn + 2 # Test odds only
+    }
+  }
+
+  if ($1 > 46341 && intx > 1 && intx < $1) {
+    # Special case for large numbers
+    # Only necessary if current intx is greater than 1 (not fully factored) and less than its original value (original not prime)
+    intf2 = $1/int(product(intf))
+#    printf("Large input; now testing %d\n\n", intf2) # Debugging
+    intf2 = factor(intf2)
+    intf = cat(intf, intf2, axis=x)
+  }
+
+  if (isscalar(intf) == 1) { # If prime
+    return(int($1))
+  } else {
+    return(intf[2:,]) # Skipping the 1
+  }
+}
+
+define fib(0,1) {
+
+    if ($ARGC == 0) {
+      printf("\nFibonacci numbers\n")
+      printf("fib(n) returns nth Fibonacci number\n")
+      printf("Uses generalized version of Binet's formula\n")
+      printf("The generalized version extends the sequence to all numbers\n")
+      printf("Works for arrays\n")
+      printf("S.Marshall 10-02-2009\n\n")
+
+      return(byte(0))
+    }
+
+    if (isnum($1) == 0) {
+      printf("\nInput must be numeric\n\n")
+
+      return(byte(0))
+    }
+
+    if (format($1) == "double" || max(abs($1)) > 31) {
+      # Calculation with integers not accurate for |n| > 31; use double in that case
+      phi = 0.5*(1 + sqrt(double(5)))
+      pi = atod("3.14159265358979323846")
+      sqf = sqrt(double(5))
+    } else {
+      phi = 0.5*(1 + sqrt(5))
+      pi = 3.14159265358979323
+      sqf = sqrt(5)
+    }
+
+    if (isint($1) == 1 && max(abs($1)) <= 31) {
+      return(int(round((phi^$1-(1-phi)^$1)/sqf)))
+      # Binet formula; return integers when possible
+      # If input is some form of integer, the formula gives integers, and output can be integers
+    } else {
+      return((phi^$1-cos($1*pi)*phi^(-$1))/sqf)
+      # Generalized Binet formula
+      # Returns float when max |x| <= 31, double otherwise
+    }
+}
+
+define fix(0,1)
+{
+  if ($ARGC == 0) {
+    printf("\nFix - round toward zero\n")
+    printf("fix(x)\n")
+    printf("Works for arrays\n")
+    printf("S.Marshall 02-02-2008\n\n")
+    
+    return(byte(0))
+  }
+  
+  if (isnum($1) == 0) {
+    printf("\nInput must be numeric!\n\n")
+  }
+
+  outp = $1
+  intd = dim(outp)
+
+  # Element-by-element
+  for (intk = 1; intk <= intd[3,1,1]; intk++) {
+    for (intj = 1; intj <= intd[2,1,1]; intj++) {
+      for (inti = 1; inti <= intd[1,1,1]; inti++) {
+        if (outp[inti, intj, intk] >= 0) {
+          outp[inti, intj, intk] = floor(outp[inti, intj, intk])
+        } else {
+          outp[inti, intj, intk] = ceil(outp[inti, intj, intk])
+        }
+      }
+    }
+  }
+  return(outp)
+}
+
+define gamma(0,1)
+{
+  if ($ARGC == 0) {
+    printf("\nGamma function - extended factorial\n")
+    printf("gamma(x) = fact(x-1)\n")
+    printf("gamma(x) = integral from 0 to Inf of t^(x-1)*exp(-t) dt\n")
+    printf("gamma(x+1) = x*gamma(x)\n")
+    printf("Accurate within precision of input\n")
+    printf("Works for arrays\n")
+    printf("This function uses an algorithm from W. J. Cody and L. Stoltz\n")
+    printf("See http://www.netlib.org/specfun/gamma\n")
+    printf("S.Marshall 02-22-2008\n\n")
+
+    return(byte(0))
+  }
+
+  if (isnum($1) == 0) {
+    printf("\nInput must be numeric!\n")
+  }
+
+  if (format($1) == "double") { # Match input precision
+    outp = double($1)
+
+    pi = atod("3.14159265358979323846") # 3.141592653589793
+
+    # Set coefficients, from specfun
+    # Using atod gets around the intermediate float bug
+    cp = create(8, format=double)
+      cp[1] = atod("-1.71618513886549492533811")
+      cp[2] = atod("2.47656508055759199108314E+1")
+      cp[3] = atod("-3.79804256470945635097577E+2")
+      cp[4] = atod("6.29331155312818442661052E+2")
+      cp[5] = atod("8.66966202790413211295064E+2")
+      cp[6] = atod("-3.14512729688483675254357E+4")
+      cp[7] = atod("-3.61444134186911729807069E+4")
+      cp[8] = atod("6.64561438202405440627855E+4")
+    cq = create(8, format=double)
+      cq[1] = atod("-3.08402300119738975254353E+1")
+      cq[2] = atod("3.15350626979604161529144E+2")
+      cq[3] = atod("-1.01515636749021914166146E+3")
+      cq[4] = atod("-3.10777167157231109440444E+3")
+      cq[5] = atod("2.25381184209801510330112E+4")
+      cq[6] = atod("4.75584627752788110767815E+3")
+      cq[7] = atod("-1.34659959864969306392456E+5")
+      cq[8] = atod("-1.15132259675553483497211E+5")
+    cc = create(7, format=double)
+      cc[1] = atod("-1.910444077728E-03")
+      cc[2] = atod("8.4171387781295E-04")
+      cc[3] = atod("-5.952379913043012E-04")
+      cc[4] = atod("7.93650793500350248E-04")
+      cc[5] = atod("-2.777777777777681622553E-03")
+      cc[6] = atod("8.333333333333333331554247E-02")
+      cc[7] = atod("5.7083835261E-03")
+    cd = atod("0.9189385332046727417803297")
+  } else {
+    outp = float($1)
+
+    pi = 3.141592654 # Only single precision
+
+    # Set coefficients, from specfun
+    cp = create(8, format=float)
+      cp[1] = -1.71618513886549492533811
+      cp[2] = 2.47656508055759199108314E+1
+      cp[3] =  -3.79804256470945635097577E+2
+      cp[4] = 6.29331155312818442661052E+2
+      cp[5] = 8.66966202790413211295064E+2
+      cp[6] = -3.14512729688483675254357E+4
+      cp[7] = -3.61444134186911729807069E+4
+      cp[8] = 6.64561438202405440627855E+4
+    cq = create(8, format=float)
+      cq[1] = -3.08402300119738975254353E+1
+      cq[2] = 3.15350626979604161529144E+2
+      cq[3] = -1.01515636749021914166146E+3
+      cq[4] = -3.10777167157231109440444E+3
+      cq[5] = 2.25381184209801510330112E+4
+      cq[6] = 4.75584627752788110767815E+3
+      cq[7] = -1.34659959864969306392456E+5
+      cq[8] = -1.15132259675553483497211E+5
+    cc = create(7, format=float)
+      cc[1] = -1.910444077728E-03
+      cc[2] = 8.4171387781295E-04
+      cc[3] = -5.952379913043012E-04
+      cc[4] = 7.93650793500350248E-04
+      cc[5] = -2.777777777777681622553E-03
+      cc[6] = 8.333333333333333331554247E-02
+      cc[7] = 5.7083835261E-03
+    cd = 0.9189385332046727417803297
+  }
+
+  intd = dim(outp)
+
+  warnni = 0
+  # If warnni is changed to 1 during loop execution, will display warning about negative integers and zero before displaying output
+
+  for (intk = 1; intk <= intd[3,1,1]; intk++) {
+    for (intj = 1; intj <= intd[2,1,1]; intj++) {
+      for (inti = 1; inti <= intd[1,1,1]; inti++) {
+        intx = outp[inti, intj, intk]
+        inty = intx
+        intz = 0
+        intf = 1 # Fact
+
+        if (intx <= 0) {
+          inty = -intx
+          if (isint(intx) == 0) {
+            intf = -pi/(intx*sin(pi*intx)) # Fact
+            inty++
+          } else {
+            warnni = 1
+            # Will display negative integer warning after loop
+            # Value will be set to zero in main loop
+          }
+        }
+
+        # Main loop - most computation done here; most of this is directly from specfun
+        if (intx < 0 && isint(intx) == 1) {
+          intz = 0
+          # Gamma function is technically undefined (or infinite) at negative integers and zero
+          # This function uses zero as a placeholder, since gamma(x) != 0 for all real x
+        } else {
+          if (inty < 12) {
+            if (inty < 1) {
+              intz = inty
+              inty = inty + 1
+            # (0, 1) to (1, 2)
+            } else {
+              inty = inty - floor(inty) + 1
+              intz = inty - 1
+              # [1, 12) becomes [1, 2)
+            }
+            intxn = double(0)
+            intxd = double(1)
+            for (intn = 1; intn <= 8; intn++) {
+              intxn = (intxn + cp[intn])*intz
+              intxd = intxd*intz + cq[intn]
+            }
+            intz = intxn/intxd + 1
+            if (abs(intx) < 1) {
+              intz = intz/abs(intx)
+            } else {
+              inty = inty - floor(inty) + 1
+              for (intn = 2; intn <= abs(intx); intn++) {
+                intz = intz*inty
+                inty = inty + 1
+                # Accounts for [1, 12) to [1, 2)
+              }
+            }
+          } else {
+            # inty >= 12
+            inty2 = inty^2
+            intz = cc[7]
+            for (intn = 1; intn <= 6; intn++) {
+              intz = intz/inty2 + cc[intn]
+            }
+            intz = intz/inty - inty + cd
+            intz = intz + (inty - 0.5)*log(inty)
+            intz = exp(intz)
+          }
+
+          if (intx < 0) {
+            intz = intf/intz
+          }
+        }
+
+        outp[inti, intj, intk] = intz
+      }
+    }
+  }
+
+  if (warnni == 1) {
+    printf("\nNegative integers and zero are not allowed! Output set to zero at those values.\n\n")
+  }
+
+  return(outp)
+}
+
+define hyp(0,2) {
+
+    if ($ARGC < 2) {
+      printf("\nPythagorean theorem - given legs, find hypotenuse\n")
+      printf("hyp(a,b) returns sqrt(a^2+b^2)\n")
+      printf("Works for arrays\n")
+      printf("S.Marshall 10-02-2009\n\n")
+
+      return(byte(0))
+    }
+
+    if (isnum($1) == 0 || isnum($2) == 0) {
+      printf("\nInputs must be numeric\n\n")
+
+      return(byte(0))
+    }
+
+    return(sqrt($1*$1 + $2*$2))
+}
+
+define intprod(0,2) {
+
+  if ($ARGC < 2) {
+    printf("\nReturns product of consecutive integers\n")
+    printf("intprod(a, b) returns product of integers a through b (inclusive)\n")
+    printf(" Both inputs must be scalar (1x1x1).\n")
+#    printf("\n")
+    printf("S.Marshall 11-18-2009\n\n")
+
+    return(byte(0))
+  }
+
+  inpa = $1
+  inpb = $2
+
+  if (isscalar(inpa) == 0 || isscalar(inpb) == 0) {
+    printf("\nError! Both inputs must be scalar.\n\n")
+    return(byte(0))
+  }
+
+  if (inpa >= inpb) {
+    printf("\nError! First input must be less than second input!\n\n")
+    return(byte(0))
+  }
+
+  if (isint(inpa) == 0 || isint(inpb) == 0) {
+    printf("\nError! Both inputs must be integers!\n\n")
+    return(byte(0))
+  }
+
+  if (double(inpb)^(inpb - inpa + 1) > 2147483647) {
+    outp = double(1) # Will be output
+#    printf("\nWarning! Using double format to ensure good value for product!\n\n") # From debugging
+  } else {
+    outp = 1
+  }
+
+  ic = inpa # Counter
+  for (ic = inpa; ic <= inpb; ic++) { # Main loop
+    outp = outp*ic
+  }
+
+  return(outp)
+}
+
+define inverf(0,1) {
+  if ($ARGC == 0) {
+    printf("\nInverse error function\n")
+    printf("x = inverf(y) iff y = erf(x)\n")
+    printf("This function uses the inverse normal function\n")
+    printf("inverf(y) = invnorm((y + 1)/2)/sqrt(2)\n")
+    printf("Input must be y such that -1 < y < 1\n")
+    printf("Relative errors (in double precision) are less than 1.2e-9\n")
+    printf("Matches input format\n")
+    printf("Works for arrays\n")
+    printf("S.Marshall 10-02-2009\n\n")
+
+    return(byte(0))
+  }
+  
+  if (isnum($1) == 0) {
+    printf("\nInput must be numeric\n\n")
+
+    return(byte(0))
+  }
+
+  if (min($1) <= -1 || max($1) >= 1) {
+    printf("\nInput must be y such that -1 < y < 1\n\n")
+
+    return(byte(0))
+  }
+
+  # Basically a simple coordinate shift
+  if (format($1) == "double") { # Match input precision
+    return(invnorm(0.5*($1 + 1))/sqrt(double(2)))
+    # Watch out for the intermediate float bug - use sqrt(double(2))
+  } else {
+    return(invnorm(0.5*($1 + 1))/sqrt(2))
+  }
+}
+
+define invnorm(0,1) {
+  if ($ARGC == 0) {
+    printf("\nInverse cumulative probability function for normal distribution\n")
+    printf("z = invnorm(y) iff y = normcdf(z)\n")
+    printf("Input must be y such that 0 < y < 1\n")
+    printf("Algorithm from http://home.online.no/~pjacklam/notes/invnorm/\n")
+    printf("Relative errors (in double precision) are less than 1.2e-9\n")
+    printf("Matches input format\n")
+    printf("Works for arrays\n")
+    printf("S.Marshall 02-25-2008\n\n")
+
+    return(byte(0))
+  }
+
+  if (isnum($1) == 0) {
+    printf("\nInput must be numeric\n\n")
+
+    return(byte(0))
+  }
+
+  if (min($1) <= 0 || max($1) >= 1) {
+    printf("\nInput must be y such that 0 < y < 1\n\n")
+
+    return(byte(0))
+  }
+
+  if (format($1) == "double") { # Match input precision
+    outp = double(abs($1))
+    # Coefficients in approximations, from Acklam
+    # atod to bypass intermediate float bug
+    ca = create(6, format=double)
+      ca[1] = atod("-3.969683028665376e+01")
+      ca[2] = atod("2.209460984245205e+02")
+      ca[3] = atod("-2.759285104469687e+02")
+      ca[4] = atod("1.383577518672690e+02")
+      ca[5] = atod("-3.066479806614716e+01")
+      ca[6] = atod("2.506628277459239")
+    cb = create(5, format=double)
+      cb[1] = atod("-5.447609879822406e+01")
+      cb[2] = atod("1.615858368580409e+02")
+      cb[3] = atod("-1.556989798598866e+02")
+      cb[4] = atod("6.680131188771972e+01")
+      cb[5] = atod("-1.328068155288572e+01")
+    cc = create(6, format=double)
+      cc[1] = atod("-7.784894002430293e-03")
+      cc[2] = atod("-3.223964580411365e-01")
+      cc[3] = atod("-2.400758277161838")
+      cc[4] = atod("-2.549732539343734")
+      cc[5] = atod("4.374664141464968")
+      cc[6] = atod("2.938163982698783")
+    cd = create(4, format=double)
+      cd[1] = atod("7.784695709041462e-03")
+      cd[2] = atod("3.224671290700398e-01")
+      cd[3] = atod("2.445134137142996")
+      cd[4] = atod("3.754408661907416")
+  } else {
+    outp = float(abs($1))
+    # Coefficients in approximations, from Acklam
+    ca = create(6, format=float)
+      ca[1] = -3.969683028665376e+01
+      ca[2] =  2.209460984245205e+02
+      ca[3] = -2.759285104469687e+02
+      ca[4] =  1.383577518672690e+02
+      ca[5] = -3.066479806614716e+01
+      ca[6] =  2.506628277459239
+    cb = create(5, format=float)
+      cb[1] = -5.447609879822406e+01
+      cb[2] =  1.615858368580409e+02
+      cb[3] = -1.556989798598866e+02
+      cb[4] =  6.680131188771972e+01
+      cb[5] = -1.328068155288572e+01
+    cc = create(6, format=float)
+      cc[1] = -7.784894002430293e-03
+      cc[2] = -3.223964580411365e-01
+      cc[3] = -2.400758277161838
+      cc[4] = -2.549732539343734
+      cc[5] =  4.374664141464968
+      cc[6] =  2.938163982698783
+    cd = create(4, format=float)
+      cd[1] =  7.784695709041462e-03
+      cd[2] =  3.224671290700398e-01
+      cd[3] =  2.445134137142996
+      cd[4] =  3.754408661907416
+  }
+
+  intd = dim(outp)
+    
+  # Element-by-element
+  for (intk = 1; intk <= intd[3,1,1]; intk++) {
+    for (intj = 1; intj <= intd[2,1,1]; intj++) {
+      for (inti = 1; inti <= intd[1,1,1]; inti++) {
+        inty = outp[inti, intj, intk]
+        # Algorithm from Acklam
+        if (inty == 0) {
+          intx = 0
+        } else if (inty < 0.02425) {
+          intx = sqrt(-2*ln(inty))
+          intx = (((((cc[1]*intx+cc[2])*intx+cc[3])*intx+cc[4])*intx+cc[5])*intx+cc[6])/((((cd[1]*intx+cd[2])*intx+cd[3])*intx+cd[4])*intx+1)
+          # I could have used "for" loops
+        } else if (inty < 0.97575) {
+          intx = inty - 0.5
+          intx2 = intx*intx
+          intx = (((((ca[1]*intx2+ca[2])*intx2+ca[3])*intx2+ca[4])*intx2+ca[5])*intx2+ca[6])*intx/(((((cb[1]*intx2+cb[2])*intx2+cb[3])*intx2+cb[4])*intx2+cb[5])*intx2+1)
+        } else if (inty < 1) {
+          intx = sqrt(-2*ln(1-inty))
+          intx = -(((((cc[1]*intx+cc[2])*intx+cc[3])*intx+cc[4])*intx+cc[5])*intx+cc[6])/((((cd[1]*intx+cd[2])*intx+cd[3])*intx+cd[4])*intx+1)
+        }
+        outp[inti, intj, intk] = intx
+      }
+    }
+  }
+
+  return(sign($1)*outp)
+}
+
+define isint(0,1) { # What about double-precision values that store integers larger than intmax? According to this function, those are not integers.
+
+    if ($ARGC == 0) {
+      printf("\nReturns 1 if all elements of input are integers (in any format), 0 if not\n")
+      printf("Works for arrays\n")
+      printf("S.Marshall 11-16-2010\n\n")
+
+      return(byte(0))
+    }
+
+    if (isnum($1) == 0) {
+      printf("\nInput must be numeric\n\n")
+
+      return(byte(0))
+      # This function returns zero for non-numeric input, or no input, but that should be OK
+    }
+
+    if (equals($1, int($1))) {
+      return(byte(1))
+    }
+
+    return(byte(0))
+}
+
+define isnum(0,1) {
+
+    if ($ARGC == 0) {
+      printf("\nReturns 1 if input is numeric (any format), 0 if not\n")
+      printf("Works for arrays\n")
+      printf("S.Marshall 12-07-2010\n\n")
+
+      return(byte(0))
+    }
+
+    ef = format($1)
+    if (equals(ef, "byte") || equals(ef, "short") || equals(ef, "int") || equals(ef, "float") || equals(ef, "double")) {
+      return(byte(1))
+    }
+
+    return(byte(0))
+}
+
+define isscalar(0,1)
+{
+  if ($ARGC == 0) {
+    printf("\nisscalar - test for scalar input\n")
+    printf("Returns 1 if input is a scalar (1x1x1) number, 0 otherwise\n")
+    printf("S.Marshall 12-07-2010\n\n")
+
+    return(byte(0))
+  }
+
+  if (isnum($1) == 0) {
+    printf("\nInput must be numeric\n\n")
+
+    return(byte(0))
+  }
+
+  if (length($1) == 1) {
+    # I don't think the length can be less than 1, but just in case...
+    return(byte(1))
+  } else {
+    return(byte(0))
+  }
+}
+
+define leg(0,2) {
+
+    if ($ARGC < 2) {
+      printf("\nPythagorean theorem - given hypotenuse and leg, find other leg\n")
+      printf("leg(c,a) returns sqrt(c^2-a^2)\n")
+      printf("The first input must be greater than or equal to the second input\n")
+      printf("Works for arrays\n")
+      printf("S.Marshall 10-02-2009\n\n")
+
+      return(byte(0))
+    }
+
+    if (isnum($1) == 0 || isnum($2) == 0) {
+      printf("\nInputs must be numeric\n\n")
+
+      return(byte(0))
+    }
+
+    return(sqrt($1*$1 - $2*$2))
+}
+
+define linfit(0,3) {
+
+  if ($ARGC < 2) {
+    printf("\nDetailed linear fit - returns slope, intercept, uncertainties, and more\n")
+    printf("linfit(y,x) returns an array with the following organization:\n")
+    printf(" [[y-intercept,           slope              ]\n")
+    printf("  [intercept uncertainty, slope uncertainty  ]\n")
+    printf("  [correlation coef. (R), standard error in y]]\n")
+    printf("Uses least squares\n")
+    printf("Uncertainty formulae from Higbie 1990\n")
+    printf("S.Marshall 10-09-2010\n\n")
+
+    return(byte(0))
+  }
+
+  ey = $1
+  ex = $2
+
+#  inta = fit(y=ey, x=ex, type=linear)
+  en = length(ex)
+#  en = en[1]*en[2]*en[3] # Number of terms, N
+
+  ixa = avg(ex)
+  iya = avg(ey)
+
+  issxx = sum((ex - ixa)^2)
+  issyy = sum((ey - iya)^2)
+  issxy = sum((ex - ixa)*(ey - iya))
+
+  is = issxy/issxx # Slope
+  ii = iya - is*ixa # y-intercept
+
+#  ixsd = stddev(ex)
+#  iysd = stddev(ey)
+
+  ir = issxy/sqrt(issxx*issyy)
+
+#  isu = abs(inta[2])*tan(acos(ir))/sqrt(en - 2) # Uncertainty in slope
+  isu = abs(is)*tan(acos(ir))/sqrt(en - 2) # Uncertainty in slope
+
+  ixrms = sqrt(avg(ex*ex)) # RMS x-value
+  iiu = isu*ixrms # Uncertainty in y-intercept
+
+  iys = ii + is*ex # Calculated y
+  iys = iys - ey # Differences
+  iys = sqrt(sum(iys*iys)/(en - 2)) # Squares of differences
+
+  outp = cat(ii//is, double(iiu//isu), double(ir)//double(iys), axis=y)
+
+#  pplot({ey, outp[1,1] + outp[2,1]*ex, outp[1,1] + outp[2,1]*ex - outp[2,3], outp[1,1] + outp[2,1]*ex + outp[2,3]}, {3,2,1,1}, {"Given y-values", "Calculated regression", "Regression minus error", "Regression plus error"}, xaxis=ex, xlabel="x", ylabel="y", plot_title="Linear regression", lw=1)
+
+  return(outp)
+}
+
+define log2(0,1) {
+
+    if ($ARGC == 0) {
+      printf("\nBase-2 logarithm\n")
+      printf("log2(x) returns ln(x)/ln(2)\n")
+      printf("Works for arrays\n")
+      printf("S.Marshall 10-27-2009\n\n")
+
+      return(byte(0))
+    }
+
+    if (isnum($1) == 0) {
+      printf("\nInput must be numeric\n\n")
+
+      return(byte(0))
+    }
+
+  if (format($1) == "double") {
+    return(ln($1)/atod("0.69314718055994530941"))
+    # Match input precision
+  } else {
+    return(ln($1)/0.6931471806)
+  }
+}
+
+define logb(0,2) {
+
+    if ($ARGC < 2) {
+      printf("\nLogarithm with arbitrary base\n")
+      printf("logb(b,x) returns ln(x)/ln(b)\n")
+      printf("Note that the base is the first input\n")
+      printf("Works for arrays\n")
+      printf("S.Marshall 12-06-2007\n\n")
+
+      return(byte(0))
+    }
+
+    if (isnum($1) == 0 || isnum($2) == 0) {
+      printf("\nInputs must be numeric\n\n")
+
+      return(byte(0))
+    }
+
+    return(ln($2)/ln($1))
+}
+
+define lsq(0,3) {
+
+  if ($ARGC == 0) {
+    printf("\nUnconstrained least squares fitting\n")
+    printf("lsq(X,y) returns A such that X*A best approximates y\n")
+    printf(" by minimizing the sum of squares of the residuals.\n")
+    printf(" That is, A for which sum((y_i - A_i*X_i)^2) is minimized.\n")
+    printf("The data input X should have m rows, n columns, and 1 plane.\n")
+    printf("The test input y should have m rows, 1 column, and 1 plane.\n")
+    printf("Will also display summary of errors, unless given a third\n")
+    printf(" input equal to zero\n")
+    printf("S.Marshall 09-09-2010\n\n") # Some revisions to comments, 12-07-2010
+
+    return(byte(0))
+  }
+
+  # Previously, I had the function check to ensure that there are no columns of zeros.
+  #  That test has been removed, in the interest of speeding up the computations.
+
+  # From http://www.stat.lsa.umich.edu/~kshedden/Courses/Stat401/Notes/401-multreg.pdf
+  # n elements in each spectrum
+  # Y is a column vector with n elements
+  # There are p potential end members
+  # X is a n-by-p matrix (n rows, p columns)
+  # So, each row corresponds to one wavelength,
+  #  and each column corresponds to one end member
+  # A is a column vector with p elements
+  # A = inverse(X'*X)*X'*Y
+
+  # Test matrix initially has 934 rows and 304 columns, so n = 934 and p = 304
+  #printf("Setting eX\n") # For debugging
+  eX = $1
+  #printf("Setting eXt\n")
+  eXt = eX
+  #printf("Translating eXt\n")
+  eXt = translate(eX, from=x, to=y) # X transposed
+  #printf("Setting eY\n")
+  eY = $2
+  #printf("Done setting variables; now calculating output\n")
+
+  #in = dim(eX)
+  #ip = in[2]
+  #in = in[1]
+
+  #printf("Calculating oA\n")
+  oA = mxm(mxm(minvert(mxm(eXt, eX)), eXt), eY)
+
+  if ($ARGC >= 3) {
+    iem = $3 # Controls error printing mode - if nonzero, will display brief error report
+  } else {
+    iem = 1
+  }
+
+  if (equals(iem, 0)) {
+    # Don't calculate or display errors; just return A (as a non-structure)
+    return(oA)
+  } else {
+    # Display brief error report
+    printf("Errors in fitted spectrum:\n")
+    oYf = mxm(eX, oA) # Fit y
+    oYfe = abs(oYf - eY) # Absolute errors in fit y
+    oMADE = avg(oYfe)
+    printf("MAD error: %f\n", oMADE)
+    oRMSE = sqrt(avg(oYfe*oYfe)) # RMS error
+    printf("RMS error: %f\n", oRMSE)
+    omaxE = max(oYfe)
+    printf("Maximum absolute error: %f\n", omaxE)
+    # And return A in a structure
+    return({A = oA, Yfit = oYf, MADE = oMADE, RMSE = oRMSE, maxE = omaxE})
+  }
+}
+
+# May want to include option to set maximum number of iterations to something other than 100
+define lsqnn(0,3) {
+  if ($ARGC < 2) {
+    printf("\nNonnegative least squares fitting\n")
+    printf("lsqnn(X,y) returns A such that X*A best approximates y\n")
+    printf(" by minimizing the sum of squares of the residuals,\n")
+    printf(" subject to the constraint that all elements of A are >= 0.\n")
+    printf(" That is, A for which sum((y_i - X_i*A_i)^2) is minimized.\n")
+    printf("The data input X should have m rows, n columns, and 1 plane.\n")
+    printf("The test input y should have m rows, 1 column, and 1 plane.\n")
+    printf("Optional third input controls output mode\n")
+    printf(" If $3 is 1 (or omitted), will print summary and return structure\n")
+    printf("  with errors and fitted spectrum, in addition to calculated\n")
+    printf("  coefficients.\n")
+    printf(" If $3 is 0, will only return structure with coefficients\n")
+    printf(" This means that the format of the output depends on $3.\n")
+    printf("This function uses an algorithm outlined in Lawson & Hanson 1974\n")
+    printf("Note that this function is set to stop after 100 iterations and\n")
+    printf(" return its best solution if no convergence is reached by then.\n")
+    printf("S.Marshall 10-31-2010\n\n") # Some revisions to comments, 12-07-2010
+
+    return(byte(0))
+  }
+
+  # Unlike the earlier version, this needs to work such that the matrix passed to lsq doesn't have any columns of zeros
+
+  # Add option to display strings if verbose >= 1?
+  # But this could slow it down, as it would require an if check for each string - is there a way to avoid that?
+
+  eE = double($1) # X
+  ef = double($2) # y
+  eEd = dim(eE) # dim gives [columns, rows, planes]
+  efd = dim(ef)
+
+  if ($ARGC == 3) {
+    if (equals($3, 0) || equals($3, 1)) {
+      iem = byte($3)
+    } else {
+      printf("\nError! Invalid third input!\n\n")
+      return(null)
+    }
+  } else { # Will print errors and return structure by default
+    iem = byte(1)
+  }
+  # Originally, the previous block was meant to be used to set error printing mode and verbosity mode
+  #  (defined but never implemented)
+  #  If nonzero, would display update after each iteration, and will give brief error analysis when complete
+
+  if (efd[1,1,1] != 1 || eEd[3,1,1] != 1 || efd[3,1,1]!= 1 || eEd[2,1,1] != efd[2,1,1]) {
+    printf("\nDimension error!\n\n")
+    return(byte(0))
+  }
+  #printf("\nInputs OK; proceeding with lsqnn...\n") # For debugging
+
+  # Descriptions of procedure from: Lawson, C. L., and R. J. Hanson.
+  #  Solving Least Squares Problems, pp. 160-161 (Problem NNLS). Prentice-Hall, 1974.
+  # Problem NNLS:
+  # Initially given m-by-n matrix E, integers m and n, and m-vector f
+  # 23.10: Algorithm NNLS(E,m,n,f,x,w,z,P,Z)
+  em = eEd[2,1,1] # Rows (number of samples in each spectrum)
+  en = eEd[1,1,1] # Columns (number of end members)
+  ieps = 5.e-8 # Tolerance
+  # Adjust this? This value requires double-precision
+
+  # 1. Set P = null, Z = {1,2,...,n}, x = 0
+  iZ = create(1,en,1, start=1, format=int) # Column vector; will hold indices contrained to be zero
+  iP = clone(0, 1,en,1) # Column vector; will hold indices for which values are positive
+  ix = clone(double(0), 1,en,1)
+  #printf("Step 1 complete; defined m, n, Z, P, x\n")
+  ill = short(sum(iP > 0)) # It should be zero initially
+  # List of number of positive end members at beginning of each iteration (or after each iteration, if you count the first element as zero)
+  ici = 0 # Number of iterations
+  ig = byte(2) # Control switch - step to complete next, since algorithm is not a simple loop
+
+  # Begin loop
+  while (ici < 100 && ig < 12) { # Stops after 100 iterations; change that number if necessary
+   # Note that Davinci only checks the criteria for a loop (e.g. ig < 12) at the beginning of each iteration (not continuously).
+   #  So this loop has some intermediate checks for ig, in order to avoid unnecessary computations.
+    ici++ # Increment number of iterations
+    #printf("\nBeginning iteration %d of main loop\n", ici)
+    ill = cat(ill, short(sum(iP > 0)), axis=x)
+    #if (ici > 10) { # Check for convergence, based on ill not changing for several iterations
+    # # At this point, the length (number of elements) of ill is ici+1
+    #  #printf("ici = %d; length(ill) = %d\n", ici, temp)
+    #  temp = ill[ici+1] # Last element of ill
+    #  if ((temp == ill[ici]) && (temp == ill[ici-1]) && (temp == ill[ici-2]) && (temp == ill[ici-3]) && (temp == ill[ici-4])) {
+    #   # This should never actually be triggered, since the check in step 3 is now working correctly
+    #    printf("Convergence criterion satisfied; breaking from main loop\n")
+    #    ig = byte(12)
+    #  }
+    #}
+    #if (ici % 5 == 0) { # For debugging
+    #  temp = pause("Press Enter to continue ")
+    #}
+    if (ig < 6) {
+      # 2. Compute n-vector w = E'*(f - E*x)
+      #printf("Step 2: Computing w\n")
+      iw = mxm(translate(eE,x,y), (ef - mxm(eE, ix)))
+      #return(iw) # For debugging
+
+      # 3. If Z is empty or if w_j <= 0 for all j dom Z, go to step 12 (return x)
+      #printf("Step 3: Checking for completion\n")
+      #printf(" max(iZ) = %d\n", max(iZ)) # Kind of useless
+      #temp = maxpos(iw*(iZ > 0), showval=1)
+      #printf(" max of iw (from indices iZ) = %.3e, at index %d\n", temp[4], temp[2])
+      if ((max(iZ) <= 0) || (max(iw*(iZ > 0)) <= 0)) {
+        #printf("\nStep 12: Computation complete; breaking from main loop\n")
+        ig = byte(12) # Break
+      }
+    }
+
+    if (ig < 6) {
+      # 4. Find an index t dom Z such that w_t = max({w_j: j dom Z})
+      #printf("Not complete (based on step 3); beginning step 4...\n")
+      ict = maxpos(iw*double(iZ > 0)) # That should handle the j dom Z part as quickly as possible
+      ict = ict[2]
+      #printf("Step 4 complete; found t = %d\n",ict) # Test
+
+      # 5. Move the index t from set Z to set P
+      iP[1,ict] = ict # Move index
+      iZ[1,ict] = 0
+      #printf("Step 5 complete; index %d moved from Z to P\n", ict)
+    }
+
+    if (ig < 12) {
+      # 6. Let E_P denote the m-by-n matrix defined by:
+      #     Column j of E_P = _/ column j if E if j dom P 
+      #                        \ 0 if j dom Z
+      #  And perhaps introduce another intermediate variable (possibly unnecessary) to keep track
+      #ici++ # Increment number of iterations
+      #iEP = clone(double(0), eEd[1,1], eEd[2,1], 1) # Same dimensions as eE
+      #printf("Step 6: Setting up EP for call to lsq\n")
+      ict = 1
+      iEPn = 0 # Number of end members in EP
+      # Not using columns of zeros in EP (won't work with lsq), but then I must keep track of the indices
+      for (ict = 1; ict <= en; ict++) {
+        if (iP[1,ict] > 0) { # If index ict is in P (rather than Z)
+          if (iEPn > 0) {
+            # Concatenate EP with column ict of E
+            iEP = cat(iEP, eE[ict,], axis=x)
+            iEPj = cat(iEPj, ict, axis=x)
+          } else { # Nothing in EP yet (ict is first index in P)
+            # Define EP using column ict of E
+            iEP = eE[ict,]
+            iEPj = ict # Tracks indices in iEP
+          }
+          iEPn++
+        }
+      }
+      #    Compute the n-vector z as a solution of the least squares problem
+      #     E_P*z ~= f. Note that only the components of z_j, j dom P, are
+      #     determined by this problem. Define z_j = 0 for j dom Z
+      #printf(" Finished creating EP (%d end members); calling lsq\n", iEPn)
+      izP = lsq(iEP, ef, 0) # Final zero to skip calculation of errors
+      # Be careful, since the indices returned here do not match those of the original (input) E
+      #printf(" lsq complete; max component value is %f; re-arranging indices\n", max(izP))
+      ict = 1
+      iz = clone(double(0), 1,en,1) # z with indices corresponding to original input
+      for (ict = 1; ict <= iEPn; ict++) {
+        iz[1,iEPj[ict]] = izP[1,ict]
+        # Drop element ict of izP into element iEPj[ict] of iz
+        # And the other elements of iz will be left at zero
+      }
+      #temp = maxpos(iz, showval=1)
+      #printf(" Done re-arranging indices; max component value is %f at index %d; proceeding to step 7\n", temp[4], temp[2])
+
+      # 7. If all z_j > 0 for all j dom P, set x = z and go to step 2
+      #temp = minpos(iz*(iP > 0) , ignore=0, showval=1)
+      if (min(iz*(iP > 0) + (iZ > 0)) > 0.) {
+       # Tricks with logical operators; the (iZ > 0) part is necessary to ensure that
+       #  there are no zeros in the test array at the indices of iZ. This way, an element
+       #  can only be zero or less if it its index is in iP
+        ix = iz
+        #printf("Step 7: z_j > 0 for all j dom P; minimum value is %f at index %d; moving to step 2\n", temp[4], temp[2])
+        ig = byte(2) # And go to step 2
+      } else {
+        #printf("Step 7 criterion not met; minimum value is %f at index %d; proceeding to step 8\n", temp[4], temp[2])
+
+        # 8. Find an index q dom P such that x_q/(x_q - z_q) = min({x_j/(x_j - z_j)})
+        #iq = minpos((ix/(ix - iz))*(iz <= 0)*(iP > 0), ignore=0, showval=1)
+        # Consistent fatal errors when trying to do it that way, even when adding ieps to denominator
+        # Be careful; there's a lot that can go wrong here
+        ict = 1 # Counter
+        iq = 0 # Will store index of interest
+        ia = double(1e7) # Will store value at that index
+        itv = ia # Temporary variable for ict-th value of x/(x - z)
+        for (ict = 1; ict <= en; ict++) {
+          if ((iz[1,ict] <= 0.) && (iP[1,ict] > 0)) {
+            itv = ix[1,ict]/(ix[1,ict] - iz[1,ict])
+            #printf(" itv = %f at index %d\n", itv, ict)
+            if (itv < ia) {
+              iq = ict # Remember this index
+              ia = itv # And this value
+            }
+          }
+        }
+        # And the errors occurred before this string, so it wasn't a problem with iq later on
+        #printf("Step 8: found q = %d, value = %f\n", iq, ia)
+        # 9. Set a (alpha) = x_q/(x_q - z_q)
+        # Already done
+        #printf("Step 9: alpha = %f\n", ia)
+        # 10. Set x = x + a*(z - x)
+        ix = ix + ia*(iz - ix)
+        #printf("Step 10: Recalculated x\n")
+        # 11. Move from set P to set Z all indices j dom P for which x_j = 0
+        ict = 1
+        #printf("Step 11: Keeping indices ")
+        for (ict = 1; ict <= en; ict++) {
+          if (abs(ix[1,ict]) <= ieps) {
+            iP[1,ict] = 0
+            iZ[1,ict] = ict
+          #} else {
+          #  printf("%d, ", ict)
+          #  # Doing it this way to print less, since it seems like more indices are moved to iZ than left in iP
+          }
+        }
+        #printf("in iP; others moved to iZ\n")
+        #printf("Step 11 complete; going to step 6\n")
+        ig = byte(6) # Go to step 6
+      }
+#    }
+    }
+  }
+
+  # 12. (The computation is completed.)
+  # On termination the solution vector x satisfies:
+  # 23.11 x_j > 0, j dom P
+  # 23.12 x_j = 0, j dom Z
+
+  if (equals(iem, 0)) { # Return coefficients only
+    return(ix)
+  } else { # Print errors and return structure
+    printf("\n%d iterations; %d significant (nonzero) end members\n", ici, sum(iP > 0))
+    oA = ix
+    printf("Errors in fitted spectrum:\n")
+    oYf = mxm($1, oA) # Fit y
+    oYfe = abs(oYf - $2) # Absolute errors in fit y
+    oMAE = avg(oYfe)
+    printf("Mean absolute error: %f\n", oMAE)
+    oRMSE = sqrt(avg(oYfe*oYfe)) # RMS error
+    printf("RMS error: %f\n", oRMSE)
+    omaxE = max(oYfe)
+    printf("Maximum absolute error: %f\n", omaxE)
+    # And return A in a structure
+    return({A = oA, Yfit = oYf, MAE = oMAE, RMSE = oRMSE, maxE = omaxE, np = ill[2:]})
+    # Since the first element of ill must be zero, based on how it has been defined
+  }
+}
+
+define lsqsn(0,4) {
+
+  if ($ARGC < 3) {
+    printf("\nConstrained least squares, where some elements are allowed to be\n")
+    printf(" negative and others are not\n")
+    printf("lsqsn(X,y,n) returns A such that X*A best approximates y,\n")
+    printf(" where the last n elements are allowed to be negative but\n")
+    printf(" the first elements must be positive (or zero)\n")
+    printf("n must be less than or equal to 30\n")
+    printf("In essence, this function just sets up a bunch of calls to lsqnn,\n")
+    printf(" which effectively means that each additional unconstrained\n")
+    printf(" term effectively doubles the number of computations.\n")
+    printf("Optional fourth input controls output mode\n")
+    printf(" If $4 is 1 (or omitted), will print summary and return structure\n")
+    printf("  with errors and fitted spectrum, in addition to calculated\n")
+    printf("  coefficients.\n")
+    printf(" If $4 is 0, will only return structure with coefficients\n")
+    printf(" This means that the format of the output depends on $4.\n")
+    printf("S.Marshall 11-09-2010\n\n")
+
+    return(null)
+  }
+
+  eX = double($1)
+  ey = double($2)
+  enn = $3 # Number of terms which are allowed to be negative (assumed to be the last n terms)
+  eXd = dim(eX) # dim gives [columns, rows, planes]
+  eyd = dim(ey)
+
+  if (eyd[1,1,1] != 1 || eXd[3,1,1] != 1 || eyd[3,1,1]!= 1 || eXd[2,1,1] != eyd[2,1,1]) {
+    printf("\nDimension error!\n\n")
+    return(byte(0))
+  }
+
+  if ($ARGC == 4) { # Set output mode
+    if (equals($4, 0) || equals($4, 1)) {
+      iem = byte($4) # If $4 == 0, will only return coefficients
+    } else {
+      printf("\nError! Invalid fourth input!\n\n")
+      return(null)
+    }
+  } else { # Will print errors and return structure by default
+    iem = byte(1)
+  }
+
+  em = eXd[2,1,1] # Rows (number of samples in each spectrum)
+  en = eXd[1,1,1] # Columns (number of end members)
+
+  flag = byte(0) # Flag for whether it can just use function lsq
+  if ((isscalar($3) != 1) || (isint($3) != 1) || ($3 < 0) || ($3 > en)) {
+    printf("\nError! Invalid third input!\n\n")
+    return(null)
+  } else if ($3 > 30) { # So that the powers of 2 used later can never exceed intmax (-1 + 2^31)
+   # Perhaps the limit should be set even lower, in order to avoid excessively long calculations
+    printf("\nError! Third input must be less than or equal to 30!\n\n")
+    return(null)
+  } else if ($3 == en) { # Or equivalently, if enp == 0
+    printf("\nSince all terms are allowed to be negative, it will be faster to\n")
+    printf(" just use lsq (unconstrained least squares). Doing that...\n")
+    flag = byte(1)
+    oA = lsq(iX, ey) # Fit coefficients
+  }
+  #printf("Done error checking; setting up for iterations\n") # For debugging
+
+  if (flag == 0) {
+    enn = int(enn)
+    enp = en - enn # Number of terms required to be positive
+    #printf("enp = %d, enn = %d\n", enp, enn)
+
+    # Now set up for iterations between positive and negative terms
+    isc = binbyte(create(1,2^enn, start=0, format=int)) # Will hold signed coefficients (+1 or -1)
+    #dump(isc)
+    #printf("\n") # For clarity
+    #isc = double(2*isc - 1) # Now all values are +1 or -1
+    #return(isc) # For debugging
+  
+    oRMSE = double(2) # Will store best RMS error (should always be less than 1, so this should be a safe starting value)
+    oj = 0 # Will store index of isc that gives best RMS error
+    oA = clone(double(0), 1,en,1) # Will store
+
+    icj = 1 # Counter to keep track of overall combinations from isc
+    for (icj = 1; icj <= 2^enn; icj++) {
+      ici = 1 # Counter to keep track of each adjustable (allowed to be negative) endmember
+      iX = eX # Will hold sign-adjusted library
+      for (ici = 1; ici <= enn; ici++) {
+        if (isc[ici,icj,1] == 0) {
+          iX[enp+ici,,1] = -iX[enp+ici,,1] # Change sign of endmember if needed
+          #printf("isc[%d,%d] = 0; changing sign for iX[%d,]\n", ici, icj, enp+ici)
+        } # If not, don't need to do anything
+      }
+      iA = lsqnn(iX, ey, 0) # Fit coefficients
+      iYf = mxm(iX, iA) # Fit y
+      iYf = iYf - ey # Errors in fit y
+      #dump(dim(iYf))
+      iej = sqrt(avg(iYf*iYf)) # Error for iteration j
+      # I could store all of them to an array, but that seems unnecessary
+      #printf("icj = %d, RMSE = %f\n", icj, iej)
+      if (iej < oRMSE) { # If the error calculated here is less than that from any previous iteration
+        oRMSE = iej
+        #printf("Changing oj from %d to %d\n", oj, icj)
+        oj = icj
+        oA = iA # Will handle positives and negatives later
+      }
+    }
+    #dump(isc[,oj,]) # For debugging
+
+    # Now handle signs for best iteration, then return
+    ici = 1
+    for (ici = 1; ici <= enn; ici++) {
+      if (isc[ici,oj,1] == 0) {
+        oA[1,enp+ici,1] = -oA[1,enp+ici,1] # Change sign of coefficient if needed
+      } # If not, don't need to do anything
+    }
+  }
+
+  if (equals(iem, 0)) { # Return coefficients only
+    return(oA)
+  } else { # Print errors and return structure
+    # Continue here; need to calculate error terms and such
+    printf("Errors in fitted spectrum:\n")
+    oYf = mxm(eX, oA) # Fit y
+    oYfe = abs(oYf - ey) # Absolute errors in fit y
+    oMAE = avg(oYfe)
+    printf("Mean absolute error: %f\n", oMAE)
+    oRMSE = sqrt(avg(oYfe*oYfe)) # RMS error
+    printf("RMS error: %f\n", oRMSE)
+    omaxE = max(oYfe)
+    printf("Maximum absolute error: %f\n", omaxE)
+    # And return A in a structure
+    return({A = oA, Yfit = oYf, MAE = oMAE, RMSE = oRMSE, maxE = omaxE})
+  }
+}
+
+define mag(0,1) {
+
+    if ($ARGC == 0) {
+      printf("\nMagnitude (power of 10) of input\n")
+      printf("mag(x) returns short(floor(log10(abs(x))))\n")
+      printf("Works for arrays\n")
+      printf("S.Marshall 12-06-2007\n\n")
+
+      return(byte(0))
+    }
+
+    if (isnum($1) == 0) {
+      printf("\nInput must be numeric\n\n")
+
+      return(byte(0))
+    }
+
+    return(short(floor(log10(abs($1)))))
+}
+
+define med(axis,ignore) {
+  if ($ARGC != 1) {
+    printf("\nComputes median of a data set\n")
+    printf("med(data, axis=\"x\"|\"y\"|\"z\"|\"xy\"|\"xz\"|\"yz\"|\"xyz\", ignore=value)\n")
+    printf(" The inputs axis and ignore are both optional. If used, each must\n")
+    printf("  be passed by reference.\n")
+    printf(" axis specifies the axis/axes of the array along which to compute\n")
+    printf("  the median. It must be entered as a string. If no axis is\n")
+    printf("  specified (or if axis=\"xyz\", the returned value is the median\n")
+    printf("  of the entire array.\n")
+    printf(" ignore specifies the value to exclude from computations. If all\n")
+    printf("  elements are equal to ignore, the function returns ignore.\n")
+    printf("For a data set (or subset) with an even number of points, it\n")
+    printf(" returns the mean of the two middle points.\n")
+#    printf("\n")
+    printf("S.Marshall 12-04-2010\n\n")
+    return(null)
+  }
+
+  if (isnum($1) == 0) {
+    printf("\nError! Input must be numeric!\n\n")
+    return(null)
+  }
+
+  if (hasvalue(axis)) { # Set axis option if needed
+    ax = axis
+  } else {
+    ax = "none"
+  }
+
+  if (hasvalue(ignore)) {
+    if (isnum(ignore) && isscalar(ignore)) {
+      # OK to proceed
+    } else {
+      printf("\nError! Ignore value must be scalar and numeric!\n\n")
+      return(null)
+    }
+  }
+
+  ix = $1
+  ed = dim(ix)
+  el = length(ix)
+
+  # Rather than rewriting the main block for every possible axis input, it is easier to reshape the array first
+  # It will create a new array of dimensions, then reshape and translate the input array (as necessary)
+  if (equals(ax, "none") || equals(ax, "xyz")) {
+    resize(ix, el,1,1) # Make one-dimensional, since it is only looking for a single value
+    id = cat(el, 1, 1, axis=x) # New array of dimensions
+  } else if (equals(ax, "x")) {
+    # Don't need to do anything with ix in this case
+    id = ed # Same dimensions
+  } else if (equals(ax, "y")) {
+    ix = translate(ix, from=x, to=y) # Switch x and y
+    id = cat(ed[2], ed[1], ed[3], axis=x)
+  } else if (equals(ax, "z")) {
+    ix = translate(ix, from=x, to=z) # Switch x and z
+    id = cat(ed[3], ed[2], ed[1], axis=x)
+  } else if (equals(ax, "xy")) {
+    id = cat(ed[1]*ed[2], ed[3], 1, axis=x)
+    resize(ix, id[1], id[2], id[3]) # Combine x and y
+  } else if (equals(ax, "xz")) {
+    id = cat(ed[1]*ed[3], ed[2], 1, axis=x)
+    ix = translate(ix, from=y, to=z) # Swap y and z
+    resize(ix, id[1], id[2], id[3])
+  } else if (equals(ax, "yz")) {
+    id = cat(ed[2]*ed[3], ed[1], 1, axis=x)
+    ix = translate(ix, from=x, to=z)
+    resize(ix, id[1], id[2], id[3])
+  } else {
+    printf("\nError! Invalid axis specification!\n\n")
+    return(null)
+  }
+  #dump(ix) # For debugging
+
+  ix = double(ix) # Will worry about matching input format later
+  ici = 1 # Counters
+  icj = 1
+  outp = clone(double(0), 1,id[2],id[3]) # Will worry about matching input format later
+  icn = id[1]
+
+  for (icj = 1; icj <= id[3]; icj++) {
+    for (ici = 1; ici <= id[2]; ici++) {
+      temp = sort(ix[,ici,icj])
+      if (hasvalue(ignore)) {
+        if (contains(temp, ignore)) {
+          ick = int(sum(temp == ignore)) # Number of instances of ignore value within temp
+          if (ick == icn) { # Need to handle case where all members of temp are equal to the ignore value
+           #  In that case, just set the corresponding element of outp equal to the ignore value
+            ick = 1 # The easiest way; any value between 1 and icn would work, since all elements are the same in this case
+          } else {
+            temp[where(temp == ignore)] = -2.*abs(temp[1,1,1]) - 1. # This value must be less than any element in temp
+            # Is there a better way to do this?
+            temp = sort(temp)
+            # This block could be rewritten to call sort only once, but it would require a call to min, in order to find the get the minimum value
+            temp = temp[(ick+1):]
+            ick = icn - ick
+          }
+        } else {
+          ick = icn # Will eventually store position of median
+        }
+      } else {
+        ick = icn
+      }
+
+      #dump(ick)
+      if ((ick%2) == 0) { # If even
+        ick = ick/2 # Integer division
+        outp[1,ici,icj] = 0.5*(temp[ick] + temp[ick+1])
+      } else { # If odd
+        ick = ick/2 + 1 # Integer division
+        outp[1,ici,icj] = temp[ick]
+      }
+    }
+  }
+
+  # Then reshape output and convert back to original format (if that will not involve a loss of accuracy; if it will, be careful)
+  if (equals(ax, "none") || equals(ax, "xyz")) {
+    # Nothing to do; output is already one-dimensional
+  } else if (equals(ax, "x")) {
+    # Don't need to do anything in this case, either
+  } else if (equals(ax, "y")) {
+    outp = translate(outp, from=x, to=y) # Switch x and y
+  } else if (equals(ax, "z")) {
+    outp = translate(outp, from=x, to=z) # Switch x and z
+  } else if (equals(ax, "xy")) {
+    resize(outp, 1, 1, ed[3]) # One-dimensional output along z axis
+  } else if (equals(ax, "xz")) {
+    # Nothing needs to be done in this case, either (I think)
+    # Already have one-dimensional output along y axis
+    #resize(outp, 1, ed[2], 1) # One-dimensional output along y axis
+    #ix = translate(ix, from=y, to=z) # Swap y and z
+  } else if (equals(ax, "yz")) {
+    outp = translate(outp, from=y, to=x)
+  } else {
+    printf("\nError converting outp back to proper shape!\n\n") # This should never happen
+    return(null)
+  }
+
+  # Now match input format, if that can be done without a loss of accuracy
+  ef = format($1)
+  if (ef == "double") {
+    # Don't need to do anything in this case
+  } else if (ef == "float") {
+    if (equals(outp, float(outp))) {
+     # Make sure reduced precision will not reduce accuracy (possible in some cases with an even number of terms in a subset)
+      outp = float(outp)
+    } else {
+      #printf("Cannot convert output back to float without a slight loss of accuracy\n")
+    }
+  } else if (isint(outp)) {
+    if (ef == "byte") {
+      outp = byte(outp)
+    } else if (ef == "short") {
+      outp = short(outp)
+    } else if (ef == "int") {
+      outp = int(outp)
+    } else {
+      printf("\nError converting outp back to format of original input!\n\n") # This should never happen
+      return(null)
+    }
+  } else {
+    #printf("\nCannot convert output back to input format without a loss of accuracy\n")
+  }
+  return(outp)
+}
+
+define nCk(0,2)
+{
+  if ($ARGC != 2) {
+    printf("\nCombinations (a.k.a. n choose k, or the binomial coefficient)\n")
+    printf("nCk(n,k) returns the number of ways to choose n elements from a\n")
+    printf(" set of k elements (n >= k; order doesn't matter)\n")
+    printf("nCk = n!/(k!*(n - k)!)\n")
+    printf("Does NOT work for arrays, only for 1x1x1 inputs\n")
+    printf("S.Marshall 02-25-2008\n\n")
+
+    return(byte(0))
+  }
+  
+  if (isscalar($1) == 0 || isscalar($2) == 0) {
+    printf("\nInputs must be scalar (1x1x1)\n\n")
+
+    return(byte(0))
+  }
+
+  if (isint($1) == 0 || isint($2) == 0) {
+    printf("\nInputs must be positive integers\n\n")
+
+    return(byte(0))
+  }
+  
+  if ($2 > $1) {
+    printf("\nn must be greater than k\n\n")
+    
+    return(byte(0))
+  }
+  
+  if ($2 == 0) {
+    return(1)
+  }
+
+  if ($1 <= 0 || $2 < 0) {
+    printf("\nInputs must be positive integers\n\n")
+
+    return(byte(0))
+  }
+
+  count = 0
+  inty = 1. # Will be used in output
+
+  while (count <= $2 - 1) {
+    inty = inty*($1 - count)/($2 - count)
+    count++
+    # For large input values this is more efficient than using the factorial
+  }
+
+  if (inty == int(inty)) {
+    return(int(ceil(inty)))
+    # Return an integer value only if inty converts correctly to an integer.
+    # If inty > intmax, it will keep the float value.
+  } else {
+    return(inty)
+  }
+}
+
+define nPk(0,2)
+{
+  if ($ARGC != 2) {
+    printf("\nPermutations (n pick k)\n")
+    printf("nPk(n, k) returns the number of ways to arrange n elements picked\n")
+    printf(" from a set of k elements (n >= k; order matters)\n")
+    printf("nPk = n!/(n - k)!\n")
+    printf("Does NOT work for arrays, only for 1x1x1 inputs\n")
+    printf("S. Marshall 02-25-2008\n\n")
+
+    return(byte(0))
+  }
+  
+  if (isscalar($1) == 0 || isscalar($2) == 0) {
+    printf("\nInputs must be scalar (1x1x1)\n\n")
+
+    return(byte(0))
+  }
+
+  if (isint($1) == 0 || isint($2) == 0) {
+    printf("\nInputs must be positive integers\n\n")
+
+    return(byte(0))
+  }
+
+  if ($2 > $1) {
+    printf("\nn must be greater than k\n\n")
+    
+    return(byte(0))
+  }
+  
+  if ($2 == 0) {
+    return(1)
+  }
+
+  if ($1 <= 0 || $2 <= 0) {
+    printf("\nInputs must be positive integers\n\n")
+
+    return(byte(0))
+  }
+  
+  count = 0
+  inty = 1 # Will be used in output
+
+  while (count < $2) {
+    inty = inty*($1 - count)
+    count++
+  }
+
+  if (inty == int(inty)) {
+    return(int(ceil(inty)))
+    # Return an integer value only if inty converts correctly to an integer.
+    # If inty > intmax, it will keep the float value.
+  } else {
+    return(inty)
+  }
+}
+
+define normalize(0,1) {
+
+  if ($ARGC == 0) {
+    printf("Returns normalized version of input array - rescales so that\n")
+    printf(" the minimum value is zero and the maximum value is one\n")
+#    printf("\n")
+#    printf("\n")
+    printf("S.Marshall 03-24-2009\n\n")
+
+    return(byte(0))
+  }
+
+  inp = $1
+
+# Not needed
+#  if (equals(format(outp), "double")) {
+#    intd = byte(1) # Double-format flag
+#  } else {
+#    intd = byte(0)
+#  }
+
+  outp = inp - min(inp) # Shift so that minimum value of output is zero
+  outp = outp/max(outp) # Then rescale
+  return(outp)
+}
+
+define normcdf(mean,stdv)
+{
+  if ($ARGC == 0) {
+    printf("\nCumulative distribution function for normal distribution\n")
+    printf("Does computations with the error function (erf)\n")
+    printf("normcdf(a, b, mean=mu, stdv=sigma) = (erf(z(b)) - erf(z(a)))/2\n")
+    printf("If mean and/or stdv are omitted, defaults to standard values of mu=0 and stdv=1\n")
+    printf("z = (x - mu)/(sigma*sqrt(2))\n")
+    printf("Returns cumulative probability between a and b in the normal distribution\n")
+    printf("normcdf(b, mean=mu, stdv=sigma) returns probability between -Inf and b\n")
+    printf("Equivalent to integrating normpdf(z) from z(a) to z(b)\n")
+    printf("Matches input precision\n")
+    printf("Works for arrays\n")
+    printf("S.Marshall 10-02-2009\n\n")
+
+    return(byte(0))
+  }
+
+  if ($ARGC > 4) {
+    printf("\nThere can be up to four unnamed inputs.\n\n")
+
+    return(byte(0))
+  }
+
+  if (isnum($1) == 0) {
+    printf("\nInputs must be numeric!\n\n")
+
+    return(byte(0))
+  }
+  
+  if ($ARGC >= 2) {
+    if (isnum($2) == 0) {
+      printf("\nInputs must be numeric!\n\n")
+
+      return(byte(0))
+    }
+  }
+
+  if ($ARGC == 4) {
+    inta = $1
+    intb = $2
+    mean = $3
+    stdv = $4
+    # Given normcdf($1, $2, $3, $4):
+    # a = $1, b = $2, mu = $3, sigma = $4
+  } else if ($ARGC == 3) {
+    intb = $1
+    mean = $2
+    stdv = $3
+    # Given normcdf($1, $2, $3):
+    # a = -Inf (unnecessary for calculations), b = $1, mu = $2, sigma = $3
+  } else if ($ARGC == 2) {
+    inta = $1
+    intb = $2
+  } else if ($ARGC == 1) {
+    intb = $1
+  } else {
+    printf("\nError!\n\n")
+    # Shouldn't ever get here
+    return(byte(0))
+  }
+
+  # Use standard values for mean and standard deviation if omitted
+  if (HasValue(mean) == 0) mean = 0
+  if (HasValue(stdv) == 0) stdv = 1
+
+  if (isnum(mean) == 0 || isnum(stdv) == 0) {
+    printf("\nInputs must be numeric!\n\n")
+
+    return(byte(0))
+  }
+
+  if (stdv <= 0) {
+    printf("\nStandard deviation must be positive\n\n")
+
+    return(byte(0))
+  }
+
+  if (format($1) == "double") { # Match input precision
+    sqt = sqrt(double(2))
+  } else {
+    sqt = sqrt(2)
+  }
+
+  if (HasValue(inta) == 1) {
+    intz1 = (inta - mean)/(stdv*sqt)
+    intz2 = (intb - mean)/(stdv*sqt)
+
+    return(0.5*(erf(intz2) - erf(intz1)))
+    # This calls erf twice, which may be inefficient for large input arrays,
+    #  but I don't want to catenate the inputs; they might not be the same size
+  } else if (HasValue(inta) == 0) {
+    intz2 = (intb - mean)/(stdv*sqt)
+    return(0.5*(1 + erf(intz2)))
+  } else {
+    printf("\nError!\n\n") # Shouldn't ever get here
+    return(byte(0))
+  }
+}
+
+define normpdf(mean,stdv)
+{
+  if ($ARGC == 0) {
+    printf("\nNormal distribution probability density function (bell curve)\n")
+    printf("normpdf(x, mean=mu, stdv=sigma)\n")
+    printf(" = exp((x - mu)^2/(-2*sigma^2))/(sigma*sqrt(2*pi))\n")
+    printf("If mean and/or stdv are omitted, defaults to standard values of mu=0 and stdv=1\n")
+    printf("Returns value of point on curve\n")
+    printf("Use normcdf to find cumulative probability\n")
+    printf("S. Marshall 02-22-2008\n\n")
+
+    return(byte(0))
+  }
+
+  if ($ARGC > 3 || $ARGC == 2) {
+    printf("\nThere should only be one or three unnamed inputs.\n\n")
+
+    return(byte(0))
+  }
+
+  if (isnum($1) == 0) {
+      printf("\nInputs must be numeric!\n\n")
+
+      return(byte(0))
+  }
+
+  if ($ARGC == 3) {
+    if (isnum($2) == 0 || isnum($3) == 0) {
+      printf("\nInputs must be numeric!\n\n")
+
+      return(byte(0))
+    }
+
+    mean = $2
+    stdv = $3
+  }
+
+  if (HasValue(mean) == 0) mean = 0
+  if (HasValue(stdv) == 0) stdv = 1
+  # Use standard values if omitted
+
+  if (isnum(mean) == 0 || isnum(stdv) == 0) {
+    printf("\nInputs must be numeric!\n\n")
+
+    return(byte(0))
+  }
+
+  if (stdv <= 0) {
+    printf("\nStandard deviation must be positive\n\n")
+
+    return(byte(0))
+  }
+
+  if (format($1) == "double") {
+    pi = atod("3.14159265358979323846")
+    # Have pi match input format; it will carry over to the output format
+  } else {
+    pi = 3.1415926536
+  }
+
+  return(exp(($1 - mean)^2/(-2.*stdv*stdv))/(stdv*sqrt(2*pi))) # Could fix this to speed up calculation slightly (use numeric value with atod)
+}
+
+define numint(0,4) {
+
+  if ($ARGC < 4) {
+    printf("\nNumerical integration (midpoint approximation)\n")
+    printf("numint(\"f(x)\",a,b,n) returns approximate integral of function f(x)\n")
+    printf(" with respect to x over interval [a,b] with n divisions\n")
+    printf("S.Marshall 10-02-2009\n\n")
+
+    return(byte(0))
+  }
+
+  if (type($1) != "STRING") {
+    printf("\nError! First input must be a string giving a function of x!\n\n")
+    return(byte(0))
+  }
+
+  if (isnum($2) == 0 || isnum($3) == 0 || isnum($4) == 0) {
+    printf("\nError! Second, third, and fourth inputs must be numeric!\n\n")
+    return(byte(0))
+  }
+
+  if (isscalar($2) == 0 || isscalar($3) == 0 || isscalar($4) == 0) {
+    printf("\nError! Second, third, and fourth inputs must be scalar!\n\n")
+    return(byte(0))
+  }
+
+  if ($3 <= $2) {
+    printf("\nError! Third input must be greater than second input!\n\n")
+    return(byte(0))
+  }
+
+  if (isint($4) == 0 || $4 <= 0) {
+    printf("\nError! Fourth input must be a positive integer!\n\n")
+    return(byte(0))
+  }
+
+  x = ($3 - $2)*(create($4,format=float)/$4 + 0.5/$4) + $2
+  # Using double format does not generally improve solution accuracy
+
+  inty = sum(eval($1))*($3 - $2)/$4
+  return(inty)
+}
+
+define product(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nComputes product of all elements in an array\n")
+    printf("S.Marshall 10-27-2009\n\n")
+
+    return(byte(0))
+  }
+
+  inp = $1
+  id = dim(inp)
+  outp = 0.*inp[1,1,1] + 1. # Match format (must be float or double)
+
+  ici = 1
+  icj = 1
+  ick = 1
+  for (ick = 1; ick <= id[3,1,1]; ick++) {
+    for (icj = 1; icj <= id[2,1,1]; icj++) {
+      for (ici = 1; ici <= id[1,1,1]; ici++) {
+        outp = outp*inp[ici,icj,ick]
+      }
+    }
+  }
+
+  return(outp)
+}
+
+define s2dhms(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nConverts scalar decimal seconds to DHMS array\n")
+    printf("s2dhms(ds) returns [D, h, m, s]\n")
+    printf("Input must be scalar\n")
+    printf("S.Marshall 10-02-2009\n\n")
+
+    return(byte(0))
+  }
+
+  if (isscalar($1) == 0) {
+    printf("\nInput must be scalar\n\n")
+
+    return(byte(0))
+  }
+
+  inp = abs($1)
+
+  if (format($1) == "double") {
+    outp = clone(double(0), 4, 1, 1)
+  } else {
+    outp = clone(0., 4, 1, 1)
+  }
+
+  outp[1,1,1] = sign($1)*floor(inp/86400)
+  inp = (inp - 86400*abs(outp[1,1,1]))
+  outp[2,1,1] = floor(inp/3600)
+  inp = (inp - 3600*outp[2,1,1])
+  outp[3,1,1] = floor(inp/60)
+  inp = (inp - 60*outp[3,1,1])
+  outp[4,1,1] = inp
+  return(outp)
+
+}
+
+define sec(0,1) {
+  if ($ARGC == 0) {
+    printf("\nSecant\n")
+    printf("Hypotenuse length over adjacent leg length (in a right triangle)\n")
+    printf("sec(x) = 1/cos(x)\n")
+    printf("Works for arrays\n")
+    printf("S.Marshall 01-25-2008\n\n")
+
+    return(byte(0))
+  }
+
+  return(1/cos($1))
+}
+
+define sign(0,1) {
+
+    if ($ARGC == 0) {
+      printf("\nsign(x) returns sign of input\n")
+      printf("1 if positive, -1 if negative, 0 if zero\n")
+      printf("Works for arrays\n")
+      printf("S.Marshall 12-07-2007\n\n")
+
+      return(byte(0))
+    }
+
+    if (isnum($1) == 0) {
+      printf("\nInput must be numeric\n\n")
+
+      return(byte(0))
+    }
+
+    isx=$1 # Intermediate variable
+
+    isx[where isx > 0] = 1
+    isx[where isx == 0] = 0
+    isx[where isx < 0] = -1
+
+    return(short(isx))
+}
+
+define sinc(0,1) {
+
+  if ($ARGC == 0) {
+    printf("\nSinc function (a.k.a. sine cardinal, sampling function)\n")
+    printf("This version is defined such that its zeros occur at\n")
+    printf(" nonzero integer multiples of pi.\n")
+    printf(" sinc(x) = sin(x)/x for all x except zero\n")
+    printf(" sinc(0) = 1, by definition\n")
+    printf("See http://mathworld.wolfram.com/SincFunction.html\n")
+    printf("S.Marshall 11-11-2009\n\n")
+
+    return(byte(0))
+  }
+
+  inp = $1
+  id = dim(inp)
+
+  outp = 0.*$1 # Output should be double if input is double, float otherwise
+
+  for (ick = 1; ick <= id[3,1,1]; ick++) {
+    for (icj = 1; icj <= id[2,1,1]; icj++) {
+      for (ici = 1; ici <= id[1,1,1]; ici++) {
+        if (inp[ici,icj,ick] == 0.) {
+          outp[ici, icj, ick] = 1
+        } else {
+          outp[ici, icj, ick] = sin(inp[ici,icj,ick])/inp[ici,icj,ick]
+        }
+      }
+    }
+  }
+
+#  outp[where inp == 0] = 1. # Can't do this?
+#  outp[where inp ~= 0] = sin(inp)/inp
+
+  return(outp)
+}
+
+define sinh(0,1) {
+  if ($ARGC == 0) {
+    printf("\nHyperbolic sine\n")
+    printf("sinh(x) = (exp(x) - exp(-x))/2\n")
+    printf("Works for arrays\n")
+    printf("S.Marshall 01-25-2008\n\n")
+
+    return(byte(0))
+  }
+
+  return(0.5*(exp($1) - exp(-$1)))
+}
+
+define sph2cart(0,3) { # Make third optional, and default to r=1?
+
+  if ($ARGC < 2) {
+    printf("\nConvert spherical coordinates to Cartesian (rectangular)\n")
+    printf("sph2cart(r, latitude, longitude) returns (x, y, z) where r is the\n")
+    printf(" radial coordinate, and latitude and longitude are in degrees.\n")
+    printf(" r is optional; if only given two inputs, the function assumes they\n")
+    printf("  are latitude and longitude, respectively, and sets r to 1.\n")
+    printf(" Input angles must be in degrees. Longitude must be east-positive.\n")
+    printf(" Zero longitude corresponds to the x-axis; 90 E is y-axis.\n")
+    printf(" r, latitude, and longitude must be entered as separate arguments\n")
+    printf(" To make the output easier to read, inputs should only have one row.\n")
+    printf("S.Marshall 10-30-2009\n\n")
+
+    return(byte(0))
+  }
+
+  if ($ARGC == 3) {
+    inpr = $1
+    inplat = $2
+    inplon = $3
+  } else if ($ARGC == 2) {
+    inpr = 1.
+    inplat = $1
+    inplon = $2
+  } else {
+    printf("\nError! Invalid input!\n\n")
+  }
+
+  if (equals(format(inpr[1,1,1]*inplat[1,1,1]*inplon[1,1,1]), "double")) { # Must match formats, or output array won't work
+    inpr = double(inpr)
+    inplat = double(inplat)
+    inplon = double(inplon)
+  } else {
+    inpr = float(inpr)
+    inplat = float(inplat)
+    inplon = float(inplon)
+  }
+
+  iy = cosd(inplat) # Temporary; will use this twice
+
+  ix = inpr*cosd(inplon)*iy
+  iy = inpr*sind(inplon)*iy
+  iz = inpr*sind(inplat)
+
+  return(ix//iy//iz)
+}
+
+define tanh(0,1) {
+  if ($ARGC == 0) {
+    printf("\nHyperbolic tangent\n")
+    printf("tanh(x) = sinh(x)/cosh(x)\n")
+    printf("        = (exp(x) - exp(-x))/(exp(x) + exp(-x))\n")
+    printf("        = (exp(2*x) - 1)/(exp(2*x) + 1)\n")
+    printf("Works for arrays\n")
+    printf("S.Marshall 10-09-2010\n\n")
+
+    return(byte(0))
+  }
+
+  outp = exp(2*$1)
+  outp = (outp - 1)/(outp + 1)
+  return(outp)
+}
+
+
+
+define hex2dec() {
+
+  if($ARGC==0) {
+    printf("\nConvert a hex string to a decimal\n")
+    printf("$1=hex string\n\n")
+    printf("c.edwards 12/7/12\n\n")
+    return(null)
+  }
+
+  string=$1
+  if(isnum(string)!=0) {
+    printf("You must enter a hex string\n")
+    return(null)
+  }
+
+  count=0
+  result=0
+  for(i=length(string);i>0;i-=1) {
+    if (string[i]!="#") {
+      if(string[i]=="A" || string[i]=="a") {
+        val=10
+      } else if (string[i]=="B" || string[i]=="b") {
+        val=11
+      } else if (string[i]=="B" || string[i]=="b") {
+        val=12
+      } else if (string[i]=="C" || string[i]=="c") {
+        val=13
+      } else if (string[i]=="D" || string[i]=="d") {
+        val=14
+      } else if (string[i]=="F" || string[i]=="e") {
+        val=15
+      } else {
+        val=atoi(string[i])
+      }
+
+      result=result+(val*16^count)
+      count=count+1      
+    }
+  }
+  return(result)
+}

@@ -1,0 +1,425 @@
+
+
+*.o
+*.lo
+*.a
+*.la
+
+dv_tests/plot/foo.ps
+
+# /
+# TODO(rswinkle) this is a mess created by
+# git svn show-ignore > .gitignore
+# clearly people have been adding junk to svn:ignore for decades
+# and never removing anything
+# clean up sometime 
+/README
+/TODO
+/ff_bop.c
+/docs
+/tests
+/lib
+/memory.c
+/README_FF
+/bin
+/libmagic.tar.gz
+/plot.h
+/config.status
+/readline
+/malloc.c
+/speclist.c
+/stamp.c
+/strdup.c
+/vimssplit.c
+/isis2vicar
+/config.h
+/NOTES
+/bison.simple
+/convert
+/apidef.c.test
+/tmp
+/memory.h
+/c-grammar.y,v
+/c-grammar.y
+/c-grammar.tab.c
+/c-grammar.output
+/c-grammar.tab.h
+/parser.new.y
+/alloc.c
+/mallocs
+/foo
+/fit.x
+/Makefile2
+/btyacc
+/parser2.y
+/data
+/cassini-1
+/test.cub
+/stamp
+/parser2.tab.h
+/gplot
+/.dvlog
+/davinci
+/other
+/.pure
+/config.log
+/config.cache
+/build.h
+/foo.ddd
+/old_io_themis.c
+/good_strip.pgm
+/print_me
+/print_me_big
+/bad_vis_files
+/updates
+/themis-gds
+/raw_vis
+/bad_usds_files
+/.gdb_history
+/lib/.pure
+/readline/config.log
+/readline/config.h
+/readline/config.status
+/readline/stamp-h
+/readline/Makefile
+/cscope.out
+/Makefile
+/modules/Makefile
+/.deps
+/libtool
+/stamp-h
+/stamp-h.in
+/stamp-h1
+/.libs
+/autom4te.cache
+/build_summary
+/modules/foo/Makefile
+/modules/foo/.deps
+modules/foo/.libs
+/modules/gui/Makefile
+/modules/gui/.deps
+/modules/pnm/Makefile
+/modules/pnm/.deps
+/modules/pnm/.libs
+
+# /docs/
+/docs/README
+/docs/ascii.html
+/docs/atoi.html
+/docs/basename.html
+/docs/bsq.html
+/docs/byte.html
+/docs/cat.html
+/docs/ccount.html
+/docs/clone.html
+/docs/cluster.html
+/docs/create.html
+/docs/cube.gif
+/docs/cube.obj
+/docs/davinci.html
+/docs/davinci.ps
+/docs/davinci.txt
+/docs/delim.html
+/docs/dim.html
+/docs/display.html
+/docs/dv.hlp
+/docs/ff
+/docs/filetype.html
+/docs/fit.html
+/docs/format.html
+/docs/functions.html
+/docs/gnoise.html
+/docs/gplot.html
+/docs/interp.html
+/docs/intro.html
+/docs/intro.ps
+/docs/intro.txt
+/docs/moment.html
+/docs/org.html
+/docs/plot.html
+/docs/primer.html
+/docs/primer.ps
+/docs/primer.txt
+/docs/read.html
+/docs/read_text.html
+/docs/reference.html
+/docs/rgb.html
+/docs/rnoise.html
+/docs/skel.html
+/docs/source.html
+/docs/string.html
+/docs/translate.html
+/docs/vitruvian_animated.gif
+/docs/write.html
+
+# /docs/html/
+/docs/html/.dvlog
+
+# /libltdl/
+/libltdl/.libs
+/libltdl/Makefile
+/libltdl/config.h
+/libltdl/config.log
+/libltdl/config.status
+/libltdl/*.la
+/libltdl/*.lo
+/libltdl/libtool
+/libltdl/stamp-h1
+
+# /modules/
+/modules/.deps
+/modules/.libs
+/modules/Makefile
+/modules/config.h
+/modules/config.log
+/modules/config.status
+/modules/*.la
+/modules/libtool
+/modules/*.lo
+/modules/stamp-h1
+/modules/.dvlog
+
+# /modules/cse/
+/modules/cse/*.lo
+/modules/cse/*.la
+/modules/cse/Makefile
+/modules/cse/.libs
+/modules/cse/.deps
+
+# /modules/foo/
+/modules/foo/.deps
+/modules/foo/Makefile
+
+# /modules/gui/
+/modules/gui/.deps
+/modules/gui/Makefile
+
+# /modules/kjn/
+/modules/kjn/*.lo
+/modules/kjn/*.la
+/modules/kjn/Makefile
+/modules/kjn/.libs
+/modules/kjn/.deps
+
+# /modules/pnm/
+/modules/pnm/.deps
+/modules/pnm/Makefile
+
+# /modules/thm/
+/modules/thm/*.lo
+/modules/thm/*.la
+/modules/thm/Makefile
+/modules/thm/.libs
+/modules/thm/.deps
+
+# /vicar/
+/vicar/.deps
+/vicar/.libs
+/vicar/Makefile
+/vicar/config.h
+/vicar/config.log
+/vicar/config.status
+/vicar/*.la
+/vicar/libtool
+/vicar/*.lo
+/vicar/stamp-h1
+
+
+# imported from git svn show-ignore in iomedley
+# TODO(rswinkle) cleanup this too
+iomedley/*.o
+iomedley/*.a
+iomedley/cscope.out
+iomedley/configure
+iomedley/config.status
+iomedley/config.log
+iomedley/config.cache
+iomedley/Makefile
+iomedley/iom_config.h
+iomedley/tiff-4.0.3/Makefile
+iomedley/tiff-4.0.3/build/Makefile
+iomedley/tiff-4.0.3/config.status
+iomedley/tiff-4.0.3/contrib/Makefile
+iomedley/tiff-4.0.3/contrib/addtiffo/Makefile
+iomedley/tiff-4.0.3/contrib/addtiffo/addtiffo
+iomedley/tiff-4.0.3/contrib/addtiffo/.libs
+iomedley/tiff-4.0.3/contrib/dbs/Makefile
+iomedley/tiff-4.0.3/contrib/dbs/.libs
+iomedley/tiff-4.0.3/contrib/dbs/tiff-bi
+iomedley/tiff-4.0.3/contrib/dbs/tiff-grayscale
+iomedley/tiff-4.0.3/contrib/dbs/tiff-palette
+iomedley/tiff-4.0.3/contrib/dbs/tiff-rgb
+iomedley/tiff-4.0.3/contrib/dbs/xtiff/Makefile
+iomedley/tiff-4.0.3/contrib/iptcutil/Makefile
+iomedley/tiff-4.0.3/contrib/iptcutil/iptcutil
+iomedley/tiff-4.0.3/contrib/mfs/Makefile
+iomedley/tiff-4.0.3/contrib/pds/Makefile
+iomedley/tiff-4.0.3/contrib/ras/Makefile
+iomedley/tiff-4.0.3/contrib/stream/Makefile
+iomedley/tiff-4.0.3/contrib/tags/Makefile
+iomedley/tiff-4.0.3/contrib/win_dib/Makefile
+iomedley/tiff-4.0.3/html/Makefile
+iomedley/tiff-4.0.3/html/images/Makefile
+iomedley/tiff-4.0.3/html/man/Makefile
+iomedley/tiff-4.0.3/libtiff/Makefile
+iomedley/tiff-4.0.3/libtiff/mkg3states
+iomedley/tiff-4.0.3/libtiff/.libs
+iomedley/tiff-4.0.3/libtiff-4.pc
+iomedley/tiff-4.0.3/libtool
+iomedley/tiff-4.0.3/man/Makefile
+iomedley/tiff-4.0.3/port/Makefile
+iomedley/tiff-4.0.3/test/Makefile
+iomedley/tiff-4.0.3/tools/Makefile
+iomedley/tiff-4.0.3/tools/bmp2tiff
+iomedley/tiff-4.0.3/tools/fax2ps
+iomedley/tiff-4.0.3/tools/fax2tiff
+iomedley/tiff-4.0.3/tools/gif2tiff
+iomedley/tiff-4.0.3/tools/pal2rgb
+iomedley/tiff-4.0.3/tools/ppm2tiff
+iomedley/tiff-4.0.3/tools/ras2tiff
+iomedley/tiff-4.0.3/tools/raw2tiff
+iomedley/tiff-4.0.3/tools/rgb2ycbcr
+iomedley/tiff-4.0.3/tools/thumbnail
+iomedley/tiff-4.0.3/tools/tiff2bw
+iomedley/tiff-4.0.3/tools/tiff2pdf
+iomedley/tiff-4.0.3/tools/tiff2ps
+iomedley/tiff-4.0.3/tools/tiff2rgba
+iomedley/tiff-4.0.3/tools/tiffcmp
+iomedley/tiff-4.0.3/tools/tiffcp
+iomedley/tiff-4.0.3/tools/tiffcrop
+iomedley/tiff-4.0.3/tools/tiffdither
+iomedley/tiff-4.0.3/tools/tiffdump
+iomedley/tiff-4.0.3/tools/tiffinfo
+iomedley/tiff-4.0.3/tools/tiffmedian
+iomedley/tiff-4.0.3/tools/tiffset
+iomedley/tiff-4.0.3/tools/tiffsplit
+iomedley/tiff-4.0.3/tools/.libs
+
+# /libgif/
+iomedley/libgif/config.log
+iomedley/libgif/config.status
+iomedley/libgif/Makefile
+
+# /libjpeg/
+iomedley/libjpeg/config.log
+iomedley/libjpeg/config.status
+iomedley/libjpeg/Makefile
+iomedley/libjpeg/jconfig.h
+
+# /libpng-1.2.3/
+iomedley/libpng-1.2.3/config.log
+iomedley/libpng-1.2.3/config.status
+iomedley/libpng-1.2.3/Makefile
+
+# /tiff-4.0.3/
+iomedley/tiff-4.0.3/Makefile
+iomedley/tiff-4.0.3/libtiff-4.pc
+iomedley/tiff-4.0.3/libtool
+iomedley/tiff-4.0.3/config.log
+iomedley/tiff-4.0.3/config.status
+
+# /tiff-4.0.3/build/
+iomedley/tiff-4.0.3/build/Makefile
+
+# /tiff-4.0.3/contrib/
+iomedley/tiff-4.0.3/contrib/Makefile
+
+# /tiff-4.0.3/contrib/addtiffo/
+iomedley/tiff-4.0.3/contrib/addtiffo/.deps
+iomedley/tiff-4.0.3/contrib/addtiffo/Makefile
+iomedley/tiff-4.0.3/contrib/addtiffo/addtiffo
+
+# /tiff-4.0.3/contrib/dbs/
+iomedley/tiff-4.0.3/contrib/dbs/.deps
+iomedley/tiff-4.0.3/contrib/dbs/Makefile
+iomedley/tiff-4.0.3/contrib/dbs/tiff-bi
+iomedley/tiff-4.0.3/contrib/dbs/tiff-grayscale
+iomedley/tiff-4.0.3/contrib/dbs/tiff-palette
+iomedley/tiff-4.0.3/contrib/dbs/tiff-rgb
+
+# /tiff-4.0.3/contrib/dbs/xtiff/
+iomedley/tiff-4.0.3/contrib/dbs/xtiff/Makefile
+
+# /tiff-4.0.3/contrib/iptcutil/
+iomedley/tiff-4.0.3/contrib/iptcutil/.deps
+iomedley/tiff-4.0.3/contrib/iptcutil/.libs
+iomedley/tiff-4.0.3/contrib/iptcutil/Makefile
+iomedley/tiff-4.0.3/contrib/iptcutil/iptcutil
+
+# /tiff-4.0.3/contrib/mfs/
+iomedley/tiff-4.0.3/contrib/mfs/Makefile
+
+# /tiff-4.0.3/contrib/pds/
+iomedley/tiff-4.0.3/contrib/pds/Makefile
+
+# /tiff-4.0.3/contrib/ras/
+iomedley/tiff-4.0.3/contrib/ras/Makefile
+
+# /tiff-4.0.3/contrib/stream/
+iomedley/tiff-4.0.3/contrib/stream/Makefile
+
+# /tiff-4.0.3/contrib/tags/
+iomedley/tiff-4.0.3/contrib/tags/Makefile
+
+# /tiff-4.0.3/contrib/win_dib/
+iomedley/tiff-4.0.3/contrib/win_dib/Makefile
+
+# /tiff-4.0.3/html/
+iomedley/tiff-4.0.3/html/Makefile
+
+# /tiff-4.0.3/html/images/
+iomedley/tiff-4.0.3/html/images/Makefile
+
+# /tiff-4.0.3/html/man/
+iomedley/tiff-4.0.3/html/man/Makefile
+
+# /tiff-4.0.3/libtiff/
+iomedley/tiff-4.0.3/libtiff/.deps
+iomedley/tiff-4.0.3/libtiff/Makefile
+iomedley/tiff-4.0.3/libtiff/mkg3states
+iomedley/tiff-4.0.3/libtiff/tif_config.h
+iomedley/tiff-4.0.3/libtiff/tiffconf.h
+
+# /tiff-4.0.3/man/
+iomedley/tiff-4.0.3/man/Makefile
+
+# /tiff-4.0.3/port/
+iomedley/tiff-4.0.3/port/.deps
+iomedley/tiff-4.0.3/port/Makefile
+
+# /tiff-4.0.3/test/
+iomedley/tiff-4.0.3/test/.deps
+iomedley/tiff-4.0.3/test/Makefile
+
+# /tiff-4.0.3/tools/
+iomedley/tiff-4.0.3/tools/.deps
+iomedley/tiff-4.0.3/tools/Makefile
+iomedley/tiff-4.0.3/tools/bmp2tiff
+iomedley/tiff-4.0.3/tools/fax2ps
+iomedley/tiff-4.0.3/tools/fax2tiff
+iomedley/tiff-4.0.3/tools/gif2tiff
+iomedley/tiff-4.0.3/tools/pal2rgb
+iomedley/tiff-4.0.3/tools/ppm2tiff
+iomedley/tiff-4.0.3/tools/ras2tiff
+iomedley/tiff-4.0.3/tools/raw2tiff
+iomedley/tiff-4.0.3/tools/rgb2ycbcr
+iomedley/tiff-4.0.3/tools/thumbnail
+iomedley/tiff-4.0.3/tools/tiff2bw
+iomedley/tiff-4.0.3/tools/tiff2pdf
+iomedley/tiff-4.0.3/tools/tiff2ps
+iomedley/tiff-4.0.3/tools/tiff2rgba
+iomedley/tiff-4.0.3/tools/tiffcmp
+iomedley/tiff-4.0.3/tools/tiffcp
+iomedley/tiff-4.0.3/tools/tiffcrop
+iomedley/tiff-4.0.3/tools/tiffdither
+iomedley/tiff-4.0.3/tools/tiffdump
+iomedley/tiff-4.0.3/tools/tiffinfo
+iomedley/tiff-4.0.3/tools/tiffmedian
+iomedley/tiff-4.0.3/tools/tiffset
+iomedley/tiff-4.0.3/tools/tiffsplit
+iomedley/tiff-4.0.3/tools/tiffgt
+
+
+
+
+

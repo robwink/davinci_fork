@@ -1,0 +1,69 @@
+#STANDARD DAVINCI LIBRARY
+source($DV_LIB+"/utils.dvrc")
+
+#set up $DV_OS and $DV_BROWSER from system environemnt
+os = getos();
+browser = getbrowser(os);
+putenv("DV_OS",os)
+putenv("DV_BROWSER",browser)
+putenv("DV_SCRIPT_FILES",$DV_LIB+"/script_files")
+putenv("DV_EX","http://davinci.asu.edu/examples")
+putenv("CAT_LOCATION",$DV_EX)
+putenv("DV_UPDATE_ALLOW","1")
+
+#gnuplot terminal default
+putenv("GPLOT_CMD","/Applications/davinci.app/Contents/Resources/gnuplot/bin/gnuplot")
+putenv("GPLOT_TERM","x11")
+plot("set term "+$GPLOT_TERM)
+
+#Database logins
+putenv("DV_THM_DB_USER","davinci")
+putenv("DV_THM_DB_PASS","davinci")
+putenv("DV_THM_DB_SPACE","^")
+putenv("DV_CRISM_DB_USER","crism")
+putenv("DV_CRISM_DB_PORT","--port=7227")
+putenv("DV_CRISM_DB_PASS","")
+
+#crism cache directory
+putenv("DV_CRISM_CACHE","~/CRISM_CACHE")
+
+#gdal location
+#this is for a gdal installed from http://www.kyngchaos.com/software/frameworks
+putenv("DV_GDAL_PATH","/Library/Frameworks/GDAL.framework/Programs/")
+source($DV_LIB+"/msff.dvrc")
+
+#User defined location for TEST_DATA
+putenv("DV_TEST_DATA","")
+
+#some class examples in	their own dvrc
+source($DV_LIB+"/class_examples.dvrc")
+
+#3rd party contributions
+source($DV_LIB+"/dshadow.dvrc")
+
+#set up default variables/constants
+source($DV_LIB+"/constants.dvrc")
+source($DV_LIB+"/time.dvrc")
+
+#source the standard user defined functions
+source($DV_LIB+"/image_stretch.dvrc")
+source($DV_LIB+"/map_projection.dvrc")
+source($DV_LIB+"/plot_tools.dvrc")
+source($DV_LIB+"/data_manipulation.dvrc")
+source($DV_LIB+"/themis_science.dvrc")
+source($DV_LIB+"/tes_science.dvrc")
+source($DV_LIB+"/crism_science.dvrc")
+source($DV_LIB+"/aster_science.dvrc")
+source($DV_LIB+"/master_science.dvrc")
+source($DV_LIB+"/aviris_science.dvrc")
+source($DV_LIB+"/thermal_model.dvrc")
+source($DV_LIB+"/misc.dvrc")
+source($DV_LIB+"/general_science.dvrc")
+source($DV_LIB+"/mosaic_tools.dvrc")
+source($DV_LIB+"/spectral_tools.dvrc")
+source($DV_LIB+"/field_spectrometer.dvrc")
+source($DV_LIB+"/v_mosaic.dvrc")
+source($DV_LIB+"/math.dvrc")
+
+#load the thm module
+load_module("thm")

@@ -1,0 +1,37 @@
+#!/mars/common/bin/davinci -fq -v0
+source("/themis/lib/dav_lib/library/library_mars.dvrc")
+
+opt={\
+from="",\
+to="",\
+target = 0\
+};
+opt=getopt($ARGV,opt)
+
+if(opt.from=="" || opt.to=="") {
+	printf("\nSort a file_list of THEMIS images from left to right\n\n")
+	printf("Arguments\n")
+	printf("\tfrom = path to input file_list\n")
+	printf("\tto = path to output file_list\n")
+	printf("\ttarget = target latitute for sorting (Default is 0)\n\n")
+  printf("Script Contributors:\n")
+  printf("C. Edwards 8/11/14\n\n")
+	exit(0)
+}
+printf("\nSelected options:\n")
+opt_usage(opt)
+printf("Sorting THEMIS cubes from left to right with target %f:\n",opt.target)
+
+#load the input images and create a blank array
+input=read_lines(opt.from)
+meridians=clone(0.,1,length(input),1)
+
+#get the meridian given the target lat
+for(i=1;i<=length(input);i+=1) {
+	meridians[,i]=themis_meridian(input[,i],target=opt.target)
+}
+
+#sort the input by the meridians (from left to right)
+output=sort(input,by=meridians)
+
+write(output,opt.to,ascii,force=1);
