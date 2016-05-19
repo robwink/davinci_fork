@@ -34,7 +34,7 @@ fi
 
 davinci_src=${script_dir}/../..
 
-version=`grep 'daVinci Version #' ${davinci_src}/version.h | sed -e 's/\(.*\)#\(.*\)";/\2/'`
+version=`grep 'davinci ' ${davinci_src}/version.h | sed -e 's/\(.*\) \(.*\)";/\2/'`
 
 
 

@@ -148,7 +148,7 @@ if [ "`echo $packages | grep davinci`" ]; then
 
 	echo "Getting davinci version number"
 	#get the version of davinci from version.h to attach to filename
-	version=`grep 'daVinci Version #' $source/version.h | sed -e 's/\(.*\)#\(.*\)";/\2/'`
+	version=`grep 'davinci ' $source/version.h | sed -e 's/\(.*\) \(.*\)";/\2/'`
 	[[ "${version}" != "" ]] || failed "Davinci version was not found. Unable to build package."
 	major=`echo $version | cut -d. -f1`
 	minor=`echo $version | cut -d. -f2`

@@ -34,7 +34,7 @@ if [ -e $deb_dir ]; then
 fi
 
 #get and check the version
-version=`grep 'daVinci Version #' ${davinci_src}/version.h | sed -e 's/\(.*\)#\(.*\)";/\2/'`
+version=`grep 'davinci ' ${davinci_src}/version.h | sed -e 's/\(.*\) \(.*\)";/\2/'`
 if [ "${version}" = "" ]; then
     echo "Davinci version was not found"
     exit

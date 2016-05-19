@@ -13,7 +13,7 @@
 extern void parse_error(char *fmt, ...);
 
 /*
-** daVinci module handle used for hiding the system specific 
+** davinci module handle used for hiding the system specific 
 ** module handle.
 */
 typedef struct {

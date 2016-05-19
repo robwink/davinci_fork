@@ -1,6 +1,6 @@
 # File xplat-param.dv
 #
-# Parameter file for cross platform tests for daVinci.
+# Parameter file for cross platform tests for davinci.
 # Dependent files: xplat-s.dv, xplat-t.dv
 
 # source image

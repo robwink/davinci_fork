@@ -1225,7 +1225,7 @@ void dbgprintf (char *fmt, ...)
  *
  * Module initialization/destruction hooks.
  *
- * dv_module_init is called by DaVinci when you load the module.
+ * dv_module_init is called by davinci when you load the module.
  * The second argument to this subroutine passes back the pointer
  * to initialization stucture defined above.  This module is analogous
  * to _init() when you do C-style shared libraries, so it is the perfect

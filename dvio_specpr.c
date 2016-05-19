@@ -572,7 +572,7 @@ WriteSpecpr(Var *v, char *filename, char *title)
             filename, V_DSIZE(v), title);
   }
 
-  sprintf(ahist, "%60.60s", "daVinci generated record");
+  sprintf(ahist, "%60.60s", "davinci generated record");
   ahist[60] = '\0';
   mhist[0] = '\0';
 

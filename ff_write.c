@@ -89,7 +89,7 @@ ff_write(vfuncptr func, Var *arg)
 	if (iom_type_found)                   dv_WriteIOM(ob, filename, type, force);
 	else if (!strcasecmp(type, "raw"))    dv_WriteRaw(ob, filename, force);
 	else if (!strcasecmp(type, "vicar"))  dv_WriteVicar(ob, filename, force);
-	else if (!strcasecmp(type, "grd"))    dv_WriteGRD(ob, filename, force, title, (char *)"daVinci");
+	else if (!strcasecmp(type, "grd"))    dv_WriteGRD(ob, filename, force, title, (char *)"davinci");
 	/*    else if (!strcasecmp(type, "pnm"))    dv_WritePNM(ob, filename, force); */
 	else if (!strcasecmp(type, "pgm"))    dv_WritePGM(ob, filename, force);
 	else if (!strcasecmp(type, "ppm"))    dv_WritePPM(ob, filename, force);

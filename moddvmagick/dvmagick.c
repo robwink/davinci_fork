@@ -1,6 +1,6 @@
 /*
 
-  DaVinci loadable module for using ImageMagick features.
+  davinci loadable module for using ImageMagick features.
 
   Copyright 2002, Mars Space Flight Facility,
   Department of Geological Sciences, Arizona State University
@@ -11,7 +11,7 @@
 
   This code can provide access to a good chunk of the ImageMagick Library
   as a module, but it has been hacked to also provide built-in ReadImage and
-  WriteImage support for the base DaVinci package's read() and write()
+  WriteImage support for the base davinci package's read() and write()
   functions.
   
   Bugs:
@@ -39,7 +39,7 @@
 
 */
 
-/* DaVinci Includes */
+/* davinci Includes */
 #include "parser.h"
 #include "help.h"
 
@@ -129,7 +129,7 @@ static Var *dvWaveImage(vfuncptr f, Var *args);
 */
 
 
-/* Begin DaVinci set up structures and constructors, destructors */
+/* Begin davinci set up structures and constructors, destructors */
 static dvModuleFuncDesc export_funcs [] = {
   {"WriteImage", (void *)dvWriteImage}, 
   {"ReadImage", (void *)dvReadImage},
@@ -184,7 +184,7 @@ static dvModuleFuncDesc export_funcs [] = {
   {NULL, NULL}
 };
 
-/* No dependencies that DaVinci needs to load.  However, ImageMagick relies
+/* No dependencies that davinci needs to load.  However, ImageMagick relies
    on a scad of libraries to do its thing.  This list can vary depending
    on your architecture, operating system, and environment.  To find out what
    you need, run:
@@ -198,14 +198,14 @@ static dvDepAttr deps[] = {
   {NULL, NULL}
 };
 
-/* The structure that defines what is accessible from DaVinci */
+/* The structure that defines what is accessible from davinci */
 
 static dvModuleInitStuff dvinit = {
   export_funcs, 49, NULL, 0
 };
 
 
-/* dv_module_init is called by DaVinci when you load the module.
+/* dv_module_init is called by davinci when you load the module.
    The second argument to this subroutine passes back the pointer
    to initialization stucture defined above.  This module is analogous
    to _init() when you do C-style shared libraries, so it's the perfect
@@ -241,7 +241,7 @@ DV_MOD_EXPORT void dv_module_fini(const char *modname)
 static inline StorageType dv_to_im_storage_type(Var * img)
 {
   /* Determine the ImageMagick Storage Type to use, based on the type
-     of a DaVinci storage type. */
+     of a davinci storage type. */
      
   switch (V_FORMAT(img)) {
   case BYTE:
@@ -259,7 +259,7 @@ static inline StorageType dv_to_im_storage_type(Var * img)
   case DOUBLE:
     return DoublePixel;
   default:
-    return CharPixel; /* Unknown DaVinci Type!  You'll need to add it here. */
+    return CharPixel; /* Unknown davinci Type!  You'll need to add it here. */
   }
 }
 
@@ -345,11 +345,11 @@ static unsigned int write_im_image(Image * img, char * fn, char * type) {
 static Image * assemble_image(Var * obj, unsigned int ctype, 
 			      unsigned int zplane) {
   /* Routine to build a single ImageMagick greyscale or color image from a 
-     DaVinci cube, given the cube object, the type of image desired, and
+     davinci cube, given the cube object, the type of image desired, and
      which z plane we should begin at. 
 
      Arguments: 
-     obj - DaVinci object we will build the image from
+     obj - davinci object we will build the image from
 
      type - 1 for greyscale, 3 for RGB color
 
@@ -378,10 +378,10 @@ static Image * assemble_image(Var * obj, unsigned int ctype,
 
 
   /* At this point, we have a blank image in the appropriate dimensions. 
-     We now need to slush through the DaVinci object to get the right data 
+     We now need to slush through the davinci object to get the right data 
      into the ImageMagick image. */
   
-  /* Make DaVinci objects of the z plane(s) in question */
+  /* Make davinci objects of the z plane(s) in question */
 
   if (ctype == 3) {
 
@@ -456,13 +456,13 @@ static Image * assemble_image(Var * obj, unsigned int ctype,
 
 static Var * im_to_dv(Image * img) {
   /* im_to_dv: Takes an ImageMagick image or animation and returns
-     a DaVinci object that represents the image.
+     a davinci object that represents the image.
 
      Arguments:
      img: The ImageMagick Image Object we want to convert
 
      Returns:
-     A pointer to a DaVinci cube on success.  NULL pointer on failure.
+     A pointer to a davinci cube on success.  NULL pointer on failure.
 
   */
   
@@ -554,7 +554,7 @@ static Image * dv_to_im(Var * obj, int type)
      representative ImageMagick object.  
      
      Arguments:
-     obj: The DaVinci object we are translating
+     obj: The davinci object we are translating
      
      type: Identify the movie type we want for movies.  Pass 1 for
      greyscale and 2 for color.  This value is meaningless for still

@@ -2646,7 +2646,7 @@ Davinci supports the following matrix functions:
 
 ?functions plot()
 ?plot()
- plot() - The graphing function of daVinci
+ plot() - The graphing function of davinci
 
  Through the use of this function, data may be altered, formatted
 and exported to the Gnuplot graphing engine.

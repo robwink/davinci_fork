@@ -1,10 +1,10 @@
-This is the README file for daVinci, a hyperspectral math engine,
+This is the README file for davinci, a hyperspectral math engine,
 developed for JPL under contract #959904.  You can always obtain the
-latest version of daVinci from ftp://east.la.asu.edu/pub/software/davinci
+latest version of davinci from ftp://east.la.asu.edu/pub/software/davinci
 
 Compiling
 ---------
-DaVinci requries an ANSI C compiler.  A configuration script has been 
+Davinci requries an ANSI C compiler.  A configuration script has been
 included to make compilation as straight forward as possible.  In
 most instances you should be able to run configure, and then run make:
 

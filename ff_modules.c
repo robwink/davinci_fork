@@ -49,7 +49,7 @@ Narray *loaded_modules = NULL;
 static const char ver_any_str[] = "(any)";
 #define printable_ver_str(ver) ((ver)? (ver): ver_any_str)
 
-/* daVinci module file extension */
+/* davinci module file extension */
 static const char DVM_EXT[] = "la";
 
 /* Environment variable for module lookup */
@@ -78,7 +78,7 @@ int unload_dv_module(char *module_name);
 
 
 /*******************************************************************/
-/** daVinci load_module(mod="module_name") function.              **/
+/** davinci load_module(mod="module_name") function.              **/
 /*******************************************************************/
 
 Var *
@@ -117,7 +117,7 @@ ff_load_dv_module(
 	v_return = new_module(module_name);
 	if (v_return){
 		/*
-		** Actually load the module into the daVinci variable
+		** Actually load the module into the davinci variable
 		** just created.
 		*/
 		if (!load_dv_module(module_name, NULL, 1, &V_MODULE(v_return))){
@@ -136,7 +136,7 @@ ff_load_dv_module(
 
 
 /*******************************************************************/
-/** daVinci unload_module(mod="module_name") function.            **/
+/** davinci unload_module(mod="module_name") function.            **/
 /*******************************************************************/
 
 Var *
@@ -172,7 +172,7 @@ ff_unload_dv_module(
 
 
 /*******************************************************************/
-/** daVinci list_modules() function.                              **/
+/** davinci list_modules() function.                              **/
 /*******************************************************************/
 
 Var *
@@ -414,7 +414,7 @@ remove_from_list_of_loaded_modules(Var *v)
 
 
 /*
-** Create a daVinci module variable with the specified name.
+** Create a davinci module variable with the specified name.
 */
 
 Var *
@@ -1112,7 +1112,7 @@ autoload_dv_module(char *name, const char *ver)
 	/*
 	** TODO:
 	**
-	** Create a daVinci module variable. Pass that variable
+	** Create a davinci module variable. Pass that variable
 	** into load_module() to actually load the module. Check
 	** the error returned by load_module() if any. On error
 	** collapse the module we were trying to load.
@@ -1127,7 +1127,7 @@ autoload_dv_module(char *name, const char *ver)
 	v_return = new_module(name);
 	if (v_return){
 		/*
-		** Actually load the module into the daVinci variable
+		** Actually load the module into the davinci variable
 		** just created.
 		*/
 		if (!load_dv_module(V_NAME(v_return), NULL, 1, &V_MODULE(v_return))){
@@ -1300,7 +1300,7 @@ load_dv_module_functions(
 
 	ct = 0;
 	for (i = 0; i < nfdesc; i++){
-		/* get the name of the next daVinci function */
+		/* get the name of the next davinci function */
 		func_name = fdesc[i].name;
 
 #ifdef _CANNOT_PASS_FUNCTION_PTRS_
@@ -1321,7 +1321,7 @@ load_dv_module_functions(
 #endif
 
 		/*
-		** Create daVinci function description using the
+		** Create davinci function description using the
 		** supplied function-name, function-pointer, and
 		** associate the data "h" with it.
 		*/
@@ -1340,7 +1340,7 @@ load_dv_module_functions(
 
 
 		/*
-		** Make the daVinci function descriptor (vfuncptr)
+		** Make the davinci function descriptor (vfuncptr)
 		** available through name lookup by way of the
 		** functions Narray.
 		**

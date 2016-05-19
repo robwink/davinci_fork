@@ -10,7 +10,7 @@
 **
 ** Complementry function of var2iheader()
 **
-** Converts an _iheader structure into a daVinci "Var."
+** Converts an _iheader structure into a davinci "Var."
 ** It works for very simple applications. The only fields
 ** transferred across are:
 **    org     (as V_ORDER)
@@ -92,7 +92,7 @@ int dvio_ValidGfx(char *type,char *GFX_type);
 
 /*
 ** Locates the file according to the "$datapath" variable.
-** This variable is set within daVinci somewhere.
+** This variable is set within davinci somewhere.
 **
 ** On successful return a character string allocated using
 ** malloc() will be returned. It is the caller's responsibility

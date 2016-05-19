@@ -1,6 +1,6 @@
 # File: xplat-t.dv
 # 
-# Target part of cross-platform test for daVinci.
+# Target part of cross-platform test for davinci.
 # Corresponding source part is xplat-s.dv
 #
 # This test verifies that various image formats work 

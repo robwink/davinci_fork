@@ -40,7 +40,7 @@ x11=$dir/install/x11/usr/local/davinci
 aqua=$dir/install/aqua/usr/local/davinci
 
 #get the version of davinci from version.h to attach to filename
-version=`grep 'daVinci Version #' $dir/../../version.h | sed -e 's/\(.*\)#\(.*\)";/\2/'`
+version=`grep 'davinci ' $dir/../../version.h | sed -e 's/\(.*\) \(.*\)";/\2/'`
 if [ "${version}" = "" ] 
 then
   echo "Davinci version was not found"

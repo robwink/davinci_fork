@@ -271,7 +271,7 @@ define dcsf(ignore,sample,variance) {
 
   # wrapped the reference to e[1] in abs() to avoid values involving imaginary
   # numbers - their presence would cause the resulting image to be a black rectangle
-  # I believe their presence is related to a bug in DaVinci regarding very small negative 
+  # I believe their presence is related to a bug in davinci regarding very small negative 
   # floating-point values.
   #s = identity(dim(a)[3]) * v/sqrt(e[1]);
 
@@ -1340,7 +1340,7 @@ define threeplane() {
 
 
 
-# this is a workaround for an apparent bug in the DaVinci scripting syntax
+# this is a workaround for an apparent bug in the davinci scripting syntax
 # if the same object is passed multiple times as an argument to a function, only the first occurence is visible to the script code
 define threeclone() {
 	if($ARGC != 1) {
@@ -2872,7 +2872,7 @@ define findAggMinMax(steps, backlash, threshold, threshrepeat, searchwidth){
 	#if (newMin < 0.0) {
 	#	newMin = 0.0
 	#}
-	#apparently DaVinci is not always so great at determining if a value is less than zero
+	#apparently davinci is not always so great at determining if a value is less than zero
 	#if (newMin != abs(newMin)) {
 	#	newMin = 0.0
 	#}
@@ -3827,7 +3827,7 @@ define colourIsolation(mode, master, rg, gb, rb){
 		outR = one - outC
 		outG = one - outM
 		outB = one - outY
-	# This next set of else ifs is a workaround for DaVinci's apparent inability to pass string variables to other functions
+	# This next set of else ifs is a workaround for davinci's apparent inability to pass string variables to other functions
 	} else if (om == "p") {
 		outR = colourIsolationInternal(omode="p", inC1=inR, inC2=inG, inC3=inB, c1c2Isolation=rgi, c1c3Isolation=rbi)
 		outG = colourIsolationInternal(omode="p", inC1=inG, inC2=inR, inC3=inB, c1c2Isolation=rgi, c1c3Isolation=gbi)

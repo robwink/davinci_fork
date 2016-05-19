@@ -7,22 +7,22 @@
 typedef struct {
 	char *name;
 	char *ver;
-} dvDepAttr;     /* daVinci dependency module attributes */
+} dvDepAttr;     /* davinci dependency module attributes */
 
 /*
-** daVinci module-function description
+** davinci module-function description
 */
 typedef struct {
 	char *name;     /* name of the variable or a function to look up */
 	void *ptr;      /* address of function within the loaded shared library */
-} dvModuleFuncDesc;   /* description of a daVinci shared-lib member function */
+} dvModuleFuncDesc;   /* description of a davinci shared-lib member function */
 
 typedef struct {
 	dvModuleFuncDesc *fdesc; /* function descriptors */
 	int  nfdesc;            /* count of function descriptors */
 	dvDepAttr *dep;     /* module dependencies */
 	int ndep;               /* count of module dependencies */
-} dvModuleInitStuff; /* stuff returned by daVinci module init function */
+} dvModuleInitStuff; /* stuff returned by davinci module init function */
 
 struct _module {
 	char *name;         /* module name */

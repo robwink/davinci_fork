@@ -1,10 +1,10 @@
 BASICS
 
 
-daVinci module processing code is contained in ff_modules.c and
+Davinci module processing code is contained in ff_modules.c and
 module_io.c.
 
-daVinci modules are essentially ".so"s (shared-objects) or
+Davinci modules are essentially ".so"s (shared-objects) or
 shared-libraries or ".dll"s.  I'll use the term shared-object in the
 text below to refer to any one of these variations. Shared objects
 are compiled as "position-independent-code" (which is different
@@ -12,7 +12,7 @@ from relocatable code).
 
 WRITING MODULES
 
-daVinci modules must have the following in them:
+Davinci modules must have the following in them:
 
 a)  An initialization function with the same prototype as the type
 	"dvModuleInitFunc" defined in ff_modules.h. Its name must be

@@ -51,7 +51,7 @@ typedef enum {
 	iom_VAX_INT     = 42,
 	iom_VAX_REAL_4  = 44,
 	iom_VAX_REAL_8  = 48
-} iom_edf;             /* daVinci I/O external data formats */
+} iom_edf;             /* davinci I/O external data formats */
 
 #define iom_NBYTES(ef) ((ef) > 40 ? ((ef) - 40) : ((ef) > 30 ? ((ef) - 30) : ((ef) > 20 ? ((ef) - 20) : ((ef) > 10 ? ((ef) - 10) : (ef)))))
 
@@ -66,7 +66,7 @@ typedef enum {
 	iom_INT    = 3,
 	iom_FLOAT  = 4,
 	iom_DOUBLE = 5
-} iom_idf;             /* daVinci I/O internal data formats */
+} iom_idf;             /* davinci I/O internal data formats */
 
 #define iom_NBYTESI(ifmt) ((ifmt) == 5 ? 8 : ((ifmt) == 3 ? 4 : (ifmt)))
 

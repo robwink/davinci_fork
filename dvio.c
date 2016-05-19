@@ -2,7 +2,7 @@
 ** File: dvio.c
 ** Related files: dvio.h dvio_*.c
 **
-** Bridging code between daVinci and iomedley
+** Bridging code between davinci and iomedley
 */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -152,7 +152,7 @@ vfmt2ihfmt(int vfmt)
 **
 ** Complementry function of var2iheader()
 **
-** Converts an _iheader structure into a daVinci "Var."
+** Converts an _iheader structure into a davinci "Var."
 ** It works for very simple applications. The only fields
 ** transferred across are:
 **    org     (as V_ORDER)

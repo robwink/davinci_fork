@@ -1,6 +1,6 @@
 // pnm_module.c : Gary Rigg : January 2002
 //
-// Port of the PNM suite of utilities for DaVinci
+// Port of the PNM suite of utilities for davinci
 //
 #include "help.h"
 #include "parser.h"

@@ -259,7 +259,7 @@ ff_xrt3d(vfuncptr func, Var * arg)
                    strcmp(XtName(graph), "shellWindow")) {
                 graph=parent;
             }
-            XtVaSetValues(graph, XtNtitle, "daVinci/XRT3D (inactive)", NULL);
+            XtVaSetValues(graph, XtNtitle, "davinci/XRT3D (inactive)", NULL);
             CreatePopup2();
         }
     }
@@ -403,7 +403,7 @@ CreatePopup2(void)
     
     base = XtVaAppCreateShell(NULL, "shellWindow",
                               topLevelShellWidgetClass, XtDisplay(top),
-                              XtNtitle, "daVinci/XRT3D",
+                              XtNtitle, "davinci/XRT3D",
                               NULL);
     
     MtCreateShell(base, NULL, NULL, (Widget (*)())CreateMain, menu_items,
