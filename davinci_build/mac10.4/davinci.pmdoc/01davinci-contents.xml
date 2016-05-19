@@ -1,0 +1,757 @@
+<?xml version="1.0"?>
+<pkg-contents spec="1.12">
+<f n="davinci.app" o="root" g="admin" p="16892" pt="/Applications/davinci.app" m="true" t="file">
+  <f n="Contents" o="root" g="admin" p="16893">
+    <f n="Info.plist" o="root" g="admin" p="33277"><mod>mode</mod></f>
+    <f n="MacOS" o="root" g="admin" p="16893">
+      <f n="dav.command" o="root" g="admin" p="33277"><mod>mode</mod></f>
+      <f n="dav.start.2" o="root" g="admin" p="33277"><mod>mode</mod></f>
+      <mod>mode</mod>
+    </f>
+      <f n="Resources" o="root" g="admin" p="16893">
+        <f n="bin" o="root" g="admin" p="16893">
+          <f n="davinci" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="gif2h5" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="h52gif" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="h5cc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="h5copy" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="h5debug" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="h5diff" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="h5dump" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="h5import" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="h5jam" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="h5ls" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="h5mkgrp" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="h5perf_serial" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="h5redeploy" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="h5repack" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="h5repart" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="h5stat" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="h5unjam" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <mod>mode</mod>
+        </f>
+          <f n="Davinci.icns" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="gnuplot" o="root" g="admin" p="16893">
+            <f n="bin" o="root" g="admin" p="16893">
+              <f n="annotate" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="bdftogd" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="gd2copypal" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="gd2togif" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="gd2topng" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="gdcmpgif" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="gdlib-config" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="gdparttopng" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="gdtopng" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="giftogd2" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="gnuplot" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="libpng-config" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="libpng15-config" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="pdfimage" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="pdflib-config" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="pngtogd" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="pngtogd2" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="text2pdf" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="webpng" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <mod>mode</mod>
+            </f>
+              <f n="include" o="root" g="admin" p="16893">
+                <f n="entities.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                <f n="gd.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                <f n="gd_io.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                <f n="gdcache.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                <f n="gdfontg.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                <f n="gdfontl.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                <f n="gdfontmb.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                <f n="gdfonts.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                <f n="gdfontt.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                <f n="gdfx.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                <f n="libpng15" o="root" g="admin" p="16893">
+                  <f n="png.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="pngconf.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="pnglibconf.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <mod>mode</mod>
+                </f>
+                  <f n="pdflib.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="png.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="pngconf.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="pnglibconf.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                <mod>mode</mod>
+              </f>
+                <f n="lib" o="root" g="admin" p="16893">
+                  <f n="libgd.2.0.0.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="libgd.2.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="libgd.a" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="libgd.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="libgd.la" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="libpdf.6.0.5.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="libpdf.6.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="libpdf.a" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="libpdf.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="libpdf.la" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="libpng.a" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="libpng.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="libpng.la" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="libpng15.15.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="libpng15.a" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="libpng15.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="libpng15.la" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="pkgconfig" o="root" g="admin" p="16893">
+                    <f n="libpng.pc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="libpng15.pc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <mod>mode</mod>
+                  </f>
+                  <mod>mode</mod>
+                </f>
+                  <f n="libexec" o="root" g="admin" p="16893">
+                    <f n="gnuplot" o="root" g="admin" p="16893">
+                      <f n="4.4" o="root" g="admin" p="16893">
+                        <f n="gnuplot_x11" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <mod>mode</mod>
+                      </f>
+                      <mod>mode</mod>
+                    </f>
+                    <mod>mode</mod>
+                  </f>
+                    <f n="share" o="root" g="admin" p="16893">
+                      <f n="gnuplot" o="root" g="admin" p="16893">
+                        <f n="4.4" o="root" g="admin" p="16893">
+                          <f n="app-defaults" o="root" g="admin" p="16893">
+                            <f n="Gnuplot" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                            <mod>mode</mod>
+                          </f>
+                            <f n="gnuplot.gih" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                            <f n="js" o="root" g="admin" p="16893">
+                              <f n="canvasmath.js" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                              <f n="canvastext.js" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                              <f n="gnuplot_common.js" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                              <f n="gnuplot_mouse.css" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                              <f n="gnuplot_mouse.js" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                              <f n="grid.png" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                              <f n="help.png" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                              <f n="nextzoom.png" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                              <f n="previouszoom.png" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                              <f n="README" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                              <f n="textzoom.png" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                              <mod>mode</mod>
+                            </f>
+                              <f n="lua" o="root" g="admin" p="16893">
+                                <f n="gnuplot-tikz.lua" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                <mod>mode</mod>
+                              </f>
+                                <f n="PostScript" o="root" g="admin" p="16893">
+                                  <f n="8859-1.ps" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="8859-15.ps" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="8859-2.ps" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="8859-9.ps" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="aglfn.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="cp1250.ps" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="cp437.ps" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="cp850.ps" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="cp852.ps" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="koi8r.ps" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="koi8u.ps" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="prologue.ps" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="utf-8.ps" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <mod>mode</mod>
+                                </f>
+                          <mod>mode</mod>
+                        </f>
+                        <mod>mode</mod>
+                      </f>
+                        <f n="info" o="root" g="admin" p="16893">
+                          <f n="dir" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <f n="gnuplot.info" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <mod>mode</mod>
+                        </f>
+                          <f n="man" o="root" g="admin" p="16893">
+                            <f n="man1" o="root" g="admin" p="16893">
+                              <f n="gnuplot.1" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                              <mod>mode</mod>
+                            </f>
+                              <f n="man3" o="root" g="admin" p="16893">
+                                <f n="libpng.3" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                <f n="libpngpf.3" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                <mod>mode</mod>
+                              </f>
+                                <f n="man5" o="root" g="admin" p="16893">
+                                  <f n="png.5" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <mod>mode</mod>
+                                </f>
+                            <mod>mode</mod>
+                          </f>
+                      <mod>mode</mod>
+                    </f>
+            <mod>mode</mod>
+          </f>
+            <f n="ImageJ" o="root" g="admin" p="16893">
+              <f n="display.sh" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="ghetto_display.sh" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="ij.jar" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="ImageJ.app" o="root" g="admin" p="16893">
+                <f n="Contents" o="root" g="admin" p="16893">
+                  <f n="Info.plist" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="MacOS" o="root" g="admin" p="16893">
+                    <f n="JavaApplicationStub" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="JavaApplicationStub-old" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <mod>mode</mod>
+                  </f>
+                    <f n="PkgInfo" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="Resources" o="root" g="admin" p="16893">
+                      <f n="ImageJ.icns" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Java" o="root" g="admin" p="16893">
+                        <f n="Where" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <mod>mode</mod>
+                      </f>
+                      <mod>mode</mod>
+                    </f>
+                  <mod>mode</mod>
+                </f>
+                <mod>mode</mod>
+              </f>
+                <f n="luts" o="root" g="admin" p="16893">
+                  <f n="16_colors.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="5_ramps.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="6_shades.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="blue_orange_icb.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="brgbcmyw.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="cool.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="Cyan" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="edges.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="gem.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="Green" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="HiLo.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="ICA.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="ICA2.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="ICA3.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="Magenta" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="Orange" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="phase.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="Rainbow" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="README.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="Red" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="royal.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="sepia.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="smart.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="thal.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="thallium.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="unionjack.lut" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="Yellow" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <mod>mode</mod>
+                </f>
+                  <f n="macros" o="root" g="admin" p="16893">
+                    <f n=".FBCIndex" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n=".FBCLockFolder" o="root" g="admin" p="16893">
+                      <f n=".FBCSemaphoreFile" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <mod>mode</mod>
+                    </f>
+                      <f n="3Dflight.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="AA_ReadMe.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="About" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="AnimatedText.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ApplyDicomRescaleSlope.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ApplyFunctionToImage.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ArgumentPassingDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Arrays.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Artillery.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="AzimuthalProfile.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="BackgroundCorrectedDensity.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Batch_RGB_Merge.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="BatchConvert.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="BatchConvertToBinary.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="BatchConvertToJPEG.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="BatchMeasure.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="BatchModeCalculator.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="BatchModeCompositeSelection.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="BatchModeTest.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="BatchProcessFolders.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="BatchRGBMeasure.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="BatchSetScale.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="BouncingBar.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="BuiltinFunctions.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="BullsEye.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Calculate_Black_to_White_Ratio.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="CalculateMean.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Calculations.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="CallJavaDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ChangeColors.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="CircularParticles.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="CloseAllWindows.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="CommandLine.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="CompositeSelections.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ConvertDicomDictionary.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ConvertImageToStack.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ConvertMaskToCompositeROI.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ConvertSigned16BitToUnsigned.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ConvertStackToBinary.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ConvexHull.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ConvexitySolidarity.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="CreateImageFromFunction.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Custom_Profile_Plot.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="CustomHistogram.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="DeconvolutionDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="DialogDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Display_Pixel_Values.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="DisplayRangeMacros.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="DisplayTiffInfo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="DottedLines.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="DoWandDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="DrawGradientLine.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="DrawRandomDots.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="DrawSliceLabels.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="DXM_jpg_acquisition_Mode.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="EDM_16bits.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="EllipseCalibration.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ErodeToSinglePixel.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="EvalDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ExamplePlots.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="EXIF_Batch_Reader.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ExifDateAndTime.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ExpandOrShrinkSelection.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ExtractRGBChannels.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Factorials.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="FeretsDiameter.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="FFTCustomFilterDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="FFTRemoveStreaks.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="FileDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="FileSequences.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="FindMaxPixelLocation.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="FindSelectionLimits.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="FindSelectionPeak.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="FindTopPixel.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Fixed16BitTo8BitConversion.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="FixLineEndings.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="FixNIHImageTiffs.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Fonts.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="FractalEDM.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="FullRange16BitInvert.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="FullTelomerecounter.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Gamma.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="GaussianConvolution.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="GenerateColorMap.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="GetCursorLocDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="GetDateAndTime.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="GetDirectoryDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="GetLineDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="GetProfileExample.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="getRGBPixelCount.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="HalfCircleSelections.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="HistogramLister.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="HistogramOfResultsValues.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="HistogramPlotter.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="HSB_Histogram.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="HtmlDialogDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="HueRotation.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ImageCalculatorDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ImageCreationTest.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ImageRotator.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Import_Results_Table.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Init.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="InvertImage.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="KeyboardShortcuts.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="LabelParticlesWithArea.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="LineAngleTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="LineStatistics.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ListDicomTags.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ListFilesRecursively.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ListSelectionCoordinates.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="LogWindowTricks.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="LookupTables.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="LoopStack.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="LSM_Batch_With_Colors.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="MacroSet.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="MakeMontage.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="MakeSelectionDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Mandelbrot.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Max_Value_Segmentation.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Measure3Lengths.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Measure_And_Label.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Measure_Angle_And_Length.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="MeasureAndLabelXYZ.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="MeasureAndSetLabel.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="MeasureAreaFraction.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="MeasureEdgePixels.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="MeasureOutside.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="MeasurePointSpacing.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="MeasureRedirected.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="MeasureRGB.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="MeasureStack.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="MoreStartupMacros.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="MotionBlurRemoval.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="MoveSelection.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="MultipleColourAnalysis.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="MultipleColourBackgrounds.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="OpenFileDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="OpenImagesFromList.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="OpenMacIPLab.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="OpenSeriesUsingFilter.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ParseFloatIntExamples.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ParticleCircularityHistogram.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ParticleClusterAnalysis.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ParticleLabelingExample.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ParticleOutlines.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ParticleRotator.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="PasteControlDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="PerimeterAndCircularityTest.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="PlotColumnPixelCounts.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="PlotProfileWithSD.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="PlotStack.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="PointsToStack.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Polygon.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="PolygonArea.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Pong.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="RadialIntegratedIntensity.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="RadialProfiles.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="RandomOvals.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="RandomSampleAndMeasure.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="RatioOfDifferenceAndSum.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="RecordProfile.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="RedirectedParticleAnalysis.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="RegressionTests.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ReplaceRedWithMagenta.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ResizeImagesAndStack.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ResultsSummary.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ReturnStatements.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="RGB_Histogram.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ROI_Manager_Stack_Demo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="RoiManagerAddParticles.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="RoiManagerMacros.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="RoiManagerSpeedTest.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Rotate_Image.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="RotateSelection.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="RotatingPolygon.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ScaleSelection.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Search_Macros.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="SelectionCoordinates.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="SelectionIntersection.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Shift_RGB_Channel.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Shortcuts.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Show_All_LUTs.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Show_Selection_As_Text.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ShowImageInfo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ShowPath.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ShowRawStatistics.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ShowScale.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="ShowStatistics.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="SineCosineTable.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Slice-to-Slice" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Snake.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="SortDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="StackHistogramLister.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="StackProfilePlot.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Stacks.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="StartupMacros.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Statements.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="StringFunctions.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="SubractMeasuredBackground.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="SubtractProfile.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="SumAreas.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="telecran.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="Test_Wavelets.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="TextDemo.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="TiffCommentsEditor.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="TimeLapseCapture.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="TimingTest.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <f n="tools" o="root" g="admin" p="16893">
+                        <f n="3D-Distance-Tool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="3DAngleTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="3FluoLablelingExploringTools.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="AboutTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="ArrowMakerTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="BigCursorTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="ButtonBar.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="CalculatorTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="ChangeColorTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="CircleTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="CircularQuadrantMeasureTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="CircularSelectionTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="ClickToTrackTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="ColorPickerTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="ConcentricRingsTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="DrawingTools.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="ExampleTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="FloodFillTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="GetCursorLocDemoTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="HDRexplorerTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="Image_To_Tool_Icon.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="LabelLineTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="LineAngleTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="LineTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="LUTFileTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="MacroPluginShortcutsTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="MacrosAndToolsUpdater.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="MagnifyingGlassTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="MeasurePieSegmentsTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="MeasurerAndLabelTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="MirrorSelectionTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="MontageShufflerTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="MultiCursorTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="PixelPickerTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="SpotMeasurementTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="SprayCanTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="Tools.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="URLtools.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="WandAutoMeasureTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="ZProfileTool.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <mod>mode</mod>
+                      </f>
+                        <f n="toolsets" o="root" g="admin" p="16893">
+                          <f n="Developer" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <f n="Icons.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <f n="Lookup" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <f n="Stack" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <mod>mode</mod>
+                        </f>
+                          <f n="ToolShortcuts.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <f n="Topolines.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <f n="Translate.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <f n="Unicode.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <f n="UserFunctions.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <f n="Version_Checker.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <f n="VolumeFractionOfBone.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <f n="WeatherOverFrance.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <f n="WindowAndLevel.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <mod>mode</mod>
+                  </f>
+                    <f n="plugins" o="root" g="admin" p="16893">
+                      <f n="Analyze" o="root" g="admin" p="16893">
+                        <f n="Voxel_Counter.class" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="Voxel_Counter.java" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <mod>mode</mod>
+                      </f>
+                        <f n="Demos" o="root" g="admin" p="16893">
+                          <f n="Image_Inverter.class" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <f n="Image_Inverter.java" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <f n="Plasma2_.class" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <f n="Plasma2_.java" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <f n="Red_And_Blue.class" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <f n="Red_And_Blue.java" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                          <mod>mode</mod>
+                        </f>
+                          <f n="Filters" o="root" g="admin" p="16893">
+                            <f n="Multi_Thresholder.jar" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                            <mod>mode</mod>
+                          </f>
+                            <f n="Graphics" o="root" g="admin" p="16893">
+                              <f n="Example_Plot.class" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                              <f n="Example_Plot.java" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                              <mod>mode</mod>
+                            </f>
+                              <f n="Input-Output" o="root" g="admin" p="16893">
+                                <f n="Analyze_Reader.class" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                <f n="Analyze_Reader.java" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                <f n="Analyze_Writer.class" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                <f n="Analyze_Writer.java" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                <f n="Biorad_Reader.class" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                <f n="Biorad_Reader.java" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                <f n="HandleExtraFileTypes.class" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                <f n="HandleExtraFileTypes.java" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                <f n="IPLab_Reader.class" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                <f n="IPLab_Reader.java" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                <f n="LSM_Reader.jar" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                <f n="QuickTime_Plugins.jar" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                <mod>mode</mod>
+                              </f>
+                                <f n="Macros" o="root" g="admin" p="16893">
+                                  <f n="About" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="About_Plugin_Macros.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="Bulls_Eye.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="Import_Results_Table.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="Polygon_.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="Pong.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="RGB_Histogram.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <mod>mode</mod>
+                                </f>
+                                  <f n="README.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                  <f n="Stacks" o="root" g="admin" p="16893">
+                                    <f n="Time_Stamper.class" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                    <f n="Time_Stamper.java" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                    <mod>mode</mod>
+                                  </f>
+                                    <f n="Utilities" o="root" g="admin" p="16893">
+                                      <f n="QuitHandler.class" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                      <f n="QuitHandler.java" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                                      <mod>mode</mod>
+                                    </f>
+                      <mod>mode</mod>
+                    </f>
+                      <f n="README.html" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <mod>mode</mod>
+            </f>
+              <f n="include" o="root" g="admin" p="16893">
+                <f n="cfitsio" o="root" g="admin" p="16893">
+                  <f n="fitsio.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="fitsio2.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <mod>mode</mod>
+                </f>
+                  <f n="davinci" o="root" g="admin" p="16893">
+                    <f n="api.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="api_extern_defs.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="apidef.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="avl.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="build.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="config.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="configwin.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="csv.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="darray.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="dos.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="dvio.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="dvio_fits.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="dvio_specpr.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="endian_norm.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="ff.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="ff_modules.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="fft.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="fit.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="func.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="header.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="help.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="io_loadmod.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="isis_obj.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="module_io.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="motif_tools.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="parser.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="proto.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="rfunc.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="scope.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="system.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="toolbox.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="tools.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="trigtbl.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="ufunc.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="version.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="window.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="XformTable.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="xrt_print_3d.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="y_tab.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <mod>mode</mod>
+                  </f>
+                    <f n="drvrsmem.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="fitsio.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="fitsio2.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5ACpublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5api_adpt.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5Apublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5Cpublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5Dpublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5DSpublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5Epubgen.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5Epublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5FDcore.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5FDdirect.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5FDfamily.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5FDlog.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5FDmpi.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5FDmpio.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5FDmpiposix.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5FDmulti.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5FDpublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5FDsec2.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5FDstdio.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5Fpublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5Gpublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5IMpublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5Ipublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5Lpublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5LTpublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5MMpublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5Opublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5overflow.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5Ppublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5PTpublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5pubconf.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5public.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5Rpublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5Spublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5TBpublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5Tpublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5version.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="H5Zpublic.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="hdf5.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="hdf5_hl.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="longnam.h" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                <mod>mode</mod>
+              </f>
+                <f n="lib" o="root" g="admin" p="16893">
+                  <f n="davinci" o="root" g="admin" p="16893">
+                    <f n="cse.0.0.0.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="cse.0.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="cse.a" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="cse.la" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="cse.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="foo.0.0.0.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="foo.0.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="foo.a" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="foo.la" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="foo.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="kjn.0.0.0.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="kjn.0.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="kjn.a" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="kjn.la" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="kjn.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="mod1.0.0.0.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="mod1.0.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="mod1.a" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="mod1.la" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="mod1.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="mod2.0.0.0.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="mod2.0.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="mod2.a" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="mod2.la" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="mod2.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="pnm.0.0.0.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="pnm.0.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="pnm.a" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="pnm.la" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="pnm.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="thm.0.0.0.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="thm.0.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="thm.a" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="thm.la" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="thm.so" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <mod>mode</mod>
+                  </f>
+                    <f n="libcfitsio.a" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="libcurl.4.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="libdavinci.0.2.0.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="libdavinci.0.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="libdavinci.a" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="libdavinci.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="libdavinci.la" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="libhdf5.6.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="libhdf5.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="libhdf5.la" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="libhdf5.settings" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="libhdf5_hl.6.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="libhdf5_hl.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="libhdf5_hl.la" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="libiomedley.a" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="libltdl.3.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="libltdl.7.dylib" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="pdshead" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                    <f n="pkgconfig" o="root" g="admin" p="16893">
+                      <f n="cfitsio.pc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                      <mod>mode</mod>
+                    </f>
+                  <mod>mode</mod>
+                </f>
+                  <f n="license.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                  <f n="share" o="root" g="admin" p="16893">
+                    <f n="davinci" o="root" g="admin" p="16893">
+                      <f n="docs" o="root" g="admin" p="16893">
+                        <f n="dv.gih" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="README" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="README.modules" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <f n="README_FF" o="root" g="admin" p="33277"><mod>mode</mod></f>
+                        <mod>mode</mod>
+                      </f>
+                      <mod>mode</mod>
+                    </f>
+                    <mod>mode</mod>
+                  </f>
+        <mod>mode</mod>
+      </f>
+    <mod>mode</mod>
+  </f>
+  <mod>mode</mod>
+</f>
+</pkg-contents>

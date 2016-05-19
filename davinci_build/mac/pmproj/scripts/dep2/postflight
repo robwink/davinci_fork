@@ -1,0 +1,19 @@
+#!/bin/sh -f
+
+if [ ! -e /usr/lib/libltdl.3.dylib ] 
+then
+	sudo chown root:wheel /private/tmp/libltdl.3.dylib
+	sudo mv /private/tmp/libltdl.3.dylib /usr/lib/
+fi
+
+if [ ! -e /usr/lib/libcurl.4.dylib ] 
+then
+	sudo chown root:wheel /private/tmp/libcurl.4.dylib
+	sudo mv /private/tmp/libcurl.4.dylib /usr/lib/
+fi
+
+if [ ! -e /usr/bin/pdshead ] 
+then
+	sudo chown root:wheel /private/tmp/pdshead
+	sudo mv /private/tmp/pdshead /usr/bin/
+fi

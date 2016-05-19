@@ -1,0 +1,3 @@
+"\M-p":	history-search-backward
+"\M-n":	history-search-forward
+"\M-?":	dump-functions

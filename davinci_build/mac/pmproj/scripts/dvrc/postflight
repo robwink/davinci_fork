@@ -1,0 +1,7 @@
+#!/bin/bash
+
+user=`whoami`
+sudo mv /private/tmp/dvrc ~/.dvrc
+sudo mv /private/tmp/inputrc ~/.inputrc
+sudo chown $user ~/.dvrc
+sudo chown $user ~/.inputrc

@@ -1,0 +1,13 @@
+# override default line colors for gnuplot on a white background
+set style line 1 lw 1 lc rgb 'black' 
+set style line 2 lw 1 lc rgb 'purple'
+set style line 3 lw 1 lc rgb 'blue'
+set style line 4 lw 1 lc rgb '#2E8B57' #sea green
+set style line 5 lw 1 lc rgb 'red'
+set style line 6 lw 1 lc rgb '#4682B4' #slate blue
+set style line 7 lw 1 lc rgb '#00CED1' #dark turquoise
+set style line 8 lw 1 lc rgb 'green'
+set style line 9 lw 1 lc rgb '#8B008B' #dark magenta
+set style line 1 lw 1 lc rgb 'brown'
+set style increment user
+

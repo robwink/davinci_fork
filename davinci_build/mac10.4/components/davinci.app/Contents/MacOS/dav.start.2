@@ -1,0 +1,13 @@
+#!/bin/bash
+
+base="/Applications/davinci.app/Contents/Resources"
+
+#mypath=`pwd`
+export EDITOR="/usr/bin/pico"
+export DV_VIEWER="$base/ImageJ/display.sh"
+export GPLOT_CMD="$base/gnuplot/bin/gnuplot"
+export PATH=$PATH:$base/bin/
+cd
+
+exec $base/bin/davinci
+

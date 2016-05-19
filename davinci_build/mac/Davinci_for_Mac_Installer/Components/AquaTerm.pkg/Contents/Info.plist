@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleGetInfoString</key>
+	<string>AquaTerm 1.0.1 Copyrights © 2006 Aquaterm Project</string>
+	<key>CFBundleIdentifier</key>
+	<string>net.sourceforge.aquaterm.installer</string>
+	<key>CFBundleName</key>
+	<string>AquaTerm</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.1</string>
+	<key>IFMajorVersion</key>
+	<integer>1</integer>
+	<key>IFMinorVersion</key>
+	<integer>0</integer>
+	<key>IFPkgBuildDate</key>
+	<date>2006-07-31T22:53:07Z</date>
+	<key>IFPkgBuildVersion</key>
+	<string>8J135</string>
+	<key>IFPkgCreator</key>
+	<string>IcebergBuilder 1.1.5</string>
+	<key>IFPkgFlagAllowBackRev</key>
+	<true/>
+	<key>IFPkgFlagAuthorizationAction</key>
+	<string>RootAuthorization</string>
+	<key>IFPkgFlagDefaultLocation</key>
+	<string>/</string>
+	<key>IFPkgFlagFollowLinks</key>
+	<true/>
+	<key>IFPkgFlagInstallFat</key>
+	<false/>
+	<key>IFPkgFlagInstalledSize</key>
+	<integer>1412</integer>
+	<key>IFPkgFlagIsRequired</key>
+	<false/>
+	<key>IFPkgFlagOverwritePermissions</key>
+	<false/>
+	<key>IFPkgFlagRelocatable</key>
+	<false/>
+	<key>IFPkgFlagRestartAction</key>
+	<string>NoRestart</string>
+	<key>IFPkgFlagRootVolumeOnly</key>
+	<true/>
+	<key>IFPkgFlagUpdateInstalledLanguages</key>
+	<false/>
+	<key>IFPkgFormatVersion</key>
+	<real>0.10000000149011612</real>
+</dict>
+</plist>

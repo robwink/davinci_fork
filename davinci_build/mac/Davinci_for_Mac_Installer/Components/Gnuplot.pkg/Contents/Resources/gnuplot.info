@@ -1,0 +1,17 @@
+Title gnuplot
+Version 4.0.0
+Description 
+DefaultLocation /usr/local
+DeleteWarning 
+
+### Package Flags
+
+NeedsAuthorization YES
+Required YES
+Relocatable NO
+RequiresReboot NO
+UseUserMask NO
+OverwritePermissions NO
+InstallFat NO
+AllowBackRev NO
+RootVolumeOnly YES

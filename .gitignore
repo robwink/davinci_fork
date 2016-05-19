@@ -420,6 +420,35 @@ iomedley/tiff-4.0.3/tools/tiffsplit
 iomedley/tiff-4.0.3/tools/tiffgt
 
 
+# davinci_build subdir
+davinci_build/linux/*.deb
+davinci_build/mac10.4/dependencies/gd-2.0.35/.deps
+davinci_build/mac10.4/dependencies/gd-2.0.35/Makefile
+davinci_build/mac10.4/dependencies/gd-2.0.35/config/Makefile
+davinci_build/mac10.4/dependencies/gd-2.0.35/config/gdlib-config
+davinci_build/mac10.4/dependencies/gd-2.0.35/config.h
+davinci_build/mac10.4/dependencies/gd-2.0.35/config.log
+davinci_build/mac10.4/dependencies/gd-2.0.35/config.status
+davinci_build/mac10.4/dependencies/gd-2.0.35/libtool
+davinci_build/mac10.4/dependencies/gd-2.0.35/stamp-h1
+davinci_build/mac10.4/dependencies/gd-2.0.35/test/Makefile
+davinci_build/mac10.4/dependencies/libpng-1.5.1/.deps
+davinci_build/mac10.4/dependencies/libpng-1.5.1/Makefile
+davinci_build/mac10.4/dependencies/libpng-1.5.1/config.h
+davinci_build/mac10.4/dependencies/libpng-1.5.1/config.log
+davinci_build/mac10.4/dependencies/libpng-1.5.1/config.status
+davinci_build/mac10.4/dependencies/libpng-1.5.1/libpng-config
+davinci_build/mac10.4/dependencies/libpng-1.5.1/libpng.pc
+davinci_build/mac10.4/dependencies/libpng-1.5.1/libpng.vers
+davinci_build/mac10.4/dependencies/libpng-1.5.1/libpng15-config
+davinci_build/mac10.4/dependencies/libpng-1.5.1/libpng15.pc
+davinci_build/mac10.4/dependencies/libpng-1.5.1/libtool
+davinci_build/mac10.4/dependencies/libpng-1.5.1/pnglibconf.dfn
+davinci_build/mac10.4/dependencies/libpng-1.5.1/pnglibconf.h
+davinci_build/mac10.4/dependencies/libpng-1.5.1/pnglibconf.out
+davinci_build/mac10.4/dependencies/libpng-1.5.1/scripts/vers.out
+davinci_build/mac10.4/dependencies/libpng-1.5.1/stamp-h1
+
 
 
 

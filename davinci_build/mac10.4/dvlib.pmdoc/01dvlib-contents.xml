@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<pkg-contents spec="1.12">
+<f n="library" o="root" g="admin" p="16892" pt="/Users/admin/Downloads/davinci-2_09/davinci_build/mac10.4/tmp_dvlib/library" m="true" t="file">
+  <f n="aster_science.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="class_examples.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="constants.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="crism_science.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="data_manipulation.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="dshadow.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="field_spectrometer.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="general_science.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="image_stretch.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="library_linux.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="library_mac.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="library_mars.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="library_win.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="map_projection.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="math.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="misc.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="mosaic_tools.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="msff.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="plot_tools.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <f n="script_files" o="root" g="admin" p="16893">
+    <f n="aster4davinci.pl" o="root" g="admin" p="33277"><mod>mode</mod></f>
+    <f n="aster4davinci.pl.script" o="root" g="admin" p="33277"><mod>mode</mod></f>
+    <f n="color_tables" o="root" g="admin" p="16893">
+      <f n="colorjet.ppm" o="root" g="admin" p="33277"><mod>mode</mod></f>
+      <f n="colormap.ppm" o="root" g="admin" p="33277"><mod>mode</mod></f>
+      <f n="colormap_daily.ppm" o="root" g="admin" p="33277"><mod>mode</mod></f>
+      <f n="xvscalebar.ppm" o="root" g="admin" p="33277"><mod>mode</mod></f>
+      <mod>mode</mod>
+    </f>
+      <f n="crism_speclib.hdf" o="root" g="admin" p="33277"><mod>mode</mod></f>
+      <f n="day_maps_final.vicar" o="root" g="admin" p="33277"><mod>mode</mod></f>
+      <f n="dehyd_water.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+      <f n="instrument_parameters" o="root" g="admin" p="16893">
+        <f n="aster_bandcenter_cm.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="aster_bandcenter_wave.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="aster_ir_scaling.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="aster_ir_spectral_response_cm.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="aster_ir_spectral_response_wave.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="aster_spec_rofiles.csv" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="irf_fit_all_v3.0_tv6_1_2_v3.0" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="lab1_xaxis.vicar" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="lab1cmx.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="lab2cmx.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="MASTER_filter_functions.hdf" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="master_ir_spectral_response_avg_cm.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="master_ir_spectral_response_avg_wave.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="temp_rad_aster.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="temp_rad_aster_v2.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="temp_rad_europa_20_30.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="temp_rad_tims.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="temp_rad_v4" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="themis_bandcenter_cm.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="themis_bandcenter_wave.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="themis_dust_ice_trans_shapes2.ascii" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="themis_filter_functions.hdf" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="themis_IR_filter_response_norm_v2.davinci" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="themis_ir_spectral_response_cm.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="tims_ir_spectral_response_avg_cm.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="tims_ir_spectral_response_avg_wave.vic" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <mod>mode</mod>
+      </f>
+        <f n="irf_fit_all_v3.0_tv6_1_2_v3.0" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="lab1_xaxis.vicar" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="night_maps_final.vicar" o="root" g="admin" p="33277"><mod>mode</mod></f>
+        <f n="orbital_parameters" o="root" g="admin" p="16893">
+          <f n="lunar.hdf" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="mars.hdf" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <mod>mode</mod>
+        </f>
+          <f n="temp_rad_v4" o="root" g="admin" p="33277"><mod>mode</mod></f>
+          <f n="test_data" o="root" g="admin" p="16893">
+            <mod>mode</mod>
+          </f>
+            <f n="themis_filter_functions.hdf" o="root" g="admin" p="33277"><mod>mode</mod></f>
+            <f n="time" o="root" g="admin" p="16893">
+              <f n="DeltaT.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="Mars_Viking.jpg" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="months.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="tai-utc.dat" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <f n="weekdays.txt" o="root" g="admin" p="33277"><mod>mode</mod></f>
+              <mod>mode</mod>
+            </f>
+    <mod>mode</mod>
+  </f>
+    <f n="spectral_tools.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+    <f n="tes_science.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+    <f n="themis_isis3.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+    <f n="themis_science.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+    <f n="thermal_model.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+    <f n="time.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+    <f n="update_library.sh" o="root" g="admin" p="33277"><mod>mode</mod></f>
+    <f n="utils.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+    <f n="v_mosaic.dvrc" o="root" g="admin" p="33277"><mod>mode</mod></f>
+  <mod>mode</mod>
+</f>
+</pkg-contents>

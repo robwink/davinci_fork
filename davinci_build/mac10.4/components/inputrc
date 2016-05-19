@@ -1,0 +1,9 @@
+"\ep": history-search-backward
+"\en": history-search-forward
+
+"\M-p":	history-search-backward
+"\M-n":	history-search-forward
+"\M-?":	dump-functions
+
+"\M-\C-m": emacs-editing-mode
+"\M-\C-j": emacs-editing-mode

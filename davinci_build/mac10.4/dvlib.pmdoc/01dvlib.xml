@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<pkgref spec="1.12" uuid="31C37195-3660-4DBC-AA46-4BC8FA5E8BA8">
+  <config>
+    <identifier>edu.asu.msff.dvlib.pkg</identifier>
+    <version>2012-12-07</version>
+    <description/>
+    <post-install type="none"/>
+    <requireAuthorization/>
+    <installFrom includeRoot="true">../../library</installFrom>
+    <installTo>/Applications/davinci.app/Contents/Resources</installTo>
+    <flags>
+      <followSymbolicLinks/>
+    </flags>
+    <packageStore type="internal"/>
+    <mod>parent</mod>
+    <mod>identifier</mod>
+  </config>
+  <contents>
+    <file-list>01dvlib-contents.xml</file-list>
+    <filter>/CVS$</filter>
+    <filter>/\.svn$</filter>
+    <filter>/\.cvsignore$</filter>
+    <filter>/\.cvspass$</filter>
+    <filter>/\.DS_Store$</filter>
+  </contents>
+</pkgref>

@@ -1,0 +1,23 @@
+#set up the enviornment variables to install locations
+homedir=syscall("pwd")[,1]
+putenv("EDITOR","/usr/bin/pico")
+putenv("DV_VIEWER","/Applications/davinci.app/Contents/Resources/ImageJ/ghetto_display.sh")
+putenv("GPLOT_CMD","/usr/local/bin/gnuplot")
+putenv("DV_MOD_PATH","/usr/local/davinci/lib/davinci/")
+putenv("DVHELP","/usr/local/davinci/share/davinci/docs/dv.gih")
+
+#change DV_AQUA = 0 for X11 support
+putenv("DV_AQUA","0")
+
+#set up paths to all davinci libraries and examples
+putenv("DV_HOME","/Library/davinci")
+putenv("DV_LIB",$DV_HOME+"/library")
+putenv("DV_EX",$DV_HOME+"/examples")
+
+#the standard library is sourced here, including the thm module.  Since the library calls many sub-libraries
+#it is necessary to change to the library directory and then source it. 
+#we then change back to the user's home directory.
+
+source($DV_LIB+"/library_mac.dvrc")
+
+#place user defined functions after here

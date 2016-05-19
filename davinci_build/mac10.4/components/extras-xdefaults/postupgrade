@@ -1,0 +1,34 @@
+#! /bin/sh
+
+src_name=/Users/Shared/davinci/xdefaults 
+new_name="${HOME}/.Xdefaults"
+old_name="${HOME}/.Xdefaults.old.`date '+%Y-%m-%dT%H:%M:%S'`"
+old_file_renamed=0
+
+if [[ -e "$new_name" ]]; then
+	sudo mv "$new_name" "$old_name"
+	if [[ $? -ne 0 ]]; then
+		osascript -l AppleScript <<-END
+			tell application "System Events"
+				activate
+				display alert "Unable to rename $new_name to $oldname" as critical
+			end tell
+		END
+		exit 1
+	else
+		old_file_renamed=1
+	fi
+fi
+
+sudo mv "$src_name" "$new_name"
+sudo chown `id -ru "$USER"`:`id -rg "$USER"` "$new_name"
+
+if [[ $old_file_renamed -eq 1 ]]; then
+	osascript -l AppleScript <<-END
+		tell application "System Events"
+			activate
+			display alert "$new_name moved to $old_name" as warning
+		end tell
+	END
+fi
+

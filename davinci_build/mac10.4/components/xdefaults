@@ -1,0 +1,26 @@
+# setup for white backgroud
+gnuplot*background:     white
+gnuplot*textColor:     black
+gnuplot*borderColor:    black
+gnuplot*axisColor:     black
+
+# setup for black backgroud
+#gnuplot*background:     black
+#gnuplot*textColor:     white
+#gnuplot*borderColor:    white
+#gnuplot*axisColor:     white
+
+# override default line colors for gnuplot
+gnuplot*line0Color:     black
+gnuplot*line1Color:     black
+gnuplot*line2Color:        purple
+gnuplot*line3Color:        blue
+gnuplot*line4Color:        sea green
+gnuplot*line5Color:        red
+gnuplot*line6Color:        SlateBlue
+gnuplot*line7Color:        DarkTurquoise
+gnuplot*line8Color:        green
+gnuplot*line9Color:        darkmagenta
+gnuplot*line10Color:       brown
+
+

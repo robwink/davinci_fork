@@ -1,0 +1,14 @@
+Davinci RPM builder. 
+
+(For more information visit: http://davinci.asu.edu/index.php/Compiling_Davinci)
+
+The directory (build_utils) of build_rpm.sh script must be located in the main davinci source directory. 
+For example the directory structure looks like.
+
+davinci_source
+davinci_source/build_utils
+davinci_source/build_utils/build_rpm.sh
+
+Get in the build_utils directory and run the ./build_rpm.sh script.
+After the building process the i386.rpm and src.rpm files are created and copied onto the build_utils
+directory.

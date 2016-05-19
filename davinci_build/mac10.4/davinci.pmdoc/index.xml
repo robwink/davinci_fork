@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<pkmkdoc spec="1.12">
+  <properties>
+    <title>davinci</title>
+    <build>davinci.mpkg</build>
+    <organization>edu.asu.msff</organization>
+    <userSees ui="both"/>
+    <min-target os="2"/>
+    <domain anywhere="true" system="true"/>
+  </properties>
+  <distribution>
+    <versions min-spec="1.000000"/>
+    <scripts/>
+  </distribution>
+  <contents>
+    <choice title="davinci" id="choice0" description="Davinci is an interpreted language that looks and feels a lot like C, but has additional vector oriented features that make working with blocks of data a lot easier. This makes davinci well suited for use as a data processing tool, allowing symbolic and mathematical manipulation of hyperspectral data for imaging spectroscopy applications." starts_selected="true" starts_enabled="true" starts_hidden="false">
+      <pkgref id="edu.asu.msff.davinci.pkg"/>
+    </choice>
+    <choice title="library" id="choice1" description="davinci library. Contains user-defined functions for various scientific analyses." starts_selected="true" starts_enabled="true" starts_hidden="false">
+      <pkgref id="edu.asu.msff.dvlib.pkg"/>
+    </choice>
+    <choice title="dvrc" id="choice2" description="davinci resource file, .dvrc, installed in the user's home directory. Used by davinci at startup." starts_selected="true" starts_enabled="true" starts_hidden="false">
+      <pkgref id="edu.asu.msff.dvrc.pkg"/>
+      <!-- <choice-reqs>
+        <requirement id="file" operator="eq" value="true" selected="yes" enabled="unchanged" hidden="unchanged" startSelected="unchanged" startEnabled="unchanged" startHidden="unchanged">
+          <file>${HOME}/.dvrc</file>
+        </requirement>
+      </choice-reqs> -->
+    </choice>
+    <choice title="inputrc" id="choice3" description=".inputrc file which ends up in the user's home directory and is used by command-line history and editing (see readline library)." starts_selected="true" starts_enabled="true" starts_hidden="false">
+      <pkgref id="edu.asu.msff.inputrc.pkg"/>
+      <!-- <choice-reqs>
+        <requirement id="file" operator="eq" value="true" selected="yes" enabled="unchanged" hidden="unchanged" startSelected="unchanged" startEnabled="unchanged" startHidden="unchanged">
+          <file>${HOME}/.inputrc</file>
+        </requirement>
+      </choice-reqs> -->
+    </choice>
+    <choice title="xdefaults" id="choice4" description=".Xdefaults file which ends up in the user's home directory and is used by gnuplot for colorization." starts_selected="true" starts_enabled="true" starts_hidden="false">
+      <pkgref id="edu.asu.msff.xdefaults.pkg"/>
+      <!-- <choice-reqs>
+        <requirement id="file" operator="eq" value="true" selected="yes" enabled="unchanged" hidden="unchanged" startSelected="unchanged" startEnabled="unchanged" startHidden="unchanged">
+          <file>${HOME}/.Xdefaults</file>
+        </requirement>
+      </choice-reqs> -->
+    </choice>
+  </contents>
+  <resources bg-scale="none" bg-align="topleft">
+    <locale lang="en">
+      <resource mod="true" type="license">/Applications/davinci.app/Contents/Resources/license.txt</resource>
+      <resource mime-type="text/rtf" kind="embedded" type="welcome"><![CDATA[{\rtf1\ansi\ansicpg1252\cocoartf949\cocoasubrtf540
+{\fonttbl\f0\fnil\fcharset0 LucidaGrande;}
+{\colortbl;\red255\green255\blue255;}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
+
+\f0\fs26 \cf0 This installer will install davinci in /Applications and .dvrc, .inputrc & .Xdefaults in your home directory.}]]></resource>
+    </locale>
+  </resources>
+  <requirements>
+    <requirement id="tosv" operator="ge" value="10.8">
+      <message>This release will work on 10.8 or higher</message>
+    </requirement>
+  </requirements>
+  <flags/>
+  <item type="file">01davinci.xml</item>
+  <item type="file">02dvlib.xml</item>
+  <item type="file">03dvrc.xml</item>
+  <item type="file">04inputrc.xml</item>
+  <item type="file">05xdefaults.xml</item>
+  <mod>properties.systemDomain</mod>
+  <mod>properties.title</mod>
+</pkmkdoc>

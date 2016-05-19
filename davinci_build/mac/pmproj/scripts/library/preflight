@@ -1,0 +1,10 @@
+#!/bin/sh -f
+
+if [ -e "/Library/davinci_library/" ]
+then
+  sudo rm -r /Library/davinci_library/
+fi
+if [ -e "/Library/davinci/" ]
+then
+  sudo rm -r /Library/davinci/
+fi

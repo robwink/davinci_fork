@@ -1,0 +1,52 @@
+SUMMARY OF THE HDF5 CONFIGURATION
+=================================
+
+HDF5 Version:		1.6.5
+Configured on:		Wed Jul 25 10:09:04 MST 2007
+Configured by:		cedwards@student2.mars.asu.edu
+Configure mode:		production
+Host system:		powerpc-apple-darwin8.10.0
+Byte sex:		big-endian
+Libraries:		shared
+Parallel support:	no
+Installation point:	/usr/local/davinci
+Compiler:		/usr/bin/gcc (gcc-4.0.1)
+Compiler switches:	 -std=c99 -Wno-long-long -O -fomit-frame-pointer -finline-functions -UH5_DEBUG_API -DNDEBUG 
+Extra libraries:	 -lz -lm 
+Archiver:		ar
+Ranlib:			ranlib
+Debugged Packages:	
+API Tracing:		no
+File addresses:		large
+Configure Summary
+Compiling Options:
+               Compilation Mode:  Production
+                     C Compiler:  gcc
+                         CFLAGS:   -std=c99 -Wno-long-long -O -fomit-frame-pointer -finline-functions
+                       CPPFLAGS:  -UH5_DEBUG_API -DNDEBUG 
+                        LDFLAGS:  
+                     Debug Mode:  None
+               Shared Libraries:  Yes
+               Static Libraries:  No
+  Statically Linked Executables:  No
+                        Tracing:  No
+   Optimization Instrumentation:  No
+Languages:
+                            C++:  No
+                        Fortran:  No
+Features:
+                        dmalloc:  No
+         Function Stack Tracing:  Disabled
+                           GASS:  No
+                           GPFS:  No
+        HDF5 v1.4 Compatibility:  Yes
+                        hsize_t:  Large
+         I/O filters (external):  deflate
+         I/O filters (internal):  shuffle,fletcher32
+ Linux Large File Support (LFS):  Disabled
+                            MPE:  No
+                  Parallel HDF5:  No
+                            SRB:  No
+                     Stream VFD:  Enabled
+                   Threadsafety:  Disabled
+             High Level library:  Enabled
