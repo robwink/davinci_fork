@@ -5,6 +5,8 @@
 *.a
 *.la
 
+deb/
+
 dv_tests/plot/foo.ps
 
 # /
