@@ -4,6 +4,7 @@
 *.lo
 *.a
 *.la
+tags
 
 deb/
 
@@ -232,7 +233,6 @@ modules/foo/.libs
 iomedley/*.o
 iomedley/*.a
 iomedley/cscope.out
-iomedley/configure
 iomedley/config.status
 iomedley/config.log
 iomedley/config.cache

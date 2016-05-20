@@ -724,12 +724,11 @@ static char* locate_latest_dv_module_in_path(const char* mod_name, char* path)
 	char name[1024];
 	char* fname;
 
-	int i;
 	cvector_str modules;
 	cvec_str(&modules, 0, 16);
 	int nmodules = get_module_versions(mod_name, path, &modules);
 
-	for (i = 0; i < nmodules; i++) {
+	for (int i = 0; i < nmodules; i++) {
 		fname = modules.a[i];
 		vcurr = extract_dv_mod_ver_from_fname(mod_name, fname);
 

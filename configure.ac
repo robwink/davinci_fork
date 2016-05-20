@@ -28,7 +28,9 @@ AM_CONFIG_HEADER(config.h)
 
 
 dnl Check for some required programs.
-AC_PROG_CC
+dnl NOTE(rswinkle) it's 2016, every compiler supports C99 and we really need it
+AC_PROG_CC_C99
+
 AC_PROG_CPP
 AC_PROG_CXX
 dnl AC_PROG_YACC
