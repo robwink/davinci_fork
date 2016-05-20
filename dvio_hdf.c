@@ -13,7 +13,7 @@
 typedef struct callback_data
 {
 	Var* parent_var;
-	vector_void addresses;
+	cvector_void addresses;
 } callback_data;
 
 Var *load_hdf5(hid_t parent, callback_data* cb_data);
@@ -257,7 +257,7 @@ static herr_t group_iter(hid_t parent, const char *name, const H5L_info_t *info,
 	switch (type)  {
 	case H5O_TYPE_GROUP:
 		for (i=0; i<cb_data->addresses.size; ++i) {
-			if (obj_info.addr == *GET_VOID(&cb_data->addresses, haddr_t, i)) {
+			if (obj_info.addr == *CVEC_GET_VOID(&cb_data->addresses, haddr_t, i)) {
 				break;
 			}
 		}
@@ -265,7 +265,7 @@ static herr_t group_iter(hid_t parent, const char *name, const H5L_info_t *info,
 			printf("Warning: loop detected, skipping %s\n", name);
 		} else {
 			//add addr to list
-			push_void(&cb_data->addresses, &obj_info.addr);
+			cvec_push_void(&cb_data->addresses, &obj_info.addr);
 
 			child = H5Gopen(parent, name, H5P_DEFAULT);
 			v = load_hdf5(child, cb_data);
@@ -478,11 +478,11 @@ LoadHDF5(char *filename)
 
 	callback_data data;
 	data.parent_var = NULL;
-	vec_void(&data.addresses, 0, 20, sizeof(haddr_t), NULL, NULL);
+	cvec_void(&data.addresses, 0, 20, sizeof(haddr_t), NULL, NULL);
 
 	v = load_hdf5(file, &data);
 
-	free_vec_void(&data.addresses);
+	cvec_free_void(&data.addresses);
 
 	H5Fclose(file);
 	return v;
