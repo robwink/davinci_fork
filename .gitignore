@@ -101,6 +101,7 @@ dv_tests/plot/foo.ps
 modules/foo/.libs
 /modules/gui/Makefile
 /modules/gui/.deps
+/modules/gui/.libs
 /modules/pnm/Makefile
 /modules/pnm/.deps
 /modules/pnm/.libs
