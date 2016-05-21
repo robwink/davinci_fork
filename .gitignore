@@ -5,6 +5,7 @@
 *.a
 *.la
 tags
+*.dvlog
 
 deb/
 
@@ -61,7 +62,6 @@ dv_tests/plot/foo.ps
 /stamp
 /parser2.tab.h
 /gplot
-/.dvlog
 /davinci
 /other
 /.pure
@@ -157,7 +157,6 @@ modules/foo/.libs
 /docs/write.html
 
 # /docs/html/
-/docs/html/.dvlog
 
 # /libltdl/
 /libltdl/.libs
@@ -181,7 +180,6 @@ modules/foo/.libs
 /modules/libtool
 /modules/*.lo
 /modules/stamp-h1
-/modules/.dvlog
 
 # /modules/cse/
 /modules/cse/*.lo

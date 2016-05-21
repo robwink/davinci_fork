@@ -1,22 +1,24 @@
 #include "dvio.h"
+#include "cvector.h"
+#include "ff_source.h"
 
-#include <time.h>
-#include <setjmp.h>
 #include "parser.h"
 #include "system.h"
+#include <limits.h>
+#include <setjmp.h>
 #include <stdio.h>
 #include <string.h>
-#include <limits.h>
+#include <time.h>
 #include <unistd.h>
 
-//include specific libraries for finding the DV_EXEPATH
+// include specific libraries for finding the DV_EXEPATH
 #if defined(__APPLE__)
 #include <libproc.h>
 #elif defined(_WIN32)
 #include <windows.h>
 #elif defined(__linux__)
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #endif
 
 #ifdef HAVE_XT
@@ -574,16 +576,12 @@ void lhandler(char *line)
 void
 process_streams(void)
 {
-  extern FILE *ftos;
-  extern int nfstack;
   char buf[1024];
   extern int pp_line;
-  /*
-  ** Process anything that has been pushed onto the input stream stack.
-  **/
 
-  while (nfstack) {
-    while (fgets(buf, 1024, ftos) != NULL) {
+  // Process anything that has been pushed onto the input stream stack.
+  while (input_stack_size()) {
+    while (fgets(buf, 1024, top_input_file()) != NULL) {
       parse_buffer(buf);
       pp_line++;
     }

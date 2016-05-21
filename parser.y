@@ -8,7 +8,6 @@ Var *p_mkval(int , char *);
 
 extern Var *curnode;
 extern char *yytext;
-extern FILE *ftos;
 jmp_buf env;
 
 extern int indent;

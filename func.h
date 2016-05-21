@@ -155,13 +155,6 @@ double extract_double (Var * v, size_t i);
 Var *pp_add_strings(Var *a, Var *b);
 Var *pp_math_strings(Var *a, int op, Var *b);
 
-/* ff_source.c */
-void push_input_file(char *name);
-void push_input_stream(FILE *, char *filename);
-void pop_input_file();
-void init_input_stack();
-int is_file(char *name);
-
 /* error.c */
 #ifdef __cplusplus
 extern "C" {
@@ -257,7 +250,7 @@ char *enumerated_arg(Var *, char **);
 //This should be for ff_* functions only and any C file
 //that has other functions that get used elsewhere should
 //have an h file to go with it.  Probably means extracting
-//helper functinos from some ff*.c files into logical groups
+//helper functions from some ff*.c files into logical groups
 Var *mem_claim(Var *);
 Var *mem_malloc();
 void mem_free(Scope *scope);

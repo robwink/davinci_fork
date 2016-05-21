@@ -1,13 +1,13 @@
-#include <string.h>
 #include "parser.h"
+#include "ff_source.h"
 #include "func.h"
+#include <string.h>
 
 
-/**
- ** Load function from file.
- ** Find and verify name.
- ** Find split and verify args.
- **/
+
+// Load function from file.
+// Find and verify name.
+// Find split and verify args.
 
 //TODO(rswinkle) use vector_void for this
 //too many custom one off vectors/stacks in davinci
@@ -15,6 +15,7 @@ UFUNC **ufunc_list = NULL;
 int nufunc = 0;
 int ufsize = 16;
 extern int pp_line;
+
 
 void list_funcs();
 
@@ -95,9 +96,7 @@ save_ufunc(char *filename)
 UFUNC *
 load_function(char *filename)
 {
-	/**
-	 ** locate and verify important portions of function definition
-	 **/
+	 // locate and verify important portions of function definition
 	int i,j;
 	struct stat sbuf;
 	char *buf, *str, *p;
@@ -115,14 +114,7 @@ load_function(char *filename)
 	extern int local_line;
 	extern char *pp_str;
 
-	// these are all necessary to tell me what file and line number
-	// functions come from
-	extern char **fnamestack;
-	extern int ftosIndex;
-
 	char *fname;
-	int fline;
-
 
 	/**
 	 ** Get text from file
@@ -174,22 +166,16 @@ load_function(char *filename)
 	f->text = buf;
 	f->ready = 0;
 
-	fname = fnamestack[ftosIndex];
-	fline = local_line+1;
-	if (fname == NULL) {
+	fname = top_input_filename();
+	if (!fname) {
 		fname = (char *)":no filename:";
 	}
 
 	f->fname = strdup(fname);
 	f->fline = local_line+1;
 
-	/*
-	** Added 09/29/00,
-	**
-	** See if the function we are replacing is exactly the same.
-	** If so, do nothing.
-	*/
-
+	// See if the function we are replacing is exactly the same.
+	// If so, do nothing.
 	if ((f2 = locate_ufunc(f->name)) != NULL) {
 		if (!strcmp(f->text, f2->text)) {
 			/*

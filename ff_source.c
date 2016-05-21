@@ -1,59 +1,33 @@
-/******************************* ff_source.c **********************************/
+#include "cvector.h"
+#include "ff_source.h"
 #include "parser.h"
 
-/**
- ** This file contains routines to handle pushing and popping of input files.
- **/
+// This file contains routines to handle pushing and popping of input files.
 
 //TODO(rswinkle) replace these 3 manual stacks with
 //vec_void, vec_str, and vec_i
 //
-FILE *ftos = NULL;
-int ftosIndex = 0;
-static FILE **fstack=NULL;
-char **fnamestack=NULL;
-int nfstack=0;
-static int fsize=16;
-int *flinenos;
+
+static cvector_void source_stack;
+
 extern int pp_line;
 
-
-
-void
-init_input_stack()
+void init_input_stack()
 {
-	fstack = (FILE **)calloc(fsize, sizeof(FILE *));
-	fnamestack = (char **)calloc(fsize, sizeof(char *));
-	flinenos = (int *)calloc(fsize, sizeof(int));
+	cvec_void(&source_stack, 0, 16, sizeof(Source), NULL, NULL);
 }
 
-
-void
-push_input_stream(FILE *fptr, char *filename)
+void push_input_stream(FILE* fptr, char* filename)
 {
-	if (nfstack == fsize) {
-		fsize *= 2;
-		fstack = (FILE **)my_realloc(fstack, fsize * sizeof(FILE *));
-		fnamestack = (char **)my_realloc(fnamestack, fsize * sizeof(char *));
-		flinenos = (int *)my_realloc(flinenos, fsize * sizeof(int));
-	}
-
-	fstack[nfstack] = fptr;
-	flinenos[nfstack] = pp_line;
-	if (filename) fnamestack[nfstack] = strdup(filename);
-	else fnamestack[nfstack] = NULL;
-
-	ftos = fstack[nfstack];
-	ftosIndex = nfstack;
+	Source new_source = { fptr, ((filename) ? strdup(filename) : NULL), pp_line };
+	cvec_push_void(&source_stack, &new_source);
 	pp_line = 0;
-	nfstack++;
 }
 
-void
-push_input_file(char *name)
+void push_input_file(char* name)
 {
-	FILE *fptr = NULL;
-	char *fname;
+	FILE* fptr = NULL;
+	char* fname;
 
 	if (name == NULL) {
 		fptr = stdin;
@@ -62,7 +36,7 @@ push_input_file(char *name)
 			fptr = fopen(fname, "r");
 			free(fname);
 		}
-		if (fptr == NULL)  {
+		if (fptr == NULL) {
 			sprintf(error_buf, "Could not source file: %s", name);
 			parse_error(NULL);
 			return;
@@ -74,80 +48,80 @@ push_input_file(char *name)
 	push_input_stream(fptr, name);
 }
 
-/**
- ** Close (pop) currently opened file, and return next one on stack.
- **/
-
-void
-pop_input_file()
+// Close (pop) currently opened file, and return next one on stack.
+void pop_input_file()
 {
-	FILE *fp;
-	char *fname;
-
-	ftos = NULL;
-
-	fp = fstack[--nfstack];
-	pp_line = flinenos[nfstack];
-	fname = fnamestack[nfstack];
-	free(fname);
-
-	if (fileno(fp) != 0) {
-		fclose(fp);
+	Source src;
+	cvec_pop_void(&source_stack, &src);
+	
+	pp_line = src.line;
+	free(src.name);
+	if (fileno(src.file) != 0) {
+		fclose(src.file);
 	}
-
-	if (nfstack == 0)
-		return;
-
-	ftos = fstack[nfstack-1];
-	ftosIndex = nfstack-1;
 }
 
-int
-is_file(char *name)
+int is_file(char* name)
 {
 	struct stat sbuf;
 
 	if ((stat(name, &sbuf)) != 0) {
-		return(0);
+		return 0;
 	}
-	return(1);
+	return 1;
 }
-/**
- ** ff_source() - Source a script file
- **
- ** This function pushes another file onto the file stack.  It takes
- ** a single STRING arg.
- **/
 
-Var *
-ff_source(vfuncptr func, Var *arg)
+int input_stack_size()
 {
-	char *p;
-	char *filename = NULL;
-	char *fname = NULL;
+	return source_stack.size;
+}
+
+Source* top_input_source()
+{
+	return cvec_back_void(&source_stack);
+}
+
+FILE* top_input_file()
+{
+	return ((Source*)cvec_back_void(&source_stack))->file;
+}
+
+char* top_input_filename()
+{
+	return ((Source*)cvec_back_void(&source_stack))->name;
+}
+
+
+// ff_source() - Source a script file
+//
+// This function pushes another file onto the file stack.  It takes
+// a single STRING arg.
+Var* ff_source(vfuncptr func, Var* arg)
+{
+	char* p;
+	char* filename = NULL;
+	char* fname    = NULL;
 
 	Alist alist[2];
-	alist[0] = make_alist( "filename",    ID_STRING,    NULL,    &filename);
+	alist[0]      = make_alist("filename", ID_STRING, NULL, &filename);
 	alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return NULL;
 
 	if (filename == NULL) {
 		parse_error("%s: No filename specified.", func->name);
-		return(NULL);
+		return NULL;
 	}
-	/**
-	 ** remove extra quotes from string.
-	 **/
+	// remove extra quotes from string.
 	p = filename;
 	if (*p == '"') p++;
-	if (strchr(p, '"')) *(strchr(p,'"')) = '\0';
+	if (strchr(p, '"')) *(strchr(p, '"')) = '\0';
 
 	if ((fname = dv_locate_file(filename)) == NULL) {
 		parse_error("Cannot find file: %s\n", filename);
-		return(NULL);
+		return NULL;
 	}
 	push_input_file(fname);
 
-	return(NULL);
+	return NULL;
 }

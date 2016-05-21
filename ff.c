@@ -8,6 +8,10 @@
 #include "rfunc.h"
 #endif
 
+#ifdef HAVE_READLINE
+#include "ff_source.h"
+#endif
+
 #if defined(__CYGWIN__) || defined(__MINGW32__)
 // #include <dos.h>
 #endif
@@ -1530,7 +1534,7 @@ print_history(int i)
 
 // This is probably overriden in config.h
 #ifndef EDITOR
-#define EDITOR "/bin/vi"
+#define EDITOR "vi"
 #endif
 
 
