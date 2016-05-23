@@ -490,7 +490,7 @@ getdouble(Var *v, double *ip)
 {
   Var *e;
 
-  if (v == NULL) return(0);
+  if (v == NULL) return 1;
   if ((e = eval(v)) == NULL) {
     sprintf(error_buf, "Variable not found: %s", V_NAME(v));
     parse_error(NULL);
