@@ -75,17 +75,23 @@ int input_stack_size()
 
 Source* top_input_source()
 {
-	return cvec_back_void(&source_stack);
+	if (source_stack.size)
+		return cvec_back_void(&source_stack);
+	return NULL;
 }
 
 FILE* top_input_file()
 {
-	return ((Source*)cvec_back_void(&source_stack))->file;
+	if (source_stack.size)
+		return ((Source*)cvec_back_void(&source_stack))->file;
+	return NULL;
 }
 
 char* top_input_filename()
 {
-	return ((Source*)cvec_back_void(&source_stack))->name;
+	if (source_stack.size)
+		return ((Source*)cvec_back_void(&source_stack))->name;
+	return NULL;
 }
 
 
