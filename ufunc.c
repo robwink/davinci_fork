@@ -1,47 +1,42 @@
-#include "parser.h"
 #include "ff_source.h"
 #include "func.h"
+#include "parser.h"
 #include <string.h>
-
-
 
 // Load function from file.
 // Find and verify name.
 // Find split and verify args.
 
-//TODO(rswinkle) use vector_void for this
-//too many custom one off vectors/stacks in davinci
-UFUNC **ufunc_list = NULL;
-int nufunc = 0;
-int ufsize = 16;
+// TODO(rswinkle) use vector_void for this
+// too many custom one off vectors/stacks in davinci
+UFUNC** ufunc_list = NULL;
+int nufunc         = 0;
+int ufsize         = 16;
 extern int pp_line;
-
 
 void list_funcs();
 
-void *get_current_buffer();
-void *yy_scan_string();
-void yy_delete_buffer(void *);
-void yy_switch_to_buffer(void *);
+void* get_current_buffer();
+void* yy_scan_string();
+void yy_delete_buffer(void*);
+void yy_switch_to_buffer(void*);
 
-UFUNC *
-locate_ufunc(const char *name)
+UFUNC* locate_ufunc(const char* name)
 {
 	int i;
-	for (i = 0 ; i < nufunc ; i++) {
+	for (i = 0; i < nufunc; i++) {
 		if (!strcmp(ufunc_list[i]->name, name)) return ufunc_list[i];
 	}
 	return NULL;
 }
 
-int
-destroy_ufunc(const char *name)
+int destroy_ufunc(const char* name)
 {
 	int i;
-	for (i = 0 ; i < nufunc ; i++) {
+	for (i = 0; i < nufunc; i++) {
 		if (!strcmp(ufunc_list[i]->name, name)) {
 			free_ufunc(ufunc_list[i]);
-			ufunc_list[i] = ufunc_list[nufunc-1];
+			ufunc_list[i] = ufunc_list[nufunc - 1];
 			nufunc--;
 			return 1;
 		}
@@ -49,22 +44,20 @@ destroy_ufunc(const char *name)
 	return 0;
 }
 
-void
-store_ufunc(UFUNC *f)
+void store_ufunc(UFUNC* f)
 {
 	if (ufunc_list == NULL) {
-		ufunc_list = (UFUNC **)calloc(ufsize, sizeof(UFUNC *));
+		ufunc_list = (UFUNC**)calloc(ufsize, sizeof(UFUNC*));
 	} else {
 		if (nufunc == ufsize) {
 			ufsize *= 2;
-			ufunc_list = (UFUNC **)my_realloc(ufunc_list, ufsize * sizeof(UFUNC *));
+			ufunc_list = (UFUNC**)my_realloc(ufunc_list, ufsize * sizeof(UFUNC*));
 		}
 	}
 	ufunc_list[nufunc++] = f;
 }
 
-void
-free_ufunc(UFUNC *f)
+void free_ufunc(UFUNC* f)
 {
 	free(f->text);
 	free(f->name);
@@ -74,10 +67,9 @@ free_ufunc(UFUNC *f)
 	free(f);
 }
 
-void
-save_ufunc(char *filename)
+void save_ufunc(char* filename)
 {
-	UFUNC *f;
+	UFUNC* f;
 
 	f = load_function(filename);
 	if (f == NULL) return;
@@ -87,34 +79,32 @@ save_ufunc(char *filename)
 	if (destroy_ufunc(f->name)) {
 		if (VERBOSE) fprintf(stderr, "Replacing function %s\n", f->name);
 	} else {
-		if (VERBOSE)
-			fprintf(stderr, "Loaded function %s\n", f->name);
+		if (VERBOSE) fprintf(stderr, "Loaded function %s\n", f->name);
 	}
 	store_ufunc(f);
 }
 
-UFUNC *
-load_function(char *filename)
+UFUNC* load_function(char* filename)
 {
-	 // locate and verify important portions of function definition
-	int i,j;
+	// locate and verify important portions of function definition
+	int i, j;
 	struct stat sbuf;
 	char *buf, *str, *p;
 	int nlen = 0;
 	char name[256];
 	char line[2048];
-	char *q;
+	char* q;
 
 	UFUNC *f = NULL, *f2 = NULL;
-	void *handle;
-	extern char *yytext;
-	extern Var *curnode;
-	FILE *fp;
-	void *parent_buffer;
+	void* handle;
+	extern char* yytext;
+	extern Var* curnode;
+	FILE* fp;
+	void* parent_buffer;
 	extern int local_line;
-	extern char *pp_str;
+	extern char* pp_str;
 
-	char *fname;
+	char* fname;
 
 	/**
 	 ** Get text from file
@@ -123,8 +113,8 @@ load_function(char *filename)
 		fprintf(stderr, "Internal error: load_function, no file\n");
 		return NULL;
 	}
-	buf = (char *)calloc(1, sbuf.st_size+1);
-	fp = fopen(filename, "rb");
+	buf = (char*)calloc(1, sbuf.st_size + 1);
+	fp  = fopen(filename, "rb");
 	fread(buf, sbuf.st_size, 1, fp);
 	fclose(fp);
 
@@ -134,15 +124,15 @@ load_function(char *filename)
 
 	str = buf;
 
-	while(isspace(*str)) str++;
+	while (isspace(*str)) str++;
 	if (strncasecmp(str, "define", 6)) {
 		free(buf);
 		fprintf(stderr, "Internal error: load_function, no 'define' in file\n");
 		return NULL;
 	}
 	str += 6;
-	while(*str && isspace(*str)) str++;
-	while(*str && (isalnum(*str) || *str == '_')) name[nlen++] = *str++;
+	while (*str && isspace(*str)) str++;
+	while (*str && (isalnum(*str) || *str == '_')) name[nlen++] = *str++;
 	if (nlen == 0) {
 		/**
 		 ** If we want to be nice to the user, we could spit out all
@@ -161,18 +151,18 @@ load_function(char *filename)
 		return NULL;
 	}
 
-	f = (UFUNC *)calloc(1, sizeof(UFUNC));
-	f->name = strdup(name);
-	f->text = buf;
+	f        = (UFUNC*)calloc(1, sizeof(UFUNC));
+	f->name  = strdup(name);
+	f->text  = buf;
 	f->ready = 0;
 
 	fname = top_input_filename();
 	if (!fname) {
-		fname = (char *)":no filename:";
+		fname = (char*)":no filename:";
 	}
 
 	f->fname = strdup(fname);
-	f->fline = local_line+1;
+	f->fline = local_line + 1;
 
 	// See if the function we are replacing is exactly the same.
 	// If so, do nothing.
@@ -192,20 +182,19 @@ load_function(char *filename)
 	 ** should now find '( args )'.
 	 ** args should be limited to ids, space and numbers
 	 **/
-	while(*str && isspace(*str)) str++;
+	while (*str && isspace(*str)) str++;
 
 	if (*str && *str == '(') {
 		str++;
 		p = str;
-		while(*str && (isalnum(*str) || isspace(*str) || strchr(",_", *str)))
-			str++;
+		while (*str && (isalnum(*str) || isspace(*str) || strchr(",_", *str))) str++;
 		if (*str && *str == ')') {
 			/**
 			 ** Believe we found a complete args section.  Parse 'em up.
 			 ** Duplicate the string for cutting on.
 			 **/
 			if (p != str) {
-				f->argbuf = strndup((char *)p, str-p);
+				f->argbuf = strndup((char*)p, str - p);
 				split_string(f->argbuf, &f->nargs, &f->args, ",");
 			}
 			/**
@@ -214,12 +203,12 @@ load_function(char *filename)
 			f->min_args = -1;
 			f->max_args = -1;
 			if (f->nargs) {
-				if (strspn(f->args[f->nargs-1], "0123456789")) {
-					f->min_args = atoi(f->args[f->nargs-1]);
+				if (strspn(f->args[f->nargs - 1], "0123456789")) {
+					f->min_args = atoi(f->args[f->nargs - 1]);
 					f->nargs--;
-					if (f->nargs && strspn(f->args[f->nargs-1], "0123456789")) {
+					if (f->nargs && strspn(f->args[f->nargs - 1], "0123456789")) {
 						f->max_args = f->min_args;
-						f->min_args = atoi(f->args[f->nargs-1]);
+						f->min_args = atoi(f->args[f->nargs - 1]);
 						f->nargs--;
 					}
 				}
@@ -231,12 +220,12 @@ load_function(char *filename)
 			/**
 			 ** Verify arg names.
 			 **/
-			for (i = 0 ; i < f->nargs ; i++) {
+			for (i = 0; i < f->nargs; i++) {
 				if (!(isalpha(f->args[i][0]))) {
 					parse_error("error: Illegal argument name: %s\n", f->args[i]);
 					return f;
 				}
-				for (j = 0 ; j < strlen(f->args[i]) ; j++) {
+				for (j = 0; j < strlen(f->args[i]); j++) {
 					if (!(isalnum(f->args[i][j]) || f->args[i][j] == '_')) {
 						parse_error("error: Illegal argument name: %s\n", f->args[i]);
 						return f;
@@ -271,43 +260,43 @@ load_function(char *filename)
 	if (debug) {
 		p = f->text;
 		q = f->body;
-		memcpy(line, p, q-p+1);
-		line[q-p+1] = '\0';
+		memcpy(line, p, q - p + 1);
+		line[q - p + 1] = '\0';
 		printf("%s", line);
 		fflush(stdout);
 	}
 
 	pp_line = local_line;
-	p = str;
+	p       = str;
 
-	parent_buffer = (void *)get_current_buffer();
+	parent_buffer = (void*)get_current_buffer();
 
 	while (p && *p) {
-		q = strchr(p, '\n');
-		if (q == NULL) q = p+strlen(p)-1;
-		memcpy(line, p, q-p+1);
-		line[q-p+1] = '\0';
+		q                = strchr(p, '\n');
+		if (q == NULL) q = p + strlen(p) - 1;
+		memcpy(line, p, q - p + 1);
+		line[q - p + 1] = '\0';
 		if (debug) {
 			printf("%s", line);
 			fflush(stdout);
 		}
-		handle = (void *)yy_scan_string(line);
+		handle = (void*)yy_scan_string(line);
 		pp_str = line;
 		pp_line++;
-		while((i = yylex()) != 0) {
-			j = yyparse(i, (Var *)yytext);
+		while ((i = yylex()) != 0) {
+			j = yyparse(i, (Var*)yytext);
 
 			if (j == 1) {
 				f->tree = curnode;
 				break;
 			}
 		}
-		yy_delete_buffer((struct yy_buffer_state *)handle);
-		p = q+1;
+		yy_delete_buffer((struct yy_buffer_state*)handle);
+		p = q + 1;
 	}
-	yy_switch_to_buffer((struct yy_buffer_state *)parent_buffer);
+	yy_switch_to_buffer((struct yy_buffer_state*)parent_buffer);
 	f->ready = 1;
-	pp_str = NULL;
+	pp_str   = NULL;
 
 	/*
 	** Take one off  because save_ufunc put one on.
@@ -316,7 +305,6 @@ load_function(char *filename)
 
 	return f;
 }
-
 
 /**
  ** dispatch_ufunc - dispatch a ufunc.
@@ -331,20 +319,19 @@ load_function(char *filename)
  ** Scope should include a symtab pointer to hold memory allocated
  ** while in this scope.  To be deallocated on exit.
  **/
-Var *
-dispatch_ufunc(UFUNC *f, Var *arg)
+Var* dispatch_ufunc(UFUNC* f, Var* arg)
 {
-	Scope *scope = new_scope();
+	Scope* scope = new_scope();
 	int i, argc, j;
 	Var *v, *p, *e;
 	int insert = 0;
-	int ac = 0;
+	int ac     = 0;
 
 	/**
 	 ** Create identifiers for all the named arguments.  These don't
 	 ** yet have pointers to data, indicating they're NOT_PRESENT.
 	 **/
-	for (i = 0 ; i < f->nargs ; i++) {
+	for (i = 0; i < f->nargs; i++) {
 		dd_put(scope, f->args[i], NULL);
 	}
 	/**
@@ -361,11 +348,11 @@ dispatch_ufunc(UFUNC *f, Var *arg)
 	if (arg) {
 		ac = Narray_count(V_ARGS(arg));
 	}
-	for (j = 0 ; j < ac ; j++) {
-		Narray_get(V_ARGS(arg), j, NULL, (void **) &p);
+	for (j = 0; j < ac; j++) {
+		Narray_get(V_ARGS(arg), j, NULL, (void**)&p);
 
 		if (V_TYPE(p) == ID_KEYWORD) {
-			for (i = 0 ; i < f->nargs ; i++) {
+			for (i = 0; i < f->nargs; i++) {
 				if (!strcmp(f->args[i], V_NAME(p))) {
 					break;
 				}
@@ -382,10 +369,11 @@ dispatch_ufunc(UFUNC *f, Var *arg)
 		} else {
 			v = p;
 			if ((e = eval(v)) != NULL) v = e;
-			argc = dd_put_argv(scope, v);
+			argc                         = dd_put_argv(scope, v);
 
 			if (f->max_args >= 0 && argc > f->max_args) {
-				parse_error("error: Too many arguments to ufunc: %s().  Only expecting %d\n", f->name, f->max_args);
+				parse_error("error: Too many arguments to ufunc: %s().  Only expecting %d\n",
+				            f->name, f->max_args);
 				dd_unput_argv(scope);
 				free_scope(scope);
 				return NULL;
@@ -441,14 +429,14 @@ dispatch_ufunc(UFUNC *f, Var *arg)
 	clean_scope(scope_pop());
 
 	if (insert) {
-		Scope *scope = scope_tos();
+		Scope* scope = scope_tos();
 
 		if (V_NAME(v) != NULL) {
 			free(V_NAME(v));
 			V_NAME(v) = NULL;
 		}
 
-		if (scope->tmp == NULL){
+		if (scope->tmp == NULL) {
 			scope->tmp = Darray_create(1);
 		}
 		Darray_add(scope->tmp, v);
@@ -463,18 +451,17 @@ dispatch_ufunc(UFUNC *f, Var *arg)
  ** Check file time, and reload if newer.
  **/
 
-Var *
-ufunc_edit(vfuncptr func , Var *arg)
+Var* ufunc_edit(vfuncptr func, Var* arg)
 {
-	UFUNC *ufunc;
-	char *name;
+	UFUNC* ufunc;
+	char* name;
 	struct stat sbuf;
 	time_t time = 0;
-	FILE *fp;
+	FILE* fp;
 	char buf[256];
 	char *fname, *filename, *editor;
 	int temp = 0;
-	Var *function;
+	Var* function;
 
 	/*
 	** This function does not call parse_args, as it uses a
@@ -483,7 +470,7 @@ ufunc_edit(vfuncptr func , Var *arg)
 	*/
 
 	if (arg == NULL) return NULL;
-	Narray_get(V_ARGS(arg), 0, NULL, (void **)&function);
+	Narray_get(V_ARGS(arg), 0, NULL, (void**)&function);
 
 	if (V_TYPE(function) == ID_STRING) {
 		filename = V_STRING(function);
@@ -494,9 +481,9 @@ ufunc_edit(vfuncptr func , Var *arg)
 		/**
 		 ** Numeric arg, call hedit to do history editing()
 		 **/
-		 return ff_hedit(func,arg);
+		return ff_hedit(func, arg);
 	} else {
-		if ((name  = V_NAME(function)) == NULL) {
+		if ((name = V_NAME(function)) == NULL) {
 			return NULL;
 		}
 
@@ -511,15 +498,14 @@ ufunc_edit(vfuncptr func , Var *arg)
 		fprintf(fp, "# Original location: %s:%d\n", ufunc->fname, ufunc->fline);
 		fputs(ufunc->text, fp);
 		fclose(fp);
-		temp=1;
+		temp = 1;
 	}
 
-	if (stat(fname, &sbuf) == 0)  {
+	if (stat(fname, &sbuf) == 0) {
 		time = sbuf.st_mtime;
 	}
 
-	if ((editor = getenv("EDITOR")) == NULL)
-		editor = (char *)"/bin/vi";
+	if ((editor = getenv("EDITOR")) == NULL) editor = (char*)"/bin/vi";
 
 	sprintf(buf, "%s %s", editor, fname);
 	system(buf);
@@ -527,7 +513,7 @@ ufunc_edit(vfuncptr func , Var *arg)
 	if (stat(fname, &sbuf) == 0) {
 		if (time != sbuf.st_mtime) {
 			fp = fopen(fname, "r");
-			push_input_stream(fp, (char *)":ufunc edit:");
+			push_input_stream(fp, (char*)":ufunc edit:");
 		} else {
 			fprintf(stderr, "File not changed.\n");
 		}
@@ -535,43 +521,44 @@ ufunc_edit(vfuncptr func , Var *arg)
 	if (temp) {
 		unlink(fname);
 		free(fname);
-	} else if (filename && fname != filename) free(fname);
+	} else if (filename && fname != filename)
+		free(fname);
 
 	return NULL;
 }
 
-void
-list_funcs()
+void list_funcs()
 {
 	int i;
-	for (i = 0 ; i < nufunc ; i++) {
+	for (i = 0; i < nufunc; i++) {
 		printf("%s\n", ufunc_list[i]->name);
 	}
 }
 
-Var *
-ff_global(vfuncptr func, Var * arg)
+Var* ff_global(vfuncptr func, Var* arg)
 {
 	Var *e = NULL, *v = NULL;
-	char *aname = NULL;
+	char* aname = NULL;
 	Alist alist[2];
 
-	alist[0] = make_alist( "object",    ID_ENUM,    NULL,    &aname);
+	alist[0]      = make_alist("object", ID_ENUM, NULL, &aname);
 	alist[1].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return NULL;
 
-	if (aname == NULL) {return NULL;}
+	if (aname == NULL) {
+		return NULL;
+	}
 
-	if ((e = get_global_sym(aname)) == NULL)  {
+	if ((e = get_global_sym(aname)) == NULL) {
 		/*
 		 * Doesn't exist in the global scope.
 		 * If it exists in the local scope, get it and give it's memory
 		 * to the global scope.  Otherwise, create a new value.
 		 */
 		if ((e = get_sym(aname)) == NULL) {
-			char *zero = (char *)calloc(1,1);
-			e = newVal(BSQ, 1,1,1, BYTE, zero);
+			char* zero = (char*)calloc(1, 1);
+			e          = newVal(BSQ, 1, 1, 1, BYTE, zero);
 			mem_claim(e);
 			V_NAME(e) = strdup(aname);
 			printf("path 1\n");
