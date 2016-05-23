@@ -79,8 +79,7 @@ define get_image(instrument,type,src) {
 		server="http://app-davinci.mars.asu.edu/StampServer-1.2/"
 	}
    
-	ver=version()[18:]
-	ver="davinci "+ver
+	ver=version_string()
 
 	if(src!=0) {
 		url=sprintf("%sSourceLookup?instrument=%s&id=%s&imageType=%s&version=%s&format=text",server,instrument,id,type,ver)

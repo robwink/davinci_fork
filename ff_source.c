@@ -4,9 +4,6 @@
 
 // This file contains routines to handle pushing and popping of input files.
 
-//TODO(rswinkle) replace these 3 manual stacks with
-//vec_void, vec_str, and vec_i
-//
 
 static cvector_void source_stack;
 

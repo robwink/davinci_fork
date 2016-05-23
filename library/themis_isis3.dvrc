@@ -282,7 +282,7 @@ define isis3_history(param) {
      new.date_time=syscall("date +'%Y-%m-%dT%H:%M:%S'")[,]
      new.software_desc="TBD"
      new.version_id="TBD"
-     new.davinci_version=sprintf("%s",version()[18:])
+     new.davinci_version=sprintf("%.2f",version())
      new.user_name=syscall('echo `whoami`"@"`hostname`')[,]
      new.user_note=""
      if ( HasValue(param) == 1 ) {

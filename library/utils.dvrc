@@ -191,7 +191,7 @@ define library_version() {
 	global(v_mosaic_version)
 	global(utils_version)
 
-	printf("\nDavinci Core Version:\t%.2f\n",atof(version()[18:]))
+	printf("\nDavinci Core Version:\t%.2f\n", version())
 	printf("\nDavinci Library Versions:\n")
 	printf("class_examples.dvrc:\t%.2f\n",class_examples_version)
 	printf("constants.dvrc:\t\t%.2f\n",constants_version)
@@ -225,7 +225,7 @@ define install_check() {
 	#added $DV variable support
 
 	verbose=0
-	printf("\nDavinci Core Version:\t%.2f\n",atof(version()[18:]))
+	printf("\nDavinci Core Version:\t%.2f\n", version())
 	printf("Operating System:\t%s\n",$DV_OS)
 	printf("Home Location:\t\t%s\n",$DV_HOME)
 	printf("Library Location:\t%s\n",$DV_LIB)
@@ -244,7 +244,7 @@ define install_check() {
 		remote=0
 	} else {
 		remote=1
-		if(atof(dv_repository_version)<atof(version()[18:])){
+		if(atof(dv_repository_version) < version()) {
 			printf("\n\tNew Davinci version available\n")
 			printf("\tDownload at http://davinci.asu.edu\n\n")
 		} else {
@@ -983,7 +983,7 @@ define library_update(update,beta,version,noroot,setexepath) {
 		}
 
 		#take care of *.dv in the bin directory
-		if(atof(version()[18:])>=2.12 || HasValue(setexepath)) {
+		if (version() >= 2.12 || HasValue(setexepath)) {
 			if($DV_OS=="mac") library=sprintf("%s/library_mac.dvrc",$DV_LIB)
 			if($DV_OS=="linux") library=sprintf("%s/library_linux.dvrc",$DV_LIB)
 			if($DV_OS=="win") library=sprintf("%s/library_win.dvrc",$DV_LIB)

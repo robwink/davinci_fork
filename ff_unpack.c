@@ -104,15 +104,6 @@ static int write_data(byte* buffer, data *the_data, unpack_digest* input, int ro
 static void cleanup_data(data*, int);
 static int pack_row(data* the_data, unpack_digest* digest, int row, byte* buffer);
 
-static void memory_error(int error_num, int mem_size)
-{
-	char err_str[100];
-
-	snprintf(err_str, sizeof(err_str)-1, "Error allocating memory, %d: ", mem_size);
-	parse_error("%s: %s", err_str, strerror(error_num));
-
-	return;
-}
 
 /*premade calls for testing:
 

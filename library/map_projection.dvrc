@@ -102,8 +102,7 @@ define jmars(id,ul,ur,ll,lr,ignore,name,port,host,v,tmpdir,geo) {
 	outfile=sprintf("%s/%.6d_dvjmars.png",tmpdir,id)
 	urlprefix=sprintf("http://%s:%i/jmarsdvlink?",host,port)
 
-	ver=version()[18:]
-	ver="davinci "+ver
+	ver=version_string()
 
 	#check for the data with specified ul, lr etc
 	if(type($1)!="STRUCT" && $ARGC==1) {

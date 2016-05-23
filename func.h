@@ -308,6 +308,7 @@ Var *ff_atof(vfuncptr func, Var *arg);
 Var *ff_sprintf(vfuncptr func, Var *arg);
 Var *ff_fprintf(vfuncptr func, Var *arg);
 Var *ff_version(vfuncptr, Var *);
+Var* ff_version_str(vfuncptr, Var*);
 Var *ff_random(vfuncptr, Var *);
 Var *ff_gnoise(vfuncptr func, Var *arg);
 Var *ff_cluster(vfuncptr func, Var *arg);

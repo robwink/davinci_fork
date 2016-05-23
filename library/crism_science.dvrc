@@ -81,7 +81,7 @@ define process_crism(raw, resample, atm, sl, s,l, index, destripe,wget,rotate,sr
 	if(HasValue(photm)==0) photom=1
 
 	if(HasValue(wget)==0) wget=0
- 	if(atof(version()[18:])>=2.0) {
+ 	if(version()>=2.0) {
 		copy=0
 	} else {
 		copy=1
@@ -208,7 +208,7 @@ define get_crism(ra,raw,sl,l,s,force,verb,ignore,set_ignore,wget,src,oldatm,v) {
 	if(HasValue(src)==0) src=0
 	if(HasValue(wget)==0) wget=0
   if(HasValue(oldatm)==0) oldatm=0
- 	if(atof(version()[18:])>=2.0) {
+ 	if(version()>=2.0) {
 		copy=1
 	} else {
 		copy=0
@@ -844,7 +844,7 @@ define crism_destripe(r_size,f_size,ignore,sigmamult,data,v) {
 	
 	#run deplaid last (seems to make the noise a bit clearer)
 	#this option usees a directional deplaid for older versions of davinci
-	if(dim(data)[3]==438 && atof(version()[18:])>=2.0) {
+	if(dim(data)[3]==438 && version()>=2.0) {
     for (i=5; i<=168; i+=20) {
       if (i<149) {
    	    data[,,i:(i+20)]=thm.deplaid(data[,,i:(i+20)],ignore=ignore,b10=0,axis=y)
@@ -862,7 +862,7 @@ define crism_destripe(r_size,f_size,ignore,sigmamult,data,v) {
   }
 	
 	#this option uses the standard deplaid if the directional version is not available
-	if(dim(data)[3]==438 && atof(version()[18:])<2.0) {
+	if(dim(data)[3]==438 && version()<2.0) {
     for (i=5; i<=168; i+=20) {
 	    if (i<149) {
 			  data[,,i:(i+20)]=thm.deplaid(data[,,i:(i+20)],ignore=ignore,b10=0)
@@ -986,7 +986,7 @@ define crism_destripe_old(r_size,f_size,ignore,sigmamult,data,v) {
 #	data=thm.deplaid(data,ignore=ignore,b10=0)
 
 
-	if(dim(data)[3]==438 && atof(version()[18:])>=2.0) {
+	if(dim(data)[3]==438 && version()>=2.0) {
     for (i=4; i<=168; i+=20) {
 	    if (i<149) {
 	 	    data[,,i:(i+20)]=thm.deplaid(data[,,i:(i+20)],ignore=ignore,b10=0,axis=y)
@@ -1002,7 +1002,7 @@ define crism_destripe_old(r_size,f_size,ignore,sigmamult,data,v) {
       }
     }
   }
-	if(dim(data)[3]==438 && atof(version()[18:])<2.0) {
+	if(dim(data)[3]==438 && version()<2.0) {
     for (i=4; i<=168; i+=20) {
       if (i<149) {
    	    data[,,i:(i+20)]=thm.deplaid(data[,,i:(i+20)],ignore=ignore,b10=0)
