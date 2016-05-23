@@ -50,461 +50,450 @@
 #include <unistd.h>
 #endif
 
-#define PF(out, f, func) {                                      \
-    char *b = NULL;                                             \
-    if (fieldwidth)                                             \
-      if (precision)                                            \
-        (void)dv_asprintf(&b, f, fieldwidth, precision, func);  \
-      else                                                      \
-        (void)dv_asprintf(&b, f, fieldwidth, func);             \
-    else if (precision)                                         \
-      (void)dv_asprintf(&b, f, precision, func);                \
-    else                                                        \
-      (void)dv_asprintf(&b, f, func);                           \
-    if (b) {                                                    \
-      out = str_append(out, b);                                 \
-      free(b);                                                  \
-    }                                                           \
-  }
+#define PF(out, f, func)                                               \
+	{                                                                  \
+		char* b = NULL;                                                \
+		if (fieldwidth)                                                \
+			if (precision)                                             \
+				(void)dv_asprintf(&b, f, fieldwidth, precision, func); \
+			else                                                       \
+				(void)dv_asprintf(&b, f, fieldwidth, func);            \
+		else if (precision)                                            \
+			(void)dv_asprintf(&b, f, precision, func);                 \
+		else                                                           \
+			(void)dv_asprintf(&b, f, func);                            \
+		if (b) {                                                       \
+			out = str_append(out, b);                                  \
+			free(b);                                                   \
+		}                                                              \
+	}
 
-static void	 escape __P((char *));
-static int	 getchr    __P((Var *,char *));
-static int	 getdouble __P((Var *,double *));
-static int	 getint    __P((Var *,int *));
-static int	 getstr    __P((Var *,char **));
-static char	*mklong __P((char *, int));
-static int dv_asprintf(char **, char *, ...);
-char *do_sprintf(int ac, Var **av);
+static void escape __P((char*));
+static int getchr __P((Var*, char*));
+static int getdouble __P((Var*, double*));
+static int getint __P((Var*, int*));
+static int getstr __P((Var*, char**));
+static char* mklong __P((char*, int));
+static int dv_asprintf(char**, char*, ...);
+char* do_sprintf(int ac, Var** av);
 
-char *dv_locate_file(const char *fname);
+char* dv_locate_file(const char* fname);
 
-Var *
-ff_fprintf(vfuncptr func, Var *arg)
+Var* ff_fprintf(vfuncptr func, Var* arg)
 {
-  FILE *fp;
-  char *p;
-  char *filename = NULL;
-  char *fname;
-  Var *v, *e;
-  int ac;
-  Var **av;
-  int i;
-  char buf[1024];
+	FILE* fp;
+	char* p;
+	char* filename = NULL;
+	char* fname;
+	Var *v, *e;
+	int ac;
+	Var** av;
+	int i;
+	char buf[1024];
 
-  make_args(&ac, &av, func, arg);
-  if (ac < 2) {
-    parse_error("%s: expected a filename and a format string");
-  } else {
-    v = av[1];
-    /* pop off the first argument.
-       In theory, this could search for a "filename" kwyword first
-    */
-    for (i = 2; i < ac ; i++) {
-      av[i-1] = av[i];
-    }
-    ac-=1;
+	make_args(&ac, &av, func, arg);
+	if (ac < 2) {
+		parse_error("%s: expected a filename and a format string");
+	} else {
+		v = av[1];
+		/* pop off the first argument.
+		   In theory, this could search for a "filename" kwyword first
+		*/
+		for (i = 2; i < ac; i++) {
+			av[i - 1] = av[i];
+		}
+		ac -= 1;
 
-    if ((e = eval(v)) != NULL) {
-      v =e;
-    }
-    if (V_TYPE(v) != ID_STRING) {
-      parse_error("%s: expected a filename and a format string");
-    } else {
-      /* CHECK THIS??? */
-      filename = V_STRING(v);
-      strcpy(buf, filename);
+		if ((e = eval(v)) != NULL) {
+			v = e;
+		}
+		if (V_TYPE(v) != ID_STRING) {
+			parse_error("%s: expected a filename and a format string");
+		} else {
+			/* CHECK THIS??? */
+			filename = V_STRING(v);
+			strcpy(buf, filename);
 
-      fname = dv_locate_file(filename);
-      if (fname == NULL) {
-        parse_error("fprintf: Unable to find file: %s\n", filename);
-      } else {
-        p = do_sprintf(ac, av);
-        if (p != NULL) {
-          fp = fopen(fname, "a");
-          if (!fp) {
-            parse_error("fprintf: Unable to open file: %s\n", fname);
-          } else {
-            fputs(p, fp);
-            fclose(fp);
-          }
-          free(p);
-        }
-        free(fname);
-      }
-    }
-  }
+			fname = dv_locate_file(filename);
+			if (fname == NULL) {
+				parse_error("fprintf: Unable to find file: %s\n", filename);
+			} else {
+				p = do_sprintf(ac, av);
+				if (p != NULL) {
+					fp = fopen(fname, "a");
+					if (!fp) {
+						parse_error("fprintf: Unable to open file: %s\n", fname);
+					} else {
+						fputs(p, fp);
+						fclose(fp);
+					}
+					free(p);
+				}
+				free(fname);
+			}
+		}
+	}
 
-  free(av);
-  return(NULL);
+	free(av);
+	return NULL;
 }
 
-Var *
-ff_printf(vfuncptr func, Var *arg)
+Var* ff_printf(vfuncptr func, Var* arg)
 {
-  char *p;
-  int ac;
-  Var **av;
+	char* p;
+	int ac;
+	Var** av;
 
-  make_args(&ac, &av, func, arg);
+	make_args(&ac, &av, func, arg);
 
-  p = do_sprintf(ac, av);
-  if (p) {
-    fputs(p, stdout);
-    free(p);
-  }
+	p = do_sprintf(ac, av);
+	if (p) {
+		fputs(p, stdout);
+		free(p);
+	}
 
-  free(av);
-  return(NULL);
+	free(av);
+	return NULL;
 }
 
-Var *
-ff_sprintf(vfuncptr func, Var *arg)
+Var* ff_sprintf(vfuncptr func, Var* arg)
 {
-  char *p;
-  Var *s = NULL;
-  int ac;
-  Var **av;
+	char* p;
+	Var* s = NULL;
+	int ac;
+	Var** av;
 
-  make_args(&ac, &av, func, arg);
+	make_args(&ac, &av, func, arg);
 
-  p = do_sprintf(ac, av);
-  if (p) {
-    s = newString(p);
-  }
+	p = do_sprintf(ac, av);
+	if (p) {
+		s = newString(p);
+	}
 
-  free(av);
-  return(s);
+	free(av);
+	return s;
 }
 
-
-char *
-str_append(char *s1, char *s2)
+char* str_append(char* s1, char* s2)
 {
-  s1 = (char *)realloc(s1, strlen(s1)+strlen(s2)+1);
-  strcat(s1, s2);
-  return(s1);
+	s1 = (char*)realloc(s1, strlen(s1) + strlen(s2) + 1);
+	strcat(s1, s2);
+	return s1;
 }
 
-char *
-do_sprintf(int ac, Var **av)
+char* do_sprintf(int ac, Var** av)
 {
-  static char *skip1, *skip2;
-  int end, fieldwidth, precision;
-  char convch, nextch, *format, *fmt, *start;
-  Var *v, *e;
-  char *out;
-  int gv;
+	static char *skip1, *skip2;
+	int end, fieldwidth, precision;
+	char convch, nextch, *format, *fmt, *start;
+	Var *v, *e;
+	char* out;
+	int gv;
 
-  /*
-   * Basic algorithm is to scan the format string for conversion
-   * specifications -- once one is found, find out if the field
-   * width or precision is a '*'; if it is, gather up value.  Note,
-   * format strings are reused as necessary to use up the provided
-   * arguments, arguments of zero/null string are provided to use
-   * up the format string.
-   */
-  skip1 = (char *)"#-+ 0";
-  skip2 = (char *)"0123456789";
+	/*
+	 * Basic algorithm is to scan the format string for conversion
+	 * specifications -- once one is found, find out if the field
+	 * width or precision is a '*'; if it is, gather up value.  Note,
+	 * format strings are reused as necessary to use up the provided
+	 * arguments, arguments of zero/null string are provided to use
+	 * up the format string.
+	 */
+	skip1 = (char*)"#-+ 0";
+	skip2 = (char*)"0123456789";
 
-  if (ac < 2) {
-    parse_error("Format string must be first paramter");
-    return(NULL);
-  }
-  v = av[1];
-  if ((e = eval(v)) != NULL) v = e;
-  if (V_TYPE(v) != ID_STRING) {
-    parse_error("Format string not specified");
-    return(NULL);
-  }
+	if (ac < 2) {
+		parse_error("Format string must be first paramter");
+		return NULL;
+	}
+	v = av[1];
+	if ((e = eval(v)) != NULL) v = e;
+	if (V_TYPE(v) != ID_STRING) {
+		parse_error("Format string not specified");
+		return NULL;
+	}
 
-  out = (char *)calloc(1,1);
-  escape(fmt = format = V_STRING(v));		/* backslash interpretation */
-  gv = 2;
+	out = (char*)calloc(1, 1);
+	escape(fmt = format = V_STRING(v)); /* backslash interpretation */
+	gv = 2;
 
-  for (;;) {
-    end = 0;
-    /* find next format specification */
- next:
-    for (start = fmt;; ++fmt) {
-      if (!*fmt) {
-        /* avoid infinite loop */
-        if (end == 1) {
-          fprintf(stderr,"missing format character");
-          free(out);
-          return (NULL);
-        }
-        end = 1;
-        if (fmt > start)
-          out = str_append(out, start);
-        if (gv == ac) {
-          return(out);
-        }
-        fmt = format;
-        goto next;
-      }
-      /* %% prints a % */
-      if (*fmt == '%') {
-        if (*++fmt != '%')
-          break;
-        *fmt++ = '\0';
-        out = str_append(out, start);
-        goto next;
-      }
-    }
+	for (;;) {
+		end = 0;
+	/* find next format specification */
+	next:
+		for (start = fmt;; ++fmt) {
+			if (!*fmt) {
+				/* avoid infinite loop */
+				if (end == 1) {
+					fprintf(stderr, "missing format character");
+					free(out);
+					return NULL;
+				}
+				end                  = 1;
+				if (fmt > start) out = str_append(out, start);
+				if (gv == ac) {
+					return out;
+				}
+				fmt = format;
+				goto next;
+			}
+			/* %% prints a % */
+			if (*fmt == '%') {
+				if (*++fmt != '%') break;
+				*fmt++ = '\0';
+				out    = str_append(out, start);
+				goto next;
+			}
+		}
 
-    /* skip to field width */
-    for (; strchr(skip1, *fmt); ++fmt);
-    if (*fmt == '*') {
-      if (getint(av[gv++], &fieldwidth)) {
-        free(out);
-        return (NULL);
-      }
-      ++fmt;
-    } else {
-      fieldwidth = 0;
+		/* skip to field width */
+		for (; strchr(skip1, *fmt); ++fmt)
+			;
+		if (*fmt == '*') {
+			if (!getint(av[gv++], &fieldwidth)) {
+				free(out);
+				return NULL;
+			}
+			++fmt;
+		} else {
+			fieldwidth = 0;
 
-      /* skip to possible '.', get following precision */
-      for (; strchr(skip2, *fmt); ++fmt);
-    }
-    if (*fmt == '.') {
-      /* precision present? */
-      ++fmt;
-      if (*fmt == '*') {
-        if (getint(av[gv++], &precision)) {
-          free(out);
-          return (NULL);
-        }
-        ++fmt;
-      } else {
-        precision = 0;
+			/* skip to possible '.', get following precision */
+			for (; strchr(skip2, *fmt); ++fmt)
+				;
+		}
+		if (*fmt == '.') {
+			/* precision present? */
+			++fmt;
+			if (*fmt == '*') {
+				if (!getint(av[gv++], &precision)) {
+					free(out);
+					return NULL;
+				}
+				++fmt;
+			} else {
+				precision = 0;
 
-        /* skip to conversion char */
-        for (; strchr(skip2, *fmt); ++fmt);
-      }
-    } else
-      precision = 0;
-    if (!*fmt) {
-      fprintf(stderr,"missing format character");
-      free(out);
-      return (NULL);
-    }
+				/* skip to conversion char */
+				for (; strchr(skip2, *fmt); ++fmt)
+					;
+			}
+		} else
+			precision = 0;
+		if (!*fmt) {
+			fprintf(stderr, "missing format character");
+			free(out);
+			return NULL;
+		}
 
-    convch = *fmt;
-    nextch = *++fmt;
-    *fmt = '\0';
-    switch(convch) {
-      case 'c': {
-        char p;
+		convch = *fmt;
+		nextch = *++fmt;
+		*fmt   = '\0';
+		switch (convch) {
+		case 'c': {
+			char p;
 
-        if (getchr(av[gv++], &p)) {
-          free(out);
-          return(NULL);
-        }
+			if (!getchr(av[gv++], &p)) {
+				free(out);
+				return NULL;
+			}
 
-        PF(out, start, p);
-        break;
-      }
-      case 's': {
-        char *p;
+			PF(out, start, p);
+			break;
+		}
+		case 's': {
+			char* p;
 
-        if (getstr(av[gv++], &p)) {
-          free(out);
-          return(NULL);
-        }
-        PF(out, start, p);
-        break;
-      }
-      case 'd': case 'i': case 'o': case 'u': case 'x': case 'X': {
-        int p;
-        char *f;
+			if (!getstr(av[gv++], &p)) {
+				free(out);
+				return NULL;
+			}
+			PF(out, start, p);
+			break;
+		}
+		case 'd':
+		case 'i':
+		case 'o':
+		case 'u':
+		case 'x':
+		case 'X': {
+			int p;
+			char* f;
 
-        if ((f = mklong(start, convch)) == NULL || getint(av[gv++], &p)) {
-          free(out);
-          return (NULL);
-        }
-        PF(out, f, (long)p);
-        break;
-      }
-      case 'e': case 'E': case 'f': case 'g': case 'G': {
-        double p;
+			if (!(f = mklong(start, convch)) || !getint(av[gv++], &p)) {
+				free(out);
+				return NULL;
+			}
+			PF(out, f, (long)p);
+			break;
+		}
+		case 'e':
+		case 'E':
+		case 'f':
+		case 'g':
+		case 'G': {
+			double p;
 
-        if (getdouble(av[gv++], &p)) {
-          free(out);
-          return(NULL);
-        }
-        PF(out, start, p);
-        break;
-      }
-      default:
-        fprintf(stderr,"illegal format character %c",  convch);
-        free(out);
-        return (NULL);
-    }
-    *fmt = nextch;
-  }
-  /* NOTREACHED */
+			if (!getdouble(av[gv++], &p)) {
+				free(out);
+				return NULL;
+			}
+			PF(out, start, p);
+			break;
+		}
+		default:
+			fprintf(stderr, "illegal format character %c", convch);
+			free(out);
+			return NULL;
+		}
+		*fmt = nextch;
+	}
+	/* NOTREACHED */
 }
 
-
-static char *
-mklong(char *str, int ch)
+// NOTE(rswinkle) static var copy not threadsafe and why are we
+// checking if it's NULL above if we aren't allocating ... copy
+// can't be NULL
+static char* mklong(char* str, int ch)
 {
-  static char copy[1024];
-  int len;
+	static char copy[1024];
+	int len;
 
-
-  len = strlen(str) + 2;
-  memmove(copy, str, len - 3);
-  copy[len - 3] = 'l';
-  copy[len - 2] = ch;
-  copy[len - 1] = '\0';
-  return (copy);
+	len = strlen(str) + 2;
+	memmove(copy, str, len - 3);
+	copy[len - 3] = 'l';
+	copy[len - 2] = ch;
+	copy[len - 1] = '\0';
+	return copy;
 }
 
-static void
-escape(register char *fmt)
+static void escape(register char* fmt)
 {
-  char *store;
-  int value, c;
+	char* store;
+	int value, c;
 
-  for (store = fmt; (c = *fmt); ++fmt, ++store) {
-    if (c != '\\') {
-      *store = c;
-      continue;
-    }
-    switch (*++fmt) {
-      case '\0':		/* EOS, user error */
-        *store = '\\';
-        *++store = '\0';
-        return;
-      case '\\':		/* backslash */
-      case '\'':		/* single quote */
-        *store = *fmt;
-        break;
-      case 'a':		/* bell/alert */
-        *store = '\7';
-        break;
-      case 'b':		/* backspace */
-        *store = '\b';
-        break;
-      case 'f':		/* form-feed */
-        *store = '\f';
-        break;
-      case 'n':		/* newline */
-        *store = '\n';
-        break;
-      case 'r':		/* carriage-return */
-        *store = '\r';
-        break;
-      case 't':		/* horizontal tab */
-        *store = '\t';
-        break;
-      case 'v':		/* vertical tab */
-        *store = '\13';
-        break;
-        /* octal constant */
-      case '0': case '1': case '2': case '3':
-      case '4': case '5': case '6': case '7':
-        for (c = 3, value = 0;
-             c-- && *fmt >= '0' && *fmt <= '7'; ++fmt) {
-          value <<= 3;
-          value += *fmt - '0';
-        }
-        --fmt;
-        *store = value;
-        break;
-      default:
-        *store = *fmt;
-        break;
-    }
-  }
-  *store = '\0';
+	for (store = fmt; (c = *fmt); ++fmt, ++store) {
+		if (c != '\\') {
+			*store = c;
+			continue;
+		}
+		switch (*++fmt) {
+		case '\0': /* EOS, user error */
+			*store   = '\\';
+			*++store = '\0';
+			return;
+		case '\\': /* backslash */
+		case '\'': /* single quote */ *store   = *fmt; break;
+		case 'a': /* bell/alert */ *store      = '\7'; break;
+		case 'b': /* backspace */ *store       = '\b'; break;
+		case 'f': /* form-feed */ *store       = '\f'; break;
+		case 'n': /* newline */ *store         = '\n'; break;
+		case 'r': /* carriage-return */ *store = '\r'; break;
+		case 't': /* horizontal tab */ *store  = '\t'; break;
+		case 'v': /* vertical tab */
+			*store = '\13';
+			break;
+		/* octal constant */
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+			for (c = 3, value = 0; c-- && *fmt >= '0' && *fmt <= '7'; ++fmt) {
+				value <<= 3;
+				value += *fmt - '0';
+			}
+			--fmt;
+			*store = value;
+			break;
+		default: *store = *fmt; break;
+		}
+	}
+	*store = '\0';
 }
 
-static int
-getchr(Var *v, char *p)
+static int getchr(Var* v, char* p)
 {
-  Var *e;
+	Var* e;
 
-  if (v == NULL) return(1);
-  if ((e = eval(v)) == NULL) {
-    sprintf(error_buf, "Variable not found: %s", V_NAME(v));
-    parse_error(NULL);
-    return(1);
-  }
-  v = e;
+	if (v == NULL) return 0;
+	if ((e = eval(v)) == NULL) {
+		sprintf(error_buf, "Variable not found: %s", V_NAME(v));
+		parse_error(NULL);
+		return 0;
+	}
+	v = e;
 
-  if (V_TYPE(v) == ID_VAL) {
-    *p = extract_int(v, 0);
-  } else if (V_TYPE(v) == ID_STRING) {
-    *p = (V_STRING(v)[0]);
-  }
-  return(0);
+	if (V_TYPE(v) == ID_VAL) {
+		*p = extract_int(v, 0);
+	} else if (V_TYPE(v) == ID_STRING) {
+		*p = (V_STRING(v)[0]);
+	}
+	return 1;
 }
 
-static int
-getstr(Var *v, char **ip)
+static int getstr(Var* v, char** ip)
 {
-  Var *e;
+	Var* e;
 
-  if (v == NULL) return(1);
-  if ((e = eval(v)) == NULL) {
-    sprintf(error_buf, "Variable not found: %s", V_NAME(v));
-    parse_error(NULL);
-    return(1);
-  }
-  v = e;
+	if (v == NULL) return 0;
+	if ((e = eval(v)) == NULL) {
+		sprintf(error_buf, "Variable not found: %s", V_NAME(v));
+		parse_error(NULL);
+		return 0;
+	}
+	v = e;
 
-  if (V_TYPE(v) != ID_STRING) {
-    parse_error("sprintf: Expected a string");
-    return(1);
-  }
-  *ip = V_STRING(v);
-  return(0);
+	if (V_TYPE(v) != ID_STRING) {
+		parse_error("sprintf: Expected a string");
+		return 0;
+	}
+	*ip = V_STRING(v);
+	return 1;
 }
 
-static int
-getint(Var *v, int *ip)
+static int getint(Var* v, int* ip)
 {
-  Var *e;
+	Var* e;
 
-  if (v == NULL) return(1);
-  if ((e = eval(v)) == NULL) {
-    sprintf(error_buf, "Variable not found: %s", V_NAME(v));
-    parse_error(NULL);
-    return(1);
-  }
-  v = e;
+	if (v == NULL) return 0;
+	if ((e = eval(v)) == NULL) {
+		sprintf(error_buf, "Variable not found: %s", V_NAME(v));
+		parse_error(NULL);
+		return 0;
+	}
+	v = e;
 
-  if (V_TYPE(v) != ID_VAL) {
-    sprintf(error_buf, "sprintf: Expected a value");
-    parse_error(NULL);
-    return(1);
-  }
-  *ip = extract_int(v, 0);
-  return (0);
+	if (V_TYPE(v) != ID_VAL) {
+		sprintf(error_buf, "sprintf: Expected a value");
+		parse_error(NULL);
+		return 0;
+	}
+	*ip = extract_int(v, 0);
+	return 1;
 }
 
-static int
-getdouble(Var *v, double *ip)
+static int getdouble(Var* v, double* ip)
 {
-  Var *e;
+	Var* e;
 
-  if (v == NULL) return 1;
-  if ((e = eval(v)) == NULL) {
-    sprintf(error_buf, "Variable not found: %s", V_NAME(v));
-    parse_error(NULL);
-    return(1);
-  }
-  v = e;
+	if (v == NULL) return 0;
+	if ((e = eval(v)) == NULL) {
+		sprintf(error_buf, "Variable not found: %s", V_NAME(v));
+		parse_error(NULL);
+		return 0;
+	}
+	v = e;
 
-  if (V_TYPE(v) != ID_VAL) {
-    sprintf(error_buf, "sprintf: Expected a value");
-    parse_error(NULL);
-    return(1);
-  }
-  *ip = extract_double(v, 0);
-  return(0);
+	if (V_TYPE(v) != ID_VAL) {
+		sprintf(error_buf, "sprintf: Expected a value");
+		parse_error(NULL);
+		return 0;
+	}
+	*ip = extract_double(v, 0);
+	return 1;
 }
 
 /* Like vsprintf but provides a pointer to malloc'd storage, which must
@@ -527,116 +516,93 @@ getdouble(Var *v, double *ip)
    not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdarg.h>
 
-
-unsigned long strtoul ();
+unsigned long strtoul();
 /* char *malloc (); */
 
 #ifndef va_copy
-# ifdef __va_copy
-#  define va_copy(DEST,SRC) __va_copy((DEST),(SRC))
-# else
-#  ifdef HAVE_VA_LIST_AS_ARRAY
-#   define va_copy(DEST,SRC) (*(DEST) = *(SRC))
-#  else
-#   define va_copy(DEST,SRC) ((DEST) = (SRC))
-#  endif
-# endif
+#ifdef __va_copy
+#define va_copy(DEST, SRC) __va_copy((DEST), (SRC))
+#else
+#ifdef HAVE_VA_LIST_AS_ARRAY
+#define va_copy(DEST, SRC) (*(DEST) = *(SRC))
+#else
+#define va_copy(DEST, SRC) ((DEST) = (SRC))
+#endif
+#endif
 #endif
 
-
-static int
-dv_int_vasprintf (char **result, char *format, va_list args)
+static int dv_int_vasprintf(char** result, char* format, va_list args)
 {
-  char *p = format;
-  /* Add one to make sure that it is never zero, which might cause malloc
-     to return NULL.  */
-  int total_width = strlen (format) + 1;
-  va_list ap;
+	char* p = format;
+	/* Add one to make sure that it is never zero, which might cause malloc
+	   to return NULL.  */
+	int total_width = strlen(format) + 1;
+	va_list ap;
 
-  va_copy(ap, args);
+	va_copy(ap, args);
 
-  while (*p != '\0')
-  {
-    if (*p++ == '%')
-    {
-      while (strchr ("-+ #0", *p))
-        ++p;
-      if (*p == '*')
-      {
-        ++p;
-        total_width += abs (va_arg (args, int));
-      }
-      else
-        total_width += strtoul (p, &p, 10);
-      if (*p == '.')
-      {
-        ++p;
-        if (*p == '*')
-        {
-          ++p;
-          total_width += abs (va_arg (args, int));
-        }
-        else
-          total_width += strtoul (p, &p, 10);
-      }
-      while (strchr ("hlL", *p))
-        ++p;
-      /* Should be big enough for any format specifier except %s.  */
-      total_width += 30;
-      switch (*p)
-      {
-        case 'd':
-        case 'i':
-        case 'o':
-        case 'u':
-        case 'x':
-        case 'X':
-        case 'c':
-          (void) va_arg (args, int);
-          break;
-        case 'f':
-        case 'e':
-        case 'E':
-        case 'g':
-        case 'G':
-          (void) va_arg (args, double);
-          break;
-        case 's':
-          total_width += strlen (va_arg (args, char *));
-          break;
-        case 'p':
-        case 'n':
-          (void) va_arg (args, char *);
-          break;
-      }
-    }
-  }
+	while (*p != '\0') {
+		if (*p++ == '%') {
+			while (strchr("-+ #0", *p)) ++p;
+			if (*p == '*') {
+				++p;
+				total_width += abs(va_arg(args, int));
+			} else
+				total_width += strtoul(p, &p, 10);
+			if (*p == '.') {
+				++p;
+				if (*p == '*') {
+					++p;
+					total_width += abs(va_arg(args, int));
+				} else
+					total_width += strtoul(p, &p, 10);
+			}
+			while (strchr("hlL", *p)) ++p;
+			/* Should be big enough for any format specifier except %s.  */
+			total_width += 30;
+			switch (*p) {
+			case 'd':
+			case 'i':
+			case 'o':
+			case 'u':
+			case 'x':
+			case 'X':
+			case 'c': (void)va_arg(args, int); break;
+			case 'f':
+			case 'e':
+			case 'E':
+			case 'g':
+			case 'G': (void)va_arg(args, double); break;
+			case 's': total_width += strlen(va_arg(args, char*)); break;
+			case 'p':
+			case 'n': (void)va_arg(args, char*); break;
+			}
+		}
+	}
 
-  *result = (char *)malloc (total_width);
-  if (*result != NULL)
-    return vsprintf (*result, format, ap);
-  else
-    return 0;
+	*result = (char*)malloc(total_width);
+	if (*result != NULL)
+		return vsprintf(*result, format, ap);
+	else
+		return 0;
 }
 
-int
-dv_vasprintf (char **result, char *format, va_list args)
+int dv_vasprintf(char** result, char* format, va_list args)
 {
-  return dv_int_vasprintf (result, format, args);
+	return dv_int_vasprintf(result, format, args);
 }
 
-int
-dv_asprintf(char **str, char *fmt, ...)
+int dv_asprintf(char** str, char* fmt, ...)
 {
-  int ret;
-  va_list ap;
+	int ret;
+	va_list ap;
 
-  va_start(ap, fmt);
-  ret = dv_vasprintf(str, fmt, ap);
-  va_end(ap);
-  return (ret);
+	va_start(ap, fmt);
+	ret = dv_vasprintf(str, fmt, ap);
+	va_end(ap);
+	return ret;
 }
