@@ -1,6 +1,8 @@
 #ifndef FF_SOURCE_H
 #define FF_SOURCE_H
 
+#include <stdio.h>
+
 typedef struct Source {
 	FILE* file;
 	char* name;

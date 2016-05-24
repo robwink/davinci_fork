@@ -1,6 +1,8 @@
 #ifndef UFUNC_H
 #define UFUNC_H
 
+#include "parser.h"
+
 typedef struct {
 	char *text;
 	char *name;
