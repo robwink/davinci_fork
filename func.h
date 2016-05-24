@@ -163,6 +163,7 @@ extern "C" {
 #endif
 void parse_error(const char *, ...);
 void parse_error2(const char *, ...);
+void memory_error(int error_num, size_t mem_size);
 #ifdef __cplusplus
 }
 #endif

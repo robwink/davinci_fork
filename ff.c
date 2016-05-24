@@ -8,7 +8,7 @@
 #include "rfunc.h"
 #endif
 
-#ifdef HAVE_READLINE
+#ifdef HAVE_LIBREADLINE
 #include "ff_source.h"
 #endif
 
@@ -1892,6 +1892,9 @@ ff_killchild(vfuncptr func, Var *arg)
 }
 
 
+//TODO(rswinkle) rename these ... suffix usually implies type but
+//the plain functions take double (C99 varieties are cos, cosf, cosl for example)
+// I think cos_deg or deg_cos would be clearer
 double cosd(double theta) { return(cos(theta*M_PI/180.0)); }
 double sind(double theta) { return(sin(theta*M_PI/180.0)); }
 double tand(double theta) { return(tan(theta*M_PI/180.0)); }

@@ -96,7 +96,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ff_bin5.c  ff_transform.c ff_blend.c ff_unpack.c \
 	header.c ff_resample.c \
 	help.c init.c cvector.c \
-	isis_obj.c globals.c matrix.c \
+	globals.c matrix.c \
 	misc.c motif_tools.c \
 	newfunc.c p.c pp.c \
 	pp_math.c printf.c reserved.c \
@@ -109,7 +109,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ufunc.h dvio.h dvio_pds4.h header.h \
 	proto.h version.h apidef.h dvio_specpr.h help.h rfunc.h \
 	xrt_print_3d.h avl.h endian_norm.h io_loadmod.h scope.h \
-	ff.h isis_obj.h system.h ff_modules.h module_io.h \
+	ff.h system.h ff_modules.h module_io.h \
 	toolbox.h configwin.h fft.h motif_tools.h tools.h \
 	lexer.c parser.c parser.h y_tab.h \
 	ff_gconvolve.c ff_warp.c ff_median.c ff_radial.c ff_window.c \

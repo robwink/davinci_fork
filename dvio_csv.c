@@ -103,24 +103,6 @@ static void free_coldefs(coldef *cols, int n);
 static void init_coldefs(coldef* cols, int num);
 
 
-/**
-    Print error string to stderr along with amount memory
-    that was requested.
-    @param error_num [in] errno value.
-    @param mem_size [in] amount of memory requested in bytes.
-*/
-static void
-memory_error(int error_num, size_t mem_size)
-{
-	char err_str[512];
-
-	snprintf(err_str, sizeof(err_str)-1, "Error allocating memory, %lu", mem_size);
-	parse_error("%s: %s", err_str, strerror(error_num));
-
-	return;
-}
-/*************************************************/
-
 
 /**
 ** Fix the "size" field of coldef structure for each of the column

@@ -46,9 +46,10 @@ void parse_error2(const char* fmt, ...)
 // parse_errors, but runtime errors
 void memory_error(int error_num, size_t mem_size)
 {
-	char err_str[100];
-	snprintf(err_str, sizeof(err_str), "Error allocating memory, %d: ", mem_size);
+	char err_str[128];
+	snprintf(err_str, sizeof(err_str), "Error allocating memory, %zu: ", mem_size);
 	parse_error("%s: %s", err_str, strerror(error_num));
 
 	return;
 }
+
