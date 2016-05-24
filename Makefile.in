@@ -114,12 +114,12 @@ am_libdavinci_la_OBJECTS = apifunc.lo array.lo avl.lo binDCT.lo \
 	ff_version.lo ff_vignette.lo ff_write.lo ff_xfrm.lo fft.lo \
 	fft2f.lo fft_mayer.lo fit.lo ff_coreg.lo ff_boxfilter.lo \
 	ff_bin5.lo ff_transform.lo ff_blend.lo ff_unpack.lo header.lo \
-	ff_resample.lo help.lo init.lo cvector.lo isis_obj.lo \
-	globals.lo matrix.lo misc.lo motif_tools.lo newfunc.lo p.lo \
-	pp.lo pp_math.lo printf.lo reserved.lo rfunc.lo rice.lo \
-	rpos.lo scope.lo spread.lo string.lo symbol.lo system.lo \
-	tools.lo ufunc.lo util.lo x.lo xrt_print_3d.lo lexer.lo \
-	parser.lo ff_gconvolve.lo ff_warp.lo ff_median.lo ff_radial.lo \
+	ff_resample.lo help.lo init.lo cvector.lo globals.lo matrix.lo \
+	misc.lo motif_tools.lo newfunc.lo p.lo pp.lo pp_math.lo \
+	printf.lo reserved.lo rfunc.lo rice.lo rpos.lo scope.lo \
+	spread.lo string.lo symbol.lo system.lo tools.lo ufunc.lo \
+	util.lo x.lo xrt_print_3d.lo lexer.lo parser.lo \
+	ff_gconvolve.lo ff_warp.lo ff_median.lo ff_radial.lo \
 	ff_window.lo dvio_fits.lo ff_extract.lo dvio_tdb.lo \
 	url_create_file.lo ff_filesystem.lo ff_grassfire.lo libcsv.lo
 libdavinci_la_OBJECTS = $(am_libdavinci_la_OBJECTS)
@@ -390,7 +390,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ff_bin5.c  ff_transform.c ff_blend.c ff_unpack.c \
 	header.c ff_resample.c \
 	help.c init.c cvector.c \
-	isis_obj.c globals.c matrix.c \
+	globals.c matrix.c \
 	misc.c motif_tools.c \
 	newfunc.c p.c pp.c \
 	pp_math.c printf.c reserved.c \
@@ -403,7 +403,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ufunc.h dvio.h dvio_pds4.h header.h \
 	proto.h version.h apidef.h dvio_specpr.h help.h rfunc.h \
 	xrt_print_3d.h avl.h endian_norm.h io_loadmod.h scope.h \
-	ff.h isis_obj.h system.h ff_modules.h module_io.h \
+	ff.h system.h ff_modules.h module_io.h \
 	toolbox.h configwin.h fft.h motif_tools.h tools.h \
 	lexer.c parser.c parser.h y_tab.h \
 	ff_gconvolve.c ff_warp.c ff_median.c ff_radial.c ff_window.c \
@@ -677,7 +677,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/help.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/init.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/io_loadmod.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/isis_obj.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lexer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcsv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
