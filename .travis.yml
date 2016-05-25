@@ -11,6 +11,8 @@ addons:
     sources:
     packages:
       - python3
+      - libcfitsio3-dev
+      - libhdf5-dev
 
 
 script:

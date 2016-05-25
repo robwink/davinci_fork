@@ -86,7 +86,7 @@ def main():
 		testlen = len(test)
 		#sys.stdout.flush() #could do away with this in 3.3+
 
-		rc = os.system(args.davinci + " -fqv0 " + name + "> /dev/null 2>&1")
+		rc = os.system(args.davinci + " -fqv0 " + name + "> tmp.txt 2>&1")
 		rc >>= 8 # get high byte
 		if rc == 0:
 			#print("passed")
@@ -95,6 +95,7 @@ def main():
 			print('{: <40}'.format(test[:-7]), "..... skipped")
 		else:
 			print('{: <40}'.format(test[:-7]), "..... failed")
+			os.system("cat tmp.txt")
 			ret = 1
 
 		os.chdir(topdir)
