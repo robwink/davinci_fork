@@ -17,5 +17,5 @@ script:
   - ./configure && make
   - cd dv_tests
   - export LD_LIBRARY_PATH=../.libs/
-  - ./run_tests.py
+  - ./run_tests.py -d ../.libs/davinci -t .
 
