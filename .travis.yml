@@ -12,7 +12,8 @@ addons:
     packages:
       - python3
       - libcfitsio3-dev
-      - libhdf5-dev
+        #libhdf5-dev in newer releases
+      - libhdf5-serial-dev
 
 
 script:
