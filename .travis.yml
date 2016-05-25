@@ -1,4 +1,5 @@
-sudo: false
+sudo: required
+dist: trusty
 language: c
 compiler:
   - gcc
@@ -12,8 +13,8 @@ addons:
     packages:
       - python3
       - libcfitsio3-dev
-        #libhdf5-dev in newer releases
-      - libhdf5-serial-dev
+      - libhdf5-dev # in newer releases
+        #- libhdf5-serial-dev #on precise
 
 
 script:
