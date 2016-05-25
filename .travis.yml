@@ -18,8 +18,10 @@ addons:
 
 
 script:
-  - ./configure && make
+  - ./configure --disable-jbig && make
   - cd dv_tests
-  - export LD_LIBRARY_PATH=../.libs/
-  - ./run_tests.py -d ../.libs/davinci -t .
+  #- export LD_LIBRARY_PATH=../.libs/
+  - sudo make install
+  #- ./run_tests.py -d ../.libs/davinci -t .
+  - ./run_tests.py -t .
 
