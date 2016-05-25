@@ -1,0 +1,20 @@
+sudo: false
+language: c
+compiler:
+  - gcc
+  - clang
+# Change this to your needs
+
+
+addons:
+  apt:
+    sources:
+    packages:
+
+
+script:
+  - ./configure && make
+  - cd dv_tests
+  - export LD_LIBRARY_PATH=../.libs/
+  - ./run_tests.py
+

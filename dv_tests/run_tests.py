@@ -77,24 +77,29 @@ def main():
 	
 	topdir = os.getcwd()
 
+	ret = 0
 	for test in tests:
 		location, tmp, name = test.rpartition('/')
 
 		os.chdir(location)
 
 		testlen = len(test)
-		print('{: <40}'.format(test[:-7]), "..... ", end='')
 		#sys.stdout.flush() #could do away with this in 3.3+
 
 		rc = os.system(args.davinci + " -fqv0 " + name + "> /dev/null 2>&1")
+		rc >>= 8 # get high byte
 		if rc == 0:
-			print("passed")
+			#print("passed")
+			pass
 		elif rc == 99:
-			print("skipped")
+			print('{: <40}'.format(test[:-7]), "..... skipped")
 		else:
-			print("failed")
+			print('{: <40}'.format(test[:-7]), "..... failed")
+			ret = 1
 
 		os.chdir(topdir)
+
+	exit(ret)
 
 
 
