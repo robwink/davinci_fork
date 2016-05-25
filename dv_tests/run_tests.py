@@ -97,6 +97,7 @@ def main():
 			print('{: <40}'.format(test[:-7]), "..... failed")
 			os.system("cat tmp.txt")
 			ret = 1
+		os.remove("tmp.txt")
 
 		os.chdir(topdir)
 

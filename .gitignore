@@ -6,6 +6,7 @@
 *.la
 tags
 *.dvlog
+*tmp.txt
 
 deb/
 

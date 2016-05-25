@@ -75,7 +75,7 @@ if [ ! -e $davinci_src/davinci -o $force_rebuild -ne 0 ]
     cd $davinci_src   
 
     #configure with appropriate settings
-    ./configure --prefix=/usr --disable-jbig --disable-libisis --with-cfitsio=/usr --with-libxml2=/usr --with-libxml2_hdr=/usr/include/libxml2 --with-readline=/usr --with-viewer=/usr/bin/display --with-modpath=/usr/${lib}/${name} --with-help=/usr/share/davinci/docs/dv.gih CFLAGS=-fPIC CXXFLAGS=-fPIC
+    ./configure --prefix=/usr --disable-jbig --disable-libisis --with-cfitsio=/usr --with-readline=/usr --with-viewer=/usr/bin/display --with-modpath=/usr/${lib}/${name} --with-help=/usr/share/davinci/docs/dv.gih CFLAGS=-fPIC CXXFLAGS=-fPIC
     [ $? -eq 0 ] || failed "Failure configuring davinci"
 
     #make the binary
