@@ -1,3 +1,4 @@
+debug = 5
 load_module("thm")
 loaded = HasValue(thm);
 unload_module("thm")
