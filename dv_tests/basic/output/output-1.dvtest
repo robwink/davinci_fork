@@ -1,4 +1,0 @@
-results = syscall("davinci -qe 'printf(\"%d_%.2f\", 4*3, 4.0/3)'")
-if (length(results) == 1 && results[,1] == "12_1.33") exit(0);
-exit(1);
-

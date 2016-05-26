@@ -1,9 +1,9 @@
 Package: davinci
-Version: 2.10
+Version: 2.17
 Section: Science
 Priority: extra
 Architecture: amd64
-Depends: libc6,libc6-i386, libgcc1, libice6, libxmu6, libxt6, libsm6, libstdc++6, libx11-6, libncurses5 (>= 5.5), zlib1g (>= 1:1.2.1), libreadline6, libhdf5-serial-1.8.4, libcfitsio3, libcurl3-gnutls, libltdl7, libpng12-0, gnuplot-x11 (>= 4.0), imagemagick (>=6.2)
+Depends: libc6, libgcc1, libice6, libxmu6, libxt6, libsm6, libstdc++6, libx11-6, zlib1g (>= 1:1.2.1), libreadline6, libhdf5-serial-1.8.4, libcfitsio3, libcurl3-gnutls, libltdl7, libpng12-0, gnuplot-x11 (>= 4.0), imagemagick (>=6.2)
 Suggests: gdal-bin
 Installed-Size: 28864
 Maintainer: Davinci Dev Team <davinci-dev@mars.asu.edu>

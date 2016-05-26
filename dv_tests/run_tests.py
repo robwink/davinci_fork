@@ -1,6 +1,8 @@
 #! /usr/bin/env python3
 
-import re, sys, string, glob, argparse, os
+import sys, string, glob, argparse, os
+import tempfile
+from subprocess import *
 from os.path import *
 
 test_suites = [
@@ -9,10 +11,21 @@ test_suites = [
 "matrix/",
 "modules/",
 "pca/",
-
-#"plot/",
-"sort"
+"plot/",
+"sort",
+"cmd_line"
 ]
+
+
+# TODO think about those 4 tests
+# output-1,2,3 and cmd-line-args
+test_strings = [
+" -qe 'printf(\"%d_%.2f\", 4*3, 4.0/3)'",
+]
+
+
+
+
 
 
 def find_files(root, filetypes, exclude):          # for a root dir
@@ -40,11 +53,6 @@ def find_files(root, filetypes, exclude):          # for a root dir
 
 
 # TODO(rswinkle)
-# output formatting, right now just pipe stdout/err to /dev/null but
-# I should provide options.  I also should make it prettier and
-# provide html output ala
-# http://www.robertwinkler.com/CVector/CUnitAutomated-Results.xml
-#
 # eventually, tie this into CI, and of course fix the failing tests
 # also the 64 bit tests are pointless if you can't even run them because
 # they use too much memory and crash/freeze your machine.  I'll adjust
@@ -73,31 +81,37 @@ def main():
 
 	tests = []
 	for suite in args.tests:
-		tests += find_files(suite, ['.dvtest'], [])
+		tests += find_files(suite, ['.dvtest', '.dvscript'], [])
 	
 	topdir = os.getcwd()
 
 	ret = 0
 	for test in tests:
-		location, tmp, name = test.rpartition('/')
-
+		#print(test)
+		location, tmp, testfile = test.rpartition('/')
+		testname, extension = testfile.split('.')
 		os.chdir(location)
+		filename = testfile
 
-		testlen = len(test)
-		#sys.stdout.flush() #could do away with this in 3.3+
+		if extension == "dvscript":
+			tmpfile = tempfile.NamedTemporaryFile('w', delete=False)
+			tmpfile.file.write(open(testfile, 'r').read().replace('DAVINCI_EXECUTABLE', args.davinci))
+			tmpfile.close()
+			filename = tmpfile.name
 
-		rc = os.system(args.davinci + " -fqv0 " + name + "> tmp.txt 2>&1")
-		rc >>= 8 # get high byte
+		proc = Popen([args.davinci, "-fqv0", filename], stdout=PIPE, universal_newlines=True)
+
+		out, err = proc.communicate()
+		rc = proc.returncode
 		if rc == 0:
-			#print("passed")
+			#print('{: <40}'.format(location+'/'+testname), "..... passed")
 			pass
 		elif rc == 99:
-			print('{: <40}'.format(test[:-7]), "..... skipped")
+			print('{: <40}'.format(location+'/'+testname), "..... skipped")
 		else:
-			print('{: <40}'.format(test[:-7]), "..... failed")
-			os.system("cat tmp.txt")
+			print('{: <40}'.format(location+'/'+testname), "..... failed")
+			print('stdout:\n{0}\nstderr:\n{1}'.format(out, err))
 			ret = 1
-		os.remove("tmp.txt")
 
 		os.chdir(topdir)
 

@@ -46,11 +46,9 @@ arch=`uname -p`
 case "$mach" in
     i*)
         arch=i386
-        lib=lib
         ;;
     x86_64)
         arch=amd64
-        lib=lib64
         ;;
     *)
         echo "Unknown architecture"
@@ -63,11 +61,11 @@ deb=${name}-${version}-${release}.${arch}.deb
 
 #if a davinci executeable exists then don't compile just make the package
 if [ ! -e $davinci_src/davinci -o $force_rebuild -ne 0 ]
-    then 
-    
+    then
+
     cd $davinci_src
     make clean
-    
+
     #make the png lib first to use local copy
     cd $davinci_src/iomedley/libpng-1.2.3
     ./configure CFLAGS=-fPIC CXXFLAGS=-fPIC
@@ -75,7 +73,9 @@ if [ ! -e $davinci_src/davinci -o $force_rebuild -ne 0 ]
     cd $davinci_src   
 
     #configure with appropriate settings
-    ./configure --prefix=/usr --disable-jbig --disable-libisis --with-cfitsio=/usr --with-readline=/usr --with-viewer=/usr/bin/display --with-modpath=/usr/${lib}/${name} --with-help=/usr/share/davinci/docs/dv.gih CFLAGS=-fPIC CXXFLAGS=-fPIC
+    #printf "%s\n" "./configure --prefix=/usr --disable-jbig --disable-libisis --with-cfitsio=/usr --with-readline=/usr --with-viewer=/usr/bin/display --with-help=/usr/share/davinci/docs/dv.gih CFLAGS=-fPIC CXXFLAGS=-fPIC"
+    #./configure --prefix=/usr --disable-jbig --disable-libisis --with-cfitsio=/usr --with-readline=/usr --with-viewer=/usr/bin/display --with-help=/usr/share/davinci/docs/dv.gih CFLAGS=-fPIC CXXFLAGS=-fPIC
+    ./configure --prefix=/usr --disable-jbig --with-viewer=/usr/bin/display
     [ $? -eq 0 ] || failed "Failure configuring davinci"
 
     #make the binary
