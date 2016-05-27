@@ -1,0 +1,16 @@
+a=create(100,1,1);
+plot("set terminal postscript color; set output 'foo.ps';");
+syscall("sleep 0.5")
+xplot(a);
+syscall("sleep 0.5")
+plot("set terminal postscript color; set output 'foo.ps'; replot;");
+syscall("sleep 0.5")
+plot("quit");
+syscall("sleep 0.5")
+
+if (fexists("foo.ps")){
+	fremove("foo.ps");
+	exit(0);
+}
+exit(1);
+

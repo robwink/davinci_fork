@@ -1,12 +1,6 @@
-a=create(100,1,1);
-plot("set terminal postscript color; set output 'foo.ps';");
-xplot(a);
-plot("set terminal postscript color; set output 'foo.ps'; replot;");
-plot("quit");
+a=create(10);
+b = a^2
+plot(b, Xaxis=a)
 
-if (fexists("foo.ps")){
-	fremove("foo.ps");
-	exit(0);
-}
-exit(1);
-
+syscall("sleep 0.5")
+exit(0)
