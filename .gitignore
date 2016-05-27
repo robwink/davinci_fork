@@ -7,6 +7,10 @@
 tags
 *.dvlog
 *tmp.txt
+*.rpm
+*.deb
+*~
+*.swp
 
 deb/
 

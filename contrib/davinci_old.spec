@@ -29,19 +29,19 @@ Summary:      Davinci - A tool to manipulate and view various types of data, dev
 URL:          http://davinci.asu.edu
 Vendor:       Mars Space Flight Facility at Arizona State University
 Packager:     Davinci Devs <davinci-dev@mars.asu.edu>  
-Distribution: CentOS 6 (MSFF)
+Distribution: CentOS 5 (MSFF)
 Group:        Applications/Science
 License:      GPLv2
-Version:      2.17
+Version:      2.0
 Release:      1
 
 #   list of sources
 Source:      ftp://ftp.mars.asu.edu/pub/software/davinci/%{name}-%{version}.tar.gz
 
 #   build information
-BuildRequires:  automake, autoconf, make, gcc, gcc-c++, hdf5, hdf5-devel, cfitsio, cfitsio-devel, readline, readline-devel, zlib, zlib-devel, curl-devel	
+BuildPreReq:  automake, autoconf, make, gcc, gcc-c++, hdf5, hdf5-devel, cfitsio, cfitsio-devel, readline, readline-devel, zlib, zlib-devel, curl-devel	
 BuildRoot: %{_tmppath}/%{name}-%{version}-buildroot
-Requires:	gnuplot, hdf5, cfitsio, readline, zlib
+Requires:	gnuplot, hdf5, hdf5-devel, cfitsio, readline, zlib
 #Provides:     
 #Obsoletes:    
 #Conflicts:    
@@ -58,16 +58,15 @@ Prefix: %_prefix
 
 %setup -q
 
-#why are we building iomedley separately?  building davinci recursively builds iomedley
 %build
 #Iomedley
-#cd iomedley
-#./configure --prefix=%{_prefix} --libdir=%{_libdir}  
-#make 
-#cd ../
+cd iomedley
+./configure --prefix=%{_prefix} --libdir=%{_libdir}  
+make 
+cd ../
 
 #Davinci
-./configure --prefix=%{_prefix} --libdir=%{_libdir} --disable-libisis --disable-lzma --with-viewer=/usr/bin/display \
+./configure --prefix=%{_prefix} --libdir=%{_libdir} --disable-libisis   --with-viewer=/usr/bin/display \
 --with-modpath=%{_libdir}/%{name} --with-help=%{_datadir}/%{name}/docs/dv.gih
 
 
