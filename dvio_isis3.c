@@ -1,5 +1,6 @@
 /*
- * a = load_isis3("/u/ddoerres/work/Project/themis_dbtools/themis_dbtools/trunk/makerdr/I01001001.cub")
+ * a =
+ * load_isis3("/u/ddoerres/work/Project/themis_dbtools/themis_dbtools/trunk/makerdr/I01001001.cub")
  * b = load_isis3("/local/cube/SE_500K_0_0_SIMP.cub")
  * c = load_isis3("/local/cube/ESP_038117_1385_RED.cub")             <-- This is the really big cube
  * d = load_isis3("/u/cedwards/davinci_test/I01001001.lev1.cub")
@@ -30,7 +31,6 @@
  * variables ARE possible
  */
 
-
 // #define or #undef
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -41,89 +41,91 @@
 #include "dvio_isis3.h"
 
 #include "dvio.h"
+#include "func.h"
 
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
 #include <ctype.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <sys/stat.h>
 
 #define _FILE_OFFSET_BITS 64
 
-static Var *do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
-        int use_units); // drd static so only visible in this file
-static Var *do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int valTl); // drd static so only visible in this file
+static Var* do_loadISIS3(vfuncptr func, char* filename, int data, int use_names,
+                         int use_units); // drd static so only visible in this file
+static Var* do_writeISIS3(Var* obj, char* ISIS3_filename, char* bsqTile, int valTs,
+                          int valTl); // drd static so only visible in this file
 
-static int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *nambuf);
-static int dQuoteManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf);
-static void make_unique_name(char *buffer, Var *dv_struct);
-static char get_keyword_datatype(char *value, char *name);
-static void add_converted_to_struct(Var *dv_struct, char * name, char * value);
-static int stringFinder(FILE *fp);
-static int cNameMaker(char *inputString);
-static int readNextLine(FILE *fp);
-static int getCubeParams(FILE *fp);
-static Var *readCube(FILE *fp);
-static int writeCube(FILE *fp, minIsisInfo *isisinfo, unsigned char *data);
+static int parenManager(char* stringItem, FILE* fp, Var* GroupOrObject, char* nambuf);
+static int dQuoteManager(char* stringItem, FILE* fp, Var* GroupOrObject, char* namebuf);
+static void make_unique_name(char* buffer, Var* dv_struct);
+static char get_keyword_datatype(char* value, char* name);
+static void add_converted_to_struct(Var* dv_struct, char* name, char* value);
+static int stringFinder(FILE* fp);
+static int cNameMaker(char* inputString);
+static int readNextLine(FILE* fp);
+static int getCubeParams(FILE* fp);
+static Var* readCube(FILE* fp);
+static int writeCube(FILE* fp, minIsisInfo* isisinfo, unsigned char* data);
 static char inputString[2048];
 static char continuationString[2048];
 static char string1[200], string2[200], string3[200], string4[200];
 static char string1_2[80], string2_2[80], string3_2[80], string4_2[80];
 static char interString[80];
 
-static int StartByte = 1;
-static int Format = 1;
-static size_t Samples = 1;
-static size_t Lines = 1;
+static int StartByte     = 1;
+static int Format        = 1;
+static size_t Samples    = 1;
+static size_t Lines      = 1;
 static size_t totalBands = 1;
-static size_t sampleSize = 1;   // "Type"
-static int ByteOrder = 1;
-static double Base = 0.0;
+static size_t sampleSize = 1; // "Type"
+static int ByteOrder     = 1;
+static double Base       = 0.0;
 static double Multiplier = 1.0;
 
-static size_t tileSize = 1;
+static size_t tileSize    = 1;
 static size_t TileSamples = 1;
-static size_t TileLines = 1;
+static size_t TileLines   = 1;
 
-static size_t subTileSize = 1;
-static size_t tiles = 1;
-static size_t row = 1;
-static size_t Row = 1;
-static size_t Bands = 1;
-static size_t tilesPerRow = 1;
+static size_t subTileSize    = 1;
+static size_t tiles          = 1;
+static size_t row            = 1;
+static size_t Row            = 1;
+static size_t Bands          = 1;
+static size_t tilesPerRow    = 1;
 static size_t subTileSamples = 1;
-static size_t totalRows = 1;
-static size_t subTileLines = 1;
+static size_t totalRows      = 1;
+static size_t subTileLines   = 1;
 
 static char cubeStub[][160] = {
-		{ "Object = IsisCube" },                // 00
-		{ "  Object = Core" },                  // 01
-		{ "    StartByte   = " },               // 02 65537
-		{ "    Format      = " },               // 03 Tile or BSQ
-		{ "    TileSamples = " },               // 04
-		{ "    TileLines   = " },               // 05
-		{ "" },                                 // 06
-		{ "    Group = Dimensions" },           // 07
-		{ "      Samples = " },                 // 08
-		{ "      Lines   = " },                 // 09
-		{ "      Bands   = " },                 // 10
-		{ "    End_Group" },                    // 11
-		{ "" },                                 // 12
-		{ "    Group = Pixels" },               // 13
-		{ "      Type       = " },              // 14
-		{ "      ByteOrder  = " },              // 15 Lsb, Msb -- be careful of this if it is NOT Lsb
-		{ "      Base       = " },              // 16 0.0
-		{ "      Multiplier = " },              // 17 1.0
-		{ "    End_Group" },                    // 18
-		{ "  End_Object" },                     // 19
-		{ "End_Object" },                       // 20
-		{ "" },                                 // 21
-		{ "Object = Label" },                   // 22
-		{ "  Bytes = " },                       // 23 65536
-		{ "End_Object" },                       // 24
-		{ "End" }                               // 25
-		};
+    {"Object = IsisCube"},      // 00
+    {"  Object = Core"},        // 01
+    {"    StartByte   = "},     // 02 65537
+    {"    Format      = "},     // 03 Tile or BSQ
+    {"    TileSamples = "},     // 04
+    {"    TileLines   = "},     // 05
+    {""},                       // 06
+    {"    Group = Dimensions"}, // 07
+    {"      Samples = "},       // 08
+    {"      Lines   = "},       // 09
+    {"      Bands   = "},       // 10
+    {"    End_Group"},          // 11
+    {""},                       // 12
+    {"    Group = Pixels"},     // 13
+    {"      Type       = "},    // 14
+    {"      ByteOrder  = "},    // 15 Lsb, Msb -- be careful of this if it is NOT Lsb
+    {"      Base       = "},    // 16 0.0
+    {"      Multiplier = "},    // 17 1.0
+    {"    End_Group"},          // 18
+    {"  End_Object"},           // 19
+    {"End_Object"},             // 20
+    {""},                       // 21
+    {"Object = Label"},         // 22
+    {"  Bytes = "},             // 23 65536
+    {"End_Object"},             // 24
+    {"End"}                     // 25
+};
 /*
 
  Group = BandBin
@@ -138,12 +140,14 @@ static int countFix = 32;
 #endif
 
 /*
- * a = load_isis3("/u/ddoerres/work/Project/themis_dbtools/themis_dbtools/trunk/makerdr/I01001001.cub")
+ * a =
+ * load_isis3("/u/ddoerres/work/Project/themis_dbtools/themis_dbtools/trunk/makerdr/I01001001.cub")
  * write_isis3(a, "Cow", force = 1)
  * b = load_isis3("Cow")
  * write_isis3(b, "Cow", force = 1)
  * b = load_isis3("Cow")
- * write_isis3(b, "Cow", force = 1, "bsQ", valTs=320, valTl=449) // Note that valTs and valTl are ignored
+ * write_isis3(b, "Cow", force = 1, "bsQ", valTs=320, valTl=449) // Note that valTs and valTl are
+ * ignored
  * b = load_isis3("Cow")
  * write_isis3(b, "Cow", force = 1, "tiLE", valTs=320, valTl=449)
  * b = load_isis3("Cow")
@@ -153,38 +157,41 @@ static int countFix = 32;
  *
  */
 
-Var* WriteISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
+Var* WriteISIS3(vfuncptr func, Var* arg) // drd proto for this is in func.h
 {
-	Var *obj = NULL;
-	char *filename = NULL;
-	int force = 0;
-	char *bsqTile;
+	Var* obj       = NULL;
+	char* filename = NULL;
+	int force      = 0;
+	char* bsqTile;
 	char bsqTileBuffer[80];
 	int ts = -1;
 	int tl = -1;
 
-	static char bsqItem[] = "BandSequential";
+	static char bsqItem[]  = "BandSequential";
 	static char tileItem[] = "Tile";
-	static char nothing[] = "nothing";
+	static char nothing[]  = "nothing";
 
 	bsqTile = &nothing[0];
 
 	if (arg == NULL) {
-		parse_error("No parameter list supplied--must supply at least an ISIS3 object and file name.\n");
+		parse_error(
+		    "No parameter list supplied--must supply at least an ISIS3 object and file name.\n");
 		return (NULL);
 	}
 
 	Alist alist[7];
-	alist[0] = make_alist("obj", ID_UNK, NULL, &obj);
-	alist[1] = make_alist("filename", ID_STRING, NULL, &filename);
-	alist[2] = make_alist("force", INT, NULL, &force);
-	alist[3] = make_alist("bsqTile", ID_STRING, NULL, &bsqTile);
-	alist[4] = make_alist("valTs", INT, NULL, &ts);
-	alist[5] = make_alist("valTl", INT, NULL, &tl);
+	alist[0]      = make_alist("obj", ID_UNK, NULL, &obj);
+	alist[1]      = make_alist("filename", ID_STRING, NULL, &filename);
+	alist[2]      = make_alist("force", INT, NULL, &force);
+	alist[3]      = make_alist("bsqTile", ID_STRING, NULL, &bsqTile);
+	alist[4]      = make_alist("valTs", INT, NULL, &ts);
+	alist[5]      = make_alist("valTl", INT, NULL, &tl);
 	alist[6].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) {
-		parse_error("No useful command line, should have: ISIS3object, \"filename\", [force=0,1], [[\"BSQ\",\"Tile\"], [valTs=value], [valTl=value]]");
+		parse_error(
+		    "No useful command line, should have: ISIS3object, \"filename\", [force=0,1], "
+		    "[[\"BSQ\",\"Tile\"], [valTs=value], [valTl=value]]");
 		return NULL;
 	}
 
@@ -206,29 +213,28 @@ Var* WriteISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 	if (V_TYPE(obj) == ID_STRUCT) {
 		int i;
 		strcpy(bsqTileBuffer, bsqTile);
-		for(i = 0; i < strlen(bsqTile) ; i ++) {
+		for (i = 0; i < strlen(bsqTile); i++) {
 			bsqTileBuffer[i] = toupper(bsqTileBuffer[i]);
 		}
-		if( strcmp("BSQ", bsqTileBuffer) == 0) {
+		if (strcmp("BSQ", bsqTileBuffer) == 0) {
 			strcpy(bsqTileBuffer, bsqItem);
 			/*
 			 * If we are BSQ, we are NOT tiled
 			 * so set these to negative
 			 */
-			ts=-1;
-			tl=-1;
+			ts = -1;
+			tl = -1;
 		}
 		/*
 		 * If we are Tiled, we must have
 		 * positive ts and positive tl
 		 */
-		if( strcmp("TILE", bsqTileBuffer) == 0) {
-			if( (ts < 0) || (tl < 0) ) {
+		if (strcmp("TILE", bsqTileBuffer) == 0) {
+			if ((ts < 0) || (tl < 0)) {
 				strcpy(bsqTileBuffer, bsqItem);
-				ts=-1;
-				ts=-1;
-			}
-			else {
+				ts = -1;
+				ts = -1;
+			} else {
 				strcpy(bsqTileBuffer, tileItem);
 			}
 		}
@@ -241,27 +247,26 @@ Var* WriteISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 	}
 }
 
-
-Var* do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int valTl)
+Var* do_writeISIS3(Var* obj, char* ISIS3_filename, char* bsqTile, int valTs, int valTl)
 {
 	int count;
 	int writeResult = 1;
 	int i, j;
-	char *name;
+	char* name;
 	char buffer[160];
-	char *ISIS3label = NULL;
-	unsigned char *isis3Data = NULL;
+	char* ISIS3label         = NULL;
+	unsigned char* isis3Data = NULL;
 
 	size_t allData = 0;
 
-	Var *objIsisCube = NULL;
-	Var *objCore = NULL;
-	Var *objDimensions = NULL;
-	Var *objPixels = NULL;
-	Var *objLabel = NULL;
-	Var *objTemp = NULL;
+	Var* objIsisCube   = NULL;
+	Var* objCore       = NULL;
+	Var* objDimensions = NULL;
+	Var* objPixels     = NULL;
+	Var* objLabel      = NULL;
+	Var* objTemp       = NULL;
 
-	FILE *fp;
+	FILE* fp;
 
 	minIsisInfo isisinfo; // in isis3Include.h
 
@@ -279,47 +284,43 @@ Var* do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int
 		return NULL;
 	}
 
-
 	if (i >= 0) {
 
 		// in case these are not there, default
 		isisinfo.TileSamples = valTs;
-		isisinfo.TileLines = valTl;
+		isisinfo.TileLines   = valTl;
 
 		count = get_struct_count(objCore);
 		for (j = 0; j < count; j++) {
 			get_struct_element(objCore, j, &name, &objTemp);
 
 			if (strcmp("StartByte", name) == 0) {
-				isisinfo.StartByte = ((int *) V_DATA(objTemp))[0];
-				//printf("StartByte is %d\n", isisinfo.StartByte);
+				isisinfo.StartByte = ((int*)V_DATA(objTemp))[0];
+				// printf("StartByte is %d\n", isisinfo.StartByte);
 			}
 
 			else if (strcmp("Format", name) == 0) {
-		   	    if(strcmp(bsqTile, "NOTHING") == 0) {
-		   	    	isisinfo.Format = V_STRING(objTemp);
-		   	    }
-		   	    else {
-		   	    	isisinfo.Format = bsqTile;
-		   	    }
-				//printf("Format is %s\n", isisinfo.Format);
-		   	}
+				if (strcmp(bsqTile, "NOTHING") == 0) {
+					isisinfo.Format = V_STRING(objTemp);
+				} else {
+					isisinfo.Format = bsqTile;
+				}
+				// printf("Format is %s\n", isisinfo.Format);
+			}
 
 			else if (strcmp("TileSamples", name) == 0) {
-				if( (isisinfo.TileSamples < 0) &&
-					strcmp (isisinfo.Format, "Tile") == 0) {
+				if ((isisinfo.TileSamples < 0) && strcmp(isisinfo.Format, "Tile") == 0) {
 
-					isisinfo.TileSamples = ((int *) V_DATA(objTemp))[0];
-					//printf("TileSamples is %d\n", isisinfo.TileSamples);
+					isisinfo.TileSamples = ((int*)V_DATA(objTemp))[0];
+					// printf("TileSamples is %d\n", isisinfo.TileSamples);
 				}
 			}
 
 			else if (strcmp("TileLines", name) == 0) {
-				if( (isisinfo.TileLines < 0) &&
-					strcmp (isisinfo.Format, "Tile") == 0) {
+				if ((isisinfo.TileLines < 0) && strcmp(isisinfo.Format, "Tile") == 0) {
 
-					isisinfo.TileLines = ((int *) V_DATA(objTemp))[0];
-					//printf("TileLines is %d\n", isisinfo.TileLines);
+					isisinfo.TileLines = ((int*)V_DATA(objTemp))[0];
+					// printf("TileLines is %d\n", isisinfo.TileLines);
 				}
 			}
 		}
@@ -334,16 +335,14 @@ Var* do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int
 				get_struct_element(objDimensions, j, &name, &objTemp);
 
 				if (strcmp("Samples", name) == 0) {
-					isisinfo.Samples = ((int *) V_DATA(objTemp))[0];
-					//printf("Samples is %d\n", isisinfo.Samples);
-				}
-				else if (strcmp("Lines", name) == 0) {
-					isisinfo.Lines = ((int *) V_DATA(objTemp))[0];
-					//printf("Lines is %d\n", isisinfo.Lines);
-				}
-				else if (strcmp("Bands", name) == 0) {
-					isisinfo.Bands = ((int *) V_DATA(objTemp))[0];
-					//printf("Bands is %d\n", isisinfo.Bands);
+					isisinfo.Samples = ((int*)V_DATA(objTemp))[0];
+					// printf("Samples is %d\n", isisinfo.Samples);
+				} else if (strcmp("Lines", name) == 0) {
+					isisinfo.Lines = ((int*)V_DATA(objTemp))[0];
+					// printf("Lines is %d\n", isisinfo.Lines);
+				} else if (strcmp("Bands", name) == 0) {
+					isisinfo.Bands = ((int*)V_DATA(objTemp))[0];
+					// printf("Bands is %d\n", isisinfo.Bands);
 				}
 			}
 		}
@@ -358,19 +357,16 @@ Var* do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int
 
 				if (strcmp("Type", name) == 0) {
 					isisinfo.Type = V_STRING(objTemp);
-					//printf("Type is %s\n", isisinfo.Type);
-				}
-				else if (strcmp("ByteOrder", name) == 0) {
+					// printf("Type is %s\n", isisinfo.Type);
+				} else if (strcmp("ByteOrder", name) == 0) {
 					isisinfo.ByteOrder = V_STRING(objTemp);
-					//printf("ByteOrder is %s\n", isisinfo.ByteOrder);
-				}
-				else if (strcmp("Base", name) == 0) {
-					isisinfo.Base = ((double *) V_DATA(objTemp))[0];
-					//printf("Base is %.1f\n", isisinfo.Base);
-				}
-				else if (strcmp("Multiplier", name) == 0) {
-					isisinfo.Multiplier = ((double *) V_DATA(objTemp))[0];
-					//printf("Multiplier is %.1f\n", isisinfo.Multiplier);
+					// printf("ByteOrder is %s\n", isisinfo.ByteOrder);
+				} else if (strcmp("Base", name) == 0) {
+					isisinfo.Base = ((double*)V_DATA(objTemp))[0];
+					// printf("Base is %.1f\n", isisinfo.Base);
+				} else if (strcmp("Multiplier", name) == 0) {
+					isisinfo.Multiplier = ((double*)V_DATA(objTemp))[0];
+					// printf("Multiplier is %.1f\n", isisinfo.Multiplier);
 				}
 			}
 		}
@@ -384,120 +380,118 @@ Var* do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int
 				get_struct_element(objLabel, j, &name, &objTemp);
 
 				if (strcmp("Bytes", name) == 0) {
-					isisinfo.Bytes = ((int *) V_DATA(objTemp))[0];
-					//printf("Bytes is %d\n", isisinfo.Bytes);
+					isisinfo.Bytes = ((int*)V_DATA(objTemp))[0];
+					// printf("Bytes is %d\n", isisinfo.Bytes);
 				}
 			}
 		}
 	}
 
-
 	if (i >= 0) {
 		ISIS3label = calloc(0x10000, sizeof(unsigned char));
-		if(ISIS3label == NULL) {
+		if (ISIS3label == NULL) {
 			fprintf(stderr, "Could not allocate space for building label");
 			return NULL;
 		}
 
-		strcpy(ISIS3label, &cubeStub[0][0]);                            //  { "Object = IsisCube" },                // 00
+		strcpy(ISIS3label, &cubeStub[0][0]); //  { "Object = IsisCube" },                // 00
 		strcat(ISIS3label, "\n");
 
-		strcat(ISIS3label, &cubeStub[1][0]);                            //  { "  Object = Core" },                  // 01
+		strcat(ISIS3label, &cubeStub[1][0]); //  { "  Object = Core" },                  // 01
 		strcat(ISIS3label, "\n");
 
-		strcat(ISIS3label, &cubeStub[2][0]);                            //  { "    StartByte   = " },               // 02
+		strcat(ISIS3label, &cubeStub[2][0]); //  { "    StartByte   = " },               // 02
 		sprintf(buffer, "%d\n", isisinfo.StartByte);
 		strcat(ISIS3label, buffer);
 
-		strcat(ISIS3label, &cubeStub[3][0]);                            //  { "    Format      = " },               // 03
+		strcat(ISIS3label, &cubeStub[3][0]); //  { "    Format      = " },               // 03
 		sprintf(buffer, "%s\n", isisinfo.Format);
 		strcat(ISIS3label, buffer);
 
-		 /*
-		  * We must be Tile Format or
-		  * these don't occur
-		  */
+		/*
+		 * We must be Tile Format or
+		 * these don't occur
+		 */
 
-		if(strcmp(isisinfo.Format, "Tile") == 0) {
+		if (strcmp(isisinfo.Format, "Tile") == 0) {
 
-			strcat(ISIS3label, &cubeStub[4][0]);                    //  { "    TileSamples = " },               // 04
+			strcat(ISIS3label, &cubeStub[4][0]); //  { "    TileSamples = " },               // 04
 			sprintf(buffer, "%d\n", isisinfo.TileSamples);
 			strcat(ISIS3label, buffer);
 
-			strcat(ISIS3label, &cubeStub[5][0]);                    //  { "    TileLines = " },                 // 05
+			strcat(ISIS3label, &cubeStub[5][0]); //  { "    TileLines = " },                 // 05
 			sprintf(buffer, "%d\n", isisinfo.TileLines);
 			strcat(ISIS3label, buffer);
 		}
 
-
-		strcat(ISIS3label, &cubeStub[6][0]);                            //  { "" }                                  // 06
+		strcat(ISIS3label, &cubeStub[6][0]); //  { "" }                                  // 06
 		strcat(ISIS3label, "\n");
 
-		strcat(ISIS3label, &cubeStub[7][0]);                            //  { "    Group = Dimensions" },           // 07
+		strcat(ISIS3label, &cubeStub[7][0]); //  { "    Group = Dimensions" },           // 07
 		strcat(ISIS3label, "\n");
 
-		strcat(ISIS3label, &cubeStub[8][0]);                            //  { "      Samples = " },                 // 08
+		strcat(ISIS3label, &cubeStub[8][0]); //  { "      Samples = " },                 // 08
 		sprintf(buffer, "%d\n", isisinfo.Samples);
 		strcat(ISIS3label, buffer);
 
-		strcat(ISIS3label, &cubeStub[9][0]);                            //  { "      Lines   = " },                 // 09
+		strcat(ISIS3label, &cubeStub[9][0]); //  { "      Lines   = " },                 // 09
 		sprintf(buffer, "%d\n", isisinfo.Lines);
 		strcat(ISIS3label, buffer);
 
-		strcat(ISIS3label, &cubeStub[10][0]);                           //  { "      Bands   = " },                 // 10
+		strcat(ISIS3label, &cubeStub[10][0]); //  { "      Bands   = " },                 // 10
 		sprintf(buffer, "%d\n", isisinfo.Bands);
 		strcat(ISIS3label, buffer);
 
-		strcat(ISIS3label, &cubeStub[11][0]);                            //  { "    End_Group" },                   // 11
+		strcat(ISIS3label, &cubeStub[11][0]); //  { "    End_Group" },                   // 11
 		strcat(ISIS3label, "\n");
 
-		strcat(ISIS3label, &cubeStub[12][0]);                            //  { "" }                                 // 12
+		strcat(ISIS3label, &cubeStub[12][0]); //  { "" }                                 // 12
 		strcat(ISIS3label, "\n");
 
-		strcat(ISIS3label, &cubeStub[13][0]);                            //  { "    Group = Pixels" },              // 13
+		strcat(ISIS3label, &cubeStub[13][0]); //  { "    Group = Pixels" },              // 13
 		strcat(ISIS3label, "\n");
 
-		strcat(ISIS3label, &cubeStub[14][0]);                            //  { "      Type       = " },             // 14
+		strcat(ISIS3label, &cubeStub[14][0]); //  { "      Type       = " },             // 14
 		sprintf(buffer, "%s\n", isisinfo.Type);
 		strcat(ISIS3label, buffer);
 
-		strcat(ISIS3label, &cubeStub[15][0]);                            //  { "      ByteOrder  = " },             // 15 Lsb, Msb
+		strcat(ISIS3label,
+		       &cubeStub[15][0]); //  { "      ByteOrder  = " },             // 15 Lsb, Msb
 		sprintf(buffer, "%s\n", isisinfo.ByteOrder);
 		strcat(ISIS3label, buffer);
 
-		strcat(ISIS3label, &cubeStub[16][0]);                            //  { "      Base       = " },             // 16 0.0
+		strcat(ISIS3label, &cubeStub[16][0]); //  { "      Base       = " },             // 16 0.0
 		sprintf(buffer, "%.1f\n", isisinfo.Base);
 		strcat(ISIS3label, buffer);
 
-		strcat(ISIS3label, &cubeStub[17][0]);                            //  { "      Multiplier = " },             // 17 1.0
+		strcat(ISIS3label, &cubeStub[17][0]); //  { "      Multiplier = " },             // 17 1.0
 		sprintf(buffer, "%.1f\n", isisinfo.Multiplier);
 		strcat(ISIS3label, buffer);
 
-		strcat(ISIS3label, &cubeStub[18][0]);                            //  { "    End_Group" },                   // 18
+		strcat(ISIS3label, &cubeStub[18][0]); //  { "    End_Group" },                   // 18
 		strcat(ISIS3label, "\n");
 
-		strcat(ISIS3label, &cubeStub[19][0]);                            //  { "  End_Object" },                    // 19
+		strcat(ISIS3label, &cubeStub[19][0]); //  { "  End_Object" },                    // 19
 		strcat(ISIS3label, "\n");
 
-		strcat(ISIS3label, &cubeStub[20][0]);                            //  { "End_Object" },                      // 20
+		strcat(ISIS3label, &cubeStub[20][0]); //  { "End_Object" },                      // 20
 		strcat(ISIS3label, "\n");
 
-		strcat(ISIS3label, &cubeStub[21][0]);                            //  { "" }                                 // 21
+		strcat(ISIS3label, &cubeStub[21][0]); //  { "" }                                 // 21
 		strcat(ISIS3label, "\n");
 
-		strcat(ISIS3label, &cubeStub[22][0]);                            //  { "Object = Label" },                  // 22
+		strcat(ISIS3label, &cubeStub[22][0]); //  { "Object = Label" },                  // 22
 		strcat(ISIS3label, "\n");
 
-		strcat(ISIS3label, &cubeStub[23][0]);                            //  { "  Bytes = " },                      // 23 65536
+		strcat(ISIS3label, &cubeStub[23][0]); //  { "  Bytes = " },                      // 23 65536
 		sprintf(buffer, "%d\n", isisinfo.Bytes);
 		strcat(ISIS3label, buffer);
 
-		strcat(ISIS3label, &cubeStub[24][0]);                            //  { "End_Object" },                      // 24
+		strcat(ISIS3label, &cubeStub[24][0]); //  { "End_Object" },                      // 24
 		strcat(ISIS3label, "\n");
 
-		strcat(ISIS3label, &cubeStub[25][0]);                            //  { "End" },                             // 25
+		strcat(ISIS3label, &cubeStub[25][0]); //  { "End" },                             // 25
 		strcat(ISIS3label, "\n");
-
 
 		fwrite(ISIS3label, 0x10000, 1, fp);
 
@@ -508,28 +502,26 @@ Var* do_writeISIS3(Var *obj, char *ISIS3_filename, char *bsqTile, int valTs, int
 
 		get_struct_element(obj, 0, &name, &objTemp);
 
-		isis3Data = (unsigned char *) V_DATA(objTemp);
+		isis3Data = (unsigned char*)V_DATA(objTemp);
 
 		writeResult = writeCube(fp, &isisinfo, isis3Data);
 
 		fclose(fp);
 
-	}
-	else {
+	} else {
 		fprintf(stderr, "Malformed ISIS3 Cube");
 	}
 
 	return NULL;
-
 }
 
-Var* ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
+Var* ReadISIS3(vfuncptr func, Var* arg) // drd proto for this is in func.h
 {
-	Var *fn = NULL;
-	char *filename = NULL;
-	int data = 1;  // parse the cube
-	int use_names = 1; // reverse name and info if 1
-	int use_units = 0; // use the units field if 1
+	Var* fn        = NULL;
+	char* filename = NULL;
+	int data       = 1; // parse the cube
+	int use_names  = 1; // reverse name and info if 1
+	int use_units  = 0; // use the units field if 1
 	int i;
 
 	/*
@@ -538,16 +530,15 @@ Var* ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 	 */
 
 	if (arg == NULL) {
-		parse_error(
-				"No parameter list supplied--must at least supply an input file name.\n");
+		parse_error("No parameter list supplied--must at least supply an input file name.\n");
 		return (NULL);
 	}
 
 	Alist alist[5];
-	alist[0] = make_alist("filename", ID_UNK, NULL, &fn);
-	alist[1] = make_alist("data", INT, NULL, &data);
-	alist[2] = make_alist("use_names", INT, NULL, &use_names);
-	alist[3] = make_alist("use_units", INT, NULL, &use_units);
+	alist[0]      = make_alist("filename", ID_UNK, NULL, &fn);
+	alist[1]      = make_alist("data", INT, NULL, &data);
+	alist[2]      = make_alist("use_names", INT, NULL, &use_names);
+	alist[3]      = make_alist("use_units", INT, NULL, &use_units);
 	alist[4].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) {
@@ -556,10 +547,10 @@ Var* ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 
 	/* Handle loading many filenames */
 	if (V_TYPE(fn) == ID_TEXT) {
-		Var *s = new_struct(V_TEXT(fn).Row);
+		Var* s = new_struct(V_TEXT(fn).Row);
 		for (i = 0; i < V_TEXT(fn).Row; i++) {
 			filename = strdup(V_TEXT(fn).text[i]);
-			Var *t = do_loadISIS3(func, filename, data, use_names, use_units);
+			Var* t   = do_loadISIS3(func, filename, data, use_names, use_units);
 			if (t) {
 				add_struct(s, filename, t);
 			}
@@ -574,83 +565,83 @@ Var* ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 		filename = V_STRING(fn);
 		return (do_loadISIS3(func, filename, data, use_names, use_units));
 	} else {
-		parse_error("Illegal argument to function %s(%s), expected STRING",
-				func->name, "filename");
+		parse_error("Illegal argument to function %s(%s), expected STRING", func->name, "filename");
 		return (NULL);
 	}
 }
 
-static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names, int use_units)
+static Var* do_loadISIS3(vfuncptr func, char* filename, int data, int use_names, int use_units)
 {
 
-	char *fname;
-	FILE *fp;
-	Var *v = new_struct(0);
-	Var *cubeVar = new_struct(0);
-	Var *IsisCube = new_struct(0);
-	Var *naifKeywordsObj = NULL; // NULL for logic tests, address of a Var * is copied to it if used
-	Var *historyObj = NULL; // NULL for logic tests, address of a Var * is copied to it if used
-	Var *originalLabelObj = NULL; // NULL for logic tests, address of a Var * is copied to it if used
-	Var *Object[5]; // Can nest up to 5 deep
-	Var *Group = new_struct(0);
-	Var *stub = new_struct(0);
-	Var *numArray = new_struct(0);
-	Var *charBlob = new_struct(0);
-	int originalLabelRows = 0;
-	char **olRows = NULL;
-	void *localData = NULL;
-	char *originalLabelData = NULL;
-	char *ObjectName[5];
+	char* fname;
+	FILE* fp;
+	Var* v               = new_struct(0);
+	Var* cubeVar         = new_struct(0);
+	Var* IsisCube        = new_struct(0);
+	Var* naifKeywordsObj = NULL; // NULL for logic tests, address of a Var * is copied to it if used
+	Var* historyObj      = NULL; // NULL for logic tests, address of a Var * is copied to it if used
+	Var* originalLabelObj =
+	    NULL;       // NULL for logic tests, address of a Var * is copied to it if used
+	Var* Object[5]; // Can nest up to 5 deep
+	Var* Group              = new_struct(0);
+	Var* stub               = new_struct(0);
+	Var* numArray           = new_struct(0);
+	Var* charBlob           = new_struct(0);
+	int originalLabelRows   = 0;
+	char** olRows           = NULL;
+	void* localData         = NULL;
+	char* originalLabelData = NULL;
+	char* ObjectName[5];
 	int i, k, step, count;
 	int lineInCount = 0;
 
-	volatile int stopCount = 32;  // find stop
-	double *testD;
-	unsigned char *testC;
+	volatile int stopCount = 32; // find stop
+	double* testD;
+	unsigned char* testC;
 	unsigned char inFix[8];
-	int objectNest = -1;
-	char *workingObject = NULL;
-	char *workingGroup = NULL;
-	char *fileIndicator = NULL;
+	int objectNest      = -1;
+	char* workingObject = NULL;
+	char* workingGroup  = NULL;
+	char* fileIndicator = NULL;
 	char namebuf[DV_NAMEBUF_MAX];
 	static char noGroup[] = "NONE";
-	int inGroup = 0;
-	int position = 0;
-	long whereInFile;  // Next read starts here
-	long savedFileLocation = 0; // Save location
+	int inGroup           = 0;
+	int position          = 0;
+	long whereInFile;            // Next read starts here
+	long savedFileLocation  = 0; // Save location
 	long startOfHistoryRead = 0;
-	char *historyStrings = NULL;
+	char* historyStrings    = NULL;
 	long historyOffset;
 	long historySize;
 	long currentLocation;
-	int inHistory = 0;
-	int inOriginalLabel = 0;
-	int doneReadingHistory = 1;
-	int historyObjectLevel = -2;
-	int retVal = 0;
-	int weNeedToRead = 1;
-	int doneFlag = 0;
-	int inNaifKeywords = 0;
-	int naifObjectLevel = -2;
-	int localInTable = 0;  // 0 until we enter a table, 0 when we end a table
-	unsigned int localStartByte = 0;
-	unsigned int localBytes = 0;
-	unsigned int localRecords = 0;
-	unsigned int olLocalBytes = 0; // for OriginalLabel
+	int inHistory                 = 0;
+	int inOriginalLabel           = 0;
+	int doneReadingHistory        = 1;
+	int historyObjectLevel        = -2;
+	int retVal                    = 0;
+	int weNeedToRead              = 1;
+	int doneFlag                  = 0;
+	int inNaifKeywords            = 0;
+	int naifObjectLevel           = -2;
+	int localInTable              = 0; // 0 until we enter a table, 0 when we end a table
+	unsigned int localStartByte   = 0;
+	unsigned int localBytes       = 0;
+	unsigned int localRecords     = 0;
+	unsigned int olLocalBytes     = 0; // for OriginalLabel
 	unsigned int olLocalStartByte = 0; // for OriginalLabel
-	int localByteOrder = 2; // 0 will be Lsb, 1 will be Msb, 2 is initial condition
-	int localFieldCount = 0;
+	int localByteOrder            = 2; // 0 will be Lsb, 1 will be Msb, 2 is initial condition
+	int localFieldCount           = 0;
 	char localTableName[256];
 	char localLine[256];
-	int localSize = 0;  // This will be size of the item
-	/* from parser.h, and right now ignoring others:
-	 #define INT			3
-	 #define FLOAT		4
-	 #define DOUBLE		8
-	 We are assuming ONE type per table.  If more than one, will flag it and not process it
-	 */
+	int localSize = 0;    // This will be size of the item
+	                      /* from parser.h, and right now ignoring others:
+	                       #define INT			3
+	                       #define FLOAT		4
+	                       #define DOUBLE		8
+	                       We are assuming ONE type per table.  If more than one, will flag it and not process it
+	                       */
 	int localProcess = 1; // Set to zero to NOT process
-	char *nptr; // for strtoxx conversions
+	char* nptr;           // for strtoxx conversions
 
 	for (i = 0; i < 5; i++) {
 		Object[i] = NULL;
@@ -661,11 +652,11 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 	 * So it is handled in the calling function
 	 */
 
-	//if (filename == NULL) {
+	// if (filename == NULL) {
 	//    parse_error("%s: No filename specified\n", func->name);
 	//   return (NULL);
 	//}
-	if ((fname = dv_locate_file(filename)) == (char*) NULL) {
+	if ((fname = dv_locate_file(filename)) == (char*)NULL) {
 		parse_error("%s: Unable to expand filename %s\n", func->name, filename);
 		return (NULL);
 	}
@@ -683,11 +674,11 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 			/* fprintf(stderr, "is compressed\n");    FIX: remove */
 			fclose(fp);
 			fname = iom_uncompress_with_name(fname);
-			fp = fopen(fname, "rb");
+			fp    = fopen(fname, "rb");
 		}
 	}
 
-	//parse_error("/**************************************************/\n");
+	// parse_error("/**************************************************/\n");
 	if (data == 1) { // we parse cube info
 		// parse_error("Parsing Cube Parameters...\n");
 		int check;
@@ -699,7 +690,6 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 			return NULL;
 		}
 		fseeko(fp, 0, SEEK_SET);
-
 	}
 
 	for (k = 0; k < 2048; k++) { // 2048 seems a reasonable limit
@@ -714,7 +704,7 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 
 #ifdef PRINTINPUT
 				lineInCount++;
-				if(lineInCount == stopCount) {
+				if (lineInCount == stopCount) {
 					printf("Eureka!\n");
 				}
 #endif
@@ -725,37 +715,36 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 					}
 
 #ifdef PRINTINPUT
-					printf("The difference is %ld, max difference is %ld\n", currentLocation-startOfHistoryRead, historySize);
+					printf("The difference is %ld, max difference is %ld\n",
+					       currentLocation - startOfHistoryRead, historySize);
 #endif
 				}
-
 			}
 
 #ifdef PRINTINPUT
-			if(fileIndicator != NULL) {
+			if (fileIndicator != NULL) {
 				printf("%3d : %3d : %s", lineInCount, strlen(inputString), inputString);
 				if (lineInCount == countFix) {
 					printf("lineInCount = %d caught\n", countFix);
 				}
-			}
-			else {
+			} else {
 				printf("\n\nReached End of History\n\n");
 			}
 #endif
 
 			if (fileIndicator == NULL) {
 				fseeko(fp, savedFileLocation, SEEK_SET);
-				inHistory = -1; // drd history
+				inHistory          = -1; // drd history
 				historyObjectLevel = -2;
 				continue;
 			}
 
 			whereInFile = ftello(fp);
-			i = strlen(inputString);
+			i           = strlen(inputString);
 		}
 
 		if (doneFlag == 0) { // Only do this if we are not done
-			if (i > 1) { // There may be "blank" lines with only a \n
+			if (i > 1) {     // There may be "blank" lines with only a \n
 				if (weNeedToRead) {
 					// Note that there is a '\n' at the end of the input string
 					i -= 1;
@@ -774,8 +763,7 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 					 * UNLESS the line is an End_ of something
 					 * In this annoying case, we will reorganize:
 					 */
-					if ((strstr(inputString, "=") == NULL)
-							&& (strstr(inputString, "End_") == NULL)) {
+					if ((strstr(inputString, "=") == NULL) && (strstr(inputString, "End_") == NULL)) {
 						if (strcmp(inputString, "End") != 0) {
 							// printf("Here is %s\n", inputString);
 							strcpy(string1, "comment = ");
@@ -783,8 +771,7 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 							strcpy(inputString, string1);
 						}
 					}
-					count = sscanf(inputString, "%s%s%s%s", string1, string2,
-							string3, string4);
+					count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
 				} else {
 					weNeedToRead = 1;
 				}
@@ -797,7 +784,7 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 				//
 				if ((strcmp("End", string1) == 0) && (count == 1)) {
 					doneFlag = 1;
-#ifdef  PRINTINPUT
+#ifdef PRINTINPUT
 					printf("\nFound the end of the header\n");
 #endif
 					continue;
@@ -821,13 +808,14 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 						}
 
 						if (localInTable == 0) { // drd table processing
-							localInTable = 1;
+							localInTable   = 1;
 							localStartByte = 0;
-							localBytes = 0;
-							localRecords = 0;
-							localByteOrder = 2; // 0 is Lsb, 1 is Msb, this 2 is an initial condition
-							localSize = 0;
-							localProcess = 1;
+							localBytes     = 0;
+							localRecords   = 0;
+							localByteOrder =
+							    2; // 0 is Lsb, 1 is Msb, this 2 is an initial condition
+							localSize       = 0;
+							localProcess    = 1;
 							localFieldCount = 0;
 							if (use_names == 1) {
 								/*
@@ -836,13 +824,14 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 								 * to use for the table values
 								 */
 								strcpy(localTableName, "Table");
-								// strcpy(localTableName, "Table_"); // Option is to put this back in and
+								// strcpy(localTableName, "Table_"); // Option is to put this back
+								// in and
 								// strcat(localTableName, string3); // have a longish table name
 							} else {
 								strcpy(localTableName, "NOTHING");
 							}
 						} // end localInTable == 0
-					}  // end strcmp("Table", string3)
+					}     // end strcmp("Table", string3)
 
 					strcpy(namebuf, string3);
 					if (objectNest >= 0) {
@@ -853,36 +842,38 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 					workingObject = strdup(namebuf);
 					if (strcmp("IsisCube", string3) == 0) {
 						workingGroup = noGroup;
-						inGroup = 0;
+						inGroup      = 0;
 					} else {
 						objectNest++; // this was because IsisCube was at -1 level
 						if (objectNest >= 5) {
 							return NULL;
 						}
 
-						Object[objectNest] = new_struct(0);
+						Object[objectNest]     = new_struct(0);
 						ObjectName[objectNest] = workingObject;
 
-						if (strcmp("NaifKeywords", ObjectName[objectNest])
-								== 0) {
-							inNaifKeywords = 1;
+						if (strcmp("NaifKeywords", ObjectName[objectNest]) == 0) {
+							inNaifKeywords  = 1;
 							naifObjectLevel = objectNest;
 						}
 
-// This is the original OriginalLabel Processing Code
+						// This is the original OriginalLabel Processing Code
 						/*
 						 if( strcmp("OriginalLabel", ObjectName[objectNest]) == 0) {
 						 inOriginalLabel = 1;
 						 fgets(inputString, 2046, fp); // Name = IsisCube
 						 fgets(inputString, 2046, fp); // StartByte = 92020737
-						 count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
+						 count = sscanf(inputString, "%s%s%s%s", string1, string2, string3,
+						 string4);
 						 sscanf(string3, "%ld", &historyOffset);
 						 fgets(inputString, 2046, fp); // Bytes = 3210
 						 savedFileLocation = ftell(fp); // This is where we return to parsing later
-						 count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
+						 count = sscanf(inputString, "%s%s%s%s", string1, string2, string3,
+						 string4);
 						 sscanf(string3, "%ld", &historySize);
 						 fseek(fp, historyOffset-1, SEEK_SET);
-						 historyStrings = (char *)malloc(historySize + 1);  // The +1 is in case we need room for a \0
+						 historyStrings = (char *)malloc(historySize + 1);  // The +1 is in case we
+						 need room for a \0
 						 if(historyStrings == NULL) {
 						 parse_error("Could not malloc space for OriginalLabel\n");
 						 return NULL;
@@ -893,7 +884,8 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 
 						 fread(historyStrings, 1, historySize, fp);
 						 historyStrings[historySize] = '\0'; // Force '\0' at the end
-						 stub = newString(historyStrings); // All the History in a text blob with a '\0' at the end
+						 stub = newString(historyStrings); // All the History in a text blob with a
+						 '\0' at the end
 						 add_struct(Object[objectNest], "OriginalLabel", stub);
 						 fseek(fp, savedFileLocation, SEEK_SET);
 						 // The next read is "End_Object"
@@ -910,20 +902,20 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 							count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
 							sscanf(string3, "%ld", &historyOffset);
 							fgets(inputString, 2046, fp); // Bytes = 8292
-							savedFileLocation = ftello(fp); // This is where we return to parsing later
+							savedFileLocation =
+							    ftello(fp); // This is where we return to parsing later
 							count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
 							sscanf(string3, "%ld", &historySize);
 							fseeko(fp, historyOffset - 1, SEEK_SET);
 							startOfHistoryRead = ftello(fp);
-							inHistory = 1;
+							inHistory          = 1;
 							doneReadingHistory = 0;
 							historyObjectLevel = objectNest;
-							// drd history putting history back in line
-							// historyObj = Object[objectNest];
+// drd history putting history back in line
+// historyObj = Object[objectNest];
 #ifdef PRINTINPUT
 							printf("\n\nNow jumping to History\n");
 #endif
-
 						}
 					}
 					if (weNeedToRead == 0) {
@@ -931,7 +923,6 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 						strcpy(string3, string3_2);
 						strcpy(inputString, "=");
 						strcat(inputString, string3);
-
 					}
 
 				} /* End Let's see if we are starting an Object */
@@ -959,14 +950,13 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 						make_unique_name(namebuf, IsisCube);
 					}
 					workingGroup = strdup(namebuf);
-					inGroup = 1;
-					Group = new_struct(0);
+					inGroup      = 1;
+					Group        = new_struct(0);
 					if (weNeedToRead == 0) {
 						strcpy(string1, string1_2);
 						strcpy(string3, string3_2);
 						strcpy(inputString, "=");
 						strcat(inputString, string3);
-
 					}
 				}
 				/* Let's see if we are at an End_Object */
@@ -975,9 +965,10 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 					// drd history "object"
 					if (inHistory == -1) {
 						inHistory = 0; // drd history
-						stub = newString(strdup("history"));
+						stub      = newString(strdup("history"));
 					} else {
-						stub = newString(strdup("object")); // drd history this is all there was before putting history back inline
+						stub = newString(strdup("object")); // drd history this is all there was
+						                                    // before putting history back inline
 					}
 
 					if (objectNest >= 0) {
@@ -989,21 +980,25 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 							printf("localStartByte = %d\n", localStartByte);
 							printf("localBytes = %d\n", localBytes);
 							printf("localRecords = %d\n", localRecords);
-							printf("localByteOrder = %d\n", localByteOrder); // 0 is Lsb, 1 is Msb, this 2 is an initial condition
+							printf("localByteOrder = %d\n", localByteOrder); // 0 is Lsb, 1 is Msb,
+							                                                 // this 2 is an initial
+							                                                 // condition
 							printf("localSize = %d\n", localSize);
 							printf("localProcess = %d\n", localProcess);
 							printf("localFieldCount = %d\n", localFieldCount);
 							printf("localTableName = %s\n", localTableName);
 #endif
-							localData = malloc(localBytes);
+							localData         = malloc(localBytes);
 							savedFileLocation = ftello(fp);
-							fseeko(fp, localStartByte - 1, SEEK_SET); // REMEMBER the 1 offset for the addresses!!!!!
+							fseeko(fp, localStartByte - 1,
+							       SEEK_SET); // REMEMBER the 1 offset for the addresses!!!!!
 							fread(localData, localBytes, 1, fp);
 							fseeko(fp, savedFileLocation, SEEK_SET);
 
-							if (localByteOrder == 1) { // 0 is Lsb, 1 is Msb, this 2 is an initial condition
+							if (localByteOrder ==
+							    1) { // 0 is Lsb, 1 is Msb, this 2 is an initial condition
 
-								testC = (unsigned char *) localData;
+								testC = (unsigned char*)localData;
 
 								for (i = 0; i < localBytes; i += localSize) {
 									for (k = 0; k < localSize; k++) {
@@ -1013,32 +1008,40 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 
 									for (k = 0; k < localSize; k++) {
 										testC[i + k] = inFix[localSize - 1 - k];
-										// printf("testC[%d + %d] = inFix[%d]\n", i, k, localSize-1-k);
+										// printf("testC[%d + %d] = inFix[%d]\n", i, k,
+										// localSize-1-k);
 									}
 								}
 							}
 
 							numArray = newVal(BSQ, localFieldCount, localRecords, 1, localSize, localData);
 							add_struct(Object[objectNest], localTableName, numArray);
-						}  // end localInTable == 1
+						} // end localInTable == 1
 
 						else if (inOriginalLabel == 1) {
 							inOriginalLabel = 0;
-							parse_error("\n\"OriginalLabel\" is not processed by davinci, it is stored as a Text Buffer\n"); // was "as a string blob\n");
-							originalLabelData = (char *) malloc(olLocalBytes + 3); // we will force a \n','\0' at the end
+							parse_error(
+							    "\n\"OriginalLabel\" is not processed by davinci, it is stored as "
+							    "a Text Buffer\n"); // was "as a string blob\n");
+							originalLabelData = (char*)malloc(
+							    olLocalBytes + 3); // we will force a \n','\0' at the end
 							if (originalLabelData == NULL) {
 								parse_error("Could not malloc space for OriginalLabel\n");
 								return NULL;
 							}
 
 							savedFileLocation = ftello(fp);
-							fseeko(fp, olLocalStartByte - 1, SEEK_SET); // REMEMBER the 1 offset for the addresses!!!!!
-							//Here we read bytes instead of one big chunk to allow for
-							//any kind of historySize error--hopefully something is better than nothing
+							fseeko(fp, olLocalStartByte - 1,
+							       SEEK_SET); // REMEMBER the 1 offset for the addresses!!!!!
+							// Here we read bytes instead of one big chunk to allow for
+							// any kind of historySize error--hopefully something is better than
+							// nothing
 							fread(originalLabelData, 1, olLocalBytes, fp);
 							fseeko(fp, savedFileLocation, SEEK_SET);
-							originalLabelData[olLocalBytes + 2] = '\0'; // Force '\0' at the very end
-							originalLabelData[olLocalBytes + 1] = '\n'; // Force a '\n' at the end of text
+							originalLabelData[olLocalBytes + 2] =
+							    '\0'; // Force '\0' at the very end
+							originalLabelData[olLocalBytes + 1] =
+							    '\n'; // Force a '\n' at the end of text
 							// Var *newText(int rows, char **text)
 							originalLabelRows = 0;
 							for (k = 0; k < olLocalBytes + 2; k++) {
@@ -1058,29 +1061,36 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 									}
 
 									localLine[step] = '\0'; // Want a '\0' on the end and not a '\n'
-									olRows[i] = strdup(localLine);
+									olRows[i]       = strdup(localLine);
 									k++;
-									// printf("line %d: %s\n", i+1, olRows[i]);  // drd to print out the strings as they are added to the list
-
+									// printf("line %d: %s\n", i+1, olRows[i]);  // drd to print out
+									// the strings as they are added to the list
 								}
-								//  charBlob = newString(originalLabelData); // All the originalLabel in a text blob with a '\0' at the end
-								//             if you use the big blob, you don't need the list of strings in olRows[]
+								//  charBlob = newString(originalLabelData); // All the
+								//  originalLabel in a text blob with a '\0' at the end
+								//             if you use the big blob, you don't need the list of
+								//             strings in olRows[]
 								//             so choose either newString() or newText()
-								//             I have done this both ways--right now, Chris Edwards prefers the list of strings
-								charBlob = newText(originalLabelRows, olRows); // All the originalLabel as a list of strings
+								//             I have done this both ways--right now, Chris Edwards
+								//             prefers the list of strings
+								charBlob =
+								    newText(originalLabelRows,
+								            olRows); // All the originalLabel as a list of strings
 								add_struct(Object[objectNest], "TextBuffer", charBlob);
-							} // end malloc not NULL
-							else { // We could not malloc space for the array of pointers to pointers
-								stub = newString(strdup(
-								    "Could not malloc space to store OriginalLabel as list of strings"));
+							}      // end malloc not NULL
+							else { // We could not malloc space for the array of pointers to
+							       // pointers
+								stub =
+								    newString(strdup("Could not malloc space to store "
+								                     "OriginalLabel as list of strings"));
 								add_struct(Object[objectNest], "OriginalLabel", stub);
 							}
 							free(originalLabelData); // Don't need this anymore
-						} // end of inOriginalLabel == 1
+						}                            // end of inOriginalLabel == 1
 
 						if (inNaifKeywords == 1) {
 							naifKeywordsObj = Object[objectNest--];
-							inNaifKeywords = 0;
+							inNaifKeywords  = 0;
 							naifObjectLevel = -2;
 						}
 
@@ -1091,7 +1101,7 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 							}
 							add_struct(Object[objectNest - 1], ObjectName[objectNest], Object[objectNest]);
 							objectNest--;
-						} else {  //drd history putting History back in line
+						} else { // drd history putting History back in line
 							// if(strcmp("History", ObjectName[objectNest]) != 0)  // drd was
 							{ // History points to historyObj, historyObj is attached later
 								add_struct(IsisCube, ObjectName[objectNest], Object[objectNest]);
@@ -1099,11 +1109,11 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 
 							objectNest--;
 						}
-					}  // end objectNest >= 0
+					} // end objectNest >= 0
 					else {
 						add_struct(IsisCube, "isis_struct_type", stub);
 					}
-				}  // end string1 == "End_Object"
+				} // end string1 == "End_Object"
 				/* Let's see if we are at an End_Group */
 				else if (strcmp("End_Group", string1) == 0) {
 					stub = newString(strdup("group"));
@@ -1114,7 +1124,8 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 						add_struct(IsisCube, workingGroup, Group);
 					}
 					// We are done with this Group
-					workingGroup = noGroup; // May not get another Group for a while, point to noGroup
+					workingGroup =
+					    noGroup; // May not get another Group for a while, point to noGroup
 					inGroup = 0;
 				}
 
@@ -1147,8 +1158,9 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 							if (strcmp("Msb", string3) == 0) {
 								localByteOrder = 1;
 							} // end Msb
-						} // end ByteOrder
-						if ((localSize == 0) && strcmp("Type", string1) == 0) { // drd setting only once per table
+						}     // end ByteOrder
+						if ((localSize == 0) &&
+						    strcmp("Type", string1) == 0) { // drd setting only once per table
 							for (i = 0; i < strlen(string3); i++) {
 								string3[i] = toupper(string3[i]);
 							}
@@ -1161,9 +1173,9 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 							}
 						}
 					} // end of table info handling
-					/*
-					 * We may have OriginalLabel processing
-					 */
+					  /*
+					   * We may have OriginalLabel processing
+					   */
 					if (inOriginalLabel == 1) {
 						if (strcmp("StartByte", string1) == 0) {
 							olLocalStartByte = strtoul(string3, &nptr, 10);
@@ -1172,7 +1184,8 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 							olLocalBytes = strtoul(string3, &nptr, 10);
 						}
 					}
-					/* Make a unique name; either for the Group or Object we are in or the base IsisCube */
+					/* Make a unique name; either for the Group or Object we are in or the base
+					 * IsisCube */
 					cNameMaker(string1); // Fix some problems observed in the input name
 					strcpy(namebuf, string1);
 
@@ -1186,7 +1199,8 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 
 					// do a little research on continuation lines
 					// First is string lists enclosed by '(' and ')'
-					// These may be either text string lists or text strings representing number lists
+					// These may be either text string lists or text strings representing number
+					// lists
 					// We don't consider mixed lists
 					//
 
@@ -1210,7 +1224,8 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 
 					else {
 
-						// Next is the possibility of a long string with no delimiters that may extend to yet another line
+						// Next is the possibility of a long string with no delimiters that may
+						// extend to yet another line
 						// If there is another part to read in, we will concatenate it to string3
 						if ((string2[0] == '=') && (string3[strlen(string3) - 1] == '-') &&
 						    (strlen(string3) > 58)) { // The '-' is a hyphen for continuation
@@ -1241,24 +1256,27 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 						// Whether or not we read in an extra snippet, just continue
 
 						if (inGroup == 1) {
-							/* There may be <units> in string4. Units are strings enclosed by a '<' and a '>',
+							/* There may be <units> in string4. Units are strings enclosed by a '<'
+							 * and a '>',
 							 * or string4 may simply be a part of a string3 that has spaces in it.
 							 * Also, by default, we are now not showing units
 							 */
 							if ((use_units == 1) && (count == 4) && (string4[0] == '<') &&
 							    (string4[-1 + strlen(string4)] == '>')) {
 
-								add_converted_to_struct(Group, namebuf,string3);
+								add_converted_to_struct(Group, namebuf, string3);
 								strcat(namebuf, "Units");
 								add_struct(Group, namebuf, newString(strdup(string4)));
 							} else if ((use_units == 0) && (count == 4) && (string4[0] == '<') &&
 							           (string4[-1 + strlen(string4)] == '>')) {
 								add_converted_to_struct(Group, namebuf, string3);
-							} else { // &inputString[position] is the input string past the '=' with leading and trailing double quotes removed
+							} else { // &inputString[position] is the input string past the '=' with
+							         // leading and trailing double quotes removed
 								add_converted_to_struct(Group, namebuf, &inputString[position]);
 							}
 						} else {
-							/* There may be <units> in string4. Units are strings enclosed by a '<' and a '>',
+							/* There may be <units> in string4. Units are strings enclosed by a '<'
+							 * and a '>',
 							 * or string4 may simply be a part of a string3 that has spaces in it.
 							 * Also, by default, we are now not showing units
 							 */
@@ -1270,17 +1288,21 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 							} else if ((use_units == 0) && (count == 4) && (string4[0] == '<') &&
 							           (string4[-1 + strlen(string4)] == '>')) {
 								add_converted_to_struct(Object[objectNest], namebuf, string3);
-							} else { // &inputString[position] is the input string past the '=' with leading and trailing double quotes removed
-								if (inOriginalLabel == 1) { // todo -- is this only here, or is it needed in the "Group" one above, too?
-									//add_struct(Object[objectNest], "Note", newString(strdup("This item is not processed by davinci")));
+							} else { // &inputString[position] is the input string past the '=' with
+							         // leading and trailing double quotes removed
+								if (inOriginalLabel == 1) { // todo -- is this only here, or is it
+								                            // needed in the "Group" one above, too?
+									// add_struct(Object[objectNest], "Note", newString(strdup("This
+									// item is not processed by davinci")));
 								}
-								add_converted_to_struct(Object[objectNest], namebuf, &inputString[position]);
+								add_converted_to_struct(Object[objectNest], namebuf,
+								                        &inputString[position]);
 							}
 						}
 					}
 				} // end of not at beginning or end
-			} // end of length > 1
-		} // end of not done yet
+			}     // end of length > 1
+		}         // end of not done yet
 		else {
 			// parse_error("Found End of label...\n");
 			// parse_error("/**************************************************/\n");
@@ -1317,7 +1339,7 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 }
 
 /**************************************************************************/
-void make_unique_name(char * buffer, Var * dv_struct)
+void make_unique_name(char* buffer, Var* dv_struct)
 {
 	/*
 
@@ -1332,23 +1354,24 @@ void make_unique_name(char * buffer, Var * dv_struct)
 	 */
 	int start_count = 2;
 	char work_buf[DV_NAMEBUF_MAX];
-	Var * dummy_sptr;
+	Var* dummy_sptr;
 	strncpy(work_buf, buffer, DV_NAMEBUF_MAX - 1);
 	while (find_struct(dv_struct, work_buf, &dummy_sptr) != -1) {
 		if (snprintf(work_buf, DV_NAMEBUF_MAX - 1, "%s_%i", buffer, start_count++) >= DV_NAMEBUF_MAX - 1) {
-			parse_error("Warning: attempt to find unique name for '%s' results in truncated strings.\n"
-			            "Cannot rename. Please use shorter names in your ISIS files!");
+			parse_error(
+			    "Warning: attempt to find unique name for '%s' results in truncated strings.\n"
+			    "Cannot rename. Please use shorter names in your ISIS files!");
 			return;
 		}
 	}
 	strncpy(buffer, work_buf, DV_NAMEBUF_MAX - 1);
 }
 
-char get_keyword_datatype(char * value, char * name)
+char get_keyword_datatype(char* value, char* name)
 {
 	/* Determines the davinci datatype to apply to a value string, given its value
 	 and its name for hints. */
-	char * endptr;
+	char* endptr;
 	int intval;
 	double floatval;
 	int is_int = 0, is_double = 0;
@@ -1361,9 +1384,8 @@ char get_keyword_datatype(char * value, char * name)
 	if (errno)
 		is_int = 0;
 	else
-		is_int = 1;
-	if (endptr != value + strlen(value))
-		is_int = 0;
+		is_int                                  = 1;
+	if (endptr != value + strlen(value)) is_int = 0;
 
 	/* check for float value. Note that like the int, the whole string must convert
 	 to be a float or it is more likely a string like a date/time value */
@@ -1372,9 +1394,8 @@ char get_keyword_datatype(char * value, char * name)
 	if (errno)
 		is_double = 0;
 	else
-		is_double = 1;
-	if (endptr != value + strlen(value))
-		is_double = 0;
+		is_double                                  = 1;
+	if (endptr != value + strlen(value)) is_double = 0;
 
 	/* if both tests pass, check to see if they are numerically equal. Floating point
 	 values only occasionally integral, and davinci can do the appropriate casting
@@ -1385,7 +1406,7 @@ char get_keyword_datatype(char * value, char * name)
 	 */
 
 	if (name != NULL && strstr(name, "Version") != NULL) {
-		is_int = 0;
+		is_int    = 0;
 		is_double = 0;
 	}
 	/* drd
@@ -1393,7 +1414,7 @@ char get_keyword_datatype(char * value, char * name)
 	 */
 
 	if (name != NULL && strstr(name, "SpacecraftClockCount") != NULL) {
-		is_int = 0;
+		is_int    = 0;
 		is_double = 0;
 	}
 
@@ -1402,9 +1423,9 @@ char get_keyword_datatype(char * value, char * name)
 	 */
 
 	if ((name != NULL) && (value[0] == '\"') && (value[1] == '\"')) {
-		is_int = 0;
+		is_int    = 0;
 		is_double = 0;
-		value[0] = '\0'; // The output routine will give us the desired "" for "Nothing"
+		value[0]  = '\0'; // The output routine will give us the desired "" for "Nothing"
 	}
 
 	if (name != NULL) {
@@ -1412,23 +1433,19 @@ char get_keyword_datatype(char * value, char * name)
 			if (intval == floatval) {
 				is_double = 0;
 				// drd added one more test -- if there is a decimal point, leave it a double
-				if (strstr(value, ".") != NULL)
-					is_double = 1;
+				if (strstr(value, ".") != NULL) is_double = 1;
 			} else {
 				is_int = 0;
 			}
 		}
 	}
 
-	if (is_double)
-		return 'd';
-	if (is_int)
-		return 'i';
+	if (is_double) return 'd';
+	if (is_int) return 'i';
 	return 'c';
-
 }
 
-void add_converted_to_struct(Var * dv_struct, char * name, char * value)
+void add_converted_to_struct(Var* dv_struct, char* name, char* value)
 {
 	/* Attempts to convert keyword values to integers and floats to determine if
 	 the value supplied is a numeric value. The rules are:
@@ -1455,37 +1472,41 @@ void add_converted_to_struct(Var * dv_struct, char * name, char * value)
 
 /*
  * drd
- * Some comments on CSV strings I have seen:  There are lots of CSV strings in the cubes.  The longs ones are wrapped with leading spaces.
- * The tools parenManager() and dQuoteManager remove leading spaces from the wrapped lines and concatenate the strings.  This may mean that there will be
+ * Some comments on CSV strings I have seen:  There are lots of CSV strings in the cubes.  The longs
+ * ones are wrapped with leading spaces.
+ * The tools parenManager() and dQuoteManager remove leading spaces from the wrapped lines and
+ * concatenate the strings.  This may mean that there will be
  * no white space in a few instances:
  * one, two, three,four, five
  *                ^ comma, but no space white for example
- * BUT, in at least one case I found a long string wrapped with no comma.  Forcing a space between concatenations may thus add a space to a string
+ * BUT, in at least one case I found a long string wrapped with no comma.  Forcing a space between
+ * concatenations may thus add a space to a string
  * not intended to have spaces.  Thus, I have elected to strip leading spaces from read in strings.
  * Note that all Tokens are based on ','s and not white spaces.
  */
 
-int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
+int parenManager(char* stringItem, FILE* fp, Var* GroupOrObject, char* namebuf)
 {
-	char *workingString = NULL;
-	char *localString = NULL;
-	char *token = NULL;
+	char* workingString = NULL;
+	char* localString   = NULL;
+	char* token         = NULL;
 	char localBuff[400];
-	int length = 0;
+	int length      = 0;
 	int addedLength = 0;
-	int commaCount = 0;
-	int retVal = 0;
-	int i = 0;
-	int k = 0;
-	int endHyphen = 0;  // 0 means there is no hyphen at the end of the string
-	int endSpace = 1; // 1 means we add one space to the end of the string before strcat()'ing on next string
-	int conversionCount = 0;
-	double *numberArrayDouble = NULL;
-	int *numberArrayInt = NULL;
-	double checkDouble = 99.9; // Any value would do
-	int checkInt = 99; // Any value will do
-	Var *localStub = new_struct(0);
-	Var *subItem = new_struct(0);
+	int commaCount  = 0;
+	int retVal      = 0;
+	int i           = 0;
+	int k           = 0;
+	int endHyphen   = 0; // 0 means there is no hyphen at the end of the string
+	int endSpace =
+	    1; // 1 means we add one space to the end of the string before strcat()'ing on next string
+	int conversionCount       = 0;
+	double* numberArrayDouble = NULL;
+	int* numberArrayInt       = NULL;
+	double checkDouble        = 99.9; // Any value would do
+	int checkInt              = 99;   // Any value will do
+	Var* localStub            = new_struct(0);
+	Var* subItem              = new_struct(0);
 
 	while (stringItem[i] != '(') {
 		i++;
@@ -1499,12 +1520,13 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
 	}
 
 	workingString = strdup(&stringItem[i]);
-	length = 2 + strlen(workingString); // '2 + ' is accounting for a space to be added and '\0' at the end of the string
+	length = 2 + strlen(workingString); // '2 + ' is accounting for a space to be added and '\0' at
+	                                    // the end of the string
 
 	while (strstr(workingString, ")") == NULL) {
 		fgets(localBuff, 400, fp);
 		retVal += strlen(localBuff);
-		addedLength = strlen(localBuff) - 1;
+		addedLength            = strlen(localBuff) - 1;
 		localBuff[addedLength] = '\0'; // delete the '\n'
 
 		i = 0;
@@ -1520,7 +1542,7 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
 
 		if (localBuff[i - 1 + strlen(&localBuff[i])] == '-') {
 			localBuff[i - 1 + strlen(&localBuff[i])] = '\0';
-			endHyphen = 1;
+			endHyphen                                = 1;
 		}
 
 		length = length + strlen(&localBuff[i]);
@@ -1540,7 +1562,7 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
 			}
 			strcat(workingString, &localBuff[i]);
 			if (endHyphen == 1) {
-				endSpace = 0;
+				endSpace  = 0;
 				endHyphen = 0;
 			}
 			// printf("Realloc worked %d,%d,%s\n", length, strlen(workingString),workingString);
@@ -1563,12 +1585,13 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
 
 		if (workingString[i] == ')') {
 			workingString[i] = ',';
-			commaCount++; // There was one more element than there were ','s until we just added this ','
+			commaCount++; // There was one more element than there were ','s until we just added
+			              // this ','
 		}
 	}
 
-	token = strtok(workingString, ",");
-	i = 0;
+	token  = strtok(workingString, ",");
+	i      = 0;
 	length = strlen(token);
 	while ((token[i] == 0x20) && (i < length)) { // remove leading spaces
 		i++;
@@ -1583,7 +1606,9 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
 
 	if (conversionCount == 1) { // We have a list of numbers
 		sscanf(&token[i], "%d", &checkInt);
-		if ((checkInt == checkDouble) && (strstr(&token[i], ".") == NULL)) { // if the values are the same and no ".", assume ints
+		if ((checkInt == checkDouble) &&
+		    (strstr(&token[i], ".") ==
+		     NULL)) { // if the values are the same and no ".", assume ints
 			numberArrayInt = malloc(commaCount * sizeof(int));
 			if (numberArrayInt == NULL) {
 				retVal = -1;
@@ -1611,8 +1636,7 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
 		}
 
 		if (numberArrayDouble != NULL) {
-			localStub = newVal(BSQ, commaCount, 1, 1, DOUBLE,
-					numberArrayDouble);
+			localStub = newVal(BSQ, commaCount, 1, 1, DOUBLE, numberArrayDouble);
 		} else {
 			localStub = newVal(BSQ, commaCount, 1, 1, INT, numberArrayInt);
 		}
@@ -1625,9 +1649,9 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
 		localStub = newString(strdup(&token[i]));
 		add_struct(subItem, NULL, localStub);
 		for (i = 1; i < commaCount; i++) {
-			token = strtok(NULL, ",");
+			token       = strtok(NULL, ",");
 			addedLength = strlen(token);
-			k = 0;
+			k           = 0;
 			while ((token[k] == 0x20) && (k < addedLength)) { // remove leading spaces
 				k++;
 			}
@@ -1640,19 +1664,20 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
 	return retVal;
 }
 
-int dQuoteManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
+int dQuoteManager(char* stringItem, FILE* fp, Var* GroupOrObject, char* namebuf)
 {
-	char *workingString = NULL;
-	char *localString = NULL;
+	char* workingString = NULL;
+	char* localString   = NULL;
 	char localBuff[400];
-	int length = 0;
+	int length      = 0;
 	int lengthInBuf = 0;
-	int retVal = 0;
-	int i = 0;
-	Var *localStub = new_struct(0);
+	int retVal      = 0;
+	int i           = 0;
+	Var* localStub  = new_struct(0);
 
 	/* drd
-	 *  This next looks like it might fail, but we got here because there was the character pair > '" <
+	 *  This next looks like it might fail, but we got here because there was the character pair >
+	 * '" <
 	 *  in the string that brought us here.  We will find a \' !
 	 */
 
@@ -1662,7 +1687,7 @@ int dQuoteManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
 	strcpy(localBuff, &stringItem[i]);
 	strcat(localBuff, "\n");
 	workingString = strdup(localBuff);
-	length = 1 + strlen(workingString); // '1 +' to allow for terminating '\0'
+	length        = 1 + strlen(workingString); // '1 +' to allow for terminating '\0'
 
 	while (strstr(workingString, "\"'") == NULL) { // begins with '" and ends with "'
 		fgets(localBuff, 400, fp);
@@ -1708,26 +1733,28 @@ int dQuoteManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
  *    item          =      value    units
  * The thing is, string3 may have spaces in it.
  * Units is optional.  If string3 has spaces in it,
- * then string4 is just the next text word of what should be part of string3, and string3 is truncated.
- * So we have this function which returns an offset to the first letter in the first word past the string2 '=' sign
+ * then string4 is just the next text word of what should be part of string3, and string3 is
+ * truncated.
+ * So we have this function which returns an offset to the first letter in the first word past the
+ * string2 '=' sign
  */
 int stringFinder(FILE* fp)
 {
-	int i = 0;
+	int i     = 0;
 	int sub_i = 0;
 	int innerString;
 	int length;
 	char inBuffer[100];
 	char moreBuffer[4096];
 
-// So what about the case where there is no '=' in here?
-// This was fixed before sscanf() is called
+	// So what about the case where there is no '=' in here?
+	// This was fixed before sscanf() is called
 
 	while (inputString[i] != '=') {
 		i++;
 	}
-	i++; // Now we are past the '='
-// There might be 'spaces'
+	i++;                             // Now we are past the '='
+	                                 // There might be 'spaces'
 	while (inputString[i] == 0x20) { // 0x20 is a space, remove leading spaces
 		i++;
 	}
@@ -1741,28 +1768,28 @@ int stringFinder(FILE* fp)
 		return i;
 	}
 
-// There might be strings with embedded spaces
-// These strings might be enclosed in double quotes
-// I don't want the double quotes
-// If these do remain, then strings with embedded spaces will print like
-//                  ""This is a string with embedded spaces""
-// What I want is
-//                   "This is a string with embedded spaces"
-// drd added:
-// Also, I have found cases where the string is continued on the next line(s)
-// This means I need to read more to get the rest of the string
+	// There might be strings with embedded spaces
+	// These strings might be enclosed in double quotes
+	// I don't want the double quotes
+	// If these do remain, then strings with embedded spaces will print like
+	//                  ""This is a string with embedded spaces""
+	// What I want is
+	//                   "This is a string with embedded spaces"
+	// drd added:
+	// Also, I have found cases where the string is continued on the next line(s)
+	// This means I need to read more to get the rest of the string
 	if (inputString[i] == 0x22) { // 0x22 is a "
-		inputString[i] = 0x20; // now the 0x22 is a space
-		i++; // now past where the " was
+		inputString[i] = 0x20;    // now the 0x22 is a space
+		i++;                      // now past where the " was
 
 		// there must be another 0x22, or we need to read more
 
 		if (strstr(inputString, "\"") == NULL) {
 			strcpy(moreBuffer, &inputString[i]);
 			strcat(moreBuffer, "\n"); // This was removed before we got here
-			i = 0; // Now we go to the beginning
+			i = 0;                    // Now we go to the beginning
 
-			do {  // you just don't see do-while loops very often
+			do { // you just don't see do-while loops very often
 				sub_i = 0;
 				fgets(inBuffer, 99, fp);
 
@@ -1792,31 +1819,29 @@ int stringFinder(FILE* fp)
  * I have not seen all these other symbols, but they could cause a problem
  * Replace as shown, and the string becomes a C name that davinci can parse
  */
-int cNameMaker(char *inputString)
+int cNameMaker(char* inputString)
 {
 	int result = 0;
 	int i;
 
 	for (i = 0; i < strlen(inputString); i++) {
 		switch (inputString[i]) {
-		case '-':   // a minus sign
-		case '.':   // a dot
-		case ':':   // a colon
-		case '+':   // a plus sign
-		case ';':   // a semicolon
-		case ' ':   // a space, not very possible
+		case '-':                 // a minus sign
+		case '.':                 // a dot
+		case ':':                 // a colon
+		case '+':                 // a plus sign
+		case ';':                 // a semicolon
+		case ' ':                 // a space, not very possible
 			inputString[i] = '_'; // each individually replace by an underbar
 			break;
-		default:
-			; // nothing, just leave it alone
+		default:; // nothing, just leave it alone
 		}
-
 	}
 
 	return result; // I don't see a failure possible here, so for now, always good
 }
 
-int readNextLine(FILE *fp)
+int readNextLine(FILE* fp)
 {
 	int locali;
 
@@ -1833,37 +1858,36 @@ int readNextLine(FILE *fp)
 		locali = 1;
 	}
 	return locali;
-
 }
 
-Var *readCube(FILE *fp)
+Var* readCube(FILE* fp)
 {
 
-	#define CUBEDEBUG
-	#ifdef CUBEDEBUG
+#define CUBEDEBUG
+#ifdef CUBEDEBUG
 
-	FILE *fpc;
+	FILE* fpc;
 
-	#endif
+#endif
 
-	Var *dv_struct = new_struct(0);
-	unsigned char *cubeData = NULL;
+	Var* dv_struct          = new_struct(0);
+	unsigned char* cubeData = NULL;
 	unsigned char inBuffer[4];
 	unsigned char swapBuffer[4];
 	int cubeElement = 0;
 	int x, y, z;
-	size_t element = 0;
+	size_t element      = 0;
 	size_t linearOffset = 0;
-	size_t offset = 0;
-	size_t allSized = 0;
+	size_t offset       = 0;
+	size_t allSized     = 0;
 
 	if (Format == I3Tile) {
-		tileSize = TileSamples * TileLines * sampleSize;
-		tilesPerRow = Samples / TileSamples;
+		tileSize       = TileSamples * TileLines * sampleSize;
+		tilesPerRow    = Samples / TileSamples;
 		subTileSamples = Samples % TileSamples; // What is left over going across
-		subTileSize = subTileSamples * TileLines * sampleSize;
-		totalRows = Lines / TileLines;
-		subTileLines = Lines % TileLines; // What is left going down
+		subTileSize    = subTileSamples * TileLines * sampleSize;
+		totalRows      = Lines / TileLines;
+		subTileLines   = Lines % TileLines; // What is left going down
 
 		if (subTileSamples != 0) {
 			tilesPerRow += 1;
@@ -1876,13 +1900,14 @@ Var *readCube(FILE *fp)
 
 	if (allSized >= 2147483647ll) {
 		char biggie[64];
-		sprintf(biggie,"%lu", allSized);
+		sprintf(biggie, "%lu", allSized);
 		commaize(biggie);
 		parse_error(
-				"Warning:  Size is %s bytes.\nThis is larger than the 32bit integer max of 2,147,483,647.\nProceeding...\n",
-				biggie);
-// for now, we are done
-//  return NULL;
+		    "Warning:  Size is %s bytes.\nThis is larger than the 32bit integer max of "
+		    "2,147,483,647.\nProceeding...\n",
+		    biggie);
+		// for now, we are done
+		//  return NULL;
 	}
 	cubeData = malloc(allSized);
 
@@ -1894,7 +1919,7 @@ Var *readCube(FILE *fp)
 	if (Format == BandSequential) {
 
 		fseeko(fp, StartByte - 1, SEEK_SET); // Need only the one fseeko() to set up all
-		offset = 0;  // This is the offset in to the storage structure
+		offset = 0;                          // This is the offset in to the storage structure
 		for (z = 0; z < totalBands; z++) {
 			for (y = 0; y < Lines; y++) {
 				for (x = 0; x < Samples; x++) {
@@ -1912,8 +1937,7 @@ Var *readCube(FILE *fp)
 								swapBuffer[1] = inBuffer[2];
 								swapBuffer[0] = inBuffer[3];
 								break;
-							default:
-								;
+							default:;
 							}
 
 							for (element = 0; element < sampleSize; element++) {
@@ -1933,39 +1957,44 @@ Var *readCube(FILE *fp)
 						return NULL;
 					}
 				} // end x
-			} // end y
-		} // end z
-	} // end BandSequential
+			}     // end y
+		}         // end z
+	}             // end BandSequential
 
 	if (Format == I3Tile) {
-		linearOffset = 0;  // Where the write starts to the storage area
+		linearOffset = 0; // Where the write starts to the storage area
 		// printf("totalRows = %lld\n", totalRows);
 		for (Bands = 0; Bands < totalBands; Bands++) {
 			for (Row = 0; Row < totalRows; Row++) {
 				for (row = 0; row < TileLines; row++) {
 					for (tiles = 0; tiles < tilesPerRow; tiles++) {
 						offset = StartByte - 1;
-						offset += Bands * (Samples * Lines * sampleSize); // How many whole "sheets" we have read
-						offset += (Row * tilesPerRow * tileSize); // This is the number of full Rows of full tiles
-						offset += (tiles * tileSize); // This is the offset of the number of full tiles already read in the Row
-						offset += (row * TileSamples * sampleSize); // How many full rows we have read so far in this tile
+						offset += Bands * (Samples * Lines *
+						                   sampleSize); // How many whole "sheets" we have read
+						offset += (Row * tilesPerRow *
+						           tileSize); // This is the number of full Rows of full tiles
+						offset += (tiles * tileSize); // This is the offset of the number of full
+						                              // tiles already read in the Row
+						offset +=
+						    (row * TileSamples *
+						     sampleSize); // How many full rows we have read so far in this tile
 
 						fseeko(fp, offset, SEEK_SET); // for Tiled, fseeko() each TileSample start
 
 						for (x = 0; x < TileSamples; x++) { // Reading across a tile
 							if (1 == fread(inBuffer, sampleSize, 1, fp)) {
 
-								if ((subTileSamples != 0)
-										&& (tiles == (tilesPerRow - 1))) {
+								if ((subTileSamples != 0) && (tiles == (tilesPerRow - 1))) {
 									if (x >= subTileSamples) {
-										continue; // We read it, we just don't put it in the structure
+										continue; // We read it, we just don't put it in the
+										          // structure
 									}
 								}
 
-								if ((subTileLines != 0)
-										&& (Row == (totalRows - 1))) {
+								if ((subTileLines != 0) && (Row == (totalRows - 1))) {
 									if (row >= subTileLines) {
-										continue; // We read it, we just don't put it in the structure
+										continue; // We read it, we just don't put it in the
+										          // structure
 									}
 								}
 
@@ -1981,20 +2010,19 @@ Var *readCube(FILE *fp)
 										swapBuffer[1] = inBuffer[2];
 										swapBuffer[0] = inBuffer[3];
 										break;
-									default:
-										;
+									default:;
 									}
 
 									for (element = 0; element < sampleSize; element++) {
-										cubeData[linearOffset + element] =
-												swapBuffer[element];
+										cubeData[linearOffset + element] = swapBuffer[element];
 									}
 								} else {
 									for (element = 0; element < sampleSize; element++) {
 										cubeData[linearOffset + element] = inBuffer[element];
 									}
 								}
-								linearOffset += sampleSize; // linearOffset into the RAM data just keeps incrementing
+								linearOffset += sampleSize; // linearOffset into the RAM data just
+								                            // keeps incrementing
 
 							} // end of good read
 
@@ -2003,40 +2031,33 @@ Var *readCube(FILE *fp)
 								return NULL;
 							}
 						} // end TileSamples
-					} // end tilesPerRow
-				} // end rows
-			} // end Rows
-		}  // end Bands
-	} // end I3Tile
+					}     // end tilesPerRow
+				}         // end rows
+			}             // end Rows
+		}                 // end Bands
+	}                     // end I3Tile
 
 	switch (sampleSize) {
-	case 1:
-		cubeElement = BYTE;
-		break;
-	case 2:
-		cubeElement = SHORT;
-		break;
-	case 4:
-		cubeElement = FLOAT;
-		break;
-	default:
-		cubeElement = BYTE;
+	case 1: cubeElement  = BYTE; break;
+	case 2: cubeElement  = SHORT; break;
+	case 4: cubeElement  = FLOAT; break;
+	default: cubeElement = BYTE;
 	}
 
 	dv_struct = newVal(BSQ, Samples, Lines, totalBands, cubeElement, cubeData);
 
-	#ifdef CUBEDEBUG
+#ifdef CUBEDEBUG
 	fpc = fopen("bincube.bin", "wb");
-	fwrite(cubeData, allSized, 1, fpc );
+	fwrite(cubeData, allSized, 1, fpc);
 	fclose(fpc);
-	#endif
+#endif
 
 	cubeData = NULL;
 
 	return dv_struct;
 }
 
-int getCubeParams(FILE *fp)
+int getCubeParams(FILE* fp)
 {
 	int retVal = 1;
 	int count;
@@ -2050,7 +2071,7 @@ int getCubeParams(FILE *fp)
 	while (strcmp("End_Object", string1) != 0) {
 		fgets(inputString, 2046, fp);
 		count = sscanf(inputString, "%s%s%s%s", string1, string2, string3, string4);
-		if (strlen(inputString) < 3) {  // Some blank lines
+		if (strlen(inputString) < 3) { // Some blank lines
 			continue;
 		}
 
@@ -2060,37 +2081,23 @@ int getCubeParams(FILE *fp)
 
 		if (strcmp("StartByte", string1) == 0) {
 			sscanf(string3, "%d", &StartByte);
-		}
-
-		else if (strcmp("Format", string1) == 0) {
+		} else if (strcmp("Format", string1) == 0) {
 			if (strcmp("Tile", string3) == 0) {
 				Format = I3Tile;
 			} else {
 				Format = BandSequential;
 			}
-		}
-
-		else if (strcmp("TileSamples", string1) == 0) {
+		} else if (strcmp("TileSamples", string1) == 0) {
 			sscanf(string3, "%zd", &TileSamples);
-		}
-
-		else if (strcmp("TileLines", string1) == 0) {
+		} else if (strcmp("TileLines", string1) == 0) {
 			sscanf(string3, "%zd", &TileLines);
-		}
-
-		else if (strcmp("Samples", string1) == 0) {
+		} else if (strcmp("Samples", string1) == 0) {
 			sscanf(string3, "%zd", &Samples);
-		}
-
-		else if (strcmp("Lines", string1) == 0) {
+		} else if (strcmp("Lines", string1) == 0) {
 			sscanf(string3, "%zd", &Lines);
-		}
-
-		else if (strcmp("Bands", string1) == 0) {
+		} else if (strcmp("Bands", string1) == 0) {
 			sscanf(string3, "%zd", &totalBands);
-		}
-
-		else if (strcmp("Type", string1) == 0) {
+		} else if (strcmp("Type", string1) == 0) {
 			if (strcmp("UnsignedByte", string3) == 0) {
 				sampleSize = 1;
 			} else if (strcmp("SignedWord", string3) == 0) {
@@ -2098,25 +2105,17 @@ int getCubeParams(FILE *fp)
 			} else {
 				sampleSize = 4; // only other choice is Real which is really float of size 4
 			}
-		}
-
-		else if (strcmp("ByteOrder", string1) == 0) {
+		} else if (strcmp("ByteOrder", string1) == 0) {
 			if (strcmp("Lsb", string3) == 0) {
 				ByteOrder = Lsb;
 			} else {
 				ByteOrder = Msb;
 			}
-		}
-
-		else if (strcmp("Base", string1) == 0) {
+		} else if (strcmp("Base", string1) == 0) {
 			sscanf(string3, "%lf", &Base);
-		}
-
-		else if (strcmp("Multiplier", string1) == 0) {
+		} else if (strcmp("Multiplier", string1) == 0) {
 			sscanf(string3, "%lf", &Multiplier);
-		}
-
-		else {
+		} else {
 			; // nothing for now
 		}
 	} // end of the while loop
@@ -2126,36 +2125,36 @@ int getCubeParams(FILE *fp)
 	return retVal;
 }
 
-int writeCube(FILE *fp, minIsisInfo *isisinfo, unsigned char *data)
+int writeCube(FILE* fp, minIsisInfo* isisinfo, unsigned char* data)
 {
-	unsigned char *cubeData = NULL;
+	unsigned char* cubeData = NULL;
 	unsigned char outBuffer[4];
 	unsigned char swapBuffer[4];
-	unsigned char fakeBuffer[] = {0,0,0,0};
-	int cubeElement = 0;
+	unsigned char fakeBuffer[] = {0, 0, 0, 0};
+	int cubeElement            = 0;
 	int x, y, z;
-	int writeCount = 0;
-	int wrtSampleSize = 0;
-	size_t wrtTileSize = 0;
+	int writeCount        = 0;
+	int wrtSampleSize     = 0;
+	size_t wrtTileSize    = 0;
 	size_t wrtTileSamples = 0;
 
-	size_t wrtSubTileSize = 0;
-	size_t wrtTiles = 0;
-	size_t wrt_row = 0;
-	size_t wrtRow = 0;
-	size_t wrtBands = 0;
-	size_t wrtTilesPerRow = 0;
+	size_t wrtSubTileSize    = 0;
+	size_t wrtTiles          = 0;
+	size_t wrt_row           = 0;
+	size_t wrtRow            = 0;
+	size_t wrtBands          = 0;
+	size_t wrtTilesPerRow    = 0;
 	size_t wrtSubTileSamples = 0;
-	size_t wrtTotalRows = 0;
-	size_t wrtSubTileLines = 0;
+	size_t wrtTotalRows      = 0;
+	size_t wrtSubTileLines   = 0;
 
-	size_t wrtElement = 0;
-	size_t wrtOffset = 0;
+	size_t wrtElement  = 0;
+	size_t wrtOffset   = 0;
 	size_t wrtAllSized = 0;
 #undef OUTDEBUG
 #ifdef OUTDEBUG
-	FILE *snog;
-	snog = fopen("data.txt","wt");
+	FILE* snog;
+	snog = fopen("data.txt", "wt");
 #endif
 	if (strcmp("UnsignedByte", isisinfo->Type) == 0) {
 		wrtSampleSize = 1;
@@ -2165,7 +2164,8 @@ int writeCube(FILE *fp, minIsisInfo *isisinfo, unsigned char *data)
 		wrtSampleSize = 4; // only other choice is Real which is really float of size 4
 	}
 
-	wrtAllSized = (size_t) isisinfo->Samples * (size_t) isisinfo->Lines * (size_t) isisinfo->Bands * (size_t) wrtSampleSize;
+	wrtAllSized = (size_t)isisinfo->Samples * (size_t)isisinfo->Lines * (size_t)isisinfo->Bands *
+	              (size_t)wrtSampleSize;
 
 	if (wrtAllSized >= 2147483647ll) {
 		char biggie[64];
@@ -2176,32 +2176,29 @@ int writeCube(FILE *fp, minIsisInfo *isisinfo, unsigned char *data)
 
 	cubeData = data;
 
-	if (strcmp (isisinfo->Format, "BandSequential") == 0) {
-
-		wrtOffset = 0;  // This is the offset in to the storage structure
+	if (strcmp(isisinfo->Format, "BandSequential") == 0) {
+		wrtOffset = 0; // This is the offset in to the storage structure
 		for (z = 0; z < isisinfo->Bands; z++) {
 			for (y = 0; y < isisinfo->Lines; y++) {
 				for (x = 0; x < isisinfo->Samples; x++) {
 					for (wrtElement = 0; wrtElement < wrtSampleSize; wrtElement++) {
-						 outBuffer[wrtElement] = cubeData[wrtOffset + wrtElement];
+						outBuffer[wrtElement] = cubeData[wrtOffset + wrtElement];
 					}
-					if ( strcmp(isisinfo->ByteOrder, "Lsb")== 0) {
+					if (strcmp(isisinfo->ByteOrder, "Lsb") == 0) {
 						writeCount = fwrite(outBuffer, wrtSampleSize, 1, fp);
-					}
-					else {
+					} else {
 						switch (wrtSampleSize) {
-							case 2:
-								swapBuffer[1] = outBuffer[0];
-								swapBuffer[0] = outBuffer[1];
-								break;
-							case 4:
-								swapBuffer[3] = outBuffer[0];
-								swapBuffer[2] = outBuffer[1];
-								swapBuffer[1] = outBuffer[2];
-								swapBuffer[0] = outBuffer[3];
-								break;
-							default:
-								;
+						case 2:
+							swapBuffer[1] = outBuffer[0];
+							swapBuffer[0] = outBuffer[1];
+							break;
+						case 4:
+							swapBuffer[3] = outBuffer[0];
+							swapBuffer[2] = outBuffer[1];
+							swapBuffer[1] = outBuffer[2];
+							swapBuffer[0] = outBuffer[3];
+							break;
+						default:;
 						}
 						writeCount = fwrite(swapBuffer, wrtSampleSize, 1, fp);
 					}
@@ -2213,17 +2210,17 @@ int writeCube(FILE *fp, minIsisInfo *isisinfo, unsigned char *data)
 					wrtOffset += wrtSampleSize;
 
 				} // end x
-			} // end y
-		} // end z
-	} // end BandSequential
-
+			}     // end y
+		}         // end z
+	}             // end BandSequential
 	else { // Tiled
 
-		wrtTileSize = isisinfo->TileSamples * isisinfo->TileLines * wrtSampleSize;
+		wrtTileSize    = isisinfo->TileSamples * isisinfo->TileLines * wrtSampleSize;
 		wrtTilesPerRow = isisinfo->Samples / isisinfo->TileSamples;
-		wrtSubTileSamples = isisinfo->Samples % isisinfo->TileSamples; // What is left over going across
-		wrtSubTileSize = wrtSubTileSamples * isisinfo->TileLines * wrtSampleSize;
-		wrtTotalRows = isisinfo->Lines / isisinfo->TileLines;
+		wrtSubTileSamples =
+		    isisinfo->Samples % isisinfo->TileSamples; // What is left over going across
+		wrtSubTileSize  = wrtSubTileSamples * isisinfo->TileLines * wrtSampleSize;
+		wrtTotalRows    = isisinfo->Lines / isisinfo->TileLines;
 		wrtSubTileLines = isisinfo->Lines % isisinfo->TileLines; // What is left going down
 
 		if (wrtSubTileSamples != 0) {
@@ -2239,34 +2236,34 @@ int writeCube(FILE *fp, minIsisInfo *isisinfo, unsigned char *data)
 					for (wrt_row = 0; wrt_row < isisinfo->TileLines; wrt_row++) {
 						wrtOffset = 0;
 						wrtOffset += wrtBands * (isisinfo->Samples * isisinfo->Lines * wrtSampleSize); // How many whole "sheets" we have read
-						wrtOffset += (wrtRow * wrtTilesPerRow * wrtTileSize); // This is the number of full Rows of full tiles
-						wrtOffset += (wrtTiles * isisinfo->TileSamples * wrtSampleSize); // This is the X offset from the left, tile widths
-						wrtOffset += (wrt_row * isisinfo->TileSamples * (wrtTilesPerRow) * wrtSampleSize); // This is the Y offset
+						wrtOffset += (wrtRow * wrtTilesPerRow *
+						              wrtTileSize); // This is the number of full Rows of full tiles
+						wrtOffset +=
+						    (wrtTiles * isisinfo->TileSamples *
+						     wrtSampleSize); // This is the X offset from the left, tile widths
+						wrtOffset += (wrt_row * isisinfo->TileSamples *
+						              (wrtTilesPerRow)*wrtSampleSize); // This is the Y offset
 
 #ifdef OUTDEBUG
- fprintf(snog,"Bands=%d, Rows=%d, row=%3d, Tiles=%d, wrtOffset=%8d\n", wrtBands, wrtRow, wrt_row, wrtTiles,wrtOffset);
+						fprintf(snog, "Bands=%d, Rows=%d, row=%3d, Tiles=%d, wrtOffset=%8d\n",
+						        wrtBands, wrtRow, wrt_row, wrtTiles, wrtOffset);
 #endif
 						writeCount = 1;
 
 						for (x = 0; x < isisinfo->TileSamples; x++) { // Reading across a tile
-
 							if (writeCount != 1) {
 								parse_error("Bad Write for Tiled Data");
 								return 0;
 							}
 
-							if ( (wrtTiles == (wrtTilesPerRow - 1)) &&
-								 (wrtSubTileSamples != 0) ) {
-
+							if ((wrtTiles == (wrtTilesPerRow - 1)) && (wrtSubTileSamples != 0)) {
 								if (x >= wrtSubTileSamples) {
 									writeCount = fwrite(fakeBuffer, wrtSampleSize, 1, fp);
 									continue;
 								}
 							}
 
-							if ( (wrtRow == (wrtTotalRows - 1)) &&
-								 (wrtSubTileLines != 0) ) {
-
+							if ((wrtRow == (wrtTotalRows - 1)) && (wrtSubTileLines != 0)) {
 								if (wrtRow >= wrtSubTileLines) {
 									writeCount = fwrite(fakeBuffer, wrtSampleSize, 1, fp);
 									continue;
@@ -2276,23 +2273,21 @@ int writeCube(FILE *fp, minIsisInfo *isisinfo, unsigned char *data)
 							for (wrtElement = 0; wrtElement < wrtSampleSize; wrtElement++) {
 								outBuffer[wrtElement] = cubeData[wrtOffset + wrtElement];
 							}
-							if ( strcmp(isisinfo->ByteOrder, "Lsb") == 0) {
+							if (strcmp(isisinfo->ByteOrder, "Lsb") == 0) {
 								writeCount = fwrite(outBuffer, wrtSampleSize, 1, fp);
-							}
-							else {
+							} else {
 								switch (wrtSampleSize) {
-									case 2:
-										swapBuffer[1] = outBuffer[0];
-										swapBuffer[0] = outBuffer[1];
-										break;
-									case 4:
-										swapBuffer[3] = outBuffer[0];
-										swapBuffer[2] = outBuffer[1];
-										swapBuffer[1] = outBuffer[2];
-										swapBuffer[0] = outBuffer[3];
-										break;
-									default:
-										;
+								case 2:
+									swapBuffer[1] = outBuffer[0];
+									swapBuffer[0] = outBuffer[1];
+									break;
+								case 4:
+									swapBuffer[3] = outBuffer[0];
+									swapBuffer[2] = outBuffer[1];
+									swapBuffer[1] = outBuffer[2];
+									swapBuffer[0] = outBuffer[3];
+									break;
+								default:;
 								}
 								writeCount = fwrite(swapBuffer, wrtSampleSize, 1, fp);
 							}
@@ -2300,11 +2295,11 @@ int writeCube(FILE *fp, minIsisInfo *isisinfo, unsigned char *data)
 							wrtOffset += wrtSampleSize;
 
 						} // end TileSamples
-					} // end tilesPerRow
-				} // end rows
-			} // end Rows
-		}  // end Bands
-	} // end tiled
+					}     // end tilesPerRow
+				}         // end rows
+			}             // end Rows
+		}                 // end Bands
+	}                     // end tiled
 #ifdef OUTDEBUG
 	fclose(snog);
 #endif

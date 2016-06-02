@@ -1,7 +1,7 @@
 %{
 #include <stdio.h>
 #include <setjmp.h>
-#include "parser.h"
+#include "func.h"
 
 Var *p_mknod(int , Var *, Var *);
 Var *p_mkval(int , char *);

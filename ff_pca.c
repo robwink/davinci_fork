@@ -1,18 +1,18 @@
 /*
-	C A U T I O N !
+    C A U T I O N !
 
-	The following code uses both zero-indexed and one-indexed
-	arrays.
+    The following code uses both zero-indexed and one-indexed
+    arrays.
 */
 
 /*********************************************************************/
 /* Principal Components Analysis or the Karhunen-Loeve expansion is a
    classical method for dimensionality reduction or exploratory data
    analysis.  One reference among many is: F. Murtagh and A. Heck,
-   Multivariate Data Analysis, Kluwer Academic, Dordrecht, 1987 
+   Multivariate Data Analysis, Kluwer Academic, Dordrecht, 1987
    (hardbound, paperback and accompanying diskette).
 
-   This program is public-domain.  If of importance, please reference 
+   This program is public-domain.  If of importance, please reference
    the author.  Please also send comments of any kind to the author:
 
    F. Murtagh
@@ -29,86 +29,71 @@
    Internet:     murtagh@scivax.stsci.edu
 
 
-   A Fortran version of this program is also available.     
+   A Fortran version of this program is also available.
 
    F. Murtagh, Munich, 6 June 1989                                   */
 /*********************************************************************/
 
+#include "func.h"
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
-#include "parser.h"
 
-static const char PCS[]="pcs1";
-static const char PCA[]="pca1";
-#define I_AM_PCS(func)  (strcmp((func)->name, PCS) == 0)
-#define I_AM_PCA(func)  (strcmp((func)->name, PCA) == 0)
+static const char PCS[] = "pcs1";
+static const char PCA[] = "pca1";
+#define I_AM_PCS(func) (strcmp((func)->name, PCS) == 0)
+#define I_AM_PCA(func) (strcmp((func)->name, PCA) == 0)
 
-#define SIGN(a, b) ( (b) < 0 ? -fabs(a) : fabs(a) )
+#define SIGN(a, b) ((b) < 0 ? -fabs(a) : fabs(a))
 
 #define DEFAULT_MAX_TQLI_ITER 30
 
-float **dstretch(
-	float	**data,	/* data[n][m] */
-	int	n,
-	int	m,
-	float	*evals,	/* eigen-values[m] */
-	float	**evecs,	/* eigen-vectors[m][m] */
-	float	*dscale	/* scaling vector [m] */
-);
+float** dstretch(float** data,               /* data[n][m] */
+                 int n, int m, float* evals, /* eigen-values[m] */
+                 float** evecs,              /* eigen-vectors[m][m] */
+                 float* dscale               /* scaling vector [m] */
+                 );
 
-float **eval_dstmat(
-	float	**gain,	/* gain factors matrix [nxn] */
-	float	**evec,	/* eigen vectors matrix [nxn]*/
-	int	n,
-	int	biggest_processing
-);
+float** eval_dstmat(float** gain, /* gain factors matrix [nxn] */
+                    float** evec, /* eigen vectors matrix [nxn]*/
+                    int n, int biggest_processing);
 
 void corcol();
 void covcol();
 void scpcol();
-float *vector();
-float **matrix();
+float* vector();
+float** matrix();
 void free_vector();
 void free_matrix();
 void scpcol();
 void tred2();
 int tqli();
-void stddev(float **data, int n, int m, float *stddev);
+void stddev(float** data, int n, int m, float* stddev);
 
-static float **mxm(
-	float **m1, int r1, int c1,
-	float **m2, int r2, int c2,
-	float	**result
-);
+static float** mxm(float** m1, int r1, int c1, float** m2, int r2, int c2, float** result);
 
-static float **xpose(float **m, int r, int c, float **result);
+static float** xpose(float** m, int r, int c, float** result);
 
 /*
 ** Multiply matrix m1 with matrix m2 i.e. m1 x m2.
 **
 ** "m1", "m2", and "result" are r1xc1, r2xc2, and r1xc2 matrices
 ** pre-allocated using matrix().
-*/ 
-static float **
-mxm(
-	float **m1, int r1, int c1,
-	float **m2, int r2, int c2,
-	float	**result
-)
+*/
+static float** mxm(float** m1, int r1, int c1, float** m2, int r2, int c2, float** result)
 {
-	int		i, j, k;
-	double	d;
+	int i, j, k;
+	double d;
 
-	if (c1 != r2){
+	if (c1 != r2) {
 		fprintf(stderr, "mxm: Invalid dimenstions for matrix multiply.\n");
 		return NULL;
 	}
 
-	for (i=1; i<=r1; i++){
-		for(j=1; j<=c2; j++){
+	for (i = 1; i <= r1; i++) {
+		for (j = 1; j <= c2; j++) {
 			d = 0;
-			for(k=1; k<=c1; k++){
+			for (k = 1; k <= c1; k++) {
 				d += m1[i][k] * m2[k][j];
 			}
 			result[i][j] = d;
@@ -124,16 +109,12 @@ mxm(
 ** "m" and "result" are rxc and cxr (sized) matrices pre-allocated
 ** using matrix()
 */
-static float **
-xpose(
-	float **m, int r, int c,
-	float **result
-)
+static float** xpose(float** m, int r, int c, float** result)
 {
-	int	i, j;
+	int i, j;
 
-	for(j=1; j<=r; j++){
-		for(i=1; i<=c; i++){
+	for (j = 1; j <= r; j++) {
+		for (i = 1; i <= c; i++) {
 			result[i][j] = m[j][i];
 		}
 	}
@@ -144,40 +125,32 @@ xpose(
 /*
 ** pca() - Principal Component Analysis
 */
-float *
-pca(
-	float		**data,	/* n x m matrix of input data */
-	int		n,			/* n-rows (or n-vectors, each of length m) */
-	int		m,			/* m-columns (or m-variables) */
-	char		opt,		/* processing option:
-									'v' - use covariance matrix
-									'r' - use correlation matrix
-									's' - use SSCP matrix
-							*/
-	float		*evals,	/* Eigen Values 1 x m vector */
-	float		**symmat,	/* Eigen Vectors m x m matrix */
-	int      niter    /* Max no. of iterations during tqli convergence */
-)
+float* pca(float** data,   /* n x m matrix of input data */
+           int n,          /* n-rows (or n-vectors, each of length m) */
+           int m,          /* m-columns (or m-variables) */
+           char opt,       /* processing option:
+                                   'v' - use covariance matrix
+                                   'r' - use correlation matrix
+                                   's' - use SSCP matrix
+                           */
+           float* evals,   /* Eigen Values 1 x m vector */
+           float** symmat, /* Eigen Vectors m x m matrix */
+           int niter       /* Max no. of iterations during tqli convergence */
+           )
 {
-	float		*interm;
-	int       success;
+	float* interm;
+	int success;
 
 	/* Look at analysis option; branch in accordance with this. */
 	switch (opt) {
-	case 'R':/* Output correlation matrix - symmat[m][m]. */
-	case 'r':
-		corcol(data, n, m, symmat);
-		break;
+	case 'R': /* Output correlation matrix - symmat[m][m]. */
+	case 'r': corcol(data, n, m, symmat); break;
 
-	case 'V':/* Output variance-covariance matrix - symmat[m][m]. */
-	case 'v':
-		covcol(data, n, m, symmat);
-		break;
+	case 'V': /* Output variance-covariance matrix - symmat[m][m]. */
+	case 'v': covcol(data, n, m, symmat); break;
 
-	case 'S':/* Output SSCP matrix - symmat[m][m]. */
-	case 's':
-		scpcol(data, n, m, symmat);
-		break;
+	case 'S': /* Output SSCP matrix - symmat[m][m]. */
+	case 's': scpcol(data, n, m, symmat); break;
 
 	default:
 		fprintf(stderr, "pca(): Invalid processing option %c\n", opt);
@@ -187,18 +160,18 @@ pca(
 	}
 
 	/* Allocate storage for dummy and new vectors. */
-	interm = vector(m);	/* Storage alloc. for 'intermediate' vector */
+	interm = vector(m); /* Storage alloc. for 'intermediate' vector */
 
 	/* Calculate Eigen values and vectors */
-	tred2(symmat, m, evals, interm);	/* Triangular decomposition */
-	success = tqli(evals, interm, m, symmat, niter);		/* Reduction of sym. trid. matrix */
-	if (!success){
+	tred2(symmat, m, evals, interm);                 /* Triangular decomposition */
+	success = tqli(evals, interm, m, symmat, niter); /* Reduction of sym. trid. matrix */
+	if (!success) {
 		free_vector(interm, m);
 		return NULL;
 	}
 
 	/* evals now contains the eigenvalues,
-		columns of symmat now contain the associated eigenvectors. */
+	    columns of symmat now contain the associated eigenvectors. */
 
 	free_vector(interm, m);
 
@@ -208,35 +181,32 @@ pca(
 /*
 **
 */
-float **
-eval_stretch_matrix(
-	float		*evals,		/* m Eigen Values */
-	float		**evecs,		/* m x m Eigen Vectors */
-	int		m,
-	float		*scale,		/* m Scaling Values or
-									NULL (scaling = 1.0) */
-	float		**dstmat		/* output m x m stretch matrix */
-)
+float** eval_stretch_matrix(float* evals,        /* m Eigen Values */
+                            float** evecs,       /* m x m Eigen Vectors */
+                            int m, float* scale, /* m Scaling Values or
+                                                         NULL (scaling = 1.0) */
+                            float** dstmat       /* output m x m stretch matrix */
+                            )
 {
-	float		**gainfac, **iresult;
-	float		**evecst;
-	float		x;
-	int		i, j;
+	float **gainfac, **iresult;
+	float** evecst;
+	float x;
+	int i, j;
 
 	/* allocate space for gain-factor matrix */
 	gainfac = matrix(m, m);
 
-	for(j=1; j<=m; j++){
-		for(i=1; i<=m; i++){
+	for (j = 1; j <= m; j++) {
+		for (i = 1; i <= m; i++) {
 			gainfac[j][i] = 0.0;
 		}
 	}
 
 	/* evaluate the gain-factor (scaling) matrix */
-	x = (m<2)? evals[1]: evals[2];
+	x = (m < 2) ? evals[1] : evals[2];
 
-	for(i=1; i<=m; i++){
-		gainfac[i][i] = sqrt(fabs(x/evals[i]))*((scale == NULL)? 1.0: scale[i]);
+	for (i = 1; i <= m; i++) {
+		gainfac[i][i] = sqrt(fabs(x / evals[i])) * ((scale == NULL) ? 1.0 : scale[i]);
 	}
 
 	/*
@@ -267,24 +237,18 @@ eval_stretch_matrix(
 	return dstmat;
 }
 
-
 /*
 **	data[][] is replaced with the stretched data
 */
-float **
-pcs(
-	float		**data,
-	int		n,
-	int		m,
-	char		opt,
-	float		*scale,		/* scaling vector (m scaling values) or
-									NULL for scaling of 1.0 (i.e. no scaling) */
-	int      niter			/* max number of iterations during tqli convergence */
-)
+float** pcs(float** data, int n, int m, char opt,
+            float* scale, /* scaling vector (m scaling values) or
+                                  NULL for scaling of 1.0 (i.e. no scaling) */
+            int niter     /* max number of iterations during tqli convergence */
+            )
 {
-	float		*evals, **evecs, *v;
-	float		**dstmat;
-	int		i, j, k;
+	float *evals, **evecs, *v;
+	float** dstmat;
+	int i, j, k;
 
 	/* Allocate storage for Eigen Vectors */
 	evecs = matrix(m, m);
@@ -292,7 +256,7 @@ pcs(
 	/* Allocate storage for vector of eigenvalues */
 	evals = vector(m);
 
-	if (pca(data, n, m, opt, evals, evecs, niter) == NULL){
+	if (pca(data, n, m, opt, evals, evecs, niter) == NULL) {
 		free_matrix(evecs, m, m);
 		free_vector(evals, m);
 		return NULL;
@@ -319,18 +283,20 @@ pcs(
 	/* allocate space for a row of data matrix */
 	v = vector(m);
 
-	for(j=1; j<=n; j++){
+	for (j = 1; j <= n; j++) {
 
 		/* evaluate a single row of data matrix */
-		for(i=1; i<=m; i++){
+		for (i = 1; i <= m; i++) {
 			v[i] = 0;
-			for(k=1; k<=m; k++){
+			for (k = 1; k <= m; k++) {
 				v[i] += data[j][k] * dstmat[k][i];
 			}
 		}
 
 		/* replace the original row with the computed data */
-		for(i=1; i<=m; i++){ data[j][i] = v[i]; }
+		for (i = 1; i <= m; i++) {
+			data[j][i] = v[i];
+		}
 	}
 
 	free_vector(v, m);
@@ -341,51 +307,44 @@ pcs(
 /***************************************************************************/
 /** davinci function pcs(obj [, opt = v, axis = z, scale = 1])            **/
 /***************************************************************************/
-Var *
-ff_pcs(vfuncptr	func, Var *args)
+Var* ff_pcs(vfuncptr func, Var* args)
 {
-	Var		*obj = NULL, *axis_arg = NULL;
-	Var		*scale_arg = NULL, *opt_arg = NULL;
-	Var		*v_return;
-	const char	*axis_enums[] = { /* values that axis can take */
-		"x",  "X",
-		"y",  "Y",
-		"z",  "Z",
-		NULL
-	};
-	const char	*opt_enums[] = { /* values taken by "opt"; see pca() */
-		"v",	"V", /* use covariance matrix -  default */
-		"r",	"R", /* use correlation matrix */
-		"s",	"S", /* use sum of squares matrix */
-		NULL
-	};
-	char		opt = 'v'; /* default processing option (value of "opt" arg) */
+	Var *obj = NULL, *axis_arg = NULL;
+	Var *scale_arg = NULL, *opt_arg = NULL;
+	Var* v_return;
+	const char* axis_enums[] = {/* values that axis can take */
+	                            "x", "X", "y", "Y", "z", "Z", NULL};
+	const char* opt_enums[] = {          /* values taken by "opt"; see pca() */
+	                           "v", "V", /* use covariance matrix -  default */
+	                           "r", "R", /* use correlation matrix */
+	                           "s", "S", /* use sum of squares matrix */
+	                           NULL};
+	char opt = 'v'; /* default processing option (value of "opt" arg) */
 
-	float		**data, *scale = NULL;
-	float		*fdata = NULL;
-	int		dim[3], indices[3];
-	int		ref[3] = {0, 1, 2};
-	int		n, m, offset;
-	int		i, j, k, index;
-	int      niter = DEFAULT_MAX_TQLI_ITER;
+	float **data, *scale = NULL;
+	float* fdata = NULL;
+	int dim[3], indices[3];
+	int ref[3] = {0, 1, 2};
+	int n, m, offset;
+	int i, j, k, index;
+	int niter = DEFAULT_MAX_TQLI_ITER;
 
-	Alist		alist[6];
-	alist[0] = make_alist( "obj",    ID_VAL,    NULL,        &obj);
-	alist[1] = make_alist( "opt",    ID_ENUM,   opt_enums,   &opt_arg);
-	alist[2] = make_alist( "axis",   ID_ENUM,   axis_enums,  &axis_arg);
-	alist[3] = make_alist( "scale",  ID_VAL,    NULL,        &scale_arg);
-	alist[4] = make_alist( "niter",  INT,       NULL,        &niter);
+	Alist alist[6];
+	alist[0]      = make_alist("obj", ID_VAL, NULL, &obj);
+	alist[1]      = make_alist("opt", ID_ENUM, opt_enums, &opt_arg);
+	alist[2]      = make_alist("axis", ID_ENUM, axis_enums, &axis_arg);
+	alist[3]      = make_alist("scale", ID_VAL, NULL, &scale_arg);
+	alist[4]      = make_alist("niter", INT, NULL, &niter);
 	alist[5].name = NULL;
 
-	if (parse_args(func, args, alist) == 0) return(NULL);
+	if (parse_args(func, args, alist) == 0) return (NULL);
 
 	if (obj == NULL) {
-		parse_error("%s(): Argument \"%s\" not specified\n",
-			func->name, alist[0].name);
-		return(NULL);
+		parse_error("%s(): Argument \"%s\" not specified\n", func->name, alist[0].name);
+		return (NULL);
 	}
 
-	switch(V_FORMAT(obj)){
+	switch (V_FORMAT(obj)) {
 	case BYTE:
 	case SHORT:
 	case INT:
@@ -393,28 +352,29 @@ ff_pcs(vfuncptr	func, Var *args)
 	case DOUBLE:
 		/* Only the above data types are supported */
 		break;
-	
+
 	default:
-		parse_error("%s(): \"%s\" is of invalid format.\n",
-			func->name, alist[0].name);
-		return(NULL);
+		parse_error("%s(): \"%s\" is of invalid format.\n", func->name, alist[0].name);
+		return (NULL);
 	}
 
 	/* Get dimensions of input data */
-	dim[0] = GetSamples(V_SIZE(obj), V_ORG(obj));	/* x */
-	dim[1] = GetLines(V_SIZE(obj), V_ORG(obj));		/* y */
-	dim[2] = GetBands(V_SIZE(obj), V_ORG(obj));		/* z */
+	dim[0] = GetSamples(V_SIZE(obj), V_ORG(obj)); /* x */
+	dim[1] = GetLines(V_SIZE(obj), V_ORG(obj));   /* y */
+	dim[2] = GetBands(V_SIZE(obj), V_ORG(obj));   /* z */
 
 	/*
 	** If axis is not specified, use the default, i.e. Z
 	*/
-	offset = (axis_arg != NULL)? toupper(*(char *)axis_arg)-'X': 'Z'-'X';
+	offset = (axis_arg != NULL) ? toupper(*(char*)axis_arg) - 'X' : 'Z' - 'X';
 
 	/*
 	** ref[0] contains the index of the "axis" passed in by the user
 	** ref[1-2] contains the indices of the other two axes
 	*/
-	for(i = 0; i < 3; i++){ ref[i] = (i+offset)%3; }
+	for (i = 0; i < 3; i++) {
+		ref[i] = (i + offset) % 3;
+	}
 
 	/*
 	** number of columns (or variables) is along the "axis"
@@ -428,16 +388,16 @@ ff_pcs(vfuncptr	func, Var *args)
 	*/
 	n = dim[ref[1]] * dim[ref[2]];
 
-	/* 
+	/*
 	** If scale[] is specified, do some sanity checks on its dimensions
 	** and retrieve the scaling data
 	*/
-	if (scale_arg != NULL){
+	if (scale_arg != NULL) {
 		int sm, sn, sw;
 
 		/* verify scaling data's data-type */
 
-		switch(V_FORMAT(scale_arg)){
+		switch (V_FORMAT(scale_arg)) {
 		case BYTE:
 		case SHORT:
 		case INT:
@@ -445,20 +405,18 @@ ff_pcs(vfuncptr	func, Var *args)
 		case DOUBLE:
 			/* Only the above data types are supported */
 			break;
-		
+
 		default:
-			parse_error("%s(): \"%s\" is of invalid format.\n",
-				func->name, alist[3].name);
-			return(NULL);
+			parse_error("%s(): \"%s\" is of invalid format.\n", func->name, alist[3].name);
+			return (NULL);
 		}
 
 		sm = GetSamples(V_SIZE(scale_arg), V_ORG(scale_arg));
 		sn = GetLines(V_SIZE(scale_arg), V_ORG(scale_arg));
 		sw = GetBands(V_SIZE(scale_arg), V_ORG(scale_arg));
 
-		if (sm != m || sn != 1 || sw != 1){
-			parse_error("%s(): \"%s\" must be [%d, 1, 1].\n",
-				func->name, alist[3].name, m);
+		if (sm != m || sn != 1 || sw != 1) {
+			parse_error("%s(): \"%s\" must be [%d, 1, 1].\n", func->name, alist[3].name, m);
 			return NULL;
 		}
 
@@ -466,74 +424,78 @@ ff_pcs(vfuncptr	func, Var *args)
 		scale = vector(m);
 
 		/* retrieve scaling data */
-		for(i=0; i<m; i++){
-			index = cpos(i, 0, 0, scale_arg);
-			scale[i+1] = extract_float(scale_arg, index);
+		for (i = 0; i < m; i++) {
+			index        = cpos(i, 0, 0, scale_arg);
+			scale[i + 1] = extract_float(scale_arg, index);
 		}
 	}
 
 	/*
 	** retrieve the processing option
 	*/
-	if (opt_arg != NULL){
-		opt = *(char *)opt_arg;
+	if (opt_arg != NULL) {
+		opt = *(char*)opt_arg;
 	}
 
 	/* allocate data space for n-rows, and m-columns */
 	data = matrix(n, m);
 
 	/* extract data */
-	for(j=0; j<dim[ref[1]]; j++){
-		for(i=0; i<dim[ref[2]]; i++){
+	for (j = 0; j < dim[ref[1]]; j++) {
+		for (i = 0; i < dim[ref[2]]; i++) {
 
-			for(k=0; k<dim[ref[0]]; k++){ /* "axis" or "m" dimension */
+			for (k = 0; k < dim[ref[0]]; k++) { /* "axis" or "m" dimension */
 
 				indices[ref[1]] = j;
 				indices[ref[2]] = i;
 				indices[ref[0]] = k;
 
 				/*
-				** here indices[0], indices[1], indices[2] are 
+				** here indices[0], indices[1], indices[2] are
 				** x, y, & z indices respectively
 				*/
 				index = cpos(indices[0], indices[1], indices[2], obj);
 
 				/* data[][] has 1-based indices */
-				data[j*dim[ref[2]]+i+1][k+1] = extract_float(obj, index);
+				data[j * dim[ref[2]] + i + 1][k + 1] = extract_float(obj, index);
 			}
 		}
 	}
 
 	/* perform the Principal Component Stretch */
-	if (pcs(data, n, m, (strcmp(func->name, "pcsx")? tolower(opt): toupper(opt)), scale, niter) == NULL){
+	if (pcs(data, n, m, (strcmp(func->name, "pcsx") ? tolower(opt) : toupper(opt)), scale, niter) == NULL) {
 		free_matrix(data, n, m);
-		if(scale) { free_vector(scale, m); }
+		if (scale) {
+			free_vector(scale, m);
+		}
 		return NULL;
 	}
 
-	if(scale){ free_vector(scale, m); }
+	if (scale) {
+		free_vector(scale, m);
+	}
 
 	/* collect, package, and return results */
-	fdata = (float *)calloc(dim[0]*dim[1]*dim[2], sizeof(float));
+	fdata = (float*)calloc(dim[0] * dim[1] * dim[2], sizeof(float));
 
 	/* store data */
-	for(j=0; j<dim[ref[1]]; j++){
-		for(i=0; i<dim[ref[2]]; i++){
+	for (j = 0; j < dim[ref[1]]; j++) {
+		for (i = 0; i < dim[ref[2]]; i++) {
 
-			for(k=0; k<dim[ref[0]]; k++){ /* "axis" or "m" dimension */
+			for (k = 0; k < dim[ref[0]]; k++) { /* "axis" or "m" dimension */
 
 				indices[ref[1]] = j;
 				indices[ref[2]] = i;
 				indices[ref[0]] = k;
 
 				/*
-				** here indices[0], indices[1], indices[2] are 
+				** here indices[0], indices[1], indices[2] are
 				** x, y, & z indices respectively
 				*/
 				index = cpos(indices[0], indices[1], indices[2], obj);
 
 				/* data[][] has 1-based indices */
-				fdata[index] = data[j*dim[ref[2]]+i+1][k+1];
+				fdata[index] = data[j * dim[ref[2]] + i + 1][k + 1];
 			}
 		}
 	}
@@ -545,253 +507,228 @@ ff_pcs(vfuncptr	func, Var *args)
 	return v_return;
 }
 
-
 /***************************************************************************/
 /** davinci function corr(obj [, axis = z])                               **/
 /** davinci function covar(obj [, axis = z])                              **/
 /** davinci function scp(obj [, axis = z])                                **/
 /***************************************************************************/
-Var *
-ff_covar(
-    vfuncptr func,
-    Var *args
-)
+Var* ff_covar(vfuncptr func, Var* args)
 {
-  Var *obj = NULL, *axis_arg = NULL;
-  Var *v_return;
-  const char *axis_enums[] = { /* values that axis can take */
-    "x",  "X",
-    "y",  "Y",
-    "z",  "Z",
-    NULL
-  };
+	Var *obj = NULL, *axis_arg = NULL;
+	Var* v_return;
+	const char* axis_enums[] = {/* values that axis can take */
+	                            "x", "X", "y", "Y", "z", "Z", NULL};
 
-  float **data, **symmat;
-  float *fdata = NULL;
-  int dim[3], indices[3];
-  int ref[3] = {0, 1, 2};
-  int n, m, offset;
-  int i, j, k, index;
-  Var *ignore = NULL;
+	float **data, **symmat;
+	float* fdata = NULL;
+	int dim[3], indices[3];
+	int ref[3] = {0, 1, 2};
+	int n, m, offset;
+	int i, j, k, index;
+	Var* ignore = NULL;
 
-  Alist alist[4];
-  alist[0] = make_alist( "obj",    ID_VAL,    NULL,        &obj);
-  alist[1] = make_alist( "axis",   ID_ENUM,   axis_enums,  &axis_arg);
-  alist[2] = make_alist( "ignore",   ID_VAL,  NULL,  &ignore);
-  alist[3].name = NULL;
+	Alist alist[4];
+	alist[0]      = make_alist("obj", ID_VAL, NULL, &obj);
+	alist[1]      = make_alist("axis", ID_ENUM, axis_enums, &axis_arg);
+	alist[2]      = make_alist("ignore", ID_VAL, NULL, &ignore);
+	alist[3].name = NULL;
 
-  if (parse_args(func, args, alist) == 0) return(NULL);
+	if (parse_args(func, args, alist) == 0) return (NULL);
 
-  if (obj == NULL) {
-    parse_error("%s(): Argument \"%s\" not specified\n",
-                func->name, alist[0].name);
-    return(NULL);
-  }
+	if (obj == NULL) {
+		parse_error("%s(): Argument \"%s\" not specified\n", func->name, alist[0].name);
+		return (NULL);
+	}
 
+	/*
+	 ** If axis is not specified, use the default, i.e. Z
+	 */
+	offset = (axis_arg != NULL) ? toupper(*(char*)axis_arg) - 'X' : 'Z' - 'X';
 
-  /*
-   ** If axis is not specified, use the default, i.e. Z
-   */
-  offset = (axis_arg != NULL)? toupper(*(char *)axis_arg)-'X': 'Z'-'X';
+	/*
+	 ** ref[0] contains the index of the "axis" passed in by the user
+	 ** ref[1-2] contains the indices of the other two axes
+	 */
+	for (i = 0; i < 3; i++) {
+		ref[i] = (i + offset) % 3;
+	}
 
-  /*
-   ** ref[0] contains the index of the "axis" passed in by the user
-   ** ref[1-2] contains the indices of the other two axes
-   */
-  for(i = 0; i < 3; i++){ ref[i] = (i+offset)%3; }
+	dim[0] = GetSamples(V_SIZE(obj), V_ORG(obj)); /* x */
+	dim[1] = GetLines(V_SIZE(obj), V_ORG(obj));   /* y */
+	dim[2] = GetBands(V_SIZE(obj), V_ORG(obj));   /* z */
 
-  dim[0] = GetSamples(V_SIZE(obj), V_ORG(obj));	/* x */
-  dim[1] = GetLines(V_SIZE(obj), V_ORG(obj));		/* y */
-  dim[2] = GetBands(V_SIZE(obj), V_ORG(obj));		/* z */
+	/*
+	 ** number of columns (or variables) is along the "axis"
+	 ** specified by the user
+	 */
+	m = dim[ref[0]];
 
-  /*
-   ** number of columns (or variables) is along the "axis"
-   ** specified by the user
-   */
-  m = dim[ref[0]];
+	/*
+	 ** number of rows is the rest of the two (out of three)
+	 ** dimensions
+	 */
+	n = dim[ref[1]] * dim[ref[2]];
 
-  /*
-   ** number of rows is the rest of the two (out of three)
-   ** dimensions
-   */
-  n = dim[ref[1]] * dim[ref[2]];
+	/* allocate data space for n-rows, and m-columns */
+	data = matrix(n, m);
 
-  /* allocate data space for n-rows, and m-columns */
-  data = matrix(n, m);
+	/* extract data */
+	for (j = 0; j < dim[ref[1]]; j++) {
+		for (i = 0; i < dim[ref[2]]; i++) {
 
-  /* extract data */
-  for(j=0; j<dim[ref[1]]; j++){
-    for(i=0; i<dim[ref[2]]; i++){
+			for (k = 0; k < dim[ref[0]]; k++) { /* "axis" or "m" dimension */
 
-      for(k=0; k<dim[ref[0]]; k++){ /* "axis" or "m" dimension */
+				indices[ref[1]] = j;
+				indices[ref[2]] = i;
+				indices[ref[0]] = k;
 
-        indices[ref[1]] = j;
-        indices[ref[2]] = i;
-        indices[ref[0]] = k;
+				/*
+				 ** here indices[0], indices[1], indices[2] are
+				 ** x, y, & z indices respectively
+				 */
+				index = cpos(indices[0], indices[1], indices[2], obj);
 
-        /*
-         ** here indices[0], indices[1], indices[2] are 
-         ** x, y, & z indices respectively
-         */
-        index = cpos(indices[0], indices[1], indices[2], obj);
+				/* data[][] has 1-based indices */
+				data[j * dim[ref[2]] + i + 1][k + 1] = extract_float(obj, index);
+			}
+		}
+	}
 
-        /* data[][] has 1-based indices */
-        data[j*dim[ref[2]]+i+1][k+1] = extract_float(obj, index);
-      }
-    }
-  }
+	/* handle ignore cases */
 
-  /* handle ignore cases */
+	if (ignore) {
+		float ign_val = extract_float(ignore, 0);
+		int i2        = 1;
+		int flag;
 
-  if (ignore) {
-    float ign_val = extract_float(ignore, 0);
-    int i2 = 1;
-    int flag;
+		for (i = 1; i <= n; i++) {
+			flag = 0;
+			for (j = 1; j <= m; j++) {
+				if (data[i][j] == ign_val) {
+					flag++;
+					break;
+				}
+				data[i2][j] = data[i][j];
+			}
+			if (!flag) i2++;
+		}
+		n = i2 - 1;
+	}
 
-    for (i = 1 ; i <= n ; i++) { 
-      flag = 0;
-      for (j = 1 ; j <= m ; j++) { 
-        if (data[i][j] == ign_val) {
-          flag++;
-          break;
-        }
-        data[i2][j] = data[i][j];
-      }
-      if (!flag) i2++;
-    }
-    n = i2-1;
-  }
+	/* allocate space for resultant matrix */
+	symmat = matrix(m, m);
 
-  /* allocate space for resultant matrix */
-  symmat = matrix(m, m);
+	/* apply processing function */
 
-  /* apply processing function */
+	if (strcmp(func->name, "covar") == 0) {
+		/* evaluate covariance */
+		covcol(data, n, m, symmat);
+	} else if (strcmp(func->name, "corr") == 0) {
+		/* evaluate correlation */
+		corcol(data, n, m, symmat);
+	} else if (strcmp(func->name, "scp") == 0) {
+		/* evaluate sum of squares and cross products matrix */
+		scpcol(data, n, m, symmat);
+	} else {
+		/* should be fairly unreachable - an uncommon occurrance */
+		parse_error("%s() <-- NOT IMPLEMENTED.\n", func->name);
+		return NULL;
+	}
 
-  if (strcmp(func->name, "covar") == 0){
-    /* evaluate covariance */
-    covcol(data, n, m, symmat);
-  }
-  else if (strcmp(func->name, "corr") == 0){
-    /* evaluate correlation */
-    corcol(data, n, m, symmat);
-  }
-  else if (strcmp(func->name, "scp") == 0){
-    /* evaluate sum of squares and cross products matrix */
-    scpcol(data, n, m, symmat);
-  }
-  else {
-    /* should be fairly unreachable - an uncommon occurrance */
-    parse_error("%s() <-- NOT IMPLEMENTED.\n", func->name);
-    return NULL;
-  }
+	/* cleanup original data */
+	free_matrix(data, n, m);
 
-  /* cleanup original data */
-  free_matrix(data, n, m);
+	/* collect, package, and return results */
+	fdata = (float*)calloc(m * m, sizeof(float));
 
-  /* collect, package, and return results */
-  fdata = (float *)calloc(m*m, sizeof(float));
+	for (j = 0; j < m; j++) {
+		for (i = 0; i < m; i++) {
+			fdata[j * m + i] = symmat[j + 1][i + 1];
+		}
+	}
 
-  for(j=0; j<m; j++){
-    for(i=0; i<m; i++){
-      fdata[j*m+i] = symmat[j+1][i+1];
-    }
-  }
+	/* cleanup temporary matrix */
+	free_matrix(symmat, m, m);
 
-  /* cleanup temporary matrix */
-  free_matrix(symmat, m, m);
-
-  v_return = newVal(BSQ, m, m, 1, FLOAT, fdata);
-  return v_return;
+	v_return = newVal(BSQ, m, m, 1, FLOAT, fdata);
+	return v_return;
 }
 
-void
-stddev(
-	float	**data,
-	int	n,
-	int	m,
-	float	*stddev
-)
+void stddev(float** data, int n, int m, float* stddev)
 {
 	float eps = 0.005;
 	float *mean, *vector();
-	int	i, j;
+	int i, j;
 
-/* Allocate storage for mean vector */
+	/* Allocate storage for mean vector */
 	mean = vector(m);
 
-/* Determine mean of column vectors of input data matrix */
+	/* Determine mean of column vectors of input data matrix */
 
 	for (j = 1; j <= m; j++) {
 		mean[j] = 0.0;
 		for (i = 1; i <= n; i++) {
 			mean[j] += data[i][j];
 		}
-		mean[j] /= (float) n;
+		mean[j] /= (float)n;
 	}
 
-/* Determine standard deviations of column vectors of data matrix. */
+	/* Determine standard deviations of column vectors of data matrix. */
 
 	for (j = 1; j <= m; j++) {
 		stddev[j] = 0.0;
 		for (i = 1; i <= n; i++) {
-			stddev[j] += ((data[i][j] - mean[j]) *
-				      (data[i][j] - mean[j]));
+			stddev[j] += ((data[i][j] - mean[j]) * (data[i][j] - mean[j]));
 		}
-		stddev[j] /= (float) n;
+		stddev[j] /= (float)n;
 		stddev[j] = sqrt(stddev[j]);
 		/* The following in an inelegant but usual way to handle
 		   near-zero std. dev. values, which below would cause a zero-
 		   divide. */
-		if (stddev[j] <= eps)
-			stddev[j] = 1.0;
+		if (stddev[j] <= eps) stddev[j] = 1.0;
 	}
 
 	free_vector(mean, m);
 }
 
-
 /**  Correlation matrix: creation  ***********************************/
 
 /* Create m * m correlation matrix from given n * m data matrix. */
 
-void 
-corcol(data, n, m, symmat)
-     float **data, **symmat;
-     int n, m;
+void corcol(data, n, m, symmat) float **data, **symmat;
+int n, m;
 {
 	float eps = 0.005, sqn;
 	float *mean, *stddev, *vector();
 	int i, j, j1, j2;
 
-/* Allocate storage for mean and std. dev. vectors */
-	mean = vector(m);
+	/* Allocate storage for mean and std. dev. vectors */
+	mean   = vector(m);
 	stddev = vector(m);
 
-/* Determine mean of column vectors of input data matrix */
+	/* Determine mean of column vectors of input data matrix */
 
 	for (j = 1; j <= m; j++) {
 		mean[j] = 0.0;
 		for (i = 1; i <= n; i++) {
 			mean[j] += data[i][j];
 		}
-		mean[j] /= (float) n;
+		mean[j] /= (float)n;
 	}
 
-/* Determine standard deviations of column vectors of data matrix. */
+	/* Determine standard deviations of column vectors of data matrix. */
 
 	for (j = 1; j <= m; j++) {
 		stddev[j] = 0.0;
 		for (i = 1; i <= n; i++) {
-			stddev[j] += ((data[i][j] - mean[j]) *
-				      (data[i][j] - mean[j]));
+			stddev[j] += ((data[i][j] - mean[j]) * (data[i][j] - mean[j]));
 		}
-		stddev[j] /= (float) n;
+		stddev[j] /= (float)n;
 		stddev[j] = sqrt(stddev[j]);
 		/* The following in an inelegant but usual way to handle
 		   near-zero std. dev. values, which below would cause a zero-
 		   divide. */
-		if (stddev[j] <= eps)
-			stddev[j] = 1.0;
+		if (stddev[j] <= eps) stddev[j] = 1.0;
 	}
 
 #if 0
@@ -818,9 +755,9 @@ corcol(data, n, m, symmat)
 	}
 	symmat[m][m] = 1.0;
 #else
-/* Saadat - Make this routine non-destructive for data[][] */
+	/* Saadat - Make this routine non-destructive for data[][] */
 
-/* Calculate the m * m correlation matrix. */
+	/* Calculate the m * m correlation matrix. */
 	sqn = sqrt((float)n);
 
 	for (j1 = 1; j1 <= m - 1; j1++) {
@@ -828,9 +765,8 @@ corcol(data, n, m, symmat)
 		for (j2 = j1 + 1; j2 <= m; j2++) {
 			symmat[j1][j2] = 0.0;
 			for (i = 1; i <= n; i++) {
-				symmat[j1][j2] += 
-					((data[i][j1] - mean[j1]) / (stddev[j1] * sqn)) *
-					((data[i][j2] - mean[j2]) / (stddev[j2] * sqn));
+				symmat[j1][j2] += ((data[i][j1] - mean[j1]) / (stddev[j1] * sqn)) *
+				                  ((data[i][j2] - mean[j2]) / (stddev[j2] * sqn));
 			}
 			symmat[j2][j1] = symmat[j1][j2];
 		}
@@ -840,32 +776,29 @@ corcol(data, n, m, symmat)
 #endif
 
 	return;
-
 }
 
 /**  Variance-covariance matrix: creation  *****************************/
 
-void 
-covcol(data, n, m, symmat)
-     float **data, **symmat;
-     int n, m;
+void covcol(data, n, m, symmat) float **data, **symmat;
+int n, m;
 /* Create m * m covariance matrix from given n * m data matrix. */
 {
 	float *mean, *vector();
 	int i, j, j1, j2;
 
-/* Allocate storage for mean vector */
+	/* Allocate storage for mean vector */
 
 	mean = vector(m);
 
-/* Determine mean of column vectors of input data matrix */
+	/* Determine mean of column vectors of input data matrix */
 
 	for (j = 1; j <= m; j++) {
 		mean[j] = 0.0;
 		for (i = 1; i <= n; i++) {
 			mean[j] += data[i][j];
 		}
-		mean[j] /= (float) n;
+		mean[j] /= (float)n;
 	}
 
 #if 0
@@ -887,37 +820,32 @@ covcol(data, n, m, symmat)
 		}
 	}
 #else
-/* Saadat - Make this routine non-destructive for data[][] */
+	/* Saadat - Make this routine non-destructive for data[][] */
 
-/* Calculate the m * m covariance matrix. */
+	/* Calculate the m * m covariance matrix. */
 	for (j1 = 1; j1 <= m; j1++) {
 		for (j2 = j1; j2 <= m; j2++) {
 			symmat[j1][j2] = 0.0;
 			for (i = 1; i <= n; i++) {
-				symmat[j1][j2] += 
-					(data[i][j1] - mean[j1]) *
-					(data[i][j2] - mean[j2]);
+				symmat[j1][j2] += (data[i][j1] - mean[j1]) * (data[i][j2] - mean[j2]);
 			}
-			symmat[j2][j1] = (symmat[j1][j2] /= ((float)(n-1)));
+			symmat[j2][j1] = (symmat[j1][j2] /= ((float)(n - 1)));
 		}
 	}
 #endif
 
 	return;
-
 }
 
 /**  Sums-of-squares-and-cross-products matrix: creation  **************/
 
-void 
-scpcol(data, n, m, symmat)
-     float **data, **symmat;
-     int n, m;
+void scpcol(data, n, m, symmat) float **data, **symmat;
+int n, m;
 /* Create m * m sums-of-cross-products matrix from n * m data matrix. */
 {
 	int i, j1, j2;
 
-/* Calculate the m * m sums-of-squares-and-cross-products matrix. */
+	/* Calculate the m * m sums-of-squares-and-cross-products matrix. */
 
 	for (j1 = 1; j1 <= m; j1++) {
 		for (j2 = j1; j2 <= m; j2++) {
@@ -930,43 +858,35 @@ scpcol(data, n, m, symmat)
 	}
 
 	return;
-
 }
-
-
 
 /**  Allocation of vector storage  ***********************************/
 
-float *
-vector(n)
-     int n;
+float* vector(n) int n;
 /* Allocates a float vector with range [1..n]. */
 {
 
-	float *v;
+	float* v;
 
-	v = (float *) malloc((unsigned) n * sizeof(float));
-	if (!v){
+	v = (float*)malloc((unsigned)n * sizeof(float));
+	if (!v) {
 		parse_error("Allocation failure in vector(). Aborting!");
 		exit(1);
 	}
 	return v - 1;
-
 }
 
 /**  Allocation of float matrix storage  *****************************/
 
-float **
-matrix(n, m)
-     int n, m;
+float **matrix(n, m) int n, m;
 /* Allocate a float matrix with range [1..n][1..m]. */
 {
 	int i;
-	float **mat;
+	float** mat;
 
 	/* Allocate pointers to rows. */
-	mat = (float **) malloc((unsigned) (n) * sizeof(float *));
-	if (!mat){
+	mat = (float**)malloc((unsigned)(n) * sizeof(float*));
+	if (!mat) {
 		parse_error("Allocation failure 1 in matrix(). Aborting!");
 		exit(1);
 	}
@@ -974,8 +894,8 @@ matrix(n, m)
 
 	/* Allocate rows and set pointers to them. */
 	for (i = 1; i <= n; i++) {
-		mat[i] = (float *) malloc((unsigned) (m) * sizeof(float));
-		if (!mat[i]){
+		mat[i] = (float*)malloc((unsigned)(m) * sizeof(float));
+		if (!mat[i]) {
 			parse_error("Allocation failure 2 in matrix(). Aborting!");
 			exit(1);
 		}
@@ -984,43 +904,36 @@ matrix(n, m)
 
 	/* Return pointer to array of pointers to rows. */
 	return mat;
-
 }
 
 /**  Deallocate vector storage  *********************************/
 
-void 
-free_vector(v, n)
-     float *v;
-     int n;
+void free_vector(v, n) float* v;
+int n;
 /* Free a float vector allocated by vector(). */
 {
-	free((char *) (v + 1));
+	free((char*)(v + 1));
 }
 
 /**  Deallocate float matrix storage  ***************************/
 
-void 
-free_matrix(mat, n, m)
-     float **mat;
-     int n, m;
+void free_matrix(mat, n, m) float** mat;
+int n, m;
 /* Free a float matrix allocated by matrix(). */
 {
 	int i;
 
 	for (i = n; i >= 1; i--) {
-		free((char *) (mat[i] + 1));
+		free((char*)(mat[i] + 1));
 	}
-	free((char *) (mat + 1));
+	free((char*)(mat + 1));
 }
 
 /**  Reduce a real, symmetric matrix to a symmetric, tridiag. matrix. */
 
-void 
-tred2(a, n, d, e)
-     float **a, *d, *e;
+void tred2(a, n, d, e) float **a, *d, *e;
 /* float **a, d[], e[]; */
-     int n;
+int n;
 /* Householder reduction of matrix a to tridiagonal form.
    Algorithm: Martin et al., Num. Math. 11, 181-195, 1968.
    Ref: Smith et al., Matrix Eigensystem Routines -- EISPACK Guide
@@ -1035,8 +948,7 @@ tred2(a, n, d, e)
 		l = i - 1;
 		h = scale = 0.0;
 		if (l > 1) {
-			for (k = 1; k <= l; k++)
-				scale += fabs(a[i][k]);
+			for (k = 1; k <= l; k++) scale += fabs(a[i][k]);
 			if (scale == 0.0)
 				e[i] = a[i][l];
 			else {
@@ -1044,33 +956,30 @@ tred2(a, n, d, e)
 					a[i][k] /= scale;
 					h += a[i][k] * a[i][k];
 				}
-				f = a[i][l];
-				g = f > 0 ? -sqrt(h) : sqrt(h);
+				f    = a[i][l];
+				g    = f > 0 ? -sqrt(h) : sqrt(h);
 				e[i] = scale * g;
 				h -= f * g;
 				a[i][l] = f - g;
-				f = 0.0;
+				f       = 0.0;
 				for (j = 1; j <= l; j++) {
 					a[j][i] = a[i][j] / h;
-					g = 0.0;
-					for (k = 1; k <= j; k++)
-						g += a[j][k] * a[i][k];
-					for (k = j + 1; k <= l; k++)
-						g += a[k][j] * a[i][k];
-					e[j] = g / h;
+					g       = 0.0;
+					for (k = 1; k <= j; k++) g += a[j][k] * a[i][k];
+					for (k = j + 1; k <= l; k++) g += a[k][j] * a[i][k];
+					e[j]   = g / h;
 					f += e[j] * a[i][j];
 				}
 				hh = f / (h + h);
 				for (j = 1; j <= l; j++) {
-					f = a[i][j];
+					f    = a[i][j];
 					e[j] = g = e[j] - hh * f;
-					for (k = 1; k <= j; k++)
-						a[j][k] -= (f * e[k] + g * a[i][k]);
+					for (k = 1; k <= j; k++) a[j][k] -= (f * e[k] + g * a[i][k]);
 				}
 			}
 		} else
 			e[i] = a[i][l];
-		d[i] = h;
+		d[i]     = h;
 	}
 	d[1] = 0.0;
 	e[1] = 0.0;
@@ -1079,73 +988,67 @@ tred2(a, n, d, e)
 		if (d[i]) {
 			for (j = 1; j <= l; j++) {
 				g = 0.0;
-				for (k = 1; k <= l; k++)
-					g += a[i][k] * a[k][j];
-				for (k = 1; k <= l; k++)
-					a[k][j] -= g * a[k][i];
+				for (k = 1; k <= l; k++) g += a[i][k] * a[k][j];
+				for (k = 1; k <= l; k++) a[k][j] -= g * a[k][i];
 			}
 		}
-		d[i] = a[i][i];
+		d[i]    = a[i][i];
 		a[i][i] = 1.0;
-		for (j = 1; j <= l; j++)
-			a[j][i] = a[i][j] = 0.0;
+		for (j = 1; j <= l; j++) a[j][i] = a[i][j] = 0.0;
 	}
 }
 
 /**  Tridiagonal QL algorithm -- Implicit  **********************/
 
-int 
-tqli(d, e, n, z, niter)
-     float d[], e[], **z;
-     int n, niter;
+int tqli(d, e, n, z, niter) float d[], e[], **z;
+int n, niter;
 {
 	int m, l, iter, i, k;
 	float s, r, p, g, f, dd, c, b;
 
-	for (i = 2; i <= n; i++)
-		e[i - 1] = e[i];
-	e[n] = 0.0;
+	for (i = 2; i <= n; i++) e[i - 1] = e[i];
+	e[n]                              = 0.0;
 	for (l = 1; l <= n; l++) {
 		iter = 0;
 		do {
 			for (m = l; m <= n - 1; m++) {
 				dd = fabs(d[m]) + fabs(d[m + 1]);
-				if (fabs(e[m]) + dd == dd)
-					break;
+				if (fabs(e[m]) + dd == dd) break;
 			}
 			if (m != l) {
-				if (iter++ >= niter){
-					parse_error("No convergence in Tridiagonal QL Algorithm in %d iterations. Giving up!", niter);
+				if (iter++ >= niter) {
+					parse_error(
+					    "No convergence in Tridiagonal QL Algorithm in %d iterations. Giving up!", niter);
 					return 0;
 				}
 				g = (d[l + 1] - d[l]) / (2.0 * e[l]);
 				r = sqrt((g * g) + 1.0);
 				g = d[m] - d[l] + e[l] / (g + SIGN(r, g));
 				s = c = 1.0;
-				p = 0.0;
+				p     = 0.0;
 				for (i = m - 1; i >= l; i--) {
 					f = s * e[i];
 					b = c * e[i];
 					if (fabs(f) >= fabs(g)) {
-						c = g / f;
-						r = sqrt((c * c) + 1.0);
+						c        = g / f;
+						r        = sqrt((c * c) + 1.0);
 						e[i + 1] = f * r;
 						c *= (s = 1.0 / r);
 					} else {
-						s = f / g;
-						r = sqrt((s * s) + 1.0);
+						s        = f / g;
+						r        = sqrt((s * s) + 1.0);
 						e[i + 1] = g * r;
 						s *= (c = 1.0 / r);
 					}
-					g = d[i + 1] - p;
-					r = (d[i] - g) * s + 2.0 * c * b;
-					p = s * r;
+					g        = d[i + 1] - p;
+					r        = (d[i] - g) * s + 2.0 * c * b;
+					p        = s * r;
 					d[i + 1] = g + p;
-					g = c * r - b;
+					g        = c * r - b;
 					for (k = 1; k <= n; k++) {
-						f = z[k][i + 1];
+						f           = z[k][i + 1];
 						z[k][i + 1] = s * z[k][i] + c * f;
-						z[k][i] = c * z[k][i] - s * f;
+						z[k][i]     = c * z[k][i] - s * f;
 					}
 				}
 				d[l] = d[l] - p;
@@ -1162,35 +1065,30 @@ tqli(d, e, n, z, niter)
 /** davinci function eigen(obj)                                           **/
 /** calculates Eigen Values & Vectors of Real Symmetric Matrices          **/
 /***************************************************************************/
-Var *
-ff_eigen(
-	vfuncptr	func,
-	Var		*args
-)
+Var* ff_eigen(vfuncptr func, Var* args)
 {
-	Var		*obj = NULL;
-	Var		*v_return;
-	float		*interm, *evals, **symmat;
-	float		*fdata = NULL;
-	int		n, m, w;
-	int		i, j, index;
-	int      niter = DEFAULT_MAX_TQLI_ITER;
-	int      success;
+	Var* obj = NULL;
+	Var* v_return;
+	float *interm, *evals, **symmat;
+	float* fdata = NULL;
+	int n, m, w;
+	int i, j, index;
+	int niter = DEFAULT_MAX_TQLI_ITER;
+	int success;
 
-	Alist		alist[3];
-	alist[0] = make_alist( "obj",    ID_VAL,    NULL,        &obj);
-	alist[1] = make_alist( "niter",  INT,       NULL,        &niter);
+	Alist alist[3];
+	alist[0]      = make_alist("obj", ID_VAL, NULL, &obj);
+	alist[1]      = make_alist("niter", INT, NULL, &niter);
 	alist[2].name = NULL;
 
-	if (parse_args(func, args, alist) == 0) return(NULL);
+	if (parse_args(func, args, alist) == 0) return (NULL);
 
 	if (obj == NULL) {
-		parse_error("%s(): Argument \"%s\" not specified\n",
-			func->name, alist[0].name);
-		return(NULL);
+		parse_error("%s(): Argument \"%s\" not specified\n", func->name, alist[0].name);
+		return (NULL);
 	}
 
-	switch(V_FORMAT(obj)){
+	switch (V_FORMAT(obj)) {
 	case BYTE:
 	case SHORT:
 	case INT:
@@ -1198,20 +1096,18 @@ ff_eigen(
 	case DOUBLE:
 		/* Only the above data types are supported */
 		break;
-	
+
 	default:
-		parse_error("%s(): \"%s\" is of invalid format.\n",
-			func->name, alist[0].name);
-		return(NULL);
+		parse_error("%s(): \"%s\" is of invalid format.\n", func->name, alist[0].name);
+		return (NULL);
 	}
 
-	m = GetSamples(V_SIZE(obj), V_ORG(obj));	/* x */
-	n = GetLines(V_SIZE(obj), V_ORG(obj));		/* y */
-	w = GetBands(V_SIZE(obj), V_ORG(obj));		/* z */
+	m = GetSamples(V_SIZE(obj), V_ORG(obj)); /* x */
+	n = GetLines(V_SIZE(obj), V_ORG(obj));   /* y */
+	w = GetBands(V_SIZE(obj), V_ORG(obj));   /* z */
 
-	if (m != n && w != 1){
-		parse_error("%s(): Argument \"%s\" must be a real symmetric matrix.\n",
-			func->name, alist[0].name);
+	if (m != n && w != 1) {
+		parse_error("%s(): Argument \"%s\" must be a real symmetric matrix.\n", func->name, alist[0].name);
 		return NULL;
 	}
 
@@ -1219,10 +1115,10 @@ ff_eigen(
 	symmat = matrix(m, m);
 
 	/* extract data */
-	for(j=0; j<n; j++){
-		for(i=0; i<m; i++){
-			index = cpos(i, j, 0, obj);
-			symmat[j+1][i+1] = extract_float(obj, index);
+	for (j = 0; j < n; j++) {
+		for (i = 0; i < m; i++) {
+			index                = cpos(i, j, 0, obj);
+			symmat[j + 1][i + 1] = extract_float(obj, index);
 		}
 	}
 
@@ -1230,13 +1126,13 @@ ff_eigen(
 	evals = vector(m);
 
 	/* Allocate storage for dummy and new vectors. */
-	interm = vector(m);	/* Storage alloc. for 'intermediate' vector */
+	interm = vector(m); /* Storage alloc. for 'intermediate' vector */
 
 	/* Calculate Eigen values and vectors */
-	tred2(symmat, m, evals, interm);	/* Triangular decomposition */
-	success = tqli(evals, interm, m, symmat, niter);		/* Reduction of sym. trid. matrix */
+	tred2(symmat, m, evals, interm);                 /* Triangular decomposition */
+	success = tqli(evals, interm, m, symmat, niter); /* Reduction of sym. trid. matrix */
 
-	if (!success){
+	if (!success) {
 		free_vector(interm, m);
 		free_vector(evals, m);
 		free_matrix(symmat, m, m);
@@ -1245,7 +1141,7 @@ ff_eigen(
 	}
 
 	/* evals now contains the eigenvalues,
-		columns of symmat now contain the associated eigenvectors. */
+	    columns of symmat now contain the associated eigenvectors. */
 
 	/* cleanup temporary variables */
 	free_vector(interm, m);
@@ -1253,24 +1149,24 @@ ff_eigen(
 	/*
 	** collect, package, and return results
 	*/
-	fdata = (float *)calloc(m*(m+1), sizeof(float));
+	fdata = (float*)calloc(m * (m + 1), sizeof(float));
 
 	/* store eigen vectors starting from the second column of output data */
-	for(j=0; j<m; j++){
-		for(i=0; i<m; i++){
-			fdata[j*(m+1)+(i+1)] = symmat[j+1][i+1];
+	for (j = 0; j < m; j++) {
+		for (i = 0; i < m; i++) {
+			fdata[j * (m + 1) + (i + 1)] = symmat[j + 1][i + 1];
 		}
 	}
 
 	/* save eigen values in the first column of output data */
-	for(j=0; j<m; j++){
-		fdata[j*(m+1)] = evals[j+1];
+	for (j = 0; j < m; j++) {
+		fdata[j * (m + 1)] = evals[j + 1];
 	}
 
 	/* cleanup temporary matrix */
 	free_matrix(symmat, m, m);
 	free_vector(evals, m);
 
-	v_return = newVal(BSQ, m+1, m, 1, FLOAT, fdata);
+	v_return = newVal(BSQ, m + 1, m, 1, FLOAT, fdata);
 	return v_return;
 }

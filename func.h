@@ -1,6 +1,8 @@
 #include <config.h>
 
 #include "parser.h"
+#include "scope.h"
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,7 +56,6 @@ void squash_spaces(char *s);
 int instring(char *str, char c);
 void save_function(void);
 void eat_em();
-int dd_put_argv(Scope *s, Var *v);
 void unput_nextc(char c);
 int send_to_plot(const char *);
 char *do_help(char *input, char *path);
@@ -254,10 +255,6 @@ char *enumerated_arg(Var *, char **);
 //that has other functions that get used elsewhere should
 //have an h file to go with it.  Probably means extracting
 //helper functions from some ff*.c files into logical groups
-Var *mem_claim(Var *);
-Var *mem_malloc();
-void mem_free(Scope *scope);
-
 void free_var(Var *);
 void commaize(char *);
 void free_tree(Var *);
@@ -418,7 +415,6 @@ Var *ff_covar(vfuncptr func, Var *arg);
 Var *ff_loadvan(vfuncptr func, Var *arg);
 Var *ff_loadspecpr(vfuncptr func, Var *arg);
 
-Alist make_alist(const char *name, int type, void *limits, void *value);
 #ifdef HAVE_LIBXML2
 Var * ReadPDS4(vfuncptr func, Var * arg);
 #endif
@@ -451,8 +447,14 @@ int cmp_float(const void *, const void *);
 int cmp_double(const void *, const void *);
 
 void log_line(char *str);
-int parse_args(vfuncptr func, Var *args, Alist *alist);
-int make_args(int *ac, Var ***av, vfuncptr func, Var *args);
+
+// defined in newfunc.c
+int parse_args(vfuncptr func, Var* args, Alist* alist);
+int make_args(int* ac, Var*** av, vfuncptr func, Var* args);
+Alist make_alist(const char* name, int type, void* limits, void* value);
+Var* append_arg(Var*, char*, Var*);
+Var* create_args(int, ...);
+
 void print_history(int i);
 
 void save_ufunc(char *filename);
@@ -597,8 +599,6 @@ int array_replace(Var *dst, Var *src, Range *r);
 char *make_temp_file_path_in_dir(char *dir);
 char * make_temp_file_path();
 
-Var *create_args(int, ...);
-Var *append_arg(Var *, char *, Var *);
 int compare_vars(Var *a, Var *b);
 
 extern void pp_print_var(Var *, char *, int, int);

@@ -1,13 +1,9 @@
-#include "parser.h"
+#include "func.h"
 
-/**
- **/
+//TODO(rswinkle) does this need it's own file? move to
+//ff.c or something like that
 
-
-/**
- ** ff_pause() - Get a line of input from the user
- **/
-
+// ff_pause() - Get a line of input from the user
 Var *
 ff_pause(vfuncptr func, Var *arg)
 {

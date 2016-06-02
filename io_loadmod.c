@@ -1,3 +1,4 @@
+#include "func.h"
 #include "io_loadmod.h"
 
 #define IOMOD_EXT ".dvio"

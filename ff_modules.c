@@ -9,6 +9,7 @@
 
 #include "cvector.h"
 #include "darray.h"
+#include "func.h"
 #include "parser.h"
 #include <errno.h>
 #include <errno.h>

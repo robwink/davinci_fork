@@ -1,6 +1,6 @@
 #include "dvio.h"
 #include "io_loadmod.h"
-#include "dvio_specpr.h"
+#include "func.h"
 
 
 Var *do_load(char *filename, struct iom_iheader *h, int hdf_old);
@@ -96,7 +96,7 @@ do_load(char *filename, struct iom_iheader *h, int hdf_old)
 	 **/
 	fname = dv_locate_file(filename);
 	if (!file_exists(fname)) {
-		if ((p = strchr(filename, SPECPR_SUFFIX)) != NULL) {
+		if ((p = strchr(filename, RECORD_SUFFIX)) != NULL) {
 			*p = '\0';
 			record = atoi(p + 1);
 			fname = dv_locate_file(filename);

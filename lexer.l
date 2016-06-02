@@ -3,7 +3,7 @@
 %{
 
 #include "y_tab.h"
-#include "parser.h"
+#include "func.h"
 
 #define MYECHO if (save_fp) (void)fwrite( yytext, yyleng, 1, save_fp );
 

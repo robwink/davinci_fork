@@ -2,7 +2,7 @@
 #include "cvector.h"
 #include "ff_source.h"
 
-#include "parser.h"
+#include "func.h"
 #include "system.h"
 #include <limits.h>
 #include <setjmp.h>

@@ -1,28 +1,26 @@
-#include "parser.h"
 #include "dvio.h"
 #include "io_loadmod.h"
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include "func.h"
 #include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #if defined(__CYGWIN__) || defined(__MINGW32__)
 #include <io.h>
-extern Swap_Big_and_Little(Var *);
+extern Swap_Big_and_Little(Var*);
 #endif
 
 /* FIX: put these in a header */
 
 #ifdef HAVE_LIBPNG
-static char const *iom_filetypes[] = { "gif", "jpg", "jpeg", "tif", "tiff", "png", "bmp", 0 };
+static char const* iom_filetypes[] = {"gif", "jpg", "jpeg", "tif", "tiff", "png", "bmp", 0};
 #else
-static char const *iom_filetypes[] = { "gif", "jpg", "jpeg", "tif", "tiff", "bmp", 0 };
+static char const* iom_filetypes[] = {"gif", "jpg", "jpeg", "tif", "tiff", "bmp", 0};
 #endif
 
-Var *
-ff_write(vfuncptr func, Var *arg)
+Var* ff_write(vfuncptr func, Var* arg)
 {
-
 	Var  *ob = NULL;
 	char *filename = NULL;
 	char *title = NULL;
@@ -32,7 +30,6 @@ ff_write(vfuncptr func, Var *arg)
 	int   force=0;            /* Force file overwrite */
 	int hdf_old = 0;  // write hdf file backward like davinci used to
 	unsigned short iom_type_idx, iom_type_found;
-
 
 	Alist alist[9];
 	alist[0] = make_alist("object",   ID_UNK,    NULL, &ob);
@@ -45,35 +42,35 @@ ff_write(vfuncptr func, Var *arg)
 	alist[7] = make_alist("hdf_old",  INT,       NULL, &hdf_old);
 	alist[8].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
 	/**
 	** Make sure user specified an object
 	**/
-	if (ob == NULL){
+	if (ob == NULL) {
 		parse_error("%s: No object specified.", func->name);
-		return(NULL);
+		return (NULL);
 	}
 
 	/**
 	** get filename.  Verify type
 	**/
-	if (filename == NULL){
+	if (filename == NULL) {
 		parse_error("No filename specified.");
-		return(NULL);
+		return (NULL);
 	}
 	filename = dv_locate_file(filename);
 
 	if (type == NULL) {
 		parse_error("No type specified.");
-		return(NULL);
+		return (NULL);
 	}
 
 	/*
 	** Get title string
 	*/
 	if (title == NULL) {
-		title = (char *)"DV data product";
+		title = (char*)"DV data product";
 	}
 
 	/* Check type against list of types supported by iomedley. */
@@ -82,27 +79,39 @@ ff_write(vfuncptr func, Var *arg)
 
 	while (iom_filetypes[iom_type_idx]) {
 		if (!strcasecmp(type, iom_filetypes[iom_type_idx])) {
-		iom_type_found = 1;
-		break;
+			iom_type_found = 1;
+			break;
 		}
 		iom_type_idx++;
 	}
 
-	if (iom_type_found)                   dv_WriteIOM(ob, filename, type, force);
-	else if (!strcasecmp(type, "raw"))    dv_WriteRaw(ob, filename, force);
-	else if (!strcasecmp(type, "vicar"))  dv_WriteVicar(ob, filename, force);
-	else if (!strcasecmp(type, "grd"))    dv_WriteGRD(ob, filename, force, title, (char *)"davinci");
+	if (iom_type_found)
+		dv_WriteIOM(ob, filename, type, force);
+	else if (!strcasecmp(type, "raw"))
+		dv_WriteRaw(ob, filename, force);
+	else if (!strcasecmp(type, "vicar"))
+		dv_WriteVicar(ob, filename, force);
+	else if (!strcasecmp(type, "grd"))
+		dv_WriteGRD(ob, filename, force, title, (char*)"davinci");
 	/*    else if (!strcasecmp(type, "pnm"))    dv_WritePNM(ob, filename, force); */
-	else if (!strcasecmp(type, "pgm"))    dv_WritePGM(ob, filename, force);
-	else if (!strcasecmp(type, "ppm"))    dv_WritePPM(ob, filename, force);
-	else if (!strcasecmp(type, "ascii"))  WriteAscii(ob, filename, force);
-	else if (!strcasecmp(type, "csv"))    dv_WriteCSV(ob, filename, separator, header, force);
-	else if (!strcasecmp(type, "ers"))    dv_WriteERS(ob, filename, force);
-	else if (!strcasecmp(type, "imath"))  dv_WriteIMath(ob, filename, force);
-	else if (!strcasecmp(type, "isis"))   dv_WriteISIS(ob, filename, force, title);
-	else if (!strcasecmp(type, "envi"))   dv_WriteENVI(ob, filename, force);
-	else if (!strcasecmp(type, "specpr")){
-		if (!force && access(filename, F_OK)){
+	else if (!strcasecmp(type, "pgm"))
+		dv_WritePGM(ob, filename, force);
+	else if (!strcasecmp(type, "ppm"))
+		dv_WritePPM(ob, filename, force);
+	else if (!strcasecmp(type, "ascii"))
+		WriteAscii(ob, filename, force);
+	else if (!strcasecmp(type, "csv"))
+		dv_WriteCSV(ob, filename, separator, header, force);
+	else if (!strcasecmp(type, "ers"))
+		dv_WriteERS(ob, filename, force);
+	else if (!strcasecmp(type, "imath"))
+		dv_WriteIMath(ob, filename, force);
+	else if (!strcasecmp(type, "isis"))
+		dv_WriteISIS(ob, filename, force, title);
+	else if (!strcasecmp(type, "envi"))
+		dv_WriteENVI(ob, filename, force);
+	else if (!strcasecmp(type, "specpr")) {
+		if (!force && access(filename, F_OK)) {
 			parse_error("File %s already exists.\n", filename);
 			return NULL;
 		}
@@ -113,7 +122,7 @@ ff_write(vfuncptr func, Var *arg)
 ** Below here are optional packages
 */
 #ifdef HAVE_LIBHDF5
-	else if (!strcasecmp(type, "hdf")){
+	else if (!strcasecmp(type, "hdf")) {
 		struct stat statbuf;
 		if (!force && !stat(filename, &statbuf)) {
 			parse_error("File %s already exists.\n", filename);
@@ -126,7 +135,8 @@ ff_write(vfuncptr func, Var *arg)
 #endif
 
 #ifdef BUILD_MODULE_SUPPORT
-	else if (iomod_handler_for_type(type)) write_to_io_module(ob, filename, type, force);
+	else if (iomod_handler_for_type(type))
+		write_to_io_module(ob, filename, type, force);
 #endif
 
 #if 0
@@ -138,10 +148,9 @@ ff_write(vfuncptr func, Var *arg)
 	else {
 		sprintf(error_buf, "Unrecognized type: %s", type);
 		parse_error(NULL);
-		return(NULL);
+		return (NULL);
 	}
 
 	free(filename);
-
-	return(NULL);
+	return (NULL);
 }

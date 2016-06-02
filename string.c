@@ -1,4 +1,4 @@
-#include "parser.h"
+#include "func.h"
 
 // Convert a string to int representation
 Var* ff_atoi(vfuncptr func, Var* arg)

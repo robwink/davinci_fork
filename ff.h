@@ -1,6 +1,6 @@
 #ifndef _FF_H_
 #define _FF_H_
-#include "parser.h"
+#include "func.h"
 
 /**
  ** The list of named functions, their handlers and an optional data value

@@ -1,5 +1,5 @@
 /********************************** pp.c *********************************/
-#include "parser.h"
+#include "func.h"
 #include "dvio.h"
 #include "ff_modules.h"
 

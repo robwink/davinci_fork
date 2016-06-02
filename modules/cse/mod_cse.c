@@ -1,286 +1,268 @@
-#include "parser.h"
-#include "math.h"
+#include "func.h"
 #include "ff_modules.h"
+#include "math.h"
+#include "parser.h"
 
-static void floodFillScanline(int x, int y, int h, int w,  int newColor, int oldColor, unsigned char *screenBuffer);
-static float *sstretch_sobel(float *data, float ignore, int x, int y, int z);
-static float *smooth(float *obj, float *kernel, int ox, int oy, int oz, int kx, int ky, int kz, int norm, float ignore);
-static float *unslantc(float *data, int *leftedge, int width, int x, int y, int z, float ignore);
-static float *unshearc(float *w_pic, float angle, int x, int y, int z, float nullv);
+static void floodFillScanline(int x, int y, int h, int w, int newColor, int oldColor,
+                              unsigned char* screenBuffer);
+static float* sstretch_sobel(float* data, float ignore, int x, int y, int z);
+static float* smooth(float* obj, float* kernel, int ox, int oy, int oz, int kx, int ky, int kz,
+                     int norm, float ignore);
+static float* unslantc(float* data, int* leftedge, int width, int x, int y, int z, float ignore);
+static float* unshearc(float* w_pic, float angle, int x, int y, int z, float nullv);
 static float round_dp(float input, float decimal);
 
+static Var* cse_contour(vfuncptr func, Var* arg);
+static Var* cse_maxpos(vfuncptr func, Var* arg);
+static Var* cse_minpos(vfuncptr func, Var* arg);
+static Var* cse_cleandcs(vfuncptr func, Var* arg);
+static Var* cse_rmnoise(vfuncptr func, Var* arg);
+static Var* cse_find_shift(vfuncptr func, Var* arg);
+static Var* cse_shift(vfuncptr func, Var* arg);
+static Var* cse_unshift(vfuncptr func, Var* arg);
+static Var* cse_tes_shift(vfuncptr func, Var* arg);
+static Var* cse_sobel(vfuncptr func, Var* arg);
+static Var* cse_circle(vfuncptr func, Var* arg);
+static Var* cse_reconst(vfuncptr func, Var* arg);
+static Var* cse_sstretch2(vfuncptr func, Var* arg);
+static Var* cse_unscale(vfuncptr func, Var* arg);
+static Var* cse_ramp(vfuncptr func, Var* arg);
+// static Var *cse_interp2d(vfuncptr func, Var * arg);
+static Var* cse_columnator(vfuncptr func, Var* arg);
+static Var* cse_cubicspline(vfuncptr func, Var* arg);
+static Var* cse_resample(vfuncptr func, Var* arg);
+static Var* cse_fFill(vfuncptr func, Var* arg);
 
-static Var *cse_contour(vfuncptr func, Var *arg);
-static Var *cse_maxpos(vfuncptr func, Var *arg);
-static Var *cse_minpos(vfuncptr func, Var *arg);
-static Var *cse_cleandcs(vfuncptr func, Var *arg);
-static Var *cse_rmnoise(vfuncptr func, Var *arg);
-static Var *cse_find_shift(vfuncptr func, Var *arg);
-static Var *cse_shift(vfuncptr func, Var *arg);
-static Var *cse_unshift(vfuncptr func, Var *arg);
-static Var *cse_tes_shift(vfuncptr func, Var *arg);
-static Var *cse_sobel(vfuncptr func, Var *arg);
-static Var *cse_circle(vfuncptr func, Var *arg);
-static Var *cse_reconst(vfuncptr func, Var *arg);
-static Var *cse_sstretch2(vfuncptr func, Var *arg);
-static Var *cse_unscale(vfuncptr func, Var *arg);
-static Var *cse_ramp(vfuncptr func, Var * arg);
-//static Var *cse_interp2d(vfuncptr func, Var * arg);
-static Var *cse_columnator(vfuncptr func, Var * arg);
-static Var *cse_cubicspline(vfuncptr func, Var * arg);
-static Var *cse_resample(vfuncptr func, Var * arg);
-static Var *cse_fFill(vfuncptr func, Var * arg);
+static dvModuleFuncDesc exported_list[] = {{"contour", (void*)cse_contour},
+                                           {"maxpos", (void*)cse_maxpos},
+                                           {"minpos", (void*)cse_minpos},
+                                           {"cleandcs", (void*)cse_cleandcs},
+                                           {"rmnoise", (void*)cse_rmnoise},
+                                           {"find_shift", (void*)cse_find_shift},
+                                           {"shift", (void*)cse_shift},
+                                           {"unshift", (void*)cse_unshift},
+                                           {"tes_shift", (void*)cse_tes_shift},
+                                           {"sobel", (void*)cse_sobel},
+                                           {"circle", (void*)cse_circle},
+                                           {"reconst", (void*)cse_reconst},
+                                           {"sstretch", (void*)cse_sstretch2},
+                                           {"unscale", (void*)cse_unscale},
+                                           {"ramp", (void*)cse_ramp},
+                                           {"interp2d", (void*)ff_interp2d},
+                                           {"columnator", (void*)cse_columnator},
+                                           {"cubicspline", (void*)cse_cubicspline},
+                                           {"resample", (void*)cse_resample},
+                                           {"floodfill", (void*)cse_fFill}};
 
+static dvModuleInitStuff is = {exported_list, sizeof(exported_list) / sizeof(dvModuleFuncDesc), NULL, 0};
 
-
-static dvModuleFuncDesc exported_list[] = {
-	{ "contour", (void *) cse_contour },
-	{ "maxpos", (void *) cse_maxpos },
-	{ "minpos", (void *) cse_minpos },
-	{ "cleandcs", (void *) cse_cleandcs },
-	{ "rmnoise", (void *) cse_rmnoise },
-	{ "find_shift", (void *) cse_find_shift },
-	{ "shift", (void *) cse_shift},
-	{ "unshift", (void *) cse_unshift},
-	{ "tes_shift", (void *) cse_tes_shift},
-	{ "sobel", (void *) cse_sobel},
-	{ "circle", (void *) cse_circle},
-	{ "reconst", (void *) cse_reconst},
-	{ "sstretch", (void *) cse_sstretch2},
-	{ "unscale", (void *) cse_unscale},
-	{ "ramp", (void *) cse_ramp},
-	{ "interp2d", (void *) ff_interp2d},
-	{ "columnator", (void *) cse_columnator},
-	{ "cubicspline",(void *) cse_cubicspline},
-	{ "resample",(void *) cse_resample},
-	{ "floodfill", (void *) cse_fFill}
-};
-
-static dvModuleInitStuff is = {
-	exported_list, sizeof(exported_list)/sizeof(dvModuleFuncDesc),
-	NULL, 0
-};
-
-int dv_module_init(const char *name, dvModuleInitStuff *init_stuff)
+int dv_module_init(const char* name, dvModuleInitStuff* init_stuff)
 {
 	*init_stuff = is;
 
 	parse_error("Loaded module cse.");
 
 	return 1; /* return initialization success */
-
 }
 
-void dv_module_fini(const char *name)
+void dv_module_fini(const char* name)
 {
 	parse_error("Unloaded module cse.");
 }
 
-//stack friendly and fast floodfill algorithm
-static void floodFillScanline(int x, int y, int h, int w,  int newColor, int oldColor, unsigned char *screenBuffer)
+// stack friendly and fast floodfill algorithm
+static void floodFillScanline(int x, int y, int h, int w, int newColor, int oldColor, unsigned char* screenBuffer)
 {
-	if(oldColor == newColor) return;
-	if(screenBuffer[y*w + x] != oldColor) return;
+	if (oldColor == newColor) return;
+	if (screenBuffer[y * w + x] != oldColor) return;
 
 	int y1;
 
-	//draw current scanline from start position to the top
+	// draw current scanline from start position to the top
 	y1 = y;
-	while(y1 < h && screenBuffer[y1*w + x] == oldColor)
-	{
-		screenBuffer[y1*w + x] = newColor;
+	while (y1 < h && screenBuffer[y1 * w + x] == oldColor) {
+		screenBuffer[y1 * w + x] = newColor;
 		y1++;
 	}
 
-	//draw current scanline from start position to the bottom
+	// draw current scanline from start position to the bottom
 	y1 = y - 1;
-	while(y1 >= 0 && screenBuffer[y1*w + x] == oldColor)
-	{
-		screenBuffer[y1*w + x] = newColor;
+	while (y1 >= 0 && screenBuffer[y1 * w + x] == oldColor) {
+		screenBuffer[y1 * w + x] = newColor;
 		y1--;
 	}
 
-	//test for new scanlines to the left
+	// test for new scanlines to the left
 	y1 = y;
-	while(y1 < h && screenBuffer[y1*w + x] == newColor)
-	{
-		if(x > 0 && screenBuffer[x - 1 + y1*w] == oldColor)
-		{
+	while (y1 < h && screenBuffer[y1 * w + x] == newColor) {
+		if (x > 0 && screenBuffer[x - 1 + y1 * w] == oldColor) {
 			floodFillScanline(x - 1, y1, h, w, newColor, oldColor, screenBuffer);
 		}
 		y1++;
 	}
 	y1 = y - 1;
-	while(y1 >= 0 && screenBuffer[y1*w + x] == newColor)
-	{
-		if(x > 0 && screenBuffer[x - 1 + y1*w] == oldColor)
-		{
-			floodFillScanline(x - 1, y1, h,w, newColor, oldColor, screenBuffer);
+	while (y1 >= 0 && screenBuffer[y1 * w + x] == newColor) {
+		if (x > 0 && screenBuffer[x - 1 + y1 * w] == oldColor) {
+			floodFillScanline(x - 1, y1, h, w, newColor, oldColor, screenBuffer);
 		}
 		y1--;
 	}
 
-	//test for new scanlines to the right
+	// test for new scanlines to the right
 	y1 = y;
-	while(y1 < h && screenBuffer[y1*w + x] == newColor)
-	{
-		if(x < w - 1 && screenBuffer[x + 1 + y1*w] == oldColor)
-		{
-			floodFillScanline(x + 1, y1, h,w, newColor, oldColor, screenBuffer);
+	while (y1 < h && screenBuffer[y1 * w + x] == newColor) {
+		if (x < w - 1 && screenBuffer[x + 1 + y1 * w] == oldColor) {
+			floodFillScanline(x + 1, y1, h, w, newColor, oldColor, screenBuffer);
 		}
 		y1++;
 	}
 	y1 = y - 1;
-	while(y1 >= 0 && screenBuffer[y1*w + x] == newColor)
-	{
-		if(x < w - 1 && screenBuffer[x + 1 + y1*w] == oldColor)
-		{
-			floodFillScanline(x + 1, y1, h,w, newColor, oldColor, screenBuffer);
+	while (y1 >= 0 && screenBuffer[y1 * w + x] == newColor) {
+		if (x < w - 1 && screenBuffer[x + 1 + y1 * w] == oldColor) {
+			floodFillScanline(x + 1, y1, h, w, newColor, oldColor, screenBuffer);
 		}
 		y1--;
 	}
 }
-
-
 
 /*static programs*/
 
 static float round_dp(float input, float decimal)
 {
-	int      i = 0;
-	double   val = 0.0;
-	float    output = 0;
-	float    mult = 0.0;
-	float    multiplier = 1.0;
-	int      topval = 0;
-	float    remainder = 0.0;
+	int i            = 0;
+	double val       = 0.0;
+	float output     = 0;
+	float mult       = 0.0;
+	float multiplier = 1.0;
+	int topval       = 0;
+	float remainder  = 0.0;
 
 	// determine the multiplier value
 	if (decimal > 1.0) {
-		for (mult = 1.0; decimal >= 10.0; mult/=10){
-			decimal/=10;
-			multiplier/=10;
+		for (mult = 1.0; decimal >= 10.0; mult /= 10) {
+			decimal /= 10;
+			multiplier /= 10;
 		}
 	} else if (decimal < 1.0) {
-		for (mult = 1.0; decimal < 1.0; mult*=10) {
-			decimal*=10;
-			multiplier*=10;
+		for (mult = 1.0; decimal < 1.0; mult *= 10) {
+			decimal *= 10;
+			multiplier *= 10;
 		}
 	}
 
 	val = (double)input;
-	val*=multiplier;
-	topval = (int)val;
-	remainder = val - topval;
-	if(remainder > 0.5) topval = topval + 1;
-	if(remainder < -0.5) topval = topval - 1;
-	output = (float)topval/multiplier;
+	val *= multiplier;
+	topval                       = (int)val;
+	remainder                    = val - topval;
+	if (remainder > 0.5) topval  = topval + 1;
+	if (remainder < -0.5) topval = topval - 1;
+	output                       = (float)topval / multiplier;
 
-	return(output);
+	return (output);
 }
 
-
-
-static float *sstretch_sobel(float *data, float ignore, int x, int y, int z)
+static float* sstretch_sobel(float* data, float ignore, int x, int y, int z)
 {
 
 	/* takes data and stretches it similar to sstretch() davinci function */
 	/* but keeps data in float space */
 
-	double     sum = 0;           /* sum of elements in data */
-	double     sumsq = 0;         /* sum of the square of elements in data */
-	double     stdv = 0;          /* standard deviation */
-	int        cnt = 0;           /* total number of non-null points */
-	float     *out = NULL;        /* stretched data to be returned */
-	int        i,j,k;
-	int        tv;
+	double sum   = 0;    /* sum of elements in data */
+	double sumsq = 0;    /* sum of the square of elements in data */
+	double stdv  = 0;    /* standard deviation */
+	int cnt      = 0;    /* total number of non-null points */
+	float* out   = NULL; /* stretched data to be returned */
+	int i, j, k;
+	int tv;
 
 	/* create out array */
-	out = (float *)calloc(sizeof(float), x*y*z);
+	out = (float*)calloc(sizeof(float), x * y * z);
 
 	/* stretch each band separately */
-	for(k=0;k<z;k++) {
-		sum = 0;
+	for (k = 0; k < z; k++) {
+		sum   = 0;
 		sumsq = 0;
-		stdv = 0;
-		cnt = 0;
-		tv = 0;
+		stdv  = 0;
+		cnt   = 0;
+		tv    = 0;
 
 		/* calculate the sum and the sum of squares */
-		for(j=0; j<y; j++) {
-			for(i=0; i<x; i++) {
-				if(data[k*y*x + j*x + i] != ignore){
-					sum += (double)data[k*y*x + j*x + i];
-					sumsq += (double)(data[k*y*x + j*x + i]*data[k*y*x + j*x + i]);
+		for (j = 0; j < y; j++) {
+			for (i = 0; i < x; i++) {
+				if (data[k * y * x + j * x + i] != ignore) {
+					sum += (double)data[k * y * x + j * x + i];
+					sumsq += (double)(data[k * y * x + j * x + i] * data[k * y * x + j * x + i]);
 					cnt += 1;
 				}
 			}
 		}
 
 		/* calculate standard deviation */
-		stdv = sqrt((sumsq - (sum*sum/cnt))/(cnt-1));
+		stdv = sqrt((sumsq - (sum * sum / cnt)) / (cnt - 1));
 		sum /= (double)cnt;
 
 		/* fill in stretched values */
-		for(j=0; j<y; j++) {
-			for(i=0; i<x; i++) {
-				if(data[k*y*x + j*x + i] != ignore){
-					out[k*y*x + j*x + i] = (data[k*y*x + j*x + i] - sum)*(40/stdv)+127;
+		for (j = 0; j < y; j++) {
+			for (i = 0; i < x; i++) {
+				if (data[k * y * x + j * x + i] != ignore) {
+					out[k * y * x + j * x + i] = (data[k * y * x + j * x + i] - sum) * (40 / stdv) + 127;
 				}
 			}
 		}
 	}
 
-	return(out);
+	return (out);
 }
 
-
-
-static float *smooth(float *obj, float *kernel, int ox, int oy, int oz, int kx, int ky, int kz, int norm, float ignore)
+static float* smooth(float* obj, float* kernel, int ox, int oy, int oz, int kx, int ky, int kz,
+                     int norm, float ignore)
 {
 
-	float   *data;                /* the smoothed array */
-	float   *wt;                  /* array of number of elements in sum */
-	int      a, b, c;             /* x, y, z position of kernel element */
-	int      x_pos, y_pos, z_pos; /* x, y, z position of object element */
-	int      kx_center;           /* x radius and total x dimension of kernel */
-	int      ky_center;           /* y radius and total y dimension of kernel */
-	int      kz_center;           /* z radius and total z dimension of kernel */
-	int      x, y, z;             /* x, y, z pos of object convolved element */
-	int      i, j, k;             /* memory locations */
-	float    kval, oval;          /* value of kernel and object element */
-	int      objsize;             /* total 1-d size of object */
+	float* data;             /* the smoothed array */
+	float* wt;               /* array of number of elements in sum */
+	int a, b, c;             /* x, y, z position of kernel element */
+	int x_pos, y_pos, z_pos; /* x, y, z position of object element */
+	int kx_center;           /* x radius and total x dimension of kernel */
+	int ky_center;           /* y radius and total y dimension of kernel */
+	int kz_center;           /* z radius and total z dimension of kernel */
+	int x, y, z;             /* x, y, z pos of object convolved element */
+	int i, j, k;             /* memory locations */
+	float kval, oval;        /* value of kernel and object element */
+	int objsize;             /* total 1-d size of object */
 
-	kx_center = kx/2;
-	ky_center = ky/2;
-	kz_center = kz/2;
+	kx_center = kx / 2;
+	ky_center = ky / 2;
+	kz_center = kz / 2;
 
 	objsize = ox * oy * oz;
 
-	data = (float *)calloc(sizeof(float), objsize);
-	wt = (float *)calloc(sizeof(float), objsize);
+	data = (float*)calloc(sizeof(float), objsize);
+	wt   = (float*)calloc(sizeof(float), objsize);
 
 	if (data == NULL || wt == NULL) {
 		parse_error("Unable to allocate memory");
-		return NULL ;
+		return NULL;
 	}
 
-	for (i = 0 ; i < objsize ; i++) {
-		if(obj[i] == ignore) { data[i] = ignore; continue; }
-		z = i/(ox*oy);
-		y = (i - z*ox*oy)/ox ;
-		x =  i - z*ox*oy - y*ox;
-		for (a = 0 ; a < kx ; a++) {
+	for (i = 0; i < objsize; i++) {
+		if (obj[i] == ignore) {
+			data[i] = ignore;
+			continue;
+		}
+		z = i / (ox * oy);
+		y = (i - z * ox * oy) / ox;
+		x = i - z * ox * oy - y * ox;
+		for (a = 0; a < kx; a++) {
 			x_pos = x + a - kx_center;
 			if (x_pos < 0 || x_pos >= ox) continue;
-			for (b = 0 ; b < ky ; b++) {
+			for (b = 0; b < ky; b++) {
 				y_pos = y + b - ky_center;
 				if (y_pos < 0 || y_pos >= oy) continue;
-				for (c = 0 ; c < kz ; c++) {
+				for (c = 0; c < kz; c++) {
 					z_pos = z + c - kz_center;
 					if (z_pos < 0 || z_pos >= oz) continue;
-					j = z_pos*ox*oy + y_pos*ox + x_pos;
-					k = c*kx*ky + b*kx + a;
+					j    = z_pos * ox * oy + y_pos * ox + x_pos;
+					k    = c * kx * ky + b * kx + a;
 					kval = kernel[k];
 					oval = obj[j];
 					if (oval != ignore && kval != ignore) {
@@ -295,28 +277,26 @@ static float *smooth(float *obj, float *kernel, int ox, int oy, int oz, int kx, 
 		}
 	}
 	free(wt);
-	return(data);
+	return (data);
 }
 
-
-
-static float *unslantc(float *data, int *leftedge, int width, int x, int y, int z, float ignore)
+static float* unslantc(float* data, int* leftedge, int width, int x, int y, int z, float ignore)
 {
 	/* set up variables */
-	int i,j,k,p;
-	float *odata=NULL;
+	int i, j, k, p;
+	float* odata = NULL;
 
 	/* allocate memory for the new data */
-	odata = calloc(width*y*z, sizeof(float));
+	odata = calloc(width * y * z, sizeof(float));
 
 	/* extract the data and shift it */
-	for (j=0;j<y;j++) {
-		for (i=0;i<width;i++) {
-			for (k=0;k<z;k++) {
-				if (i >= leftedge[j] && i < leftedge[j]+x) {
-					odata[width*y*k + width*j +i] = data[x*y*k + x*j + (i-leftedge[j])];
+	for (j = 0; j < y; j++) {
+		for (i = 0; i < width; i++) {
+			for (k = 0; k < z; k++) {
+				if (i >= leftedge[j] && i < leftedge[j] + x) {
+					odata[width * y * k + width * j + i] = data[x * y * k + x * j + (i - leftedge[j])];
 				} else {
-					odata[width*y*k + width*j +i] = ignore;
+					odata[width * y * k + width * j + i] = ignore;
 				}
 			}
 		}
@@ -324,39 +304,37 @@ static float *unslantc(float *data, int *leftedge, int width, int x, int y, int 
 
 	free(data);
 	/* return the data */
-	return(odata);
+	return (odata);
 }
 
-
-
-static float *unshearc(float *w_pic, float angle, int x, int y, int z, float nullv)
+static float* unshearc(float* w_pic, float angle, int x, int y, int z, float nullv)
 {
 
-	float   *pic=NULL;
-	float    shift;                   /* the shift/pixel */
-	int      lshift;                  /* the largest shift (int) */
-	int      i, j, k;                 /* loop indices */
-	int      nx, ni, nj;              /* memory locations */
-	Var     *out=NULL;
+	float* pic = NULL;
+	float shift;    /* the shift/pixel */
+	int lshift;     /* the largest shift (int) */
+	int i, j, k;    /* loop indices */
+	int nx, ni, nj; /* memory locations */
+	Var* out = NULL;
 
 	/* calculating the number of rows to add to the picture to accomodate the shear */
-	shift = tan((M_PI / 180.0) * angle);
-	lshift = (int)((x*fabs(shift)-0.5)+1)*(shift/fabs(shift));
+	shift  = tan((M_PI / 180.0) * angle);
+	lshift = (int)((x * fabs(shift) - 0.5) + 1) * (shift / fabs(shift));
 
-	 /*create the new picture array */
-	pic = (float *)calloc(sizeof(float), x*z*(y-abs(lshift)));
+	/*create the new picture array */
+	pic = (float*)calloc(sizeof(float), x * z * (y - abs(lshift)));
 
 	if (pic == NULL) {
-		parse_error("ERROR! Unable to allocate %d bytes\n", sizeof(float)*x*z*(y+abs(lshift)));
+		parse_error("ERROR! Unable to allocate %d bytes\n", sizeof(float) * x * z * (y + abs(lshift)));
 		return NULL;
 	}
 
 	/* fill in the null value into all pic elements */
-	if(nullv != 0) {
-		for(k=0; k<z; k++) {
-			for(j=0; j<y-abs(lshift); j++) {
-				for(i=0; i<x; i++) {
-					ni = k*(y-abs(lshift))*x + j*x + i;
+	if (nullv != 0) {
+		for (k = 0; k < z; k++) {
+			for (j = 0; j < y - abs(lshift); j++) {
+				for (i = 0; i < x; i++) {
+					ni      = k * (y - abs(lshift)) * x + j * x + i;
 					pic[ni] = nullv;
 				}
 			}
@@ -364,60 +342,56 @@ static float *unshearc(float *w_pic, float angle, int x, int y, int z, float nul
 	}
 
 	/* extract the picture directly into a sheared, but trimmed, array */
-	for(k=0; k<z; k++) {
-		for(j=0; j<y-abs(lshift); j++) {
-			for(i=0; i<x; i++) {
+	for (k = 0; k < z; k++) {
+		for (j = 0; j < y - abs(lshift); j++) {
+			for (i = 0; i < x; i++) {
 
 				/* the index of the new array */
-				nx = k*(y-abs(lshift))*x + j*x + i;
+				nx = k * (y - abs(lshift)) * x + j * x + i;
 
 				/* the shifted y pixel */
 				/* if the angle is greater than 0 */
-				if(lshift>0) {
-					nj = j + (int)(fabs(shift)*i+0.5);
+				if (lshift > 0) {
+					nj = j + (int)(fabs(shift) * i + 0.5);
 				}
 
 				/* if the angle is less than 0 */
-				if(lshift<0) {
-					nj = j + abs(lshift) - (int)(fabs(shift)*i+0.5);
+				if (lshift < 0) {
+					nj = j + abs(lshift) - (int)(fabs(shift) * i + 0.5);
 				}
-				pic[nx] = w_pic[x*y*k + nj*x + i];
+				pic[nx] = w_pic[x * y * k + nj * x + i];
 			}
 		}
 	}
 	free(w_pic);
-	return(pic);
+	return (pic);
 }
-
-
-
 
 /*davinci cse_funtions*/
 
-Var*
-cse_contour(vfuncptr func, Var *arg)
+Var* cse_contour(vfuncptr func, Var* arg)
 {
 
-	Var    *data = NULL;                      /* the orignial data */
-	Var    *out = NULL;                       /* the output structure */
-	float   bin = 10;                         /* contour interval */
-	float  *w_data;                           /* contoured image */
-	int     i, j, k;                          /* loop indices */
-	int     x=0, y=0, z=0;                    /* size of the data */
-	float   tv=0,tv2=0;                       /* temporary value */
-	int     startx=0, starty=0;               /* start x and y vals */
-	int     endx=0, endy=0;                   /* end x and y vals */
-	int     i1=0,j1=0;                        /* small loop indices */
-	int     fill=0;                           /* pixel fill check */
-	float   zero=0;                           /* zero point */
+	Var* data = NULL;           /* the orignial data */
+	Var* out  = NULL;           /* the output structure */
+	float bin = 10;             /* contour interval */
+	float* w_data;              /* contoured image */
+	int i, j, k;                /* loop indices */
+	int x = 0, y = 0, z = 0;    /* size of the data */
+	float tv = 0, tv2 = 0;      /* temporary value */
+	int startx = 0, starty = 0; /* start x and y vals */
+	int endx = 0, endy = 0;     /* end x and y vals */
+	int i1 = 0, j1 = 0;         /* small loop indices */
+	int fill   = 0;             /* pixel fill check */
+	float zero = 0;             /* zero point */
 
 	Alist alist[4];
-	alist[0] = make_alist("data",           ID_VAL,    NULL,  &data);
-	alist[1] = make_alist("interval",       FLOAT,     NULL,  &bin);
-	alist[2] = make_alist("zero",           FLOAT,     NULL,  &zero);
+	alist[0]      = make_alist("data", ID_VAL, NULL, &data);
+	alist[1]      = make_alist("interval", FLOAT, NULL, &bin);
+	alist[2]      = make_alist("zero", FLOAT, NULL, &zero);
 	alist[3].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 	if (data == NULL) {
 		parse_error("\ncontour() - Thu Aug 10 14:14:13 MST 2006");
 		parse_error("Create contour map");
@@ -426,7 +400,7 @@ cse_contour(vfuncptr func, Var *arg)
 		parse_error("interval - contour interval (Default = 10)");
 		parse_error("zero - zero level (or \"sea level\") of data (Default = 0)");
 		parse_error("\nreturns an array of contours of the same dimensions as the");
-		parse_error("input with contours of a multiplicative of the interval value\n") ;
+		parse_error("input with contours of a multiplicative of the interval value\n");
 		parse_error("c.edwards\n");
 		return (NULL);
 	}
@@ -437,78 +411,77 @@ cse_contour(vfuncptr func, Var *arg)
 	z = GetZ(data);
 
 	/* allocate memory for the picture */
-	w_data = (float *)calloc(sizeof(float), x*y*z);
+	w_data = (float*)calloc(sizeof(float), x * y * z);
 
 	/* loop through data and extract points and fill in contours*/
-	for(i=0; i<x; i++) {
-		for(j=0; j<y; j++) {
-			for(k=0; k<z; k++) {
+	for (i = 0; i < x; i++) {
+		for (j = 0; j < y; j++) {
+			for (k = 0; k < z; k++) {
 
 				/* extract temporary binned value */
-				tv=(round_dp((extract_float(data, cpos(i,j,k,data))-zero)/bin,1))*bin;
+				tv = (round_dp((extract_float(data, cpos(i, j, k, data)) - zero) / bin, 1)) * bin;
 
 				/* set up small loop start and end points */
-				startx=i-1;
-				endx=i+1;
-				starty=j-1;
-				endy=j+1;
+				startx = i - 1;
+				endx   = i + 1;
+				starty = j - 1;
+				endy   = j + 1;
 
 				/* edge protection */
-				if(startx<0) startx=0;
-				if(endx>=x) endx=x-1;
-				if(starty<0) starty=0;
-				if(endy>=y) endy=y-1;
+				if (startx < 0) startx = 0;
+				if (endx >= x) endx    = x - 1;
+				if (starty < 0) starty = 0;
+				if (endy >= y) endy    = y - 1;
 
 				/* small loop indices and fill flag */
-				i1=startx;
-				j1=starty;
-				fill=0;
+				i1   = startx;
+				j1   = starty;
+				fill = 0;
 
 				/* dooo the looop */
-				while(fill==0 && i1<=endx) {
-					while(fill==0 && j1<=endy) {
+				while (fill == 0 && i1 <= endx) {
+					while (fill == 0 && j1 <= endy) {
 						/* make sure not to check comparison value */
-						if(i1!=i && j1!=j) {
+						if (i1 != i && j1 != j) {
 							/*perform the check and fill in data when it is triggered */
-							if(tv<(round_dp((extract_float(data, cpos(i1,j1,k,data))-zero)/bin,1))*bin) {
-								w_data[x*y*k + x*j + i]=tv;
-								fill=1;
+							if (tv < (round_dp((extract_float(data, cpos(i1, j1, k, data)) - zero) / bin, 1)) *
+							             bin) {
+								w_data[x * y * k + x * j + i] = tv;
+								fill                          = 1;
 							}
 						}
-						j1+=1;
+						j1 += 1;
 					}
-					j1=starty;
-					i1+=1;
+					j1 = starty;
+					i1 += 1;
 				}
 			}
 		}
 	}
 	/* return the contoured data */
-	out=newVal(BSQ,x,y,z,FLOAT,w_data);
+	out = newVal(BSQ, x, y, z, FLOAT, w_data);
 	return out;
 }
 
-
-Var*
-cse_maxpos(vfuncptr func, Var *arg)
+Var* cse_maxpos(vfuncptr func, Var* arg)
 {
 
-	Var    *data = NULL;                      /* the orignial data */
-	Var    *out = NULL;                       /* the output structure */
-	int    *pos = NULL;                       /* the output position */
-	float   ignore = -32768;                  /* null value */
-	float  *val = NULL;                       /* the output values */
-	int     i, j, k, l;                       /* loop indices */
-	int     x=0, y=0, z=0;                    /* size of the data */
-	float   ni1=0, ni2=-32798, ni3=-852;      /* temp values and positions */
-	int     opt=0;                            /* return array option */
-	int     iter=1;                           /* number of iterations to include */
+	Var* data    = NULL;                     /* the orignial data */
+	Var* out     = NULL;                     /* the output structure */
+	int* pos     = NULL;                     /* the output position */
+	float ignore = -32768;                   /* null value */
+	float* val   = NULL;                     /* the output values */
+	int i, j, k, l;                          /* loop indices */
+	int x = 0, y = 0, z = 0;                 /* size of the data */
+	float ni1 = 0, ni2 = -32798, ni3 = -852; /* temp values and positions */
+	int opt  = 0;                            /* return array option */
+	int iter = 1;                            /* number of iterations to include */
 
 	Alist alist[5];
-	alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-	alist[1] = make_alist("ret",       INT,       NULL,  &opt);
-	alist[2] = make_alist("iter",      INT,       NULL,  &iter);
-	alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
+	alist[0]      = make_alist("data", ID_VAL, NULL, &data);
+	alist[1]      = make_alist("ret", INT, NULL, &opt);
+	alist[2]      = make_alist("iter", INT, NULL, &iter);
+	alist[3]      = make_alist("ignore", FLOAT, NULL, &ignore);
 	alist[4].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return NULL;
@@ -525,13 +498,13 @@ cse_maxpos(vfuncptr func, Var *arg)
 		return NULL;
 	}
 
-	if (iter > 1 ) {
-		opt=1;
+	if (iter > 1) {
+		opt = 1;
 	}
 
 	/* create array for postion */
-	pos = (int *)calloc(sizeof(int), 3*iter);
-	val = (float *)calloc(sizeof(float), iter);
+	pos = (int*)calloc(sizeof(int), 3 * iter);
+	val = (float*)calloc(sizeof(float), iter);
 
 	/* x, y and z dimensions of the data */
 	x = GetX(data);
@@ -539,71 +512,68 @@ cse_maxpos(vfuncptr func, Var *arg)
 	z = GetZ(data);
 
 	/* find the maximum point and its position */
-	for(l=0; l<iter; l++) {
-		for(k=0; k<z; k++) {
-			for(j=0; j<y; j++) {
-				for(i=0; i<x; i++) {
+	for (l = 0; l < iter; l++) {
+		for (k = 0; k < z; k++) {
+			for (j = 0; j < y; j++) {
+				for (i = 0; i < x; i++) {
 
 					/* ni1 = current value */
 					/* ni2 = curent max value */
 					/* ni3 = old max val */
-					ni1 = extract_float(data, cpos(i,j,k,data));
-					if(ni1>ni2 && (ni3 == -852 || (ni1<ni3 && ni3 != -852)) && ni1 != ignore) {
-						ni2=ni1;
-						pos[3*l+2]=k+1;
-						pos[3*l+1]=j+1;
-						pos[3*l+0]=i+1;
+					ni1 = extract_float(data, cpos(i, j, k, data));
+					if (ni1 > ni2 && (ni3 == -852 || (ni1 < ni3 && ni3 != -852)) && ni1 != ignore) {
+						ni2            = ni1;
+						pos[3 * l + 2] = k + 1;
+						pos[3 * l + 1] = j + 1;
+						pos[3 * l + 0] = i + 1;
 					}
 				}
 			}
 		}
-		ni3=ni2;
-		val[l]=ni2;
-		ni2=-32798;
+		ni3    = ni2;
+		val[l] = ni2;
+		ni2    = -32798;
 	}
 
-	if(iter==1) {
+	if (iter == 1) {
 		/* return the findings */
-		printf("\nLocation: %i,%i,%i\n",pos[0],pos[1],pos[2]);
-		printf("%.13f\n\n",ni3);
+		printf("\nLocation: %i,%i,%i\n", pos[0], pos[1], pos[2]);
+		printf("%.13f\n\n", ni3);
 
-		if(opt==0) return NULL;
+		if (opt == 0) return NULL;
 	}
 
-	if(opt!=0) {
+	if (opt != 0) {
 		out = new_struct(2);
-		add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
-		add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
+		add_struct(out, "pos", newVal(BSQ, 3, iter, 1, INT, pos));
+		add_struct(out, "val", newVal(BSQ, 1, iter, 1, FLOAT, val));
 		return out;
 	}
 	return NULL;
 }
 
-
-
-Var*
-cse_minpos(vfuncptr func, Var *arg)
+Var* cse_minpos(vfuncptr func, Var* arg)
 {
 
-	Var    *data = NULL;                 /* the orignial data */
-	Var    *out = NULL;                  /* the output struture */
-	int    *pos = NULL;                  /* the output postion */
-	float   ignore = -32768;             /* null value */
-	float  *val = NULL;                  /* the output values */
-	int     i, j, k, l;                  /* loop indices */
-	int     x=0, y=0, z=0;               /* size of the data */
-	float   ni1=0, ni2=32798, ni3=852;   /* temp values and positions */
-	int     opt=0;                       /* return array option */
-	int     iter=1;                      /* number of iterations to include */
+	Var* data    = NULL;                   /* the orignial data */
+	Var* out     = NULL;                   /* the output struture */
+	int* pos     = NULL;                   /* the output postion */
+	float ignore = -32768;                 /* null value */
+	float* val   = NULL;                   /* the output values */
+	int i, j, k, l;                        /* loop indices */
+	int x = 0, y = 0, z = 0;               /* size of the data */
+	float ni1 = 0, ni2 = 32798, ni3 = 852; /* temp values and positions */
+	int opt  = 0;                          /* return array option */
+	int iter = 1;                          /* number of iterations to include */
 
 	Alist alist[5];
-	alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-	alist[1] = make_alist("ret",       INT,       NULL,  &opt);
-	alist[2] = make_alist("iter",      INT,       NULL,  &iter);
-	alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
+	alist[0]      = make_alist("data", ID_VAL, NULL, &data);
+	alist[1]      = make_alist("ret", INT, NULL, &opt);
+	alist[2]      = make_alist("iter", INT, NULL, &iter);
+	alist[3]      = make_alist("ignore", FLOAT, NULL, &ignore);
 	alist[4].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
 	if (data == NULL) {
 		parse_error("\nUsed to find the position of the min point in an array\n");
@@ -617,13 +587,13 @@ cse_minpos(vfuncptr func, Var *arg)
 		return NULL;
 	}
 
-	if (iter > 1 ) {
-		opt=1;
+	if (iter > 1) {
+		opt = 1;
 	}
 
 	/* create array for position and value*/
-	pos = (int *)calloc(sizeof(int), 3*iter);
-	val = (float *)calloc(sizeof(float), iter);
+	pos = (int*)calloc(sizeof(int), 3 * iter);
+	val = (float*)calloc(sizeof(float), iter);
 
 	/* x, y and z dimensions of the data */
 	x = GetX(data);
@@ -631,72 +601,69 @@ cse_minpos(vfuncptr func, Var *arg)
 	z = GetZ(data);
 
 	/* find the minimum point and its position */
-	for(l=0; l<iter; l++) {
-		for(k=0; k<z; k++) {
-			for(j=0; j<y; j++) {
-				for(i=0; i<x; i++) {
+	for (l = 0; l < iter; l++) {
+		for (k = 0; k < z; k++) {
+			for (j = 0; j < y; j++) {
+				for (i = 0; i < x; i++) {
 
 					/* ni1 = current value */
 					/* ni2 = curent max value */
 					/* ni3 = old max val */
-					ni1 = extract_float(data, cpos(i,j,k,data));
-					if(ni1<ni2 && (ni3 == 852 || (ni1>ni3 && ni3 != 852)) && ni1 != ignore) {
-						ni2=ni1;
-						pos[3*l+2]=k+1;
-						pos[3*l+1]=j+1;
-						pos[3*l+0]=i+1;
+					ni1 = extract_float(data, cpos(i, j, k, data));
+					if (ni1 < ni2 && (ni3 == 852 || (ni1 > ni3 && ni3 != 852)) && ni1 != ignore) {
+						ni2            = ni1;
+						pos[3 * l + 2] = k + 1;
+						pos[3 * l + 1] = j + 1;
+						pos[3 * l + 0] = i + 1;
 					}
 				}
 			}
 		}
-		ni3=ni2;
-		val[l]=ni2;
-		ni2=32798;
+		ni3    = ni2;
+		val[l] = ni2;
+		ni2    = 32798;
 	}
 
 	/* return the findings */
-	if(iter==1) {
-		printf("\nLocation: %i,%i,%i\n",pos[0],pos[1],pos[2]);
-		if(ni2<-32768) {
-			printf("%.9e\n\n",ni3);
+	if (iter == 1) {
+		printf("\nLocation: %i,%i,%i\n", pos[0], pos[1], pos[2]);
+		if (ni2 < -32768) {
+			printf("%.9e\n\n", ni3);
 		}
-		if(ni2>=-32768) {
-			printf("%.9f\n\n",ni3);
+		if (ni2 >= -32768) {
+			printf("%.9f\n\n", ni3);
 		}
-		if(opt==0) return NULL;
+		if (opt == 0) return NULL;
 	}
 
-	if(opt!=0) {
+	if (opt != 0) {
 		out = new_struct(2);
-		add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
-		add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
+		add_struct(out, "pos", newVal(BSQ, 3, iter, 1, INT, pos));
+		add_struct(out, "val", newVal(BSQ, 1, iter, 1, FLOAT, val));
 		return out;
 	}
 }
 
-
-
-Var *
-cse_cleandcs(vfuncptr func, Var * arg)
+Var* cse_cleandcs(vfuncptr func, Var* arg)
 {
 
 	typedef unsigned char byte;
 
-	Var    *pic = NULL;            /* the orignial dcs pic */
-	Var    *out = NULL;            /* the output pic */
-	byte   *w_pic;                 /* modified image */
-	int     i, j, k;               /* loop indices */
-	int     x=0, y=0, z=0;         /* size of the picture */
-	byte    tv=0;                  /* temp pixel value */
-	int     opt=2;                 /* option for possible clean */
+	Var* pic = NULL;         /* the orignial dcs pic */
+	Var* out = NULL;         /* the output pic */
+	byte* w_pic;             /* modified image */
+	int i, j, k;             /* loop indices */
+	int x = 0, y = 0, z = 0; /* size of the picture */
+	byte tv = 0;             /* temp pixel value */
+	int opt = 2;             /* option for possible clean */
 
 	Alist alist[3];
-	alist[0] = make_alist("pic",      ID_VAL,     NULL,  &pic);
-	alist[1] = make_alist("opt",      INT,        NULL,  &opt);
+	alist[0]      = make_alist("pic", ID_VAL, NULL, &pic);
+	alist[1]      = make_alist("opt", INT, NULL, &opt);
 	alist[2].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
-	if ( opt < 1 || opt > 2) opt=2;
+	if (parse_args(func, arg, alist) == 0) return (NULL);
+	if (opt < 1 || opt > 2) opt = 2;
 
 	if (pic == NULL) {
 		parse_error("\nUsed to remove extraneous color from a dcs image\n");
@@ -713,21 +680,23 @@ cse_cleandcs(vfuncptr func, Var * arg)
 	z = GetZ(pic);
 
 	/* allocate memory for the picture */
-	w_pic = (byte *)calloc(sizeof(byte), x*y*z);
+	w_pic = (byte*)calloc(sizeof(byte), x * y * z);
 
-	if(w_pic == NULL) return NULL;
+	if (w_pic == NULL) return NULL;
 
 	/* loop through data and extract new points with null value of 0 ignored */
-	for(j=0; j<y; j++) {
-		for(i=0; i<x; i++) {
-			for(k=0; k<z; k++) {
-				tv = (byte)extract_int(pic, cpos(i,j,k, pic));
-						w_pic[j*x*z + i*z + k] = tv;
-				if (k==z-1) {
-					if((w_pic[j*x*z + i*z + k] == 0) + (w_pic[j*x*z + i*z + (k-1)] == 0) + (w_pic[j*x*z + i*z + (k-2)] == 0) >= opt ) {
-						w_pic[j*x*z + i*z + k]=0;
-						w_pic[j*x*z + i*z + (k-1)]=0;
-						w_pic[j*x*z + i*z + (k-2)]=0;
+	for (j = 0; j < y; j++) {
+		for (i = 0; i < x; i++) {
+			for (k = 0; k < z; k++) {
+				tv                           = (byte)extract_int(pic, cpos(i, j, k, pic));
+				w_pic[j * x * z + i * z + k] = tv;
+				if (k == z - 1) {
+					if ((w_pic[j * x * z + i * z + k] == 0) + (w_pic[j * x * z + i * z + (k - 1)] == 0) +
+					        (w_pic[j * x * z + i * z + (k - 2)] == 0) >=
+					    opt) {
+						w_pic[j * x * z + i * z + k]       = 0;
+						w_pic[j * x * z + i * z + (k - 1)] = 0;
+						w_pic[j * x * z + i * z + (k - 2)] = 0;
 					}
 				}
 			}
@@ -739,39 +708,36 @@ cse_cleandcs(vfuncptr func, Var * arg)
 	return out;
 }
 
-
-
-Var*
-cse_rmnoise(vfuncptr func, Var *arg)
+Var* cse_rmnoise(vfuncptr func, Var* arg)
 {
 	typedef unsigned char byte;
 
-	byte   *bc = NULL;                /* band count for orignal stuff */
-	Var    *data = NULL;              /* the original data */
-	Var    *out = NULL;               /* the output structure */
-	float   nullval=-32768;           /* null value */
-	float  *w_pic, *w_pic2;           /* working data */
-	float   tv=0;                     /* temporary value */
-	float   *total;                   /* the sum of the data (luminosity) */
-	int     i, j, k;                  /* loop indices */
-	int     x=0, y=0, z=0;            /* size of the data */
-	float  *kern;                     /* kernel for the convolve */
-	int     b10=10;                   /* band option */
-	float  *band_10;                  /* band 10 to smooth */
-	int     filt=7;                   /* the filter size */
-	int     kernsize;                 /* number of kern elements */
-	int     vb=1;                     /* verbosity for updataes */
+	byte* bc      = NULL;    /* band count for orignal stuff */
+	Var* data     = NULL;    /* the original data */
+	Var* out      = NULL;    /* the output structure */
+	float nullval = -32768;  /* null value */
+	float *w_pic, *w_pic2;   /* working data */
+	float tv = 0;            /* temporary value */
+	float* total;            /* the sum of the data (luminosity) */
+	int i, j, k;             /* loop indices */
+	int x = 0, y = 0, z = 0; /* size of the data */
+	float* kern;             /* kernel for the convolve */
+	int b10 = 10;            /* band option */
+	float* band_10;          /* band 10 to smooth */
+	int filt = 7;            /* the filter size */
+	int kernsize;            /* number of kern elements */
+	int vb = 1;              /* verbosity for updataes */
 
 	Alist alist[7];
-	alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-	alist[1] = make_alist("null",      FLOAT,     NULL,  &nullval);
-	alist[2] = make_alist("b10",       INT,       NULL,  &b10);
-	alist[3] = make_alist("filt",      INT,       NULL,  &filt);
-	alist[4] = make_alist("verbose",   INT,       NULL,  &vb);
-	alist[5] = make_alist("ignore",    FLOAT,     NULL,  &nullval);
+	alist[0]      = make_alist("data", ID_VAL, NULL, &data);
+	alist[1]      = make_alist("null", FLOAT, NULL, &nullval);
+	alist[2]      = make_alist("b10", INT, NULL, &b10);
+	alist[3]      = make_alist("filt", INT, NULL, &filt);
+	alist[4]      = make_alist("verbose", INT, NULL, &vb);
+	alist[5]      = make_alist("ignore", FLOAT, NULL, &nullval);
 	alist[6].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
 	if (data == NULL) {
 		parse_error("\nUsed to remove white noise from data");
@@ -796,115 +762,119 @@ cse_rmnoise(vfuncptr func, Var *arg)
 	}
 
 	/* set the band number for c */
-	if(b10 != 0 ) {
-		b10-=1;
-		if(b10<0 || b10>9) b10=9;
+	if (b10 != 0) {
+		b10 -= 1;
+		if (b10 < 0 || b10 > 9) b10 = 9;
 	}
 
 	/* x, y, and z dimensions of the data  */
-	x = GetX(data);
-	y = GetY(data);
-	z = GetZ(data);
-	kernsize=filt*filt;
+	x        = GetX(data);
+	y        = GetY(data);
+	z        = GetZ(data);
+	kernsize = filt * filt;
 
 	/* more error handling */
-	if(z < 2) {
+	if (z < 2) {
 		printf("\nSorry you need more bands to remove noise\n\n");
 		return NULL;
 	}
-	if(vb==1) printf("\nMORE UPDATES! CHECK THE HELP!\n");
+	if (vb == 1) printf("\nMORE UPDATES! CHECK THE HELP!\n");
 
 	/* allocate memory for the data */
-	bc = (byte *)calloc(sizeof(byte), x*y);
-	w_pic = (float *)calloc(sizeof(float), x*y*z);
-	w_pic2 = (float *)calloc(sizeof(float), x*y*z);
-	total = (float *)calloc(sizeof(float), x*y);
-	kern = (float *)calloc(sizeof(float), kernsize);
-	band_10 = (float *)calloc(sizeof(float),x*y);
+	bc      = (byte*)calloc(sizeof(byte), x * y);
+	w_pic   = (float*)calloc(sizeof(float), x * y * z);
+	w_pic2  = (float*)calloc(sizeof(float), x * y * z);
+	total   = (float*)calloc(sizeof(float), x * y);
+	kern    = (float*)calloc(sizeof(float), kernsize);
+	band_10 = (float*)calloc(sizeof(float), x * y);
 
-	if(w_pic == NULL) return NULL;
+	if (w_pic == NULL) return NULL;
 
 	/* if there is a band 10 */
-	if(b10 != 0 ) {
+	if (b10 != 0) {
 		/* extract values and make luminosity map */
-		for(k=0; k<z; k++) {
-			for(j=0; j<y; j++) {
-				for(i=0; i<x; i++) {
-					tv = extract_float(data, cpos(i,j,k, data));
-					if(k!=b10) {
-						total[x*j + i]+=tv;
-						if(tv!=nullval) bc[x*j + i]+=1;
+		for (k = 0; k < z; k++) {
+			for (j = 0; j < y; j++) {
+				for (i = 0; i < x; i++) {
+					tv = extract_float(data, cpos(i, j, k, data));
+					if (k != b10) {
+						total[x * j + i] += tv;
+						if (tv != nullval) bc[x * j + i] += 1;
 					}
-					if(k==(x-1)) band_10[x*j + i]=tv;
-					w_pic[x*y*k + x*j + i]=tv;
+					if (k == (x - 1)) band_10[x * j + i] = tv;
+					w_pic[x * y * k + x * j + i]         = tv;
 				}
 			}
 		}
 
 		/* divide by the luminosity map and check for null values */
-		for(k=0; k<z; k++) {
-			if(k!=b10) {
-				for(j=0; j<y; j++) {
-					for(i=0; i<x; i++) {
-						if(bc[x*j + i] == b10) w_pic2[x*y*k + x*j + i]=w_pic[x*y*k + x*j + i]/total[x*j + i];
+		for (k = 0; k < z; k++) {
+			if (k != b10) {
+				for (j = 0; j < y; j++) {
+					for (i = 0; i < x; i++) {
+						if (bc[x * j + i] == b10)
+							w_pic2[x * y * k + x * j + i] =
+							    w_pic[x * y * k + x * j + i] / total[x * j + i];
 					}
 				}
 			}
 		}
 
 		/* convolve over the image */
-		for(i=0;i<kernsize;i++) {
-			kern[i]=1.0;
+		for (i = 0; i < kernsize; i++) {
+			kern[i] = 1.0;
 		}
-		w_pic2=smooth(w_pic2,kern,x,y,z,filt,filt,1,1,0);
-		band_10=smooth(band_10,kern,x,y,1,filt,filt,1,1,0);
+		w_pic2  = smooth(w_pic2, kern, x, y, z, filt, filt, 1, 1, 0);
+		band_10 = smooth(band_10, kern, x, y, 1, filt, filt, 1, 1, 0);
 
-	/* convert back to normal space and fill other pixels */
-		for(k=0; k<z; k++) {
-			for(j=0; j<y; j++) {
-		for(i=0; i<x; i++) {
-			if(k!=b10) {
-				if(bc[x*j + i] == b10) w_pic2[x*y*k + x*j + i]*=total[x*j + i];
-				if(bc[x*j + i] < b10) w_pic2[x*y*k + x*j + i]=w_pic[x*y*k + x*j + i];
-			}
-			if(k==b10) w_pic2[x*y*k + x*j + i]=band_10[x*j + i];
-		}
+		/* convert back to normal space and fill other pixels */
+		for (k = 0; k < z; k++) {
+			for (j = 0; j < y; j++) {
+				for (i = 0; i < x; i++) {
+					if (k != b10) {
+						if (bc[x * j + i] == b10) w_pic2[x * y * k + x * j + i] *= total[x * j + i];
+						if (bc[x * j + i] < b10)
+							w_pic2[x * y * k + x * j + i] = w_pic[x * y * k + x * j + i];
+					}
+					if (k == b10) w_pic2[x * y * k + x * j + i] = band_10[x * j + i];
+				}
 			}
 		}
 	}
 
 	/*if there is not a band 10 */
-	if(b10 == 0 ) {
+	if (b10 == 0) {
 		/* extract values and make luminosity map */
-		for(k=0; k<z; k++) {
-			for(j=0; j<y; j++) {
-				for(i=0; i<x; i++) {
-					tv = extract_float(data, cpos(i,j,k, data));
-					total[x*j + i]+=tv;
-					w_pic[x*y*k + x*j + i]=tv;
+		for (k = 0; k < z; k++) {
+			for (j = 0; j < y; j++) {
+				for (i = 0; i < x; i++) {
+					tv = extract_float(data, cpos(i, j, k, data));
+					total[x * j + i] += tv;
+					w_pic[x * y * k + x * j + i] = tv;
 				}
 			}
 		}
-		for(k=0; k<z; k++) {
-			for(j=0; j<y; j++) {
-				for(i=0; i<x; i++) {
-					w_pic2[x*y*k + x*j + i]=w_pic[x*y*k + x*j + i]/total[x*j + i];
+		for (k = 0; k < z; k++) {
+			for (j = 0; j < y; j++) {
+				for (i = 0; i < x; i++) {
+					w_pic2[x * y * k + x * j + i] = w_pic[x * y * k + x * j + i] / total[x * j + i];
 				}
 			}
 		}
 
 		/* convolve over the image */
-		for(i=0;i<kernsize;i++) {
-			kern[i]=1.0;
+		for (i = 0; i < kernsize; i++) {
+			kern[i] = 1.0;
 		}
-		w_pic2=smooth(w_pic2,kern,x,y,z,filt,filt,1,1,0);
+		w_pic2 = smooth(w_pic2, kern, x, y, z, filt, filt, 1, 1, 0);
 
 		/* convert back to normal space and fill other pixels */
-		for(k=0; k<z; k++) {
-			for(j=0; j<y; j++) {
-				for(i=0; i<x; i++) {
-					w_pic2[x*y*k + x*j + i]*=total[x*j + i];
-					if(w_pic[x*y*k + x*j + i]==nullval) w_pic2[x*y*k + x*j + i]=nullval;
+		for (k = 0; k < z; k++) {
+			for (j = 0; j < y; j++) {
+				for (i = 0; i < x; i++) {
+					w_pic2[x * y * k + x * j + i] *= total[x * j + i];
+					if (w_pic[x * y * k + x * j + i] == nullval)
+						w_pic2[x * y * k + x * j + i] = nullval;
 				}
 			}
 		}
@@ -917,33 +887,30 @@ cse_rmnoise(vfuncptr func, Var *arg)
 	free(band_10);
 	free(bc);
 
-	out=newVal(BSQ,x,y,z,FLOAT,w_pic2);
+	out = newVal(BSQ, x, y, z, FLOAT, w_pic2);
 	return out;
 }
 
-
-
-Var *
-cse_find_shift(vfuncptr func, Var * arg)
+Var* cse_find_shift(vfuncptr func, Var* arg)
 {
 
-	Var     *data=NULL;               /* misslanted data */
-	Var     *out=NULL;                /* output data */
-	int      i, j;                    /* loop indices */
-	int      x=0, y=0, z=0;           /* size of the picture */
-	float    tvright=0;               /* temporary pixel value */
-	float    tvleft=0;                /* temporary pixel value */
-	float    nullval=-32768;          /* null value */
+	Var* data = NULL;        /* misslanted data */
+	Var* out  = NULL;        /* output data */
+	int i, j;                /* loop indices */
+	int x = 0, y = 0, z = 0; /* size of the picture */
+	float tvright = 0;       /* temporary pixel value */
+	float tvleft  = 0;       /* temporary pixel value */
+	float nullval = -32768;  /* null value */
 
 	Alist alist[4];
-	alist[0] = make_alist("data",      ID_VAL,     NULL,  &data);
-	alist[1] = make_alist("null",      FLOAT,      NULL,  &nullval);
-	alist[2] = make_alist("ignore",    FLOAT,      NULL,  &nullval);
+	alist[0]      = make_alist("data", ID_VAL, NULL, &data);
+	alist[1]      = make_alist("null", FLOAT, NULL, &nullval);
+	alist[2]      = make_alist("ignore", FLOAT, NULL, &nullval);
 	alist[3].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
-	if(data == NULL) {
+	if (data == NULL) {
 		parse_error("\nUsed to find the side of the mosaic that contains data");
 		parse_error("Which is then used to shift/unshift data for deplaiding \n");
 		parse_error("$1 =  the data (should be part of a davinci mosaic)\n");
@@ -958,54 +925,51 @@ cse_find_shift(vfuncptr func, Var * arg)
 	y = GetY(data);
 
 	/* if the right side has data values */
-	for(j=0;j<y;j++){
-		tvright = extract_float(data,cpos((x-1),j,0,data));
-		if(tvright > nullval) {
+	for (j = 0; j < y; j++) {
+		tvright = extract_float(data, cpos((x - 1), j, 0, data));
+		if (tvright > nullval) {
 			out = newInt(1);
 			return out;
 		}
 	}
 	/* if the left side has data values */
-	for(j=0;j<y;j++) {
-		tvleft = extract_float(data,cpos(0,j,0,data));
-		if(tvleft > nullval) {
+	for (j = 0; j < y; j++) {
+		tvleft = extract_float(data, cpos(0, j, 0, data));
+		if (tvleft > nullval) {
 			out = newInt(2);
 			return out;
 		}
 	}
-	if(tvleft == nullval && tvright == nullval) {
+	if (tvleft == nullval && tvright == nullval) {
 		out = newInt(0);
 		return out;
 	}
 	return NULL;
 }
 
-
-
-Var *
-cse_shift(vfuncptr func, Var * arg)
+Var* cse_shift(vfuncptr func, Var* arg)
 {
 
-	Var     *data=NULL;               /* misslanted data */
-	Var     *out=NULL;                /* output data */
-	float   *w_data=NULL;             /* working data */
-	int      i, j, k;                 /* loop indices */
-	int      x=0, y=0, z=0;           /* size of the picture */
-	float    tv=0;                    /* temporary pixel value */
-	float    nullval=-32768;          /* null value */
-	int     *newshift=NULL;           /* new left edge */
-	int      opt;                     /* the way to shift pixels */
+	Var* data     = NULL;    /* misslanted data */
+	Var* out      = NULL;    /* output data */
+	float* w_data = NULL;    /* working data */
+	int i, j, k;             /* loop indices */
+	int x = 0, y = 0, z = 0; /* size of the picture */
+	float tv      = 0;       /* temporary pixel value */
+	float nullval = -32768;  /* null value */
+	int* newshift = NULL;    /* new left edge */
+	int opt;                 /* the way to shift pixels */
 
 	Alist alist[5];
-	alist[0] = make_alist("data",      ID_VAL,     NULL,  &data);
-	alist[1] = make_alist("null",      FLOAT,      NULL,  &nullval);
-	alist[2] = make_alist("side",      INT,        NULL,  &opt);
-	alist[3] = make_alist("ignore",    FLOAT,      NULL,  &nullval);
+	alist[0]      = make_alist("data", ID_VAL, NULL, &data);
+	alist[1]      = make_alist("null", FLOAT, NULL, &nullval);
+	alist[2]      = make_alist("side", INT, NULL, &opt);
+	alist[3]      = make_alist("ignore", FLOAT, NULL, &nullval);
 	alist[4].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
-	if(data == NULL) {
+	if (data == NULL) {
 		parse_error("\nUsed to shift pixels for mosaics for deplaiding\n");
 		parse_error("$1 = the data to shift (must be rectified \n");
 		parse_error("ignore = the null value of the image (default -32768)");
@@ -1018,48 +982,49 @@ cse_shift(vfuncptr func, Var * arg)
 	}
 
 	/* error handling */
-	if(opt > 2 || opt < 0 ) {
+	if (opt > 2 || opt < 0) {
 		parse_error("Enter either 1 for right and 2 for left");
 		return NULL;
 	}
-	if(opt==0) return NULL;
+	if (opt == 0) return NULL;
 
 	/* x, y and z dimensions of the data and allocate memory */
-	x = GetX(data);
-	y = GetY(data);
-	z = GetZ(data);
-	w_data=(float *)calloc(sizeof(float),x*y*z);
-	newshift=(int *)calloc(sizeof(int),y);
+	x        = GetX(data);
+	y        = GetY(data);
+	z        = GetZ(data);
+	w_data   = (float*)calloc(sizeof(float), x * y * z);
+	newshift = (int*)calloc(sizeof(int), y);
 
 	/* shift pixels to the left / data is on the right */
-	if(opt==1) {
+	if (opt == 1) {
 		/* determine the shift for each row */
-		for(j=0;j<y;j++) {
-			for(i=0;i<x;i++) {
-				tv = extract_float(data,cpos(i,j,0,data));
-				if(tv != nullval) {
-					newshift[j]=i;
-					i=x;
+		for (j = 0; j < y; j++) {
+			for (i = 0; i < x; i++) {
+				tv = extract_float(data, cpos(i, j, 0, data));
+				if (tv != nullval) {
+					newshift[j] = i;
+					i           = x;
 				}
-				if(i==(x-1)) newshift[j]=x-1;
+				if (i == (x - 1)) newshift[j] = x - 1;
 			}
 		}
 		/*extract and shift the pixels */
-		for(k=0;k<z;k++) {
-			for(j=0;j<y;j++) {
-				for(i=0;i<x;i++) {
-					if(newshift[j] == (x-1)) {
-						w_data[x*y*k + x*j + i]=nullval;
+		for (k = 0; k < z; k++) {
+			for (j = 0; j < y; j++) {
+				for (i = 0; i < x; i++) {
+					if (newshift[j] == (x - 1)) {
+						w_data[x * y * k + x * j + i] = nullval;
 					}
-					if(newshift[j] == 0) {
-						w_data[x*y*k + x*j + i]=extract_float(data,cpos(i,j,k,data));
+					if (newshift[j] == 0) {
+						w_data[x * y * k + x * j + i] = extract_float(data, cpos(i, j, k, data));
 					}
-					if(newshift[j] != 0 && newshift[j] != (x-1)) {
-						if((newshift[j]+i) < x) {
-							w_data[x*y*k + x*j + i]=extract_float(data,cpos(i+newshift[j],j,k,data));
+					if (newshift[j] != 0 && newshift[j] != (x - 1)) {
+						if ((newshift[j] + i) < x) {
+							w_data[x * y * k + x * j + i] =
+							    extract_float(data, cpos(i + newshift[j], j, k, data));
 						}
-						if((newshift[j]+i) >= x) {
-							w_data[x*y*k + x*j + i]=nullval;
+						if ((newshift[j] + i) >= x) {
+							w_data[x * y * k + x * j + i] = nullval;
 						}
 					}
 				}
@@ -1068,35 +1033,36 @@ cse_shift(vfuncptr func, Var * arg)
 	}
 
 	/* shift pixels to the right / data is on the left */
-	if(opt==2) {
+	if (opt == 2) {
 		/* determine the shift for each row */
-		for(j=0;j<y;j++) {
-			for(i=x-1;i>=0;i--) {
-				tv = extract_float(data,cpos(i,j,0,data));
-				if(tv != nullval) {
-					newshift[j]=i;
-					i=0;
+		for (j = 0; j < y; j++) {
+			for (i = x - 1; i >= 0; i--) {
+				tv = extract_float(data, cpos(i, j, 0, data));
+				if (tv != nullval) {
+					newshift[j] = i;
+					i           = 0;
 				}
-				if(i == 0 && tv == nullval) newshift[j]=0;
+				if (i == 0 && tv == nullval) newshift[j] = 0;
 			}
 		}
 		/*extract and shift the pixels */
-		for(k=0;k<z;k++) {
-			for(j=0;j<y;j++) {
-				for(i=0;i<x;i++) {
-					tv=extract_float(data,cpos(i,j,k,data));
-					if(newshift[j] == 0){
-						w_data[x*y*k + x*j + i]=nullval;
+		for (k = 0; k < z; k++) {
+			for (j = 0; j < y; j++) {
+				for (i = 0; i < x; i++) {
+					tv = extract_float(data, cpos(i, j, k, data));
+					if (newshift[j] == 0) {
+						w_data[x * y * k + x * j + i] = nullval;
 					}
-					if(newshift[j] == (x-1)) {
-						w_data[x*y*k + x*j + i ]=extract_float(data,cpos(i,j,k,data));
+					if (newshift[j] == (x - 1)) {
+						w_data[x * y * k + x * j + i] = extract_float(data, cpos(i, j, k, data));
 					}
-					if(newshift[j] != 0 && newshift[j] != (x-1)){
-						if(i >= x-newshift[j]-1) {
-							w_data[x*y*k + x*j + i]=extract_float(data,cpos(i-x+newshift[j]+1,j,k,data));
+					if (newshift[j] != 0 && newshift[j] != (x - 1)) {
+						if (i >= x - newshift[j] - 1) {
+							w_data[x * y * k + x * j + i] =
+							    extract_float(data, cpos(i - x + newshift[j] + 1, j, k, data));
 						}
-						if(i < x-newshift[j]-1) {
-							w_data[x*y*k + x*j + i]=nullval;
+						if (i < x - newshift[j] - 1) {
+							w_data[x * y * k + x * j + i] = nullval;
 						}
 					}
 				}
@@ -1105,40 +1071,37 @@ cse_shift(vfuncptr func, Var * arg)
 	}
 
 	/* return and clean up */
-	out=new_struct(2);
-	add_struct(out,"data",newVal(BSQ,x,y,z,FLOAT,w_data));
-	add_struct(out,"shift_edge",newVal(BSQ,1,y,1,INT,newshift));
+	out = new_struct(2);
+	add_struct(out, "data", newVal(BSQ, x, y, z, FLOAT, w_data));
+	add_struct(out, "shift_edge", newVal(BSQ, 1, y, 1, INT, newshift));
 	return out;
 }
 
-
-
-Var *
-cse_unshift(vfuncptr func, Var * arg)
+Var* cse_unshift(vfuncptr func, Var* arg)
 {
 
-	Var     *rect=NULL;               /* structure that contains left_shift */
-	Var     *data=NULL;               /* misslanted data */
-	Var     *out=NULL;                /* output data */
-	Var     *newshiftt=NULL;          /* new left pointer */
-	float   *w_data;                  /* working data */
-	int      i, j, k;                 /* loop indices */
-	int      x=0, y=0, z=0;           /* size of the picture */
-	float    tv=0;                    /* temp pixel value */
-	float    nullval=-32768;          /* null value */
-	int     *newshift=NULL;           /* new edge */
-	int      opt;                     /* the way to unshift pixels */
+	Var* rect      = NULL;   /* structure that contains left_shift */
+	Var* data      = NULL;   /* misslanted data */
+	Var* out       = NULL;   /* output data */
+	Var* newshiftt = NULL;   /* new left pointer */
+	float* w_data;           /* working data */
+	int i, j, k;             /* loop indices */
+	int x = 0, y = 0, z = 0; /* size of the picture */
+	float tv      = 0;       /* temp pixel value */
+	float nullval = -32768;  /* null value */
+	int* newshift = NULL;    /* new edge */
+	int opt;                 /* the way to unshift pixels */
 
 	Alist alist[5];
-	alist[0] = make_alist("rect",      ID_STRUCT,  NULL,  &rect);
-	alist[1] = make_alist("null",      FLOAT,      NULL,  &nullval);
-	alist[2] = make_alist("side",      INT,        NULL,  &opt);
-	alist[3] = make_alist("ignore",    FLOAT,      NULL,  &nullval);
+	alist[0]      = make_alist("rect", ID_STRUCT, NULL, &rect);
+	alist[1]      = make_alist("null", FLOAT, NULL, &nullval);
+	alist[2]      = make_alist("side", INT, NULL, &opt);
+	alist[3]      = make_alist("ignore", FLOAT, NULL, &nullval);
 	alist[4].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
-	if(rect == NULL) {
+	if (rect == NULL) {
 		parse_error("\nUsed to unshift pixels for mosaics for deplaiding\n");
 		parse_error("$1 = the data to unshift (must be shift");
 		parse_error("structure w/ \"shift_edge\" and \"data\")\n");
@@ -1152,51 +1115,52 @@ cse_unshift(vfuncptr func, Var * arg)
 	}
 
 	/* get structures */
-	find_struct(rect,"data",&data);
-	find_struct(rect,"shift_edge",&newshiftt);
+	find_struct(rect, "data", &data);
+	find_struct(rect, "shift_edge", &newshiftt);
 
 	/* error handling */
-	if(newshiftt == NULL || data == NULL) {
+	if (newshiftt == NULL || data == NULL) {
 		parse_error("Structure must contain the elements:");
 		parse_error("\"data\" and \"shift_edge\"");
 		return NULL;
 	}
-	if(opt > 2 || opt < 0 ) {
+	if (opt > 2 || opt < 0) {
 		parse_error("Enter either 1 for right and 2 for left");
 		return NULL;
 	}
-	if(opt==0) return NULL;
+	if (opt == 0) return NULL;
 
 	/* x, y and z dimensions of the data and allocate memory */
-	x = GetX(data);
-	y = GetY(data);
-	z = GetZ(data);
-	w_data=calloc(sizeof(float),x*y*z);
-	newshift=calloc(sizeof(int),y);
+	x        = GetX(data);
+	y        = GetY(data);
+	z        = GetZ(data);
+	w_data   = calloc(sizeof(float), x * y * z);
+	newshift = calloc(sizeof(int), y);
 
 	/* extract the old shift and turn it to negative shift*/
-	for(j=0;j<y;j++) {
-		newshift[j]=-(extract_int(newshiftt,cpos(0,j,0,newshiftt)));
+	for (j = 0; j < y; j++) {
+		newshift[j] = -(extract_int(newshiftt, cpos(0, j, 0, newshiftt)));
 	}
 
 	/* extract and shift the pixels */
 	/* shift pixels to the left / data is on the right */
-	if(opt==1) {
-		for(k=0;k<z;k++) {
-			for(j=0;j<y;j++) {
-				for(i=0;i<x;i++) {
-					if(newshift[j] == -(x-1)){
-						w_data[x*y*k + x*j + i]=nullval;
+	if (opt == 1) {
+		for (k = 0; k < z; k++) {
+			for (j = 0; j < y; j++) {
+				for (i = 0; i < x; i++) {
+					if (newshift[j] == -(x - 1)) {
+						w_data[x * y * k + x * j + i] = nullval;
 					}
-					if(newshift[j] == 0) {
-						w_data[x*y*k + x*j + i ]=extract_float(data,cpos(i,j,k,data));
+					if (newshift[j] == 0) {
+						w_data[x * y * k + x * j + i] = extract_float(data, cpos(i, j, k, data));
 					}
-					if(newshift[j] != 0 && newshift[j] != -(x-1)) {
-						if(i >= -newshift[j]) {
-							w_data[x*y*k + x*j + i]=extract_float(data,cpos(i+newshift[j],j,k,data));
+					if (newshift[j] != 0 && newshift[j] != -(x - 1)) {
+						if (i >= -newshift[j]) {
+							w_data[x * y * k + x * j + i] =
+							    extract_float(data, cpos(i + newshift[j], j, k, data));
 						}
-						if(i < -newshift[j]) {
-							w_data[x*y*k + x*j + i]=nullval;
+						if (i < -newshift[j]) {
+							w_data[x * y * k + x * j + i] = nullval;
 						}
 					}
 				}
@@ -1205,22 +1169,23 @@ cse_unshift(vfuncptr func, Var * arg)
 	}
 
 	/* shift pixels to the right / data is on the left */
-	if(opt==2) {
-		for(k=0;k<z;k++) {
-			for(j=0;j<y;j++) {
-				for(i=0;i<x;i++) {
-					if(newshift[j] == 0){
-						w_data[x*y*k + x*j + i]=nullval;
+	if (opt == 2) {
+		for (k = 0; k < z; k++) {
+			for (j = 0; j < y; j++) {
+				for (i = 0; i < x; i++) {
+					if (newshift[j] == 0) {
+						w_data[x * y * k + x * j + i] = nullval;
 					}
-					if(newshift[j] == -(x-1)) {
-						w_data[x*y*k + x*j + i ]=extract_float(data,cpos(i,j,k,data));
+					if (newshift[j] == -(x - 1)) {
+						w_data[x * y * k + x * j + i] = extract_float(data, cpos(i, j, k, data));
 					}
-					if(newshift[j] != 0 && newshift[j] != -(x-1)) {
-						if(i < -newshift[j]+1) {
-							w_data[x*y*k + x*j + i]=extract_float(data,cpos(i+(newshift[j]+x)-1,j,k,data));
+					if (newshift[j] != 0 && newshift[j] != -(x - 1)) {
+						if (i < -newshift[j] + 1) {
+							w_data[x * y * k + x * j + i] =
+							    extract_float(data, cpos(i + (newshift[j] + x) - 1, j, k, data));
 						}
-						if(i >= -newshift[j]+1) {
-							w_data[x*y*k + x*j + i]=nullval;
+						if (i >= -newshift[j] + 1) {
+							w_data[x * y * k + x * j + i] = nullval;
 						}
 					}
 				}
@@ -1230,35 +1195,32 @@ cse_unshift(vfuncptr func, Var * arg)
 
 	/* return and clean up */
 	free(newshift);
-	out=newVal(BSQ,x,y,z,FLOAT,w_data);
+	out = newVal(BSQ, x, y, z, FLOAT, w_data);
 	return out;
 }
 
-
-
-Var *
-cse_tes_shift(vfuncptr func, Var * arg)
+Var* cse_tes_shift(vfuncptr func, Var* arg)
 {
 
 	typedef unsigned char byte;
 
-	Var    *data=NULL;         /* tes map to be shifted */
-	Var    *out=NULL;          /* output data */
-	Var    *shifts=NULL;       /* shift info */
-	float  *w_data=NULL;       /* working data */
-	int     w_shifts;          /* working shifts */
-	int     x,y,i,j;           /* dims and indices */
-	int     tv=-32768;         /* tmpval */
-	int     maxshift=-32768;   /* maxshift */
+	Var* data     = NULL;  /* tes map to be shifted */
+	Var* out      = NULL;  /* output data */
+	Var* shifts   = NULL;  /* shift info */
+	float* w_data = NULL;  /* working data */
+	int w_shifts;          /* working shifts */
+	int x, y, i, j;        /* dims and indices */
+	int tv       = -32768; /* tmpval */
+	int maxshift = -32768; /* maxshift */
 
 	Alist alist[3];
-	alist[0] = make_alist("data",      ID_VAL,      NULL,  &data);
-	alist[1] = make_alist("shifts",    ID_VAL,      NULL,  &shifts);
+	alist[0]      = make_alist("data", ID_VAL, NULL, &data);
+	alist[1]      = make_alist("shifts", ID_VAL, NULL, &shifts);
 	alist[2].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
-	if(data == NULL || shifts == NULL ){
+	if (data == NULL || shifts == NULL) {
 		parse_error("\nUsed to shift tes maps for vertical lines and deplaid\n");
 		parse_error("$1=the data to shift");
 		parse_error("$2=the shift data from tes_ock_interp() or ");
@@ -1269,59 +1231,57 @@ cse_tes_shift(vfuncptr func, Var * arg)
 	}
 
 	/*get dims */
-	x=GetX(data);
-	y=GetY(data);
-	if(GetZ(data)!=1) {
+	x = GetX(data);
+	y = GetY(data);
+	if (GetZ(data) != 1) {
 		parse_error("please use single band data\n");
 		return NULL;
 	}
 
 	/* get max shift */
-	for(j=0;j<y;j++) {
-		tv=extract_int(shifts,cpos(0,j,0,shifts));
-		if(tv>maxshift) maxshift=tv;
+	for (j = 0; j < y; j++) {
+		tv                          = extract_int(shifts, cpos(0, j, 0, shifts));
+		if (tv > maxshift) maxshift = tv;
 	}
 	/*memory allocation */
-	w_data=(float *)calloc(sizeof(float),(x+maxshift)*y);
+	w_data = (float*)calloc(sizeof(float), (x + maxshift) * y);
 
 	/* get shifts, extract and shift the data */
-	for(j=0;j<y;j++) {
-		w_shifts=extract_int(shifts,cpos(0,j,0,shifts));
-		for(i=0;i<x;i++) {
-			w_data[(x+maxshift)*j +(maxshift-w_shifts+i)]=(float)extract_float(data,cpos(i,j,0,data));
+	for (j = 0; j < y; j++) {
+		w_shifts = extract_int(shifts, cpos(0, j, 0, shifts));
+		for (i = 0; i < x; i++) {
+			w_data[(x + maxshift) * j + (maxshift - w_shifts + i)] =
+			    (float)extract_float(data, cpos(i, j, 0, data));
 		}
 	}
 
 	/* return the data */
-	out=newVal(BSQ,x+maxshift,y,1,FLOAT,w_data);
+	out = newVal(BSQ, x + maxshift, y, 1, FLOAT, w_data);
 	return out;
 }
 
-
-
-Var *
-cse_sobel(vfuncptr func, Var * arg)
+Var* cse_sobel(vfuncptr func, Var* arg)
 {
 
-	Var    *pic=NULL;          /* input data*/
-	Var    *out=NULL;          /* output pic */
-	int     x,y,z;             /* image size */
-	int     i,j,k;             /* loop indeces */
-	float  *xkern,*ykern;      /* sobel kernals */
-	float  *w_pic=NULL;        /* working picture */
-	float  *dir=NULL;          /* direction vectors */
-	float  *sobelx,*sobely;    /* sobel convolved images */
-	double  tv,tx,ty;          /* tmp value */
-	float   null=-32768;       /* ignore values */
+	Var* pic = NULL;        /* input data*/
+	Var* out = NULL;        /* output pic */
+	int x, y, z;            /* image size */
+	int i, j, k;            /* loop indeces */
+	float *xkern, *ykern;   /* sobel kernals */
+	float* w_pic = NULL;    /* working picture */
+	float* dir   = NULL;    /* direction vectors */
+	float *sobelx, *sobely; /* sobel convolved images */
+	double tv, tx, ty;      /* tmp value */
+	float null = -32768;    /* ignore values */
 
 	Alist alist[3];
-	alist[0] = make_alist("pic",      ID_VAL,     NULL,  &pic);
-	alist[1] = make_alist("ignore",   FLOAT,      NULL,  &null);
+	alist[0]      = make_alist("pic", ID_VAL, NULL, &pic);
+	alist[1]      = make_alist("ignore", FLOAT, NULL, &null);
 	alist[2].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
-	if(pic==NULL) {
+	if (pic == NULL) {
 		parse_error("Runs a Sobel edge detecor on an image\n");
 		parse_error("This will sstretch the data and return the");
 		parse_error("magnitude and direction as mag and dir respectively\n");
@@ -1337,58 +1297,58 @@ cse_sobel(vfuncptr func, Var * arg)
 	z = GetZ(pic);
 
 	/* make room for the data!!*/
-	w_pic=(float *)calloc(sizeof(float),x*y*z);
-	dir=(float *)calloc(sizeof(float),x*y*z);
-	sobely=(float *)calloc(sizeof(float),x*y*z);
-	sobelx=(float *)calloc(sizeof(float),x*y*z);
-	xkern=(float *)calloc(sizeof(float),9);
-	ykern=(float *)calloc(sizeof(float),9);
+	w_pic  = (float*)calloc(sizeof(float), x * y * z);
+	dir    = (float*)calloc(sizeof(float), x * y * z);
+	sobely = (float*)calloc(sizeof(float), x * y * z);
+	sobelx = (float*)calloc(sizeof(float), x * y * z);
+	xkern  = (float*)calloc(sizeof(float), 9);
+	ykern  = (float*)calloc(sizeof(float), 9);
 
 	/*make the sobel kernel */
-	xkern[0]=-1;
-	xkern[1]=0;
-	xkern[2]=1;
-	xkern[3]=-2;
-	xkern[4]=0;
-	xkern[5]=2;
-	xkern[6]=-1;
-	xkern[7]=0;
-	xkern[8]=1;
-	ykern[0]=1;
-	ykern[1]=2;
-	ykern[2]=1;
-	ykern[3]=0;
-	ykern[4]=0;
-	ykern[5]=0;
-	ykern[6]=-1;
-	ykern[7]=-2;
-	ykern[8]=-1;
+	xkern[0] = -1;
+	xkern[1] = 0;
+	xkern[2] = 1;
+	xkern[3] = -2;
+	xkern[4] = 0;
+	xkern[5] = 2;
+	xkern[6] = -1;
+	xkern[7] = 0;
+	xkern[8] = 1;
+	ykern[0] = 1;
+	ykern[1] = 2;
+	ykern[2] = 1;
+	ykern[3] = 0;
+	ykern[4] = 0;
+	ykern[5] = 0;
+	ykern[6] = -1;
+	ykern[7] = -2;
+	ykern[8] = -1;
 
 	/*extract the data */
-	for(k=0;k<z;k++) {
-		for(j=0;j<y;j++) {
-			for(i=0;i<x;i++) {
-				tv = extract_float(pic, cpos(i,j,k,pic));
-				w_pic[k*x*y + x*j + i]=tv;
+	for (k = 0; k < z; k++) {
+		for (j = 0; j < y; j++) {
+			for (i = 0; i < x; i++) {
+				tv                           = extract_float(pic, cpos(i, j, k, pic));
+				w_pic[k * x * y + x * j + i] = tv;
 			}
 		}
 	}
 
 	/* sstretch the data */
-	w_pic=sstretch_sobel(w_pic,null,x,y,z);
+	w_pic = sstretch_sobel(w_pic, null, x, y, z);
 
 	/* run sobel kernal over the data */
-	sobelx=smooth(w_pic,xkern,x,y,z,3,3,1,1,0);
-	sobely=smooth(w_pic,ykern,x,y,z,3,3,1,1,0);
+	sobelx = smooth(w_pic, xkern, x, y, z, 3, 3, 1, 1, 0);
+	sobely = smooth(w_pic, ykern, x, y, z, 3, 3, 1, 1, 0);
 
 	/* determine the magnitude and direction vectors */
-	for(k=0;k<z;k++) {
-		for(j=0;j<y;j++) {
-			for(i=0;i<x;i++) {
-				tx=sobelx[k*x*y + x*j + i];
-				ty=sobely[k*x*y + x*j + i];
-				w_pic[k*x*y + x*j + i]=(float)sqrt(tx*tx+ty*ty);
-				dir[k*x*y + x*j + i]=(float)(-atan2(ty,tx)*(360/2*3.14159265));
+	for (k = 0; k < z; k++) {
+		for (j = 0; j < y; j++) {
+			for (i = 0; i < x; i++) {
+				tx                           = sobelx[k * x * y + x * j + i];
+				ty                           = sobely[k * x * y + x * j + i];
+				w_pic[k * x * y + x * j + i] = (float)sqrt(tx * tx + ty * ty);
+				dir[k * x * y + x * j + i]   = (float)(-atan2(ty, tx) * (360 / 2 * 3.14159265));
 			}
 		}
 	}
@@ -1399,36 +1359,33 @@ cse_sobel(vfuncptr func, Var * arg)
 	free(xkern);
 	free(ykern);
 
-	out=new_struct(2);
-	add_struct(out,"mag",newVal(BSQ,x,y,z,FLOAT,w_pic));
-	add_struct(out,"dir",newVal(BSQ,x,y,z,FLOAT,dir));
+	out = new_struct(2);
+	add_struct(out, "mag", newVal(BSQ, x, y, z, FLOAT, w_pic));
+	add_struct(out, "dir", newVal(BSQ, x, y, z, FLOAT, dir));
 	return out;
 }
 
-
-
-Var *
-cse_circle(vfuncptr func, Var * arg)
+Var* cse_circle(vfuncptr func, Var* arg)
 {
-	Var    *out=NULL;          /* out data */
-	float  *pic=NULL;          /* working data */
-	int     x=0,y=0;           /* array dimensions */
-	int     xi=0,yi=0;         /* array points */
-	int     cx=0,cy=0,j,i;     /* center points and loop indices */
-	float   t=0;               /* theta for parametric equation */
-	float   r=0;               /* radius */
-	float   whigh,wlow;        /* the values for the weighting option */
-	int     count;             /* on pixel count */
-	int     weight=0;          /* weight option */
+	Var* out   = NULL;        /* out data */
+	float* pic = NULL;        /* working data */
+	int x = 0, y = 0;         /* array dimensions */
+	int xi = 0, yi = 0;       /* array points */
+	int cx = 0, cy = 0, j, i; /* center points and loop indices */
+	float t = 0;              /* theta for parametric equation */
+	float r = 0;              /* radius */
+	float whigh, wlow;        /* the values for the weighting option */
+	int count;                /* on pixel count */
+	int weight = 0;           /* weight option */
 
 	Alist alist[3];
-	alist[0] = make_alist("r",      FLOAT,        NULL,  &r);
-	alist[1] = make_alist("weight", INT,          NULL,  &weight);
+	alist[0]      = make_alist("r", FLOAT, NULL, &r);
+	alist[1]      = make_alist("weight", INT, NULL, &weight);
 	alist[2].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
-	if (r == 0){
+	if (r == 0) {
 		parse_error("Circle drawing algorithm\n");
 		parse_error("$1 = raduis of the circle");
 		parse_error("float is supported but diameter will be integer");
@@ -1441,105 +1398,101 @@ cse_circle(vfuncptr func, Var * arg)
 	/*set x,y and the center */
 	/*checking to see if diameter is odd */
 
-	x=y=(int)(r*2);
-	if(x%2==0) {
-		cx=(int)r;
-		cy=(int)r;
+	x = y = (int)(r * 2);
+	if (x % 2 == 0) {
+		cx = (int)r;
+		cy = (int)r;
 	}
-	if(x%2==1) {
-		cx=(int)r+1;
-		cy=(int)r+1;
+	if (x % 2 == 1) {
+		cx = (int)r + 1;
+		cy = (int)r + 1;
 	}
 
 	/* allocate memory*/
-	pic=(float *)calloc(sizeof(float),(int)x*y);
+	pic = (float*)calloc(sizeof(float), (int)x * y);
 
 	/* loop through using a parametric circle drawing techinque */
-	for(t=0.0;t<2*M_PI;t+=1/r) {
-		xi=(int)r*cos(t)+cx;
-		yi=(int)r*sin(t)+cy;
-		pic[x*yi + xi]=1;
+	for (t = 0.0; t < 2 * M_PI; t += 1 / r) {
+		xi               = (int)r * cos(t) + cx;
+		yi               = (int)r * sin(t) + cy;
+		pic[x * yi + xi] = 1;
 	}
 
 	/* weighted array option */
 	/* get the count of on pixels */
-	if(weight==2) {
-		count=0;
-		for(j=0;j<y;j++) {
-			for(i=0;i<x;i++) {
-				if(pic[x*j + i]==1) count++;
+	if (weight == 2) {
+		count = 0;
+		for (j = 0; j < y; j++) {
+			for (i = 0; i < x; i++) {
+				if (pic[x * j + i] == 1) count++;
 			}
 		}
 		/*set the weighting amounts */
-		whigh=(float)1./count;
-		wlow=-(float)1./(x*y-count);
+		whigh = (float)1. / count;
+		wlow  = -(float)1. / (x * y - count);
 
 		/* loop through and set the values */
-		for(j=0;j<y;j++) {
-			for(i=0;i<x;i++) {
-				if(pic[x*j + i]!=1) pic[x*j + i]=wlow;
-				if(pic[x*j + i]==1) pic[x*j + i]=whigh;
+		for (j = 0; j < y; j++) {
+			for (i = 0; i < x; i++) {
+				if (pic[x * j + i] != 1) pic[x * j + i] = wlow;
+				if (pic[x * j + i] == 1) pic[x * j + i] = whigh;
 			}
 		}
 	}
 	/* crater kernel weight */
-	if(weight==1) {
-		for(j=0;j<y;j++) {
-			for(i=0;i<r;i++) {
-				if(pic[x*j + i]==1 ) pic[x*j + i]=10;
+	if (weight == 1) {
+		for (j = 0; j < y; j++) {
+			for (i = 0; i < r; i++) {
+				if (pic[x * j + i] == 1) pic[x * j + i] = 10;
 			}
-			for(i=r;i<x;i++) {
-				if(pic[x*j + i]==1) pic[x*j + i]=-10;
+			for (i = r; i < x; i++) {
+				if (pic[x * j + i] == 1) pic[x * j + i] = -10;
 			}
 		}
 	}
-	if(weight==-1) {
-		for(j=0;j<y;j++) {
-			for(i=0;i<r;i++) {
-				if(pic[x*j + i]==1) pic[x*j + i]=-10;
+	if (weight == -1) {
+		for (j = 0; j < y; j++) {
+			for (i = 0; i < r; i++) {
+				if (pic[x * j + i] == 1) pic[x * j + i] = -10;
 			}
-			for(i=r;i<x;i++) {
-				if(pic[x*j + i]==1) pic[x*j + i]=10;
+			for (i = r; i < x; i++) {
+				if (pic[x * j + i] == 1) pic[x * j + i] = 10;
 			}
 		}
 	}
 
 	/* return the circle array */
-	out=newVal(BSQ,x,y,1,FLOAT,pic);
+	out = newVal(BSQ, x, y, 1, FLOAT, pic);
 	return out;
 }
 
-
-
-Var*
-cse_reconst(vfuncptr func, Var * arg)
+Var* cse_reconst(vfuncptr func, Var* arg)
 {
 
-	Var    *obj=NULL;                 /* input rectify structre */
-	Var    *out=NULL;                 /* output data */
-	Var    *vdata=NULL;               /* data  var */
-	Var    *vleftedge=NULL;           /* leftedge var */
-	Var    *w=NULL,*a=NULL;           /* width and angle var */
-	int    *leftedge=NULL;            /* leftedge array */
-	float   angle=0;                  /* angle value */
-	int     width=0;                  /* width value */
-	int     x,y,z;                    /* rectified image size */
-	int     i,j,k;                    /* loop indices */
-	float  *new_data=NULL;            /* changing data size */
-	float   null=-32768;              /* null value */
-	int     lshift;                   /* vert shift max shift */
-	float   shift;                    /* tan of the shift */
-
+	Var* obj       = NULL;    /* input rectify structre */
+	Var* out       = NULL;    /* output data */
+	Var* vdata     = NULL;    /* data  var */
+	Var* vleftedge = NULL;    /* leftedge var */
+	Var *w = NULL, *a = NULL; /* width and angle var */
+	int* leftedge = NULL;     /* leftedge array */
+	float angle   = 0;        /* angle value */
+	int width     = 0;        /* width value */
+	int x, y, z;              /* rectified image size */
+	int i, j, k;              /* loop indices */
+	float* new_data = NULL;   /* changing data size */
+	float null      = -32768; /* null value */
+	int lshift;               /* vert shift max shift */
+	float shift;              /* tan of the shift */
 
 	Alist alist[4];
-	alist[0] = make_alist("rect",      ID_STRUCT,  NULL,  &obj);
-	alist[1] = make_alist("null",      FLOAT,      NULL,  &null);
-	alist[2] = make_alist("ignore",    FLOAT,      NULL,  &null);
+	alist[0]      = make_alist("rect", ID_STRUCT, NULL, &obj);
+	alist[1]      = make_alist("null", FLOAT, NULL, &null);
+	alist[2]      = make_alist("ignore", FLOAT, NULL, &null);
 	alist[3].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
-	if(obj==NULL ) {
+	if (obj == NULL) {
 		parse_error("\nTakes rectified cubes and returns");
 		parse_error("them to projected geometry\n");
 		parse_error("$1 = rectify structure");
@@ -1549,68 +1502,70 @@ cse_reconst(vfuncptr func, Var * arg)
 	}
 
 	/* get stuff from structre */
-	find_struct(obj,"data",&vdata);
-	find_struct(obj,"leftedge",&vleftedge);
-	find_struct(obj,"angle",&a);
-	find_struct(obj,"width",&w);
+	find_struct(obj, "data", &vdata);
+	find_struct(obj, "leftedge", &vleftedge);
+	find_struct(obj, "angle", &a);
+	find_struct(obj, "width", &w);
 	width = extract_int(w, 0);
-	angle = -extract_float(a,0);
+	angle = -extract_float(a, 0);
 
-	if(angle == 0) {
-		parse_error("Why did you bother to shear the data by a 0 angle?\n"); return NULL;
+	if (angle == 0) {
+		parse_error("Why did you bother to shear the data by a 0 angle?\n");
+		return NULL;
 	}
-	if(angle > 80 || angle < -80) {
-		parse_error("Try to stay between -80 and 80, love.  Our motto is \"No Crashy Crashy.\""); return NULL;
+	if (angle > 80 || angle < -80) {
+		parse_error("Try to stay between -80 and 80, love.  Our motto is \"No Crashy Crashy.\"");
+		return NULL;
 	}
 
 	/* get x,y,z */
-	x=GetX(vdata);
-	y=GetY(vdata);
-	z=GetZ(vdata);
-	new_data=(float *)calloc(sizeof(float),x*y*z);
-	leftedge=(int *)calloc(sizeof(int),y);
+	x        = GetX(vdata);
+	y        = GetY(vdata);
+	z        = GetZ(vdata);
+	new_data = (float*)calloc(sizeof(float), x * y * z);
+	leftedge = (int*)calloc(sizeof(int), y);
 
 	/* extract the data  and leftedge*/
-	for(j=0;j<y;j++) {
-		leftedge[j]=extract_int(vleftedge,cpos(0,j,0,vleftedge));
+	for (j = 0; j < y; j++) {
+		leftedge[j] = extract_int(vleftedge, cpos(0, j, 0, vleftedge));
 	}
-	for (k=0;k<z;k++) {
-		for (j=0;j<y;j++) {
-			for (i=0;i<x;i++) {
-				new_data[x*y*k + x*j + i]=extract_float(vdata,cpos(i,j,k,vdata));
+	for (k = 0; k < z; k++) {
+		for (j = 0; j < y; j++) {
+			for (i = 0; i < x; i++) {
+				new_data[x * y * k + x * j + i] = extract_float(vdata, cpos(i, j, k, vdata));
 			}
 		}
 	}
 
 	/* run unslantc */
-	new_data=unslantc(new_data,leftedge,width,x,y,z,null);
+	new_data = unslantc(new_data, leftedge, width, x, y, z, null);
 
 	/* calculating the number of rows to add to the picture to accomodate the shear */
-	shift = tan((M_PI / 180.0) * angle);
-	lshift = (int)((width*fabs(shift)-0.5)+1)*(shift/fabs(shift));
+	shift  = tan((M_PI / 180.0) * angle);
+	lshift = (int)((width * fabs(shift) - 0.5) + 1) * (shift / fabs(shift));
 
 	/* error handling */
-	if(lshift == 0) {
-		parse_error("The shear is too small to accomplish anything. Try again bozo.\n"); return NULL;
+	if (lshift == 0) {
+		parse_error("The shear is too small to accomplish anything. Try again bozo.\n");
+		return NULL;
 	}
-	if(y-abs(lshift)<=0) {
-		parse_error("The trimmed array has a length of %d, you nincompoop. Stop trying to crash me.\n", y-abs(lshift));
+	if (y - abs(lshift) <= 0) {
+		parse_error(
+		    "The trimmed array has a length of %d, you nincompoop. Stop trying to crash me.\n",
+		    y - abs(lshift));
 		return NULL;
 	}
 
 	/* run unshearc */
-	new_data=unshearc(new_data,angle,width,y,z,null);
+	new_data = unshearc(new_data, angle, width, y, z, null);
 	free(leftedge);
 
 	/* return the data */
-	out = newVal(BSQ, width, y-abs(lshift), z, FLOAT, new_data);
-	return(out);
+	out = newVal(BSQ, width, y - abs(lshift), z, FLOAT, new_data);
+	return (out);
 }
 
-
-
-Var *
-cse_sstretch2(vfuncptr func, Var * arg)
+Var* cse_sstretch2(vfuncptr func, Var* arg)
 {
 
 	/* takes data and stretches it similar to sstretch() davinci function*/
@@ -1618,30 +1573,30 @@ cse_sstretch2(vfuncptr func, Var * arg)
 
 	typedef unsigned char byte;
 
-	Var       *data=NULL;               /* input */
-	Var       *out=NULL;                /* output */
-	float     *w_data=NULL;             /* working data2 */
-	byte      *w_data2=NULL;            /* working data */
-	float     *sample=NULL;             /* sample data */
-	Var       *sam_data=NULL;           /* sample input */
-	float      ignore=-32768;           /* ignore value*/
-	int        x,y,z,samx,samy,samz;    /* indices */
-	double     sum = 0;                 /* sum of elements in data */
-	double     sumsq = 0;               /* sum of the square of elements in data */
-	double     stdv = 0;                /* standard deviation */
-	int        cnt = 0;                 /* total number of non-null points */
-	int        i,j,k;                   /* loop indices */
-	float      tv;                      /* tmp value */
-	float      v=40;                    /* variance */
+	Var* data     = NULL;          /* input */
+	Var* out      = NULL;          /* output */
+	float* w_data = NULL;          /* working data2 */
+	byte* w_data2 = NULL;          /* working data */
+	float* sample = NULL;          /* sample data */
+	Var* sam_data = NULL;          /* sample input */
+	float ignore  = -32768;        /* ignore value*/
+	int x, y, z, samx, samy, samz; /* indices */
+	double sum   = 0;              /* sum of elements in data */
+	double sumsq = 0;              /* sum of the square of elements in data */
+	double stdv  = 0;              /* standard deviation */
+	int cnt      = 0;              /* total number of non-null points */
+	int i, j, k;                   /* loop indices */
+	float tv;                      /* tmp value */
+	float v = 40;                  /* variance */
 
 	Alist alist[5];
-	alist[0] = make_alist("data", 	  ID_VAL,	NULL,	&data);
-	alist[1] = make_alist("ignore", 	  FLOAT,	NULL,	&ignore);
-	alist[2] = make_alist("variance",       FLOAT,        NULL,   &v);
-	alist[3] = make_alist("sample",         ID_VAL,       NULL,   &sam_data);
+	alist[0]      = make_alist("data", ID_VAL, NULL, &data);
+	alist[1]      = make_alist("ignore", FLOAT, NULL, &ignore);
+	alist[2]      = make_alist("variance", FLOAT, NULL, &v);
+	alist[3]      = make_alist("sample", ID_VAL, NULL, &sam_data);
 	alist[4].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
 	if (data == NULL) {
 		parse_error("\nUsed to sstretch data band by band");
@@ -1651,46 +1606,46 @@ cse_sstretch2(vfuncptr func, Var * arg)
 		parse_error("variance=variance of the stretch (Default=40)");
 		parse_error("sample=sample data to stretch, must have sampe # of bands\n");
 		parse_error("c.edwards 6/15/05\n");
-		out = newVal(BSQ, 1, 1, 1, BYTE, (float *)calloc(sizeof(float), 1));
-		return(out);
+		out = newVal(BSQ, 1, 1, 1, BYTE, (float*)calloc(sizeof(float), 1));
+		return (out);
 	}
 
 	/* x, y and z dimensions of the data */
 	x = GetX(data);
 	y = GetY(data);
 	z = GetZ(data);
-	if(sam_data != NULL) {
+	if (sam_data != NULL) {
 		samx = GetX(sam_data);
 		samy = GetY(sam_data);
 		samz = GetZ(sam_data);
 	}
 
-	if(z != samz && sam_data != NULL) {
+	if (z != samz && sam_data != NULL) {
 		parse_error("\nThe sample data and the data must have the same # of bands\n");
-		return(NULL);
+		return (NULL);
 	}
 
 	/* create out array */
-	w_data = (float *)calloc(sizeof(float), x*y*z);
-	w_data2 = (byte *)calloc(sizeof(byte),x*y*z);
+	w_data  = (float*)calloc(sizeof(float), x * y * z);
+	w_data2 = (byte*)calloc(sizeof(byte), x * y * z);
 
 	/* stretch each band separately */
-	for(k=0;k<z;k++) {
-		sum = 0;
+	for (k = 0; k < z; k++) {
+		sum   = 0;
 		sumsq = 0;
-		stdv = 0;
-		cnt = 0;
-		tv = 0;
+		stdv  = 0;
+		cnt   = 0;
+		tv    = 0;
 
 		/*calculate the sum and sum squares if non sampled */
-		if(sam_data == NULL) {
-			for(j=0; j<y; j++) {
-				for(i=0; i<x; i++) {
-					tv=extract_float(data, cpos(i,j,k, data));
-					w_data[k*y*x + j*x + i]=tv;
-					if( tv != ignore){
+		if (sam_data == NULL) {
+			for (j = 0; j < y; j++) {
+				for (i = 0; i < x; i++) {
+					tv                            = extract_float(data, cpos(i, j, k, data));
+					w_data[k * y * x + j * x + i] = tv;
+					if (tv != ignore) {
 						sum += (double)tv;
-						sumsq += (double)(tv*tv);
+						sumsq += (double)(tv * tv);
 						cnt += 1;
 					}
 				}
@@ -1698,84 +1653,82 @@ cse_sstretch2(vfuncptr func, Var * arg)
 		}
 
 		/* calculate the sum and sum of squares if sampled image */
-		if(sam_data != NULL) {
-			for(j=0; j<samy; j++) {
-				for(i=0; i<samx; i++) {
-					tv=extract_float(sam_data, cpos(i,j,k, sam_data));
-					if( tv != ignore){
+		if (sam_data != NULL) {
+			for (j = 0; j < samy; j++) {
+				for (i = 0; i < samx; i++) {
+					tv = extract_float(sam_data, cpos(i, j, k, sam_data));
+					if (tv != ignore) {
 						sum += (double)tv;
-						sumsq += (double)(tv*tv);
+						sumsq += (double)(tv * tv);
 						cnt += 1;
 					}
 				}
 			}
 
 			/* extract data values if want sampled image */
-			for(j=0; j<y; j++) {
-				for(i=0; i<x; i++) {
-					w_data[k*y*x + j*x + i]=extract_float(data, cpos(i,j,k, data));
+			for (j = 0; j < y; j++) {
+				for (i = 0; i < x; i++) {
+					w_data[k * y * x + j * x + i] = extract_float(data, cpos(i, j, k, data));
 				}
 			}
 		}
 
 		/* calculate standard deviation */
-		stdv = sqrt((sumsq - (sum*sum/cnt))/(cnt-1));
+		stdv = sqrt((sumsq - (sum * sum / cnt)) / (cnt - 1));
 		sum /= (double)cnt;
 
 		/* fill in stretched values */
-		for(j=0; j<y; j++) {
-			for(i=0; i<x; i++) {
-				if(w_data[k*y*x + j*x + i] != ignore) w_data[k*y*x + j*x + i] = (float)((w_data[k*y*x + j*x + i] - sum)*(v/stdv)+127);
-				if(w_data[k*y*x + j*x + i] < 0) w_data[k*y*x + j*x + i] = 0;
-				if(w_data[k*y*x + j*x + i] > 255) w_data[k*y*x + j*x + i] = 255;
+		for (j = 0; j < y; j++) {
+			for (i = 0; i < x; i++) {
+				if (w_data[k * y * x + j * x + i] != ignore)
+					w_data[k * y * x + j * x + i] =
+					    (float)((w_data[k * y * x + j * x + i] - sum) * (v / stdv) + 127);
+				if (w_data[k * y * x + j * x + i] < 0) w_data[k * y * x + j * x + i]   = 0;
+				if (w_data[k * y * x + j * x + i] > 255) w_data[k * y * x + j * x + i] = 255;
 			}
 		}
 	}
 
 	/*convert to bip */
-	for(j=0; j<y; j++) {
-		for(i=0; i<x; i++) {
-			for(k=0; k<z; k++) {
-				w_data2[j*x*z + i*z + k]=(byte)w_data[k*y*x + j*x + i];
+	for (j = 0; j < y; j++) {
+		for (i = 0; i < x; i++) {
+			for (k = 0; k < z; k++) {
+				w_data2[j * x * z + i * z + k] = (byte)w_data[k * y * x + j * x + i];
 			}
 		}
 	}
 
 	/* clean up and return data */
 	free(w_data);
-	out = newVal(BIP,z, x, y, BYTE, w_data2);
-	return(out);
+	out = newVal(BIP, z, x, y, BYTE, w_data2);
+	return (out);
 }
 
-
-
-Var *
-cse_unscale(vfuncptr func, Var * arg)
+Var* cse_unscale(vfuncptr func, Var* arg)
 {
 
-	Var      *pds = NULL;                  /* the original pds structure */
-	Var      *out = NULL;                  /* the output scaled data */
-	Var      *w_pds=NULL;                  /* data from struct */
-	float    *w_pic=NULL;                  /* working data */
-	Var      *struc=NULL;                  /* second struct */
-	Var      *bin=NULL;                    /* band_bin struct */
-	Var      *baset, *multt;               /* base/multiplier temp*/
-	double   *mult, *base;                 /* base/multiplier */
-	Var      *c_null=NULL;                 /* core_null var */
-	float     core_null=-32768;            /* core null value */
-	int       i, j, k;                     /* loop indices */
-	int       x=0, y=0, z=0, x1=0;         /* size of the picture */
-	float     tv1=0;
-	float     tv2=0;                       /* temp pixel value */
-
+	Var* pds     = NULL;             /* the original pds structure */
+	Var* out     = NULL;             /* the output scaled data */
+	Var* w_pds   = NULL;             /* data from struct */
+	float* w_pic = NULL;             /* working data */
+	Var* struc   = NULL;             /* second struct */
+	Var* bin     = NULL;             /* band_bin struct */
+	Var *baset, *multt;              /* base/multiplier temp*/
+	double *mult, *base;             /* base/multiplier */
+	Var* c_null     = NULL;          /* core_null var */
+	float core_null = -32768;        /* core null value */
+	int i, j, k;                     /* loop indices */
+	int x = 0, y = 0, z = 0, x1 = 0; /* size of the picture */
+	float tv1 = 0;
+	float tv2 = 0; /* temp pixel value */
 
 	Alist alist[2];
-	alist[0] = make_alist("obj",        ID_STRUCT,     NULL,   &pds);
+	alist[0]      = make_alist("obj", ID_STRUCT, NULL, &pds);
 	alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
-	if(pds==NULL) {
+	if (pds == NULL) {
 		parse_error("\nUsed to unscale a pds from short to float data\n");
 		parse_error("$1 = the pds structure\n");
 		parse_error("core_null values will be set to -32768");
@@ -1784,24 +1737,23 @@ cse_unscale(vfuncptr func, Var * arg)
 	}
 
 	/* get structures */
-	find_struct(pds,"spectral_qube",&struc);
-	find_struct(struc,"data",&w_pds);
-	find_struct(struc,"core_null",&c_null);
-	core_null=extract_float(c_null, 0);
-	find_struct(struc,"band_bin",&bin);
-	find_struct(bin,"band_bin_multiplier",&multt);
-	find_struct(bin,"band_bin_base",&baset);
-
+	find_struct(pds, "spectral_qube", &struc);
+	find_struct(struc, "data", &w_pds);
+	find_struct(struc, "core_null", &c_null);
+	core_null = extract_float(c_null, 0);
+	find_struct(struc, "band_bin", &bin);
+	find_struct(bin, "band_bin_multiplier", &multt);
+	find_struct(bin, "band_bin_base", &baset);
 
 	/* set up base and multiplier arrays */
 	x1 = GetX(multt);
 
-	base = (double *)calloc(sizeof(double), x1);
-	mult = (double *)calloc(sizeof(double), x1);
+	base = (double*)calloc(sizeof(double), x1);
+	mult = (double*)calloc(sizeof(double), x1);
 
-	for(i=0; i<x1; i++) {
-		mult[i]=extract_double(multt,cpos(i,0,0,multt));
-		base[i]=extract_double(baset,cpos(i,0,0,multt));
+	for (i = 0; i < x1; i++) {
+		mult[i] = extract_double(multt, cpos(i, 0, 0, multt));
+		base[i] = extract_double(baset, cpos(i, 0, 0, multt));
 	}
 
 	/* x, y and z dimensions of the data */
@@ -1810,18 +1762,18 @@ cse_unscale(vfuncptr func, Var * arg)
 	z = GetZ(w_pds);
 
 	/* allocate memory for the picture */
-	w_pic = (float *)calloc(sizeof(float), x*y*z);
+	w_pic = (float*)calloc(sizeof(float), x * y * z);
 
 	/* loop through and unscale data */
-	for(k=0; k<z; k++) {
-		for(j=0; j<y; j++) {
-			for(i=0; i<x; i++) {
-				tv1 = extract_float(w_pds, cpos(i,j,k,w_pds));
-				tv2 = (float)((tv1*mult[k])+base[k]);
-				if (tv1 == core_null ) {
+	for (k = 0; k < z; k++) {
+		for (j = 0; j < y; j++) {
+			for (i = 0; i < x; i++) {
+				tv1 = extract_float(w_pds, cpos(i, j, k, w_pds));
+				tv2 = (float)((tv1 * mult[k]) + base[k]);
+				if (tv1 == core_null) {
 					tv2 = -32768.0;
 				}
-				w_pic[x*y*k + x*j + i]=tv2;
+				w_pic[x * y * k + x * j + i] = tv2;
 			}
 		}
 	}
@@ -1832,53 +1784,51 @@ cse_unscale(vfuncptr func, Var * arg)
 	free(base);
 	free(mult);
 
-	out=newVal(BSQ,x,y,z,FLOAT,w_pic);
+	out = newVal(BSQ, x, y, z, FLOAT, w_pic);
 	return out;
 }
 
-
-
-Var *
-cse_ramp(vfuncptr func, Var * arg)
+Var* cse_ramp(vfuncptr func, Var* arg)
 {
 	/* made more efficient and fixed several bugs Oct 14, 2005                         **
 	** added ability to speed up ramp calculation by setting a maximum # of iterations **
 	** Fri Oct 14 16:36:44 MST 2005                                                    */
 
-	Var    *pic_1 = NULL;		 /* picture one                                   */
-	Var    *pic_2 = NULL;		 /* picture two                                   */
-	Var    *out = NULL;		 /* the output picture                            */
-	float  *ramp = NULL; 	         /* storage location of output ramp               */
-	int    *ol1 = NULL;	         /* the overlap in picture 1                      */
-	int    *ol2 = NULL;	         /* the overlap in picture 2                      */
-	float   nullv = 0.0;	         /* the ignore value                              */
-	float   tmpval = 0.0;          /* a temporary extracted value from the pictures */
-	int     r1 = -1, r2 = -1;      /* beginning and ending rows of the overlap      */
-	int     c1 = -1, c2 = -1;      /* beginning and ending columns of the overlap   */
-	int     i, j, k;	         /* loop indices                                  */
-	int     x, y;		         /* dimensions of the input pictures              */
-	int     t1;  			 /* memory location                               */
-	int     ct = 1;		 /* counter                                       */
-	int     n=-1, num = 1;	 /* fill-in number                                */
-	int     up, down, left, right; /* some neighborhood indices                     */
-	int     pare = 100000;         /* maximum # of pixels away from edge to search  */
-	float   sum=0;
+	Var* pic_1   = NULL;       /* picture one                                   */
+	Var* pic_2   = NULL;       /* picture two                                   */
+	Var* out     = NULL;       /* the output picture                            */
+	float* ramp  = NULL;       /* storage location of output ramp               */
+	int* ol1     = NULL;       /* the overlap in picture 1                      */
+	int* ol2     = NULL;       /* the overlap in picture 2                      */
+	float nullv  = 0.0;        /* the ignore value                              */
+	float tmpval = 0.0;        /* a temporary extracted value from the pictures */
+	int r1 = -1, r2 = -1;      /* beginning and ending rows of the overlap      */
+	int c1 = -1, c2 = -1;      /* beginning and ending columns of the overlap   */
+	int i, j, k;               /* loop indices                                  */
+	int x, y;                  /* dimensions of the input pictures              */
+	int t1;                    /* memory location                               */
+	int ct = 1;                /* counter                                       */
+	int n = -1, num = 1;       /* fill-in number                                */
+	int up, down, left, right; /* some neighborhood indices                     */
+	int pare  = 100000;        /* maximum # of pixels away from edge to search  */
+	float sum = 0;
 
 	Alist alist[5];
-	alist[0] = make_alist("pic1",   ID_VAL, NULL, &pic_1);
-	alist[1] = make_alist("pic2",   ID_VAL, NULL, &pic_2);
-	alist[2] = make_alist("stop",   INT,    NULL, &pare);
-	alist[3] = make_alist("ignore", FLOAT,  NULL, &nullv);
+	alist[0]      = make_alist("pic1", ID_VAL, NULL, &pic_1);
+	alist[1]      = make_alist("pic2", ID_VAL, NULL, &pic_2);
+	alist[2]      = make_alist("stop", INT, NULL, &pare);
+	alist[3]      = make_alist("ignore", FLOAT, NULL, &nullv);
 	alist[4].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0)
-		return (NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
 	/* if no pictures got passed to the function */
 	if (pic_1 == NULL || pic_2 == NULL) {
 		parse_error("ramp() - Fri Oct 14 14:45:09 MST 2005");
 		parse_error("Calculates a 0 - 1 float ramp between two overlapping pictures.");
-		parse_error("You need to pass me two overlapping pictures contained in arrays\nof identical size, and an ignore value.\n");
+		parse_error(
+		    "You need to pass me two overlapping pictures contained in arrays\nof identical size, "
+		    "and an ignore value.\n");
 		parse_error("Syntax:  b = thm.ramp(pic1, pic2, stop, ignore)");
 		parse_error("example: b = thm.ramp(a1, a2, stop=100, ignore=-32768");
 		parse_error("pic1 - may be any 2-d array - float, int, short, etc.");
@@ -1888,7 +1838,8 @@ cse_ramp(vfuncptr func, Var * arg)
 		parse_error("NOTES:\n");
 		parse_error("You need to multiply the ramp*pic2 and (1-ramp)*pic1.");
 		parse_error("The ramp is only found for OVERLAPPING regions.");
-		parse_error("Non-overlapping regions from pic1 and pic2 need to be added to make a full blend.");
+		parse_error(
+		    "Non-overlapping regions from pic1 and pic2 need to be added to make a full blend.");
 		parse_error("You can speed up ramp calculation by setting \'stop\'. 100 works well.");
 		return NULL;
 	}
@@ -1903,49 +1854,57 @@ cse_ramp(vfuncptr func, Var * arg)
 	}
 
 	/* create the two overlap arrays */
-	ol1 = (int *) malloc(sizeof(int)*x*y);
-	ol2 = (int *) malloc(sizeof(int)*x*y);
+	ol1 = (int*)malloc(sizeof(int) * x * y);
+	ol2 = (int*)malloc(sizeof(int) * x * y);
 
 	/* lines and columns bounding data */
-	r1 = y-1;
+	r1 = y - 1;
 	r2 = 0;
-	c1 = x-1;
+	c1 = x - 1;
 	c2 = 0;
 
 	/* extract profiles of images */
-	for (j = 0; j < y ; j++) {
-		for (i = 0; i < x ; i++) {
-			t1 = j * x + i;
+	for (j = 0; j < y; j++) {
+		for (i = 0; i < x; i++) {
+			t1      = j * x + i;
 			ol1[t1] = -1;
 			ol2[t1] = -1;
 
-			tmpval = extract_float(pic_1, cpos(i, j, 0, pic_1));
-			if(tmpval != nullv) ol1[t1] = 0;
+			tmpval                       = extract_float(pic_1, cpos(i, j, 0, pic_1));
+			if (tmpval != nullv) ol1[t1] = 0;
 
-			tmpval = extract_float(pic_2, cpos(i, j, 0, pic_2));
-			if(tmpval != nullv) ol2[t1] = 0;
+			tmpval                       = extract_float(pic_2, cpos(i, j, 0, pic_2));
+			if (tmpval != nullv) ol2[t1] = 0;
 
-			if(ol1[t1] == 0) sum+=ol2[t1];
+			if (ol1[t1] == 0) sum += ol2[t1];
 			/* find left and right limits of overlapping area */
 			if (ol1[t1] != -1 && ol2[t1] != -1) {
-				if (j < r1) { r1 = j; }
-				if (j > r2) { r2 = j; }
-				if (i < c1) { c1 = i; }
-				if (i > c2) { c2 = i; }
+				if (j < r1) {
+					r1 = j;
+				}
+				if (j > r2) {
+					r2 = j;
+				}
+				if (i < c1) {
+					c1 = i;
+				}
+				if (i > c2) {
+					c2 = i;
+				}
 			}
 		}
 	}
 
 	/* ol1 and ol2 were being left zero (sum==0) causing the ramp to fail  **
 	** setting the outteredges of both ol1 and ol2 to -1 fixed the problem.*/
-	if(sum==0) {
-		for(i = 0; i < x; i++){
-			ol1[x*y-(i+1)]=-1;
-			ol1[i]=-1;
+	if (sum == 0) {
+		for (i = 0; i < x; i++) {
+			ol1[x * y - (i + 1)] = -1;
+			ol1[i]               = -1;
 		}
-		for(j = 1; j < y; j++){
-			ol1[x*j]=-1;
-			ol1[x*j-1]=-1;
+		for (j = 1; j < y; j++) {
+			ol1[x * j]     = -1;
+			ol1[x * j - 1] = -1;
 		}
 	}
 
@@ -1954,7 +1913,7 @@ cse_ramp(vfuncptr func, Var * arg)
 	** -1 and we set that pixel to 1.  On all other iterations we look for **
 	** neighbors with values num-1. If "stop" number is specified, we stop **
 	** searching for distances and set all values to value of "pare".      */
-	k=1;
+	k = 1;
 	while (ct > 0) {
 		ct = 0;
 
@@ -1963,24 +1922,26 @@ cse_ramp(vfuncptr func, Var * arg)
 				t1 = j * x + i;
 
 				/* neighbor pixel positions */
-				up = (j-1) * x + i;
-				down = (j+1) * x + i;
-				left = t1 - 1;
+				up    = (j - 1) * x + i;
+				down  = (j + 1) * x + i;
+				left  = t1 - 1;
 				right = t1 + 1;
 
 				/* safety against falling off the edge */
-				if(j==0) up = t1;
-				if(j==y-1) down = t1;
-				if(i==0) left = t1;
-				if(i==x-1) right = t1;
+				if (j == 0) up        = t1;
+				if (j == y - 1) down  = t1;
+				if (i == 0) left      = t1;
+				if (i == x - 1) right = t1;
 
-				if (ol1[t1] == 0 && ((ol1[left] == n) || (ol1[right] == n) || (ol1[up] == n) || (ol1[down] == n))) {
+				if (ol1[t1] == 0 &&
+				    ((ol1[left] == n) || (ol1[right] == n) || (ol1[up] == n) || (ol1[down] == n))) {
 					ol1[t1] = num;
 					ct += 1;
 				}
 				/* If the sum of the overlap == 0 then we don't need to do this part */
-				if(sum!=0) {
-					if (ol2[t1] == 0 && ((ol2[left] == n) || (ol2[right] == n) || (ol2[up] == n) || (ol2[down] == n))) {
+				if (sum != 0) {
+					if (ol2[t1] == 0 &&
+					    ((ol2[left] == n) || (ol2[right] == n) || (ol2[up] == n) || (ol2[down] == n))) {
 						ol2[t1] = num;
 						ct += 1;
 					}
@@ -1988,32 +1949,32 @@ cse_ramp(vfuncptr func, Var * arg)
 			}
 		}
 		num += 1;
-		n = num-1;
-		k+=1;
+		n = num - 1;
+		k += 1;
 
 		/* we've searched enough. Set all remaining values to 'pare' */
-		if(k==pare) {
+		if (k == pare) {
 			for (j = r1; j <= r2; j++) {
 				for (i = c1; i <= c2; i++) {
-					t1 = j * x + i;
+					t1                        = j * x + i;
 					if (ol1[t1] == 0) ol1[t1] = pare;
-					if(sum!=0) {
+					if (sum != 0) {
 						if (ol2[t1] == 0) ol2[t1] = pare;
 					}
 				}
 			}
-			ct=0;
+			ct = 0;
 		}
 	}
 
 	/* loop through last time and create ramp using the special cases*/
-	ramp = (float *) calloc(sizeof(float), x*y);
+	ramp = (float*)calloc(sizeof(float), x * y);
 	for (j = 0; j < y; j++) {
 		for (i = 0; i < x; i++) {
-			t1 = j*x + i;
+			t1 = j * x + i;
 			if (ol1[t1] != -1 && ol2[t1] != -1) {
-				if(sum!=0)  ramp[t1] = (float)(ol2[t1]) / (float)(ol2[t1] + ol1[t1]);
-				if(sum==0)  ramp[t1] = (float)(1 -((float)(ol1[t1]) / (float)(2*k)));
+				if (sum != 0) ramp[t1] = (float)(ol2[t1]) / (float)(ol2[t1] + ol1[t1]);
+				if (sum == 0) ramp[t1] = (float)(1 - ((float)(ol1[t1]) / (float)(2 * k)));
 			}
 		}
 	}
@@ -2025,271 +1986,270 @@ cse_ramp(vfuncptr func, Var * arg)
 	return out;
 }
 
-
-
-Var*
-cse_columnator(vfuncptr func, Var * arg)
+Var* cse_columnator(vfuncptr func, Var* arg)
 {
 
-	Var    *data=NULL;                 /* input rectify structre */
-	Var    *out=NULL;                 /* output data */
-	int     x,y,z;                    /* rectified image size */
-	int     i,j,k;                    /* loop indices */
-	float  *wdata=NULL;            /* changing data size */
-	float   null=-32768;              /* null value */
-	int     count=0;                  /* count*/
+	Var* data = NULL;      /* input rectify structre */
+	Var* out  = NULL;      /* output data */
+	int x, y, z;           /* rectified image size */
+	int i, j, k;           /* loop indices */
+	float* wdata = NULL;   /* changing data size */
+	float null   = -32768; /* null value */
+	int count    = 0;      /* count*/
 
 	Alist alist[3];
-	alist[0] = make_alist("data",      ID_VAL,  NULL,  &data);
-	alist[1] = make_alist("ignore",    FLOAT,      NULL,  &null);
+	alist[0]      = make_alist("data", ID_VAL, NULL, &data);
+	alist[1]      = make_alist("ignore", FLOAT, NULL, &null);
 	alist[2].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
-	if(data==NULL ) {
+	if (data == NULL) {
 		return NULL;
 	}
 
 	/* get x,y,z */
-	x=GetX(data);
-	y=GetY(data);
+	x = GetX(data);
+	y = GetY(data);
 
-	for (j=0;j<y;j++) {
-		for (i=0;i<x;i++) {
-			if(extract_float(data,cpos(i,j,0,data))!=null) {
-				count+=1;
+	for (j = 0; j < y; j++) {
+		for (i = 0; i < x; i++) {
+			if (extract_float(data, cpos(i, j, 0, data)) != null) {
+				count += 1;
 			}
 		}
 	}
 
 	/*memory allocation*/
-	wdata=(float *)calloc(sizeof(float),3*count);
+	wdata = (float*)calloc(sizeof(float), 3 * count);
 
-	count=0;
+	count = 0;
 	/*fill in the loop*/
-	for (j=0;j<y;j++) {
-		for (i=0;i<x;i++) {
-			if(extract_float(data,cpos(i,j,0,data))!=null) {
-				wdata[3*count + 1]=(float)i;
-				wdata[3*count + 2]=(float)j;
-				wdata[3*count + 3]=extract_float(data,cpos(i,j,0,data));
-				count+=1;
+	for (j = 0; j < y; j++) {
+		for (i = 0; i < x; i++) {
+			if (extract_float(data, cpos(i, j, 0, data)) != null) {
+				wdata[3 * count + 1] = (float)i;
+				wdata[3 * count + 2] = (float)j;
+				wdata[3 * count + 3] = extract_float(data, cpos(i, j, 0, data));
+				count += 1;
 			}
 		}
 	}
 
 	/* return the data */
 	out = newVal(BSQ, 3, count, 1, FLOAT, wdata);
-	return(out);
+	return (out);
 }
 
-
-
-Var*
-cse_cubicspline(vfuncptr func, Var * arg)
+Var* cse_cubicspline(vfuncptr func, Var* arg)
 {
-	Var    *oldx=NULL;                 /*old x*/
-	Var    *oldy=NULL;                 /*old y*/
-	Var    *newx=NULL;                 /*new x*/
-	Var    *out=NULL;                  /*output array*/
-	int     ox,oy,nx,ny;               /* rectified image size */
-	int     i,count;                     /* loop indices */
-	float  *nya=NULL;                  /* new y array */
-	float  *nxa=NULL;                  /* new y array */
-	float  *oya=NULL;                  /* new y array */
-	float  *oxa=NULL;                  /* new y array */
-	float  *slope=NULL;
-	float  *exag=NULL;
-	float  *vals=NULL;
-	float   cpy1,cpy2;
-	float   cpx1,cpx2;
-	float   A,B,C,D;
+	Var* oldx = NULL;    /*old x*/
+	Var* oldy = NULL;    /*old y*/
+	Var* newx = NULL;    /*new x*/
+	Var* out  = NULL;    /*output array*/
+	int ox, oy, nx, ny;  /* rectified image size */
+	int i, count;        /* loop indices */
+	float* nya   = NULL; /* new y array */
+	float* nxa   = NULL; /* new y array */
+	float* oya   = NULL; /* new y array */
+	float* oxa   = NULL; /* new y array */
+	float* slope = NULL;
+	float* exag  = NULL;
+	float* vals  = NULL;
+	float cpy1, cpy2;
+	float cpx1, cpx2;
+	float A, B, C, D;
 
 	Alist alist[4];
-	alist[0] = make_alist("oldy",    ID_VAL,      NULL,  &oldy);
-	alist[1] = make_alist("oldx",    ID_VAL,      NULL,  &oldx);
-	alist[2] = make_alist("newx",    ID_VAL,      NULL,  &newx);
+	alist[0]      = make_alist("oldy", ID_VAL, NULL, &oldy);
+	alist[1]      = make_alist("oldx", ID_VAL, NULL, &oldx);
+	alist[2]      = make_alist("newx", ID_VAL, NULL, &newx);
 	alist[3].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
-	if(oldx==NULL || oldy==NULL || newx==NULL) {
+	if (oldx == NULL || oldy == NULL || newx == NULL) {
 		return NULL;
 	}
 
 	/* get x,y,z */
-	ox=GetZ(oldx);
-	nx=GetZ(newx);
+	ox = GetZ(oldx);
+	nx = GetZ(newx);
 
 	/* create the three input arrays */
-	nya = (float *) calloc(sizeof(float),nx);
-	nxa = (float *) calloc(sizeof(float),nx);
-	oya = (float *) calloc(sizeof(float),ox);
-	oxa = (float *) calloc(sizeof(float),ox);
-	slope = (float *) calloc(sizeof(float),ox);
-	exag = (float *)calloc(sizeof(float),ox);
+	nya   = (float*)calloc(sizeof(float), nx);
+	nxa   = (float*)calloc(sizeof(float), nx);
+	oya   = (float*)calloc(sizeof(float), ox);
+	oxa   = (float*)calloc(sizeof(float), ox);
+	slope = (float*)calloc(sizeof(float), ox);
+	exag  = (float*)calloc(sizeof(float), ox);
 
 	/*extract data */
-	for(i=0;i<nx;i+=1) {
-		nxa[i]=extract_float(newx,cpos(0,0,i,newx));
+	for (i = 0; i < nx; i += 1) {
+		nxa[i] = extract_float(newx, cpos(0, 0, i, newx));
 	}
-	for(i=0;i<ox;i+=1) {
-		oya[i]=extract_float(oldy,cpos(0,0,i,oldy));
-		oxa[i]=extract_float(oldx,cpos(0,0,i,oldx));
+	for (i = 0; i < ox; i += 1) {
+		oya[i] = extract_float(oldy, cpos(0, 0, i, oldy));
+		oxa[i] = extract_float(oldx, cpos(0, 0, i, oldx));
 	}
 
 	/* calculate the slope at every point */
-	for(i=1;i<ox-1;i++) {
-		slope[i]=(float)(oya[i+1]-oya[i-1])/(oxa[i+1]-oxa[i-1]);
-		exag[i]=(oxa[i+1]-oxa[i])/4;
+	for (i = 1; i < ox - 1; i++) {
+		slope[i] = (float)(oya[i + 1] - oya[i - 1]) / (oxa[i + 1] - oxa[i - 1]);
+		exag[i]  = (oxa[i + 1] - oxa[i]) / 4;
 	}
 
 	/*do the interpolation loop*/
-	count=0;
-	for(i=0;i<ox;i++) {
+	count = 0;
+	for (i = 0; i < ox; i++) {
 		/*check to make sure that the values of the new x are within the values of the old x*/
-		while(oxa[i]>=nxa[count] && oxa[i]<nxa[count] && count<nx){
-			printf("%f,%f\n",nxa[count],oxa[i]);
+		while (oxa[i] >= nxa[count] && oxa[i] < nxa[count] && count < nx) {
+			printf("%f,%f\n", nxa[count], oxa[i]);
 			/*calculate the positions of the control points*/
-			cpx1=oxa[i]+exag[i];
-			cpy1=oya[i]+exag[i]*slope[i];
-			cpx2=oxa[i+1]-exag[i+1];
-			cpy2=oya[i+1]-exag[i+1]*slope[i+1];
+			cpx1 = oxa[i] + exag[i];
+			cpy1 = oya[i] + exag[i] * slope[i];
+			cpx2 = oxa[i + 1] - exag[i + 1];
+			cpy2 = oya[i + 1] - exag[i + 1] * slope[i + 1];
 
 			/*Bernstein polynomial*/
-			A = oya[i+1] - 3*cpy2 + 3*cpy1 - oya[i];
-			B =            3*cpy2 - 6*cpy1 + 3*oya[i];
-			C =                     3*cpy1 - 3*oya[i];
-			D =                                oya[i];
-			nya[count] = D + nxa[count]*(C + nxa[count]*(B + nxa[count]*(A)));
+			A          = oya[i + 1] - 3 * cpy2 + 3 * cpy1 - oya[i];
+			B          = 3 * cpy2 - 6 * cpy1 + 3 * oya[i];
+			C          = 3 * cpy1 - 3 * oya[i];
+			D          = oya[i];
+			nya[count] = D + nxa[count] * (C + nxa[count] * (B + nxa[count] * (A)));
 			count++;
 		}
-
 	}
 
 	out = newVal(BSQ, 1, 1, nx, FLOAT, nya);
-	return(out);
+	return (out);
 }
 
-
-
-Var*
-cse_resample(vfuncptr func, Var * arg)
+Var* cse_resample(vfuncptr func, Var* arg)
 {
-	Var    *oldx=NULL;                 //old x
-	Var    *oldy=NULL;                 //old y
-	Var    *newx=NULL;                 //new x
-	Var    *out=NULL;                  //output array
-	float  *ynew=NULL;                 //new y array
-	float  *y=NULL;                    //old y array
-	float  *xnew=NULL;                 //new x array
-	float  *xold=NULL;                 //old x array
-	float  *y2d=NULL;                  //second derivative array
-	float  *u=NULL;                    //u array
-	int     i,npts,new_npts;           //indices and sizes
-	int     start_count,stop_count;    //stop and start locations
-	float   sig,p,h,a,b;               //cubic spline variables
-	int     samp_hi,samp_lo,samp_new;  //hi,lo,new samples
-	float   min=0,max=0;               //min and max values
+	Var* oldx   = NULL;             // old x
+	Var* oldy   = NULL;             // old y
+	Var* newx   = NULL;             // new x
+	Var* out    = NULL;             // output array
+	float* ynew = NULL;             // new y array
+	float* y    = NULL;             // old y array
+	float* xnew = NULL;             // new x array
+	float* xold = NULL;             // old x array
+	float* y2d  = NULL;             // second derivative array
+	float* u    = NULL;             // u array
+	int i, npts, new_npts;          // indices and sizes
+	int start_count, stop_count;    // stop and start locations
+	float sig, p, h, a, b;          // cubic spline variables
+	int samp_hi, samp_lo, samp_new; // hi,lo,new samples
+	float min = 0, max = 0;         // min and max values
 
 	Alist alist[4];
-	alist[0] = make_alist("oldy",    ID_VAL,      NULL,  &oldy);
-	alist[1] = make_alist("oldx",    ID_VAL,      NULL,  &oldx);
-	alist[2] = make_alist("newx",    ID_VAL,      NULL,  &newx);
+	alist[0]      = make_alist("oldy", ID_VAL, NULL, &oldy);
+	alist[1]      = make_alist("oldx", ID_VAL, NULL, &oldx);
+	alist[2]      = make_alist("newx", ID_VAL, NULL, &newx);
 	alist[3].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
-	if(oldx==NULL || oldy==NULL || newx==NULL) {
-		printf (" \n");
-		printf (" Resample a spectrum to a given scale using cubic spline interpolation \n");
-		printf (" $1 = spectra to be resampled \n");
-		printf (" $2 = old scale \n");
-		printf (" $3 = new scale \n");
-		printf (" \n");
-		printf (" c.edwards 03-23-07\n\n");
+	if (oldx == NULL || oldy == NULL || newx == NULL) {
+		printf(" \n");
+		printf(" Resample a spectrum to a given scale using cubic spline interpolation \n");
+		printf(" $1 = spectra to be resampled \n");
+		printf(" $2 = old scale \n");
+		printf(" $3 = new scale \n");
+		printf(" \n");
+		printf(" c.edwards 03-23-07\n\n");
 		return NULL;
 	}
 
 	/* get z of old array and allocate memory*/
-	npts=GetZ(oldx);
-	y = (float *) calloc(sizeof(float),npts);
-	xold = (float *) calloc(sizeof(float),npts);
-	y2d = (float *) calloc(sizeof(float),npts);
-	u = (float *) calloc(sizeof(float),npts-1);
+	npts = GetZ(oldx);
+	y    = (float*)calloc(sizeof(float), npts);
+	xold = (float*)calloc(sizeof(float), npts);
+	y2d  = (float*)calloc(sizeof(float), npts);
+	u    = (float*)calloc(sizeof(float), npts - 1);
 
 	/*set boundary spline conditions; Second derivative is 0. */
 
-	min=extract_float(oldx,cpos(0,0,0,oldx));
-	max=extract_float(oldx,cpos(0,0,npts-1,oldx));
-	for(i=0;i<npts;i++) {
-		y[i]=extract_float(oldy,cpos(0,0,i,oldy));
-		xold[i]=extract_float(oldx,cpos(0,0,i,oldx));
-		if(xold[i] < min) { min=xold[i]; }
-		if(xold[i] > max) { max=xold[i]; }
-		y2d[i]=y[i]-y[i];
-		if(i<npts-1) {
-			u[i]=y2d[i];
+	min = extract_float(oldx, cpos(0, 0, 0, oldx));
+	max = extract_float(oldx, cpos(0, 0, npts - 1, oldx));
+	for (i = 0; i < npts; i++) {
+		y[i]    = extract_float(oldy, cpos(0, 0, i, oldy));
+		xold[i] = extract_float(oldx, cpos(0, 0, i, oldx));
+		if (xold[i] < min) {
+			min = xold[i];
+		}
+		if (xold[i] > max) {
+			max = xold[i];
+		}
+		y2d[i] = y[i] - y[i];
+		if (i < npts - 1) {
+			u[i] = y2d[i];
 		}
 	}
 
-
 	/*Set start and end points in case many values are zeroed.*/
-	start_count=1;
+	start_count = 1;
 	while (y[start_count] == 0. && start_count <= npts) {
-		start_count=start_count+1;
+		start_count = start_count + 1;
 	}
-	stop_count=npts;
-	while (y[stop_count] == 0. && stop_count >=1) {
-		stop_count=stop_count-1;
+	stop_count = npts;
+	while (y[stop_count] == 0. && stop_count >= 1) {
+		stop_count = stop_count - 1;
 	}
 
 	/* Do the decomposition loop of the tridiagonal algorithm */
-	for (i=(start_count); i<=(stop_count-1); i+=1) {
-		sig=(xold[i]-xold[(i-1)])/(xold[(i+1)]-xold[(i-1)]);
-		p=sig*y2d[(i-1)]+2.;
-		y2d[i]=(sig-1.)/p;
-		if(xold[(i+1)]-xold[i] !=0 ) { u[i]=(y[(i+1)]-y[i])/(xold[(i+1)]-xold[i]);}
-		if(xold[i]-xold[(i-1)] !=0 ) { u[i]= u[i] - (y[i]-y[(i-1)])/(xold[i]-xold[(i-1)]); }
-		if(xold[(i+1)]-xold[(i-1)] !=0) { u[i]=(6.*u[i]/(xold[(i+1)]-xold[(i-1)]) - sig*u[(i-1)])/p;}
+	for (i = (start_count); i <= (stop_count - 1); i += 1) {
+		sig    = (xold[i] - xold[(i - 1)]) / (xold[(i + 1)] - xold[(i - 1)]);
+		p      = sig * y2d[(i - 1)] + 2.;
+		y2d[i] = (sig - 1.) / p;
+		if (xold[(i + 1)] - xold[i] != 0) {
+			u[i] = (y[(i + 1)] - y[i]) / (xold[(i + 1)] - xold[i]);
+		}
+		if (xold[i] - xold[(i - 1)] != 0) {
+			u[i] = u[i] - (y[i] - y[(i - 1)]) / (xold[i] - xold[(i - 1)]);
+		}
+		if (xold[(i + 1)] - xold[(i - 1)] != 0) {
+			u[i] = (6. * u[i] / (xold[(i + 1)] - xold[(i - 1)]) - sig * u[(i - 1)]) / p;
+		}
 	}
 
-	for (i=(stop_count-1); i>=start_count; i-=1) {
-		y2d[i]=y2d[i]*y2d[(i+1)] + u[i];
+	for (i = (stop_count - 1); i >= start_count; i -= 1) {
+		y2d[i] = y2d[i] * y2d[(i + 1)] + u[i];
 	}
-
 
 	/* Now that we have the second derivative //
 	// we can evaluate our y with respect to the new xaxis //
 	// get the size of the new xaxis and alloate the memory */
-	new_npts=GetZ(newx);
-	ynew = (float *) calloc(sizeof(float),new_npts);
-	xnew = (float *) calloc(sizeof(float),new_npts);
-	for(i=0;i<new_npts;i++) {
-		xnew[i]=extract_float(newx,cpos(0,0,i,newx));
+	new_npts = GetZ(newx);
+	ynew     = (float*)calloc(sizeof(float), new_npts);
+	xnew     = (float*)calloc(sizeof(float), new_npts);
+	for (i = 0; i < new_npts; i++) {
+		xnew[i] = extract_float(newx, cpos(0, 0, i, newx));
 	}
 
-	for (i=0; i<new_npts; i+=1) {
-		samp_hi=npts-1;
-		samp_lo=0;
-		while (samp_hi-samp_lo > 1) {
-			samp_new=(samp_hi+samp_lo)/2;
+	for (i = 0; i < new_npts; i += 1) {
+		samp_hi = npts - 1;
+		samp_lo = 0;
+		while (samp_hi - samp_lo > 1) {
+			samp_new = (samp_hi + samp_lo) / 2;
 			if (xold[samp_new] > xnew[i]) {
-				samp_hi=samp_new;
+				samp_hi = samp_new;
 			}
 			if (xold[samp_new] <= xnew[i]) {
-				samp_lo=samp_new;
+				samp_lo = samp_new;
 			}
 		}
-		h=xold[samp_hi]-xold[samp_lo];
-		a=(xold[samp_hi]-xnew[i])/h;
-		b=(xnew[i]-xold[samp_lo])/h;
-		if(xnew[i]<=max && xnew[i]>=min) {
-			ynew[i]=a*y[samp_lo]+b*y[samp_hi]+((a*a*a-a)*y2d[samp_lo]+(b*b*b-b)*y2d[samp_hi])*(h*h)/6.;
+		h = xold[samp_hi] - xold[samp_lo];
+		a = (xold[samp_hi] - xnew[i]) / h;
+		b = (xnew[i] - xold[samp_lo]) / h;
+		if (xnew[i] <= max && xnew[i] >= min) {
+			ynew[i] = a * y[samp_lo] + b * y[samp_hi] +
+			          ((a * a * a - a) * y2d[samp_lo] + (b * b * b - b) * y2d[samp_hi]) * (h * h) / 6.;
 		}
 	}
-	if(xnew[0]==xold[0]) {
-		ynew[0]=y[0];
+	if (xnew[0] == xold[0]) {
+		ynew[0] = y[0];
 	}
 
 	free(y);
@@ -2298,29 +2258,28 @@ cse_resample(vfuncptr func, Var * arg)
 	free(y2d);
 	free(u);
 	out = newVal(BSQ, 1, 1, new_npts, FLOAT, ynew);
-	return(out);
+	return (out);
 }
 
-
-Var *cse_fFill(vfuncptr func, Var * arg)
+Var* cse_fFill(vfuncptr func, Var* arg)
 {
-	Var    *pic = NULL;            /* the orignial dcs pic */
-	Var    *out = NULL;            /* the output pic */
-	unsigned char *w_pic;                 /* modified image */
-	int     i, j, k;               /* loop indices */
-	int     x=0, y=0;              /* size of the picture */
-	int     sx=0,sy=0;             /* starting x and y positions*/
-	int     fill=0,val=0;
+	Var* pic = NULL;      /* the orignial dcs pic */
+	Var* out = NULL;      /* the output pic */
+	unsigned char* w_pic; /* modified image */
+	int i, j, k;          /* loop indices */
+	int x = 0, y = 0;     /* size of the picture */
+	int sx = 0, sy = 0;   /* starting x and y positions*/
+	int fill = 0, val = 0;
 
 	Alist alist[6];
-	alist[0] = make_alist("data",      ID_VAL,     NULL,  &pic);
-	alist[1] = make_alist("xpos",      INT,        NULL,  &sx);
-	alist[2] = make_alist("ypos",      INT,        NULL,  &sy);
-	alist[3] = make_alist("fill",      INT,        NULL,  &fill);
-	alist[4] = make_alist("value",     INT,        NULL,  &val);
+	alist[0]      = make_alist("data", ID_VAL, NULL, &pic);
+	alist[1]      = make_alist("xpos", INT, NULL, &sx);
+	alist[2]      = make_alist("ypos", INT, NULL, &sy);
+	alist[3]      = make_alist("fill", INT, NULL, &fill);
+	alist[4]      = make_alist("value", INT, NULL, &val);
 	alist[5].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
 	if (pic == NULL) {
 		parse_error("\nUsed to remove extraneous color from a dcs image\n");
@@ -2338,14 +2297,14 @@ Var *cse_fFill(vfuncptr func, Var * arg)
 	y = GetY(pic);
 
 	/* allocate memory for the picture */
-	w_pic = (unsigned char *)calloc(sizeof(char), x*y);
+	w_pic = (unsigned char*)calloc(sizeof(char), x * y);
 
-	if(w_pic == NULL) return NULL;
+	if (w_pic == NULL) return NULL;
 
 	/* loop through data and extract new points with null value of 0 ignored */
-	for(i=0; i<x; i++) {
-		for(j=0; j<y; j++) {
-			w_pic[j*x + i] = (unsigned char)extract_int(pic, cpos(i,j,0, pic));
+	for (i = 0; i < x; i++) {
+		for (j = 0; j < y; j++) {
+			w_pic[j * x + i] = (unsigned char)extract_int(pic, cpos(i, j, 0, pic));
 		}
 	}
 
