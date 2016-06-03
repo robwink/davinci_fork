@@ -1,5 +1,4 @@
 #include "func.h"
-#include "parser.h"
 
 /**
  ** Convert specified position to scalar value, by applying range

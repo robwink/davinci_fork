@@ -1,7 +1,5 @@
 #include "dvio.h"
 #include "func.h"
-#include "iomedley.h"
-#include "parser.h"
 
 Var* dv_LoadVicar(FILE* fp, char* filename, struct iom_iheader* s)
 {

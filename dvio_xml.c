@@ -1,6 +1,5 @@
 #include "dvio.h"
 #include "func.h"
-#include "parser.h"
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>

@@ -22,11 +22,11 @@
 #include <ctype.h>
 #include <fcntl.h>
 
-// dvio.h pulls in parser.h and iomedley.h
 #include "dvio.h"
 #include "func.h"
 #include "system.h"
 
+// TODO(rswinkle) (re)move following 3 lines
 typedef unsigned char uchar;
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))

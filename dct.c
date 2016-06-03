@@ -1,5 +1,4 @@
 #include "func.h"
-#include "parser.h"
 
 #define alpha(k, N) (k == 0 ? sqrt(1.0 / (double)N) : sqrt(2.0 / (double)N))
 

@@ -1,5 +1,4 @@
 #include "func.h"
-#include "parser.h"
 #include <math.h>
 
 #define XAXIS 1
@@ -12,9 +11,7 @@
 ** If the user passes the 'both' option, you get a struct with both a & s
 */
 
-/*
-** this is a one pass algorithm to find sum, avg and stddev.
-*/
+// this is a one pass algorithm to find sum, avg and stddev.
 Var* ff_avg2(vfuncptr func, Var* arg)
 {
 	Var *obj  = NULL, *v;

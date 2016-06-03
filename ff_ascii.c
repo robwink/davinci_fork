@@ -1,5 +1,4 @@
 #include "func.h"
-#include "parser.h"
 
 int dv_getline(char** ptr, FILE* fp)
 {

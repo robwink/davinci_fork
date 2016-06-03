@@ -1,5 +1,4 @@
 #include "func.h"
-#include "parser.h"
 
 static Var* do_ipi(Var* coords_array, Var* values_array)
 {

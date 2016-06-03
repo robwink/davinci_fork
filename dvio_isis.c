@@ -4,7 +4,6 @@
 
 #include "dvio.h"
 #include "func.h"
-#include "parser.h"
 #include <assert.h>
 #include <regex.h>
 #include <strings.h>

@@ -1,5 +1,4 @@
 #include "func.h"
-#include "parser.h"
 
 static float round_dp(float input, float decimal)
 {
