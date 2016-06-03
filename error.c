@@ -5,6 +5,17 @@
 extern int VERBOSE;
 char error_buf[16384];
 
+// TODO(rswinkle) make these macros?  get rid of error_buf
+// create a separate header so you don't need func.h just to get
+// these
+//
+// Also, parse_error2 is only used in url_create_file.c and it's used
+// for regular (non-error) output.
+//
+// heck create unified error/output/logging system, deal with separate
+// debug and VERBOSE globals in a sane way.  Look at linux kernel
+// or learn C the hard way for inspiration
+
 void parse_error(const char* fmt, ...)
 {
 	va_list ap;

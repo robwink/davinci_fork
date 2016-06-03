@@ -1,20 +1,21 @@
+#include "dvio.h"
+#include "func.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "parser.h"
-#include "dvio.h"
 
-Var *
-dv_LoadPNM(FILE *fp, char *filename, struct iom_iheader *s)
+Var* dv_LoadPNM(FILE* fp, char* filename, struct iom_iheader* s)
 {
-	u_char *data;
+	u_char* data;
 	struct iom_iheader h;
 	int status;
 	char hbuf[HBUFSIZE];
-	Var *v;
+	Var* v;
 
-	if (iom_isPNM(fp) == 0){ return NULL; }
+	if (iom_isPNM(fp) == 0) {
+		return NULL;
+	}
 
-	if (!(status = iom_GetPNMHeader(fp, filename, &h))){
+	if (!(status = iom_GetPNMHeader(fp, filename, &h))) {
 		return NULL;
 	}
 
@@ -27,28 +28,24 @@ dv_LoadPNM(FILE *fp, char *filename, struct iom_iheader *s)
 
 	data = iom_read_qube_data(fileno(fp), &h);
 	if (data) {
-		v = iom_iheader2var(&h);
+		v         = iom_iheader2var(&h);
 		V_DATA(v) = data;
 	} else {
 		v = NULL;
 	}
 
-	sprintf(hbuf, "%s: PNM %s image: %dx%dx%d, %d bits",
-			filename, iom_Org2Str(h.org),
-			iom_GetSamples(h.dim, h.org),
-			iom_GetLines(h.dim, h.org),
-			iom_GetBands(h.dim, h.org),
-			iom_NBYTESI(h.format)*8);
+	sprintf(hbuf, "%s: PNM %s image: %dx%dx%d, %d bits", filename, iom_Org2Str(h.org),
+	        iom_GetSamples(h.dim, h.org), iom_GetLines(h.dim, h.org), iom_GetBands(h.dim, h.org),
+	        iom_NBYTESI(h.format) * 8);
 	if (VERBOSE > 1) {
 		parse_error(hbuf);
 	}
-	
+
 	iom_cleanup_iheader(&h);
 	return v;
 }
 
-int
-dv_WritePGM(Var *obj, char *filename, int force)
+int dv_WritePGM(Var* obj, char* filename, int force)
 {
 	struct iom_iheader h;
 	int status;
@@ -67,16 +64,15 @@ dv_WritePGM(Var *obj, char *filename, int force)
 
 	var2iom_iheader(obj, &h);
 
-	if (VERBOSE > 1)  {
-		fprintf(stderr, "Writing %s: %dx%d PGM file.\n",
-				filename, iom_GetSamples(h.size,h.org),
-				iom_GetLines(h.size,h.org));
+	if (VERBOSE > 1) {
+		fprintf(stderr, "Writing %s: %dx%d PGM file.\n", filename, iom_GetSamples(h.size, h.org),
+		        iom_GetLines(h.size, h.org));
 	}
 
 	status = iom_WritePNM(filename, V_DATA(obj), &h, force);
 	iom_cleanup_iheader(&h);
 
-	if (status == 0){
+	if (status == 0) {
 		parse_error("Writing of PGM file %s failed.\n", filename);
 		return 0;
 	}
@@ -84,8 +80,7 @@ dv_WritePGM(Var *obj, char *filename, int force)
 	return 1;
 }
 
-int
-dv_WritePPM(Var *obj, char *filename, int force)
+int dv_WritePPM(Var* obj, char* filename, int force)
 {
 	struct iom_iheader h;
 	int status;
@@ -110,17 +105,15 @@ dv_WritePPM(Var *obj, char *filename, int force)
 
 	var2iom_iheader(obj, &h);
 
-	if (VERBOSE > 1)  {
-		fprintf(stderr, "Writing %s: %dx%dx%d PPM file.\n", filename,
-		        iom_GetSamples(h.size,h.org),
-		        iom_GetLines(h.size,h.org),
-		        iom_GetBands(h.size,h.org));
+	if (VERBOSE > 1) {
+		fprintf(stderr, "Writing %s: %dx%dx%d PPM file.\n", filename, iom_GetSamples(h.size, h.org),
+		        iom_GetLines(h.size, h.org), iom_GetBands(h.size, h.org));
 	}
 
 	status = iom_WritePNM(filename, V_DATA(obj), &h, force);
 	iom_cleanup_iheader(&h);
 
-	if (status == 0){
+	if (status == 0) {
 		parse_error("Writing of PPM file %s failed.\n", filename);
 		return 0;
 	}

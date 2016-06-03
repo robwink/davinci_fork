@@ -2,8 +2,8 @@
 
 %{
 
-#include "y_tab.h"
 #include "func.h"
+#include "y_tab.h"
 
 #define MYECHO if (save_fp) (void)fwrite( yytext, yyleng, 1, save_fp );
 
@@ -23,21 +23,21 @@ get_current_buffer()
 }
 
 extern int indent;
-FILE *save_fp = NULL;
+FILE* save_fp = NULL;
 char save_file[256];
 
-int caller;    /* used by flex to handle comments in multiple states */
+int caller; /* used by flex to handle comments in multiple states */
 
 void start_save()
 {
-	char *tmp;
+	char* tmp;
 
 	local_line = pp_line;
-	tmp = make_temp_file_path();
+	tmp        = make_temp_file_path();
 	if (tmp == NULL || (save_fp = fopen(tmp, "w")) == NULL) {
 		parse_error("define: unable to open temp file");
 		if (tmp) free(tmp);
-		return(NULL);
+		return NULL;
 	}
 	strcpy(save_file, tmp);
 	free(tmp);
@@ -50,7 +50,6 @@ void end_save()
 	save_fp = NULL;
 	save_ufunc(save_file);
 }
-
 
 %}
 

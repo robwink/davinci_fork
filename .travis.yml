@@ -20,6 +20,9 @@ addons:
 
 script:
   - ./configure --disable-jbig && make
+    #the next 2 steps shouldn't be necessary but oh well ...
+  - make davinci.sh
+  - . davinci.sh
   - cd dv_tests
   - export LD_LIBRARY_PATH=../.libs/
   #- sudo make install

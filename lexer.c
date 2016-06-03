@@ -494,7 +494,7 @@ char *yytext;
 /******************************** lexer.l ******************************/
 #line 4 "lexer.l"
 
-#include "parser.h"
+#include "func.h"
 #include "y_tab.h"
 
 #define MYECHO		if (save_fp) (void)fwrite( yytext, yyleng, 1, save_fp );
@@ -511,28 +511,28 @@ extern int in_string;
 YY_BUFFER_STATE
 get_current_buffer()
 {
-	return(YY_CURRENT_BUFFER);
+	return (YY_CURRENT_BUFFER);
 }
 
 extern int indent;
-FILE *save_fp = NULL;
+FILE* save_fp = NULL;
 char save_file[1024];
 
-int caller;			/* used by flex to handle comments in multiple states */
+int caller; /* used by flex to handle comments in multiple states */
 
 void start_save()
 {
-    char *tmp;
-	char *make_temp_file_path();
+	char* tmp;
+	char* make_temp_file_path();
 
 	local_line = pp_line;
-    tmp = make_temp_file_path();
-    if (tmp == NULL || (save_fp = fopen(tmp, "w")) == NULL ) {
-        parse_error("define: unable to open temp file");
-        if (tmp) free(tmp);
-        return;
-    }
-    strcpy(save_file, tmp);
+	tmp        = make_temp_file_path();
+	if (tmp == NULL || (save_fp = fopen(tmp, "w")) == NULL) {
+		parse_error("define: unable to open temp file");
+		if (tmp) free(tmp);
+		return;
+	}
+	strcpy(save_file, tmp);
 }
 
 void end_save()
@@ -542,7 +542,6 @@ void end_save()
 	save_fp = NULL;
 	save_ufunc(save_file);
 }
-
 
 #define comment 1
 #define ufunc 2

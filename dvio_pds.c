@@ -3,9 +3,7 @@
 #include "endian_norm.h"
 #include "func.h"
 #include "header.h"
-#include "io_lablib3.h"
 #include "io_loadmod.h"
-#include "parser.h"
 #include <ctype.h>
 #include <errno.h>
 #include <libgen.h>

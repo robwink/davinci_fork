@@ -1,9 +1,8 @@
 #ifndef _DVIO_H_
 #define _DVIO_H_
 
-#include "parser.h"
 #include "iomedley.h"
-
+#include "parser.h"
 
 /*
 ** iheader2var()
@@ -18,8 +17,7 @@
 **    dim     (as V_SIZE & V_DSIZE)
 */
 
-Var *iom_iheader2var(struct iom_iheader *h);
-
+Var* iom_iheader2var(struct iom_iheader* h);
 
 /*
 ** var2iheader()
@@ -37,8 +35,8 @@ Var *iom_iheader2var(struct iom_iheader *h);
 **    format (from V_FORMAT)
 */
 
-void iom_var2iheader(Var *v, struct iom_iheader *h);
-void var2iom_iheader(Var *v, struct iom_iheader *h);
+void iom_var2iheader(Var* v, struct iom_iheader* h);
+void var2iom_iheader(Var* v, struct iom_iheader* h);
 
 int ihorg2vorg(int org);
 int vorg2ihorg(int vorder);
@@ -50,36 +48,36 @@ int _iheader2iom_iheader(struct _iheader *h, struct iom_iheader *iomh);
 int iom_iheader2_iheader(struct iom_iheader *iomh, struct _iheader *h);
 #endif /* 0 */
 
-Var *dv_LoadIOM(FILE *, char *, struct iom_iheader *);
-Var *dv_LoadAVIRIS(FILE *fp, char *filename, struct iom_iheader *s);
-Var *dv_LoadGOES(FILE *fp, char *filename, struct iom_iheader *s);
-Var *dv_LoadIMath(FILE *fp, char *filename, struct iom_iheader *s);
-Var *dv_LoadISIS(FILE *fp, char *filename, struct iom_iheader *s);
-Var *dv_LoadISISFromPDS(FILE *fp, char *fn, int dptr);
-Var *dv_LoadISISSuffixesFromPDS(FILE *fp, char *fname);
+Var* dv_LoadIOM(FILE*, char*, struct iom_iheader*);
+Var* dv_LoadAVIRIS(FILE* fp, char* filename, struct iom_iheader* s);
+Var* dv_LoadGOES(FILE* fp, char* filename, struct iom_iheader* s);
+Var* dv_LoadIMath(FILE* fp, char* filename, struct iom_iheader* s);
+Var* dv_LoadISIS(FILE* fp, char* filename, struct iom_iheader* s);
+Var* dv_LoadISISFromPDS(FILE* fp, char* fn, int dptr);
+Var* dv_LoadISISSuffixesFromPDS(FILE* fp, char* fname);
 #ifdef HAVE_LIBMAGICK
-Var *dv_LoadGFX_Image(FILE *fp, char *filename, struct iom_iheader *s);
+Var* dv_LoadGFX_Image(FILE* fp, char* filename, struct iom_iheader* s);
 #endif /* HAVE_LIBMAGICK */
-Var *dv_LoadPNM(FILE *fp, char *filename, struct iom_iheader *s);
-Var *dv_LoadVicar(FILE *fp, char *filename, struct iom_iheader *s);
-Var *dv_LoadGRD(FILE *fp, char *filename, struct iom_iheader *s);
-Var *dv_LoadENVI(FILE *fp, char *filename, struct iom_iheader *s);
-Var *dv_LoadSpecpr(FILE *fp, char *filename, struct iom_iheader *s);
+Var* dv_LoadPNM(FILE* fp, char* filename, struct iom_iheader* s);
+Var* dv_LoadVicar(FILE* fp, char* filename, struct iom_iheader* s);
+Var* dv_LoadGRD(FILE* fp, char* filename, struct iom_iheader* s);
+Var* dv_LoadENVI(FILE* fp, char* filename, struct iom_iheader* s);
+Var* dv_LoadSpecpr(FILE* fp, char* filename, struct iom_iheader* s);
 #ifdef HAVE_LIBXML2
-Var *dv_LoadXML(char *filename, int use_names);
-Var *dv_loadPDS4(char *filename);
+Var* dv_LoadXML(char* filename, int use_names);
+Var* dv_loadPDS4(char* filename);
 #endif
-int dv_WriteIOM(Var *, const char *, const char *, int);
-int dv_WriteGRD(Var *s, char *filename, int force, char *title, char *task);
-int dv_WriteISIS(Var *s, char *filename, int force, char *title);
-int dv_WritePGM(Var *obj, char *filename, int force);
-int dv_WritePPM(Var *obj, char *filename, int force);
-int dv_WriteERS(Var *obj, char *filename, int force);
-int dv_WriteRaw(Var *obj, char *filename, int force);
-int dv_WriteVicar(Var *obj, char *filename, int force);
-int dv_WriteIMath(Var *obj, char *filename, int force);
-int dv_WriteENVI(Var *obj, char *filename, int force);
-int dv_WriteGFX_Image(Var *ob, char *filename, int force, char *GFX_type);
+int dv_WriteIOM(Var*, const char*, const char*, int);
+int dv_WriteGRD(Var* s, char* filename, int force, char* title, char* task);
+int dv_WriteISIS(Var* s, char* filename, int force, char* title);
+int dv_WritePGM(Var* obj, char* filename, int force);
+int dv_WritePPM(Var* obj, char* filename, int force);
+int dv_WriteERS(Var* obj, char* filename, int force);
+int dv_WriteRaw(Var* obj, char* filename, int force);
+int dv_WriteVicar(Var* obj, char* filename, int force);
+int dv_WriteIMath(Var* obj, char* filename, int force);
+int dv_WriteENVI(Var* obj, char* filename, int force);
+int dv_WriteGFX_Image(Var* ob, char* filename, int force, char* GFX_type);
 int dv_WriteCSV(Var* the_data, char* filename, char* separator, int header, int force);
 /*
 ** NOTE:
@@ -87,8 +85,7 @@ int dv_WriteCSV(Var* the_data, char* filename, char* separator, int header, int 
 **   WriteGIFC(), WriteGIFG(), WritePNG() etc.
 */
 
-int dvio_ValidGfx(char *type,char *GFX_type);
-
+int dvio_ValidGfx(char* type, char* GFX_type);
 
 /*
 ** Locates the file according to the "$datapath" variable.
@@ -98,12 +95,9 @@ int dvio_ValidGfx(char *type,char *GFX_type);
 ** malloc() will be returned. It is the caller's responsibility
 ** to free it after use.
 */
-char *dv_locate_file(const char *fname);
+char* dv_locate_file(const char* fname);
 
-
-int file_exists(const char * filename);
-
-
+int file_exists(const char* filename);
 
 /*
 ** Set the verbosity of iomedley.

@@ -1,7 +1,9 @@
 #include <config.h>
 
-#include "parser.h"
+
+//pulls in ufunc.h and parser.h
 #include "scope.h"
+
 
 
 #ifdef __cplusplus
@@ -17,18 +19,14 @@ extern "C" {
   #include <readline/history.h>
 #endif
 
-#if 0
-  /* JAS FIX: these conflict if readline is used, and are not needed otherwise. */
-  void rl_callback_handler_install(char *, void (*)(char *));
-  struct _hist_state* history_get_history_state(void);
-  void rl_callback_read_char ();
-  void rl_callback_handler_remove();
-#endif
-
   //globals.c
-  int yywrap();
-  void yyerror(char *s);
   void quit(int return_code);
+  void make_sym(Var *, int, char *);
+  Var *eval_buffer(char *buf);
+  void yyerror(char *s);
+  int yywrap();
+  char *unquote(char *);
+  char* unescape(char* str);
 
 #ifdef HAVE_LIBHDF5
 #include <hdf5.h>
@@ -38,32 +36,24 @@ extern "C" {
 }
 #endif
 
-#if 0
-typedef struct yy_buffer_state *YY_BUFFER_STATE;
-void yy_delete_buffer ( YY_BUFFER_STATE );
-YY_BUFFER_STATE yy_scan_string( char *yy_str );
-void yy_switch_to_buffer ( YY_BUFFER_STATE new_buffer);
-#endif
-
-
-
+//parser.c
 int yyparse(int, YYSTYPE);
 
+//main.c
 void log_line(char *);
+
+//lexer.c
 int yylex();
 
-void squash_spaces(char *s);
-int instring(char *str, char c);
+
 void save_function(void);
 void eat_em();
 void unput_nextc(char c);
 int send_to_plot(const char *);
-char *do_help(char *input, char *path);
 
 void parse_stream(FILE *fp);
 
 void parse_buffer(char *buf);
-Var *eval_buffer(char *buf);
 
 /* pp.c */
 void emit_prompt (void);                /* spit out prompt if interactive */
@@ -173,9 +163,6 @@ void memory_error(int error_num, size_t mem_size);
 int is_reserved_var (char *);
 Var *set_reserved_var (Var *, Var *, Var *);
 
-/* ff.c */
-
-char *unquote(char *);
 
 int evaluate_keywords (vfuncptr, Var *, struct keywords *);
 Var *get_kw (char *, struct keywords *);
@@ -241,20 +228,18 @@ Var * pp_print(Var *);
 
 /* Calls a davinci function programatically.
    See create_args() for creating and sending args. */
-Var *V_func (const char *name, Var *args);
-
-void make_sym(Var *, int, char *);
+Var *V_func(const char *name, Var *args);
 
 char *get_env_var(char *);
 char *expand_filename(char *);
 char *enumerated_arg(Var *, char **);
 
-//TODO(rswinkle)
-//This file is the dumping ground for all prototypes?
-//This should be for ff_* functions only and any C file
-//that has other functions that get used elsewhere should
-//have an h file to go with it.  Probably means extracting
-//helper functions from some ff*.c files into logical groups
+// TODO(rswinkle)
+// This file is the dumping ground for all prototypes?
+// This should be for ff_* functions only and any C file
+// that has other functions that get used elsewhere should
+// have an h file to go with it.  Probably means extracting
+// helper functions from some ff*.c files into logical groups
 void free_var(Var *);
 void commaize(char *);
 void free_tree(Var *);
@@ -458,7 +443,6 @@ Var* create_args(int, ...);
 void print_history(int i);
 
 void save_ufunc(char *filename);
-void vax_ieee_r(float *from, float *to);
 
 #ifndef HAVE_STRNDUP
 char *strndup(char *, int);

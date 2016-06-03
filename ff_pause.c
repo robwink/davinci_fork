@@ -1,20 +1,19 @@
 #include "func.h"
 
-//TODO(rswinkle) does this need it's own file? move to
-//ff.c or something like that
+// TODO(rswinkle) does this need it's own file? move to
+// ff.c or something like that
 
 // ff_pause() - Get a line of input from the user
-Var *
-ff_pause(vfuncptr func, Var *arg)
+Var* ff_pause(vfuncptr func, Var* arg)
 {
 	char buf[256];
-	char *string = NULL;
+	char* string = NULL;
 
 	Alist alist[2];
-	alist[0] = make_alist( "string",    ID_STRING,    NULL,    &string);
+	alist[0]      = make_alist("string", ID_STRING, NULL, &string);
 	alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
 	if (string != NULL) {
 		printf("%s", string);
@@ -22,5 +21,5 @@ ff_pause(vfuncptr func, Var *arg)
 	}
 
 	fgets(buf, 256, stdin);
-    return(newString(strdup(buf)));
+	return (newString(strdup(buf)));
 }

@@ -2,7 +2,7 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#include "parser.h"
+#include "func.h"
 
 #include <stdio.h>
 
@@ -13,7 +13,6 @@
 #include <string.h>
 #include "system.h"
 
-//These are also located in dvio_pds.c
 #define HTTP_PREFIX  "http://"
 #define HTTPS_PREFIX  "https://"
 #define FTP_PREFIX "ftp://"
@@ -24,12 +23,12 @@
 
 extern char *make_temp_file_path();
 
-FILE *url_file; /* declare a FILE pointer */
+FILE *url_file;
 int unsigned long  url_data_counter = 0;
 
 #ifdef HAVE_LIBCURL
 
-/** Return urlencoded string  (applied only to the characters <=32 and >=123 **/
+// Return urlencoded string  (applied only to the characters <=32 and >=123
 char* get_loose_urlencoded(const char *url)
 {
 	int i,j = 0;
@@ -57,7 +56,7 @@ size_t url_callback(char *buffer, size_t size, size_t nmemb, void *data)
 	size_t realsize = size * nmemb;
 	char c;
 	int i=0;
-	while (i < realsize) {     /* keep looping... */
+	while (i < realsize) {
 		c =  buffer[i];
 		fputc(c, url_file);
 		i++;
@@ -66,7 +65,7 @@ size_t url_callback(char *buffer, size_t size, size_t nmemb, void *data)
 	url_data_counter += realsize;
 	//Show a dot every 200KB
 	if (url_data_counter  >= 200000 ) {
-		parse_error2(".");
+		parse_error2("."); // TODO(rswinkle) using error functions for regular output? fix
 		url_data_counter = 0;
 	}
 	return realsize;
@@ -87,7 +86,6 @@ int url_create_file(const char* filename, const char* url)
 			parse_error("Error: can't open file (%s) for writing.\n", filename);
 			return 1;
 		}
-
 
 		//Encode the URL (excluding special characters)
 		if ((strncasecmp(url, HTTP_PREFIX,  strlen(HTTP_PREFIX)) == 0) ||
@@ -137,11 +135,9 @@ int url_create_file(const char* filename, const char* url)
 #endif
 
 
-/*
- * try_remote_load - will identify if the filename is remote,
- * and loads it if it has been downloaded properly. The filename
- * changes
- */
+// try_remote_load - will identify if the filename is remote,
+// and loads it if it has been downloaded properly. The filename
+// changes
 char* try_remote_load(const char * filename)
 {
 	char* rtnfilename = NULL;

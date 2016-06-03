@@ -30,7 +30,24 @@ int indent   = 0;
 Var* curnode = NULL;
 
 
-void quit(int);
+void quit(int return_code)
+{
+	char* path = getenv("TMPDIR");
+
+	if (interactive) {
+		printf("\n");
+#if defined(USE_X11_EVENTS) && defined(HAVE_LIBREADLINE)
+		/* JAS FIX */
+		rl_callback_handler_remove();
+#endif
+	}
+
+	clean_scope(scope_tos());
+
+	// clean up temporary directory
+	rmrf(path);
+	exit(return_code);
+}
 
 void make_sym(Var* v, int format, char* str)
 {
@@ -57,10 +74,8 @@ void make_sym(Var* v, int format, char* str)
 	}
 }
 
-/*
-** This is similar to parse_buffer, but it doesn't print the stack
-** or clean up the scope
-*/
+// This is similar to parse_buffer, but it doesn't print the stack
+// or clean up the scope
 Var* eval_buffer(char* buf)
 {
 	int i, j;
@@ -98,26 +113,6 @@ Var* eval_buffer(char* buf)
 	return (v);
 }
 
-void quit(int return_code)
-{
-	char* path = getenv("TMPDIR");
-
-	if (interactive) {
-		printf("\n");
-#if defined(USE_X11_EVENTS) && defined(HAVE_LIBREADLINE)
-		/* JAS FIX */
-		rl_callback_handler_remove();
-#endif
-	}
-
-	clean_scope(scope_tos());
-
-	/**
-	 ** clean up temporary directory
-	 **/
-	rmrf(path);
-	exit(return_code);
-}
 
 void yyerror(char* s)
 {

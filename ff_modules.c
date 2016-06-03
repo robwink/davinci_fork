@@ -1,17 +1,8 @@
-/*
-** Formatting: tabwidth=4 shiftwidth=4
-**
-** File: ff_modules.c  - tightly dependent on darray.c::Narray
-**
-** Contains code for loading vanilla modules.
-**
-*/
-
 #include "cvector.h"
 #include "darray.h"
 #include "func.h"
-#include "parser.h"
-#include <errno.h>
+#include "help.h"
+#include "module_io.h"
 #include <errno.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -30,7 +21,6 @@
 #include <dirent.h>
 #include <libgen.h>
 #endif /* _WIN32 */
-#include "module_io.h"
 
 extern int debug;
 extern int VERBOSE;

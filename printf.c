@@ -37,7 +37,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "parser.h"
+#include "func.h"
 
 #include <sys/types.h>
 

@@ -1,9 +1,9 @@
 #include "endian_norm.h"
+#include "func.h"
+#include <errno.h>
 
 
-/*
-** Convert to/from MSB in place.  Does nothing if you're already MSB
-*/
+// Convert to/from MSB in place.  Does nothing if you're already MSB
 void MSB(unsigned char * data, unsigned int data_elem, unsigned int word_size)
 {
 #ifdef WORDS_BIGENDIAN
@@ -13,9 +13,7 @@ void MSB(unsigned char * data, unsigned int data_elem, unsigned int word_size)
 #endif
 }
 
-/*
-** Convert to/from LSB in place.  Does nothing if you're already LSB
-*/
+// Convert to/from LSB in place.  Does nothing if you're already LSB
 void LSB(unsigned char * data, unsigned int data_elem, unsigned int word_size)
 {
 #ifdef WORDS_BIGENDIAN
@@ -25,9 +23,7 @@ void LSB(unsigned char * data, unsigned int data_elem, unsigned int word_size)
 #endif
 }
 
-/*
-** Do an actual endian conversion, in place
-*/
+// Do an actual endian conversion, in place
 void swap_endian(unsigned char *buf, size_t n, unsigned int size)
 {
 	size_t i;
@@ -56,19 +52,19 @@ void swap_endian(unsigned char *buf, size_t n, unsigned int size)
 	}
 }
 
+// Ensure the data is always read and written in big endian format.
+// Try not to call this on big endian machines, since it's just a
+// wasteful copy operation in that case.
+// TODO(rswinkle) why not do this in place?
 char * flip_endian(unsigned char * data, size_t data_elem, unsigned int word_size)
 {
-	/* Ensure the data is always read and written in big endian format.
-	 Try not to call this on big endian machines, since it's just a
-	 wasteful copy operation in that case.
-	*/
 	unsigned char * new_buf;
 	size_t data_size, i = 0;
 
 	data_size = data_elem * word_size;
 	new_buf = calloc(data_elem, word_size);
 	if (new_buf == NULL) {
-		parse_error("Malloc failed. (Low memory?)");
+		memory_error(errno, data_elem*word_size);
 		return NULL;
 	}
 #ifdef WORDS_BIGENDIAN

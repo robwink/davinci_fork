@@ -8,46 +8,41 @@
  *
  */
 
+#include "dvio.h"
 #include "config.h"
+#include "func.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "parser.h"
-#include "dvio.h"
 
+// TODO rswinkle
+//
+// Should more of this be moved into a header? if so which one?
+// iomedley.h seems best fit currently
 
-/* TODO rswinkle
- *
- * Should more of this be moved into a header? if so which one?
- * iomedley.h seems best fit currently
- *
- */
+// Create lookup table for external iomedley image functions.
 
-
-/* Create lookup table for external iomedley image functions. */
-
-typedef int (*_iom_is_func)(FILE *);
-typedef int (*_iom_header_func)(FILE *, char *, struct iom_iheader *);
-typedef int (*_iom_write_func)(char *, unsigned char *, struct iom_iheader *, int);
+typedef int (*_iom_is_func)(FILE*);
+typedef int (*_iom_header_func)(FILE*, char*, struct iom_iheader*);
+typedef int (*_iom_write_func)(char*, unsigned char*, struct iom_iheader*, int);
 
 typedef struct {
-	const char          *type;         /* Canonical name. */
-	const char          **extensions;  /* Davinci types/file extensions. */
-	_iom_is_func        is;            /* Function to test magic number. */
-	_iom_header_func    header;        /* Funtion to read header & data. */
-	_iom_write_func     write;         /* Function to write new file. */
-	unsigned short int  maxbytes;      /* Max bytes per pixel. */
+	const char* type;            /* Canonical name. */
+	const char** extensions;     /* Davinci types/file extensions. */
+	_iom_is_func is;             /* Function to test magic number. */
+	_iom_header_func header;     /* Funtion to read header & data. */
+	_iom_write_func write;       /* Function to write new file. */
+	unsigned short int maxbytes; /* Max bytes per pixel. */
 } iom_io_interface;
 
 /* Recognized types/file extensions, used during file creation. */
 
-static const char *gif_extensions[]  = { "gif", NULL };
-static const char *jpeg_extensions[] = { "jpg", "jpeg", NULL };
-static const char *bmp_extensions[]  = { "bmp", NULL };
-static const char *tiff_extensions[] = { "tif", "tiff", NULL };
+static const char* gif_extensions[]  = {"gif", NULL};
+static const char* jpeg_extensions[] = {"jpg", "jpeg", NULL};
+static const char* bmp_extensions[]  = {"bmp", NULL};
+static const char* tiff_extensions[] = {"tif", "tiff", NULL};
 
-static const char *png_extensions[]  = { "png", NULL };
-
+static const char* png_extensions[] = {"png", NULL};
 
 static iom_io_interface interfaces[] = {
 	{ "GIF",  gif_extensions,  iom_isGIF,  iom_GetGIFHeader,  iom_WriteGIF,  1 },
@@ -62,19 +57,17 @@ static iom_io_interface interfaces[] = {
 
 /*********/
 
-Var *
-dv_LoadIOM(FILE *fp, char *filename, struct iom_iheader *s)
+Var* dv_LoadIOM(FILE* fp, char* filename, struct iom_iheader* s)
 {
-
-	struct iom_iheader    h;
-	unsigned char        *data;
-	Var                  *v;
-	char                  hbuf[HBUFSIZE];
-	unsigned short        interface;
+	struct iom_iheader h;
+	unsigned char* data;
+	Var* v;
+	char hbuf[HBUFSIZE];
+	unsigned short interface;
 
 	/* Check iom_isFOO for each interface. */
 	/* FIX: preread file header and pass that to isFOO to eliminate
-		 consecutive rewind()/read(). */
+	     consecutive rewind()/read(). */
 
 	interface = 0;
 
@@ -91,7 +84,6 @@ dv_LoadIOM(FILE *fp, char *filename, struct iom_iheader *s)
 
 	/* Read file and populate header, including image data. */
 
-
 	if (!(*interfaces[interface].header)(fp, filename, &h)) {
 		return NULL;
 	}
@@ -100,40 +92,34 @@ dv_LoadIOM(FILE *fp, char *filename, struct iom_iheader *s)
 		iom_MergeHeaderAndSlice(&h, s);
 	}
 
-	data = iom_read_qube_data(-1, &h);   /* Sending fd -1 because we always set h->data. */
+	data = iom_read_qube_data(-1, &h); /* Sending fd -1 because we always set h->data. */
 	if (iom_is_ok2print_progress()) {
 		/* sorta a hack because iom_read_qube_data output is ugly */
 		fprintf(stderr, "\n");
 	}
 
 	if (data) {
-		v = iom_iheader2var(&h);
+		v         = iom_iheader2var(&h);
 		V_DATA(v) = data;
 		// I think data was being double free'd here.
-		//h.data = NULL;
+		// h.data = NULL;
 	} else {
 		v = NULL;
 	}
 
 	if (VERBOSE > 1) {
-		sprintf(hbuf, "%s: %s %s image: %dx%dx%d, %d bits",
-		        filename, iom_Org2Str(h.org),
-		        interfaces[interface].type,
-		        iom_GetSamples(h.dim, h.org),
-		        iom_GetLines(h.dim, h.org),
-		        iom_GetBands(h.dim, h.org),
-		        iom_NBYTESI(h.format) * 8);
+		sprintf(hbuf, "%s: %s %s image: %dx%dx%d, %d bits", filename, iom_Org2Str(h.org),
+		        interfaces[interface].type, iom_GetSamples(h.dim, h.org),
+		        iom_GetLines(h.dim, h.org), iom_GetBands(h.dim, h.org), iom_NBYTESI(h.format) * 8);
 		parse_error(hbuf);
 	}
 
 	iom_cleanup_iheader(&h);
 
 	return v;
-
 }
 
-int
-dv_WriteIOM(Var *obj, const char *filename, const char *type, int force)
+int dv_WriteIOM(Var* obj, const char* filename, const char* type, int force)
 {
 
 	struct iom_iheader h;
@@ -165,7 +151,8 @@ dv_WriteIOM(Var *obj, const char *filename, const char *type, int force)
 		parse_error("error: object must be a value type (ie. an array, not a struct)\n");
 		return 0;
 	} else if (NBYTES(V_FORMAT(obj)) > interfaces[interface].maxbytes) {
-		parse_error("error: Data for %s file must be %d bit.\n", interfaces[interface].type, interfaces[interface].maxbytes * 8);
+		parse_error("error: Data for %s file must be %d bit.\n", interfaces[interface].type,
+		            interfaces[interface].maxbytes * 8);
 		return 0;
 	}
 
@@ -174,11 +161,8 @@ dv_WriteIOM(Var *obj, const char *filename, const char *type, int force)
 	var2iom_iheader(obj, &h);
 
 	if (VERBOSE > 1) {
-		fprintf(stderr, "Writing %s: %dx%dx%d %s file.\n", filename,
-	        iom_GetSamples(h.size,h.org),
-	        iom_GetLines(h.size,h.org),
-	        iom_GetBands(h.size,h.org),
-	        interfaces[interface].type);
+		fprintf(stderr, "Writing %s: %dx%dx%d %s file.\n", filename, iom_GetSamples(h.size, h.org),
+		        iom_GetLines(h.size, h.org), iom_GetBands(h.size, h.org), interfaces[interface].type);
 	}
 
 	status = (*interfaces[interface].write)((char*)filename, V_DATA(obj), &h, force);
@@ -190,5 +174,4 @@ dv_WriteIOM(Var *obj, const char *filename, const char *type, int force)
 	}
 
 	return 1;
-
 }
