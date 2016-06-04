@@ -343,9 +343,8 @@ dnl fi
 dnl Check for headers.
 AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h limits.h malloc.h sys/file.h sys/time.h unistd.h)
+AC_CHECK_HEADERS(fcntl.hmalloc.h sys/file.h sys/time.h unistd.h)
 AC_CHECK_HEADERS(values.h)
-AC_CHECK_HEADERS(limits.h)
 AC_CHECK_HEADERS(libgen.h)
 AC_CHECK_HEADERS(Xm/Xrt3d.h)
 

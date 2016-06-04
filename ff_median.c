@@ -6,11 +6,11 @@ float local_maximum(Window* w, float threshold, float ignore);
 Var* ff_local_maximum(vfuncptr func, Var* arg)
 {
 	Var *obj = NULL, *rval = NULL;
-	float ignore = MINFLOAT;
+	float ignore = FLT_MIN;
 	float* out;
 	int x, y, i, j;
 	int size        = 3;
-	float threshold = MINFLOAT;
+	float threshold = FLT_MIN;
 	Window* w;
 
 	Alist alist[9];

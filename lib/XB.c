@@ -203,10 +203,10 @@ XfPosXB(XB, x, y, w, h)
 	int             move = 0, resize = 0;
 	AButton         B = (AButton) XB;
 
-	if (x != MAXINT && y != MAXINT) {
+	if (x != INT_MAX && y != INT_MAX) {
 		move = 1;
 	}
-	if (w != MAXINT && h != MAXINT) {
+	if (w != INT_MAX && h != INT_MAX) {
 		resize = 1;
 	}
 	if (move && resize) {

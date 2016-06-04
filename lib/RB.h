@@ -28,8 +28,8 @@ struct tagRB {
     RButton         headRB;     /* head element in xor list */
 };
 
-#define XfResizeRB(RB, w, h)    XfPosXB(RB, MAXINT, MAXINT, w, h)
-#define XfMoveRB(RB, x, y)      XfPosXB(RB, x, y, MAXINT, MAXINT)
+#define XfResizeRB(RB, w, h)    XfPosXB(RB, INT_MAX, INT_MAX, w, h)
+#define XfMoveRB(RB, x, y)      XfPosXB(RB, x, y, INT_MAX, INT_MAX)
 
 /**
 *** Function declarations

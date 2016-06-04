@@ -26,8 +26,8 @@ struct tagCB {
     int             pix_h;
 };
 
-#define XfResizeCB(CB, w, h)    XfPosCB(CB, MAXINT, MAXINT, w, h)
-#define XfMoveCB(CB, x, y)      XfPosCB(CB, x, y, MAXINT, MAXINT)
+#define XfResizeCB(CB, w, h)    XfPosCB(CB, INT_MAX, INT_MAX, w, h)
+#define XfMoveCB(CB, x, y)      XfPosCB(CB, x, y, INT_MAX, INT_MAX)
 
 /**
 *** Function declarations

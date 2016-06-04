@@ -15,7 +15,7 @@ float radial_symmetry2(void** data_in, int width, int height, float ignore);
 Var* ff_radial_symmetry(vfuncptr func, Var* arg)
 {
 	Var *obj = NULL, *rval = NULL;
-	float ignore = MINFLOAT;
+	float ignore = FLT_MIN;
 	float* out   = NULL;
 	int x, y, z, i, j, k;
 	int size   = 10;
@@ -86,7 +86,7 @@ Var* ff_radial_symmetry(vfuncptr func, Var* arg)
 Var* ff_radial_symmetry2(vfuncptr func, Var* arg)
 {
 	Var *obj = NULL, *rval = NULL;
-	float ignore = MINFLOAT;
+	float ignore = FLT_MIN;
 	float* out;
 	int x, y, z, i, j;
 	int size  = 0;
@@ -293,7 +293,7 @@ float radial_symmetry2(void** data_in, int width, int height, /* dimensions of w
 Var* ff_radial_symmetry3(vfuncptr func, Var* arg)
 {
 	Var* obj     = NULL;
-	float ignore = MINFLOAT;
+	float ignore = FLT_MIN;
 	int width = 0, height = 0;
 	int end   = 1;
 	Var* rval = NULL;
@@ -472,7 +472,7 @@ Var* ff_drawshape(vfuncptr func, Var* arg)
 	Var *obj = NULL, *ovar = NULL;
 	size_t x, y, z;
 	char* out;
-	float ignore = MAXFLOAT;
+	float ignore = FLT_MAX;
 
 	const char* options[] = {"cross", "box", "circle", NULL};
 	const char* shape     = options[0];

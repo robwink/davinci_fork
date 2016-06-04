@@ -421,7 +421,7 @@ Var* ff_min(vfuncptr func, Var* arg)
 	int axis              = 0;
 	const char* options[] = {"x",  "y",   "z",   "xy",  "yx",  "xz",  "zx",  "yz",
 	                         "zy", "xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL};
-	float ignore = MINFLOAT;
+	float ignore = FLT_MIN;
 
 	Alist alist[4];
 	alist[0]      = make_alist("object", ID_VAL, NULL, &obj);
@@ -507,7 +507,7 @@ Var* ff_findmin(vfuncptr func, Var* arg)
 	float x, val;
 	int do_min = 0, do_max = 0;
 	size_t pos;
-	float ignore = MINFLOAT;
+	float ignore = FLT_MIN;
 
 	Alist alist[3];
 	alist[0]      = make_alist("object", ID_VAL, NULL, &obj);
@@ -552,7 +552,7 @@ Var* ff_convolve(vfuncptr func, Var* arg)
 {
 	Var *obj = NULL, *kernel = NULL;
 	int norm     = 1;
-	float ignore = MINFLOAT;
+	float ignore = FLT_MIN;
 
 	Alist alist[5];
 	alist[0]      = make_alist("object", ID_VAL, NULL, &obj);
@@ -917,7 +917,7 @@ Var* ff_maxpos(vfuncptr func, Var* arg)
 	int* pos     = NULL; /* the output position             */
 	float* posv  = NULL; /* the output position plus value  */
 	float* vals  = NULL;
-	float minval = -MAXFLOAT; /* the most negative float value   */
+	float minval = -FLT_MAX; /* the most negative float value   */
 	float ignore = minval;    /* null value                      */
 	size_t i, j, k;           /* loop indices and flags          */
 	int ck    = 0;
@@ -1032,7 +1032,7 @@ Var* ff_minpos(vfuncptr func, Var* arg)
 	int* pos     = NULL; /* the output position             */
 	float* vals  = NULL;
 	float* posv  = NULL;     /* the output position plus value  */
-	float maxval = MAXFLOAT; /* the most negative float value   */
+	float maxval = FLT_MAX; /* the most negative float value   */
 	float ignore = maxval;   /* null value                      */
 	size_t i, j, k;          /* loop indices and flags          */
 	int ck    = 0;
@@ -1143,7 +1143,7 @@ Var* ff_valpos(vfuncptr func, Var* arg)
 	int* pos     = NULL; /* the output position             */
 	float* posv  = NULL; /* the output position plus value  */
 	float* vals  = NULL;
-	float maxval = MAXFLOAT; /* the most positive float value   */
+	float maxval = FLT_MAX; /* the most positive float value   */
 	float ignore = maxval;   /* null value                      */
 	size_t i, j, k;          /* loop indices and flags          */
 	int ck    = 0;

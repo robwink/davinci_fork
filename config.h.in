@@ -55,8 +55,8 @@
 /* Define to 1 if you have the file `examples/day_maps_final.vicar'. */
 #undef HAVE_EXAMPLES_DAY_MAPS_FINAL_VICAR
 
-/* Define to 1 if you have the <fcntl.h> header file. */
-#undef HAVE_FCNTL_H
+/* Define to 1 if you have the <fcntl.hmalloc.h> header file. */
+#undef HAVE_FCNTL_HMALLOC_H
 
 /* Define to 1 if you have the <fitsio.h> header file. */
 #undef HAVE_FITSIO_H
@@ -138,12 +138,6 @@
 
 /* Define to 1 if you have the `Xt' library (-lXt). */
 #undef HAVE_LIBXT
-
-/* Define to 1 if you have the <limits.h> header file. */
-#undef HAVE_LIMITS_H
-
-/* Define to 1 if you have the <malloc.h> header file. */
-#undef HAVE_MALLOC_H
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H

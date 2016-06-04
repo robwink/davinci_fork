@@ -1,4 +1,5 @@
 
+// TODO(rswinkle) move to globals.c and delete this file
 const char *FORMAT2STR[] = {
 	0,
 	"byte",

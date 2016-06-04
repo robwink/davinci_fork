@@ -47,8 +47,8 @@ Var* ff_fncc(vfuncptr func, Var* arg)
 
 	double t_avg, t_var;
 	double* ignore = NULL;
-	double ig      = MINFLOAT;
-	double ref     = MINFLOAT;
+	double ig      = FLT_MIN;
+	double ref     = FLT_MIN;
 
 	double* running_f  = NULL;
 	double* running_f2 = NULL;
@@ -156,7 +156,7 @@ Var* ff_fncc(vfuncptr func, Var* arg)
 
 	p        = (int*)malloc(2 * sizeof(int));
 	p1       = (int*)malloc(2 * sizeof(int));
-	max_p[0] = MINFLOAT;
+	max_p[0] = FLT_MIN;
 	find_max_point(x, y, cc, p, max_p);
 	p[0]++;
 	p[1]++;
@@ -405,7 +405,7 @@ double f_sum(double* f, int f_row, int f_col, int x, int y, int t_cen_row, int t
 	double f_sum              = 0.0;
 	double sum_of_the_squares = 0.0;
 	int ig_flag               = 0;
-	double ig                 = MINFLOAT;
+	double ig                 = FLT_MIN;
 	double ic                 = 0; // ignore count;
 
 	if (ignore != NULL) {
@@ -528,11 +528,11 @@ double* fncc(double* r, int g_row, int g_col, int t_row, int t_col, int f_row, i
 
 				if (p3 < 0.) {
 					//                    parse_error("Error at cell: %d,%d we have: %g",j,i,p3);
-					g[i * g_col + j] = MINFLOAT;
+					g[i * g_col + j] = FLT_MIN;
 				}
 
 				else if (p3 < tol && p3 > -tol) // as good as dead
-					g[i * g_col + j] = MINFLOAT;
+					g[i * g_col + j] = FLT_MIN;
 
 				else {
 
@@ -596,7 +596,7 @@ void build_t_constants(double* t, int t_row, int t_col, double* t_avg, double* t
 	int i, j;
 	int ig_flag  = 0; /*Ignore flag; 0 = not set, 1 = set */
 	int ig_count = 0;
-	double ig    = MINFLOAT;
+	double ig    = FLT_MIN;
 	double t1    = 0.0; /*Temporary var for t_avg */
 	double t2    = 0.0; /*Temporary var for t2_prime */
 
@@ -759,7 +759,7 @@ double* TwoD_Convolve(int trow, int tcol, int frow, int fcol, double* t, double*
 	int col_even_mod = 1;
 
 	int ig_flag = 0;
-	double ig   = MINFLOAT;
+	double ig   = FLT_MIN;
 
 	/*
 	** While this integer division seems poor, it actually acomplishes

@@ -24,44 +24,7 @@
 #include <values.h>
 #endif
 
-#ifdef HAVE_LIMITS_H
-#include <limits.h>
-#endif
-
-// TODO(rswinkle) why not just use the standard macros directly?
-#ifndef MINSHORT
-#define MINSHORT SHRT_MIN
-#endif
-#ifndef MININT
-#define MININT INT_MIN
-#endif
-#ifndef MINLONG
-#define MINLONG LONG_MIN
-#endif
-#ifndef MAXSHORT
-#define MAXSHORT SHRT_MAX
-#endif
-#ifndef MAXINT
-#define MAXINT INT_MAX
-#endif
-#ifndef MAXLONG
-#define MAXLONG LONG_MAX
-#endif
-
 #include <float.h>
-#ifndef MAXDOUBLE
-#define MAXDOUBLE DBL_MAX
-#endif
-#ifndef MAXFLOAT
-#define MAXFLOAT FLT_MAX
-#endif
-#ifndef MINDOUBLE
-#define MINDOUBLE DBL_MIN
-#endif
-#ifndef MINFLOAT
-#define MINFLOAT FLT_MIN
-#endif
-
 #include <ctype.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -169,10 +132,7 @@ struct _var {
 
 #define newVar (Var*)mem_malloc
 
-/**
- ** The following define the various types for Var->type
- **/
-
+// The following define the various types for Var->type
 enum {
 	ID_NONE  = 0, /* a non value */
 	ID_ERROR = 99,
@@ -256,11 +216,8 @@ enum {
 	ID_FPTR /* a function pointer */
 };
 
-/**
- ** element format.
- ** Var->value.Sym->format
- **/
-
+// element format.
+// Var->value.Sym->format
 //#define UINT8       1
 //#define INT16       2
 //#define INT32       3
@@ -306,8 +263,8 @@ enum {
 
 #define saturate(v, lo, hi) ((v) > (lo) ? ((v) < (hi) ? (v) : (hi)) : (lo))
 #define saturate_byte(v) saturate(v, 0, 255)
-#define saturate_short(v) saturate(v, (MINSHORT), (MAXSHORT))
-#define saturate_int(v) saturate(v, (MININT), (MAXINT))
+#define saturate_short(v) saturate(v, (SHRT_MIN), (SHRT_MAX))
+#define saturate_int(v) saturate(v, (INT_MIN), (INT_MAX))
 #define saturate_float(v) v
 #define saturate_double(v) v
 
@@ -330,30 +287,8 @@ struct _vfuncptr {
 	void* fdata2;
 };
 
-#if 0
-/* See iomdeley iom_iheader instead. */
-struct _iheader {
-	int dptr;           /* offset in bytes to first data value    */
-	int prefix[3];      /* size of prefix data (bytes)            */
-	int suffix[3];      /* size of suffix data (bytes)            */
-	int size[3];        /* size of data (pixels)                  */
-	int s_lo[3];        /* subset lower range (pixels)            */
-	int s_hi[3];        /* subset upper range (pixels)            */
-	int s_skip[3];      /* subset skip interval (pixels)          */
-	int dim[3];         /* final dimension size */
-	int corner;         /* size of 1 whole plane */
 
-	int byte_order;     /* byteorder of data                      */
-	int format;         /* data format (INT, FLOAT, etc)          */
-	int org;            /* data organization                      */
-
-	float gain, offset; /* data multiplier and additive offset    */
-};
-#endif /* 0 */
-
-/**
- ** This structure used by parse_args.
- **/
+// This structure used by parse_args.
 typedef struct Alist {
 	const char* name;
 	int type;
@@ -372,8 +307,6 @@ extern int orders[3][3];
 extern Var* VZERO;
 extern char* ORG2STR[];
 extern char* FORMAT2STR[];
-extern int Argc;
-extern char** Argv;
 extern int VERBOSE;
 extern int DEPTH;
 extern int SCALE;

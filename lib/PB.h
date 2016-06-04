@@ -21,8 +21,8 @@ struct tagPB {
     int             pix_h;
 };
 
-#define XfResizePB(PB, w, h)    XfPosXB((XButton)PB, MAXINT, MAXINT, w, h)
-#define XfMovePB(PB, x, y)      XfPosXB((XButton)PB, x, y, MAXINT, MAXINT)
+#define XfResizePB(PB, w, h)    XfPosXB((XButton)PB, INT_MAX, INT_MAX, w, h)
+#define XfMovePB(PB, x, y)      XfPosXB((XButton)PB, x, y, INT_MAX, INT_MAX)
 
 /**
 *** Function declarations

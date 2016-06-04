@@ -40,10 +40,6 @@
 #endif
 #endif
 
-#ifdef HAVE_LIMITS_H
-#include <limits.h>
-#endif
-
 
 #ifndef HAVE_INDEX
 char *

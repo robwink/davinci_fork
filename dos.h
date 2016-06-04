@@ -8,30 +8,30 @@
 #include <values.h>
 #else /* _WIN32 */
 
-#ifndef MINSHORT
-#define MINSHORT SHRT_MIN
+#ifndef SHRT_MIN
+#define SHRT_MIN SHRT_MIN
 #endif
 
-#ifndef MAXSHORT
-#define MAXSHORT SHRT_MAX
+#ifndef SHRT_MAX
+#define SHRT_MAX SHRT_MAX
 #endif
 
-#ifndef MININT
-#define MININT   INT_MIN
+#ifndef INT_MIN
+#define INT_MIN   INT_MIN
 #endif
 
-#ifndef MAXINT
-#define MAXINT   INT_MAX
+#ifndef INT_MAX
+#define INT_MAX   INT_MAX
 #endif
 
 #include <float.h>
 
-#ifndef MINFLOAT
-#define MINFLOAT FLT_MIN
+#ifndef FLT_MIN
+#define FLT_MIN FLT_MIN
 #endif
 
-#ifndef MAXFLOAT
-#define MAXFLOAT FLT_MAX
+#ifndef FLT_MAX
+#define FLT_MAX FLT_MAX
 #endif
 
 #endif /* _WIN32 */

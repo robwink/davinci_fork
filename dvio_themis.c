@@ -1470,7 +1470,7 @@ Var* ff_PACI_Read(vfuncptr func, Var* arg)
 
 	} else { // report != 0
 		int* band             = (int*)calloc(32, sizeof(int));
-		unsigned int minframe = MAXINT;
+		unsigned int minframe = INT_MAX;
 		int maxframe          = -1;
 		i                     = 0;
 

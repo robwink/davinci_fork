@@ -42,7 +42,7 @@ void srand48(long seedval)
 
 Var* ff_random(vfuncptr func, Var* arg)
 {
-	int x = 1, y = 1, z = 1, seed = MAXINT;
+	int x = 1, y = 1, z = 1, seed = INT_MAX;
 	float* fdata;
 	size_t dsize;
 	size_t i;

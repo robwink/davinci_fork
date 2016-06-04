@@ -21,7 +21,7 @@
 #endif
 
 #define BITSPERBYTE 8
-#define MAXSHORT    0x7fff
+#define SHRT_MAX    0x7fff
 
 #if !defined(__FLAT__)
 #define MAXINT      0x7FFF
@@ -29,7 +29,7 @@
 #define MAXINT      0x7fffffff
 #endif
 
-#define MAXLONG     0x7fffffff
+#define LONG_MAX     0x7fffffff
 #define HIBITS      0x8000
 #define HIBITI      0x8000
 #define HIBITL      0x80000000
@@ -39,10 +39,10 @@
 #define DMINEXP     -307
 #define FMINEXP     -37
 
-#define MAXDOUBLE   1.7976931348623158E+308
-#define MAXFLOAT    3.40282347E+38F
-#define MINDOUBLE   2.2250738585072014E-308
-#define MINFLOAT    1.17549435E-38F
+#define DBL_MAX   1.7976931348623158E+308
+#define FLT_MAX    3.40282347E+38F
+#define DBL_MIN   2.2250738585072014E-308
+#define FLT_MIN    1.17549435E-38F
 #define MAXLDOUBLE  1.1897314953572317649E+4932L
 #define MINLDOUBLE  3.362103143112094E-4917L /* This isn't accurate, but it */
                                              /* will do for now. The real   */
@@ -60,7 +60,7 @@
 #define IEEE        1
 #define LENBASE     1
 #define HIDDENBIT   1
-#define LN_MAXDOUBLE    7.0978E+2
-#define LN_MINDOUBLE    -7.0840E+2
+#define LN_DBL_MAX    7.0978E+2
+#define LN_DBL_MIN    -7.0840E+2
 
 #endif  /* __VALUES_H */

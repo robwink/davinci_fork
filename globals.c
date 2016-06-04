@@ -30,6 +30,9 @@ int indent   = 0;
 Var* curnode = NULL;
 
 
+// TODO (rswinkle) move the functions to more appropriate place(s)
+// and add similar small functions from main.c to those places
+
 void quit(int return_code)
 {
 	char* path = getenv("TMPDIR");
@@ -62,7 +65,9 @@ void make_sym(Var* v, int format, char* str)
 	case FLOAT: {
 		double d;
 		d = strtod(str, NULL);
-		if (((d > MAXFLOAT) || (d < MINFLOAT)) && (d != 0)) {
+		// NOTE(rswinkle) this only works because we apply unary minus separately later
+		// otherwise you'd have to check against -FLT_MAX and -FLT_MIN too
+		if (((d > FLT_MAX) || (d < FLT_MIN)) && (d != 0)) {
 			free(V_DATA(v));
 			V_DATA(v)               = calloc(1, NBYTES(DOUBLE));
 			V_FORMAT(v)             = DOUBLE;
@@ -110,7 +115,7 @@ Var* eval_buffer(char* buf)
 
 	yy_delete_buffer((struct yy_buffer_state*)buffer);
 	if (parent_buffer) yy_switch_to_buffer(parent_buffer);
-	return (v);
+	return v;
 }
 
 
@@ -125,15 +130,15 @@ void yyerror(char* s)
 
 int yywrap()
 {
-	return (1);
+	return 1;
 }
 
 char* unquote(char* name)
 {
 	char* p = name;
 
-	if (name == NULL) return (NULL);
-	if (*name == 0) return (name);
+	if (name == NULL) return NULL;
+	if (*name == 0) return name;
 	if (*name == '"') {
 		p++;
 		name++;
@@ -151,7 +156,7 @@ char* unquote(char* name)
 		}
 		*name = '\0';
 	}
-	return (p);
+	return p;
 }
 
 char* unescape(char* str)
@@ -177,5 +182,5 @@ char* unescape(char* str)
 		}
 		*q = *p;
 	}
-	return (str);
+	return str;
 }

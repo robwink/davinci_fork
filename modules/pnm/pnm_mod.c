@@ -132,8 +132,8 @@ static Var* ff_pnmscale(vfuncptr f, Var* args)
 	Var* obj     = NULL;
 	int xsize    = MAXINT;
 	int ysize    = MAXINT;
-	float xscale = MAXFLOAT;
-	float yscale = MAXFLOAT;
+	float xscale = FLT_MAX;
+	float yscale = FLT_MAX;
 
 	Alist alist[6];
 	alist[0]      = make_alist("object", ID_VAL, NULL, &obj);
@@ -150,8 +150,8 @@ static Var* ff_pnmscale(vfuncptr f, Var* args)
 	}
 
 	// Simple argument checking
-	if ((MAXINT != xsize && MAXFLOAT != xscale) || (xscale < 0.0 || xsize < 0) ||
-	    (MAXINT != ysize && MAXFLOAT != yscale) || (yscale < 0.0 || ysize < 0)) {
+	if ((MAXINT != xsize && FLT_MAX != xscale) || (xscale < 0.0 || xsize < 0) ||
+	    (MAXINT != ysize && FLT_MAX != yscale) || (yscale < 0.0 || ysize < 0)) {
 		printf("\n\nError in input arguments.\n\n");
 		print_scale_usage();
 		return (NULL);
@@ -332,7 +332,7 @@ Var* pnmscale(Var* obj, int xsize, int ysize, float xscale, float yscale)
 	int newcols = 0;
 	int newrows = 0;
 
-	float aratio = MAXFLOAT;
+	float aratio = FLT_MAX;
 
 	// Read our Matrix
 	x = GetX(obj);
@@ -340,14 +340,14 @@ Var* pnmscale(Var* obj, int xsize, int ysize, float xscale, float yscale)
 	z = GetZ(obj);
 
 	// Calculate output image size
-	if (xscale != MAXFLOAT)
+	if (xscale != FLT_MAX)
 		newcols = x * xscale + 0.999; // Rounding
 	else if (xsize != MAXINT)
 		newcols = xsize;
 	else
 		newcols = x; // No change
 
-	if (yscale != MAXFLOAT)
+	if (yscale != FLT_MAX)
 		newrows = y * yscale + 0.999; // Rounding
 	else if (ysize != MAXINT)
 		newrows = ysize;
@@ -356,15 +356,15 @@ Var* pnmscale(Var* obj, int xsize, int ysize, float xscale, float yscale)
 
 	// In the case where only ONE dimension given, calculate the
 	// other maintaining the ASPECT RATIO
-	if (xsize == MAXINT && xscale == MAXFLOAT) {
-		if (yscale != MAXFLOAT)
+	if (xsize == MAXINT && xscale == FLT_MAX) {
+		if (yscale != FLT_MAX)
 			aratio = yscale;
 		else
 			aratio = ysize / y;
 
 		newcols = x * aratio + 0.999;
-	} else if (ysize == MAXINT && yscale == MAXFLOAT) {
-		if (xscale != MAXFLOAT)
+	} else if (ysize == MAXINT && yscale == FLT_MAX) {
+		if (xscale != FLT_MAX)
 			aratio = xscale;
 		else
 			aratio = xsize / x;

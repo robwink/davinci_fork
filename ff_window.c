@@ -281,7 +281,7 @@ void free_histogram(Histogram* h)
 Var* ff_window(vfuncptr func, Var* arg)
 {
 	Var *obj = NULL, *rval = NULL;
-	float ignore = MAXFLOAT;
+	float ignore = FLT_MAX;
 	float* f_out;
 	short* s_out;
 	int x, y, z, i, j;

@@ -75,8 +75,8 @@ extern XButton XBList;
 #define RIGHTTEXT(str)		str,-1, XfFont(NULL,NULL)
 #define NOTEXT				NULL, 0, NULL
 
-#define XfResizeXB(XB, w, h)    XfPosXB(XB, MAXINT, MAXINT, w, h)
-#define XfMoveXB(XB, x, y)      XfPosXB(XB, x, y, MAXINT, MAXINT)
+#define XfResizeXB(XB, w, h)    XfPosXB(XB, INT_MAX, INT_MAX, w, h)
+#define XfMoveXB(XB, x, y)      XfPosXB(XB, x, y, INT_MAX, INT_MAX)
 
 #if defined(__STDC__) && defined(__LINT__)
 

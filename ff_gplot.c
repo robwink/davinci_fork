@@ -17,10 +17,10 @@ Var* ff_gplot(vfuncptr func, Var* arg)
 	int i;
 	FILE* fp      = NULL;
 	char* fname   = NULL;
-	float g_xlow  = MAXFLOAT;
-	float g_xhigh = MAXFLOAT;
-	float g_ylow  = MAXFLOAT;
-	float g_yhigh = MAXFLOAT;
+	float g_xlow  = FLT_MAX;
+	float g_xhigh = FLT_MAX;
+	float g_ylow  = FLT_MAX;
+	float g_yhigh = FLT_MAX;
 
 	Alist alist[6];
 	alist[0]      = make_alist("object", ID_VAL, NULL, &object);
@@ -69,15 +69,15 @@ Var* ff_gplot(vfuncptr func, Var* arg)
 
 	fprintf(gplot_pfp, "plot ");
 	fprintf(gplot_pfp, "[ ");
-	if (g_xlow != MAXFLOAT) fprintf(gplot_pfp, "%g", g_xlow);
+	if (g_xlow != FLT_MAX) fprintf(gplot_pfp, "%g", g_xlow);
 	fprintf(gplot_pfp, ":");
-	if (g_xhigh != MAXFLOAT) fprintf(gplot_pfp, "%g", g_xhigh);
+	if (g_xhigh != FLT_MAX) fprintf(gplot_pfp, "%g", g_xhigh);
 	fprintf(gplot_pfp, "] ");
 
 	fprintf(gplot_pfp, "[ ");
-	if (g_ylow != MAXFLOAT) fprintf(gplot_pfp, "%g", g_ylow);
+	if (g_ylow != FLT_MAX) fprintf(gplot_pfp, "%g", g_ylow);
 	fprintf(gplot_pfp, ":");
-	if (g_yhigh != MAXFLOAT) fprintf(gplot_pfp, "%g", g_yhigh);
+	if (g_yhigh != FLT_MAX) fprintf(gplot_pfp, "%g", g_yhigh);
 	fprintf(gplot_pfp, "] '%s' with linespoints\n", fname);
 	fflush(gplot_pfp);
 

@@ -12,12 +12,12 @@
 #include <netinet/in.h>
 #endif
 
-#ifndef MINSHORT
-#define MINSHORT    ((short)(1 << ((8*sizeof(short) - 1))))
+#ifndef SHRT_MIN
+#define SHRT_MIN    ((short)(1 << ((8*sizeof(short) - 1))))
 #endif
 
-#ifndef MININT
-#define MININT    ((int)(1 << ((8*sizeof(int) - 1))))
+#ifndef INT_MIN
+#define INT_MIN    ((int)(1 << ((8*sizeof(int) - 1))))
 #endif
 
 #ifndef max
