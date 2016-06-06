@@ -164,12 +164,10 @@ int is_reserved_var (char *);
 Var *set_reserved_var (Var *, Var *, Var *);
 
 
+// p.c
 int evaluate_keywords (vfuncptr, Var *, struct keywords *);
-Var *get_kw (char *, struct keywords *);
-Var *verify_single_arg(vfuncptr, Var *);
-Var *verify_single_string(vfuncptr , Var *);
-int KwToInt(char *, struct keywords *, int *);
-int KwToFloat(char *, struct keywords *, float *);
+
+
 
 /* vicar.h */
 char *get_value (char *, char *);

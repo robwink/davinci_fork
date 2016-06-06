@@ -1651,6 +1651,45 @@ ff_fork(vfuncptr func, Var * arg)
   return(NULL);
 }
 
+// This is similar to parse_buffer, but it doesn't print the stack
+// or clean up the scope
+Var* eval_buffer(char* buf)
+{
+	int i, j;
+	extern char* yytext;
+	Var* v = NULL;
+	void* parent_buffer;
+	void* buffer;
+	Var* node;
+
+	extern void* get_current_buffer();
+	extern void* yy_scan_string();
+	extern void yy_delete_buffer(void*);
+	extern void yy_switch_to_buffer(void*);
+
+	parent_buffer = (void*)get_current_buffer();
+	buffer        = (void*)yy_scan_string(buf);
+
+	while ((i = yylex()) != 0) {
+		/*
+		** if this is a function definition, do no further parsing yet.
+		*/
+		j = yyparse(i, (Var*)yytext);
+		if (j == -1) quit(0);
+
+		if (j == 1 && curnode != NULL) {
+			node = curnode;
+			evaluate(node);
+			/* // v = pop(scope_tos()); */
+			free_tree(node);
+		}
+	}
+
+	yy_delete_buffer((struct yy_buffer_state*)buffer);
+	if (parent_buffer) yy_switch_to_buffer(parent_buffer);
+	return v;
+}
+
 Var *
 ff_eval(vfuncptr func, Var * arg)
 {

@@ -311,6 +311,7 @@ extern int VERBOSE;
 extern int DEPTH;
 extern int SCALE;
 extern int debug;
+extern Var *curnode;
 
 #if defined(_WIN32) && !defined(__MINGW32__)
 #define readline w_readline
