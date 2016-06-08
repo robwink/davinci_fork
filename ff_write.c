@@ -140,5 +140,7 @@ ff_write(vfuncptr func, Var *arg)
 		return(NULL);
 	}
 
+	free(filename);
+
 	return(NULL);
 }
