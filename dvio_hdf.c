@@ -72,35 +72,13 @@ void WriteHDF5(hid_t parent, char* name, Var* v)
 		org       = V_ORG(v);
 		dataspace = H5Screate_simple(3, size, NULL);
 
-		// why are we always storing them as BE?  seems arbitrary to me
-		// since we can read both and BE will almost always require conversion both
-		// ways because who runs BE machines these days?
-		// We should just store them as the native format, shorter, simpler code
 		switch (V_FORMAT(v)) {
-		case BYTE:
-			datatype        = H5Tcopy(H5T_STD_U8BE);
-			native_datatype = H5Tget_native_type(H5T_STD_U8BE, H5T_DIR_ASCEND);
-			break;
-		case SHORT:
-			datatype        = H5Tcopy(H5T_STD_I16BE);
-			native_datatype = H5Tget_native_type(H5T_STD_I16BE, H5T_DIR_ASCEND);
-			break;
-		case USHORT:
-			datatype        = H5Tcopy(H5T_STD_U16BE);
-			native_datatype = H5Tget_native_type(H5T_STD_U16BE, H5T_DIR_ASCEND);
-			break;
-		case INT:
-			datatype        = H5Tcopy(H5T_STD_I32BE);
-			native_datatype = H5Tget_native_type(H5T_STD_I32BE, H5T_DIR_ASCEND);
-			break;
-		case FLOAT:
-			datatype        = H5Tcopy(H5T_IEEE_F32BE);
-			native_datatype = H5Tget_native_type(H5T_IEEE_F32BE, H5T_DIR_ASCEND);
-			break;
-		case DOUBLE:
-			datatype        = H5Tcopy(H5T_IEEE_F64BE);
-			native_datatype = H5Tget_native_type(H5T_IEEE_F64BE, H5T_DIR_ASCEND);
-			break;
+		case BYTE: datatype   = H5Tcopy(H5T_NATIVE_UCHAR); break;
+		case SHORT: datatype  = H5Tcopy(H5T_NATIVE_SHORT); break;
+		case USHORT: datatype = H5Tcopy(H5T_NATIVE_USHORT); break;
+		case INT: datatype    = H5Tcopy(H5T_NATIVE_INT); break;
+		case FLOAT: datatype  = H5Tcopy(H5T_NATIVE_FLOAT); break;
+		case DOUBLE: datatype = H5Tcopy(H5T_NATIVE_DOUBLE); break;
 		}
 
 		// Enable chunking and compression - JAS
@@ -109,17 +87,19 @@ void WriteHDF5(hid_t parent, char* name, Var* v)
 		H5Pset_deflate(plist, HDF5_COMPRESSION_LEVEL);
 
 		dataset = H5Dcreate(parent, name, datatype, dataspace, H5P_DEFAULT, plist, H5P_DEFAULT);
-		H5Dwrite(dataset, native_datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, V_DATA(v));
-		H5Tclose(native_datatype);
+		H5Dwrite(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, V_DATA(v));
+		//H5Tclose(native_datatype);
 
 		aid2 = H5Screate(H5S_SCALAR);
 
-		// again why BE?
-		attr = H5Acreate(dataset, "org", H5T_STD_I32BE, aid2, H5P_DEFAULT, H5P_DEFAULT);
+		// org could even be a byte since it's [0-2]
+		attr = H5Acreate(dataset, "org", H5T_NATIVE_INT, aid2, H5P_DEFAULT, H5P_DEFAULT);
 
-		native_datatype = H5Tget_native_type(H5T_STD_I32BE, H5T_DIR_ASCEND);
-		H5Awrite(attr, native_datatype, &org);
-		H5Tclose(native_datatype);
+		H5Awrite(attr, H5T_NATIVE_INT, &org);
+
+		//native_datatype = H5Tget_native_type(H5T_STD_I32BE, H5T_DIR_ASCEND);
+		//H5Awrite(attr, native_datatype, &org);
+		//H5Tclose(native_datatype);
 
 		H5Sclose(aid2);
 		H5Aclose(attr);
@@ -143,11 +123,9 @@ void WriteHDF5(hid_t parent, char* name, Var* v)
 		H5Dwrite(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, V_STRING(v));
 
 		aid2 = H5Screate(H5S_SCALAR);
-		attr = H5Acreate(dataset, "lines", H5T_STD_I32BE, aid2, H5P_DEFAULT, H5P_DEFAULT);
-		native_datatype = H5Tget_native_type(H5T_STD_I32BE, H5T_DIR_ASCEND);
+		attr = H5Acreate(dataset, "lines", H5T_NATIVE_INT, aid2, H5P_DEFAULT, H5P_DEFAULT);
 
-		H5Awrite(attr, native_datatype, &lines);
-		H5Tclose(native_datatype);
+		H5Awrite(attr, H5T_NATIVE_INT, &lines);
 		H5Sclose(aid2);
 		H5Aclose(attr);
 
@@ -189,11 +167,9 @@ void WriteHDF5(hid_t parent, char* name, Var* v)
 		H5Dwrite(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, big);
 		lines = V_TEXT(v).Row;
 		aid2  = H5Screate(H5S_SCALAR);
-		attr  = H5Acreate(dataset, "lines", H5T_STD_I32BE, aid2, H5P_DEFAULT, H5P_DEFAULT);
-		native_datatype = H5Tget_native_type(H5T_STD_I32BE, H5T_DIR_ASCEND);
+		attr  = H5Acreate(dataset, "lines", H5T_NATIVE_INT, aid2, H5P_DEFAULT, H5P_DEFAULT);
 
-		H5Awrite(attr, native_datatype, &lines);
-		H5Tclose(native_datatype);
+		H5Awrite(attr, H5T_NATIVE_INT, &lines);
 
 		H5Sclose(aid2);
 		H5Aclose(attr);
@@ -291,10 +267,14 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 				parse_error("Unable to get org. Assuming %s.\n", Org2Str(org));
 			} else {
 				attr = H5Aopen_name(dataset, "org");
+				/*
 				native_type_attr = H5Tget_native_type(H5T_STD_I32BE, H5T_DIR_ASCEND);
 				H5Aread(attr, native_type_attr, &org);
-				H5Aclose(attr);
 				H5Tclose(native_type_attr);
+				*/
+				H5Aread(attr, H5T_NATIVE_INT, &org);
+
+				H5Aclose(attr);
 			}
 
 			// HDF data sets can have arbitrary rank and we don't
@@ -310,19 +290,18 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 				// array[x,y,z], if you declared it in C array[X][Y][Z], it's actually stored Z, Y, X
 				// so to get the correct representation we reverse the dimensions on read and write.
 				// see the fine print Note just above 7.3.2.6 in the HDF5 User's Guide
+				//
+				// www.hdfgroup.org/HDF5/doc/UG/HDF5_Users_Guide-Responsive HTML5/index.html
 				size[2-i] = datasize[i];
 			}
-			// mem_dataspace = H5Screate_simple(3, datasize, NULL);
 
 			dsize   = H5Sget_simple_extent_npoints(dataspace);
 			databuf = calloc(dsize, NBYTES(type));
 
-			// H5Dread(dataset, native_type_data, H5S_ALL, mem_dataspace, H5P_DEFAULT, databuf);
 			H5Dread(dataset, native_type_data, H5S_ALL, H5S_ALL, H5P_DEFAULT, databuf);
 
 			H5Tclose(datatype);
 			H5Sclose(dataspace);
-			// H5Sclose(mem_dataspace);
 			H5Dclose(dataset);
 			H5Tclose(native_type_data);
 
@@ -353,10 +332,8 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 				parse_error("Unable to get lines. Assuming %d.\n", Lines);
 			} else {
 				attr = H5Aopen_name(dataset, "lines");
-				native_type_attr = H5Tget_native_type(H5T_STD_I32BE, H5T_DIR_ASCEND);
-				H5Aread(attr, native_type_attr, &Lines);
+				H5Aread(attr, H5T_NATIVE_INT, &Lines);
 				H5Aclose(attr);
-				H5Tclose(native_type_attr);
 			}
 
 			v = newVar();
