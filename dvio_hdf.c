@@ -287,9 +287,10 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 
 		if (type != ID_STRING) {
 			org = BSQ;
-			if ((attr = H5Aopen_name(dataset, "org")) < 0) {
+			if (!H5Aexists(dataset, "org")) {
 				parse_error("Unable to get org. Assuming %s.\n", Org2Str(org));
 			} else {
+				attr = H5Aopen_name(dataset, "org");
 				native_type_attr = H5Tget_native_type(H5T_STD_I32BE, H5T_DIR_ASCEND);
 				H5Aread(attr, native_type_attr, &org);
 				H5Aclose(attr);
@@ -348,9 +349,10 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 		// else type == ID_STRING
 		} else {
 			Lines = 0;
-			if ((attr = H5Aopen_name(dataset, "lines")) < 0) {
+			if (!H5Aexists(dataset, "lines")) {
 				parse_error("Unable to get lines. Assuming %d.\n", Lines);
 			} else {
+				attr = H5Aopen_name(dataset, "lines");
 				native_type_attr = H5Tget_native_type(H5T_STD_I32BE, H5T_DIR_ASCEND);
 				H5Aread(attr, native_type_attr, &Lines);
 				H5Aclose(attr);
