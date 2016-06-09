@@ -192,7 +192,7 @@ Var *LoadSpecpr(FILE *,char *,int );
 Var *LoadSpecprHeaderStruct(FILE *,char *,int );
 int dv_LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var);
 Var * LoadVanilla(char *filename);
-Var * LoadHDF5(char *filename);
+Var * LoadHDF5(char *filename, int hdf_old);
 
 int WriteRaw(Var *, FILE *, char *);
 int WriteGRD(Var *, FILE *, char *);
@@ -207,7 +207,7 @@ int WriteIMath(Var *s, FILE *fp, char *filename);
 int WriteAscii(Var *, char *, int);
 
 #ifdef HAVE_LIBHDF5
-void WriteHDF5(hid_t parent, char *name, Var *v);
+void WriteHDF5(hid_t parent, char *name, Var *v, int hdf_old);
 #endif
 
 #ifdef HAVE_LIBMAGICK

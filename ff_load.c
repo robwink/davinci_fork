@@ -2,10 +2,11 @@
 #include "io_loadmod.h"
 #include "dvio_specpr.h"
 
-Var *do_load(char *filename, struct iom_iheader *h);
+
+Var *do_load(char *filename, struct iom_iheader *h, int hdf_old);
 
 Var *
-ff_load_many(Var * list, struct iom_iheader *h )
+ff_load_many(Var * list, struct iom_iheader *h, int hdf_old)
 {
 	int i;
 	char *filename;
@@ -19,7 +20,7 @@ ff_load_many(Var * list, struct iom_iheader *h )
 	s = new_struct(V_TEXT(list).Row);
 	for (i = 0 ; i < V_TEXT(list).Row ; i++) {
 		filename = strdup(V_TEXT(list).text[i]);
-		t = do_load(filename, h);
+		t = do_load(filename, h, hdf_old);
 		if (t) add_struct(s, fix_name(filename), t);
 	}
 	if (get_struct_count(s)) {
@@ -34,13 +35,14 @@ Var *
 ff_load(vfuncptr func, Var * arg)
 {
 	int record = -1;
+	int hdf_old = 0;
 	char *filename = NULL;
 	struct iom_iheader h;
 	Var *fvar = NULL;
 
 	/* Set data extraction ranges for iom_read_qube_data(). */
 
-	Alist alist[12];
+	Alist alist[13];
 
 	iom_init_iheader(&h);
 
@@ -54,8 +56,9 @@ ff_load(vfuncptr func, Var * arg)
 	alist[7] = make_alist( "yskip",     INT,    	NULL,     &h.s_skip[1]);
 	alist[8] = make_alist( "zlow",      INT,    	NULL,     &h.s_lo[2]);
 	alist[9] = make_alist( "zhigh",     INT,    	NULL,     &h.s_hi[2]);
-	alist[10] = make_alist( "zskip",     INT,    	NULL,     &h.s_skip[2]);
-	alist[11].name = NULL;
+	alist[10] = make_alist( "zskip",    INT,    	NULL,     &h.s_skip[2]);
+	alist[11] = make_alist( "hdf_old",  INT,    	NULL,     &hdf_old);
+	alist[12].name = NULL;
 
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -69,7 +72,7 @@ ff_load(vfuncptr func, Var * arg)
 	if (record != -1) h.s_lo[2] = h.s_hi[2] = record;
 
 	if (V_TYPE(fvar) == ID_TEXT) {
-		return(ff_load_many(fvar, &h));
+		return(ff_load_many(fvar, &h, hdf_old));
 	} else if (V_TYPE(fvar) == ID_STRING) {
 		filename = V_STRING(fvar);
 	} else {
@@ -77,11 +80,11 @@ ff_load(vfuncptr func, Var * arg)
 			func->name, "filename");
 		return (NULL);
 	}
-	return(do_load(filename, &h));
+	return(do_load(filename, &h, hdf_old));
 }
 
 Var *
-do_load(char *filename, struct iom_iheader *h)
+do_load(char *filename, struct iom_iheader *h, int hdf_old)
 {
 	int record = -1;
 	FILE *fp = NULL;
@@ -128,7 +131,7 @@ do_load(char *filename, struct iom_iheader *h)
 	if (input == NULL)    input = dv_LoadAVIRIS(fp, fname, h);
 
 #ifdef HAVE_LIBHDF5
-		if (input == NULL)    input = LoadHDF5(fname);
+		if (input == NULL)    input = LoadHDF5(fname, hdf_old);
 #endif
 
 #ifdef HAVE_LIBXML2

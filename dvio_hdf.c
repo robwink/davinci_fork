@@ -12,11 +12,29 @@
 typedef struct callback_data {
 	Var* parent_var;
 	cvector_void addresses;
+	int hdf_old;
 } callback_data;
 
 Var* load_hdf5(hid_t parent, callback_data* cb_data);
 
-void WriteHDF5(hid_t parent, char* name, Var* v)
+void make_valid_identifier(char* id)
+{
+	if (!id || !id[0]) return;
+
+	if (!isalpha(id[0]) && id[0] != '_') {
+		id[0] = '_';
+	}
+	
+	char* p = &id[1];
+	while (*p) {
+		if (!isalnum(*p) && *p != '_')
+			*p = '_';
+		++p;
+	}
+}
+
+
+void WriteHDF5(hid_t parent, char* name, Var* v, int hdf_old)
 {
 	hid_t dataset, datatype, native_datatype, dataspace, aid2, attr, child, plist;
 	hsize_t size[3];
@@ -37,11 +55,14 @@ void WriteHDF5(hid_t parent, char* name, Var* v)
 		return;
 	}
 
+
 	if (parent < 0) {
 		top    = 1;
-		//TODO(rswinkle) find the function that validates name (ie makes it a valid identifier)
 		parent = H5Fcreate(name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	}
+
+	// validate the name after above check so we don't change the filename
+	make_valid_identifier(name);
 
 	switch (V_TYPE(v)) {
 	case ID_STRUCT: {
@@ -57,7 +78,7 @@ void WriteHDF5(hid_t parent, char* name, Var* v)
 		}
 		for (i = 0; i < get_struct_count(v); i++) {
 			get_struct_element(v, i, &n, &d);
-			WriteHDF5(child, n, d);
+			WriteHDF5(child, n, d, hdf_old);
 		}
 		if (top == 0) H5Gclose(child);
 		break;
@@ -67,7 +88,10 @@ void WriteHDF5(hid_t parent, char* name, Var* v)
 
 		// member is a value.  Create a dataset
 		for (i = 0; i < 3; i++) {
-			size[2-i] = V_SIZE(v)[i];
+			if (!hdf_old)
+				size[2-i] = V_SIZE(v)[i];
+			else
+				size[i] = V_SIZE(v)[i];
 		}
 		org       = V_ORG(v);
 		dataspace = H5Screate_simple(3, size, NULL);
@@ -292,7 +316,11 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 				// see the fine print Note just above 7.3.2.6 in the HDF5 User's Guide
 				//
 				// www.hdfgroup.org/HDF5/doc/UG/HDF5_Users_Guide-Responsive HTML5/index.html
-				size[2-i] = datasize[i];
+
+				if (!cb_data->hdf_old)
+					size[2-i] = datasize[i];
+				else
+					size[i] = datasize[i];
 			}
 
 			dsize   = H5Sget_simple_extent_npoints(dataspace);
@@ -395,6 +423,8 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 	default: parse_error("Unknown object type");
 	}
 
+	make_valid_identifier(V_NAME(v));
+
 	if (VERBOSE > 2) {
 		if (v)
 			pp_print_var(v, V_NAME(v), 0, 0);
@@ -417,7 +447,7 @@ static herr_t count_group(hid_t group, const char* name, const H5L_info_t* info,
 	return 0;
 }
 
-Var* LoadHDF5(char* filename)
+Var* LoadHDF5(char* filename, int hdf_old)
 {
 	Var* v;
 	hid_t group;
@@ -434,6 +464,7 @@ Var* LoadHDF5(char* filename)
 	callback_data data;
 	data.parent_var = NULL;
 	cvec_void(&data.addresses, 0, 20, sizeof(haddr_t), NULL, NULL);
+	data.hdf_old = hdf_old;
 
 	v = load_hdf5(file, &data);
 
