@@ -25,7 +25,7 @@
 /* Widget, String */
 #include <X11/Intrinsic.h>
 
-#include "parser.h"
+#include "func.h"
 
 /* Data types */
 
@@ -91,7 +91,6 @@ Widget			gui_initDefault(const char *, WidgetClass, Widget, Var *,
 #define DV_GUI_RESOURCES_H
 
 #include <Xm/Xm.h>
-#include "parser.h"
 
 #if 0
 /* FIX: remove */

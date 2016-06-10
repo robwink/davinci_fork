@@ -308,6 +308,7 @@ int parse_args(vfuncptr name, Var* args, Alist* alist)
 			}
 			// Get just the argument part
 			v = V_KEYVAL(v);
+			printf("name = %s\nvalue = \"%s\"\n", ptr, V_NAME(v));
 		} else {
 			/*
 			 * Unnamed arguments.

@@ -34,6 +34,8 @@ Widget      applicationShell = NULL;
 XtAppContext    applicationContext;
 #endif
 
+static int windows = 1;
+int usage(char* prog);
 
 /**
  ** Command line args:

@@ -17,6 +17,9 @@ addons:
         #- libhdf5-serial-dev #on precise
       - gnuplot
 
+branches:
+  except:
+    - header_madness
 
 script:
   - ./configure --disable-jbig && make
