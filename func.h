@@ -19,14 +19,7 @@ extern "C" {
   #include <readline/history.h>
 #endif
 
-  //globals.c
-  void quit(int return_code);
-  void make_sym(Var *, int, char *);
-  Var *eval_buffer(char *buf);
-  void yyerror(char *s);
-  int yywrap();
-  char *unquote(char *);
-  char* unescape(char* str);
+#include "misc.h"
 
 #ifdef HAVE_LIBHDF5
 #include <hdf5.h>
@@ -164,11 +157,6 @@ int is_reserved_var (char *);
 Var *set_reserved_var (Var *, Var *, Var *);
 
 
-// p.c
-int evaluate_keywords (vfuncptr, Var *, struct keywords *);
-
-
-
 /* vicar.h */
 char *get_value (char *, char *);
 
@@ -229,8 +217,8 @@ Var * pp_print(Var *);
 Var *V_func(const char *name, Var *args);
 
 char *get_env_var(char *);
-char *expand_filename(char *);
-char *enumerated_arg(Var *, char **);
+//char *expand_filename(char *);
+//char *enumerated_arg(Var *, char **);
 
 // TODO(rswinkle)
 // This file is the dumping ground for all prototypes?
@@ -246,18 +234,14 @@ Var *rm_symtab(Var *);
 int LoadSpecprHeader(FILE *, char *, int , char *, Var **);
 int dv_LoadVicarHeader(FILE *, char *, int , char *, Var **);
 
-Var *RequireKeyword(char *, struct keywords *, int, int, vfuncptr );
 Var *HasValue(vfuncptr, Var *);
 Var *ufunc_edit(vfuncptr, Var *);
 
 
 int fixup_ranges(Var *v, Range *in, Range *out);
-void split_string(char *buf, int *argc, char ***argv, char *s);
-char *uppercase(char *s);
-char *lowercase(char *s);
-char *ltrim(char *s, const char *trim_chars);
-char *rtrim(char *s, const char *trim_chars);
-char *fix_name(const char *input_name);
+
+
+
 
 int dv_getline(char **ptr, FILE *fp);
 
@@ -423,6 +407,8 @@ extern "C" Var *newVal(int org, int x, int y, int z, int format, void *data);
 #else
 Var *newVal(int org, int x, int y, int z, int format, void *data);
 #endif
+
+// from ff_sort.c
 int cmp_byte(const void *, const void *);
 int cmp_short(const void *, const void *);
 int cmp_int(const void *, const void *);
@@ -431,12 +417,6 @@ int cmp_double(const void *, const void *);
 
 void log_line(char *str);
 
-// defined in newfunc.c
-int parse_args(vfuncptr func, Var* args, Alist* alist);
-int make_args(int* ac, Var*** av, vfuncptr func, Var* args);
-Alist make_alist(const char* name, int type, void* limits, void* value);
-Var* append_arg(Var*, char*, Var*);
-Var* create_args(int, ...);
 
 void print_history(int i);
 

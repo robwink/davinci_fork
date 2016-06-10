@@ -21,14 +21,14 @@ static char const* iom_filetypes[] = {"gif", "jpg", "jpeg", "tif", "tiff", "bmp"
 
 Var* ff_write(vfuncptr func, Var* arg)
 {
-	Var  *ob = NULL;
-	char *filename = NULL;
-	char *title = NULL;
-	char *type=NULL;
-	char *separator = NULL;   /* for csv */
-	int header = 0;           /* for csv */
-	int   force=0;            /* Force file overwrite */
-	int hdf_old = 0;  // write hdf file backward like davinci used to
+	Var* ob         = NULL;
+	char* filename  = NULL;
+	char* title     = NULL;
+	char* type      = NULL;
+	char* separator = NULL; /* for csv */
+	int header      = 0;    /* for csv */
+	int force       = 0;    /* Force file overwrite */
+	int hdf_old     = 0;    // write hdf file backward like davinci used to
 	unsigned short iom_type_idx, iom_type_found;
 
 	Alist alist[9];

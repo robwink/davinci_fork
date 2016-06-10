@@ -16,6 +16,7 @@ typedef struct callback_data {
 
 Var* load_hdf5(hid_t parent, callback_data* cb_data);
 
+// TODO (move to utils.c)
 void make_valid_identifier(char* id)
 {
 	if (!id || !id[0]) return;

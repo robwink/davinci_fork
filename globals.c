@@ -1,9 +1,12 @@
-#include "func.h"
 #include <setjmp.h>
 #include <stdio.h>
 
+#include "parser_types.h"
+
 // These symbols were moved from main.c in order to create
 // a windows dll easier.
+//
+// TODO(rswinkle) move all globals here
 
 int interactive  = 1;
 int continuation = 0;
@@ -30,120 +33,38 @@ int indent   = 0;
 Var* curnode = NULL;
 
 
-// TODO (rswinkle) move the functions to more appropriate place(s)
-// and add similar small functions from main.c to those places
+// from init.c
+const char *FORMAT2STR[] = {
+	0,
+	"byte",
+	"short",
+	"int",
+	"float",
+	"vax float",
+	"",
+	"",
+	"double",
+	"unsigned short" // drd Bug 2208 Loading a particular hdf5 file kills davinci
+};
 
-void quit(int return_code)
-{
-	char* path = getenv("TMPDIR");
+const char *ORG2STR[] = {
+	"bsq",
+	"bil",
+	"bip"
+};
 
-	if (interactive) {
-		printf("\n");
-#if defined(USE_X11_EVENTS) && defined(HAVE_LIBREADLINE)
-		/* JAS FIX */
-		rl_callback_handler_remove();
-#endif
-	}
 
-	clean_scope(scope_tos());
+// from array.c
+/**
+ ** These convert from BSQ to something else
+ ** Which is why orders[BIP] looks funny.
+ **
+ ** This is the "location" of axis N.
+ **/
 
-	// clean up temporary directory
-	rmrf(path);
-	exit(return_code);
-}
-
-void make_sym(Var* v, int format, char* str)
-{
-	V_FORMAT(v)  = format;
-	V_DSIZE(v)   = 1;
-	V_SIZE(v)[0] = V_SIZE(v)[1] = V_SIZE(v)[2] = 1;
-	V_ORG(v)                                   = BSQ;
-	V_DATA(v)                                  = calloc(1, NBYTES(format));
-
-	switch (format) {
-	case INT: *((int*)(V_DATA(v))) = strtol(str, NULL, 10); break;
-	case FLOAT: {
-		double d;
-		d = strtod(str, NULL);
-		// NOTE(rswinkle) this only works because we apply unary minus separately later
-		// otherwise you'd have to check against -FLT_MAX and -FLT_MIN too
-		// also right here is an easy fix to the float intermediate bug/design choice
-		if (((d > FLT_MAX) || (d < FLT_MIN)) && (d != 0)) {
-			free(V_DATA(v));
-			V_DATA(v)               = calloc(1, NBYTES(DOUBLE));
-			V_FORMAT(v)             = DOUBLE;
-			*((double*)(V_DATA(v))) = d;
-		} else {
-			*((float*)(V_DATA(v))) = d;
-		}
-	}
-	}
-}
+int orders[3][3] = {{0, 1, 2}, {0, 2, 1}, {1, 2, 0}};
 
 
 
-void yyerror(char* s)
-{
-	extern int pp_count;
-	extern int pp_line;
 
-	printf("***%*s^ ", pp_count, " ");
-	printf("%s, line %d\n", s, pp_line);
-}
 
-int yywrap()
-{
-	return 1;
-}
-
-char* unquote(char* name)
-{
-	char* p = name;
-
-	if (name == NULL) return NULL;
-	if (*name == 0) return name;
-	if (*name == '"') {
-		p++;
-		name++;
-		while (*name) {
-			if (*name == '"' && *(name - 1) != '\\') break;
-			name++;
-		}
-		*name = '\0';
-	} else if (*name == '\'') {
-		p++;
-		name++;
-		while (*name) {
-			if (*name == '\'' && *(name - 1) != '\\') break;
-			name++;
-		}
-		*name = '\0';
-	}
-	return p;
-}
-
-char* unescape(char* str)
-{
-	char* p = str;
-	char* q = str;
-
-	if (str && *str) {
-		while (*p) {
-			if (*p == '\\') {
-				if (*(p + 1) == 't')
-					*q = '\t';
-				else if (*(p + 1) == 'n')
-					*q = '\n';
-				else
-					*q = *(p + 1);
-				p++;
-			} else {
-				*q = *p;
-			}
-			p++;
-			q++;
-		}
-		*q = *p;
-	}
-	return str;
-}

@@ -30,75 +30,15 @@
 #include <signal.h>
 #include <sys/stat.h>
 
-#include "darray.h"
 #include "system.h"
 
-#include "ff_modules.h"
 
+// NOTE(rswinkle) this is only used 3 times, twice in ff_ix.c
+// and once in tools.c.  Is it really necessary?  Also it precludes
+// checking for malloc failure...
 #define memdup(p, l) memcpy(malloc(l), (p), l)
 
-typedef struct _var Var;
-typedef Var* Vptr;
-/* dvModule is defined in ff_modules.h */
-typedef struct _vfuncptr* vfuncptr;
-typedef Var* (*vfunc)(struct _vfuncptr*, Var*); /* function caller */
-
-typedef struct Range {
-	int dim; /* dimension of data */
-	int lo[3];
-	int hi[3];
-	int step[3];
-} Range;
-
-typedef struct Sym {
-	int format;   /* format of data */
-	size_t dsize; /* total size of data */
-	int size[3];  /* size of each axis */
-	int order;    /* axis application order */
-	void* data;
-	void* null; /* null value */
-	char* title;
-} Sym;
-
-typedef struct Node {
-	Var* left;
-	Var* right;
-	Var* parent;
-
-	// An identifier of what type of value this is:
-	// Possibilities: Constant, Temporary
-	int type;
-
-	int token_number; /* Where in the value table is this puppy located? */
-} Node;
-
-typedef struct Vstruct {
-	int x_count;
-	char** x_names;
-	Var** x_data;
-} Vstruct;
-
-typedef struct TextArray {
-	int Row;
-	char** text;
-} TextArray;
-
-struct _var {
-	int type;
-	char* name;
-	union {
-		Node node;
-		Sym sym;
-		Range range;
-		char* string;
-		Var* keyval; /* used by $Keyword */
-		Narray* vstruct;
-		Narray* args; /* an array of function arguments (same as struct) */
-		TextArray textarray;
-		dvModule mod;      /* a dynamically loaded module */
-		vfuncptr function; /* most likely a module function dereference */
-	} value;
-};
+#include "parser_types.h"
 
 #define V_NAME(v) (v)->name /* NAME of SYMbol in union */
 #define V_TYPE(v) (v)->type /* type of var */
@@ -272,10 +212,6 @@ enum {
 #define PATH_SEP ' '
 #define RECORD_SUFFIX '#'
 
-struct keywords {
-	char* name;
-	Var* value;
-};
 
 typedef double (*dfunc)(double);
 typedef double (*ddfunc)(double, double);
@@ -299,10 +235,12 @@ typedef struct Alist {
 
 #define YYSTYPE Vptr
 #define YYDEBUG 1
-extern YYSTYPE yylval;
+//extern YYSTYPE yylval;
 
+#include "globals.h"
+/*
 extern char error_buf[16384];
-extern char pp_input_buf[8192];
+//extern char pp_input_buf[8192];
 extern int orders[3][3];
 extern Var* VZERO;
 extern char* ORG2STR[];
@@ -312,6 +250,7 @@ extern int DEPTH;
 extern int SCALE;
 extern int debug;
 extern Var *curnode;
+*/
 
 #if defined(_WIN32) && !defined(__MINGW32__)
 #define readline w_readline

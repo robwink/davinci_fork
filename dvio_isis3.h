@@ -1,5 +1,5 @@
-#ifndef ISIS3INCLUDE_H_
-#define ISIS3INCLUDE_H_
+#ifndef DVIO_ISIS3_H
+#define DVIO_ISIS3_H
 
 #define DV_NAMEBUF_MAX 1025
 
@@ -175,4 +175,4 @@ struct stringStack /* Structure definition for a string stack */
 
 typedef struct stringStack STRINGSTACK;
 
-#endif /* ISIS3INCLUDE_H_ */
+#endif

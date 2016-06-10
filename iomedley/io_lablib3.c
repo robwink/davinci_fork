@@ -5951,22 +5951,27 @@ dirname(char *path)
 }
 #endif
 
-static char *uppercase(char *s)
+//TODO(rswinkle) why not use functions in misc.c?
+static char* uppercase(char* s)
 {
-  char *p;
-  for (p = s ; p && *p ; p++) {
-    if (islower(*p)) *p = *p - 'a' + 'A';
-  }
-  return(s);
+	if (s) {
+		for (char* p = s; *p; ++p) {
+			*p = toupper(*p);
+		}
+	}
+	return s;
 }
-static char *lowercase(char *s)
+
+static char* lowercase(char* s)
 {
-  char *p;
-  for (p = s ; p && *p ; p++) {
-    if (isupper(*p)) *p = *p - 'A' + 'a';
-  }
-  return(s);
+	if (s) {
+		for (char* p = s; *p; ++p) {
+			*p = tolower(*p);
+		}
+	}
+	return (s);
 }
+
   char *
 find_file(char *fname)
 {

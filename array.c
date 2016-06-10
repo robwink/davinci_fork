@@ -1,5 +1,7 @@
 #include "func.h"
 
+
+
 /**
  ** Convert specified position to scalar value, by applying range
  **/
@@ -47,14 +49,6 @@ int fixup_ranges(Var* v, Range* in, Range* out)
 	}
 	return (1);
 }
-/**
- ** These convert from BSQ to something else
- ** Which is why orders[BIP] looks funny.
- **
- ** This is the "location" of axis N.
- **/
-
-int orders[3][3] = {{0, 1, 2}, {0, 2, 1}, {1, 2, 0}};
 
 Var* extract_array(Var* v, Range* r)
 {

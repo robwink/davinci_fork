@@ -28,6 +28,8 @@
  ** Indices at which X,Y & Z (or Samples, Lines & Bands)
  ** dimensions end up at.
  **/
+
+// NOTE(rswinkle) this is the same as orders in array.c
 int iom_orders[3][3] = {
     { 0,1,2 },
     { 0,2,1 },

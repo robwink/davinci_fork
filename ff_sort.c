@@ -170,6 +170,10 @@ static inline void qswap(void* base, int i, int j, int width, size_t* sortList)
 	}
 }
 
+// NOTE(rswinkle) What was wrong with ff_sort_old and the standard qsort?  Do we really
+// think we can beat the speed of the standard library?  They don't use plain quicksort and
+// they can take advantage of platform specific optimizations.
+//
 //	QuickSort adapted from Kernighan and Ritchie, 'The C Programming Language'
 static void quicksort(void* base, size_t num, size_t width, int (*cmp)(), size_t* sortList,
                       int left, int right)

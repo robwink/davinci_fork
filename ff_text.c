@@ -1008,6 +1008,9 @@ Var* ff_stringsubst(vfuncptr func, Var* arg)
 	return (result);
 }
 
+// NOTE(rswinkle) what about rtrim in misc.c? Let's combine/reuse and obey DRY
+// and while we're at it why do we have a davinci ff_rtrim
+// but no ff_ltrim?
 char* rtrim_string(char* string, char* trim)
 {
 	char* new_string;
