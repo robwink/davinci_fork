@@ -1,5 +1,9 @@
-#include "parser.h"
-#include "globals.h"
+#include "func.h"
+
+// I want to stop relying on func.h as a "pull in everything" header
+// parser_types.h Var
+//#include "scope.h" clean_scope()
+// error.c parse_error
 
 #include <stddef.h>
 #include <string.h>
@@ -308,7 +312,6 @@ int parse_args(vfuncptr name, Var* args, Alist* alist)
 			}
 			// Get just the argument part
 			v = V_KEYVAL(v);
-			printf("name = %s\nvalue = \"%s\"\n", ptr, V_NAME(v));
 		} else {
 			/*
 			 * Unnamed arguments.

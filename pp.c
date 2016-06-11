@@ -113,7 +113,6 @@ void dump_var(Var* v, int indent, int limit)
 	int x, y, z;
 	int row;
 
-	printf("%p dump_var\n", V_DATA(v));
 	switch (V_TYPE(v)) {
 	case ID_VAL:
 		x = GetSamples(V_SIZE(v), V_ORG(v));

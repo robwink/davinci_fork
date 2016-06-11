@@ -661,9 +661,7 @@ ff_create(vfuncptr func, Var * arg)
   alist[7] = make_alist( "init",   INT,      NULL,     &init);
   alist[8].name = NULL;
 
-  printf("step = %f\n", step);
   if (parse_args(func, arg, alist) == 0) return(NULL);
-  printf("step = %f\n", step);
 
   dsize = (size_t)x*(size_t)y*(size_t)z;
 
@@ -709,9 +707,6 @@ ff_create(vfuncptr func, Var * arg)
   idata = (int *) V_DATA(s);
   fdata = (float *) V_DATA(s);
   ddata = (double *) V_DATA(s);
-
-  printf("%p data\n", V_DATA(s));
-  printf("%d %f %zu\n", init, step, dsize);
 
   if (init){
     if (step == 0){
