@@ -17,6 +17,8 @@
 
 #include "widget_vicar.h"
 
+#include "ff_struct.h"
+
 #include <Xm/Form.h>
 
 /* Some macros. */

@@ -1,3 +1,4 @@
+#include "ff_struct.h"
 #include "func.h"
 
 #if defined(HAVE_LIBCFITSIO) && (defined(HAVE_CFITSIO_FITSIO_H) || defined(HAVE_FITSIO_H))

@@ -1,3 +1,5 @@
+#include "ff_struct.h"
+
 #include "dvio.h"
 #include "dvio_pds4.h"
 #include "endian_norm.h"

@@ -11,6 +11,9 @@
 #include <errno.h>
 #include <pwd.h>
 #include <math.h>
+
+#include "ff_struct.h"
+
 #include "parser.h"
 #include "io_loadmod.h"
 /* #include "dvio.h" */

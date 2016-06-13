@@ -1,3 +1,4 @@
+#include "ff_struct.h"
 #include "fft.h"
 #include "func.h"
 #include <errno.h>

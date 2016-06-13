@@ -2,6 +2,8 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#include "ff_struct.h"
+
 #include "dvio.h"
 #include "func.h"
 #include <assert.h>

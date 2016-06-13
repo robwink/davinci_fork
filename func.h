@@ -145,9 +145,9 @@ Var *pp_math_strings(Var *a, int op, Var *b);
 #ifdef __cplusplus
 extern "C" {
 #endif
-void parse_error(const char *, ...);
-void parse_error2(const char *, ...);
-void memory_error(int error_num, size_t mem_size);
+
+#include "error.h"
+
 #ifdef __cplusplus
 }
 #endif
@@ -443,11 +443,6 @@ Var * ff_delete(vfuncptr func, Var *arg);
 #ifdef __cplusplus
 extern "C" {
 #endif
-  Var *new_struct(int ac);
-  void add_struct(Var *s, const char *name, Var *exp);
-  Var *remove_struct(Var *, int);
-  int find_struct(Var *, const char *, Var **);
-  void free_struct(Var *);
   /* internal functions for text arrays */
   Var *newString(char *str);
   Var *newText(int rows, char **text);

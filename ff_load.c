@@ -1,3 +1,5 @@
+#include "ff_struct.h"
+
 #include "dvio.h"
 #include "io_loadmod.h"
 #include "func.h"

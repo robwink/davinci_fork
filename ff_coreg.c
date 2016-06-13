@@ -1,3 +1,4 @@
+#include "ff_struct.h"
 #include "func.h"
 
 Var* ff_coreg(vfuncptr func, Var* arg)

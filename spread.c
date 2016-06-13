@@ -1,3 +1,4 @@
+#include "ff_struct.h"
 #include "func.h"
 
 Var* make_mask(int size, float dir);

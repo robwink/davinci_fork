@@ -1,3 +1,5 @@
+#include "ff_struct.h"
+
 #include "func.h"
 
 // compute_windowed_mean() - computes the mean and count of the pixels

@@ -1,5 +1,8 @@
 #include "endian_norm.h"
-#include "func.h"
+#include "misc.h"
+
+
+
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>

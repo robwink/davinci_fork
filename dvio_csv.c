@@ -1,3 +1,7 @@
+#include "ff_struct.h"
+
+
+
 #include <ctype.h>
 #include <errno.h>
 #include <float.h>
@@ -24,6 +28,7 @@
 #include "csv.h"
 #include "dvio.h"
 #include "func.h"
+
 #include <ctype.h>
 #include <fcntl.h>
 

@@ -25,6 +25,9 @@
 /* Widget, String */
 #include <X11/Intrinsic.h>
 
+//TODO(rswinkle) move to c files to obey "only include what you need"
+#include "ff_struct.h"
+
 #include "func.h"
 
 /* Data types */

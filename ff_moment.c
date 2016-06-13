@@ -1,3 +1,5 @@
+#include "ff_struct.h"
+
 #include "func.h"
 /**
  ** This function computes some standard statistics of data:

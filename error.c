@@ -3,6 +3,8 @@
 #include <string.h>
 
 extern int VERBOSE;
+
+// TODO(rswinkle) move to globals.c?
 char error_buf[16384];
 
 // TODO(rswinkle) make these macros?  get rid of error_buf

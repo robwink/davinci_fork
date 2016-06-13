@@ -1,7 +1,8 @@
+#include "ff_struct.h"
+
 #include "func.h"
 #include "ff_modules.h"
 #include "math.h"
-#include "parser.h"
 
 static void floodFillScanline(int x, int y, int h, int w, int newColor, int oldColor,
                               unsigned char* screenBuffer);

@@ -4,6 +4,9 @@
 #include "darray.h"
 #include "ff_modules.h"
 
+//for size_t
+#include <stdlib.h>
+
 typedef struct _var Var;
 typedef Var* Vptr;
 /* dvModule is defined in ff_modules.h */

@@ -19,6 +19,8 @@
 
 #include "widget_command.h"
 
+#include "ff_struct.h"
+
 /*****************************************************************************
  *
  * PROTOTYPES

@@ -1,3 +1,5 @@
+#include "ff_struct.h"
+
 #include "darray.h"
 #include "func.h"
 

@@ -1,7 +1,7 @@
+#include "ff_struct.h"
 #include "func.h"
 #include "dvio.h"
 #include "ff_modules.h"
-#include "parser.h"
 
 typedef struct {
 	float* emiss;

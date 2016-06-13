@@ -40,6 +40,8 @@
 
 #include "dvio_isis3.h"
 
+#include "ff_struct.h"
+
 #include "dvio.h"
 #include "func.h"
 

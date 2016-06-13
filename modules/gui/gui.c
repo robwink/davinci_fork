@@ -69,7 +69,7 @@
 #include <X11/IntrinsicP.h>
 #include <Xm/DialogS.h>
 
-#include "parser.h"
+#include "ff_struct.h"
 /* FIX: #include "help.h" */
 #include "gui.h"
 /* FIX: #include "resources.h" */
