@@ -1,5 +1,8 @@
 davinci
 =======
+
+[![Build Status](https://travis-ci.org/robwink/davinci.svg?branch=master)](https://travis-ci.org/robwink/davinci)
+
 Davinci is a hyperspectral math engine, developed for JPL under
 contract #959904.  You can always obtain the latest version of davinci from
 [davinc.asu.edu](davinci.asu.edu)

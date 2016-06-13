@@ -1,8 +1,11 @@
+#include "ff_struct.h"
+
 #include "dvio.h"
 #include "ff_modules.h"
 #include "func.h"
 #include "help.h"
 
+//TODO(rswinkle) where are these defined?  include appropriate header
 void commaize(char*);
 void pp_print_var(Var* v, char* name, int indent, int depth);
 
@@ -11,7 +14,6 @@ extern Var* string_subset(Var*, Var*);
 extern Var* set_text(Var*, Range*, Var*);
 extern Var* set_string(Var*, Range*, Var*);
 extern Var* where_text(Var*, Var*, Var*);
-extern Var* duplicate_struct(Var* v);
 extern Var* dd_get_argc(Scope* s);
 extern Var* dd_make_arglist(Scope* s);
 

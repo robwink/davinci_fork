@@ -1,3 +1,4 @@
+#include "ff_struct.h"
 #include "func.h"
 
 #if !(defined(__CYGWIN__) || defined(__MINGW32__))

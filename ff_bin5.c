@@ -8,6 +8,7 @@
 #include <sys/mman.h>
 #endif
 
+#include "ff_struct.h"
 #include "func.h"
 
 typedef enum {
@@ -73,6 +74,8 @@ static int get_arch_id(const char* arch)
 	return 0;
 }
 
+// NOTE(rswinkle) could be used elsewhere, might already be
+// duplicate functionality somewhere
 static void byte_swap(char* buff, int nbytes)
 {
 	int i, n;

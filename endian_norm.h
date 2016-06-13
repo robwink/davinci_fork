@@ -1,4 +1,11 @@
-#include "parser.h"
+#ifndef ENDIAN_NORM_H
+#define ENDIAN_NORM_H
+
+#include "parser_types.h"
+
+//for size_t
+#include <stdlib.h>
+
 #define intswap(i) (i) = ((((i) >> 24) & 0xFF) | (((i) >> 8) & 0xFF00) | \
                           (((i) << 8) &0xFF0000) | (((i) << 24) & 0xFF000000))
 char * flip_endian(unsigned char *, size_t, unsigned int);
@@ -7,3 +14,5 @@ char * var_endian(Var *);
 
 void MSB(unsigned char * data, unsigned int data_elem, unsigned int word_size);
 void LSB(unsigned char * data, unsigned int data_elem, unsigned int word_size);
+
+#endif

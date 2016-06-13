@@ -1,5 +1,12 @@
 #include "endian_norm.h"
+#include "ff_struct.h"
 #include "misc.h"
+#include "error.h"
+
+//parser_types.h is pulled in above headers
+
+#include <ctype.h>
+
 
 
 

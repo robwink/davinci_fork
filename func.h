@@ -403,6 +403,7 @@ Var * ff_write_isis_cub(vfuncptr func, Var *args);
 double bbr(double, double);
 double btemp(double, double);
 #ifdef __cplusplus
+//ff.c
 extern "C" Var *newVal(int org, int x, int y, int z, int format, void *data);
 #else
 Var *newVal(int org, int x, int y, int z, int format, void *data);
@@ -432,40 +433,17 @@ Var *varray_subset(Var *v, Range *r);
 
 Var *set_varray(Var *v, Range *r, Var *e);
 void print_text(Var *v, int indent);
-Var * create_struct(Var *v);
 Var *ff_syscall(vfuncptr func, Var * arg);
 
 Var * ff_dump(vfuncptr func, Var * arg);
 Var * ff_global(vfuncptr func, Var * arg);
 Var * ff_delete(vfuncptr func, Var *arg);
 
-/* internal functions for structures */
-#ifdef __cplusplus
-extern "C" {
-#endif
-  /* internal functions for text arrays */
-  Var *newString(char *str);
-  Var *newText(int rows, char **text);
-  int get_struct_element(const Var *v, const int i, char **name, Var **data);
-  int get_struct_count(const Var *v);
-#ifdef __cplusplus
-}
-#endif
-
 /*Text/string functions*/
 Var *ff_rtrim(vfuncptr func, Var *arg);
 
 Var *ff_equals(vfuncptr func, Var *arg);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-  Var * newInt(int i);
-  Var * newFloat(float f);
-  Var * newDouble(double f);
-#ifdef __cplusplus
-}
-#endif
 Var *ff_xplot(vfuncptr func, Var *arg);
 Var *ff_vplot(vfuncptr func, Var *arg);
 Var *ff_killchild(vfuncptr func, Var *arg);
@@ -555,8 +533,6 @@ int array_replace(Var *dst, Var *src, Range *r);
 
 char *make_temp_file_path_in_dir(char *dir);
 char * make_temp_file_path();
-
-int compare_vars(Var *a, Var *b);
 
 extern void pp_print_var(Var *, char *, int, int);
 Var *ff_grassfire(vfuncptr func, Var * arg);

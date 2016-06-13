@@ -1,12 +1,11 @@
 #include "ff.h"
 #include "apidef.h"
+
+#include "ff_struct.h"
+
 #include <string.h>
 #include <errno.h>
 #include <math.h>
-
-#ifdef rfunc
-#include "rfunc.h"
-#endif
 
 #ifdef HAVE_LIBREADLINE
 #include "ff_source.h"
@@ -1422,22 +1421,6 @@ ff_system(vfuncptr func, Var * arg)
   return newInt(sys_rtnval);
 }
 
-Var *
-newVal(int org, int x, int y, int z, int format, void *data)
-{
-  Var *v = NULL;
-  if (!(v = newVar()))
-    return NULL;
-  V_TYPE(v) = ID_VAL;
-  V_ORG(v) = org;
-  V_DSIZE(v) = ((size_t)x)*((size_t)y)*((size_t)z);
-  V_SIZE(v)[0] = x;
-  V_SIZE(v)[1] = y;
-  V_SIZE(v)[2] = z;
-  V_FORMAT(v) = format;
-  V_DATA(v) = data;
-  return(v);
-}
 
 Var *
 ff_exit(vfuncptr func, Var * arg)
@@ -1823,102 +1806,6 @@ ff_equals(vfuncptr func, Var * arg)
   return(v);
 }
 
-int
-compare_vars(Var *a, Var *b)
-{
-  size_t i;
-  int x1, y1, z1;
-  int x2, y2, z2;
-  int rows, format;
-
-  if (a == NULL || b == NULL) return(0);
-  if (V_TYPE(a) != V_TYPE(b)) return(0);
-
-  switch (V_TYPE(a)) {
-    case ID_STRUCT:
-      return(compare_struct(a, b));
-
-    case ID_TEXT:
-      if (V_TEXT(a).Row != V_TEXT(b).Row) return(0);
-      rows = V_TEXT(a).Row;
-      for (i = 0 ; i < rows ; i++) {
-        if (strcmp(V_TEXT(a).text[i], V_TEXT(b).text[i])) {
-          return(0);
-        }
-      }
-      return(1);
-
-    case ID_STRING:
-      if (strcmp(V_STRING(a), V_STRING(b))) {
-        return(0);
-      }
-      return(1);
-
-    case ID_VAL:
-      /*
-      ** pp_math will give us an answer,
-      ** but will also let us use smaller sets.
-      ** Verify that these are the same size first
-      */
-      x1 = GetSamples(V_SIZE(a), V_ORG(a));
-      y1 = GetLines(V_SIZE(a), V_ORG(a));
-      z1 = GetBands(V_SIZE(a), V_ORG(a));
-
-      x2 = GetSamples(V_SIZE(b), V_ORG(b));
-      y2 = GetLines(V_SIZE(b), V_ORG(b));
-      z2 = GetBands(V_SIZE(b), V_ORG(b));
-
-      if (x1 != x2 || y1 != y2 || z1 != z2) {
-        return(0);
-      }
-
-      format = max(V_FORMAT(a), V_FORMAT(b));
-
-      for (i = 0 ; i < V_DSIZE(a) ; i++) {
-        switch(format) {
-          case BYTE:
-          case SHORT:
-          case INT:
-            if (extract_int(a,i) != extract_int(b,rpos(i,a,b)))
-              return(0);
-            break;
-          case FLOAT:
-            if (extract_float(a,i) != extract_float(b,rpos(i,a, b)))
-              return(0);
-            break;
-          case DOUBLE:
-            if (extract_double(a,i) != extract_double(b,rpos(i,a, b)))
-              return(0);
-            break;
-        }
-      }
-      return(1);
-  }
-  return(0);
-}
-
-
-Var *
-newInt(int i)
-{
-  Var *v = newVal(BSQ, 1, 1,1, INT, calloc(1, sizeof(int)));
-  V_INT(v) = i;
-  return(v);
-}
-Var *
-newFloat(float f)
-{
-  Var *v = newVal(BSQ, 1, 1,1, FLOAT, calloc(1, sizeof(float)));
-  V_FLOAT(v) = f;
-  return(v);
-}
-Var *
-newDouble(double d)
-{
-  Var *v = newVal(BSQ, 1, 1,1, DOUBLE, calloc(1, sizeof(double)));
-  V_DOUBLE(v) = d;
-  return(v);
-}
 
 Var *
 ff_killchild(vfuncptr func, Var *arg)

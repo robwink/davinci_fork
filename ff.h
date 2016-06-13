@@ -1,5 +1,8 @@
 #ifndef _FF_H_
 #define _FF_H_
+
+//This is honestly the only place func.h should be used
+//and it should just list all davinci user function prototypes
 #include "func.h"
 
 /**

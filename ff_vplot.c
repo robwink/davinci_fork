@@ -1,3 +1,4 @@
+#include "ff_struct.h"
 #include "func.h"
 
 // This is probably overriden in config.h

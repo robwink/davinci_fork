@@ -1,11 +1,10 @@
+#include "ff_struct.h"
 #include "func.h"
 
 
+// TODO(rswinkle) move to a different c file?
 
-/**
- ** Convert specified position to scalar value, by applying range
- **/
-
+// Convert specified position to scalar value, by applying range
 int fixup(int i, Range* in, Range* out, int maxsize)
 {
 	out->lo[i]   = in->lo[i];
@@ -26,6 +25,7 @@ int fixup(int i, Range* in, Range* out, int maxsize)
 	return (1);
 }
 
+//used in pp.c
 int fixup_ranges(Var* v, Range* in, Range* out)
 {
 	int i, j;
@@ -50,6 +50,7 @@ int fixup_ranges(Var* v, Range* in, Range* out)
 	return (1);
 }
 
+//used in 5 files
 Var* extract_array(Var* v, Range* r)
 {
 	Range rout;
@@ -63,10 +64,7 @@ Var* extract_array(Var* v, Range* r)
 	void* data;
 	int bytes, opt_bytes, opt_step;
 
-	/**
-	 ** fix up range values for use and do error detection.
-	 **/
-
+	// fix up range values for use and do error detection.
 	if (fixup_ranges(v, r, &rout) == 0) {
 		parse_error("Illegal range value.");
 		return (NULL);
@@ -121,16 +119,6 @@ Var* extract_array(Var* v, Range* r)
 	return (out);
 }
 
-/*
-Var *
-subset(Var *v,
-        int xlo, int xhi, int xskip,
-        int ylo, int yhi, int yskip,
-        int zlo, int zhi, int zskip)
-{
-
-}
-*/
 
 Var* ff_translate(vfuncptr func, Var* arg)
 {

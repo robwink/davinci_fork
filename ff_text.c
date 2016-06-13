@@ -6,24 +6,9 @@
 #include <libgen.h>
 #endif
 
+//TODO(rswinkle) ?
 extern char* __loc1; /*Global char * for regex */
 
-Var* newString(char* str)
-{
-	Var* v      = newVar();
-	V_TYPE(v)   = ID_STRING;
-	V_STRING(v) = str;
-	return (v);
-}
-
-Var* newText(int rows, char** text)
-{
-	Var* v         = newVar();
-	V_TYPE(v)      = ID_TEXT;
-	V_TEXT(v).Row  = rows;
-	V_TEXT(v).text = text;
-	return (v);
-}
 
 /**
  ** read a text file into BYTE data
