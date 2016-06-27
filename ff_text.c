@@ -6,7 +6,9 @@
 #include <libgen.h>
 #endif
 
-//TODO(rswinkle) ?
+//TODO(rswinkle) libgen.h should bring this in?
+// need to update to regexec/regcomp etc. from legacy
+// regex regcmp anyway
 extern char* __loc1; /*Global char * for regex */
 
 

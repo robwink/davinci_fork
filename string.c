@@ -89,7 +89,6 @@ Var* ff_atof(vfuncptr func, Var* arg)
 ** Add something to a string.
 ** This takes a char* so that it can be used in a loop by add_text()
 */
-
 char* do_add_strings(char* s1, Var* v, int flag)
 {
 	int len;
@@ -122,10 +121,7 @@ char* do_add_strings(char* s1, Var* v, int flag)
 	return ptr;
 }
 
-/*
-** add something to a TEXT
-*/
-
+// add something to a TEXT
 Var* do_add_text(Var* text, Var* v, int flag)
 {
 	char *s1, *s2;
@@ -169,12 +165,6 @@ Var* do_add_text(Var* text, Var* v, int flag)
 	}
 	return NULL;
 }
-
-/**
- ** pp_add_strings()
- **
- ** This is called from pp_math.c
- **/
 
 Var* pp_add_strings(Var* a, Var* b)
 {

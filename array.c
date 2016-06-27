@@ -1,5 +1,12 @@
 #include "ff_struct.h"
-#include "func.h"
+#include "error.h"
+
+#include "parser_types.h"
+
+#include "globals.h"
+#include "misc.h"
+
+#include <string.h>
 
 
 // TODO(rswinkle) move to a different c file?

@@ -160,8 +160,8 @@ Var *set_reserved_var (Var *, Var *, Var *);
 /* vicar.h */
 char *get_value (char *, char *);
 
-/* read.c */
 
+// Remove these
 Var *LoadSpecpr(FILE *,char *,int );
 Var *LoadSpecprHeaderStruct(FILE *,char *,int );
 int dv_LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var);
@@ -199,7 +199,8 @@ int is_imath(FILE *);
 FILE *uncompress(FILE *, char *);
 
 
-
+// p.c only used in parser.c/y
+// can we combine p.c with parser.c?
 Var *p_mknod(int, Var *, Var *);
 Var *p_mkval(int, char *);
 Var *evaluate(Var *);

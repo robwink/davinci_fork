@@ -1,4 +1,13 @@
+
+#include "csv.h"
+#include "dvio.h"
+
+#include "error.h"
+#include "misc.h"
 #include "ff_struct.h"
+
+//parser_types.h is pulled in above headers
+
 
 
 
@@ -25,11 +34,7 @@
 #include <libgen.h>
 #endif
 
-#include "csv.h"
-#include "dvio.h"
-#include "func.h"
 
-#include <ctype.h>
 #include <fcntl.h>
 
 typedef unsigned char uchar;

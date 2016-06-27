@@ -2,6 +2,7 @@
 #define GLOBALS_H
 
 #include "parser_types.h"
+#include <stdio.h>
 
 extern char error_buf[16384];
 
