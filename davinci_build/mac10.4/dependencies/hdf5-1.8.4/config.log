@@ -30,8 +30,8 @@ Kernel configured for up to 2 processors.
 Processor type: i486 (Intel 80486)
 Processors active: 0 1
 Primary memory available: 2.00 gigabytes
-Default processor set: 193 tasks, 709 threads, 2 processors
-Load average: 2.11, Mach factor: 0.30
+Default processor set: 189 tasks, 747 threads, 2 processors
+Load average: 2.01, Mach factor: 0.35
 /bin/machine           = unknown
 /usr/bin/oslevel       = unknown
 /bin/universe          = unknown
@@ -148,7 +148,7 @@ PATH=/bin:/usr/bin:/usr/X11R6/bin:/opt/local/bin:/usr/local/bin/:/sw/bin
 PATH_SEPARATOR=:
 PIPESTATUS=([0]="0")
 POSIXLY_CORRECT=y
-PPID=9301
+PPID=47425
 PS1='$ '
 PS2='> '
 PS4='+ '
@@ -158,7 +158,7 @@ SHELL=/bin/sh
 SHELLOPTS=braceexpand:hashall:interactive-comments:posix
 SHLVL=2
 SSH_AUTH_SOCK=/private/tmp/com.apple.launchd.QfG9SWd7U3/Listeners
-SUDO_COMMAND='./build_mac.sh 10.6'
+SUDO_COMMAND='./build_mac.sh 10.10'
 SUDO_GID=20
 SUDO_UID=501
 SUDO_USER=admin
@@ -2975,7 +2975,7 @@ configure:24592: checking for _getvideoconfig
 configure:24592: gcc -arch x86_64 -o conftest        conftest.c -lz -lm  >&5
 Undefined symbols for architecture x86_64:
   "__getvideoconfig", referenced from:
-      _main in conftest-1196b7.o
+      _main in conftest-588a84.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:24592: $? = 1
@@ -3125,7 +3125,7 @@ configure:24592: checking for gettextinfo
 configure:24592: gcc -arch x86_64 -o conftest        conftest.c -lz -lm  >&5
 Undefined symbols for architecture x86_64:
   "_gettextinfo", referenced from:
-      _main in conftest-c2114e.o
+      _main in conftest-e68b55.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:24592: $? = 1
@@ -3275,7 +3275,7 @@ configure:24592: checking for GetConsoleScreenBufferInfo
 configure:24592: gcc -arch x86_64 -o conftest        conftest.c -lz -lm  >&5
 Undefined symbols for architecture x86_64:
   "_GetConsoleScreenBufferInfo", referenced from:
-      _main in conftest-c60638.o
+      _main in conftest-3f2bfd.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:24592: $? = 1
@@ -3425,7 +3425,7 @@ configure:24605: checking for _scrsize
 configure:24605: gcc -arch x86_64 -o conftest        conftest.c -lz -lm  >&5
 Undefined symbols for architecture x86_64:
   "__scrsize", referenced from:
-      _main in conftest-0b64d5.o
+      _main in conftest-8be3e5.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:24605: $? = 1
@@ -3871,7 +3871,7 @@ configure:24765: checking for BSDgettimeofday
 configure:24765: gcc -arch x86_64 -o conftest        conftest.c -lz -lm  >&5
 Undefined symbols for architecture x86_64:
   "_BSDgettimeofday", referenced from:
-      _main in conftest-7ca82a.o
+      _main in conftest-f24356.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:24765: $? = 1
@@ -4047,7 +4047,7 @@ configure:24765: checking for setsysinfo
 configure:24765: gcc -arch x86_64 -o conftest        conftest.c -lz -lm  >&5
 Undefined symbols for architecture x86_64:
   "_setsysinfo", referenced from:
-      _main in conftest-c9a22b.o
+      _main in conftest-460ad0.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:24765: $? = 1
@@ -5187,7 +5187,7 @@ CC_VERSION='/usr/bin/gcc -arch x86_64'
 CFLAGS=''
 CLEARFILEBUF='yes'
 CODESTACK='no'
-CONFIG_DATE='Thu Jun 23 16:57:43 PDT 2016'
+CONFIG_DATE='Mon Jun 27 12:00:05 PDT 2016'
 CONFIG_MODE='production'
 CONFIG_USER='root@dhcp195-118.mars.asu.edu'
 CPP='gcc -arch x86_64 -E'

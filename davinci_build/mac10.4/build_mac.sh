@@ -376,22 +376,22 @@ if [ "`echo $packages | grep davinci`" ]; then
 	echo "Updating dvlib xml file"
 	lib_version=`svn info $source/library/. | sed '/^Last Changed Date:/!d;s/^[^:]*: //;s/ .*$//'`
 	[[ $? -eq 0 ]] || lib_version=`date +'%Y-%m-%d'`
-	xml ed -u '/pkgref/config/version' -v "${lib_version}" davinci.pmdoc/02dvlib.xml > /tmp/x.xml && mv /tmp/x.xml davinci.pmdoc/02dvlib.xml
+	xmlstarlet ed -u '/pkgref/config/version' -v "${lib_version}" davinci.pmdoc/02dvlib.xml > /tmp/x.xml && mv /tmp/x.xml davinci.pmdoc/02dvlib.xml
 	[[ $? -eq 0 ]] || failed "Updating 02dvlib.xml with version/release failed."
 
 	echo "Updating davinci xml file"
-	xml ed -u '/pkgref/config/version' -v "${version}-${release}" davinci.pmdoc/01davinci.xml > /tmp/x.xml && mv /tmp/x.xml davinci.pmdoc/01davinci.xml
+	xmlstarlet ed -u '/pkgref/config/version' -v "${version}-${release}" davinci.pmdoc/01davinci.xml > /tmp/x.xml && mv /tmp/x.xml davinci.pmdoc/01davinci.xml
 	[[ $? -eq 0 ]] || failed "Updating 01davinci.xml with version/release failed."
 	
 	echo "Updating index file with OS version"
-	xml ed -u '/pkmkdoc/requirements/requirement[1]/@value' -v "${tgt_os}" davinci.pmdoc/index.xml > /tmp/x.xml && mv /tmp/x.xml davinci.pmdoc/index.xml
+	xmlstarlet ed -u '/pkmkdoc/requirements/requirement[1]/@value' -v "${tgt_os}" davinci.pmdoc/index.xml > /tmp/x.xml && mv /tmp/x.xml davinci.pmdoc/index.xml
 	[[ $? -eq 0 ]] || failed "Updating index.xml with target OS (low) failed."
-	xml ed -u '/pkmkdoc/requirements/requirement/message' -v "This release will work on ${tgt_os} or higher" davinci.pmdoc/index.xml > /tmp/x.xml && mv /tmp/x.xml davinci.pmdoc/index.xml
+	xmlstarlet ed -u '/pkmkdoc/requirements/requirement/message' -v "This release will work on ${tgt_os} or higher" davinci.pmdoc/index.xml > /tmp/x.xml && mv /tmp/x.xml davinci.pmdoc/index.xml
 	[[ $? -eq 0 ]] || failed "Updating index.xml with target OS message failed."
 
 	echo "Updating Info.plist file with davinci version"
 	info_plist="${dv_app_dir}/Contents/Info.plist"
-	xml ed -u '//dict/string[text()="9.99"]' -v "${major}.${minor}-${release}" ${info_plist} > /tmp/x.xml && mv /tmp/x.xml ${info_plist}
+	xmlstarlet ed -u '//dict/string[text()="9.99"]' -v "${major}.${minor}-${release}" ${info_plist} > /tmp/x.xml && mv /tmp/x.xml ${info_plist}
 	[[ $? -eq 0 ]] || failed "Updating Info.plist with davinci version."
 
 	#build the davinci package
@@ -425,7 +425,7 @@ if [ "`echo $packages | grep dvlib`" ]; then
 	echo "Updating dvlib xml file"
 	lib_version=`svn info $source/library/. | sed '/^Last Changed Date:/!d;s/^[^:]*: //;s/ .*$//'`
 	[[ $? -eq 0 ]] || lib_version=`date +'%Y-%m-%d'`
-	xml ed -u '/pkgref/config/version' -v "${lib_version}" dvlib.pmdoc/01dvlib.xml > /tmp/x.xml && mv /tmp/x.xml dvlib.pmdoc/01dvlib.xml
+	xmlstarlet ed -u '/pkgref/config/version' -v "${lib_version}" dvlib.pmdoc/01dvlib.xml > /tmp/x.xml && mv /tmp/x.xml dvlib.pmdoc/01dvlib.xml
 	[[ $? -eq 0 ]] || failed "Updating 01dvlib.xml with version/release failed."
 
 	#make library package

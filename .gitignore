@@ -4,6 +4,7 @@
 *.lo
 *.Po
 *.Plo
+*.dmg
 *.a
 *.la
 tags
