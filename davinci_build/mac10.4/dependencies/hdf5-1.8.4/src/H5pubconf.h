@@ -481,7 +481,7 @@
 #define H5_PACKAGE_VERSION "1.8.4"
 
 /* Width for printf() for type `long long' or `__int64', use `ll' */
-#define H5_PRINTF_LL_WIDTH "ll"
+#define H5_PRINTF_LL_WIDTH "l"
 
 /* The size of `char', as computed by sizeof. */
 #define H5_SIZEOF_CHAR 1
@@ -532,7 +532,7 @@
 #define H5_SIZEOF_INT_LEAST8_T 1
 
 /* The size of `long', as computed by sizeof. */
-#define H5_SIZEOF_LONG 4
+#define H5_SIZEOF_LONG 8
 
 /* The size of `long double', as computed by sizeof. */
 #define H5_SIZEOF_LONG_DOUBLE 16
@@ -550,10 +550,10 @@
 #define H5_SIZEOF_SHORT 2
 
 /* The size of `size_t', as computed by sizeof. */
-#define H5_SIZEOF_SIZE_T 4
+#define H5_SIZEOF_SIZE_T 8
 
 /* The size of `ssize_t', as computed by sizeof. */
-#define H5_SIZEOF_SSIZE_T 4
+#define H5_SIZEOF_SSIZE_T 8
 
 /* The size of `uint16_t', as computed by sizeof. */
 #define H5_SIZEOF_UINT16_T 2

@@ -15,7 +15,7 @@
 #
 # Tests for the h5dump tool
 
-H5_LONE_COLON="yes"
+H5_LONE_COLON="no"
 
 DUMPER=h5dump               # The tool name
 DUMPER_BIN=`pwd`/$DUMPER    # The path of the tool binary

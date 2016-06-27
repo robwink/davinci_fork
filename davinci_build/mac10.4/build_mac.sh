@@ -260,7 +260,7 @@ if [ "`echo $packages | grep davinci`" ]; then
 	then
 		echo "Building gd"
 		cd $dep/gd-2.0.35/
-		./configure --with-x --x-includes=/usr/X11/include --x-libraries=/usr/X11/lib --prefix=$gplot_install_dir 
+		./configure --with-x --x-includes=/usr/X11/include --x-libraries=/usr/X11/lib --prefix=$gplot_install_dir --with-png=$gplot_install_dir
 		[[ $? -eq 0 ]] || failed "Unable to configure gd."
 		make clean && make install
 		[[ $? -eq 0 ]] || failed "Unable to build/install gd."

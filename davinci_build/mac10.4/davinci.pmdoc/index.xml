@@ -56,8 +56,8 @@
     </locale>
   </resources>
   <requirements>
-    <requirement id="tosv" operator="ge" value="10.8">
-      <message>This release will work on 10.8 or higher</message>
+    <requirement id="tosv" operator="ge" value="10.6">
+      <message>This release will work on 10.6 or higher</message>
     </requirement>
   </requirements>
   <flags/>

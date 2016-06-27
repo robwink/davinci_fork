@@ -4,11 +4,11 @@
 General Information:
 -------------------
 		   HDF5 Version: 1.8.4
-		  Configured on: Tue Feb 16 14:30:27 MST 2010
-		  Configured by: saadat@maya.mobile.asu.edu
+		  Configured on: Thu Jun 23 16:57:43 PDT 2016
+		  Configured by: root@dhcp195-118.mars.asu.edu
 		 Configure mode: production
-		    Host system: i386-apple-darwin9.8.0
-	      Uname information: Darwin maya.mobile.asu.edu 9.8.0 Darwin Kernel Version 9.8.0: Wed Jul 15 16:55:01 PDT 2009; root:xnu-1228.15.4~1/RELEASE_I386 i386
+		    Host system: i386-apple-darwin14.5.0
+	      Uname information: Darwin dhcp195-118.mars.asu.edu 14.5.0 Darwin Kernel Version 14.5.0: Tue Sep  1 21:23:09 PDT 2015; root:xnu-2782.50.1~1/RELEASE_X86_64 x86_64
 		       Byte sex: little-endian
 		      Libraries: 
 	     Installation point: /Applications/davinci.app/Contents/Resources
@@ -16,9 +16,9 @@ General Information:
 Compiling Options:
 ------------------
                Compilation Mode: production
-                     C Compiler: /usr/bin/gcc (gcc-4.0.1)
+                     C Compiler: /usr/bin/gcc -arch x86_64
                          CFLAGS: 
-                      H5_CFLAGS: -std=c99 -pedantic -Wall -Wextra -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Winline -Wno-long-long -Wfloat-equal -Wmissing-format-attribute -Wmissing-noreturn -Wpacked -Wdisabled-optimization -Wendif-labels -Wdeclaration-after-statement -Wold-style-definition -Winvalid-pch -Wvariadic-macros -Wnonnull -Winit-self -Wmissing-include-dirs -Wswitch-default -Wswitch-enum -Wunused-macros -O -fomit-frame-pointer -finline-functions
+                      H5_CFLAGS:  
                       AM_CFLAGS: 
                        CPPFLAGS: 
                     H5_CPPFLAGS:   -DNDEBUG -UH5_DEBUG_API

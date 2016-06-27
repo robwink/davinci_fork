@@ -481,7 +481,7 @@
 #define PACKAGE_VERSION "1.8.4"
 
 /* Width for printf() for type `long long' or `__int64', use `ll' */
-#define PRINTF_LL_WIDTH "ll"
+#define PRINTF_LL_WIDTH "l"
 
 /* The size of `char', as computed by sizeof. */
 #define SIZEOF_CHAR 1
@@ -532,7 +532,7 @@
 #define SIZEOF_INT_LEAST8_T 1
 
 /* The size of `long', as computed by sizeof. */
-#define SIZEOF_LONG 4
+#define SIZEOF_LONG 8
 
 /* The size of `long double', as computed by sizeof. */
 #define SIZEOF_LONG_DOUBLE 16
@@ -550,10 +550,10 @@
 #define SIZEOF_SHORT 2
 
 /* The size of `size_t', as computed by sizeof. */
-#define SIZEOF_SIZE_T 4
+#define SIZEOF_SIZE_T 8
 
 /* The size of `ssize_t', as computed by sizeof. */
-#define SIZEOF_SSIZE_T 4
+#define SIZEOF_SSIZE_T 8
 
 /* The size of `uint16_t', as computed by sizeof. */
 #define SIZEOF_UINT16_T 2

@@ -38,7 +38,7 @@ HL="hl"
 ##                                                                        ##
 ############################################################################
 
-host_os="darwin9.8.0"
+host_os="darwin14.5.0"
 
 prog_name="`basename $0`"
 
@@ -56,8 +56,8 @@ dash_c="no"
 get_output_file="no"
 
 SHOW="eval"
-CCBASE="gcc"
-CLINKERBASE="gcc"
+CCBASE="gcc -arch x86_64"
+CLINKERBASE="gcc -arch x86_64"
 CFLAGS=" "
 CPPFLAGS=" "
 LDFLAGS=" "
