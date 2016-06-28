@@ -5,7 +5,7 @@ libdir=@libdir@
 SHELL = /bin/sh
 
 LIBTIFF = libtiff.a
-LIBTIFFDIR = tiff-4.0.3
+LIBTIFFDIR = tiff-4.0.6
 
 LIBJPEG = libjpeg.a
 LIBJPEGDIR = libjpeg

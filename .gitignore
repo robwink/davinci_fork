@@ -245,64 +245,64 @@ iomedley/config.log
 iomedley/config.cache
 iomedley/Makefile
 iomedley/iom_config.h
-iomedley/tiff-4.0.3/Makefile
-iomedley/tiff-4.0.3/build/Makefile
-iomedley/tiff-4.0.3/config.status
-iomedley/tiff-4.0.3/contrib/Makefile
-iomedley/tiff-4.0.3/contrib/addtiffo/Makefile
-iomedley/tiff-4.0.3/contrib/addtiffo/addtiffo
-iomedley/tiff-4.0.3/contrib/addtiffo/.libs
-iomedley/tiff-4.0.3/contrib/dbs/Makefile
-iomedley/tiff-4.0.3/contrib/dbs/.libs
-iomedley/tiff-4.0.3/contrib/dbs/tiff-bi
-iomedley/tiff-4.0.3/contrib/dbs/tiff-grayscale
-iomedley/tiff-4.0.3/contrib/dbs/tiff-palette
-iomedley/tiff-4.0.3/contrib/dbs/tiff-rgb
-iomedley/tiff-4.0.3/contrib/dbs/xtiff/Makefile
-iomedley/tiff-4.0.3/contrib/iptcutil/Makefile
-iomedley/tiff-4.0.3/contrib/iptcutil/iptcutil
-iomedley/tiff-4.0.3/contrib/mfs/Makefile
-iomedley/tiff-4.0.3/contrib/pds/Makefile
-iomedley/tiff-4.0.3/contrib/ras/Makefile
-iomedley/tiff-4.0.3/contrib/stream/Makefile
-iomedley/tiff-4.0.3/contrib/tags/Makefile
-iomedley/tiff-4.0.3/contrib/win_dib/Makefile
-iomedley/tiff-4.0.3/html/Makefile
-iomedley/tiff-4.0.3/html/images/Makefile
-iomedley/tiff-4.0.3/html/man/Makefile
-iomedley/tiff-4.0.3/libtiff/Makefile
-iomedley/tiff-4.0.3/libtiff/mkg3states
-iomedley/tiff-4.0.3/libtiff/.libs
-iomedley/tiff-4.0.3/libtiff-4.pc
-iomedley/tiff-4.0.3/libtool
-iomedley/tiff-4.0.3/man/Makefile
-iomedley/tiff-4.0.3/port/Makefile
-iomedley/tiff-4.0.3/test/Makefile
-iomedley/tiff-4.0.3/tools/Makefile
-iomedley/tiff-4.0.3/tools/bmp2tiff
-iomedley/tiff-4.0.3/tools/fax2ps
-iomedley/tiff-4.0.3/tools/fax2tiff
-iomedley/tiff-4.0.3/tools/gif2tiff
-iomedley/tiff-4.0.3/tools/pal2rgb
-iomedley/tiff-4.0.3/tools/ppm2tiff
-iomedley/tiff-4.0.3/tools/ras2tiff
-iomedley/tiff-4.0.3/tools/raw2tiff
-iomedley/tiff-4.0.3/tools/rgb2ycbcr
-iomedley/tiff-4.0.3/tools/thumbnail
-iomedley/tiff-4.0.3/tools/tiff2bw
-iomedley/tiff-4.0.3/tools/tiff2pdf
-iomedley/tiff-4.0.3/tools/tiff2ps
-iomedley/tiff-4.0.3/tools/tiff2rgba
-iomedley/tiff-4.0.3/tools/tiffcmp
-iomedley/tiff-4.0.3/tools/tiffcp
-iomedley/tiff-4.0.3/tools/tiffcrop
-iomedley/tiff-4.0.3/tools/tiffdither
-iomedley/tiff-4.0.3/tools/tiffdump
-iomedley/tiff-4.0.3/tools/tiffinfo
-iomedley/tiff-4.0.3/tools/tiffmedian
-iomedley/tiff-4.0.3/tools/tiffset
-iomedley/tiff-4.0.3/tools/tiffsplit
-iomedley/tiff-4.0.3/tools/.libs
+iomedley/tiff-4.0.6/Makefile
+iomedley/tiff-4.0.6/build/Makefile
+iomedley/tiff-4.0.6/config.status
+iomedley/tiff-4.0.6/contrib/Makefile
+iomedley/tiff-4.0.6/contrib/addtiffo/Makefile
+iomedley/tiff-4.0.6/contrib/addtiffo/addtiffo
+iomedley/tiff-4.0.6/contrib/addtiffo/.libs
+iomedley/tiff-4.0.6/contrib/dbs/Makefile
+iomedley/tiff-4.0.6/contrib/dbs/.libs
+iomedley/tiff-4.0.6/contrib/dbs/tiff-bi
+iomedley/tiff-4.0.6/contrib/dbs/tiff-grayscale
+iomedley/tiff-4.0.6/contrib/dbs/tiff-palette
+iomedley/tiff-4.0.6/contrib/dbs/tiff-rgb
+iomedley/tiff-4.0.6/contrib/dbs/xtiff/Makefile
+iomedley/tiff-4.0.6/contrib/iptcutil/Makefile
+iomedley/tiff-4.0.6/contrib/iptcutil/iptcutil
+iomedley/tiff-4.0.6/contrib/mfs/Makefile
+iomedley/tiff-4.0.6/contrib/pds/Makefile
+iomedley/tiff-4.0.6/contrib/ras/Makefile
+iomedley/tiff-4.0.6/contrib/stream/Makefile
+iomedley/tiff-4.0.6/contrib/tags/Makefile
+iomedley/tiff-4.0.6/contrib/win_dib/Makefile
+iomedley/tiff-4.0.6/html/Makefile
+iomedley/tiff-4.0.6/html/images/Makefile
+iomedley/tiff-4.0.6/html/man/Makefile
+iomedley/tiff-4.0.6/libtiff/Makefile
+iomedley/tiff-4.0.6/libtiff/mkg3states
+iomedley/tiff-4.0.6/libtiff/.libs
+iomedley/tiff-4.0.6/libtiff-4.pc
+iomedley/tiff-4.0.6/libtool
+iomedley/tiff-4.0.6/man/Makefile
+iomedley/tiff-4.0.6/port/Makefile
+iomedley/tiff-4.0.6/test/Makefile
+iomedley/tiff-4.0.6/tools/Makefile
+iomedley/tiff-4.0.6/tools/bmp2tiff
+iomedley/tiff-4.0.6/tools/fax2ps
+iomedley/tiff-4.0.6/tools/fax2tiff
+iomedley/tiff-4.0.6/tools/gif2tiff
+iomedley/tiff-4.0.6/tools/pal2rgb
+iomedley/tiff-4.0.6/tools/ppm2tiff
+iomedley/tiff-4.0.6/tools/ras2tiff
+iomedley/tiff-4.0.6/tools/raw2tiff
+iomedley/tiff-4.0.6/tools/rgb2ycbcr
+iomedley/tiff-4.0.6/tools/thumbnail
+iomedley/tiff-4.0.6/tools/tiff2bw
+iomedley/tiff-4.0.6/tools/tiff2pdf
+iomedley/tiff-4.0.6/tools/tiff2ps
+iomedley/tiff-4.0.6/tools/tiff2rgba
+iomedley/tiff-4.0.6/tools/tiffcmp
+iomedley/tiff-4.0.6/tools/tiffcp
+iomedley/tiff-4.0.6/tools/tiffcrop
+iomedley/tiff-4.0.6/tools/tiffdither
+iomedley/tiff-4.0.6/tools/tiffdump
+iomedley/tiff-4.0.6/tools/tiffinfo
+iomedley/tiff-4.0.6/tools/tiffmedian
+iomedley/tiff-4.0.6/tools/tiffset
+iomedley/tiff-4.0.6/tools/tiffsplit
+iomedley/tiff-4.0.6/tools/.libs
 
 # /libgif/
 iomedley/libgif/config.log
@@ -320,113 +320,113 @@ iomedley/libpng-1.2.3/config.log
 iomedley/libpng-1.2.3/config.status
 iomedley/libpng-1.2.3/Makefile
 
-# /tiff-4.0.3/
-iomedley/tiff-4.0.3/Makefile
-iomedley/tiff-4.0.3/libtiff-4.pc
-iomedley/tiff-4.0.3/libtool
-iomedley/tiff-4.0.3/config.log
-iomedley/tiff-4.0.3/config.status
+# /tiff-4.0.6/
+iomedley/tiff-4.0.6/Makefile
+iomedley/tiff-4.0.6/libtiff-4.pc
+iomedley/tiff-4.0.6/libtool
+iomedley/tiff-4.0.6/config.log
+iomedley/tiff-4.0.6/config.status
 
-# /tiff-4.0.3/build/
-iomedley/tiff-4.0.3/build/Makefile
+# /tiff-4.0.6/build/
+iomedley/tiff-4.0.6/build/Makefile
 
-# /tiff-4.0.3/contrib/
-iomedley/tiff-4.0.3/contrib/Makefile
+# /tiff-4.0.6/contrib/
+iomedley/tiff-4.0.6/contrib/Makefile
 
-# /tiff-4.0.3/contrib/addtiffo/
-iomedley/tiff-4.0.3/contrib/addtiffo/.deps
-iomedley/tiff-4.0.3/contrib/addtiffo/Makefile
-iomedley/tiff-4.0.3/contrib/addtiffo/addtiffo
+# /tiff-4.0.6/contrib/addtiffo/
+iomedley/tiff-4.0.6/contrib/addtiffo/.deps
+iomedley/tiff-4.0.6/contrib/addtiffo/Makefile
+iomedley/tiff-4.0.6/contrib/addtiffo/addtiffo
 
-# /tiff-4.0.3/contrib/dbs/
-iomedley/tiff-4.0.3/contrib/dbs/.deps
-iomedley/tiff-4.0.3/contrib/dbs/Makefile
-iomedley/tiff-4.0.3/contrib/dbs/tiff-bi
-iomedley/tiff-4.0.3/contrib/dbs/tiff-grayscale
-iomedley/tiff-4.0.3/contrib/dbs/tiff-palette
-iomedley/tiff-4.0.3/contrib/dbs/tiff-rgb
+# /tiff-4.0.6/contrib/dbs/
+iomedley/tiff-4.0.6/contrib/dbs/.deps
+iomedley/tiff-4.0.6/contrib/dbs/Makefile
+iomedley/tiff-4.0.6/contrib/dbs/tiff-bi
+iomedley/tiff-4.0.6/contrib/dbs/tiff-grayscale
+iomedley/tiff-4.0.6/contrib/dbs/tiff-palette
+iomedley/tiff-4.0.6/contrib/dbs/tiff-rgb
 
-# /tiff-4.0.3/contrib/dbs/xtiff/
-iomedley/tiff-4.0.3/contrib/dbs/xtiff/Makefile
+# /tiff-4.0.6/contrib/dbs/xtiff/
+iomedley/tiff-4.0.6/contrib/dbs/xtiff/Makefile
 
-# /tiff-4.0.3/contrib/iptcutil/
-iomedley/tiff-4.0.3/contrib/iptcutil/.deps
-iomedley/tiff-4.0.3/contrib/iptcutil/.libs
-iomedley/tiff-4.0.3/contrib/iptcutil/Makefile
-iomedley/tiff-4.0.3/contrib/iptcutil/iptcutil
+# /tiff-4.0.6/contrib/iptcutil/
+iomedley/tiff-4.0.6/contrib/iptcutil/.deps
+iomedley/tiff-4.0.6/contrib/iptcutil/.libs
+iomedley/tiff-4.0.6/contrib/iptcutil/Makefile
+iomedley/tiff-4.0.6/contrib/iptcutil/iptcutil
 
-# /tiff-4.0.3/contrib/mfs/
-iomedley/tiff-4.0.3/contrib/mfs/Makefile
+# /tiff-4.0.6/contrib/mfs/
+iomedley/tiff-4.0.6/contrib/mfs/Makefile
 
-# /tiff-4.0.3/contrib/pds/
-iomedley/tiff-4.0.3/contrib/pds/Makefile
+# /tiff-4.0.6/contrib/pds/
+iomedley/tiff-4.0.6/contrib/pds/Makefile
 
-# /tiff-4.0.3/contrib/ras/
-iomedley/tiff-4.0.3/contrib/ras/Makefile
+# /tiff-4.0.6/contrib/ras/
+iomedley/tiff-4.0.6/contrib/ras/Makefile
 
-# /tiff-4.0.3/contrib/stream/
-iomedley/tiff-4.0.3/contrib/stream/Makefile
+# /tiff-4.0.6/contrib/stream/
+iomedley/tiff-4.0.6/contrib/stream/Makefile
 
-# /tiff-4.0.3/contrib/tags/
-iomedley/tiff-4.0.3/contrib/tags/Makefile
+# /tiff-4.0.6/contrib/tags/
+iomedley/tiff-4.0.6/contrib/tags/Makefile
 
-# /tiff-4.0.3/contrib/win_dib/
-iomedley/tiff-4.0.3/contrib/win_dib/Makefile
+# /tiff-4.0.6/contrib/win_dib/
+iomedley/tiff-4.0.6/contrib/win_dib/Makefile
 
-# /tiff-4.0.3/html/
-iomedley/tiff-4.0.3/html/Makefile
+# /tiff-4.0.6/html/
+iomedley/tiff-4.0.6/html/Makefile
 
-# /tiff-4.0.3/html/images/
-iomedley/tiff-4.0.3/html/images/Makefile
+# /tiff-4.0.6/html/images/
+iomedley/tiff-4.0.6/html/images/Makefile
 
-# /tiff-4.0.3/html/man/
-iomedley/tiff-4.0.3/html/man/Makefile
+# /tiff-4.0.6/html/man/
+iomedley/tiff-4.0.6/html/man/Makefile
 
-# /tiff-4.0.3/libtiff/
-iomedley/tiff-4.0.3/libtiff/.deps
-iomedley/tiff-4.0.3/libtiff/Makefile
-iomedley/tiff-4.0.3/libtiff/mkg3states
-iomedley/tiff-4.0.3/libtiff/tif_config.h
-iomedley/tiff-4.0.3/libtiff/tiffconf.h
+# /tiff-4.0.6/libtiff/
+iomedley/tiff-4.0.6/libtiff/.deps
+iomedley/tiff-4.0.6/libtiff/Makefile
+iomedley/tiff-4.0.6/libtiff/mkg3states
+iomedley/tiff-4.0.6/libtiff/tif_config.h
+iomedley/tiff-4.0.6/libtiff/tiffconf.h
 
-# /tiff-4.0.3/man/
-iomedley/tiff-4.0.3/man/Makefile
+# /tiff-4.0.6/man/
+iomedley/tiff-4.0.6/man/Makefile
 
-# /tiff-4.0.3/port/
-iomedley/tiff-4.0.3/port/.deps
-iomedley/tiff-4.0.3/port/Makefile
+# /tiff-4.0.6/port/
+iomedley/tiff-4.0.6/port/.deps
+iomedley/tiff-4.0.6/port/Makefile
 
-# /tiff-4.0.3/test/
-iomedley/tiff-4.0.3/test/.deps
-iomedley/tiff-4.0.3/test/Makefile
+# /tiff-4.0.6/test/
+iomedley/tiff-4.0.6/test/.deps
+iomedley/tiff-4.0.6/test/Makefile
 
-# /tiff-4.0.3/tools/
-iomedley/tiff-4.0.3/tools/.deps
-iomedley/tiff-4.0.3/tools/Makefile
-iomedley/tiff-4.0.3/tools/bmp2tiff
-iomedley/tiff-4.0.3/tools/fax2ps
-iomedley/tiff-4.0.3/tools/fax2tiff
-iomedley/tiff-4.0.3/tools/gif2tiff
-iomedley/tiff-4.0.3/tools/pal2rgb
-iomedley/tiff-4.0.3/tools/ppm2tiff
-iomedley/tiff-4.0.3/tools/ras2tiff
-iomedley/tiff-4.0.3/tools/raw2tiff
-iomedley/tiff-4.0.3/tools/rgb2ycbcr
-iomedley/tiff-4.0.3/tools/thumbnail
-iomedley/tiff-4.0.3/tools/tiff2bw
-iomedley/tiff-4.0.3/tools/tiff2pdf
-iomedley/tiff-4.0.3/tools/tiff2ps
-iomedley/tiff-4.0.3/tools/tiff2rgba
-iomedley/tiff-4.0.3/tools/tiffcmp
-iomedley/tiff-4.0.3/tools/tiffcp
-iomedley/tiff-4.0.3/tools/tiffcrop
-iomedley/tiff-4.0.3/tools/tiffdither
-iomedley/tiff-4.0.3/tools/tiffdump
-iomedley/tiff-4.0.3/tools/tiffinfo
-iomedley/tiff-4.0.3/tools/tiffmedian
-iomedley/tiff-4.0.3/tools/tiffset
-iomedley/tiff-4.0.3/tools/tiffsplit
-iomedley/tiff-4.0.3/tools/tiffgt
+# /tiff-4.0.6/tools/
+iomedley/tiff-4.0.6/tools/.deps
+iomedley/tiff-4.0.6/tools/Makefile
+iomedley/tiff-4.0.6/tools/bmp2tiff
+iomedley/tiff-4.0.6/tools/fax2ps
+iomedley/tiff-4.0.6/tools/fax2tiff
+iomedley/tiff-4.0.6/tools/gif2tiff
+iomedley/tiff-4.0.6/tools/pal2rgb
+iomedley/tiff-4.0.6/tools/ppm2tiff
+iomedley/tiff-4.0.6/tools/ras2tiff
+iomedley/tiff-4.0.6/tools/raw2tiff
+iomedley/tiff-4.0.6/tools/rgb2ycbcr
+iomedley/tiff-4.0.6/tools/thumbnail
+iomedley/tiff-4.0.6/tools/tiff2bw
+iomedley/tiff-4.0.6/tools/tiff2pdf
+iomedley/tiff-4.0.6/tools/tiff2ps
+iomedley/tiff-4.0.6/tools/tiff2rgba
+iomedley/tiff-4.0.6/tools/tiffcmp
+iomedley/tiff-4.0.6/tools/tiffcp
+iomedley/tiff-4.0.6/tools/tiffcrop
+iomedley/tiff-4.0.6/tools/tiffdither
+iomedley/tiff-4.0.6/tools/tiffdump
+iomedley/tiff-4.0.6/tools/tiffinfo
+iomedley/tiff-4.0.6/tools/tiffmedian
+iomedley/tiff-4.0.6/tools/tiffset
+iomedley/tiff-4.0.6/tools/tiffsplit
+iomedley/tiff-4.0.6/tools/tiffgt
 
 
 # davinci_build subdir
