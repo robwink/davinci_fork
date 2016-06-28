@@ -7,7 +7,7 @@
 *.dmg
 *.a
 *.la
-tags
+./tags
 *.dvlog
 *tmp.txt
 *.rpm
