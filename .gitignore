@@ -315,10 +315,26 @@ iomedley/libjpeg/config.status
 iomedley/libjpeg/Makefile
 iomedley/libjpeg/jconfig.h
 
-# /libpng-1.2.3/
-iomedley/libpng-1.2.3/config.log
-iomedley/libpng-1.2.3/config.status
-iomedley/libpng-1.2.3/Makefile
+# /libpng-1.6.23/
+iomedley/Makefile.am
+iomedley/autom4te.cache/
+iomedley/compile_output
+iomedley/libpng-1.6.23/.libs/
+iomedley/libpng-1.6.23/libpng.vers
+iomedley/libpng-1.6.23/libpng16-config
+iomedley/libpng-1.6.23/libpng16.pc
+iomedley/libpng-1.6.23/png-fix-itxt
+iomedley/libpng-1.6.23/pngfix
+iomedley/libpng-1.6.23/pngimage
+iomedley/libpng-1.6.23/pnglibconf.c
+iomedley/libpng-1.6.23/pnglibconf.h
+iomedley/libpng-1.6.23/pnglibconf.out
+iomedley/libpng-1.6.23/pngprefix.h
+iomedley/libpng-1.6.23/pngstest
+iomedley/libpng-1.6.23/pngtest
+iomedley/libpng-1.6.23/pngunknown
+iomedley/libpng-1.6.23/pngvalid
+iomedley/libpng-1.6.23/scripts/vers.out
 
 # /tiff-4.0.6/
 iomedley/tiff-4.0.6/Makefile
@@ -743,5 +759,4 @@ davinci_build/mac10.4/dvlib-.dmg
 davinci_build/mac10.4/png_h_files
 iomedley/__.SYMDEF SORTED
 iomedley/libgif/a.out.dSYM/
-iomedley/libpng-1.2.3/a.out.dSYM/
 libltdl/a.out.dSYM/

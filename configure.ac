@@ -151,11 +151,11 @@ AM_CONDITIONAL(HAVE_LIBWSOCK32, [test "x$have_libwsock32" = "xyes"])
 AC_CHECK_LIB(regex, main, [have_libregex=yes],[have_libregex=no])
 AM_CONDITIONAL(HAVE_LIBREGEX, [test "x$have_libregex" = "xyes"])
 
-dnl AC_CHECK_LIB(z, deflate, [have_libpng2=yes], [have_libpng2=no])
-AC_CHECK_LIB(z, deflate)
-AC_CHECK_LIB(png, png_read_info)
-AC_CHECK_LIB(png, png_read_image,[have_libpng2=yes],[have_libpng2=no],
-[$LDFLAGS -lpng -Liomedley/libpng-1.2.3])
+AC_CHECK_LIB(z, deflate, [have_libpng2=yes], [have_libpng2=no])
+dnl AC_CHECK_LIB(z, deflate)
+dnl AC_CHECK_LIB(png, png_read_info)
+dnl AC_CHECK_LIB(png, png_read_image,[have_libpng2=yes],[have_libpng2=no],
+dnl [$LDFLAGS -lpng -Liomedley/libpng-1.2.3])
 
 if test "x$have_libpng2" = "xyes"; then
 	AC_DEFINE(HAVE_LIBPNG, 1, [ if you have libpng] )

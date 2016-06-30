@@ -463,7 +463,7 @@ configure:13042: result: yes
 configure:13055: checking for pow
 configure:13055: gcc -o conftest -g -O2 -fPIC  -I/usr/include/libxml2 -I$(top_srcdir)/iomedley -I${top_srcdir}/libltdl -I$(top_srcdir)/vicar   conftest.c  >&5
 conftest.c:49: warning: conflicting types for built-in function 'pow'
-/tmp/cc857Cox.o: In function `main':
+/tmp/ccPEw1Rk.o: In function `main':
 /mars/u/rswinkle/workspace/davinci_github/iomedley/libpng-1.6.23/conftest.c:60: undefined reference to `pow'
 collect2: ld returned 1 exit status
 configure:13055: $? = 1
@@ -539,7 +539,7 @@ configure:13087: $? = 0
 configure:13096: result: yes
 configure:13115: checking for clock_gettime
 configure:13115: gcc -o conftest -g -O2 -fPIC  -I/usr/include/libxml2 -I$(top_srcdir)/iomedley -I${top_srcdir}/libltdl -I$(top_srcdir)/vicar   conftest.c -lm  >&5
-/tmp/ccn4er0C.o: In function `main':
+/tmp/ccNAp9Lq.o: In function `main':
 /mars/u/rswinkle/workspace/davinci_github/iomedley/libpng-1.6.23/conftest.c:61: undefined reference to `clock_gettime'
 collect2: ld returned 1 exit status
 configure:13115: $? = 1

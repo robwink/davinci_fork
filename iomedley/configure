@@ -595,6 +595,8 @@ ac_header_list=
 enable_option_checking=no
 ac_subst_vars='LTLIBOBJS
 subdirs
+libpngdir
+libpng
 ALLOCA
 LIBOBJS
 EGREP
@@ -4490,7 +4492,7 @@ $as_echo "#define HAVE_LIBPNG 1" >>confdefs.h
 	libpng="libpng16.a"
 	libpngdir="libpng-1.6.23"
 	save_CFLAGS="$CFLAGS" save_LIBS="$LIBS" save_LDFLAGS="$LDFLAGS"
-	CFLAGS="$CFLAGS -I$libpngdir" LIBS="$LIBS -lpng" LDFLAGS="$LDFLAGS -L$libpngdir/.libs"
+	CFLAGS="$CFLAGS -I$libpngdir" LIBS="$LIBS -lpng16" LDFLAGS="$LDFLAGS -L$libpngdir/.libs"
 else
 	echo "**********************************************************************"
 	echo "*                                                                    *"
@@ -4978,6 +4980,8 @@ _ACEOF
 
 
 fi
+
+
 
 
 

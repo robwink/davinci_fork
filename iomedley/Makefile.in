@@ -13,8 +13,8 @@ LIBJPEGDIR = libjpeg
 LIBGIF = libgif.a
 LIBGIFDIR = libgif
 
-LIBPNG = libpng16.a
-LIBPNGDIR = libpng-1.6.23
+LIBPNG = @libpng@
+LIBPNGDIR = @libpngdir@
 
 CC=@CC@
 DEFS=@DEFS@
@@ -151,7 +151,7 @@ io_imath.o: io_imath.c iomedley.h io_lablib3.h toolbox.h
 io_isis.o: io_isis.c iomedley.h io_lablib3.h toolbox.h
 io_lablib3.o: io_lablib3.c header.h tools.h io_lablib3.h toolbox.h
 io_gif.o: io_gif.c iomedley.h io_lablib3.h toolbox.h
-io_png.o: io_png.c iomedley.h io_lablib3.h toolbox.h
+io_png.o: io_png.c iomedley.h io_lablib3.h toolbox.h $(LIBPNG)
 io_jpeg.o: io_jpeg.c iomedley.h io_lablib3.h toolbox.h
 io_tiff.o: io_tiff.c iomedley.h io_lablib3.h toolbox.h
 io_pnm.o: io_pnm.c iomedley.h io_lablib3.h toolbox.h

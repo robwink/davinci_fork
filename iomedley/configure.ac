@@ -63,7 +63,7 @@ if test "$found_libz" = "yes"; then
 	libpng="libpng16.a"
 	libpngdir="libpng-1.6.23"
 	save_CFLAGS="$CFLAGS" save_LIBS="$LIBS" save_LDFLAGS="$LDFLAGS"
-	CFLAGS="$CFLAGS -I$libpngdir" LIBS="$LIBS -lpng" LDFLAGS="$LDFLAGS -L$libpngdir/.libs"
+	CFLAGS="$CFLAGS -I$libpngdir" LIBS="$LIBS -lpng16" LDFLAGS="$LDFLAGS -L$libpngdir/.libs"
 else
 	echo "**********************************************************************"
 	echo "*                                                                    *"
@@ -84,8 +84,8 @@ dnl Xsed="sed -e s/^X// "
 dnl LTLIBOBJS=`echo X"$LIBOBJS" | $Xsed -e "s,\.[^.]* ,.lo ,g;s,\.[^.]*\$,.lo,"`
 
 dnl Substitute the following additional variables
-dnl AC_SUBST(libpng)
-dnl AC_SUBST(libpngdir)
+AC_SUBST(libpng)
+AC_SUBST(libpngdir)
 AC_SUBST(CFLAGS)
 AC_SUBST(LDFLAGS)
 dnl AC_SUBST(LTLIBOBJS)
