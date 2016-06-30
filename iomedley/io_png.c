@@ -22,7 +22,7 @@
 #include <unistd.h>
 #endif /* _WIN32 */
 #include "iomedley.h"
-#include "libpng-1.2.3/png.h"
+#include "png.h"
 #include <string.h>
 #include <sys/types.h>
 

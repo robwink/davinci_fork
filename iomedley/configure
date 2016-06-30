@@ -595,8 +595,6 @@ ac_header_list=
 enable_option_checking=no
 ac_subst_vars='LTLIBOBJS
 subdirs
-libpngdir
-libpng
 ALLOCA
 LIBOBJS
 EGREP
@@ -679,7 +677,7 @@ LIBS
 CPPFLAGS
 CPP'
 ac_subdirs_all='libjpeg libgif tiff-4.0.6
-libpng-1.2.3'
+libpng-1.6.23'
 
 # Initialize some variables set by options.
 ac_init_help=
@@ -4489,10 +4487,10 @@ $as_echo "#define HAVE_LIBZ 1" >>confdefs.h
 
 $as_echo "#define HAVE_LIBPNG 1" >>confdefs.h
 
-	libpng="libpng.a"
-	libpngdir="libpng-1.2.3"
+	libpng="libpng16.a"
+	libpngdir="libpng-1.6.23"
 	save_CFLAGS="$CFLAGS" save_LIBS="$LIBS" save_LDFLAGS="$LDFLAGS"
-	CFLAGS="$CFLAGS -I$libpngdir" LIBS="$LIBS -lpng" LDFLAGS="$LDFLAGS -L$libpngdir"
+	CFLAGS="$CFLAGS -I$libpngdir" LIBS="$LIBS -lpng" LDFLAGS="$LDFLAGS -L$libpngdir/.libs"
 else
 	echo "**********************************************************************"
 	echo "*                                                                    *"
@@ -4988,12 +4986,10 @@ fi
 
 
 
-
-
 subdirs="$subdirs libjpeg libgif tiff-4.0.6"
 
 if test "$found_libz" = "yes"; then
-	subdirs="$subdirs libpng-1.2.3"
+	subdirs="$subdirs libpng-1.6.23"
 
 fi
 

@@ -13,9 +13,8 @@ LIBJPEGDIR = libjpeg
 LIBGIF = libgif.a
 LIBGIFDIR = libgif
 
-LIBPNG = libpng.a
-LIBPNGOBJ = @libpng@
-LIBPNGDIR = @libpngdir@
+LIBPNG = libpng16.a
+LIBPNGDIR = libpng-1.6.23
 
 CC=@CC@
 DEFS=@DEFS@
@@ -61,7 +60,7 @@ all: $(LIBIOMEDLEY)
 test: test.c $(LIBIOMEDLEY)
 	$(CC) -g test.c -L. -ljpeg -liomedley -lz -lm -o $@
 
-$(LIBIOMEDLEY):	$(OBJS) $(LIBTIFF) $(LIBJPEG) $(LIBGIF) $(LIBPNGOBJ)
+$(LIBIOMEDLEY): $(OBJS) $(LIBTIFF) $(LIBJPEG) $(LIBGIF) $(LIBPNG)
 	ar -ruv $@ $(OBJS)
 	./mungelibs
 	$(RANLIB) $@
@@ -76,7 +75,7 @@ $(LIBTIFF):
 	cd $(LIBTIFFDIR) && $(MAKE)
 
 $(LIBPNG):
-	cd $(LIBPNGDIR) && $(MAKE) $(LIBPNG)
+	cd $(LIBPNGDIR) && $(MAKE)
 
 $(LIBJPEG):
 	cd $(LIBJPEGDIR) && $(MAKE) $(LIBJPEG)

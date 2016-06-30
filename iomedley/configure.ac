@@ -60,10 +60,10 @@ dnl Warn the user if zlib not found
 if test "$found_libz" = "yes"; then
 	AC_DEFINE(HAVE_LIBZ, 1, [ define to 1 if you have libz ] )
 	AC_DEFINE(HAVE_LIBPNG, 1, [ define to 1 if you have libpng ] )
-	libpng="libpng.a"
-	libpngdir="libpng-1.2.3"
+	libpng="libpng16.a"
+	libpngdir="libpng-1.6.23"
 	save_CFLAGS="$CFLAGS" save_LIBS="$LIBS" save_LDFLAGS="$LDFLAGS"
-	CFLAGS="$CFLAGS -I$libpngdir" LIBS="$LIBS -lpng" LDFLAGS="$LDFLAGS -L$libpngdir"
+	CFLAGS="$CFLAGS -I$libpngdir" LIBS="$LIBS -lpng" LDFLAGS="$LDFLAGS -L$libpngdir/.libs"
 else
 	echo "**********************************************************************"
 	echo "*                                                                    *"
@@ -84,8 +84,8 @@ dnl Xsed="sed -e s/^X// "
 dnl LTLIBOBJS=`echo X"$LIBOBJS" | $Xsed -e "s,\.[^.]* ,.lo ,g;s,\.[^.]*\$,.lo,"`
 
 dnl Substitute the following additional variables
-AC_SUBST(libpng)
-AC_SUBST(libpngdir)
+dnl AC_SUBST(libpng)
+dnl AC_SUBST(libpngdir)
 AC_SUBST(CFLAGS)
 AC_SUBST(LDFLAGS)
 dnl AC_SUBST(LTLIBOBJS)
@@ -93,7 +93,7 @@ dnl AC_SUBST(LTALLOCA)
 
 AC_CONFIG_SUBDIRS(libjpeg libgif tiff-4.0.6)
 if test "$found_libz" = "yes"; then
-	AC_CONFIG_SUBDIRS(libpng-1.2.3)
+	AC_CONFIG_SUBDIRS(libpng-1.6.23)
 fi
 
 AC_OUTPUT(Makefile)
