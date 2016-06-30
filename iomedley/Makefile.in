@@ -11,7 +11,7 @@ LIBJPEG = libjpeg.a
 LIBJPEGDIR = libjpeg
 
 LIBGIF = libgif.a
-LIBGIFDIR = libgif
+LIBGIFDIR = giflib-5.1.4/lib
 
 LIBPNG = @libpng@
 LIBPNGDIR = @libpngdir@

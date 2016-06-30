@@ -678,7 +678,7 @@ LDFLAGS
 LIBS
 CPPFLAGS
 CPP'
-ac_subdirs_all='libjpeg libgif tiff-4.0.6
+ac_subdirs_all='libjpeg giflib-5.1.4 tiff-4.0.6
 libpng-1.6.23'
 
 # Initialize some variables set by options.
@@ -4990,7 +4990,7 @@ fi
 
 
 
-subdirs="$subdirs libjpeg libgif tiff-4.0.6"
+subdirs="$subdirs libjpeg giflib-5.1.4 tiff-4.0.6"
 
 if test "$found_libz" = "yes"; then
 	subdirs="$subdirs libpng-1.6.23"
