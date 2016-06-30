@@ -335,6 +335,12 @@ iomedley/libpng-1.6.23/pngtest
 iomedley/libpng-1.6.23/pngunknown
 iomedley/libpng-1.6.23/pngvalid
 iomedley/libpng-1.6.23/scripts/vers.out
+iomedley/libpng-1.6.23/timepng
+iomedley/libpng-1.6.23/Makefile
+iomedley/libpng-1.6.23/config.log
+iomedley/libpng-1.6.23/config.status
+iomedley/libpng-1.6.23/libtool
+
 
 # /tiff-4.0.6/
 iomedley/tiff-4.0.6/Makefile
