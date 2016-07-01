@@ -306,9 +306,7 @@ iomedley/tiff-4.0.6/tools/.libs
 
 # /giflib-5.1.4/
 iomedley/giflib-5.1.4/Makefile
-iomedley/giflib-5.1.4/autom4te.cache
 iomedley/giflib-5.1.4/config.log
-iomedley/giflib-5.1.4/config.status
 iomedley/giflib-5.1.4/doc/Makefile
 iomedley/giflib-5.1.4/lib/Makefile
 iomedley/giflib-5.1.4/libtool
