@@ -9,7 +9,7 @@ test_suites = [
 "basic/",
 "io/",
 "matrix/",
-"modules/",
+#"modules/",
 "pca/",
 "plot/",
 "sort",
