@@ -307,6 +307,7 @@ iomedley/tiff-4.0.6/tools/.libs
 # /giflib-5.1.4/
 iomedley/giflib-5.1.4/Makefile
 iomedley/giflib-5.1.4/config.log
+iomedley/giflib-5.1.4/config.status
 iomedley/giflib-5.1.4/doc/Makefile
 iomedley/giflib-5.1.4/lib/Makefile
 iomedley/giflib-5.1.4/libtool
@@ -328,6 +329,16 @@ iomedley/giflib-5.1.4/util/gifsponge
 iomedley/giflib-5.1.4/util/giftext
 iomedley/giflib-5.1.4/util/giftool
 iomedley/giflib-5.1.4/util/gifwedge
+iomedley/giflib-5.1.4/doc/gif2rgb.1
+iomedley/giflib-5.1.4/doc/gifbuild.1
+iomedley/giflib-5.1.4/doc/gifclrmp.1
+iomedley/giflib-5.1.4/doc/gifecho.1
+iomedley/giflib-5.1.4/doc/giffix.1
+iomedley/giflib-5.1.4/doc/gifinto.1
+iomedley/giflib-5.1.4/doc/giflib.1
+iomedley/giflib-5.1.4/doc/giftext.1
+iomedley/giflib-5.1.4/doc/giftool.1
+
 
 
 
