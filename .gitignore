@@ -304,10 +304,17 @@ iomedley/tiff-4.0.6/tools/tiffset
 iomedley/tiff-4.0.6/tools/tiffsplit
 iomedley/tiff-4.0.6/tools/.libs
 
-# /libgif/
-iomedley/libgif/config.log
-iomedley/libgif/config.status
-iomedley/libgif/Makefile
+# /giflib-5.1.4/
+iomedley/giflib-5.1.4/Makefile
+iomedley/giflib-5.1.4/autom4te.cache
+iomedley/giflib-5.1.4/config.log
+iomedley/giflib-5.1.4/config.status
+iomedley/giflib-5.1.4/doc/Makefile
+iomedley/giflib-5.1.4/lib/Makefile
+iomedley/giflib-5.1.4/libtool
+iomedley/giflib-5.1.4/pic/Makefile
+iomedley/giflib-5.1.4/util/Makefile
+
 
 # /libjpeg/
 iomedley/libjpeg/config.log
@@ -764,5 +771,4 @@ davinci_build/mac10.4/dependencies/readline-5.2/stamp-h
 davinci_build/mac10.4/dvlib-.dmg
 davinci_build/mac10.4/png_h_files
 iomedley/__.SYMDEF SORTED
-iomedley/libgif/a.out.dSYM/
 libltdl/a.out.dSYM/
