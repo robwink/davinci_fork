@@ -7,7 +7,22 @@ compiler:
 # Change this to your needs
 
 
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "KjIv5voVJlvXNafjzxi+sp0OD9kYgCo4Cb5sh5KMaxMURfK6c89/wplEHE0vOEK+Q6yYxuYrt01ZjwEM4vR58vGsDBtuIsYExfqrdgz2mkzQYdU6YfmGBW5snVckXq+Pd0W95QNPcdWU5zhEfHCG+hSVW77HiOyRaMN8LsN7xD9+Op3yEXp+jLdc0whlwk+du3xO7e/3up4r+/+1Et7wm9l9MXe5fB2PXalIm35BN2FAYt8zv9ZYlhxHjWW9acGmWboR23vag3ca4ML78+J8KmJTdMp21UVon0YxkhuHn0eiF0MJnl234LiJYWrffvoCTdqt4FyRVAMxMhQ75WmhAyXr9PzQQVvHd5iRI4J6HVRUSvHUon+ce8HzsM3m5wPkgt79x4moH45YPR3Ncvz16+PEFq4XVodJ3je1w8ukgKBlbUH8SKLHKcMZ23wjUmRqN+UAw65BjRdzH40xGjeTYxykQ95GT7z1F+s0OV2bZO+02OjbuRx2/ZZqG0pXD2YE0/s1mew6kroW2o03S3h5BsZEEtgjg+NK7KiZb8ps1y5NUPd+M9NhL9yIq+hhhtLV2erSjNv8b2p5sVm3enl+l6KepS3Gxvsyg63sckoW61ZQ0dBQcN1XHCzbfaZlPADxlfHOTLFIvxD8e/WJIxReVfbm0W7uwU4YxyCdvZg16so="
+
 addons:
+  coverity_scan:
+    project:
+      name: "robwink/davinci"
+      description: "Build submitted via Travis CI"
+    notification_email: rswinkle@asu.edu
+    build_command_prepend: "./configure; make clean"
+    build_command:   "make"
+    branch_pattern: coverity_scan
+
   apt:
     sources:
     packages:
@@ -16,6 +31,12 @@ addons:
       - libhdf5-dev # in newer releases
         #- libhdf5-serial-dev #on precise
       - gnuplot
+
+
+branches:
+  only:
+    - master
+
 
 
 script:
