@@ -17,12 +17,6 @@ test_suites = [
 ]
 
 
-# TODO think about those 4 tests
-# output-1,2,3 and cmd-line-args
-test_strings = [
-" -qe 'printf(\"%d_%.2f\", 4*3, 4.0/3)'",
-]
-
 
 
 

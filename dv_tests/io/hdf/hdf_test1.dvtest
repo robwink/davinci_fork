@@ -1,0 +1,25 @@
+a = load("test_old_bsq.hdf")
+write(a, "test_out_bsq.hdf", hdf, force=1)
+b = load("test_out_bsq.hdf")
+
+fremove("test_out_bsq.hdf")
+
+if (equals(a, b) != 1)
+	exit(1);
+
+c = load("test_no_org.hdf")
+write(a, "test_out.hdf", hdf, force=1)
+d = load("test_out.hdf")
+
+fremove("test_out.hdf")
+
+if (equals(c, d) != 1)
+	exit(1);
+
+e = load("test_no_org.hdf", hdf_old=1)
+if (equals(e.dataset0, a.data) != 1)
+	exit(0);
+
+
+
+exit(0)

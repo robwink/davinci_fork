@@ -36,7 +36,7 @@ void make_valid_identifier(char* id)
 
 void WriteHDF5(hid_t parent, char* name, Var* v, int hdf_old)
 {
-	hid_t dataset, datatype, native_datatype, dataspace, aid2, attr, child, plist;
+	hid_t dataset, datatype, dataspace, aid2, attr, child, plist;
 	hsize_t size[3];
 	int org;
 	int top = 0;
@@ -112,21 +112,27 @@ void WriteHDF5(hid_t parent, char* name, Var* v, int hdf_old)
 
 		dataset = H5Dcreate(parent, name, datatype, dataspace, H5P_DEFAULT, plist, H5P_DEFAULT);
 		H5Dwrite(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, V_DATA(v));
-		//H5Tclose(native_datatype);
 
 		aid2 = H5Screate(H5S_SCALAR);
 
 		// org could even be a byte since it's [0-2]
 		attr = H5Acreate(dataset, "org", H5T_NATIVE_INT, aid2, H5P_DEFAULT, H5P_DEFAULT);
-
 		H5Awrite(attr, H5T_NATIVE_INT, &org);
-
-		//native_datatype = H5Tget_native_type(H5T_STD_I32BE, H5T_DIR_ASCEND);
-		//H5Awrite(attr, native_datatype, &org);
-		//H5Tclose(native_datatype);
 
 		H5Sclose(aid2);
 		H5Aclose(attr);
+
+		if (!hdf_old) {
+			// value of dv_std doesn't really matter, just the existence of the attribute
+			// in fact we could change below to H5S_NULL and not write any data
+			aid2 = H5Screate(H5S_SCALAR);
+			int dv_std = 1;
+			attr = H5Acreate(dataset, "dv_std", H5T_NATIVE_INT, aid2, H5P_DEFAULT, H5P_DEFAULT);
+			H5Awrite(attr, H5T_NATIVE_INT, &dv_std);
+
+			H5Sclose(aid2);
+			H5Aclose(attr);
+		}
 
 		H5Tclose(datatype);
 		H5Sclose(dataspace);
@@ -217,7 +223,7 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 	H5G_stat_t buf;
 
 	hid_t child, dataset, dataspace, mem_dataspace, datatype, attr;
-	int org, type, native_type_attr, native_type_data, size[3], dsize, i;
+	int org, type, native_type_data, size[3], dsize, i;
 	int var_type;
 	hsize_t datasize[3], maxsize[3];
 	H5T_class_t classtype;
@@ -287,18 +293,18 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 
 		if (type != ID_STRING) {
 			org = BSQ;
+			int org_exists = 0;
+			int dv_std_exists = 0;
 			if (!H5Aexists(dataset, "org")) {
-				parse_error("Unable to get org. Assuming %s.\n", Org2Str(org));
+				parse_error("Unable to find org attribute. Assuming %s.\n", Org2Str(org));
 			} else {
 				attr = H5Aopen_name(dataset, "org");
-				/*
-				native_type_attr = H5Tget_native_type(H5T_STD_I32BE, H5T_DIR_ASCEND);
-				H5Aread(attr, native_type_attr, &org);
-				H5Tclose(native_type_attr);
-				*/
 				H5Aread(attr, H5T_NATIVE_INT, &org);
 
 				H5Aclose(attr);
+				org_exists = 1;
+				if (H5Aexists(dataset, "dv_std"))
+					dv_std_exists = 1;
 			}
 
 			// HDF data sets can have arbitrary rank and we don't
@@ -317,10 +323,10 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 				//
 				// www.hdfgroup.org/HDF5/doc/UG/HDF5_Users_Guide-Responsive HTML5/index.html
 
-				if (!cb_data->hdf_old)
-					size[2-i] = datasize[i];
-				else
+				if (cb_data->hdf_old || (org_exists && !dv_std_exists))
 					size[i] = datasize[i];
+				else
+					size[2-i] = datasize[i];
 			}
 
 			dsize   = H5Sget_simple_extent_npoints(dataspace);
@@ -355,9 +361,9 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 
 		// else type == ID_STRING
 		} else {
-			Lines = 0;
+			Lines = 1;
 			if (!H5Aexists(dataset, "lines")) {
-				parse_error("Unable to get lines. Assuming %d.\n", Lines);
+				parse_error("Unable to find lines attribute. Assuming %d.\n", Lines);
 			} else {
 				attr = H5Aopen_name(dataset, "lines");
 				H5Aread(attr, H5T_NATIVE_INT, &Lines);
@@ -417,13 +423,21 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 		}
 		break;
 
-	// Our HD5 lib is out of date or else this'd be defined
+	// Our HDF5 lib is out of date on some platforms so we have to code
+	// to the lowest common denominator or else this'd be defined
 	// case H50_TYPE_NAMED_DATATYPE:
 	//	break;
-	default: parse_error("Unknown object type");
+	default:
+		parse_error("Unknown object type");
 	}
 
-	make_valid_identifier(V_NAME(v));
+	// restore in case we recursed for subgroup
+	cb_data->parent_var = parent_var;
+
+	if (v) {
+		make_valid_identifier(V_NAME(v));
+		add_struct(cb_data->parent_var, V_NAME(v), v);
+	}
 
 	if (VERBOSE > 2) {
 		if (v)
@@ -432,12 +446,6 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 			printf("Var v = NULL\n");
 	}
 
-	// restore in case we recursed for subgroup
-	cb_data->parent_var = parent_var;
-
-	if (v) {
-		add_struct(cb_data->parent_var, V_NAME(v), v);
-	}
 	return 0;
 }
 

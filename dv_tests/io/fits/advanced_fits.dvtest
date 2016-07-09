@@ -1,5 +1,4 @@
-#Set up environment variable for file locations
-putenv("FITS_TEST_FILES","/mars/u/ddoerres/work/davinci_2016_01/build/davinci64/dv_tests/io/fits/fits")
+FITS_TEST_FILES = "test_files"
 
 all = 0;
 success = 0;
@@ -7,7 +6,7 @@ success = 0;
 # Load a file and write it out
 # This file has a single, Binary table with 6 cols
 ##################################################
-a=load_fits($FITS_TEST_FILES+"/crash.fit")
+a=load_fits(FITS_TEST_FILES+"/crash.fit")
 write_fits(a, $TMPDIR+"/crashOut.fit", force=1)
 
 if(fexists($TMPDIR+"/crashOut.fit")) {
@@ -61,7 +60,7 @@ all++
 # Make a copy of it so we don't have to load it again
 #######################################################
 
-b=load_fits($FITS_TEST_FILES+"/ge.fit")
+b=load_fits(FITS_TEST_FILES+"/ge.fit")
 c=b
 
 # Add the Table from a to c
@@ -114,7 +113,7 @@ all++
 
 # Load up a FITs with an image
 ################################################
-image1 = load_fits($FITS_TEST_FILES+"/xngc.fit")
+image1 = load_fits(FITS_TEST_FILES+"/xngc.fit")
 
 
 # Add the image to c
@@ -133,7 +132,7 @@ all++
 
 # Load up another FITs with an image
 #############################################
-image2 = load_fits($FITS_TEST_FILES+"/rosat.fit")
+image2 = load_fits(FITS_TEST_FILES+"/rosat.fit")
 
 
 # Add the image to c
@@ -153,7 +152,7 @@ all++
 
 # Load up another FITs with an image
 #############################################
-image3 = load_fits($FITS_TEST_FILES+"/HR.fit")
+image3 = load_fits(FITS_TEST_FILES+"/HR.fit")
 
 
 # Add the image to c
@@ -215,6 +214,11 @@ success++
 }
 all++
 printf("There were %d tests with %d successes\n", all, success)
+
+if (all != success)
+	exit(1)
+
+exit(0)
 
 
 

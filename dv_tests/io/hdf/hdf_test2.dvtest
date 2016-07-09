@@ -1,0 +1,10 @@
+a = load("../../../library/script_files/themis_filter_functions.hdf")
+write(a, "thm_filt_func_out.hdf", hdf, force=1)
+b = load("thm_filt_func_out.hdf")
+
+fremove("thm_filt_func_out.hdf")
+
+if (equals(a, b) != 1)
+	exit(1);
+
+exit(0)

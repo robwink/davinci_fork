@@ -1,0 +1,20 @@
+a = load("h5ex_g_iterate.h5")
+write(a, "h5ex_g_iterate_out.hdf", hdf, force=1)
+b = load("h5ex_g_iterate_out.hdf")
+
+fremove("h5ex_g_iterate_out.hdf")
+
+if (equals(a, b) != 1)
+	exit(1);
+
+a = load("h5ex_g_traverse.h5")
+write(a, "h5ex_g_traverse_out.hdf", hdf, force=1)
+b = load("h5ex_g_traverse_out.hdf")
+
+fremove("h5ex_g_traverse_out.hdf")
+
+if (equals(a, b) != 1)
+	exit(1);
+
+exit(0)
+
