@@ -13,7 +13,7 @@ Var *
 ff_interp(vfuncptr func, Var *arg)
 {
     Var *v[3] = {NULL,NULL,NULL};
-    float ignore = MINFLOAT;
+    float ignore = FLT_MIN;
     const char *usage = "usage: %s(y1,x1,x2,[type={'linear'|'cubic'}]";
     char *type = (char *)"";
     const char *types[] = {"linear", "cubic", NULL};
@@ -157,7 +157,7 @@ Var *
 ff_cinterp(vfuncptr func, Var *arg)
 {
     Var *v[3] = {NULL,NULL,NULL};
-	float ignore = MINFLOAT;
+	float ignore = FLT_MIN;
 	char *type = NULL;
 
     Alist alist[6];

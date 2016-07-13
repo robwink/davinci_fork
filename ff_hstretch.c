@@ -52,8 +52,8 @@ ff_hstretch(vfuncptr func, Var * arg)
     int lhist = 0;
     int debug = 0;
 
-    float minval = -MAXFLOAT;
-    float maxval = MAXFLOAT;
+    float minval = -FLT_MAX;
+    float maxval = FLT_MAX;
 
     Alist alist[11];
     alist[0] = make_alist( "object",    ID_VAL,    NULL,    &obj);
@@ -93,7 +93,7 @@ ff_hstretch(vfuncptr func, Var * arg)
                                 "steps", newInt(65536),
                                 "compress", newInt(1),
                                 NULL,NULL);
-        if (minval != -MAXFLOAT) {
+        if (minval != -FLT_MAX) {
             args = append_arg(args, (char *)"start", newFloat(minval));
         }
         histogram = V_func("histogram", args);
@@ -112,7 +112,7 @@ ff_hstretch(vfuncptr func, Var * arg)
         npts += y[i];
     }
 
-    if (minval > -MAXFLOAT || maxval < MAXFLOAT) {
+    if (minval > -FLT_MAX || maxval < FLT_MAX) {
         for (i = 0 ; i < hsize ; i++) {
             if (x[i] <= minval) {
                 npts -= y[i];

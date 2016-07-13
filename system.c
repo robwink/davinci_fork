@@ -49,10 +49,6 @@
 #endif
 #endif
 
-#ifdef HAVE_LIMITS_H
-#include <limits.h>
-#endif
-
 
 
 #ifndef _WIN32

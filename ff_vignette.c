@@ -39,7 +39,7 @@ Var *
 ff_vignette(vfuncptr func, Var *arg)
 {
     int width =0, height=0;
-    float radius=MAXFLOAT, offset=MAXFLOAT, intensity=MAXFLOAT;
+    float radius=FLT_MAX, offset=FLT_MAX, intensity=FLT_MAX;
     Var *s;
 
     /**
@@ -61,15 +61,15 @@ ff_vignette(vfuncptr func, Var *arg)
         parse_error("Invalid value for \"height\"");
         return(NULL);
     }
-    if (radius == MAXFLOAT) {
+    if (radius == FLT_MAX) {
         parse_error("Invalid value for \"radius\"");
         return(NULL);
     }
-    if (offset == MAXFLOAT) {
+    if (offset == FLT_MAX) {
         parse_error("Invalid value for \"offset\"");
         return(NULL);
     }
-    if (intensity == MAXFLOAT) {
+    if (intensity == FLT_MAX) {
         parse_error("Invalid value for \"intensity\"");
         return(NULL);
     }

@@ -34,7 +34,7 @@ ff_image_resize(vfuncptr func, Var * arg)
 
 	int i_new_c, i_new_c_temp;
 	double d_new_c, d_new_c_temp;
-	double ignore_color = MINDOUBLE;
+	double ignore_color = DBL_MIN;
 	int ignore_color_found = 0;
 
 	const char *usage = "usage: %s(data [, factor] [, xfactor] [, yfactor] [,width] [,height] [,lockratio={'0'|'1'}] [,interp={'bilinear'|'bicubic'|'none'}] [,ignore]";

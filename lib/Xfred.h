@@ -35,13 +35,12 @@
 #include <stdlib.h>
 
 #include <limits.h>
-#define MINSHORT        SHRT_MIN
-#define MININT          INT_MIN
-#define MINLONG         LONG_MIN
+#define INT_MIN          INT_MIN
+#define LONG_MIN         LONG_MIN
 
-#define MAXSHORT        SHRT_MAX
-#define MAXINT          INT_MAX
-#define MAXLONG         LONG_MAX
+#define SHRT_MAX        SHRT_MAX
+#define INT_MAX          INT_MAX
+#define LONG_MAX         LONG_MAX
 
 #include <X11/Xos.h>
 #include <X11/Xlib.h>

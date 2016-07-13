@@ -4176,7 +4176,7 @@ gui_setShort(const Widget widget,
 	intVal = extract_int(value, 0);
 
 	/* Range checking. */
-	if (intVal < MINSHORT || intVal > MAXSHORT) {
+	if (intVal < SHRT_MIN || intVal > SHRT_MAX) {
 		parse_error("attempt to set short resource to value "
 				"outside allowed range.");
 		return (XtArgVal) oldValue;

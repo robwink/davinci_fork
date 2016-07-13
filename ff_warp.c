@@ -169,7 +169,7 @@ Var *
 ff_warp(vfuncptr func, Var * arg)
 {
 	Var *obj = NULL, *xm = NULL, *oval;
-	float ignore = MINFLOAT;
+	float ignore = FLT_MIN;
 	int i, j;
 	float *out;
 	int x,y,n;
@@ -199,7 +199,7 @@ ff_warp(vfuncptr func, Var * arg)
 		parse_error("%s: No object specified\n", func->name);
 		return(NULL);
 	}
-	if (ignore == MINFLOAT) ignore=-32768;
+	if (ignore == FLT_MIN) ignore=-32768;
 
 	x = GetX(obj);
 	y = GetY(obj);

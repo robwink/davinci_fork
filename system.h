@@ -12,21 +12,18 @@
 #include <netinet/in.h>
 #endif
 
-#ifndef MINSHORT
-#define MINSHORT    ((short)(1 << ((8*sizeof(short) - 1))))
-#endif
+#include <limits.h>
 
-#ifndef MININT
-#define MININT    ((int)(1 << ((8*sizeof(int) - 1))))
-#endif
 
 #ifndef max
 #define max(a,b) ((a) < (b) ? (b) : (a))
 #define min(a,b) ((a) > (b) ? (b) : (a))
 #endif
 
+#include <stdint.h>
+
 #ifndef u_char
-#define u_char unsigned char
+#define u_char uint8_t
 #endif
 
 #ifdef NEED_UDEFS

@@ -374,7 +374,7 @@ Var *bounding_box(Var *vsrc, int ignore) {
 Var *ff_grassfire(vfuncptr func, Var * arg)
 {
   Var *obj = NULL;
-  int ignore = MAXINT;
+  int ignore = INT_MAX;
   const char *options[] = { "euclidian", "manhattan", "bounding", NULL };
   char *type = (char *)options[0];
 

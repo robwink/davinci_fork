@@ -45,7 +45,7 @@ void make_sym(Var* v, int format, char* str)
 	case FLOAT: {
 		double d;
 		d = strtod(str, NULL);
-		if (((d > MAXFLOAT) || (d < MINFLOAT)) && (d != 0)) {
+		if (((d > FLT_MAX) || (d < FLT_MIN)) && (d != 0)) {
 			free(V_DATA(v));
 			V_DATA(v)               = calloc(1, NBYTES(DOUBLE));
 			V_FORMAT(v)             = DOUBLE;

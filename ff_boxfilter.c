@@ -229,7 +229,7 @@ ff_boxfilter(vfuncptr func, Var * arg)
 	int y=0;
 	int z=0;
 	int size=0;
-	double ignore=MINFLOAT;
+	double ignore=FLT_MIN;
 	int verbose=0;
 
     Alist alist[8];

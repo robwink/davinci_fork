@@ -34,8 +34,8 @@ ff_histogram(vfuncptr func, Var * arg)
 	float *data;
 	float v;
 
-	float start = MAXFLOAT, size= MAXFLOAT;
-	int steps = MAXINT;
+	float start = FLT_MAX, size= FLT_MAX;
+	int steps = INT_MAX;
 
 	Alist alist[9];
 	alist[0] = make_alist( "object",    ID_VAL,    NULL,    &obj);
@@ -61,29 +61,29 @@ ff_histogram(vfuncptr func, Var * arg)
 
 	switch(V_FORMAT(obj)) {
 		case BYTE: 
-			if (start == MAXFLOAT) start = 0;
-			if (size == MAXFLOAT) size = 1;
-			if (steps == MAXINT) steps = 256;
+			if (start == FLT_MAX) start = 0;
+			if (size == FLT_MAX) size = 1;
+			if (steps == INT_MAX) steps = 256;
 			break;
 		case SHORT: 
-			if (start == MAXFLOAT) start = -32768;
-			if (size == MAXFLOAT) size = 1;
-			if (steps == MAXINT) steps = 65536;
+			if (start == FLT_MAX) start = -32768;
+			if (size == FLT_MAX) size = 1;
+			if (steps == INT_MAX) steps = 65536;
 			break;
 		case INT:
-			if (steps == MAXFLOAT) {
+			if (steps == FLT_MAX) {
 				parse_error("%s(...steps=...) required for INT format.", func->name);
 				return(NULL);
 			}
 			break;
 		case FLOAT:
-			if (steps == MAXFLOAT) {
+			if (steps == FLT_MAX) {
 				parse_error("%s(...steps=...) required for FLOAT format.", func->name);
 				return(NULL);
 			}
 			break;
 		case DOUBLE:
-			if (steps == MAXFLOAT) {
+			if (steps == FLT_MAX) {
 				parse_error("%s(...steps=...) required for DOUBLE format.", func->name);
 				return(NULL);
 			}
@@ -93,7 +93,7 @@ ff_histogram(vfuncptr func, Var * arg)
 	/*
 	** Find minimum if necessary
 	*/
-	if (start == MAXFLOAT) {
+	if (start == FLT_MAX) {
 		Var *vmin;
 		vmin = fb_min(obj, 7, 0);
 		if (vmin) start = V_FLOAT(vmin);
@@ -102,13 +102,13 @@ ff_histogram(vfuncptr func, Var * arg)
 	/*
 	** find maximum if necessary
 	*/
-	if (size == MAXFLOAT) {
+	if (size == FLT_MAX) {
 		Var *vmax;
 		vmax = fb_min(obj, 7, 1);
 		if (vmax) size = (V_FLOAT(vmax) - start) / steps;
 	}
 
-	if (start == MAXFLOAT || steps == MAXINT || steps == 0 || size == MAXFLOAT) {
+	if (start == FLT_MAX || steps == INT_MAX || steps == 0 || size == FLT_MAX) {
 		parse_error("Unable to determine start, steps or size");
 		return(NULL);
 	}
@@ -249,8 +249,8 @@ ff_rgb2hsv(vfuncptr func, Var * arg)
 	if (maxval == NULL) {
 		switch (V_FORMAT(obj)) {
 			case BYTE:		mval = (1 << 8)-1; break;
-			case SHORT:		mval = MAXSHORT; break;
-			case INT:		mval = MAXINT; break;
+			case SHORT:		mval = SHRT_MAX; break;
+			case INT:		mval = INT_MAX; break;
 			case FLOAT:		mval = 1.0; break;
 			case DOUBLE:	mval = 1.0; break;
 		}

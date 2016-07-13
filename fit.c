@@ -49,7 +49,7 @@ Var * ff_fit(vfuncptr func, Var *arg)
 	int iter = 1;
 	int plot = 0 ;
 	int verbose = 0;
-	double ignore = MINFLOAT;
+	double ignore = FLT_MIN;
 	int ret;
 
 	const char *fits[] = { "gauss", "gaussc", "gaussl", "ngauss", "lorenz",
