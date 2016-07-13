@@ -8,28 +8,8 @@
 #include <sys/stat.h>
 
 #if defined(___CYGWIN__) || defined(__MINGW32__)
-#include "mem.h"
-#include "win32/win_mmap.h"
 
-void *mmap(void *x0, size_t len, int x1, int x2, int fd, size_t off)
-{
-	char *buf;
-
-	lseek(fd, off, SEEK_SET);
-	if ((buf = (char *)malloc(len)) == NULL) {
-		fprintf(stderr, "Unable to allocate memory for mmap.\n");
-		exit(1);
-	}
-	read(fd, buf, len);
-	return buf;
-}
-
-void munmap(void *buf,int len)
-{
-	free(buf);
-}
-
-
+//TODO(rswinkle)
 #define mkstemp(p) open(_mktemp(p), _O_CREAT | _O_SHORT_LIVED | _O_EXCL)
 
 #else

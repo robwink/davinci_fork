@@ -49,5 +49,18 @@ char *strndup(char *s1, int len);
 char *basename(const char *);
 #endif
 
+#ifndef HAVE_MMAP
+#define PROT_READ   0x1
+#define PROT_WRITE  0x2
+#define MAP_SHARED  0x1
+#define MAP_PRIVATE 0x2 /* unsupported */
+
+// for size_t
+#include <stdlib.h>
+
+void *mmap(void *x0, size_t len, int x1, int x2, int fd, size_t off);
+void munmap(void *buf,int len);
+#endif
+
 void *my_realloc(void *, int);
 void rmrf(const char *path);

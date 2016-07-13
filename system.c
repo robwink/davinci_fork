@@ -6,6 +6,13 @@
 #include "config.h"
 #include "system.h"
 
+
+//TODO(rswinkle) we should stick to one test macro for windows or at least
+//the same test everywhere.  We use __MINGW32__, _WIN32, __CYGWIN__ all over the
+//place inconsistently.  Plus now I'm aiming for mingw64 so maybe we should just
+//go with _WIN32 or whatever is always defined on windows no matter what toolchain
+//you use
+
 #ifdef __MINGW32__
 #include <windows.h>
 #endif
@@ -21,6 +28,8 @@
 #include <direct.h>
 #include <fcntl.h>
 #endif
+
+
 #include <errno.h>
 #include <time.h>
 #include <sys/types.h>
@@ -584,3 +593,25 @@ make_temp_file_path_in_dir(char *dir)
 
 	return(strdup(pathbuf));
 }
+
+#ifndef HAVE_MMAP
+void *mmap(void *x0, size_t len, int x1, int x2, int fd, size_t off)
+{
+	char *buf;
+
+    lseek(fd, off, SEEK_SET);
+	if ((buf = (char *)malloc(len)) == NULL) {
+		fprintf(stderr, "Unable to allocate memory for mmap.\n");
+		exit(1);
+	}
+	read(fd, buf, len);
+	return(buf);
+}
+
+void munmap(void *buf,int len)
+{
+	free(buf);
+}
+#endif
+
+

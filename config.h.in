@@ -139,9 +139,6 @@
 /* Define to 1 if you have the `Xt' library (-lXt). */
 #undef HAVE_LIBXT
 
-/* Define to 1 if you have the `z' library (-lz). */
-#undef HAVE_LIBZ
-
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
 
@@ -153,6 +150,9 @@
 
 /* Define to 1 if you have the `mkdir' function. */
 #undef HAVE_MKDIR
+
+/* Define to 1 if you have the `mmap' function. */
+#undef HAVE_MMAP
 
 /* if all motif parts are present */
 #undef HAVE_MOTIF

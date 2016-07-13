@@ -364,7 +364,7 @@ AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(mkdir putenv select strdup strndup strspn strstr strtod strtol strtoul drand48)
 AC_CHECK_FUNCS(index rindex getdtablesize getwd usleep strtoul basename)
-AC_CHECK_FUNCS(dirname bcopy bcmp bzero)
+AC_CHECK_FUNCS(dirname bcopy bcmp bzero mmap)
 
 dnl Get path to libisis+includes from system env if ISISR is defined
 if test "x$ISISR" != "x"; then

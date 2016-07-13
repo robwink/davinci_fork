@@ -3,7 +3,6 @@
 #include <strings.h>
 
 #ifdef __MINGW32__
-#include "win32/win_mmap.h"
 #else
 #include <sys/mman.h>
 #endif

@@ -9,12 +9,9 @@
 #include <float.h>
 #include <unistd.h>
 
-#ifdef _WIN32
-#include <io.h>
-#include "win32/win_mmap.h"
-#include "mem.h"
-#else
+#ifndef _WIN32
 #include <sys/mman.h>
+#else
 #endif /* _WIN32 */
 
 #ifdef HAVE_LIBGEN_H

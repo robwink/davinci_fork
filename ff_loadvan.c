@@ -6,9 +6,6 @@
 #include <sys/stat.h>
 
 #ifdef _WIN32
-#include <io.h>
-#include "win32/win_mmap.h"
-#include "mem.h"
 #else
 #include <sys/mman.h>
 #endif /* _WIN32 */
