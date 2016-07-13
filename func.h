@@ -458,11 +458,9 @@ void print_history(int i);
 void save_ufunc(char *filename);
 void vax_ieee_r(float *from, float *to);
 
-#ifndef HAVE_STRNDUP
-char *strndup(char *, int);
-#else
+//for strndup though it's pulled in in parser.h above
+//and parser.h includes this func.h ... I hate davinci
 #include <string.h>
-#endif
 
 Var *varray_subset(Var *v, Range *r);
 

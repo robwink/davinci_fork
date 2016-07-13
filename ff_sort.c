@@ -54,9 +54,9 @@ int cmp_double(const void *a, const void *b)
 
 // Move data [from] object, [to] data, using size to expand the offset as needed
 #define reorg(to, data, from, object, size)			\
-  memcpy(	(void*)((long)data 	 + to 	* size),	\
-		(void*)((long)object + from * size),		\
-		size);
+  memcpy((void*)((char*)data   + to   * size),	\
+         (void*)((char*)object + from * size),		\
+         size);
 
 
 

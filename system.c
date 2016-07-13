@@ -54,21 +54,6 @@
 #endif
 
 
-#ifndef HAVE_INDEX
-char *
-index(char *str, char c)
-{
-	return(strchr(str, c));
-}
-#endif
-
-#ifndef HAVE_INDEX
-char *
-rindex(char *str, char c)
-{
-	return(strrchr(str, c));
-}
-#endif
 
 #ifndef _WIN32
 #ifndef HAVE_GETDTABLESIZE
@@ -447,10 +432,7 @@ BUGS
 
 #ifndef HAVE_BZERO
 
-void
-bzero (to, count)
-  char *to;
-  int count;
+void bzero(void* to, size_t count)
 {
 	while (count-- > 0)
 		{
@@ -473,8 +455,9 @@ char *strdup(const char *s1)
 
 #endif
 
+
 #ifndef HAVE_STRNDUP
-char *strndup(char *s1, int len)
+char *strndup(const char *s1, size_t len)
 {
 	char *s2;
 	if (s1 == NULL) s1 = "";
@@ -485,6 +468,7 @@ char *strndup(char *s1, int len)
 	return(s2);
 }
 #endif
+
 
 void *
 my_realloc(void *ptr, int len)

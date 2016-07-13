@@ -14,6 +14,7 @@
 *.deb
 *~
 *.swp
+*.exe
 
 deb/
 
@@ -482,6 +483,19 @@ iomedley/tiff-4.0.6/tools/tiffmedian
 iomedley/tiff-4.0.6/tools/tiffset
 iomedley/tiff-4.0.6/tools/tiffsplit
 iomedley/tiff-4.0.6/tools/tiffgt
+
+
+
+iomedley/giflib-5.1.4/config.h
+iomedley/libpng-1.6.23/config.h
+iomedley/libpng-1.6.23/libpng-config
+iomedley/libpng-1.6.23/libpng.pc
+iomedley/libpng-1.6.23/libpng.sym
+iomedley/libpng-1.6.23/scripts/sym.out
+
+
+
+
 
 
 # davinci_build subdir

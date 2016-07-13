@@ -18,9 +18,12 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef _WIN32
+
+//mingw64 has unistd.h
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif /* _WIN32 */
+#endif
+
 #include "iomedley.h"
 #include "png.h"
 #include <string.h>

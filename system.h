@@ -41,8 +41,10 @@ typedef unsigned char uchar;
 char *strdup(const char *);
 #endif
 
+//for some reason configure on mingw64 doesn't detect
+//strndup even though the compiler is complaining about having it
 #ifndef HAVE_STRNDUP
-char *strndup(char *s1, int len);
+char *strndup(const char *s1, size_t len);
 #endif
 
 #ifndef HAVE_BASENAME
@@ -54,6 +56,8 @@ char *basename(const char *);
 #define PROT_WRITE  0x2
 #define MAP_SHARED  0x1
 #define MAP_PRIVATE 0x2 /* unsupported */
+
+#define MAP_FAILED (void*)-1
 
 // for size_t
 #include <stdlib.h>

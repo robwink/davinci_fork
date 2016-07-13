@@ -1065,11 +1065,6 @@ Var *ff_PACI_Read(vfuncptr func, Var * arg)
 {
 	//NOTE(rswinkle) This is excessive and we're already GNU89, we can
 	//mix decls and code
-#ifdef __WIN32__
-	extern unsigned char *mmap(void *, size_t , int, int , int , size_t );
-	extern void munmap(unsigned char *,int);
-	typedef void* caddr_t;
-#endif
 	void        *data;
 	void        *newbuf;
 	char        *filename;
@@ -1167,7 +1162,7 @@ Var *ff_PACI_Read(vfuncptr func, Var * arg)
 	fstat(fd, &sbuf);
 	old_len=len = sbuf.st_size;
 
-	fbuf = mmap((caddr_t)0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+	fbuf = mmap(0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
 
 	 cflag = Check_Swap(fbuf,len);
 

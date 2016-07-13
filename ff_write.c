@@ -6,10 +6,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#if defined(__CYGWIN__) || defined(__MINGW32__)
-#include <io.h>
-extern Swap_Big_and_Little(Var *);
-#endif
 
 /* FIX: put these in a header */
 
