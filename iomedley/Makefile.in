@@ -72,10 +72,11 @@ $(LIBGIF):
 	cd $(LIBGIFDIR) && $(MAKE)
 
 $(LIBTIFF):
-	cd $(LIBTIFFDIR) && $(MAKE)
+	cd $(LIBTIFFDIR)/port && $(MAKE)
+	cd $(LIBTIFFDIR)/libtiff && $(MAKE)
 
 $(LIBPNG):
-	cd $(LIBPNGDIR) && $(MAKE)
+	cd $(LIBPNGDIR) && $(MAKE) $(LIBPNG)
 
 $(LIBJPEG):
 	cd $(LIBJPEGDIR) && $(MAKE) $(LIBJPEG)
