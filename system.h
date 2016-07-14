@@ -65,3 +65,22 @@ void munmap(void *buf,int len);
 
 void *my_realloc(void *, int);
 void rmrf(const char *path);
+
+
+#ifndef HAVE_RANDOM
+#define random rand
+#define srandom srand
+#endif
+
+#ifndef HAVE_DRAND48
+#include <math.h>
+
+double drand48(void);
+long mrand48(void);
+long lrand48(void);
+void srand48(long seedval);
+
+#endif
+
+
+
