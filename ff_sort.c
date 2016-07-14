@@ -170,6 +170,8 @@ static void *reorgByIndex(Var *object, Var *index, size_t *sortList)
 
 
 
+//TODO(rswinkle) Use the standard library qsort instead.  Seriously why not?
+//This file dates to 1999, qsort has been around since C89.
 
 //	QuickSort adapted from Kernighan and Ritchie, 'The C Programming Language'
 static inline void qswap(void *base, int i, int j, int width, size_t *sortList)
@@ -177,6 +179,7 @@ static inline void qswap(void *base, int i, int j, int width, size_t *sortList)
   long tmp;
   unsigned char b;
   int k;
+  char* basec = base;
   
   // Maintain a sorted list of elements
   tmp = sortList[j];
@@ -185,9 +188,9 @@ static inline void qswap(void *base, int i, int j, int width, size_t *sortList)
   
   // Swap two elements, given the size of the elements
   for (k=0; k < width; k++) {
-    b = *(char *) ((long) base + i * width + k);
-    *(char *) ((long) base + i * width + k) = *(char *) ((long) base + j * width + k);
-    *(char *) ((long) base + j * width + k) = b;
+    b = basec[i*width + k];
+	basec[i*width + k] = basec[j*width + k];
+	basec[j*width + k] = b;
   }
 }
 

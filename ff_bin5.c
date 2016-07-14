@@ -163,7 +163,7 @@ read_bin5_header(const char *fname, B5H **b5h)
       return 0;
     }
 
-    bzero(&buff[buff_sz-block_sz-1], block_sz+1);
+    memset(&buff[buff_sz-block_sz-1], 0, block_sz+1);
     if (fread(&buff[buff_sz-block_sz-1], block_sz, 1, fp) != 1){
       fprintf(stderr, "Short read in file %s\n", fname);
       free(buff);

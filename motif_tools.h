@@ -56,7 +56,6 @@ int fputs(char *, FILE *fp);
 int printf(char *format, ...);
 int fprintf(FILE *stream, char *format, ...);
 int sscanf(char *str, char *format, ...);
-void bcopy(char *b1, char *b2, int length);
 int tolower(int);
 int toupper(int);
 long strtol(const char *str, char **ptr, int base);

@@ -239,7 +239,7 @@ enum {
 #define VAX_INTEGER 6
 #define INT64       7
 #define DOUBLE      8
-#define USHORT      9 // drd Bug 2208 Loading a particular hdf5 file kills davinci
+#define USHORT      9
 
 // drd Bug 2208 Loading a particular hdf5 file kills davinci
 #define NBYTES(a)   ((a) == INT ? 4 : ((a) == USHORT ? 2 : ((a) == INT64 ? 8 : ((a) == VAX_FLOAT ? 4 : ((a) == VAX_INTEGER ? 2 : (a))))))
