@@ -1,3 +1,6 @@
+#ifndef DVIO_FITS_H
+#define DVIO_FITS_H
+
 char     DVIO_FITS_err_text[128];
 
 #define QUERY_FITS_ERROR(status,context,null_return)    if (status) { \
@@ -23,7 +26,7 @@ int  Write_FITS_Record(fitsfile *fptr,Var *obj, char *obj_name);
 
 
 
-
+#endif
 
 
 

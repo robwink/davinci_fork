@@ -7,7 +7,6 @@
 #include <fitsio.h>
 #else
 #include <cfitsio/fitsio.h>
-// #include "/mars/u/ddoerres/work/cfitsio/fitsio.h"
 #endif
 
 #include <sys/types.h>
