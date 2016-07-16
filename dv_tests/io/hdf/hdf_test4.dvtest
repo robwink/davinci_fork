@@ -1,0 +1,20 @@
+a = load("otes_l0_v001.h5")
+write(a, "otes_l0_v001_out.hdf", hdf, force=1)
+b = load("otes_l0_v001_out.hdf")
+
+fremove("otes_l0_v001_out.hdf")
+
+if (equals(a, b) != 1)
+	exit(1);
+
+a = load("2019-03-03T09_49_40.099Z_otes_L0_v001.hdf")
+write(a, "2019-03-03T09_49_40.099Z_otes_L0_v001_out.hdf", hdf, force=1)
+b = load("2019-03-03T09_49_40.099Z_otes_L0_v001_out.hdf")
+
+fremove("2019-03-03T09_49_40.099Z_otes_L0_v001_out.hdf")
+
+if (equals(a, b) != 1)
+	exit(1);
+
+exit(0)
+

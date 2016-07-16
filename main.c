@@ -14,8 +14,10 @@
 // include specific libraries for finding the DV_EXEPATH
 #if defined(__APPLE__)
 #include <libproc.h>
+
 #elif defined(_WIN32)
-#include <windows.h>
+//#include <windows.h>
+
 #elif defined(__linux__)
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -208,6 +210,7 @@ int main(int ac, char **av)
 
 #elif defined(_WIN32)
 	// Will contain exe path
+	/*
 	hModule = GetModuleHandle(NULL);
 	if (hModule != NULL) {
 		GetModuleFileName(hModule, pathbuf, (sizeof(pathbuf)));
@@ -217,15 +220,23 @@ int main(int ac, char **av)
 		putenv(exe_path_out);
 	}
 	//also set the DV_OS environment variable
+	*/
 	putenv("DV_OS=win");
 
 #elif defined(__linux__)
 	//use the pid to get the relative link
 	pid = getpid();
 	sprintf(pidpath, "/proc/%d/exe", pid);
+	
+	char mypathbuf[4097];
+	getcwd(mypathbuf, 4097);
+	//printf("\ncwd=\n%s\n\n", mypathbuf);
+
 
 	//resolve the link with readlink
-	if (readlink(pidpath, pathbuf, PATH_MAX) != -1) {
+	size_t path_len = readlink(pidpath, pathbuf, PATH_MAX);
+	if (path_len != -1) {
+		pathbuf[path_len] = 0; //readlink doesn't NULL terminate
 		sprintf(exe_path_out, "DV_EXEPATH=%s", pathbuf);
 		putenv(exe_path_out);
 	}
