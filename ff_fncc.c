@@ -69,7 +69,7 @@ ff_fncc(vfuncptr func, Var * arg)
     alist[2] = make_alist("rf",     ID_VAL,     NULL, &rf);
     alist[3] = make_alist("r2",     ID_VAL,     NULL, &rf2);
     alist[4] = make_alist("fft",     DV_INT32,     NULL, &fft);
-    alist[5] = make_alist("ignore",     DOUBLE,     NULL, &ig);
+    alist[5] = make_alist("ignore",     DV_DOUBLE,     NULL, &ig);
     alist[6] = make_alist("rectify",     DV_INT32,     NULL, &rec);
     alist[7].name = NULL;
 
@@ -85,13 +85,13 @@ ff_fncc(vfuncptr func, Var * arg)
         return(NULL);
     }
 
-    if (V_FORMAT(obj) != DOUBLE) {
-        parse_error("%s: Object must contain DOUBLE values\n", func->name);
+    if (V_FORMAT(obj) != DV_DOUBLE) {
+        parse_error("%s: Object must contain DV_DOUBLE values\n", func->name);
         return(NULL);
     }
 
-    if (V_FORMAT(template) != DOUBLE) {
-        parse_error("%s: Template must contain DOUBLE values\n", func->name);
+    if (V_FORMAT(template) != DV_DOUBLE) {
+        parse_error("%s: Template must contain DV_DOUBLE values\n", func->name);
         return(NULL);
     }
 
@@ -169,8 +169,8 @@ ff_fncc(vfuncptr func, Var * arg)
     p1[1]=p[1]-t_row+1;
 
     result = new_struct(3);
-//    add_struct(result,"convolution",newVal(BSQ,x,y,1,DOUBLE,r));
-//    add_struct(result,"cross_correlation",newVal(BSQ,x,y,1,DOUBLE,cc));
+//    add_struct(result,"convolution",newVal(BSQ,x,y,1,DV_DOUBLE,r));
+//    add_struct(result,"cross_correlation",newVal(BSQ,x,y,1,DV_DOUBLE,cc));
     free(cc);
     free(r);
 
@@ -183,11 +183,11 @@ ff_fncc(vfuncptr func, Var * arg)
 ** Our corner point is based on a peak value in the corelation matrix.
 ** That value represents the strength of the match (1.0 would be a perfect match)
 */
-    add_struct(result,"weight",newVal(BSQ,1,1,1,DOUBLE,max_p));
+    add_struct(result,"weight",newVal(BSQ,1,1,1,DV_DOUBLE,max_p));
 
 
-//    add_struct(result,"running_sum",newVal(BSQ,x,y,1,DOUBLE,running_f));
-//    add_struct(result,"running_sum_squared",newVal(BSQ,x,y,1,DOUBLE,running_f2));
+//    add_struct(result,"running_sum",newVal(BSQ,x,y,1,DV_DOUBLE,running_f));
+//    add_struct(result,"running_sum_squared",newVal(BSQ,x,y,1,DV_DOUBLE,running_f2));
 
 //    free(running_f);
 //    free(running_f2);
@@ -1014,7 +1014,7 @@ ff_fncc_write_mat(vfuncptr func, Var * arg)
     case DV_INT16:  hdr_type += 40; break;
     case DV_INT32:    hdr_type += 20; break;
     case DV_FLOAT:  hdr_type += 10; break;
-    case DOUBLE: hdr_type += 00; break;
+    case DV_DOUBLE: hdr_type += 00; break;
     default:
         parse_error("%s: Unsupported data type %s in obj.\n",
             func->name, Format2Str(V_FORMAT(obj)));
@@ -1074,7 +1074,7 @@ ff_fncc_write_mat(vfuncptr func, Var * arg)
                     ff = extract_double(obj, cpos(i,j,k,obj));
                     fwrite(&ff, sizeof(ff), 1, fp);
                     break;
-                case DOUBLE:
+                case DV_DOUBLE:
                     dd = extract_double(obj, cpos(i,j,k,obj));
                     fwrite(&dd, sizeof(dd), 1, fp);
                     break;
@@ -1152,7 +1152,7 @@ ff_fncc_fft2d(vfuncptr func, Var *arg)
     }
     free(result);
 
-    return(newVal(BSQ, cols, rows, 2, DOUBLE, output));
+    return(newVal(BSQ, cols, rows, 2, DV_DOUBLE, output));
 }
 
 Var *
@@ -1210,7 +1210,7 @@ ff_fncc_ifft2d(vfuncptr func, Var *arg)
     }
     free(result);
 
-    return(newVal(BSQ, cols, rows, 2, DOUBLE, output));
+    return(newVal(BSQ, cols, rows, 2, DV_DOUBLE, output));
 }
 
 Var *
@@ -1290,7 +1290,7 @@ ff_fncc_cmplx_mul(vfuncptr func, Var *arg)
     }
     free(result);
 
-    return(newVal(BSQ, cols, rows, depth, DOUBLE, output));
+    return(newVal(BSQ, cols, rows, depth, DV_DOUBLE, output));
 }
 
 
@@ -1351,7 +1351,7 @@ ff_fncc_fft_conv_real(vfuncptr func, Var *arg)
         return NULL;
     }
 
-    return(newVal(BSQ, outcols, outrows, 1, DOUBLE, result));
+    return(newVal(BSQ, outcols, outrows, 1, DV_DOUBLE, result));
 }
 
 

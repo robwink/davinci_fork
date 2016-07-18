@@ -45,14 +45,14 @@ ff_image_resize(vfuncptr func, Var * arg)
 
 	Alist alist[10];
 	alist[0] = make_alist( "data", ID_VAL, NULL, &data);
-	alist[1] = make_alist( "factor", DOUBLE, NULL, &factor);
-	alist[2] = make_alist( "xfactor", DOUBLE, NULL, &x_factor);
-	alist[3] = make_alist( "yfactor", DOUBLE, NULL, &y_factor);
+	alist[1] = make_alist( "factor", DV_DOUBLE, NULL, &factor);
+	alist[2] = make_alist( "xfactor", DV_DOUBLE, NULL, &x_factor);
+	alist[3] = make_alist( "yfactor", DV_DOUBLE, NULL, &y_factor);
 	alist[4] = make_alist( "width",  DV_INT32, NULL, &new_xx);
 	alist[5] = make_alist( "height", DV_INT32, NULL, &new_yy);
 	alist[6] = make_alist( "lockratio", DV_INT32, NULL, &lockratio);
 	alist[7] = make_alist( "interp",    ID_ENUM,    types,    &type);
-	alist[8] = make_alist( "ignore",    DOUBLE, NULL,    &ignore_color);
+	alist[8] = make_alist( "ignore",    DV_DOUBLE, NULL,    &ignore_color);
 	alist[9].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -247,7 +247,7 @@ ff_image_resize(vfuncptr func, Var * arg)
 					case DV_INT16:  ((short *)V_DATA(out))[pos]  = saturate_short(i_new_c);  break;
 					case DV_INT32:    ((int *)V_DATA(out))[pos]    = saturate_int(i_new_c);    break;
 					case DV_FLOAT:  ((float *)V_DATA(out))[pos]  = saturate_float(d_new_c);  break;
-					case DOUBLE: ((double *)V_DATA(out))[pos] = saturate_double(d_new_c); break;
+					case DV_DOUBLE: ((double *)V_DATA(out))[pos] = saturate_double(d_new_c); break;
 				}
 			}
 		}

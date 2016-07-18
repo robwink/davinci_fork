@@ -62,7 +62,7 @@ ff_basis(vfuncptr func, Var * arg)
         else if (type == 2) basis_haar(basis, n);
     }
 
-    v = newVal(BSQ, n, n, 1, DOUBLE, basis);
+    v = newVal(BSQ, n, n, 1, DV_DOUBLE, basis);
     return(v);
 }
 
@@ -127,7 +127,7 @@ ff_mxm(vfuncptr func, Var * arg)
     else { /* Double */
 
       double_data = (double *) calloc(y1*x2, sizeof(double));
-      v = newVal(BSQ, x2, y1, 1, DOUBLE, double_data);
+      v = newVal(BSQ, x2, y1, 1, DV_DOUBLE, double_data);
 
       for (j = 0 ; j < y1 ; j++) {
         for (i = 0 ; i < x2 ; i++) {

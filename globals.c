@@ -47,8 +47,8 @@ void make_sym(Var* v, int format, char* str)
 		d = strtod(str, NULL);
 		if (((d > FLT_MAX) || (d < FLT_MIN)) && (d != 0)) {
 			free(V_DATA(v));
-			V_DATA(v)               = calloc(1, NBYTES(DOUBLE));
-			V_FORMAT(v)             = DOUBLE;
+			V_DATA(v)               = calloc(1, NBYTES(DV_DOUBLE));
+			V_FORMAT(v)             = DV_DOUBLE;
 			*((double*)(V_DATA(v))) = d;
 		} else {
 			*((float*)(V_DATA(v))) = d;

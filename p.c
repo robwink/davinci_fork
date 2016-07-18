@@ -89,7 +89,7 @@ is_zero(Var * v)
         case DV_INT32:
             return (extract_int(v, 0) == 0);
         case DV_FLOAT:
-        case DOUBLE:
+        case DV_DOUBLE:
             return (extract_float(v, 0) == 0.0);
         }
     } else {
@@ -102,7 +102,7 @@ is_zero(Var * v)
                 if (extract_int(v, i) == 0)
                     return (1);
             case DV_FLOAT:
-            case DOUBLE:
+            case DV_DOUBLE:
                 if (extract_float(v, i) == 0.0)
                     return (1);
             }

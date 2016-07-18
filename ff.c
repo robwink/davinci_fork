@@ -153,7 +153,7 @@ ff_dfunc(vfuncptr func, Var * arg)
         }
         break;
       }
-    case DOUBLE:
+    case DV_DOUBLE:
       {
         ddata = (double *) data;
         for (i = 0; i < dsize; i++) {
@@ -299,7 +299,7 @@ ff_binary_op(const char *name,               // Function name, for errors
       case DV_FLOAT:
         fdata[i] = saturate_float(v3);
         break;
-      case DOUBLE:
+      case DV_DOUBLE:
         ddata[i] = v3;
         break;
     }
@@ -334,7 +334,7 @@ ff_bop(vfuncptr func, Var * arg)
     return (NULL);
   }
 
-  return(ff_binary_op(func->name, a, b, fptr, DOUBLE));
+  return(ff_binary_op(func->name, a, b, fptr, DV_DOUBLE));
 }
 
 
@@ -488,7 +488,7 @@ ff_conv(vfuncptr func, Var * arg)
         }
         break;
       }
-    case DOUBLE:
+    case DV_DOUBLE:
       {
         double *idata = (double *) data;
         for (i = 0; i < dsize; i++) {
@@ -656,8 +656,8 @@ ff_create(vfuncptr func, Var * arg)
   alist[2] = make_alist( "z",      DV_INT32,      NULL,     &z);
   alist[3] = make_alist( "org",    ID_ENUM,  orgs,     &org_str);
   alist[4] = make_alist( "format", ID_ENUM,  formats,  &format_str);
-  alist[5] = make_alist( "start",  DOUBLE,   NULL,     &start);
-  alist[6] = make_alist( "step",   DOUBLE,   NULL,     &step);
+  alist[5] = make_alist( "start",  DV_DOUBLE,   NULL,     &start);
+  alist[6] = make_alist( "step",   DV_DOUBLE,   NULL,     &step);
   alist[7] = make_alist( "init",   DV_INT32,      NULL,     &init);
   alist[8].name = NULL;
 
@@ -679,7 +679,7 @@ ff_create(vfuncptr func, Var * arg)
     else if (!strcasecmp(format_str, "short")) format = DV_INT16;
     else if (!strcasecmp(format_str, "int")) format = DV_INT32;
     else if (!strcasecmp(format_str, "float")) format = DV_FLOAT;
-    else if (!strcasecmp(format_str, "double")) format = DOUBLE;
+    else if (!strcasecmp(format_str, "double")) format = DV_DOUBLE;
   }
   if (x <= 0 || y <= 0 || z <=0) {
     parse_error("create(): invalid dimensions: %dx%dx%d\n", x,y,z);
@@ -721,7 +721,7 @@ ff_create(vfuncptr func, Var * arg)
           case DV_INT16: sdata[0] = saturate_short(v); break;
           case DV_INT32: idata[0] = saturate_int(v); break;
           case DV_FLOAT: fdata[0] = saturate_float(v); break;
-          case DOUBLE: ddata[0] = v; break;
+          case DV_DOUBLE: ddata[0] = v; break;
         }
         for(i=1; i<dsize; i++){
           memcpy(data+i*nbytes, data, nbytes);
@@ -747,7 +747,7 @@ ff_create(vfuncptr func, Var * arg)
               case DV_FLOAT:
                 fdata[c] = saturate_float(v);
                 break;
-              case DOUBLE:
+              case DV_DOUBLE:
                 ddata[c] = v;
                 break;
             }
@@ -1843,7 +1843,7 @@ compare_vars(Var *a, Var *b)
             if (extract_float(a,i) != extract_float(b,rpos(i,a, b)))
               return(0);
             break;
-          case DOUBLE:
+          case DV_DOUBLE:
             if (extract_double(a,i) != extract_double(b,rpos(i,a, b)))
               return(0);
             break;
@@ -1872,7 +1872,7 @@ newFloat(float f)
 Var *
 newDouble(double d)
 {
-  Var *v = newVal(BSQ, 1, 1,1, DOUBLE, calloc(1, sizeof(double)));
+  Var *v = newVal(BSQ, 1, 1,1, DV_DOUBLE, calloc(1, sizeof(double)));
   V_DOUBLE(v) = d;
   return(v);
 }
@@ -2293,7 +2293,7 @@ ff_contains(vfuncptr func, Var * arg)
         }
       }
       break;
-    case DOUBLE:
+    case DV_DOUBLE:
       vd = extract_double(value, 0);
       for (i = 0 ; i < dsize ; i++) {
         if (((double *)V_DATA(obj))[i] == vd) {

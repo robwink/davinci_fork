@@ -458,11 +458,11 @@ setImage(Widget widget, Var *value)
 		case DV_FLOAT:
 			dataType = XvicREAL;
 			break;
-		case DOUBLE:
+		case DV_DOUBLE:
 			dataType = XvicDOUBLE;
 			break;
 		default:
-			parse_error("VICAR image data must be DV_UINT8, DV_INT16, DV_INT32, DV_FLOAT, or DOUBLE.");
+			parse_error("VICAR image data must be DV_UINT8, DV_INT16, DV_INT32, DV_FLOAT, or DV_DOUBLE.");
 			return 0;
 	}
 

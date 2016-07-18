@@ -56,7 +56,7 @@ ff_minvert(vfuncptr func, Var * arg)
 		return NULL;
 	}
 
-	if (V_TYPE(obj) == DOUBLE) {
+	if (V_TYPE(obj) == DV_DOUBLE) {
 		a = (double *)V_DATA(obj);
 	} else {
 		a = (double *)calloc(dsize, sizeof(double));
@@ -68,11 +68,11 @@ ff_minvert(vfuncptr func, Var * arg)
 
 	matrix_LUinvert(x, a, b);
 
-	if (V_TYPE(obj) != DOUBLE) {
+	if (V_TYPE(obj) != DV_DOUBLE) {
 		free(a);
 	}
 
-	return newVal(V_ORG(obj), V_SIZE(obj)[0], V_SIZE(obj)[1], V_SIZE(obj)[2], DOUBLE, b);
+	return newVal(V_ORG(obj), V_SIZE(obj)[0], V_SIZE(obj)[1], V_SIZE(obj)[2], DV_DOUBLE, b);
 }
 
 

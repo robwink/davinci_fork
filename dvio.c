@@ -124,7 +124,7 @@ ihfmt2vfmt(int ifmt)
     case iom_SHORT:  vfmt = DV_INT16;  break;
     case iom_INT:    vfmt = DV_INT32;    break;
     case iom_FLOAT:  vfmt = DV_FLOAT;  break;
-    case iom_DOUBLE: vfmt = DOUBLE; break;
+    case iom_DOUBLE: vfmt = DV_DOUBLE; break;
         /* VAX_INT & VAX_FLOAT are deprecated */
     }
 
@@ -141,7 +141,7 @@ vfmt2ihfmt(int vfmt)
     case DV_INT16:  ifmt = iom_SHORT;  break;
     case DV_INT32:    ifmt = iom_INT;    break;
     case DV_FLOAT:  ifmt = iom_FLOAT;  break;
-    case DOUBLE: ifmt = iom_DOUBLE; break;
+    case DV_DOUBLE: ifmt = iom_DOUBLE; break;
     }
 
     return ifmt;

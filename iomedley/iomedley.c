@@ -34,11 +34,11 @@ const char* iom_EFORMAT2STR[] = {
     "(invalid)",      "(invalid)", "(invalid)",       "(invalid)", "(invalid)",       "MSB DV_UINT8",
     "MSB DV_INT16",      "(invalid)", "MSB DV_INT32",         "(invalid)", "(invalid)",       "(invalid)",
     "(invalid)",      "(invalid)", "(invalid)",       "(invalid)", "(invalid)",       "(invalid)",
-    "MSB IEEE DV_FLOAT", "(invalid)", "(invalid)",       "(invalid)", "MSB IEEE DOUBLE", "(invalid)",
+    "MSB IEEE DV_FLOAT", "(invalid)", "(invalid)",       "(invalid)", "MSB IEEE DV_DOUBLE", "(invalid)",
     "(invalid)",      "(invalid)", "(invalid)",       "(invalid)", "LSB IEEE DV_FLOAT",  "(invalid)",
-    "(invalid)",      "(invalid)", "LSB IEEE DOUBLE", "(invalid)", "(invalid)",       "(invalid)",
+    "(invalid)",      "(invalid)", "LSB IEEE DV_DOUBLE", "(invalid)", "(invalid)",       "(invalid)",
     "VAX INTEGER",    "(invalid)", "VAX DV_FLOAT",       "(invalid)", "(invalid)",       "(invalid)",
-    "VAX DOUBLE"};
+    "VAX DV_DOUBLE"};
 
 const char* iom_FORMAT2STR[] = {0, "byte", "short", "int", "float", "double"};
 

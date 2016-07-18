@@ -31,8 +31,8 @@ int dv_module_init(const char *name, dvModuleInitStuff *init_stuff)
 
 /* API CLI definitions */
 APIARGS sqrt_args[]={
-	{ "sqrt",DOUBLE },
-	{ "val",DOUBLE }
+	{ "sqrt",DV_DOUBLE },
+	{ "val",DV_DOUBLE }
 };
 
 void
@@ -43,8 +43,8 @@ sqrt_wrapper(int ac,APIARGS *av){
 }
 
 APIARGS ceil_args[]={
-	{ "ceil",DOUBLE },
-	{ "val",DOUBLE }
+	{ "ceil",DV_DOUBLE },
+	{ "val",DV_DOUBLE }
 };
 
 void
@@ -54,8 +54,8 @@ ceil_wrapper(int ac,APIARGS *av){
 }
 
 APIARGS floor_args[]={
-	{ "floor",DOUBLE },
-	{ "val",DOUBLE }
+	{ "floor",DV_DOUBLE },
+	{ "val",DV_DOUBLE }
 };
 
 void

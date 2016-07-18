@@ -672,7 +672,7 @@ static Var *scale_doit(Var* obj, int x, int y, int z, int newcols, int newrows)
 					((float*)data)[k1]
 					    = (float)GetPixel(obj,x,y,orgX,orgY,k);
 					break;
-				case DOUBLE:
+				case DV_DOUBLE:
 					((double*)data)[k1]
 					    = GetPixel(obj,x,y,orgX,orgY,k);
 					break;
@@ -720,7 +720,7 @@ static int fill_object_with_pad_color(int nx, int ny, int z,
 				case DV_FLOAT:
 					((float*)data)[k1] = color;
 					break;
-				case DOUBLE:
+				case DV_DOUBLE:
 					((double*)data)[k1] = color;
 					break;
 				default:
@@ -763,7 +763,7 @@ static int map_image(int x, int y, int z, int left, int top,
 				case DV_FLOAT:
 					((float*)data)[k1] = extract_float(obj,k2);
 					break;
-				case DOUBLE:
+				case DV_DOUBLE:
 					((double*)data)[k1] = extract_double(obj,k2);
 					break;
 				default:
@@ -882,7 +882,7 @@ static void fix_stripe(void* data, Var* obj,
 			   extract_float(obj,k3)
 			                  ) / 2;
 			break;
-		case DOUBLE:
+		case DV_DOUBLE:
 			((double*)data)[k1] = (
 			   extract_double(obj,k2) +
 			   extract_double(obj,k3)
@@ -907,7 +907,7 @@ static void fix_stripe(void* data, Var* obj,
 		case DV_FLOAT:
 			((float*)data)[k1] = extract_float(obj,k1);
 			break;
-		case DOUBLE:
+		case DV_DOUBLE:
 			 ((double*)data)[k1] = extract_double(obj,k1);
 			break;
 		default:

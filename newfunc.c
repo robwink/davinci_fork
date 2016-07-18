@@ -185,7 +185,7 @@ int parse_args(vfuncptr name, Var *args, Alist *alist)
 			fptr = (float *)(alist[j].value);
 			*fptr = extract_float(v, 0);
 			alist[j].filled = 1;
-		} else if (alist[j].type == DOUBLE) {
+		} else if (alist[j].type == DV_DOUBLE) {
 			double *fptr;
 			if ((e = eval(v)) == NULL) {
 				parse_error("%s: Variable not found: %s", fname, V_NAME(v));
@@ -194,7 +194,7 @@ int parse_args(vfuncptr name, Var *args, Alist *alist)
 			}
 			v = e;
 			if (V_TYPE(v) != ID_VAL) {
-				parse_error("Illegal argument %s(...%s=...), expected DOUBLE", fname, alist[j].name);
+				parse_error("Illegal argument %s(...%s=...), expected DV_DOUBLE", fname, alist[j].name);
 				free(av);
 				return 0;
 			}
@@ -373,4 +373,31 @@ create_args(int ac, ...)
 	}
 	va_end(ap);
 	return args;
+}
+
+
+int dv_format_size(int type)
+{
+	switch (type) {
+	case DV_UINT8:
+	case DV_INT8:
+		return 1;
+
+	case DV_UINT16:
+	case DV_INT16:
+		return 2;
+
+	case DV_UINT32:
+	case DV_INT32:
+
+	//should be IEEE-754 so 4 bytes
+	case DV_FLOAT:
+		return 4;
+	
+	case DV_DOUBLE:
+		return sizeof(double);
+	default:
+		//unsupported type
+		;
+	}
 }

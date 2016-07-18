@@ -75,17 +75,17 @@ ff_avg2(vfuncptr func, Var * arg)
 	*/
 	if (!strcmp(func->name, "sum"))  {
 		f_sum = 1;
-		v = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL);
+		v = newVal(V_ORG(obj), out[0], out[1], out[2], DV_DOUBLE, NULL);
 	}
 
 	if (!strncmp(func->name, "avg", 3) || both)  {
 		f_avg = 1;
-		v = avg = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL);
+		v = avg = newVal(V_ORG(obj), out[0], out[1], out[2], DV_DOUBLE, NULL);
 	}
 
 	if (!strcmp(func->name, "stddev") || both)  {
 		f_stddev = 1;
-		v = stddev = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL);
+		v = stddev = newVal(V_ORG(obj), out[0], out[1], out[2], DV_DOUBLE, NULL);
 	}
 
 	sum= (double *)calloc(V_DSIZE(v), sizeof(double));
@@ -227,17 +227,17 @@ ff_avg3(vfuncptr func, Var * arg)
 	*/
 	if (!strcmp(func->name, "sum"))  {
 		f_sum = 1;
-		v = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL);
+		v = newVal(V_ORG(obj), out[0], out[1], out[2], DV_DOUBLE, NULL);
 	}
 
 	if (!strncmp(func->name, "avg", 3) || both)  {
 		f_avg = 1;
-		v = avg = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL);
+		v = avg = newVal(V_ORG(obj), out[0], out[1], out[2], DV_DOUBLE, NULL);
 	}
 
 	if (!strcmp(func->name, "stddev") || both)  {
 		f_stddev = 1;
-		v = stddev = newVal(V_ORG(obj), out[0], out[1], out[2], DOUBLE, NULL);
+		v = stddev = newVal(V_ORG(obj), out[0], out[1], out[2], DV_DOUBLE, NULL);
 	}
 
 	sum= (double *)calloc(V_DSIZE(v), sizeof(double));

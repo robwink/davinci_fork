@@ -2,14 +2,20 @@
 const char *FORMAT2STR[] = {
 	0,
 	"byte",
-	"short",
-	"int",
+	"uint16",
+	"uint32",
+	"uint64",
+
+	"int8",
+	"short", //really int16
+	"int",   //really int32
+	"int64",
+
 	"float",
-	"vax float",
-	"",
-	"",
 	"double",
-	"unsigned short" // drd Bug 2208 Loading a particular hdf5 file kills davinci
+
+	"vax float",
+	"vax int",
 };
 
 const char *ORG2STR[] = {
@@ -17,3 +23,5 @@ const char *ORG2STR[] = {
 	"bil",
 	"bip"
 };
+
+

@@ -646,7 +646,7 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 	/* from parser.h, and right now ignoring others:
 	 #define DV_INT32			3
 	 #define DV_FLOAT		4
-	 #define DOUBLE		8
+	 #define DV_DOUBLE		8
 	 We are assuming ONE type per table.  If more than one, will flag it and not process it
 	 */
 	int localProcess = 1; // Set to zero to NOT process
@@ -1152,7 +1152,7 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 							for (i = 0; i < strlen(string3); i++) {
 								string3[i] = toupper(string3[i]);
 							}
-							if (strcmp("DOUBLE", string3) == 0) {
+							if (strcmp("DV_DOUBLE", string3) == 0) {
 								localSize = 8;
 							} else if (strcmp("DV_FLOAT", string3) == 0) {
 								localSize = 4;
@@ -1611,7 +1611,7 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
 		}
 
 		if (numberArrayDouble != NULL) {
-			localStub = newVal(BSQ, commaCount, 1, 1, DOUBLE,
+			localStub = newVal(BSQ, commaCount, 1, 1, DV_DOUBLE,
 					numberArrayDouble);
 		} else {
 			localStub = newVal(BSQ, commaCount, 1, 1, DV_INT32, numberArrayInt);

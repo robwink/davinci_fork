@@ -82,9 +82,9 @@ ff_histogram(vfuncptr func, Var * arg)
 				return(NULL);
 			}
 			break;
-		case DOUBLE:
+		case DV_DOUBLE:
 			if (steps == FLT_MAX) {
-				parse_error("%s(...steps=...) required for DOUBLE format.", func->name);
+				parse_error("%s(...steps=...) required for DV_DOUBLE format.", func->name);
 				return(NULL);
 			}
 			break;
@@ -195,8 +195,8 @@ ff_hstats(vfuncptr func, Var * arg)
 		return(NULL);
 	}
 
-	avg = newVal(BSQ, 1, 1, 1, DOUBLE, calloc(1, sizeof(double)));
-	stddev = newVal(BSQ, 1, 1, 1, DOUBLE, calloc(1, sizeof(double)));
+	avg = newVal(BSQ, 1, 1, 1, DV_DOUBLE, calloc(1, sizeof(double)));
+	stddev = newVal(BSQ, 1, 1, 1, DV_DOUBLE, calloc(1, sizeof(double)));
 
 	/*
 	** Use one pass method
@@ -252,7 +252,7 @@ ff_rgb2hsv(vfuncptr func, Var * arg)
 			case DV_INT16:		mval = SHRT_MAX; break;
 			case DV_INT32:		mval = INT_MAX; break;
 			case DV_FLOAT:		mval = 1.0; break;
-			case DOUBLE:	mval = 1.0; break;
+			case DV_DOUBLE:	mval = 1.0; break;
 		}
 	} else {
 		mval = extract_double(maxval, 0);
@@ -305,7 +305,7 @@ ff_hsv2rgb(vfuncptr func, Var * arg)
 
 	Alist alist[3];
 	alist[0] = make_alist( "object",  ID_VAL,    NULL,     &obj);
-	alist[1] = make_alist( "maxval",  DOUBLE,    NULL,     &mval);
+	alist[1] = make_alist( "maxval",  DV_DOUBLE,    NULL,     &mval);
 	alist[2].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -518,7 +518,7 @@ ff_entropy(vfuncptr func, Var * arg)
 		case DV_INT16:         cmp = cmp_short; break;
 		case DV_INT32:           cmp = cmp_int; break;
 		case DV_FLOAT:         cmp = cmp_float; break;
-		case DOUBLE:        cmp = cmp_double; break;
+		case DV_DOUBLE:        cmp = cmp_double; break;
 	}
 	qsort(data, V_DSIZE(obj), NBYTES(format), cmp);
 

@@ -293,7 +293,7 @@ Read_FITS_Image(fitsfile *fptr) {
 		break;
 
 	case DOUBLE_IMG:
-		format = DOUBLE;
+		format = DV_DOUBLE;
 		datatype = TDOUBLE;
 		break;
 
@@ -572,7 +572,7 @@ int fits_tbl_type_for_column_var(Var *coldata) {
 			return TINT;
 		case DV_FLOAT:
 			return GetX(coldata)> 1? TCOMPLEX: TFLOAT;
-			case DOUBLE: return GetX(coldata) > 1? TDBLCOMPLEX: TDOUBLE;
+			case DV_DOUBLE: return GetX(coldata) > 1? TDBLCOMPLEX: TDOUBLE;
 		}
 	}
 	return -1;
@@ -751,7 +751,7 @@ Read_FITS_Table(fitsfile *fptr) {
 
 		case TDOUBLE:
 			datatype = TDOUBLE;
-			fmt = DOUBLE;
+			fmt = DV_DOUBLE;
 			x = repeat;
 			y = nrows;
 			z = 1;
@@ -789,7 +789,7 @@ Read_FITS_Table(fitsfile *fptr) {
 
 		case TDBLCOMPLEX:
 			datatype = TDOUBLE;
-			fmt = DOUBLE;
+			fmt = DV_DOUBLE;
 			x = repeat;
 			y = nrows;
 			z = 2;
@@ -1079,7 +1079,7 @@ int VarType2FitsType(Var *obj, int *bitpix, int *datatype) {
 		*datatype = TFLOAT;
 		break;
 
-	case DOUBLE:
+	case DV_DOUBLE:
 		*bitpix = DOUBLE_IMG;
 		*datatype = TDOUBLE;
 		break;

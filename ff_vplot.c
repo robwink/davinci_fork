@@ -218,7 +218,7 @@ ff_vplot(vfuncptr func, Var *arg)
 	    if(V_FORMAT(v)>=DV_UINT8 && V_FORMAT(v)<=DV_INT32) {
 	      globalNums[0] = 1;
 	      globalNums[1] = (double)extract_int(v,0);
-	    } else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE) {
+	    } else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE) {
 	      globalNums[0] = 1;
 	      globalNums[1] = extract_double(v,0);
 	    }
@@ -239,7 +239,7 @@ ff_vplot(vfuncptr func, Var *arg)
 	    if(V_FORMAT(v)>=DV_UINT8 && V_FORMAT(v)<=DV_INT32) {
 	      globalNums[2] = 1;
 	      globalNums[3] = (double)extract_int(v,0);
-	    } else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE) {
+	    } else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE) {
 	      globalNums[2] = 1;
 	      globalNums[3] = extract_double(v,0);
 	    }
@@ -260,7 +260,7 @@ ff_vplot(vfuncptr func, Var *arg)
 	    if(V_FORMAT(v)>=DV_UINT8 && V_FORMAT(v)<=DV_INT32) {
 	      globalNums[4] = 1;
 	      globalNums[5] = (double)extract_int(v,0);
-	    } else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE) {
+	    } else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE) {
 	      globalNums[4] = 1;
 	      globalNums[5] = extract_double(v,0);
 	    }
@@ -281,7 +281,7 @@ ff_vplot(vfuncptr func, Var *arg)
 	    if(V_FORMAT(v)>=DV_UINT8 && V_FORMAT(v)<=DV_INT32) {
 	      globalNums[6] = 1;
 	      globalNums[7] = (double)extract_int(v,0);
-	    } else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE) {
+	    } else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE) {
 	      globalNums[6] = 1;
 	      globalNums[7] = extract_double(v,0);
 	    }
@@ -302,7 +302,7 @@ ff_vplot(vfuncptr func, Var *arg)
 	    if(V_FORMAT(v)>=DV_UINT8 && V_FORMAT(v)<=DV_INT32) {
 	      globalNums[8] = 1;
 	      globalNums[9] = (double)extract_int(v,0);
-	    } else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE) {
+	    } else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE) {
 	      globalNums[8] = 1;
 	      globalNums[9] = extract_double(v,0);
 	    }
@@ -389,7 +389,7 @@ ff_vplot(vfuncptr func, Var *arg)
 	    v = V_KEYVAL(av[i]);
 	    if(V_FORMAT(v)>=DV_UINT8 && V_FORMAT(v)<=DV_INT32) {
 	      globalNums[15] = (double)extract_int(v,0);
-	    } else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE) {
+	    } else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE) {
 	      globalNums[15] = extract_double(v,0);
 	    }
 	  } else {
@@ -658,7 +658,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  if(V_TYPE(v) == ID_VAL) {
 	    if(V_FORMAT(v)>=DV_UINT8 && V_FORMAT(v)<=DV_INT32)
 	      width = extract_int(v,0);
-	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE)
+	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE)
 	      width = (int)extract_double(v,0);
 	  } else {
 	    parse_error("Invalid width element in structure: Object %d",Onum);
@@ -705,7 +705,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  if(V_TYPE(v) == ID_VAL) {
 	    if(V_FORMAT(v)>=DV_UINT8 && V_FORMAT(v)<=DV_INT32)
 	      color = extract_int(v,0);
-	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE)
+	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE)
 	      color = (int)extract_double(v,0);
 	  } else {
 	    parse_error("Invalid color element in structure: Object %d",Onum);
@@ -727,7 +727,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	      ignore = (double)extract_int(v,0);
 	      iflag = 1;
 	    }
-	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE) {
+	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE) {
 	      ignore = extract_double(v,0);
 	      iflag = 1;
 	    }
@@ -748,7 +748,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	      ignore_above = (double)extract_int(v,0);
 	      iaflag = 1;
 	    }
-	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE) {
+	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE) {
 	      ignore_above = extract_double(v,0);
 	      iaflag = 1;
 	    }
@@ -769,7 +769,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	      ignore_below = (double)extract_int(v,0);
 	      ibflag = 1;
 	    }
-	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE) {
+	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE) {
 	      ignore_below = extract_double(v,0);
 	      ibflag = 1;
 	    }
@@ -790,7 +790,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	      ignore_x_above = (double)extract_int(v,0);
 	      ixaflag = 1;
 	    }
-	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE) {
+	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE) {
 	      ignore_x_above = extract_double(v,0);
 	      ixaflag = 1;
 	    }
@@ -811,7 +811,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	      ignore_x_below = (double)extract_int(v,0);
 	      ixbflag = 1;
 	    }
-	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE) {
+	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE) {
 	      ignore_x_below = extract_double(v,0);
 	      ixbflag = 1;
 	    }
@@ -831,7 +831,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	    if(V_FORMAT(v)>=DV_UINT8 && V_FORMAT(v)<=DV_INT32)
 	      offset = (double)extract_int(v,0);
 
-	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE)
+	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE)
 	      offset = extract_double(v,0);
 
 	    else
@@ -925,7 +925,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  if(V_TYPE(v) == ID_VAL) {
 	    if(V_FORMAT(v)>=DV_UINT8 && V_FORMAT(v)<=DV_INT32)
 	      ignore = (double)extract_int(v,0);
-	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE)
+	    else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE)
 	      ignore = extract_double(v,0);
 	    iflag = 1;
 	  } else {
@@ -941,7 +941,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  v = V_KEYVAL(av[i]);
 	  if(V_FORMAT(v)>=DV_UINT8 && V_FORMAT(v)<=DV_INT32)
 	    ignore_above = (double)extract_int(v,0);
-	  else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE)
+	  else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE)
 	    ignore_above = extract_double(v,0);
 	  iaflag = 1;
 	} else {
@@ -954,7 +954,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  v = V_KEYVAL(av[i]);
 	  if(V_FORMAT(v)>=DV_UINT8 && V_FORMAT(v)<=DV_INT32)
 	    ignore_below = (double)extract_int(v,0);
-	  else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE)
+	  else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE)
 	    ignore_below = extract_double(v,0);
 	  ibflag = 1;
 	} else {
@@ -969,7 +969,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	    ignore_x_above = (double)extract_int(v,0);
 	    ixaflag = 1;
 	  }
-	  else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE) {
+	  else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE) {
 	    ignore_x_above = extract_double(v,0);
 	    ixaflag = 1;
 	  }
@@ -985,7 +985,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	    ignore_x_below = (double)extract_int(v,0);
 	    ixbflag = 1;
 	  }
-	  else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE) {
+	  else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE) {
 	    ignore_x_below = extract_double(v,0);
 	    ixbflag = 1;
 	  }
@@ -999,7 +999,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  v = V_KEYVAL(av[i]);
 	  if(V_FORMAT(v)>=DV_UINT8 && V_FORMAT(v)<=DV_INT32)
 	    offset = (double)extract_int(v,0);
-	  else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DOUBLE)
+	  else if(V_FORMAT(v)>=DV_FLOAT && V_FORMAT(v)<=DV_DOUBLE)
 	    offset = extract_double(v,0);
 	} else {
 	  parse_error("Invalid designation for offset");
@@ -1008,7 +1008,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	
       } else if (!(name_check(av[i]->name, "color", 1))) {
 	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
-	  if(V_FORMAT(av[i]) == DV_FLOAT || V_FORMAT(av[i]) == DOUBLE)
+	  if(V_FORMAT(av[i]) == DV_FLOAT || V_FORMAT(av[i]) == DV_DOUBLE)
 	    color = (int)extract_double(V_KEYVAL(av[i]),0);
 	  else
 	    color = extract_int(V_KEYVAL(av[i]),0);
@@ -1346,7 +1346,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	    y[k] = (double) extract_int(v, obj_index);
 	  break;
 	  case DV_FLOAT:
-	  case DOUBLE:
+	  case DV_DOUBLE:
 	    y[k] = extract_double(v, obj_index);
 	  }
 	
@@ -1358,7 +1358,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	      x[k] = (double)extract_int(xaxis_i, rpos(obj_index, v, xaxis_i));
 	    break;
 	    case DV_FLOAT:
-	    case DOUBLE:
+	    case DV_DOUBLE:
 	      x[k] = extract_double(xaxis_i, rpos(obj_index, v, xaxis_i));
 	    }
 	  } else {
@@ -1386,7 +1386,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	      }
 	    break;
 	    case DV_FLOAT:
-	    case DOUBLE:
+	    case DV_DOUBLE:
 	      if(V_DSIZE(errorb) == 1)
 		Err1[k] = extract_double(errorb,0);
 	      else {
@@ -1437,7 +1437,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
           		  fprintf(fp, "%d\t %d\n", (int)x[k], (int)yval);
               break;
           	  case DV_FLOAT:
-          	  case DOUBLE:
+          	  case DV_DOUBLE:
           		  fprintf(fp, "%f\t %f\n", x[k], yval);
           }
 
@@ -1452,7 +1452,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
         		  fprintf(fp, "%d\t %d\t %d\n", (int)x[k], (int)yval, (int)Err1[k]);
               break;
         	  case DV_FLOAT:
-        	  case DOUBLE:
+        	  case DV_DOUBLE:
         		  fprintf(fp, "%f\t %f\t %f\n", x[k], yval, Err1[k]);
         }
 
@@ -1471,7 +1471,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
       		fprintf(fp, "%d\t %d\t %d\t %d\n", (int)x[k], (int)yval, (int)e1, (int)e2);
           break;
       	  case DV_FLOAT:
-      	  case DOUBLE:
+      	  case DV_DOUBLE:
       		fprintf(fp, "%f\t %f\t %f\t %f\n", x[k], yval, e1, e2);
       }
 
@@ -1488,7 +1488,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 		      		fprintf(fp, "%d\t %d\t %d\t %d\t %d\t %d\n", (int)x[k], (int)yval, (int)Err1[k], (int)Err2[k], (int)e1, (int)e2);
 		      	  break;
 		      	  case DV_FLOAT:
-		      	  case DOUBLE:
+		      	  case DV_DOUBLE:
 		      		fprintf(fp, "%f\t %f\t %f\t %f\t %f\t %f\n", x[k], yval, Err1[k], Err2[k], e1, e2);
 		      }
 	      }

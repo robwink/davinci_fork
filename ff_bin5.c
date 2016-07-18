@@ -52,7 +52,7 @@ static int internalTypes[B5WT_ULONGLONG+1] = {
   DV_INT16,
   DV_INT32,
   DV_FLOAT,
-  DOUBLE,
+  DV_DOUBLE,
   0,
   0,
   0,

@@ -87,7 +87,7 @@ ff_ascii(vfuncptr func, Var *arg)
 		else if (!strcasecmp(format_str, "short")) format = DV_INT16;
 		else if (!strcasecmp(format_str, "int")) format = DV_INT32;
 		else if (!strcasecmp(format_str, "float")) format = DV_FLOAT;
-		else if (!strcasecmp(format_str, "double")) format = DOUBLE;
+		else if (!strcasecmp(format_str, "double")) format = DV_DOUBLE;
 	}
 
 	/**
@@ -219,7 +219,7 @@ ff_ascii(vfuncptr func, Var *arg)
 				case DV_FLOAT:
 					fdata[count++] = strtod(ptr, NULL);
 					break;
-				case DOUBLE:
+				case DV_DOUBLE:
 					ddata[count++] = strtod(ptr, NULL);
 					break;
 				}

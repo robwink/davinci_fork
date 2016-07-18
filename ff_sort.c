@@ -321,7 +321,7 @@ Var *ff_sort(vfuncptr func, Var * arg)
     case DV_INT16:		cmp = cmp_short;	break;
     case DV_INT32:		cmp = cmp_int;		break;
     case DV_FLOAT:		cmp = cmp_float;	break;
-    case DOUBLE:	cmp = cmp_double;	break;
+    case DV_DOUBLE:	cmp = cmp_double;	break;
     }
 
     if (V_ORG(sortVar) != BSQ) {
@@ -698,7 +698,7 @@ Var *ff_sort_old(vfuncptr func, Var * arg)
   case DV_INT16:		cmp = cmp_short;	break;
   case DV_INT32:		cmp = cmp_int;		break;
   case DV_FLOAT:		cmp = cmp_float;	break;
-  case DOUBLE:	        cmp = cmp_double;	break;
+  case DV_DOUBLE:	        cmp = cmp_double;	break;
   }
   
   // Convert index or object to BSQ format, so that the sorted object

@@ -232,17 +232,27 @@ enum {
  ** Var->value.Sym->format
  **/
 
+// TODO(rswinkle) make these an enum?
 #define DV_UINT8    1
-#define DV_INT16    2
-#define DV_INT32    3
-#define DV_FLOAT    4
-#define VAX_FLOAT   5
-#define VAX_INTEGER 6
-#define DV_INT64    7
-#define DOUBLE      8
-#define UINT16      9
+#define DV_UINT16   2
+#define DV_UINT32   3
+#define DV_UINT64   4
 
-#define NBYTES(a)   ((a) == DV_INT32 ? 4 : ((a) == UINT16 ? 2 : ((a) == DV_INT64 ? 8 : ((a) == VAX_FLOAT ? 4 : ((a) == VAX_INTEGER ? 2 : (a))))))
+#define DV_INT8     5
+#define DV_INT16    6
+#define DV_INT32    7
+#define DV_INT64    8
+
+#define DV_FLOAT    9
+#define DV_DOUBLE   10
+
+//deprecated
+#define VAX_FLOAT   11
+#define VAX_INTEGER 12
+
+#define NBYTES(a)   dv_format_size(a)
+
+int dv_format_size(int type);
 
 /**
  ** Data axis order

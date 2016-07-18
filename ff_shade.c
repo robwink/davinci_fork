@@ -39,9 +39,9 @@ ff_shade(vfuncptr func, Var * arg)
 	
 	Alist alist[5];
 	alist[0] = make_alist( "object",    ID_VAL,    NULL, &obj);
-	alist[1] = make_alist( "angle",     DOUBLE,    NULL,    &sun_elevation);
-	alist[2] = make_alist( "azimuth",     DOUBLE,    NULL,  &sun_azimuth);
-	alist[3] = make_alist( "scale",     DOUBLE,    NULL,  &scale);
+	alist[1] = make_alist( "angle",     DV_DOUBLE,    NULL,    &sun_elevation);
+	alist[2] = make_alist( "azimuth",     DV_DOUBLE,    NULL,  &sun_azimuth);
+	alist[3] = make_alist( "scale",     DV_DOUBLE,    NULL,  &scale);
 	alist[4].name = NULL;
 	
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -134,8 +134,8 @@ ff_shade2(vfuncptr func, Var * arg)
 	
     Alist alist[5];
     alist[0] = make_alist( "object",    ID_VAL,    NULL, &obj);
-    alist[1] = make_alist( "pixdist",   DOUBLE,     NULL,    &dx);
-    alist[2] = make_alist( "angle",     DOUBLE,    NULL,    &sun_angle);
+    alist[1] = make_alist( "pixdist",   DV_DOUBLE,     NULL,    &dx);
+    alist[2] = make_alist( "angle",     DV_DOUBLE,    NULL,    &sun_angle);
     alist[3] = make_alist( "noshadow",  DV_INT32,       NULL,    &no_shade);
     alist[4].name = NULL;
 

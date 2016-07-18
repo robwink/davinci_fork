@@ -383,7 +383,7 @@ LoadTDB(char *filename)
                                        d->dim_size[0] ? d->dim_size[0] : 1,
                                        d->dim_size[1] ? d->dim_size[1] : 1,
                                        d->dim_size[2] ? d->dim_size[2] : 1,
-                                       DOUBLE, dbl);
+                                       DV_DOUBLE, dbl);
                            break;
                          }
           case T_FLOAT:

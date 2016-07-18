@@ -70,7 +70,7 @@ ff_fft(vfuncptr func, Var * arg)
 		data[i*2] = out[i].re;
 		data[i*2+1] = out[i].im;
 	}
-	return(newVal(BSQ, 2, n, 1, DOUBLE, data));
+	return(newVal(BSQ, 2, n, 1, DV_DOUBLE, data));
 }
 
 Var *
@@ -104,7 +104,7 @@ ff_realfft(vfuncptr func, Var * arg)
 	} else {
 		realrft(in, n, out);
 	}
-	return(newVal(BSQ, 1, n, 1, DOUBLE, out));
+	return(newVal(BSQ, 1, n, 1, DV_DOUBLE, out));
 }
 
 
@@ -149,7 +149,7 @@ ff_realfft2(vfuncptr func, Var * arg)
 		}
 	}
 
-	return(newVal(BSQ, 1, n, 1, DOUBLE, in));
+	return(newVal(BSQ, 1, n, 1, DV_DOUBLE, in));
 }
 
 
@@ -210,5 +210,5 @@ ff_realfft3(vfuncptr func, Var * arg)
     mayer_realifft(n, in);
   }
 
-  return(newVal(BSQ, 1, n, 1, DOUBLE, in));
+  return(newVal(BSQ, 1, n, 1, DV_DOUBLE, in));
 }

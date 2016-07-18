@@ -152,5 +152,5 @@ ff_dct(vfuncptr func, Var * arg)
 		V_SIZE(obj)[0], 
 		V_SIZE(obj)[1], 
 		V_SIZE(obj)[2], 
-		DOUBLE, data));
+		DV_DOUBLE, data));
 }

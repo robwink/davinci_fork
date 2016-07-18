@@ -2603,7 +2603,7 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
     free(slopes);
     free(irad);
 
-    out = newVal(BSQ, 400, 400, z, DOUBLE, min_try1);
+    out = newVal(BSQ, 400, 400, z, DV_DOUBLE, min_try1);
     return(out);
   }
 
@@ -2619,7 +2619,7 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
   /* find minimum along the trough */
   min_try3 = minimize_1d(rad, irad, 0.0, min_try1, min_try2, slopes);
 
-  out = newVal(BSQ, 2, 1, z, DOUBLE, min_try3);
+  out = newVal(BSQ, 2, 1, z, DV_DOUBLE, min_try3);
 
   free(irad);
   free(min_try2);
@@ -3711,7 +3711,7 @@ Var *thm_marsbin(vfuncptr func, Var *arg){
 
     out = new_struct(2);
     add_struct(out, "nobs", newVal(BSQ,lon_range,lat_range,1,DV_INT32,inv_plane));
-    add_struct(out, "cube", newVal(BSQ,lon_range,lat_range,xdim-2,DOUBLE,calc_plane));
+    add_struct(out, "cube", newVal(BSQ,lon_range,lat_range,xdim-2,DV_DOUBLE,calc_plane));
 
     return(out);
   }

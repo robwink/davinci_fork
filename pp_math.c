@@ -219,7 +219,7 @@ pp_math(Var * a, int op, Var * b)
         case DV_FLOAT:
             DO_RELOP_LOOP(float, u_char, extract_float, (float));
             break;
-        case DOUBLE:
+        case DV_DOUBLE:
             DO_RELOP_LOOP(double, u_char, extract_double, (double));
             break;
         }
@@ -258,7 +258,7 @@ pp_math(Var * a, int op, Var * b)
         case DV_FLOAT:
             DO_MATH_LOOP(float, float, extract_float, (float));
             break;
-        case DOUBLE:
+        case DV_DOUBLE:
             DO_MATH_LOOP(double, double, extract_double, (double));
             break;
         }
@@ -376,7 +376,7 @@ pp_compare(Var * a, Var * b)
 		case DV_FLOAT:
 			DO_CMP_LOOP(float, extract_float);
 			break;
-		case DOUBLE:
+		case DV_DOUBLE:
 			DO_CMP_LOOP(double, extract_double);
 			break;
 	}
@@ -467,7 +467,7 @@ extract_int(const Var * v, const size_t i)
         return ((int) ((int *) V_DATA(v))[i]);
     case DV_FLOAT:
         return ((int) ((float *) V_DATA(v))[i]);
-    case DOUBLE:
+    case DV_DOUBLE:
         return ((int) ((double *) V_DATA(v))[i]);
     }
     return (0);
@@ -484,7 +484,7 @@ extract_float(Var * v, size_t i)
         return ((float) ((int *) V_DATA(v))[i]);
     case DV_FLOAT:
         return ((float) ((float *) V_DATA(v))[i]);
-    case DOUBLE:
+    case DV_DOUBLE:
         return ((float) ((double *) V_DATA(v))[i]);
     }
     return (0);
@@ -501,7 +501,7 @@ extract_double(Var * v, size_t i)
         return (((int *) V_DATA(v))[i]);
     case DV_FLOAT:
         return (((float *) V_DATA(v))[i]);
-    case DOUBLE:
+    case DV_DOUBLE:
         return (((double *) V_DATA(v))[i]);
     }
     return (0);

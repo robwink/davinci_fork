@@ -61,7 +61,7 @@ WriteAscii(Var *s, char *filename, int force)
 					fprintf(fp, "%d", ival);
 					break;
 				  case DV_FLOAT:
-				  case DOUBLE:
+				  case DV_DOUBLE:
 					dval = extract_double(s, pos);
 					fprintf(fp, "%.10g", dval);
 					break;

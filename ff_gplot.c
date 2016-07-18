@@ -67,7 +67,7 @@ Var *ff_gplot(vfuncptr func, Var * arg)
             fprintf(fp, "%d\n", extract_int(object, i));
             break;
         case DV_FLOAT:
-        case DOUBLE:
+        case DV_DOUBLE:
             fprintf(fp, "%g\n", extract_double(object, i));
             break;
         }
@@ -157,7 +157,7 @@ Var *ff_plot(vfuncptr func, Var * arg)
                         fprintf(fp, "%d", extract_int(v, i));
                         break;
                     case DV_FLOAT:
-                    case DOUBLE:
+                    case DV_DOUBLE:
                         fprintf(fp, "%.12g", extract_double(v, i));
                         break;
                     }
@@ -240,7 +240,7 @@ Var *ff_splot(vfuncptr func, Var * arg)
 	      v = V_KEYVAL(s);
 	      if(V_FORMAT(v)==DV_UINT8 || V_FORMAT(v)==DV_INT32 || V_FORMAT(v)==DV_INT16) {
 		xscale = (float)extract_int(v,0);
-	      } else if(V_FORMAT(v)==DV_FLOAT || V_FORMAT(v)==DOUBLE) {
+	      } else if(V_FORMAT(v)==DV_FLOAT || V_FORMAT(v)==DV_DOUBLE) {
 		xscale = extract_float(v,0);
 	      }
 	    }
@@ -253,7 +253,7 @@ Var *ff_splot(vfuncptr func, Var * arg)
 	      v = V_KEYVAL(s);
 	      if(V_FORMAT(v)==DV_UINT8 || V_FORMAT(v)==DV_INT32 || V_FORMAT(v)==DV_INT16) {
 		yscale = (float)extract_int(v,0);
-	      } else if(V_FORMAT(v)==DV_FLOAT || V_FORMAT(v)==DOUBLE) {
+	      } else if(V_FORMAT(v)==DV_FLOAT || V_FORMAT(v)==DV_DOUBLE) {
 		yscale = extract_float(v,0);
 	      }
 	    }
@@ -300,7 +300,7 @@ Var *ff_splot(vfuncptr func, Var * arg)
 	    
 	    break;
 	  case DV_FLOAT:
-	  case DOUBLE:
+	  case DV_DOUBLE:
 	    if(xscale != 0 && yscale != 0) {
 	      fprintf(fp, "%g %g %.12g\n",(int)((i%s0)+1)*xscale, (int)((i/s0)+1)*yscale, extract_float(v,i));
 	    } else {
@@ -627,7 +627,7 @@ Var *ff_xplot(vfuncptr func, Var * arg)
                                 break; // drd added -- break was missing
 
                             case DV_FLOAT:
-                            case DOUBLE:
+                            case DV_DOUBLE:
                                 y[k] = extract_float(v, obj_index);
                             }
 
@@ -643,7 +643,7 @@ Var *ff_xplot(vfuncptr func, Var * arg)
                                                                  Xaxis));
                                     break; // drd added -- break was missing
                                 case DV_FLOAT:
-                                case DOUBLE:
+                                case DV_DOUBLE:
                                     x[k] =
                                         extract_float(Xaxis,
                                                       rpos(obj_index, v,
@@ -672,7 +672,7 @@ Var *ff_xplot(vfuncptr func, Var * arg)
                                 	fprintf(fp, "%d\t %d\n", (int)x[k], (int)y[k]);
                                     break;
                                 case DV_FLOAT:
-                                case DOUBLE:
+                                case DV_DOUBLE:
                                 	fprintf(fp, "%f\t %f\n", x[k], y[k]);
                                 }
 
@@ -951,7 +951,7 @@ Var *ff_xplot2(vfuncptr func, Var * arg)
                                 y[k] = (float) extract_int(v, obj_index);
                                 break; // drd added -- break was missing
                             case DV_FLOAT:
-                            case DOUBLE:
+                            case DV_DOUBLE:
                                 y[k] = extract_float(v, obj_index);
                             }
 
@@ -967,7 +967,7 @@ Var *ff_xplot2(vfuncptr func, Var * arg)
                                                                  Xaxis));
                                     break; // drd added
                                 case DV_FLOAT:
-                                case DOUBLE:
+                                case DV_DOUBLE:
                                     x[k] =
                                         extract_float(Xaxis,
                                                       rpos(obj_index, v,

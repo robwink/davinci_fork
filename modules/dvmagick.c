@@ -256,7 +256,7 @@ static inline StorageType dv_to_im_storage_type(Var * img)
     return FloatPixel; /* When you make an assumption... */
   case VAX_INTEGER:
     return IntegerPixel;
-  case DOUBLE:
+  case DV_DOUBLE:
     return DoublePixel;
   default:
     return CharPixel; /* Unknown davinci Type!  You'll need to add it here. */
@@ -963,8 +963,8 @@ static Var * dvBlurImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
-  alist[2] = make_alist("sigma", DOUBLE, NULL, &sigma);
+  alist[1] = make_alist("radius", DV_DOUBLE, NULL, &radius);
+  alist[2] = make_alist("sigma", DV_DOUBLE, NULL, &sigma);
   alist[3].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -1010,8 +1010,8 @@ static Var * dvCharcoalImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
-  alist[2] = make_alist("sigma", DOUBLE, NULL, &sigma);
+  alist[1] = make_alist("radius", DV_DOUBLE, NULL, &radius);
+  alist[2] = make_alist("sigma", DV_DOUBLE, NULL, &sigma);
   alist[3].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -1279,7 +1279,7 @@ static Var * dvEdgeImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
+  alist[1] = make_alist("radius", DV_DOUBLE, NULL, &radius);
   alist[2].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -1321,8 +1321,8 @@ static Var * dvEmbossImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
-  alist[2] = make_alist("sigma", DOUBLE, NULL, &sigma);
+  alist[1] = make_alist("radius", DV_DOUBLE, NULL, &radius);
+  alist[2] = make_alist("sigma", DV_DOUBLE, NULL, &sigma);
   alist[3].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -1626,8 +1626,8 @@ static Var * dvGaussianBlurImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
-  alist[2] = make_alist("sigma", DOUBLE, NULL, &sigma);
+  alist[1] = make_alist("radius", DV_DOUBLE, NULL, &radius);
+  alist[2] = make_alist("sigma", DV_DOUBLE, NULL, &sigma);
   alist[3].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -1669,7 +1669,7 @@ static Var * dvImplodeImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("amount", DOUBLE, NULL, &amount);
+  alist[1] = make_alist("amount", DV_DOUBLE, NULL, &amount);
   alist[2].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -1713,9 +1713,9 @@ static Var * dvLevelImage(vfuncptr f, Var *args) {
   InitializeMagick("davinci");
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("blackpoint", DOUBLE, NULL, &blackpoint);
-  alist[2] = make_alist("midpoint", DOUBLE, NULL, &midpoint);
-  alist[3] = make_alist("whitepoint", DOUBLE, NULL, &whitepoint);
+  alist[1] = make_alist("blackpoint", DV_DOUBLE, NULL, &blackpoint);
+  alist[2] = make_alist("midpoint", DV_DOUBLE, NULL, &midpoint);
+  alist[3] = make_alist("whitepoint", DV_DOUBLE, NULL, &whitepoint);
   alist[4].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -1799,7 +1799,7 @@ static Var * dvMedianFilterImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
+  alist[1] = make_alist("radius", DV_DOUBLE, NULL, &radius);
   alist[2].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -1884,9 +1884,9 @@ static Var * dvModulateImage(vfuncptr f, Var *args) {
   InitializeMagick("davinci");
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("brightness", DOUBLE, NULL, &brightness);
-  alist[2] = make_alist("saturation", DOUBLE, NULL, &saturation);
-  alist[3] = make_alist("hue", DOUBLE, NULL, &hue);
+  alist[1] = make_alist("brightness", DV_DOUBLE, NULL, &brightness);
+  alist[2] = make_alist("saturation", DV_DOUBLE, NULL, &saturation);
+  alist[3] = make_alist("hue", DV_DOUBLE, NULL, &hue);
   alist[4].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -2015,9 +2015,9 @@ static Var * dvMotionBlurImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
-  alist[2] = make_alist("sigma", DOUBLE, NULL, &sigma);
-  alist[3] = make_alist("angle", DOUBLE, NULL, &angle);
+  alist[1] = make_alist("radius", DV_DOUBLE, NULL, &radius);
+  alist[2] = make_alist("sigma", DV_DOUBLE, NULL, &sigma);
+  alist[3] = make_alist("angle", DV_DOUBLE, NULL, &angle);
   alist[4].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -2139,7 +2139,7 @@ static Var * dvOilPaintImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
+  alist[1] = make_alist("radius", DV_DOUBLE, NULL, &radius);
   alist[2].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -2181,7 +2181,7 @@ static Var * dvReduceNoiseImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
+  alist[1] = make_alist("radius", DV_DOUBLE, NULL, &radius);
   alist[2].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -2240,7 +2240,7 @@ static Var * dvResizeImage(vfuncptr f, Var *args) {
   alist[1] = make_alist("columns", DV_INT32, NULL, &columns);
   alist[2] = make_alist("rows", DV_INT32, NULL, &rows);
   alist[3] = make_alist("type", ID_ENUM, filtertypes, &filtertype);
-  alist[4] = make_alist("blur", DOUBLE, NULL, &blur);
+  alist[4] = make_alist("blur", DV_DOUBLE, NULL, &blur);
   alist[5].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -2358,7 +2358,7 @@ static Var * dvRotateImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("angle", DOUBLE, NULL, &angle);
+  alist[1] = make_alist("angle", DV_DOUBLE, NULL, &angle);
   alist[2].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -2512,8 +2512,8 @@ static Var * dvShadeImage(vfuncptr f, Var *args) {
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
   alist[1] = make_alist("colorshade", DV_INT32, NULL, &colorshade);
-  alist[2] = make_alist("azimuth", DOUBLE, NULL, &azimuth);
-  alist[3] = make_alist("elevation", DOUBLE, NULL, &elevation);
+  alist[2] = make_alist("azimuth", DV_DOUBLE, NULL, &azimuth);
+  alist[3] = make_alist("elevation", DV_DOUBLE, NULL, &elevation);
   alist[4].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -2555,8 +2555,8 @@ static Var * dvSharpenImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
-  alist[2] = make_alist("sigma", DOUBLE, NULL, &sigma);
+  alist[1] = make_alist("radius", DV_DOUBLE, NULL, &radius);
+  alist[2] = make_alist("sigma", DV_DOUBLE, NULL, &sigma);
   alist[3].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -2642,8 +2642,8 @@ static Var * dvShearImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("xshear", DOUBLE, NULL, &xshear);
-  alist[2] = make_alist("yshear", DOUBLE, NULL, &yshear);
+  alist[1] = make_alist("xshear", DV_DOUBLE, NULL, &xshear);
+  alist[2] = make_alist("yshear", DV_DOUBLE, NULL, &yshear);
   alist[3].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -2821,7 +2821,7 @@ static Var * dvSwirlImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("angle", DOUBLE, NULL, &angle);
+  alist[1] = make_alist("angle", DV_DOUBLE, NULL, &angle);
   alist[2].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -2862,10 +2862,10 @@ static Var * dvUnsharpMaskImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("radius", DOUBLE, NULL, &radius);
-  alist[2] = make_alist("sigma", DOUBLE, NULL, &sigma);
-  alist[3] = make_alist("amount", DOUBLE, NULL, &amount);
-  alist[4] = make_alist("threshold", DOUBLE, NULL, &threshold);
+  alist[1] = make_alist("radius", DV_DOUBLE, NULL, &radius);
+  alist[2] = make_alist("sigma", DV_DOUBLE, NULL, &sigma);
+  alist[3] = make_alist("amount", DV_DOUBLE, NULL, &amount);
+  alist[4] = make_alist("threshold", DV_DOUBLE, NULL, &threshold);
   alist[5].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -2907,8 +2907,8 @@ static Var * dvWaveImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("amplitude", DOUBLE, NULL, &amplitude);
-  alist[2] = make_alist("length", DOUBLE, NULL, &length);
+  alist[1] = make_alist("amplitude", DV_DOUBLE, NULL, &amplitude);
+  alist[2] = make_alist("length", DV_DOUBLE, NULL, &length);
   alist[3].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;

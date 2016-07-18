@@ -234,7 +234,7 @@ do_key(KEYWORD * key)
     case ODL_REAL:
       f = (double *) calloc(1, sizeof(double));
       *f = strtod(key->value, NULL);
-      o = newVal(BSQ, 1, 1, 1, DOUBLE, f);
+      o = newVal(BSQ, 1, 1, 1, DV_DOUBLE, f);
       break;
     case ODL_SYMBOL:
     case ODL_DATE:
@@ -295,7 +295,7 @@ do_key(KEYWORD * key)
               f = (double *) malloc(num * sizeof(double));
               for (ii = 0; ii < num; ii++)
                 f[ii] = strtod(stuff[ii], NULL);
-              o = newVal(BSQ, num, 1, 1, DOUBLE, f);
+              o = newVal(BSQ, num, 1, 1, DV_DOUBLE, f);
               break;
 
             default:
@@ -796,7 +796,7 @@ ProcessVarIntoString(Var * element, char *name)
       sprintf(tmp_string, "%f", V_FLOAT(element));
     }
 
-    else if (V_FORMAT(element) == DOUBLE) {
+    else if (V_FORMAT(element) == DV_DOUBLE) {
       sprintf(tmp_string, "%.10g", V_DOUBLE(element));
     }
 
@@ -854,7 +854,7 @@ ProcessVarIntoString(Var * element, char *name)
         sprintf(tmp_string, "%f, ", extract_float(element, idx));
         break;
 
-      case DOUBLE:
+      case DV_DOUBLE:
         sprintf(tmp_string, "%.10g, ", extract_double(element, idx));
         break;
 
@@ -1258,7 +1258,7 @@ void output_big_var(FILE * out, Var * data, char *inset, char *name)
         break;
 
 
-      case DOUBLE:
+      case DV_DOUBLE:
         dp = ((double *) V_DATA(data));
         fprintf(out, "%.10g%s", dp[i], dmrk);
         break;
@@ -1447,7 +1447,7 @@ ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth,
                     V_FLOAT(data));
             break;
 
-          case DOUBLE:
+          case DV_DOUBLE:
             fprintf(fp, "%s%s = %.10g\r\n", inset, tmpname,
                     (*((double *) V_DATA(data))));
             break;
@@ -2228,7 +2228,7 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
       Bufs[j] = DoScale(label->nrows, f[j], Bufs[j]);
       data = calloc(dim * sizeof(double) * label->nrows, sizeof(char));
       memcpy(data, Bufs[j], dim * sizeof(double) * label->nrows);
-      v = newVal(BSQ, dim, label->nrows, 1, DOUBLE, data);
+      v = newVal(BSQ, dim, label->nrows, 1, DV_DOUBLE, data);
     } else {
       switch (f[j]->eformat) {
         case CHARACTER:
@@ -2272,7 +2272,7 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
               for(k=0; k<nitems; k++){
                 *(double *)(data + k*sizeof(double)) = (double)*(unsigned int * )(Bufs[j] + k * sizeof(int));
               }
-              v = newVal(BSQ, dim, label->nrows, 1, DOUBLE, data);
+              v = newVal(BSQ, dim, label->nrows, 1, DV_DOUBLE, data);
               break;
             case 2:
               data = calloc(size[j] * 2 * label->nrows, sizeof(char)); // upscale the data type
@@ -2296,7 +2296,7 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
 
           switch (f[j]->size) {
             case 8:
-              v = newVal(BSQ, dim, label->nrows, 1, DOUBLE, data);
+              v = newVal(BSQ, dim, label->nrows, 1, DV_DOUBLE, data);
               break;
             case 4:
               v = newVal(BSQ, dim, label->nrows, 1, DV_FLOAT, data);
@@ -2327,7 +2327,7 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
             step += sizeof(double);
           }
 
-          v = newVal(BSQ, dim, label->nrows, 1, DOUBLE, data);
+          v = newVal(BSQ, dim, label->nrows, 1, DV_DOUBLE, data);
           break;
 
         case BYTE_OFFSET:

@@ -65,7 +65,7 @@ Var * ff_fit(vfuncptr func, Var *arg)
 	alist[4] = make_alist( "steps",   DV_INT32,       NULL,    &iter);
 	alist[5] = make_alist( "plot",    DV_INT32,       NULL,    &plot);
 	alist[6] = make_alist( "verbose", DV_INT32,       NULL,    &verbose);
-	alist[7] = make_alist( "ignore",  DOUBLE,    NULL,    &ignore);
+	alist[7] = make_alist( "ignore",  DV_DOUBLE,    NULL,    &ignore);
 	alist[8].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return NULL;
@@ -117,7 +117,7 @@ Var * ff_fit(vfuncptr func, Var *arg)
 
 	V_DATA(s) = op;
 	V_DSIZE(s) = nparam+2;
-	V_FORMAT(s) = DOUBLE;
+	V_FORMAT(s) = DV_DOUBLE;
 	V_ORDER(s) = BSQ;
 	V_SIZE(s)[0] = nparam+2;
 	V_SIZE(s)[2] = V_SIZE(s)[1] = 1;
@@ -196,7 +196,7 @@ lin_fit(Var *x, Var *y, int Row, int plot, double ignore)
 		free(tmp);
 		send_to_plot(buf);
 	}
-	return newVal(BSQ,2,1,1,DOUBLE,r);
+	return newVal(BSQ,2,1,1,DV_DOUBLE,r);
 }
 
 

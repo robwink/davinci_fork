@@ -390,7 +390,7 @@ ff_pcs(vfuncptr	func, Var *args)
 	case DV_INT16:
 	case DV_INT32:
 	case DV_FLOAT:
-	case DOUBLE:
+	case DV_DOUBLE:
 		/* Only the above data types are supported */
 		break;
 	
@@ -442,7 +442,7 @@ ff_pcs(vfuncptr	func, Var *args)
 		case DV_INT16:
 		case DV_INT32:
 		case DV_FLOAT:
-		case DOUBLE:
+		case DV_DOUBLE:
 			/* Only the above data types are supported */
 			break;
 		
@@ -1195,7 +1195,7 @@ ff_eigen(
 	case DV_INT16:
 	case DV_INT32:
 	case DV_FLOAT:
-	case DOUBLE:
+	case DV_DOUBLE:
 		/* Only the above data types are supported */
 		break;
 	

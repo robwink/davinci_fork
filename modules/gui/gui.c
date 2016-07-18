@@ -598,7 +598,7 @@ static EnumNameEntry vicarDataTypeEnums[] = {
 	{ "FULL",				XvicFULL },
 	{ "UFULL",				XvicUFULL },
 	{ "REAL",				XvicREAL },
-	{ "DOUBLE",				XvicDOUBLE },
+	{ "DV_DOUBLE",				XvicDOUBLE },
 	{ NULL,				0 }
 };
 

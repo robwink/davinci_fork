@@ -4003,7 +4003,7 @@ Var *kjn_radcorr(vfuncptr func, Var * arg)
     free(slopes);
     free(irad);
 
-    out = newVal(BSQ, 400, 400, z, DOUBLE, min_try1);
+    out = newVal(BSQ, 400, 400, z, DV_DOUBLE, min_try1);
     return(out);
   }
 
@@ -4019,7 +4019,7 @@ Var *kjn_radcorr(vfuncptr func, Var * arg)
   // find minimal point along the trough //
   min_try3 = minimize_1d(rad, irad, 0.0, min_try1, min_try2, slopes);
 
-  out = newVal(BSQ, 2, 1, z, DOUBLE, min_try3);
+  out = newVal(BSQ, 2, 1, z, DV_DOUBLE, min_try3);
 
   // free up heap objects //
   free(irad);

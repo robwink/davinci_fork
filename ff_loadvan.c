@@ -614,7 +614,7 @@ davinci_type(
     case TREAL:
         switch(csize){
         case 4: dav_type = DV_FLOAT; break;
-        default: dav_type = DOUBLE; break;
+        default: dav_type = DV_DOUBLE; break;
         }
         break;
 
@@ -958,7 +958,7 @@ vpass2(
                         float_data[i][idx] = atof(vals[t->sno]); break;
 
                     default:
-                    case DOUBLE:
+                    case DV_DOUBLE:
                         double_data[i][idx] = atof(vals[t->sno]); break;
                     }
                     break;

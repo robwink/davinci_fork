@@ -53,7 +53,7 @@ struct _vfuncptr vfunclist[] = {
   { "short",      ff_conv, (void *)DV_INT16, NULL},
   { "int",        ff_conv, (void *)DV_INT32, NULL},
   { "float",      ff_conv, (void *)DV_FLOAT, NULL},
-  { "double",     ff_conv, (void *)DOUBLE, NULL},
+  { "double",     ff_conv, (void *)DV_DOUBLE, NULL},
 
   /* org conversion.  All just shorthand for ff_org() */
 

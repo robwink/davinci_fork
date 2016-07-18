@@ -207,7 +207,7 @@ init_sums(Var *data, int w, int h, int d, Var **rn, Var **rs, Var **rcount, Var 
 					DV_INT32, n);
 	*rs = newVal(V_ORG(data), 
 					V_SIZE(data)[0], V_SIZE(data)[1], V_SIZE(data)[2], 
-					DOUBLE, s);
+					DV_DOUBLE, s);
 	*rcount = newVal(V_ORG(data), 
 					V_SIZE(data)[0], V_SIZE(data)[1], V_SIZE(data)[2], 
 					DV_INT32, c);
@@ -238,7 +238,7 @@ ff_boxfilter(vfuncptr func, Var * arg)
     alist[2] = make_alist("y",      DV_INT32,     NULL,     &y);
     alist[3] = make_alist("z",      DV_INT32,     NULL,     &z);
     alist[4] = make_alist("size",   DV_INT32,     NULL,     &size);
-    alist[5] = make_alist("ignore", DOUBLE,  NULL,     &ignore);
+    alist[5] = make_alist("ignore", DV_DOUBLE,  NULL,     &ignore);
     alist[6] = make_alist("verbose", DV_INT32,    NULL,     &verbose);
     alist[7].name = NULL;
 	
