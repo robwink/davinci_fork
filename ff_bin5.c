@@ -48,7 +48,7 @@ static int typeSizes[B5WT_ULONGLONG+1] = {
 
 static int internalTypes[B5WT_ULONGLONG+1] = {
   0,
-  BYTE,
+  DV_UINT8,
   DV_INT16,
   DV_INT32,
   FLOAT,

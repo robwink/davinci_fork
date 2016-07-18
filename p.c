@@ -84,7 +84,7 @@ is_zero(Var * v)
 
     if (V_TYPE(v) == ID_VAL && V_DSIZE(v) == 1) {
         switch (V_FORMAT(v)) {
-        case BYTE:
+        case DV_UINT8:
         case DV_INT16:
         case DV_INT32:
             return (extract_int(v, 0) == 0);
@@ -96,7 +96,7 @@ is_zero(Var * v)
         size_t i;
         for (i = 0; i < V_DSIZE(v); i++) {
             switch (V_FORMAT(v)) {
-            case BYTE:
+            case DV_UINT8:
             case DV_INT16:
             case DV_INT32:
                 if (extract_int(v, i) == 0)

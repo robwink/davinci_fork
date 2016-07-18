@@ -1010,7 +1010,7 @@ ff_fncc_write_mat(vfuncptr func, Var * arg)
 #endif /* WORDS_BIGENDIAN */
 
     switch(V_FORMAT(obj)){
-    case BYTE:   hdr_type += 50; break;
+    case DV_UINT8:   hdr_type += 50; break;
     case DV_INT16:  hdr_type += 40; break;
     case DV_INT32:    hdr_type += 20; break;
     case FLOAT:  hdr_type += 10; break;
@@ -1058,7 +1058,7 @@ ff_fncc_write_mat(vfuncptr func, Var * arg)
         for(i = 0; i < x; i++){
             for(j = 0; j < y; j++){
                 switch(V_FORMAT(obj)){
-                case BYTE:
+                case DV_UINT8:
                     bb = extract_int(obj, cpos(i,j,k,obj));
                     fwrite(&bb, sizeof(bb), 1, fp);
                     break;

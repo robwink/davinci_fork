@@ -148,7 +148,7 @@ davinci_type(
     int      dav_type;
 
     switch(c) {
-        case TBYTE:     dav_type = BYTE;        break;
+        case TBYTE:     dav_type = DV_UINT8;        break;
         case TSHORT:    dav_type = DV_INT16;       break;
         case TINT:      dav_type = DV_INT32;         break;
         case TFLOAT:    dav_type = FLOAT;       break;
@@ -652,7 +652,7 @@ init_coldefs(coldef* cols, int num)
 
     for(i=0; i<num; i++) {
         cols[i].name = NULL;
-        cols[i].data_type = TBYTE; /* start as "BYTE", promote if necessary */
+        cols[i].data_type = TBYTE; /* start as "DV_UINT8", promote if necessary */
         cols[i].max_len = 0;
         cols[i].text = NULL;
         cols[i].next = NULL;
@@ -1427,7 +1427,7 @@ dv_WriteCSV(Var* the_data, char* filename, char* field_delim, int header, int fo
 				for(j=0; j<columns; j++) {
 					switch(V_FORMAT(data[i]))
 					{
-						case BYTE:		fprintf(file, "%u", ((unsigned char*)V_DATA(data[i]))[row*columns+j] );	break;
+						case DV_UINT8:		fprintf(file, "%u", ((unsigned char*)V_DATA(data[i]))[row*columns+j] );	break;
 						case DV_INT16:		fprintf(file, "%d", ((short*)V_DATA(data[i]))[row*columns+j] );			break;
 						case DV_INT32:		fprintf(file, "%d", ((int*)V_DATA(data[i]))[row*columns+j] );			break;
 						case FLOAT:		fprintf(file, "%.4f", ((float*)V_DATA(data[i]))[row*columns+j] );		break;

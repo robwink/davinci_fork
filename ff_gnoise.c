@@ -43,7 +43,7 @@ ff_gnoise(vfuncptr func, Var * arg)
 	V_SIZE(s)[1] = y;
 	V_SIZE(s)[2] = z;
 	V_ORG(s) = BSQ;
-	V_FORMAT(s) = BYTE;
+	V_FORMAT(s) = DV_UINT8;
 
 	if (seed == 0)
 		seed = time(0) * getpid();

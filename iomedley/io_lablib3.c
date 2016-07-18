@@ -2612,7 +2612,7 @@ FILE* OdlOpenMessageFile(char* message_fname, FILE* message_fptr)
 /*             *start_location      : 197                               */
 /*             *start_location type : ODL_RECORD_LOCATION               */
 /*                                                                      */
-/*          ^FNAME = 346 <BYTE>                                         */
+/*          ^FNAME = 346 <DV_UINT8>                                         */
 /*                                                                      */
 /*             file name            : test.lbl (attached)               */
 /*             *start_location      : 346                               */
@@ -2648,7 +2648,7 @@ FILE* OdlOpenMessageFile(char* message_fname, FILE* message_fptr)
 /*             *start_location      : 197                               */
 /*             *start_location type : ODL_RECORD_LOCATION               */
 /*                                                                      */
-/*          ^FNAME = ("file_name.dat", 346 <BYTE>)                      */
+/*          ^FNAME = ("file_name.dat", 346 <DV_UINT8>)                      */
 /*                                                                      */
 /*             file name            : file_name.dat (detached)          */
 /*             *start_location      : 346                               */
@@ -2732,7 +2732,7 @@ char* OdlGetFileName(KEYWORD* keyword, unsigned long* start_location, unsigned s
 		else {
 			/*  Otherwise, find out what kind of units string we have  */
 			UpperCase(unit)* unit = '<'; /* Bug fix SM 10/24/94 */
-			if (strncmp(unit, "<BYTE", 5) == 0)
+			if (strncmp(unit, "<DV_UINT8", 5) == 0)
 				*start_location_type = ODL_BYTE_LOCATION;
 			else
 				*start_location_type = ODL_RECORD_LOCATION;

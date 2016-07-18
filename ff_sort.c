@@ -317,7 +317,7 @@ Var *ff_sort(vfuncptr func, Var * arg)
     dsize = V_DSIZE(sortVar);
   
     switch (format) {
-    case BYTE:		cmp = cmp_byte;		break;
+    case DV_UINT8:		cmp = cmp_byte;		break;
     case DV_INT16:		cmp = cmp_short;	break;
     case DV_INT32:		cmp = cmp_int;		break;
     case FLOAT:		cmp = cmp_float;	break;
@@ -694,7 +694,7 @@ Var *ff_sort_old(vfuncptr func, Var * arg)
   dsize = V_DSIZE(object);
   
   switch (format) {
-  case BYTE:		cmp = cmp_byte;		break;
+  case DV_UINT8:		cmp = cmp_byte;		break;
   case DV_INT16:		cmp = cmp_short;	break;
   case DV_INT32:		cmp = cmp_int;		break;
   case FLOAT:		cmp = cmp_float;	break;

@@ -202,7 +202,7 @@ int iom_GetVicarHeader(FILE* fp, char* fname, struct iom_iheader* h)
 
 	format = iom_EDF_INVALID;
 	if ((q = vicar_get_value(p, "FORMAT=")) != NULL) {
-		if (!strncmp(q, "'BYTE'", 6)) {
+		if (!strncmp(q, "'DV_UINT8'", 6)) {
 			switch (intfmt) {
 			case VICAR_INTFMT_LOW: format  = iom_LSB_INT_1; break;
 			case VICAR_INTFMT_HIGH: format = iom_MSB_INT_1; break;
@@ -334,7 +334,7 @@ int iom_WriteVicar(char* filename,        /* File name for reference purpose */
 #endif /* WORDS_BIGENDIAN */
 
 	switch (h->format) {
-	case iom_BYTE: sprintf(ptr + strlen(ptr), "FORMAT='BYTE'  "); break;
+	case iom_BYTE: sprintf(ptr + strlen(ptr), "FORMAT='DV_UINT8'  "); break;
 	case iom_SHORT: sprintf(ptr + strlen(ptr), "FORMAT='HALF'  "); break;
 	case iom_INT: sprintf(ptr + strlen(ptr), "FORMAT='FULL'  "); break;
 	case iom_FLOAT: sprintf(ptr + strlen(ptr), "FORMAT='REAL'  "); break;

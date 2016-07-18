@@ -838,7 +838,7 @@ ProcessVarIntoString(Var * element, char *name)
   for (idx = 0; idx < count; idx++) {
     switch (V_FORMAT(element)) {
 
-      case BYTE:
+      case DV_UINT8:
 
         break;
 
@@ -1235,7 +1235,7 @@ void output_big_var(FILE * out, Var * data, char *inset, char *name)
 
     switch (V_FORMAT(data)) {
 
-      case BYTE:
+      case DV_UINT8:
         cp = ((char *) V_DATA(data));
         fprintf(out, "%d%s", cp[i], dmrk);
         break;
@@ -1427,7 +1427,7 @@ ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth,
         tmpname = correct_name(name);
         switch (V_FORMAT(data)) {
 
-          case BYTE:
+          case DV_UINT8:
             fprintf(fp, "%s%s = %d\r\n", inset, tmpname,
                     (0xff & V_INT(data)));
             break;
@@ -2255,7 +2255,7 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
               v = newVal(BSQ, dim, label->nrows, 1, DV_INT16, data);
               break;
             case 1:
-              // davinci BYTE type is unsigned char
+              // davinci DV_UINT8 type is unsigned char
               data = calloc(size[j] * 2 * label->nrows, sizeof(char)); // upscale the data type
               for(k=0; k<nitems; k++){
                 *(short *)(data + k*sizeof(short)) = (short)*(unsigned char *)(Bufs[j] + k * sizeof(char));
@@ -2282,10 +2282,10 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
               v = newVal(BSQ, dim, label->nrows, 1, DV_INT32, data);
               break;
             case 1:
-              // davinci BYTE type is unsigned char
+              // davinci DV_UINT8 type is unsigned char
               data = calloc(size[j] * label->nrows, sizeof(char));
               memcpy(data, Bufs[j], size[j] * label->nrows);
-              v = newVal(BSQ, dim, label->nrows, 1, BYTE, data);
+              v = newVal(BSQ, dim, label->nrows, 1, DV_UINT8, data);
           }
           break;
 

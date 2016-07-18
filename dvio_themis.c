@@ -481,7 +481,7 @@ Var *Make_Vis_Cube(int nob, int height, int width, unsigned char *buf)
 	unsigned char *cube;
 
 	if (nob==0 || nob==1) /*Only one image plane*/
-		return newVal(BSQ, width, height, 1, BYTE, buf);
+		return newVal(BSQ, width, height, 1, DV_UINT8, buf);
 
 
 	ramp= (nob > 3 ? 3:nob);
@@ -543,7 +543,7 @@ Var *Make_Vis_Cube(int nob, int height, int width, unsigned char *buf)
 		}
 	}
 	free(buf);
-	return newVal(BSQ,width,(divider/width),nob,BYTE,cube);
+	return newVal(BSQ,width,(divider/width),nob,DV_UINT8,cube);
 }
 
 void Rotate_Buffer(unsigned char *buf, int height, int width, int verb)
@@ -642,7 +642,7 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
 				if (rotate)
 					Rotate_Buffer(buf,height,width,verb);
 				if (nocube)
-					return newVal(BSQ,width,height,1,BYTE,buf);
+					return newVal(BSQ,width,height,1,DV_UINT8,buf);
 				else
 					return Make_Vis_Cube(nob,height,width,buf);
 		} else {
@@ -1462,9 +1462,9 @@ Var *ff_PACI_Read(vfuncptr func, Var * arg)
 			munmap(buf, old_len);
 			close(fd);
 			if (Data_Only) {
-				return(newVal(BSQ,(Col-_SIGINFO),Lines,1,BYTE,data));
+				return(newVal(BSQ,(Col-_SIGINFO),Lines,1,DV_UINT8,data));
 			} else {
-				return(newVal(BSQ,Col,Lines,1,BYTE,data));
+				return(newVal(BSQ,Col,Lines,1,DV_UINT8,data));
 			}
 		}
 
@@ -1489,9 +1489,9 @@ Var *ff_PACI_Read(vfuncptr func, Var * arg)
 				       (Col-_SIGINFO));
 			}
 			free(newbuf);
-			return newVal(BSQ,(Col-_SIGINFO), band_frame_count, Max_Band+1, BYTE,do_buff);
+			return newVal(BSQ,(Col-_SIGINFO), band_frame_count, Max_Band+1, DV_UINT8,do_buff);
 		}
-		return newVal(BSQ, Col, band_frame_count, Max_Band+1, BYTE,newbuf);
+		return newVal(BSQ, Col, band_frame_count, Max_Band+1, DV_UINT8,newbuf);
 
 	} else { //report != 0
 		int *band = (int *)calloc(32, sizeof(int));
@@ -1554,10 +1554,10 @@ Var *ff_GSE_VIS_upshift(vfuncptr func, Var * arg)
 		return NULL;
 	}
 
-	if (V_FORMAT(obj) != BYTE) {
-		parse_error("This function upshifts BYTE values to DV_INT16 values\n"
+	if (V_FORMAT(obj) != DV_UINT8) {
+		parse_error("This function upshifts DV_UINT8 values to DV_INT16 values\n"
 		            "based on the MSSS Square-Root Encoding Table. Please only\n"
-		            "submit BYTE values");
+		            "submit DV_UINT8 values");
 		return NULL;
 	}
 	if (V_ORG(obj) != BSQ) {
@@ -1622,7 +1622,7 @@ Var *ff_GSE_VIS_downshift(vfuncptr func, Var * arg)
    }
 
    if (V_FORMAT(obj)!=DV_INT16) {
-      parse_error("This function downshifts DV_INT16 values to BYTE values\n"
+      parse_error("This function downshifts DV_INT16 values to DV_UINT8 values\n"
                   "based on the MSSS Square-Root Encoding Table. Please only\n"
                   "submit DV_INT16 values");
 
@@ -1647,5 +1647,5 @@ Var *ff_GSE_VIS_downshift(vfuncptr func, Var * arg)
          }
       }
    }
-   return(newVal(BSQ,x,y,z,BYTE,data));
+   return(newVal(BSQ,x,y,z,DV_UINT8,data));
 }

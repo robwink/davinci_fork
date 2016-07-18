@@ -126,6 +126,6 @@ Var *ff_flood_fill(vfuncptr func, Var * arg)
 	floodFillScanline(sx, sy, y, x, fill, val, w_pic);
 	  
   /* return the modified data */
-  out = newVal(BSQ, x, y, 1, BYTE, w_pic);
+  out = newVal(BSQ, x, y, 1, DV_UINT8, w_pic);
   return out;
 }

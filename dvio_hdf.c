@@ -97,7 +97,7 @@ void WriteHDF5(hid_t parent, char* name, Var* v, int hdf_old)
 		dataspace = H5Screate_simple(3, size, NULL);
 
 		switch (V_FORMAT(v)) {
-		case BYTE: datatype   = H5Tcopy(H5T_NATIVE_UCHAR); break;
+		case DV_UINT8: datatype   = H5Tcopy(H5T_NATIVE_UCHAR); break;
 		case DV_INT16: datatype  = H5Tcopy(H5T_NATIVE_SHORT); break;
 		case UINT16: datatype = H5Tcopy(H5T_NATIVE_USHORT); break;
 		case DV_INT32: datatype    = H5Tcopy(H5T_NATIVE_INT); break;
@@ -278,7 +278,7 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 		} else {
 			// technically can return negative number for unsuccessful
 			if (H5Tequal(native_type_data, H5T_NATIVE_UCHAR))
-				type = BYTE;
+				type = DV_UINT8;
 			else if (H5Tequal(native_type_data, H5T_NATIVE_SHORT))
 				type = DV_INT16;
 			else if (H5Tequal(native_type_data, H5T_NATIVE_USHORT))

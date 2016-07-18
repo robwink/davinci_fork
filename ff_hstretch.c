@@ -447,6 +447,6 @@ ff_sstretch2(vfuncptr func, Var * arg)
   
   
   /* clean up and return data */
-  out = newVal(BIP,z, x, y, BYTE, w_data2);	
+  out = newVal(BIP,z, x, y, DV_UINT8, w_data2);	
   return(out);
 }

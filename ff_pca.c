@@ -386,7 +386,7 @@ ff_pcs(vfuncptr	func, Var *args)
 	}
 
 	switch(V_FORMAT(obj)){
-	case BYTE:
+	case DV_UINT8:
 	case DV_INT16:
 	case DV_INT32:
 	case FLOAT:
@@ -438,7 +438,7 @@ ff_pcs(vfuncptr	func, Var *args)
 		/* verify scaling data's data-type */
 
 		switch(V_FORMAT(scale_arg)){
-		case BYTE:
+		case DV_UINT8:
 		case DV_INT16:
 		case DV_INT32:
 		case FLOAT:
@@ -1191,7 +1191,7 @@ ff_eigen(
 	}
 
 	switch(V_FORMAT(obj)){
-	case BYTE:
+	case DV_UINT8:
 	case DV_INT16:
 	case DV_INT32:
 	case FLOAT:

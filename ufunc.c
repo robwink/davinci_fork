@@ -558,7 +558,7 @@ Var* ff_global(vfuncptr func, Var* arg)
 		 */
 		if ((e = get_sym(aname)) == NULL) {
 			char* zero = (char*)calloc(1, 1);
-			e          = newVal(BSQ, 1, 1, 1, BYTE, zero);
+			e          = newVal(BSQ, 1, 1, 1, DV_UINT8, zero);
 			mem_claim(e);
 			V_NAME(e) = strdup(aname);
 			printf("path 1\n");

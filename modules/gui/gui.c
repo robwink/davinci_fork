@@ -592,7 +592,7 @@ static EnumNameEntry vicarDataSavePolicyEnums[] = {
 };
 
 static EnumNameEntry vicarDataTypeEnums[] = {
-	{ "BYTE",				XvicBYTE },
+	{ "DV_UINT8",				XvicBYTE },
 	{ "HALF",				XvicHALF },
 	{ "UHALF",				XvicUHALF },
 	{ "FULL",				XvicFULL },

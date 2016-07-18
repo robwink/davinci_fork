@@ -86,8 +86,8 @@ dv_WriteGFX_Image(Var *ob, char *filename, int force, char *GFX_type)
 	  return 0;
 	}
 
-	else if (format!=BYTE){
-	  parse_error("Only BYTE type data is allowed...aborting");
+	else if (format!=DV_UINT8){
+	  parse_error("Only DV_UINT8 type data is allowed...aborting");
 	  return 0;
 	}
 
@@ -122,8 +122,8 @@ Var2Miff(Var *v)
 		return (NULL);
 	}
 
-	else if (format!=BYTE){
-		parse_error("Only BYTE type data is allowed...aborting");
+	else if (format!=DV_UINT8){
+		parse_error("Only DV_UINT8 type data is allowed...aborting");
 		return (NULL);
 	}
 
@@ -140,7 +140,7 @@ dv_Miff2Var(Image *image) /*  Read */
 	char *data = NULL;
 
 	//    if (!iom_ExtractMiffData(image, &x, &y, &z, (void *)&data)){ return NULL; }
-	//return(newVal(BSQ,x,y,z,BYTE,data));
+	//return(newVal(BSQ,x,y,z,DV_UINT8,data));
 	return NULL;
 }
 

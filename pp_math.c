@@ -172,7 +172,7 @@ pp_math(Var * a, int op, Var * b)
     in_format = out_format =  max(V_FORMAT(a), V_FORMAT(b));
 
     if (is_relop(op)) {
-        out_format = BYTE;
+        out_format = DV_UINT8;
     }
 
     dsize = 1;
@@ -211,7 +211,7 @@ pp_math(Var * a, int op, Var * b)
 
     if (is_relop(op)) {
         switch (in_format) {
-        case BYTE:
+        case DV_UINT8:
         case DV_INT16:
         case DV_INT32:
             DO_RELOP_LOOP(int, u_char, extract_int, (int));
@@ -226,7 +226,7 @@ pp_math(Var * a, int op, Var * b)
     } else if (op == ID_LSHIFT || op == ID_RSHIFT) {
 		if (in_format <= DV_INT32) {
 			switch (V_FORMAT(a)) {
-			case BYTE:
+			case DV_UINT8:
 				DO_SHIFT_LOOP(int, u_char, extract_int, saturate_byte);
 				break;
 			case DV_INT16:
@@ -246,7 +246,7 @@ pp_math(Var * a, int op, Var * b)
         ** order, and re-compute offset to that element in the other var.
         **/
         switch (in_format) {
-        case BYTE:
+        case DV_UINT8:
             DO_MATH_LOOP(int, u_char, extract_int, saturate_byte);
             break;
         case DV_INT16:
@@ -368,7 +368,7 @@ pp_compare(Var * a, Var * b)
     V_SIZE(val)[orders[order][2]] = size[2];
 
 	switch (in_format) {
-		case BYTE:
+		case DV_UINT8:
 		case DV_INT16:
 		case DV_INT32:
 			DO_CMP_LOOP(int, extract_int);
@@ -459,7 +459,7 @@ int
 extract_int(const Var * v, const size_t i)
 {
     switch (V_FORMAT(v)) {
-    case BYTE:
+    case DV_UINT8:
         return ((int) ((u_char *) V_DATA(v))[i]);
     case DV_INT16:
         return ((int) ((short *) V_DATA(v))[i]);
@@ -476,7 +476,7 @@ float
 extract_float(Var * v, size_t i)
 {
     switch (V_FORMAT(v)) {
-    case BYTE:
+    case DV_UINT8:
         return ((float) ((u_char *) V_DATA(v))[i]);
     case DV_INT16:
         return ((float) ((short *) V_DATA(v))[i]);
@@ -493,7 +493,7 @@ double
 extract_double(Var * v, size_t i)
 {
     switch (V_FORMAT(v)) {
-    case BYTE:
+    case DV_UINT8:
         return (((u_char *) V_DATA(v))[i]);
     case DV_INT16:
         return (((short *) V_DATA(v))[i]);

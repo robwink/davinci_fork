@@ -120,7 +120,7 @@ ihfmt2vfmt(int ifmt)
     int vfmt = -1;
 
     switch(ifmt){
-    case iom_BYTE:   vfmt = BYTE;   break;
+    case iom_BYTE:   vfmt = DV_UINT8;   break;
     case iom_SHORT:  vfmt = DV_INT16;  break;
     case iom_INT:    vfmt = DV_INT32;    break;
     case iom_FLOAT:  vfmt = FLOAT;  break;
@@ -137,7 +137,7 @@ vfmt2ihfmt(int vfmt)
     int ifmt = -1;
 
     switch(vfmt){
-    case BYTE:   ifmt = iom_BYTE;   break;
+    case DV_UINT8:   ifmt = iom_BYTE;   break;
     case DV_INT16:  ifmt = iom_SHORT;  break;
     case DV_INT32:    ifmt = iom_INT;    break;
     case FLOAT:  ifmt = iom_FLOAT;  break;

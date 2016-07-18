@@ -26,7 +26,7 @@ Var *newText(int rows, char **text)
 }
 
 /**
- ** read a text file into BYTE data
+ ** read a text file into DV_UINT8 data
  **/
 Var *ff_read_text(vfuncptr func, Var * arg)
 {
@@ -94,7 +94,7 @@ Var *ff_read_text(vfuncptr func, Var * arg)
     fprintf(stderr, "Read TEXT file: %dx%d (%d bytes)\n", x, y, count);
   }
 
-  return (newVal(BSQ, x, y, 1, BYTE, cdata));
+  return (newVal(BSQ, x, y, 1, DV_UINT8, cdata));
 }
 
 Var *ff_read_lines(vfuncptr func, Var * arg)
@@ -236,7 +236,7 @@ Var *ff_delim_textarray(Var * ob, int item, char *delim)
 
 
 /**
- ** extract from BYTE using delim
+ ** extract from DV_UINT8 using delim
  **/
 
 Var *ff_delim(vfuncptr func, Var * arg)

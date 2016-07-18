@@ -61,7 +61,7 @@ Var *ff_gplot(vfuncptr func, Var * arg)
 
     for (i = 0; i < V_DSIZE(object); i++) {
         switch (V_FORMAT(object)) {
-        case BYTE:
+        case DV_UINT8:
         case DV_INT16:
         case DV_INT32:
             fprintf(fp, "%d\n", extract_int(object, i));
@@ -151,7 +151,7 @@ Var *ff_plot(vfuncptr func, Var * arg)
                         fprintf(fp, "%d ", i + 1);
                     }
                     switch (type) {
-                    case BYTE:
+                    case DV_UINT8:
                     case DV_INT16:
                     case DV_INT32:
                         fprintf(fp, "%d", extract_int(v, i));
@@ -238,7 +238,7 @@ Var *ff_splot(vfuncptr func, Var * arg)
 	  if(V_KEYVAL(s) != NULL) {
 	    if(V_TYPE(V_KEYVAL(s)) == ID_VAL) {
 	      v = V_KEYVAL(s);
-	      if(V_FORMAT(v)==BYTE || V_FORMAT(v)==DV_INT32 || V_FORMAT(v)==DV_INT16) {
+	      if(V_FORMAT(v)==DV_UINT8 || V_FORMAT(v)==DV_INT32 || V_FORMAT(v)==DV_INT16) {
 		xscale = (float)extract_int(v,0);
 	      } else if(V_FORMAT(v)==FLOAT || V_FORMAT(v)==DOUBLE) {
 		xscale = extract_float(v,0);
@@ -251,7 +251,7 @@ Var *ff_splot(vfuncptr func, Var * arg)
 	  if(V_KEYVAL(s) != NULL) {
 	    if(V_TYPE(V_KEYVAL(s)) == ID_VAL) {
 	      v = V_KEYVAL(s);
-	      if(V_FORMAT(v)==BYTE || V_FORMAT(v)==DV_INT32 || V_FORMAT(v)==DV_INT16) {
+	      if(V_FORMAT(v)==DV_UINT8 || V_FORMAT(v)==DV_INT32 || V_FORMAT(v)==DV_INT16) {
 		yscale = (float)extract_int(v,0);
 	      } else if(V_FORMAT(v)==FLOAT || V_FORMAT(v)==DOUBLE) {
 		yscale = extract_float(v,0);
@@ -289,7 +289,7 @@ Var *ff_splot(vfuncptr func, Var * arg)
 	  if ((i && (i % s0) == 0) || s0 == 1)
 	    fputc('\n', fp);
 	  switch (type) {
-	  case BYTE:
+	  case DV_UINT8:
 	  case DV_INT16:
 	  case DV_INT32:
 	    if(xscale != 0 && yscale != 0) {
@@ -620,7 +620,7 @@ Var *ff_xplot(vfuncptr func, Var * arg)
                             CE[Mode[0]] = k;
                             obj_index = cpos(CE[0], CE[1], CE[2], v);
                             switch (V_FORMAT(v)) {
-                            case BYTE:
+                            case DV_UINT8:
                             case DV_INT16:
                             case DV_INT32:
                                 y[k] = (float) extract_int(v, obj_index);
@@ -633,7 +633,7 @@ Var *ff_xplot(vfuncptr func, Var * arg)
 
                             if (xFlag) {
                                 switch (V_FORMAT(v)) {
-                                case BYTE:
+                                case DV_UINT8:
                                 case DV_INT16:
                                 case DV_INT32:
                                     x[k] =
@@ -666,7 +666,7 @@ Var *ff_xplot(vfuncptr func, Var * arg)
                                 // fprintf(fp, "%g\t %g\n", x[k], y[k]);  // <-- drd originally, no checking
 
                             	switch (V_FORMAT(v)) {
-                                case BYTE:
+                                case DV_UINT8:
                                 case DV_INT16:
                                 case DV_INT32:
                                 	fprintf(fp, "%d\t %d\n", (int)x[k], (int)y[k]);
@@ -945,7 +945,7 @@ Var *ff_xplot2(vfuncptr func, Var * arg)
                             CE[Mode[0]] = k;
                             obj_index = cpos(CE[0], CE[1], CE[2], v);
                             switch (V_FORMAT(v)) {
-                            case BYTE:
+                            case DV_UINT8:
                             case DV_INT16:
                             case DV_INT32:
                                 y[k] = (float) extract_int(v, obj_index);
@@ -957,7 +957,7 @@ Var *ff_xplot2(vfuncptr func, Var * arg)
 
                             if (xFlag) {
                                 switch (V_FORMAT(v)) {
-                                case BYTE:
+                                case DV_UINT8:
                                 case DV_INT16:
                                 case DV_INT32:
                                     x[k] =

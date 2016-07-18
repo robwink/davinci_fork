@@ -656,7 +656,7 @@ static Var *scale_doit(Var* obj, int x, int y, int z, int newcols, int newrows)
 				k1   = cpos(i,j,k,output);  // Writing position
 
 				switch(V_FORMAT(output)) {
-				case BYTE:
+				case DV_UINT8:
 					((u_char*)data)[k1]
 					    = (u_char)GetPixel(obj,x,y,orgX,orgY,k);
 					break;
@@ -708,7 +708,7 @@ static int fill_object_with_pad_color(int nx, int ny, int z,
 			{
 				k1 = cpos(i,j,k, output);
 				switch(V_FORMAT(output)) {
-				case BYTE:
+				case DV_UINT8:
 					((u_char*)data)[k1] = color;
 					break;
 				case DV_INT16:
@@ -751,7 +751,7 @@ static int map_image(int x, int y, int z, int left, int top,
 				k1 = cpos(i+left, j+top, k, output);
 				k2 = cpos(i,j,k, obj);
 				switch(V_FORMAT(obj)) {
-				case BYTE:
+				case DV_UINT8:
 					((u_char*)data)[k1] = (u_char)extract_int(obj, k2);
 					break;
 				case DV_INT16:
@@ -858,7 +858,7 @@ static void fix_stripe(void* data, Var* obj,
 	if ((x+1) % detectors == 0)
 	{
 		switch(V_FORMAT(obj)) {
-		case BYTE:
+		case DV_UINT8:
 			((u_char*)data)[k1] = (
 			   extract_int(obj,k2) +
 			   extract_int(obj,k3)
@@ -895,7 +895,7 @@ static void fix_stripe(void* data, Var* obj,
 	else
 	{
 		switch(V_FORMAT(obj)) {
-		case BYTE:
+		case DV_UINT8:
 			((u_char*)data)[k1] = extract_int(obj,k1);
 			break;
 		case DV_INT16:

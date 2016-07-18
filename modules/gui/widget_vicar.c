@@ -446,7 +446,7 @@ setImage(Widget widget, Var *value)
 	}
 
 	switch (V_FORMAT(value)) {
-		case BYTE:
+		case DV_UINT8:
 			dataType = XvicBYTE;
 			break;
 		case DV_INT16:
@@ -462,7 +462,7 @@ setImage(Widget widget, Var *value)
 			dataType = XvicDOUBLE;
 			break;
 		default:
-			parse_error("VICAR image data must be BYTE, DV_INT16, DV_INT32, FLOAT, or DOUBLE.");
+			parse_error("VICAR image data must be DV_UINT8, DV_INT16, DV_INT32, FLOAT, or DOUBLE.");
 			return 0;
 	}
 
@@ -955,7 +955,7 @@ setOverlay(Widget widget, Var *value)
 	if (vBitmap) {
 		/* Parse bitmap. */
 
-		if (V_TYPE(vBitmap) != ID_VAL || V_FORMAT(vBitmap) != BYTE ||
+		if (V_TYPE(vBitmap) != ID_VAL || V_FORMAT(vBitmap) != DV_UINT8 ||
 				GetZ(vBitmap) != 1) {
 			parse_error("VICAR overlay: bitmap must be 2D byte.");
 			return;

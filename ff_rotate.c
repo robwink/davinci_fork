@@ -67,7 +67,7 @@ Var *rotation(Var *obj, float angle, float ign)
   union DATA ign_resized; /* properly resized value of ignore */
 
   switch(V_FORMAT(obj)){
-  case BYTE:
+  case DV_UINT8:
 		ign_resized.b = ign;
 		break;
   case DV_INT16:

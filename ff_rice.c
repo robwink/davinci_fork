@@ -79,7 +79,7 @@ ff_rice(vfuncptr func, Var * arg)
 			start += (len+7)/8;
 		}
 	}
-	return(newVal(BSQ, start, 1, 1, BYTE, out));
+	return(newVal(BSQ, start, 1, 1, DV_UINT8, out));
 }
 
 Var *
@@ -165,7 +165,7 @@ ff_unrice(vfuncptr func, Var * arg)
 			start += l;
 			count++;
 		}
-		format = (nbytes == 1 ? BYTE : (nbytes == 2 ? DV_INT16 : DV_INT32));
+		format = (nbytes == 1 ? DV_UINT8 : (nbytes == 2 ? DV_INT16 : DV_INT32));
 		return(newVal(BSQ, x, y, z, format, out));
 	} else {
 		parse_error("Data without header not supported yet.");

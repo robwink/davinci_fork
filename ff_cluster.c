@@ -73,7 +73,7 @@ ff_cluster(vfuncptr func, Var * arg)
             }
         }
     }
-	return(newVal(V_ORG(obj), x, y, 1, BYTE, data));
+	return(newVal(V_ORG(obj), x, y, 1, DV_UINT8, data));
 }
 
 

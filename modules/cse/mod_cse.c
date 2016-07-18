@@ -735,7 +735,7 @@ cse_cleandcs(vfuncptr func, Var * arg)
 	}
 
 	/* return the modified data */
-	out = newVal(BIP, z, x, y, BYTE, w_pic);
+	out = newVal(BIP, z, x, y, DV_UINT8, w_pic);
 	return out;
 }
 
@@ -1651,7 +1651,7 @@ cse_sstretch2(vfuncptr func, Var * arg)
 		parse_error("variance=variance of the stretch (Default=40)");
 		parse_error("sample=sample data to stretch, must have sampe # of bands\n");
 		parse_error("c.edwards 6/15/05\n");
-		out = newVal(BSQ, 1, 1, 1, BYTE, (float *)calloc(sizeof(float), 1));
+		out = newVal(BSQ, 1, 1, 1, DV_UINT8, (float *)calloc(sizeof(float), 1));
 		return(out);
 	}
 
@@ -1743,7 +1743,7 @@ cse_sstretch2(vfuncptr func, Var * arg)
 
 	/* clean up and return data */
 	free(w_data);
-	out = newVal(BIP,z, x, y, BYTE, w_data2);
+	out = newVal(BIP,z, x, y, DV_UINT8, w_data2);
 	return(out);
 }
 
@@ -2352,6 +2352,6 @@ Var *cse_fFill(vfuncptr func, Var * arg)
 	floodFillScanline(sx, sy, y, x, fill, val, w_pic);
 
 	/* return the modified data */
-	out = newVal(BSQ, x, y, 1, BYTE, w_pic);
+	out = newVal(BSQ, x, y, 1, DV_UINT8, w_pic);
 	return out;
 }

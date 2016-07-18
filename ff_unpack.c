@@ -162,7 +162,7 @@ ff_unpack(vfuncptr func, Var* arg)
 		return NULL;
 
 
-	/* Converting types to appropriate davinci types (constants ie DV_INT16, BYTE etc.) */
+	/* Converting types to appropriate davinci types (constants ie DV_INT16, DV_UINT8 etc.) */
 	if( !convert_types(reg_data, num_items, rows) ) {
 		free(reg_data);
 		return NULL;
@@ -215,7 +215,7 @@ static int convert_types(data* thedata, int num_items, int rows)
 
 			case UNSIGNED_LSB_INT:
 			case UNSIGNED_MSB_INT:
-				thedata[i].type = BYTE;
+				thedata[i].type = DV_UINT8;
 				break;
 
 			case LSB_FLOAT:
@@ -1498,7 +1498,7 @@ parse_struct(Var* toPack, Var* column_names, int* numData, int* greatestNumRows)
 			reg_data[i].input->columns = V_SIZE(element)[0]; // x value = columns
 			reg_data[i].array = V_DATA(element);
 			reg_data[i].strarray = NULL;
-			reg_data[i].type = V_FORMAT(element); // DV_INT16, DV_INT32, BYTE, FLOAT, DOUBLE
+			reg_data[i].type = V_FORMAT(element); // DV_INT16, DV_INT32, DV_UINT8, FLOAT, DOUBLE
 			break;
 
 		default:
@@ -1661,7 +1661,7 @@ convert_to_ext_fmt(char *from, int ffmt, char *to, int tfmt, int tolen)
 
 	// convert from type to large internal numeric types
 	switch(ffmt){
-	case BYTE:      ui = *(unsigned char *)from; si = (int         )ui; d  = (double)ui; break;
+	case DV_UINT8:      ui = *(unsigned char *)from; si = (int         )ui; d  = (double)ui; break;
 	case DV_INT16:     si = *(short         *)from; ui = (unsigned int)si; d  = (double)si; break;
 	case DV_INT32:       si = *(int           *)from; ui = (unsigned int)si; d  = (double)si; break;
 	case FLOAT:     d  = *(float         *)from; ui = (unsigned int)d;  si = (int   )d;  break;
@@ -1679,7 +1679,7 @@ convert_to_ext_fmt(char *from, int ffmt, char *to, int tfmt, int tolen)
 
 	if (tfmt == STRING){
 		switch(ffmt){
-		case BYTE:      sprintf(str,"%u",ui); break;
+		case DV_UINT8:      sprintf(str,"%u",ui); break;
 		case DV_INT16:
 		case DV_INT32:       sprintf(str,"%d",si); break;
 		case FLOAT:

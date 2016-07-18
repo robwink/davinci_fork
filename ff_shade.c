@@ -171,7 +171,7 @@ ff_shade2(vfuncptr func, Var * arg)
     printf("Sun vector is %f\n", atan2(sy, sx) * 180 / M_PI);
 
     odata = calloc(x*(size_t)y, 1);
-    out = newVal(BSQ, x, y, 1, BYTE, odata);
+    out = newVal(BSQ, x, y, 1, DV_UINT8, odata);
 
     gx = dx;
 

@@ -2011,7 +2011,7 @@ Var *readCube(FILE *fp)
 
 	switch (sampleSize) {
 	case 1:
-		cubeElement = BYTE;
+		cubeElement = DV_UINT8;
 		break;
 	case 2:
 		cubeElement = DV_INT16;
@@ -2020,7 +2020,7 @@ Var *readCube(FILE *fp)
 		cubeElement = FLOAT;
 		break;
 	default:
-		cubeElement = BYTE;
+		cubeElement = DV_UINT8;
 	}
 
 	dv_struct = newVal(BSQ, Samples, Lines, totalBands, cubeElement, cubeData);

@@ -187,7 +187,7 @@ dd_make_arglist(Scope *s)
     for (i = 1 ; i < dd->count ; i++) {
 		if (V_TYPE(dd->value[i]) == ID_UNK) {
 			zero = (char *)calloc(1,1);
-			p = newVal(BSQ, 1,1,1, BYTE, zero);
+			p = newVal(BSQ, 1,1,1, DV_UINT8, zero);
 			mem_claim(p);
 		} else {
 			p = V_DUP(dd->value[i]);

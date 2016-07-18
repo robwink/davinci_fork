@@ -137,7 +137,7 @@ dump_var(Var *v, int indent, int limit)
 					for (i = 0 ; i < x ; i++) {
 						c = cpos(i,j,k,v);
 						switch (V_FORMAT(v)) {
-						case BYTE: printf("%d\t", ((u_char *)V_DATA(v))[c]); break;
+						case DV_UINT8: printf("%d\t", ((u_char *)V_DATA(v))[c]); break;
 						case DV_INT16: printf("%d\t", ((short *)V_DATA(v))[c]); break;
 						case DV_INT32:  printf("%d\t", ((int *)V_DATA(v))[c]); break;
 						case FLOAT: printf("%#.*g\t", SCALE, ((float *)V_DATA(v))[c]); break;
@@ -474,7 +474,7 @@ array_replace(Var *dst, Var *src, Range *r)
 				}
 				else {
 					switch(V_FORMAT(dst)) {
-					case BYTE:
+					case DV_UINT8:
 						((u_char *)V_DATA(dst))[d] =
 							saturate_byte(extract_int(src, s));
 						break;
@@ -559,7 +559,7 @@ pp_mk_range(Var *r1, Var *r2)
 
 	if (r1) {
 		format = V_FORMAT(r1);
-		if (format != DV_INT32 && format != DV_INT16 && format != BYTE) {
+		if (format != DV_INT32 && format != DV_INT16 && format != DV_UINT8) {
 			parse_error("(r1) Invalid range value.");
 			return(NULL);
 		}
@@ -568,7 +568,7 @@ pp_mk_range(Var *r1, Var *r2)
 
 	if (r2) {
 		format = V_FORMAT(r2);
-		if (format != DV_INT32 && format != DV_INT16 && format != BYTE) {
+		if (format != DV_INT32 && format != DV_INT16 && format != DV_UINT8) {
 			parse_error("(r2) Invalid range value");
 			return(NULL);
 		}
@@ -608,7 +608,7 @@ pp_mk_rstep(Var *r1, Var *r2)
 
 	if (r2) {
 		format = V_FORMAT(r2);
-		if (format != DV_INT32 && format != DV_INT16 && format != BYTE) {
+		if (format != DV_INT32 && format != DV_INT16 && format != DV_UINT8) {
 			parse_error("(r2) Invalid range value");
 			return(NULL);
 		}
@@ -1152,7 +1152,7 @@ pp_set_where(Var *id, Var *where, Var *exp)
 			j = rpos(i, id, where);
 			if (extract_int(where, j)) {
 				switch (format) {
-				case BYTE:      ((u_char *)V_DATA(id))[i] = ival; break;
+				case DV_UINT8:      ((u_char *)V_DATA(id))[i] = ival; break;
 				case DV_INT16:     ((short *)V_DATA(id))[i] = ival; break;
 				case DV_INT32:       ((int *)V_DATA(id))[i] = ival; break;
 				case FLOAT:     ((float *)V_DATA(id))[i] = dval; break;
@@ -1169,7 +1169,7 @@ pp_set_where(Var *id, Var *where, Var *exp)
 			if (extract_int(where, j)) {
 				k = rpos(i, id, exp);
 				switch (format) {
-				case BYTE:
+				case DV_UINT8:
 					((u_char *)V_DATA(id))[i] = extract_int(exp, k);
 					break;
 				case DV_INT16:

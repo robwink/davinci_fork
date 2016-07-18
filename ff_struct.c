@@ -39,7 +39,7 @@ make_struct(int ac, Var **av)
 
 	for (i = 0 ; i < ac ; i++) {
 		zero = (char *)calloc(1,1);
-		data = newVal(BSQ, 1,1,1, BYTE, zero);
+		data = newVal(BSQ, 1,1,1, DV_UINT8, zero);
 		mem_claim(data);
 		add_struct(o, V_NAME(av[i]), data);
 	}
@@ -188,7 +188,7 @@ ff_insert_struct(vfuncptr func, Var * arg)
 	}
 
 	if (v == NULL) {
-		v = newVal(BSQ, 1, 1, 1, BYTE, calloc(1,1));
+		v = newVal(BSQ, 1, 1, 1, DV_UINT8, calloc(1,1));
 	} else {
 		e = eval(v);
 		if (e == NULL) {

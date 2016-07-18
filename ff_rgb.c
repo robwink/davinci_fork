@@ -29,8 +29,8 @@ ff_rgb(vfuncptr func, Var *arg)
 			parse_error("rgb() requires three images.  Image %d is NULL", i+1);
 			return(NULL);
 		}
-        if (V_TYPE(v[i]) != ID_VAL || V_FORMAT(v[i]) != BYTE) {
-            parse_error("%s: Image planes must be BYTE format",func->name);
+        if (V_TYPE(v[i]) != ID_VAL || V_FORMAT(v[i]) != DV_UINT8) {
+            parse_error("%s: Image planes must be DV_UINT8 format",func->name);
             return(NULL);
         }
         if (V_ORG(v[i]) != V_ORG(v[0]))  {
@@ -69,7 +69,7 @@ ff_rgb(vfuncptr func, Var *arg)
     V_SIZE(s)[1] = x;
     V_SIZE(s)[2] = y;
     V_DSIZE(s) = x*y*3;
-    V_FORMAT(s) = BYTE;
+    V_FORMAT(s) = DV_UINT8;
 
     return(s);
 }

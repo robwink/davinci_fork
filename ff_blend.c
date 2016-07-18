@@ -93,7 +93,7 @@ ff_blend(vfuncptr func, Var * arg)
   if (fptr == NULL) {
     parse_error("%s: Unknown mode.", func->name);
   }
-  return(ff_binary_op(func->name, image, mask, fptr, BYTE));
+  return(ff_binary_op(func->name, image, mask, fptr, DV_UINT8));
 }
 
 Var *

@@ -60,7 +60,7 @@ ff_histogram(vfuncptr func, Var * arg)
 	dsize = V_DSIZE(obj);
 
 	switch(V_FORMAT(obj)) {
-		case BYTE: 
+		case DV_UINT8: 
 			if (start == FLT_MAX) start = 0;
 			if (size == FLT_MAX) size = 1;
 			if (steps == INT_MAX) steps = 256;
@@ -248,7 +248,7 @@ ff_rgb2hsv(vfuncptr func, Var * arg)
 
 	if (maxval == NULL) {
 		switch (V_FORMAT(obj)) {
-			case BYTE:		mval = (1 << 8)-1; break;
+			case DV_UINT8:		mval = (1 << 8)-1; break;
 			case DV_INT16:		mval = SHRT_MAX; break;
 			case DV_INT32:		mval = INT_MAX; break;
 			case FLOAT:		mval = 1.0; break;
@@ -514,7 +514,7 @@ ff_entropy(vfuncptr func, Var * arg)
 	data = memdup(V_DATA(obj), dsize * NBYTES(V_FORMAT(obj)));
 
 	switch(format) {
-		case BYTE:          cmp = cmp_byte; break;
+		case DV_UINT8:          cmp = cmp_byte; break;
 		case DV_INT16:         cmp = cmp_short; break;
 		case DV_INT32:           cmp = cmp_int; break;
 		case FLOAT:         cmp = cmp_float; break;

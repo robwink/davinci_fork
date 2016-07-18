@@ -53,7 +53,7 @@ dv_WritePGM(Var *obj, char *filename, int force)
 	struct iom_iheader h;
 	int status;
 
-	if (V_TYPE(obj) != ID_VAL || V_FORMAT(obj) != BYTE) {
+	if (V_TYPE(obj) != ID_VAL || V_FORMAT(obj) != DV_UINT8) {
 		sprintf(error_buf, "Data for PGM file must be byte()");
 		parse_error(NULL);
 		return 0;
@@ -90,7 +90,7 @@ dv_WritePPM(Var *obj, char *filename, int force)
 	struct iom_iheader h;
 	int status;
 
-	if (V_TYPE(obj) != ID_VAL || V_FORMAT(obj) != BYTE) {
+	if (V_TYPE(obj) != ID_VAL || V_FORMAT(obj) != DV_UINT8) {
 		sprintf(error_buf, "Data for PPM output must be byte()");
 		parse_error(NULL);
 		return 0;

@@ -336,7 +336,7 @@ thm_deplaid(vfuncptr func, Var * arg)
   if(dump == 1) {
     free(row_avg);
     free(row_wt);
-    out = newVal(BSQ, x, y, 1, BYTE, blackmask);
+    out = newVal(BSQ, x, y, 1, DV_UINT8, blackmask);
     return out;
   }
 	
@@ -2077,7 +2077,7 @@ thm_cleandcs(vfuncptr func, Var * arg)
   }
 
   /* return the modified data */
-  out = newVal(BIP, z, x, y, BYTE, w_pic);
+  out = newVal(BIP, z, x, y, DV_UINT8, w_pic);
   return out;
 }
 

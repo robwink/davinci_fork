@@ -43,7 +43,7 @@ int find_free_argbin(int argc, APIARGS *args)
 int api_extract_int(int fmt, void * v, int i)
 {
 	switch (fmt) {
-	case BYTE:
+	case DV_UINT8:
 		return ((int) ((u_char *) v)[i]);
 	case DV_INT16:
 		return ((int) ((short *) v)[i]);
@@ -60,7 +60,7 @@ int api_extract_int(int fmt, void * v, int i)
 float api_extract_float(int fmt, void * v, int i)
 {
 	switch (fmt) {
-	case BYTE:
+	case DV_UINT8:
 		return ((float) ((u_char *) v)[i]);
 	case DV_INT16:
 		return ((float) ((short *) v)[i]);
@@ -77,7 +77,7 @@ float api_extract_float(int fmt, void * v, int i)
 double api_extract_double(int fmt, void * v, int i)
 {
 	switch (fmt) {
-	case BYTE:
+	case DV_UINT8:
 		return (((u_char *) v)[i]);
 	case DV_INT16:
 		return (((short *) v)[i]);
@@ -105,7 +105,7 @@ int typeconvert_args(int srctype, void *src, int dsttype, void *dst, int dsize)
 	}
 
 	switch(dsttype){
-	case BYTE:
+	case DV_UINT8:
 		cp = (char *) dst;
 		for(lup = 0; lup < dsize; lup++){
 			cp[lup] = saturate_byte(api_extract_int(srctype,src,lup));
@@ -158,7 +158,7 @@ int link_argvalue(Var *arg, APIARGS *aarg)
 	}
 
 	if(V_TYPE(e) == ID_STRING){
-	if((aarg->argtype & DTMASK) == BYTE && (aarg->argtype & PTRBIT) == PTRBIT)
+	if((aarg->argtype & DTMASK) == DV_UINT8 && (aarg->argtype & PTRBIT) == PTRBIT)
 		aarg->argval = strdup(V_STRING(e));
 	else {
 		printf("Data type mismatch\n");

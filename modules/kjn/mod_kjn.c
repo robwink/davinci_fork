@@ -1379,7 +1379,7 @@ kjn_deplaid(vfuncptr func, Var * arg)
   if(dump == 1) {
     free(row_avg);
     free(row_wt);
-    out = newVal(BSQ, x, y, 1, BYTE, blackmask);
+    out = newVal(BSQ, x, y, 1, DV_UINT8, blackmask);
     return out;
   }
 
@@ -4442,7 +4442,7 @@ kjn_deplaid2(vfuncptr func, Var * arg)
   if(dump == 1) {
     free(row_avg);
     free(row_wt);
-    out = newVal(BSQ, x, y, 1, BYTE, blackmask);
+    out = newVal(BSQ, x, y, 1, DV_UINT8, blackmask);
     return out;
   }
 

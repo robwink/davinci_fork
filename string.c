@@ -100,7 +100,7 @@ char* do_add_strings(char* s1, Var* v, int flag)
 		s2 = V_STRING(v);
 	} else {
 		switch (V_FORMAT(v)) {
-		case BYTE:
+		case DV_UINT8:
 		case DV_INT16:
 		case DV_INT32: sprintf(buf, "%d", extract_int(v, 0)); break;
 		case FLOAT:

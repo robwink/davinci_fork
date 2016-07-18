@@ -244,7 +244,7 @@ static inline StorageType dv_to_im_storage_type(Var * img)
      of a davinci storage type. */
      
   switch (V_FORMAT(img)) {
-  case BYTE:
+  case DV_UINT8:
     return CharPixel;
   case DV_INT16:
     return ShortPixel;
@@ -545,7 +545,7 @@ static Var * im_to_dv(Image * img) {
     cur_frame = cur_frame->next;
     if (cur_frame == NULL) break; /* extra safety */
   }
-  return newVal(BSQ, x, y, z, BYTE, dvdata);  
+  return newVal(BSQ, x, y, z, DV_UINT8, dvdata);  
 }
 
 static Image * dv_to_im(Var * obj, int type)
@@ -674,7 +674,7 @@ MODULE_TYPE int paramdvWriteImage(Var * image, char * fname, char *itype, int fo
      actual file writing tasks
   */
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is currently supported.");
     goto error_exit;
   }
@@ -835,7 +835,7 @@ static Var * dvAddNoiseImage(vfuncptr f, Var *args) {
     }
   }
   	   
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -889,7 +889,7 @@ static Var * dvAppendImages(vfuncptr f, Var *args) {
     if (stack[0] == 'h') stk = 0; else stk = 1;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -930,7 +930,7 @@ static Var * dvAverageImages(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -973,7 +973,7 @@ static Var * dvBlurImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1020,7 +1020,7 @@ static Var * dvCharcoalImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1065,7 +1065,7 @@ static Var * dvChopImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1117,7 +1117,7 @@ static Var * dvColorizeImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1160,7 +1160,7 @@ static Var * dvContrastImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1204,7 +1204,7 @@ static Var * dvCropImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1246,7 +1246,7 @@ static Var * dvDespeckleImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1288,7 +1288,7 @@ static Var * dvEdgeImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1331,7 +1331,7 @@ static Var * dvEmbossImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1372,7 +1372,7 @@ static Var * dvEnhanceImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1410,7 +1410,7 @@ static Var * dvEqualizeImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1451,7 +1451,7 @@ static Var * dvFlattenImages(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1492,7 +1492,7 @@ static Var * dvFlipImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1533,7 +1533,7 @@ static Var * dvFlopImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1576,7 +1576,7 @@ static Var * dvGammaImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1636,7 +1636,7 @@ static Var * dvGaussianBlurImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1678,7 +1678,7 @@ static Var * dvImplodeImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1724,7 +1724,7 @@ static Var * dvLevelImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1766,7 +1766,7 @@ static Var * dvMagnifyImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1808,7 +1808,7 @@ static Var * dvMedianFilterImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1849,7 +1849,7 @@ static Var * dvMinifyImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1895,7 +1895,7 @@ static Var * dvModulateImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1939,7 +1939,7 @@ static Var * dvMorphImages(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -1982,7 +1982,7 @@ static Var * dvMosaicImages(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2026,7 +2026,7 @@ static Var * dvMotionBlurImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2067,7 +2067,7 @@ static Var * dvNegateImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2105,7 +2105,7 @@ static Var * dvNormalizeImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2148,7 +2148,7 @@ static Var * dvOilPaintImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2190,7 +2190,7 @@ static Var * dvReduceNoiseImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2267,7 +2267,7 @@ static Var * dvResizeImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2325,7 +2325,7 @@ static Var * dvRollImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2367,7 +2367,7 @@ static Var * dvRotateImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2411,7 +2411,7 @@ static Var * dvSampleImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2465,7 +2465,7 @@ static Var * dvScaleImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2522,7 +2522,7 @@ static Var * dvShadeImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2565,7 +2565,7 @@ static Var * dvSharpenImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2609,7 +2609,7 @@ static Var * dvShaveImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2652,7 +2652,7 @@ static Var * dvShearImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2694,7 +2694,7 @@ static Var * dvSpreadImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2739,7 +2739,7 @@ static Var * dvSteganoImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2786,7 +2786,7 @@ static Var * dvStereoImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2830,7 +2830,7 @@ static Var * dvSwirlImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2874,7 +2874,7 @@ static Var * dvUnsharpMaskImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }
@@ -2917,7 +2917,7 @@ static Var * dvWaveImage(vfuncptr f, Var *args) {
     goto error_exit;
   }
 
-  if (V_FORMAT(image) != BYTE) {
+  if (V_FORMAT(image) != DV_UINT8) {
     parse_error("Only byte data is supported.\n");
     goto error_exit;
   }

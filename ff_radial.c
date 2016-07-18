@@ -510,7 +510,7 @@ ff_drawshape(vfuncptr func, Var * arg)
     y = GetY(obj);
     z = GetZ(obj);
 	out = calloc(x*y,sizeof(char));
-	ovar = newVal(BSQ, x, y, 1, BYTE, out);
+	ovar = newVal(BSQ, x, y, 1, DV_UINT8, out);
 
 	if (!strcmp(shape, "cross")) {
 		draw_cross(obj, x, y, ignore, out);

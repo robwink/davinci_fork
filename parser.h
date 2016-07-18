@@ -232,9 +232,9 @@ enum {
  ** Var->value.Sym->format
  **/
 
-#define BYTE        1
+#define DV_UINT8    1
 #define DV_INT16    2
-#define DV_INT32         3
+#define DV_INT32    3
 #define FLOAT       4
 #define VAX_FLOAT   5
 #define VAX_INTEGER 6

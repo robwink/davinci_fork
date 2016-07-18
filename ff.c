@@ -287,7 +287,7 @@ ff_binary_op(const char *name,               // Function name, for errors
     v2 = extract_double(b, rpos(i, val, b));
     v3 = (*fptr)(v1, v2);
     switch (format) {
-      case BYTE:
+      case DV_UINT8:
         cdata[i] = saturate_byte(v3);
         break;
       case DV_INT16:
@@ -450,7 +450,7 @@ ff_conv(vfuncptr func, Var * arg)
   }
 
   switch (format) {
-    case BYTE:
+    case DV_UINT8:
       {
         int d;
         u_char *idata = (u_char *) data;
@@ -675,7 +675,7 @@ ff_create(vfuncptr func, Var * arg)
   }
 
   if (format_str != NULL) {
-    if (!strcasecmp(format_str, "byte")) format = BYTE;
+    if (!strcasecmp(format_str, "byte")) format = DV_UINT8;
     else if (!strcasecmp(format_str, "short")) format = DV_INT16;
     else if (!strcasecmp(format_str, "int")) format = DV_INT32;
     else if (!strcasecmp(format_str, "float")) format = FLOAT;
@@ -717,7 +717,7 @@ ff_create(vfuncptr func, Var * arg)
 
         v = start;
         switch (format) {
-          case BYTE: cdata[0] = saturate_byte(v); break;
+          case DV_UINT8: cdata[0] = saturate_byte(v); break;
           case DV_INT16: sdata[0] = saturate_short(v); break;
           case DV_INT32: idata[0] = saturate_int(v); break;
           case FLOAT: fdata[0] = saturate_float(v); break;
@@ -735,7 +735,7 @@ ff_create(vfuncptr func, Var * arg)
             v = (count++) * step + start;
             c = cpos(i,j,k,s);
             switch (format) {
-              case BYTE:
+              case DV_UINT8:
                 cdata[c] = saturate_byte(v);
                 break;
               case DV_INT16:
@@ -1339,8 +1339,8 @@ ff_string(vfuncptr func, Var * arg)
     parse_error("Not enough arguments to function: %s()", func->name);
     return(NULL);
   }
-  if (V_FORMAT(v) != BYTE) {
-    parse_error("%s(), argument must be BYTE format");
+  if (V_FORMAT(v) != DV_UINT8) {
+    parse_error("%s(), argument must be DV_UINT8 format");
     return(NULL);
   }
 
@@ -1776,7 +1776,7 @@ ff_equals(vfuncptr func, Var * arg)
 
   data = calloc(1,1);
   data[0] = compare_vars(v1,v2);
-  v = newVal(BSQ, 1, 1, 1, BYTE, data);
+  v = newVal(BSQ, 1, 1, 1, DV_UINT8, data);
   return(v);
 }
 
@@ -1833,7 +1833,7 @@ compare_vars(Var *a, Var *b)
 
       for (i = 0 ; i < V_DSIZE(a) ; i++) {
         switch(format) {
-          case BYTE:
+          case DV_UINT8:
           case DV_INT16:
           case DV_INT32:
             if (extract_int(a,i) != extract_int(b,rpos(i,a,b)))
@@ -2152,7 +2152,7 @@ ff_deleted(vfuncptr func, Var * arg)
   v = newVar();
   V_TYPE(v) = ID_VAL;
   V_ORG(v) = V_ORG(obj);
-  V_FORMAT(v) = BYTE;
+  V_FORMAT(v) = DV_UINT8;
   V_SIZE(v)[0] = V_SIZE(obj)[0];
   V_SIZE(v)[1] = V_SIZE(obj)[1];
   V_SIZE(v)[2] = V_SIZE(obj)[2];
@@ -2257,7 +2257,7 @@ ff_contains(vfuncptr func, Var * arg)
   dsize = V_DSIZE(obj);
 
   switch (V_FORMAT(obj)) {
-    case BYTE:
+    case DV_UINT8:
       vi = extract_int(value, 0);
       for (i = 0 ; i < dsize ; i++) {
         if (((unsigned char *)V_DATA(obj))[i] == vi) {
