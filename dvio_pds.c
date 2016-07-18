@@ -792,7 +792,7 @@ ProcessVarIntoString(Var * element, char *name)
       sprintf(tmp_string, "%d", V_INT(element));
     }
 
-    else if (V_FORMAT(element) == FLOAT) {
+    else if (V_FORMAT(element) == DV_FLOAT) {
       sprintf(tmp_string, "%f", V_FLOAT(element));
     }
 
@@ -850,7 +850,7 @@ ProcessVarIntoString(Var * element, char *name)
         sprintf(tmp_string, "%d, ", extract_int(element, idx));
         break;
 
-      case FLOAT:
+      case DV_FLOAT:
         sprintf(tmp_string, "%f, ", extract_float(element, idx));
         break;
 
@@ -1252,7 +1252,7 @@ void output_big_var(FILE * out, Var * data, char *inset, char *name)
         break;
 
 
-      case FLOAT:
+      case DV_FLOAT:
         fp = ((float *) V_DATA(data));
         fprintf(out, "%f%s", fp[i], dmrk);
         break;
@@ -1442,7 +1442,7 @@ ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth,
                     V_INT(data));
             break;
 
-          case FLOAT:
+          case DV_FLOAT:
             fprintf(fp, "%s%s = %12.6f\r\n", inset, tmpname,
                     V_FLOAT(data));
             break;
@@ -2299,7 +2299,7 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
               v = newVal(BSQ, dim, label->nrows, 1, DOUBLE, data);
               break;
             case 4:
-              v = newVal(BSQ, dim, label->nrows, 1, FLOAT, data);
+              v = newVal(BSQ, dim, label->nrows, 1, DV_FLOAT, data);
               break;
           }
           break;
@@ -3019,7 +3019,7 @@ static int loadFieldBinary(Var *v, LABEL *label, dataKey *data_key,
             {
                 field->scale = V_INT(s);
             }
-            else if (V_FORMAT(s) == FLOAT)
+            else if (V_FORMAT(s) == DV_FLOAT)
             {
                 field->scale = V_FLOAT(s);
             }
@@ -3037,7 +3037,7 @@ static int loadFieldBinary(Var *v, LABEL *label, dataKey *data_key,
             {
                 field->offset = V_INT(s);
             }
-            else if (V_FORMAT(s) == FLOAT)
+            else if (V_FORMAT(s) == DV_FLOAT)
             {
                 field->offset = V_FLOAT(s);
             }

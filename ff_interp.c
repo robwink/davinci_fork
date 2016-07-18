@@ -23,7 +23,7 @@ ff_interp(vfuncptr func, Var *arg)
     alist[0] = make_alist( "object",    ID_VAL,    NULL,    &v[0]);
     alist[1] = make_alist( "from",      ID_VAL,    NULL,    &v[1]);
     alist[2] = make_alist( "to",        ID_VAL,    NULL,    &v[2]);
-    alist[3] = make_alist( "ignore",    FLOAT,    NULL,    &ignore);
+    alist[3] = make_alist( "ignore",    DV_FLOAT,    NULL,    &ignore);
     alist[4] = make_alist( "type",    ID_ENUM,    types,    &type);
     alist[5] = make_alist( "y1",    ID_VAL,    NULL,    &v[0]);
     alist[6] = make_alist( "x1",    ID_VAL,    NULL,    &v[1]);
@@ -145,7 +145,7 @@ Var *linear_interp(Var *v0, Var *v1, Var *v2, float ignore)
     V_SIZE(s)[1] = V_SIZE(v2)[1];
     V_SIZE(s)[2] = V_SIZE(v2)[2];
     V_ORG(s) = V_ORG(v2);
-    V_FORMAT(s) = FLOAT;
+    V_FORMAT(s) = DV_FLOAT;
 
     free(x);
     free(y);
@@ -165,7 +165,7 @@ ff_cinterp(vfuncptr func, Var *arg)
     alist[1] = make_alist( "from",      ID_VAL,    NULL,    &v[1]);
     alist[2] = make_alist( "to",        ID_VAL,    NULL,    &v[2]);
     alist[3] = make_alist( "type",      ID_ENUM,    NULL,   type);
-    alist[4] = make_alist( "ignore",    FLOAT,    NULL,    &ignore);
+    alist[4] = make_alist( "ignore",    DV_FLOAT,    NULL,    &ignore);
     alist[5].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -263,7 +263,7 @@ cubic_interp(Var *v0, Var *v1, Var *v2, char *type, float ignore)
 		V_SIZE(v2)[0], 
 		V_SIZE(v2)[1], 
 		V_SIZE(v2)[2], 
-		FLOAT, 
+		DV_FLOAT, 
 		out));
 }
 
@@ -821,10 +821,10 @@ Var* ff_interp2d(vfuncptr func, Var *arg)
   alist[0] = make_alist("table",     ID_VAL,    NULL,  &table);
   alist[1] = make_alist("xdata",     ID_VAL,    NULL,  &xdata);
   alist[2] = make_alist("ydata",     ID_VAL,    NULL,  &ydata);
-  alist[3] = make_alist("startx",    FLOAT,     NULL,  &sx);
-  alist[4] = make_alist("deltax",    FLOAT,     NULL,  &dx);
-  alist[5] = make_alist("starty",    FLOAT,     NULL,  &sy);
-  alist[6] = make_alist("deltay",    FLOAT,     NULL,  &dy);
+  alist[3] = make_alist("startx",    DV_FLOAT,     NULL,  &sx);
+  alist[4] = make_alist("deltax",    DV_FLOAT,     NULL,  &dx);
+  alist[5] = make_alist("starty",    DV_FLOAT,     NULL,  &sy);
+  alist[6] = make_alist("deltay",    DV_FLOAT,     NULL,  &dy);
   alist[7].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -895,6 +895,6 @@ Var* ff_interp2d(vfuncptr func, Var *arg)
       wdata[(size_t)xx*(size_t)j + (size_t)i]=(float)(tv1+tv2);
     }
   }
-  out=newVal(BSQ, xx, xy, 1, FLOAT, wdata);
+  out=newVal(BSQ, xx, xy, 1, DV_FLOAT, wdata);
   return out;
 }

@@ -256,8 +256,8 @@ setHistogram (Widget w, Var *var)
 	x = GetX (var);
 	y = GetY (var);
 	z = GetZ (var);
-	if (V_TYPE(var) != ID_VAL || V_FORMAT(var) != FLOAT || x != 2 || z != 1) {
-		parse_error ("widget_linebox.c:setHistogram: Object must be 2xNx1 Var of type FLOAT\n");
+	if (V_TYPE(var) != ID_VAL || V_FORMAT(var) != DV_FLOAT || x != 2 || z != 1) {
+		parse_error ("widget_linebox.c:setHistogram: Object must be 2xNx1 Var of type DV_FLOAT\n");
 		return 1;
 	}
 	varToPoints (&num, &pPoints, var);
@@ -431,7 +431,7 @@ pointsToVar (int num, LBoxPoint_t *in)
 		data[i*2+0] = in[i].x;
 		data[i*2+1] = in[i].y;
 	}
-	return newVal (BSQ, 2, num, 1, FLOAT, data);
+	return newVal (BSQ, 2, num, 1, DV_FLOAT, data);
 }
 
 /* copies Davinci Var to LBoxPoint_t array */

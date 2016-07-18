@@ -34,7 +34,7 @@ ff_radial_symmetry(vfuncptr func, Var * arg)
     alist[1] = make_alist( "size",    DV_INT32,    NULL,      &size);
     alist[2] = make_alist( "xdelta",    DV_INT32,    NULL,      &xdelta);
     alist[3] = make_alist( "ydelta",    DV_INT32,    NULL,      &ydelta);
-    alist[4] = make_alist( "ignore",    FLOAT,  NULL,    &ignore);
+    alist[4] = make_alist( "ignore",    DV_FLOAT,  NULL,    &ignore);
     alist[5] = make_alist( "all",       DV_INT32,    NULL,    &all);
     alist[6] = make_alist( "first",    DV_INT32,    NULL,      &first);
     alist[7].name = NULL;
@@ -54,17 +54,17 @@ ff_radial_symmetry(vfuncptr func, Var * arg)
     x = GetX(obj);
     y = GetY(obj);
     z = GetZ(obj);
-    w = create_window(size, size, FLOAT);
+    w = create_window(size, size, DV_FLOAT);
 
     if (all) {
 		size_t n = (size_t)x*(size_t)y*(size_t)(size-first+1);
         out = (float *)calloc(n, sizeof(float));
-        rval = newVal(BSQ, x, y, (size-first+1), FLOAT, out);
+        rval = newVal(BSQ, x, y, (size-first+1), DV_FLOAT, out);
         line = (float *)calloc(size, sizeof(float));
     } else {
 		size_t n = (size_t)x*(size_t)y;
         out = (float *)calloc(n, sizeof(float));
-        rval = newVal(BSQ, x, y, 1, FLOAT, out);
+        rval = newVal(BSQ, x, y, 1, DV_FLOAT, out);
         line = NULL;
     }
 
@@ -104,7 +104,7 @@ ff_radial_symmetry2(vfuncptr func, Var * arg)
     alist[1] = make_alist( "x",    DV_INT32,    NULL,      &width);
     alist[2] = make_alist( "y",    DV_INT32,    NULL,      &height);
     alist[3] = make_alist( "size",    DV_INT32,    NULL,      &size);
-    alist[4] = make_alist( "ignore",    FLOAT,  NULL,    &ignore);
+    alist[4] = make_alist( "ignore",    DV_FLOAT,  NULL,    &ignore);
     alist[5].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -127,10 +127,10 @@ ff_radial_symmetry2(vfuncptr func, Var * arg)
     x = GetX(obj);
     y = GetY(obj);
     z = GetZ(obj);
-    w = create_window(width, height, FLOAT);
+    w = create_window(width, height, DV_FLOAT);
 
 	out = calloc((size_t)x*(size_t)y, sizeof(float));
-	rval = newVal(BSQ, x, y, 1, FLOAT, out);
+	rval = newVal(BSQ, x, y, 1, DV_FLOAT, out);
 
     for (i = 0 ; i < x ; i+=1) {
         load_window(w, obj, i, 0, ignore);
@@ -339,7 +339,7 @@ ff_radial_symmetry3(vfuncptr func, Var * arg)
     Alist alist[6];
     alist[0] = make_alist( "object",    ID_VAL, NULL,   &obj);
     alist[1] = make_alist( "size",      DV_INT32,    NULL,   &end);
-    alist[2] = make_alist( "ignore",    FLOAT,  NULL,   &ignore);
+    alist[2] = make_alist( "ignore",    DV_FLOAT,  NULL,   &ignore);
     alist[3] = make_alist( "start",    DV_INT32,  NULL,   &start);
     alist[4] = make_alist( "step",    DV_INT32,  NULL,   &step);
     alist[5].name = NULL;
@@ -363,7 +363,7 @@ ff_radial_symmetry3(vfuncptr func, Var * arg)
 	height = end*2+1;
 	// width = end;
 	// height = end;
-    w = create_window(width, height, FLOAT);
+    w = create_window(width, height, DV_FLOAT);
 
 	/* cache some frequently used computed values */
 	h2 = height/2;
@@ -388,7 +388,7 @@ ff_radial_symmetry3(vfuncptr func, Var * arg)
 	}
 
 	out = calloc((size_t)x*(size_t)y*(size_t)((end - start) / step +1), sizeof(float));
-	rval = newVal(BSQ, x, y, ((end-start)/step +1), FLOAT, out);
+	rval = newVal(BSQ, x, y, ((end-start)/step +1), DV_FLOAT, out);
 	accum = calloc(end+1, sizeof(struct dstore));
 
 	/* run a window over every pixel and do the math */
@@ -496,7 +496,7 @@ ff_drawshape(vfuncptr func, Var * arg)
     Alist alist[9];
     alist[0] = make_alist( "object",    ID_VAL, NULL,   &obj);
     alist[1] = make_alist( "shape",     ID_ENUM, options,   &shape);
-    alist[2] = make_alist( "ignore",    FLOAT, NULL,   &ignore);
+    alist[2] = make_alist( "ignore",    DV_FLOAT, NULL,   &ignore);
     alist[3].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(NULL);

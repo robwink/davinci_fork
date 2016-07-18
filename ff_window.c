@@ -8,7 +8,7 @@
 ** Window * create_window(int width, int height, int format);
 ** 
 **  Create a window structure of size width x height.  Format is ignore
-**  currently.  Window is always of type FLOAT.  (but pass FLOAT anyway).
+**  currently.  Window is always of type DV_FLOAT.  (but pass DV_FLOAT anyway).
 ** 
 ** void load_window(Window *w, Var *obj, int x1, int y1, float ignore);
 ** 
@@ -323,7 +323,7 @@ ff_window(vfuncptr func, Var * arg)
     alist[2] = make_alist( "x",       DV_INT32,      NULL,  &width);
     alist[3] = make_alist( "y",       DV_INT32,      NULL,  &height);
     alist[4] = make_alist( "size",    DV_INT32,      NULL,  &size);
-    alist[5] = make_alist( "ignore",  FLOAT,    NULL,  &ignore);
+    alist[5] = make_alist( "ignore",  DV_FLOAT,    NULL,  &ignore);
     alist[6] = make_alist( "mask",    ID_VAL,   NULL,  &mask);
     alist[7].name = NULL;
 
@@ -349,7 +349,7 @@ ff_window(vfuncptr func, Var * arg)
     x = GetX(obj);
     y = GetY(obj);
     z = GetZ(obj);
-    w = create_window(width, height, FLOAT);
+    w = create_window(width, height, DV_FLOAT);
 
     if (!strcmp(type, "median")) {
         /*
@@ -357,7 +357,7 @@ ff_window(vfuncptr func, Var * arg)
         ** you have to reload it each time.
         */
         f_out = calloc((size_t)x*(size_t)y, sizeof(float));
-        rval = newVal(BSQ, x, y, 1, FLOAT, f_out);
+        rval = newVal(BSQ, x, y, 1, DV_FLOAT, f_out);
         for (j = 0 ; j < y ; j+=1) {
             for (i = 0 ; i < x ; i+=1) {
                 load_window(w, obj, i, j, ignore);

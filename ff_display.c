@@ -39,7 +39,7 @@ ff_display(vfuncptr func, Var *arg)
     y = GetY(obj);
     z = GetZ(obj);
     if (V_FORMAT(obj) > DV_INT16) {
-        sprintf(error_buf, "Unable to display FLOAT or DOUBLE data\n");
+        sprintf(error_buf, "Unable to display DV_FLOAT or DOUBLE data\n");
         parse_error(NULL);
         return(NULL);
     }

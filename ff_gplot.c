@@ -26,10 +26,10 @@ Var *ff_gplot(vfuncptr func, Var * arg)
 
     Alist alist[6];
     alist[0] = make_alist("object", ID_VAL, NULL, &object);
-    alist[1] = make_alist("xlow", FLOAT, NULL, &g_xlow);
-    alist[2] = make_alist("xhigh", FLOAT, NULL, &g_xhigh);
-    alist[3] = make_alist("ylow", FLOAT, NULL, &g_ylow);
-    alist[4] = make_alist("yhigh", FLOAT, NULL, &g_yhigh);
+    alist[1] = make_alist("xlow", DV_FLOAT, NULL, &g_xlow);
+    alist[2] = make_alist("xhigh", DV_FLOAT, NULL, &g_xhigh);
+    alist[3] = make_alist("ylow", DV_FLOAT, NULL, &g_ylow);
+    alist[4] = make_alist("yhigh", DV_FLOAT, NULL, &g_yhigh);
     alist[5].name = NULL;
 
     if (parse_args(func, arg, alist) == 0)
@@ -66,7 +66,7 @@ Var *ff_gplot(vfuncptr func, Var * arg)
         case DV_INT32:
             fprintf(fp, "%d\n", extract_int(object, i));
             break;
-        case FLOAT:
+        case DV_FLOAT:
         case DOUBLE:
             fprintf(fp, "%g\n", extract_double(object, i));
             break;
@@ -156,7 +156,7 @@ Var *ff_plot(vfuncptr func, Var * arg)
                     case DV_INT32:
                         fprintf(fp, "%d", extract_int(v, i));
                         break;
-                    case FLOAT:
+                    case DV_FLOAT:
                     case DOUBLE:
                         fprintf(fp, "%.12g", extract_double(v, i));
                         break;
@@ -240,7 +240,7 @@ Var *ff_splot(vfuncptr func, Var * arg)
 	      v = V_KEYVAL(s);
 	      if(V_FORMAT(v)==DV_UINT8 || V_FORMAT(v)==DV_INT32 || V_FORMAT(v)==DV_INT16) {
 		xscale = (float)extract_int(v,0);
-	      } else if(V_FORMAT(v)==FLOAT || V_FORMAT(v)==DOUBLE) {
+	      } else if(V_FORMAT(v)==DV_FLOAT || V_FORMAT(v)==DOUBLE) {
 		xscale = extract_float(v,0);
 	      }
 	    }
@@ -253,7 +253,7 @@ Var *ff_splot(vfuncptr func, Var * arg)
 	      v = V_KEYVAL(s);
 	      if(V_FORMAT(v)==DV_UINT8 || V_FORMAT(v)==DV_INT32 || V_FORMAT(v)==DV_INT16) {
 		yscale = (float)extract_int(v,0);
-	      } else if(V_FORMAT(v)==FLOAT || V_FORMAT(v)==DOUBLE) {
+	      } else if(V_FORMAT(v)==DV_FLOAT || V_FORMAT(v)==DOUBLE) {
 		yscale = extract_float(v,0);
 	      }
 	    }
@@ -299,7 +299,7 @@ Var *ff_splot(vfuncptr func, Var * arg)
 	    }
 	    
 	    break;
-	  case FLOAT:
+	  case DV_FLOAT:
 	  case DOUBLE:
 	    if(xscale != 0 && yscale != 0) {
 	      fprintf(fp, "%g %g %.12g\n",(int)((i%s0)+1)*xscale, (int)((i/s0)+1)*yscale, extract_float(v,i));
@@ -626,7 +626,7 @@ Var *ff_xplot(vfuncptr func, Var * arg)
                                 y[k] = (float) extract_int(v, obj_index);
                                 break; // drd added -- break was missing
 
-                            case FLOAT:
+                            case DV_FLOAT:
                             case DOUBLE:
                                 y[k] = extract_float(v, obj_index);
                             }
@@ -642,7 +642,7 @@ Var *ff_xplot(vfuncptr func, Var * arg)
                                                                  v,
                                                                  Xaxis));
                                     break; // drd added -- break was missing
-                                case FLOAT:
+                                case DV_FLOAT:
                                 case DOUBLE:
                                     x[k] =
                                         extract_float(Xaxis,
@@ -657,8 +657,8 @@ Var *ff_xplot(vfuncptr func, Var * arg)
 
                             	/*
                             	 * Bug 2185 xplot() not what is expected for large and small numbers
-                            	 * 1. Everything was FLOAT because of a missing break;
-                            	 * 2. Plotting everything as FLOAT %g is fairly limiting.
+                            	 * 1. Everything was DV_FLOAT because of a missing break;
+                            	 * 2. Plotting everything as DV_FLOAT %g is fairly limiting.
                             	 *    Checking for the various int's and float's and
                             	 *    printing accordingly gives more visually appealing results.
                             	 *
@@ -671,7 +671,7 @@ Var *ff_xplot(vfuncptr func, Var * arg)
                                 case DV_INT32:
                                 	fprintf(fp, "%d\t %d\n", (int)x[k], (int)y[k]);
                                     break;
-                                case FLOAT:
+                                case DV_FLOAT:
                                 case DOUBLE:
                                 	fprintf(fp, "%f\t %f\n", x[k], y[k]);
                                 }
@@ -950,7 +950,7 @@ Var *ff_xplot2(vfuncptr func, Var * arg)
                             case DV_INT32:
                                 y[k] = (float) extract_int(v, obj_index);
                                 break; // drd added -- break was missing
-                            case FLOAT:
+                            case DV_FLOAT:
                             case DOUBLE:
                                 y[k] = extract_float(v, obj_index);
                             }
@@ -966,7 +966,7 @@ Var *ff_xplot2(vfuncptr func, Var * arg)
                                                                  v,
                                                                  Xaxis));
                                     break; // drd added
-                                case FLOAT:
+                                case DV_FLOAT:
                                 case DOUBLE:
                                     x[k] =
                                         extract_float(Xaxis,

@@ -19,8 +19,8 @@ ff_local_maximum(vfuncptr func, Var * arg)
     Alist alist[9];
     alist[0] = make_alist( "object",    ID_VAL, NULL,   &obj);
     alist[1] = make_alist( "size",      DV_INT32,    NULL,   &size);
-    alist[2] = make_alist( "ignore",    FLOAT,  NULL,    &ignore);
-    alist[3] = make_alist( "threshold",    FLOAT,  NULL,    &threshold);
+    alist[2] = make_alist( "ignore",    DV_FLOAT,  NULL,    &ignore);
+    alist[3] = make_alist( "threshold",    DV_FLOAT,  NULL,    &threshold);
     alist[4].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -32,10 +32,10 @@ ff_local_maximum(vfuncptr func, Var * arg)
 
     x = GetX(obj);
     y = GetY(obj);
-    w = create_window(size, size, FLOAT);
+    w = create_window(size, size, DV_FLOAT);
 
 	out = calloc(x*y, sizeof(float));
-	rval = newVal(BSQ, x, y, 1, FLOAT, out);
+	rval = newVal(BSQ, x, y, 1, DV_FLOAT, out);
 
     for (i = 0 ; i < x ; i+=1) {
         load_window(w, obj, i, 0, ignore);

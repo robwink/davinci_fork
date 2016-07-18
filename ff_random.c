@@ -87,7 +87,7 @@ ff_random(vfuncptr func, Var * arg)
             fdata[i] = g_random();
         }
     }
-    return (newVal(BSQ, x, y, z, FLOAT, fdata));
+    return (newVal(BSQ, x, y, z, DV_FLOAT, fdata));
 }
 
 void

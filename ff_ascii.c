@@ -86,7 +86,7 @@ ff_ascii(vfuncptr func, Var *arg)
 		if (!strcasecmp(format_str, "byte")) format = DV_UINT8;
 		else if (!strcasecmp(format_str, "short")) format = DV_INT16;
 		else if (!strcasecmp(format_str, "int")) format = DV_INT32;
-		else if (!strcasecmp(format_str, "float")) format = FLOAT;
+		else if (!strcasecmp(format_str, "float")) format = DV_FLOAT;
 		else if (!strcasecmp(format_str, "double")) format = DOUBLE;
 	}
 
@@ -216,7 +216,7 @@ ff_ascii(vfuncptr func, Var *arg)
 				case DV_INT32:
 					idata[count++] = saturate_int(strtol(ptr, NULL, 10));
 					break;
-				case FLOAT:
+				case DV_FLOAT:
 					fdata[count++] = strtod(ptr, NULL);
 					break;
 				case DOUBLE:

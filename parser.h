@@ -235,7 +235,7 @@ enum {
 #define DV_UINT8    1
 #define DV_INT16    2
 #define DV_INT32    3
-#define FLOAT       4
+#define DV_FLOAT    4
 #define VAX_FLOAT   5
 #define VAX_INTEGER 6
 #define DV_INT64    7
@@ -307,7 +307,7 @@ struct _iheader {
 	int corner;         /* size of 1 whole plane */
 
 	int byte_order;     /* byteorder of data                      */
-	int format;         /* data format (DV_INT32, FLOAT, etc)          */
+	int format;         /* data format (DV_INT32, DV_FLOAT, etc)          */
 	int org;            /* data organization                      */
 
 	float gain, offset; /* data multiplier and additive offset    */

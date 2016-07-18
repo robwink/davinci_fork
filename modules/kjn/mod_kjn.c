@@ -112,10 +112,10 @@ kjn_y_shear(vfuncptr func, Var * arg)
 
   Alist alist[6];
   alist[0] = make_alist("picture",  ID_VAL,  NULL,   &pic_v);
-  alist[1] = make_alist("angle",    FLOAT,   NULL,   &angle);
-  alist[2] = make_alist("ignore",   FLOAT,   NULL,   &nullv);
+  alist[1] = make_alist("angle",    DV_FLOAT,   NULL,   &angle);
+  alist[2] = make_alist("ignore",   DV_FLOAT,   NULL,   &nullv);
   alist[3] = make_alist("trim",     DV_INT32,     NULL,   &trim);
-  alist[4] = make_alist("null",     FLOAT,   NULL,   &nullv); // can be removed once all legacy programs are dead
+  alist[4] = make_alist("null",     DV_FLOAT,   NULL,   &nullv); // can be removed once all legacy programs are dead
   alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -198,7 +198,7 @@ kjn_y_shear(vfuncptr func, Var * arg)
       }
     }
     /* final output */
-    out = newVal(BSQ, x, y+abs(lshift), z, FLOAT, pic);
+    out = newVal(BSQ, x, y+abs(lshift), z, DV_FLOAT, pic);
   }
 
   /* for trim != 0 */
@@ -253,7 +253,7 @@ kjn_y_shear(vfuncptr func, Var * arg)
       }
     }
     /* final output */
-    out = newVal(BSQ, x, y-abs(lshift), z, FLOAT, pic);
+    out = newVal(BSQ, x, y-abs(lshift), z, DV_FLOAT, pic);
   }
   return out;
 }
@@ -482,7 +482,7 @@ kjn_kfill(vfuncptr func, Var * arg)
       pic2[j*x+i] = pic[(j+wth)*pic_x+(i+wth)];
     }
   }
-  out = newVal(BSQ, x, y, 1, FLOAT, pic2);
+  out = newVal(BSQ, x, y, 1, DV_FLOAT, pic2);
 
   /* cleanup before exit */
   free(wgt);
@@ -511,7 +511,7 @@ kjn_smoothy(vfuncptr func, Var * arg)
   alist[0] = make_alist("object",       ID_VAL,         NULL,         &obj);
   alist[1] = make_alist("kernel",       ID_VAL,         NULL,      &kernel);
   alist[2] = make_alist("normalize",    DV_INT32,            NULL,        &norm);
-  alist[3] = make_alist("ignore",       FLOAT,          NULL,      &ignore);
+  alist[3] = make_alist("ignore",       DV_FLOAT,          NULL,      &ignore);
   alist[4] = make_alist("kernreduce",   DV_INT32,            NULL,  &kernreduce);
   alist[5].name = NULL;
 
@@ -652,7 +652,7 @@ Var *do_smoothy(Var *obj, Var *kernel, int norm, float ignore, int kernreduce)
   }
 
   free(wt);
-  return(newVal(V_ORG(obj), V_SIZE(obj)[0], V_SIZE(obj)[1], V_SIZE(obj)[2], FLOAT, data));
+  return(newVal(V_ORG(obj), V_SIZE(obj)[0], V_SIZE(obj)[1], V_SIZE(obj)[2], DV_FLOAT, data));
 }
 
 
@@ -760,7 +760,7 @@ kjn_ramp(vfuncptr func, Var * arg)
     Alist alist[4];
     alist[0] = make_alist("pic1", ID_VAL, NULL, &pic_1);
     alist[1] = make_alist("pic2", ID_VAL, NULL, &pic_2);
-    alist[2] = make_alist("ignore", FLOAT, NULL, &nullv);
+    alist[2] = make_alist("ignore", DV_FLOAT, NULL, &nullv);
     alist[3].name = NULL;
 
     if (parse_args(func, arg, alist) == 0)
@@ -903,7 +903,7 @@ kjn_ramp(vfuncptr func, Var * arg)
     free(ol1);
     free(ol2);
 
-    out = newVal(BSQ, x, y, 1, FLOAT, ramp);
+    out = newVal(BSQ, x, y, 1, DV_FLOAT, ramp);
     return out;
 }
 
@@ -923,7 +923,7 @@ kjn_corners(vfuncptr func, Var * arg)
 
   Alist alist[3];
   alist[0] = make_alist("picture",   ID_VAL,  NULL,   &pic_a);
-  alist[1] = make_alist("ignore",    FLOAT,   NULL,   &nullval);
+  alist[1] = make_alist("ignore",    DV_FLOAT,   NULL,   &nullval);
   alist[2].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -1130,7 +1130,7 @@ kjn_sawtooth(vfuncptr func, Var * arg)
   }
 
   tooth = sawtooth(x, y, z);
-  out = newVal(BSQ, x, y, z, FLOAT, tooth);
+  out = newVal(BSQ, x, y, z, DV_FLOAT, tooth);
   return out;
 }
 
@@ -1221,13 +1221,13 @@ kjn_deplaid(vfuncptr func, Var * arg)
 
   Alist alist[9];
   alist[0] = make_alist("data",                 ID_VAL,         NULL,   &data);
-  alist[1] = make_alist("ignore",               FLOAT,          NULL,   &nullval);
-  alist[2] = make_alist("tmask_max",            FLOAT,          NULL,   &tmask_max);
-  alist[3] = make_alist("tmask_min",            FLOAT,          NULL,   &tmask_min);
+  alist[1] = make_alist("ignore",               DV_FLOAT,          NULL,   &nullval);
+  alist[2] = make_alist("tmask_max",            DV_FLOAT,          NULL,   &tmask_max);
+  alist[3] = make_alist("tmask_min",            DV_FLOAT,          NULL,   &tmask_min);
   alist[4] = make_alist("filt_len",             DV_INT32,            NULL,   &filt_len);
   alist[5] = make_alist("b10",                  DV_INT32,            NULL,   &b10);
   alist[6] = make_alist("dump",                 DV_INT32,            NULL,   &dump);
-  alist[7] = make_alist("null",                 FLOAT,          NULL,   &nullval);
+  alist[7] = make_alist("null",                 DV_FLOAT,          NULL,   &nullval);
   alist[8].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -1638,7 +1638,7 @@ kjn_deplaid(vfuncptr func, Var * arg)
   free(col_avg);
 
   /* return array */
-  out = newVal(BSQ, x, y, z, FLOAT, rdata);
+  out = newVal(BSQ, x, y, z, DV_FLOAT, rdata);
   return out;
 }
 
@@ -1676,9 +1676,9 @@ kjn_rectify(vfuncptr func, Var * arg)
 
   Alist alist[5];
   alist[0] = make_alist("object",   ID_VAL,  NULL,   &obj);
-  alist[1] = make_alist("ignore",   FLOAT,   NULL,   &nullo);
-  alist[2] = make_alist("trust",    FLOAT,   NULL,   &trust);
-  alist[3] = make_alist("null",     FLOAT,   NULL,   &nullo);
+  alist[1] = make_alist("ignore",   DV_FLOAT,   NULL,   &nullo);
+  alist[2] = make_alist("trust",    DV_FLOAT,   NULL,   &trust);
+  alist[3] = make_alist("null",     DV_FLOAT,   NULL,   &nullo);
   alist[4].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return NULL;
@@ -1797,7 +1797,7 @@ kjn_rectify(vfuncptr func, Var * arg)
 
   /* final output */
   out = new_struct(4);
-  add_struct(out, "data", newVal(BSQ, width, u, z, FLOAT, pic));
+  add_struct(out, "data", newVal(BSQ, width, u, z, DV_FLOAT, pic));
   add_struct(out, "leftedge", newVal(BSQ, 1, u, 1, DV_INT32, leftmost));
   add_struct(out, "width", newInt(x));
   add_struct(out, "angle", newFloat(angle));
@@ -1909,7 +1909,7 @@ kjn_coreg(vfuncptr func, Var * arg)
     pos[1] = b;
 
     out = new_struct(2);
-    add_struct(out, "space", newVal(BSQ, s_dia, s_dia, 1, FLOAT, solution));
+    add_struct(out, "space", newVal(BSQ, s_dia, s_dia, 1, DV_FLOAT, solution));
     add_struct(out, "position", newVal(BSQ, 2, 1, 1, DV_INT32, pos));
     return(out);
   }
@@ -2545,7 +2545,7 @@ kjn_supersample(vfuncptr func, Var * arg)
   }
 
   /* final output */
-  out = newVal(BSQ, factor*x, factor*y, z, FLOAT, ssdata);
+  out = newVal(BSQ, factor*x, factor*y, z, DV_FLOAT, ssdata);
   return(out);
 }
 
@@ -2802,7 +2802,7 @@ kjn_coreg_fill(vfuncptr func, Var * arg)
     }
   }
 
-  out = newVal(BSQ, x+p, y+p, z, FLOAT, cssdata);
+  out = newVal(BSQ, x+p, y+p, z, DV_FLOAT, cssdata);
   return(out);
 }
 
@@ -2837,9 +2837,9 @@ kjn_rad2tb(vfuncptr func, Var * arg)
   Alist alist[6];
   alist[0] = make_alist("rad",           ID_VAL,         NULL,   &rad);
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
-  alist[2] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
+  alist[2] = make_alist("ignore",        DV_FLOAT,          NULL,   &nullval);
   alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
-  alist[4] = make_alist("null",          FLOAT,          NULL,   &nullval);
+  alist[4] = make_alist("null",          DV_FLOAT,          NULL,   &nullval);
   alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -2900,7 +2900,7 @@ kjn_rad2tb(vfuncptr func, Var * arg)
   b_temps = rad2tb(rad, temp_rad, blist, bx, nullval);
 
   free(blist);
-  out = newVal(BSQ, x, y, z, FLOAT, b_temps);
+  out = newVal(BSQ, x, y, z, DV_FLOAT, b_temps);
   return(out);
 
 }
@@ -2933,13 +2933,13 @@ float *rad2tb(Var *radiance, Var *temp_rad, int *bandlist, int bx, float nullval
   w = GetY(temp_rad);
 
   /* assigning memory for the interpolated data, temps and rads */
-  btemps = (float *)calloc(sizeof(FLOAT), x*y*bx);
-  temps = (float *)malloc(sizeof(FLOAT)*w);
-  rads = (float *)malloc(sizeof(FLOAT)*w);
+  btemps = (float *)calloc(sizeof(DV_FLOAT), x*y*bx);
+  temps = (float *)malloc(sizeof(DV_FLOAT)*w);
+  rads = (float *)malloc(sizeof(DV_FLOAT)*w);
 
   /* slopes and intercepts arrays */
-  m = (float *)calloc(sizeof(FLOAT), w-1);
-  b = (float *)calloc(sizeof(FLOAT), w-1);
+  m = (float *)calloc(sizeof(DV_FLOAT), w-1);
+  b = (float *)calloc(sizeof(DV_FLOAT), w-1);
 
   /* extract the linear temperature array */
   for (i=0;i<w;i++) {
@@ -3025,9 +3025,9 @@ kjn_tb2rad(vfuncptr func, Var * arg)
   Alist alist[6];
   alist[0] = make_alist("btemps",        ID_VAL,         NULL,   &btemps);
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
-  alist[2] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
+  alist[2] = make_alist("ignore",        DV_FLOAT,          NULL,   &nullval);
   alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
-  alist[4] = make_alist("null",          FLOAT,          NULL,   &nullval);
+  alist[4] = make_alist("null",          DV_FLOAT,          NULL,   &nullval);
   alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -3101,7 +3101,7 @@ kjn_tb2rad(vfuncptr func, Var * arg)
 
   free(blist);
   free(btemp);
-  out = newVal(BSQ, x, y, bx, FLOAT, bbrads);
+  out = newVal(BSQ, x, y, bx, DV_FLOAT, bbrads);
   return(out);
 
 }
@@ -3131,13 +3131,13 @@ float *tb2rad(float *btemp, Var *temp_rad, int *bandlist, int bx, float nullval,
   w = GetY(temp_rad);
 
   /* assigning memory for the interpolated data, temps and rads */
-  irads = (float *)calloc(sizeof(FLOAT), x*y*bx);
-  temps = (float *)malloc(sizeof(FLOAT)*w);
-  rads = (float *)malloc(sizeof(FLOAT)*w);
+  irads = (float *)calloc(sizeof(DV_FLOAT), x*y*bx);
+  temps = (float *)malloc(sizeof(DV_FLOAT)*w);
+  rads = (float *)malloc(sizeof(DV_FLOAT)*w);
 
   /* slopes and intercepts arrays */
-  m = (float *)calloc(sizeof(FLOAT), w-1);
-  b = (float *)calloc(sizeof(FLOAT), w-1);
+  m = (float *)calloc(sizeof(DV_FLOAT), w-1);
+  b = (float *)calloc(sizeof(DV_FLOAT), w-1);
 
   /* extract the linear temperature array */
   for (i=0;i<w;i++) {
@@ -3220,11 +3220,11 @@ kjn_themissivity(vfuncptr func, Var * arg)
   Alist alist[8];
   alist[0] = make_alist("rad",           ID_VAL,         NULL,   &rad);
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
-  alist[2] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
+  alist[2] = make_alist("ignore",        DV_FLOAT,          NULL,   &nullval);
   alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
   alist[4] = make_alist("b1",            DV_INT32,            NULL,   &b1);
   alist[5] = make_alist("b2",            DV_INT32,            NULL,   &b2);
-  alist[6] = make_alist("null",          FLOAT,          NULL,   &nullval); // can be deleted when all legacy programs are dead
+  alist[6] = make_alist("null",          DV_FLOAT,          NULL,   &nullval); // can be deleted when all legacy programs are dead
   alist[7].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -3276,8 +3276,8 @@ kjn_themissivity(vfuncptr func, Var * arg)
 
   if(e_struct) {
     out = new_struct(2);
-    add_struct(out, "emiss", newVal(BSQ, x, y, z, FLOAT, e_struct->emiss));
-    add_struct(out, "maxbtemp", newVal(BSQ, x, y, 1, FLOAT, e_struct->maxbtemp));
+    add_struct(out, "emiss", newVal(BSQ, x, y, z, DV_FLOAT, e_struct->emiss));
+    add_struct(out, "maxbtemp", newVal(BSQ, x, y, 1, DV_FLOAT, e_struct->maxbtemp));
 
     free(e_struct);
     return(out);
@@ -3401,7 +3401,7 @@ kjn_emiss2rad(vfuncptr func, Var * arg)
   Alist alist[5];
   alist[0] = make_alist("estruct",       ID_STRUCT,      NULL,   &estruct);
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
-  alist[2] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
+  alist[2] = make_alist("ignore",        DV_FLOAT,          NULL,   &nullval);
   alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
   alist[4].name = NULL;
 
@@ -3489,7 +3489,7 @@ kjn_emiss2rad(vfuncptr func, Var * arg)
     }
   }
 
-  out = newVal(BSQ, x, y, z, FLOAT, rad);
+  out = newVal(BSQ, x, y, z, DV_FLOAT, rad);
   return(out);
 
 }
@@ -3528,7 +3528,7 @@ kjn_whitey(vfuncptr func, Var * arg)
   alist[0] = make_alist("rad",           ID_VAL,         NULL,   &rad);
   alist[1] = make_alist("k_size",        DV_INT32,            NULL,   &k_size);
   alist[2] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
-  alist[3] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
+  alist[3] = make_alist("ignore",        DV_FLOAT,          NULL,   &nullval);
   alist[4] = make_alist("b1",            DV_INT32,            NULL,   &b1);
   alist[5] = make_alist("b2",            DV_INT32,            NULL,   &b2);
   alist[6].name = NULL;
@@ -3600,7 +3600,7 @@ kjn_whitey(vfuncptr func, Var * arg)
   b_temps = rad2tb(rad, temp_rad, blist, bx, nullval);
 
   /* allocate memory for max_b_temp */
-  max_b_temp = (float *)calloc(sizeof(FLOAT), x*y);
+  max_b_temp = (float *)calloc(sizeof(DV_FLOAT), x*y);
 
   /* find max_b_temp */
   for(k=b1-1;k<=b2;k++) {
@@ -3617,7 +3617,7 @@ kjn_whitey(vfuncptr func, Var * arg)
   irad = tb2rad(max_b_temp, temp_rad, blist, bx, nullval, x, y);
 
   /* allocate memory for emiss */
-  emiss = (float *)calloc(sizeof(FLOAT), x*y*z);
+  emiss = (float *)calloc(sizeof(DV_FLOAT), x*y*z);
 
   /* divide the interpolated radiance by the original radiance and set to emissivity */
   for(k=0;k<z;k++) {
@@ -3635,7 +3635,7 @@ kjn_whitey(vfuncptr func, Var * arg)
   free(max_b_temp);
 
   /* create kernel and smooth the emissivity */
-  kern = (float *)malloc(sizeof(FLOAT)*k_size*k_size);
+  kern = (float *)malloc(sizeof(DV_FLOAT)*k_size*k_size);
   for(j=0;j<k_size;j++) {
     for(i=0;i<k_size;i++) {
       kern[j*k_size + i] = 1.0;
@@ -3656,7 +3656,7 @@ kjn_whitey(vfuncptr func, Var * arg)
   free(s_emiss);
   free(irad);
 
-  out = newVal(BSQ, x, y, z, FLOAT, emiss);
+  out = newVal(BSQ, x, y, z, DV_FLOAT, emiss);
   return out;
 }
 
@@ -3820,7 +3820,7 @@ float *bbrw_k(float *btemp, int *bandlist, int x, int y, int z, float nullval)
   float       numerator = 0.0;
 
   /* wavelengths of themis bands in microns */
-  wavelengths = (float *)calloc(sizeof(FLOAT), 10);
+  wavelengths = (float *)calloc(sizeof(DV_FLOAT), 10);
   wavelengths[0] = 6.76665;
   wavelengths[1] = 6.76665;
   wavelengths[2] = 7.88883;
@@ -3833,7 +3833,7 @@ float *bbrw_k(float *btemp, int *bandlist, int x, int y, int z, float nullval)
   wavelengths[9] = 14.8079;
 
   /* create new calculated radiance array */
-  irads = (float *)calloc(sizeof(FLOAT), x*y*z);
+  irads = (float *)calloc(sizeof(DV_FLOAT), x*y*z);
 
   for(k=0; k<z; k++) {
     wl = bandlist[k] - 1;
@@ -3887,12 +3887,12 @@ Var *kjn_radcorr(vfuncptr func, Var * arg)
   Alist alist[9];
   alist[0] = make_alist("radiance",      ID_VAL,         NULL,   &rad);
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
-  alist[2] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
+  alist[2] = make_alist("ignore",        DV_FLOAT,          NULL,   &nullval);
   alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
   alist[4] = make_alist("b1",            DV_INT32,            NULL,   &b1);
   alist[5] = make_alist("b2",            DV_INT32,            NULL,   &b2);
   alist[6] = make_alist("space",         DV_INT32,            NULL,   &space);
-  alist[7] = make_alist("null",          FLOAT,          NULL,   &nullval);
+  alist[7] = make_alist("null",          DV_FLOAT,          NULL,   &nullval);
   alist[8].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -4052,7 +4052,7 @@ Var *do_ipi(Var *coords_array, Var *values_array){
 			      pow(coords[1]-coords[2],2)*(values[1]-values[0])) /
     ((coords[1]-coords[0])*(values[1]-values[2]) - (coords[1]-coords[2])*(values[1]-values[0]));
 
-  return(newVal(BSQ, 1 ,1, 1, FLOAT, result));
+  return(newVal(BSQ, 1 ,1, 1, DV_FLOAT, result));
 }
 
 
@@ -4104,7 +4104,7 @@ kjn_src_col_fill(vfuncptr func, Var * arg)
   Alist alist[4];
   alist[0] = make_alist("column",       ID_VAL,   NULL,   &col_in);
   alist[1] = make_alist("chunk_size",   DV_INT32,      NULL,   &csize);
-  alist[2] = make_alist("ignore",       FLOAT,    NULL,   &ignore);
+  alist[2] = make_alist("ignore",       DV_FLOAT,    NULL,   &ignore);
   alist[3].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -4144,7 +4144,7 @@ kjn_src_col_fill(vfuncptr func, Var * arg)
   }
 
   if(sum == 0) {
-    out = newVal(BSQ, x, y, z, FLOAT, column);
+    out = newVal(BSQ, x, y, z, DV_FLOAT, column);
     return out;
   }
 
@@ -4153,7 +4153,7 @@ kjn_src_col_fill(vfuncptr func, Var * arg)
 
   free(column);
 
-  out = newVal(BSQ, x, y, z, FLOAT, column_out);
+  out = newVal(BSQ, x, y, z, DV_FLOAT, column_out);
   return out;
 }
 
@@ -4284,13 +4284,13 @@ kjn_deplaid2(vfuncptr func, Var * arg)
 
   Alist alist[9];
   alist[0] = make_alist("data",        ID_VAL,   NULL,   &data);
-  alist[1] = make_alist("ignore",      FLOAT,    NULL,   &nullval);
-  alist[2] = make_alist("tmask_max",   FLOAT,    NULL,   &tmask_max);
-  alist[3] = make_alist("tmask_min",   FLOAT,    NULL,   &tmask_min);
+  alist[1] = make_alist("ignore",      DV_FLOAT,    NULL,   &nullval);
+  alist[2] = make_alist("tmask_max",   DV_FLOAT,    NULL,   &tmask_max);
+  alist[3] = make_alist("tmask_min",   DV_FLOAT,    NULL,   &tmask_min);
   alist[4] = make_alist("filt_len",    DV_INT32,      NULL,   &filt_len);
   alist[5] = make_alist("b10",         DV_INT32,      NULL,   &b10);
   alist[6] = make_alist("dump",        DV_INT32,      NULL,   &dump);
-  alist[7] = make_alist("null",        FLOAT,    NULL,   &nullval);
+  alist[7] = make_alist("null",        DV_FLOAT,    NULL,   &nullval);
   alist[8].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -4650,7 +4650,7 @@ kjn_deplaid2(vfuncptr func, Var * arg)
     }
   }
 
-  out = newVal(BSQ, x, chunks, z, FLOAT, col_avg);
+  out = newVal(BSQ, x, chunks, z, DV_FLOAT, col_avg);
   return out;
 
   /* smooth the column brightness array to deplaid the luminosity */
@@ -4704,7 +4704,7 @@ kjn_deplaid2(vfuncptr func, Var * arg)
   free(col_avg);
 
   /* return array */
-  out = newVal(BSQ, x, y, z, FLOAT, rdata);
+  out = newVal(BSQ, x, y, z, DV_FLOAT, rdata);
   return out;
 }
 

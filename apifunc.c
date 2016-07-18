@@ -49,7 +49,7 @@ int api_extract_int(int fmt, void * v, int i)
 		return ((int) ((short *) v)[i]);
 	case DV_INT32:
 		return ((int) ((int *) v)[i]);
-	case FLOAT:
+	case DV_FLOAT:
 		return ((int) ((float *) v)[i]);
 	case DOUBLE:
 		return ((int) ((double *) v)[i]);
@@ -66,7 +66,7 @@ float api_extract_float(int fmt, void * v, int i)
 		return ((float) ((short *) v)[i]);
 	case DV_INT32:
 		return ((float) ((int *) v)[i]);
-	case FLOAT:
+	case DV_FLOAT:
 		return ((float) ((float *) v)[i]);
 	case DOUBLE:
 		return ((float) ((double *) v)[i]);
@@ -83,7 +83,7 @@ double api_extract_double(int fmt, void * v, int i)
 		return (((short *) v)[i]);
 	case DV_INT32:
 		return (((int *) v)[i]);
-	case FLOAT:
+	case DV_FLOAT:
 		return (((float *) v)[i]);
 	case DOUBLE:
 		return (((double *) v)[i]);
@@ -123,7 +123,7 @@ int typeconvert_args(int srctype, void *src, int dsttype, void *dst, int dsize)
 	    	ip[lup] = api_extract_int(srctype,src, lup);
 		}
 		break;
-	case FLOAT:
+	case DV_FLOAT:
 		fp = (float *) dst;
 		for(lup = 0; lup < dsize; lup++){
 			fp[lup] = api_extract_float(srctype,src, lup);

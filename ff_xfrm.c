@@ -110,7 +110,7 @@ ff_mxm(vfuncptr func, Var * arg)
     if (!strcasecmp(format, "float")) {
 
       float_data = (float *) calloc(y1*x2, sizeof(float));
-      v = newVal(BSQ, x2, y1, 1, FLOAT, float_data);
+      v = newVal(BSQ, x2, y1, 1, DV_FLOAT, float_data);
 
       for (j = 0 ; j < y1 ; j++) {
         for (i = 0 ; i < x2 ; i++) {

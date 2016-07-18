@@ -289,7 +289,7 @@ Var *ff_sort(vfuncptr func, Var * arg)
   Alist alist[4];
   alist[0] = make_alist("object",  ID_UNK, NULL, &object);
   alist[1] = make_alist("by",      ID_UNK, NULL, &byObj);
-  alist[2] = make_alist("descend", FLOAT,  NULL, &descend);
+  alist[2] = make_alist("descend", DV_FLOAT,  NULL, &descend);
   alist[3].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return (NULL);
@@ -320,7 +320,7 @@ Var *ff_sort(vfuncptr func, Var * arg)
     case DV_UINT8:		cmp = cmp_byte;		break;
     case DV_INT16:		cmp = cmp_short;	break;
     case DV_INT32:		cmp = cmp_int;		break;
-    case FLOAT:		cmp = cmp_float;	break;
+    case DV_FLOAT:		cmp = cmp_float;	break;
     case DOUBLE:	cmp = cmp_double;	break;
     }
 
@@ -560,7 +560,7 @@ ff_unique(vfuncptr func, Var * arg)
 				}
       }
 			
-      result = newVal(BSQ, 1, uniqElems, 1, FLOAT, uniqData);
+      result = newVal(BSQ, 1, uniqElems, 1, DV_FLOAT, uniqData);
       free(indexList);
       return(result);
     }
@@ -621,7 +621,7 @@ ff_unique(vfuncptr func, Var * arg)
 					}
 				}
       }
-      result = newVal(BSQ,uniqElems,y,z,FLOAT,uniqData);
+      result = newVal(BSQ,uniqElems,y,z,DV_FLOAT,uniqData);
       return(result);
 			
     } else if(sy != 1) {
@@ -638,7 +638,7 @@ ff_unique(vfuncptr func, Var * arg)
 					}
 				}
       }
-      result = newVal(BSQ,x,uniqElems,z,FLOAT,uniqData);
+      result = newVal(BSQ,x,uniqElems,z,DV_FLOAT,uniqData);
       return(result);
 			
     } else if(sz != 1) {
@@ -655,7 +655,7 @@ ff_unique(vfuncptr func, Var * arg)
 					}
 				}
       }
-      result = newVal(BSQ,x,y,uniqElems,FLOAT,uniqData);
+      result = newVal(BSQ,x,y,uniqElems,DV_FLOAT,uniqData);
       return(result);
     }
   }
@@ -697,7 +697,7 @@ Var *ff_sort_old(vfuncptr func, Var * arg)
   case DV_UINT8:		cmp = cmp_byte;		break;
   case DV_INT16:		cmp = cmp_short;	break;
   case DV_INT32:		cmp = cmp_int;		break;
-  case FLOAT:		cmp = cmp_float;	break;
+  case DV_FLOAT:		cmp = cmp_float;	break;
   case DOUBLE:	        cmp = cmp_double;	break;
   }
   

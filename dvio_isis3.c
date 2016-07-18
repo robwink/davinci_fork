@@ -645,7 +645,7 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 	int localSize = 0;  // This will be size of the item
 	/* from parser.h, and right now ignoring others:
 	 #define DV_INT32			3
-	 #define FLOAT		4
+	 #define DV_FLOAT		4
 	 #define DOUBLE		8
 	 We are assuming ONE type per table.  If more than one, will flag it and not process it
 	 */
@@ -1154,7 +1154,7 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 							}
 							if (strcmp("DOUBLE", string3) == 0) {
 								localSize = 8;
-							} else if (strcmp("FLOAT", string3) == 0) {
+							} else if (strcmp("DV_FLOAT", string3) == 0) {
 								localSize = 4;
 							} else if (strcmp("DV_INT32", string3) == 0) {
 								localSize = 4;
@@ -1296,7 +1296,7 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 
 	 ************************************************************************/
 	// fop = malloc(4*4*4*4);
-	// cubeVar = newVal(BSQ, 4, 4, 4, FLOAT, fop);
+	// cubeVar = newVal(BSQ, 4, 4, 4, DV_FLOAT, fop);
 	// pp_print(cubeVar);
 	if ((cubeVar != NULL) && (data != 0)) {
 		add_struct(v, "cube", cubeVar);
@@ -2017,7 +2017,7 @@ Var *readCube(FILE *fp)
 		cubeElement = DV_INT16;
 		break;
 	case 4:
-		cubeElement = FLOAT;
+		cubeElement = DV_FLOAT;
 		break;
 	default:
 		cubeElement = DV_UINT8;

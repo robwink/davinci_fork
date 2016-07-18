@@ -169,7 +169,7 @@ Var* ff_resample(vfuncptr func, Var * arg)
 
 			/* create the output structure */
 			out=new_struct(3);
-			add_struct(out,"data", newVal(BSQ, xi, yi, npts, FLOAT, newy_float));
+			add_struct(out,"data", newVal(BSQ, xi, yi, npts, DV_FLOAT, newy_float));
 
 			if(l_type==0) {	
 				add_struct(out,"label",label);
@@ -177,7 +177,7 @@ Var* ff_resample(vfuncptr func, Var * arg)
 			if(l_type==1) {
 				add_struct(out,"sample_name",label);
 			}
-			add_struct(out,"xaxis", newVal(BSQ, 1, 1, npts, FLOAT, oldx_float));
+			add_struct(out,"xaxis", newVal(BSQ, 1, 1, npts, DV_FLOAT, oldx_float));
 			return(out);
 		}
 	}
@@ -200,7 +200,7 @@ Var* ff_resample(vfuncptr func, Var * arg)
 
 	/* create the output structure */
 	out=new_struct(3);
-	add_struct(out,"data", newVal(BSQ,xi,yi,new_npts,FLOAT,newy_float));
+	add_struct(out,"data", newVal(BSQ,xi,yi,new_npts,DV_FLOAT,newy_float));
 
 	if(l_type==0) {	
 		add_struct(out,"label",label);
@@ -208,7 +208,7 @@ Var* ff_resample(vfuncptr func, Var * arg)
 		add_struct(out,"sample_name",label);
 	}
 
-	add_struct(out,"xaxis", newVal(BSQ, 1, 1, new_npts, FLOAT, newx_float));
+	add_struct(out,"xaxis", newVal(BSQ, 1, 1, new_npts, DV_FLOAT, newx_float));
 
 	
 	return(out);

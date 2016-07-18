@@ -54,7 +54,7 @@ Var* ff_atof(vfuncptr func, Var* arg)
 
 	if (V_TYPE(v) == ID_STRING) {
 		if (!strcmp(func->name, "atof")) {
-			s          = newVal(BSQ, 1, 1, 1, FLOAT, NULL);
+			s          = newVal(BSQ, 1, 1, 1, DV_FLOAT, NULL);
 			V_DATA(s)  = (float*)calloc(1, sizeof(float));
 			V_FLOAT(s) = (float)strtod(V_STRING(v), NULL);
 		} else if (!strcmp(func->name, "atod")) {
@@ -67,7 +67,7 @@ Var* ff_atof(vfuncptr func, Var* arg)
 		int nlines = V_TEXT(v).Row;
 		if (!strcmp(func->name, "atof")) {
 			float* data = (float*)calloc(nlines, sizeof(float));
-			s           = newVal(BSQ, 1, nlines, 1, FLOAT, NULL);
+			s           = newVal(BSQ, 1, nlines, 1, DV_FLOAT, NULL);
 			for (line = 0; line < nlines; line++) {
 				data[line] = strtod(V_TEXT(v).text[line], NULL);
 			}
@@ -103,7 +103,7 @@ char* do_add_strings(char* s1, Var* v, int flag)
 		case DV_UINT8:
 		case DV_INT16:
 		case DV_INT32: sprintf(buf, "%d", extract_int(v, 0)); break;
-		case FLOAT:
+		case DV_FLOAT:
 		case DOUBLE: sprintf(buf, "%.*g", SCALE, extract_double(v, 0)); break;
 		}
 		s2 = buf;

@@ -672,7 +672,7 @@ fake_data()
   V_SIZE(v)[1] = 3;
   V_SIZE(v)[2] = 2;
   V_ORG(v) = BSQ;
-  V_FORMAT(v) = FLOAT;
+  V_FORMAT(v) = DV_FLOAT;
   V_DATA(v) = calloc(4 * 3 * 2, sizeof(float));
 
   for (i = 0; i < 4; i++) {
@@ -718,7 +718,7 @@ fake_data()
   V_SIZE(v)[1] = 2;
   V_SIZE(v)[2] = 2;
   V_ORG(v) = BSQ;
-  V_FORMAT(v) = FLOAT;
+  V_FORMAT(v) = DV_FLOAT;
   V_DATA(v) = calloc(2 * 2 * 2, sizeof(float));
 
   for (i = 0; i < 8; i++) {

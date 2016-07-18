@@ -250,7 +250,7 @@ static inline StorageType dv_to_im_storage_type(Var * img)
     return ShortPixel;
   case DV_INT32:
     return IntegerPixel;
-  case FLOAT:
+  case DV_FLOAT:
     return FloatPixel;
   case VAX_FLOAT:
     return FloatPixel; /* When you make an assumption... */

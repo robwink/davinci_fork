@@ -455,14 +455,14 @@ setImage(Widget widget, Var *value)
 		case DV_INT32:
 			dataType = XvicFULL;
 			break;
-		case FLOAT:
+		case DV_FLOAT:
 			dataType = XvicREAL;
 			break;
 		case DOUBLE:
 			dataType = XvicDOUBLE;
 			break;
 		default:
-			parse_error("VICAR image data must be DV_UINT8, DV_INT16, DV_INT32, FLOAT, or DOUBLE.");
+			parse_error("VICAR image data must be DV_UINT8, DV_INT16, DV_INT32, DV_FLOAT, or DOUBLE.");
 			return 0;
 	}
 
@@ -854,7 +854,7 @@ setOverlay(Widget widget, Var *value)
 
 	/* Extract X location. */
 	if (find_struct(value, "x", &vX) >= 0) {
-		if (V_TYPE(vX) != ID_VAL || V_FORMAT(vX) < FLOAT) {
+		if (V_TYPE(vX) != ID_VAL || V_FORMAT(vX) < DV_FLOAT) {
 			parse_error("VICAR overlay: x must be a double.");
 			return;
 		}
@@ -879,7 +879,7 @@ setOverlay(Widget widget, Var *value)
 
 	/* Extract Y location. */
 	if (find_struct(value, "y", &vY) >= 0) {
-		if (V_TYPE(vY) != ID_VAL || V_FORMAT(vY) < FLOAT) {
+		if (V_TYPE(vY) != ID_VAL || V_FORMAT(vY) < DV_FLOAT) {
 			parse_error("VICAR overlay: y must be a double.");
 			return;
 		}

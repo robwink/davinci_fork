@@ -125,7 +125,7 @@ ff_dfunc(vfuncptr func, Var * arg)
   /**
    ** figure out if we should be returning float or double.
    **/
-  format = max(FLOAT, V_FORMAT(v));
+  format = max(DV_FLOAT, V_FORMAT(v));
   dsize = V_DSIZE(v);
 
   /**
@@ -145,7 +145,7 @@ ff_dfunc(vfuncptr func, Var * arg)
   }
 
   switch (format) {
-    case FLOAT:
+    case DV_FLOAT:
       {
         fdata = (float *) data;
         for (i = 0; i < dsize; i++) {
@@ -296,7 +296,7 @@ ff_binary_op(const char *name,               // Function name, for errors
       case DV_INT32:
         idata[i] = saturate_int(v3);
         break;
-      case FLOAT:
+      case DV_FLOAT:
         fdata[i] = saturate_float(v3);
         break;
       case DOUBLE:
@@ -480,7 +480,7 @@ ff_conv(vfuncptr func, Var * arg)
         }
         break;
       }
-    case FLOAT:
+    case DV_FLOAT:
       {
         float *idata = (float *) data;
         for (i = 0; i < dsize; i++) {
@@ -678,7 +678,7 @@ ff_create(vfuncptr func, Var * arg)
     if (!strcasecmp(format_str, "byte")) format = DV_UINT8;
     else if (!strcasecmp(format_str, "short")) format = DV_INT16;
     else if (!strcasecmp(format_str, "int")) format = DV_INT32;
-    else if (!strcasecmp(format_str, "float")) format = FLOAT;
+    else if (!strcasecmp(format_str, "float")) format = DV_FLOAT;
     else if (!strcasecmp(format_str, "double")) format = DOUBLE;
   }
   if (x <= 0 || y <= 0 || z <=0) {
@@ -720,7 +720,7 @@ ff_create(vfuncptr func, Var * arg)
           case DV_UINT8: cdata[0] = saturate_byte(v); break;
           case DV_INT16: sdata[0] = saturate_short(v); break;
           case DV_INT32: idata[0] = saturate_int(v); break;
-          case FLOAT: fdata[0] = saturate_float(v); break;
+          case DV_FLOAT: fdata[0] = saturate_float(v); break;
           case DOUBLE: ddata[0] = v; break;
         }
         for(i=1; i<dsize; i++){
@@ -744,7 +744,7 @@ ff_create(vfuncptr func, Var * arg)
               case DV_INT32:
                 idata[c] = saturate_int(v);
                 break;
-              case FLOAT:
+              case DV_FLOAT:
                 fdata[c] = saturate_float(v);
                 break;
               case DOUBLE:
@@ -1839,7 +1839,7 @@ compare_vars(Var *a, Var *b)
             if (extract_int(a,i) != extract_int(b,rpos(i,a,b)))
               return(0);
             break;
-          case FLOAT:
+          case DV_FLOAT:
             if (extract_float(a,i) != extract_float(b,rpos(i,a, b)))
               return(0);
             break;
@@ -1865,7 +1865,7 @@ newInt(int i)
 Var *
 newFloat(float f)
 {
-  Var *v = newVal(BSQ, 1, 1,1, FLOAT, calloc(1, sizeof(float)));
+  Var *v = newVal(BSQ, 1, 1,1, DV_FLOAT, calloc(1, sizeof(float)));
   V_FLOAT(v) = f;
   return(v);
 }
@@ -2284,7 +2284,7 @@ ff_contains(vfuncptr func, Var * arg)
         }
       }
       break;
-    case FLOAT:
+    case DV_FLOAT:
       vd = extract_float(value, 0);
       for (i = 0 ; i < dsize ; i++) {
         if (((float *)V_DATA(obj))[i] == vd) {

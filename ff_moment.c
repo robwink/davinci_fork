@@ -93,7 +93,7 @@ ff_moment(vfuncptr func, Var *arg)
     V_SIZE(out)[1] = 1;
     V_SIZE(out)[2] = 1;
     V_ORG(out) = BSQ;
-    V_FORMAT(out) = FLOAT;
+    V_FORMAT(out) = DV_FLOAT;
 
     return(out);
 }

@@ -613,7 +613,7 @@ davinci_type(
 
     case TREAL:
         switch(csize){
-        case 4: dav_type = FLOAT; break;
+        case 4: dav_type = DV_FLOAT; break;
         default: dav_type = DOUBLE; break;
         }
         break;
@@ -954,7 +954,7 @@ vpass2(
                     idx = (recno-1) * fields[i]->chain_len + j;
 
                     switch(fields[i]->dav_type){
-                    case FLOAT:
+                    case DV_FLOAT:
                         float_data[i][idx] = atof(vals[t->sno]); break;
 
                     default:

@@ -246,7 +246,7 @@ ff_image_resize(vfuncptr func, Var * arg)
 					case DV_UINT8:   ((u_char *)V_DATA(out))[pos] = saturate_byte(i_new_c);   break;
 					case DV_INT16:  ((short *)V_DATA(out))[pos]  = saturate_short(i_new_c);  break;
 					case DV_INT32:    ((int *)V_DATA(out))[pos]    = saturate_int(i_new_c);    break;
-					case FLOAT:  ((float *)V_DATA(out))[pos]  = saturate_float(d_new_c);  break;
+					case DV_FLOAT:  ((float *)V_DATA(out))[pos]  = saturate_float(d_new_c);  break;
 					case DOUBLE: ((double *)V_DATA(out))[pos] = saturate_double(d_new_c); break;
 				}
 			}

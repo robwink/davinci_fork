@@ -59,12 +59,12 @@ ff_hstretch(vfuncptr func, Var * arg)
     alist[0] = make_alist( "object",    ID_VAL,    NULL,    &obj);
     alist[1] = make_alist( "type",      ID_STRING, NULL,   &type);
     alist[2] = make_alist( "histogram", ID_VAL,    NULL,    &histogram);
-    alist[3] = make_alist( "minval",    FLOAT,   NULL,    &minval);
-    alist[4] = make_alist( "maxval",    FLOAT,   NULL,    &maxval);
+    alist[3] = make_alist( "minval",    DV_FLOAT,   NULL,    &minval);
+    alist[4] = make_alist( "maxval",    DV_FLOAT,   NULL,    &maxval);
 
 /* these args a specific to gaussian */
-    alist[5] = make_alist( "gmean",     FLOAT,     NULL,    &gmean);
-    alist[6] = make_alist( "gsigma",    FLOAT,     NULL,    &gsigma);
+    alist[5] = make_alist( "gmean",     DV_FLOAT,     NULL,    &gmean);
+    alist[6] = make_alist( "gsigma",    DV_FLOAT,     NULL,    &gsigma);
     alist[7] = make_alist( "dnmin",     DV_INT32,   NULL,    &dnmin);
     alist[8] = make_alist( "dnmax",     DV_INT32,   NULL,    &dnmax);
     alist[9] = make_alist( "debug",     DV_INT32,   NULL,    &debug);
@@ -125,11 +125,11 @@ ff_hstretch(vfuncptr func, Var * arg)
         }
     }
 
-    vx = newVal(BSQ, 1, hsize, 1, FLOAT, x),
-    vy = newVal(BSQ, 1, hsize, 1, FLOAT, y),
-    vcdf = newVal(BSQ, dnmax-dnmin+1, 1, 1, FLOAT, cdf);
+    vx = newVal(BSQ, 1, hsize, 1, DV_FLOAT, x),
+    vy = newVal(BSQ, 1, hsize, 1, DV_FLOAT, y),
+    vcdf = newVal(BSQ, dnmax-dnmin+1, 1, 1, DV_FLOAT, cdf);
     out = hmod(hsize, y, dnmin, dnmax, cdf, npts);
-    o = newVal(BSQ, 1, hsize, 1, FLOAT, out);
+    o = newVal(BSQ, 1, hsize, 1, DV_FLOAT, out);
 
     if (obj != NULL) {
         Var *args = create_args(3,
@@ -356,8 +356,8 @@ ff_sstretch2(vfuncptr func, Var * arg)
   
   Alist alist[5];
   alist[0] = make_alist("data", 	  ID_VAL,	NULL,	&data);
-  alist[1] = make_alist("ignore", 	  FLOAT,	NULL,	&ignore);
-  alist[2] = make_alist("variance",       FLOAT,        NULL,   &v);
+  alist[1] = make_alist("ignore", 	  DV_FLOAT,	NULL,	&ignore);
+  alist[2] = make_alist("variance",       DV_FLOAT,        NULL,   &v);
   alist[3] = make_alist("sample",         ID_VAL, NULL, &sample);
   alist[4].name = NULL;
   

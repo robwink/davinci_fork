@@ -1497,7 +1497,7 @@ dv_LoadISISHeader(FILE *fp, char *filename, int rec, char *element, Var **var)
             break;
         case ODL_REAL:
             v = newVar();
-            make_sym(v, FLOAT, key->value);
+            make_sym(v, DV_FLOAT, key->value);
             V_TYPE(v) = ID_VAL;
             break;
 
@@ -2613,7 +2613,7 @@ iformat_to_eformat(Var *obj)
     case DV_UINT8: sprintf(buf,"MSB_UNSIGNED_INTEGER"); break;
     case DV_INT16: sprintf(buf,"MSB_INTEGER"); break;
     case DV_INT32: sprintf(buf,"MSB_INTEGER"); break;
-    case FLOAT: sprintf(buf,"IEEE_REAL"); break;
+    case DV_FLOAT: sprintf(buf,"IEEE_REAL"); break;
     case DOUBLE: sprintf(buf,"IEEE_REAL"); break;
   }
 #else /* little-endian */
@@ -2621,7 +2621,7 @@ iformat_to_eformat(Var *obj)
     case DV_UINT8: sprintf(buf,"PC_UNSIGNED_INTEGER"); break;
     case DV_INT16: sprintf(buf,"PC_INTEGER"); break;
     case DV_INT32: sprintf(buf,"PC_INTEGER"); break;
-    case FLOAT: sprintf(buf,"PC_REAL"); break;
+    case DV_FLOAT: sprintf(buf,"PC_REAL"); break;
     case DOUBLE: sprintf(buf,"PC_REAL"); break;
   }
 #endif /* WORDS_BIGENDIAN */
@@ -2637,7 +2637,7 @@ get_type_string(int type)
     case DV_UINT8:   return "DV_UINT8";
     case DV_INT16:  return "DV_INT16";
     case DV_INT32:    return "DV_INT32";
-    case FLOAT:  return "FLOAT";
+    case DV_FLOAT:  return "DV_FLOAT";
     case DOUBLE: return "DOUBLE";
   }
   return "UNKNOWN";
@@ -2684,7 +2684,7 @@ convert_data(int from_type, void *from_data, int to_type, void *to_data, int nel
           case DV_UINT8:   to_byte_data[i]   = from_byte_data[i];   break;
           case DV_INT16:  to_short_data[i]  = from_byte_data[i];  break;
           case DV_INT32:    to_int_data[i]    = from_byte_data[i];    break;
-          case FLOAT:  to_float_data[i]  = saturate_float(from_byte_data[i]);  break;
+          case DV_FLOAT:  to_float_data[i]  = saturate_float(from_byte_data[i]);  break;
           case DOUBLE: to_double_data[i] = saturate_double(from_byte_data[i]); break;
           default: return 0;
         }
@@ -2694,7 +2694,7 @@ convert_data(int from_type, void *from_data, int to_type, void *to_data, int nel
           case DV_UINT8:   to_byte_data[i]   = saturate_byte(from_short_data[i]);   break;
           case DV_INT16:  to_short_data[i]  = from_short_data[i];  break;
           case DV_INT32:    to_int_data[i]    = from_short_data[i];    break;
-          case FLOAT:  to_float_data[i]  = from_short_data[i];  break;
+          case DV_FLOAT:  to_float_data[i]  = from_short_data[i];  break;
           case DOUBLE: to_double_data[i] = from_short_data[i]; break;
           default: return 0;
         }
@@ -2704,17 +2704,17 @@ convert_data(int from_type, void *from_data, int to_type, void *to_data, int nel
           case DV_UINT8:   to_byte_data[i]   = saturate_byte(from_int_data[i]);   break;
           case DV_INT16:  to_short_data[i]  = saturate_short(from_int_data[i]);   break;
           case DV_INT32:    to_int_data[i]    = from_int_data[i];    break;
-          case FLOAT:  to_float_data[i]  = saturate_float(from_int_data[i]);  break;
+          case DV_FLOAT:  to_float_data[i]  = saturate_float(from_int_data[i]);  break;
           case DOUBLE: to_double_data[i] = saturate_double(from_int_data[i]); break;
           default: return 0;
         }
         break;
-      case FLOAT:
+      case DV_FLOAT:
         switch(to_type){
           case DV_UINT8:   to_byte_data[i]   = saturate_byte(from_float_data[i]);   break;
           case DV_INT16:  to_short_data[i]  = saturate_short(from_float_data[i]);  break;
           case DV_INT32:    to_int_data[i]    = saturate_int(from_float_data[i]);    break;
-          case FLOAT:  to_float_data[i]  = saturate_float(from_float_data[i]);  break;
+          case DV_FLOAT:  to_float_data[i]  = saturate_float(from_float_data[i]);  break;
           case DOUBLE: to_double_data[i] = saturate_double(from_float_data[i]); break;
           default: return 0;
         }
@@ -2724,7 +2724,7 @@ convert_data(int from_type, void *from_data, int to_type, void *to_data, int nel
           case DV_UINT8:   to_byte_data[i]   = saturate_byte(from_double_data[i]);   break;
           case DV_INT16:  to_short_data[i]  = saturate_short(from_double_data[i]);  break;
           case DV_INT32:    to_int_data[i]    = saturate_int(from_double_data[i]);    break;
-          case FLOAT:  to_float_data[i]  = saturate_float(from_double_data[i]);  break;
+          case DV_FLOAT:  to_float_data[i]  = saturate_float(from_double_data[i]);  break;
           case DOUBLE: to_double_data[i] = saturate_double(from_double_data[i]); break;
           default: return 0;
         }
@@ -3414,7 +3414,7 @@ extract_data_band_as_bsq(
           short_buff[idx++]  = (short)extract_int(v, pos); break;
         case DV_INT32:
           int_buff[idx++]    = extract_int(v, pos); break;
-        case FLOAT:
+        case DV_FLOAT:
           float_buff[idx++]  = extract_float(v, pos); break;
         case DOUBLE:
           double_buff[idx++] = extract_double(v, pos); break;
@@ -4251,7 +4251,7 @@ propagate_keywords_0(
             propagate_int_keyword(fid, object, group, name, v);
             break;
 
-          case FLOAT:
+          case DV_FLOAT:
             propagate_float_keyword(fid, object, group, name, v);
             break;
 
@@ -4577,7 +4577,7 @@ propagate_history_group_keywords(
           case DV_INT16:
           case DV_INT32:
             propagate_history_int_keyword(indent, name, v); break;
-          case FLOAT:
+          case DV_FLOAT:
           case DOUBLE:
             propagate_history_real_keyword(indent, name, v); break;
           default:

@@ -31,7 +31,7 @@ ff_jfill(vfuncptr func, Var * arg)
   
   Alist alist[6];
   alist[0] = make_alist( "object",    ID_VAL, NULL, &obj);
-  alist[1] = make_alist( "fill",      FLOAT,  NULL, &fill);
+  alist[1] = make_alist( "fill",      DV_FLOAT,  NULL, &fill);
   alist[2] = make_alist( "radius",    DV_INT32,    NULL, &radius);
   alist[3] = make_alist( "wrap",      DV_INT32,    NULL, &wrap);
   alist[4] = make_alist( "neighbors",      DV_INT32,    NULL, &neighbors);
@@ -60,7 +60,7 @@ ff_jfill(vfuncptr func, Var * arg)
   V_SIZE(v)[0] = V_SIZE(obj)[0];
   V_SIZE(v)[1] = V_SIZE(obj)[1];
   V_SIZE(v)[2] = V_SIZE(obj)[2];
-  V_FORMAT(v) = FLOAT;
+  V_FORMAT(v) = DV_FLOAT;
   V_DATA(v) = data;
   
   for (band = 0; band < depth; band++) {
@@ -139,7 +139,7 @@ ff_ifill(vfuncptr func, Var * arg)
 
   Alist alist[6];
   alist[0] = make_alist( "object",    ID_VAL, NULL, &obj);
-  alist[1] = make_alist( "fill",      FLOAT,  NULL, &fill);
+  alist[1] = make_alist( "fill",      DV_FLOAT,  NULL, &fill);
   alist[2] = make_alist( "radius",    DV_INT32,    NULL, &radius);
   alist[3] = make_alist( "wrap",      DV_INT32,    NULL, &wrap);
   alist[4] = make_alist( "pass",      ID_STRING,    NULL, &pass);
@@ -200,7 +200,7 @@ ff_ifill(vfuncptr func, Var * arg)
   V_SIZE(v)[0] = V_SIZE(obj)[0];
   V_SIZE(v)[1] = V_SIZE(obj)[1];
   V_SIZE(v)[2] = V_SIZE(obj)[2];
-  V_FORMAT(v) = FLOAT;
+  V_FORMAT(v) = DV_FLOAT;
   V_DATA(v) = data1;
   
   free(data2);
@@ -734,7 +734,7 @@ Var *ff_kfill(vfuncptr func, Var * arg)
       pic2[j*x+i] = pic[(j+wth)*pic_x+(i+wth)];
     }
   }
-  out = newVal(BSQ, x, y, 1, FLOAT, pic2);
+  out = newVal(BSQ, x, y, 1, DV_FLOAT, pic2);
 
   /* cleanup before exit */
   free(wgt);

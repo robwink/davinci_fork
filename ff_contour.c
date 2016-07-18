@@ -53,8 +53,8 @@ ff_contour(vfuncptr func, Var *arg)
 
   Alist alist[4];
   alist[0] = make_alist("data",           ID_VAL,    NULL,  &data);
-  alist[1] = make_alist("interval",       FLOAT,     NULL,  &bin);
-  alist[2] = make_alist("zero",           FLOAT,     NULL,  &zero);
+  alist[1] = make_alist("interval",       DV_FLOAT,     NULL,  &bin);
+  alist[2] = make_alist("zero",           DV_FLOAT,     NULL,  &zero);
   alist[3].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -78,7 +78,7 @@ ff_contour(vfuncptr func, Var *arg)
 
   /* allocate memory for the picture */
   w_data = (float *)calloc(V_DSIZE(data), sizeof(float));
-  out=newVal(BSQ,x,y,z,FLOAT,w_data);
+  out=newVal(BSQ,x,y,z,DV_FLOAT,w_data);
 
   /* loop through data and extract points and fill in contours*/
   for(i=0; i<x; i++) {

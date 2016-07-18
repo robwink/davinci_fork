@@ -162,7 +162,7 @@ ff_coreg(vfuncptr func, Var * arg)
 		pos[1] = b;
 
 		out = new_struct(2);
-		add_struct(out, "space", newVal(BSQ, s_dia, s_dia, 1, FLOAT, solution));
+		add_struct(out, "space", newVal(BSQ, s_dia, s_dia, 1, DV_FLOAT, solution));
 		add_struct(out, "wt", newVal(BSQ, s_dia, s_dia, 1, DV_INT32, wt));
 		add_struct(out, "position", newVal(BSQ, 2, 1, 1, DV_INT32, pos));
 		add_struct(out, "count", newInt(count)); /* TODO: Should return a long */
@@ -202,7 +202,7 @@ Var *ff_coreg2(vfuncptr func, Var * arg)
     alist[0] = make_alist("obj1", ID_VAL, NULL, &obj1);
     alist[1] = make_alist("obj2", ID_VAL, NULL, &obj2);
     alist[2] = make_alist("size", DV_INT32, NULL, &size);
-    alist[3] = make_alist("ignore", FLOAT, NULL, &ignore);
+    alist[3] = make_alist("ignore", DV_FLOAT, NULL, &ignore);
     alist[4] = make_alist("verbose", DV_INT32, NULL, &verbose);
     alist[5].name = NULL;
 

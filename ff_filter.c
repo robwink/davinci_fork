@@ -62,7 +62,7 @@ Var *ff_sawtooth(vfuncptr func, Var * arg)
   }
 
   tooth = sawtooth(x, y, z);
-  out = newVal(BSQ, x, y, z, FLOAT, tooth);
+  out = newVal(BSQ, x, y, z, DV_FLOAT, tooth);
   return out;
 }
 

@@ -128,7 +128,7 @@ struct iom_iheader {
                     	/*   -- comes from iom_edf enum above      */
                     	/* this is what the file says it has       */
 
-	int format;         /* data format (DV_INT32, FLOAT, etc)           */
+	int format;         /* data format (DV_INT32, DV_FLOAT, etc)           */
 	/*   -- comes from iom_idf enum above    */
                     	/* this is what read_qube_data() returns   */
 

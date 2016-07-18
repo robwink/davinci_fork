@@ -15,7 +15,7 @@ typedef struct tag_Window {
 ** Window * create_window(int width, int height, int format);
 ** 
 **  Create a window structure of size width x height.  Format is ignore
-**  currently.  Window is always of type FLOAT.  (but pass FLOAT anyway).
+**  currently.  Window is always of type DV_FLOAT.  (but pass DV_FLOAT anyway).
 ** 
 ** void load_window(Window *w, Var *obj, int x1, int y1, float ignore);
 ** 

@@ -42,7 +42,7 @@ void make_sym(Var* v, int format, char* str)
 
 	switch (format) {
 	case DV_INT32: *((int*)(V_DATA(v))) = strtol(str, NULL, 10); break;
-	case FLOAT: {
+	case DV_FLOAT: {
 		double d;
 		d = strtod(str, NULL);
 		if (((d > FLT_MAX) || (d < FLT_MIN)) && (d != 0)) {

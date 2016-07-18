@@ -14,8 +14,8 @@ Var *ff_rotation(vfuncptr func, Var * arg)
 
   Alist alist[4];
   alist[0] = make_alist( "object",      ID_VAL,   NULL,     &obj);
-  alist[1] = make_alist( "angle",  	FLOAT,    NULL,     &angle);
-  alist[2] = make_alist( "ignore",      FLOAT,    NULL,     &ign);
+  alist[1] = make_alist( "angle",  	DV_FLOAT,    NULL,     &angle);
+  alist[2] = make_alist( "ignore",      DV_FLOAT,    NULL,     &ign);
   alist[3].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return NULL;
@@ -76,7 +76,7 @@ Var *rotation(Var *obj, float angle, float ign)
   case DV_INT32:
 		ign_resized.i = ign;
 		break;
-  case FLOAT:
+  case DV_FLOAT:
 		ign_resized.f = ign;
 		break;
   case DOUBLE:

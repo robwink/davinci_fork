@@ -69,7 +69,7 @@ ff_self_convolve(vfuncptr func, Var * arg)
 		}
 	}
 
-	return(newVal(V_ORG(v1), V_SIZE(v1)[0], V_SIZE(v1)[1], V_SIZE(v1)[2], FLOAT, out));
+	return(newVal(V_ORG(v1), V_SIZE(v1)[0], V_SIZE(v1)[1], V_SIZE(v1)[2], DV_FLOAT, out));
 }
 
 
@@ -184,7 +184,7 @@ static Var *do_my_convolve(Var *obj, Var *kernel, int norm, float ignore, int ke
 	}
 
 	free(wt);
-	return(newVal(V_ORG(obj), V_SIZE(obj)[0], V_SIZE(obj)[1], V_SIZE(obj)[2], FLOAT, data));
+	return(newVal(V_ORG(obj), V_SIZE(obj)[0], V_SIZE(obj)[1], V_SIZE(obj)[2], DV_FLOAT, data));
 }
 
 
@@ -200,7 +200,7 @@ Var *ff_convolve2(vfuncptr func, Var * arg)
 	alist[0] = make_alist("object",       ID_VAL,         NULL,	      &obj);
 	alist[1] = make_alist("kernel",       ID_VAL,         NULL,      &kernel);
 	alist[2] = make_alist("normalize",    DV_INT32,            NULL,        &norm);
-	alist[3] = make_alist("ignore",       FLOAT,          NULL,      &ignore);
+	alist[3] = make_alist("ignore",       DV_FLOAT,          NULL,      &ignore);
 	alist[4] = make_alist("kernreduce",   DV_INT32,            NULL,  &kernreduce);
 	alist[5].name = NULL;
 

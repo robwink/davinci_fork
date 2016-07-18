@@ -25,7 +25,7 @@ ff_distance_map(vfuncptr func, Var * arg)
 	Alist alist[8];
 	alist[0] = make_alist( "o1",    ID_VAL,    NULL,    &o1);
 	alist[1] = make_alist( "o2",    ID_VAL,    NULL,    &o2);
-	alist[2] = make_alist( "dir",   FLOAT,     NULL,    &dir);
+	alist[2] = make_alist( "dir",   DV_FLOAT,     NULL,    &dir);
 	alist[3] = make_alist( "ignore",ID_VAL,    NULL,    &ignore);
 	alist[4] = make_alist( "skip",  DV_INT32,       NULL,    &skip);
 	alist[5] = make_alist( "radius",  DV_INT32,       NULL,    &radius);

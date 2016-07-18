@@ -1013,7 +1013,7 @@ ff_fncc_write_mat(vfuncptr func, Var * arg)
     case DV_UINT8:   hdr_type += 50; break;
     case DV_INT16:  hdr_type += 40; break;
     case DV_INT32:    hdr_type += 20; break;
-    case FLOAT:  hdr_type += 10; break;
+    case DV_FLOAT:  hdr_type += 10; break;
     case DOUBLE: hdr_type += 00; break;
     default:
         parse_error("%s: Unsupported data type %s in obj.\n",
@@ -1070,7 +1070,7 @@ ff_fncc_write_mat(vfuncptr func, Var * arg)
                     ii = extract_int(obj, cpos(i,j,k,obj));
                     fwrite(&ii, sizeof(ii), 1, fp);
                     break;
-                case FLOAT:
+                case DV_FLOAT:
                     ff = extract_double(obj, cpos(i,j,k,obj));
                     fwrite(&ff, sizeof(ff), 1, fp);
                     break;

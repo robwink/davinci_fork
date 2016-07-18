@@ -140,7 +140,7 @@ dump_var(Var *v, int indent, int limit)
 						case DV_UINT8: printf("%d\t", ((u_char *)V_DATA(v))[c]); break;
 						case DV_INT16: printf("%d\t", ((short *)V_DATA(v))[c]); break;
 						case DV_INT32:  printf("%d\t", ((int *)V_DATA(v))[c]); break;
-						case FLOAT: printf("%#.*g\t", SCALE, ((float *)V_DATA(v))[c]); break;
+						case DV_FLOAT: printf("%#.*g\t", SCALE, ((float *)V_DATA(v))[c]); break;
 						case DOUBLE: printf("%#.*g\t", SCALE, ((double *)V_DATA(v))[c]); break;
 						}
 					}
@@ -486,7 +486,7 @@ array_replace(Var *dst, Var *src, Range *r)
 						((int *)V_DATA(dst))[d] =
 							saturate_int(extract_int(src, s));
 						break;
-					case FLOAT:
+					case DV_FLOAT:
 						((float *)V_DATA(dst))[d] =
 							extract_float(src, s);
 						break;
@@ -1155,7 +1155,7 @@ pp_set_where(Var *id, Var *where, Var *exp)
 				case DV_UINT8:      ((u_char *)V_DATA(id))[i] = ival; break;
 				case DV_INT16:     ((short *)V_DATA(id))[i] = ival; break;
 				case DV_INT32:       ((int *)V_DATA(id))[i] = ival; break;
-				case FLOAT:     ((float *)V_DATA(id))[i] = dval; break;
+				case DV_FLOAT:     ((float *)V_DATA(id))[i] = dval; break;
 				case DOUBLE:    ((double *)V_DATA(id))[i] = dval; break;
 				}
 			}
@@ -1178,7 +1178,7 @@ pp_set_where(Var *id, Var *where, Var *exp)
 				case DV_INT32:
 					((int *)V_DATA(id))[i] = extract_int(exp, k);
 					break;
-				case FLOAT:
+				case DV_FLOAT:
 					((float *)V_DATA(id))[i] = extract_double(exp, k);
 					break;
 				case DOUBLE:

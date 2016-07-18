@@ -413,8 +413,8 @@ cse_contour(vfuncptr func, Var *arg)
 
 	Alist alist[4];
 	alist[0] = make_alist("data",           ID_VAL,    NULL,  &data);
-	alist[1] = make_alist("interval",       FLOAT,     NULL,  &bin);
-	alist[2] = make_alist("zero",           FLOAT,     NULL,  &zero);
+	alist[1] = make_alist("interval",       DV_FLOAT,     NULL,  &bin);
+	alist[2] = make_alist("zero",           DV_FLOAT,     NULL,  &zero);
 	alist[3].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -484,7 +484,7 @@ cse_contour(vfuncptr func, Var *arg)
 		}
 	}
 	/* return the contoured data */
-	out=newVal(BSQ,x,y,z,FLOAT,w_data);
+	out=newVal(BSQ,x,y,z,DV_FLOAT,w_data);
 	return out;
 }
 
@@ -508,7 +508,7 @@ cse_maxpos(vfuncptr func, Var *arg)
 	alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
 	alist[1] = make_alist("ret",       DV_INT32,       NULL,  &opt);
 	alist[2] = make_alist("iter",      DV_INT32,       NULL,  &iter);
-	alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
+	alist[3] = make_alist("ignore",    DV_FLOAT,     NULL,  &ignore);
 	alist[4].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return NULL;
@@ -573,7 +573,7 @@ cse_maxpos(vfuncptr func, Var *arg)
 	if(opt!=0) {
 		out = new_struct(2);
 		add_struct(out,"pos",newVal(BSQ, 3, iter, 1, DV_INT32, pos));
-		add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
+		add_struct(out,"val",newVal(BSQ, 1, iter, 1, DV_FLOAT, val));
 		return out;
 	}
 	return NULL;
@@ -600,7 +600,7 @@ cse_minpos(vfuncptr func, Var *arg)
 	alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
 	alist[1] = make_alist("ret",       DV_INT32,       NULL,  &opt);
 	alist[2] = make_alist("iter",      DV_INT32,       NULL,  &iter);
-	alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
+	alist[3] = make_alist("ignore",    DV_FLOAT,     NULL,  &ignore);
 	alist[4].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -669,7 +669,7 @@ cse_minpos(vfuncptr func, Var *arg)
 	if(opt!=0) {
 		out = new_struct(2);
 		add_struct(out,"pos",newVal(BSQ, 3, iter, 1, DV_INT32, pos));
-		add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
+		add_struct(out,"val",newVal(BSQ, 1, iter, 1, DV_FLOAT, val));
 		return out;
 	}
 }
@@ -764,11 +764,11 @@ cse_rmnoise(vfuncptr func, Var *arg)
 
 	Alist alist[7];
 	alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-	alist[1] = make_alist("null",      FLOAT,     NULL,  &nullval);
+	alist[1] = make_alist("null",      DV_FLOAT,     NULL,  &nullval);
 	alist[2] = make_alist("b10",       DV_INT32,       NULL,  &b10);
 	alist[3] = make_alist("filt",      DV_INT32,       NULL,  &filt);
 	alist[4] = make_alist("verbose",   DV_INT32,       NULL,  &vb);
-	alist[5] = make_alist("ignore",    FLOAT,     NULL,  &nullval);
+	alist[5] = make_alist("ignore",    DV_FLOAT,     NULL,  &nullval);
 	alist[6].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -917,7 +917,7 @@ cse_rmnoise(vfuncptr func, Var *arg)
 	free(band_10);
 	free(bc);
 
-	out=newVal(BSQ,x,y,z,FLOAT,w_pic2);
+	out=newVal(BSQ,x,y,z,DV_FLOAT,w_pic2);
 	return out;
 }
 
@@ -937,8 +937,8 @@ cse_find_shift(vfuncptr func, Var * arg)
 
 	Alist alist[4];
 	alist[0] = make_alist("data",      ID_VAL,     NULL,  &data);
-	alist[1] = make_alist("null",      FLOAT,      NULL,  &nullval);
-	alist[2] = make_alist("ignore",    FLOAT,      NULL,  &nullval);
+	alist[1] = make_alist("null",      DV_FLOAT,      NULL,  &nullval);
+	alist[2] = make_alist("ignore",    DV_FLOAT,      NULL,  &nullval);
 	alist[3].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -998,9 +998,9 @@ cse_shift(vfuncptr func, Var * arg)
 
 	Alist alist[5];
 	alist[0] = make_alist("data",      ID_VAL,     NULL,  &data);
-	alist[1] = make_alist("null",      FLOAT,      NULL,  &nullval);
+	alist[1] = make_alist("null",      DV_FLOAT,      NULL,  &nullval);
 	alist[2] = make_alist("side",      DV_INT32,        NULL,  &opt);
-	alist[3] = make_alist("ignore",    FLOAT,      NULL,  &nullval);
+	alist[3] = make_alist("ignore",    DV_FLOAT,      NULL,  &nullval);
 	alist[4].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -1106,7 +1106,7 @@ cse_shift(vfuncptr func, Var * arg)
 
 	/* return and clean up */
 	out=new_struct(2);
-	add_struct(out,"data",newVal(BSQ,x,y,z,FLOAT,w_data));
+	add_struct(out,"data",newVal(BSQ,x,y,z,DV_FLOAT,w_data));
 	add_struct(out,"shift_edge",newVal(BSQ,1,y,1,DV_INT32,newshift));
 	return out;
 }
@@ -1131,9 +1131,9 @@ cse_unshift(vfuncptr func, Var * arg)
 
 	Alist alist[5];
 	alist[0] = make_alist("rect",      ID_STRUCT,  NULL,  &rect);
-	alist[1] = make_alist("null",      FLOAT,      NULL,  &nullval);
+	alist[1] = make_alist("null",      DV_FLOAT,      NULL,  &nullval);
 	alist[2] = make_alist("side",      DV_INT32,        NULL,  &opt);
-	alist[3] = make_alist("ignore",    FLOAT,      NULL,  &nullval);
+	alist[3] = make_alist("ignore",    DV_FLOAT,      NULL,  &nullval);
 	alist[4].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -1230,7 +1230,7 @@ cse_unshift(vfuncptr func, Var * arg)
 
 	/* return and clean up */
 	free(newshift);
-	out=newVal(BSQ,x,y,z,FLOAT,w_data);
+	out=newVal(BSQ,x,y,z,DV_FLOAT,w_data);
 	return out;
 }
 
@@ -1293,7 +1293,7 @@ cse_tes_shift(vfuncptr func, Var * arg)
 	}
 
 	/* return the data */
-	out=newVal(BSQ,x+maxshift,y,1,FLOAT,w_data);
+	out=newVal(BSQ,x+maxshift,y,1,DV_FLOAT,w_data);
 	return out;
 }
 
@@ -1316,7 +1316,7 @@ cse_sobel(vfuncptr func, Var * arg)
 
 	Alist alist[3];
 	alist[0] = make_alist("pic",      ID_VAL,     NULL,  &pic);
-	alist[1] = make_alist("ignore",   FLOAT,      NULL,  &null);
+	alist[1] = make_alist("ignore",   DV_FLOAT,      NULL,  &null);
 	alist[2].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -1400,8 +1400,8 @@ cse_sobel(vfuncptr func, Var * arg)
 	free(ykern);
 
 	out=new_struct(2);
-	add_struct(out,"mag",newVal(BSQ,x,y,z,FLOAT,w_pic));
-	add_struct(out,"dir",newVal(BSQ,x,y,z,FLOAT,dir));
+	add_struct(out,"mag",newVal(BSQ,x,y,z,DV_FLOAT,w_pic));
+	add_struct(out,"dir",newVal(BSQ,x,y,z,DV_FLOAT,dir));
 	return out;
 }
 
@@ -1422,7 +1422,7 @@ cse_circle(vfuncptr func, Var * arg)
 	int     weight=0;          /* weight option */
 
 	Alist alist[3];
-	alist[0] = make_alist("r",      FLOAT,        NULL,  &r);
+	alist[0] = make_alist("r",      DV_FLOAT,        NULL,  &r);
 	alist[1] = make_alist("weight", DV_INT32,          NULL,  &weight);
 	alist[2].name = NULL;
 
@@ -1505,7 +1505,7 @@ cse_circle(vfuncptr func, Var * arg)
 	}
 
 	/* return the circle array */
-	out=newVal(BSQ,x,y,1,FLOAT,pic);
+	out=newVal(BSQ,x,y,1,DV_FLOAT,pic);
 	return out;
 }
 
@@ -1533,8 +1533,8 @@ cse_reconst(vfuncptr func, Var * arg)
 
 	Alist alist[4];
 	alist[0] = make_alist("rect",      ID_STRUCT,  NULL,  &obj);
-	alist[1] = make_alist("null",      FLOAT,      NULL,  &null);
-	alist[2] = make_alist("ignore",    FLOAT,      NULL,  &null);
+	alist[1] = make_alist("null",      DV_FLOAT,      NULL,  &null);
+	alist[2] = make_alist("ignore",    DV_FLOAT,      NULL,  &null);
 	alist[3].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -1603,7 +1603,7 @@ cse_reconst(vfuncptr func, Var * arg)
 	free(leftedge);
 
 	/* return the data */
-	out = newVal(BSQ, width, y-abs(lshift), z, FLOAT, new_data);
+	out = newVal(BSQ, width, y-abs(lshift), z, DV_FLOAT, new_data);
 	return(out);
 }
 
@@ -1636,8 +1636,8 @@ cse_sstretch2(vfuncptr func, Var * arg)
 
 	Alist alist[5];
 	alist[0] = make_alist("data", 	  ID_VAL,	NULL,	&data);
-	alist[1] = make_alist("ignore", 	  FLOAT,	NULL,	&ignore);
-	alist[2] = make_alist("variance",       FLOAT,        NULL,   &v);
+	alist[1] = make_alist("ignore", 	  DV_FLOAT,	NULL,	&ignore);
+	alist[2] = make_alist("variance",       DV_FLOAT,        NULL,   &v);
 	alist[3] = make_alist("sample",         ID_VAL,       NULL,   &sam_data);
 	alist[4].name = NULL;
 
@@ -1832,7 +1832,7 @@ cse_unscale(vfuncptr func, Var * arg)
 	free(base);
 	free(mult);
 
-	out=newVal(BSQ,x,y,z,FLOAT,w_pic);
+	out=newVal(BSQ,x,y,z,DV_FLOAT,w_pic);
 	return out;
 }
 
@@ -1868,7 +1868,7 @@ cse_ramp(vfuncptr func, Var * arg)
 	alist[0] = make_alist("pic1",   ID_VAL, NULL, &pic_1);
 	alist[1] = make_alist("pic2",   ID_VAL, NULL, &pic_2);
 	alist[2] = make_alist("stop",   DV_INT32,    NULL, &pare);
-	alist[3] = make_alist("ignore", FLOAT,  NULL, &nullv);
+	alist[3] = make_alist("ignore", DV_FLOAT,  NULL, &nullv);
 	alist[4].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0)
@@ -2021,7 +2021,7 @@ cse_ramp(vfuncptr func, Var * arg)
 	free(ol1);
 	free(ol2);
 
-	out = newVal(BSQ, x, y, 1, FLOAT, ramp);
+	out = newVal(BSQ, x, y, 1, DV_FLOAT, ramp);
 	return out;
 }
 
@@ -2041,7 +2041,7 @@ cse_columnator(vfuncptr func, Var * arg)
 
 	Alist alist[3];
 	alist[0] = make_alist("data",      ID_VAL,  NULL,  &data);
-	alist[1] = make_alist("ignore",    FLOAT,      NULL,  &null);
+	alist[1] = make_alist("ignore",    DV_FLOAT,      NULL,  &null);
 	alist[2].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -2079,7 +2079,7 @@ cse_columnator(vfuncptr func, Var * arg)
 	}
 
 	/* return the data */
-	out = newVal(BSQ, 3, count, 1, FLOAT, wdata);
+	out = newVal(BSQ, 3, count, 1, DV_FLOAT, wdata);
 	return(out);
 }
 
@@ -2167,7 +2167,7 @@ cse_cubicspline(vfuncptr func, Var * arg)
 
 	}
 
-	out = newVal(BSQ, 1, 1, nx, FLOAT, nya);
+	out = newVal(BSQ, 1, 1, nx, DV_FLOAT, nya);
 	return(out);
 }
 
@@ -2297,7 +2297,7 @@ cse_resample(vfuncptr func, Var * arg)
 	free(xold);
 	free(y2d);
 	free(u);
-	out = newVal(BSQ, 1, 1, new_npts, FLOAT, ynew);
+	out = newVal(BSQ, 1, 1, new_npts, DV_FLOAT, ynew);
 	return(out);
 }
 

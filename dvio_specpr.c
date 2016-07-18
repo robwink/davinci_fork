@@ -464,7 +464,7 @@ LoadSpecpr(FILE *fp,char *filename,int rec)
     while ((err = read_specpr(fileno(fp), rec, &label, (char **)&data)) >= 0) {
       if (err > 0) {
         s = new_struct(2);
-        v = newVal(BSQ, 1, 1, label.itchan, FLOAT, data);
+        v = newVal(BSQ, 1, 1, label.itchan, DV_FLOAT, data);
         add_struct(s, "data", v);
         add_struct(s, "title", newString(strndup(label.ititl, 40)));
         add_struct(q, NULL, s);
@@ -481,7 +481,7 @@ LoadSpecpr(FILE *fp,char *filename,int rec)
       V_SIZE(s)[0] = 1;
       V_SIZE(s)[1] = 1;
       V_SIZE(s)[2] = label.itchan;
-      V_FORMAT(s) = FLOAT;
+      V_FORMAT(s) = DV_FLOAT;
       V_ORDER(s) = BSQ;
 
       V_TITLE(s) = (char *)malloc(41);
@@ -557,7 +557,7 @@ WriteSpecpr(Var *v, char *filename, char *title)
     return(0);
   }
 
-  if (V_FORMAT(v) == FLOAT) {
+  if (V_FORMAT(v) == DV_FLOAT) {
     fdata = (float *)V_DATA(v);
   } else {
     fdata = (float *)calloc(V_DSIZE(v), sizeof(float));
@@ -693,7 +693,7 @@ LoadSpecprHeader(FILE *fp, char *filename, int rec, char *element, Var **val)
     V_DSIZE(v) = V_SIZE(v)[0] = range;
     V_SIZE(v)[1] = V_SIZE(v)[2] = 1;
     V_ORG(v) = BSQ;
-    V_FORMAT(v) = FLOAT;
+    V_FORMAT(v) = DV_FLOAT;
     V_DATA(v) = calloc(range, sizeof(float));
     memcpy(V_DATA(v), fval, sizeof(float)*range);
   } else if (tval != NULL) {

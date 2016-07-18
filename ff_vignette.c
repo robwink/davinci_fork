@@ -30,9 +30,9 @@ vignette(int width, int height, float r0, float offset, float i0)
  **
  ** usage: vignette(width=DV_INT32, 
  **                 height=DV_INT32, 
- **                 radius=FLOAT, 
- **                 offset=FLOAT, 
- **                 intensity=FLOAT)
+ **                 radius=DV_FLOAT, 
+ **                 offset=DV_FLOAT, 
+ **                 intensity=DV_FLOAT)
  **/
 
 Var *
@@ -48,9 +48,9 @@ ff_vignette(vfuncptr func, Var *arg)
 	Alist alist[6];
 	alist[0] = make_alist( "width",    DV_INT32,    NULL,    &width);
 	alist[1] = make_alist( "height",    DV_INT32,    NULL,    &height);
-	alist[2] = make_alist( "radius",    FLOAT,    NULL,    &radius);
-	alist[3] = make_alist( "offset",    FLOAT,    NULL,    &offset);
-	alist[4] = make_alist( "intensity",    FLOAT,    NULL,    &intensity);
+	alist[2] = make_alist( "radius",    DV_FLOAT,    NULL,    &radius);
+	alist[3] = make_alist( "offset",    DV_FLOAT,    NULL,    &offset);
+	alist[4] = make_alist( "intensity",    DV_FLOAT,    NULL,    &intensity);
 	alist[5].name = NULL;
 
 	if (width <= 0) {
@@ -80,7 +80,7 @@ ff_vignette(vfuncptr func, Var *arg)
     s = newVar();
     V_TYPE(s) = ID_VAL;             /* typical */
     V_DSIZE(s) = width*height;      /* number of elements */
-    V_FORMAT(s) = FLOAT;            /* data format */
+    V_FORMAT(s) = DV_FLOAT;            /* data format */
     V_ORG(s) = BSQ;                 /* data organization */
     V_SIZE(s)[0] = width;           /* size of first axis  (BSQ[0] = x-axis) */
     V_SIZE(s)[1] = height;          /* size of second axis (BSQ[1] = y-axis) */

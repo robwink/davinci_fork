@@ -288,7 +288,7 @@ Read_FITS_Image(fitsfile *fptr) {
 		break;
 
 	case FLOAT_IMG:
-		format = FLOAT;
+		format = DV_FLOAT;
 		datatype = TFLOAT;
 		break;
 
@@ -570,7 +570,7 @@ int fits_tbl_type_for_column_var(Var *coldata) {
 			return TSHORT;
 		case DV_INT32:
 			return TINT;
-		case FLOAT:
+		case DV_FLOAT:
 			return GetX(coldata)> 1? TCOMPLEX: TFLOAT;
 			case DOUBLE: return GetX(coldata) > 1? TDBLCOMPLEX: TDOUBLE;
 		}
@@ -742,7 +742,7 @@ Read_FITS_Table(fitsfile *fptr) {
 
 		case TFLOAT:
 			datatype = TFLOAT;
-			fmt = FLOAT;
+			fmt = DV_FLOAT;
 			x = repeat;
 			y = nrows;
 			z = 1;
@@ -780,7 +780,7 @@ Read_FITS_Table(fitsfile *fptr) {
 
 		case TCOMPLEX:
 			datatype = TFLOAT;
-			fmt = FLOAT;
+			fmt = DV_FLOAT;
 			x = repeat;
 			y = nrows;
 			z = 2;
@@ -863,7 +863,7 @@ makeVarFromFITSLabel(char *fits_value, char key_type) {
 	case 'F':
 		f = (float *) calloc(1, sizeof(float));
 		*f = atof(fits_value);
-		v = newVal(BSQ, 1, 1, 1, FLOAT, f);
+		v = newVal(BSQ, 1, 1, 1, DV_FLOAT, f);
 		break;
 
 	case 'X':
@@ -1074,7 +1074,7 @@ int VarType2FitsType(Var *obj, int *bitpix, int *datatype) {
 		*datatype = TINT; /*Future's so bright...*/
 		break;
 
-	case FLOAT:
+	case DV_FLOAT:
 		*bitpix = FLOAT_IMG;
 		*datatype = TFLOAT;
 		break;

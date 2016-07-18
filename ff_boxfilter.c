@@ -213,10 +213,10 @@ init_sums(Var *data, int w, int h, int d, Var **rn, Var **rs, Var **rcount, Var 
 					DV_INT32, c);
 	*rmean = newVal(V_ORG(data), 
 					V_SIZE(data)[0], V_SIZE(data)[1], V_SIZE(data)[2], 
-					FLOAT, mean);
+					DV_FLOAT, mean);
 	*rsigma = newVal(V_ORG(data), 
 					V_SIZE(data)[0], V_SIZE(data)[1], V_SIZE(data)[2], 
-					FLOAT, sigma);
+					DV_FLOAT, sigma);
 }
 
 Var *
@@ -282,7 +282,7 @@ ff_boxfilter(vfuncptr func, Var * arg)
 }
 
 /*
-filter(type=STRING, size=DV_INT32, x=DV_INT32, y=DV_INT32, z=DV_INT32, ignore=, gsigma=FLOAT)
+filter(type=STRING, size=DV_INT32, x=DV_INT32, y=DV_INT32, z=DV_INT32, ignore=, gsigma=DV_FLOAT)
 
 	"box"		- box filter, uniform XxY convolution
 	"lpf"		- same as box filter

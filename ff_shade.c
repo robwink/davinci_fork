@@ -109,7 +109,7 @@ ff_shade(vfuncptr func, Var * arg)
 			odata[cpos(i,j, 0, obj)] = 1.0/ (1.0+cosE/cosI);
 		}
 	}
-	out = newVal(BSQ, x, y, 1, FLOAT, odata);
+	out = newVal(BSQ, x, y, 1, DV_FLOAT, odata);
 	return(out);
 }
 

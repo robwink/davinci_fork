@@ -157,8 +157,8 @@ ff_pnmscale(vfuncptr f, Var *args)
 	alist[0] = make_alist("object", ID_VAL, NULL, &obj);
 	alist[1] = make_alist("xsize", DV_INT32, NULL, &xsize);
 	alist[2] = make_alist("ysize", DV_INT32, NULL, &ysize);
-	alist[3] = make_alist("xscale", FLOAT, NULL, &xscale);
-	alist[4] = make_alist("yscale", FLOAT, NULL, &yscale);
+	alist[3] = make_alist("xscale", DV_FLOAT, NULL, &xscale);
+	alist[4] = make_alist("yscale", DV_FLOAT, NULL, &yscale);
 	alist[5].name = NULL;
 
 	// Check arguments are valid
@@ -668,7 +668,7 @@ static Var *scale_doit(Var* obj, int x, int y, int z, int newcols, int newrows)
 					((int*)data)[k1]
 					    = (int)GetPixel(obj,orgX,x,y,orgY,k);
 					break;
-				case FLOAT:
+				case DV_FLOAT:
 					((float*)data)[k1]
 					    = (float)GetPixel(obj,x,y,orgX,orgY,k);
 					break;
@@ -717,7 +717,7 @@ static int fill_object_with_pad_color(int nx, int ny, int z,
 				case DV_INT32:
 					((int*)data)[k1] = color;
 					break;
-				case FLOAT:
+				case DV_FLOAT:
 					((float*)data)[k1] = color;
 					break;
 				case DOUBLE:
@@ -760,7 +760,7 @@ static int map_image(int x, int y, int z, int left, int top,
 				case DV_INT32:
 					((int*)data)[k1] = extract_int(obj,k2);
 					break;
-				case FLOAT:
+				case DV_FLOAT:
 					((float*)data)[k1] = extract_float(obj,k2);
 					break;
 				case DOUBLE:
@@ -876,7 +876,7 @@ static void fix_stripe(void* data, Var* obj,
 			   extract_int(obj,k3)
 			                  ) / 2;
 			break;
-		case FLOAT:
+		case DV_FLOAT:
 			((float*)data)[k1] = (
 			   extract_float(obj,k2) +
 			   extract_float(obj,k3)
@@ -904,7 +904,7 @@ static void fix_stripe(void* data, Var* obj,
 		case DV_INT32:
 			((int*)data)[k1] = extract_int(obj,k1);
 			break;
-		case FLOAT:
+		case DV_FLOAT:
 			((float*)data)[k1] = extract_float(obj,k1);
 			break;
 		case DOUBLE:

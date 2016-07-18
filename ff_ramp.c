@@ -32,7 +32,7 @@ Var *ff_ramp(vfuncptr func, Var * arg)
   alist[0] = make_alist((char *)"pic1",   ID_VAL, NULL, &pic_1);
   alist[1] = make_alist((char *)"pic2",   ID_VAL, NULL, &pic_2);
   alist[2] = make_alist((char *)"stop",   DV_INT32,    NULL, &pare);
-  alist[3] = make_alist((char *)"ignore", FLOAT,  NULL, &nullv);
+  alist[3] = make_alist((char *)"ignore", DV_FLOAT,  NULL, &nullv);
   alist[4].name = NULL;
 
   if (parse_args(func, arg, alist) == 0)
@@ -195,6 +195,6 @@ Var *ff_ramp(vfuncptr func, Var * arg)
   free(ol1);
   free(ol2);
 
-  out = newVal(BSQ, x, y, 1, FLOAT, ramp);
+  out = newVal(BSQ, x, y, 1, DV_FLOAT, ramp);
   return out;
 }

@@ -72,7 +72,7 @@ ff_slant(vfuncptr func, Var * arg)
   }
 
   odata = calloc(width*y*z,4);
-  out = newVal(BSQ, width, y, z, FLOAT, odata);
+  out = newVal(BSQ, width, y, z, DV_FLOAT, odata);
 
   for (j = 0 ; j < y ; j++) {
     for (i = leftmost[j] ; i < leftmost[j]+width ; i++) {
@@ -128,7 +128,7 @@ ff_unslant(vfuncptr func, Var * arg)
 	leftmost = V_DATA(leftedge);
 
 	odata = calloc(width*y*z, sizeof(float));
-	out = newVal(BSQ, width, y, z, FLOAT, odata);
+	out = newVal(BSQ, width, y, z, DV_FLOAT, odata);
 
 	for (j = 0 ; j < y ; j++) {
 	  parse_error("leftmost[%i]: %i", j, leftmost[j]);
@@ -232,7 +232,7 @@ Var * ff_unslant_shear(vfuncptr func, Var * arg) {
   }
   /* Use malloc to save time, since we're going to initialize the area ourselves. */
   odata = (float *)malloc(elements * b);
-  out = newVal(BSQ, w, y-abs(lsize), z, FLOAT, odata);
+  out = newVal(BSQ, w, y-abs(lsize), z, DV_FLOAT, odata);
 
   /* Initialize odata with null value*/
   for (i=0; i<elements; odata[i++] = nullvalue_f);

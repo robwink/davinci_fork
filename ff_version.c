@@ -20,7 +20,7 @@ Var* ff_version(vfuncptr func, Var* arg)
 	}
 	*version_num = atof(version+13);
 
-	return newVal(BSQ, 1, 1, 1, FLOAT, version_num);
+	return newVal(BSQ, 1, 1, 1, DV_FLOAT, version_num);
 }
 
 void dump_version()

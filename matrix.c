@@ -25,7 +25,7 @@ ff_identity(vfuncptr func, Var * arg)
 	for (i = 0 ; i < size ; i++) {
 		data[i + i*size] = 1.0;
 	}
-	return newVal(BSQ, size, size, 1, FLOAT, data);
+	return newVal(BSQ, size, size, 1, DV_FLOAT, data);
 }
 
 Var *

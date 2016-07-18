@@ -101,7 +101,7 @@ void WriteHDF5(hid_t parent, char* name, Var* v, int hdf_old)
 		case DV_INT16: datatype  = H5Tcopy(H5T_NATIVE_SHORT); break;
 		case UINT16: datatype = H5Tcopy(H5T_NATIVE_USHORT); break;
 		case DV_INT32: datatype    = H5Tcopy(H5T_NATIVE_INT); break;
-		case FLOAT: datatype  = H5Tcopy(H5T_NATIVE_FLOAT); break;
+		case DV_FLOAT: datatype  = H5Tcopy(H5T_NATIVE_FLOAT); break;
 		case DOUBLE: datatype = H5Tcopy(H5T_NATIVE_DOUBLE); break;
 		}
 
@@ -286,7 +286,7 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 			else if (H5Tequal(native_type_data, H5T_NATIVE_INT))
 				type = DV_INT32;
 			else if (H5Tequal(native_type_data, H5T_NATIVE_FLOAT))
-				type = FLOAT;
+				type = DV_FLOAT;
 			else if (H5Tequal(native_type_data, H5T_NATIVE_DOUBLE))
 				type = DOUBLE;
 		}

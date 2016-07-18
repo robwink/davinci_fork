@@ -276,7 +276,7 @@ define cb_go_conv (set)
 {
 	x = set.cset.x
 	y = set.cset.y
-	mat = create(x,y, format=FLOAT);
+	mat = create(x,y, format=DV_FLOAT);
 	for (i=1; i<=x; i+=1) {
 		for (j=1; j<=y; j+=1) {
 			mat[i,j] = atof (gui.get(set.cset.mat[i,j],"value").value)

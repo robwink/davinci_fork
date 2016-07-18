@@ -220,7 +220,7 @@ static int convert_types(data* thedata, int num_items, int rows)
 
 			case LSB_FLOAT:
 			case MSB_FLOAT:
-				thedata[i].type = FLOAT;
+				thedata[i].type = DV_FLOAT;
 				break;
 
 			case LSB_DOUBLE:
@@ -1498,7 +1498,7 @@ parse_struct(Var* toPack, Var* column_names, int* numData, int* greatestNumRows)
 			reg_data[i].input->columns = V_SIZE(element)[0]; // x value = columns
 			reg_data[i].array = V_DATA(element);
 			reg_data[i].strarray = NULL;
-			reg_data[i].type = V_FORMAT(element); // DV_INT16, DV_INT32, DV_UINT8, FLOAT, DOUBLE
+			reg_data[i].type = V_FORMAT(element); // DV_INT16, DV_INT32, DV_UINT8, DV_FLOAT, DOUBLE
 			break;
 
 		default:
@@ -1664,7 +1664,7 @@ convert_to_ext_fmt(char *from, int ffmt, char *to, int tfmt, int tolen)
 	case DV_UINT8:      ui = *(unsigned char *)from; si = (int         )ui; d  = (double)ui; break;
 	case DV_INT16:     si = *(short         *)from; ui = (unsigned int)si; d  = (double)si; break;
 	case DV_INT32:       si = *(int           *)from; ui = (unsigned int)si; d  = (double)si; break;
-	case FLOAT:     d  = *(float         *)from; ui = (unsigned int)d;  si = (int   )d;  break;
+	case DV_FLOAT:     d  = *(float         *)from; ui = (unsigned int)d;  si = (int   )d;  break;
 	case DOUBLE:    d  = *(double        *)from; ui = (unsigned int)d;  si = (int   )d;  break;
 	case ID_STRING: d  = atof(from); ui = strtoul(from,NULL,10); si = atoi(from);  break;
 	default: return 0;
@@ -1682,7 +1682,7 @@ convert_to_ext_fmt(char *from, int ffmt, char *to, int tfmt, int tolen)
 		case DV_UINT8:      sprintf(str,"%u",ui); break;
 		case DV_INT16:
 		case DV_INT32:       sprintf(str,"%d",si); break;
-		case FLOAT:
+		case DV_FLOAT:
 		case DOUBLE:    sprintf(str,"%g",d); break;
 		case ID_STRING: sprintf(str,"%s",from); break;
 		default:        return 0;

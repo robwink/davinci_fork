@@ -16,7 +16,7 @@
  ** Args:
  **             object = VAR
  **             radius = DV_INT32
- **             threshold = FLOAT
+ **             threshold = DV_FLOAT
  ** Returns:
  **     Cluster overlay image
  **
@@ -114,7 +114,7 @@ ff_ccount(vfuncptr func, Var * arg)
             top++;
     }
 
-	v = newVal(BSQ, 3, 1, 1, FLOAT, calloc(3, sizeof(float)));
+	v = newVal(BSQ, 3, 1, 1, DV_FLOAT, calloc(3, sizeof(float)));
 
     if (bottom == 0) {
         ((float *) V_DATA(v))[0] = (float) 0.0;

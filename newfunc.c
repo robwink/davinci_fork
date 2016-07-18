@@ -169,7 +169,7 @@ int parse_args(vfuncptr name, Var *args, Alist *alist)
 			iptr = (int *)(alist[j].value);
 			*iptr = extract_int(v, 0);
 			alist[j].filled = 1;
-		} else if (alist[j].type == FLOAT) {
+		} else if (alist[j].type == DV_FLOAT) {
 			float *fptr;
 			if ((e = eval(v)) == NULL) {
 				parse_error("%s: Variable not found: %s", fname, V_NAME(v));
@@ -178,7 +178,7 @@ int parse_args(vfuncptr name, Var *args, Alist *alist)
 			}
 			v = e;
 			if (V_TYPE(v) != ID_VAL) {
-				parse_error("Illegal argument %s(...%s=...), expected FLOAT", fname, alist[j].name);
+				parse_error("Illegal argument %s(...%s=...), expected DV_FLOAT", fname, alist[j].name);
 				free(av);
 				return 0;
 			}

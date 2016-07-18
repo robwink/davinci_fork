@@ -389,7 +389,7 @@ ff_pcs(vfuncptr	func, Var *args)
 	case DV_UINT8:
 	case DV_INT16:
 	case DV_INT32:
-	case FLOAT:
+	case DV_FLOAT:
 	case DOUBLE:
 		/* Only the above data types are supported */
 		break;
@@ -441,7 +441,7 @@ ff_pcs(vfuncptr	func, Var *args)
 		case DV_UINT8:
 		case DV_INT16:
 		case DV_INT32:
-		case FLOAT:
+		case DV_FLOAT:
 		case DOUBLE:
 			/* Only the above data types are supported */
 			break;
@@ -541,7 +541,7 @@ ff_pcs(vfuncptr	func, Var *args)
 	/* cleanup temporary matrix */
 	free_matrix(data, n, m);
 
-	v_return = newVal(V_ORG(obj), dim[0], dim[1], dim[2], FLOAT, fdata);
+	v_return = newVal(V_ORG(obj), dim[0], dim[1], dim[2], DV_FLOAT, fdata);
 	return v_return;
 }
 
@@ -700,7 +700,7 @@ ff_covar(
   /* cleanup temporary matrix */
   free_matrix(symmat, m, m);
 
-  v_return = newVal(BSQ, m, m, 1, FLOAT, fdata);
+  v_return = newVal(BSQ, m, m, 1, DV_FLOAT, fdata);
   return v_return;
 }
 
@@ -1194,7 +1194,7 @@ ff_eigen(
 	case DV_UINT8:
 	case DV_INT16:
 	case DV_INT32:
-	case FLOAT:
+	case DV_FLOAT:
 	case DOUBLE:
 		/* Only the above data types are supported */
 		break;
@@ -1271,6 +1271,6 @@ ff_eigen(
 	free_matrix(symmat, m, m);
 	free_vector(evals, m);
 
-	v_return = newVal(BSQ, m+1, m, 1, FLOAT, fdata);
+	v_return = newVal(BSQ, m+1, m, 1, DV_FLOAT, fdata);
 	return v_return;
 }

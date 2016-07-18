@@ -151,7 +151,7 @@ davinci_type(
         case TBYTE:     dav_type = DV_UINT8;        break;
         case TSHORT:    dav_type = DV_INT16;       break;
         case TINT:      dav_type = DV_INT32;         break;
-        case TFLOAT:    dav_type = FLOAT;       break;
+        case TFLOAT:    dav_type = DV_FLOAT;       break;
         case TDOUBLE:   dav_type = DOUBLE;       break;
 
         case TSTR:
@@ -1415,9 +1415,9 @@ dv_WriteCSV(Var* the_data, char* filename, char* field_delim, int header, int fo
 			 * Saadat reports that the output was now coming out as E format with
 			 * little resolution.
 			 * The changes here are to make the output match the inputs
-			 * The FLOAT inputs hand 4 decimal places, the DOUBLE inputs 1 decimal place
+			 * The DV_FLOAT inputs hand 4 decimal places, the DOUBLE inputs 1 decimal place
 			 *
-			 * The change is to %.4f from %G for FLOAT,
+			 * The change is to %.4f from %G for DV_FLOAT,
 			 *                  %.1f from %G for DOUBLE
 			 *
 			 */
@@ -1430,8 +1430,8 @@ dv_WriteCSV(Var* the_data, char* filename, char* field_delim, int header, int fo
 						case DV_UINT8:		fprintf(file, "%u", ((unsigned char*)V_DATA(data[i]))[row*columns+j] );	break;
 						case DV_INT16:		fprintf(file, "%d", ((short*)V_DATA(data[i]))[row*columns+j] );			break;
 						case DV_INT32:		fprintf(file, "%d", ((int*)V_DATA(data[i]))[row*columns+j] );			break;
-						case FLOAT:		fprintf(file, "%.4f", ((float*)V_DATA(data[i]))[row*columns+j] );		break;
-					  //case FLOAT:		fprintf(file, "%G", ((float*)V_DATA(data[i]))[row*columns+j] );			break;
+						case DV_FLOAT:		fprintf(file, "%.4f", ((float*)V_DATA(data[i]))[row*columns+j] );		break;
+					  //case DV_FLOAT:		fprintf(file, "%G", ((float*)V_DATA(data[i]))[row*columns+j] );			break;
 						case DOUBLE:	fprintf(file, "%.1f", ((double*)V_DATA(data[i]))[row*columns+j] );		break;
 					 // case DOUBLE:	fprintf(file, "%G", ((double*)V_DATA(data[i]))[row*columns+j] );		break;
 						default:

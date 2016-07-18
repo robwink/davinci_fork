@@ -54,7 +54,7 @@ Var *ff_gconvolve(vfuncptr func, Var * arg)
     Alist alist[3];
 
     alist[0] = make_alist("obj", ID_VAL, NULL, &obj);
-    alist[1] = make_alist("sigma", FLOAT, NULL, &sigma);
+    alist[1] = make_alist("sigma", DV_FLOAT, NULL, &sigma);
     alist[2].name = NULL;
 
     /* Parse & validate input args. */
@@ -203,6 +203,6 @@ Var *ff_gconvolve(vfuncptr func, Var * arg)
 					V_SIZE(obj)[0],
 					V_SIZE(obj)[1],
 					V_SIZE(obj)[2],
-					FLOAT, data);
+					DV_FLOAT, data);
 	return (out);
 }
