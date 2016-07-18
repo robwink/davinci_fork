@@ -5,7 +5,7 @@ QTSRCDIR=/usr
 ARCH=64
 LD_RUN_PATH=$ISIS3DIR/3rdParty/lib
 echo $LD_RUN_PATH
-g++ -DHAVE_CONFIG_H -m$ARCH -fPIC -g -I.. -I../libltdl -I$ISIS3DIR/inc -I$QTSRCDIR/include -I/$QTSRCDIR/include/QtCore -Wall iomod_isis3.3.C -c -o iomod_isis33.o
+g++ -DHAVE_CONFIG_H -m$ARCH -fPIC -g -I.. -I../libltdl -I$ISIS3DIR/inc -I$QTSRCDIR/include -I/$QTSRCDIR/include/QtCore -Wall iomod_isis3.3.c -c -o iomod_isis33.o
 if [ $? != 0 ]; then
     echo Compile failed.
     exit 1

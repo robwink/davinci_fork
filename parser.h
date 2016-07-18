@@ -238,11 +238,11 @@ enum {
 #define FLOAT       4
 #define VAX_FLOAT   5
 #define VAX_INTEGER 6
-#define INT64       7
+#define DV_INT64    7
 #define DOUBLE      8
 #define UINT16      9
 
-#define NBYTES(a)   ((a) == DV_INT32 ? 4 : ((a) == UINT16 ? 2 : ((a) == INT64 ? 8 : ((a) == VAX_FLOAT ? 4 : ((a) == VAX_INTEGER ? 2 : (a))))))
+#define NBYTES(a)   ((a) == DV_INT32 ? 4 : ((a) == UINT16 ? 2 : ((a) == DV_INT64 ? 8 : ((a) == VAX_FLOAT ? 4 : ((a) == VAX_INTEGER ? 2 : (a))))))
 
 /**
  ** Data axis order
