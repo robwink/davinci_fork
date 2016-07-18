@@ -212,7 +212,7 @@ pp_math(Var * a, int op, Var * b)
     if (is_relop(op)) {
         switch (in_format) {
         case BYTE:
-        case SHORT:
+        case DV_INT16:
         case INT:
             DO_RELOP_LOOP(int, u_char, extract_int, (int));
             break;
@@ -229,7 +229,7 @@ pp_math(Var * a, int op, Var * b)
 			case BYTE:
 				DO_SHIFT_LOOP(int, u_char, extract_int, saturate_byte);
 				break;
-			case SHORT:
+			case DV_INT16:
 				DO_SHIFT_LOOP(int, short, extract_int, saturate_short);
 				break;
 			case INT:
@@ -249,7 +249,7 @@ pp_math(Var * a, int op, Var * b)
         case BYTE:
             DO_MATH_LOOP(int, u_char, extract_int, saturate_byte);
             break;
-        case SHORT:
+        case DV_INT16:
             DO_MATH_LOOP(int, short, extract_int, saturate_short);
             break;
         case INT:
@@ -369,7 +369,7 @@ pp_compare(Var * a, Var * b)
 
 	switch (in_format) {
 		case BYTE:
-		case SHORT:
+		case DV_INT16:
 		case INT:
 			DO_CMP_LOOP(int, extract_int);
 			break;
@@ -461,7 +461,7 @@ extract_int(const Var * v, const size_t i)
     switch (V_FORMAT(v)) {
     case BYTE:
         return ((int) ((u_char *) V_DATA(v))[i]);
-    case SHORT:
+    case DV_INT16:
         return ((int) ((short *) V_DATA(v))[i]);
     case INT:
         return ((int) ((int *) V_DATA(v))[i]);
@@ -478,7 +478,7 @@ extract_float(Var * v, size_t i)
     switch (V_FORMAT(v)) {
     case BYTE:
         return ((float) ((u_char *) V_DATA(v))[i]);
-    case SHORT:
+    case DV_INT16:
         return ((float) ((short *) V_DATA(v))[i]);
     case INT:
         return ((float) ((int *) V_DATA(v))[i]);
@@ -495,7 +495,7 @@ extract_double(Var * v, size_t i)
     switch (V_FORMAT(v)) {
     case BYTE:
         return (((u_char *) V_DATA(v))[i]);
-    case SHORT:
+    case DV_INT16:
         return (((short *) V_DATA(v))[i]);
     case INT:
         return (((int *) V_DATA(v))[i]);

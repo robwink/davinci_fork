@@ -70,7 +70,7 @@ Var *rotation(Var *obj, float angle, float ign)
   case BYTE:
 		ign_resized.b = ign;
 		break;
-  case SHORT:
+  case DV_INT16:
 		ign_resized.s = ign;
 		break;
   case INT:

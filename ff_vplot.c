@@ -1341,7 +1341,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 
 	  switch (V_FORMAT(v)) {
 	  case BYTE:
-	  case SHORT:
+	  case DV_INT16:
 	  case INT:
 	    y[k] = (double) extract_int(v, obj_index);
 	  break;
@@ -1353,7 +1353,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  if (xFlag) {
 	    switch (V_FORMAT(v)) {
 	    case BYTE:
-	    case SHORT:
+	    case DV_INT16:
 	    case INT:
 	      x[k] = (double)extract_int(xaxis_i, rpos(obj_index, v, xaxis_i));
 	    break;
@@ -1371,7 +1371,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 
 	    switch (V_FORMAT(v)) {
 	    case BYTE:
-	    case SHORT:
+	    case DV_INT16:
 	    case INT:
 	      if(V_DSIZE(errorb) == 1)
 		Err1[k] = (double)extract_int(errorb,0);
@@ -1432,7 +1432,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	      // fprintf(fp, "%f\t %f\n", x[k], yval);  // originally
 	      switch (V_FORMAT(v)) {
           	  case BYTE:
-          	  case SHORT:
+          	  case DV_INT16:
           	  case INT:
           		  fprintf(fp, "%d\t %d\n", (int)x[k], (int)yval);
               break;
@@ -1447,7 +1447,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	    	// fprintf(fp, "%f\t %f\t %f\n", x[k], yval, Err1[k]); // originally
 	      switch (V_FORMAT(v)) {
         	  case BYTE:
-        	  case SHORT:
+        	  case DV_INT16:
         	  case INT:
         		  fprintf(fp, "%d\t %d\t %d\n", (int)x[k], (int)yval, (int)Err1[k]);
               break;
@@ -1466,7 +1466,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 		// fprintf(fp, "%f\t %f\t %f\t %f\n", x[k], yval, e1, e2); // originally
 	      switch (V_FORMAT(v)) {
       	  case BYTE:
-      	  case SHORT:
+      	  case DV_INT16:
       	  case INT:
       		fprintf(fp, "%d\t %d\t %d\t %d\n", (int)x[k], (int)yval, (int)e1, (int)e2);
           break;
@@ -1483,7 +1483,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 		// fprintf(fp, "%f\t %f\t %f\t %f\t %f\t %f\n", x[k], yval, Err1[k], Err2[k], e1, e2); // originally
 		switch (V_FORMAT(v)) {
 		      	  case BYTE:
-		      	  case SHORT:
+		      	  case DV_INT16:
 		      	  case INT:
 		      		fprintf(fp, "%d\t %d\t %d\t %d\t %d\t %d\n", (int)x[k], (int)yval, (int)Err1[k], (int)Err2[k], (int)e1, (int)e2);
 		      	  break;

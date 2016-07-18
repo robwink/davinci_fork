@@ -84,7 +84,7 @@ ff_ascii(vfuncptr func, Var *arg)
 
 	if (format_str != NULL) {
 		if (!strcasecmp(format_str, "byte")) format = BYTE;
-		else if (!strcasecmp(format_str, "short")) format = SHORT;
+		else if (!strcasecmp(format_str, "short")) format = DV_INT16;
 		else if (!strcasecmp(format_str, "int")) format = INT;
 		else if (!strcasecmp(format_str, "float")) format = FLOAT;
 		else if (!strcasecmp(format_str, "double")) format = DOUBLE;
@@ -210,7 +210,7 @@ ff_ascii(vfuncptr func, Var *arg)
 				case BYTE:
 					cdata[count++] = saturate_byte(strtol(ptr, NULL, 10));
 					break;
-				case SHORT:
+				case DV_INT16:
 					sdata[count++] = saturate_short(strtol(ptr, NULL, 10));
 					break;
 				case INT:

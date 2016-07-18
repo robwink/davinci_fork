@@ -246,7 +246,7 @@ static inline StorageType dv_to_im_storage_type(Var * img)
   switch (V_FORMAT(img)) {
   case BYTE:
     return CharPixel;
-  case SHORT:
+  case DV_INT16:
     return ShortPixel;
   case INT:
     return IntegerPixel;

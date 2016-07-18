@@ -449,7 +449,7 @@ setImage(Widget widget, Var *value)
 		case BYTE:
 			dataType = XvicBYTE;
 			break;
-		case SHORT:
+		case DV_INT16:
 			dataType = XvicHALF;
 			break;
 		case INT:
@@ -462,7 +462,7 @@ setImage(Widget widget, Var *value)
 			dataType = XvicDOUBLE;
 			break;
 		default:
-			parse_error("VICAR image data must be BYTE, SHORT, INT, FLOAT, or DOUBLE.");
+			parse_error("VICAR image data must be BYTE, DV_INT16, INT, FLOAT, or DOUBLE.");
 			return 0;
 	}
 

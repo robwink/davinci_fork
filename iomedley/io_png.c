@@ -381,7 +381,7 @@ int iom_WritePNG(char* filename, unsigned char* indata, struct iom_iheader* h, i
     /* FIX: handle?  ok2p etc */
     /* NOTE: need to change row_stride calculation below if other bit
        depths are supported! */
-    fprintf(stderr, "ERROR: iom_WritePNG() input must be 8/16 bit MSB in BYTE/SHORT\n");
+    fprintf(stderr, "ERROR: iom_WritePNG() input must be 8/16 bit MSB in BYTE/DV_INT16\n");
     fprintf(stderr, "eformat = %d\tformat = %d\n", h->eformat, h->format);
     return 0;
   }
@@ -395,7 +395,7 @@ int iom_WritePNG(char* filename, unsigned char* indata, struct iom_iheader* h, i
 	} else {
 		/* NOTE: need to change row_stride calculation below if other bit depths are supported! */
 		if (iom_is_ok2print_unsupp_errors()) {
-			fprintf(stderr, "ERROR: iom_WritePNG() input must be 8/16 bit MSB in BYTE/SHORT\n");
+			fprintf(stderr, "ERROR: iom_WritePNG() input must be 8/16 bit MSB in BYTE/DV_INT16\n");
 			fprintf(stderr, "eformat = %d\tformat = %d\n", h->eformat, h->format);
 		}
 		return 0;

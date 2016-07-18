@@ -1555,7 +1555,7 @@ Var *ff_GSE_VIS_upshift(vfuncptr func, Var * arg)
 	}
 
 	if (V_FORMAT(obj) != BYTE) {
-		parse_error("This function upshifts BYTE values to SHORT values\n"
+		parse_error("This function upshifts BYTE values to DV_INT16 values\n"
 		            "based on the MSSS Square-Root Encoding Table. Please only\n"
 		            "submit BYTE values");
 		return NULL;
@@ -1578,7 +1578,7 @@ Var *ff_GSE_VIS_upshift(vfuncptr func, Var * arg)
 			}
 		}
 	}
-	return newVal(BSQ,x,y,z,SHORT,data);
+	return newVal(BSQ,x,y,z,DV_INT16,data);
 }
 
 unsigned char find_Value(unsigned short v)
@@ -1621,10 +1621,10 @@ Var *ff_GSE_VIS_downshift(vfuncptr func, Var * arg)
       return(NULL);
    }
 
-   if (V_FORMAT(obj)!=SHORT) {
-      parse_error("This function downshifts SHORT values to BYTE values\n"
+   if (V_FORMAT(obj)!=DV_INT16) {
+      parse_error("This function downshifts DV_INT16 values to BYTE values\n"
                   "based on the MSSS Square-Root Encoding Table. Please only\n"
-                  "submit SHORT values");
+                  "submit DV_INT16 values");
 
       return(NULL);
    }

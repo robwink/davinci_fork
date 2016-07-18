@@ -165,7 +165,7 @@ ff_unrice(vfuncptr func, Var * arg)
 			start += l;
 			count++;
 		}
-		format = (nbytes == 1 ? BYTE : (nbytes == 2 ? SHORT : INT));
+		format = (nbytes == 1 ? BYTE : (nbytes == 2 ? DV_INT16 : INT));
 		return(newVal(BSQ, x, y, z, format, out));
 	} else {
 		parse_error("Data without header not supported yet.");

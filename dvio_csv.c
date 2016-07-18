@@ -33,6 +33,7 @@ typedef unsigned char uchar;
 //#define FF_LOADCSV_DEBUG 1
 
 /** datatype used in coldef*/
+// TODO(rswinkle) why separate macros?  why not just the stardard ones in parser.h?
 typedef enum {
     TBYTE,
     TSHORT,
@@ -148,7 +149,7 @@ davinci_type(
 
     switch(c) {
         case TBYTE:     dav_type = BYTE;        break;
-        case TSHORT:    dav_type = SHORT;       break;
+        case TSHORT:    dav_type = DV_INT16;       break;
         case TINT:      dav_type = INT;         break;
         case TFLOAT:    dav_type = FLOAT;       break;
         case TDOUBLE:   dav_type = DOUBLE;       break;
@@ -1427,7 +1428,7 @@ dv_WriteCSV(Var* the_data, char* filename, char* field_delim, int header, int fo
 					switch(V_FORMAT(data[i]))
 					{
 						case BYTE:		fprintf(file, "%u", ((unsigned char*)V_DATA(data[i]))[row*columns+j] );	break;
-						case SHORT:		fprintf(file, "%d", ((short*)V_DATA(data[i]))[row*columns+j] );			break;
+						case DV_INT16:		fprintf(file, "%d", ((short*)V_DATA(data[i]))[row*columns+j] );			break;
 						case INT:		fprintf(file, "%d", ((int*)V_DATA(data[i]))[row*columns+j] );			break;
 						case FLOAT:		fprintf(file, "%.4f", ((float*)V_DATA(data[i]))[row*columns+j] );		break;
 					  //case FLOAT:		fprintf(file, "%G", ((float*)V_DATA(data[i]))[row*columns+j] );			break;

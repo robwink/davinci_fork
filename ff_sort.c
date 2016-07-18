@@ -318,7 +318,7 @@ Var *ff_sort(vfuncptr func, Var * arg)
   
     switch (format) {
     case BYTE:		cmp = cmp_byte;		break;
-    case SHORT:		cmp = cmp_short;	break;
+    case DV_INT16:		cmp = cmp_short;	break;
     case INT:		cmp = cmp_int;		break;
     case FLOAT:		cmp = cmp_float;	break;
     case DOUBLE:	cmp = cmp_double;	break;
@@ -695,7 +695,7 @@ Var *ff_sort_old(vfuncptr func, Var * arg)
   
   switch (format) {
   case BYTE:		cmp = cmp_byte;		break;
-  case SHORT:		cmp = cmp_short;	break;
+  case DV_INT16:		cmp = cmp_short;	break;
   case INT:		cmp = cmp_int;		break;
   case FLOAT:		cmp = cmp_float;	break;
   case DOUBLE:	        cmp = cmp_double;	break;

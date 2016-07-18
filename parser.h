@@ -29,6 +29,7 @@
 #include <signal.h>
 
 
+//pulls in stdint.h
 #include "system.h"
 #include "darray.h"
 
@@ -232,7 +233,7 @@ enum {
  **/
 
 #define BYTE        1
-#define SHORT       2
+#define DV_INT16    2
 #define INT         3
 #define FLOAT       4
 #define VAX_FLOAT   5

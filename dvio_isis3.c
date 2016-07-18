@@ -2014,7 +2014,7 @@ Var *readCube(FILE *fp)
 		cubeElement = BYTE;
 		break;
 	case 2:
-		cubeElement = SHORT;
+		cubeElement = DV_INT16;
 		break;
 	case 4:
 		cubeElement = FLOAT;

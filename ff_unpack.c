@@ -162,7 +162,7 @@ ff_unpack(vfuncptr func, Var* arg)
 		return NULL;
 
 
-	/* Converting types to appropriate davinci types (constants ie SHORT, BYTE etc.) */
+	/* Converting types to appropriate davinci types (constants ie DV_INT16, BYTE etc.) */
 	if( !convert_types(reg_data, num_items, rows) ) {
 		free(reg_data);
 		return NULL;
@@ -196,7 +196,7 @@ ff_unpack(vfuncptr func, Var* arg)
 
 
 /* Convert my type constants to appropriate davinci type constants
- * e.g. SIGNED_LSB_INT && numbytes == 2-> SHORT
+ * e.g. SIGNED_LSB_INT && numbytes == 2-> DV_INT16
  */
 static int convert_types(data* thedata, int num_items, int rows)
 {
@@ -208,7 +208,7 @@ static int convert_types(data* thedata, int num_items, int rows)
 			case SIGNED_LSB_INT:
 			case SIGNED_MSB_INT:
 				if( thedata[i].numbytes == 2 )
-					thedata[i].type = SHORT;
+					thedata[i].type = DV_INT16;
 				else
 					thedata[i].type = INT;
 				break;
@@ -1498,7 +1498,7 @@ parse_struct(Var* toPack, Var* column_names, int* numData, int* greatestNumRows)
 			reg_data[i].input->columns = V_SIZE(element)[0]; // x value = columns
 			reg_data[i].array = V_DATA(element);
 			reg_data[i].strarray = NULL;
-			reg_data[i].type = V_FORMAT(element); // SHORT, INT, BYTE, FLOAT, DOUBLE
+			reg_data[i].type = V_FORMAT(element); // DV_INT16, INT, BYTE, FLOAT, DOUBLE
 			break;
 
 		default:
@@ -1662,7 +1662,7 @@ convert_to_ext_fmt(char *from, int ffmt, char *to, int tfmt, int tolen)
 	// convert from type to large internal numeric types
 	switch(ffmt){
 	case BYTE:      ui = *(unsigned char *)from; si = (int         )ui; d  = (double)ui; break;
-	case SHORT:     si = *(short         *)from; ui = (unsigned int)si; d  = (double)si; break;
+	case DV_INT16:     si = *(short         *)from; ui = (unsigned int)si; d  = (double)si; break;
 	case INT:       si = *(int           *)from; ui = (unsigned int)si; d  = (double)si; break;
 	case FLOAT:     d  = *(float         *)from; ui = (unsigned int)d;  si = (int   )d;  break;
 	case DOUBLE:    d  = *(double        *)from; ui = (unsigned int)d;  si = (int   )d;  break;
@@ -1680,7 +1680,7 @@ convert_to_ext_fmt(char *from, int ffmt, char *to, int tfmt, int tolen)
 	if (tfmt == STRING){
 		switch(ffmt){
 		case BYTE:      sprintf(str,"%u",ui); break;
-		case SHORT:
+		case DV_INT16:
 		case INT:       sprintf(str,"%d",si); break;
 		case FLOAT:
 		case DOUBLE:    sprintf(str,"%g",d); break;

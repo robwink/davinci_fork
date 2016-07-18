@@ -30,9 +30,9 @@
 int iom_orders[3][3] = {{0, 1, 2}, {0, 2, 1}, {1, 2, 0}};
 
 const char* iom_EFORMAT2STR[] = {
-    "(invalid)",      "LSB BYTE",  "LSB SHORT",       "(invalid)", "LSB INT",         "(invalid)",
+    "(invalid)",      "LSB BYTE",  "LSB DV_INT16",       "(invalid)", "LSB INT",         "(invalid)",
     "(invalid)",      "(invalid)", "(invalid)",       "(invalid)", "(invalid)",       "MSB BYTE",
-    "MSB SHORT",      "(invalid)", "MSB INT",         "(invalid)", "(invalid)",       "(invalid)",
+    "MSB DV_INT16",      "(invalid)", "MSB INT",         "(invalid)", "(invalid)",       "(invalid)",
     "(invalid)",      "(invalid)", "(invalid)",       "(invalid)", "(invalid)",       "(invalid)",
     "MSB IEEE FLOAT", "(invalid)", "(invalid)",       "(invalid)", "MSB IEEE DOUBLE", "(invalid)",
     "(invalid)",      "(invalid)", "(invalid)",       "(invalid)", "LSB IEEE FLOAT",  "(invalid)",

@@ -606,7 +606,7 @@ davinci_type(
     case TINT:
         switch(csize){
         case 1: dav_type = BYTE; break;
-        case 2: dav_type = SHORT; break;
+        case 2: dav_type = DV_INT16; break;
         default: dav_type = INT; break;
         }
         break;
@@ -941,7 +941,7 @@ vpass2(
                     case BYTE:
                         byte_data[i][idx] = atoi(vals[t->sno]); break;
                
-                    case SHORT:
+                    case DV_INT16:
                         short_data[i][idx] = atoi(vals[t->sno]); break;
                
                     default:

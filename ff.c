@@ -290,7 +290,7 @@ ff_binary_op(const char *name,               // Function name, for errors
       case BYTE:
         cdata[i] = saturate_byte(v3);
         break;
-      case SHORT:
+      case DV_INT16:
         sdata[i] = saturate_short(v3);
         break;
       case INT:
@@ -460,7 +460,7 @@ ff_conv(vfuncptr func, Var * arg)
         }
         break;
       }
-    case SHORT:
+    case DV_INT16:
       {
         int d;
         short *idata = (short *) data;
@@ -676,7 +676,7 @@ ff_create(vfuncptr func, Var * arg)
 
   if (format_str != NULL) {
     if (!strcasecmp(format_str, "byte")) format = BYTE;
-    else if (!strcasecmp(format_str, "short")) format = SHORT;
+    else if (!strcasecmp(format_str, "short")) format = DV_INT16;
     else if (!strcasecmp(format_str, "int")) format = INT;
     else if (!strcasecmp(format_str, "float")) format = FLOAT;
     else if (!strcasecmp(format_str, "double")) format = DOUBLE;
@@ -718,7 +718,7 @@ ff_create(vfuncptr func, Var * arg)
         v = start;
         switch (format) {
           case BYTE: cdata[0] = saturate_byte(v); break;
-          case SHORT: sdata[0] = saturate_short(v); break;
+          case DV_INT16: sdata[0] = saturate_short(v); break;
           case INT: idata[0] = saturate_int(v); break;
           case FLOAT: fdata[0] = saturate_float(v); break;
           case DOUBLE: ddata[0] = v; break;
@@ -738,7 +738,7 @@ ff_create(vfuncptr func, Var * arg)
               case BYTE:
                 cdata[c] = saturate_byte(v);
                 break;
-              case SHORT:
+              case DV_INT16:
                 sdata[c] = saturate_short(v);
                 break;
               case INT:
@@ -1834,7 +1834,7 @@ compare_vars(Var *a, Var *b)
       for (i = 0 ; i < V_DSIZE(a) ; i++) {
         switch(format) {
           case BYTE:
-          case SHORT:
+          case DV_INT16:
           case INT:
             if (extract_int(a,i) != extract_int(b,rpos(i,a,b)))
               return(0);
@@ -2266,7 +2266,7 @@ ff_contains(vfuncptr func, Var * arg)
         }
       }
       break;
-    case SHORT:
+    case DV_INT16:
       vi = extract_int(value, 0);
       for (i = 0 ; i < dsize ; i++) {
         if (((short *)V_DATA(obj))[i] == vi) {

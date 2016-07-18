@@ -100,7 +100,7 @@ int iom_GetAVIRISHeader(FILE* fp, char* fname, struct iom_iheader* h)
 	}
 
 	/**
-	** Right now, the only files we've seen indicate SHORT=2.
+	** Right now, the only files we've seen indicate DV_INT16=2.
 	** That matches davinci, so go with it.
 	**/
 	if (format != 2 /* iom_SHORT */) {
@@ -122,7 +122,7 @@ int iom_GetAVIRISHeader(FILE* fp, char* fname, struct iom_iheader* h)
 	h->dptr       = label;
 	h->byte_order = 4321; /* can this be reliably determined? */
 	h->eformat    = iom_MSB_INT_2;
-	h->format     = format; /* SHORT */
+	h->format     = format; /* DV_INT16 */
 	h->org        = org;
 	h->gain       = 1.0;
 	h->offset     = 0.0;

@@ -660,7 +660,7 @@ static Var *scale_doit(Var* obj, int x, int y, int z, int newcols, int newrows)
 					((u_char*)data)[k1]
 					    = (u_char)GetPixel(obj,x,y,orgX,orgY,k);
 					break;
-				case SHORT:
+				case DV_INT16:
 					((short*)data)[k1]
 					    = (short)GetPixel(obj,orgX,x,y,orgY,k);
 					break;
@@ -711,7 +711,7 @@ static int fill_object_with_pad_color(int nx, int ny, int z,
 				case BYTE:
 					((u_char*)data)[k1] = color;
 					break;
-				case SHORT:
+				case DV_INT16:
 					((short*)data)[k1] = color;
 					break;
 				case INT:
@@ -754,7 +754,7 @@ static int map_image(int x, int y, int z, int left, int top,
 				case BYTE:
 					((u_char*)data)[k1] = (u_char)extract_int(obj, k2);
 					break;
-				case SHORT:
+				case DV_INT16:
 					((short*)data)[k1] = (short)extract_int(obj,k2);
 					break;
 				case INT:
@@ -864,7 +864,7 @@ static void fix_stripe(void* data, Var* obj,
 			   extract_int(obj,k3)
 			                  ) / 2;
 			break;
-		case SHORT:
+		case DV_INT16:
 			((short*)data)[k1] = (
 			   extract_int(obj,k2) +
 			   extract_int(obj,k3)
@@ -898,7 +898,7 @@ static void fix_stripe(void* data, Var* obj,
 		case BYTE:
 			((u_char*)data)[k1] = extract_int(obj,k1);
 			break;
-		case SHORT:
+		case DV_INT16:
 			((short*)data)[k1] = extract_int(obj,k1);
 			break;
 		case INT:

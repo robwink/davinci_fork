@@ -376,7 +376,7 @@ ff_window(vfuncptr func, Var * arg)
 			hf = histogram_max;
 		}
 		s_out = calloc((size_t)x*(size_t)y, sizeof(short));
-		rval = newVal(BSQ, x, y, 1, SHORT, s_out);
+		rval = newVal(BSQ, x, y, 1, DV_INT16, s_out);
 		for (i = 0 ; i < x ; i+=1) {
 			load_window(w, obj, i, 0, ignore);
 			h = load_histogram(h, w, ignore);

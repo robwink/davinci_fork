@@ -278,7 +278,7 @@ Read_FITS_Image(fitsfile *fptr) {
 		break;
 
 	case SHORT_IMG:
-		format = SHORT;
+		format = DV_INT16;
 		datatype = TSHORT;
 		break;
 
@@ -566,7 +566,7 @@ int fits_tbl_type_for_column_var(Var *coldata) {
 		switch (V_FORMAT(coldata)) {
 		case BYTE:
 			return TBYTE;
-		case SHORT:
+		case DV_INT16:
 			return TSHORT;
 		case INT:
 			return TINT;
@@ -733,7 +733,7 @@ Read_FITS_Table(fitsfile *fptr) {
 
 		case TSHORT:
 			datatype = TSHORT;
-			fmt = SHORT;
+			fmt = DV_INT16;
 			x = repeat;
 			y = nrows;
 			z = 1;
@@ -1064,7 +1064,7 @@ int VarType2FitsType(Var *obj, int *bitpix, int *datatype) {
 		*datatype = TBYTE;
 		break;
 
-	case SHORT:
+	case DV_INT16:
 		*bitpix = SHORT_IMG;
 		*datatype = TSHORT;
 		break;

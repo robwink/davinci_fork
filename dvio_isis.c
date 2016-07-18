@@ -2611,7 +2611,7 @@ iformat_to_eformat(Var *obj)
 #ifdef WORDS_BIGENDIAN
   switch (V_FORMAT(obj)) {
     case BYTE: sprintf(buf,"MSB_UNSIGNED_INTEGER"); break;
-    case SHORT: sprintf(buf,"MSB_INTEGER"); break;
+    case DV_INT16: sprintf(buf,"MSB_INTEGER"); break;
     case INT: sprintf(buf,"MSB_INTEGER"); break;
     case FLOAT: sprintf(buf,"IEEE_REAL"); break;
     case DOUBLE: sprintf(buf,"IEEE_REAL"); break;
@@ -2619,7 +2619,7 @@ iformat_to_eformat(Var *obj)
 #else /* little-endian */
   switch (V_FORMAT(obj)) {
     case BYTE: sprintf(buf,"PC_UNSIGNED_INTEGER"); break;
-    case SHORT: sprintf(buf,"PC_INTEGER"); break;
+    case DV_INT16: sprintf(buf,"PC_INTEGER"); break;
     case INT: sprintf(buf,"PC_INTEGER"); break;
     case FLOAT: sprintf(buf,"PC_REAL"); break;
     case DOUBLE: sprintf(buf,"PC_REAL"); break;
@@ -2635,7 +2635,7 @@ get_type_string(int type)
 {
   switch(type){
     case BYTE:   return "BYTE";
-    case SHORT:  return "SHORT";
+    case DV_INT16:  return "DV_INT16";
     case INT:    return "INT";
     case FLOAT:  return "FLOAT";
     case DOUBLE: return "DOUBLE";
@@ -2682,17 +2682,17 @@ convert_data(int from_type, void *from_data, int to_type, void *to_data, int nel
       case BYTE:
         switch(to_type){
           case BYTE:   to_byte_data[i]   = from_byte_data[i];   break;
-          case SHORT:  to_short_data[i]  = from_byte_data[i];  break;
+          case DV_INT16:  to_short_data[i]  = from_byte_data[i];  break;
           case INT:    to_int_data[i]    = from_byte_data[i];    break;
           case FLOAT:  to_float_data[i]  = saturate_float(from_byte_data[i]);  break;
           case DOUBLE: to_double_data[i] = saturate_double(from_byte_data[i]); break;
           default: return 0;
         }
         break;
-      case SHORT:
+      case DV_INT16:
         switch(to_type){
           case BYTE:   to_byte_data[i]   = saturate_byte(from_short_data[i]);   break;
-          case SHORT:  to_short_data[i]  = from_short_data[i];  break;
+          case DV_INT16:  to_short_data[i]  = from_short_data[i];  break;
           case INT:    to_int_data[i]    = from_short_data[i];    break;
           case FLOAT:  to_float_data[i]  = from_short_data[i];  break;
           case DOUBLE: to_double_data[i] = from_short_data[i]; break;
@@ -2702,7 +2702,7 @@ convert_data(int from_type, void *from_data, int to_type, void *to_data, int nel
       case INT:
         switch(to_type){
           case BYTE:   to_byte_data[i]   = saturate_byte(from_int_data[i]);   break;
-          case SHORT:  to_short_data[i]  = saturate_short(from_int_data[i]);   break;
+          case DV_INT16:  to_short_data[i]  = saturate_short(from_int_data[i]);   break;
           case INT:    to_int_data[i]    = from_int_data[i];    break;
           case FLOAT:  to_float_data[i]  = saturate_float(from_int_data[i]);  break;
           case DOUBLE: to_double_data[i] = saturate_double(from_int_data[i]); break;
@@ -2712,7 +2712,7 @@ convert_data(int from_type, void *from_data, int to_type, void *to_data, int nel
       case FLOAT:
         switch(to_type){
           case BYTE:   to_byte_data[i]   = saturate_byte(from_float_data[i]);   break;
-          case SHORT:  to_short_data[i]  = saturate_short(from_float_data[i]);  break;
+          case DV_INT16:  to_short_data[i]  = saturate_short(from_float_data[i]);  break;
           case INT:    to_int_data[i]    = saturate_int(from_float_data[i]);    break;
           case FLOAT:  to_float_data[i]  = saturate_float(from_float_data[i]);  break;
           case DOUBLE: to_double_data[i] = saturate_double(from_float_data[i]); break;
@@ -2722,7 +2722,7 @@ convert_data(int from_type, void *from_data, int to_type, void *to_data, int nel
       case DOUBLE:
         switch(to_type){
           case BYTE:   to_byte_data[i]   = saturate_byte(from_double_data[i]);   break;
-          case SHORT:  to_short_data[i]  = saturate_short(from_double_data[i]);  break;
+          case DV_INT16:  to_short_data[i]  = saturate_short(from_double_data[i]);  break;
           case INT:    to_int_data[i]    = saturate_int(from_double_data[i]);    break;
           case FLOAT:  to_float_data[i]  = saturate_float(from_double_data[i]);  break;
           case DOUBLE: to_double_data[i] = saturate_double(from_double_data[i]); break;
@@ -3410,7 +3410,7 @@ extract_data_band_as_bsq(
       switch(V_FORMAT(v)){
         case BYTE:
           byte_buff[idx++]   = (unsigned char)extract_int(v, pos); break;
-        case SHORT:
+        case DV_INT16:
           short_buff[idx++]  = (short)extract_int(v, pos); break;
         case INT:
           int_buff[idx++]    = extract_int(v, pos); break;
@@ -4246,7 +4246,7 @@ propagate_keywords_0(
       case ID_VAL:    /* numeric array or a single value */
         switch(V_FORMAT(v)){
           case BYTE:
-          case SHORT:
+          case DV_INT16:
           case INT:
             propagate_int_keyword(fid, object, group, name, v);
             break;
@@ -4574,7 +4574,7 @@ propagate_history_group_keywords(
       case ID_VAL:
         switch(V_FORMAT(v)){
           case BYTE:
-          case SHORT:
+          case DV_INT16:
           case INT:
             propagate_history_int_keyword(indent, name, v); break;
           case FLOAT:
