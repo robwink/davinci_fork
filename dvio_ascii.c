@@ -56,7 +56,7 @@ WriteAscii(Var *s, char *filename, int force)
 				switch (format) {
 				  case BYTE:
 				  case DV_INT16:
-				  case INT:
+				  case DV_INT32:
 					ival = extract_int(s, pos);
 					fprintf(fp, "%d", ival);
 					break;

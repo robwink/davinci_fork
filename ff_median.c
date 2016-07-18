@@ -18,7 +18,7 @@ ff_local_maximum(vfuncptr func, Var * arg)
 
     Alist alist[9];
     alist[0] = make_alist( "object",    ID_VAL, NULL,   &obj);
-    alist[1] = make_alist( "size",      INT,    NULL,   &size);
+    alist[1] = make_alist( "size",      DV_INT32,    NULL,   &size);
     alist[2] = make_alist( "ignore",    FLOAT,  NULL,    &ignore);
     alist[3] = make_alist( "threshold",    FLOAT,  NULL,    &threshold);
     alist[4].name = NULL;

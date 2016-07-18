@@ -191,7 +191,7 @@ dv_LoadENVIHeader(FILE *fp, char *filename, int rec, char *element, Var **var)
 				V_TYPE(v) = ID_VAL;
 				V_DSIZE(v) = V_SIZE(v)[0] = V_SIZE(v)[1] = V_SIZE(v)[2] = 1;
 				V_ORG(v) = BSQ;
-				V_FORMAT(v) = INT;
+				V_FORMAT(v) = DV_INT32;
 				V_DATA(v) = calloc(1, sizeof(int));
 				V_INT(v) = atoi(q);
 		} else {

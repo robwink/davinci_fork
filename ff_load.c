@@ -47,17 +47,17 @@ ff_load(vfuncptr func, Var * arg)
 	iom_init_iheader(&h);
 
 	alist[0] = make_alist( "filename",  ID_UNK,  NULL,     &fvar);
-	alist[1] = make_alist( "record",    INT,    	NULL,     &record);
-	alist[2] = make_alist( "xlow",      INT,    	NULL,     &h.s_lo[0]);
-	alist[3] = make_alist( "xhigh",     INT,    	NULL,     &h.s_hi[0]);
-	alist[4] = make_alist( "xskip",     INT,    	NULL,     &h.s_skip[0]);
-	alist[5] = make_alist( "ylow",      INT,    	NULL,     &h.s_lo[1]);
-	alist[6] = make_alist( "yhigh",     INT,    	NULL,     &h.s_hi[1]);
-	alist[7] = make_alist( "yskip",     INT,    	NULL,     &h.s_skip[1]);
-	alist[8] = make_alist( "zlow",      INT,    	NULL,     &h.s_lo[2]);
-	alist[9] = make_alist( "zhigh",     INT,    	NULL,     &h.s_hi[2]);
-	alist[10] = make_alist( "zskip",    INT,    	NULL,     &h.s_skip[2]);
-	alist[11] = make_alist( "hdf_old",  INT,    	NULL,     &hdf_old);
+	alist[1] = make_alist( "record",    DV_INT32,    	NULL,     &record);
+	alist[2] = make_alist( "xlow",      DV_INT32,    	NULL,     &h.s_lo[0]);
+	alist[3] = make_alist( "xhigh",     DV_INT32,    	NULL,     &h.s_hi[0]);
+	alist[4] = make_alist( "xskip",     DV_INT32,    	NULL,     &h.s_skip[0]);
+	alist[5] = make_alist( "ylow",      DV_INT32,    	NULL,     &h.s_lo[1]);
+	alist[6] = make_alist( "yhigh",     DV_INT32,    	NULL,     &h.s_hi[1]);
+	alist[7] = make_alist( "yskip",     DV_INT32,    	NULL,     &h.s_skip[1]);
+	alist[8] = make_alist( "zlow",      DV_INT32,    	NULL,     &h.s_lo[2]);
+	alist[9] = make_alist( "zhigh",     DV_INT32,    	NULL,     &h.s_hi[2]);
+	alist[10] = make_alist( "zskip",    DV_INT32,    	NULL,     &h.s_skip[2]);
+	alist[11] = make_alist( "hdf_old",  DV_INT32,    	NULL,     &hdf_old);
 	alist[12].name = NULL;
 
 

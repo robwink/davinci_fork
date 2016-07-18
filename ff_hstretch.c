@@ -65,9 +65,9 @@ ff_hstretch(vfuncptr func, Var * arg)
 /* these args a specific to gaussian */
     alist[5] = make_alist( "gmean",     FLOAT,     NULL,    &gmean);
     alist[6] = make_alist( "gsigma",    FLOAT,     NULL,    &gsigma);
-    alist[7] = make_alist( "dnmin",     INT,   NULL,    &dnmin);
-    alist[8] = make_alist( "dnmax",     INT,   NULL,    &dnmax);
-    alist[9] = make_alist( "debug",     INT,   NULL,    &debug);
+    alist[7] = make_alist( "dnmin",     DV_INT32,   NULL,    &dnmin);
+    alist[8] = make_alist( "dnmax",     DV_INT32,   NULL,    &dnmax);
+    alist[9] = make_alist( "debug",     DV_INT32,   NULL,    &debug);
     alist[10].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(NULL);

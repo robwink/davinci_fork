@@ -50,7 +50,7 @@ static int internalTypes[B5WT_ULONGLONG+1] = {
   0,
   BYTE,
   DV_INT16,
-  INT,
+  DV_INT32,
   FLOAT,
   DOUBLE,
   0,
@@ -60,7 +60,7 @@ static int internalTypes[B5WT_ULONGLONG+1] = {
   0,
   0,
   DV_INT16,
-  INT,
+  DV_INT32,
   0,
   0
 };

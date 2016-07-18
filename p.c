@@ -55,7 +55,7 @@ p_mkval(int type, char *str)
         V_TYPE(v) = ID_STRING;
         break;
     case ID_IVAL:
-        make_sym(v, INT, str);
+        make_sym(v, DV_INT32, str);
         V_TYPE(v) = ID_VAL;
         break;
     case ID_RVAL:
@@ -86,7 +86,7 @@ is_zero(Var * v)
         switch (V_FORMAT(v)) {
         case BYTE:
         case DV_INT16:
-        case INT:
+        case DV_INT32:
             return (extract_int(v, 0) == 0);
         case FLOAT:
         case DOUBLE:
@@ -98,7 +98,7 @@ is_zero(Var * v)
             switch (V_FORMAT(v)) {
             case BYTE:
             case DV_INT16:
-            case INT:
+            case DV_INT32:
                 if (extract_int(v, i) == 0)
                     return (1);
             case FLOAT:

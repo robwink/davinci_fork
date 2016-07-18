@@ -590,10 +590,10 @@ Var *ff_GSE_VIS_Read(vfuncptr func, Var * arg)
 
 	Alist alist[6];
 	alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
-	alist[1] = make_alist("gse",      INT,       NULL, &gse);
-	alist[2] = make_alist("nocube",   INT,       NULL, &nocube);
-	alist[3] = make_alist("verbose",  INT,       NULL, &verb);
-	alist[4] = make_alist("rotate",   INT,       NULL, &rotate);
+	alist[1] = make_alist("gse",      DV_INT32,       NULL, &gse);
+	alist[2] = make_alist("nocube",   DV_INT32,       NULL, &nocube);
+	alist[3] = make_alist("verbose",  DV_INT32,       NULL, &verb);
+	alist[4] = make_alist("rotate",   DV_INT32,       NULL, &rotate);
 	alist[5].name = NULL;
 
 	if (!parse_args(func, arg, alist)) return NULL;
@@ -1106,13 +1106,13 @@ Var *ff_PACI_Read(vfuncptr func, Var * arg)
 	Alist alist[10];
 
 	alist[0] = make_alist("filename", ID_STRING, NULL, &filename);
-	alist[1] = make_alist("frame", INT, NULL, &Frame);
-	alist[2] = make_alist("band", INT, NULL, &Band);
-	alist[3] = make_alist("report", INT, NULL, &report);
-	alist[4] = make_alist("nosig", INT, NULL, &Data_Only);
-	alist[5] = make_alist("swap", INT, NULL, &swap_flag);
-	alist[6] = make_alist("spec", INT, NULL, &Spec_Swap);
-	alist[7] = make_alist("quiet", INT, NULL, &quiet);
+	alist[1] = make_alist("frame", DV_INT32, NULL, &Frame);
+	alist[2] = make_alist("band", DV_INT32, NULL, &Band);
+	alist[3] = make_alist("report", DV_INT32, NULL, &report);
+	alist[4] = make_alist("nosig", DV_INT32, NULL, &Data_Only);
+	alist[5] = make_alist("swap", DV_INT32, NULL, &swap_flag);
+	alist[6] = make_alist("spec", DV_INT32, NULL, &Spec_Swap);
+	alist[7] = make_alist("quiet", DV_INT32, NULL, &quiet);
 	alist[8] = make_alist("err", ID_VAL, NULL, &err);
 	alist[9].name = NULL;
 

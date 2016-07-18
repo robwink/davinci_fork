@@ -61,7 +61,7 @@ Var *ff_bindct(vfuncptr func, Var * arg)
   }
 
   out = newVal(V_ORG(obj), V_SIZE(obj)[0], V_SIZE(obj)[1], V_SIZE(obj)[2],
-               INT, odata);
+               DV_INT32, odata);
 
   return(out);
 }

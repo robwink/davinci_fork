@@ -127,7 +127,7 @@ thm_corners(vfuncptr func, Var * arg)
   }
 
   cns = do_corners(pic_a, nullval);
-  return(newVal(BSQ, 1, 8, 1, INT, cns));
+  return(newVal(BSQ, 1, 8, 1, DV_INT32, cns));
 }
 
 
@@ -192,9 +192,9 @@ thm_deplaid(vfuncptr func, Var * arg)
   alist[1] = make_alist("ignore",               FLOAT,          NULL,    &nullval);
   alist[2] = make_alist("tmask_max",            FLOAT,          NULL,    &tmask_max);
   alist[3] = make_alist("tmask_min",            FLOAT,          NULL,    &tmask_min);
-  alist[4] = make_alist("filt_len",             INT,            NULL,    &filt_len);
-  alist[5] = make_alist("b10",                  INT,            NULL,    &b10);
-  alist[6] = make_alist("dump",                 INT,            NULL,    &dump);
+  alist[4] = make_alist("filt_len",             DV_INT32,            NULL,    &filt_len);
+  alist[5] = make_alist("b10",                  DV_INT32,            NULL,    &b10);
+  alist[6] = make_alist("dump",                 DV_INT32,            NULL,    &dump);
   alist[7] = make_alist("null",                 FLOAT,          NULL,    &nullval); // can be removed when all legacy programs are dead
   alist[8] = make_alist("axis",                 ID_ENUM,        options, &ptr);
   alist[9].name = NULL;
@@ -625,9 +625,9 @@ thm_sawtooth(vfuncptr func, Var * arg)
   int x = 0, y = 0, z = 0;
 
   Alist alist[4];
-  alist[0] = make_alist("x",       INT,         NULL,	&x);
-  alist[1] = make_alist("y",       INT,         NULL,	&y);
-  alist[2] = make_alist("z",       INT,         NULL,   &z);
+  alist[0] = make_alist("x",       DV_INT32,         NULL,	&x);
+  alist[1] = make_alist("y",       DV_INT32,         NULL,	&y);
+  alist[2] = make_alist("z",       DV_INT32,         NULL,   &z);
   alist[3].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -724,7 +724,7 @@ thm_rectify(vfuncptr func, Var * arg)
   alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
   alist[1] = make_alist("ignore",               FLOAT,          NULL,   &nullo);
   alist[2] = make_alist("trust",                FLOAT,          NULL,   &trust);
-  alist[3] = make_alist("force",                INT,            NULL,   &force);
+  alist[3] = make_alist("force",                DV_INT32,            NULL,   &force);
   alist[4] = make_alist("null",                 FLOAT,          NULL,   &nullo); //can be removed when all legacy programs are dead
   alist[5].name = NULL;
 
@@ -950,7 +950,7 @@ thm_rectify(vfuncptr func, Var * arg)
   /* final output */
   out = new_struct(4);
   add_struct(out, "data", newVal(BSQ, width, u, z, FLOAT, pic));
-  add_struct(out, "leftedge", newVal(BSQ, 1, u, 1, INT, leftmost));
+  add_struct(out, "leftedge", newVal(BSQ, 1, u, 1, DV_INT32, leftmost));
   add_struct(out, "width", newInt(x));
   add_struct(out, "angle", newFloat(angle));
   return out;
@@ -1069,8 +1069,8 @@ thm_supersample(vfuncptr func, Var * arg)
 
   Alist alist[4];
   alist[0] = make_alist("data", 		ID_VAL,		NULL,	&data);
-  alist[1] = make_alist("type",                 INT,            NULL,   &type);
-  alist[2] = make_alist("factor",               INT,            NULL, &factor);
+  alist[1] = make_alist("type",                 DV_INT32,            NULL,   &type);
+  alist[2] = make_alist("factor",               DV_INT32,            NULL, &factor);
   alist[3].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -1469,8 +1469,8 @@ thm_themissivity(vfuncptr func, Var * arg)
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
   alist[2] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
   alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
-  alist[4] = make_alist("b1",            INT,            NULL,   &b1);
-  alist[5] = make_alist("b2",            INT,            NULL,   &b2);
+  alist[4] = make_alist("b1",            DV_INT32,            NULL,   &b1);
+  alist[5] = make_alist("b2",            DV_INT32,            NULL,   &b2);
   alist[6] = make_alist("max_emiss",     FLOAT,          NULL,   &maxem);
   alist[7].name = NULL;
 
@@ -1478,7 +1478,7 @@ thm_themissivity(vfuncptr func, Var * arg)
 
   if (rad == NULL) {
     parse_error("themis_emissivity() - THEMIS radiance to THEMIS emissivity converter\n");
-    parse_error("Syntax:  b = thm.themis_emissivity(rad=VAL[,bandlist=VAL][,ignore=FLOAT][,temp_rad_path=STRING][,b1=INT][,b2=INT][,max_emiss=FLOAT])");
+    parse_error("Syntax:  b = thm.themis_emissivity(rad=VAL[,bandlist=VAL][,ignore=FLOAT][,temp_rad_path=STRING][,b1=DV_INT32][,b2=DV_INT32][,max_emiss=FLOAT])");
     parse_error("example: b = thm.themis_emissivity(a)");
     parse_error("example: b = thm.themis_emissivity(a,1//2//3//4//5//6//7//8//9,0,b1=4,b2=8)");
     parse_error("example: b = thm.themis_emissivity(rad=a,bandlist=4//9//10,ignore=-2,temp_rad_path=\"/themis/calib/temp_rad_v3\")");
@@ -1779,11 +1779,11 @@ thm_white_noise_remove1(vfuncptr func, Var * arg)
 
   Alist alist[8];
   alist[0] = make_alist("rad", 		 ID_VAL,         NULL,   &rad);
-  alist[1] = make_alist("k_size",        INT,            NULL,   &k_size);
+  alist[1] = make_alist("k_size",        DV_INT32,            NULL,   &k_size);
   alist[2] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
   alist[3] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
-  alist[4] = make_alist("b1",            INT,            NULL,   &b1);
-  alist[5] = make_alist("b2",            INT,            NULL,   &b2);
+  alist[4] = make_alist("b1",            DV_INT32,            NULL,   &b1);
+  alist[5] = make_alist("b2",            DV_INT32,            NULL,   &b2);
   alist[6] = make_alist("null",          FLOAT,          NULL,   &nullval); //can be removed when all legacy programs are dead
   alist[7].name = NULL;
 
@@ -2034,7 +2034,7 @@ thm_cleandcs(vfuncptr func, Var * arg)
 
   Alist alist[3];
   alist[0] = make_alist("pic",      ID_VAL,     NULL,  &pic);
-  alist[1] = make_alist("opt",      INT,        NULL,  &opt);
+  alist[1] = make_alist("opt",      DV_INT32,        NULL,  &opt);
   alist[2].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -2108,8 +2108,8 @@ thm_white_noise_remove2(vfuncptr func, Var *arg)
 
   Alist alist[5];
   alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-  alist[1] = make_alist("filt",      INT,       NULL,  &filt);
-  alist[2] = make_alist("b10",       INT,       NULL,  &b10);
+  alist[1] = make_alist("filt",      DV_INT32,       NULL,  &filt);
+  alist[2] = make_alist("b10",       DV_INT32,       NULL,  &b10);
   alist[3] = make_alist("ignore",    FLOAT,     NULL,  &nullval);
   alist[4].name = NULL;
 
@@ -2489,9 +2489,9 @@ Var *thm_radcorr(vfuncptr func, Var * arg)
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
   alist[2] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
   alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
-  alist[4] = make_alist("b1",            INT,            NULL,   &b1);
-  alist[5] = make_alist("b2",            INT,            NULL,   &b2);
-  alist[6] = make_alist("space",         INT,            NULL,   &space);
+  alist[4] = make_alist("b1",            DV_INT32,            NULL,   &b1);
+  alist[5] = make_alist("b2",            DV_INT32,            NULL,   &b2);
+  alist[6] = make_alist("space",         DV_INT32,            NULL,   &space);
   alist[7].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -2646,7 +2646,7 @@ thm_column_fill(vfuncptr func, Var * arg)
 
   Alist alist[4];
   alist[0] = make_alist("column",		ID_VAL,		NULL,	&col_in);
-  alist[1] = make_alist("chunk_size",           INT,            NULL,   &csize);
+  alist[1] = make_alist("chunk_size",           DV_INT32,            NULL,   &csize);
   alist[2] = make_alist("ignore",               FLOAT,          NULL,   &ignore);
   alist[3].name = NULL;
 
@@ -3111,8 +3111,8 @@ thm_maxpos_v1(vfuncptr func, Var *arg)
 
   Alist alist[5];
   alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-  alist[1] = make_alist("ret",       INT,       NULL,  &opt);
-  alist[2] = make_alist("iter",      INT,       NULL,  &iter);
+  alist[1] = make_alist("ret",       DV_INT32,       NULL,  &opt);
+  alist[2] = make_alist("iter",      DV_INT32,       NULL,  &iter);
   alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
   alist[4].name = NULL;
 
@@ -3177,7 +3177,7 @@ thm_maxpos_v1(vfuncptr func, Var *arg)
 
   if(opt!=0) {
     out = new_struct(2);
-    add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
+    add_struct(out,"pos",newVal(BSQ, 3, iter, 1, DV_INT32, pos));
     add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
     return out;
   }
@@ -3202,8 +3202,8 @@ thm_minpos_v1(vfuncptr func, Var *arg)
 
   Alist alist[5];
   alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-  alist[1] = make_alist("ret",       INT,       NULL,  &opt);
-  alist[2] = make_alist("iter",      INT,       NULL,  &iter);
+  alist[1] = make_alist("ret",       DV_INT32,       NULL,  &opt);
+  alist[2] = make_alist("iter",      DV_INT32,       NULL,  &iter);
   alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
   alist[4].name = NULL;
 
@@ -3272,7 +3272,7 @@ thm_minpos_v1(vfuncptr func, Var *arg)
 
   if(opt!=0) {
     out = new_struct(2);
-    add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
+    add_struct(out,"pos",newVal(BSQ, 3, iter, 1, DV_INT32, pos));
     add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
     return out;
   }
@@ -3290,8 +3290,8 @@ Var *thm_destripe(vfuncptr func, Var *arg){
 
   Alist alist[5];
   alist[0] = make_alist("data",         ID_VAL,   NULL,  &data);
-  alist[1] = make_alist("ignore",       INT,      NULL,  &ignore);
-  alist[2] = make_alist("filt_size",    INT,      NULL,  &filt_size);
+  alist[1] = make_alist("ignore",       DV_INT32,      NULL,  &ignore);
+  alist[2] = make_alist("filt_size",    DV_INT32,      NULL,  &filt_size);
   alist[3] = make_alist("t_level",      ID_VAL,   NULL,  &t_level);
   alist[4].name = NULL;
 
@@ -3710,7 +3710,7 @@ Var *thm_marsbin(vfuncptr func, Var *arg){
     free(obs_plane);
 
     out = new_struct(2);
-    add_struct(out, "nobs", newVal(BSQ,lon_range,lat_range,1,INT,inv_plane));
+    add_struct(out, "nobs", newVal(BSQ,lon_range,lat_range,1,DV_INT32,inv_plane));
     add_struct(out, "cube", newVal(BSQ,lon_range,lat_range,xdim-2,DOUBLE,calc_plane));
 
     return(out);
@@ -3746,7 +3746,7 @@ thm_rampold(vfuncptr func, Var * arg)
   Alist alist[5];
   alist[0] = make_alist("pic1",   ID_VAL, NULL, &pic_1);
   alist[1] = make_alist("pic2",   ID_VAL, NULL, &pic_2);
-  alist[2] = make_alist("stop",   INT,    NULL, &pare);
+  alist[2] = make_alist("stop",   DV_INT32,    NULL, &pare);
   alist[3] = make_alist("ignore", FLOAT,  NULL, &nullv);
   alist[4].name = NULL;
 
@@ -3921,7 +3921,7 @@ thm_y_shear(vfuncptr func, Var * arg)
   alist[0] = make_alist("picture",		ID_VAL,		NULL,	&pic_v);
   alist[1] = make_alist("angle",		FLOAT,		NULL,	&angle);
   alist[2] = make_alist("ignore",               FLOAT,          NULL,   &nullv);
-  alist[3] = make_alist("trim",		        INT,		NULL,    &trim);
+  alist[3] = make_alist("trim",		        DV_INT32,		NULL,    &trim);
   alist[4] = make_alist("null",                 FLOAT,          NULL,   &nullv); // can be removed once all legacy programs are dead
   alist[5].name = NULL;
 

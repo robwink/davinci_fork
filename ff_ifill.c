@@ -32,9 +32,9 @@ ff_jfill(vfuncptr func, Var * arg)
   Alist alist[6];
   alist[0] = make_alist( "object",    ID_VAL, NULL, &obj);
   alist[1] = make_alist( "fill",      FLOAT,  NULL, &fill);
-  alist[2] = make_alist( "radius",    INT,    NULL, &radius);
-  alist[3] = make_alist( "wrap",      INT,    NULL, &wrap);
-  alist[4] = make_alist( "neighbors",      INT,    NULL, &neighbors);
+  alist[2] = make_alist( "radius",    DV_INT32,    NULL, &radius);
+  alist[3] = make_alist( "wrap",      DV_INT32,    NULL, &wrap);
+  alist[4] = make_alist( "neighbors",      DV_INT32,    NULL, &neighbors);
   alist[5].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -140,8 +140,8 @@ ff_ifill(vfuncptr func, Var * arg)
   Alist alist[6];
   alist[0] = make_alist( "object",    ID_VAL, NULL, &obj);
   alist[1] = make_alist( "fill",      FLOAT,  NULL, &fill);
-  alist[2] = make_alist( "radius",    INT,    NULL, &radius);
-  alist[3] = make_alist( "wrap",      INT,    NULL, &wrap);
+  alist[2] = make_alist( "radius",    DV_INT32,    NULL, &radius);
+  alist[3] = make_alist( "wrap",      DV_INT32,    NULL, &wrap);
   alist[4] = make_alist( "pass",      ID_STRING,    NULL, &pass);
   alist[5].name = NULL;
   

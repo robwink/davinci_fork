@@ -139,7 +139,7 @@ dump_var(Var *v, int indent, int limit)
 						switch (V_FORMAT(v)) {
 						case BYTE: printf("%d\t", ((u_char *)V_DATA(v))[c]); break;
 						case DV_INT16: printf("%d\t", ((short *)V_DATA(v))[c]); break;
-						case INT:  printf("%d\t", ((int *)V_DATA(v))[c]); break;
+						case DV_INT32:  printf("%d\t", ((int *)V_DATA(v))[c]); break;
 						case FLOAT: printf("%#.*g\t", SCALE, ((float *)V_DATA(v))[c]); break;
 						case DOUBLE: printf("%#.*g\t", SCALE, ((double *)V_DATA(v))[c]); break;
 						}
@@ -482,7 +482,7 @@ array_replace(Var *dst, Var *src, Range *r)
 						((short *)V_DATA(dst))[d] =
 							saturate_short(extract_int(src, s));
 						break;
-					case INT:
+					case DV_INT32:
 						((int *)V_DATA(dst))[d] =
 							saturate_int(extract_int(src, s));
 						break;
@@ -559,7 +559,7 @@ pp_mk_range(Var *r1, Var *r2)
 
 	if (r1) {
 		format = V_FORMAT(r1);
-		if (format != INT && format != DV_INT16 && format != BYTE) {
+		if (format != DV_INT32 && format != DV_INT16 && format != BYTE) {
 			parse_error("(r1) Invalid range value.");
 			return(NULL);
 		}
@@ -568,7 +568,7 @@ pp_mk_range(Var *r1, Var *r2)
 
 	if (r2) {
 		format = V_FORMAT(r2);
-		if (format != INT && format != DV_INT16 && format != BYTE) {
+		if (format != DV_INT32 && format != DV_INT16 && format != BYTE) {
 			parse_error("(r2) Invalid range value");
 			return(NULL);
 		}
@@ -608,7 +608,7 @@ pp_mk_rstep(Var *r1, Var *r2)
 
 	if (r2) {
 		format = V_FORMAT(r2);
-		if (format != INT && format != DV_INT16 && format != BYTE) {
+		if (format != DV_INT32 && format != DV_INT16 && format != BYTE) {
 			parse_error("(r2) Invalid range value");
 			return(NULL);
 		}
@@ -888,7 +888,7 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
 		** compare 2 string objects
 		*/
 		k = compare_strings(V_STRING(exp1), op, V_STRING(exp2));
-		s = newVal(BSQ,1,1,1,INT,calloc(1, sizeof(int)));
+		s = newVal(BSQ,1,1,1,DV_INT32,calloc(1, sizeof(int)));
 		V_INT(s) = k;
 		return(s);
 	} else if (V_TYPE(exp1) == ID_TEXT && V_TYPE(exp2) == ID_TEXT) {
@@ -906,7 +906,7 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
 									  op,
 									  V_TEXT(exp2).text[i]);
 		}
-		return(newVal(BSQ,1,rows,1,INT,data));
+		return(newVal(BSQ,1,rows,1,DV_INT32,data));
 	} else if ((V_TYPE(exp1) == ID_STRING && V_TYPE(exp2) == ID_TEXT) ||
 			   (V_TYPE(exp2) == ID_STRING && V_TYPE(exp1) == ID_TEXT)) {
 		/*
@@ -927,7 +927,7 @@ pp_math_strings(Var *exp1, int op, Var *exp2)
 			data[i] = compare_strings(V_TEXT(text).text[i], op, ptr);
 			if (V_TYPE(exp1) != ID_TEXT) data[i] = -data[i];
 		}
-		return(newVal(BSQ,1,rows,1,INT,data));
+		return(newVal(BSQ,1,rows,1,DV_INT32,data));
 	} else {
 		parse_error("unable to compare strings and non-strings");
 		return(NULL);
@@ -1154,7 +1154,7 @@ pp_set_where(Var *id, Var *where, Var *exp)
 				switch (format) {
 				case BYTE:      ((u_char *)V_DATA(id))[i] = ival; break;
 				case DV_INT16:     ((short *)V_DATA(id))[i] = ival; break;
-				case INT:       ((int *)V_DATA(id))[i] = ival; break;
+				case DV_INT32:       ((int *)V_DATA(id))[i] = ival; break;
 				case FLOAT:     ((float *)V_DATA(id))[i] = dval; break;
 				case DOUBLE:    ((double *)V_DATA(id))[i] = dval; break;
 				}
@@ -1175,7 +1175,7 @@ pp_set_where(Var *id, Var *where, Var *exp)
 				case DV_INT16:
 					((short *)V_DATA(id))[i] = extract_int(exp, k);
 					break;
-				case INT:
+				case DV_INT32:
 					((int *)V_DATA(id))[i] = extract_int(exp, k);
 					break;
 				case FLOAT:

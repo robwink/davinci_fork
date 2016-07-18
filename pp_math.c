@@ -213,7 +213,7 @@ pp_math(Var * a, int op, Var * b)
         switch (in_format) {
         case BYTE:
         case DV_INT16:
-        case INT:
+        case DV_INT32:
             DO_RELOP_LOOP(int, u_char, extract_int, (int));
             break;
         case FLOAT:
@@ -224,7 +224,7 @@ pp_math(Var * a, int op, Var * b)
             break;
         }
     } else if (op == ID_LSHIFT || op == ID_RSHIFT) {
-		if (in_format <= INT) {
+		if (in_format <= DV_INT32) {
 			switch (V_FORMAT(a)) {
 			case BYTE:
 				DO_SHIFT_LOOP(int, u_char, extract_int, saturate_byte);
@@ -232,7 +232,7 @@ pp_math(Var * a, int op, Var * b)
 			case DV_INT16:
 				DO_SHIFT_LOOP(int, short, extract_int, saturate_short);
 				break;
-			case INT:
+			case DV_INT32:
 				DO_SHIFT_LOOP(int, int, extract_int, (int));
 				break;
 			}
@@ -252,7 +252,7 @@ pp_math(Var * a, int op, Var * b)
         case DV_INT16:
             DO_MATH_LOOP(int, short, extract_int, saturate_short);
             break;
-        case INT:
+        case DV_INT32:
             DO_MATH_LOOP(int, int, extract_int, (int));
             break;
         case FLOAT:
@@ -370,7 +370,7 @@ pp_compare(Var * a, Var * b)
 	switch (in_format) {
 		case BYTE:
 		case DV_INT16:
-		case INT:
+		case DV_INT32:
 			DO_CMP_LOOP(int, extract_int);
 			break;
 		case FLOAT:
@@ -463,7 +463,7 @@ extract_int(const Var * v, const size_t i)
         return ((int) ((u_char *) V_DATA(v))[i]);
     case DV_INT16:
         return ((int) ((short *) V_DATA(v))[i]);
-    case INT:
+    case DV_INT32:
         return ((int) ((int *) V_DATA(v))[i]);
     case FLOAT:
         return ((int) ((float *) V_DATA(v))[i]);
@@ -480,7 +480,7 @@ extract_float(Var * v, size_t i)
         return ((float) ((u_char *) V_DATA(v))[i]);
     case DV_INT16:
         return ((float) ((short *) V_DATA(v))[i]);
-    case INT:
+    case DV_INT32:
         return ((float) ((int *) V_DATA(v))[i]);
     case FLOAT:
         return ((float) ((float *) V_DATA(v))[i]);
@@ -497,7 +497,7 @@ extract_double(Var * v, size_t i)
         return (((u_char *) V_DATA(v))[i]);
     case DV_INT16:
         return (((short *) V_DATA(v))[i]);
-    case INT:
+    case DV_INT32:
         return (((int *) V_DATA(v))[i]);
     case FLOAT:
         return (((float *) V_DATA(v))[i]);

@@ -189,7 +189,7 @@ ff_warp(vfuncptr func, Var * arg)
 	alist[0] = make_alist( "object",  ID_VAL,    NULL,    &obj);
 	alist[1] = make_alist( "matrix",  ID_VAL,    NULL,    &xm);
 	alist[2] = make_alist( "ignore",  FLOAT,    NULL,    &ignore);
-	alist[3] = make_alist( "grow",    INT,    NULL,    &grow);
+	alist[3] = make_alist( "grow",    DV_INT32,    NULL,    &grow);
 	alist[4] = make_alist( "interp",  ID_ENUM,    options,    &interp);
 	alist[5].name = NULL;
 

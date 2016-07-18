@@ -15,8 +15,8 @@ ff_rice(vfuncptr func, Var * arg)
 
 	Alist alist[4];
 	alist[0] = make_alist("object",    ID_VAL,     NULL,    &obj);
-	alist[1] = make_alist("header",    INT,        NULL,    &header);
-	alist[2] = make_alist("bits",      INT,        NULL,    &bits);
+	alist[1] = make_alist("header",    DV_INT32,        NULL,    &header);
+	alist[2] = make_alist("bits",      DV_INT32,        NULL,    &bits);
 	alist[3].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -165,7 +165,7 @@ ff_unrice(vfuncptr func, Var * arg)
 			start += l;
 			count++;
 		}
-		format = (nbytes == 1 ? BYTE : (nbytes == 2 ? DV_INT16 : INT));
+		format = (nbytes == 1 ? BYTE : (nbytes == 2 ? DV_INT16 : DV_INT32));
 		return(newVal(BSQ, x, y, z, format, out));
 	} else {
 		parse_error("Data without header not supported yet.");

@@ -229,7 +229,7 @@ do_key(KEYWORD * key)
     case ODL_INTEGER:
       i = (int *) calloc(1, sizeof(int));
       *i = make_int(key->value);
-      o = newVal(BSQ, 1, 1, 1, INT, i);
+      o = newVal(BSQ, 1, 1, 1, DV_INT32, i);
       break;
     case ODL_REAL:
       f = (double *) calloc(1, sizeof(double));
@@ -265,8 +265,8 @@ do_key(KEYWORD * key)
           **
           ** This turns out to be bad if the first value is a real
           ** that just happens to not have a decimal part, and the
-          ** rest do.  So, check that either everything is INT or
-          ** promote to REAL.  If we get a value that's neither INT
+          ** rest do.  So, check that either everything is DV_INT32 or
+          ** promote to REAL.  If we get a value that's neither DV_INT32
           ** or REAL, abort and use that type (STRING is all that's left)
           */
           ptype = OdlDataType(stuff[0]);
@@ -288,7 +288,7 @@ do_key(KEYWORD * key)
               i = (int *) malloc(num * sizeof(int));
               for (ii = 0; ii < num; ii++)
                 i[ii] = atoi(stuff[ii]);
-              o = newVal(BSQ, num, 1, 1, INT, i);
+              o = newVal(BSQ, num, 1, 1, DV_INT32, i);
               break;
 
             case ODL_REAL:
@@ -788,7 +788,7 @@ ProcessVarIntoString(Var * element, char *name)
 
   else {
 
-    if (V_FORMAT(element) == INT) {
+    if (V_FORMAT(element) == DV_INT32) {
       sprintf(tmp_string, "%d", V_INT(element));
     }
 
@@ -846,7 +846,7 @@ ProcessVarIntoString(Var * element, char *name)
 
         break;
 
-      case INT:
+      case DV_INT32:
         sprintf(tmp_string, "%d, ", extract_int(element, idx));
         break;
 
@@ -1246,7 +1246,7 @@ void output_big_var(FILE * out, Var * data, char *inset, char *name)
         break;
 
 
-      case INT:
+      case DV_INT32:
         ip = ((int *) V_DATA(data));
         fprintf(out, "%d%s", ip[i], dmrk);
         break;
@@ -1437,7 +1437,7 @@ ProcessIntoLabel(FILE * fp, int record_bytes, Var * v, int depth,
                     (0xffff & V_INT(data)));
             break;
 
-          case INT:
+          case DV_INT32:
             fprintf(fp, "%s%s = %d\r\n", inset, tmpname,
                     V_INT(data));
             break;
@@ -1545,7 +1545,7 @@ Var *WritePDS(vfuncptr func, Var * arg)
   Alist alist[4];
   alist[0] = make_alist("object", ID_STRUCT, NULL, &v);
   alist[1] = make_alist("filename", ID_STRING, NULL, &filename);
-  alist[2] = make_alist("force", INT, NULL, &force);
+  alist[2] = make_alist("force", DV_INT32, NULL, &force);
   alist[3].name = NULL;
 
   if (parse_args(func, arg, alist) == 0)
@@ -1662,7 +1662,7 @@ ff_write_isis_cub(vfuncptr func, Var *args)
 
   alist[0] = make_alist("obj",      ID_STRUCT, NULL, &obj);
   alist[1] = make_alist("filename", ID_STRING, NULL, &fname);
-  alist[2] = make_alist("force",    INT,       NULL, &force);
+  alist[2] = make_alist("force",    DV_INT32,       NULL, &force);
   alist[3].name = NULL;
 
   if (parse_args(func, args, alist) == 0) return NULL;
@@ -1707,8 +1707,8 @@ Var *ReadPDS(vfuncptr func, Var * arg)
 
   Alist alist[4];
   alist[0] = make_alist("filename", ID_UNK, NULL, &fn);
-  alist[1] = make_alist("data", INT, NULL, &data);
-  alist[2] = make_alist("suffix_data", INT, NULL, &suffix_data);
+  alist[1] = make_alist("data", DV_INT32, NULL, &data);
+  alist[2] = make_alist("suffix_data", DV_INT32, NULL, &suffix_data);
   alist[3].name = NULL;
 
   if (parse_args(func, arg, alist) == 0)
@@ -2247,7 +2247,7 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
             case 4:
               data = calloc(size[j] * label->nrows, sizeof(char));
               memcpy(data, Bufs[j], size[j] * label->nrows);
-              v = newVal(BSQ, dim, label->nrows, 1, INT, data);
+              v = newVal(BSQ, dim, label->nrows, 1, DV_INT32, data);
               break;
             case 2:
               data = calloc(size[j] * label->nrows, sizeof(char));
@@ -2279,7 +2279,7 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
               for(k=0; k<nitems; k++){
                 *(int *)(data + k*sizeof(int)) = (int)*(unsigned short *)(Bufs[j] + k * sizeof(short));
               }
-              v = newVal(BSQ, dim, label->nrows, 1, INT, data);
+              v = newVal(BSQ, dim, label->nrows, 1, DV_INT32, data);
               break;
             case 1:
               // davinci BYTE type is unsigned char
@@ -2314,7 +2314,7 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
             step += sizeof(int);
           }
 
-          v = newVal(BSQ, dim, label->nrows, 1, INT, data);
+          v = newVal(BSQ, dim, label->nrows, 1, DV_INT32, data);
           break;
 
         case ASCII_REAL:
@@ -2333,14 +2333,14 @@ Set_Col_Var(Var ** Data, FIELD ** f, LABEL * label, int *size, char **Bufs)
         case BYTE_OFFSET:
           data = calloc(size[j] * label->nrows, sizeof(char));
           memcpy(data, Bufs[j], size[j] * label->nrows);
-          v = newVal(BSQ, dim, label->nrows, 1, INT, data);
+          v = newVal(BSQ, dim, label->nrows, 1, DV_INT32, data);
           break;
 
         case MSB_BIT_FIELD:
         case LSB_BIT_FIELD:
           data = calloc(size[j] * label->nrows, sizeof(char));
           memcpy(data, Bufs[j], size[j] * label->nrows);
-          v = newVal(BSQ, dim, label->nrows, 1, INT, data);
+          v = newVal(BSQ, dim, label->nrows, 1, DV_INT32, data);
           break;
 
       }
@@ -2598,9 +2598,9 @@ ff_pdshead(vfuncptr func, Var *arg)
 	Alist alist[6];
 	alist[0] = make_alist("fname", ID_STRING, NULL, &fname);
 	alist[1] = make_alist("outfname", ID_STRING, NULL, &outfname);
-	alist[2] = make_alist("convert_short", INT, NULL, &convert_short);
-	alist[3] = make_alist("data", INT, NULL, &data);
-	alist[4] = make_alist("fdata", INT, NULL, &fdata);
+	alist[2] = make_alist("convert_short", DV_INT32, NULL, &convert_short);
+	alist[3] = make_alist("data", DV_INT32, NULL, &data);
+	alist[4] = make_alist("fdata", DV_INT32, NULL, &fdata);
 	alist[5].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0)
@@ -2713,8 +2713,8 @@ Var *ReadPDS4(vfuncptr func, Var * arg)
 
     Alist alist[4];
     alist[0] = make_alist("filename", ID_UNK, NULL, &fn);
-    alist[1] = make_alist("use_names", INT, NULL, &use_names);
-    alist[2] = make_alist("data", INT, NULL, &get_data);
+    alist[1] = make_alist("use_names", DV_INT32, NULL, &use_names);
+    alist[2] = make_alist("data", DV_INT32, NULL, &get_data);
     alist[3].name = NULL;
 
     if (parse_args(func, arg, alist) == 0)
@@ -2987,7 +2987,7 @@ static int loadFieldBinary(Var *v, LABEL *label, dataKey *data_key,
                 else if (!strcmp(elem_name, VALUE))
                 {
                     errno = 0;
-                    if (V_FORMAT(t) != INT)
+                    if (V_FORMAT(t) != DV_INT32)
                     {
                         parse_error(
                                 "Warning!: Field length should be an Integer value\n");
@@ -3015,7 +3015,7 @@ static int loadFieldBinary(Var *v, LABEL *label, dataKey *data_key,
         }
         else if (!strcmp(name, SCALING_FACTOR))
         {
-            if (V_FORMAT(s) == INT)
+            if (V_FORMAT(s) == DV_INT32)
             {
                 field->scale = V_INT(s);
             }
@@ -3033,7 +3033,7 @@ static int loadFieldBinary(Var *v, LABEL *label, dataKey *data_key,
         }
         else if (!strcmp(name, VALUE_OFFSET))
         {
-            if (V_FORMAT(s) == INT)
+            if (V_FORMAT(s) == DV_INT32)
             {
                 field->offset = V_INT(s);
             }

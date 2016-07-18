@@ -63,7 +63,7 @@ Var *ff_gplot(vfuncptr func, Var * arg)
         switch (V_FORMAT(object)) {
         case BYTE:
         case DV_INT16:
-        case INT:
+        case DV_INT32:
             fprintf(fp, "%d\n", extract_int(object, i));
             break;
         case FLOAT:
@@ -153,7 +153,7 @@ Var *ff_plot(vfuncptr func, Var * arg)
                     switch (type) {
                     case BYTE:
                     case DV_INT16:
-                    case INT:
+                    case DV_INT32:
                         fprintf(fp, "%d", extract_int(v, i));
                         break;
                     case FLOAT:
@@ -238,7 +238,7 @@ Var *ff_splot(vfuncptr func, Var * arg)
 	  if(V_KEYVAL(s) != NULL) {
 	    if(V_TYPE(V_KEYVAL(s)) == ID_VAL) {
 	      v = V_KEYVAL(s);
-	      if(V_FORMAT(v)==BYTE || V_FORMAT(v)==INT || V_FORMAT(v)==DV_INT16) {
+	      if(V_FORMAT(v)==BYTE || V_FORMAT(v)==DV_INT32 || V_FORMAT(v)==DV_INT16) {
 		xscale = (float)extract_int(v,0);
 	      } else if(V_FORMAT(v)==FLOAT || V_FORMAT(v)==DOUBLE) {
 		xscale = extract_float(v,0);
@@ -251,7 +251,7 @@ Var *ff_splot(vfuncptr func, Var * arg)
 	  if(V_KEYVAL(s) != NULL) {
 	    if(V_TYPE(V_KEYVAL(s)) == ID_VAL) {
 	      v = V_KEYVAL(s);
-	      if(V_FORMAT(v)==BYTE || V_FORMAT(v)==INT || V_FORMAT(v)==DV_INT16) {
+	      if(V_FORMAT(v)==BYTE || V_FORMAT(v)==DV_INT32 || V_FORMAT(v)==DV_INT16) {
 		yscale = (float)extract_int(v,0);
 	      } else if(V_FORMAT(v)==FLOAT || V_FORMAT(v)==DOUBLE) {
 		yscale = extract_float(v,0);
@@ -291,7 +291,7 @@ Var *ff_splot(vfuncptr func, Var * arg)
 	  switch (type) {
 	  case BYTE:
 	  case DV_INT16:
-	  case INT:
+	  case DV_INT32:
 	    if(xscale != 0 && yscale != 0) {
 	      fprintf(fp, "%d %d %d\n",((i%s0)+1)*(int)xscale, ((i/s0)+1)*(int)yscale, extract_int(v, i));
 	    } else {
@@ -622,7 +622,7 @@ Var *ff_xplot(vfuncptr func, Var * arg)
                             switch (V_FORMAT(v)) {
                             case BYTE:
                             case DV_INT16:
-                            case INT:
+                            case DV_INT32:
                                 y[k] = (float) extract_int(v, obj_index);
                                 break; // drd added -- break was missing
 
@@ -635,7 +635,7 @@ Var *ff_xplot(vfuncptr func, Var * arg)
                                 switch (V_FORMAT(v)) {
                                 case BYTE:
                                 case DV_INT16:
-                                case INT:
+                                case DV_INT32:
                                     x[k] =
                                         (float) extract_int(Xaxis,
                                                             rpos(obj_index,
@@ -668,7 +668,7 @@ Var *ff_xplot(vfuncptr func, Var * arg)
                             	switch (V_FORMAT(v)) {
                                 case BYTE:
                                 case DV_INT16:
-                                case INT:
+                                case DV_INT32:
                                 	fprintf(fp, "%d\t %d\n", (int)x[k], (int)y[k]);
                                     break;
                                 case FLOAT:
@@ -947,7 +947,7 @@ Var *ff_xplot2(vfuncptr func, Var * arg)
                             switch (V_FORMAT(v)) {
                             case BYTE:
                             case DV_INT16:
-                            case INT:
+                            case DV_INT32:
                                 y[k] = (float) extract_int(v, obj_index);
                                 break; // drd added -- break was missing
                             case FLOAT:
@@ -959,7 +959,7 @@ Var *ff_xplot2(vfuncptr func, Var * arg)
                                 switch (V_FORMAT(v)) {
                                 case BYTE:
                                 case DV_INT16:
-                                case INT:
+                                case DV_INT32:
                                     x[k] =
                                         (float) extract_int(Xaxis,
                                                             rpos(obj_index,

@@ -248,7 +248,7 @@ static inline StorageType dv_to_im_storage_type(Var * img)
     return CharPixel;
   case DV_INT16:
     return ShortPixel;
-  case INT:
+  case DV_INT32:
     return IntegerPixel;
   case FLOAT:
     return FloatPixel;
@@ -761,7 +761,7 @@ MODULE_TYPE Var * dvWriteImage(vfuncptr f, Var *args)
   alist[0] = make_alist("object", ID_UNK, NULL, &image);
   alist[1] = make_alist("filename", ID_STRING, NULL, &fname);
   alist[2] = make_alist("type", ID_ENUM, valid_types, &itype);
-  alist[3] = make_alist("force", INT, NULL, &force);
+  alist[3] = make_alist("force", DV_INT32, NULL, &force);
   alist[4].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -1053,10 +1053,10 @@ static Var * dvChopImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("x", INT, NULL, &rect.x);
-  alist[2] = make_alist("y", INT, NULL, &rect.y);
-  alist[3] = make_alist("width", INT, NULL, &rect.width);
-  alist[4] = make_alist("height", INT, NULL, &rect.height);
+  alist[1] = make_alist("x", DV_INT32, NULL, &rect.x);
+  alist[2] = make_alist("y", DV_INT32, NULL, &rect.y);
+  alist[3] = make_alist("width", DV_INT32, NULL, &rect.width);
+  alist[4] = make_alist("height", DV_INT32, NULL, &rect.height);
   alist[5].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -1100,10 +1100,10 @@ static Var * dvColorizeImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("opacity", INT, NULL, &opacity);
-  alist[2] = make_alist("red", INT, NULL, &(brush.red));
-  alist[3] = make_alist("green", INT, NULL, &(brush.green));
-  alist[4] = make_alist("blue", INT, NULL, &(brush.blue));
+  alist[1] = make_alist("opacity", DV_INT32, NULL, &opacity);
+  alist[2] = make_alist("red", DV_INT32, NULL, &(brush.red));
+  alist[3] = make_alist("green", DV_INT32, NULL, &(brush.green));
+  alist[4] = make_alist("blue", DV_INT32, NULL, &(brush.blue));
   alist[5].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -1151,7 +1151,7 @@ static Var * dvContrastImage(vfuncptr f, Var *args) {
   InitializeMagick("davinci");
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("sharpen", INT, NULL, &sharpen);
+  alist[1] = make_alist("sharpen", DV_INT32, NULL, &sharpen);
   alist[2].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -1192,10 +1192,10 @@ static Var * dvCropImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("x", INT, NULL, &rect.x);
-  alist[2] = make_alist("y", INT, NULL, &rect.y);
-  alist[3] = make_alist("width", INT, NULL, &rect.width);
-  alist[4] = make_alist("height", INT, NULL, &rect.height);
+  alist[1] = make_alist("x", DV_INT32, NULL, &rect.x);
+  alist[2] = make_alist("y", DV_INT32, NULL, &rect.y);
+  alist[3] = make_alist("width", DV_INT32, NULL, &rect.width);
+  alist[4] = make_alist("height", DV_INT32, NULL, &rect.height);
   alist[5].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -1930,7 +1930,7 @@ static Var * dvMorphImages(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("iterations", INT, NULL, &framecount);
+  alist[1] = make_alist("iterations", DV_INT32, NULL, &framecount);
   alist[2].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -2058,7 +2058,7 @@ static Var * dvNegateImage(vfuncptr f, Var *args) {
   InitializeMagick("davinci");
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("grayscale", INT, NULL, &grayscale);
+  alist[1] = make_alist("grayscale", DV_INT32, NULL, &grayscale);
   alist[2].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -2237,8 +2237,8 @@ static Var * dvResizeImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("columns", INT, NULL, &columns);
-  alist[2] = make_alist("rows", INT, NULL, &rows);
+  alist[1] = make_alist("columns", DV_INT32, NULL, &columns);
+  alist[2] = make_alist("rows", DV_INT32, NULL, &rows);
   alist[3] = make_alist("type", ID_ENUM, filtertypes, &filtertype);
   alist[4] = make_alist("blur", DOUBLE, NULL, &blur);
   alist[5].name = NULL;
@@ -2315,8 +2315,8 @@ static Var * dvRollImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("x", INT, NULL, &x);
-  alist[2] = make_alist("y", INT, NULL, &y);
+  alist[1] = make_alist("x", DV_INT32, NULL, &x);
+  alist[2] = make_alist("y", DV_INT32, NULL, &y);
   alist[3].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -2401,8 +2401,8 @@ static Var * dvSampleImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("columns", INT, NULL, &columns);
-  alist[2] = make_alist("rows", INT, NULL, &rows);
+  alist[1] = make_alist("columns", DV_INT32, NULL, &columns);
+  alist[2] = make_alist("rows", DV_INT32, NULL, &rows);
   alist[3].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -2455,8 +2455,8 @@ static Var * dvScaleImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("columns", INT, NULL, &columns);
-  alist[2] = make_alist("rows", INT, NULL, &rows);
+  alist[1] = make_alist("columns", DV_INT32, NULL, &columns);
+  alist[2] = make_alist("rows", DV_INT32, NULL, &rows);
   alist[3].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -2511,7 +2511,7 @@ static Var * dvShadeImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("colorshade", INT, NULL, &colorshade);
+  alist[1] = make_alist("colorshade", DV_INT32, NULL, &colorshade);
   alist[2] = make_alist("azimuth", DOUBLE, NULL, &azimuth);
   alist[3] = make_alist("elevation", DOUBLE, NULL, &elevation);
   alist[4].name = NULL;
@@ -2597,10 +2597,10 @@ static Var * dvShaveImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("x", INT, NULL, &rect.x);
-  alist[2] = make_alist("y", INT, NULL, &rect.y);
-  alist[3] = make_alist("width", INT, NULL, &rect.width);
-  alist[4] = make_alist("height", INT, NULL, &rect.height);
+  alist[1] = make_alist("x", DV_INT32, NULL, &rect.x);
+  alist[2] = make_alist("y", DV_INT32, NULL, &rect.y);
+  alist[3] = make_alist("width", DV_INT32, NULL, &rect.width);
+  alist[4] = make_alist("height", DV_INT32, NULL, &rect.height);
   alist[5].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;
@@ -2685,7 +2685,7 @@ static Var * dvSpreadImage(vfuncptr f, Var *args) {
   GetExceptionInfo(&exc);
 
   alist[0] = make_alist("object", ID_VAL, NULL, &image);
-  alist[1] = make_alist("amount", INT, NULL, &amount);
+  alist[1] = make_alist("amount", DV_INT32, NULL, &amount);
   alist[2].name = NULL;
 
   if (parse_args(f, args, alist) == 0) goto error_exit;

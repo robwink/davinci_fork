@@ -74,7 +74,7 @@ ff_get_struct_key(vfuncptr func, Var* arg)
 
 	Alist alist[3];
 	alist[0] = make_alist( "object",    ID_STRUCT,  NULL,     &s);
-	alist[1] = make_alist( "index",     INT,        NULL,     &index); /* 1-based */
+	alist[1] = make_alist( "index",     DV_INT32,        NULL,     &index); /* 1-based */
 	alist[2].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -582,7 +582,7 @@ ff_remove_struct(vfuncptr func, Var * arg)
 	Alist alist[4];
 	alist[0] = make_alist( "structure",    ID_STRUCT,    NULL,     &a);
 	alist[1] = make_alist( "name",         ID_STRING,     NULL,     &name);
-	alist[2] = make_alist( "position",     INT,     NULL,     &pos);
+	alist[2] = make_alist( "position",     DV_INT32,     NULL,     &pos);
 	alist[3].name = NULL;
 	if (parse_args(func, arg, alist) == 0) return(NULL);
 

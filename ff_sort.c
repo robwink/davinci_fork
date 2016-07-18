@@ -319,7 +319,7 @@ Var *ff_sort(vfuncptr func, Var * arg)
     switch (format) {
     case BYTE:		cmp = cmp_byte;		break;
     case DV_INT16:		cmp = cmp_short;	break;
-    case INT:		cmp = cmp_int;		break;
+    case DV_INT32:		cmp = cmp_int;		break;
     case FLOAT:		cmp = cmp_float;	break;
     case DOUBLE:	cmp = cmp_double;	break;
     }
@@ -435,7 +435,7 @@ Var *ff_sort(vfuncptr func, Var * arg)
       if(V_TYPE(object) == ID_VAL) {
 				//parse_error("Object = ID_VAL, byObj = ID_TEXT");
 				//parse_error("works, but has possible memory leak");
-				args = newVal(BSQ, 1, rows, 1, INT, indexList);
+				args = newVal(BSQ, 1, rows, 1, DV_INT32, indexList);
 				data = reorgByIndex(object, args, indexList);
 				result = newVal(V_ORG(object), V_SIZE(object)[0], V_SIZE(object)[1], 
 												V_SIZE(object)[2], V_FORMAT(object), data);
@@ -696,7 +696,7 @@ Var *ff_sort_old(vfuncptr func, Var * arg)
   switch (format) {
   case BYTE:		cmp = cmp_byte;		break;
   case DV_INT16:		cmp = cmp_short;	break;
-  case INT:		cmp = cmp_int;		break;
+  case DV_INT32:		cmp = cmp_int;		break;
   case FLOAT:		cmp = cmp_float;	break;
   case DOUBLE:	        cmp = cmp_double;	break;
   }

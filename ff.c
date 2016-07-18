@@ -293,7 +293,7 @@ ff_binary_op(const char *name,               // Function name, for errors
       case DV_INT16:
         sdata[i] = saturate_short(v3);
         break;
-      case INT:
+      case DV_INT32:
         idata[i] = saturate_int(v3);
         break;
       case FLOAT:
@@ -470,7 +470,7 @@ ff_conv(vfuncptr func, Var * arg)
         }
         break;
       }
-    case INT:
+    case DV_INT32:
       {
         int d;
         int *idata = (int *) data;
@@ -539,7 +539,7 @@ ff_dim(vfuncptr func, Var * arg)
   iptr[1] = GetLines(V_SIZE(v), V_ORG(v));
   iptr[2] = GetBands(V_SIZE(v), V_ORG(v));
 
-  return(newVal(BSQ, 3, 1, 1, INT, iptr));
+  return(newVal(BSQ, 3, 1, 1, DV_INT32, iptr));
 }
 
 /**
@@ -637,7 +637,7 @@ ff_create(vfuncptr func, Var * arg)
   const char *formats[] = { "byte", "short", "int", "float", "double", NULL};
 
   size_t x = 1, y = 1, z = 1;
-  int format = INT;
+  int format = DV_INT32;
   int org = BSQ;
   double start = 0;
   double step = 1.0;
@@ -651,14 +651,14 @@ ff_create(vfuncptr func, Var * arg)
   double *ddata;
 
   Alist alist[9];
-  alist[0] = make_alist( "x",      INT,      NULL,     &x);
-  alist[1] = make_alist( "y",      INT,      NULL,     &y);
-  alist[2] = make_alist( "z",      INT,      NULL,     &z);
+  alist[0] = make_alist( "x",      DV_INT32,      NULL,     &x);
+  alist[1] = make_alist( "y",      DV_INT32,      NULL,     &y);
+  alist[2] = make_alist( "z",      DV_INT32,      NULL,     &z);
   alist[3] = make_alist( "org",    ID_ENUM,  orgs,     &org_str);
   alist[4] = make_alist( "format", ID_ENUM,  formats,  &format_str);
   alist[5] = make_alist( "start",  DOUBLE,   NULL,     &start);
   alist[6] = make_alist( "step",   DOUBLE,   NULL,     &step);
-  alist[7] = make_alist( "init",   INT,      NULL,     &init);
+  alist[7] = make_alist( "init",   DV_INT32,      NULL,     &init);
   alist[8].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -677,7 +677,7 @@ ff_create(vfuncptr func, Var * arg)
   if (format_str != NULL) {
     if (!strcasecmp(format_str, "byte")) format = BYTE;
     else if (!strcasecmp(format_str, "short")) format = DV_INT16;
-    else if (!strcasecmp(format_str, "int")) format = INT;
+    else if (!strcasecmp(format_str, "int")) format = DV_INT32;
     else if (!strcasecmp(format_str, "float")) format = FLOAT;
     else if (!strcasecmp(format_str, "double")) format = DOUBLE;
   }
@@ -719,7 +719,7 @@ ff_create(vfuncptr func, Var * arg)
         switch (format) {
           case BYTE: cdata[0] = saturate_byte(v); break;
           case DV_INT16: sdata[0] = saturate_short(v); break;
-          case INT: idata[0] = saturate_int(v); break;
+          case DV_INT32: idata[0] = saturate_int(v); break;
           case FLOAT: fdata[0] = saturate_float(v); break;
           case DOUBLE: ddata[0] = v; break;
         }
@@ -741,7 +741,7 @@ ff_create(vfuncptr func, Var * arg)
               case DV_INT16:
                 sdata[c] = saturate_short(v);
                 break;
-              case INT:
+              case DV_INT32:
                 idata[c] = saturate_int(v);
                 break;
               case FLOAT:
@@ -874,9 +874,9 @@ ff_replicate(vfuncptr func, Var * arg)
 
   Alist alist[5];
   alist[0] = make_alist( "object", ID_UNK,   NULL, &v);
-  alist[1] = make_alist( "x",   INT, NULL,  &x);
-  alist[2] = make_alist( "y",   INT, NULL,  &y);
-  alist[3] = make_alist( "z",   INT, NULL,  &z);
+  alist[1] = make_alist( "x",   DV_INT32, NULL,  &x);
+  alist[2] = make_alist( "y",   DV_INT32, NULL,  &y);
+  alist[3] = make_alist( "z",   DV_INT32, NULL,  &z);
   alist[4].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -1372,7 +1372,7 @@ ff_issubstring(vfuncptr func, Var * arg)
     *Result=1;
   }
 
-  return(newVal(BSQ,1,1,1, INT, Result));
+  return(newVal(BSQ,1,1,1, DV_INT32, Result));
 }
 
 
@@ -1484,7 +1484,7 @@ ff_fsize(vfuncptr func, Var * arg)
         parse_error("%s: Integer truncation, size was %ld\n", func->name, sbuf.st_size);
       }
     }
-    return(newVal(BSQ, 1, 1, 1, INT, data));
+    return(newVal(BSQ, 1, 1, 1, DV_INT32, data));
   }
 }
 
@@ -1550,7 +1550,7 @@ ff_hedit(vfuncptr func, Var * arg)
   char *tmp, *editor, buf[256];
 
   Alist alist[2];
-  alist[0] = make_alist("number",    INT,    NULL,     &count);
+  alist[0] = make_alist("number",    DV_INT32,    NULL,     &count);
   alist[1].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -1599,9 +1599,9 @@ ff_resize(vfuncptr func, Var * arg)
 
   Alist alist[6];
   alist[0] = make_alist("obj",    ID_VAL,     NULL,     &obj);
-  alist[1] = make_alist("x",        INT,        NULL,     &x);
-  alist[2] = make_alist("y",        INT,        NULL,     &y);
-  alist[3] = make_alist("z",        INT,        NULL,     &z);
+  alist[1] = make_alist("x",        DV_INT32,        NULL,     &x);
+  alist[2] = make_alist("y",        DV_INT32,        NULL,     &y);
+  alist[3] = make_alist("z",        DV_INT32,        NULL,     &z);
   alist[4] = make_alist("org",    ID_ENUM,    orgs,     &org_str);
   alist[5].name = NULL;
 
@@ -1741,8 +1741,8 @@ ff_dump(vfuncptr func, Var * arg)
 
   Alist alist[4];
   alist[0] = make_alist("object",    ID_UNK,     NULL,     &v);
-  alist[1] = make_alist("indent",    INT,     NULL,     &indent);
-  alist[2] = make_alist("depth",    INT,     NULL,     &depth);
+  alist[1] = make_alist("indent",    DV_INT32,     NULL,     &indent);
+  alist[2] = make_alist("depth",    DV_INT32,     NULL,     &depth);
   alist[3].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -1835,7 +1835,7 @@ compare_vars(Var *a, Var *b)
         switch(format) {
           case BYTE:
           case DV_INT16:
-          case INT:
+          case DV_INT32:
             if (extract_int(a,i) != extract_int(b,rpos(i,a,b)))
               return(0);
             break;
@@ -1858,7 +1858,7 @@ compare_vars(Var *a, Var *b)
 Var *
 newInt(int i)
 {
-  Var *v = newVal(BSQ, 1, 1,1, INT, calloc(1, sizeof(int)));
+  Var *v = newVal(BSQ, 1, 1,1, DV_INT32, calloc(1, sizeof(int)));
   V_INT(v) = i;
   return(v);
 }
@@ -1927,7 +1927,7 @@ ff_exists(vfuncptr func, Var * arg)
     for (i = 0 ; i < n ; i++) {
       data[i] = (access(V_TEXT(v).text[i], F_OK) == 0);
     }
-    return(newVal(BSQ, 1, n, 1, INT, data));
+    return(newVal(BSQ, 1, n, 1, DV_INT32, data));
   } else {
     parse_error( "%s: Argument is not a filename.", func->name);
     return(NULL);
@@ -1959,7 +1959,7 @@ ff_unlink(vfuncptr func, Var * arg)
     for (i = 0 ; i < n ; i++) {
       data[i] = (unlink(V_TEXT(v).text[i]) == 0);
     }
-    return(newVal(BSQ, 1, n, 1, INT, data));
+    return(newVal(BSQ, 1, n, 1, DV_INT32, data));
   } else {
     parse_error( "%s: Argument is not a filename.", func->name);
     return(NULL);
@@ -2275,7 +2275,7 @@ ff_contains(vfuncptr func, Var * arg)
         }
       }
       break;
-    case INT:
+    case DV_INT32:
       vi = extract_int(value, 0);
       for (i = 0 ; i < dsize ; i++) {
         if (((int *)V_DATA(obj))[i] == vi) {

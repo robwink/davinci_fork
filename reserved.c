@@ -60,7 +60,7 @@ RV_set_int(Var *id,Var *range,Var *exp)
 {
     if (exp == NULL) return(NULL);
 
-    if (V_TYPE(exp) != ID_VAL || V_FORMAT(exp) != INT || V_DSIZE(exp) != 1) {
+    if (V_TYPE(exp) != ID_VAL || V_FORMAT(exp) != DV_INT32 || V_DSIZE(exp) != 1) {
 	sprintf(error_buf, "Improper value for reserved variable: %s", 
 		V_NAME(id));
 	parse_error(NULL);

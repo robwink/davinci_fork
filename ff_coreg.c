@@ -30,10 +30,10 @@ ff_coreg(vfuncptr func, Var * arg)
   Alist alist[8];
   alist[0] = make_alist("pic1",     ID_VAL,	NULL,	&pic1_in);
   alist[1] = make_alist("pic2",     ID_VAL,     NULL,   &pic2_in);
-  alist[2] = make_alist("search",   INT,        NULL,   &search);
-  alist[3] = make_alist("ignore",   INT,        NULL,   &ignore);
-  alist[4] = make_alist("verbose",    INT,        NULL,   &verbose);
-  alist[5] = make_alist("random",   INT,        NULL,   &random);
+  alist[2] = make_alist("search",   DV_INT32,        NULL,   &search);
+  alist[3] = make_alist("ignore",   DV_INT32,        NULL,   &ignore);
+  alist[4] = make_alist("verbose",    DV_INT32,        NULL,   &verbose);
+  alist[5] = make_alist("random",   DV_INT32,        NULL,   &random);
   alist[6].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -163,8 +163,8 @@ ff_coreg(vfuncptr func, Var * arg)
 
 		out = new_struct(2);
 		add_struct(out, "space", newVal(BSQ, s_dia, s_dia, 1, FLOAT, solution));
-		add_struct(out, "wt", newVal(BSQ, s_dia, s_dia, 1, INT, wt));
-		add_struct(out, "position", newVal(BSQ, 2, 1, 1, INT, pos));
+		add_struct(out, "wt", newVal(BSQ, s_dia, s_dia, 1, DV_INT32, wt));
+		add_struct(out, "position", newVal(BSQ, 2, 1, 1, DV_INT32, pos));
 		add_struct(out, "count", newInt(count)); /* TODO: Should return a long */
 		printf("count=%ld/%ld\n", count, total);
 		return(out);
@@ -175,7 +175,7 @@ ff_coreg(vfuncptr func, Var * arg)
 	pos = (int *)malloc(sizeof(int)*2);
 	pos[0] = a;
 	pos[1] = b;
-	out = newVal(BSQ, 2, 1, 1, INT, pos);
+	out = newVal(BSQ, 2, 1, 1, DV_INT32, pos);
 	return out;
 }
 
@@ -201,9 +201,9 @@ Var *ff_coreg2(vfuncptr func, Var * arg)
     Alist alist[8];
     alist[0] = make_alist("obj1", ID_VAL, NULL, &obj1);
     alist[1] = make_alist("obj2", ID_VAL, NULL, &obj2);
-    alist[2] = make_alist("size", INT, NULL, &size);
+    alist[2] = make_alist("size", DV_INT32, NULL, &size);
     alist[3] = make_alist("ignore", FLOAT, NULL, &ignore);
-    alist[4] = make_alist("verbose", INT, NULL, &verbose);
+    alist[4] = make_alist("verbose", DV_INT32, NULL, &verbose);
     alist[5].name = NULL;
 
     if (parse_args(func, arg, alist) == 0)
@@ -233,7 +233,7 @@ Var *ff_coreg2(vfuncptr func, Var * arg)
 		parse_error("%s: Unable to alloc %ld bytes.\n", func->name, diameter*diameter*sizeof(int));
 		return NULL;
 	}
-	sval = newVal(BSQ, diameter, diameter, 1, INT, solution);
+	sval = newVal(BSQ, diameter, diameter, 1, DV_INT32, solution);
 
     /*
      ** Exhaustive search, skipping pixels that are blank in both
@@ -278,10 +278,10 @@ Var *ff_coreg2(vfuncptr func, Var * arg)
 
 	if (verbose) {
 		Var *s = new_struct(2);
-		add_struct(s, "position", newVal(BSQ, 2, 1, 1, INT, answer));
+		add_struct(s, "position", newVal(BSQ, 2, 1, 1, DV_INT32, answer));
 		add_struct(s, "counts", sval);
 		return(s);
 	} else {
-		return(newVal(BSQ, 2, 1, 1, INT, answer));
+		return(newVal(BSQ, 2, 1, 1, DV_INT32, answer));
 	}
 }

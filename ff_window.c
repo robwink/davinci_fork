@@ -320,9 +320,9 @@ ff_window(vfuncptr func, Var * arg)
     Alist alist[9];
     alist[0] = make_alist( "object",  ID_VAL,   NULL,  &obj);
     alist[1] = make_alist( "type",    ID_ENUM,  types, &type);
-    alist[2] = make_alist( "x",       INT,      NULL,  &width);
-    alist[3] = make_alist( "y",       INT,      NULL,  &height);
-    alist[4] = make_alist( "size",    INT,      NULL,  &size);
+    alist[2] = make_alist( "x",       DV_INT32,      NULL,  &width);
+    alist[3] = make_alist( "y",       DV_INT32,      NULL,  &height);
+    alist[4] = make_alist( "size",    DV_INT32,      NULL,  &size);
     alist[5] = make_alist( "ignore",  FLOAT,    NULL,  &ignore);
     alist[6] = make_alist( "mask",    ID_VAL,   NULL,  &mask);
     alist[7].name = NULL;

@@ -684,7 +684,7 @@ LoadSpecprHeader(FILE *fp, char *filename, int rec, char *element, Var **val)
     V_SIZE(v)[0] = range;
     V_SIZE(v)[1] = V_SIZE(v)[2] = 1;
     V_ORG(v) = BSQ;
-    V_FORMAT(v) = INT;
+    V_FORMAT(v) = DV_INT32;
     V_DATA(v) = calloc(range, sizeof(int));
     memcpy(V_DATA(v), ival, sizeof(int)*range);
   }  else if (fval != NULL) {
@@ -716,7 +716,7 @@ ff_loadspecpr(vfuncptr func, Var *arg)
 
   Alist alist[12];
   alist[0] = make_alist( "filename",  ID_STRING,  NULL,     &filename);
-  alist[1] = make_alist( "record",    INT,        NULL,     &record);
+  alist[1] = make_alist( "record",    DV_INT32,        NULL,     &record);
   alist[2].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -801,7 +801,7 @@ LoadSpecprHeaderStruct(FILE *fp, char *filename, int rec)
     iptr = calloc(2, sizeof(int));
     iptr[0] = label.iband[0];
     iptr[1] = label.iband[1];
-    add_struct(v, "iband",      newVal(BSQ, 2, 1, 1, INT, iptr));
+    add_struct(v, "iband",      newVal(BSQ, 2, 1, 1, DV_INT32, iptr));
     add_struct(v, "irwav",      newInt(label.irwav));
     add_struct(v, "irespt",     newInt(label.irespt));
     add_struct(v, "irecno",     newInt(label.irecno));

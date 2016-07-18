@@ -68,9 +68,9 @@ ff_fncc(vfuncptr func, Var * arg)
     alist[1] = make_alist("object",     ID_VAL,     NULL, &obj);
     alist[2] = make_alist("rf",     ID_VAL,     NULL, &rf);
     alist[3] = make_alist("r2",     ID_VAL,     NULL, &rf2);
-    alist[4] = make_alist("fft",     INT,     NULL, &fft);
+    alist[4] = make_alist("fft",     DV_INT32,     NULL, &fft);
     alist[5] = make_alist("ignore",     DOUBLE,     NULL, &ig);
-    alist[6] = make_alist("rectify",     INT,     NULL, &rec);
+    alist[6] = make_alist("rectify",     DV_INT32,     NULL, &rec);
     alist[7].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -175,9 +175,9 @@ ff_fncc(vfuncptr func, Var * arg)
     free(r);
 
 /* Max point is 0-indexed */
-    add_struct(result,"max_point",newVal(BSQ,2,1,1,INT,p));
+    add_struct(result,"max_point",newVal(BSQ,2,1,1,DV_INT32,p));
 /* Corner point is 0-indexed */
-    add_struct(result,"corner_point",newVal(BSQ,2,1,1,INT,p1));
+    add_struct(result,"corner_point",newVal(BSQ,2,1,1,DV_INT32,p1));
 
 /*
 ** Our corner point is based on a peak value in the corelation matrix.
@@ -981,7 +981,7 @@ ff_fncc_write_mat(vfuncptr func, Var * arg)
     Alist alist[4];
     alist[0] = make_alist( "obj",       ID_UNK,     NULL,     &obj);
     alist[1] = make_alist( "filename",  ID_STRING,  NULL,     &fname);
-    alist[2] = make_alist( "force",     INT,        NULL,     &force);
+    alist[2] = make_alist( "force",     DV_INT32,        NULL,     &force);
     alist[3].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(newInt(0));
@@ -1012,7 +1012,7 @@ ff_fncc_write_mat(vfuncptr func, Var * arg)
     switch(V_FORMAT(obj)){
     case BYTE:   hdr_type += 50; break;
     case DV_INT16:  hdr_type += 40; break;
-    case INT:    hdr_type += 20; break;
+    case DV_INT32:    hdr_type += 20; break;
     case FLOAT:  hdr_type += 10; break;
     case DOUBLE: hdr_type += 00; break;
     default:
@@ -1066,7 +1066,7 @@ ff_fncc_write_mat(vfuncptr func, Var * arg)
                     ss = extract_int(obj, cpos(i,j,k,obj));
                     fwrite(&ss, sizeof(ss), 1, fp);
                     break;
-                case INT:
+                case DV_INT32:
                     ii = extract_int(obj, cpos(i,j,k,obj));
                     fwrite(&ii, sizeof(ii), 1, fp);
                     break;

@@ -24,7 +24,7 @@ ff_display(vfuncptr func, Var *arg)
 
     Alist alist[4];
     alist[0] = make_alist( "object",    ID_VAL, NULL,    &obj);
-    alist[1] = make_alist( "max",       INT,    NULL,    &max);
+    alist[1] = make_alist( "max",       DV_INT32,    NULL,    &max);
     alist[2] = make_alist( "title",     ID_STRING,    NULL, &title);
     alist[3].name = NULL;
 

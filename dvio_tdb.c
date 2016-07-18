@@ -421,8 +421,8 @@ ff_load_tdb(vfuncptr func, Var *arg)
   Alist   alist[4];
   /* make arguments list */
   alist[0] = make_alist("filename", ID_STRING, NULL, &fname);
-  alist[1] = make_alist("reform", INT, NULL, &reform);
-  alist[2] = make_alist("distribute", INT, NULL, &distribute);
+  alist[1] = make_alist("reform", DV_INT32, NULL, &reform);
+  alist[2] = make_alist("distribute", DV_INT32, NULL, &distribute);
   alist[3].name = NULL;
 
   /* process arguments */

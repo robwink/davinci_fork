@@ -514,7 +514,7 @@ iom_edf iomConvertISISType(char* type, int item_bytes)
 
 	q = type;
 
-	if ((!strcmp(q, "INT")) || (!strcmp(q, "UNSIGNED_INTEGER")) || (!strcmp(q, "INTEGER"))) {
+	if ((!strcmp(q, "DV_INT32")) || (!strcmp(q, "UNSIGNED_INTEGER")) || (!strcmp(q, "INTEGER"))) {
 		switch (item_bytes) {
 #ifdef WORDS_BIGENDIAN
 		case 1: format = iom_MSB_INT_1; break;

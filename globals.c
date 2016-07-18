@@ -41,7 +41,7 @@ void make_sym(Var* v, int format, char* str)
 	V_DATA(v)                                  = calloc(1, NBYTES(format));
 
 	switch (format) {
-	case INT: *((int*)(V_DATA(v))) = strtol(str, NULL, 10); break;
+	case DV_INT32: *((int*)(V_DATA(v))) = strtol(str, NULL, 10); break;
 	case FLOAT: {
 		double d;
 		d = strtod(str, NULL);

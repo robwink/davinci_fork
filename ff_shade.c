@@ -136,7 +136,7 @@ ff_shade2(vfuncptr func, Var * arg)
     alist[0] = make_alist( "object",    ID_VAL,    NULL, &obj);
     alist[1] = make_alist( "pixdist",   DOUBLE,     NULL,    &dx);
     alist[2] = make_alist( "angle",     DOUBLE,    NULL,    &sun_angle);
-    alist[3] = make_alist( "noshadow",  INT,       NULL,    &no_shade);
+    alist[3] = make_alist( "noshadow",  DV_INT32,       NULL,    &no_shade);
     alist[4].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(NULL);

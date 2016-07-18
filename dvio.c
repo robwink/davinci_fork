@@ -122,7 +122,7 @@ ihfmt2vfmt(int ifmt)
     switch(ifmt){
     case iom_BYTE:   vfmt = BYTE;   break;
     case iom_SHORT:  vfmt = DV_INT16;  break;
-    case iom_INT:    vfmt = INT;    break;
+    case iom_INT:    vfmt = DV_INT32;    break;
     case iom_FLOAT:  vfmt = FLOAT;  break;
     case iom_DOUBLE: vfmt = DOUBLE; break;
         /* VAX_INT & VAX_FLOAT are deprecated */
@@ -139,7 +139,7 @@ vfmt2ihfmt(int vfmt)
     switch(vfmt){
     case BYTE:   ifmt = iom_BYTE;   break;
     case DV_INT16:  ifmt = iom_SHORT;  break;
-    case INT:    ifmt = iom_INT;    break;
+    case DV_INT32:    ifmt = iom_INT;    break;
     case FLOAT:  ifmt = iom_FLOAT;  break;
     case DOUBLE: ifmt = iom_DOUBLE; break;
     }
@@ -173,7 +173,7 @@ iom_iheader2var(struct iom_iheader *h)
     
     /** Will not be possible now
 	if (V_FORMAT(v) == VAX_FLOAT) V_FORMAT(v) = FLOAT;
-	if (V_FORMAT(v) == VAX_INTEGER) V_FORMAT(v) = INT;
+	if (V_FORMAT(v) == VAX_INTEGER) V_FORMAT(v) = DV_INT32;
     */
 
 	if (h->dim[0] < 0 || h->dim[1] < 0 || h->dim[2] < 0){

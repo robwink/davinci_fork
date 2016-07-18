@@ -24,12 +24,12 @@ ff_raw(vfuncptr func, Var * arg)
 
 	Alist alist[11];
 	alist[0] = make_alist( "filename",  ID_STRING,  NULL,     &filename);
-	alist[1] = make_alist( "x", INT,NULL,&x);
-	alist[2] = make_alist( "y", INT,NULL,&y);
-	alist[3] = make_alist( "z", INT,NULL,&z);
+	alist[1] = make_alist( "x", DV_INT32,NULL,&x);
+	alist[2] = make_alist( "y", DV_INT32,NULL,&y);
+	alist[3] = make_alist( "z", DV_INT32,NULL,&z);
 	alist[4] = make_alist( "org", ID_ENUM,orgs,&org);
 	alist[5] = make_alist( "format", ID_ENUM,formats,&format);
-	alist[6] = make_alist( "header", INT,NULL,&header);
+	alist[6] = make_alist( "header", DV_INT32,NULL,&header);
 	alist[7].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);

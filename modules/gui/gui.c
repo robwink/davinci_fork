@@ -1545,7 +1545,7 @@ dv_XEventFlush(vfuncptr f, Var *args)
 	int		widgetId;
 	MyWidgetList	widgetListEntry;
 
-	alist[0] = make_alist("parent", INT, NULL, &dvWidgetId);
+	alist[0] = make_alist("parent", DV_INT32, NULL, &dvWidgetId);
 	alist[1].name = NULL;
 
 	if (parse_args(f, args, alist) == 0) {
@@ -1853,7 +1853,7 @@ dv_AddCallback(vfuncptr f, Var *args)
 
 	widgetId = DV_INVALID_WIDGET_ID;
 
-	alist[0] = make_alist("widgetid", INT, NULL, &widgetId);
+	alist[0] = make_alist("widgetid", DV_INT32, NULL, &widgetId);
 	alist[1] = make_alist("callback", ID_STRING, NULL, &userCallbackName);
 	alist[2] = make_alist("eval", ID_STRING, NULL, &evalString);
 	alist[3].name = NULL;
@@ -2029,7 +2029,7 @@ dv_ListCallbacks(vfuncptr f, Var *args)
 
 	widgetId = DV_INVALID_WIDGET_ID;
 
-	alist[0] = make_alist("widgetid", INT, NULL, &widgetId);
+	alist[0] = make_alist("widgetid", DV_INT32, NULL, &widgetId);
 	alist[1].name = NULL;
 
 	if (parse_args(f, args, alist) == 0) {
@@ -2141,7 +2141,7 @@ dv_RemoveCallback(vfuncptr f, Var *args)
 
 	widgetId = DV_INVALID_WIDGET_ID;
 
-	alist[0] = make_alist("widgetid", INT, NULL, &widgetId);
+	alist[0] = make_alist("widgetid", DV_INT32, NULL, &widgetId);
 	alist[1] = make_alist("callback", ID_STRING, NULL, &userCallbackName);
 	alist[2].name = NULL;
 
@@ -2260,7 +2260,7 @@ dv_CreateWidget(vfuncptr f, Var *args)
 	tmpDvResources = NULL;
 	dvName = NULL;
 	alist[0] = make_alist("widgetclass", ID_STRING, NULL, &dvWidgetClass);
-	alist[1] = make_alist("parent", INT, NULL, &parentId);
+	alist[1] = make_alist("parent", DV_INT32, NULL, &parentId);
 	alist[2] = make_alist("resources", ID_STRUCT, NULL, &tmpDvResources);
 	alist[3] = make_alist("name", ID_STRING, NULL, &dvName);
 	alist[4].name = NULL;
@@ -2441,7 +2441,7 @@ dv_DestroyWidget(vfuncptr f, Var *args)
 
 	dbgprintf ("dv_DestroyWidget()\n");
 
-	alist[0] = make_alist("widgetid", INT, NULL, &widgetId);
+	alist[0] = make_alist("widgetid", DV_INT32, NULL, &widgetId);
 	alist[1].name = NULL;
 
 	if (parse_args(f, args, alist) == 0) {
@@ -2587,7 +2587,7 @@ dv_Realize(vfuncptr f, Var * args)
 	/* Parse function args. */
 
 	dvWidgetId = DV_INVALID_WIDGET_ID;
-	alist[0] = make_alist("widgetid", INT, NULL, &dvWidgetId);
+	alist[0] = make_alist("widgetid", DV_INT32, NULL, &dvWidgetId);
 	alist[1].name = NULL;
 
 	if (parse_args(f, args, alist) == 0) {
@@ -2684,7 +2684,7 @@ dv_XEventWait(vfuncptr f, Var *args)
 			return NULL;
 		}
 		/* Sanity checks. */
-		if (V_FORMAT(waitList) != INT) {
+		if (V_FORMAT(waitList) != DV_INT32) {
 			dbgprintf ("V_FORMAT(waitList) = %d\n", V_FORMAT(waitList));
 			parse_error("widgetlist must be a vector of integers.");
 			return NULL;
@@ -3103,10 +3103,10 @@ dv_XGet(vfuncptr f, Var * args)
 	dvShowEnums = 0;
 	dvAllResources = 0;
 	dvResourceList = NULL;
-	alist[0] = make_alist("widgetid", INT, NULL, &dvWidgetId);
+	alist[0] = make_alist("widgetid", DV_INT32, NULL, &dvWidgetId);
 	alist[1] = make_alist("resourcelist", ID_UNK, NULL, &dvResourceList);
-	alist[2] = make_alist("all", INT, NULL, &dvAllResources);
-	alist[3] = make_alist("showenums", INT, NULL, &dvShowEnums);
+	alist[2] = make_alist("all", DV_INT32, NULL, &dvAllResources);
+	alist[3] = make_alist("showenums", DV_INT32, NULL, &dvShowEnums);
 	alist[4].name = NULL;
 
 	if (parse_args(f, args, alist) == 0) {
@@ -3375,7 +3375,7 @@ dv_XSet(vfuncptr f, Var * args)
 
 	/* Parse function args. */
 	dvWidgetId = DV_INVALID_WIDGET_ID;
-	alist[0] = make_alist("widgetid", INT, NULL, &dvWidgetId);
+	alist[0] = make_alist("widgetid", DV_INT32, NULL, &dvWidgetId);
 	alist[1] = make_alist("resources", ID_STRUCT, NULL, &usrStruct);
 	alist[2].name = NULL;
 

@@ -574,7 +574,7 @@ ff_convolve(vfuncptr func, Var * arg)
 	Alist alist[5];
 	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
 	alist[1] = make_alist("kernel",  	ID_VAL,		NULL,	&kernel);
-	alist[2] = make_alist("normalize", 	INT, NULL, &norm);
+	alist[2] = make_alist("normalize", 	DV_INT32, NULL, &norm);
 	alist[3] = make_alist("ignore", 	FLOAT, NULL, &ignore);
 	alist[4].name = NULL;
 
@@ -692,7 +692,7 @@ ff_convolve3(vfuncptr func, Var * arg)
 	Alist alist[4];
 	alist[0] = make_alist("object",		ID_VAL,		NULL,	&obj);
 	alist[1] = make_alist("kernel",  	ID_VAL,		NULL,	&kernel);
-	alist[2] = make_alist("normalize", 	INT, NULL, &norm);
+	alist[2] = make_alist("normalize", 	DV_INT32, NULL, &norm);
 	alist[3].name = NULL;
 
 
@@ -995,10 +995,10 @@ ff_maxpos(vfuncptr func, Var *arg)
 
   Alist alist[6];
   alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-  alist[1] = make_alist("iter",      INT,       NULL,  &iter);
+  alist[1] = make_alist("iter",      DV_INT32,       NULL,  &iter);
   alist[2] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
   alist[3] = make_alist("lt",        FLOAT,     NULL,  &lt);
-  alist[4] = make_alist("showval",   INT,       NULL,  &showval);
+  alist[4] = make_alist("showval",   DV_INT32,       NULL,  &showval);
   alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -1084,7 +1084,7 @@ ff_maxpos(vfuncptr func, Var *arg)
   /* return the findings */
   free(vals);
 
-  out = newVal(BSQ, 3, iter, 1, INT, pos);
+  out = newVal(BSQ, 3, iter, 1, DV_INT32, pos);
   return(out);
 }
 
@@ -1119,10 +1119,10 @@ ff_minpos(vfuncptr func, Var *arg)
 
   Alist alist[6];
   alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-  alist[1] = make_alist("iter",      INT,       NULL,  &iter);
+  alist[1] = make_alist("iter",      DV_INT32,       NULL,  &iter);
   alist[2] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
   alist[3] = make_alist("gt",        FLOAT,     NULL,  &gt);
-  alist[4] = make_alist("showval",   INT,       NULL,  &showval);
+  alist[4] = make_alist("showval",   DV_INT32,       NULL,  &showval);
   alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -1206,7 +1206,7 @@ ff_minpos(vfuncptr func, Var *arg)
   }
 
   /* return the findings */
-  out = newVal(BSQ, 3, iter, 1, INT, pos);
+  out = newVal(BSQ, 3, iter, 1, DV_INT32, pos);
   return(out);
 }
 
@@ -1241,9 +1241,9 @@ ff_valpos(vfuncptr func, Var *arg)
   Alist alist[6];
   alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
   alist[1] = make_alist("value",     FLOAT,     NULL,  &myval);
-  alist[2] = make_alist("iter",      INT,       NULL,  &iter);
+  alist[2] = make_alist("iter",      DV_INT32,       NULL,  &iter);
   alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
-  alist[4] = make_alist("showval",   INT,       NULL,  &showval);
+  alist[4] = make_alist("showval",   DV_INT32,       NULL,  &showval);
   alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -1327,7 +1327,7 @@ ff_valpos(vfuncptr func, Var *arg)
   /* return the findings */
   free(vals);
 
-  out = newVal(BSQ, 3, iter, 1, INT, pos);
+  out = newVal(BSQ, 3, iter, 1, DV_INT32, pos);
   return(out);
 }
 

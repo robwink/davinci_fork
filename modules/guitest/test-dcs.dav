@@ -3,7 +3,7 @@ load_module("gui")
 define dcs(ignore,sample,variance)
 {
 	if ($ARGC != 1) {
-		printf("usage: dcs(input_image [,ignore=INT][,sample=VAL])\n")
+		printf("usage: dcs(input_image [,ignore=DV_INT32][,sample=VAL])\n")
 		return(0);
 	}
 

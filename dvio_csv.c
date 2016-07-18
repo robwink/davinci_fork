@@ -150,7 +150,7 @@ davinci_type(
     switch(c) {
         case TBYTE:     dav_type = BYTE;        break;
         case TSHORT:    dav_type = DV_INT16;       break;
-        case TINT:      dav_type = INT;         break;
+        case TINT:      dav_type = DV_INT32;         break;
         case TFLOAT:    dav_type = FLOAT;       break;
         case TDOUBLE:   dav_type = DOUBLE;       break;
 
@@ -1237,8 +1237,8 @@ ff_loadcsv(
     alist[0] = make_alist( "filename",      ID_STRING,    NULL,        &filename);
     alist[1] = make_alist( "separator",     ID_STRING,    NULL,        &field_delim);
     alist[2] = make_alist( "delimiter",     ID_STRING,    NULL,        &field_delim);
-    alist[3] = make_alist( "header",        INT,          NULL,        &header);
-    alist[4] = make_alist( "collapse",      INT,          NULL,        &collapse_fdelim);
+    alist[3] = make_alist( "header",        DV_INT32,          NULL,        &header);
+    alist[4] = make_alist( "collapse",      DV_INT32,          NULL,        &collapse_fdelim);
     alist[5].name = NULL;
 
     if (parse_args(func, args, alist) == 0) return(NULL);
@@ -1429,7 +1429,7 @@ dv_WriteCSV(Var* the_data, char* filename, char* field_delim, int header, int fo
 					{
 						case BYTE:		fprintf(file, "%u", ((unsigned char*)V_DATA(data[i]))[row*columns+j] );	break;
 						case DV_INT16:		fprintf(file, "%d", ((short*)V_DATA(data[i]))[row*columns+j] );			break;
-						case INT:		fprintf(file, "%d", ((int*)V_DATA(data[i]))[row*columns+j] );			break;
+						case DV_INT32:		fprintf(file, "%d", ((int*)V_DATA(data[i]))[row*columns+j] );			break;
 						case FLOAT:		fprintf(file, "%.4f", ((float*)V_DATA(data[i]))[row*columns+j] );		break;
 					  //case FLOAT:		fprintf(file, "%G", ((float*)V_DATA(data[i]))[row*columns+j] );			break;
 						case DOUBLE:	fprintf(file, "%.1f", ((double*)V_DATA(data[i]))[row*columns+j] );		break;

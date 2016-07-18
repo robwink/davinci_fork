@@ -109,10 +109,10 @@ ff_pnmcut(vfuncptr f, Var *args)
 
 	Alist alist[6];
 	alist[0] = make_alist("object", ID_VAL, NULL, &obj);
-	alist[1] = make_alist("left", INT, NULL, &left);
-	alist[2] = make_alist("top", INT, NULL, &top);
-	alist[3] = make_alist("width", INT, NULL, &width);
-	alist[4] = make_alist("height", INT, NULL, &height);
+	alist[1] = make_alist("left", DV_INT32, NULL, &left);
+	alist[2] = make_alist("top", DV_INT32, NULL, &top);
+	alist[3] = make_alist("width", DV_INT32, NULL, &width);
+	alist[4] = make_alist("height", DV_INT32, NULL, &height);
 	alist[5].name = NULL;
 
 	// Check arguments are valid
@@ -155,8 +155,8 @@ ff_pnmscale(vfuncptr f, Var *args)
 
 	Alist alist[6];
 	alist[0] = make_alist("object", ID_VAL, NULL, &obj);
-	alist[1] = make_alist("xsize", INT, NULL, &xsize);
-	alist[2] = make_alist("ysize", INT, NULL, &ysize);
+	alist[1] = make_alist("xsize", DV_INT32, NULL, &xsize);
+	alist[2] = make_alist("ysize", DV_INT32, NULL, &ysize);
 	alist[3] = make_alist("xscale", FLOAT, NULL, &xscale);
 	alist[4] = make_alist("yscale", FLOAT, NULL, &yscale);
 	alist[5].name = NULL;
@@ -207,10 +207,10 @@ ff_pnmcrop(vfuncptr f, Var *args)
 
 	Alist alist[6];
 	alist[0] = make_alist("object", ID_VAL, NULL, &obj);
-	alist[1] = make_alist("left", INT, NULL, &cLeft);
-	alist[2] = make_alist("right", INT, NULL, &cRight);
-	alist[3] = make_alist("top", INT, NULL, &cTop);
-	alist[4] = make_alist("bottom", INT, NULL, &cBottom);
+	alist[1] = make_alist("left", DV_INT32, NULL, &cLeft);
+	alist[2] = make_alist("right", DV_INT32, NULL, &cRight);
+	alist[3] = make_alist("top", DV_INT32, NULL, &cTop);
+	alist[4] = make_alist("bottom", DV_INT32, NULL, &cBottom);
 	alist[5].name = NULL;
 
 	if (0 == parse_args(f, args, alist) || NULL == obj)
@@ -257,11 +257,11 @@ ff_pnmpad(vfuncptr f, Var *args)
 
 	Alist alist[7];
 	alist[0] = make_alist("object", ID_VAL, NULL, &obj);
-	alist[1] = make_alist("color", INT, NULL, &pColor);
-	alist[2] = make_alist("left", INT, NULL, &pLeft);
-	alist[3] = make_alist("right", INT, NULL, &pRight);
-	alist[4] = make_alist("top", INT, NULL, &pTop);
-	alist[5] = make_alist("bottom", INT, NULL, &pBottom);
+	alist[1] = make_alist("color", DV_INT32, NULL, &pColor);
+	alist[2] = make_alist("left", DV_INT32, NULL, &pLeft);
+	alist[3] = make_alist("right", DV_INT32, NULL, &pRight);
+	alist[4] = make_alist("top", DV_INT32, NULL, &pTop);
+	alist[5] = make_alist("bottom", DV_INT32, NULL, &pBottom);
 	alist[6].name = NULL;
 
 	if (0 == parse_args(f, args, alist) || NULL == obj)
@@ -297,7 +297,7 @@ ff_destripe(vfuncptr f, Var *args)
 
 	Alist alist[3];
 	alist[0] = make_alist("object", ID_VAL, NULL, &obj);
-	alist[1] = make_alist("detectors", INT, NULL, &detectors);
+	alist[1] = make_alist("detectors", DV_INT32, NULL, &detectors);
 	alist[2].name = NULL;
 
 	if (0 == parse_args(f, args, alist) || NULL == obj)
@@ -664,7 +664,7 @@ static Var *scale_doit(Var* obj, int x, int y, int z, int newcols, int newrows)
 					((short*)data)[k1]
 					    = (short)GetPixel(obj,orgX,x,y,orgY,k);
 					break;
-				case INT:
+				case DV_INT32:
 					((int*)data)[k1]
 					    = (int)GetPixel(obj,orgX,x,y,orgY,k);
 					break;
@@ -714,7 +714,7 @@ static int fill_object_with_pad_color(int nx, int ny, int z,
 				case DV_INT16:
 					((short*)data)[k1] = color;
 					break;
-				case INT:
+				case DV_INT32:
 					((int*)data)[k1] = color;
 					break;
 				case FLOAT:
@@ -757,7 +757,7 @@ static int map_image(int x, int y, int z, int left, int top,
 				case DV_INT16:
 					((short*)data)[k1] = (short)extract_int(obj,k2);
 					break;
-				case INT:
+				case DV_INT32:
 					((int*)data)[k1] = extract_int(obj,k2);
 					break;
 				case FLOAT:
@@ -870,7 +870,7 @@ static void fix_stripe(void* data, Var* obj,
 			   extract_int(obj,k3)
 			                  ) / 2;
 			break;
-		case INT:
+		case DV_INT32:
 			((int*)data)[k1] = (
 			   extract_int(obj,k2) +
 			   extract_int(obj,k3)
@@ -901,7 +901,7 @@ static void fix_stripe(void* data, Var* obj,
 		case DV_INT16:
 			((short*)data)[k1] = extract_int(obj,k1);
 			break;
-		case INT:
+		case DV_INT32:
 			((int*)data)[k1] = extract_int(obj,k1);
 			break;
 		case FLOAT:

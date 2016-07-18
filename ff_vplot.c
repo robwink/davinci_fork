@@ -215,7 +215,7 @@ ff_vplot(vfuncptr func, Var *arg)
 	if (V_KEYVAL(av[i]) != NULL) {
 	  if(V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	    v = V_KEYVAL(av[i]);
-	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32) {
 	      globalNums[0] = 1;
 	      globalNums[1] = (double)extract_int(v,0);
 	    } else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
@@ -236,7 +236,7 @@ ff_vplot(vfuncptr func, Var *arg)
 	if (V_KEYVAL(av[i]) != NULL) {
 	  if(V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	    v = V_KEYVAL(av[i]);
-	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32) {
 	      globalNums[2] = 1;
 	      globalNums[3] = (double)extract_int(v,0);
 	    } else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
@@ -257,7 +257,7 @@ ff_vplot(vfuncptr func, Var *arg)
 	if (V_KEYVAL(av[i]) != NULL) {
 	  if(V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	    v = V_KEYVAL(av[i]);
-	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32) {
 	      globalNums[4] = 1;
 	      globalNums[5] = (double)extract_int(v,0);
 	    } else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
@@ -278,7 +278,7 @@ ff_vplot(vfuncptr func, Var *arg)
 	if (V_KEYVAL(av[i]) != NULL) {
 	  if(V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	    v = V_KEYVAL(av[i]);
-	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32) {
 	      globalNums[6] = 1;
 	      globalNums[7] = (double)extract_int(v,0);
 	    } else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
@@ -299,7 +299,7 @@ ff_vplot(vfuncptr func, Var *arg)
 	if (V_KEYVAL(av[i]) != NULL) {
 	  if(V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	    v = V_KEYVAL(av[i]);
-	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32) {
 	      globalNums[8] = 1;
 	      globalNums[9] = (double)extract_int(v,0);
 	    } else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
@@ -387,7 +387,7 @@ ff_vplot(vfuncptr func, Var *arg)
 	if (V_KEYVAL(av[i]) != NULL) {
 	  if(V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	    v = V_KEYVAL(av[i]);
-	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32) {
 	      globalNums[15] = (double)extract_int(v,0);
 	    } else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE) {
 	      globalNums[15] = extract_double(v,0);
@@ -656,7 +656,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	find_struct(s,"width",&v);
 	if(v!=NULL) {
 	  if(V_TYPE(v) == ID_VAL) {
-	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32)
 	      width = extract_int(v,0);
 	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
 	      width = (int)extract_double(v,0);
@@ -703,7 +703,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	find_struct(s,"color",&v);
 	if(v!=NULL) {
 	  if(V_TYPE(v) == ID_VAL) {
-	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32)
 	      color = extract_int(v,0);
 	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
 	      color = (int)extract_double(v,0);
@@ -723,7 +723,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	find_struct(s,"ignore",&v);
 	if(v!=NULL) {
 	  if(V_TYPE(v) == ID_VAL) {
-	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32) {
 	      ignore = (double)extract_int(v,0);
 	      iflag = 1;
 	    }
@@ -744,7 +744,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	find_struct(s,"iabove",&v);
 	if(v!=NULL) {
 	  if(V_TYPE(v) == ID_VAL) {
-	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32) {
 	      ignore_above = (double)extract_int(v,0);
 	      iaflag = 1;
 	    }
@@ -765,7 +765,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	find_struct(s,"ibelow",&v);
 	if(v!=NULL) {
 	  if(V_TYPE(v) == ID_VAL) {
-	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32) {
 	      ignore_below = (double)extract_int(v,0);
 	      ibflag = 1;
 	    }
@@ -786,7 +786,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	find_struct(s,"ixabove",&v);
 	if(v!=NULL) {
 	  if(V_TYPE(v) == ID_VAL) {
-	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32) {
 	      ignore_x_above = (double)extract_int(v,0);
 	      ixaflag = 1;
 	    }
@@ -807,7 +807,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	find_struct(s,"ixbelow",&v);
 	if(v!=NULL) {
 	  if(V_TYPE(v) == ID_VAL) {
-	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32) {
 	      ignore_x_below = (double)extract_int(v,0);
 	      ixbflag = 1;
 	    }
@@ -828,7 +828,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	find_struct(s,"offset",&v);
 	if(v!=NULL) {
 	  if(V_TYPE(v) == ID_VAL) {
-	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32)
 	      offset = (double)extract_int(v,0);
 
 	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
@@ -923,7 +923,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	if (V_KEYVAL(av[i]) != NULL) {
 	  v = V_KEYVAL(av[i]);
 	  if(V_TYPE(v) == ID_VAL) {
-	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
+	    if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32)
 	      ignore = (double)extract_int(v,0);
 	    else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
 	      ignore = extract_double(v,0);
@@ -939,7 +939,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
       } else if (!(name_check(av[i]->name, "iabove", 2))) {
 	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	  v = V_KEYVAL(av[i]);
-	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
+	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32)
 	    ignore_above = (double)extract_int(v,0);
 	  else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
 	    ignore_above = extract_double(v,0);
@@ -952,7 +952,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
       } else if (!(name_check(av[i]->name, "ibelow", 2))) {
 	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	  v = V_KEYVAL(av[i]);
-	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
+	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32)
 	    ignore_below = (double)extract_int(v,0);
 	  else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
 	    ignore_below = extract_double(v,0);
@@ -965,7 +965,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
       } else if (!(name_check(av[i]->name, "ixabove", 3))) {
 	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	  v = V_KEYVAL(av[i]);
-	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32) {
 	    ignore_x_above = (double)extract_int(v,0);
 	    ixaflag = 1;
 	  }
@@ -981,7 +981,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
       } else if (!(name_check(av[i]->name, "ixbelow", 3))) {
 	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	  v = V_KEYVAL(av[i]);
-	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT) {
+	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32) {
 	    ignore_x_below = (double)extract_int(v,0);
 	    ixbflag = 1;
 	  }
@@ -997,7 +997,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
       } else if (!(name_check(av[i]->name, "offset", 1))) {
 	if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 	  v = V_KEYVAL(av[i]);
-	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=INT)
+	  if(V_FORMAT(v)>=BYTE && V_FORMAT(v)<=DV_INT32)
 	    offset = (double)extract_int(v,0);
 	  else if(V_FORMAT(v)>=FLOAT && V_FORMAT(v)<=DOUBLE)
 	    offset = extract_double(v,0);
@@ -1342,7 +1342,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	  switch (V_FORMAT(v)) {
 	  case BYTE:
 	  case DV_INT16:
-	  case INT:
+	  case DV_INT32:
 	    y[k] = (double) extract_int(v, obj_index);
 	  break;
 	  case FLOAT:
@@ -1354,7 +1354,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	    switch (V_FORMAT(v)) {
 	    case BYTE:
 	    case DV_INT16:
-	    case INT:
+	    case DV_INT32:
 	      x[k] = (double)extract_int(xaxis_i, rpos(obj_index, v, xaxis_i));
 	    break;
 	    case FLOAT:
@@ -1372,7 +1372,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	    switch (V_FORMAT(v)) {
 	    case BYTE:
 	    case DV_INT16:
-	    case INT:
+	    case DV_INT32:
 	      if(V_DSIZE(errorb) == 1)
 		Err1[k] = (double)extract_int(errorb,0);
 	      else {
@@ -1433,7 +1433,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	      switch (V_FORMAT(v)) {
           	  case BYTE:
           	  case DV_INT16:
-          	  case INT:
+          	  case DV_INT32:
           		  fprintf(fp, "%d\t %d\n", (int)x[k], (int)yval);
               break;
           	  case FLOAT:
@@ -1448,7 +1448,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	      switch (V_FORMAT(v)) {
         	  case BYTE:
         	  case DV_INT16:
-        	  case INT:
+        	  case DV_INT32:
         		  fprintf(fp, "%d\t %d\t %d\n", (int)x[k], (int)yval, (int)Err1[k]);
               break;
         	  case FLOAT:
@@ -1467,7 +1467,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 	      switch (V_FORMAT(v)) {
       	  case BYTE:
       	  case DV_INT16:
-      	  case INT:
+      	  case DV_INT32:
       		fprintf(fp, "%d\t %d\t %d\t %d\n", (int)x[k], (int)yval, (int)e1, (int)e2);
           break;
       	  case FLOAT:
@@ -1484,7 +1484,7 @@ int plot_chopper(Var **av, int start_ct, int end_ct, int Onum, char *CommandBuff
 		switch (V_FORMAT(v)) {
 		      	  case BYTE:
 		      	  case DV_INT16:
-		      	  case INT:
+		      	  case DV_INT32:
 		      		fprintf(fp, "%d\t %d\t %d\t %d\t %d\t %d\n", (int)x[k], (int)yval, (int)Err1[k], (int)Err2[k], (int)e1, (int)e2);
 		      	  break;
 		      	  case FLOAT:

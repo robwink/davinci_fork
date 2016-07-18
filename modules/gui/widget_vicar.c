@@ -368,7 +368,7 @@ getZoom(Widget widget) {
 void
 setZoom(Widget widget, Var *value)
 {
-	if (V_TYPE(value) != ID_VAL || V_FORMAT(value) > INT) {
+	if (V_TYPE(value) != ID_VAL || V_FORMAT(value) > DV_INT32) {
 		parse_error("VICAR zoom resource must be an integer");
 		return;
 	}
@@ -452,7 +452,7 @@ setImage(Widget widget, Var *value)
 		case DV_INT16:
 			dataType = XvicHALF;
 			break;
-		case INT:
+		case DV_INT32:
 			dataType = XvicFULL;
 			break;
 		case FLOAT:
@@ -462,7 +462,7 @@ setImage(Widget widget, Var *value)
 			dataType = XvicDOUBLE;
 			break;
 		default:
-			parse_error("VICAR image data must be BYTE, DV_INT16, INT, FLOAT, or DOUBLE.");
+			parse_error("VICAR image data must be BYTE, DV_INT16, DV_INT32, FLOAT, or DOUBLE.");
 			return 0;
 	}
 
@@ -831,7 +831,7 @@ setOverlay(Widget widget, Var *value)
 
 	if (find_struct(value, "id", &vId) < 0 ||
 			V_TYPE(vId) != ID_VAL ||
-			V_FORMAT(vId) > INT) {
+			V_FORMAT(vId) > DV_INT32) {
 		parse_error("VICAR overlay: must be a struct containing id (integer).");
 		return;
 	}
@@ -1681,11 +1681,11 @@ Var *getLUT (Widget widget)
 		case 1:
 			lut = (int *) calloc (LUT_SIZE * 1, sizeof(int));
 			XvicImageGetMonoLUT (widget, lut);
-			return newVal (BSQ, LUT_SIZE, 1, 1, INT, lut);
+			return newVal (BSQ, LUT_SIZE, 1, 1, DV_INT32, lut);
 		case 3:
 			lut = (int *) calloc (LUT_SIZE * 3, sizeof(int));
 			XvicImageGetColorLUT (widget, lut+LUT_SIZE*0, lut+LUT_SIZE*1, lut+LUT_SIZE*2);
-			return newVal (BSQ, LUT_SIZE, 3, 1, INT, lut);
+			return newVal (BSQ, LUT_SIZE, 3, 1, DV_INT32, lut);
 		default:
 			parse_error ("Unable to retrieve LUT from non-mono, non-color image data\n");
 			return newInt(-1);

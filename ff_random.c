@@ -26,9 +26,9 @@ ff_random(vfuncptr func, Var * arg)
                         "mrand48", "drand48", "uniform", "rnoise", NULL};
     Var *seedvar = NULL;
     Alist alist[6];
-	alist[0] = make_alist("x", INT, NULL, &x);
-	alist[1] = make_alist("y", INT, NULL, &y);
-	alist[2] = make_alist("z", INT, NULL, &z);
+	alist[0] = make_alist("x", DV_INT32, NULL, &x);
+	alist[1] = make_alist("y", DV_INT32, NULL, &y);
+	alist[2] = make_alist("z", DV_INT32, NULL, &z);
 	alist[3] = make_alist("seed", ID_VAL, NULL, &seedvar);
 	alist[4] = make_alist("type", ID_ENUM, options, &ptr);
 	alist[5].name = NULL;

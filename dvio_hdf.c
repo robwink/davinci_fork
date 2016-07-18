@@ -100,7 +100,7 @@ void WriteHDF5(hid_t parent, char* name, Var* v, int hdf_old)
 		case BYTE: datatype   = H5Tcopy(H5T_NATIVE_UCHAR); break;
 		case DV_INT16: datatype  = H5Tcopy(H5T_NATIVE_SHORT); break;
 		case UINT16: datatype = H5Tcopy(H5T_NATIVE_USHORT); break;
-		case INT: datatype    = H5Tcopy(H5T_NATIVE_INT); break;
+		case DV_INT32: datatype    = H5Tcopy(H5T_NATIVE_INT); break;
 		case FLOAT: datatype  = H5Tcopy(H5T_NATIVE_FLOAT); break;
 		case DOUBLE: datatype = H5Tcopy(H5T_NATIVE_DOUBLE); break;
 		}
@@ -284,7 +284,7 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 			else if (H5Tequal(native_type_data, H5T_NATIVE_USHORT))
 				type = UINT16;
 			else if (H5Tequal(native_type_data, H5T_NATIVE_INT))
-				type = INT;
+				type = DV_INT32;
 			else if (H5Tequal(native_type_data, H5T_NATIVE_FLOAT))
 				type = FLOAT;
 			else if (H5Tequal(native_type_data, H5T_NATIVE_DOUBLE))
@@ -343,15 +343,15 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 			 * // drd Bug 2208 Loading a particular hdf5 file kills davinci
 			 * For the time being, there is no UINT16 type
 			 * functionally available in davinci.
-			 * We can promote any UINT16 value to INT
+			 * We can promote any UINT16 value to DV_INT32
 			 * and not change sign
 			 */
-			if (type == UINT16) { // promote to INT
-				databuf2 = calloc(dsize, NBYTES(INT));
+			if (type == UINT16) { // promote to DV_INT32
+				databuf2 = calloc(dsize, NBYTES(DV_INT32));
 				for (i = 0; i < dsize; i++) {
 					((int*)databuf2)[i] = (int)((unsigned short*)databuf)[i];
 				}
-				type = INT;
+				type = DV_INT32;
 				free(databuf);
 				databuf = databuf2;
 			}

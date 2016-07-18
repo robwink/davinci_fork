@@ -132,8 +132,8 @@ ff_unpack(vfuncptr func, Var* arg)
 	Alist alist[6];
 	alist[0] = make_alist(ARG_TEMPLATE,   ID_STRING,  NULL,  &template);
 	alist[1] = make_alist(ARG_FILENAME,   ID_STRING,  NULL,  &filename);
-	alist[2] = make_alist(ARG_SKIP,       INT,        NULL,  &hdr_length);
-	alist[3] = make_alist(ARG_COUNT,      INT,        NULL,  &rows);
+	alist[2] = make_alist(ARG_SKIP,       DV_INT32,        NULL,  &hdr_length);
+	alist[3] = make_alist(ARG_COUNT,      DV_INT32,        NULL,  &rows);
 	alist[4] = make_alist(ARG_COL_NAMES,  ID_UNK,     NULL,  &column_names);
 	alist[5].name = NULL;
 
@@ -210,7 +210,7 @@ static int convert_types(data* thedata, int num_items, int rows)
 				if( thedata[i].numbytes == 2 )
 					thedata[i].type = DV_INT16;
 				else
-					thedata[i].type = INT;
+					thedata[i].type = DV_INT32;
 				break;
 
 			case UNSIGNED_LSB_INT:
@@ -1274,10 +1274,10 @@ ff_pack(vfuncptr func, Var* arg)
 	alist[0] = make_alist(ARG_STRUCT,     ID_STRUCT,  NULL,  &toPack);
 	alist[1] = make_alist(ARG_TEMPLATE,   ID_STRING,  NULL,  &template);
 	alist[2] = make_alist(ARG_FILENAME,   ID_STRING,  NULL,  &filename);
-	alist[3] = make_alist(ARG_SKIP,       INT,        NULL,  &skip);
-	alist[4] = make_alist(ARG_COUNT,      INT,        NULL,  &count);
+	alist[3] = make_alist(ARG_SKIP,       DV_INT32,        NULL,  &skip);
+	alist[4] = make_alist(ARG_COUNT,      DV_INT32,        NULL,  &count);
 	alist[5] = make_alist(ARG_COL_NAMES,  ID_UNK,     NULL,  &column_names);
-	alist[6] = make_alist(ARG_FORCE,      INT,        NULL,  &force);
+	alist[6] = make_alist(ARG_FORCE,      DV_INT32,        NULL,  &force);
 	alist[7].name = NULL;
 
 	// TODO add truncate parameter to truncate at the end of current write
@@ -1498,7 +1498,7 @@ parse_struct(Var* toPack, Var* column_names, int* numData, int* greatestNumRows)
 			reg_data[i].input->columns = V_SIZE(element)[0]; // x value = columns
 			reg_data[i].array = V_DATA(element);
 			reg_data[i].strarray = NULL;
-			reg_data[i].type = V_FORMAT(element); // DV_INT16, INT, BYTE, FLOAT, DOUBLE
+			reg_data[i].type = V_FORMAT(element); // DV_INT16, DV_INT32, BYTE, FLOAT, DOUBLE
 			break;
 
 		default:
@@ -1663,7 +1663,7 @@ convert_to_ext_fmt(char *from, int ffmt, char *to, int tfmt, int tolen)
 	switch(ffmt){
 	case BYTE:      ui = *(unsigned char *)from; si = (int         )ui; d  = (double)ui; break;
 	case DV_INT16:     si = *(short         *)from; ui = (unsigned int)si; d  = (double)si; break;
-	case INT:       si = *(int           *)from; ui = (unsigned int)si; d  = (double)si; break;
+	case DV_INT32:       si = *(int           *)from; ui = (unsigned int)si; d  = (double)si; break;
 	case FLOAT:     d  = *(float         *)from; ui = (unsigned int)d;  si = (int   )d;  break;
 	case DOUBLE:    d  = *(double        *)from; ui = (unsigned int)d;  si = (int   )d;  break;
 	case ID_STRING: d  = atof(from); ui = strtoul(from,NULL,10); si = atoi(from);  break;
@@ -1681,7 +1681,7 @@ convert_to_ext_fmt(char *from, int ffmt, char *to, int tfmt, int tolen)
 		switch(ffmt){
 		case BYTE:      sprintf(str,"%u",ui); break;
 		case DV_INT16:
-		case INT:       sprintf(str,"%d",si); break;
+		case DV_INT32:       sprintf(str,"%d",si); break;
 		case FLOAT:
 		case DOUBLE:    sprintf(str,"%g",d); break;
 		case ID_STRING: sprintf(str,"%s",from); break;

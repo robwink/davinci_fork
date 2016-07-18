@@ -208,7 +208,7 @@ reset_vlex(
 
 typedef enum {
     VTOK_ERR,         /* ERROR */
-    VTOK_INT,         /* INT value encountered */
+    VTOK_INT,         /* DV_INT32 value encountered */
     VTOK_REAL,        /* REAL value encountered */
     VTOK_STR,         /* STRING encountered */
     VTOK_NA,          /* N/A encountered */
@@ -367,7 +367,7 @@ vlex_next_tok(
             h->q = *le = q;
             return VTOK_REAL;
 
-        case 910:   /* Accept INT */
+        case 910:   /* Accept DV_INT32 */
             /* [+-]{0,1}[0-9]+ */
             *ls = p;
             h->q = *le = q;
@@ -607,7 +607,7 @@ davinci_type(
         switch(csize){
         case 1: dav_type = BYTE; break;
         case 2: dav_type = DV_INT16; break;
-        default: dav_type = INT; break;
+        default: dav_type = DV_INT32; break;
         }
         break;
 
@@ -945,7 +945,7 @@ vpass2(
                         short_data[i][idx] = atoi(vals[t->sno]); break;
                
                     default:
-                    case INT:
+                    case DV_INT32:
                         int_data[i][idx] = atoi(vals[t->sno]); break;
                     }
                     break;
@@ -1184,7 +1184,7 @@ vanread(
     for (i = 0; i < nfields; i++){
         fprintf(stdout, "%s[%d]: %s\n",
                 fields[i]->name, fields[i]->chain_len,
-                (fields[i]->data_type == TINT)?  "INT":
+                (fields[i]->data_type == TINT)?  "DV_INT32":
                 (fields[i]->data_type == TREAL)? "REAL":
                 (fields[i]->data_type == TSTR)?  "STR":
                 "UNKNOWN");

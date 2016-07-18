@@ -283,7 +283,7 @@ Read_FITS_Image(fitsfile *fptr) {
 		break;
 
 	case LONG_IMG:
-		format = INT;
+		format = DV_INT32;
 		datatype = TINT;
 		break;
 
@@ -568,7 +568,7 @@ int fits_tbl_type_for_column_var(Var *coldata) {
 			return TBYTE;
 		case DV_INT16:
 			return TSHORT;
-		case INT:
+		case DV_INT32:
 			return TINT;
 		case FLOAT:
 			return GetX(coldata)> 1? TCOMPLEX: TFLOAT;
@@ -771,7 +771,7 @@ Read_FITS_Table(fitsfile *fptr) {
 		case TLONG:
 		case TINT:
 			datatype = TINT;
-			fmt = INT;
+			fmt = DV_INT32;
 			x = repeat;
 			y = nrows;
 			z = 1;
@@ -849,7 +849,7 @@ makeVarFromFITSLabel(char *fits_value, char key_type) {
 	case 'I':
 		i = (int *) calloc(1, sizeof(int));
 		*i = atoi(fits_value);
-		v = newVal(BSQ, 1, 1, 1, INT, i);
+		v = newVal(BSQ, 1, 1, 1, DV_INT32, i);
 		break;
 	case 'L':
 		i = (int *) calloc(1, sizeof(int));
@@ -857,7 +857,7 @@ makeVarFromFITSLabel(char *fits_value, char key_type) {
 			*i = 1;
 		else
 			*i = 0;
-		v = newVal(BSQ, 1, 1, 1, INT, i);
+		v = newVal(BSQ, 1, 1, 1, DV_INT32, i);
 		break;
 
 	case 'F':
@@ -1069,7 +1069,7 @@ int VarType2FitsType(Var *obj, int *bitpix, int *datatype) {
 		*datatype = TSHORT;
 		break;
 
-	case INT:
+	case DV_INT32:
 		*bitpix = LONG_IMG; /* Yeah, I know, it says long...but it means 32-bit */
 		*datatype = TINT; /*Future's so bright...*/
 		break;
@@ -1467,7 +1467,7 @@ WriteFITS(vfuncptr func, Var * arg) {
 	Alist alist[4];
 	alist[0] = make_alist("obj", ID_UNK, NULL, &obj);
 	alist[1] = make_alist("filename", ID_STRING, NULL, &filename);
-	alist[2] = make_alist("force", INT, NULL, &force);
+	alist[2] = make_alist("force", DV_INT32, NULL, &force);
 	alist[3].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0)

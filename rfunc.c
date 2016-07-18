@@ -160,15 +160,15 @@ R_MakeArgs(ArgsRegister *r, Var *arg, u_char *out)
             }
             memcpy(out+alist[j].offset, &v, sizeof(char *));
             alist[j].filled = 1;
-        } else if (alist[j].type == INT) {
+        } else if (alist[j].type == DV_INT32) {
             int ival;
             if ((e = eval(v)) == NULL) {
                 parse_error("%s: Variable not found: %s", fname, V_NAME(v));
                 return(NULL);
             }
             v = e;
-            if (V_TYPE(v) != ID_VAL || V_FORMAT(v) > INT) {
-                parse_error("Illegal argument %s(...%s=...), expected INT", 
+            if (V_TYPE(v) != ID_VAL || V_FORMAT(v) > DV_INT32) {
+                parse_error("Illegal argument %s(...%s=...), expected DV_INT32", 
                             fname, alist[j].name);
                 return(NULL);
             }

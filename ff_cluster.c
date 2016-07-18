@@ -15,7 +15,7 @@
  **
  ** Args:
  **             object = VAR
- **             radius = INT
+ **             radius = DV_INT32
  **             threshold = FLOAT
  ** Returns:
  **     Cluster overlay image
@@ -38,8 +38,8 @@ ff_cluster(vfuncptr func, Var * arg)
 
 	Alist alist[4];
 	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
-	alist[1] = make_alist( "radius",    INT,    NULL,     &radius);
-	alist[2] = make_alist( "threshold", INT,    NULL,     &threshold);
+	alist[1] = make_alist( "radius",    DV_INT32,    NULL,     &radius);
+	alist[2] = make_alist( "threshold", DV_INT32,    NULL,     &threshold);
 	alist[3].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -87,8 +87,8 @@ ff_ccount(vfuncptr func, Var * arg)
 
 	Alist alist[4];
 	alist[0] = make_alist( "object",    ID_VAL,    NULL,     &obj);
-	alist[1] = make_alist( "threshold", INT,    NULL,    &threshold);
-	alist[2] = make_alist( "ignore",    INT,    NULL,     &ignore);
+	alist[1] = make_alist( "threshold", DV_INT32,    NULL,    &threshold);
+	alist[2] = make_alist( "ignore",    DV_INT32,    NULL,     &ignore);
 	alist[3].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);

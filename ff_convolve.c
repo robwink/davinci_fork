@@ -199,9 +199,9 @@ Var *ff_convolve2(vfuncptr func, Var * arg)
 	Alist alist[6];
 	alist[0] = make_alist("object",       ID_VAL,         NULL,	      &obj);
 	alist[1] = make_alist("kernel",       ID_VAL,         NULL,      &kernel);
-	alist[2] = make_alist("normalize",    INT,            NULL,        &norm);
+	alist[2] = make_alist("normalize",    DV_INT32,            NULL,        &norm);
 	alist[3] = make_alist("ignore",       FLOAT,          NULL,      &ignore);
-	alist[4] = make_alist("kernreduce",   INT,            NULL,  &kernreduce);
+	alist[4] = make_alist("kernreduce",   DV_INT32,            NULL,  &kernreduce);
 	alist[5].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);

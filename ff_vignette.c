@@ -28,8 +28,8 @@ vignette(int width, int height, float r0, float offset, float i0)
 /**
  ** ff_vignette() - entry point for vignette function
  **
- ** usage: vignette(width=INT, 
- **                 height=INT, 
+ ** usage: vignette(width=DV_INT32, 
+ **                 height=DV_INT32, 
  **                 radius=FLOAT, 
  **                 offset=FLOAT, 
  **                 intensity=FLOAT)
@@ -46,8 +46,8 @@ ff_vignette(vfuncptr func, Var *arg)
      ** List the keywords this function can accept.  Order is important.
      **/
 	Alist alist[6];
-	alist[0] = make_alist( "width",    INT,    NULL,    &width);
-	alist[1] = make_alist( "height",    INT,    NULL,    &height);
+	alist[0] = make_alist( "width",    DV_INT32,    NULL,    &width);
+	alist[1] = make_alist( "height",    DV_INT32,    NULL,    &height);
 	alist[2] = make_alist( "radius",    FLOAT,    NULL,    &radius);
 	alist[3] = make_alist( "offset",    FLOAT,    NULL,    &offset);
 	alist[4] = make_alist( "intensity",    FLOAT,    NULL,    &intensity);

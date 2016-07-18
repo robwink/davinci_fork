@@ -114,7 +114,7 @@ kjn_y_shear(vfuncptr func, Var * arg)
   alist[0] = make_alist("picture",  ID_VAL,  NULL,   &pic_v);
   alist[1] = make_alist("angle",    FLOAT,   NULL,   &angle);
   alist[2] = make_alist("ignore",   FLOAT,   NULL,   &nullv);
-  alist[3] = make_alist("trim",     INT,     NULL,   &trim);
+  alist[3] = make_alist("trim",     DV_INT32,     NULL,   &trim);
   alist[4] = make_alist("null",     FLOAT,   NULL,   &nullv); // can be removed once all legacy programs are dead
   alist[5].name = NULL;
 
@@ -510,9 +510,9 @@ kjn_smoothy(vfuncptr func, Var * arg)
   Alist alist[6];
   alist[0] = make_alist("object",       ID_VAL,         NULL,         &obj);
   alist[1] = make_alist("kernel",       ID_VAL,         NULL,      &kernel);
-  alist[2] = make_alist("normalize",    INT,            NULL,        &norm);
+  alist[2] = make_alist("normalize",    DV_INT32,            NULL,        &norm);
   alist[3] = make_alist("ignore",       FLOAT,          NULL,      &ignore);
-  alist[4] = make_alist("kernreduce",   INT,            NULL,  &kernreduce);
+  alist[4] = make_alist("kernreduce",   DV_INT32,            NULL,  &kernreduce);
   alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -942,7 +942,7 @@ kjn_corners(vfuncptr func, Var * arg)
   }
 
   cns = do_corners(pic_a, nullval);
-  return(newVal(BSQ, 1, 8, 1, INT, cns));
+  return(newVal(BSQ, 1, 8, 1, DV_INT32, cns));
 }
 
 
@@ -1115,9 +1115,9 @@ kjn_sawtooth(vfuncptr func, Var * arg)
   int x = 0, y = 0, z = 0;
 
   Alist alist[4];
-  alist[0] = make_alist("x",   INT,   NULL,   &x);
-  alist[1] = make_alist("y",   INT,   NULL,   &y);
-  alist[2] = make_alist("z",   INT,   NULL,   &z);
+  alist[0] = make_alist("x",   DV_INT32,   NULL,   &x);
+  alist[1] = make_alist("y",   DV_INT32,   NULL,   &y);
+  alist[2] = make_alist("z",   DV_INT32,   NULL,   &z);
   alist[3].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -1224,9 +1224,9 @@ kjn_deplaid(vfuncptr func, Var * arg)
   alist[1] = make_alist("ignore",               FLOAT,          NULL,   &nullval);
   alist[2] = make_alist("tmask_max",            FLOAT,          NULL,   &tmask_max);
   alist[3] = make_alist("tmask_min",            FLOAT,          NULL,   &tmask_min);
-  alist[4] = make_alist("filt_len",             INT,            NULL,   &filt_len);
-  alist[5] = make_alist("b10",                  INT,            NULL,   &b10);
-  alist[6] = make_alist("dump",                 INT,            NULL,   &dump);
+  alist[4] = make_alist("filt_len",             DV_INT32,            NULL,   &filt_len);
+  alist[5] = make_alist("b10",                  DV_INT32,            NULL,   &b10);
+  alist[6] = make_alist("dump",                 DV_INT32,            NULL,   &dump);
   alist[7] = make_alist("null",                 FLOAT,          NULL,   &nullval);
   alist[8].name = NULL;
 
@@ -1798,7 +1798,7 @@ kjn_rectify(vfuncptr func, Var * arg)
   /* final output */
   out = new_struct(4);
   add_struct(out, "data", newVal(BSQ, width, u, z, FLOAT, pic));
-  add_struct(out, "leftedge", newVal(BSQ, 1, u, 1, INT, leftmost));
+  add_struct(out, "leftedge", newVal(BSQ, 1, u, 1, DV_INT32, leftmost));
   add_struct(out, "width", newInt(x));
   add_struct(out, "angle", newFloat(angle));
   return out;
@@ -1835,9 +1835,9 @@ kjn_coreg(vfuncptr func, Var * arg)
   Alist alist[6];
   alist[0] = make_alist("pic1",     ID_VAL,     NULL,   &pic1_in);
   alist[1] = make_alist("pic2",     ID_VAL,     NULL,   &pic2_in);
-  alist[2] = make_alist("search",   INT,        NULL,   &search);
-  alist[3] = make_alist("ignore",   INT,        NULL,   &nullval);
-  alist[4] = make_alist("space",    INT,        NULL,   &space);
+  alist[2] = make_alist("search",   DV_INT32,        NULL,   &search);
+  alist[3] = make_alist("ignore",   DV_INT32,        NULL,   &nullval);
+  alist[4] = make_alist("space",    DV_INT32,        NULL,   &space);
   alist[5].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -1910,7 +1910,7 @@ kjn_coreg(vfuncptr func, Var * arg)
 
     out = new_struct(2);
     add_struct(out, "space", newVal(BSQ, s_dia, s_dia, 1, FLOAT, solution));
-    add_struct(out, "position", newVal(BSQ, 2, 1, 1, INT, pos));
+    add_struct(out, "position", newVal(BSQ, 2, 1, 1, DV_INT32, pos));
     return(out);
   }
 
@@ -1918,7 +1918,7 @@ kjn_coreg(vfuncptr func, Var * arg)
   pos = (int *)malloc(sizeof(int)*2);
   pos[0] = a;
   pos[1] = b;
-  out = newVal(BSQ, 2, 1, 1, INT, pos);
+  out = newVal(BSQ, 2, 1, 1, DV_INT32, pos);
   return out;
 }
 
@@ -2478,8 +2478,8 @@ kjn_supersample(vfuncptr func, Var * arg)
 
   Alist alist[4];
   alist[0] = make_alist("data",     ID_VAL,  NULL,   &data);
-  alist[1] = make_alist("type",     INT,     NULL,   &type);
-  alist[2] = make_alist("factor",   INT,     NULL,   &factor);
+  alist[1] = make_alist("type",     DV_INT32,     NULL,   &type);
+  alist[2] = make_alist("factor",   DV_INT32,     NULL,   &factor);
   alist[3].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -2574,8 +2574,8 @@ kjn_ss_coreg(vfuncptr func, Var * arg)
 
   Alist alist[4];
   alist[0] = make_alist("data",     ID_VAL,   NULL,   &pic);
-  alist[1] = make_alist("search",   INT,      NULL,   &search);
-  alist[2] = make_alist("b10",      INT,      NULL,   &b10);
+  alist[1] = make_alist("search",   DV_INT32,      NULL,   &search);
+  alist[2] = make_alist("b10",      DV_INT32,      NULL,   &b10);
   alist[3].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -2648,7 +2648,7 @@ kjn_ss_coreg(vfuncptr func, Var * arg)
 
   }
 
-  out = newVal(BSQ, 2, 1, z, INT, pos);
+  out = newVal(BSQ, 2, 1, z, DV_INT32, pos);
   return(out);
 }
 
@@ -2740,7 +2740,7 @@ kjn_ss_pic(vfuncptr func, Var * arg)
   }
 
   free(data);
-  out = newVal(BSQ, x, y, z, INT, pic);
+  out = newVal(BSQ, x, y, z, DV_INT32, pic);
   return(out);
 }
 
@@ -3222,8 +3222,8 @@ kjn_themissivity(vfuncptr func, Var * arg)
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
   alist[2] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
   alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
-  alist[4] = make_alist("b1",            INT,            NULL,   &b1);
-  alist[5] = make_alist("b2",            INT,            NULL,   &b2);
+  alist[4] = make_alist("b1",            DV_INT32,            NULL,   &b1);
+  alist[5] = make_alist("b2",            DV_INT32,            NULL,   &b2);
   alist[6] = make_alist("null",          FLOAT,          NULL,   &nullval); // can be deleted when all legacy programs are dead
   alist[7].name = NULL;
 
@@ -3526,11 +3526,11 @@ kjn_whitey(vfuncptr func, Var * arg)
 
   Alist alist[7];
   alist[0] = make_alist("rad",           ID_VAL,         NULL,   &rad);
-  alist[1] = make_alist("k_size",        INT,            NULL,   &k_size);
+  alist[1] = make_alist("k_size",        DV_INT32,            NULL,   &k_size);
   alist[2] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
   alist[3] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
-  alist[4] = make_alist("b1",            INT,            NULL,   &b1);
-  alist[5] = make_alist("b2",            INT,            NULL,   &b2);
+  alist[4] = make_alist("b1",            DV_INT32,            NULL,   &b1);
+  alist[5] = make_alist("b2",            DV_INT32,            NULL,   &b2);
   alist[6].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -3889,9 +3889,9 @@ Var *kjn_radcorr(vfuncptr func, Var * arg)
   alist[1] = make_alist("bandlist",      ID_VAL,         NULL,   &bandlist);
   alist[2] = make_alist("ignore",        FLOAT,          NULL,   &nullval);
   alist[3] = make_alist("temp_rad_path", ID_STRING,      NULL,   &fname);
-  alist[4] = make_alist("b1",            INT,            NULL,   &b1);
-  alist[5] = make_alist("b2",            INT,            NULL,   &b2);
-  alist[6] = make_alist("space",         INT,            NULL,   &space);
+  alist[4] = make_alist("b1",            DV_INT32,            NULL,   &b1);
+  alist[5] = make_alist("b2",            DV_INT32,            NULL,   &b2);
+  alist[6] = make_alist("space",         DV_INT32,            NULL,   &space);
   alist[7] = make_alist("null",          FLOAT,          NULL,   &nullval);
   alist[8].name = NULL;
 
@@ -4103,7 +4103,7 @@ kjn_src_col_fill(vfuncptr func, Var * arg)
 
   Alist alist[4];
   alist[0] = make_alist("column",       ID_VAL,   NULL,   &col_in);
-  alist[1] = make_alist("chunk_size",   INT,      NULL,   &csize);
+  alist[1] = make_alist("chunk_size",   DV_INT32,      NULL,   &csize);
   alist[2] = make_alist("ignore",       FLOAT,    NULL,   &ignore);
   alist[3].name = NULL;
 
@@ -4287,9 +4287,9 @@ kjn_deplaid2(vfuncptr func, Var * arg)
   alist[1] = make_alist("ignore",      FLOAT,    NULL,   &nullval);
   alist[2] = make_alist("tmask_max",   FLOAT,    NULL,   &tmask_max);
   alist[3] = make_alist("tmask_min",   FLOAT,    NULL,   &tmask_min);
-  alist[4] = make_alist("filt_len",    INT,      NULL,   &filt_len);
-  alist[5] = make_alist("b10",         INT,      NULL,   &b10);
-  alist[6] = make_alist("dump",        INT,      NULL,   &dump);
+  alist[4] = make_alist("filt_len",    DV_INT32,      NULL,   &filt_len);
+  alist[5] = make_alist("b10",         DV_INT32,      NULL,   &b10);
+  alist[6] = make_alist("dump",        DV_INT32,      NULL,   &dump);
   alist[7] = make_alist("null",        FLOAT,    NULL,   &nullval);
   alist[8].name = NULL;
 

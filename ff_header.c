@@ -22,7 +22,7 @@ ff_header(vfuncptr func, Var *arg)
 	Alist alist[4];
 	alist[0] = make_alist( "filename",  ID_STRING,    NULL,    &filename);
 	alist[1] = make_alist( "element",   ID_STRING,    NULL,    &element);
-	alist[2] = make_alist( "record",    INT,          NULL,    &frec);
+	alist[2] = make_alist( "record",    DV_INT32,          NULL,    &frec);
 	alist[3].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);

@@ -153,7 +153,7 @@ int parse_args(vfuncptr name, Var *args, Alist *alist)
 			vptr = (Var **)(alist[j].value);
 			*vptr = v;
 			alist[j].filled = 1;
-		} else if (alist[j].type == INT) {
+		} else if (alist[j].type == DV_INT32) {
 			int *iptr;
 			if ((e = eval(v)) == NULL) {
 				parse_error("%s: Variable not found: %s", fname, V_NAME(v));
@@ -161,8 +161,8 @@ int parse_args(vfuncptr name, Var *args, Alist *alist)
 				return 0;
 			}
 			v = e;
-			if (V_TYPE(v) != ID_VAL || V_FORMAT(v) > INT) {
-				parse_error("Illegal argument %s(...%s=...), expected INT", fname, alist[j].name);
+			if (V_TYPE(v) != ID_VAL || V_FORMAT(v) > DV_INT32) {
+				parse_error("Illegal argument %s(...%s=...), expected DV_INT32", fname, alist[j].name);
 				free(av);
 				return 0;
 			}

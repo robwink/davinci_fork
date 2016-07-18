@@ -177,10 +177,10 @@ Var* WriteISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 	Alist alist[7];
 	alist[0] = make_alist("obj", ID_UNK, NULL, &obj);
 	alist[1] = make_alist("filename", ID_STRING, NULL, &filename);
-	alist[2] = make_alist("force", INT, NULL, &force);
+	alist[2] = make_alist("force", DV_INT32, NULL, &force);
 	alist[3] = make_alist("bsqTile", ID_STRING, NULL, &bsqTile);
-	alist[4] = make_alist("valTs", INT, NULL, &ts);
-	alist[5] = make_alist("valTl", INT, NULL, &tl);
+	alist[4] = make_alist("valTs", DV_INT32, NULL, &ts);
+	alist[5] = make_alist("valTl", DV_INT32, NULL, &tl);
 	alist[6].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) {
@@ -545,9 +545,9 @@ Var* ReadISIS3(vfuncptr func, Var * arg)   // drd proto for this is in func.h
 
 	Alist alist[5];
 	alist[0] = make_alist("filename", ID_UNK, NULL, &fn);
-	alist[1] = make_alist("data", INT, NULL, &data);
-	alist[2] = make_alist("use_names", INT, NULL, &use_names);
-	alist[3] = make_alist("use_units", INT, NULL, &use_units);
+	alist[1] = make_alist("data", DV_INT32, NULL, &data);
+	alist[2] = make_alist("use_names", DV_INT32, NULL, &use_names);
+	alist[3] = make_alist("use_units", DV_INT32, NULL, &use_units);
 	alist[4].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) {
@@ -644,7 +644,7 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 	char localLine[256];
 	int localSize = 0;  // This will be size of the item
 	/* from parser.h, and right now ignoring others:
-	 #define INT			3
+	 #define DV_INT32			3
 	 #define FLOAT		4
 	 #define DOUBLE		8
 	 We are assuming ONE type per table.  If more than one, will flag it and not process it
@@ -1156,7 +1156,7 @@ static Var* do_loadISIS3(vfuncptr func, char *filename, int data, int use_names,
 								localSize = 8;
 							} else if (strcmp("FLOAT", string3) == 0) {
 								localSize = 4;
-							} else if (strcmp("INT", string3) == 0) {
+							} else if (strcmp("DV_INT32", string3) == 0) {
 								localSize = 4;
 							}
 						}
@@ -1614,7 +1614,7 @@ int parenManager(char *stringItem, FILE *fp, Var *GroupOrObject, char *namebuf)
 			localStub = newVal(BSQ, commaCount, 1, 1, DOUBLE,
 					numberArrayDouble);
 		} else {
-			localStub = newVal(BSQ, commaCount, 1, 1, INT, numberArrayInt);
+			localStub = newVal(BSQ, commaCount, 1, 1, DV_INT32, numberArrayInt);
 		}
 		add_struct(GroupOrObject, namebuf, localStub);
 

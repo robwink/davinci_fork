@@ -204,13 +204,13 @@ init_sums(Var *data, int w, int h, int d, Var **rn, Var **rs, Var **rcount, Var 
 
 	*rn = newVal(V_ORG(data), 
 					V_SIZE(data)[0], V_SIZE(data)[1], V_SIZE(data)[2], 
-					INT, n);
+					DV_INT32, n);
 	*rs = newVal(V_ORG(data), 
 					V_SIZE(data)[0], V_SIZE(data)[1], V_SIZE(data)[2], 
 					DOUBLE, s);
 	*rcount = newVal(V_ORG(data), 
 					V_SIZE(data)[0], V_SIZE(data)[1], V_SIZE(data)[2], 
-					INT, c);
+					DV_INT32, c);
 	*rmean = newVal(V_ORG(data), 
 					V_SIZE(data)[0], V_SIZE(data)[1], V_SIZE(data)[2], 
 					FLOAT, mean);
@@ -234,12 +234,12 @@ ff_boxfilter(vfuncptr func, Var * arg)
 
     Alist alist[8];
     alist[0] = make_alist("obj",    ID_VAL,     NULL,     &v);
-    alist[1] = make_alist("x",      INT,     NULL,     &x);
-    alist[2] = make_alist("y",      INT,     NULL,     &y);
-    alist[3] = make_alist("z",      INT,     NULL,     &z);
-    alist[4] = make_alist("size",   INT,     NULL,     &size);
+    alist[1] = make_alist("x",      DV_INT32,     NULL,     &x);
+    alist[2] = make_alist("y",      DV_INT32,     NULL,     &y);
+    alist[3] = make_alist("z",      DV_INT32,     NULL,     &z);
+    alist[4] = make_alist("size",   DV_INT32,     NULL,     &size);
     alist[5] = make_alist("ignore", DOUBLE,  NULL,     &ignore);
-    alist[6] = make_alist("verbose", INT,    NULL,     &verbose);
+    alist[6] = make_alist("verbose", DV_INT32,    NULL,     &verbose);
     alist[7].name = NULL;
 	
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -282,7 +282,7 @@ ff_boxfilter(vfuncptr func, Var * arg)
 }
 
 /*
-filter(type=STRING, size=INT, x=INT, y=INT, z=INT, ignore=, gsigma=FLOAT)
+filter(type=STRING, size=DV_INT32, x=DV_INT32, y=DV_INT32, z=DV_INT32, ignore=, gsigma=FLOAT)
 
 	"box"		- box filter, uniform XxY convolution
 	"lpf"		- same as box filter

@@ -81,10 +81,10 @@ Var *ff_flood_fill(vfuncptr func, Var * arg)
 
   Alist alist[6];
   alist[0] = make_alist("data",      ID_VAL,     NULL,  &pic);
-	alist[1] = make_alist("xpos",      INT,        NULL,  &sx);
-	alist[2] = make_alist("ypos",      INT,        NULL,  &sy);
-	alist[3] = make_alist("fill",      INT,        NULL,  &fill);
-  alist[4] = make_alist("value",     INT,        NULL,  &val);
+	alist[1] = make_alist("xpos",      DV_INT32,        NULL,  &sx);
+	alist[2] = make_alist("ypos",      DV_INT32,        NULL,  &sy);
+	alist[3] = make_alist("fill",      DV_INT32,        NULL,  &fill);
+  alist[4] = make_alist("value",     DV_INT32,        NULL,  &val);
   alist[5].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);

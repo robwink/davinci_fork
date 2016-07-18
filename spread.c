@@ -27,9 +27,9 @@ ff_distance_map(vfuncptr func, Var * arg)
 	alist[1] = make_alist( "o2",    ID_VAL,    NULL,    &o2);
 	alist[2] = make_alist( "dir",   FLOAT,     NULL,    &dir);
 	alist[3] = make_alist( "ignore",ID_VAL,    NULL,    &ignore);
-	alist[4] = make_alist( "skip",  INT,       NULL,    &skip);
-	alist[5] = make_alist( "radius",  INT,       NULL,    &radius);
-	alist[6] = make_alist( "smooth",  INT,       NULL,    &smooth);
+	alist[4] = make_alist( "skip",  DV_INT32,       NULL,    &skip);
+	alist[5] = make_alist( "radius",  DV_INT32,       NULL,    &radius);
+	alist[6] = make_alist( "smooth",  DV_INT32,       NULL,    &smooth);
 	alist[7].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -100,9 +100,9 @@ ff_distance_map(vfuncptr func, Var * arg)
 			}
 		 }
 	 }
-	 dval = newVal(BSQ,x,y,1,INT,diff);
+	 dval = newVal(BSQ,x,y,1,DV_INT32,diff);
 	 a = new_struct(3);
-	 add_struct(a, "dist", newVal(BSQ,x,y,1,INT,dist));
+	 add_struct(a, "dist", newVal(BSQ,x,y,1,DV_INT32,dist));
 	 add_struct(a, "diff", dval);
 
 	 /*
@@ -145,7 +145,7 @@ make_mask(int size, float dir)
 
 	if (size%2 == 0) size++;
 	mdata = calloc(size*size, sizeof(int));
-	mask = newVal(BSQ,size,size,1,INT,mdata);
+	mask = newVal(BSQ,size,size,1,DV_INT32,mdata);
 	ct = size/2;
 
 	/* create a mask that's 90 degrees rotated from the downtrack direction */

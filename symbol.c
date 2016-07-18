@@ -216,8 +216,8 @@ Var *ff_list(vfuncptr func, Var *arg)
   int i;
   int list_ufuncs = 0, list_sfuncs = 0;
   Alist alist[3];
-  alist[0] = make_alist( "ufunc",    INT,    NULL,    &list_ufuncs);
-  alist[1] = make_alist( "sfunc",    INT,    NULL,    &list_sfuncs);
+  alist[0] = make_alist( "ufunc",    DV_INT32,    NULL,    &list_ufuncs);
+  alist[1] = make_alist( "sfunc",    DV_INT32,    NULL,    &list_sfuncs);
   alist[2].name = NULL;
 
   if (parse_args(func, arg, alist) == 0) return(NULL);

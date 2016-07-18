@@ -66,12 +66,12 @@ ff_ascii(vfuncptr func, Var *arg)
 
 	Alist alist[9];
 	alist[0] = make_alist( "filename",  ID_STRING,   NULL,    &filename);
-	alist[1] = make_alist( "x",         INT,         NULL,    &x);
-	alist[2] = make_alist( "y",         INT,         NULL,    &y);
-	alist[3] = make_alist( "z",         INT,         NULL,    &z);
+	alist[1] = make_alist( "x",         DV_INT32,         NULL,    &x);
+	alist[2] = make_alist( "y",         DV_INT32,         NULL,    &y);
+	alist[3] = make_alist( "z",         DV_INT32,         NULL,    &z);
 	alist[4] = make_alist( "format",    ID_ENUM,     formats, &format_str);
-	alist[5] = make_alist( "column",    INT,         NULL,    &column);
-	alist[6] = make_alist( "row",       INT,         NULL,    &row);
+	alist[5] = make_alist( "column",    DV_INT32,         NULL,    &column);
+	alist[6] = make_alist( "row",       DV_INT32,         NULL,    &row);
 	alist[7] = make_alist( "delim",     ID_STRING,   NULL,    &delim);
 	alist[8].name = NULL;
 
@@ -85,7 +85,7 @@ ff_ascii(vfuncptr func, Var *arg)
 	if (format_str != NULL) {
 		if (!strcasecmp(format_str, "byte")) format = BYTE;
 		else if (!strcasecmp(format_str, "short")) format = DV_INT16;
-		else if (!strcasecmp(format_str, "int")) format = INT;
+		else if (!strcasecmp(format_str, "int")) format = DV_INT32;
 		else if (!strcasecmp(format_str, "float")) format = FLOAT;
 		else if (!strcasecmp(format_str, "double")) format = DOUBLE;
 	}
@@ -151,7 +151,7 @@ ff_ascii(vfuncptr func, Var *arg)
 	if (x == 0) x = 1;
 	if (y == 0) y = 1;
 	if (z == 0) z = 1;
-	if (format == 0) format = INT;
+	if (format == 0) format = DV_INT32;
 
 	dsize = x*y*z;
 	data = calloc(NBYTES(format), dsize);
@@ -213,7 +213,7 @@ ff_ascii(vfuncptr func, Var *arg)
 				case DV_INT16:
 					sdata[count++] = saturate_short(strtol(ptr, NULL, 10));
 					break;
-				case INT:
+				case DV_INT32:
 					idata[count++] = saturate_int(strtol(ptr, NULL, 10));
 					break;
 				case FLOAT:

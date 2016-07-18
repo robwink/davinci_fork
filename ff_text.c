@@ -252,7 +252,7 @@ Var *ff_delim(vfuncptr func, Var * arg)
   Alist alist[5];
   alist[0] = make_alist("object", ID_UNK, NULL, &ob);
   alist[1] = make_alist("delim", ID_STRING, NULL, &delim);
-  alist[2] = make_alist("count", INT, NULL, &item);
+  alist[2] = make_alist("count", DV_INT32, NULL, &item);
   alist[3].name = NULL;
 
   if (parse_args(func, arg, alist) == 0)
@@ -589,8 +589,8 @@ Var *ff_grep(vfuncptr func, Var * arg)
   Alist alist[5];
   alist[0] = make_alist("obj", ID_UNK, NULL, &ob1);
   alist[1] = make_alist("pattern", ID_STRING, NULL, &s1);
-  alist[2] = make_alist("icase", INT, NULL, &ignore_case);
-  alist[3] = make_alist("invert", INT, NULL, &invert);
+  alist[2] = make_alist("icase", DV_INT32, NULL, &ignore_case);
+  alist[3] = make_alist("invert", DV_INT32, NULL, &invert);
   alist[4].name = NULL;
 
   if (parse_args(func, arg, alist) == 0)
@@ -716,7 +716,7 @@ Var *ff_text_strstr(Var * ob1, char *s1)
 
   free(align);
 
-  return (newVal(BSQ, 1, V_TEXT(ob1).Row, 1, INT, data));
+  return (newVal(BSQ, 1, V_TEXT(ob1).Row, 1, DV_INT32, data));
 }
 
 Var *ff_strstr(vfuncptr func, Var * arg)
@@ -745,7 +745,7 @@ Var *ff_strstr(vfuncptr func, Var * arg)
     int *align = kmp_compile(s1);
     *v = kmp(V_STRING(ob1), s1, align) + 1;
     free(align);
-    return (newVal(BSQ, 1, 1, 1, INT, v));
+    return (newVal(BSQ, 1, 1, 1, DV_INT32, v));
   }
 
   else {
@@ -1150,7 +1150,7 @@ Var *ff_create_text(vfuncptr func, Var * arg)
   int i;
 
   Alist alist[2];
-  alist[0] = make_alist("count", INT, NULL, &count);
+  alist[0] = make_alist("count", DV_INT32, NULL, &count);
   alist[1].name = NULL;
 
   parse_args(func, arg, alist);

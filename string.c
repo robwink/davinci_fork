@@ -28,7 +28,7 @@ Var* ff_atoi(vfuncptr func, Var* arg)
 		for (l = 0; l < V_TEXT(v).Row; l++) {
 			data[l] = strtod(V_TEXT(v).text[l], NULL);
 		}
-		return newVal(BSQ, 1, l, 1, INT, data);
+		return newVal(BSQ, 1, l, 1, DV_INT32, data);
 	}
 }
 
@@ -102,7 +102,7 @@ char* do_add_strings(char* s1, Var* v, int flag)
 		switch (V_FORMAT(v)) {
 		case BYTE:
 		case DV_INT16:
-		case INT: sprintf(buf, "%d", extract_int(v, 0)); break;
+		case DV_INT32: sprintf(buf, "%d", extract_int(v, 0)); break;
 		case FLOAT:
 		case DOUBLE: sprintf(buf, "%.*g", SCALE, extract_double(v, 0)); break;
 		}
@@ -327,7 +327,7 @@ Var* ff_strlen(vfuncptr func, Var* arg)
 				r[i] = 0;
 			}
 		}
-		return newVal(BSQ, 1, n, 1, INT, r);
+		return newVal(BSQ, 1, n, 1, DV_INT32, r);
 	} else if (V_TYPE(s1) == ID_STRING) {
 		return newInt(strlen(V_STRING(s1)));
 	} else {

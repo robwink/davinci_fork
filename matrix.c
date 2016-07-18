@@ -11,7 +11,7 @@ ff_identity(vfuncptr func, Var * arg)
 	float *data;
 
 	Alist alist[2];
-	alist[0] = make_alist( "size",    INT,    NULL,     &size);
+	alist[0] = make_alist( "size",    DV_INT32,    NULL,     &size);
 	alist[1].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);

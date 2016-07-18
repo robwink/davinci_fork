@@ -16,7 +16,7 @@ ff_basis(vfuncptr func, Var * arg)
     Alist alist[4];
 	alist[0] = make_alist("object",    ID_VAL,    NULL,       &obj);
 	alist[1] = make_alist("type",      ID_ENUM,   options,    &ptr);
-	alist[2] = make_alist("size",      INT,       NULL,       &size);
+	alist[2] = make_alist("size",      DV_INT32,       NULL,       &size);
 	alist[3].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);

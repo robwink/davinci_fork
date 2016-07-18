@@ -83,12 +83,12 @@ ff_cut( vfuncptr func, Var *arg)
 	
 	Alist alist[8];
 	alist[0] = make_alist( "object",   ID_VAL, NULL,     &obj);
-	alist[1] = make_alist( "x",        INT,    NULL,     &x);
-	alist[2] = make_alist( "y",        INT,    NULL,     &y);
-	alist[3] = make_alist( "z",        INT,    NULL,     &z);
-	alist[4] = make_alist( "width",    INT,    NULL,     &w);
-	alist[5] = make_alist( "height",   INT,    NULL,     &h);
-	alist[6] = make_alist( "depth",    INT,    NULL,     &d);
+	alist[1] = make_alist( "x",        DV_INT32,    NULL,     &x);
+	alist[2] = make_alist( "y",        DV_INT32,    NULL,     &y);
+	alist[3] = make_alist( "z",        DV_INT32,    NULL,     &z);
+	alist[4] = make_alist( "width",    DV_INT32,    NULL,     &w);
+	alist[5] = make_alist( "height",   DV_INT32,    NULL,     &h);
+	alist[6] = make_alist( "depth",    DV_INT32,    NULL,     &d);
 	alist[7].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);

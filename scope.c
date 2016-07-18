@@ -210,7 +210,7 @@ new_dd()
      ** Make a var for $argc
      **/
     d->value[0] = (Var *)calloc(1, sizeof(Var));
-    make_sym(d->value[0], INT, (char *)"0");
+    make_sym(d->value[0], DV_INT32, (char *)"0");
     V_TYPE(d->value[0]) = ID_VAL;
 
     return(d);

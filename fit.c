@@ -62,9 +62,9 @@ Var * ff_fit(vfuncptr func, Var *arg)
 	alist[1] = make_alist( "x",       ID_VAL,    NULL,    &x);
 	alist[2] = make_alist( "type",    ID_ENUM,   fits,    &ftype);
 	alist[3] = make_alist( "start",   ID_VAL,    NULL,    &ip);
-	alist[4] = make_alist( "steps",   INT,       NULL,    &iter);
-	alist[5] = make_alist( "plot",    INT,       NULL,    &plot);
-	alist[6] = make_alist( "verbose", INT,       NULL,    &verbose);
+	alist[4] = make_alist( "steps",   DV_INT32,       NULL,    &iter);
+	alist[5] = make_alist( "plot",    DV_INT32,       NULL,    &plot);
+	alist[6] = make_alist( "verbose", DV_INT32,       NULL,    &verbose);
 	alist[7] = make_alist( "ignore",  DOUBLE,    NULL,    &ignore);
 	alist[8].name = NULL;
 

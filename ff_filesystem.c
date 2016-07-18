@@ -22,7 +22,7 @@ ff_copy(vfuncptr func, Var * arg)
     Alist alist[4];
     alist[0] = make_alist("src",    ID_STRING,     NULL,     &src);
     alist[1] = make_alist("dest",    ID_STRING,     NULL,     &dest);
-    alist[2] = make_alist("force",    INT,       NULL, &force);
+    alist[2] = make_alist("force",    DV_INT32,       NULL, &force);
     alist[3].name = NULL;
     
     if (parse_args(func, arg, alist) == 0) return(NULL);

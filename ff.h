@@ -51,7 +51,7 @@ struct _vfuncptr vfunclist[] = {
   { "char",       ff_conv, (void *)BYTE, NULL},
   { "byte",       ff_conv, (void *)BYTE, NULL},
   { "short",      ff_conv, (void *)DV_INT16, NULL},
-  { "int",        ff_conv, (void *)INT, NULL},
+  { "int",        ff_conv, (void *)DV_INT32, NULL},
   { "float",      ff_conv, (void *)FLOAT, NULL},
   { "double",     ff_conv, (void *)DOUBLE, NULL},
 

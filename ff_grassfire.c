@@ -251,12 +251,12 @@ Var *saito_grassfire(Var *input, int ignore) {
   size_t dx = GetX(input);
   size_t dy = GetY(input);
 
-  Var *sdt_x = newVal(BSQ, dx, dy, 1, INT, calloc(dx*dy, sizeof(int)));
+  Var *sdt_x = newVal(BSQ, dx, dy, 1, DV_INT32, calloc(dx*dy, sizeof(int)));
   if (sdt_x == NULL) {
     parse_error("Unable to allocate memory.");
     return(NULL);
   }
-  Var *sdt_xy = newVal(BSQ, dx, dy, 1, INT, calloc(dx*dy, sizeof(int)));
+  Var *sdt_xy = newVal(BSQ, dx, dy, 1, DV_INT32, calloc(dx*dy, sizeof(int)));
   if (sdt_xy == NULL) {
     parse_error("Unable to allocate memory.");
     free(sdt_x);
@@ -283,7 +283,7 @@ Var *vw_grassfire(Var *vsrc, int ignore) {
     parse_error("Unable to allocate memory.");
     return(NULL);
   }
-  Var *vdst = newVal(BSQ, dx, dy, 1, INT, dst);
+  Var *vdst = newVal(BSQ, dx, dy, 1, DV_INT32, dst);
 
   // First row
   j = 0;
@@ -344,7 +344,7 @@ Var *bounding_box(Var *vsrc, int ignore) {
     parse_error("Unable to allocate memory.");
     return(NULL);
   }
-  Var *vdst = newVal(BSQ, dx, dy, 1, INT, dst);
+  Var *vdst = newVal(BSQ, dx, dy, 1, DV_INT32, dst);
 
   for (j = 0 ; j < dy ; j++) {
     for (left = 0 ; left < dx ; left++) {
@@ -380,7 +380,7 @@ Var *ff_grassfire(vfuncptr func, Var * arg)
 
   Alist alist[4];
   alist[0] = make_alist("obj",    ID_VAL,  NULL, &obj);
-  alist[1] = make_alist("ignore", INT,     NULL, &ignore);
+  alist[1] = make_alist("ignore", DV_INT32,     NULL, &ignore);
   alist[2] = make_alist("type",   ID_ENUM, options, &type);
   alist[3].name = NULL;
 

@@ -48,9 +48,9 @@ ff_image_resize(vfuncptr func, Var * arg)
 	alist[1] = make_alist( "factor", DOUBLE, NULL, &factor);
 	alist[2] = make_alist( "xfactor", DOUBLE, NULL, &x_factor);
 	alist[3] = make_alist( "yfactor", DOUBLE, NULL, &y_factor);
-	alist[4] = make_alist( "width",  INT, NULL, &new_xx);
-	alist[5] = make_alist( "height", INT, NULL, &new_yy);
-	alist[6] = make_alist( "lockratio", INT, NULL, &lockratio);
+	alist[4] = make_alist( "width",  DV_INT32, NULL, &new_xx);
+	alist[5] = make_alist( "height", DV_INT32, NULL, &new_yy);
+	alist[6] = make_alist( "lockratio", DV_INT32, NULL, &lockratio);
 	alist[7] = make_alist( "interp",    ID_ENUM,    types,    &type);
 	alist[8] = make_alist( "ignore",    DOUBLE, NULL,    &ignore_color);
 	alist[9].name = NULL;
@@ -180,7 +180,7 @@ ff_image_resize(vfuncptr func, Var * arg)
 
 				ignore_color_found = 0;
 				// Integers
-				if(V_FORMAT(data) == BYTE || V_FORMAT(data) == DV_INT16 || V_FORMAT(data) == INT){
+				if(V_FORMAT(data) == BYTE || V_FORMAT(data) == DV_INT16 || V_FORMAT(data) == DV_INT32){
 					i_new_c = (int)my_round(get_none_interp(data, x,  y, z));
 					i_new_c_temp = (int)my_round(get_none_interp(data, x+1,  y+1, z));
 					if(i_new_c == ignore_color || i_new_c_temp == ignore_color){
@@ -204,7 +204,7 @@ ff_image_resize(vfuncptr func, Var * arg)
 						y1= (j+0.5)/y_factor;
 						x1= (i+0.5)/x_factor;
 						// Integers
-						if(V_FORMAT(data) == BYTE || V_FORMAT(data) == DV_INT16 || V_FORMAT(data) == INT){
+						if(V_FORMAT(data) == BYTE || V_FORMAT(data) == DV_INT16 || V_FORMAT(data) == DV_INT32){
 							i_new_c = (int)my_round(get_image_box_average(data, x, y, x1, y1, z, ignore_color));
 							//Doubles
 						}else{
@@ -213,7 +213,7 @@ ff_image_resize(vfuncptr func, Var * arg)
 					//scale up
 					}else{
 						// Integers
-						if(V_FORMAT(data) == BYTE || V_FORMAT(data) == DV_INT16 || V_FORMAT(data) == INT){
+						if(V_FORMAT(data) == BYTE || V_FORMAT(data) == DV_INT16 || V_FORMAT(data) == DV_INT32){
 							//bicubic
 							if(itype == 1){
 								i_new_c = (int)my_round(get_image_bicubic_interp(data, x, y, z));
@@ -245,7 +245,7 @@ ff_image_resize(vfuncptr func, Var * arg)
 				switch(V_FORMAT(data)){
 					case BYTE:   ((u_char *)V_DATA(out))[pos] = saturate_byte(i_new_c);   break;
 					case DV_INT16:  ((short *)V_DATA(out))[pos]  = saturate_short(i_new_c);  break;
-					case INT:    ((int *)V_DATA(out))[pos]    = saturate_int(i_new_c);    break;
+					case DV_INT32:    ((int *)V_DATA(out))[pos]    = saturate_int(i_new_c);    break;
 					case FLOAT:  ((float *)V_DATA(out))[pos]  = saturate_float(d_new_c);  break;
 					case DOUBLE: ((double *)V_DATA(out))[pos] = saturate_double(d_new_c); break;
 				}
@@ -275,7 +275,7 @@ double  get_none_interp(Var *obj,  double x, double y, double z)
 	}
      	/*  get the 4 pixels around the interpolated one */
 	// Integers
-	if(V_FORMAT(obj) == BYTE || V_FORMAT(obj) == DV_INT16 || V_FORMAT(obj) == INT){
+	if(V_FORMAT(obj) == BYTE || V_FORMAT(obj) == DV_INT16 || V_FORMAT(obj) == DV_INT32){
 		i_new_c = extract_int(obj, cpos(x_floor, y_floor, z, obj));
 		return (double)i_new_c;
 	//Floats
@@ -318,7 +318,7 @@ double  get_image_bilinear_interp(Var *obj,  double x, double y, double z){
 
      	/*  get the 4 pixels around the interpolated one */
 	// Integers
-	if(V_FORMAT(obj) == BYTE || V_FORMAT(obj) == DV_INT16 || V_FORMAT(obj) == INT){
+	if(V_FORMAT(obj) == BYTE || V_FORMAT(obj) == DV_INT16 || V_FORMAT(obj) == DV_INT32){
 		i_c1 = extract_int(obj, cpos(x_floor, y_floor, z, obj));
 		i_c2 = extract_int(obj, cpos(x_ceil,  y_floor, z, obj));
 		i_c3 = extract_int(obj, cpos(x_floor, y_ceil, z, obj));
@@ -372,7 +372,7 @@ double get_my_cubic_row(Var *obj, size_t x, size_t y, size_t z, double offset)
 	if (y >= yy)   y = yy-1;
 
 	// Integers
-	if (V_FORMAT(obj) == BYTE || V_FORMAT(obj) == DV_INT16 || V_FORMAT(obj) == INT) {
+	if (V_FORMAT(obj) == BYTE || V_FORMAT(obj) == DV_INT16 || V_FORMAT(obj) == DV_INT32) {
 
 		c0 = extract_int(obj, cpos(x0, y, z, obj));
 		c1=  extract_int(obj, cpos(x1, y, z, obj));
@@ -471,7 +471,7 @@ double get_image_box_average(Var *obj, double x0, double y0, double x1, double y
 			}
 
 			// Integers
-			if (V_FORMAT(obj) == BYTE || V_FORMAT(obj) == DV_INT16 || V_FORMAT(obj) == INT) {
+			if (V_FORMAT(obj) == BYTE || V_FORMAT(obj) == DV_INT16 || V_FORMAT(obj) == DV_INT32) {
 				i_c = extract_int(obj, cpos(x_, y_, z_, obj));
 				if (x < x0) {
 					size = size * (1.0 - (x0-x));

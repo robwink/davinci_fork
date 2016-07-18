@@ -171,7 +171,7 @@ ff_translate(vfuncptr func, Var *arg)
 	alist[0] = make_alist( "object",  ID_VAL,    NULL,       &object);
 	alist[1] = make_alist( "from",    ID_ENUM,    options,    &axis1_str);
 	alist[2] = make_alist( "to",      ID_ENUM,    options,    &axis2_str);
-	alist[3] = make_alist( "flip",    INT,       NULL,       &flip);
+	alist[3] = make_alist( "flip",    DV_INT32,       NULL,       &flip);
 	alist[4].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);

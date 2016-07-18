@@ -31,7 +31,7 @@ Var *ff_ramp(vfuncptr func, Var * arg)
   Alist alist[5];
   alist[0] = make_alist((char *)"pic1",   ID_VAL, NULL, &pic_1);
   alist[1] = make_alist((char *)"pic2",   ID_VAL, NULL, &pic_2);
-  alist[2] = make_alist((char *)"stop",   INT,    NULL, &pare);
+  alist[2] = make_alist((char *)"stop",   DV_INT32,    NULL, &pare);
   alist[3] = make_alist((char *)"ignore", FLOAT,  NULL, &nullv);
   alist[4].name = NULL;
 

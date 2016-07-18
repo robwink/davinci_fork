@@ -374,7 +374,7 @@ ff_pcs(vfuncptr	func, Var *args)
 	alist[1] = make_alist( "opt",    ID_ENUM,   opt_enums,   &opt_arg);
 	alist[2] = make_alist( "axis",   ID_ENUM,   axis_enums,  &axis_arg);
 	alist[3] = make_alist( "scale",  ID_VAL,    NULL,        &scale_arg);
-	alist[4] = make_alist( "niter",  INT,       NULL,        &niter);
+	alist[4] = make_alist( "niter",  DV_INT32,       NULL,        &niter);
 	alist[5].name = NULL;
 
 	if (parse_args(func, args, alist) == 0) return(NULL);
@@ -388,7 +388,7 @@ ff_pcs(vfuncptr	func, Var *args)
 	switch(V_FORMAT(obj)){
 	case BYTE:
 	case DV_INT16:
-	case INT:
+	case DV_INT32:
 	case FLOAT:
 	case DOUBLE:
 		/* Only the above data types are supported */
@@ -440,7 +440,7 @@ ff_pcs(vfuncptr	func, Var *args)
 		switch(V_FORMAT(scale_arg)){
 		case BYTE:
 		case DV_INT16:
-		case INT:
+		case DV_INT32:
 		case FLOAT:
 		case DOUBLE:
 			/* Only the above data types are supported */
@@ -1179,7 +1179,7 @@ ff_eigen(
 
 	Alist		alist[3];
 	alist[0] = make_alist( "obj",    ID_VAL,    NULL,        &obj);
-	alist[1] = make_alist( "niter",  INT,       NULL,        &niter);
+	alist[1] = make_alist( "niter",  DV_INT32,       NULL,        &niter);
 	alist[2].name = NULL;
 
 	if (parse_args(func, args, alist) == 0) return(NULL);
@@ -1193,7 +1193,7 @@ ff_eigen(
 	switch(V_FORMAT(obj)){
 	case BYTE:
 	case DV_INT16:
-	case INT:
+	case DV_INT32:
 	case FLOAT:
 	case DOUBLE:
 		/* Only the above data types are supported */

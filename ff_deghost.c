@@ -40,7 +40,7 @@ ff_deghost(vfuncptr func, Var * arg)
 	alist[2] = make_alist("down",  		ID_VAL,	    NULL,	&down);
 	alist[3] = make_alist("right",  	ID_VAL,	    NULL,	&right);
 	alist[4] = make_alist("id",  	    ID_STRING,	NULL,	&id);
-	alist[5] = make_alist("usetrackserver", INT,    NULL,   &useTrackServer);
+	alist[5] = make_alist("usetrackserver", DV_INT32,    NULL,   &useTrackServer);
 	alist[6].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);

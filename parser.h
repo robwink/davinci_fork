@@ -234,7 +234,7 @@ enum {
 
 #define BYTE        1
 #define DV_INT16    2
-#define INT         3
+#define DV_INT32         3
 #define FLOAT       4
 #define VAX_FLOAT   5
 #define VAX_INTEGER 6
@@ -242,7 +242,7 @@ enum {
 #define DOUBLE      8
 #define UINT16      9
 
-#define NBYTES(a)   ((a) == INT ? 4 : ((a) == UINT16 ? 2 : ((a) == INT64 ? 8 : ((a) == VAX_FLOAT ? 4 : ((a) == VAX_INTEGER ? 2 : (a))))))
+#define NBYTES(a)   ((a) == DV_INT32 ? 4 : ((a) == UINT16 ? 2 : ((a) == INT64 ? 8 : ((a) == VAX_FLOAT ? 4 : ((a) == VAX_INTEGER ? 2 : (a))))))
 
 /**
  ** Data axis order
@@ -307,7 +307,7 @@ struct _iheader {
 	int corner;         /* size of 1 whole plane */
 
 	int byte_order;     /* byteorder of data                      */
-	int format;         /* data format (INT, FLOAT, etc)          */
+	int format;         /* data format (DV_INT32, FLOAT, etc)          */
 	int org;            /* data organization                      */
 
 	float gain, offset; /* data multiplier and additive offset    */

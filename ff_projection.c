@@ -65,7 +65,7 @@ Var *ff_projection(vfuncptr func, Var * arg)
         alist[2] = make_alist( "lat",	  	ID_VAL,       NULL,     &pLat);
         alist[3] = make_alist( "lon", 		ID_VAL,       NULL,     &pLon);
         alist[4] = make_alist( "rad", 		ID_VAL,       NULL,     &pRadius);
-        alist[5] = make_alist( "ppd", 		INT,         NULL,     &ppd);
+        alist[5] = make_alist( "ppd", 		DV_INT32,         NULL,     &ppd);
         alist[6].name = NULL;
 
 

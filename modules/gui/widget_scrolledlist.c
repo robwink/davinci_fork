@@ -235,7 +235,7 @@ gui_getScrolledListPseudoResources(const Widget widget, Var *dvStruct)
 
 	if (XmListGetSelectedPos(widget, &selectedList, &N_selectedList) == TRUE) {
 		add_struct(dvStruct, "selectedPosition",
-			newVal(BSQ, 1, N_selectedList, 1, INT, selectedList));
+			newVal(BSQ, 1, N_selectedList, 1, DV_INT32, selectedList));
 	} else {
 		add_struct(dvStruct, "selectedPosition", newInt(-1));
 	}

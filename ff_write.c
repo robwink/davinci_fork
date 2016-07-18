@@ -35,10 +35,10 @@ ff_write(vfuncptr func, Var *arg)
 	alist[1] = make_alist("filename", ID_STRING, NULL, &filename);
 	alist[2] = make_alist("type",     ID_ENUM,   NULL, &type);
 	alist[3] = make_alist("title",    ID_STRING, NULL, &title);
-	alist[4] = make_alist("force",    INT,       NULL, &force);
+	alist[4] = make_alist("force",    DV_INT32,       NULL, &force);
 	alist[5] = make_alist("separator",ID_STRING, NULL, &separator);
-	alist[6] = make_alist("header",   INT,       NULL, &header);
-	alist[7] = make_alist("hdf_old",  INT,       NULL, &hdf_old);
+	alist[6] = make_alist("header",   DV_INT32,       NULL, &header);
+	alist[7] = make_alist("hdf_old",  DV_INT32,       NULL, &hdf_old);
 	alist[8].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);

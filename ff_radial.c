@@ -31,12 +31,12 @@ ff_radial_symmetry(vfuncptr func, Var * arg)
 
     Alist alist[9];
     alist[0] = make_alist( "object",    ID_VAL, NULL,   &obj);
-    alist[1] = make_alist( "size",    INT,    NULL,      &size);
-    alist[2] = make_alist( "xdelta",    INT,    NULL,      &xdelta);
-    alist[3] = make_alist( "ydelta",    INT,    NULL,      &ydelta);
+    alist[1] = make_alist( "size",    DV_INT32,    NULL,      &size);
+    alist[2] = make_alist( "xdelta",    DV_INT32,    NULL,      &xdelta);
+    alist[3] = make_alist( "ydelta",    DV_INT32,    NULL,      &ydelta);
     alist[4] = make_alist( "ignore",    FLOAT,  NULL,    &ignore);
-    alist[5] = make_alist( "all",       INT,    NULL,    &all);
-    alist[6] = make_alist( "first",    INT,    NULL,      &first);
+    alist[5] = make_alist( "all",       DV_INT32,    NULL,    &all);
+    alist[6] = make_alist( "first",    DV_INT32,    NULL,      &first);
     alist[7].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -101,9 +101,9 @@ ff_radial_symmetry2(vfuncptr func, Var * arg)
 
     Alist alist[9];
     alist[0] = make_alist( "object",    ID_VAL, NULL,   &obj);
-    alist[1] = make_alist( "x",    INT,    NULL,      &width);
-    alist[2] = make_alist( "y",    INT,    NULL,      &height);
-    alist[3] = make_alist( "size",    INT,    NULL,      &size);
+    alist[1] = make_alist( "x",    DV_INT32,    NULL,      &width);
+    alist[2] = make_alist( "y",    DV_INT32,    NULL,      &height);
+    alist[3] = make_alist( "size",    DV_INT32,    NULL,      &size);
     alist[4] = make_alist( "ignore",    FLOAT,  NULL,    &ignore);
     alist[5].name = NULL;
 
@@ -338,10 +338,10 @@ ff_radial_symmetry3(vfuncptr func, Var * arg)
 
     Alist alist[6];
     alist[0] = make_alist( "object",    ID_VAL, NULL,   &obj);
-    alist[1] = make_alist( "size",      INT,    NULL,   &end);
+    alist[1] = make_alist( "size",      DV_INT32,    NULL,   &end);
     alist[2] = make_alist( "ignore",    FLOAT,  NULL,   &ignore);
-    alist[3] = make_alist( "start",    INT,  NULL,   &start);
-    alist[4] = make_alist( "step",    INT,  NULL,   &step);
+    alist[3] = make_alist( "start",    DV_INT32,  NULL,   &start);
+    alist[4] = make_alist( "step",    DV_INT32,  NULL,   &step);
     alist[5].name = NULL;
 
     if (parse_args(func, arg, alist) == 0) return(NULL);

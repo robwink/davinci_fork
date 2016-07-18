@@ -47,9 +47,9 @@ Var *ff_sawtooth(vfuncptr func, Var * arg)
   int x = 0, y = 0, z = 0;
 
   Alist alist[4];
-  alist[0] = make_alist("x",       INT,         NULL,	&x);
-  alist[1] = make_alist("y",       INT,         NULL,	&y);
-  alist[2] = make_alist("z",       INT,         NULL,   &z);
+  alist[0] = make_alist("x",       DV_INT32,         NULL,	&x);
+  alist[1] = make_alist("y",       DV_INT32,         NULL,	&y);
+  alist[2] = make_alist("z",       DV_INT32,         NULL,   &z);
   alist[3].name = NULL;
   
   if (parse_args(func, arg, alist) == 0) return(NULL);

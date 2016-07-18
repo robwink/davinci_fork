@@ -506,8 +506,8 @@ cse_maxpos(vfuncptr func, Var *arg)
 
 	Alist alist[5];
 	alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-	alist[1] = make_alist("ret",       INT,       NULL,  &opt);
-	alist[2] = make_alist("iter",      INT,       NULL,  &iter);
+	alist[1] = make_alist("ret",       DV_INT32,       NULL,  &opt);
+	alist[2] = make_alist("iter",      DV_INT32,       NULL,  &iter);
 	alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
 	alist[4].name = NULL;
 
@@ -572,7 +572,7 @@ cse_maxpos(vfuncptr func, Var *arg)
 
 	if(opt!=0) {
 		out = new_struct(2);
-		add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
+		add_struct(out,"pos",newVal(BSQ, 3, iter, 1, DV_INT32, pos));
 		add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
 		return out;
 	}
@@ -598,8 +598,8 @@ cse_minpos(vfuncptr func, Var *arg)
 
 	Alist alist[5];
 	alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
-	alist[1] = make_alist("ret",       INT,       NULL,  &opt);
-	alist[2] = make_alist("iter",      INT,       NULL,  &iter);
+	alist[1] = make_alist("ret",       DV_INT32,       NULL,  &opt);
+	alist[2] = make_alist("iter",      DV_INT32,       NULL,  &iter);
 	alist[3] = make_alist("ignore",    FLOAT,     NULL,  &ignore);
 	alist[4].name = NULL;
 
@@ -668,7 +668,7 @@ cse_minpos(vfuncptr func, Var *arg)
 
 	if(opt!=0) {
 		out = new_struct(2);
-		add_struct(out,"pos",newVal(BSQ, 3, iter, 1, INT, pos));
+		add_struct(out,"pos",newVal(BSQ, 3, iter, 1, DV_INT32, pos));
 		add_struct(out,"val",newVal(BSQ, 1, iter, 1, FLOAT, val));
 		return out;
 	}
@@ -692,7 +692,7 @@ cse_cleandcs(vfuncptr func, Var * arg)
 
 	Alist alist[3];
 	alist[0] = make_alist("pic",      ID_VAL,     NULL,  &pic);
-	alist[1] = make_alist("opt",      INT,        NULL,  &opt);
+	alist[1] = make_alist("opt",      DV_INT32,        NULL,  &opt);
 	alist[2].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -765,9 +765,9 @@ cse_rmnoise(vfuncptr func, Var *arg)
 	Alist alist[7];
 	alist[0] = make_alist("data",      ID_VAL,    NULL,  &data);
 	alist[1] = make_alist("null",      FLOAT,     NULL,  &nullval);
-	alist[2] = make_alist("b10",       INT,       NULL,  &b10);
-	alist[3] = make_alist("filt",      INT,       NULL,  &filt);
-	alist[4] = make_alist("verbose",   INT,       NULL,  &vb);
+	alist[2] = make_alist("b10",       DV_INT32,       NULL,  &b10);
+	alist[3] = make_alist("filt",      DV_INT32,       NULL,  &filt);
+	alist[4] = make_alist("verbose",   DV_INT32,       NULL,  &vb);
 	alist[5] = make_alist("ignore",    FLOAT,     NULL,  &nullval);
 	alist[6].name = NULL;
 
@@ -999,7 +999,7 @@ cse_shift(vfuncptr func, Var * arg)
 	Alist alist[5];
 	alist[0] = make_alist("data",      ID_VAL,     NULL,  &data);
 	alist[1] = make_alist("null",      FLOAT,      NULL,  &nullval);
-	alist[2] = make_alist("side",      INT,        NULL,  &opt);
+	alist[2] = make_alist("side",      DV_INT32,        NULL,  &opt);
 	alist[3] = make_alist("ignore",    FLOAT,      NULL,  &nullval);
 	alist[4].name = NULL;
 
@@ -1107,7 +1107,7 @@ cse_shift(vfuncptr func, Var * arg)
 	/* return and clean up */
 	out=new_struct(2);
 	add_struct(out,"data",newVal(BSQ,x,y,z,FLOAT,w_data));
-	add_struct(out,"shift_edge",newVal(BSQ,1,y,1,INT,newshift));
+	add_struct(out,"shift_edge",newVal(BSQ,1,y,1,DV_INT32,newshift));
 	return out;
 }
 
@@ -1132,7 +1132,7 @@ cse_unshift(vfuncptr func, Var * arg)
 	Alist alist[5];
 	alist[0] = make_alist("rect",      ID_STRUCT,  NULL,  &rect);
 	alist[1] = make_alist("null",      FLOAT,      NULL,  &nullval);
-	alist[2] = make_alist("side",      INT,        NULL,  &opt);
+	alist[2] = make_alist("side",      DV_INT32,        NULL,  &opt);
 	alist[3] = make_alist("ignore",    FLOAT,      NULL,  &nullval);
 	alist[4].name = NULL;
 
@@ -1423,7 +1423,7 @@ cse_circle(vfuncptr func, Var * arg)
 
 	Alist alist[3];
 	alist[0] = make_alist("r",      FLOAT,        NULL,  &r);
-	alist[1] = make_alist("weight", INT,          NULL,  &weight);
+	alist[1] = make_alist("weight", DV_INT32,          NULL,  &weight);
 	alist[2].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);
@@ -1867,7 +1867,7 @@ cse_ramp(vfuncptr func, Var * arg)
 	Alist alist[5];
 	alist[0] = make_alist("pic1",   ID_VAL, NULL, &pic_1);
 	alist[1] = make_alist("pic2",   ID_VAL, NULL, &pic_2);
-	alist[2] = make_alist("stop",   INT,    NULL, &pare);
+	alist[2] = make_alist("stop",   DV_INT32,    NULL, &pare);
 	alist[3] = make_alist("ignore", FLOAT,  NULL, &nullv);
 	alist[4].name = NULL;
 
@@ -2314,10 +2314,10 @@ Var *cse_fFill(vfuncptr func, Var * arg)
 
 	Alist alist[6];
 	alist[0] = make_alist("data",      ID_VAL,     NULL,  &pic);
-	alist[1] = make_alist("xpos",      INT,        NULL,  &sx);
-	alist[2] = make_alist("ypos",      INT,        NULL,  &sy);
-	alist[3] = make_alist("fill",      INT,        NULL,  &fill);
-	alist[4] = make_alist("value",     INT,        NULL,  &val);
+	alist[1] = make_alist("xpos",      DV_INT32,        NULL,  &sx);
+	alist[2] = make_alist("ypos",      DV_INT32,        NULL,  &sy);
+	alist[3] = make_alist("fill",      DV_INT32,        NULL,  &fill);
+	alist[4] = make_alist("value",     DV_INT32,        NULL,  &val);
 	alist[5].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return(NULL);

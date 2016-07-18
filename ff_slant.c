@@ -84,7 +84,7 @@ ff_slant(vfuncptr func, Var * arg)
 
   a = new_struct(3);
   add_struct(a, "data", out);
-  add_struct(a, "leftedge", newVal(BSQ, 1, y, 1, INT, leftmost));
+  add_struct(a, "leftedge", newVal(BSQ, 1, y, 1, DV_INT32, leftmost));
   add_struct(a, "width", newInt(x));
 
   return(a);
