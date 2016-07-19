@@ -8,8 +8,8 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#include "parser.h"
 #include "iomedley.h"
+#include "parser.h"
 #include <stdlib.h>
 
 #if 0
@@ -82,69 +82,67 @@ iom_iheader2_iheader(
 /*
 ** iom_iheader.org <-> V_ORG(v)
 */
-int
-ihorg2vorg(int org)
+int ihorg2vorg(int org)
 {
-    int vorder = -1;
-    
-    switch(org){
-    case iom_BSQ: vorder = BSQ; break;
-    case iom_BIL: vorder = BIL; break;
-    case iom_BIP: vorder = BIP; break;
-    }
+	int vorder = -1;
 
-    return vorder;
+	switch (org) {
+	case iom_BSQ: vorder = BSQ; break;
+	case iom_BIL: vorder = BIL; break;
+	case iom_BIP: vorder = BIP; break;
+	}
+
+	return vorder;
 }
 
-int
-vorg2ihorg(int vorder)
+int vorg2ihorg(int vorder)
 {
-    int org = -1;
+	int org = -1;
 
-    switch(vorder){
-    case BSQ: org = iom_BSQ; break;
-    case BIL: org = iom_BIL; break;
-    case BIP: org = iom_BIP; break;
-    }
+	switch (vorder) {
+	case BSQ: org = iom_BSQ; break;
+	case BIL: org = iom_BIL; break;
+	case BIP: org = iom_BIP; break;
+	}
 
-    return org;
+	return org;
 }
 
 /*
 ** iom_iheader.format <-> V_FORMAT(v)
 */
 
-int
-ihfmt2vfmt(int ifmt)
+int ihfmt2vfmt(int ifmt)
 {
-    int vfmt = -1;
+	int vfmt = -1;
 
-    switch(ifmt){
-    case iom_BYTE:   vfmt = DV_UINT8;   break;
-    case iom_SHORT:  vfmt = DV_INT16;  break;
-    case iom_INT:    vfmt = DV_INT32;    break;
-    case iom_FLOAT:  vfmt = DV_FLOAT;  break;
-    case iom_DOUBLE: vfmt = DV_DOUBLE; break;
-        /* VAX_INT & VAX_FLOAT are deprecated */
-    }
+	switch (ifmt) {
+	case iom_BYTE: vfmt  = DV_UINT8; break;
+	case iom_SHORT: vfmt = DV_INT16; break;
+	case iom_INT: vfmt   = DV_INT32; break;
+	case iom_FLOAT: vfmt = DV_FLOAT; break;
+	case iom_DOUBLE:
+		vfmt = DV_DOUBLE;
+		break;
+		/* VAX_INT & VAX_FLOAT are deprecated */
+	}
 
-    return vfmt;
+	return vfmt;
 }
 
-int
-vfmt2ihfmt(int vfmt)
+int vfmt2ihfmt(int vfmt)
 {
-    int ifmt = -1;
+	int ifmt = -1;
 
-    switch(vfmt){
-    case DV_UINT8:   ifmt = iom_BYTE;   break;
-    case DV_INT16:  ifmt = iom_SHORT;  break;
-    case DV_INT32:    ifmt = iom_INT;    break;
-    case DV_FLOAT:  ifmt = iom_FLOAT;  break;
-    case DV_DOUBLE: ifmt = iom_DOUBLE; break;
-    }
+	switch (vfmt) {
+	case DV_UINT8: ifmt  = iom_BYTE; break;
+	case DV_INT16: ifmt  = iom_SHORT; break;
+	case DV_INT32: ifmt  = iom_INT; break;
+	case DV_FLOAT: ifmt  = iom_FLOAT; break;
+	case DV_DOUBLE: ifmt = iom_DOUBLE; break;
+	}
 
-    return ifmt;
+	return ifmt;
 }
 
 /*
@@ -160,38 +158,35 @@ vfmt2ihfmt(int vfmt)
 **    format  (as V_FORMAT)
 */
 
-Var *
-iom_iheader2var(struct iom_iheader *h)
+Var* iom_iheader2var(struct iom_iheader* h)
 {
-    Var *v;
-    int i;
+	Var* v;
+	int i;
 
-    v = newVar();
+	v = newVar();
 
-    V_TYPE(v) = ID_VAL;
-    V_FORMAT(v) = ihfmt2vfmt(h->format);
-    
-    /** Will not be possible now
+	V_TYPE(v)   = ID_VAL;
+	V_FORMAT(v) = ihfmt2vfmt(h->format);
+
+	/** Will not be possible now
 	if (V_FORMAT(v) == VAX_FLOAT) V_FORMAT(v) = DV_FLOAT;
 	if (V_FORMAT(v) == VAX_INTEGER) V_FORMAT(v) = DV_INT32;
-    */
+	*/
 
-	if (h->dim[0] < 0 || h->dim[1] < 0 || h->dim[2] < 0){
+	if (h->dim[0] < 0 || h->dim[1] < 0 || h->dim[2] < 0) {
 		fprintf(stderr, "One of dim[i]'s is not set properly.\n");
 		fprintf(stderr, "See File: %s  Line: %d.\n", __FILE__, __LINE__);
 	}
-    
-    V_ORDER(v) = ihorg2vorg(h->org);
-    V_DSIZE(v) = 1;
-    for (i = 0 ; i < 3 ; i++) {
-        V_SIZE(v)[i] = (((h->dim)[i] -1)/h->s_skip[i])+1;
-        V_DSIZE(v) *= V_SIZE(v)[i];
-    }
 
-    return(v);
+	V_ORDER(v) = ihorg2vorg(h->org);
+	V_DSIZE(v) = 1;
+	for (i = 0; i < 3; i++) {
+		V_SIZE(v)[i] = (((h->dim)[i] - 1) / h->s_skip[i]) + 1;
+		V_DSIZE(v) *= V_SIZE(v)[i];
+	}
+
+	return (v);
 }
-
-
 
 /*
 ** var2iheader()
@@ -209,31 +204,26 @@ iom_iheader2var(struct iom_iheader *h)
 **    format (from V_FORMAT)
 */
 
-void
-var2iom_iheader(
-    Var *v,
-    struct iom_iheader *h
-    )
+void var2iom_iheader(Var* v, struct iom_iheader* h)
 {
-    int i;
-    
-    iom_init_iheader(h);
-    h->org = vorg2ihorg(V_ORDER(v));
+	int i;
 
-    for (i = 0; i < 3; i++){
-        h->size[i] = V_SIZE(v)[i];
-    }
+	iom_init_iheader(h);
+	h->org = vorg2ihorg(V_ORDER(v));
 
-    h->format = vfmt2ihfmt(V_FORMAT(v));
+	for (i = 0; i < 3; i++) {
+		h->size[i] = V_SIZE(v)[i];
+	}
+
+	h->format = vfmt2ihfmt(V_FORMAT(v));
 }
-
 
 /* Checks if the file exists...*/
 
-int file_exists(const char * filename)
+int file_exists(const char* filename)
 {
 	struct stat buf;
-	return (stat(filename,&buf)==0?1:0);
+	return (stat(filename, &buf) == 0 ? 1 : 0);
 }
 
 /*
@@ -244,29 +234,31 @@ int file_exists(const char * filename)
 ** to free it after use.
 */
 
-char *
-dv_locate_file(const char *fname)
+char* dv_locate_file(const char* fname)
 {
 
-	char *buf = NULL;
+	char* buf = NULL;
 
-	//Check if it is a remote file. Download it and make it local
-	//Return a memory(strdup) with the new filename if necessary, otherwise return the same name.
+	// Check if it is a remote file. Download it and make it local
+	// Return a memory(strdup) with the new filename if necessary, otherwise return the same name.
 	buf = try_remote_load(fname);
 
-	//If download didn't happen (meaning the fname equals fname2)
-	if(buf != NULL && strcmp(fname, buf) == 0){
-		free(buf); //free the try_remote_load malloc
-		//return a strdup
+	// If download didn't happen (meaning the fname equals fname2)
+	if (buf != NULL && strcmp(fname, buf) == 0) {
+		free(buf); // free the try_remote_load malloc
+		// return a strdup
 		buf = iom_expand_filename(fname);
 	}
 	return buf;
 }
 
-void
-dv_set_iom_verbosity()
+void dv_set_iom_verbosity()
 {
-	if (VERBOSE == 1){ iom_VERBOSITY = 5; }
-	else if (VERBOSE >= 2){ iom_VERBOSITY = 10; }
-	else { iom_VERBOSITY = VERBOSE; }
+	if (VERBOSE == 1) {
+		iom_VERBOSITY = 5;
+	} else if (VERBOSE >= 2) {
+		iom_VERBOSITY = 10;
+	} else {
+		iom_VERBOSITY = VERBOSE;
+	}
 }

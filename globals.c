@@ -29,7 +29,6 @@ int indent   = 0;
 
 Var* curnode = NULL;
 
-
 void quit(int);
 
 void make_sym(Var* v, int format, char* str)

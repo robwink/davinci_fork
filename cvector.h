@@ -1,27 +1,23 @@
 #ifndef CVECTOR_H
 #define CVECTOR_H
 
+#include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <assert.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
 /** Data structure for int vector. */
-typedef struct cvector_i
-{
-	int* a;            /**< Array. */
-	size_t size;       /**< Current size (amount you use when manipulating array directly). */
-	size_t capacity;   /**< Allocated size of array; always >= size. */
+typedef struct cvector_i {
+	int* a;          /**< Array. */
+	size_t size;     /**< Current size (amount you use when manipulating array directly). */
+	size_t capacity; /**< Allocated size of array; always >= size. */
 } cvector_i;
 
-
 extern size_t CVEC_I_START_SZ;
-
 
 int cvec_i(cvector_i* vec, size_t size, size_t capacity);
 int cvec_init_i(cvector_i* vec, int* vals, size_t num);
@@ -49,19 +45,14 @@ void cvec_clear_i(cvector_i* vec);
 void cvec_free_i_heap(void* vec);
 void cvec_free_i(void* vec);
 
-
-
-
 /** Data structure for double vector. */
-typedef struct cvector_d
-{
-	double* a;         /**< Array. */
-	size_t size;       /**< Current size (amount you use when manipulating array directly). */
-	size_t capacity;   /**< Allocated size of array; always >= size. */
+typedef struct cvector_d {
+	double* a;       /**< Array. */
+	size_t size;     /**< Current size (amount you use when manipulating array directly). */
+	size_t capacity; /**< Allocated size of array; always >= size. */
 } cvector_d;
 
 extern size_t CVEC_D_START_SZ;
-
 
 int cvec_d(cvector_d* vec, size_t size, size_t capacity);
 int cvec_init_d(cvector_d* vec, double* vals, size_t num);
@@ -70,7 +61,6 @@ cvector_d* cvec_d_heap(size_t size, size_t capacity);
 cvector_d* cvec_init_d_heap(double* vals, size_t num);
 
 void cvec_d_copy(void* dest, void* src);
-
 
 int cvec_push_d(cvector_d* vec, double a);
 double cvec_pop_d(cvector_d* vec);
@@ -91,16 +81,12 @@ void cvec_clear_d(cvector_d* vec);
 void cvec_free_d_heap(void* vec);
 void cvec_free_d(void* vec);
 
-
-
 /** Data structure for string vector. */
-typedef struct cvector_str
-{
-	char** a;          /**< Array. */
-	size_t size;       /**< Current size (amount you use when manipulating array directly). */
-	size_t capacity;   /**< Allocated size of array; always >= size. */
+typedef struct cvector_str {
+	char** a;        /**< Array. */
+	size_t size;     /**< Current size (amount you use when manipulating array directly). */
+	size_t capacity; /**< Allocated size of array; always >= size. */
 } cvector_str;
-
 
 extern size_t CVEC_STR_START_SZ;
 
@@ -133,30 +119,31 @@ void cvec_clear_str(cvector_str* vec);
 void cvec_free_str_heap(void* vec);
 void cvec_free_str(void* vec);
 
-
-
 typedef unsigned char byte;
 
 /** Data structure for generic type (cast to void) vectors */
-typedef struct cvector_void
-{
-	byte* a;                 /**< Array. */
-	size_t size;             /**< Current size (amount you should use when manipulating array directly). */
-	size_t capacity;         /**< Allocated size of array; always >= size. */
-	size_t elem_size;        /**< Size in bytes of type stored (sizeof(T) where T is type). */
+typedef struct cvector_void {
+	byte* a;          /**< Array. */
+	size_t size;      /**< Current size (amount you should use when manipulating array directly). */
+	size_t capacity;  /**< Allocated size of array; always >= size. */
+	size_t elem_size; /**< Size in bytes of type stored (sizeof(T) where T is type). */
 	void (*elem_init)(void*, void*);
 	void (*elem_free)(void*);
 } cvector_void;
 
 extern size_t CVEC_VOID_START_SZ;
 
-#define CVEC_GET_VOID(VEC, TYPE, I) ((TYPE*)&(VEC)->a[(I)*(VEC)->elem_size])
+#define CVEC_GET_VOID(VEC, TYPE, I) ((TYPE*)&(VEC)->a[(I) * (VEC)->elem_size])
 
-int cvec_void(cvector_void* vec, size_t size, size_t capacity, size_t elem_sz, void(*elem_free)(void*), void(*elem_init)(void*, void*));
-int cvec_init_void(cvector_void* vec, void* vals, size_t num, size_t elem_sz, void(*elem_free)(void*), void(*elem_init)(void*, void*));
+int cvec_void(cvector_void* vec, size_t size, size_t capacity, size_t elem_sz,
+              void (*elem_free)(void*), void (*elem_init)(void*, void*));
+int cvec_init_void(cvector_void* vec, void* vals, size_t num, size_t elem_sz,
+                   void (*elem_free)(void*), void (*elem_init)(void*, void*));
 
-cvector_void* cvec_void_heap(size_t size, size_t capacity, size_t elem_sz, void (*elem_free)(void*), void(*elem_init)(void*, void*));
-cvector_void* cvec_init_void_heap(void* vals, size_t num, size_t elem_sz, void (*elem_free)(void*), void(*elem_init)(void*, void*));
+cvector_void* cvec_void_heap(size_t size, size_t capacity, size_t elem_sz, void (*elem_free)(void*),
+                             void (*elem_init)(void*, void*));
+cvector_void* cvec_init_void_heap(void* vals, size_t num, size_t elem_sz, void (*elem_free)(void*),
+                                  void (*elem_init)(void*, void*));
 
 void cvec_void_copy(void* dest, void* src);
 
@@ -180,11 +167,9 @@ void cvec_clear_void(cvector_void* vec);
 void cvec_free_void_heap(void* vec);
 void cvec_free_void(void* vec);
 
-
 #ifdef __cplusplus
 }
 #endif
 
 /* header ends */
 #endif
-

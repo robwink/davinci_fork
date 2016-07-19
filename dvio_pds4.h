@@ -1,6 +1,5 @@
 #include <config.h>
 
-
 #ifdef HAVE_LIBXML2
 
 #define ASCII_STRING "ASCII_String"

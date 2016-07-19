@@ -14,10 +14,9 @@
 
 #include <limits.h>
 
-
 #ifndef max
-#define max(a,b) ((a) < (b) ? (b) : (a))
-#define min(a,b) ((a) > (b) ? (b) : (a))
+#define max(a, b) ((a) < (b) ? (b) : (a))
+#define min(a, b) ((a) > (b) ? (b) : (a))
 #endif
 
 #include <stdint.h>
@@ -33,25 +32,24 @@ typedef unsigned short ushort;
 typedef unsigned char uchar;
 #endif /* NEED_UDEFS */
 
-
 #ifndef HAVE_STRDUP
-char *strdup(const char *);
+char* strdup(const char*);
 #endif
 
-//for some reason configure on mingw64 doesn't detect
-//strndup even though the compiler is complaining about having it
+// for some reason configure on mingw64 doesn't detect
+// strndup even though the compiler is complaining about having it
 #ifndef HAVE_STRNDUP
-char *strndup(const char *s1, size_t len);
+char* strndup(const char* s1, size_t len);
 #endif
 
 #ifndef HAVE_BASENAME
-char *basename(const char *);
+char* basename(const char*);
 #endif
 
 #ifndef HAVE_MMAP
-#define PROT_READ   0x1
-#define PROT_WRITE  0x2
-#define MAP_SHARED  0x1
+#define PROT_READ 0x1
+#define PROT_WRITE 0x2
+#define MAP_SHARED 0x1
 #define MAP_PRIVATE 0x2 /* unsupported */
 
 #define MAP_FAILED (void*)-1
@@ -59,13 +57,12 @@ char *basename(const char *);
 // for size_t
 #include <stdlib.h>
 
-void *mmap(void *x0, size_t len, int x1, int x2, int fd, size_t off);
-void munmap(void *buf,int len);
+void* mmap(void* x0, size_t len, int x1, int x2, int fd, size_t off);
+void munmap(void* buf, int len);
 #endif
 
-void *my_realloc(void *, int);
-void rmrf(const char *path);
-
+void* my_realloc(void*, int);
+void rmrf(const char* path);
 
 #ifndef HAVE_RANDOM
 #define random rand
@@ -81,6 +78,3 @@ long lrand48(void);
 void srand48(long seedval);
 
 #endif
-
-
-

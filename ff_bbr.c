@@ -2,22 +2,20 @@
 
 /**
  ** black-body radiance support function
- ** 
+ **
  **/
 
-#define C1 (2.*6.6260755e-34*(2.99792458e10)*(2.99792458e10))
+#define C1 (2. * 6.6260755e-34 * (2.99792458e10) * (2.99792458e10))
 #define C2 1.43879
 
-double 
-bbr(double wn, double temp)
+double bbr(double wn, double temp)
 {
 	/**
 	 ** wn = wavenumber
 	 ** temp = temperature in Kelvin
 	 **/
-    if (temp <= 0)
-        return (0.0);
-    return ((C1 * (wn * wn * wn)) / (exp(C2 * wn / temp) - 1.0));
+	if (temp <= 0) return (0.0);
+	return ((C1 * (wn * wn * wn)) / (exp(C2 * wn / temp) - 1.0));
 }
 
 /**
@@ -26,17 +24,14 @@ bbr(double wn, double temp)
  ** Try to catch the cases where divison by zero would occur.
  **/
 
-double
-btemp(double f, double radiance)
+double btemp(double f, double radiance)
 {
 	double x;
 
-	if (radiance <= 0)
-		return (0.0);
+	if (radiance <= 0) return (0.0);
 
 	x = log(1.0 + (C1 * f * f * f / radiance));
-	if (x <= 0)
-		return (0.0);
+	if (x <= 0) return (0.0);
 
 	return (C2 * f / log(1.0 + (C1 * f * f * f / radiance)));
 }

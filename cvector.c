@@ -2,15 +2,13 @@
 
 size_t CVEC_I_START_SZ = 50;
 
-#define CVEC_I_ALLOCATOR(x) ((x) * 2)
-
-
-
+#define CVEC_I_ALLOCATOR(x) ((x)*2)
 
 /**
  * Creates a new cvector_i on the heap.
  * Vector size set to (size > 0) ? size : 0;
- * Capacity to (capacity > vec->size || (vec->size && capacity == vec->size)) ? capacity : vec->size + CVEC_I_START_SZ
+ * Capacity to (capacity > vec->size || (vec->size && capacity == vec->size)) ? capacity : vec->size
+ * + CVEC_I_START_SZ
  * in other words capacity has to be at least 1 and >= to vec->size of course.
  */
 cvector_i* cvec_i_heap(size_t size, size_t capacity)
@@ -21,10 +19,12 @@ cvector_i* cvec_i_heap(size_t size, size_t capacity)
 		return NULL;
 	}
 
-	vec->size = size;
-	vec->capacity = (capacity > vec->size || (vec->size && capacity == vec->size)) ? capacity : vec->size + CVEC_I_START_SZ;
+	vec->size     = size;
+	vec->capacity = (capacity > vec->size || (vec->size && capacity == vec->size))
+	                    ? capacity
+	                    : vec->size + CVEC_I_START_SZ;
 
-	if (!(vec->a = (int*)malloc(vec->capacity*sizeof(int)))) {
+	if (!(vec->a = (int*)malloc(vec->capacity * sizeof(int)))) {
 		assert(vec->a != NULL);
 		free(vec);
 		return NULL;
@@ -39,21 +39,21 @@ cvector_i* cvec_i_heap(size_t size, size_t capacity)
 cvector_i* cvec_init_i_heap(int* vals, size_t num)
 {
 	cvector_i* vec;
-	
+
 	if (!(vec = (cvector_i*)malloc(sizeof(cvector_i)))) {
 		assert(vec != NULL);
 		return NULL;
 	}
 
 	vec->capacity = num + CVEC_I_START_SZ;
-	vec->size = num;
-	if (!(vec->a = (int*)malloc(vec->capacity*sizeof(int)))) {
+	vec->size     = num;
+	if (!(vec->a = (int*)malloc(vec->capacity * sizeof(int)))) {
 		assert(vec->a != NULL);
 		free(vec);
 		return NULL;
 	}
 
-	memcpy(vec->a, vals, sizeof(int)*num);
+	memcpy(vec->a, vals, sizeof(int) * num);
 
 	return vec;
 }
@@ -64,10 +64,12 @@ cvector_i* cvec_init_i_heap(int* vals, size_t num)
  */
 int cvec_i(cvector_i* vec, size_t size, size_t capacity)
 {
-	vec->size = size;
-	vec->capacity = (capacity > vec->size || (vec->size && capacity == vec->size)) ? capacity : vec->size + CVEC_I_START_SZ;
+	vec->size     = size;
+	vec->capacity = (capacity > vec->size || (vec->size && capacity == vec->size))
+	                    ? capacity
+	                    : vec->size + CVEC_I_START_SZ;
 
-	if (!(vec->a = (int*)malloc(vec->capacity*sizeof(int)))) {
+	if (!(vec->a = (int*)malloc(vec->capacity * sizeof(int)))) {
 		assert(vec->a != NULL);
 		vec->size = vec->capacity = 0;
 		return 0;
@@ -75,7 +77,6 @@ int cvec_i(cvector_i* vec, size_t size, size_t capacity)
 
 	return 1;
 }
-
 
 /** Same as cvec_init_i_heap() except the vector passed in was declared on the stack so
  *  it isn't allocated in this function.
@@ -83,18 +84,17 @@ int cvec_i(cvector_i* vec, size_t size, size_t capacity)
 int cvec_init_i(cvector_i* vec, int* vals, size_t num)
 {
 	vec->capacity = num + CVEC_I_START_SZ;
-	vec->size = num;
-	if (!(vec->a = (int*)malloc(vec->capacity*sizeof(int)))) {
+	vec->size     = num;
+	if (!(vec->a = (int*)malloc(vec->capacity * sizeof(int)))) {
 		assert(vec->a != NULL);
 		vec->size = vec->capacity = 0;
 		return 0;
 	}
 
-	memcpy(vec->a, vals, sizeof(int)*num);
+	memcpy(vec->a, vals, sizeof(int) * num);
 
 	return 1;
 }
-
 
 /** Makes dest an identical copy of src.  The parameters
  *  are void so it can be used as the constructor when making
@@ -106,24 +106,20 @@ void cvec_i_copy(void* dest, void* src)
 {
 	cvector_i* vec1 = (cvector_i*)dest;
 	cvector_i* vec2 = (cvector_i*)src;
-	
-	vec1->size = 0;
+
+	vec1->size     = 0;
 	vec1->capacity = 0;
-	
+
 	/*not much else we can do here*/
-	if (!(vec1->a = (int*)malloc(vec2->capacity*sizeof(int)))) {
+	if (!(vec1->a = (int*)malloc(vec2->capacity * sizeof(int)))) {
 		assert(vec1->a != NULL);
 		return;
 	}
-	
-	memcpy(vec1->a, vec2->a, vec2->size*sizeof(int));
-	vec1->size = vec2->size;
+
+	memcpy(vec1->a, vec2->a, vec2->size * sizeof(int));
+	vec1->size     = vec2->size;
 	vec1->capacity = vec2->capacity;
 }
-
-
-
-
 
 /**
  * Append a to end of vector (size increased 1).
@@ -135,19 +131,17 @@ int cvec_push_i(cvector_i* vec, int a)
 	size_t tmp_sz;
 	if (vec->capacity == vec->size) {
 		tmp_sz = CVEC_I_ALLOCATOR(vec->capacity);
-		if (!(tmp = (int*)realloc(vec->a, sizeof(int)*tmp_sz))) {
+		if (!(tmp = (int*)realloc(vec->a, sizeof(int) * tmp_sz))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = tmp_sz;
 	}
-	
+
 	vec->a[vec->size++] = a;
 	return 1;
 }
-
-
 
 /** Remove and return the last element (size decreased 1).*/
 int cvec_pop_i(cvector_i* vec)
@@ -158,10 +152,8 @@ int cvec_pop_i(cvector_i* vec)
 /** Return pointer to last element */
 int* cvec_back_i(cvector_i* vec)
 {
-	return &vec->a[vec->size-1];
+	return &vec->a[vec->size - 1];
 }
-
-
 
 /** Increase the size of the array num items.  Items
  *  are not initialized to anything */
@@ -171,20 +163,17 @@ int cvec_extend_i(cvector_i* vec, size_t num)
 	size_t tmp_sz;
 	if (vec->capacity < vec->size + num) {
 		tmp_sz = vec->capacity + num + CVEC_I_START_SZ;
-		if (!(tmp = (int*)realloc(vec->a, sizeof(int)*tmp_sz))) {
+		if (!(tmp = (int*)realloc(vec->a, sizeof(int) * tmp_sz))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = tmp_sz;
 	}
 
 	vec->size += num;
 	return 1;
 }
-
-
-
 
 /**
  * Insert a at index i (0 based).
@@ -196,20 +185,19 @@ int cvec_insert_i(cvector_i* vec, size_t i, int a)
 	size_t tmp_sz;
 	if (vec->capacity == vec->size) {
 		tmp_sz = CVEC_I_ALLOCATOR(vec->capacity);
-		if (!(tmp = (int*)realloc(vec->a, sizeof(int)*tmp_sz))) {
+		if (!(tmp = (int*)realloc(vec->a, sizeof(int) * tmp_sz))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = tmp_sz;
 	}
 
-	memmove(&vec->a[i+1], &vec->a[i], (vec->size-i)*sizeof(int));
+	memmove(&vec->a[i + 1], &vec->a[i], (vec->size - i) * sizeof(int));
 	vec->a[i] = a;
 	vec->size++;
 	return 1;
 }
-
 
 /**
  * Insert the first num elements of array a at index i.
@@ -223,29 +211,27 @@ int cvec_insert_array_i(cvector_i* vec, size_t i, int* a, size_t num)
 	size_t tmp_sz;
 	if (vec->capacity < vec->size + num) {
 		tmp_sz = vec->capacity + num + CVEC_I_START_SZ;
-		if (!(tmp = (int*)realloc(vec->a, sizeof(int)*tmp_sz))) {
+		if (!(tmp = (int*)realloc(vec->a, sizeof(int) * tmp_sz))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = tmp_sz;
 	}
 
-	memmove(&vec->a[i+num], &vec->a[i], (vec->size-i)*sizeof(int));
-	memcpy(&vec->a[i], a, num*sizeof(int));
+	memmove(&vec->a[i + num], &vec->a[i], (vec->size - i) * sizeof(int));
+	memcpy(&vec->a[i], a, num * sizeof(int));
 	vec->size += num;
 	return 1;
 }
 
-
 /** Replace value at index i with a, return original value. */
 int cvec_replace_i(cvector_i* vec, size_t i, int a)
 {
-	int tmp = vec->a[i];
+	int tmp   = vec->a[i];
 	vec->a[i] = a;
 	return tmp;
 }
-
 
 /**
  * Erases elements from start to end inclusive.
@@ -255,27 +241,24 @@ int cvec_replace_i(cvector_i* vec, size_t i, int a)
 void cvec_erase_i(cvector_i* vec, size_t start, size_t end)
 {
 	size_t d = end - start + 1;
-	memmove(&vec->a[start], &vec->a[end+1], (vec->size-1-end)*sizeof(int));
+	memmove(&vec->a[start], &vec->a[end + 1], (vec->size - 1 - end) * sizeof(int));
 	vec->size -= d;
 }
-
 
 /** Make sure capacity is at least size(parameter not member). */
 int cvec_reserve_i(cvector_i* vec, size_t size)
 {
 	int* tmp;
 	if (vec->capacity < size) {
-		if (!(tmp = (int*)realloc(vec->a, sizeof(int)*(size+CVEC_I_START_SZ)))) {
+		if (!(tmp = (int*)realloc(vec->a, sizeof(int) * (size + CVEC_I_START_SZ)))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = size + CVEC_I_START_SZ;
 	}
 	return 1;
 }
-
-
 
 /** Set capacity to size.
  * You will lose data if you shrink the capacity below the current size.
@@ -288,39 +271,38 @@ int cvec_set_cap_i(cvector_i* vec, size_t size)
 		vec->size = size;
 	}
 
-	if (!(tmp = (int*)realloc(vec->a, sizeof(int)*size))) {
+	if (!(tmp = (int*)realloc(vec->a, sizeof(int) * size))) {
 		assert(tmp != NULL);
 		return 0;
 	}
-	vec->a = tmp;
+	vec->a        = tmp;
 	vec->capacity = size;
 	return 1;
 }
-
-
 
 /** Set all size elements to val. */
 void cvec_set_val_sz_i(cvector_i* vec, int val)
 {
 	size_t i;
-	for (i=0; i<vec->size; i++) {
+	for (i = 0; i < vec->size; i++) {
 		vec->a[i] = val;
 	}
 }
-
 
 /** Fills entire allocated array (capacity) with val. */
 void cvec_set_val_cap_i(cvector_i* vec, int val)
 {
 	size_t i;
-	for (i=0; i<vec->capacity; i++) {
+	for (i = 0; i < vec->capacity; i++) {
 		vec->a[i] = val;
 	}
 }
 
-
 /** Sets size to 0 (does not clear contents).*/
-void cvec_clear_i(cvector_i* vec) { vec->size = 0; }
+void cvec_clear_i(cvector_i* vec)
+{
+	vec->size = 0;
+}
 
 /** Frees everything so don't use vec after calling this. */
 void cvec_free_i_heap(void* vec)
@@ -335,37 +317,36 @@ void cvec_free_i(void* vec)
 {
 	cvector_i* tmp = (cvector_i*)vec;
 	free(tmp->a);
-	tmp->size = 0;
+	tmp->size     = 0;
 	tmp->capacity = 0;
 }
 
 size_t CVEC_D_START_SZ = 50;
 
-
-#define CVEC_D_ALLOCATOR(x) ((x) * 2)
-
-
-
+#define CVEC_D_ALLOCATOR(x) ((x)*2)
 
 /**
  * Creates a new cvector_d on the heap.
  * Vector size set to (size > 0) ? size : 0;
- * Capacity to (capacity > vec->size || (vec->size && capacity == vec->size)) ? capacity : vec->size + CVEC_D_START_SZ
+ * Capacity to (capacity > vec->size || (vec->size && capacity == vec->size)) ? capacity : vec->size
+ * + CVEC_D_START_SZ
  * in other words capacity has to be at least 1 and >= to vec->size of course.
  */
 cvector_d* cvec_d_heap(size_t size, size_t capacity)
 {
 	cvector_d* vec;
-	
+
 	if (!(vec = (cvector_d*)malloc(sizeof(cvector_d)))) {
 		assert(vec != NULL);
 		return NULL;
 	}
 
-	vec->size = size;
-	vec->capacity = (capacity > vec->size || (vec->size && capacity == vec->size)) ? capacity : vec->size + CVEC_D_START_SZ;
+	vec->size     = size;
+	vec->capacity = (capacity > vec->size || (vec->size && capacity == vec->size))
+	                    ? capacity
+	                    : vec->size + CVEC_D_START_SZ;
 
-	if (!(vec->a = (double*)malloc(vec->capacity*sizeof(double)))) {
+	if (!(vec->a = (double*)malloc(vec->capacity * sizeof(double)))) {
 		assert(vec->a != NULL);
 		free(vec);
 		return NULL;
@@ -373,7 +354,6 @@ cvector_d* cvec_d_heap(size_t size, size_t capacity)
 
 	return vec;
 }
-
 
 /** Create (on the heap) and initialize cvector_d with num elements of vals.
  *  Capacity is set to num + CVEC_D_START_SZ.
@@ -381,25 +361,24 @@ cvector_d* cvec_d_heap(size_t size, size_t capacity)
 cvector_d* cvec_init_d_heap(double* vals, size_t num)
 {
 	cvector_d* vec;
-	
+
 	if (!(vec = (cvector_d*)malloc(sizeof(cvector_d)))) {
 		assert(vec != NULL);
 		return NULL;
 	}
 
 	vec->capacity = num + CVEC_D_START_SZ;
-	vec->size = num;
-	if (!(vec->a = (double*)malloc(vec->capacity*sizeof(double)))) {
+	vec->size     = num;
+	if (!(vec->a = (double*)malloc(vec->capacity * sizeof(double)))) {
 		assert(vec->a != NULL);
 		free(vec);
 		return NULL;
 	}
 
-	memcpy(vec->a, vals, sizeof(double)*num);
+	memcpy(vec->a, vals, sizeof(double) * num);
 
 	return vec;
 }
-
 
 /** Same as cvec_d_heap() except the vector passed in was declared on the stack so
  *  it isn't allocated in this function.  Use the cvec_free_d in this case.
@@ -407,10 +386,12 @@ cvector_d* cvec_init_d_heap(double* vals, size_t num)
  */
 int cvec_d(cvector_d* vec, size_t size, size_t capacity)
 {
-	vec->size = size;
-	vec->capacity = (capacity > vec->size || (vec->size && capacity == vec->size)) ? capacity : vec->size + CVEC_D_START_SZ;
+	vec->size     = size;
+	vec->capacity = (capacity > vec->size || (vec->size && capacity == vec->size))
+	                    ? capacity
+	                    : vec->size + CVEC_D_START_SZ;
 
-	if (!(vec->a = (double*)malloc(vec->capacity*sizeof(double)))) {
+	if (!(vec->a = (double*)malloc(vec->capacity * sizeof(double)))) {
 		assert(vec->a != NULL);
 		vec->size = vec->capacity = 0;
 		return 0;
@@ -425,14 +406,14 @@ int cvec_d(cvector_d* vec, size_t size, size_t capacity)
 int cvec_init_d(cvector_d* vec, double* vals, size_t num)
 {
 	vec->capacity = num + CVEC_D_START_SZ;
-	vec->size = num;
-	if (!(vec->a = (double*)malloc(vec->capacity*sizeof(double)))) {
+	vec->size     = num;
+	if (!(vec->a = (double*)malloc(vec->capacity * sizeof(double)))) {
 		assert(vec->a != NULL);
 		vec->size = vec->capacity = 0;
 		return 0;
 	}
 
-	memcpy(vec->a, vals, sizeof(double)*num);
+	memcpy(vec->a, vals, sizeof(double) * num);
 
 	return 1;
 }
@@ -447,26 +428,20 @@ void cvec_d_copy(void* dest, void* src)
 {
 	cvector_d* vec1 = (cvector_d*)dest;
 	cvector_d* vec2 = (cvector_d*)src;
-	
-	vec1->size = 0;
+
+	vec1->size     = 0;
 	vec1->capacity = 0;
-	
+
 	/*not much else we can do here*/
-	if (!(vec1->a = (double*)malloc(vec2->capacity*sizeof(double)))) {
+	if (!(vec1->a = (double*)malloc(vec2->capacity * sizeof(double)))) {
 		assert(vec1->a != NULL);
 		return;
 	}
-	
-	memcpy(vec1->a, vec2->a, vec2->size*sizeof(double));
-	vec1->size = vec2->size;
+
+	memcpy(vec1->a, vec2->a, vec2->size * sizeof(double));
+	vec1->size     = vec2->size;
 	vec1->capacity = vec2->capacity;
 }
-
-
-
-
-
-
 
 /** Append a to end of vector (size increased 1).
  * Capacity is increased by doubling when necessary.
@@ -477,17 +452,16 @@ int cvec_push_d(cvector_d* vec, double a)
 	size_t tmp_sz;
 	if (vec->capacity == vec->size) {
 		tmp_sz = CVEC_D_ALLOCATOR(vec->capacity);
-		if (!(tmp = (double*)realloc(vec->a, sizeof(double)*tmp_sz))) {
+		if (!(tmp = (double*)realloc(vec->a, sizeof(double) * tmp_sz))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = tmp_sz;
 	}
 	vec->a[vec->size++] = a;
 	return 1;
 }
-
 
 /** Remove and return the last element (size decreased 1).*/
 double cvec_pop_d(cvector_d* vec)
@@ -495,15 +469,11 @@ double cvec_pop_d(cvector_d* vec)
 	return vec->a[--vec->size];
 }
 
-
 /** Return pointer to last element */
 double* cvec_back_d(cvector_d* vec)
 {
-	return &vec->a[vec->size-1];
+	return &vec->a[vec->size - 1];
 }
-
-
-
 
 /** Increase the size of the array num items.  Items
  *  are not initialized to anything */
@@ -513,20 +483,17 @@ int cvec_extend_d(cvector_d* vec, size_t num)
 	size_t tmp_sz;
 	if (vec->capacity < vec->size + num) {
 		tmp_sz = vec->capacity + num + CVEC_D_START_SZ;
-		if (!(tmp = (double*)realloc(vec->a, sizeof(double)*tmp_sz))) {
+		if (!(tmp = (double*)realloc(vec->a, sizeof(double) * tmp_sz))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = tmp_sz;
 	}
 
 	vec->size += num;
 	return 1;
 }
-
-
-
 
 /**
  * Insert a at index i (0 based).
@@ -538,15 +505,15 @@ int cvec_insert_d(cvector_d* vec, size_t i, double a)
 	size_t tmp_sz;
 	if (vec->capacity == vec->size) {
 		tmp_sz = CVEC_D_ALLOCATOR(vec->capacity);
-		if (!(tmp = (double*)realloc(vec->a, sizeof(double)*tmp_sz))) {
+		if (!(tmp = (double*)realloc(vec->a, sizeof(double) * tmp_sz))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = tmp_sz;
 	}
-	
-	memmove(&vec->a[i+1], &vec->a[i], (vec->size-i)*sizeof(double));
+
+	memmove(&vec->a[i + 1], &vec->a[i], (vec->size - i) * sizeof(double));
 	vec->a[i] = a;
 	vec->size++;
 	return 1;
@@ -564,26 +531,25 @@ int cvec_insert_array_d(cvector_d* vec, size_t i, double* a, size_t num)
 	size_t tmp_sz;
 	if (vec->capacity < vec->size + num) {
 		tmp_sz = vec->capacity + num + CVEC_D_START_SZ;
-		if (!(tmp = (double*)realloc(vec->a, sizeof(double)*tmp_sz))) {
+		if (!(tmp = (double*)realloc(vec->a, sizeof(double) * tmp_sz))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = tmp_sz;
 	}
 
-	memmove(&vec->a[i+num], &vec->a[i], (vec->size-i)*sizeof(double));
-	memcpy(&vec->a[i], a, num*sizeof(double));
+	memmove(&vec->a[i + num], &vec->a[i], (vec->size - i) * sizeof(double));
+	memcpy(&vec->a[i], a, num * sizeof(double));
 	vec->size += num;
 	return 1;
 }
-
 
 /** Replace value at index i with a, return original value. */
 double cvec_replace_d(cvector_d* vec, size_t i, double a)
 {
 	double tmp = vec->a[i];
-	vec->a[i] = a;
+	vec->a[i]  = a;
 	return tmp;
 }
 
@@ -595,26 +561,24 @@ double cvec_replace_d(cvector_d* vec, size_t i, double a)
 void cvec_erase_d(cvector_d* vec, size_t start, size_t end)
 {
 	size_t d = end - start + 1;
-	memmove(&vec->a[start], &vec->a[end+1], (vec->size-1-end)*sizeof(double));
+	memmove(&vec->a[start], &vec->a[end + 1], (vec->size - 1 - end) * sizeof(double));
 	vec->size -= d;
 }
-
 
 /** Make sure capacity is at least size(parameter not member). */
 int cvec_reserve_d(cvector_d* vec, size_t size)
 {
 	double* tmp;
 	if (vec->capacity < size) {
-		if (!(tmp = (double*)realloc(vec->a, sizeof(double)*(size+CVEC_D_START_SZ)))) {
+		if (!(tmp = (double*)realloc(vec->a, sizeof(double) * (size + CVEC_D_START_SZ)))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = size + CVEC_D_START_SZ;
 	}
 	return 1;
 }
-
 
 /** Set capacity to size.
  * You will lose data if you shrink the capacity below the current size.
@@ -623,43 +587,40 @@ int cvec_reserve_d(cvector_d* vec, size_t size)
 int cvec_set_cap_d(cvector_d* vec, size_t size)
 {
 	double* tmp;
-	if (size < vec->size)
-		vec->size = size;
+	if (size < vec->size) vec->size = size;
 
-	if (!(tmp = (double*)realloc(vec->a, sizeof(double)*size))) {
+	if (!(tmp = (double*)realloc(vec->a, sizeof(double) * size))) {
 		assert(tmp != NULL);
 		return 0;
 	}
-	vec->a = tmp;
+	vec->a        = tmp;
 	vec->capacity = size;
 	return 1;
 }
-
 
 /** Set all size elements to val. */
 void cvec_set_val_sz_d(cvector_d* vec, double val)
 {
 	size_t i;
-	for(i=0; i<vec->size; i++) {
+	for (i = 0; i < vec->size; i++) {
 		vec->a[i] = val;
 	}
 }
-
 
 /** Fills entire allocated array (capacity) with val. */
 void cvec_set_val_cap_d(cvector_d* vec, double val)
 {
 	size_t i;
-	for(i=0; i<vec->capacity; i++) {
+	for (i = 0; i < vec->capacity; i++) {
 		vec->a[i] = val;
 	}
 }
 
-
-
 /** Sets size to 0 (does not clear contents).*/
-void cvec_clear_d(cvector_d* vec) { vec->size = 0; }
-
+void cvec_clear_d(cvector_d* vec)
+{
+	vec->size = 0;
+}
 
 /** Frees everything so don't use vec after calling this. */
 void cvec_free_d_heap(void* vec)
@@ -674,32 +635,32 @@ void cvec_free_d(void* vec)
 {
 	cvector_d* tmp = (cvector_d*)vec;
 	free(tmp->a);
-	tmp->size = 0;
+	tmp->size     = 0;
 	tmp->capacity = 0;
 }
 size_t CVEC_STR_START_SZ = 20;
 
-#define CVEC_STR_ALLOCATOR(x) ((x) * 2)
+#define CVEC_STR_ALLOCATOR(x) ((x)*2)
 
 /** Useful utility function since strdup isn't in standard C.*/
 char* mystrdup(const char* str)
 {
 	size_t len = strlen(str);
-	char* temp = (char*)calloc(len+1, sizeof(char));
+	char* temp = (char*)calloc(len + 1, sizeof(char));
 	if (!temp) {
 		assert(temp != NULL);
 		return NULL;
 	}
-	
-	return (char*)memcpy(temp, str, len);  /* memcpy returns to, and (char**)calloc already nulled last char */
+
+	return (char*)memcpy(temp, str,
+	                     len); /* memcpy returns to, and (char**)calloc already nulled last char */
 }
-
-
 
 /**
  * Create a new cvector_str on the heap.
  * Vector size set to (size > 0) ? size : 0;
- * Capacity to (capacity > vec->size || (vec->size && capacity == vec->size)) ? capacity : vec->size + CVEC_STR_START_SZ
+ * Capacity to (capacity > vec->size || (vec->size && capacity == vec->size)) ? capacity : vec->size
+ * + CVEC_STR_START_SZ
  * in other words capacity has to be at least 1 and >= to vec->size of course.
  * Note: cvector_str does not copy pointers passed in but duplicates the strings
  * they point to (using mystrdup()) so you don't have to worry about freeing
@@ -714,8 +675,10 @@ cvector_str* cvec_str_heap(size_t size, size_t capacity)
 		return NULL;
 	}
 
-	vec->size = size;
-	vec->capacity = (capacity > vec->size || (vec->size && capacity == vec->size)) ? capacity : vec->size + CVEC_STR_START_SZ;
+	vec->size     = size;
+	vec->capacity = (capacity > vec->size || (vec->size && capacity == vec->size))
+	                    ? capacity
+	                    : vec->size + CVEC_STR_START_SZ;
 
 	/* calloc here because if we free before poppirg/erasing and since nothing is
 	 * allocated these need to be NULL to not cause problems */
@@ -728,34 +691,32 @@ cvector_str* cvec_str_heap(size_t size, size_t capacity)
 	return vec;
 }
 
-
 /** Create (on the heap) and initialize cvector_str with num elements of vals.
  */
 cvector_str* cvec_init_str_heap(char** vals, size_t num)
 {
 	cvector_str* vec;
 	size_t i;
-	
+
 	if (!(vec = (cvector_str*)malloc(sizeof(cvector_str)))) {
 		assert(vec != NULL);
 		return NULL;
 	}
 
 	vec->capacity = num + CVEC_STR_START_SZ;
-	vec->size = num;
-	if (!(vec->a = (char**)malloc(vec->capacity*sizeof(char*)))) {
+	vec->size     = num;
+	if (!(vec->a = (char**)malloc(vec->capacity * sizeof(char*)))) {
 		assert(vec->a != NULL);
 		free(vec);
 		return NULL;
 	}
 
-	for(i=0; i<num; i++) {
+	for (i = 0; i < num; i++) {
 		vec->a[i] = mystrdup(vals[i]);
 	}
-	
+
 	return vec;
 }
-
 
 /** Same as cvec_str_heap() except the vector passed in was declared on the stack so
  *  it isn't allocated in this function.  Use the cvec_free_str in this case
@@ -763,8 +724,10 @@ cvector_str* cvec_init_str_heap(char** vals, size_t num)
  */
 int cvec_str(cvector_str* vec, size_t size, size_t capacity)
 {
-	vec->size = size;
-	vec->capacity = (capacity > vec->size || (vec->size && capacity == vec->size)) ? capacity : vec->size + CVEC_STR_START_SZ;
+	vec->size     = size;
+	vec->capacity = (capacity > vec->size || (vec->size && capacity == vec->size))
+	                    ? capacity
+	                    : vec->size + CVEC_STR_START_SZ;
 
 	/* (char**)calloc here because if we free before popping/erasing and since nothing is
 	 * allocated these need to be NULL to not cause problems */
@@ -783,22 +746,21 @@ int cvec_str(cvector_str* vec, size_t size, size_t capacity)
 int cvec_init_str(cvector_str* vec, char** vals, size_t num)
 {
 	size_t i;
-	
+
 	vec->capacity = num + CVEC_STR_START_SZ;
-	vec->size = num;
-	if (!(vec->a = (char**)malloc(vec->capacity*sizeof(char*)))) {
+	vec->size     = num;
+	if (!(vec->a = (char**)malloc(vec->capacity * sizeof(char*)))) {
 		assert(vec->a != NULL);
 		vec->size = vec->capacity = 0;
 		return 0;
 	}
 
-	for(i=0; i<num; i++) {
+	for (i = 0; i < num; i++) {
 		vec->a[i] = mystrdup(vals[i]);
 	}
-	
+
 	return 1;
 }
-
 
 /** Makes dest an identical copy of src.  The parameters
  *  are void so it can be used as the constructor when making
@@ -811,25 +773,23 @@ void cvec_str_copy(void* dest, void* src)
 	size_t i;
 	cvector_str* vec1 = (cvector_str*)dest;
 	cvector_str* vec2 = (cvector_str*)src;
-	
-	vec1->size = 0;
+
+	vec1->size     = 0;
 	vec1->capacity = 0;
-	
+
 	/*not much else we can do here*/
-	if (!(vec1->a = (char**)malloc(vec2->capacity*sizeof(char*)))) {
+	if (!(vec1->a = (char**)malloc(vec2->capacity * sizeof(char*)))) {
 		assert(vec1->a != NULL);
 		return;
 	}
-	
-	for (i=0; i<vec2->size; ++i) {
+
+	for (i = 0; i < vec2->size; ++i) {
 		vec1->a[i] = mystrdup(vec2->a[i]);
 	}
-	
-	vec1->size = vec2->size;
+
+	vec1->size     = vec2->size;
 	vec1->capacity = vec2->capacity;
 }
-
-
 
 /**
  * Append a to end of vector (size increased 1).
@@ -841,14 +801,14 @@ int cvec_push_str(cvector_str* vec, char* a)
 	size_t tmp_sz;
 	if (vec->capacity == vec->size) {
 		tmp_sz = CVEC_STR_ALLOCATOR(vec->capacity);
-		if (!(tmp = (char**)realloc(vec->a, sizeof(char*)*tmp_sz))) {
+		if (!(tmp = (char**)realloc(vec->a, sizeof(char*) * tmp_sz))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = tmp_sz;
 	}
-	
+
 	vec->a[vec->size++] = mystrdup(a);
 	return 1;
 }
@@ -859,21 +819,15 @@ int cvec_push_str(cvector_str* vec, char* a)
  *  (ie ret has adequate space.) */
 void cvec_pop_str(cvector_str* vec, char* ret)
 {
-	if (ret)
-		strcpy(ret, vec->a[--vec->size]);
+	if (ret) strcpy(ret, vec->a[--vec->size]);
 	free(vec->a[vec->size]);
 }
 
 /** Return pointer to last element */
 char** cvec_back_str(cvector_str* vec)
 {
-	return &vec->a[vec->size-1];
+	return &vec->a[vec->size - 1];
 }
-
-
-
-
-
 
 /** Increase the size of the array num items.  Items
  *  are memset to NULL since they will be freed when
@@ -884,21 +838,18 @@ int cvec_extend_str(cvector_str* vec, size_t num)
 	size_t tmp_sz;
 	if (vec->capacity < vec->size + num) {
 		tmp_sz = vec->capacity + num + CVEC_STR_START_SZ;
-		if (!(tmp = (char**)realloc(vec->a, sizeof(char*)*tmp_sz))) {
+		if (!(tmp = (char**)realloc(vec->a, sizeof(char*) * tmp_sz))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = tmp_sz;
 	}
 
-	memset(&vec->a[vec->size], 0, num*sizeof(char*));
+	memset(&vec->a[vec->size], 0, num * sizeof(char*));
 	vec->size += num;
 	return 1;
 }
-
-
-
 
 /**
  * Insert a at index i (0 based).
@@ -910,20 +861,19 @@ int cvec_insert_str(cvector_str* vec, size_t i, char* a)
 	size_t tmp_sz;
 	if (vec->capacity == vec->size) {
 		tmp_sz = CVEC_STR_ALLOCATOR(vec->capacity);
-		if (!(tmp = (char**)realloc(vec->a, sizeof(char*)*tmp_sz))) {
+		if (!(tmp = (char**)realloc(vec->a, sizeof(char*) * tmp_sz))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = tmp_sz;
 	}
 
-	memmove(&vec->a[i+1], &vec->a[i], (vec->size-i)*sizeof(char*));
+	memmove(&vec->a[i + 1], &vec->a[i], (vec->size - i) * sizeof(char*));
 	vec->a[i] = mystrdup(a);
 	vec->size++;
 	return 1;
 }
-
 
 /**
  * Insert the first num elements of array a at index i.
@@ -936,19 +886,19 @@ int cvec_insert_array_str(cvector_str* vec, size_t i, char** a, size_t num)
 	size_t tmp_sz, j;
 	if (vec->capacity < vec->size + num) {
 		tmp_sz = vec->capacity + num + CVEC_STR_START_SZ;
-		if (!(tmp = (char**)realloc(vec->a, sizeof(char*)*tmp_sz))) {
+		if (!(tmp = (char**)realloc(vec->a, sizeof(char*) * tmp_sz))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = tmp_sz;
 	}
 
-	memmove(&vec->a[i+num], &vec->a[i], (vec->size-i)*sizeof(char*));
-	for (j=0; j<num; ++j) {
-		vec->a[j+i] = mystrdup(a[j]);
+	memmove(&vec->a[i + num], &vec->a[i], (vec->size - i) * sizeof(char*));
+	for (j = 0; j < num; ++j) {
+		vec->a[j + i] = mystrdup(a[j]);
 	}
-	
+
 	vec->size += num;
 	return 1;
 }
@@ -959,12 +909,10 @@ int cvec_insert_array_str(cvector_str* vec, size_t i, char** a, size_t num)
  * */
 void cvec_replace_str(cvector_str* vec, size_t i, char* a, char* ret)
 {
-	if (ret)
-		strcpy(ret, vec->a[i]);
+	if (ret) strcpy(ret, vec->a[i]);
 	free(vec->a[i]);
 	vec->a[i] = mystrdup(a);
 }
-
 
 /**
  * Erases strings from start to end inclusive.
@@ -975,28 +923,24 @@ void cvec_erase_str(cvector_str* vec, size_t start, size_t end)
 {
 	size_t i;
 	size_t d = end - start + 1;
-	for (i=start; i<=end; i++) {
+	for (i = start; i <= end; i++) {
 		free(vec->a[i]);
 	}
-	
-	memmove(&vec->a[start], &vec->a[end+1], (vec->size-1-end)*sizeof(char*));
+
+	memmove(&vec->a[start], &vec->a[end + 1], (vec->size - 1 - end) * sizeof(char*));
 	vec->size -= d;
 }
-
-
-
-
 
 /** Makes sure the vector capacity is >= size (parameter not member). */
 int cvec_reserve_str(cvector_str* vec, size_t size)
 {
 	char** tmp;
 	if (vec->capacity < size) {
-		if (!(tmp = (char**)realloc(vec->a, sizeof(char*)*(size+CVEC_STR_START_SZ)))) {
+		if (!(tmp = (char**)realloc(vec->a, sizeof(char*) * (size + CVEC_STR_START_SZ)))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = size + CVEC_STR_START_SZ;
 	}
 	return 1;
@@ -1011,29 +955,27 @@ int cvec_set_cap_str(cvector_str* vec, size_t size)
 	size_t i;
 	char** tmp;
 	if (size < vec->size) {
-		for(i=vec->size-1; i>size-1; i--) {
+		for (i = vec->size - 1; i > size - 1; i--) {
 			free(vec->a[i]);
 		}
 
 		vec->size = size;
 	}
 
-	if (!(tmp = (char**)realloc(vec->a, sizeof(char*)*size))) {
+	if (!(tmp = (char**)realloc(vec->a, sizeof(char*) * size))) {
 		assert(tmp != NULL);
 		return 0;
 	}
-	vec->a = tmp;
+	vec->a        = tmp;
 	vec->capacity = size;
 	return 1;
 }
-
-
 
 /** Sets all size elements to val. */
 void cvec_set_val_sz_str(cvector_str* vec, char* val)
 {
 	size_t i;
-	for(i=0; i<vec->size; i++) {
+	for (i = 0; i < vec->size; i++) {
 		free(vec->a[i]);
 
 		/* not worth checking/(char**)reallocing to me */
@@ -1041,78 +983,74 @@ void cvec_set_val_sz_str(cvector_str* vec, char* val)
 	}
 }
 
-
 /** Fills entire allocated array (capacity) with val.  Size is set
  * to capacity in this case because strings are individually dynamically allocated.
- * This is different from vector_i, vector_d and vector (without a free function) where the size stays the same.
-   TODO  Remove this function?  even more unnecessary than for vector_i and vector_d and different behavior*/
+ * This is different from vector_i, vector_d and vector (without a free function) where the size
+ stays the same.
+   TODO  Remove this function?  even more unnecessary than for vector_i and vector_d and different
+ behavior*/
 void cvec_set_val_cap_str(cvector_str* vec, char* val)
 {
 	size_t i;
-	for (i=0; i<vec->capacity; i++) {
-		if (i<vec->size) {
+	for (i = 0; i < vec->capacity; i++) {
+		if (i < vec->size) {
 			free(vec->a[i]);
 		}
-		
+
 		vec->a[i] = mystrdup(val);
 	}
 	vec->size = vec->capacity;
 }
 
-
 /** Clears the contents of vector (frees all strings) and sets size to 0. */
 void cvec_clear_str(cvector_str* vec)
 {
 	int i;
-	for (i=0; i<vec->size; i++) {
+	for (i = 0; i < vec->size; i++) {
 		free(vec->a[i]);
 	}
-	
+
 	vec->size = 0;
 }
 
-
-/** Frees contents (individual strings and array) and frees vector so don't use after calling this. */
+/** Frees contents (individual strings and array) and frees vector so don't use after calling this.
+ */
 void cvec_free_str_heap(void* vec)
 {
 	size_t i;
 	cvector_str* tmp = (cvector_str*)vec;
-	for (i=0; i<tmp->size; i++) {
+	for (i = 0; i < tmp->size; i++) {
 		free(tmp->a[i]);
 	}
-	
+
 	free(tmp->a);
 	free(tmp);
 }
-
 
 /** Frees the internal array and sets size and capacity to 0 */
 void cvec_free_str(void* vec)
 {
 	size_t i;
 	cvector_str* tmp = (cvector_str*)vec;
-	for (i=0; i<tmp->size; i++) {
+	for (i = 0; i < tmp->size; i++) {
 		free(tmp->a[i]);
 	}
-	
+
 	free(tmp->a);
-	tmp->size = 0;
+	tmp->size     = 0;
 	tmp->capacity = 0;
 }
 size_t CVEC_VOID_START_SZ = 20;
 
-
-#define CVEC_VOID_ALLOCATOR(x) ((x) * 2)
-
-
-
+#define CVEC_VOID_ALLOCATOR(x) ((x)*2)
 
 /*  general vector */
 
 /**
  * Creates a new vector on the heap.
  * Vector size set to (size > 0) ? size : 0;
- * Capacity to (capacity > vec->size || (vec->size && capacity == vec->size)) ? capacity : vec->size + CVEC_VOID_START_SZ
+ * Capacity to (capacity > vec->size || (vec->size && capacity == vec->size)) ? capacity : vec->size
+ * + CVEC_VOID_START_SZ
  * in other words capacity has to be at least 1 and >= to vec->size of course.
  * elem_sz is the size of the type you want to store ( ie sizeof(T) where T is your type ).
  * You can pass in a function, elem_free, to be called on every element before it is removed
@@ -1121,19 +1059,26 @@ size_t CVEC_VOID_START_SZ = 20;
  * and strdup (or mystrdup in this project) for elem_init you could
  * make vector work exactly like vector_s.  Pass in NULL, to not use the function parameters.
  *
- * All functions call elem_free before overwriting/popping/erasing elements if elem_free is provided.
+ * All functions call elem_free before overwriting/popping/erasing elements if elem_free is
+ * provided.
  *
- * elem_init is only used in set_val_sz and set_val_cap because in those cases you are setting many elements
- * to a single "value" and using the elem_init functionality you can provide what amounts to a copy constructor
- * which duplicates dynamically allocated memory instead of just copying the pointer ie just like strdup
- * or mystrdup does with a string.  This allows the free function to work correctly when called on all those
+ * elem_init is only used in set_val_sz and set_val_cap because in those cases you are setting many
+ * elements
+ * to a single "value" and using the elem_init functionality you can provide what amounts to a copy
+ * constructor
+ * which duplicates dynamically allocated memory instead of just copying the pointer ie just like
+ * strdup
+ * or mystrdup does with a string.  This allows the free function to work correctly when called on
+ * all those
  * elements.  If you didn't provide an elem_init function but did provide a free function, then
- * after calling one of the set_val functions, eventually the free function would be called on all those
+ * after calling one of the set_val functions, eventually the free function would be called on all
+ * those
  * elements and you'd get a double free or corruption error.
  *
  * See the other functions and the tests for more behavioral/usage details.
  */
-cvector_void* cvec_void_heap(size_t size, size_t capacity, size_t elem_sz, void(*elem_free)(void*), void(*elem_init)(void*, void*))
+cvector_void* cvec_void_heap(size_t size, size_t capacity, size_t elem_sz, void (*elem_free)(void*),
+                             void (*elem_init)(void*, void*))
 {
 	cvector_void* vec;
 	if (!(vec = (cvector_void*)malloc(sizeof(cvector_void)))) {
@@ -1141,13 +1086,16 @@ cvector_void* cvec_void_heap(size_t size, size_t capacity, size_t elem_sz, void(
 		return NULL;
 	}
 
-	vec->size = size;
-	vec->capacity = (capacity > vec->size || (vec->size && capacity == vec->size)) ? capacity : vec->size + CVEC_VOID_START_SZ;
+	vec->size     = size;
+	vec->capacity = (capacity > vec->size || (vec->size && capacity == vec->size))
+	                    ? capacity
+	                    : vec->size + CVEC_VOID_START_SZ;
 
 	vec->elem_size = elem_sz;
-	
-	/*not calloc here and init_vec as in vector_s because elem_free cannot be calling free directly*/
-	if (!(vec->a = (byte*)malloc(vec->capacity*elem_sz))) {
+
+	/*not calloc here and init_vec as in vector_s because elem_free cannot be calling free
+	 * directly*/
+	if (!(vec->a = (byte*)malloc(vec->capacity * elem_sz))) {
 		assert(vec->a != NULL);
 		free(vec);
 		return NULL;
@@ -1159,17 +1107,16 @@ cvector_void* cvec_void_heap(size_t size, size_t capacity, size_t elem_sz, void(
 	return vec;
 }
 
-
-
 /** Create (on the heap) and initialize vector with num elements of vals.
  *  elem_sz is the size of the type you want to store ( ie sizeof(T) where T is your type ).
  *  See cvec_void_heap() for more information about the elem_free and elem_init parameters.
  */
-cvector_void* cvec_init_void_heap(void* vals, size_t num, size_t elem_sz, void(*elem_free)(void*), void(*elem_init)(void*, void*))
+cvector_void* cvec_init_void_heap(void* vals, size_t num, size_t elem_sz, void (*elem_free)(void*),
+                                  void (*elem_init)(void*, void*))
 {
 	cvector_void* vec;
 	size_t i;
-	
+
 	if (!(vec = (cvector_void*)malloc(sizeof(cvector_void)))) {
 		assert(vec != NULL);
 		return NULL;
@@ -1178,21 +1125,21 @@ cvector_void* cvec_init_void_heap(void* vals, size_t num, size_t elem_sz, void(*
 	vec->elem_size = elem_sz;
 
 	vec->capacity = num + CVEC_VOID_START_SZ;
-	vec->size = num;
-	if (!(vec->a = (byte*)malloc(vec->capacity*elem_sz))) {
+	vec->size     = num;
+	if (!(vec->a = (byte*)malloc(vec->capacity * elem_sz))) {
 		assert(vec->a != NULL);
 		free(vec);
 		return NULL;
 	}
 
 	if (elem_init) {
-		for (i=0; i<num; ++i) {
-			elem_init(&vec->a[i*elem_sz], &((byte*)vals)[i*elem_sz]);
+		for (i = 0; i < num; ++i) {
+			elem_init(&vec->a[i * elem_sz], &((byte*)vals)[i * elem_sz]);
 		}
 	} else {
-		memcpy(vec->a, vals, elem_sz*num);
+		memcpy(vec->a, vals, elem_sz * num);
 	}
-	
+
 	vec->elem_free = elem_free;
 	vec->elem_init = elem_init;
 
@@ -1202,14 +1149,17 @@ cvector_void* cvec_init_void_heap(void* vals, size_t num, size_t elem_sz, void(*
 /** Same as cvec_void_heap() except the vector passed in was declared on the stack so
  *  it isn't allocated in this function.  Use the cvec_free_void in that case
  */
-int cvec_void(cvector_void* vec, size_t size, size_t capacity, size_t elem_sz, void(*elem_free)(void*), void(*elem_init)(void*, void*))
+int cvec_void(cvector_void* vec, size_t size, size_t capacity, size_t elem_sz,
+              void (*elem_free)(void*), void (*elem_init)(void*, void*))
 {
-	vec->size = size;
-	vec->capacity = (capacity > vec->size || (vec->size && capacity == vec->size)) ? capacity : vec->size + CVEC_VOID_START_SZ;
+	vec->size     = size;
+	vec->capacity = (capacity > vec->size || (vec->size && capacity == vec->size))
+	                    ? capacity
+	                    : vec->size + CVEC_VOID_START_SZ;
 
 	vec->elem_size = elem_sz;
-	
-	if (!(vec->a = (byte*)malloc(vec->capacity*elem_sz))) {
+
+	if (!(vec->a = (byte*)malloc(vec->capacity * elem_sz))) {
 		assert(vec->a != NULL);
 		vec->size = vec->capacity = 0;
 		return 0;
@@ -1224,26 +1174,27 @@ int cvec_void(cvector_void* vec, size_t size, size_t capacity, size_t elem_sz, v
 /** Same as init_vec_heap() except the vector passed in was declared on the stack so
  *  it isn't allocated in this function.  Use the cvec_free_void in this case
  */
-int cvec_init_void(cvector_void* vec, void* vals, size_t num, size_t elem_sz, void(*elem_free)(void*), void(*elem_init)(void*, void*))
+int cvec_init_void(cvector_void* vec, void* vals, size_t num, size_t elem_sz,
+                   void (*elem_free)(void*), void (*elem_init)(void*, void*))
 {
 	size_t i;
-	
+
 	vec->elem_size = elem_sz;
 
 	vec->capacity = num + CVEC_VOID_START_SZ;
-	vec->size = num;
-	if (!(vec->a = (byte*)malloc(vec->capacity*elem_sz))) {
+	vec->size     = num;
+	if (!(vec->a = (byte*)malloc(vec->capacity * elem_sz))) {
 		assert(vec->a != NULL);
 		vec->size = vec->capacity = 0;
 		return 0;
 	}
 
 	if (elem_init) {
-		for (i=0; i<num; ++i) {
-			elem_init(&vec->a[i*elem_sz], &((byte*)vals)[i*elem_sz]);
+		for (i = 0; i < num; ++i) {
+			elem_init(&vec->a[i * elem_sz], &((byte*)vals)[i * elem_sz]);
 		}
 	} else {
-		memcpy(vec->a, vals, elem_sz*num);
+		memcpy(vec->a, vals, elem_sz * num);
 	}
 
 	vec->elem_free = elem_free;
@@ -1251,7 +1202,6 @@ int cvec_init_void(cvector_void* vec, void* vals, size_t num, size_t elem_sz, vo
 
 	return 1;
 }
-
 
 /** Makes dest an identical copy of src.  The parameters
  *  are void so it can be used as the constructor when making
@@ -1266,31 +1216,30 @@ void cvec_void_copy(void* dest, void* src)
 	size_t i;
 	cvector_void* vec1 = (cvector_void*)dest;
 	cvector_void* vec2 = (cvector_void*)src;
-	
-	vec1->size = 0;
+
+	vec1->size     = 0;
 	vec1->capacity = 0;
-	
+
 	/*not much else we can do here*/
-	if (!(vec1->a = (byte*)malloc(vec2->capacity*vec2->elem_size))) {
+	if (!(vec1->a = (byte*)malloc(vec2->capacity * vec2->elem_size))) {
 		assert(vec1->a != NULL);
 		return;
 	}
 
-	vec1->size = vec2->size;
-	vec1->capacity = vec2->capacity;
+	vec1->size      = vec2->size;
+	vec1->capacity  = vec2->capacity;
 	vec1->elem_size = vec2->elem_size;
 	vec1->elem_init = vec2->elem_init;
 	vec1->elem_free = vec2->elem_free;
-	
+
 	if (vec1->elem_init) {
-		for (i=0; i<vec1->size; ++i) {
-			vec1->elem_init(&vec1->a[i*vec1->elem_size], &vec2->a[i*vec1->elem_size]);
+		for (i = 0; i < vec1->size; ++i) {
+			vec1->elem_init(&vec1->a[i * vec1->elem_size], &vec2->a[i * vec1->elem_size]);
 		}
 	} else {
-		memcpy(vec1->a, vec2->a, vec1->size*vec1->elem_size);
+		memcpy(vec1->a, vec2->a, vec1->size * vec1->elem_size);
 	}
 }
-
 
 /** Append a to end of vector (size increased 1).
  * Capacity is increased by doubling when necessary.
@@ -1301,23 +1250,22 @@ int cvec_push_void(cvector_void* vec, void* a)
 	size_t tmp_sz;
 	if (vec->capacity == vec->size) {
 		tmp_sz = CVEC_VOID_ALLOCATOR(vec->capacity);
-		if (!(tmp = (byte*)realloc(vec->a, vec->elem_size*tmp_sz))) {
+		if (!(tmp = (byte*)realloc(vec->a, vec->elem_size * tmp_sz))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = tmp_sz;
 	}
 	if (vec->elem_init) {
-		vec->elem_init(&vec->a[vec->size*vec->elem_size], a);
+		vec->elem_init(&vec->a[vec->size * vec->elem_size], a);
 	} else {
-		memmove(&vec->a[vec->size*vec->elem_size], a, vec->elem_size);
+		memmove(&vec->a[vec->size * vec->elem_size], a, vec->elem_size);
 	}
-	
+
 	vec->size++;
 	return 1;
 }
-
 
 /** Remove the last element (size decreased 1).
  * If ret != NULL, copy the element to ret. It assumes the memory at ret
@@ -1328,21 +1276,18 @@ void cvec_pop_void(cvector_void* vec, void* ret)
 {
 	vec->size--;
 	if (ret) {
-		memmove(ret, &vec->a[vec->size*vec->elem_size], vec->elem_size);
+		memmove(ret, &vec->a[vec->size * vec->elem_size], vec->elem_size);
 	}
 	if (vec->elem_free) {
-		vec->elem_free(&vec->a[vec->size*vec->elem_size]);
+		vec->elem_free(&vec->a[vec->size * vec->elem_size]);
 	}
 }
 
 /** Return pointer to last element */
 void* cvec_back_void(cvector_void* vec)
 {
-	return &vec->a[(vec->size-1)*vec->elem_size];
+	return &vec->a[(vec->size - 1) * vec->elem_size];
 }
-
-
-
 
 /** Increase the size of the array num items.  Items
  *  are not initialized to anything! */
@@ -1352,18 +1297,17 @@ int cvec_extend_void(cvector_void* vec, size_t num)
 	size_t tmp_sz;
 	if (vec->capacity < vec->size + num) {
 		tmp_sz = vec->capacity + num + CVEC_VOID_START_SZ;
-		if (!(tmp = (byte*)realloc(vec->a, vec->elem_size*tmp_sz))) {
+		if (!(tmp = (byte*)realloc(vec->a, vec->elem_size * tmp_sz))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = tmp_sz;
 	}
 
 	vec->size += num;
 	return 1;
 }
-
 
 /** Return a void pointer to the ith element.
   * Another way to get elements from vector that is used in vector_tests.c
@@ -1372,10 +1316,8 @@ int cvec_extend_void(cvector_void* vec, size_t num)
 */
 void* cvec_get_void(cvector_void* vec, size_t i)
 {
-	return &vec->a[i*vec->elem_size];
+	return &vec->a[i * vec->elem_size];
 }
-
-
 
 /**
  * Insert a at index i (0 based).
@@ -1387,20 +1329,20 @@ int cvec_insert_void(cvector_void* vec, size_t i, void* a)
 	size_t tmp_sz;
 	if (vec->capacity == vec->size) {
 		tmp_sz = CVEC_VOID_ALLOCATOR(vec->capacity);
-		if (!(tmp = (byte*)realloc(vec->a, vec->elem_size*tmp_sz))) {
+		if (!(tmp = (byte*)realloc(vec->a, vec->elem_size * tmp_sz))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		
-		vec->a = tmp;
+
+		vec->a        = tmp;
 		vec->capacity = tmp_sz;
 	}
-	memmove(&vec->a[(i+1)*vec->elem_size], &vec->a[i*vec->elem_size], (vec->size-i)*vec->elem_size);
+	memmove(&vec->a[(i + 1) * vec->elem_size], &vec->a[i * vec->elem_size], (vec->size - i) * vec->elem_size);
 
 	if (vec->elem_init) {
-		vec->elem_init(&vec->a[i*vec->elem_size], a);
+		vec->elem_init(&vec->a[i * vec->elem_size], a);
 	} else {
-		memmove(&vec->a[i*vec->elem_size], a, vec->elem_size);
+		memmove(&vec->a[i * vec->elem_size], a, vec->elem_size);
 	}
 
 	vec->size++;
@@ -1420,21 +1362,22 @@ int cvec_insert_array_void(cvector_void* vec, size_t i, void* a, size_t num)
 	size_t tmp_sz, j;
 	if (vec->capacity < vec->size + num) {
 		tmp_sz = vec->capacity + num + CVEC_VOID_START_SZ;
-		if (!(tmp = (byte*)realloc(vec->a, vec->elem_size*tmp_sz))) {
+		if (!(tmp = (byte*)realloc(vec->a, vec->elem_size * tmp_sz))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = tmp_sz;
 	}
 
-	memmove(&vec->a[(i+num)*vec->elem_size], &vec->a[i*vec->elem_size], (vec->size-i)*vec->elem_size);
+	memmove(&vec->a[(i + num) * vec->elem_size], &vec->a[i * vec->elem_size],
+	        (vec->size - i) * vec->elem_size);
 	if (vec->elem_init) {
-		for (j=0; j<num; ++j) {
-			vec->elem_init(&vec->a[(j+i)*vec->elem_size], &((byte*)a)[j*vec->elem_size]);
+		for (j = 0; j < num; ++j) {
+			vec->elem_init(&vec->a[(j + i) * vec->elem_size], &((byte*)a)[j * vec->elem_size]);
 		}
 	} else {
-		memcpy(&vec->a[i*vec->elem_size], a, num*vec->elem_size);
+		memcpy(&vec->a[i * vec->elem_size], a, num * vec->elem_size);
 	}
 	vec->size += num;
 	return 1;
@@ -1445,14 +1388,14 @@ int cvec_insert_array_void(cvector_void* vec, size_t i, void* a, size_t num)
  */
 void cvec_replace_void(cvector_void* vec, size_t i, void* a, void* ret)
 {
-	if (ret)
-		memmove(ret, &vec->a[i*vec->elem_size], vec->elem_size);
-	memmove(&vec->a[i*vec->elem_size], a, vec->elem_size);
+	if (ret) memmove(ret, &vec->a[i * vec->elem_size], vec->elem_size);
+	memmove(&vec->a[i * vec->elem_size], a, vec->elem_size);
 }
 
 /**
  * Erases elements from start to end inclusive.
- * Example cvec_erase_void(myvec, 1, 3) would free (if an elem_free function was provided) and remove elements at 1, 2, and 3 and the element
+ * Example cvec_erase_void(myvec, 1, 3) would free (if an elem_free function was provided) and
+ * remove elements at 1, 2, and 3 and the element
  * that was at index 4 would now be at 1 etc.
  */
 void cvec_erase_void(cvector_void* vec, size_t start, size_t end)
@@ -1460,30 +1403,29 @@ void cvec_erase_void(cvector_void* vec, size_t start, size_t end)
 	size_t i;
 	size_t d = end - start + 1;
 	if (vec->elem_free) {
-		for (i=start; i<=end; i++) {
-			vec->elem_free(&vec->a[i*vec->elem_size]);
+		for (i = start; i <= end; i++) {
+			vec->elem_free(&vec->a[i * vec->elem_size]);
 		}
 	}
-	memmove(&vec->a[start*vec->elem_size], &vec->a[(end+1)*vec->elem_size], (vec->size-1-end)*vec->elem_size);
+	memmove(&vec->a[start * vec->elem_size], &vec->a[(end + 1) * vec->elem_size],
+	        (vec->size - 1 - end) * vec->elem_size);
 	vec->size -= d;
 }
-
 
 /** Makes sure capacity >= size (the parameter not the member). */
 int cvec_reserve_void(cvector_void* vec, size_t size)
 {
 	byte* tmp;
 	if (vec->capacity < size) {
-		if (!(tmp = (byte*)realloc(vec->a, vec->elem_size*(size+CVEC_VOID_START_SZ)))) {
+		if (!(tmp = (byte*)realloc(vec->a, vec->elem_size * (size + CVEC_VOID_START_SZ)))) {
 			assert(tmp != NULL);
 			return 0;
 		}
-		vec->a = tmp;
+		vec->a        = tmp;
 		vec->capacity = size + CVEC_VOID_START_SZ;
 	}
 	return 1;
 }
-
 
 /** Set capacity to size.
  * You will lose data if you shrink the capacity below the current size.
@@ -1495,8 +1437,8 @@ int cvec_set_cap_void(cvector_void* vec, size_t size)
 	byte* tmp;
 	if (size < vec->size) {
 		if (vec->elem_free) {
-			for (i=vec->size-1; i>=size; i--) {
-				vec->elem_free(&vec->a[i*vec->elem_size]);
+			for (i = vec->size - 1; i >= size; i--) {
+				vec->elem_free(&vec->a[i * vec->elem_size]);
 			}
 		}
 		vec->size = size;
@@ -1504,15 +1446,13 @@ int cvec_set_cap_void(cvector_void* vec, size_t size)
 
 	vec->capacity = size;
 
-	if (!(tmp = (byte*)realloc(vec->a, vec->elem_size*size))) {
+	if (!(tmp = (byte*)realloc(vec->a, vec->elem_size * size))) {
 		assert(tmp != NULL);
 		return 0;
 	}
-	vec-> a = tmp;
+	vec->a = tmp;
 	return 1;
 }
-
-
 
 /** Set all size elements to val. */
 void cvec_set_val_sz_void(cvector_void* vec, void* val)
@@ -1520,22 +1460,21 @@ void cvec_set_val_sz_void(cvector_void* vec, void* val)
 	size_t i;
 
 	if (vec->elem_free) {
-		for(i=0; i<vec->size; i++) {
-			vec->elem_free(&vec->a[i*vec->elem_size]);
+		for (i = 0; i < vec->size; i++) {
+			vec->elem_free(&vec->a[i * vec->elem_size]);
 		}
 	}
-	
+
 	if (vec->elem_init) {
-		for (i=0; i<vec->size; i++) {
-			vec->elem_init(&vec->a[i*vec->elem_size], val);
+		for (i = 0; i < vec->size; i++) {
+			vec->elem_init(&vec->a[i * vec->elem_size], val);
 		}
 	} else {
-		for (i=0; i<vec->size; i++) {
-			memmove(&vec->a[i*vec->elem_size], val, vec->elem_size);
+		for (i = 0; i < vec->size; i++) {
+			memmove(&vec->a[i * vec->elem_size], val, vec->elem_size);
 		}
 	}
 }
-
 
 /** Fills entire allocated array (capacity) with val.  If you set a free function
  * then size is set to capacity like vector_s for the same reason, ie I need to know
@@ -1546,23 +1485,22 @@ void cvec_set_val_cap_void(cvector_void* vec, void* val)
 {
 	size_t i;
 	if (vec->elem_free) {
-		for (i=0; i<vec->size; i++) {
-			vec->elem_free(&vec->a[i*vec->elem_size]);
+		for (i = 0; i < vec->size; i++) {
+			vec->elem_free(&vec->a[i * vec->elem_size]);
 		}
 		vec->size = vec->capacity;
 	}
 
 	if (vec->elem_init) {
-		for (i=0; i<vec->capacity; i++) {
-			vec->elem_init(&vec->a[i*vec->elem_size], val);
+		for (i = 0; i < vec->capacity; i++) {
+			vec->elem_init(&vec->a[i * vec->elem_size], val);
 		}
 	} else {
-		for (i=0; i<vec->capacity; i++) {
-			memmove(&vec->a[i*vec->elem_size], val, vec->elem_size);
+		for (i = 0; i < vec->capacity; i++) {
+			memmove(&vec->a[i * vec->elem_size], val, vec->elem_size);
 		}
 	}
 }
-
 
 /** Sets size to 0 (does not change contents unless elem_free is set
  *  then it will free all size elements as in vector_s). */
@@ -1570,13 +1508,12 @@ void cvec_clear_void(cvector_void* vec)
 {
 	size_t i;
 	if (vec->elem_free) {
-		for (i=0; i<vec->size; ++i) {
-			vec->elem_free(&vec->a[i*vec->elem_size]);
+		for (i = 0; i < vec->size; ++i) {
+			vec->elem_free(&vec->a[i * vec->elem_size]);
 		}
 	}
 	vec->size = 0;
 }
-
 
 /** Frees everything so don't use vec after calling this. If you set a free function
  * it will be called on all size elements of course. */
@@ -1585,14 +1522,13 @@ void cvec_free_void_heap(void* vec)
 	size_t i;
 	cvector_void* tmp = (cvector_void*)vec;
 	if (tmp->elem_free) {
-		for (i=0; i<tmp->size; i++) {
-			tmp->elem_free(&tmp->a[i*tmp->elem_size]);
+		for (i = 0; i < tmp->size; i++) {
+			tmp->elem_free(&tmp->a[i * tmp->elem_size]);
 		}
 	}
 	free(tmp->a);
 	free(tmp);
 }
-
 
 /** Frees the internal array and sets size and capacity to 0 */
 void cvec_free_void(void* vec)
@@ -1600,18 +1536,16 @@ void cvec_free_void(void* vec)
 	size_t i;
 	cvector_void* tmp = (cvector_void*)vec;
 	if (tmp->elem_free) {
-		for (i=0; i<tmp->size; i++) {
-			tmp->elem_free(&tmp->a[i*tmp->elem_size]);
+		for (i = 0; i < tmp->size; i++) {
+			tmp->elem_free(&tmp->a[i * tmp->elem_size]);
 		}
 	}
 
 	free(tmp->a);
 
-	tmp->size = 0;
+	tmp->size     = 0;
 	tmp->capacity = 0;
 }
-
-
 
 /*! \mainpage CVector notes
  *
@@ -1701,13 +1635,13 @@ I've also run it under valgrind and there are no memory leaks.
 <pre>
 valgrind --leak-check=full -v ./vector
 
-==35463== 
+==35463==
 ==35463== HEAP SUMMARY:
 ==35463==     in use at exit: 0 bytes in 0 blocks
 ==35463==   total heap usage: 6,285 allocs, 6,285 frees, 996,013 bytes allocated
-==35463== 
+==35463==
 ==35463== All heap blocks were freed -- no leaks are possible
-==35463== 
+==35463==
 ==35463== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
 ==35463== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
 </pre>
@@ -1732,20 +1666,26 @@ CVector is licensed under the MIT License.
 
 Copyright (c) 2011-2016 Robert Winkler
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
-documentation files (the "Software"), to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated
+documentation files (the "Software"), to deal in the Software without restriction, including without
+limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+Software, and
 to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all copies or substantial
+portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
-CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO
+EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS
 IN THE SOFTWARE.
  *
  *
  */
-
-

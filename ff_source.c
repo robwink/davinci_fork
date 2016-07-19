@@ -1,9 +1,8 @@
-#include "cvector.h"
 #include "ff_source.h"
+#include "cvector.h"
 #include "parser.h"
 
 // This file contains routines to handle pushing and popping of input files.
-
 
 static cvector_void source_stack;
 
@@ -16,7 +15,7 @@ void init_input_stack()
 
 void push_input_stream(FILE* fptr, char* filename)
 {
-	Source new_source = { fptr, ((filename) ? strdup(filename) : NULL), pp_line };
+	Source new_source = {fptr, ((filename) ? strdup(filename) : NULL), pp_line};
 	cvec_push_void(&source_stack, &new_source);
 	pp_line = 0;
 }
@@ -50,7 +49,7 @@ void pop_input_file()
 {
 	Source src;
 	cvec_pop_void(&source_stack, &src);
-	
+
 	pp_line = src.line;
 	free(src.name);
 	if (fileno(src.file) != 0) {
@@ -75,25 +74,21 @@ int input_stack_size()
 
 Source* top_input_source()
 {
-	if (source_stack.size)
-		return cvec_back_void(&source_stack);
+	if (source_stack.size) return cvec_back_void(&source_stack);
 	return NULL;
 }
 
 FILE* top_input_file()
 {
-	if (source_stack.size)
-		return ((Source*)cvec_back_void(&source_stack))->file;
+	if (source_stack.size) return ((Source*)cvec_back_void(&source_stack))->file;
 	return NULL;
 }
 
 char* top_input_filename()
 {
-	if (source_stack.size)
-		return ((Source*)cvec_back_void(&source_stack))->name;
+	if (source_stack.size) return ((Source*)cvec_back_void(&source_stack))->name;
 	return NULL;
 }
-
 
 // ff_source() - Source a script file
 //

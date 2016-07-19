@@ -8,9 +8,9 @@
  * It is grossly unfinished, and likely never will be
  */
 
-#include <stddef.h>
-#include "parser.h"
 #include "rfunc.h"
+#include "parser.h"
+#include <stddef.h>
 
 typedef struct _Arg_simple_axis {	/* simple axis argument structure */
     Var *obj;

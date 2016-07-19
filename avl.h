@@ -30,53 +30,50 @@
    insertion.  You may change this compile-time constant as you
    wish. */
 #ifndef AVL_MAX_HEIGHT
-#define AVL_MAX_HEIGHT	32
+#define AVL_MAX_HEIGHT 32
 #endif
 
 /* Structure for a node in an AVL tree. */
-typedef struct avl_node
-  {
-    void *data;			/* Pointer to data. */
-    struct avl_node *link[2];	/* Subtrees. */
-    signed char bal;		/* Balance factor. */
-    char cache;			/* Used during insertion. */
-    signed char pad[2];		/* Unused.  Reserved for threaded trees. */
-  }
-avl_node;
+typedef struct avl_node {
+	void* data;               /* Pointer to data. */
+	struct avl_node* link[2]; /* Subtrees. */
+	signed char bal;          /* Balance factor. */
+	char cache;               /* Used during insertion. */
+	signed char pad[2];       /* Unused.  Reserved for threaded trees. */
+} avl_node;
 
 /* Used for traversing an AVL tree. */
-typedef struct avl_traverser
-  {
-    int init;			/* Initialized? */
-    int nstack;			/* Top of stack. */
-    const avl_node *p;		/* Used for traversal. */
-    const avl_node *stack[AVL_MAX_HEIGHT];/* Descended trees. */
-  }
-avl_traverser;
+typedef struct avl_traverser {
+	int init;                              /* Initialized? */
+	int nstack;                            /* Top of stack. */
+	const avl_node* p;                     /* Used for traversal. */
+	const avl_node* stack[AVL_MAX_HEIGHT]; /* Descended trees. */
+} avl_traverser;
 
 /* Initializer for avl_traverser. */
-#define AVL_TRAVERSER_INIT {0}
+#define AVL_TRAVERSER_INIT \
+	{                      \
+		0                  \
+	}
 
 /* Function types. */
 #if !AVL_FUNC_TYPES
 #define AVL_FUNC_TYPES 1
-typedef int (*avl_comparison_func) (const void *a, const void *b, void *param);
-typedef void (*avl_node_func) (void *data, void *param);
-typedef void *(*avl_copy_func) (void *data, void *param);
+typedef int (*avl_comparison_func)(const void* a, const void* b, void* param);
+typedef void (*avl_node_func)(void* data, void* param);
+typedef void* (*avl_copy_func)(void* data, void* param);
 #endif
 
 /* Structure which holds information about an AVL tree. */
-typedef struct avl_tree
-  {
+typedef struct avl_tree {
 #if PSPP
-    struct arena **owner;	/* Arena to store nodes. */
+	struct arena** owner; /* Arena to store nodes. */
 #endif
-    avl_node root;		/* Tree root node. */
-    avl_comparison_func cmp;	/* Used to compare keys. */
-    int count;			/* Number of nodes in the tree. */
-    void *param;		/* Arbitary user data. */
-  }
-avl_tree;
+	avl_node root;           /* Tree root node. */
+	avl_comparison_func cmp; /* Used to compare keys. */
+	int count;               /* Number of nodes in the tree. */
+	void* param;             /* Arbitary user data. */
+} avl_tree;
 
 #if PSPP
 #define MAYBE_ARENA struct arena **owner,
@@ -85,64 +82,57 @@ avl_tree;
 #endif
 
 /* General functions. */
-avl_tree *avl_create (MAYBE_ARENA avl_comparison_func, void *param);
-void avl_destroy (avl_tree *, avl_node_func);
-void avl_free (avl_tree *);
-int avl_count (const avl_tree *);
-avl_tree *avl_copy (MAYBE_ARENA const avl_tree *, avl_copy_func);
+avl_tree* avl_create(MAYBE_ARENA avl_comparison_func, void* param);
+void avl_destroy(avl_tree*, avl_node_func);
+void avl_free(avl_tree*);
+int avl_count(const avl_tree*);
+avl_tree* avl_copy(MAYBE_ARENA const avl_tree*, avl_copy_func);
 
 /* Walk the tree. */
-void avl_walk (const avl_tree *, avl_node_func, void *param);
-void *avl_traverse (const avl_tree *, avl_traverser *);
+void avl_walk(const avl_tree*, avl_node_func, void* param);
+void* avl_traverse(const avl_tree*, avl_traverser*);
 #define avl_init_traverser(TRAVERSER) ((TRAVERSER)->init = 0)
 
 /* Search for a given item. */
-void **avl_probe (avl_tree *, void *);
-void *avl_delete (avl_tree *, const void *);
-void *avl_find (const avl_tree *, const void *);
-void *avl_find_close (const avl_tree *, const void *);
+void** avl_probe(avl_tree*, void*);
+void* avl_delete(avl_tree*, const void*);
+void* avl_find(const avl_tree*, const void*);
+void* avl_find_close(const avl_tree*, const void*);
 
 #if __GCC__ >= 2
-extern inline void *
-avl_insert (avl_tree *tree, void *item)
+extern inline void* avl_insert(avl_tree* tree, void* item)
 {
-  void **p = avl_probe (tree, item);
-  return (*p == item) ? NULL : *p;
+	void** p = avl_probe(tree, item);
+	return (*p == item) ? NULL : *p;
 }
 
-extern inline void *
-avl_replace (avl_tree *tree, void *item)
+extern inline void* avl_replace(avl_tree* tree, void* item)
 {
-  void **p = avl_probe (tree, item);
-  if (*p == item)
-    return NULL;
-  else
-    {
-      void *r = *p;
-      *p = item;
-      return r;
-    }
+	void** p = avl_probe(tree, item);
+	if (*p == item)
+		return NULL;
+	else {
+		void* r = *p;
+		*p      = item;
+		return r;
+	}
 }
-#else /* not gcc */
-void *avl_insert (avl_tree *tree, void *item);
-void *avl_replace (avl_tree *tree, void *item);
+#else  /* not gcc */
+void* avl_insert(avl_tree* tree, void* item);
+void* avl_replace(avl_tree* tree, void* item);
 #endif /* not gcc */
 
 /* Easy assertions on insertion & deletion. */
 #ifndef NDEBUG
-#define avl_force_insert(A, B)			\
-	do					\
-	  {					\
-            void *r = avl_insert (A, B);	\
-	    assert (r == NULL);			\
-	  }					\
-	while (0)
-void *avl_force_delete (avl_tree *, void *);
+#define avl_force_insert(A, B)      \
+	do {                            \
+		void* r = avl_insert(A, B); \
+		assert(r == NULL);          \
+	} while (0)
+void* avl_force_delete(avl_tree*, void*);
 #else
-#define avl_force_insert(A, B)			\
-	avl_insert (A, B)
-#define avl_force_delete(A, B)			\
-	avl_delete (A, B)
+#define avl_force_insert(A, B) avl_insert(A, B)
+#define avl_force_delete(A, B) avl_delete(A, B)
 #endif
 
 #endif /* avl_h */

@@ -8,8 +8,8 @@
 
 typedef struct Symtable Symtable;
 struct Symtable {
-	Var *value;         /* variable holder */
-	Symtable *next;
+	Var* value; /* variable holder */
+	Symtable* next;
 };
 
 /**
@@ -18,30 +18,28 @@ struct Symtable {
 typedef struct Dictionary {
 	int count;
 	int size;
-	char **name;      /* variable name */
-	Var **value;
+	char** name; /* variable name */
+	Var** value;
 } Dictionary;
-
 
 typedef struct Stack {
 	int size;
 	int top;
-	Var **value;
+	Var** value;
 } Stack;
 
-
 typedef struct Scope {
-	Dictionary *dd;     /* named variable data dictionary */
-	Dictionary *args;   /* number arguments data dictionary */
-	Symtable *symtab;   /* local symbol table. */
-	Darray *tmp;        /* tmp memory list */
-	Stack *stack;       /* local stack */
-	UFUNC *ufunc;       /* function pointer */
+	Dictionary* dd;   /* named variable data dictionary */
+	Dictionary* args; /* number arguments data dictionary */
+	Symtable* symtab; /* local symbol table. */
+	Darray* tmp;      /* tmp memory list */
+	Stack* stack;     /* local stack */
+	UFUNC* ufunc;     /* function pointer */
 
-	Var *rval;          /* value returned */
-	int broken;         /* loop counter flag */
-	int loop;           /* loop counter flag */
-	int returned;       /* loop counter flag */
+	Var* rval;    /* value returned */
+	int broken;   /* loop counter flag */
+	int loop;     /* loop counter flag */
+	int returned; /* loop counter flag */
 } Scope;
 
 /**
@@ -50,23 +48,23 @@ typedef struct Scope {
  ** (besides duplicated names).
  **/
 
-Var * dd_get_argv(Scope *s, int n);
-void dd_put(Scope *s, char *name, Var *v);
-void dd_unput_argv(Scope *s);
-Var *dd_find(Scope *, char *);
+Var* dd_get_argv(Scope* s, int n);
+void dd_put(Scope* s, char* name, Var* v);
+void dd_unput_argv(Scope* s);
+Var* dd_find(Scope*, char*);
 
-Scope *new_scope(void);
-void scope_push(Scope *);
-Scope * scope_pop(void);
-Scope * scope_tos(void);
-void free_scope(Scope *);
-void push(Scope *, Var *);
-Var *pop(Scope *);
-Var *dd_argc_var(Scope *);
-Scope *global_scope(void);
-Scope *parent_scope(void);
-void clean_scope(Scope *);
-void cleanup(Scope *);
-int dd_argc(Scope *);
+Scope* new_scope(void);
+void scope_push(Scope*);
+Scope* scope_pop(void);
+Scope* scope_tos(void);
+void free_scope(Scope*);
+void push(Scope*, Var*);
+Var* pop(Scope*);
+Var* dd_argc_var(Scope*);
+Scope* global_scope(void);
+Scope* parent_scope(void);
+void clean_scope(Scope*);
+void cleanup(Scope*);
+int dd_argc(Scope*);
 
 #endif /* SCOPE_H */

@@ -1,6 +1,6 @@
-#include "parser.h"
-#include "func.h"
 #include "cvector.h"
+#include "func.h"
+#include "parser.h"
 #include <sys/stat.h>
 
 #ifdef HAVE_LIBHDF5
@@ -24,15 +24,13 @@ void make_valid_identifier(char* id)
 	if (!isalpha(id[0]) && id[0] != '_') {
 		id[0] = '_';
 	}
-	
+
 	char* p = &id[1];
 	while (*p) {
-		if (!isalnum(*p) && *p != '_')
-			*p = '_';
+		if (!isalnum(*p) && *p != '_') *p = '_';
 		++p;
 	}
 }
-
 
 void WriteHDF5(hid_t parent, char* name, Var* v, int hdf_old)
 {
@@ -54,7 +52,6 @@ void WriteHDF5(hid_t parent, char* name, Var* v, int hdf_old)
 		parse_error("Can't find variable");
 		return;
 	}
-
 
 	if (parent < 0) {
 		top    = 1;
@@ -89,7 +86,7 @@ void WriteHDF5(hid_t parent, char* name, Var* v, int hdf_old)
 		// member is a value.  Create a dataset
 		for (i = 0; i < 3; i++) {
 			if (!hdf_old)
-				size[2-i] = V_SIZE(v)[i];
+				size[2 - i] = V_SIZE(v)[i];
 			else
 				size[i] = V_SIZE(v)[i];
 		}
@@ -97,10 +94,10 @@ void WriteHDF5(hid_t parent, char* name, Var* v, int hdf_old)
 		dataspace = H5Screate_simple(3, size, NULL);
 
 		switch (V_FORMAT(v)) {
-		case DV_UINT8: datatype   = H5Tcopy(H5T_NATIVE_UCHAR); break;
+		case DV_UINT8: datatype  = H5Tcopy(H5T_NATIVE_UCHAR); break;
 		case DV_INT16: datatype  = H5Tcopy(H5T_NATIVE_SHORT); break;
 		case DV_UINT16: datatype = H5Tcopy(H5T_NATIVE_USHORT); break;
-		case DV_INT32: datatype    = H5Tcopy(H5T_NATIVE_INT); break;
+		case DV_INT32: datatype  = H5Tcopy(H5T_NATIVE_INT); break;
 		case DV_FLOAT: datatype  = H5Tcopy(H5T_NATIVE_FLOAT); break;
 		case DV_DOUBLE: datatype = H5Tcopy(H5T_NATIVE_DOUBLE); break;
 		}
@@ -125,7 +122,7 @@ void WriteHDF5(hid_t parent, char* name, Var* v, int hdf_old)
 		if (!hdf_old) {
 			// value of dv_std doesn't really matter, just the existence of the attribute
 			// in fact we could change below to H5S_NULL and not write any data
-			aid2 = H5Screate(H5S_SCALAR);
+			aid2       = H5Screate(H5S_SCALAR);
 			int dv_std = 1;
 			attr = H5Acreate(dataset, "dv_std", H5T_NATIVE_INT, aid2, H5P_DEFAULT, H5P_DEFAULT);
 			H5Awrite(attr, H5T_NATIVE_INT, &dv_std);
@@ -292,8 +289,8 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 		}
 
 		if (type != ID_STRING) {
-			org = BSQ;
-			int org_exists = 0;
+			org               = BSQ;
+			int org_exists    = 0;
 			int dv_std_exists = 0;
 			if (!H5Aexists(dataset, "org")) {
 				parse_error("Unable to find org attribute. Assuming %s.\n", Org2Str(org));
@@ -303,8 +300,7 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 
 				H5Aclose(attr);
 				org_exists = 1;
-				if (H5Aexists(dataset, "dv_std"))
-					dv_std_exists = 1;
+				if (H5Aexists(dataset, "dv_std")) dv_std_exists = 1;
 			}
 
 			// HDF data sets can have arbitrary rank and we don't
@@ -315,9 +311,12 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 			H5Sget_simple_extent_dims(dataspace, datasize, maxsize);
 
 			for (i = 0; i < 3; i++) {
-				// HDF stores data in row-major order like C, or "along the fasted-changing dimension"
-				// So while we say X, Y, Z and think of that as row/column/plane and access it in davinci as
-				// array[x,y,z], if you declared it in C array[X][Y][Z], it's actually stored Z, Y, X
+				// HDF stores data in row-major order like C, or "along the fasted-changing
+				// dimension"
+				// So while we say X, Y, Z and think of that as row/column/plane and access it in
+				// davinci as
+				// array[x,y,z], if you declared it in C array[X][Y][Z], it's actually stored Z, Y,
+				// X
 				// so to get the correct representation we reverse the dimensions on read and write.
 				// see the fine print Note just above 7.3.2.6 in the HDF5 User's Guide
 				//
@@ -326,7 +325,7 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 				if (cb_data->hdf_old || (org_exists && !dv_std_exists))
 					size[i] = datasize[i];
 				else
-					size[2-i] = datasize[i];
+					size[2 - i] = datasize[i];
 			}
 
 			dsize   = H5Sget_simple_extent_npoints(dataspace);
@@ -359,7 +358,7 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 			v         = newVal(org, size[0], size[1], size[2], type, databuf);
 			V_NAME(v) = strdup(name);
 
-		// else type == ID_STRING
+			// else type == ID_STRING
 		} else {
 			Lines = 1;
 			if (!H5Aexists(dataset, "lines")) {
@@ -427,8 +426,7 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 	// to the lowest common denominator or else this'd be defined
 	// case H50_TYPE_NAMED_DATATYPE:
 	//	break;
-	default:
-		parse_error("Unknown object type");
+	default: parse_error("Unknown object type");
 	}
 
 	// restore in case we recursed for subgroup
@@ -488,7 +486,7 @@ Var* load_hdf5(hid_t parent, callback_data* cb_data)
 	hsize_t idx = 0;
 	herr_t ret;
 
-	//NOTE(rswinkle) I think this is overkill.  Picking a reasonable start size (4-8) is fine
+	// NOTE(rswinkle) I think this is overkill.  Picking a reasonable start size (4-8) is fine
 	H5Literate(parent, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, count_group, &count);
 
 	if (count < 0) {

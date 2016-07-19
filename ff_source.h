@@ -9,11 +9,11 @@ typedef struct Source {
 	int line;
 } Source;
 
-void push_input_file(char *name);
-void push_input_stream(FILE *, char *filename);
+void push_input_file(char* name);
+void push_input_stream(FILE*, char* filename);
 void pop_input_file();
 void init_input_stack();
-int is_file(char *name);
+int is_file(char* name);
 
 Source* top_input_source();
 FILE* top_input_file();

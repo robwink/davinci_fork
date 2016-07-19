@@ -43,12 +43,10 @@ extern int VERBOSE;
 /*
 ** A global list of modules currently loaded and available.
 */
-Narray *loaded_modules = NULL;
-
-
+Narray* loaded_modules = NULL;
 
 static const char ver_any_str[] = "(any)";
-#define printable_ver_str(ver) ((ver)? (ver): ver_any_str)
+#define printable_ver_str(ver) ((ver) ? (ver) : ver_any_str)
 
 /* davinci module file extension */
 static const char DVM_EXT[] = "la";
@@ -62,21 +60,18 @@ static const char DV_MOD_PATH_DEF[] = DV_MOD_PATH;
 static char DV_MODULE_INIT_FUNC_NAME[] = "dv_module_init";
 static char DV_MODULE_FINI_FUNC_NAME[] = "dv_module_fini";
 
-typedef int (* dvModuleInitFunc)(const char *called_as, dvModuleInitStuff *init_stuff);
-typedef int (* dvModuleFiniFunc)(const char *called_as);
+typedef int (*dvModuleInitFunc)(const char* called_as, dvModuleInitStuff* init_stuff);
+typedef int (*dvModuleFiniFunc)(const char* called_as);
 
-
-
-static int load_dv_module(char *mod_fname, char *ver, int offset, dvModule *mod);
-static int init_dv_module(dvModule *m);
-Var *new_module(char *module_name);
-static int load_dv_module_functions(dvModule *m);
+static int load_dv_module(char* mod_fname, char* ver, int offset, dvModule* mod);
+static int init_dv_module(dvModule* m);
+Var* new_module(char* module_name);
+static int load_dv_module_functions(dvModule* m);
 static void free_module_function(vfuncptr fptr);
-static int autoload_dep(dvDepAttr *dep, int ndep);
-void del_module(Var *mv);
-static int uninit_dv_module(dvModule *m);
-int unload_dv_module(char *module_name);
-
+static int autoload_dep(dvDepAttr* dep, int ndep);
+void del_module(Var* mv);
+static int uninit_dv_module(dvModule* m);
+int unload_dv_module(char* module_name);
 
 /*******************************************************************/
 /** davinci load_module(mod="module_name") function.              **/

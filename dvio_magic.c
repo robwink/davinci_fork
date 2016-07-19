@@ -2,19 +2,18 @@
 
 #ifdef HAVE_LIBMAGICK
 
-#include "parser.h"
 #include "dvio.h"
+#include "parser.h"
 
 #include <magick/api.h>
 
-Var *
-dv_LoadGFX_Image(FILE *fp, char *filename, struct iom_iheader *s)
+Var* dv_LoadGFX_Image(FILE* fp, char* filename, struct iom_iheader* s)
 {
-	Var *v;
+	Var* v;
 	struct iom_iheader h;
-	void *image_data = NULL;
-	int   status;
-	char  hbuf[HBUFSIZE];
+	void* image_data = NULL;
+	int status;
+	char hbuf[HBUFSIZE];
 
 	//    if (!(status = iom_GetGFXHeader(fp, filename, &h))){ return NULL; }
 
@@ -26,21 +25,17 @@ dv_LoadGFX_Image(FILE *fp, char *filename, struct iom_iheader *s)
 	}
 
 	image_data = iom_read_qube_data(fileno(fp), &h);
-	if (image_data){
-		v = iom_iheader2var(&h);
+	if (image_data) {
+		v         = iom_iheader2var(&h);
 		V_DATA(v) = image_data;
-	}
-	else {
+	} else {
 		parse_error("Read from ImageMagick file %s failed.", filename);
 		v = NULL;
 	}
 
-	sprintf(hbuf, "%s: via Magick %s image: %dx%dx%d, %d bits",
-			filename, iom_Org2Str(h.org),
-			iom_GetSamples(h.dim, h.org),
-			iom_GetLines(h.dim, h.org),
-			iom_GetBands(h.dim, h.org),
-			iom_NBYTESI(h.format)*8);
+	sprintf(hbuf, "%s: via Magick %s image: %dx%dx%d, %d bits", filename, iom_Org2Str(h.org),
+	        iom_GetSamples(h.dim, h.org), iom_GetLines(h.dim, h.org), iom_GetBands(h.dim, h.org),
+	        iom_NBYTESI(h.format) * 8);
 	if (VERBOSE > 1) {
 		parse_error(hbuf);
 	}
@@ -50,79 +45,74 @@ dv_LoadGFX_Image(FILE *fp, char *filename, struct iom_iheader *s)
 	return v;
 }
 
-
-
-int
-dv_WriteGFX_Image(Var *ob, char *filename, int force, char *GFX_type)
+int dv_WriteGFX_Image(Var* ob, char* filename, int force, char* GFX_type)
 {
-	Image *image;
+	Image* image;
 	ImageInfo image_info;
 	struct iom_iheader h;
 	int status;
 
 	int x, y, z;
-	int format,org;
+	int format, org;
 
-	format=V_FORMAT(ob);
-	org=V_ORG(ob);
-	x=GetSamples(V_SIZE(ob), V_ORG(ob));
-	y=GetLines(V_SIZE(ob), V_ORG(ob));
-	z=GetBands(V_SIZE(ob), V_ORG(ob));
+	format = V_FORMAT(ob);
+	org    = V_ORG(ob);
+	x      = GetSamples(V_SIZE(ob), V_ORG(ob));
+	y      = GetLines(V_SIZE(ob), V_ORG(ob));
+	z      = GetBands(V_SIZE(ob), V_ORG(ob));
 
-
-	if(z>3 && (strcmp(GFX_type,"mpgc") && strcmp(GFX_type,"mpgg") &&
-	       strcmp(GFX_type,"gifc") && strcmp(GFX_type,"gifg"))){
-	  parse_error("A movie type must be specified if you have more than 3 bands");
-	  return 0;
+	if (z > 3 && (strcmp(GFX_type, "mpgc") && strcmp(GFX_type, "mpgg") &&
+	              strcmp(GFX_type, "gifc") && strcmp(GFX_type, "gifg"))) {
+		parse_error("A movie type must be specified if you have more than 3 bands");
+		return 0;
 	}
 
-	if (z==2) {
-	  parse_error("Incorrect number of bands to make an image...aborting");
-	  return 0;
+	if (z == 2) {
+		parse_error("Incorrect number of bands to make an image...aborting");
+		return 0;
 	}
 
-	else if (org==BIL || org==BIP){
-	  parse_error("BIL and BIP formats are not allowable...aborting");
-	  return 0;
+	else if (org == BIL || org == BIP) {
+		parse_error("BIL and BIP formats are not allowable...aborting");
+		return 0;
 	}
 
-	else if (format!=DV_UINT8){
-	  parse_error("Only DV_UINT8 type data is allowed...aborting");
-	  return 0;
+	else if (format != DV_UINT8) {
+		parse_error("Only DV_UINT8 type data is allowed...aborting");
+		return 0;
 	}
 
 	var2iom_iheader(ob, &h);
 	//    status = iom_WriteGFXImage(filename, V_DATA(ob), &h, force, GFX_type);
 	iom_cleanup_iheader(&h);
 
-	if (status == 0){
-	  parse_error("Failed writing file %s.\n", filename);
-	  return 0;
+	if (status == 0) {
+		parse_error("Failed writing file %s.\n", filename);
+		return 0;
 	}
 
 	return 1;
 }
 
-static Image *
-Var2Miff(Var *v)
+static Image* Var2Miff(Var* v)
 {
 	int x, y, z;
 	int format, org;
-	Image *image = NULL;
+	Image* image = NULL;
 
 	x = GetSamples(V_SIZE(v), V_ORG(v));
 	y = GetLines(V_SIZE(v), V_ORG(v));
 	z = GetBands(V_SIZE(v), V_ORG(v));
 
 	format = V_FORMAT(v);
-	org = V_ORG(v);
+	org    = V_ORG(v);
 
-	if (org==BIL || org==BIP){
+	if (org == BIL || org == BIP) {
 		parse_error("BIL and BIP formats are not allowable...aborting");
 		return (NULL);
 	}
 
-	else if (format!=DV_UINT8){
+	else if (format != DV_UINT8) {
 		parse_error("Only DV_UINT8 type data is allowed...aborting");
 		return (NULL);
 	}
@@ -132,51 +122,39 @@ Var2Miff(Var *v)
 	return image;
 }
 
-
-Var *
-dv_Miff2Var(Image *image) /*  Read */
+Var* dv_Miff2Var(Image* image) /*  Read */
 {
 	int x, y, z;
-	char *data = NULL;
+	char* data = NULL;
 
 	//    if (!iom_ExtractMiffData(image, &x, &y, &z, (void *)&data)){ return NULL; }
-	//return(newVal(BSQ,x,y,z,DV_UINT8,data));
+	// return(newVal(BSQ,x,y,z,DV_UINT8,data));
 	return NULL;
 }
 
 /*
 ** Test for the types recognized by ImageMagic
 */
-int
-dvio_ValidGfx(char *type,char *GFX_type)
+int dvio_ValidGfx(char* type, char* GFX_type)
 {
 
-	int nt=43;  /* Number of types
-				 * modify this number if you change the number of types
-				 */
+	int nt = 43; /* Number of types
+	              * modify this number if you change the number of types
+	              */
 
-	char *Gfx_Types[]={"avs","bmp","cmyk",
-					   "gif","gifc","gifg",
-					   "hist","jbig","jpeg",
-					   "jpg","map","matte",
-					   "miff","mpeg","mpgg",
-					   "mpgc","mtv","pcd",
-					   "pcx","pict","pm",
-					   "pbm","pgm","ppm",
-					   "pnm","ras","rgb",
-					   "rgba","rle","sgi",
-					   "sun","tga","tif",
-					   "tiff","tile","vid",
-					   "viff","xc","xbm",
-					   "xpm","xv","xwd","yuv"};
+	char* Gfx_Types[] = {"avs",  "bmp",  "cmyk",  "gif",  "gifc", "gifg", "hist", "jbig", "jpeg",
+	                     "jpg",  "map",  "matte", "miff", "mpeg", "mpgg", "mpgc", "mtv",  "pcd",
+	                     "pcx",  "pict", "pm",    "pbm",  "pgm",  "ppm",  "pnm",  "ras",  "rgb",
+	                     "rgba", "rle",  "sgi",   "sun",  "tga",  "tif",  "tiff", "tile", "vid",
+	                     "viff", "xc",   "xbm",   "xpm",  "xv",   "xwd",  "yuv"};
 	int i;
 
-	for (i = 0 ; i < strlen(type) ; i++) {
+	for (i = 0; i < strlen(type); i++) {
 		if (isupper(type[i])) type[i] = tolower(type[i]);
 	}
 
-	for (i=0 ; i < nt ; i++){
-		if (!(strcmp(type, Gfx_Types[i]))){
+	for (i = 0; i < nt; i++) {
+		if (!(strcmp(type, Gfx_Types[i]))) {
 			strcpy(GFX_type, Gfx_Types[i]);
 			return (1);
 		}
@@ -184,7 +162,5 @@ dvio_ValidGfx(char *type,char *GFX_type)
 
 	return (0);
 }
-
-
 
 #endif /* HAVE_LIBMAGICK */

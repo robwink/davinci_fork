@@ -23,13 +23,13 @@
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
  *
- *  Include file for the print dialog.  
+ *  Include file for the print dialog.
  *
  *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 */
 
 #ifndef _H_PRINT3D
-#define	_H_PRINT3D
+#define _H_PRINT3D
 
 #if defined(PRINT_3D) && defined(NDEBUG)
 static char sccsid_h[] = "@(#)print_3d.h	1.17 98/12/08 KL Group Inc.";
@@ -42,10 +42,9 @@ extern "C" {
 /* function declarations */
 #ifdef _NO_PROTO
 extern void MtShow3dPrintDialog();
-#else /* _NO_PROTO */
-extern void MtShow3dPrintDialog(Widget graph_to_print, char *default_printer,char *default_file);
+#else  /* _NO_PROTO */
+extern void MtShow3dPrintDialog(Widget graph_to_print, char* default_printer, char* default_file);
 #endif /* _NO_PROTO */
-
 
 #if defined(__cplusplus)
 }

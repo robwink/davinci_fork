@@ -14,20 +14,17 @@
 */
 #define NEED_UDEFS
 
-
 /*
 ** Announce that this application is a Windows Console App.
 */
 
-#define _CONSOLE 
-
+#define _CONSOLE
 
 /*
 ** Undefine HAVE_STRTOUL if strtoul is available int the headers.
 */
 
-#define HAVE_STRTOUL 
-
+#define HAVE_STRTOUL
 
 /*
 ** Define to build module support into davinci. When undefined,
@@ -37,9 +34,8 @@
 /* #define BUILD_MODULE_SUPPORT  */
 #undef BUILD_MODULE_SUPPORT
 
-
 /*
-** Various different macros meaning that the code is being compiled 
+** Various different macros meaning that the code is being compiled
 ** for Microsoft Windows.
 */
 
@@ -62,7 +58,6 @@
 #ifndef __MSDOS__
 #define __MSDOS__
 #endif /* __MSDOS__ */
-
 
 /*
 ** Defined for regex.[ch]. Basically means that we have "string.h"

@@ -43,8 +43,8 @@
  *
  */
 
-#include "parser.h"
 #include "func.h"
+#include "parser.h"
 
 /* definitions for grow direction */
 #define AXIS_NONE -1
@@ -56,81 +56,77 @@
 
 /* Functions */
 
-Var *
-ff_extract (vfuncptr func, Var * arg)
+Var* ff_extract(vfuncptr func, Var* arg)
 {
 	Var *val = NULL, *mask = NULL, *axisvar = NULL, *result = NULL;
 	size_t vx, vy, vz, mx, my, mz, rx, ry, rz;
 	int axis = AXIS_NONE;
-	size_t i,j,k, count, dims, length, size;
+	size_t i, j, k, count, dims, length, size;
 	size_t in, out, outstep;
-	void *data;
+	void* data;
 	unsigned char *inbase, *outbase;
-	size_t maskIdx, p,q,r, a,b,c;
+	size_t maskIdx, p, q, r, a, b, c;
 	int minx, maxx, miny, maxy, minz, maxz;
 
 	Alist alist[4];
-	alist[0] = make_alist( "object", ID_VAL, NULL, &val);
-	alist[1] = make_alist( "mask", ID_VAL, NULL, &mask);
-	alist[2] = make_alist( "axis", ID_UNK, NULL, &axisvar);
+	alist[0]      = make_alist("object", ID_VAL, NULL, &val);
+	alist[1]      = make_alist("mask", ID_VAL, NULL, &mask);
+	alist[2]      = make_alist("axis", ID_UNK, NULL, &axisvar);
 	alist[3].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
 	if (val == NULL) {
 		parse_error("Object is null");
-		return(NULL);
+		return (NULL);
 	}
 
 	if (mask == NULL) {
 		parse_error("Mask is null");
 		return (NULL);
 	}
-	
+
 	if (axisvar != NULL) {
 		if (V_TYPE(axisvar) == ID_STRING && V_STRING(axisvar) != NULL) {
-			if (0 == strcasecmp (V_STRING(axisvar), "x"))
+			if (0 == strcasecmp(V_STRING(axisvar), "x"))
 				axis = AXIS_X;
-			else if (0 == strcasecmp (V_STRING(axisvar), "y"))
+			else if (0 == strcasecmp(V_STRING(axisvar), "y"))
 				axis = AXIS_Y;
-			else if (0 == strcasecmp (V_STRING(axisvar), "z"))
+			else if (0 == strcasecmp(V_STRING(axisvar), "z"))
 				axis = AXIS_Z;
 			else {
-				parse_error ("Axis must be a string equal to 'x', 'y', or 'z'");
+				parse_error("Axis must be a string equal to 'x', 'y', or 'z'");
 				return NULL;
 			}
 		}
 	}
 
-	vx = GetX (val);
-	vy = GetY (val);
-	vz = GetZ (val);
-	mx = GetX (mask);
-	my = GetY (mask);
-	mz = GetZ (mask);
+	vx = GetX(val);
+	vy = GetY(val);
+	vz = GetZ(val);
+	mx = GetX(mask);
+	my = GetY(mask);
+	mz = GetZ(mask);
 
 	if (vx < 2 && vy < 2 && vz < 2) {
-		parse_error ("Object must be at least 2 in one or more dimensions");
+		parse_error("Object must be at least 2 in one or more dimensions");
 		return (NULL);
 	}
 
 	if (mx < 2 && my < 2 && mz < 2) {
-		parse_error ("Mask must be at least 2 in one or more dimensions");
+		parse_error("Mask must be at least 2 in one or more dimensions");
 		return (NULL);
 	}
 
-	if ((mx > 1 && mx != vx)
-	||  (my > 1 && my != vy)
-	||  (mz > 1 && mz != vz)) {
-		parse_error ("Mask dimensions greater than one must equal corresponding object dimension");
+	if ((mx > 1 && mx != vx) || (my > 1 && my != vy) || (mz > 1 && mz != vz)) {
+		parse_error("Mask dimensions greater than one must equal corresponding object dimension");
 		return (NULL);
 	}
 
 	/* dimension parallel to mask will be equal to 'count' */
 	count = 0;
-	for (i=0; i<V_DSIZE(mask); i++)
-		if (extract_int(mask, i) != 0)
-			count ++;
+	for (i = 0; i < V_DSIZE(mask); i++)
+		if (extract_int(mask, i) != 0) count++;
 
 	/* compute size of return object */
 
@@ -139,20 +135,18 @@ ff_extract (vfuncptr func, Var * arg)
 	   may be omitted, but if included it must be correct */
 
 	dims = 0;
-	if (mx > 1) dims ++;
-	if (my > 1) dims ++;
-	if (mz > 1) dims ++;
+	if (mx > 1) dims++;
+	if (my > 1) dims++;
+	if (mz > 1) dims++;
 
 	switch (dims) {
 	case 1:
 		if (axis != AXIS_NONE) {
-			if ((mx > 1 && axis != AXIS_X)
-			||  (my > 1 && axis != AXIS_Y)
-			||  (mz > 1 && axis != AXIS_Z)) {
-				parse_error ("Axis must be 'x', 'y', or 'z', and correspond to a mask dimension > 1");
+			if ((mx > 1 && axis != AXIS_X) || (my > 1 && axis != AXIS_Y) || (mz > 1 && axis != AXIS_Z)) {
+				parse_error(
+				    "Axis must be 'x', 'y', or 'z', and correspond to a mask dimension > 1");
 				return (NULL);
 			}
-
 		}
 
 		if (mx > 1) axis = AXIS_X;
@@ -173,7 +167,7 @@ ff_extract (vfuncptr func, Var * arg)
 	case 2:
 	case 3:
 		if (axis == AXIS_NONE) {
-			parse_error ("Axis parameter required to specify stacking direction");
+			parse_error("Axis parameter required to specify stacking direction");
 			return (NULL);
 		} else {
 			if (mx > 1 && axis == AXIS_X) {
@@ -210,61 +204,60 @@ ff_extract (vfuncptr func, Var * arg)
 					ry = 1;
 				}
 			} else {
-				parse_error ("Axis must be 'x', 'y', or 'z', and correspond to a mask dimension > 1");
+				parse_error(
+				    "Axis must be 'x', 'y', or 'z', and correspond to a mask dimension > 1");
 				return (NULL);
 			}
 		}
 		break;
-	default:
-		parse_error ("Unable to determine dimensionality of output object.");
-		return (NULL);
+	default: parse_error("Unable to determine dimensionality of output object."); return (NULL);
 	}
 
 	/* allocate data and VAL for the result */
 	length = rx * ry * rz;
-	size = NBYTES(V_FORMAT(val));
-	data = calloc (length, size);
-	result = newVal (V_ORG(val), rx, ry, rz, V_FORMAT(val), data);
+	size   = NBYTES(V_FORMAT(val));
+	data   = calloc(length, size);
+	result = newVal(V_ORG(val), rx, ry, rz, V_FORMAT(val), data);
 
-	inbase = (unsigned char *) V_DATA (val);
-	outbase = (unsigned char *) data;
+	inbase  = (unsigned char*)V_DATA(val);
+	outbase = (unsigned char*)data;
 
 	/* loop over the mask, copying as necessary when a set bit is found */
 	outstep = 0;
 	for (i = 0; i < mx; i++) {
 		for (j = 0; j < my; j++) {
 			for (k = 0; k < mz; k++) {
-				maskIdx = cpos (i,j,k, mask);
+				maskIdx = cpos(i, j, k, mask);
 
-				if (0 != extract_int (mask, maskIdx)) {
+				if (0 != extract_int(mask, maskIdx)) {
 					minx = (mx == vx ? i : 0);
-					maxx = (mx == vx ? i : vx-1);
+					maxx = (mx == vx ? i : vx - 1);
 					miny = (my == vy ? j : 0);
-					maxy = (my == vy ? j : vy-1);
+					maxy = (my == vy ? j : vy - 1);
 					minz = (mz == vz ? k : 0);
-					maxz = (mz == vz ? k : vz-1);
+					maxz = (mz == vz ? k : vz - 1);
 
-					for (p = minx; p <= maxx; p ++) {
-						for (q = miny; q <= maxy; q ++) {
-							for (r = minz; r <= maxz; r ++) {
-								in = cpos (p,q,r, val);
+					for (p = minx; p <= maxx; p++) {
+						for (q = miny; q <= maxy; q++) {
+							for (r = minz; r <= maxz; r++) {
+								in = cpos(p, q, r, val);
 
 								a = (rx == vx ? p : 0);
 								b = (ry == vy ? q : 0);
 								c = (rz == vz ? r : 0);
 								switch (axis) {
-									case AXIS_X: a = outstep; break;
-									case AXIS_Y: b = outstep; break;
-									case AXIS_Z: c = outstep; break;
+								case AXIS_X: a = outstep; break;
+								case AXIS_Y: b = outstep; break;
+								case AXIS_Z: c = outstep; break;
 								}
-								out = cpos (a,b,c, result);
+								out = cpos(a, b, c, result);
 
-								memcpy (outbase + out*size, inbase + in*size, size);
+								memcpy(outbase + out * size, inbase + in * size, size);
 							}
 						}
 					}
 
-					outstep ++;
+					outstep++;
 				}
 			}
 		}

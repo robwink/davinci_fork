@@ -1,90 +1,87 @@
-#include "parser.h"
 #include "func.h"
+#include "parser.h"
 #include "window.h"
 
+float local_maximum(Window* w, float threshold, float ignore);
 
-float local_maximum(Window *w, float threshold, float ignore);
-
-Var *
-ff_local_maximum(vfuncptr func, Var * arg)
+Var* ff_local_maximum(vfuncptr func, Var* arg)
 {
-    Var *obj = NULL, *rval = NULL;
-    float ignore=FLT_MIN;
-    float *out;
-    int x,y,i,j;
-    int size = 3;
+	Var *obj = NULL, *rval = NULL;
+	float ignore = FLT_MIN;
+	float* out;
+	int x, y, i, j;
+	int size        = 3;
 	float threshold = FLT_MIN;
-    Window *w;
+	Window* w;
 
-    Alist alist[9];
-    alist[0] = make_alist( "object",    ID_VAL, NULL,   &obj);
-    alist[1] = make_alist( "size",      DV_INT32,    NULL,   &size);
-    alist[2] = make_alist( "ignore",    DV_FLOAT,  NULL,    &ignore);
-    alist[3] = make_alist( "threshold",    DV_FLOAT,  NULL,    &threshold);
-    alist[4].name = NULL;
+	Alist alist[9];
+	alist[0]      = make_alist("object", ID_VAL, NULL, &obj);
+	alist[1]      = make_alist("size", DV_INT32, NULL, &size);
+	alist[2]      = make_alist("ignore", DV_FLOAT, NULL, &ignore);
+	alist[3]      = make_alist("threshold", DV_FLOAT, NULL, &threshold);
+	alist[4].name = NULL;
 
-    if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
-    if (obj == NULL) {
-        parse_error("%s: No object specified\n", func->name);
-        return(NULL);
-    }
+	if (obj == NULL) {
+		parse_error("%s: No object specified\n", func->name);
+		return (NULL);
+	}
 
-    x = GetX(obj);
-    y = GetY(obj);
-    w = create_window(size, size, DV_FLOAT);
+	x = GetX(obj);
+	y = GetY(obj);
+	w = create_window(size, size, DV_FLOAT);
 
-	out = calloc(x*y, sizeof(float));
+	out  = calloc(x * y, sizeof(float));
 	rval = newVal(BSQ, x, y, 1, DV_FLOAT, out);
 
-    for (i = 0 ; i < x ; i+=1) {
-        load_window(w, obj, i, 0, ignore);
-        for (j = 0 ; j < y ; j+=1) {
-            if (j) roll_window(w, obj, i, j, ignore);
+	for (i = 0; i < x; i += 1) {
+		load_window(w, obj, i, 0, ignore);
+		for (j = 0; j < y; j += 1) {
+			if (j) roll_window(w, obj, i, j, ignore);
 
-            out[cpos(i,j,0,rval)] = local_maximum(w, threshold, ignore);
-        }
-    }
+			out[cpos(i, j, 0, rval)] = local_maximum(w, threshold, ignore);
+		}
+	}
 
-    free_window(w);
-    return(rval);
+	free_window(w);
+	return (rval);
 }
 
-float 
-local_maximum(Window *w, float threshold, float ignore) 
+float local_maximum(Window* w, float threshold, float ignore)
 {
 	float v;
 	int i, j;
 	float max;
 
-	v = ((float *)w->row[w->height/2])[w->width/2];
-	if (v == ignore) return(ignore);
+	v = ((float*)w->row[w->height / 2])[w->width / 2];
+	if (v == ignore) return (ignore);
 	max = v;
 
-	for (i = 0 ; i < w->width ; i+=1) {
-		for (j = 0 ; j < w->height ; j+=1) {
-			v = ((float *)w->row[j])[i];
+	for (i = 0; i < w->width; i += 1) {
+		for (j = 0; j < w->height; j += 1) {
+			v = ((float*)w->row[j])[i];
 			if (v == ignore || v < threshold) continue;
-			if (v > max) return(ignore);
+			if (v > max) return (ignore);
 		}
 	}
-	return(max);
+	return (max);
 }
 
 /*
 ** Given a 2-D array of data, compute it's median
 ** this algorithm currently just qsorts the entire NxN array and
-** then counts up to the N/2th element, 
+** then counts up to the N/2th element,
 ** N has to get modified by the number of ignore values in the array
 **
 ** This was the fastest way to get it to work, but it'll be slow.
-** Michael's merge sort idea is a better way, but it's tightly coupled 
-** with window generation.  It will eventually be: 
+** Michael's merge sort idea is a better way, but it's tightly coupled
+** with window generation.  It will eventually be:
 **
-**** Sort each row, then merge-find (merge-sort without move) across 
-**** rows.  You can leave the N-1 rows sorted and just replace 
-**** the last one, reducing the problem down to sorting a single N-element 
-**** array and then merge sorting across arrays to find the smallest N/2 
+**** Sort each row, then merge-find (merge-sort without move) across
+**** rows.  You can leave the N-1 rows sorted and just replace
+**** the last one, reducing the problem down to sorting a single N-element
+**** array and then merge sorting across arrays to find the smallest N/2
 **** elements.
 **
 **** One thing I learned when implementing it the cheezy way, you can't

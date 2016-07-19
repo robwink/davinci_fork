@@ -17,42 +17,40 @@
  ** This function was written for Gregg Swayze on 1/11/95.
  **/
 
-Var *
-ff_gnoise(vfuncptr func, Var * arg)
+Var* ff_gnoise(vfuncptr func, Var* arg)
 {
-	Var *s;
-	int x=512, y=512, z=10;
+	Var* s;
+	int x = 512, y = 512, z = 10;
 	int seed = 0;
 	int i, j, d;
 
 	Alist alist[5];
-	alist[0] = make_alist( "x",    DV_INT32,    NULL,    &x);
-	alist[1] = make_alist( "y",    DV_INT32,    NULL,    &y);
-	alist[2] = make_alist( "z",    DV_INT32,    NULL,    &z);
-	alist[3] = make_alist( "seed", DV_INT32,    NULL,    &seed);
+	alist[0]      = make_alist("x", DV_INT32, NULL, &x);
+	alist[1]      = make_alist("y", DV_INT32, NULL, &y);
+	alist[2]      = make_alist("z", DV_INT32, NULL, &z);
+	alist[3]      = make_alist("seed", DV_INT32, NULL, &seed);
 	alist[4].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return(NULL);
+	if (parse_args(func, arg, alist) == 0) return (NULL);
 
-	s = newVar();
+	s         = newVar();
 	V_TYPE(s) = ID_VAL;
 
-	V_DATA(s) = calloc(1, x * y * z);
-	V_DSIZE(s) = x * y * z;
+	V_DATA(s)    = calloc(1, x * y * z);
+	V_DSIZE(s)   = x * y * z;
 	V_SIZE(s)[0] = x;
 	V_SIZE(s)[1] = y;
 	V_SIZE(s)[2] = z;
-	V_ORG(s) = BSQ;
-	V_FORMAT(s) = DV_UINT8;
+	V_ORG(s)     = BSQ;
+	V_FORMAT(s)  = DV_UINT8;
 
-	if (seed == 0)
-		seed = time(0) * getpid();
+	if (seed == 0) seed = time(0) * getpid();
 	srand48(seed);
 
 	for (j = 0; j < y; j++) {
 		for (i = 0; i < x; i++) {
-			d = (int) ((float)z *drand48());
-			((unsigned char *) V_DATA(s))[(d * y + j) * x + i] = 255;
+			d                                                = (int)((float)z * drand48());
+			((unsigned char*)V_DATA(s))[(d * y + j) * x + i] = 255;
 		}
 	}
 	return (s);
