@@ -35,11 +35,13 @@ Var* V_DUP(Var* v)
 		V_SYM(r)->data             = memcpy(malloc(dsize), V_SYM(v)->data, dsize);
 		if (V_TITLE(v)) V_TITLE(r) = strdup(V_TITLE(v));
 		break;
-	case ID_STRING: V_STRING(r) = strdup(V_STRING(v)); break;
+	case ID_STRING:
+		V_STRING(r) = strdup(V_STRING(v)); break;
 	case ID_UNK:
 		if (V_NAME(v)) V_NAME(r) = strdup(V_NAME(v));
 		break;
-	case ID_STRUCT: r = (Var*)duplicate_struct(v); break;
+	case ID_STRUCT:
+		r = (Var*)duplicate_struct(v); break;
 
 	case ID_TEXT: /*Added: Thu Mar  2 16:49:11 MST 2000*/
 	{
