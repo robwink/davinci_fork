@@ -812,3 +812,9 @@ davinci_build/mac10.4/dvlib-.dmg
 davinci_build/mac10.4/png_h_files
 iomedley/__.SYMDEF SORTED
 libltdl/a.out.dSYM/
+
+
+davinci_build/windows/dependencies/cfitsio/Makefile
+davinci_build/windows/dependencies/cfitsio/cfitsio.pc
+davinci_build/windows/dependencies/cfitsio/config.log
+davinci_build/windows/dependencies/cfitsio/config.status
