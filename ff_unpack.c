@@ -1541,7 +1541,7 @@ static void copy(const void* from, void* to, int len, int swap)
 	}
 }
 
-static int convert_to_ext_fmt(char* from, int ffmt, char* to, int tfmt, int tolen)
+static int convert_to_ext_fmt(void* from, int ffmt, char* to, int tfmt, int tolen)
 {
 	int si;
 	unsigned int ui;
@@ -1671,7 +1671,7 @@ static int pack_row(data* the_data, unpack_digest* digest, int row, byte* buffer
 {
 	int i, j, k, numbytes, al_bytes, columns, start_byte;
 	char letter;
-	byte* src_buf;
+	void* src_buf;
 	int src_type, src_columns;
 
 	// start for loop through unpack_digest's input
@@ -1696,7 +1696,7 @@ static int pack_row(data* the_data, unpack_digest* digest, int row, byte* buffer
 			} else {
 				src_buf = the_data[j].array + row * src_columns * NBYTES(src_type) + k * NBYTES(src_type);
 			}
-			if (!convert_to_ext_fmt((char*)src_buf, src_type, &buffer[start_byte + k * numbytes], letter, numbytes)) {
+			if (!convert_to_ext_fmt(src_buf, src_type, &buffer[start_byte + k * numbytes], letter, numbytes)) {
 				fprintf(stderr, "Unable to convert column %d (index %d)\n", j, k);
 				return 0;
 			}

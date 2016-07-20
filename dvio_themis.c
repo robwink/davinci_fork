@@ -1,3 +1,6 @@
+#define _XOPEN_SOURCE
+// for swab in unistd.h
+
 #include "dvio.h"
 #include "XformTable.h"
 #include "parser.h"
@@ -332,6 +335,7 @@ int Process_SC_Vis(FILE* infile, unsigned char** data, int* vis_width, int* nob,
 		if (!count) break;
 
 		head_count++;
+		//NOTE(rswinkle) could just use swap_endian(&mh, sizeof(msdp_Header), 2)
 		swab(&mh, &mh, sizeof(msdp_Header));
 
 		height += (mh.line * 16);

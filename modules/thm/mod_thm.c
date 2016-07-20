@@ -868,7 +868,7 @@ Var* thm_rectify(vfuncptr func, Var* arg)
 				if (lshift > 0) ni = ((int)(j + abs(lshift) - (int)(shift * i + 0.5))) * x + i;
 
 				/* if the angle is less than 0 */
-				if (lshift < 0) ni = (j + (int)(abs(shift) * i + 0.5)) * x + i;
+				if (lshift < 0) ni = (j + (int)(fabs(shift) * i + 0.5)) * x + i;
 
 				/* finding the x, y and z in the sheared array */
 				nu = ni / x;
@@ -2950,7 +2950,7 @@ int* do_corners(Var* pic_a, float nullval)
 
 	/* loop through row_avg */
 	j = 0;
-	while (tmyv == -1 || bmyv == -1 && j < y) {
+	while (tmyv == -1 || (bmyv == -1 && j < y)) {
 		if (row_avg[j] != 0 && tmyv == -1) {
 			tmyv = j;
 		}
@@ -2962,7 +2962,7 @@ int* do_corners(Var* pic_a, float nullval)
 
 	/* loop through col_avg */
 	i = 0;
-	while (lmxv == -1 || rmxv == -1 && i < x) {
+	while (lmxv == -1 || (rmxv == -1 && i < x)) {
 		if (col_avg[i] != 0 && lmxv == -1) {
 			lmxv = i;
 		}
@@ -2974,7 +2974,7 @@ int* do_corners(Var* pic_a, float nullval)
 
 	/* find corresponding y vals to the left most and right most x vals */
 	j = 0;
-	while (lmyv == -1 || rmyv == -1 && j < y) {
+	while (lmyv == -1 || (rmyv == -1 && j < y)) {
 		if (pic[j * x + lmxv] != 0 && lmyv == -1) {
 			lmyv = j;
 		}
@@ -2994,7 +2994,7 @@ int* do_corners(Var* pic_a, float nullval)
 	/* approach top most x value from the right */
 	if (rmyv >= lmyv) {
 		i = 0;
-		while (corners[2] == -1 || corners[4] == -1 && i < x) {
+		while (corners[2] == -1 || (corners[4] == -1 && i < x)) {
 			if (pic[tmyv * x + (x - i - 1)] != 0 && corners[2] == -1) {
 				corners[2] = x - i;
 				corners[3] = tmyv + 1;
@@ -3015,7 +3015,7 @@ int* do_corners(Var* pic_a, float nullval)
 	/* approach top most x value from the left */
 	if (lmyv >= rmyv) {
 		i = 0;
-		while (corners[0] == -1 || corners[6] == -1 && i < x) {
+		while (corners[0] == -1 || (corners[6] == -1 && i < x)) {
 			if (pic[tmyv * x + i] != 0 && corners[0] == -1) {
 				corners[0] = i + 1;
 				corners[1] = tmyv + 1;

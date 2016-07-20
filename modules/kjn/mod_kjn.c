@@ -1037,7 +1037,7 @@ int* do_corners(Var* pic_a, float nullval)
 
 	/* loop through row_avg */
 	j = 0;
-	while (tmyv == -1 || bmyv == -1 && j < y) {
+	while (tmyv == -1 || (bmyv == -1 && j < y)) {
 		if (row_avg[j] != 0 && tmyv == -1) {
 			tmyv = j;
 		}
@@ -1049,7 +1049,7 @@ int* do_corners(Var* pic_a, float nullval)
 
 	/* loop through col_avg */
 	i = 0;
-	while (lmxv == -1 || rmxv == -1 && i < x) {
+	while (lmxv == -1 || (rmxv == -1 && i < x)) {
 		if (col_avg[i] != 0 && lmxv == -1) {
 			lmxv = i;
 		}
@@ -1061,7 +1061,7 @@ int* do_corners(Var* pic_a, float nullval)
 
 	/* find corresponding y vals to the left most and right most x vals */
 	j = 0;
-	while (lmyv == -1 || rmyv == -1 && j < y) {
+	while (lmyv == -1 || (rmyv == -1 && j < y)) {
 		if (pic[j * x + lmxv] != 0 && lmyv == -1) {
 			lmyv = j;
 		}
@@ -1081,7 +1081,7 @@ int* do_corners(Var* pic_a, float nullval)
 	/* approach top most x value from the right */
 	if (rmyv >= lmyv) {
 		i = 0;
-		while (corners[2] == -1 || corners[4] == -1 && i < x) {
+		while (corners[2] == -1 || (corners[4] == -1 && i < x)) {
 			if (pic[tmyv * x + (x - i - 1)] != 0 && corners[2] == -1) {
 				corners[2] = x - i;
 				corners[3] = tmyv + 1;
@@ -1102,7 +1102,7 @@ int* do_corners(Var* pic_a, float nullval)
 	/* approach top most x value from the left */
 	if (lmyv >= rmyv) {
 		i = 0;
-		while (corners[0] == -1 || corners[6] == -1 && i < x) {
+		while (corners[0] == -1 || (corners[6] == -1 && i < x)) {
 			if (pic[tmyv * x + i] != 0 && corners[0] == -1) {
 				corners[0] = i + 1;
 				corners[1] = tmyv + 1;
@@ -1294,7 +1294,7 @@ Var* kjn_deplaid(vfuncptr func, Var* arg)
 			b10 = 9;
 		} else {
 			parse_error("assuming NO band 10 data, b10 being reset to %d\n", z - 1);
-			b10 == z - 1;
+			b10 = z - 1;
 		}
 	}
 
@@ -1812,7 +1812,7 @@ Var* kjn_rectify(vfuncptr func, Var* arg)
 
 				/* the shifted y pixel */
 				/* if the angle is greater than 0 */
-				if (lshift > 0) ni = ((int)(j + fabs(lshift) - (int)(shift * i + 0.5))) * x + i;
+				if (lshift > 0) ni = ((int)(j + abs(lshift) - (int)(shift * i + 0.5))) * x + i;
 
 				/* if the angle is less than 0 */
 				if (lshift < 0) ni = (j + (int)(fabs(shift) * i + 0.5)) * x + i;
@@ -2151,7 +2151,7 @@ static float* deplaid(float* data, int x, int y, int z, float nullval, int b10)
 			b10 = 9;
 		} else {
 			parse_error("assuming NO band 10 data, b10 being reset to %d\n", z - 1);
-			b10 == z - 1;
+			b10 = z - 1;
 		}
 	}
 
@@ -4342,8 +4342,8 @@ float* column_fill(float* column, int y, int z, int csize, float ignore)
 					/* now for every other pixel */
 					if (val_after == ignore & j != 0) cols[k * y + j] = val_before;
 					if (val_after != ignore && j != 0) {
-						dist_before     = fabs(position_before - j);
-						dist_after      = fabs(position_after - j);
+						dist_before     = abs(position_before - j);
+						dist_after      = abs(position_after - j);
 						cols[k * y + j] = (dist_after * val_before + dist_before * val_after) /
 						                  (dist_before + dist_after);
 					}
@@ -4463,7 +4463,7 @@ Var* kjn_deplaid2(vfuncptr func, Var* arg)
 			b10 = 9;
 		} else {
 			parse_error("assuming NO band 10 data, b10 being reset to %d\n", z - 1);
-			b10 == z - 1;
+			b10 = z - 1;
 		}
 	}
 

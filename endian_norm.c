@@ -56,7 +56,7 @@ void swap_endian(unsigned char* buf, size_t n, unsigned int size)
 	}
 }
 
-char* flip_endian(unsigned char* data, size_t data_elem, unsigned int word_size)
+void* flip_endian(unsigned char* data, size_t data_elem, unsigned int word_size)
 {
 	/* Ensure the data is always read and written in big endian format.
 	 Try not to call this on big endian machines, since it's just a

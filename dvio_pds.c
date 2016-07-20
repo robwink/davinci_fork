@@ -102,10 +102,6 @@ typedef struct _dataKeys {
 
 } dataKey;
 
-#ifdef LITTLE_ENDIAN
-extern char* var_endian(Var* v);
-#endif
-
 Var* dv_LoadISISFromPDS_New(FILE* fp, char* fn, int dptr, OBJDESC* qube);
 Var* dv_LoadISISSuffixesFromPDS_New(FILE* fp, char* fname, size_t dptr, OBJDESC* qube);
 Var* dv_LoadImage_New(FILE* fp, char* fn, int dptr, OBJDESC* image);

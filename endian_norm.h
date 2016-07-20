@@ -4,7 +4,7 @@
 	       (((i) << 24) & 0xFF000000))
 
 
-char* flip_endian(unsigned char*, size_t, unsigned int);
+void* flip_endian(unsigned char*, size_t, unsigned int);
 
 void swap_endian(unsigned char* buf, size_t n, unsigned int size);
 void* var_endian(Var*);
