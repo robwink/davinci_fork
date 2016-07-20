@@ -156,10 +156,10 @@ int main(int ac, char** av)
 	char exe_path_out[PROC_PIDPATHINFO_MAXSIZE + 12];
 	pid_t pid;
 #elif defined(_WIN32)
-	char pathbuf[MAX_PATH];
+	//char pathbuf[MAX_PATH];
 	// add 12 for length of ENV Variable Name
-	char exe_path_out[MAX_PATH + 12];
-	HMODULE hModule;
+	//char exe_path_out[MAX_PATH + 12];
+	//HMODULE hModule;
 #elif defined(__linux__)
 	char pidpath[PATH_MAX];
 	char pathbuf[PATH_MAX];
