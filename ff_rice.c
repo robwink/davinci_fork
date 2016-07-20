@@ -8,7 +8,7 @@ Var* ff_rice(vfuncptr func, Var* arg)
 	Var* obj = NULL;
 	int x, y, z, nbytes, i, j, k, pos, start, len;
 	short* in;
-	char* out;
+	unsigned char* out;
 	int header = 1;
 	int bits   = -1;
 
@@ -18,11 +18,11 @@ Var* ff_rice(vfuncptr func, Var* arg)
 	alist[2]      = make_alist("bits", DV_INT32, NULL, &bits);
 	alist[3].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return (NULL);
+	if (parse_args(func, arg, alist) == 0) return NULL;
 
 	if (obj == NULL) {
 		parse_error("%s: No object or size specified", func->name);
-		return (NULL);
+		return NULL;
 	}
 
 	x                    = GetX(obj);
@@ -34,15 +34,15 @@ Var* ff_rice(vfuncptr func, Var* arg)
 
 	if (x > 4096) {
 		parse_error("%s: Max buffer length is 4096 elements", func->name);
-		return (NULL);
+		return NULL;
 	}
 	if (nbytes > 2) {
 		parse_error("Only able to compress 2 byte words or less");
-		return (NULL);
+		return NULL;
 	}
 	if (nbytes == 2 && x > 511) {
 		parse_error("Too many values in a row.  Split this up.");
-		return (NULL);
+		return NULL;
 	}
 
 	in  = calloc(x, 2);
@@ -55,7 +55,7 @@ Var* ff_rice(vfuncptr func, Var* arg)
 		/* write out header */
 		if (x > 65535 || y > 65535 || z > 65535) {
 			parse_error("data block too big for header");
-			return (NULL);
+			return NULL;
 		}
 
 		memcpy(out, "RICE", 4);
@@ -83,7 +83,7 @@ Var* ff_rice(vfuncptr func, Var* arg)
 			start += (len + 7) / 8;
 		}
 	}
-	return (newVal(BSQ, start, 1, 1, DV_UINT8, out));
+	return newVal(BSQ, start, 1, 1, DV_UINT8, out);
 }
 
 Var* ff_unrice(vfuncptr func, Var* arg)
@@ -108,11 +108,11 @@ Var* ff_unrice(vfuncptr func, Var* arg)
 	alist[1]      = make_alist("header", ID_VAL, NULL, &header);
 	alist[2].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return (NULL);
+	if (parse_args(func, arg, alist) == 0) return NULL;
 
 	if (obj == NULL) {
 		parse_error("%s: No object or size specified", func->name);
-		return (NULL);
+		return NULL;
 	}
 
 	len   = V_DSIZE(obj);
@@ -126,7 +126,7 @@ Var* ff_unrice(vfuncptr func, Var* arg)
 
 		if (memcmp(hdr, "RICE", 4) != 0) {
 			parse_error("Not a rice header");
-			return (NULL);
+			return NULL;
 		}
 
 		memcpy(&sx, in + start, 2);
@@ -145,8 +145,8 @@ Var* ff_unrice(vfuncptr func, Var* arg)
 		nbytes = (bits + 7) / 8;
 		npts   = x;
 
-		out   = (char*)calloc(x * y * z, nbytes);
-		cout  = (char*)out;
+		out   = calloc(x * y * z, nbytes);
+		cout  = out;
 		sout  = (short*)out;
 		tmp   = (short*)calloc(x, 2);
 		count = 0;
@@ -160,7 +160,7 @@ Var* ff_unrice(vfuncptr func, Var* arg)
 			l = rice_unauto(in + start, len, npts, bits, tmp);
 			if (l <= 0) {
 				parse_error("Bad return code");
-				return (NULL);
+				return NULL;
 			}
 			for (i = 0; i < npts; i++) {
 				if (nbytes == 1) {
@@ -173,9 +173,9 @@ Var* ff_unrice(vfuncptr func, Var* arg)
 			count++;
 		}
 		format = (nbytes == 1 ? DV_UINT8 : (nbytes == 2 ? DV_INT16 : DV_INT32));
-		return (newVal(BSQ, x, y, z, format, out));
+		return newVal(BSQ, x, y, z, format, out);
 	} else {
 		parse_error("Data without header not supported yet.");
-		return (NULL);
+		return NULL;
 	}
 }

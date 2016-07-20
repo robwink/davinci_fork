@@ -63,7 +63,7 @@ Var* ff_self_convolve(vfuncptr func, Var* arg)
 	for (m = 0; m < d1; m++) {
 		for (n = 0; n < d1; n++) {
 			d2 = d1 / 2 - 1 - n + m;
-			if (d2 < 0 || d2 >= n) continue;
+			if (d2 >= n) continue;
 			out[m] += extract_float(v1, n) * extract_float(v1, d2);
 		}
 	}

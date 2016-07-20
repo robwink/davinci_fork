@@ -39,6 +39,7 @@
 
 #define MAX_ATTRIBUTES 500
 
+//TODO(rswinkle) change to uint8 or typedef'd uint8
 typedef unsigned char byte;
 
 // filled in parse_template()
@@ -193,15 +194,19 @@ static int convert_types(data* thedata, int num_items, int rows)
 			break;
 
 		case UNSIGNED_LSB_INT:
-		case UNSIGNED_MSB_INT: thedata[i].type = DV_UINT8; break;
+		case UNSIGNED_MSB_INT:
+			thedata[i].type = DV_UINT8; break;
 
 		case LSB_FLOAT:
-		case MSB_FLOAT: thedata[i].type = DV_FLOAT; break;
+		case MSB_FLOAT:
+			thedata[i].type = DV_FLOAT; break;
 
 		case LSB_DOUBLE:
-		case MSB_DOUBLE: thedata[i].type = DV_DOUBLE; break;
+		case MSB_DOUBLE:
+			thedata[i].type = DV_DOUBLE; break;
 
-		case STRING: break;
+		case STRING:
+			break;
 
 		default:
 			parse_error("In convert_types(): Unknown type: %c\n", thedata[i].type);
@@ -1526,6 +1531,7 @@ static int pack(data* thedata, char* template, char* filename, int numData, int 
 	return 1; // return success
 }
 
+//TODO(rswinkle) why aren't we using our existing swapping functions?
 static void copy(const void* from, void* to, int len, int swap)
 {
 	int i;
@@ -1665,7 +1671,7 @@ static int pack_row(data* the_data, unpack_digest* digest, int row, byte* buffer
 {
 	int i, j, k, numbytes, al_bytes, columns, start_byte;
 	char letter;
-	char* src_buf;
+	byte* src_buf;
 	int src_type, src_columns;
 
 	// start for loop through unpack_digest's input
@@ -1690,7 +1696,7 @@ static int pack_row(data* the_data, unpack_digest* digest, int row, byte* buffer
 			} else {
 				src_buf = the_data[j].array + row * src_columns * NBYTES(src_type) + k * NBYTES(src_type);
 			}
-			if (!convert_to_ext_fmt(src_buf, src_type, &buffer[start_byte + k * numbytes], letter, numbytes)) {
+			if (!convert_to_ext_fmt((char*)src_buf, src_type, &buffer[start_byte + k * numbytes], letter, numbytes)) {
 				fprintf(stderr, "Unable to convert column %d (index %d)\n", j, k);
 				return 0;
 			}

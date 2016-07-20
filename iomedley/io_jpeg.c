@@ -56,20 +56,18 @@ void my_error_exit(j_common_ptr cinfo)
 
 int iom_isJPEG(FILE* fp)
 {
-
 	/* Returns 1 if fp is a JPEG file, 0 otherwise. */
-
 	unsigned char magic[2];
 	int i, c;
 
 	rewind(fp);
 
 	for (i = 0; i < 2; i++) {
-		if ((c   = fgetc(fp)) == EOF) return 0;
-		magic[i] = (unsigned char)c;
+		if ((c = fgetc(fp)) == EOF) return 0;
+		magic[i] = c;
 	}
 
-	if (!strncmp(magic, JPEG_MAGIC, 2)) {
+	if (!memcmp(magic, JPEG_MAGIC, 2)) {
 		return 1;
 	} else {
 		return 0;

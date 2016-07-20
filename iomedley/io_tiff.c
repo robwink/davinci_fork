@@ -86,7 +86,6 @@ static void tiff_error_handler(const char* module, const char* fmt, va_list ap)
 
 int iom_isTIFF(FILE* fp)
 {
-
 	unsigned char magic[4];
 	int i, c;
 
@@ -97,13 +96,13 @@ int iom_isTIFF(FILE* fp)
 		magic[i] = (unsigned char)c;
 	}
 
-	if (!strncmp(magic, TIFF_MAGIC_BIGEND, 4))
+	if (!memcmp(magic, TIFF_MAGIC_BIGEND, 4))
 		return 1;
-	else if (!strncmp(magic, TIFF_MAGIC_LITTLEEND, 4))
+	else if (!memcmp(magic, TIFF_MAGIC_LITTLEEND, 4))
 		return 1;
-	if (!strncmp(magic, BIG_TIFF_MAGIC_BIGEND, 4))
+	if (!memcmp(magic, BIG_TIFF_MAGIC_BIGEND, 4))
 		return 1;
-	else if (!strncmp(magic, BIG_TIFF_MAGIC_LITTLEEND, 4))
+	else if (!memcmp(magic, BIG_TIFF_MAGIC_LITTLEEND, 4))
 		return 1;
 	else
 		return 0;

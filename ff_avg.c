@@ -973,8 +973,8 @@ Var* ff_maxpos(vfuncptr func, Var* arg)
 		for (i = 0; i < elems; i++) {
 			ni1 = extract_float(data, i);
 
-			if (ni1 > ni2 && ni1 != ignore && (lt != minval && k == 0 && ni1 <= ni3 ||
-			                                   k == 0 && lt == minval || ni1 <= ni3 && k > 0)) {
+			if (ni1 > ni2 && ni1 != ignore && ((lt != minval && k == 0 && ni1 <= ni3) ||
+			                                   (k == 0 && lt == minval) || (ni1 <= ni3 && k > 0))) {
 
 				/* check to see if it's the same element as a previous entry */
 				ck = 0;
@@ -1088,8 +1088,9 @@ Var* ff_minpos(vfuncptr func, Var* arg)
 		for (i = 0; i < elems; i++) {
 			ni1 = extract_float(data, i);
 
-			if (ni1 < ni2 && ni1 != ignore && (gt != maxval && k == 0 && ni1 >= ni3 ||
-			                                   k == 0 && gt == maxval || ni1 >= ni3 && k > 0)) {
+			//TODO(rswinkle) simplify logic ((k==0 && (gt == maxval || ni1 >= ni3)) || (ni1 >= ni3 && k > 0)
+			if (ni1 < ni2 && ni1 != ignore && ((gt != maxval && k == 0 && ni1 >= ni3) ||
+			                                   (k == 0 && gt == maxval) || (ni1 >= ni3 && k > 0))) {
 
 				/* check to see if it's the same element as a previous entry */
 				ck = 0;

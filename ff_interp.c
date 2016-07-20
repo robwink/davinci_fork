@@ -700,7 +700,13 @@ Modified:  Dave Hale, Colorado School of Mines, 08/04/91
 		t        = 2.0 - yd[i][0] * yd[i][3];
 		yd[i][1] = (yd[i][2] - yd[i][0] * yd[i - 1][1]) / t;
 	}
-	for (i = n - 2; i >= 0; i--) yd[i][1] -= yd[i + 1][3] * yd[i + 1][1];
+	for (i = n - 2; ; i--) {
+		yd[i][1] -= yd[i + 1][3] * yd[i + 1][1];
+		
+		//i is size_t so >= 0 above doesn't work
+		if (i == 0)
+			break;
+	}
 
 	/* copy ordinates into output array */
 	for (i = 0; i < n; i++) yd[i][0] = y[i];

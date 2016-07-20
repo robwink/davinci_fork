@@ -88,6 +88,11 @@ static void findAxis(char* R, Var* Obj, int flag)
 		*R = '\0';
 }
 
+// TODO(rswinkle) why??? what's wrong with just using str(n)cmp directly?
+// the only thing this does is avoid undefined behavior of passing NULL to the first
+// parameter of strcmp and name is always supposed to be a literal hence no check
+//
+// all that other stuff is pointless extra work (and slower)
 static int name_check(const char* actual_input, const char* name, int limit)
 {
 	int namelen  = 0;
@@ -811,22 +816,22 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 		}
 
 		if (V_TYPE(av[i]) == ID_KEYWORD) {
-			if (!(name_check(av[i]->name, "Xaxis", 1))) {
-			} else if (!(name_check(av[i]->name, "Axis", 1))) {
-			} else if (!(name_check(av[i]->name, "Ignore", 2))) {
-			} else if (!(name_check(av[i]->name, "Iabove", 2))) {
-			} else if (!(name_check(av[i]->name, "Ibelow", 2))) {
-			} else if (!(name_check(av[i]->name, "Ixabove", 3))) {
-			} else if (!(name_check(av[i]->name, "Ixbelow", 3))) {
-			} else if (!(name_check(av[i]->name, "Color", 1))) {
-			} else if (!(name_check(av[i]->name, "Width", 1))) {
-			} else if (!(name_check(av[i]->name, "Style", 2))) {
-			} else if (!(name_check(av[i]->name, "Separate", 2))) {
-			} else if (!(name_check(av[i]->name, "Offset", 1))) {
-			} else if (!(name_check(av[i]->name, "dir", 1))) {
-			} else if (!(name_check(av[i]->name, "gcommand", 1))) {
+			if (!name_check(av[i]->name, "Xaxis", 1)) {
+			} else if (!name_check(av[i]->name, "Axis", 1)) {
+			} else if (!name_check(av[i]->name, "Ignore", 2)) {
+			} else if (!name_check(av[i]->name, "Iabove", 2)) {
+			} else if (!name_check(av[i]->name, "Ibelow", 2)) {
+			} else if (!name_check(av[i]->name, "Ixabove", 3)) {
+			} else if (!name_check(av[i]->name, "Ixbelow", 3)) {
+			} else if (!name_check(av[i]->name, "Color", 1)) {
+			} else if (!name_check(av[i]->name, "Width", 1)) {
+			} else if (!name_check(av[i]->name, "Style", 2)) {
+			} else if (!name_check(av[i]->name, "Separate", 2)) {
+			} else if (!name_check(av[i]->name, "Offset", 1)) {
+			} else if (!name_check(av[i]->name, "dir", 1)) {
+			} else if (!name_check(av[i]->name, "gcommand", 1)) {
 
-			} else if (!(name_check(av[i]->name, "xaxis", 1))) {
+			} else if (!name_check(av[i]->name, "xaxis", 1)) {
 				xaxis_i = eval(V_KEYVAL(av[i]));
 				if (xaxis_i == NULL) {
 					parse_error("Variable not found: \'xaxis\'");
@@ -840,7 +845,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 					return (1);
 				}
 
-			} else if (!(name_check(av[i]->name, "axis", 1))) {
+			} else if (!name_check(av[i]->name, "axis", 1)) {
 
 				if (V_KEYVAL(av[i]) == NULL) {
 					parse_error("Invalid axis designation. x y z only.");
@@ -863,7 +868,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 					return (1);
 				}
 
-			} else if (!(name_check(av[i]->name, "errorbars", 1))) {
+			} else if (!name_check(av[i]->name, "errorbars", 1)) {
 				errorb = eval(V_KEYVAL(av[i]));
 				if (errorb == NULL) {
 					parse_error("Variable not found: \'errorbars\'");
@@ -877,10 +882,10 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 					return (1);
 				}
 
-			} else if (!(name_check(av[i]->name, "separate", 2))) {
+			} else if (!name_check(av[i]->name, "separate", 2)) {
 				sep = 1;
 
-			} else if (!(name_check(av[i]->name, "ignore", 2))) {
+			} else if (!name_check(av[i]->name, "ignore", 2)) {
 				if (V_KEYVAL(av[i]) != NULL) {
 					v = V_KEYVAL(av[i]);
 					if (V_TYPE(v) == ID_VAL) {
@@ -897,7 +902,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 					}
 				}
 
-			} else if (!(name_check(av[i]->name, "iabove", 2))) {
+			} else if (!name_check(av[i]->name, "iabove", 2)) {
 				if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 					v = V_KEYVAL(av[i]);
 					if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32)
@@ -910,7 +915,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 					parse_error("Continuing plot without value");
 				}
 
-			} else if (!(name_check(av[i]->name, "ibelow", 2))) {
+			} else if (!name_check(av[i]->name, "ibelow", 2)) {
 				if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 					v = V_KEYVAL(av[i]);
 					if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32)
@@ -923,7 +928,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 					parse_error("Continuing plot without value");
 				}
 
-			} else if (!(name_check(av[i]->name, "ixabove", 3))) {
+			} else if (!name_check(av[i]->name, "ixabove", 3)) {
 				if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 					v = V_KEYVAL(av[i]);
 					if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32) {
@@ -938,7 +943,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 					parse_error("Continuing plot without value");
 				}
 
-			} else if (!(name_check(av[i]->name, "ixbelow", 3))) {
+			} else if (!name_check(av[i]->name, "ixbelow", 3)) {
 				if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 					v = V_KEYVAL(av[i]);
 					if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32) {
@@ -953,7 +958,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 					parse_error("Continuing plot without value");
 				}
 
-			} else if (!(name_check(av[i]->name, "offset", 1))) {
+			} else if (!name_check(av[i]->name, "offset", 1)) {
 				if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 					v = V_KEYVAL(av[i]);
 					if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32)
@@ -965,7 +970,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 					parse_error("Continuing plot without value");
 				}
 
-			} else if (!(name_check(av[i]->name, "color", 1))) {
+			} else if (!name_check(av[i]->name, "color", 1)) {
 				if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 					if (V_FORMAT(av[i]) == DV_FLOAT || V_FORMAT(av[i]) == DV_DOUBLE)
 						color = (int)extract_double(V_KEYVAL(av[i]), 0);
@@ -980,7 +985,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 					return (1);
 				}
 
-			} else if (!(name_check(av[i]->name, "width", 1))) {
+			} else if (!name_check(av[i]->name, "width", 1)) {
 				if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 					width = (int)extract_double(V_KEYVAL(av[i]), 0);
 				} else {
@@ -988,7 +993,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 					parse_error("Continuing plot with default width");
 				}
 
-			} else if (!(name_check(av[i]->name, "style", 2))) {
+			} else if (!name_check(av[i]->name, "style", 2)) {
 				v = V_KEYVAL(av[i]);
 				if (V_TYPE(v) == ID_STRING) {
 					style = V_STRING(v);
@@ -1014,7 +1019,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 					style = NULL;
 				}
 
-			} else if (!(name_check(av[i]->name, "smooth", 1))) {
+			} else if (!name_check(av[i]->name, "smooth", 1)) {
 				v = V_KEYVAL(av[i]);
 				if (V_TYPE(v) == ID_STRING)
 					smooth = V_STRING(v);
@@ -1028,7 +1033,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 					return (1);
 				}
 
-			} else if (!(name_check(av[i]->name, "label", 1))) {
+			} else if (!name_check(av[i]->name, "label", 1)) {
 
 				v = eval(V_KEYVAL(av[i]));
 				if (v == NULL) {
@@ -1396,13 +1401,12 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 
 							} else if (Err1 && Err2 && Err3 == NULL) {
 
-								// NOTE(gorelick): This is an outright error.
 								e1 = (style && offset &&
-								      (style == "yerrorbars" || style == "yerrorlines"))
+								      (!name_check(style, "yerrorbars", 1) || !name_check(style, "yerrorlines", 1)))
 								         ? Err1[k] - (double)(vnum - 1) * offset
 								         : Err1[k];
 								e2 = (style && offset &&
-								      (style == "yerrorbars" || style == "yerrorlines"))
+								      (!name_check(style, "yerrorbars", 1) || !name_check(style, "yerrorlines", 1)))
 								         ? Err2[k] - (double)(vnum - 1) * offset
 								         : Err2[k];
 

@@ -3,7 +3,7 @@
 /*
 ** Convert to/from MSB in place.  Does nothing if you're already MSB
 */
-void MSB(unsigned char* data, unsigned int data_elem, unsigned int word_size)
+void MSB(void* data, size_t data_elem, unsigned int word_size)
 {
 #ifdef WORDS_BIGENDIAN
 
@@ -15,7 +15,7 @@ void MSB(unsigned char* data, unsigned int data_elem, unsigned int word_size)
 /*
 ** Convert to/from LSB in place.  Does nothing if you're already LSB
 */
-void LSB(unsigned char* data, unsigned int data_elem, unsigned int word_size)
+void LSB(void* data, size_t data_elem, unsigned int word_size)
 {
 #ifdef WORDS_BIGENDIAN
 	swap_endian(data, data_elem, word_size);
@@ -104,7 +104,7 @@ char* flip_endian(unsigned char* data, size_t data_elem, unsigned int word_size)
 	return new_buf;
 }
 
-char* var_endian(Var* v)
+void* var_endian(Var* v)
 {
 	unsigned int ws = 0;
 	unsigned int el = 0;

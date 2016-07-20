@@ -157,6 +157,8 @@ int rice_unauto(uchar* in, int len, int npts, int bits, short* out)
 	int len_size;
 	int mode_size;
 
+	ushort* us_out = (ushort*)out;
+
 	if (bits <= 8) {
 		hdr       = 15;
 		len_size  = 12;
@@ -182,11 +184,11 @@ int rice_unauto(uchar* in, int len, int npts, int bits, short* out)
 	len1 -= hdr;
 
 	switch (mode) {
-	case 0: rice_uncode(in, len1, out, start); break;
-	case 1: rice_unfs(in, len1, out, start); break;
+	case 0: rice_uncode(in, len1, us_out, start); break;
+	case 1: rice_unfs(in, len1, us_out, start); break;
 	case 2: {
 		bits = len1 / npts;
-		rice_unpack(in, len1, bits, out, start);
+		rice_unpack(in, len1, bits, us_out, start);
 		break;
 	}
 	default: {
@@ -196,13 +198,10 @@ int rice_unauto(uchar* in, int len, int npts, int bits, short* out)
 	}
 
 	// rswinkle?
-	delta_transform_inverse((unsigned short*)out, npts, out);
-	return ((len1 + hdr + 7) / 8);
+	delta_transform_inverse(us_out, npts, out);
+	return (len1 + hdr + 7) / 8;
 }
 
-/*
-**
-*/
 
 int rice_split(ushort* in, int npts, int entropy, uchar* out, int start)
 {
@@ -224,7 +223,7 @@ int rice_split(ushort* in, int npts, int entropy, uchar* out, int start)
 	len2 = rice_fs(top, npts, out, start + len1);
 
 	// printf("rice_split(%d) = %d\n", entropy, len1+len2);
-	return (len1 + len2);
+	return len1 + len2;
 }
 
 int rice_unsplit(uchar* in, int len, int npts, int entropy, short* out, int start)
@@ -236,18 +235,18 @@ int rice_unsplit(uchar* in, int len, int npts, int entropy, short* out, int star
 
 	len1 = npts * entropy;
 
-	n1 = rice_unpack(in, len1, entropy, out, start);
-	n2 = rice_unfs(in, len - len1, top, start + len1);
+	n1 = rice_unpack(in, len1, entropy, (ushort*)out, start);
+	n2 = rice_unfs(in, len - len1, (ushort*)top, start + len1);
 
 	if (n1 != n2 || n1 != npts) {
 		fprintf(stderr, "rice_split_sample: npts doesn't match between parts, %d,%d\n", n1, n2);
-		return (0);
+		return 0;
 	}
 	for (i = 0; i < n2; i++) {
 		out[i] |= (top[i] << entropy);
 	}
 
-	return (n2);
+	return n2;
 }
 
 int rice_split_size(uchar* in)
@@ -276,7 +275,7 @@ int delta_transform(short* in, int npts, ushort* out)
 			out[i] = in[i] * 2;
 		sum += out[i] + 1;
 	}
-	return (sum);
+	return sum;
 }
 
 /**
@@ -465,6 +464,7 @@ int same(ushort* a, ushort* b, int na, int nb, char* msg)
 	return (bad == 0);
 }
 
+#if 0
 void test_rice_fs(ushort* in, int npts)
 {
 	/*
@@ -577,3 +577,5 @@ void test_main(int ac, char** av)
 
 	test_rice_auto(in, n, bits);
 }
+
+#endif

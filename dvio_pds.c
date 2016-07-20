@@ -897,7 +897,7 @@ int set_suffix(Var* suffix, Var** final)
 	for (i = 0; i < v_count; i++) { /*Need to skip first element, it's the Object=Name element */
 		get_struct_element(tmp, i, &innername, &element);
 		v_data          = V_DATA(element);
-		V_DATA(element) = (void*)var_endian(element);
+		V_DATA(element) = var_endian(element);
 		free(v_data);
 	}
 	final_block = tmp;

@@ -559,9 +559,9 @@ Var* evaluate(Var* n)
 
 			// Support for help
 			if (strcmp((V_NAME(p2)), MODULE_HELP) == 0) {
-				if ((tmp = getenv("DV_MOD_PATH"))) sprintf(module_help, tmp);
-
-				if (!module_help[0]) { // use default
+				if ((tmp = getenv("DV_MOD_PATH"))) {
+					strncpy(module_help, tmp, 256);
+				} else { // use default
 					sprintf(module_help, "/usr/lib/davinci/modules");
 				}
 				sprintf(module_help, "%s/%s.gih", module_help, V_NAME(p3));

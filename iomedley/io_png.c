@@ -150,7 +150,7 @@ int iom_ReadPNG(FILE* fp, char* filename, int* xout, int* yout, int* zout, int* 
 {
 	png_uint_32 x, y;
 	unsigned int z;
-	unsigned int bit_depth; /* Bits per channel. */
+	int bit_depth; /* Bits per channel. */
 	unsigned int color_type;
 	unsigned int i;
 	size_t row_stride; /* Bytes per scanline. */
