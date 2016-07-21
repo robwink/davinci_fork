@@ -7,6 +7,12 @@
 **
 */
 
+#if defined(HAVE_CONFIG_H)
+#include <config.h>
+#endif
+
+#ifdef BUILD_MODULE_SUPPORT
+
 #include "cvector.h"
 #include "darray.h"
 #include "parser.h"
@@ -1230,3 +1236,7 @@ void module_help(char* module, char* keyword)
 	}
 	do_help(keyword, path);
 }
+
+
+// BUILD_MODULE_SUPPORT
+#endif

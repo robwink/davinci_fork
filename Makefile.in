@@ -59,12 +59,6 @@ CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
-ARFLAGS = cru
-libmodsupp_a_AR = $(AR) $(ARFLAGS)
-libmodsupp_a_LIBADD =
-am_libmodsupp_a_OBJECTS = ff_modules.$(OBJEXT) module_io.$(OBJEXT) \
-	io_loadmod.$(OBJEXT)
-libmodsupp_a_OBJECTS = $(am_libmodsupp_a_OBJECTS)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -92,7 +86,7 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libdavinci_la_DEPENDENCIES = $(MY_READLINE_LDADD) \
-	$(am__DEPENDENCIES_1) $(MY_MODULES_LIB) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_libdavinci_la_OBJECTS = apifunc.lo array.lo avl.lo binDCT.lo \
@@ -121,7 +115,8 @@ am_libdavinci_la_OBJECTS = apifunc.lo array.lo avl.lo binDCT.lo \
 	util.lo x.lo xrt_print_3d.lo lexer.lo parser.lo \
 	ff_gconvolve.lo ff_warp.lo ff_median.lo ff_radial.lo \
 	ff_window.lo dvio_fits.lo ff_extract.lo dvio_tdb.lo \
-	url_create_file.lo ff_filesystem.lo ff_grassfire.lo libcsv.lo
+	url_create_file.lo ff_filesystem.lo ff_grassfire.lo libcsv.lo \
+	ff_modules.lo module_io.lo io_loadmod.lo
 libdavinci_la_OBJECTS = $(am_libdavinci_la_OBJECTS)
 libdavinci_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
@@ -129,7 +124,7 @@ libdavinci_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 PROGRAMS = $(bin_PROGRAMS)
 am_davinci_OBJECTS = main.$(OBJEXT)
 davinci_OBJECTS = $(am_davinci_OBJECTS)
-davinci_DEPENDENCIES = $(MY_MODULES_LIB) $(am__DEPENDENCIES_1)
+davinci_DEPENDENCIES = $(am__DEPENDENCIES_1)
 davinci_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(davinci_LDFLAGS) \
 	$(LDFLAGS) -o $@
@@ -155,10 +150,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libmodsupp_a_SOURCES) $(libdavinci_la_SOURCES) \
-	$(davinci_SOURCES)
-DIST_SOURCES = $(libmodsupp_a_SOURCES) $(libdavinci_la_SOURCES) \
-	$(davinci_SOURCES)
+SOURCES = $(libdavinci_la_SOURCES) $(davinci_SOURCES)
+DIST_SOURCES = $(libdavinci_la_SOURCES) $(davinci_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-dvi-recursive install-exec-recursive \
@@ -354,7 +347,6 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 EXTRA_DIST = README.modules README_FF docs gplot.c lexer.l lib moddvmagick parser.y push.skel tests win32
 AM_CPPFLAGS = -DDVHELP=\"$(DVHELP)\" $(am__append_1)
-@MODULE_SUPPORT_TRUE@MY_MODULES_LIB = libmodsupp.a
 @LOCAL_READLINE_TRUE@MY_READLINE_LDADD = readline/libreadline.a
 @HAVE_LIBIBERTY_TRUE@MINGW32_LIBIBERTY_LDADD = -liberty
 @HAVE_LIBREGEX_TRUE@MINGW32_LIBREGEX_LDADD = -lregex
@@ -364,7 +356,6 @@ MY_IOMEDLEY_LDADD = -Liomedley -liomedley
 SUBDIRS = @MY_SUBDIRS@ libltdl
 BUILT_SOURCES = config.h build.h
 noinst_LIBRARIES = $(MY_MODULES_LIB)
-libmodsupp_a_SOURCES = ff_modules.c module_io.c io_loadmod.c
 lib_LTLIBRARIES = libdavinci.la
 libdavinci_la_LIBADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULES_LIB)  \
 		$(MINGW32_LIBREGEX_LDADD) $(MINGW32_LIBWSOCK32_LDADD) $(MINGW32_LIBIBERTY_LDADD) $(MY_LIBLTDLC_LDADD)
@@ -409,7 +400,8 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ff_gconvolve.c ff_warp.c ff_median.c ff_radial.c ff_window.c \
 	dvio_fits.c ff_extract.c dvio_tdb.c \
 	url_create_file.c ff_filesystem.c ff_grassfire.c \
-	libcsv.c csv.h
+	libcsv.c csv.h \
+	ff_modules.c module_io.c io_loadmod.c
 
 library_includedir = $(includedir)/@PACKAGE@
 library_include_HEADERS = $(wildcard *.h)
@@ -482,10 +474,6 @@ distclean-hdr:
 
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
-libmodsupp.a: $(libmodsupp_a_OBJECTS) $(libmodsupp_a_DEPENDENCIES) 
-	-rm -f libmodsupp.a
-	$(libmodsupp_a_AR) libmodsupp.a $(libmodsupp_a_OBJECTS) $(libmodsupp_a_LIBADD)
-	$(RANLIB) libmodsupp.a
 install-libLTLIBRARIES: $(lib_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
 	test -z "$(libdir)" || $(MKDIR_P) "$(DESTDIR)$(libdir)"
@@ -639,7 +627,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_loadvan.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_median.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_meta.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_modules.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_modules.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_moment.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_pause.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_pbm.Plo@am__quote@
@@ -676,13 +664,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/header.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/help.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/init.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/io_loadmod.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/io_loadmod.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lexer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcsv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/matrix.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/misc.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/module_io.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/module_io.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/motif_tools.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/newfunc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/p.Plo@am__quote@

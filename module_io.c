@@ -1,3 +1,10 @@
+
+#if defined(HAVE_CONFIG_H)
+#include <config.h>
+#endif
+
+#ifdef BUILD_MODULE_SUPPORT
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,3 +72,7 @@ void* locate_dv_module_func_in_slib(dvModuleHandle emh, char* func_name)
 	foo = lt_dlsym(mh->handle, func_name);
 	return foo;
 }
+
+
+// BUILD_MODULE_SUPPORT
+#endif

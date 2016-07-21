@@ -30,7 +30,6 @@ AM_CPPFLAGS = -DDVHELP=\"$(DVHELP)\"
 
 
 if MODULE_SUPPORT
-  MY_MODULES_LIB = libmodsupp.a
   AM_CPPFLAGS += -DDV_MOD_PATH=\"$(DV_MOD_PATH)\"
 endif
 
@@ -63,9 +62,6 @@ bin_PROGRAMS = davinci
 BUILT_SOURCES = config.h build.h
 
 noinst_LIBRARIES = $(MY_MODULES_LIB)
-
-
-libmodsupp_a_SOURCES = ff_modules.c module_io.c io_loadmod.c
 
 ## Install libdavinci  under /usr/lib
 lib_LTLIBRARIES = libdavinci.la
@@ -115,7 +111,8 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	ff_gconvolve.c ff_warp.c ff_median.c ff_radial.c ff_window.c \
 	dvio_fits.c ff_extract.c dvio_tdb.c \
 	url_create_file.c ff_filesystem.c ff_grassfire.c \
-	libcsv.c csv.h
+	libcsv.c csv.h \
+	ff_modules.c module_io.c io_loadmod.c
 
 
 ## Install header files under /usr/include/davinci

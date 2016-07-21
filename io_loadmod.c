@@ -1,3 +1,9 @@
+#if defined(HAVE_CONFIG_H)
+#include <config.h>
+#endif
+
+#ifdef BUILD_MODULE_SUPPORT
+
 #include "io_loadmod.h"
 
 #define IOMOD_EXT ".dvio"
@@ -653,3 +659,6 @@ int iomod_handler_for_type(char* type)
 	else
 		return 0;
 }
+
+// BUILD_MODULE_SUPPORT
+#endif

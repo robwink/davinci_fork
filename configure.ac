@@ -54,11 +54,6 @@ export CXXFLAGS="${CXXFLAGS} -fPIC"
 
 dnl Handle user-controllable options.
 
-dnl Enable/disable loadable modules (default = yes).
-AC_ARG_ENABLE(modules,
-	AC_HELP_STRING([--disable-modules], [remove loadable module support.]))
-AM_CONDITIONAL(MODULE_SUPPORT, test "x$enable_modules" != "xno")
-
 dnl iomedley (default = yes).
 AC_ARG_ENABLE([iomedley],
 	AC_HELP_STRING([--disable-iomedley], [remove iomedley support.]))
@@ -443,6 +438,12 @@ if test "x$enable_iomedley" != "xno"; then
 fi
 AM_CONDITIONAL(LOCAL_IOMEDLEY, test x$local_iomedley = xyes)
 
+
+dnl Enable/disable loadable modules (default = yes).
+AC_ARG_ENABLE(modules,
+	AC_HELP_STRING([--disable-modules], [remove loadable module support.]))
+
+AM_CONDITIONAL(MODULE_SUPPORT, test "x$enable_modules" != "xno")
 
 dnl Add module support.
 if test "x$enable_modules" != "xno"; then

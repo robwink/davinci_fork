@@ -782,6 +782,8 @@ INCLTDL
 LTDLINCL
 LTDLDEPS
 LIBLTDL
+MODULE_SUPPORT_FALSE
+MODULE_SUPPORT_TRUE
 LOCAL_IOMEDLEY_FALSE
 LOCAL_IOMEDLEY_TRUE
 LOCAL_READLINE_FALSE
@@ -804,8 +806,6 @@ X_LIBS
 X_PRE_LIBS
 X_CFLAGS
 XMKMF
-MODULE_SUPPORT_FALSE
-MODULE_SUPPORT_TRUE
 am__fastdepCXX_FALSE
 am__fastdepCXX_TRUE
 CXXDEPMODE
@@ -915,7 +915,6 @@ ac_user_opts='
 enable_option_checking
 enable_dependency_tracking
 enable_maintainer_mode
-enable_modules
 enable_iomedley
 enable_vicar
 enable_libisis
@@ -926,6 +925,7 @@ with_cfitsio
 with_hdf5
 with_qmv
 with_readline
+enable_modules
 enable_shared
 enable_static
 with_pic
@@ -1585,11 +1585,11 @@ Optional Features:
   --enable-dependency-tracking   do not reject slow dependency extractors
   --enable-maintainer-mode  enable make rules and dependencies not useful
 			  (and sometimes confusing) to the casual installer
-  --disable-modules       remove loadable module support.
   --disable-iomedley      remove iomedley support.
   --disable-vicar         remove VICAR widget support.
   --disable-libisis       disable use of libisis and hence ISIS cube writer.
   --enable-aqua           add AQUA widget support.
+  --disable-modules       remove loadable module support.
   --enable-shared[=PKGS]  build shared libraries [default=yes]
   --enable-static[=PKGS]  build static libraries [default=yes]
   --enable-fast-install[=PKGS]
@@ -5754,20 +5754,6 @@ export CFLAGS="${CFLAGS} -fPIC"
 export CXXFLAGS="${CXXFLAGS} -fPIC"
 
 
-# Check whether --enable-modules was given.
-if test "${enable_modules+set}" = set; then :
-  enableval=$enable_modules;
-fi
-
- if test "x$enable_modules" != "xno"; then
-  MODULE_SUPPORT_TRUE=
-  MODULE_SUPPORT_FALSE='#'
-else
-  MODULE_SUPPORT_TRUE='#'
-  MODULE_SUPPORT_FALSE=
-fi
-
-
 # Check whether --enable-iomedley was given.
 if test "${enable_iomedley+set}" = set; then :
   enableval=$enable_iomedley;
@@ -8651,6 +8637,21 @@ fi
 
 
 
+# Check whether --enable-modules was given.
+if test "${enable_modules+set}" = set; then :
+  enableval=$enable_modules;
+fi
+
+
+ if test "x$enable_modules" != "xno"; then
+  MODULE_SUPPORT_TRUE=
+  MODULE_SUPPORT_FALSE='#'
+else
+  MODULE_SUPPORT_TRUE='#'
+  MODULE_SUPPORT_FALSE=
+fi
+
+
 if test "x$enable_modules" != "xno"; then
 	subdirs="$subdirs libltdl"
 
@@ -9160,13 +9161,13 @@ if test "${lt_cv_nm_interface+set}" = set; then :
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:9163: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:9164: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:9166: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:9167: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:9169: output\"" >&5)
+  (eval echo "\"\$as_me:9170: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -10371,7 +10372,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 10374 "configure"' > conftest.$ac_ext
+  echo '#line 10375 "configure"' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -12153,11 +12154,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12156: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12157: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:12160: \$? = $ac_status" >&5
+   echo "$as_me:12161: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -12492,11 +12493,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12495: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12496: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:12499: \$? = $ac_status" >&5
+   echo "$as_me:12500: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -12597,11 +12598,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12600: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12601: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:12604: \$? = $ac_status" >&5
+   echo "$as_me:12605: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12652,11 +12653,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12655: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12656: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:12659: \$? = $ac_status" >&5
+   echo "$as_me:12660: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15022,7 +15023,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 15025 "configure"
+#line 15026 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -15118,7 +15119,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 15121 "configure"
+#line 15122 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17074,11 +17075,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:17077: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17078: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:17081: \$? = $ac_status" >&5
+   echo "$as_me:17082: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -17173,11 +17174,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:17176: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17177: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:17180: \$? = $ac_status" >&5
+   echo "$as_me:17181: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17225,11 +17226,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:17228: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17229: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:17232: \$? = $ac_status" >&5
+   echo "$as_me:17233: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -18687,10 +18688,6 @@ if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
-if test -z "${MODULE_SUPPORT_TRUE}" && test -z "${MODULE_SUPPORT_FALSE}"; then
-  as_fn_error "conditional \"MODULE_SUPPORT\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${HAVE_MOTIF_TRUE}" && test -z "${HAVE_MOTIF_FALSE}"; then
   as_fn_error "conditional \"HAVE_MOTIF\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -18717,6 +18714,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${LOCAL_IOMEDLEY_TRUE}" && test -z "${LOCAL_IOMEDLEY_FALSE}"; then
   as_fn_error "conditional \"LOCAL_IOMEDLEY\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MODULE_SUPPORT_TRUE}" && test -z "${MODULE_SUPPORT_FALSE}"; then
+  as_fn_error "conditional \"MODULE_SUPPORT\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
