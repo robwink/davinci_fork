@@ -80,6 +80,7 @@ mv davinci.exe $current_dir
 mv modules/thm/thm.lai $current_dir/modules
 mv modules/cse/cse.lai $current_dir/modules
 mv modules/kjn/kjn.lai $current_dir/modules
+mv modules/pnm/pnm.lai $current_dir/modules
 cd $current_dir
 
 
