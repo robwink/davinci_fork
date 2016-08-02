@@ -528,6 +528,56 @@ davinci_build/mac10.4/dependencies/libpng-1.5.1/scripts/vers.out
 davinci_build/mac10.4/dependencies/libpng-1.5.1/stamp-h1
 
 
+davinci_build/mac10.4/dependencies/cfitsio/config.log
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/c++/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/c++/examples/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/c++/src/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/c++/src/h5c++
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/c++/test/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/config.log
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/config.status
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/examples/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/fortran/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/fortran/examples/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/fortran/src/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/fortran/src/h5fc
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/fortran/test/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/fortran/testpar/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/hl/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/hl/c++/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/hl/c++/examples/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/hl/c++/src/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/hl/c++/test/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/hl/examples/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/hl/fortran/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/hl/fortran/examples/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/hl/fortran/src/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/hl/fortran/test/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/hl/src/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/hl/test/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/hl/tools/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/hl/tools/gif2h5/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/libtool
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/perform/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/src/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/src/libhdf5.settings
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/test/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/testpar/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/tools/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/tools/h5copy/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/tools/h5diff/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/tools/h5dump/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/tools/h5import/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/tools/h5jam/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/tools/h5ls/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/tools/h5repack/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/tools/h5stat/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/tools/lib/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/tools/misc/Makefile
+davinci_build/mac10.4/dependencies/hdf5-1.8.4/tools/misc/h5cc
+davinci_build/mac10.4/dependencies/libxml2-2.9.1/libxml2.spec
+
 
 
 .DS_Store
