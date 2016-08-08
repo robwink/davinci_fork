@@ -18,9 +18,10 @@ fi
 
 #set up what things to build
 release=1
-packages="davinci dvlib"
+#packages="davinci dvlib"
+packages="davinci"
 
-tgt_os=10.8
+tgt_os=10.10
 tgt_arch=x86_64
 #tgt_arch=i386
 
