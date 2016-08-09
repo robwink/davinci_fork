@@ -55,7 +55,7 @@ back to source root dir
 If you're on a VM that can take 15 minutes
 
 cd davinci_build/windows
-./make_win.sh ../..
+./makewin.sh ../..
 
 copy the exe dll and modules/ to the install directory
 (ie the folder contained what would go in C:/Program Files/Davinci)
