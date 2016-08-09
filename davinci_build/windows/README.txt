@@ -50,6 +50,13 @@ cd to davinci_build/windows/dependencies/cfitsio
 
 back to source root dir
 
+=====================================
+START HERE on monopoly2.mars.asu.edu
+everything above has already been done
+======================================
+
+in source root
+
 ./configure CXXFLAGS='-fpermissive' && make
 
 If you're on a VM that can take 15 minutes
@@ -59,6 +66,10 @@ cd davinci_build/windows
 
 copy the exe dll and modules/ to the install directory
 (ie the folder contained what would go in C:/Program Files/Davinci)
+
+On monopoly2 that would be
+/c/msys64/home/rswinkle/davinci_win/
+
 
 cd to parent of install directory and copy the nsi script there
 run NSIS on the script (after changing the defines at the top)
