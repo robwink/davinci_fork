@@ -1229,7 +1229,7 @@ Var* do_cat(Var* ob1, Var* ob2, int axis)
 /**
  ** enumerated_arg() - Make sure arg is one of a list of enumerated values.
  **/
-
+/*
 char* enumerated_arg(Var* v, char** values)
 {
 	char* ptr;
@@ -1260,6 +1260,7 @@ char* enumerated_arg(Var* v, char** values)
 	}
 	return (NULL);
 }
+*/
 
 /**
  ** convert bytes to string

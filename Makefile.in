@@ -114,14 +114,14 @@ am_libdavinci_la_OBJECTS = apifunc.lo array.lo avl.lo binDCT.lo \
 	ff_version.lo ff_vignette.lo ff_write.lo ff_xfrm.lo fft.lo \
 	fft2f.lo fft_mayer.lo fit.lo ff_coreg.lo ff_boxfilter.lo \
 	ff_bin5.lo ff_transform.lo ff_blend.lo ff_unpack.lo header.lo \
-	ff_resample.lo help.lo init.lo cvector.lo globals.lo matrix.lo \
-	misc.lo motif_tools.lo newfunc.lo p.lo pp.lo pp_math.lo \
-	printf.lo reserved.lo rfunc.lo rice.lo rpos.lo scope.lo \
-	spread.lo string.lo symbol.lo system.lo tools.lo ufunc.lo \
-	util.lo x.lo xrt_print_3d.lo lexer.lo parser.lo \
-	ff_gconvolve.lo ff_warp.lo ff_median.lo ff_radial.lo \
-	ff_window.lo dvio_fits.lo ff_extract.lo dvio_tdb.lo \
-	url_create_file.lo ff_filesystem.lo ff_grassfire.lo libcsv.lo
+	ff_resample.lo help.lo cvector.lo globals.lo matrix.lo misc.lo \
+	motif_tools.lo p.lo pp.lo pp_math.lo printf.lo reserved.lo \
+	rfunc.lo rice.lo rpos.lo scope.lo spread.lo string.lo \
+	symbol.lo system.lo tools.lo ufunc.lo x.lo xrt_print_3d.lo \
+	lexer.lo parser.lo ff_gconvolve.lo ff_warp.lo ff_median.lo \
+	ff_radial.lo ff_window.lo dvio_fits.lo ff_extract.lo \
+	dvio_tdb.lo url_create_file.lo ff_filesystem.lo \
+	ff_grassfire.lo libcsv.lo
 libdavinci_la_OBJECTS = $(am_libdavinci_la_OBJECTS)
 libdavinci_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
@@ -389,19 +389,19 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	fft.c fft2f.c fft_mayer.c fit.c ff_coreg.c ff_boxfilter.c \
 	ff_bin5.c  ff_transform.c ff_blend.c ff_unpack.c \
 	header.c ff_resample.c \
-	help.c init.c cvector.c \
+	help.c cvector.c \
 	globals.c matrix.c \
 	misc.c motif_tools.c \
-	newfunc.c p.c pp.c \
+	p.c pp.c \
 	pp_math.c printf.c reserved.c \
 	rfunc.c rice.c rpos.c scope.c \
 	spread.c string.c symbol.c \
 	system.c tools.c \
-	ufunc.c util.c \
+	ufunc.c \
 	x.c xrt_print_3d.c \
 	XformTable.h darray.h fit.h trigtbl.h api.h dos.h func.h \
 	ufunc.h dvio.h dvio_pds4.h header.h \
-	proto.h version.h apidef.h dvio_specpr.h help.h rfunc.h \
+	version.h apidef.h dvio_specpr.h help.h rfunc.h \
 	xrt_print_3d.h avl.h endian_norm.h io_loadmod.h scope.h \
 	ff.h system.h ff_modules.h module_io.h \
 	toolbox.h configwin.h fft.h motif_tools.h tools.h \
@@ -675,7 +675,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/globals.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/header.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/help.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/init.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/io_loadmod.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lexer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcsv.Plo@am__quote@
@@ -684,7 +683,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/misc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/module_io.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/motif_tools.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/newfunc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/p.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pp.Plo@am__quote@
@@ -702,7 +700,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tools.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ufunc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/url_create_file.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/util.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/x.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xrt_print_3d.Plo@am__quote@
 

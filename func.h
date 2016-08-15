@@ -168,16 +168,6 @@ void memory_error(int error_num, size_t mem_size);
 int is_reserved_var(char*);
 Var* set_reserved_var(Var*, Var*, Var*);
 
-/* ff.c */
-
-char* unquote(char*);
-
-int evaluate_keywords(vfuncptr, Var*, struct keywords*);
-Var* get_kw(char*, struct keywords*);
-Var* verify_single_arg(vfuncptr, Var*);
-Var* verify_single_string(vfuncptr, Var*);
-int KwToInt(char*, struct keywords*, int*);
-int KwToFloat(char*, struct keywords*, float*);
 
 /* vicar.h */
 char* get_value(char*, char*);
@@ -238,8 +228,6 @@ Var* V_func(const char* name, Var* args);
 void make_sym(Var*, int, char*);
 
 char* get_env_var(char*);
-char* expand_filename(char*);
-char* enumerated_arg(Var*, char**);
 
 // TODO(rswinkle)
 // This file is the dumping ground for all prototypes?
@@ -259,7 +247,6 @@ Var* rm_symtab(Var*);
 int LoadSpecprHeader(FILE*, char*, int, char*, Var**);
 int dv_LoadVicarHeader(FILE*, char*, int, char*, Var**);
 
-Var* RequireKeyword(char*, struct keywords*, int, int, vfuncptr);
 Var* HasValue(vfuncptr, Var*);
 Var* ufunc_edit(vfuncptr, Var*);
 

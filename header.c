@@ -33,7 +33,6 @@ static char rcsver[] = "$Id$";
 
 #include "header.h"
 #include "io_lablib3.h"
-#include "proto.h"
 #include <limits.h>
 
 #define GetKey(ob, name) OdlFindKwd(ob, name, NULL, 0, ODL_THIS_OBJECT)
