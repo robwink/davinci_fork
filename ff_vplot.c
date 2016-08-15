@@ -7,10 +7,6 @@
 	"'gnuplot*textColor:white' -xrm 'gnuplot*borderColor:white'"
 #endif
 
-#ifdef GPLOT_CMD
-extern FILE* pfp;
-#endif
-
 static int name_check(const char* actual_input, const char* name, int limit);
 static void findAxis(char* R, Var* Obj, int flag);
 static int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuffer,

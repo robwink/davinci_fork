@@ -36,32 +36,10 @@ Widget applicationShell = NULL;
 XtAppContext applicationContext;
 #endif
 
-extern int interactive;
-extern int continuation;
-extern int in_comment;
-extern int in_string;
-
-extern int debug;
-extern char pp_input_buf[8192];
-extern FILE* lfile;
-extern FILE* pfp;
-
-extern int SCALE;
-extern int VERBOSE;
-extern int DEPTH;
-
-extern int allocs;
-extern Var* VZERO;
 
 static int windows = 1;
 int usage(char* prog);
 
-/**
- ** This is stuff from the old input.c
- **/
-extern int pp_count;
-extern int pp_line;
-extern int indent;
 
 /**
  ** Command line args:
@@ -223,8 +201,8 @@ int main(int ac, char** av)
 	pid = getpid();
 	sprintf(pidpath, "/proc/%d/exe", pid);
 
-	char mypathbuf[4097];
-	getcwd(mypathbuf, 4097);
+	//char mypathbuf[4097];
+	//getcwd(mypathbuf, 4097);
 	// printf("\ncwd=\n%s\n\n", mypathbuf);
 
 	// resolve the link with readlink
@@ -553,247 +531,247 @@ void lhandler(char* line)
 #endif
 	}
 
-	void process_streams(void)
-	{
-		char buf[1024];
-		extern int pp_line;
+void process_streams(void)
+{
+	char buf[1024];
+	extern int pp_line;
 
-		// Process anything that has been pushed onto the input stream stack.
-		while (input_stack_size()) {
-			while (fgets(buf, 1024, top_input_file()) != NULL) {
-				parse_buffer(buf);
-				pp_line++;
-			}
-			pop_input_file();
+	// Process anything that has been pushed onto the input stream stack.
+	while (input_stack_size()) {
+		while (fgets(buf, 1024, top_input_file()) != NULL) {
+			parse_buffer(buf);
+			pp_line++;
+		}
+		pop_input_file();
+	}
+}
+
+extern Var* curnode;
+
+void parse_buffer(char* buf)
+{
+	int i, j = 0;
+	extern char* yytext;
+	Var* v = NULL;
+	void* parent_buffer;
+	void* buffer;
+	Var* node;
+	extern char* pp_str;
+
+	extern void* get_current_buffer();
+	extern void* yy_scan_string();
+	extern void yy_delete_buffer(void*);
+	extern void yy_switch_to_buffer(void*);
+
+	parent_buffer = (void*)get_current_buffer();
+	buffer        = (void*)yy_scan_string(buf);
+	pp_str        = buf;
+
+	curnode = NULL;
+
+	while ((i = yylex()) != 0) {
+		/*
+		** if this is a function definition, do no further parsing yet.
+		*/
+		j = yyparse(i, (Var*)yytext);
+		if (j == -1) quit(0);
+
+		if (j == 1 && curnode != NULL) {
+			node = curnode;
+			evaluate(node);
+			v = pop(scope_tos());
+			pp_print(v);
+			free_tree(node);
+			indent = 0;
+			cleanup(scope_tos());
 		}
 	}
 
-	extern Var* curnode;
+	yy_delete_buffer((struct yy_buffer_state*)buffer);
+	if (parent_buffer) yy_switch_to_buffer(parent_buffer);
+}
 
-	void parse_buffer(char* buf)
-	{
-		int i, j = 0;
-		extern char* yytext;
-		Var* v = NULL;
-		void* parent_buffer;
-		void* buffer;
-		Var* node;
-		extern char* pp_str;
-
-		extern void* get_current_buffer();
-		extern void* yy_scan_string();
-		extern void yy_delete_buffer(void*);
-		extern void yy_switch_to_buffer(void*);
-
-		parent_buffer = (void*)get_current_buffer();
-		buffer        = (void*)yy_scan_string(buf);
-		pp_str        = buf;
-
-		curnode = NULL;
-
-		while ((i = yylex()) != 0) {
-			/*
-			** if this is a function definition, do no further parsing yet.
-			*/
-			j = yyparse(i, (Var*)yytext);
-			if (j == -1) quit(0);
-
-			if (j == 1 && curnode != NULL) {
-				node = curnode;
-				evaluate(node);
-				v = pop(scope_tos());
-				pp_print(v);
-				free_tree(node);
-				indent = 0;
-				cleanup(scope_tos());
-			}
-		}
-
-		yy_delete_buffer((struct yy_buffer_state*)buffer);
-		if (parent_buffer) yy_switch_to_buffer(parent_buffer);
+void log_line(char* str)
+{
+	if (lfile) {
+		fprintf(lfile, "%s", str);
+		fflush(lfile);
 	}
+}
 
-	void log_line(char* str)
-	{
-		if (lfile) {
-			fprintf(lfile, "%s", str);
-			fflush(lfile);
+void fake_data()
+{
+	Var* v;
+	int i, j;
+
+	v         = newVar();
+	V_NAME(v) = strdup("a");
+	V_TYPE(v) = ID_VAL;
+	v         = put_sym(v);
+
+	V_DSIZE(v)   = 4 * 3 * 2;
+	V_SIZE(v)[0] = 4;
+	V_SIZE(v)[1] = 3;
+	V_SIZE(v)[2] = 2;
+	V_ORG(v)     = BSQ;
+	V_FORMAT(v)  = DV_FLOAT;
+	V_DATA(v)    = calloc(4 * 3 * 2, sizeof(float));
+
+	for (i = 0; i < 4; i++) {
+		for (j = 0; j < 3; j++) {
+			((float*)V_DATA(v))[i + j * 4] = (float)i + j * 4;
 		}
 	}
 
-	void fake_data()
-	{
-		Var* v;
-		int i, j;
+	// srand48(getpid());
+	srand((unsigned int)time(NULL));
+	srand48((unsigned int)time(NULL));
 
-		v         = newVar();
-		V_NAME(v) = strdup("a");
-		V_TYPE(v) = ID_VAL;
-		v         = put_sym(v);
-
-		V_DSIZE(v)   = 4 * 3 * 2;
-		V_SIZE(v)[0] = 4;
-		V_SIZE(v)[1] = 3;
-		V_SIZE(v)[2] = 2;
-		V_ORG(v)     = BSQ;
-		V_FORMAT(v)  = DV_FLOAT;
-		V_DATA(v)    = calloc(4 * 3 * 2, sizeof(float));
-
-		for (i = 0; i < 4; i++) {
-			for (j = 0; j < 3; j++) {
-				((float*)V_DATA(v))[i + j * 4] = (float)i + j * 4;
-			}
-		}
-
-		// srand48(getpid());
-		srand((unsigned int)time(NULL));
-		srand48((unsigned int)time(NULL));
-
-		for (i = 0; i < 12; i++) {
+	for (i = 0; i < 12; i++) {
 #ifdef __MINGW32__
-			((float*)V_DATA(v))[i + 12] = ((double)rand()) / ((double)(RAND_MAX));
+		((float*)V_DATA(v))[i + 12] = ((double)rand()) / ((double)(RAND_MAX));
 // for some reason calling drand48()
 // messes up the application
 #else
-		((float*)V_DATA(v))[i + 12] = drand48();
+	((float*)V_DATA(v))[i + 12] = drand48();
 #endif
-		}
-
-		v            = (Var*)calloc(1, sizeof(Var));
-		V_NAME(v)    = NULL;
-		V_TYPE(v)    = ID_VAL;
-		V_DSIZE(v)   = 1;
-		V_SIZE(v)[0] = 1;
-		V_SIZE(v)[1] = 1;
-		V_SIZE(v)[2] = 1;
-		V_ORG(v)     = BSQ;
-		V_FORMAT(v)  = DV_UINT8;
-		V_DATA(v)    = calloc(1, sizeof(u_char));
-		VZERO        = v;
-
-		v         = newVar();
-		V_NAME(v) = strdup("tmp");
-		V_TYPE(v) = ID_VAL;
-		v         = put_sym(v);
-
-		V_DSIZE(v)   = 2 * 2 * 2;
-		V_SIZE(v)[0] = 2;
-		V_SIZE(v)[1] = 2;
-		V_SIZE(v)[2] = 2;
-		V_ORG(v)     = BSQ;
-		V_FORMAT(v)  = DV_FLOAT;
-		V_DATA(v)    = calloc(2 * 2 * 2, sizeof(float));
-
-		for (i = 0; i < 8; i++) {
-			((float*)V_DATA(v))[i] = (float)i;
-		}
 	}
 
-	void env_vars()
-	{
-		char* path;
-		Var* s;
+	v            = (Var*)calloc(1, sizeof(Var));
+	V_NAME(v)    = NULL;
+	V_TYPE(v)    = ID_VAL;
+	V_DSIZE(v)   = 1;
+	V_SIZE(v)[0] = 1;
+	V_SIZE(v)[1] = 1;
+	V_SIZE(v)[2] = 1;
+	V_ORG(v)     = BSQ;
+	V_FORMAT(v)  = DV_UINT8;
+	V_DATA(v)    = calloc(1, sizeof(u_char));
+	VZERO        = v;
 
-		if ((path = getenv("DATAPATH")) != NULL) {
-			s           = newVar();
-			V_NAME(s)   = strdup("datapath");
-			V_TYPE(s)   = ID_STRING;
-			V_STRING(s) = strdup(path);
-			put_sym(s);
-		}
+	v         = newVar();
+	V_NAME(v) = strdup("tmp");
+	V_TYPE(v) = ID_VAL;
+	v         = put_sym(v);
+
+	V_DSIZE(v)   = 2 * 2 * 2;
+	V_SIZE(v)[0] = 2;
+	V_SIZE(v)[1] = 2;
+	V_SIZE(v)[2] = 2;
+	V_ORG(v)     = BSQ;
+	V_FORMAT(v)  = DV_FLOAT;
+	V_DATA(v)    = calloc(2 * 2 * 2, sizeof(float));
+
+	for (i = 0; i < 8; i++) {
+		((float*)V_DATA(v))[i] = (float)i;
 	}
+}
 
-	void log_time()
-	{
-		time_t t;
-		char* uname;
-		char tbuf[30];
-		char* host;
-		char cwd[1024];
-		if (lfile) {
-			t = time(0);
+void env_vars()
+{
+	char* path;
+	Var* s;
+
+	if ((path = getenv("DATAPATH")) != NULL) {
+		s           = newVar();
+		V_NAME(s)   = strdup("datapath");
+		V_TYPE(s)   = ID_STRING;
+		V_STRING(s) = strdup(path);
+		put_sym(s);
+	}
+}
+
+void log_time()
+{
+	time_t t;
+	char* uname;
+	char tbuf[30];
+	char* host;
+	char cwd[1024];
+	if (lfile) {
+		t = time(0);
 /* eandres: ctime() seems to return invalid pointers on x86_64 systems.
- * ctime_r with a provided buffer fills the buffer correctly, but still
- * returns an invalid pointer. */
+* ctime_r with a provided buffer fills the buffer correctly, but still
+* returns an invalid pointer. */
 
 #ifdef __MINGW32__
-			time(&t);
-			strcpy(tbuf, ctime(&t));
+		time(&t);
+		strcpy(tbuf, ctime(&t));
 #elif __sun
-		ctime_r(&t, tbuf, sizeof(tbuf));
+	ctime_r(&t, tbuf, sizeof(tbuf));
 #else
-		ctime_r(&t, tbuf);
+	ctime_r(&t, tbuf);
 #endif
 
-			/* eandres: This really shouldn't be a problem, but it shouldn't be a crash, either. */
-			if ((uname = getenv("USER")) == NULL) {
-				uname = (char*)"<UNKNOWN>";
-			}
-			if ((host = getenv("HOST")) == NULL) {
-				host = (char*)"<UNKNOWN>";
-			}
-			if (getcwd(cwd, 1024) == NULL) {
-				strcpy(cwd, "<UNKNOWN>");
-			}
-
-			fprintf(lfile, "###################################################\n");
-			fprintf(lfile, "# User: %8.8s    Date: %26.26s", uname, tbuf);
-			fprintf(lfile, "# Host: %-11s Cwd: %s\n", host, cwd);
-			fprintf(lfile, "###################################################\n");
+		/* eandres: This really shouldn't be a problem, but it shouldn't be a crash, either. */
+		if ((uname = getenv("USER")) == NULL) {
+			uname = (char*)"<UNKNOWN>";
 		}
-	}
-
-	void init_history(char* fname)
-	{
-		char buf[2048];
-		FILE* fp;
-
-		if ((fp = fopen(fname, "r")) == NULL) return;
-		printf("loading history\n");
-
-		while (fgets(buf, sizeof(buf) - 1, fp)) {
-			if (buf[0] == '#') continue;
-			buf[strlen(buf) - 1] = '\0';
-			add_history((char*)buf);
+		if ((host = getenv("HOST")) == NULL) {
+			host = (char*)"<UNKNOWN>";
 		}
-	}
+		if (getcwd(cwd, 1024) == NULL) {
+			strcpy(cwd, "<UNKNOWN>");
+		}
 
-	char** dv_complete_func(const char* text, int start, int end) { return (NULL); }
+		fprintf(lfile, "###################################################\n");
+		fprintf(lfile, "# User: %8.8s    Date: %26.26s", uname, tbuf);
+		fprintf(lfile, "# Host: %-11s Cwd: %s\n", host, cwd);
+		fprintf(lfile, "###################################################\n");
+	}
+}
+
+void init_history(char* fname)
+{
+	char buf[2048];
+	FILE* fp;
+
+	if ((fp = fopen(fname, "r")) == NULL) return;
+	printf("loading history\n");
+
+	while (fgets(buf, sizeof(buf) - 1, fp)) {
+		if (buf[0] == '#') continue;
+		buf[strlen(buf) - 1] = '\0';
+		add_history((char*)buf);
+	}
+}
+
+char** dv_complete_func(const char* text, int start, int end) { return (NULL); }
 
 #ifndef HAVE_LIBREADLINE
 
-	void add_history() {}
-	char* readline(char* prompt)
-	{
-		char buf[2048];
-		fputs(prompt, stdout);
-		fflush(stdout);
-		if (fgets(buf, sizeof(buf) - 1, stdin) != NULL) {
-			return (strdup(buf));
-		} else {
-			return (NULL);
-		}
+void add_history() {}
+char* readline(char* prompt)
+{
+	char buf[2048];
+	fputs(prompt, stdout);
+	fflush(stdout);
+	if (fgets(buf, sizeof(buf) - 1, stdin) != NULL) {
+		return (strdup(buf));
+	} else {
+		return (NULL);
 	}
+}
 #endif
 
-	const char* usage_str =
-	    "usage: %s [-Viwq] [-v#] [-l logfile] [-e cmd] [-f script] args\n"
-	    " Options:\n"
-	    "    -V            dump version information\n"
-	    "    -i            force interactive mode\n"
-	    "    -w            don't use X windows\n"
-	    "    -q            quick startup.  Don't load history or .dvrc\n"
-	    "    -H            force loadig of history, even in quick mode\n"
-	    "    -h            print this help\n"
-	    "    -l logfile    use logfile for loading/saving history instead of ./.dvrc\n"
-	    "    -e cmd        execute the specified command and exit\n"
-	    "    -f script     exectue the specified script and exit\n"
-	    "    --            indicates this is the last command line option\n"
-	    ""
-	    "  Note: Any --option style options are always passed as $ARGV values\n";
+const char* usage_str =
+	"usage: %s [-Viwq] [-v#] [-l logfile] [-e cmd] [-f script] args\n"
+	" Options:\n"
+	"    -V            dump version information\n"
+	"    -i            force interactive mode\n"
+	"    -w            don't use X windows\n"
+	"    -q            quick startup.  Don't load history or .dvrc\n"
+	"    -H            force loadig of history, even in quick mode\n"
+	"    -h            print this help\n"
+	"    -l logfile    use logfile for loading/saving history instead of ./.dvrc\n"
+	"    -e cmd        execute the specified command and exit\n"
+	"    -f script     exectue the specified script and exit\n"
+	"    --            indicates this is the last command line option\n"
+	""
+	"  Note: Any --option style options are always passed as $ARGV values\n";
 
-	int usage(char* prog)
-	{
-		fprintf(stderr, usage_str, prog);
-		return (1);
-	}
+int usage(char* prog)
+{
+	fprintf(stderr, usage_str, prog);
+	return (1);
+}

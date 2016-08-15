@@ -1226,41 +1226,6 @@ Var* do_cat(Var* ob1, Var* ob2, int axis)
 	return (s);
 }
 
-/**
- ** enumerated_arg() - Make sure arg is one of a list of enumerated values.
- **/
-/*
-char* enumerated_arg(Var* v, char** values)
-{
-	char* ptr;
-	Var* e;
-	char** p;
-	char* result;
-
-	if (V_TYPE(v) == ID_STRING)
-		ptr = V_STRING(v);
-	else
-		ptr = V_NAME(v);
-
-	for (p = values; p && *p; p++) {
-		if (ptr && !strcasecmp(ptr, *p)) {
-			result = *p;
-			return (result);
-		}
-	}
-
-	if ((e = eval(v)) != NULL) {
-		ptr = V_STRING(e);
-		for (p = values; p && *p; p++) {
-			if (ptr && !strcasecmp(ptr, *p)) {
-				result = *p;
-				return (result);
-			}
-		}
-	}
-	return (NULL);
-}
-*/
 
 /**
  ** convert bytes to string

@@ -1,9 +1,10 @@
+#include "globals.h"
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
 
-extern int VERBOSE;
 
 // TODO(rswinkle) move to globals.c?
 char error_buf[16384];

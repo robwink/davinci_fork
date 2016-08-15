@@ -49,12 +49,8 @@
 Var* p_mknod(int, Var*, Var*);
 Var* p_mkval(int, char*);
 
-extern Var* curnode;
 extern char* yytext;
 jmp_buf env;
-
-extern int indent;
-extern int pp_count;
 
 int log_it = 0;
 char* pp_str;

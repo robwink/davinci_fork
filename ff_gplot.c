@@ -7,7 +7,6 @@
 
 FILE* gplot_pfp = NULL;
 #ifdef GPLOT_CMD
-extern FILE* pfp;
 #endif /* GPLOT_CMD */
 
 Var* ff_gplot(vfuncptr func, Var* arg)
@@ -82,84 +81,6 @@ Var* ff_gplot(vfuncptr func, Var* arg)
 	fflush(gplot_pfp);
 
 	free(fname);
-	return (NULL);
-}
-/* Not used anymore, replaced with ff_vplot */
-Var* ff_plot(vfuncptr func, Var* arg)
-{
-	Var *s, *v;
-	FILE* fp;
-	char* fname;
-	int x, y, z, i, j;
-	int type;
-	char buf[5120]; /* added factor of 10 */
-	int s0, s1;
-	int count = 0;
-
-	int ac;
-	Var** av;
-
-	make_args(&ac, &av, func, arg);
-	/* make_args puts func->name into av[0] and ac == 2 */
-	ac--;
-
-	if (ac == 1 && V_TYPE(av[1]) == ID_STRING) {
-		strcpy(buf, V_STRING(av[1]));
-	} else {
-		strcpy(buf, "plot ");
-		for (j = 1; j < ac; j++) {
-			s = av[j];
-			if (V_TYPE(s) == ID_STRING) {
-				strcat(buf, V_STRING(s));
-			} else {
-				if ((v = eval(s)) == NULL) v = s;
-
-				type = V_FORMAT(v);
-
-				fname = make_temp_file_path();
-				if (fname == NULL || (fp = fopen(fname, "w")) == NULL) {
-					parse_error("%s: unable to open temp file", func->name);
-					if (fname) free(fname);
-					return (NULL);
-				}
-
-				s0 = V_SIZE(v)[0];
-				s1 = V_SIZE(v)[1] * V_SIZE(v)[0];
-
-				x = V_SIZE(v)[orders[V_ORG(v)][0]];
-				y = V_SIZE(v)[orders[V_ORG(v)][1]];
-				z = V_SIZE(v)[orders[V_ORG(v)][2]];
-
-				for (i = 0; i < V_DSIZE(v); i++) {
-					if (x == 1 && y > 1 && z == 1) {
-						fprintf(fp, "%d ", i + 1);
-					}
-					switch (type) {
-					case DV_UINT8:
-					case DV_INT16:
-					case DV_INT32: fprintf(fp, "%d", extract_int(v, i)); break;
-					case DV_FLOAT:
-					case DV_DOUBLE: fprintf(fp, "%.12g", extract_double(v, i)); break;
-					}
-					if (((i + 1) % s0) == 0) {
-						fputc('\n', fp);
-					} else {
-						fputc('\t', fp);
-					}
-					if (((i + 1) % s1) == 0) {
-						fputc('\n', fp);
-						fputc('\n', fp);
-					}
-				}
-				fclose(fp);
-				if (count++) strcat(buf, ",");
-				sprintf(buf + strlen(buf), "'%s'", fname);
-				if (V_NAME(v)) sprintf(buf + strlen(buf), "title '%s'", V_NAME(v));
-				free(fname);
-			}
-		}
-	}
-	send_to_plot(buf);
 	return (NULL);
 }
 

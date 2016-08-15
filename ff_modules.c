@@ -31,8 +31,6 @@
 #endif /* _WIN32 */
 #include "module_io.h"
 
-extern int debug;
-extern int VERBOSE;
 
 /*
 ** Value of debug must be greater than DEBUG_THRESHOLD to produce

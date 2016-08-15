@@ -12,7 +12,6 @@
 UFUNC** ufunc_list = NULL;
 int nufunc         = 0;
 int ufsize         = 16;
-extern int pp_line;
 
 void list_funcs();
 

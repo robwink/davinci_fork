@@ -311,7 +311,6 @@ Var* ff_string(vfuncptr, Var*);
 Var* ff_delim(vfuncptr, Var*);
 Var* ff_translate(vfuncptr, Var*);
 Var* ff_gplot(vfuncptr, Var*);
-Var* ff_plot(vfuncptr, Var*);
 Var* ff_splot(vfuncptr, Var*);
 Var* ff_display(vfuncptr, Var*);
 Var* ff_moment(vfuncptr, Var*);

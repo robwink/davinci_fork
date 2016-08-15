@@ -6,8 +6,6 @@
 
 static cvector_void source_stack;
 
-extern int pp_line;
-
 void init_input_stack()
 {
 	cvec_void(&source_stack, 0, 16, sizeof(Source), NULL, NULL);

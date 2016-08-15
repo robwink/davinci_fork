@@ -227,7 +227,6 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 	Var* v = NULL;
 	void *databuf, *databuf2;
 	int Lines = 1;
-	extern int VERBOSE;
 
 	callback_data* cb_data = (callback_data*)operator_data;
 	Var* parent_var        = cb_data->parent_var;
