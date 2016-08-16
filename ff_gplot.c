@@ -6,8 +6,6 @@
 #endif
 
 FILE* gplot_pfp = NULL;
-#ifdef GPLOT_CMD
-#endif /* GPLOT_CMD */
 
 Var* ff_gplot(vfuncptr func, Var* arg)
 {

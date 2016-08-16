@@ -42,13 +42,6 @@
 #define HBUFSIZE 8192
 #define PATH_SEP ' '
 
-/*
-struct keywords {
-	char* name;
-	Var* value;
-};
-*/
-
 typedef double (*dfunc)(double);
 typedef double (*ddfunc)(double, double);
 

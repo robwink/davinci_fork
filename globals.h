@@ -12,9 +12,11 @@ extern char pp_input_buf[8192];
 extern int orders[3][3];
 
 extern char* ORG2STR[];
-extern char* FORMAT2STR[];
 
-
+#define NUM_TYPE_STRS 13
+extern const char* FORMAT_STRINGS[NUM_TYPE_STRS];
+extern const int STR_TO_FORMAT[NUM_TYPE_STRS];
+#undef NUM_TYPE_STRS
 
 extern int interactive;
 extern int continuation;

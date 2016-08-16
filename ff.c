@@ -596,8 +596,9 @@ Var* ff_create(vfuncptr func, Var* arg)
 	size_t dsize, count = 0, c;
 	size_t i, j, k;
 	double v;
+
+	// TODO(rswinkle) combine/with use global array?
 	const char* orgs[]    = {"bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL};
-	const char* formats[] = {"byte", "short", "int", "float", "double", NULL};
 
 	size_t x = 1, y = 1, z = 1;
 	int format       = DV_INT32;
@@ -618,7 +619,7 @@ Var* ff_create(vfuncptr func, Var* arg)
 	alist[1]      = make_alist("y", DV_INT32, NULL, &y);
 	alist[2]      = make_alist("z", DV_INT32, NULL, &z);
 	alist[3]      = make_alist("org", ID_ENUM, orgs, &org_str);
-	alist[4]      = make_alist("format", ID_ENUM, formats, &format_str);
+	alist[4]      = make_alist("format", ID_ENUM, FORMAT_STRINGS, &format_str);
 	alist[5]      = make_alist("start", DV_DOUBLE, NULL, &start);
 	alist[6]      = make_alist("step", DV_DOUBLE, NULL, &step);
 	alist[7]      = make_alist("init", DV_INT32, NULL, &init);
@@ -644,16 +645,8 @@ Var* ff_create(vfuncptr func, Var* arg)
 	}
 
 	if (format_str != NULL) {
-		if (!strcasecmp(format_str, "byte"))
-			format = DV_UINT8;
-		else if (!strcasecmp(format_str, "short"))
-			format = DV_INT16;
-		else if (!strcasecmp(format_str, "int"))
-			format = DV_INT32;
-		else if (!strcasecmp(format_str, "float"))
-			format = DV_FLOAT;
-		else if (!strcasecmp(format_str, "double"))
-			format = DV_DOUBLE;
+		//know it's valid because it's checked in parse_args
+		format = dv_str_to_format(format_str);
 	}
 	if (x <= 0 || y <= 0 || z <= 0) {
 		parse_error("create(): invalid dimensions: %dx%dx%d\n", x, y, z);

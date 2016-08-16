@@ -1,5 +1,8 @@
 #include "parser.h"
 
+// for when/if I pull globals.h out of parser.h
+// #include "globals.h"
+
 
 
 // NOTE(rswinkle) Organization (and design) is davinci's biggest problem.  This file
@@ -683,4 +686,56 @@ int dv_format_size(int type)
 		fprintf(stderr, "unknown format: %d\n", type);
 		return 0;
 	}
+}
+
+
+const char* dv_format_to_str(int type)
+{
+	switch (type) {
+	case DV_UINT8:
+		return "byte";
+
+	case DV_UINT16:
+		return "uint16";
+
+	case DV_UINT32:
+		return "uint32";
+
+	case DV_UINT64:
+		return "uint64";
+
+	case DV_INT8:
+		return "int8";
+	case DV_INT16:
+		return "short"; //int16
+	case DV_INT32:
+		return "int"; //int32
+	case DV_INT64:
+		return "int64";
+
+	case DV_FLOAT:
+		return "float";
+	case DV_DOUBLE:
+		return "double";
+
+/* deprecated
+	case VAX_FLOAT:
+		return "vax_float"
+	case VAX_INTEGER:
+		return "vax_int"
+*/
+	}
+}
+
+// TODO(rswinkle) create array mapping FORMAT_STRINGS to appropriate formats
+int dv_str_to_format(const char* str)
+{
+	int format = -1;
+
+	for (int i=0; i<sizeof(FORMAT_STRINGS)/sizeof(char*); ++i) {
+		if (!strcasecmp(FORMAT_STRINGS[i], str))
+			return STR_TO_FORMAT[i];
+	}
+
+	return format;
 }

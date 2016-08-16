@@ -207,22 +207,25 @@ enum {
 };
 
 // TODO(rswinkle) make these an enum?
-#define DV_UINT8 1
-#define DV_UINT16 2
-#define DV_UINT32 3
-#define DV_UINT64 4
 
-#define DV_INT8 5
-#define DV_INT16 6
-#define DV_INT32 7
-#define DV_INT64 8
+enum {
+	DV_UINT8 = 1,
+	DV_UINT16,
+	DV_UINT32,
+	DV_UINT64,
 
-#define DV_FLOAT 9
-#define DV_DOUBLE 10
+	DV_INT8,
+	DV_INT16,
+	DV_INT32,
+	DV_INT64,
+
+	DV_FLOAT,
+	DV_DOUBLE,
 
 // deprecated
-#define VAX_FLOAT 11
-#define VAX_INTEGER 12
+	VAX_FLOAT,
+	VAX_INTEGER
+};
 
 #define NBYTES(a) dv_format_size(a)
 
@@ -240,7 +243,11 @@ int dv_format_size(int type);
 #define BIL 1
 #define BIP 2
 
-#define Format2Str(i) FORMAT2STR[(i)]
+#define Format2Str(i) dv_format_to_str(i)
+
+const char* dv_format_to_str(int type);
+
+
 #define Org2Str(i) (((i) >= BSQ && (i) <= BIP) ? ORG2STR[(i)] : "undef")
 
 #define GetSamples(s, org) (s)[((org) == BIP ? 1 : 0)]
