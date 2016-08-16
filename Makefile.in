@@ -116,12 +116,11 @@ am_libdavinci_la_OBJECTS = apifunc.lo array.lo avl.lo binDCT.lo \
 	ff_bin5.lo ff_transform.lo ff_blend.lo ff_unpack.lo header.lo \
 	ff_resample.lo help.lo cvector.lo globals.lo matrix.lo misc.lo \
 	motif_tools.lo p.lo pp.lo pp_math.lo printf.lo reserved.lo \
-	rfunc.lo rice.lo rpos.lo scope.lo spread.lo string.lo \
-	symbol.lo system.lo tools.lo ufunc.lo x.lo xrt_print_3d.lo \
-	lexer.lo parser.lo ff_gconvolve.lo ff_warp.lo ff_median.lo \
-	ff_radial.lo ff_window.lo dvio_fits.lo ff_extract.lo \
-	dvio_tdb.lo url_create_file.lo ff_filesystem.lo \
-	ff_grassfire.lo libcsv.lo
+	rice.lo rpos.lo scope.lo spread.lo string.lo symbol.lo \
+	system.lo tools.lo ufunc.lo x.lo xrt_print_3d.lo lexer.lo \
+	parser.lo ff_gconvolve.lo ff_warp.lo ff_median.lo ff_radial.lo \
+	ff_window.lo dvio_fits.lo ff_extract.lo dvio_tdb.lo \
+	url_create_file.lo ff_filesystem.lo ff_grassfire.lo libcsv.lo
 libdavinci_la_OBJECTS = $(am_libdavinci_la_OBJECTS)
 libdavinci_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
@@ -394,14 +393,14 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	misc.c motif_tools.c \
 	p.c pp.c \
 	pp_math.c printf.c reserved.c \
-	rfunc.c rice.c rpos.c scope.c \
+	rice.c rpos.c scope.c \
 	spread.c string.c symbol.c \
 	system.c tools.c \
 	ufunc.c \
 	x.c xrt_print_3d.c \
 	XformTable.h darray.h fit.h trigtbl.h api.h dos.h func.h \
 	ufunc.h dvio.h dvio_pds4.h header.h \
-	version.h apidef.h dvio_specpr.h help.h rfunc.h \
+	version.h apidef.h dvio_specpr.h help.h \
 	xrt_print_3d.h avl.h endian_norm.h io_loadmod.h scope.h \
 	ff.h system.h ff_modules.h module_io.h \
 	toolbox.h configwin.h fft.h motif_tools.h tools.h \
@@ -689,7 +688,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pp_math.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/printf.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/reserved.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rfunc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rice.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rpos.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scope.Plo@am__quote@
