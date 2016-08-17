@@ -126,16 +126,23 @@ void dump_var(Var* v, int indent, int limit)
 					for (i = 0; i < x; i++) {
 						c = cpos(i, j, k, v);
 						switch (V_FORMAT(v)) {
-						case DV_UINT8: printf("%d\t", ((u_char*)V_DATA(v))[c]); break;
-						case DV_INT16: printf("%d\t", ((short*)V_DATA(v))[c]); break;
-						case DV_INT32: printf("%d\t", ((int*)V_DATA(v))[c]); break;
+						case DV_UINT8: printf("%u\t", ((u8*)V_DATA(v))[c]); break;
+						case DV_UINT16: printf("%u\t", ((u16*)V_DATA(v))[c]); break;
+						case DV_UINT32: printf("%lu\t", ((u32*)V_DATA(v))[c]); break;
+						case DV_UINT64: printf("%llu\t", ((u64*)V_DATA(v))[c]); break;
+
+						case DV_INT8: printf("%d\t", ((i8*)V_DATA(v))[c]); break;
+						case DV_INT16: printf("%d\t", ((i16*)V_DATA(v))[c]); break;
+						case DV_INT32: printf("%ld\t", ((i32*)V_DATA(v))[c]); break;
+						case DV_INT64: printf("%lld\t", ((i64*)V_DATA(v))[c]); break;
+
 						case DV_FLOAT: printf("%#.*g\t", SCALE, ((float*)V_DATA(v))[c]); break;
 						case DV_DOUBLE: printf("%#.*g\t", SCALE, ((double*)V_DATA(v))[c]); break;
 						}
 					}
-					printf("\n");
+					putchar('\n');
 				}
-				if (z > 1) printf("\n");
+				if (z > 1) putchar('\n');
 			}
 		}
 		break;

@@ -141,7 +141,7 @@ char* get_value(char* s1, char* s2)
 }
 
 
-// Moved from global.c
+// Moved from globals.c
 void make_sym(Var* v, int format, char* str)
 {
 	V_FORMAT(v)  = format;
@@ -150,8 +150,18 @@ void make_sym(Var* v, int format, char* str)
 	V_ORG(v)                                   = BSQ;
 	V_DATA(v)                                  = calloc(1, NBYTES(format));
 
+	// TODO(rswinkle) I think we should just default to i64 and double
 	switch (format) {
-	case DV_INT32: *((int*)(V_DATA(v))) = strtol(str, NULL, 10); break;
+	case DV_UINT8:
+	case DV_UINT16:
+	case DV_UINT32:
+	case DV_UINT64: *((u64*)(V_DATA(v))) = strtoull(str, NULL, 10); break;
+
+	case DV_INT8:
+	case DV_INT16:
+	case DV_INT32: *((i32*)(V_DATA(v))) = strtol(str, NULL, 10); break;
+	case DV_INT64: *((i64*)(V_DATA(v))) = strtoll(str, NULL, 10); break;
+
 	case DV_FLOAT: {
 		double d;
 		d = strtod(str, NULL);
@@ -163,6 +173,11 @@ void make_sym(Var* v, int format, char* str)
 		} else {
 			*((float*)(V_DATA(v))) = d;
 		}
+	} break;
+	case DV_DOUBLE: {
+		double d;
+		d = strtod(str, NULL);
+		*((double*)(V_DATA(v))) = d;
 	}
 	}
 }
@@ -443,21 +458,35 @@ int parse_args(vfuncptr name, Var* args, Alist* alist)
 			vptr            = (Var**)(alist[j].value);
 			*vptr           = v;
 			alist[j].filled = 1;
-		} else if (alist[j].type == DV_INT32) {
-			int* iptr;
+
+
+		// NOTE(rswinkle) this works because the integer types are grouped together
+		// *and* the davinci type enum doesn't overlap,
+		//
+		// ID_NONE  = 0, /* a non value */
+		// ID_ERROR = 99,
+		// ID_BASE  = 100, /* in case of conflicts */
+		// ID_UNK,         /* Unknown type - also used as a generic type */
+		// ...
+		// etc.
+		// though of course we could just shift the starting point to of the numeric
+		// enums if we needed to
+		} else if (alist[j].type >= DV_UINT8 &&alist[j].type <= DV_INT64) {
+			i64* iptr;
 			if ((e = eval(v)) == NULL) {
 				parse_error("%s: Variable not found: %s", fname, V_NAME(v));
 				free(av);
 				return 0;
 			}
 			v = e;
-			if (V_TYPE(v) != ID_VAL || V_FORMAT(v) > DV_INT32) {
+			if (V_TYPE(v) != ID_VAL || V_FORMAT(v) > DV_INT64) {
 				parse_error("Illegal argument %s(...%s=...), expected DV_INT32", fname, alist[j].name);
 				free(av);
 				return 0;
 			}
-			iptr            = (int*)(alist[j].value);
-			*iptr           = extract_int(v, 0);
+			// TODO(rswinkle)
+			iptr            = alist[j].value;
+			*iptr           = extract_int64(v, 0);
 			alist[j].filled = 1;
 		} else if (alist[j].type == DV_FLOAT) {
 			float* fptr;
@@ -679,6 +708,10 @@ int dv_format_size(int type)
 	case DV_FLOAT:
 		return 4;
 
+	case DV_UINT64:
+	case DV_INT64:
+		return 8;
+
 	case DV_DOUBLE:
 		return sizeof(double);
 	default:
@@ -727,7 +760,6 @@ const char* dv_format_to_str(int type)
 	}
 }
 
-// TODO(rswinkle) create array mapping FORMAT_STRINGS to appropriate formats
 int dv_str_to_format(const char* str)
 {
 	int format = -1;
@@ -739,3 +771,6 @@ int dv_str_to_format(const char* str)
 
 	return format;
 }
+
+
+

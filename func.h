@@ -23,11 +23,6 @@ void add_history();
   void rl_callback_handler_remove();
 #endif
 
-// globals.c
-int yywrap();
-void yyerror(char* s);
-void quit(int return_code);
-
 #ifdef HAVE_LIBHDF5
 #include <hdf5.h>
 #endif
@@ -60,7 +55,6 @@ char* do_help(char* input, char* path);
 void parse_stream(FILE* fp);
 
 void parse_buffer(char* buf);
-Var* eval_buffer(char* buf);
 
 /* pp.c */
 void emit_prompt(void);                  /* spit out prompt if interactive */
@@ -144,6 +138,8 @@ void xpos(size_t i, Var* v, int* x, int* y, int* z);
 extern "C" {
 #endif
 int extract_int(const Var* v, const size_t i);
+i64 extract_int64(const Var* v, const size_t i);
+
 float extract_float(Var* v, size_t i);
 double extract_double(Var* v, size_t i);
 #ifdef __cplusplus
@@ -169,8 +165,6 @@ int is_reserved_var(char*);
 Var* set_reserved_var(Var*, Var*, Var*);
 
 
-/* vicar.h */
-char* get_value(char*, char*);
 
 /* read.c */
 
@@ -225,7 +219,42 @@ Var* pp_print(Var*);
    See create_args() for creating and sending args. */
 Var* V_func(const char* name, Var* args);
 
+
+
+// misc.c
+void split_string(char* buf, int* argc, char*** argv, char* s);
+char* uppercase(char* s);
+char* lowercase(char* s);
+char* ltrim(char* s, const char* trim_chars);
+char* rtrim(char* s, const char* trim_chars);
+char* fix_name(const char* input_name);
+
+char* get_value(char*, char*);
+
 void make_sym(Var*, int, char*);
+void quit(int return_code);
+
+Var* eval_buffer(char* buf);
+int yywrap();
+void yyerror(char* s);
+
+// used in p.c
+char* unquote(char* name);
+char* unescape(char* str);
+
+int parse_args(vfuncptr func, Var* args, Alist* alist);
+int make_args(int* ac, Var*** av, vfuncptr func, Var* args);
+Alist make_alist(const char* name, int type, void* limits, void* value);
+Var* append_arg(Var*, char*, Var*);
+Var* create_args(int, ...);
+
+int dv_format_size(int type);
+const char* dv_format_to_str(int type);
+int dv_str_to_format(const char* str);
+
+// end misc.c
+
+
 
 char* get_env_var(char*);
 
@@ -251,12 +280,6 @@ Var* HasValue(vfuncptr, Var*);
 Var* ufunc_edit(vfuncptr, Var*);
 
 int fixup_ranges(Var* v, Range* in, Range* out);
-void split_string(char* buf, int* argc, char*** argv, char* s);
-char* uppercase(char* s);
-char* lowercase(char* s);
-char* ltrim(char* s, const char* trim_chars);
-char* rtrim(char* s, const char* trim_chars);
-char* fix_name(const char* input_name);
 
 int dv_getline(char** ptr, FILE* fp);
 
@@ -395,7 +418,6 @@ Var* ff_covar(vfuncptr func, Var* arg);
 Var* ff_loadvan(vfuncptr func, Var* arg);
 Var* ff_loadspecpr(vfuncptr func, Var* arg);
 
-Alist make_alist(const char* name, int type, void* limits, void* value);
 #ifdef HAVE_LIBXML2
 Var* ReadPDS4(vfuncptr func, Var* arg);
 #endif
@@ -428,8 +450,6 @@ int cmp_float(const void*, const void*);
 int cmp_double(const void*, const void*);
 
 void log_line(char* str);
-int parse_args(vfuncptr func, Var* args, Alist* alist);
-int make_args(int* ac, Var*** av, vfuncptr func, Var* args);
 void print_history(int i);
 
 void save_ufunc(char* filename);
@@ -571,8 +591,6 @@ int array_replace(Var* dst, Var* src, Range* r);
 char* make_temp_file_path_in_dir(char* dir);
 char* make_temp_file_path();
 
-Var* create_args(int, ...);
-Var* append_arg(Var*, char*, Var*);
 int compare_vars(Var* a, Var* b);
 
 extern void pp_print_var(Var*, char*, int, int);

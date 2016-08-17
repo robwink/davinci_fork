@@ -600,24 +600,26 @@ Var* ff_create(vfuncptr func, Var* arg)
 	// TODO(rswinkle) combine/with use global array?
 	const char* orgs[]    = {"bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL};
 
-	size_t x = 1, y = 1, z = 1;
-	int format       = DV_INT32;
+	u64 x = 1, y = 1, z = 1;
+	int format       = DV_INT64;
 	int org          = BSQ;
 	double start     = 0;
 	double step      = 1.0;
 	int init         = 1;
 	char *format_str = NULL, *org_str = NULL;
 
-	u_char* cdata;
-	short* sdata;
-	int* idata;
+	u8* cdata;
+	i16* sdata;
+	i32* idata;
+	i64* i64data;
+
 	float* fdata;
 	double* ddata;
 
 	Alist alist[9];
-	alist[0]      = make_alist("x", DV_INT32, NULL, &x);
-	alist[1]      = make_alist("y", DV_INT32, NULL, &y);
-	alist[2]      = make_alist("z", DV_INT32, NULL, &z);
+	alist[0]      = make_alist("x", DV_UINT64, NULL, &x);
+	alist[1]      = make_alist("y", DV_UINT64, NULL, &y);
+	alist[2]      = make_alist("z", DV_UINT64, NULL, &z);
 	alist[3]      = make_alist("org", ID_ENUM, orgs, &org_str);
 	alist[4]      = make_alist("format", ID_ENUM, FORMAT_STRINGS, &format_str);
 	alist[5]      = make_alist("start", DV_DOUBLE, NULL, &start);
@@ -627,7 +629,7 @@ Var* ff_create(vfuncptr func, Var* arg)
 
 	if (parse_args(func, arg, alist) == 0) return (NULL);
 
-	dsize = (size_t)x * (size_t)y * (size_t)z;
+	dsize = x * y * z;
 
 	if (org_str != NULL) {
 		if (!strcasecmp(org_str, "bsq"))
@@ -644,13 +646,14 @@ Var* ff_create(vfuncptr func, Var* arg)
 			org = BIP;
 	}
 
-	if (format_str != NULL) {
-		//know it's valid because it's checked in parse_args
+	if (format_str) {
 		format = dv_str_to_format(format_str);
 	}
-	if (x <= 0 || y <= 0 || z <= 0) {
+
+	// can't be negative cause they're unsigned
+	if (!x || !y || !z) {
 		parse_error("create(): invalid dimensions: %dx%dx%d\n", x, y, z);
-		return (NULL);
+		return NULL;
 	}
 
 	s         = newVar();
@@ -658,8 +661,8 @@ Var* ff_create(vfuncptr func, Var* arg)
 
 	V_DATA(s) = calloc(dsize, NBYTES(format));
 	if (V_DATA(s) == NULL) {
-		parse_error("Unable to allocate %ld bytes: %s\n", dsize * NBYTES(format), strerror(errno));
-		return (NULL);
+		memory_error(errno, dsize * NBYTES(format));
+		return NULL;
 	}
 	V_FORMAT(s) = format;
 	V_ORDER(s)  = org;
@@ -669,14 +672,19 @@ Var* ff_create(vfuncptr func, Var* arg)
 	V_SIZE(s)[orders[org][1]] = y;
 	V_SIZE(s)[orders[org][2]] = z;
 
-	cdata = (u_char*)V_DATA(s);
-	sdata = (short*)V_DATA(s);
-	idata = (int*)V_DATA(s);
+	// casts from void* aren't required in C ...
+	cdata = (u8*)V_DATA(s);
+	sdata = (i16*)V_DATA(s);
+	idata = (i32*)V_DATA(s);
+	i64data = (i64*)V_DATA(s);
+
 	fdata = (float*)V_DATA(s);
 	ddata = (double*)V_DATA(s);
 
 	if (init) {
 		if (step == 0) {
+
+			//unecessary check
 			if (dsize > 0) {
 				unsigned char* data = V_DATA(s);
 				unsigned int nbytes = NBYTES(format);
@@ -687,6 +695,8 @@ Var* ff_create(vfuncptr func, Var* arg)
 				case DV_UINT8: cdata[0]  = saturate_byte(v); break;
 				case DV_INT16: sdata[0]  = saturate_short(v); break;
 				case DV_INT32: idata[0]  = saturate_int(v); break;
+				case DV_INT64: i64data[0]  = saturate_int64(v); break;
+
 				case DV_FLOAT: fdata[0]  = saturate_float(v); break;
 				case DV_DOUBLE: ddata[0] = v; break;
 				}
@@ -701,9 +711,11 @@ Var* ff_create(vfuncptr func, Var* arg)
 						v = (count++) * step + start;
 						c = cpos(i, j, k, s);
 						switch (format) {
-						case DV_UINT8: cdata[c]  = saturate_byte(v); break;
-						case DV_INT16: sdata[c]  = saturate_short(v); break;
-						case DV_INT32: idata[c]  = saturate_int(v); break;
+						case DV_UINT8: cdata[c]    = saturate_byte(v); break;
+						case DV_INT16: sdata[c]    = saturate_short(v); break;
+						case DV_INT32: idata[c]    = saturate_int(v); break;
+						case DV_INT64: i64data[c]  = saturate_int64(v); break;
+
 						case DV_FLOAT: fdata[c]  = saturate_float(v); break;
 						case DV_DOUBLE: ddata[c] = v; break;
 						}

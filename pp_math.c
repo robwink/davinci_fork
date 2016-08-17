@@ -205,17 +205,25 @@ Var* pp_math(Var* a, int op, Var* b)
 	if (is_relop(op)) {
 		switch (in_format) {
 		case DV_UINT8:
+		case DV_UINT16:
+		case DV_UINT32:
+		case DV_UINT64:
+		case DV_INT8:
 		case DV_INT16:
-		case DV_INT32: DO_RELOP_LOOP(int, u_char, extract_int, (int)); break;
-		case DV_FLOAT: DO_RELOP_LOOP(float, u_char, extract_float, (float)); break;
-		case DV_DOUBLE: DO_RELOP_LOOP(double, u_char, extract_double, (double)); break;
+		case DV_INT32:
+		case DV_INT64: DO_RELOP_LOOP(i64, u8, extract_int, (i64)); break;
+		case DV_FLOAT: DO_RELOP_LOOP(float, u8, extract_float, (float)); break;
+		case DV_DOUBLE: DO_RELOP_LOOP(double, u8, extract_double, (double)); break;
 		}
 	} else if (op == ID_LSHIFT || op == ID_RSHIFT) {
-		if (in_format <= DV_INT32) {
+		if (in_format <= DV_INT64) {
 			switch (V_FORMAT(a)) {
-			case DV_UINT8: DO_SHIFT_LOOP(int, u_char, extract_int, saturate_byte); break;
-			case DV_INT16: DO_SHIFT_LOOP(int, short, extract_int, saturate_short); break;
-			case DV_INT32: DO_SHIFT_LOOP(int, int, extract_int, (int)); break;
+			// TODO(rswinkle) check C spec for exact conversion behaviors? and add other types
+			case DV_UINT8: DO_SHIFT_LOOP(i32, u8, extract_int, saturate_byte); break;
+			case DV_INT16: DO_SHIFT_LOOP(i32, i16, extract_int, saturate_short); break;
+			case DV_INT32: DO_SHIFT_LOOP(i32, i32, extract_int, (i32)); break;
+
+			case DV_INT64: DO_SHIFT_LOOP(i64, i64, extract_int, (i64)); break;
 			}
 		} else {
 			parse_error("Can only shift ints\n");
@@ -227,9 +235,10 @@ Var* pp_math(Var* a, int op, Var* b)
 		** order, and re-compute offset to that element in the other var.
 		**/
 		switch (in_format) {
-		case DV_UINT8: DO_MATH_LOOP(int, u_char, extract_int, saturate_byte); break;
-		case DV_INT16: DO_MATH_LOOP(int, short, extract_int, saturate_short); break;
-		case DV_INT32: DO_MATH_LOOP(int, int, extract_int, (int)); break;
+		case DV_UINT8: DO_MATH_LOOP(i32, u8, extract_int, saturate_byte); break;
+		case DV_INT16: DO_MATH_LOOP(i32, i16, extract_int, saturate_short); break;
+		case DV_INT32: DO_MATH_LOOP(i32, i32, extract_int, (i32)); break;
+
 		case DV_FLOAT: DO_MATH_LOOP(float, float, extract_float, (float)); break;
 		case DV_DOUBLE: DO_MATH_LOOP(double, double, extract_double, (double)); break;
 		}
@@ -409,18 +418,42 @@ void xpos(size_t i, Var* v, int* x, int* y, int* z)
 int extract_int(const Var* v, const size_t i)
 {
 	switch (V_FORMAT(v)) {
-	case DV_UINT8: return ((int)((u_char*)V_DATA(v))[i]);
-	case DV_INT16: return ((int)((short*)V_DATA(v))[i]);
-	case DV_INT32: return ((int)((int*)V_DATA(v))[i]);
-	case DV_FLOAT: return ((int)((float*)V_DATA(v))[i]);
+	case DV_UINT8: return ((i32)((u8*)V_DATA(v))[i]);
+	case DV_INT16: return ((i32)((i16*)V_DATA(v))[i]);
+	case DV_INT32: return ((i32)((i32*)V_DATA(v))[i]);
+	case DV_FLOAT: return ((i32)((float*)V_DATA(v))[i]);
 	case DV_DOUBLE: return ((int)((double*)V_DATA(v))[i]);
+	default:
+		printf("unknown format %d\n", V_FORMAT(v));
 	}
-	return (0);
+	return 0;
 }
+
+i64 extract_int64(const Var* v, const size_t i)
+{
+	switch (V_FORMAT(v)) {
+	case DV_UINT8: return ((i64)((u8*)V_DATA(v))[i]);
+	case DV_UINT16: return ((i64)((u16*)V_DATA(v))[i]);
+	case DV_UINT32: return ((i64)((u32*)V_DATA(v))[i]);
+
+	// Could overflow
+	case DV_UINT64: return ((i64)((u64*)V_DATA(v))[i]);
+
+	case DV_INT8: return ((i64)((i8*)V_DATA(v))[i]);
+	case DV_INT16: return ((i64)((i16*)V_DATA(v))[i]);
+	case DV_INT32: return ((i64)((i32*)V_DATA(v))[i]);
+	case DV_INT64: return ((i64)((i32*)V_DATA(v))[i]);
+
+	case DV_FLOAT: return ((i64)((float*)V_DATA(v))[i]);
+	case DV_DOUBLE: return ((i64)((double*)V_DATA(v))[i]);
+	}
+	return 0;
+}
+
 float extract_float(Var* v, size_t i)
 {
 	switch (V_FORMAT(v)) {
-	case DV_UINT8: return ((float)((u_char*)V_DATA(v))[i]);
+	case DV_UINT8: return ((float)((u8*)V_DATA(v))[i]);
 	case DV_INT16: return ((float)((short*)V_DATA(v))[i]);
 	case DV_INT32: return ((float)((int*)V_DATA(v))[i]);
 	case DV_FLOAT: return ((float)((float*)V_DATA(v))[i]);
@@ -431,7 +464,7 @@ float extract_float(Var* v, size_t i)
 double extract_double(Var* v, size_t i)
 {
 	switch (V_FORMAT(v)) {
-	case DV_UINT8: return (((u_char*)V_DATA(v))[i]);
+	case DV_UINT8: return (((u8*)V_DATA(v))[i]);
 	case DV_INT16: return (((short*)V_DATA(v))[i]);
 	case DV_INT32: return (((int*)V_DATA(v))[i]);
 	case DV_FLOAT: return (((float*)V_DATA(v))[i]);

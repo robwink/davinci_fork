@@ -29,7 +29,6 @@
 #include <signal.h>
 
 
-//pulls in stdint.h
 #include "system.h"
 
 // NOTE(rswinkle) this is only used 3 times, twice in ff_ix.c
@@ -38,6 +37,9 @@
 #define memdup(p, l) memcpy(malloc(l), (p), l)
 
 #include "parser_types.h"
+
+// could ifdef this to extract_int32
+//#define extract_int extract_int64
 
 #define HBUFSIZE 8192
 #define PATH_SEP ' '

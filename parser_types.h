@@ -7,11 +7,25 @@
 //for size_t
 #include <stdlib.h>
 
+#include <stdint.h>
+
 typedef struct _var Var;
 typedef Var* Vptr;
 /* dvModule is defined in ff_modules.h */
 typedef struct _vfuncptr* vfuncptr;
 typedef Var* (*vfunc)(struct _vfuncptr*, Var*); /* function caller */
+
+typedef int8_t i8;
+typedef int16_t i16;
+typedef int32_t i32;
+typedef int64_t i64;
+
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+
+
 
 typedef struct Range {
 	int dim; /* dimension of data */
@@ -23,7 +37,7 @@ typedef struct Range {
 typedef struct Sym {
 	int format;   /* format of data */
 	size_t dsize; /* total size of data */
-	int size[3];  /* size of each axis */
+	size_t size[3];  /* size of each axis */
 	int order;    /* axis application order */
 	void* data;
 	void* null; /* null value */
@@ -261,8 +275,10 @@ const char* dv_format_to_str(int type);
 
 #define saturate(v, lo, hi) ((v) > (lo) ? ((v) < (hi) ? (v) : (hi)) : (lo))
 #define saturate_byte(v) saturate(v, 0, 255)
-#define saturate_short(v) saturate(v, (SHRT_MIN), (SHRT_MAX))
-#define saturate_int(v) saturate(v, (INT_MIN), (INT_MAX))
+#define saturate_short(v) saturate(v, (INT16_MIN), (INT16_MAX))
+#define saturate_int(v) saturate(v, (INT32_MIN), (INT32_MAX))
+#define saturate_int64(v) saturate(v, (INT64_MIN), (INT64_MAX))
+
 #define saturate_float(v) v
 #define saturate_double(v) v
 

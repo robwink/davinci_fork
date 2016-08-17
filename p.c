@@ -12,7 +12,6 @@
 #define PRINTABLE_STR(s) ((s) ? (s) : "(null)")
 #define MODULE_HELP (const char*)"help"
 
-char *unescape(char *), *unquote(char *);
 char* cleanup_input(char* s);
 Var* pp_new_parallel(Var* axis, Var* arg);
 
@@ -53,11 +52,13 @@ Var* p_mkval(int type, char* str)
 		V_TYPE(v)   = ID_STRING;
 		break;
 	case ID_IVAL:
-		make_sym(v, DV_INT32, str);
+		// NOTE(rswinkle) default to i64
+		make_sym(v, DV_INT64, str);
 		V_TYPE(v) = ID_VAL;
 		break;
 	case ID_RVAL:
-		make_sym(v, DV_FLOAT, str);
+		// NOTE(rswinkle) fix intermediate float bug
+		make_sym(v, DV_DOUBLE, str);
 		V_TYPE(v) = ID_VAL;
 		break;
 	case ID_ID:
