@@ -5,7 +5,7 @@ Var* make_mask(int size, float dir);
 
 Var* ff_distance_map(vfuncptr func, Var* arg)
 {
-	int x, y, z;
+	size_t x, y, z;
 	int dx, dy;
 	Var* o1 = NULL;
 	Var* o2 = NULL;

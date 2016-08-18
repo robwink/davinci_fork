@@ -48,6 +48,7 @@ struct _vfuncptr vfunclist[] = {
 
     /* format conversion routines.  All just shorthand for ff_conv() */
 
+    // TODO(rswinkle) Add types
     {"char", ff_conv, (void*)DV_UINT8, NULL},
     {"byte", ff_conv, (void*)DV_UINT8, NULL},
     {"short", ff_conv, (void*)DV_INT16, NULL},

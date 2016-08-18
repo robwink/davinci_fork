@@ -29,9 +29,9 @@ typedef uint64_t u64;
 
 typedef struct Range {
 	int dim; /* dimension of data */
-	int lo[3];
-	int hi[3];
-	int step[3];
+	u64 lo[3];
+	u64 hi[3];
+	u64 step[3];
 } Range;
 
 typedef struct Sym {

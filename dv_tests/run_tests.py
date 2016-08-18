@@ -81,7 +81,7 @@ def main():
 
 	ret = 0
 	for test in tests:
-		#print(test)
+		print(test)
 		location, tmp, testfile = test.rpartition('/')
 		testname, extension = testfile.split('.')
 		os.chdir(location)

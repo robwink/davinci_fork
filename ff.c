@@ -426,6 +426,7 @@ Var* ff_conv(vfuncptr func, Var* arg)
 		return (NULL);
 	}
 
+	//TODO(rswinkle) add types
 	switch (format) {
 	case DV_UINT8: {
 		int d;
@@ -524,12 +525,19 @@ Var* ff_format(vfuncptr func, Var* arg)
 	char* ptr             = NULL;
 	char* type            = NULL;
 	char* format_str      = NULL;
-	const char* formats[] = {"byte", "short", "int", "float", "double", NULL};
 
 	Alist alist[4];
 	alist[0]      = make_alist("object", ID_UNK, NULL, &obj);
-	alist[1]      = make_alist("format", ID_ENUM, formats, &format_str);
-	alist[2]      = make_alist("type", ID_ENUM, formats, &format_str);
+
+	// TODO(rswinkle) This is stupid and inconsistent with other "format" taking functions.
+	// allows doing this
+	//
+	// format(obj, type=byte, format=int)
+	//
+	// and uses the last given, ie int in this case
+	alist[1]      = make_alist("format", ID_ENUM, FORMAT_STRINGS, &format_str);
+	alist[2]      = make_alist("type", ID_ENUM, FORMAT_STRINGS, &format_str);
+
 	alist[3].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return (NULL);

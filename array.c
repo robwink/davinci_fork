@@ -4,7 +4,7 @@
  ** Convert specified position to scalar value, by applying range
  **/
 
-int fixup(int i, Range* in, Range* out, int maxsize)
+int fixup(int i, Range* in, Range* out, size_t maxsize)
 {
 	out->lo[i]   = in->lo[i];
 	out->hi[i]   = in->hi[i];
@@ -28,6 +28,9 @@ int fixup_ranges(Var* v, Range* in, Range* out)
 {
 	int i, j;
 
+	// NOTE(rswinkle): It is just wrong that we allow array indexing structures
+	// in davinci.  Mixing named and unnamed members and allowing indexing based on
+	// creation order (ignoring the names) is messed up
 	if (V_TYPE(v) == ID_STRUCT) {
 		/*
 		** Structures only have 1 dimension
@@ -47,6 +50,8 @@ int fixup_ranges(Var* v, Range* in, Range* out)
 	}
 	return (1);
 }
+
+
 /**
  ** These convert from BSQ to something else
  ** Which is why orders[BIP] looks funny.
@@ -54,6 +59,7 @@ int fixup_ranges(Var* v, Range* in, Range* out)
  ** This is the "location" of axis N.
  **/
 
+// This is more davinci style madness and a global of course
 int orders[3][3] = {{0, 1, 2}, {0, 2, 1}, {1, 2, 0}};
 
 Var* extract_array(Var* v, Range* r)
@@ -61,9 +67,10 @@ Var* extract_array(Var* v, Range* r)
 	Range rout;
 	Var* out;
 
-	int f_lo[3];
-	int f_hi[3];
-	int f_step[3];
+	size_t f_lo[3];
+	size_t f_hi[3];
+	size_t f_step[3];
+
 	size_t i, j, k, count, size = 1;
 	size_t f1, f2, f3;
 	void* data;
@@ -143,12 +150,13 @@ Var* ff_translate(vfuncptr func, Var* arg)
 	Var *object = NULL, *v, *s;
 	int from;
 	int to;
-	int d[3];
 	size_t count, l;
 	int flip = 0;
 	int nbytes;
-	int in_size[3], out_size[3];
-	int i, j, k, t;
+
+	size_t in_size[3], out_size[3], d[3];
+	size_t i, j, k, t;
+
 	const char* options[] = {"x", "y", "z", NULL};
 	char *axis1_str = NULL, *axis2_str = NULL;
 

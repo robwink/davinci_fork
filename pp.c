@@ -522,7 +522,7 @@ Var* pp_set_struct(Var* a, Var* b, Var* exp)
  **/
 Var* pp_mk_range(Var* r1, Var* r2)
 {
-	int v1 = 0, v2 = 0;
+	u64 v1 = 0, v2 = 0;
 	int format;
 	Var* v;
 
@@ -531,20 +531,20 @@ Var* pp_mk_range(Var* r1, Var* r2)
 
 	if (r1) {
 		format = V_FORMAT(r1);
-		if (format != DV_INT32 && format != DV_INT16 && format != DV_UINT8) {
+		if (format < DV_UINT8 | format > DV_INT64) {
 			parse_error("(r1) Invalid range value.");
 			return (NULL);
 		}
-		v1 = extract_int(r1, 0);
+		v1 = extract_int64(r1, 0);
 	}
 
 	if (r2) {
 		format = V_FORMAT(r2);
-		if (format != DV_INT32 && format != DV_INT16 && format != DV_UINT8) {
+		if (format < DV_UINT8 | format > DV_INT64) {
 			parse_error("(r2) Invalid range value");
 			return (NULL);
 		}
-		v2 = extract_int(r2, 0);
+		v2 = extract_int64(r2, 0);
 	}
 
 	v = newVar();
@@ -563,7 +563,7 @@ Var* pp_mk_range(Var* r1, Var* r2)
  **/
 Var* pp_mk_rstep(Var* r1, Var* r2)
 {
-	int v1 = 0;
+	u64 v1 = 0;
 	int format;
 
 	r1 = eval(r1);
@@ -583,7 +583,7 @@ Var* pp_mk_rstep(Var* r1, Var* r2)
 			parse_error("(r2) Invalid range value");
 			return (NULL);
 		}
-		v1 = extract_int(r2, 0);
+		v1 = extract_int64(r2, 0);
 	}
 
 	V_RANGE(r1)->step[0] = v1;
