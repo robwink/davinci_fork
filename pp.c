@@ -126,15 +126,16 @@ void dump_var(Var* v, int indent, int limit)
 					for (i = 0; i < x; i++) {
 						c = cpos(i, j, k, v);
 						switch (V_FORMAT(v)) {
+						// TODO(rswinkle) test on 32 bit
 						case DV_UINT8: printf("%u\t", ((u8*)V_DATA(v))[c]); break;
 						case DV_UINT16: printf("%u\t", ((u16*)V_DATA(v))[c]); break;
-						case DV_UINT32: printf("%lu\t", ((u32*)V_DATA(v))[c]); break;
-						case DV_UINT64: printf("%llu\t", ((u64*)V_DATA(v))[c]); break;
+						case DV_UINT32: printf("%u\t", ((u32*)V_DATA(v))[c]); break;
+						case DV_UINT64: printf("%lu\t", ((u64*)V_DATA(v))[c]); break;
 
 						case DV_INT8: printf("%d\t", ((i8*)V_DATA(v))[c]); break;
 						case DV_INT16: printf("%d\t", ((i16*)V_DATA(v))[c]); break;
-						case DV_INT32: printf("%ld\t", ((i32*)V_DATA(v))[c]); break;
-						case DV_INT64: printf("%lld\t", ((i64*)V_DATA(v))[c]); break;
+						case DV_INT32: printf("%d\t", ((i32*)V_DATA(v))[c]); break;
+						case DV_INT64: printf("%ld\t", ((i64*)V_DATA(v))[c]); break;
 
 						case DV_FLOAT: printf("%#.*g\t", SCALE, ((float*)V_DATA(v))[c]); break;
 						case DV_DOUBLE: printf("%#.*g\t", SCALE, ((double*)V_DATA(v))[c]); break;
@@ -420,8 +421,8 @@ Var* pp_inc_var(Var* id, Var* range, Var* exp)
 int array_replace(Var* dst, Var* src, Range* r)
 {
 	size_t i, j, k;
-	int size[3];
-	int x, y, z;
+	size_t size[3];
+	size_t x, y, z;
 	size_t d, s;
 	size_t src_nbytes;
 
@@ -457,16 +458,35 @@ int array_replace(Var* dst, Var* src, Range* r)
 					memcpy(((char*)V_DATA(dst)) + d * src_nbytes,
 					       ((char*)V_DATA(src)) + s * src_nbytes, src_nbytes);
 				} else {
+
+					// TODO(rswinkle) think about these extract funcs and where/if clamp is necessary
 					switch (V_FORMAT(dst)) {
 					case DV_UINT8:
-						((u_char*)V_DATA(dst))[d] = saturate_byte(extract_int(src, s));
+						((u8*)V_DATA(dst))[d] = clamp_byte(extract_int(src, s));
+						break;
+					case DV_UINT16:
+						((u16*)V_DATA(dst))[d] = clamp_u16(extract_int(src, s));
+						break;
+					case DV_UINT32:
+						((u32*)V_DATA(dst))[d] = clamp_u32(extract_int(src, s));
+						break;
+					case DV_UINT64:
+						((u64*)V_DATA(dst))[d] = extract_u64(src, s);
+						break;
+
+					case DV_INT8:
+						((i8*)V_DATA(dst))[d] = clamp_i8(extract_int(src, s));
 						break;
 					case DV_INT16:
-						((short*)V_DATA(dst))[d] = saturate_short(extract_int(src, s));
+						((i16*)V_DATA(dst))[d] = clamp_short(extract_int(src, s));
 						break;
 					case DV_INT32:
-						((int*)V_DATA(dst))[d] = saturate_int(extract_int(src, s));
+						((i32*)V_DATA(dst))[d] = clamp_i32(extract_int(src, s));
 						break;
+					case DV_INT64:
+						((i64*)V_DATA(dst))[d] = extract_i64(src, s);
+						break;
+
 					case DV_FLOAT: ((float*)V_DATA(dst))[d]   = extract_float(src, s); break;
 					case DV_DOUBLE: ((double*)V_DATA(dst))[d] = extract_double(src, s); break;
 					}
@@ -535,7 +555,7 @@ Var* pp_mk_range(Var* r1, Var* r2)
 			parse_error("(r1) Invalid range value.");
 			return (NULL);
 		}
-		v1 = extract_int64(r1, 0);
+		v1 = extract_u64(r1, 0);
 	}
 
 	if (r2) {
@@ -544,7 +564,7 @@ Var* pp_mk_range(Var* r1, Var* r2)
 			parse_error("(r2) Invalid range value");
 			return (NULL);
 		}
-		v2 = extract_int64(r2, 0);
+		v2 = extract_u64(r2, 0);
 	}
 
 	v = newVar();
@@ -583,7 +603,7 @@ Var* pp_mk_rstep(Var* r1, Var* r2)
 			parse_error("(r2) Invalid range value");
 			return (NULL);
 		}
-		v1 = extract_int64(r2, 0);
+		v1 = extract_u64(r2, 0);
 	}
 
 	V_RANGE(r1)->step[0] = v1;

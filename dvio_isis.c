@@ -2543,14 +2543,14 @@ static int convert_data(int from_type, void* from_data, int to_type, void* to_da
 			case DV_UINT8: to_byte_data[i]    = from_byte_data[i]; break;
 			case DV_INT16: to_short_data[i]   = from_byte_data[i]; break;
 			case DV_INT32: to_int_data[i]     = from_byte_data[i]; break;
-			case DV_FLOAT: to_float_data[i]   = saturate_float(from_byte_data[i]); break;
-			case DV_DOUBLE: to_double_data[i] = saturate_double(from_byte_data[i]); break;
+			case DV_FLOAT: to_float_data[i]   = clamp_float(from_byte_data[i]); break;
+			case DV_DOUBLE: to_double_data[i] = clamp_double(from_byte_data[i]); break;
 			default: return 0;
 			}
 			break;
 		case DV_INT16:
 			switch (to_type) {
-			case DV_UINT8: to_byte_data[i]    = saturate_byte(from_short_data[i]); break;
+			case DV_UINT8: to_byte_data[i]    = clamp_byte(from_short_data[i]); break;
 			case DV_INT16: to_short_data[i]   = from_short_data[i]; break;
 			case DV_INT32: to_int_data[i]     = from_short_data[i]; break;
 			case DV_FLOAT: to_float_data[i]   = from_short_data[i]; break;
@@ -2560,31 +2560,31 @@ static int convert_data(int from_type, void* from_data, int to_type, void* to_da
 			break;
 		case DV_INT32:
 			switch (to_type) {
-			case DV_UINT8: to_byte_data[i]    = saturate_byte(from_int_data[i]); break;
-			case DV_INT16: to_short_data[i]   = saturate_short(from_int_data[i]); break;
+			case DV_UINT8: to_byte_data[i]    = clamp_byte(from_int_data[i]); break;
+			case DV_INT16: to_short_data[i]   = clamp_short(from_int_data[i]); break;
 			case DV_INT32: to_int_data[i]     = from_int_data[i]; break;
-			case DV_FLOAT: to_float_data[i]   = saturate_float(from_int_data[i]); break;
-			case DV_DOUBLE: to_double_data[i] = saturate_double(from_int_data[i]); break;
+			case DV_FLOAT: to_float_data[i]   = clamp_float(from_int_data[i]); break;
+			case DV_DOUBLE: to_double_data[i] = clamp_double(from_int_data[i]); break;
 			default: return 0;
 			}
 			break;
 		case DV_FLOAT:
 			switch (to_type) {
-			case DV_UINT8: to_byte_data[i]    = saturate_byte(from_float_data[i]); break;
-			case DV_INT16: to_short_data[i]   = saturate_short(from_float_data[i]); break;
-			case DV_INT32: to_int_data[i]     = saturate_int(from_float_data[i]); break;
-			case DV_FLOAT: to_float_data[i]   = saturate_float(from_float_data[i]); break;
-			case DV_DOUBLE: to_double_data[i] = saturate_double(from_float_data[i]); break;
+			case DV_UINT8: to_byte_data[i]    = clamp_byte(from_float_data[i]); break;
+			case DV_INT16: to_short_data[i]   = clamp_short(from_float_data[i]); break;
+			case DV_INT32: to_int_data[i]     = clamp_int(from_float_data[i]); break;
+			case DV_FLOAT: to_float_data[i]   = clamp_float(from_float_data[i]); break;
+			case DV_DOUBLE: to_double_data[i] = clamp_double(from_float_data[i]); break;
 			default: return 0;
 			}
 			break;
 		case DV_DOUBLE:
 			switch (to_type) {
-			case DV_UINT8: to_byte_data[i]    = saturate_byte(from_double_data[i]); break;
-			case DV_INT16: to_short_data[i]   = saturate_short(from_double_data[i]); break;
-			case DV_INT32: to_int_data[i]     = saturate_int(from_double_data[i]); break;
-			case DV_FLOAT: to_float_data[i]   = saturate_float(from_double_data[i]); break;
-			case DV_DOUBLE: to_double_data[i] = saturate_double(from_double_data[i]); break;
+			case DV_UINT8: to_byte_data[i]    = clamp_byte(from_double_data[i]); break;
+			case DV_INT16: to_short_data[i]   = clamp_short(from_double_data[i]); break;
+			case DV_INT32: to_int_data[i]     = clamp_int(from_double_data[i]); break;
+			case DV_FLOAT: to_float_data[i]   = clamp_float(from_double_data[i]); break;
+			case DV_DOUBLE: to_double_data[i] = clamp_double(from_double_data[i]); break;
 			default: return 0;
 			}
 			break;

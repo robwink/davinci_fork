@@ -273,14 +273,25 @@ const char* dv_format_to_str(int type);
 #define GetZ(s) GetBands(V_SIZE(s), V_ORG(s))
 #define GetNbytes(s) NBYTES(V_FORMAT(s))
 
-#define saturate(v, lo, hi) ((v) > (lo) ? ((v) < (hi) ? (v) : (hi)) : (lo))
-#define saturate_byte(v) saturate(v, 0, 255)
-#define saturate_short(v) saturate(v, (INT16_MIN), (INT16_MAX))
-#define saturate_int(v) saturate(v, (INT32_MIN), (INT32_MAX))
-#define saturate_int64(v) saturate(v, (INT64_MIN), (INT64_MAX))
+#define clamp(v, lo, hi) ((v) > (lo) ? ((v) < (hi) ? (v) : (hi)) : (lo))
+#define clamp_byte(v) clamp(v, 0, UINT8_MAX)
+#define clamp_u8(v) clamp(v, 0, UINT8_MAX)
+#define clamp_u16(v) clamp(v, 0, UINT16_MAX)
+#define clamp_u32(v) clamp(v, 0, UINT32_MAX)
+#define clamp_u64(v) clamp(v, 0, UINT64_MAX)
 
-#define saturate_float(v) v
-#define saturate_double(v) v
+#define clamp_i8(v) clamp(v, INT8_MIN, INT8_MAX)
+
+#define clamp_i16(v) clamp(v, (INT16_MIN), (INT16_MAX))
+#define clamp_short(v) clamp_i16(v)
+
+#define clamp_i32(v) clamp(v, (INT32_MIN), (INT32_MAX))
+#define clamp_int(v) clamp_i32(v)
+
+#define clamp_i64(v) clamp(v, (INT64_MIN), (INT64_MAX))
+
+#define clamp_float(v) v
+#define clamp_double(v) v
 
 
 #endif

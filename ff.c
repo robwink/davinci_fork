@@ -274,10 +274,10 @@ Var* ff_binary_op(const char* name,               // Function name, for errors
 		v2 = extract_double(b, rpos(i, val, b));
 		v3 = (*fptr)(v1, v2);
 		switch (format) {
-		case DV_UINT8: cdata[i]  = saturate_byte(v3); break;
-		case DV_INT16: sdata[i]  = saturate_short(v3); break;
-		case DV_INT32: idata[i]  = saturate_int(v3); break;
-		case DV_FLOAT: fdata[i]  = saturate_float(v3); break;
+		case DV_UINT8: cdata[i]  = clamp_byte(v3); break;
+		case DV_INT16: sdata[i]  = clamp_short(v3); break;
+		case DV_INT32: idata[i]  = clamp_int(v3); break;
+		case DV_FLOAT: fdata[i]  = clamp_float(v3); break;
 		case DV_DOUBLE: ddata[i] = v3; break;
 		}
 	}
@@ -418,7 +418,7 @@ Var* ff_conv(vfuncptr func, Var* arg)
 		return (NULL);
 	}
 
-	format = (long)func->fdata;
+	format = (intptr_t)func->fdata;
 	dsize  = V_DSIZE(v);
 	data   = calloc(dsize, NBYTES(format));
 	if (data == NULL) {
@@ -433,7 +433,7 @@ Var* ff_conv(vfuncptr func, Var* arg)
 		u_char* idata = (u_char*)data;
 		for (i = 0; i < dsize; i++) {
 			d        = extract_int(v, i);
-			idata[i] = saturate_byte(d);
+			idata[i] = clamp_byte(d);
 		}
 		break;
 	}
@@ -442,7 +442,7 @@ Var* ff_conv(vfuncptr func, Var* arg)
 		short* idata = (short*)data;
 		for (i = 0; i < dsize; i++) {
 			d        = extract_int(v, i);
-			idata[i] = saturate_short(d);
+			idata[i] = clamp_short(d);
 		}
 		break;
 	}
@@ -451,7 +451,7 @@ Var* ff_conv(vfuncptr func, Var* arg)
 		int* idata = (int*)data;
 		for (i = 0; i < dsize; i++) {
 			d        = extract_int(v, i);
-			idata[i] = saturate_int(d);
+			idata[i] = clamp_int(d);
 		}
 		break;
 	}
@@ -700,12 +700,12 @@ Var* ff_create(vfuncptr func, Var* arg)
 
 				v = start;
 				switch (format) {
-				case DV_UINT8: cdata[0]  = saturate_byte(v); break;
-				case DV_INT16: sdata[0]  = saturate_short(v); break;
-				case DV_INT32: idata[0]  = saturate_int(v); break;
-				case DV_INT64: i64data[0]  = saturate_int64(v); break;
+				case DV_UINT8: cdata[0]  = clamp_byte(v); break;
+				case DV_INT16: sdata[0]  = clamp_short(v); break;
+				case DV_INT32: idata[0]  = clamp_int(v); break;
+				case DV_INT64: i64data[0]  = clamp_i64(v); break;
 
-				case DV_FLOAT: fdata[0]  = saturate_float(v); break;
+				case DV_FLOAT: fdata[0]  = clamp_float(v); break;
 				case DV_DOUBLE: ddata[0] = v; break;
 				}
 				for (i = 1; i < dsize; i++) {
@@ -719,12 +719,12 @@ Var* ff_create(vfuncptr func, Var* arg)
 						v = (count++) * step + start;
 						c = cpos(i, j, k, s);
 						switch (format) {
-						case DV_UINT8: cdata[c]    = saturate_byte(v); break;
-						case DV_INT16: sdata[c]    = saturate_short(v); break;
-						case DV_INT32: idata[c]    = saturate_int(v); break;
-						case DV_INT64: i64data[c]  = saturate_int64(v); break;
+						case DV_UINT8: cdata[c]    = clamp_byte(v); break;
+						case DV_INT16: sdata[c]    = clamp_short(v); break;
+						case DV_INT32: idata[c]    = clamp_int(v); break;
+						case DV_INT64: i64data[c]  = clamp_i64(v); break;
 
-						case DV_FLOAT: fdata[c]  = saturate_float(v); break;
+						case DV_FLOAT: fdata[c]  = clamp_float(v); break;
 						case DV_DOUBLE: ddata[c] = v; break;
 						}
 					}

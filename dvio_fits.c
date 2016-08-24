@@ -146,13 +146,12 @@ int Write_FITS_Image(fitsfile* fptr, Var* obj)
 	long naxes[3];
 	int bitpix;
 	int datatype;
-	int* size;
+	size_t* size;
 	int i;
 	int status = 0;
 	int fits_type;
 	long fpixel[3] = {1, 1, 1};
-	long sz;
-	long x, y, z, n;
+	size_t sz, x, y, z, n;
 
 	VarType2FitsType(obj, &bitpix, &datatype);
 
@@ -179,7 +178,7 @@ int Write_FITS_Image(fitsfile* fptr, Var* obj)
 	 */
 	sz = abs(bitpix) / 8;
 
-	n        = (long)((size_t)size[0]) * ((size_t)size[1]) * ((size_t)size[2]);
+	n        = size[0] * size[1] * size[2];
 	swapData = (char*)calloc(n, sz);
 	data     = V_DATA(obj);
 	for (z = 0; z < size[2]; z++) {
@@ -197,7 +196,7 @@ int Write_FITS_Image(fitsfile* fptr, Var* obj)
 	}
 
 	V_DATA(obj) = swapData;
-	fits_write_pix(fptr, datatype, fpixel, ((size_t)size[0]) * ((size_t)size[1]) * ((size_t)size[2]),
+	fits_write_pix(fptr, datatype, fpixel, size[0]*size[1]*size[2],
 	               (void*)V_DATA(obj), &status);
 	QUERY_FITS_ERROR(status, " writing pixel data", 0);
 	V_DATA(obj) = data;

@@ -130,18 +130,23 @@ size_t __BIL2BIP(Var* s1, Var* s2, size_t i);
 size_t __BIP2BSQ(Var* s1, Var* s2, size_t i);
 size_t __BIP2BIL(Var* s1, Var* s2, size_t i);
 size_t __BIP2BIP(Var* s1, Var* s2, size_t i);
-size_t cpos(int x, int y, int z, Var* v);
+size_t cpos(size_t x, size_t y, size_t z, Var* v);
 void xpos(size_t i, Var* v, int* x, int* y, int* z);
 
-/* pp_math.h */
+/* pp_math.c */
 #ifdef __cplusplus
 extern "C" {
 #endif
-int extract_int(const Var* v, const size_t i);
-i64 extract_int64(const Var* v, const size_t i);
+#define extract_type_proto(type) \
+type extract_##type(const Var* v, const size_t i)
+extract_type_proto(u32);
+extract_type_proto(u64);
 
-float extract_float(Var* v, size_t i);
-double extract_double(Var* v, size_t i);
+extract_type_proto(i32);
+extract_type_proto(i64);
+extract_type_proto(float);
+extract_type_proto(double);
+
 #ifdef __cplusplus
 }
 #endif

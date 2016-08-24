@@ -38,8 +38,10 @@
 
 #include "parser_types.h"
 
-// could ifdef this to extract_int32
-//#define extract_int extract_int64
+// could ifdef this based on architecture
+#define extract_int extract_i32
+//#define extract_int extract_i64
+
 
 #define HBUFSIZE 8192
 #define PATH_SEP ' '

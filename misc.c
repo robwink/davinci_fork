@@ -484,9 +484,9 @@ int parse_args(vfuncptr name, Var* args, Alist* alist)
 				free(av);
 				return 0;
 			}
-			// TODO(rswinkle)
+			// TODO(rswinkle) use arch based macro?
 			iptr            = alist[j].value;
-			*iptr           = extract_int64(v, 0);
+			*iptr           = extract_i64(v, 0);
 			alist[j].filled = 1;
 		} else if (alist[j].type == DV_FLOAT) {
 			float* fptr;

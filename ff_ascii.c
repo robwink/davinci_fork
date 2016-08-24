@@ -209,9 +209,9 @@ Var* ff_ascii(vfuncptr func, Var* arg)
 					break;
 				}
 				switch (format) {
-				case DV_UINT8: cdata[count++]  = saturate_byte(strtol(ptr, NULL, 10)); break;
-				case DV_INT16: sdata[count++]  = saturate_short(strtol(ptr, NULL, 10)); break;
-				case DV_INT32: idata[count++]  = saturate_int(strtol(ptr, NULL, 10)); break;
+				case DV_UINT8: cdata[count++]  = clamp_byte(strtol(ptr, NULL, 10)); break;
+				case DV_INT16: sdata[count++]  = clamp_short(strtol(ptr, NULL, 10)); break;
+				case DV_INT32: idata[count++]  = clamp_int(strtol(ptr, NULL, 10)); break;
 				case DV_FLOAT: fdata[count++]  = strtod(ptr, NULL); break;
 				case DV_DOUBLE: ddata[count++] = strtod(ptr, NULL); break;
 				}
