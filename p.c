@@ -80,8 +80,15 @@ int is_zero(Var* v)
 	if (V_TYPE(v) == ID_VAL && V_DSIZE(v) == 1) {
 		switch (V_FORMAT(v)) {
 		case DV_UINT8:
+		case DV_UINT16:
+		case DV_UINT32:
+		case DV_UINT64:
+
+		case DV_INT8:
 		case DV_INT16:
-		case DV_INT32: return (extract_int(v, 0) == 0);
+		case DV_INT32:
+		case DV_INT64: return (extract_i64(v, 0) == 0);
+
 		case DV_FLOAT:
 		case DV_DOUBLE: return (extract_float(v, 0) == 0.0);
 		}
@@ -90,12 +97,17 @@ int is_zero(Var* v)
 		for (i = 0; i < V_DSIZE(v); i++) {
 			switch (V_FORMAT(v)) {
 			case DV_UINT8:
+			case DV_UINT16:
+			case DV_UINT32:
+			case DV_UINT64:
+
+			case DV_INT8:
 			case DV_INT16:
 			case DV_INT32:
-				if (extract_int(v, i) == 0) return (1);
+			case DV_INT64: return (extract_i64(v, i) == 0);
+
 			case DV_FLOAT:
-			case DV_DOUBLE:
-				if (extract_float(v, i) == 0.0) return (1);
+			case DV_DOUBLE: return (extract_float(v, i) == 0.0);
 			}
 		}
 	}

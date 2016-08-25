@@ -373,7 +373,7 @@ int pp_compare(Var* a, Var* b)
 	case DV_INT8:
 	case DV_INT16:
 	case DV_INT32:
-	case DV_INT64: DO_CMP_LOOP(i64, extract_int); break;
+	case DV_INT64: DO_CMP_LOOP(i64, extract_i64); break;
 
 	case DV_FLOAT: DO_CMP_LOOP(float, extract_float); break;
 	case DV_DOUBLE: DO_CMP_LOOP(double, extract_double); break;
@@ -478,109 +478,6 @@ extract_type_func(i64)
 extract_type_func(float)
 extract_type_func(double)
 
-
-/*
-// TODO(rswinkle) combine/simplify these.  Macro?
-i32 extract_int32(const Var* v, const size_t i)
-{
-	switch (V_FORMAT(v)) {
-	case DV_UINT8: return ((i32)((u8*)V_DATA(v))[i]);
-	case DV_UINT16: return ((i32)((u16*)V_DATA(v))[i]);
-	case DV_UINT32: return ((i32)((u32*)V_DATA(v))[i]);
-
-	// Could overflow
-	case DV_UINT64: return ((i32)((u64*)V_DATA(v))[i]);
-
-	case DV_INT8: return ((i32)((i8*)V_DATA(v))[i]);
-	case DV_INT16: return ((i32)((i16*)V_DATA(v))[i]);
-	case DV_INT32: return ((i32)((i32*)V_DATA(v))[i]);
-	case DV_INT64: return ((i32)((i32*)V_DATA(v))[i]);
-
-	case DV_FLOAT: return ((i32)((float*)V_DATA(v))[i]);
-	case DV_DOUBLE: return ((i32)((double*)V_DATA(v))[i]);
-	default:
-		printf("unknown format %d\n", V_FORMAT(v));
-	}
-	return 0;
-}
-
-i64 extract_int64(const Var* v, const size_t i)
-{
-	switch (V_FORMAT(v)) {
-	case DV_UINT8: return ((i64)((u8*)V_DATA(v))[i]);
-	case DV_UINT16: return ((i64)((u16*)V_DATA(v))[i]);
-	case DV_UINT32: return ((i64)((u32*)V_DATA(v))[i]);
-
-	// Could overflow
-	case DV_UINT64: return ((i64)((u64*)V_DATA(v))[i]);
-
-	case DV_INT8: return ((i64)((i8*)V_DATA(v))[i]);
-	case DV_INT16: return ((i64)((i16*)V_DATA(v))[i]);
-	case DV_INT32: return ((i64)((i32*)V_DATA(v))[i]);
-	case DV_INT64: return ((i64)((i32*)V_DATA(v))[i]);
-
-	case DV_FLOAT: return ((i64)((float*)V_DATA(v))[i]);
-	case DV_DOUBLE: return ((i64)((double*)V_DATA(v))[i]);
-	}
-	return 0;
-}
-
-u64 extract_uint64(const Var* v, const size_t i)
-{
-	switch (V_FORMAT(v)) {
-	case DV_UINT8: return ((u64)((u8*)V_DATA(v))[i]);
-	case DV_UINT16: return ((u64)((u16*)V_DATA(v))[i]);
-	case DV_UINT32: return ((u64)((u32*)V_DATA(v))[i]);
-	case DV_UINT64: return ((u64)((u64*)V_DATA(v))[i]);
-
-	case DV_INT8: return ((u64)((i8*)V_DATA(v))[i]);
-	case DV_INT16: return ((u64)((i16*)V_DATA(v))[i]);
-	case DV_INT32: return ((u64)((i32*)V_DATA(v))[i]);
-	case DV_INT64: return ((u64)((i32*)V_DATA(v))[i]);
-
-	case DV_FLOAT: return ((u64)((float*)V_DATA(v))[i]);
-	case DV_DOUBLE: return ((u64)((double*)V_DATA(v))[i]);
-	}
-	return 0;
-}
-
-float extract_float(Var* v, size_t i)
-{
-	switch (V_FORMAT(v)) {
-	case DV_UINT8: return ((float)((u8*)V_DATA(v))[i]);
-	case DV_UINT16: return ((float)((u16*)V_DATA(v))[i]);
-	case DV_UINT32: return ((float)((u32*)V_DATA(v))[i]);
-	case DV_UINT64: return ((float)((u64*)V_DATA(v))[i]);
-
-	case DV_INT8: return ((float)((i8*)V_DATA(v))[i]);
-	case DV_INT16: return ((float)((i16*)V_DATA(v))[i]);
-	case DV_INT32: return ((float)((i32*)V_DATA(v))[i]);
-	case DV_INT64: return ((float)((i32*)V_DATA(v))[i]);
-
-	case DV_FLOAT: return ((float)((float*)V_DATA(v))[i]);
-	case DV_DOUBLE: return ((float)((double*)V_DATA(v))[i]);
-	}
-	return 0;
-}
-double extract_double(Var* v, size_t i)
-{
-	switch (V_FORMAT(v)) {
-	case DV_UINT8: return ((double)((u8*)V_DATA(v))[i]);
-	case DV_UINT16: return ((double)((u16*)V_DATA(v))[i]);
-	case DV_UINT32: return ((double)((u32*)V_DATA(v))[i]);
-	case DV_UINT64: return ((double)((u64*)V_DATA(v))[i]);
-
-	case DV_INT8: return ((double)((i8*)V_DATA(v))[i]);
-	case DV_INT16: return ((double)((i16*)V_DATA(v))[i]);
-	case DV_INT32: return ((double)((i32*)V_DATA(v))[i]);
-	case DV_INT64: return ((double)((i32*)V_DATA(v))[i]);
-
-	case DV_FLOAT: return ((double)((float*)V_DATA(v))[i]);
-	case DV_DOUBLE: return ((double)((double*)V_DATA(v))[i]);
-	}
-	return 0;
-}
-*/
 
 int math_operable(Var* a, Var* b)
 {

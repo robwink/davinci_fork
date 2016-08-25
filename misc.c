@@ -144,6 +144,8 @@ char* get_value(char* s1, char* s2)
 // Moved from globals.c
 void make_sym(Var* v, int format, char* str)
 {
+	double d;
+
 	V_FORMAT(v)  = format;
 	V_DSIZE(v)   = 1;
 	V_SIZE(v)[0] = V_SIZE(v)[1] = V_SIZE(v)[2] = 1;
@@ -162,8 +164,7 @@ void make_sym(Var* v, int format, char* str)
 	case DV_INT32: *((i32*)(V_DATA(v))) = strtol(str, NULL, 10); break;
 	case DV_INT64: *((i64*)(V_DATA(v))) = strtoll(str, NULL, 10); break;
 
-	case DV_FLOAT: {
-		double d;
+	case DV_FLOAT:
 		d = strtod(str, NULL);
 		if (((d > FLT_MAX) || (d < FLT_MIN)) && (d != 0)) {
 			free(V_DATA(v));
@@ -173,12 +174,11 @@ void make_sym(Var* v, int format, char* str)
 		} else {
 			*((float*)(V_DATA(v))) = d;
 		}
-	} break;
-	case DV_DOUBLE: {
-		double d;
+		break;
+	case DV_DOUBLE:
 		d = strtod(str, NULL);
 		*((double*)(V_DATA(v))) = d;
-	}
+		break;
 	}
 }
 
@@ -471,8 +471,26 @@ int parse_args(vfuncptr name, Var* args, Alist* alist)
 		// etc.
 		// though of course we could just shift the starting point to of the numeric
 		// enums if we needed to
-		} else if (alist[j].type >= DV_UINT8 &&alist[j].type <= DV_INT64) {
-			i64* iptr;
+		} else if (alist[j].type >= DV_UINT8 && alist[j].type <= DV_INT64) {
+
+			// NOTE(rswinkle) previously it only did i32 and all non-real/OBJ args were i32
+			// (including those specified as BOOL/BOOLEAN in docs) because it was the largest
+			// int type available it could handle anything
+			//
+			// I am going to handle everything even though it's overkill because I might as well.  Really
+			// You could probably just add i64 (and maybe u32 and u64)
+			// I'm not going to change every davinci function to use DV_INT64's instead though someone might
+			// want to eventually.
+			u8* u8ptr = alist[j].value;
+			u16* u16ptr = alist[j].value;
+			u32* u32ptr = alist[j].value;
+			u64* u64ptr = alist[j].value;
+
+			i8* i8ptr = alist[j].value;
+			i16* i16ptr = alist[j].value;
+			i32* i32ptr = alist[j].value;
+			i64* i64ptr = alist[j].value;
+
 			if ((e = eval(v)) == NULL) {
 				parse_error("%s: Variable not found: %s", fname, V_NAME(v));
 				free(av);
@@ -480,13 +498,24 @@ int parse_args(vfuncptr name, Var* args, Alist* alist)
 			}
 			v = e;
 			if (V_TYPE(v) != ID_VAL || V_FORMAT(v) > DV_INT64) {
-				parse_error("Illegal argument %s(...%s=...), expected DV_INT32", fname, alist[j].name);
+				parse_error("Illegal argument %s(...%s=...), expected integer type", fname, alist[j].name);
 				free(av);
 				return 0;
 			}
-			// TODO(rswinkle) use arch based macro?
-			iptr            = alist[j].value;
-			*iptr           = extract_i64(v, 0);
+
+			// TODO(rswinkle) use extract_int and arch based macros? see parser.h
+			switch (alist[j].type) {
+			case DV_UINT8: *u8ptr = extract_u64(v, 0); break;
+			case DV_UINT16: *u16ptr = extract_u64(v, 0); break;
+			case DV_UINT32: *u32ptr = extract_u64(v, 0); break;
+			case DV_UINT64: *u64ptr = extract_u64(v, 0); break;
+
+			case DV_INT8: *i8ptr = extract_i64(v, 0); break;
+			case DV_INT16: *i16ptr = extract_i64(v, 0); break;
+			case DV_INT32: *i32ptr = extract_i64(v, 0); break;
+			case DV_INT64: *i64ptr = extract_i64(v, 0); break;
+			}
+			
 			alist[j].filled = 1;
 		} else if (alist[j].type == DV_FLOAT) {
 			float* fptr;

@@ -120,7 +120,10 @@ Var* ff_dfunc(vfuncptr func, Var* arg)
 	/**
 	 ** figure out if we should be returning float or double.
 	 **/
+	// NOTE(rswinkle) always return double
+	//format = DV_DOUBLE;
 	format = max(DV_FLOAT, V_FORMAT(v));
+	
 	dsize  = V_DSIZE(v);
 
 	/**
@@ -608,8 +611,16 @@ Var* ff_create(vfuncptr func, Var* arg)
 	// TODO(rswinkle) combine/with use global array?
 	const char* orgs[]    = {"bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL};
 
+
+	// NOTE(rswinkle) question is do we default to INT64 or not, or base it on the platform
+	// and this decision affects at least a couple other functions, ie make_sym.
+	//
+	// Also x,y,z are size_t in other funcs but we don't handle size_t in parse_args.  Fortunately
+	// size_t is a u64 on 64 bit
 	u64 x = 1, y = 1, z = 1;
 	int format       = DV_INT64;
+
+
 	int org          = BSQ;
 	double start     = 0;
 	double step      = 1.0;

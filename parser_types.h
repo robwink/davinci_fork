@@ -114,8 +114,11 @@ typedef struct Alist {
 #define V_SYM(v) (&((v)->value.sym)) /* SYMbol value in union */
 
 #define V_DATA(v) V_SYM(v)->data      /* pointer to data */
+
+// TODO(rswinkle) change V_INT based on arch?  uncomment V_INT64?
 #define V_INT(v) (*((int*)V_DATA(v))) /* derefernce as a single int */
 /* #define V_INT64(v)  (*((int64 *)V_DATA(v))) / * derefernce as a single int64 */
+
 #define V_FLOAT(v) (*((float*)V_DATA(v)))   /* derefernce as a single float */
 #define V_DOUBLE(v) (*((double*)V_DATA(v))) /* derefernce as a single dbl */
 #define V_FORMAT(v) V_SYM(v)->format

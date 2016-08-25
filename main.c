@@ -646,7 +646,7 @@ void fake_data()
 	V_SIZE(v)[2] = 1;
 	V_ORG(v)     = BSQ;
 	V_FORMAT(v)  = DV_UINT8;
-	V_DATA(v)    = calloc(1, sizeof(u_char));
+	V_DATA(v)    = calloc(1, sizeof(u8));
 	VZERO        = v;
 
 	v         = newVar();

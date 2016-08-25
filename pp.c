@@ -551,7 +551,7 @@ Var* pp_mk_range(Var* r1, Var* r2)
 
 	if (r1) {
 		format = V_FORMAT(r1);
-		if (format < DV_UINT8 | format > DV_INT64) {
+		if (format < DV_UINT8 || format > DV_INT64) {
 			parse_error("(r1) Invalid range value.");
 			return (NULL);
 		}
@@ -560,7 +560,7 @@ Var* pp_mk_range(Var* r1, Var* r2)
 
 	if (r2) {
 		format = V_FORMAT(r2);
-		if (format < DV_UINT8 | format > DV_INT64) {
+		if (format < DV_UINT8 || format > DV_INT64) {
 			parse_error("(r2) Invalid range value");
 			return (NULL);
 		}
@@ -599,7 +599,7 @@ Var* pp_mk_rstep(Var* r1, Var* r2)
 
 	if (r2) {
 		format = V_FORMAT(r2);
-		if (format != DV_INT32 && format != DV_INT16 && format != DV_UINT8) {
+		if (format < DV_UINT8 || format > DV_INT64) {
 			parse_error("(r2) Invalid range value");
 			return (NULL);
 		}
@@ -1048,7 +1048,7 @@ Var* pp_set_where(Var* id, Var* where, Var* exp)
 {
 	Var* v;
 	size_t i, j, k, l, dsize;
-	int ival, format;
+	int format;
 	double dval;
 
 	/**
@@ -1114,16 +1114,26 @@ Var* pp_set_where(Var* id, Var* where, Var* exp)
 	if (V_DSIZE(exp) == 1) {
 		dsize  = V_DSIZE(id);
 		format = V_FORMAT(id);
-		ival   = extract_int(exp, 0);
-		dval   = extract_double(exp, 0);
+
+		// NOTE(rswinkle)
+		u64 uval = extract_u64(exp, 0);
+		i64 ival = extract_i64(exp, 0);
+		dval = extract_double(exp, 0);
 
 		for (i = 0; i < dsize; i++) {
 			j = rpos(i, id, where);
 			if (extract_int(where, j)) {
 				switch (format) {
-				case DV_UINT8: ((u_char*)V_DATA(id))[i]  = ival; break;
-				case DV_INT16: ((short*)V_DATA(id))[i]   = ival; break;
-				case DV_INT32: ((int*)V_DATA(id))[i]     = ival; break;
+				case DV_UINT8: ((u8*)V_DATA(id))[i]   = uval; break;
+				case DV_UINT16: ((u16*)V_DATA(id))[i] = uval; break;
+				case DV_UINT32: ((u32*)V_DATA(id))[i] = uval; break;
+				case DV_UINT64: ((u64*)V_DATA(id))[i] = uval; break;
+
+				case DV_INT8: ((i8*)V_DATA(id))[i]    = ival; break;
+				case DV_INT16: ((i16*)V_DATA(id))[i]  = ival; break;
+				case DV_INT32: ((i32*)V_DATA(id))[i]  = ival; break;
+				case DV_INT64: ((i64*)V_DATA(id))[i]  = ival; break;
+
 				case DV_FLOAT: ((float*)V_DATA(id))[i]   = dval; break;
 				case DV_DOUBLE: ((double*)V_DATA(id))[i] = dval; break;
 				}
