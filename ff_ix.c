@@ -521,9 +521,10 @@ Var* ff_entropy(vfuncptr func, Var* arg)
 	data   = memdup(V_DATA(obj), dsize * NBYTES(V_FORMAT(obj)));
 
 	switch (format) {
-	case DV_UINT8: cmp  = cmp_byte; break;
-	case DV_INT16: cmp  = cmp_short; break;
-	case DV_INT32: cmp  = cmp_int; break;
+	// TODO(rswinkle) add types
+	case DV_UINT8: cmp  = cmp_u8; break;
+	case DV_INT16: cmp  = cmp_i16; break;
+	case DV_INT32: cmp  = cmp_i32; break;
 	case DV_FLOAT: cmp  = cmp_float; break;
 	case DV_DOUBLE: cmp = cmp_double; break;
 	}

@@ -3,16 +3,61 @@
 static void quicksort(void*, size_t, size_t, int (*)(), size_t*, int, int);
 static void* reorgByIndex(Var*, Var*, size_t*);
 
+
+#define cmp_func(type) \
+int cmp_##type(const void* a, const void* b) \
+{ \
+	if (*(type*)a > *(type*)b) return (1); \
+	if (*(type*)a < *(type*)b) return (-1); \
+	return 0; \
+}
+
+
+cmp_func(u8)
+cmp_func(u16)
+cmp_func(u32)
+cmp_func(u64)
+
+cmp_func(i8)
+cmp_func(i16)
+cmp_func(i32)
+cmp_func(i64)
+
+cmp_func(float)
+cmp_func(double)
+
 int cmp_string(const void* a, const void* b)
 {
 	return strcmp(*(char* const*)a, *(char* const*)b);
 }
 
+/*
 int cmp_byte(const void* a, const void* b)
 {
 	if (*(u_char*)a > *(u_char*)b) return (1);
 	if (*(u_char*)a < *(u_char*)b) return (-1);
 	return (0);
+}
+
+int cmp_u16(const void* a, const void* b)
+{
+	if (*(u16*)a > *(u16*)b) return (1);
+	if (*(u16*)a < *(u16*)b) return (-1);
+	return 0;
+}
+
+int cmp_u32(const void* a, const void* b)
+{
+	if (*(u32*)a > *(u32*)b) return (1);
+	if (*(u32*)a < *(u32*)b) return (-1);
+	return 0;
+}
+
+int cmp_u64(const void* a, const void* b)
+{
+	if (*(u64*)a > *(u64*)b) return (1);
+	if (*(u64*)a < *(u64*)b) return (-1);
+	return 0;
 }
 
 int cmp_short(const void* a, const void* b)
@@ -42,6 +87,7 @@ int cmp_double(const void* a, const void* b)
 	if (*(double*)a < *(double*)b) return (-1);
 	return (0);
 }
+*/
 
 // Move data [from] object, [to] data, using size to expand the offset as needed
 #define reorg(to, data, from, object, size) \
@@ -280,9 +326,16 @@ Var* ff_sort(vfuncptr func, Var* arg)
 		dsize  = V_DSIZE(sortVar);
 
 		switch (format) {
-		case DV_UINT8: cmp  = cmp_byte; break;
-		case DV_INT16: cmp  = cmp_short; break;
-		case DV_INT32: cmp  = cmp_int; break;
+		case DV_UINT8: cmp  = cmp_u8; break;
+		case DV_UINT16: cmp  = cmp_u16; break;
+		case DV_UINT32: cmp  = cmp_u32; break;
+		case DV_UINT64: cmp  = cmp_u64; break;
+
+		case DV_INT8: cmp  = cmp_i8; break;
+		case DV_INT16: cmp  = cmp_i16; break;
+		case DV_INT32: cmp  = cmp_i32; break;
+		case DV_INT64: cmp  = cmp_i64; break;
+
 		case DV_FLOAT: cmp  = cmp_float; break;
 		case DV_DOUBLE: cmp = cmp_double; break;
 		}
@@ -610,103 +663,3 @@ Var* ff_unique(vfuncptr func, Var* arg)
 	return NULL;
 }
 
-Var* ff_sort_old(vfuncptr func, Var* arg)
-{
-	Var* object      = NULL; // Value of current object
-	Var* rVal        = NULL; // Returned value/structure
-	Var* index       = NULL; // Sorting index from user
-	Var* args        = NULL;
-	size_t* sortList = NULL; // Sorted list (from index)
-	int format;
-	size_t dsize, ssize;
-	int sformat, i;
-	void *data, *sortSet;
-	int (*cmp)(const void*, const void*);
-
-	Alist alist[3];
-	alist[0]      = make_alist("object", ID_VAL, NULL, &object);
-	alist[1]      = make_alist("index", ID_VAL, NULL, &index);
-	alist[2].name = NULL;
-
-	if (parse_args(func, arg, alist) == 0) return (NULL);
-
-	if (object == NULL) {
-		parse_error("Scott Gonyea's version of sort (still)");
-		return (NULL);
-	}
-
-	format = V_FORMAT(object);
-	dsize  = V_DSIZE(object);
-
-	switch (format) {
-	case DV_UINT8: cmp  = cmp_byte; break;
-	case DV_INT16: cmp  = cmp_short; break;
-	case DV_INT32: cmp  = cmp_int; break;
-	case DV_FLOAT: cmp  = cmp_float; break;
-	case DV_DOUBLE: cmp = cmp_double; break;
-	}
-
-	// Convert index or object to BSQ format, so that the sorted object
-	//  can be rearranged in a way that is understandable to the user.
-	if (index)
-		rVal = index;
-	else
-		rVal = object;
-
-	// Convert to BSQ if not already
-	if (V_ORG(rVal) != BSQ) {
-		args = create_args(1, NULL, rVal, NULL, NULL);
-		rVal = V_func("bsq", args);
-
-		if (index) index = rVal; // Treat index like it is BSQ
-	}
-
-	/*	If index is NULL, ensure BSQ org (above), qsort,	*
-	 *		then convert back to original organization.		*
-	 *		This is visually "more intuitive" to the user.	*/
-	if (index == NULL) {
-		data = calloc(dsize, NBYTES(format));
-		memcpy(data, V_DATA(rVal), dsize * NBYTES(format));
-
-		qsort(data, dsize, NBYTES(format), cmp);
-
-		rVal = newVal(V_ORG(rVal), V_SIZE(rVal)[0], V_SIZE(rVal)[1], V_SIZE(rVal)[2], format, data);
-
-		// Convert the object back to its native format, if it's not BSQ
-		if (V_ORG(object) != BSQ) {
-			args = create_args(1, NULL, rVal, NULL, NULL);
-			if (V_ORG(object) == BIL)
-				rVal = V_func("bil", args);
-			else
-				rVal = V_func("bip", args);
-		}
-		return rVal;
-	}
-
-	sformat = V_FORMAT(index);
-	ssize   = V_DSIZE(index);
-
-	// Create memory for sortSet -- avoid touching the user's data
-	sortSet = calloc(V_DSIZE(index), NBYTES(sformat));
-	memcpy(sortSet, V_DATA(index), V_DSIZE(index) * NBYTES(sformat));
-
-	// sortList will record the index of items that are moved
-	sortList = calloc(ssize, sizeof(size_t));
-	for (i = 0; i < ssize; i++) sortList[i] = i;
-
-	// Sort it
-	quicksort(sortSet, ssize, NBYTES(sformat), cmp, sortList, 0, ssize - 1);
-
-	// Reorganize the object by its respective index
-	data = reorgByIndex(object, index, sortList);
-
-	rVal = newVal(V_ORG(object), V_SIZE(object)[0], V_SIZE(object)[1], V_SIZE(object)[2], format, data);
-
-	// Release memory and return
-	free(sortSet);
-	sortSet = NULL;
-	free(sortList);
-	sortList = NULL;
-
-	return rVal;
-}

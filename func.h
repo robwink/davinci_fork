@@ -448,11 +448,15 @@ extern "C" Var* newVal(int org, int x, int y, int z, int format, void* data);
 #else
 Var* newVal(int org, int x, int y, int z, int format, void* data);
 #endif
-int cmp_byte(const void*, const void*);
-int cmp_short(const void*, const void*);
-int cmp_int(const void*, const void*);
+
+// from ff_sort.c
+int cmp_u8(const void*, const void*);
+int cmp_i16(const void*, const void*);
+int cmp_i32(const void*, const void*);
 int cmp_float(const void*, const void*);
 int cmp_double(const void*, const void*);
+
+
 
 void log_line(char* str);
 void print_history(int i);
