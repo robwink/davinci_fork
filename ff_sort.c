@@ -7,8 +7,8 @@ static void* reorgByIndex(Var*, Var*, size_t*);
 #define cmp_func(type) \
 int cmp_##type(const void* a, const void* b) \
 { \
-	if (*(type*)a > *(type*)b) return (1); \
-	if (*(type*)a < *(type*)b) return (-1); \
+	if (*(type*)a > *(type*)b) return 1; \
+	if (*(type*)a < *(type*)b) return -1; \
 	return 0; \
 }
 
@@ -31,63 +31,6 @@ int cmp_string(const void* a, const void* b)
 	return strcmp(*(char* const*)a, *(char* const*)b);
 }
 
-/*
-int cmp_byte(const void* a, const void* b)
-{
-	if (*(u_char*)a > *(u_char*)b) return (1);
-	if (*(u_char*)a < *(u_char*)b) return (-1);
-	return (0);
-}
-
-int cmp_u16(const void* a, const void* b)
-{
-	if (*(u16*)a > *(u16*)b) return (1);
-	if (*(u16*)a < *(u16*)b) return (-1);
-	return 0;
-}
-
-int cmp_u32(const void* a, const void* b)
-{
-	if (*(u32*)a > *(u32*)b) return (1);
-	if (*(u32*)a < *(u32*)b) return (-1);
-	return 0;
-}
-
-int cmp_u64(const void* a, const void* b)
-{
-	if (*(u64*)a > *(u64*)b) return (1);
-	if (*(u64*)a < *(u64*)b) return (-1);
-	return 0;
-}
-
-int cmp_short(const void* a, const void* b)
-{
-	if (*(short*)a > *(short*)b) return (1);
-	if (*(short*)a < *(short*)b) return (-1);
-	return (0);
-}
-
-int cmp_int(const void* a, const void* b)
-{
-	if (*(int*)a > *(int*)b) return (1);
-	if (*(int*)a < *(int*)b) return (-1);
-	return (0);
-}
-
-int cmp_float(const void* a, const void* b)
-{
-	if (*(float*)a > *(float*)b) return (1);
-	if (*(float*)a < *(float*)b) return (-1);
-	return (0);
-}
-
-int cmp_double(const void* a, const void* b)
-{
-	if (*(double*)a > *(double*)b) return (1);
-	if (*(double*)a < *(double*)b) return (-1);
-	return (0);
-}
-*/
 
 // Move data [from] object, [to] data, using size to expand the offset as needed
 #define reorg(to, data, from, object, size) \

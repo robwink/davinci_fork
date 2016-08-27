@@ -208,6 +208,7 @@ Var* ff_vplot(vfuncptr func, Var* arg)
 				if (V_KEYVAL(av[i]) != NULL) {
 					if (V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 						v = V_KEYVAL(av[i]);
+						// TODO(rswinkle) ADD TYPES
 						if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32) {
 							globalNums[0] = 1;
 							globalNums[1] = (double)extract_int(v, 0);

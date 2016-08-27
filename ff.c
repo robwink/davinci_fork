@@ -429,54 +429,66 @@ Var* ff_conv(vfuncptr func, Var* arg)
 		return (NULL);
 	}
 
-	//TODO(rswinkle) add types
-	switch (format) {
-	case DV_UINT8: {
-		int d;
-		u_char* idata = (u_char*)data;
-		for (i = 0; i < dsize; i++) {
-			d        = extract_int(v, i);
-			idata[i] = clamp_byte(d);
-		}
-		break;
-	}
-	case DV_INT16: {
-		int d;
-		short* idata = (short*)data;
-		for (i = 0; i < dsize; i++) {
-			d        = extract_int(v, i);
-			idata[i] = clamp_short(d);
-		}
-		break;
-	}
-	case DV_INT32: {
-		int d;
-		int* idata = (int*)data;
-		for (i = 0; i < dsize; i++) {
-			d        = extract_int(v, i);
-			idata[i] = clamp_int(d);
-		}
-		break;
-	}
-	case DV_FLOAT: {
-		float* idata = (float*)data;
-		for (i = 0; i < dsize; i++) {
-			idata[i] = extract_float(v, i);
-		}
-		break;
-	}
-	case DV_DOUBLE: {
-		double* idata = (double*)data;
-		for (i = 0; i < dsize; i++) {
-			idata[i] = extract_double(v, i);
-		}
-		break;
-	}
-	}
-	/**
-	 ** Make the new var
-	 **/
+	u8* u8data = data;
+	u16* u16data = data;
+	u32* u32data = data;
+	u64* u64data = data;
 
+	i8* i8data = data;
+	i16* i16data = data;
+	i32* i32data = data;
+	i64* i64data = data;
+
+	float* fdata = data;
+	double* ddata = data;
+
+	u64 tmp_u64;
+	i64 tmp_i64;
+
+	for (i=0; i<dsize; ++i) {
+		switch (format) {
+		case DV_UINT8:
+			tmp_u64 = extract_u64(v, i);
+			u8data[i] = clamp_u8(tmp_u64);
+			break;
+		case DV_UINT16:
+			tmp_u64 = extract_u64(v, i);
+			u16data[i] = clamp_u16(tmp_u64);
+			break;
+		case DV_UINT32:
+			tmp_u64 = extract_u64(v, i);
+			u32data[i] = clamp_u32(tmp_u64);
+			break;
+		case DV_UINT64:
+			u64data[i] = extract_u64(v, i);
+			break;
+
+		case DV_INT8:
+			tmp_i64 = extract_i64(v, i);
+			i8data[i] = clamp_i8(tmp_i64);
+			break;
+		case DV_INT16:
+			tmp_i64 = extract_i64(v, i);
+			i16data[i] = clamp_i16(tmp_i64);
+			break;
+		case DV_INT32:
+			tmp_i64 = extract_i64(v, i);
+			i32data[i] = clamp_i32(tmp_i64);
+			break;
+		case DV_INT64:
+			i64data[i] = extract_i64(v, i);
+			break;
+
+		case DV_FLOAT:
+			fdata[i] = extract_float(v, i);
+			break;
+		case DV_DOUBLE:
+			ddata[i] = extract_double(v, i);
+			break;
+		}
+	}
+
+	// Make the new var
 	s = newVar();
 	memcpy(s, v, sizeof(Var));
 	V_NAME(s) = NULL;
@@ -497,7 +509,7 @@ Var* ff_conv(vfuncptr func, Var* arg)
 Var* ff_dim(vfuncptr func, Var* arg)
 {
 	Var* v = NULL;
-	int* iptr;
+	u64* iptr;
 
 	Alist alist[2];
 	alist[0]      = make_alist("object", ID_VAL, NULL, &v);
@@ -509,13 +521,16 @@ Var* ff_dim(vfuncptr func, Var* arg)
 		return (NULL);
 	}
 
-	iptr = (int*)calloc(3, sizeof(int));
+	// NOTE(rswinkle) dimensions are actually stored as size_t so unless we add
+	// a DV_SIZE_T type and handle it everywhere we just have to use u64 which is the same
+	// as size_t on 64 bit but overkill obviously on 32 bit
+	iptr = (u64*)calloc(3, sizeof(u64));
 
 	iptr[0] = GetSamples(V_SIZE(v), V_ORG(v));
 	iptr[1] = GetLines(V_SIZE(v), V_ORG(v));
 	iptr[2] = GetBands(V_SIZE(v), V_ORG(v));
 
-	return (newVal(BSQ, 3, 1, 1, DV_INT32, iptr));
+	return newVal(BSQ, 3, 1, 1, DV_UINT64, iptr);
 }
 
 /**
@@ -568,9 +583,6 @@ Var* ff_format(vfuncptr func, Var* arg)
 		}
 		return (newString(strdup(type)));
 	} else {
-		/**
-		 ** v specifies format.
-		 **/
 
 		if (!strcasecmp(format_str, "byte"))
 			ptr = (char*)"byte";
@@ -616,10 +628,9 @@ Var* ff_create(vfuncptr func, Var* arg)
 	// and this decision affects at least a couple other functions, ie make_sym.
 	//
 	// Also x,y,z are size_t in other funcs but we don't handle size_t in parse_args.  Fortunately
-	// size_t is a u64 on 64 bit
+	// size_t is a u64 on 64 bit.  We could add size_t to parse_args if wanted.
 	u64 x = 1, y = 1, z = 1;
-	int format       = DV_INT64;
-
+	int format       = DV_INT32;
 
 	int org          = BSQ;
 	double start     = 0;
@@ -1695,31 +1706,31 @@ Var* ff_equals(vfuncptr func, Var* arg)
 int compare_vars(Var* a, Var* b)
 {
 	size_t i;
-	int x1, y1, z1;
-	int x2, y2, z2;
+	size_t x1, y1, z1;
+	size_t x2, y2, z2;
 	int rows, format;
 
-	if (a == NULL || b == NULL) return (0);
-	if (V_TYPE(a) != V_TYPE(b)) return (0);
+	if (a == NULL || b == NULL) return 0;
+	if (V_TYPE(a) != V_TYPE(b)) return 0;
 
 	switch (V_TYPE(a)) {
-	case ID_STRUCT: return (compare_struct(a, b));
+	case ID_STRUCT: return compare_struct(a, b);
 
 	case ID_TEXT:
 		if (V_TEXT(a).Row != V_TEXT(b).Row) return (0);
 		rows = V_TEXT(a).Row;
 		for (i = 0; i < rows; i++) {
 			if (strcmp(V_TEXT(a).text[i], V_TEXT(b).text[i])) {
-				return (0);
+				return 0;
 			}
 		}
-		return (1);
+		return 1;
 
 	case ID_STRING:
 		if (strcmp(V_STRING(a), V_STRING(b))) {
-			return (0);
+			return 0;
 		}
-		return (1);
+		return 1;
 
 	case ID_VAL:
 		/*
@@ -1736,37 +1747,59 @@ int compare_vars(Var* a, Var* b)
 		z2 = GetBands(V_SIZE(b), V_ORG(b));
 
 		if (x1 != x2 || y1 != y2 || z1 != z2) {
-			return (0);
+			return 0;
 		}
 
+		//TODO(rswinkle) check C spec integer conversions/promotions
 		format = max(V_FORMAT(a), V_FORMAT(b));
 
 		for (i = 0; i < V_DSIZE(a); i++) {
 			switch (format) {
 			case DV_UINT8:
+			case DV_UINT16:
+			case DV_UINT32:
+
+			case DV_INT8:
 			case DV_INT16:
 			case DV_INT32:
-				if (extract_int(a, i) != extract_int(b, rpos(i, a, b))) return (0);
-				break;
+			case DV_INT64:
+				if (extract_i64(a, i) != extract_i64(b, rpos(i, a, b))) return 0;
+
+			case DV_UINT64:
+				if (extract_u64(a, i) != extract_u64(b, rpos(i, a, b))) return 0;
+
 			case DV_FLOAT:
-				if (extract_float(a, i) != extract_float(b, rpos(i, a, b))) return (0);
-				break;
+				if (extract_float(a, i) != extract_float(b, rpos(i, a, b))) return 0;
 			case DV_DOUBLE:
-				if (extract_double(a, i) != extract_double(b, rpos(i, a, b))) return (0);
-				break;
+				if (extract_double(a, i) != extract_double(b, rpos(i, a, b))) return 0;
 			}
 		}
-		return (1);
+		return 1;
 	}
-	return (0);
+	return 0;
+}
+
+Var* new_u64(u64 i)
+{
+	Var* v     = newVal(BSQ, 1, 1, 1, DV_UINT64, calloc(1, sizeof(u64)));
+	V_UINT64(v) = i;
+	return v;
+}
+
+Var* new_i64(i64 i)
+{
+	Var* v     = newVal(BSQ, 1, 1, 1, DV_INT64, calloc(1, sizeof(i64)));
+	V_INT64(v) = i;
+	return v;
 }
 
 Var* newInt(int i)
 {
-	Var* v   = newVal(BSQ, 1, 1, 1, DV_INT32, calloc(1, sizeof(int)));
+	Var* v   = newVal(BSQ, 1, 1, 1, DV_INT32, calloc(1, sizeof(i32)));
 	V_INT(v) = i;
 	return (v);
 }
+
 Var* newFloat(float f)
 {
 	Var* v     = newVal(BSQ, 1, 1, 1, DV_FLOAT, calloc(1, sizeof(float)));
@@ -1908,45 +1941,42 @@ Var* ff_putenv(vfuncptr func, Var* arg)
 	return (NULL);
 }
 
-/*
- * TODO(gorelick): v_length wants to return an size_t, but we can't
- * give that to the user (yet), so it's currently truncated to an int.
- *
- * Who calls len() on a ID_VAL anyway?
- */
-int v_length(Var* obj)
+// NOTE(rswinkle) again we don't have a DV_SIZE_T yet and not sure we should
+// so we use u64 which is equivalent on 64-bit and overkill on 32-bit
+u64 v_length(Var* obj, int* err)
 {
 	switch (V_TYPE(obj)) {
-	case ID_STRUCT: return (get_struct_count(obj));
-	case ID_TEXT: return (V_TEXT(obj).Row);
-	case ID_STRING: return (strlen(V_STRING(obj)));
-	case ID_VAL: return (V_DSIZE(obj));
-	default: return (-1);
+	case ID_STRUCT: return get_struct_count(obj);
+	case ID_TEXT: return V_TEXT(obj).Row;
+	case ID_STRING: return strlen(V_STRING(obj));
+	case ID_VAL: return V_DSIZE(obj);
+	default: *err = 1;
 	}
 }
 
 Var* ff_length(vfuncptr func, Var* arg)
 {
 	Var* obj = NULL;
-	int len;
+	u64 len;
 
 	Alist alist[2];
 	alist[0]      = make_alist("obj", ID_UNK, NULL, &obj);
 	alist[1].name = NULL;
 
-	if (parse_args(func, arg, alist) == 0) return (NULL);
+	if (parse_args(func, arg, alist) == 0) return NULL;
 
 	if (obj == NULL) {
 		parse_error("Expected object");
-		return (NULL);
+		return NULL;
 	}
 
-	len = v_length(obj);
-	if (len >= 0) {
-		return (newInt(v_length(obj)));
+	int err = 0;
+	len = v_length(obj, &err);
+	if (!err) {
+		return new_u64(len);
 	} else {
 		parse_error("%s: unrecognized type", func->name);
-		return (NULL);
+		return NULL;
 	}
 }
 
@@ -2155,6 +2185,7 @@ Var* ff_contains(vfuncptr func, Var* arg)
 	}
 	dsize = V_DSIZE(obj);
 
+	// TODO(rswinkle) add types
 	switch (V_FORMAT(obj)) {
 	case DV_UINT8:
 		vi = extract_int(value, 0);

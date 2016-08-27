@@ -29,6 +29,8 @@ typedef uint64_t u64;
 
 typedef struct Range {
 	int dim; /* dimension of data */
+	
+	// TODO(rswinkle) make size_t?
 	u64 lo[3];
 	u64 hi[3];
 	u64 step[3];
@@ -115,12 +117,27 @@ typedef struct Alist {
 
 #define V_DATA(v) V_SYM(v)->data      /* pointer to data */
 
+// dereference as single elements of a type
+#define V_UINT8(v) (*((u8*)V_DATA(v)))
+#define V_UINT16(v) (*((u16*)V_DATA(v)))
+#define V_UINT32(v) (*((u32*)V_DATA(v)))
+#define V_UINT64(v) (*((u64*)V_DATA(v)))
+
+#define V_INT8(v) (*((i8*)V_DATA(v)))
+#define V_INT16(v) (*((i16*)V_DATA(v)))
+#define V_INT32(v) (*((i32*)V_DATA(v)))
+#define V_INT64(v) (*((i64*)V_DATA(v)))
+
+// historical type names
 // TODO(rswinkle) change V_INT based on arch?  uncomment V_INT64?
-#define V_INT(v) (*((int*)V_DATA(v))) /* derefernce as a single int */
-/* #define V_INT64(v)  (*((int64 *)V_DATA(v))) / * derefernce as a single int64 */
+#define V_BYTE(v) (*((u8*)V_DATA(v)))
+#define V_SHORT(v) (*((i16*)V_DATA(v)))
+#define V_INT(v) (*((i32*)V_DATA(v)))
 
 #define V_FLOAT(v) (*((float*)V_DATA(v)))   /* derefernce as a single float */
 #define V_DOUBLE(v) (*((double*)V_DATA(v))) /* derefernce as a single dbl */
+
+
 #define V_FORMAT(v) V_SYM(v)->format
 #define V_DSIZE(v) V_SYM(v)->dsize
 #define V_SIZE(v) V_SYM(v)->size
@@ -277,8 +294,10 @@ const char* dv_format_to_str(int type);
 #define GetNbytes(s) NBYTES(V_FORMAT(s))
 
 #define clamp(v, lo, hi) ((v) > (lo) ? ((v) < (hi) ? (v) : (hi)) : (lo))
-#define clamp_byte(v) clamp(v, 0, UINT8_MAX)
+
 #define clamp_u8(v) clamp(v, 0, UINT8_MAX)
+#define clamp_byte(v) clamp_u8(v)
+
 #define clamp_u16(v) clamp(v, 0, UINT16_MAX)
 #define clamp_u32(v) clamp(v, 0, UINT32_MAX)
 #define clamp_u64(v) clamp(v, 0, UINT64_MAX)
