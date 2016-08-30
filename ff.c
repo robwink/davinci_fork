@@ -108,66 +108,37 @@ Var* ff_dfunc(vfuncptr func, Var* arg)
 		return (NULL);
 	}
 
-	/**
-	 ** Find the named function.
-	 **/
-
+	// Find the named function.
 	fptr = (dfunc)func->fdata;
 	if (fptr == NULL) { /* this should never happen */
 		parse_error("Function not found.");
 		return (NULL);
 	}
-	/**
-	 ** figure out if we should be returning float or double.
-	 **/
-	// NOTE(rswinkle) always return double
+
+	// NOTE(rswinkle) I think we should always return double just like C precision
 	//format = DV_DOUBLE;
 	format = max(DV_FLOAT, V_FORMAT(v));
-	
 	dsize  = V_DSIZE(v);
 
-	/**
-	 ** reuse memory if not named.
-	 **/
-	/*
-	  if (format == V_FORMAT(v) && V_NAME(v) == NULL) {
-	  data = V_DATA(v);
-	  } else {
-	  data = calloc(dsize, NBYTES(format));
-	  }
-	*/
 	data = calloc(dsize, NBYTES(format));
 	if (data == NULL) {
 		parse_error("Unable to alloc %ld bytes.\n", dsize * NBYTES(format));
 		return NULL;
 	}
 
-	switch (format) {
-	case DV_FLOAT: {
-		fdata = (float*)data;
+	fdata = data;
+	ddata = data;
+	if (format == DV_FLOAT) {
 		for (i = 0; i < dsize; i++) {
 			fdata[i] = (float)fptr(extract_double(v, i));
 		}
-		break;
-	}
-	case DV_DOUBLE: {
-		ddata = (double*)data;
+	} else {
 		for (i = 0; i < dsize; i++) {
-			ddata[i] = (double)fptr(extract_double(v, i));
+			ddata[i] = fptr(extract_double(v, i));
 		}
-		break;
-	}
 	}
 
-	/**
-	 ** If we reused memory, make sure it doesn't get free'd.
-	 **/
-	if (data == V_DATA(v)) V_DATA(v) = NULL;
-
-	/**
-	 ** construct a new var
-	 **/
-
+	// construct a new var
 	s = newVar();
 	memcpy(s, v, sizeof(Var));
 	V_NAME(s) = NULL;
@@ -177,7 +148,7 @@ Var* ff_dfunc(vfuncptr func, Var* arg)
 	V_DATA(s)                  = data;
 	if (V_TITLE(v)) V_TITLE(s) = strdup(V_TITLE(v));
 
-	return (s);
+	return s;
 }
 
 /**
@@ -1793,6 +1764,7 @@ Var* new_i64(i64 i)
 	return v;
 }
 
+// TODO(rswinkle) macro define this based on arch?
 Var* newInt(int i)
 {
 	Var* v   = newVal(BSQ, 1, 1, 1, DV_INT32, calloc(1, sizeof(i32)));
@@ -2165,7 +2137,8 @@ Var* ff_contains(vfuncptr func, Var* arg)
 	size_t dsize;
 	size_t i;
 	int ret = 0;
-	int vi;
+	i64 vi;
+	u64 vu;
 	double vd;
 
 	Alist alist[4];
@@ -2185,35 +2158,76 @@ Var* ff_contains(vfuncptr func, Var* arg)
 	}
 	dsize = V_DSIZE(obj);
 
-	// TODO(rswinkle) add types
+	// this is ugly and long ...
+	vi = extract_i64(value, 0);
+	vu = extract_u64(value, 0);
 	switch (V_FORMAT(obj)) {
 	case DV_UINT8:
-		vi = extract_int(value, 0);
 		for (i = 0; i < dsize; i++) {
-			if (((unsigned char*)V_DATA(obj))[i] == vi) {
+			if (((u8*)V_DATA(obj))[i] == vi) {
+				ret = 1;
+				break;
+			}
+		}
+		break;
+	case DV_UINT16:
+		for (i = 0; i < dsize; i++) {
+			if (((u16*)V_DATA(obj))[i] == vi) {
+				ret = 1;
+				break;
+			}
+		}
+		break;
+	case DV_UINT32:
+		for (i = 0; i < dsize; i++) {
+			if (((u32*)V_DATA(obj))[i] == vi) {
+				ret = 1;
+				break;
+			}
+		}
+		break;
+	case DV_UINT64:
+		for (i = 0; i < dsize; i++) {
+			if (((u64*)V_DATA(obj))[i] == vu) {
+				ret = 1;
+				break;
+			}
+		}
+		break;
+
+	case DV_INT8:
+		for (i = 0; i < dsize; i++) {
+			if (((i8*)V_DATA(obj))[i] == vi) {
 				ret = 1;
 				break;
 			}
 		}
 		break;
 	case DV_INT16:
-		vi = extract_int(value, 0);
 		for (i = 0; i < dsize; i++) {
-			if (((short*)V_DATA(obj))[i] == vi) {
+			if (((i16*)V_DATA(obj))[i] == vi) {
 				ret = 1;
 				break;
 			}
 		}
 		break;
 	case DV_INT32:
-		vi = extract_int(value, 0);
 		for (i = 0; i < dsize; i++) {
-			if (((int*)V_DATA(obj))[i] == vi) {
+			if (((i32*)V_DATA(obj))[i] == vi) {
 				ret = 1;
 				break;
 			}
 		}
 		break;
+	case DV_INT64:
+		for (i = 0; i < dsize; i++) {
+			if (((i64*)V_DATA(obj))[i] == vi) {
+				ret = 1;
+				break;
+			}
+		}
+		break;
+
 	case DV_FLOAT:
 		vd = extract_float(value, 0);
 		for (i = 0; i < dsize; i++) {
@@ -2233,7 +2247,7 @@ Var* ff_contains(vfuncptr func, Var* arg)
 		}
 		break;
 	}
-	return (newInt(ret));
+	return newInt(ret);
 }
 
 Var* ff_chdir(vfuncptr func, Var* arg)
@@ -2261,5 +2275,5 @@ Var* ff_chdir(vfuncptr func, Var* arg)
 */
 double my_round(double d)
 {
-	return (round(d));
+	return round(d);
 }

@@ -1,13 +1,12 @@
 x = 1/256.0
 pi = 104348.0 / 33215
-rc1 = (atan(tan(x))== x && \
+rc1 = (atan(tan(x)) == x && \
     (sin(x)*sin(x) + cos(x)*cos(x)) == 1.0 && \
     acos(-1) == pi && \
     asin(1)*2 == pi && \
     cos(pi/4) == sqrt(2)/2 && \
     sin(pi/4) == sqrt(2)/2)
 
-x = 1/256.0
 pi = 180.0
 rc2 = (atand(tand(x))== x && \
     (sind(x)*sind(x) + cosd(x)*cosd(x)) == 1.0 && \

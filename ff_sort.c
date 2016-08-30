@@ -140,7 +140,8 @@ static void* reorgByIndex(Var* object, Var* index, size_t* sortList)
 }
 
 // TODO(rswinkle) Use the standard library qsort instead.  Seriously why not?
-// This file dates to 1999, qsort has been around since C89.
+// This file dates to 1999, qsort has been around since C89.  Also we already use
+// qsort in ff_ix.c
 
 //	QuickSort adapted from Kernighan and Ritchie, 'The C Programming Language'
 static inline void qswap(void* base, int i, int j, int width, size_t* sortList)

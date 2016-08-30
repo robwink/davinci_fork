@@ -240,8 +240,15 @@ enum {
 	ID_FPTR /* a function pointer */
 };
 
-// TODO(rswinkle) make these an enum?
 
+// NOTE(rswinkle): Always keep the order and arrangement of the types like this
+// so things like
+//
+// if(format >= DV_UINT8 && format <= DV_INT64)
+// else if (format <= DV_DOUBLE)
+//
+// and similar checks work
+//
 enum {
 	DV_UINT8 = 1,
 	DV_UINT16,

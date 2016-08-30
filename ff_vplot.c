@@ -208,14 +208,8 @@ Var* ff_vplot(vfuncptr func, Var* arg)
 				if (V_KEYVAL(av[i]) != NULL) {
 					if (V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 						v = V_KEYVAL(av[i]);
-						// TODO(rswinkle) ADD TYPES
-						if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32) {
-							globalNums[0] = 1;
-							globalNums[1] = (double)extract_int(v, 0);
-						} else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE) {
-							globalNums[0] = 1;
-							globalNums[1] = extract_double(v, 0);
-						}
+						globalNums[0] = 1;
+						globalNums[1] = extract_double(v, 0);
 					} else {
 						parse_error("Invalid designation for Ignore");
 						parse_error("Keyword 'Ignore' must be a numeric value");
@@ -230,13 +224,8 @@ Var* ff_vplot(vfuncptr func, Var* arg)
 				if (V_KEYVAL(av[i]) != NULL) {
 					if (V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 						v = V_KEYVAL(av[i]);
-						if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32) {
-							globalNums[2] = 1;
-							globalNums[3] = (double)extract_int(v, 0);
-						} else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE) {
-							globalNums[2] = 1;
-							globalNums[3] = extract_double(v, 0);
-						}
+						globalNums[2] = 1;
+						globalNums[3] = extract_double(v, 0);
 					} else {
 						parse_error("Invalid designation for Iabove");
 						parse_error("Keyword 'Iabove' must be a numeric value");
@@ -251,13 +240,8 @@ Var* ff_vplot(vfuncptr func, Var* arg)
 				if (V_KEYVAL(av[i]) != NULL) {
 					if (V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 						v = V_KEYVAL(av[i]);
-						if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32) {
-							globalNums[4] = 1;
-							globalNums[5] = (double)extract_int(v, 0);
-						} else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE) {
-							globalNums[4] = 1;
-							globalNums[5] = extract_double(v, 0);
-						}
+						globalNums[4] = 1;
+						globalNums[5] = extract_double(v, 0);
 					} else {
 						parse_error("Invalid designation for Ibelow");
 						parse_error("Keyword 'Ibelow' must be a numeric value");
@@ -272,13 +256,8 @@ Var* ff_vplot(vfuncptr func, Var* arg)
 				if (V_KEYVAL(av[i]) != NULL) {
 					if (V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 						v = V_KEYVAL(av[i]);
-						if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32) {
-							globalNums[6] = 1;
-							globalNums[7] = (double)extract_int(v, 0);
-						} else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE) {
-							globalNums[6] = 1;
-							globalNums[7] = extract_double(v, 0);
-						}
+						globalNums[6] = 1;
+						globalNums[7] = extract_double(v, 0);
 					} else {
 						parse_error("Invalid designation for Ixabove");
 						parse_error("Keyword 'Ixabove' must be a numeric value");
@@ -293,13 +272,8 @@ Var* ff_vplot(vfuncptr func, Var* arg)
 				if (V_KEYVAL(av[i]) != NULL) {
 					if (V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 						v = V_KEYVAL(av[i]);
-						if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32) {
-							globalNums[8] = 1;
-							globalNums[9] = (double)extract_int(v, 0);
-						} else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE) {
-							globalNums[8] = 1;
-							globalNums[9] = extract_double(v, 0);
-						}
+						globalNums[8] = 1;
+						globalNums[9] = extract_double(v, 0);
 					} else {
 						parse_error("Invalid designation for Ixbelow");
 						parse_error("Keyword 'Ixbelow' must be a numeric value");
@@ -315,7 +289,7 @@ Var* ff_vplot(vfuncptr func, Var* arg)
 					v = V_KEYVAL(av[i]);
 					if (V_TYPE(v) == ID_VAL) {
 						globalNums[10] = 1;
-						globalNums[11] = (int)extract_double(v, 0);
+						globalNums[11] = extract_int(v, 0);
 					} else {
 						parse_error("Invalid designation for Color");
 						return (NULL);
@@ -330,7 +304,7 @@ Var* ff_vplot(vfuncptr func, Var* arg)
 					v = V_KEYVAL(av[i]);
 					if (V_TYPE(v) == ID_VAL) {
 						globalNums[12] = 1;
-						globalNums[13] = (int)extract_double(v, 0);
+						globalNums[13] = extract_int(v, 0);
 					} else {
 						parse_error("Invalid designation for line Width");
 						return (NULL);
@@ -376,11 +350,7 @@ Var* ff_vplot(vfuncptr func, Var* arg)
 				if (V_KEYVAL(av[i]) != NULL) {
 					if (V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 						v = V_KEYVAL(av[i]);
-						if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32) {
-							globalNums[15] = (double)extract_int(v, 0);
-						} else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE) {
-							globalNums[15] = extract_double(v, 0);
-						}
+						globalNums[15] = extract_double(v, 0);
 					} else {
 						parse_error("Invalid designation for Offset");
 						parse_error("Keyword 'Offset' must be a numeric value");
@@ -640,10 +610,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 				find_struct(s, "width", &v);
 				if (v != NULL) {
 					if (V_TYPE(v) == ID_VAL) {
-						if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32)
-							width = extract_int(v, 0);
-						else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE)
-							width = (int)extract_double(v, 0);
+						width = extract_int(v, 0); //extract_i64?  change the define ever?
 					} else {
 						parse_error("Invalid width element in structure: Object %d", Onum);
 						parse_error("width must be an integer. Continuing with default width.\n");
@@ -681,10 +648,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 				find_struct(s, "color", &v);
 				if (v != NULL) {
 					if (V_TYPE(v) == ID_VAL) {
-						if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32)
-							color = extract_int(v, 0);
-						else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE)
-							color = (int)extract_double(v, 0);
+						color = extract_int(v, 0);
 					} else {
 						parse_error("Invalid color element in structure: Object %d", Onum);
 						parse_error("color must be an integer. Continuing with default color.\n");
@@ -699,15 +663,8 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 				find_struct(s, "ignore", &v);
 				if (v != NULL) {
 					if (V_TYPE(v) == ID_VAL) {
-						if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32) {
-							ignore = (double)extract_int(v, 0);
-							iflag  = 1;
-						} else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE) {
-							ignore = extract_double(v, 0);
-							iflag  = 1;
-						} else {
-							parse_error("Invalid format for ignore in Object %d", Onum);
-						}
+						ignore = extract_double(v, 0);
+						iflag  = 1;
 					} else {
 						parse_error("Invalid ignore element in structure: Object %d", Onum);
 						parse_error("ignore must be a number. Continuing without ignore.\n");
@@ -718,15 +675,8 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 				find_struct(s, "iabove", &v);
 				if (v != NULL) {
 					if (V_TYPE(v) == ID_VAL) {
-						if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32) {
-							ignore_above = (double)extract_int(v, 0);
-							iaflag       = 1;
-						} else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE) {
-							ignore_above = extract_double(v, 0);
-							iaflag       = 1;
-						} else {
-							parse_error("Invalid format for iabove in Object %d", Onum);
-						}
+						ignore_above = extract_double(v, 0);
+						iaflag       = 1;
 					} else {
 						parse_error("Invalid iabove element in structure: Object %d", Onum);
 						parse_error("iabove must be a number. Continuing without iabove.\n");
@@ -737,15 +687,8 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 				find_struct(s, "ibelow", &v);
 				if (v != NULL) {
 					if (V_TYPE(v) == ID_VAL) {
-						if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32) {
-							ignore_below = (double)extract_int(v, 0);
-							ibflag       = 1;
-						} else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE) {
-							ignore_below = extract_double(v, 0);
-							ibflag       = 1;
-						} else {
-							parse_error("Invalid format for ibelow in Object %d", Onum);
-						}
+						ignore_below = extract_double(v, 0);
+						ibflag       = 1;
 					} else {
 						parse_error("Invalid ibelow element in structure: Object %d", Onum);
 						parse_error("ibelow must be a number. Continuing without ibelow.\n");
@@ -756,15 +699,8 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 				find_struct(s, "ixabove", &v);
 				if (v != NULL) {
 					if (V_TYPE(v) == ID_VAL) {
-						if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32) {
-							ignore_x_above = (double)extract_int(v, 0);
-							ixaflag        = 1;
-						} else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE) {
-							ignore_x_above = extract_double(v, 0);
-							ixaflag        = 1;
-						} else {
-							parse_error("Invalid format for ixabove in Object %d", Onum);
-						}
+						ignore_x_above = extract_double(v, 0);
+						ixaflag        = 1;
 					} else {
 						parse_error("Invalid ixabove element in structure: Object %d", Onum);
 						parse_error("ixabove must be a number. Continuing without ixabove.\n");
@@ -775,15 +711,8 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 				find_struct(s, "ixbelow", &v);
 				if (v != NULL) {
 					if (V_TYPE(v) == ID_VAL) {
-						if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32) {
-							ignore_x_below = (double)extract_int(v, 0);
-							ixbflag        = 1;
-						} else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE) {
-							ignore_x_below = extract_double(v, 0);
-							ixbflag        = 1;
-						} else {
-							parse_error("Invalid format for ixbelow in Object %d", Onum);
-						}
+						ignore_x_below = extract_double(v, 0);
+						ixbflag        = 1;
 					} else {
 						parse_error("Invalid ixbelow element in structure: Object %d", Onum);
 						parse_error("ixbelow must be a number. Continuing without ixbelow.\n");
@@ -794,15 +723,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 				find_struct(s, "offset", &v);
 				if (v != NULL) {
 					if (V_TYPE(v) == ID_VAL) {
-						if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32)
-							offset = (double)extract_int(v, 0);
-
-						else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE)
-							offset = extract_double(v, 0);
-
-						else
-							parse_error("Invalid format for offset in Object %d", Onum);
-
+						offset = extract_double(v, 0);
 					} else {
 						parse_error("Invalid offset element in structure: Object %d", Onum);
 						parse_error("offset must be a number. Continuing without offset.\n");
@@ -886,10 +807,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 				if (V_KEYVAL(av[i]) != NULL) {
 					v = V_KEYVAL(av[i]);
 					if (V_TYPE(v) == ID_VAL) {
-						if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32)
-							ignore = (double)extract_int(v, 0);
-						else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE)
-							ignore = extract_double(v, 0);
+						ignore = extract_double(v, 0);
 						iflag      = 1;
 					} else {
 						parse_error("Invalid ignore value for Object %d", Onum);
@@ -902,10 +820,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 			} else if (!name_check(av[i]->name, "iabove", 2)) {
 				if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 					v = V_KEYVAL(av[i]);
-					if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32)
-						ignore_above = (double)extract_int(v, 0);
-					else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE)
-						ignore_above = extract_double(v, 0);
+					ignore_above = extract_double(v, 0);
 					iaflag           = 1;
 				} else {
 					parse_error("Invalid designation for iabove");
@@ -915,10 +830,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 			} else if (!name_check(av[i]->name, "ibelow", 2)) {
 				if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 					v = V_KEYVAL(av[i]);
-					if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32)
-						ignore_below = (double)extract_int(v, 0);
-					else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE)
-						ignore_below = extract_double(v, 0);
+					ignore_below = extract_double(v, 0);
 					ibflag           = 1;
 				} else {
 					parse_error("Invalid designation for ibelow");
@@ -928,13 +840,8 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 			} else if (!name_check(av[i]->name, "ixabove", 3)) {
 				if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 					v = V_KEYVAL(av[i]);
-					if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32) {
-						ignore_x_above = (double)extract_int(v, 0);
-						ixaflag        = 1;
-					} else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE) {
-						ignore_x_above = extract_double(v, 0);
-						ixaflag        = 1;
-					}
+					ignore_x_above = extract_double(v, 0);
+					ixaflag        = 1;
 				} else {
 					parse_error("Invalid designation for ixabove");
 					parse_error("Continuing plot without value");
@@ -943,13 +850,8 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 			} else if (!name_check(av[i]->name, "ixbelow", 3)) {
 				if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 					v = V_KEYVAL(av[i]);
-					if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32) {
-						ignore_x_below = (double)extract_int(v, 0);
-						ixbflag        = 1;
-					} else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE) {
-						ignore_x_below = extract_double(v, 0);
-						ixbflag        = 1;
-					}
+					ignore_x_below = extract_double(v, 0);
+					ixbflag        = 1;
 				} else {
 					parse_error("Invalid designation for ixbelow");
 					parse_error("Continuing plot without value");
@@ -958,10 +860,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 			} else if (!name_check(av[i]->name, "offset", 1)) {
 				if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
 					v = V_KEYVAL(av[i]);
-					if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT32)
-						offset = (double)extract_int(v, 0);
-					else if (V_FORMAT(v) >= DV_FLOAT && V_FORMAT(v) <= DV_DOUBLE)
-						offset = extract_double(v, 0);
+					offset = extract_double(v, 0);
 				} else {
 					parse_error("Invalid designation for offset");
 					parse_error("Continuing plot without value");
@@ -969,10 +868,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 
 			} else if (!name_check(av[i]->name, "color", 1)) {
 				if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
-					if (V_FORMAT(av[i]) == DV_FLOAT || V_FORMAT(av[i]) == DV_DOUBLE)
-						color = (int)extract_double(V_KEYVAL(av[i]), 0);
-					else
-						color = extract_int(V_KEYVAL(av[i]), 0);
+					color = extract_int(V_KEYVAL(av[i]), 0); //extract_i64?
 				} else {
 					parse_error("Invalid designation for color");
 					parse_error("Continuing plot with default color");
@@ -984,7 +880,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 
 			} else if (!name_check(av[i]->name, "width", 1)) {
 				if (V_KEYVAL(av[i]) != NULL && V_TYPE(V_KEYVAL(av[i])) == ID_VAL) {
-					width = (int)extract_double(V_KEYVAL(av[i]), 0);
+					width = extract_int(V_KEYVAL(av[i]), 0);
 				} else {
 					parse_error("Invalid designation for line width");
 					parse_error("Continuing plot with default width");
@@ -1280,24 +1176,10 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 
 					obj_index = cpos(CE[0], CE[1], CE[2], v);
 
-					switch (V_FORMAT(v)) {
-					case DV_UINT8:
-					case DV_INT16:
-					case DV_INT32: y[k] = (double)extract_int(v, obj_index); break;
-					case DV_FLOAT:
-					case DV_DOUBLE: y[k] = extract_double(v, obj_index);
-					}
+					y[k] = extract_double(v, obj_index);
 
 					if (xFlag) {
-						switch (V_FORMAT(v)) {
-						case DV_UINT8:
-						case DV_INT16:
-						case DV_INT32:
-							x[k] = (double)extract_int(xaxis_i, rpos(obj_index, v, xaxis_i));
-							break;
-						case DV_FLOAT:
-						case DV_DOUBLE: x[k] = extract_double(xaxis_i, rpos(obj_index, v, xaxis_i));
-						}
+						x[k] = extract_double(xaxis_i, rpos(obj_index, v, xaxis_i));
 					} else {
 						x[k] = (double)k;
 					}
@@ -1306,38 +1188,16 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 
 						EI = make_errorbar_indices(v, Mode, CE, errorb);
 
-						switch (V_FORMAT(v)) {
-						case DV_UINT8:
-						case DV_INT16:
-						case DV_INT32:
-							if (V_DSIZE(errorb) == 1)
-								Err1[k] = (double)extract_int(errorb, 0);
-							else {
-								Err1[k] = (double)extract_int(errorb, cpos(EI[0], EI[1], EI[2], errorb));
-								if (Err2 != NULL)
-									Err2[k] =
-									    (double)extract_int(errorb, cpos(EI[3], EI[4], EI[5], errorb));
-								if (Err3 != NULL) {
-									Err3[k] =
-									    (double)extract_int(errorb, cpos(EI[6], EI[7], EI[8], errorb));
-									Err4[k] =
-									    (double)extract_int(errorb, cpos(EI[9], EI[10], EI[11], errorb));
-								}
+						if (V_DSIZE(errorb) == 1)
+							Err1[k] = extract_double(errorb, 0);
+						else {
+							Err1[k] = extract_double(errorb, cpos(EI[0], EI[1], EI[2], errorb));
+							if (Err2 != NULL) {
+								Err2[k] = extract_double(errorb, cpos(EI[3], EI[4], EI[5], errorb));
 							}
-							break;
-						case DV_FLOAT:
-						case DV_DOUBLE:
-							if (V_DSIZE(errorb) == 1)
-								Err1[k] = extract_double(errorb, 0);
-							else {
-								Err1[k] = extract_double(errorb, cpos(EI[0], EI[1], EI[2], errorb));
-								if (Err2 != NULL) {
-									Err2[k] = extract_double(errorb, cpos(EI[3], EI[4], EI[5], errorb));
-								}
-								if (Err3 != NULL) {
-									Err3[k] = extract_double(errorb, cpos(EI[6], EI[7], EI[8], errorb));
-									Err4[k] = extract_double(errorb, cpos(EI[9], EI[10], EI[11], errorb));
-								}
+							if (Err3 != NULL) {
+								Err3[k] = extract_double(errorb, cpos(EI[6], EI[7], EI[8], errorb));
+								Err4[k] = extract_double(errorb, cpos(EI[9], EI[10], EI[11], errorb));
 							}
 						}
 					}
@@ -1374,28 +1234,22 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 
 						if (errorb == NULL) {
 							// fprintf(fp, "%f\t %f\n", x[k], yval);  // originally
-							switch (V_FORMAT(v)) {
-							case DV_UINT8:
-							case DV_INT16:
-							case DV_INT32: fprintf(fp, "%d\t %d\n", (int)x[k], (int)yval); break;
-							case DV_FLOAT:
-							case DV_DOUBLE: fprintf(fp, "%f\t %f\n", x[k], yval);
+							if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT64) {
+								fprintf(fp, "%ld\t %ld\n", (i64)x[k], (i64)yval);
+							} else if (V_FORMAT(v) <= DV_DOUBLE) {
+								fprintf(fp, "%f\t %f\n", x[k], yval);
 							}
 
 						} else {
 
 							if (Err1 && Err2 == NULL) {
 								// fprintf(fp, "%f\t %f\t %f\n", x[k], yval, Err1[k]); // originally
-								switch (V_FORMAT(v)) {
-								case DV_UINT8:
-								case DV_INT16:
-								case DV_INT32:
-									fprintf(fp, "%d\t %d\t %d\n", (int)x[k], (int)yval, (int)Err1[k]);
-									break;
-								case DV_FLOAT:
-								case DV_DOUBLE: fprintf(fp, "%f\t %f\t %f\n", x[k], yval, Err1[k]);
+								
+								if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT64) {
+									fprintf(fp, "%ld\t %ld\t %ld\n", (i64)x[k], (i64)yval, (i64)Err1[k]);
+								} else if (V_FORMAT(v) <= DV_DOUBLE) {
+									fprintf(fp, "%f\t %f\t %f\n", x[k], yval, Err1[k]);
 								}
-
 							} else if (Err1 && Err2 && Err3 == NULL) {
 
 								e1 = (style && offset &&
@@ -1407,17 +1261,10 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 								         ? Err2[k] - (double)(vnum - 1) * offset
 								         : Err2[k];
 
-								// fprintf(fp, "%f\t %f\t %f\t %f\n", x[k], yval, e1, e2); //
-								// originally
-								switch (V_FORMAT(v)) {
-								case DV_UINT8:
-								case DV_INT16:
-								case DV_INT32:
-									fprintf(fp, "%d\t %d\t %d\t %d\n", (int)x[k], (int)yval,
-									        (int)e1, (int)e2);
-									break;
-								case DV_FLOAT:
-								case DV_DOUBLE:
+								// fprintf(fp, "%f\t %f\t %f\t %f\n", x[k], yval, e1, e2); // originally
+								if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT64) {
+									fprintf(fp, "%d\t %d\t %d\t %d\n", (i64)x[k], (i64)yval, (i64)e1, (i64)e2);
+								} else if (V_FORMAT(v) <= DV_DOUBLE) {
 									fprintf(fp, "%f\t %f\t %f\t %f\n", x[k], yval, e1, e2);
 								}
 
@@ -1428,15 +1275,10 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 
 								// fprintf(fp, "%f\t %f\t %f\t %f\t %f\t %f\n", x[k], yval, Err1[k],
 								// Err2[k], e1, e2); // originally
-								switch (V_FORMAT(v)) {
-								case DV_UINT8:
-								case DV_INT16:
-								case DV_INT32:
-									fprintf(fp, "%d\t %d\t %d\t %d\t %d\t %d\n", (int)x[k],
-									        (int)yval, (int)Err1[k], (int)Err2[k], (int)e1, (int)e2);
-									break;
-								case DV_FLOAT:
-								case DV_DOUBLE:
+								if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT64) {
+									fprintf(fp, "%d\t %d\t %d\t %d\t %d\t %d\n", (i64)x[k],
+									        (i64)yval, (i64)Err1[k], (i64)Err2[k], (i64)e1, (i64)e2);
+								} else if (V_FORMAT(v) <= DV_DOUBLE) {
 									fprintf(fp, "%f\t %f\t %f\t %f\t %f\t %f\n", x[k], yval,
 									        Err1[k], Err2[k], e1, e2);
 								}

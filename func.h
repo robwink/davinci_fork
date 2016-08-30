@@ -451,8 +451,15 @@ Var* newVal(int org, int x, int y, int z, int format, void* data);
 
 // from ff_sort.c
 int cmp_u8(const void*, const void*);
+int cmp_u16(const void*, const void*);
+int cmp_u32(const void*, const void*);
+int cmp_u64(const void*, const void*);
+
+int cmp_i8(const void*, const void*);
 int cmp_i16(const void*, const void*);
 int cmp_i32(const void*, const void*);
+int cmp_i64(const void*, const void*);
+
 int cmp_float(const void*, const void*);
 int cmp_double(const void*, const void*);
 
