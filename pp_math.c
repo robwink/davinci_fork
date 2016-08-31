@@ -153,6 +153,8 @@ Var* pp_math(Var* a, int op, Var* b)
 			parse_error("Can only add structs to structs");
 			return (NULL);
 		}
+		// TODO(rswinkle): what the heck is this here for?  No matter
+		// what the op actually is, if it's 2 structs we concatenate?
 		return (concatenate_struct(a, b));
 	}
 	if (V_TYPE(a) != ID_VAL || V_TYPE(b) != ID_VAL) {

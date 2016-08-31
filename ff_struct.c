@@ -446,6 +446,8 @@ int compare_struct(Var* a, Var* b)
 
 	if (get_struct_count(b) != count) return (0);
 
+	// TODO(rswinkle) fix this so it compares based on name of members
+	// not order of members
 	for (i = 0; i < count; i++) {
 		get_struct_element(a, i, &name_a, &data_a);
 		get_struct_element(b, i, &name_b, &data_b);

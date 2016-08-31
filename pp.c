@@ -101,6 +101,8 @@ void pp_print_struct(Var* v, int indent, int depth)
 
 	indent += 4;
 
+	// TODO(rswinkle): print members in alphabetical order? so 2 equal structs
+	// will actually look equal when printed?  (after change to compare_struct)
 	count = get_struct_count(v);
 	for (i = 0; i < count; i++) {
 		get_struct_element(v, i, &name, &s);
