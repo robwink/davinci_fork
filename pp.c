@@ -112,9 +112,9 @@ void pp_print_struct(Var* v, int indent, int depth)
 
 void dump_var(Var* v, int indent, int limit)
 {
-	int i, j, k;
+	size_t i, j, k;
 	size_t c;
-	int x, y, z;
+	size_t x, y, z;
 	int row;
 
 	switch (V_TYPE(v)) {
@@ -172,7 +172,7 @@ void dump_var(Var* v, int indent, int limit)
 void pp_print_var(Var* v, char* name, int indent, int depth)
 {
 	char bytes[64];
-	int x, y, z;
+	size_t x, y, z;
 	int npassed = (name != NULL);
 
 	if (name == NULL) {
@@ -189,9 +189,9 @@ void pp_print_var(Var* v, char* name, int indent, int depth)
 			x = GetSamples(V_SIZE(v), V_ORG(v));
 			y = GetLines(V_SIZE(v), V_ORG(v));
 			z = GetBands(V_SIZE(v), V_ORG(v));
-			sprintf(bytes, "%ld", NBYTES(V_FORMAT(v)) * V_DSIZE(v));
+			sprintf(bytes, "%zu", NBYTES(V_FORMAT(v)) * V_DSIZE(v));
 			commaize(bytes);
-			printf("%dx%dx%d array of %s, %s format [%s bytes]\n", x, y, z, Format2Str(V_FORMAT(v)),
+			printf("%zux%zux%zu array of %s, %s format [%s bytes]\n", x, y, z, Format2Str(V_FORMAT(v)),
 			       Org2Str(V_ORG(v)), bytes);
 			if (indent == 0) {
 				dump_var(v, 0, 100);
@@ -928,9 +928,7 @@ char* toBytes(int i)
 	return (buf);
 }
 
-/**
- ** Pretty-print a number, with commas.
- **/
+// Pretty-print a number, with commas.
 void commaize(char* s)
 {
 	int i, j;

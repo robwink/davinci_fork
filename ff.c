@@ -653,7 +653,7 @@ Var* ff_create(vfuncptr func, Var* arg)
 
 	// can't be negative cause they're unsigned
 	if (!x || !y || !z) {
-		parse_error("create(): invalid dimensions: %dx%dx%d\n", x, y, z);
+		parse_error("create(): invalid dimensions: %zux%zux%zu\n", x, y, z);
 		return NULL;
 	}
 
