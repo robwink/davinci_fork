@@ -52,14 +52,14 @@ Var* ff_gplot(vfuncptr func, Var* arg)
 		return (NULL);
 	}
 
-	for (i = 0; i < V_DSIZE(object); i++) {
-		switch (V_FORMAT(object)) {
-		case DV_UINT8:
-		case DV_INT16:
-		case DV_INT32: fprintf(fp, "%d\n", extract_int(object, i)); break;
-		case DV_FLOAT:
-		case DV_DOUBLE: fprintf(fp, "%g\n", extract_double(object, i)); break;
-		}
+	// NOTE(rswinkle): Assuming it's a valid type simplifies checking
+	// and we never handled invalid types before anyway
+	if (V_FORMAT(object) <= DV_INT64) {
+		for (i = 0; i < V_DSIZE(object); i++)
+			fprintf(fp, "%d\n", extract_int(object, i));
+	} else {
+		for (i = 0; i < V_DSIZE(object); i++)
+			fprintf(fp, "%g\n", extract_double(object, i));
 	}
 
 	fclose(fp);
@@ -88,7 +88,7 @@ Var* ff_splot(vfuncptr func, Var* arg)
 	Var *s = NULL, *v = NULL;
 	FILE* fp;
 	char* fname = NULL;
-	int i, j;
+	size_t i, j;
 	int s0, s1;
 	int type;
 	char buf[512];
@@ -132,12 +132,7 @@ Var* ff_splot(vfuncptr func, Var* arg)
 					if (V_KEYVAL(s) != NULL) {
 						if (V_TYPE(V_KEYVAL(s)) == ID_VAL) {
 							v = V_KEYVAL(s);
-							if (V_FORMAT(v) == DV_UINT8 || V_FORMAT(v) == DV_INT32 ||
-							    V_FORMAT(v) == DV_INT16) {
-								xscale = (float)extract_int(v, 0);
-							} else if (V_FORMAT(v) == DV_FLOAT || V_FORMAT(v) == DV_DOUBLE) {
-								xscale = extract_float(v, 0);
-							}
+							xscale = extract_float(v, 0);
 						}
 					}
 				}
@@ -146,12 +141,7 @@ Var* ff_splot(vfuncptr func, Var* arg)
 					if (V_KEYVAL(s) != NULL) {
 						if (V_TYPE(V_KEYVAL(s)) == ID_VAL) {
 							v = V_KEYVAL(s);
-							if (V_FORMAT(v) == DV_UINT8 || V_FORMAT(v) == DV_INT32 ||
-							    V_FORMAT(v) == DV_INT16) {
-								yscale = (float)extract_int(v, 0);
-							} else if (V_FORMAT(v) == DV_FLOAT || V_FORMAT(v) == DV_DOUBLE) {
-								yscale = extract_float(v, 0);
-							}
+							yscale = extract_float(v, 0);
 						}
 					}
 				}
@@ -180,27 +170,24 @@ Var* ff_splot(vfuncptr func, Var* arg)
 				s1 = V_SIZE(v)[1] * V_SIZE(v)[0];
 				for (i = 0; i < V_DSIZE(v); i++) {
 					if ((i && (i % s0) == 0) || s0 == 1) fputc('\n', fp);
-					switch (type) {
-					case DV_UINT8:
-					case DV_INT16:
-					case DV_INT32:
-						if (xscale != 0 && yscale != 0) {
-							fprintf(fp, "%d %d %d\n", ((i % s0) + 1) * (int)xscale,
-							        ((i / s0) + 1) * (int)yscale, extract_int(v, i));
-						} else {
-							fprintf(fp, "%d %d %d\n", (i % s0) + 1, (i / s0) + 1, extract_int(v, i));
-						}
 
-						break;
-					case DV_FLOAT:
-					case DV_DOUBLE:
+					// NOTE(rswinkle): technically a high enough u64 could produce negative extracted as i64
+					// but I think i64 max is sufficient and we could alway break the unsigned types out if
+					// we wanted
+					if (type <= DV_INT64) {
+						if (xscale != 0 && yscale != 0) {
+							fprintf(fp, "%d %d %d\n", ((i % s0) + 1) * (i64)xscale,
+							        ((i / s0) + 1) * (i64)yscale, extract_i64(v, i));
+						} else {
+							fprintf(fp, "%d %d %d\n", (i % s0) + 1, (i / s0) + 1, extract_i64(v, i));
+						}
+					} else {
 						if (xscale != 0 && yscale != 0) {
 							fprintf(fp, "%g %g %.12g\n", (int)((i % s0) + 1) * xscale,
 							        (int)((i / s0) + 1) * yscale, extract_float(v, i));
 						} else {
 							fprintf(fp, "%d %d %.12g\n", (i % s0) + 1, (i / s0) + 1, extract_float(v, i));
 						}
-						break;
 					}
 				}
 				fclose(fp);
@@ -488,28 +475,11 @@ Var* ff_xplot(vfuncptr func, Var* arg)
 							CE[Mode[1]] = j;
 							CE[Mode[0]] = k;
 							obj_index   = cpos(CE[0], CE[1], CE[2], v);
-							switch (V_FORMAT(v)) {
-							case DV_UINT8:
-							case DV_INT16:
-							case DV_INT32:
-								y[k] = (float)extract_int(v, obj_index);
-								break; // drd added -- break was missing
 
-							case DV_FLOAT:
-							case DV_DOUBLE: y[k] = extract_float(v, obj_index);
-							}
+							y[k] = extract_float(v, obj_index);
 
 							if (xFlag) {
-								switch (V_FORMAT(v)) {
-								case DV_UINT8:
-								case DV_INT16:
-								case DV_INT32:
-									x[k] = (float)extract_int(Xaxis, rpos(obj_index, v, Xaxis));
-									break; // drd added -- break was missing
-								case DV_FLOAT:
-								case DV_DOUBLE:
-									x[k] = extract_float(Xaxis, rpos(obj_index, v, Xaxis));
-								}
+								x[k] = extract_float(Xaxis, rpos(obj_index, v, Xaxis));
 							} else {
 								x[k] = (float)k;
 							}
@@ -526,14 +496,10 @@ Var* ff_xplot(vfuncptr func, Var* arg)
 								// fprintf(fp, "%g\t %g\n", x[k], y[k]);  // <-- drd originally, no
 								// checking
 
-								switch (V_FORMAT(v)) {
-								case DV_UINT8:
-								case DV_INT16:
-								case DV_INT32:
-									fprintf(fp, "%d\t %d\n", (int)x[k], (int)y[k]);
-									break;
-								case DV_FLOAT:
-								case DV_DOUBLE: fprintf(fp, "%f\t %f\n", x[k], y[k]);
+								if (V_FORMAT(v) <= DV_INT64) {
+									fprintf(fp, "%ld\t %ld\n", (i64)x[k], (i64)y[k]);
+								} else {
+									fprintf(fp, "%f\t %f\n", x[k], y[k]);
 								}
 							}
 						}
@@ -782,27 +748,11 @@ Var* ff_xplot2(vfuncptr func, Var* arg)
 							CE[Mode[1]] = j;
 							CE[Mode[0]] = k;
 							obj_index   = cpos(CE[0], CE[1], CE[2], v);
-							switch (V_FORMAT(v)) {
-							case DV_UINT8:
-							case DV_INT16:
-							case DV_INT32:
-								y[k] = (float)extract_int(v, obj_index);
-								break; // drd added -- break was missing
-							case DV_FLOAT:
-							case DV_DOUBLE: y[k] = extract_float(v, obj_index);
-							}
+
+							y[k] = extract_float(v, obj_index);
 
 							if (xFlag) {
-								switch (V_FORMAT(v)) {
-								case DV_UINT8:
-								case DV_INT16:
-								case DV_INT32:
-									x[k] = (float)extract_int(Xaxis, rpos(obj_index, v, Xaxis));
-									break; // drd added
-								case DV_FLOAT:
-								case DV_DOUBLE:
-									x[k] = extract_float(Xaxis, rpos(obj_index, v, Xaxis));
-								}
+								x[k] = extract_float(Xaxis, rpos(obj_index, v, Xaxis));
 							} else {
 								x[k] = (float)k;
 							}

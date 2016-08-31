@@ -116,8 +116,8 @@ Var* ff_dfunc(vfuncptr func, Var* arg)
 	}
 
 	// NOTE(rswinkle) I think we should always return double just like C precision
-	//format = DV_DOUBLE;
-	format = max(DV_FLOAT, V_FORMAT(v));
+	format = DV_DOUBLE;
+	//format = max(DV_FLOAT, V_FORMAT(v));
 	dsize  = V_DSIZE(v);
 
 	data = calloc(dsize, NBYTES(format));
