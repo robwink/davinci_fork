@@ -306,6 +306,11 @@ iomedley/tiff-4.0.6/tools/tiffsplit
 iomedley/tiff-4.0.6/tools/.libs
 
 # /giflib-5.1.4/
+# not used anymore but in for reference and
+# license compliance.  Basically I extracted the
+# lib subdirectory into iomedley/libgif and used
+# the old configure.in/Makefile.in adjusted for the
+# new code
 iomedley/giflib-5.1.4/Makefile
 iomedley/giflib-5.1.4/config.log
 iomedley/giflib-5.1.4/config.status
@@ -339,6 +344,12 @@ iomedley/giflib-5.1.4/doc/gifinto.1
 iomedley/giflib-5.1.4/doc/giflib.1
 iomedley/giflib-5.1.4/doc/giftext.1
 iomedley/giflib-5.1.4/doc/giftool.1
+iomedley/giflib-5.1.4/config.h
+
+# libgif
+iomedley/libgif/Makefile
+iomedley/libgif/config.log
+iomedley/libgif/config.status
 
 
 
@@ -486,7 +497,6 @@ iomedley/tiff-4.0.6/tools/tiffgt
 
 
 
-iomedley/giflib-5.1.4/config.h
 iomedley/libpng-1.6.23/config.h
 iomedley/libpng-1.6.23/libpng-config
 iomedley/libpng-1.6.23/libpng.pc
