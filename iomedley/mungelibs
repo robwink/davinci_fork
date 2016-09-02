@@ -1,6 +1,6 @@
 #!/bin/sh
 
-giflibs=`ar xv giflib-5.1.4/lib/.libs/libgif.a | grep -v SYMDEF | cut -d' ' -f3`
+giflibs=`ar xv libgif/libgif.a | grep -v SYMDEF | cut -d' ' -f3`
 tifflibs=`ar xv tiff-4.0.6/libtiff/.libs/libtiff.a | grep -v SYMDEF | cut -d' ' -f3`
 jpeglibs=`ar xv libjpeg/libjpeg.a | grep -v SYMDEF | cut -d' ' -f3`
 pnglibs=`ar xv libpng-1.6.23/.libs/libpng16.a | grep -v SYMDEF | cut -d' ' -f3`

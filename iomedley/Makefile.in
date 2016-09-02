@@ -11,7 +11,7 @@ LIBJPEG = libjpeg.a
 LIBJPEGDIR = libjpeg
 
 LIBGIF = libgif.a
-LIBGIFDIR = giflib-5.1.4/lib
+LIBGIFDIR = libgif
 
 LIBPNG = @libpng@
 LIBPNGDIR = @libpngdir@
@@ -72,11 +72,10 @@ $(LIBGIF):
 	cd $(LIBGIFDIR) && $(MAKE)
 
 $(LIBTIFF):
-	cd $(LIBTIFFDIR)/port && $(MAKE)
-	cd $(LIBTIFFDIR)/libtiff && $(MAKE)
+	cd $(LIBTIFFDIR) && $(MAKE)
 
 $(LIBPNG):
-	cd $(LIBPNGDIR) && $(MAKE) $(LIBPNG)
+	cd $(LIBPNGDIR) && $(MAKE)
 
 $(LIBJPEG):
 	cd $(LIBJPEGDIR) && $(MAKE) $(LIBJPEG)
