@@ -39,9 +39,6 @@
 
 #define MAX_ATTRIBUTES 500
 
-//TODO(rswinkle) change to uint8 or typedef'd uint8
-typedef unsigned char byte;
-
 // filled in parse_template()
 typedef struct {
 	char type;                 // type constant from above defines
@@ -62,7 +59,7 @@ typedef struct {
 // array of this is returned from unpack function to ff_unpack
 typedef struct {
 	column_attributes* input; // address of appropriate element in attr array above
-	byte* array;              // array to actually store the column data, NULL if type is string
+	u8* array;              // array to actually store the column data, NULL if type is string
 	char** strarray;          // array to store column data if type is string, NULL otherwise
 	short numbytes;           // set equal to adj_bytesize
 	char type;                // set equal to final type (after conversions in upgrade_types() )
@@ -73,7 +70,7 @@ static int convert_types(data* thedata, int num_items, int rows);
 static data* unpack(char*, char*, Var*, int, int*, int*);
 static unpack_digest* parse_template(char* template, column_attributes* input, Var* column_names, int*);
 static int validate_template(unpack_digest* input);
-static int read_data(byte*, data*, unpack_digest*, FILE*, int);
+static int read_data(u8*, data*, unpack_digest*, FILE*, int);
 static int calc_rows(char*, int, unpack_digest*, int);
 static data* allocate_arrays(unpack_digest*);
 static void compute_adj_bytes(unpack_digest*);
@@ -86,14 +83,14 @@ static int test_signed_char(data* the_data, int rows, int columns);
 static int test_signed_short(data* the_data, int rows, int columns);
 static int test_int_max(data* the_data, int rows, int columns);
 
-static void clean_up(int, unpack_digest*, byte*, data*, FILE*);
+static void clean_up(int, unpack_digest*, u8*, data*, FILE*);
 
 static int pack(data*, char*, char*, int, int, int);
 static data* parse_struct(Var*, Var*, int*, int*);
 static data* format_data(data*, unpack_digest*);
-static int write_data(byte* buffer, data* the_data, unpack_digest* input, int row);
+static int write_data(u8* buffer, data* the_data, unpack_digest* input, int row);
 static void cleanup_data(data*, int);
-static int pack_row(data* the_data, unpack_digest* digest, int row, byte* buffer);
+static int pack_row(data* the_data, unpack_digest* digest, int row, u8* buffer);
 
 /*premade calls for testing:
 
@@ -228,7 +225,7 @@ static data* unpack(char* template, char* filename, Var* column_names, int hdr_l
 	column_attributes* initial = NULL;
 	unpack_digest* input       = NULL;
 	FILE* file                 = NULL;
-	byte* buffer               = NULL;
+	u8* buffer               = NULL;
 	data* thedata              = NULL;
 	void* temp_ptr             = NULL;
 
@@ -306,9 +303,9 @@ static data* unpack(char* template, char* filename, Var* column_names, int hdr_l
 		}
 	}
 
-	buffer = (byte*)calloc(rec_length + 2, sizeof(byte)); // not sure if extra 2 are needed but jic
+	buffer = (u8*)calloc(rec_length + 2, sizeof(u8)); // not sure if extra 2 are needed but jic
 	if (buffer == NULL) {
-		memory_error(errno, rec_length * sizeof(byte));
+		memory_error(errno, rec_length * sizeof(u8));
 		clean_up(0, input, NULL, NULL, file);
 		return NULL;
 	}
@@ -363,7 +360,7 @@ static data* unpack(char* template, char* filename, Var* column_names, int hdr_l
 }
 
 /* clean up function called on errors */
-static void clean_up(int level, unpack_digest* input, byte* buffer, data* the_data, FILE* file)
+static void clean_up(int level, unpack_digest* input, u8* buffer, data* the_data, FILE* file)
 {
 	int i, j;
 	int num_items = input->num_items;
@@ -741,10 +738,10 @@ static data* allocate_arrays(unpack_digest* digest)
 			all_data[i].array = NULL;
 		} else {
 			all_data[i].array =
-			    (byte*)calloc(input[i].columns * input[i].adj_bytesize * rows, sizeof(byte));
+			    (u8*)calloc(input[i].columns * input[i].adj_bytesize * rows, sizeof(u8));
 			if (all_data[i].array == NULL) {
 				err_num = errno;
-				mem_num = input[i].columns * input[i].adj_bytesize * rows * sizeof(byte);
+				mem_num = input[i].columns * input[i].adj_bytesize * rows * sizeof(u8);
 				break;
 			}
 
@@ -867,14 +864,14 @@ static int print_data(data* the_data, unpack_digest* input)
     reads data into buf, performs necessary manipulations (like byteswapping)
     then stores into correct location (loc) in the_data->array
 */
-static int read_data(byte* buffer, data* the_data, unpack_digest* input, FILE* file, int row)
+static int read_data(u8* buffer, data* the_data, unpack_digest* input, FILE* file, int row)
 {
 	int tempint           = 0;
 	unsigned int utempint = 0;
 
-	byte* mybyte = NULL;
-	byte* loc    = NULL;
-	byte* buf    = NULL;
+	u8* mybyte = NULL;
+	u8* loc    = NULL;
+	u8* buf    = NULL;
 
 	int i, j, k;
 
@@ -917,7 +914,7 @@ static int read_data(byte* buffer, data* the_data, unpack_digest* input, FILE* f
 				break;
 
 			case SIGNED_MSB_INT:
-			case SIGNED_LSB_INT: tempint = 0; mybyte = (byte*)&tempint;
+			case SIGNED_LSB_INT: tempint = 0; mybyte = (u8*)&tempint;
 
 #ifdef WORDS_BIGENDIAN
 				if (letter == SIGNED_LSB_INT) {
@@ -944,7 +941,7 @@ static int read_data(byte* buffer, data* the_data, unpack_digest* input, FILE* f
 				break;
 
 			case UNSIGNED_MSB_INT:
-			case UNSIGNED_LSB_INT: utempint = 0; mybyte = (byte*)&utempint;
+			case UNSIGNED_LSB_INT: utempint = 0; mybyte = (u8*)&utempint;
 
 #ifdef WORDS_BIGENDIAN
 				if (letter == UNSIGNED_LSB_INT) {
@@ -1063,7 +1060,7 @@ static int upgrade_types(data* the_data, unpack_digest* input)
 
 // resize_array does upcasts for upgrade_types()
 // type		original					new
-// 0		signed byte (i.e. char)		signed short
+// 0		signed u8 (i.e. char)		signed short
 // 1		unsigned short				signed int
 // 2		unsigned int				signed double
 static int resize_array(data* the_data, int rows, int columns, int type)
@@ -1088,10 +1085,10 @@ static int resize_array(data* the_data, int rows, int columns, int type)
 	}
 
 	temp_ptr        = the_data->array;
-	the_data->array = (byte*)realloc(the_data->array, size * rows * columns);
+	the_data->array = (u8*)realloc(the_data->array, size * rows * columns);
 	if (the_data->array == NULL) {
 		memory_error(errno, size * rows * columns);
-		the_data->array = (byte*)temp_ptr;
+		the_data->array = (u8*)temp_ptr;
 		return 0;
 	}
 
@@ -1429,7 +1426,7 @@ static int pack(data* thedata, char* template, char* filename, int numData, int 
 	column_attributes* initial = NULL; // used to parse template
 	unpack_digest* digest      = NULL;
 	FILE* file                 = NULL;
-	byte* buffer               = NULL;
+	u8* buffer               = NULL;
 
 	// check thedata argument, can't pack what doesn't exist
 	if (thedata == NULL) {
@@ -1463,7 +1460,7 @@ static int pack(data* thedata, char* template, char* filename, int numData, int 
 
 	digest->rows = rows;
 
-	// validate the input template (checks allowable byte sizes)
+	// validate the input template (checks allowable u8 sizes)
 	if (!validate_template(digest)) {
 		clean_up(0, digest, NULL, NULL, NULL);
 		return 0; // NULL;
@@ -1496,9 +1493,9 @@ static int pack(data* thedata, char* template, char* filename, int numData, int 
 		return 0; // NULL;
 	}
 
-	buffer = (byte*)calloc(rec_length + 2, sizeof(byte)); // output buffer +2 (for '\0')
+	buffer = (u8*)calloc(rec_length + 2, sizeof(u8)); // output buffer +2 (for '\0')
 	if (buffer == NULL) {
-		memory_error(errno, rec_length * sizeof(byte));
+		memory_error(errno, rec_length * sizeof(u8));
 		clean_up(0, digest, NULL, NULL, file);
 		return 0; // NULL;
 	}
@@ -1516,7 +1513,7 @@ static int pack(data* thedata, char* template, char* filename, int numData, int 
 		}
 
 		// write data to file
-		if (fwrite(buffer, sizeof(byte), rec_length, file) != rec_length) {
+		if (fwrite(buffer, sizeof(u8), rec_length, file) != rec_length) {
 			parse_error("Error writing data: %s", strerror(errno));
 			clean_up(2, digest, buffer, thedata, file);
 			return 0; // NULL;
@@ -1615,7 +1612,7 @@ static int convert_to_ext_fmt(void* from, int ffmt, char* to, int tfmt, int tole
 	big = 0;
 #endif
 
-	// write data out, byte-swapping as needed
+	// write data out, u8-swapping as needed
 	switch (tfmt) {
 	case LSB_DOUBLE: copy(&d, to, sizeof(d), big ^ 0); break;
 	case MSB_DOUBLE: copy(&d, to, sizeof(d), big ^ 1); break;
@@ -1660,14 +1657,14 @@ static int convert_to_ext_fmt(void* from, int ffmt, char* to, int tfmt, int tole
 	return 1;
 }
 
-// write_data(), inverse of read_data(). writes the data into a byte buffer
+// write_data(), inverse of read_data(). writes the data into a u8 buffer
 // called by pack()
-// @param byte* buffer              // buffer to write data into
+// @param u8* buffer              // buffer to write data into
 // @param data* the_data            // data to write into buffer
 // @param unpack_digest* input      // input digest indicating how data should be written
 // @param int row                   // the current row in data to write
 // @return int indicating success:  // 1 = success, 0 = fail
-static int pack_row(data* the_data, unpack_digest* digest, int row, byte* buffer)
+static int pack_row(data* the_data, unpack_digest* digest, int row, u8* buffer)
 {
 	int i, j, k, numbytes, al_bytes, columns, start_byte;
 	char letter;
