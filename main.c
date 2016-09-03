@@ -569,6 +569,7 @@ void parse_buffer(char* buf)
 
 	curnode = NULL;
 
+	printf("start scope_count = %d\n", scope_stack_count());
 	while ((i = yylex()) != 0) {
 		/*
 		** if this is a function definition, do no further parsing yet.
@@ -579,11 +580,17 @@ void parse_buffer(char* buf)
 		if (j == 1 && curnode != NULL) {
 			node = curnode;
 			evaluate(node);
+
+			printf("scope_count = %d\n", scope_stack_count());
+
 			v = pop(scope_tos());
+
+			printf("scope_count = %d\n", scope_stack_count());
 			pp_print(v);
 			free_tree(node);
 			indent = 0;
 			cleanup(scope_tos());
+			printf("scope_count = %d\n", scope_stack_count());
 		}
 	}
 
@@ -637,6 +644,8 @@ void fake_data()
 #endif
 	}
 
+	// Set VZERO, read only variable used twice in pp_math.c when
+	// variables are NULL they're set to this.
 	v            = (Var*)calloc(1, sizeof(Var));
 	V_NAME(v)    = NULL;
 	V_TYPE(v)    = ID_VAL;
@@ -648,6 +657,7 @@ void fake_data()
 	V_FORMAT(v)  = DV_UINT8;
 	V_DATA(v)    = calloc(1, sizeof(u8));
 	VZERO        = v;
+
 
 	v         = newVar();
 	V_NAME(v) = strdup("tmp");

@@ -239,7 +239,6 @@ int Acmp(const void* a, const void* b, void* param)
 
 Nnode* Nnode_create(const char* key, void* value)
 {
-
 	Nnode* a        = (Nnode*)calloc(1, sizeof(Nnode));
 	if (key) a->key = (char*)strdup(key);
 	a->value        = value;
@@ -280,29 +279,8 @@ int Narray_add(Narray* a, const char* key, void* data)
 	Nnode* n;
 
 	return (Narray_insert(a, key, data, -1));
-
-	if (a == NULL) return (-1);
-	/*
-	** See if this key already exists
-	*/
-	n = Nnode_create(key, data);
-
-	if (key) {
-		r = avl_insert(a->tree, n);
-		if (r != NULL) {
-			/*
-			** Key already exists.  Abort.
-			*/
-			Nnode_free(n, NULL);
-			return (-1);
-		}
-	}
-	/*
-	** Add the node to the array, and update the index.
-	*/
-	n->index = Darray_add(a->data, n);
-	return (n->index);
 }
+
 /*
 ** Insert inan element in the array.
 **

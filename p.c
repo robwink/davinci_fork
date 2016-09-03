@@ -23,8 +23,13 @@ Var* p_mknod(int type, Var* left, Var* right)
 	Var* v;
 	Node* n;
 
-	/* v = newVar(); */
-	/* mem_claim(v); */
+	/*
+	 * 96, 32, 72 on 64-bit
+	printf("sizeof(Var) = %zu\n", sizeof(Var));
+	printf("sizeof(Node) = %zu\n", sizeof(Node));
+	printf("sizeof(Sym) = %zu\n", sizeof(Sym));
+	*/
+
 	v       = calloc(1, sizeof(Var));
 	n       = V_NODE(v);
 	v->type = type;
@@ -42,8 +47,6 @@ Var* p_mknod(int type, Var* left, Var* right)
 Var* p_mkval(int type, char* str)
 {
 	Var* v;
-	/* v = newVar(); */
-	/* mem_claim(v); */
 	v = calloc(1, sizeof(Var));
 
 	switch (type) {
@@ -119,6 +122,118 @@ int is_zero(Var* v)
 	return (0);
 }
 
+
+static debug_print_var_type(int type)
+{
+static char* enum_strings[] = {
+	"ID_NONE  = 0, /* a non value */",
+	"ID_ERROR = 99,",
+	"ID_BASE  = 100, /* in case of conflicts */",
+	"ID_UNK,         /* Unknown type - also used as a generic type */",
+	"ID_STRING,      /* NULL terminated character string */",
+	"ID_KEYWORD,     /* keyword argument */",
+	"ID_VAL,         /* everything with dim != 0 */",
+	"ID_STRUCT,      /* Structure */",
+	"ID_TEXT,        /*1-D Array of Strings*/",
+
+	"ID_IVAL, /* Integer value */",
+	"ID_RVAL, /* real value */",
+	"ID_ID,   /* Identifier */",
+
+	"ID_LIST,   ",
+	"ID_IF"
+	"ID_ELSE,   ",
+	"ID_WHILE,  ",
+	"ID_CONT,   ",
+	"ID_BREAK,  ",
+	"ID_RETURN, ",
+
+	"ID_RANGES, /* list of ranges */",
+	"ID_RSTEP,  /* list of ranges */",
+	"ID_RANGE,  /* single range value */",
+	"ID_SET,    /* assignment expression */",
+	"ID_OR",
+	"ID_AND",
+	"ID_EQ",
+	"ID_NE",
+	"ID_LT",
+	"ID_GT",
+	"ID_LE",
+	"ID_GE",
+	"ID_ADD",
+	"ID_SUB",
+	"ID_MULT",
+	"ID_DIV",
+	"ID_MOD",
+	"ID_UMINUS",
+	"ID_LSHIFT",
+	"ID_RSHIFT",
+	"ID_FUNCT",
+	"ID_ARRAY,  /* application of ranges to array */",
+
+	// I think these descriptions are swapped based on evaluate()
+	"ID_ARG,    /* list of arguments */",
+	"ID_ARGS,   /* single argument */",
+
+	"ID_FOR",
+	"ID_FOREACH",
+	"ID_EACH",
+
+	"ID_ARGV,    /* $VALUE argument. Evalue at run */",
+
+	"ID_INC,    /* increment value */",
+	"ID_DEC,    /* decrement value */",
+	"ID_INCSET, /* increment value */",
+	"ID_DECSET, /* decrement value */",
+	"ID_MULSET, /* *= value */",
+	"ID_DIVSET, /* /= value */",
+
+	"ID_POW,   /* exponent */",
+	"ID_CAT,   /* concatenate */",
+	"ID_ENUM,  /* enumerated argument, not parsed */",
+	"ID_DECL,  /* Declaration */",
+	"ID_WHERE, /* Where */",
+	"ID_DEREF, /* Structure dereference */",
+
+	"ID_CONSTRUCT,   /* Structure constructor */",
+	"ID_DECONSTRUCT, /* Structure deconstructor */",
+
+	"ONE_AXIS, /* argument options */",
+	"ANY_AXIS, /* argument options */",
+
+	"ID_LINE",
+
+	"ID_MODULE,   /* davinci module variable ID */",
+	"ID_FUNCTION, /* davinci module function variable ID */",
+	"ID_PARALLEL, /* parallelization */",
+	"ID_VARARGS,  /* varargs arguments */",
+
+	"ID_FPTR /* a function pointer */",
+	};
+
+	if (type > 0)
+		type -= ID_ERROR-1;
+
+	puts(enum_strings[type]);
+}
+
+/*
+define myfunc() {
+ printf("argc = %d\n", $0)
+ printf("argc = %d\n", $argc)
+
+ l = $argv
+ printf("l = %s %s\n", l)
+
+
+ c = 5
+ d = 6
+ ls()
+
+}
+
+*/
+
 /**
  ** evaluate() - Evaluate a parse tree
  **/
@@ -133,6 +248,10 @@ Var* evaluate(Var* n)
 	if (n == NULL) return (NULL);
 	type = V_TYPE(n);
 
+	// DEBUG(rswinkle)
+	printf("evaluate scope_count = %d\n", scope_stack_count());
+	//debug_print_var_type(type);
+	
 	/**
 	 ** These are not nodes, but merely vals.  push 'em. and return;
 	 **/

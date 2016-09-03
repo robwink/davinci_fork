@@ -13,10 +13,15 @@
 
 */
 
-// TODO(rswinkle) replace with vec_void
+// TODO(rswinkle) replace with vec_void or vector_Scope
 static int scope_count     = 0;
 static int scope_size      = 0;
 static Scope** scope_stack = NULL;
+
+int scope_stack_count()
+{
+	return scope_count;
+}
 
 void scope_push(Scope* s)
 {
@@ -36,6 +41,7 @@ Scope* scope_tos()
 {
 	return (scope_stack[scope_count - 1]);
 }
+
 Scope* global_scope()
 {
 	return (scope_stack[0]);

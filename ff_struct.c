@@ -299,8 +299,8 @@ Var* ff_get_struct(vfuncptr func, Var* arg)
 Var* varray_subset(Var* v, Range* r)
 {
 	Var* s;
-	int size;
-	int i, j;
+	size_t size;
+	size_t i, j;
 	char* name;
 	Var* data;
 
@@ -330,17 +330,15 @@ Var* varray_subset(Var* v, Range* r)
 
 Var* set_varray(Var* v, Range* r, Var* e)
 {
-	int i;
+	size_t i;
 	int count = 0;
 
-	int size = 1 + (r->hi[0] - r->lo[0]) / r->step[0];
+	size_t size = 1 + (r->hi[0] - r->lo[0]) / r->step[0];
 
 	Var* data;
 	Var* old;
 
-	/*
-	** The case of 1 <- N, just duplicate N and stuff it in here
-	*/
+	// The case of 1 <- N, just duplicate N and stuff it in here
 	if (size == 1) {
 		i    = r->lo[0];
 		data = V_DUP(e);

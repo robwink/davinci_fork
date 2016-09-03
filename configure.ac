@@ -52,6 +52,10 @@ dnl Enable Position Independent Code (often required by 64-bit systems)
 export CFLAGS="${CFLAGS} -fPIC"
 export CXXFLAGS="${CXXFLAGS} -fPIC"
 
+dnl Add or remove warnings as wanted
+WFLAGS="-Wall -Wextra -Wno-unused-result"
+CFLAGS="$CFLAGS $WFLAGS"
+
 dnl Handle user-controllable options.
 
 dnl Enable/disable loadable modules (default = yes).

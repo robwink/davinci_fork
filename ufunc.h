@@ -17,6 +17,7 @@ typedef struct {
 	char* fname;
 	int fline;
 } UFUNC;
+
 UFUNC* load_function(char*);
 Var* dispatch_ufunc(UFUNC*, Var*);
 void free_ufunc(UFUNC*);

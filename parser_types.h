@@ -58,12 +58,6 @@ typedef struct Node {
 	int token_number; /* Where in the value table is this puppy located? */
 } Node;
 
-typedef struct Vstruct {
-	int x_count;
-	char** x_names;
-	Var** x_data;
-} Vstruct;
-
 typedef struct TextArray {
 	int Row;
 	char** text;
@@ -183,7 +177,7 @@ enum {
 	ID_RANGES, /* list of ranges */
 	ID_RSTEP,  /* list of ranges */
 	ID_RANGE,  /* single range value */
-	ID_SET,    /* equivalence expression */
+	ID_SET,    /* assignment expression */
 	ID_OR,     /* logical (||) or */
 	ID_AND,    /* logical (&&) and */
 	ID_EQ,     /* logical (==) equals */

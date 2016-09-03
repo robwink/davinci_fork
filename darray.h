@@ -2,6 +2,7 @@
 #define _DARRAY_H_
 
 #include "avl.h"
+#include "cvector.h"
 
 typedef struct _Darray {
 	int size;

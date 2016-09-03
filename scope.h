@@ -53,6 +53,10 @@ void dd_put(Scope* s, char* name, Var* v);
 void dd_unput_argv(Scope* s);
 Var* dd_find(Scope*, char*);
 
+
+
+int scope_stack_count();
+
 Scope* new_scope(void);
 void scope_push(Scope*);
 Scope* scope_pop(void);
