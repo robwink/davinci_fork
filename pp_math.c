@@ -149,12 +149,16 @@ Var* pp_math(Var* a, int op, Var* b)
 		return (pp_math_strings(a, op, b));
 	}
 	if (V_TYPE(a) == ID_STRUCT || V_TYPE(b) == ID_STRUCT) {
-		if (V_TYPE(a) != V_TYPE(b)) {
-			parse_error("Can only add structs to structs");
+		if (op != ID_ADD) {
+			parse_error("Operation not supported on structs, only concatenation (+) allowed.");
 			return (NULL);
 		}
-		// TODO(rswinkle): what the heck is this here for?  No matter
-		// what the op actually is, if it's 2 structs we concatenate?
+
+		if (V_TYPE(a) != V_TYPE(b)) {
+			parse_error("Can only add (concatenate) structs to structs");
+			return (NULL);
+		}
+
 		return (concatenate_struct(a, b));
 	}
 	if (V_TYPE(a) != ID_VAL || V_TYPE(b) != ID_VAL) {

@@ -163,7 +163,7 @@ void dump_var(Var* v, int indent, int limit)
 		row            = V_TEXT(v).Row;
 		if (limit) row = min(limit, row);
 		for (i = 0; i < row; i++) {
-			printf("%*s%d: %s\n", indent, "", (i + 1), V_TEXT(v).text[i]);
+			printf("%*s%zu: %s\n", indent, "", (i + 1), V_TEXT(v).text[i]);
 		}
 		break;
 	}
