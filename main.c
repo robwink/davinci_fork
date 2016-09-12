@@ -569,7 +569,9 @@ void parse_buffer(char* buf)
 
 	curnode = NULL;
 
-	printf("start scope_count = %d\n", scope_stack_count());
+	// DEBUG(rswinkle)
+	//printf("start scope_count = %d\n", scope_stack_count());
+
 	while ((i = yylex()) != 0) {
 		/*
 		** if this is a function definition, do no further parsing yet.
@@ -581,16 +583,12 @@ void parse_buffer(char* buf)
 			node = curnode;
 			evaluate(node);
 
-			printf("scope_count = %d\n", scope_stack_count());
-
 			v = pop(scope_tos());
 
-			printf("scope_count = %d\n", scope_stack_count());
 			pp_print(v);
 			free_tree(node);
 			indent = 0;
 			cleanup(scope_tos());
-			printf("scope_count = %d\n", scope_stack_count());
 		}
 	}
 

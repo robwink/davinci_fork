@@ -249,8 +249,10 @@ Var* evaluate(Var* n)
 	type = V_TYPE(n);
 
 	// DEBUG(rswinkle)
+#if 0
 	printf("evaluate scope_count = %d\n", scope_stack_count());
 	//debug_print_var_type(type);
+#endif
 	
 	/**
 	 ** These are not nodes, but merely vals.  push 'em. and return;

@@ -230,11 +230,19 @@ typedef struct _anode {
 	int index;
 	const char* key;
 	void* value;
+	avl_node_t node;
 } Nnode;
 
 int Acmp(const void* a, const void* b, void* param)
 {
 	return (strcmp(((Nnode*)a)->key, ((Nnode*)b)->key));
+}
+
+int avl_cmp(const avl_node_t* lhs, const avl_node_t* rhs, const void* aux)
+{
+	const Nnode* a = (const Nnode*)(lhs-offsetof(Nnode, node));
+	const Nnode* b = (const Nnode*)(rhs-offsetof(Nnode, node));
+	return strcmp(a->key, b->key);
 }
 
 Nnode* Nnode_create(const char* key, void* value)
@@ -243,7 +251,8 @@ Nnode* Nnode_create(const char* key, void* value)
 	if (key) a->key = (char*)strdup(key);
 	a->value        = value;
 	a->index        = -1; /* unassigned */
-	return (a);
+	//node already set to 0 by calloc
+	return a;
 }
 
 void Nnode_free(Nnode* a, Narray_FuncPtr fptr)
@@ -258,7 +267,7 @@ Narray* Narray_create(int size)
 	Narray* a;
 	a       = (Narray*)calloc(1, sizeof(Narray));
 	a->data = Darray_create(size);
-	a->tree = avl_create(Acmp, NULL);
+	avl_init(&a->tree, NULL);
 	return (a);
 }
 
@@ -298,20 +307,20 @@ int Narray_insert(Narray* a, const char* key, void* data, int pos)
 	Nnode* n;
 	int i;
 
-	if (a == NULL) return (-1);
+	if (a == NULL) return -1;
 	/*
 	** See if this key already exists
 	*/
 	n = Nnode_create(key, data);
 
 	if (key) {
-		r = avl_insert(a->tree, n);
+		r = avl_insert(a->tree, n, avl_cmp);
 		if (r != NULL) {
 			/*
 			** Key already exists.  Abort.
 			*/
 			Nnode_free(n, NULL);
-			return (-1);
+			return -1;
 		}
 	}
 	/*
