@@ -1,0 +1,386 @@
+COLUMNS                 = 20
+ROW_BYTES               = 42
+DESCRIPTION             = "
+    The OBS table stores the state of the instrument at the start of each
+    observation.  One OBS record is generated for each observation."
+
+OBJECT                  = COLUMN
+    NAME                = sclk_time
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 1
+    BYTES               = 4
+    DESCRIPTION         = "Spacecraft time, seconds since 1/1/1980"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = orbit
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 5
+    BYTES               = 2
+    DESCRIPTION         = "Mapping orbit number"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = ORBIT_COUNTER_KEEPER
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 7
+    BYTES               = 2
+    ALIAS_NAME          = ock
+    DESCRIPTION         = "Sequential count of the number of orbital
+                           revolutions since orbit insertion.  This number
+                           is identical to the project supplied orbit number
+                           up until the first time it is reset to zero."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = ick
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 9
+    BYTES               = 4
+    DESCRIPTION         = "Two second count since the start of the orbit."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = tic
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 13
+    BYTES               = 1
+    DESCRIPTION         = "Temporal integration count.
+                           The number of 2-second scans averaged into 
+                           this observation.  Valid values are 1, 2 and 4"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = pnt_angle
+    DATA_TYPE           = MSB_INTEGER
+    START_BYTE          = 14
+    BYTES               = 2
+    DESCRIPTION         = "Scan mirror pointing angle, degrees from nadir."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = pnt_imc
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 16
+    BYTES               = 1
+    DESCRIPTION         = "The number of image motion compensation steps."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = pnt_view
+    DATA_TYPE           = CHARACTER
+    START_BYTE          = 17
+    BYTES               = 1
+    DESCRIPTION         = "The view classification.  Coarsely identifies the 
+                           type of observation as one of the following: 
+                               B=Internal black body reference surface,
+                               1=Visual Bolometer calibration lamp 1,
+                               2=Visual Bolometer calibration lamp 2,
+                               D=Planet, Day side, 
+                               N=Planet, Night side, 
+                               L=Planet, limb,
+                               S=Space"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = scan_len
+    DATA_TYPE           = CHARACTER
+    START_BYTE          = 18
+    BYTES               = 1
+    DESCRIPTION         = "Length of scan
+                           1 = single length scans (10 wavenumber spacing),
+                           2 = double length scans (5 wavenumber spacing)"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = pckt_type
+    DATA_TYPE           = CHARACTER
+    START_BYTE          = 19
+    BYTES               = 1
+    DESCRIPTION         = "Downlink packet format
+                           S = short packets, (no AUX info)
+                           L = long packets (AUX info included)"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = schedule_type
+    DATA_TYPE           = CHARACTER
+    START_BYTE          = 20
+    BYTES               = 1
+    DESCRIPTION         = "Schedule type being executed:
+                           T = Real time plan,
+                           C = Record plan,
+                           O = Overlay"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = spc_gain
+    DATA_TYPE           = CHARACTER
+    START_BYTE          = 21
+    BYTES               = 1
+    DESCRIPTION         = "Spectrometer amplifier gain channel number,
+                           one of: 1, 2, 4, 8"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = vbol_gain
+    DATA_TYPE           = CHARACTER
+    START_BYTE          = 22
+    BYTES               = 1
+    DESCRIPTION         = "Visual bolometer amplifier gain setting,
+                            L = Low setting,
+                            H = High setting"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = tbol_gain
+    DATA_TYPE           = CHARACTER
+    START_BYTE          = 23
+    BYTES               = 1
+    DESCRIPTION         = "Thermal bolomter amplifier gain setting,
+                            L = Low setting,
+                            H = High setting"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = comp_pp
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 24
+    BYTES               = 1
+    DESCRIPTION         = "Precompressor reference detector number."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = det_mask
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 25
+    BYTES               = 1
+    DESCRIPTION         = "Spatial detector mask.  See TES User's Guide"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = class
+    DATA_TYPE           = MSB_BIT_STRING
+    START_BYTE          = 26
+    BYTES               = 4
+    DESCRIPTION         = "32-bit observation classification word.  Bit 
+                           column descriptions and code definitions follow; 
+                           see class.txt for more information" 
+
+  OBJECT                  = BIT_COLUMN
+      NAME                = MISSION_PHASE
+      BIT_DATA_TYPE       = MSB_UNSIGNED_INTEGER
+      START_BIT           = 1
+      BITS                = 3
+      ALIAS_NAME          = phase
+      DESCRIPTION         = "Identifies MGS Mission Phase: 
+                             0 = Error
+                             1 = Aerobraking Phase 1 (AB-1)
+                             2 = Science Phasing Orbit 1 (SPO-1)
+                             3 = Science Phasing Orbit 2 (SPO-2)
+                             4 = Aerobraking Phase 2 (AB-2)
+                             5 = Mapping Phase
+                            >5 = Error"
+  END_OBJECT              = BIT_COLUMN
+
+  OBJECT                  = BIT_COLUMN
+      NAME                = INTENDED_TARGET
+      BIT_DATA_TYPE       = MSB_UNSIGNED_INTEGER
+      START_BIT           = 4
+      BITS                = 4
+      ALIAS_NAME          = type
+      DESCRIPTION         = "Description of observation type, including 
+                             various physical targets and various tests
+                             conducted
+                               0 = No Target
+                               1 = Surface Observation
+                               2 = Atmospheric Observation
+                               3 = Phobos Observation
+                               4 = Deimos Observation
+                               5 = Reference Observation
+                               6 = Space and Global Mars Observations
+                               7 = Test Data
+                               8 = Less Than Ick 15
+                               9 = PROM Data "
+  END_OBJECT              = BIT_COLUMN
+
+  OBJECT                  = BIT_COLUMN
+      NAME                = TES_SEQUENCE
+      BIT_DATA_TYPE       = MSB_UNSIGNED_INTEGER
+      START_BIT           = 8
+      BITS                = 4
+      ALIAS_NAME          = sequence
+      DESCRIPTION         = "Description of observation sequence performed,
+                             must be used in conjunction with 
+                             INTENDED_TARGET; see class.txt for bit codes 
+                             and definitions"
+  END_OBJECT              = BIT_COLUMN
+
+  OBJECT                  = BIT_COLUMN
+      NAME                = NEON_LAMP_STATUS
+      BIT_DATA_TYPE       = MSB_UNSIGNED_INTEGER
+      START_BIT           = 12
+      BITS                = 2
+      ALIAS_NAME          = lamp_status
+      DESCRIPTION         = "Describes the status of the neon lamp, and by 
+                             correlation, defines when spectra are collected
+                             0 = Neon lamp on, spectra collected
+                             1 = Neon lamp off, spectra not collected"
+  END_OBJECT              = BIT_COLUMN
+
+  OBJECT                  = BIT_COLUMN
+      NAME                = TIMING_ACCURACY
+      BIT_DATA_TYPE       = MSB_UNSIGNED_INTEGER
+      START_BIT           = 14
+      BITS                = 1
+      ALIAS_NAME          = timing
+      DESCRIPTION         = "Describes the accuracy of observation timing,
+                             based on availabilty of equator crossing 
+                             broadcasts 
+                             0 = most accurate timing, MGS-PDS equator 
+                                 crossing broadcast received
+                             1 = timing drifts present, MGS-PDS equator 
+                                 crossing broadcast not received"
+  END_OBJECT              = BIT_COLUMN
+
+  OBJECT                  = BIT_COLUMN
+      NAME                = SPARE
+      BIT_DATA_TYPE       = MSB_UNSIGNED_INTEGER
+      START_BIT           = 15
+      BITS                = 2
+      ALIAS_NAME          = spare
+      DESCRIPTION         = "Reserved for future use "
+  END_OBJECT              = BIT_COLUMN
+
+  OBJECT                  = BIT_COLUMN
+      NAME                = CLASSIFICATION_VALUE
+      BIT_DATA_TYPE       = MSB_INTEGER
+      START_BIT           = 17
+      BITS                = 16
+      ALIAS_NAME          = class_value
+      DESCRIPTION         = "One of the following signed numerical details:
+                               latitude coordinants
+                               timing before or after periapsis (seconds)
+                               ANS roll number relative to periapsis
+                             Must be used in conjunction with TES_SEQUENCE
+                             and OBSERVATION_TYPE"
+  END_OBJECT              = BIT_COLUMN
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = quality
+    DATA_TYPE           = MSB_BIT_STRING
+    START_BYTE          = 30
+    BYTES               = 4
+    DESCRIPTION         = "32-bit observation quality word.  Bit column 
+                           description and code definitions follow; see also
+                           quality.txt for more information"
+
+  OBJECT                  = BIT_COLUMN
+      NAME                = HGA_MOTION
+      BIT_DATA_TYPE       = MSB_UNSIGNED_INTEGER
+      START_BIT           = 1
+      BITS                = 2
+      ALIAS_NAME          = hga_motion
+      DESCRIPTION         = "Identifies motion and rate of High Gain Antenna;
+                             0 = HGA motion unknown
+                             1 = HGA not moving
+                             2 = HGA moving at 0.05 deg/sec (autotrack)
+                             3 = HGA moving at 0.51 deg/sec (rewind)"
+  END_OBJECT              = BIT_COLUMN
+
+  OBJECT                  = BIT_COLUMN
+      NAME                = SOLAR_PANEL_MOTION
+      BIT_DATA_TYPE       = MSB_UNSIGNED_INTEGER
+      START_BIT           = 3
+      BITS                = 3
+      ALIAS_NAME          = pnl_motion
+      DESCRIPTION         = "Identifies motion and rate of both Solar Panels;
+                             0 = panel motion unknown
+                             1 = panels not moving
+                             2 = panels moving at 0.051 deg/sec (autotrack)
+                             3 = panels moving at 0.120 deg/sec 
+                                 (prior to ock 3859)
+                             4 = panels moving at 0.240 deg/sec 
+                                 (starting at ock 3859)
+                             5 = panels moving at 0.400 deg/sec 
+                                 (aerobraking only)
+                             6 = panels moving & changing between rates
+                             7 = not assigned"
+  END_OBJECT              = BIT_COLUMN
+
+  OBJECT                  = BIT_COLUMN
+      NAME                = ALGOR_PATCH
+      BIT_DATA_TYPE       = MSB_UNSIGNED_INTEGER
+      START_BIT           = 6
+      BITS                = 1
+      ALIAS_NAME          = algor_patch
+      DESCRIPTION         = "Status of algor flight software patch; 
+                             0 = Algor flight software patch not onboard TES
+                             1 = Algor flight software patch onboard TES"
+  END_OBJECT              = BIT_COLUMN
+
+  OBJECT                  = BIT_COLUMN
+      NAME                = IMC_PATCH
+      BIT_DATA_TYPE       = MSB_UNSIGNED_INTEGER
+      START_BIT           = 7
+      BITS                = 1
+      ALIAS_NAME          = imc_patch
+      DESCRIPTION         = "Status of IMC flight software patch; 
+                             0 = imc moving in forward direction 
+                                 (IMC patch not onboard)
+                             1 = imc moving in reverse direction  
+                                 (IMC patch onboard)"
+  END_OBJECT              = BIT_COLUMN
+
+  OBJECT                  = BIT_COLUMN
+      NAME                = MOMENTUM_DESATURATION
+      BIT_DATA_TYPE       = MSB_UNSIGNED_INTEGER
+      START_BIT           = 8
+      BITS                = 1
+      ALIAS_NAME          = moment
+      DESCRIPTION         = "Occurance of autonomous angular momentum 
+                             desaturation; 
+                             0 = angular momentum desaturization not 
+                                 occurring on spacecraft
+                             1 = angular momentum desaturization occurring 
+                                 on spacecraft"
+  END_OBJECT              = BIT_COLUMN
+
+  OBJECT                  = BIT_COLUMN
+      NAME                = EQUALIZATION_TABLE
+      BIT_DATA_TYPE       = MSB_UNSIGNED_INTEGER
+      START_BIT           = 9
+      BITS                = 1
+      ALIAS_NAME          = equal_tab
+      DESCRIPTION         = "Status of equalization tables; 
+                             0 = equalization tables not onboard TES
+                             1 = equalization tables onboard TES"
+  END_OBJECT              = BIT_COLUMN
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = temps
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 34
+    BYTES               = 8
+    ITEMS               = 4
+    ITEM_BYTES          = 2
+    DESCRIPTION         = "Primary diagnostic temperatures in degK:
+                            T1 - Visual Bolometer Detector Package
+                            T2 - Thermal Bolometer Detector Package
+                            T3 - Spectrometer Detector Package
+                            T4 - Thermal Bolometer Black Body Reference"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = ffti
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 42
+    BYTES               = 1
+    DESCRIPTION         = "FFT start index.  Specifies the starting wavenumber
+                           of the spectra.  The wavenumber of the first data
+                           channel is 10.58 times the index number.
+                           This value also affects which channels the
+                           spectral mask applies to."
+END_OBJECT              = COLUMN

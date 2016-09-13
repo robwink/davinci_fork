@@ -1,0 +1,161 @@
+COLUMNS                 = 12
+ROW_BYTES               = 30
+DESCRIPTION             = "
+
+    The BOL table contains the raw and calibrated visual and thermal 
+    bolometer measurements, and several properties derived from these
+    measurements.
+
+    Six BOL records are generated for each instrument scan, one for
+    each detector.  When spectrometer data are temporally averaged, 
+    there can be up to 4 scans of bolometer data."
+
+OBJECT                  = COLUMN
+    NAME                = sclk_time
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 1
+    BYTES               = 4
+    DESCRIPTION         = "Spacecraft clock time, seconds since 1/1/1980"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = detector
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 5
+    BYTES               = 1
+    DESCRIPTION         = "Detector number."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = tic_count
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 6
+    BYTES               = 1
+    DESCRIPTION         = "Number of scans since start of observation."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = vbol
+    DATA_TYPE           = MSB_INTEGER
+    START_BYTE          = 7
+    BYTES               = 2
+    SCALING_FACTOR      = .000152587890625
+    DESCRIPTION         = "Raw visual bolometer data, per detector, volts.
+                          Scaling factor is 5.0/2^15."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = tbol
+    DATA_TYPE           = MSB_INTEGER
+    START_BYTE          = 9
+    BYTES               = 2
+    SCALING_FACTOR      = .000152587890625
+    DESCRIPTION         = "Raw thermal bolometer data, per detector, volts
+                          Scaling factor is 5.0/2^15."
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = cal_vbol
+    DATA_TYPE           = IEEE_REAL
+    START_BYTE          = 11
+    BYTES               = 4
+    DESCRIPTION         = "Calibrated visual bolometric radiance.
+                           watts per cm-2 stradian-1 wavenumber"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = lambert_alb
+    DATA_TYPE           = IEEE_REAL
+    START_BYTE          = 15
+    BYTES               = 4
+    DESCRIPTION         = "Lambertian albedo, derived from vbol (units?)"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = ti_bol
+    DATA_TYPE           = IEEE_REAL
+    START_BYTE          = 19
+    BYTES               = 4
+    DESCRIPTION         = "Thermal inertia, derived from tbol (units?)"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = brightness_temp_bol
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 23
+    BYTES               = 2
+    SCALING_FACTOR      = 0.01
+    DESCRIPTION         = "Brightness temperature, derived from tbol, degK" 
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = vbol_version_id
+    DATA_TYPE           = CHARACTER
+    START_BYTE          = 25
+    BYTES               = 2
+    DESCRIPTION         = "Visible Bolometer calibration version ID"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = tbol_version_id
+    DATA_TYPE           = CHARACTER
+    START_BYTE          = 27
+    BYTES               = 2
+    DESCRIPTION         = "Thermal Bolometer calibration version ID"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = quality
+    DATA_TYPE           = MSB_BIT_STRING
+    START_BYTE          = 29
+    BYTES               = 2
+    DESCRIPTION         = "16-bit thermal inertia quality word.  Bit column
+                           description and code definitions follow; see 
+                           also index/quality.txt for more information"
+
+    OBJECT                 = BIT_COLUMN
+        NAME               = BOLOMETRIC_INERTIA_RATING
+        BIT_DATA_TYPE      = MSB_UNSIGNED_INTEGER
+        START_BIT          = 1
+        BITS               = 3
+        ALIAS_NAME         = ti_bol_rating
+        DESCRIPTION        = "Values of 0 to 3 rate the uncertainty of the 
+                              modeled bolometer thermal inertia based on
+                              design-specified instrument noise levels;
+                              for other sources of model uncertainty see 
+                              document/process.asc or document/process.pdf.
+                              Values of 5 to 7 rate the reasons why valid 
+                              bolometer thermal inertia could not be modeled.
+                               0 = best quality 
+                               1 = good quality
+                               2 = medium quality
+                               3 = low quality
+                               4 = not assigned
+                               5 = lowest quality - observed temperature 
+                                   outside of model-predicted range
+                               6 = lowest quality - no model temperature 
+                                   variation as a function of thermal inertia
+                               7 = lowest quality - thermal inertia value not 
+                                   computed due to lack of necessary data"
+    END_OBJECT             = BIT_COLUMN
+
+  OBJECT                  = BIT_COLUMN
+     NAME                 = BOLOMETER_LAMP_ANOMALY
+     BIT_DATA_TYPE        = MSB_UNSIGNED_INTEGER
+     START_BIT            = 4
+     BITS                 = 1
+     ALIAS_NAME           = bol_ref_lamp
+     DESCRIPTION          = "Visual bolometer calibration requires regular
+                             sampling of one of the two internal reference 
+                             lamps;  when the reference lamp looks are 
+                             unavailable for a significant period of time, 
+                             the calibration may be adversly affected and 
+                             the calibrated data products should be used
+                             with caution.  This bit is specifically 
+                             designed to track the bolometer reference 
+                             lamp gap spanning ocks 12064 to 12688.
+                             0 = reference lamp looks routinely sampled
+                             1 = reference lamp looks missing"
+  END_OBJECT              = BIT_COLUMN
+
+END_OBJECT              = COLUMN

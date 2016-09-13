@@ -1,0 +1,180 @@
+COLUMNS                 = 20
+ROW_BYTES               = 43
+
+OBJECT                  = COLUMN
+    NAME                = sclk_time
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 1
+    BYTES               = 4
+    DESCRIPTION         = "Spacecraft clock time, seconds since 1/1/1980"
+	UNIT                = second
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = detector
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 5
+    BYTES               = 1
+    DESCRIPTION         = "detector number"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = longitude
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 6
+    BYTES               = 2
+    DESCRIPTION         = "Longitude of target point, deg"
+	UNIT                = degree
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = latitude
+    DATA_TYPE           = MSB_INTEGER
+    START_BYTE          = 8
+    BYTES               = 2
+    DESCRIPTION         = "Latitude of target point, deg"
+	UNIT                = degree
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = phase
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 10
+    BYTES               = 2
+    DESCRIPTION         = "Phase angle, deg"
+	UNIT                = degree
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = emission
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 12
+    BYTES               = 2
+    DESCRIPTION         = "Emission angle, deg"
+	UNIT                = degree
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = incidence
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 14
+    BYTES               = 2
+    DESCRIPTION         = "Solar incidence angle deg"
+	UNIT                = degree
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = planetary_phase
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 16
+    BYTES               = 2
+    DESCRIPTION         = "Planetary phase angle, deg"
+	UNIT                = degree
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = heliocentric_lon
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 18
+    BYTES               = 2
+    DESCRIPTION         = "heliocentric longitude deg"
+	UNIT                = degree
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = sub_sc_lon
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 20
+    BYTES               = 2
+    DESCRIPTION         = "Longitude of sub-spacecraft point, deg"
+	UNIT                = degree
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = sub_sc_lat
+    DATA_TYPE           = MSB_INTEGER
+    START_BYTE          = 22
+    BYTES               = 2    
+    DESCRIPTION         = "Latitude of sub-spacecraft point, deg"
+	UNIT                = degree
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = sub_solar_lon
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 24
+    BYTES               = 2
+    DESCRIPTION         = "Sub-solar longitude, deg"
+	UNIT                = degree
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = sub_solar_lat
+    DATA_TYPE           = MSB_INTEGER
+    START_BYTE          = 26
+    BYTES               = 2
+    DESCRIPTION         = "Sub-solar latitude, deg"
+	UNIT                = degree
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = target_distance
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 28
+    BYTES               = 2
+    DESCRIPTION         = "Spacecraft/target distance, km"
+	UNIT                = km
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = height
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 30
+    BYTES               = 2
+    DESCRIPTION         = "Tangent point height, km"
+	UNIT                = km
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = altitude
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 32
+    BYTES               = 2
+    DESCRIPTION         = "Altitude of s/c, km"
+	UNIT                = km
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = local_time
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 34
+    BYTES               = 2
+    DESCRIPTION         = "Local time at target, in decimal martian hours"
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = solar_distance
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 36
+    BYTES               = 2
+    DESCRIPTION         = "Planet/sun distance, km"
+	UNIT                = km
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = angular_semidiameter
+    DATA_TYPE           = MSB_UNSIGNED_INTEGER
+    START_BYTE          = 38
+    BYTES               = 2
+    DESCRIPTION         = "Angular semidiameter of planet, deg"
+	UNIT                = degree
+END_OBJECT              = COLUMN
+
+OBJECT                  = COLUMN
+    NAME                = version_id
+    DATA_TYPE           = CHARACTER
+    START_BYTE          = 40
+    BYTES               = 4
+    DESCRIPTION         = "Version ID of algorithm used"
+END_OBJECT              = COLUMN
+
