@@ -93,11 +93,23 @@ void WriteHDF5(hid_t parent, char* name, Var* v, int hdf_old)
 		org       = V_ORG(v);
 		dataspace = H5Screate_simple(3, size, NULL);
 
+		// TODO(rswinkle): double check the 64 bit types on a 32 bit machine
+		// cause a long is usually 32 bits iirc
+		//
+		// actually maybe we can use the C99 native types:
+		//
+		// https://www.hdfgroup.org/HDF5/doc/RM/PredefDTypes.html
 		switch (V_FORMAT(v)) {
-		case DV_UINT8: datatype  = H5Tcopy(H5T_NATIVE_UCHAR); break;
-		case DV_INT16: datatype  = H5Tcopy(H5T_NATIVE_SHORT); break;
-		case DV_UINT16: datatype = H5Tcopy(H5T_NATIVE_USHORT); break;
-		case DV_INT32: datatype  = H5Tcopy(H5T_NATIVE_INT); break;
+		case DV_UINT8: datatype  = H5Tcopy(H5T_NATIVE_UINT8); break;
+		case DV_UINT16: datatype = H5Tcopy(H5T_NATIVE_UINT16); break;
+		case DV_UINT32: datatype = H5Tcopy(H5T_NATIVE_UINT32); break;
+		case DV_UINT64: datatype = H5Tcopy(H5T_NATIVE_UINT64); break;
+
+		case DV_INT8: datatype   = H5Tcopy(H5T_NATIVE_INT8); break;
+		case DV_INT16: datatype  = H5Tcopy(H5T_NATIVE_INT16); break;
+		case DV_INT32: datatype  = H5Tcopy(H5T_NATIVE_INT32); break;
+		case DV_INT64: datatype  = H5Tcopy(H5T_NATIVE_INT64); break;
+
 		case DV_FLOAT: datatype  = H5Tcopy(H5T_NATIVE_FLOAT); break;
 		case DV_DOUBLE: datatype = H5Tcopy(H5T_NATIVE_DOUBLE); break;
 		}
@@ -273,14 +285,22 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 			type = ID_STRING;
 		} else {
 			// technically can return negative number for unsuccessful
-			if (H5Tequal(native_type_data, H5T_NATIVE_UCHAR))
+			if (H5Tequal(native_type_data, H5T_NATIVE_UINT8))
 				type = DV_UINT8;
-			else if (H5Tequal(native_type_data, H5T_NATIVE_SHORT))
-				type = DV_INT16;
-			else if (H5Tequal(native_type_data, H5T_NATIVE_USHORT))
+			else if (H5Tequal(native_type_data, H5T_NATIVE_UINT16))
 				type = DV_UINT16;
-			else if (H5Tequal(native_type_data, H5T_NATIVE_INT))
+			else if (H5Tequal(native_type_data, H5T_NATIVE_UINT32))
+				type = DV_UINT32;
+			else if (H5Tequal(native_type_data, H5T_NATIVE_UINT64))
+				type = DV_UINT64;
+			else if (H5Tequal(native_type_data, H5T_NATIVE_INT8))
+				type = DV_INT8;
+			else if (H5Tequal(native_type_data, H5T_NATIVE_INT16))
+				type = DV_INT16;
+			else if (H5Tequal(native_type_data, H5T_NATIVE_INT32))
 				type = DV_INT32;
+			else if (H5Tequal(native_type_data, H5T_NATIVE_INT64))
+				type = DV_INT64;
 			else if (H5Tequal(native_type_data, H5T_NATIVE_FLOAT))
 				type = DV_FLOAT;
 			else if (H5Tequal(native_type_data, H5T_NATIVE_DOUBLE))

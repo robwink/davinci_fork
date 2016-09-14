@@ -59,7 +59,7 @@ typedef struct {
 // array of this is returned from unpack function to ff_unpack
 typedef struct {
 	column_attributes* input; // address of appropriate element in attr array above
-	u8* array;              // array to actually store the column data, NULL if type is string
+	u8* array;                // array to actually store the column data, NULL if type is string
 	char** strarray;          // array to store column data if type is string, NULL otherwise
 	short numbytes;           // set equal to adj_bytesize
 	char type;                // set equal to final type (after conversions in upgrade_types() )
@@ -184,15 +184,27 @@ static int convert_types(data* thedata, int num_items, int rows)
 		switch (thedata[i].type) {
 		case SIGNED_LSB_INT:
 		case SIGNED_MSB_INT:
-			if (thedata[i].numbytes == 2)
-				thedata[i].type = DV_INT16;
-			else
-				thedata[i].type = DV_INT32;
+			switch (thedata[i].numbytes) {
+			case 1: thedata[i].type = DV_INT8; break;
+			case 2: thedata[i].type = DV_INT16; break;
+			case 3:
+			case 4: thedata[i].type = DV_INT32; break;
+			default:
+				thedata[i].type = DV_INT64; break;
+			}
 			break;
 
 		case UNSIGNED_LSB_INT:
 		case UNSIGNED_MSB_INT:
-			thedata[i].type = DV_UINT8; break;
+			switch (thedata[i].numbytes) {
+			case 1: thedata[i].type = DV_UINT8; break;
+			case 2: thedata[i].type = DV_UINT16; break;
+			case 3:
+			case 4: thedata[i].type = DV_UINT32; break;
+			default:
+				thedata[i].type = DV_UINT64; break;
+			}
+			break;
 
 		case LSB_FLOAT:
 		case MSB_FLOAT:
@@ -225,7 +237,7 @@ static data* unpack(char* template, char* filename, Var* column_names, int hdr_l
 	column_attributes* initial = NULL;
 	unpack_digest* input       = NULL;
 	FILE* file                 = NULL;
-	u8* buffer               = NULL;
+	u8* buffer                 = NULL;
 	data* thedata              = NULL;
 	void* temp_ptr             = NULL;
 
@@ -402,6 +414,7 @@ static int validate_template(unpack_digest* input)
 		case UNSIGNED_MSB_INT:
 		case SIGNED_LSB_INT:
 		case UNSIGNED_LSB_INT:
+			// TODO(rswinkle): allow up to 8 byte int types
 			if (input->attr[i].bytesize < 1 || input->attr[i].bytesize > 4) {
 				parse_error("Invalid bytesize (%d) for column %d of type %c\nValid values are 1-4",
 				            input->attr[i].bytesize, i + 1, input->attr[i].type);
@@ -669,12 +682,15 @@ static void compute_adj_bytes(unpack_digest* input)
 		if (a == SIGNED_MSB_INT || a == UNSIGNED_MSB_INT || a == SIGNED_LSB_INT || a == UNSIGNED_LSB_INT) {
 			if (attr_array[i].bytesize == 3)
 				attr_array[i].adj_bytesize = 4;
+			else if (attr_array[i].bytesize >= 5)
+				attr_array[i].adj_bytesize = 8;
 			else
 				attr_array[i].adj_bytesize = attr_array[i].bytesize;
-		} else if (a == STRING)
+		} else if (a == STRING) {
 			attr_array[i].adj_bytesize = attr_array[i].bytesize + 1;
-		else
+		} else {
 			attr_array[i].adj_bytesize = attr_array[i].bytesize;
+		}
 	}
 }
 
@@ -779,11 +795,13 @@ static int print_data(data* the_data, unpack_digest* input)
 
 	double tempdouble;
 	float tempfloat;
-	int tempint;
-	unsigned int utempint;
-	short tempshort;
-	unsigned short utempshort;
-	char signedbyte;
+	i64 tmpi64;
+	u64 tmpu64;
+	i32 tempint;
+	u32 utempint;
+	i16 tempshort;
+	u16 utempshort;
+	i8 signedbyte;
 
 	int bytesize;
 	int columns;
@@ -822,7 +840,10 @@ static int print_data(data* the_data, unpack_digest* input)
 
 				case SIGNED_MSB_INT:
 				case SIGNED_LSB_INT:
-					if (bytesize == 4) {
+					if (bytesize == 8) {
+						memcpy(&tmpi64, &the_data[j].array[(i * columns + k) * 8], 8);
+						printf("%ld\t", tmpi64);
+					} else if (bytesize == 4) {
 						memcpy(&tempint, &the_data[j].array[(i * columns + k) * 4], 4);
 						printf("%d\t", tempint);
 					} else if (bytesize == 2) {
@@ -830,21 +851,25 @@ static int print_data(data* the_data, unpack_digest* input)
 						printf("%d\t", tempshort);
 					} else {
 						// memcpy(&signedbyte, &the_data[j].array[i*columns[j]+k], 1);
-						signedbyte = (char)the_data[j].array[i * columns + k];
+						signedbyte = (i8)the_data[j].array[i * columns + k];
 						printf("%d\t", signedbyte);
 					}
 					break;
 
 				case UNSIGNED_MSB_INT:
 				case UNSIGNED_LSB_INT:
-					if (bytesize == 4) {
+					if (bytesize == 8) {
+						memcpy(&tmpu64, &the_data[j].array[(i * columns + k) * 8], 8);
+						printf("%lu\t", tmpu64);
+					} else if (bytesize == 4) {
 						memcpy(&utempint, &the_data[j].array[(i * columns + k) * 4], 4);
 						printf("%u\t", utempint);
 					} else if (bytesize == 2) {
 						memcpy(&utempshort, &the_data[j].array[(i * columns + k) * 2], 2);
 						printf("%u\t", utempshort);
-					} else
+					} else {
 						printf("%u\t", the_data[j].array[i * columns + k]);
+					}
 					break;
 
 				default:
@@ -866,8 +891,9 @@ static int print_data(data* the_data, unpack_digest* input)
 */
 static int read_data(u8* buffer, data* the_data, unpack_digest* input, FILE* file, int row)
 {
-	int tempint           = 0;
-	unsigned int utempint = 0;
+	//TODO(rswinkle): adjust this function to allow reading 64 bit
+	i32 tempint  = 0;
+	u32 utempint = 0;
 
 	u8* mybyte = NULL;
 	u8* loc    = NULL;
@@ -899,15 +925,15 @@ static int read_data(u8* buffer, data* the_data, unpack_digest* input, FILE* fil
 
 				break;
 
-			case LSB_DOUBLE: // double precision float (LSB)
-			case LSB_FLOAT:  // single precision float (LSB)
+			case LSB_DOUBLE:
+			case LSB_FLOAT:
 				LSB(buf, 1, numbytes);
 				memcpy(loc, buf, al_bytes);
 
 				break;
 
-			case MSB_DOUBLE: // double precision float (MSB)
-			case MSB_FLOAT:  // single precision float (MSB)
+			case MSB_DOUBLE:
+			case MSB_FLOAT:
 				MSB(buf, 1, numbytes);
 				memcpy(loc, buf, al_bytes);
 
@@ -987,7 +1013,6 @@ static int read_data(u8* buffer, data* the_data, unpack_digest* input, FILE* fil
         unsigned shorts	->		ints
         unsigned ints	->		doubles (floats have inadequate precision)
 */
-
 static int upgrade_types(data* the_data, unpack_digest* input)
 {
 	int i, j;
@@ -1011,6 +1036,7 @@ static int upgrade_types(data* the_data, unpack_digest* input)
 		switch (type) {
 		case SIGNED_MSB_INT:
 		case SIGNED_LSB_INT:
+			/*
 			if (bytesize == 1) {
 				j = test_signed_char(&the_data[i], rows, columns);
 
@@ -1021,10 +1047,12 @@ static int upgrade_types(data* the_data, unpack_digest* input)
 					the_data[i].type = UNSIGNED_LSB_INT;
 				}
 			}
+			*/
 			break;
 
 		case UNSIGNED_MSB_INT:
 		case UNSIGNED_LSB_INT:
+			/*
 			if (bytesize == 4) {
 				j = test_int_max(&the_data[i], rows, columns);
 
@@ -1037,9 +1065,11 @@ static int upgrade_types(data* the_data, unpack_digest* input)
 					the_data[i].type = SIGNED_LSB_INT;
 				}
 			}
+			*/
 
 			if (bytesize == 3) the_data[i].type = SIGNED_LSB_INT;
 
+			/*
 			if (bytesize == 2) {
 				j = test_signed_short(&the_data[i], rows, columns);
 
@@ -1049,6 +1079,7 @@ static int upgrade_types(data* the_data, unpack_digest* input)
 
 				the_data[i].type = SIGNED_LSB_INT;
 			}
+			*/
 			break;
 
 		default: break;
@@ -1058,6 +1089,7 @@ static int upgrade_types(data* the_data, unpack_digest* input)
 	return 1;
 }
 
+/*
 // resize_array does upcasts for upgrade_types()
 // type		original					new
 // 0		signed u8 (i.e. char)		signed short
@@ -1148,6 +1180,7 @@ static int test_signed_short(data* the_data, int rows, int columns)
 	}
 	return i;
 }
+*/
 
 // ********************************************* Begin Pack Implementation Functions
 // **************************************************** //
@@ -1529,6 +1562,7 @@ static int pack(data* thedata, char* template, char* filename, int numData, int 
 }
 
 //TODO(rswinkle) why aren't we using our existing swapping functions?
+// see endian_norm.c/h dvio_tdb.c dvio_specpr.c/h
 static void copy(const void* from, void* to, int len, int swap)
 {
 	int i;
@@ -1600,7 +1634,7 @@ static int convert_to_ext_fmt(void* from, int ffmt, char* to, int tfmt, int tole
 		case DV_INT32: sprintf(str, "%d", si); break;
 		case DV_FLOAT:
 		case DV_DOUBLE: sprintf(str, "%g", d); break;
-		case ID_STRING: sprintf(str, "%s", from); break;
+		case ID_STRING: sprintf(str, "%s", (char*)from); break;
 		default: return 0;
 		}
 	}

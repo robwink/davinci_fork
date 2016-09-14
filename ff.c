@@ -1324,6 +1324,7 @@ Var* ff_system(vfuncptr func, Var* arg)
 	return newInt(sys_rtnval);
 }
 
+// TODO(rswinkle): make x,y,z size_t?
 Var* newVal(int org, int x, int y, int z, int format, void* data)
 {
 	Var* v = NULL;
