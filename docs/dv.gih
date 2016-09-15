@@ -359,7 +359,7 @@
  read(filename="path" [,record=INT],
       [,xlow=INT] [,xhigh=INT] [,xskip=INT]
       [,ylow=INT] [,yhigh=INT] [,yskip=INT]
-      [,zlow=INT] [,zhigh=INT] [,zskip=INT])
+      [,zlow=INT] [,zhigh=INT] [,zskip=INT] [,hdf_old=BOOL])
 
     The read() function loads the specified data file.   The read()
     function can automatically recognize and load the following file
@@ -374,6 +374,7 @@
         AVIRIS
         GIF, JPEG, TIFF, PNG, BMP
         HDF5
+        ENVI
 
     If the specified path is not absolute (ie: it doesn't start with a '/'),
     and the specified file cannot be found in the current directory, the
@@ -396,6 +397,11 @@
     Reading a PPM image produces a 3-plane, BIP cube of byte values.
     Each plane represents the red, green and blue values respectivly.
 
+    hdf_old forces reading hdf dataset dimensions backwards the way davinci
+    always did prior to version 2.17.  It defaults to 0 and should almost
+    never be needed because davinci will do the "right" thing based on
+    the specific hdf file.
+
     read() is an alias for the load() function.
 
  See Also:
@@ -406,7 +412,8 @@
 ?write()
  write() - Save data to file
 
- write(object=VAL, filename="path", type=TYPE, force=1, [separator=STRING], [header=0])
+ write(object=VAL, filename="path", type=TYPE
+       [,force=1] [,separator=STRING] [,header=0] [,hdf_old])
 
     The write() function copies data to a file.  The value of type specifies
     the type of file written, and is one of:
@@ -432,23 +439,26 @@
     name is overwritten.  Without this keyword, the write is aborted
     if the filename already exists.
 
-    Notes:
-        The standard graphics formats (GIF, TIFF, JPEG, PNG, BMP, PPM),
-        all expect either 1 or 3 band, byte images.  A 3-band image is
-        interpreted to be a red band, a green band and a blue band.
+    The standard graphics formats (GIF, TIFF, JPEG, PNG, BMP, PPM),
+    all expect either 1 or 3 band, byte images.  A 3-band image is
+    interpreted to be a red band, a green band and a blue band.
 
-        The PGM and GRD formats can not handle multiplane data.
+    The PGM and GRD formats can not handle multiplane data.
 
-        The ERS format produces two files, one named "path", containing the
-        raw raster data, and another named "path.ers", containing the ERS
-        header.  This is the standard for ERS files.
+    The ERS format produces two files, one named "path", containing the
+    raw raster data, and another named "path.ers", containing the ERS
+    header.  This is the standard for ERS files.
 
-        The CSV format defaults to tab, "\t", as the separator if none
-        is specified.  If optional parameter header is 1, a header row
-        will be printed as the first row, using davinci structure field names,
-        if available.  Otherwise davinci generates generic column names
-        following the pattern "col_n".  This format only supports single
-        plane data in BSQ organization.
+    The CSV format defaults to tab, "\t", as the separator if none
+    is specified.  If optional parameter header is 1, a header row
+    will be printed as the first row, using davinci structure field names,
+    if available.  Otherwise davinci generates generic column names
+    following the pattern "col_n".  This format only supports single
+    plane data in BSQ organization.
+
+    hdf_old forces writing hdf dataset dimensions backwards the way davinci
+    always did prior to version 2.17.  It defaults to 0 and should almost
+    never be needed or wanted.
 
  See Also:
     filetype(), read(), rgb(), load_pds(), load_raw(), ascii(),
