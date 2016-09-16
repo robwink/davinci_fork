@@ -7,57 +7,73 @@
 #unpack("Iu2i3u4r4r8x4U2U3U4R4R8a6*3", "strmulttest.dat", 0)
 
 
+
 # TODO(rswinkle): Need to add a test for signed bytes, and 64 bit ints and uints
 
 atm = unpack("U4U2U2*38U2U2R4I2*9R4R4R4x6a4", "atm05555.dat", 390)
-#write(atm, "atm_out.hdf", type=hdf, force=1)
+write(atm, "atm_out.hdf", type=hdf, force=1)
 atm_in = load("atm.hdf")
+atm_in2 = load("atm_out.hdf")
 
 if (equals(atm, atm_in) == 0) exit(1);
+if (equals(atm, atm_in2) == 0) exit(1);
 
 printf("finished atm\n");
-#fremove("atm_out.hdf")
+fremove("atm_out.hdf")
 
 
 
 
 obs = unpack("U4U2U2U4UU2UaaaaaaaUUx8U2*4U", "obs05555.dat", 420)
-#write(obs, "obs_out.hdf", type=hdf)
+write(obs, "obs_out.hdf", type=hdf)
 obs_in = load("obs.hdf")
+obs_in2 = load("obs_out.hdf")
 if (equals(obs, obs_in) == 0) exit(1);
+if (equals(obs, obs_in2) == 0) exit(1);
 
-#fremove("obs_out.hdf")
+fremove("obs_out.hdf")
 
 printf("finished obs\n")
 
 
 t1 = unpack("Iu2i3u4r4r8x4I2I3U4R4R8a5", "mytestfile.dat", 0)
-#write(t1, "t1_out.hdf", type=hdf)
+write(t1, "mytestfile_out.hdf", type=hdf)
 t1_in = load("mytestfile.hdf")
+t1_in2 = load("mytestfile_out.hdf")
 
 if (equals(t1, t1_in) == 0) exit(1);
-#fremove("t1_out.hdf")
+if (equals(t1, t1_in2) == 0) exit(1);
+fremove("mytestfile_out.hdf")
 
 
 printf("finished mytestfile.dat\n")
 
 
 t2 = unpack("Iu2i3u4r4r8x4U2U3U4R4R8a5", "secondtest.dat", 0)
-#write(t2, "secondtest_out.hdf", type=hdf)
+write(t2, "secondtest_out.hdf", type=hdf)
 t2_in = load("secondtest.hdf")
+t2_in2 = load("secondtest_out.hdf")
 
 if (equals(t2, t2_in) == 0) exit(1);
-#fremove("secondtest_out.hdf")
+if (equals(t2, t2_in2) == 0) exit(1);
+fremove("secondtest_out.hdf")
 
 printf("finished secondtest.dat\n")
 
 t3 = unpack("Iu2i3u4r4r8x4U2U3U4R4R8a6*3", "strmulttest.dat", 0)
-#write(t3, "strmulttest_out.hdf", type=hdf)
+write(t3, "strmulttest_out.hdf", type=hdf)
 t3_in = load("strmulttest.hdf")
+t3_in2 = load("strmulttest_out.hdf")
 
 if (equals(t3, t3_in) == 0) exit(1);
-#fremove("strmulttest_out.hdf")
+if (equals(t3, t3_in2) == 0) exit(1);
+fremove("strmulttest_out.hdf")
+
 
 printf("finished strmulttest.dat\n")
 
+
 exit(0)
+
+
+

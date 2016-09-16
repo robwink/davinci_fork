@@ -1,0 +1,45 @@
+
+#unpack("U1U3U5U6U7U8u1u3u5u6u7u8x4I1I3I5I6I7I8i1i3i5i6i7i8", "test64bit.dat", 0)
+
+
+a = unpack("U1U3U5U6U7U8u1u3u5u6u7u8x4I1I3I5I6I7I8i1i3i5i6i7i8", "test64bit.dat", 0)
+
+# The 10th element of the first 12 columns is the maximum value that
+# can be stored in the specified format, ie (2^nbits) - 1
+
+test1 = (a.c1[,10,] == 255 &&
+         a.c2[,10,] == 16777215 &&
+         a.c3[,10,] == 1099511627775 &&
+         a.c4[,10,] == 281474976710655 &&
+         a.c5[,10,] == 72057594037927935 &&
+         a.c6[,10,] == 18446744073709551615)
+
+test2 = (equals(a.c1, a.c7) &&
+         equals(a.c2, a.c8) &&
+         equals(a.c3, a.c9) &&
+         equals(a.c4, a.c10) &&
+         equals(a.c5, a.c11) &&
+         equals(a.c6, a.c12))
+
+
+# The 10th element of the second 12 columns is the minimum value that
+# can be stored in the specified format, ie -2^(nbits - 1) in traditional
+# 2's complement
+
+test3 = (a.c13[,10,] == -128 &&
+         a.c14[,10,] == -8388608 &&
+         a.c15[,10,] == -549755813888 &&
+         a.c16[,10,] == -140737488355328 &&
+         a.c17[,10,] == -36028797018963968 &&
+         a.c18[,10,] == -9223372036854775808)
+
+test4 = (equals(a.c13, a.c19) &&
+         equals(a.c14, a.c20) &&
+         equals(a.c15, a.c21) &&
+         equals(a.c16, a.c22) &&
+         equals(a.c17, a.c23) &&
+         equals(a.c18, a.c24))
+
+if (test1 == 0 || test2 == 0 || test3 == 0 || test4 == 0) exit(1);
+
+exit(0)
