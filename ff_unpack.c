@@ -62,7 +62,7 @@ typedef struct {
 	u8* array;                // array to actually store the column data, NULL if type is string
 	char** strarray;          // array to store column data if type is string, NULL otherwise
 	short numbytes;           // set equal to adj_bytesize
-	char type;                // set equal to final type (after conversions in upgrade_types() )
+	char type;                // set equal to final type
 } data;
 
 static int convert_types(data* thedata, int num_items, int rows);
@@ -75,8 +75,11 @@ static int calc_rows(char*, int, unpack_digest*, int);
 static data* allocate_arrays(unpack_digest*);
 static void compute_adj_bytes(unpack_digest*);
 
+
+#ifdef FF_UNPACK_DEBUG
 static int print_data(data* the_data, unpack_digest* input);
-static int upgrade_types(data*, unpack_digest*);
+#endif
+//static int upgrade_types(data*, unpack_digest*);
 
 static int resize_array(data* the_data, int rows, int columns, int type);
 static int test_signed_char(data* the_data, int rows, int columns);
@@ -349,11 +352,14 @@ static data* unpack(char* template, char* filename, Var* column_names, int hdr_l
 		}
 	}
 
-	// upgrade types if necessary (ie unsigned shorts and ints to ints and doubles)
+#if 0
+	// see comment above upgrade_types
+	// change types if necessary ie 3, 5-7 byte int types to appropriate
 	if (!upgrade_types(thedata, input)) {
 		clean_up(2, input, buffer, thedata, file);
 		return NULL;
 	}
+#endif
 
 #ifdef FF_UNPACK_DEBUG
 	print_data(thedata, input);
@@ -415,8 +421,8 @@ static int validate_template(unpack_digest* input)
 		case SIGNED_LSB_INT:
 		case UNSIGNED_LSB_INT:
 			// TODO(rswinkle): allow up to 8 byte int types
-			if (input->attr[i].bytesize < 1 || input->attr[i].bytesize > 4) {
-				parse_error("Invalid bytesize (%d) for column %d of type %c\nValid values are 1-4",
+			if (input->attr[i].bytesize < 1 || input->attr[i].bytesize > 8) {
+				parse_error("Invalid bytesize (%d) for column %d of type %c\nValid values are 1-8",
 				            input->attr[i].bytesize, i + 1, input->attr[i].type);
 				return 0;
 			}
@@ -789,6 +795,8 @@ static data* allocate_arrays(unpack_digest* digest)
 }
 
 /* print function for debugging */
+
+#ifdef FF_UNPACK_DEBUG
 static int print_data(data* the_data, unpack_digest* input)
 {
 	int i, j, k;
@@ -884,6 +892,7 @@ static int print_data(data* the_data, unpack_digest* input)
 	}
 	return 1;
 }
+#endif
 
 /*
     reads data into buf, performs necessary manipulations (like byteswapping)
@@ -891,9 +900,8 @@ static int print_data(data* the_data, unpack_digest* input)
 */
 static int read_data(u8* buffer, data* the_data, unpack_digest* input, FILE* file, int row)
 {
-	//TODO(rswinkle): adjust this function to allow reading 64 bit
-	i32 tempint  = 0;
-	u32 utempint = 0;
+	i64 tmp_i64 = 0;
+	u64 tmp_u64 = 0;
 
 	u8* mybyte = NULL;
 	u8* loc    = NULL;
@@ -940,26 +948,34 @@ static int read_data(u8* buffer, data* the_data, unpack_digest* input, FILE* fil
 				break;
 
 			case SIGNED_MSB_INT:
-			case SIGNED_LSB_INT: tempint = 0; mybyte = (u8*)&tempint;
+			case SIGNED_LSB_INT: tmp_i64 = 0; mybyte = (u8*)&tmp_i64;
 
 #ifdef WORDS_BIGENDIAN
 				if (letter == SIGNED_LSB_INT) {
-					for (i = 0; i < numbytes; i++) mybyte[3 - (4 - numbytes) - i] = buf[i];
-					tempint = tempint >> ((4 - numbytes) * 8);
+					for (i = 0; i < numbytes; i++) {
+						mybyte[7 - (8 - numbytes) - i] = buf[i];
+					}
+					tmp_i64 = tmp_i64 >> ((8 - numbytes) * 8);
 				} else {
-					for (i = 0; i < numbytes; i++) mybyte[i] = buf[i];
-					tempint                                  = tempint >> ((4 - numbytes) * 8);
+					for (i = 0; i < numbytes; i++) {
+						mybyte[i] = buf[i];
+					}
+					tmp_i64 = tmp_i64 >> ((8 - numbytes) * 8);
 				}
 
-				memcpy(loc, &mybyte[4 - al_bytes], al_bytes);
+				memcpy(loc, &mybyte[8 - al_bytes], al_bytes);
 
 #else
 				if (letter == SIGNED_MSB_INT) {
-					for (i = 0; i < numbytes; i++) mybyte[3 - i] = buf[i];
-					tempint                                      = tempint >> ((4 - numbytes) * 8);
+					for (i = 0; i < numbytes; i++) {
+						mybyte[7 - i] = buf[i];
+					}
+					tmp_i64 = tmp_i64 >> ((8 - numbytes) * 8);
 				} else {
-					for (i = 0; i < numbytes; i++) mybyte[3 - (numbytes - 1) + i] = buf[i];
-					tempint = tempint >> ((4 - numbytes) * 8);
+					for (i = 0; i < numbytes; i++) {
+						mybyte[7 - (numbytes - 1) + i] = buf[i];
+					}
+					tmp_i64 = tmp_i64 >> ((8 - numbytes) * 8);
 				}
 				memcpy(loc, mybyte, al_bytes);
 
@@ -967,22 +983,30 @@ static int read_data(u8* buffer, data* the_data, unpack_digest* input, FILE* fil
 				break;
 
 			case UNSIGNED_MSB_INT:
-			case UNSIGNED_LSB_INT: utempint = 0; mybyte = (u8*)&utempint;
+			case UNSIGNED_LSB_INT: tmp_u64 = 0; mybyte = (u8*)&tmp_u64;
 
 #ifdef WORDS_BIGENDIAN
 				if (letter == UNSIGNED_LSB_INT) {
-					for (i = 0; i < numbytes; i++) mybyte[3 - i] = buf[i];
+					for (i = 0; i < numbytes; i++) {
+						mybyte[7 - i] = buf[i];
+					}
 				} else {
-					for (i = 0; i < numbytes; i++) mybyte[i + (4 - numbytes)] = buf[i];
+					for (i = 0; i < numbytes; i++) {
+						mybyte[i + (8 - numbytes)] = buf[i];
+					}
 				}
 
-				memcpy(loc, &mybyte[4 - al_bytes], al_bytes);
+				memcpy(loc, &mybyte[8 - al_bytes], al_bytes);
 
 #else
 				if (letter == UNSIGNED_MSB_INT) {
-					for (i = 0; i < numbytes; i++) mybyte[numbytes - 1 - i] = buf[i];
+					for (i = 0; i < numbytes; i++) {
+						mybyte[numbytes - 1 - i] = buf[i];
+					}
 				} else {
-					for (i = 0; i < numbytes; i++) mybyte[i] = buf[i];
+					for (i = 0; i < numbytes; i++) {
+						mybyte[i] = buf[i];
+					}
 				}
 
 				memcpy(loc, mybyte, al_bytes);
@@ -1006,13 +1030,19 @@ static int read_data(u8* buffer, data* the_data, unpack_digest* input, FILE* fil
 	return 1;
 }
 
-/*
-    resize types if necessary because davinci only supports unsigned bytes
-    and signed shorts and ints.  So this checks and possibly converts the following:
-        signed bytes 	->		shorts (required conversion)
-        unsigned shorts	->		ints
-        unsigned ints	->		doubles (floats have inadequate precision)
-*/
+
+
+// upgrade_types() is now a no-op function since Davinci now supports all types.
+// We could change this to try to fit the data in the smallest possible
+// type to try to save memory
+//
+// ie if they specified a i8 but it fits in an i4 , or even more specific
+// they specified an i8 but it fits in a u4 (but not an i4).  This downsizability
+// would apply to all integer types if we really wanted
+//
+// but I don't think it's worth it.
+
+#if 0
 static int upgrade_types(data* the_data, unpack_digest* input)
 {
 	int i, j;
@@ -1036,50 +1066,11 @@ static int upgrade_types(data* the_data, unpack_digest* input)
 		switch (type) {
 		case SIGNED_MSB_INT:
 		case SIGNED_LSB_INT:
-			/*
-			if (bytesize == 1) {
-				j = test_signed_char(&the_data[i], rows, columns);
 
-				if (j < rows * columns) {
-					if (!resize_array(&the_data[i], rows, columns, 0)) return 0;
-
-				} else {
-					the_data[i].type = UNSIGNED_LSB_INT;
-				}
-			}
-			*/
 			break;
 
 		case UNSIGNED_MSB_INT:
 		case UNSIGNED_LSB_INT:
-			/*
-			if (bytesize == 4) {
-				j = test_int_max(&the_data[i], rows, columns);
-
-				if (j < rows * columns) {
-					if (!resize_array(&the_data[i], rows, columns, 2)) return 0;
-
-					the_data[i].type = LSB_DOUBLE;
-
-				} else {
-					the_data[i].type = SIGNED_LSB_INT;
-				}
-			}
-			*/
-
-			if (bytesize == 3) the_data[i].type = SIGNED_LSB_INT;
-
-			/*
-			if (bytesize == 2) {
-				j = test_signed_short(&the_data[i], rows, columns);
-
-				if (j < rows * columns) {
-					if (!resize_array(&the_data[i], rows, columns, 1)) return 0;
-				}
-
-				the_data[i].type = SIGNED_LSB_INT;
-			}
-			*/
 			break;
 
 		default: break;
@@ -1088,99 +1079,8 @@ static int upgrade_types(data* the_data, unpack_digest* input)
 
 	return 1;
 }
+#endif
 
-/*
-// resize_array does upcasts for upgrade_types()
-// type		original					new
-// 0		signed u8 (i.e. char)		signed short
-// 1		unsigned short				signed int
-// 2		unsigned int				signed double
-static int resize_array(data* the_data, int rows, int columns, int type)
-{
-	int i    = 0;
-	int size = 0;
-
-	short* tmpshrtarray = NULL;
-	int* tmpintarray    = NULL;
-	double* tmpdblarray = NULL;
-	void* temp_ptr      = NULL;
-
-	if (type == 0)
-		size = 2;
-	else if (type == 1)
-		size = 4;
-	else if (type == 2)
-		size = 8;
-	else {
-		parse_error("Unrecognized type constant in resize_array(): %d", type);
-		return 0;
-	}
-
-	temp_ptr        = the_data->array;
-	the_data->array = (u8*)realloc(the_data->array, size * rows * columns);
-	if (the_data->array == NULL) {
-		memory_error(errno, size * rows * columns);
-		the_data->array = (u8*)temp_ptr;
-		return 0;
-	}
-
-	switch (type) {
-	case 0:
-		tmpshrtarray = (short*)the_data->array;
-		for (i = rows * columns - 1; i >= 0; i--) tmpshrtarray[i] = *((char*)(&the_data->array[i]));
-		break;
-
-	case 1:
-		tmpintarray = (int*)the_data->array;
-		for (i             = rows * columns - 1; i >= 0; i--)
-			tmpintarray[i] = *(unsigned short*)&the_data->array[i * 2];
-		break;
-
-	case 2:
-		tmpdblarray = (double*)the_data->array;
-		for (i             = rows * columns - 1; i >= 0; i--)
-			tmpdblarray[i] = *(unsigned int*)&the_data->array[i * 4];
-		break;
-	}
-
-	the_data->numbytes = size;
-
-	return 1;
-}
-
-static int test_signed_char(data* the_data, int rows, int columns)
-{
-	int i;
-	char tempchar = 0;
-	for (i = 0; i < rows * columns; i++) {
-		memcpy(&tempchar, &the_data->array[i], 1);
-		if (tempchar < 0) break;
-	}
-	return i;
-}
-
-static int test_int_max(data* the_data, int rows, int columns)
-{
-	int i;
-	unsigned int uint = 0;
-	for (i = 0; i < rows * columns; i++) {
-		memcpy(&uint, &the_data->array[i * 4], 4);
-		if (uint > INT_MAX) break;
-	}
-	return i;
-}
-
-static int test_signed_short(data* the_data, int rows, int columns)
-{
-	int i;
-	short tempshort = 0;
-	for (i = 0; i < rows * columns; i++) {
-		memcpy(&tempshort, &the_data->array[i * 2], 2);
-		if (tempshort < 0) break;
-	}
-	return i;
-}
-*/
 
 // ********************************************* Begin Pack Implementation Functions
 // **************************************************** //
