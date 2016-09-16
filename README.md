@@ -7,13 +7,16 @@ contract #959904.  You can always obtain the latest version of davinci from
 [davinci.asu.edu](davinci.asu.edu)
 
 ## Compiling
-Davinci requries a C compiler.  A configuration script has been
+Davinci requries a C99 compliant compiler.  A configuration script has been
 included to make compilation as straight forward as possible.  In
 most instances you should be able to run configure, and then run make:
 
 	% ./configure
 	% make
 	% make install
+
+If that doesn't work check [the wiki page](http://davinci.asu.edu/index.php?title=Compiling_Davinci)
+for OS specific details.
 
 
 ## Documentation

@@ -404,7 +404,7 @@ static void clean_up(int level, unpack_digest* input, u8* buffer, data* the_data
 		}
 	}
 
-	if (file != NULL) fclose(file);
+	if (file) fclose(file);
 }
 
 static int validate_template(unpack_digest* input)
@@ -1188,25 +1188,9 @@ Var* ff_pack(vfuncptr func, Var* arg)
 static void cleanup_data(data* reg_data, int i)
 {
 	while (--i >= 0) {
-		if (reg_data[i].input != NULL) {
-			/*// didn't use
-			if(reg_data[i].input->col_name != NULL)
-			{
-			    free(reg_data[i].input->col_name);
-			}*/
+		if (reg_data[i].input) {
 			free(reg_data[i].input);
 		}
-
-		/*// from clean_up()
-		if( reg_data[i].input->type == STRING )
-		{
-		    for(j=0; j<rows; j++)
-		        free(reg_data[i].strarray[j]);
-
-		    free(reg_data[i].strarray);
-		} else
-		    free(reg_data[i].array);
-		*/
 	}
 	free(reg_data);
 }
