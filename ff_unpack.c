@@ -81,11 +81,6 @@ static int print_data(data* the_data, unpack_digest* input);
 #endif
 //static int upgrade_types(data*, unpack_digest*);
 
-static int resize_array(data* the_data, int rows, int columns, int type);
-static int test_signed_char(data* the_data, int rows, int columns);
-static int test_signed_short(data* the_data, int rows, int columns);
-static int test_int_max(data* the_data, int rows, int columns);
-
 static void clean_up(int, unpack_digest*, u8*, data*, FILE*);
 
 static int pack(data*, char*, char*, int, int, int);
@@ -420,7 +415,6 @@ static int validate_template(unpack_digest* input)
 		case UNSIGNED_MSB_INT:
 		case SIGNED_LSB_INT:
 		case UNSIGNED_LSB_INT:
-			// TODO(rswinkle): allow up to 8 byte int types
 			if (input->attr[i].bytesize < 1 || input->attr[i].bytesize > 8) {
 				parse_error("Invalid bytesize (%d) for column %d of type %c\nValid values are 1-8",
 				            input->attr[i].bytesize, i + 1, input->attr[i].type);
@@ -585,8 +579,9 @@ static unpack_digest* parse_template(char* template, column_attributes* input, V
 			}
 
 			template = end;
-		} else
+		} else {
 			input[j].columns = 1;
+		}
 
 		if (input[j].type != IGNORE) {
 			if (input[j].col_name == NULL) {
@@ -1348,14 +1343,14 @@ static int pack(data* thedata, char* template, char* filename, int numData, int 
 	// check thedata argument, can't pack what doesn't exist
 	if (thedata == NULL) {
 		parse_error("Error, no input data was provided.");
-		return 0; // NULL;
+		return 0;
 	}
 
 	// create an initial column_attributes to work with
 	initial = (column_attributes*)calloc(MAX_ATTRIBUTES, sizeof(column_attributes));
 	if (initial == NULL) {
 		memory_error(errno, sizeof(column_attributes) * MAX_ATTRIBUTES);
-		return 0; // NULL;
+		return 0;
 	}
 
 	// create an unpack_digest with computed: digest->attr and ->num_items. ->rows set to -1, also
@@ -1363,7 +1358,7 @@ static int pack(data* thedata, char* template, char* filename, int numData, int 
 	digest = parse_template(template, initial, NULL, &rec_length);
 	if (digest == NULL) {
 		free(initial);
-		return 0; // NULL;
+		return 0;
 	}
 
 	// if (digest->num_items > numData) // user specified more columns to pack than he/she had given
@@ -1372,15 +1367,15 @@ static int pack(data* thedata, char* template, char* filename, int numData, int 
 		parse_error("Error: #columns in struct (%d) != #columns named for packing (%d)", numData,
 		            digest->num_items);
 		clean_up(0, digest, NULL, NULL, NULL);
-		return 0; // NULL;
+		return 0;
 	}
 
 	digest->rows = rows;
 
-	// validate the input template (checks allowable u8 sizes)
+	// validate the input template (checks allowable byte sizes)
 	if (!validate_template(digest)) {
 		clean_up(0, digest, NULL, NULL, NULL);
-		return 0; // NULL;
+		return 0;
 	}
 
 	//*// reallocate the initial column_attributes to match the amount specified in digest?
@@ -1388,7 +1383,7 @@ static int pack(data* thedata, char* template, char* filename, int numData, int 
 	if (initial == NULL) {
 		memory_error(errno, sizeof(column_attributes) * digest->num_items);
 		clean_up(0, digest, NULL, NULL, NULL);
-		return 0; // NULL;
+		return 0;
 	} else {
 		digest->attr = initial;
 	}
@@ -1400,40 +1395,40 @@ static int pack(data* thedata, char* template, char* filename, int numData, int 
 		if (file == NULL) {
 			parse_error("%s: %s", "Error opening file", strerror(errno));
 			clean_up(0, digest, NULL, NULL, NULL);
-			return 0; // NULL;
+			return 0;
 		}
 	}
 
 	if (fseek(file, offset, SEEK_SET)) { // skip to start
 		parse_error("file %s seek error: %s", filename, strerror(errno));
 		clean_up(0, digest, NULL, NULL, file);
-		return 0; // NULL;
+		return 0;
 	}
 
 	buffer = (u8*)calloc(rec_length + 2, sizeof(u8)); // output buffer +2 (for '\0')
 	if (buffer == NULL) {
 		memory_error(errno, rec_length * sizeof(u8));
 		clean_up(0, digest, NULL, NULL, file);
-		return 0; // NULL;
+		return 0;
 	}
 
 	// rows calculated before entering pack()
 	for (i = 0; i < rows; i++) {
 		// clear the output record buffer
-		memset(buffer, '\0', rec_length);
+		memset(buffer, 0, rec_length);
 
 		// write data into buffer
 		if (!pack_row(thedata, digest, i, buffer)) {
 			parse_error("Error in writing data to buffer");
 			clean_up(2, digest, buffer, thedata, file);
-			return 0; // NULL;
+			return 0;
 		}
 
 		// write data to file
-		if (fwrite(buffer, sizeof(u8), rec_length, file) != rec_length) {
+		if (!fwrite(buffer, rec_length, 1, file)) {
 			parse_error("Error writing data: %s", strerror(errno));
 			clean_up(2, digest, buffer, thedata, file);
-			return 0; // NULL;
+			return 0;
 		}
 	}
 
@@ -1458,64 +1453,73 @@ static void copy(const void* from, void* to, int len, int swap)
 
 static int convert_to_ext_fmt(void* from, int ffmt, char* to, int tfmt, int tolen)
 {
-	int si;
-	unsigned int ui;
-	short ss;
-	unsigned short us;
-	char sc;
-	unsigned char uc;
+	u64 tmpu64;
+	i64 tmpi64;
+
+	i32 tmpi32;
+	u32 tmpu32;
+	i16 tmpi16;
+	u16 tmpu16;
+	i8 tmpi8;
+	u8 tmpu8;
 	float f;
 	double d;
+
 	int big   = 0;
+	
+	// NOTE(rswinkle): Not a huge fan of alloca()
 	char* str = alloca(tolen > 1024 ? tolen + 1 : 1024);
 
-	// convert from type to large internal numeric types
 	switch (ffmt) {
-	case DV_UINT8:
-		ui = *(unsigned char*)from;
-		si = (int)ui;
-		d  = (double)ui;
-		break;
-	case DV_INT16:
-		si = *(short*)from;
-		ui = (unsigned int)si;
-		d  = (double)si;
-		break;
-	case DV_INT32:
-		si = *(int*)from;
-		ui = (unsigned int)si;
-		d  = (double)si;
-		break;
+	case DV_UINT8:  tmpi64 = tmpu64 = *(u8*)from; break;
+	case DV_UINT16: tmpi64 = tmpu64 = *(u16*)from; break;
+	case DV_UINT32: tmpi64 = tmpu64 = *(u32*)from; break;
+	case DV_UINT64: tmpi64 = tmpu64 = *(u64*)from; break;
+
+	case DV_INT8:   tmpu64 = tmpi64 = *(i8*)from; break;
+	case DV_INT16:  tmpu64 = tmpi64 = *(i16*)from; break;
+	case DV_INT32:  tmpu64 = tmpi64 = *(i32*)from; break;
+	case DV_INT64:  tmpu64 = tmpi64 = *(i64*)from; break;
+	
 	case DV_FLOAT:
-		d  = *(float*)from;
-		ui = (unsigned int)d;
-		si = (int)d;
+		f = *(float*)from;
+		tmpu64 = (u64)f;
+		tmpi64 = (i64)f;
 		break;
 	case DV_DOUBLE:
-		d  = *(double*)from;
-		ui = (unsigned int)d;
-		si = (int)d;
+		d = *(double*)from;
+		tmpu64 = (u64)d;
+		tmpi64 = (i64)d;
 		break;
+
 	case ID_STRING:
 		d  = atof(from);
-		ui = strtoul(from, NULL, 10);
-		si = atoi(from);
+		tmpu64 = strtoull(from, NULL, 10);
+		tmpi64 = atoll(from);
 		break;
 	default: return 0;
 	}
 
 	// add conversions for other numeric types
-	us = (unsigned short)ui;
-	ss = (short)si;
-	uc = (unsigned char)ui;
-	sc = (char)si;
-	f  = (float)d;
+	tmpu32 = tmpu64;
+	tmpi32 = tmpi64;
+	tmpu16 = tmpu32;
+	tmpi16 = tmpi32;
+	tmpu8 = tmpu32;
+	tmpi8 = tmpi32;
 
 	if (tfmt == STRING) {
 		switch (ffmt) {
-		case DV_UINT8: sprintf(str, "%u", ui); break;
+		case DV_UINT8:
+		case DV_UINT16:
+		case DV_UINT32:
+		case DV_UINT64: sprintf(str, "%lu", tmpu64); break;
+
+		case DV_INT8:
 		case DV_INT16:
-		case DV_INT32: sprintf(str, "%d", si); break;
+		case DV_INT32:
+		case DV_INT64: sprintf(str, "%d", tmpi32); break;
+
 		case DV_FLOAT:
 		case DV_DOUBLE: sprintf(str, "%g", d); break;
 		case ID_STRING: sprintf(str, "%s", (char*)from); break;
@@ -1538,33 +1542,37 @@ static int convert_to_ext_fmt(void* from, int ffmt, char* to, int tfmt, int tole
 	case MSB_FLOAT: copy(&f, to, sizeof(f), big ^ 1); break;
 	case SIGNED_LSB_INT:
 		switch (tolen) {
-		case 1: copy(&sc, to, sizeof(sc), big ^ 0); break;
-		case 2: copy(&ss, to, sizeof(ss), big ^ 0); break;
-		case 4: copy(&si, to, sizeof(si), big ^ 0); break;
+		case 1: copy(&tmpi8, to, sizeof(tmpi8), big ^ 0); break;
+		case 2: copy(&tmpi16, to, sizeof(tmpi16), big ^ 0); break;
+		case 4: copy(&tmpi32, to, sizeof(tmpi32), big ^ 0); break;
+		case 8: copy(&tmpi64, to, sizeof(tmpi64), big ^ 0); break;
 		default: return 0;
 		}
 		break;
 	case SIGNED_MSB_INT:
 		switch (tolen) {
-		case 1: copy(&sc, to, sizeof(sc), big ^ 1); break;
-		case 2: copy(&ss, to, sizeof(ss), big ^ 1); break;
-		case 4: copy(&si, to, sizeof(si), big ^ 1); break;
+		case 1: copy(&tmpi8, to, sizeof(tmpi8), big ^ 1); break;
+		case 2: copy(&tmpi16, to, sizeof(tmpi16), big ^ 1); break;
+		case 4: copy(&tmpi32, to, sizeof(tmpi32), big ^ 1); break;
+		case 8: copy(&tmpi64, to, sizeof(tmpi64), big ^ 1); break;
 		default: return 0;
 		}
 		break;
 	case UNSIGNED_LSB_INT:
 		switch (tolen) {
-		case 1: copy(&uc, to, sizeof(uc), big ^ 0); break;
-		case 2: copy(&us, to, sizeof(us), big ^ 0); break;
-		case 4: copy(&ui, to, sizeof(ui), big ^ 0); break;
+		case 1: copy(&tmpu8, to, sizeof(tmpu8), big ^ 0); break;
+		case 2: copy(&tmpu16, to, sizeof(tmpu16), big ^ 0); break;
+		case 4: copy(&tmpu32, to, sizeof(tmpu32), big ^ 0); break;
+		case 8: copy(&tmpu64, to, sizeof(tmpu64), big ^ 0); break;
 		default: return 0;
 		}
 		break;
 	case UNSIGNED_MSB_INT:
 		switch (tolen) {
-		case 1: copy(&uc, to, sizeof(uc), big ^ 1); break;
-		case 2: copy(&us, to, sizeof(us), big ^ 1); break;
-		case 4: copy(&ui, to, sizeof(ui), big ^ 1); break;
+		case 1: copy(&tmpu8, to, sizeof(tmpu8), big ^ 1); break;
+		case 2: copy(&tmpu16, to, sizeof(tmpu16), big ^ 1); break;
+		case 4: copy(&tmpu32, to, sizeof(tmpu32), big ^ 1); break;
+		case 8: copy(&tmpu64, to, sizeof(tmpu64), big ^ 1); break;
 		default: return 0;
 		}
 		break;
@@ -1575,7 +1583,7 @@ static int convert_to_ext_fmt(void* from, int ffmt, char* to, int tfmt, int tole
 	return 1;
 }
 
-// write_data(), inverse of read_data(). writes the data into a u8 buffer
+// write_data(), inverse of read_data(). writes the data into a buffer
 // called by pack()
 // @param u8* buffer              // buffer to write data into
 // @param data* the_data            // data to write into buffer
@@ -1602,8 +1610,8 @@ static int pack_row(data* the_data, unpack_digest* digest, int row, u8* buffer)
 
 		// loop through columns in column attributes
 		for (k = 0; k < columns; k++) {
-			if (k >= src_columns) // src data has less columns than specified
-				continue;
+			if (k >= src_columns) // src data has fewer columns than specified
+				break;
 
 			// TODO - check for buffer overuns -- different for strings vs vals
 			if (src_type == ID_STRING) {

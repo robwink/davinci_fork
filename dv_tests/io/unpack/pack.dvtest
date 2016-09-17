@@ -13,6 +13,15 @@
 # below from the originals above, besides removing the ignore
 # sections, I changed 3 byte types to 4.
 
+# NOTE(rswinkle): it seems pack will pack structures with members
+# with differing y lengths and will just pad those columns with
+# 00's so the file will be the size in bytes of the first row
+# times the number of rows (y length) of the longest column.
+#
+# Maybe I should add a test for that but it seems like a rare
+# thing and unpack has no way of knowing what the different lengths
+# were or how to differentiate a real 0 from a padded 0.
+
 
 atm = load("atm.hdf");
 pack(atm, "U4U2U2*38U2U2R4I2*9R4R4R4a4", "atm_packed.dat")
