@@ -289,10 +289,10 @@
     one of the following letters:
         Letter     Meaning              Allowable byte-sizes ("n")
         'a'        string               1+
-        'I'        signed msb int       1-4
-        'U'        unsigned msb int     1-4
-        'i'        signed lsb int       1-4
-        'u'        unsigned lsb int     1-4
+        'I'        signed msb int       1-8
+        'U'        unsigned msb int     1-8
+        'i'        signed lsb int       1-8
+        'u'        unsigned lsb int     1-8
         'r'        real                 4, 8
         'R'        msb real             4, 8
         'x'        skip                 1+
@@ -337,7 +337,9 @@
     encoding to the file. The optional count parameter specifies
     the number of records to be packed (a negative value
     means all records). The template string has the same structure
-    as used in the "unpack" function.
+    as used in the "unpack" function, except that unlike the unpack
+    function it does not support 3, 5, 6, or 7 byte int types, only
+    1, 2, 4, and 8.
 
     NOTE: existing data in the file is overwritten.
 
