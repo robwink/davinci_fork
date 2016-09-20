@@ -2723,7 +2723,7 @@ Example:
 ?sort()
  sort() - Alpha-numeric sorting
 
- Syntax: sort(object=VAL[, by=VAL][, descend=INT])
+ Syntax: sort(object=VAL[, by=VAL][, descend=BOOL])
  'object'  - a numeric array or text array
  'by'      - optional object by which to sort the data object
  'descend' - option to order by decreasing value. Default = 0 (ascending)
