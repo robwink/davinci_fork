@@ -4,7 +4,7 @@ static void quicksort(void*, size_t, size_t, int (*)(), size_t*, int, int);
 static void* reorgByIndex(Var*, Var*, size_t*);
 
 
-#define cmp_func(type) \
+#define cmp_func_asc(type) \
 int cmp_##type(const void* a, const void* b) \
 { \
 	if (*(type*)a > *(type*)b) return 1; \
@@ -12,23 +12,49 @@ int cmp_##type(const void* a, const void* b) \
 	return 0; \
 }
 
+#define cmp_func_dsc(type) \
+int cmp_##type##_dsc(const void* a, const void* b) \
+{ \
+	if (*(type*)a > *(type*)b) return -1; \
+	if (*(type*)a < *(type*)b) return 1; \
+	return 0; \
+}
 
-cmp_func(u8)
-cmp_func(u16)
-cmp_func(u32)
-cmp_func(u64)
 
-cmp_func(i8)
-cmp_func(i16)
-cmp_func(i32)
-cmp_func(i64)
+cmp_func_asc(u8)
+cmp_func_asc(u16)
+cmp_func_asc(u32)
+cmp_func_asc(u64)
 
-cmp_func(float)
-cmp_func(double)
+cmp_func_asc(i8)
+cmp_func_asc(i16)
+cmp_func_asc(i32)
+cmp_func_asc(i64)
+
+cmp_func_asc(float)
+cmp_func_asc(double)
+
+cmp_func_dsc(u8)
+cmp_func_dsc(u16)
+cmp_func_dsc(u32)
+cmp_func_dsc(u64)
+
+cmp_func_dsc(i8)
+cmp_func_dsc(i16)
+cmp_func_dsc(i32)
+cmp_func_dsc(i64)
+
+cmp_func_dsc(float)
+cmp_func_dsc(double)
 
 int cmp_string(const void* a, const void* b)
 {
-	return strcmp(*(char* const*)a, *(char* const*)b);
+	return strcmp(*(char**)a, *(char**)b);
+}
+
+int cmp_string_dsc(const void* a, const void* b)
+{
+	return strcmp(*(char**)b, *(char**)a);
 }
 
 
@@ -237,14 +263,14 @@ Var* ff_sort(vfuncptr func, Var* arg)
 	size_t dsize;
 	size_t i, j;
 	int rows      = 0;
-	float descend = 0;
+	int descend = 0;
 	void *data, *sortSet;
 	int (*cmp)(const void*, const void*);
 
 	Alist alist[4];
 	alist[0]      = make_alist("object", ID_UNK, NULL, &object);
 	alist[1]      = make_alist("by", ID_UNK, NULL, &byObj);
-	alist[2]      = make_alist("descend", DV_FLOAT, NULL, &descend);
+	alist[2]      = make_alist("descend", DV_INT32, NULL, &descend);
 	alist[3].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return (NULL);
@@ -270,18 +296,18 @@ Var* ff_sort(vfuncptr func, Var* arg)
 		dsize  = V_DSIZE(sortVar);
 
 		switch (format) {
-		case DV_UINT8: cmp  = cmp_u8; break;
-		case DV_UINT16: cmp  = cmp_u16; break;
-		case DV_UINT32: cmp  = cmp_u32; break;
-		case DV_UINT64: cmp  = cmp_u64; break;
+		case DV_UINT8:  cmp = (descend) ? cmp_u8_dsc : cmp_u8; break;
+		case DV_UINT16: cmp = (descend) ? cmp_u16_dsc : cmp_u16; break;
+		case DV_UINT32: cmp = (descend) ? cmp_u32_dsc : cmp_u32; break;
+		case DV_UINT64: cmp = (descend) ? cmp_u64_dsc : cmp_u64; break;
 
-		case DV_INT8: cmp  = cmp_i8; break;
-		case DV_INT16: cmp  = cmp_i16; break;
-		case DV_INT32: cmp  = cmp_i32; break;
-		case DV_INT64: cmp  = cmp_i64; break;
+		case DV_INT8:  cmp  = (descend) ? cmp_i8_dsc : cmp_i8; break;
+		case DV_INT16: cmp  = (descend) ? cmp_i16_dsc : cmp_i16; break;
+		case DV_INT32: cmp  = (descend) ? cmp_i32_dsc : cmp_i32; break;
+		case DV_INT64: cmp  = (descend) ? cmp_i64_dsc : cmp_i64; break;
 
-		case DV_FLOAT: cmp  = cmp_float; break;
-		case DV_DOUBLE: cmp = cmp_double; break;
+		case DV_FLOAT: cmp  = (descend) ? cmp_float_dsc : cmp_float; break;
+		case DV_DOUBLE: cmp = (descend) ? cmp_double_dsc : cmp_double; break;
 		}
 
 		if (V_ORG(sortVar) != BSQ) {
@@ -299,15 +325,6 @@ Var* ff_sort(vfuncptr func, Var* arg)
 
 		/* Sort and create indexList */
 		if (dsize > 0) quicksort(sortSet, dsize, NBYTES(format), cmp, indexList, 0, dsize - 1);
-
-		/* flip the bitches? */
-		if (descend > 0) {
-			for (i = 0; i < (dsize / 2); i += 1) {
-				j                        = indexList[i];
-				indexList[i]             = indexList[dsize - i - 1];
-				indexList[dsize - i - 1] = j;
-			}
-		}
 
 		if (byObj == NULL) {
 			free(sortSet);
@@ -366,19 +383,6 @@ Var* ff_sort(vfuncptr func, Var* arg)
 		for (i = 0; i < rows; i++) indexList[i] = i;
 
 		quicksort(tlines, rows, sizeof(char*), cmp_string, indexList, 0, rows - 1);
-
-		/* flip the bitches? */
-		if (descend > 0) {
-			for (i = 0; i < (rows / 2); i += 1) {
-				oneline              = tlines[i];
-				tlines[i]            = tlines[rows - i - 1];
-				tlines[rows - i - 1] = oneline;
-
-				j                       = indexList[i];
-				indexList[i]            = indexList[rows - i - 1];
-				indexList[rows - i - 1] = j;
-			}
-		}
 
 		if (byObj == NULL) {
 			// parse_error("Object = ID_TEXT, byObj = NULL");
