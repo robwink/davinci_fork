@@ -4,19 +4,16 @@
 #include <math.h>
 #include <string.h>
 
-#ifdef rfunc
-#include "rfunc.h"
-#endif
-
 #ifdef HAVE_LIBREADLINE
 #include "ff_source.h"
 #endif
 
-#if defined(__CYGWIN__) || defined(__MINGW32__)
-// #include <dos.h>
-#endif
-
 Var* eval_buffer(char* buf);
+
+
+int num_internal_funcs = sizeof(vfunclist)/sizeof(struct _vfuncptr);
+
+
 
 /**
  ** V_func - find and call named function
@@ -46,7 +43,8 @@ Var* V_func(const char* name, Var* arg)
 	/*
 	** Find and call the named function or its handler
 	*/
-	for (f = vfunclist; f->name != NULL; f++) {
+	for (int i=0; i<num_internal_funcs; ++i) {
+		f = &vfunclist[i];
 		if (!strcmp(f->name, name)) {
 			return (f->fptr(f, arg));
 		}

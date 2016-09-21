@@ -15,13 +15,6 @@ void add_history();
 #include <readline/readline.h>
 #endif
 
-#if 0
-  /* JAS FIX: these conflict if readline is used, and are not needed otherwise. */
-  void rl_callback_handler_install(char *, void (*)(char *));
-  struct _hist_state* history_get_history_state(void);
-  void rl_callback_read_char ();
-  void rl_callback_handler_remove();
-#endif
 
 #ifdef HAVE_LIBHDF5
 #include <hdf5.h>
@@ -463,6 +456,22 @@ int cmp_i64(const void*, const void*);
 int cmp_float(const void*, const void*);
 int cmp_double(const void*, const void*);
 
+int cmp_string(const void* a, const void* b);
+
+int cmp_u8_dsc(const void*, const void*);
+int cmp_u16_dsc(const void*, const void*);
+int cmp_u32_dsc(const void*, const void*);
+int cmp_u64_dsc(const void*, const void*);
+
+int cmp_i8_dsc(const void*, const void*);
+int cmp_i16_dsc(const void*, const void*);
+int cmp_i32_dsc(const void*, const void*);
+int cmp_i64_dsc(const void*, const void*);
+
+int cmp_float_dsc(const void*, const void*);
+int cmp_double_dsc(const void*, const void*);
+
+int cmp_string_dsc(const void* a, const void* b);
 
 
 void log_line(char* str);

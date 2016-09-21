@@ -1,5 +1,11 @@
 #ifndef _FF_H_
 #define _FF_H_
+
+
+// TODO(rswinkle):
+// This needs parser.h not just parser_types.h because it needs func.h
+// I really need to make func.h just the function prototypes needed for this file
+// and move everything else into appropriate headers
 #include "parser.h"
 
 /**
@@ -357,9 +363,9 @@ struct _vfuncptr vfunclist[] = {
     /*  { "blend",             ff_blend,          NULL, NULL }, */
     {"text", ff_create_text, NULL, NULL},
 
-    {"pdshead", ff_pdshead, NULL, NULL},
+    {"pdshead", ff_pdshead, NULL, NULL}
 
-    {NULL, NULL, NULL, NULL}
+    //{NULL, NULL, NULL, NULL}
 
 };
 

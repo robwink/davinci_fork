@@ -29,6 +29,8 @@ UFUNC* locate_ufunc(const char* name)
 	return NULL;
 }
 
+// NOTE(rswinkle): filling the whole with the last element
+// precludes keeping them sorted
 int destroy_ufunc(const char* name)
 {
 	int i;

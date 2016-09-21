@@ -40,6 +40,17 @@ XtAppContext applicationContext;
 static int windows = 1;
 int usage(char* prog);
 
+// Used for tab completion
+extern int num_internal_funcs;
+extern struct _vfuncptr vfunclist[];
+
+extern UFUNC** ufunc_list;
+extern int nufunc;
+
+////////////////////
+
+
+
 
 /**
  ** Command line args:
@@ -115,6 +126,9 @@ void dv_sighandler(int data)
 
 /* char *__progname = "davinci"; */
 
+
+
+
 int main(int ac, char** av)
 {
 	Scope* s;
@@ -149,6 +163,10 @@ int main(int ac, char** av)
 
 	s = new_scope();
 	init_input_stack();
+
+	//sort internal function list to speed up tab completion matching
+	//and present them in alphabetical order when double TABing for multiple matches
+	qsort(vfunclist, num_internal_funcs, sizeof(struct _vfuncptr), cmp_string);
 
 	signal(SIGINT, dv_sighandler);
 	signal(SIGSEGV, dv_sighandler);
@@ -744,7 +762,81 @@ void init_history(char* fname)
 	}
 }
 
-char** dv_complete_func(const char* text, int start, int end) { return (NULL); }
+
+
+
+
+// Generator function for command completion.  STATE lets us know whether
+// to start from scratch; without any state (i.e. STATE == 0), then we
+// start at the top of the list.
+char* command_generator(const char* text, int state)
+{
+	static int list_index, len;
+
+	// If this is a new word to complete, initialize now.  This includes
+	// saving the length of TEXT for efficiency, and initializing the index
+	// variable to 0.
+	if (!state) {
+		len = strlen(text);
+		list_index = 0;
+	}
+
+	int i;
+
+	// Return the next name which partially matches from the command list.
+	for (i=list_index; i<num_internal_funcs; ++i) {
+		if (strncmp(vfunclist[i].name, text, len) == 0) {
+			list_index = i+1;
+			return strdup(vfunclist[i].name);
+		}
+	}
+
+	if (i > list_index)
+		list_index = i;
+
+	for (i = list_index - num_internal_funcs; i < nufunc; ++i) {
+		if (strncmp(ufunc_list[i]->name, text, len) == 0) {
+			list_index = num_internal_funcs+i+1;
+			return strdup(ufunc_list[i]->name);
+		}
+	}
+
+	// If no names matched, then return NULL.
+	return NULL;
+}
+
+
+/* Attempt to complete on the contents of TEXT.  START and END bound the
+	 region of rl_line_buffer that contains the word to complete.  TEXT is
+	 the word to complete.  We can use the entire contents of rl_line_buffer
+	 in case we want to do some simple parsing.  Return the array of matches,
+	 or NULL if there aren't any. */
+char** dv_complete_func(const char* text, int start, int end)
+{
+	///*
+	char** matches = NULL;
+
+	rl_completion_append_character = '\0';
+	// If this word is at the start of the line, then it is a function name
+	// to complete.  Otherwise it is the name of a file in the current
+	// directory.
+	if (start == 0) {
+		matches = rl_completion_matches(text, command_generator);
+	} else {
+		//printf("\n%s\n", text);
+		//printf("%s\n", &text[start]);
+	}
+
+
+
+	return matches;
+}
+
+
+
+
+
+
 
 #ifndef HAVE_LIBREADLINE
 

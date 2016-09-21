@@ -49,12 +49,12 @@ cmp_func_dsc(double)
 
 int cmp_string(const void* a, const void* b)
 {
-	return strcmp(*(char**)a, *(char**)b);
+	return strcmp(*(const char**)a, *(const char**)b);
 }
 
 int cmp_string_dsc(const void* a, const void* b)
 {
-	return strcmp(*(char**)b, *(char**)a);
+	return strcmp(*(const char**)b, *(const char**)a);
 }
 
 
@@ -165,9 +165,9 @@ static void* reorgByIndex(Var* object, Var* index, size_t* sortList)
 	return data;
 }
 
-// TODO(rswinkle) Use the standard library qsort instead.  Seriously why not?
-// This file dates to 1999, qsort has been around since C89.  Also we already use
-// qsort in ff_ix.c
+// TODO(rswinkle) Figure out some way to use the standard library qsort instead.
+// There's got to be a way.  We could just sort the user's data directly which would
+// make in easy.
 
 //	QuickSort adapted from Kernighan and Ritchie, 'The C Programming Language'
 static inline void qswap(void* base, int i, int j, int width, size_t* sortList)

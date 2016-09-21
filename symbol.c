@@ -192,14 +192,21 @@ Var* eval(Var* v)
 	return (v);
 }
 
+
+
 /**
  ** enumerate the symbol table.
  **/
 
+//ufunc.c/h
 extern UFUNC** ufunc_list;
 extern int nufunc;
+
+
+//ff.h/c
 extern struct _vfuncptr vfunclist[];
-extern int nsfunc;
+extern int num_internal_funcs;
+
 
 Var* ff_list(vfuncptr func, Var* arg)
 {
@@ -222,7 +229,7 @@ Var* ff_list(vfuncptr func, Var* arg)
 			if (V_NAME(v) != NULL) pp_print_var(v, V_NAME(v), 0, 0);
 		}
 	} else {
-		int nfuncs = 0, nsfunc;
+		int nfuncs = 0;
 		int count  = 0;
 		char** names;
 
@@ -230,10 +237,7 @@ Var* ff_list(vfuncptr func, Var* arg)
 			nfuncs += nufunc;
 		}
 		if (list_sfuncs) {
-			nsfunc = 0;
-			while (vfunclist[nsfunc].name != NULL) nsfunc++;
-
-			nfuncs += nsfunc;
+			nfuncs += num_internal_funcs;
 		}
 
 		names = calloc(nfuncs, sizeof(char*));
@@ -244,7 +248,7 @@ Var* ff_list(vfuncptr func, Var* arg)
 			count += nufunc;
 		}
 		if (list_sfuncs) {
-			for (i = 0; i < nsfunc; i++) {
+			for (i = 0; i < num_internal_funcs; i++) {
 				names[i + count] = strdup(vfunclist[i].name);
 			}
 		}
