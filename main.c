@@ -78,6 +78,7 @@ void event_loop(void);
 #endif
 
 char** dv_complete_func(const char* text, int start, int end);
+char** dv_null_func(const char* text, int start, int end) { return NULL; }
 
 jmp_buf env;
 
@@ -339,7 +340,22 @@ int main(int ac, char** av)
 		if (quick == 0 || history == 1) init_history(logfile);
 #ifdef HAVE_LIBREADLINE
 		/* JAS FIX */
+
+		// TODO(rswinkle): figure out how to get special_prefixes to work and
+		// whether it's even worth it
+		// There are too many configuration variables poorly documented/explained
+		// http://cnswww.cns.cwru.edu/php/chet/readline/readline.html#SEC47
+		//static const char* wordbreakers = ".";
+		//rl_special_prefixes = wordbreakers;
+		
+
+		//static const char wordbreakers = " \t\n\"\\'`@$><=;|&{(";
+		//adding the '.'
+		static const char* wordbreakers = ". \t\n\"\\'`@$><=;|&{(";
+		rl_basic_word_break_characters = wordbreakers;
+
 		rl_attempted_completion_function = dv_complete_func;
+		//rl_attempted_completion_function = dv_null_func;
 #endif
 	}
 	if (quick == 0) {
@@ -771,39 +787,177 @@ void init_history(char* fname)
 // start at the top of the list.
 char* command_generator(const char* text, int state)
 {
-	static int list_index, len;
+	static int list_index, len, search_state;
+
+	Scope* scope = global_scope();
+	Symtable* s  = scope->symtab;
+	Var* v;
 
 	// If this is a new word to complete, initialize now.  This includes
 	// saving the length of TEXT for efficiency, and initializing the index
 	// variable to 0.
 	if (!state) {
 		len = strlen(text);
+		search_state = 0;
 		list_index = 0;
 	}
 
 	int i;
 
 	// Return the next name which partially matches from the command list.
-	for (i=list_index; i<num_internal_funcs; ++i) {
-		if (strncmp(vfunclist[i].name, text, len) == 0) {
-			list_index = i+1;
-			return strdup(vfunclist[i].name);
+	
+	// search builtin functions
+	if (search_state == 0) {
+		for (i=list_index; i<num_internal_funcs; ++i) {
+			if (strncmp(vfunclist[i].name, text, len) == 0) {
+				list_index = i+1;
+				return strdup(vfunclist[i].name);
+			}
 		}
+		search_state++;
+		list_index = 0;
 	}
 
-	if (i > list_index)
-		list_index = i;
+	//search user defined functions
+	if (search_state == 1) {
+		for (i = list_index; i < nufunc; ++i) {
+			if (strncmp(ufunc_list[i]->name, text, len) == 0) {
+				list_index = i+1;
+				return strdup(ufunc_list[i]->name);
+			}
+		}
+		search_state++;
+		list_index = 0;
+	}
 
-	for (i = list_index - num_internal_funcs; i < nufunc; ++i) {
-		if (strncmp(ufunc_list[i]->name, text, len) == 0) {
-			list_index = num_internal_funcs+i+1;
-			return strdup(ufunc_list[i]->name);
+	//global variables
+	if (search_state == 2) {
+		for (i=0, s = scope->symtab; s != NULL; s=s->next, ++i) {
+			if (i < list_index)
+				continue;
+
+			v = s->value;
+			if (V_NAME(v) != NULL && !strncmp(V_NAME(v), text, len)) {
+				list_index = i+1;
+				return strdup(V_NAME(v));
+			}
 		}
 	}
 
 	// If no names matched, then return NULL.
 	return NULL;
 }
+
+char* member_generator(const char* text, int state)
+{
+	static int list_index, len;
+	static Var* v;
+	static char* dot;
+
+	Var* member;
+	char* name;
+
+	Scope* scope = global_scope();
+	Symtable* s  = scope->symtab;
+
+	char* word = NULL;
+
+	//text is actually empty cause it breaks on '.' and we
+	//need the structure names so we work on the whole line buf
+	//word = text;
+	word = rl_line_buffer;
+
+	//return NULL;
+	//printf("word = \"%s\"\n", word);
+	char* tmp;
+	int nlen;
+	int i, n_memb;
+
+	if (!state) {
+		len = strlen(word);
+		list_index = 0;
+		v = NULL;
+		dot = word;
+	}
+	char buf[256];
+
+	if (!v) {
+		tmp = strchr(word, '.');
+		nlen = tmp - dot;
+		dot = tmp;
+
+		for (i=0, s = scope->symtab; s != NULL; s=s->next, ++i) {
+			v = s->value;
+			if (V_TYPE(v) != ID_STRUCT)
+				continue;
+
+			if (V_NAME(v) && !strncmp(V_NAME(v), word, nlen)) {
+				break;
+			}
+		}
+
+		while ((tmp = strchr(&dot[1], '.'))) {
+			memcpy(buf, &dot[1], tmp-dot-1);
+			buf[tmp-dot-1] = 0;
+			i = Narray_find(V_STRUCT(v), buf, (void**)&member);
+			if (i == -1 || V_TYPE(member) != ID_STRUCT)
+				return NULL;
+			
+			v = member;
+			dot = tmp;
+		}
+	}
+
+	nlen = len - (dot - word) - 1;
+	char* result = NULL;
+	n_memb = get_struct_count(v);
+	for (int j=list_index; j<n_memb; ++j) {
+		get_struct_element(v, j, &name, &member);
+		if (name && !strncmp(name, &dot[1], nlen)) {
+
+			list_index = j+1;
+			/*
+			result = malloc(dot-word+1 + strlen(name)+1);
+			memcpy(result, word, dot-word+1);
+			strcpy(&result[dot-word+1], name);
+			return result;
+			*/
+
+			return strdup(name);
+		}
+	}
+
+	return NULL;
+}
+
+char* global_var_generator(const char* text, int state)
+{
+	static int list_index, len;
+
+	Scope* scope = global_scope();
+	Symtable* s  = scope->symtab;
+	Var* v;
+
+	if (!state) {
+		len = strlen(text);
+		list_index = 0;
+	}
+
+	int i;
+	for (i=0, s = scope->symtab; s != NULL; s=s->next, ++i) {
+		if (i < list_index)
+			continue;
+
+		v = s->value;
+		if (V_NAME(v) != NULL && !strncmp(V_NAME(v), text, len)) {
+			list_index = i+1;
+			return strdup(V_NAME(v));
+		}
+	}
+	return NULL;
+}
+
+
 
 
 /* Attempt to complete on the contents of TEXT.  START and END bound the
@@ -817,16 +971,22 @@ char** dv_complete_func(const char* text, int start, int end)
 	char** matches = NULL;
 
 	rl_completion_append_character = '\0';
+
+
 	// If this word is at the start of the line, then it is a function name
 	// to complete.  Otherwise it is the name of a file in the current
 	// directory.
+	//printf("\"%s\" %d %d %c\n", rl_line_buffer, start, end, rl_line_buffer[start]);
 	if (start == 0) {
 		matches = rl_completion_matches(text, command_generator);
 	} else {
-		//printf("\n%s\n", text);
-		//printf("%s\n", &text[start]);
+		if (rl_line_buffer[start-1] == '.') {
+			matches = rl_completion_matches(text, member_generator);
+			rl_attempted_completion_over = 1;
+		}
+		else
+			matches = rl_completion_matches(text, command_generator);
 	}
-
 
 
 	return matches;
