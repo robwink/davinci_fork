@@ -967,10 +967,15 @@ char* global_var_generator(const char* text, int state)
 	 or NULL if there aren't any. */
 char** dv_complete_func(const char* text, int start, int end)
 {
-	///*
 	char** matches = NULL;
 
 	rl_completion_append_character = '\0';
+
+	//static const char *default_filename_quote_chars = " \t\n\\\"'@<>=;|&()#$`?*[!:{~";	/*}*/
+	//rl_filename_quote_characters = default_filename_quote_chars;
+
+	static const char* qb = "\'\"";
+	//rl_completer_word_break_characters = wordbreakers;
 
 
 	// If this word is at the start of the line, then it is a function name
@@ -983,9 +988,15 @@ char** dv_complete_func(const char* text, int start, int end)
 		if (rl_line_buffer[start-1] == '.') {
 			matches = rl_completion_matches(text, member_generator);
 			rl_attempted_completion_over = 1;
-		}
-		else
+
+		// I'm sure there is a better/more correct way to do this but I haven't
+		// figured it out yet
+		} else if (rl_line_buffer[start-1] != qb[0] && rl_line_buffer[start-1] != qb[1]) {
+		//} else if (!rl_completion_quote_character) {
 			matches = rl_completion_matches(text, command_generator);
+		} else {
+			//rl_completer_word_break_characters = qb;
+		}
 	}
 
 
