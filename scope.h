@@ -8,6 +8,11 @@ typedef struct varptr {
 	Var* p;
 } varptr;
 
+typedef struct dict_item {
+	char* name;
+	Var* value;
+} dict_item;
+
 /**
  ** Symbol table.  This actually hold the memory for values created
  ** in this scope.  Child scopes will point to these vars
@@ -30,8 +35,8 @@ typedef struct Dictionary {
 } Dictionary;
 
 typedef struct Scope {
-	Dictionary* dd;   /* named variable data dictionary */
-	Dictionary* args; /* number arguments data dictionary */
+	Dictionary dd;   /* named variable data dictionary */
+	Dictionary args; /* number arguments data dictionary */
 	Symtable* symtab; /* local symbol table. */
 	Darray* tmp;      /* tmp memory list */
 

@@ -61,7 +61,7 @@ Scope* parent_scope()
 
 Var* dd_find(Scope* s, char* name)
 {
-	Dictionary* dd = s->dd;
+	Dictionary* dd = &s->dd;
 
 	int i;
 	for (i = 1; i < dd->count; i++) {
@@ -74,20 +74,20 @@ Var* dd_find(Scope* s, char* name)
 
 Var* dd_get_argv(Scope* s, int n)
 {
-	if (n < s->args->count) {
-		return (s->args->value[n]);
+	if (n < s->args.count) {
+		return (s->args.value[n]);
 	}
 	return (NULL);
 }
 
 Var* dd_get_argc(Scope* s)
 {
-	return (newInt(s->args->count - 1));
+	return (newInt(s->args.count - 1));
 }
 
 void dd_put(Scope* s, char* name, Var* v)
 {
-	Dictionary* dd = s->dd;
+	Dictionary* dd = &s->dd;
 	int i;
 
 	for (i = 1; i < dd->count; i++) {
@@ -115,7 +115,7 @@ void dd_put(Scope* s, char* name, Var* v)
  **/
 int dd_put_argv(Scope* s, Var* v)
 {
-	Dictionary* dd = s->args;
+	Dictionary* dd = &s->args;
 
 	if (dd->count == dd->size) {
 		dd->size *= 2;
@@ -142,7 +142,7 @@ int dd_put_argv(Scope* s, Var* v)
 
 void dd_unput_argv(Scope* s)
 {
-	Dictionary* dd = s->args;
+	Dictionary* dd = &s->args;
 	Var* v;
 	int i;
 
@@ -157,7 +157,7 @@ int dd_argc(Scope* s)
 	/**
 	 ** subtract 1 for $0
 	 **/
-	return (s->args->count - 1);
+	return (s->args.count - 1);
 }
 
 /**
@@ -165,7 +165,7 @@ int dd_argc(Scope* s)
  **/
 Var* dd_argc_var(Scope* s)
 {
-	return (s->args->value[0]);
+	return (s->args.value[0]);
 }
 
 /*
@@ -173,7 +173,7 @@ Var* dd_argc_var(Scope* s)
 */
 Var* dd_make_arglist(Scope* s)
 {
-	Dictionary* dd = s->args;
+	Dictionary* dd = &s->args;
 	Var* v         = new_struct(dd->count);
 	Var* p;
 	int i;
@@ -210,6 +210,21 @@ Dictionary* new_dd()
 	return (d);
 }
 
+void init_dd(Dictionary* d)
+{
+	d->value = (Var**)calloc(1, sizeof(Var*));
+	d->size  = 1;
+	d->count = 1;
+
+	// Make a var for $argc
+	d->value[0] = (Var*)calloc(1, sizeof(Var));
+
+
+	// TODO(rswinkle): What is this?  casting "0" but saying it's an int?
+	make_sym(d->value[0], DV_INT32, (char*)"0");
+	V_TYPE(d->value[0]) = ID_VAL;
+}
+
 /**
  ** Allocate an init space for a scope
  **/
@@ -217,8 +232,8 @@ Scope* new_scope()
 {
 	Scope* s = (Scope*)calloc(1, sizeof(Scope));
 
-	s->dd    = new_dd();
-	s->args  = new_dd();
+	init_dd(&s->dd);
+	init_dd(&s->args);
 	return (s);
 }
 
@@ -230,11 +245,9 @@ void free_scope(Scope* s)
 	   }
 	*/
 
-	if (s->dd->value) free(s->dd->value);
-	if (s->dd) free(s->dd);
+	if (s->dd.value) free(s->dd.value);
 
-	free(s->args->value);
-	free(s->args);
+	free(s->args.value);
 	free(s);
 }
 
@@ -409,22 +422,20 @@ void unload_symtab_modules(Scope* scope)
 void clean_scope(Scope* scope)
 {
 
-	if (scope->dd) {
-		free_var(scope->dd->value[0]);
-		free(scope->dd->value);
+	if (scope->dd.value) {
+		free_var(scope->dd.value[0]);
+		free(scope->dd.value);
 		/* this looks wrong
 		   for (i = 1 ; i< scope->dd->count ; i++) {
 		   free(scope->dd->name[i]);
 		   }
 		*/
-		free(scope->dd->name);
-		free(scope->dd);
+		free(scope->dd.name);
 	}
-	if (scope->args) {
-		free_var(scope->args->value[0]);
-		free(scope->args->value);
-		free(scope->args->name);
-		free(scope->args);
+	if (scope->args.value) {
+		free_var(scope->args.value[0]);
+		free(scope->args.value);
+		free(scope->args.name);
 	}
 	clean_stack(scope);
 	if (scope->tmp) Darray_free(scope->tmp, (Darray_FuncPtr)free_var);
