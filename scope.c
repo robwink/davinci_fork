@@ -240,20 +240,24 @@ void free_scope(Scope* s)
 
 void push(Scope* scope, Var* v)
 {
-	Stack* s = &scope->stack;
-	if (s->top == s->size) {
-		s->size  = max(s->size * 2, 2);
-		s->value = (Var**)my_realloc(s->value, s->size * sizeof(Var*));
-	}
-	s->value[s->top++] = v;
+	varptr t = { v };
+
+	if (!scope->stack.a)
+		cvec_void(&scope->stack, 0, 2, sizeof(varptr), NULL, NULL);
+
+	cvec_push_void(&scope->stack, &t);
 }
 
 Var* pop(Scope* scope)
 {
-	Stack* s = &scope->stack;
+	cvector_void* s = &scope->stack;
 
-	if (s->top == 0) return NULL;
-	return s->value[--s->top];
+	if (!s->size) return NULL;
+
+	varptr ret;
+	cvec_pop_void(s, &ret);
+
+	return ret.p;
 }
 
 void clean_table(Symtable* s)
@@ -270,14 +274,22 @@ void clean_table(Symtable* s)
 
 void clean_stack(Scope* scope)
 {
-	Stack* s = &scope->stack;
-	Var* v;
+	cvector_void* s = &scope->stack;
+	//Var* v;
+	// could use v if we wanted
+	// cvec_pop_void(s, &v) would work fine
+	// it's a void* parameter and the space is the
+	// same.  Really you could pass the address of anything
+	// as long as it had >= elem_size space.
+	//
+	// I only made varptr for if/when I move to cvec_varptr
 
-	while (s->top) {
-		v = s->value[--s->top];
-		if (v == NULL) continue;
+	varptr r;
+	while (s->size) {
+		cvec_pop_void(s, &r);
+		if (!r.p) continue;
 
-		if (mem_claim(v) != NULL) free_var(v);
+		if (mem_claim(r.p)) free_var(r.p);
 	}
 }
 
@@ -428,7 +440,7 @@ void clean_scope(Scope* scope)
 	clean_table(scope->symtab);
 	scope->symtab = NULL;
 
-	free(scope->stack.value);
+	cvec_free_void(&scope->stack);
 
 	free(scope);
 }

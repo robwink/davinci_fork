@@ -1,11 +1,12 @@
 #ifndef SCOPE_H
 #define SCOPE_H
 
-//#include "cvector.h"
+#include "cvector.h"
 
 
-//typedef struct {
-//};
+typedef struct varptr {
+	Var* p;
+} varptr;
 
 /**
  ** Symbol table.  This actually hold the memory for values created
@@ -28,18 +29,14 @@ typedef struct Dictionary {
 	Var** value;
 } Dictionary;
 
-typedef struct Stack {
-	int size;
-	int top;
-	Var** value;
-} Stack;
-
 typedef struct Scope {
 	Dictionary* dd;   /* named variable data dictionary */
 	Dictionary* args; /* number arguments data dictionary */
 	Symtable* symtab; /* local symbol table. */
 	Darray* tmp;      /* tmp memory list */
-	Stack stack;      /* local stack */
+
+	cvector_void stack; // local stack
+
 	UFUNC* ufunc;     /* function pointer */
 
 	Var* rval;    /* value returned */
