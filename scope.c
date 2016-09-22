@@ -13,6 +13,8 @@
 
 */
 
+//static int cvector_void scope_stack = { 0 };
+
 // TODO(rswinkle) replace with vec_void or vector_Scope
 static int scope_count     = 0;
 static int scope_size      = 0;
@@ -25,6 +27,10 @@ int scope_stack_count()
 
 void scope_push(Scope* s)
 {
+//	if (scope_stack.capacity == 0) {
+//		cvec_void(&scope_stack, 0, 2, sizeof(Scope), free_scope, new_scope);
+//	}
+//
 	if (scope_count == scope_size) {
 		scope_size  = max(scope_size * 2, 2);
 		scope_stack = (Scope**)my_realloc(scope_stack, scope_size * sizeof(Scope*));
@@ -213,7 +219,6 @@ Scope* new_scope()
 
 	s->dd    = new_dd();
 	s->args  = new_dd();
-	s->stack = (Stack*)calloc(1, sizeof(Stack));
 	return (s);
 }
 
@@ -235,20 +240,20 @@ void free_scope(Scope* s)
 
 void push(Scope* scope, Var* v)
 {
-	Stack* stack = scope->stack;
-	if (stack->top == stack->size) {
-		stack->size  = max(stack->size * 2, 2);
-		stack->value = (Var**)my_realloc(stack->value, stack->size * sizeof(Var*));
+	Stack* s = &scope->stack;
+	if (s->top == s->size) {
+		s->size  = max(s->size * 2, 2);
+		s->value = (Var**)my_realloc(s->value, s->size * sizeof(Var*));
 	}
-	stack->value[stack->top++] = v;
+	s->value[s->top++] = v;
 }
 
 Var* pop(Scope* scope)
 {
-	Stack* stack = scope->stack;
+	Stack* s = &scope->stack;
 
-	if (stack->top == 0) return (NULL);
-	return stack->value[--stack->top];
+	if (s->top == 0) return NULL;
+	return s->value[--s->top];
 }
 
 void clean_table(Symtable* s)
@@ -265,11 +270,11 @@ void clean_table(Symtable* s)
 
 void clean_stack(Scope* scope)
 {
-	Stack* stack = scope->stack;
+	Stack* s = &scope->stack;
 	Var* v;
 
-	while (stack->top) {
-		v = stack->value[--stack->top];
+	while (s->top) {
+		v = s->value[--s->top];
 		if (v == NULL) continue;
 
 		if (mem_claim(v) != NULL) free_var(v);
@@ -423,8 +428,7 @@ void clean_scope(Scope* scope)
 	clean_table(scope->symtab);
 	scope->symtab = NULL;
 
-	free(scope->stack->value);
-	free(scope->stack);
+	free(scope->stack.value);
 
 	free(scope);
 }

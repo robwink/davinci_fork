@@ -1,6 +1,12 @@
 #ifndef SCOPE_H
 #define SCOPE_H
 
+//#include "cvector.h"
+
+
+//typedef struct {
+//};
+
 /**
  ** Symbol table.  This actually hold the memory for values created
  ** in this scope.  Child scopes will point to these vars
@@ -33,7 +39,7 @@ typedef struct Scope {
 	Dictionary* args; /* number arguments data dictionary */
 	Symtable* symtab; /* local symbol table. */
 	Darray* tmp;      /* tmp memory list */
-	Stack* stack;     /* local stack */
+	Stack stack;      /* local stack */
 	UFUNC* ufunc;     /* function pointer */
 
 	Var* rval;    /* value returned */
