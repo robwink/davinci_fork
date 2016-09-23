@@ -250,8 +250,8 @@ Var* evaluate(Var* n)
 
 	// DEBUG(rswinkle)
 #if 0
-	printf("evaluate scope_count = %d\n", scope_stack_count());
-	//debug_print_var_type(type);
+	//printf("evaluate scope_count = %d\n", scope_stack_count());
+	debug_print_var_type(type);
 #endif
 	
 	/**

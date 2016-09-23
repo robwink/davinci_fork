@@ -24,19 +24,13 @@ struct Symtable {
 	Symtable* next;
 };
 
-/**
- ** A data dictionary.  value[0] holds the var representation of argc
- **/
-typedef struct Dictionary {
-	int count;
-	int size;
-	char** name; /* variable name */
-	Var** value;
-} Dictionary;
-
 typedef struct Scope {
-	Dictionary dd;   /* named variable data dictionary */
-	Dictionary args; /* number arguments data dictionary */
+
+	// a[0].value holds the var representation of argc
+	cvector_void dd;   // named variable data dictionary
+	cvector_void args; // number arguments data dictionary
+
+
 	Symtable* symtab; /* local symbol table. */
 	Darray* tmp;      /* tmp memory list */
 

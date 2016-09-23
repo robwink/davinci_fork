@@ -153,6 +153,9 @@ void make_sym(Var* v, int format, char* str)
 	V_DATA(v)                                  = calloc(1, NBYTES(format));
 
 	// TODO(rswinkle) I think we should just default to i64 and double
+	// TODO FIX, though it's very unlikely I think this could write out of bounds
+	// if you allocated enough space for a smaller format, and then write as if its
+	// a larger format ...
 	switch (format) {
 	case DV_UINT8:
 	case DV_UINT16:

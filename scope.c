@@ -61,168 +61,149 @@ Scope* parent_scope()
 
 Var* dd_find(Scope* s, char* name)
 {
-	Dictionary* dd = &s->dd;
+	cvector_void* dd = &s->dd;
+	dict_item* p;
 
 	int i;
-	for (i = 1; i < dd->count; i++) {
-		if (dd->name[i] && !strcmp(dd->name[i], name)) {
-			return (dd->value[i]);
+	for (i = 1; i < dd->size; i++) {
+		p = CVEC_GET_VOID(dd, dict_item, i);
+		if (p->name && !strcmp(p->name, name)) {
+			return p->value;
 		}
 	}
-	return (NULL);
+	return NULL;
 }
 
 Var* dd_get_argv(Scope* s, int n)
 {
-	if (n < s->args.count) {
-		return (s->args.value[n]);
+	if (n < s->args.size) {
+		return CVEC_GET_VOID(&s->args, dict_item, n)->value;
 	}
-	return (NULL);
+	return NULL;
 }
 
 Var* dd_get_argc(Scope* s)
 {
-	return (newInt(s->args.count - 1));
+	return newInt(s->args.size - 1);
 }
 
 void dd_put(Scope* s, char* name, Var* v)
 {
-	Dictionary* dd = &s->dd;
+	cvector_void* dd = &s->dd;
 	int i;
+	dict_item* p;
 
-	for (i = 1; i < dd->count; i++) {
-		if (!strcmp(dd->name[i], name)) {
-			dd->value[i] = v;
+	for (i = 1; i < dd->size; i++) {
+		p = CVEC_GET_VOID(dd, dict_item, i);
+		if (!strcmp(p->name, name)) {
+			p->value = v;
 			return;
 		}
 	}
-	if (dd->count == dd->size) {
-		dd->size  = max(dd->size * 2, 2);
-		dd->name  = (char**)my_realloc(dd->name, sizeof(char*) * dd->size);
-		dd->value = (Var**)my_realloc(dd->value, sizeof(Var*) * dd->size);
-	}
-	if (name == NULL || strlen(name) == 0)
-		dd->name[dd->count] = NULL;
-	else
-		dd->name[dd->count] = strdup(name); /* strdup here? */
-	dd->value[dd->count]    = v;
-	dd->count++;
+
+	// C99 spec 6.7.8.21
+	// If there are fewer initializers in a brace-enclosed list than there are
+	// elements or members of an aggregate, or fewer characters in a string
+	// literal used to initialize an array of known size than there are elements
+	// in the array, the remainder of the aggregate shall be initialized implicitly
+	// the same as objects that have static storage duration.
+	//
+	// Actually GNU99 allows empty braces too
+	dict_item item = { 0 };
+
+	if (name && strlen(name))
+		item.name = strdup(name); // strdup here?
+
+	item.value = v;
+	cvec_push_void(dd, &item);
 }
 
-/**
- ** stick an arg on the end of the arg list.
- ** Update argc.
- **/
+// stick an arg on the end of the arg list.
+// Update argc.
 int dd_put_argv(Scope* s, Var* v)
 {
-	Dictionary* dd = &s->args;
+	cvector_void* dd = &s->args;
 
-	if (dd->count == dd->size) {
-		dd->size *= 2;
-		dd->value = (Var**)my_realloc(dd->value, sizeof(Var*) * dd->size);
-		dd->name  = (char**)my_realloc(dd->name, sizeof(char*) * dd->size);
-	}
 	/*
 	** WARNING: This looks like it will break if you try to global a
 	**          value that was passed.
 	*/
-	dd->value[dd->count] = v;
-	dd->name[dd->count]  = V_NAME(v);
-	V_NAME(v)            = NULL;
+	dict_item item = { 0 };
 
-	dd->count++;
+	item.value = v;
+	item.name = V_NAME(v);
+	V_NAME(v) = NULL;
 
-	/**
-	 ** subtract 1 for $0
-	 **/
-	V_INT(dd->value[0]) = dd->count - 1;
+	cvec_push_void(dd, &item);
 
-	return (dd->count - 1);
+	dict_item* p = CVEC_GET_VOID(dd, dict_item, 0);
+	// subtract 1 for $0
+	V_INT(p->value) = dd->size - 1;
+
+	return dd->size - 1;
 }
 
 void dd_unput_argv(Scope* s)
 {
-	Dictionary* dd = &s->args;
+	cvector_void* dd = &s->args;
 	Var* v;
 	int i;
+	dict_item* p;
 
-	for (i = 1; i < dd->count; i++) {
-		v         = dd->value[i];
-		V_NAME(v) = dd->name[i];
+	for (i = 1; i < dd->size; i++) {
+		p = CVEC_GET_VOID(dd, dict_item, i);
+		v         = p->value;
+		V_NAME(v) = p->name;
 	}
 }
 
 int dd_argc(Scope* s)
 {
-	/**
-	 ** subtract 1 for $0
-	 **/
-	return (s->args.count - 1);
+	// subtract 1 for $0
+	return s->args.size - 1;
 }
 
-/**
- ** return argc as a Var
- **/
+// return argc as a Var
 Var* dd_argc_var(Scope* s)
 {
-	return (s->args.value[0]);
+	return CVEC_GET_VOID(&s->args, dict_item, 0);
 }
 
-/*
-**
-*/
 Var* dd_make_arglist(Scope* s)
 {
-	Dictionary* dd = &s->args;
-	Var* v         = new_struct(dd->count);
+	cvector_void* dd = &s->args;
+	Var* v         = new_struct(dd->size);
 	Var* p;
 	int i;
 	void* zero;
+	dict_item* item;
 
-	for (i = 1; i < dd->count; i++) {
-		if (V_TYPE(dd->value[i]) == ID_UNK) {
-			zero = (char*)calloc(1, 1);
+	for (i = 1; i < dd->size; i++) {
+		item = CVEC_GET_VOID(dd, dict_item, i);
+		if (V_TYPE(item->value) == ID_UNK) {
+			zero = calloc(1, 1);
 			p    = newVal(BSQ, 1, 1, 1, DV_UINT8, zero);
 			mem_claim(p);
 		} else {
-			p = V_DUP(dd->value[i]);
+			p = V_DUP(item->value);
 		}
-		add_struct(v, dd->name[i], p);
+		add_struct(v, item->name, p);
 	}
-	return (v);
+	return v;
 }
 
-Dictionary* new_dd()
+void init_dd(cvector_void* d)
 {
-	Dictionary* d;
-	d        = (Dictionary*)calloc(1, sizeof(Dictionary));
-	d->value = (Var**)calloc(1, sizeof(Var*));
-	d->size  = 1;
-	d->count = 1;
+	cvec_void(d, 1, 1, sizeof(dict_item), NULL, NULL);
 
-	/**
-	 ** Make a var for $argc
-	 **/
-	d->value[0] = (Var*)calloc(1, sizeof(Var));
-	make_sym(d->value[0], DV_INT32, (char*)"0");
-	V_TYPE(d->value[0]) = ID_VAL;
-
-	return (d);
-}
-
-void init_dd(Dictionary* d)
-{
-	d->value = (Var**)calloc(1, sizeof(Var*));
-	d->size  = 1;
-	d->count = 1;
+	dict_item* p = CVEC_GET_VOID(d, dict_item, 0);
 
 	// Make a var for $argc
-	d->value[0] = (Var*)calloc(1, sizeof(Var));
+	p->value = (Var*)calloc(1, sizeof(Var));
 
-
-	// TODO(rswinkle): What is this?  casting "0" but saying it's an int?
-	make_sym(d->value[0], DV_INT32, (char*)"0");
-	V_TYPE(d->value[0]) = ID_VAL;
+	// that cast isn't even necessary right?
+	make_sym(p->value, DV_INT32, (char*)"0");
+	V_TYPE(p->value) = ID_VAL;
 }
 
 /**
@@ -234,9 +215,10 @@ Scope* new_scope()
 
 	init_dd(&s->dd);
 	init_dd(&s->args);
-	return (s);
+	return s;
 }
 
+// NOTE(rswinkle): Only used 3 times, all in ufunc.c::dispatch_ufunc()
 void free_scope(Scope* s)
 {
 	/* this looks wrong
@@ -245,9 +227,9 @@ void free_scope(Scope* s)
 	   }
 	*/
 
-	if (s->dd.value) free(s->dd.value);
+	cvec_free_void(&s->dd);
+	cvec_free_void(&s->args);
 
-	free(s->args.value);
 	free(s);
 }
 
@@ -362,10 +344,8 @@ Var* mem_claim_struct(Var* v)
 	return (v);
 }
 
-/**
- ** claim memory in the scope tmp list, so it doesn't get free'd
- ** return NULL if it isn't here.
- **/
+// claim memory in the scope tmp list, so it doesn't get free'd
+// return NULL if it isn't here.
 Var* mem_claim(Var* ptr)
 {
 	Scope* scope = scope_tos();
@@ -388,10 +368,7 @@ Var* mem_claim(Var* ptr)
 	return (NULL);
 }
 
-/**
- ** free the scope tmp list
- **/
-
+// free the scope tmp list
 void mem_free(Scope* scope)
 {
 	if (scope->tmp) Darray_free(scope->tmp, (Darray_FuncPtr)free_var);
@@ -418,25 +395,21 @@ void unload_symtab_modules(Scope* scope)
  ** All the vars in args belong to the parent.  Dont free those.
  ** argv[0]
  **/
-
 void clean_scope(Scope* scope)
 {
 
-	if (scope->dd.value) {
-		free_var(scope->dd.value[0]);
-		free(scope->dd.value);
-		/* this looks wrong
-		   for (i = 1 ; i< scope->dd->count ; i++) {
-		   free(scope->dd->name[i]);
-		   }
-		*/
-		free(scope->dd.name);
+	// NOTE(rswirkle): Need to think about whether these checks are necessary
+	// but for now just replicating old logic
+	if (scope->dd.a) {
+		free_var(CVEC_GET_VOID(&scope->dd, dict_item, 0)->value);
+		cvec_free_void(&scope->dd);
 	}
-	if (scope->args.value) {
-		free_var(scope->args.value[0]);
-		free(scope->args.value);
-		free(scope->args.name);
+
+	if (scope->args.a) {
+		free_var(CVEC_GET_VOID(&scope->args, dict_item, 0)->value);
+		cvec_free_void(&scope->args);
 	}
+
 	clean_stack(scope);
 	if (scope->tmp) Darray_free(scope->tmp, (Darray_FuncPtr)free_var);
 	scope->tmp = NULL;
