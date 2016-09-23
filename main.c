@@ -75,10 +75,11 @@ void event_loop(void);
 
 #ifdef HAVE_LIBREADLINE
 #include <readline/readline.h>
-#endif
 
 char** dv_complete_func(const char* text, int start, int end);
 char** dv_null_func(const char* text, int start, int end) { return NULL; }
+
+#endif
 
 jmp_buf env;
 
@@ -781,6 +782,7 @@ void init_history(char* fname)
 
 
 
+#ifdef HAVE_LIBREADLINE
 
 // Generator function for command completion.  STATE lets us know whether
 // to start from scratch; without any state (i.e. STATE == 0), then we
@@ -1003,13 +1005,7 @@ char** dv_complete_func(const char* text, int start, int end)
 	return matches;
 }
 
-
-
-
-
-
-
-#ifndef HAVE_LIBREADLINE
+#else
 
 void add_history() {}
 char* readline(char* prompt)
