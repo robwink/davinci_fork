@@ -22,33 +22,24 @@ Var* HasValue(vfuncptr func, Var* arg)
 	return newInt(0);
 }
 
-/**
- ** remove a symbol from the symtab.
- ** this destroys the symtab and hands back the value.
- **/
-
+// remove a symbol from the symtab.
+// this destroys the symtab and hands back the value.
 Var* rm_symtab(Var* v)
 {
 	Scope* scope = scope_tos();
-	Symtable *s, *t;
 
-	if (scope->symtab == NULL) return NULL;
-	if (scope->symtab->value == v) {
-		s             = scope->symtab;
-		scope->symtab = s->next;
-		free(s);
-		return v;
-	} else {
-		for (s = scope->symtab; s->next != NULL; s = s->next) {
-			if (s->next->value == v) {
-				t       = s->next;
-				s->next = t->next;
-				t->next = NULL;
-				free(t);
-				return v;
-			}
+	
+	cvector_void* vec = &scope->symtab;
+	varptr* ptr;
+
+	for (int i=0; i<vec->size; ++i) {
+		ptr = CVEC_GET_VOID(vec, varptr, i);
+		if (ptr->p == v) {
+			cvec_erase_void(vec, i, i);
+			return v;
 		}
 	}
+
 	return NULL;
 }
 
@@ -69,11 +60,18 @@ Var* ff_delete(vfuncptr func, Var* arg)
 
 Var* search_symtab(Scope* scope, char* name)
 {
-	Symtable* s;
-	for (s = scope->symtab; s != NULL; s = s->next) {
-		if (V_NAME(s->value) && !strcmp(V_NAME(s->value), name)) return (s->value);
+	cvector_void* vec = &scope->symtab;
+
+	// could just use a Var** and cast
+	varptr* ptr;
+
+	for (int i=0; i<vec->size; ++i) {
+		ptr = CVEC_GET_VOID(vec, varptr, i);
+		if (V_NAME(ptr->p) && !strcmp(V_NAME(ptr->p), name))
+			return ptr->p;
 	}
-	return (NULL);
+
+	return NULL;
 }
 
 Var* get_sym(char* name)
@@ -96,40 +94,29 @@ Var* get_global_sym(char* name)
 	return (NULL);
 }
 
-/**
- ** delete symbol from symbol table
- **/
-
+// delete symbol from symbol table
 void rm_sym(char* name)
 {
 	Scope* scope = scope_tos();
-	Symtable *s, *last = NULL;
 
-	if (name == NULL) return;
+	cvector_void* vec = &scope->symtab;
+	varptr* ptr;
 
-	for (s = scope->symtab; s != NULL; s = s->next) {
-		if (!strcmp(V_NAME(s->value), name)) {
-			if (last != NULL) {
-				last->next = s->next;
-			} else {
-				scope->symtab = s->next;
-			}
-			free_var(s->value);
-			free(s);
+	for (int i=0; i<vec->size; ++i) {
+		ptr = CVEC_GET_VOID(vec, varptr, i);
+		if (!strcmp(V_NAME(ptr->p), name)) {
+			free(ptr->p);
+			cvec_erase_void(vec, i, i);
 			return;
 		}
-		last = s;
 	}
+
 	return;
 }
 
-/**
- ** put_sym()    - store symbol in symbol table
- **/
-
+// put_sym()    - store symbol in symbol table
 Var* sym_put(Scope* scope, Var* s)
 {
-	Symtable* symtab;
 	Var *v, tmp;
 	/**
 	 ** If symbol already exists, we must re-use its structure.
@@ -138,12 +125,12 @@ Var* sym_put(Scope* scope, Var* s)
 	if ((v = get_sym(V_NAME(s))) != NULL) {
 
 		mem_claim(s);
-		/* swap around the values */
+		// swap around the values
 		tmp = *v;
 		*v  = *s;
 		*s  = tmp;
 
-		/* put the names back */
+		// put the names back
 		tmp.name = v->name;
 		v->name  = s->name;
 		s->name  = tmp.name;
@@ -151,16 +138,18 @@ Var* sym_put(Scope* scope, Var* s)
 		free_var(s);
 		s = v;
 	} else {
-		symtab        = (Symtable*)calloc(1, sizeof(Symtable));
-		symtab->value = s;
-		symtab->next  = scope->symtab;
-		scope->symtab = symtab;
+		varptr sym;
+		sym.p = s;
+
+		cvec_push_void(&scope->symtab, &sym);
 	}
-	/**
-	 ** Possible this has already been done.  do it again for safety.
-	 **/
+	
+	//Possible this has already been done.  do it again for safety.
+	// 
+	// NOTE(rswinkle): huh?
 	mem_claim(s);
-	return (s);
+
+	return s;
 }
 
 Var* put_sym(Var* s)
@@ -173,10 +162,7 @@ Var* put_global_sym(Var* s)
 	return (sym_put(global_scope(), s));
 }
 
-/**
- ** Force symtab evaluation
- **/
-
+// Force symtab evaluation
 Var* eval(Var* v)
 {
 	if (v == NULL) return NULL;
@@ -211,9 +197,10 @@ extern int num_internal_funcs;
 Var* ff_list(vfuncptr func, Var* arg)
 {
 	Scope* scope = scope_tos();
-	Symtable* s  = scope->symtab;
 
-	Var* v;
+	cvector_void* vec = &scope->symtab;
+
+	Var** v;
 	int i;
 	int list_ufuncs = 0, list_sfuncs = 0;
 	Alist alist[3];
@@ -224,10 +211,11 @@ Var* ff_list(vfuncptr func, Var* arg)
 	if (parse_args(func, arg, alist) == 0) return (NULL);
 
 	if (list_ufuncs == 0 && list_sfuncs == 0) {
-		for (s = scope->symtab; s != NULL; s = s->next) {
-			v = s->value;
-			if (V_NAME(v) != NULL) pp_print_var(v, V_NAME(v), 0, 0);
+		for (i=0; i<vec->size; ++i) {
+			v = CVEC_GET_VOID(vec, Var*, i);
+			if (V_NAME(*v)) pp_print_var(*v, V_NAME(*v), 0, 0);
 		}
+			
 	} else {
 		int nfuncs = 0;
 		int count  = 0;

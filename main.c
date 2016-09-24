@@ -792,7 +792,8 @@ char* command_generator(const char* text, int state)
 	static int list_index, len, search_state;
 
 	Scope* scope = global_scope();
-	Symtable* s  = scope->symtab;
+
+	cvector_void* vec = &scope->symtab;
 	Var* v;
 
 	// If this is a new word to complete, initialize now.  This includes
@@ -834,11 +835,11 @@ char* command_generator(const char* text, int state)
 
 	//global variables
 	if (search_state == 2) {
-		for (i=0, s = scope->symtab; s != NULL; s=s->next, ++i) {
+		for (i=0; i<vec->size; ++i) {
 			if (i < list_index)
 				continue;
 
-			v = s->value;
+			v = *CVEC_GET_VOID(vec, Var*, i);
 			if (V_NAME(v) != NULL && !strncmp(V_NAME(v), text, len)) {
 				list_index = i+1;
 				return strdup(V_NAME(v));
@@ -860,7 +861,7 @@ char* member_generator(const char* text, int state)
 	char* name;
 
 	Scope* scope = global_scope();
-	Symtable* s  = scope->symtab;
+	cvector_void* vec = &scope->symtab;
 
 	char* word = NULL;
 
@@ -888,8 +889,8 @@ char* member_generator(const char* text, int state)
 		nlen = tmp - dot;
 		dot = tmp;
 
-		for (i=0, s = scope->symtab; s != NULL; s=s->next, ++i) {
-			v = s->value;
+		for (i=0; i<vec->size; ++i) {
+			v = *CVEC_GET_VOID(vec, Var*, i);
 			if (V_TYPE(v) != ID_STRUCT)
 				continue;
 
@@ -937,7 +938,7 @@ char* global_var_generator(const char* text, int state)
 	static int list_index, len;
 
 	Scope* scope = global_scope();
-	Symtable* s  = scope->symtab;
+	cvector_void* vec = &scope->symtab;
 	Var* v;
 
 	if (!state) {
@@ -946,11 +947,11 @@ char* global_var_generator(const char* text, int state)
 	}
 
 	int i;
-	for (i=0, s = scope->symtab; s != NULL; s=s->next, ++i) {
+	for (i=0; i<vec->size; ++i) {
 		if (i < list_index)
 			continue;
 
-		v = s->value;
+		v = *CVEC_GET_VOID(vec, Var*, i);
 		if (V_NAME(v) != NULL && !strncmp(V_NAME(v), text, len)) {
 			list_index = i+1;
 			return strdup(V_NAME(v));

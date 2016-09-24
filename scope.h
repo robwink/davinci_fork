@@ -13,16 +13,6 @@ typedef struct dict_item {
 	Var* value;
 } dict_item;
 
-/**
- ** Symbol table.  This actually hold the memory for values created
- ** in this scope.  Child scopes will point to these vars
- **/
-
-typedef struct Symtable Symtable;
-struct Symtable {
-	Var* value; /* variable holder */
-	Symtable* next;
-};
 
 typedef struct Scope {
 
@@ -31,17 +21,21 @@ typedef struct Scope {
 	cvector_void args; // number arguments data dictionary
 
 
-	Symtable* symtab; /* local symbol table. */
-	Darray* tmp;      /* tmp memory list */
 
-	cvector_void stack; // local stack
+	// symbol table.  This actually holds the memory for values created
+	// in this scope. Child scopes will point to these vars
+	cvector_void symtab; // local symbol table
 
-	UFUNC* ufunc;     /* function pointer */
+	Darray* tmp;         // tmp memory list
 
-	Var* rval;    /* value returned */
-	int broken;   /* loop counter flag */
-	int loop;     /* loop counter flag */
-	int returned; /* loop counter flag */
+	cvector_void stack;  // local stack
+
+	UFUNC* ufunc;        // function pointer
+
+	Var* rval;           // value returned
+	int broken;          // loop counter flag
+	int loop;            // loop counter flag
+	int returned;        // loop counter flag
 } Scope;
 
 /**

@@ -213,6 +213,14 @@ Scope* new_scope()
 {
 	Scope* s = (Scope*)calloc(1, sizeof(Scope));
 
+	// TODO(rswinkle): add elem_free later
+	//
+	// These actually aren't even necessary if cvec allocator macro handles
+	// 0 capacity correctly, but when we use elem_free it makes more sense
+	cvec_void(&s->symtab, 0, 8, sizeof(varptr), NULL, NULL);
+
+	cvec_void(&s->stack, 0, 2, sizeof(varptr), NULL, NULL);
+
 	init_dd(&s->dd);
 	init_dd(&s->args);
 	return s;
@@ -237,9 +245,6 @@ void push(Scope* scope, Var* v)
 {
 	varptr t = { v };
 
-	if (!scope->stack.a)
-		cvec_void(&scope->stack, 0, 2, sizeof(varptr), NULL, NULL);
-
 	cvec_push_void(&scope->stack, &t);
 }
 
@@ -255,16 +260,12 @@ Var* pop(Scope* scope)
 	return ret.p;
 }
 
-void clean_table(Symtable* s)
+void clean_table(cvector_void* vec)
 {
-	Symtable* t;
-
-	while (s != NULL) {
-		t = s->next;
-		free_var(s->value);
-		free(s);
-		s = t;
+	for (int i=0; i<vec->size; ++i) {
+		free(*CVEC_GET_VOID(vec, Var*, i));
 	}
+	cvec_free_void(vec);
 }
 
 void clean_stack(Scope* scope)
@@ -288,10 +289,7 @@ void clean_stack(Scope* scope)
 	}
 }
 
-/**
- ** Clean the stack and tmptab of the current scope
- **/
-
+// Clean the stack and tmptab of the current scope
 void cleanup(Scope* scope)
 {
 	clean_stack(scope);
@@ -299,9 +297,7 @@ void cleanup(Scope* scope)
 	scope->tmp = NULL;
 }
 
-/**
- ** allocate memory in the scope tmp list
- **/
+// allocate memory in the scope tmp list
 Var* mem_malloc()
 {
 	Scope* scope = scope_tos();
@@ -377,14 +373,15 @@ void mem_free(Scope* scope)
 void unload_symtab_modules(Scope* scope)
 {
 #ifdef BUILD_MODULE_SUPPORT
-	Symtable* s = scope->symtab;
-	while (s) {
-		Var* v = s->value;
-		s      = s->next;
+	cvector_void* vec = &scope->symtab;
+	Var* v;
+	for (int i=0; i<vec->size; ++i) {
+		v = *CVEC_GET_VOID(vec, Var*, i);
 		if (V_TYPE(v) == ID_MODULE) {
 			unload_dv_module(V_NAME(v));
 		}
 	}
+
 #endif /* BUILD_MODULE_SUPPORT */
 }
 
@@ -421,8 +418,8 @@ void clean_scope(Scope* scope)
 	   to the module variable in the global symbol table. */
 	unload_symtab_modules(scope);
 
-	clean_table(scope->symtab);
-	scope->symtab = NULL;
+	// replace with cvec_free with elem_free
+	clean_table(&scope->symtab);
 
 	cvec_free_void(&scope->stack);
 
