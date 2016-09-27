@@ -607,9 +607,14 @@ Var* ff_create(vfuncptr func, Var* arg)
 	int init         = 1;
 	char *format_str = NULL, *org_str = NULL;
 
-	u8* cdata;
-	i16* sdata;
-	i32* idata;
+	u8* u8data;
+	u16* u16data;
+	u32* u32data;
+	u64* u64data;
+
+	i8* i8data;
+	i16* i16data;
+	i32* i32data;
 	i64* i64data;
 
 	float* fdata;
@@ -672,9 +677,14 @@ Var* ff_create(vfuncptr func, Var* arg)
 	V_SIZE(s)[orders[org][2]] = z;
 
 	// casts from void* aren't required in C ...
-	cdata = (u8*)V_DATA(s);
-	sdata = (i16*)V_DATA(s);
-	idata = (i32*)V_DATA(s);
+	u8data = (u8*)V_DATA(s);
+	u16data = (u16*)V_DATA(s);
+	u32data = (u32*)V_DATA(s);
+	u64data = (u64*)V_DATA(s);
+
+	i8data = (i8*)V_DATA(s);
+	i16data = (i16*)V_DATA(s);
+	i32data = (i32*)V_DATA(s);
 	i64data = (i64*)V_DATA(s);
 
 	fdata = (float*)V_DATA(s);
@@ -691,9 +701,14 @@ Var* ff_create(vfuncptr func, Var* arg)
 
 				v = start;
 				switch (format) {
-				case DV_UINT8: cdata[0]  = clamp_byte(v); break;
-				case DV_INT16: sdata[0]  = clamp_short(v); break;
-				case DV_INT32: idata[0]  = clamp_int(v); break;
+				case DV_UINT8: u8data[0]  = clamp_u8(v); break;
+				case DV_UINT16: u16data[0]  = clamp_u16(v); break;
+				case DV_UINT32: u32data[0]  = clamp_u32(v); break;
+				case DV_UINT64: u64data[0]  = clamp_u64(v); break;
+
+				case DV_INT8: i8data[0]  = clamp_i8(v); break;
+				case DV_INT16: i16data[0]  = clamp_i16(v); break;
+				case DV_INT32: i32data[0]  = clamp_i32(v); break;
 				case DV_INT64: i64data[0]  = clamp_i64(v); break;
 
 				case DV_FLOAT: fdata[0]  = clamp_float(v); break;
@@ -710,9 +725,15 @@ Var* ff_create(vfuncptr func, Var* arg)
 						v = (count++) * step + start;
 						c = cpos(i, j, k, s);
 						switch (format) {
-						case DV_UINT8: cdata[c]    = clamp_byte(v); break;
-						case DV_INT16: sdata[c]    = clamp_short(v); break;
-						case DV_INT32: idata[c]    = clamp_int(v); break;
+
+						case DV_UINT8: u8data[c]  = clamp_u8(v); break;
+						case DV_UINT16: u16data[c]  = clamp_u16(v); break;
+						case DV_UINT32: u32data[c]  = clamp_u32(v); break;
+						case DV_UINT64: u64data[c]  = clamp_u64(v); break;
+
+						case DV_INT8: i8data[c]  = clamp_i8(v); break;
+						case DV_INT16: i16data[c]  = clamp_i16(v); break;
+						case DV_INT32: i32data[c]  = clamp_i32(v); break;
 						case DV_INT64: i64data[c]  = clamp_i64(v); break;
 
 						case DV_FLOAT: fdata[c]  = clamp_float(v); break;
