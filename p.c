@@ -328,7 +328,9 @@ Var* evaluate(Var* n)
 			cleanup(scope);
 			evaluate(left);
 			p1 = pop(scope);
-			if ((p2 = eval(p1)) != NULL) p1 = p2;
+			if ((p2 = eval(p1)) != NULL) {
+				p1 = p2;
+			}
 			scope->rval                     = p1;
 		}
 		scope->returned = 1;

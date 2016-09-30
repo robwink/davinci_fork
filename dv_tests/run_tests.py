@@ -94,6 +94,7 @@ def main():
 			filename = tmpfile.name
 
 		proc = Popen([args.davinci, "-fqv0", filename], stdout=PIPE, universal_newlines=True)
+		#proc = Popen(["valgrind", "--leak-check=full", "-v", args.davinci, "-fqv0", filename], stdout=PIPE, universal_newlines=True)
 
 		out, err = proc.communicate()
 		rc = proc.returncode

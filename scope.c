@@ -13,50 +13,63 @@
 
 */
 
-//static int cvector_void scope_stack = { 0 };
+static cvector_void scope_stack;
 
-// TODO(rswinkle) replace with vec_void or vector_Scope
-static int scope_count     = 0;
-static int scope_size      = 0;
-static Scope** scope_stack = NULL;
+
+void clean_scope(Scope*);
+
+void init_scope_stack()
+{
+	cvec_void(&scope_stack, 0, 8, sizeof(Scope), NULL, NULL);
+}
+
 
 int scope_stack_count()
 {
-	return scope_count;
+	return scope_stack.size;
 }
+
+Scope* scope_stack_get(int i)
+{
+	return CVEC_GET_VOID(&scope_stack, Scope, i);
+}
+
+Scope* scope_stack_back()
+{
+	return cvec_back_void(&scope_stack);
+}
+
+
 
 void scope_push(Scope* s)
 {
-//	if (scope_stack.capacity == 0) {
-//		cvec_void(&scope_stack, 0, 2, sizeof(Scope), free_scope, new_scope);
-//	}
-//
-	if (scope_count == scope_size) {
-		scope_size  = max(scope_size * 2, 2);
-		scope_stack = (Scope**)my_realloc(scope_stack, scope_size * sizeof(Scope*));
-	}
-	scope_stack[scope_count++] = s;
+	cvec_push_void(&scope_stack, s);
 }
 
-Scope* scope_pop()
+void scope_pop()
 {
-	return (scope_stack[--scope_count]);
+	// TODO(rswinkle): use clean_scope as elem_free?
+	Scope* s = cvec_back_void(&scope_stack);
+	clean_scope(s);
+
+	cvec_pop_void(&scope_stack, NULL);
 }
 
 Scope* scope_tos()
 {
-	return (scope_stack[scope_count - 1]);
+	return (Scope*)cvec_back_void(&scope_stack);
 }
 
 Scope* global_scope()
 {
-	return (scope_stack[0]);
+	return (Scope*)&scope_stack.a[0];
 }
 
 Scope* parent_scope()
 {
-	int count = max(scope_count - 2, 0);
-	return (scope_stack[count]);
+	//TODO(rswinkle): why is parent -2 and not -1?
+	int count = (scope_stack.size > 2) ? scope_stack.size-2 : 0;
+	return CVEC_GET_VOID(&scope_stack, Scope, count);
 }
 
 Var* dd_find(Scope* s, char* name)
@@ -202,29 +215,31 @@ void init_dd(cvector_void* d)
 	p->value = (Var*)calloc(1, sizeof(Var));
 
 	// that cast isn't even necessary right?
+	// why don't we use newInt?  Why don't we want to mem_malloc it?
+	// (which is called in newInt -> newVal -> newVar)
 	make_sym(p->value, DV_INT32, (char*)"0");
 	V_TYPE(p->value) = ID_VAL;
 }
 
-/**
- ** Allocate an init space for a scope
- **/
-Scope* new_scope()
+
+void init_scope(Scope* s)
 {
-	Scope* s = (Scope*)calloc(1, sizeof(Scope));
+	//not sure if this is necessary
+	memset(s, 0, sizeof(Scope));
 
 	// TODO(rswinkle): add elem_free later
 	//
-	// These actually aren't even necessary if cvec allocator macro handles
-	// 0 capacity correctly, but when we use elem_free it makes more sense
+	// These actually aren't even necessary since cvec allocator macro handles
+	// 0 capacity correctly, but when/if we use elem_free it makes more sense
 	cvec_void(&s->symtab, 0, 8, sizeof(varptr), NULL, NULL);
 
 	cvec_void(&s->stack, 0, 2, sizeof(varptr), NULL, NULL);
 
 	init_dd(&s->dd);
 	init_dd(&s->args);
-	return s;
+
 }
+
 
 // NOTE(rswinkle): Only used 3 times, all in ufunc.c::dispatch_ufunc()
 void free_scope(Scope* s)
@@ -237,8 +252,6 @@ void free_scope(Scope* s)
 
 	cvec_free_void(&s->dd);
 	cvec_free_void(&s->args);
-
-	free(s);
 }
 
 void push(Scope* scope, Var* v)
@@ -289,6 +302,7 @@ void clean_stack(Scope* scope)
 	}
 }
 
+// only used 6 times, 1 in main.c, 5 in p.c
 // Clean the stack and tmptab of the current scope
 void cleanup(Scope* scope)
 {
@@ -422,6 +436,4 @@ void clean_scope(Scope* scope)
 	clean_table(&scope->symtab);
 
 	cvec_free_void(&scope->stack);
-
-	free(scope);
 }

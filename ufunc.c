@@ -322,11 +322,16 @@ UFUNC* load_function(char* filename)
  **/
 Var* dispatch_ufunc(UFUNC* f, Var* arg)
 {
-	Scope* scope = new_scope();
 	int i, argc, j;
 	Var *v, *p, *e;
 	int insert = 0;
 	int ac     = 0;
+
+
+	Scope s;
+	init_scope(&s);
+	Scope* scope = &s;
+
 
 	/**
 	 ** Create identifiers for all the named arguments.  These don't
@@ -393,7 +398,14 @@ Var* dispatch_ufunc(UFUNC* f, Var* arg)
 	 **/
 	scope->ufunc = f;
 	scope_push(scope);
+
+	//save location in vector
+	int loc = scope_stack_count()-1;
 	evaluate(f->tree);
+
+	//retrieve in case vector was realloced and because the scope
+	//on the scope_stack has changed from the scope that was pushed
+	scope = scope_stack_get(loc);
 
 	/**
 	 **  Additionally, we need to transfer this value OUT of this scope's
@@ -417,6 +429,7 @@ Var* dispatch_ufunc(UFUNC* f, Var* arg)
 	 ** a name, we need to get rid of it.
 	 **/
 	if ((v = scope->rval) != NULL) {
+		printf("returning something\n");
 		/**
 		*** DANGER!
 		***
@@ -427,10 +440,10 @@ Var* dispatch_ufunc(UFUNC* f, Var* arg)
 			insert = 1;
 		}
 	}
-	clean_scope(scope_pop());
+	scope_pop();
 
 	if (insert) {
-		Scope* scope = scope_tos();
+		scope = scope_tos();
 
 		if (V_NAME(v) != NULL) {
 			free(V_NAME(v));

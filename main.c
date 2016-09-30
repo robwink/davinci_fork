@@ -117,7 +117,7 @@ void dv_sighandler(int data)
 		signal(SIGINT, SIG_IGN);
 		while ((scope = scope_tos()) != global_scope()) {
 			dd_unput_argv(scope);
-			clean_scope(scope_pop());
+			scope_pop();
 		}
 
 		signal(SIGINT, dv_sighandler);
@@ -133,7 +133,6 @@ void dv_sighandler(int data)
 
 int main(int ac, char** av)
 {
-	Scope* s;
 	Var* v;
 	FILE* fp;
 	char path[256];
@@ -143,6 +142,7 @@ int main(int ac, char** av)
 	int iflag     = 0;
 	char* p;
 	int history = 1;
+
 #if defined(__APPLE__)
 	int ret;
 	char pathbuf[PROC_PIDPATHINFO_MAXSIZE];
@@ -163,12 +163,24 @@ int main(int ac, char** av)
 	pid_t pid;
 #endif
 
-	s = new_scope();
+
+
+
+	// TODO(rswinkle): put all this in a general "init" function
 	init_input_stack();
+	init_scope_stack();
+
+	Scope scope;
+	init_scope(&scope);
+	scope_push(&scope);
+	Scope* s = scope_stack_back();
 
 	//sort internal function list to speed up tab completion matching
 	//and present them in alphabetical order when double TABing for multiple matches
 	qsort(vfunclist, num_internal_funcs, sizeof(struct _vfuncptr), cmp_string);
+
+
+
 
 	signal(SIGINT, dv_sighandler);
 	signal(SIGSEGV, dv_sighandler);
@@ -177,7 +189,7 @@ int main(int ac, char** av)
 	signal(SIGBUS, dv_sighandler);
 	signal(SIGUSR1, user_sighandler);
 #endif
-	scope_push(s);
+
 	/**
 	 ** handle $0 specially.
 	 **/

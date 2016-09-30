@@ -15,6 +15,8 @@
 #include <X11/StringDefs.h>		/* for XtRString */
 #endif
 
+#include <stdlib.h>
+
 #define xvicPATH_MAX 1024	/* xvic prefix to avoid name collision */
 
 #define FONTSPECIFIER		"FONT "

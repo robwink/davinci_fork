@@ -5,6 +5,7 @@
 #include <limits.h>   /* only for SetDataRangeDefaults() */
 #include <math.h>     /* only for floor()... is it really needed??!!!!*/
 #include <stdlib.h>   /* for free() and exit() */
+#include <ctype.h>    // for tolower()
 
 /* #define DPR(x) printf x */
 #define DPR(x)

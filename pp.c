@@ -746,10 +746,7 @@ char* get_env_var(char* name)
 	return (strdup(value));
 }
 
-/**
- ** pp_argv() - Get $arg value from current scope.
- **/
-
+// pp_argv() - Get $arg value from current scope.
 Var* pp_argv(Var* left, Var* right)
 {
 	int n;

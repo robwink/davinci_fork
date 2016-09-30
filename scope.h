@@ -50,21 +50,24 @@ void dd_unput_argv(Scope* s);
 Var* dd_find(Scope*, char*);
 
 
+void init_scope(Scope* s);
+void init_scope_stack();
 
-int scope_stack_count();
-
-Scope* new_scope(void);
 void scope_push(Scope*);
-Scope* scope_pop(void);
+void scope_pop(void);
+int scope_stack_count();
+Scope* scope_stack_get(int i);
+Scope* scope_stack_back();
 Scope* scope_tos(void);
 void free_scope(Scope*);
+
+void cleanup(Scope*);
+
 void push(Scope*, Var*);
 Var* pop(Scope*);
 Var* dd_argc_var(Scope*);
 Scope* global_scope(void);
 Scope* parent_scope(void);
-void clean_scope(Scope*);
-void cleanup(Scope*);
 int dd_argc(Scope*);
 
 #endif /* SCOPE_H */

@@ -290,4 +290,6 @@ double ConvertAndScaleData(PTR raw, FIELD* field);
 
 PTR GiveMeVarPtr(PTR raw, TABLE* table, int offset);
 
+IFORMAT eformat_to_iformat(EFORMAT e);
+
 #endif /* _HEADER_H */

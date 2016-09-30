@@ -1,10 +1,12 @@
-#include <stdlib.h>
 #include "XvicImageP.h"
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
 #include <Xm/ScrolledWP.h>
 #include <Xm/ScrollBarP.h>
 #include "XvicImageOverlay.h"
+
+#include <stdlib.h>
+#include <ctype.h>
 
 /* #define DPR(x) printf x */
 #define DPR(x)

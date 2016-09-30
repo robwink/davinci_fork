@@ -197,11 +197,12 @@ void quit(int return_code)
 #endif
 	}
 
-	clean_scope(scope_tos());
+	// Could free memory here (like scope_stack etc.) but
+	// what's the point?
+	// It's only a memory leak if forget to free something
+	// while running or worse lose access to the pointer entirely.
 
-	/**
-	 ** clean up temporary directory
-	 **/
+	// clean up temporary directory
 	rmrf(path);
 	exit(return_code);
 }
