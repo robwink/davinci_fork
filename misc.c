@@ -758,14 +758,14 @@ int dv_format_size(int type)
 const char* dv_format_to_str(int type)
 {
 	switch (type) {
-	case DV_UINT8:  return "byte"; //uint8
+	case DV_UINT8:  return "uint8";
 	case DV_UINT16: return "uint16";
 	case DV_UINT32: return "uint32";
 	case DV_UINT64: return "uint64";
 
 	case DV_INT8:  return "int8";
-	case DV_INT16: return "short"; //int16
-	case DV_INT32: return "int"; //int32
+	case DV_INT16: return "int16";
+	case DV_INT32: return "int32";
 	case DV_INT64: return "int64";
 
 	case DV_FLOAT:  return "float";
