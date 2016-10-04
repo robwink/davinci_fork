@@ -64,7 +64,11 @@ If you're on a VM that can take 15 minutes
 cd davinci_build/windows
 ./makewin.sh ../..
 
-copy the exe dll and modules/ to the install directory
+run this command to copy all the used mingw libraries to the current directory
+ldd davinci.exe | grep mingw64 | cut -d' ' -f3 | xargs -I{} cp {} .
+
+
+copy the exe, all the dlls, and modules/ to the install directory
 (ie the folder contained what would go in C:/Program Files/Davinci)
 
 On monopoly2 that would be

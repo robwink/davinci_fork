@@ -123,6 +123,9 @@ library_includedir=$(includedir)/@PACKAGE@
 library_include_HEADERS = $(wildcard *.h)
 
 davinci_LDADD = -ldavinci $(MY_MODULES_LIB)  $(MY_LIBLTDLC_LDADD)
+
+#export-dynamic is not supported for PE+ targets (ie mingw windows)
+# we use --export-all-symbols in davinci_build/windows/makewin.sh
 davinci_LDFLAGS = -export-dynamic
 davinci_SOURCES = main.c
 

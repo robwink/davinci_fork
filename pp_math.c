@@ -225,7 +225,7 @@ Var* pp_math(Var* a, int op, Var* b)
 		case DV_INT8:
 		case DV_INT16:
 		case DV_INT32:
-		case DV_INT64: DO_RELOP_LOOP(i64, u8, extract_int, (i64)); break;
+		case DV_INT64: DO_RELOP_LOOP(i64, u8, extract_i64, (i64)); break;
 		case DV_FLOAT: DO_RELOP_LOOP(float, u8, extract_float, (float)); break;
 		case DV_DOUBLE: DO_RELOP_LOOP(double, u8, extract_double, (double)); break;
 		}

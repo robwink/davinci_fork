@@ -911,6 +911,9 @@ char* member_generator(const char* text, int state)
 			}
 		}
 
+		if (i == vec->size)
+			return NULL;
+
 		while ((tmp = strchr(&dot[1], '.'))) {
 			memcpy(buf, &dot[1], tmp-dot-1);
 			buf[tmp-dot-1] = 0;

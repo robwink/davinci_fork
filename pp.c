@@ -129,15 +129,15 @@ void dump_var(Var* v, int indent, int limit)
 						c = cpos(i, j, k, v);
 						switch (V_FORMAT(v)) {
 						// TODO(rswinkle) test on 32 bit
-						case DV_UINT8: printf("%u\t", ((u8*)V_DATA(v))[c]); break;
-						case DV_UINT16: printf("%u\t", ((u16*)V_DATA(v))[c]); break;
-						case DV_UINT32: printf("%u\t", ((u32*)V_DATA(v))[c]); break;
-						case DV_UINT64: printf("%lu\t", ((u64*)V_DATA(v))[c]); break;
+						case DV_UINT8: printf("%"PRIu8"\t", ((u8*)V_DATA(v))[c]); break;
+						case DV_UINT16: printf("%"PRIu16"\t", ((u16*)V_DATA(v))[c]); break;
+						case DV_UINT32: printf("%"PRIu32"\t", ((u32*)V_DATA(v))[c]); break;
+						case DV_UINT64: printf("%"PRIu64"\t", ((u64*)V_DATA(v))[c]); break;
 
-						case DV_INT8: printf("%d\t", ((i8*)V_DATA(v))[c]); break;
-						case DV_INT16: printf("%d\t", ((i16*)V_DATA(v))[c]); break;
-						case DV_INT32: printf("%d\t", ((i32*)V_DATA(v))[c]); break;
-						case DV_INT64: printf("%ld\t", ((i64*)V_DATA(v))[c]); break;
+						case DV_INT8: printf("%"PRId8"\t", ((i8*)V_DATA(v))[c]); break;
+						case DV_INT16: printf("%"PRId16"\t", ((i16*)V_DATA(v))[c]); break;
+						case DV_INT32: printf("%"PRId32"\t", ((i32*)V_DATA(v))[c]); break;
+						case DV_INT64: printf("%"PRId64"\t", ((i64*)V_DATA(v))[c]); break;
 
 						case DV_FLOAT: printf("%#.*g\t", SCALE, ((float*)V_DATA(v))[c]); break;
 						case DV_DOUBLE: printf("%#.*g\t", SCALE, ((double*)V_DATA(v))[c]); break;
@@ -539,9 +539,7 @@ Var* pp_set_struct(Var* a, Var* b, Var* exp)
  ** Ranges:
  **/
 
-/**
- ** pp_mk_range() - make a range value, with specified from exression
- **/
+// pp_mk_range() - make a range value, with specified from exression
 Var* pp_mk_range(Var* r1, Var* r2)
 {
 	u64 v1 = 0, v2 = 0;

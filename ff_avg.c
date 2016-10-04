@@ -356,6 +356,10 @@ Var* ff_avg(vfuncptr func, Var* arg)
 	if (axis & YAXIS) out[orders[V_ORG(obj)][1]] = 1;
 	if (axis & ZAXIS) out[orders[V_ORG(obj)][2]] = 1;
 
+	// TODO(rswinkle): Why are we operating in float!!? The *only* reason
+	// to use float over double is to save space and in SIMD stuff you can
+	// do twice as many float ops as double in the same time but that's rare.
+	// For a given op they actually take the same amount of time.
 	v         = newVal(V_ORG(obj), out[0], out[1], out[2], DV_FLOAT, NULL);
 	fdata     = (float*)calloc(V_DSIZE(v), sizeof(float));
 	V_DATA(v) = fdata;

@@ -429,7 +429,6 @@ Var* dispatch_ufunc(UFUNC* f, Var* arg)
 	 ** a name, we need to get rid of it.
 	 **/
 	if ((v = scope->rval) != NULL) {
-		printf("returning something\n");
 		/**
 		*** DANGER!
 		***
