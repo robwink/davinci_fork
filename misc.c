@@ -583,6 +583,7 @@ int parse_args(vfuncptr name, Var* args, Alist* alist)
 							for (p = values; p && *p; p++) {
 								if (ptr && !strcasecmp(ptr, *p)) {
 									q = *p;
+									break;
 								}
 							}
 						}
