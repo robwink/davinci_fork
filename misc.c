@@ -574,6 +574,7 @@ int parse_args(vfuncptr name, Var* args, Alist* alist)
 				for (p = values; p && *p; p++) {
 					if (ptr && !strcasecmp(ptr, *p)) {
 						q = *p;
+						break;
 					}
 				}
 				if (q == NULL) {
@@ -778,6 +779,9 @@ const char* dv_format_to_str(int type)
 	case VAX_INTEGER:
 		return "vax_int"
 */
+	default:
+		parse_error("Unknown format");
+		return NULL;
 	}
 }
 

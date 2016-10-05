@@ -599,7 +599,9 @@ Var* ff_create(vfuncptr func, Var* arg)
 	// Also x,y,z are size_t in other funcs but we don't handle size_t in parse_args.  Fortunately
 	// size_t is a u64 on 64 bit.  We could add size_t to parse_args if wanted.
 	u64 x = 1, y = 1, z = 1;
-	int format       = DV_INT32;
+
+	// default format if format_not given
+	int format            = DV_INT32;
 
 	int org          = BSQ;
 	double start     = 0;
@@ -650,6 +652,8 @@ Var* ff_create(vfuncptr func, Var* arg)
 			org = BIP;
 	}
 
+	// format_str will never be invalid because parse_args would have failed
+	// so format will never be set to -1;
 	if (format_str) {
 		format = dv_str_to_format(format_str);
 	}

@@ -30,25 +30,9 @@ int indent   = 0;
 Var* curnode = NULL;
 
 
-/*
-const char* FORMAT2STR[] = {
-    0,           "byte",    "uint16", "uint32", "uint64",
-
-    "int8",
-    "short", // really int16
-    "int",   // really int32
-    "int64",
-
-    "float",     "double",
-
-    "vax float", "vax int",
-};
-*/
-
-
 #define NUM_TYPE_STRS 13
 
-const char* FORMAT_STRINGS[NUM_TYPE_STRS] = {
+const char* FORMAT_STRINGS[NUM_TYPE_STRS+1] = {
 	"byte",
 	"short",
 	"int",
@@ -64,7 +48,9 @@ const char* FORMAT_STRINGS[NUM_TYPE_STRS] = {
 	"int64",
 
 	"float",
-	"double"
+	"double",
+
+	NULL
 
 //	,"vax float", "vax int"
 };

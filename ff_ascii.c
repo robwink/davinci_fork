@@ -43,12 +43,7 @@ Var* ff_ascii(vfuncptr func, Var* arg)
 	FILE* fp       = NULL;
 	char* ptr      = NULL;
 	int rlen;
-	void* data           = NULL;
-	unsigned char* cdata = NULL;
-	short* sdata         = NULL;
-	int* idata           = NULL;
-	float* fdata         = NULL;
-	double* ddata        = NULL;
+
 	size_t count         = 0;
 	const char* delim    = " \t";
 	int i, j, k;
@@ -56,18 +51,34 @@ Var* ff_ascii(vfuncptr func, Var* arg)
 	int x                 = 0;
 	int y                 = 0;
 	int z                 = 0;
-	int format            = 0;
+
+	// default format if format_not given
+	int format            = DV_INT32;
+
 	int column            = 0;
 	int row               = 0;
-	const char* formats[] = {"byte", "short", "int", "float", "double", NULL};
 	char* format_str      = NULL;
+
+	void* data           = NULL;
+	u8* u8data;
+	u16* u16data;
+	u32* u32data;
+	u64* u64data;
+
+	i8* i8data;
+	i16* i16data;
+	i32* i32data;
+	i64* i64data;
+
+	float* fdata;
+	double* ddata;
 
 	Alist alist[9];
 	alist[0]      = make_alist("filename", ID_STRING, NULL, &filename);
 	alist[1]      = make_alist("x", DV_INT32, NULL, &x);
 	alist[2]      = make_alist("y", DV_INT32, NULL, &y);
 	alist[3]      = make_alist("z", DV_INT32, NULL, &z);
-	alist[4]      = make_alist("format", ID_ENUM, formats, &format_str);
+	alist[4]      = make_alist("format", ID_ENUM, FORMAT_STRINGS, &format_str);
 	alist[5]      = make_alist("column", DV_INT32, NULL, &column);
 	alist[6]      = make_alist("row", DV_INT32, NULL, &row);
 	alist[7]      = make_alist("delim", ID_STRING, NULL, &delim);
@@ -80,22 +91,13 @@ Var* ff_ascii(vfuncptr func, Var* arg)
 		return (NULL);
 	}
 
-	if (format_str != NULL) {
-		if (!strcasecmp(format_str, "byte"))
-			format = DV_UINT8;
-		else if (!strcasecmp(format_str, "short"))
-			format = DV_INT16;
-		else if (!strcasecmp(format_str, "int"))
-			format = DV_INT32;
-		else if (!strcasecmp(format_str, "float"))
-			format = DV_FLOAT;
-		else if (!strcasecmp(format_str, "double"))
-			format = DV_DOUBLE;
+	// format_str will never be invalid because parse_args would have failed
+	// so format will never be set to -1;
+	if (format_str) {
+		format = dv_str_to_format(format_str);
 	}
 
-	/**
-	 ** Got all the values.  Do something with 'em.
-	 **/
+	// Got all the values.  Do something with 'em.
 
 	if ((fname = dv_locate_file(filename)) == NULL) {
 		sprintf(error_buf, "Cannot find file: %s\n", filename);
@@ -108,12 +110,10 @@ Var* ff_ascii(vfuncptr func, Var* arg)
 		return (NULL);
 	}
 	if (x == 0 && y == 0 && z == 0) {
-		/**
-		 ** User wants us to determine the file size.
-		 **/
+		// User wants us to determine the file size.
 		z = 1;
 
-		/* skip some rows */
+		// skip some rows
 		for (i = 0; i < row; i++) {
 			dv_getline(&ptr, fp);
 			if (ptr == NULL) {
@@ -148,22 +148,26 @@ Var* ff_ascii(vfuncptr func, Var* arg)
 		rewind(fp);
 	}
 
-	/**
-	 ** Decode file with specified X, Y, Z.
-	 **/
+	// Decode file with specified X, Y, Z.
 	if (x == 0) x           = 1;
 	if (y == 0) y           = 1;
 	if (z == 0) z           = 1;
-	if (format == 0) format = DV_INT32;
 
-	dsize = x * y * z;
+	dsize = (size_t)x * y * z;
 	data  = calloc(NBYTES(format), dsize);
 
-	cdata = (unsigned char*)data;
-	sdata = (short*)data;
-	idata = (int*)data;
-	fdata = (float*)data;
-	ddata = (double*)data;
+	u8data = data;
+	u16data = data;
+	u32data = data;
+	u64data = data;
+
+	i8data = data;
+	i16data = data;
+	i32data = data;
+	i64data = data;
+
+	fdata = data;
+	ddata = data;
 
 	count = 0;
 
@@ -179,9 +183,7 @@ Var* ff_ascii(vfuncptr func, Var* arg)
 	}
 	for (k = 0; k < z; k++) {
 		if (k) {
-			/**
-			 ** skip to end of block
-			 **/
+			// skip to end of block
 			while (dv_getline(&ptr, fp) > 1)
 				;
 		}
@@ -189,18 +191,13 @@ Var* ff_ascii(vfuncptr func, Var* arg)
 		for (j = 0; j < y; j++) {
 			if ((rlen = dv_getline(&ptr, fp)) == -1) break;
 
-			/**
-			 ** skip columns
-			 **/
-
+			// skip columns
 			for (i = 0; i < column; i++) {
 				ptr = strtok(ptr, delim);
 				ptr = NULL;
 			}
-			/**
-			 ** read X values from this line
-			 **/
 
+			// read X values from this line
 			for (i = 0; i < x; i++) {
 				ptr = strtok(ptr, delim);
 				if (ptr == NULL) {
@@ -208,10 +205,21 @@ Var* ff_ascii(vfuncptr func, Var* arg)
 					count += x - i;
 					break;
 				}
+
+				// NOTE(rswinkle): the clamps on the 32 and especially 64 bit types are unnecessary
+				// and pointless since they're limited by the strto* function in the first place
+				// but I left them in for the sake of uniformity.
 				switch (format) {
-				case DV_UINT8: cdata[count++]  = clamp_byte(strtol(ptr, NULL, 10)); break;
-				case DV_INT16: sdata[count++]  = clamp_short(strtol(ptr, NULL, 10)); break;
-				case DV_INT32: idata[count++]  = clamp_int(strtol(ptr, NULL, 10)); break;
+				case DV_UINT8: u8data[count++]  = clamp_u8(strtoul(ptr, NULL, 10)); break;
+				case DV_UINT16: u16data[count++]  = clamp_u16(strtoul(ptr, NULL, 10)); break;
+				case DV_UINT32: u32data[count++]  = clamp_u32(strtoul(ptr, NULL, 10)); break;
+				case DV_UINT64: u64data[count++]  = clamp_u64(strtoull(ptr, NULL, 10)); break;
+
+				case DV_INT8: i8data[count++]  = clamp_i8(strtol(ptr, NULL, 10)); break;
+				case DV_INT16: i16data[count++]  = clamp_i16(strtol(ptr, NULL, 10)); break;
+				case DV_INT32: i32data[count++]  = clamp_i32(strtol(ptr, NULL, 10)); break;
+				case DV_INT64: i64data[count++]  = clamp_i64(strtoll(ptr, NULL, 10)); break;
+
 				case DV_FLOAT: fdata[count++]  = strtod(ptr, NULL); break;
 				case DV_DOUBLE: ddata[count++] = strtod(ptr, NULL); break;
 				}
