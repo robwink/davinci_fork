@@ -321,7 +321,7 @@ int iom_ReadTIFF(FILE* fp, char* filename, int* xout, int* yout, int* zout, int*
 	if (!TIFFGetField(tifffp, TIFFTAG_SAMPLEFORMAT, &tiff_type)) {
 		fprintf(
 		    stderr,
-		    "SAMPLEFORMAT tag missing; assumptions will be made in data format determination");
+		    "SAMPLEFORMAT tag missing; assumptions will be made in data format determination\n");
 	}
 
 	TIFFGetFieldDefaulted(tifffp, TIFFTAG_SAMPLESPERPIXEL, &z); /* Not always set in file. */
