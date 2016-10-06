@@ -273,6 +273,8 @@ fi
 
 AC_CHECK_LIB([curl],[curl_easy_init])
 
+AC_CHECK_LIB(lzma,lzma_code)
+
 dnl Check for ImageMagic.
 AC_CHECK_LIB(Magick, GetImageInfo, [have_libmagick=yes],[have_libmagick=no])
 if test "x$have_libmagic" = "xyes"; then
