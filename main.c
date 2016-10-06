@@ -863,6 +863,26 @@ char* command_generator(const char* text, int state)
 	return NULL;
 }
 
+
+
+char* strrspn(const char* s, const char* accept)
+{
+	return 0;
+}
+
+// returns pointer to start suffix of substr of s with
+// no characters in reject
+char* strrcspn(const char* s, const char* reject)
+{
+	long i;
+	for (i=strlen(s)-1; i>=0; --i) {
+		if (strchr(reject, s[i]))
+			break;
+	}
+
+	return &s[i+1]
+}
+
 char* member_generator(const char* text, int state)
 {
 	static int list_index, len;
@@ -877,16 +897,26 @@ char* member_generator(const char* text, int state)
 
 	char* word = NULL;
 
-	//text is actually empty cause it breaks on '.' and we
+	len = strlen(rl_line_buffer);
+	static const char* wordbreakers = " \t\n\"\\'`@$><=;|&{(";
+
+	//text arg is insufficient cause it breaks on '.' and we
 	//need the structure names so we work on the whole line buf
-	//word = text;
+	//and find the full "word" we're working with by find the last
+	//word separator
 	word = rl_line_buffer;
+
+	word = strrcspn(word, wordbreakers);
+	
+
+	//would just use this line if . were not a word breaking character
+	//word = text;
 
 	//return NULL;
 	//printf("word = \"%s\"\n", word);
 	char* tmp;
 	int nlen;
-	int i, n_memb;
+	int n_memb;
 
 	if (!state) {
 		len = strlen(word);
@@ -896,6 +926,10 @@ char* member_generator(const char* text, int state)
 	}
 	char buf[256];
 
+	// traverse through "word" finding the base struct, then each
+	// completed member.  v becomes the the last completed member
+	// (or the base struct) so the matching is done based on the members
+	// of v
 	if (!v) {
 		tmp = strchr(word, '.');
 		nlen = tmp - dot;
@@ -934,6 +968,7 @@ char* member_generator(const char* text, int state)
 		if (name && !strncmp(name, &dot[1], nlen)) {
 
 			list_index = j+1;
+
 			/*
 			result = malloc(dot-word+1 + strlen(name)+1);
 			memcpy(result, word, dot-word+1);
@@ -992,28 +1027,49 @@ char** dv_complete_func(const char* text, int start, int end)
 	//static const char *default_filename_quote_chars = " \t\n\\\"'@<>=;|&()#$`?*[!:{~";	/*}*/
 	//rl_filename_quote_characters = default_filename_quote_chars;
 
-	static const char* qb = "\'\"";
+
+	const char* orig_wordbreakers = " \t\n\"\\'`@$><=;|&{(";
+
+	const char* qb = "\'\"";
 	//rl_completer_word_break_characters = wordbreakers;
 
+	char* dotloc = NULL;
+	char* q1 = NULL, *q2 = NULL;;
 
 	// If this word is at the start of the line, then it is a function name
 	// to complete.  Otherwise it is the name of a file in the current
 	// directory.
 	//printf("\"%s\" %d %d %c\n", rl_line_buffer, start, end, rl_line_buffer[start]);
+
+
 	if (start == 0) {
 		matches = rl_completion_matches(text, command_generator);
-	} else {
-		if (rl_line_buffer[start-1] == '.') {
-			matches = rl_completion_matches(text, member_generator);
-			rl_attempted_completion_over = 1;
 
-		// I'm sure there is a better/more correct way to do this but I haven't
-		// figured it out yet
-		} else if (rl_line_buffer[start-1] != qb[0] && rl_line_buffer[start-1] != qb[1]) {
-		//} else if (!rl_completion_quote_character) {
+		/*
+		if (!(dotloc = strchr(rl_line_buffer, '.'))) {
 			matches = rl_completion_matches(text, command_generator);
 		} else {
-			//rl_completer_word_break_characters = qb;
+			matches = rl_completion_matches(text, member_generator);
+			rl_attempted_completion_over = 1;
+		}
+		*/
+
+
+	// I'm sure there is a better/more correct way to do this but I haven't
+	// figured it out yet
+	//} else if (!rl_completion_quote_character) {
+	} else {
+		q1 = strrchr(rl_line_buffer, qb[0]);
+		q2 = strrchr(rl_line_buffer, qb[1]);
+		char* q3 = (q1 > q2) ? q1 : q2;
+
+		if (1) {
+			if (rl_line_buffer[start-1] == '.') {
+				matches = rl_completion_matches(text, member_generator);
+				//rl_attempted_completion_over = 1;
+			} else {
+				matches = rl_completion_matches(text, command_generator);
+			}
 		}
 	}
 

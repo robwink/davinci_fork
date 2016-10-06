@@ -147,7 +147,6 @@ int iom_GetTIFFHeader(FILE* fp, char* filename, struct iom_iheader* h)
 
 	int byte_size = bits / 8;
 
-	printf("type = %d\n", type);
 	/* type == -1 means sampleformat tag was missing and we assume unsigned int type */
 	if (bits == 8) {
 		if (type == SAMPLEFORMAT_INT &&
@@ -322,7 +321,7 @@ int iom_ReadTIFF(FILE* fp, char* filename, int* xout, int* yout, int* zout, int*
 	if (!TIFFGetField(tifffp, TIFFTAG_SAMPLEFORMAT, &tiff_type)) {
 		fprintf(
 		    stderr,
-		    "SAMPLEFORMAT tag missing; assumptions will be made in data format determination %u\n", tiff_type);
+		    "SAMPLEFORMAT tag missing; assumptions will be made in data format determination");
 	}
 
 	TIFFGetFieldDefaulted(tifffp, TIFFTAG_SAMPLESPERPIXEL, &z); /* Not always set in file. */
