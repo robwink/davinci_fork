@@ -1248,7 +1248,6 @@ int WriteSingleStructure(fitsfile* fptr, Var* obj, int index)
  ** structure a FITS object and associated label will
  ** be generated in the file.
  */
-
 Var* FITS_Write_Structure(char* fits_filename, Var* obj, int force)
 {
 	int i;
@@ -1277,8 +1276,9 @@ Var* FITS_Write_Structure(char* fits_filename, Var* obj, int force)
 		strcpy(name, "!");
 		strcat(name, fits_filename); /* the '!'-prefix tells the cfitsio
 		                                lib to overwrite existing file */
-	} else
+	} else {
 		name = strdup(fits_filename);
+	}
 
 	fits_create_file(&fptr, name, &status);
 	sprintf(msg, " creating file %s", name);
@@ -1287,6 +1287,7 @@ Var* FITS_Write_Structure(char* fits_filename, Var* obj, int force)
 	count = get_struct_count(obj);
 
 	for (i = 0; i < count; i++) {
+		printf("i = %d\n", i);
 		get_struct_element(obj, i, &obj_name, &Tmp);
 
 		if (V_TYPE(Tmp) != ID_STRUCT) {
@@ -1389,7 +1390,6 @@ Var* FITS_Write_Var(char* fits_filename, Var* obj, int force)
  ** on the objects type (Var or Structure).  Any
  ** other type is not valid, and is rejected.
  */
-
 Var* WriteFITS(vfuncptr func, Var* arg)
 {
 	Var* obj       = NULL;
