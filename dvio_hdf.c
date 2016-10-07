@@ -93,11 +93,6 @@ void WriteHDF5(hid_t parent, char* name, Var* v, int hdf_old)
 		org       = V_ORG(v);
 		dataspace = H5Screate_simple(3, size, NULL);
 
-		// TODO(rswinkle): double check the 64 bit types on a 32 bit machine
-		// cause a long is usually 32 bits iirc
-		//
-		// actually maybe we can use the C99 native types:
-		//
 		// https://www.hdfgroup.org/HDF5/doc/RM/PredefDTypes.html
 		switch (V_FORMAT(v)) {
 		case DV_UINT8: datatype  = H5Tcopy(H5T_NATIVE_UINT8); break;
@@ -364,6 +359,7 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 			 * We can promote any DV_UINT16 value to DV_INT32
 			 * and not change sign
 			 */
+			/*
 			if (type == DV_UINT16) { // promote to DV_INT32
 				databuf2 = calloc(dsize, NBYTES(DV_INT32));
 				for (i = 0; i < dsize; i++) {
@@ -373,6 +369,7 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 				free(databuf);
 				databuf = databuf2;
 			}
+			*/
 
 			v         = newVal(org, size[0], size[1], size[2], type, databuf);
 			V_NAME(v) = strdup(name);

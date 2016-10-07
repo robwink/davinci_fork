@@ -1,3 +1,3 @@
-char* version = "@(#) davinci 2.17";
+char* version = "@(#) davinci 2.18";
 
 #include "build.h"

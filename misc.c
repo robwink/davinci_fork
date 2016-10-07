@@ -76,7 +76,7 @@ char* rtrim(char* s, const char* trim_chars)
 }
 
 // TODO(rswinkle) this leaks everywhere it's used, can we not modify in place?
-// my version is in dvio_hdf.c:make_valid_identifier
+// my version is in dvio_hdf.c:make_valid_identifier()
 char* fix_name(const char* input_name)
 {
 	const char invalid_pfx[] = "__invalid";

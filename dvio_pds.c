@@ -559,7 +559,6 @@ static Var* traverseObj(OBJDESC* top, Var* v, dataKey objSizeMap[], int* nObj, O
 
 	for (kw = OdlGetFirstKwd(top); kw != NULL; kw = OdlGetNextKwd(kw)) {
 		kwName = OdlGetKwdName(kw);
-		printf("Name is %s\n", kwName); // drd added just printf()
 
 		if (kw->is_a_pointer) {
 			kwName = fix_name(mod_name_if_necessary(kwName));
@@ -743,23 +742,18 @@ static char* ProcessVarIntoString(Var* element, char* name)
 			sprintf(string, "%s = \"Error\"\r\n", correct_name(name));
 			return (string);
 		}
-	}
+	} else {
 
-	else {
-
-		if (V_FORMAT(element) == DV_INT32) {
-			sprintf(tmp_string, "%d", V_INT(element));
-		}
-
-		else if (V_FORMAT(element) == DV_FLOAT) {
+		// NOTE(rswinke): replace with switch?
+		if (V_FORMAT(element) <= DV_UINT64) {
+			sprintf(tmp_string, "%"PRIu64, V_INT(element));
+		} else if (V_FORMAT(element) <= DV_INT64) {
+			sprintf(tmp_string, "%"PRId64, V_INT(element));
+		} else if (V_FORMAT(element) == DV_FLOAT) {
 			sprintf(tmp_string, "%f", V_FLOAT(element));
-		}
-
-		else if (V_FORMAT(element) == DV_DOUBLE) {
+		} else if (V_FORMAT(element) == DV_DOUBLE) {
 			sprintf(tmp_string, "%.10g", V_DOUBLE(element));
-		}
-
-		else {
+		} else {
 			parse_error("Found a scalar which isn't covered");
 			strcpy(tmp_string, "\"Error\"\r\n");
 		}
@@ -786,15 +780,22 @@ static char* ProcessVarIntoString(Var* element, char* name)
 
 	for (idx = 0; idx < count; idx++) {
 		switch (V_FORMAT(element)) {
+		case DV_UINT8:
+		case DV_UINT16:
+		case DV_UINT32:
+		case DV_UINT64:
+			sprintf(tmp_string, "%"PRIu64", ", extract_u64(element, idx));
+			break;
 
-		case DV_UINT8: break;
+		case DV_INT8:
+		case DV_INT16:
+		case DV_INT32:
+		case DV_INT64:
+			sprintf(tmp_string, "%"PRId64", ", extract_i64(element, idx));
+			break;
 
-		case DV_INT16: break;
-
-		case DV_INT32: sprintf(tmp_string, "%d, ", extract_int(element, idx)); break;
 
 		case DV_FLOAT: sprintf(tmp_string, "%f, ", extract_float(element, idx)); break;
-
 		case DV_DOUBLE: sprintf(tmp_string, "%.10g, ", extract_double(element, idx)); break;
 		}
 		strcat(string, tmp_string);
@@ -1140,11 +1141,10 @@ void output_big_var(FILE* out, Var* data, char* inset, char* name)
 {
 	int numelements = V_SIZE(data)[0] * V_SIZE(data)[1] * V_SIZE(data)[2];
 	int i;
-	char* cp;
-	short* sp;
-	int* ip;
-	float* fp;
-	double* dp;
+
+	float* fdata = V_DATA(data);
+	double* ddata = V_DATA(data);
+
 	char dmrk[10];
 
 	fprintf(out, "%s%s = (", inset, name);
@@ -1152,32 +1152,14 @@ void output_big_var(FILE* out, Var* data, char* inset, char* name)
 	for (i = 0; i < numelements; i++) {
 		if ((i + 1) == numelements) strcpy(dmrk, ")\r\n");
 
-		switch (V_FORMAT(data)) {
-
-		case DV_UINT8:
-			cp = ((char*)V_DATA(data));
-			fprintf(out, "%d%s", cp[i], dmrk);
-			break;
-
-		case DV_INT16:
-			sp = ((short*)V_DATA(data));
-			fprintf(out, "%d%s", sp[i], dmrk);
-			break;
-
-		case DV_INT32:
-			ip = ((int*)V_DATA(data));
-			fprintf(out, "%d%s", ip[i], dmrk);
-			break;
-
-		case DV_FLOAT:
-			fp = ((float*)V_DATA(data));
-			fprintf(out, "%f%s", fp[i], dmrk);
-			break;
-
-		case DV_DOUBLE:
-			dp = ((double*)V_DATA(data));
-			fprintf(out, "%.10g%s", dp[i], dmrk);
-			break;
+		if (V_FORMAT(data) <= DV_UINT64) {
+			fprintf(out, "%"PRIu64"%s", extract_u64(data, i), dmrk);
+		} else if (V_FORMAT(data) <= DV_INT64) {
+			fprintf(out, "%"PRId64"%s", extract_i64(data, i), dmrk);
+		} else if (V_FORMAT(data) == DV_FLOAT) {
+			fprintf(out, "%f%s", fdata[i], dmrk);
+		} else { //DV_DOUBLE
+			fprintf(out, "%.10g%s", ddata[i], dmrk);
 		}
 	}
 }
@@ -1286,9 +1268,7 @@ Var* ProcessIntoLabel(FILE* fp, int record_bytes, Var* v, int depth, size_t* lab
 				}
 			}
 
-		}
-
-		else if (V_TYPE(data) == ID_TEXT) {
+		} else if (V_TYPE(data) == ID_TEXT) {
 			int ti;
 			tmpname = correct_name(name);
 			fprintf(fp, "%s%s = (", inset, tmpname);
@@ -1296,16 +1276,13 @@ Var* ProcessIntoLabel(FILE* fp, int record_bytes, Var* v, int depth, size_t* lab
 			for (ti = 0; ti < V_TEXT(data).Row - 1; ti++)
 				fprintf(fp, "%s, ", V_TEXT(data).text[ti]);
 			fprintf(fp, "%s)\r\n", V_TEXT(data).text[ti]);
-		}
 
-		else if (V_TYPE(data) == ID_STRING) {
+		} else if (V_TYPE(data) == ID_STRING) {
 			tmpname = correct_name(name);
 			fprintf(fp, "%s%s = %s\r\n", inset, tmpname, V_STRING(data));
 			free(tmpname);
 
-		}
-
-		else if (V_TYPE(data) == ID_VAL) {
+		} else if (V_TYPE(data) == ID_VAL) {
 
 			if (V_SIZE(data)[0] > 1 || V_SIZE(data)[1] > 1 || V_SIZE(data)[2] > 1) {
 				int axis_count = 0;
@@ -1320,37 +1297,23 @@ Var* ProcessIntoLabel(FILE* fp, int record_bytes, Var* v, int depth, size_t* lab
 					continue;
 				}
 				output_big_var(fp, data, inset, correct_name(name));
-			}
 
-			else {
-
+			} else {
 				tmpname = correct_name(name);
-				switch (V_FORMAT(data)) {
 
-				case DV_UINT8:
-					fprintf(fp, "%s%s = %d\r\n", inset, tmpname, (0xff & V_INT(data)));
-					break;
-
-				case DV_INT16:
-					fprintf(fp, "%s%s = %d\r\n", inset, tmpname, (0xffff & V_INT(data)));
-					break;
-
-				case DV_INT32: fprintf(fp, "%s%s = %d\r\n", inset, tmpname, V_INT(data)); break;
-
-				case DV_FLOAT:
+				if (V_FORMAT(data) <= DV_UINT64) {
+					fprintf(fp, "%s%s = %"PRIu64"\r\n", inset, tmpname, extract_u64(data, 0));
+				} else if (V_FORMAT(data) <= DV_INT64) {
+					fprintf(fp, "%s%s = %"PRId64"\r\n", inset, tmpname, extract_i64(data, 0));
+				} else if (V_FORMAT(data) == DV_FLOAT) {
 					fprintf(fp, "%s%s = %12.6f\r\n", inset, tmpname, V_FLOAT(data));
-					break;
-
-				case DV_DOUBLE:
-					fprintf(fp, "%s%s = %.10g\r\n", inset, tmpname, (*((double*)V_DATA(data))));
-					break;
-				} /*Switch */
-
+				} else { //DV_DOUBLE
+					fprintf(fp, "%s%s = %.10g\r\n", inset, tmpname, V_DOUBLE(data));
+				}
 				free(tmpname);
 			} /*else */
 
-		}
-		/*else if */
+		} /*else if */
 		else {
 			parse_error("What the hell is this: %d", V_TYPE(data));
 		}
@@ -1448,12 +1411,7 @@ Var* WritePDS(vfuncptr func, Var* arg)
 
 	fname = dv_locate_file(filename);
 
-	if (!file_exists(fname)) {
-		parse_error("%s: Unable to expand filename %s\n", func->name, filename);
-		return (NULL);
-	}
-
-	if (!force && access(fname, F_OK) == 0) {
+	if (!force && file_exists(fname)) {
 		parse_error("%s: File %s already exists.", func->name, filename);
 		return (NULL);
 	}
@@ -1706,7 +1664,6 @@ static Var* do_loadPDS(vfuncptr func, char* filename, int data, int suffix_data)
 		free_struct(v);
 		return NULL;
 	}
-	printf("Returned v is %p\n", v); // drd
 	return (v);
 }
 
@@ -2068,6 +2025,8 @@ static void Set_Col_Var(Var** Data, FIELD** f, LABEL* label, int* size, char** B
 			memcpy(data, Bufs[j], dim * sizeof(double) * label->nrows);
 			v = newVal(BSQ, dim, label->nrows, 1, DV_DOUBLE, data);
 		} else {
+
+			//TODO(rswinkle): add new integer types
 			switch (f[j]->eformat) {
 			case CHARACTER:
 				text = (char**)calloc(label->nrows, sizeof(char*));
@@ -2206,7 +2165,6 @@ static int rfImage(dataKey* objSize, Var* ob)
 
 	fileName = (char*)alloca(strlen(objSize->FileName) + 1);
 	pickFilename(fileName, objSize->FileName);
-	printf("This is where the Reading image comes from\n"); // drd
 	parse_error("Reading %s from %s...\n", objSize->Name, fileName);
 	if ((fp = fopen(fileName, "rb")) == NULL) {
 		fprintf(stderr, "Unable to open file for reading: \"%s\". Reason: %s\n", fileName, strerror(errno));
@@ -2215,17 +2173,8 @@ static int rfImage(dataKey* objSize, Var* ob)
 
 	data = dv_LoadImage_New(fp, fileName, objSize->dptr, objSize->objDesc);
 	if (data != NULL) {
-		unsigned char* flex; // drd
-		int i;               // drd
-		char lclName[] = "drddata";
 		// add_struct(ob, fix_name("DATA"), data); // drd this is what was here
-		add_struct(ob, lclName, data);
-		printf("Added the data v at %p to the object\n", data); // drd
-		flex = (unsigned char*)V_DATA(data);                    // drd
-		printf("Printing out 8 bytes from the data area of 'Var *data' %p at %p:\n", data, flex); // drd
-		for (i = 0; i < 8; i++) {        // drd
-			printf("0x%02X\n", flex[i]); // drd
-		}                                // drd
+		add_struct(ob, "data", data);
 		rc = 1;
 	}
 
@@ -2412,9 +2361,7 @@ static int GetInt(OBJDESC* ob, char* key, int* val)
 	return (0);
 }
 
-/*
-remove the pds header from a file
-*/
+// remove the pds header from a file
 Var* ff_pdshead(vfuncptr func, Var* arg)
 {
 	OBJDESC* ob;
@@ -3434,10 +3381,7 @@ Var* do_loadPDS4(vfuncptr func, char* filename, int use_names, int get_data)
 	return labelFile;
 }
 
-/**
- * The same functionality and dependencies as do_loadPDS4() elsewhere in this file.
- *
- */
+// The same functionality and dependencies as do_loadPDS4() elsewhere in this file.
 Var* dv_loadPDS4(char* filename)
 {
 	return do_loadPDS4((vfuncptr)NULL, filename, 1, 1);

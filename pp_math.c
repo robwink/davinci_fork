@@ -215,6 +215,7 @@ Var* pp_math(Var* a, int op, Var* b)
 	V_SIZE(val)[orders[order][2]] = size[2];
 
 	// TODO(rswinkle) check C spec for exact op conversion/promotion behaviors
+	// double check the extract calls
 	if (is_relop(op)) {
 		switch (in_format) {
 		case DV_UINT8:
