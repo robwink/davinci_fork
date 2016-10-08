@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #include <stdint.h>
+#include <inttypes.h>
 
 typedef struct _var Var;
 typedef Var* Vptr;
