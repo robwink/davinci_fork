@@ -937,19 +937,11 @@ Var* ff_replicate(vfuncptr func, Var* arg)
 	return (s);
 }
 
-/**
- ** Get an integer value out of a keyword.
- ** Returns:  1 if found
- **           0 if not specified
- **          -1 if not an int.
- **          >1 if an array of ints, returns first.
- **/
 
 /**
  ** Takes two objects, with the same ORG, FORMAT, and two matching axis,
  ** and concatenate them together along specified axis.
  **/
-
 Var* ff_cat(vfuncptr func, Var* arg)
 {
 	int ac;
@@ -958,6 +950,7 @@ Var* ff_cat(vfuncptr func, Var* arg)
 	char* axis_str;
 	int i, j, axis;
 
+	// TODO(rswinkle): Why aren't we using alist + parse_args() here?
 	make_args(&ac, &av, func, arg);
 
 	if (ac < 4) {

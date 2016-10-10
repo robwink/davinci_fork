@@ -1,0 +1,42 @@
+
+# davinci really is terrible to work with/maintain
+# ugly to read, and terrible syntax/capabilities for a scripting language
+
+a = create(5,1,1, step=10)
+b = create(5,1,1, start=100)
+
+c = cat(a, b, x)
+
+ret = equals(a, c[1:5]) && equals(b, c[dim(a)[1]+1:])
+
+printf("ret = %d\n", ret);
+
+a = create(1,5,1, start=20)
+b = create(1,5,1, step = 2)
+
+c = cat(a, b, y)
+
+ret = ret && equals(a, c[,1:5]) && equals(b, c[,dim(a)[2]+1:])
+
+printf("ret = %d\n", ret);
+
+a = create(5,5,10, step=10)
+b = create(5,5,100, start=100, step=3)
+
+c = cat(a, b, z)
+
+ret = ret && equals(a, c[,,1:10]) && equals(b, c[,,dim(a)[3]+1:])
+
+printf("ret = %d\n", ret);
+
+if (ret == 0) {
+	exit(1)
+}
+
+
+
+
+exit(0)
+
+
+
