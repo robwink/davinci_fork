@@ -16,18 +16,16 @@
 #include <iom_config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include "iomedley.h"
+
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef _WIN32
-#include <unistd.h>
-#endif /* _WIN32 */
 #include <string.h>
 #include <sys/types.h>
 #include <tiffio.h>
 
-#include "iomedley.h"
 
 /* Photometric names. */
 
@@ -517,7 +515,7 @@ int iom_WriteTIFF(char* filename, unsigned char* indata, struct iom_iheader* h, 
 
 	/* Check for file existence if force overwrite not set. */
 
-	if (!force && access(filename, F_OK) == 0) {
+	if (!force && file_exists(filename)) {
 		if (iom_is_ok2print_errors()) {
 			fprintf(stderr, "File %s already exists.\n", filename);
 		}

@@ -3,17 +3,22 @@
 #include <iom_config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include "iomedley.h"
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #ifdef _WIN32
 #undef strncasecmp
 #define strncasecmp strnicmp
 #else
+
+// TODO(rswinkle): check if mingw has pwd.h
+// I'm guessing it does
 #include <pwd.h>
-#include <unistd.h>
 #endif /* _WIN32 */
-#include "iomedley.h"
+
 #include <string.h>
 #include <sys/types.h>
 
@@ -290,7 +295,7 @@ int iom_WriteVicar(char* filename,        /* File name for reference purpose */
 	time_t t = time(0);
 	FILE* fp = NULL;
 
-	if (!force_write && access(filename, F_OK) == 0) {
+	if (!force_write && file_exists(filename)) {
 		fprintf(stderr, "File %s already exits.\n", filename);
 		return 0;
 	}

@@ -6,6 +6,11 @@
 
 #include "system.h"
 
+
+// TODO(rswinkle): Why is this in it own file?  It's called ff_filesystem.c
+// so wouldn't fexists/fremove/chdir/unlink etc. currently in ff.c belong
+// here?
+
 Var* ff_copy(vfuncptr func, Var* arg)
 {
 	int force         = 0;
@@ -42,8 +47,12 @@ Var* ff_copy(vfuncptr func, Var* arg)
 	}
 
 	// Check if the destination is a directory. If yes, the file to be put in there
+	//
+	// NOTE(rswinkle): file_exists is unecessary, because stat would have failed
+	// in the first place if it didn't exist so it could become:
+	// if (!stat(destLocated, &sbuf) && S_ISDIR(sbuf.st_mode) {
 	stat(destLocated, &sbuf);
-	if (S_ISDIR(sbuf.st_mode) && access(destLocated, F_OK) == 0) {
+	if (S_ISDIR(sbuf.st_mode) && file_exists(destLocated)) {
 		tmp =
 		    (char*)malloc(strlen(destLocated) + strlen(basename(src)) + 2); // 2 is for '\0' and '/'
 		sprintf(tmp, "%s/%s", destLocated, basename(src));
@@ -52,7 +61,7 @@ Var* ff_copy(vfuncptr func, Var* arg)
 	}
 
 	// Check whether to overwrite the file.
-	if (!force && access(destLocated, F_OK) == 0) {
+	if (!force && file_exists(destLocated)) {
 		parse_error("%s: Destination filename %s already exists! Use force to overwrite",
 		            func->name, destLocated);
 		free(srcLocated);

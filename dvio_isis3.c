@@ -204,7 +204,7 @@ Var* WriteISIS3(vfuncptr func, Var* arg) // drd proto for this is in func.h
 		return NULL;
 	}
 
-	if (!force && access(filename, F_OK) == 0) {
+	if (!force && file_exists(filename)) {
 		parse_error("%s: File %s already exists.", func->name, filename);
 		return (NULL);
 	}

@@ -28,6 +28,9 @@
 #include <ctype.h>
 #include <signal.h>
 
+#ifndef file_exists
+#define file_exists(filename) (access(filename, F_OK) == 0)
+#endif
 
 #include "system.h"
 

@@ -2,13 +2,11 @@
 #include <iom_config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include "iomedley.h"
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef _WIN32
-#include <unistd.h>
-#endif /* _WIN32 */
-#include "iomedley.h"
 #include <string.h>
 
 /**
@@ -134,7 +132,7 @@ int iom_WriteGRD(char* fname, void* data, struct iom_iheader* h, int force_write
 	float f;
 	FILE* fp = NULL;
 
-	if (!force_write && access(fname, F_OK) == 0) {
+	if (!force_write && file_exists(fname)) {
 		if (iom_is_ok2print_errors()) {
 			fprintf(stderr, "File %s already exists.\n", fname);
 		}

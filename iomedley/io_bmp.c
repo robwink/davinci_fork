@@ -13,13 +13,11 @@
 #include <iom_config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include "iomedley.h"
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef _WIN32
-#include <unistd.h>
-#endif /* _WIN32 */
-#include "iomedley.h"
 #include <string.h>
 #include <sys/types.h>
 
@@ -677,7 +675,7 @@ int iom_WriteBMP(char* filename, unsigned char* indata, struct iom_iheader* h, i
 	int i, nc, nbits, bperlin, cmaplen;
 	unsigned char graymap[256];
 
-	if (!force && access(filename, F_OK) == 0) {
+	if (!force && file_exists(filename)) {
 		if (iom_is_ok2print_errors()) {
 			fprintf(stderr, "File %s already exists.\n", filename);
 		}

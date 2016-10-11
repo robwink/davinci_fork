@@ -2093,7 +2093,7 @@ Var* write_isis_planes(vfuncptr func, Var* arg)
 		return (NULL);
 	}
 
-	if (!force && access(fname, F_OK) == 0) {
+	if (!force && file_exists(fname)) {
 		parse_error("%s: File %s already exists.", func->name, filename);
 		return (NULL);
 	}
@@ -4512,7 +4512,7 @@ int dv_WriteISISStruct(Var* s, char* fname, int force)
 
 	/* if the user has asked to overwrite the file, then delete
 	   it first, since q_open() fails on an existing file. */
-	if (force && access(fname, F_OK) == 0) {
+	if (force && file_exists(fname)) {
 		unlink(fname);
 	}
 

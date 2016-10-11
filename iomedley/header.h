@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include "tools.h"
 
+/*
 #ifdef _WIN32
 #include <io.h>
 
@@ -20,16 +21,25 @@ typedef unsigned long ulong;
 #endif
 
 #if 0
-/* The following two defines have dummy values */
+// The following two defines have dummy values
 #define PROT_WRITE 6
 #define MAP_PRIVATE 1
-#endif /* 0 */
+#endif
 
 #else
+
 #include <unistd.h>
 #include <sys/mman.h>
 #endif
 
+*/
+
+#include <unistd.h>
+#include <sys/mman.h>
+
+#ifndef file_exists
+#define file_exists(filename) (access(filename, F_OK) == 0)
+#endif
 
 enum _external_format {
     INVALID_EFORMAT = -1,

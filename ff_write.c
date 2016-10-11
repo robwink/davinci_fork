@@ -107,7 +107,7 @@ Var* ff_write(vfuncptr func, Var* arg)
 	else if (!strcasecmp(type, "envi"))
 		dv_WriteENVI(ob, filename, force);
 	else if (!strcasecmp(type, "specpr")) {
-		if (!force && access(filename, F_OK)) {
+		if (!force && file_exists(filename)) {
 			parse_error("File %s already exists.\n", filename);
 			return NULL;
 		}

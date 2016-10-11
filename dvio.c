@@ -218,16 +218,18 @@ void var2iom_iheader(Var* v, struct iom_iheader* h)
 	h->format = vfmt2ihfmt(V_FORMAT(v));
 }
 
+/*
 // Checks if the file exists...
-// could be a macro
+// changed to macro in dvio.h
 int file_exists(const char* filename)
 {
 	//struct stat buf;
 	//return (stat(filename, &buf) == 0 ? 1 : 0);
 
-	return (access(filename, F_OK) == 0 ? 1 : 0);
+	return (access(filename, F_OK) == 0);
 
 }
+*/
 
 /*
 ** locate_file() - do filename expansion

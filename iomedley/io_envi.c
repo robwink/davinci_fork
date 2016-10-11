@@ -16,7 +16,6 @@
 #define strncasecmp strnicmp
 #else
 #include <pwd.h>
-#include <unistd.h>
 #endif /* _WIN32 */
 
 #define ENVI_MAGIC "ENVI"
@@ -217,7 +216,7 @@ int iom_WriteENVI(char* filename,        /* File name for reference purpose */
 
 	int x, y, z;
 
-	if (!force_write && access(filename, F_OK) == 0) {
+	if (!force_write && file_exists(filename)) {
 		fprintf(stderr, "File %s already exits.\n", filename);
 		return 0;
 	}

@@ -1149,8 +1149,7 @@ Var* ff_pack(vfuncptr func, Var* arg)
 		return NULL;
 	}
 
-	// if(force == 0 && access to file is permitted, i.e. exists)
-	if (!force && !access(filename, F_OK)) {
+	if (!force && file_exists(filename)) {
 		parse_error("File %s already exists.", filename);
 		return NULL;
 	}

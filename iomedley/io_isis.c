@@ -2,13 +2,10 @@
 #include <iom_config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include "iomedley.h"
+
 #include <errno.h>
 #include <stdio.h>
-#ifndef _WIN32
-#include <unistd.h>
-#endif /* _WIN32 */
-#include "io_lablib3.h"
-#include "iomedley.h"
 #include <string.h>
 
 iom_edf iom_ConvertISISType(char* type, char* bits, char* bytes);
@@ -382,7 +379,7 @@ int iom_WriteISIS(char* fname, void* data, struct iom_iheader* h, int force_writ
 	char buf[1025];
 	FILE* fp = NULL;
 
-	if (!force_write && access(fname, F_OK) == 0) {
+	if (!force_write && file_exists(fname)) {
 		if (iom_is_ok2print_errors()) {
 			fprintf(stderr, "File %s exists already.\n", fname);
 		}

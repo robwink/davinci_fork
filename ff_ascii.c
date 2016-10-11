@@ -1,5 +1,6 @@
 #include "parser.h"
 
+// NOTE(rswinkle): used in ff.c and ff_text.c
 int dv_getline(char** ptr, FILE* fp)
 {
 	static char* line = NULL;

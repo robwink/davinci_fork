@@ -1782,6 +1782,7 @@ Var* new_i64(i64 i)
 }
 
 // TODO(rswinkle) macro define this based on arch?
+// or just change to DV_INT64?
 Var* newInt(int i)
 {
 	Var* v   = newVal(BSQ, 1, 1, 1, DV_INT32, calloc(1, sizeof(i32)));
@@ -1860,12 +1861,12 @@ Var* ff_exists(vfuncptr func, Var* arg)
 		return (NULL);
 	} else if (V_TYPE(v) == ID_STRING) {
 		filename = dv_locate_file(V_STRING(v));
-		return (newInt(access(filename, F_OK) == 0));
+		return (newInt(file_exists(filename)));
 	} else if (V_TYPE(v) == ID_TEXT) {
 		int n     = V_TEXT(v).Row;
 		int* data = calloc(n, sizeof(int));
 		for (i = 0; i < n; i++) {
-			data[i] = (access(V_TEXT(v).text[i], F_OK) == 0);
+			data[i] = file_exists(V_TEXT(v).text[i]);
 		}
 		return (newVal(BSQ, 1, n, 1, DV_INT32, data));
 	} else {
@@ -2278,13 +2279,13 @@ Var* ff_chdir(vfuncptr func, Var* arg)
 
 	if (dir == NULL) {
 		parse_error("%s: No directory specified", func->name);
+	} else if (file_exists(dir)) {
+		chdir(dir);
+		return newString(strdup(dir));
 	} else {
-		if (access(dir, F_OK) == 0) {
-			chdir(dir);
-			return (newString(strdup(dir)));
-		}
+		parse_error("%s: No such directory %s", func->name, dir);
 	}
-	return (NULL);
+	return NULL;
 }
 
 /*

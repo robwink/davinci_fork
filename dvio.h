@@ -97,7 +97,12 @@ int dvio_ValidGfx(char* type, char* GFX_type);
 */
 char* dv_locate_file(const char* fname);
 
-int file_exists(const char* filename);
+
+// NOTE(rswinkle): rename to fexists() to match davinci function?
+//int file_exists(const char* filename);
+//
+//now defined in iomedley.h
+//#define file_exists(filename) (access(filename, F_OK) == 0)
 
 /*
 ** Set the verbosity of iomedley.

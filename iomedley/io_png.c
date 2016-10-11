@@ -15,17 +15,12 @@
 
 #ifdef HAVE_LIBZ
 
+#include "iomedley.h"
+#include "png.h"
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-//mingw64 has unistd.h
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#include "iomedley.h"
-#include "png.h"
 #include <string.h>
 #include <sys/types.h>
 
@@ -339,9 +334,8 @@ int iom_WritePNG(char* filename, unsigned char* indata, struct iom_iheader* h, i
 	png_infop info_ptr;
 	png_bytep* row_pointers = NULL;
 
-	/* Check file accessibility. */
-
-	if (!force && access(filename, F_OK) == 0) {
+	// Check file accessibility.
+	if (!force && file_exists(filename)) {
 		if (iom_is_ok2print_errors()) {
 			fprintf(stderr, "File %s already exists.\n", filename);
 		}

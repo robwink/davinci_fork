@@ -2,13 +2,11 @@
 #include <iom_config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include "iomedley.h"
+
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef _WIN32
-#include <unistd.h>
-#endif /* _WIN32 */
-#include "iomedley.h"
 
 /**
  ** Write data as ER Mapper ERS data set
@@ -59,7 +57,7 @@ int iom_WriteERS(char* fname, void* data, struct iom_iheader* h, int force_write
 
 	sprintf(lblfname, "%s.ers", fname);
 
-	if (!force_write && (access(fname, F_OK) == 0 || access(lblfname, F_OK) == 0)) {
+	if (!force_write && (file_exists(fname) || file_exists(lblfname))) {
 		fprintf(stderr, "File %s or %s exists.\n", fname, lblfname);
 		return 0;
 	}

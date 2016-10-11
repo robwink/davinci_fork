@@ -2806,7 +2806,7 @@ char* OdlGetFileSpec(char* fname, char* orig_fspec) /* this is still TBD */
 			CopyString(fspec, fname);
 		}
 
-		if (access(fspec, F_OK) != 0) {
+		if (!file_exists(fspec)) {
 			/**
 			 ** Try some alternate versions
 			 **/
@@ -5490,19 +5490,19 @@ char* find_file(char* fname)
 			} else {
 				sprintf(buf3, "%s", p);
 			}
-			if (!access(buf3, F_OK)) {
+			if (file_exists(buf3)) {
 				strcpy(buf2, buf3);
 				continue;
 			}
 
 			sprintf(buf3, "%s/%s", buf2, uppercase(p));
-			if (!access(buf3, F_OK)) {
+			if (file_exists(buf3)) {
 				strcpy(buf2, buf3);
 				continue;
 			}
 
 			sprintf(buf3, "%s/%s", buf2, lowercase(p));
-			if (!access(buf3, F_OK)) {
+			if (file_exists(buf3)) {
 				strcpy(buf2, buf3);
 				continue;
 			}

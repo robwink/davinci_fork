@@ -2,6 +2,8 @@
 #include <iom_config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include "iomedley.h"
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,10 +11,7 @@
 #ifdef _WIN32
 #undef strncasecmp
 #define strncasecmp strnicmp
-#else
-#include <unistd.h>
 #endif /* _WIN32 */
-#include "iomedley.h"
 
 /**
  ** These are fortran sequential unformatted records.
@@ -92,7 +91,7 @@ int iom_WriteIMath(char* filename, void* data, struct iom_iheader* h, int force_
 	int height, width;
 	FILE* fp = NULL;
 
-	if (!force_write && access(filename, F_OK)) {
+	if (!force_write && file_exists(filename)) {
 		if (iom_is_ok2print_errors()) {
 			fprintf(stderr, "File %s already exists.\n", filename);
 		}

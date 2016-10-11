@@ -7,6 +7,21 @@
 #include <string.h>
 #include "io_lablib3.h"
 
+
+// for access()
+//
+// probably not even worth guarding since every platform including
+// windows (via mingw) has it
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+// NOTE(rswinkle): rename to fexists() to match davinci function?
+//int file_exists(const char* filename);
+#ifndef file_exists
+#define file_exists(filename) (access(filename, F_OK) == 0)
+#endif
+
 /*
 ** CAUTION:
 ** iom_EFORMAT2STR[] in iomedley.c depends upon these values
@@ -60,6 +75,8 @@ typedef enum {
 ** CAUTION:
 ** iom_FORMAT2STR[] in iomedley.c depends upon these values
 */
+//TODO(rswinkle): Not sure it's worth the effort (why on earth do we have an entirely separate type system
+// for iomedley?) but could try adding the new int types here as well
 typedef enum {
 	iom_BYTE   = 1,
 	iom_SHORT  = 2,

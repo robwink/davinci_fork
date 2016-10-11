@@ -14,7 +14,7 @@ int WriteAscii(Var* s, char* filename, int force)
 	size_t pos;
 	FILE* fp;
 
-	if (!force && access(filename, F_OK) == 0) {
+	if (!force && file_exists(filename)) {
 		parse_error("File %s already exists.", filename);
 		return 0;
 	}

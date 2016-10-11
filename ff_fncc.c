@@ -985,7 +985,7 @@ Var* ff_fncc_write_mat(vfuncptr func, Var* arg)
 		break;
 	}
 
-	if (access(fname, F_OK) == 0 && !force) {
+	if (file_exists(fname) && !force) {
 		parse_error("%s: File %s already exists. Use \"force\".\n", func->name, fname);
 		return newInt(0);
 	}
