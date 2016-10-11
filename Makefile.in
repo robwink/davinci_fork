@@ -102,18 +102,18 @@ am_libdavinci_la_OBJECTS = apifunc.lo array.lo avl.lo binDCT.lo \
 	dvio_isis.lo dvio_magic.lo dvio_pds.lo dvio_isis3.lo \
 	dvio_pnm.lo dvio_raw.lo dvio_specpr.lo dvio_csv.lo \
 	dvio_themis.lo dvio_vicar.lo dvio_xml.lo endian_norm.lo \
-	ff_ffill.lo error.lo ff.lo ff_ascii.lo ff_avg.lo ff_ipi.lo \
-	ff_contour.lo ff_rotate.lo ff_bbr.lo ff_cluster.lo \
-	ff_convolve.lo ff_deghost.lo ff_display.lo ff_fft.lo \
-	ff_filetype.lo ff_fncc.lo ff_gnoise.lo ff_gplot.lo ff_vplot.lo \
-	ff_header.lo ff_hstretch.lo ff_ifill.lo ff_interp.lo ff_ix.lo \
-	ff_load.lo ff_loadvan.lo ff_meta.lo ff_ramp.lo ff_filter.lo \
-	ff_moment.lo ff_pause.lo ff_pbm.lo ff_pca.lo ff_projection.lo \
-	ff_random.lo ff_raw.lo ff_rgb.lo ff_rice.lo ff_shade.lo \
-	ff_slant.lo ff_sort.lo ff_source.lo ff_struct.lo ff_text.lo \
-	ff_version.lo ff_vignette.lo ff_write.lo ff_xfrm.lo fft.lo \
-	fft2f.lo fft_mayer.lo fit.lo ff_coreg.lo ff_boxfilter.lo \
-	ff_bin5.lo ff_transform.lo ff_blend.lo ff_unpack.lo header.lo \
+	ff_ffill.lo error.lo ff.lo ff_avg.lo ff_ipi.lo ff_contour.lo \
+	ff_rotate.lo ff_bbr.lo ff_cluster.lo ff_convolve.lo \
+	ff_deghost.lo ff_display.lo ff_fft.lo ff_filetype.lo \
+	ff_fncc.lo ff_gnoise.lo ff_gplot.lo ff_vplot.lo ff_header.lo \
+	ff_hstretch.lo ff_ifill.lo ff_interp.lo ff_ix.lo ff_load.lo \
+	ff_loadvan.lo ff_meta.lo ff_ramp.lo ff_filter.lo ff_moment.lo \
+	ff_pause.lo ff_pbm.lo ff_pca.lo ff_projection.lo ff_random.lo \
+	ff_raw.lo ff_rgb.lo ff_rice.lo ff_shade.lo ff_slant.lo \
+	ff_sort.lo ff_source.lo ff_struct.lo ff_text.lo ff_version.lo \
+	ff_vignette.lo ff_write.lo ff_xfrm.lo fft.lo fft2f.lo \
+	fft_mayer.lo fit.lo ff_coreg.lo ff_boxfilter.lo ff_bin5.lo \
+	ff_transform.lo ff_blend.lo ff_unpack.lo header.lo \
 	ff_resample.lo help.lo cvector.lo globals.lo matrix.lo misc.lo \
 	motif_tools.lo p.lo pp.lo pp_math.lo printf.lo reserved.lo \
 	rice.lo rpos.lo scope.lo spread.lo string.lo symbol.lo \
@@ -376,7 +376,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	dvio_hdf.c dvio_imath.c dvio_iomedley.c dvio_isis.c dvio_magic.c \
 	dvio_pds.c dvio_isis3.c dvio_pnm.c dvio_raw.c dvio_specpr.c dvio_csv.c \
 	dvio_themis.c dvio_vicar.c dvio_xml.c endian_norm.c ff_ffill.c\
-	error.c ff.c ff_ascii.c ff_avg.c ff_ipi.c ff_contour.c ff_rotate.c\
+	error.c ff.c ff_avg.c ff_ipi.c ff_contour.c ff_rotate.c\
 	ff_bbr.c ff_cluster.c ff_convolve.c ff_deghost.c ff_display.c \
 	ff_fft.c ff_filetype.c ff_fncc.c ff_gnoise.c ff_gplot.c ff_vplot.c\
 	ff_header.c ff_hstretch.c ff_ifill.c ff_interp.c ff_ix.c \
@@ -608,7 +608,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/endian_norm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/error.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_ascii.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_avg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_bbr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ff_bin5.Plo@am__quote@
