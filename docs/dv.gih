@@ -249,12 +249,14 @@
 ?cat()
  cat() - Concatenate (append) two objects together
 
- cat(ob1=VAL,ob2=VAL,axis={X,Y,Z})
+ cat(ob1=VAL,ob2=VAL, [ob3, ob4, ... obn,] axis={X,Y,Z})
 
-    The cat() function duplicates ob1 and appends a copy of ob2, along the
-    specified axis.  The two arrays may be in different formats, in which
-    case the return value will be in the smallest format with a range that
-    contains the range of both.  They may also be in different organizations
+    The cat() function duplicates ob1 and appends a copy of ob2 through
+    obn, along the specified axis.
+
+    The arrays may be in different formats, in which case the return
+    value will be in the smallest format with a range that contains the
+    range of all of them.  They may also be in different organizations
     with the return value having the organization of ob1.
 
     The two objects must have the same dimension along the two
