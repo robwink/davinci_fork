@@ -589,12 +589,15 @@ Var* ff_create(vfuncptr func, Var* arg)
 	size_t i, j, k;
 	double v;
 
-	// TODO(rswinkle) combine/with use global array?
+	// TODO(rswinkle) combine/with use globals.c ORG2STR array?
 	const char* orgs[]    = {"bsq", "bil", "bip", "xyz", "xzy", "zxy", NULL};
 
 
 	// NOTE(rswinkle) question is do we default to INT64 or not, or base it on the platform
 	// and this decision affects at least a couple other functions, ie make_sym.
+	// Personally, I think we should officially drop 32-bit support.  The Linux distros have been
+	// recommending using amd64 for computers with >2GB of memory for years (who doesn't have > 2GB of
+	// memory?) and several are going to stop making i386 releases entirely by 2020
 	//
 	// Also x,y,z are size_t in other funcs but we don't handle size_t in parse_args.  Fortunately
 	// size_t is a u64 on 64 bit.  We could add size_t to parse_args if wanted.
@@ -951,10 +954,25 @@ Var* ff_cat(vfuncptr func, Var* arg)
 	int i, j, axis;
 
 	// TODO(rswinkle): Why aren't we using alist + parse_args() here?
+	//
+	// UPDATE(rswinkle): Ok as far as I can tell the only reason
+	// we don't use parse_args() here is because it can't handle variable
+	// numbers of arguments...
+	//
+	// cat() is documented as only taking 2 arrays on both the wiki
+	// and dv.gih
+	// cat(array1, array2, axis)
+	//
+	// nothing about arbitrary numbers of arrays
+	//
+	// Looks like maybe a few places in the library do we use cat() with 
+	// more than 2 arrays.  Maybe there's a way to update parse_args to
+	// handle this?  future research I guess
 	make_args(&ac, &av, func, arg);
 
 	if (ac < 4) {
 		parse_error("Not enough arguments to cat()");
+		free(av);
 		return (NULL);
 	}
 	/* find axis if specified */
@@ -983,6 +1001,7 @@ Var* ff_cat(vfuncptr func, Var* arg)
 		axis_str = V_NAME(axis_var);
 	} else {
 		parse_error("cat(): No axis specified");
+		free(av);
 		return (NULL);
 	}
 	if (!strcasecmp(axis_str, "x"))
@@ -993,6 +1012,7 @@ Var* ff_cat(vfuncptr func, Var* arg)
 		axis = 2;
 	else {
 		parse_error("cat(): Invalid axis specified");
+		free(av);
 		return (NULL);
 	}
 
@@ -1000,10 +1020,12 @@ Var* ff_cat(vfuncptr func, Var* arg)
 	for (i = 2; i < ac; i++) {
 		q = do_cat(p, av[i], axis);
 		if (q == NULL) {
+			free(av);
 			return (NULL);
 		}
 		p = q;
 	}
+
 	free(av);
 	return (p);
 }
@@ -1148,8 +1170,6 @@ Var* cat_string_text(Var* ob1, Var* ob2, int axis)
 Var* do_cat(Var* ob1, Var* ob2, int axis)
 {
 	Var *e, *s;
-	int i, j;
-	int s1[3], s2[3];
 	void *data, *d1, *d2, *out;
 	size_t dsize;
 	int nbytes;
@@ -1180,70 +1200,157 @@ Var* do_cat(Var* ob1, Var* ob2, int axis)
 
 	if (ob1_type == ID_STRING || ob1_type == ID_TEXT) return (cat_string_text(ob1, ob2, axis));
 
-	if (V_FORMAT(ob1) != V_FORMAT(ob2)) {
-		parse_error("cat(), Data formats must match.");
-		return (NULL);
-	}
-	if (V_ORG(ob1) != V_ORG(ob2)) {
-		parse_error("cat(), Data organization must match.");
-		return (NULL);
-	}
+	int out_format = combine_var_formats(ob1, ob2);
 
-	/**
-	 ** convert from XYZ into the appropriate ORG
-	 **/
-	axis = orders[V_ORG(ob1)][axis];
-
+	size_t i, j, k;
 	for (i = 0; i < 3; i++) {
-		s1[i] = V_SIZE(ob1)[i];
-		s2[i] = V_SIZE(ob2)[i];
-		if (i == axis) continue;
-		if (V_SIZE(ob1)[i] != V_SIZE(ob2)[i]) {
-			parse_error("Axis must match");
+		if (i == axis) {
+			continue;
+		}
+
+		// stupid davinci making the size array order change with the org
+		if (V_SIZE(ob1)[orders[V_ORG(ob1)][i]] != V_SIZE(ob2)[orders[V_ORG(ob2)][i]]) {
+
+			parse_error("Unspecified axes must match");
 			return (NULL);
 		}
 	}
 
 	nbytes = NBYTES(V_FORMAT(ob1));
+	nbytes = NBYTES(out_format);
 	d1     = V_DATA(ob1);
 	d2     = V_DATA(ob2);
 	dsize  = V_DSIZE(ob1) + V_DSIZE(ob2);
 	data   = calloc(nbytes, dsize);
 	out    = data;
-
-	for (j = 0; j < s1[2]; j++) {
-		for (i = 0; i < s1[1]; i++) {
-			memcpy(out, d1, s1[0] * nbytes);
-			out = (char*)out + s1[0] * nbytes;
-			d1  = (char*)d1 + s1[0] * nbytes;
-			if (axis == 0) {
-				memcpy(out, d2, s2[0] * nbytes);
-				out = (char*)out + s2[0] * nbytes;
-				d2  = (char*)d2 + s2[0] * nbytes;
-			}
-		}
-		if (axis == 1) {
-			memcpy(out, d2, s2[0] * s2[1] * nbytes);
-			out = (char*)out + s2[0] * s2[1] * nbytes;
-			d2  = (char*)d2 + s2[0] * s2[1] * nbytes;
-		}
-	}
-	if (axis == 2) {
-		memcpy(out, d2, s2[0] * s2[1] * s2[2] * nbytes);
-	}
 	s            = newVar();
 	V_TYPE(s)    = ID_VAL;
 	V_DATA(s)    = data;
-	V_FORMAT(s)  = V_FORMAT(ob1);
+	V_FORMAT(s)  = out_format;
 	V_ORG(s)     = V_ORG(ob1);
 	V_DSIZE(s)   = dsize;
 	V_SIZE(s)[0] = V_SIZE(ob1)[0];
 	V_SIZE(s)[1] = V_SIZE(ob1)[1];
 	V_SIZE(s)[2] = V_SIZE(ob1)[2];
-	/**
-	 ** replace the axis that changed
-	 **/
-	V_SIZE(s)[axis] = V_SIZE(ob1)[axis] + V_SIZE(ob2)[axis];
+
+	// replace the axis that changed
+	//
+	// find "location" of specificed axis (see array.c)
+	// stupid davinci madness
+	int tmp_axis = orders[V_ORG(ob1)][axis];
+
+	V_SIZE(s)[tmp_axis] = V_SIZE(ob1)[tmp_axis] + V_SIZE(ob2)[orders[V_ORG(ob2)][axis]];
+
+	u8* u8data = data;
+	u16* u16data = data;
+	u32* u32data = data;
+	u64* u64data = data;
+
+	i8* i8data = data;
+	i16* i16data = data;
+	i32* i32data = data;
+	i64* i64data = data;
+
+	float* fdata = data;
+	double* ddata = data;
+
+	size_t idx, oidx;
+	for (i=0; i<GetZ(ob1); ++i) {
+		for (j=0; j<GetY(ob1); ++j) {
+			for (k=0; k<GetX(ob1); ++k) {
+				idx = cpos(k, j, i, ob1);
+				oidx = cpos(k, j, i, s);
+				
+				switch (out_format) {
+				case DV_UINT8:  u8data[oidx] = extract_u32(ob1, idx); break;
+				case DV_UINT16: u16data[oidx] = extract_u32(ob1, idx); break;
+				case DV_UINT32: u32data[oidx] = extract_u32(ob1, idx); break;
+				case DV_UINT64: u64data[oidx] = extract_u64(ob1, idx); break;
+
+				case DV_INT8:   u8data[oidx] =  extract_i32(ob1, idx); break;
+				case DV_INT16:  u16data[oidx] = extract_i32(ob1, idx); break;
+				case DV_INT32:  u32data[oidx] = extract_i32(ob1, idx); break;
+				case DV_INT64:  u64data[oidx] = extract_i64(ob1, idx); break;
+
+				case DV_FLOAT:  fdata[oidx] = extract_float(ob1, idx); break;
+				case DV_DOUBLE: ddata[oidx] =  extract_double(ob1, idx); break;
+				}
+
+			}
+			if (axis == 0) {
+				for (k=0; k<GetX(ob2); ++k) {
+					idx = cpos(k, j, i, ob2);
+					oidx = cpos(k+GetX(ob1), j, i, s);
+					
+					switch (out_format) {
+					case DV_UINT8:  u8data[oidx] = extract_u32(ob2, idx); break;
+					case DV_UINT16: u16data[oidx] = extract_u32(ob2, idx); break;
+					case DV_UINT32: u32data[oidx] = extract_u32(ob2, idx); break;
+					case DV_UINT64: u64data[oidx] = extract_u64(ob2, idx); break;
+
+					case DV_INT8:   u8data[oidx] =  extract_i32(ob2, idx); break;
+					case DV_INT16:  u16data[oidx] = extract_i32(ob2, idx); break;
+					case DV_INT32:  u32data[oidx] = extract_i32(ob2, idx); break;
+					case DV_INT64:  u64data[oidx] = extract_i64(ob2, idx); break;
+
+					case DV_FLOAT:  fdata[oidx] = extract_float(ob2, idx); break;
+					case DV_DOUBLE: ddata[oidx] =  extract_double(ob2, idx); break;
+					}
+				}
+			}
+		}
+
+		if (axis == 1) {
+			for (j=0; j<GetY(ob2); ++j) {
+				for (k=0; k<GetX(ob1); ++k) {
+					idx = cpos(k, j, i, ob2);
+					oidx = cpos(k, j+GetY(ob1), i, s);
+
+					switch (out_format) {
+					case DV_UINT8:  u8data[oidx] = extract_u32(ob2, idx); break;
+					case DV_UINT16: u16data[oidx] = extract_u32(ob2, idx); break;
+					case DV_UINT32: u32data[oidx] = extract_u32(ob2, idx); break;
+					case DV_UINT64: u64data[oidx] = extract_u64(ob2, idx); break;
+
+					case DV_INT8:   u8data[oidx] =  extract_i32(ob2, idx); break;
+					case DV_INT16:  u16data[oidx] = extract_i32(ob2, idx); break;
+					case DV_INT32:  u32data[oidx] = extract_i32(ob2, idx); break;
+					case DV_INT64:  u64data[oidx] = extract_i64(ob2, idx); break;
+
+					case DV_FLOAT:  fdata[oidx] = extract_float(ob2, idx); break;
+					case DV_DOUBLE: ddata[oidx] =  extract_double(ob2, idx); break;
+					}
+				}
+			}
+		}
+	}
+	
+	if (axis == 2) {
+		for (i=0; i<GetZ(ob2); ++i) {
+			for (j=0; j<GetY(ob1); ++j) {
+				for (k=0; k<GetX(ob1); ++k) {
+					idx = cpos(k, j, i, ob2);
+					oidx = cpos(k, j, i+GetZ(ob1), s);
+
+					switch (out_format) {
+					case DV_UINT8:  u8data[oidx] = extract_u32(ob2, idx); break;
+					case DV_UINT16: u16data[oidx] = extract_u32(ob2, idx); break;
+					case DV_UINT32: u32data[oidx] = extract_u32(ob2, idx); break;
+					case DV_UINT64: u64data[oidx] = extract_u64(ob2, idx); break;
+
+					case DV_INT8:   u8data[oidx] =  extract_i32(ob2, idx); break;
+					case DV_INT16:  u16data[oidx] = extract_i32(ob2, idx); break;
+					case DV_INT32:  u32data[oidx] = extract_i32(ob2, idx); break;
+					case DV_INT64:  u64data[oidx] = extract_i64(ob2, idx); break;
+
+					case DV_FLOAT:  fdata[oidx] = extract_float(ob2, idx); break;
+					case DV_DOUBLE: ddata[oidx] =  extract_double(ob2, idx); break;
+					}
+				}
+			}
+		}
+
+	}
 
 	return (s);
 }

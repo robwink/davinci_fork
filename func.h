@@ -250,6 +250,8 @@ int dv_format_size(int type);
 const char* dv_format_to_str(int type);
 int dv_str_to_format(const char* str);
 
+int combine_var_formats(Var* v1, Var* v2);
+int combine_formats(int format1, int format2);
 // end misc.c
 
 

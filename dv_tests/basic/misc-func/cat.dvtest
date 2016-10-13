@@ -29,6 +29,101 @@ ret = ret && equals(a, c[,,1:10]) && equals(b, c[,,dim(a)[3]+1:])
 
 printf("ret = %d\n", ret);
 
+
+# test bil
+
+a = create(5,1,1, step=10, org=bil)
+b = create(5,1,1, start=100, org=bil)
+
+c = cat(a, b, x)
+
+ret = ret && equals(a, c[1:5]) && equals(b, c[dim(a)[1]+1:])
+
+printf("ret = %d\n", ret);
+
+a = create(1,5,1, start=20, org=bil)
+b = create(1,5,1, step = 2, org=bil)
+
+c = cat(a, b, y)
+
+ret = ret && equals(a, c[,1:5]) && equals(b, c[,dim(a)[2]+1:])
+
+printf("ret = %d\n", ret);
+
+a = create(5,5,10, step=10, org=bil)
+b = create(5,5,100, start=100, step=3, org=bil)
+
+c = cat(a, b, z)
+
+ret = ret && equals(a, c[,,1:10]) && equals(b, c[,,dim(a)[3]+1:])
+
+printf("ret = %d\n", ret);
+
+#test BIP
+
+a = create(5,1,1, step=10, org=bip)
+b = create(5,1,1, start=100, org=bip)
+
+c = cat(a, b, x)
+
+ret = ret && equals(a, c[1:5]) && equals(b, c[dim(a)[1]+1:])
+
+printf("ret = %d\n", ret);
+
+a = create(1,5,1, start=20, org=bip)
+b = create(1,5,1, step = 2, org=bip)
+
+c = cat(a, b, y)
+
+ret = ret && equals(a, c[,1:5]) && equals(b, c[,dim(a)[2]+1:])
+
+printf("ret = %d\n", ret);
+
+a = create(5,5,10, step=10, org=bip)
+b = create(5,5,100, start=100, step=3, org=bip)
+
+c = cat(a, b, z)
+
+ret = ret && equals(a, c[,,1:10]) && equals(b, c[,,dim(a)[3]+1:])
+
+printf("ret = %d\n", ret);
+
+
+######################################
+# This functionality is not documented or used anywhere as far as I
+# can tell
+
+a = create(5,5,10, step=10, org=bip)
+b = create(5,5,100, start=100, step=3, org=bip)
+c = create(5,5,100, start=5, step=4, org=bip)
+
+d = cat(a, b, c, z)
+
+ret = ret && equals(a, d[,,1:10]) && equals(b, d[,,dim(a)[3]+1:dim(a)[3]+dim(b)[3]]) && \
+      equals(c, d[,,dim(a)[3]+dim(b)[3]+1:])
+
+printf("ret = %d\n", ret);
+
+###########################################33
+
+
+
+
+#########################################
+# We can easily do this now if we want to
+##########################################
+a = create(5,5,10, step=10)
+b = create(5,5,100, start=100, step=3, org=bip)
+
+c = cat(a, b, z)
+
+ret = ret && equals(a, c[,,1:10]) && equals(b, c[,,dim(a)[3]+1:])
+
+printf("ret = %d\n", ret);
+
+##############################################
+
+
 if (ret == 0) {
 	exit(1)
 }

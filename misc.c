@@ -798,4 +798,192 @@ int dv_str_to_format(const char* str)
 }
 
 
+// Return smallest format that can contain the values
+// of the formats of both v1 and v2
+int combine_var_formats(Var* v1, Var* v2)
+{
+	return combine_formats(V_FORMAT(v1), V_FORMAT(v2));
+}
+
+int combine_formats(int format1, int format2)
+{
+	int out_format = format1;
+
+	// I think I made the assumption below that they were
+	// not equal so I left out some cases
+	if (format1 == format2)
+		return out_format;
+
+	switch (format1) {
+	case DV_UINT8:
+		if (format2 == DV_INT8) {
+			out_format = DV_INT16;
+		} else {
+			out_format = format2;
+		}
+		break;
+	case DV_UINT16:
+		switch (format2) {
+		case DV_UINT8:
+			out_format = DV_UINT16;
+			break;
+		case DV_INT8:
+		case DV_INT16:
+			out_format = DV_INT32;
+			break;
+		default:
+			out_format = format2;
+		}
+		break;
+		
+	case DV_UINT32:
+		switch (format2) {
+		case DV_UINT8:
+		case DV_UINT16:
+			out_format = DV_UINT32;
+			break;
+		case DV_INT8:
+		case DV_INT16:
+		case DV_INT32:
+			out_format = DV_INT64;
+			break;
+		case DV_FLOAT:
+			out_format = DV_DOUBLE;
+			break;
+		default:
+			out_format = format2;
+		}
+		break;
+	case DV_UINT64:
+		switch (format2) {
+		case DV_UINT8:
+		case DV_UINT16:
+		case DV_UINT32:
+			out_format = DV_UINT64;
+			break;
+		default:
+			out_format = DV_DOUBLE;
+		}
+		break;
+
+	case DV_INT8:
+		switch (format2) {
+		case DV_UINT8:
+			out_format = DV_INT16;
+			break;
+		case DV_UINT16:
+			out_format = DV_INT32;
+			break;
+		case DV_UINT32:
+			out_format = DV_INT64;
+			break;
+		case DV_UINT64:
+			out_format = DV_DOUBLE;
+			break;
+
+		default:
+			out_format = format2;
+		}
+		break;
+
+	case DV_INT16:
+		switch (format2) {
+		case DV_UINT8:
+			out_format = DV_INT16;
+			break;
+		case DV_UINT16:
+			out_format = DV_INT32;
+			break;
+		case DV_UINT32:
+			out_format = DV_INT64;
+			break;
+		case DV_UINT64:
+			out_format = DV_DOUBLE;
+			break;
+
+		case DV_INT8:
+			out_format = DV_INT16;
+			break;
+
+		default:
+			out_format = format2;
+		}
+		break;
+
+	case DV_INT32:
+		switch (format2) {
+		case DV_UINT8:
+		case DV_UINT16:
+			out_format = DV_INT32;
+			break;
+		case DV_UINT32:
+			out_format = DV_INT64;
+			break;
+		case DV_UINT64:
+			out_format = DV_DOUBLE;
+			break;
+
+		case DV_INT8:
+		case DV_INT16:
+			out_format = DV_INT32;
+			break;
+
+		case DV_FLOAT:
+			out_format = DV_DOUBLE;
+			break;
+
+		default:
+			out_format = format2;
+		}
+		break;
+
+	case DV_INT64:
+		switch (format2) {
+		case DV_UINT8:
+		case DV_UINT16:
+		case DV_UINT32:
+			out_format = DV_INT64;
+			break;
+		case DV_UINT64:
+			out_format = DV_DOUBLE;
+			break;
+
+		case DV_INT8:
+		case DV_INT16:
+		case DV_INT32:
+			out_format = DV_INT64;
+			break;
+
+		case DV_FLOAT:
+			out_format = DV_DOUBLE;
+			break;
+
+		default:
+			out_format = format2;
+		}
+		break;
+
+	case DV_FLOAT:
+		switch (format2) {
+		case DV_UINT32:
+		case DV_UINT64:
+		case DV_INT32:
+		case DV_INT64:
+		case DV_DOUBLE:
+			out_format = DV_DOUBLE;
+			break;
+		default:
+			out_format = DV_FLOAT;
+			break;
+		}
+		break;
+
+	case DV_DOUBLE:
+		out_format = DV_DOUBLE;
+		break;
+	}
+
+	return out_format;
+
+}
 

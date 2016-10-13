@@ -220,7 +220,8 @@ void var2iom_iheader(Var* v, struct iom_iheader* h)
 
 /*
 // Checks if the file exists...
-// changed to macro in dvio.h
+// changed to file_exists macro in iomedley.h and
+// parser.h
 int file_exists(const char* filename)
 {
 	//struct stat buf;

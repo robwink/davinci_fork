@@ -176,6 +176,8 @@ Var* pp_math(Var* a, int op, Var* b)
 	** take order from the larger matrix (less paging that way)
 	**/
 
+	// TODO(rswinkle): This is wrong now.  For example uint64 + int8 should not
+	// return an int8.  Maybe reuse code from ff.c::do_cat()
 	in_format = out_format = max(V_FORMAT(a), V_FORMAT(b));
 
 	if (is_relop(op)) {
@@ -447,6 +449,52 @@ void xpos(size_t i, Var* v, int* x, int* y, int* z)
 	*x = d[orders[V_ORG(v)][0]];
 	*y = d[orders[V_ORG(v)][1]];
 	*z = d[orders[V_ORG(v)][2]];
+}
+
+
+// TODO(rswinkle): figure out how best to do this
+/*
+void extract_n_set(const Var* set, const size_t set_i, const Var* get, const size_t get_i)
+{
+	switch (V_FORMAT(get)) {
+	case DV_UINT8: return ((type)((u8*)V_DATA(get))[i]);
+	case DV_UINT16: return ((type)((u16*)V_DATA(get))[i]);
+	case DV_UINT32: return ((type)((u32*)V_DATA(get))[i]);
+	case DV_UINT64: return ((type)((u64*)V_DATA(get))[i]);
+
+	case DV_INT8: return ((type)((i8*)V_DATA(get))[i]);
+	case DV_INT16: return ((type)((i16*)V_DATA(get))[i]);
+	case DV_INT32: return ((type)((i32*)V_DATA(get))[i]);
+	case DV_INT64: return ((type)((i64*)V_DATA(get))[i]);
+
+	case DV_FLOAT: return ((type)((float*)V_DATA(get))[i]);
+	case DV_DOUBLE: return ((type)((double*)V_DATA(get))[i]);
+	default: \
+		printf("unknown format %d\n", V_FORMAT(get));
+	}
+	return 0;
+}
+*/
+
+void* extract_loc(const Var* v, const size_t i)
+{
+	switch (V_FORMAT(v)) {
+	case DV_UINT8: return &((u8*)V_DATA(v))[i];
+	case DV_UINT16: return &(((u16*)V_DATA(v))[i]);
+	case DV_UINT32: return &(((u32*)V_DATA(v))[i]);
+	case DV_UINT64: return &(((u64*)V_DATA(v))[i]);
+
+	case DV_INT8: return &(((i8*)V_DATA(v))[i]);
+	case DV_INT16: return &(((i16*)V_DATA(v))[i]);
+	case DV_INT32: return &(((i32*)V_DATA(v))[i]);
+	case DV_INT64: return &(((i64*)V_DATA(v))[i]);
+
+	case DV_FLOAT: return &(((float*)V_DATA(v))[i]);
+	case DV_DOUBLE: return &(((double*)V_DATA(v))[i]);
+	default: \
+		printf("unknown format %d\n", V_FORMAT(v));
+	}
+	return 0;
 }
 
 
