@@ -364,8 +364,12 @@ int main(int ac, char** av)
 
 		//static const char wordbreakers = " \t\n\"\\'`@$><=;|&{(";
 		//adding the '.'
-		static const char* wordbreakers = ". \t\n\"\\'`@$><=;|&{(";
-		rl_basic_word_break_characters = wordbreakers;
+		//static const char* wordbreakers = ". \t\n\"\\'`@$><=;|&{(";
+		//rl_basic_word_break_characters = wordbreakers;
+		//
+
+		static const char* prefixes = "\"\'";
+		//rl_special_prefixes = prefixes;
 
 		rl_attempted_completion_function = dv_complete_func;
 		//rl_attempted_completion_function = dv_null_func;
@@ -796,12 +800,14 @@ void init_history(char* fname)
 
 #ifdef HAVE_LIBREADLINE
 
+char* member_generator(const char* text, int state);
+
 // Generator function for command completion.  STATE lets us know whether
 // to start from scratch; without any state (i.e. STATE == 0), then we
 // start at the top of the list.
 char* command_generator(const char* text, int state)
 {
-	static int list_index, len, search_state;
+	static int list_index, len, search_state, mem_state;
 
 	Scope* scope = global_scope();
 
@@ -815,6 +821,7 @@ char* command_generator(const char* text, int state)
 		len = strlen(text);
 		search_state = 0;
 		list_index = 0;
+		mem_state = 0;
 	}
 
 	int i;
@@ -852,9 +859,33 @@ char* command_generator(const char* text, int state)
 				continue;
 
 			v = *CVEC_GET_VOID(vec, Var*, i);
-			if (V_NAME(v) != NULL && !strncmp(V_NAME(v), text, len)) {
-				list_index = i+1;
-				return strdup(V_NAME(v));
+
+			if (V_NAME(v) != NULL) {
+				int n_len = strlen(V_NAME(v));
+
+				if (!strncmp(V_NAME(v), text, len)) {
+					list_index = i+1;
+					return strdup(V_NAME(v));
+				}
+
+				if (!strncmp(V_NAME(v), text, strlen(V_NAME(v))) && text[n_len] == '.') {
+					//
+					// NOTE(rswinkle): I'm manually doing what rl_completion_matches does
+					// here.  I used to try to logic it out in dv_complete_func and call
+					// rl_completion_matches with member_generator directly but it wasn't
+					// ideal and even though this duplicates some work (refinding the top level
+					// structure) I think it's better
+					char* ret = member_generator(text, mem_state);
+					mem_state = 1;
+					
+					if (!ret) {
+						list_index = i+1;
+						mem_state = 0;
+						//rl_attempted_completion_over = 1;
+						continue;
+					}
+					return ret;
+				}
 			}
 		}
 	}
@@ -877,10 +908,14 @@ char* member_generator(const char* text, int state)
 
 	char* word = NULL;
 
+	word = text;
+
 	//text is actually empty cause it breaks on '.' and we
 	//need the structure names so we work on the whole line buf
-	//word = text;
-	word = rl_line_buffer;
+	//
+	//I no longer break on '.' but if I change back uncommenting
+	//this and commenting the 4 lines below fixes it
+	//word = rl_line_buffer;
 
 	//return NULL;
 	//printf("word = \"%s\"\n", word);
@@ -934,12 +969,12 @@ char* member_generator(const char* text, int state)
 		if (name && !strncmp(name, &dot[1], nlen)) {
 
 			list_index = j+1;
-			/*
+
+			//comment out these 4 lines if '.' is a breaking character
 			result = malloc(dot-word+1 + strlen(name)+1);
 			memcpy(result, word, dot-word+1);
 			strcpy(&result[dot-word+1], name);
 			return result;
-			*/
 
 			return strdup(name);
 		}
@@ -989,34 +1024,14 @@ char** dv_complete_func(const char* text, int start, int end)
 
 	rl_completion_append_character = '\0';
 
-	//static const char *default_filename_quote_chars = " \t\n\\\"'@<>=;|&()#$`?*[!:{~";	/*}*/
-	//rl_filename_quote_characters = default_filename_quote_chars;
-
 	static const char* qb = "\'\"";
-	//rl_completer_word_break_characters = wordbreakers;
 
 
-	// If this word is at the start of the line, then it is a function name
-	// to complete.  Otherwise it is the name of a file in the current
-	// directory.
-	//printf("\"%s\" %d %d %c\n", rl_line_buffer, start, end, rl_line_buffer[start]);
-	if (start == 0) {
+	//printf("\"%s\" %d %d = '%c' = '%c'\n", rl_line_buffer, start, end, rl_line_buffer[start], text[0]);
+
+	if (start == 0 || (rl_line_buffer[start-1] != qb[0] && rl_line_buffer[start-1] != qb[1])) {
 		matches = rl_completion_matches(text, command_generator);
-	} else {
-		if (rl_line_buffer[start-1] == '.') {
-			matches = rl_completion_matches(text, member_generator);
-			rl_attempted_completion_over = 1;
-
-		// I'm sure there is a better/more correct way to do this but I haven't
-		// figured it out yet
-		} else if (rl_line_buffer[start-1] != qb[0] && rl_line_buffer[start-1] != qb[1]) {
-		//} else if (!rl_completion_quote_character) {
-			matches = rl_completion_matches(text, command_generator);
-		} else {
-			//rl_completer_word_break_characters = qb;
-		}
 	}
-
 
 	return matches;
 }
