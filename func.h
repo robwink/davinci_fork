@@ -290,6 +290,8 @@ int dv_getline(char** ptr, FILE* fp);
 Var* ff_unpack(vfuncptr, Var*);
 Var* ff_pack(vfuncptr, Var*);
 Var* ff_dfunc(vfuncptr, Var*);
+Var* ff_isnan(vfuncptr, Var*);
+Var* ff_isinf(vfuncptr, Var*);
 Var* ff_pow(vfuncptr, Var*);
 Var* ff_conv(vfuncptr, Var*);
 Var* ff_dim(vfuncptr, Var*);
@@ -474,6 +476,7 @@ int cmp_float_dsc(const void*, const void*);
 int cmp_double_dsc(const void*, const void*);
 
 int cmp_string_dsc(const void* a, const void* b);
+
 
 
 void log_line(char* str);

@@ -145,7 +145,7 @@ int iom_GetTIFFHeader(FILE* fp, char* filename, struct iom_iheader* h)
 
 	int byte_size = bits / 8;
 
-	/* type == -1 means sampleformat tag was missing and we assume unsigned int type */
+	/* type == 0 means sampleformat tag was missing and we assume unsigned int type */
 	if (bits == 8) {
 		if (type == SAMPLEFORMAT_INT &&
 		    uchar_overflow(h->data, dsize) <

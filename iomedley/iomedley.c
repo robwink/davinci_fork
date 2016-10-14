@@ -26,6 +26,11 @@
 /**
  ** Indices at which X,Y & Z (or Samples, Lines & Bands)
  ** dimensions end up at.
+ **
+ ** NOTE(rswinkle): All of this mirrors globals in globals.c and array.c
+ ** Why did we have to duplicate all this effort?  Because iomedley is compiled as a separate library?
+ ** and why did we make that retarded decision?  Is it honestly used *anywhere* outside of davinci?
+ ** even if it were it'd have been easy to pull out the common globals/enums and use them in both
  **/
 int iom_orders[3][3] = {{0, 1, 2}, {0, 2, 1}, {1, 2, 0}};
 

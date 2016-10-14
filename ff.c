@@ -2402,3 +2402,95 @@ double my_round(double d)
 {
 	return round(d);
 }
+
+
+Var* ff_isnan(vfuncptr func, Var* arg)
+{
+	Var *v = NULL, *e;
+	Alist alist[2];
+	u8* data;
+
+	alist[0]      = make_alist("obj", ID_UNK, NULL, &v);
+	alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return NULL;
+
+	if (!v) {
+		parse_error("Expected 1 argument, obj, to function: %s(obj)", func->name);
+		return NULL;
+	}
+
+	if ((e = eval(v)) != NULL) v = e;
+
+	if (V_TYPE(v) != ID_VAL) {
+		parse_error("%s: argument must be ID_VAL", func->name);
+		return NULL;
+	}
+
+	if (V_FORMAT(v) != DV_FLOAT && V_FORMAT(v) != DV_DOUBLE) {
+		parse_error("%s: format must be float or double", func->name);
+		return NULL;
+	}
+
+	float* fdata = V_DATA(v);
+	double* ddata = V_DATA(v);
+
+
+	data = calloc(1, V_DSIZE(v));
+	for (size_t i=0; i<V_DSIZE(v); ++i) {
+		if (V_FORMAT(v) == DV_FLOAT)
+			data[i] = isnan(fdata[i]);
+		else
+			data[i] = isnan(ddata[i]);
+	}
+
+	v = newVal(V_ORG(v), V_SIZE(v)[0], V_SIZE(v)[1], V_SIZE(v)[2], DV_UINT8, data);
+
+	return v;
+}
+
+Var* ff_isinf(vfuncptr func, Var* arg)
+{
+	Var *v = NULL, *e;
+	Alist alist[2];
+	u8* data;
+
+	alist[0]      = make_alist("obj", ID_UNK, NULL, &v);
+	alist[1].name = NULL;
+
+	if (parse_args(func, arg, alist) == 0) return NULL;
+
+	if (!v) {
+		parse_error("Expected 1 argument, obj, to function: %s(obj)", func->name);
+		return NULL;
+	}
+
+	if ((e = eval(v)) != NULL) v = e;
+
+	if (V_TYPE(v) != ID_VAL) {
+		parse_error("%s: argument must be ID_VAL", func->name);
+		return NULL;
+	}
+
+	if (V_FORMAT(v) != DV_FLOAT && V_FORMAT(v) != DV_DOUBLE) {
+		parse_error("%s: format must be float or double", func->name);
+		return NULL;
+	}
+
+	float* fdata = V_DATA(v);
+	double* ddata = V_DATA(v);
+
+
+	data = calloc(1, V_DSIZE(v));
+	for (size_t i=0; i<V_DSIZE(v); ++i) {
+		if (V_FORMAT(v) == DV_FLOAT)
+			data[i] = isinf(fdata[i]);
+		else
+			data[i] = isinf(ddata[i]);
+	}
+
+	v = newVal(V_ORG(v), V_SIZE(v)[0], V_SIZE(v)[1], V_SIZE(v)[2], DV_UINT8, data);
+
+	return v;
+}
+

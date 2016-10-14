@@ -48,9 +48,12 @@ struct _vfuncptr vfunclist[] = {
     {"ceil", ff_dfunc, (void*)ceil, NULL},
     {"abs", ff_dfunc, (void*)fabs, NULL},
     {"round", ff_dfunc, (void*)my_round, NULL},
-    {"my_round", ff_dfunc, (void*)my_round, NULL},
 
     {"pow", ff_pow, (void*)NULL, NULL},
+
+    {"isnan", ff_isnan, (void*)NULL, NULL},
+    {"isinf", ff_isinf, (void*)NULL, NULL},
+
 
     /* format conversion routines.  All just shorthand for ff_conv() */
 
