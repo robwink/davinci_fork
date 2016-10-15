@@ -154,6 +154,7 @@ struct _vfuncptr vfunclist[] = {
     {"string", ff_string, NULL, NULL},
 
     {"atoi", ff_atoi, NULL, NULL},
+    {"atol", ff_atoi, NULL, NULL},
     {"atof", ff_atof, NULL, NULL},
     {"atod", ff_atof, NULL, NULL},
     {"delim", ff_delim, NULL, NULL},

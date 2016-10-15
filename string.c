@@ -20,15 +20,29 @@ Var* ff_atoi(vfuncptr func, Var* arg)
 		return NULL;
 	}
 
+	//NOTE(rswinkle): should probably just use strtoimax() + clamp_type
+	//for both to be most correct
+	int is_atoi = !strcmp(func->name, "atoi");
+
 	if (V_TYPE(v) == ID_STRING) {
-		return (newInt(strtod(V_STRING(v), NULL)));
+		if (is_atoi)
+			return newInt(atoi(V_STRING(v)));
+		else
+			return new_i64(atol(V_STRING(v)));
 	} else {
-		int l;
-		int* data = (int*)calloc(V_TEXT(v).Row, sizeof(int));
+		i32 l;
+		i32* data = NULL;
+		if (is_atoi)
+			data = calloc(V_TEXT(v).Row, sizeof(i32));
+		else
+			data = calloc(V_TEXT(v).Row, sizeof(i64));
 		for (l = 0; l < V_TEXT(v).Row; l++) {
-			data[l] = strtod(V_TEXT(v).text[l], NULL);
+			if (is_atoi)
+				data[l] = atoi(V_TEXT(v).text[l]);
+			else
+				data[l] = atol(V_TEXT(v).text[l]);
 		}
-		return newVal(BSQ, 1, l, 1, DV_INT32, data);
+		return newVal(BSQ, 1, l, 1, (is_atoi ? DV_INT32 : DV_INT64), data);
 	}
 }
 
@@ -52,15 +66,18 @@ Var* ff_atof(vfuncptr func, Var* arg)
 		return NULL;
 	}
 
+	// NOTE(rswinkle): You know there is no atod() in C. atof() returns a double.
+	// Also now that we're using C99 so we could use strtof() for float conversion
+	// if we really wanted, meh
 	if (V_TYPE(v) == ID_STRING) {
 		if (!strcmp(func->name, "atof")) {
 			s          = newVal(BSQ, 1, 1, 1, DV_FLOAT, NULL);
 			V_DATA(s)  = (float*)calloc(1, sizeof(float));
-			V_FLOAT(s) = (float)strtod(V_STRING(v), NULL);
+			V_FLOAT(s) = atof(V_STRING(v));
 		} else if (!strcmp(func->name, "atod")) {
 			s           = newVal(BSQ, 1, 1, 1, DV_DOUBLE, NULL);
 			V_DATA(s)   = (double*)calloc(1, sizeof(double));
-			V_DOUBLE(s) = (double)strtod(V_STRING(v), NULL);
+			V_DOUBLE(s) = atof(V_STRING(v));
 		}
 	} else {
 		int line;
@@ -69,14 +86,14 @@ Var* ff_atof(vfuncptr func, Var* arg)
 			float* data = (float*)calloc(nlines, sizeof(float));
 			s           = newVal(BSQ, 1, nlines, 1, DV_FLOAT, NULL);
 			for (line = 0; line < nlines; line++) {
-				data[line] = strtod(V_TEXT(v).text[line], NULL);
+				data[line] = atof(V_TEXT(v).text[line]);
 			}
 			V_DATA(s) = data;
 		} else if (!strcmp(func->name, "atod")) {
 			double* data = (double*)calloc(nlines, sizeof(double));
 			s            = newVal(BSQ, 1, nlines, 1, DV_DOUBLE, NULL);
 			for (line = 0; line < nlines; line++) {
-				data[line] = strtod(V_TEXT(v).text[line], NULL);
+				data[line] = atof(V_TEXT(v).text[line]);
 			}
 			V_DATA(s) = data;
 		}
