@@ -3,6 +3,12 @@
 
 extern Var* iom_iheader2var(struct iom_iheader* h);
 
+// TODO(rswinkle): Add support for new types, which since I don't want to 
+// bother upgrading the types of iomedley would require decoupling this from
+// iomedley.  Honestly, it's not hard to read a block of data we don't need
+// all the extra stuff in iom_read_qube_data
+
+
 Var* ff_raw(vfuncptr func, Var* arg)
 {
 	char *filename = NULL, *fname;

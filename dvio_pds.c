@@ -1755,7 +1755,7 @@ static int rfQube(const dataKey* objSize, Var* vQube, int load_suffix_data)
 		return 0;
 	}
 
-	add_struct(vQube, fix_name("DATA"), data);
+	add_struct(vQube, "data", data);
 
 	if (load_suffix_data) {
 		suffix_data = dv_LoadISISSuffixesFromPDS_New(fp, fileName, objSize->dptr, objSize->objDesc);
@@ -1767,12 +1767,15 @@ static int rfQube(const dataKey* objSize, Var* vQube, int load_suffix_data)
 		/* create a suffix part only when there are suffixes, i.e.
 		   avoid blank suffix structure */
 		if (get_struct_count(suffix_data) > 0) {
-			add_struct(vQube, fix_name("SUFFIX_DATA"), suffix_data);
+			add_struct(vQube, "suffix_data", suffix_data);
 		} else {
 			mem_claim(suffix_data);
 			free_struct(suffix_data);
 			/* NOTE: if one does not do mem_claim and free_struct
 			   the garbage collector will take care of it */
+
+			// NOTE(rswinkle): huh?  *will*?  or *will not*?
+			// what garbage collector?
 		}
 	}
 
@@ -1830,7 +1833,7 @@ static int rfTable(dataKey* objSize, Var* ob, LABEL* label)
 
 	/*Initialize a set of buffers to read in the data */
 	bufs   = (char**)calloc(num_items, sizeof(char*));
-	tmpbuf = (char*)calloc(label->reclen, sizeof(char));
+	tmpbuf = (char*)calloc(label->reclen, 1);
 	size   = (int*)calloc(num_items, sizeof(int));
 	for (j = 0; j < num_items; j++) {
 		size[j] = f[j]->dimension ? f[j]->size * f[j]->dimension : f[j]->size;
@@ -1839,6 +1842,9 @@ static int rfTable(dataKey* objSize, Var* ob, LABEL* label)
 
 	Offset = objSize->dptr;
 
+	// TODO(rswinkle): Why are we using open/read instead of fopen/fread?
+	// and while we're at it why are we reading into an allocated buffer just to allocate
+	// another and copy it when creating the davinci arrays?
 #if defined(__CYGWIN__) || defined(__MINGW32__)
 	fd = open(fileName, O_RDONLY | O_BINARY, 0);
 #else
@@ -1874,7 +1880,8 @@ static int rfTable(dataKey* objSize, Var* ob, LABEL* label)
 	if (rc) {
 		/*Set each field Var's data and parameter information */
 		Set_Col_Var(&data, f, label, size, bufs);
-		add_struct(ob, fix_name("DATA"), data);
+
+		add_struct(ob, "data", data);
 	}
 
 	free(tmpbuf);
@@ -2026,7 +2033,6 @@ static void Set_Col_Var(Var** Data, FIELD** f, LABEL* label, int* size, char** B
 			v = newVal(BSQ, dim, label->nrows, 1, DV_DOUBLE, data);
 		} else {
 
-			//TODO(rswinkle): add new integer types
 			switch (f[j]->eformat) {
 			case CHARACTER:
 				text = (char**)calloc(label->nrows, sizeof(char*));
@@ -2041,51 +2047,47 @@ static void Set_Col_Var(Var** Data, FIELD** f, LABEL* label, int* size, char** B
 			case MSB_INTEGER:
 			case LSB_INTEGER:
 				switch (f[j]->size) {
+				case 8:
+					data = malloc(size[j] * label->nrows);
+					memcpy(data, Bufs[j], size[j] * label->nrows);
+					v = newVal(BSQ, dim, label->nrows, 1, DV_INT64, data);
+					break;
 				case 4:
-					data = calloc(size[j] * label->nrows, sizeof(char));
+					data = malloc(size[j] * label->nrows);
 					memcpy(data, Bufs[j], size[j] * label->nrows);
 					v = newVal(BSQ, dim, label->nrows, 1, DV_INT32, data);
 					break;
 				case 2:
-					data = calloc(size[j] * label->nrows, sizeof(char));
+					data = malloc(size[j] * label->nrows);
 					memcpy(data, Bufs[j], size[j] * label->nrows);
 					v = newVal(BSQ, dim, label->nrows, 1, DV_INT16, data);
 					break;
 				case 1:
-					// davinci DV_UINT8 type is unsigned char
-					data =
-					    calloc(size[j] * 2 * label->nrows, sizeof(char)); // upscale the data type
-					for (k = 0; k < nitems; k++) {
-						*(short*)(data + k * sizeof(short)) =
-						    (short)*(unsigned char*)(Bufs[j] + k * sizeof(char));
-					}
-					v = newVal(BSQ, dim, label->nrows, 1, DV_INT16, data);
+					data = malloc(size[j] * label->nrows);
+					memcpy(data, Bufs[j], size[j] * label->nrows);
+					v = newVal(BSQ, dim, label->nrows, 1, DV_INT8, data);
 				}
 				break;
 
 			case MSB_UNSIGNED_INTEGER:
 			case LSB_UNSIGNED_INTEGER:
 				switch (f[j]->size) {
+				case 8:
+					data = malloc(size[j] * label->nrows);
+					memcpy(data, Bufs[j], size[j] * label->nrows);
+					v = newVal(BSQ, dim, label->nrows, 1, DV_UINT64, data);
+					break;
 				case 4:
-					data =
-					    calloc(size[j] * 2 * label->nrows, sizeof(char)); // upscale the data type
-					for (k = 0; k < nitems; k++) {
-						*(double*)(data + k * sizeof(double)) =
-						    (double)*(unsigned int*)(Bufs[j] + k * sizeof(int));
-					}
-					v = newVal(BSQ, dim, label->nrows, 1, DV_DOUBLE, data);
+					data = malloc(size[j] * label->nrows);
+					memcpy(data, Bufs[j], size[j] * label->nrows);
+					v = newVal(BSQ, dim, label->nrows, 1, DV_UINT32, data);
 					break;
 				case 2:
-					data =
-					    calloc(size[j] * 2 * label->nrows, sizeof(char)); // upscale the data type
-					for (k = 0; k < nitems; k++) {
-						*(int*)(data + k * sizeof(int)) =
-						    (int)*(unsigned short*)(Bufs[j] + k * sizeof(short));
-					}
-					v = newVal(BSQ, dim, label->nrows, 1, DV_INT32, data);
+					data = malloc(size[j] * label->nrows);
+					memcpy(data, Bufs[j], size[j] * label->nrows);
+					v = newVal(BSQ, dim, label->nrows, 1, DV_UINT16, data);
 					break;
 				case 1:
-					// davinci DV_UINT8 type is unsigned char
 					data = calloc(size[j] * label->nrows, sizeof(char));
 					memcpy(data, Bufs[j], size[j] * label->nrows);
 					v = newVal(BSQ, dim, label->nrows, 1, DV_UINT8, data);
@@ -2103,6 +2105,8 @@ static void Set_Col_Var(Var** Data, FIELD** f, LABEL* label, int* size, char** B
 				}
 				break;
 
+			// NOTE(rswinkle): What's the actual range of this format in a PDS file?
+			// Should it be int64?
 			case ASCII_INTEGER:
 				data = calloc(sizeof(int) * label->nrows, sizeof(char));
 				for (i = 0; i < (label->nrows * dim); i++) {
@@ -2129,6 +2133,7 @@ static void Set_Col_Var(Var** Data, FIELD** f, LABEL* label, int* size, char** B
 				v = newVal(BSQ, dim, label->nrows, 1, DV_DOUBLE, data);
 				break;
 
+			// NOTE(rswinkle): Should this be unsigned?  or int64?
 			case BYTE_OFFSET:
 				data = calloc(size[j] * label->nrows, sizeof(char));
 				memcpy(data, Bufs[j], size[j] * label->nrows);
@@ -2172,8 +2177,13 @@ static int rfImage(dataKey* objSize, Var* ob)
 	}
 
 	data = dv_LoadImage_New(fp, fileName, objSize->dptr, objSize->objDesc);
-	if (data != NULL) {
-		// add_struct(ob, fix_name("DATA"), data); // drd this is what was here
+	if (data) {
+		// NOTE(rswinkle): something like the following line was used everywhere
+		// you see an add_struct with "data" and also with "suffix_data".  There's 
+		// no reason to call fix_name on a known string.  Wasted work and memory leaks
+		// just to lowercase something you could put there yourself?  What was the point?
+		// add_struct(ob, fix_name("DATA"), data);
+
 		add_struct(ob, "data", data);
 		rc = 1;
 	}
@@ -2204,7 +2214,7 @@ static int rfHistogram(dataKey* objSize, Var* ob)
 
 	data = dv_LoadHistogram_New(fp, fileName, objSize->dptr, objSize->objDesc);
 	if (data != NULL) {
-		add_struct(ob, fix_name("DATA"), data);
+		add_struct(ob, "data", data);
 		rc = 1;
 	}
 
@@ -2345,7 +2355,7 @@ static int rfHistory(dataKey* objSize, Var* ob)
 	top = OdlParseLabelString(history, NULL, ODL_EXPAND_STRUCTURE, VERBOSE == 0);
 	traverseObj(top, data, NULL, 0, top, data);
 
-	if (get_struct_count(data)) add_struct(ob, fix_name("DATA"), data);
+	if (get_struct_count(data)) add_struct(ob, "data", data);
 
 	return 1;
 }
@@ -2362,6 +2372,9 @@ static int GetInt(OBJDESC* ob, char* key, int* val)
 }
 
 // remove the pds header from a file
+//
+// NOTE(rswinkle): This is not documented anywhere, wiki or dv.gih and not
+// used in the library.
 Var* ff_pdshead(vfuncptr func, Var* arg)
 {
 	OBJDESC* ob;
@@ -2369,18 +2382,16 @@ Var* ff_pdshead(vfuncptr func, Var* arg)
 	char buf[8192];
 	char *fname = NULL, *outfname = NULL;
 	int fd = -1, ofd = -1;
-	int convert_short = 0;
 	int data          = 0;
 	int fdata         = 0;
 	char t;
 
-	Alist alist[6];
+	Alist alist[5];
 	alist[0]      = make_alist("fname", ID_STRING, NULL, &fname);
 	alist[1]      = make_alist("outfname", ID_STRING, NULL, &outfname);
-	alist[2]      = make_alist("convert_short", DV_INT32, NULL, &convert_short);
-	alist[3]      = make_alist("data", DV_INT32, NULL, &data);
-	alist[4]      = make_alist("fdata", DV_INT32, NULL, &fdata);
-	alist[5].name = NULL;
+	alist[2]      = make_alist("data", DV_INT32, NULL, &data);
+	alist[3]      = make_alist("fdata", DV_INT32, NULL, &fdata);
+	alist[4].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return (NULL);
 

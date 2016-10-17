@@ -1,6 +1,11 @@
 #include "tools.h"
 #include <stdlib.h>
 
+
+
+// TODO(rswinkle): Why do we have both LIST and Darray?  replace both with Cvector
+// though LIST looks better than Darray.  QUEUE isn't even used anywhere in davinci
+
 /**
  **
  ** list - a dynamic array of pointers

@@ -75,7 +75,8 @@ char* rtrim(char* s, const char* trim_chars)
 	return s;
 }
 
-// TODO(rswinkle) this leaks everywhere it's used, can we not modify in place?
+// TODO(rswinkle) this leaks almost everywhere it's used because people overwrite the original
+// value. Can we not modify in place?
 // my version is in dvio_hdf.c:make_valid_identifier()
 char* fix_name(const char* input_name)
 {
@@ -95,6 +96,7 @@ char* fix_name(const char* input_name)
 
 	len = strlen(name);
 	if (len < 1) {
+		free(name);
 		name = (char*)calloc(strlen(invalid_pfx) + 12, sizeof(char));
 		sprintf(name, "%s_%d", invalid_pfx, ++invalid_id);
 		return name;
