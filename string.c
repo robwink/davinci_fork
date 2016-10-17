@@ -21,7 +21,11 @@ Var* ff_atoi(vfuncptr func, Var* arg)
 	}
 
 	//NOTE(rswinkle): should probably just use strtoimax() + clamp_type
-	//for both to be most correct
+	//for both to be most correct but on the other hand shouldn't the
+	//behavior match the function name?
+	//
+	//Maybe we should add a strtod or strtoimax anyway so the user could
+	//convert strings with a different base to ints
 	int is_atoi = !strcmp(func->name, "atoi");
 
 	if (V_TYPE(v) == ID_STRING) {

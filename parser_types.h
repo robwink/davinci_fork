@@ -244,6 +244,22 @@ enum {
 //
 // and similar checks work
 //
+// If we wanted it make it easy to do simple C style type promotion
+// for operations between types we'd arange them like this
+//
+// DV_INT8,
+// DV_UINT8,
+// DV_INT16,
+// DV_UINT16,
+// ...
+// DV_FLOAT,
+// DV_DOUBLE
+//
+// but that'd require a lot more changes and make it much
+// harder to quickly determine signedness
+//
+// see misc.c::combine_formats()
+//
 enum {
 	DV_UINT8 = 1,
 	DV_UINT16,

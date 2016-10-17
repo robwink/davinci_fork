@@ -17,7 +17,7 @@
                        && logical AND
 
 
- All the mathematical operators except can take any two VAL types, and
+ All the mathematical operators take any two VAL types, and
  will cast up to the larger type.
 
  All the relational operators return a value of 0 or 1.  If used on arrays,
@@ -31,8 +31,8 @@
 ?concatenation
 
  The // operator concatenates (appends) two values together along their
- X axis.  It is shorthand for cat(v1, v2, x), and therefore has all
- the limitations of the cat() function.
+ X axis.  It is shorthand for cat(v1, v2, x), and therefore has the
+ behavior of the cat() function.
 
  Example:
     This example creates a 3x1x1 array from the numbers 1, 2 and 3:
@@ -524,16 +524,29 @@
 
 ?functions atoi()
 ?atoi()
- atoi() - Convert a string to INT
+ atoi() - Convert a string to INT32
 
  atoi(STRING | TEXT)
 
-    The atoi function converts the specified string to an INT value.
+    The atoi function converts the specified string to an INT32 value.
     If the input is a TEXT array, then each line of the TEXT array is
     converted and an array of 1xNx1 values is returned.
 
  See Also:
-    atof()
+    atol(), atof(), atod()
+
+?functions atol()
+?atol()
+ atol() - Convert a string to INT64
+
+ atol(STRING | TEXT)
+
+    The atol function converts the specified string to an INT64 value.
+    If the input is a TEXT array, then each line of the TEXT array is
+    converted and an array of 1xNx1 values is returned.
+
+ See Also:
+    atoi(), atof(), atod()
 
 ?functions atof()
 ?atof()
@@ -546,7 +559,7 @@
     converted and an array of 1xNx1 values is returned.
 
  See Also:
-    atoi(), atod()
+    atoi(), atol(), atod()
 
 ?functions atod()
 ?atod()
@@ -559,7 +572,7 @@
     converted and an array of 1xNx1 values is returned.
 
  See also:
-    atof(), atoi()
+    atof(), atoi(), atol()
 
 ?functions basename()
 ?basename()
@@ -784,6 +797,24 @@
  pow(x,y)
 
  Computes x raised to the power y.
+
+?functions Math isnan()
+?isnan()
+ isnan() - NaN test
+
+ isnan(VAL)
+
+    Returns 1 if VAL is NaN, 0 otherwise.  If used on an array returns
+    an array of 0's and 1's of the same size.
+
+?functions Math isinf()
+?isinf()
+ isinf() - infinity test
+
+ isinf(VAL)
+
+    Returns 1 if VAL is inf (positive or negative), 0 otherwise. If used
+    on an array returns an array of 0's and 1's of the same size.
 
 ?functions help()
 ?help()

@@ -2427,21 +2427,26 @@ Var* ff_isnan(vfuncptr func, Var* arg)
 		return NULL;
 	}
 
+	/*
 	if (V_FORMAT(v) != DV_FLOAT && V_FORMAT(v) != DV_DOUBLE) {
 		parse_error("%s: format must be float or double", func->name);
 		return NULL;
 	}
+	*/
 
 	float* fdata = V_DATA(v);
 	double* ddata = V_DATA(v);
 
-
+	//NOTE(rswinkle): C standard only says it returns a non-zero integral value
+	//if it's nan, hence the != 0 to make it 1/0
 	data = calloc(1, V_DSIZE(v));
 	for (size_t i=0; i<V_DSIZE(v); ++i) {
 		if (V_FORMAT(v) == DV_FLOAT)
-			data[i] = isnan(fdata[i]);
+			data[i] = (isnan(fdata[i]) != 0);
+		else if (V_FORMAT(v) == DV_DOUBLE)
+			data[i] = (isnan(ddata[i]) != 0);
 		else
-			data[i] = isnan(ddata[i]);
+			data[i] = 0;
 	}
 
 	v = newVal(V_ORG(v), V_SIZE(v)[0], V_SIZE(v)[1], V_SIZE(v)[2], DV_UINT8, data);
@@ -2480,13 +2485,16 @@ Var* ff_isinf(vfuncptr func, Var* arg)
 	float* fdata = V_DATA(v);
 	double* ddata = V_DATA(v);
 
-
+	//NOTE(rswinkle): C standard only says it returns a non-zero integral value
+	//if it's inf, hence the != 0 to make it 1/0
+	//
+	//man page says glib > 2.01 return +/- 1 for +/-inf.
 	data = calloc(1, V_DSIZE(v));
 	for (size_t i=0; i<V_DSIZE(v); ++i) {
 		if (V_FORMAT(v) == DV_FLOAT)
-			data[i] = isinf(fdata[i]);
+			data[i] = (isinf(fdata[i]) != 0);
 		else
-			data[i] = isinf(ddata[i]);
+			data[i] = (isinf(ddata[i]) != 0);
 	}
 
 	v = newVal(V_ORG(v), V_SIZE(v)[0], V_SIZE(v)[1], V_SIZE(v)[2], DV_UINT8, data);

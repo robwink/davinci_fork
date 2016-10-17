@@ -177,8 +177,11 @@ Var* pp_math(Var* a, int op, Var* b)
 	**/
 
 	// TODO(rswinkle): This is wrong now.  For example uint64 + int8 should not
-	// return an int8.  Maybe reuse code from ff.c::do_cat()
-	in_format = out_format = max(V_FORMAT(a), V_FORMAT(b));
+	// return an int8.
+	//in_format = out_format = max(V_FORMAT(a), V_FORMAT(b));
+
+	// See misc.c, also used for cat()
+	in_format = out_format = combine_formats(V_FORMAT(a), V_FORMAT(b));
 
 	if (is_relop(op)) {
 		out_format = DV_UINT8;
@@ -257,7 +260,7 @@ Var* pp_math(Var* a, int op, Var* b)
 		** For each output element (0-size), de-compute relative position using
 		** order, and re-compute offset to that element in the other var.
 		**/
-		switch (in_format) {
+		switch (out_format) {
 		case DV_UINT8: DO_MATH_LOOP(i64, u8, extract_int, clamp_byte); break;
 		case DV_UINT16: DO_MATH_LOOP(i64, u16, extract_int, clamp_u16); break;
 		case DV_UINT32: DO_MATH_LOOP(i64, u32, extract_int, clamp_u32); break;

@@ -800,8 +800,29 @@ int dv_str_to_format(const char* str)
 }
 
 
-// Return smallest format that can contain the values
+// NOTE(rswinkle):
+//
+// Return smallest format that can contain the range
 // of the formats of both v1 and v2
+//
+// Currently when combining DV_UINT64 with any signed int type
+// I promote to double even though double doesn't have sufficient
+// precision to represent u64 (or i64 for that matter).
+//
+// double has 15 decimal places of precision and i64 goes to 
+// 9223372036854775807
+//
+// u64 goes to twice that so add one decimal place
+//
+// The alternative when combining u64 with any signed int type is to
+// be like C and just convert the other to u64 and risk losing
+// any negatives.  Of course that would be inconsistent with
+// what we do for combining any smaller unsigned types with a
+// signed type where we just go to the signed type 1 larger
+// than the unsigned for sufficient range.
+//
+// This decision affects all the mathematical and relational operators + cat()
+
 int combine_var_formats(Var* v1, Var* v2)
 {
 	return combine_formats(V_FORMAT(v1), V_FORMAT(v2));
