@@ -14,10 +14,21 @@ int fixup(int i, Range* in, Range* out, size_t maxsize)
 	if (out->hi[i] == 0) out->hi[i]     = maxsize;
 	if (out->step[i] == 0) out->step[i] = 1;
 
+	/*
+	 * Ranges are u64 so they can no longer be negative.  Compiler warns about tests
+	 * that can never be true.
+	 *
+	 * Leaving this here in case someone changes them back to signed.
 	if (out->lo[i] < 0 || out->hi[i] < 0 || out->step[i] < 0 || out->lo[i] > out->hi[i] ||
 	    out->hi[i] > maxsize) {
 		return (0);
 	}
+	*/
+
+	if (out->lo[i] > out->hi[i] || out->hi[i] > maxsize) {
+		return 0;
+	}
+
 	out->lo[i] = out->lo[i] - 1;
 	out->hi[i] = out->hi[i] - 1;
 

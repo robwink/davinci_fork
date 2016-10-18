@@ -550,20 +550,32 @@ Var* pp_mk_range(Var* r1, Var* r2)
 	r2 = eval(r2);
 
 	if (r1) {
+		/*
+		 * NOTE(rswinkle): We can put these checks back in, if
+		 * we want, if we change the format promotion used in
+		 * pp_math to not promote uint64 + signed int type
+		 * to double.  As it is, this is a scripting language
+		 * and does it hurt to allow floating point values
+		 * which are automatically truncated converting to u64?
+		 *
+		 *
 		format = V_FORMAT(r1);
 		if (format < DV_UINT8 || format > DV_INT64) {
 			parse_error("(r1) Invalid range value.");
 			return (NULL);
 		}
+		*/
 		v1 = extract_u64(r1, 0);
 	}
 
 	if (r2) {
+		/*
 		format = V_FORMAT(r2);
 		if (format < DV_UINT8 || format > DV_INT64) {
 			parse_error("(r2) Invalid range value");
 			return (NULL);
 		}
+		*/
 		v2 = extract_u64(r2, 0);
 	}
 
@@ -598,11 +610,13 @@ Var* pp_mk_rstep(Var* r1, Var* r2)
 	}
 
 	if (r2) {
+		/*
 		format = V_FORMAT(r2);
 		if (format < DV_UINT8 || format > DV_INT64) {
 			parse_error("(r2) Invalid range value");
 			return (NULL);
 		}
+		*/
 		v1 = extract_u64(r2, 0);
 	}
 
