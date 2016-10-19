@@ -2114,9 +2114,10 @@ TB_STRING_LIST* OdlGetAllKwdValues(KEYWORD* keyword)
 				for (val_start = (char*)OdlValueStart(keyword->value); *val_start != '\0';
 				     val_start = (char*)OdlValueStart(val_stop + 1)) {
 					val_stop        = (char*)OdlValueEnd(val_start);
-					save_ch         = *(val_stop + 1);
-					*(val_stop + 1) = '\0';
-					AddStringToList(val_start, value_list) * (val_stop + 1) = save_ch;
+					save_ch         = val_stop[1];
+					val_stop[1]     = '\0';
+					AddStringToList(val_start, value_list)
+					val_stop[1] = save_ch;
 				}
 			} else {
 				/*
@@ -2151,7 +2152,13 @@ int OdlGetAllKwdValuesArray(KEYWORD* keyword, char*** array)
 	value_list = OdlGetAllKwdValues(keyword);
 
 	if (value_list) {
-		return (ListToArray(value_list, array));
+		// NOTE(rswinkle): all that crap above creating a stupid macro based list just to
+		// turn it into an array?  Why not just create a vector/array in the first place?
+		//
+		// and then whoever originally wrote this forgot to free said list.
+		int ret = ListToArray(value_list, array);
+		//RemoveStringList(value_list);
+		return ret;
 	} else {
 		return (0);
 	}
@@ -5431,18 +5438,20 @@ static char* uppercase(char* s)
 {
 	char* p;
 	for (p = s; p && *p; p++) {
-		if (islower(*p)) *p = *p - 'a' + 'A';
+		toupper(*p);
 	}
 	return (s);
 }
+
 static char* lowercase(char* s)
 {
 	char* p;
 	for (p = s; p && *p; p++) {
-		if (isupper(*p)) *p = *p - 'A' + 'a';
+		tolower(*p);
 	}
 	return (s);
 }
+
 char* find_file(char* fname)
 {
 	if (!access(fname, R_OK)) return (fname);

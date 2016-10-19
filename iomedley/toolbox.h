@@ -96,10 +96,30 @@
                     strcat(zstrz, znewz); \
              }}
 
+/*
 #define StripLeading(zstrz, zstripz) \
             {char *zcz; \
              for (zcz=zstrz; ((*zcz != '\0') && (*zcz == zstripz)); ++zcz) ; \
              strcpy(zstrz, zcz);}
+
+ * StripLeading above is a bug.  strcpy is undefined behavior for overlaping strings.
+#define StripLeading(zstrz, zstripz) \
+            {char *zcz; int i; \
+             for (zcz=zstrz; ((*zcz != '\0') && (*zcz == zstripz)); ++zcz) ; \
+             if (zcz != zstrz) { \
+                 for (i=0; *zcz != '\0'; zstrz[i++] = *zcz++); \
+                 zstrz[i] = 0; \
+             } \
+            }
+
+*/
+
+#define StripLeading(zstrz, zstripz) \
+            {char *zcz; \
+             for (zcz=zstrz; ((*zcz != '\0') && (*zcz == zstripz)); ++zcz) ; \
+             memmove(zstrz, zcz, strlen(zcz)+1);}
+
+
 
 #define StripTrailing(zstrz, zstripz) \
             {char *zcz; \
@@ -152,6 +172,14 @@
 
 typedef unsigned short MASK;
 
+// NOTE(rswinkle): This is absolutely horrible.  cvector_str would make
+// this so much clearer.  As it is I'm not sure it's worth trying to fix
+// the memory leaks because the terrible macros make it hard to debug.
+// and what's with the arg names? why zblahz for everything?
+// 
+// This whole file and io_lablib3 are terrible.
+//
+
 typedef struct tb_string_list
 {
     char *text;
@@ -174,13 +202,13 @@ typedef struct tb_string_list
         { \
             if (zlistz != NULL) RemoveStringList(zlistz) \
             zlistz = (TB_STRING_LIST *) malloc(sizeof(TB_STRING_LIST)); \
-            zlistz->next = NULL; \
             if (zlistz == NULL) SayGoodbye() \
+            zlistz->next = NULL; \
             if (zstrz == NULL) \
                 NewString(zlistz->text, 1) \
             else \
                 CopyString(zlistz->text, zstrz) \
-        }                                               
+        }
 
 #define AddStringToList(zstrz, zlistz) \
         { \

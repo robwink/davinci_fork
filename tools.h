@@ -6,6 +6,8 @@
 /**
  **
  **/
+
+/*
 struct tag_queue {
 	void* data;
 	struct tag_queue* next;
@@ -20,6 +22,8 @@ void add_queue_tail(QUEUE** queue, void* data);
 void remove_from_queue(QUEUE** queue, void* data);
 QUEUE* next_in_queue(QUEUE* queue);
 void* queue_data(QUEUE* queue);
+
+*/
 
 typedef struct _list LIST;
 typedef void* (*vfptr)(LIST*);

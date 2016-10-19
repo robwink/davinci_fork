@@ -167,6 +167,7 @@ void list_merge(LIST* l1, LIST* l2)
 /*                                                                           */
 /*****************************************************************************/
 
+/*
 QUEUE* new_queue(void* data)
 {
 	QUEUE* New = calloc(1, sizeof(QUEUE));
@@ -222,3 +223,5 @@ void* queue_data(QUEUE* l)
 {
 	return (l->data);
 }
+
+*/

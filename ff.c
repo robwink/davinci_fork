@@ -1845,8 +1845,8 @@ int compare_vars(Var* a, Var* b)
 			return 0;
 		}
 
-		//TODO(rswinkle) check C spec integer conversions/promotions
-		format = max(V_FORMAT(a), V_FORMAT(b));
+		//format = max(V_FORMAT(a), V_FORMAT(b));
+		format = combine_formats(V_FORMAT(a), V_FORMAT(b));
 
 		for (i = 0; i < V_DSIZE(a); i++) {
 			switch (format) {
@@ -1859,14 +1859,17 @@ int compare_vars(Var* a, Var* b)
 			case DV_INT32:
 			case DV_INT64:
 				if (extract_i64(a, i) != extract_i64(b, rpos(i, a, b))) return 0;
+				break;
 
 			case DV_UINT64:
 				if (extract_u64(a, i) != extract_u64(b, rpos(i, a, b))) return 0;
-
+				break;
 			case DV_FLOAT:
 				if (extract_float(a, i) != extract_float(b, rpos(i, a, b))) return 0;
+				break;
 			case DV_DOUBLE:
 				if (extract_double(a, i) != extract_double(b, rpos(i, a, b))) return 0;
+				break;
 			}
 		}
 		return 1;
