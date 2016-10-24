@@ -1,4 +1,3 @@
-#include "cvector.h"
 #include "dvio.h"
 #include "dvio_pds4.h"
 #include "endian_norm.h"
@@ -162,7 +161,6 @@ static int genObjClassCmpr(const void* v1, const void* v2)
 
 static int make_int(char* number)
 {
-	char* base;
 	char* radix;
 	int r_flag = 0;
 	int len;
@@ -193,9 +191,7 @@ static int make_int(char* number)
 	while (i < len) {
 		if (number[i] == '#') { /*Other one */
 			number[i] = '\0';
-			base      = strdup((number + offset));
-			int ret = strtol(base, NULL, atoi(radix));
-			free(base);
+			int ret = strtol(&number[offset], NULL, atoi(radix));
 			free(radix);
 			return ret;
 		}
@@ -302,9 +298,8 @@ static Var* do_key(KEYWORD* key)
 			V_STRING(o)    = (char*)calloc(1, sizeof(char));
 			V_STRING(o)[0] = '\0';
 		}
-
 		//free array
-		for (int j = 0; j<num; ++j) {
+		for (int j=0; j<num; ++j) {
 			free(stuff[j]);
 		}
 		free(stuff);
@@ -402,8 +397,9 @@ static KEYWORD* traverseGroup(KEYWORD* kw, Var* v)
 				free(oldGroupName);
 			}
 			add_struct(v, groupName, sub);
+			free(groupName);
 		} else {
-			//fix_name is stupid, should be done in place
+			//fix_name is stupid, should be done in place, add_struct strdups key
 			char* tmp = fix_name(kwName);
 			add_struct(v, tmp, do_key(kw));
 			free(tmp);
@@ -575,14 +571,18 @@ static Var* traverseObj(OBJDESC* top, Var* v, dataKey objSizeMap[], int* nObj, O
 		kwName = OdlGetKwdName(kw);
 
 		if (kw->is_a_pointer) {
+			//kwName = fix_name(mod_name_if_necessary(kwName));
+			//add_struct(v, kwName, decodePtr(kw));
+			//
 			char* tmp = mod_name_if_necessary(kwName);
 			char* tmp2 = fix_name(tmp);
 			add_struct(v, tmp2, decodePtr(kw));
 			free(tmp2);
-			//Need free tmp if tmp != kwName
+			//Need to free tmp if tmp != kwName
 			if (tmp != kwName) {
 				free(tmp);
 			}
+
 		} else if (strcasecmp(kwName, KW_GROUP) == 0) {
 			groupName = fix_name(OdlGetKwdValue(kw));
 
@@ -627,7 +627,7 @@ static Var* traverseObj(OBJDESC* top, Var* v, dataKey objSizeMap[], int* nObj, O
 		// NOTE(rswinkle): old pointer is still stored elsewhere and freed elsewhere
 		// Honestly io_lablib3 + toolbox.h + dvio_pds.c is some of the worst, most convoluted memory
 		// management I've ever seen, and fix_name doesn't help.  Valgrind originally had
-		// 248 errors (of all kinds, not just leaks).  I've gotten it down to < 20.
+		// 248 errors (of all kinds, not just leaks).  I've gotten it down to 0.
 		objName = fix_name(objName);
 
 		if (find_struct(v, objName, &tmpVar) >= 0) {
@@ -637,11 +637,11 @@ static Var* traverseObj(OBJDESC* top, Var* v, dataKey objSizeMap[], int* nObj, O
 		}
 		add_struct(v, objName, sub);
 
-		if (bsearch(&genObjClass, handledObjTypes, nHandledObjTypes, sizeof(char*), genObjClassCmpr)) {
+		if (objSizeMap && bsearch(&genObjClass, handledObjTypes, nHandledObjTypes, sizeof(char*), genObjClassCmpr)) {
 			/* obj-class is one that we handle reading data for - add it to the list for data read
 			 */
 			objSizeMap[*nObj].Name = objName; /* holds objName - for readData  */
-			objSizeMap[*nObj].ObjClass = objClass; /* holds objClass - for resolvePointers */
+			objSizeMap[*nObj].ObjClass = fix_name(objClass); /* holds objClass - for resolvePointers */
 			objSizeMap[*nObj].size      = getObjSize(sub);
 			objSizeMap[*nObj].objDesc   = op;
 			objSizeMap[*nObj].Obj       = v;
@@ -1639,16 +1639,16 @@ static Var* do_loadPDS(vfuncptr func, char* filename, int data, int suffix_data)
 		return (NULL);
 	}
 
-	/**
-	*** What about compression?
-	**/
+	// What about compression?
 	if ((fp = fopen(fname, "rb")) != NULL) {
 		if (iom_is_compressed(fp)) {
 			/* fprintf(stderr, "is compressed\n");    FIX: remove */
 			fclose(fp);
+
 			char* tmp = iom_uncompress_with_name(fname);
 			free(fname);
 			fname = tmp;
+
 			fp    = fopen(fname, "rb");
 		}
 	}
@@ -1694,11 +1694,11 @@ static Var* do_loadPDS(vfuncptr func, char* filename, int data, int suffix_data)
 
 	for (i=0; i < nObj; ++i) {
 		free(objSize[i].Name);
+		free(objSize[i].ObjClass);
 		free(objSize[i].FileName);
 	}
 	free(fname);
 
-	// TODO Free space consumed by FileNames allocated within objSize array
 	OdlFreeTree(ob);
 
 	if (get_struct_count(v) == 0) {
@@ -1811,13 +1811,11 @@ static int rfQube(const dataKey* objSize, Var* vQube, int load_suffix_data)
 		if (get_struct_count(suffix_data) > 0) {
 			add_struct(vQube, "suffix_data", suffix_data);
 		} else {
+			// NOTE(rswinkle): because suffix_data is created (once you drill down) with
+			// mem_malloc, you could just let it get freed automatically when the scope is
+			// cleaned.  see scope.c
 			mem_claim(suffix_data);
-			free_struct(suffix_data);
-			/* NOTE: if one does not do mem_claim and free_struct
-			   the garbage collector will take care of it */
-
-			// NOTE(rswinkle): huh?  *will*?  or *will not*?
-			// what garbage collector?
+			free_var(suffix_data);
 		}
 	}
 
@@ -2284,14 +2282,14 @@ static char* history_parse_buffer(FILE* in)
 		strcpy((TheString + ptr), buf);
 		ptr += strlen(buf);
 
-		if (strncasecmp("END_", buf, 4)) {
+		if (!strncasecmp("END", buf, 3) && buf[3] != '_') {
 			break;
 		}
 	}
 
 	TheString = (char*)realloc(TheString, strlen(TheString)+1);
 
-	return (TheString);
+	return TheString;
 }
 
 /*
@@ -2308,6 +2306,7 @@ static char* history_remove_isis_indents(const char* history)
 	char* tgt_hist   = NULL;
 	char *line, **lines;
 	char* p;
+	LIST* lines_list;
 	regex_t indent_regex;
 	regmatch_t matches[1];
 	int i, n;
@@ -2319,30 +2318,21 @@ static char* history_remove_isis_indents(const char* history)
 		return NULL;
 	}
 
-	LIST* lines_list;
-	//cvector_str lines_list = { 0 };
-	//cvec_str(&lines_list, 0, 20);
-	
-	printf("in history_remove_isis_indents srt_hist_len = %d\n", src_hist_len);
-
 	lines_list = new_list();
 	for (p = src_hist; line = strtok(p, "\n"); p = NULL) {
-		//cvec_push_str(&lines_list, line);
 		list_add(lines_list, line);
 	}
 
 	n     = list_count(lines_list);
 	lines = (char**)list_data(lines_list);
 
-	//n = lines_list.size;
-	//lines = lines_list.a;
-
 	for (i = 0; i < n; i++) {
 		/* remove ISIS style vertical-bar indent-end marker */
 		rc = regexec(&indent_regex, lines[i], sizeof(matches) / sizeof(regmatch_t), matches, 0);
 		if (rc == 0) {
 			/* a match was found: get rid of indent */
-			// src and dest must not overlap for strcpy
+			//src and dst must not overlap for strcpy so have to use memmove
+			//strcpy(lines[i], &lines[i][matches[0].rm_eo]);
 			memmove(lines[i], &lines[i][matches[0].rm_eo], strlen(&lines[i][matches[0].rm_eo])+1);
 		}
 	}
@@ -2359,8 +2349,6 @@ static char* history_remove_isis_indents(const char* history)
 	}
 
 	list_free(lines_list);
-	//cvec_free_str(&lines_list);
-
 	free(src_hist);
 
 	return tgt_hist;
@@ -2407,6 +2395,7 @@ static int rfHistory(dataKey* objSize, Var* ob)
 
 	if (get_struct_count(data)) add_struct(ob, "data", data);
 
+	OdlFreeTree(top);
 	free(history);
 
 	return 1;

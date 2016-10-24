@@ -2114,10 +2114,15 @@ TB_STRING_LIST* OdlGetAllKwdValues(KEYWORD* keyword)
 				for (val_start = (char*)OdlValueStart(keyword->value); *val_start != '\0';
 				     val_start = (char*)OdlValueStart(val_stop + 1)) {
 					val_stop        = (char*)OdlValueEnd(val_start);
+
 					save_ch         = val_stop[1];
 					val_stop[1]     = '\0';
 					AddStringToList(val_start, value_list)
 					val_stop[1] = save_ch;
+
+//					save_ch         = *(val_stop + 1);
+//					*(val_stop + 1) = '\0';
+//					AddStringToList(val_start, value_list) * (val_stop + 1) = save_ch;
 				}
 			} else {
 				/*
@@ -2154,11 +2159,7 @@ int OdlGetAllKwdValuesArray(KEYWORD* keyword, char*** array)
 	if (value_list) {
 		// NOTE(rswinkle): all that crap above creating a stupid macro based list just to
 		// turn it into an array?  Why not just create a vector/array in the first place?
-		//
-		// and then whoever originally wrote this forgot to free said list.
-		int ret = ListToArray(value_list, array);
-		//RemoveStringList(value_list);
-		return ret;
+		return (ListToArray(value_list, array));
 	} else {
 		return (0);
 	}
@@ -3809,15 +3810,18 @@ OBJDESC* OdlParseFile(char* label_fname, FILE* label_fptr, char* message_fname, 
 	    "\n--------------------------------------------------------------------------\n\n");
 
 	/*  if we opened the label file in this routine then close it  */
-	if (label_fptr == NULL)
+	if (label_fptr == NULL) {
 		CloseMe(l_ptr)
+	}
 
-		    /*  if we opened the message file in this routine then close it  */
-		    if ((m_ptr != stdout) && (message_fptr == NULL)) CloseMe(m_ptr)
+	/*  if we opened the message file in this routine then close it  */
+	if ((m_ptr != stdout) && (message_fptr == NULL)) {
+		CloseMe(m_ptr)
+	}
 
-		        LemmeGo(text)
+	LemmeGo(text)
 
-		            return (root);
+	return (root);
 
 } /*  End routine:  OdlParseFile  */
 
@@ -5438,7 +5442,7 @@ static char* uppercase(char* s)
 {
 	char* p;
 	for (p = s; p && *p; p++) {
-		toupper(*p);
+		*p = toupper(*p);
 	}
 	return (s);
 }
@@ -5447,7 +5451,7 @@ static char* lowercase(char* s)
 {
 	char* p;
 	for (p = s; p && *p; p++) {
-		tolower(*p);
+		*p = tolower(*p);
 	}
 	return (s);
 }

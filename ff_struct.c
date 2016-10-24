@@ -463,8 +463,8 @@ int compare_struct(Var* a, Var* b)
 			get_struct_element(a, i, &name_a, &data_a);
 			get_struct_element(b, i, &name_b, &data_b);
 
-			if ((name_a && !name_b) || (name_b && !name_a)) return 0;
-			if (name_a && name_b && strcmp(name_a, name_b)) return 0;
+			if (!name_a || !name_b) return 0;
+			if (strcmp(name_a, name_b)) return 0;
 
 			if (compare_vars(data_a, data_b) == 0) return 0;
 		}
@@ -472,8 +472,10 @@ int compare_struct(Var* a, Var* b)
 		for (i = 0; i < count; i++) {
 			get_struct_element(a, i, &name_a, &data_a);
 			if ((pos = find_struct(b, name_a, &data_b)) >= 0) {
-				if (compare_vars(data_a, data_b) == 0)
+				if (compare_vars(data_a, data_b) == 0) {
+					printf("%s.%s != %s.%s\n", V_NAME(a), name_a, V_NAME(b), name_a);
 					return 0;
+				}
 			}
 		}
 	}
