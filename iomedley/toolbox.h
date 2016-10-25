@@ -173,10 +173,10 @@
 typedef unsigned short MASK;
 
 // NOTE(rswinkle): This is absolutely horrible.  cvector_str would make
-// this so much clearer.  As it is I'm not sure it's worth trying to fix
-// the memory leaks because the terrible macros make it hard to debug.
-// and what's with the arg names? why zblahz for everything?
-// 
+// this so much clearer.  Also what's with the arg names? why zblahz for
+// everything?  Macro arg names don't have to be unique to the surrounding code
+// just within body of the macro.
+//
 // This whole file and io_lablib3 are terrible.
 //
 

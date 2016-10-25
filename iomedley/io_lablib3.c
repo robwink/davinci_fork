@@ -2119,10 +2119,6 @@ TB_STRING_LIST* OdlGetAllKwdValues(KEYWORD* keyword)
 					val_stop[1]     = '\0';
 					AddStringToList(val_start, value_list)
 					val_stop[1] = save_ch;
-
-//					save_ch         = *(val_stop + 1);
-//					*(val_stop + 1) = '\0';
-//					AddStringToList(val_start, value_list) * (val_stop + 1) = save_ch;
 				}
 			} else {
 				/*

@@ -152,8 +152,10 @@ int dv_WriteIOM(Var* obj, const char* filename, const char* type, int force)
 	if (V_TYPE(obj) != ID_VAL) {
 		parse_error("error: object must be a value type (ie. an array, not a struct)\n");
 		return 0;
-	} else if (NBYTES(V_FORMAT(obj)) > interfaces[interface].maxbytes) {
-		parse_error("error: Data for %s file must be %d bit.\n", interfaces[interface].type,
+	}
+
+	if (NBYTES(V_FORMAT(obj)) > interfaces[interface].maxbytes) {
+		parse_error("error: Data for %s file must be <= %d bit.\n", interfaces[interface].type,
 		            interfaces[interface].maxbytes * 8);
 		return 0;
 	}

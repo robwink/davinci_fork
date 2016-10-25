@@ -4,7 +4,7 @@
 
 
 // TODO(rswinkle): Why do we have both LIST and Darray?  replace both with Cvector
-// though LIST looks better than Darray.  QUEUE isn't even used anywhere in davinci
+// though LIST looks better than Darray.
 
 /**
  **

@@ -2304,9 +2304,7 @@ static char* history_remove_isis_indents(const char* history)
 	char* src_hist   = strdup(history);
 	int src_hist_len = strlen(history);
 	char* tgt_hist   = NULL;
-	char *line, **lines;
-	char* p;
-	LIST* lines_list;
+	char *line, *p;
 	regex_t indent_regex;
 	regmatch_t matches[1];
 	int i, n;
@@ -2318,22 +2316,22 @@ static char* history_remove_isis_indents(const char* history)
 		return NULL;
 	}
 
-	lines_list = new_list();
+	cvector_str lines;
+	cvec_str(&lines, 0, 20);
 	for (p = src_hist; line = strtok(p, "\n"); p = NULL) {
-		list_add(lines_list, line);
+		cvec_push_str(&lines, line);
 	}
 
-	n     = list_count(lines_list);
-	lines = (char**)list_data(lines_list);
+	n = lines.size;
 
 	for (i = 0; i < n; i++) {
 		/* remove ISIS style vertical-bar indent-end marker */
-		rc = regexec(&indent_regex, lines[i], sizeof(matches) / sizeof(regmatch_t), matches, 0);
+		rc = regexec(&indent_regex, lines.a[i], sizeof(matches) / sizeof(regmatch_t), matches, 0);
 		if (rc == 0) {
 			/* a match was found: get rid of indent */
 			//src and dst must not overlap for strcpy so have to use memmove
 			//strcpy(lines[i], &lines[i][matches[0].rm_eo]);
-			memmove(lines[i], &lines[i][matches[0].rm_eo], strlen(&lines[i][matches[0].rm_eo])+1);
+			memmove(lines.a[i], &lines.a[i][matches[0].rm_eo], strlen(&lines.a[i][matches[0].rm_eo])+1);
 		}
 	}
 
@@ -2345,10 +2343,10 @@ static char* history_remove_isis_indents(const char* history)
 		if (i > 0) {
 			strcat(tgt_hist, "\n");
 		}
-		strcat(tgt_hist, lines[i]);
+		strcat(tgt_hist, lines.a[i]);
 	}
 
-	list_free(lines_list);
+	cvec_free_str(&lines);
 	free(src_hist);
 
 	return tgt_hist;
