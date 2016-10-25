@@ -505,6 +505,11 @@ Var* load_hdf5(hid_t parent, callback_data* cb_data)
 	// NOTE(rswinkle) I think this is overkill.  Picking a reasonable start size (4-8) is fine
 	H5Literate(parent, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, count_group, &count);
 
+	//Theoretically calling H5Literate something like this (and adjusted down below too) would
+	//preserve struct member ordering when loading in an hdf written by davinci.  Unfortunately
+	//it doesn't work at all, throws errors including "no creation order index to query"
+	//H5Literate(parent, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, count_group, &count);
+
 	if (count < 0) {
 		parse_error("Group count < 0");
 		return NULL;

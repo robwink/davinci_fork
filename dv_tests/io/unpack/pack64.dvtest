@@ -4,9 +4,11 @@
 
 a = unpack("U1U3U5U6U7U8u1u3u5u6u7u8x4I1I3I5I6I7I8i1i3i5i6i7i8", "test64bit.dat", 0)
 
-pack(a, "U1U4U8U8U8U8u1u4u8u8u8u8II4I8I8I8I8ii4i8i8i8i8", "test64bit_packed.dat")
+#pack(a, template="U1U4U8U8U8U8u1u4u8u8u8u8II4I8I8I8I8ii4i8i8i8i8", "test64bit_packed.dat")
+template = pack(a, "test64bit_packed.dat")
 
-b = unpack("U1U4U8U8U8U8u1u4u8u8u8u8II4I8I8I8I8ii4i8i8i8i8", "test64bit_packed.dat")
+#b = unpack("U1U4U8U8U8U8u1u4u8u8u8u8II4I8I8I8I8ii4i8i8i8i8", "test64bit_packed.dat")
+b = unpack(template, "test64bit_packed.dat")
 
 fremove("test64bit_packed.dat")
 

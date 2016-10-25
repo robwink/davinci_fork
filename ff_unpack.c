@@ -83,7 +83,7 @@ static int print_data(data* the_data, unpack_digest* input);
 
 static void clean_up(int, unpack_digest*, u8*, data*, FILE*);
 
-static int pack(data*, char*, char*, int, int, int);
+static int pack(Var* struct_to_pack, data* thedata, char** template_in, char* filename, int numData, int rows, int offset);
 static data* parse_struct(Var*, Var*, int*, int*);
 static data* format_data(data*, unpack_digest*);
 static int write_data(u8* buffer, data* the_data, unpack_digest* input, int row);
@@ -498,7 +498,12 @@ static unpack_digest* parse_template(char* template, column_attributes* input, V
 		}
 	}
 
-	for (i = 0; i < name_count; i++) names[i] = fix_name(names[i]);
+	char* tmp;
+	for (i = 0; i < name_count; i++) {
+		tmp = fix_name(names[i]);
+		free(names[i]);
+		names[i] = tmp;
+	}
 
 	while (template[0] != '\0') // loop through parsing template
 	{
@@ -1088,28 +1093,29 @@ static int upgrade_types(data* the_data, unpack_digest* input)
 Var* ff_pack(vfuncptr func, Var* arg)
 {
 	Var* toPack    = NULL; // Davinci structure to be packed
-	char* template = NULL; // template string indicating how toPack should be packed
+	char* template = NULL; // optional template string indicating how the data should be packed
 	char* filename = NULL; // name of file to pack struct into
+
+	//NOTE(rswinkle): What is the point of a skip parameter for pack()?  Seriously?
 	int skip       = 0;    // optional, file offset before begin writing. default: none
-	int count =
-	    -1; // optional, number of rows (i.e. Davinci records) to pack. default: negative = ALL
-	Var* column_names =
-	    NULL;      // optional, order in which columns (i.e. Davinci fields) should be packed
+
+	int count = -1;        // optional, number of rows (i.e. Davinci records) to pack. default: negative = ALL
+	Var* column_names = NULL;    // optional, order in which columns (i.e. Davinci fields) should be packed
 	int force = 0; // optional, force file overwrite. default: NO
 	int num_items, rows;
 
 	Alist alist[8];
 	alist[0]      = make_alist(ARG_STRUCT, ID_STRUCT, NULL, &toPack);
-	alist[1]      = make_alist(ARG_TEMPLATE, ID_STRING, NULL, &template);
-	alist[2]      = make_alist(ARG_FILENAME, ID_STRING, NULL, &filename);
-	alist[3]      = make_alist(ARG_SKIP, DV_INT32, NULL, &skip);
-	alist[4]      = make_alist(ARG_COUNT, DV_INT32, NULL, &count);
-	alist[5]      = make_alist(ARG_COL_NAMES, ID_UNK, NULL, &column_names);
-	alist[6]      = make_alist(ARG_FORCE, DV_INT32, NULL, &force);
+	alist[1]      = make_alist(ARG_FILENAME, ID_STRING, NULL, &filename);
+	alist[2]      = make_alist(ARG_COUNT, DV_INT32, NULL, &count);
+	alist[3]      = make_alist(ARG_COL_NAMES, ID_UNK, NULL, &column_names);
+	alist[4]      = make_alist(ARG_FORCE, DV_INT32, NULL, &force);
+	alist[5]      = make_alist(ARG_TEMPLATE, ID_STRING, NULL, &template);
+	alist[6]      = make_alist(ARG_SKIP, DV_INT32, NULL, &skip);
 	alist[7].name = NULL;
 
 	// TODO add truncate parameter to truncate at the end of current write
-	// TODO ad reading of data record before pack_row to keep skipped areas intact
+	// TODO add reading of data record before pack_row to keep skipped areas intact
 
 	if (parse_args(func, arg, alist) == 0) {
 		return NULL;
@@ -1120,14 +1126,20 @@ Var* ff_pack(vfuncptr func, Var* arg)
 		return NULL;
 	}
 
+	/*
 	if (template == NULL) {
 		parse_error("%s not specified: %s()", ARG_TEMPLATE, func->name);
 		return NULL;
 	}
+	*/
 
-	if (strlen(template) == 0) {
-		parse_error("Error: Template cannot be the empty string!");
-		return NULL;
+	int free_template = 1;
+	if (template) {
+		if (strlen(template) == 0) {
+			parse_error("Error: Template cannot be the empty string!");
+			return NULL;
+		}
+		free_template = 0;
 	}
 
 	if (filename == NULL) {
@@ -1155,6 +1167,7 @@ Var* ff_pack(vfuncptr func, Var* arg)
 	}
 
 	// if force == 1 remove old file
+	// TODO(rswinkle): unlink()?  and force doesn't make sense with fopen("wb+") below
 	if (force) {
 		unlink(filename);
 	}
@@ -1170,12 +1183,24 @@ Var* ff_pack(vfuncptr func, Var* arg)
 	// count zero, return error (see above).
 	// count positive, pack that amount (write null chars for rows which do not exist).
 	rows = count > 0 ? count : rows;
-	if (pack(reg_data, template, filename, num_items, rows, skip)) {
+	if (pack(toPack, reg_data, &template, filename, num_items, rows, skip)) {
 		parse_error("Packed %d records to to %s.", rows, filename);
 	}
 
 	cleanup_data(reg_data, num_items); // clean memory for reg_data
-	return NULL;                       // return toPack;
+
+	// NOTE(rswinkle):
+	// return the template.  This is used/needed for when the user doesn't provide one.
+	// (which why should they, we already know the data types of the structure), so
+	// they can get the template we generated to use to call unpack() on the file later
+	Var* s       = newVar();
+	V_TYPE(s)    = ID_STRING;
+	V_STRING(s)  = strdup(template);
+
+	if (free_template)
+		free(template);
+
+	return s;
 }
 
 // used in parse_struct to clean up reg_data in case of error
@@ -1225,11 +1250,6 @@ static data* parse_struct(Var* toPack, Var* column_names, int* numData, int* gre
 			parse_error("Unrecognized type passed in for argument col_names");
 			return NULL;
 		}
-	}
-
-	// TODO -- probably not needed
-	for (i = 0; i < name_count; i++) {
-		names[i] = fix_name(names[i]);
 	}
 
 	// use toPack to find num_items
@@ -1302,8 +1322,7 @@ static data* parse_struct(Var* toPack, Var* column_names, int* numData, int* gre
 			reg_data[i].input->columns = V_SIZE(element)[0]; // x value = columns
 			reg_data[i].array          = V_DATA(element);
 			reg_data[i].strarray       = NULL;
-			reg_data[i].type =
-			    V_FORMAT(element); // DV_INT16, DV_INT32, DV_UINT8, DV_FLOAT, DV_DOUBLE
+			reg_data[i].type = V_FORMAT(element); // DV_UINT*, DV_INT*, DV_FLOAT, DV_DOUBLE
 			break;
 
 		default:
@@ -1330,14 +1349,20 @@ static data* parse_struct(Var* toPack, Var* column_names, int* numData, int* gre
 // @param int rows;                 // the number of rows of data to be packed
 // @param int offset;               // number of bytes to skip in file before writing
 // @return int indicating success:  // 1 = success, 0 = fail
-static int pack(data* thedata, char* template, char* filename, int numData, int rows, int offset)
+//
+//
+// NOTE(rswinkle): I really hate those java style comments and parameter comments in general.  Honestly
+// how helpful are those?  Pick good parameter names and write clear code.
+static int pack(Var* struct_to_pack, data* thedata, char** template_in, char* filename, int numData, int rows, int offset)
 {
-	// declare local variables used in the function
 	int i, rec_length;
 	column_attributes* initial = NULL; // used to parse template
 	unpack_digest* digest      = NULL;
 	FILE* file                 = NULL;
 	u8* buffer               = NULL;
+
+	char* template = NULL;
+	char template_buf[1024] = { 0 };
 
 	// check thedata argument, can't pack what doesn't exist
 	if (thedata == NULL) {
@@ -1351,6 +1376,83 @@ static int pack(data* thedata, char* template, char* filename, int numData, int 
 		memory_error(errno, sizeof(column_attributes) * MAX_ATTRIBUTES);
 		return 0;
 	}
+
+	// If no template provided, use the internal datatypes and native byte ordering duh
+	// This does somewhat waste effort going through parse_template and validate template later
+	// but data structures are filled out in the process and it'd be a pain and more code to
+	// create a separate path
+	if (!*template_in) {
+		char* p = template_buf;
+		int cols = 1;
+		Var* element = NULL;
+		for (i=0; i<numData; ++i) {
+			cols = thedata[i].input->columns;
+
+#ifdef WORDS_BIGENDIAN
+			switch (thedata[i].type) {
+			case DV_UINT8:   p[0] = UNSIGNED_MSB_INT; ++p; break;
+			case DV_UINT16:  p[0] = UNSIGNED_MSB_INT, p[1] = '2'; p+=2; break;
+			case DV_UINT32:  p[0] = UNSIGNED_MSB_INT, p[1] = '4'; p+=2; break;
+			case DV_UINT64:  p[0] = UNSIGNED_MSB_INT, p[1] = '8'; p+=2; break;
+
+			case DV_INT8:    p[0] = SIGNED_MSB_INT; ++p; break;
+			case DV_INT16:   p[0] = SIGNED_MSB_INT, p[1] = '2'; p+=2; break;
+			case DV_INT32:   p[0] = SIGNED_MSB_INT, p[1] = '4'; p+=2; break;
+			case DV_INT64:   p[0] = SIGNED_MSB_INT, p[1] = '8'; p+=2; break;
+
+			case DV_FLOAT:   p[0] = MSB_REAL, p[1] = '4'; p+=2; break;
+			case DV_DOUBLE:  p[0] = MSB_REAL, p[1] = '8'; p+=2; break;
+
+			case ID_STRING:  p[0] = STRING; ++p; break;
+
+			}
+#else
+			switch (thedata[i].type) {
+			case DV_UINT8:   p[0] = UNSIGNED_LSB_INT; ++p; break;
+			case DV_UINT16:  p[0] = UNSIGNED_LSB_INT, p[1] = '2'; p+=2; break;
+			case DV_UINT32:  p[0] = UNSIGNED_LSB_INT, p[1] = '4'; p+=2; break;
+			case DV_UINT64:  p[0] = UNSIGNED_LSB_INT, p[1] = '8'; p+=2; break;
+
+			case DV_INT8:    p[0] = SIGNED_LSB_INT; ++p; break;
+			case DV_INT16:   p[0] = SIGNED_LSB_INT, p[1] = '2'; p+=2; break;
+			case DV_INT32:   p[0] = SIGNED_LSB_INT, p[1] = '4'; p+=2; break;
+			case DV_INT64:   p[0] = SIGNED_LSB_INT, p[1] = '8'; p+=2; break;
+
+			case DV_FLOAT:   p[0] = LSB_REAL, p[1] = '4'; p+=2; break;
+			case DV_DOUBLE:  p[0] = LSB_REAL, p[1] = '8'; p+=2; break;
+
+			case ID_STRING:  p[0] = STRING; ++p; break;
+
+			}
+#endif
+			//string is special because it has to have a byte size >= to the largest
+			//string in the entire column
+			if (thedata[i].type == ID_STRING) {
+				get_struct_element(struct_to_pack, i, NULL, &element);
+				//already know it has to be BSQ
+				int max = 0, len;
+				char** txt_array = V_TEXT(element).text;
+				for (int j=0; j<V_TEXT(element).Row; ++j) {
+					len = strlen(txt_array[j]);
+					max = (len > max) ? len : max;
+				}
+				
+				int tmp = sprintf(p, "%d", max);
+				p += tmp;
+			}
+
+			if (cols > 1) {
+				p[0] = '*';
+				++p;
+				int tmp = sprintf(p, "%d", cols);
+				p += tmp;
+			}
+		}
+
+		*template_in = strdup(template_buf);
+	}
+
+	template = *template_in;
 
 	// create an unpack_digest with computed: digest->attr and ->num_items. ->rows set to -1, also
 	// rec_length
@@ -1378,16 +1480,16 @@ static int pack(data* thedata, char* template, char* filename, int numData, int 
 	}
 
 	//*// reallocate the initial column_attributes to match the amount specified in digest?
-	initial = realloc(initial, sizeof(column_attributes) * digest->num_items);
-	if (initial == NULL) {
+	digest->attr = realloc(initial, sizeof(column_attributes) * digest->num_items);
+	if (digest->attr == NULL) {
 		memory_error(errno, sizeof(column_attributes) * digest->num_items);
+		free(initial);
 		clean_up(0, digest, NULL, NULL, NULL);
 		return 0;
-	} else {
-		digest->attr = initial;
 	}
 	//*/
 
+	// TODO(rswinkle): think about this with force.  update documentation
 	file = fopen(filename, "rb+"); // open file if exists already
 	if (file == NULL) {
 		file = fopen(filename, "wb+"); // creates a new file to write

@@ -103,6 +103,7 @@ struct _vfuncptr vfunclist[] = {
     {"remove_struct", ff_remove_struct, NULL, NULL},
     {"insert_struct", ff_insert_struct, NULL, NULL},
     {"get_struct_key", ff_get_struct_key, NULL, NULL},
+    {"get_struct_keys", ff_get_struct_key, NULL, NULL},
 
     /* i/o */
 
@@ -367,6 +368,7 @@ struct _vfuncptr vfunclist[] = {
     /*  { "blend",             ff_blend,          NULL, NULL }, */
     {"text", ff_create_text, NULL, NULL},
 
+    // not documented or used anywhere
     {"pdshead", ff_pdshead, NULL, NULL}
 
     //{NULL, NULL, NULL, NULL}

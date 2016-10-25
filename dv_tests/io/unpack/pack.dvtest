@@ -22,42 +22,51 @@
 # thing and unpack has no way of knowing what the different lengths
 # were or how to differentiate a real 0 from a padded 0.
 
+# NOTE(rswinkle): Have to use the col_names feature of unpack because
+# the hdf writing (or reading?) reorders the members and pack just
+# packs them in index order and unpack assigns names sequentially
+# by default.
+
+# TODO(rswinkle) Add testing of count parameter and maybe some
+# direct comparisons with unpacks of original data so we don't need
+# the col_names
+
 
 atm = load("atm.hdf");
-pack(atm, "U4U2U2*38U2U2R4I2*9R4R4R4a4", "atm_packed.dat")
-atm_in = unpack("U4U2U2*38U2U2R4I2*9R4R4R4a4", "atm_packed.dat")
+template = pack(atm, "atm_packed.dat")
+atm_in = unpack(template, "atm_packed.dat", col_names=get_struct_keys(atm))
 if (equals(atm, atm_in) == 0) exit(1);
 
 fremove("atm_packed.dat")
 printf("atm succeeded\n")
 
 obs = load("obs.hdf");
-pack(obs, "U4U2U2U4UU2UaaaaaaaUUU2*4U", "obs_packed.dat")
-obs_in = unpack("U4U2U2U4UU2UaaaaaaaUUU2*4U", "obs_packed.dat")
+template = pack(obs, "obs_packed.dat")
+obs_in = unpack(template, "obs_packed.dat", col_names=get_struct_keys(obs))
 if (equals(obs, obs_in) == 0) exit(1);
 
 fremove("obs_packed.dat")
 printf("obs succeeded\n")
 
 t1 = load("mytestfile.hdf");
-pack(t1, "Iu2i4u4r4r8I2I4U4R4R8a5", "mytestfile_packed.dat")
-t1_in = unpack("Iu2i4u4r4r8I2I4U4R4R8a5", "mytestfile_packed.dat")
+template = pack(t1, "mytestfile_packed.dat")
+t1_in = unpack(template, "mytestfile_packed.dat", col_names=get_struct_keys(t1))
 if (equals(t1, t1_in) == 0) exit(1);
 
 fremove("mytestfile_packed.dat")
 printf("mytestfile succeeded\n")
 
 t2 = load("secondtest.hdf");
-pack(t2, "Iu2i4u4r4r8U2U4U4R4R8a5", "secondtest_packed.dat", 0)
-t2_in = unpack("Iu2i4u4r4r8U2U4U4R4R8a5", "secondtest_packed.dat", 0)
+template = pack(t2, "secondtest_packed.dat", skip=0)
+t2_in = unpack(template, "secondtest_packed.dat", 0, col_names=get_struct_keys(t2))
 if (equals(t2, t2_in) == 0) exit(1);
 
 fremove("secondtest_packed.dat")
 printf("secondtest succeeded\n")
 
 t3 = load("strmulttest.hdf");
-pack(t3, "Iu2i4u4r4r8U2U4U4R4R8a6*3", "strmulttest_packed.dat")
-t3_in = unpack("Iu2i4u4r4r8U2U4U4R4R8a6*3", "strmulttest_packed.dat")
+template = pack(t3, "strmulttest_packed.dat")
+t3_in = unpack(template, "strmulttest_packed.dat", col_names=get_struct_keys(t3))
 if (equals(t3, t3_in) == 0) exit(1);
 
 fremove("strmulttest_packed.dat")

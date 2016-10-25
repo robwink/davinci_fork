@@ -335,28 +335,33 @@
 ?pack()
  pack() - Packs binary data from a Davinci struct to a file, given a template
 
- pack(struct=STRUCT, template=STRING, filename=STRING [,skip=INT] [,count=INT] ,col_names=TEXT)
+ pack(struct=STRUCT, filename=STRING [, count=INT, col_names=TEXT, force=BOOL,
+      template=STRING, skip=INT32])
 
     The pack function reads binary data from the davinci struct,
     interprets it according to the specified record template,
-    and writes it to the file named by filename.  The optional skip
-    parameter specifies the bytes into the file to skip before
-    encoding to the file. The optional count parameter specifies
-    the number of records to be packed (a negative value
-    means all records). The template string has the same structure
-    as used in the "unpack" function, except that unlike the unpack
-    function it does not support 3, 5, 6, or 7 byte int types, only
-    1, 2, 4, and 8.
+    and writes it to the file named by filename.  The optional count
+    parameter specifies the number of records to be packed (a negative
+    value means all records).  The optional col_names parameter can
+    be used to specify the structure fields to pack and the order
+    in which to do so.  Thus it can be either a string (for a single
+    column) or a TEXT object.  Providing extra names or names not in
+    the structure is an error.  Providing fewer is fine.
 
-    NOTE: existing data in the file is overwritten.
+    The option force argument says whether to overwrite an existing file.
 
-    The user must specify the order in which columns within a
-    davinci structure is encoded with the argument
-    col_names. The argument col_names can be either a string
-    (if the user is only writing 1 column) or a davinci text
-    buffer (string array). Providing extra names or names
-    not in the davinci structure is an error. Providing
-    fewer names is fine.
+    By default, if no template is provided davinci will pack the data
+    as the types of the actual fields.  There's really no reason not
+    to do that and specifying template strings is painful and tedious.
+
+    Whether you provide a template string or not, the template string
+    needed to unpack() the data is the return value.  If you really
+    want to specify the template string yourself, it has the same
+    structure as unpack() except it does not support 3,5,6 or 7 byte
+    int types, only 1,2,4,8, ie the native integer sizes.
+
+    The optional skip parameter specifies the bytes into the file to
+    skip before encoding to the file.
 
  See Also:
     unpack(), load_raw()
@@ -2339,6 +2344,15 @@ Davinci supports the following matrix functions:
  get_struct_key() returns the name of the structure element at the
  specified (1-based) index. If the element does not have a name attached
  to it, an empty string is returned.
+
+?functions get_struct_keys()
+?get_struct_keys()
+ get_struct_keys() - Returns the name of structure element at the given index.
+
+ get_struct_keys(object=STRUCT)
+
+ Returns a text buffer with the names of all the elements in the specified
+ structure.
 
 ?functions remove_struct()
 ?remove_struct()

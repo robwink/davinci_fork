@@ -87,7 +87,13 @@ Var* ff_get_struct_key(vfuncptr func, Var* arg)
 	}
 
 	// Return all the keys as strings
-	if (index == 0) {
+	if (!strcmp(func->name, "get_struct_keys") || index == 0) {
+
+		if (index != 0) {
+			parse_error("Too many arguments to get_struct_keys()\n");
+			return NULL;
+		}
+
 		char** keys = calloc(count, sizeof(char*));
 		for (i = 0; i < count; i++) {
 			get_struct_element(s, i, &keys[i], &v);
@@ -491,13 +497,14 @@ int get_struct_count(const Var* v)
 	return (Narray_count(V_STRUCT(v)));
 }
 
+// NOTE(rswinkle): only used twice, once in dvio_pds, once in modules/gui/gui.c
 int get_struct_names(const Var* v, char*** names, const char* prefix)
 {
 	Var* data;
 	char* name;
 	int len   = (prefix != NULL ? strlen(prefix) : 0);
 	int n     = get_struct_count(v);
-	char** p  = calloc(n + 1, sizeof(char**));
+	char** p  = calloc(n + 1, sizeof(char*));
 	int count = 0;
 	int i;
 

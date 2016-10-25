@@ -8,8 +8,6 @@
 
 
 
-# TODO(rswinkle): Need to add a test for signed bytes, and 64 bit ints and uints
-
 atm = unpack("U4U2U2*38U2U2R4I2*9R4R4R4x6a4", "atm05555.dat", 390)
 write(atm, "atm_out.hdf", type=hdf, force=1)
 atm_in = load("atm.hdf")

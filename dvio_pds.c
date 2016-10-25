@@ -954,9 +954,9 @@ static void ProcessObjectIntoLabel(FILE* fp, int record_bytes, Var* v, char* nam
 	int bands;
 
 	char** name_list;
-	int sample_idx = (-1);
-	int line_idx   = (-1);
-	int band_idx   = (-1);
+	int sample_idx = -1;
+	int line_idx   = -1;
+	int band_idx   = -1;
 
 	fprintf(fp, "OBJECT = %s\r\n", name);
 
@@ -1046,17 +1046,17 @@ static void ProcessObjectIntoLabel(FILE* fp, int record_bytes, Var* v, char* nam
 	** size accordingly.
 	*/
 
-	else if ((!(strcasecmp("spectral_qube", name))) || (!(strcasecmp("qube", name))) ||
-	         (!(strcasecmp("image", name)))) { /*We're processing a qube */
+	else if (!strcasecmp("spectral_qube", name) || !strcasecmp("qube", name) ||
+	         !strcasecmp("image", name)) { /*We're processing a qube */
 
 		count = get_struct_names(v, &name_list, NULL);
 
 		for (i = 0; i < count && name_list[i] != NULL; i++) {
-			if (!(strcasecmp("sample_suffix", name_list[i])))
+			if (!strcasecmp("sample_suffix", name_list[i]))
 				sample_idx = i;
-			else if (!(strcasecmp("line_suffix", name_list[i])))
+			else if (!strcasecmp("line_suffix", name_list[i]))
 				line_idx = i;
-			else if (!(strcasecmp("band_suffix", name_list[i])))
+			else if (!strcasecmp("band_suffix", name_list[i]))
 				band_idx = i;
 
 			free(name_list[i]);
@@ -1813,7 +1813,7 @@ static int rfQube(const dataKey* objSize, Var* vQube, int load_suffix_data)
 		} else {
 			// NOTE(rswinkle): because suffix_data is created (once you drill down) with
 			// mem_malloc, you could just let it get freed automatically when the scope is
-			// cleaned.  see scope.c
+			// cleaned (see scope.c).
 			mem_claim(suffix_data);
 			free_var(suffix_data);
 		}
