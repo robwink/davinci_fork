@@ -94,7 +94,15 @@ def main():
 			filename = tmpfile.name
 
 		proc = Popen([args.davinci, "-fqv0", filename], stdout=PIPE, universal_newlines=True)
+
 		#proc = Popen(["valgrind", "--leak-check=full", "-v", args.davinci, "-fqv0", filename], stdout=PIPE, universal_newlines=True)
+
+		# do something like this when running under valgrind
+		#./run_tests.py -d ../.libs/davinci -t . 2> valgrind_output.txt
+		#grep ERROR valgrind_output.txt | cut --complement -d' ' -f1 > v2.txt
+
+		# then, as long as you don't add/remove any tests, you can easily
+		#compare the valgrind outputs
 
 		out, err = proc.communicate()
 		rc = proc.returncode

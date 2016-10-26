@@ -39,17 +39,9 @@ static char rcsver[] = "$Id$";
 
 FIELD* MakeField(OBJDESC*, LABEL*);
 int DetermineFieldType(char* type, int size);
-IFORMAT eformat_to_iformat(EFORMAT e);
-void MakeBitFields(OBJDESC* col, FIELD* f, LIST* list);
+void MakeBitFields(OBJDESC* col, FIELD* f, cvector_voidptr* fields);
 FIELD* MakeBitField(OBJDESC* col, FIELD* f);
-EFORMAT ConvertType(char* type);
 
-/*Dummy stub needed for this "borrowed" code*/
-DATA ConvertASCIItoData(char* ascii, int i)
-{
-	DATA d;
-	return (d);
-}
 
 /**
 ** LoadLabel() - Read and decode a PDS label, including individual fields.
@@ -76,7 +68,6 @@ LABEL* LoadLabelFromObjDesc(OBJDESC* tbl, const char* fname)
 	OBJDESC* col;
 	KEYWORD* kw;
 	FIELD* f;
-	LIST* list;
 	LABEL* l;
 	int i;
 	unsigned short scope;
@@ -116,37 +107,31 @@ LABEL* LoadLabelFromObjDesc(OBJDESC* tbl, const char* fname)
 	l->name    = name;
 	l->nrows   = nrows;
 
-	/**
-	 ** get all the column descriptions
-	 **/
+	// get all the column descriptions
+	cvec_init_voidptr(&l->fields, 0, 10, NULL, NULL);
 
-	list  = new_list();
-	i     = 0;
 	scope = ODL_CHILDREN_ONLY;
 	col   = tbl;
 	while ((col = OdlNextObjDesc(col, 0, &scope)) != NULL) {
 		if ((f = MakeField(col, l)) != NULL) {
-			list_add(list, f);
-			i++;
+			cvec_push_voidptr(&l->fields, &f);
 
-			/**
-			 ** Fake up some additional fields for bit columns.
-			 **/
+			// Fake up some additional fields for bit columns.
 			if (f->eformat == MSB_BIT_FIELD) {
-				MakeBitFields(col, f, list);
+				MakeBitFields(col, f, &l->fields);
 			}
 		}
 	}
 
-	if (i != nfields) {
+	if (l->fields.size != nfields) {
 		fprintf(stderr,
-		        "Wrong number of column definitions in table %s of  %s.  Expected %d, got %d.\n",
-		        OdlGetObjDescClassName(tbl), fname, nfields, i);
+		        "Wrong number of column definitions in table %s of  %s.  Expected %d, got %zu.\n",
+		        OdlGetObjDescClassName(tbl), fname, nfields, l->fields.size);
 	}
 
-	l->fields = list;
+	//l->fields = list;
 
-	return (l);
+	return l;
 }
 
 /**
@@ -279,7 +264,7 @@ FIELD* MakeField(OBJDESC* col, LABEL* l)
 	return (NULL);
 }
 
-void MakeBitFields(OBJDESC* col, FIELD* f, LIST* list)
+void MakeBitFields(OBJDESC* col, FIELD* f, cvector_voidptr* fields)
 {
 	unsigned short scope;
 	FIELD* b;
@@ -287,7 +272,7 @@ void MakeBitFields(OBJDESC* col, FIELD* f, LIST* list)
 	scope = ODL_CHILDREN_ONLY;
 	while ((col = OdlNextObjDesc(col, 0, &scope)) != NULL) {
 		if ((b = MakeBitField(col, f)) != NULL) {
-			list_add(list, b);
+			cvec_push_voidptr(fields, b);
 		}
 	}
 }
@@ -360,8 +345,7 @@ FIELD* MakeBitField(OBJDESC* col, FIELD* f)
 	return (NULL);
 }
 
-IFORMAT
-eformat_to_iformat(EFORMAT e)
+IFORMAT eformat_to_iformat(EFORMAT e)
 {
 	switch (e) {
 	case LSB_INTEGER:
@@ -386,8 +370,7 @@ eformat_to_iformat(EFORMAT e)
 	return INVALID_IFORMAT;
 }
 
-EFORMAT
-ConvertType(char* type)
+EFORMAT ConvertType(char* type)
 {
 	if (!strcasecmp(type, "MSB_INTEGER") || !strcasecmp(type, "MSB_SIGNED_INTEGER") ||
 	    !strcasecmp(type, "SUN_INTEGER") || !strcasecmp(type, "MAC_INTEGER") ||
@@ -424,6 +407,17 @@ ConvertType(char* type)
 		return (LSB_UNSIGNED_INTEGER);
 	}
 	return (INVALID_EFORMAT);
+}
+
+// NOTE(rswinkle): These functions aren't used anywhere that I can see
+//
+#if 0
+
+/*Dummy stub needed for this "borrowed" code*/
+DATA ConvertASCIItoData(char* ascii, int i)
+{
+	DATA d;
+	return (d);
 }
 
 /**
@@ -489,6 +483,7 @@ FIELD* FindFieldInLabel(char* name, LABEL* l)
 	}
 	return (NULL);
 }
+
 
 /**
  ** Load the header values specific to an individual file
@@ -609,3 +604,5 @@ void FreeFragment(FRAGMENT* f)
 	list_free(f->end_keys);
 	free(f);
 }
+
+#endif

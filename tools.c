@@ -36,6 +36,7 @@
  ** 	list->data(list);
  **/
 
+#if 0
 void* list_ptr(LIST* list, int whence);
 void** list_data(LIST* list);
 void* list_add(LIST* list, void* ptr);
@@ -155,6 +156,8 @@ void list_merge(LIST* l1, LIST* l2)
 	memcpy(&((void**)l1->ptr)[l1->number], l2->ptr, l2->number * sizeof(void*));
 	l1->number = i;
 }
+
+#endif
 
 /*****************************************************************************/
 /* QUEUE - dynamically allocated linked list                                 */

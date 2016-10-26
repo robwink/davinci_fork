@@ -25,6 +25,7 @@ void* queue_data(QUEUE* queue);
 
 */
 
+#if 0
 typedef struct _list LIST;
 typedef void* (*vfptr)(LIST*);
 struct _list {
@@ -49,5 +50,7 @@ void list_free(LIST* l);
 /* Do what list_free() does plus run free() on each of the
     list elements. Good for lists of char*'s */
 void list_kill(LIST* l);
+
+#endif
 
 #endif /* TOOLS_H */

@@ -5,34 +5,6 @@
 #include <sys/stat.h>
 #include "tools.h"
 
-/*
-#ifdef _WIN32
-#include <io.h>
-
-typedef unsigned int uint;
-typedef unsigned char uchar;
-typedef unsigned long ulong;
-
-#define F_OK 0
-#define R_OK 4
-
-#ifndef PROT_READ
-#define PROT_READ 5
-#endif
-
-#if 0
-// The following two defines have dummy values
-#define PROT_WRITE 6
-#define MAP_PRIVATE 1
-#endif
-
-#else
-
-#include <unistd.h>
-#include <sys/mman.h>
-#endif
-
-*/
 
 #include <unistd.h>
 #include <sys/mman.h>

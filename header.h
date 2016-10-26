@@ -6,30 +6,12 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#ifdef _WIN32
-#include <io.h>
 
-typedef unsigned int uint;
-typedef unsigned char uchar;
-typedef unsigned long ulong;
+// NOTE(rswinkle): This file is almost exactly an extension of iomedley/header.h
+// All this duplication bothers me.  There must be a way to use a single file.
 
-#define F_OK 0
-#define R_OK 4
-
-#ifndef PROT_READ
-#define PROT_READ 5
-#endif
-
-#if 0
-/* The following two defines have dummy values */
-#define PROT_WRITE 6
-#define MAP_PRIVATE 1
-#endif /* 0 */
-
-#else
-#include <sys/mman.h>
 #include <unistd.h>
-#endif
+#include <sys/mman.h>
 
 enum _external_format {
 	INVALID_EFORMAT = -1,
@@ -56,9 +38,18 @@ enum _varformat { VAX_VAR = 1, Q15 = 2 };
 
 typedef char* PTR;
 
-typedef struct _dataset DATASET;
+
 typedef struct _label LABEL;
 typedef struct _field FIELD;
+typedef struct _bitfield BITFIELD;
+
+
+
+
+
+
+
+typedef struct _dataset DATASET;
 typedef struct _vardata VARDATA;
 typedef struct _fragment FRAGMENT;
 typedef union _data DATA;
@@ -67,19 +58,19 @@ typedef struct _ostruct OSTRUCT;
 typedef struct _table TABLE;
 typedef struct _select SELECT;
 typedef struct _tblbuff TBLBUFF;
-typedef struct _bitfield BITFIELD;
 typedef struct _fakefield FAKEFIELD;
 typedef void (*FuncPtr)();
 
+
 struct _dataset {
-	LIST* tablenames; /* (char) */
-	LIST* tables;     /* (TABLE) */
+	cvector_voidptr tablenames; //(char)
+	cvector_voidptr tables;     // (TABLE)
 };
 
 struct _table {
 	LABEL* label;  /* label for this table */
-	LIST* files;   /* (char) sorted list of directory entries */
-	LIST* selects; /* (SELECT) list of selections for this table */
+	cvector_voidptr files;   /* (char) sorted list of directory entries */
+	cvector_voidptr selects; /* (SELECT) list of selections for this table */
 	TBLBUFF* buff;
 };
 
@@ -88,8 +79,8 @@ struct _label {
 	char* name;
 	int nfields;
 	int nrows;
-	LIST* fields; /* (FIELD) */
-	LIST* keys;   /* (FIELD) */
+	cvector_voidptr fields;
+	cvector_voidptr keys;
 	TABLE* table; /* pointer to parent table struct */
 };
 
@@ -137,8 +128,8 @@ struct _fakefield {
 struct _fragment {
 	int offset;       /* pointer to start of data */
 	int nrows;        /* number of rows in this fragment */
-	LIST* start_keys; /* (DATA) key values of first record */
-	LIST* end_keys;   /* (DATA) key values of last record */
+	cvector_voidptr start_keys; // (DATA) key values of first record
+	cvector_voidptr end_keys;   // (DATA) key values of last record
 	struct stat sbuf;
 };
 
@@ -247,49 +238,54 @@ typedef char* cptr;
 // TODO(rswinkle) organize these in same order as header.c for sanity
 LABEL* LoadLabel(char*);
 LABEL* LoadLabelFromObjDesc(OBJDESC* tbl, const char*);
-DATASET* LoadDataset(DATASET* dataset, char* fname);
-FIELD* FindField(char* name, LIST* labels);
-FIELD* FindFieldInLabel(char* name, LABEL* l);
-FRAGMENT* LoadFragment(char* fname, TABLE* table);
-void FreeFragment(FRAGMENT* f);
-
-DATA ConvertASCIItoData(char* ascii, int i);
-DATA ConvertField(char* ptr, FIELD* f);
-LIST* LoadFilenames(char* path, char* prefix);
-
-DATA ConvertData(PTR ptr, FIELD* f);
-DATA ConvertFieldData(PTR ptr, FIELD* f);
-DATA ConvertVarData(PTR ptr, VARDATA* v);
-int EquivalentData(DATA d1, DATA d2, FIELD* f);
-int CompareData(DATA d1, DATA d2, FIELD* f);
-DATA* maxFieldVal(SLICE* s, int dim, TABLE** tbl, DATA* maxValue);
-
-LIST* Make_Index(char* fields_str, LIST* tables);
-int ConvertSelect(DATASET* d, char* sel_str);
-void search(int deep, int maxdepth, SLICE** slice, TABLE** tbl, int tcount);
-void output_rec(OSTRUCT** o, int n);
-void SortFiles(LIST* list);
-PTR RefillTblBuff(TBLBUFF* b);
-
-/* TBLBUFF *NewTblBuff(TABLE * t, size_t reccount, size_t overcount); */
-TBLBUFF* NewTblBuff(TABLE* t);
-PTR GetFirstRec(TABLE* t);
-PTR find_jump(TABLE* t, FIELD* f, DATA d, PTR beg, PTR end, int deep);
-PTR find_until(TABLE* t, FIELD* f, PTR beg, PTR end);
-PTR find_select(TABLE* t, PTR beg, PTR end);
-
-int sequence_keys(SEQ* keyseq, TABLE** tables, int num_tables);
-SLICE** init_slices(TABLE** tables, int tcount, SEQ keyseq);
-
-LIST* ConvertOutput(char* output_str, LIST* tables);
-char* find_file(char* fname);
-short ConvertVaxVarByteCount(PTR raw, VARDATA* vdata);
-
-FIELD* FindFakeField(char* name, LIST* tables);
-double ConvertAndScaleData(PTR raw, FIELD* field);
-
-PTR GiveMeVarPtr(PTR raw, TABLE* table, int offset);
 
 IFORMAT eformat_to_iformat(EFORMAT e);
+EFORMAT ConvertType(char* type);
+
+
+//FIELD* FindField(char* name, LIST* labels);
+//FIELD* FindFieldInLabel(char* name, LABEL* l);
+
+
+//FRAGMENT* LoadFragment(char* fname, TABLE* table);
+//void FreeFragment(FRAGMENT* f);
+//DATA ConvertASCIItoData(char* ascii, int i);
+//DATA ConvertField(char* ptr, FIELD* f);
+//int ConvertSelect(DATASET* d, char* sel_str);
+//LIST* LoadFilenames(char* path, char* prefix);
+//DATASET* LoadDataset(DATASET* dataset, char* fname);
+
+//DATA ConvertData(PTR ptr, FIELD* f);
+//DATA ConvertFieldData(PTR ptr, FIELD* f);
+//DATA ConvertVarData(PTR ptr, VARDATA* v);
+//int EquivalentData(DATA d1, DATA d2, FIELD* f);
+//int CompareData(DATA d1, DATA d2, FIELD* f);
+//DATA* maxFieldVal(SLICE* s, int dim, TABLE** tbl, DATA* maxValue);
+//
+//LIST* Make_Index(char* fields_str, LIST* tables);
+//void search(int deep, int maxdepth, SLICE** slice, TABLE** tbl, int tcount);
+//void output_rec(OSTRUCT** o, int n);
+//void SortFiles(LIST* list);
+//PTR RefillTblBuff(TBLBUFF* b);
+//
+///* TBLBUFF *NewTblBuff(TABLE * t, size_t reccount, size_t overcount); */
+//TBLBUFF* NewTblBuff(TABLE* t);
+//PTR GetFirstRec(TABLE* t);
+//PTR find_jump(TABLE* t, FIELD* f, DATA d, PTR beg, PTR end, int deep);
+//PTR find_until(TABLE* t, FIELD* f, PTR beg, PTR end);
+//PTR find_select(TABLE* t, PTR beg, PTR end);
+//
+//int sequence_keys(SEQ* keyseq, TABLE** tables, int num_tables);
+//SLICE** init_slices(TABLE** tables, int tcount, SEQ keyseq);
+//
+//LIST* ConvertOutput(char* output_str, LIST* tables);
+//char* find_file(char* fname);
+//short ConvertVaxVarByteCount(PTR raw, VARDATA* vdata);
+//
+//FIELD* FindFakeField(char* name, LIST* tables);
+//double ConvertAndScaleData(PTR raw, FIELD* field);
+//
+//PTR GiveMeVarPtr(PTR raw, TABLE* table, int offset);
+
 
 #endif /* _HEADER_H */

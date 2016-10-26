@@ -1865,13 +1865,13 @@ static int rfTable(dataKey* objSize, Var* ob, LABEL* label)
 	pickFilename(fileName, objSize->FileName);
 	parse_error("Reading %s from %s...\n", objSize->Name, fileName);
 
-	f         = (FIELD**)label->fields->ptr;
-	num_items = label->fields->number; /*This is a count of BOTH columns AND bit-columns */
+	f         = (FIELD**)label->fields.a;
+	num_items = label->fields.size; // This is a count of BOTH columns AND bit-columns
 
-	/*Add new structure to parent ob*/
+	// Add new structure to parent ob
 	data = new_struct(0);
 
-	/*Initialize a set of buffers to read in the data */
+	// Initialize a set of buffers to read in the data
 	bufs   = (char**)calloc(num_items, sizeof(char*));
 	tmpbuf = (char*)calloc(label->reclen, 1);
 	size   = (int*)calloc(num_items, sizeof(int));
@@ -2037,7 +2037,7 @@ static void Set_Col_Var(Var** Data, FIELD** f, LABEL* label, int* size, char** B
 	int num_fields;
 	int nitems;
 
-	num_fields = label->fields->number;
+	num_fields = label->fields.size;
 
 	/**
 	*** Note: the calloc in all these routines is stupid, as it
@@ -2586,10 +2586,13 @@ static void print_pds4_structs(LABEL* label, dataKey* data_key)
 		printf("label->name: %s\n", label->name);
 		printf("label->nfields: %d\n", label->nfields);
 		printf("label->nrows: %d\n", label->nrows);
-		if (label->fields != NULL) {
-			field_count = list_count(label->fields);
+
+		if (label->fields.size) {
+			//field_count = list_count(label->fields);
+			field_count = label->fields.size;
 			printf("label->fields->count: %d\n", field_count);
-			fields = (FIELD**)list_data(label->fields);
+			//fields = (FIELD**)list_data(label->fields);
+			fields = label->fields.a;
 
 			for (i = 0; i < field_count; i++) {
 				f = fields[i];
@@ -2639,9 +2642,9 @@ static int loadFieldBinary(Var* v, LABEL* label, dataKey* data_key, int use_name
 
 	count = get_struct_count(v);
 
-	if (count > 0 && label->fields == NULL) {
-		label->fields = new_list();
-		if (label->fields == NULL) {
+	if (count > 0 && !label->fields.a) {
+		//label->fields = new_list();
+		if (!cvec_init_voidptr(&label->fields, 0, 8, NULL, NULL)) {
 			parse_error("Error allocating memory for a FIELD list\n");
 			return 0;
 		}
@@ -2813,7 +2816,8 @@ FINISH:
 		}
 	}
 	if (field != NULL) {
-		list_add(label->fields, field);
+		//list_add(label->fields, field);
+		cvec_push_voidptr(&label->fields, field);
 		label->nfields += 1;
 	}
 	return 1;
@@ -3147,6 +3151,7 @@ static int loadBinaryTable(Var* v, LABEL* label, dataKey* data_key, int use_name
 	return ret_val;
 }
 
+// NOTE(rswinkle): why is label even passed in if it's not used?
 static int loadFileInfo(Var* v, LABEL* label, dataKey* data_key)
 {
 	int i, j;
@@ -3241,7 +3246,7 @@ static Var* xmlParseLabelFiles(Var* v, LABEL* label, dataKey* data_key, int use_
 			    strstr(node_name, FILE_AREA_OBSERVATIONAL) == NULL) {
 				if (data_key == NULL) {
 					// create a new LABEL and pass it in
-					label = malloc(sizeof(LABEL));
+					label = calloc(1, sizeof(LABEL));
 					if (label == NULL) {
 						parse_error(
 						    "Memory allocation error while trying to parse the PDS4 xml label "
@@ -3250,37 +3255,22 @@ static Var* xmlParseLabelFiles(Var* v, LABEL* label, dataKey* data_key, int use_
 						break;
 					}
 				}
-				label->reclen  = 0;
+				//label is zeroed with calloc above so cvectors are already valid
 				label->name    = strdup(node_name);
-				label->nfields = 0;
-				label->nrows   = 0;
-				label->fields  = NULL;
-				label->keys    = NULL;
-				label->table   = NULL;
 
 				// create a new dataKey and pass it in as well
-				data_key = malloc(sizeof(dataKey));
+				data_key = calloc(1, sizeof(dataKey));
 				if (data_key == NULL) {
 					parse_error(
 					    "Memory allocation error while trying to parse the PDS4 xml label files\n");
 					err = 1;
 					break;
 				}
-				data_key->ObjClass = NULL;
-				data_key->Obj      = NULL;
-				data_key->KeyValue = NULL;
+				//data_key is zeroed with calloc above
 				if (file_path != NULL) {
 					data_key->FileName = strdup(file_path);
 					//                   free(file_path);
-				} else {
-					data_key->FileName = NULL;
 				}
-				data_key->dptr      = 0;
-				data_key->size      = 0;
-				data_key->objDesc   = NULL;
-				data_key->pFileDesc = NULL;
-				data_key->pFileVar  = NULL;
-
 				if (!loadFileInfo(s, label, data_key)) {
 					err = 1;
 					break;

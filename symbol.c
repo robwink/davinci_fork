@@ -16,10 +16,12 @@ Var* HasValue(vfuncptr func, Var* arg)
 	Var **av, *v;
 
 	make_args(&ac, &av, func, arg);
+	int ret = 0;
 	if (ac == 2 && (v = eval(av[1])) != NULL) {
-		return newInt(1);
+		ret = 1;
 	}
-	return newInt(0);
+	free(av);
+	return newInt(ret);
 }
 
 // remove a symbol from the symtab.

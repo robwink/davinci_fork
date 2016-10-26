@@ -430,6 +430,7 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 						nm++;
 					}
 				}
+				free(databuf);
 			}
 
 			H5Sclose(dataspace);
