@@ -76,7 +76,7 @@ libdavinci_la_LIBADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULES_LI
 ##libdavinci_la_LDFLAGS =  -version-info @LIB_CURRENT@:@LIB_REVISION@:@LIB_AGE@ -shrext .so
 libdavinci_la_LDFLAGS =  -version-info @LIB_CURRENT@:@LIB_REVISION@:@LIB_AGE@
 
-libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
+libdavinci_la_SOURCES = apifunc.c array.c libavl.c binDCT.c \
 	darray.c \
 	dct.c deghost.C dvio.c dvio_ascii.c \
 	dvio_aviris.c dvio_envi.c dvio_ers.c dvio_goes.c dvio_grd.c \
@@ -108,7 +108,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	XformTable.h darray.h fit.h trigtbl.h api.h dos.h func.h \
 	ufunc.h dvio.h dvio_pds4.h header.h \
 	version.h apidef.h dvio_specpr.h help.h \
-	xrt_print_3d.h avl.h endian_norm.h io_loadmod.h scope.h \
+	xrt_print_3d.h libavl.h endian_norm.h io_loadmod.h scope.h \
 	ff.h system.h ff_modules.h module_io.h \
 	toolbox.h configwin.h fft.h motif_tools.h tools.h \
 	lexer.c parser.c parser.h y_tab.h \

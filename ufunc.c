@@ -7,7 +7,7 @@
 // Find and verify name.
 // Find split and verify args.
 
-// TODO(rswinkle) use vector_void for this
+// TODO(rswinkle) use cvector_void for this
 // too many custom one off vectors/stacks in davinci
 UFUNC** ufunc_list = NULL;
 int nufunc         = 0;

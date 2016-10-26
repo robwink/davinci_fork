@@ -32,11 +32,13 @@
 #include "common.h"
 #define HAVE_XMALLOC 1
 #endif
+
 #if SELF_TEST
 #include <limits.h>
 #include <time.h>
 #endif
-#include "avl.h"
+
+#include "libavl.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
