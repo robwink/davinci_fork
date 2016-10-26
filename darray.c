@@ -236,14 +236,12 @@ int Narray_insert(Narray* a, const char* key, void* data, int pos)
 	n = Nnode_create(key, data);
 
 	if (key) {
-		node = avl_search(&a->tree, &n->node, avl_compare);
+		node = avl_insert(&a->tree, &n->node, avl_compare);
 		if (node) {
 			// Key already exists.  Abort.
 			Nnode_free(n, NULL);
 			return -1;
 		}
-
-		avl_insert(&a->tree, &n->node, avl_compare);
 	}
 
 	// Add the node to the array, and update the indexes.
@@ -279,18 +277,14 @@ void* Narray_delete(Narray* a, const char* key)
 	found = avl_search(&a->tree, &n.node, avl_compare);
 
 	if (found) {
-
 		Nnode* tmp = avl_ref(found, Nnode, node);
 		// remove element from the linearly ordered array
 		Darray_remove(a->data, tmp->index);
 
-
-		/*
-		** Re-index the nodes which have indices higher than
-		** found->index.
-		**
-		** Don't know of a better way as yet!
-		*/
+		// Re-index the nodes which have indices higher than
+		// found->index.
+		//
+		// Don't know of a better way as yet!
 		for (i = 0; i < a->data->count; i++) {
 			node = (Nnode*)a->data->data[i];
 			if (node->index > tmp->index) {
