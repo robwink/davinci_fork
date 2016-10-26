@@ -95,7 +95,7 @@ libdavinci_la_DEPENDENCIES = $(MY_READLINE_LDADD) \
 	$(am__DEPENDENCIES_1) $(MY_MODULES_LIB) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
-am_libdavinci_la_OBJECTS = apifunc.lo array.lo libavl.lo binDCT.lo \
+am_libdavinci_la_OBJECTS = apifunc.lo array.lo avl.lo binDCT.lo \
 	darray.lo dct.lo deghost.lo dvio.lo dvio_ascii.lo \
 	dvio_aviris.lo dvio_envi.lo dvio_ers.lo dvio_goes.lo \
 	dvio_grd.lo dvio_hdf.lo dvio_imath.lo dvio_iomedley.lo \
@@ -369,7 +369,7 @@ libdavinci_la_LIBADD = $(MY_READLINE_LDADD) $(MY_IOMEDLEY_LDADD) $(MY_MODULES_LI
 		$(MINGW32_LIBREGEX_LDADD) $(MINGW32_LIBWSOCK32_LDADD) $(MINGW32_LIBIBERTY_LDADD) $(MY_LIBLTDLC_LDADD)
 
 libdavinci_la_LDFLAGS = -version-info @LIB_CURRENT@:@LIB_REVISION@:@LIB_AGE@
-libdavinci_la_SOURCES = apifunc.c array.c libavl.c binDCT.c \
+libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	darray.c \
 	dct.c deghost.C dvio.c dvio_ascii.c \
 	dvio_aviris.c dvio_envi.c dvio_ers.c dvio_goes.c dvio_grd.c \
@@ -401,7 +401,7 @@ libdavinci_la_SOURCES = apifunc.c array.c libavl.c binDCT.c \
 	XformTable.h darray.h fit.h trigtbl.h api.h dos.h func.h \
 	ufunc.h dvio.h dvio_pds4.h header.h \
 	version.h apidef.h dvio_specpr.h help.h \
-	xrt_print_3d.h libavl.h endian_norm.h io_loadmod.h scope.h \
+	xrt_print_3d.h avl.h endian_norm.h io_loadmod.h scope.h \
 	ff.h system.h ff_modules.h module_io.h \
 	toolbox.h configwin.h fft.h motif_tools.h tools.h \
 	lexer.c parser.c parser.h y_tab.h \
@@ -576,6 +576,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/apifunc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/array.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/avl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/binDCT.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cvector.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/darray.Plo@am__quote@
@@ -677,7 +678,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/help.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/io_loadmod.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lexer.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libavl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcsv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/matrix.Plo@am__quote@

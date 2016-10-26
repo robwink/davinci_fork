@@ -1,7 +1,7 @@
 #ifndef _DARRAY_H_
 #define _DARRAY_H_
 
-#include "libavl.h"
+#include "avl.h"
 #include "cvector.h"
 
 typedef struct _Darray {
@@ -12,7 +12,7 @@ typedef struct _Darray {
 
 typedef struct _Narray {
 	Darray* data;
-	avl_tree* tree;
+	avl_tree_t tree;
 } Narray;
 
 typedef void (*Darray_FuncPtr)(void*);
