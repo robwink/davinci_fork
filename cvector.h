@@ -925,6 +925,17 @@ void cvec_free_void(void* vec);
 #endif
 
 
+#define RESIZE(a) ((a+1)*2)
+
+// NOTE(rswinkle): I generally hate typedefing a pointer (except function pointers that
+// are used many places) but I think in this case it's better than wrapping it in a struct.
+
+typedef void* voidptr;
+CVEC_NEW_DECLS2(voidptr)
+
+
+
+
 /* header ends */
 #endif
 

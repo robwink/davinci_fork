@@ -177,6 +177,9 @@ int main(int ac, char** av)
 
 	//sort internal function list to speed up tab completion matching
 	//and present them in alphabetical order when double TABing for multiple matches
+	//also lets us do bsearch for function dispatch in ff.c:V_func()
+	//
+	//note cmp_string only works because name is the first member of _vfuncptr
 	qsort(vfunclist, num_internal_funcs, sizeof(struct _vfuncptr), cmp_string);
 
 

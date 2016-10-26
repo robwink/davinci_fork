@@ -13,8 +13,6 @@ Var* eval_buffer(char* buf);
 
 int num_internal_funcs = sizeof(vfunclist)/sizeof(struct _vfuncptr);
 
-
-
 /**
  ** V_func - find and call named function
  **
@@ -40,37 +38,36 @@ Var* V_func(const char* name, Var* arg)
 	  }
 	*/
 
-	/*
-	** Find and call the named function or its handler
-	*/
-	for (int i=0; i<num_internal_funcs; ++i) {
-		f = &vfunclist[i];
-		if (!strcmp(f->name, name)) {
-			return (f->fptr(f, arg));
-		}
+	// Find and call the named function or its handler
+	//
+	// since vfunclist is now sorted by name (see main.c) we
+	// can now use bsearch which with > 250 built in functions
+	// should be much faster than a linear search.
+	//
+	// We can use &name and cmp_string because name is the first
+	// member of _vfuncptr
+	//
+	f = bsearch(&name, vfunclist, num_internal_funcs,
+	            sizeof(struct _vfuncptr), cmp_string);
+	if (f) {
+		return (f->fptr(f, arg));
 	}
 
-	/*
-	** No internal function match.  Check ufunc list
-	*/
+	// No internal function match.  Check ufunc list
 	if ((uf = locate_ufunc(name)) != NULL) {
 		return (dispatch_ufunc(uf, arg));
 	}
 
 #ifdef INCLUDE_API
-	/*
-	** Check for func in API list
-	*/
+	// Check for func in API list
 	if ((api = api_lookup(name)) != NULL) {
 		return (dispatch_api(api, arg));
 	}
 #endif
 
-	/*
-	** No function found?  Return NULL
-	*/
+	// No function found?  Return NULL
 	parse_error("Function not found: %s", name);
-	return (NULL);
+	return NULL;
 }
 
 /**

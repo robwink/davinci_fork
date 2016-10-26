@@ -1877,4 +1877,5 @@ IN THE SOFTWARE.
  */
 
 
+CVEC_NEW_DEFS2(voidptr, RESIZE)
 
