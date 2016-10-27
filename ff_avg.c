@@ -418,7 +418,7 @@ Var* ff_avg(vfuncptr func, Var* arg)
 	return (both);
 }
 
-Var* fb_min(Var* obj, int axis, int direction, float ignore);
+Var* fb_min(Var* obj, int axis, int direction, Var* ignore);
 
 Var* ff_min(vfuncptr func, Var* arg)
 {
@@ -427,12 +427,13 @@ Var* ff_min(vfuncptr func, Var* arg)
 	int axis              = 0;
 	const char* options[] = {"x",  "y",   "z",   "xy",  "yx",  "xz",  "zx",  "yz",
 	                         "zy", "xyz", "xzy", "yxz", "yzx", "zxy", "zyx", NULL};
-	float ignore = FLT_MIN;
+	//float ignore = FLT_MIN;
+	Var* ignore = NULL;;
 
 	Alist alist[4];
 	alist[0]      = make_alist("object", ID_VAL, NULL, &obj);
 	alist[1]      = make_alist("axis", ID_ENUM, options, &ptr);
-	alist[2]      = make_alist("ignore", DV_FLOAT, options, &ignore);
+	alist[2]      = make_alist("ignore", ID_UNK, NULL, &ignore);
 	alist[3].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return (NULL);
@@ -447,10 +448,31 @@ Var* ff_min(vfuncptr func, Var* arg)
 
 	if (obj == NULL) {
 		parse_error("%s: No object specified\n", func->name);
-		return (NULL);
+		return NULL;
 	}
 
-	return (fb_min(obj, axis, (!strcmp(func->name, "min")) ? 0 : 1, ignore));
+	if (ignore) {
+		if (V_TYPE(ignore) != ID_VAL) {
+			parse_error("%s: ignore must be VAL type.\n", func->name);
+			return NULL;
+		}
+		if (V_DSIZE(ignore) != 1) {
+			parse_error("%s: ignore must be a single value (ie length(ignore)==1).\n", func->name);
+			return NULL;
+		}
+		if (V_FORMAT(ignore) != V_FORMAT(obj)) {
+			parse_error("%s: ignore must have the same type as obj, %s != %s.\n", func->name,
+			            dv_format_to_str(V_FORMAT(ignore)), dv_format_to_str(V_FORMAT(obj)));
+			return NULL;
+		}
+	}
+
+	if (ignore && V_TYPE(ignore) != ID_VAL) {
+		parse_error("%s: ignore must be VAL type\n", func->name);
+		return NULL;
+	}
+
+	return fb_min(obj, axis, (!strcmp(func->name, "min")) ? 0 : 1, ignore);
 }
 
 /*
@@ -460,13 +482,11 @@ Var* ff_min(vfuncptr func, Var* arg)
 **     axis:3, z axis
 **     direction:  0 = min, 1 = max
 */
-Var* fb_min(Var* obj, int axis, int direction, float ignore)
+Var* fb_min(Var* obj, int axis, int direction, Var* ignore)
 {
 	Var* v;
 	size_t dsize, dsize2, i, j;
-	float *fdata, x;
-	void* data;
-	int in[3], out[3];
+	size_t in[3], out[3];
 
 	dsize = V_DSIZE(obj);
 	for (i = 0; i < 3; i++) {
@@ -477,33 +497,182 @@ Var* fb_min(Var* obj, int axis, int direction, float ignore)
 	if (axis & YAXIS) out[orders[V_ORG(obj)][1]] = 1;
 	if (axis & ZAXIS) out[orders[V_ORG(obj)][2]] = 1;
 
-	v      = newVal(V_ORG(obj), out[0], out[1], out[2], DV_FLOAT, NULL);
+	v      = newVal(V_ORG(obj), out[0], out[1], out[2], V_FORMAT(obj), NULL);
 	dsize2 = V_DSIZE(v);
 
-	fdata     = (float*)calloc(dsize2, sizeof(float));
-	V_DATA(v) = fdata;
-	data      = V_DATA(obj);
+	// NOTE(rswinkle): Someone should decide what the default ignore values
+	// should be for the different types.  I used the min values for each type
+	// except for float and double because the old "always return float" version
+	// used FLT_MIN which is actually the smallest positive value for float.
+	// not the lowest value which would be -FLT_MAX.
+	switch (V_FORMAT(obj)) {
+	case DV_UINT8: {
+		u8 tmp, ign = (ignore) ? V_UINT8(ignore) : 0;
+		u8* u8data = V_DATA(v) = malloc(dsize2);
+		for (i=0; i<dsize2; ++i) { u8data[i] = ign; }
+		for (i=0; i<dsize; ++i) {
+			j = rpos(i, obj, v);
+			tmp = extract_u32(obj, i);
+			if (tmp == ign) continue;
 
-	/**
-	 ** Fill in defaults
-	 **/
-	for (i = 0; i < dsize2; i++) {
-		fdata[i] = ignore;
-	}
-
-	for (i = 0; i < dsize; i++) {
-		j = rpos(i, obj, v);
-		x = extract_float(obj, i);
-		if (x == ignore) continue;
-
-		if (direction == 0) {
-			if (fdata[j] == ignore || x < fdata[j]) fdata[j] = x;
-		} else {
-			if (fdata[j] == ignore || x > fdata[j]) fdata[j] = x;
+			if (direction == 0) {
+				if (u8data[j] == ign || tmp < u8data[j]) u8data[j] = tmp;
+			} else {
+				if (u8data[j] == ign || tmp > u8data[j]) u8data[j] = tmp;
+			}
 		}
+	} break;
+	case DV_UINT16: {
+		u16 tmp, ign = (ignore) ? V_UINT16(ignore) : 0;
+		u16* u16data = V_DATA(v) = malloc(dsize2*sizeof(u16));
+		for (i=0; i<dsize2; ++i) { u16data[i] = ign; }
+		for (i=0; i<dsize; ++i) {
+			j = rpos(i, obj, v);
+			tmp = extract_u32(obj, i);
+			if (tmp == ign) continue;
+
+			if (direction == 0) {
+				if (u16data[j] == ign || tmp < u16data[j]) u16data[j] = tmp;
+			} else {
+				if (u16data[j] == ign || tmp > u16data[j]) u16data[j] = tmp;
+			}
+		}
+	} break;
+	case DV_UINT32: {
+		u32 tmp, ign = (ignore) ? V_UINT32(ignore) : 0;
+		u32* u32data = V_DATA(v) = malloc(dsize2*sizeof(u32));
+		for (i=0; i<dsize2; ++i) { u32data[i] = ign; }
+		for (i=0; i<dsize; ++i) {
+			j = rpos(i, obj, v);
+			tmp = extract_u32(obj, i);
+			if (tmp == ign) continue;
+
+			if (direction == 0) {
+				if (u32data[j] == ign || tmp < u32data[j]) u32data[j] = tmp;
+			} else {
+				if (u32data[j] == ign || tmp > u32data[j]) u32data[j] = tmp;
+			}
+		}
+	} break;
+	case DV_UINT64: {
+		u64 tmp, ign = (ignore) ? V_UINT64(ignore) : 0;
+		u64* u64data = V_DATA(v) = malloc(dsize2*sizeof(u64));
+		for (i=0; i<dsize2; ++i) { u64data[i] = ign; }
+		for (i=0; i<dsize; ++i) {
+			j = rpos(i, obj, v);
+			tmp = extract_u64(obj, i);
+			if (tmp == ign) continue;
+
+			if (direction == 0) {
+				if (u64data[j] == ign || tmp < u64data[j]) u64data[j] = tmp;
+			} else {
+				if (u64data[j] == ign || tmp > u64data[j]) u64data[j] = tmp;
+			}
+		}
+	} break;
+
+	case DV_INT8: {
+		i8 tmp, ign = (ignore) ? V_INT8(ignore) : INT8_MIN;
+		i8* i8data = V_DATA(v) = malloc(dsize2);
+		for (i=0; i<dsize2; ++i) { i8data[i] = ign; }
+		for (i=0; i<dsize; ++i) {
+			j = rpos(i, obj, v);
+			tmp = extract_i32(obj, i);
+			if (tmp == ign) continue;
+
+			if (direction == 0) {
+				if (i8data[j] == ign || tmp < i8data[j]) i8data[j] = tmp;
+			} else {
+				if (i8data[j] == ign || tmp > i8data[j]) i8data[j] = tmp;
+			}
+		}
+	} break;
+	case DV_INT16: {
+		i16 tmp, ign = (ignore) ? V_INT16(ignore) : INT16_MIN;
+		i16* i16data = V_DATA(v) = malloc(dsize2*sizeof(i16));
+		for (i=0; i<dsize2; ++i) { i16data[i] = ign; }
+		for (i=0; i<dsize; ++i) {
+			j = rpos(i, obj, v);
+			tmp = extract_i32(obj, i);
+			if (tmp == ign) continue;
+
+			if (direction == 0) {
+				if (i16data[j] == ign || tmp < i16data[j]) i16data[j] = tmp;
+			} else {
+				if (i16data[j] == ign || tmp > i16data[j]) i16data[j] = tmp;
+			}
+		}
+	} break;
+	case DV_INT32: {
+		i32 tmp, ign = (ignore) ? V_INT32(ignore) : INT32_MIN;
+		printf("ignore = %d\n", ign);
+		i32* i32data = V_DATA(v) = malloc(dsize2*sizeof(i32));
+		for (i=0; i<dsize2; ++i) { i32data[i] = ign; }
+		for (i=0; i<dsize; ++i) {
+			j = rpos(i, obj, v);
+			tmp = extract_i32(obj, i);
+			if (tmp == ign) continue;
+
+			if (direction == 0) {
+				if (i32data[j] == ign || tmp < i32data[j]) i32data[j] = tmp;
+			} else {
+				if (i32data[j] == ign || tmp > i32data[j]) i32data[j] = tmp;
+			}
+		}
+	} break;
+	case DV_INT64: {
+		i64 tmp, ign = (ignore) ? V_INT64(ignore) : INT64_MIN;
+		i64* i64data = V_DATA(v) = malloc(dsize2*sizeof(i64));
+		for (i=0; i<dsize2; ++i) { i64data[i] = ign; }
+		for (i=0; i<dsize; ++i) {
+			j = rpos(i, obj, v);
+			tmp = extract_i64(obj, i);
+			if (tmp == ign) continue;
+
+			if (direction == 0) {
+				if (i64data[j] == ign || tmp < i64data[j]) i64data[j] = tmp;
+			} else {
+				if (i64data[j] == ign || tmp > i64data[j]) i64data[j] = tmp;
+			}
+		}
+	} break;
+	
+	case DV_FLOAT: {
+		float tmp, ign = (ignore) ? V_FLOAT(ignore) : FLT_MIN;
+		float* fdata = V_DATA(v) = malloc(dsize2*sizeof(float));
+		for (i=0; i<dsize2; ++i) { fdata[i] = ign; }
+		for (i=0; i<dsize; ++i) {
+			j = rpos(i, obj, v);
+			tmp = extract_float(obj, i);
+			if (tmp == ign) continue;
+
+			if (direction == 0) {
+				if (fdata[j] == ign || tmp < fdata[j]) fdata[j] = tmp;
+			} else {
+				if (fdata[j] == ign || tmp > fdata[j]) fdata[j] = tmp;
+			}
+		}
+	} break;
+	case DV_DOUBLE: {
+		double tmp, ign = (ignore) ? V_DOUBLE(ignore) : DBL_MIN;
+		double* ddata = V_DATA(v) = malloc(dsize2*sizeof(double));
+		for (i=0; i<dsize2; ++i) { ddata[i] = ign; }
+		for (i=0; i<dsize; ++i) {
+			j = rpos(i, obj, v);
+			tmp = extract_double(obj, i);
+			if (tmp == ign) continue;
+
+			if (direction == 0) {
+				if (ddata[j] == ign || tmp < ddata[j]) ddata[j] = tmp;
+			} else {
+				if (ddata[j] == ign || tmp > ddata[j]) ddata[j] = tmp;
+			}
+		}
+	} break;
+
 	}
 
-	return (v);
+	return v;
 }
 
 Var* ff_findmin(vfuncptr func, Var* arg)

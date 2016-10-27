@@ -172,8 +172,9 @@ void make_sym(Var* v, int format, char* str)
 	case DV_FLOAT:
 		d = strtod(str, NULL);
 		if (((d > FLT_MAX) || (d < FLT_MIN)) && (d != 0)) {
+			//could realloc here
 			free(V_DATA(v));
-			V_DATA(v)               = calloc(1, NBYTES(DV_DOUBLE));
+			V_DATA(v)               = calloc(1, sizeof(double));
 			V_FORMAT(v)             = DV_DOUBLE;
 			*((double*)(V_DATA(v))) = d;
 		} else {

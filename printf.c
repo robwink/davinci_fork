@@ -340,8 +340,7 @@ char* do_sprintf(int ac, Var** av)
 				free(out);
 				return NULL;
 			}
-			//why the cast to long?
-			PF(out, f, (long)p);
+			PF(out, f, p);
 			break;
 		}
 		case 'e':
