@@ -1,5 +1,5 @@
 a=read("../../data/THEMIS.cub")
-b=load_pds("../../data/THEMIS.cub", suffix=1)
+b=load_pds("../../data/THEMIS.cub")
 
 
 rc = HasValue(a) && HasValue(b) && b.qube.isis_instrument.start_time[,1]=="\"2002-05-21T16:16:45.667Z\"" && equals(b.qube.data,a)
@@ -9,13 +9,21 @@ if (rc == 0) {
 	exit(1);
 }
 
-themis_suffix = load("THEMIS_suffix.hdf")
+themis = load("THEMIS.hdf")
 themis_data = load("THEMIS_data.hdf")
 
-rc = equals(themis_suffix, b) && equals(themis_data.THEMIS_data_hdf, a)
+rc = equals(themis, b) && equals(themis_data.THEMIS_data_hdf, a)
 
 if (rc == 0) {
-	printf("failed part2: %d %d\n", equals(themis_suffix, b), equals(themis_data.THEMIS_data_hdf, a));
+	printf("failed part2: %d %d\n", equals(themis, b), equals(themis_data.THEMIS_data_hdf, a));
+	exit(1);
+}
+
+c = load_pds("ESP_015894_1545_COLOR.LBL")
+
+rc = c.compressed_file.required_storage_bytes == 8209427016
+if (rc == 0) {
+	printf("failed part3: %d != 8209427016", c.compressed_file.required_storage_bytes);
 	exit(1);
 }
 

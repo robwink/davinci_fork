@@ -479,7 +479,9 @@ int compare_struct(Var* a, Var* b)
 			get_struct_element(a, i, &name_a, &data_a);
 			if ((pos = find_struct(b, name_a, &data_b)) >= 0) {
 				if (compare_vars(data_a, data_b) == 0) {
-					printf("%s.%s != %s.%s\n", V_NAME(a), name_a, V_NAME(b), name_a);
+					if (debug > 2) {
+						printf("%s.%s != %s.%s\n", V_NAME(a), name_a, V_NAME(b), name_a);
+					}
 					return 0;
 				}
 			}

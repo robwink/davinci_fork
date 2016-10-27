@@ -159,7 +159,7 @@ static int genObjClassCmpr(const void* v1, const void* v2)
 	return strcasecmp(s1, s2);
 }
 
-static int make_int(char* number)
+static i64 make_int(char* number)
 {
 	char* radix;
 	int r_flag = 0;
@@ -178,20 +178,21 @@ static int make_int(char* number)
 		i++;
 	}
 
-	if (!(r_flag)) /*Didn't find it, regular int */
-		return (atoi(number));
+	// Didn't find it, regular int
+	if (!r_flag) {
+		return strtoimax(number, NULL, 10);
+	}
 
-	/*Gotta convert it! */
-
-	number[i] = '\0'; /*Null it at first # */
+	// Gotta convert it!
+	number[i] = '\0'; // Null it at first #
 	radix     = strdup(number);
 	i++;
-	offset = i; /*Start string here now */
+	offset = i; // Start string here now
 
 	while (i < len) {
-		if (number[i] == '#') { /*Other one */
+		if (number[i] == '#') { // Other one
 			number[i] = '\0';
-			int ret = strtol(&number[offset], NULL, atoi(radix));
+			i64 ret = strtoimax(&number[offset], NULL, atoi(radix));
 			free(radix);
 			return ret;
 		}
@@ -204,20 +205,24 @@ static int make_int(char* number)
 
 static Var* do_key(KEYWORD* key)
 {
-
 	unsigned short kwv;
 	Var* o = NULL;
-	int* i;
 	double* f;
+
+	i64 i;
+
 
 	kwv = OdlGetKwdValueType(key);
 
 	switch (kwv) {
 
 	case ODL_INTEGER:
-		i  = (int*)calloc(1, sizeof(int));
-		*i = make_int(key->value);
-		o  = newVal(BSQ, 1, 1, 1, DV_INT32, i);
+		i = make_int(key->value);
+		if (i <= INT32_MAX && i >= INT32_MIN) {
+			o = newInt(i);
+		} else {
+			o = new_i64(i);
+		}
 		break;
 	case ODL_REAL:
 		f  = (double*)calloc(1, sizeof(double));
@@ -271,11 +276,13 @@ static Var* do_key(KEYWORD* key)
 			}
 
 			switch (ptype) {
-			case ODL_INTEGER:
-				i = (int*)malloc(num * sizeof(int));
+			case ODL_INTEGER: {
+				//TODO(rswinkle): determine if 64-bit is necessary.  Don't want to
+				//double the memory use unnecessarily.
+				int* i = malloc(num * sizeof(int));
 				for (ii = 0; ii < num; ii++) i[ii] = atoi(stuff[ii]);
 				o                                  = newVal(BSQ, num, 1, 1, DV_INT32, i);
-				break;
+			} break;
 
 			case ODL_REAL:
 				f = (double*)malloc(num * sizeof(double));
@@ -2153,6 +2160,7 @@ static void Set_Col_Var(Var** Data, FIELD** f, LABEL* label, int* size, char** B
 					memcpy(num, Bufs[j] + f[j]->size * i, f[j]->size);
 					num[f[j]->size] = '\0';
 					inum            = atoi(num);
+					printf("inum = %d\n", inum);
 					memcpy((char*)data + step, &inum, sizeof(int));
 					step += sizeof(int);
 				}

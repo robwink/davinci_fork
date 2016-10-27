@@ -953,17 +953,10 @@ Var* ff_cat(vfuncptr func, Var* arg)
 	// TODO(rswinkle): Why aren't we using alist + parse_args() here?
 	//
 	// UPDATE(rswinkle): Ok as far as I can tell the only reason
-	// we don't use parse_args() here is because it can't handle variable
+	// we don't use parse_args() here is because it can't handle arbitrary
 	// numbers of arguments...
 	//
-	// cat() is documented as only taking 2 arrays on both the wiki
-	// and dv.gih
-	// cat(array1, array2, axis)
-	//
-	// nothing about arbitrary numbers of arrays
-	//
-	// Looks like maybe a few places in the library do we use cat() with 
-	// more than 2 arrays.  Maybe there's a way to update parse_args to
+	// Maybe there's a way to update parse_args to
 	// handle this?  future research I guess
 	make_args(&ac, &av, func, arg);
 

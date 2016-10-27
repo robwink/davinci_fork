@@ -1,0 +1,27 @@
+
+
+
+test = { }
+
+test += { i64 = create(1,10, format=int64, start=5000000000) }
+test += { u32 = create(1,10, format=uint32, start=3000000000) }
+
+test += { i32_8 = create(1,10) }
+test += { i32_16 = create(1,10, start=300) }
+test += { i32 = create(1,10, start=70000) }
+
+
+write(test, "test.csv", csv, header=1);
+
+
+
+test_in = load_csv("test.csv");
+
+ret = equals(test, test_in);
+
+if (ret == 0) {
+	printf("test != test_in\n");
+	exit(1);
+}
+
+exit(0);

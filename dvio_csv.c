@@ -32,7 +32,11 @@ typedef unsigned char uchar;
 
 /** datatype used in coldef*/
 // TODO(rswinkle) why separate macros?  why not just the stardard ones in parser.h?
-typedef enum { TBYTE, TSHORT, TINT, TFLOAT, TDOUBLE, TSTR } coltype;
+// instead of having to convert between them?
+//
+// For now I've only added INT64.  I think that's sufficient for reading.  Too much work for little
+// gain in this case to add the other unsigned types
+typedef enum { TUINT8, TINT16, TINT32, TINT64, TFLOAT, TDOUBLE, TSTR } coltype;
 
 struct _coldef;
 
@@ -98,9 +102,10 @@ static void fill_col_min_size(coldef* cols, int n)
 
 	for (i = 0; i < n; i++) {
 		switch (cols[i].data_type) {
-		case TBYTE: cols[i].size   = sizeof(char); break;
-		case TSHORT: cols[i].size  = sizeof(short); break;
-		case TINT: cols[i].size    = sizeof(int); break;
+		case TUINT8: cols[i].size  = sizeof(u8); break;
+		case TINT16: cols[i].size  = sizeof(i16); break;
+		case TINT32: cols[i].size  = sizeof(i32); break;
+		case TINT64: cols[i].size  = sizeof(i64); break;
 		case TFLOAT: cols[i].size  = sizeof(float); break;
 		case TDOUBLE: cols[i].size = sizeof(double); break;
 
@@ -116,15 +121,16 @@ static void fill_col_min_size(coldef* cols, int n)
 ** Return the davinci type based on the column type and size pair.
     @param c [in] column type.
 */
-static int davinci_type(coltype c /* column type: TINT, TFLOAT, ... */
+static int davinci_type(coltype c /* column type: TINT32, TFLOAT, ... */
                         )
 {
 	int dav_type;
 
 	switch (c) {
-	case TBYTE: dav_type   = DV_UINT8; break;
-	case TSHORT: dav_type  = DV_INT16; break;
-	case TINT: dav_type    = DV_INT32; break;
+	case TUINT8: dav_type  = DV_UINT8; break;
+	case TINT16: dav_type  = DV_INT16; break;
+	case TINT32: dav_type  = DV_INT32; break;
+	case TINT64: dav_type  = DV_INT64; break;
 	case TFLOAT: dav_type  = DV_FLOAT; break;
 	case TDOUBLE: dav_type = DV_DOUBLE; break;
 
@@ -283,9 +289,10 @@ static Var* alloc_davinci_data_space(coldef** fields,       /* list of "root"-"c
 		cl = fields[i]->chain_len;
 
 		switch (fields[i]->data_type) {
-		case TBYTE:
-		case TSHORT:
-		case TINT:
+		case TUINT8:
+		case TINT16:
+		case TINT32:
+		case TINT64:
 		case TFLOAT:
 		case TDOUBLE:
 			mem_size = (size_t)nrecs * (size_t)cl * (size_t)fields[i]->size;
@@ -368,10 +375,8 @@ static int is_overflow_double(double d)
 static void pass1_cb_fs(void* s, size_t len, void* call_data)
 {
 	int i;
-	long itemp     = 0;
 	double dtemp   = 0;
 	float ftemp    = 0;
-	char* end      = NULL;
 	int type_found = 0;
 
 	char temp_char;
@@ -483,19 +488,23 @@ static void pass1_cb_fs(void* s, size_t len, void* call_data)
 	data->coldefs[data->cur_field].max_len = MAX(data->coldefs[data->cur_field].max_len, len);
 
 	/* determine field type and update column type */
+	char* end = NULL;
 	char* schar = (char*)s;
 	temp_char   = schar[len];
 	schar[len]  = '\0';
-	itemp       = strtol(s, &end, 10);
+	i64 i64temp       = strtoll(s, &end, 10);
 
-	if (itemp <= INT_MAX && itemp >= INT_MIN && end >= schar + len) {
-		if (itemp >= 0 && itemp <= UCHAR_MAX) {
+	if (i64temp <= INT64_MAX && i64temp >= INT64_MIN && end >= schar + len) {
+
+		if (i64temp >= 0 && i64temp <= UINT8_MAX) {
 			;
-		} else if (itemp <= SHRT_MAX && itemp >= SHRT_MIN) {
+		} else if (i64temp <= INT16_MAX && i64temp >= INT16_MIN) {
 			data->coldefs[data->cur_field].data_type =
-			    MAX(data->coldefs[data->cur_field].data_type, TSHORT);
+			    MAX(data->coldefs[data->cur_field].data_type, TINT16);
+		} else if (i64temp <= INT32_MAX && i64temp >= INT32_MIN) {
+			data->coldefs[data->cur_field].data_type = MAX(data->coldefs[data->cur_field].data_type, TINT32);
 		} else {
-			data->coldefs[data->cur_field].data_type = MAX(data->coldefs[data->cur_field].data_type, TINT);
+			data->coldefs[data->cur_field].data_type = MAX(data->coldefs[data->cur_field].data_type, TINT64);
 		}
 
 		type_found = 1;
@@ -601,7 +610,7 @@ static void init_coldefs(coldef* cols, int num)
 
 	for (i = 0; i < num; i++) {
 		cols[i].name      = NULL;
-		cols[i].data_type = TBYTE; /* start as "DV_UINT8", promote if necessary */
+		cols[i].data_type = TUINT8; /* start as "DV_UINT8", promote if necessary */
 		cols[i].max_len   = 0;
 		cols[i].text      = NULL;
 		cols[i].next      = NULL;
@@ -726,9 +735,11 @@ static void pass2_cb_rs(int c, void* call_data)
 	char** vals = data->vals;
 	char* tmps  = "";
 
-	unsigned char** byte_data = (unsigned char**)data->data_ptrs;
-	short** short_data        = (short**)data->data_ptrs;
-	int** int_data            = (int**)data->data_ptrs;
+	u8** u8_data = (u8**)data->data_ptrs;
+	i16** i16_data        = (i16**)data->data_ptrs;
+	i32** i32_data            = (i32**)data->data_ptrs;
+	i64** i64_data            = (i64**)data->data_ptrs;
+
 	float** float_data        = (float**)data->data_ptrs;
 	double** double_data      = (double**)data->data_ptrs;
 	char*** str_data          = (char***)data->data_ptrs;
@@ -756,9 +767,10 @@ static void pass2_cb_rs(int c, void* call_data)
 
 			switch (t->data_type) {
 
-			case TBYTE: byte_data[i][idx]     = atoi(vals[t->sno]); break;
-			case TSHORT: short_data[i][idx]   = atoi(vals[t->sno]); break;
-			case TINT: int_data[i][idx]       = atoi(vals[t->sno]); break;
+			case TUINT8: u8_data[i][idx]       = atoi(vals[t->sno]); break;
+			case TINT16: i16_data[i][idx]     = atoi(vals[t->sno]); break;
+			case TINT32: i32_data[i][idx]     = atol(vals[t->sno]); break;
+			case TINT64: i64_data[i][idx]     = atoll(vals[t->sno]); break;
 			case TFLOAT: float_data[i][idx]   = atof(vals[t->sno]); break;
 			case TDOUBLE: double_data[i][idx] = atof(vals[t->sno]); break;
 
@@ -1282,24 +1294,38 @@ int dv_WriteCSV(Var* the_data, char* filename, char* field_delim, int header, in
 				for (j = 0; j < columns; j++) {
 					switch (V_FORMAT(data[i])) {
 					case DV_UINT8:
-						fprintf(file, "%u", ((unsigned char*)V_DATA(data[i]))[row * columns + j]);
+						fprintf(file, "%"PRIu8, ((u8*)V_DATA(data[i]))[row * columns + j]);
+						break;
+					case DV_UINT16:
+						fprintf(file, "%"PRIu16, ((u16*)V_DATA(data[i]))[row * columns + j]);
+						break;
+					case DV_UINT32:
+						fprintf(file, "%"PRIu32, ((u32*)V_DATA(data[i]))[row * columns + j]);
+						break;
+					case DV_UINT64:
+						fprintf(file, "%"PRIu64, ((u64*)V_DATA(data[i]))[row * columns + j]);
+						break;
+
+
+					case DV_INT8:
+						fprintf(file, "%"PRIi8, ((i8*)V_DATA(data[i]))[row * columns + j]);
 						break;
 					case DV_INT16:
-						fprintf(file, "%d", ((short*)V_DATA(data[i]))[row * columns + j]);
+						fprintf(file, "%"PRIi16, ((i16*)V_DATA(data[i]))[row * columns + j]);
 						break;
 					case DV_INT32:
-						fprintf(file, "%d", ((int*)V_DATA(data[i]))[row * columns + j]);
+						fprintf(file, "%"PRIi32, ((i32*)V_DATA(data[i]))[row * columns + j]);
 						break;
+					case DV_INT64:
+						fprintf(file, "%"PRIi64, ((i64*)V_DATA(data[i]))[row * columns + j]);
+						break;
+
 					case DV_FLOAT:
 						fprintf(file, "%.4f", ((float*)V_DATA(data[i]))[row * columns + j]);
 						break;
-					// case DV_FLOAT:		fprintf(file, "%G", ((float*)V_DATA(data[i]))[row*columns+j]
-					// );			break;
 					case DV_DOUBLE:
 						fprintf(file, "%.1f", ((double*)V_DATA(data[i]))[row * columns + j]);
 						break;
-					// case DV_DOUBLE:	fprintf(file, "%G", ((double*)V_DATA(data[i]))[row*columns+j]
-					// );		break;
 					default:
 						parse_error("unknown format for ID_VAL: %d\n", V_FORMAT(data[i]));
 						free(keys);
