@@ -4,17 +4,20 @@
 #include "cvector.h"
 
 
+// TODO(rswinkle): Think of a better, shorter name.  I'd call
+// it dict but it's only a single element not an entire dictionary.
 typedef struct dict_item {
 	char* name;
 	Var* value;
 } dict_item;
 
+CVEC_NEW_DECLS2(dict_item)
 
 typedef struct Scope {
 
 	// a[0].value holds the var representation of argc
-	cvector_void dd;   // named variable data dictionary
-	cvector_void args; // number arguments data dictionary
+	cvector_dict_item dd;   // named variable data dictionary
+	cvector_dict_item args; // number arguments data dictionary
 
 
 

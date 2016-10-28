@@ -13,6 +13,8 @@
 
 */
 
+CVEC_NEW_DEFS2(dict_item, RESIZE)
+
 static cvector_void scope_stack;
 
 
@@ -74,12 +76,11 @@ Scope* parent_scope()
 
 Var* dd_find(Scope* s, char* name)
 {
-	cvector_void* dd = &s->dd;
 	dict_item* p;
 
 	int i;
-	for (i = 1; i < dd->size; i++) {
-		p = CVEC_GET_VOID(dd, dict_item, i);
+	for (i = 1; i < s->dd.size; i++) {
+		p = &s->dd.a[i];
 		if (p->name && !strcmp(p->name, name)) {
 			return p->value;
 		}
@@ -90,7 +91,7 @@ Var* dd_find(Scope* s, char* name)
 Var* dd_get_argv(Scope* s, int n)
 {
 	if (n < s->args.size) {
-		return CVEC_GET_VOID(&s->args, dict_item, n)->value;
+		return s->args.a[n].value;
 	}
 	return NULL;
 }
@@ -102,12 +103,11 @@ Var* dd_get_argc(Scope* s)
 
 void dd_put(Scope* s, char* name, Var* v)
 {
-	cvector_void* dd = &s->dd;
 	int i;
 	dict_item* p;
 
-	for (i = 1; i < dd->size; i++) {
-		p = CVEC_GET_VOID(dd, dict_item, i);
+	for (i = 1; i < s->dd.size; i++) {
+		p = &s->dd.a[i];
 		if (!strcmp(p->name, name)) {
 			p->value = v;
 			return;
@@ -128,14 +128,14 @@ void dd_put(Scope* s, char* name, Var* v)
 		item.name = strdup(name); // strdup here?
 
 	item.value = v;
-	cvec_push_void(dd, &item);
+	cvec_push_dict_item(&s->dd, &item);
 }
 
 // stick an arg on the end of the arg list.
 // Update argc.
 int dd_put_argv(Scope* s, Var* v)
 {
-	cvector_void* dd = &s->args;
+	cvector_dict_item* dd = &s->args;
 
 	/*
 	** WARNING: This looks like it will break if you try to global a
@@ -147,24 +147,24 @@ int dd_put_argv(Scope* s, Var* v)
 	item.name = V_NAME(v);
 	V_NAME(v) = NULL;
 
-	cvec_push_void(dd, &item);
+	cvec_push_dict_item(dd, &item);
 
-	dict_item* p = CVEC_GET_VOID(dd, dict_item, 0);
 	// subtract 1 for $0
-	V_INT(p->value) = dd->size - 1;
+	V_INT(dd->a[0].value) = dd->size - 1;
 
 	return dd->size - 1;
 }
 
+// NOTE(rswinkle): This literally does nothing!
 void dd_unput_argv(Scope* s)
 {
-	cvector_void* dd = &s->args;
 	Var* v;
 	int i;
 	dict_item* p;
+	cvector_dict_item* dd = &s->args;
 
 	for (i = 1; i < dd->size; i++) {
-		p = CVEC_GET_VOID(dd, dict_item, i);
+		p = &dd->a[i];
 		v         = p->value;
 		V_NAME(v) = p->name;
 	}
@@ -176,23 +176,25 @@ int dd_argc(Scope* s)
 	return s->args.size - 1;
 }
 
+//NOTE(rswinkle): not used anywhere!
 // return argc as a Var
 Var* dd_argc_var(Scope* s)
 {
-	return CVEC_GET_VOID(&s->args, dict_item, 0);
+	return s->args.a[0].value;
 }
 
 Var* dd_make_arglist(Scope* s)
 {
-	cvector_void* dd = &s->args;
-	Var* v         = new_struct(dd->size);
 	Var* p;
 	int i;
 	void* zero;
 	dict_item* item;
 
+	cvector_dict_item* dd = &s->args;
+	Var* v         = new_struct(dd->size);
+
 	for (i = 1; i < dd->size; i++) {
-		item = CVEC_GET_VOID(dd, dict_item, i);
+		item = &dd->a[i];
 		if (V_TYPE(item->value) == ID_UNK) {
 			zero = calloc(1, 1);
 			p    = newVal(BSQ, 1, 1, 1, DV_UINT8, zero);
@@ -205,14 +207,14 @@ Var* dd_make_arglist(Scope* s)
 	return v;
 }
 
-void init_dd(cvector_void* d)
+void init_dd(cvector_dict_item* d)
 {
-	cvec_void(d, 1, 1, sizeof(dict_item), NULL, NULL);
+	cvec_dict_item(d, 1, 1, NULL, NULL);
 
-	dict_item* p = CVEC_GET_VOID(d, dict_item, 0);
+	dict_item* p = &d->a[0];
 
 	// Make a var for $argc
-	p->value = (Var*)calloc(1, sizeof(Var));
+	p->value = calloc(1, sizeof(Var));
 
 	// that cast isn't even necessary right?
 	// why don't we use newInt?  Why don't we want to mem_malloc it?
@@ -402,13 +404,13 @@ void clean_scope(Scope* scope)
 	// NOTE(rswirkle): Need to think about whether these checks are necessary
 	// but for now just replicating old logic
 	if (scope->dd.a) {
-		free_var(CVEC_GET_VOID(&scope->dd, dict_item, 0)->value);
-		cvec_free_void(&scope->dd);
+		free_var(scope->dd.a[0].value);
+		cvec_free_dict_item(&scope->dd);
 	}
 
 	if (scope->args.a) {
-		free_var(CVEC_GET_VOID(&scope->args, dict_item, 0)->value);
-		cvec_free_void(&scope->args);
+		free_var(scope->args.a[0].value);
+		cvec_free_dict_item(&scope->args);
 	}
 
 	clean_stack(scope);
