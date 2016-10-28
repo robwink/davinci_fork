@@ -1,4 +1,3 @@
-#include "darray.h"
 #include "parser.h"
 
 /*
@@ -178,10 +177,12 @@ int dd_argc(Scope* s)
 
 //NOTE(rswinkle): not used anywhere!
 // return argc as a Var
+/*
 Var* dd_argc_var(Scope* s)
 {
 	return s->args.a[0].value;
 }
+*/
 
 Var* dd_make_arglist(Scope* s)
 {
@@ -223,6 +224,10 @@ void init_dd(cvector_dict_item* d)
 	V_TYPE(p->value) = ID_VAL;
 }
 
+void free_var2(void* v)
+{
+	free_var(*(Var**)v);
+}
 
 void init_scope(Scope* s)
 {
@@ -236,9 +241,10 @@ void init_scope(Scope* s)
 	cvec_varptr(&s->symtab, 0, 8, NULL, NULL);
 	cvec_varptr(&s->stack, 0, 2, NULL, NULL);
 
+	cvec_varptr(&s->tmp, 0, 16, free_var2, NULL);
+
 	init_dd(&s->dd);
 	init_dd(&s->args);
-
 }
 
 
@@ -298,36 +304,51 @@ void clean_stack(Scope* scope)
 void cleanup(Scope* scope)
 {
 	clean_stack(scope);
-	if (scope->tmp) Darray_free(scope->tmp, (Darray_FuncPtr)free_var);
-	scope->tmp = NULL;
+	
+	if (scope->tmp.capacity) {
+		/*
+		if (!scope->tmp.a)
+			printf("%p %zu %zu\n", &scope->tmp, scope->tmp.a, scope->tmp.size, scope->tmp.capacity);
+		*/
+
+		cvec_free_varptr(&scope->tmp);
+
+		// NOTE(rswinkle): This is necessary or else *bad things* happen
+		// because whoever wrote davinci didn't actually think about memory
+		// management so things are "cleaned up" in multiple places to be safe
+		scope->tmp.a = NULL;
+	}
 }
 
-// allocate memory in the scope tmp list
 Var* mem_malloc()
 {
-	Scope* scope = scope_tos();
-	Var* v       = (Var*)calloc(1, sizeof(Var));
 	Var* top     = NULL;
 	Var* junk    = NULL;
-	int count    = 0;
+	size_t count    = 0;
 
-	if (scope->tmp == NULL) scope->tmp = Darray_create(0);
+	Scope* scope = scope_tos();
+	cvector_varptr* vec = &scope->tmp;
 
-	/*
-	 * If the top of the tmp scope is null, insert there, instead
-	 * of adding a new one.  This will prevent the temp list from
-	 * gowing indefinitely.
-	 */
-	if ((count = Darray_count(scope->tmp)) > 0) {
-		if (Darray_get(scope->tmp, count - 1, (void**)&top) == 1 && top == NULL) {
-			Darray_replace(scope->tmp, count - 1, v, (void**)&junk);
-			return (v);
+	Var* v       = calloc(1, sizeof(Var));
+
+	// If the top of the tmp scope is null, insert there, instead
+	// of adding a new one.  This will prevent the temp list from
+	// growing indefinitely.
+	//
+	// TODO(rswinkle): I don't really grok the above statement.  Why
+	// would there ever be a NULL at the end?
+	
+	if ((count = vec->size) > 0) {
+		if (!vec->a[count-1]) {
+			vec->a[count-1] = v;
+			return v;
 		}
 	}
-
-	Darray_add(scope->tmp, v);
-	return (v);
+	cvec_push_varptr(vec, &v);
+	return v;
 }
+
+
 
 Var* mem_claim_struct(Var* v)
 {
@@ -345,6 +366,7 @@ Var* mem_claim_struct(Var* v)
 	return (v);
 }
 
+
 // claim memory in the scope tmp list, so it doesn't get free'd
 // return NULL if it isn't here.
 Var* mem_claim(Var* ptr)
@@ -354,26 +376,22 @@ Var* mem_claim(Var* ptr)
 	int count;
 	int i;
 
-	if (scope->tmp == NULL) return (NULL);
-	if ((count = Darray_count(scope->tmp)) == 0) return (NULL);
+	cvector_varptr* vec = &scope->tmp;
 
-	for (i = count - 1; i >= 0; i--) {
-		if (Darray_get(scope->tmp, i, (void**)&v) == 1 && v == ptr) {
-			/*
-			** This is it.
-			*/
-			Darray_replace(scope->tmp, i, NULL, (void**)&v);
-			return (mem_claim_struct(v));
+	if ((count = vec->size) == 0) return NULL;
+
+	// TODO(rswinkle): why loop backward?
+	for (i = count - 1; i >= 0; --i) {
+		if (vec->a[i] == ptr) {
+			v = vec->a[i];
+			vec->a[i] = NULL;
+			return mem_claim_struct(v);
 		}
 	}
-	return (NULL);
+
+	return NULL;
 }
 
-// free the scope tmp list
-void mem_free(Scope* scope)
-{
-	if (scope->tmp) Darray_free(scope->tmp, (Darray_FuncPtr)free_var);
-}
 
 void unload_symtab_modules(Scope* scope)
 {
@@ -413,8 +431,16 @@ void clean_scope(Scope* scope)
 	}
 
 	clean_stack(scope);
-	if (scope->tmp) Darray_free(scope->tmp, (Darray_FuncPtr)free_var);
-	scope->tmp = NULL;
+	if (scope->tmp.capacity) {
+		/*
+ 		 * Have yet to see this output and I'm at a loss
+		if (!scope->tmp.a)
+			printf("%p %p %zu %zu\n", &scope->tmp, scope->tmp.a, scope->tmp.size, scope->tmp.capacity);
+		*/
+		cvec_free_varptr(&scope->tmp);
+		// NOTE(rswinkle): again this is necessary or bad things happen ...
+		scope->tmp.a = NULL;
+	}
 
 	/* Clean modules since before cleaning symbol table
 	   since they have a builtin mechansim of removing

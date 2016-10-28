@@ -2651,7 +2651,6 @@ static int loadFieldBinary(Var* v, LABEL* label, dataKey* data_key, int use_name
 	count = get_struct_count(v);
 
 	if (count > 0 && !label->fields.a) {
-		//label->fields = new_list();
 		if (!cvec_init_voidptr(&label->fields, 0, 8, NULL, NULL)) {
 			parse_error("Error allocating memory for a FIELD list\n");
 			return 0;
@@ -2824,8 +2823,7 @@ FINISH:
 		}
 	}
 	if (field != NULL) {
-		//list_add(label->fields, field);
-		cvec_push_voidptr(&label->fields, field);
+		cvec_push_voidptr(&label->fields, (void**)&field);
 		label->nfields += 1;
 	}
 	return 1;
@@ -3341,6 +3339,8 @@ static Var* xmlParseLabelFiles(Var* v, LABEL* label, dataKey* data_key, int use_
 			err = 1;
 		}
 	}
+	//TODO(rswinkle): Seems like label should be freed here (including the vectors) since
+	//it doesn't look like it's not returned in any way.
 	if (err) {
 		if (node_name != NULL) {
 			free(node_name);

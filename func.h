@@ -266,7 +266,7 @@ char* get_env_var(char*);
 // helper functions from some ff*.c files into logical groups
 Var* mem_claim(Var*);
 Var* mem_malloc();
-void mem_free(Scope* scope);
+//void mem_free(Scope* scope);
 
 void free_var(Var*);
 void commaize(char*);
@@ -523,10 +523,17 @@ Var* ff_rtrim(vfuncptr func, Var* arg);
 
 Var* ff_equals(vfuncptr func, Var* arg);
 
+// NOTE(rswinkle): Why are some things extern C but most aren't?
+// Seems like it's either an all or nothing thing and it's completely
+// unecessary for davinci as far as I can tell
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// in ff.c
 Var* newInt(int i);
+Var* new_i64(i64 i);
+Var* new_u64(u64 i);
 Var* newFloat(float f);
 Var* newDouble(double f);
 #ifdef __cplusplus

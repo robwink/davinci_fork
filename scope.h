@@ -25,7 +25,7 @@ typedef struct Scope {
 	// in this scope. Child scopes will point to these vars
 	cvector_varptr symtab; // local symbol table
 
-	Darray* tmp;         // tmp memory list
+	cvector_varptr tmp;         // tmp memory list
 
 	cvector_varptr stack;  // local stack
 
