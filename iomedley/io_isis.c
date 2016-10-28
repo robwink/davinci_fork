@@ -105,10 +105,7 @@ int iom_GetISISHeader(FILE* fp, char* filename, struct iom_iheader* h,
 
 	if (qube != NULL) {
 
-		/**
-		 ** Get data organization
-		 **/
-
+		// Get data organization
 		org = -1;
 		if ((key = OdlFindKwd(qube, "AXES_NAME", NULL, 0, scope)) ||
 		    (key = OdlFindKwd(qube, "AXIS_NAME", NULL, 0, scope))) {
@@ -127,25 +124,17 @@ int iom_GetISISHeader(FILE* fp, char* filename, struct iom_iheader* h,
 			}
 		}
 
-		/**
-		 ** Size of data
-		 **/
-
+		// Size of data
 		if ((key = OdlFindKwd(qube, "CORE_ITEMS", NULL, 0, scope))) {
 			sscanf(key->value, "(%d,%d,%d)", &size[0], &size[1], &size[2]);
 		}
 
-		/**
-		 ** Format
-		 **/
-
+		// Format
 		key2 = OdlFindKwd(qube, "CORE_ITEM_BYTES", NULL, 0, scope);
 
-		/**
-		 ** This tells us if we happen to be using float vs int
-		 **/
-
+		// This tells us if we happen to be using float vs int
 		key1 = OdlFindKwd(qube, "CORE_ITEM_TYPE", NULL, 0, scope);
+		printf("%s type = %s\n", __FUNCTION__, key1->value);
 
 		format = iom_ConvertISISType(key1 ? key1->value : NULL, NULL, key2 ? key2->value : NULL);
 
@@ -511,7 +500,7 @@ iom_edf iomConvertISISType(char* type, int item_bytes)
 
 	q = type;
 
-	if ((!strcmp(q, "DV_INT32")) || (!strcmp(q, "UNSIGNED_INTEGER")) || (!strcmp(q, "INTEGER"))) {
+	if ((!strcmp(q, "INT")) || (!strcmp(q, "UNSIGNED_INTEGER")) || (!strcmp(q, "INTEGER"))) {
 		switch (item_bytes) {
 #ifdef WORDS_BIGENDIAN
 		case 1: format = iom_MSB_INT_1; break;

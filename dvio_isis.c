@@ -425,6 +425,7 @@ Var* dvLoadSuffixes(FILE* fp, char* fname, int dptr, int org, int items[], int i
 	return (v);
 }
 
+#if 0
 Var* dv_LoadISISFromPDS(FILE* fp, char* fn, int dptr)
 {
 	/* Want to read label and pull out only the minimal key words
@@ -574,6 +575,8 @@ Var* dv_LoadISISFromPDS(FILE* fp, char* fn, int dptr)
 	return (v);
 }
 
+#endif
+
 /* Want to read label and pull out only the minimal key words
    needed to define the header strucure for iom_read_qube_data.
    The offset will be suplied and only a few things about
@@ -626,10 +629,7 @@ static int initHeaderFromQubeLabel(OBJDESC* qube, char* fn, struct iom_iheader* 
 		}
 	}
 
-	/**
-	 ** Size of data
-	 **/
-
+	// Size of data
 	if ((key = OdlFindKwd(qube, "CORE_ITEMS", NULL, 0, scope))) {
 		sscanf(key->value, "(%d,%d,%d)", &size[0], &size[1], &size[2]);
 	} else {
@@ -639,20 +639,15 @@ static int initHeaderFromQubeLabel(OBJDESC* qube, char* fn, struct iom_iheader* 
 		return 0;
 	}
 
-	/**
-	 ** Format
-	 **/
-
+	// Format
 	if ((key2 = OdlFindKwd(qube, "CORE_ITEM_BYTES", NULL, 0, scope))) {
 		item_bytes = atoi(key2->value);
 	}
 
-	/**
-	 ** This tells us if we happen to be using float vs int
-	 **/
-
+	// This tells us if we happen to be using float vs int
 	if ((key1 = OdlFindKwd(qube, "CORE_ITEM_TYPE", NULL, 0, scope))) {
 		if (strstr(key1->value, "UNSIGNED")) _unsigned = 1;
+		printf("type = %s\n", key1->value);
 	}
 
 	format = iom_ConvertISISType(key1 ? key1->value : NULL, NULL, key2 ? key2->value : NULL);
@@ -942,10 +937,7 @@ Var* dv_LoadISISFromPDS_New(FILE* fp, char* fn, int dptr, OBJDESC* qube)
 
 	data = iom_read_qube_data(fileno(fp), &h);
 
-	/*
-	** We need do promote unsigned short to signed int here
-	*/
-
+	// We need do promote unsigned short to signed int here
 	if (item_bytes == 2 && _unsigned) data = fix_unsigned(&h, data);
 
 	v         = iom_iheader2var(&h);
@@ -1294,27 +1286,21 @@ Var* dv_LoadISIS(FILE* fp, char* filename, struct iom_iheader* s)
 #endif /* __CYGWIN__ */
 	}
 
+	printf("in dv_LoadISIS\n");
 	if (iom_GetISISHeader(fp, filename, &h, msg_file, NULL) == 0) {
 		return (NULL);
 	}
 
-	/**
-	 ** If user specified a record, subset out a specific band
-	 **/
-
+	// If user specified a record, subset out a specific band
 	if (s != NULL) {
-		/**
-		 ** Set subsets
-		 **/
+		// Set subsets
 		iom_MergeHeaderAndSlice(&h, s);
 	}
 
-	/*
-	** Handle reading a detached label
-	*/
-
+	// Handle reading a detached label
 	datafile = h.ddfname; /* get the detached data file name */
 
+	// TODO(rswinkle) don't use open use fopen
 	if (datafile != NULL) {
 #if defined(__CYGWIN__) || defined(__MINGW32__)
 		if ((fd = open(datafile, O_RDONLY | O_BINARY)) < 0) {
@@ -1328,9 +1314,7 @@ Var* dv_LoadISIS(FILE* fp, char* filename, struct iom_iheader* s)
 		close(fd);
 
 	} else {
-		/**
-		 ** Put all this into a Var struct.
-		 **/
+		// Put all this into a Var struct.
 		data = iom_read_qube_data(fileno(fp), &h);
 	}
 	if (data == NULL) {

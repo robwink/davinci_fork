@@ -244,7 +244,7 @@ static void explode_keyword(Isis::PvlKeyword kwd, Var * dv_struct) {
             }
             for (int j=0; j<kwd.size(); j++)
                 float_block[j] = atof(KWD_TO_CHAR_PTR(kwd[j]));
-              varlist = newVal(BSQ, kwd.size(), 1, 1, DOUBLE, float_block);
+              varlist = newVal(BSQ, kwd.size(), 1, 1, DV_DOUBLE, float_block);
             break;
           case 'i':
             /* The values are integers... make an array of ints. */
@@ -256,7 +256,7 @@ static void explode_keyword(Isis::PvlKeyword kwd, Var * dv_struct) {
             }
             for (int j=0; j<kwd.size(); j++)
                 int_block[j] = atoi(KWD_TO_CHAR_PTR(kwd[j]));
-              varlist = newVal(BSQ, kwd.size(), 1, 1, INT, int_block);
+              varlist = newVal(BSQ, kwd.size(), 1, 1, DV_INT32, int_block);
             break;
           default:
             parse_error("Unknown datatype for array '%s'. This is a bug!\nPlease report this bug to http://davinci.asu.edu/", namebuf);
@@ -304,7 +304,7 @@ static Var * explode_object(Isis::PvlObject o) {
             add_struct(rtn_value, namebuf, cur_obj);
         }
     }
-   
+
     /* get groups at this level */
     if (o.groups() > 0) {
         for (int i=0; i<o.groups(); i++) {
@@ -427,7 +427,7 @@ static void get_data_for_table(Isis::Table t, Var * dv_struct) {
                 cur_fld = &(cur_rec[j]);
                 if (cur_fld->size() == 1) {
                     double dbl_store = double(*cur_fld);
-                    
+
                     memcpy((unsigned char *)(dv_table_data) + ((xpos+(i*x))*sizeof(double)), &dbl_store, sizeof(double));
                     xpos++;
                 }
@@ -437,7 +437,7 @@ static void get_data_for_table(Isis::Table t, Var * dv_struct) {
                 }
             }
         }
-        add_struct(dv_struct, "data", newVal(BSQ, x, y, 1, DOUBLE, dv_table_data));
+        add_struct(dv_struct, "data", newVal(BSQ, x, y, 1, DV_DOUBLE, dv_table_data));
     }
     else if (collective_type == 'i') {
         dv_table_data = calloc(x*y, sizeof(int));
@@ -452,7 +452,7 @@ static void get_data_for_table(Isis::Table t, Var * dv_struct) {
                 cur_fld = &(cur_rec[j]);
                 if (cur_fld->size() == 1) {
                     int int_store = int(*cur_fld);
-                    
+
                     memcpy((unsigned char *)(dv_table_data) + ((xpos+(i*x))*sizeof(int)), &int_store, sizeof(int));
                     xpos++;
                 }
@@ -462,7 +462,7 @@ static void get_data_for_table(Isis::Table t, Var * dv_struct) {
                 }
             }
         }
-        add_struct(dv_struct, "data", newVal(BSQ, x, y, 1, INT, dv_table_data));
+        add_struct(dv_struct, "data", newVal(BSQ, x, y, 1, DV_INT32, dv_table_data));
     }
     else if (collective_type == 'f') {
         dv_table_data = calloc(x*y, sizeof(float));
@@ -477,7 +477,7 @@ static void get_data_for_table(Isis::Table t, Var * dv_struct) {
                 cur_fld = &(cur_rec[j]);
                 if (cur_fld->size() == 1) {
                     float float_store = float(*cur_fld);
-                    
+
                     memcpy((unsigned char *)(dv_table_data) + ((xpos+(i*x))*sizeof(float)), &float_store, sizeof(float));
                     xpos++;
                 }
@@ -487,7 +487,7 @@ static void get_data_for_table(Isis::Table t, Var * dv_struct) {
                 }
             }
         }
-        add_struct(dv_struct, "data", newVal(BSQ, x, y, 1, FLOAT, dv_table_data));
+        add_struct(dv_struct, "data", newVal(BSQ, x, y, 1, DV_FLOAT, dv_table_data));
     }
     else if (collective_type == 'm') {
         add_struct(dv_struct, "data", newString(strdup("Mixed tables unimplemented.")));
@@ -650,7 +650,7 @@ read_isis3(FILE *fp, char *filename, int include_headers, int include_data, int 
     catch (Isis::IException &e) {
         delete cube;
         return NULL;
-    } 
+    }
     parse_error("Using ISIS3 API to read file '%s'.", filename);
     if (include_data) {
         x = (size_t)cube->sampleCount();
@@ -659,18 +659,18 @@ read_isis3(FILE *fp, char *filename, int include_headers, int include_data, int 
         brick = new Isis::Brick(*cube, x, 1, 1);
         switch (cube->pixelType()) {
           case (Isis::UnsignedByte):
-            fmt = BYTE;
-            size = sizeof(unsigned char);
+            fmt = DV_UINT8;
+            size = sizeof(u8);
             break;
           case (Isis::SignedWord):
-            fmt = SHORT;
-            size = sizeof(short);
+            fmt = DV_INT16;
+            size = sizeof(i16);
           case (Isis::Real):
-            fmt = FLOAT;
+            fmt = DV_FLOAT;
             size = sizeof(float);
             break;
           default:
-            fmt = FLOAT;
+            fmt = DV_FLOAT;
             size = sizeof(float);
             break;
         }
@@ -713,27 +713,27 @@ static QString dv_value_to_istring(Var * sdata, char * sname) {
         return QString(V_STRING(sdata));
       case ID_VAL:
         switch (V_FORMAT(sdata)) {
-          case BYTE:
-          case SHORT:
-          case INT:
+          case DV_UINT8:
+          case DV_INT16:
+          case DV_INT32:
+          case DV_INT64:
           case VAX_INTEGER:
-          case INT64:
               is = QString();
-              is.setNum((int)extract_int(sdata, 0));
+              is.setNum((int)extract_i64(sdata, 0));
               return is;
-          case FLOAT:
+          case DV_FLOAT:
           case VAX_FLOAT:
               fs = QString();
               fs.setNum(extract_float(sdata, 0));
               return fs;
-          case DOUBLE:
+          case DV_DOUBLE:
               ds = QString();
               ds.setNum(extract_double(sdata, 0));
               return ds;
         }
     }
     parse_error("Unknown keyword translation for davinci value '%s'", sname);
-    return QString("undefined");     
+    return QString("undefined");
 }
 
 static Isis::PvlKeyword * dv_value_to_isis_keyword(Var * sdata, char * sname) {
@@ -760,34 +760,34 @@ static Isis::PvlKeyword * dv_value_to_isis_keyword(Var * sdata, char * sname) {
             QString qs = QString();
             rtnobj = new Isis::PvlKeyword(QString(sname));
             switch (V_FORMAT(sdata)) {
-              case BYTE:
-              case SHORT:
-              case INT:
-              case VAX_INTEGER:
-              case INT64:
-                for (int i=0; i<GetX(sdata); i++) {
-                    qs.setNum(extract_int(sdata,i));
-                    rtnobj->addValue(qs);
-                }
-                break;
-              case FLOAT:
-              case VAX_FLOAT:
-                for (int i=0; i<GetX(sdata); i++) {
-                    qs.setNum(extract_float(sdata,i));
-                    rtnobj->addValue(qs);
-                }
-                break;
-              case DOUBLE:
-                for (int i=0; i<GetX(sdata); i++) {
-                    qs.setNum(extract_double(sdata, i));
-                    rtnobj->addValue(qs);
-                }
-                break;
-              default:
-                qs = "undefined";
-                rtnobj->addValue(qs);
-                parse_error("Unknown davinci format %i for '%s' value", V_FORMAT(sdata), sname);
-                break;
+            case DV_UINT8:
+            case DV_INT16:
+            case DV_INT32:
+            case DV_INT64:
+            case VAX_INTEGER:
+              for (int i=0; i<GetX(sdata); i++) {
+                  qs.setNum(extract_i64(sdata,i));
+                  rtnobj->addValue(qs);
+              }
+              break;
+            case DV_FLOAT:
+            case VAX_FLOAT:
+              for (int i=0; i<GetX(sdata); i++) {
+                  qs.setNum(extract_float(sdata,i));
+                  rtnobj->addValue(qs);
+              }
+              break;
+            case DV_DOUBLE:
+              for (int i=0; i<GetX(sdata); i++) {
+                  qs.setNum(extract_double(sdata, i));
+                  rtnobj->addValue(qs);
+              }
+              break;
+            default:
+              qs = "undefined";
+              rtnobj->addValue(qs);
+              parse_error("Unknown davinci format %i for '%s' value", V_FORMAT(sdata), sname);
+              break;
             }
         }
     }
@@ -1027,7 +1027,7 @@ static int get_size_from_fdef(char * fname, Var * fdef) {
         parse_error("Table field '%s' size definition cannot evaluate to integer. Assuming 1.", fname);
         return 1;
     }
-    return V_INT(size_fld);
+    return V_INT32(size_fld);
 }
 
 
@@ -1166,9 +1166,9 @@ static void set_i3_base_multi(Var * dv_obj, Isis::Cube * cube) {
                 find_struct(current_value, "Base", &base_v);
                 find_struct(current_value, "Multiplier", &multi_v);
                 if (base_v != NULL) base = V_DOUBLE(base_v);
-                if (V_FORMAT(base_v) != DOUBLE) parse_error("Warning: Base is not a double value, which is probably not what you want.");
+                if (V_FORMAT(base_v) != DV_DOUBLE) parse_error("Warning: Base is not a double value, which is probably not what you want.");
                 if (multi_v != NULL) multi = V_DOUBLE(multi_v);
-                if (V_FORMAT(multi_v) != DOUBLE) parse_error("Warning: Multiplier is not a double value, which is probably not what you want.");
+                if (V_FORMAT(multi_v) != DV_DOUBLE) parse_error("Warning: Multiplier is not a double value, which is probably not what you want.");
                 cube->setBaseMultiplier(base, multi);
             }
         }
@@ -1259,26 +1259,26 @@ static int convert_dv_to_isis3(Var * dv_obj, char * fn) {
     if (rtnval == 0) {
         // If we actually have a cube thing:
         if (cube_data != NULL) {
-    	    x = GetX(cube_data);
-	        y = GetY(cube_data);
-	        z = GetZ(cube_data);
+            x = GetX(cube_data);
+            y = GetY(cube_data);
+            z = GetZ(cube_data);
             cube = new Isis::Cube();
             cube->setLabelsAttached(1);
             cube->setFormat(Isis::Cube::Bsq);
             cube->setDimensions(x,y,z);
             if (descend) set_i3_base_multi(dv_obj, cube);
 
-            
+
             switch (V_FORMAT(cube_data)) {
-              case BYTE:
+              case DV_UINT8:
                 cube->setPixelType(Isis::UnsignedByte);
-                dsize = sizeof(unsigned char);
+                dsize = sizeof(u8);
                 break;
-              case SHORT:
+              case DV_INT16:
                 cube->setPixelType(Isis::SignedWord);
-                dsize = sizeof(short int);
+                dsize = sizeof(i16);
                 break;
-              case FLOAT:
+              case DV_FLOAT:
                 cube->setPixelType(Isis::Real);
                 dsize = sizeof(float);
                 break;

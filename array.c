@@ -87,10 +87,7 @@ Var* extract_array(Var* v, Range* r)
 	void* data;
 	int bytes, opt_bytes, opt_step;
 
-	/**
-	 ** fix up range values for use and do error detection.
-	 **/
-
+	// fix up range values for use and do error detection.
 	if (fixup_ranges(v, r, &rout) == 0) {
 		parse_error("Illegal range value.");
 		return (NULL);

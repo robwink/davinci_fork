@@ -3405,6 +3405,8 @@ Var* do_loadPDS4(vfuncptr func, char* filename, int use_names, int get_data)
 	 }
 	 */
 
+	printf("loading pds\n");
+
 	labelFile = dv_LoadXML(fname, use_names);
 
 	if (labelFile != NULL) {

@@ -45,9 +45,44 @@ const char* iom_EFORMAT2STR[] = {
     "VAX INTEGER",    "(invalid)", "VAX FLOAT",       "(invalid)", "(invalid)",       "(invalid)",
     "VAX DOUBLE"};
 
-const char* iom_FORMAT2STR[] = {0, "byte", "short", "int", "float", "double"};
-
 const char* iom_ORG2STR[] = {"bsq", "bil", "bip"};
+
+
+int iom_ifmt_size(int type)
+{
+	switch (type) {
+	case iom_BYTE:
+		return 1;
+
+	case iom_SHORT:
+		return 2;
+
+	case iom_INT:
+		return 4;
+
+	case iom_FLOAT:
+		return sizeof(float);
+
+	case iom_DOUBLE:
+		return sizeof(double);
+	default:
+		;
+	}
+}
+const char* iom_ifmt_to_str(int type)
+{
+	switch (type) {
+	case iom_BYTE: return "uint8";
+	case iom_SHORT: return "int16";
+	case iom_INT: return "int32";
+
+	case iom_FLOAT: return "float";
+	case iom_DOUBLE: return "double";
+	default:
+		;
+	}
+}
+
 
 FILE* iom_uncompress(FILE* fp, const char* fname);
 char* iom_expand_filename(const char* s);

@@ -544,7 +544,7 @@ int iom_WriteTIFF(char* filename, unsigned char* indata, struct iom_iheader* h, 
 		sample_fmt = SAMPLEFORMAT_IEEEFP;
 	} else {
 		if (iom_is_ok2print_errors()) {
-			fprintf(stderr, "Cannot write %s data in a TIFF file.\n", iom_FORMAT2STR[h->format]);
+			fprintf(stderr, "Cannot write %s data in a TIFF file.\n", iom_ifmt_to_str(h->format));
 		}
 		return 0;
 	}

@@ -189,7 +189,7 @@ int iom_WriteJPEG(char* filename, unsigned char* indata, struct iom_iheader* h, 
 
 	if (h->format != iom_BYTE) {
 		if (iom_is_ok2print_unsupp_errors()) {
-			fprintf(stderr, "Cannot write %s data in a JPEG file.\n", iom_FORMAT2STR[h->format]);
+			fprintf(stderr, "Cannot write %s data in a JPEG file.\n", iom_ifmt_to_str(h->format));
 		}
 		return 0;
 	}

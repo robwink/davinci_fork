@@ -71,10 +71,6 @@ typedef enum {
 #define iom_NBYTES(ef) ((ef) > 40 ? ((ef) - 40) : ((ef) > 30 ? ((ef) - 30) : ((ef) > 20 ? ((ef) - 20) : ((ef) > 10 ? ((ef) - 10) : (ef)))))
 
 
-/*
-** CAUTION:
-** iom_FORMAT2STR[] in iomedley.c depends upon these values
-*/
 //TODO(rswinkle): Not sure it's worth the effort (why on earth do we have an entirely separate type system
 // for iomedley?) but could try adding the new int types here as well
 typedef enum {
@@ -85,7 +81,11 @@ typedef enum {
 	iom_DOUBLE = 5
 } iom_idf;             /* davinci I/O internal data formats */
 
-#define iom_NBYTESI(ifmt) ((ifmt) == 5 ? 8 : ((ifmt) == 3 ? 4 : (ifmt)))
+
+int iom_ifmt_size(int type);
+const char* iom_ifmt_to_str(int type);
+
+#define iom_NBYTESI(ifmt) iom_ifmt_size(ifmt)
 
 /**
  ** Data axis order
@@ -106,7 +106,7 @@ typedef enum {
 } iom_order;
 
 #define iom_EFormat2Str(i)  iom_EFORMAT2STR[(i)]
-#define iom_Format2Str(i)   iom_FORMAT2STR[(i)]
+#define iom_Format2Str(i)   iom_ifmt_to_str(i)
 #define iom_Org2Str(i)      iom_ORG2STR[(i)]
 
 #define iom_GetSamples(s,org)   (s)[((org) == iom_BIP ? 1 : 0)]
@@ -115,7 +115,6 @@ typedef enum {
 
 extern int iom_orders[3][3];
 extern const char *iom_EFORMAT2STR[];
-extern const char *iom_FORMAT2STR[];
 extern const char *iom_ORG2STR[];
 /* extern int iom_VERBOSE; */
 

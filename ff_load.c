@@ -84,9 +84,7 @@ Var* do_load(char* filename, struct iom_iheader* h, int hdf_old)
 	Var* input = NULL;
 	char *p, *fname;
 
-	/**
-	 ** if open file fails, check for record suffix
-	 **/
+	// if open file fails, check for record suffix
 	fname = dv_locate_file(filename);
 	if (!file_exists(fname)) {
 		if ((p = strchr(filename, SPECPR_SUFFIX)) != NULL) {

@@ -22,7 +22,7 @@ int num_internal_funcs = sizeof(vfunclist)/sizeof(struct _vfuncptr);
 
 Var* V_func(const char* name, Var* arg)
 {
-	vfuncptr f;
+	vfuncptr f = NULL;
 	UFUNC *uf, *locate_ufunc(const char *);
 #ifdef INCLUDE_API
 	APIDEFS* api;
