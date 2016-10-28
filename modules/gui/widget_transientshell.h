@@ -22,10 +22,9 @@
  *
  *****************************************************************************/
 
-int		gui_isTransientShell(const char *);
-WidgetClass	gui_getTransientShellClass(void);
-Widget		gui_initTransientShell(const char *, WidgetClass, Widget,
-				      Var *, void **, Narray *, Widget *);
-Narray *	gui_getTransientShellPublicResources(void);
+int gui_isTransientShell(const char*);
+WidgetClass gui_getTransientShellClass(void);
+Widget gui_initTransientShell(const char*, WidgetClass, Widget, Var*, void**, Narray*, Widget*);
+Narray* gui_getTransientShellPublicResources(void);
 
 #endif /* DV_WIDGET_TRANSIENTSHELL_H */

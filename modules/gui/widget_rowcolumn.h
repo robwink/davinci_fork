@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_ROWCOLUMN_H
 #define DV_WIDGET_ROWCOLUMN_H
 
-#include <Xm/RowColumn.h>
 #include "gui.h"
+#include <Xm/RowColumn.h>
 
 /*****************************************************************************
  *
@@ -23,9 +23,9 @@
  *
  *****************************************************************************/
 
-int		gui_isRowColumn(const char *);
-WidgetClass	gui_getRowColumnClass(void);
-CallbackList	gui_getRowColumnCallbacks(void);
-Narray *	gui_getRowColumnPublicResources(void);
+int gui_isRowColumn(const char*);
+WidgetClass gui_getRowColumnClass(void);
+CallbackList gui_getRowColumnCallbacks(void);
+Narray* gui_getRowColumnPublicResources(void);
 
 #endif /* DV_WIDGET_ROWCOLUMN_H */

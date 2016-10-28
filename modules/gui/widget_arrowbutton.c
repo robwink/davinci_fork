@@ -25,24 +25,10 @@
  *
  *****************************************************************************/
 
-static CallbackEntry arrowButtonCallbacks[] = {
-  {
-    "arm",
-    XmNarmCallback,
-    gui_defaultCallback
-  },
-  {
-    "activate",
-    XmNactivateCallback,
-    gui_defaultCallback
-  },
-  {
-    "disarm",
-    XmNdisarmCallback,
-    gui_defaultCallback
-  },
-  { NULL, NULL, NULL }
-};
+static CallbackEntry arrowButtonCallbacks[] = {{"arm", XmNarmCallback, gui_defaultCallback},
+                                               {"activate", XmNactivateCallback, gui_defaultCallback},
+                                               {"disarm", XmNdisarmCallback, gui_defaultCallback},
+                                               {NULL, NULL, NULL}};
 
 /*****************************************************************************
  *
@@ -50,8 +36,8 @@ static CallbackEntry arrowButtonCallbacks[] = {
  *
  *****************************************************************************/
 
-static const char *arrowButtonPublicResources[] = {
-  "arrowDirection",
+static const char* arrowButtonPublicResources[] = {
+    "arrowDirection",
 };
 
 /*****************************************************************************
@@ -60,42 +46,37 @@ static const char *arrowButtonPublicResources[] = {
  *
  *****************************************************************************/
 
-int
-gui_isArrowButton(const char *name)
+int gui_isArrowButton(const char* name)
 {
-  const char *aliases[] = { "arrowbutton", "xmArrowButtonWidgetClass", NULL };
-  return gui_isDefault(aliases, name);
+	const char* aliases[] = {"arrowbutton", "xmArrowButtonWidgetClass", NULL};
+	return gui_isDefault(aliases, name);
 }
 
-WidgetClass
-gui_getArrowButtonClass(void)
+WidgetClass gui_getArrowButtonClass(void)
 {
-  return xmArrowButtonWidgetClass;
+	return xmArrowButtonWidgetClass;
 }
 
-CallbackList
-gui_getArrowButtonCallbacks(void)
+CallbackList gui_getArrowButtonCallbacks(void)
 {
-  return arrowButtonCallbacks;
+	return arrowButtonCallbacks;
 }
 
-Narray *
-gui_getArrowButtonPublicResources()
+Narray* gui_getArrowButtonPublicResources()
 {
 
-  Narray	*resArrowButton;
-  int		i, num;
+	Narray* resArrowButton;
+	int i, num;
 
 #if DEBUG
-  fprintf(stderr, "DEBUG: gui_getArrowButtonPublicResources()\n");
+	fprintf(stderr, "DEBUG: gui_getArrowButtonPublicResources()\n");
 #endif
 
-  num = sizeof(arrowButtonPublicResources) / sizeof(arrowButtonPublicResources[0]);
-  resArrowButton = Narray_create(num);
-  for (i = 0; i < num; i++) {
-    Narray_add(resArrowButton, (char *) arrowButtonPublicResources[i], NULL);
-  }
+	num            = sizeof(arrowButtonPublicResources) / sizeof(arrowButtonPublicResources[0]);
+	resArrowButton = Narray_create(num);
+	for (i = 0; i < num; i++) {
+		Narray_add(resArrowButton, (char*)arrowButtonPublicResources[i], NULL);
+	}
 
-  return resArrowButton;
-
+	return resArrowButton;
 }

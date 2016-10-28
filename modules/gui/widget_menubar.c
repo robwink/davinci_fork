@@ -33,25 +33,20 @@
  *
  *****************************************************************************/
 
-int
-gui_isMenuBar(const char *name)
+int gui_isMenuBar(const char* name)
 {
-  const char *aliases[] = { "menubar", "xmMenuBarWidgetClass", NULL };
-  return gui_isDefault(aliases, name);
+	const char* aliases[] = {"menubar", "xmMenuBarWidgetClass", NULL};
+	return gui_isDefault(aliases, name);
 }
 
-Widget
-gui_initMenuBar (const char *dvName, WidgetClass class, Widget parent,
-	Var *dvResources, void **instanceData,
-	Narray *publicResources, Widget *outerWidget)
+Widget gui_initMenuBar(const char* dvName, WidgetClass class, Widget parent, Var* dvResources,
+                       void** instanceData, Narray* publicResources, Widget* outerWidget)
 {
 	return XmCreateMenuBar(parent, (char*)dvName, NULL, 0);
 }
 
-WidgetClass
-gui_getMenuBarClass(void)
+WidgetClass gui_getMenuBarClass(void)
 {
 	// return xmMenuBarWidgetClass;
 	return xmRowColumnWidgetClass;
 }
-

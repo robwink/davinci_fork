@@ -44,24 +44,21 @@ static const char *framePublicResources[] = {
  *
  *****************************************************************************/
 
-int
-gui_isFrame(const char *name)
+int gui_isFrame(const char* name)
 {
-  const char *aliases[] = { "frame", "xmFrameWidgetClass", NULL };
-  return gui_isDefault(aliases, name);
+	const char* aliases[] = {"frame", "xmFrameWidgetClass", NULL};
+	return gui_isDefault(aliases, name);
 }
 
-WidgetClass
-gui_getFrameClass(void)
+WidgetClass gui_getFrameClass(void)
 {
-  return xmFrameWidgetClass;
+	return xmFrameWidgetClass;
 }
 
-Narray *
-gui_getFramePublicResources()
+Narray* gui_getFramePublicResources()
 {
 
-  return Narray_create(0);
+	return Narray_create(0);
 
 #if 0
   Narray	*resList;
@@ -75,5 +72,4 @@ gui_getFramePublicResources()
 
   return resList;
 #endif
-
 }

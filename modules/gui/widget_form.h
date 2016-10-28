@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_FORM_H
 #define DV_WIDGET_FORM_H
 
-#include <Xm/Form.h>
 #include "gui.h"
+#include <Xm/Form.h>
 
 /*****************************************************************************
  *
@@ -23,7 +23,7 @@
  *
  *****************************************************************************/
 
-int		gui_isForm(const char *);
-WidgetClass	gui_getFormClass(void);
+int gui_isForm(const char*);
+WidgetClass gui_getFormClass(void);
 
 #endif /* DV_WIDGET_FORM_H */

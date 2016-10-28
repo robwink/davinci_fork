@@ -1,6 +1,6 @@
-#include "parser.h"
-#include "ff_modules.h"
 #include "dvio.h"
+#include "ff_modules.h"
+#include "parser.h"
 
 #define XAXIS 1;
 #define YAXIS 2;
@@ -187,8 +187,9 @@ Var* thm_deplaid(vfuncptr func, Var* arg)
 	alist[4] = make_alist("filt_len", DV_INT32, NULL, &filt_len);
 	alist[5] = make_alist("b10", DV_INT32, NULL, &b10);
 	alist[6] = make_alist("dump", DV_INT32, NULL, &dump);
-	alist[7] = make_alist("null", DV_FLOAT, NULL, &nullval); // can be removed when all legacy programs are dead
-	alist[8] = make_alist("axis", ID_ENUM, options, &ptr);
+	alist[7] = make_alist("null", DV_FLOAT, NULL,
+	                      &nullval); // can be removed when all legacy programs are dead
+	alist[8]      = make_alist("axis", ID_ENUM, options, &ptr);
 	alist[9].name = NULL;
 
 	if (parse_args(func, arg, alist) == 0) return (NULL);
@@ -999,8 +1000,7 @@ Var* thm_rectify(vfuncptr func, Var* arg)
 				/* I removed this condition (leftmost[j] != x-1 && i + leftmost[j] < x) from the
 				 * following if statement */
 				// don't have to check nu and nx >= 0 because they're size_t, an unsigned type
-				if (nu < y && nx < x &&
-				    (yiz = extract_float(obj, cpos(nx, nu, k, obj))) != nullo) {
+				if (nu < y && nx < x && (yiz = extract_float(obj, cpos(nx, nu, k, obj))) != nullo) {
 					pic[k * u * width + j * width + i] = yiz;
 				}
 			}

@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_FRAME_H
 #define DV_WIDGET_FRAME_H
 
-#include <Xm/Frame.h>
 #include "gui.h"
+#include <Xm/Frame.h>
 
 /*****************************************************************************
  *
@@ -23,8 +23,8 @@
  *
  *****************************************************************************/
 
-int		gui_isFrame(const char *);
-WidgetClass	gui_getFrameClass(void);
-Narray *	gui_getFramePublicResources(void);
+int gui_isFrame(const char*);
+WidgetClass gui_getFrameClass(void);
+Narray* gui_getFramePublicResources(void);
 
 #endif /* DV_WIDGET_FRAME_H */

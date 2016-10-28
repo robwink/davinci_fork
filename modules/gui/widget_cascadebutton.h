@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_CASCADEBUTTON_H
 #define DV_WIDGET_CASCADEBUTTON_H
 
-#include <Xm/CascadeB.h>
 #include "gui.h"
+#include <Xm/CascadeB.h>
 
 /*****************************************************************************
  *
@@ -23,9 +23,9 @@
  *
  *****************************************************************************/
 
-int		gui_isCascadeButton(const char *);
-WidgetClass	gui_getCascadeButtonClass(void);
-CallbackList	gui_getCascadeButtonCallbacks(void);
-Narray *	gui_getCascadeButtonPublicResources(void);
+int gui_isCascadeButton(const char*);
+WidgetClass gui_getCascadeButtonClass(void);
+CallbackList gui_getCascadeButtonCallbacks(void);
+Narray* gui_getCascadeButtonPublicResources(void);
 
 #endif /* DV_WIDGET_CASCADEBUTTON_H */

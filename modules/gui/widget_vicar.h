@@ -26,15 +26,14 @@
  *
  *****************************************************************************/
 
-int		gui_isVicar(const char *);
-Widget		gui_initVicar(const char *, WidgetClass, Widget,
-			      Var *, void **, Narray *, Widget *);
-void		gui_destroyVicar(Widget, void *);
-WidgetClass	gui_getVicarClass(void);
-CallbackList	gui_getVicarCallbacks(void);
-void		gui_getVicarPseudoResources(Widget, Var *);
-void		gui_setVicarPseudoResources(Widget, Var *, Narray *);
-Narray *	gui_getVicarPublicResources(void);
+int gui_isVicar(const char*);
+Widget gui_initVicar(const char*, WidgetClass, Widget, Var*, void**, Narray*, Widget*);
+void gui_destroyVicar(Widget, void*);
+WidgetClass gui_getVicarClass(void);
+CallbackList gui_getVicarCallbacks(void);
+void gui_getVicarPseudoResources(Widget, Var*);
+void gui_setVicarPseudoResources(Widget, Var*, Narray*);
+Narray* gui_getVicarPublicResources(void);
 
 /* Data types. */
 

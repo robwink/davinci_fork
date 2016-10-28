@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_DRAWNBUTTON_H
 #define DV_WIDGET_DRAWNBUTTON_H
 
-#include <Xm/DrawnB.h>
 #include "gui.h"
+#include <Xm/DrawnB.h>
 
 /*****************************************************************************
  *
@@ -23,8 +23,8 @@
  *
  *****************************************************************************/
 
-int		gui_isDrawnButton(const char *);
-WidgetClass	gui_getDrawnButtonClass(void);
-CallbackList	gui_getDrawnButtonCallbacks(void);
+int gui_isDrawnButton(const char*);
+WidgetClass gui_getDrawnButtonClass(void);
+CallbackList gui_getDrawnButtonCallbacks(void);
 
 #endif /* DV_WIDGET_DRAWNBUTTON_H */

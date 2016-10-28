@@ -22,10 +22,9 @@
  *
  *****************************************************************************/
 
-int		gui_isTopLevelShell(const char *);
-WidgetClass	gui_getTopLevelShellClass(void);
-Widget		gui_initTopLevelShell(const char *, WidgetClass, Widget,
-				      Var *, void **, Narray *, Widget *);
-Narray *	gui_getTopLevelShellPublicResources(void);
+int gui_isTopLevelShell(const char*);
+WidgetClass gui_getTopLevelShellClass(void);
+Widget gui_initTopLevelShell(const char*, WidgetClass, Widget, Var*, void**, Narray*, Widget*);
+Narray* gui_getTopLevelShellPublicResources(void);
 
 #endif /* DV_WIDGET_TOPLEVELSHELL_H */

@@ -1,6 +1,6 @@
-#include "parser.h"
-#include "ff_modules.h"
 #include "dvio.h"
+#include "ff_modules.h"
+#include "parser.h"
 
 typedef struct {
 	float* emiss;
@@ -4888,4 +4888,3 @@ Var* kjn_deplaid2(vfuncptr func, Var* arg)
 	out = newVal(BSQ, x, y, z, DV_FLOAT, rdata);
 	return out;
 }
-

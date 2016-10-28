@@ -25,19 +25,9 @@
  *
  *****************************************************************************/
 
-static CallbackEntry cascadeButtonCallbacks[] = {
-  {
-    "activate",
-    XmNactivateCallback,
-    gui_defaultCallback
-  },
-  {
-    "cascading",
-    XmNcascadingCallback,
-    gui_defaultCallback
-  },
-  { NULL, NULL, NULL }
-};
+static CallbackEntry cascadeButtonCallbacks[] = {{"activate", XmNactivateCallback, gui_defaultCallback},
+                                                 {"cascading", XmNcascadingCallback, gui_defaultCallback},
+                                                 {NULL, NULL, NULL}};
 
 /*****************************************************************************
  *
@@ -45,8 +35,8 @@ static CallbackEntry cascadeButtonCallbacks[] = {
  *
  *****************************************************************************/
 
-static const char *cascadeButtonPublicResources[] = {
-  "subMenuId",
+static const char* cascadeButtonPublicResources[] = {
+    "subMenuId",
 };
 
 /*****************************************************************************
@@ -55,42 +45,37 @@ static const char *cascadeButtonPublicResources[] = {
  *
  *****************************************************************************/
 
-int
-gui_isCascadeButton(const char *name)
+int gui_isCascadeButton(const char* name)
 {
-  const char *aliases[] = { "cascadebutton", "xmCascadeButtonWidgetClass", NULL };
-  return gui_isDefault(aliases, name);
+	const char* aliases[] = {"cascadebutton", "xmCascadeButtonWidgetClass", NULL};
+	return gui_isDefault(aliases, name);
 }
 
-WidgetClass
-gui_getCascadeButtonClass(void)
+WidgetClass gui_getCascadeButtonClass(void)
 {
-  return xmCascadeButtonWidgetClass;
+	return xmCascadeButtonWidgetClass;
 }
 
-CallbackList
-gui_getCascadeButtonCallbacks(void)
+CallbackList gui_getCascadeButtonCallbacks(void)
 {
-  return cascadeButtonCallbacks;
+	return cascadeButtonCallbacks;
 }
 
-Narray *
-gui_getCascadeButtonPublicResources()
+Narray* gui_getCascadeButtonPublicResources()
 {
 
-  Narray	*resCascadeButton;
-  int		i, num;
+	Narray* resCascadeButton;
+	int i, num;
 
 #if DEBUG
-  fprintf(stderr, "DEBUG: gui_getCascadeButtonPublicResources()\n");
+	fprintf(stderr, "DEBUG: gui_getCascadeButtonPublicResources()\n");
 #endif
 
-  num = sizeof(cascadeButtonPublicResources) / sizeof(cascadeButtonPublicResources[0]);
-  resCascadeButton = Narray_create(num);
-  for (i = 0; i < num; i++) {
-    Narray_add(resCascadeButton, (char *) cascadeButtonPublicResources[i], NULL);
-  }
+	num = sizeof(cascadeButtonPublicResources) / sizeof(cascadeButtonPublicResources[0]);
+	resCascadeButton = Narray_create(num);
+	for (i = 0; i < num; i++) {
+		Narray_add(resCascadeButton, (char*)cascadeButtonPublicResources[i], NULL);
+	}
 
-  return resCascadeButton;
-
+	return resCascadeButton;
 }

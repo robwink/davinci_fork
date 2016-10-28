@@ -33,8 +33,8 @@
  *
  *****************************************************************************/
 
-static const char *separatorPublicResources[] = {
-  "orientation", "separatorType",
+static const char* separatorPublicResources[] = {
+    "orientation", "separatorType",
 };
 
 /*****************************************************************************
@@ -43,32 +43,28 @@ static const char *separatorPublicResources[] = {
  *
  *****************************************************************************/
 
-int
-gui_isSeparator(const char *name)
+int gui_isSeparator(const char* name)
 {
-  const char *aliases[] = { "separator", "xmSeparatorWidgetClass", NULL };
-  return gui_isDefault(aliases, name);
+	const char* aliases[] = {"separator", "xmSeparatorWidgetClass", NULL};
+	return gui_isDefault(aliases, name);
 }
 
-WidgetClass
-gui_getSeparatorClass(void)
+WidgetClass gui_getSeparatorClass(void)
 {
-  return xmSeparatorWidgetClass;
+	return xmSeparatorWidgetClass;
 }
 
-Narray *
-gui_getSeparatorPublicResources()
+Narray* gui_getSeparatorPublicResources()
 {
 
-  Narray	*resList;
-  int		i, num;
+	Narray* resList;
+	int i, num;
 
-  num = sizeof(separatorPublicResources) / sizeof(separatorPublicResources[0]);
-  resList = Narray_create(num);
-  for (i = 0; i < num; i++) {
-    Narray_add(resList, (char *) separatorPublicResources[i], NULL);
-  }
+	num     = sizeof(separatorPublicResources) / sizeof(separatorPublicResources[0]);
+	resList = Narray_create(num);
+	for (i = 0; i < num; i++) {
+		Narray_add(resList, (char*)separatorPublicResources[i], NULL);
+	}
 
-  return resList;
-
+	return resList;
 }

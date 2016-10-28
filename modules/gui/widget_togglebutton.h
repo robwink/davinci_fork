@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_TOGGLEBUTTON_H
 #define DV_WIDGET_TOGGLEBUTTON_H
 
-#include <Xm/ToggleB.h>
 #include "gui.h"
+#include <Xm/ToggleB.h>
 
 /*****************************************************************************
  *
@@ -23,9 +23,9 @@
  *
  *****************************************************************************/
 
-int		gui_isToggleButton(const char *);
-WidgetClass	gui_getToggleButtonClass(void);
-CallbackList	gui_getToggleButtonCallbacks(void);
-Narray *	gui_getToggleButtonPublicResources(void);
+int gui_isToggleButton(const char*);
+WidgetClass gui_getToggleButtonClass(void);
+CallbackList gui_getToggleButtonCallbacks(void);
+Narray* gui_getToggleButtonPublicResources(void);
 
 #endif /* DV_WIDGET_TOGGLEBUTTON_H */

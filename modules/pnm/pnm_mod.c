@@ -2,9 +2,9 @@
 //
 // Port of the PNM suite of utilities for davinci
 //
+#include "ff_modules.h"
 #include "help.h"
 #include "parser.h"
-#include "ff_modules.h"
 
 // Main functions - Static so can't be extern'd
 static Var* ff_pnmcut(vfuncptr f, Var* args);
@@ -828,4 +828,3 @@ void print_destripe_usage(void)
 	printf("VERTICAL striping - i.e., the data should be in the aquired\n");
 	printf("format (horizontal strips).\n\n");
 }
-

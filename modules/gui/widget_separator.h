@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_SEPARATOR_H
 #define DV_WIDGET_SEPARATOR_H
 
-#include <Xm/Separator.h>
 #include "gui.h"
+#include <Xm/Separator.h>
 
 /*****************************************************************************
  *
@@ -23,8 +23,8 @@
  *
  *****************************************************************************/
 
-int		gui_isSeparator(const char *);
-WidgetClass	gui_getSeparatorClass(void);
-Narray *	gui_getSeparatorPublicResources(void);
+int gui_isSeparator(const char*);
+WidgetClass gui_getSeparatorClass(void);
+Narray* gui_getSeparatorPublicResources(void);
 
 #endif /* DV_WIDGET_SEPARATOR_H */

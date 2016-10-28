@@ -26,9 +26,8 @@
  *****************************************************************************/
 
 static CallbackEntry scrolledWindowCallbacks[] = {
-  { "traverseObscured",	XmNtraverseObscuredCallback,	gui_defaultCallback },
-  { NULL,		NULL,				NULL		    }
-};
+    {"traverseObscured", XmNtraverseObscuredCallback, gui_defaultCallback},
+    {NULL, NULL, NULL}};
 
 /*****************************************************************************
  *
@@ -36,8 +35,8 @@ static CallbackEntry scrolledWindowCallbacks[] = {
  *
  *****************************************************************************/
 
-static const char *scrolledWindowPublicResources[] = {
-  "scrollBarDisplayPolicy", "scrollBarPlacement",
+static const char* scrolledWindowPublicResources[] = {
+    "scrollBarDisplayPolicy", "scrollBarPlacement",
 };
 
 /*****************************************************************************
@@ -46,38 +45,33 @@ static const char *scrolledWindowPublicResources[] = {
  *
  *****************************************************************************/
 
-int
-gui_isScrolledWindow(const char *name)
+int gui_isScrolledWindow(const char* name)
 {
-  const char *aliases[] = { "scrolledwindow", "xmScrolledWindowWidgetClass", NULL };
-  return gui_isDefault(aliases, name);
+	const char* aliases[] = {"scrolledwindow", "xmScrolledWindowWidgetClass", NULL};
+	return gui_isDefault(aliases, name);
 }
 
-WidgetClass
-gui_getScrolledWindowClass(void)
+WidgetClass gui_getScrolledWindowClass(void)
 {
-  return xmScrolledWindowWidgetClass;
+	return xmScrolledWindowWidgetClass;
 }
 
-CallbackList
-gui_getScrolledWindowCallbacks(void)
+CallbackList gui_getScrolledWindowCallbacks(void)
 {
-  return scrolledWindowCallbacks;
+	return scrolledWindowCallbacks;
 }
 
-Narray *
-gui_getScrolledWindowPublicResources()
+Narray* gui_getScrolledWindowPublicResources()
 {
 
-  Narray	*resList;
-  int		i, num;
+	Narray* resList;
+	int i, num;
 
-  num = sizeof(scrolledWindowPublicResources) / sizeof(scrolledWindowPublicResources[0]);
-  resList = Narray_create(num);
-  for (i = 0; i < num; i++) {
-    Narray_add(resList, (char *) scrolledWindowPublicResources[i], NULL);
-  }
+	num     = sizeof(scrolledWindowPublicResources) / sizeof(scrolledWindowPublicResources[0]);
+	resList = Narray_create(num);
+	for (i = 0; i < num; i++) {
+		Narray_add(resList, (char*)scrolledWindowPublicResources[i], NULL);
+	}
 
-  return resList;
-
+	return resList;
 }

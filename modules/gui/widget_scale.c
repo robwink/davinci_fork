@@ -25,11 +25,9 @@
  *
  *****************************************************************************/
 
-static CallbackEntry scaleCallbacks[] = {
-  { "drag",		XmNdragCallback,		gui_defaultCallback },
-  { "valueChanged",	XmNvalueChangedCallback,	gui_defaultCallback },
-  { NULL,		NULL,				NULL 		    }
-};
+static CallbackEntry scaleCallbacks[] = {{"drag", XmNdragCallback, gui_defaultCallback},
+                                         {"valueChanged", XmNvalueChangedCallback, gui_defaultCallback},
+                                         {NULL, NULL, NULL}};
 
 /*****************************************************************************
  *
@@ -37,9 +35,9 @@ static CallbackEntry scaleCallbacks[] = {
  *
  *****************************************************************************/
 
-static const char *scalePublicResources[] = {
-  "decimalPoints", "maximum", "minimum", "orientation", "processingDirection",
-  "showValue", "titleString", "value",
+static const char* scalePublicResources[] = {
+    "decimalPoints",       "maximum",   "minimum",     "orientation",
+    "processingDirection", "showValue", "titleString", "value",
 };
 
 /*****************************************************************************
@@ -48,38 +46,33 @@ static const char *scalePublicResources[] = {
  *
  *****************************************************************************/
 
-int
-gui_isScale(const char *name)
+int gui_isScale(const char* name)
 {
-  const char *aliases[] = { "scale", "xmScaleWidgetClass", NULL };
-  return gui_isDefault(aliases, name);
+	const char* aliases[] = {"scale", "xmScaleWidgetClass", NULL};
+	return gui_isDefault(aliases, name);
 }
 
-WidgetClass
-gui_getScaleClass(void)
+WidgetClass gui_getScaleClass(void)
 {
-  return xmScaleWidgetClass;
+	return xmScaleWidgetClass;
 }
 
-CallbackList
-gui_getScaleCallbacks(void)
+CallbackList gui_getScaleCallbacks(void)
 {
-  return scaleCallbacks;
+	return scaleCallbacks;
 }
 
-Narray *
-gui_getScalePublicResources()
+Narray* gui_getScalePublicResources()
 {
 
-  Narray	*resList;
-  int		i, num;
+	Narray* resList;
+	int i, num;
 
-  num = sizeof(scalePublicResources) / sizeof(scalePublicResources[0]);
-  resList = Narray_create(num);
-  for (i = 0; i < num; i++) {
-    Narray_add(resList, (char *) scalePublicResources[i], NULL);
-  }
+	num     = sizeof(scalePublicResources) / sizeof(scalePublicResources[0]);
+	resList = Narray_create(num);
+	for (i = 0; i < num; i++) {
+		Narray_add(resList, (char*)scalePublicResources[i], NULL);
+	}
 
-  return resList;
-
+	return resList;
 }

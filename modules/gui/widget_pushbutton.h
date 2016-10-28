@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_PUSHBUTTON_H
 #define DV_WIDGET_PUSHBUTTON_H
 
-#include <Xm/PushB.h>
 #include "gui.h"
+#include <Xm/PushB.h>
 
 /*****************************************************************************
  *
@@ -23,9 +23,9 @@
  *
  *****************************************************************************/
 
-int		gui_isPushButton(const char *);
-WidgetClass	gui_getPushButtonClass(void);
-CallbackList	gui_getPushButtonCallbacks(void);
-Narray *	gui_getPushButtonPublicResources(void);
+int gui_isPushButton(const char*);
+WidgetClass gui_getPushButtonClass(void);
+CallbackList gui_getPushButtonCallbacks(void);
+Narray* gui_getPushButtonPublicResources(void);
 
 #endif /* DV_WIDGET_PUSHBUTTON_H */

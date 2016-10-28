@@ -23,8 +23,8 @@
  *
  *****************************************************************************/
 
-int			gui_isMenuBar(const char *);
-Widget		gui_initMenuBar(const char *, WidgetClass, Widget, Var *, void **, Narray *, Widget *);
-WidgetClass	gui_getMenuBarClass(void);
+int gui_isMenuBar(const char*);
+Widget gui_initMenuBar(const char*, WidgetClass, Widget, Var*, void**, Narray*, Widget*);
+WidgetClass gui_getMenuBarClass(void);
 
 #endif /* DV_WIDGET_MENUBAR_H */

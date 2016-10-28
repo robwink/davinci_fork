@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_LABEL_H
 #define DV_WIDGET_LABEL_H
 
-#include <Xm/Label.h>
 #include "gui.h"
+#include <Xm/Label.h>
 
 /*****************************************************************************
  *
@@ -23,8 +23,8 @@
  *
  *****************************************************************************/
 
-int		gui_isLabel(const char *);
-WidgetClass	gui_getLabelClass(void);
-Narray *	gui_getLabelPublicResources(void);
+int gui_isLabel(const char*);
+WidgetClass gui_getLabelClass(void);
+Narray* gui_getLabelPublicResources(void);
 
 #endif /* DV_WIDGET_LABEL_H */

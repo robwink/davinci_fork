@@ -33,8 +33,8 @@
  *
  *****************************************************************************/
 
-static const char *panedWindowPublicResources[] = {
-  "separatorOn",
+static const char* panedWindowPublicResources[] = {
+    "separatorOn",
 };
 
 /*****************************************************************************
@@ -43,32 +43,28 @@ static const char *panedWindowPublicResources[] = {
  *
  *****************************************************************************/
 
-int
-gui_isPanedWindow(const char *name)
+int gui_isPanedWindow(const char* name)
 {
-  const char *aliases[] = { "panedWindow", "xmPanedWindowWidgetClass", NULL };
-  return gui_isDefault(aliases, name);
+	const char* aliases[] = {"panedWindow", "xmPanedWindowWidgetClass", NULL};
+	return gui_isDefault(aliases, name);
 }
 
-WidgetClass
-gui_getPanedWindowClass(void)
+WidgetClass gui_getPanedWindowClass(void)
 {
-  return xmPanedWindowWidgetClass;
+	return xmPanedWindowWidgetClass;
 }
 
-Narray *
-gui_getPanedWindowPublicResources()
+Narray* gui_getPanedWindowPublicResources()
 {
 
-  Narray	*resList;
-  int		i, num;
+	Narray* resList;
+	int i, num;
 
-  num = sizeof(panedWindowPublicResources) / sizeof(panedWindowPublicResources[0]);
-  resList = Narray_create(num);
-  for (i = 0; i < num; i++) {
-    Narray_add(resList, (char *) panedWindowPublicResources[i], NULL);
-  }
+	num     = sizeof(panedWindowPublicResources) / sizeof(panedWindowPublicResources[0]);
+	resList = Narray_create(num);
+	for (i = 0; i < num; i++) {
+		Narray_add(resList, (char*)panedWindowPublicResources[i], NULL);
+	}
 
-  return resList;
-
+	return resList;
 }

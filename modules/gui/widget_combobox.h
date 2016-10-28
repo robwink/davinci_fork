@@ -14,9 +14,9 @@
 #ifndef DV_WIDGET_COMBOBOX_H
 #define DV_WIDGET_COMBOBOX_H
 
-#include <Xm/Xm.h>			/* necessary addition for solaris.  */
-#include <Xm/ComboBox.h>
 #include "gui.h"
+#include <Xm/ComboBox.h>
+#include <Xm/Xm.h> /* necessary addition for solaris.  */
 
 /*****************************************************************************
  *
@@ -24,8 +24,8 @@
  *
  *****************************************************************************/
 
-int				gui_isComboBox(const char *);
-WidgetClass		gui_getComboBoxClass(void);
-CallbackList	gui_getComboBoxCallbacks(void);
+int gui_isComboBox(const char*);
+WidgetClass gui_getComboBoxClass(void);
+CallbackList gui_getComboBoxCallbacks(void);
 
 #endif /* DV_WIDGET_COMBOBOX_H */

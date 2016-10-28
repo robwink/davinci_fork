@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_SCROLLBAR_H
 #define DV_WIDGET_SCROLLBAR_H
 
-#include <Xm/ScrollBar.h>
 #include "gui.h"
+#include <Xm/ScrollBar.h>
 
 /*****************************************************************************
  *
@@ -23,8 +23,8 @@
  *
  *****************************************************************************/
 
-int		gui_isScrollBar(const char *);
-WidgetClass	gui_getScrollBarClass(void);
-CallbackList	gui_getScrollBarCallbacks(void);
+int gui_isScrollBar(const char*);
+WidgetClass gui_getScrollBarClass(void);
+CallbackList gui_getScrollBarCallbacks(void);
 
 #endif /* DV_WIDGET_SCROLLBAR_H */

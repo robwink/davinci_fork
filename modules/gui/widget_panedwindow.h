@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_PANEDWINDOW_H
 #define DV_WIDGET_PANEDWINDOW_H
 
-#include <Xm/PanedW.h>
 #include "gui.h"
+#include <Xm/PanedW.h>
 
 /*****************************************************************************
  *
@@ -23,8 +23,8 @@
  *
  *****************************************************************************/
 
-int		gui_isPanedWindow(const char *);
-WidgetClass	gui_getPanedWindowClass(void);
-Narray *	gui_getPanedWindowPublicResources(void);
+int gui_isPanedWindow(const char*);
+WidgetClass gui_getPanedWindowClass(void);
+Narray* gui_getPanedWindowPublicResources(void);
 
 #endif /* DV_WIDGET_PANEDWINDOW_H */

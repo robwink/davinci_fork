@@ -26,33 +26,12 @@
  *****************************************************************************/
 
 static CallbackEntry textFieldCallbacks[] = {
-  {
-    "activate",
-    XmNactivateCallback,
-    gui_defaultCallback
-  },
-  {
-    "focus",
-    XmNfocusCallback,
-    gui_defaultCallback
-  },
-  {
-    "losingFocus",
-    XmNlosingFocusCallback,
-    gui_defaultCallback
-  },
-  {
-    "modifyVerify",
-    XmNmodifyVerifyCallback,
-    gui_defaultCallback
-  },
-  {
-    "valueChanged",
-    XmNvalueChangedCallback,
-    gui_defaultCallback
-  },
-  { NULL, NULL, NULL }
-};
+    {"activate", XmNactivateCallback, gui_defaultCallback},
+    {"focus", XmNfocusCallback, gui_defaultCallback},
+    {"losingFocus", XmNlosingFocusCallback, gui_defaultCallback},
+    {"modifyVerify", XmNmodifyVerifyCallback, gui_defaultCallback},
+    {"valueChanged", XmNvalueChangedCallback, gui_defaultCallback},
+    {NULL, NULL, NULL}};
 
 /*****************************************************************************
  *
@@ -60,8 +39,8 @@ static CallbackEntry textFieldCallbacks[] = {
  *
  *****************************************************************************/
 
-static const char *textFieldPublicResources[] = {
-  "value", "cursorPosition", "columns", "editable",
+static const char* textFieldPublicResources[] = {
+    "value", "cursorPosition", "columns", "editable",
 };
 
 /*****************************************************************************
@@ -70,38 +49,33 @@ static const char *textFieldPublicResources[] = {
  *
  *****************************************************************************/
 
-int
-gui_isTextField(const char *name)
+int gui_isTextField(const char* name)
 {
-  const char *aliases[] = { "textfield", "xmTextFieldWidgetClass", NULL };
-  return gui_isDefault(aliases, name);
+	const char* aliases[] = {"textfield", "xmTextFieldWidgetClass", NULL};
+	return gui_isDefault(aliases, name);
 }
 
-WidgetClass
-gui_getTextFieldClass(void)
+WidgetClass gui_getTextFieldClass(void)
 {
-  return xmTextFieldWidgetClass;
+	return xmTextFieldWidgetClass;
 }
 
-CallbackList
-gui_getTextFieldCallbacks(void)
+CallbackList gui_getTextFieldCallbacks(void)
 {
-  return textFieldCallbacks;
+	return textFieldCallbacks;
 }
 
-Narray *
-gui_getTextFieldPublicResources()
+Narray* gui_getTextFieldPublicResources()
 {
 
-  Narray	*resList;
-  int		i, num;
+	Narray* resList;
+	int i, num;
 
-  num = sizeof(textFieldPublicResources) / sizeof(textFieldPublicResources[0]);
-  resList = Narray_create(num);
-  for (i = 0; i < num; i++) {
-    Narray_add(resList, (char *) textFieldPublicResources[i], NULL);
-  }
+	num     = sizeof(textFieldPublicResources) / sizeof(textFieldPublicResources[0]);
+	resList = Narray_create(num);
+	for (i = 0; i < num; i++) {
+		Narray_add(resList, (char*)textFieldPublicResources[i], NULL);
+	}
 
-  return resList;
-
+	return resList;
 }

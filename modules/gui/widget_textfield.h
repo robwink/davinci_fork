@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_TEXTFIELD_H
 #define DV_WIDGET_TEXTFIELD_H
 
-#include <Xm/TextF.h>
 #include "gui.h"
+#include <Xm/TextF.h>
 
 /*****************************************************************************
  *
@@ -23,9 +23,9 @@
  *
  *****************************************************************************/
 
-int		gui_isTextField(const char *);
-WidgetClass	gui_getTextFieldClass(void);
-CallbackList	gui_getTextFieldCallbacks(void);
-Narray *	gui_getTextFieldPublicResources(void);
+int gui_isTextField(const char*);
+WidgetClass gui_getTextFieldClass(void);
+CallbackList gui_getTextFieldCallbacks(void);
+Narray* gui_getTextFieldPublicResources(void);
 
 #endif /* DV_WIDGET_TEXTFIELD_H */

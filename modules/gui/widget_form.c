@@ -25,15 +25,13 @@
  *
  *****************************************************************************/
 
-int
-gui_isForm(const char *name)
+int gui_isForm(const char* name)
 {
-  const char *aliases[] = { "form", "xmFormWidgetClass", NULL };
-  return gui_isDefault(aliases, name);
+	const char* aliases[] = {"form", "xmFormWidgetClass", NULL};
+	return gui_isDefault(aliases, name);
 }
 
-WidgetClass
-gui_getFormClass(void)
+WidgetClass gui_getFormClass(void)
 {
-  return xmFormWidgetClass;
+	return xmFormWidgetClass;
 }

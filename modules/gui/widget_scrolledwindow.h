@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_SCROLLEDWINDOW_H
 #define DV_WIDGET_SCROLLEDWINDOW_H
 
-#include <Xm/ScrolledW.h>
 #include "gui.h"
+#include <Xm/ScrolledW.h>
 
 /*****************************************************************************
  *
@@ -23,9 +23,9 @@
  *
  *****************************************************************************/
 
-int		gui_isScrolledWindow(const char *);
-WidgetClass	gui_getScrolledWindowClass(void);
-CallbackList	gui_getScrolledWindowCallbacks(void);
-Narray *	gui_getScrolledWindowPublicResources(void);
+int gui_isScrolledWindow(const char*);
+WidgetClass gui_getScrolledWindowClass(void);
+CallbackList gui_getScrolledWindowCallbacks(void);
+Narray* gui_getScrolledWindowPublicResources(void);
 
 #endif /* DV_WIDGET_SCROLLEDWINDOW_H */

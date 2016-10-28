@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_TEXT_H
 #define DV_WIDGET_TEXT_H
 
-#include <Xm/Text.h>
 #include "gui.h"
+#include <Xm/Text.h>
 
 /*****************************************************************************
  *
@@ -23,8 +23,8 @@
  *
  *****************************************************************************/
 
-int		gui_isText(const char *);
-WidgetClass	gui_getTextClass(void);
-CallbackList	gui_getTextCallbacks(void);
+int gui_isText(const char*);
+WidgetClass gui_getTextClass(void);
+CallbackList gui_getTextCallbacks(void);
 
 #endif /* DV_WIDGET_TEXT_H */

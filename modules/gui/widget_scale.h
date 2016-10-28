@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_SCALE_H
 #define DV_WIDGET_SCALE_H
 
-#include <Xm/Scale.h>
 #include "gui.h"
+#include <Xm/Scale.h>
 
 /*****************************************************************************
  *
@@ -23,9 +23,9 @@
  *
  *****************************************************************************/
 
-int		gui_isScale(const char *);
-WidgetClass	gui_getScaleClass(void);
-CallbackList	gui_getScaleCallbacks(void);
-Narray *	gui_getScalePublicResources(void);
+int gui_isScale(const char*);
+WidgetClass gui_getScaleClass(void);
+CallbackList gui_getScaleCallbacks(void);
+Narray* gui_getScalePublicResources(void);
 
 #endif /* DV_WIDGET_SCALE_H */

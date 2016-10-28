@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_ERRORDIALOG_H
 #define DV_WIDGET_ERRORDIALOG_H
 
-#include <Xm/MessageB.h>
 #include "gui.h"
+#include <Xm/MessageB.h>
 
 /*****************************************************************************
  *
@@ -23,11 +23,10 @@
  *
  *****************************************************************************/
 
-int				gui_isErrorDialog(const char *);
-WidgetClass		gui_getErrorDialogClass(void);
-Widget			gui_initErrorDialog(const char *, WidgetClass, Widget,
-					Var *, void **, Narray *);
-Narray *		gui_getErrorDialogPublicResources(void);
-CallbackList	gui_getErrorDialogCallbacks(void);
+int gui_isErrorDialog(const char*);
+WidgetClass gui_getErrorDialogClass(void);
+Widget gui_initErrorDialog(const char*, WidgetClass, Widget, Var*, void**, Narray*);
+Narray* gui_getErrorDialogPublicResources(void);
+CallbackList gui_getErrorDialogCallbacks(void);
 
 #endif /* DV_WIDGET_ERRORDIALOG_H */

@@ -45,7 +45,7 @@
  */
 
 #define MAXBYTE 255
-#define	DV_GUI_PRIVATE_RESOURCE_NAME "davinciPrivate"
+#define DV_GUI_PRIVATE_RESOURCE_NAME "davinciPrivate"
 /* First widget ID to use. */
 #define DV_GUI_APPSHELL_WIDGETID 0
 
@@ -58,13 +58,13 @@
 /* Davinci Includes */
 
 /* System Includes */
-#include <string.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <X11/IntrinsicP.h>
 #include <Xm/DialogS.h>
@@ -86,8 +86,8 @@
 #include "widget_label.h"
 #include "widget_list.h"
 #include "widget_menubar.h"
-#include "widget_pushbutton.h"
 #include "widget_panedwindow.h"
+#include "widget_pushbutton.h"
 #include "widget_radiobox.h"
 #include "widget_rowcolumn.h"
 #include "widget_scale.h"
@@ -3314,8 +3314,8 @@ Var* gui_getXmStringTableCount(const Widget widget, const String resource, const
 */
 
 XtArgVal gui_setXmStringTableFromStrings(const Widget widget, const String resourceName,
-                                        const String resourceType, const char** values,
-                                        int n_vals, FreeStackList freeStack)
+                                         const String resourceType, const char** values, int n_vals,
+                                         FreeStackList freeStack)
 {
 	XmStringTable oldValue;
 	XmStringTable stringTable;
@@ -3383,10 +3383,10 @@ XtArgVal gui_setXmStringTable(const Widget widget, const String resourceName,
 {
 	XtArgVal stringTable;
 
-	int n_vals = 0;
+	int n_vals         = 0;
 	char** string_list = gui_extract_strings(value, &n_vals);
-	stringTable =
-	    gui_setXmStringTableFromStrings(widget, resourceName, resourceType, string_list, n_vals, freeStack);
+	stringTable = gui_setXmStringTableFromStrings(widget, resourceName, resourceType, string_list,
+	                                              n_vals, freeStack);
 
 	free(string_list);
 
@@ -3996,7 +3996,7 @@ char* dupString(const char* source)
 	return dest;
 }
 
-/* 
+/*
 * char** gui_extract_strings(Var *dvResourceList, int* n_vals)
 *
 * Builds a list of strings from a Davinci Var.
@@ -4010,7 +4010,7 @@ char* dupString(const char* source)
 * are not strdup()ing them.
 *
 * Caller is responsible for freeing memory.
-* 
+*
 *
 */
 char** gui_extract_strings(const Var* value, int* n_vals)
@@ -4031,16 +4031,16 @@ char** gui_extract_strings(const Var* value, int* n_vals)
 				return NULL;
 			}
 			string_list[0] = V_STRING(value);
-			*n_vals = 1;
+			*n_vals        = 1;
 			break;
 
 		case ID_TEXT:
-			textArray  = V_TEXT(value);
-			if (!(string_list = malloc(textArray.Row*sizeof(char*)))) {
+			textArray = V_TEXT(value);
+			if (!(string_list = malloc(textArray.Row * sizeof(char*)))) {
 				parse_error("Internal error: unable to add to string list.");
 				return NULL;
 			}
-			for (int i=0; i<textArray.Row; ++i) {
+			for (int i = 0; i < textArray.Row; ++i) {
 				string_list[i] = textArray.text[i];
 			}
 			*n_vals = textArray.Row;
@@ -4048,11 +4048,11 @@ char** gui_extract_strings(const Var* value, int* n_vals)
 
 		case ID_STRUCT:
 			structCount = get_struct_count(value);
-			if (!(string_list = malloc(structCount*sizeof(char*)))) {
+			if (!(string_list = malloc(structCount * sizeof(char*)))) {
 				parse_error("Internal error: unable to add to string list.");
 				return NULL;
 			}
-			for (int i=0; i<structCount; ++i) {
+			for (int i = 0; i < structCount; ++i) {
 				get_struct_element(value, i, NULL, &elementValue);
 				if (V_TYPE(elementValue) != ID_STRING) {
 					parse_error("Error: expecting STRING values in struct.");

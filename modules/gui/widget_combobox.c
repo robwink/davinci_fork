@@ -25,10 +25,8 @@
  *
  *****************************************************************************/
 
-static CallbackEntry comboboxCallbacks[] = {
-	{ "selectionCallback", XmNselectionCallback, gui_defaultCallback },
-	{ NULL, NULL, NULL }
-};
+static CallbackEntry comboboxCallbacks[] = {{"selectionCallback", XmNselectionCallback, gui_defaultCallback},
+                                            {NULL, NULL, NULL}};
 
 /*****************************************************************************
  *
@@ -36,21 +34,18 @@ static CallbackEntry comboboxCallbacks[] = {
  *
  *****************************************************************************/
 
-int
-gui_isComboBox(const char *name)
+int gui_isComboBox(const char* name)
 {
-	const char *aliases[] = { "combobox", "xmComboBoxWidgetClass", NULL };
+	const char* aliases[] = {"combobox", "xmComboBoxWidgetClass", NULL};
 	return gui_isDefault(aliases, name);
 }
 
-WidgetClass
-gui_getComboBoxClass(void)
+WidgetClass gui_getComboBoxClass(void)
 {
 	return xmComboBoxWidgetClass;
 }
 
-CallbackList
-gui_getComboBoxCallbacks(void)
+CallbackList gui_getComboBoxCallbacks(void)
 {
 	return comboboxCallbacks;
 }

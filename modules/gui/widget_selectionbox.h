@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_SELECTIONBOX_H
 #define DV_WIDGET_SELECTIONBOX_H
 
-#include <Xm/SelectioB.h>
 #include "gui.h"
+#include <Xm/SelectioB.h>
 
 /*****************************************************************************
  *
@@ -23,11 +23,11 @@
  *
  *****************************************************************************/
 
-int		gui_isSelectionBox(const char *);
-WidgetClass	gui_getSelectionBoxClass(void);
-CallbackList	gui_getSelectionBoxCallbacks(void);
-void		gui_getSelectionBoxPseudoResources(Widget, Var *);
-void		gui_setSelectionBoxPseudoResources(Widget, Var *, Narray *);
-Narray *	gui_getSelectionBoxPublicResources(void);
+int gui_isSelectionBox(const char*);
+WidgetClass gui_getSelectionBoxClass(void);
+CallbackList gui_getSelectionBoxCallbacks(void);
+void gui_getSelectionBoxPseudoResources(Widget, Var*);
+void gui_setSelectionBoxPseudoResources(Widget, Var*, Narray*);
+Narray* gui_getSelectionBoxPublicResources(void);
 
 #endif /* DV_WIDGET_SELECTIONBOX_H */

@@ -25,7 +25,7 @@
  *
  *****************************************************************************/
 
-static void setItems(const Widget, const String, const Var *);
+static void setItems(const Widget, const String, const Var*);
 
 /*****************************************************************************
  *
@@ -33,8 +33,8 @@ static void setItems(const Widget, const String, const Var *);
  *
  *****************************************************************************/
 
-static const char *commandPublicResources[] = {
-  "promptString", "command",
+static const char* commandPublicResources[] = {
+    "promptString", "command",
 };
 
 /*****************************************************************************
@@ -44,18 +44,9 @@ static const char *commandPublicResources[] = {
  *****************************************************************************/
 
 static CallbackEntry commandCallbacks[] = {
-  {
-    "commandEntered",
-    XmNcommandEnteredCallback,
-    gui_defaultCallback
-  },
-  {
-    "commandChanged",
-    XmNcommandChangedCallback,
-    gui_defaultCallback
-  },
-  { NULL, NULL, NULL }
-};
+    {"commandEntered", XmNcommandEnteredCallback, gui_defaultCallback},
+    {"commandChanged", XmNcommandChangedCallback, gui_defaultCallback},
+    {NULL, NULL, NULL}};
 
 /*****************************************************************************
  *
@@ -63,23 +54,20 @@ static CallbackEntry commandCallbacks[] = {
  *
  *****************************************************************************/
 
-int
-gui_isCommand(const char *name)
+int gui_isCommand(const char* name)
 {
-  const char *aliases[] = { "command", "xmCommandWidgetClass", NULL };
-  return gui_isDefault(aliases, name);
+	const char* aliases[] = {"command", "xmCommandWidgetClass", NULL};
+	return gui_isDefault(aliases, name);
 }
 
-WidgetClass
-gui_getCommandClass(void)
+WidgetClass gui_getCommandClass(void)
 {
-  return xmCommandWidgetClass;
+	return xmCommandWidgetClass;
 }
 
-CallbackList
-gui_getCommandCallbacks(void)
+CallbackList gui_getCommandCallbacks(void)
 {
-  return commandCallbacks;
+	return commandCallbacks;
 }
 
 /* void
@@ -90,41 +78,39 @@ gui_getCommandCallbacks(void)
  *
  */
 
-static void
-setItems(const Widget widget, const String resourceName, const Var *value)
+static void setItems(const Widget widget, const String resourceName, const Var* value)
 {
 
-  FreeStackListEntry	localFreeStack;
-  int			stringCount;
-  XtArgVal		itemTable;
-  String		countResourceName;
+	FreeStackListEntry localFreeStack;
+	int stringCount;
+	XtArgVal itemTable;
+	String countResourceName;
 
-  localFreeStack.head = localFreeStack.tail = NULL;
+	localFreeStack.head = localFreeStack.tail = NULL;
 
-  int n_vals = 0;
-  char** string_list = gui_extract_strings(value, &n_vals);
+	int n_vals         = 0;
+	char** string_list = gui_extract_strings(value, &n_vals);
 
-  if (string_list == NULL) {
-    parse_error("Warning: keeping old item list setting.");
-  } else {
-    stringCount = n_vals;
-    if (stringCount > 0) {
-      // NOTE(rswinkle): Why do we create a list of strings just to create another one in
-      // gui_setXmStringTable?  What's wrong the first one?
-      itemTable = gui_setXmStringTable(widget, resourceName, NULL, value, &localFreeStack);
-      free(string_list);
-    } else {
-      itemTable = (XtArgVal) NULL;
-    }
-    /* Set the list and the count. */
-    countResourceName = "historyItemCount";
-    XtVaSetValues(widget, resourceName, itemTable, countResourceName, (XtArgVal) stringCount, NULL);
-  }
+	if (string_list == NULL) {
+		parse_error("Warning: keeping old item list setting.");
+	} else {
+		stringCount = n_vals;
+		if (stringCount > 0) {
+			// NOTE(rswinkle): Why do we create a list of strings just to create another one in
+			// gui_setXmStringTable?  What's wrong the first one?
+			itemTable = gui_setXmStringTable(widget, resourceName, NULL, value, &localFreeStack);
+			free(string_list);
+		} else {
+			itemTable = (XtArgVal)NULL;
+		}
+		/* Set the list and the count. */
+		countResourceName = "historyItemCount";
+		XtVaSetValues(widget, resourceName, itemTable, countResourceName, (XtArgVal)stringCount, NULL);
+	}
 
-  gui_freeStackFree(&localFreeStack);
+	gui_freeStackFree(&localFreeStack);
 
-  return;
-
+	return;
 }
 
 /* void
@@ -138,29 +124,25 @@ setItems(const Widget widget, const String resourceName, const Var *value)
  *
  */
 
-void
-gui_getCommandPseudoResources(const Widget widget, Var *dvStruct)
+void gui_getCommandPseudoResources(const Widget widget, Var* dvStruct)
 {
 
-  Var	*items;
-  int	itemCount;
+	Var* items;
+	int itemCount;
 
 #if DEBUG
-  fprintf(stderr, "DEBUG: gui_getCommandPseudoResources(%ld, %ld)\n",
-	  widget, dvStruct);
+	fprintf(stderr, "DEBUG: gui_getCommandPseudoResources(%ld, %ld)\n", widget, dvStruct);
 #endif
 
-  XtVaGetValues(widget, "historyItemCount", &itemCount, NULL);
-  if (itemCount == 0) {
-    items = newText(0, NULL);
-  }
-  else {
-    items = gui_getXmStringTableCount(widget, "historyItems", 0, itemCount);
-  }
-  add_struct(dvStruct, "historyItems", items);
+	XtVaGetValues(widget, "historyItemCount", &itemCount, NULL);
+	if (itemCount == 0) {
+		items = newText(0, NULL);
+	} else {
+		items = gui_getXmStringTableCount(widget, "historyItems", 0, itemCount);
+	}
+	add_struct(dvStruct, "historyItems", items);
 
-  return;
-
+	return;
 }
 
 /* gui_setCommandPseudoResources()
@@ -173,51 +155,49 @@ gui_getCommandPseudoResources(const Widget widget, Var *dvStruct)
  *
  */
 
-void
-gui_setCommandPseudoResources(Widget widget, Var *dvStruct,
-			   Narray *publicResources)
+void gui_setCommandPseudoResources(Widget widget, Var* dvStruct, Narray* publicResources)
 {
 
-  int		i, cont;
-  char		*name;
-  Var		*value;
+	int i, cont;
+	char* name;
+	Var* value;
 
 #if DEBUG
-  fprintf(stderr, "DEBUG: gui_setCommandPseudoResources(widget = %ld, "
-	  "dvStruct = %ld, publicResources = %ld)\n",
-	  widget, dvStruct, publicResources);
+	fprintf(stderr,
+	        "DEBUG: gui_setCommandPseudoResources(widget = %ld, "
+	        "dvStruct = %ld, publicResources = %ld)\n",
+	        widget, dvStruct, publicResources);
 #endif
 
-  /* Iterate over the struct, extracting any pseudo-resource items that
-   * we set.  Delete the items from the struct, and start iterating at the
-   * beginning again.  This is not really efficient, but I'm not sure how
-   * else to do it without mucking about with Davinci's structures more than
-   * I'd like to, or keeping track of what has/hasn't been set.
-   */
+	/* Iterate over the struct, extracting any pseudo-resource items that
+	 * we set.  Delete the items from the struct, and start iterating at the
+	 * beginning again.  This is not really efficient, but I'm not sure how
+	 * else to do it without mucking about with Davinci's structures more than
+	 * I'd like to, or keeping track of what has/hasn't been set.
+	 */
 
-  cont = 1;
-  while (cont && get_struct_count(dvStruct)) {
-    cont = 0;
-    for (i = 0; i < get_struct_count(dvStruct); i++) {
-      get_struct_element(dvStruct, i, &name, &value);
-      if (!strcmp(name, "itemCount")) {
-	/* Extrapolated from items. */
-	parse_error("WARNING: ignoring itemCount");
-	free_var(Narray_delete(V_STRUCT(dvStruct), "itemCount"));
 	cont = 1;
-	break;
-      }
-      if (!strcmp(name, "items")) {
-	setItems(widget, name, value);
-	Narray_add(publicResources, name, NULL);
-	free_var(Narray_delete(V_STRUCT(dvStruct), "items"));
-	cont = 1;
-	break;
-      }
-     /* ...new comparisons go here. */
-    }
-  }
-
+	while (cont && get_struct_count(dvStruct)) {
+		cont = 0;
+		for (i = 0; i < get_struct_count(dvStruct); i++) {
+			get_struct_element(dvStruct, i, &name, &value);
+			if (!strcmp(name, "itemCount")) {
+				/* Extrapolated from items. */
+				parse_error("WARNING: ignoring itemCount");
+				free_var(Narray_delete(V_STRUCT(dvStruct), "itemCount"));
+				cont = 1;
+				break;
+			}
+			if (!strcmp(name, "items")) {
+				setItems(widget, name, value);
+				Narray_add(publicResources, name, NULL);
+				free_var(Narray_delete(V_STRUCT(dvStruct), "items"));
+				cont = 1;
+				break;
+			}
+			/* ...new comparisons go here. */
+		}
+	}
 }
 
 /* gui_getCommandPublicResources()
@@ -232,23 +212,21 @@ gui_setCommandPseudoResources(Widget widget, Var *dvStruct,
  *
  */
 
-Narray *
-gui_getCommandPublicResources()
+Narray* gui_getCommandPublicResources()
 {
 
-  Narray	*resCommand;
-  int		i, num;
+	Narray* resCommand;
+	int i, num;
 
 #if DEBUG
-  fprintf(stderr, "DEBUG: gui_getCommandPublicResources()\n");
+	fprintf(stderr, "DEBUG: gui_getCommandPublicResources()\n");
 #endif
 
-  num = sizeof(commandPublicResources) / sizeof(commandPublicResources[0]);
-  resCommand = Narray_create(num);
-  for (i = 0; i < num; i++) {
-    Narray_add(resCommand, (char *) commandPublicResources[i], NULL);
-  }
+	num        = sizeof(commandPublicResources) / sizeof(commandPublicResources[0]);
+	resCommand = Narray_create(num);
+	for (i = 0; i < num; i++) {
+		Narray_add(resCommand, (char*)commandPublicResources[i], NULL);
+	}
 
-  return resCommand;
-
+	return resCommand;
 }

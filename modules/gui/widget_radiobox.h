@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_RADIOBOX_H
 #define DV_WIDGET_RADIOBOX_H
 
-#include <Xm/RowColumn.h>
 #include "gui.h"
+#include <Xm/RowColumn.h>
 
 /*****************************************************************************
  *
@@ -23,11 +23,10 @@
  *
  *****************************************************************************/
 
-int		gui_isRadioBox(const char *);
-Widget		gui_initRadioBox(const char *, WidgetClass, Widget,
-				 Var *, void **, Narray *, Widget *);
-WidgetClass	gui_getRadioBoxClass(void);
-CallbackList	gui_getRadioBoxCallbacks(void);
-Narray *	gui_getRadioBoxPublicResources(void);
+int gui_isRadioBox(const char*);
+Widget gui_initRadioBox(const char*, WidgetClass, Widget, Var*, void**, Narray*, Widget*);
+WidgetClass gui_getRadioBoxClass(void);
+CallbackList gui_getRadioBoxCallbacks(void);
+Narray* gui_getRadioBoxPublicResources(void);
 
 #endif /* DV_WIDGET_RADIOBOX_H */

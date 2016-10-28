@@ -12,8 +12,8 @@
 *
 *******************************************************************************/
 
-#ifndef  LineBox_H
-#define  LineBox_H
+#ifndef LineBox_H
+#define LineBox_H
 
 /* Resource strings */
 
@@ -51,21 +51,21 @@ typedef struct LBoxPoint_t {
 
 extern WidgetClass lineBoxWidgetClass;
 
-typedef struct _LineBoxClassRec *LineBoxWidgetClass;
-typedef struct _LineBoxRec *LineBoxWidget;
+typedef struct _LineBoxClassRec* LineBoxWidgetClass;
+typedef struct _LineBoxRec* LineBoxWidget;
 
 /* utility functions */
-void  LBoxSetFloatValue (Widget w, char *name, float val);
+void LBoxSetFloatValue(Widget w, char* name, float val);
 
 /* widget data control */
-void  LBoxResetPoints (Widget w);
-void  LBoxGetPointsNorm (Widget w, int *pNum, LBoxPoint_t **ppPoints);
-void  LBoxSetPointsNorm (Widget w, int nPoints, LBoxPoint_t *pPoints);
-void  LBoxSetHistogram (Widget w, int nBins, LBoxPoint_t *pBins);
-void  LBoxSetMotionCB (Widget w, void (*cb)(Widget));
-void  LBoxSetStretchChangeCB (Widget w, void (*cb)(Widget));
-void  LBoxGetPointerDN (Widget w, float *x, float *y);
-void  LBoxGetMappedPoints (Widget w, int *pNum, LBoxPoint_t **ppPoints);
-void  LBoxSetMappedPoints (Widget w, int nPoints, float *pPoints);
+void LBoxResetPoints(Widget w);
+void LBoxGetPointsNorm(Widget w, int* pNum, LBoxPoint_t** ppPoints);
+void LBoxSetPointsNorm(Widget w, int nPoints, LBoxPoint_t* pPoints);
+void LBoxSetHistogram(Widget w, int nBins, LBoxPoint_t* pBins);
+void LBoxSetMotionCB(Widget w, void (*cb)(Widget));
+void LBoxSetStretchChangeCB(Widget w, void (*cb)(Widget));
+void LBoxGetPointerDN(Widget w, float* x, float* y);
+void LBoxGetMappedPoints(Widget w, int* pNum, LBoxPoint_t** ppPoints);
+void LBoxSetMappedPoints(Widget w, int nPoints, float* pPoints);
 
 #endif

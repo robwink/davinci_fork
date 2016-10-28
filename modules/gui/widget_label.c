@@ -33,8 +33,8 @@
  *
  *****************************************************************************/
 
-static const char *labelPublicResources[] = {
-  "labelString", "alignment",
+static const char* labelPublicResources[] = {
+    "labelString", "alignment",
 };
 
 /*****************************************************************************
@@ -43,32 +43,28 @@ static const char *labelPublicResources[] = {
  *
  *****************************************************************************/
 
-int
-gui_isLabel(const char *name)
+int gui_isLabel(const char* name)
 {
-  const char *aliases[] = { "label", "xmLabelWidgetClass", NULL };
-  return gui_isDefault(aliases, name);
+	const char* aliases[] = {"label", "xmLabelWidgetClass", NULL};
+	return gui_isDefault(aliases, name);
 }
 
-WidgetClass
-gui_getLabelClass(void)
+WidgetClass gui_getLabelClass(void)
 {
-  return xmLabelWidgetClass;
+	return xmLabelWidgetClass;
 }
 
-Narray *
-gui_getLabelPublicResources()
+Narray* gui_getLabelPublicResources()
 {
 
-  Narray	*resList;
-  int		i, num;
+	Narray* resList;
+	int i, num;
 
-  num = sizeof(labelPublicResources) / sizeof(labelPublicResources[0]);
-  resList = Narray_create(num);
-  for (i = 0; i < num; i++) {
-    Narray_add(resList, (char *) labelPublicResources[i], NULL);
-  }
+	num     = sizeof(labelPublicResources) / sizeof(labelPublicResources[0]);
+	resList = Narray_create(num);
+	for (i = 0; i < num; i++) {
+		Narray_add(resList, (char*)labelPublicResources[i], NULL);
+	}
 
-  return resList;
-
+	return resList;
 }

@@ -14,8 +14,8 @@
 #ifndef DV_WIDGET_FILESELECTIONBOX_H
 #define DV_WIDGET_FILESELECTIONBOX_H
 
-#include <Xm/FileSB.h>
 #include "gui.h"
+#include <Xm/FileSB.h>
 
 /*****************************************************************************
  *
@@ -23,11 +23,11 @@
  *
  *****************************************************************************/
 
-int		gui_isFileSelectionBox(const char *);
-WidgetClass	gui_getFileSelectionBoxClass(void);
-CallbackList	gui_getFileSelectionBoxCallbacks(void);
-void		gui_getFileSelectionBoxPseudoResources(Widget, Var *);
-void		gui_setFileSelectionBoxPseudoResources(Widget, Var *, Narray *);
-Narray *	gui_getFileSelectionBoxPublicResources(void);
+int gui_isFileSelectionBox(const char*);
+WidgetClass gui_getFileSelectionBoxClass(void);
+CallbackList gui_getFileSelectionBoxCallbacks(void);
+void gui_getFileSelectionBoxPseudoResources(Widget, Var*);
+void gui_setFileSelectionBoxPseudoResources(Widget, Var*, Narray*);
+Narray* gui_getFileSelectionBoxPublicResources(void);
 
 #endif /* DV_WIDGET_FILESELECTIONBOX_H */

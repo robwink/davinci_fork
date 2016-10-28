@@ -36,51 +36,51 @@
 *	Publically-required Definitions
 *******************************************************************************/
 
-typedef struct _LineBoxClassPart{
+typedef struct _LineBoxClassPart {
 	int ignore;
 } LineBoxClassPart;
 
-typedef struct _LineBoxClassRec{
-	CoreClassPart  core_class;
+typedef struct _LineBoxClassRec {
+	CoreClassPart core_class;
 	XmPrimitiveClassPart primitive_class;
-	LineBoxClassPart  lineBox_class;
+	LineBoxClassPart lineBox_class;
 } LineBoxClassRec;
 
 extern LineBoxClassRec lineBoxClassRec;
 
 typedef struct enum_t {
-	char *name;
+	char* name;
 	int val;
 } enum_t;
 
 typedef struct _LineBoxPart {
 	/* mouse */
-	int mode; /* whether mouse click adds, moves, or deletes points */
+	int mode;        /* whether mouse click adds, moves, or deletes points */
 	float pointer_x; /* position of mouse pointer in normalized coordinates */
 	float pointer_y;
-	float box_x;     /* position of highlight box in normalized coordinates */
+	float box_x; /* position of highlight box in normalized coordinates */
 	float box_y;
 	int dragPoint; /* index of point being dragged (while button held down) */
 
 	/* screen */
-	GC contentsGC;		/* graphics context for plot contents */
-	Pixmap drawBuffer;		/* double buffering for non-flashing draws */
-	int xMin, yMin, xMax, yMax;	/* boundaries of the drawable area of widget */
+	GC contentsGC;              /* graphics context for plot contents */
+	Pixmap drawBuffer;          /* double buffering for non-flashing draws */
+	int xMin, yMin, xMax, yMax; /* boundaries of the drawable area of widget */
 
 	/* stretch line */
-	int nPoints; /* number of points, always at least 2 (one for each edge) */
-	LBoxPoint_t *pPoints; /* array of x,y coordinates in range 0,1 */
+	int nPoints;          /* number of points, always at least 2 (one for each edge) */
+	LBoxPoint_t* pPoints; /* array of x,y coordinates in range 0,1 */
 
 	/* histogram */
-	int nBins;         /* data for histogram, x= start position, y= intensity */
-	LBoxPoint_t *pBins;
+	int nBins; /* data for histogram, x= start position, y= intensity */
+	LBoxPoint_t* pBins;
 	float hist_xMin, hist_xMax, hist_yMin, hist_yMax; /* histogram region to view */
 	Bool showLeftMask, showRightMask; /* indicates if left or right masks have been set */
-	float leftMask, rightMask; /* occludes x<=leftMask and x>=rightMask */
+	float leftMask, rightMask;        /* occludes x<=leftMask and x>=rightMask */
 
 	/* list of points to transform by stretch line */
 	int nMappedPoints;
-	float *pMappedPoints; /* input DNs to stretch by the stretch function */
+	float* pMappedPoints; /* input DNs to stretch by the stretch function */
 
 	/* callbacks */
 	void (*motionCB)(Widget); /* called when mouse moves */
@@ -88,9 +88,9 @@ typedef struct _LineBoxPart {
 } LineBoxPart;
 
 typedef struct _LineBoxRec {
-	CorePart        core;
+	CorePart core;
 	XmPrimitivePart primitive;
-	LineBoxPart        lineBox;
+	LineBoxPart lineBox;
 } LineBoxRec;
 
 #endif

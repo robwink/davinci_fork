@@ -26,33 +26,12 @@
  *****************************************************************************/
 
 static CallbackEntry textCallbacks[] = {
-  {
-    "activate",
-    XmNactivateCallback,
-    gui_defaultCallback
-  },
-  {
-    "focus",
-    XmNfocusCallback,
-    gui_defaultCallback
-  },
-  {
-    "losingFocus",
-    XmNlosingFocusCallback,
-    gui_defaultCallback
-  },
-  {
-    "modifyVerify",
-    XmNmodifyVerifyCallback,
-    gui_defaultCallback
-  },
-  {
-    "valueChanged",
-    XmNvalueChangedCallback,
-    gui_defaultCallback
-  },
-  { NULL, NULL, NULL }
-};
+    {"activate", XmNactivateCallback, gui_defaultCallback},
+    {"focus", XmNfocusCallback, gui_defaultCallback},
+    {"losingFocus", XmNlosingFocusCallback, gui_defaultCallback},
+    {"modifyVerify", XmNmodifyVerifyCallback, gui_defaultCallback},
+    {"valueChanged", XmNvalueChangedCallback, gui_defaultCallback},
+    {NULL, NULL, NULL}};
 
 /*****************************************************************************
  *
@@ -60,21 +39,18 @@ static CallbackEntry textCallbacks[] = {
  *
  *****************************************************************************/
 
-int
-gui_isText(const char *name)
+int gui_isText(const char* name)
 {
-  const char *aliases[] = { "text", "xmTextWidgetClass", NULL };
-  return gui_isDefault(aliases, name);
+	const char* aliases[] = {"text", "xmTextWidgetClass", NULL};
+	return gui_isDefault(aliases, name);
 }
 
-WidgetClass
-gui_getTextClass(void)
+WidgetClass gui_getTextClass(void)
 {
-  return xmTextWidgetClass;
+	return xmTextWidgetClass;
 }
 
-CallbackList
-gui_getTextCallbacks(void)
+CallbackList gui_getTextCallbacks(void)
 {
-  return textCallbacks;
+	return textCallbacks;
 }
