@@ -59,10 +59,10 @@ def main():
 	parser = argparse.ArgumentParser(description="Run Davinci test suite(s)")
 	parser.add_argument("-d", "--davinci", default="davinci", help="specify which davinci to test")
 	parser.add_argument("-t", "--tests", nargs=1, default=test_suites, help="manually specify what test (or test directory) to run")
+	parser.add_argument("-v", "--valgrind", action='store_true', help="run under valgrind")
 
 	args = parser.parse_args()
 	print(args)
-
 
 	if args.davinci != "davinci":
 		args.davinci = os.path.abspath(args.davinci)
@@ -93,9 +93,10 @@ def main():
 			tmpfile.close()
 			filename = tmpfile.name
 
-		proc = Popen([args.davinci, "-fqv0", filename], stdout=PIPE, universal_newlines=True)
-
-		proc = Popen(["valgrind", "--leak-check=full", "-v", args.davinci, "-fqv0", filename], stdout=PIPE, universal_newlines=True)
+		if not args.valgrind:
+			proc = Popen([args.davinci, "-fqv0", filename], stdout=PIPE, universal_newlines=True)
+		else:
+			proc = Popen(["valgrind", "--leak-check=full", "-v", args.davinci, "-fqv0", filename], stdout=PIPE, universal_newlines=True)
 
 		# do something like this when running under valgrind
 		#./run_tests.py -d ../.libs/davinci -t . 2> valgrind_output.txt

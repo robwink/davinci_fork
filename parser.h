@@ -53,7 +53,7 @@ typedef double (*dfunc)(double);
 typedef double (*ddfunc)(double, double);
 
 
-#define YYSTYPE Vptr
+#define YYSTYPE varptr
 #define YYDEBUG 1
 
 #include "globals.h"

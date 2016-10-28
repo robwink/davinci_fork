@@ -4,10 +4,6 @@
 #include "cvector.h"
 
 
-typedef struct varptr {
-	Var* p;
-} varptr;
-
 typedef struct dict_item {
 	char* name;
 	Var* value;

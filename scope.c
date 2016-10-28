@@ -256,9 +256,7 @@ void free_scope(Scope* s)
 
 void push(Scope* scope, Var* v)
 {
-	varptr t = { v };
-
-	cvec_push_void(&scope->stack, &t);
+	cvec_push_void(&scope->stack, &v);
 }
 
 Var* pop(Scope* scope)
@@ -267,10 +265,10 @@ Var* pop(Scope* scope)
 
 	if (!s->size) return NULL;
 
-	varptr ret;
+	Var* ret;
 	cvec_pop_void(s, &ret);
 
-	return ret.p;
+	return ret;
 }
 
 void clean_table(cvector_void* vec)
@@ -284,21 +282,13 @@ void clean_table(cvector_void* vec)
 void clean_stack(Scope* scope)
 {
 	cvector_void* s = &scope->stack;
-	//Var* v;
-	// could use v if we wanted
-	// cvec_pop_void(s, &v) would work fine
-	// it's a void* parameter and the space is the
-	// same.  Really you could pass the address of anything
-	// as long as it had >= elem_size space.
-	//
-	// I only made varptr for if/when I move to cvec_varptr
 
-	varptr r;
+	Var* v;
 	while (s->size) {
-		cvec_pop_void(s, &r);
-		if (!r.p) continue;
+		cvec_pop_void(s, &v);
+		if (!v) continue;
 
-		if (mem_claim(r.p)) free_var(r.p);
+		if (mem_claim(v)) free_var(v);
 	}
 }
 

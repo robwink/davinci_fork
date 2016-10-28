@@ -11,7 +11,7 @@
 #include <inttypes.h>
 
 typedef struct _var Var;
-typedef Var* Vptr;
+typedef Var* varptr;
 /* dvModule is defined in ff_modules.h */
 typedef struct _vfuncptr* vfuncptr;
 typedef Var* (*vfunc)(struct _vfuncptr*, Var*); /* function caller */

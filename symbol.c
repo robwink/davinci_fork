@@ -32,11 +32,11 @@ Var* rm_symtab(Var* v)
 
 	
 	cvector_void* vec = &scope->symtab;
-	varptr* ptr;
+	Var* ptr;
 
 	for (int i=0; i<vec->size; ++i) {
-		ptr = CVEC_GET_VOID(vec, varptr, i);
-		if (ptr->p == v) {
+		ptr = *CVEC_GET_VOID(vec, Var*, i);
+		if (ptr == v) {
 			cvec_erase_void(vec, i, i);
 			return v;
 		}
@@ -64,13 +64,12 @@ Var* search_symtab(Scope* scope, char* name)
 {
 	cvector_void* vec = &scope->symtab;
 
-	// could just use a Var** and cast
-	varptr* ptr;
+	Var* v;
 
 	for (int i=0; i<vec->size; ++i) {
-		ptr = CVEC_GET_VOID(vec, varptr, i);
-		if (V_NAME(ptr->p) && !strcmp(V_NAME(ptr->p), name))
-			return ptr->p;
+		v = *CVEC_GET_VOID(vec, Var*, i);
+		if (V_NAME(v) && !strcmp(V_NAME(v), name))
+			return v;
 	}
 
 	return NULL;
@@ -102,12 +101,12 @@ void rm_sym(char* name)
 	Scope* scope = scope_tos();
 
 	cvector_void* vec = &scope->symtab;
-	varptr* ptr;
+	Var* v;
 
 	for (int i=0; i<vec->size; ++i) {
-		ptr = CVEC_GET_VOID(vec, varptr, i);
-		if (!strcmp(V_NAME(ptr->p), name)) {
-			free(ptr->p);
+		v = CVEC_GET_VOID(vec, Var*, i);
+		if (!strcmp(V_NAME(v), name)) {
+			free(v);
 			cvec_erase_void(vec, i, i);
 			return;
 		}
@@ -140,10 +139,7 @@ Var* sym_put(Scope* scope, Var* s)
 		free_var(s);
 		s = v;
 	} else {
-		varptr sym;
-		sym.p = s;
-
-		cvec_push_void(&scope->symtab, &sym);
+		cvec_push_void(&scope->symtab, &s);
 	}
 	
 	//Possible this has already been done.  do it again for safety.
