@@ -233,7 +233,7 @@ void init_scope(Scope* s)
 	//
 	// These actually aren't even necessary since cvec allocator macro handles
 	// 0 capacity correctly, but when/if we use elem_free it makes more sense
-	cvec_void(&s->symtab, 0, 8, sizeof(varptr), NULL, NULL);
+	cvec_varptr(&s->symtab, 0, 8, NULL, NULL);
 
 	cvec_void(&s->stack, 0, 2, sizeof(varptr), NULL, NULL);
 
@@ -273,12 +273,12 @@ Var* pop(Scope* scope)
 	return ret;
 }
 
-void clean_table(cvector_void* vec)
+void clean_table(cvector_varptr* vec)
 {
 	for (int i=0; i<vec->size; ++i) {
-		free(*CVEC_GET_VOID(vec, Var*, i));
+		free(vec->a[i]);
 	}
-	cvec_free_void(vec);
+	cvec_free_varptr(vec);
 }
 
 void clean_stack(Scope* scope)
@@ -379,10 +379,10 @@ void mem_free(Scope* scope)
 void unload_symtab_modules(Scope* scope)
 {
 #ifdef BUILD_MODULE_SUPPORT
-	cvector_void* vec = &scope->symtab;
+	cvector_varptr* vec = &scope->symtab;
 	Var* v;
 	for (int i=0; i<vec->size; ++i) {
-		v = *CVEC_GET_VOID(vec, Var*, i);
+		v = vec->a[i];
 		if (V_TYPE(v) == ID_MODULE) {
 			unload_dv_module(V_NAME(v));
 		}

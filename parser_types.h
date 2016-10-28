@@ -82,6 +82,9 @@ struct _var {
 };
 
 
+CVEC_NEW_DECLS2(varptr)
+
+
 struct _vfuncptr {
 	const char* name;
 	vfunc fptr;

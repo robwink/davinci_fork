@@ -53,7 +53,7 @@ export CFLAGS="${CFLAGS} -fPIC"
 export CXXFLAGS="${CXXFLAGS} -fPIC"
 
 dnl Add or remove warnings as wanted
-WFLAGS="-Wall -Wextra -Wno-unused-result"
+WFLAGS="-Wall -Wextra -Wno-unused-result -Wno-sign-compare"
 CFLAGS="$CFLAGS $WFLAGS"
 
 dnl Handle user-controllable options.

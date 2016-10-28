@@ -1011,3 +1011,10 @@ int combine_formats(int format1, int format2)
 
 }
 
+
+//NOTE(rswinkle): could put this anywhere that includes parser_types.h
+
+CVEC_NEW_DEFS2(varptr, RESIZE)
+
+
+

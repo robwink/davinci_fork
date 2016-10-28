@@ -31,13 +31,13 @@ Var* rm_symtab(Var* v)
 	Scope* scope = scope_tos();
 
 	
-	cvector_void* vec = &scope->symtab;
+	cvector_varptr* vec = &scope->symtab;
 	Var* ptr;
 
 	for (int i=0; i<vec->size; ++i) {
-		ptr = *CVEC_GET_VOID(vec, Var*, i);
+		ptr = vec->a[i];
 		if (ptr == v) {
-			cvec_erase_void(vec, i, i);
+			cvec_erase_varptr(vec, i, i);
 			return v;
 		}
 	}
@@ -62,12 +62,12 @@ Var* ff_delete(vfuncptr func, Var* arg)
 
 Var* search_symtab(Scope* scope, char* name)
 {
-	cvector_void* vec = &scope->symtab;
+	cvector_varptr* vec = &scope->symtab;
 
 	Var* v;
 
 	for (int i=0; i<vec->size; ++i) {
-		v = *CVEC_GET_VOID(vec, Var*, i);
+		v = vec->a[i];
 		if (V_NAME(v) && !strcmp(V_NAME(v), name))
 			return v;
 	}
@@ -100,14 +100,14 @@ void rm_sym(char* name)
 {
 	Scope* scope = scope_tos();
 
-	cvector_void* vec = &scope->symtab;
+	cvector_varptr* vec = &scope->symtab;
 	Var* v;
 
 	for (int i=0; i<vec->size; ++i) {
-		v = CVEC_GET_VOID(vec, Var*, i);
+		v = vec->a[i];
 		if (!strcmp(V_NAME(v), name)) {
 			free(v);
-			cvec_erase_void(vec, i, i);
+			cvec_erase_varptr(vec, i, i);
 			return;
 		}
 	}
@@ -139,7 +139,7 @@ Var* sym_put(Scope* scope, Var* s)
 		free_var(s);
 		s = v;
 	} else {
-		cvec_push_void(&scope->symtab, &s);
+		cvec_push_varptr(&scope->symtab, &s);
 	}
 	
 	//Possible this has already been done.  do it again for safety.
@@ -196,9 +196,9 @@ Var* ff_list(vfuncptr func, Var* arg)
 {
 	Scope* scope = scope_tos();
 
-	cvector_void* vec = &scope->symtab;
+	cvector_varptr* vec = &scope->symtab;
 
-	Var** v;
+	Var* v;
 	int i;
 	int list_ufuncs = 0, list_sfuncs = 0;
 	Alist alist[3];
@@ -210,8 +210,8 @@ Var* ff_list(vfuncptr func, Var* arg)
 
 	if (list_ufuncs == 0 && list_sfuncs == 0) {
 		for (i=0; i<vec->size; ++i) {
-			v = CVEC_GET_VOID(vec, Var*, i);
-			if (V_NAME(*v)) pp_print_var(*v, V_NAME(*v), 0, 0);
+			v = vec->a[i];
+			if (V_NAME(v)) pp_print_var(v, V_NAME(v), 0, 0);
 		}
 			
 	} else {

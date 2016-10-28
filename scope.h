@@ -23,7 +23,7 @@ typedef struct Scope {
 
 	// symbol table.  This actually holds the memory for values created
 	// in this scope. Child scopes will point to these vars
-	cvector_void symtab; // local symbol table
+	cvector_varptr symtab; // local symbol table
 
 	Darray* tmp;         // tmp memory list
 
