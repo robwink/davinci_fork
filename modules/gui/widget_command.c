@@ -95,37 +95,30 @@ setItems(const Widget widget, const String resourceName, const Var *value)
 {
 
   FreeStackListEntry	localFreeStack;
-  Darray		*stringList;
   int			stringCount;
   XtArgVal		itemTable;
   String		countResourceName;
 
   localFreeStack.head = localFreeStack.tail = NULL;
 
-  stringList = gui_extractDarray(value);
+  int n_vals = 0;
+  char** string_list = gui_extract_strings(value, &n_vals);
 
-  if (stringList == NULL) {
+  if (string_list == NULL) {
     parse_error("Warning: keeping old item list setting.");
-  }
-  else {
-    stringCount = Darray_count(stringList);
-    if (stringCount == -1) {
-      /* Should never happen. */
-      parse_error("Internal error: Darray_count == -1 in setItems().");
+  } else {
+    stringCount = n_vals;
+    if (stringCount > 0) {
+      // NOTE(rswinkle): Why do we create a list of strings just to create another one in
+      // gui_setXmStringTable?  What's wrong the first one?
+      itemTable = gui_setXmStringTable(widget, resourceName, NULL, value, &localFreeStack);
+      free(string_list);
+    } else {
+      itemTable = (XtArgVal) NULL;
     }
-    else {
-      if (stringCount > 0) {
-	itemTable = gui_setXmStringTable(widget, resourceName, NULL, value,
-					 &localFreeStack);
-      }
-      else {
-	itemTable = (XtArgVal) NULL;
-      }
-      /* Set the list and the count. */
-      countResourceName = "historyItemCount";
-      XtVaSetValues(widget, resourceName, itemTable,
-		    countResourceName, (XtArgVal) stringCount, NULL);
-    }
+    /* Set the list and the count. */
+    countResourceName = "historyItemCount";
+    XtVaSetValues(widget, resourceName, itemTable, countResourceName, (XtArgVal) stringCount, NULL);
   }
 
   gui_freeStackFree(&localFreeStack);

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if 0
 /*
 ** Darray_create(size)
 **
@@ -148,6 +149,8 @@ void Darray_free(Darray* d, Darray_FuncPtr fptr)
 	free(d);
 }
 
+#endif
+
 /*
 ****************************************************************************
 ** Associative Array
@@ -156,7 +159,8 @@ void Darray_free(Darray* d, Darray_FuncPtr fptr)
 
 typedef struct _anode {
 	int index;
-	const char* key;
+	//const char* key;
+	char* key;
 	void* value;
 	avl_node_t node;
 } Nnode;
@@ -184,11 +188,11 @@ void Nnode_free(Nnode* a, Narray_FuncPtr fptr)
 	free(a);
 }
 
-Narray* Narray_create(int size)
+Narray* Narray_create(int capacity)
 {
 	Narray* a;
 	a       = (Narray*)calloc(1, sizeof(Narray));
-	a->data = Darray_create(size);
+	cvec_voidptr(&a->data, 0, capacity, NULL, NULL);
 	avl_init(&a->tree, NULL);
 	return a;
 }
@@ -206,10 +210,7 @@ Narray* Narray_create(int size)
 */
 int Narray_add(Narray* a, const char* key, void* data)
 {
-	char* r;
-	Nnode* n;
-
-	return (Narray_insert(a, key, data, -1));
+	return (Narray_insert(a, key, data, a->data.size));
 }
 
 /*
@@ -232,6 +233,11 @@ int Narray_insert(Narray* a, const char* key, void* data, int pos)
 
 	if (a == NULL) return -1;
 
+	//this is stupid
+	//if (pos == -1) pos = a->data.size;
+	
+	//if pos < 0 || > size bad things happen
+
 	// See if this key already exists
 	n = Nnode_create(key, data);
 
@@ -245,15 +251,14 @@ int Narray_insert(Narray* a, const char* key, void* data, int pos)
 	}
 
 	// Add the node to the array, and update the indexes.
-	n->index = Darray_insert(a->data, n, pos);
-	pos      = n->index;
-
-	for (i = pos + 1; i < a->data->count; i++) {
-		n = (Nnode*)a->data->data[i];
+	n->index = pos;
+	cvec_insert_voidptr(&a->data, pos, (void**)&n);
+	for (i = pos+1; i<a->data.size; ++i) {
+		n = (Nnode*)a->data.a[i];
 		n->index++;
 	}
 
-	return (n->index);
+	return pos;
 }
 
 /*
@@ -278,15 +283,17 @@ void* Narray_delete(Narray* a, const char* key)
 
 	if (found) {
 		Nnode* tmp = avl_ref(found, Nnode, node);
+
 		// remove element from the linearly ordered array
-		Darray_remove(a->data, tmp->index);
+		cvec_erase_voidptr(&a->data, tmp->index, tmp->index);
 
 		// Re-index the nodes which have indices higher than
 		// found->index.
 		//
 		// Don't know of a better way as yet!
-		for (i = 0; i < a->data->count; i++) {
-			node = (Nnode*)a->data->data[i];
+		// TODO
+		for (i = 0; i < a->data.size; ++i) {
+			node = (Nnode*)a->data.a[i];
 			if (node->index > tmp->index) {
 				node->index--;
 			}
@@ -302,8 +309,8 @@ void* Narray_delete(Narray* a, const char* key)
 }
 
 /*
-** Deletes the key from the Narray and returns the data
-** associated with it, and renumbers.
+** Deletes the index from the Narray and returns the data
+** associated with it.
 */
 void* Narray_remove(Narray* a, int index)
 {
@@ -315,10 +322,10 @@ void* Narray_remove(Narray* a, int index)
 	avl_node_t* found;
 
 	if (a == NULL) return NULL;
-	if (index > a->data->count) return NULL;
+	if (index > a->data.size) return NULL;
 
-	node = Darray_remove(a->data, index);
-	data = node->value;
+	data = a->data.a[index];
+	cvec_erase_voidptr(&a->data, index, index);
 
 	if (node->key != NULL) {
 		memset(&n, 0, sizeof(n));
@@ -331,8 +338,8 @@ void* Narray_remove(Narray* a, int index)
 		}
 	}
 
-	for (i = 0; i < a->data->count; i++) {
-		node = (Nnode*)a->data->data[i];
+	for (i = 0; i < a->data.size; i++) {
+		node = (Nnode*)a->data.a[i];
 		if (node->index > index) {
 			node->index--;
 		}
@@ -370,7 +377,8 @@ int Narray_find(Narray* a, const char* key, void** data)
 int Narray_replace(Narray* a, int i, void* New, void** old)
 {
 	Nnode* n;
-	if (Darray_get(a->data, i, (void**)&n) == 1) {
+	if (i < a->data.size) {
+		n = (Nnode*)a->data.a[i];
 		*old     = n->value;
 		n->value = New;
 		return 1;
@@ -384,31 +392,30 @@ int Narray_replace(Narray* a, int i, void* New, void** old)
 int Narray_get(const Narray* a, const int i, char** key, void** data)
 {
 	Nnode* n;
-	if (Darray_get(a->data, i, (void**)&n) == 1) {
-		if (key) *key   = (char*)n->key;
+	if (i < a->data.size) {
+		n = (Nnode*)a->data.a[i];
+		if (key) *key   = n->key;
 		if (data) *data = n->value;
-		return (1);
+		return 1;
 	}
-	return (-1);
+	return -1;
 }
 
 int Narray_count(const Narray* a)
 {
-	if (a) return (Darray_count(a->data));
-	return (-1);
+	if (a) return a->data.size;
+	return -1;
 }
 
 void Narray_free(Narray* a, Narray_FuncPtr fptr)
 {
 	int i;
-	int count = Darray_count(a->data);
-	Nnode* n;
+	int count = a->data.size;
 
 	for (i = 0; i < count; i++) {
-		Darray_get(a->data, i, (void**)&n);
-		Nnode_free(n, fptr);
+		Nnode_free((Nnode*)a->data.a[i], fptr);
 	}
-	Darray_free(a->data, NULL);
+	cvec_free_voidptr(&a->data);
 	free(a);
 }
 

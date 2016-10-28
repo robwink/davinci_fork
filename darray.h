@@ -4,19 +4,21 @@
 #include "avl.h"
 #include "cvector.h"
 
+
+typedef struct _Narray {
+	cvector_voidptr data;
+	avl_tree_t tree;
+} Narray;
+
+typedef void (*Narray_FuncPtr)(void*);
+
+/*
+typedef void (*Darray_FuncPtr)(void*);
 typedef struct _Darray {
 	int size;
 	int count;
 	void** data;
 } Darray;
-
-typedef struct _Narray {
-	Darray* data;
-	avl_tree_t tree;
-} Narray;
-
-typedef void (*Darray_FuncPtr)(void*);
-typedef void (*Narray_FuncPtr)(void*);
 
 Darray* Darray_create(int size);
 int Darray_add(Darray* d, void* New);
@@ -26,6 +28,7 @@ int Darray_replace(Darray* d, int i, void* in, void** out);
 int Darray_count(const Darray* d);
 void Darray_release(Darray* d, Darray_FuncPtr fptr);
 void Darray_free(Darray* d, Darray_FuncPtr fptr);
+*/
 
 Narray* Narray_create(int size);
 int Narray_add(Narray* a, const char* key, void* data);
