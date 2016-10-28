@@ -27,7 +27,7 @@ typedef struct Scope {
 
 	Darray* tmp;         // tmp memory list
 
-	cvector_void stack;  // local stack
+	cvector_varptr stack;  // local stack
 
 	UFUNC* ufunc;        // function pointer
 

@@ -234,8 +234,7 @@ void init_scope(Scope* s)
 	// These actually aren't even necessary since cvec allocator macro handles
 	// 0 capacity correctly, but when/if we use elem_free it makes more sense
 	cvec_varptr(&s->symtab, 0, 8, NULL, NULL);
-
-	cvec_void(&s->stack, 0, 2, sizeof(varptr), NULL, NULL);
+	cvec_varptr(&s->stack, 0, 2, NULL, NULL);
 
 	init_dd(&s->dd);
 	init_dd(&s->args);
@@ -258,17 +257,17 @@ void free_scope(Scope* s)
 
 void push(Scope* scope, Var* v)
 {
-	cvec_push_void(&scope->stack, &v);
+	cvec_push_varptr(&scope->stack, &v);
 }
 
 Var* pop(Scope* scope)
 {
-	cvector_void* s = &scope->stack;
+	cvector_varptr* s = &scope->stack;
 
 	if (!s->size) return NULL;
 
 	Var* ret;
-	cvec_pop_void(s, &ret);
+	cvec_pop_varptr(s, &ret);
 
 	return ret;
 }
@@ -283,11 +282,11 @@ void clean_table(cvector_varptr* vec)
 
 void clean_stack(Scope* scope)
 {
-	cvector_void* s = &scope->stack;
+	cvector_varptr* s = &scope->stack;
 
 	Var* v;
 	while (s->size) {
-		cvec_pop_void(s, &v);
+		cvec_pop_varptr(s, &v);
 		if (!v) continue;
 
 		if (mem_claim(v)) free_var(v);
@@ -427,5 +426,5 @@ void clean_scope(Scope* scope)
 	// replace with cvec_free with elem_free
 	clean_table(&scope->symtab);
 
-	cvec_free_void(&scope->stack);
+	cvec_free_varptr(&scope->stack);
 }

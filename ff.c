@@ -753,7 +753,7 @@ Var* ff_create(vfuncptr func, Var* arg)
 
 Var* ff_nop(vfuncptr func, Var* arg)
 {
-	return (NULL);
+	return NULL;
 }
 
 Var* ff_echo(vfuncptr func, Var* arg)
@@ -1257,10 +1257,10 @@ Var* do_cat(Var* ob1, Var* ob2, int axis)
 				case DV_UINT32: u32data[oidx] = extract_u32(ob1, idx); break;
 				case DV_UINT64: u64data[oidx] = extract_u64(ob1, idx); break;
 
-				case DV_INT8:   u8data[oidx] =  extract_i32(ob1, idx); break;
-				case DV_INT16:  u16data[oidx] = extract_i32(ob1, idx); break;
-				case DV_INT32:  u32data[oidx] = extract_i32(ob1, idx); break;
-				case DV_INT64:  u64data[oidx] = extract_i64(ob1, idx); break;
+				case DV_INT8:   i8data[oidx] =  extract_i32(ob1, idx); break;
+				case DV_INT16:  i16data[oidx] = extract_i32(ob1, idx); break;
+				case DV_INT32:  i32data[oidx] = extract_i32(ob1, idx); break;
+				case DV_INT64:  i64data[oidx] = extract_i64(ob1, idx); break;
 
 				case DV_FLOAT:  fdata[oidx] = extract_float(ob1, idx); break;
 				case DV_DOUBLE: ddata[oidx] =  extract_double(ob1, idx); break;
@@ -1278,10 +1278,10 @@ Var* do_cat(Var* ob1, Var* ob2, int axis)
 					case DV_UINT32: u32data[oidx] = extract_u32(ob2, idx); break;
 					case DV_UINT64: u64data[oidx] = extract_u64(ob2, idx); break;
 
-					case DV_INT8:   u8data[oidx] =  extract_i32(ob2, idx); break;
-					case DV_INT16:  u16data[oidx] = extract_i32(ob2, idx); break;
-					case DV_INT32:  u32data[oidx] = extract_i32(ob2, idx); break;
-					case DV_INT64:  u64data[oidx] = extract_i64(ob2, idx); break;
+					case DV_INT8:   i8data[oidx] =  extract_i32(ob2, idx); break;
+					case DV_INT16:  i16data[oidx] = extract_i32(ob2, idx); break;
+					case DV_INT32:  i32data[oidx] = extract_i32(ob2, idx); break;
+					case DV_INT64:  i64data[oidx] = extract_i64(ob2, idx); break;
 
 					case DV_FLOAT:  fdata[oidx] = extract_float(ob2, idx); break;
 					case DV_DOUBLE: ddata[oidx] =  extract_double(ob2, idx); break;
@@ -1302,10 +1302,10 @@ Var* do_cat(Var* ob1, Var* ob2, int axis)
 					case DV_UINT32: u32data[oidx] = extract_u32(ob2, idx); break;
 					case DV_UINT64: u64data[oidx] = extract_u64(ob2, idx); break;
 
-					case DV_INT8:   u8data[oidx] =  extract_i32(ob2, idx); break;
-					case DV_INT16:  u16data[oidx] = extract_i32(ob2, idx); break;
-					case DV_INT32:  u32data[oidx] = extract_i32(ob2, idx); break;
-					case DV_INT64:  u64data[oidx] = extract_i64(ob2, idx); break;
+					case DV_INT8:   i8data[oidx] =  extract_i32(ob2, idx); break;
+					case DV_INT16:  i16data[oidx] = extract_i32(ob2, idx); break;
+					case DV_INT32:  i32data[oidx] = extract_i32(ob2, idx); break;
+					case DV_INT64:  i64data[oidx] = extract_i64(ob2, idx); break;
 
 					case DV_FLOAT:  fdata[oidx] = extract_float(ob2, idx); break;
 					case DV_DOUBLE: ddata[oidx] =  extract_double(ob2, idx); break;
