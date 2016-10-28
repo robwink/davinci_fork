@@ -95,7 +95,7 @@ def main():
 
 		proc = Popen([args.davinci, "-fqv0", filename], stdout=PIPE, universal_newlines=True)
 
-		#proc = Popen(["valgrind", "--leak-check=full", "-v", args.davinci, "-fqv0", filename], stdout=PIPE, universal_newlines=True)
+		proc = Popen(["valgrind", "--leak-check=full", "-v", args.davinci, "-fqv0", filename], stdout=PIPE, universal_newlines=True)
 
 		# do something like this when running under valgrind
 		#./run_tests.py -d ../.libs/davinci -t . 2> valgrind_output.txt

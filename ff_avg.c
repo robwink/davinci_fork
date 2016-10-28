@@ -460,11 +460,6 @@ Var* ff_min(vfuncptr func, Var* arg)
 			parse_error("%s: ignore must be a single value (ie length(ignore)==1).\n", func->name);
 			return NULL;
 		}
-		if (V_FORMAT(ignore) != V_FORMAT(obj)) {
-			parse_error("%s: ignore must have the same type as obj, %s != %s.\n", func->name,
-			            dv_format_to_str(V_FORMAT(ignore)), dv_format_to_str(V_FORMAT(obj)));
-			return NULL;
-		}
 	}
 
 	if (ignore && V_TYPE(ignore) != ID_VAL) {
@@ -507,7 +502,7 @@ Var* fb_min(Var* obj, int axis, int direction, Var* ignore)
 	// not the lowest value which would be -FLT_MAX.
 	switch (V_FORMAT(obj)) {
 	case DV_UINT8: {
-		u8 tmp, ign = (ignore) ? V_UINT8(ignore) : 0;
+		u8 tmp, ign = (ignore) ? extract_u32(ignore, 0) : 0;
 		u8* u8data = V_DATA(v) = malloc(dsize2);
 		for (i=0; i<dsize2; ++i) { u8data[i] = ign; }
 		for (i=0; i<dsize; ++i) {
@@ -523,7 +518,7 @@ Var* fb_min(Var* obj, int axis, int direction, Var* ignore)
 		}
 	} break;
 	case DV_UINT16: {
-		u16 tmp, ign = (ignore) ? V_UINT16(ignore) : 0;
+		u16 tmp, ign = (ignore) ? extract_u32(ignore, 0) : 0;
 		u16* u16data = V_DATA(v) = malloc(dsize2*sizeof(u16));
 		for (i=0; i<dsize2; ++i) { u16data[i] = ign; }
 		for (i=0; i<dsize; ++i) {
@@ -539,7 +534,7 @@ Var* fb_min(Var* obj, int axis, int direction, Var* ignore)
 		}
 	} break;
 	case DV_UINT32: {
-		u32 tmp, ign = (ignore) ? V_UINT32(ignore) : 0;
+		u32 tmp, ign = (ignore) ? extract_u32(ignore, 0) : 0;
 		u32* u32data = V_DATA(v) = malloc(dsize2*sizeof(u32));
 		for (i=0; i<dsize2; ++i) { u32data[i] = ign; }
 		for (i=0; i<dsize; ++i) {
@@ -555,7 +550,7 @@ Var* fb_min(Var* obj, int axis, int direction, Var* ignore)
 		}
 	} break;
 	case DV_UINT64: {
-		u64 tmp, ign = (ignore) ? V_UINT64(ignore) : 0;
+		u64 tmp, ign = (ignore) ? extract_u64(ignore, 0) : 0;
 		u64* u64data = V_DATA(v) = malloc(dsize2*sizeof(u64));
 		for (i=0; i<dsize2; ++i) { u64data[i] = ign; }
 		for (i=0; i<dsize; ++i) {
@@ -572,7 +567,7 @@ Var* fb_min(Var* obj, int axis, int direction, Var* ignore)
 	} break;
 
 	case DV_INT8: {
-		i8 tmp, ign = (ignore) ? V_INT8(ignore) : INT8_MIN;
+		i8 tmp, ign = (ignore) ? extract_i32(ignore, 0) : INT8_MIN;
 		i8* i8data = V_DATA(v) = malloc(dsize2);
 		for (i=0; i<dsize2; ++i) { i8data[i] = ign; }
 		for (i=0; i<dsize; ++i) {
@@ -588,7 +583,7 @@ Var* fb_min(Var* obj, int axis, int direction, Var* ignore)
 		}
 	} break;
 	case DV_INT16: {
-		i16 tmp, ign = (ignore) ? V_INT16(ignore) : INT16_MIN;
+		i16 tmp, ign = (ignore) ? extract_i32(ignore, 0) : INT16_MIN;
 		i16* i16data = V_DATA(v) = malloc(dsize2*sizeof(i16));
 		for (i=0; i<dsize2; ++i) { i16data[i] = ign; }
 		for (i=0; i<dsize; ++i) {
@@ -604,7 +599,7 @@ Var* fb_min(Var* obj, int axis, int direction, Var* ignore)
 		}
 	} break;
 	case DV_INT32: {
-		i32 tmp, ign = (ignore) ? V_INT32(ignore) : INT32_MIN;
+		i32 tmp, ign = (ignore) ? extract_i32(ignore, 0) : INT32_MIN;
 		printf("ignore = %d\n", ign);
 		i32* i32data = V_DATA(v) = malloc(dsize2*sizeof(i32));
 		for (i=0; i<dsize2; ++i) { i32data[i] = ign; }
@@ -621,7 +616,7 @@ Var* fb_min(Var* obj, int axis, int direction, Var* ignore)
 		}
 	} break;
 	case DV_INT64: {
-		i64 tmp, ign = (ignore) ? V_INT64(ignore) : INT64_MIN;
+		i64 tmp, ign = (ignore) ? extract_i64(ignore, 0) : INT64_MIN;
 		i64* i64data = V_DATA(v) = malloc(dsize2*sizeof(i64));
 		for (i=0; i<dsize2; ++i) { i64data[i] = ign; }
 		for (i=0; i<dsize; ++i) {
@@ -638,7 +633,7 @@ Var* fb_min(Var* obj, int axis, int direction, Var* ignore)
 	} break;
 	
 	case DV_FLOAT: {
-		float tmp, ign = (ignore) ? V_FLOAT(ignore) : FLT_MIN;
+		float tmp, ign = (ignore) ? extract_float(ignore, 0) : FLT_MIN;
 		float* fdata = V_DATA(v) = malloc(dsize2*sizeof(float));
 		for (i=0; i<dsize2; ++i) { fdata[i] = ign; }
 		for (i=0; i<dsize; ++i) {
@@ -654,7 +649,7 @@ Var* fb_min(Var* obj, int axis, int direction, Var* ignore)
 		}
 	} break;
 	case DV_DOUBLE: {
-		double tmp, ign = (ignore) ? V_DOUBLE(ignore) : DBL_MIN;
+		double tmp, ign = (ignore) ? extract_double(ignore, 0) : DBL_MIN;
 		double* ddata = V_DATA(v) = malloc(dsize2*sizeof(double));
 		for (i=0; i<dsize2; ++i) { ddata[i] = ign; }
 		for (i=0; i<dsize; ++i) {
