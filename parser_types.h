@@ -3,6 +3,7 @@
 
 #include "darray.h"
 #include "ff_modules.h"
+#include "cvector.h"
 
 //for size_t
 #include <stdlib.h>

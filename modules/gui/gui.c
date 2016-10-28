@@ -3307,27 +3307,27 @@ Var* gui_getXmStringTableCount(const Widget widget, const String resource, const
 }
 
 /* XtArgVal
-* gui_setXmStringTableFromDarray()
+* gui_setXmStringTableFromStrings()
 *
 * FIX: describe.
 *
 */
 
-XtArgVal gui_setXmStringTableFromDarray(const Widget widget, const String resourceName,
-                                        const String resourceType, const Darray* value,
-                                        FreeStackList freeStack)
+XtArgVal gui_setXmStringTableFromStrings(const Widget widget, const String resourceName,
+                                        const String resourceType, const char** values,
+                                        int n_vals, FreeStackList freeStack)
 {
 	XmStringTable oldValue;
 	XmStringTable stringTable;
-	int numStrings, stringIdx;
+	int numStrings;
 	char* stringValue;
 	XmString xmStringValue;
 
 	dbgprintf(
-	    "gui_setXmStringTableFromDarray(widget = %ld, "
-	    "resourceName = '%s', resourceType = '%s', value = %ld, "
-	    "freeStack = %ld)\n",
-	    widget, resourceName, resourceType, value, freeStack);
+	    "gui_setXmStringTableFromStrings(widget = %ld, "
+	    "resourceName = '%s', resourceType = '%s', values = %ld, "
+	    "n_vals = %ld, freeStack = %ld)\n",
+	    widget, resourceName, resourceType, values, n_vals, freeStack);
 
 	if (widget != NULL) {
 		XtVaGetValues(widget, resourceName, &oldValue, NULL);
@@ -3341,10 +3341,10 @@ XtArgVal gui_setXmStringTableFromDarray(const Widget widget, const String resour
 		oldValue = NULL;
 	}
 
-	numStrings = Darray_count(value);
+	numStrings = n_vals;
 	dbgprintf("numStrings = %d\n", numStrings);
 
-	if (numStrings == -1) {
+	if (numStrings == 0) {
 		stringTable = oldValue;
 	} else {
 		/* Create a table of XmStrings. */
@@ -3353,24 +3353,16 @@ XtArgVal gui_setXmStringTableFromDarray(const Widget widget, const String resour
 			parse_error("Error: unable to allocate memory for string list.");
 		} else {
 			// gui_freeStackPush(freeStack, stringTable);
-			for (stringIdx = 0; stringIdx < numStrings; stringIdx++) {
-				if (Darray_get(value, stringIdx, (void**)&stringValue) == -1) {
-					parse_error("Internal error: unable to read Darray.");
+			for (int i = 0; i < numStrings; ++i) {
+				xmStringValue = XmStringCreateLocalized(values[i]);
+
+				if (!xmStringValue) {
+					parse_error("Internal error: unable to create XmString.");
 					stringTable = oldValue;
 					break;
-				} else {
-					xmStringValue = XmStringCreateLocalized(stringValue);
-					/* FIX: can't find documentation on failure return, so this is
-					 * an assumption; confirm
-					 */
-					if (xmStringValue == NULL) {
-						parse_error("Internal error: unable to create XmString.");
-						stringTable = oldValue;
-						break;
-					}
-					// gui_freeStackPush(freeStack, xmStringValue);
-					stringTable[stringIdx] = xmStringValue;
 				}
+				// gui_freeStackPush(freeStack, xmStringValue);
+				stringTable[i] = xmStringValue;
 			}
 		}
 	}
@@ -3381,7 +3373,7 @@ XtArgVal gui_setXmStringTableFromDarray(const Widget widget, const String resour
 /* XtArgVal
 * gui_setXmStringTable()
 *
-* Builds a Narray of strings from a Var and calls
+* Builds a cvector_str of strings from a Var and calls
 * gui_setXmStringTableFromNarray().
 *
 */
@@ -3389,12 +3381,14 @@ XtArgVal gui_setXmStringTableFromDarray(const Widget widget, const String resour
 XtArgVal gui_setXmStringTable(const Widget widget, const String resourceName,
                               const String resourceType, const Var* value, FreeStackList freeStack)
 {
-	Darray* stringList;
 	XtArgVal stringTable;
 
-	stringList = gui_extractDarray(value);
+	int n_vals = 0;
+	char** string_list = gui_extract_strings(value, &n_vals);
 	stringTable =
-	    gui_setXmStringTableFromDarray(widget, resourceName, resourceType, stringList, freeStack);
+	    gui_setXmStringTableFromStrings(widget, resourceName, resourceType, string_list, n_vals, freeStack);
+
+	free(string_list);
 
 	return stringTable;
 }
@@ -4002,76 +3996,79 @@ char* dupString(const char* source)
 	return dest;
 }
 
-/* Darray *
-* gui_extractDarray(Var *dvResourceList)
+/* 
+* char** gui_extract_strings(Var *dvResourceList, int* n_vals)
 *
-* Builds a list of strings in a Darray (NULL values) from a Davinci Var.
+* Builds a list of strings from a Davinci Var.
+*
 * Supported Var types are ID_STRING, ID_TEXT, and ID_STRUCT (values only).
 *
-* Returns pointer to a new Darray.  Caller is responsible for freeing memory.
-* Returns NULL and prints failure message on any error.
+* returns the array of char* strings and the number of strings in n_vals.
+*
+* Little reason to use a cvector_str
+* because we know how many strings there are ahead of time and we
+* are not strdup()ing them.
+*
+* Caller is responsible for freeing memory.
+* 
 *
 */
-
-Darray* gui_extractDarray(const Var* value)
+char** gui_extract_strings(const Var* value, int* n_vals)
 {
-	Darray* stringList;
 	TextArray textArray;
 	int nameIdx, structCount;
 	Var* elementValue;
 
-	dbgprintf("gui_extractDarray(value = %ld)\n", value);
+	char** string_list = NULL;
 
-	stringList = NULL;
+	dbgprintf("gui_extract_cvec_str(value = %ld)\n", value);
 
 	if (value != NULL) {
 		switch (V_TYPE(value)) {
 		case ID_STRING:
-			stringList = Darray_create(1);
-			if (Darray_add(stringList, V_STRING(value)) == -1) {
-				parse_error("Internal error: unable to add to Darray.");
-				Darray_free(stringList, NULL);
-				stringList = NULL;
+			if (!(string_list = malloc(sizeof(char*)))) {
+				parse_error("Internal error: unable to add to string list.");
+				return NULL;
 			}
+			string_list[0] = V_STRING(value);
+			*n_vals = 1;
 			break;
 
 		case ID_TEXT:
 			textArray  = V_TEXT(value);
-			stringList = Darray_create(textArray.Row); /* 0 is ok. */
-			for (nameIdx = 0; nameIdx < textArray.Row; nameIdx++) {
-				if (Darray_add(stringList, textArray.text[nameIdx]) == -1) {
-					parse_error("Internal error: unable to add to Darray.");
-					Darray_free(stringList, NULL);
-					stringList = NULL;
-				}
+			if (!(string_list = malloc(textArray.Row*sizeof(char*)))) {
+				parse_error("Internal error: unable to add to string list.");
+				return NULL;
 			}
+			for (int i=0; i<textArray.Row; ++i) {
+				string_list[i] = textArray.text[i];
+			}
+			*n_vals = textArray.Row;
 			break;
 
 		case ID_STRUCT:
 			structCount = get_struct_count(value);
-			stringList  = Darray_create(structCount); /* 0 is ok. */
-			for (nameIdx = 0; nameIdx < structCount; nameIdx++) {
-				get_struct_element(value, nameIdx, NULL, &elementValue);
+			if (!(string_list = malloc(structCount*sizeof(char*)))) {
+				parse_error("Internal error: unable to add to string list.");
+				return NULL;
+			}
+			for (int i=0; i<structCount; ++i) {
+				get_struct_element(value, i, NULL, &elementValue);
 				if (V_TYPE(elementValue) != ID_STRING) {
 					parse_error("Error: expecting STRING values in struct.");
-					Darray_free(stringList, NULL);
-					stringList = NULL;
-					break;
+					free(string_list);
+					return NULL;
 				}
-				if (Darray_add(stringList, V_STRING(elementValue)) == -1) {
-					parse_error("Internal error: unable to add to Darray.");
-					Darray_free(stringList, NULL);
-					stringList = NULL;
-					break;
-				}
+				string_list[i] = V_STRING(elementValue);
 			}
+			*n_vals = structCount;
 			break;
 
 		default: parse_error("Error: string list must be STRING, TEXT, or STRUCT."); return NULL;
 		}
 	}
 
-	return stringList;
+	return string_list;
 }
 
 /* Narray *
