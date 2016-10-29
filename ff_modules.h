@@ -1,7 +1,7 @@
 #ifndef _FF_MODULES_H_
 #define _FF_MODULES_H_
 
-#include "darray.h"
+#include "narray.h"
 #include "module_io.h"
 
 typedef struct {

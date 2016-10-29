@@ -1,7 +1,7 @@
 #ifndef PARSER_TYPES_H
 #define PARSER_TYPES_H
 
-#include "darray.h"
+#include "narray.h"
 #include "ff_modules.h"
 #include "cvector.h"
 

@@ -7,9 +7,11 @@
 **
 */
 
+//parser actually pulls in narray which pulls in cvector meh
 #include "cvector.h"
-#include "darray.h"
+#include "narray.h"
 #include "parser.h"
+
 #include <errno.h>
 #include <errno.h>
 #include <stddef.h>
