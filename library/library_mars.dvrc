@@ -34,8 +34,7 @@ putenv("GPLOT_TERM","x11")
 plot("set term "+$GPLOT_TERM)
 
 #determine the operating system
-//source($DV_LIB+"/utils.dvrc")
-source("/mars/u/rswinkle/workspace/davinci_github/library/utils.dvrc")
+source($DV_LIB+"/utils.dvrc")
 os = getos();
 browser = getbrowser(os);
 putenv("DV_OS",os)

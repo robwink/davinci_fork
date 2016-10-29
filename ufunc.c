@@ -449,9 +449,11 @@ Var* dispatch_ufunc(UFUNC* f, Var* arg)
 			V_NAME(v) = NULL;
 		}
 
+		/*
 		if (!scope->tmp.capacity || !scope->tmp.a) {
 			printf("%p %p %zu %zu\n", &scope->tmp, scope->tmp.a, scope->tmp.size, scope->tmp.capacity);
 		}
+		*/
 		cvec_push_varptr(&scope->tmp, &v);
 	}
 	return v;

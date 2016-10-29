@@ -338,7 +338,6 @@ define install_check() {
 			gg_count++
 		}
 	}
-	printf("1\n");
 	if(gg_count>=1) {
 	  printf("\t\t\t\tPASSED\n")
 		optional++
@@ -350,11 +349,9 @@ define install_check() {
 			check_exclude="geom_ghost"
 		}
 	}
-	printf("2\n");
 
 	printf("Testing \"where\" statement... ")
 	if(hasvalue(isis)){
-		printf("3\n");
 		isis[where isis < -1 ]=-32768
 		if(HasValue(isis)) {
 			printf("\t\t\t\tPASSED\n")
@@ -362,7 +359,6 @@ define install_check() {
 		} else {
 			printf("\t\t\t\FAILED!\n")
 		}
-		printf("4\n");
 	}else{
 		printf("\t\t\t\tSKIPPED!\n")
 	}

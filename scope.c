@@ -241,7 +241,7 @@ void init_scope(Scope* s)
 	cvec_varptr(&s->symtab, 0, 8, NULL, NULL);
 	cvec_varptr(&s->stack, 0, 2, NULL, NULL);
 
-	cvec_varptr(&s->tmp, 0, 16, NULL, NULL);
+	cvec_varptr(&s->tmp, 0, 16, free_var2, NULL);
 
 	init_dd(&s->dd);
 	init_dd(&s->args);
@@ -306,15 +306,17 @@ void cleanup(Scope* scope)
 	clean_stack(scope);
 	
 	if (scope->tmp.capacity) {
+		/*
 		if (!scope->tmp.a)
 			printf("%p %p %zu %zu\n", &scope->tmp, scope->tmp.a, scope->tmp.size, scope->tmp.capacity);
+		*/
 
 		cvec_free_varptr(&scope->tmp);
 
 		// NOTE(rswinkle): This is necessary or else *bad things* happen
 		// because whoever wrote davinci didn't actually think about memory
 		// management so things are "cleaned up" in multiple places to be safe
-		//scope->tmp.a = NULL;
+		scope->tmp.a = NULL;
 	}
 }
 
@@ -428,11 +430,13 @@ void clean_scope(Scope* scope)
 
 	clean_stack(scope);
 	if (scope->tmp.capacity) {
+		/*
 		if (!scope->tmp.a)
 			printf("%p %p %zu %zu\n", &scope->tmp, scope->tmp.a, scope->tmp.size, scope->tmp.capacity);
+			*/
 		cvec_free_varptr(&scope->tmp);
 		// NOTE(rswinkle): again this is necessary or bad things happen ...
-		//scope->tmp.a = NULL;
+		scope->tmp.a = NULL;
 	}
 
 	/* Clean modules since before cleaning symbol table

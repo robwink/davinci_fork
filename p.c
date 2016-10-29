@@ -47,6 +47,7 @@ Var* p_mknod(int type, Var* left, Var* right)
 Var* p_mkval(int type, char* str)
 {
 	Var* v;
+	//this leaks, at least sometimes
 	v = calloc(1, sizeof(Var));
 
 	switch (type) {

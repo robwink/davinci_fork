@@ -10,8 +10,6 @@
 #define strtok_r(s, d, p) strtok(s, d)
 #endif
 
-#define DV_MOD_LIBPATH "/usr/local/lib/davinci"
-
 #define DV_MOD_ENV "DV_MOD_PATH"
 
 #define yesno(n) (n ? "yes" : "no")
@@ -406,7 +404,7 @@ static char* get_path_for_module(char* modname)
 	char *path_rtn = NULL, *curdir;
 	struct stat statbuf;
 	if ((env = getenv(DV_MOD_ENV)) == NULL)
-		lib_path = strdup(DV_MOD_LIBPATH);
+		lib_path = strdup(DV_MOD_PATH);
 	else
 		lib_path = strdup(env);
 	if (lib_path == NULL) {
