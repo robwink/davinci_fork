@@ -4145,6 +4145,46 @@ Narray* gui_extractNarray(const Var* value)
 	return stringList;
 }
 
+
+/* void
+ * setItems(widget, resourceName, value)
+ *
+ * Parses value for a command of strings, converts to XmStringTable, sets resource
+ * resourceName on widget to the XmStringTable.
+ *
+ */
+
+void setItems(const Widget widget, const String resourceName, const String countResourceName, const Var* value)
+{
+	FreeStackListEntry localFreeStack;
+	int stringCount;
+	XtArgVal itemTable;
+
+	localFreeStack.head = localFreeStack.tail = NULL;
+
+	int n_vals         = 0;
+	char** string_list = gui_extract_strings(value, &n_vals);
+
+	if (string_list == NULL) {
+		parse_error("Warning: keeping old item list setting.");
+	} else {
+		stringCount = n_vals;
+		if (stringCount > 0) {
+			// NOTE(rswinkle): Why do we create a list of strings just to create another one in
+			// gui_setXmStringTable?  What's wrong the first one?
+			itemTable = gui_setXmStringTable(widget, resourceName, NULL, value, &localFreeStack);
+			free(string_list);
+		} else {
+			itemTable = (XtArgVal)NULL;
+		}
+		/* Set the list and the count. */
+		XtVaSetValues(widget, resourceName, itemTable, countResourceName, (XtArgVal)stringCount, NULL);
+	}
+
+	gui_freeStackFree(&localFreeStack);
+}
+
+
 #if 0
 static Boolean
 isValidWidget(MyWidgetList widgetListEntry)

@@ -114,7 +114,7 @@ LABEL* LoadLabelFromObjDesc(OBJDESC* tbl, const char* fname)
 	col   = tbl;
 	while ((col = OdlNextObjDesc(col, 0, &scope)) != NULL) {
 		if ((f = MakeField(col, l)) != NULL) {
-			cvec_push_voidptr(&l->fields, &f);
+			cvec_push_voidptr(&l->fields, (void**)&f);
 
 			// Fake up some additional fields for bit columns.
 			if (f->eformat == MSB_BIT_FIELD) {
@@ -272,7 +272,7 @@ void MakeBitFields(OBJDESC* col, FIELD* f, cvector_voidptr* fields)
 	scope = ODL_CHILDREN_ONLY;
 	while ((col = OdlNextObjDesc(col, 0, &scope)) != NULL) {
 		if ((b = MakeBitField(col, f)) != NULL) {
-			cvec_push_voidptr(fields, b);
+			cvec_push_voidptr(fields, (void**)&b);
 		}
 	}
 }

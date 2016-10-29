@@ -163,6 +163,7 @@ Var* ff_avg2(vfuncptr func, Var* arg)
 	}
 }
 
+#if 0
 Var* ff_avg3(vfuncptr func, Var* arg)
 {
 	Var *obj  = NULL, *v;
@@ -417,6 +418,8 @@ Var* ff_avg(vfuncptr func, Var* arg)
 	add_struct(both, "stddev", v);
 	return (both);
 }
+
+#endif
 
 Var* fb_min(Var* obj, int axis, int direction, Var* ignore);
 

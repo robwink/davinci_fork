@@ -25,8 +25,6 @@
  *
  *****************************************************************************/
 
-static void setItems(const Widget, const String, const String, const Var*);
-
 /*****************************************************************************
  *
  * RESOURCES
@@ -142,40 +140,6 @@ Widget gui_initScrolledList(const char* dvName, WidgetClass class, Widget parent
 #endif
 
 	return widget;
-}
-
-static void setItems(const Widget widget, const String resourceName, const String countResourceName,
-                     const Var* value)
-{
-
-	FreeStackListEntry localFreeStack;
-	Darray* stringList;
-	int stringCount;
-	XtArgVal itemTable;
-
-	localFreeStack.head = localFreeStack.tail = NULL;
-
-	stringList = gui_extractDarray(value);
-
-	if (stringList == NULL) {
-		parse_error("Warning: keeping old item list setting.");
-	} else {
-		stringCount = Darray_count(stringList);
-		if (stringCount == -1) {
-			/* Should never happen. */
-			parse_error("Internal error: Darray_count == -1 in setItems().");
-		} else {
-			if (stringCount > 0) {
-				itemTable = gui_setXmStringTable(widget, resourceName, NULL, value, &localFreeStack);
-			} else {
-				itemTable = (XtArgVal)NULL;
-			}
-			/* Set the list and the count. */
-			XtVaSetValues(widget, resourceName, itemTable, countResourceName, (XtArgVal)stringCount, NULL);
-		}
-	}
-
-	gui_freeStackFree(&localFreeStack);
 }
 
 /* void

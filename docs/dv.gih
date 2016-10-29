@@ -1258,17 +1258,17 @@
 ?min()
  min() - Compute minimum value along specified axis
 
- min(object=VAL[, axis=[x][y][z]][, ignore=VAL])
+ min(object=VAL [, axis=[x][y][z]] [, ignore=VAL])
 
-The min() function finds the minimum value along one or more axis.
-If no axis is specified, then all three axis are used.
+ The min() function finds the minimum value along one or more axis.
+ If no axis is specified, then all three axis are used.
 
  If an ignore value is specified, then any element that is equal to
  the ignore value is not included in the computation.  If all the
  values in the computation are equal to the ignore value, then the
  output is set to the ignore value.
 
-Min always returns a FLOAT.
+ Min returns the same format as object.
 
  Example:
 
@@ -1281,17 +1281,17 @@ Min always returns a FLOAT.
 ?max()
  max() - Compute maximum value along specified axis
 
- max(object=VAL[, axis=[x][y][z]])
+ max(object=VAL [, axis=[x][y][z]] [, ignore=VAL])
 
-The max() function finds the maximum value along one or more axis.
-If no axis is specified, then all three axis are used.
+ The max() function finds the maximum value along one or more axis.
+ If no axis is specified, then all three axis are used.
 
  If an ignore value is specified, then any element that is equal to
  the ignore value is not included in the computation.  If all the
  values in the computation are equal to the ignore value, then the
  output is set to the ignore value.
 
-Max always returns a FLOAT.
+ Max returns the same format as object.
 
  Example:
 

@@ -25,8 +25,6 @@
  *
  *****************************************************************************/
 
-static void setItems(const Widget, const String, const Var*);
-
 /*****************************************************************************
  *
  * RESOURCES
@@ -70,48 +68,7 @@ CallbackList gui_getCommandCallbacks(void)
 	return commandCallbacks;
 }
 
-/* void
- * setItems(widget, resourceName, value)
- *
- * Parses value for a command of strings, converts to XmStringTable, sets resource
- * resourceName on widget to the XmStringTable.
- *
- */
 
-static void setItems(const Widget widget, const String resourceName, const Var* value)
-{
-
-	FreeStackListEntry localFreeStack;
-	int stringCount;
-	XtArgVal itemTable;
-	String countResourceName;
-
-	localFreeStack.head = localFreeStack.tail = NULL;
-
-	int n_vals         = 0;
-	char** string_list = gui_extract_strings(value, &n_vals);
-
-	if (string_list == NULL) {
-		parse_error("Warning: keeping old item list setting.");
-	} else {
-		stringCount = n_vals;
-		if (stringCount > 0) {
-			// NOTE(rswinkle): Why do we create a list of strings just to create another one in
-			// gui_setXmStringTable?  What's wrong the first one?
-			itemTable = gui_setXmStringTable(widget, resourceName, NULL, value, &localFreeStack);
-			free(string_list);
-		} else {
-			itemTable = (XtArgVal)NULL;
-		}
-		/* Set the list and the count. */
-		countResourceName = "historyItemCount";
-		XtVaSetValues(widget, resourceName, itemTable, countResourceName, (XtArgVal)stringCount, NULL);
-	}
-
-	gui_freeStackFree(&localFreeStack);
-
-	return;
-}
 
 /* void
  * gui_getCommandPseudoResources()
@@ -189,7 +146,7 @@ void gui_setCommandPseudoResources(Widget widget, Var* dvStruct, Narray* publicR
 				break;
 			}
 			if (!strcmp(name, "items")) {
-				setItems(widget, name, value);
+				setItems(widget, name, "historyItemCount", value);
 				Narray_add(publicResources, name, NULL);
 				free_var(Narray_delete(V_STRUCT(dvStruct), "items"));
 				cont = 1;

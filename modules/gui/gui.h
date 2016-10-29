@@ -208,6 +208,9 @@ XtArgVal gui_setReadOnly(const Widget, const String, const String, const Var*, F
 Cardinal gui_setResourceValues(Widget, WidgetClass, Var*, Arg*, FreeStackList, Narray*);
 char** gui_extract_strings(const Var*, int* n_vals);
 Narray* gui_extractNarray(const Var*);
+void setItems(const Widget, const String, const String, const Var*);
+
+
 void gui_freeStackPush(FreeStackList, void*);
 void gui_freeStackFree(FreeStackList);
 void gui_addEvent(Widget, String);

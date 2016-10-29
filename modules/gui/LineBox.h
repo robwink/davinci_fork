@@ -15,6 +15,8 @@
 #ifndef LineBox_H
 #define LineBox_H
 
+#include "gui.h"
+
 /* Resource strings */
 
 #define LBoxNlineMode "lineMode"

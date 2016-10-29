@@ -449,13 +449,9 @@ Var* dispatch_ufunc(UFUNC* f, Var* arg)
 			V_NAME(v) = NULL;
 		}
 
-		/*
- 		 *  I have yet to get this to happen but there used to be a NULL check Darray_create here
- 		 *  see comments in scope.c
 		if (!scope->tmp.capacity || !scope->tmp.a) {
 			printf("%p %p %zu %zu\n", &scope->tmp, scope->tmp.a, scope->tmp.size, scope->tmp.capacity);
 		}
-		*/
 		cvec_push_varptr(&scope->tmp, &v);
 	}
 	return v;
