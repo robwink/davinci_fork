@@ -1,8 +1,8 @@
 #ifndef _HEADER_H
 #define _HEADER_H
 
+#include "parser.h"
 #include "io_lablib3.h" //for OBJDESC
-#include "tools.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 

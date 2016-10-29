@@ -102,7 +102,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	pp_math.c printf.c reserved.c \
 	rice.c rpos.c scope.c \
 	spread.c string.c symbol.c \
-	system.c tools.c \
+	system.c \
 	ufunc.c \
 	x.c xrt_print_3d.c \
 	XformTable.h darray.h fit.h trigtbl.h api.h dos.h func.h \
@@ -110,7 +110,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	version.h apidef.h dvio_specpr.h help.h \
 	xrt_print_3d.h avl.h endian_norm.h io_loadmod.h scope.h \
 	ff.h system.h ff_modules.h module_io.h \
-	toolbox.h configwin.h fft.h motif_tools.h tools.h \
+	toolbox.h configwin.h fft.h motif_tools.h \
 	lexer.c parser.c parser.h y_tab.h \
 	ff_gconvolve.c ff_warp.c ff_median.c ff_radial.c ff_window.c \
 	dvio_fits.c ff_extract.c dvio_tdb.c \

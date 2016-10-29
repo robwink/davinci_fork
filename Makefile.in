@@ -117,8 +117,8 @@ am_libdavinci_la_OBJECTS = apifunc.lo array.lo avl.lo binDCT.lo \
 	ff_resample.lo help.lo cvector.lo globals.lo matrix.lo misc.lo \
 	motif_tools.lo p.lo pp.lo pp_math.lo printf.lo reserved.lo \
 	rice.lo rpos.lo scope.lo spread.lo string.lo symbol.lo \
-	system.lo tools.lo ufunc.lo x.lo xrt_print_3d.lo lexer.lo \
-	parser.lo ff_gconvolve.lo ff_warp.lo ff_median.lo ff_radial.lo \
+	system.lo ufunc.lo x.lo xrt_print_3d.lo lexer.lo parser.lo \
+	ff_gconvolve.lo ff_warp.lo ff_median.lo ff_radial.lo \
 	ff_window.lo dvio_fits.lo ff_extract.lo dvio_tdb.lo \
 	url_create_file.lo ff_filesystem.lo ff_grassfire.lo libcsv.lo
 libdavinci_la_OBJECTS = $(am_libdavinci_la_OBJECTS)
@@ -395,7 +395,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	pp_math.c printf.c reserved.c \
 	rice.c rpos.c scope.c \
 	spread.c string.c symbol.c \
-	system.c tools.c \
+	system.c \
 	ufunc.c \
 	x.c xrt_print_3d.c \
 	XformTable.h darray.h fit.h trigtbl.h api.h dos.h func.h \
@@ -403,7 +403,7 @@ libdavinci_la_SOURCES = apifunc.c array.c avl.c binDCT.c \
 	version.h apidef.h dvio_specpr.h help.h \
 	xrt_print_3d.h avl.h endian_norm.h io_loadmod.h scope.h \
 	ff.h system.h ff_modules.h module_io.h \
-	toolbox.h configwin.h fft.h motif_tools.h tools.h \
+	toolbox.h configwin.h fft.h motif_tools.h \
 	lexer.c parser.c parser.h y_tab.h \
 	ff_gconvolve.c ff_warp.c ff_median.c ff_radial.c ff_window.c \
 	dvio_fits.c ff_extract.c dvio_tdb.c \
@@ -697,7 +697,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/string.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/symbol.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/system.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tools.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ufunc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/url_create_file.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/x.Plo@am__quote@
