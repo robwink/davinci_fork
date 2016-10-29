@@ -210,9 +210,9 @@ struct _vfuncptr vfunclist[] = {
 
     {"moment", ff_moment, NULL, NULL},
     {"moments", ff_moments, NULL, NULL},
-    {"avg", ff_avg2, NULL, NULL},
-    {"stddev", ff_avg2, NULL, NULL},
-    {"sum", ff_avg2, NULL, NULL},
+    {"avg", ff_avg, NULL, NULL},
+    {"stddev", ff_avg, NULL, NULL},
+    {"sum", ff_avg, NULL, NULL},
     {"min", ff_min, NULL, NULL},
     {"max", ff_min, NULL, NULL},
     {"sort", ff_sort, NULL, NULL},
