@@ -90,6 +90,7 @@ Var* do_load(char* filename, struct iom_iheader* h, int hdf_old)
 		if ((p = strchr(filename, SPECPR_SUFFIX)) != NULL) {
 			*p     = '\0';
 			record = atoi(p + 1);
+			free(fname);
 			fname  = dv_locate_file(filename);
 		}
 		if (!file_exists(fname)) {
@@ -103,6 +104,7 @@ Var* do_load(char* filename, struct iom_iheader* h, int hdf_old)
 		if (iom_is_compressed(fp)) {
 			fprintf(stderr, "is compressed\n"); /* FIX: remove */
 			fclose(fp);
+			free(fname);
 			fname = iom_uncompress_with_name(fname);
 			fp    = fopen(fname, "rb");
 		}
@@ -144,7 +146,7 @@ Var* do_load(char* filename, struct iom_iheader* h, int hdf_old)
 			parse_error(NULL);
 		}
 	}
-	if (fname) free(fname);
+	free(fname);
 
 	return (input);
 }

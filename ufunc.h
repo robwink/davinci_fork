@@ -16,8 +16,12 @@ typedef struct {
 	Var* tree; /* code tree */
 	char* fname;
 	int fline;
+	avl_node_t node;
+
 } UFUNC;
 
+void init_ufunc_tree();
+void free_ufunc_tree();
 UFUNC* load_function(char*);
 Var* dispatch_ufunc(UFUNC*, Var*);
 void free_ufunc(UFUNC*);

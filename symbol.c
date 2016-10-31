@@ -183,7 +183,7 @@ Var* eval(Var* v)
  **/
 
 //ufunc.c/h
-extern UFUNC** ufunc_list;
+extern avl_tree_t ufuncs_avl;
 extern int nufunc;
 
 
@@ -228,8 +228,12 @@ Var* ff_list(vfuncptr func, Var* arg)
 
 		names = calloc(nfuncs, sizeof(char*));
 		if (list_ufuncs) {
-			for (i = 0; i < nufunc; i++) {
-				names[i] = strdup(ufunc_list[i]->name);
+			i=0;
+			avl_node_t* cur = avl_head(&ufuncs_avl);
+			while (cur) {
+				UFUNC* u = avl_ref(cur, UFUNC, node);
+				names[i++] = strdup(u->name);
+				cur = avl_next(cur);
 			}
 			count += nufunc;
 		}

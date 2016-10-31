@@ -442,6 +442,7 @@ void start_save()
 		return;
 	}
 	strcpy(save_file, tmp);
+	free(tmp);
 }
 
 void end_save()

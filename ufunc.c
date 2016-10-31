@@ -7,11 +7,9 @@
 // Find and verify name.
 // Find split and verify args.
 
-// TODO(rswinkle) use cvector_void for this
-// too many custom one off vectors/stacks in davinci
-UFUNC** ufunc_list = NULL;
 int nufunc         = 0;
-int ufsize         = 16;
+
+avl_tree_t ufuncs_avl;
 
 void list_funcs();
 
@@ -20,48 +18,70 @@ void* yy_scan_string();
 void yy_delete_buffer(void*);
 void yy_switch_to_buffer(void*);
 
-UFUNC* locate_ufunc(const char* name)
+void init_ufunc_tree()
 {
-	int i;
-	for (i = 0; i < nufunc; i++) {
-		if (!strcmp(ufunc_list[i]->name, name)) return ufunc_list[i];
+	avl_init(&ufuncs_avl, NULL);
+}
+
+void free_ufunc_tree()
+{
+	avl_node_t* next;
+	avl_node_t* cur = avl_head(&ufuncs_avl);
+	while (cur) {
+		next = avl_next(cur);
+		free_ufunc(avl_ref(cur, UFUNC, node));
+		cur = next;
 	}
+}
+
+static int avl_cmp_ufunc(const avl_node_t* lhs, const avl_node_t* rhs, const void* aux)
+{
+	const UFUNC* a = avl_ref(lhs, UFUNC, node);
+	const UFUNC* b = avl_ref(rhs, UFUNC, node);
+	return strcmp(a->name, b->name);
+}
+
+
+UFUNC* locate_ufunc(char* name)
+{
+	UFUNC tmp;
+	tmp.name = name;
+	avl_node_t* found = avl_search(&ufuncs_avl, &tmp.node, avl_cmp_ufunc);
+	if (found) {
+		return avl_ref(found, UFUNC, node);
+	}
+
 	return NULL;
 }
 
-// NOTE(rswinkle): filling the whole with the last element
-// precludes keeping them sorted
-int destroy_ufunc(const char* name)
+int destroy_ufunc(char* name)
 {
-	int i;
-	for (i = 0; i < nufunc; i++) {
-		if (!strcmp(ufunc_list[i]->name, name)) {
-			free_ufunc(ufunc_list[i]);
-			ufunc_list[i] = ufunc_list[nufunc - 1];
-			nufunc--;
-			return 1;
-		}
+	UFUNC tmp;
+	tmp.name = name;
+	avl_node_t* found = avl_search(&ufuncs_avl, &tmp.node, avl_cmp_ufunc);
+	if (found) {
+		avl_remove(&ufuncs_avl, found);
+		UFUNC* u = avl_ref(found, UFUNC, node);
+		free_ufunc(u);
+		--nufunc;
+		return 1;
 	}
+
 	return 0;
 }
 
 void store_ufunc(UFUNC* f)
 {
-	if (ufunc_list == NULL) {
-		ufunc_list = (UFUNC**)calloc(ufsize, sizeof(UFUNC*));
-	} else {
-		if (nufunc == ufsize) {
-			ufsize *= 2;
-			ufunc_list = (UFUNC**)my_realloc(ufunc_list, ufsize * sizeof(UFUNC*));
-		}
-	}
-	ufunc_list[nufunc++] = f;
+	avl_insert(&ufuncs_avl, &f->node, avl_cmp_ufunc);
+	++nufunc;
 }
 
 void free_ufunc(UFUNC* f)
 {
 	free(f->text);
 	free(f->name);
+	free(f->fname);
+
 	if (f->argbuf) free(f->argbuf);
 	if (f->args) free(f->args);
 	if (f->tree) free_tree(f->tree);
@@ -172,9 +192,7 @@ UFUNC* load_function(char* filename)
 			/*
 			** Functions are identical, move on.
 			*/
-			free(f->name);
-			free(f->text);
-			free(f);
+			free_ufunc(f);
 			return NULL;
 		}
 	}
@@ -536,17 +554,20 @@ Var* ufunc_edit(vfuncptr func, Var* arg)
 	if (temp) {
 		unlink(fname);
 		free(fname);
-	} else if (filename && fname != filename)
+	} else if (filename && fname != filename) {
 		free(fname);
+	}
 
 	return NULL;
 }
 
 void list_funcs()
 {
-	int i;
-	for (i = 0; i < nufunc; i++) {
-		printf("%s\n", ufunc_list[i]->name);
+	avl_node_t *cur = avl_head(&ufuncs_avl);
+	while (cur) {
+		UFUNC* u = avl_ref(cur, UFUNC, node);
+		printf("%s\n", u->name);
+		cur = avl_next(cur);
 	}
 }
 

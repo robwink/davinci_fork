@@ -61,7 +61,6 @@ Var* p_mkval(int type, char* str)
 		V_TYPE(v) = ID_VAL;
 		break;
 	case ID_RVAL:
-		// NOTE(rswinkle) fix intermediate float bug
 		make_sym(v, DV_DOUBLE, str);
 		V_TYPE(v) = ID_VAL;
 		break;
@@ -265,7 +264,9 @@ Var* evaluate(Var* n)
 	case ID_UNK:
 	case ID_STRING:
 	case ID_VAL:
-	case ID_TEXT: /*Added: Thu Mar  2 16:00:18 MST 2000 */ push(scope, V_DUP(n)); return (NULL);
+	case ID_TEXT:
+		push(scope, V_DUP(n));
+		return (NULL);
 	}
 
 	left  = V_NODE(n)->left;
@@ -864,7 +865,9 @@ void free_tree(Var* n)
 		case ID_ID:
 		case ID_UNK:
 		case ID_KEYWORD:
-		case ID_TEXT: /*Added: Thu Mar  2 16:01:19 MST 2000 */ free_var(n); return;
+		case ID_TEXT:
+			free_var(n);
+			return;
 		}
 
 		left  = V_NODE(n)->left;

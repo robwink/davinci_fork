@@ -176,10 +176,6 @@ Var* pp_math(Var* a, int op, Var* b)
 	** take order from the larger matrix (less paging that way)
 	**/
 
-	// TODO(rswinkle): This is wrong now.  For example uint64 + int8 should not
-	// return an int8.
-	//in_format = out_format = max(V_FORMAT(a), V_FORMAT(b));
-
 	// See misc.c, also used for cat()
 	in_format = out_format = combine_formats(V_FORMAT(a), V_FORMAT(b));
 
@@ -219,7 +215,8 @@ Var* pp_math(Var* a, int op, Var* b)
 	V_SIZE(val)[orders[order][1]] = size[1];
 	V_SIZE(val)[orders[order][2]] = size[2];
 
-	// TODO(rswinkle) check C spec for exact op conversion/promotion behaviors
+	// NOTE(rswinkle) Could check C spec for exact op conversion/promotion behaviors
+	// for different ops but combine_formats above for everything is ok.
 	// double check the extract calls
 	if (is_relop(op)) {
 		switch (in_format) {

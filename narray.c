@@ -20,7 +20,7 @@ typedef struct _anode {
 	avl_node_t node;
 } Nnode;
 
-int avl_compare(const avl_node_t *lhs, const avl_node_t *rhs, const void *aux)
+static int avl_cmp_nnode(const avl_node_t* lhs, const avl_node_t* rhs, const void* aux)
 {
 	const Nnode* a = avl_ref(lhs, Nnode, node);
 	const Nnode* b = avl_ref(rhs, Nnode, node);
@@ -79,25 +79,21 @@ int Narray_add(Narray* a, const char* key, void* data)
 ** Returns index (>= 0) on success
 **        -1 on failure
 */
-int Narray_insert(Narray* a, const char* key, void* data, int pos)
+int Narray_insert(Narray* a, const char* key, void* data, size_t pos)
 {
-	char* r;
 	Nnode* n;
 	int i;
 	avl_node_t* node;
 
 	if (a == NULL) return -1;
 
-	//this is stupid
-	//if (pos == -1) pos = a->data.size;
-	
-	//if pos < 0 || > size bad things happen
+	//NOTE(rswinkle) if pos > size bad things happen
 
 	// See if this key already exists
 	n = Nnode_create(key, data);
 
 	if (key) {
-		node = avl_insert(&a->tree, &n->node, avl_compare);
+		node = avl_insert(&a->tree, &n->node, avl_cmp_nnode);
 		if (node) {
 			// Key already exists.  Abort.
 			Nnode_free(n, NULL);
@@ -134,7 +130,7 @@ void* Narray_delete(Narray* a, const char* key)
 
 	avl_node_t* found = NULL;
 
-	found = avl_search(&a->tree, &n.node, avl_compare);
+	found = avl_search(&a->tree, &n.node, avl_cmp_nnode);
 
 	if (found) {
 		Nnode* tmp = avl_ref(found, Nnode, node);
@@ -144,14 +140,9 @@ void* Narray_delete(Narray* a, const char* key)
 
 		// Re-index the nodes which have indices higher than
 		// found->index.
-		//
-		// Don't know of a better way as yet!
-		// TODO
-		for (i = 0; i < a->data.size; ++i) {
+		for (i=tmp->index; i<a->data.size; ++i) {
 			node = (Nnode*)a->data.a[i];
-			if (node->index > tmp->index) {
-				node->index--;
-			}
+			node->index--;
 		}
 
 		avl_remove(&a->tree, found);
@@ -185,7 +176,7 @@ void* Narray_remove(Narray* a, int index)
 	if (node->key != NULL) {
 		memset(&n, 0, sizeof(n));
 		n.key = node->key;
-		found = avl_search(&a->tree, &n.node, avl_compare);
+		found = avl_search(&a->tree, &n.node, avl_cmp_nnode);
 
 		if (found) {
 			avl_remove(&a->tree, found);
@@ -193,11 +184,9 @@ void* Narray_remove(Narray* a, int index)
 		}
 	}
 
-	for (i = 0; i < a->data.size; i++) {
+	for (i=index; i<a->data.size; ++i) {
 		node = (Nnode*)a->data.a[i];
-		if (node->index > index) {
-			node->index--;
-		}
+		node->index--;
 	}
 
 	return data;
@@ -215,7 +204,7 @@ int Narray_find(Narray* a, const char* key, void** data)
 
 	if (a == NULL) return -1;
 
-	found = avl_search(&a->tree, &n.node, avl_compare);
+	found = avl_search(&a->tree, &n.node, avl_cmp_nnode);
 	if (found) {
 		Nnode* tmp = avl_ref(found, Nnode, node);
 		if (data) *data = tmp->value;

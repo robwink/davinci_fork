@@ -118,6 +118,7 @@ Var* ff_source(vfuncptr func, Var* arg)
 		return NULL;
 	}
 	push_input_file(fname);
+	free(fname);
 
 	return NULL;
 }

@@ -85,7 +85,6 @@ char* fix_name(const char* input_name)
 	char* name;
 	int len;
 	int i;
-	int val;
 	const char* trim_chars = "\"\t ";
 
 	name = (char*)calloc(1, strlen(input_name) + 2);
@@ -188,6 +187,8 @@ void make_sym(Var* v, int format, char* str)
 	}
 }
 
+
+extern avl_tree_t ufuncs_avl;
 void quit(int return_code)
 {
 	char* path = getenv("TMPDIR");
@@ -200,10 +201,16 @@ void quit(int return_code)
 #endif
 	}
 
-	// Could free memory here (like scope_stack etc.) but
+	// NOTE(rswinkle):
+	// Could free all memory here (like scope_stack etc.) but
 	// what's the point?
 	// It's only a memory leak if forget to free something
 	// while running or worse lose access to the pointer entirely.
+	
+	// Only freeing this because it's intrusive and valgrind says everything
+	// in the UFUNC's is "possibly lost".  It would say the same for Narray's
+	// but they also store those pointers directly in the cvector_voidptr
+	free_ufunc_tree();
 
 	// clean up temporary directory
 	rmrf(path);

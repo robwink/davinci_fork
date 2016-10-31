@@ -44,8 +44,7 @@ int usage(char* prog);
 extern int num_internal_funcs;
 extern struct _vfuncptr vfunclist[];
 
-extern UFUNC** ufunc_list;
-extern int nufunc;
+extern avl_tree_t ufuncs_avl;
 
 ////////////////////
 
@@ -169,6 +168,7 @@ int main(int ac, char** av)
 	// TODO(rswinkle): put all this in a general "init" function
 	init_input_stack();
 	init_scope_stack();
+	init_ufunc_tree();
 
 	Scope scope;
 	init_scope(&scope);
@@ -811,10 +811,11 @@ char* member_generator(const char* text, int state);
 char* command_generator(const char* text, int state)
 {
 	static int list_index, len, search_state, mem_state;
+	static avl_node_t* tree_node;
 
 	Scope* scope = global_scope();
 
-	cvector_void* vec = &scope->symtab;
+	cvector_varptr* vec = &scope->symtab;
 	Var* v;
 
 	// If this is a new word to complete, initialize now.  This includes
@@ -825,18 +826,23 @@ char* command_generator(const char* text, int state)
 		search_state = 0;
 		list_index = 0;
 		mem_state = 0;
+		tree_node = NULL;
 	}
 
-	int i;
+	int i, cmp_result;
 
 	// Return the next name which partially matches from the command list.
 	
 	// search builtin functions
 	if (search_state == 0) {
 		for (i=list_index; i<num_internal_funcs; ++i) {
-			if (strncmp(vfunclist[i].name, text, len) == 0) {
+			cmp_result = strncmp(vfunclist[i].name, text, len);
+			if (cmp_result == 0) {
 				list_index = i+1;
 				return strdup(vfunclist[i].name);
+			} else if (cmp_result > 0) {
+				// since they're alphabetical if name > text we're done
+				break;
 			}
 		}
 		search_state++;
@@ -845,14 +851,22 @@ char* command_generator(const char* text, int state)
 
 	//search user defined functions
 	if (search_state == 1) {
-		for (i = list_index; i < nufunc; ++i) {
-			if (strncmp(ufunc_list[i]->name, text, len) == 0) {
-				list_index = i+1;
-				return strdup(ufunc_list[i]->name);
+		if (!tree_node)
+			tree_node = avl_head(&ufuncs_avl);
+		while (tree_node) {
+			UFUNC* u = avl_ref(tree_node, UFUNC, node);
+			cmp_result = strncmp(u->name, text, len);
+			if (cmp_result == 0) {
+				tree_node = avl_next(tree_node);
+				return strdup(u->name);
+			} else if (cmp_result > 0) {
+				//since we're going through the tree in alphabetical order
+				//if u->name > text we're past any possible matches
+				break;
 			}
+			tree_node = avl_next(tree_node);
 		}
 		search_state++;
-		list_index = 0;
 	}
 
 	//global variables
@@ -861,7 +875,7 @@ char* command_generator(const char* text, int state)
 			if (i < list_index)
 				continue;
 
-			v = *CVEC_GET_VOID(vec, Var*, i);
+			v = vec->a[i];
 
 			if (V_NAME(v) != NULL) {
 				int n_len = strlen(V_NAME(v));
@@ -907,7 +921,7 @@ char* member_generator(const char* text, int state)
 	char* name;
 
 	Scope* scope = global_scope();
-	cvector_void* vec = &scope->symtab;
+	cvector_varptr* vec = &scope->symtab;
 
 	char* word = NULL;
 
@@ -940,7 +954,7 @@ char* member_generator(const char* text, int state)
 		dot = tmp;
 
 		for (i=0; i<vec->size; ++i) {
-			v = *CVEC_GET_VOID(vec, Var*, i);
+			v = vec->a[i];
 			if (V_TYPE(v) != ID_STRUCT)
 				continue;
 
@@ -991,7 +1005,7 @@ char* global_var_generator(const char* text, int state)
 	static int list_index, len;
 
 	Scope* scope = global_scope();
-	cvector_void* vec = &scope->symtab;
+	cvector_varptr* vec = &scope->symtab;
 	Var* v;
 
 	if (!state) {
@@ -1004,7 +1018,7 @@ char* global_var_generator(const char* text, int state)
 		if (i < list_index)
 			continue;
 
-		v = *CVEC_GET_VOID(vec, Var*, i);
+		v = vec->a[i];
 		if (V_NAME(v) != NULL && !strncmp(V_NAME(v), text, len)) {
 			list_index = i+1;
 			return strdup(V_NAME(v));
