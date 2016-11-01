@@ -128,7 +128,6 @@ void dump_var(Var* v, int indent, int limit)
 					for (i = 0; i < x; i++) {
 						c = cpos(i, j, k, v);
 						switch (V_FORMAT(v)) {
-						// TODO(rswinkle) test on 32 bit
 						case DV_UINT8: printf("%"PRIu8"\t", ((u8*)V_DATA(v))[c]); break;
 						case DV_UINT16: printf("%"PRIu16"\t", ((u16*)V_DATA(v))[c]); break;
 						case DV_UINT32: printf("%"PRIu32"\t", ((u32*)V_DATA(v))[c]); break;

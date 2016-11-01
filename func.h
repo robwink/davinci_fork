@@ -287,6 +287,7 @@ int dv_getline(char** ptr, FILE* fp);
  ** All the internal functions are declared here.
  **/
 
+Var* ff_print(vfuncptr func, Var* arg);
 Var* ff_unpack(vfuncptr, Var*);
 Var* ff_pack(vfuncptr, Var*);
 Var* ff_dfunc(vfuncptr, Var*);

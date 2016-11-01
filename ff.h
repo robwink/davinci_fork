@@ -179,6 +179,7 @@ struct _vfuncptr vfunclist[] = {
     {"printf", ff_printf, NULL, NULL},
     {"sprintf", ff_sprintf, NULL, NULL},
     {"fprintf", ff_fprintf, NULL, NULL},
+    {"print", ff_print, NULL, NULL},
 
     {"syscall", ff_syscall, NULL, NULL},
     {"shell", ff_syscall, NULL, NULL},

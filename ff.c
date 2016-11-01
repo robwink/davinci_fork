@@ -950,10 +950,8 @@ Var* ff_cat(vfuncptr func, Var* arg)
 	char* axis_str;
 	int i, j, axis;
 
-	// TODO(rswinkle): Why aren't we using alist + parse_args() here?
-	//
 	// UPDATE(rswinkle): Ok as far as I can tell the only reason
-	// we don't use parse_args() here is because it can't handle arbitrary
+	// we don't use alist + parse_args() here is because it can't handle arbitrary
 	// numbers of arguments...
 	//
 	// Maybe there's a way to update parse_args to
@@ -1764,6 +1762,152 @@ Var* ff_dump(vfuncptr func, Var* arg)
 	return (NULL);
 }
 
+Var* ff_print(vfuncptr func, Var* arg)
+{
+	int ac;
+	Var** av;
+
+	size_t x,y,z,i,j,k,c;
+
+	Var* sep_var = NULL;
+	Var* end_var = NULL;
+	Var* file_var = NULL;
+
+	make_args(&ac, &av, func, arg);
+	for (i = 1; i < ac; ++i) {
+		if (V_TYPE(av[i]) == ID_KEYWORD && V_NAME(av[i]) != NULL) {
+		    if (!strcasecmp(V_NAME(av[i]), "sep")) {
+				sep_var = V_KEYVAL(av[i]);
+				if (V_TYPE(sep_var) != ID_STRING) {
+					parse_error("%s: %s argument must be a string\n", func->name, V_NAME(av[i]));
+					free(av);
+					return NULL;
+				}
+		    } else if (!strcasecmp(V_NAME(av[i]), "end")) {
+				end_var = V_KEYVAL(av[i]);
+				if (V_TYPE(end_var) != ID_STRING) {
+					parse_error("%s: %s argument must be a string\n", func->name, V_NAME(av[i]));
+					free(av);
+					return NULL;
+				}
+		    } else if (!strcasecmp(V_NAME(av[i]), "file")) {
+				file_var = V_KEYVAL(av[i]);
+				if (V_TYPE(file_var) != ID_STRING) {
+					parse_error("%s: %s argument must be a string\n", func->name, V_NAME(av[i]));
+					free(av);
+					return NULL;
+				}
+			} else {
+				parse_error("%s: unrecognized keyword %s\n", func->name, V_NAME(av[i]));
+				free(av);
+				return NULL;
+			}
+			av[i] = NULL;
+		}
+	}
+	
+	const char space[] = " ";
+	const char newline[] = "\n";
+	char* sep;
+	char* end;
+	FILE* file;
+
+	int indent = 0, limit = 0;
+	int row;
+
+	if (!sep_var) {
+		sep = space;
+	} else {
+		sep = V_STRING(sep_var);
+	}
+	if (!end_var) {
+		end = newline;
+	} else {
+		sep = V_STRING(end_var);
+	}
+
+	if (!file_var) {
+		file = (FILE*)stdout;
+	} else {
+		//TODO(rswinkle): file_exists/force parameter?
+		file = fopen(V_STRING(file_var), "w");
+		if (!file) {
+			parse_error("%s: failed to open file \"%s\"\n", func->name, V_STRING(file_var));
+			free(av);
+			return NULL;
+		}
+	}
+
+	Var* v;
+	for (int arg=1; arg<ac; ++arg) {
+		if (!av[arg]) continue;
+		v = av[arg];
+
+		switch (V_TYPE(v)) {
+		case ID_VAL:
+			x = GetSamples(V_SIZE(v), V_ORG(v));
+			y = GetLines(V_SIZE(v), V_ORG(v));
+			z = GetBands(V_SIZE(v), V_ORG(v));
+			if (limit == 0 || (limit && V_DSIZE(v) <= limit)) {
+				for (k = 0; k < z; k++) {
+					for (j = 0; j < y; j++) {
+						for (i = 0; i < x; i++) {
+							c = cpos(i, j, k, v);
+							switch (V_FORMAT(v)) {
+							case DV_UINT8: fprintf(file, "%"PRIu8"\t", ((u8*)V_DATA(v))[c]); break;
+							case DV_UINT16: fprintf(file, "%"PRIu16"\t", ((u16*)V_DATA(v))[c]); break;
+							case DV_UINT32: fprintf(file, "%"PRIu32"\t", ((u32*)V_DATA(v))[c]); break;
+							case DV_UINT64: fprintf(file, "%"PRIu64"\t", ((u64*)V_DATA(v))[c]); break;
+
+							case DV_INT8: fprintf(file, "%"PRId8"\t", ((i8*)V_DATA(v))[c]); break;
+							case DV_INT16: fprintf(file, "%"PRId16"\t", ((i16*)V_DATA(v))[c]); break;
+							case DV_INT32: fprintf(file, "%"PRId32"\t", ((i32*)V_DATA(v))[c]); break;
+							case DV_INT64: fprintf(file, "%"PRId64"\t", ((i64*)V_DATA(v))[c]); break;
+
+							case DV_FLOAT: fprintf(file, "%#.*g\t", SCALE, ((float*)V_DATA(v))[c]); break;
+							case DV_DOUBLE: fprintf(file, "%#.*g\t", SCALE, ((double*)V_DATA(v))[c]); break;
+							}
+						}
+						if (y > 1)
+							putchar('\n');
+					}
+					if (z > 1) putchar('\n');
+				}
+			}
+			break;
+
+		case ID_STRUCT:
+			if (limit > 0) {
+				printf("struct, %d elements\n", get_struct_count(v));
+				pp_print_struct(v, indent, limit - 1);
+			} else {
+				printf("struct, %d elements...\n", get_struct_count(v));
+			}
+			break;
+
+		case ID_STRING:
+			break;
+
+		case ID_TEXT:
+			row            = V_TEXT(v).Row;
+			if (limit) row = min(limit, row);
+			for (i = 0; i < row; i++) {
+				printf("%*s%zu: %s\n", indent, "", (i + 1), V_TEXT(v).text[i]);
+			}
+			break;
+		}
+
+		fprintf(file, "%s", sep);
+	}
+
+	fprintf(file, "%s", end);
+
+
+	free(av);
+	return NULL;
+}
+
+
 /*
 ** compare a to b to see if they are equivalent
 */
@@ -2042,6 +2186,7 @@ u64 v_length(Var* obj, int* err)
 	case ID_VAL: return V_DSIZE(obj);
 	default: *err = 1;
 	}
+	return 0;
 }
 
 Var* ff_length(vfuncptr func, Var* arg)
