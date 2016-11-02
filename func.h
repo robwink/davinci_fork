@@ -76,9 +76,9 @@ Var* pp_usage(Var*);
 void pp_set_cvar(Var*, Var*); /* set control variable */
 Var* pp_get_cvar(char*);      /* get control variable */
 Var* pp_shell(char* cmd);
-void pp_print_struct(Var* v, int indent, int depth);
+void pp_print_struct(Var* v, int indent, int depth, FILE* file);
 int pp_compare(Var* a, Var* b);
-void dump_var(Var* v, int indent, int limit);
+void dump_var(Var* v, int indent, int limit, FILE* file);
 
 #ifdef BUILD_MODULE_SUPPORT
 /* Modules related functions */
@@ -252,6 +252,9 @@ int dv_str_to_format(const char* str);
 
 int combine_var_formats(Var* v1, Var* v2);
 int combine_formats(int format1, int format2);
+
+//debug use only
+void debug_print_var_type(int type);
 // end misc.c
 
 
@@ -493,7 +496,6 @@ void vax_ieee_r(float* from, float* to);
 Var* varray_subset(Var* v, Range* r);
 
 Var* set_varray(Var* v, Range* r, Var* e);
-void print_text(Var* v, int indent);
 Var* create_struct(Var* v);
 Var* ff_syscall(vfuncptr func, Var* arg);
 
@@ -631,7 +633,7 @@ char* make_temp_file_path();
 
 int compare_vars(Var* a, Var* b);
 
-extern void pp_print_var(Var*, char*, int, int);
+extern void pp_print_var(Var*, char*, int, int, FILE*);
 Var* ff_grassfire(vfuncptr func, Var* arg);
 int math_operable(Var* a, Var* b);
 int compare_struct(Var* a, Var* b);

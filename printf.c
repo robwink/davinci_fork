@@ -113,7 +113,7 @@ Var* ff_fprintf(vfuncptr func, Var* arg)
 		} else {
 			/* CHECK THIS??? */
 			filename = V_STRING(v);
-			strcpy(buf, filename);
+			strncpy(buf, filename, 1024);
 
 			fname = dv_locate_file(filename);
 			if (fname == NULL) {

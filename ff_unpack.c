@@ -85,8 +85,6 @@ static void clean_up(int, unpack_digest*, u8*, data*, FILE*);
 
 static int pack(Var* struct_to_pack, data* thedata, char** template_in, char* filename, int numData, int rows, int offset);
 static data* parse_struct(Var*, Var*, int*, int*);
-static data* format_data(data*, unpack_digest*);
-static int write_data(u8* buffer, data* the_data, unpack_digest* input, int row);
 static void cleanup_data(data*, int);
 static int pack_row(data* the_data, unpack_digest* digest, int row, u8* buffer);
 
@@ -1684,13 +1682,6 @@ static int convert_to_ext_fmt(void* from, int ffmt, char* to, int tfmt, int tole
 	return 1;
 }
 
-// write_data(), inverse of read_data(). writes the data into a buffer
-// called by pack()
-// @param u8* buffer              // buffer to write data into
-// @param data* the_data            // data to write into buffer
-// @param unpack_digest* input      // input digest indicating how data should be written
-// @param int row                   // the current row in data to write
-// @return int indicating success:  // 1 = success, 0 = fail
 static int pack_row(data* the_data, unpack_digest* digest, int row, u8* buffer)
 {
 	int i, j, k, numbytes, al_bytes, columns, start_byte;

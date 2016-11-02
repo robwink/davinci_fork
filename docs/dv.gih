@@ -110,24 +110,33 @@
 ?format()
  format()  - Show or change an objects data format
 
- format(object=VAL [, format={BYTE,SHORT,INT,FLOAT,DOUBLE}])
+ format(object=VAL [, format={UINT8,INT16,...,FLOAT,DOUBLE}])
 
     The format() function reports or changes the data format of an
     object.  If used with only one argument, the data format of the
     object specified by the argument is reported as a string.  The
     return values are one of:
 
-        "byte"   - 8 bit unsigned integer
-        "short"  - 16 bit signed integer
-        "int"    - 32 bit signed integer
+        "uint8"  -  8 bit unsigned integer
+        "uint16" - 16 bit unsigned integer
+        "uint32" - 32 bit unsigned integer
+        "uint64" - 64 bit unsigned integer
+        "int8"   -  8 bit signed integer
+        "int16"  - 16 bit signed integer
+        "int32"  - 32 bit signed integer
+        "int64"  - 64 bit signed integer
         "float"  - 32 bit real
         "double" - 64 bit real
+
+    The format argument is not case sensitive.  The old format names,
+    byte, short, and int still work and are equivalent to uint8, int16
+    and int32.
 
     If the second, optional, argument is included, the object specified bt
     the first argument is duplicated and converted to the specified format.
 
  See Also:
-    byte(), short(), int(), float(), double()
+    uint8(), int16(), int32(), float(), double()
 
 ?functions dim()
 ?dim()
@@ -175,30 +184,144 @@
  See Also:
     bsq(), bip(), org()
 
+?functions uint8()
+?uint8()
+ uint8() - Convert an object to uint8 format
+
+ uint8(object=VAL)
+
+    The uint8() function copies and converts an object to uint8 format.
+    Any values above or below the maximum representable values of
+    0, 255 are set to the nearest representable value.
+    This function is equivalent to format(object=VAL, format=uint8).
+
+    This is the new official name for the old byte type.
+
+ See Also:
+    int16(), int32(), float(), double(), format()
+
+?functions uint16()
+?uint16()
+ uint16() - Convert an object to uint16 format
+
+ uint16(object=VAL)
+
+    The uint16() function copies and converts an object to uint16 format.
+    Any values above or below the maximum representable values of
+    0, 65535 are set to the nearest representable value.
+    This function is equivalent to format(object=VAL, format=uint16).
+
+ See Also:
+    int16(), int32(), float(), double(), format()
+
+?functions uint32()
+?uint32()
+ uint32() - Convert an object to uint32 format
+
+ uint32(object=VAL)
+
+    The uint32() function copies and converts an object to uint32 format.
+    Any values above or below the maximum representable values of
+    0, 4294967295  are set to the nearest representable value.
+    This function is equivalent to format(object=VAL, format=uint32).
+
+ See Also:
+    int16(), int32(), float(), double(), format()
+
+?functions uint64()
+?uint64()
+ uint64() - Convert an object to uint64 format
+
+ uint64(object=VAL)
+
+    The uint64() function copies and converts an object to uint64 format.
+    The range is 0 to 18446744073709551615.
+
+    This function is equivalent to format(object=VAL, format=uint64).
+
+ See Also:
+    int16(), int32(), float(), double(), format()
+
+?functions int8()
+?int8()
+ int8() - Convert an object to int8 format
+
+ int8(object=VAL)
+
+    The int8() function copies and converts an object to int8 format.
+    Any values above or below the maximum representable values of
+    -128, 127 are set to the nearest representable value.
+    This function is equivalent to format(object=VAL, format=int8).
+
+ See Also:
+    int16(), int32(), float(), double(), format()
+
+?functions int16()
+?int16()
+ int16() - Convert an object to int16 format
+
+ int16(object=VAL)
+
+    The int16() function copies and converts an object to int16 format.
+    Any values above or below the maximum representable values of
+    -32768, 32767 are set to the nearest representable value.
+    This function is equivalent to format(object=VAL, format=int16).
+
+    This is the new official name for the old short type.
+
+ See Also:
+    int16(), int32(), float(), double(), format()
+
+?functions int32()
+?int32()
+ int32() - Convert an object to int32 format
+
+ int32(object=VAL)
+
+    The int32() function copies and converts an object to int32 format.
+    Any values above or below the maximum representable values of
+    -2147483648, 2147483647 are set to the nearest representable value.
+    This function is equivalent to format(object=VAL, format=int32).
+
+    This is the new official name for the old int type.
+
+ See Also:
+    int16(), int32(), float(), double(), format()
+
+?functions int64()
+?int64()
+ int64() - Convert an object to int64 format
+
+ int64(object=VAL)
+
+    The int64() function copies and converts an object to int64 format.
+    The range is -9223372036854775808 to 9223372036854775807.
+
+    This function is equivalent to format(object=VAL, format=int64).
+
+    This is the default type for an integer literal.
+
+ See Also:
+    int16(), int32(), float(), double(), format()
+
 ?functions byte()
 ?byte()
- byte() - Convert an object to BYTE format
+ byte() - Convert an object to uint8 format
 
  byte(object=VAL)
 
-    The byte() function copies and converts an object to BYTE format.
-    Any values above or below the maximum representable values of
-    0, 255 are set to the nearest representable value.
-    This function is equivalent to format(object=VAL, format=BYTE).
+    Equivalent to uint8()
 
  See Also:
     short(), int(), float(), double(), format()
 
-?functions short()
+?functions int16()
 ?short()
- short() - Convert an object to SHORT format
+ short() - Convert an object to int16 format
 
  short(object=VAL)
 
-    The short() function copies and converts an object to SHORT format.
-    Any values above or below the maximum representable values of
-    -32767,32768 are set to the closest representable value.
-    This function is equivalent to format(object=VAL, format=SHORT).
+    Equivalent to int16()
 
  See Also:
     byte(), int(), float(), double(), format()
@@ -209,10 +332,7 @@
 
  int(object=VAL)
 
-    The int() function copies and converts an object to INT format.
-    Any values above or below the maximum representable values of
-    -2^31,2^31 are set to the closest representable value.
-    This function is equivalent to format(object=VAL, format=INT).
+    Equivalent to int32()
 
  See Also:
     byte(), short(), float(), double(), format()

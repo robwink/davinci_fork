@@ -506,7 +506,6 @@ Var* ff_dim(vfuncptr func, Var* arg)
 Var* ff_format(vfuncptr func, Var* arg)
 {
 	Var *s, *obj = NULL;
-	char* ptr             = NULL;
 	char* type            = NULL;
 	char* format_str      = NULL;
 
@@ -536,9 +535,7 @@ Var* ff_format(vfuncptr func, Var* arg)
 	if (format_str == NULL) {
 		switch (V_TYPE(obj)) {
 		case ID_VAL:
-			/**
-			 ** no format specified.  Print out the format of the passed object.
-			 **/
+			// no format specified.  Print out the format of the passed object.
 			type = Format2Str(V_FORMAT(obj));
 			break;
 		case ID_STRING: type = (char*)"STRING"; break;
@@ -549,19 +546,11 @@ Var* ff_format(vfuncptr func, Var* arg)
 		}
 		return (newString(strdup(type)));
 	} else {
-
-		if (!strcasecmp(format_str, "byte"))
-			ptr = (char*)"byte";
-		else if (!strcasecmp(format_str, "short"))
-			ptr = (char*)"short";
-		else if (!strcasecmp(format_str, "int"))
-			ptr = (char*)"int";
-		else if (!strcasecmp(format_str, "float"))
-			ptr = (char*)"float";
-		else if (!strcasecmp(format_str, "double"))
-			ptr = (char*)"double";
-
-		return (V_func(ptr, create_args(1, NULL, obj, NULL, NULL)));
+		// NOTE(rswinkle): we already know format_str is valid because
+		// parse_args strcasecmps the values in limits, in this case FORMAT_STRINGS
+		// and assigns the matching value to format_str (so we always have a valid
+		// lowercase format)
+		return (V_func(format_str, create_args(1, NULL, obj, NULL, NULL)));
 	}
 }
 
@@ -1363,7 +1352,7 @@ Var* ff_string(vfuncptr func, Var* arg)
 		return (NULL);
 	}
 	if (V_FORMAT(v) != DV_UINT8) {
-		parse_error("%s(), argument must be DV_UINT8 format");
+		parse_error("%s(), argument must be DV_UINT8 format", func->name);
 		return (NULL);
 	}
 
@@ -1757,7 +1746,7 @@ Var* ff_dump(vfuncptr func, Var* arg)
 
 	if (v == NULL) return (NULL);
 
-	dump_var(v, indent, depth);
+	dump_var(v, indent, depth, (FILE*)stdout);
 
 	return (NULL);
 }
@@ -1777,22 +1766,22 @@ Var* ff_print(vfuncptr func, Var* arg)
 	for (i = 1; i < ac; ++i) {
 		if (V_TYPE(av[i]) == ID_KEYWORD && V_NAME(av[i]) != NULL) {
 		    if (!strcasecmp(V_NAME(av[i]), "sep")) {
-				sep_var = V_KEYVAL(av[i]);
-				if (V_TYPE(sep_var) != ID_STRING) {
+				sep_var = eval(V_KEYVAL(av[i]));
+				if (!sep_var || V_TYPE(sep_var) != ID_STRING) {
 					parse_error("%s: %s argument must be a string\n", func->name, V_NAME(av[i]));
 					free(av);
 					return NULL;
 				}
 		    } else if (!strcasecmp(V_NAME(av[i]), "end")) {
-				end_var = V_KEYVAL(av[i]);
-				if (V_TYPE(end_var) != ID_STRING) {
+				end_var = eval(V_KEYVAL(av[i]));
+				if (!end_var || V_TYPE(end_var) != ID_STRING) {
 					parse_error("%s: %s argument must be a string\n", func->name, V_NAME(av[i]));
 					free(av);
 					return NULL;
 				}
 		    } else if (!strcasecmp(V_NAME(av[i]), "file")) {
-				file_var = V_KEYVAL(av[i]);
-				if (V_TYPE(file_var) != ID_STRING) {
+				file_var = eval(V_KEYVAL(av[i]));
+				if (!file_var || V_TYPE(file_var) != ID_STRING) {
 					parse_error("%s: %s argument must be a string\n", func->name, V_NAME(av[i]));
 					free(av);
 					return NULL;
@@ -1812,7 +1801,13 @@ Var* ff_print(vfuncptr func, Var* arg)
 	char* end;
 	FILE* file;
 
-	int indent = 0, limit = 0;
+	//Unlike ff_dump, we do not pass in/use indent or limit.
+	//print should mostly be used for individual items anyway
+	//but it's easy enough to subscript a large array or structure
+	//if you only want to print part of it.  If you're printing
+	//it alone you might as well just use dump() though
+	//int indent = 0, limit = 0;
+	
 	int row;
 
 	if (!sep_var) {
@@ -1823,14 +1818,14 @@ Var* ff_print(vfuncptr func, Var* arg)
 	if (!end_var) {
 		end = newline;
 	} else {
-		sep = V_STRING(end_var);
+		end = V_STRING(end_var);
 	}
 
 	if (!file_var) {
 		file = (FILE*)stdout;
 	} else {
-		//TODO(rswinkle): file_exists/force parameter?
-		file = fopen(V_STRING(file_var), "w");
+		//NOTE(rswinkle): similar to ff_fprintf behavior, no force parameter
+		file = fopen(V_STRING(file_var), "a");
 		if (!file) {
 			parse_error("%s: failed to open file \"%s\"\n", func->name, V_STRING(file_var));
 			free(av);
@@ -1839,69 +1834,80 @@ Var* ff_print(vfuncptr func, Var* arg)
 	}
 
 	Var* v;
+	int is_first = 1;
 	for (int arg=1; arg<ac; ++arg) {
 		if (!av[arg]) continue;
 		v = av[arg];
+
+		// easier to determine if sep is needed here
+		// than at the end of the loop (because of the NULLed
+		// keyword values which could be anywhere in av)
+		if (!is_first) {
+			fprintf(file, "%s", sep);
+		} else {
+			is_first = 0;
+		}
+
+		if (V_TYPE(v) == ID_UNK) {
+			v = eval(v);
+		}
 
 		switch (V_TYPE(v)) {
 		case ID_VAL:
 			x = GetSamples(V_SIZE(v), V_ORG(v));
 			y = GetLines(V_SIZE(v), V_ORG(v));
 			z = GetBands(V_SIZE(v), V_ORG(v));
-			if (limit == 0 || (limit && V_DSIZE(v) <= limit)) {
-				for (k = 0; k < z; k++) {
-					for (j = 0; j < y; j++) {
-						for (i = 0; i < x; i++) {
-							c = cpos(i, j, k, v);
-							switch (V_FORMAT(v)) {
-							case DV_UINT8: fprintf(file, "%"PRIu8"\t", ((u8*)V_DATA(v))[c]); break;
-							case DV_UINT16: fprintf(file, "%"PRIu16"\t", ((u16*)V_DATA(v))[c]); break;
-							case DV_UINT32: fprintf(file, "%"PRIu32"\t", ((u32*)V_DATA(v))[c]); break;
-							case DV_UINT64: fprintf(file, "%"PRIu64"\t", ((u64*)V_DATA(v))[c]); break;
+			for (k = 0; k < z; k++) {
+				if (k > 0) fputc('\n', file);
+				for (j = 0; j < y; j++) {
+					if (j > 0 || k > 0) fputc('\n', file);
+					for (i = 0; i < x; i++) {
+						if (i > 0) fputc('\t', file);
 
-							case DV_INT8: fprintf(file, "%"PRId8"\t", ((i8*)V_DATA(v))[c]); break;
-							case DV_INT16: fprintf(file, "%"PRId16"\t", ((i16*)V_DATA(v))[c]); break;
-							case DV_INT32: fprintf(file, "%"PRId32"\t", ((i32*)V_DATA(v))[c]); break;
-							case DV_INT64: fprintf(file, "%"PRId64"\t", ((i64*)V_DATA(v))[c]); break;
+						c = cpos(i, j, k, v);
+						switch (V_FORMAT(v)) {
+						case DV_UINT8: fprintf(file, "%"PRIu8, ((u8*)V_DATA(v))[c]); break;
+						case DV_UINT16: fprintf(file, "%"PRIu16, ((u16*)V_DATA(v))[c]); break;
+						case DV_UINT32: fprintf(file, "%"PRIu32, ((u32*)V_DATA(v))[c]); break;
+						case DV_UINT64: fprintf(file, "%"PRIu64, ((u64*)V_DATA(v))[c]); break;
 
-							case DV_FLOAT: fprintf(file, "%#.*g\t", SCALE, ((float*)V_DATA(v))[c]); break;
-							case DV_DOUBLE: fprintf(file, "%#.*g\t", SCALE, ((double*)V_DATA(v))[c]); break;
-							}
+						case DV_INT8: fprintf(file, "%"PRId8, ((i8*)V_DATA(v))[c]); break;
+						case DV_INT16: fprintf(file, "%"PRId16, ((i16*)V_DATA(v))[c]); break;
+						case DV_INT32: fprintf(file, "%"PRId32, ((i32*)V_DATA(v))[c]); break;
+						case DV_INT64: fprintf(file, "%"PRId64, ((i64*)V_DATA(v))[c]); break;
+
+						case DV_FLOAT: fprintf(file, "%#.*g", SCALE, ((float*)V_DATA(v))[c]); break;
+						case DV_DOUBLE: fprintf(file, "%#.*g", SCALE, ((double*)V_DATA(v))[c]); break;
 						}
-						if (y > 1)
-							putchar('\n');
 					}
-					if (z > 1) putchar('\n');
 				}
 			}
 			break;
 
 		case ID_STRUCT:
-			if (limit > 0) {
-				printf("struct, %d elements\n", get_struct_count(v));
-				pp_print_struct(v, indent, limit - 1);
-			} else {
-				printf("struct, %d elements...\n", get_struct_count(v));
-			}
+			pp_print_struct(v, 0, INT_MAX, file);
 			break;
 
 		case ID_STRING:
+			fprintf(file, "%s", V_STRING(v));
 			break;
 
 		case ID_TEXT:
 			row            = V_TEXT(v).Row;
-			if (limit) row = min(limit, row);
+			//NOTE(rswinkle): Should this just print the members as if
+			//they were individual strings?  ie no "index: " and only separated
+			//by sep not \n's?  But then maybe we should do the same thing for
+			//arrays, just print them as a series of individual values?
 			for (i = 0; i < row; i++) {
-				printf("%*s%zu: %s\n", indent, "", (i + 1), V_TEXT(v).text[i]);
+				fprintf(file, "%*s%zu: %s\n", 0, "", (i + 1), V_TEXT(v).text[i]);
 			}
 			break;
 		}
-
-		fprintf(file, "%s", sep);
 	}
 
 	fprintf(file, "%s", end);
-
+	if (file != stdout)
+		fclose(file);
 
 	free(av);
 	return NULL;
@@ -1979,7 +1985,6 @@ int compare_vars(Var* a, Var* b)
 			return 0;
 		}
 
-		//format = max(V_FORMAT(a), V_FORMAT(b));
 		format = combine_formats(V_FORMAT(a), V_FORMAT(b));
 
 		for (i = 0; i < V_DSIZE(a); i++) {

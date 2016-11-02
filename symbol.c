@@ -211,7 +211,7 @@ Var* ff_list(vfuncptr func, Var* arg)
 	if (list_ufuncs == 0 && list_sfuncs == 0) {
 		for (i=0; i<vec->size; ++i) {
 			v = vec->a[i];
-			if (V_NAME(v)) pp_print_var(v, V_NAME(v), 0, 0);
+			if (V_NAME(v)) pp_print_var(v, V_NAME(v), 0, 0, NULL);
 		}
 			
 	} else {

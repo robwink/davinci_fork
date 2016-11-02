@@ -456,7 +456,7 @@ static herr_t group_iter(hid_t parent, const char* name, const H5L_info_t* info,
 
 	if (VERBOSE > 2) {
 		if (v)
-			pp_print_var(v, V_NAME(v), 0, 0);
+			pp_print_var(v, V_NAME(v), 0, 0, NULL);
 		else
 			printf("Var v = NULL\n");
 	}

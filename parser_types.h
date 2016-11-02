@@ -128,13 +128,12 @@ typedef struct Alist {
 #define V_INT64(v) (*((i64*)V_DATA(v)))
 
 // historical type names
-// TODO(rswinkle) change V_INT based on arch?  uncomment V_INT64?
 #define V_BYTE(v) (*((u8*)V_DATA(v)))
 #define V_SHORT(v) (*((i16*)V_DATA(v)))
 #define V_INT(v) (*((i32*)V_DATA(v)))
 
-#define V_FLOAT(v) (*((float*)V_DATA(v)))   /* derefernce as a single float */
-#define V_DOUBLE(v) (*((double*)V_DATA(v))) /* derefernce as a single dbl */
+#define V_FLOAT(v) (*((float*)V_DATA(v)))
+#define V_DOUBLE(v) (*((double*)V_DATA(v)))
 
 
 #define V_FORMAT(v) V_SYM(v)->format
