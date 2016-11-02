@@ -76,6 +76,9 @@ Var* pp_usage(Var*);
 void pp_set_cvar(Var*, Var*); /* set control variable */
 Var* pp_get_cvar(char*);      /* get control variable */
 Var* pp_shell(char* cmd);
+Var* pp_print(Var*);
+void pp_print_var(Var*, char*, int, int, FILE*);
+void pp_print_val(Var* v, int limit, FILE* file);
 void pp_print_struct(Var* v, int indent, int depth, FILE* file);
 int pp_compare(Var* a, Var* b);
 void dump_var(Var* v, int indent, int limit, FILE* file);
@@ -211,7 +214,6 @@ Var* p_rlist(int, Var*, Var*);
 Var* p_llist(int, Var*, Var*);
 
 size_t rpos(size_t, Var*, Var*);
-Var* pp_print(Var*);
 
 /* Calls a davinci function programatically.
    See create_args() for creating and sending args. */
@@ -633,7 +635,6 @@ char* make_temp_file_path();
 
 int compare_vars(Var* a, Var* b);
 
-extern void pp_print_var(Var*, char*, int, int, FILE*);
 Var* ff_grassfire(vfuncptr func, Var* arg);
 int math_operable(Var* a, Var* b);
 int compare_struct(Var* a, Var* b);

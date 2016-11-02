@@ -1467,7 +1467,7 @@ Var* ff_fsize(vfuncptr func, Var* arg)
 {
 	char* filename = NULL;
 	struct stat sbuf;
-	int* data;
+	i64* data;
 
 	Alist alist[2];
 	alist[0]      = make_alist("filename", ID_STRING, NULL, &filename);
@@ -1479,7 +1479,7 @@ Var* ff_fsize(vfuncptr func, Var* arg)
 		fprintf(stderr, "%s: No filename specified\n", func->name);
 		return (NULL);
 	} else {
-		data  = (int*)calloc(1, sizeof(int));
+		data  = (i64*)calloc(1, sizeof(i64));
 		*data = -1;
 		if ((stat(filename, &sbuf)) == 0) {
 			*data = sbuf.st_size;
@@ -1487,7 +1487,7 @@ Var* ff_fsize(vfuncptr func, Var* arg)
 				parse_error("%s: Integer truncation, size was %ld\n", func->name, sbuf.st_size);
 			}
 		}
-		return (newVal(BSQ, 1, 1, 1, DV_INT32, data));
+		return (newVal(BSQ, 1, 1, 1, DV_INT64, data));
 	}
 }
 
@@ -1756,7 +1756,7 @@ Var* ff_print(vfuncptr func, Var* arg)
 	int ac;
 	Var** av;
 
-	size_t x,y,z,i,j,k,c;
+	int i;
 
 	Var* sep_var = NULL;
 	Var* end_var = NULL;
@@ -1854,37 +1854,13 @@ Var* ff_print(vfuncptr func, Var* arg)
 
 		switch (V_TYPE(v)) {
 		case ID_VAL:
-			x = GetSamples(V_SIZE(v), V_ORG(v));
-			y = GetLines(V_SIZE(v), V_ORG(v));
-			z = GetBands(V_SIZE(v), V_ORG(v));
-			for (k = 0; k < z; k++) {
-				if (k > 0) fputc('\n', file);
-				for (j = 0; j < y; j++) {
-					if (j > 0 || k > 0) fputc('\n', file);
-					for (i = 0; i < x; i++) {
-						if (i > 0) fputc('\t', file);
-
-						c = cpos(i, j, k, v);
-						switch (V_FORMAT(v)) {
-						case DV_UINT8: fprintf(file, "%"PRIu8, ((u8*)V_DATA(v))[c]); break;
-						case DV_UINT16: fprintf(file, "%"PRIu16, ((u16*)V_DATA(v))[c]); break;
-						case DV_UINT32: fprintf(file, "%"PRIu32, ((u32*)V_DATA(v))[c]); break;
-						case DV_UINT64: fprintf(file, "%"PRIu64, ((u64*)V_DATA(v))[c]); break;
-
-						case DV_INT8: fprintf(file, "%"PRId8, ((i8*)V_DATA(v))[c]); break;
-						case DV_INT16: fprintf(file, "%"PRId16, ((i16*)V_DATA(v))[c]); break;
-						case DV_INT32: fprintf(file, "%"PRId32, ((i32*)V_DATA(v))[c]); break;
-						case DV_INT64: fprintf(file, "%"PRId64, ((i64*)V_DATA(v))[c]); break;
-
-						case DV_FLOAT: fprintf(file, "%#.*g", SCALE, ((float*)V_DATA(v))[c]); break;
-						case DV_DOUBLE: fprintf(file, "%#.*g", SCALE, ((double*)V_DATA(v))[c]); break;
-						}
-					}
-				}
-			}
+			pp_print_val(v, INT_MAX, file);
 			break;
 
 		case ID_STRUCT:
+			//TODO(rswinkle): still get an extra '\n' at the end
+			//of printing a struct ... it'd be ugly and a pain to
+			//get rid of it.
 			pp_print_struct(v, 0, INT_MAX, file);
 			break;
 

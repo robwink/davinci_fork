@@ -111,6 +111,43 @@ void pp_print_struct(Var* v, int indent, int depth, FILE* file)
 	}
 }
 
+void pp_print_val(Var* v, int limit, FILE* file)
+{
+	size_t x,y,z,i,j,k,c;
+	if (!file) file = (FILE*)stdout;
+
+	x = GetSamples(V_SIZE(v), V_ORG(v));
+	y = GetLines(V_SIZE(v), V_ORG(v));
+	z = GetBands(V_SIZE(v), V_ORG(v));
+	if (limit == 0 || V_DSIZE(v) <= limit) {
+		for (k = 0; k < z; k++) {
+			if (k > 0) fputc('\n', file);
+			for (j = 0; j < y; j++) {
+				if (j > 0 || k > 0) fputc('\n', file);
+				for (i = 0; i < x; i++) {
+					if (i > 0) fputc('\t', file);
+
+					c = cpos(i, j, k, v);
+					switch (V_FORMAT(v)) {
+					case DV_UINT8: fprintf(file, "%"PRIu8, ((u8*)V_DATA(v))[c]); break;
+					case DV_UINT16: fprintf(file, "%"PRIu16, ((u16*)V_DATA(v))[c]); break;
+					case DV_UINT32: fprintf(file, "%"PRIu32, ((u32*)V_DATA(v))[c]); break;
+					case DV_UINT64: fprintf(file, "%"PRIu64, ((u64*)V_DATA(v))[c]); break;
+
+					case DV_INT8: fprintf(file, "%"PRId8, ((i8*)V_DATA(v))[c]); break;
+					case DV_INT16: fprintf(file, "%"PRId16, ((i16*)V_DATA(v))[c]); break;
+					case DV_INT32: fprintf(file, "%"PRId32, ((i32*)V_DATA(v))[c]); break;
+					case DV_INT64: fprintf(file, "%"PRId64, ((i64*)V_DATA(v))[c]); break;
+
+					case DV_FLOAT: fprintf(file, "%#.*g", SCALE, ((float*)V_DATA(v))[c]); break;
+					case DV_DOUBLE: fprintf(file, "%#.*g", SCALE, ((double*)V_DATA(v))[c]); break;
+					}
+				}
+			}
+		}
+	}
+}
+
 void dump_var(Var* v, int indent, int limit, FILE* file)
 {
 	size_t i, j, k;
@@ -122,34 +159,8 @@ void dump_var(Var* v, int indent, int limit, FILE* file)
 
 	switch (V_TYPE(v)) {
 	case ID_VAL:
-		x = GetSamples(V_SIZE(v), V_ORG(v));
-		y = GetLines(V_SIZE(v), V_ORG(v));
-		z = GetBands(V_SIZE(v), V_ORG(v));
-		if (limit == 0 || V_DSIZE(v) <= limit) {
-			for (k = 0; k < z; k++) {
-				for (j = 0; j < y; j++) {
-					for (i = 0; i < x; i++) {
-						c = cpos(i, j, k, v);
-						switch (V_FORMAT(v)) {
-						case DV_UINT8: fprintf(file, "%"PRIu8"\t", ((u8*)V_DATA(v))[c]); break;
-						case DV_UINT16: fprintf(file, "%"PRIu16"\t", ((u16*)V_DATA(v))[c]); break;
-						case DV_UINT32: fprintf(file, "%"PRIu32"\t", ((u32*)V_DATA(v))[c]); break;
-						case DV_UINT64: fprintf(file, "%"PRIu64"\t", ((u64*)V_DATA(v))[c]); break;
-
-						case DV_INT8: fprintf(file, "%"PRId8"\t", ((i8*)V_DATA(v))[c]); break;
-						case DV_INT16: fprintf(file, "%"PRId16"\t", ((i16*)V_DATA(v))[c]); break;
-						case DV_INT32: fprintf(file, "%"PRId32"\t", ((i32*)V_DATA(v))[c]); break;
-						case DV_INT64: fprintf(file, "%"PRId64"\t", ((i64*)V_DATA(v))[c]); break;
-
-						case DV_FLOAT: fprintf(file, "%#.*g\t", SCALE, ((float*)V_DATA(v))[c]); break;
-						case DV_DOUBLE: fprintf(file, "%#.*g\t", SCALE, ((double*)V_DATA(v))[c]); break;
-						}
-					}
-					fputc('\n', file);
-				}
-				if (z > 1) fputc('\n', file);
-			}
-		}
+		pp_print_val(v, limit, file);
+		fputc('\n', file);
 		break;
 
 	case ID_STRUCT:

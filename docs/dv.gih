@@ -130,7 +130,8 @@
 
     The format argument is not case sensitive.  The old format names,
     byte, short, and int still work and are equivalent to uint8, int16
-    and int32.
+    and int32.  In addition, everywhere in the docs you see an INT
+    that means int32, just like it always has been.
 
     If the second, optional, argument is included, the object specified bt
     the first argument is duplicated and converted to the specified format.
@@ -145,7 +146,7 @@
  dim(object=VAL)
 
     The dim() function reports the size of each axis of an object.
-    The values are returned in a 3x1x1 array, as the size of the
+    The values are returned in a 3x1x1 uint64 array, as the size of the
     X, Y and Z axis, respectivly.
 
 ?functions bsq()
@@ -1220,14 +1221,62 @@
         if (strlen(s) <= 1) break
     }
 
+?functions print()
+?print()
+ print() - print formatted output
+
+ print(arg1 [, arg2, arg3 ...] [sep=STRING, end=STRING, file=STRING])
+
+ The print() function is based on the python3 print() function.
+ You can pass as many arguments of whatever type you want and it will print
+ them, separated by sep, with the end string at the end.
+
+ sep defaults to ' '.  end defaults to '\n'.  file defaults to stdout.
+
+ If file is provided, it will be opened in append mode same as fprintf().
+
+ Note that the keyword arguments can be given in any order, anywhere in the
+ call, even interspersed with regular arguments.
+
+ Note that this prints complex objects (structures, text objects, 3D arrays)
+ similar to the way that dump() does without a depth limit for arrays *or*
+ structs.
+ When combined with sep, that can look off.
+
+ Example:
+
+    dv> print(100, b, 300)
+    100 0	1
+    2	3
+    4	5
+
+    6	7
+    8	9
+    10	11 300
+
+    dv> c = { a = 1, b = 2 }
+    struct, 2 elements
+        a: 1
+        b: 2
+    dv> dump(c)
+    struct, 2 elements...
+    dv> print(c)
+        a: 1
+        b: 2
+
+ The best way to use print in those cases is to set sep='' and pass space
+ and newlines as you want, or just print complex structures separately.
+
+
 ?functions printf()
 ?printf()
  printf() - print formatted output
 
  printf(fmt [, argument...] )
 
- The printf() function is a direct interface to the C library function
- of the same name.
+ The printf() function is a simplified direct interface to the C library
+ function of the same name.  There are no size specifiers needed or supported
+ for example (ie no %hd, %ld, or %lld etc.).
 
  Printf returns no value.
 
@@ -1280,7 +1329,7 @@
  fsize(filename)
 
  The fsize() function determines the size of the specified file, and
- returns that number as an integer.  If the file does not exist, fsize()
+ returns that number as an int64.  If the file does not exist, fsize()
  returns a -1.
 
  Example:
@@ -2135,7 +2184,7 @@ Davinci supports the following matrix functions:
 ?create()
  create() - Create an array of values
 
- create(x=INT, y=INT, z=INT, [org=ORG, format=FORMAT, start=VAL, step=VAL, init=BOOL])
+ create(x=UINT64, y=UINT64, z=UINT64, [org=ORG, format=FORMAT, start=VAL, step=VAL, init=BOOL])
 
      The create() function creates an array of data of the specified
      size, format and organization.
@@ -2144,9 +2193,9 @@ Davinci supports the following matrix functions:
      If a value is not given, it is assumed to be 1.
 
      The 'org' and 'format' parameters specify the organization (one of
-     bil, bip, bsq, xyz, xzy, zxy) and format (one of byte, short, int,
+     bil, bip, bsq, xyz, xzy, zxy) and format (one of uint8-uint64, int8-int64,
      float or double).  The default organization is bsq.  The default
-     format is int.
+     format is int32, for size and backward compatibility reasons.
 
      The array is filled with a ramp.  The first element is numbered from
      the 'start' parameter (default of 1) and each successive element is
@@ -2425,6 +2474,8 @@ Davinci supports the following matrix functions:
  For strings, it returns the number of characters in the string.
  For structures, it returns the number of elements in the structure
  For text arrays, it returns the number of lines in the array.
+
+ It returns a uint64.
 
  Example:
 
