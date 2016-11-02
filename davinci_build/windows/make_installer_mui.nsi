@@ -5,7 +5,7 @@
 ; --------------------------------
 
 ; Change these as needed
-!define VERSION "2.17"
+!define VERSION "2.18"
 !define INST_FOLDER "davinci_win"
 
 

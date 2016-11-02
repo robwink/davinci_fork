@@ -42,6 +42,7 @@ mingw-w64-x86_64-curl
 
 ...
 
+In a MINGW64 shell,
 
 clone (or checkout) the repo
 cd to davinci_build/windows/dependencies/cfitsio
@@ -54,6 +55,15 @@ back to source root dir
 START HERE on monopoly2.mars.asu.edu
 everything above has already been done
 ======================================
+
+First, start an MSYS2 shell and check for updates:
+
+pacman -Syuu
+
+and follow the directions.  Run it again until it says
+there are no updates.
+
+Close that MSYS2 shell and open an MINGW64 shell.
 
 in source root
 
@@ -78,7 +88,9 @@ On monopoly2 that would be
 cd to parent of install directory and copy the nsi script there
 run NSIS on the script (after changing the defines at the top)
 
-Choose LZMA since it's the best compression
+Choose LZMA (solid) since it's the best compression.
+
+It'll take about 5 minutes to complete.
 
 
 
