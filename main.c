@@ -138,7 +138,6 @@ int main(int ac, char** av)
 	int quick = 0;
 	int i, j, k, flag = 0;
 	char* logfile = NULL;
-	int iflag     = 0;
 	char* p;
 	int history = 1;
 
@@ -307,12 +306,6 @@ int main(int ac, char** av)
 					}
 					break;
 				}
-				case 'i': {
-					/**
-					 **/
-					iflag = 1;
-					break;
-				}
 				case 'q': {
 					quick = 1;
 					break;
@@ -357,24 +350,9 @@ int main(int ac, char** av)
 #ifdef HAVE_LIBREADLINE
 		/* JAS FIX */
 
-		// TODO(rswinkle): figure out how to get special_prefixes to work and
-		// whether it's even worth it
-		// There are too many configuration variables poorly documented/explained
-		// http://cnswww.cns.cwru.edu/php/chet/readline/readline.html#SEC47
-		//static const char* wordbreakers = ".";
-		//rl_special_prefixes = wordbreakers;
-		
-
-		//static const char wordbreakers = " \t\n\"\\'`@$><=;|&{(";
-		//adding the '.'
-		//static const char* wordbreakers = ". \t\n\"\\'`@$><=;|&{(";
-		//rl_basic_word_break_characters = wordbreakers;
-		//
-
-		static const char* prefixes = "\"\'";
-		//rl_special_prefixes = prefixes;
-
 		rl_attempted_completion_function = dv_complete_func;
+
+		//to turn off tab completion (except filename completion which is free)
 		//rl_attempted_completion_function = dv_null_func;
 #endif
 	}
@@ -851,30 +829,31 @@ char* command_generator(const char* text, int state)
 
 	//search user defined functions
 	if (search_state == 1) {
-		if (!tree_node)
+		if (!list_index) {
 			tree_node = avl_head(&ufuncs_avl);
+			list_index = 1;
+		}
 		while (tree_node) {
 			UFUNC* u = avl_ref(tree_node, UFUNC, node);
 			cmp_result = strncmp(u->name, text, len);
-			if (cmp_result == 0) {
-				tree_node = avl_next(tree_node);
-				return strdup(u->name);
-			} else if (cmp_result > 0) {
-				//since we're going through the tree in alphabetical order
-				//if u->name > text we're past any possible matches
+
+			//since we're going through the tree in alphabetical order
+			//if u->name > text we're past any possible matches
+			if (cmp_result > 0)
 				break;
-			}
+
 			tree_node = avl_next(tree_node);
+
+			if (cmp_result == 0)
+				return strdup(u->name);
 		}
 		search_state++;
+		list_index = 0;
 	}
 
 	//global variables
 	if (search_state == 2) {
-		for (i=0; i<vec->size; ++i) {
-			if (i < list_index)
-				continue;
-
+		for (i=list_index; i<vec->size; ++i) {
 			v = vec->a[i];
 
 			if (V_NAME(v) != NULL) {
@@ -898,7 +877,6 @@ char* command_generator(const char* text, int state)
 					if (!ret) {
 						list_index = i+1;
 						mem_state = 0;
-						//rl_attempted_completion_over = 1;
 						continue;
 					}
 					return ret;
@@ -927,15 +905,6 @@ char* member_generator(const char* text, int state)
 
 	word = text;
 
-	//text is actually empty cause it breaks on '.' and we
-	//need the structure names so we work on the whole line buf
-	//
-	//I no longer break on '.' but if I change back uncommenting
-	//this and commenting the 4 lines below fixes it
-	//word = rl_line_buffer;
-
-	//return NULL;
-	//printf("word = \"%s\"\n", word);
 	char* tmp;
 	int nlen;
 	int i, n_memb;
@@ -1000,6 +969,8 @@ char* member_generator(const char* text, int state)
 	return NULL;
 }
 
+/*
+ * NOTE(rswinkle): Not currently used
 char* global_var_generator(const char* text, int state)
 {
 	static int list_index, len;
@@ -1026,6 +997,7 @@ char* global_var_generator(const char* text, int state)
 	}
 	return NULL;
 }
+*/
 
 
 
@@ -1042,9 +1014,6 @@ char** dv_complete_func(const char* text, int start, int end)
 	rl_completion_append_character = '\0';
 
 	static const char* qb = "\'\"";
-
-
-	//printf("\"%s\" %d %d = '%c' = '%c'\n", rl_line_buffer, start, end, rl_line_buffer[start], text[0]);
 
 	if (start == 0 || (rl_line_buffer[start-1] != qb[0] && rl_line_buffer[start-1] != qb[1])) {
 		matches = rl_completion_matches(text, command_generator);

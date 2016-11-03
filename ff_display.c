@@ -37,8 +37,8 @@ Var* ff_display(vfuncptr func, Var* arg)
 	x = GetX(obj);
 	y = GetY(obj);
 	z = GetZ(obj);
-	if (V_FORMAT(obj) > DV_INT16) {
-		sprintf(error_buf, "Unable to display DV_FLOAT or DV_DOUBLE data\n");
+	if (V_FORMAT(obj) != DV_UINT8 && V_FORMAT(obj) != DV_INT16) {
+		sprintf(error_buf, "Can only display uint8 or int16 data\n");
 		parse_error(NULL);
 		return (NULL);
 	}
