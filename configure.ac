@@ -533,8 +533,11 @@ AC_ARG_WITH(examples,
 )
 AM_CONDITIONAL(DV_EXAMPLES, [test "x$DV_EXAMPLES" != "xno"])
 
-dnl We should just delete this whole system.  only mod_foo, an examlpe module uses
-dnl it now.  Everything else uses modules_io
+dnl NOTE(rswinkle): We should just delete this whole system.
+dnl Only moduls/foo, an example module, uses it now.  And this is *never* enabled.
+dnl Everything else uses just ff_modules.c/h which depends on modules_io.c/h
+dnl
+dnl IOW, apifunc.c, apidef.h, api.h and modules/foo/ should be deleted
 AC_ARG_ENABLE(api, AC_HELP_STRING([--enable-api], [enable api support.]))
 if [[ "$enable_api" == "yes" ]]; then
 	AC_DEFINE(INCLUDE_API, 1, [ include api support])

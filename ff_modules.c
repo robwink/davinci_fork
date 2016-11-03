@@ -1,7 +1,7 @@
 /*
 ** Formatting: tabwidth=4 shiftwidth=4
 **
-** File: ff_modules.c  - tightly dependent on darray.c::Narray
+** File: ff_modules.c  - tightly dependent on narray.c::Narray
 **
 ** Contains code for loading vanilla modules.
 **
