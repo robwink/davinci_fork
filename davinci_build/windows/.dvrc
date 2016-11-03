@@ -1,0 +1,9 @@
+VERBOSE=3
+SCALE=10
+#################################################
+#Put all of your user defined functions here
+################################################
+
+chdir($HOME)
+source($DV_LIB+"/library_win.dvrc")
+
