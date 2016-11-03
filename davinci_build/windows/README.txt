@@ -84,6 +84,8 @@ copy the exe, all the dlls, and modules/ to the install directory
 On monopoly2 that would be
 /c/msys64/home/rswinkle/davinci_win/
 
+If necessary (if you updated them), copy the davinci library and dv.gih
+from the repo to the install directory as well.
 
 cd to parent of install directory and copy the nsi script there
 run NSIS on the script (after changing the defines at the top)
