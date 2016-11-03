@@ -5,24 +5,42 @@
 #This creates davinci.dll, davinci.exe and modules.
 #Run:
 #
-# ./makwin.sh [davinci_source]
+# ./makwin.sh [davinci_source] [inst_dir]
 #
 
 
 
 davinci_src="$1"
+inst_dir="$2"
 
 current_dir=`pwd`
 
 
 
-if [ "$davinci_src" = "" ]; then 
-    davinci_src="../"
+if [ "$davinci_src" = "" ]; then
+    davinci_src="../.."
 fi
 
+if [ "$inst_dir" = "" ]; then
+	inst_dir="../../../davinci_win/"
+fi
+
+#first clean out install directory of built files
+rm $inst_dir/*.dll
+rm $inst_dir/*.exe
+rm $inst_dir/modules/*
 
 cd $davinci_src
 
+
+#first build davinci
+./configure CFLAGS='-g -O2 -D__USE_MINGW_ANSI_STDIO=1 -fPIC' CXXFLAGS='-fpermissive'
+make clean
+make
+
+
+#Then do this stuff that was already here that I didn't write.
+#I commented out the libraries that mingw now provides
 LIBS=""
 function filllibs() {
 	name="$1"
@@ -83,4 +101,22 @@ mv modules/kjn/kjn.lai $current_dir/modules
 mv modules/pnm/pnm.lai $current_dir/modules
 cd $current_dir
 
+#copy all mingw libraries here (and then to inst_dir) in case
+#they've been updated since the last build
+# (ie through pacman -Syuu see README.txt)
+ldd davinci.exe | grep mingw64 | cut -d' ' -f3 | xargs -I{} cp {} .
+
+#copy everything that was built to inst_dir
+cp *.dll $inst_dir
+cp davinci.exe $inst_dir
+cp -r modules/ $inst_dir
+
+#and everything that could have changed since the last build
+cp -r $davinci_src/library $inst_dir
+cp $davinci_src/docs/dv.gih $inst_dir
+
+#clean
+rm *.exe
+rm *.dll
+rm modules/*
 
