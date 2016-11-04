@@ -293,7 +293,7 @@ dnl This is a C++ library; set the language so the test succeeds.
 dnl FIX: not sure why we need both lib and header check..
 dnl Note for FIX above: You may have the library installed on a system, but
 dnl not the header files. davinci already compiled with qmv support will run on
-dnl a system with just the library, but a recompile will fail on deghost.C if you
+dnl a system with just the library, but a recompile will fail on deghost.cpp if you
 dnl do not check for the header file, too.
 
 AC_LANG_PUSH(C++)
