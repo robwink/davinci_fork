@@ -65,32 +65,20 @@ there are no updates.
 
 Close that MSYS2 shell and open an MINGW64 shell.
 
-in source root
-
-./configure CXXFLAGS='-fpermissive' && make
-
-If you're on a VM that can take 15 minutes
-
 cd davinci_build/windows
-./makewin.sh ../..
+./makewin.sh [davinci_src] [inst_dir]
 
-run this command to copy all the used mingw libraries to the current directory
-ldd davinci.exe | grep mingw64 | cut -d' ' -f3 | xargs -I{} cp {} .
+which is this on monopoly2:
+./makewin.sh ../.. ../../../davinci_win
 
+since davinci_build is checked out into the davinci repo
 
-copy the exe, all the dlls, and modules/ to the install directory
-(ie the folder contained what would go in C:/Program Files/Davinci)
-
-On monopoly2 that would be
-/c/msys64/home/rswinkle/davinci_win/
-
-If necessary (if you updated them), copy the davinci library and dv.gih
-from the repo to the install directory as well.
+That will configure, compile, copy libs and such to the install
+directory.  It'll take a while.
 
 cd to parent of install directory and copy the nsi script there
-run NSIS on the script (after changing the defines at the top)
-
-Choose LZMA (solid) since it's the best compression.
+run NSIS on the script (after changing the defines at the top if
+necessary)
 
 It'll take about 5 minutes to complete.
 
