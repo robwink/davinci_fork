@@ -66,12 +66,6 @@ if [ ! -e $davinci_src/davinci -o $force_rebuild -ne 0 ]
     cd $davinci_src
     make clean
 
-    #make the png lib first to use local copy
-    cd $davinci_src/iomedley/libpng-1.2.3
-    ./configure CFLAGS=-fPIC CXXFLAGS=-fPIC
-    make
-    cd $davinci_src   
-
     #configure with appropriate settings
     #printf "%s\n" "./configure --prefix=/usr --disable-jbig --disable-libisis --with-cfitsio=/usr --with-readline=/usr --with-viewer=/usr/bin/display --with-help=/usr/share/davinci/docs/dv.gih CFLAGS=-fPIC CXXFLAGS=-fPIC"
     #./configure --prefix=/usr --disable-jbig --disable-libisis --with-cfitsio=/usr --with-readline=/usr --with-viewer=/usr/bin/display --with-help=/usr/share/davinci/docs/dv.gih CFLAGS=-fPIC CXXFLAGS=-fPIC
@@ -84,7 +78,7 @@ if [ ! -e $davinci_src/davinci -o $force_rebuild -ne 0 ]
     [ $? -eq 0 ] || failed "davinci build failed"
 fi
 
-#check to make sure davicni compiled
+#check to make sure davinci compiled
 [ -e $davinci_src/davinci ] || failed "davinci executeable could not be made"
 
 cd $davinci_src
