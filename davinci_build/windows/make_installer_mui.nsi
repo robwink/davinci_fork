@@ -8,6 +8,8 @@
 !define VERSION "2.18"
 !define INST_FOLDER "davinci_win"
 
+SetCompressor /SOLID /FINAL lzma
+SetCompressorDictSize 64
 
 Name "Davinci-${VERSION}"
 OutFile "Davinci-${VERSION}-Setup.exe"
