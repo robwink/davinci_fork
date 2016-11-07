@@ -134,7 +134,7 @@ int iom_GetISISHeader(FILE* fp, char* filename, struct iom_iheader* h,
 
 		// This tells us if we happen to be using float vs int
 		key1 = OdlFindKwd(qube, "CORE_ITEM_TYPE", NULL, 0, scope);
-		printf("%s type = %s\n", __FUNCTION__, key1->value);
+		//printf("%s type = %s\n", __FUNCTION__, key1->value);
 
 		format = iom_ConvertISISType(key1 ? key1->value : NULL, NULL, key2 ? key2->value : NULL);
 
