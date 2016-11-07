@@ -1666,6 +1666,17 @@
         quiet=1:        Only print end summary
         quiet=2:        Print nothing except fatal errors
 
+
+?edit edit()
+?edit()
+ edit() - Edit the code of a User Defined Function
+
+ edit(function)
+
+     A text editor will be opened to allow the user to alter the code of the
+     specified user-defined function. Upon saving the function will operate
+     according to the alterations.
+
 ?history
      Davinci maintains a command line history.  As each line is typed, it
      is logged to a file in the current working directory, ".dvlog".  When
