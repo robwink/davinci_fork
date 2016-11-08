@@ -447,12 +447,15 @@ Var* evaluate(Var* n)
 			p3 = pop(scope);
 			p2 = pop(scope);
 			p1 = pop(scope);
+			printf("%s %s %s\n", (p1) ? V_NAME(p1) : "p1 = null", (p2) ? V_NAME(p2) : "p2 = null",
+			       (p3) ? V_NAME(p3) : "p3 = null");
 			push(scope, pp_set_struct(p1, p2, p3));
 		} else {
 			evaluate(left);
+			p1 = pop(scope);
 			evaluate(right);
 			p2 = pop(scope);
-			p1 = pop(scope);
+			printf("%s %s\n", (p1) ? V_NAME(p1) : "p1 = null", (p2) ? V_NAME(p2) : "p2 = null");
 			push(scope, pp_set_var(p1, NULL, p2));
 		}
 		break;

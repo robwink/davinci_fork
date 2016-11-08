@@ -30,7 +30,8 @@ Var* V_DUP(Var* v)
 
 	switch (V_TYPE(v)) {
 	case ID_VAL:
-		memcpy(V_SYM(r), V_SYM(v), sizeof(Sym));
+		//taken care of by above memcpy
+		//memcpy(V_SYM(r), V_SYM(v), sizeof(Sym));
 		dsize                      = V_DSIZE(v) * NBYTES(V_FORMAT(v));
 		V_SYM(r)->data             = memcpy(malloc(dsize), V_SYM(v)->data, dsize);
 		if (V_TITLE(v)) V_TITLE(r) = strdup(V_TITLE(v));
@@ -248,7 +249,21 @@ Var* pp_set_var(Var* id, Var* range, Var* exp)
 	 ** If exp is named, it is a simple variable substitution.
 	 ** If its not named, we can use its memory directly.
 	 **/
-	if (exp == NULL) return (NULL);
+	if (exp == NULL) {
+		// "set" id to NULL by removing it
+		if (V_NAME(id)) {
+			//TODO(rswinkle) valgrind
+
+			printf("id %p %s\n", id, V_NAME(id));
+
+			rm_sym(V_NAME(id));
+			//mem_claim(id);
+			//free_var(rm_symtab(id));
+		}
+
+		return NULL;
+	}
+
 	if (range != NULL) {
 		/**
 		 ** The user has requested an array replacement.
@@ -308,6 +323,8 @@ Var* pp_set_var(Var* id, Var* range, Var* exp)
 	}
 
 	/* looks like structs might not have names, so skip this for them */
+	// NOTE(rswinkle): I don't think id will ever not have a name and the
+	// comment above is out of date
 	if (V_NAME(id)) {
 		V_NAME(exp) = strdup(V_NAME(id));
 

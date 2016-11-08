@@ -115,7 +115,9 @@ void dv_sighandler(int data)
 	case (SIGINT):
 		signal(SIGINT, SIG_IGN);
 		while ((scope = scope_tos()) != global_scope()) {
+			//NOTE(rswinkle): This does nothing!
 			dd_unput_argv(scope);
+
 			scope_pop();
 		}
 

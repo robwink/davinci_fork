@@ -234,10 +234,9 @@ void init_scope(Scope* s)
 	//not sure if this is necessary
 	memset(s, 0, sizeof(Scope));
 
-	// TODO(rswinkle): add elem_free later
-	//
-	// These actually aren't even necessary since cvec allocator macro handles
-	// 0 capacity correctly, but when/if we use elem_free it makes more sense
+	// NOTE(rswinkle):
+	// Can't use elem_free like with tmp because of rm_symtab shenanigans in
+	// ufunc.c for symtab and because of pop() which removes and returns the stack values
 	cvec_varptr(&s->symtab, 0, 8, NULL, NULL);
 	cvec_varptr(&s->stack, 0, 2, NULL, NULL);
 
@@ -256,6 +255,10 @@ void free_scope(Scope* s)
 	   free(s->dd->name);
 	   }
 	*/
+
+	cvec_free_varptr(&s->symtab);
+	cvec_free_varptr(&s->stack);
+	cvec_free_varptr(&s->tmp);
 
 	cvec_free_void(&s->dd);
 	cvec_free_void(&s->args);
@@ -281,7 +284,7 @@ Var* pop(Scope* scope)
 void clean_table(cvector_varptr* vec)
 {
 	for (int i=0; i<vec->size; ++i) {
-		free(vec->a[i]);
+		free_var(vec->a[i]);
 	}
 	cvec_free_varptr(vec);
 }
@@ -316,6 +319,11 @@ void cleanup(Scope* scope)
 		// NOTE(rswinkle): This is necessary or else *bad things* happen
 		// because whoever wrote davinci didn't actually think about memory
 		// management so things are "cleaned up" in multiple places to be safe
+		//
+		// theoreticaly the capacity check above should prevent any problems
+		// because cvec_free_type sets size = capacity = 0
+		// but for some reason it still seg faults without this.  FTR the old
+		// Darray based version set itself to NULL too
 		scope->tmp.a = NULL;
 	}
 }
@@ -415,7 +423,6 @@ void unload_symtab_modules(Scope* scope)
  **/
 void clean_scope(Scope* scope)
 {
-
 	// NOTE(rswirkle): Need to think about whether these checks are necessary
 	// but for now just replicating old logic
 	if (scope->dd.a) {
@@ -429,6 +436,8 @@ void clean_scope(Scope* scope)
 	}
 
 	clean_stack(scope);
+	cvec_free_varptr(&scope->stack);
+
 	if (scope->tmp.capacity) {
 		/*
 		if (!scope->tmp.a)
@@ -446,8 +455,5 @@ void clean_scope(Scope* scope)
 	   to the module variable in the global symbol table. */
 	unload_symtab_modules(scope);
 
-	// replace with cvec_free with elem_free
 	clean_table(&scope->symtab);
-
-	cvec_free_varptr(&scope->stack);
 }

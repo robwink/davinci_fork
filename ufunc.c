@@ -429,6 +429,8 @@ Var* dispatch_ufunc(UFUNC* f, Var* arg)
 	 **  Additionally, we need to transfer this value OUT of this scope's
 	 **  symtab, since that memory will go away when the scope is cleaned.
 	 **/
+	//NOTE(rswinkle): this literally does nothing, 0 side effects, see scope.c
+	//it's been that way for a decade at least
 	dd_unput_argv(scope);
 
 	/**
@@ -597,10 +599,10 @@ Var* ff_global(vfuncptr func, Var* arg)
 			e          = newVal(BSQ, 1, 1, 1, DV_UINT8, zero);
 			mem_claim(e);
 			V_NAME(e) = strdup(aname);
-			printf("path 1\n");
+			//printf("path 1\n");
 		} else if ((v = rm_symtab(e)) != NULL) {
 			e = v;
-			fprintf(stderr, "path 2\n");
+			//fprintf(stderr, "path 2\n");
 		} else {
 			/* Ok, at this point, this named argument exists in the
 			 * local scope, but it has to be in the dd, not the symtab.

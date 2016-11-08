@@ -281,7 +281,7 @@ Var* rm_symtab(Var*);
 int LoadSpecprHeader(FILE*, char*, int, char*, Var**);
 int dv_LoadVicarHeader(FILE*, char*, int, char*, Var**);
 
-Var* HasValue(vfuncptr, Var*);
+Var* ff_hasvalue(vfuncptr, Var*);
 Var* ufunc_edit(vfuncptr, Var*);
 
 int fixup_ranges(Var* v, Range* in, Range* out);

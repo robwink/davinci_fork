@@ -589,6 +589,7 @@ Var* ff_grep(vfuncptr func, Var* arg)
 
 	if (count == 0) {
 		parse_error("No Match");
+		regfree(&compiled);
 		return (NULL);
 	}
 

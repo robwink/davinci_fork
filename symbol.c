@@ -10,7 +10,8 @@
  **
  **/
 
-Var* HasValue(vfuncptr func, Var* arg)
+
+Var* ff_hasvalue(vfuncptr func, Var* arg)
 {
 	int ac;
 	Var **av, *v;
@@ -29,7 +30,6 @@ Var* HasValue(vfuncptr func, Var* arg)
 Var* rm_symtab(Var* v)
 {
 	Scope* scope = scope_tos();
-
 	
 	cvector_varptr* vec = &scope->symtab;
 	Var* ptr;
@@ -68,8 +68,10 @@ Var* search_symtab(Scope* scope, char* name)
 
 	for (int i=0; i<vec->size; ++i) {
 		v = vec->a[i];
-		if (V_NAME(v) && !strcmp(V_NAME(v), name))
+		if (V_NAME(v) && !strcmp(V_NAME(v), name)) {
+			printf("found %p %s\n", v, name);
 			return v;
+		}
 	}
 
 	return NULL;
@@ -106,7 +108,7 @@ void rm_sym(char* name)
 	for (int i=0; i<vec->size; ++i) {
 		v = vec->a[i];
 		if (!strcmp(V_NAME(v), name)) {
-			free(v);
+			free_var(v);
 			cvec_erase_varptr(vec, i, i);
 			return;
 		}
@@ -132,6 +134,10 @@ Var* sym_put(Scope* scope, Var* s)
 		*s  = tmp;
 
 		// put the names back
+		//
+		// TODO(rswinkle) I really don't get this but
+		// somehow commenting these out breaks the test
+		// basic/ufunc/call-by-ref.dvtest
 		tmp.name = v->name;
 		v->name  = s->name;
 		s->name  = tmp.name;
@@ -140,13 +146,9 @@ Var* sym_put(Scope* scope, Var* s)
 		s = v;
 	} else {
 		cvec_push_varptr(&scope->symtab, &s);
+		mem_claim(s);
 	}
 	
-	//Possible this has already been done.  do it again for safety.
-	// 
-	// NOTE(rswinkle): huh?
-	mem_claim(s);
-
 	return s;
 }
 

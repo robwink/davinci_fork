@@ -870,7 +870,6 @@ static int load_dv_module(char* mod_name, char* mod_ver, int offset, dvModule* m
 	}
 	mod->stage = MOD_LOCATED;
 
-	mod->path = strdup(mod->path);
 	if (mod->path == NULL) {
 		parse_error("Mem allocation error, while loading %s.", mod_name);
 		return 0;

@@ -212,6 +212,10 @@ void quit(int return_code)
 	// but they also store those pointers directly in the cvector_voidptr
 	free_ufunc_tree();
 
+	while (scope_stack_count()) {
+		scope_pop();
+	}
+
 	// clean up temporary directory
 	rmrf(path);
 	exit(return_code);

@@ -173,8 +173,8 @@ struct _vfuncptr vfunclist[] = {
     {"delete", ff_delete, NULL, NULL},
     {"equals", ff_equals, NULL, NULL},
     {"length", ff_length, NULL, NULL},
-    {"hasvalue", HasValue, NULL, NULL},
-    {"HasValue", HasValue, NULL, NULL},
+    {"hasvalue", ff_hasvalue, NULL, NULL},
+    {"HasValue", ff_hasvalue, NULL, NULL},
 
     {"printf", ff_printf, NULL, NULL},
     {"sprintf", ff_sprintf, NULL, NULL},
