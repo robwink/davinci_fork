@@ -453,6 +453,9 @@ Var* evaluate(Var* n)
 		} else {
 			evaluate(left);
 			p1 = pop(scope);
+			if (V_NAME(p1)) {
+				rm_sym(V_NAME(p1));
+			}
 			evaluate(right);
 			p2 = pop(scope);
 			printf("%s %s\n", (p1) ? V_NAME(p1) : "p1 = null", (p2) ? V_NAME(p2) : "p2 = null");

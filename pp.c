@@ -30,8 +30,6 @@ Var* V_DUP(Var* v)
 
 	switch (V_TYPE(v)) {
 	case ID_VAL:
-		//taken care of by above memcpy
-		//memcpy(V_SYM(r), V_SYM(v), sizeof(Sym));
 		dsize                      = V_DSIZE(v) * NBYTES(V_FORMAT(v));
 		V_SYM(r)->data             = memcpy(malloc(dsize), V_SYM(v)->data, dsize);
 		if (V_TITLE(v)) V_TITLE(r) = strdup(V_TITLE(v));
