@@ -69,7 +69,6 @@ Var* search_symtab(Scope* scope, char* name)
 	for (int i=0; i<vec->size; ++i) {
 		v = vec->a[i];
 		if (V_NAME(v) && !strcmp(V_NAME(v), name)) {
-			printf("found %p %s\n", v, name);
 			return v;
 		}
 	}

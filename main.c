@@ -603,9 +603,6 @@ void parse_buffer(char* buf)
 
 	curnode = NULL;
 
-	// DEBUG(rswinkle)
-	//printf("start scope_count = %d\n", scope_stack_count());
-
 	while ((i = yylex()) != 0) {
 		/*
 		** if this is a function definition, do no further parsing yet.

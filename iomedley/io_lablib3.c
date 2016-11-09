@@ -2157,6 +2157,7 @@ int OdlGetAllKwdValuesArray(KEYWORD* keyword, char*** array)
 		// turn it into an array?  Why not just create a vector/array in the first place?
 		return (ListToArray(value_list, array));
 	} else {
+		*array = NULL;
 		return (0);
 	}
 
@@ -5374,6 +5375,7 @@ int ListToArray(TB_STRING_LIST* list, char*** array)
 		count++;
 	}
 	*array = calloc(count, sizeof(char*));
+	printf("array = %p\n", *array);
 
 	t = list;
 	while (t != NULL) {

@@ -653,7 +653,7 @@ static int initHeaderFromQubeLabel(OBJDESC* qube, char* fn, struct iom_iheader* 
 	// This tells us if we happen to be using float vs int
 	if ((key1 = OdlFindKwd(qube, "CORE_ITEM_TYPE", NULL, 0, scope))) {
 		if (strstr(key1->value, "UNSIGNED")) _unsigned = 1;
-		printf("type = %s\n", key1->value);
+		//printf("type = %s\n", key1->value);
 	}
 
 	format = iom_ConvertISISType(key1 ? key1->value : NULL, NULL, key2 ? key2->value : NULL);
@@ -971,7 +971,7 @@ Var* dv_LoadISISSuffixesFromPDS_New(FILE* fp, char* fname, size_t dptr, OBJDESC*
 	Var* suffix_data[3] = {NULL, NULL, NULL};
 	iom_edf eformat;
 	int iformat;
-	int i, j, k, n;
+	int i, j, k;
 	size_t size;
 	Var* v;
 	char* msg_file              = NULL;
@@ -1089,19 +1089,29 @@ Var* dv_LoadISISSuffixesFromPDS_New(FILE* fp, char* fname, size_t dptr, OBJDESC*
 		}
 	}
 
-	//TODO(rswinkle): Why is this not sufficient?  whye is there
+	//TODO(rswinkle): Why is this not sufficient?  why is there
 	//still a leak?
-	for (i=0; i<type_list_sz; ++i)
+	printf("\n%d %d %d\n", type_list_sz, name_list_sz, size_list_sz);
+	printf("%p\n%p\n%p\n", type_list, name_list, size_list);
+	for (i=0; i<type_list_sz; ++i) {
+		printf("%s\n",type_list[i]);
 		free(type_list[i]);
+	}
 	free(type_list);
-
-	for (i=0; i<name_list_sz; ++i)
+	putchar('\n');
+	for (i=0; i<name_list_sz; ++i) {
+		printf("%s\n",name_list[i]);
 		free(name_list[i]);
+	}
 	free(name_list);
 
-	for (i=0; i<size_list_sz; ++i)
+	putchar('\n');
+	for (i=0; i<size_list_sz; ++i) {
+		printf("%s\n",size_list[i]);
 		free(size_list[i]);
+	}
 	free(size_list);
+	putchar('\n');
 
 	return (v);
 }
@@ -1772,6 +1782,10 @@ static int dv_LookupSuffix(OBJDESC* qube, char* name, int* plane, int* type, str
 						*type  = i;
 						count++;
 						if (!strcasecmp(list[j], name)) {
+							for (int k=0; k<n; ++k) {
+								free(list[j]);
+							}
+							free(list);
 							return (0);
 						}
 					}
@@ -1779,6 +1793,10 @@ static int dv_LookupSuffix(OBJDESC* qube, char* name, int* plane, int* type, str
 			}
 		}
 	}
+	for (int k=0; k<n; ++k) {
+		free(list[j]);
+	}
+	free(list);
 
 	if (count) {
 		if (count > 1) {
@@ -2176,7 +2194,7 @@ Var* write_isis_planes(vfuncptr func, Var* arg)
 		rec_len = size[2] * GetNbytes(core);
 		if (suffix[2]) rec_len += get_struct_count(suffix[2]) * 4;
 	}
-	sprintf(buf + strlen(buf), "    CORE_ITEMS = (%d,%d,%d)\n", V_SIZE(core)[0], V_SIZE(core)[1],
+	sprintf(buf + strlen(buf), "    CORE_ITEMS = (%zu,%zu,%zu)\n", V_SIZE(core)[0], V_SIZE(core)[1],
 	        V_SIZE(core)[2]);
 
 	sprintf(buf + strlen(buf), "    CORE_ITEM_BYTES = %d\n", GetNbytes(core));
@@ -2365,6 +2383,7 @@ Var* write_isis_planes(vfuncptr func, Var* arg)
 		}
 	}
 	fclose(fp);
+	free(fname);
 	return (newInt(1));
 }
 
