@@ -39,6 +39,8 @@ static int get_org_from_axis_names(char* axis_names[3], int* org);
 static const char* axis_names[3] = {"sample", "line", "band"};
 #endif
 
+// NOTE(rswinkle): We already have these in io_lablib3.c and probably
+// elsewhere too.  We need to quit duplicating code (and bloating our binaries).
 static void lcase(char* name)
 {
 	int i, n;
@@ -303,6 +305,8 @@ Var* dvLoadQube(FILE* fp, char* fn, int dptr, int org, int items[], int itemByte
  **
  ** Returns NULL on error.
  **/
+
+#if 0
 Var* dvLoadSuffixes(FILE* fp, char* fname, int dptr, int org, int items[], int itemBytes, char* itemType,
                     double coreBase, double coreMult, int suffixItems[], int suffixBytes, OBJDESC* qube)
 {
@@ -314,6 +318,7 @@ Var* dvLoadSuffixes(FILE* fp, char* fname, int dptr, int org, int items[], int i
 	char str[256];
 	char str2[256];
 	char **name_list = NULL, **size_list = NULL, **type_list = NULL;
+	int name_list_sz = 0, size_list_sz = 0, type_list_sz = 0;
 	Var* suffix_data[3] = {NULL, NULL, NULL};
 	iom_edf eformat;
 	int iformat;
@@ -340,14 +345,14 @@ Var* dvLoadSuffixes(FILE* fp, char* fname, int dptr, int org, int items[], int i
 				continue;
 			}
 
-			n = OdlGetAllKwdValuesArray(key, &name_list);
-			if (n != suffixItems[iom_orders[h.org][i]]) {
+			name_list_sz = OdlGetAllKwdValuesArray(key, &name_list);
+			if (name_list_sz != suffixItems[iom_orders[h.org][i]]) {
 				parse_error("suffix name list is incomplete\n");
 				continue;
 			}
 
 			/* lower-case names for consistency */
-			for (k = 0; k < n; k++) {
+			for (k = 0; k < name_list_sz; k++) {
 				lcase(name_list[k]);
 			}
 
@@ -357,8 +362,8 @@ Var* dvLoadSuffixes(FILE* fp, char* fname, int dptr, int org, int items[], int i
 				continue;
 			}
 
-			n = OdlGetAllKwdValuesArray(key, &size_list);
-			if (n != suffixItems[iom_orders[h.org][i]]) {
+			size_list_sz = OdlGetAllKwdValuesArray(key, &size_list);
+			if (size_list_sz != suffixItems[iom_orders[h.org][i]]) {
 				parse_error("suffix size list is incomplete\n");
 				continue;
 			}
@@ -369,8 +374,8 @@ Var* dvLoadSuffixes(FILE* fp, char* fname, int dptr, int org, int items[], int i
 				continue;
 			}
 
-			n = OdlGetAllKwdValuesArray(key, &type_list);
-			if (n != suffixItems[iom_orders[h.org][i]]) {
+			type_list_sz = OdlGetAllKwdValuesArray(key, &type_list);
+			if (type_list_sz != suffixItems[iom_orders[h.org][i]]) {
 				parse_error("suffix type list is incomplete\n");
 				continue;
 			}
@@ -424,6 +429,7 @@ Var* dvLoadSuffixes(FILE* fp, char* fname, int dptr, int org, int items[], int i
 
 	return (v);
 }
+#endif
 
 #if 0
 Var* dv_LoadISISFromPDS(FILE* fp, char* fn, int dptr)
@@ -665,6 +671,11 @@ static int initHeaderFromQubeLabel(OBJDESC* qube, char* fn, struct iom_iheader* 
 
 	if ((key = OdlFindKwd(qube, "CORE_MULTIPLIER", NULL, 0, scope))) {
 		gain = atof(key->value);
+	} else {
+		// NOTE(rswinkle): valgrind complained of jump based on uninitialized value in
+		// iomedley.c:454 and 1.0 seems like the correct default if I understand this
+		// correctly
+		gain = 1.0;
 	}
 
 	if ((key = OdlFindKwd(qube, "SUFFIX_ITEMS", NULL, 0, scope))) {
@@ -956,6 +967,7 @@ Var* dv_LoadISISSuffixesFromPDS_New(FILE* fp, char* fname, size_t dptr, OBJDESC*
 	char str[256];
 	char str2[256];
 	char **name_list = NULL, **size_list = NULL, **type_list = NULL;
+	int name_list_sz = 0, size_list_sz = 0, type_list_sz = 0;
 	Var* suffix_data[3] = {NULL, NULL, NULL};
 	iom_edf eformat;
 	int iformat;
@@ -994,14 +1006,14 @@ Var* dv_LoadISISSuffixesFromPDS_New(FILE* fp, char* fname, size_t dptr, OBJDESC*
 				continue;
 			}
 
-			n = OdlGetAllKwdValuesArray(key, &name_list);
-			if (n != suffix[iom_orders[h.org][i]]) {
+			name_list_sz = OdlGetAllKwdValuesArray(key, &name_list);
+			if (name_list_sz != suffix[iom_orders[h.org][i]]) {
 				parse_error("suffix name list is incomplete\n");
 				continue;
 			}
 
 			/* lower-case names for consistency */
-			for (k = 0; k < n; k++) {
+			for (k = 0; k < name_list_sz; k++) {
 				lcase(name_list[k]);
 			}
 
@@ -1011,8 +1023,8 @@ Var* dv_LoadISISSuffixesFromPDS_New(FILE* fp, char* fname, size_t dptr, OBJDESC*
 				continue;
 			}
 
-			n = OdlGetAllKwdValuesArray(key, &size_list);
-			if (n != suffix[iom_orders[h.org][i]]) {
+			size_list_sz = OdlGetAllKwdValuesArray(key, &size_list);
+			if (size_list_sz != suffix[iom_orders[h.org][i]]) {
 				parse_error("suffix size list is incomplete\n");
 				continue;
 			}
@@ -1023,8 +1035,8 @@ Var* dv_LoadISISSuffixesFromPDS_New(FILE* fp, char* fname, size_t dptr, OBJDESC*
 				continue;
 			}
 
-			n = OdlGetAllKwdValuesArray(key, &type_list);
-			if (n != suffix[iom_orders[h.org][i]]) {
+			type_list_sz = OdlGetAllKwdValuesArray(key, &type_list);
+			if (type_list_sz != suffix[iom_orders[h.org][i]]) {
 				parse_error("suffix type list is incomplete\n");
 				continue;
 			}
@@ -1077,9 +1089,24 @@ Var* dv_LoadISISSuffixesFromPDS_New(FILE* fp, char* fname, size_t dptr, OBJDESC*
 		}
 	}
 
+	//TODO(rswinkle): Why is this not sufficient?  whye is there
+	//still a leak?
+	for (i=0; i<type_list_sz; ++i)
+		free(type_list[i]);
+	free(type_list);
+
+	for (i=0; i<name_list_sz; ++i)
+		free(name_list[i]);
+	free(name_list);
+
+	for (i=0; i<size_list_sz; ++i)
+		free(size_list[i]);
+	free(size_list);
+
 	return (v);
 }
 
+#if 0
 /**
  ** dv_LoadISISSuffixesFromPDS()
  **
@@ -1243,6 +1270,8 @@ Var* dv_LoadISISSuffixesFromPDS(FILE* fp, char* fname)
 
 	return (v);
 }
+
+#endif
 
 int* fix_unsigned(struct iom_iheader* h, unsigned short* s)
 {

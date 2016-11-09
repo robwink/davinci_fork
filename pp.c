@@ -248,17 +248,13 @@ Var* pp_set_var(Var* id, Var* range, Var* exp)
 	 ** If its not named, we can use its memory directly.
 	 **/
 	if (exp == NULL) {
-		// "set" id to NULL by removing it
+		// NOTE(rswinkle):
+		// "set" id to NULL by removing it from the symtable
+		// which makes the behavior consistent with the case
+		// where the symbol didn't already exist.
 		if (V_NAME(id)) {
-			//TODO(rswinkle) valgrind
-
-			printf("id %p %s\n", id, V_NAME(id));
-
 			rm_sym(V_NAME(id));
-			//mem_claim(id);
-			//free_var(rm_symtab(id));
 		}
-
 		return NULL;
 	}
 
@@ -321,8 +317,11 @@ Var* pp_set_var(Var* id, Var* range, Var* exp)
 	}
 
 	/* looks like structs might not have names, so skip this for them */
-	// NOTE(rswinkle): I don't think id will ever not have a name and the
-	// comment above is out of date
+
+	// NOTE(rswinkle): I don't think id will ever not have a name.  This
+	// function parses statements of the form id = exp.  exp could be a function
+	// call or expression, and thus not have a name but how could id not be
+	// an actual identifier, ie a name?
 	if (V_NAME(id)) {
 		V_NAME(exp) = strdup(V_NAME(id));
 
