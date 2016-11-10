@@ -166,6 +166,7 @@ char *OdlTempFname();
 unsigned short OdlWildCardCompare();
 short CheckBalance();
 int ListToArray();
+void free_str_array(char** array, int n);
 
 #else
 

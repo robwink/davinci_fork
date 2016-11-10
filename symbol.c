@@ -45,6 +45,14 @@ Var* rm_symtab(Var* v)
 	return NULL;
 }
 
+// NOTE(rswinkle): This seems extremely dangerous ...
+// I could understand making this take a string and calling
+// rm_sym() as a way to let users remove a symbol and free
+// the memory associated with it (as opposed to just overwriting
+// it with an int or something where the symbol still exists but
+// at least the memory is freed) but this
+// could be freeing a variable in symtab or tmp or who knows
+// potentially and that sounds like a recipe for "bad things" (TM)
 Var* ff_delete(vfuncptr func, Var* arg)
 {
 	Var* obj;
