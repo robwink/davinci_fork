@@ -2155,6 +2155,7 @@ int OdlGetAllKwdValuesArray(KEYWORD* keyword, char*** array)
 	if (value_list) {
 		// NOTE(rswinkle): all that crap above creating a stupid macro based list just to
 		// turn it into an array?  Why not just create a vector/array in the first place?
+		// use cvector_str for all of this directly
 		return (ListToArray(value_list, array));
 	} else {
 		*array = NULL;
@@ -5375,7 +5376,6 @@ int ListToArray(TB_STRING_LIST* list, char*** array)
 		count++;
 	}
 	*array = calloc(count, sizeof(char*));
-	printf("array = %p\n", *array);
 
 	t = list;
 	while (t != NULL) {
@@ -5385,6 +5385,15 @@ int ListToArray(TB_STRING_LIST* list, char*** array)
 		t = t2;
 	}
 	return (i);
+}
+
+void free_str_array(char** array, int num)
+{
+	int i;
+	for (i=0; i<num; ++i) {
+		free(array[i]);
+	}
+	free(array);
 }
 
 #if 0
