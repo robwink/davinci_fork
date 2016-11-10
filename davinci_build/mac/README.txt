@@ -47,8 +47,8 @@ unfair to mac, I install a similar (much better) explorer extension in windows
 for tabbed file browsing and much more and I install MSYS2, git-bash etc. for
 unix style terminal (and package manager) experience.
 
-That's what makes these lacks on Mac so frustrating.  It already is Unix and
-yet it's terminal is pathetic and there's no package manager.  Oh well.
+That's what makes these lacks on Mac so frustrating.  It *is* Unix and
+yet its terminal is pathetic and there's no package manager.  Oh well.
 
 
 
