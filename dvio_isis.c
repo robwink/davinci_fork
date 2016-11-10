@@ -786,7 +786,6 @@ Var* dv_LoadISISSuffixesFromPDS_New(FILE* fp, char* fname, size_t dptr, OBJDESC*
 				   suffix_data sturcture */
 				add_struct(suffix_data[i], name_list[j], v);
 			}
-
 			free_str_array(type_list, type_list_sz);
 			free_str_array(name_list, name_list_sz);
 			free_str_array(size_list, size_list_sz);
