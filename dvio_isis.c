@@ -247,7 +247,6 @@ Var* dvLoadQube(FILE* fp, char* fn, int dptr, int org, int items[], int itemByte
 	Var* v     = NULL;
 	void* data = NULL;
 	int format;
-	int i;
 	int _unsigned = 0;
 
 	h = (struct iom_iheader*)malloc(sizeof(struct iom_iheader));
@@ -433,7 +432,6 @@ static int initHeaderFromHistogramLabel(OBJDESC* hist, char* fn, struct iom_ihea
 {
 	KEYWORD *key = NULL, *key1 = NULL, *key2 = NULL, *key3 = NULL;
 	int size[3]        = {1, 1, 1};
-	int prefix[3]      = {0, 0, 0};
 	int prefix_size[3] = {0, 0, 0};
 	int suffix[3]      = {0, 0, 0};
 	int suffix_size[3] = {0, 0, 0};
@@ -444,7 +442,6 @@ static int initHeaderFromHistogramLabel(OBJDESC* hist, char* fn, struct iom_ihea
 	int scope          = ODL_THIS_OBJECT;
 	int format         = iom_EDF_INVALID;
 	int item_bytes     = 0;
-	char* orgStr       = NULL;
 	int i;
 
 	iom_init_iheader(h);
@@ -503,13 +500,13 @@ static int initHeaderFromImageLabel(OBJDESC* image, char* fn, struct iom_iheader
 
 	iom_init_iheader(h);
 
-	if (key = OdlFindKwd(image, "BAND_STORAGE_TYPE", NULL, 0, scope)) {
+	if ((key = OdlFindKwd(image, "BAND_STORAGE_TYPE", NULL, 0, scope))) {
 		orgStr = OdlGetKwdValue(key);
-		if (strcasecmp(orgStr, "LINE_INTERLEAVED") == 0)
+		if (!strcasecmp(orgStr, "LINE_INTERLEAVED"))
 			org = iom_BIL;
-		else if (strcasecmp(orgStr, "SAMPLE_INTERLEAVED") == 0)
+		else if (!strcasecmp(orgStr, "SAMPLE_INTERLEAVED"))
 			org = iom_BIP;
-		else if (strcasecmp(orgStr, "BAND_SEQUENTIAL") == 0)
+		else if (!strcasecmp(orgStr, "BAND_SEQUENTIAL"))
 			org = iom_BSQ;
 		else
 			org = -1;
@@ -519,14 +516,14 @@ static int initHeaderFromImageLabel(OBJDESC* image, char* fn, struct iom_iheader
 		return 0;
 	}
 
-	if (key                      = OdlFindKwd(image, "LINE_SAMPLES", NULL, 0, scope))
+	if ((key                      = OdlFindKwd(image, "LINE_SAMPLES", NULL, 0, scope)))
 		size[iom_orders[org][0]] = atof(OdlGetKwdValue(key));
-	if (key                      = OdlFindKwd(image, "LINES", NULL, 0, scope))
+	if ((key                      = OdlFindKwd(image, "LINES", NULL, 0, scope)))
 		size[iom_orders[org][1]] = atof(OdlGetKwdValue(key));
-	if (key                      = OdlFindKwd(image, "BANDS", NULL, 0, scope))
+	if ((key                      = OdlFindKwd(image, "BANDS", NULL, 0, scope)))
 		size[iom_orders[org][2]] = atof(OdlGetKwdValue(key));
 
-	if (key = OdlFindKwd(image, "SAMPLE_BITS", NULL, 0, scope))
+	if ((key = OdlFindKwd(image, "SAMPLE_BITS", NULL, 0, scope)))
 		item_bytes = atoi(OdlGetKwdValue(key)) / 8;
 
 	if ((key1 = OdlFindKwd(image, "SAMPLE_TYPE", NULL, 0, scope)) &&
@@ -690,7 +687,6 @@ Var* dv_LoadISISSuffixesFromPDS_New(FILE* fp, char* fname, size_t dptr, OBJDESC*
 	int i, j, k;
 	size_t size;
 	Var* v;
-	char* msg_file              = NULL;
 	const char* suffix_names[3] = {"sample", "line", "band"};
 	int suffix[3]               = {0, 0, 0}; /* suffix dimensions */
 	int suffix_bytes            = 0;
@@ -1353,7 +1349,7 @@ Var* ff_read_suffix_plane(vfuncptr func, Var* arg)
 	FILE* fp;
 	int suffix[3] = {0, 0, 0};
 	int suffix_bytes;
-	int list1_sz, list2_sz, i, j;
+	int list1_sz = 0, list2_sz = 0, i, j;
 	void* data;
 	char* isisfile;
 	char* name = NULL;
@@ -1625,7 +1621,7 @@ Var* write_isis_planes(vfuncptr func, Var* arg)
 	int n;
 	char* filename = NULL;
 	char* p;
-	int rec_len, lbl_length;
+	int rec_len=0, lbl_length;
 	Var* zero;
 	int nsuffix[3] = {0, 0, 0};
 	char* fname;

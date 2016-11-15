@@ -166,7 +166,6 @@ char *OdlTempFname();
 unsigned short OdlWildCardCompare();
 short CheckBalance();
 int ListToArray();
-void free_str_array(char** array, int n);
 
 #else
 
@@ -235,6 +234,7 @@ unsigned short OdlWildCardCompare(const char *, const char *);
 short CheckBalance(char *);
 int ListToArray(TB_STRING_LIST *, char ***);
 OBJDESC *OdlParseLabelFptr (FILE *fp, char *message_fname, MASK expand, unsigned short suppress_messages);
+void free_str_array(char** array, int n);
 
 
 #endif  /* _NO_PROTO  */
