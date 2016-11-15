@@ -1,6 +1,12 @@
-I used this command to create rpm files but similar would work
+I used this process and fpm command to create rpm files but similar would work
 for any Unix OS or package type, see fpm help
 ============================================================
+
+
+./configure --prefix=/usr
+make install DESTDIR=/home/rswinkle/testinstall/
+cd ~
+
 fpm -s dir -t rpm -v 2.18 -n davinci -C testinstall \
 --log info --verbose \
 -d "gnuplot >= 4.0" -d "hdf5 >= 1.8.5" -d "cfitsio" -d "readline" -d "zlib" -d "ImageMagick >= 6.2" -d "libxml2" \
@@ -19,72 +25,3 @@ of hyperspectral data for imaging spectroscopy applications."
 
 
 
-
-
-//simple command
-./configure --prefix=/usr
-make install DESTDIR=/home/robert/testinstall/
-fpm -s dir -t rpm -v 2.17 -n davinci -C testinstall \
--d "gnuplot" -d "hdf5" -d "cfitsio" -d "readline" -d "zlib" -d "ImageMagick" \
-
-
-
-
-
-// Deb control file below
-Package: davinci
-Version: 2.17
-Section: Science
-Priority: extra
-Architecture: amd64
-Depends: libc6, libice6, libxmu6, libxt6, libsm6, libx11-6, zlib1g (>= 1:1.2.1), libreadline6, libhdf5-10, libcfitsio2, libcurl3-gnutls, libltdl7, libpng12-0, libxml2, gnuplot-x11 (>= 4.0), imagemagick (>=6.2)
-Suggests: gdal-bin
-Installed-Size: 28864
-Maintainer: Davinci Dev Team <davinci-dev@mars.asu.edu>
-Homepage: http://davinci.mars.asu.edu
-Description: Davinci - A tool to manipulate and view various types of data, developed in Mars Space Flight Facility
-         Davinci is an interpreted language that looks and feels a lot like C,
-         but has additional vector oriented features that make working with blocks
-         of data a lot easier. This makes davinci well suited for use as a data
-         processing tool, allowing symbolic and mathematical manipulation of
-         hyperspectral data for imaging spectroscopy applications.  See http://davinci.mars.asu.edu for more details.
-
-
-
-
-
-
-// RPM spec file below
-
-#   package information
-Name:         davinci
-Summary:      Davinci - A tool to manipulate and view various types of data, developed in Mars Space Flight Facility
-URL:          http://davinci.asu.edu
-Vendor:       Mars Space Flight Facility at Arizona State University
-Packager:     Davinci Devs <davinci-dev@mars.asu.edu>  
-Distribution: CentOS 6 (MSFF)
-Group:        Applications/Science
-License:      GPLv2
-Version:      2.17
-Release:      1
-
-#   list of sources
-Source:      ftp://ftp.mars.asu.edu/pub/software/davinci/%{name}-%{version}.tar.gz
-
-#   build information
-BuildRequires:  automake, autoconf, make, gcc, gcc-c++, hdf5, hdf5-devel, cfitsio, cfitsio-devel, readline, readline-devel, zlib, zlib-devel, curl-devel	
-BuildRoot: %{_tmppath}/%{name}-%{version}-buildroot
-Requires:	gnuplot, hdf5, cfitsio, readline, zlib
-#Provides:     
-#Obsoletes:    
-#Conflicts:    
-Prefix: %_prefix
-
-%description
-	Davinci is an interpreted language that looks and feels a lot like C, 
-	but has additional vector oriented features that make working with blocks 
-	of data a lot easier. This makes davinci well suited for use as a data 
-	processing tool, allowing symbolic and mathematical manipulation of 
-	hyperspectral data for imaging spectroscopy applications. 
-
-%prep

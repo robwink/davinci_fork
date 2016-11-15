@@ -1,6 +1,19 @@
 CHANGELOG
 =========
 
+  Version 2.18: Tue Nov 15 2016
+  * External distribution.
+  * New integer types (now support 8,16,32,64bit signed and unsigned)
+  * Default int type is int64, default real is double
+  * Tab completion
+  * Improvements to many functions in general with specific support
+    for the new types for many functions, esp. I/O functions
+  * Many many bug fixes of all kinds
+  * New 64-bit Windows build with improved installer
+  * See the documentation or the commit log at
+    https://github.com/robwink/davinci/ between April and November
+    for more details about changes.
+
   Version 2.17: Tue Apr  7  9:22:05 MST 2015
   * External distribution.
   * Completed reading/parsing of ISIS3 files.
