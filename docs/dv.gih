@@ -2034,47 +2034,6 @@
         Map:
             Click with Button3 to find the nearest point on the surface.
 
-?functions projection()
-?projection()
- projection() - Compute a stereographic projection for each band of an object
-
- projection(obj=VAL, [lat=FLOAT], [lon=FLOAT], [rad=FLOAT],
-            [ppd=INT32], type=STRING)
-
- The projection() function will process each band of an object, projecting
- into a BIL organized dataset.  Format of the object does not matter.
-
- lat and lon specify the center point of the projection,
- rad specifys the radius extent of the projection in degrees.
-
- The ppd paramter specified pixels per degree, and when combined with
- the radius value, defines the size of the output image.  Therefore,
- if a radius of 20 is specified with ppd=5 the resulting band will be
- 200 pixels (2x20x5) on each side.
-
- The type parameter sets the parameters of distortion, that is if one
- is projecting on the planet Mars as opposed to a sphere, there will
- be a slightly different result.  The projection types are as follows:
-
-    type: MARS
-          EARTH
-          SPHERE
-
- The four optional paramters default to the following values:
-
-        lat=90.0
-        lon=0.0
-        rad=30.0
-        ppd=1
-
- Example:
-
-    dv> projection(obj=a,lat=0.0,rad=90,ppd=10,type=MARS)
-
-    This will produce an equatorial projection (with lon defaulting to 0)
-    with the poles at the top and botton of the image.  Each band will
-    have the XY dimention of 1800 (2x90x10).
-
 ?functions Matrix
 Davinci supports the following matrix functions:
 
