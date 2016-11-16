@@ -65,12 +65,12 @@ typedef struct {
 	char type;                // set equal to final type
 } data;
 
-static int convert_types(data* thedata, int num_items, int rows);
+static int convert_types(data* thedata, int num_items);
 
 static data* unpack(char*, char*, Var*, int, int*, int*);
 static unpack_digest* parse_template(char* template, column_attributes* input, Var* column_names, int*);
 static int validate_template(unpack_digest* input);
-static int read_data(u8*, data*, unpack_digest*, FILE*, int);
+static int read_data(u8*, data*, unpack_digest*, int);
 static int calc_rows(char*, int, unpack_digest*, int);
 static data* allocate_arrays(unpack_digest*);
 static void compute_adj_bytes(unpack_digest*);
@@ -141,7 +141,7 @@ Var* ff_unpack(vfuncptr func, Var* arg)
 	if (reg_data == NULL || rows <= 0 || num_items <= 0) return NULL;
 
 	/* Converting types to appropriate davinci types (constants ie DV_INT16, DV_UINT8 etc.) */
-	if (!convert_types(reg_data, num_items, rows)) {
+	if (!convert_types(reg_data, num_items)) {
 		free(reg_data);
 		return NULL;
 	}
@@ -172,7 +172,7 @@ Var* ff_unpack(vfuncptr func, Var* arg)
 /* Convert my type constants to appropriate davinci type constants
  * e.g. SIGNED_LSB_INT && numbytes == 2-> DV_INT16
  */
-static int convert_types(data* thedata, int num_items, int rows)
+static int convert_types(data* thedata, int num_items)
 {
 	int i = 0;
 
@@ -227,15 +227,14 @@ static int convert_types(data* thedata, int num_items, int rows)
 static data* unpack(char* template, char* filename, Var* column_names, int hdr_length,
                     int* numitems, int* ret_rows)
 {
-	int i, k, x;
-	int rec_length, max_buf;
+	int i, k;
+	int rec_length;
 
 	column_attributes* initial = NULL;
 	unpack_digest* input       = NULL;
 	FILE* file                 = NULL;
 	u8* buffer                 = NULL;
 	data* thedata              = NULL;
-	void* temp_ptr             = NULL;
 
 	if (strlen(template) == 0) {
 		parse_error("Error: Template cannot be the empty string!");
@@ -339,7 +338,7 @@ static data* unpack(char* template, char* filename, Var* column_names, int hdr_l
 			return NULL;
 		}
 
-		if (!read_data(buffer, thedata, input, file, k)) {
+		if (!read_data(buffer, thedata, input, k)) {
 			clean_up(2, input, buffer, thedata, file);
 			return NULL;
 		}
@@ -704,8 +703,8 @@ static int calc_rows(char* filename, int hdr_length, unpack_digest* input, int r
 	// use filesize,header size, and template to determine number of rows
 
 	struct stat filestats; // struct to get file size with fstat
-	int filesize, i;
-	int rows = 0, width = 0;
+	int filesize;
+	int rows = 0;
 
 	if (stat(filename, &filestats) < 0) // get filesize
 	{
@@ -722,7 +721,7 @@ static int calc_rows(char* filename, int hdr_length, unpack_digest* input, int r
 /* also pretty self explanatory */
 static data* allocate_arrays(unpack_digest* digest)
 {
-	int i, j = 0, k = 0, mem_num = 0, err_num = 0;
+	int i, k = 0, mem_num = 0, err_num = 0;
 	// char* err_str = "Error in allocate_arrays()";
 	int num_items            = digest->num_items;
 	int rows                 = digest->rows;
@@ -896,7 +895,7 @@ static int print_data(data* the_data, unpack_digest* input)
     reads data into buf, performs necessary manipulations (like byteswapping)
     then stores into correct location (loc) in the_data->array
 */
-static int read_data(u8* buffer, data* the_data, unpack_digest* input, FILE* file, int row)
+static int read_data(u8* buffer, data* the_data, unpack_digest* input, int row)
 {
 	i64 tmp_i64 = 0;
 	u64 tmp_u64 = 0;
@@ -1310,7 +1309,7 @@ static data* parse_struct(Var* toPack, Var* column_names, int* numData, int* gre
 				return NULL;
 			}
 			if (V_SIZE(element)[2] != 1) { // z value
-				fprintf(stderr, "Z-dimension (%d) > 1 is unsupported.\n", V_SIZE(element)[2]);
+				fprintf(stderr, "Z-dimension (%zu) > 1 is unsupported.\n", V_SIZE(element)[2]);
 				cleanup_data(reg_data, i); // clean memory for reg_data
 				return NULL;
 			}
@@ -1684,7 +1683,7 @@ static int convert_to_ext_fmt(void* from, int ffmt, char* to, int tfmt, int tole
 
 static int pack_row(data* the_data, unpack_digest* digest, int row, u8* buffer)
 {
-	int i, j, k, numbytes, al_bytes, columns, start_byte;
+	int j, k, numbytes, al_bytes, columns, start_byte;
 	char letter;
 	void* src_buf;
 	int src_type, src_columns;

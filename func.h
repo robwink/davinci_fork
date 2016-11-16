@@ -112,6 +112,7 @@ Var* extract_array(Var*, Range*);
 /* symbol.c */
 Var* get_sym(char* name); /* retrieve named Sym from table */
 Var* put_sym(Var*);
+void rm_sym(char* name);
 Var* eval(Var*);
 Var* get_global_sym(char*);
 Var* put_global_sym(Var*);

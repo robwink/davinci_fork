@@ -2622,7 +2622,7 @@ static void print_pds4_structs(LABEL* label, dataKey* data_key)
 		printf("data_key->Name: %s\n", data_key->Name);
 		printf("data_key->FileName: %s\n", data_key->FileName);
 		printf("data_key->dptr: %d\n", data_key->dptr);
-		printf("data_key->size: %d\n", data_key->size);
+		printf("data_key->size: %zu\n", data_key->size);
 
 	} else {
 		printf("data_key is NULL\n");

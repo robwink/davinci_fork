@@ -1263,7 +1263,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 
 								// fprintf(fp, "%f\t %f\t %f\t %f\n", x[k], yval, e1, e2); // originally
 								if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT64) {
-									fprintf(fp, "%d\t %d\t %d\t %d\n", (i64)x[k], (i64)yval, (i64)e1, (i64)e2);
+									fprintf(fp, "%ld\t %ld\t %ld\t %ld\n", (i64)x[k], (i64)yval, (i64)e1, (i64)e2);
 								} else if (V_FORMAT(v) <= DV_DOUBLE) {
 									fprintf(fp, "%f\t %f\t %f\t %f\n", x[k], yval, e1, e2);
 								}
@@ -1276,7 +1276,7 @@ int plot_chopper(Var** av, int start_ct, int end_ct, int Onum, char* CommandBuff
 								// fprintf(fp, "%f\t %f\t %f\t %f\t %f\t %f\n", x[k], yval, Err1[k],
 								// Err2[k], e1, e2); // originally
 								if (V_FORMAT(v) >= DV_UINT8 && V_FORMAT(v) <= DV_INT64) {
-									fprintf(fp, "%d\t %d\t %d\t %d\t %d\t %d\n", (i64)x[k],
+									fprintf(fp, "%ld\t %ld\t %ld\t %ld\t %ld\t %ld\n", (i64)x[k],
 									        (i64)yval, (i64)Err1[k], (i64)Err2[k], (i64)e1, (i64)e2);
 								} else if (V_FORMAT(v) <= DV_DOUBLE) {
 									fprintf(fp, "%f\t %f\t %f\t %f\t %f\t %f\n", x[k], yval,

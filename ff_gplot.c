@@ -176,17 +176,17 @@ Var* ff_splot(vfuncptr func, Var* arg)
 					// we wanted
 					if (type <= DV_INT64) {
 						if (xscale != 0 && yscale != 0) {
-							fprintf(fp, "%d %d %d\n", ((i % s0) + 1) * (i64)xscale,
+							fprintf(fp, "%ld %ld %ld\n", ((i % s0) + 1) * (i64)xscale,
 							        ((i / s0) + 1) * (i64)yscale, extract_i64(v, i));
 						} else {
-							fprintf(fp, "%d %d %d\n", (i % s0) + 1, (i / s0) + 1, extract_i64(v, i));
+							fprintf(fp, "%zu %zu %ld\n", (i % s0) + 1, (i / s0) + 1, extract_i64(v, i));
 						}
 					} else {
 						if (xscale != 0 && yscale != 0) {
 							fprintf(fp, "%g %g %.12g\n", (int)((i % s0) + 1) * xscale,
 							        (int)((i / s0) + 1) * yscale, extract_float(v, i));
 						} else {
-							fprintf(fp, "%d %d %.12g\n", (i % s0) + 1, (i / s0) + 1, extract_float(v, i));
+							fprintf(fp, "%zu %zu %.12g\n", (i % s0) + 1, (i / s0) + 1, extract_float(v, i));
 						}
 					}
 				}
