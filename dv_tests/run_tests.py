@@ -5,6 +5,9 @@ import tempfile
 from subprocess import *
 from os.path import *
 
+# TODO(rswinkle) Maybe make this include everything but the 64 bit tests
+# and put all those in a single directory (then I can change the extension
+# back to .dvtest instead of .dvtest64
 test_suites = [
 "basic/",
 "io/",
@@ -47,7 +50,6 @@ def find_files(root, filetypes, exclude):          # for a root dir
 
 
 # TODO(rswinkle)
-# eventually, tie this into CI, and of course fix the failing tests
 # also the 64 bit tests are pointless if you can't even run them because
 # they use too much memory and crash/freeze your machine.  I'll adjust
 # them so they use <= 8 GB of mem and don't take longer than ... 10 min each?
@@ -60,6 +62,7 @@ def main():
 	parser.add_argument("-d", "--davinci", default="davinci", help="specify which davinci to test")
 	parser.add_argument("-t", "--tests", nargs=1, default=test_suites, help="manually specify what test (or test directory) to run")
 	parser.add_argument("-v", "--valgrind", action='store_true', help="run under valgrind")
+	parser.add_argument("-b", "--big", action='store_true', help="run 64-bit tests (very memory intensive and slow)")
 
 	args = parser.parse_args()
 	print(args)
@@ -72,10 +75,14 @@ def main():
 	except:
 		pass
 
+	extensions = ['.dvtest', '.dvscript']
+	
+	if args.big:
+		extensions += ['.dvtest64']
 
 	tests = []
 	for suite in args.tests:
-		tests += find_files(suite, ['.dvtest', '.dvscript'], [])
+		tests += find_files(suite, extensions, [])
 	
 	topdir = os.getcwd()
 
