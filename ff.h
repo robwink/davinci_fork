@@ -288,10 +288,6 @@ struct _vfuncptr vfunclist[] = {
     {"pnmcut", ff_cut, NULL, NULL},
     {"pnmcrop", ff_crop, NULL, NULL},
 
-#if 0
-  { "projection", ff_projection,   NULL , NULL},
-#endif
-
 #ifdef HAVE_XM_XR3DT_H
     {"xrt3d", ff_xrt3d, NULL, NULL},
 #endif
