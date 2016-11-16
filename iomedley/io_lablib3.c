@@ -5387,15 +5387,6 @@ int ListToArray(TB_STRING_LIST* list, char*** array)
 	return (i);
 }
 
-void free_str_array(char** array, int num)
-{
-	int i;
-	for (i=0; i<num; ++i) {
-		free(array[i]);
-	}
-	free(array);
-}
-
 #if 0
 /*
  * helper functions

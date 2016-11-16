@@ -234,7 +234,14 @@ unsigned short OdlWildCardCompare(const char *, const char *);
 short CheckBalance(char *);
 int ListToArray(TB_STRING_LIST *, char ***);
 OBJDESC *OdlParseLabelFptr (FILE *fp, char *message_fname, MASK expand, unsigned short suppress_messages);
-void free_str_array(char** array, int n);
+
+#define free_str_array(array, n) \
+	do { \
+	for (int i=0; i<n; ++i) { \
+		free(array[i]); \
+	} \
+	free(array); \
+	} while (0)
 
 
 #endif  /* _NO_PROTO  */

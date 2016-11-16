@@ -39,6 +39,19 @@ static int get_org_from_axis_names(char* axis_names[3], int* org);
 static const char* axis_names[3] = {"sample", "line", "band"};
 #endif
 
+
+/*
+void free_str_array(char** array, int num)
+{
+	int i;
+	for (i=0; i<num; ++i) {
+		free(array[i]);
+	}
+	free(array);
+}
+*/
+
+
 // NOTE(rswinkle): We already have these in io_lablib3.c and probably
 // elsewhere too.  We need to quit duplicating code (and bloating our binaries).
 //

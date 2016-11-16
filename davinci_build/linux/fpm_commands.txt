@@ -1,6 +1,8 @@
 I used this process and fpm command to create rpm files but similar would work
 for any Unix OS or package type, see fpm help
 
+You can get and read about fpm here:
+https://github.com/jordansissel/fpm
 
 Also note, if you're using this on CentOS/RHEL, they use such outdated
 packages, their default ruby version is too old for fpm to work.  You have
