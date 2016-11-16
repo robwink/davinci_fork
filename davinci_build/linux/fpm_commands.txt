@@ -1,5 +1,13 @@
 I used this process and fpm command to create rpm files but similar would work
 for any Unix OS or package type, see fpm help
+
+
+Also note, if you're using this on CentOS/RHEL, they use such outdated
+packages, their default ruby version is too old for fpm to work.  You have
+to install and enable the SCLs before you run the fpm command, ie
+
+(after it's installed):
+scl enable rh-ruby22 bash
 ============================================================
 
 
