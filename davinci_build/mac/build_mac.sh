@@ -402,7 +402,7 @@ if [ "`echo $packages | grep davinci`" ]; then
 
 	#make the davinci disk image
 	echo "Building davinci disk image as $dir/davinci-${version}-${release}-${tgt_os}-${tgt_arch}.dmg"
-	rm -f $dir/davinci-${version}-${release}.dmg
+	rm -f $dir/davinci-${version}-${release}-${tgt_os}-${tgt_arch}.dmg
 	hdiutil create -srcdir /tmp/davinci-${version}-${release}-${tgt_os}-${tgt_arch}.mpkg $dir/davinci-${version}-${release}-${tgt_os}-${tgt_arch}.dmg
 	[[ $? -eq 0 ]] || failed "Failed to build davinci disk image."
 
