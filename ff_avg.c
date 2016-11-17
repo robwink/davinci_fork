@@ -345,7 +345,6 @@ Var* fb_min(Var* obj, int axis, int direction, Var* ignore)
 	} break;
 	case DV_INT32: {
 		i32 tmp, ign = (ignore) ? extract_i32(ignore, 0) : INT32_MIN;
-		printf("ignore = %d\n", ign);
 		i32* i32data = V_DATA(v) = malloc(dsize2*sizeof(i32));
 		for (i=0; i<dsize2; ++i) { i32data[i] = ign; }
 		for (i=0; i<dsize; ++i) {
