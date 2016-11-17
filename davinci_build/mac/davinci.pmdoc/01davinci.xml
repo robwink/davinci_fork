@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<pkgref spec="1.12" uuid="31C37195-3660-4DBC-AA46-4BC8FA5E8BA8">
+  <config>
+    <identifier>edu.asu.msff.davinci.pkg</identifier>
+    <version>2.18-1</version>
+    <description/>
+    <post-install type="none"/>
+    <requireAuthorization/>
+    <installFrom includeRoot="true">/Applications/davinci.app</installFrom>
+    <installTo>/Applications</installTo>
+    <flags>
+      <followSymbolicLinks/>
+    </flags>
+    <packageStore type="internal"/>
+    <mod>parent</mod>
+    <mod>identifier</mod>
+  </config>
+  <contents>
+    <file-list>01davinci-contents.xml</file-list>
+    <component id="edu.asu.mars.davinci" path="/Applications/davinci.app" version="1" isDowngradeable="true">
+      <component id="gov.nih.info.rsb.ImageJ" path="/Applications/davinci.app/Contents/Resources/ImageJ/ImageJ.app" version="10.2" isDowngradeable="true">
+        <mod>isDowngradeable</mod>
+      </component>
+      <mod>isDowngradeable</mod>
+    </component>
+    <filter>/CVS$</filter>
+    <filter>/\.svn$</filter>
+    <filter>/\.cvsignore$</filter>
+    <filter>/\.cvspass$</filter>
+    <filter>/\.DS_Store$</filter>
+  </contents>
+</pkgref>
