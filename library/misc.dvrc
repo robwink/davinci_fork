@@ -560,7 +560,7 @@ define get_map(lat,lon,clat,clon,lpo,spo,ppd,proj,map,trim,size,struct,v,verify,
 	}
 	verbose=3
 
-	if(type(data)=="byte") {			
+	if(type(data)=="uint8") {
 		param.ignore=0
 	} else {
 		param.ignore=-32768
@@ -1574,7 +1574,7 @@ if ($ARGC == 0) {
 
 const=59340000.0
 et=$1
-pi=3.1415927
+pi=3.14159265358979323846
 scale=et/const*2*pi+2
 
 lsubs=(et+46090000)%const*360.0/const+sin(et*2*pi/const+0.4)*10.75+6*sin(-2*scale-0.3)/9.-pow(sin(scale)+1,4)/9-3*et/2000000000.0-8.75

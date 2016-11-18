@@ -60,10 +60,9 @@ intmax = 2147483647 # Maximum integer value (-1 + 2^31)
 eps = float(2)^-23 # Floating point (single) precision
 eps2 = double(2)^-52 # Double precision
 
-# Intermediate float bug is a problem, but I can avoid it by using atod
+# Intermediate float bug is no longer a problem, so any work arounds (ie atod()) from before can be removed
 # Is there a better algorithm for inverf or invnorm?
 # Add Bessel functions or other "special" (higher transcendental) functions?
-# Take another look at isint - as currently written, it returns 0 (false) for double-precision values which store integers larger than intmax. Perhaps this should be reconsidered.
 
 
 
@@ -1524,7 +1523,7 @@ define invnorm(0,1) {
   return(sign($1)*outp)
 }
 
-define isint(0,1) { # What about double-precision values that store integers larger than intmax? According to this function, those are not integers.
+define isint(0,1) {
 
     if ($ARGC == 0) {
       printf("\nReturns 1 if all elements of input are integers (in any format), 0 if not\n")
@@ -1541,7 +1540,7 @@ define isint(0,1) { # What about double-precision values that store integers lar
       # This function returns zero for non-numeric input, or no input, but that should be OK
     }
 
-    if (equals($1, int($1))) {
+    if (equals($1, int64($1)) || equals($1, uint64($1))) {
       return(byte(1))
     }
 
@@ -1559,9 +1558,10 @@ define isnum(0,1) {
     }
 
     ef = format($1)
-    if (equals(ef, "byte") || equals(ef, "short") || equals(ef, "int") || equals(ef, "float") || equals(ef, "double")) {
+    if (ef != "STRING" && ef != "STRUCT" && ef != "TEXT") {
       return(byte(1))
     }
+    print(ef)
 
     return(byte(0))
 }
@@ -2335,11 +2335,11 @@ define med(axis,ignore) {
       #printf("Cannot convert output back to float without a slight loss of accuracy\n")
     }
   } else if (isint(outp)) {
-    if (ef == "byte") {
+    if (ef == "uint8") {
       outp = byte(outp)
-    } else if (ef == "short") {
+    } else if (ef == "int16") {
       outp = short(outp)
-    } else if (ef == "int") {
+    } else if (ef == "int32") {
       outp = int(outp)
     } else {
       printf("\nError converting outp back to format of original input!\n\n") # This should never happen

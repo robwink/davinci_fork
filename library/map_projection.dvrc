@@ -238,7 +238,7 @@ define jmars(id,ul,ur,ll,lr,ignore,name,port,host,v,tmpdir,geo) {
 				data=get_struct(struct,"image")
 			}
 
-			if(type(data)=="byte") {
+			if(type(data)=="uint8") {
 				if(HasValue(v)) printf("Writing out .data from struct to  file\n")
 				if(dim(data)[3]!=1 && dim(data)[3]!=3) {
 					printf("Data must have only 1 or 3 bands\n")
@@ -267,7 +267,7 @@ define jmars(id,ul,ur,ll,lr,ignore,name,port,host,v,tmpdir,geo) {
 		#copy($1,outfile)
 
 	#this is the case where we have data as a pds structure or with user defined points
-	} else if(type($1)=="byte") {
+	} else if(type($1)=="uint8") {
 		if(HasValue(v)) printf("Writting out unstretched data to file\n")
 			if(dim($1)[3]!=1 && dim($1)[3]!=3) {
 				printf("Data must have only 1 or 3 bands\n")
@@ -276,7 +276,7 @@ define jmars(id,ul,ur,ll,lr,ignore,name,port,host,v,tmpdir,geo) {
 				write($1,outfile,png,force=1)
 			}
 	#this is the case where we have unstretched data as a pds structure or with user defined points
-	} else if(type($1)=="float" || type($1)=="short" || type($1)=="int" || type($1)=="double") {
+	} else if(type($1)!="uint8") {
 		printf("Error only byte data may be used with JMARS at this time\n\n")
 		return(null)
 	} else {
@@ -1733,11 +1733,11 @@ define shape2georaster(a_srs_shape,a_srs_image,inverse,value,v,ignore,color,hsv,
 		element=key[,maxpos(key==grep(key,value)[,1])[2]]
 		format=format(get_struct(obj=shapestruct,name=element))
 
-		if(format=="byte") {
+		if(format=="uint8") {
 			otype="-ot Byte "
-		} else if(format=="short") {
+		} else if(format=="int16") {
 			otype="-ot Int16 "
-		} else if(format=="int") {
+		} else if(format=="int32") {
 			otype="-ot Int32 "
 		} else if(format=="float") {
 			otype="-ot Float32 "
@@ -1745,7 +1745,7 @@ define shape2georaster(a_srs_shape,a_srs_image,inverse,value,v,ignore,color,hsv,
 			otype="-ot Float64 "
 		}
 
-		if(format!="byte" && format!="short" && format!="int" && format!="float" && format!="double") {
+		if(format!="uint8" && format!="int16" && format!="int32" && format!="float" && format!="double") {
 			printf("Supported datatype was not found\n")
 			printf("Reverting to mapping option\n")
 			attribstr="-burn 255 "
@@ -1843,7 +1843,7 @@ define shape2georaster(a_srs_shape,a_srs_image,inverse,value,v,ignore,color,hsv,
 	#overlay the new color data on the original map data
   if(hsv==1) {
   	if(HasValue(color) || HasValue(gradient)) {
-  		if(type(geostruct.data)=="byte" && dim(geostruct.data)[3]==1) {
+  		if(type(geostruct.data)=="uint8" && dim(geostruct.data)[3]==1) {
   			hsv=rgb2hsv(out.data)
   			hsv[,,3]=geostruct.data/255.
   			out.data=byte(hsv2rgb(hsv,maxval=255))
@@ -1929,11 +1929,11 @@ define write_envi(force,v) {
 	} else if (isnum(input)==1) {
 		#translate DV datatype to ENVI hdr type
 		dv_datatype=format(input)
-		if(dv_datatype=="byte") {
+		if(dv_datatype=="uint8") {
 			datatype=1
-		} else if(dv_datatype=="short") {
+		} else if(dv_datatype=="int16") {
 			datatype=2
- 		} else if(dv_datatype=="int") {
+ 		} else if(dv_datatype=="int32") {
 			datatype=3
  		} else if(dv_datatype=="float") {
 			datatype=4

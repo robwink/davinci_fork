@@ -860,7 +860,7 @@ define pplot(mtes, tes, themis, lab1, wave, cm, nir, emiss, xaxis, ignore, plot_
 		if(type(arg2[1]) == "STRING") {
 			titles = arg2
 	
-		} else if (type(arg2[1]) == "int") {
+		} else if (type(arg2[1]) == "int32") {
 			colors = arg2
 	
 		} else if (type(arg2) == "TEXT") {
@@ -898,7 +898,7 @@ define pplot(mtes, tes, themis, lab1, wave, cm, nir, emiss, xaxis, ignore, plot_
 		if(type(arg3[1]) == "STRING") {
 			titles = arg3
 	
-		}else if (type(arg3[1]) == "int") {
+		}else if (type(arg3[1]) == "int32") {
 			colors = arg3
 	
 		} else if (type(arg3) == "TEXT") {
@@ -3489,7 +3489,7 @@ define triplot(tlabel,llabel,rlabel,label,title,ptype,psize,norm) {
 		
 	#get the format of the data and up-convert if necessary
 	id=format($1)
-	if(id=="int" || id=="byte" || id=="short" || id=="float") {
+	if(id=="int32" || id=="uint8" || id=="int16" || id=="float") {
 		id="float"
 	} else {
 		id="double"

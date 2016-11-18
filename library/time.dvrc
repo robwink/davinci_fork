@@ -1075,7 +1075,7 @@ define JD2date(cal,print) {
     intY = int(floor((intJ - 1721058.)/365.25))
     intM = (intm + 2)%12 + 1
     intD = int(intd + 1.5)
-    if (format($1) != "int") { # If input not integer, get time as well
+    if (format($1) != "int32") { # If input not integer, get time as well
       intT = 24*($1 + 0.5 - intJ)
       inth = int(floor(intT)) # Hour
       intm = int(floor(60*(intT - inth))) # intm used before, but no matter here
@@ -1108,7 +1108,7 @@ define JD2date(cal,print) {
     intY = inty - 4800 + (intm + 2)/12
     intM = (intm + 2) % 12 + 1
     intD = int(intd + 1.5)
-    if (format($1) != "int") { # If input not integer, get time as well
+    if (format($1) != "int32") { # If input not integer, get time as well
       intT = 24*($1 + 0.5 - intJ) # Had previously added 1e-6 here
 #      return(intT) # From debugging
       inth = int(floor(intT)) # Hour
@@ -1233,7 +1233,7 @@ define MJD2date(cal,print) {
     }
   }
 
-  if (format($1) != "int") { # If input not integer, get time as well
+  if (format($1) != "int32") { # If input not integer, get time as well
     intT = $1 - floor($1) # Fraction of day
 #    printf("intT = %f\n", intT) # Debugging
     intT = 24*intT

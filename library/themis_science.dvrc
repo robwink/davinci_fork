@@ -2877,9 +2877,9 @@ define degrade_ir(sum,band,null) {
   if (HasValue(null)) {
      cnull=null
   } else {
-     if ( format(image) == "byte" ) {
+     if ( format(image) == "uint8" ) {
         cnull=0
-     } else if ( format(image) == "short" || format(image) == "float" ) {
+     } else if ( format(image) == "int16" || format(image) == "float" ) {
         cnull=-32768
      }
   }

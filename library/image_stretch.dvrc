@@ -335,12 +335,12 @@ define do_hsv(ignore,colorize) {
 		color=colorize(color,ignore=ignore,colors=colorize)
 	}
 	
-	if(type(color) != "byte") {
+	if(type(color) != "uint8") {
 		printf("\nSupply $1 as a byte array or a numeric array with colorize set to > 0\n\n")
 		return(null)
 	}		
 
-	 if(type(bw) != "byte") {
+	 if(type(bw) != "uint8") {
 		printf("\nSupply $2 as a byte array\n\n")
 		return(null)
 	}		

@@ -279,7 +279,7 @@ red_image2 [where (red_mask2==0)]=ignore
 
 # Account for rounding up or down for int and byte images
 
-if (format($1) == "int" || format($1) == "byte") {
+if (format($1) == "int32" || format($1) == "uint8") {
 
         red_image2 [where (red_image2-int(red_image2)>=0.5)] =red_image2+1
 }

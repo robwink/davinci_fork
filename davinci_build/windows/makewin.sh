@@ -113,6 +113,8 @@ cp -r modules/ $inst_dir
 
 #and everything that could have changed since the last build
 cp -r $davinci_src/library $inst_dir
+#stupid svn (this type of crap isn't necessary using git)
+rm -rf $inst_dir/library/.svn*
 cp $davinci_src/docs/dv.gih $inst_dir
 
 #clean
