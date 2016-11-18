@@ -2182,7 +2182,12 @@ Var* ff_length(vfuncptr func, Var* arg)
 	if (parse_args(func, arg, alist) == 0) return NULL;
 
 	if (obj == NULL) {
-		parse_error("Expected object");
+		parse_error("Expected an argument to function: %s()", func->name);
+		return NULL;
+	}
+
+	if (!strcmp("strlen", func->name) && V_TYPE(obj) != ID_TEXT && V_TYPE(obj) != ID_STRING) {
+		parse_error("Invalid type, expected STRING or TEXT for function: strlen()");
 		return NULL;
 	}
 

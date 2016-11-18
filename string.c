@@ -323,36 +323,3 @@ Var* set_string(Var* to, Range* r, Var* from)
 	return src;
 }
 
-Var* ff_strlen(vfuncptr func, Var* arg)
-{
-	Var* s1 = NULL;
-	int i;
-	Alist alist[2];
-
-	alist[0]      = make_alist("string", ID_UNK, NULL, &s1);
-	alist[1].name = NULL;
-
-	if (parse_args(func, arg, alist) == 0) return NULL;
-	if (s1 == NULL) {
-		parse_error("Not enough arguments to function: %s()", func->name);
-		return NULL;
-	}
-
-	if (V_TYPE(s1) == ID_TEXT) {
-		int n  = V_TEXT(s1).Row;
-		int* r = calloc(n, sizeof(int));
-		for (i = 0; i < n; i += 1) {
-			if (V_TEXT(s1).text[i]) {
-				r[i] = strlen(V_TEXT(s1).text[i]);
-			} else {
-				r[i] = 0;
-			}
-		}
-		return newVal(BSQ, 1, n, 1, DV_INT32, r);
-	} else if (V_TYPE(s1) == ID_STRING) {
-		return newInt(strlen(V_STRING(s1)));
-	} else {
-		parse_error("Invalid type");
-		return NULL;
-	}
-}

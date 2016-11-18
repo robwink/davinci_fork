@@ -2367,12 +2367,22 @@ Davinci supports the following matrix functions:
 
  It returns a uint64.
 
+ strlen is an alias of length().
+
  Example:
 
     dv> length(create(5,5,1))
     25
     dv> length("some string")
     11
+
+?functions strlen()
+?strlen()
+ strlen() - Return length of STRING or rows in TEXT
+
+ strlen(str)
+
+ strlen() is an alias of length() but only accepts STRING or TEXT.
 
 ?functions add_struct()
 ?add_struct()

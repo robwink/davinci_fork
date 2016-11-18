@@ -315,7 +315,6 @@ Var* ff_filetype(vfuncptr, Var*);
 Var* ff_list(vfuncptr, Var*);
 Var* ff_atoi(vfuncptr func, Var* arg);
 Var* ff_issubstring(vfuncptr func, Var* arg);
-Var* ff_strlen(vfuncptr func, Var* arg);
 Var* ff_strstr(vfuncptr func, Var* arg);
 Var* ff_grep(vfuncptr func, Var* arg);
 Var* ff_atof(vfuncptr func, Var* arg);

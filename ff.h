@@ -160,7 +160,7 @@ struct _vfuncptr vfunclist[] = {
     {"atod", ff_atof, NULL, NULL},
     {"delim", ff_delim, NULL, NULL},
     {"issubstring", ff_issubstring, NULL, NULL},
-    {"strlen", ff_strlen, NULL, NULL},
+    {"strlen", ff_length, NULL, NULL},
     {"strstr", ff_strstr, NULL, NULL},
     {"grep", ff_grep, NULL, NULL},
     {"basename", ff_filename, (void*)1, NULL},

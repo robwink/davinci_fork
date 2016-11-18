@@ -78,7 +78,7 @@ def main():
 	extensions = ['.dvtest', '.dvscript']
 	
 	if args.big:
-		extensions += ['.dvtest64']
+		extensions = ['.dvtest64']
 
 	tests = []
 	for suite in args.tests:
