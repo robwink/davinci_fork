@@ -3,7 +3,7 @@ davinci
 [![Build Status](https://travis-ci.org/robwink/davinci.svg?branch=master)](https://travis-ci.org/robwink/davinci)
 
 
-This is a fork of [davinci.asu.edu](davinci.asu.edu).  It has dozens of bug
+This is a fork of [davinci.asu.edu](http://davinci.asu.edu/index.php?title=Main_Page).  It has dozens of bug
 fixes and 100's of warning fixes (hard to believe because there are still so
 many in this terrible ancient monstrosity of a project).
 
@@ -39,7 +39,7 @@ that it may be wrong
 
 
 ## Documentation
-Documentation can be found on the wiki at [davinci.asu.edu](davinci.asu.edu) however
+Documentation can be found on the wiki at [davinci.asu.edu](http://davinci.asu.edu/index.php?title=Category:Functions) however
 the same caveats as above.  This versions has functions that may not be there, or
 if they are there, there may be more functionality than is documented or work
 slightly differently.
