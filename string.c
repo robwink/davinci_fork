@@ -122,8 +122,13 @@ char* do_add_strings(char* s1, Var* v, int flag)
 	} else {
 		switch (V_FORMAT(v)) {
 		case DV_UINT8:
+		case DV_UINT16:
+		case DV_UINT32:
+		case DV_UINT64: sprintf(buf, "%"PRIu64, extract_u64(v, 0)); break;
+		case DV_INT8:
 		case DV_INT16:
-		case DV_INT32: sprintf(buf, "%d", extract_int(v, 0)); break;
+		case DV_INT32:
+		case DV_INT64: sprintf(buf, "%"PRId64, extract_i64(v, 0)); break;
 		case DV_FLOAT:
 		case DV_DOUBLE: sprintf(buf, "%.*g", SCALE, extract_double(v, 0)); break;
 		}

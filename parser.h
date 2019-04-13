@@ -41,7 +41,19 @@
 
 #include "parser_types.h"
 
-// could ifdef this based on architecture
+// NOTE(rswinkle)
+// could ifdef this based on architecture but I don't
+// know if it's even worth supporting 32 bit going forward,
+// most linux distros are dropping 32 bit support in the next year
+// or so if they haven't already and besides I
+// can't just switch even on 64-bit because too much code still
+// hasn't been updated to new types and while most of it
+// would work fine (just silently convert from a 64 bit
+// to the receiving 32 bit type) there might be a few
+//
+// so instead, for now, explicitly use extract_i64 in new code
+// and replace extract_int with it, as needed a-la do_add_strings() in string.c
+
 #define extract_int extract_i32
 //#define extract_int extract_i64
 
